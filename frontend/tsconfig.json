@@ -1,0 +1,42 @@
+{
+  "compilerOptions": {
+    "types": [
+      "node",
+      "lodash",
+      "enzyme",
+      "react",
+      "prop-types",
+      "jest",
+      "react-router",
+      "text-encoding",
+      "react-dnd",
+      "react-dnd-html5-backend"
+    ],
+    "target": "es6",
+    "module": "es2015",
+    "moduleResolution": "node",
+    "lib": ["es6", "es2017", "dom", "webworker"],
+    "skipLibCheck": true,
+    "isolatedModules": false,
+    "esModuleInterop": true,
+    "jsx": "react",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "noImplicitAny": false,
+    "noImplicitUseStrict": false,
+    "noUnusedParameters": true,
+    "noUnusedLocals": true,
+    "removeComments": true,
+    "noLib": false,
+    "preserveConstEnums": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "allowSyntheticDefaultImports": true,
+    "allowJs": true,
+    "checkJs": false,
+    "sourceMap": true,
+    "baseUrl": "./",
+    "rootDir": "./",
+    "outDir": "./dist"
+  },
+  "exclude": ["assets", "build", "dist", "node_modules"]
+}

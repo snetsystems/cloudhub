@@ -1,0 +1,158 @@
+{
+  "id": "1f3ac9d0-bfb3-4e13-91a6-8949f7643ee9",
+  "measurement": "elasticsearch_indices",
+  "app": "elasticsearch",
+  "autoflow": false,
+  "cells": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 12,
+      "h": 4,
+      "i": "3254c2ee-4b0f-440e-9cba-b996b96bf12a",
+      "name": "ElasticSearch - Query Throughput",
+      "queries": [
+        {
+          "query": "SELECT non_negative_derivative(mean(search_query_total)) AS searches_per_min, non_negative_derivative(mean(search_scroll_total)) AS scrolls_per_min, non_negative_derivative(mean(search_fetch_total)) AS fetches_per_min, non_negative_derivative(mean(search_suggest_total)) AS suggests_per_min FROM \":db:\".\":rp:\".\"elasticsearch_indices\"",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 4,
+      "w": 12,
+      "h": 4,
+      "i": "7db341c0-455b-4595-8d34-61dfbdaf6cc6",
+      "name": "ElasticSearch - Open Connections",
+      "queries": [
+        {
+          "query": "SELECT mean(current_open) FROM \":db:\".\":rp:\".\"elasticsearch_http\"",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 8,
+      "w": 6,
+      "h": 4,
+      "i": "ca304109-35db-4066-91e4-00875a618abb",
+      "name": "ElasticSearch - Query Latency",
+      "queries": [
+        {
+          "query": "SELECT non_negative_derivative(mean(search_query_time_in_millis)) AS mean, non_negative_derivative(median(search_query_time_in_millis)) AS median, non_negative_derivative(percentile(search_query_time_in_millis, 95)) AS ninety_fifth FROM \":db:\".\":rp:\".\"elasticsearch_indices\"",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 6,
+      "y": 8,
+      "w": 6,
+      "h": 4,
+      "i": "e0418118-a562-49d1-bf50-83943f72b245",
+      "name": "ElasticSearch - Fetch Latency",
+      "queries": [
+        {
+          "query": "SELECT non_negative_derivative(mean(search_fetch_time_in_millis)) AS mean, non_negative_derivative(median(search_fetch_time_in_millis)) AS median, non_negative_derivative(percentile(search_fetch_time_in_millis, 95)) AS ninety_fifth FROM \":db:\".\":rp:\".\"elasticsearch_indices\"",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 12,
+      "w": 6,
+      "h": 4,
+      "i": "3912091e-2ee5-4f47-bc74-40520239372d",
+      "name": "ElasticSearch - Suggest Latency",
+      "queries": [
+        {
+          "query": "SELECT non_negative_derivative(mean(search_suggest_time_in_millis)) AS mean, non_negative_derivative(median(search_suggest_time_in_millis)) AS median, non_negative_derivative(percentile(search_suggest_time_in_millis, 95)) AS ninety_fifth FROM \":db:\".\":rp:\".\"elasticsearch_indices\"",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 6,
+      "y": 12,
+      "w": 6,
+      "h": 4,
+      "i": "01e536cd-baf8-4bf3-9cee-9c1d149b58ef",
+      "name": "ElasticSearch - Scroll Latency",
+      "queries": [
+        {
+          "query": "SELECT non_negative_derivative(mean(search_scroll_time_in_millis)) AS mean, non_negative_derivative(median(search_scroll_time_in_millis)) AS median, non_negative_derivative(percentile(search_scroll_time_in_millis, 95)) AS ninety_fifth FROM \":db:\".\":rp:\".\"elasticsearch_indices\"",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 16,
+      "w": 12,
+      "h": 4,
+      "i": "306d6cdc-93ef-49d9-8151-a1bae355dfc6",
+      "name": "ElasticSearch - Indexing Latency",
+      "queries": [
+        {
+          "query": "SELECT non_negative_derivative(mean(indexing_index_time_in_millis)) AS mean FROM \":db:\".\":rp:\".\"elasticsearch_indices\"",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 20,
+      "w": 4,
+      "h": 4,
+      "i": "5ef57f9f-4cba-4f9e-9264-15aa2954c724",
+      "name": "ElasticSearch - JVM GC Collection Counts",
+      "queries": [
+        {
+          "query": "SELECT mean(gc_collectors_old_collection_count) AS old_count, mean(gc_collectors_young_collection_count) AS young_count FROM \":db:\".\":rp:\".\"elasticsearch_jvm\"",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 4,
+      "y": 20,
+      "w": 4,
+      "h": 4,
+      "i": "fa7c807e-3e87-4d26-869b-e0ffd3ef344a",
+      "name": "ElasticSearch - JVM GC Latency",
+      "queries": [
+        {
+          "query": "SELECT non_negative_derivative(mean(gc_collectors_old_collection_time_in_millis)) AS mean_old_time, non_negative_derivative(mean(gc_collectors_young_collection_time_in_millis)) AS mean_young_time FROM \":db:\".\":rp:\".\"elasticsearch_jvm\"",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 8,
+      "y": 20,
+      "w": 4,
+      "h": 4,
+      "i": "6f4e01c4-31d6-4302-8e62-9f31f6c3f46f",
+      "name": "ElasticSearch - JVM Heap Usage",
+      "queries": [
+        {
+          "query": "SELECT mean(mem_heap_used_percent) FROM \":db:\".\":rp:\".\"elasticsearch_jvm\"",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    }
+  ]
+}

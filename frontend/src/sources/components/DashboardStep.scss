@@ -1,0 +1,26 @@
+.dashboard-step {
+  position: relative;
+  min-width: 100%;
+  min-height: 100%;
+}
+
+.dashboard-step--filter-controls {
+  margin-bottom: $ix-marg-c;
+  padding: 0 2px;
+  box-sizing: border-box;
+  min-width: 100%;
+  display: inline-flex;
+  justify-content: space-between;
+}
+
+.suggestion-text{
+  font-weight: 600;
+  font-size: 14.5px;
+  line-height: 1.55em;
+  color: $g12-forge;
+  margin: $ix-marg-b 0 $ix-marg-a 2px;
+}
+
+.dashboard-step--loading{
+  padding: 15px;
+}

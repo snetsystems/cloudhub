@@ -1,0 +1,37 @@
+/*
+    Flux Code Mirror Editor
+    ----------------------------------------------------------------------------
+*/
+
+.time-machine-container {
+  display: flex;
+  height: 90%;
+  justify-content: baseline;
+  align-items: stretch;
+}
+
+.flux-editor {
+display: flex;
+flex-direction: row;
+height: 100%;
+}
+
+.flux-script-editor {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.error-warning {
+  color: $c-dreamsicle;
+  cursor: pointer;
+}
+
+.inline-error-message {
+  color: white;
+  background-color: red;
+}
+
+.flux-query-maker--script .threesizer--body {
+  height: calc(100% - #{$threesizer-header-height});
+}

@@ -1,0 +1,25 @@
+/*
+  Wizard Step Styles
+  ------------------------------------------------------------------------------
+*/
+
+.wizard-step--container {
+  position: relative;
+  overflow: hidden;
+  margin: $ix-marg-c 0;
+  width: 100%;
+}
+
+.wizard-step--child {
+  padding: $ix-marg-c;
+}
+
+.wizard-step--shadow {
+  position: absolute;
+  min-width: 100%;
+  min-height: 100%;
+  pointer-events: none;
+  z-index: 100;
+  box-shadow: inset 0px -11px 8px -10px $g0-obsidian,
+    inset 0px 11px 8px -10px $g0-obsidian;
+}

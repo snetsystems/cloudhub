@@ -1,0 +1,419 @@
+/*
+    Styles for Log Viewer Page
+    ----------------------------------------------------------------------------
+*/
+
+$logs-viewer-graph-height: 170px;
+$logs-viewer-search-height: 46px; 
+$logs-viewer-filter-height: 40px;
+$logs-viewer-results-text-indent: 33px;
+$logs-viewer-gutter: 60px;
+
+.logs-viewer {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  flex-wrap: nowrap;
+}
+
+.logs-viewer--graph-container {
+  padding: $ix-marg-b $logs-viewer-gutter;
+  height: $logs-viewer-graph-height;
+  @include gradient-v($g2-kevlar, $g0-obsidian);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.logs-viewer--graph-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  margin-bottom: $ix-marg-b;
+}
+
+.logs-viewer--graph {
+  flex: 1 0 calc(100% - 38px);
+}
+
+.logs-viewer--search-bar {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: nowrap;
+  padding: 0 $logs-viewer-gutter;
+  height: $logs-viewer-search-height;
+  background-color: $g3-castle;
+}
+
+.logs-viewer--table-container {
+  padding: 0 $logs-viewer-gutter;
+  height: calc(
+    100% - #{$logs-viewer-graph-height + $logs-viewer-search-height +
+      $logs-viewer-filter-height}
+  );
+  background-color: $g3-castle;
+}
+
+// Search Bar
+.logs-viewer--search-input {
+  flex: 1 0 0;
+  margin-right: $ix-marg-b;
+  position: relative;
+}
+.logs-viewer--search-dropdown {
+  margin-right: $ix-marg-b;
+}
+
+// Filters Bar
+.logs-viewer--filter-bar {
+  display: flex;
+  align-items: center;
+  @include no-user-select();
+  padding: 0 $logs-viewer-gutter 0 ($logs-viewer-gutter);
+  height: $logs-viewer-filter-height;
+  background-color: $g3-castle;
+}
+
+.logs-viewer--filters {
+  overflow: hidden;
+  position: relative;
+
+  &:after {
+    content: '';
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 44px;
+    pointer-events: none;
+    position: absolute;
+    @include gradient-h(rgba($g3-castle, 0), $g3-castle);
+  }
+}
+
+.logs-viewer--clear-filters {
+  padding: 0 $ix-marg-b;
+}
+
+.logs-viewer--results-text {
+  margin: 0;
+  margin-right: $logs-viewer-results-text-indent;
+  padding: 0;
+  font-size: 13px;
+  line-height: 13px;
+  font-weight: 600;
+  color: $g9-mountain;
+  transition: color 0.25s ease;
+  min-width: 180px;
+
+  strong {
+    color: $g15-platinum;
+    font-weight: 900;
+  }
+}
+
+
+@keyframes resultsSpinner {
+  0% {
+    transform: translateY(-50%) rotate(0deg);
+  }
+  100% {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}
+
+.logs-viewer--results-spinner {
+  position: absolute;
+  top: 50%;
+  left: $logs-viewer-gutter + 8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid $c-pool;
+  border-bottom-color: transparent;
+  animation: resultsSpinner 0.75s linear infinite;
+
+  & + .logs-viewer--results-text {
+    color: $c-pool;
+  }
+}
+
+.logs-viewer--filters {
+  flex: 1 0 0;
+  display: flex;
+  align-items: center;
+}
+
+.logs-viewer--filter {
+  position: relative;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  padding: 0 2px 0 8px;
+  height: 26px;
+  border-radius: 4px;
+  background-color: $g5-pepper;
+  color: $g13-mist;
+  font-weight: 500;
+  font-family: $code-font;
+  margin: 1px;
+  max-width: 289px;
+
+  &.active,
+  &:hover {
+    background-color: $g6-smoke;
+    color: $g17-whisper;
+  }
+  &:hover {
+    cursor: pointer;
+  }
+
+  > span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
+  }
+}
+
+.logs-viewer--filter-remove {
+  outline: none;
+  width: 24px;
+  height: 24px;
+  background-color: transparent;
+  border: 0;
+  position: relative;
+
+  &:before,
+  &:after {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 12px;
+    height: 2px;
+    border-radius: 1px;
+    background-color: $g8-storm;
+    transition: background-color 0.25s ease;
+    content: '';
+  }
+
+  &:before {
+    transform: translate(-50%, -50%) rotate(-45deg);
+  }
+
+  &:after {
+    transform: translate(-50%, -50%) rotate(45deg);
+  }
+
+  &:hover {
+    cursor: pointer;
+
+    &:before,
+    &:after {
+      background-color: $c-dreamsicle;
+    }
+  }
+}
+
+.logs-viewer--operator,
+.logs-viewer--value,
+.logs-viewer--filter-label {
+  margin-right: 2px;
+
+  &.form-control.input-xs {
+    padding: 0 5px;
+    font-weight: 500;
+    height: 24px;
+    border-radius: 3px;
+    border-color: $g6-smoke;
+
+    &:focus {
+      border-color: $c-pool;
+    }
+  }
+}
+
+.logs-viewer--operator {
+  width: 30px;
+}
+.logs-viewer--value {
+  width: 170px;
+}
+
+// Table Dots
+.logs-viewer--dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  background-color: $g0-obsidian;
+  border: 2px solid $g3-castle;
+  margin-left: 2px;
+}
+.logs-viewer--severity-text {
+  padding: 2px;
+  padding-left: 5px;
+}
+
+// Play & Pause Toggle in Header
+.logs-viewer--mode-toggle {
+  margin-right: 10px;
+}
+
+// Table Cell Styles
+.logs-viewer--cell {
+  font-size: 12px;
+  padding: 0 4px;
+  color: $g11-sidewalk;
+  display: flex;
+  align-content: center;
+  align-items: center;
+  font-family: $code-font;
+
+  &.message-wrap {
+    word-break: break-all
+  }
+}
+.logs-viewer--cell-header {
+  font-weight: 600;
+  color: $g15-platinum;
+  border-bottom: 2px solid $g5-pepper;
+}
+
+// Clickable Cells
+.logs-viewer--clickable {
+  display: inline-flex;
+  align-items: center;
+  padding: 0px 3px;
+  border-radius: 3px;
+  @include no-user-select();
+
+  &:hover {
+    background-color: $c-pool;
+    color: $g20-white;
+    cursor: pointer;
+  }
+
+  &:active,
+  &:active:hover {
+    background-color: $c-laser;
+  }
+}
+
+// Scroll Loader
+.logs-viewer--scroll-loader {
+  position: fixed;
+  bottom: 0;
+  left: 60px;
+  width: calc(100% - 60px);
+  height: 60px;
+  @include gradient-v(rgba($g2-kevlar, 0), $g2-kevlar);
+  z-index: 5;
+  display: flex;
+  align-content: center;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  opacity: 0;
+  color: $g15-platinum;
+
+  &.loading {
+    opacity: 1;
+  }
+
+  h6 {
+    margin: 0;
+  }
+}
+
+.logs-viewer--table-count {
+  position: absolute;
+  top: -60px;
+}
+
+.logs-viewer--searching-time {
+  text-transform: uppercase;
+  margin-top: $ix-marg-b;
+  @include gradient-h($c-laser, $c-comet);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+@keyframes magnifier {
+  0% {
+    transform: translate(-50%,-50%);
+  }
+  25% {
+    transform: translate(0%,-50%);
+  }
+  75% {
+    transform: translate(-100%,-50%);
+  }
+  100% {
+    transform: translate(-50%,-50%);
+  }
+}
+
+@keyframes magRotateA {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes magRotateB {
+  0% {
+    transform: translate(-50%,-50%) rotate(0deg);
+  }
+  100% {
+    transform: translate(-50%,-50%) rotate(-360deg);
+  }
+}
+
+.logs-viewer--search-graphic {
+  width: 100px;
+  height: 100px;
+  display: inline-block;
+  position: relative;
+}
+
+.logs-viewer--graphic-log,
+.logs-viewer--graphic-magnifier-b,
+.logs-viewer--graphic-empty {
+  background-size: 100% 100%;
+  background-position: center center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+}
+.logs-viewer--graphic-magnifier-a {
+  width: 100px;
+  height: 100px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  animation: magRotateA 1.8s infinite linear;
+}
+.logs-viewer--graphic-log {
+  background-image: url('../../assets/images/log.svg');
+  width: 50px;
+  height: 50px;
+  transform: translate(-50%,-50%);
+}
+.logs-viewer--graphic-magnifier-b {
+  background-image: url('../../assets/images/magnifier.svg');
+  width: 50px;
+  height: 50px;
+  top: 35%;
+  left: 35%;
+  animation: magRotateB 1.8s infinite linear;
+}
+.logs-viewer--graphic-empty {
+  background-image: url('../../assets/images/no-logs.svg');
+  width: 60px;
+  height: 60px;
+  transform: translate(-50%,-50%);
+}

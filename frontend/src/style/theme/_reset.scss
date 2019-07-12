@@ -1,0 +1,35 @@
+/*
+  Setting lowermost styles here
+*/
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  background-color: $g0-obsidian;
+}
+
+body {
+  overflow: hidden;
+  color: $g17-whisper;
+  font-size: $ix-text-base;
+}
+
+#react-root,
+.cmp-root {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.cmp-root {
+  display: flex;
+  align-items: stretch;
+}

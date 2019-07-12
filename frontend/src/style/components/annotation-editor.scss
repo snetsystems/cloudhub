@@ -1,0 +1,96 @@
+.annotation-editor .overlay-heading {
+  justify-content: space-between;
+}
+
+.annotation-editor .row {
+  margin-bottom: 5px;
+}
+
+.annotation-editor--controls {
+  display: flex;
+
+  button:first-child {
+    margin-right: 5px;
+  }
+}
+
+.annotation-editor-body--delete {
+  width: 65px;
+  margin: 25px auto 0 auto;
+}
+
+.annotation-editor-body label {
+  display: flex;
+  justify-content: space-between;
+
+  .error {
+    color: $c-curacao;
+  }
+}
+
+.annotation-tag-editor {
+  margin-top: 2px;
+}
+
+.annotation-tag-editor .annotation-tag-editor--add {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.annotation-tag-editor .tag-control {
+  margin-bottom: 8px;
+}
+
+.tag-control {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tag-control--arrow {
+  display: flex;
+  align-items: center;
+  width: 50px;
+  padding: 0 6px;
+
+  > span {
+    position: relative;
+    height: 2px;
+    width: 100%;
+    @include gradient-h($c-pool, $c-star);
+
+    &:before,
+    &:after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    &:before {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: $c-pool;
+      left: 0;
+    }
+    &:after {
+      right: -6px;
+      border-style: solid;
+      border-color: transparent;
+      border-width: 6px;
+      border-left-color: $c-star;
+    }
+  }
+}
+
+.tag-control--key {
+  flex: 1 1 40%;
+}
+
+.tag-control--value {
+  flex: 1 1 60%;
+}
+
+.tag-control button {
+  margin-left: 5px;
+}
