@@ -20,6 +20,51 @@ For more information of the basic common features between _Chronograf_ 1.7.11 an
 * For more Dev. Env., provide **Visual Studio Code** Env. including the setting.json and launch.json.
 * Window build & run Env. support.
 
+## Setting in VSCode
+* Add the followings into **_setting.json_** to **User Setting** namespace.
+```
+{
+  "terminal.integrated.shell.windows": "C:\\Program Files\\Git\\bin\\bash.exe",
+  "terminal.integrated.rightClickBehavior": "default",
+  "terminal.explorerKind": "external",
+  "terminal.integrated.copyOnSelection": true,
+  "terminal.integrated.scrollback": 10000,
+  "breadcrumbs.enabled": true,
+  "editor.renderControlCharacters": true,
+  "editor.largeFileOptimizations": false,
+  "editor.formatOnSave": true,
+  "editor.renderWhitespace": "none",
+  "workbench.startupEditor": "newUntitledFile",
+  "explorer.confirmDelete": false,
+  "explorer.confirmDragAndDrop": false,
+  "files.eol": "\n",
+  "go.formatTool": "goimports",
+  "go.lintOnSave": "package",
+  "prettier.singleQuote": true,
+  "prettier.bracketSpacing": false,
+  "prettier.semi": false,
+  "prettier.trailingComma": "es5",
+  "eslint.alwaysShowStatus": true,
+  "tslint.jsEnable": true,
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "debug.showInStatusBar": "always",
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "debug.toolBarLocation": "docked",
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  }
+}
+```
 ## How to build
 To do
 
