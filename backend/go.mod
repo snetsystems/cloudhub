@@ -8,6 +8,7 @@ require (
 	github.com/boltdb/bolt v0.0.0-20160719165138-5cc10bbbc5c1
 	github.com/bouk/httprouter v0.0.0-20160817010721-ee8b3818a7f5
 	github.com/dgrijalva/jwt-go v0.0.0-20160831183534-24c63f56522a
+	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/elazarl/go-bindata-assetfs v1.0.0
 	github.com/gogo/protobuf v1.2.1
 	github.com/google/go-cmp v0.2.0
