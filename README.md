@@ -13,7 +13,7 @@ For more information of the basic common features between _Chronograf_ 1.7.11 an
 
 [Documents for TICK Stack](https://docs.influxdata.com/)
 
-## Key Differences against _Chronograf_.
+## Key Differences against _Chronograf_ at this point.
 * Compose of directories.
   * Divide as backend and frontend.
 * More easy debugging environment support without proxy server by node.js.
