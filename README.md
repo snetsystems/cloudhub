@@ -65,8 +65,70 @@ For more information of the basic common features between _Chronograf_ 1.7.11 an
   }
 }
 ```
-## How to build
-To do
 
-## How to debug via VSCode
-To do
+## How to build
+### Getting the source code from github.
+[If you're on Windows, run "Git Bash" and] type the followings.
+```
+# If you're on Windows, run "Git Bash" and type the followings.
+
+$ go get github.com/snetsystems/cmp
+$ cd $GOPATH/src/github.com/snetsystems/cmp
+$ make
+```
+
+If well done, you can see the binary.
+```
+$ cd backend/cmd/cmp
+$ ls -l
+total 28072
+...
+-rwxr-xr-x 1 Snetsystems 197121 28610048 Jul 15 09:09 scmp
+```
+Once run scmp, 8888 port will be listened.
+```
+$ ./scmp
+```
+You can see the SCMP UI via browser: http://localhost:8888 
+
+## How to debug via VSCode for Development.
+For your convenience, make "_.code-workspace_" for VSCode in the your snetsystems folder.
+```
+$ cd $GOPATH/src/github.com/snetsystems/
+$ cat snet.code-workspace
+{
+  "folders": [
+    {
+      "path": "cmp"
+    }
+  ],
+  "settings": {
+    "files.exclude": {}
+  }
+}
+```
+Run VSCode as above workspace.
+```
+$ code snet.code-workspace
+```
+Simply, select **"Debug SCMP"** and then run debug.<br>
+Also, for UI debugging, select **"Launch Chrome"** and then run debug.
+
+> We already prepared **"_.vscode/launch.json_"** and **"_.vscode/settings.json_"**
+>> * Using **GO111MODULE**.
+>>   * Not need a vendor directory anymore.
+>> * Snetsystems Github login setting as a default.
+>>   * You need to change to the Github's keys of your organization.
+>>   * If you don't need to login, get rid of the login information.
+>>     ```
+>>      ...
+>>      "args": [
+>>        "-l=debug",
+>>        "-d"
+>>        // "--auth-duration=0",
+>>        // "-t=74c1e9e2450886060b5bf736b935cd0bf960837f",
+>>        // "--github-client-id=c170bbdba5cb2ea8c3e6",        
+>>        // "--github-client-secret=55c35715b0e4eebab7edbdeef3081bf890e79d22"
+>>      ],
+>>      ...
+>>     ```
