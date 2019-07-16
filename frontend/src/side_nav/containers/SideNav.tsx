@@ -52,7 +52,7 @@ class SideNav extends PureComponent<Props> {
     const id = sourceID || _.get(defaultSource, 'id', 0)
 
     const sourcePrefix = `/sources/${id}`
-    const dataExplorerLink = `${sourcePrefix}/cmp/data-explorer`
+    // const dataExplorerLink = `${sourcePrefix}/cmp/visualize`
 
     const isDefaultPage = location.split('/').includes(DEFAULT_HOME_PAGE)
 
@@ -69,20 +69,12 @@ class SideNav extends PureComponent<Props> {
           </Link>
         </div>
         <NavBlock
-          highlightWhen={['hosts']}
-          icon="eye"
-          link={`${sourcePrefix}/hosts`}
-          location={location}
-        >
-          <NavHeader link={`${sourcePrefix}/hosts`} title="Hosts" />
-        </NavBlock>
-        <NavBlock
-          highlightWhen={['data-explorer']}
+          highlightWhen={['visualize']}
           icon="graphline-2"
-          link={dataExplorerLink}
+          link={`${sourcePrefix}/visualize`}
           location={location}
         >
-          <NavHeader link={dataExplorerLink} title="Visualize" />
+          <NavHeader link={`${sourcePrefix}/visualize`} title="Visualize" />
         </NavBlock>
         <NavBlock
           highlightWhen={['dashboards']}
@@ -93,6 +85,25 @@ class SideNav extends PureComponent<Props> {
           <NavHeader link={`${sourcePrefix}/dashboards`} title="Dashboards" />
         </NavBlock>
         <NavBlock
+          highlightWhen={['hosts']}
+          icon="server2"
+          link={`${sourcePrefix}/hosts`}
+          location={location}
+        >
+          <NavHeader link={`${sourcePrefix}/hosts`} title="Infrastructure" />
+        </NavBlock>
+        <NavBlock
+          highlightWhen={['application']}
+          icon="disks"
+          link={`${sourcePrefix}/application`}
+          location={location}
+        >
+          <NavHeader
+            link={`${sourcePrefix}/application`}
+            title="Applications"
+          />
+        </NavBlock>
+        <NavBlock
           highlightWhen={['alerts', 'alert-rules', 'tickscript']}
           icon="alerts"
           link={`${sourcePrefix}/alert-rules`}
@@ -100,7 +111,7 @@ class SideNav extends PureComponent<Props> {
         >
           <NavHeader link={`${sourcePrefix}/alert-rules`} title="Alert" />
           <NavListItem link={`${sourcePrefix}/alert-rules`}>
-            Manage Tasks
+            Alert Setting
           </NavListItem>
           <NavListItem link={`${sourcePrefix}/alerts`}>
             Alert History
@@ -109,7 +120,7 @@ class SideNav extends PureComponent<Props> {
 
         <NavBlock
           highlightWhen={['logs']}
-          icon="wood"
+          icon="eye"
           link="/logs"
           location={location}
         >

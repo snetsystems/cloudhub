@@ -137,7 +137,7 @@ class RefreshingGraph extends Component<Props> {
     if (this.shouldShowNoResults) {
       return (
         <div className="graph-empty">
-          <p data-test="data-explorer-no-results">{emptyGraphCopy}</p>
+          <p data-test="visualize-no-results">{emptyGraphCopy}</p>
         </div>
       )
     }
