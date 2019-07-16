@@ -8,14 +8,14 @@ Therefore, SCMP will be enhanced by adding our direction, such as automation of 
 SCMP has been started with _Chronograf_ version **1.7.11**.
 
 ### Using the basic common features
-For more information of the basic common features between _Chronograf_ 1.7.11 and SCMP, dependencies and using guides like the way of TICK Script or Flux queries, refer to the following link.<br>
+For more information of the basic common features between _Chronograf_ 1.7.11 and SCMP, dependencies and using guides like the way of _TICK_ Script or _Flux_ queries, refer to the following link.<br>
 [Github for _chronograf_](https://github.com/influxdata/chronograf/blob/master/README.md)<br>
-[Documents for TICK Stack](https://docs.influxdata.com/)
+[Documents for _TICK_ Stack](https://docs.influxdata.com/)
 
 ### Test Environment
 For running this project, maybe, you shoud get the environment for test data and composition like telegraf, kapacity and influxdb.
 This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
-[Download Sandbox](https://github.com/influxdata/sandbox)
+[Download _Sandbox_](https://github.com/influxdata/sandbox)
 
 ## Key Differences against _Chronograf_ at this point.
 * Compose of directories.
