@@ -148,7 +148,7 @@ class Root extends PureComponent<{}, State> {
                 <Route path="status" component={StatusPage} />
                 <Route path="hosts" component={HostsPage} />
                 <Route path="hosts/:hostID" component={HostPage} />
-                <Route path="cmp/data-explorer" component={DataExplorerPage} />
+                <Route path="visualize" component={DataExplorerPage} />
                 <Route path="dashboards" component={DashboardsPage} />
                 <Route
                   path="dashboards/:dashboardID"

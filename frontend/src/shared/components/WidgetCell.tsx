@@ -36,7 +36,7 @@ const WidgetCell: SFC<Props> = ({cell, source, timeRange}) => {
     default: {
       return (
         <div className="graph-empty">
-          <p data-test="data-explorer-no-results">Nothing to show</p>
+          <p data-test="visualize-no-results">Nothing to show</p>
         </div>
       )
     }
