@@ -1,10 +1,5 @@
 // Types
-import {DEState} from 'src/types/dataExplorer'
 import {Status} from 'src/types'
-
-export interface State {
-  dataExplorer: DEState
-}
 
 export enum ActionType {
   UpdateSourceLink = 'DE_UPDATE_SOURCE_LINK',

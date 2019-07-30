@@ -20,14 +20,17 @@ interface Props {
 
 interface State {
   isOpen: boolean
+  isActive: boolean
 }
 
 @ErrorHandling
 class FieldListItem extends PureComponent<Props, State> {
   constructor(props) {
     super(props)
+
     this.state = {
       isOpen: false,
+      isActive: false,
     }
   }
 
@@ -57,12 +60,15 @@ class FieldListItem extends PureComponent<Props, State> {
             disabled: isDisabled,
           })}
           onClick={this.handleToggleField}
+          onMouseEnter={this.handleHover}
+          onMouseLeave={this.handleStopHover}
           data-test={`query-builder-list-item-field-${fieldName}`}
         >
           <span>
             <div className="query-builder--checkbox" />
-            {fieldName}
+            {fieldName} {this.helperText}
           </span>
+
           {isSelected ? (
             <div
               className={classnames('btn btn-xs', {
@@ -89,6 +95,16 @@ class FieldListItem extends PureComponent<Props, State> {
     )
   }
 
+  private get helperText(): JSX.Element {
+    if (this.state.isActive) {
+      return (
+        <dd className="query-builder--list-item--helper">
+          {this.getFieldDesc()}
+        </dd>
+      )
+    }
+  }
+
   private toggleFunctionsMenu = (e: MouseEvent<HTMLElement>) => {
     e.stopPropagation()
     const {isDisabled} = this.props
@@ -101,6 +117,14 @@ class FieldListItem extends PureComponent<Props, State> {
 
   private close = (): void => {
     this.setState({isOpen: false})
+  }
+
+  private handleHover = () => {
+    this.setState({isActive: true})
+  }
+
+  private handleStopHover = () => {
+    this.setState({isActive: false})
   }
 
   private handleToggleField = (): void => {
@@ -135,6 +159,13 @@ class FieldListItem extends PureComponent<Props, State> {
     return _.get(fieldFunc, 'type') === 'field'
       ? _.get(fieldFunc, 'value')
       : firstFieldName(_.get(fieldFunc, 'args'))
+  }
+
+  private getFieldDesc = (): string => {
+    const {fieldFuncs} = this.props
+    const fieldFunc = _.head(fieldFuncs)
+
+    return _.get(fieldFunc, 'desc')
   }
 }
 

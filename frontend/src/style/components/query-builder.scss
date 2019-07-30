@@ -107,7 +107,7 @@
       cursor: default;
       background-color: $query-builder--list-item-bg;
     }
-    
+
     &.active {
       background-color: $query-builder--list-item-bg-active;
     }
@@ -175,6 +175,14 @@
     background-color: $g5-pepper;
   }
 }
+
+.query-builder--list-item--helper {
+  color: $g10-wolf;
+  padding: 15px;
+  font-size: x-small;
+  position: relative;
+}
+
 .query-builder--list-item.active .query-builder--checkbox:after {
   opacity: 1;
   transform: translate(-50%, -50%) scale(0.4, 0.4);
@@ -226,5 +234,5 @@
 /* Container for group by and fill dropdowns to live side-by-side */
 .query-builder--groupby-fill-container {
   display: flex;
-  alignItems: center;
+  align-items: center;
 }

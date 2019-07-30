@@ -452,7 +452,8 @@ const mstp = state => {
     app: {
       persisted: {autoRefresh},
     },
-    dataExplorer: {timeRange, queryStatus, sourceLink},
+    timeRange,
+    dataExplorer: {queryStatus, sourceLink},
     dashboardUI: {dashboards},
     sources,
     links,
