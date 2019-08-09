@@ -73,15 +73,11 @@ class HostPage extends PureComponent<Props, State> {
     const focusedApp = location.query.app
 
     const filteredLayouts = layouts.filter(layout => {
-      if (focusedApp) {
-        return layout.app === focusedApp
-      }
-
-      return (
-        host.apps &&
-        host.apps.includes(layout.app) &&
-        measurements.includes(layout.measurement)
-      )
+      return focusedApp
+        ? layout.app === focusedApp
+        : host.apps &&
+            host.apps.includes(layout.app) &&
+            measurements.includes(layout.measurement)
     })
 
     const hostLinks = await this.getHostLinks()
@@ -148,7 +144,7 @@ class HostPage extends PureComponent<Props, State> {
               templates={tempVars}
               timeRange={timeRange}
               manualRefresh={manualRefresh}
-              host={this.props.params.hostID}
+              host={hostID}
             />
           </div>
         </FancyScrollbar>
@@ -165,7 +161,7 @@ class HostPage extends PureComponent<Props, State> {
     }
   }
 
-  private async fetchHostsAndMeasurements(layouts) {
+  private async fetchHostsAndMeasurements(layouts: Layout[]) {
     const {source, params} = this.props
 
     const fetchMeasurements = getMeasurementsForHost(source, params.hostID)

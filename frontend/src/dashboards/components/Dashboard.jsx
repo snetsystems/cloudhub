@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-import LayoutRenderer from 'shared/components/LayoutRenderer'
+import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import DashboardEmpty from 'src/dashboards/components/DashboardEmpty'
 import {Page} from 'src/reusable_ui'
 
@@ -64,6 +64,7 @@ const Dashboard = ({
   )
 }
 
+// tslint:disable-next-line: variable-name
 const {arrayOf, bool, func, shape, string, number} = PropTypes
 
 Dashboard.propTypes = {

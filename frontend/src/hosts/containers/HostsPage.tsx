@@ -4,9 +4,12 @@ import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import _ from 'lodash'
 import {getDeep} from 'src/utils/wrappers'
+import classnames from 'classnames'
 
 // Components
 import HostsTable from 'src/hosts/components/HostsTable'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import ManualRefresh, {
   ManualRefreshProps,
@@ -19,6 +22,8 @@ import {
   getCpuAndLoadForHosts,
   getLayouts,
   getAppsForHosts,
+  getAppsForHost,
+  getMeasurementsForHost,
 } from 'src/hosts/apis'
 import {getEnv} from 'src/shared/apis/env'
 
@@ -28,6 +33,8 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 // Utils
 import {generateForHosts} from 'src/utils/tempVars'
+import {getCells} from 'src/hosts/utils/getCells'
+import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 
 // Constants
 import {
@@ -43,7 +50,9 @@ import {
   RemoteDataState,
   Host,
   Layout,
+  TimeRange,
 } from 'src/types'
+import {timeRanges} from 'src/shared/data/timeRanges'
 
 interface Props extends ManualRefreshProps {
   source: Source
@@ -57,6 +66,7 @@ interface State {
   hostsObject: {[x: string]: Host}
   hostsPageStatus: RemoteDataState
   layouts: Layout[]
+  timeRange: TimeRange
 }
 
 @ErrorHandling
@@ -73,6 +83,7 @@ export class HostsPage extends PureComponent<Props, State> {
       hostsObject: {},
       hostsPageStatus: RemoteDataState.NotStarted,
       layouts: [],
+      timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
     }
   }
 
@@ -92,14 +103,47 @@ export class HostsPage extends PureComponent<Props, State> {
       })
       return
     }
+
+    // For rendering whole hosts list
     await this.fetchHostsData(layouts)
+
+    // For rendering the charts with the focused single host.
+    const hostID = this.getFirstHost(this.state.hostsObject)
+    const {host, measurements} = await this.fetchHostsAndMeasurements(
+      layouts,
+      hostID
+    )
+
+    const focusedApp = 'system'
+
+    const filteredLayouts = layouts.filter(layout => {
+      return focusedApp
+        ? layout.app === focusedApp &&
+            host.apps &&
+            host.apps.includes(layout.app) &&
+            measurements.includes(layout.measurement)
+        : host.apps &&
+            host.apps.includes(layout.app) &&
+            measurements.includes(layout.measurement)
+    })
+
     if (autoRefresh) {
       this.intervalID = window.setInterval(
         () => this.fetchHostsData(layouts),
         autoRefresh
       )
     }
-    this.setState({layouts})
+    GlobalAutoRefresher.poll(autoRefresh)
+
+    this.setState({layouts: filteredLayouts})
+  }
+
+  public componentDidUpdate(prevProps) {
+    const {autoRefresh} = this.props
+
+    if (prevProps.autoRefresh !== autoRefresh) {
+      GlobalAutoRefresher.poll(autoRefresh)
+    }
   }
 
   public componentWillReceiveProps(nextProps: Props) {
@@ -125,6 +169,7 @@ export class HostsPage extends PureComponent<Props, State> {
   public componentWillUnmount() {
     clearInterval(this.intervalID)
     this.intervalID = null
+    GlobalAutoRefresher.stopPolling()
   }
 
   public render() {
@@ -134,12 +179,16 @@ export class HostsPage extends PureComponent<Props, State> {
       onChooseAutoRefresh,
       onManualRefresh,
     } = this.props
-    const {hostsObject, hostsPageStatus} = this.state
+    const {hostsObject, hostsPageStatus, layouts, timeRange} = this.state
+
+    const layoutCells = getCells(layouts, source)
+    const tempVars = generateForHosts(source)
+
     return (
       <Page className="hosts-list-page">
         <Page.Header>
           <Page.Header.Left>
-            <Page.Title title="Hosts" />
+            <Page.Title title="Infrastructure" />
           </Page.Header.Left>
           <Page.Header.Right showSourceIndicator={true}>
             <AutoRefreshDropdown
@@ -149,13 +198,32 @@ export class HostsPage extends PureComponent<Props, State> {
             />
           </Page.Header.Right>
         </Page.Header>
-        <Page.Contents scrollable={false}>
+        <Page.Contents scrollable={true}>
           <HostsTable
             source={source}
             hosts={_.values(hostsObject)}
             hostsPageStatus={hostsPageStatus}
           />
         </Page.Contents>
+        <FancyScrollbar
+          className={classnames({
+            'page-contents': true,
+          })}
+        >
+          <div className="container-fluid full-width dashboard">
+            <LayoutRenderer
+              source={source}
+              sources={[source]}
+              isStatusPage={false}
+              isEditable={false}
+              cells={layoutCells}
+              templates={tempVars}
+              timeRange={timeRange}
+              manualRefresh={this.props.manualRefresh}
+              host={this.getFirstHost(hostsObject)}
+            />
+          </div>
+        </FancyScrollbar>
       </Page>
     )
   }
@@ -200,6 +268,30 @@ export class HostsPage extends PureComponent<Props, State> {
         hostsPageStatus: RemoteDataState.Error,
       })
     }
+  }
+
+  private async fetchHostsAndMeasurements(layouts: Layout[], hostID: string) {
+    const {source} = this.props
+
+    const fetchMeasurements = getMeasurementsForHost(source, hostID)
+    const fetchHosts = getAppsForHost(
+      source.links.proxy,
+      hostID,
+      layouts,
+      source.telegraf
+    )
+
+    const [host, measurements] = await Promise.all([
+      fetchHosts,
+      fetchMeasurements,
+    ])
+
+    return {host, measurements}
+  }
+
+  private getFirstHost = (hostsObject: {[x: string]: Host}): string => {
+    const hostsArray = _.values(hostsObject)
+    return hostsArray.length > 0 ? hostsArray[0].name : null
   }
 }
 
