@@ -66,6 +66,7 @@ interface State {
   hostsObject: {[x: string]: Host}
   hostsPageStatus: RemoteDataState
   layouts: Layout[]
+  filteredLayouts: Layout[]
   timeRange: TimeRange
 }
 
@@ -83,6 +84,7 @@ export class HostsPage extends PureComponent<Props, State> {
       hostsObject: {},
       hostsPageStatus: RemoteDataState.NotStarted,
       layouts: [],
+      filteredLayouts: [],
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
     }
   }
@@ -114,17 +116,16 @@ export class HostsPage extends PureComponent<Props, State> {
       hostID
     )
 
-    const focusedApp = 'system'
+    const layoutsWithinHost = layouts.filter(layout => {
+      return (
+        host.apps &&
+        host.apps.includes(layout.app) &&
+        measurements.includes(layout.measurement)
+      )
+    })
 
-    const filteredLayouts = layouts.filter(layout => {
-      return focusedApp
-        ? layout.app === focusedApp &&
-            host.apps &&
-            host.apps.includes(layout.app) &&
-            measurements.includes(layout.measurement)
-        : host.apps &&
-            host.apps.includes(layout.app) &&
-            measurements.includes(layout.measurement)
+    const filteredLayouts = layoutsWithinHost.filter(layout => {
+      return layout.app === 'system'
     })
 
     if (autoRefresh) {
@@ -135,7 +136,7 @@ export class HostsPage extends PureComponent<Props, State> {
     }
     GlobalAutoRefresher.poll(autoRefresh)
 
-    this.setState({layouts: filteredLayouts})
+    this.setState({layouts: [...layoutsWithinHost], filteredLayouts})
   }
 
   public componentDidUpdate(prevProps) {
@@ -179,9 +180,14 @@ export class HostsPage extends PureComponent<Props, State> {
       onChooseAutoRefresh,
       onManualRefresh,
     } = this.props
-    const {hostsObject, hostsPageStatus, layouts, timeRange} = this.state
+    const {
+      hostsObject,
+      hostsPageStatus,
+      filteredLayouts,
+      timeRange,
+    } = this.state
 
-    const layoutCells = getCells(layouts, source)
+    const layoutCells = getCells(filteredLayouts, source)
     const tempVars = generateForHosts(source)
 
     return (
