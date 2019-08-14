@@ -67,6 +67,7 @@ interface State {
   hostsPageStatus: RemoteDataState
   layouts: Layout[]
   filteredLayouts: Layout[]
+  focusedHost: string
   timeRange: TimeRange
 }
 
@@ -85,6 +86,7 @@ export class HostsPage extends PureComponent<Props, State> {
       hostsPageStatus: RemoteDataState.NotStarted,
       layouts: [],
       filteredLayouts: [],
+      focusedHost: '',
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
     }
   }
@@ -111,22 +113,6 @@ export class HostsPage extends PureComponent<Props, State> {
 
     // For rendering the charts with the focused single host.
     const hostID = this.getFirstHost(this.state.hostsObject)
-    const {host, measurements} = await this.fetchHostsAndMeasurements(
-      layouts,
-      hostID
-    )
-
-    const layoutsWithinHost = layouts.filter(layout => {
-      return (
-        host.apps &&
-        host.apps.includes(layout.app) &&
-        measurements.includes(layout.measurement)
-      )
-    })
-
-    const filteredLayouts = layoutsWithinHost.filter(layout => {
-      return layout.app === 'system'
-    })
 
     if (autoRefresh) {
       this.intervalID = window.setInterval(
@@ -136,32 +122,53 @@ export class HostsPage extends PureComponent<Props, State> {
     }
     GlobalAutoRefresher.poll(autoRefresh)
 
-    this.setState({layouts: [...layoutsWithinHost], filteredLayouts})
+    this.setState({
+      layouts,
+      focusedHost: hostID,
+    })
   }
 
-  public componentDidUpdate(prevProps) {
+  public async componentDidUpdate(prevProps: Props, prevState: State) {
     const {autoRefresh} = this.props
+    const {layouts, focusedHost} = this.state
 
-    if (prevProps.autoRefresh !== autoRefresh) {
-      GlobalAutoRefresher.poll(autoRefresh)
+    if (layouts) {
+      if (prevState.focusedHost !== focusedHost) {
+        this.fetchHostsData(layouts)
+        const {filteredLayouts} = await this.getLayoutsforHost(
+          layouts,
+          focusedHost
+        )
+        this.setState({filteredLayouts})
+      }
+
+      if (prevProps.autoRefresh !== autoRefresh) {
+        GlobalAutoRefresher.poll(autoRefresh)
+      }
     }
   }
 
-  public componentWillReceiveProps(nextProps: Props) {
-    const {layouts} = this.state
+  public async componentWillReceiveProps(nextProps: Props) {
+    const {layouts, focusedHost} = this.state
+
     if (layouts) {
       if (this.props.manualRefresh !== nextProps.manualRefresh) {
         this.fetchHostsData(layouts)
+        const {filteredLayouts} = await this.getLayoutsforHost(
+          layouts,
+          focusedHost
+        )
+        this.setState({filteredLayouts})
       }
 
       if (this.props.autoRefresh !== nextProps.autoRefresh) {
         clearInterval(this.intervalID)
+        GlobalAutoRefresher.poll(nextProps.autoRefresh)
 
         if (nextProps.autoRefresh) {
-          this.intervalID = window.setInterval(
-            () => this.fetchHostsData(layouts),
-            nextProps.autoRefresh
-          )
+          this.intervalID = window.setInterval(() => {
+            this.fetchHostsData(layouts)
+          }, nextProps.autoRefresh)
         }
       }
     }
@@ -184,6 +191,7 @@ export class HostsPage extends PureComponent<Props, State> {
       hostsObject,
       hostsPageStatus,
       filteredLayouts,
+      focusedHost,
       timeRange,
     } = this.state
 
@@ -209,6 +217,8 @@ export class HostsPage extends PureComponent<Props, State> {
             source={source}
             hosts={_.values(hostsObject)}
             hostsPageStatus={hostsPageStatus}
+            focusedHost={focusedHost}
+            onClickTableRow={this.handleClickTableRow}
           />
         </Page.Contents>
         <FancyScrollbar
@@ -221,17 +231,45 @@ export class HostsPage extends PureComponent<Props, State> {
               source={source}
               sources={[source]}
               isStatusPage={false}
+              isStaticPage={true}
               isEditable={false}
               cells={layoutCells}
               templates={tempVars}
               timeRange={timeRange}
               manualRefresh={this.props.manualRefresh}
-              host={this.getFirstHost(hostsObject)}
+              host={focusedHost}
             />
           </div>
         </FancyScrollbar>
       </Page>
     )
+  }
+
+  private async getLayoutsforHost(layouts: Layout[], hostID: string) {
+    const {host, measurements} = await this.fetchHostsAndMeasurements(
+      layouts,
+      hostID
+    )
+    const layoutsWithinHost = layouts.filter(layout => {
+      return (
+        host.apps &&
+        host.apps.includes(layout.app) &&
+        measurements.includes(layout.measurement)
+      )
+    })
+    const filteredLayouts = layoutsWithinHost
+      .filter(layout => {
+        return layout.app === 'system'
+      })
+      .sort((x, y) => {
+        return x.measurement < y.measurement
+          ? -1
+          : x.measurement > y.measurement
+            ? 1
+            : 0
+      })
+
+    return {filteredLayouts}
   }
 
   private async fetchHostsData(layouts: Layout[]): Promise<void> {
@@ -298,6 +336,10 @@ export class HostsPage extends PureComponent<Props, State> {
   private getFirstHost = (hostsObject: {[x: string]: Host}): string => {
     const hostsArray = _.values(hostsObject)
     return hostsArray.length > 0 ? hostsArray[0].name : null
+  }
+
+  private handleClickTableRow = (hostName: string) => () => {
+    this.setState({focusedHost: hostName})
   }
 }
 

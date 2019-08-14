@@ -139,6 +139,7 @@ class HostPage extends PureComponent<Props, State> {
               source={source}
               sources={[source]}
               isStatusPage={false}
+              isStaticPage={true}
               isEditable={false}
               cells={layoutCells}
               templates={tempVars}

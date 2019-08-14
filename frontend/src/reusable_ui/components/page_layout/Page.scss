@@ -16,7 +16,7 @@
   position: relative;
   height: calc(100% - #{$cmp-page-header-height}) !important;
   flex: 1 0 0;
-  @include gradient-v($g2-kevlar,$g0-obsidian);
+  @include gradient-v($g2-kevlar, $g0-obsidian);
 
   &:only-child {
     height: 100% !important;
@@ -48,7 +48,9 @@
   top: 0;
   height: 100% !important;
 
-  .container-fluid {padding: 8px}
+  .container-fluid {
+    padding: 8px;
+  }
 }
 
 /*
@@ -71,7 +73,9 @@
   justify-content: space-between;
   flex-wrap: nowrap;
   width: 100%;
-  max-width: ($page-wrapper-max-width - $page-wrapper-padding - $page-wrapper-padding);
+  max-width: (
+    $page-wrapper-max-width - $page-wrapper-padding - $page-wrapper-padding
+  );
 }
 
 // If specified as a full width page header
@@ -143,10 +147,10 @@
     transition: background-color 0.25s ease;
   }
   &:before {
-    transform: translate(-50%,-50%) rotate(45deg);
+    transform: translate(-50%, -50%) rotate(45deg);
   }
   &:after {
-    transform: translate(-50%,-50%) rotate(-45deg);
+    transform: translate(-50%, -50%) rotate(-45deg);
   }
   /* Hover State */
   &:hover {
