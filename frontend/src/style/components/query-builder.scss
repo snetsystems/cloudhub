@@ -10,14 +10,17 @@
   align-items: stretch;
   flex-wrap: nowrap;
 }
+
 .query-builder--column {
   display: flex;
   flex-direction: column;
   flex: 2 0 0%;
 }
+
 .query-builder--column-db {
   flex: 1 0 0%;
 }
+
 .query-builder--heading {
   @include no-user-select();
   width: 100%;
@@ -33,18 +36,21 @@
   line-height: $query-builder--heading-height;
 
   /* Accounting for headings w/ optional second item */
-  & > span {
+  &>span {
     margin-right: 16px;
   }
 }
+
 .query-builder--list,
 .query-builder--list-empty {
   flex: 1 0 0%;
 }
+
 .query-builder--list {
   padding: 0;
   background-color: $query-builder--list-bg;
 }
+
 .query-builder--list-empty {
   background-color: $query-builder--list-bg;
   text-align: center;
@@ -58,6 +64,7 @@
     @include no-user-select();
   }
 }
+
 .query-builder--list-item {
   @include no-user-select();
   background-color: $query-builder--list-item-bg;
@@ -78,26 +85,31 @@
     color: $query-builder--list-item-text-hover;
     cursor: pointer;
   }
+
   /* Active State */
   &.active {
     background-color: $query-builder--list-item-bg-active;
     color: $query-builder--list-item-text-active;
   }
+
   /* Hide dropdowns unless item is active */
-  & > .dropdown {
+  &>.dropdown {
     visibility: hidden;
   }
-  &.active > .dropdown {
+
+  &.active>.dropdown {
     visibility: visible;
   }
+
   /* Sub-item group for layout purposes */
-  & > span {
+  &>span {
     display: flex;
     align-items: center;
     flex-wrap: nowrap;
     white-space: nowrap;
     margin-right: 8px;
   }
+
   /* Disabled State */
   &.disabled {
     font-style: italic;
@@ -113,12 +125,13 @@
     }
   }
 }
+
 /* Filter Element */
 .query-builder--filter {
   flex: 1 0 0%;
   display: flex;
 
-  & > span {
+  &>span {
     font-size: 12px;
     line-height: 30px;
     order: 1;
@@ -130,7 +143,8 @@
     transition: color 0.25s ease;
     color: $g9-mountain;
   }
-  & > input.form-control {
+
+  &>input.form-control {
     order: 2;
     padding-left: 24px;
     border-color: $g6-smoke !important;
@@ -138,14 +152,17 @@
     &:hover {
       border-color: $g7-graphite !important;
     }
+
     &:focus {
       border-color: $c-pool !important;
     }
-    &:focus + span {
+
+    &:focus+span {
       color: $c-pool;
     }
   }
 }
+
 /* Checkbox Element */
 .query-builder--checkbox {
   display: inline-block;
@@ -179,6 +196,7 @@
 .query-builder--list-item--helper {
   color: $g10-wolf;
   padding: 15px;
+  width: 20px;
   font-size: x-small;
   position: relative;
 }
@@ -187,15 +205,18 @@
   opacity: 1;
   transform: translate(-50%, -50%) scale(0.4, 0.4);
 }
+
 /* Caret Element */
 .query-builder--caret {
   margin-right: 5px;
   transform: rotate(0deg);
   transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
+
 .query-builder--list-item.active .query-builder--caret {
   transform: rotate(90deg);
 }
+
 /* Sub lists (Used for the tags list) */
 .query-builder--sub-list {
   padding: 4px $query-builder--list-gutter 4px $query-builder--sub-list-gutter;
@@ -204,10 +225,12 @@
   .query-builder--list-item {
     padding: 0;
   }
+
   .query-builder--filter {
     margin-bottom: 4px;
   }
 }
+
 /* Toggle for grouping by tags in tags list */
 .group-by-tag {
   visibility: hidden;
@@ -223,14 +246,17 @@
     }
   }
 }
+
 .query-builder--list-item:hover .group-by-tag,
 .query-builder--list-item.active .group-by-tag,
 .query-builder--list-item .group-by-tag.btn-primary {
   visibility: visible;
 }
+
 .query-builder--db-dropdown {
   display: inline-block;
 }
+
 /* Container for group by and fill dropdowns to live side-by-side */
 .query-builder--groupby-fill-container {
   display: flex;
