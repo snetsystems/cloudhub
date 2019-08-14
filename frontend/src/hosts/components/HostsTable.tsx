@@ -11,6 +11,8 @@ import {HOSTS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Source, RemoteDataState, Host} from 'src/types'
 
+import {HostsPage} from 'src/hosts/containers/HostsPage'
+
 enum SortDirection {
   ASC = 'asc',
   DESC = 'desc',
@@ -20,6 +22,8 @@ export interface Props {
   hosts: Host[]
   hostsPageStatus: RemoteDataState
   source: Source
+  focusedHost: string
+  onClickTableRow: HostsPage['handleClickTableRow']
 }
 
 interface State {
@@ -151,7 +155,7 @@ class HostsTable extends PureComponent<Props, State> {
   }
 
   private get TableWithHosts(): JSX.Element {
-    const {source, hosts} = this.props
+    const {source, hosts, focusedHost, onClickTableRow} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
     const sortedHosts = this.getSortedHosts(
       hosts,
@@ -164,7 +168,13 @@ class HostsTable extends PureComponent<Props, State> {
         {this.HostsTableHeader}
         <InfiniteScroll
           items={sortedHosts.map(h => (
-            <HostRow key={h.name} host={h} sourceID={source.id} />
+            <HostRow
+              key={h.name}
+              host={h}
+              sourceID={source.id}
+              focusedHost={focusedHost}
+              onClickTableRow={onClickTableRow}
+            />
           ))}
           itemHeight={26}
           className="hosts-table--tbody"

@@ -1,4 +1,4 @@
-VERSION = 0.1.0
+VERSION = 0.0.3
 COMMIT ?= $(shell git rev-parse --short=8 HEAD)
 GOBINDATA := $(shell go list -f {{.Root}}  github.com/kevinburke/go-bindata 2> /dev/null)
 YARN := $(shell command -v yarn 2> /dev/null)
@@ -94,7 +94,7 @@ run-dev: ${BINARY}
 clean:
 	if [ -f backend/cmd/cmp/${BINARY} ] ; then rm backend/cmd/cmp/${BINARY} ; fi
 	cd frontend && yarn run clean
-	# cd frontend && rm -rf node_modules
+	cd frontend && rm -rf node_modules
 	rm -f backend/dist/dist_gen.go backend/canned/bin_gen.go backend/protoboards/bin_gen.go
 	@rm -f .godep .jsdep .jssrc .bindata
 

@@ -18,6 +18,7 @@ import {
   PAGE_CONTAINER_MARGIN,
   LAYOUT_MARGIN,
   DASHBOARD_LAYOUT_ROW_HEIGHT,
+  STATIC_LAYOUT_ROW_HEIGHT,
 } from 'src/shared/constants'
 
 // Types
@@ -34,6 +35,7 @@ interface Props {
   host: string
   manualRefresh: number
   isStatusPage: boolean
+  isStaticPage: boolean
   isEditable: boolean
   onZoom?: () => void
   onCloneCell?: () => void
@@ -166,16 +168,22 @@ class LayoutRenderer extends Component<Props, State> {
 
   // ensures that Status Page height fits the window
   private calculateRowHeight = () => {
-    const {isStatusPage} = this.props
+    const {isStatusPage, isStaticPage} = this.props
 
-    return isStatusPage
-      ? (window.innerHeight -
+    if (isStatusPage) {
+      return (
+        (window.innerHeight -
           STATUS_PAGE_ROW_COUNT * LAYOUT_MARGIN -
           PAGE_HEADER_HEIGHT -
           PAGE_CONTAINER_MARGIN -
           PAGE_CONTAINER_MARGIN) /
-          STATUS_PAGE_ROW_COUNT
-      : DASHBOARD_LAYOUT_ROW_HEIGHT
+        STATUS_PAGE_ROW_COUNT
+      )
+    } else if (isStaticPage) {
+      return STATIC_LAYOUT_ROW_HEIGHT
+    }
+
+    return DASHBOARD_LAYOUT_ROW_HEIGHT
   }
 }
 

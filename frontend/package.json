@@ -1,13 +1,14 @@
 {
   "name": "frontend",
-  "version": "0.0.1",
+  "version": "0.0.3",
   "private": true,
   "description": "This is CMP's User interface made in React & Typescript",
   "author": "Jack Kim",
   "license": "AGPL-3.0",
   "scripts": {
-    "start": "parcel src/index.html",
-    "build": "parcel build -d build src/index.html",
+    "start": "node parcel.jsx",
+    "build":
+      "parcel build -d build --log-level 2 --no-source-maps --public-url '' src/index.html",
     "clean": "rm -rf ./build/* && rm -rf ./.cache && rm -rf ./dist",
     "tsc": "tsc -p ./tsconfig.json --noEmit --pretty",
     "tsc:watch": "tsc -p ./tsconfig.json --noEmit --pretty -w"

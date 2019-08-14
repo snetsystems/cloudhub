@@ -11,12 +11,14 @@ import {
   TimeShift,
 } from 'src/types'
 
+import {FIELD_DESCRIPTIONS} from 'src/shared/constants/measurementFieldDesc'
+
 import QueryOptions from 'src/shared/components/QueryOptions'
 import FieldListItem from 'src/data_explorer/components/FieldListItem'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 import {showFieldKeys} from 'src/shared/apis/metaQuery'
-import showFieldKeysParser from 'src/shared/parsing/showFieldKeys'
+import parseShowFieldKeys from 'src/shared/parsing/showFieldKeys'
 import {
   functionNames,
   numFunctions,
@@ -152,8 +154,9 @@ class FieldList extends PureComponent<Props, State> {
                   fieldFunc.value,
                   fields
                 )
+
                 const fieldFuncs = selectedFields.length
-                  ? selectedFields
+                  ? [this.addDesc(_.head(selectedFields), fieldFunc.desc)]
                   : [fieldFunc]
 
                 return (
@@ -174,6 +177,11 @@ class FieldList extends PureComponent<Props, State> {
         )}
       </div>
     )
+  }
+
+  private addDesc = (selectedField: FieldFunc, desc: string) => {
+    selectedField.desc = desc
+    return selectedField
   }
 
   private handleGroupByTime = (groupBy: GroupByOption): void => {
@@ -242,17 +250,19 @@ class FieldList extends PureComponent<Props, State> {
     const {querySource, source} = this.props
 
     const proxy =
-      _.get(querySource, ['links', 'proxy'], null) || source.links.proxy
+      _.get(querySource, ['links', 'proxy'], null) ||
+      _.get(source, ['links', 'proxy'], null)
 
     showFieldKeys(proxy, database, measurement, retentionPolicy).then(resp => {
-      const {errors, fieldSets} = showFieldKeysParser(resp.data)
+      const {errors, fieldSets} = parseShowFieldKeys(resp.data)
       if (errors.length) {
         console.error('Error parsing fields keys: ', errors)
       }
 
-      const newFields = _.get(fieldSets, measurement, []).map(f => ({
+      const newFields = _.get(fieldSets, measurement, []).map((f: any) => ({
         value: f,
         type: 'field',
+        desc: _.get(FIELD_DESCRIPTIONS, `${measurement}.${f}`),
       }))
 
       this.setState({

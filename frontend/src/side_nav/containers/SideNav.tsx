@@ -50,10 +50,7 @@ class SideNav extends PureComponent<Props> {
 
     const defaultSource = sources.find(s => s.default)
     const id = sourceID || _.get(defaultSource, 'id', 0)
-
     const sourcePrefix = `/sources/${id}`
-    // const dataExplorerLink = `${sourcePrefix}/cmp/visualize`
-
     const isDefaultPage = location.split('/').includes(DEFAULT_HOME_PAGE)
 
     return isHidden ? null : (

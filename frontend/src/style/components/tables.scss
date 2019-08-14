@@ -80,10 +80,10 @@
     }
   }
   &.sorting-ascending > .icon {
-    transform: translateY(-50%) rotate(180deg);
+    transform: translateY(-50%) rotate(0deg);
   }
   &.sorting-descending > .icon {
-    transform: translateY(-50%) rotate(0deg);
+    transform: translateY(-50%) rotate(180deg);
   }
 }
 
@@ -298,6 +298,9 @@ table .table-cell-nowrap {
   width: 100%;
   &:hover {
     background-color: $g4-onyx;
+  }
+  &.focused {
+    background-color: $g6-smoke;
   }
 }
 .hosts-table--td {

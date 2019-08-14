@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 
-import LayoutRenderer from 'shared/components/LayoutRenderer'
+import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import DashboardEmpty from 'src/dashboards/components/DashboardEmpty'
 import {Page} from 'src/reusable_ui'
 
@@ -48,6 +48,8 @@ const Dashboard = ({
             source={source}
             sources={sources}
             isEditable={true}
+            isStatusPage={false}
+            isStaticPage={false}
             timeRange={timeRange}
             manualRefresh={manualRefresh}
             onDeleteCell={onDeleteCell}
@@ -64,6 +66,7 @@ const Dashboard = ({
   )
 }
 
+// tslint:disable-next-line: variable-name
 const {arrayOf, bool, func, shape, string, number} = PropTypes
 
 Dashboard.propTypes = {

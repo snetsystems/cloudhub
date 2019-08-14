@@ -39,6 +39,7 @@ export interface Field {
   type: string
   alias?: string
   args?: FieldArg[]
+  desc?: string
 }
 
 export interface FieldArg {
@@ -49,7 +50,7 @@ export interface FieldArg {
 }
 
 export interface FieldFunc extends Field {
-  args: FuncArg[]
+  args?: FuncArg[]
 }
 export interface FuncArg {
   type: string

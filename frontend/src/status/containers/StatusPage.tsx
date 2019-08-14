@@ -67,6 +67,7 @@ class StatusPage extends Component<Props, State> {
                 manualRefresh={0}
                 isEditable={false}
                 isStatusPage={true}
+                isStaticPage={false}
                 timeRange={timeRange}
                 templates={this.templates}
               />

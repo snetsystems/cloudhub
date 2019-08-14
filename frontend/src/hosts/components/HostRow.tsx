@@ -5,12 +5,21 @@ import classnames from 'classnames'
 import {HOSTS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 import {Host} from 'src/types'
 
+import {HostsPage} from 'src/hosts/containers/HostsPage'
+
 interface Props {
   sourceID: string
   host: Host
+  focusedHost: string
+  onClickTableRow: HostsPage['handleClickTableRow']
 }
 
-const HostRow: SFC<Props> = ({host, sourceID}) => {
+const HostRow: SFC<Props> = ({
+  host,
+  sourceID,
+  focusedHost,
+  onClickTableRow,
+}) => {
   const {name, cpu, load, apps = []} = host
   const {NameWidth, StatusWidth, CPUWidth, LoadWidth} = HOSTS_TABLE_SIZING
 
@@ -23,8 +32,15 @@ const HostRow: SFC<Props> = ({host, sourceID}) => {
       : 'dot-critical'
   )
 
+  const focusedClasses = (): string => {
+    if (name === focusedHost) {
+      return 'hosts-table--tr focused'
+    }
+    return 'hosts-table--tr'
+  }
+
   return (
-    <div className="hosts-table--tr">
+    <div className={focusedClasses()} onClick={onClickTableRow(name)}>
       <div className="hosts-table--td" style={{width: NameWidth}}>
         <Link to={`/sources/${sourceID}/hosts/${name}`}>{name}</Link>
       </div>
