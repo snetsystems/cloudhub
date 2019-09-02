@@ -83,15 +83,16 @@ export const FIELD_DESCRIPTIONS = {
   processes: {
     blocked: 'aka disk sleep or uninterruptible sleep',
     dead: '',
-    idle: '',
-    paging: '',
+    idle: '(bsd and Linux 4+ only)',
+    paging: '(linux only)',
     running: '',
     sleeping: '',
     stopped: '',
     total: '',
-    total_threads: '',
+    total_threads: '(linux only)',
     unknown: '',
     zombies: '',
+    wait: '(freebsd only)',
   },
   swap: {
     free: 'Remaining swap memory',
@@ -514,7 +515,7 @@ export const FIELD_DESCRIPTIONS = {
     value: '',
   },
   sqlserver_server_properties: {
-    cpu_count: '',
+    cpu_count: 'Specifies the number of logical CPUs on the system',
     db_offline: '',
     db_online: '',
     db_recovering: '',
@@ -546,42 +547,6 @@ export const FIELD_DESCRIPTIONS = {
     Packets_Received_persec: '',
     Packets_Sent_persec: '',
   },
-  
-  sqlserver_database_io: {
-read_bytes:'',
-read_latency_ms:'',
-reads:'',
-write_bytes:'',
-write_latency_ms:'',
-writes:'',
-  },
-  sqlserver_memory_clerks:{
-size_kb:'',
-},
-sqlserver_performance:{
-  value:'',
-},
-sqlserver_server_properties: {
-
-cpu_count:'',
-db_offline:'',
-db_online:'',
-db_recovering:'',
-db_recoveryPending:'',
-db_restoring:'',
-db_suspect:'',
-engine_edition:'',
-server_memory:'',
-uptime:'',
-},
-sqlserver_waitstats: {
-
-max_wait_time_ms:'',
-resource_wait_ms:'',
-signal_wait_time_ms:'',
-wait_time_ms:'',
-waiting_tasks_count:'',
-},
 mysql:{
   aborted_clients:'',
 aborted_connects:'',
@@ -1955,7 +1920,12 @@ mongodb:{
   wtcache_server_evicting_pages:'',
   wtcache_tracked_dirty_bytes:'',
   wtcache_unmodified_pages_evicted:'',
-  wtcache_worker_thread_evictingpages:'',
-  
+  wtcache_worker_thread_evictingpages:'',  
+},
+activemq_topics:{  
+consumer_count:'',
+dequeue_count:'',
+enqueue_count:'',
+size:'',
 },
 }
