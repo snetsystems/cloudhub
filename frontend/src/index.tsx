@@ -24,9 +24,10 @@ import {
 } from 'src/auth'
 import CheckSources from 'src/CheckSources'
 import {StatusPage} from 'src/status'
-import {HostsPage, HostPage} from 'src/hosts'
 import DataExplorerPage from 'src/data_explorer'
 import {DashboardsPage, DashboardPage} from 'src/dashboards'
+import {HostsPage, HostPage} from 'src/hosts'
+import {Applications} from 'src/applications'
 import {LogsPage} from 'src/logs'
 import AlertsApp from 'src/alerts'
 import {
@@ -133,9 +134,9 @@ class Root extends PureComponent<{}, State> {
               path="/purgatory"
               component={UserIsAuthenticated(Purgatory)}
             />
-            <Route component={UserIsAuthenticated(App)}>
+            {/* <Route component={UserIsAuthenticated(App)}>
               <Route path="/logs" component={LogsPage} />
-            </Route>
+            </Route> */}
             <Route
               path="/sources/new"
               component={UserIsAuthenticated(OnboardingWizard)}
@@ -146,15 +147,16 @@ class Root extends PureComponent<{}, State> {
             >
               <Route component={CheckSources}>
                 <Route path="status" component={StatusPage} />
-                <Route path="hosts" component={HostsPage} />
-                <Route path="hosts/:hostID" component={HostPage} />
                 <Route path="visualize" component={DataExplorerPage} />
                 <Route path="dashboards" component={DashboardsPage} />
                 <Route
                   path="dashboards/:dashboardID"
                   component={DashboardPage}
                 />
-                <Route path="alerts" component={AlertsApp} />
+                <Route path="infrastructure" component={HostsPage} />
+                <Route path="infrastructure/:hostID" component={HostPage} />
+                <Route path="applications" component={Applications} />
+                {/* <Route path="alerts" component={AlertsApp} />
                 <Route path="alert-rules" component={KapacitorRulesPage} />
                 <Route
                   path="alert-rules/:ruleID"
@@ -168,12 +170,12 @@ class Root extends PureComponent<{}, State> {
                 <Route
                   path="kapacitors/:id/edit:hash"
                   component={KapacitorPage}
-                />
+                /> */}
                 <Route path="admin-cmp/:tab" component={AdminCMPPage} />
-                <Route
+                {/* <Route
                   path="admin-influxdb/:tab"
                   component={AdminInfluxDBPage}
-                />
+                /> */}
                 <Route path="manage-sources" component={ManageSources} />
               </Route>
             </Route>

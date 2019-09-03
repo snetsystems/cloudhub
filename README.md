@@ -23,6 +23,8 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
 * Easier debugging environment support without a proxy server by node.js.
 * For more Dev. Env., provide **Visual Studio Code** Env. including the setting.json and launch.json.
 * Window build & run Env. support.
+* Hosts to Infrastructures and basic charts added.
+* Visualization added by criteria of Applications.
 
 ## Setting in VSCode
 * Add the followings into **_setting.json_** to **User Setting** namespace.
@@ -71,6 +73,10 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
 ```
 
 ## How to build
+### Preparing dependencies
+* SCMP works with go 1.11+, node LTS, and yarn 1.7+.
+* In the case of Windows, it cannot be invoked "make" command,<br>So you need to download and install [GNUMake](http://gnuwin32.sourceforge.net/packages/make.htm) for windows.
+  * [Direct download](http://gnuwin32.sourceforge.net/downlinks/make.php)
 ### Getting the source code from github.
 [If you're on Windows, run "Git Bash" and] type the followings.
 ```

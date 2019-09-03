@@ -4,12 +4,10 @@ import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import _ from 'lodash'
 import {getDeep} from 'src/utils/wrappers'
-import classnames from 'classnames'
 
 // Components
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import HostsTable from 'src/hosts/components/HostsTable'
-import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import ManualRefresh, {
@@ -218,6 +216,7 @@ export class HostsPage extends PureComponent<Props, State> {
             />
           </Page.Header.Right>
         </Page.Header>
+<<<<<<< HEAD
         <Page.Contents scrollable={true}>
           <Threesizer
             orientation={HANDLE_HORIZONTAL}
@@ -225,6 +224,31 @@ export class HostsPage extends PureComponent<Props, State> {
             onResize={this.handleResize}
           />
         </Page.Contents>
+=======
+        <Page.Contents>
+          <HostsTable
+            source={source}
+            hosts={_.values(hostsObject)}
+            hostsPageStatus={hostsPageStatus}
+            focusedHost={focusedHost}
+            onClickTableRow={this.handleClickTableRow}
+          />
+        </Page.Contents>
+        <Page.Contents>
+          <LayoutRenderer
+            source={source}
+            sources={[source]}
+            isStatusPage={false}
+            isStaticPage={true}
+            isEditable={false}
+            cells={layoutCells}
+            templates={tempVars}
+            timeRange={timeRange}
+            manualRefresh={this.props.manualRefresh}
+            host={focusedHost}
+          />
+        </Page.Contents>
+>>>>>>> 161da91ae0265041ea7eaad8d6357723959d5d30
       </Page>
     )
   }
@@ -317,7 +341,7 @@ export class HostsPage extends PureComponent<Props, State> {
     })
     const filteredLayouts = layoutsWithinHost
       .filter(layout => {
-        return layout.app === 'system'
+        return layout.app === 'system' || layout.app === 'win_system'
       })
       .sort((x, y) => {
         return x.measurement < y.measurement
