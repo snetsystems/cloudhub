@@ -72,13 +72,21 @@ class HostPage extends PureComponent<Props, State> {
 
     const focusedApp = location.query.app
 
-    const filteredLayouts = layouts.filter(layout => {
-      return focusedApp
-        ? layout.app === focusedApp
-        : host.apps &&
-            host.apps.includes(layout.app) &&
-            measurements.includes(layout.measurement)
-    })
+    const filteredLayouts = layouts
+      .filter(layout => {
+        return focusedApp
+          ? layout.app === focusedApp
+          : host.apps &&
+              host.apps.includes(layout.app) &&
+              measurements.includes(layout.measurement)
+      })
+      .sort((x, y) => {
+        return x.measurement < y.measurement
+          ? -1
+          : x.measurement > y.measurement
+            ? 1
+            : 0
+      })
 
     const hostLinks = await this.getHostLinks()
 

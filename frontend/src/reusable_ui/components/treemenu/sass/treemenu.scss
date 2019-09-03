@@ -1,0 +1,49 @@
+$ICON_SIZE: 2rem;
+$DEFAULT_PADDING: 0.75rem;
+
+.toggle-icon {
+  display: inline-block;
+  &-symbol {
+    width: $ICON_SIZE;
+    height: $ICON_SIZE;
+    text-align: center;
+    line-height: $ICON_SIZE;
+  }
+}
+
+.tree-item-group {
+  list-style-type: none;
+  padding-left: 0;
+  border-top: 0px solid $g5-pepper;
+  margin: 4px 0 0.55em 0;
+  font-weight: bold;
+}
+
+.tree-item {
+  padding: 0.2rem 1rem;
+  cursor: pointer;
+  color: $c-laser;
+  background-color: $g3-castle;
+  border-bottom: 1px solid $g5-pepper;
+  box-shadow: none;
+  z-index: unset;
+  position: relative;
+  margin: 0;
+
+  &--active {
+    background-color: $g6-smoke;
+    border-bottom: none;
+  }
+}
+
+.tree-search {
+  padding: 0.25rem 1.5rem;
+  border: none;
+  width: 100%;
+  font-weight: bold;
+  color: $g15-platinum;
+  background-color: $g2-kevlar;
+  &:focus {
+    color: $g20-white;
+  }
+}

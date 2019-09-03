@@ -4,11 +4,9 @@ import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import _ from 'lodash'
 import {getDeep} from 'src/utils/wrappers'
-import classnames from 'classnames'
 
 // Components
 import HostsTable from 'src/hosts/components/HostsTable'
-import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import ManualRefresh, {
@@ -212,7 +210,7 @@ export class HostsPage extends PureComponent<Props, State> {
             />
           </Page.Header.Right>
         </Page.Header>
-        <Page.Contents scrollable={true}>
+        <Page.Contents>
           <HostsTable
             source={source}
             hosts={_.values(hostsObject)}
@@ -221,26 +219,20 @@ export class HostsPage extends PureComponent<Props, State> {
             onClickTableRow={this.handleClickTableRow}
           />
         </Page.Contents>
-        <FancyScrollbar
-          className={classnames({
-            'page-contents': true,
-          })}
-        >
-          <div className="container-fluid full-width dashboard">
-            <LayoutRenderer
-              source={source}
-              sources={[source]}
-              isStatusPage={false}
-              isStaticPage={true}
-              isEditable={false}
-              cells={layoutCells}
-              templates={tempVars}
-              timeRange={timeRange}
-              manualRefresh={this.props.manualRefresh}
-              host={focusedHost}
-            />
-          </div>
-        </FancyScrollbar>
+        <Page.Contents>
+          <LayoutRenderer
+            source={source}
+            sources={[source]}
+            isStatusPage={false}
+            isStaticPage={true}
+            isEditable={false}
+            cells={layoutCells}
+            templates={tempVars}
+            timeRange={timeRange}
+            manualRefresh={this.props.manualRefresh}
+            host={focusedHost}
+          />
+        </Page.Contents>
       </Page>
     )
   }
@@ -259,7 +251,7 @@ export class HostsPage extends PureComponent<Props, State> {
     })
     const filteredLayouts = layoutsWithinHost
       .filter(layout => {
-        return layout.app === 'system'
+        return layout.app === 'system' || layout.app === 'win_system'
       })
       .sort((x, y) => {
         return x.measurement < y.measurement

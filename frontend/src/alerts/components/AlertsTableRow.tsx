@@ -98,7 +98,7 @@ class AlertsTableRow extends PureComponent<Props> {
         {host === null ? (
           <span>{'–'}</span>
         ) : (
-          <Link to={`/sources/${sourceID}/hosts/${host}`} title={host}>
+          <Link to={`/sources/${sourceID}/infrastructure/${host}`} title={host}>
             {host}
           </Link>
         )}
