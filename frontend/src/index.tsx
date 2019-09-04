@@ -134,9 +134,9 @@ class Root extends PureComponent<{}, State> {
               path="/purgatory"
               component={UserIsAuthenticated(Purgatory)}
             />
-            {/* <Route component={UserIsAuthenticated(App)}>
+            <Route component={UserIsAuthenticated(App)}>
               <Route path="/logs" component={LogsPage} />
-            </Route> */}
+            </Route>
             <Route
               path="/sources/new"
               component={UserIsAuthenticated(OnboardingWizard)}
