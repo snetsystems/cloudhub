@@ -42,7 +42,7 @@ const HostRow: SFC<Props> = ({
   return (
     <div className={focusedClasses()} onClick={onClickTableRow(name)}>
       <div className="hosts-table--td" style={{width: NameWidth}}>
-        <Link to={`/sources/${sourceID}/hosts/${name}`}>{name}</Link>
+        <Link to={`/sources/${sourceID}/infrastructure/${name}`}>{name}</Link>
       </div>
       <div className="hosts-table--td" style={{width: StatusWidth}}>
         <div className={dotClassName} />
@@ -60,7 +60,7 @@ const HostRow: SFC<Props> = ({
               <Link
                 style={{marginLeft: '2px'}}
                 to={{
-                  pathname: `/sources/${sourceID}/hosts/${name}`,
+                  pathname: `/sources/${sourceID}/infrastructure/${name}`,
                   query: {app},
                 }}
               >

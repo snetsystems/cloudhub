@@ -7,6 +7,7 @@ import {getDeep} from 'src/utils/wrappers'
 import classnames from 'classnames'
 
 // Components
+import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import HostsTable from 'src/hosts/components/HostsTable'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
@@ -42,6 +43,9 @@ import {
   notifyUnableToGetApps,
 } from 'src/shared/copy/notifications'
 
+//const
+import {HANDLE_HORIZONTAL} from 'src/shared/constants'
+
 // Types
 import {
   Source,
@@ -69,6 +73,7 @@ interface State {
   filteredLayouts: Layout[]
   focusedHost: string
   timeRange: TimeRange
+  proportions: number[]
 }
 
 @ErrorHandling
@@ -88,6 +93,7 @@ export class HostsPage extends PureComponent<Props, State> {
       filteredLayouts: [],
       focusedHost: '',
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
+      proportions: [0.43, 0.57],
     }
   }
 
@@ -213,38 +219,90 @@ export class HostsPage extends PureComponent<Props, State> {
           </Page.Header.Right>
         </Page.Header>
         <Page.Contents scrollable={true}>
-          <HostsTable
-            source={source}
-            hosts={_.values(hostsObject)}
-            hostsPageStatus={hostsPageStatus}
-            focusedHost={focusedHost}
-            onClickTableRow={this.handleClickTableRow}
+          <Threesizer
+            orientation={HANDLE_HORIZONTAL}
+            divisions={this.horizontalDivisions}
+            onResize={this.handleResize}
           />
         </Page.Contents>
-        <FancyScrollbar
-          className={classnames({
-            'page-contents': true,
-          })}
-        >
-          <div className="container-fluid full-width dashboard">
-            <LayoutRenderer
-              source={source}
-              sources={[source]}
-              isStatusPage={false}
-              isStaticPage={true}
-              isEditable={false}
-              cells={layoutCells}
-              templates={tempVars}
-              timeRange={timeRange}
-              manualRefresh={this.props.manualRefresh}
-              host={focusedHost}
-            />
-          </div>
-        </FancyScrollbar>
       </Page>
     )
   }
 
+  private get horizontalDivisions() {
+    const {proportions} = this.state
+    const [topSize, bottomSize] = proportions
+
+    return [
+      {
+        name: '',
+        handleDisplay: 'none',
+        headerButtons: [],
+        menuOptions: [],
+        render: this.renderHostTable,
+        headerOrientation: HANDLE_HORIZONTAL,
+        size: topSize,
+      },
+      {
+        name: '',
+        handlePixels: 8,
+        headerButtons: [],
+        menuOptions: [],
+        render: this.renderGraph,
+        headerOrientation: HANDLE_HORIZONTAL,
+        size: bottomSize,
+      },
+    ]
+  }
+
+  private handleResize = (proportions: number[]) => {
+    this.setState({proportions})
+  }
+
+  private renderHostTable = () => {
+    const {source} = this.props
+    const {hostsObject, hostsPageStatus, focusedHost} = this.state
+    return (
+      <HostsTable
+        source={source}
+        hosts={_.values(hostsObject)}
+        hostsPageStatus={hostsPageStatus}
+        focusedHost={focusedHost}
+        onClickTableRow={this.handleClickTableRow}
+      />
+    )
+  }
+
+  private renderGraph = () => {
+    const {source} = this.props
+    const {filteredLayouts, focusedHost, timeRange} = this.state
+
+    const layoutCells = getCells(filteredLayouts, source)
+    const tempVars = generateForHosts(source)
+
+    return (
+      <FancyScrollbar
+        className={classnames({
+          'page-contents': true,
+        })}
+      >
+        <div className="container-fluid full-width dashboard">
+          <LayoutRenderer
+            source={source}
+            sources={[source]}
+            isStatusPage={false}
+            isStaticPage={true}
+            isEditable={false}
+            cells={layoutCells}
+            templates={tempVars}
+            timeRange={timeRange}
+            manualRefresh={this.props.manualRefresh}
+            host={focusedHost}
+          />
+        </div>
+      </FancyScrollbar>
+    )
+  }
   private async getLayoutsforHost(layouts: Layout[], hostID: string) {
     const {host, measurements} = await this.fetchHostsAndMeasurements(
       layouts,
@@ -259,7 +317,7 @@ export class HostsPage extends PureComponent<Props, State> {
     })
     const filteredLayouts = layoutsWithinHost
       .filter(layout => {
-        return layout.app === 'system'
+        return layout.app === 'system' || layout.app === 'win_system'
       })
       .sort((x, y) => {
         return x.measurement < y.measurement

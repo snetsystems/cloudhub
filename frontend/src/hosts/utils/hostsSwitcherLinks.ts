@@ -15,7 +15,7 @@ export const linksFromHosts = (
     return {
       key: h.name,
       text: h.name,
-      to: `/sources/${source.id}/hosts/${h.name}`,
+      to: `/sources/${source.id}/infrastructure/${h.name}`,
     }
   })
 

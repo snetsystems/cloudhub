@@ -82,21 +82,24 @@ class SideNav extends PureComponent<Props> {
           <NavHeader link={`${sourcePrefix}/dashboards`} title="Dashboards" />
         </NavBlock>
         <NavBlock
-          highlightWhen={['hosts']}
+          highlightWhen={['infrastructure']}
           icon="server2"
-          link={`${sourcePrefix}/hosts`}
-          location={location}
-        >
-          <NavHeader link={`${sourcePrefix}/hosts`} title="Infrastructure" />
-        </NavBlock>
-        <NavBlock
-          highlightWhen={['application']}
-          icon="disks"
-          link={`${sourcePrefix}/application`}
+          link={`${sourcePrefix}/infrastructure`}
           location={location}
         >
           <NavHeader
-            link={`${sourcePrefix}/application`}
+            link={`${sourcePrefix}/infrastructure`}
+            title="Infrastructure"
+          />
+        </NavBlock>
+        <NavBlock
+          highlightWhen={['applications']}
+          icon="disks"
+          link={`${sourcePrefix}/applications`}
+          location={location}
+        >
+          <NavHeader
+            link={`${sourcePrefix}/applications`}
             title="Applications"
           />
         </NavBlock>

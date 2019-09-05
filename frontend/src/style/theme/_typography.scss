@@ -64,7 +64,6 @@ a:active {
 
 // Typography Base Styles
 // -----------------------------------------------------------------------------
-
 %type-base-styles {
   margin: $ix-marg-b 0 0.55em 0;
 }
@@ -84,7 +83,8 @@ p {
   line-height: 1.55em;
   font-weight: 400;
 
-  b,strong {
+  b,
+  strong {
     font-weight: 900;
   }
 
@@ -151,7 +151,8 @@ h6 {
     font-weight: 500;
   }
 }
-ol,ul {
+ol,
+ul {
   @extend %type-base-styles;
   padding-left: $ix-marg-c;
   font-size: $ix-text-base;
@@ -196,12 +197,13 @@ blockquote {
     border-width: 0 $ix-border $ix-border 0;
   }
 
-  b,strong {
+  b,
+  strong {
     font-weight: 900;
   }
 }
 hr {
-  border:0;
+  border: 0;
   height: 2px;
   margin: $ix-marg-c 0 $ix-marg-d 0;
   background-color: $g5-pepper;
@@ -212,7 +214,8 @@ hr {
 }
 
 // Type Formatting
-b,strong {
+b,
+strong {
   font-weight: 900;
 }
 mark {
