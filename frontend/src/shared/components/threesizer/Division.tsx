@@ -13,9 +13,9 @@ import {
   HANDLE_HORIZONTAL,
   MIN_HANDLE_PIXELS,
 } from 'src/shared/constants/index'
-import {MenuItem} from 'src/shared/components/threesizer/DivisionMenu'
+import { MenuItem } from 'src/shared/components/threesizer/DivisionMenu'
 
-const NOOP = () => {}
+const NOOP = () => { }
 
 interface Props {
   name?: string
@@ -57,18 +57,18 @@ class Division extends PureComponent<Props> {
   }
 
   public componentDidMount() {
-    const {name} = this.props
+    const { name } = this.props
     this.calcDivisionPixels()
-
     if (!name) {
       return 0
     }
 
-    const {width} = calculateSize(name, {
+    const { width } = calculateSize(name, {
       font: '"Roboto", Helvetica, Arial, Tahoma, Verdana, sans-serif',
       fontSize: '16px',
       fontWeight: '500',
     })
+
     const NAME_OFFSET = 96
 
     this.collapseThreshold = width + NAME_OFFSET
@@ -79,7 +79,7 @@ class Division extends PureComponent<Props> {
   }
 
   public render() {
-    const {render} = this.props
+    const { render } = this.props
 
     return (
       <div
@@ -149,7 +149,7 @@ class Division extends PureComponent<Props> {
   }
 
   private get renderDragHandle(): JSX.Element {
-    const {draggable} = this.props
+    const { draggable } = this.props
 
     return (
       <div
@@ -201,7 +201,7 @@ class Division extends PureComponent<Props> {
   }
 
   private get handleStyle(): CSSProperties {
-    const {handleDisplay: display, orientation, handlePixels} = this.props
+    const { handleDisplay: display, orientation, handlePixels } = this.props
 
     if (orientation === HANDLE_HORIZONTAL) {
       return {
@@ -217,7 +217,7 @@ class Division extends PureComponent<Props> {
   }
 
   private get containerStyle(): CSSProperties {
-    const {style, orientation} = this.props
+    const { style, orientation } = this.props
     if (orientation === HANDLE_HORIZONTAL) {
       return {
         ...style,
@@ -232,7 +232,7 @@ class Division extends PureComponent<Props> {
   }
 
   private get size(): string {
-    const {size, offset} = this.props
+    const { size, offset } = this.props
     return `calc((100% - ${offset}px) * ${size} + ${this.handlePixels}px)`
   }
 
@@ -245,7 +245,7 @@ class Division extends PureComponent<Props> {
   }
 
   private get containerClass(): string {
-    const {orientation, customClass} = this.props
+    const { orientation, customClass } = this.props
     const isAnyHandleBeingDragged = !!this.props.activeHandleID
     return classnames('threesizer--division', {
       dragging: isAnyHandleBeingDragged,
@@ -256,7 +256,7 @@ class Division extends PureComponent<Props> {
   }
 
   private get handleClass(): string {
-    const {draggable, orientation, name} = this.props
+    const { draggable, orientation, name } = this.props
 
     const collapsed = orientation === HANDLE_VERTICAL && this.isTitleObscured
 
@@ -271,14 +271,14 @@ class Division extends PureComponent<Props> {
   }
 
   private get contentsClass(): string {
-    const {headerOrientation, size} = this.props
+    const { headerOrientation, size } = this.props
     return classnames(`threesizer--contents ${headerOrientation}`, {
       'no-shadows': !size,
     })
   }
 
   private get titleClass(): string {
-    const {orientation} = this.props
+    const { orientation } = this.props
 
     const collapsed = orientation === HANDLE_VERTICAL && this.isTitleObscured
 
@@ -298,18 +298,18 @@ class Division extends PureComponent<Props> {
       return false
     }
 
-    const {width} = this.divisionRef.current.getBoundingClientRect()
+    const { width } = this.divisionRef.current.getBoundingClientRect()
 
     return width <= this.collapseThreshold
   }
 
   private get isDragging(): boolean {
-    const {id, activeHandleID} = this.props
+    const { id, activeHandleID } = this.props
     return id === activeHandleID
   }
 
   private drag = e => {
-    const {draggable, id} = this.props
+    const { draggable, id } = this.props
 
     if (!draggable) {
       return NOOP
@@ -319,25 +319,25 @@ class Division extends PureComponent<Props> {
   }
 
   private handleDoubleClick = (): void => {
-    const {onDoubleClick, id} = this.props
+    const { onDoubleClick, id } = this.props
 
     onDoubleClick(id)
   }
 
   private handleMinimize = (): void => {
-    const {id, onMinimize} = this.props
+    const { id, onMinimize } = this.props
     onMinimize(id)
   }
 
   private handleMaximize = (): void => {
-    const {id, onMaximize} = this.props
+    const { id, onMaximize } = this.props
     onMaximize(id)
   }
 
   private calcDivisionPixels = (): void => {
-    const {orientation} = this.props
+    const { orientation } = this.props
 
-    const {clientWidth, clientHeight} = this.divisionRef.current
+    const { clientWidth, clientHeight } = this.divisionRef.current
 
     let divisionPixels = clientWidth
     if (orientation === HANDLE_HORIZONTAL) {
