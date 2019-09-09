@@ -1,9 +1,9 @@
 // Libraries
-import React, {PureComponent} from 'react'
-import {connect} from 'react-redux'
-import {bindActionCreators} from 'redux'
+import React, { PureComponent } from 'react'
+import { connect } from 'react-redux'
+import { bindActionCreators } from 'redux'
 import _ from 'lodash'
-import {getDeep} from 'src/utils/wrappers'
+import { getDeep } from 'src/utils/wrappers'
 
 // Components
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
@@ -11,11 +11,11 @@ import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/Aut
 import ManualRefresh, {
   ManualRefreshProps,
 } from 'src/shared/components/ManualRefresh'
-import {Page} from 'src/reusable_ui'
-import {ErrorHandling} from 'src/shared/decorators/errors'
+import { Page } from 'src/reusable_ui'
+import { ErrorHandling } from 'src/shared/decorators/errors'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import TreeMenu from 'src/reusable_ui/components/treemenu'
-import {Item} from 'src/reusable_ui/components/treemenu/TreeMenu/walk'
+import { Item } from 'src/reusable_ui/components/treemenu/TreeMenu/walk'
 
 // APIs
 import {
@@ -25,23 +25,23 @@ import {
   getAppsForHost,
   getMeasurementsForHost,
 } from 'src/hosts/apis'
-import {getEnv} from 'src/shared/apis/env'
+import { getEnv } from 'src/shared/apis/env'
 
 // Actions
-import {setAutoRefresh} from 'src/shared/actions/app'
-import {notify as notifyAction} from 'src/shared/actions/notifications'
+import { setAutoRefresh } from 'src/shared/actions/app'
+import { notify as notifyAction } from 'src/shared/actions/notifications'
 
 // Utils
-import {generateForHosts} from 'src/utils/tempVars'
-import {getCells} from 'src/hosts/utils/getCells'
-import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+import { generateForHosts } from 'src/utils/tempVars'
+import { getCells } from 'src/hosts/utils/getCells'
+import { GlobalAutoRefresher } from 'src/utils/AutoRefresher'
 
 // Constants
 import {
   notifyUnableToGetHosts,
   notifyUnableToGetApps,
 } from 'src/shared/copy/notifications'
-import {HANDLE_VERTICAL} from 'src/shared/constants'
+import { HANDLE_VERTICAL } from 'src/shared/constants'
 
 // Types
 import {
@@ -52,7 +52,7 @@ import {
   Layout,
   TimeRange,
 } from 'src/types'
-import {timeRanges} from 'src/shared/data/timeRanges'
+import { timeRanges } from 'src/shared/data/timeRanges'
 
 interface Props extends ManualRefreshProps {
   source: Source
@@ -63,7 +63,7 @@ interface Props extends ManualRefreshProps {
 }
 
 interface State {
-  hostsObject: {[x: string]: Host}
+  hostsObject: { [x: string]: Host }
   appHostData: {}
   layouts: Layout[]
   filteredLayouts: Layout[]
@@ -97,14 +97,14 @@ export class Applications extends PureComponent<Props, State> {
   }
 
   public async componentDidMount() {
-    const {notify, autoRefresh} = this.props
+    const { notify, autoRefresh } = this.props
 
     const layoutResults = await getLayouts()
     const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
 
     if (!layouts) {
       notify(notifyUnableToGetApps())
-      this.setState({layouts})
+      this.setState({ layouts })
       return
     }
 
@@ -119,12 +119,12 @@ export class Applications extends PureComponent<Props, State> {
     }
     GlobalAutoRefresher.poll(autoRefresh)
 
-    this.setState({layouts})
+    this.setState({ layouts })
   }
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
-    const {autoRefresh} = this.props
-    const {layouts, focusedHost, focusedApp} = this.state
+    const { autoRefresh } = this.props
+    const { layouts, focusedHost, focusedApp } = this.state
 
     if (layouts) {
       if (
@@ -132,12 +132,12 @@ export class Applications extends PureComponent<Props, State> {
         prevState.focusedApp !== focusedApp
       ) {
         this.fetchHostsAppsData(layouts)
-        const {filteredLayouts} = await this.getLayoutsforHostApp(
+        const { filteredLayouts } = await this.getLayoutsforHostApp(
           layouts,
           focusedHost,
           focusedApp
         )
-        this.setState({filteredLayouts})
+        this.setState({ filteredLayouts })
       }
 
       if (prevProps.autoRefresh !== autoRefresh) {
@@ -153,7 +153,7 @@ export class Applications extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {autoRefresh, onChooseAutoRefresh, onManualRefresh} = this.props
+    const { autoRefresh, onChooseAutoRefresh, onManualRefresh } = this.props
 
     return (
       <Page>
@@ -181,11 +181,11 @@ export class Applications extends PureComponent<Props, State> {
   }
 
   private handleResize = (proportions: number[]) => {
-    this.setState({proportions})
+    this.setState({ proportions })
   }
 
   private get threesizerDivisions() {
-    const {source} = this.props
+    const { source } = this.props
     const {
       appHostData,
       proportions,
@@ -240,12 +240,12 @@ export class Applications extends PureComponent<Props, State> {
   private onSelectedHost = (props: Item) => {
     if (props.level === 2) {
       const apps = props.parent.split('/')
-      this.setState({focusedHost: props.label, focusedApp: apps[1]})
+      this.setState({ focusedHost: props.label, focusedApp: apps[1] })
     }
   }
 
   private fetchHostsAppsData = async (layouts: Layout[]): Promise<void> => {
-    const {source, links, notify} = this.props
+    const { source, links, notify } = this.props
 
     const envVars = await getEnv(links.environment)
     const telegrafSystemInterval = getDeep<string>(
@@ -263,9 +263,11 @@ export class Applications extends PureComponent<Props, State> {
         telegrafSystemInterval,
         tempVars
       )
+
       if (!hostsObject) {
         throw new Error(hostsError)
       }
+
       const newHosts = await getAppsForHosts(
         source.links.proxy,
         hostsObject,
@@ -282,12 +284,14 @@ export class Applications extends PureComponent<Props, State> {
               acc[key]['nodes'][appName] = {
                 label: appName,
                 index: 0,
+                level: 1,
                 nodes: {},
               }
             }
 
             acc[key]['nodes'][appName]['nodes'][hostName] = {
               label: hostName,
+              level: 2,
               index: 0,
             }
 
@@ -300,32 +304,37 @@ export class Applications extends PureComponent<Props, State> {
           'first-level-node-1': {
             label: 'Database',
             index: 0,
+            level: 0,
             nodes: {},
           },
           'first-level-node-2': {
             label: 'Middleware',
             index: 1,
+            level: 0,
             nodes: {},
           },
           'first-level-node-3': {
             label: 'Web Server',
             index: 3,
+            level: 0,
             nodes: {},
           },
           'first-level-node-4': {
             label: 'System Common',
             index: 4,
+            level: 0,
             nodes: {},
           },
           'first-level-node-5': {
             label: 'Others',
             index: 5,
+            level: 0,
             nodes: {},
           },
         }
       )
 
-      this.setState({hostsObject: newHosts, appHostData})
+      this.setState({ hostsObject: newHosts, appHostData })
     } catch (error) {
       console.error(error)
       notify(notifyUnableToGetApps())
@@ -373,7 +382,7 @@ export class Applications extends PureComponent<Props, State> {
     hostID: string,
     appID: string
   ) => {
-    const {host, measurements} = await this.fetchHostsAndMeasurements(
+    const { host, measurements } = await this.fetchHostsAndMeasurements(
       layouts,
       hostID
     )
@@ -396,14 +405,14 @@ export class Applications extends PureComponent<Props, State> {
             : 0
       })
 
-    return {filteredLayouts}
+    return { filteredLayouts }
   }
 
   private fetchHostsAndMeasurements = async (
     layouts: Layout[],
     hostID: string
   ) => {
-    const {source} = this.props
+    const { source } = this.props
 
     const fetchMeasurements = getMeasurementsForHost(source, hostID)
     const fetchHosts = getAppsForHost(
@@ -418,14 +427,14 @@ export class Applications extends PureComponent<Props, State> {
       fetchMeasurements,
     ])
 
-    return {host, measurements}
+    return { host, measurements }
   }
 }
 
 const mstp = state => {
   const {
     app: {
-      persisted: {autoRefresh},
+      persisted: { autoRefresh },
     },
     links,
   } = state

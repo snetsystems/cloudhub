@@ -1,5 +1,6 @@
 $ICON_SIZE: 2rem;
 $DEFAULT_PADDING: 0.75rem;
+$FONT_COLOR_NORMAL: #bec2cc;
 
 .toggle-icon {
   display: inline-block;
@@ -19,20 +20,56 @@ $DEFAULT_PADDING: 0.75rem;
   font-weight: bold;
 }
 
+.fancy-scroll--view div,
+.tree-item-group:focus {
+  outline: none;
+}
+
 .tree-item {
   padding: 0.2rem 1rem;
   cursor: pointer;
-  color: $c-laser;
+  color: $FONT_COLOR_NORMAL;
   background-color: $g3-castle;
   border-bottom: 1px solid $g5-pepper;
   box-shadow: none;
   z-index: unset;
   position: relative;
   margin: 0;
+  transition: background-color .25s;
+
+  &-level-2 {
+    color: $FONT_COLOR_NORMAL;
+  }
+
+  &-level-2 {
+    color: $ix-link-default;
+  }
+
+  &-level-2:hover {
+    color: $ix-link-default-hover;
+  }
 
   &--active {
+    overflow: hidden;
     background-color: $g6-smoke;
-    border-bottom: none;
+  }
+
+  &-level-0:hover,
+  &-level-1:hover,
+  &--active.tree-item-level-0,
+  &--active.tree-item-level-1 {
+    text-shadow: 0 0 9px #00c9ff, 0 0 15px #4591ed, 0 0 20px #513cc6;
+    color: #fff;
+  }
+
+  &--active.tree-item-level-2 {
+    color: #fff;
+    background: #22adf6;
+    background: -moz-linear-gradient(left, #22adf6 0%, #9394ff 100%);
+    background: -webkit-linear-gradient(left, #22adf6 0%, #9394ff 100%);
+    background: linear-gradient(to right, #22adf6 0%, #9394ff 100%);
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='$startColor', endColorstr='$endColor',GradientType=1 );
+    transition: opacity 0.25s ease;
   }
 }
 
