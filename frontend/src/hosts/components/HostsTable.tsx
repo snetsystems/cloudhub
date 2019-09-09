@@ -270,7 +270,7 @@ class HostsTable extends PureComponent<Props, State> {
             Load
             <span className="icon caret-up" />
           </div>
-          <div className="hosts-table--th">Apps</div>
+          <div className="hosts-table--th list-type">Apps</div>
         </div>
       </div>
     )

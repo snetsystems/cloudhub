@@ -271,6 +271,9 @@ table .table-cell-nowrap {
     ----------------------------------------------
 */
 
+$listWidth: 42%;
+$wordBreak: break-word;
+
 .hosts-table {
   height: 100%;
   display: flex;
@@ -288,6 +291,10 @@ table .table-cell-nowrap {
   font-size: 13px;
   font-weight: 500;
   color: $g17-whisper;
+  & + .list-type {
+    width: $listWidth;
+    word-break: $wordBreak;
+  }
 }
 .hosts-table--tbody {
   flex: 1 0 0;
@@ -312,4 +319,8 @@ table .table-cell-nowrap {
   color: $g13-mist;
   white-space: pre-wrap;
   word-break: break-all;
+  & + .list-type {
+    width: $listWidth;
+    word-break: $wordBreak;
+  }
 }
