@@ -53,7 +53,7 @@ const HostRow: SFC<Props> = ({
       <div style={{width: LoadWidth}} className="monotype hosts-table--td">
         {loadValue}
       </div>
-      <div className="hosts-table--td">
+      <div className="hosts-table--td list-type">
         {apps.map((app, index) => {
           return (
             <span key={app}>
