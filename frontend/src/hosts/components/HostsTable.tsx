@@ -28,7 +28,7 @@ export interface Props {
 
 interface State {
   searchTerm: string
-  sortDirection: string
+  sortDirection: SortDirection
   sortKey: string
 }
 
