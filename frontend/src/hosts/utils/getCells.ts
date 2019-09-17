@@ -22,7 +22,7 @@ function getLayoutCells(layouts: Layout[]): LayoutCell[] {
     return []
   }
 
-  const autoflowLayouts = layouts.filter(l => !!l.autoflow)
+  const autoflowLayouts = layouts.filter(l => (l.autoflow = true))
   const autoflowCells = flatten(autoflowLayouts.map(l => l.cells))
 
   const staticLayouts = layouts.filter(layout => !layout.autoflow)

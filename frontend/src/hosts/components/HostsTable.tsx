@@ -28,7 +28,7 @@ export interface Props {
 
 interface State {
   searchTerm: string
-  sortDirection: SortDirection
+  sortDirection: string
   sortKey: string
 }
 
@@ -51,7 +51,7 @@ class HostsTable extends PureComponent<Props, State> {
     this.state = {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
-      sortKey: null,
+      sortKey: 'name',
     }
   }
 
@@ -113,6 +113,34 @@ class HostsTable extends PureComponent<Props, State> {
       return 'hosts-table--th sortable-header sorting-descending'
     }
     return 'hosts-table--th sortable-header'
+  }
+
+  public componentWillMount() {
+    !window.localStorage.getItem('hostsTableState')
+      ? window.localStorage.setItem(
+          'hostsTableState',
+          `{
+            "sortKey": "${this.state.sortKey}", 
+            "sortDirection": "${this.state.sortDirection}"
+          }`
+        )
+      : {}
+
+    const hostsTableState = window.localStorage.getItem('hostsTableState')
+    const serializedHostsTableState = JSON.parse(hostsTableState)
+
+    this.setState({sortKey: serializedHostsTableState.sortKey})
+    this.setState({sortDirection: serializedHostsTableState.sortDirection})
+  }
+
+  public componentDidUpdate() {
+    window.localStorage.setItem(
+      'hostsTableState',
+      `{
+        "sortKey": "${this.state.sortKey}", 
+        "sortDirection": "${this.state.sortDirection}"
+      }`
+    )
   }
 
   public render() {
