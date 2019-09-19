@@ -121,7 +121,8 @@ class HostsTable extends PureComponent<Props, State> {
           'hostsTableState',
           `{
             "sortKey": "${this.state.sortKey}", 
-            "sortDirection": "${this.state.sortDirection}"
+            "sortDirection": "${this.state.sortDirection}",
+            "focusedHost": "${this.props.focusedHost}"
           }`
         )
       : {}
@@ -138,7 +139,8 @@ class HostsTable extends PureComponent<Props, State> {
       'hostsTableState',
       `{
         "sortKey": "${this.state.sortKey}", 
-        "sortDirection": "${this.state.sortDirection}"
+        "sortDirection": "${this.state.sortDirection}",
+        "focusedHost": "${this.props.focusedHost}"
       }`
     )
   }
