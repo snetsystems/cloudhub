@@ -1,0 +1,140 @@
+{
+  "id": "59ce2f27-56cf-4195-a935-df6964618953",
+  "measurement": "tomcat_connector",
+  "app": "tomcat",
+  "autoflow": true,
+  "cells": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "3e14be06-cb87-4d88-99f1-eff1b3d071de",
+      "name": "Tomcat - Requests Count Accumulation",
+      "queries": [
+        {
+          "query": "SELECT sum(\"request_count\") AS \"request_count\" FROM \":db:\".\":rp:\".\"tomcat_connector\"",
+          "groupbys": [],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      }
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "1f08afed-b9b2-4604-9922-9846aac612dc",
+      "name": "Tomcat - Sent Bytes Accumulation ",
+      "queries": [
+        {
+          "query": "SELECT sum(\"bytes_sent\") AS \"bytes_sent\" FROM \":db:\".\":rp:\".\"tomcat_connector\"",
+          "groupbys": [],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "2",
+          "scale": "linear"
+        }
+      }
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "6a2f91a3-0217-4dca-bd09-97672217e11b",
+      "name": "Tomcat - Received Bytes Accumulation",
+      "queries": [
+        {
+          "query": "SELECT sum(\"bytes_received\") AS \"bytes_received\" FROM \":db:\".\":rp:\".\"tomcat_connector\"",
+          "groupbys": [],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "2",
+          "scale": "linear"
+        }
+      }
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "a4d25835-2971-4dca-9f83-078744d1bbfb",
+      "name": "Tomcat - JVM Memory",
+      "queries": [
+        {
+          "query": "SELECT max(\"total\") AS \"total\", max(\"free\") AS \"free\" FROM \":db:\".\":rp:\".\"tomcat_jvm_memory\"",
+          "groupbys": [],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "2",
+          "scale": "linear"
+        }
+      }
+    }
+  ]
+}
