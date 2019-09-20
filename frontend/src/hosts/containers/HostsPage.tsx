@@ -98,6 +98,11 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   public async componentDidMount() {
+    // localStorage data dump
+    const hostsTableState = JSON.parse(
+      window.localStorage.getItem('hostsTableState')
+    ).focusedHost
+
     const {notify, autoRefresh} = this.props
 
     this.setState({hostsPageStatus: RemoteDataState.Loading})
@@ -118,7 +123,7 @@ export class HostsPage extends PureComponent<Props, State> {
     await this.fetchHostsData(layouts)
 
     // For rendering the charts with the focused single host.
-    const hostID = this.getFirstHost(this.state.hostsObject)
+    const hostID = hostsTableState || this.getFirstHost(this.state.hostsObject)
 
     if (autoRefresh) {
       this.intervalID = window.setInterval(
