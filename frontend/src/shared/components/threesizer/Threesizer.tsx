@@ -65,6 +65,7 @@ interface Props {
   orientation: string
   containerClass?: string
   onResize: (sizes: number[]) => void
+  defaultView: boolean
 }
 
 @ErrorHandling
