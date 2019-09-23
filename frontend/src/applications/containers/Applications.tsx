@@ -72,6 +72,8 @@ interface State {
   timeRange: TimeRange
   proportions: number[]
   defaultView: boolean
+  initialActiveKey: string
+  initialOpenNodes: string[]
 }
 
 @ErrorHandling
@@ -94,8 +96,42 @@ export class Applications extends PureComponent<Props, State> {
       focusedApp: '',
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       proportions: [0.25, 0.75],
-      defaultView: true, //수정중
+      defaultView: true,
+      initialActiveKey: '',
+      initialOpenNodes: [],
     }
+  }
+
+  public componentWillMount() {
+    const {initialSource} = JSON.parse(
+      window.localStorage.getItem('ApplicationTreeMenuState')
+    )
+    const {key} = initialSource.length > 0 ? initialSource[0] : ''
+    interface KeyInterface {
+      decomKey: string
+      decomOpenNodes: string[]
+      decomFocusedHost: string
+    }
+    const decompositionKey = (key: string): KeyInterface => {
+      if (!key) return {}
+      const arrKey = key.split('/')
+      const concatArrKey = []
+      arrKey.map((v, i) => {
+        if (i === 0) return concatArrKey.push(v)
+        concatArrKey.push(`${concatArrKey[i - 1]}/${v}`)
+      })
+      return {
+        decomKey: concatArrKey[concatArrKey.length - 1],
+        decomOpenNodes: concatArrKey,
+        decomFocusedHost: arrKey[arrKey.length - 1],
+      }
+    }
+    const {decomKey, decomOpenNodes, decomFocusedHost} = decompositionKey(key)
+    this.setState({
+      initialActiveKey: decomKey,
+      initialOpenNodes: decomOpenNodes,
+      focusedHost: decomFocusedHost,
+    })
   }
 
   public async componentDidMount() {
@@ -194,6 +230,8 @@ export class Applications extends PureComponent<Props, State> {
       filteredLayouts,
       focusedHost,
       timeRange,
+      initialActiveKey,
+      initialOpenNodes,
     } = this.state
     const [leftSize, rightSize] = proportions
 
@@ -208,7 +246,12 @@ export class Applications extends PureComponent<Props, State> {
         size: leftSize,
         render: () => (
           <Page.Contents fullWidth={true}>
-            <TreeMenu data={appHostData} onClickItem={this.onSelectedHost} />
+            <TreeMenu
+              data={appHostData}
+              onClickItem={this.onSelectedHost}
+              initialActiveKey={initialActiveKey}
+              initialOpenNodes={initialOpenNodes}
+            />
           </Page.Contents>
         ),
       },
@@ -395,6 +438,7 @@ export class Applications extends PureComponent<Props, State> {
       layouts,
       hostID
     )
+
     const layoutsWithinHost = layouts.filter(layout => {
       return (
         host.apps &&

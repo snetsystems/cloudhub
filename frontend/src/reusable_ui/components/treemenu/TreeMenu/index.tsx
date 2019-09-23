@@ -1,5 +1,5 @@
 import React from 'react'
-import { debounce } from 'lodash'
+import {debounce} from 'lodash'
 
 import walk, {
   TreeNode,
@@ -8,11 +8,12 @@ import walk, {
   LocaleFunction,
   MatchSearchFunction,
 } from './walk'
-import { defaultChildren, TreeMenuChildren, TreeMenuItem } from './renderProps'
+import {defaultChildren, TreeMenuChildren, TreeMenuItem} from './renderProps'
 import KeyDown from '../KeyDown'
+import {getFixedColumnsTotalWidth} from 'src/logs/utils/table'
 
 export type TreeMenuProps = {
-  data: { [name: string]: TreeNode } | TreeNodeInArray[]
+  data: {[name: string]: TreeNode} | TreeNodeInArray[]
   activeKey?: string
   focusKey?: string
   initialActiveKey?: string
@@ -53,16 +54,16 @@ class TreeMenu extends React.Component<TreeMenuProps, TreeMenuState> {
   }
 
   reset = (newOpenNodes?: string[]) => {
-    const { initialOpenNodes } = this.props
+    const {initialOpenNodes} = this.props
     const openNodes =
       (Array.isArray(newOpenNodes) && newOpenNodes) || initialOpenNodes || []
-    this.setState({ openNodes, searchTerm: '' })
+    this.setState({openNodes, searchTerm: ''})
   }
 
   search = (value: string) => {
-    const { debounceTime } = this.props
+    const {debounceTime} = this.props
     const search = debounce(
-      (searchTerm: string) => this.setState({ searchTerm }),
+      (searchTerm: string) => this.setState({searchTerm}),
       debounceTime
     )
     search(value)
@@ -70,23 +71,23 @@ class TreeMenu extends React.Component<TreeMenuProps, TreeMenuState> {
 
   toggleNode = (node: string) => {
     if (!this.props.openNodes) {
-      const { openNodes } = this.state
+      const {openNodes} = this.state
       const newOpenNodes = openNodes.includes(node)
         ? openNodes.filter(openNode => openNode !== node)
         : [...openNodes, node]
-      this.setState({ openNodes: newOpenNodes })
+      this.setState({openNodes: newOpenNodes})
     }
   }
 
   generateItems = (): TreeMenuItem[] => {
-    const { data, onClickItem, locale, matchSearch } = this.props
-    const { searchTerm } = this.state
+    const {data, onClickItem, locale, matchSearch} = this.props
+    const {searchTerm} = this.state
     const openNodes = this.props.openNodes || this.state.openNodes
     const activeKey = this.props.activeKey || this.state.activeKey
     const focusKey = this.props.focusKey || this.state.focusKey
 
     const items: Item[] = data
-      ? walk({ data, openNodes, searchTerm, locale, matchSearch })
+      ? walk({data, openNodes, searchTerm, locale, matchSearch})
       : []
 
     return items.map(item => {
@@ -95,20 +96,20 @@ class TreeMenu extends React.Component<TreeMenuProps, TreeMenuState> {
 
       const onClick = () => {
         const newActiveKey = this.props.activeKey || item.key
-        this.setState({ activeKey: newActiveKey, focusKey: newActiveKey })
+        this.setState({activeKey: newActiveKey, focusKey: newActiveKey})
         onClickItem && onClickItem(item)
       }
 
       const toggleNode = item.hasNodes
         ? () => this.toggleNode(item.key)
         : undefined
-      return { ...item, focused, active, onClick, toggleNode }
+      return {...item, focused, active, onClick, toggleNode}
     })
   }
 
   getKeyDownProps = (items: TreeMenuItem[]) => {
-    const { onClickItem } = this.props
-    const { focusKey, activeKey } = this.state
+    const {onClickItem} = this.props
+    const {focusKey, activeKey} = this.state
     const focusIndex = items.findIndex(
       item => item.key === (focusKey || activeKey)
     )
@@ -122,12 +123,12 @@ class TreeMenu extends React.Component<TreeMenuProps, TreeMenuState> {
 
     return {
       up: () => {
-        this.setState(({ focusKey }) => ({
+        this.setState(({focusKey}) => ({
           focusKey: focusIndex > 0 ? items[focusIndex - 1].key : focusKey,
         }))
       },
       down: () => {
-        this.setState(({ focusKey }) => ({
+        this.setState(({focusKey}) => ({
           focusKey:
             focusIndex < items.length - 1
               ? items[focusIndex + 1].key
@@ -135,41 +136,50 @@ class TreeMenu extends React.Component<TreeMenuProps, TreeMenuState> {
         }))
       },
       left: () => {
-        this.setState(({ openNodes, ...rest }) => {
+        this.setState(({openNodes, ...rest}) => {
           const item = items[focusIndex]
           const newOpenNodes = openNodes.filter(node => node !== item.key)
 
           return item.isOpen
-            ? { ...rest, openNodes: newOpenNodes, focusKey: item.key }
-            : { ...rest, focusKey: getFocusKey(item) }
+            ? {...rest, openNodes: newOpenNodes, focusKey: item.key}
+            : {...rest, focusKey: getFocusKey(item)}
         })
       },
       right: () => {
-        const { hasNodes, key } = items[focusIndex]
+        const {hasNodes, key} = items[focusIndex]
         if (hasNodes)
-          this.setState(({ openNodes }) => ({ openNodes: [...openNodes, key] }))
+          this.setState(({openNodes}) => ({openNodes: [...openNodes, key]}))
       },
       enter: () => {
-        this.setState(({ focusKey }) => ({ activeKey: focusKey }))
+        this.setState(({focusKey}) => ({activeKey: focusKey}))
         onClickItem && onClickItem(items[focusIndex])
       },
     }
   }
 
   render() {
-    const { children, hasSearch } = this.props
-    const { searchTerm } = this.state
+    const {children, hasSearch} = this.props
+    const {searchTerm, activeKey} = this.state
 
     const items = this.generateItems()
     const renderedChildren = children || defaultChildren
     const keyDownProps = this.getKeyDownProps(items)
 
+    const activeItem = items.filter(v => (v.active === true ? v : ''))
+
+    window.localStorage.setItem(
+      'ApplicationTreeMenuState',
+      `{
+        "initialSource": ${JSON.stringify(activeItem)}
+      }`
+    )
+
     return (
       <KeyDown {...keyDownProps}>
         {renderedChildren(
           hasSearch
-            ? { search: this.search, items, reset: this.reset, searchTerm }
-            : { items, reset: this.reset }
+            ? {search: this.search, items, reset: this.reset, searchTerm}
+            : {items, reset: this.reset}
         )}
       </KeyDown>
     )
