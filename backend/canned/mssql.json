@@ -195,7 +195,7 @@
         {
           "query": "SELECT mean(\"value\") AS \"mean_value\" FROM \":db:\".\":rp:\".\"sqlserver_performance\"",
           "groupbys": [],
-          "wheres": []
+          "wheres": ["\"counter\"='CPU usage %'"]
         }
       ],
       "axes": {
