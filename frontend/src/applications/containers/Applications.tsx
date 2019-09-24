@@ -76,6 +76,13 @@ interface State {
   initialOpenNodes: string[]
 }
 
+interface KeyInterface {
+  initialActiveKey: string
+  initialOpenNodes: string[]
+  focusedHost: string
+  focusedApp: string
+}
+
 @ErrorHandling
 export class Applications extends PureComponent<Props, State> {
   public static defaultProps: Partial<Props> = {
@@ -103,17 +110,7 @@ export class Applications extends PureComponent<Props, State> {
   }
 
   public componentWillMount() {
-    const {initialSource} = JSON.parse(
-      window.localStorage.getItem('ApplicationTreeMenuState')
-    )
-    const {key} = initialSource.length > 0 ? initialSource[0] : ''
-    interface KeyInterface {
-      decomKey: string
-      decomOpenNodes: string[]
-      decomFocusedHost: string
-    }
     const decompositionKey = (key: string): KeyInterface => {
-      if (!key) return {}
       const arrKey = key.split('/')
       const concatArrKey = []
       arrKey.map((v, i) => {
@@ -121,24 +118,32 @@ export class Applications extends PureComponent<Props, State> {
         concatArrKey.push(`${concatArrKey[i - 1]}/${v}`)
       })
       return {
-        decomKey: concatArrKey[concatArrKey.length - 1],
-        decomOpenNodes: concatArrKey,
-        decomFocusedHost: arrKey[arrKey.length - 1],
+        initialActiveKey: concatArrKey[concatArrKey.length - 1],
+        initialOpenNodes: concatArrKey,
+        focusedHost: arrKey[arrKey.length - 1],
+        focusedApp: arrKey[1] || arrKey[0],
       }
     }
-    const {decomKey, decomOpenNodes, decomFocusedHost} = decompositionKey(key)
-    this.setState({
-      initialActiveKey: decomKey,
-      initialOpenNodes: decomOpenNodes,
-      focusedHost: decomFocusedHost,
-    })
+
+    const getItem = window.localStorage.getItem('ApplicationTreeMenuState')
+
+    if (getItem) {
+      const {initialSource} = JSON.parse(getItem)
+      if (!initialSource[0]) return
+      if (initialSource[0].hasOwnProperty('key')) {
+        const {key} = initialSource[0]
+        this.setState({
+          ...decompositionKey(key),
+        })
+      }
+    }
   }
 
   public async componentDidMount() {
     const {notify, autoRefresh} = this.props
-
     const layoutResults = await getLayouts()
     const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
+    const {focusedHost, focusedApp} = this.state
 
     if (!layouts) {
       notify(notifyUnableToGetApps())
@@ -156,8 +161,13 @@ export class Applications extends PureComponent<Props, State> {
       )
     }
     GlobalAutoRefresher.poll(autoRefresh)
+    const {filteredLayouts} = await this.getLayoutsforHostApp(
+      layouts,
+      focusedHost,
+      focusedApp
+    )
 
-    this.setState({layouts})
+    this.setState({filteredLayouts, layouts})
   }
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {

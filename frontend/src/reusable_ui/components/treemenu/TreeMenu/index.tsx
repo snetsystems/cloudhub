@@ -10,7 +10,6 @@ import walk, {
 } from './walk'
 import {defaultChildren, TreeMenuChildren, TreeMenuItem} from './renderProps'
 import KeyDown from '../KeyDown'
-import {getFixedColumnsTotalWidth} from 'src/logs/utils/table'
 
 export type TreeMenuProps = {
   data: {[name: string]: TreeNode} | TreeNodeInArray[]
@@ -159,7 +158,7 @@ class TreeMenu extends React.Component<TreeMenuProps, TreeMenuState> {
 
   render() {
     const {children, hasSearch} = this.props
-    const {searchTerm, activeKey} = this.state
+    const {searchTerm} = this.state
 
     const items = this.generateItems()
     const renderedChildren = children || defaultChildren
