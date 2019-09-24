@@ -72,6 +72,15 @@ interface State {
   timeRange: TimeRange
   proportions: number[]
   defaultView: boolean
+  initialActiveKey: string
+  initialOpenNodes: string[]
+}
+
+interface KeyInterface {
+  initialActiveKey: string
+  initialOpenNodes: string[]
+  focusedHost: string
+  focusedApp: string
 }
 
 @ErrorHandling
@@ -94,15 +103,47 @@ export class Applications extends PureComponent<Props, State> {
       focusedApp: '',
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       proportions: [0.25, 0.75],
-      defaultView: true, //수정중
+      defaultView: true,
+      initialActiveKey: '',
+      initialOpenNodes: [],
+    }
+  }
+
+  public componentWillMount() {
+    const decompositionKey = (key: string): KeyInterface => {
+      const arrKey = key.split('/')
+      const concatArrKey = []
+      arrKey.map((v, i) => {
+        if (i === 0) return concatArrKey.push(v)
+        concatArrKey.push(`${concatArrKey[i - 1]}/${v}`)
+      })
+      return {
+        initialActiveKey: concatArrKey[concatArrKey.length - 1],
+        initialOpenNodes: concatArrKey,
+        focusedHost: arrKey[arrKey.length - 1],
+        focusedApp: arrKey[1] || arrKey[0],
+      }
+    }
+
+    const getItem = window.localStorage.getItem('ApplicationTreeMenuState')
+
+    if (getItem) {
+      const {initialSource} = JSON.parse(getItem)
+      if (!initialSource[0]) return
+      if (initialSource[0].hasOwnProperty('key')) {
+        const {key} = initialSource[0]
+        this.setState({
+          ...decompositionKey(key),
+        })
+      }
     }
   }
 
   public async componentDidMount() {
     const {notify, autoRefresh} = this.props
-
     const layoutResults = await getLayouts()
     const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
+    const {focusedHost, focusedApp} = this.state
 
     if (!layouts) {
       notify(notifyUnableToGetApps())
@@ -120,8 +161,13 @@ export class Applications extends PureComponent<Props, State> {
       )
     }
     GlobalAutoRefresher.poll(autoRefresh)
+    const {filteredLayouts} = await this.getLayoutsforHostApp(
+      layouts,
+      focusedHost,
+      focusedApp
+    )
 
-    this.setState({layouts})
+    this.setState({filteredLayouts, layouts})
   }
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
@@ -194,6 +240,8 @@ export class Applications extends PureComponent<Props, State> {
       filteredLayouts,
       focusedHost,
       timeRange,
+      initialActiveKey,
+      initialOpenNodes,
     } = this.state
     const [leftSize, rightSize] = proportions
 
@@ -208,7 +256,12 @@ export class Applications extends PureComponent<Props, State> {
         size: leftSize,
         render: () => (
           <Page.Contents fullWidth={true}>
-            <TreeMenu data={appHostData} onClickItem={this.onSelectedHost} />
+            <TreeMenu
+              data={appHostData}
+              onClickItem={this.onSelectedHost}
+              initialActiveKey={initialActiveKey}
+              initialOpenNodes={initialOpenNodes}
+            />
           </Page.Contents>
         ),
       },
@@ -395,6 +448,7 @@ export class Applications extends PureComponent<Props, State> {
       layouts,
       hostID
     )
+
     const layoutsWithinHost = layouts.filter(layout => {
       return (
         host.apps &&
