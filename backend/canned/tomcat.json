@@ -10,10 +10,10 @@
       "w": 4,
       "h": 4,
       "i": "3e14be06-cb87-4d88-99f1-eff1b3d071de",
-      "name": "Tomcat - Requests Count Accumulation",
+      "name": "Tomcat - Requests Count",
       "queries": [
         {
-          "query": "SELECT sum(\"request_count\") AS \"request_count\" FROM \":db:\".\":rp:\".\"tomcat_connector\"",
+          "query": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"request_count\"), 1s) AS \"request_count\" FROM \":db:\".\":rp:\".\"tomcat_connector\"",
           "groupbys": [],
           "wheres": []
         }
@@ -43,10 +43,10 @@
       "w": 4,
       "h": 4,
       "i": "1f08afed-b9b2-4604-9922-9846aac612dc",
-      "name": "Tomcat - Sent Bytes Accumulation ",
+      "name": "Tomcat - Tx (BPS)",
       "queries": [
         {
-          "query": "SELECT sum(\"bytes_sent\") AS \"bytes_sent\" FROM \":db:\".\":rp:\".\"tomcat_connector\"",
+          "query": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"bytes_sent\"), 1s) AS \"bytes_sent\" FROM \":db:\".\":rp:\".\"tomcat_connector\"",
           "groupbys": [],
           "wheres": []
         }
@@ -76,10 +76,10 @@
       "w": 4,
       "h": 4,
       "i": "6a2f91a3-0217-4dca-bd09-97672217e11b",
-      "name": "Tomcat - Received Bytes Accumulation",
+      "name": "Tomcat - Rx (BPS)",
       "queries": [
         {
-          "query": "SELECT sum(\"bytes_received\") AS \"bytes_received\" FROM \":db:\".\":rp:\".\"tomcat_connector\"",
+          "query": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"bytes_received\"), 1s) AS \"bytes_received\" FROM \":db:\".\":rp:\".\"tomcat_connector\"",
           "groupbys": [],
           "wheres": []
         }
@@ -112,7 +112,7 @@
       "name": "Tomcat - JVM Memory",
       "queries": [
         {
-          "query": "SELECT max(\"total\") AS \"total\", max(\"free\") AS \"free\" FROM \":db:\".\":rp:\".\"tomcat_jvm_memory\"",
+          "query": "SELECT mean(\"free\") AS \"free\", mean(\"total\") AS \"total\" FROM \":db:\".\":rp:\".\"tomcat_jvm_memory\"",
           "groupbys": [],
           "wheres": []
         }
