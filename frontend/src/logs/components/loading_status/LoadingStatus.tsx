@@ -37,6 +37,15 @@ class LoadingStatus extends PureComponent<Props> {
             <strong>Source</strong>
           </>
         )
+
+      case SearchStatus.NoSelect:
+        return (
+          <>
+            <div>
+              <strong>Currently unselected.</strong>
+            </div>
+          </>
+        )
       default:
         return <>{this.timeBounds}</>
     }
@@ -56,6 +65,16 @@ class LoadingStatus extends PureComponent<Props> {
       case SearchStatus.UpdatingSource:
       case SearchStatus.UpdatingNamespace:
       case SearchStatus.Loading:
+        return (
+          <div className="logs-viewer--search-graphic">
+            <div className="logs-viewer--graphic-log" />
+            <div className="logs-viewer--graphic-magnifier-a">
+              <div className="logs-viewer--graphic-magnifier-b" />
+            </div>
+          </div>
+        )
+
+      case SearchStatus.NoSelect:
         return (
           <div className="logs-viewer--search-graphic">
             <div className="logs-viewer--graphic-log" />
@@ -98,6 +117,8 @@ class LoadingStatus extends PureComponent<Props> {
           </>
         )
       case SearchStatus.Loading:
+      case SearchStatus.NoSelect:
+        return 'Please select a category...'
       default:
         return 'Searching...'
     }
