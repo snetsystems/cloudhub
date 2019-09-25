@@ -14,8 +14,8 @@
       "env": {},
       "args": [
         "-l=debug",
-        "-d"
-        // "--canned-path=./cmp-canned/",
+        "-d",
+        "--canned-path=./cmp-canned/"
         // "--auth-duration=0",
         // "-t=74c1e9e2450886060b5bf736b935cd0bf960837f",
         // "--github-client-id=c170bbdba5cb2ea8c3e6",

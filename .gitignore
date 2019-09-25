@@ -6,11 +6,12 @@ frontend/dist
 frontend/.cache
 frontend/node_modules
 frontend/coverage
+backend/cmd/cmp/cmp-canned
 
 # Binaries
-backend/cmd/cmp/scmp
-backend/cmd/cmp/scmpctl
-backend/cmd/cmp/debug
+backend/cmd/cmp/*scmp*
+backend/cmd/cmp/*scmpctl*
+backend/cmd/cmp/*debug*
 
 # Dotfiles
 .pull-request

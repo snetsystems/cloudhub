@@ -10,11 +10,11 @@
       "w": 4,
       "h": 4,
       "i": "2637ee2e-7643-46a8-8233-a20049b2efd5",
-      "name": "Sent Octets",
+      "name": "Rx/Tx (Byte/sec)",
       "queries": [
         {
-          "query": "SELECT sum(\"ifOutOctets\") AS \"sum_ifOutOctets\" FROM \":db:\".\":rp:\".\"snmp-ifInUcastPkts\"",
-          "groupbys": ["time(:interval:), \"ifIndex\""],
+          "query": "SELECT derivative(mean(\"ifHCOutOctets\"), 1s) * 8 AS \"Tx\", derivative(mean(\"ifHCInOctets\"), 1s) * 8 AS \"Rx\" FROM \":db:\".\":rp:\".\"snmp-ifXTable\"",
+          "groupbys": ["\"agent_host\", \"index\""],
           "wheres": []
         }
       ],
@@ -47,11 +47,11 @@
       "w": 4,
       "h": 4,
       "i": "5c2d7375-35f2-4a5b-b606-37e29d4f71b1",
-      "name": "Received Octets",
+      "name": "In/Out Error (pps)",
       "queries": [
         {
-          "query": "SELECT sum(\"ifInOctets\") AS \"sum_ifInOctets\" FROM \":db:\".\":rp:\".\"snmp-ifInUcastPkts\"",
-          "groupbys": ["time(:interval:), \"ifIndex\""],
+          "query": "SELECT derivative(mean(\"ifInErrors\"), 1s) AS \"ifInErrors\", derivative(mean(\"ifOutErrors\"), 1s) AS \"ifOutErrors\" FROM \":db:\".\":rp:\".\"snmp-ifTable\"",
+          "groupbys": ["time(:interval:), \"agent_host\", \"index\""],
           "wheres": []
         }
       ],
