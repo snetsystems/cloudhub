@@ -9,13 +9,58 @@
       "y": 0,
       "w": 4,
       "h": 4,
+      "i": "be2aeb77-037b-4ea6-a148-f5532156785e",
+      "name": "CPU usage(%)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"value\") AS \"cpu_usage\" FROM \":db:\".\":rp:\".\"sqlserver_performance\"",
+          "groupbys": [],
+          "wheres": ["\"counter\"='CPU usage %'"]
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Usage",
+          "prefix": "",
+          "suffix": "%",
+          "base": "raw",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "legend": {
+        "type": "static",
+        "orientation": "bottom"
+      }
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
       "i": "7156b6e0-30fc-49d7-b5c3-12b3d4ca8b4e",
       "name": "Used Memory",
       "queries": [
         {
-          "query": "SELECT sum(\"value\") AS \"sum_value\" FROM \":db:\".\":rp:\".\"sqlserver_performance\"",
+          "query": "SELECT mean(\"value\") * 1024 AS \"used_memory\" FROM \":db:\".\":rp:\".\"sqlserver_performance\"",
           "groupbys": [],
-          "wheres": []
+          "wheres": ["\"counter\"='Used memory (KB)'"]
         }
       ],
       "axes": {
@@ -55,10 +100,10 @@
       "w": 4,
       "h": 4,
       "i": "98d910b6-f804-46d6-afba-9a4a7b1a88f5",
-      "name": "Reads/Writes",
+      "name": "Reads/Writes (Count/sec)",
       "queries": [
         {
-          "query": "SELECT sum(\"reads\") AS \"sum_reads\", sum(\"writes\") AS \"sum_writes\" FROM \":db:\".\":rp:\".\"sqlserver_database_io\"",
+          "query": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"reads\"), 1s) AS \"reads\", NON_NEGATIVE_DERIVATIVE(mean(\"writes\"), 1s) AS \"writes\" FROM \":db:\".\":rp:\".\"sqlserver_database_io\"",
           "groupbys": [],
           "wheres": []
         }
@@ -78,7 +123,7 @@
           "prefix": "",
           "suffix": "",
           "base": "10",
-          "scale": "log"
+          "scale": "linear"
         },
         "y2": {
           "bounds": ["", ""],
@@ -100,10 +145,10 @@
       "w": 4,
       "h": 4,
       "i": "718f0401-85a3-4305-b45b-6ad5d7775c96",
-      "name": "Read/Write bytes",
+      "name": "Read/Write bytes (BPS)",
       "queries": [
         {
-          "query": "SELECT sum(\"read_bytes\") AS \"sum_read_bytes\", sum(\"write_bytes\") AS \"sum_write_bytes\" FROM \":db:\".\":rp:\".\"sqlserver_database_io\"",
+          "query": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"read_bytes\"), 1s) AS \"read_bytes\", NON_NEGATIVE_DERIVATIVE(mean(\"write_bytes\"),1s) AS \"write_bytes\" FROM \":db:\".\":rp:\".\"sqlserver_database_io\"",
           "groupbys": [],
           "wheres": []
         }
@@ -123,7 +168,7 @@
           "prefix": "",
           "suffix": "",
           "base": "2",
-          "scale": "log"
+          "scale": "linear"
         },
         "y2": {
           "bounds": ["", ""],
@@ -145,10 +190,10 @@
       "w": 4,
       "h": 4,
       "i": "375a4a81-2f5e-4058-ab8c-bbbf9be89db9",
-      "name": "Read/Write Latency(Microsecond)",
+      "name": "Read/Write Latency(Millisecond)",
       "queries": [
         {
-          "query": "SELECT mean(\"read_latency_ms\") AS \"mean_read_latency_ms\", mean(\"write_latency_ms\") AS \"mean_write_latency_ms\" FROM \":db:\".\":rp:\".\"sqlserver_database_io\"",
+          "query": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"read_latency_ms\"), 1s) AS \"mean_read_latency_ms\", NON_NEGATIVE_DERIVATIVE(mean(\"write_latency_ms\"), 1s) AS \"mean_write_latency_ms\" FROM \":db:\".\":rp:\".\"sqlserver_database_io\"",
           "groupbys": [],
           "wheres": []
         }
@@ -168,51 +213,6 @@
           "prefix": "",
           "suffix": "",
           "base": "10",
-          "scale": "log"
-        },
-        "y2": {
-          "bounds": ["", ""],
-          "label": "",
-          "prefix": "",
-          "suffix": "",
-          "base": "10",
-          "scale": "linear"
-        }
-      },
-      "legend": {
-        "type": "static",
-        "orientation": "bottom"
-      }
-    },
-    {
-      "x": 0,
-      "y": 0,
-      "w": 4,
-      "h": 4,
-      "i": "be2aeb77-037b-4ea6-a148-f5532156785e",
-      "name": "CPU usage(%)",
-      "queries": [
-        {
-          "query": "SELECT mean(\"value\") AS \"mean_value\" FROM \":db:\".\":rp:\".\"sqlserver_performance\"",
-          "groupbys": [],
-          "wheres": ["\"counter\"='CPU usage %'"]
-        }
-      ],
-      "axes": {
-        "x": {
-          "bounds": ["", ""],
-          "label": "",
-          "prefix": "",
-          "suffix": "",
-          "base": "10",
-          "scale": "linear"
-        },
-        "y": {
-          "bounds": ["", ""],
-          "label": "Usage",
-          "prefix": "",
-          "suffix": "%",
-          "base": "raw",
           "scale": "linear"
         },
         "y2": {
