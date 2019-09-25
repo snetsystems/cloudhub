@@ -10,7 +10,7 @@
       "w": 4,
       "h": 4,
       "i": "2637ee2e-7643-46a8-8233-a20049b2efd5",
-      "name": "Rx/Tx (Byte/sec)",
+      "name": "Rx/Tx (BPS)",
       "queries": [
         {
           "query": "SELECT derivative(mean(\"ifHCOutOctets\"), 1s) * 8 AS \"Tx\", derivative(mean(\"ifHCInOctets\"), 1s) * 8 AS \"Rx\" FROM \":db:\".\":rp:\".\"snmp-ifXTable\"",
