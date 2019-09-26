@@ -35,7 +35,7 @@ $FONT_COLOR_NORMAL: #bec2cc;
   z-index: unset;
   position: relative;
   margin: 0;
-  transition: background-color .25s;
+  transition: background-color 0.25s;
 
   &-level-2 {
     color: $FONT_COLOR_NORMAL;
@@ -82,5 +82,40 @@ $FONT_COLOR_NORMAL: #bec2cc;
   background-color: $g2-kevlar;
   &:focus {
     color: $g20-white;
+  }
+}
+
+/*****************
+Applications page view 
+******************/
+@keyframes clickMotion {
+  0% {
+    transform: translateY(1em);
+  }
+  50% {
+    transform: translateY(2em);
+  }
+  100% {
+    transform: translateY(1em);
+  }
+}
+
+.application--no-selected-graphic {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 20px;
+  .application--graphic-pointer {
+    height: 100%;
+    background-image: url('../../assets/images/pointer.svg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    animation: clickMotion 1.8s infinite linear;
+  }
+}
+
+.logs-viewer--table-container h4 {
+  line-height: 1.5;
+  .line-break {
+    display: block;
   }
 }

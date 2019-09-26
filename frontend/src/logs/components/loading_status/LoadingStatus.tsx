@@ -41,9 +41,9 @@ class LoadingStatus extends PureComponent<Props> {
       case SearchStatus.NoSelect:
         return (
           <>
-            <div>
-              <strong>Currently unselected.</strong>
-            </div>
+            <strong className="line-break">
+              Please, click the specific host into any category of applications.
+            </strong>
           </>
         )
       default:
@@ -76,11 +76,8 @@ class LoadingStatus extends PureComponent<Props> {
 
       case SearchStatus.NoSelect:
         return (
-          <div className="logs-viewer--search-graphic">
-            <div className="logs-viewer--graphic-log" />
-            <div className="logs-viewer--graphic-magnifier-a">
-              <div className="logs-viewer--graphic-magnifier-b" />
-            </div>
+          <div className="application--no-selected-graphic">
+            <div className="application--graphic-pointer" />
           </div>
         )
       default:
@@ -118,7 +115,7 @@ class LoadingStatus extends PureComponent<Props> {
         )
       case SearchStatus.Loading:
       case SearchStatus.NoSelect:
-        return 'Please select a category...'
+        return 'There is no selected host.'
       default:
         return 'Searching...'
     }

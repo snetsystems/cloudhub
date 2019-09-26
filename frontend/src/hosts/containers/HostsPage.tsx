@@ -103,6 +103,12 @@ export class HostsPage extends PureComponent<Props, State> {
       window.localStorage.getItem('hostsTableState')
     ).focusedHost
 
+    const getItem = window.localStorage.getItem('hostsTableStateProportions')
+    const {proportions} = getItem ? JSON.parse(getItem) : this.state
+    const convertProportions = Array.isArray(proportions)
+      ? proportions
+      : proportions.split(',').map(v => Number(v))
+
     const {notify, autoRefresh} = this.props
 
     this.setState({hostsPageStatus: RemoteDataState.Loading})
@@ -136,6 +142,7 @@ export class HostsPage extends PureComponent<Props, State> {
     this.setState({
       layouts,
       focusedHost: hostID,
+      proportions: convertProportions,
     })
   }
 
@@ -189,6 +196,11 @@ export class HostsPage extends PureComponent<Props, State> {
     clearInterval(this.intervalID)
     this.intervalID = null
     GlobalAutoRefresher.stopPolling()
+
+    window.localStorage.setItem(
+      `hostsTableStateProportions`,
+      `{"proportions": "${this.state.proportions}"}`
+    )
   }
 
   public render() {
