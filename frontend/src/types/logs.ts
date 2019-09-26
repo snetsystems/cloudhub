@@ -22,6 +22,7 @@ export enum SearchStatus {
   Loaded = 'Loaded',
   Clearing = 'Clearing',
   Cleared = 'Cleared',
+  NoSelect = 'NoSelect',
 }
 
 export interface Filter {

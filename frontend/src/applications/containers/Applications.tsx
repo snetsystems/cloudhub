@@ -16,6 +16,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import TreeMenu from 'src/reusable_ui/components/treemenu'
 import {Item} from 'src/reusable_ui/components/treemenu/TreeMenu/walk'
+import LoadingStatus from 'src/logs/components/loading_status/LoadingStatus'
 
 // APIs
 import {
@@ -53,6 +54,7 @@ import {
   TimeRange,
 } from 'src/types'
 import {timeRanges} from 'src/shared/data/timeRanges'
+import {SearchStatus} from 'src/types/logs'
 
 interface Props extends ManualRefreshProps {
   source: Source
@@ -71,7 +73,7 @@ interface State {
   focusedApp: string
   timeRange: TimeRange
   proportions: number[]
-  defaultView: boolean
+  isNotSelectStatus: Boolean
   initialActiveKey: string
   initialOpenNodes: string[]
 }
@@ -103,7 +105,7 @@ export class Applications extends PureComponent<Props, State> {
       focusedApp: '',
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       proportions: [0.25, 0.75],
-      defaultView: true,
+      isNotSelectStatus: true,
       initialActiveKey: '',
       initialOpenNodes: [],
     }
@@ -161,13 +163,26 @@ export class Applications extends PureComponent<Props, State> {
       )
     }
     GlobalAutoRefresher.poll(autoRefresh)
+
     const {filteredLayouts} = await this.getLayoutsforHostApp(
       layouts,
       focusedHost,
       focusedApp
     )
 
-    this.setState({filteredLayouts, layouts})
+    if (focusedHost === focusedApp) {
+      this.setState({
+        filteredLayouts,
+        layouts,
+        isNotSelectStatus: true,
+      })
+    } else {
+      this.setState({
+        filteredLayouts,
+        layouts,
+        isNotSelectStatus: false,
+      })
+    }
   }
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
@@ -242,6 +257,7 @@ export class Applications extends PureComponent<Props, State> {
       timeRange,
       initialActiveKey,
       initialOpenNodes,
+      isNotSelectStatus,
     } = this.state
     const [leftSize, rightSize] = proportions
 
@@ -273,18 +289,26 @@ export class Applications extends PureComponent<Props, State> {
         size: rightSize,
         render: () => (
           <Page.Contents>
-            <LayoutRenderer
-              source={source}
-              sources={[source]}
-              isStatusPage={false}
-              isStaticPage={true}
-              isEditable={false}
-              cells={layoutCells}
-              templates={tempVars}
-              timeRange={timeRange}
-              manualRefresh={this.props.manualRefresh}
-              host={focusedHost}
-            />
+            {isNotSelectStatus ? (
+              <LoadingStatus
+                status={SearchStatus.NoSelect}
+                lower={0}
+                upper={0}
+              />
+            ) : (
+              <LayoutRenderer
+                source={source}
+                sources={[source]}
+                isStatusPage={false}
+                isStaticPage={true}
+                isEditable={false}
+                cells={layoutCells}
+                templates={tempVars}
+                timeRange={timeRange}
+                manualRefresh={this.props.manualRefresh}
+                host={focusedHost}
+              />
+            )}
           </Page.Contents>
         ),
       },
@@ -293,7 +317,7 @@ export class Applications extends PureComponent<Props, State> {
 
   private onSelectedHost = (props: Item) => {
     if (props.level === 0 || props.level === 1) {
-      this.setState({focusedHost: '', focusedApp: '', defaultView: true})
+      this.setState({focusedHost: '', focusedApp: '', isNotSelectStatus: true})
     }
 
     if (props.level === 2) {
@@ -301,7 +325,7 @@ export class Applications extends PureComponent<Props, State> {
       this.setState({
         focusedHost: props.label,
         focusedApp: apps[1],
-        defaultView: false,
+        isNotSelectStatus: false,
       })
     }
   }
