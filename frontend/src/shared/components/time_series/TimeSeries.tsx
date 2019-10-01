@@ -111,10 +111,6 @@ class TimeSeries extends PureComponent<Props, State> {
     }
   }
 
-  public componentDidMount() {
-    this.executeQueries()
-  }
-
   public componentWillUnmount() {
     this.debouncer.cancelAll()
   }
