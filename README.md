@@ -82,7 +82,7 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
 
 ### Preparing dependencies
 
-- SCMP works with go 1.11+, node LTS, and yarn 1.7+.
+- SCMP works with go 1.12.1(recommended), node LTS, and yarn 1.7+.
 - In the case of Windows, it cannot be invoked "make" command,<br>So you need to download and install [GNUMake](http://gnuwin32.sourceforge.net/packages/make.htm) for windows.
   - [Direct download](http://gnuwin32.sourceforge.net/downlinks/make.php)
 
