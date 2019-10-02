@@ -4,12 +4,10 @@ import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import _ from 'lodash'
 import {getDeep} from 'src/utils/wrappers'
-import classnames from 'classnames'
 
 // Components
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import HostsTable from 'src/hosts/components/HostsTable'
-import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import ManualRefresh, {
@@ -204,22 +202,7 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {
-      source,
-      autoRefresh,
-      onChooseAutoRefresh,
-      onManualRefresh,
-    } = this.props
-    const {
-      hostsObject,
-      hostsPageStatus,
-      filteredLayouts,
-      focusedHost,
-      timeRange,
-    } = this.state
-
-    const layoutCells = getCells(filteredLayouts, source)
-    const tempVars = generateForHosts(source)
+    const {autoRefresh, onChooseAutoRefresh, onManualRefresh} = this.props
 
     return (
       <Page className="hosts-list-page">

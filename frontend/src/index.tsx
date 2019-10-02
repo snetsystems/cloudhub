@@ -156,7 +156,7 @@ class Root extends PureComponent<{}, State> {
                 <Route path="infrastructure" component={HostsPage} />
                 <Route path="infrastructure/:hostID" component={HostPage} />
                 <Route path="applications" component={Applications} />
-                {/* <Route path="alerts" component={AlertsApp} />
+                <Route path="alerts" component={AlertsApp} />
                 <Route path="alert-rules" component={KapacitorRulesPage} />
                 <Route
                   path="alert-rules/:ruleID"
@@ -170,12 +170,12 @@ class Root extends PureComponent<{}, State> {
                 <Route
                   path="kapacitors/:id/edit:hash"
                   component={KapacitorPage}
-                /> */}
+                />
                 <Route path="admin-cmp/:tab" component={AdminCMPPage} />
-                {/* <Route
+                <Route
                   path="admin-influxdb/:tab"
                   component={AdminInfluxDBPage}
-                /> */}
+                />
                 <Route path="manage-sources" component={ManageSources} />
               </Route>
             </Route>
