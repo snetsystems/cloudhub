@@ -43,11 +43,11 @@ export const fixtureStatusPageCells: Cell[] = [
     queries: [
       {
         id: '1234',
-        query: `SELECT count("value") AS "count_value" FROM "chronograf"."autogen"."alerts" WHERE time > ${TEMP_VAR_DASHBOARD_TIME} GROUP BY time(1d)`,
+        query: `SELECT count("value") AS "count_value" FROM "cmp"."autogen"."alerts" WHERE time > ${TEMP_VAR_DASHBOARD_TIME} GROUP BY time(1d)`,
         source: '',
         type: QueryType.InfluxQL,
         queryConfig: {
-          database: 'chronograf',
+          database: 'cmp',
           measurement: 'alerts',
           retentionPolicy: 'autogen',
           fields: [

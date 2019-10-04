@@ -253,7 +253,7 @@ it('parses a one-column meta query', () => {
                 values: [
                   ['_internal'],
                   ['telegraf'],
-                  ['chronograf'],
+                  ['cmp'],
                   ['hackathon'],
                   ['crypto'],
                 ],
@@ -271,7 +271,7 @@ it('parses a one-column meta query', () => {
       ['name'],
       ['_internal'],
       ['telegraf'],
-      ['chronograf'],
+      ['cmp'],
       ['hackathon'],
       ['crypto'],
     ],
