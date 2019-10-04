@@ -6,7 +6,7 @@ const showDatabasesResponse = {
         {
           name: 'databases',
           columns: ['name'],
-          values: [['telegraf'], ['_internal'], ['chronograf']],
+          values: [['telegraf'], ['_internal'], ['cmp']],
         },
       ],
     },
