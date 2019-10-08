@@ -84,6 +84,7 @@ interface State {
   layouts: Layout[]
   filteredLayouts: Layout[]
   focusedHost: string
+  HostsTableStateDump: {}
   timeRange: TimeRange
   proportions: number[]
   selected: QueriesModels.TimeRange
@@ -105,6 +106,7 @@ export class HostsPage extends PureComponent<Props, State> {
       layouts: [],
       filteredLayouts: [],
       focusedHost: '',
+      HostsTableStateDump: {},
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       proportions: [0.43, 0.57],
       selected: {lower: '', upper: ''},
@@ -120,6 +122,8 @@ export class HostsPage extends PureComponent<Props, State> {
     const hostsTableState = JSON.parse(
       window.localStorage.getItem('hostsTableState')
     ).focusedHost
+
+    console.log('mounted! hostsTableState', hostsTableState)
 
     const getItem = window.localStorage.getItem('hostsTableStateProportions')
     const {proportions} = getItem ? JSON.parse(getItem) : this.state
@@ -211,6 +215,7 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   public componentWillUnmount() {
+    console.log('unmount!', this.state.focusedHost)
     clearInterval(this.intervalID)
     this.intervalID = null
     GlobalAutoRefresher.stopPolling()
@@ -444,6 +449,15 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   private handleClickTableRow = (hostName: string) => () => {
+    const hostsTableState = window.localStorage.getItem('hostsTableState')
+    const jsonHostsTableState = JSON.parse(hostsTableState)
+    jsonHostsTableState.focusedHost = hostName
+
+    window.localStorage.setItem(
+      'hostsTableState',
+      `${JSON.stringify(jsonHostsTableState)}`
+    )
+
     this.setState({focusedHost: hostName})
   }
 }

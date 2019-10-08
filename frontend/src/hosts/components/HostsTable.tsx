@@ -120,7 +120,7 @@ class HostsTable extends PureComponent<Props, State> {
       ? window.localStorage.setItem(
           'hostsTableState',
           `{
-            "sortKey": "${this.state.sortKey}", 
+            "sortKey": "${this.state.sortKey}",
             "sortDirection": "${this.state.sortDirection}",
             "focusedHost": "${this.props.focusedHost}"
           }`
