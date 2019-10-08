@@ -13,8 +13,10 @@ import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/Aut
 import ManualRefresh, {
   ManualRefreshProps,
 } from 'src/shared/components/ManualRefresh'
-import {Page} from 'src/reusable_ui'
+import {Button, ButtonShape, IconFont, Page} from 'src/reusable_ui'
 import {ErrorHandling} from 'src/shared/decorators/errors'
+import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
+import GraphTips from 'src/shared/components/GraphTips'
 
 // APIs
 import {
@@ -27,7 +29,10 @@ import {
 import {getEnv} from 'src/shared/apis/env'
 
 // Actions
-import {setAutoRefresh} from 'src/shared/actions/app'
+import {
+  setAutoRefresh,
+  delayEnablePresentationMode,
+} from 'src/shared/actions/app'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 // Utils
@@ -55,6 +60,8 @@ import {
   TimeRange,
 } from 'src/types'
 import {timeRanges} from 'src/shared/data/timeRanges'
+import * as QueriesModels from 'src/types/queries'
+import * as AppActions from 'src/types/actions/app'
 
 interface Props extends ManualRefreshProps {
   source: Source
@@ -62,6 +69,13 @@ interface Props extends ManualRefreshProps {
   autoRefresh: number
   onChooseAutoRefresh: () => void
   notify: NotificationAction
+}
+
+interface Props {
+  handleChooseTimeRange: (timeRange: QueriesModels.TimeRange) => void
+  handleChooseAutoRefresh: AppActions.SetAutoRefreshActionCreator
+  handleClickPresentationButton: AppActions.DelayEnablePresentationModeDispatcher
+  inPresentationMode: boolean
 }
 
 interface State {
@@ -72,6 +86,7 @@ interface State {
   focusedHost: string
   timeRange: TimeRange
   proportions: number[]
+  selected: QueriesModels.TimeRange
 }
 
 @ErrorHandling
@@ -92,7 +107,12 @@ export class HostsPage extends PureComponent<Props, State> {
       focusedHost: '',
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       proportions: [0.43, 0.57],
+      selected: {lower: '', upper: ''},
     }
+  }
+
+  public componentWillMount() {
+    this.setState({selected: this.state.timeRange})
   }
 
   public async componentDidMount() {
@@ -202,19 +222,38 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {autoRefresh, onChooseAutoRefresh, onManualRefresh} = this.props
+    const {
+      autoRefresh,
+      onChooseAutoRefresh,
+      onManualRefresh,
+      inPresentationMode,
+    } = this.props
 
+    const {selected} = this.state
     return (
       <Page className="hosts-list-page">
-        <Page.Header>
+        <Page.Header inPresentationMode={inPresentationMode}>
           <Page.Header.Left>
             <Page.Title title="Infrastructure" />
           </Page.Header.Left>
           <Page.Header.Right showSourceIndicator={true}>
+            <GraphTips />
             <AutoRefreshDropdown
               selected={autoRefresh}
               onChoose={onChooseAutoRefresh}
               onManualRefresh={onManualRefresh}
+            />
+            <TimeRangeDropdown
+              onChooseTimeRange={this.handleChooseTimeRange.bind(
+                this.state.selected
+              )}
+              selected={selected}
+            />
+            <Button
+              icon={IconFont.ExpandA}
+              onClick={this.handleClickPresentationButton}
+              shape={ButtonShape.Square}
+              titleText="Enter Full-Screen Presentation Mode"
             />
           </Page.Header.Right>
         </Page.Header>
@@ -227,6 +266,20 @@ export class HostsPage extends PureComponent<Props, State> {
         </Page.Contents>
       </Page>
     )
+  }
+
+  private handleChooseTimeRange = ({lower, upper}) => {
+    console.log('lower, upper: ', lower, upper)
+    if (upper) {
+      this.setState({timeRange: {lower, upper}, selected: {lower, upper}})
+    } else {
+      const timeRange = timeRanges.find(range => range.lower === lower)
+      this.setState({timeRange, selected: timeRange})
+    }
+  }
+
+  private handleClickPresentationButton = (): void => {
+    this.props.handleClickPresentationButton()
   }
 
   private get horizontalDivisions() {
@@ -399,17 +452,23 @@ const mstp = state => {
   const {
     app: {
       persisted: {autoRefresh},
+      ephemeral: {inPresentationMode},
     },
     links,
   } = state
   return {
     links,
     autoRefresh,
+    inPresentationMode,
   }
 }
 
 const mdtp = dispatch => ({
   onChooseAutoRefresh: bindActionCreators(setAutoRefresh, dispatch),
+  handleClickPresentationButton: bindActionCreators(
+    delayEnablePresentationMode,
+    dispatch
+  ),
   notify: bindActionCreators(notifyAction, dispatch),
 })
 

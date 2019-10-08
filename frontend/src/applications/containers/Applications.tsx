@@ -11,12 +11,14 @@ import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/Aut
 import ManualRefresh, {
   ManualRefreshProps,
 } from 'src/shared/components/ManualRefresh'
-import {Page} from 'src/reusable_ui'
+import {Button, ButtonShape, IconFont, Page} from 'src/reusable_ui'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import TreeMenu from 'src/reusable_ui/components/treemenu'
 import {Item} from 'src/reusable_ui/components/treemenu/TreeMenu/walk'
 import LoadingStatus from 'src/logs/components/loading_status/LoadingStatus'
+import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
+import GraphTips from 'src/shared/components/GraphTips'
 
 // APIs
 import {
@@ -29,7 +31,10 @@ import {
 import {getEnv} from 'src/shared/apis/env'
 
 // Actions
-import {setAutoRefresh} from 'src/shared/actions/app'
+import {
+  setAutoRefresh,
+  delayEnablePresentationMode,
+} from 'src/shared/actions/app'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 // Utils
@@ -55,6 +60,8 @@ import {
 } from 'src/types'
 import {timeRanges} from 'src/shared/data/timeRanges'
 import {SearchStatus} from 'src/types/logs'
+import * as QueriesModels from 'src/types/queries'
+import * as AppActions from 'src/types/actions/app'
 
 interface Props extends ManualRefreshProps {
   source: Source
@@ -62,6 +69,14 @@ interface Props extends ManualRefreshProps {
   autoRefresh: number
   onChooseAutoRefresh: () => void
   notify: NotificationAction
+}
+
+interface Props {
+  handleChooseTimeRange: (timeRange: QueriesModels.TimeRange) => void
+  handleChooseAutoRefresh: AppActions.SetAutoRefreshActionCreator
+  handleClickPresentationButton: AppActions.DelayEnablePresentationModeDispatcher
+
+  inPresentationMode: boolean
 }
 
 interface State {
@@ -76,6 +91,8 @@ interface State {
   isNotSelectStatus: Boolean
   initialActiveKey: string
   initialOpenNodes: string[]
+  selected: QueriesModels.TimeRange
+  zoomedTimeRange: QueriesModels.TimeRange
 }
 
 interface KeyInterface {
@@ -95,7 +112,6 @@ export class Applications extends PureComponent<Props, State> {
 
   constructor(props: Props) {
     super(props)
-
     this.state = {
       hostsObject: {},
       appHostData: {},
@@ -108,6 +124,11 @@ export class Applications extends PureComponent<Props, State> {
       isNotSelectStatus: true,
       initialActiveKey: '',
       initialOpenNodes: [],
+      selected: {lower: '', upper: ''},
+      zoomedTimeRange: {
+        upper: '',
+        lower: '',
+      },
     }
   }
 
@@ -139,6 +160,10 @@ export class Applications extends PureComponent<Props, State> {
         })
       }
     }
+
+    this.setState({
+      selected: this.state.timeRange,
+    })
   }
 
   public async componentDidMount() {
@@ -179,6 +204,7 @@ export class Applications extends PureComponent<Props, State> {
     } else {
       this.setState({
         filteredLayouts,
+
         layouts,
         isNotSelectStatus: false,
       })
@@ -216,19 +242,39 @@ export class Applications extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {autoRefresh, onChooseAutoRefresh, onManualRefresh} = this.props
+    const {
+      autoRefresh,
+      onChooseAutoRefresh,
+      onManualRefresh,
+      inPresentationMode,
+    } = this.props
+
+    const {selected} = this.state
 
     return (
       <Page>
-        <Page.Header fullWidth={true}>
+        <Page.Header fullWidth={true} inPresentationMode={inPresentationMode}>
           <Page.Header.Left>
             <Page.Title title="Applications" />
           </Page.Header.Left>
           <Page.Header.Right showSourceIndicator={true}>
+            <GraphTips />
             <AutoRefreshDropdown
               selected={autoRefresh}
               onChoose={onChooseAutoRefresh}
               onManualRefresh={onManualRefresh}
+            />
+            <TimeRangeDropdown
+              onChooseTimeRange={this.handleChooseTimeRange.bind(
+                this.state.selected
+              )}
+              selected={selected}
+            />
+            <Button
+              icon={IconFont.ExpandA}
+              onClick={this.handleClickPresentationButton}
+              shape={ButtonShape.Square}
+              titleText="Enter Full-Screen Presentation Mode"
             />
           </Page.Header.Right>
         </Page.Header>
@@ -241,6 +287,20 @@ export class Applications extends PureComponent<Props, State> {
         </Page.Contents>
       </Page>
     )
+  }
+
+  private handleChooseTimeRange = ({lower, upper}) => {
+    console.log('lower, upper: ', lower, upper)
+    if (upper) {
+      this.setState({timeRange: {lower, upper}, selected: {lower, upper}})
+    } else {
+      const timeRange = timeRanges.find(range => range.lower === lower)
+      this.setState({timeRange, selected: timeRange})
+    }
+  }
+
+  private handleClickPresentationButton = (): void => {
+    this.props.handleClickPresentationButton()
   }
 
   private handleResize = (proportions: number[]) => {
@@ -263,6 +323,7 @@ export class Applications extends PureComponent<Props, State> {
 
     const layoutCells = getCells(filteredLayouts, source)
     const tempVars = generateForHosts(source)
+
     return [
       {
         name: 'Application Tree',
@@ -523,16 +584,23 @@ const mstp = state => {
   const {
     app: {
       persisted: {autoRefresh},
+      ephemeral: {inPresentationMode},
     },
     links,
   } = state
   return {
     links,
     autoRefresh,
+    inPresentationMode,
   }
 }
 
 const mdtp = dispatch => ({
+  handleChooseAutoRefresh: bindActionCreators(setAutoRefresh, dispatch),
+  handleClickPresentationButton: bindActionCreators(
+    delayEnablePresentationMode,
+    dispatch
+  ),
   onChooseAutoRefresh: bindActionCreators(setAutoRefresh, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
 })
