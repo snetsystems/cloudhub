@@ -14,6 +14,6 @@ export const getAlerts = (
   return proxy({
     source,
     query,
-    db: 'chronograf',
+    db: 'cmp',
   })
 }

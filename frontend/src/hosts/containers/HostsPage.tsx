@@ -13,8 +13,10 @@ import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/Aut
 import ManualRefresh, {
   ManualRefreshProps,
 } from 'src/shared/components/ManualRefresh'
-import {Page} from 'src/reusable_ui'
+import {Button, ButtonShape, IconFont, Page} from 'src/reusable_ui'
 import {ErrorHandling} from 'src/shared/decorators/errors'
+import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
+import GraphTips from 'src/shared/components/GraphTips'
 
 // APIs
 import {
@@ -27,8 +29,17 @@ import {
 import {getEnv} from 'src/shared/apis/env'
 
 // Actions
-import {setAutoRefresh} from 'src/shared/actions/app'
+import {
+  setAutoRefresh,
+  delayEnablePresentationMode,
+} from 'src/shared/actions/app'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
+
+//Middleware
+import {
+  setLocalStorage,
+  getLocalStorage,
+} from 'src/shared/middleware/localStorage'
 
 // Utils
 import {generateForHosts} from 'src/utils/tempVars'
@@ -55,6 +66,8 @@ import {
   TimeRange,
 } from 'src/types'
 import {timeRanges} from 'src/shared/data/timeRanges'
+import * as QueriesModels from 'src/types/queries'
+import * as AppActions from 'src/types/actions/app'
 
 interface Props extends ManualRefreshProps {
   source: Source
@@ -64,14 +77,23 @@ interface Props extends ManualRefreshProps {
   notify: NotificationAction
 }
 
+interface Props {
+  handleChooseTimeRange: (timeRange: QueriesModels.TimeRange) => void
+  handleChooseAutoRefresh: AppActions.SetAutoRefreshActionCreator
+  handleClickPresentationButton: AppActions.DelayEnablePresentationModeDispatcher
+  inPresentationMode: boolean
+}
+
 interface State {
   hostsObject: {[x: string]: Host}
   hostsPageStatus: RemoteDataState
   layouts: Layout[]
   filteredLayouts: Layout[]
   focusedHost: string
+  HostsTableStateDump: {}
   timeRange: TimeRange
   proportions: number[]
+  selected: QueriesModels.TimeRange
 }
 
 @ErrorHandling
@@ -90,26 +112,28 @@ export class HostsPage extends PureComponent<Props, State> {
       layouts: [],
       filteredLayouts: [],
       focusedHost: '',
+      HostsTableStateDump: {},
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       proportions: [0.43, 0.57],
+      selected: {lower: '', upper: ''},
     }
   }
 
-  public async componentDidMount() {
-    // localStorage data dump
-    const hostsTableState = JSON.parse(
-      window.localStorage.getItem('hostsTableState')
-    ).focusedHost
+  public componentWillMount() {
+    this.setState({selected: this.state.timeRange})
+  }
 
-    const getItem = window.localStorage.getItem('hostsTableStateProportions')
-    const {proportions} = getItem ? JSON.parse(getItem) : this.state
+  public async componentDidMount() {
+    const {focusedHost} = getLocalStorage('hostsTableState')
+
+    const getItem = getLocalStorage('hostsTableStateProportions')
+    const {proportions} = getItem || this.state
+
     const convertProportions = Array.isArray(proportions)
       ? proportions
       : proportions.split(',').map(v => Number(v))
 
     const {notify, autoRefresh} = this.props
-
-    this.setState({hostsPageStatus: RemoteDataState.Loading})
 
     const layoutResults = await getLayouts()
     const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
@@ -127,7 +151,7 @@ export class HostsPage extends PureComponent<Props, State> {
     await this.fetchHostsData(layouts)
 
     // For rendering the charts with the focused single host.
-    const hostID = hostsTableState || this.getFirstHost(this.state.hostsObject)
+    const hostID = focusedHost || this.getFirstHost(this.state.hostsObject)
 
     if (autoRefresh) {
       this.intervalID = window.setInterval(
@@ -141,6 +165,7 @@ export class HostsPage extends PureComponent<Props, State> {
       layouts,
       focusedHost: hostID,
       proportions: convertProportions,
+      hostsPageStatus: RemoteDataState.Loading,
     })
   }
 
@@ -191,30 +216,48 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   public componentWillUnmount() {
+    setLocalStorage('hostsTableStateProportions', {
+      proportions: this.state.proportions,
+    })
+
     clearInterval(this.intervalID)
     this.intervalID = null
     GlobalAutoRefresher.stopPolling()
-
-    window.localStorage.setItem(
-      `hostsTableStateProportions`,
-      `{"proportions": "${this.state.proportions}"}`
-    )
   }
 
   public render() {
-    const {autoRefresh, onChooseAutoRefresh, onManualRefresh} = this.props
+    const {
+      autoRefresh,
+      onChooseAutoRefresh,
+      onManualRefresh,
+      inPresentationMode,
+    } = this.props
 
+    const {selected} = this.state
     return (
       <Page className="hosts-list-page">
-        <Page.Header>
+        <Page.Header inPresentationMode={inPresentationMode}>
           <Page.Header.Left>
             <Page.Title title="Infrastructure" />
           </Page.Header.Left>
           <Page.Header.Right showSourceIndicator={true}>
+            <GraphTips />
             <AutoRefreshDropdown
               selected={autoRefresh}
               onChoose={onChooseAutoRefresh}
               onManualRefresh={onManualRefresh}
+            />
+            <TimeRangeDropdown
+              onChooseTimeRange={this.handleChooseTimeRange.bind(
+                this.state.selected
+              )}
+              selected={selected}
+            />
+            <Button
+              icon={IconFont.ExpandA}
+              onClick={this.handleClickPresentationButton}
+              shape={ButtonShape.Square}
+              titleText="Enter Full-Screen Presentation Mode"
             />
           </Page.Header.Right>
         </Page.Header>
@@ -227,6 +270,19 @@ export class HostsPage extends PureComponent<Props, State> {
         </Page.Contents>
       </Page>
     )
+  }
+
+  private handleChooseTimeRange = ({lower, upper}) => {
+    if (upper) {
+      this.setState({timeRange: {lower, upper}, selected: {lower, upper}})
+    } else {
+      const timeRange = timeRanges.find(range => range.lower === lower)
+      this.setState({timeRange, selected: timeRange})
+    }
+  }
+
+  private handleClickPresentationButton = (): void => {
+    this.props.handleClickPresentationButton()
   }
 
   private get horizontalDivisions() {
@@ -391,6 +447,9 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   private handleClickTableRow = (hostName: string) => () => {
+    const hostsTableState = getLocalStorage('hostsTableState')
+    hostsTableState.focusedHost = hostName
+    setLocalStorage('hostsTableState', hostsTableState)
     this.setState({focusedHost: hostName})
   }
 }
@@ -399,17 +458,23 @@ const mstp = state => {
   const {
     app: {
       persisted: {autoRefresh},
+      ephemeral: {inPresentationMode},
     },
     links,
   } = state
   return {
     links,
     autoRefresh,
+    inPresentationMode,
   }
 }
 
 const mdtp = dispatch => ({
   onChooseAutoRefresh: bindActionCreators(setAutoRefresh, dispatch),
+  handleClickPresentationButton: bindActionCreators(
+    delayEnablePresentationMode,
+    dispatch
+  ),
   notify: bindActionCreators(notifyAction, dispatch),
 })
 

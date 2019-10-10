@@ -253,20 +253,20 @@ export interface KeyMappings {
 }
 
 export interface FieldsFromConfigAlerts {
-  alerta: string[]
-  hipChat: string[]
+  alerta?: string[]
+  hipChat?: string[]
   kafka: string[]
-  opsGenie: string[]
-  opsGenie2: string[]
-  pagerDuty: string[]
-  pagerDuty2: string[]
-  pushover: string[]
-  sensu: string[]
+  opsGenie?: string[]
+  opsGenie2?: string[]
+  pagerDuty?: string[]
+  pagerDuty2?: string[]
+  pushover?: string[]
+  sensu?: string[]
   slack: string[]
   email: string[]
-  talk: string[]
+  talk?: string[]
   telegram: string[]
-  victorOps: string[]
+  victorOps?: string[]
 }
 
 export interface FieldsFromAllAlerts extends FieldsFromConfigAlerts {

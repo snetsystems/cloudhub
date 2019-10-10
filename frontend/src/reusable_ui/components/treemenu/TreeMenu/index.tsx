@@ -11,6 +11,9 @@ import walk, {
 import {defaultChildren, TreeMenuChildren, TreeMenuItem} from './renderProps'
 import KeyDown from '../KeyDown'
 
+//Middleware
+import {setLocalStorage} from 'src/shared/middleware/localStorage'
+
 export type TreeMenuProps = {
   data: {[name: string]: TreeNode} | TreeNodeInArray[]
   activeKey?: string
@@ -166,12 +169,9 @@ class TreeMenu extends React.Component<TreeMenuProps, TreeMenuState> {
 
     const activeItem = items.filter(v => (v.active === true ? v : ''))
 
-    window.localStorage.setItem(
-      'ApplicationTreeMenuState',
-      `{
-        "initialSource": ${JSON.stringify(activeItem)}
-      }`
-    )
+    setLocalStorage('ApplicationTreeMenuState', {
+      initialSource: activeItem,
+    })
 
     return (
       <KeyDown {...keyDownProps}>
