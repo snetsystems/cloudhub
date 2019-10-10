@@ -52,20 +52,20 @@ export enum AlertDisplayText {
 }
 
 export const SupportedServices: string[] = [
-  'alerta',
-  'hipchat',
+  // 'alerta',
+  // 'hipchat',
   'kafka',
-  'opsgenie',
-  'opsgenie2',
-  'pagerduty',
-  'pagerduty2',
-  'pushover',
-  'sensu',
+  // 'opsgenie',
+  // 'opsgenie2',
+  // 'pagerduty',
+  // 'pagerduty2',
+  // 'pushover',
+  // 'sensu',
   'slack',
   'smtp',
-  'talk',
+  // 'talk',
   'telegram',
-  'victorops',
+  // 'victorops',
 ]
 
 export const defaultRuleConfigs = {
@@ -214,18 +214,18 @@ export const MAP_KEYS_FROM_CONFIG: KeyMappings = {
 
 // ALERTS_FROM_CONFIG the array of fields to accept from Kapacitor Config
 export const ALERTS_FROM_CONFIG: FieldsFromConfigAlerts = {
-  alerta: ['environment', 'origin', 'token'], // token = bool
-  hipChat: ['url', 'room', 'token'], // token = bool
+  // alerta: ['environment', 'origin', 'token'], // token = bool
+  // hipChat: ['url', 'room', 'token'], // token = bool
   kafka: ['id'],
-  opsGenie: ['api-key', 'teams', 'recipients'], // api-key = bool
-  opsGenie2: ['api-key', 'teams', 'recipients'], // api-key = bool
-  pagerDuty: ['service-key'], // service-key = bool
-  pagerDuty2: ['routing-key'], // routing-key = bool
-  pushover: ['token', 'user-key'], // token = bool, user-key = bool
-  sensu: ['addr', 'source'],
+  // opsGenie: ['api-key', 'teams', 'recipients'], // api-key = bool
+  // opsGenie2: ['api-key', 'teams', 'recipients'], // api-key = bool
+  // pagerDuty: ['service-key'], // service-key = bool
+  // pagerDuty2: ['routing-key'], // routing-key = bool
+  // pushover: ['token', 'user-key'], // token = bool, user-key = bool
+  // sensu: ['addr', 'source'],
   slack: ['url', 'channel', 'workspace'], // url = bool
   email: ['from', 'host', 'password', 'port', 'username'], // password = bool
-  talk: ['url', 'author_name'], // url = bool
+  // talk: ['url', 'author_name'], // url = bool
   telegram: [
     'token',
     'chat-id',
@@ -233,7 +233,7 @@ export const ALERTS_FROM_CONFIG: FieldsFromConfigAlerts = {
     'disable-web-page-preview',
     'disable-notification',
   ], // token = bool
-  victorOps: ['api-key', 'routing-key'], // api-key = bool
+  // victorOps: ['api-key', 'routing-key'], // api-key = bool
   // snmpTrap: ['trapOid', 'data'], // [oid/type/value]
   // influxdb:[],
   // mqtt:[]
@@ -265,33 +265,33 @@ export const MAP_FIELD_KEYS_FROM_CONFIG: ConfigKeyMaps = {
 
 // HANDLERS_TO_RULE returns array of fields that may be updated for each alert on rule.
 export const HANDLERS_TO_RULE_THEM_ALL: FieldsFromAllAlerts = {
-  alerta: [
-    'resource',
-    'event',
-    'environment',
-    'group',
-    'value',
-    'origin',
-    'service',
-  ],
-  hipChat: ['room'],
+  // alerta: [
+  //   'resource',
+  //   'event',
+  //   'environment',
+  //   'group',
+  //   'value',
+  //   'origin',
+  //   'service',
+  // ],
+  // hipChat: ['room'],
   kafka: ['id', 'cluster', 'kafka-topic', 'template'],
-  opsGenie: ['teams', 'recipients'],
-  opsGenie2: ['teams', 'recipients'],
-  pagerDuty: [],
-  pagerDuty2: [],
-  pushover: ['device', 'title', 'sound', 'url', 'urlTitle'],
-  sensu: ['source', 'handlers'],
+  // opsGenie: ['teams', 'recipients'],
+  // opsGenie2: ['teams', 'recipients'],
+  // pagerDuty: [],
+  // pagerDuty2: [],
+  // pushover: ['device', 'title', 'sound', 'url', 'urlTitle'],
+  // sensu: ['source', 'handlers'],
   slack: ['channel', 'username', 'iconEmoji', 'workspace'],
   email: ['to'],
-  talk: [],
+  // talk: [],
   telegram: [
     'chatId',
     'parseMode',
     'disableWebPagePreview',
     'disableNotification',
   ],
-  victorOps: ['routingKey'],
+  // victorOps: ['routingKey'],
   post: ['url', 'headers', 'captureResponse'],
   tcp: ['address'],
   exec: ['command'],
