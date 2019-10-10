@@ -13,6 +13,13 @@ import {Source, RemoteDataState, Host} from 'src/types'
 
 import {HostsPage} from 'src/hosts/containers/HostsPage'
 
+//middlware
+import {
+  setLocalStorage,
+  getLocalStorage,
+  verifyLocalStorage,
+} from 'src/shared/middleware/localStorage'
+
 enum SortDirection {
   ASC = 'asc',
   DESC = 'desc',
@@ -116,33 +123,26 @@ class HostsTable extends PureComponent<Props, State> {
   }
 
   public componentWillMount() {
-    !window.localStorage.getItem('hostsTableState')
-      ? window.localStorage.setItem(
-          'hostsTableState',
-          `{
-            "sortKey": "${this.state.sortKey}", 
-            "sortDirection": "${this.state.sortDirection}",
-            "focusedHost": "${this.props.focusedHost}"
-          }`
-        )
-      : {}
+    verifyLocalStorage(getLocalStorage, setLocalStorage, 'hostsTableState', {
+      sortKey: this.state.sortKey,
+      sortDirection: this.state.sortDirection,
+      focusedHost: this.props.focusedHost,
+    })
 
-    const hostsTableState = window.localStorage.getItem('hostsTableState')
-    const serializedHostsTableState = JSON.parse(hostsTableState)
+    const {sortKey, sortDirection} = getLocalStorage('hostsTableState')
 
-    this.setState({sortKey: serializedHostsTableState.sortKey})
-    this.setState({sortDirection: serializedHostsTableState.sortDirection})
+    this.setState({
+      sortKey,
+      sortDirection,
+    })
   }
 
   public componentDidUpdate() {
-    window.localStorage.setItem(
-      'hostsTableState',
-      `{
-        "sortKey": "${this.state.sortKey}", 
-        "sortDirection": "${this.state.sortDirection}",
-        "focusedHost": "${this.props.focusedHost}"
-      }`
-    )
+    setLocalStorage('hostsTableState', {
+      sortKey: this.state.sortKey,
+      sortDirection: this.state.sortDirection,
+      focusedHost: this.props.focusedHost,
+    })
   }
 
   public render() {
