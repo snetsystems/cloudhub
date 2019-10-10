@@ -35,6 +35,12 @@ import {
 } from 'src/shared/actions/app'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
+//Middleware
+import {
+  setLocalStorage,
+  getLocalStorage,
+} from 'src/shared/middleware/localStorage'
+
 // Utils
 import {generateForHosts} from 'src/utils/tempVars'
 import {getCells} from 'src/hosts/utils/getCells'
@@ -118,22 +124,16 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   public async componentDidMount() {
-    // localStorage data dump
-    const hostsTableState = JSON.parse(
-      window.localStorage.getItem('hostsTableState')
-    ).focusedHost
+    const {focusedHost} = getLocalStorage('hostsTableState')
 
-    console.log('mounted! hostsTableState', hostsTableState)
+    const getItem = getLocalStorage('hostsTableStateProportions')
+    const {proportions} = getItem || this.state
 
-    const getItem = window.localStorage.getItem('hostsTableStateProportions')
-    const {proportions} = getItem ? JSON.parse(getItem) : this.state
     const convertProportions = Array.isArray(proportions)
       ? proportions
       : proportions.split(',').map(v => Number(v))
 
     const {notify, autoRefresh} = this.props
-
-    this.setState({hostsPageStatus: RemoteDataState.Loading})
 
     const layoutResults = await getLayouts()
     const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
@@ -151,7 +151,7 @@ export class HostsPage extends PureComponent<Props, State> {
     await this.fetchHostsData(layouts)
 
     // For rendering the charts with the focused single host.
-    const hostID = hostsTableState || this.getFirstHost(this.state.hostsObject)
+    const hostID = focusedHost || this.getFirstHost(this.state.hostsObject)
 
     if (autoRefresh) {
       this.intervalID = window.setInterval(
@@ -165,6 +165,7 @@ export class HostsPage extends PureComponent<Props, State> {
       layouts,
       focusedHost: hostID,
       proportions: convertProportions,
+      hostsPageStatus: RemoteDataState.Loading,
     })
   }
 
@@ -215,15 +216,13 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   public componentWillUnmount() {
-    console.log('unmount!', this.state.focusedHost)
+    setLocalStorage('hostsTableStateProportions', {
+      proportions: this.state.proportions,
+    })
+
     clearInterval(this.intervalID)
     this.intervalID = null
     GlobalAutoRefresher.stopPolling()
-
-    window.localStorage.setItem(
-      `hostsTableStateProportions`,
-      `{"proportions": "${this.state.proportions}"}`
-    )
   }
 
   public render() {
@@ -274,7 +273,6 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   private handleChooseTimeRange = ({lower, upper}) => {
-    console.log('lower, upper: ', lower, upper)
     if (upper) {
       this.setState({timeRange: {lower, upper}, selected: {lower, upper}})
     } else {
@@ -449,15 +447,9 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   private handleClickTableRow = (hostName: string) => () => {
-    const hostsTableState = window.localStorage.getItem('hostsTableState')
-    const jsonHostsTableState = JSON.parse(hostsTableState)
-    jsonHostsTableState.focusedHost = hostName
-
-    window.localStorage.setItem(
-      'hostsTableState',
-      `${JSON.stringify(jsonHostsTableState)}`
-    )
-
+    const hostsTableState = getLocalStorage('hostsTableState')
+    hostsTableState.focusedHost = hostName
+    setLocalStorage('hostsTableState', hostsTableState)
     this.setState({focusedHost: hostName})
   }
 }

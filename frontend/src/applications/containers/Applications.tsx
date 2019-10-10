@@ -37,6 +37,9 @@ import {
 } from 'src/shared/actions/app'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
+//Middleware
+import {getLocalStorage} from 'src/shared/middleware/localStorage'
+
 // Utils
 import {generateForHosts} from 'src/utils/tempVars'
 import {getCells} from 'src/hosts/utils/getCells'
@@ -148,22 +151,27 @@ export class Applications extends PureComponent<Props, State> {
       }
     }
 
-    const getItem = window.localStorage.getItem('ApplicationTreeMenuState')
+    const getItem = getLocalStorage('ApplicationTreeMenuState')
 
-    if (getItem) {
-      const {initialSource} = JSON.parse(getItem)
-      if (!initialSource[0]) return
+    if (getItem === null) {
+      this.setState({
+        selected: this.state.timeRange,
+      })
+      return
+    } else {
+      const {initialSource} = getItem
+      if (!initialSource[0])
+        return this.setState({selected: this.state.timeRange})
+
       if (initialSource[0].hasOwnProperty('key')) {
         const {key} = initialSource[0]
         this.setState({
           ...decompositionKey(key),
+          selected: this.state.timeRange,
         })
+        return
       }
     }
-
-    this.setState({
-      selected: this.state.timeRange,
-    })
   }
 
   public async componentDidMount() {
@@ -290,7 +298,6 @@ export class Applications extends PureComponent<Props, State> {
   }
 
   private handleChooseTimeRange = ({lower, upper}) => {
-    console.log('lower, upper: ', lower, upper)
     if (upper) {
       this.setState({timeRange: {lower, upper}, selected: {lower, upper}})
     } else {
