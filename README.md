@@ -166,11 +166,11 @@ Also, for UI debugging, select **"Static Debug"** and then run debug.
 
 If you run a not login mode, you can use **"Continuous Debug"**, after _**yarn start**_
 
-```
+````
 $ cd $CMP_PATH/frontend
 $ yarn start
 yarn run v1.15.2
 $ node parcel.jsx
 Serving on http://localhost:8080
 √  Built in 7.54s.
-```
+````
