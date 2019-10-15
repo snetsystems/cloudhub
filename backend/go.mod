@@ -1,7 +1,5 @@
 module github.com/snetsystems/cmp/backend
 
-go 1.12
-
 require (
 	github.com/NYTimes/gziphandler v0.0.0-20170104155701-6710af535839
 	github.com/Sirupsen/logrus v0.0.0-20160829202321-3ec0642a7fb6
