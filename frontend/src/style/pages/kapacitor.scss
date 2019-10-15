@@ -4,7 +4,7 @@
 */
 $rule-builder--accent-color: $c-rainforest;
 $rule-builder--left-gutter: 46px;
-$rule-builder--section-gap: ($cmp-page-header-height / 2);
+$rule-builder--section-gap: ($s-cmp-page-header-height / 2);
 $rule-builder--section-bg: $g3-castle;
 $rule-builder--section-border: $g2-kevlar;
 $rule-builder--dot: 6px;
@@ -234,11 +234,8 @@ $rule-builder--radius-lg: 5px;
     }
   }
 }
-
-/*
-  Section 2 - Rule Conditions
-  -----------------------------------------------------------------------------
-*/
+/* Section 2 - Rule Conditions
+  ----------------------------------------------------------------------------- */
 .rule-builder--metric {
   height: 30px;
   line-height: 30px;
@@ -259,7 +256,6 @@ $rule-builder--radius-lg: 5px;
 }
 .rule-builder--graph {
   padding: 0 $rule-builder--padding-sm;
-
   > div.dygraph {
     position: absolute;
     top: ($rule-builder--padding-lg * 2);
@@ -279,14 +275,12 @@ $rule-builder--radius-lg: 5px;
   align-items: center;
   justify-content: center;
   @include no-user-select();
-
   p {
     margin: 0;
     font-size: 16px;
     line-height: 23px;
     text-align: center;
     color: $g12-forge;
-
     strong {
       color: $g18-cloud;
       font-weight: 900;
@@ -300,7 +294,6 @@ $rule-builder--radius-lg: 5px;
   display: flex;
   align-items: center;
   height: ($rule-builder--padding-lg * 2);
-
   p {
     font-weight: 600;
     color: $g15-platinum;
@@ -308,11 +301,8 @@ $rule-builder--radius-lg: 5px;
     @include no-user-select();
   }
 }
-
-/*
-  Section 3 - Rule Message
-  -----------------------------------------------------------------------------
-*/
+/* Section 3 - Rule Message
+  ----------------------------------------------------------------------------- */
 .rule-builder--message {
   background-color: $rule-builder--section-bg;
   padding: $rule-builder--padding-lg - 2px;
@@ -335,22 +325,17 @@ $rule-builder--radius-lg: 5px;
   margin: 2px;
   transition: color 0.25s ease;
   @include no-user-select();
-
   &:hover {
     color: $rule-builder--accent-color;
     cursor: pointer;
   }
 }
-
-/*
-  Section 3 - Optional Alert Parameters
-  -----------------------------------------------------------------------------
-*/
+/* Section 3 - Optional Alert Parameters
+  ----------------------------------------------------------------------------- */
 .optional-alert-parameters {
   flex: 1 0 0;
   display: flex;
   flex-wrap: nowrap;
-
   .form-group {
     flex: 1 0 0;
     display: flex;
@@ -359,7 +344,6 @@ $rule-builder--radius-lg: 5px;
     margin: 0;
     padding-right: 8px;
     position: relative;
-
     &:last-of-type {
       padding-right: 0;
     }
@@ -392,11 +376,8 @@ $rule-builder--radius-lg: 5px;
     box-shadow: 0 0 8px $c-rainforest;
   }
 }
-
-/*
-  Color coding for alerts in Alert History table
-  -----------------------------------------------------------------------------
-*/
+/* Color coding for alerts in Alert History table
+  ----------------------------------------------------------------------------- */
 .alert-level-ok {
   &,
   &:hover {
@@ -415,24 +396,19 @@ $rule-builder--radius-lg: 5px;
     color: $c-dreamsicle !important;
   }
 }
-
-/*
-  Styles for Endpoints section
-  -----------------------------------------------------------------------------
-*/
+/* Styles for Endpoints section
+  ----------------------------------------------------------------------------- */
 .rule-message--endpoints {
   display: flex;
   align-items: stretch;
   flex-wrap: nowrap;
 }
-
 .rule-message--add-endpoint {
   margin-left: 4px;
 }
 .rule-message--add-endpoint .dropdown-menu {
   max-height: 233px;
 }
-
 .rule-message--add-endpoint
   .dropdown-menu.dropdown-malachite
   li.dropdown-divider {
@@ -449,7 +425,6 @@ $rule-builder--radius-lg: 5px;
   padding: 0;
   overflow: hidden;
 }
-
 .endpoint-tab {
   display: block;
   list-style: none;
@@ -468,11 +443,9 @@ $rule-builder--radius-lg: 5px;
   border-right: 2px solid $rule-builder--section-border;
   transition: color 0.25s ease, background-color 0.25s ease,
     border-color 0.25s ease;
-
   &:last-child {
     margin-bottom: 0;
   }
-
   &:hover {
     cursor: pointer;
     background-color: $rule-builder--section-bg;
@@ -497,7 +470,6 @@ $rule-builder--radius-lg: 5px;
   outline: none;
   background-color: transparent;
   border: none;
-
   &:before,
   &:after {
     content: '';
@@ -517,7 +489,6 @@ $rule-builder--radius-lg: 5px;
     width: 2px;
     height: 12px;
   }
-
   &:hover {
     background-color: $g5-pepper;
     cursor: pointer;
@@ -538,7 +509,6 @@ $rule-builder--radius-lg: 5px;
   flex-direction: column;
   align-items: stretch;
   min-height: 350px;
-
   h4 {
     width: 100%;
     margin: 0;
@@ -552,7 +522,6 @@ $rule-builder--radius-lg: 5px;
 .endpoint-tab--parameters {
   padding: $rule-builder--padding-lg;
   padding-bottom: 0;
-
   &:last-child {
     padding-bottom: $rule-builder--padding-lg;
   }
@@ -561,14 +530,12 @@ $rule-builder--radius-lg: 5px;
   align-items: center;
   justify-content: center;
   @include no-user-select();
-
   p {
     margin: 0;
     font-size: 16px;
     line-height: 23px;
     text-align: center;
     color: $g12-forge;
-
     strong {
       color: $g18-cloud;
       font-weight: 900;
@@ -591,11 +558,8 @@ $rule-builder--radius-lg: 5px;
 .endpoint-tab--parameters h4 .btn {
   margin-left: 6px;
 }
-
-/*
- Rule Details
-  -----------------------------------------------------------------------------
-*/
+/* Rule Details
+  ----------------------------------------------------------------------------- */
 .rule-builder--details {
   background-color: $rule-builder--section-bg;
   padding-top: $rule-builder--padding-lg - 2px;
@@ -621,7 +585,6 @@ $rule-builder--radius-lg: 5px;
   margin: 2px;
   transition: color 0.25s ease;
   @include no-user-select();
-
   &:hover {
     color: $rule-builder--accent-color;
     cursor: pointer;
