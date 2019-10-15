@@ -30,8 +30,8 @@
 
 .container-fluid {
   margin: 0 auto;
-  padding: ($s-cmp-page-header-height / 2) $page-wrapper-padding;
-  max-width: $page-wrapper-max-width;
+  padding: ($s-cmp-page-header-height / 2) $s-page-wrapper-padding;
+  max-width: $s-page-wrapper-max-width;
 
   &.full-width {
     max-width: 100%;
@@ -60,7 +60,7 @@
 
 .page-header {
   height: $s-cmp-page-header-height;
-  padding: 0 $page-wrapper-padding;
+  padding: 0 $s-page-wrapper-padding;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -73,9 +73,9 @@
   justify-content: space-between;
   flex-wrap: nowrap;
   width: 100%;
-  max-width: (
-    $page-wrapper-max-width - $page-wrapper-padding - $page-wrapper-padding
-  );
+  // max-width: (
+  //   $s-page-wrapper-max-width - $page-wrapper-padding - $page-wrapper-padding
+  // );
 }
 // If specified as a full width page header
 .page-header.full-width .page-header--container {

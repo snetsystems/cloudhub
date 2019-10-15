@@ -4,7 +4,7 @@
 */
 
 $panel-gutter: 30px;
-
+$s-panel-gutter: 15px;
 .panel {
   display: flex;
   flex-direction: column;
@@ -16,8 +16,8 @@ $panel-gutter: 30px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $panel-gutter 0;
-  min-height: 90px;
+  padding: $s-panel-gutter 0;
+  min-height: 45px;
 }
 
 .panel-title {
@@ -105,7 +105,7 @@ $panel-gutter: 30px;
   border-radius: 4px;
 
   .panel-heading {
-    padding: $panel-gutter;
+    padding: $s-panel-gutter;
   }
   .panel-body {
     background-color: transparent;
