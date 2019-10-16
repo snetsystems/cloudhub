@@ -119,6 +119,10 @@ $s-sidebar--width: 45px;
   background-color: $sidebar--logo-bg;
   .sidebar--icon {
     color: $sidebar--logo-color;
+    width: 35px;
+    height: 18px;
+    font-size: 28px;
+    text-align: center;
   }
 }
 .sidebar--item:hover .sidebar--square.sidebar--logo {

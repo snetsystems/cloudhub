@@ -62,7 +62,7 @@ class SideNav extends PureComponent<Props> {
             to={`${sourcePrefix}/${DEFAULT_HOME_PAGE}`}
             className="sidebar--square sidebar--logo"
           >
-            <span className="sidebar--icon icon cubo-uniform" />
+            <span className="sidebar--icon icon _snet--logo" />
           </Link>
         </div>
         <NavBlock
