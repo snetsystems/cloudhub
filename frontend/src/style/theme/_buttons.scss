@@ -144,14 +144,11 @@ a.btn {
   background-color: $bg-color;
   color: $text-color;
   text-shadow: none;
-  border-width: 0;
-
-  // Focus State
+  border-width: 0; // Focus State
   &:focus {
     background-color: $bg-color;
     color: $text-color;
   }
-
   // Hover State
   &:hover,
   &:focus:hover {
@@ -159,7 +156,6 @@ a.btn {
     color: $text-color-hover;
     cursor: pointer;
   }
-
   // MouseDown State
   &.active,
   &.active:hover,
@@ -181,7 +177,6 @@ a.btn {
     background-color: $g5-pepper;
     color: $g7-graphite;
     box-shadow: none;
-
     &:hover,
     &:active,
     &:focus,
@@ -198,7 +193,6 @@ a.btn {
     }
   }
 }
-
 a.btn-default,
 div.btn-default,
 button.btn-default,
@@ -216,7 +210,7 @@ div.btn-primary,
 button.btn-primary,
 input.btn-primary {
   @include btn-base-styles(
-    $c-pool,
+    $s-orange,
     $c-laser,
     $c-hydrogen,
     $g20-white,
@@ -283,7 +277,6 @@ input.btn-alert {
     $g20-white
   );
 }
-
 // Outline Button styles mixin
 // -----------------------------------------------------------------------------
 @mixin btn-outline-styles(
@@ -307,7 +300,6 @@ input.btn-alert {
   &.btn-lg {
     line-height: $form-lg-height - 4px;
   }
-
   // Default State
   border-width: 2px;
   background-color: transparent;
@@ -319,14 +311,12 @@ input.btn-alert {
     border-color: $border-color;
     color: $text-color;
   }
-
   // Hover State
   &:hover {
     background-color: transparent;
     border-color: $border-color-hover;
     color: $text-color-hover;
   }
-
   // MouseDown State
   &.active,
   &.active:hover,
@@ -338,7 +328,6 @@ input.btn-alert {
     border-color: $border-color-press;
     color: $text-color-hover;
   }
-
   // Disabled State
   &.disabled,
   &[disabled],
@@ -349,7 +338,6 @@ input.btn-alert {
     color: $g7-graphite;
     box-shadow: none;
     font-style: italic;
-
     &:hover,
     &:active,
     &:focus,
@@ -367,7 +355,6 @@ input.btn-alert {
     }
   }
 }
-
 a.btn-link,
 div.btn-link,
 button.btn-link {
@@ -423,39 +410,30 @@ button.btn-link-alert {
     $c-thunder
   );
 }
-
-/*
-   Buttons Groups
-   -----------------------------------------------------------------------------
-*/
-
+/* Buttons Groups
+   ----------------------------------------------------------------------------- */
 .btn-group--left,
 .btn-group--center,
 .btn-group--right {
   display: flex;
   align-items: center;
 }
-
 .btn-group--left > .btn {
   margin-right: 4px;
   &:last-child {
     margin-right: 0;
   }
 }
-
 .btn-group--center > .btn {
   margin-left: 2px;
   margin-right: 2px;
-
   &:first-child {
     margin-left: 0;
   }
-  
   &:last-child {
     margin-right: 0;
   }
 }
-
 .btn-group--right > .btn {
   margin-left: 4px;
   &:first-child {
