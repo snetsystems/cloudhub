@@ -9,24 +9,25 @@ $sidebar--gradient-start: $g7-graphite;
 $sidebar--gradient-end: $g4-onyx;
 
 $sidebar--logo-bg: $g19-ghost;
-$sidebar--logo-color: $c-pool;
-$sidebar--logo-bg-hover: $g20-white;
-$sidebar--logo-color-hover: $c-laser;
+// $sidebar--logo-color: $c-pool;
+$sidebar--logo-color: $s-orange;
+$sidebar--logo-bg-hover: $s-orange;
+$sidebar--logo-color-hover: #fff;
 
 $sidebar--item-bg: transparent;
-$sidebar--item-bg-hover: $c-pool;
+$sidebar--item-bg-hover: $s-orange;
 $sidebar--item-bg-active: $g4-onyx;
 $sidebar--icon: $g11-sidewalk;
 $sidebar--icon-hover: $g20-white;
 $sidebar--icon-active: $g20-white;
 
-$sidebar-menu--bg: $c-pool;
-$sidebar-menu--bg-accent: $c-comet;
-$sidebar-menu--item-bg: $c-ocean;
-$sidebar-menu--item-bg-accent: $c-star;
-$sidebar-menu--item-bg-hover: $c-laser;
-$sidebar-menu--item-bg-hover-accent: $c-potassium;
-$sidebar-menu--item-text: $c-neutrino;
+$sidebar-menu--bg: $s-orange;
+$sidebar-menu--bg-accent: $s-grapefruit;
+$sidebar-menu--item-bg: $s-oragne2;
+$sidebar-menu--item-bg-accent: $s-ligntGrapefruit;
+$sidebar-menu--item-bg-hover: $s-oragne2;
+$sidebar-menu--item-bg-hover-accent: $s-ligntGrapefruit;
+$sidebar-menu--item-text: $s-lightOrange;
 $sidebar-menu--item-text-hover: $g20-white;
 $sidebar-menu--item-text-active: $g20-white;
 $sidebar-menu--gutter: 18px;
@@ -88,7 +89,7 @@ $s-sidebar--width: 45px;
   }
   .sidebar--icon {
     color: $sidebar--icon-active;
-    text-shadow: 0 0 9px $c-laser, 0 0 15px $c-ocean, 0 0 20px $c-amethyst;
+    text-shadow: 0 0 5px $s-orange, 0 0 10px $s-orange, 0 0 25px #fff;
   }
 }
 
@@ -110,15 +111,15 @@ $s-sidebar--width: 45px;
   }
 }
 .sidebar--item.active:hover .sidebar--icon {
-  text-shadow: 0 0 9px $c-yeti, 0 0 15px $c-hydrogen, 0 0 20px $c-laser;
+  text-shadow: 0 0 5px #fff, 0 0 10px #fff, 0 0 15px $s-grapefruit;
 }
 /*
   Sidebar Logo Square
 */
 .sidebar--square.sidebar--logo {
-  background-color: $sidebar--logo-bg;
+  @include gradient-h($sidebar-menu--bg, #e35833);
   .sidebar--icon {
-    color: $sidebar--logo-color;
+    color: #fff;
     width: 35px;
     height: 18px;
     font-size: 28px;
@@ -129,13 +130,14 @@ $s-sidebar--width: 45px;
   background-color: $sidebar--logo-bg-hover;
   .sidebar--icon {
     color: $sidebar--logo-color-hover;
+    text-shadow: 0 0 5px #fff, 0 0 15px #fff, 0 0 10px #fff;
   }
 }
 .sidebar--item.active .sidebar--square.sidebar--logo {
   background-color: $sidebar--logo-bg-hover;
   .sidebar--icon {
     color: $sidebar--logo-color-hover;
-    text-shadow: 0 0 9px $c-hydrogen, 0 0 15px $c-neutrino, 0 0 20px $c-yeti;
+    text-shadow: 0 0 5px #fff, 0 0 15px #fff, 0 0 10px #fff;
   }
 }
 
@@ -174,7 +176,7 @@ $s-sidebar--width: 45px;
   color: $sidebar-menu--item-text;
   font-size: 15px;
   line-height: 22px;
-  font-weight: 500;
+  font-weight: 300;
   position: relative;
   padding: 4px $sidebar-menu--gutter;
   transition: none;
@@ -209,7 +211,7 @@ $s-sidebar--width: 45px;
   height: $s-sidebar--width;
   line-height: $s-sidebar--width;
   font-size: 19px;
-  font-weight: 400;
+  font-weight: 300;
   padding: 0px $sidebar-menu--gutter;
 }
 .sidebar-menu--item > strong {
