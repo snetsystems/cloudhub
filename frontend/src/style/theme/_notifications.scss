@@ -140,10 +140,10 @@ $notification-margin: 12px;
 }
 .notification-primary {
   @include notification-styles(
-    $c-pool,
-    $c-ocean,
+    $s-orange,
+    $s-deepOrange2,
     $g20-white,
-    $c-neutrino,
+    $s-lightOrange,
     $g20-white
   );
 }

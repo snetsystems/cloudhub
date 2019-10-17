@@ -17,7 +17,7 @@ $FONT_COLOR_NORMAL: #bec2cc;
   padding-left: 0;
   border-top: 0px solid $g5-pepper;
   margin: 4px 0 0.55em 0;
-  font-weight: bold;
+  font-weight: 400;
 }
 
 .fancy-scroll--view div,
@@ -58,17 +58,18 @@ $FONT_COLOR_NORMAL: #bec2cc;
   &-level-1:hover,
   &--active.tree-item-level-0,
   &--active.tree-item-level-1 {
-    text-shadow: 0 0 9px #00c9ff, 0 0 15px #4591ed, 0 0 20px #513cc6;
+    text-shadow: 0 0 5px $s-orange, 0 0 10px $s-orange, 0 0 25px #fff;
     color: #fff;
   }
 
   &--active.tree-item-level-2 {
     color: #fff;
-    background: #22adf6;
-    background: -moz-linear-gradient(left, #22adf6 0%, #9394ff 100%);
-    background: -webkit-linear-gradient(left, #22adf6 0%, #9394ff 100%);
-    background: linear-gradient(to right, #22adf6 0%, #9394ff 100%);
-    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='$startColor', endColorstr='$endColor',GradientType=1 );
+    @include gradient-h($sidebar-menu--bg, $s-deepOrange2);
+    // background: #22adf6;
+    // background: -moz-linear-gradient(left, #22adf6 0%, #9394ff 100%);
+    // background: -webkit-linear-gradient(left, #22adf6 0%, #9394ff 100%);
+    // background: linear-gradient(to right, #22adf6 0%, #9394ff 100%);
+    // filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='$startColor', endColorstr='$endColor',GradientType=1 );
     transition: opacity 0.25s ease;
   }
 }

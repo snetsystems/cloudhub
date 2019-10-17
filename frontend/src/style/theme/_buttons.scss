@@ -10,7 +10,7 @@ input.btn {
   text-decoration: none;
   text-align: center;
   box-shadow: none;
-  font-weight: 700;
+  font-weight: 400;
   font-family: $ix-text-font;
   border-style: solid;
   margin: 0;
@@ -211,8 +211,8 @@ button.btn-primary,
 input.btn-primary {
   @include btn-base-styles(
     $s-orange,
-    $c-laser,
-    $c-hydrogen,
+    $s-deepOrange2,
+    $s-deepOrange2,
     $g20-white,
     $g20-white
   );

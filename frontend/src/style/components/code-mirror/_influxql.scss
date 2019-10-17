@@ -6,10 +6,10 @@
 
 .cm-s-influxql {
   color: $g11-sidewalk;
-  font-weight: 600;
+  font-weight: 400;
 
   .cm-clause {
-    color: $c-pool;
+    color: $s-orange;
   }
   .cm-meta {
     color: $c-honeydew;
@@ -24,7 +24,7 @@
     color: $c-pineapple;
   }
   .cm-operator {
-    color: $c-pool;
+    color: $s-orange;
   }
   .cm-temp-var {
     color: $c-comet;

@@ -17,19 +17,16 @@
   -moz-appearance: none;
   -webkit-appearance: none;
   appearance: none;
-  transition:
-    color 0.25s ease,
-    background-color 0.25s ease,
-    border-color 0.4s ease,
-    box-shadow 0.4s ease;
+  transition: color 0.25s ease, background-color 0.25s ease,
+    border-color 0.4s ease, box-shadow 0.4s ease;
 
   &:hover {
     border-color: $g6-smoke;
   }
   &:focus {
-    border-color: $c-pool;
+    border-color: $s-orange;
     color: $g20-white;
-    box-shadow: 0 0 6px 0 $c-pool;
+    box-shadow: 0 0 6px 0 $s-orange;
     background-color: $g2-kevlar;
   }
 
@@ -38,7 +35,8 @@
   &[readonly],
   fieldset[disabled] &,
   &.disabled {
-    &, &:hover {
+    &,
+    &:hover {
       border-color: $g5-pepper;
       background-color: $g3-castle !important;
       color: $g9-mountain !important;
@@ -50,15 +48,12 @@
   .has-success &,
   .has-warning & {
     box-shadow: none;
-    transition:
-      color 0.25s ease,
-      background-color 0.25s ease,
-      border-color 0.4s ease,
-      box-shadow 0.4s ease;
+    transition: color 0.25s ease, background-color 0.25s ease,
+      border-color 0.4s ease, box-shadow 0.4s ease;
 
-      &:focus {
-        background-color: $g2-kevlar;
-      }
+    &:focus {
+      background-color: $g2-kevlar;
+    }
   }
 
   // Success State
@@ -68,8 +63,12 @@
       border-color: $c-honeydew;
       box-shadow: 0 0 8px $c-rainforest;
     }
-    &::selection {background-color: $c-rainforest;}
-    &::-moz-selection {background-color: $c-rainforest;}
+    &::selection {
+      background-color: $c-rainforest;
+    }
+    &::-moz-selection {
+      background-color: $c-rainforest;
+    }
   }
 
   // Error State
@@ -81,8 +80,12 @@
       border-color: $c-dreamsicle;
       box-shadow: 0 0 8px $c-fire;
     }
-    &::selection {background-color: $c-dreamsicle;}
-    &::-moz-selection {background-color: $c-dreamsicle;}
+    &::selection {
+      background-color: $c-dreamsicle;
+    }
+    &::-moz-selection {
+      background-color: $c-dreamsicle;
+    }
   }
 
   // Warning State
@@ -92,8 +95,12 @@
       border-color: $c-comet;
       box-shadow: 0 0 8px $c-star;
     }
-    &::selection {background-color: $c-comet;}
-    &::-moz-selection {background-color: $c-comet;}
+    &::selection {
+      background-color: $c-comet;
+    }
+    &::-moz-selection {
+      background-color: $c-comet;
+    }
   }
 }
 
@@ -102,10 +109,26 @@
 .form-control,
 textarea,
 input {
-  &::-webkit-input-placeholder { color: $g9-mountain; font-weight: 600 !important; font-style: italic;}
-  &::-moz-placeholder { color: $g9-mountain; font-weight: 600 !important; font-style: italic;}
-  &:-ms-input-placeholder { color: $g9-mountain; font-weight: 600 !important; font-style: italic;}
-  &:-moz-placeholder { color: $g9-mountain; font-weight: 600 !important; font-style: italic;}
+  &::-webkit-input-placeholder {
+    color: $g9-mountain;
+    font-weight: 600 !important;
+    font-style: italic;
+  }
+  &::-moz-placeholder {
+    color: $g9-mountain;
+    font-weight: 600 !important;
+    font-style: italic;
+  }
+  &:-ms-input-placeholder {
+    color: $g9-mountain;
+    font-weight: 600 !important;
+    font-style: italic;
+  }
+  &:-moz-placeholder {
+    color: $g9-mountain;
+    font-weight: 600 !important;
+    font-style: italic;
+  }
 }
 
 //  Size Modifiers
@@ -121,7 +144,8 @@ input.form-control {
     padding: 0 $form-sm-padding;
     font-size: $form-sm-font;
   }
-  &, &.input-md {
+  &,
+  &.input-md {
     height: $form-md-height;
     padding: 0 $form-md-padding;
     font-size: $form-md-font;
@@ -142,7 +166,8 @@ textarea.form-control {
     padding: $form-sm-padding;
     font-size: $form-sm-font;
   }
-  &, &.input-md {
+  &,
+  &.input-md {
     padding: $form-md-padding;
     font-size: $form-md-font;
   }
@@ -235,7 +260,7 @@ $form-control-checkdot: 8px;
 $form-control-checkbox-gap: 30px;
 
 .form-control-static {
-  input[type="checkbox"] {
+  input[type='checkbox'] {
     position: relative;
     left: -9999px;
     visibility: hidden;
@@ -243,7 +268,7 @@ $form-control-checkbox-gap: 30px;
     height: 0;
     margin: 0;
   }
-  input[type="checkbox"] + label {
+  input[type='checkbox'] + label {
     transition: color 0.25s ease;
     padding-left: $form-control-checkbox-gap;
     position: relative;
@@ -273,13 +298,12 @@ $form-control-checkbox-gap: 30px;
       position: absolute;
       top: 50%;
       left: ($form-control-checkbox / 2);
-      transform: translate(-50%,-50%) scale(2,2);
+      transform: translate(-50%, -50%) scale(2, 2);
       width: $form-control-checkdot;
       height: $form-control-checkdot;
       background-color: $c-pool;
       border-radius: 50%;
-      transition:
-        transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+      transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275),
         opacity 0.25s ease;
       opacity: 0;
     }
@@ -288,16 +312,18 @@ $form-control-checkbox-gap: 30px;
       color: $g18-cloud;
       cursor: pointer;
 
-      &:before {border-color: $g6-smoke;}
+      &:before {
+        border-color: $g6-smoke;
+      }
     }
   }
   // Animate checked state
-  input[type="checkbox"]:checked + label {
+  input[type='checkbox']:checked + label {
     color: $g18-cloud;
   }
-  input[type="checkbox"]:checked + label:after {
+  input[type='checkbox']:checked + label:after {
     opacity: 1;
-    transform: translate(-50%,-50%) scale(1,1);
+    transform: translate(-50%, -50%) scale(1, 1);
   }
 }
 
@@ -312,7 +338,7 @@ $form-control-checkbox-gap: 30px;
       margin-bottom: 0;
     }
   }
-  input[type="radio"] {
+  input[type='radio'] {
     position: relative;
     left: -9999px;
     visibility: hidden;
@@ -320,7 +346,7 @@ $form-control-checkbox-gap: 30px;
     height: 0;
     margin: 0;
   }
-  input[type="radio"] + label {
+  input[type='radio'] + label {
     transition: color 0.25s ease;
     padding-left: $form-control-checkbox-gap;
     position: relative;
@@ -350,13 +376,12 @@ $form-control-checkbox-gap: 30px;
       position: absolute;
       top: 50%;
       left: ($form-control-checkbox / 2);
-      transform: translate(-50%,-50%) scale(2,2);
+      transform: translate(-50%, -50%) scale(2, 2);
       width: $form-control-checkdot;
       height: $form-control-checkdot;
       background-color: $c-pool;
       border-radius: 50%;
-      transition:
-        transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+      transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275),
         opacity 0.25s ease;
       opacity: 0;
     }
@@ -365,19 +390,20 @@ $form-control-checkbox-gap: 30px;
       color: $g18-cloud;
       cursor: pointer;
 
-      &:before {border-color: $g6-smoke;}
+      &:before {
+        border-color: $g6-smoke;
+      }
     }
   }
   // Animate checked state
-  input[type="radio"]:checked + label {
+  input[type='radio']:checked + label {
     color: $g18-cloud;
   }
-  input[type="radio"]:checked + label:after {
+  input[type='radio']:checked + label:after {
     opacity: 1;
-    transform: translate(-50%,-50%) scale(1,1);
+    transform: translate(-50%, -50%) scale(1, 1);
   }
 }
-
 
 //  Themed Text Inputs
 //  ----------------------------------------------------------------------------
@@ -386,7 +412,9 @@ textarea.form-control {
   // Blue
   &.form-plutonium {
     color: $c-pool;
-    &:focus {color: $g20-white;}
+    &:focus {
+      color: $g20-white;
+    }
   }
   // Green
   &.form-malachite {
@@ -396,8 +424,12 @@ textarea.form-control {
       color: $g20-white;
       box-shadow: 0 0 8px $c-rainforest;
     }
-    &::selection {background-color: $c-rainforest;}
-    &::-moz-selection {background-color: $c-rainforest;}
+    &::selection {
+      background-color: $c-rainforest;
+    }
+    &::-moz-selection {
+      background-color: $c-rainforest;
+    }
   }
   // Purple
   &.form-astronaut {
@@ -407,8 +439,12 @@ textarea.form-control {
       color: $g20-white;
       box-shadow: 0 0 8px $c-star;
     }
-    &::selection {background-color: $c-comet;}
-    &::-moz-selection {background-color: $c-comet;}
+    &::selection {
+      background-color: $c-comet;
+    }
+    &::-moz-selection {
+      background-color: $c-comet;
+    }
   }
   // Red
   &.form-volcano {
@@ -419,11 +455,14 @@ textarea.form-control {
       color: $c-flan;
       box-shadow: 0 0 8px $c-curacao;
     }
-    &::selection {background-color: $c-curacao;}
-    &::-moz-selection {background-color: $c-curacao;}
+    &::selection {
+      background-color: $c-curacao;
+    }
+    &::-moz-selection {
+      background-color: $c-curacao;
+    }
   }
 }
-
 
 //  Monospace Inputs
 //  ----------------------------------------------------------------------------
@@ -461,18 +500,16 @@ textarea.form-control {
     left: 50%;
     width: 6px;
     height: 6px;
-    background-color: $c-pool;
+    background-color: $s-orange;
     border-radius: 50%;
-    transform: translate(-50%,-50%) scale(2,2);
+    transform: translate(-50%, -50%) scale(2, 2);
     opacity: 0;
     z-index: 3;
-    transition:
-      opacity 0.25s ease,
-      transform 0.25s ease;
+    transition: opacity 0.25s ease, transform 0.25s ease;
   }
   input:checked + label:after {
     opacity: 1;
-    transform: translate(-50%,-50%) scale(1,1);
+    transform: translate(-50%, -50%) scale(1, 1);
   }
 }
 
@@ -508,15 +545,13 @@ textarea.form-control {
     height: 6px;
     background-color: $c-pool;
     border-radius: 50%;
-    transform: translate(-50%,-50%) scale(2,2);
+    transform: translate(-50%, -50%) scale(2, 2);
     opacity: 0;
     z-index: 3;
-    transition:
-      opacity 0.25s ease,
-      transform 0.25s ease;
+    transition: opacity 0.25s ease, transform 0.25s ease;
   }
   input:checked + label:after {
     opacity: 1;
-    transform: translate(-50%,-50%) scale(1,1);
+    transform: translate(-50%, -50%) scale(1, 1);
   }
 }

@@ -36,7 +36,7 @@
   line-height: $query-builder--heading-height;
 
   /* Accounting for headings w/ optional second item */
-  &>span {
+  & > span {
     margin-right: 16px;
   }
 }
@@ -93,16 +93,16 @@
   }
 
   /* Hide dropdowns unless item is active */
-  &>.dropdown {
+  & > .dropdown {
     visibility: hidden;
   }
 
-  &.active>.dropdown {
+  &.active > .dropdown {
     visibility: visible;
   }
 
   /* Sub-item group for layout purposes */
-  &>span {
+  & > span {
     display: flex;
     align-items: center;
     flex-wrap: nowrap;
@@ -131,7 +131,7 @@
   flex: 1 0 0%;
   display: flex;
 
-  &>span {
+  & > span {
     font-size: 12px;
     line-height: 30px;
     order: 1;
@@ -144,7 +144,7 @@
     color: $g9-mountain;
   }
 
-  &>input.form-control {
+  & > input.form-control {
     order: 2;
     padding-left: 24px;
     border-color: $g6-smoke !important;
@@ -154,11 +154,11 @@
     }
 
     &:focus {
-      border-color: $c-pool !important;
+      border-color: $s-orange !important;
     }
 
-    &:focus+span {
-      color: $c-pool;
+    &:focus + span {
+      color: $s-orange;
     }
   }
 }
@@ -183,7 +183,7 @@
     width: 20px;
     height: 20px;
     opacity: 0;
-    background-color: $c-pool;
+    background-color: $s-orange;
     border-radius: 50%;
     transition: transform 0.25s ease, opacity 0.25s ease;
   }
@@ -237,11 +237,11 @@
 
   &.active {
     visibility: visible;
-    background: $c-pool;
+    background: $s-orange;
     color: $g20-white;
 
     &:hover {
-      background: $c-laser;
+      background: $s-deepOrange2;
       color: $g20-white;
     }
   }

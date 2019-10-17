@@ -4,7 +4,7 @@
 */
 
 .button {
-  font-weight: 700;
+  font-weight: 400;
   font-family: $ix-text-font;
   border-style: solid;
   border-width: $ix-border;
@@ -155,8 +155,8 @@
   // @include buttonColorModifier($c-pool, $c-laser, $c-hydrogen, $c-yeti, $g20-white);
   @include buttonColorModifier(
     $s-orange,
-    $c-laser,
-    $c-hydrogen,
+    $s-deepOrange2,
+    $s-deepOrange2,
     $c-yeti,
     $g20-white
   );

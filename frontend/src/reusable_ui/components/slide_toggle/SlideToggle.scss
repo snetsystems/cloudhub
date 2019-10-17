@@ -21,11 +21,10 @@
 .slide-toggle--knob {
   position: absolute;
   top: 50%;
-  transition:
-    background-color 0.25s ease,
+  transition: background-color 0.25s ease,
     transform 0.25s cubic-bezier(0.165, 0.84, 0.44, 1);
   background-color: $g6-smoke;
-  transform: translate(0,-50%);
+  transform: translate(0, -50%);
   border-radius: 50%;
 
   .slide-toggle:hover & {
@@ -36,7 +35,7 @@
 /* Active State */
 .slide-toggle.active .slide-toggle--knob {
   background-color: $c-rainforest;
-  transform: translate(100%,-50%);
+  transform: translate(100%, -50%);
 }
 .slide-toggle.active:hover .slide-toggle--knob {
   background-color: $c-honeydew;
@@ -95,10 +94,10 @@
   }
 
   &.slide-toggle-primary.active .slide-toggle--knob {
-    background-color: $c-pool;
+    background-color: $s-orange;
   }
   &.slide-toggle-primary.active:hover .slide-toggle--knob {
-    background-color: $c-laser;
+    background-color: $s-deepOrange2;
   }
 
   &.slide-toggle-success.active .slide-toggle--knob {
