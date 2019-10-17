@@ -1,0 +1,148 @@
+{
+  "id": "a3cfadab-56dc-48b8-9161-c6e9d82555c1",
+  "measurement": "snmp",
+  "app": "snmp",
+  "autoflow": true,
+  "cells": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "2637ee2e-7643-46a8-8233-a20049b2efd5",
+      "name": "Rx/Tx (BPS)",
+      "queries": [
+        {
+          "query": "SELECT derivative(mean(\"ifHCOutOctets\"), 1s) * 8 AS \"Tx\", derivative(mean(\"ifHCInOctets\"), 1s) * 8 AS \"Rx\" FROM \":db:\".\":rp:\".\"snmp-ifXTable\"",
+          "groupbys": ["\"agent_host\", \"index\""],
+          "wheres": ["\"index\"='10101'"]
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "2",
+          "scale": "linear"
+        }
+      },
+      "legend": {
+        "type": "static",
+        "orientation": "bottom"
+      }
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "5c2d7375-35f2-4a5b-b606-37e29d4f71b1",
+      "name": "In/Out Error (pps)",
+      "queries": [
+        {
+          "query": "SELECT derivative(mean(\"ifInErrors\"), 1s) AS \"ifInErrors\", derivative(mean(\"ifOutErrors\"), 1s) AS \"ifOutErrors\" FROM \":db:\".\":rp:\".\"snmp-ifTable\"",
+          "groupbys": ["time(:interval:), \"agent_host\", \"index\""],
+          "wheres": ["\"index\"='10101'"]
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "2",
+          "scale": "linear"
+        }
+      },
+      "legend": {
+        "type": "static",
+        "orientation": "bottom"
+      }
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "c2599999-0e9e-4efa-9c2e-8b80a9e7eeab",
+      "name": "CPU utilizaion",
+      "queries": [
+        {
+          "query": "SELECT max(\"cpu_utilization\") AS \"max_cpu_utilization\" FROM \":db:\".\":rp:\".\"snmp\"",
+          "groupbys": ["time(:interval:), \"agent_host\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "%",
+          "base": "10",
+          "scale": "linear"
+        }
+      }
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "f1e337d0-267b-4339-85b2-a3b7ffeeafb5",
+      "name": "Memory Utilization",
+      "queries": [
+        {
+          "query": "SELECT mean(\"mem_utilization\") AS \"mean_mem_utilization\" FROM \":db:\".\":rp:\".\"snmp\"",
+          "groupbys": ["time(:interval:), \"agent_host\""],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "%",
+          "base": "10",
+          "scale": "linear"
+        }
+      }
+    }
+  ]
+}

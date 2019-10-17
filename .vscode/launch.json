@@ -15,11 +15,12 @@
       "args": [
         "-l=debug",
         "-d",
-        "-c=./cmp-canned/"
-        // "--auth-duration=0",
-        // "-t=74c1e9e2450886060b5bf736b935cd0bf960837f",
-        // "--github-client-id=c170bbdba5cb2ea8c3e6",
-        // "--github-client-secret=55c35715b0e4eebab7edbdeef3081bf890e79d22"
+        "-c=./cmp-canned/",
+        "--protoboards-path=./cmp-protoboards/",
+        "--auth-duration=0",
+        "-t=74c1e9e2450886060b5bf736b935cd0bf960837f",
+        "--github-client-id=c170bbdba5cb2ea8c3e6",
+        "--github-client-secret=55c35715b0e4eebab7edbdeef3081bf890e79d22"
       ],
       "showLog": true
       // "logOutput": "debugger"

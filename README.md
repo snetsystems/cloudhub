@@ -1,26 +1,26 @@
-# SCMP (Snet Cloud Monitoring Portal)
+# SCMP (Snet Cloud Monitoring Portal) - Latest v0.0.6
 
 ## Intro.
 
 **SCMP** is **another branch** of an open-source web application derived from Influxdata's **_Chronograf_** written in Go and React.js that provides the tools to visualize your monitoring data and easily create alerting and automation rules.
 
-Therefore, SCMP will be enhanced by adding our direction, such as automation of configuration management and monitoring over Clouds.
+Therefore, SCMP will be enhanced by adding our direction, such as automation of configuration management and monitoring the systems or applications over several Clouds.
 
 SCMP has been started with _Chronograf_ version **1.7.11**.
 
 ### Using the basic common features
 
-For more information of the basic common features between _Chronograf_ 1.7.11 and SCMP - as we follow on using guides like the way of _TICK_ Script or _Flux_ queries - refer to the following link.<br>
-[Github for _chronograf_](https://github.com/influxdata/chronograf/blob/master/README.md)<br>
-[Documents for _TICK_ Stack](https://docs.influxdata.com/)
+As we follow on using guides like the way of _TICK_ Script or _Flux_ queries, for more informations of the basic common features between _Chronograf_ 1.7.11 and SCMP refer to the following link.<br>
+[Github for **_chronograf_**](https://github.com/influxdata/chronograf/blob/master/README.md)<br>
+[Documents for **_TICK Stack_**](https://docs.influxdata.com/)
 
 ### Test Environment
 
-For running this project, maybe, you should get the environment for test data and composition like telegraf, kapacity and influxdb.
+For running this project, maybe, you should get the environment for test data and composition like telegraf, kapacity and influxdb (but not need chronograf).
 This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
-[Download _Sandbox_](https://github.com/influxdata/sandbox)
+[Download **_Sandbox_**](https://github.com/influxdata/sandbox)
 
-## Key Differences against _Chronograf_ at this point.
+## Key Differences against _Chronograf_ at this point(version).
 
 - Compose of directories.
   - Divide as backend and frontend.
