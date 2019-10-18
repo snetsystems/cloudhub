@@ -11,7 +11,7 @@
   letter-spacing: 0px;
   background-color: $g2-kevlar;
   font-family: $ix-text-font;
-  font-weight: 600;
+  font-weight: 400;
   box-shadow: none;
   outline: none;
   -moz-appearance: none;
@@ -418,17 +418,17 @@ textarea.form-control {
   }
   // Green
   &.form-malachite {
-    color: $c-rainforest;
+    color: $s-brown;
     &:focus {
-      border-color: $c-rainforest;
+      border-color: $s-orange;
       color: $g20-white;
-      box-shadow: 0 0 8px $c-rainforest;
+      box-shadow: 0 0 8px $s-orange;
     }
     &::selection {
-      background-color: $c-rainforest;
+      background-color: $s-orange;
     }
     &::-moz-selection {
-      background-color: $c-rainforest;
+      background-color: $s-orange;
     }
   }
   // Purple

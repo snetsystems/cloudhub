@@ -94,7 +94,7 @@ class SideNav extends PureComponent<Props> {
         </NavBlock>
         <NavBlock
           highlightWhen={['applications']}
-          icon="disks"
+          icon="_snet--application"
           link={`${sourcePrefix}/applications`}
           location={location}
         >

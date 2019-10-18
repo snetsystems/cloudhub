@@ -13,6 +13,21 @@ $s-oragne2: #ffa42f;
 $s-lightOrange: #ffeedf;
 $s-deepOrange2: #e35833;
 
+$s-violet: #a72acb;
+
+$s-orange3: #eb4e1e;
+$s-orange4: #f16549;
+$s-orange5: #ea5a2f;
+
+/*
+gradation set
+$s-orange, $s-grapefruit (#f58220, #d83f3f)
+$s-pitch, $s-pitch2 (#fba55c, #eb6b5d)
+*/
+
+$s-pitch: #fba55c;
+$s-pitch2: #eb6b5d;
+
 // Blue (Dark to Light)
 $s-blue: #005aab;
 
@@ -20,7 +35,13 @@ $s-blue: #005aab;
 $s-gray: #939598;
 $s-lightGray: #e5e6ea;
 
-// text Color
-$s-text: #ce9178;
+// colorSetting
+$s-main: $s-orange;
 
+// text Color
+$s-brown: #ce9178;
+$s-white: #fff;
+$s-sky: #3d9aed;
 // layout Color
+
+$s-pinkRed: #f74720;

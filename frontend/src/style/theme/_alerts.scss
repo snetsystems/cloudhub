@@ -37,10 +37,8 @@
   $link-hover
 ) {
   font-size: 16px;
-
   @include gradient-h($bg-color, $bg-color-2);
   color: $text-color;
-
   a:link,
   a:visited {
     color: $link-color;
@@ -60,9 +58,8 @@
     background-color: $text-color;
   }
 }
-
-//  Alert Themes
-//  ----------------------------------------------------------------------------
+// Alert Themes
+// ----------------------------------------------------------------------------
 .alert-success {
   @include alert-styles(
     $c-rainforest,
@@ -72,11 +69,18 @@
     $g20-white
   );
 }
+
 .alert-primary {
   @include alert-styles($c-pool, $c-ocean, $g20-white, $c-neutrino, $g20-white);
 }
 .alert-warning {
-  @include alert-styles($c-star, $c-pool, $g20-white, $c-neutrino, $g20-white);
+  @include alert-styles(
+    $s-orange4,
+    $s-orange,
+    $g20-white,
+    $c-neutrino,
+    $g20-white
+  );
 }
 .alert-error {
   @include alert-styles(
@@ -113,7 +117,6 @@
     $ix-link-default,
     $ix-link-default-hover
   );
-
   strong {
     color: $g19-ghost;
   }

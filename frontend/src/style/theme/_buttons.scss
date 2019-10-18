@@ -258,7 +258,7 @@ div.btn-danger,
 button.btn-danger,
 input.btn-danger {
   @include btn-base-styles(
-    $c-curacao,
+    $s-pinkRed,
     $c-dreamsicle,
     $c-tungsten,
     $g20-white,
@@ -359,11 +359,11 @@ a.btn-link,
 div.btn-link,
 button.btn-link {
   @include btn-outline-styles(
-    $c-pool,
-    $c-laser,
+    $s-brown,
+    $s-deepOrange2,
     $g5-pepper,
     $g6-smoke,
-    $c-laser
+    $s-deepOrange2
   );
 }
 a.btn-link-success,

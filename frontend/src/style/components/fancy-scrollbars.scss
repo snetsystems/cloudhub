@@ -71,10 +71,10 @@ $scrollbar-color-kap-b: $c-pool;
 /* Dropdown Theme Scrollbars */
 ul.dropdown-menu {
   .fancy-scroll--thumb-h {
-    @include gradient-h($s-lightOrange, #fbb54f);
+    @include gradient-h($s-lightOrange, $s-pitch);
   }
   .fancy-scroll--thumb-v {
-    @include gradient-v($s-lightOrange, #fbb54f);
+    @include gradient-v($s-lightOrange, $s-pitch);
   }
 }
 /* Hacky Fix to make fancy scrollbars work in Safari */

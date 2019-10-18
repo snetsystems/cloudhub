@@ -206,7 +206,7 @@ br {
   margin-bottom: 4px;
 
   &.intro {
-    @include gradient-h($c-pool, $c-star);
+    @include gradient-h($s-orange5, $s-orange4);
     color: $g20-white;
   }
 

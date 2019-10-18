@@ -43,22 +43,18 @@ $provider--delete-width: 30px;
       $provider--delete-width
   );
 }
-
 .provider--arrow {
   display: flex;
   align-items: center;
   min-width: 36px;
-
   &.fancytable--td {
     padding: 0 8px;
   }
-
   > span {
     position: relative;
     height: 2px;
     width: 100%;
-    @include gradient-h($c-pool, $c-star);
-
+    @include gradient-h($s-orange, $s-grapefruit);
     &:before,
     &:after {
       content: '';
@@ -70,7 +66,7 @@ $provider--delete-width: 30px;
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background-color: $c-pool;
+      background-color: $s-orange;
       left: 0;
     }
     &:after {
@@ -78,7 +74,7 @@ $provider--delete-width: 30px;
       border-style: solid;
       border-color: transparent;
       border-width: 6px;
-      border-left-color: $c-star;
+      border-left-color: $s-grapefruit;
     }
   }
 }

@@ -2,7 +2,7 @@
     Kapacitor Rule Builder
     ---------------------------------------------------------------------------
 */
-$rule-builder--accent-color: $c-rainforest;
+$rule-builder--accent-color: $s-orange5;
 $rule-builder--left-gutter: 46px;
 $rule-builder--section-gap: ($s-cmp-page-header-height / 2);
 $rule-builder--section-bg: $g3-castle;
@@ -218,15 +218,15 @@ $rule-builder--radius-lg: 5px;
     }
   }
   .query-builder--list-item .query-builder--checkbox:after {
-    background-color: $c-rainforest;
+    background-color: $s-orange;
   }
   .query-builder--filter {
     input.form-control {
-      color: $c-rainforest !important;
+      color: $s-brown !important;
       &:focus {
         color: $g20-white !important;
-        box-shadow: 0 0 6px 0px $c-rainforest !important;
-        border-color: $c-rainforest !important;
+        box-shadow: 0 0 6px 0px $s-orange !important;
+        border-color: $s-orange !important;
       }
       &:focus + span.icon {
         color: $c-rainforest !important;
@@ -243,7 +243,7 @@ $rule-builder--radius-lg: 5px;
   background-color: $g5-pepper;
   color: $rule-builder--accent-color;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 400;
   padding: 0 9px;
   @include no-user-select();
 }
@@ -451,7 +451,7 @@ $rule-builder--radius-lg: 5px;
     color: $g15-platinum;
   }
   &.active {
-    color: $c-rainforest;
+    color: $s-orange;
     background-color: $rule-builder--section-bg;
     border-color: $rule-builder--section-bg;
   }
