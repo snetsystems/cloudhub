@@ -359,7 +359,7 @@ export const deleteTagFilterAsync = (
 }
 
 export const fetchAndSetTagKeys = (source: string) => async dispatch => {
-  const query = 'SHOW TAG KEYS ON chronograf FROM annotations'
+  const query = 'SHOW TAG KEYS ON cmp FROM annotations'
   const resp = await proxy({query, source})
   const tagKeys = parseMetaQuery(query, resp.data).filter(
     keys => !BLACKLISTED_KEYS.includes(keys)
@@ -372,7 +372,7 @@ export const fetchAndSetTagValues = (
   source: string,
   tagKey: string
 ) => async dispatch => {
-  const query = `SHOW TAG VALUES ON chronograf FROM annotations WITH KEY = "${tagKey}"`
+  const query = `SHOW TAG VALUES ON cmp FROM annotations WITH KEY = "${tagKey}"`
   const resp = await proxy({query, source})
   const tagValues = parseMetaQuery(query, resp.data)
 

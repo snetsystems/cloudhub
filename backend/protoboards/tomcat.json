@@ -1,0 +1,486 @@
+{
+    "id": "e2e1b8db-1c11-49bc-8b8a-4e1e49c589bd",
+    "meta": {
+      "name": "Tomcat",
+      "measurements": ["tomcat_connector"],
+      "version": "1.0",
+      "dashboardVersion": "1.x",
+      "description": "Dashboard for the telegraf input plug-in: Tomcat",
+      "author": "SNetsystems",
+      "license": "MIT",
+      "icon": "",
+      "url": "https://github.com/influxdata/telegraf/tree/master/plugins/inputs/tomcat"
+    },
+    "data": {
+        "cells": [
+			{
+				"x": 0,
+				"y": 3,
+				"w": 6,
+				"h": 3,
+				"name": "Tomcat - Tx (BPS)",
+				"queries": [
+					{
+						"query": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"bytes_sent\"), 1s) AS \"bytes_sent\" FROM \"telegraf\".\"autogen\".\"tomcat_connector\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
+						"queryConfig": {
+							"database": "",
+							"measurement": "",
+							"retentionPolicy": "",
+							"fields": [],
+							"tags": {},
+							"groupBy": {
+								"time": "",
+								"tags": []
+							},
+							"areTagsAccepted": false,
+							"rawText": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"bytes_sent\"), 1s) AS \"bytes_sent\" FROM \"telegraf\".\"autogen\".\"tomcat_connector\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
+							"range": null,
+							"shifts": null
+						},
+						"source": "/cmp/v1/sources/2",
+						"type": "influxql"
+					}
+				],
+				"axes": {
+					"x": {
+						"bounds": [
+							"",
+							""
+						],
+						"label": "",
+						"prefix": "",
+						"suffix": "",
+						"base": "10",
+						"scale": "linear"
+					},
+					"y": {
+						"bounds": [
+							"",
+							""
+						],
+						"label": "BPS",
+						"prefix": "",
+						"suffix": "",
+						"base": "2",
+						"scale": "linear"
+					},
+					"y2": {
+						"bounds": [
+							"",
+							""
+						],
+						"label": "",
+						"prefix": "",
+						"suffix": "",
+						"base": "10",
+						"scale": "linear"
+					}
+				},
+				"type": "line",
+				"colors": [
+					{
+						"id": "9d56b9fd-b749-4bb1-87ff-1ba49ba0e5a1",
+						"type": "scale",
+						"hex": "#31C0F6",
+						"name": "Nineteen Eighty Four",
+						"value": "0"
+					},
+					{
+						"id": "68aa234b-5f9d-4133-bcd9-6ebd7f48cac2",
+						"type": "scale",
+						"hex": "#A500A5",
+						"name": "Nineteen Eighty Four",
+						"value": "0"
+					},
+					{
+						"id": "8ab6682f-ca5a-4409-8828-0571b7e24098",
+						"type": "scale",
+						"hex": "#FF7E27",
+						"name": "Nineteen Eighty Four",
+						"value": "0"
+					}
+				],
+				"legend": {},
+				"tableOptions": {
+					"verticalTimeAxis": true,
+					"sortBy": {
+						"internalName": "time",
+						"displayName": "",
+						"visible": true
+					},
+					"wrapping": "truncate",
+					"fixFirstColumn": true
+				},
+				"fieldOptions": [
+					{
+						"internalName": "time",
+						"displayName": "",
+						"visible": true
+					}
+				],
+				"timeFormat": "MM/DD/YYYY HH:mm:ss",
+				"decimalPlaces": {
+					"isEnforced": true,
+					"digits": 2
+				},
+				"note": "",
+				"noteVisibility": "default"
+			},
+			{
+				"x": 0,
+				"y": 0,
+				"w": 6,
+				"h": 3,
+				"name": "Tomcat - JVM Memory",
+				"queries": [
+					{
+						"query": "SELECT mean(\"free\") AS \"free\", mean(\"total\") AS \"total\" FROM \"telegraf\".\"autogen\".\"tomcat_jvm_memory\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
+						"queryConfig": {
+							"database": "",
+							"measurement": "",
+							"retentionPolicy": "",
+							"fields": [],
+							"tags": {},
+							"groupBy": {
+								"time": "",
+								"tags": []
+							},
+							"areTagsAccepted": false,
+							"rawText": "SELECT mean(\"free\") AS \"free\", mean(\"total\") AS \"total\" FROM \"telegraf\".\"autogen\".\"tomcat_jvm_memory\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
+							"range": null,
+							"shifts": null
+						},
+						"source": "/cmp/v1/sources/2",
+						"type": "influxql"
+					}
+				],
+				"axes": {
+					"x": {
+						"bounds": [
+							"",
+							""
+						],
+						"label": "",
+						"prefix": "",
+						"suffix": "",
+						"base": "10",
+						"scale": "linear"
+					},
+					"y": {
+						"bounds": [
+							"",
+							""
+						],
+						"label": "Memory",
+						"prefix": "",
+						"suffix": "",
+						"base": "2",
+						"scale": "linear"
+					},
+					"y2": {
+						"bounds": [
+							"",
+							""
+						],
+						"label": "",
+						"prefix": "",
+						"suffix": "",
+						"base": "10",
+						"scale": "linear"
+					}
+				},
+				"type": "line",
+				"colors": [
+					{
+						"id": "9d56b9fd-b749-4bb1-87ff-1ba49ba0e5a1",
+						"type": "scale",
+						"hex": "#31C0F6",
+						"name": "Nineteen Eighty Four",
+						"value": "0"
+					},
+					{
+						"id": "68aa234b-5f9d-4133-bcd9-6ebd7f48cac2",
+						"type": "scale",
+						"hex": "#A500A5",
+						"name": "Nineteen Eighty Four",
+						"value": "0"
+					},
+					{
+						"id": "8ab6682f-ca5a-4409-8828-0571b7e24098",
+						"type": "scale",
+						"hex": "#FF7E27",
+						"name": "Nineteen Eighty Four",
+						"value": "0"
+					}
+				],
+				"legend": {},
+				"tableOptions": {
+					"verticalTimeAxis": true,
+					"sortBy": {
+						"internalName": "time",
+						"displayName": "",
+						"visible": true
+					},
+					"wrapping": "truncate",
+					"fixFirstColumn": true
+				},
+				"fieldOptions": [
+					{
+						"internalName": "time",
+						"displayName": "",
+						"visible": true
+					}
+				],
+				"timeFormat": "MM/DD/YYYY HH:mm:ss",
+				"decimalPlaces": {
+					"isEnforced": true,
+					"digits": 2
+				},
+				"note": "",
+				"noteVisibility": "default"
+			},
+			{
+				"x": 6,
+				"y": 0,
+				"w": 6,
+				"h": 3,
+				"name": "Tomcat - Requests Count",
+				"queries": [
+					{
+						"query": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"request_count\"), 1s) AS \"request_count\" FROM \"telegraf\".\"autogen\".\"tomcat_connector\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
+						"queryConfig": {
+							"database": "",
+							"measurement": "",
+							"retentionPolicy": "",
+							"fields": [],
+							"tags": {},
+							"groupBy": {
+								"time": "",
+								"tags": []
+							},
+							"areTagsAccepted": false,
+							"rawText": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"request_count\"), 1s) AS \"request_count\" FROM \"telegraf\".\"autogen\".\"tomcat_connector\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
+							"range": null,
+							"shifts": null
+						},
+						"source": "/cmp/v1/sources/2",
+						"type": "influxql"
+					}
+				],
+				"axes": {
+					"x": {
+						"bounds": [
+							"",
+							""
+						],
+						"label": "",
+						"prefix": "",
+						"suffix": "",
+						"base": "10",
+						"scale": "linear"
+					},
+					"y": {
+						"bounds": [
+							"",
+							""
+						],
+						"label": "Count",
+						"prefix": "",
+						"suffix": "",
+						"base": "10",
+						"scale": "linear"
+					},
+					"y2": {
+						"bounds": [
+							"",
+							""
+						],
+						"label": "",
+						"prefix": "",
+						"suffix": "",
+						"base": "10",
+						"scale": "linear"
+					}
+				},
+				"type": "line",
+				"colors": [
+					{
+						"id": "9d56b9fd-b749-4bb1-87ff-1ba49ba0e5a1",
+						"type": "scale",
+						"hex": "#31C0F6",
+						"name": "Nineteen Eighty Four",
+						"value": "0"
+					},
+					{
+						"id": "68aa234b-5f9d-4133-bcd9-6ebd7f48cac2",
+						"type": "scale",
+						"hex": "#A500A5",
+						"name": "Nineteen Eighty Four",
+						"value": "0"
+					},
+					{
+						"id": "8ab6682f-ca5a-4409-8828-0571b7e24098",
+						"type": "scale",
+						"hex": "#FF7E27",
+						"name": "Nineteen Eighty Four",
+						"value": "0"
+					}
+				],
+				"legend": {},
+				"tableOptions": {
+					"verticalTimeAxis": true,
+					"sortBy": {
+						"internalName": "time",
+						"displayName": "",
+						"visible": true
+					},
+					"wrapping": "truncate",
+					"fixFirstColumn": true
+				},
+				"fieldOptions": [
+					{
+						"internalName": "time",
+						"displayName": "",
+						"visible": true
+					}
+				],
+				"timeFormat": "MM/DD/YYYY HH:mm:ss",
+				"decimalPlaces": {
+					"isEnforced": true,
+					"digits": 2
+				},
+				"note": "",
+				"noteVisibility": "default"
+			},
+			{
+				"x": 6,
+				"y": 3,
+				"w": 6,
+				"h": 3,
+				"name": "Tomcat - Rx (BPS)",
+				"queries": [
+					{
+						"query": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"bytes_received\"), 1s) AS \"bytes_received\" FROM \"telegraf\".\"autogen\".\"tomcat_connector\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
+						"queryConfig": {
+							"database": "",
+							"measurement": "",
+							"retentionPolicy": "",
+							"fields": [],
+							"tags": {},
+							"groupBy": {
+								"time": "",
+								"tags": []
+							},
+							"areTagsAccepted": false,
+							"rawText": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"bytes_received\"), 1s) AS \"bytes_received\" FROM \"telegraf\".\"autogen\".\"tomcat_connector\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
+							"range": null,
+							"shifts": null
+						},
+						"source": "/cmp/v1/sources/2",
+						"type": "influxql"
+					}
+				],
+				"axes": {
+					"x": {
+						"bounds": [
+							"",
+							""
+						],
+						"label": "",
+						"prefix": "",
+						"suffix": "",
+						"base": "10",
+						"scale": "linear"
+					},
+					"y": {
+						"bounds": [
+							"",
+							""
+						],
+						"label": "BPS",
+						"prefix": "",
+						"suffix": "",
+						"base": "2",
+						"scale": "linear"
+					},
+					"y2": {
+						"bounds": [
+							"",
+							""
+						],
+						"label": "",
+						"prefix": "",
+						"suffix": "",
+						"base": "10",
+						"scale": "linear"
+					}
+				},
+				"type": "line",
+				"colors": [
+					{
+						"id": "9d56b9fd-b749-4bb1-87ff-1ba49ba0e5a1",
+						"type": "scale",
+						"hex": "#31C0F6",
+						"name": "Nineteen Eighty Four",
+						"value": "0"
+					},
+					{
+						"id": "68aa234b-5f9d-4133-bcd9-6ebd7f48cac2",
+						"type": "scale",
+						"hex": "#A500A5",
+						"name": "Nineteen Eighty Four",
+						"value": "0"
+					},
+					{
+						"id": "8ab6682f-ca5a-4409-8828-0571b7e24098",
+						"type": "scale",
+						"hex": "#FF7E27",
+						"name": "Nineteen Eighty Four",
+						"value": "0"
+					}
+				],
+				"legend": {},
+				"tableOptions": {
+					"verticalTimeAxis": true,
+					"sortBy": {
+						"internalName": "time",
+						"displayName": "",
+						"visible": true
+					},
+					"wrapping": "truncate",
+					"fixFirstColumn": true
+				},
+				"fieldOptions": [
+					{
+						"internalName": "time",
+						"displayName": "",
+						"visible": true
+					}
+				],
+				"timeFormat": "MM/DD/YYYY HH:mm:ss",
+				"decimalPlaces": {
+					"isEnforced": true,
+					"digits": 2
+				},
+				"note": "",
+				"noteVisibility": "default"
+			}
+        ],
+        "templates": [
+			{
+				"tempVar": ":host:",
+				"values": [],
+				"id": "",
+				"type": "tagValues",
+				"label": "",
+				"query": {
+					"influxql": "SHOW TAG VALUES ON :database: FROM :measurement: WITH KEY=:tagKey:",
+					"db": "telegraf",
+					"measurement": "tomcat_connector",
+					"tagKey": "host",
+					"fieldKey": ""
+				}
+			}
+		]
+    }
+}
