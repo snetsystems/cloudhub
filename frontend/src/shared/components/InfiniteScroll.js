@@ -74,9 +74,19 @@ class InfiniteScroll extends Component {
 
   throttledHandleResize = _.throttle(this.handleResize, 100)
 
-  handleMakeDiv = className => props => (
-    <div {...props} className={`fancy-scroll--${className}`} />
-  )
+  handleMakeDiv = className => props => {
+    if (className === 'view') {
+      const customStyle = {...props}
+      // eslint-disable-next-line operator-assignment
+      customStyle.style.marginBottom = customStyle.style.marginBottom - 1
+      // eslint-disable-next-line operator-assignment
+      customStyle.style.marginRight = customStyle.style.marginRight - 1
+      return <div {...customStyle} className={`fancy-scroll--${className}`} />
+      // eslint-disable-next-line no-else-return
+    } else {
+      return <div {...props} className={`fancy-scroll--${className}`} />
+    }
+  }
 
   componentDidMount() {
     window.addEventListener('resize', this.handleResize, true)
