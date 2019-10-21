@@ -31,7 +31,7 @@ $input-tag--item-height: 24px;
   white-space: nowrap;
   padding: 0 0 0 9px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 400;
   background-color: $g5-pepper;
   color: $g18-cloud;
   cursor: default;
@@ -64,7 +64,7 @@ $input-tag--item-height: 24px;
   &:hover,
   &.open {
     cursor: pointer;
-    background-color: $c-laser;
+    background-color: $s-deepOrange2;
   }
 }
 .tags-add--menu {
@@ -78,7 +78,7 @@ $input-tag--item-height: 24px;
   border-radius: 4px;
   overflow: auto;
   max-height: 200px;
-  @include gradient-h($c-ocean, $c-pool);
+  @include gradient-h($s-grapefruit, $s-orange);
 }
 .tags-add--menu-item {
   text-align: left;
@@ -94,13 +94,13 @@ $input-tag--item-height: 24px;
   &:hover {
     cursor: pointer;
     color: $g20-white;
-    @include gradient-h($c-laser, $c-pool);
+    @include gradient-h($s-grapefruit, $s-orange);
   }
   &:active,
   &:active:focus {
     cursor: pointer;
     color: $g20-white;
-    @include gradient-h($c-sapphire, $c-pool);
+    @include gradient-h($s-pitch, $s-ligntGrapefruit2);
   }
 }
 .tags-add.open .tags-add--menu {

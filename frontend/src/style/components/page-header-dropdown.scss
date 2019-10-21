@@ -19,13 +19,13 @@
     right: 0;
   }
   .dropdown-toggle > .caret:after {
-    content: "\e910";
+    content: '\e910';
     font-size: 17px;
   }
   /* Hover & Open State */
   &.open .dropdown-toggle,
   .dropdown-toggle:hover {
-    color: $c-pool;
+    color: $s-orange;
   }
   /* Menu */
   .dropdown-menu {

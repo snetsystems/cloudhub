@@ -147,7 +147,7 @@
     @include gradient-h($dividerA, $dividerB);
   }
   .dropdown-item--checkbox {
-    background-color: $dividerA;
+    background-color: $g2-kevlar;
   }
   .dropdown-item--checkbox:after {
     background-color: $scrollA;
@@ -180,9 +180,9 @@
     $s-orange,
     $s-orange,
     $s-orange,
-    #fff,
-    $c-neutrino,
-    $c-hydrogen
+    $s-white,
+    $s-lightOrange,
+    $s-pitch
   );
 }
 /* $backgroundA,
