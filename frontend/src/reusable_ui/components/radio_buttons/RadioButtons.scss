@@ -11,7 +11,7 @@
 .radio-button {
   @include no-user-select();
   font-family: $ix-text-font;
-  font-weight: 600;
+  font-weight: 400;
   transition: background-color 0.25s ease, color 0.25s ease;
   background-color: $g2-kevlar;
   color: $g11-sidewalk;
@@ -91,7 +91,6 @@
     $form-lg-height
   );
 }
-
 /* Color Modifiers */
 .radio-buttons--default {
   .radio-button.active {
@@ -123,33 +122,26 @@
     color: $c-pineapple;
   }
 }
-
 /* Shape Modifiers */
 .radio-buttons.radio-buttons--square {
   &.radio-buttons--xs .radio-button {
     width: $form-xs-height;
   }
-
   &.radio-buttons--sm .radio-button {
     width: $form-sm-height;
   }
-
   &.radio-buttons--md .radio-button {
     width: $form-md-height;
   }
-
   &.radio-buttons--lg .radio-button {
     width: $form-lg-height;
   }
-
   .radio-button {
     padding: 0;
   }
 }
-
 .radio-buttons.radio-buttons--stretch {
   width: 100%;
-
   .radio-button {
     flex: 1 0 0;
   }

@@ -187,7 +187,6 @@ $dash-graph-options-arrow: 8px;
   color: $g13-mist;
 }
 
-
 .dash-graph--note:hover .dash-graph--note-tooltip {
   display: block;
 }
@@ -250,23 +249,21 @@ $dash-graph--heading-name-z: $dash-graph--heading-dragger-z + 1;
 }
 
 .dash-graph--name {
-  font-size: 12px;
-  font-weight: 600;
   border-radius: $radius;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   position: relative;
   z-index: $dash-graph--heading-name-z;
-  font-weight: 600;
-  font-size: 13px;
+  font-weight: 400;
+  font-size: 14px;
   height: $dash-graph-heading;
   color: $g13-mist;
   line-height: $dash-graph-heading;
   width: calc(100% - 78px);
   padding-left: 10px;
   transition: color 0.25s ease, opacity 0.25s ease;
-  
+
   .dash-graph--heading-draggable:hover & {
     color: $g16-pearl;
   }
@@ -534,7 +531,10 @@ $dash-graph--heading-name-z: $dash-graph--heading-dragger-z + 1;
 // Gradient Borders when Dragging or Resizing a Cell
 $cell-gradient-border--start: $c-pool;
 $cell-gradient-border--stop: $c-comet;
-$cell-gradient-border--mid: mix($cell-gradient-border--start, $cell-gradient-border--stop);
+$cell-gradient-border--mid: mix(
+  $cell-gradient-border--start,
+  $cell-gradient-border--stop
+);
 
 .dash-graph--gradient-border {
   position: absolute;
@@ -578,7 +578,10 @@ $cell-gradient-border--mid: mix($cell-gradient-border--start, $cell-gradient-bor
     height: $ix-border;
     left: $ix-radius;
     width: calc(200% - #{$ix-radius * 2});
-    @include gradient-h($cell-gradient-border--start, $cell-gradient-border--mid);
+    @include gradient-h(
+      $cell-gradient-border--start,
+      $cell-gradient-border--mid
+    );
   }
 
   &:after {
@@ -586,7 +589,10 @@ $cell-gradient-border--mid: mix($cell-gradient-border--start, $cell-gradient-bor
     height: calc(200% - #{$ix-radius * 2});
     left: -$ix-border;
     width: $ix-border;
-    @include gradient-v($cell-gradient-border--start, $cell-gradient-border--mid);
+    @include gradient-v(
+      $cell-gradient-border--start,
+      $cell-gradient-border--mid
+    );
   }
 }
 
@@ -619,7 +625,10 @@ $cell-gradient-border--mid: mix($cell-gradient-border--start, $cell-gradient-bor
     height: $ix-border;
     right: $ix-radius;
     width: calc(200% - #{$ix-radius * 2});
-    @include gradient-h($cell-gradient-border--mid, $cell-gradient-border--stop);
+    @include gradient-h(
+      $cell-gradient-border--mid,
+      $cell-gradient-border--stop
+    );
   }
 
   &:after {
@@ -627,10 +636,12 @@ $cell-gradient-border--mid: mix($cell-gradient-border--start, $cell-gradient-bor
     height: calc(200% - #{$ix-radius * 2});
     right: -$ix-border;
     width: $ix-border;
-    @include gradient-v($cell-gradient-border--mid, $cell-gradient-border--stop);
+    @include gradient-v(
+      $cell-gradient-border--mid,
+      $cell-gradient-border--stop
+    );
   }
 }
-
 
 .react-grid-item .dash-graph--gradient-border {
   display: none;
@@ -656,7 +667,7 @@ $cell-gradient-border--mid: mix($cell-gradient-border--start, $cell-gradient-bor
   bottom: 0;
   right: 0;
   opacity: 0;
-  
+
   &:before,
   &:after {
     content: '';
@@ -688,7 +699,6 @@ $cell-gradient-border--mid: mix($cell-gradient-border--start, $cell-gradient-bor
 .react-grid-item:hover .react-resizable-handle {
   opacity: 1;
 }
-
 
 // Cell Resizing & Dragging Styles
 .react-grid-item.resizing,

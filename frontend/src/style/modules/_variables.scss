@@ -41,8 +41,8 @@ $ix-border: 2px;
 $ix-radius: 4px;
 $ix-radius-sm: 3px;
 
-$ix-link-default: $c-pool;
-$ix-link-default-hover: $c-laser;
+$ix-link-default: $s-brown;
+$ix-link-default-hover: $s-deepOrange2;
 $ix-link-success: $c-rainforest;
 $ix-link-success-hover: $c-honeydew;
 $ix-link-warning: $c-pineapple;
@@ -82,21 +82,21 @@ $ix-text-base-5: (
       $ix-text-scale * $ix-text-scale
   )
 );
-
 /* Form Element Sizing */
-
 $form-xs-height: 22px;
 $form-xs-padding: 6px;
 $form-xs-font: 13px;
-
 $form-sm-height: 30px;
 $form-sm-padding: 9px;
 $form-sm-font: 13px;
-
 $form-md-height: 38px;
 $form-md-padding: 12px;
 $form-md-font: 15px;
-
 $form-lg-height: 46px;
 $form-lg-padding: 15px;
 $form-lg-font: 17px;
+/* SnetSystem Motifs
+---------------------------------------------- */
+$s-cmp-page-header-height: 45px;
+$s-page-wrapper-max-width: 1920px;
+$s-page-wrapper-padding: 20px;

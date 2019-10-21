@@ -21,7 +21,7 @@
   -webkit-user-select: none !important;
   -ms-user-select: none !important;
   -o-user-select: none !important;
-  color: $c-pool;
+  color: $s-orange;
   background-color: $g2-kevlar;
   font-family: $code-font;
   padding-right: 11px;
@@ -35,7 +35,7 @@
   }
   &:hover:active {
     cursor: pointer;
-    color: $c-laser;
+    color: $s-deepOrange2;
   }
 }
 
@@ -44,7 +44,8 @@
   position: relative;
   background-color: $g2-kevlar;
 
-  &, &:hover {
+  &,
+  &:hover {
     cursor: pointer;
   }
 
@@ -61,7 +62,7 @@
     height: 8px;
     border-radius: 4px;
     background-color: $g6-smoke;
-    transform: translate(-50%,-50%);
+    transform: translate(-50%, -50%);
     left: 50%;
   }
   // Knob
@@ -71,7 +72,7 @@
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background-color: $c-pool;
+    background-color: $s-orange;
     transition: background-color 0.25s ease, transform 0.25s ease;
     transform: translate(0%, -50%);
   }
@@ -83,7 +84,7 @@
     height: 100%;
     top: 0;
     left: 0;
-    @include gradient-h($g2-kevlar,$g3-castle);
+    @include gradient-h($g2-kevlar, $g3-castle);
     transition: opacity 0.25s ease;
     opacity: 0;
   }
@@ -112,11 +113,11 @@
     font-style: italic;
 
     &:hover {
-      color: $c-pool;
+      color: $s-orange;
     }
     &:hover:active {
       font-style: normal;
-      color: $c-laser;
+      color: $s-deepOrange2;
     }
   }
 }

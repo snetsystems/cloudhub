@@ -3,10 +3,9 @@
    -----------------------------------------------------------------------------
 */
 
-$overlay-title-height: $cmp-page-header-height;
+$overlay-title-height: $s-cmp-page-header-height;
 $overlay-gutter: 30px;
 $overlay-min-height: 150px;
-
 
 /*
     Overlay Technology Styles
@@ -26,7 +25,7 @@ $overlay-min-height: 150px;
   z-index: 1;
   opacity: 0;
   transition: opacity 0.25s ease;
-  @include gradient-diag-down($c-pool,$c-comet);
+  @include gradient-diag-down($c-pool, $c-comet);
 }
 
 .overlay--dialog {
@@ -35,7 +34,8 @@ $overlay-min-height: 150px;
   z-index: 2;
   transform: translateY(72px);
   opacity: 0;
-  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.25s ease;
+  transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    opacity 0.25s ease;
 }
 
 .overlay-tech {
@@ -103,10 +103,10 @@ $overlay-min-height: 150px;
     transition: background-color 0.25s ease;
   }
   &:before {
-    transform: translate(-50%,-50%) rotate(45deg);
+    transform: translate(-50%, -50%) rotate(45deg);
   }
   &:after {
-    transform: translate(-50%,-50%) rotate(-45deg);
+    transform: translate(-50%, -50%) rotate(-45deg);
   }
   /* Hover State */
   &:hover {
@@ -120,7 +120,7 @@ $overlay-min-height: 150px;
 
 .overlay--body {
   padding: $overlay-gutter;
-  padding-top: 18px; 
+  padding-top: 18px;
   border-radius: 0 0 $radius $radius;
   min-height: $overlay-min-height;
   @include gradient-v($g2-kevlar, $g0-obsidian);

@@ -95,7 +95,7 @@ table.table.cmp-admin-table
   td
   div.dropdown
   div.btn.dropdown-toggle {
-  background-color: $c-pool;
+  background-color: $s-orange;
   color: $g20-white;
 
   > .caret {
@@ -103,7 +103,7 @@ table.table.cmp-admin-table
   }
 
   &:hover {
-    background-color: $c-laser;
+    background-color: $s-deepOrange2;
   }
 }
 table.table.cmp-admin-table
@@ -118,7 +118,7 @@ table.table.cmp-admin-table
   td
   div.dropdown.open
   div.btn.dropdown-toggle:hover {
-  background-color: $c-hydrogen;
+  background-color: $s-deepOrange2;
   color: $g20-white;
 
   > .caret {
@@ -133,7 +133,7 @@ table.table.cmp-admin-table tbody tr.cmp-admin-table--new-user {
 
 /* Highlight "Me" in the users table */
 .cmp-user--me {
-  color: $c-rainforest;
+  color: $s-orange;
   white-space: nowrap;
 
   > span.icon {

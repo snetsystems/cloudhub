@@ -12,7 +12,7 @@ $tooltip-font: 13px;
 
 $tooltip-bg: $g5-pepper;
 $tooltip-text: $g19-ghost;
-$tooltip-accent: $c-pool;
+$tooltip-accent: $s-orange;
 
 $tooltip-code-bg: $g2-kevlar;
 $tooltip-code-color: $c-potassium;
@@ -34,11 +34,18 @@ $tooltip-code-color: $c-potassium;
     color: $tooltip-text;
     border: 2px solid $tooltip-accent;
   }
-  &.type-dark.place-top:after {border-top-color: $tooltip-accent;}
-  &.type-dark.place-right:after {border-right-color: $tooltip-accent;}
-  &.type-dark.place-bottom:after {border-bottom-color: $tooltip-accent;}
-  &.type-dark.place-left:after {border-left-color: $tooltip-accent;}
-
+  &.type-dark.place-top:after {
+    border-top-color: $tooltip-accent;
+  }
+  &.type-dark.place-right:after {
+    border-right-color: $tooltip-accent;
+  }
+  &.type-dark.place-bottom:after {
+    border-bottom-color: $tooltip-accent;
+  }
+  &.type-dark.place-left:after {
+    border-left-color: $tooltip-accent;
+  }
 
   h1 {
     font-size: 14px;
@@ -81,10 +88,18 @@ $tooltip-code-color: $c-potassium;
     code {
       color: $c-pool !important;
     }
-    &.type-dark.place-top:after {border-top-color: $c-rainforest;}
-    &.type-dark.place-right:after {border-right-color: $c-rainforest;}
-    &.type-dark.place-bottom:after {border-bottom-color: $c-rainforest;}
-    &.type-dark.place-left:after {border-left-color: $c-rainforest;}
+    &.type-dark.place-top:after {
+      border-top-color: $c-rainforest;
+    }
+    &.type-dark.place-right:after {
+      border-right-color: $c-rainforest;
+    }
+    &.type-dark.place-bottom:after {
+      border-bottom-color: $c-rainforest;
+    }
+    &.type-dark.place-left:after {
+      border-left-color: $c-rainforest;
+    }
   }
 }
 
@@ -118,14 +133,14 @@ $qmark-tooltip-size: 15px;
   line-height: ($qmark-tooltip-size + 1px);
   font-weight: 900;
   background-color: $g10-wolf;
-  color: $g0-obsidian;
+  color: #fff;
   margin: 0 5px;
   transition: background-color 0.25s ease;
 }
 .question-mark-tooltip:hover {
   cursor: default;
   .question-mark-tooltip--icon {
-    background-color: $c-pool;
+    background-color: $s-orange;
   }
 }
 

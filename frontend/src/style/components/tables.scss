@@ -185,7 +185,7 @@ $table-tab-scrollbar-height: 6px;
   }
 
   .panel-body {
-    height: calc(100% - 90px);
+    height: calc(100% - 45px);
   }
 }
 
@@ -199,7 +199,7 @@ $table-tab-scrollbar-height: 6px;
   font-style: italic;
 }
 .table .table--temp-var {
-  color: $c-comet;
+  color: $s-orange;
   font-weight: 600;
 }
 
@@ -314,7 +314,7 @@ $wordBreak: break-word;
   font-size: 12px;
   font-family: $code-font;
   font-weight: 500;
-  padding: 4px 8px;
+  padding: 2px 8px;
   line-height: 1.42857143em;
   color: $g13-mist;
   white-space: pre-wrap;

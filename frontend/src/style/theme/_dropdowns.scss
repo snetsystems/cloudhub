@@ -4,13 +4,13 @@
 */
 
 // Default Theme Colors
-$dropdown-default-bg: $c-pool;
-$dropdown-default-dark: $c-ocean;
-$dropdown-default-press: $c-sapphire;
-$dropdown-default-hover: $c-laser;
+$dropdown-default-bg: $s-orange;
+$dropdown-default-dark: $s-grapefruit;
+$dropdown-default-press: $s-ligntGrapefruit2;
+$dropdown-default-hover: $s-ligntGrapefruit2;
 $dropdown-default-text: $c-yeti;
 $dropdown-default-text-hover: $g20-white;
-$dropdown-default-header: $c-sapphire;
+$dropdown-default-header: #fff;
 
 // Green Theme Colors
 $dropdown-green-bg: $c-pool;
@@ -40,33 +40,87 @@ $dropdown-purple-header: $c-potassium;
     width: 120px;
   }
   // Size Modifiers
-  &-80 .dropdown-toggle {width: 80px;}
-  &-90 .dropdown-toggle {width: 90px;}
-  &-100 .dropdown-toggle {width: 100px;}
-  &-110 .dropdown-toggle {width: 110px;}
-  &-120 .dropdown-toggle {width: 120px;}
-  &-130 .dropdown-toggle {width: 130px;}
-  &-140 .dropdown-toggle {width: 140px;}
-  &-150 .dropdown-toggle {width: 150px;}
-  &-160 .dropdown-toggle {width: 160px;}
-  &-170 .dropdown-toggle {width: 170px;}
-  &-180 .dropdown-toggle {width: 180px;}
-  &-190 .dropdown-toggle {width: 190px;}
-  &-200 .dropdown-toggle {width: 200px;}
-  &-210 .dropdown-toggle {width: 210px;}
-  &-220 .dropdown-toggle {width: 220px;}
-  &-230 .dropdown-toggle {width: 230px;}
-  &-240 .dropdown-toggle {width: 240px;}
-  &-250 .dropdown-toggle {width: 250px;}
-  &-260 .dropdown-toggle {width: 260px;}
-  &-270 .dropdown-toggle {width: 270px;}
-  &-280 .dropdown-toggle {width: 280px;}
-  &-290 .dropdown-toggle {width: 290px;}
-  &-300 .dropdown-toggle {width: 300px;}
-  &-310 .dropdown-toggle {width: 310px;}
-  &-320 .dropdown-toggle {width: 320px;}
-  &-330 .dropdown-toggle {width: 330px;}
-  &-340 .dropdown-toggle {width: 340px;}
+  &-80 .dropdown-toggle {
+    width: 80px;
+  }
+  &-90 .dropdown-toggle {
+    width: 90px;
+  }
+  &-100 .dropdown-toggle {
+    width: 100px;
+  }
+  &-110 .dropdown-toggle {
+    width: 110px;
+  }
+  &-120 .dropdown-toggle {
+    width: 120px;
+  }
+  &-130 .dropdown-toggle {
+    width: 130px;
+  }
+  &-140 .dropdown-toggle {
+    width: 140px;
+  }
+  &-150 .dropdown-toggle {
+    width: 150px;
+  }
+  &-160 .dropdown-toggle {
+    width: 160px;
+  }
+  &-170 .dropdown-toggle {
+    width: 170px;
+  }
+  &-180 .dropdown-toggle {
+    width: 180px;
+  }
+  &-190 .dropdown-toggle {
+    width: 190px;
+  }
+  &-200 .dropdown-toggle {
+    width: 200px;
+  }
+  &-210 .dropdown-toggle {
+    width: 210px;
+  }
+  &-220 .dropdown-toggle {
+    width: 220px;
+  }
+  &-230 .dropdown-toggle {
+    width: 230px;
+  }
+  &-240 .dropdown-toggle {
+    width: 240px;
+  }
+  &-250 .dropdown-toggle {
+    width: 250px;
+  }
+  &-260 .dropdown-toggle {
+    width: 260px;
+  }
+  &-270 .dropdown-toggle {
+    width: 270px;
+  }
+  &-280 .dropdown-toggle {
+    width: 280px;
+  }
+  &-290 .dropdown-toggle {
+    width: 290px;
+  }
+  &-300 .dropdown-toggle {
+    width: 300px;
+  }
+  &-310 .dropdown-toggle {
+    width: 310px;
+  }
+  &-320 .dropdown-toggle {
+    width: 320px;
+  }
+  &-330 .dropdown-toggle {
+    width: 330px;
+  }
+  &-340 .dropdown-toggle {
+    width: 340px;
+  }
 }
 
 .dropdown:focus,
@@ -80,7 +134,7 @@ $dropdown-purple-header: $c-potassium;
   > .btn.dropdown-toggle.active,
   > .btn.dropdown-toggle.active:active,
   > .btn.dropdown-toggle.active:active:hover {
-    box-shadow: 0 0 5px 3px $c-pool;
+    box-shadow: 0 0 0px 2px #cbcbcb;
   }
 }
 
@@ -113,20 +167,36 @@ $dropdown-purple-header: $c-potassium;
 
   // Size Modifiers
   &.btn-xs {
-    .caret {right: $form-xs-padding;}
-    .dropdown-selected {padding-right: $form-xs-padding;}
+    .caret {
+      right: $form-xs-padding;
+    }
+    .dropdown-selected {
+      padding-right: $form-xs-padding;
+    }
   }
   &.btn-sm {
-    .caret {right: $form-sm-padding;}
-    .dropdown-selected {padding-right: $form-sm-padding;}
+    .caret {
+      right: $form-sm-padding;
+    }
+    .dropdown-selected {
+      padding-right: $form-sm-padding;
+    }
   }
   &.btn-md {
-    .caret {right: $form-md-padding;}
-    .dropdown-selected {padding-right: $form-md-padding;}
+    .caret {
+      right: $form-md-padding;
+    }
+    .dropdown-selected {
+      padding-right: $form-md-padding;
+    }
   }
   &.btn-lg {
-    .caret {right: $form-lg-padding;}
-    .dropdown-selected {padding-right: $form-lg-padding;}
+    .caret {
+      right: $form-lg-padding;
+    }
+    .dropdown-selected {
+      padding-right: $form-lg-padding;
+    }
   }
 }
 
@@ -136,10 +206,18 @@ $dropdown-purple-header: $c-potassium;
   position: relative;
   padding: 0 !important;
 
-  &.btn-xs {height: $form-xs-height;}
-  &.btn-sm {height: $form-sm-height;}
-  &.btn-md {height: $form-md-height;}
-  &.btn-lg {height: $form-lg-height;}
+  &.btn-xs {
+    height: $form-xs-height;
+  }
+  &.btn-sm {
+    height: $form-sm-height;
+  }
+  &.btn-md {
+    height: $form-md-height;
+  }
+  &.btn-lg {
+    height: $form-lg-height;
+  }
 }
 .dropdown-autocomplete--input {
   position: absolute;
@@ -152,15 +230,39 @@ $dropdown-purple-header: $c-potassium;
   padding: 0;
   font-weight: 500;
 
-  .btn-xs & {padding: 0 ($form-xs-padding * 2) 0 $form-xs-padding; font-size: $form-xs-font;}
-  .btn-sm & {padding: 0 ($form-sm-padding * 2) 0 $form-sm-padding; font-size: $form-sm-font;}
-  .btn-md & {padding: 0 ($form-md-padding * 2) 0 $form-md-padding; font-size: $form-md-font;}
-  .btn-lg & {padding: 0 ($form-lg-padding * 2) 0 $form-lg-padding; font-size: $form-lg-font;}
+  .btn-xs & {
+    padding: 0 ($form-xs-padding * 2) 0 $form-xs-padding;
+    font-size: $form-xs-font;
+  }
+  .btn-sm & {
+    padding: 0 ($form-sm-padding * 2) 0 $form-sm-padding;
+    font-size: $form-sm-font;
+  }
+  .btn-md & {
+    padding: 0 ($form-md-padding * 2) 0 $form-md-padding;
+    font-size: $form-md-font;
+  }
+  .btn-lg & {
+    padding: 0 ($form-lg-padding * 2) 0 $form-lg-padding;
+    font-size: $form-lg-font;
+  }
 
-  &::-webkit-input-placeholder { color: rgba(255,255,255,0.5); font-weight: 500 !important; }
-  &::-moz-placeholder { color: rgba(255,255,255,0.5); font-weight: 500 !important; }
-  &:-ms-input-placeholder { color: rgba(255,255,255,0.5); font-weight: 500 !important; }
-  &:-moz-placeholder { color: rgba(255,255,255,0.5); font-weight: 500 !important; }
+  &::-webkit-input-placeholder {
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 500 !important;
+  }
+  &::-moz-placeholder {
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 500 !important;
+  }
+  &:-ms-input-placeholder {
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 500 !important;
+  }
+  &:-moz-placeholder {
+    color: rgba(255, 255, 255, 0.5);
+    font-weight: 500 !important;
+  }
 
   &:focus {
     color: $g20-white;
@@ -170,7 +272,7 @@ $dropdown-purple-header: $c-potassium;
   padding: 7px 9px;
   font-size: 13px;
   line-height: 13px;
-  color: rgba(255,255,255,0.4);
+  color: rgba(255, 255, 255, 0.4);
   font-weight: 500;
   @extend %no-user-select;
 }
@@ -184,7 +286,7 @@ $dropdown-purple-header: $c-potassium;
   padding: 0;
   margin: 0;
   border: 0;
-  @include gradient-h($dropdown-default-dark,$dropdown-default-bg);
+  @include gradient-h($dropdown-default-dark, $dropdown-default-bg);
   overflow: hidden;
   display: none;
   position: absolute;
@@ -207,20 +309,22 @@ $dropdown-purple-header: $c-potassium;
   &:hover,
   &.highlight,
   &.highlight:hover {
-    @include gradient-h($dropdown-default-hover,$dropdown-default-bg);
+    @include gradient-h($dropdown-default-hover, $dropdown-default-bg);
   }
   > a {
     font-size: 13px;
     line-height: 13px;
     transition: color 0.25s ease;
     color: $dropdown-default-text;
-    font-weight: 500;
+    font-weight: 400;
     padding: 7px 9px;
     outline: none;
     overflow: hidden;
     text-overflow: ellipsis;
 
-    &, &:hover, &:focus {
+    &,
+    &:hover,
+    &:focus {
       background: none;
       background-color: transparent;
     }
@@ -233,12 +337,12 @@ $dropdown-purple-header: $c-potassium;
     &:active:hover,
     &:focus:active,
     &:focus:active:hover {
-      @include gradient-h($dropdown-default-press,$dropdown-default-bg);
+      @include gradient-h($dropdown-default-press, $dropdown-default-bg);
       color: $dropdown-default-text-hover;
     }
   }
   &.active {
-    @include gradient-h($dropdown-default-press,$dropdown-default-bg);
+    @include gradient-h($dropdown-default-press, $dropdown-default-bg);
     color: $dropdown-default-text-hover;
   }
 }
@@ -298,7 +402,7 @@ $dropdown-purple-header: $c-potassium;
   line-height: 13px;
   background-color: $dropdown-default-bg;
   color: $dropdown-default-header;
-  font-weight: 600;
+  font-weight: 400;
   padding: 7px 9px;
   margin: 0;
   @extend %no-user-select;
@@ -321,7 +425,7 @@ $dropdown-purple-header: $c-potassium;
   }
   li.dropdown-item.highlight,
   li.dropdown-item.highlight:hover {
-    @include gradient-h($dropdown-default-hover,$dropdown-default-bg);
+    @include gradient-h($dropdown-default-hover, $dropdown-default-bg);
   }
 }
 
@@ -348,23 +452,20 @@ $dropdown-purple-header: $c-potassium;
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%,-50%) scale(2,2);
+    transform: translate(-50%, -50%) scale(2, 2);
     width: 6px;
     height: 6px;
     border-radius: 50%;
     background-color: $g20-white;
     opacity: 0;
-    transition:
-      transform 0.25s ease,
-      opacity 0.25s ease;
+    transition: transform 0.25s ease, opacity 0.25s ease;
   }
 }
 .multi-select--item {
   color: $c-neutrino;
   font-size: 13px;
   line-height: 13px;
-  transition:
-    color 0.25s ease;
+  transition: color 0.25s ease;
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -377,16 +478,16 @@ $dropdown-purple-header: $c-potassium;
   }
 
   &:hover {
-    @include gradient-h($c-laser,$c-pool);
+    @include gradient-h($c-laser, $c-pool);
     color: $g20-white;
-    cursor: pointer;;
+    cursor: pointer;
   }
   &.checked {
     color: $g20-white;
 
     .multi-select--checkbox:after {
       opacity: 1;
-      transform: translate(-50%,-50%) scale(1,1);
+      transform: translate(-50%, -50%) scale(1, 1);
     }
   }
 }
@@ -396,16 +497,17 @@ $dropdown-purple-header: $c-potassium;
   }
 }
 
-
 /*
   Kapacitor Theme Dropdowns
 */
 .dropdown .dropdown-menu.dropdown-malachite {
-  @include gradient-h($dropdown-green-dark,$dropdown-green-bg);
+  @include gradient-h($dropdown-green-dark, $dropdown-green-bg);
   li.dropdown-item {
     &:hover,
     &.highlight,
-    &.highlight:hover {@include gradient-h($dropdown-green-hover,$dropdown-green-bg);}
+    &.highlight:hover {
+      @include gradient-h($dropdown-green-hover, $dropdown-green-bg);
+    }
     > a {
       color: $dropdown-green-text;
 
@@ -418,23 +520,31 @@ $dropdown-purple-header: $c-potassium;
       &:active:hover,
       &:focus:active,
       &:focus:active:hover {
-        @include gradient-h($dropdown-green-press,$dropdown-green-bg);
+        @include gradient-h($dropdown-green-press, $dropdown-green-bg);
         color: $dropdown-green-text-hover;
       }
     }
-    .dropdown-action {color: $c-sapphire;}
-    .dropdown-action:hover {color: $dropdown-green-text-hover;}
-    &.active {@include gradient-h($dropdown-green-press,$dropdown-green-bg);}
+    .dropdown-action {
+      color: $c-sapphire;
+    }
+    .dropdown-action:hover {
+      color: $dropdown-green-text-hover;
+    }
+    &.active {
+      @include gradient-h($dropdown-green-press, $dropdown-green-bg);
+    }
   }
-  li.dropdown-divider {@include gradient-h($dropdown-green-press,$c-ocean)}
+  li.dropdown-divider {
+    @include gradient-h($dropdown-green-press, $c-ocean);
+  }
   li.dropdown-header {
-    @include gradient-h($dropdown-green-press,$c-ocean);
+    @include gradient-h($dropdown-green-press, $c-ocean);
     color: $dropdown-green-header;
   }
   &.dropdown-menu--no-highlight {
     li.dropdown-item.highlight,
     li.dropdown-item.highlight:hover {
-      @include gradient-h($dropdown-green-hover,$dropdown-green-bg);
+      @include gradient-h($dropdown-green-hover, $dropdown-green-bg);
     }
   }
 }
@@ -443,11 +553,13 @@ $dropdown-purple-header: $c-potassium;
   Purple Theme Dropdowns
 */
 .dropdown .dropdown-menu.dropdown-astronaut {
-  @include gradient-h($dropdown-purple-dark,$dropdown-purple-bg);
+  @include gradient-h($dropdown-purple-dark, $dropdown-purple-bg);
   li.dropdown-item {
     &:hover,
     &.highlight,
-    &.highlight:hover {@include gradient-h($dropdown-purple-hover,$dropdown-purple-bg);}
+    &.highlight:hover {
+      @include gradient-h($dropdown-purple-hover, $dropdown-purple-bg);
+    }
     > a {
       color: $dropdown-purple-text;
 
@@ -460,23 +572,31 @@ $dropdown-purple-header: $c-potassium;
       &:active:hover,
       &:focus:active,
       &:focus:active:hover {
-        @include gradient-h($dropdown-purple-press,$dropdown-purple-bg);
+        @include gradient-h($dropdown-purple-press, $dropdown-purple-bg);
         color: $dropdown-purple-text-hover;
       }
     }
-    &.active {@include gradient-h($dropdown-purple-press,$dropdown-purple-bg);}
-    .dropdown-action {color: $dropdown-purple-press;}
-    .dropdown-action:hover {color: $dropdown-purple-text-hover;}
+    &.active {
+      @include gradient-h($dropdown-purple-press, $dropdown-purple-bg);
+    }
+    .dropdown-action {
+      color: $dropdown-purple-press;
+    }
+    .dropdown-action:hover {
+      color: $dropdown-purple-text-hover;
+    }
   }
-  li.dropdown-divider {@include gradient-h($dropdown-purple-press,$c-ocean);}
+  li.dropdown-divider {
+    @include gradient-h($dropdown-purple-press, $c-ocean);
+  }
   li.dropdown-header {
-    @include gradient-h($dropdown-purple-press,$c-ocean);
+    @include gradient-h($dropdown-purple-press, $c-ocean);
     color: $dropdown-purple-header;
   }
   &.dropdown-menu--no-highlight {
     li.dropdown-item.highlight,
     li.dropdown-item.highlight:hover {
-      @include gradient-h($dropdown-purple-hover,$dropdown-purple-bg);
+      @include gradient-h($dropdown-purple-hover, $dropdown-purple-bg);
     }
   }
 }

@@ -6,10 +6,10 @@
 
 .cm-s-influxql-read-only {
   color: $g11-sidewalk;
-  font-weight: 600;
+  font-weight: 400;
 
   .cm-clause {
-    color: desaturate($c-pool, 50%);
+    color: desaturate($s-orange, 50%);
   }
   .cm-meta {
     color: $g15-platinum;
@@ -21,7 +21,7 @@
     color: $g8-storm;
   }
   .cm-number {
-    color:$g11-sidewalk;
+    color: $g11-sidewalk;
   }
   .cm-operator {
     color: $g11-sidewalk;

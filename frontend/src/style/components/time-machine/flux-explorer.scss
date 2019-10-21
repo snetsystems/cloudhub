@@ -105,10 +105,10 @@ $flux-tree-gutter: 11px;
     }
   }
   .expanded > & {
-    color: $c-pool;
+    color: $s-orange;
     .flux-schema--expander:before,
     .flux-schema--expander:after {
-      background-color: $c-pool;
+      background-color: $s-orange;
     }
     .flux-schema--expander:before {
       transform: translate(-50%, -50%) rotate(-90deg);
@@ -118,10 +118,10 @@ $flux-tree-gutter: 11px;
       transform: translate(-50%, -50%) rotate(0deg);
     }
     &:hover {
-      color: $c-laser;
+      color: $s-deepOrange2;
       .flux-schema--expander:before,
       .flux-schema--expander:after {
-        background-color: $c-laser;
+        background-color: $s-deepOrange2;
       }
     }
   }
@@ -190,13 +190,19 @@ $flux-tree-gutter: 11px;
 }
 
 .flux-schema--item-skeleton {
-  background: linear-gradient(60deg, $g4-onyx 0%, $g4-onyx 35%, $g6-smoke 50%, $g4-onyx 65%, $g4-onyx 100%);
+  background: linear-gradient(
+    60deg,
+    $g4-onyx 0%,
+    $g4-onyx 35%,
+    $g6-smoke 50%,
+    $g4-onyx 65%,
+    $g4-onyx 100%
+  );
   border-radius: 4px;
   height: 60%;
   background-size: 400% 400%;
   animation: skeleton-animation 1s ease infinite;
 }
-
 // Tree Node Lines
 .flux-schema--child:before,
 .flux-schema--child:after {
@@ -204,39 +210,33 @@ $flux-tree-gutter: 11px;
   background-color: $g4-onyx;
   position: absolute;
 }
-
 // Vertical Line
 .flux-schema--child:before {
   top: 0;
   left: $flux-tree-indent / 2;
   width: $flux-tree-line;
+
   height: 100%;
 }
-
 .flux-schema--child:last-child:before {
   height: $flux-tree-indent / 2;
 }
-
 // Horizontal Line
+
 .flux-schema--child:after {
   top: $flux-tree-indent / 2;
   left: $flux-tree-indent / 2;
   width: $flux-tree-indent / 2;
   height: $flux-tree-line;
 }
-
-/*
-    Controls
-    ----------------------------------------------------------------------------
-*/
-
+/* Controls
+    ---------------------------------------------------------------------------- */
 .flux-schema--controls {
   padding: $flux-tree-gutter;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
-
 .flux-schema--filter {
   display: flex;
   position: relative;
@@ -244,7 +244,6 @@ $flux-tree-gutter: 11px;
   padding-right: $flux-tree-gutter;
   align-items: center;
   height: 30px;
-
   &:before,
   &:after {
     content: '';
@@ -265,13 +264,11 @@ $flux-tree-gutter: 11px;
     width: $flux-tree-indent / 2;
     height: $flux-tree-line;
   }
-
   & > input.form-control.input-xs {
     max-width: $flux-tree-max-filter;
     font-size: 12px;
   }
 }
-
 // Hints
 .flux-schema--type {
   color: $g11-sidewalk;
@@ -283,18 +280,15 @@ $flux-tree-gutter: 11px;
     opacity: 1;
   }
 }
-
 .flux-schema--header {
   display: flex;
   align-items: center;
   padding-right: 11px;
-
   > .flux-schema--filter {
     flex: 1 0 0;
     max-width: $flux-tree-max-filter + $flux-tree-indent + $flux-tree-gutter;
   }
 }
-
 .flux-schema--count {
   font-size: 12px;
   color: $g11-sidewalk;
@@ -306,13 +300,10 @@ $flux-tree-gutter: 11px;
   padding: 0 8px;
   @include no-user-select();
 }
-
-/*
-    Spinner
+/* Spinner
     ----------------------------------------------------------------------------
 
-    From http: //tobiasahlin.com/spinkit/.
-*/
+    From http: //tobiasahlin.com/spinkit/. */
 
 .loading-spinner .spinner {
   width: 25px;
@@ -323,7 +314,6 @@ $flux-tree-gutter: 11px;
   justify-content: flex-end;
   flex-wrap: nowrap;
 }
-
 .loading-spinner .spinner > div {
   width: 8px;
   height: 8px;
@@ -331,15 +321,12 @@ $flux-tree-gutter: 11px;
   border-radius: 50%;
   animation: sk-bouncedelay 1s infinite ease-in-out both;
 }
-
 .loading-spinner .spinner .bounce1 {
   animation-delay: -0.32s;
 }
-
 .loading-spinner .spinner .bounce2 {
   animation-delay: -0.16s;
 }
-
 @keyframes sk-bouncedelay {
   0%,
   80%,

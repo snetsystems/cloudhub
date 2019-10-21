@@ -6,8 +6,8 @@
 $scrollbar-track-size: 12px;
 $scrollbar-thumb-size: 6px;
 
-$scrollbar-color-a: $c-pool;
-$scrollbar-color-b: $c-comet;
+$scrollbar-color-a: $s-orange;
+$scrollbar-color-b: $s-grapefruit;
 
 .fancy-scroll--track-h,
 .fancy-scroll--track-v {
@@ -71,10 +71,10 @@ $scrollbar-color-kap-b: $c-pool;
 /* Dropdown Theme Scrollbars */
 ul.dropdown-menu {
   .fancy-scroll--thumb-h {
-    @include gradient-h($c-neutrino, $c-laser);
+    @include gradient-h($s-lightOrange, $s-pitch);
   }
   .fancy-scroll--thumb-v {
-    @include gradient-v($c-neutrino, $c-laser);
+    @include gradient-v($s-lightOrange, $s-pitch);
   }
 }
 /* Hacky Fix to make fancy scrollbars work in Safari */

@@ -20,25 +20,25 @@
   justify-content: center;
   align-items: center;
   padding: $ix-marg-b;
-  
+
   .checkmark {
-    color: $c-rainforest;
-    transition: all .5s;
+    color: $s-deepOrange2;
+    transition: all 0.5s;
   }
 
   .circle-thick {
     color: $g7-graphite;
-    transition: all .5s;
+    transition: all 0.5s;
   }
 
   .current.circle-thick {
-    color: $c-pool;
-    transition: all .5s;
+    color: $s-orange;
+    transition: all 0.5s;
   }
 
   .remove {
     color: $c-curacao;
-    transition: all .5s;
+    transition: all 0.5s;
   }
 
   .wizard-progress-title {
@@ -50,14 +50,14 @@
     margin-top: -$ix-marg-b;
     font-weight: 600;
     pointer-events: none;
-    transition: all .5s;
+    transition: all 0.5s;
     @include no-user-select();
   }
 }
 
 .wizard-progress-button:hover {
   .checkmark {
-    color: $c-honeydew;
+    color: $s-pitch;
   }
 
   .circle-thick {
@@ -65,7 +65,7 @@
   }
 
   .current.circle-thick {
-    color: $c-laser;
+    color: $s-deepOrange2;
   }
 
   .remove {

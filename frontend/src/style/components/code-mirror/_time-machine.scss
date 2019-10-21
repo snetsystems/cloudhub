@@ -7,16 +7,16 @@
 .cm-s-time-machine {
   background-color: $g1-raven;
   color: $g11-sidewalk;
-  padding-right: 16px;
+  padding-right: 13px;
 
   .cm-variable {
     color: $c-pool;
-    font-weight: 700;
+    font-weight: 400;
   }
   .cm-function,
   .cm-pipe-forward {
     color: $c-comet;
-    font-weight: 700;
+    font-weight: 400;
   }
   .cm-arrow-function,
   .cm-function-arg,
@@ -55,7 +55,7 @@
 
   .CodeMirror-vscrollbar,
   .CodeMirror-hscrollbar {
-    @include custom-scrollbar-round($g1-raven, $c-pool);
+    @include custom-scrollbar-round($g1-raven, $s-orange);
     &::-webkit-scrollbar-thumb {
       border-width: 5px;
     }

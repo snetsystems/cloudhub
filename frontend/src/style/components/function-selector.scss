@@ -10,7 +10,7 @@ $function-selector--item: $g3-castle;
 $function-selector--text: $g11-sidewalk;
 $function-selector--item-hover: $g4-onyx;
 $function-selector--text-hover: $g15-platinum;
-$function-selector--item-active: $c-pool;
+$function-selector--item-active: $s-orange;
 $function-selector--text-active: $g20-white;
 
 .function-selector {
@@ -43,7 +43,7 @@ $function-selector--text-active: $g20-white;
   @include no-user-select();
   border-radius: $radius;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 400;
   font-family: $code-font;
   flex: 0 0 calc(25% - 2px);
   margin: 1px;
@@ -52,9 +52,7 @@ $function-selector--text-active: $g20-white;
   line-height: ($function-selector--size - 3px);
   background-color: $function-selector--item;
   color: $function-selector--text;
-  transition:
-    background-color 0.25s ease,
-    color 0.25s ease;
+  transition: background-color 0.25s ease, color 0.25s ease;
 
   &:hover {
     background-color: $function-selector--item-hover;
