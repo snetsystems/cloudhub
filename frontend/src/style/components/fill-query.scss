@@ -36,8 +36,12 @@ input.form-control.fill-query--input {
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
 
-  &:hover {border-color: $g8-storm;}
-  &:focus {border-color: $c-pool;}
+  &:hover {
+    border-color: $g8-storm;
+  }
+  &:focus {
+    border-color: $s-orange;
+  }
 
   & + .fill-query--dropdown .dropdown-toggle {
     border-top-right-radius: 0;

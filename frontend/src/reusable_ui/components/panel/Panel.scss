@@ -3,6 +3,8 @@
    -----------------------------------------------------------------------------
 */
 
+$s-panel-gutter: 15px;
+
 $panel-gutter: 30px;
 $panel-background: $g3-castle;
 
@@ -51,7 +53,7 @@ $panel-background: $g3-castle;
 
 .panel-body {
   background-color: $panel-background;
-  padding: $panel-gutter;
+  padding: $s-panel-gutter;
 
   .panel-header + &,
   &:first-child {

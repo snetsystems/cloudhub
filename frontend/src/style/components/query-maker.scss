@@ -43,7 +43,7 @@ $query-editor--field-bg: $g2-kevlar;
 $query-editor--status-height: 34px;
 /* ^ These 2 should total 86px */
 $query-editor--status-default: $g11-sidewalk;
-$query-editor--status-success: $c-rainforest;
+$query-editor--status-success: $s-orange;
 $query-editor--status-warning: $c-pineapple;
 $query-editor--status-error: $c-dreamsicle;
 $query-editor--templates-width: 135px;
@@ -103,9 +103,7 @@ $query-maker-tab-margin: 10px;
   color: $query-maker--tab-text;
   background: $query-maker--tab-bg;
   position: relative;
-  transition:
-      color 0.25s ease,
-      background-color 0.25s ease;
+  transition: color 0.25s ease, background-color 0.25s ease;
 
   &:hover {
     cursor: pointer;
@@ -126,7 +124,7 @@ $query-maker-tab-margin: 10px;
 .query-maker--tab > label {
   left: 10px;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 400;
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -151,17 +149,16 @@ $query-maker-tab-margin: 10px;
     height: 2px;
     border-radius: 1px;
     background-color: $g8-storm;
-    transition:
-      background-color 0.25s ease;
+    transition: background-color 0.25s ease;
     position: absolute;
     top: 50%;
     left: 50%;
   }
   &:before {
-    transform: translate(-50%,-50%) rotate(45deg);
+    transform: translate(-50%, -50%) rotate(45deg);
   }
   &:after {
-    transform: translate(-50%,-50%) rotate(-45deg);
+    transform: translate(-50%, -50%) rotate(-45deg);
   }
 
   &:hover {

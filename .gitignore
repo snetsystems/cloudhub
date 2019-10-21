@@ -6,7 +6,8 @@ frontend/dist
 frontend/.cache
 frontend/node_modules
 frontend/coverage
-backend/cmd/cmp/cmp-canned
+# backend/cmd/cmp/cmp-canned
+# backend/cmd/cmp/cmp-protoboards
 
 # Binaries
 backend/cmd/cmp/*scmp*

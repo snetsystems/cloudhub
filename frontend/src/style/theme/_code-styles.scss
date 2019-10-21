@@ -3,10 +3,9 @@
    -----------------------------------------------------------------------------
 */
 
-
 $code-bg-color: $g2-kevlar;
-$code-scrollbar: $c-pool;
-$code-font-color: $c-pool;
+$code-scrollbar: $s-orange;
+$code-font-color: $s-orange;
 $code-font-size: 11px;
 $code-font-weight: 500;
 
@@ -24,7 +23,17 @@ code {
   margin: 0 1px 0 2px;
 
   /* Reset default tag styles */
-  b,strong,i,em,mark,small,del,ins,sub,sup,u {
+  b,
+  strong,
+  i,
+  em,
+  mark,
+  small,
+  del,
+  ins,
+  sub,
+  sup,
+  u {
     font-size: $code-font-size;
     font-weight: $code-font-weight;
     text-decoration: none;
@@ -37,7 +46,8 @@ code {
     padding: 0;
   }
 
-  sup, sub {
+  sup,
+  sub {
     position: relative;
     font-size: 85%;
     margin-left: 2px;
@@ -50,9 +60,15 @@ code {
     top: 4px;
   }
 
-  b { color: $c-dreamsicle;}
-  i { color: $c-pool;}
-  u { color: $c-rainforest;}
+  b {
+    color: $c-dreamsicle;
+  }
+  i {
+    color: $s-orange;
+  }
+  u {
+    color: $c-rainforest;
+  }
 
   &.rainbow-highlighter {
     text-shadow: none;
@@ -80,11 +96,11 @@ pre {
     word-wrap: normal;
     border-radius: 0;
   }
-  @include custom-scrollbar($code-bg-color,$code-scrollbar);
+  @include custom-scrollbar($code-bg-color, $code-scrollbar);
 
   &.rainbow-highlighter {
     background-image: none;
-    @include custom-scrollbar($g2-kevlar,$c-pool);
+    @include custom-scrollbar($g2-kevlar, $s-orange);
 
     code {
       text-shadow: none;
@@ -95,7 +111,7 @@ pre {
 /* Code Highlighting */
 $code-highlight-a: $g10-wolf;
 $code-highlight-b: $c-hydrogen;
-$code-highlight-c: $c-pool;
+$code-highlight-c: $s-orange;
 $code-highlight-d: $c-viridian;
 $code-highlight-e: $c-honeydew;
 $code-highlight-f: $g20-white;
@@ -105,23 +121,42 @@ $code-highlight-i: $c-honeydew;
 $code-highlight-j: $c-comet;
 $code-highlight-k: $g6-smoke;
 
-code, pre {
+code,
+pre {
   &.rainbow-highlighter {
     color: $c-potassium;
     border-color: $c-shadow;
 
-
-
-    b { color: $code-highlight-a; }
-    strong { color: $code-highlight-b; }
-    i { color: $code-highlight-c; }
-    em { color: $code-highlight-d; }
-    mark { color: $code-highlight-e; }
-    small { color: $code-highlight-f; }
-    del { color: $code-highlight-g; }
-    ins { color: $code-highlight-h; }
-    sub { color: $code-highlight-i; }
-    sup { color: $code-highlight-j; }
+    b {
+      color: $code-highlight-a;
+    }
+    strong {
+      color: $code-highlight-b;
+    }
+    i {
+      color: $code-highlight-c;
+    }
+    em {
+      color: $code-highlight-d;
+    }
+    mark {
+      color: $code-highlight-e;
+    }
+    small {
+      color: $code-highlight-f;
+    }
+    del {
+      color: $code-highlight-g;
+    }
+    ins {
+      color: $code-highlight-h;
+    }
+    sub {
+      color: $code-highlight-i;
+    }
+    sup {
+      color: $code-highlight-j;
+    }
 
     /* Literal highlighting */
     u {
@@ -131,7 +166,8 @@ code, pre {
       text-indent: -4px;
     }
 
-    sup,sub {
+    sup,
+    sub {
       position: initial;
       top: 0;
       margin: 0;
@@ -149,12 +185,12 @@ pre:before {
   margin-bottom: $ix-marg-a;
   text-transform: uppercase;
 }
-pre[data-lang="html"]:before {
+pre[data-lang='html']:before {
   content: 'HTML';
 }
-pre[data-lang="css"]:before {
+pre[data-lang='css']:before {
   content: 'CSS';
 }
-pre[data-lang="js"]:before {
+pre[data-lang='js']:before {
   content: 'Javascript';
 }

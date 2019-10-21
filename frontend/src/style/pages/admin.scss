@@ -25,7 +25,7 @@
 }
 .admin-table tbody tr:hover .dropdown-toggle {
   color: $g20-white !important;
-  background-color: $c-pool;
+  background-color: $s-orange;
 
   .caret {
     opacity: 1;
@@ -101,7 +101,7 @@ pre.admin-table--query {
 
   h4 {
     margin: 0;
-    color: $c-potassium;
+    color: $s-oragne2;
     font-size: 16px;
     font-family: $code-font;
     padding-left: 6px;

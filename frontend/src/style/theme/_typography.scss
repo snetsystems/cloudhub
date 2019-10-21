@@ -17,7 +17,7 @@ a:visited {
   color: $ix-link-default;
   transition: color 0.2s ease;
   text-decoration: none;
-  font-weight: 700;
+  font-weight: 400;
 
   &.link-danger {
     color: $ix-link-danger;
@@ -85,13 +85,13 @@ p {
 
   b,
   strong {
-    font-weight: 900;
+    font-weight: 400;
   }
 
   small {
     color: $ix-text-light;
     font-size: $ix-text-tiny;
-    font-weight: 500;
+    font-weight: 400;
   }
 }
 
@@ -199,7 +199,7 @@ blockquote {
 
   b,
   strong {
-    font-weight: 900;
+    font-weight: 500;
   }
 }
 hr {
@@ -216,7 +216,7 @@ hr {
 // Type Formatting
 b,
 strong {
-  font-weight: 900;
+  font-weight: 500;
 }
 mark {
   background-color: $c-emerald;

@@ -35,18 +35,16 @@
 }
 .confirm-button--confirmation {
   white-space: pre;
-  max-width: 210px;  
+  max-width: 210px;
   border-radius: 3px;
-  background-color: $c-curacao;
+  background-color: $s-pinkRed;
   opacity: 0;
   padding: 0 7px;
   color: $g20-white;
   font-size: 13px;
   font-weight: 600;
   text-align: center;
-  transition:
-    opacity 0.25s ease,
-    background-color 0.25s ease;
+  transition: opacity 0.25s ease, background-color 0.25s ease;
 
   &:after {
     content: '';
@@ -67,28 +65,36 @@
     transform: translateX(-50%);
     border-top-color: $c-curacao;
   }
-  .top &:hover:after {border-top-color: $c-dreamsicle;}
+  .top &:hover:after {
+    border-top-color: $c-dreamsicle;
+  }
   .bottom &:after {
     bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
     border-bottom-color: $c-curacao;
   }
-  .bottom &:hover:after {border-bottom-color: $c-dreamsicle;}
+  .bottom &:hover:after {
+    border-bottom-color: $c-dreamsicle;
+  }
   .left &:after {
     top: 50%;
     left: 100%;
     transform: translateY(-50%);
     border-left-color: $c-curacao;
   }
-  .left &:hover:after {border-left-color: $c-dreamsicle;}
+  .left &:hover:after {
+    border-left-color: $c-dreamsicle;
+  }
   .right &:after {
     top: 50%;
     right: 100%;
     transform: translateY(-50%);
     border-right-color: $c-curacao;
   }
-  .right &:hover:after {border-right-color: $c-dreamsicle;}
+  .right &:hover:after {
+    border-right-color: $c-dreamsicle;
+  }
 }
 
 .confirm-button.active {
@@ -106,7 +112,7 @@
   margin-top: -1px;
 
   &:hover {
-    background-color:$g5-pepper;
+    background-color: $g5-pepper;
     color: $g14-chromium;
   }
 
