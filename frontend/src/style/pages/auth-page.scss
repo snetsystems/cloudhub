@@ -30,7 +30,7 @@
   position: absolute;
   top: 43%;
   left: 50%;
-  transform: translate(-50%,-50%);
+  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -41,7 +41,7 @@
     @include no-user-select();
     font-weight: 200;
     font-size: 52px;
-    letter-spacing: -2px;
+    letter-spacing: 1px;
   }
   p {
     color: $g11-sidewalk;

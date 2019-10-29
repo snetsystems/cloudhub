@@ -18,7 +18,7 @@ const Login = ({authData: {auth}}) => {
       <Notifications />
       <SplashPage>
         <h1 className="auth-text-logo">
-          <b>S &#125;</b> net <b>C</b>loud <b>M</b>onitoring <b>P</b>ortal
+          <b>Cloud Smart Hub</b>
         </h1>
         <p>
           <b>{VERSION}</b> / Time-Series Data Visualization
