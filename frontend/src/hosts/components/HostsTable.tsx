@@ -193,6 +193,8 @@ class HostsTable extends PureComponent<Props, State> {
       sortKey,
       sortDirection
     )
+
+    console.log({hosts})
     return (
       <div className="hosts-table">
         {this.HostsTableHeader}

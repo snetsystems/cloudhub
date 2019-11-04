@@ -173,6 +173,12 @@ class SideNav extends PureComponent<Props> {
             link={`${sourcePrefix}/manage-sources`}
             title="Configuration"
           />
+          <NavListItem link={`${sourcePrefix}/agent-admin/agent-minions`}>
+            Agent Configuration
+          </NavListItem>
+          <NavListItem link={`${sourcePrefix}/manage-sources/`}>
+            Configuration
+          </NavListItem>
         </NavBlock>
         {isUsingAuth ? (
           <UserNavBlock
