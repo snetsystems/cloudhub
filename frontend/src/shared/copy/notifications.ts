@@ -229,7 +229,7 @@ export const notifyCurrentOrgDeleted = (): Notification => ({
   message: 'Your current organization was deleted.',
 })
 
-//  SCMP Admin Notifications
+//  Cloud Smart Hub Admin Notifications
 //  ----------------------------------------------------------------------------
 export const notifyMappingDeleted = (
   id: string,

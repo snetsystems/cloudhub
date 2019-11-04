@@ -11,7 +11,7 @@ class GettingStarted extends Component {
         <div className="getting-started">
           <div className="getting-started--cell intro">
             <h5>
-              <span className="icon cubo-uniform" /> Welcome to SCMP!
+              <span className="icon cubo-uniform" /> Welcome to Cloud Smart Hub!
             </h5>
             <p>Follow the links below to explore CMP’s features.</p>
           </div>

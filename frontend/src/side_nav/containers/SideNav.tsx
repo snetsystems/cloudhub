@@ -156,7 +156,7 @@ class SideNav extends PureComponent<Props> {
             <NavListItem
               link={`${sourcePrefix}/admin-cmp/current-organization`}
             >
-              SCMP
+              Cloud Smart Hub
             </NavListItem>
             <NavListItem link={`${sourcePrefix}/admin-influxdb/databases`}>
               InfluxDB

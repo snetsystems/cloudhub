@@ -85,7 +85,7 @@ class ManageSources extends PureComponent<Props, State> {
             setActiveKapacitor={this.handleSetActiveKapacitor}
             toggleWizard={this.toggleWizard}
           />
-          <p className="version-number">SCMP Version: {VERSION}</p>
+          <p className="version-number">Cloud Smart Hub Version: {VERSION}</p>
         </Page.Contents>
         <ConnectionWizard
           isVisible={wizardVisibility}
