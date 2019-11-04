@@ -11,8 +11,8 @@ const SplashPage: SFC<Props> = ({children}) => (
       {children}
     </div>
     <p className="auth-credits">
-      Made by &copy;Snetsystems (Powered by{' '}
-      <span className="icon cubo-uniform" />InfluxData)
+      Copyright by &copy;Snetsystems Co., Ltd. (Derived by{' '}
+      <span className="icon cubo-uniform" />Chronograf)
     </p>
     <div className="auth-image" />
   </div>
