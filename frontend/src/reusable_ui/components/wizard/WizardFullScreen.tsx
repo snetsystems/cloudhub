@@ -24,8 +24,8 @@ class WizardFullScreen extends PureComponent<Props> {
       <div className="wizard-splash auth-image">
         <div className="wizard-container">{this.WizardController}</div>
         <p className="auth-credits">
-          Renewed by &copy;Snetsystems and Powered by{' '}
-          <span className="icon cubo-uniform" /> InfluxData
+          Copyright by &copy;Snetsystems and Derived by{' '}
+          <span className="icon cubo-uniform" /> Chronograf
         </p>
       </div>
     )
