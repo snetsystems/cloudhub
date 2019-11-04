@@ -5,7 +5,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "SCMP Server Debug",
+      "name": "Launch Server",
       "type": "go",
       "request": "launch",
       "mode": "debug",
@@ -26,17 +26,17 @@
       // "logOutput": "debugger"
     },
     {
-      "name": "Continuous Debug",
-      "type": "chrome",
-      "request": "launch",
-      "url": "http://localhost:8080/",
-      "webRoot": "${workspaceFolder}/frontend/src"
-    },
-    {
-      "name": "Static Debug",
+      "name": "Launch Chrome",
       "type": "chrome",
       "request": "launch",
       "url": "http://localhost:8888/",
+      "webRoot": "${workspaceFolder}/frontend/src"
+    },
+    {
+      "name": "Launch Chrome via Proxy",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:8080/",
       "webRoot": "${workspaceFolder}/frontend/src"
     }
   ]

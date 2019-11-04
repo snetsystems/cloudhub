@@ -11,9 +11,8 @@ const SplashPage: SFC<Props> = ({children}) => (
       {children}
     </div>
     <p className="auth-credits">
-      Made by &copy;Snetsystems{' '}
-      {/*(Powered by{' '}
-      <span className="icon cubo-uniform" />InfluxData)*/}
+      Made by &copy;Snetsystems (Powered by{' '}
+      <span className="icon cubo-uniform" />InfluxData)
     </p>
     <div className="auth-image" />
   </div>

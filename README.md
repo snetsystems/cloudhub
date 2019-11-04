@@ -1,4 +1,4 @@
-# SCMP (Snet Cloud Monitoring Portal) - Latest v0.0.6
+# SCMP (Snet Cloud Monitoring Portal) - Latest v0.0.7
 
 ## Intro.
 
@@ -141,8 +141,11 @@ Run VSCode as above workspace.
 $ code snet.code-workspace
 ```
 
-Simply, select **"Debug SCMP"** and then run debug.<br>
-Also, for UI debugging, select **"Static Debug"** and then run debug.
+Simply, select **"Launch Server"** and then run.<br>
+Also, for UI debugging, select **"Launch Chrome"** and then run debug.<br>
+For continuous debugging, you can use **"Launch Chrome"** after _**yarn start**_<br>
+> [Note]<br>
+> For continuous debugging, you need to add **_develop mode_** into the running argument.
 
 > We already prepared **"_.vscode/launch.json_"** and **"_.vscode/settings.json_"**
 >
@@ -156,15 +159,17 @@ Also, for UI debugging, select **"Static Debug"** and then run debug.
 > >    "args": [
 > >      "-l=debug",
 > >      "-d"
-> >      // "--auth-duration=0",
-> >      // "-t=74c1e9e2450886060b5bf736b935cd0bf960837f",
-> >      // "--github-client-id=c170bbdba5cb2ea8c3e6",
-> >      // "--github-client-secret=55c35715b0e4eebab7edbdeef3081bf890e79d22"
+> >      "-c=./cmp-canned/",
+> >      "--protoboards-path=./cmp-protoboards/",
+> >      "--auth-duration=0",
+> >      "-t=74c1e9e2450886060b5bf736b935cd0bf960837f",
+> >      "--github-client-id=c170bbdba5cb2ea8c3e6",
+> >      "--github-client-secret=55c35715b0e4eebab7edbdeef3081bf890e79d22"
 > >    ],
 > >    ...
 > >   ```
 
-If you run a not login mode, you can use **"Continuous Debug"**, after _**yarn start**_
+If you run a not login mode, you can use **"Launch Chrome via Proxy"** after _**yarn start**_
 
 ````
 $ cd $CMP_PATH/frontend
