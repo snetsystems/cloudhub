@@ -57,8 +57,8 @@ class FancyScrollbar extends Component<Props & Partial<DefaultProps>> {
   public handleMakeDiv = (className: string) => (props): JSX.Element => {
     if (className === 'view') {
       const customStyle = {...props}
-      customStyle.style.marginBottom = customStyle.style.marginBottom - 0.5
-      customStyle.style.marginRight = customStyle.style.marginRight - 0.5
+      customStyle.style.marginBottom = customStyle.style.marginBottom - 1
+      customStyle.style.marginRight = customStyle.style.marginRight - 1
       return <div {...customStyle} className={`fancy-scroll--${className}`} />
     } else {
       return <div {...props} className={`fancy-scroll--${className}`} />

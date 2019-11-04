@@ -225,7 +225,7 @@ $dash-graph--heading-name-z: $dash-graph--heading-dragger-z + 1;
 
 .dash-graph--heading-dragger {
   z-index: $dash-graph--heading-dragger-z;
-  @include gradient-h($c-pool, mix($c-pool, $c-comet));
+  @include gradient-h($s-orange, mix($s-orange, $s-grapefruit));
 }
 
 .react-grid-item:hover {
@@ -529,8 +529,8 @@ $dash-graph--heading-name-z: $dash-graph--heading-dragger-z + 1;
 }
 
 // Gradient Borders when Dragging or Resizing a Cell
-$cell-gradient-border--start: $c-pool;
-$cell-gradient-border--stop: $c-comet;
+$cell-gradient-border--start: $s-orange;
+$cell-gradient-border--stop: $s-grapefruit;
 $cell-gradient-border--mid: mix(
   $cell-gradient-border--start,
   $cell-gradient-border--stop
@@ -548,7 +548,6 @@ $cell-gradient-border--mid: mix(
   opacity: 0;
   z-index: $dash-graph-border-z;
 }
-
 .dash-graph--gradient-top-left,
 .dash-graph--gradient-top-right,
 .dash-graph--gradient-bottom-left,
@@ -557,14 +556,12 @@ $cell-gradient-border--mid: mix(
   width: 50%;
   height: 50%;
   z-index: 1;
-
   &:before,
   &:after {
     content: '';
     position: absolute;
   }
 }
-
 .dash-graph--gradient-top-left {
   z-index: 2;
   top: 0;
@@ -572,7 +569,6 @@ $cell-gradient-border--mid: mix(
   border-top-left-radius: $ix-radius;
   border-top: $ix-border solid $cell-gradient-border--start;
   border-left: $ix-border solid $cell-gradient-border--start;
-
   &:before {
     top: -$ix-border;
     height: $ix-border;
@@ -583,7 +579,6 @@ $cell-gradient-border--mid: mix(
       $cell-gradient-border--mid
     );
   }
-
   &:after {
     top: $ix-radius;
     height: calc(200% - #{$ix-radius * 2});
@@ -595,7 +590,6 @@ $cell-gradient-border--mid: mix(
     );
   }
 }
-
 .dash-graph--gradient-top-right {
   top: 0;
   right: 0;
@@ -603,7 +597,6 @@ $cell-gradient-border--mid: mix(
   border-top: $ix-border solid $cell-gradient-border--mid;
   border-right: $ix-border solid $cell-gradient-border--mid;
 }
-
 .dash-graph--gradient-bottom-left {
   bottom: 0;
   left: 0;
@@ -611,7 +604,6 @@ $cell-gradient-border--mid: mix(
   border-bottom: $ix-border solid $cell-gradient-border--mid;
   border-left: $ix-border solid $cell-gradient-border--mid;
 }
-
 .dash-graph--gradient-bottom-right {
   z-index: 2;
   bottom: 0;
@@ -619,7 +611,6 @@ $cell-gradient-border--mid: mix(
   border-bottom-right-radius: $ix-radius;
   border-bottom: $ix-border solid $cell-gradient-border--stop;
   border-right: $ix-border solid $cell-gradient-border--stop;
-
   &:before {
     bottom: -$ix-border;
     height: $ix-border;
@@ -630,7 +621,6 @@ $cell-gradient-border--mid: mix(
       $cell-gradient-border--stop
     );
   }
-
   &:after {
     bottom: $ix-radius;
     height: calc(200% - #{$ix-radius * 2});
@@ -642,16 +632,13 @@ $cell-gradient-border--mid: mix(
     );
   }
 }
-
 .react-grid-item .dash-graph--gradient-border {
   display: none;
 }
-
 .react-grid-item.react-draggable .dash-graph--gradient-border,
 .react-grid-item.react-resizable .dash-graph--gradient-border {
   display: block;
 }
-
 // Resize Handle
 .react-grid-item .react-resizable-handle {
   background-image: none;
@@ -667,7 +654,6 @@ $cell-gradient-border--mid: mix(
   bottom: 0;
   right: 0;
   opacity: 0;
-
   &:before,
   &:after {
     content: '';
@@ -695,45 +681,36 @@ $cell-gradient-border--mid: mix(
     border-bottom-color: $cell-gradient-border--stop;
   }
 }
-
 .react-grid-item:hover .react-resizable-handle {
   opacity: 1;
 }
-
 // Cell Resizing & Dragging Styles
 .react-grid-item.resizing,
 .react-grid-item.react-draggable-dragging {
   z-index: $dash-graph-interacting-z;
-
   .dash-graph--gradient-border {
     opacity: 1;
   }
-
   .dash-graph--name {
     color: $g20-white;
   }
-
   .dash-graph-context {
     opacity: 1;
   }
-
   .react-resizable-handle {
     border-right-color: $cell-gradient-border--stop;
     border-bottom-color: $cell-gradient-border--stop;
-
     &:before,
     &:after {
       background-color: $g0-obsidian;
     }
   }
 }
-
 // Cell Dragging Styles
 .react-grid-item.react-draggable-dragging {
   &:hover {
     cursor: move;
   }
-
   .dash-graph--heading {
     cursor: move;
   }
