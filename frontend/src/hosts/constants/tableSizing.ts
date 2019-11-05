@@ -7,8 +7,9 @@ export const HOSTS_TABLE_SIZING = {
 
 export const AGENT_TABLE_SIZING = {
   NameWidth: '25%',
-  IPWidth: '21%',
-  HostWidth: '17%',
-  StatusWidth: '17%',
+  OSWidth: '20%',
+  IPWidth: '20%',
+  HostWidth: '20%',
+  StatusWidth: '20%',
   ComboBoxWidth: '120px',
 }

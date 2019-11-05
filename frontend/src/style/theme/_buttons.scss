@@ -25,6 +25,9 @@ input.btn {
   font-size: $form-md-font;
   @extend %no-user-select;
 
+  &.btn-inline_block {
+    display: inline-block;
+  }
   // Icons
   > .icon {
     margin: 0 4px 0 0;

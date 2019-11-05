@@ -7,6 +7,7 @@ class AgentConsole extends PureComponent {
 
   render() {
     const {res} = this.props
+    console.log('res: ', res)
     return (
       <div className="panel">
         <div className="panel-heading">
@@ -20,7 +21,9 @@ class AgentConsole extends PureComponent {
               padding: '15px',
               borderRadius: '5px',
               height: '100%',
+              width: '100%',
               overflow: 'hidden',
+              resize: 'none',
             }}
           >
             {res}

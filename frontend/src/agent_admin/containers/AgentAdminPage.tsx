@@ -78,7 +78,6 @@ class AgentAdminPage extends PureComponent<Props> {
       source,
       params: {tab},
     } = this.props
-    console.log({...this.props})
     return (
       <Page>
         <Page.Header>

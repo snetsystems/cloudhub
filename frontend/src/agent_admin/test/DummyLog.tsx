@@ -1,5 +1,3 @@
-import React from 'react'
-
 const DummyLog = () => {
   return `# # Read metrics about docker containers
   # [[inputs.docker]]

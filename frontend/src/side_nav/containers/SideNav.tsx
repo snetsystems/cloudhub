@@ -164,7 +164,7 @@ class SideNav extends PureComponent<Props> {
           </NavBlock>
         </Authorized>
         <NavBlock
-          highlightWhen={['manage-sources', 'kapacitors']}
+          highlightWhen={['manage-sources', 'kapacitors', 'agent-admin']}
           icon="wrench"
           link={`${sourcePrefix}/manage-sources`}
           location={location}
