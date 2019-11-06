@@ -38,8 +38,10 @@ class AgentConfiguration extends PureComponent<State> {
           ip: '192.168.0.1',
           host: 'host1',
           status: 'accepted',
-          isInstall: 'no',
-          isSaveFile: 'no',
+          isRunning: true,
+          isInstall: false,
+          isSaveFile: false,
+          isAccept: true,
         },
         {
           name: 'minion2',
@@ -47,26 +49,41 @@ class AgentConfiguration extends PureComponent<State> {
           ip: '192.168.0.2',
           host: 'host2',
           status: 'accepted',
-          isInstall: 'yes',
-          isSaveFile: 'yes',
+          isRunning: true,
+          isInstall: true,
+          isSaveFile: true,
+          isAccept: true,
         },
         {
           name: 'minion3',
           os: 'window',
           ip: '192.168.0.3',
           host: 'host3',
-          status: 'accepted',
-          isInstall: 'yes',
-          isSaveFile: 'yes',
+          isRunning: false,
+          isInstall: true,
+          isSaveFile: true,
+          isAccept: true,
         },
         {
           name: 'minion4',
           os: 'redhat',
           ip: '',
           host: '',
-          status: 'unaccept',
+          isRunning: false,
+          isInstall: false,
+          isSaveFile: false,
+          isAccept: false,
         },
-        {name: 'minion5', os: 'mac', ip: '', host: '', status: 'unaccept'},
+        {
+          name: 'minion5',
+          os: 'mac',
+          ip: '',
+          host: '',
+          isRunning: false,
+          isInstall: false,
+          isSaveFile: false,
+          isAccept: false,
+        },
       ],
     })
   }
@@ -83,27 +100,34 @@ class AgentConfiguration extends PureComponent<State> {
     )
   }
 
-  private handleClickTableRow = () => {
-    console.log('clicked')
-  }
-
   private handleResize = (proportions: number[]) => {
     this.setState({proportions})
   }
 
   private renderAgentTable = () => {
-    // const {parentUrl} = this.props
-    const {minions} = this.state
+    const {
+      currentUrl,
+      minions,
+      onClickTableRow,
+      onClickAction,
+      onClickSave,
+      onClickTest,
+      onClickApply,
+    } = this.props
     return (
       <AgentTable
+        currentUrl={currentUrl}
         minions={minions}
-        onClickTableRow={this.handleClickTableRow}
+        onClickTableRow={onClickTableRow}
+        onClickAction={onClickAction}
+        onClickSave={onClickSave}
+        onClickTest={onClickTest}
+        onClickApply={onClickApply}
       />
     )
   }
 
   private renderAgentConsole = () => {
-    console.log('this.props: ', this.props)
     const {minionLog} = this.state
     return <AgentConsole res={minionLog} />
   }
@@ -135,17 +159,4 @@ class AgentConfiguration extends PureComponent<State> {
   }
 }
 
-const mapStateToProps = ({links, adminCMP: {organizations, users}}) => ({
-  links,
-  organizations,
-  users,
-})
-
-const mapDispatchToProps = dispatch => ({
-  actions: bindActionCreators(adminCMPActionCreators, dispatch),
-  notify: bindActionCreators(notifyAction, dispatch),
-})
-
-export default connect(mapStateToProps, mapDispatchToProps)(
-  ErrorHandling(AgentConfiguration)
-)
+export default AgentConfiguration

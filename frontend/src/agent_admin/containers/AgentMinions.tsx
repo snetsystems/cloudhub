@@ -12,6 +12,14 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 //const
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
 
+interface Props {
+  onClickTableRow: () => void
+  onClickAction: () => void
+  onClickModal: () => void
+  onClickRun: () => void
+  onClickStop: () => void
+  onClickInstall: () => void
+}
 interface State {
   minions: Readonly<[]>
   proportions: number[]
@@ -21,52 +29,9 @@ class AgentMinions extends PureComponent<State> {
   constructor(props) {
     super(props)
     this.state = {
-      minions: [],
       minionLog: 'not load log',
       proportions: [0.43, 0.57],
     }
-  }
-
-  public componentDidMount() {
-    this.setState({
-      minions: [
-        {
-          name: 'minion1',
-          os: 'ubuntu',
-          ip: '192.168.0.1',
-          host: 'host1',
-          status: 'accepted',
-          isInstall: 'no',
-          isSaveFile: 'no',
-        },
-        {
-          name: 'minion2',
-          os: 'debian',
-          ip: '192.168.0.2',
-          host: 'host2',
-          status: 'accepted',
-          isInstall: 'yes',
-          isSaveFile: 'yes',
-        },
-        {
-          name: 'minion3',
-          os: 'window',
-          ip: '192.168.0.3',
-          host: 'host3',
-          status: 'accepted',
-          isInstall: 'yes',
-          isSaveFile: 'yes',
-        },
-        {
-          name: 'minion4',
-          os: 'redhat',
-          ip: '',
-          host: '',
-          status: 'unaccept',
-        },
-        {name: 'minion5', os: 'mac', ip: '', host: '', status: 'unaccept'},
-      ],
-    })
   }
 
   render() {
@@ -81,27 +46,24 @@ class AgentMinions extends PureComponent<State> {
     )
   }
 
-  private handleClickTableRow = () => {
-    console.log('clicked')
-  }
-
   private handleResize = (proportions: number[]) => {
     this.setState({proportions})
   }
 
   private renderAgentTable = () => {
     // const {parentUrl} = this.props
-    const {minions} = this.state
+    const {currentUrl, minions, onClickTableRow, onClickModal} = this.props
     return (
       <AgentTable
+        currentUrl={currentUrl}
         minions={minions}
-        onClickTableRow={this.handleClickTableRow}
+        onClickTableRow={onClickTableRow}
+        onClickModal={onClickModal}
       />
     )
   }
 
   private renderAgentConsole = () => {
-    console.log('this.props: ', this.props)
     const {minionLog} = this.state
     return <AgentConsole res={minionLog} />
   }

@@ -7,7 +7,6 @@ class AgentConsole extends PureComponent {
 
   render() {
     const {res} = this.props
-    console.log('res: ', res)
     return (
       <div className="panel">
         <div className="panel-heading">

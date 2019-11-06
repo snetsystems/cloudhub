@@ -1,6 +1,4 @@
 import React, {PureComponent} from 'react'
-import {connect} from 'react-redux'
-import {bindActionCreators} from 'redux'
 
 // Components
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
@@ -29,48 +27,6 @@ class AgentLog extends PureComponent<State> {
     }
   }
 
-  public componentDidMount() {
-    this.setState({
-      minions: [
-        {
-          name: 'minion1',
-          os: 'ubuntu',
-          ip: '192.168.0.1',
-          host: 'host1',
-          status: 'accepted',
-          isInstall: 'no',
-          isSaveFile: 'no',
-        },
-        {
-          name: 'minion2',
-          os: 'debian',
-          ip: '192.168.0.2',
-          host: 'host2',
-          status: 'accepted',
-          isInstall: 'yes',
-          isSaveFile: 'yes',
-        },
-        {
-          name: 'minion3',
-          os: 'window',
-          ip: '192.168.0.3',
-          host: 'host3',
-          status: 'accepted',
-          isInstall: 'yes',
-          isSaveFile: 'yes',
-        },
-        {
-          name: 'minion4',
-          os: 'redhat',
-          ip: '',
-          host: '',
-          status: 'unaccept',
-        },
-        {name: 'minion5', os: 'mac', ip: '', host: '', status: 'unaccept'},
-      ],
-    })
-  }
-
   render() {
     return (
       <div className="panel panel-solid">
@@ -83,27 +39,24 @@ class AgentLog extends PureComponent<State> {
     )
   }
 
-  private handleClickTableRow = () => {
-    console.log('clicked')
-  }
-
   private handleResize = (proportions: number[]) => {
     this.setState({proportions})
   }
 
   private renderAgentTable = () => {
     // const {parentUrl} = this.props
-    const {minions} = this.state
+    const {currentUrl, minions, onClickTableRow, onClickAction} = this.props
     return (
       <AgentTable
+        currentUrl={currentUrl}
         minions={minions}
-        onClickTableRow={this.handleClickTableRow}
+        onClickTableRow={onClickTableRow}
+        onClickAction={onClickAction}
       />
     )
   }
 
   private renderAgentConsole = () => {
-    console.log('this.props: ', this.props)
     const {minionLog} = this.state
     return <AgentConsole res={minionLog} />
   }
@@ -135,17 +88,4 @@ class AgentLog extends PureComponent<State> {
   }
 }
 
-const mapStateToProps = ({links, adminCMP: {organizations, users}}) => ({
-  links,
-  organizations,
-  users,
-})
-
-const mapDispatchToProps = dispatch => ({
-  actions: bindActionCreators(adminCMPActionCreators, dispatch),
-  notify: bindActionCreators(notifyAction, dispatch),
-})
-
-export default connect(mapStateToProps, mapDispatchToProps)(
-  ErrorHandling(AgentLog)
-)
+export default AgentLog

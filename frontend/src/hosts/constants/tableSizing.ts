@@ -6,6 +6,7 @@ export const HOSTS_TABLE_SIZING = {
 }
 
 export const AGENT_TABLE_SIZING = {
+  CheckWidth: '30px',
   NameWidth: '25%',
   OSWidth: '20%',
   IPWidth: '20%',

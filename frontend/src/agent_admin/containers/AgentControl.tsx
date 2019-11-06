@@ -1,6 +1,4 @@
 import React, {PureComponent} from 'react'
-import {connect} from 'react-redux'
-import {bindActionCreators} from 'redux'
 
 // Components
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
@@ -15,10 +13,13 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
 
 interface State {
-  minions: Readonly<[]>
-  proportions: number[]
+  minions: []
+  proportions: Readonly<{}>
+  minionLog: ''
+  onClickTableRow: () => void
 }
 
+@ErrorHandling
 class AgentControl extends PureComponent<State> {
   constructor(props) {
     super(props)
@@ -38,8 +39,10 @@ class AgentControl extends PureComponent<State> {
           ip: '192.168.0.1',
           host: 'host1',
           status: 'accepted',
-          isInstall: 'no',
-          isSaveFile: 'no',
+          isRunning: true,
+          isInstall: false,
+          isSaveFile: false,
+          isAccept: true,
         },
         {
           name: 'minion2',
@@ -47,26 +50,41 @@ class AgentControl extends PureComponent<State> {
           ip: '192.168.0.2',
           host: 'host2',
           status: 'accepted',
-          isInstall: 'yes',
-          isSaveFile: 'yes',
+          isRunning: true,
+          isInstall: true,
+          isSaveFile: true,
+          isAccept: true,
         },
         {
           name: 'minion3',
           os: 'window',
           ip: '192.168.0.3',
           host: 'host3',
-          status: 'accepted',
-          isInstall: 'yes',
-          isSaveFile: 'yes',
+          isRunning: false,
+          isInstall: true,
+          isSaveFile: true,
+          isAccept: true,
         },
         {
           name: 'minion4',
           os: 'redhat',
           ip: '',
           host: '',
-          status: 'unaccept',
+          isRunning: false,
+          isInstall: false,
+          isSaveFile: false,
+          isAccept: false,
         },
-        {name: 'minion5', os: 'mac', ip: '', host: '', status: 'unaccept'},
+        {
+          name: 'minion5',
+          os: 'mac',
+          ip: '',
+          host: '',
+          isRunning: false,
+          isInstall: false,
+          isSaveFile: false,
+          isAccept: false,
+        },
       ],
     })
   }
@@ -83,27 +101,55 @@ class AgentControl extends PureComponent<State> {
     )
   }
 
-  private handleClickTableRow = () => {
-    console.log('clicked')
-  }
-
   private handleResize = (proportions: number[]) => {
     this.setState({proportions})
   }
 
   private renderAgentTable = () => {
-    // const {parentUrl} = this.props
-    const {minions} = this.state
+    const {
+      currentUrl,
+      minions,
+      onClickTableRow,
+      onClickAction,
+      onClickModal,
+      onClickRun,
+      onClickStop,
+      onClickInstall,
+    } = this.props
     return (
       <AgentTable
+        currentUrl={currentUrl}
         minions={minions}
-        onClickTableRow={this.handleClickTableRow}
+        onClickTableRow={onClickTableRow}
+        onClickAction={onClickAction}
+        onClickRun={onClickRun}
+        onClickStop={onClickStop}
+        onClickInstall={onClickInstall}
       />
     )
   }
 
+  private onClickModalCall() {
+    return console.log('modal called')
+  }
+
+  private onClickActionCall() {
+    return console.log('action called', this)
+  }
+
+  private onClickRunCall() {
+    return console.log('Action Run')
+  }
+
+  private onClickStopCall() {
+    return console.log('Action Stop')
+  }
+
+  private onClickInstallCall() {
+    return console.log('Action Install')
+  }
+
   private renderAgentConsole = () => {
-    console.log('this.props: ', this.props)
     const {minionLog} = this.state
     return <AgentConsole res={minionLog} />
   }
@@ -135,17 +181,4 @@ class AgentControl extends PureComponent<State> {
   }
 }
 
-const mapStateToProps = ({links, adminCMP: {organizations, users}}) => ({
-  links,
-  organizations,
-  users,
-})
-
-const mapDispatchToProps = dispatch => ({
-  actions: bindActionCreators(adminCMPActionCreators, dispatch),
-  notify: bindActionCreators(notifyAction, dispatch),
-})
-
-export default connect(mapStateToProps, mapDispatchToProps)(
-  ErrorHandling(AgentControl)
-)
+export default AgentControl

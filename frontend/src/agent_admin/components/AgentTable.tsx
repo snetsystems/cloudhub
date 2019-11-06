@@ -10,6 +10,8 @@ import PageSpinner from 'src/shared/components/PageSpinner'
 
 import {AGENT_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 
+import {Source, RemoteDataState, Host} from 'src/types'
+
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 enum SortDirection {
@@ -17,11 +19,17 @@ enum SortDirection {
   DESC = 'desc',
 }
 
+export interface Props {
+  hosts: Host[]
+  hostsPageStatus: RemoteDataState
+  source: Source
+  focusedHost: string
+  currentUrl: string
+}
 interface State {
   searchTerm: string
   sortDirection: SortDirection
   sortKey: string
-  currentUrl: string
 }
 
 @ErrorHandling
@@ -33,7 +41,6 @@ class AgentTable extends PureComponent<State> {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
       sortKey: 'name',
-      currentUrl: '',
     }
   }
 
@@ -108,12 +115,7 @@ class AgentTable extends PureComponent<State> {
 
   public componentWillMount() {}
 
-  public componentDidMount() {
-    const url = window.location.href.split('/')
-    const currentUrl = url[url.length - 1]
-    this.setState({currentUrl})
-    console.log(this.state.currentUrl)
-  }
+  public componentDidMount() {}
 
   public componentWillUnmount() {}
 
@@ -134,6 +136,8 @@ class AgentTable extends PureComponent<State> {
   }
 
   private get agentControlTemp() {
+    const {onClickRun, onClickStop, onClickInstall} = this.props
+
     return (
       <div
         className=""
@@ -143,9 +147,15 @@ class AgentTable extends PureComponent<State> {
           textAlign: 'right',
         }}
       >
-        <button className="btn btn-inline_block btn-default">RUN</button>
         <button
           className="btn btn-inline_block btn-default"
+          onClick={onClickRun.bind(this)}
+        >
+          RUN
+        </button>
+        <button
+          className="btn btn-inline_block btn-default"
+          onClick={onClickStop.bind(this)}
           style={{
             marginLeft: '5px',
           }}
@@ -154,6 +164,7 @@ class AgentTable extends PureComponent<State> {
         </button>
         <button
           className="btn btn-inline_block btn-default"
+          onClick={onClickInstall.bind(this)}
           style={{
             marginLeft: '5px',
           }}
@@ -165,6 +176,7 @@ class AgentTable extends PureComponent<State> {
   }
 
   private get agentConfigTemp() {
+    const {onClickSave, onClickTest, onClickApply} = this.props
     return (
       <div
         className=""
@@ -174,12 +186,18 @@ class AgentTable extends PureComponent<State> {
           textAlign: 'right',
         }}
       >
-        <button className="btn btn-inline_block btn-default">SAVE</button>
+        <button
+          className="btn btn-inline_block btn-default"
+          onClick={onClickSave.bind(this)}
+        >
+          SAVE
+        </button>
         <button
           className="btn btn-inline_block btn-default"
           style={{
             marginLeft: '5px',
           }}
+          onClick={onClickTest.bind(this)}
         >
           TEST
         </button>
@@ -188,6 +206,7 @@ class AgentTable extends PureComponent<State> {
           style={{
             marginLeft: '5px',
           }}
+          onClick={onClickApply.bind(this)}
         >
           APPLY
         </button>
@@ -196,7 +215,7 @@ class AgentTable extends PureComponent<State> {
   }
 
   private get pageProcess() {
-    const {currentUrl} = this.state
+    const {currentUrl} = this.props
     switch (currentUrl) {
       case 'agent-minions':
         return ''
@@ -228,33 +247,24 @@ class AgentTable extends PureComponent<State> {
     return `${hostsCount} Minions`
   }
   private get AgentTableHeaderEachPage() {
-    const {currentUrl} = this.state
-
-    switch (currentUrl) {
-      case 'agent-minions':
-        return this.AgentTableHeaderMinions
-      case 'agent-control':
-        return this.AgentTableHeaderControl
-      case 'agent-configuration':
-        return this.AgentTableHeaderConfig
-      case 'agent-log':
-        return this.AgentTableHeaderLog
-      default:
-        break
-    }
-  }
-
-  private get AgentTableHeaderMinions() {
+    const {currentUrl} = this.props
     const {
+      CheckWidth,
       NameWidth,
       IPWidth,
       HostWidth,
       StatusWidth,
-      ComboBoxWidth,
     } = AGENT_TABLE_SIZING
     return (
       <div className="hosts-table--thead">
         <div className="hosts-table--tr">
+          {currentUrl === 'agent-control' ? (
+            <div style={{width: CheckWidth}} className="hosts-table--th">
+              <input type="checkbox" />
+            </div>
+          ) : (
+            ''
+          )}
           <div
             onClick={this.updateSort('name')}
             className={this.sortableClasses('name')}
@@ -263,14 +273,19 @@ class AgentTable extends PureComponent<State> {
             Name
             <span className="icon caret-up" />
           </div>
-          <div
-            onClick={this.updateSort('operatingSystem')}
-            className={this.sortableClasses('operatingSystem')}
-            style={{width: IPWidth}}
-          >
-            OS
-            <span className="icon caret-up" />
-          </div>
+          {currentUrl === 'agent-minions' ? (
+            <div
+              onClick={this.updateSort('operatingSystem')}
+              className={this.sortableClasses('operatingSystem')}
+              style={{width: IPWidth}}
+            >
+              OS
+              <span className="icon caret-up" />
+            </div>
+          ) : (
+            ''
+          )}
+
           <div
             onClick={this.updateSort('deltaUptime')}
             className={this.sortableClasses('deltaUptime')}
@@ -287,194 +302,68 @@ class AgentTable extends PureComponent<State> {
             Host
             <span className="icon caret-up" />
           </div>
-          <div
-            onClick={this.updateSort('load')}
-            className={this.sortableClasses('load')}
-            style={{width: StatusWidth}}
-          >
-            Status
-            <span className="icon caret-up" />
-          </div>
-          <div
-            className="hosts-table--th list-type"
-            style={{width: ComboBoxWidth}}
-          >
-            menu
-          </div>
+
+          {currentUrl === 'agent-control' || currentUrl === 'agent-log' ? (
+            <div
+              className="hosts-table--th list-type"
+              style={{width: StatusWidth}}
+            >
+              Installed
+            </div>
+          ) : (
+            ''
+          )}
+
+          {currentUrl === 'agent-configuration' ? (
+            <div
+              className="hosts-table--th list-type"
+              style={{width: StatusWidth}}
+            >
+              Save File
+            </div>
+          ) : (
+            ''
+          )}
+
+          {currentUrl != 'agent-minions' ? (
+            <div
+              className={this.sortableClasses('cpu')}
+              style={{width: StatusWidth}}
+            >
+              Action
+            </div>
+          ) : (
+            ''
+          )}
+
+          {currentUrl === 'agent-minions' || currentUrl === 'agent-log' ? (
+            <div
+              onClick={this.updateSort('load')}
+              className={this.sortableClasses('load')}
+              style={{width: StatusWidth}}
+            >
+              Status
+              <span className="icon caret-up" />
+            </div>
+          ) : (
+            ''
+          )}
+
+          {currentUrl === 'agent-minions' ? (
+            <div
+              className="hosts-table--th list-type"
+              style={{width: StatusWidth}}
+            >
+              select
+            </div>
+          ) : (
+            ''
+          )}
         </div>
       </div>
     )
   }
 
-  private get AgentTableHeaderControl() {
-    const {
-      NameWidth,
-      IPWidth,
-      HostWidth,
-      StatusWidth,
-      ComboBoxWidth,
-    } = AGENT_TABLE_SIZING
-    return (
-      <div className="hosts-table--thead">
-        <div className="hosts-table--tr">
-          <div
-            onClick={this.updateSort('name')}
-            className={this.sortableClasses('name')}
-            style={{width: NameWidth}}
-          >
-            Name
-            <span className="icon caret-up" />
-          </div>
-          <div
-            onClick={this.updateSort('operatingSystem')}
-            className={this.sortableClasses('operatingSystem')}
-            style={{width: IPWidth}}
-          >
-            IP
-            <span className="icon caret-up" />
-          </div>
-          <div
-            onClick={this.updateSort('deltaUptime')}
-            className={this.sortableClasses('deltaUptime')}
-            style={{width: HostWidth}}
-          >
-            Host
-            <span className="icon caret-up" />
-          </div>
-          <div
-            onClick={this.updateSort('cpu')}
-            className={this.sortableClasses('cpu')}
-            style={{width: StatusWidth}}
-          >
-            Installed
-            <span className="icon caret-up" />
-          </div>
-          <div
-            className={this.sortableClasses('cpu')}
-            style={{width: StatusWidth}}
-          >
-            Action
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  private get AgentTableHeaderConfig() {
-    const {
-      NameWidth,
-      IPWidth,
-      HostWidth,
-      StatusWidth,
-      ComboBoxWidth,
-    } = AGENT_TABLE_SIZING
-    return (
-      <div className="hosts-table--thead">
-        <div className="hosts-table--tr">
-          <div
-            onClick={this.updateSort('name')}
-            className={this.sortableClasses('name')}
-            style={{width: NameWidth}}
-          >
-            Name
-            <span className="icon caret-up" />
-          </div>
-          <div
-            onClick={this.updateSort('operatingSystem')}
-            className={this.sortableClasses('operatingSystem')}
-            style={{width: IPWidth}}
-          >
-            IP
-            <span className="icon caret-up" />
-          </div>
-          <div
-            onClick={this.updateSort('deltaUptime')}
-            className={this.sortableClasses('deltaUptime')}
-            style={{width: HostWidth}}
-          >
-            Host
-            <span className="icon caret-up" />
-          </div>
-          <div
-            onClick={this.updateSort('cpu')}
-            className={this.sortableClasses('cpu')}
-            style={{width: StatusWidth}}
-          >
-            Installed
-            <span className="icon caret-up" />
-          </div>
-          <div
-            className={this.sortableClasses('cpu')}
-            style={{width: StatusWidth}}
-          >
-            Action
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  private get AgentTableHeaderLog() {
-    const {
-      NameWidth,
-      IPWidth,
-      HostWidth,
-      StatusWidth,
-      ComboBoxWidth,
-    } = AGENT_TABLE_SIZING
-    return (
-      <div className="hosts-table--thead">
-        <div className="hosts-table--tr">
-          <div
-            onClick={this.updateSort('name')}
-            className={this.sortableClasses('name')}
-            style={{width: NameWidth}}
-          >
-            Name
-            <span className="icon caret-up" />
-          </div>
-          <div
-            onClick={this.updateSort('operatingSystem')}
-            className={this.sortableClasses('operatingSystem')}
-            style={{width: IPWidth}}
-          >
-            IP
-            <span className="icon caret-up" />
-          </div>
-          <div
-            onClick={this.updateSort('deltaUptime')}
-            className={this.sortableClasses('deltaUptime')}
-            style={{width: HostWidth}}
-          >
-            Host
-            <span className="icon caret-up" />
-          </div>
-          <div
-            onClick={this.updateSort('cpu')}
-            className={this.sortableClasses('cpu')}
-            style={{width: StatusWidth}}
-          >
-            Installed
-            <span className="icon caret-up" />
-          </div>
-          <div
-            className={this.sortableClasses('cpu')}
-            style={{width: StatusWidth}}
-          >
-            Action
-          </div>
-          <div
-            onClick={this.updateSort('status')}
-            className={this.sortableClasses('status')}
-            style={{width: StatusWidth}}
-          >
-            status
-            <span className="icon caret-up" />
-          </div>
-        </div>
-      </div>
-    )
-  }
   private get AgentTableHeader() {
     return this.AgentTableHeaderEachPage
   }
@@ -501,10 +390,19 @@ class AgentTable extends PureComponent<State> {
   }
 
   private get AgentTableWithHosts() {
-    const {minions, onClickTableRow} = this.props
-    const {sortKey, sortDirection, searchTerm, currentUrl} = this.state
-    const sortedHosts = this.getSortedHosts(
+    const {
+      currentUrl,
       minions,
+      onClickTableRow,
+      onClickAction,
+      onClickModal,
+    } = this.props
+    const {sortKey, sortDirection, searchTerm} = this.state
+
+    const filteredMinion = minions.filter(m => m.isAccept === true)
+
+    const sortedHosts = this.getSortedHosts(
+      currentUrl !== 'agent-minions' ? filteredMinion : minions,
       searchTerm,
       sortKey,
       sortDirection
@@ -518,8 +416,10 @@ class AgentTable extends PureComponent<State> {
             <AgentTableRow
               key={m.name}
               minion={m}
-              onClickTableRow={onClickTableRow}
               currentUrl={currentUrl}
+              onClickTableRow={onClickTableRow}
+              onClickAction={onClickAction}
+              onClickModal={onClickModal}
             />
           ))}
           itemHeight={26}
@@ -528,18 +428,6 @@ class AgentTable extends PureComponent<State> {
       </div>
     )
   }
-
-  // private get LoadingState(): JSX.Element {
-  //   return <PageSpinner />
-  // }
-
-  // private get ErrorState(): JSX.Element {
-  //   return (
-  //     <div className="generic-empty-state">
-  //       <h4 style={{margin: '90px 0'}}>There was a problem loading hosts</h4>
-  //     </div>
-  //   )
-  // }
 
   private get NoHostsState() {
     return (

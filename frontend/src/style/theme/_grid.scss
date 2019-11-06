@@ -38,6 +38,14 @@ $grid--col-12: 100%;
 
   &.subsection {
     height: 100%;
+    .hosts-table--tbody {
+      background-color: #232323;
+      .btn {
+        height: 24px;
+        line-height: 24px;
+        font-size: 12px;
+      }
+    }
   }
 }
 

@@ -20,13 +20,54 @@ class AgentTableRow extends PureComponent<Props> {
     }
     return 'hosts-table--tr'
   }
-
-  public statusIndicator = status => {
-    if (status === 'accepted') {
-      return <div style={{color: '#4ed8a0'}}> accepted </div>
+  public isRunningIndicator = isRunning => {
+    if (isRunning === true) {
+      return (
+        <div
+          style={{
+            borderRadius: '50%',
+            backgroundColor: '#4ed8a0',
+            width: '15px',
+            height: '15px',
+          }}
+        />
+      )
     }
 
-    return <div style={{color: '#e85b1c'}}> unaccepted </div>
+    return (
+      <div
+        style={{
+          borderRadius: '50%',
+          backgroundColor: '#e85b1c',
+          width: '15px',
+          height: '15px',
+        }}
+      />
+    )
+  }
+
+  public isAcceptIndicator = isAccept => {
+    if (isAccept === true) {
+      return (
+        <div
+          style={{
+            color: '#4ed8a0',
+          }}
+        >
+          Accepted
+        </div>
+      )
+    }
+
+    return (
+      <div
+        style={{
+          color: '#e85b1c',
+        }}
+      >
+        unAccept
+      </div>
+    )
   }
 
   render() {
@@ -34,159 +75,121 @@ class AgentTableRow extends PureComponent<Props> {
   }
 
   private get TableRowEachPage() {
-    const {currentUrl} = this.props
-
-    switch (currentUrl) {
-      case 'agent-minions':
-        return this.TableRowMinion
-      case 'agent-control':
-        return this.TableRowControl
-      case 'agent-configuration':
-        return this.TableRowConfig
-      case 'agent-log':
-        return this.TableRowLog
-      default:
-        return ''
-    }
-  }
-
-  private get TableRowMinion() {
-    const {minion, onClickTableRow} = this.props
-    const {name, os, ip, host, status} = minion
     const {
+      minion,
+      currentUrl,
+      onClickTableRow,
+      onClickAction,
+      onClickModal,
+      onClickRun,
+      onClickStop,
+      onClickInstall,
+    } = this.props
+    const {
+      name,
+      os,
+      ip,
+      host,
+      isRunning,
+      isInstall,
+      isSaveFile,
+      isAccept,
+    } = minion
+    const {
+      CheckWidth,
       NameWidth,
       StatusWidth,
       HostWidth,
       IPWidth,
-      ComboBoxWidth,
     } = AGENT_TABLE_SIZING
 
     return (
-      <div className={this.focusedClasses()} onClick={onClickTableRow}>
+      <div
+        className={this.focusedClasses()}
+        onClick={onClickTableRow.bind(this)}
+      >
+        {currentUrl === 'agent-control' ? (
+          <div className="hosts-table--td" style={{width: CheckWidth}}>
+            <input type="checkbox" />
+          </div>
+        ) : (
+          ''
+        )}
         <div className="hosts-table--td" style={{width: NameWidth}}>
           {name}
         </div>
-        <div className="hosts-table--td" style={{width: IPWidth}}>
-          {os}
-        </div>
+        {currentUrl === 'agent-minions' ? (
+          <div className="hosts-table--td" style={{width: IPWidth}}>
+            {os}
+          </div>
+        ) : (
+          ''
+        )}
+
         <div className="hosts-table--td" style={{width: IPWidth}}>
           {ip}
         </div>
         <div className="hosts-table--td" style={{width: HostWidth}}>
           {host}
         </div>
-        <div className="hosts-table--td" style={{width: StatusWidth}}>
-          {this.statusIndicator(status)}
-        </div>
-        <div className="hosts-table--td" style={{width: ComboBoxWidth}}>
-          <button className="btn btn-default modal-call">Menu</button>
-        </div>
-      </div>
-    )
-  }
 
-  private get TableRowControl() {
-    const {minion, onClickTableRow} = this.props
-    const {name, ip, host, isInstall} = minion
-    console.log('TableRowControl isInstall:', isInstall)
-    const {NameWidth, StatusWidth, HostWidth, IPWidth} = AGENT_TABLE_SIZING
+        {currentUrl === 'agent-control' || currentUrl === 'agent-log' ? (
+          <div className="hosts-table--td" style={{width: HostWidth}}>
+            {isInstall === true ? 'installed' : 'not install'}
+          </div>
+        ) : (
+          ''
+        )}
 
-    return (
-      <div className={this.focusedClasses()} onClick={onClickTableRow}>
-        <div className="hosts-table--td" style={{width: NameWidth}}>
-          {name}
-        </div>
-        <div className="hosts-table--td" style={{width: IPWidth}}>
-          {ip}
-        </div>
-        <div className="hosts-table--td" style={{width: HostWidth}}>
-          {host}
-        </div>
-        <div className="hosts-table--td" style={{width: HostWidth}}>
-          {isInstall}
-        </div>
-        <div className="hosts-table--td" style={{width: HostWidth}}>
-          <button className="btn btn-default action-call">▶</button>
-        </div>
-      </div>
-    )
-  }
+        {currentUrl === 'agent-configuration' ? (
+          <div className="hosts-table--td" style={{width: StatusWidth}}>
+            {isSaveFile === 'no' ? 'No file' : 'Yes'}
+          </div>
+        ) : (
+          ''
+        )}
 
-  private get TableRowConfig() {
-    const {minion, onClickTableRow} = this.props
-    const {name, os, ip, host, isSaveFile} = minion
-    const {NameWidth, StatusWidth, HostWidth, IPWidth} = AGENT_TABLE_SIZING
+        {currentUrl !== 'agent-minions' ? (
+          <div className="hosts-table--td" style={{width: StatusWidth}}>
+            <button
+              className="btn btn-default action-call"
+              onClick={onClickAction.bind(this)}
+            >
+              ▶
+            </button>
+          </div>
+        ) : (
+          ''
+        )}
 
-    return (
-      <div className={this.focusedClasses()} onClick={onClickTableRow}>
-        <div className="hosts-table--td" style={{width: NameWidth}}>
-          {name}
-        </div>
-        <div className="hosts-table--td" style={{width: IPWidth}}>
-          {ip}
-        </div>
-        <div className="hosts-table--td" style={{width: HostWidth}}>
-          {host}
-        </div>
-        <div className="hosts-table--td" style={{width: StatusWidth}}>
-          {isSaveFile === 'no' ? 'No file' : 'Yes'}
-        </div>
-        <div className="hosts-table--td" style={{width: StatusWidth}}>
-          <button className="btn btn-default action-call">▶</button>
-        </div>
-      </div>
-    )
-  }
+        {currentUrl === 'agent-minions' ? (
+          <div className="hosts-table--td" style={{width: StatusWidth}}>
+            {this.isAcceptIndicator(isAccept)}
+          </div>
+        ) : (
+          ''
+        )}
 
-  private get TableRowLog() {
-    const {minion, onClickTableRow} = this.props
-    const {name, ip, host, isInstall, status} = minion
-    const {
-      NameWidth,
-      StatusWidth,
-      HostWidth,
-      IPWidth,
-      ComboBoxWidth,
-    } = AGENT_TABLE_SIZING
+        {currentUrl === 'agent-log' ? (
+          <div className="hosts-table--td" style={{width: StatusWidth}}>
+            {this.isRunningIndicator(isRunning)}
+          </div>
+        ) : (
+          ''
+        )}
 
-    return (
-      <div className={this.focusedClasses()} onClick={onClickTableRow}>
-        <div className="hosts-table--td" style={{width: NameWidth}}>
-          {name}
-        </div>
-        <div className="hosts-table--td" style={{width: IPWidth}}>
-          {ip}
-        </div>
-        <div className="hosts-table--td" style={{width: HostWidth}}>
-          {host}
-        </div>
-        <div className="hosts-table--td" style={{width: HostWidth}}>
-          {isInstall === 'no' ? 'No Installed' : 'Yes'}
-        </div>
-        <div className="hosts-table--td" style={{width: HostWidth}}>
-          <button className="btn btn-default action-call">▶</button>
-        </div>
-        <div className="hosts-table--td" style={{width: HostWidth}}>
-          {status === 'accepted' ? (
-            <div
-              style={{
-                borderRadius: '50%',
-                backgroundColor: 'green',
-                width: '15px',
-                height: '15px',
-              }}
-            />
-          ) : (
-            <div
-              style={{
-                borderRadius: '50%',
-                backgroundColor: 'red',
-                width: '15px',
-                height: '15px',
-              }}
-            />
-          )}
-        </div>
+        {currentUrl === 'agent-minions' ? (
+          <div className="hosts-table--td" style={{width: StatusWidth}}>
+            <button
+              className="btn btn-default modal-call"
+              onClick={onClickModal.bind(event, this)}
+            >
+              Menu
+            </button>
+          </div>
+        ) : (
+          ''
+        )}
       </div>
     )
   }
