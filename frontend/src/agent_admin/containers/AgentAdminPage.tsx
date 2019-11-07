@@ -8,6 +8,7 @@ import AgentMinions from 'src/agent_admin/containers/AgentMinions'
 import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
 import AgentControl from 'src/agent_admin/containers/AgentControl'
 import AgentLog from 'src/agent_admin/containers/AgentLog'
+import AgentModal from 'src/agent_admin/components/AgentModal'
 
 import {
   isUserAuthorized,
@@ -26,8 +27,6 @@ import {
   TimeRange,
 } from 'src/types'
 
-interface AgentAdminPage {}
-
 interface Props {
   me: {}
   source: {}
@@ -45,54 +44,6 @@ class AgentAdminPage extends PureComponent<Props> {
     }
   }
 
-  public onClickTableRowCall() {
-    return console.log('row Called', this)
-  }
-  public onClickModalCall() {
-    return console.log('modal Called', event, this)
-  }
-
-  public onClickActionCall() {
-    return console.log('action Called', this)
-  }
-
-  public onClickRunCall() {
-    return console.log('Run Called', this)
-  }
-
-  public onClickStopCall() {
-    return console.log('Stop Called', this)
-  }
-
-  public onClickInstallCall() {
-    return console.log('Install Called', this)
-  }
-
-  public onClickSaveCall() {
-    return console.log('Save Called', this)
-  }
-
-  public onClickTestCall() {
-    return console.log('Test Called', this)
-  }
-
-  public onClickApplyCall() {
-    return console.log('Apply Called', this)
-  }
-
-  /*
-  받아야할 정보
-  select의 위치정보(x, y)
-  select의 크기정보(w,h)
-  window의 리사이즈시 반응하게 할 것인지?
-  */
-
-  public onChooseKey() {}
-
-  public Selectkey = () => {
-    return <div> Hello </div>
-  }
-
   public sections = me => {
     const {minions} = this.state
     return [
@@ -101,12 +52,7 @@ class AgentAdminPage extends PureComponent<Props> {
         name: 'Minions',
         enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
         component: (
-          <AgentMinions
-            currentUrl={'agent-minions'}
-            minions={minions}
-            onClickTableRow={this.onClickTableRowCall}
-            onClickModal={this.onClickModalCall}
-          />
+          <AgentMinions currentUrl={'agent-minions'} minions={minions} />
         ),
       },
       {
@@ -114,15 +60,7 @@ class AgentAdminPage extends PureComponent<Props> {
         name: 'Collector Control',
         enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
         component: (
-          <AgentControl
-            currentUrl={'agent-control'}
-            minions={minions}
-            onClickTableRow={this.onClickTableRowCall}
-            onClickAction={this.onClickActionCall}
-            onClickRun={this.onClickRunCall}
-            onClickStop={this.onClickStopCall}
-            onClickInstall={this.onClickInstallCall}
-          />
+          <AgentControl currentUrl={'agent-control'} minions={minions} />
         ),
       },
       {
@@ -133,11 +71,6 @@ class AgentAdminPage extends PureComponent<Props> {
           <AgentConfiguration
             currentUrl={'agent-configuration'}
             minions={minions}
-            onClickTableRow={this.onClickTableRowCall}
-            onClickAction={this.onClickActionCall}
-            onClickSave={this.onClickSaveCall}
-            onClickTest={this.onClickTestCall}
-            onClickApply={this.onClickApplyCall}
           />
         ),
       },
@@ -145,14 +78,7 @@ class AgentAdminPage extends PureComponent<Props> {
         url: 'agent-log',
         name: 'Log',
         enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
-        component: (
-          <AgentLog
-            currentUrl={'agent-log'}
-            minions={minions}
-            onClickTableRow={this.onClickTableRowCall}
-            onClickAction={this.onClickActionCall}
-          />
-        ),
+        component: <AgentLog currentUrl={'agent-log'} minions={minions} />,
       },
     ]
   }
@@ -161,52 +87,50 @@ class AgentAdminPage extends PureComponent<Props> {
     this.setState({
       minions: [
         {
-          name: 'minion1',
-          os: 'ubuntu',
-          ip: '192.168.0.1',
           host: 'host1',
-          status: 'accepted',
+          os: 'ubuntu',
+          osVersion: '19.1',
+          ip: '192.168.0.1',
           isRunning: true,
           isInstall: false,
           isSaveFile: false,
           isAccept: true,
         },
         {
-          name: 'minion2',
-          os: 'debian',
-          ip: '192.168.0.2',
           host: 'host2',
-          status: 'accepted',
+          os: 'debian',
+          osVersion: '9.1',
+          ip: '192.168.0.2',
           isRunning: true,
           isInstall: true,
           isSaveFile: true,
           isAccept: true,
         },
         {
-          name: 'minion3',
-          os: 'window',
-          ip: '192.168.0.3',
           host: 'host3',
+          os: 'window',
+          osVersion: 'Server',
+          ip: '192.168.0.3',
           isRunning: false,
           isInstall: true,
           isSaveFile: true,
           isAccept: true,
         },
         {
-          name: 'minion4',
-          os: 'redhat',
+          host: 'host4',
+          os: 'window',
+          osVersion: 'Server',
           ip: '',
-          host: '',
           isRunning: false,
           isInstall: false,
           isSaveFile: false,
           isAccept: false,
         },
         {
-          name: 'minion5',
-          os: 'mac',
+          host: 'host5',
+          os: 'window',
+          osVersion: 'Server',
           ip: '',
-          host: '',
           isRunning: false,
           isInstall: false,
           isSaveFile: false,

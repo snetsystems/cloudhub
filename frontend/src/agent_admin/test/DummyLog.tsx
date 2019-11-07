@@ -46,7 +46,6 @@ const DummyLog = () => {
   #   # tls_key = "/etc/telegraf/key.pem"
   #   ## Use TLS but skip chain & host verification
   #   # insecure_skip_verify = false
-  
   `
 }
 

@@ -3,7 +3,6 @@ import {AGENT_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 
 interface Props {
   minion: object
-  name: string
   ip: string
   host: string
   status: string
@@ -15,9 +14,6 @@ class AgentTableRow extends PureComponent<Props> {
   }
 
   public focusedClasses = (): string => {
-    if (name === name) {
-      return 'hosts-table--tr'
-    }
     return 'hosts-table--tr'
   }
   public isRunningIndicator = isRunning => {
@@ -76,6 +72,7 @@ class AgentTableRow extends PureComponent<Props> {
 
   private get TableRowEachPage() {
     const {
+      key,
       minion,
       currentUrl,
       onClickTableRow,
@@ -85,8 +82,9 @@ class AgentTableRow extends PureComponent<Props> {
       onClickStop,
       onClickInstall,
     } = this.props
+
     const {
-      name,
+      osVersion,
       os,
       ip,
       host,
@@ -106,7 +104,7 @@ class AgentTableRow extends PureComponent<Props> {
     return (
       <div
         className={this.focusedClasses()}
-        onClick={onClickTableRow.bind(this)}
+        onClickCapture={onClickTableRow.bind(this)}
       >
         {currentUrl === 'agent-control' ? (
           <div className="hosts-table--td" style={{width: CheckWidth}}>
@@ -115,22 +113,21 @@ class AgentTableRow extends PureComponent<Props> {
         ) : (
           ''
         )}
-        <div className="hosts-table--td" style={{width: NameWidth}}>
-          {name}
+
+        <div className="hosts-table--td" style={{width: HostWidth}}>
+          {host}
         </div>
-        {currentUrl === 'agent-minions' ? (
-          <div className="hosts-table--td" style={{width: IPWidth}}>
-            {os}
-          </div>
-        ) : (
-          ''
-        )}
+
+        <div className="hosts-table--td" style={{width: IPWidth}}>
+          {os}
+        </div>
+
+        <div className="hosts-table--td" style={{width: IPWidth}}>
+          {osVersion}
+        </div>
 
         <div className="hosts-table--td" style={{width: IPWidth}}>
           {ip}
-        </div>
-        <div className="hosts-table--td" style={{width: HostWidth}}>
-          {host}
         </div>
 
         {currentUrl === 'agent-control' || currentUrl === 'agent-log' ? (
@@ -179,13 +176,12 @@ class AgentTableRow extends PureComponent<Props> {
         )}
 
         {currentUrl === 'agent-minions' ? (
-          <div className="hosts-table--td" style={{width: StatusWidth}}>
-            <button
-              className="btn btn-default modal-call"
-              onClick={onClickModal.bind(event, this)}
-            >
-              Menu
-            </button>
+          <div
+            className="hosts-table--td"
+            id={`table-row--select${key}`}
+            style={{width: StatusWidth}}
+          >
+            {onClickModal({name: 'select', isAccept, _this: this, key})}
           </div>
         ) : (
           ''

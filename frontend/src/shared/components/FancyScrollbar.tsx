@@ -89,7 +89,7 @@ class FancyScrollbar extends Component<Props & Partial<DefaultProps>> {
         autoHideDuration={250}
         autoHeight={autoHeight}
         autoHeightMax={maxHeight}
-        renderTrackHorizontal={this.handleMakeDiv('track-h')}
+        // renderTrackHorizontal={this.handleMakeDiv('track-h')}
         renderTrackVertical={this.handleMakeDiv('track-v')}
         renderThumbHorizontal={this.handleMakeDiv('thumb-h')}
         renderThumbVertical={this.handleMakeDiv('thumb-v')}

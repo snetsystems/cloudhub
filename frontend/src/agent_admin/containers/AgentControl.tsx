@@ -5,15 +5,12 @@ import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import AgentTable from 'src/agent_admin/components/AgentTable'
 import AgentConsole from 'src/agent_admin/components/AgentConsole'
 
-import * as adminCMPActionCreators from 'src/admin/actions/cmp'
-import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 //const
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
 
 interface State {
-  minions: []
   proportions: Readonly<{}>
   minionLog: ''
   onClickTableRow: () => void
@@ -24,70 +21,32 @@ class AgentControl extends PureComponent<State> {
   constructor(props) {
     super(props)
     this.state = {
-      minions: [],
       minionLog: 'not load log',
       proportions: [0.43, 0.57],
     }
   }
 
-  public componentDidMount() {
-    this.setState({
-      minions: [
-        {
-          name: 'minion1',
-          os: 'ubuntu',
-          ip: '192.168.0.1',
-          host: 'host1',
-          status: 'accepted',
-          isRunning: true,
-          isInstall: false,
-          isSaveFile: false,
-          isAccept: true,
-        },
-        {
-          name: 'minion2',
-          os: 'debian',
-          ip: '192.168.0.2',
-          host: 'host2',
-          status: 'accepted',
-          isRunning: true,
-          isInstall: true,
-          isSaveFile: true,
-          isAccept: true,
-        },
-        {
-          name: 'minion3',
-          os: 'window',
-          ip: '192.168.0.3',
-          host: 'host3',
-          isRunning: false,
-          isInstall: true,
-          isSaveFile: true,
-          isAccept: true,
-        },
-        {
-          name: 'minion4',
-          os: 'redhat',
-          ip: '',
-          host: '',
-          isRunning: false,
-          isInstall: false,
-          isSaveFile: false,
-          isAccept: false,
-        },
-        {
-          name: 'minion5',
-          os: 'mac',
-          ip: '',
-          host: '',
-          isRunning: false,
-          isInstall: false,
-          isSaveFile: false,
-          isAccept: false,
-        },
-      ],
-    })
+  public onClickTableRowCall() {
+    return console.log('row Called', this)
   }
+
+  public onClickActionCall() {
+    return console.log('action Called', this)
+  }
+
+  public onClickRunCall() {
+    return console.log('Run Called', this)
+  }
+
+  public onClickStopCall() {
+    return console.log('Stop Called', this)
+  }
+
+  public onClickInstallCall() {
+    return console.log('Install Called', this)
+  }
+
+  public componentDidMount() {}
 
   render() {
     return (
@@ -105,51 +64,22 @@ class AgentControl extends PureComponent<State> {
     this.setState({proportions})
   }
 
-  private renderAgentTable = () => {
-    const {
-      currentUrl,
-      minions,
-      onClickTableRow,
-      onClickAction,
-      onClickModal,
-      onClickRun,
-      onClickStop,
-      onClickInstall,
-    } = this.props
+  private renderAgentPageTop = () => {
+    const {currentUrl, minions} = this.props
     return (
       <AgentTable
         currentUrl={currentUrl}
         minions={minions}
-        onClickTableRow={onClickTableRow}
-        onClickAction={onClickAction}
-        onClickRun={onClickRun}
-        onClickStop={onClickStop}
-        onClickInstall={onClickInstall}
+        onClickTableRow={this.onClickTableRowCall}
+        onClickAction={this.onClickActionCall}
+        onClickRun={this.onClickRunCall}
+        onClickStop={this.onClickStopCall}
+        onClickInstall={this.onClickInstallCall}
       />
     )
   }
 
-  private onClickModalCall() {
-    return console.log('modal called')
-  }
-
-  private onClickActionCall() {
-    return console.log('action called', this)
-  }
-
-  private onClickRunCall() {
-    return console.log('Action Run')
-  }
-
-  private onClickStopCall() {
-    return console.log('Action Stop')
-  }
-
-  private onClickInstallCall() {
-    return console.log('Action Install')
-  }
-
-  private renderAgentConsole = () => {
+  private renderAgentPageBottom = () => {
     const {minionLog} = this.state
     return <AgentConsole res={minionLog} />
   }
@@ -164,7 +94,7 @@ class AgentControl extends PureComponent<State> {
         handleDisplay: 'none',
         headerButtons: [],
         menuOptions: [],
-        render: this.renderAgentTable,
+        render: this.renderAgentPageTop,
         headerOrientation: HANDLE_HORIZONTAL,
         size: topSize,
       },
@@ -173,7 +103,7 @@ class AgentControl extends PureComponent<State> {
         handlePixels: 8,
         headerButtons: [],
         menuOptions: [],
-        render: this.renderAgentConsole,
+        render: this.renderAgentPageBottom,
         headerOrientation: HANDLE_HORIZONTAL,
         size: bottomSize,
       },

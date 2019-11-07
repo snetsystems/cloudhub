@@ -5,7 +5,8 @@ import memoize from 'memoize-one'
 
 import SearchBar from 'src/hosts/components/SearchBar'
 import AgentTableRow from 'src/agent_admin/components/AgentTableRow'
-import InfiniteScroll from 'src/shared/components/InfiniteScroll'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+
 import PageSpinner from 'src/shared/components/PageSpinner'
 
 import {AGENT_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
@@ -67,7 +68,7 @@ class AgentTable extends PureComponent<State> {
         tagResult = false
       }
       return (
-        h.name.toLowerCase().includes(filterText) ||
+        h.host.toLowerCase().includes(filterText) ||
         apps.toLowerCase().includes(filterText) ||
         tagResult
       )
@@ -175,45 +176,6 @@ class AgentTable extends PureComponent<State> {
     )
   }
 
-  private get agentConfigTemp() {
-    const {onClickSave, onClickTest, onClickApply} = this.props
-    return (
-      <div
-        className=""
-        style={{
-          padding: '20px',
-          paddingTop: '0px',
-          textAlign: 'right',
-        }}
-      >
-        <button
-          className="btn btn-inline_block btn-default"
-          onClick={onClickSave.bind(this)}
-        >
-          SAVE
-        </button>
-        <button
-          className="btn btn-inline_block btn-default"
-          style={{
-            marginLeft: '5px',
-          }}
-          onClick={onClickTest.bind(this)}
-        >
-          TEST
-        </button>
-        <button
-          className="btn btn-inline_block btn-default"
-          style={{
-            marginLeft: '5px',
-          }}
-          onClick={onClickApply.bind(this)}
-        >
-          APPLY
-        </button>
-      </div>
-    )
-  }
-
   private get pageProcess() {
     const {currentUrl} = this.props
     switch (currentUrl) {
@@ -270,21 +232,25 @@ class AgentTable extends PureComponent<State> {
             className={this.sortableClasses('name')}
             style={{width: NameWidth}}
           >
-            Name
+            Host
             <span className="icon caret-up" />
           </div>
-          {currentUrl === 'agent-minions' ? (
-            <div
-              onClick={this.updateSort('operatingSystem')}
-              className={this.sortableClasses('operatingSystem')}
-              style={{width: IPWidth}}
-            >
-              OS
-              <span className="icon caret-up" />
-            </div>
-          ) : (
-            ''
-          )}
+          <div
+            onClick={this.updateSort('operatingSystem')}
+            className={this.sortableClasses('operatingSystem')}
+            style={{width: IPWidth}}
+          >
+            OS
+            <span className="icon caret-up" />
+          </div>
+          <div
+            onClick={this.updateSort('operatingSystem')}
+            className={this.sortableClasses('operatingSystem')}
+            style={{width: IPWidth}}
+          >
+            OS Version
+            <span className="icon caret-up" />
+          </div>
 
           <div
             onClick={this.updateSort('deltaUptime')}
@@ -292,14 +258,6 @@ class AgentTable extends PureComponent<State> {
             style={{width: IPWidth}}
           >
             IP
-            <span className="icon caret-up" />
-          </div>
-          <div
-            onClick={this.updateSort('cpu')}
-            className={this.sortableClasses('cpu')}
-            style={{width: HostWidth}}
-          >
-            Host
             <span className="icon caret-up" />
           </div>
 
@@ -411,10 +369,10 @@ class AgentTable extends PureComponent<State> {
     return (
       <div className="hosts-table">
         {this.AgentTableHeader}
-        <InfiniteScroll
-          items={sortedHosts.map(m => (
+        <FancyScrollbar
+          children={sortedHosts.map((m, i) => (
             <AgentTableRow
-              key={m.name}
+              key={i}
               minion={m}
               currentUrl={currentUrl}
               onClickTableRow={onClickTableRow}

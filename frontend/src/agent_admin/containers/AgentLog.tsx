@@ -5,10 +5,6 @@ import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import AgentTable from 'src/agent_admin/components/AgentTable'
 import AgentConsole from 'src/agent_admin/components/AgentConsole'
 
-import * as adminCMPActionCreators from 'src/admin/actions/cmp'
-import {notify as notifyAction} from 'src/shared/actions/notifications'
-import {ErrorHandling} from 'src/shared/decorators/errors'
-
 //const
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
 
@@ -21,10 +17,17 @@ class AgentLog extends PureComponent<State> {
   constructor(props) {
     super(props)
     this.state = {
-      minions: [],
       minionLog: 'not load log',
       proportions: [0.43, 0.57],
     }
+  }
+
+  public onClickTableRowCall() {
+    return console.log('row Called', this)
+  }
+
+  public onClickActionCall() {
+    return console.log('action Called', this)
   }
 
   render() {
@@ -43,20 +46,20 @@ class AgentLog extends PureComponent<State> {
     this.setState({proportions})
   }
 
-  private renderAgentTable = () => {
+  private renderAgentPageTop = () => {
     // const {parentUrl} = this.props
-    const {currentUrl, minions, onClickTableRow, onClickAction} = this.props
+    const {currentUrl, minions} = this.props
     return (
       <AgentTable
         currentUrl={currentUrl}
         minions={minions}
-        onClickTableRow={onClickTableRow}
-        onClickAction={onClickAction}
+        onClickTableRow={this.onClickTableRowCall}
+        onClickAction={this.onClickActionCall}
       />
     )
   }
 
-  private renderAgentConsole = () => {
+  private renderAgentPageBottom = () => {
     const {minionLog} = this.state
     return <AgentConsole res={minionLog} />
   }
@@ -71,7 +74,7 @@ class AgentLog extends PureComponent<State> {
         handleDisplay: 'none',
         headerButtons: [],
         menuOptions: [],
-        render: this.renderAgentTable,
+        render: this.renderAgentPageTop,
         headerOrientation: HANDLE_HORIZONTAL,
         size: topSize,
       },
@@ -80,7 +83,7 @@ class AgentLog extends PureComponent<State> {
         handlePixels: 8,
         headerButtons: [],
         menuOptions: [],
-        render: this.renderAgentConsole,
+        render: this.renderAgentPageBottom,
         headerOrientation: HANDLE_HORIZONTAL,
         size: bottomSize,
       },

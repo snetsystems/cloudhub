@@ -4,9 +4,8 @@ import React, {PureComponent} from 'react'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import AgentTable from 'src/agent_admin/components/AgentTable'
 import AgentConsole from 'src/agent_admin/components/AgentConsole'
+import AgentModal from 'src/agent_admin/components/AgentModal'
 
-import * as adminCMPActionCreators from 'src/admin/actions/cmp'
-import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 //const
@@ -25,6 +24,7 @@ interface State {
   proportions: number[]
 }
 
+@ErrorHandling
 class AgentMinions extends PureComponent<State> {
   constructor(props) {
     super(props)
@@ -32,6 +32,14 @@ class AgentMinions extends PureComponent<State> {
       minionLog: 'not load log',
       proportions: [0.43, 0.57],
     }
+  }
+
+  public onClickTableRowCall() {
+    return console.log('row Called', this)
+  }
+
+  public onClickModalCall({name, isAccept, _this}) {
+    return <AgentModal name={name} isAccept={isAccept} targetObject={_this} />
   }
 
   render() {
@@ -50,20 +58,20 @@ class AgentMinions extends PureComponent<State> {
     this.setState({proportions})
   }
 
-  private renderAgentTable = () => {
+  private renderAgentPageTop = () => {
     // const {parentUrl} = this.props
-    const {currentUrl, minions, onClickTableRow, onClickModal} = this.props
+    const {currentUrl, minions} = this.props
     return (
       <AgentTable
         currentUrl={currentUrl}
         minions={minions}
-        onClickTableRow={onClickTableRow}
-        onClickModal={onClickModal}
+        onClickTableRow={this.onClickTableRowCall}
+        onClickModal={this.onClickModalCall}
       />
     )
   }
 
-  private renderAgentConsole = () => {
+  private renderAgentPageBottom = () => {
     const {minionLog} = this.state
     return <AgentConsole res={minionLog} />
   }
@@ -78,7 +86,7 @@ class AgentMinions extends PureComponent<State> {
         handleDisplay: 'none',
         headerButtons: [],
         menuOptions: [],
-        render: this.renderAgentTable,
+        render: this.renderAgentPageTop,
         headerOrientation: HANDLE_HORIZONTAL,
         size: topSize,
       },
@@ -87,7 +95,7 @@ class AgentMinions extends PureComponent<State> {
         handlePixels: 8,
         headerButtons: [],
         menuOptions: [],
-        render: this.renderAgentConsole,
+        render: this.renderAgentPageBottom,
         headerOrientation: HANDLE_HORIZONTAL,
         size: bottomSize,
       },
