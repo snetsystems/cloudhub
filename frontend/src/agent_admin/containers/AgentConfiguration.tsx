@@ -1,11 +1,12 @@
 import React, {PureComponent} from 'react'
-import {connect} from 'react-redux'
-import {bindActionCreators} from 'redux'
+import _ from 'lodash'
 
 // Components
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import AgentTable from 'src/agent_admin/components/AgentTable'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import FluxEditor from 'src/flux/components/FluxEditor'
+import AgentToolbarFunction from 'src/agent_admin/components/AgentToolbarFunction'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
@@ -19,6 +20,7 @@ interface State {
 
 @ErrorHandling
 class AgentConfiguration extends PureComponent<State> {
+  private functionRef = React.createRef()
   constructor(props) {
     super(props)
     this.state = {
@@ -26,6 +28,10 @@ class AgentConfiguration extends PureComponent<State> {
       minionLog: 'not load log',
       horizontalProportions: [0.43, 0.57],
       verticalProportions: [0.43, 0.57],
+      suggestions: [],
+      draftScriptStatus: {type: 'none', text: ''},
+      isWizardActive: false,
+      focusedMeasure: '',
     }
 
     this.measurementsTemp = this.measurementsTemp.bind(this)
@@ -65,6 +71,8 @@ class AgentConfiguration extends PureComponent<State> {
     })
   }
 
+  public componentWillReceiveProps() {}
+
   render() {
     return (
       <div className="panel panel-solid">
@@ -75,6 +83,10 @@ class AgentConfiguration extends PureComponent<State> {
         />
       </div>
     )
+  }
+
+  private handleFocusedMeasure = () => {
+    console.log(this)
   }
 
   private horizontalHandleResize = (horizontalProportions: number[]) => {
@@ -139,10 +151,11 @@ class AgentConfiguration extends PureComponent<State> {
             <div className="query-builder--list">
               {measurements.map((v, i) => {
                 return (
-                  <div
-                    className="query-builder--list-item"
-                    data-key={i}
-                  >{`${v}`}</div>
+                  <AgentToolbarFunction
+                    name={v}
+                    key={i}
+                    focusedMeasure={this.handleFocusedMeasure}
+                  />
                 )
               })}
             </div>
@@ -158,21 +171,6 @@ class AgentConfiguration extends PureComponent<State> {
         <div className="panel-heading">
           <h2 className="panel-title">collector.conf</h2>
           <div>
-            <button
-              className="btn btn-inline_block btn-default"
-              onClick={this.onClickSaveCall}
-            >
-              SAVE
-            </button>
-            <button
-              className="btn btn-inline_block btn-default"
-              style={{
-                marginLeft: '5px',
-              }}
-              onClick={this.onClickTestCall}
-            >
-              TEST
-            </button>
             <button
               className="btn btn-inline_block btn-default"
               style={{
@@ -194,85 +192,16 @@ class AgentConfiguration extends PureComponent<State> {
               position: 'relative',
             }}
           >
-            <FancyScrollbar>
-              <textarea
-                style={{
-                  resize: 'none',
-                  width: '100%',
-                  height: '100%',
-                  backgroundColor: '#232323',
-                  color: '#fff',
-                  borderColor: 'transparent',
-                  padding: '15px',
-                }}
-              >
-                {`
-#[global_tags]
-#  dc = "denver-1"
-
-#[agent]
-# interval = "10s"
-
-# OUTPUTS
-#[[outputs.influxdb]]
-#  url = "http://192.168.59.103:8086" # required.
-#  database = "telegraf" # required.
-# precision = "s"
-
-
-#[global_tags]
-#  dc = "denver-1"
-
-#[agent]
-# interval = "10s"
-
-# OUTPUTS
-#[[outputs.influxdb]]
-#  url = "http://192.168.59.103:8086" # required.
-#  database = "telegraf" # required.
-# precision = "s"
-
-
-#[global_tags]
-#  dc = "denver-1"
-
-#[agent]
-# interval = "10s"
-
-# OUTPUTS
-#[[outputs.influxdb]]
-#  url = "http://192.168.59.103:8086" # required.
-#  database = "telegraf" # required.
-# precision = "s"
-
-
-#[global_tags]
-#  dc = "denver-1"
-
-#[agent]
-# interval = "10s"
-
-# OUTPUTS
-#[[outputs.influxdb]]
-#  url = "http://192.168.59.103:8086" # required.
-#  database = "telegraf" # required.
-# precision = "s"
-
-
-#[global_tags]
-#  dc = "denver-1"
-
-#[agent]
-# interval = "10s"
-
-# OUTPUTS
-#[[outputs.influxdb]]
-#  url = "http://192.168.59.103:8086" # required.
-#  database = "telegraf" # required.
-# precision = "s"
-              `}
-              </textarea>
-            </FancyScrollbar>
+            <FluxEditor
+              status={{type: 'none', text: ''}}
+              script={'string'}
+              visibility={true}
+              // suggestions={suggestions}
+              // onChangeScript={this.handleChangeDraftScript}
+              // onSubmitScript={this.handleSubmitScript}
+              // onShowWizard={this.handleShowWizard}
+              // onCursorChange={this.handleCursorPosition}
+            />
           </div>
         </div>
       </div>
