@@ -8,7 +8,7 @@ import AgentMinions from 'src/agent_admin/containers/AgentMinions'
 import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
 import AgentControl from 'src/agent_admin/containers/AgentControl'
 import AgentLog from 'src/agent_admin/containers/AgentLog'
-import AgentModal from 'src/agent_admin/components/AgentModal'
+import TestAPI from 'src/agent_admin/test/TestAPI'
 
 import {
   isUserAuthorized,
@@ -79,6 +79,12 @@ class AgentAdminPage extends PureComponent<Props> {
         name: 'Log',
         enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
         component: <AgentLog currentUrl={'agent-log'} minions={minions} />,
+      },
+      {
+        url: 'agent-TestAPI',
+        name: 'TestAPI',
+        enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
+        component: <TestAPI currentUrl={'agent-TestAPI'} minions={minions} />,
       },
     ]
   }

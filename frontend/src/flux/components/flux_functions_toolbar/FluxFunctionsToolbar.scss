@@ -72,6 +72,11 @@
   margin-top: 9px;
   margin-left: -8px;
   z-index: 9999;
+
+  &.tooltip-caret--left {
+    border-left: none;
+    border-right: 6px solid $s-orange;
+  }
 }
 
 .flux-functions-toolbar--tooltip-contents {

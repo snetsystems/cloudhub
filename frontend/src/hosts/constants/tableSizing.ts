@@ -10,7 +10,7 @@ export const AGENT_TABLE_SIZING = {
   NameWidth: '25%',
   OSWidth: '20%',
   IPWidth: '20%',
-  HostWidth: '20%',
+  HostWidth: '25%',
   StatusWidth: '20%',
   ComboBoxWidth: '120px',
 }
