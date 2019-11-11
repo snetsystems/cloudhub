@@ -1,0 +1,39 @@
+{
+  "minions": [
+    {
+      "name": "minion1",
+      "os": "ubuntu",
+      "ip": "192.168.0.1",
+      "host": "host1",
+      "status": "accepted",
+      "isInstall": "no",
+      "isSaveFile": "no"
+    },
+    {
+      "name": "minion2",
+      "os": "debian",
+      "ip": "192.168.0.2",
+      "host": "host2",
+      "status": "accepted",
+      "isInstall": "yes",
+      "isSaveFile": "yes"
+    },
+    {
+      "name": "minion3",
+      "os": "window",
+      "ip": "192.168.0.3",
+      "host": "host3",
+      "status": "accepted",
+      "isInstall": "yes",
+      "isSaveFile": "yes"
+    },
+    {
+      "name": "minion4",
+      "os": "redhat",
+      "ip": "",
+      "host": "",
+      "status": "unaccept"
+    },
+    {"name": "minion5", "os": "mac", "ip": "", "host": "", "status": "unaccept"}
+  ]
+}

@@ -38,6 +38,7 @@ import {
 } from 'src/kapacitor'
 import {AdminCMPPage, AdminInfluxDBPage} from 'src/admin'
 import {ManageSources, OnboardingWizard} from 'src/sources'
+import {AgentAdminPage} from 'src/agent_admin'
 
 import NotFound from 'src/shared/components/NotFound'
 import PageSpinner from 'src/shared/components/PageSpinner'
@@ -177,6 +178,7 @@ class Root extends PureComponent<{}, State> {
                   component={AdminInfluxDBPage}
                 />
                 <Route path="manage-sources" component={ManageSources} />
+                <Route path="agent-admin/:tab" component={AgentAdminPage} />
               </Route>
             </Route>
             <Route path="*" component={NotFound} />

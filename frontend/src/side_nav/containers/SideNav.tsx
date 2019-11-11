@@ -156,7 +156,7 @@ class SideNav extends PureComponent<Props> {
             <NavListItem
               link={`${sourcePrefix}/admin-cmp/current-organization`}
             >
-              SCMP
+              Cloud Smart Hub
             </NavListItem>
             <NavListItem link={`${sourcePrefix}/admin-influxdb/databases`}>
               InfluxDB
@@ -164,7 +164,7 @@ class SideNav extends PureComponent<Props> {
           </NavBlock>
         </Authorized>
         <NavBlock
-          highlightWhen={['manage-sources', 'kapacitors']}
+          highlightWhen={['manage-sources', 'kapacitors', 'agent-admin']}
           icon="wrench"
           link={`${sourcePrefix}/manage-sources`}
           location={location}
@@ -173,6 +173,12 @@ class SideNav extends PureComponent<Props> {
             link={`${sourcePrefix}/manage-sources`}
             title="Configuration"
           />
+          <NavListItem link={`${sourcePrefix}/agent-admin/agent-minions`}>
+            Agent Configuration
+          </NavListItem>
+          <NavListItem link={`${sourcePrefix}/manage-sources/`}>
+            Configuration
+          </NavListItem>
         </NavBlock>
         {isUsingAuth ? (
           <UserNavBlock

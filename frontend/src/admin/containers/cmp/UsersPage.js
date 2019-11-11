@@ -4,7 +4,7 @@ import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 
 import * as adminCMPActionCreators from 'src/admin/actions/cmp'
-import {notify as notifyAction} from 'shared/actions/notifications'
+import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import UsersTable from 'src/admin/components/cmp/UsersTable'
