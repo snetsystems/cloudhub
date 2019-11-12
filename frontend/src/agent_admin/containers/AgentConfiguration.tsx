@@ -33,6 +33,7 @@ class AgentConfiguration extends PureComponent<State> {
       isWizardActive: false,
       focusedMeasure: '',
       focusedMeasurePosition: {},
+      refresh: true,
     }
 
     this.measurementsTemp = this.measurementsTemp.bind(this)
@@ -88,11 +89,20 @@ class AgentConfiguration extends PureComponent<State> {
     )
   }
 
-  private handleFocusedMeasure = clickPosition => {
-    this.setState({
-      focusedMeasure: event.target,
-      focusedMeasurePosition: clickPosition,
-    })
+  private handleFocusedMeasure = ({clickPosition, refresh}) => {
+    if (clickPosition) {
+      this.setState({
+        focusedMeasure: event.target,
+        focusedMeasurePosition: clickPosition,
+        refresh: true,
+      })
+    }
+
+    if (refresh === false) {
+      this.setState({
+        refresh,
+      })
+    }
   }
 
   private horizontalHandleResize = (horizontalProportions: number[]) => {
@@ -127,7 +137,12 @@ class AgentConfiguration extends PureComponent<State> {
   }
 
   private measurementsTemp() {
-    const {measurements, focusedMeasure, focusedMeasurePosition} = this.state
+    const {
+      measurements,
+      focusedMeasure,
+      focusedMeasurePosition,
+      refresh,
+    } = this.state
     return (
       <div className="panel">
         <div className="panel-heading">
@@ -164,6 +179,7 @@ class AgentConfiguration extends PureComponent<State> {
                     handleFocusedMeasure={this.handleFocusedMeasure.bind(this)}
                     focusedMeasure={focusedMeasure}
                     focusedPosition={focusedMeasurePosition}
+                    refresh={refresh}
                   />
                 )
               })}

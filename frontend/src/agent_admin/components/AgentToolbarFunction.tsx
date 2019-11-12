@@ -16,8 +16,10 @@ class AgentToolbarFunction extends PureComponent {
   }
 
   public componentWillReceiveProps(newProps) {
-    const boolean = newProps.focusedMeasure === this.functionRef.current
-    this.setState({isActive: boolean})
+    if (newProps.refresh) {
+      const boolean = newProps.focusedMeasure === this.functionRef.current
+      this.setState({isActive: boolean})
+    }
   }
 
   render() {
@@ -39,11 +41,12 @@ class AgentToolbarFunction extends PureComponent {
 
   private handleFocusing = () => {
     const clickPosition = this.functionRef.current.getBoundingClientRect()
-    this.props.handleFocusedMeasure(clickPosition)
+    this.props.handleFocusedMeasure({clickPosition, refresh: true})
   }
 
   private handleOtherClick = () => {
     this.setState({isActive: false})
+    this.props.handleFocusedMeasure({refresh: false})
   }
 
   private get tooltip(): JSX.Element {
