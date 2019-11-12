@@ -74,12 +74,12 @@ class AgentAdminPage extends PureComponent<Props> {
           />
         ),
       },
-      {
-        url: 'agent-log',
-        name: 'Log',
-        enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
-        component: <AgentLog currentUrl={'agent-log'} minions={minions} />,
-      },
+      // {
+      //   url: 'agent-log',
+      //   name: 'Log',
+      //   enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
+      //   component: <AgentLog currentUrl={'agent-log'} minions={minions} />,
+      // },
       // {
       //   url: 'agent-TestAPI',
       //   name: 'TestAPI',

@@ -15,43 +15,31 @@ class AgentToolbarFunction extends PureComponent {
     }
   }
 
+  public componentWillReceiveProps(newProps) {
+    const boolean = newProps.focusedMeasure === this.functionRef.current
+    this.setState({isActive: boolean})
+  }
+
   render() {
-    const {name, focusedMeasure} = this.props
+    const {name, handleFocusedMeasure, focusedMeasure, idx} = this.props
     return (
-      <div
-        className="query-builder--list-item"
-        style={{position: 'relative'}}
-        onClick={focusedMeasure}
-      >
+      <div className="query-builder--list-item" style={{position: 'relative'}}>
         {`${name}`}
         <button
           ref={this.functionRef}
-          className="btn btn-primary"
-          onClick={this.handleClick.bind(this)}
+          className={'btn btn-primary item' + idx}
+          onClick={this.handleFocusing.bind(this)}
         >
-          help
+          {`help ${idx}`}
         </button>
         {this.tooltip}
       </div>
     )
   }
 
-  private handleClick = () => {
-    const {isActive} = this.state
-    const {
-      top,
-      right,
-      width,
-      left,
-    } = this.functionRef.current.getBoundingClientRect()
-    console.log(this.functionRef.current.getBoundingClientRect())
-    const calcPosition = window.innerWidth - right
-    isActive
-      ? this.setState({isActive: false})
-      : this.setState({
-          isActive: true,
-          clickPosition: {top, right: calcPosition},
-        })
+  private handleFocusing = () => {
+    const clickPosition = this.functionRef.current.getBoundingClientRect()
+    this.props.handleFocusedMeasure(clickPosition)
   }
 
   private handleOtherClick = () => {
@@ -59,15 +47,15 @@ class AgentToolbarFunction extends PureComponent {
   }
 
   private get tooltip(): JSX.Element {
+    const {focusedPosition} = this.props
     if (this.state.isActive) {
       const dummy = {desc: 123, args: 456, example: 678, link: '@link'}
-      console.log(this.state.clickPosition)
       return (
         <FunctionTooltip
           func={dummy}
           onDismiss={this.handleOtherClick}
-          tipPosition={this.state.clickPosition}
-          caretLeft={true}
+          tipPosition={focusedPosition}
+          pivot={'left'}
         />
       )
     }

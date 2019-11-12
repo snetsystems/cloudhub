@@ -32,6 +32,7 @@ class AgentConfiguration extends PureComponent<State> {
       draftScriptStatus: {type: 'none', text: ''},
       isWizardActive: false,
       focusedMeasure: '',
+      focusedMeasurePosition: {},
     }
 
     this.measurementsTemp = this.measurementsTemp.bind(this)
@@ -61,17 +62,19 @@ class AgentConfiguration extends PureComponent<State> {
     this.setState({
       measurements: [
         'tomcat',
-        'redis',
-        'mySQL',
-        'mongoDB',
-        'docker',
-        'cpu',
-        'memory',
+        'tomcat',
+        'tomcat',
+        'tomcat',
+        'tomcat',
+        'tomcat',
+        'tomcat',
+        'tomcat',
+        'tomcat',
+        'tomcat',
+        'tomcat',
       ],
     })
   }
-
-  public componentWillReceiveProps() {}
 
   render() {
     return (
@@ -85,8 +88,11 @@ class AgentConfiguration extends PureComponent<State> {
     )
   }
 
-  private handleFocusedMeasure = () => {
-    console.log(this)
+  private handleFocusedMeasure = clickPosition => {
+    this.setState({
+      focusedMeasure: event.target,
+      focusedMeasurePosition: clickPosition,
+    })
   }
 
   private horizontalHandleResize = (horizontalProportions: number[]) => {
@@ -121,7 +127,7 @@ class AgentConfiguration extends PureComponent<State> {
   }
 
   private measurementsTemp() {
-    const {measurements} = this.state
+    const {measurements, focusedMeasure, focusedMeasurePosition} = this.state
     return (
       <div className="panel">
         <div className="panel-heading">
@@ -154,7 +160,10 @@ class AgentConfiguration extends PureComponent<State> {
                   <AgentToolbarFunction
                     name={v}
                     key={i}
-                    focusedMeasure={this.handleFocusedMeasure}
+                    idx={i}
+                    handleFocusedMeasure={this.handleFocusedMeasure.bind(this)}
+                    focusedMeasure={focusedMeasure}
+                    focusedPosition={focusedMeasurePosition}
                   />
                 )
               })}

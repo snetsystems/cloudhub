@@ -17,7 +17,8 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 interface Props {
   func: FluxToolbarFunction
   onDismiss: () => void
-  tipPosition?: {top: number; right: number}
+  tipPosition?: {top: number; right: number; left: number}
+  pivot: string
 }
 
 interface State {
@@ -73,34 +74,57 @@ class FunctionTooltip extends PureComponent<Props, State> {
           </div>
         </div>
         <span
-          className="flux-functions-toolbar--tooltip-caret"
+          className={this.handleCaretClassName}
           style={this.styleCaretPosition}
         />
       </>
     )
   }
 
+  private get handleCaretClassName() {
+    const {pivot} = this.props
+
+    return pivot === 'right' || pivot === undefined
+      ? 'flux-functions-toolbar--tooltip-caret'
+      : 'flux-functions-toolbar--tooltip-caret tooltip-caret--left'
+  }
+
   private get styleCaretPosition(): CSSProperties {
     const {
-      tipPosition: {top, right},
+      tipPosition: {top, right, left, width},
+      pivot,
     } = this.props
 
-    return {
-      top: `${Math.min(top, window.innerHeight)}px`,
-      right: `${right + 4}px`,
-    }
+    const calcPostion =
+      pivot === 'right' || pivot === undefined
+        ? {
+            right: `${right + 4}px`,
+          }
+        : {
+            left: `${left + width + 10}px`,
+          }
+
+    return {top: `${Math.min(top, window.innerHeight)}px`, ...calcPostion}
   }
 
   private get stylePosition(): CSSProperties {
     const {
-      tipPosition: {top, right},
+      tipPosition: {top, right, left, width},
+      pivot,
     } = this.props
     const {bottomPosition} = this.state
 
-    return {
-      bottom: `${bottomPosition || window.innerHeight - top - 15}px`,
-      right: `${right + 2}px`,
-    }
+    const calcPostion =
+      pivot === 'right' || pivot === undefined
+        ? {
+            bottom: `${bottomPosition || window.innerHeight - top - 15}px`,
+            right: `${right + 2}px`,
+          }
+        : {
+            bottom: `${bottomPosition || window.innerHeight - top - 15}px`,
+            left: `${left + width + 8}px`,
+          }
+    return calcPostion
   }
 
   private handleDismiss = (e: MouseEvent<HTMLElement>) => {
