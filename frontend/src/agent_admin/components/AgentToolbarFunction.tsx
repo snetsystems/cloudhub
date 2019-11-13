@@ -1,4 +1,5 @@
 import React, { PureComponent } from "react";
+import _ from "lodash";
 import FunctionTooltip from "src/flux/components/flux_functions_toolbar/FunctionTooltip";
 import { ErrorHandling } from "src/shared/decorators/errors";
 
@@ -18,24 +19,8 @@ class AgentToolbarFunction extends PureComponent {
   }
 
   public componentWillReceiveProps(newProps) {
-    const { refresh } = newProps;
-    const { isActive } = this.state;
-
-    if (refresh === true && isActive === true) {
-      return this.handleOtherClick();
-    }
-
-    if (refresh === false && isActive === true) {
-      return this.handleOtherClick();
-    }
-
-    if (refresh === false && isActive === false) {
-      return this.handleOtherClick();
-    }
-
-    if (refresh) {
-      const boolean = newProps.focusedMeasure === this.functionRef.current;
-      return this.setState({ isActive: boolean });
+    if (this.state.isActive === true) {
+      this.setState({ isActive: false });
     }
   }
 
@@ -49,14 +34,16 @@ class AgentToolbarFunction extends PureComponent {
         style={{ position: "relative" }}
       >
         {`${name}`}
-        <button
+        <div
           ref={this.functionRef}
-          className={"btn btn-primary item" + idx}
           onClick={this.handleFocusing.bind(this)}
+          onMouseLeave={this.handleOtherClick.bind(this)}
         >
-          {`help ${idx}`}
-        </button>
-        {this.tooltip}
+          <button className={"btn btn-primary item" + idx}>
+            {`help ${idx}`}
+          </button>
+          {this.tooltip}
+        </div>
       </div>
     );
   }
@@ -68,6 +55,7 @@ class AgentToolbarFunction extends PureComponent {
   private handleFocusing = () => {
     const clickPosition = this.functionRef.current.getBoundingClientRect();
     this.props.handleFocusedMeasure({ clickPosition, refresh: true });
+    this.setState({ isActive: true });
   };
 
   private handleOtherClick = () => {

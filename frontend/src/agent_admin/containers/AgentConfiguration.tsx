@@ -32,7 +32,7 @@ class AgentConfiguration extends PureComponent<State> {
       isWizardActive: false,
       focusedMeasure: "",
       focusedMeasurePosition: {},
-      refresh: true
+      refresh: false
     };
 
     this.measurementsTemp = this.measurementsTemp.bind(this);
@@ -101,6 +101,7 @@ class AgentConfiguration extends PureComponent<State> {
       this.setState({
         refresh
       });
+      return;
     }
   };
 

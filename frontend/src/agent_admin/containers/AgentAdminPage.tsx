@@ -46,10 +46,6 @@ class AgentAdminPage extends PureComponent<Props> {
 
   public sections = me => {
     const { minions } = this.state;
-    console.log(
-      "isUserAuthorized: ",
-      isUserAuthorized(me.role, SUPERADMIN_ROLE)
-    );
     return [
       {
         url: "agent-minions",
