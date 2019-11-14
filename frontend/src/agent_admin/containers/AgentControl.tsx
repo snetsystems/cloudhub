@@ -30,8 +30,9 @@ class AgentControl extends PureComponent<State> {
     return console.log("row Called", this);
   }
 
-  public onClickActionCall() {
-    return console.log("action Called", this);
+  public onClickActionCall(event) {
+    event.stopPropagation();
+    return console.log("action Called");
   }
 
   public onClickRunCall() {

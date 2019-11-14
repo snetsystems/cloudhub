@@ -39,11 +39,12 @@ class AgentConfiguration extends PureComponent<State> {
   }
 
   public onClickTableRowCall() {
-    return console.log("row Called", this);
+    console.log("row Called", this);
   }
 
-  public onClickActionCall() {
-    return console.log("action Called", this);
+  public onClickActionCall(event) {
+    event.stopPropagation();
+    console.log("action Called");
   }
 
   public onClickSaveCall() {
