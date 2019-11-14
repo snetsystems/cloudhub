@@ -1,12 +1,13 @@
-import React, {PureComponent} from 'react'
+import React, { PureComponent } from "react";
+import FancyScrollbar from "src/shared/components/FancyScrollbar";
 
 class AgentConsole extends PureComponent {
   constructor(props) {
-    super(props)
+    super(props);
   }
 
   render() {
-    const {res} = this.props
+    const { res } = this.props;
     return (
       <div className="panel">
         <div className="panel-heading">
@@ -14,23 +15,29 @@ class AgentConsole extends PureComponent {
         </div>
         <div className="panel-body">
           <div
-            className="console-zone"
             style={{
-              background: '#232323',
-              padding: '15px',
-              borderRadius: '5px',
-              height: '100%',
-              width: '100%',
-              overflow: 'hidden',
-              resize: 'none',
+              padding: "15px",
+              height: "100%",
+              width: "100%",
+              background: "#232323",
+              borderRadius: "5px"
             }}
           >
-            {res}
+            <FancyScrollbar>
+              <div
+                className="console-zone"
+                style={{
+                  height: "100%"
+                }}
+              >
+                {res}
+              </div>
+            </FancyScrollbar>
           </div>
         </div>
       </div>
-    )
+    );
   }
 }
 
-export default AgentConsole
+export default AgentConsole;
