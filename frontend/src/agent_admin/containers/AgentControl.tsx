@@ -1,71 +1,83 @@
-import React, {PureComponent} from 'react'
+import React, { PureComponent } from "react";
 
 // Components
-import Threesizer from 'src/shared/components/threesizer/Threesizer'
-import AgentTable from 'src/agent_admin/components/AgentTable'
-import AgentConsole from 'src/agent_admin/components/AgentConsole'
+import Threesizer from "src/shared/components/threesizer/Threesizer";
+import AgentTable from "src/agent_admin/components/AgentTable";
+import AgentConsole from "src/agent_admin/components/AgentConsole";
 
-import {ErrorHandling} from 'src/shared/decorators/errors'
+import { ErrorHandling } from "src/shared/decorators/errors";
 
 //const
-import {HANDLE_HORIZONTAL} from 'src/shared/constants'
+import { HANDLE_HORIZONTAL } from "src/shared/constants";
 
 interface State {
-  proportions: Readonly<{}>
-  minionLog: ''
-  onClickTableRow: () => void
+  proportions: Readonly<{}>;
+  minionLog: "";
+  onClickTableRow: () => void;
 }
 
 @ErrorHandling
 class AgentControl extends PureComponent<State> {
   constructor(props) {
-    super(props)
+    super(props);
     this.state = {
-      minionLog: 'not load log',
-      proportions: [0.43, 0.57],
-    }
+      minionLog: "not load log",
+      proportions: [0.43, 0.57]
+    };
   }
 
   public onClickTableRowCall() {
-    return console.log('row Called', this)
+    return console.log("row Called", this);
   }
 
   public onClickActionCall() {
-    return console.log('action Called', this)
+    return console.log("action Called", this);
   }
 
   public onClickRunCall() {
-    return console.log('Run Called', this)
+    return console.log("Run Called", this);
   }
 
   public onClickStopCall() {
-    return console.log('Stop Called', this)
+    return console.log("Stop Called", this);
   }
 
   public onClickInstallCall() {
-    return console.log('Install Called', this)
+    return console.log("Install Called", this);
   }
 
   public componentDidMount() {}
 
   render() {
+    const { isUserAuthorized } = this.props;
     return (
-      <div className="panel panel-solid">
-        <Threesizer
-          orientation={HANDLE_HORIZONTAL}
-          divisions={this.horizontalDivisions}
-          onResize={this.handleResize}
-        />
-      </div>
-    )
+      <>
+        {isUserAuthorized ? (
+          <div className="panel panel-solid">
+            <Threesizer
+              orientation={HANDLE_HORIZONTAL}
+              divisions={this.horizontalDivisions}
+              onResize={this.handleResize}
+            />
+          </div>
+        ) : (
+          <div
+            className="generic-empty-state"
+            style={{ backgroundColor: "#292933" }}
+          >
+            <h4>Not Allowed User</h4>
+          </div>
+        )}
+      </>
+    );
   }
 
   private handleResize = (proportions: number[]) => {
-    this.setState({proportions})
-  }
+    this.setState({ proportions });
+  };
 
   private renderAgentPageTop = () => {
-    const {currentUrl, minions} = this.props
+    const { currentUrl, minions } = this.props;
     return (
       <AgentTable
         currentUrl={currentUrl}
@@ -76,39 +88,39 @@ class AgentControl extends PureComponent<State> {
         onClickStop={this.onClickStopCall}
         onClickInstall={this.onClickInstallCall}
       />
-    )
-  }
+    );
+  };
 
   private renderAgentPageBottom = () => {
-    const {minionLog} = this.state
-    return <AgentConsole res={minionLog} />
-  }
+    const { minionLog } = this.state;
+    return <AgentConsole res={minionLog} />;
+  };
 
   private get horizontalDivisions() {
-    const {proportions} = this.state
-    const [topSize, bottomSize] = proportions
+    const { proportions } = this.state;
+    const [topSize, bottomSize] = proportions;
 
     return [
       {
-        name: '',
-        handleDisplay: 'none',
+        name: "",
+        handleDisplay: "none",
         headerButtons: [],
         menuOptions: [],
         render: this.renderAgentPageTop,
         headerOrientation: HANDLE_HORIZONTAL,
-        size: topSize,
+        size: topSize
       },
       {
-        name: '',
+        name: "",
         handlePixels: 8,
         headerButtons: [],
         menuOptions: [],
         render: this.renderAgentPageBottom,
         headerOrientation: HANDLE_HORIZONTAL,
-        size: bottomSize,
-      },
-    ]
+        size: bottomSize
+      }
+    ];
   }
 }
 
-export default AgentControl
+export default AgentControl;

@@ -39,13 +39,12 @@ class AgentAdminPage extends PureComponent<Props> {
 
     this.state = {
       hostsPageStatus: RemoteDataState.NotStarted,
-      minion: [],
-      isSelectBoxView: true
+      isSelectBoxView: true,
+      minions: []
     };
   }
 
   public sections = me => {
-    const { minions } = this.state;
     return [
       {
         url: "agent-minions",
@@ -53,10 +52,9 @@ class AgentAdminPage extends PureComponent<Props> {
         enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
         component: (
           <AgentMinions
-            me={me}
-            compareAuthRore={SUPERADMIN_ROLE}
+            isUserAuthorized={isUserAuthorized(me.role, SUPERADMIN_ROLE)}
             currentUrl={"agent-minions"}
-            minions={minions}
+            minions={this.state.minions}
           />
         )
       },
@@ -66,9 +64,9 @@ class AgentAdminPage extends PureComponent<Props> {
         enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
         component: (
           <AgentControl
-            meID={me.id}
+            isUserAuthorized={isUserAuthorized(me.role, SUPERADMIN_ROLE)}
             currentUrl={"agent-control"}
-            minions={minions}
+            minions={this.state.minions}
           />
         )
       },
@@ -78,9 +76,9 @@ class AgentAdminPage extends PureComponent<Props> {
         enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
         component: (
           <AgentConfiguration
-            meID={me.id}
+            isUserAuthorized={isUserAuthorized(me.role, SUPERADMIN_ROLE)}
             currentUrl={"agent-configuration"}
-            minions={minions}
+            minions={this.state.minions}
           />
         )
       }

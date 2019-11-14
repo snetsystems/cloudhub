@@ -43,10 +43,10 @@ class AgentMinions extends PureComponent<State> {
   }
 
   render() {
-    const { me, compareAuthRore } = this.props;
+    const { isUserAuthorized } = this.props;
     return (
       <>
-        {me.role === compareAuthRore ? (
+        {isUserAuthorized ? (
           <div className="panel panel-solid">
             <Threesizer
               orientation={HANDLE_HORIZONTAL}
@@ -54,7 +54,14 @@ class AgentMinions extends PureComponent<State> {
               onResize={this.handleResize}
             />
           </div>
-        ) : null}
+        ) : (
+          <div
+            className="generic-empty-state"
+            style={{ backgroundColor: "#292933" }}
+          >
+            <h4>Not Allowed User</h4>
+          </div>
+        )}
       </>
     );
   }

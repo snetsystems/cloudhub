@@ -77,14 +77,26 @@ class AgentConfiguration extends PureComponent<State> {
   }
 
   render() {
+    const { isUserAuthorized } = this.props;
     return (
-      <div className="panel panel-solid">
-        <Threesizer
-          orientation={HANDLE_HORIZONTAL}
-          divisions={this.horizontalDivisions}
-          onResize={this.horizontalHandleResize}
-        />
-      </div>
+      <>
+        {isUserAuthorized ? (
+          <div className="panel panel-solid">
+            <Threesizer
+              orientation={HANDLE_HORIZONTAL}
+              divisions={this.horizontalDivisions}
+              onResize={this.horizontalHandleResize}
+            />
+          </div>
+        ) : (
+          <div
+            className="generic-empty-state"
+            style={{ backgroundColor: "#292933" }}
+          >
+            <h4>Not Allowed User</h4>
+          </div>
+        )}
+      </>
     );
   }
 
