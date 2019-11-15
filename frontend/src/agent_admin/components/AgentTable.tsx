@@ -35,6 +35,7 @@ interface State {
 
 @ErrorHandling
 class AgentTable extends PureComponent<State> {
+  private allCheck = React.createRef()
   constructor(props) {
     super(props)
 
@@ -210,19 +211,18 @@ class AgentTable extends PureComponent<State> {
   }
   private get AgentTableHeaderEachPage() {
     const {currentUrl} = this.props
-    const {
-      CheckWidth,
-      NameWidth,
-      IPWidth,
-      HostWidth,
-      StatusWidth,
-    } = AGENT_TABLE_SIZING
+    const {CheckWidth, NameWidth, IPWidth, StatusWidth} = AGENT_TABLE_SIZING
     return (
       <div className="hosts-table--thead">
         <div className="hosts-table--tr">
           {currentUrl === 'agent-control' ? (
             <div style={{width: CheckWidth}} className="hosts-table--th">
-              <input type="checkbox" />
+              <input
+                type="checkbox"
+                id="allCheck"
+                ref={this.allCheck.current}
+                onClick={this.handleAllCheck}
+              />
             </div>
           ) : (
             ''
@@ -321,7 +321,9 @@ class AgentTable extends PureComponent<State> {
       </div>
     )
   }
-
+  private handleAllCheck() {
+    return console.log(this)
+  }
   private get AgentTableHeader() {
     return this.AgentTableHeaderEachPage
   }

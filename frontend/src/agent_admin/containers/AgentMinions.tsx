@@ -1,66 +1,78 @@
-import React, {PureComponent} from 'react'
+import React, { PureComponent } from "react";
 
 // Components
-import Threesizer from 'src/shared/components/threesizer/Threesizer'
-import AgentTable from 'src/agent_admin/components/AgentTable'
-import AgentConsole from 'src/agent_admin/components/AgentConsole'
-import AgentModal from 'src/agent_admin/components/AgentModal'
+import Threesizer from "src/shared/components/threesizer/Threesizer";
+import AgentTable from "src/agent_admin/components/AgentTable";
+import AgentConsole from "src/agent_admin/components/AgentConsole";
+import AgentModal from "src/agent_admin/components/AgentModal";
 
-import {ErrorHandling} from 'src/shared/decorators/errors'
+import { ErrorHandling } from "src/shared/decorators/errors";
 
 //const
-import {HANDLE_HORIZONTAL} from 'src/shared/constants'
+import { HANDLE_HORIZONTAL } from "src/shared/constants";
 
 interface Props {
-  onClickTableRow: () => void
-  onClickAction: () => void
-  onClickModal: () => void
-  onClickRun: () => void
-  onClickStop: () => void
-  onClickInstall: () => void
+  onClickTableRow: () => void;
+  onClickAction: () => void;
+  onClickModal: () => void;
+  onClickRun: () => void;
+  onClickStop: () => void;
+  onClickInstall: () => void;
 }
 interface State {
-  minions: Readonly<[]>
-  proportions: number[]
+  minions: Readonly<[]>;
+  proportions: number[];
 }
 
 @ErrorHandling
 class AgentMinions extends PureComponent<State> {
   constructor(props) {
-    super(props)
+    super(props);
     this.state = {
-      minionLog: 'not load log',
-      proportions: [0.43, 0.57],
-    }
+      minionLog: "not load log",
+      proportions: [0.43, 0.57]
+    };
   }
 
   public onClickTableRowCall() {
-    return console.log('row Called', this)
+    return console.log("row Called", this);
   }
 
-  public onClickModalCall({name, isAccept, _this}) {
-    return <AgentModal name={name} isAccept={isAccept} targetObject={_this} />
+  public onClickModalCall({ name, isAccept, _this }) {
+    return <AgentModal name={name} isAccept={isAccept} targetObject={_this} />;
   }
 
   render() {
+    const { isUserAuthorized } = this.props;
     return (
-      <div className="panel panel-solid">
-        <Threesizer
-          orientation={HANDLE_HORIZONTAL}
-          divisions={this.horizontalDivisions}
-          onResize={this.handleResize}
-        />
-      </div>
-    )
+      <>
+        {isUserAuthorized ? (
+          <div className="panel panel-solid">
+            <Threesizer
+              orientation={HANDLE_HORIZONTAL}
+              divisions={this.horizontalDivisions}
+              onResize={this.handleResize}
+            />
+          </div>
+        ) : (
+          <div
+            className="generic-empty-state"
+            style={{ backgroundColor: "#292933" }}
+          >
+            <h4>Not Allowed User</h4>
+          </div>
+        )}
+      </>
+    );
   }
 
   private handleResize = (proportions: number[]) => {
-    this.setState({proportions})
-  }
+    this.setState({ proportions });
+  };
 
   private renderAgentPageTop = () => {
     // const {parentUrl} = this.props
-    const {currentUrl, minions} = this.props
+    const { currentUrl, minions } = this.props;
     return (
       <AgentTable
         currentUrl={currentUrl}
@@ -68,39 +80,39 @@ class AgentMinions extends PureComponent<State> {
         onClickTableRow={this.onClickTableRowCall}
         onClickModal={this.onClickModalCall}
       />
-    )
-  }
+    );
+  };
 
   private renderAgentPageBottom = () => {
-    const {minionLog} = this.state
-    return <AgentConsole res={minionLog} />
-  }
+    const { minionLog } = this.state;
+    return <AgentConsole res={minionLog} />;
+  };
 
   private get horizontalDivisions() {
-    const {proportions} = this.state
-    const [topSize, bottomSize] = proportions
+    const { proportions } = this.state;
+    const [topSize, bottomSize] = proportions;
 
     return [
       {
-        name: '',
-        handleDisplay: 'none',
+        name: "",
+        handleDisplay: "none",
         headerButtons: [],
         menuOptions: [],
         render: this.renderAgentPageTop,
         headerOrientation: HANDLE_HORIZONTAL,
-        size: topSize,
+        size: topSize
       },
       {
-        name: '',
+        name: "",
         handlePixels: 8,
         headerButtons: [],
         menuOptions: [],
         render: this.renderAgentPageBottom,
         headerOrientation: HANDLE_HORIZONTAL,
-        size: bottomSize,
-      },
-    ]
+        size: bottomSize
+      }
+    ];
   }
 }
 
-export default AgentMinions
+export default AgentMinions;
