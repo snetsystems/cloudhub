@@ -1,49 +1,145 @@
-import React, { PureComponent } from "react";
+import React, {PureComponent} from 'react'
+import _ from 'lodash'
 
 // Components
-import Threesizer from "src/shared/components/threesizer/Threesizer";
-import AgentTable from "src/agent_admin/components/AgentTable";
-import AgentConsole from "src/agent_admin/components/AgentConsole";
-import AgentModal from "src/agent_admin/components/AgentModal";
+import Threesizer from 'src/shared/components/threesizer/Threesizer'
+import AgentMinionsTable from 'src/agent_admin/components/AgentMinionsTable'
+import AgentMinionsConsole from 'src/agent_admin/components/AgentMinionsConsole'
+import AgentMinionsModal from 'src/agent_admin/components/AgentMinionsModal'
 
-import { ErrorHandling } from "src/shared/decorators/errors";
+import {ErrorHandling} from 'src/shared/decorators/errors'
+
+// APIs
+import {
+  getMinionKeyListAll,
+  getMinionsIP,
+  getMinionsOS,
+  getLocalGrainsItem,
+  runAcceptKey,
+  runRejectKey,
+  runDeleteKey,
+} from 'src/agent_admin/apis'
 
 //const
-import { HANDLE_HORIZONTAL } from "src/shared/constants";
+import {HANDLE_HORIZONTAL} from 'src/shared/constants'
+
+// Types
+import {Minion} from 'src/types'
 
 interface Props {
-  onClickTableRow: () => void;
-  onClickAction: () => void;
-  onClickModal: () => void;
-  onClickRun: () => void;
-  onClickStop: () => void;
-  onClickInstall: () => void;
+  currentUrl: string
 }
 interface State {
-  minions: Readonly<[]>;
-  proportions: number[];
+  MinionsObject: {[x: string]: Minion}
+  minionLog: string
+  currentUrl: ''
+  proportions: number[]
 }
 
 @ErrorHandling
-class AgentMinions extends PureComponent<State> {
+class AgentMinions extends PureComponent<Props, State> {
   constructor(props) {
-    super(props);
+    super(props)
     this.state = {
-      minionLog: "not load log",
-      proportions: [0.43, 0.57]
-    };
+      minionLog: 'not load log',
+      proportions: [0.43, 0.57],
+      MinionsObject: {},
+      currentUrl: '',
+    }
   }
 
-  public onClickTableRowCall() {
-    return console.log("row Called", this);
+  getWheelKeyListAll = async () => {
+    const response = await getMinionKeyListAll()
+
+    const updateMinionsIP = await getMinionsIP(response)
+
+    const newMinions = await getMinionsOS(updateMinionsIP)
+
+    this.setState({MinionsObject: newMinions})
   }
 
-  public onClickModalCall({ name, isAccept, _this }) {
-    return <AgentModal name={name} isAccept={isAccept} targetObject={_this} />;
+  public async componentDidMount() {
+    this.getWheelKeyListAll()
+
+    console.debug('componentDidMount')
+  }
+
+  onClickTableRowCall = (host: string) => () => {
+    const getLocalGrainsItemPromise = getLocalGrainsItem(host)
+    getLocalGrainsItemPromise.then(pLocalGrainsItemData => {
+      this.setState({
+        minionLog: JSON.stringify(
+          pLocalGrainsItemData.data.return[0][host],
+          null,
+          4
+        ),
+      })
+    })
+  }
+
+  handleWheelKeyCommand = (host: string, cmdstatus: string) => {
+    console.log('handleWheelKeyCommand', host, cmdstatus)
+
+    if (cmdstatus == 'ReJect') {
+      const getWheelKeyCommandPromise = runRejectKey(host)
+
+      getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
+        console.log(pWheelKeyCommandData)
+        this.setState({
+          minionLog: JSON.stringify(
+            pWheelKeyCommandData.data.return[0],
+            null,
+            4
+          ),
+        })
+        this.getWheelKeyListAll()
+      })
+    } else if (cmdstatus == 'Accept') {
+      const getWheelKeyCommandPromise = runAcceptKey(host)
+
+      getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
+        console.log(pWheelKeyCommandData)
+        this.setState({
+          minionLog: JSON.stringify(
+            pWheelKeyCommandData.data.return[0],
+            null,
+            4
+          ),
+        })
+        this.getWheelKeyListAll()
+      })
+    } else if (cmdstatus == 'Delete') {
+      const getWheelKeyCommandPromise = runDeleteKey(host)
+
+      getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
+        console.log(pWheelKeyCommandData)
+        this.setState({
+          minionLog: JSON.stringify(
+            pWheelKeyCommandData.data.return[0],
+            null,
+            4
+          ),
+        })
+        this.getWheelKeyListAll()
+      })
+    }
+  }
+
+  public onClickModalCall({name, host, status, _this, handleWheelKeyCommand}) {
+    console.log(status)
+    return (
+      <AgentMinionsModal
+        name={name}
+        host={host}
+        status={status}
+        targetObject={_this}
+        handleWheelKeyCommand={handleWheelKeyCommand}
+      />
+    )
   }
 
   render() {
-    const { isUserAuthorized } = this.props;
+    const {isUserAuthorized} = this.props
     return (
       <>
         {isUserAuthorized ? (
@@ -57,62 +153,62 @@ class AgentMinions extends PureComponent<State> {
         ) : (
           <div
             className="generic-empty-state"
-            style={{ backgroundColor: "#292933" }}
+            style={{backgroundColor: '#292933'}}
           >
             <h4>Not Allowed User</h4>
           </div>
         )}
       </>
-    );
+    )
   }
 
   private handleResize = (proportions: number[]) => {
-    this.setState({ proportions });
-  };
+    this.setState({proportions})
+  }
 
   private renderAgentPageTop = () => {
     // const {parentUrl} = this.props
-    const { currentUrl, minions } = this.props;
+    const {MinionsObject} = this.state
     return (
-      <AgentTable
-        currentUrl={currentUrl}
-        minions={minions}
+      <AgentMinionsTable
+        minions={_.values(MinionsObject)}
         onClickTableRow={this.onClickTableRowCall}
         onClickModal={this.onClickModalCall}
+        handleWheelKeyCommand={this.handleWheelKeyCommand}
       />
-    );
-  };
+    )
+  }
 
   private renderAgentPageBottom = () => {
-    const { minionLog } = this.state;
-    return <AgentConsole res={minionLog} />;
-  };
+    const {minionLog} = this.state
+    return <AgentMinionsConsole res={minionLog} />
+  }
 
   private get horizontalDivisions() {
-    const { proportions } = this.state;
-    const [topSize, bottomSize] = proportions;
+    const {proportions} = this.state
+    const [topSize, bottomSize] = proportions
 
     return [
       {
-        name: "",
-        handleDisplay: "none",
+        name: '',
+        handleDisplay: 'none',
         headerButtons: [],
         menuOptions: [],
         render: this.renderAgentPageTop,
         headerOrientation: HANDLE_HORIZONTAL,
-        size: topSize
+        size: topSize,
       },
       {
-        name: "",
+        name: '',
         handlePixels: 8,
         headerButtons: [],
         menuOptions: [],
         render: this.renderAgentPageBottom,
         headerOrientation: HANDLE_HORIZONTAL,
-        size: bottomSize
-      }
-    ];
+        size: bottomSize,
+      },
+    ]
   }
 }
 
-export default AgentMinions;
+export default AgentMinions
