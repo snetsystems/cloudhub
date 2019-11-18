@@ -1,0 +1,13 @@
+// SWAN /
+
+export const ROUTER_TABLE_SIZING = {
+  ASSETID: '25%',
+  ROUTERSTATUS: '25%',
+  NETWORKSTATUS: '25%',
+  APPLICATIONSTATUS: '25%',
+  CPU: '25%',
+  MEMORY: '25%',
+  SDPLEXTRAFFICUSAGE: '25%',
+  CONFIG: '20%',
+  FIRMWARE: '20%',
+}

@@ -188,6 +188,27 @@ class SideNav extends PureComponent<Props> {
             sourcePrefix={sourcePrefix}
           />
         ) : null}
+        <NavBlock
+          highlightWhen={[
+            'swan-sdplex',
+            'swan-sdplex/status',
+            'swan-sdplex/setting',
+          ]}
+          icon="cube"
+          link={`${sourcePrefix}/swan-sdplex/status`}
+          location={location}
+        >
+          <NavHeader
+            link={`${sourcePrefix}/swan-sdplex/status`}
+            title="Swan/SDPlex"
+          />
+          <NavListItem link={`${sourcePrefix}/swan-sdplex/status`}>
+            Status
+          </NavListItem>
+          <NavListItem link={`${sourcePrefix}/swan-sdplex/setting`}>
+            Setting
+          </NavListItem>
+        </NavBlock>
         <div className="sidebar--item cursor-default symbol-company" />
       </nav>
     )
