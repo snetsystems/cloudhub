@@ -1,6 +1,6 @@
 # SCMP (Snet Cloud Monitoring Portal) - Latest v0.0.7
 
-## Intro.
+## Intro
 
 **SCMP** is **another branch** of an open-source web application derived from Influxdata's **_Chronograf_** written in Go and React.js that provides the tools to visualize your monitoring data and easily create alerting and automation rules.
 
@@ -144,6 +144,7 @@ $ code snet.code-workspace
 Simply, select **"Launch Server"** and then run.<br>
 Also, for UI debugging, select **"Launch Chrome"** and then run debug.<br>
 For continuous debugging, you can use **"Launch Chrome"** after _**yarn start**_<br>
+
 > [Note]<br>
 > For continuous debugging, you need to add **_develop mode_** into the running argument.
 
@@ -171,11 +172,11 @@ For continuous debugging, you can use **"Launch Chrome"** after _**yarn start**_
 
 If you run a not login mode, you can use **"Launch Chrome via Proxy"** after _**yarn start**_
 
-````
+```
 $ cd $CMP_PATH/frontend
 $ yarn start
 yarn run v1.15.2
 $ node parcel.jsx
 Serving on http://localhost:8080
 √  Built in 7.54s.
-````
+```
