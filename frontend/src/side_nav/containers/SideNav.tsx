@@ -190,22 +190,22 @@ class SideNav extends PureComponent<Props> {
         ) : null}
         <NavBlock
           highlightWhen={[
-            'swan-sdplex',
-            'swan-sdplex/status',
-            'swan-sdplex/setting',
+            'add-on/128t',
+            'add-on/128t/status',
+            'add-on/128t/setting',
           ]}
           icon="cube"
-          link={`${sourcePrefix}/swan-sdplex/status`}
+          link={`${sourcePrefix}/add-on/128t/status`}
           location={location}
         >
           <NavHeader
-            link={`${sourcePrefix}/swan-sdplex/status`}
-            title="Swan/SDPlex"
+            link={`${sourcePrefix}/add-on/128t/status`}
+            title="128T/SDPlex"
           />
-          <NavListItem link={`${sourcePrefix}/swan-sdplex/status`}>
+          <NavListItem link={`${sourcePrefix}/add-on/128t/status`}>
             Status
           </NavListItem>
-          <NavListItem link={`${sourcePrefix}/swan-sdplex/setting`}>
+          <NavListItem link={`${sourcePrefix}/add-on/128t/setting`}>
             Setting
           </NavListItem>
         </NavBlock>

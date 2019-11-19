@@ -7,13 +7,9 @@ import SearchBar from 'src/hosts/components/SearchBar'
 import RouterTableRow from 'src/swan_sdplex/components/RouterTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
-// import PageSpinner from 'src/shared/components/PageSpinner'
-
-// import {AGENT_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
-
 import {Router} from 'src/types'
-
 import {ErrorHandling} from 'src/shared/decorators/errors'
+import {ROUTER_TABLE_SIZING} from 'src/swan_sdplex/constants/tableSizing'
 
 enum SortDirection {
   ASC = 'asc',
@@ -22,6 +18,7 @@ enum SortDirection {
 
 export interface Props {
   routers: Router[]
+  onClickModal: ({name, _this, onClickfn}) => JSX.Element
 }
 
 interface State {
@@ -62,7 +59,6 @@ class RouterTable extends PureComponent<Props, State> {
           />
         </div>
         <div className="panel-body">
-          test--
           <div className="hosts-table">
             <div className="hosts-table--thead">
               <div className="hosts-table--tr">{this.TableHeader}</div>
@@ -76,12 +72,23 @@ class RouterTable extends PureComponent<Props, State> {
   }
 
   private get TableHeader() {
+    const {
+      ASSETID,
+      ROUTERSTATUS,
+      NETWORKSTATUS,
+      APPLICATIONSTATUS,
+      CPU,
+      MEMORY,
+      SDPLEXTRAFFICUSAGE,
+      CONFIG,
+      FIRMWARE,
+    } = ROUTER_TABLE_SIZING
     return (
       <>
         <div
           onClick={this.updateSort('assetId')}
           className={this.sortableClasses('assetId')}
-          style={{width: '25%'}}
+          style={{width: ASSETID}}
         >
           Asset ID
           <span className="icon caret-up" />
@@ -90,7 +97,7 @@ class RouterTable extends PureComponent<Props, State> {
         <div
           onClick={this.updateSort('routerstatus')}
           className={this.sortableClasses('routerstatus')}
-          style={{width: '25%'}}
+          style={{width: ROUTERSTATUS}}
         >
           Router Status
           <span className="icon caret-up" />
@@ -98,7 +105,7 @@ class RouterTable extends PureComponent<Props, State> {
         <div
           onClick={this.updateSort('networkstatus')}
           className={this.sortableClasses('networkstatus')}
-          style={{width: '25%'}}
+          style={{width: NETWORKSTATUS}}
         >
           Network Status
           <span className="icon caret-up" />
@@ -106,7 +113,7 @@ class RouterTable extends PureComponent<Props, State> {
         <div
           onClick={this.updateSort('applicationstatus')}
           className={this.sortableClasses('applicationstatus')}
-          style={{width: '25%'}}
+          style={{width: APPLICATIONSTATUS}}
         >
           Application Status
           <span className="icon caret-up" />
@@ -114,7 +121,7 @@ class RouterTable extends PureComponent<Props, State> {
         <div
           onClick={this.updateSort('cpu')}
           className={this.sortableClasses('cpu')}
-          style={{width: '25%'}}
+          style={{width: CPU}}
         >
           CPU
           <span className="icon caret-up" />
@@ -122,7 +129,7 @@ class RouterTable extends PureComponent<Props, State> {
         <div
           onClick={this.updateSort('memory')}
           className={this.sortableClasses('memory')}
-          style={{width: '25%'}}
+          style={{width: MEMORY}}
         >
           Memory
           <span className="icon caret-up" />
@@ -130,7 +137,7 @@ class RouterTable extends PureComponent<Props, State> {
         <div
           onClick={this.updateSort('sdplextraffic')}
           className={this.sortableClasses('sdplextraffic')}
-          style={{width: '25%'}}
+          style={{width: SDPLEXTRAFFICUSAGE}}
         >
           SDPlex traffic usage
           <span className="icon caret-up" />
@@ -138,7 +145,7 @@ class RouterTable extends PureComponent<Props, State> {
         <div
           onClick={this.updateSort('config')}
           className={this.sortableClasses('config')}
-          style={{width: '25%'}}
+          style={{width: CONFIG}}
         >
           Config
           <span className="icon caret-up" />
@@ -146,7 +153,7 @@ class RouterTable extends PureComponent<Props, State> {
         <div
           onClick={this.updateSort('firmware')}
           className={this.sortableClasses('firmware')}
-          style={{width: '25%'}}
+          style={{width: FIRMWARE}}
         >
           Firmware
           <span className="icon caret-up" />
@@ -157,7 +164,7 @@ class RouterTable extends PureComponent<Props, State> {
 
   // data add
   private get TableData() {
-    const {routers} = this.props
+    const {routers, onClickModal} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
     //const sortedRouters = routers
@@ -168,18 +175,13 @@ class RouterTable extends PureComponent<Props, State> {
       sortDirection
     )
 
-    let test = true
-    if (test) {
-      return (
-        <FancyScrollbar
-          children={sortedRouters.map((r, i) => (
-            <RouterTableRow router={r} key={i} />
-          ))}
-        />
-      )
-    } else {
-      return routers.map((r, i) => <RouterTableRow router={r} key={i} />)
-    }
+    return (
+      <FancyScrollbar
+        children={sortedRouters.map((r, i) => (
+          <RouterTableRow onClickModal={onClickModal} router={r} key={i} />
+        ))}
+      />
+    )
   }
 
   public filter(allrouters, searchTerm) {

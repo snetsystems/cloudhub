@@ -181,11 +181,11 @@ class Root extends PureComponent<{}, State> {
                 <Route path="manage-sources" component={ManageSources} />
                 <Route path="agent-admin/:tab" component={AgentAdminPage} />
                 <Route
-                  path="swan-sdplex/status"
+                  path="add-on/128t/status"
                   component={SwanSdplexStatusPage}
                 />
                 <Route
-                  path="swan-sdplex/setting"
+                  path="add-on/128t/setting"
                   component={SwanSdplexSettingPage}
                 />
               </Route>
