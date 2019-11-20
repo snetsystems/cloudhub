@@ -10,11 +10,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 
 // APIs
 import {
-  getMinionAcceptKeyListAll,
-  getMinionsIP,
-  getMinionsOS,
-  getTelegrafInstalled,
-  getTelegrafServiceStatus,
+  getMinionKeyListAllAsync,
   runLocalServiceStartTelegraf,
   runLocalServiceStopTelegraf,
   runLocalCpGetDirTelegraf,
@@ -25,7 +21,7 @@ import {
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
 
 // Types
-import {Minion} from 'src/types'
+import {Minion, RemoteDataState} from 'src/types'
 
 interface Props {
   currentUrl: string
@@ -33,8 +29,11 @@ interface Props {
 
 interface State {
   MinionsObject: {[x: string]: Minion}
+  Minions: Minion[]
   proportions: Readonly<{}>
+  controlPageStatus: RemoteDataState
   minionLog: string
+  isAllCheck: boolean
 }
 
 @ErrorHandling
@@ -45,35 +44,56 @@ class AgentControl extends PureComponent<Props, State> {
       minionLog: 'not load log',
       proportions: [0.43, 0.57],
       MinionsObject: {},
+      Minions: [],
+      isAllCheck: false,
+      controlPageStatus: RemoteDataState.NotStarted,
     }
   }
 
   getWheelKeyListAll = async () => {
-    const response = await getMinionAcceptKeyListAll()
+    const hostListObject = await getMinionKeyListAllAsync()
 
-    const updateMinionsIP = await getMinionsIP(response)
-
-    const updateMinionsOS = await getMinionsOS(updateMinionsIP)
-
-    //this.setState({MinionsObject: updateMinionsOS})
-
-    const updateInstalled = await getTelegrafInstalled(updateMinionsOS)
-
-    //this.setState({MinionsObject: updateInstalled})
-
-    const updateServiceStatus = await getTelegrafServiceStatus(updateInstalled)
-
-    this.setState({MinionsObject: updateServiceStatus})
+    this.setState({
+      Minions: _.values(hostListObject),
+      controlPageStatus: RemoteDataState.Done,
+    })
   }
 
   public async componentDidMount() {
     this.getWheelKeyListAll()
-
+    this.setState({controlPageStatus: RemoteDataState.Loading})
     console.debug('componentDidMount')
   }
 
   public onClickTableRowCall() {
     return console.log('row Called', this)
+  }
+
+  public handleAllCheck = () => {
+    const {Minions, isAllCheck} = this.state
+    console.log('handleAllCheck')
+    console.log(Minions)
+    if (isAllCheck === false) {
+      Minions.map(m => (m.isCheck = true))
+    } else {
+      Minions.map(m => (m.isCheck = false))
+    }
+    this.setState({isAllCheck: !isAllCheck, Minions})
+  }
+
+  public handleMinionCheck = ({_this}) => {
+    const {minions} = _this.props
+    const {Minions} = this.state
+    const index = Minions.indexOf(minions)
+
+    Minions[index].isCheck
+      ? (Minions[index].isCheck = false)
+      : (Minions[index].isCheck = true)
+
+    this.setState({
+      Minions: [...Minions],
+      isAllCheck: false,
+    })
   }
 
   public onClickActionCall = (host: string, isRunning: boolean) => () => {
@@ -115,7 +135,14 @@ class AgentControl extends PureComponent<Props, State> {
     // return console.log('action Called', host, isRunning)
   }
 
-  public onClickRunCall = (host: string) => {
+  public onClickRunCall = () => {
+    const {Minions} = this.state
+    const host = Minions.filter(m => m.isCheck === true).map(
+      checkData => checkData.host
+    )
+
+    console.log(host)
+
     const getLocalServiceStartTelegrafPromise = runLocalServiceStartTelegraf(
       host
     )
@@ -134,7 +161,14 @@ class AgentControl extends PureComponent<Props, State> {
     // return console.log('Run Called', this)
   }
 
-  public onClickStopCall = (host: string) => {
+  public onClickStopCall = () => {
+    const {Minions} = this.state
+    const host = Minions.filter(m => m.isCheck === true).map(
+      checkData => checkData.host
+    )
+
+    console.log(host)
+
     const getLocalServiceStopTelegrafPromise = runLocalServiceStopTelegraf(host)
 
     getLocalServiceStopTelegrafPromise.then(pLocalServiceStopTelegrafData => {
@@ -151,7 +185,14 @@ class AgentControl extends PureComponent<Props, State> {
     // return console.log('Stop Called', this)
   }
 
-  public onClickInstallCall = (host: string) => {
+  public onClickInstallCall = () => {
+    const {Minions} = this.state
+    const host = Minions.filter(m => m.isCheck === true).map(
+      checkData => checkData.host
+    )
+
+    console.log(host)
+
     const getLocalCpGetDirTelegrafPromise = runLocalCpGetDirTelegraf(host)
 
     getLocalCpGetDirTelegrafPromise.then(pLocalCpGetDirTelegrafData => {
@@ -213,16 +254,22 @@ class AgentControl extends PureComponent<Props, State> {
   }
 
   private renderAgentPageTop = () => {
-    const {MinionsObject} = this.state
+    const {Minions, controlPageStatus, isAllCheck} = this.state
+
+    console.log('MinionsObject', Minions)
 
     return (
       <AgentControlTable
-        minions={_.values(MinionsObject)}
+        minions={Minions}
+        controlPageStatus={controlPageStatus}
         onClickTableRow={this.onClickTableRowCall}
         onClickAction={this.onClickActionCall}
         onClickRun={this.onClickRunCall}
         onClickStop={this.onClickStopCall}
         onClickInstall={this.onClickInstallCall}
+        isAllCheck={isAllCheck}
+        handleAllCheck={this.handleAllCheck}
+        handleMinionCheck={this.handleMinionCheck}
       />
     )
   }

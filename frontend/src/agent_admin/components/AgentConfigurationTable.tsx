@@ -21,8 +21,10 @@ enum SortDirection {
 }
 export interface Props {
   minions: Minion[]
+  configPageStatus: RemoteDataState
   onClickTableRow: () => void
   onClickAction: () => void
+  focusedHost: string
   // onClickRun: () => void
   // onClickStop: () => void
   // onClickInstall: () => void
@@ -36,8 +38,6 @@ interface State {
 
 @ErrorHandling
 class AgentConfigurationTable extends PureComponent<Props, State> {
-  private allCheck = React.createRef()
-
   constructor(props: Props) {
     super(props)
 
@@ -60,19 +60,7 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
   public filter(allHosts, searchTerm) {
     const filterText = searchTerm.toLowerCase()
     return allHosts.filter(h => {
-      // const apps = h.apps ? h.apps.join(', ') : ''
-
-      // let tagResult = false
-      // if (h.tags) {
-      //   tagResult = Object.keys(h.tags).reduce((acc, key) => {
-      //     return acc || h.tags[key].toLowerCase().includes(filterText)
-      //   }, false)
-      // } else {
-      //   tagResult = false
-      // }
       return h.host.toLowerCase().includes(filterText)
-      // apps.toLowerCase().includes(filterText) ||
-      // tagResult
     })
   }
 
@@ -121,6 +109,63 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
 
   public componentWillUnmount() {}
 
+  private get AgentTableContents() {
+    const {minions, configPageStatus} = this.props
+    const {sortKey, sortDirection, searchTerm} = this.state
+
+    const sortedHosts = this.getSortedHosts(
+      minions,
+      searchTerm,
+      sortKey,
+      sortDirection
+    )
+
+    if (configPageStatus === RemoteDataState.Loading) {
+      return this.LoadingState
+    }
+    if (configPageStatus === RemoteDataState.Error) {
+      return this.ErrorState
+    }
+    if (minions.length === 0) {
+      return this.NoHostsState
+    }
+    if (sortedHosts.length === 0) {
+      return this.NoSortedHostsState
+    }
+
+    return this.AgentTableWithHosts
+  }
+
+  private get LoadingState(): JSX.Element {
+    return <PageSpinner />
+  }
+
+  private get ErrorState(): JSX.Element {
+    return (
+      <div className="generic-empty-state">
+        <h4 style={{margin: '90px 0'}}>There was a problem loading hosts</h4>
+      </div>
+    )
+  }
+
+  private get NoHostsState(): JSX.Element {
+    return (
+      <div className="generic-empty-state">
+        <h4 style={{margin: '90px 0'}}>No Hosts found</h4>
+      </div>
+    )
+  }
+
+  private get NoSortedHostsState(): JSX.Element {
+    return (
+      <div className="generic-empty-state">
+        <h4 style={{margin: '90px 0'}}>
+          There are no hosts that match the search criteria
+        </h4>
+      </div>
+    )
+  }
+
   public render() {
     // const {onClickRun, onClickStop, onClickInstall} = this.props
 
@@ -138,15 +183,14 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     )
   }
 
-  private handleAllCheck() {
-    return console.log(this)
-  }
-
   private get AgentTitle() {
     const {minions} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
+
+    const filteredMinion = minions.filter(m => m.isInstall === true)
+
     const sortedHosts = this.getSortedHosts(
-      minions,
+      filteredMinion,
       searchTerm,
       sortKey,
       sortDirection
@@ -203,12 +247,6 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
             <span className="icon caret-up" />
           </div>
           <div
-            className="hosts-table--th list-type"
-            style={{width: StatusWidth}}
-          >
-            Installed
-          </div>
-          <div
             className={this.sortableClasses('cpu')}
             style={{width: StatusWidth}}
           >
@@ -223,33 +261,14 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     return this.AgentTableHeaderEachPage
   }
 
-  private get AgentTableContents() {
-    const {minions} = this.props
-    const {sortKey, sortDirection, searchTerm} = this.state
-
-    const sortedHosts = this.getSortedHosts(
-      minions,
-      searchTerm,
-      sortKey,
-      sortDirection
-    )
-
-    if (minions.length === 0) {
-      return this.NoHostsState
-    }
-    if (sortedHosts.length === 0) {
-      return this.NoSortedHostsState
-    }
-
-    return this.AgentTableWithHosts
-  }
-
   private get AgentTableWithHosts() {
-    const {minions, onClickTableRow, onClickAction} = this.props
+    const {minions, onClickTableRow, onClickAction, focusedHost} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
+    const filteredMinion = minions.filter(m => m.isInstall === true)
+
     const sortedHosts = this.getSortedHosts(
-      minions,
+      filteredMinion,
       searchTerm,
       sortKey,
       sortDirection
@@ -265,29 +284,12 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
               minions={m}
               onClickTableRow={onClickTableRow}
               onClickAction={onClickAction}
+              focusedHost={focusedHost}
             />
           ))}
           itemHeight={26}
           className="hosts-table--tbody"
         />
-      </div>
-    )
-  }
-
-  private get NoHostsState() {
-    return (
-      <div className="generic-empty-state">
-        <h4 style={{margin: '90px 0'}}>No Hosts found</h4>
-      </div>
-    )
-  }
-
-  private get NoSortedHostsState() {
-    return (
-      <div className="generic-empty-state">
-        <h4 style={{margin: '90px 0'}}>
-          There are no hosts that match the search criteria
-        </h4>
       </div>
     )
   }

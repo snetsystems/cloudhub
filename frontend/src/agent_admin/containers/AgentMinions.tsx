@@ -24,16 +24,18 @@ import {
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
 
 // Types
-import {Minion} from 'src/types'
+import {Minion, RemoteDataState} from 'src/types'
 
 interface Props {
   currentUrl: string
 }
 interface State {
   MinionsObject: {[x: string]: Minion}
+  minionsPageStatus: RemoteDataState
   minionLog: string
   currentUrl: ''
   proportions: number[]
+  focusedHost: string
 }
 
 @ErrorHandling
@@ -45,6 +47,8 @@ class AgentMinions extends PureComponent<Props, State> {
       proportions: [0.43, 0.57],
       MinionsObject: {},
       currentUrl: '',
+      minionsPageStatus: RemoteDataState.NotStarted,
+      focusedHost: '',
     }
   }
 
@@ -55,16 +59,22 @@ class AgentMinions extends PureComponent<Props, State> {
 
     const newMinions = await getMinionsOS(updateMinionsIP)
 
-    this.setState({MinionsObject: newMinions})
+    this.setState({
+      MinionsObject: newMinions,
+      minionsPageStatus: RemoteDataState.Done,
+    })
   }
 
   public async componentDidMount() {
     this.getWheelKeyListAll()
 
+    this.setState({minionsPageStatus: RemoteDataState.Loading})
+
     console.debug('componentDidMount')
   }
 
   onClickTableRowCall = (host: string) => () => {
+    this.setState({focusedHost: host})
     const getLocalGrainsItemPromise = getLocalGrainsItem(host)
     getLocalGrainsItemPromise.then(pLocalGrainsItemData => {
       this.setState({
@@ -168,13 +178,15 @@ class AgentMinions extends PureComponent<Props, State> {
 
   private renderAgentPageTop = () => {
     // const {parentUrl} = this.props
-    const {MinionsObject} = this.state
+    const {MinionsObject, minionsPageStatus, focusedHost} = this.state
     return (
       <AgentMinionsTable
         minions={_.values(MinionsObject)}
+        minionsPageStatus={minionsPageStatus}
         onClickTableRow={this.onClickTableRowCall}
         onClickModal={this.onClickModalCall}
         handleWheelKeyCommand={this.handleWheelKeyCommand}
+        focusedHost={focusedHost}
       />
     )
   }

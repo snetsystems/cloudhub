@@ -8,5 +8,6 @@ export interface Minion {
   isInstall?: boolean
   isSaveFile?: string
   isAccept?: boolean
+  isCheck?: boolean
   //app?: []
 }

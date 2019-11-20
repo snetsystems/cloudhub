@@ -21,11 +21,13 @@ enum SortDirection {
 }
 export interface Props {
   minions: Minion[]
+  controlPageStatus: RemoteDataState
   onClickTableRow: () => void
   onClickAction: () => void
   onClickRun: () => void
   onClickStop: () => void
   onClickInstall: () => void
+  //handleAllCheck: () => object
   // handleWheelKeyCommand: () => void
 }
 interface State {
@@ -36,8 +38,6 @@ interface State {
 
 @ErrorHandling
 class AgentControlTable extends PureComponent<Props, State> {
-  private allCheck = React.createRef()
-
   constructor(props: Props) {
     super(props)
 
@@ -121,6 +121,67 @@ class AgentControlTable extends PureComponent<Props, State> {
 
   public componentWillUnmount() {}
 
+  private get AgentTableHeader(): JSX.Element {
+    return this.AgentTableHeaderEachPage
+  }
+
+  private get AgentTableContents(): JSX.Element {
+    const {minions, controlPageStatus} = this.props
+    const {sortKey, sortDirection, searchTerm} = this.state
+
+    const sortedHosts = this.getSortedHosts(
+      minions,
+      searchTerm,
+      sortKey,
+      sortDirection
+    )
+
+    if (controlPageStatus === RemoteDataState.Loading) {
+      return this.LoadingState
+    }
+    if (controlPageStatus === RemoteDataState.Error) {
+      return this.ErrorState
+    }
+    if (minions.length === 0) {
+      return this.NoHostsState
+    }
+    if (sortedHosts.length === 0) {
+      return this.NoSortedHostsState
+    }
+
+    return this.AgentTableWithHosts
+  }
+
+  private get LoadingState(): JSX.Element {
+    return <PageSpinner />
+  }
+
+  private get ErrorState(): JSX.Element {
+    return (
+      <div className="generic-empty-state">
+        <h4 style={{margin: '90px 0'}}>There was a problem loading hosts</h4>
+      </div>
+    )
+  }
+
+  private get NoHostsState(): JSX.Element {
+    return (
+      <div className="generic-empty-state">
+        <h4 style={{margin: '90px 0'}}>No Hosts found</h4>
+      </div>
+    )
+  }
+
+  private get NoSortedHostsState(): JSX.Element {
+    return (
+      <div className="generic-empty-state">
+        <h4 style={{margin: '90px 0'}}>
+          There are no hosts that match the search criteria
+        </h4>
+      </div>
+    )
+  }
+
   public render() {
     const {onClickRun, onClickStop, onClickInstall} = this.props
 
@@ -171,8 +232,9 @@ class AgentControlTable extends PureComponent<Props, State> {
     )
   }
 
-  private handleAllCheck() {
-    return console.log(this)
+  private getHandleAllCheck = () => {
+    const {handleAllCheck} = this.props
+    return handleAllCheck({_this: this})
   }
 
   private get AgentTitle() {
@@ -191,7 +253,9 @@ class AgentControlTable extends PureComponent<Props, State> {
     }
     return `${hostsCount} Minions`
   }
+
   private get AgentTableHeaderEachPage() {
+    const {isAllCheck} = this.props
     const {
       CheckWidth,
       NameWidth,
@@ -205,9 +269,9 @@ class AgentControlTable extends PureComponent<Props, State> {
           <div style={{width: CheckWidth}} className="hosts-table--th">
             <input
               type="checkbox"
-              id="allCheck"
-              ref={this.allCheck.current}
-              onClick={this.handleAllCheck}
+              checked={isAllCheck}
+              onClick={this.getHandleAllCheck}
+              readOnly
             />
           </div>
           <div
@@ -247,7 +311,7 @@ class AgentControlTable extends PureComponent<Props, State> {
             className="hosts-table--th list-type"
             style={{width: StatusWidth}}
           >
-            Installed
+            Enabled
           </div>
           <div
             className={this.sortableClasses('cpu')}
@@ -260,31 +324,6 @@ class AgentControlTable extends PureComponent<Props, State> {
     )
   }
 
-  private get AgentTableHeader() {
-    return this.AgentTableHeaderEachPage
-  }
-
-  private get AgentTableContents() {
-    const {minions} = this.props
-    const {sortKey, sortDirection, searchTerm} = this.state
-
-    const sortedHosts = this.getSortedHosts(
-      minions,
-      searchTerm,
-      sortKey,
-      sortDirection
-    )
-
-    if (minions.length === 0) {
-      return this.NoHostsState
-    }
-    if (sortedHosts.length === 0) {
-      return this.NoSortedHostsState
-    }
-
-    return this.AgentTableWithHosts
-  }
-
   private get AgentTableWithHosts() {
     const {
       minions,
@@ -293,6 +332,8 @@ class AgentControlTable extends PureComponent<Props, State> {
       onClickRun,
       onClickStop,
       onClickInstall,
+      isAllCheck,
+      handleMinionCheck,
     } = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
@@ -316,29 +357,14 @@ class AgentControlTable extends PureComponent<Props, State> {
               onClickRun={onClickRun}
               onClickStop={onClickStop}
               onClickInstall={onClickInstall}
+              isCheck={m.isCheck}
+              isAllCheck={isAllCheck}
+              handleMinionCheck={handleMinionCheck}
             />
           ))}
           itemHeight={26}
           className="hosts-table--tbody"
         />
-      </div>
-    )
-  }
-
-  private get NoHostsState() {
-    return (
-      <div className="generic-empty-state">
-        <h4 style={{margin: '90px 0'}}>No Hosts found</h4>
-      </div>
-    )
-  }
-
-  private get NoSortedHostsState() {
-    return (
-      <div className="generic-empty-state">
-        <h4 style={{margin: '90px 0'}}>
-          There are no hosts that match the search criteria
-        </h4>
       </div>
     )
   }

@@ -28,8 +28,14 @@ class AgentControlTableRow extends PureComponent<Props> {
     return this.TableRowEachPage
   }
 
+  public getHandleMinionCheck = event => {
+    event.stopPropagation()
+    const {handleMinionCheck} = this.props
+    return handleMinionCheck({_this: this})
+  }
+
   private get TableRowEachPage() {
-    const {minions, onClickTableRow, onClickAction} = this.props
+    const {minions, onClickTableRow, onClickAction, isCheck} = this.props
 
     const {osVersion, os, ip, host, isInstall, isRunning} = minions
     const {
@@ -43,7 +49,12 @@ class AgentControlTableRow extends PureComponent<Props> {
     return (
       <div className={this.focusedClasses()} onClick={onClickTableRow(host)}>
         <div className="hosts-table--td" style={{width: CheckWidth}}>
-          <input type="checkbox" />
+          <input
+            type="checkbox"
+            checked={isCheck}
+            onClick={this.getHandleMinionCheck}
+            readOnly
+          />
         </div>
         <div className="hosts-table--td" style={{width: HostWidth}}>
           {host}
@@ -61,7 +72,7 @@ class AgentControlTableRow extends PureComponent<Props> {
           {ip}
         </div>
         <div className="hosts-table--td" style={{width: HostWidth}}>
-          {isInstall === true ? 'installed' : 'not install'}
+          {isInstall === true ? 'Enable' : 'Disable'}
         </div>
         <div className="hosts-table--td" style={{width: StatusWidth}}>
           {isRunning === true ? (

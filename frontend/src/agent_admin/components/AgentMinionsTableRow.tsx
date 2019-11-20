@@ -13,6 +13,7 @@ interface Props {
   // onClickTableRow: () => void
   onClickModal: ({}) => object
   handleWheelKeyCommand: () => void
+  focusedHost: string
 }
 
 class AgentMinionsTableRow extends PureComponent<Props> {
@@ -20,7 +21,11 @@ class AgentMinionsTableRow extends PureComponent<Props> {
     super(props)
   }
 
-  public focusedClasses = (): string => {
+  public focusedClasses = (host: string): string => {
+    const {focusedHost} = this.props
+    if (host === focusedHost) {
+      return 'hosts-table--tr focused'
+    }
     return 'hosts-table--tr'
   }
 
@@ -106,7 +111,10 @@ class AgentMinionsTableRow extends PureComponent<Props> {
     } = AGENT_TABLE_SIZING
 
     return (
-      <div className={this.focusedClasses()} onClick={onClickTableRow(host)}>
+      <div
+        className={this.focusedClasses(host)}
+        onClick={onClickTableRow(host)}
+      >
         <div className="hosts-table--td" style={{width: HostWidth}}>
           {host}
         </div>

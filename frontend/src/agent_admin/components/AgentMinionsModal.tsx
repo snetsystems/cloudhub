@@ -38,7 +38,7 @@ class AgentMinionsModal extends React.Component {
   }
 
   onClickAccept(event) {
-    const {targetObject, handleWheelKeyCommand, host, status} = this.props
+    const {handleWheelKeyCommand, host, status} = this.props
     console.log('onClickAccept', status)
     handleWheelKeyCommand(host, 'Accept')
     event.stopPropagation()
@@ -46,7 +46,7 @@ class AgentMinionsModal extends React.Component {
   }
 
   onClickReject(event) {
-    const {targetObject, handleWheelKeyCommand, host, status} = this.props
+    const {handleWheelKeyCommand, host, status} = this.props
     console.log('onClickReject', status)
     handleWheelKeyCommand(host, 'ReJect')
     event.stopPropagation()
@@ -54,7 +54,7 @@ class AgentMinionsModal extends React.Component {
   }
 
   onClickDelete(event) {
-    const {targetObject, handleWheelKeyCommand, host, status} = this.props
+    const {handleWheelKeyCommand, host, status} = this.props
     console.log('onClickDelete', status)
     handleWheelKeyCommand(host, 'Delete')
     event.stopPropagation()

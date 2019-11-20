@@ -1,82 +1,71 @@
-import React, { PureComponent } from "react";
-import _ from "lodash";
-import FunctionTooltip from "src/flux/components/flux_functions_toolbar/FunctionTooltip";
-import { ErrorHandling } from "src/shared/decorators/errors";
+import React, {PureComponent} from 'react'
+import _ from 'lodash'
+import AgentTooltip from 'src/agent_admin/components/AgentTooltip'
+import {ErrorHandling} from 'src/shared/decorators/errors'
 
 @ErrorHandling
 class AgentToolbarFunction extends PureComponent {
-  private functionRef = React.createRef();
+  private functionRef = React.createRef()
   constructor(props) {
-    super(props);
+    super(props)
     this.state = {
-      isActive: false,
-      clickPosition: undefined
-    };
+      isActive: props.isActivity,
+    }
   }
 
-  componentDidMount() {
-    window.addEventListener("resize", this.handleResize);
-  }
-
-  public componentWillReceiveProps(newProps) {
-    if (this.state.isActive === true) {
-      this.setState({ isActive: false });
+  componentWillReceiveProps(newProps) {
+    if (this.state.isActive !== newProps.isActivity) {
+      this.setState({isActive: newProps.isActivity})
     }
   }
 
   componentWillUnmount() {}
 
   render() {
-    const { name, idx } = this.props;
+    const {name, isActivity} = this.props
     return (
-      <div
-        className="query-builder--list-item"
-        style={{ position: "relative" }}
-      >
-        {`${name}`}
+      <>
         <div
-          ref={this.functionRef}
-          onClick={this.handleFocusing.bind(this)}
-          onMouseLeave={this.handleOtherClick.bind(this)}
+          className="query-builder--list-item"
+          style={{position: 'relative'}}
         >
-          <button className={"btn btn-primary item" + idx}>
-            {`help ${idx}`}
+          {`${name}`}
+          <button
+            className={
+              isActivity
+                ? 'btn btn-primary item active'
+                : 'btn btn-primary item'
+            }
+            onClick={this.handleFocusing.bind(this)}
+            ref={this.functionRef}
+          >
+            {`>>`}
           </button>
-          {this.tooltip}
         </div>
-      </div>
-    );
+        {this.tooltip}
+      </>
+    )
   }
 
-  private handleResize = () => {
-    this.handleOtherClick();
-  };
-
   private handleFocusing = () => {
-    const clickPosition = this.functionRef.current.getBoundingClientRect();
-    this.props.handleFocusedMeasure({ clickPosition, refresh: true });
-    this.setState({ isActive: true });
-  };
-
-  private handleOtherClick = () => {
-    this.setState({ isActive: false });
-    this.props.handleFocusedMeasure({ refresh: false });
-  };
+    const {handleFocusedMeasure} = this.props
+    const clickPosition = this.functionRef.current.getBoundingClientRect()
+    console.log({clickPosition})
+    handleFocusedMeasure({clickPosition, _thisProps: this.props})
+  }
 
   private get tooltip(): JSX.Element {
-    const { focusedPosition } = this.props;
+    const {focusedPosition, handleClose, description} = this.props
     if (this.state.isActive) {
-      const dummy = { desc: 123, args: 456, example: 678, link: "@link" };
       return (
-        <FunctionTooltip
-          func={dummy}
-          onDismiss={this.handleOtherClick}
+        <AgentTooltip
+          description={description}
+          onDismiss={handleClose}
           tipPosition={focusedPosition}
-          pivot={"left"}
         />
-      );
+      )
     }
   }
 }
 
-export default AgentToolbarFunction;
+export default AgentToolbarFunction

@@ -6,6 +6,7 @@ import {Minion} from 'src/types'
 interface Props {
   // key: Readonly<Props>
   minions: Minion
+  focusedHost: string
   // ip: string
   // host: string
   // status: string
@@ -20,7 +21,11 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
     super(props)
   }
 
-  public focusedClasses = (): string => {
+  public focusedClasses = (host: string): string => {
+    const {focusedHost} = this.props
+    if (host === focusedHost) {
+      return 'hosts-table--tr focused'
+    }
     return 'hosts-table--tr'
   }
 
@@ -41,7 +46,10 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
     } = AGENT_TABLE_SIZING
 
     return (
-      <div className={this.focusedClasses()} onClick={onClickTableRow(host)}>
+      <div
+        className={this.focusedClasses(host)}
+        onClick={onClickTableRow(host, ip)}
+      >
         <div className="hosts-table--td" style={{width: HostWidth}}>
           {host}
         </div>
@@ -56,9 +64,6 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
 
         <div className="hosts-table--td" style={{width: IPWidth}}>
           {ip}
-        </div>
-        <div className="hosts-table--td" style={{width: HostWidth}}>
-          {isInstall === true ? 'installed' : 'not install'}
         </div>
         <div className="hosts-table--td" style={{width: StatusWidth}}>
           {isRunning === true ? (
