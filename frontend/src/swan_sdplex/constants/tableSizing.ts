@@ -9,3 +9,11 @@ export const ROUTER_TABLE_SIZING = {
   CONFIG: '20%',
   FIRMWARE: '20%',
 }
+
+export const TOPSOURCES_TABLE_SIZING = {
+  IP: '20%',
+  TENANT: '20%',
+  CURRENTBANDWIDTH: '20%',
+  TOTALDATA: '20%',
+  SESSIONCOUNT: '20%',
+}

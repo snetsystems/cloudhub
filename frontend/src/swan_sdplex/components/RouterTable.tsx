@@ -52,7 +52,7 @@ class RouterTable extends PureComponent<Props, State> {
     return (
       <div className="panel">
         <div className="panel-heading">
-          <h2 className="panel-title">title</h2>
+          <h2 className="panel-title">Routers</h2>
           <SearchBar
             placeholder="Filter by Router..."
             onSearch={this.updateSearchTerm}
@@ -187,8 +187,6 @@ class RouterTable extends PureComponent<Props, State> {
   public filter(allrouters, searchTerm) {
     const filterText = searchTerm.toLowerCase()
     return allrouters.filter(h => {
-      const apps = h.apps ? h.apps.join(', ') : ''
-
       let tagResult = false
       if (h.tags) {
         tagResult = Object.keys(h.tags).reduce((acc, key) => {
@@ -197,11 +195,7 @@ class RouterTable extends PureComponent<Props, State> {
       } else {
         tagResult = false
       }
-      return (
-        h.assetID.toLowerCase().includes(filterText) ||
-        apps.toLowerCase().includes(filterText) ||
-        tagResult
-      )
+      return h.assetID.toLowerCase().includes(filterText) || tagResult
     })
   }
 

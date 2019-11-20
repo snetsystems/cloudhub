@@ -9,3 +9,11 @@ export interface Router {
   config: string
   firmware: string
 }
+
+export interface TopSources {
+  ip: string
+  tenant: string
+  currentBandwidth: number
+  totalData: number
+  sessionCount: number
+}

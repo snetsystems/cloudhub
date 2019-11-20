@@ -66,6 +66,12 @@ class RouterModal extends React.Component<Props, State> {
         className="btn btn-default"
         onClickCapture={this.handleOpenModal}
         onMouseLeave={this.handleCloseModal}
+        style={{
+          height: '23px',
+          lineHeight: '23px',
+          fontSize: '12px',
+          minWidth: '65px',
+        }}
       >
         {name}
         <ReactModal
@@ -78,7 +84,6 @@ class RouterModal extends React.Component<Props, State> {
             className="dropdown--menu-container dropdown--sapphire"
             style={{
               width: '8vw',
-              height: '4.5vh',
               position: 'absolute',
               top: target.top - 10,
               left: target.left + 25,
@@ -91,15 +96,12 @@ class RouterModal extends React.Component<Props, State> {
                   className="dropdown-item--children"
                   // onClick={onClickAccept}
                   onClick={this.onClickA}
+                  style={{
+                    textAlign: 'center',
+                  }}
                 >
                   Apply
                 </div>
-                {/* <div
-                  className="dropdown-item--children"                  
-                  onClick={this.handleCloseModal}
-                >
-                  Cancel
-                </div> */}
               </div>
             </div>
           </div>

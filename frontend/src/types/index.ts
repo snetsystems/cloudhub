@@ -70,7 +70,7 @@ import {JSONFeedData} from './status'
 import {Annotation} from './annotations'
 import {WriteDataMode, QueryUpdateState} from './dataExplorer'
 import {Host, Layout} from './hosts'
-import {Router} from './routers'
+import {Router, TopSources} from './routers'
 
 export {
   Me,
@@ -146,4 +146,5 @@ export {
   QueryType,
   QueryUpdateState,
   Router,
+  TopSources,
 }

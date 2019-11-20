@@ -92,7 +92,7 @@ class RouterTableRow extends PureComponent<Props, State> {
         <div className="hosts-table--td" style={{width: CONFIG}}>
           <TableItem title={config} width={'85%'} />
           {onClickModal({
-            name: '▶',
+            name: 'Deploy',
             _this: this,
             onClickfn: this.onClickApplybuttonShow,
           })}
@@ -104,7 +104,7 @@ class RouterTableRow extends PureComponent<Props, State> {
         >
           <TableItem title={firmware} width={'85%'} />
           {onClickModal({
-            name: '▶',
+            name: 'Deploy',
             _this: this,
             onClickfn: this.onClickApplybuttonShow,
           })}
