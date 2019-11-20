@@ -3,12 +3,12 @@ import React, {PureComponent} from 'react'
 import _ from 'lodash'
 import memoize from 'memoize-one'
 
-import TopSourcesTableRow from 'src/swan_sdplex/components/TopSourcesTableRow'
+import TopSourcesTableRow from 'src/addon/128t/components/TopSourcesTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 import {TopSources} from 'src/types'
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {TOPSOURCES_TABLE_SIZING} from 'src/swan_sdplex/constants/tableSizing'
+import {TOPSOURCES_TABLE_SIZING} from 'src/addon/128t/constants/tableSizing'
 
 enum SortDirection {
   ASC = 'asc',

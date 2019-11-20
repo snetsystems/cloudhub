@@ -1,5 +1,5 @@
 import React, {PureComponent} from 'react'
-import {TOPSOURCES_TABLE_SIZING} from 'src/swan_sdplex/constants/tableSizing'
+import {TOPSOURCES_TABLE_SIZING} from 'src/addon/128t/constants/tableSizing'
 import {TopSources} from 'src/types'
 
 interface Props {

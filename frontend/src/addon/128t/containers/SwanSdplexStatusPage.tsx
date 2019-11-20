@@ -10,10 +10,10 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 
 // Components
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
-import RouterModal from 'src/swan_sdplex/components/RouterModal'
+import RouterModal from 'src/addon/128t/components/RouterModal'
 // table
-import RouterTable from 'src/swan_sdplex/components/RouterTable'
-import TopSourcesTable from 'src/swan_sdplex/components/TopSourcesTable'
+import RouterTable from 'src/addon/128t/components/RouterTable'
+import TopSourcesTable from 'src/addon/128t/components/TopSourcesTable'
 
 //const
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'

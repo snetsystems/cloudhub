@@ -4,12 +4,12 @@ import _ from 'lodash'
 import memoize from 'memoize-one'
 
 import SearchBar from 'src/hosts/components/SearchBar'
-import RouterTableRow from 'src/swan_sdplex/components/RouterTableRow'
+import RouterTableRow from 'src/addon/128t/components/RouterTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 import {Router} from 'src/types'
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {ROUTER_TABLE_SIZING} from 'src/swan_sdplex/constants/tableSizing'
+import {ROUTER_TABLE_SIZING} from 'src/addon/128t/constants/tableSizing'
 
 enum SortDirection {
   ASC = 'asc',
