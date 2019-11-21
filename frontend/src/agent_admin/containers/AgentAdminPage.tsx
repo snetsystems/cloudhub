@@ -1,20 +1,20 @@
-import React, { PureComponent } from "react";
-import { connect } from "react-redux";
+import React, {PureComponent} from 'react'
+import {connect} from 'react-redux'
 
-import { Page } from "src/reusable_ui";
-import SubSections from "src/shared/components/SubSections";
+import {Page} from 'src/reusable_ui'
+import SubSections from 'src/shared/components/SubSections'
 
-import AgentMinions from "src/agent_admin/containers/AgentMinions";
-import AgentConfiguration from "src/agent_admin/containers/AgentConfiguration";
-import AgentControl from "src/agent_admin/containers/AgentControl";
+import AgentMinions from 'src/agent_admin/containers/AgentMinions'
+import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
+import AgentControl from 'src/agent_admin/containers/AgentControl'
 // import AgentLog from "src/agent_admin/containers/AgentLog";
 // import TestAPI from "src/agent_admin/test/TestAPI";
 
 import {
   isUserAuthorized,
   ADMIN_ROLE,
-  SUPERADMIN_ROLE
-} from "src/auth/Authorized";
+  SUPERADMIN_ROLE,
+} from 'src/auth/Authorized'
 
 // Types
 import {
@@ -24,64 +24,64 @@ import {
   RemoteDataState,
   Host,
   Layout,
-  TimeRange
-} from "src/types";
+  TimeRange,
+} from 'src/types'
 
 interface Props {
-  me: {};
-  source: {};
-  params: {};
+  me: {}
+  source: {}
+  params: {}
 }
 
 class AgentAdminPage extends PureComponent<Props> {
   constructor(props) {
-    super(props);
+    super(props)
 
     this.state = {
       hostsPageStatus: RemoteDataState.NotStarted,
       isSelectBoxView: true,
-      minions: []
-    };
+      minions: [],
+    }
   }
 
   public sections = me => {
     return [
       {
-        url: "agent-minions",
-        name: "Minions",
+        url: 'agent-minions',
+        name: 'Minions',
         enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
         component: (
           <AgentMinions
             isUserAuthorized={isUserAuthorized(me.role, SUPERADMIN_ROLE)}
-            currentUrl={"agent-minions"}
-            minions={this.state.minions}
+            currentUrl={'agent-minions'}
+            // minions={this.state.minions}
           />
-        )
+        ),
       },
       {
-        url: "agent-control",
-        name: "Collector Control",
+        url: 'agent-control',
+        name: 'Collector Control',
         enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
         component: (
           <AgentControl
             isUserAuthorized={isUserAuthorized(me.role, SUPERADMIN_ROLE)}
-            currentUrl={"agent-control"}
-            minions={this.state.minions}
+            currentUrl={'agent-control'}
+            // minions={this.state.minions}
           />
-        )
+        ),
       },
       {
-        url: "agent-configuration",
-        name: "Collector Config",
+        url: 'agent-configuration',
+        name: 'Collector Config',
         enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
         component: (
           <AgentConfiguration
             isUserAuthorized={isUserAuthorized(me.role, SUPERADMIN_ROLE)}
-            currentUrl={"agent-configuration"}
-            minions={this.state.minions}
+            currentUrl={'agent-configuration'}
+            // minions={this.state.minions}
           />
-        )
-      }
+        ),
+      },
       // {
       //   url: 'agent-log',
       //   name: 'Log',
@@ -94,72 +94,72 @@ class AgentAdminPage extends PureComponent<Props> {
       //   enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
       //   component: <TestAPI currentUrl={'agent-TestAPI'} minions={minions} />,
       // },
-    ];
-  };
+    ]
+  }
 
   public componentWillMount() {
     this.setState({
       minions: [
         {
-          host: "host1",
-          os: "ubuntu",
-          osVersion: "19.1",
-          ip: "192.168.0.1",
+          host: 'host1',
+          os: 'ubuntu',
+          osVersion: '19.1',
+          ip: '192.168.0.1',
           isRunning: true,
           isInstall: false,
           isSaveFile: false,
-          isAccept: true
+          isAccept: true,
         },
         {
-          host: "host2",
-          os: "debian",
-          osVersion: "9.1",
-          ip: "192.168.0.2",
+          host: 'host2',
+          os: 'debian',
+          osVersion: '9.1',
+          ip: '192.168.0.2',
           isRunning: true,
           isInstall: true,
           isSaveFile: true,
-          isAccept: true
+          isAccept: true,
         },
         {
-          host: "host3",
-          os: "window",
-          osVersion: "Server",
-          ip: "192.168.0.3",
+          host: 'host3',
+          os: 'window',
+          osVersion: 'Server',
+          ip: '192.168.0.3',
           isRunning: false,
           isInstall: true,
           isSaveFile: true,
-          isAccept: true
+          isAccept: true,
         },
         {
-          host: "host4",
-          os: "window",
-          osVersion: "Server",
-          ip: "",
+          host: 'host4',
+          os: 'window',
+          osVersion: 'Server',
+          ip: '',
           isRunning: false,
           isInstall: false,
           isSaveFile: false,
-          isAccept: false
+          isAccept: false,
         },
         {
-          host: "host5",
-          os: "window",
-          osVersion: "Server",
-          ip: "",
+          host: 'host5',
+          os: 'window',
+          osVersion: 'Server',
+          ip: '',
           isRunning: false,
           isInstall: false,
           isSaveFile: false,
-          isAccept: false
-        }
-      ]
-    });
+          isAccept: false,
+        },
+      ],
+    })
   }
 
   render() {
     const {
       me,
       source,
-      params: { tab }
-    } = this.props;
+      params: {tab},
+    } = this.props
     return (
       <Page>
         <Page.Header>
@@ -179,12 +179,12 @@ class AgentAdminPage extends PureComponent<Props> {
           </div>
         </Page.Contents>
       </Page>
-    );
+    )
   }
 }
 
-const mapStateToProps = ({ auth: { me } }) => ({
-  me
-});
+const mapStateToProps = ({auth: {me}}) => ({
+  me,
+})
 
-export default connect(mapStateToProps, null)(AgentAdminPage);
+export default connect(mapStateToProps, null)(AgentAdminPage)

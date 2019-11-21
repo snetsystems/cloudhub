@@ -24,6 +24,7 @@ import {
 } from 'src/auth'
 import CheckSources from 'src/CheckSources'
 import {StatusPage} from 'src/status'
+import {SwanSdplexStatusPage, SwanSdplexSettingPage} from 'src/addon/128t'
 import DataExplorerPage from 'src/data_explorer'
 import {DashboardsPage, DashboardPage} from 'src/dashboards'
 import {HostsPage, HostPage} from 'src/hosts'
@@ -179,6 +180,14 @@ class Root extends PureComponent<{}, State> {
                 />
                 <Route path="manage-sources" component={ManageSources} />
                 <Route path="agent-admin/:tab" component={AgentAdminPage} />
+                <Route
+                  path="add-on/128t/status"
+                  component={SwanSdplexStatusPage}
+                />
+                <Route
+                  path="add-on/128t/setting"
+                  component={SwanSdplexSettingPage}
+                />
               </Route>
             </Route>
             <Route path="*" component={NotFound} />

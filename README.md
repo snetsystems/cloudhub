@@ -29,6 +29,7 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
 - Window build & run Env. support.
 - Hosts to Infrastructures and basic charts added.
 - Visualization added by criteria of Applications.
+- Continuous installation and deployment for telegraf's agent and configuration.
 
 ## Setting in VSCode
 
