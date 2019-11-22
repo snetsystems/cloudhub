@@ -1,11 +1,11 @@
-import React, {SFC} from 'react'
-import {Link} from 'react-router'
+import React, { SFC } from 'react'
+import { Link } from 'react-router'
 import classnames from 'classnames'
 
-import {HOSTS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
-import {Host} from 'src/types'
+import { HOSTS_TABLE_SIZING } from 'src/hosts/constants/tableSizing'
+import { Host } from 'src/types'
 
-import {HostsPage} from 'src/hosts/containers/HostsPage'
+import { HostsPage } from 'src/hosts/containers/HostsPage'
 
 interface Props {
   sourceID: string
@@ -20,8 +20,8 @@ const HostRow: SFC<Props> = ({
   focusedHost,
   onClickTableRow,
 }) => {
-  const {name, cpu, load, apps = []} = host
-  const {NameWidth, StatusWidth, CPUWidth, LoadWidth} = HOSTS_TABLE_SIZING
+  const { name, cpu, load, apps = [] } = host
+  const { NameWidth, StatusWidth, CPUWidth, LoadWidth } = HOSTS_TABLE_SIZING
 
   const CPUValue = isNaN(cpu) ? 'N/A' : `${cpu.toFixed(2)}%`
   const loadValue = isNaN(load) ? 'N/A' : `${load.toFixed(2)}`
@@ -41,16 +41,16 @@ const HostRow: SFC<Props> = ({
 
   return (
     <div className={focusedClasses()} onClick={onClickTableRow(name)}>
-      <div className="hosts-table--td" style={{width: NameWidth}}>
+      <div className="hosts-table--td" style={{ width: NameWidth }}>
         <Link to={`/sources/${sourceID}/infrastructure/${name}`}>{name}</Link>
       </div>
-      <div className="hosts-table--td" style={{width: StatusWidth}}>
+      <div className="hosts-table--td" style={{ width: StatusWidth }}>
         <div className={dotClassName} />
       </div>
-      <div style={{width: CPUWidth}} className="monotype hosts-table--td">
+      <div style={{ width: CPUWidth }} className="monotype hosts-table--td">
         {CPUValue}
       </div>
-      <div style={{width: LoadWidth}} className="monotype hosts-table--td">
+      <div style={{ width: LoadWidth }} className="monotype hosts-table--td">
         {loadValue}
       </div>
       <div className="hosts-table--td list-type">
@@ -58,10 +58,10 @@ const HostRow: SFC<Props> = ({
           return (
             <span key={app}>
               <Link
-                style={{marginLeft: '2px'}}
+                style={{ marginLeft: '2px' }}
                 to={{
                   pathname: `/sources/${sourceID}/infrastructure/${name}`,
-                  query: {app},
+                  query: { app },
                 }}
               >
                 {app}

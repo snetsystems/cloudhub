@@ -14,17 +14,18 @@ import { AGENT_TABLE_SIZING } from "src/hosts/constants/tableSizing";
 import { Source, RemoteDataState, Minion } from "src/types";
 
 import { ErrorHandling } from "src/shared/decorators/errors";
+import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
 
 enum SortDirection {
   ASC = "asc",
   DESC = "desc"
 }
 export interface Props {
-  minions: Minion[];
-  configPageStatus: RemoteDataState;
-  onClickTableRow: () => void;
-  onClickAction: () => void;
-  focusedHost: string;
+  minions: Minion[]
+  configPageStatus: RemoteDataState
+  onClickTableRow: AgentConfiguration['onClickTableRowCall']
+  onClickAction: AgentConfiguration['onClickActionCall']
+  focusedHost: string
   // onClickRun: () => void
   // onClickStop: () => void
   // onClickInstall: () => void
@@ -103,11 +104,11 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     return "hosts-table--th sortable-header";
   };
 
-  public componentWillMount() {}
+  public componentWillMount() { }
 
-  public componentDidMount() {}
+  public componentDidMount() { }
 
-  public componentWillUnmount() {}
+  public componentWillUnmount() { }
 
   private get AgentTableContents() {
     const { minions, configPageStatus } = this.props;
