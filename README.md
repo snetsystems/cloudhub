@@ -53,28 +53,23 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
   "files.eol": "\n",
   "go.formatTool": "goimports",
   "go.lintOnSave": "package",
-  "prettier.singleQuote": true,
-  "prettier.bracketSpacing": false,
-  "prettier.semi": false,
-  "prettier.trailingComma": "es5",
   "eslint.alwaysShowStatus": true,
-  "tslint.jsEnable": true,
   "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "vscode.json-language-features"
   },
   "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "vscode.typescript-language-features"
   },
   "debug.showInStatusBar": "always",
   "[typescriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "vscode.typescript-language-features"
   },
   "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "vscode.json-language-features"
   },
   "debug.toolBarLocation": "docked",
   "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "vscode.typescript-language-features"
   }
 }
 ```
