@@ -127,17 +127,10 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     if (configPageStatus === RemoteDataState.Error) {
       return this.ErrorState;
     }
-    if (
-      (configPageStatus === RemoteDataState.Error && minions.length === 0) ||
-      (configPageStatus === RemoteDataState.Done && minions.length === 0)
-    ) {
+    if (configPageStatus === RemoteDataState.Done && minions.length === 0) {
       return this.NoHostsState;
     }
-    if (
-      (configPageStatus === RemoteDataState.Error &&
-        sortedHosts.length === 0) ||
-      (configPageStatus === RemoteDataState.Done && sortedHosts.length === 0)
-    ) {
+    if (configPageStatus === RemoteDataState.Done && sortedHosts.length === 0) {
       return this.NoSortedHostsState;
     }
 
@@ -197,7 +190,7 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
         <div className="panel-heading">
           <h2 className="panel-title">{this.AgentTitle}</h2>
           <SearchBar
-            placeholder="Filter by Minion..."
+            placeholder="Filter by Host..."
             onSearch={this.updateSearchTerm}
           />
         </div>
@@ -226,20 +219,14 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     return `${hostsCount} Minions`;
   }
   private get AgentTableHeaderEachPage() {
-    const {
-      CheckWidth,
-      NameWidth,
-      IPWidth,
-      HostWidth,
-      StatusWidth
-    } = AGENT_TABLE_SIZING;
+    const { IPWidth, HostWidth, StatusWidth } = AGENT_TABLE_SIZING;
     return (
       <div className="hosts-table--thead">
         <div className="hosts-table--tr">
           <div
             onClick={this.updateSort("name")}
             className={this.sortableClasses("name")}
-            style={{ width: NameWidth }}
+            style={{ width: HostWidth }}
           >
             Host
             <span className="icon caret-up" />

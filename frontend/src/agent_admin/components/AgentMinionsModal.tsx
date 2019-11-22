@@ -1,75 +1,81 @@
-import React from 'react'
-import ReactModal from 'react-modal'
+import React from "react";
+import ReactModal from "react-modal";
 
 class AgentMinionsModal extends React.Component {
   constructor(props) {
-    super(props)
+    super(props);
     this.state = {
       showModal: false,
       domObj: HTMLElement,
-      target: {},
-    }
+      target: {}
+    };
 
-    this.handleOpenModal = this.handleOpenModal.bind(this)
-    this.handleCloseModal = this.handleCloseModal.bind(this)
-    this.onClickAccept = this.onClickAccept.bind(this)
-    this.onClickReject = this.onClickReject.bind(this)
-    this.onClickDelete = this.onClickDelete.bind(this)
+    this.handleOpenModal = this.handleOpenModal.bind(this);
+    this.handleCloseModal = this.handleCloseModal.bind(this);
+    this.onClickAccept = this.onClickAccept.bind(this);
+    this.onClickReject = this.onClickReject.bind(this);
+    this.onClickDelete = this.onClickDelete.bind(this);
   }
 
   handleOpenModal(event) {
-    event.stopPropagation()
-    const {name} = this.props
+    event.stopPropagation();
+    const { name } = this.props;
     event.target.innerText === name
       ? this.setState({
           showModal: true,
-          target: event.target.getBoundingClientRect(),
+          target: event.target.getBoundingClientRect()
         })
-      : this.setState({showModal: true})
+      : this.setState({ showModal: true });
   }
 
   handleCloseModal() {
-    this.setState({showModal: false})
+    this.setState({ showModal: false });
   }
 
   componentDidMount() {
-    const {key} = this.props
-    ReactModal.setAppElement(`#table-row--select${key}`)
+    const { key } = this.props;
+    ReactModal.setAppElement(`#table-row--select${key}`);
   }
 
   onClickAccept(event) {
-    const {handleWheelKeyCommand, host, status} = this.props
-    console.log('onClickAccept', status)
-    handleWheelKeyCommand(host, 'Accept')
-    event.stopPropagation()
-    this.handleCloseModal()
+    const { handleWheelKeyCommand, host, status } = this.props;
+    console.log("onClickAccept", status);
+    handleWheelKeyCommand(host, "Accept");
+    event.stopPropagation();
+    this.handleCloseModal();
   }
 
   onClickReject(event) {
-    const {handleWheelKeyCommand, host, status} = this.props
-    console.log('onClickReject', status)
-    handleWheelKeyCommand(host, 'ReJect')
-    event.stopPropagation()
-    this.handleCloseModal()
+    const { handleWheelKeyCommand, host, status } = this.props;
+    console.log("onClickReject", status);
+    handleWheelKeyCommand(host, "ReJect");
+    event.stopPropagation();
+    this.handleCloseModal();
   }
 
   onClickDelete(event) {
-    const {handleWheelKeyCommand, host, status} = this.props
-    console.log('onClickDelete', status)
-    handleWheelKeyCommand(host, 'Delete')
-    event.stopPropagation()
-    this.handleCloseModal()
+    const { handleWheelKeyCommand, host, status } = this.props;
+    console.log("onClickDelete", status);
+    handleWheelKeyCommand(host, "Delete");
+    event.stopPropagation();
+    this.handleCloseModal();
   }
 
   render() {
     // const {name, status} = this.props
-    const {name, status} = this.props
-    const {target} = this.state
+    const { name, status } = this.props;
+    const { target } = this.state;
 
-    console.log(status)
+    console.log(status);
 
     return (
-      <button className="btn btn-default" onClick={this.handleOpenModal}>
+      <button
+        className="btn btn-default"
+        onClick={this.handleOpenModal}
+        style={{
+          fontSize: "24px"
+        }}
+      >
         {name}
         <ReactModal
           isOpen={this.state.showModal}
@@ -81,15 +87,15 @@ class AgentMinionsModal extends React.Component {
           <div
             className="dropdown--menu-container dropdown--sapphire"
             style={{
-              width: '11.5vw',
-              position: 'absolute',
+              width: "11.5vw",
+              position: "absolute",
               top: target.top,
-              left: target.left,
+              left: target.left
             }}
             onMouseLeave={this.handleCloseModal}
           >
             <div className="dropdown--menu">
-              {status === 'UnAccept' || status === 'ReJect' ? (
+              {status === "UnAccept" || status === "ReJect" ? (
                 <div className="dropdown--item" onClick={this.onClickAccept}>
                   <div className="dropdown-item--children">Accept</div>
                 </div>
@@ -106,8 +112,8 @@ class AgentMinionsModal extends React.Component {
           </div>
         </ReactModal>
       </button>
-    )
+    );
   }
 }
 
-export default AgentMinionsModal
+export default AgentMinionsModal;

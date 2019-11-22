@@ -47,7 +47,6 @@ class AgentControl extends PureComponent<Props, State> {
       Minions: [],
       isAllCheck: false,
       controlPageStatus: RemoteDataState.NotStarted
-      isPageLoaded: RemoteDataState.NotStarted
     };
   }
 
@@ -56,8 +55,7 @@ class AgentControl extends PureComponent<Props, State> {
 
     this.setState({
       Minions: _.values(hostListObject),
-      controlPageStatus: RemoteDataState.Done,
-      isPageLoaded: RemoteDataState.Done
+      controlPageStatus: RemoteDataState.Done
     });
   };
 
@@ -240,22 +238,22 @@ class AgentControl extends PureComponent<Props, State> {
     const { isUserAuthorized } = this.props;
     return (
       <>
-        {isUserAuthorized ? 
-          (<div className="panel panel-solid">
-              <Threesizer
-                orientation={HANDLE_HORIZONTAL}
-                divisions={this.horizontalDivisions}
-                onResize={this.handleResize}
-              />
-          </div>)
-        : (
-          <div
-            className="generic-empty-state"
-            style={{ backgroundColor: "#292933" }}
-          >
-            <h4>Not Allowed User</h4>
+        {isUserAuthorized ? (
+          <div className="panel panel-solid">
+            <Threesizer
+              orientation={HANDLE_HORIZONTAL}
+              divisions={this.horizontalDivisions}
+              onResize={this.handleResize}
+            />
           </div>
-        )}
+        ) : (
+            <div
+              className="generic-empty-state"
+              style={{ backgroundColor: "#292933" }}
+            >
+              <h4>Not Allowed User</h4>
+            </div>
+          )}
       </>
     );
   }
@@ -270,18 +268,18 @@ class AgentControl extends PureComponent<Props, State> {
     console.log("MinionsObject", Minions);
 
     return (
-        <AgentControlTable
-          minions={Minions}
-          controlPageStatus={controlPageStatus}
-          onClickTableRow={this.onClickTableRowCall}
-          onClickAction={this.onClickActionCall}
-          onClickRun={this.onClickRunCall}
-          onClickStop={this.onClickStopCall}
-          onClickInstall={this.onClickInstallCall}
-          isAllCheck={isAllCheck}
-          handleAllCheck={this.handleAllCheck}
-          handleMinionCheck={this.handleMinionCheck}
-        />
+      <AgentControlTable
+        minions={Minions}
+        controlPageStatus={controlPageStatus}
+        onClickTableRow={this.onClickTableRowCall}
+        onClickAction={this.onClickActionCall}
+        onClickRun={this.onClickRunCall}
+        onClickStop={this.onClickStopCall}
+        onClickInstall={this.onClickInstallCall}
+        isAllCheck={isAllCheck}
+        handleAllCheck={this.handleAllCheck}
+        handleMinionCheck={this.handleMinionCheck}
+      />
     );
   };
 

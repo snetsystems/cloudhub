@@ -142,17 +142,10 @@ class AgentControlTable extends PureComponent<Props, State> {
     if (controlPageStatus === RemoteDataState.Error) {
       return this.ErrorState;
     }
-    if (
-      (controlPageStatus === RemoteDataState.Error && minions.length === 0) ||
-      (controlPageStatus === RemoteDataState.Done && minions.length === 0)
-    ) {
+    if (controlPageStatus === RemoteDataState.Done && minions.length === 0) {
       return this.NoHostsState;
     }
-    if (
-      (controlPageStatus === RemoteDataState.Error &&
-        sortedHosts.length === 0) ||
-      (controlPageStatus === RemoteDataState.Done && minions.length === 0)
-    ) {
+    if (controlPageStatus === RemoteDataState.Done && minions.length === 0) {
       return this.NoSortedHostsState;
     }
 
@@ -217,7 +210,7 @@ class AgentControlTable extends PureComponent<Props, State> {
         <div className="panel-heading">
           <h2 className="panel-title">{this.AgentTitle}</h2>
           <SearchBar
-            placeholder="Filter by Minion..."
+            placeholder="Filter by Host..."
             onSearch={this.updateSearchTerm}
           />
         </div>
@@ -292,13 +285,7 @@ class AgentControlTable extends PureComponent<Props, State> {
 
   private get AgentTableHeaderEachPage() {
     const { isAllCheck } = this.props;
-    const {
-      CheckWidth,
-      NameWidth,
-      IPWidth,
-      HostWidth,
-      StatusWidth
-    } = AGENT_TABLE_SIZING;
+    const { CheckWidth, IPWidth, HostWidth, StatusWidth } = AGENT_TABLE_SIZING;
     return (
       <div className="hosts-table--thead">
         <div className="hosts-table--tr">
@@ -313,7 +300,7 @@ class AgentControlTable extends PureComponent<Props, State> {
           <div
             onClick={this.updateSort("name")}
             className={this.sortableClasses("name")}
-            style={{ width: NameWidth }}
+            style={{ width: HostWidth }}
           >
             Host
             <span className="icon caret-up" />
@@ -381,29 +368,27 @@ class AgentControlTable extends PureComponent<Props, State> {
     );
 
     return (
-      <>
-        <div className="hosts-table">
-          {this.AgentTableHeader}
-          <FancyScrollbar
-            children={sortedHosts.map((m, i) => (
-              <AgentControlTableRow
-                key={i}
-                minions={m}
-                onClickTableRow={onClickTableRow}
-                onClickAction={onClickAction}
-                onClickRun={onClickRun}
-                onClickStop={onClickStop}
-                onClickInstall={onClickInstall}
-                isCheck={m.isCheck}
-                isAllCheck={isAllCheck}
-                handleMinionCheck={handleMinionCheck}
-              />
-            ))}
-            itemHeight={26}
-            className="hosts-table--tbody"
-          />
-        </div>
-      </>
+      <div className="hosts-table">
+        {this.AgentTableHeader}
+        <FancyScrollbar
+          children={sortedHosts.map((m, i) => (
+            <AgentControlTableRow
+              key={i}
+              minions={m}
+              onClickTableRow={onClickTableRow}
+              onClickAction={onClickAction}
+              onClickRun={onClickRun}
+              onClickStop={onClickStop}
+              onClickInstall={onClickInstall}
+              isCheck={m.isCheck}
+              isAllCheck={isAllCheck}
+              handleMinionCheck={handleMinionCheck}
+            />
+          ))}
+          itemHeight={26}
+          className="hosts-table--tbody"
+        />
+      </div>
     );
   }
 }
