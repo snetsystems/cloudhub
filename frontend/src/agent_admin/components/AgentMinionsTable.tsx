@@ -139,16 +139,12 @@ class AgentMinionsTable extends PureComponent<Props, State> {
     if (minionsPageStatus === RemoteDataState.Error) {
       return this.ErrorState;
     }
-    if (
-      (minionsPageStatus === RemoteDataState.Error && minions.length === 0) ||
-      (minionsPageStatus === RemoteDataState.Done && minions.length === 0)
-    ) {
+    if (minionsPageStatus === RemoteDataState.Done && minions.length === 0) {
       return this.NoHostsState;
     }
     if (
-      (minionsPageStatus === RemoteDataState.Error &&
-        sortedHosts.length === 0) ||
-      (minionsPageStatus === RemoteDataState.Done && sortedHosts.length === 0)
+      minionsPageStatus === RemoteDataState.Done &&
+      sortedHosts.length === 0
     ) {
       return this.NoSortedHostsState;
     }
@@ -208,7 +204,7 @@ class AgentMinionsTable extends PureComponent<Props, State> {
         <div className="panel-heading">
           <h2 className="panel-title">{this.AgentTitle}</h2>
           <SearchBar
-            placeholder="Filter by Minion..."
+            placeholder="Filter by Host..."
             onSearch={this.updateSearchTerm}
           />
         </div>
@@ -290,7 +286,7 @@ class AgentMinionsTable extends PureComponent<Props, State> {
             className="hosts-table--th list-type"
             style={{ width: StatusWidth }}
           >
-            select
+            operation
           </div>
         </div>
       </div>

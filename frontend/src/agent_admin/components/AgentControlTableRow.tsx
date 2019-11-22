@@ -1,11 +1,12 @@
-import React, {PureComponent} from 'react'
-import {AGENT_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
+import React, { PureComponent } from "react";
+import { AGENT_TABLE_SIZING } from "src/hosts/constants/tableSizing";
 
-import {Minion} from 'src/types'
+import { Minion } from "src/types";
 
 interface Props {
   // key: Readonly<Props>
-  minions: Minion
+  minions: Minion;
+  isCheck: Boolean;
   // ip: string
   // host: string
   // status: string
@@ -17,38 +18,33 @@ interface Props {
 
 class AgentControlTableRow extends PureComponent<Props> {
   constructor(props) {
-    super(props)
+    super(props);
   }
 
   public focusedClasses = (): string => {
-    return 'hosts-table--tr'
-  }
+    const { isCheck } = this.props;
+    return isCheck ? "hosts-table--tr focused" : "hosts-table--tr";
+  };
 
   render() {
-    return this.TableRowEachPage
+    return this.TableRowEachPage;
   }
 
   public getHandleMinionCheck = event => {
-    event.stopPropagation()
-    const {handleMinionCheck} = this.props
-    return handleMinionCheck({_this: this})
-  }
+    event.stopPropagation();
+    const { handleMinionCheck } = this.props;
+    return handleMinionCheck({ _this: this });
+  };
 
   private get TableRowEachPage() {
-    const {minions, onClickTableRow, onClickAction, isCheck} = this.props
+    const { minions, onClickTableRow, onClickAction, isCheck } = this.props;
 
-    const {osVersion, os, ip, host, isInstall, isRunning} = minions
-    const {
-      CheckWidth,
-      NameWidth,
-      StatusWidth,
-      HostWidth,
-      IPWidth,
-    } = AGENT_TABLE_SIZING
+    const { osVersion, os, ip, host, isInstall, isRunning } = minions;
+    const { CheckWidth, StatusWidth, HostWidth, IPWidth } = AGENT_TABLE_SIZING;
 
     return (
       <div className={this.focusedClasses()} onClick={onClickTableRow(host)}>
-        <div className="hosts-table--td" style={{width: CheckWidth}}>
+        <div className="hosts-table--td" style={{ width: CheckWidth }}>
           <input
             type="checkbox"
             checked={isCheck}
@@ -56,25 +52,25 @@ class AgentControlTableRow extends PureComponent<Props> {
             readOnly
           />
         </div>
-        <div className="hosts-table--td" style={{width: HostWidth}}>
+        <div className="hosts-table--td" style={{ width: HostWidth }}>
           {host}
         </div>
 
-        <div className="hosts-table--td" style={{width: IPWidth}}>
+        <div className="hosts-table--td" style={{ width: IPWidth }}>
           {os}
         </div>
 
-        <div className="hosts-table--td" style={{width: IPWidth}}>
+        <div className="hosts-table--td" style={{ width: IPWidth }}>
           {osVersion}
         </div>
 
-        <div className="hosts-table--td" style={{width: IPWidth}}>
+        <div className="hosts-table--td" style={{ width: IPWidth }}>
           {ip}
         </div>
-        <div className="hosts-table--td" style={{width: HostWidth}}>
-          {isInstall === true ? 'Enable' : 'Disable'}
+        <div className="hosts-table--td" style={{ width: StatusWidth }}>
+          {isInstall === true ? "Enable" : "Disable"}
         </div>
-        <div className="hosts-table--td" style={{width: StatusWidth}}>
+        <div className="hosts-table--td" style={{ width: StatusWidth }}>
           {isRunning === true ? (
             <button
               className="btn btn-default action-call"
@@ -92,8 +88,8 @@ class AgentControlTableRow extends PureComponent<Props> {
           )}
         </div>
       </div>
-    )
+    );
   }
 }
 
-export default AgentControlTableRow
+export default AgentControlTableRow;

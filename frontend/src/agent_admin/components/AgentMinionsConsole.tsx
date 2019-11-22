@@ -1,73 +1,74 @@
-import React, {PureComponent} from 'react'
+import React, { PureComponent } from "react";
+import FancyScrollbar from "src/shared/components/FancyScrollbar";
 
 class AgentMinionsConsole extends PureComponent {
   constructor(props) {
-    super(props)
+    super(props);
   }
 
   public prettyJson(jsonText) {
     if (!jsonText) {
-      return jsonText
+      return jsonText;
     }
 
-    var prettyJson = new Array()
-    var depth = 0
-    var currChar
-    var prevChar
-    var doubleQuoteIn = false
+    var prettyJson = new Array();
+    var depth = 0;
+    var currChar;
+    var prevChar;
+    var doubleQuoteIn = false;
 
     for (var i = 0; i < jsonText.length; i++) {
-      currChar = jsonText.charAt(i)
+      currChar = jsonText.charAt(i);
 
       if (currChar == '"') {
-        if (prevChar != '\\') {
-          doubleQuoteIn = !doubleQuoteIn
+        if (prevChar != "\\") {
+          doubleQuoteIn = !doubleQuoteIn;
         }
       }
       switch (currChar) {
-        case '{':
-          prettyJson.push(currChar)
+        case "{":
+          prettyJson.push(currChar);
           if (!doubleQuoteIn) {
-            prettyJson.push('\n')
-            this.insertTab(prettyJson, ++depth)
+            prettyJson.push("\n");
+            this.insertTab(prettyJson, ++depth);
           }
-          break
-        case '}':
+          break;
+        case "}":
           if (!doubleQuoteIn) {
-            prettyJson.push('\n')
-            this.insertTab(prettyJson, --depth)
+            prettyJson.push("\n");
+            this.insertTab(prettyJson, --depth);
           }
-          prettyJson.push(currChar)
-          break
-        case ',':
-          prettyJson.push(currChar)
+          prettyJson.push(currChar);
+          break;
+        case ",":
+          prettyJson.push(currChar);
           if (!doubleQuoteIn) {
-            prettyJson.push('\n')
-            this.insertTab(prettyJson, depth)
+            prettyJson.push("\n");
+            this.insertTab(prettyJson, depth);
           }
-          break
+          break;
         default:
-          prettyJson.push(currChar)
-          break
+          prettyJson.push(currChar);
+          break;
       }
-      prevChar = currChar
+      prevChar = currChar;
     }
 
-    console.log(prettyJson)
+    console.log(prettyJson);
 
-    return prettyJson.join('')
+    return prettyJson.join("");
   }
 
   public insertTab(prettyJson, depth) {
-    const TAB = ''
+    const TAB = "";
 
     for (var i = 0; i < depth; i++) {
-      prettyJson.push(TAB)
+      prettyJson.push(TAB);
     }
   }
 
   render() {
-    const {res} = this.props
+    const { res } = this.props;
     return (
       <div className="panel">
         <div className="panel-heading">
@@ -77,36 +78,30 @@ class AgentMinionsConsole extends PureComponent {
           <div
             className="console-zone"
             style={{
-              background: '#232323',
-              padding: '15px',
-              borderRadius: '5px',
-              height: '100%',
-              width: '100%',
-              overflow: 'hidden',
-              resize: 'none',
+              background: "#232323",
+              padding: "15px",
+              borderRadius: "5px",
+              height: "100%",
+              width: "100%",
+              resize: "none"
             }}
           >
-            <pre
-              style={{
-                color: '#fff',
-                whiteSpace: 'pre-wrap',
-              }}
-            >
-              {res}
-            </pre>
-            {/* {res.split('\n').map(line => {
-              return (
-                <span>
-                  {line}
-                  <br />
-                </span>
-              )
-            })} */}
+            <FancyScrollbar>
+              <pre
+                style={{
+                  color: "#fff",
+                  whiteSpace: "pre-wrap",
+                  backgroundColor: "transparent"
+                }}
+              >
+                {res}
+              </pre>
+            </FancyScrollbar>
           </div>
         </div>
       </div>
-    )
+    );
   }
 }
 
-export default AgentMinionsConsole
+export default AgentMinionsConsole;
