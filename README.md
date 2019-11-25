@@ -1,4 +1,4 @@
-# SCMP (Snet Cloud Monitoring Portal) - Latest v0.0.8
+# SCMP (Snet Cloud Monitoring Portal) - Latest v0.9.0
 
 ## Intro.
 
