@@ -1,4 +1,4 @@
-# SCMP (Snet Cloud Monitoring Portal) - Latest v0.0.7
+# SCMP (Snet Cloud Monitoring Portal) - Latest v0.0.8
 
 ## Intro.
 
@@ -29,6 +29,7 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
 - Window build & run Env. support.
 - Hosts to Infrastructures and basic charts added.
 - Visualization added by criteria of Applications.
+- Continuous installation and deployment for telegraf's agent and configuration.
 
 ## Setting in VSCode
 
@@ -52,28 +53,23 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
   "files.eol": "\n",
   "go.formatTool": "goimports",
   "go.lintOnSave": "package",
-  "prettier.singleQuote": true,
-  "prettier.bracketSpacing": false,
-  "prettier.semi": false,
-  "prettier.trailingComma": "es5",
   "eslint.alwaysShowStatus": true,
-  "tslint.jsEnable": true,
   "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "vscode.json-language-features"
   },
   "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "vscode.typescript-language-features"
   },
   "debug.showInStatusBar": "always",
   "[typescriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "vscode.typescript-language-features"
   },
   "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "vscode.json-language-features"
   },
   "debug.toolBarLocation": "docked",
   "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "vscode.typescript-language-features"
   }
 }
 ```
@@ -144,6 +140,7 @@ $ code snet.code-workspace
 Simply, select **"Launch Server"** and then run.<br>
 Also, for UI debugging, select **"Launch Chrome"** and then run debug.<br>
 For continuous debugging, you can use **"Launch Chrome"** after _**yarn start**_<br>
+
 > [Note]<br>
 > For continuous debugging, you need to add **_develop mode_** into the running argument.
 
@@ -171,11 +168,11 @@ For continuous debugging, you can use **"Launch Chrome"** after _**yarn start**_
 
 If you run a not login mode, you can use **"Launch Chrome via Proxy"** after _**yarn start**_
 
-````
+```
 $ cd $CMP_PATH/frontend
 $ yarn start
 yarn run v1.15.2
 $ node parcel.jsx
 Serving on http://localhost:8080
 √  Built in 7.54s.
-````
+```

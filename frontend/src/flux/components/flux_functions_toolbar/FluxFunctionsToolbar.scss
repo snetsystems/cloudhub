@@ -33,7 +33,7 @@
   }
 
   dd {
-    font-family: 'RobotoMono', monospace;
+    font-family: "RobotoMono", monospace;
     cursor: pointer;
   }
 
@@ -58,11 +58,17 @@
   max-width: 600px;
   position: fixed;
   transform: translateY(50%);
-  z-index: 10;
+  z-index: 30;
+
+  &.tooltip--left {
+    padding-right: 0px;
+    padding-left: 13px;
+    margin-left: -13px;
+  }
 }
 
 .flux-functions-toolbar--tooltip-caret {
-  content: '';
+  content: "";
   width: 0;
   height: 0;
   position: fixed;
@@ -72,6 +78,11 @@
   margin-top: 9px;
   margin-left: -8px;
   z-index: 9999;
+
+  &.tooltip-caret--left {
+    border-left: none;
+    border-right: 6px solid $s-orange;
+  }
 }
 
 .flux-functions-toolbar--tooltip-contents {
@@ -99,7 +110,7 @@
   border-radius: $radius;
   margin: $ix-marg-a 0;
   padding: $ix-marg-b;
-  font-family: 'RobotoMono', monospace;
+  font-family: "RobotoMono", monospace;
 }
 
 .flux-functions-toolbar--arguments {
@@ -136,7 +147,7 @@
 
   &:before,
   &:after {
-    content: '';
+    content: "";
     position: absolute;
     width: 13px;
     height: 3px;
@@ -155,7 +166,7 @@
   }
 
   &:hover {
-    background-color: $c-laser;
+    background-color: $s-deepOrange2;
     cursor: pointer;
   }
 }
@@ -176,7 +187,7 @@
 
   &:before,
   &:after {
-    content: '';
+    content: "";
     position: absolute;
     width: 13px;
     height: 3px;
@@ -195,7 +206,7 @@
   }
 
   &:hover {
-    background-color: $c-laser;
+    background-color: $s-deepOrange2;
     cursor: pointer;
   }
 }

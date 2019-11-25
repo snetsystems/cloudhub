@@ -128,7 +128,7 @@ class InfiniteScroll extends Component {
         key={windowHeight}
       >
         <div style={{height: topPadding}} />
-        {items.filter((_item, i) => i >= topIndex && i <= bottomIndex)}
+        {items.filter((_item, i) => i >= 0)}
         <div style={{height: bottomPadding}} />
       </Scrollbars>
     )

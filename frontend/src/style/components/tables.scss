@@ -311,6 +311,8 @@ $wordBreak: break-word;
   }
 }
 .hosts-table--td {
+  display: flex;
+  align-items: center;
   font-size: 12px;
   font-family: $code-font;
   font-weight: 500;

@@ -4,3 +4,13 @@ export const HOSTS_TABLE_SIZING = {
   CPUWidth: '70px',
   LoadWidth: '68px',
 }
+
+export const AGENT_TABLE_SIZING = {
+  CheckWidth: '30px',
+  NameWidth: '25%',
+  OSWidth: '20%',
+  IPWidth: '20%',
+  HostWidth: '25%',
+  StatusWidth: '20%',
+  ComboBoxWidth: '120px',
+}

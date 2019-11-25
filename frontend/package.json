@@ -1,14 +1,13 @@
 {
   "name": "frontend",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "private": true,
   "description": "This is CMP's User interface made in React & Typescript",
   "author": "Jack Kim",
   "license": "AGPL-3.0",
   "scripts": {
     "start": "node parcel.jsx",
-    "build":
-      "parcel build -d build --log-level 2 --no-source-maps --public-url '' src/index.html",
+    "build": "parcel build -d build --log-level 2 --no-source-maps --public-url '' src/index.html",
     "clean": "rm -rf ./build/* && rm -rf ./.cache && rm -rf ./dist",
     "tsc": "tsc -p ./tsconfig.json --noEmit --pretty",
     "tsc:watch": "tsc -p ./tsconfig.json --noEmit --pretty -w"
@@ -106,7 +105,7 @@
     "papaparse": "^4.4.0",
     "prop-types": "^15.6.1",
     "qs": "^6.5.2",
-    "react": "^16.6.3",
+    "react": "^0.14.0 || ^15.0.0 || ^16",
     "react-addons-shallow-compare": "^15.0.2",
     "react-codemirror2": "^4.2.1",
     "react-copy-to-clipboard": "^5.0.1",
@@ -114,9 +113,10 @@
     "react-dimensions": "^1.2.0",
     "react-dnd": "^2.6.0",
     "react-dnd-html5-backend": "^2.6.0",
-    "react-dom": "^16.6.3",
+    "react-dom": "^0.14.0 || ^15.0.0 || ^16",
     "react-grid-layout": "^0.16.6",
     "react-markdown": "^3.4.1",
+    "react-modal": "^3.11.1",
     "react-onclickoutside": "^5.2.0",
     "react-redux": "^4.4.0",
     "react-resize-detector": "^2.3.0",

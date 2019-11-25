@@ -18,8 +18,8 @@ export const PERMISSIONS = {
     displayName: 'View Admin',
   },
   ViewCMP: {
-    description: 'Can use SCMP tools',
-    displayName: 'View SCMP',
+    description: 'Can use Cloud Smart Hub tools',
+    displayName: 'View Cloud Smart Hub',
   },
   CreateDatabase: {
     description: 'Can create databases',

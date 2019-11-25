@@ -80,10 +80,26 @@
   padding: 0 $query-builder--list-gutter;
   transition: color 0.25s ease, background-color 0.25s ease;
 
+  .btn,
+  button.btn,
+  input.btn {
+    font-size: 12px;
+    height: 24px;
+    line-height: 24px;
+    border-radius: 5px;
+    // display: none;
+  }
+
   &:hover {
     background-color: $query-builder--list-item-bg-hover;
     color: $query-builder--list-item-text-hover;
     cursor: pointer;
+
+    > .btn,
+    button.btn,
+    input.btn {
+      display: block;
+    }
   }
 
   /* Active State */
