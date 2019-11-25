@@ -188,7 +188,7 @@ class SideNav extends PureComponent<Props> {
             sourcePrefix={sourcePrefix}
           />
         ) : null}
-        {/* <NavBlock
+        <NavBlock
           highlightWhen={[
             'add-on/128t',
             'add-on/128t/status',
@@ -208,7 +208,7 @@ class SideNav extends PureComponent<Props> {
           <NavListItem link={`${sourcePrefix}/add-on/128t/setting`}>
             Setting
           </NavListItem>
-        </NavBlock> */}
+        </NavBlock>
         <div className="sidebar--item cursor-default symbol-company" />
       </nav>
     );
