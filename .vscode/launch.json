@@ -9,7 +9,9 @@
       "type": "go",
       "request": "launch",
       "mode": "debug",
-      "buildFlags": ["-ldflags='-X main.version=0.1.0'"],
+      "buildFlags": [
+        "-ldflags='-X main.version=0.1.0'"
+      ],
       "program": "${workspaceFolder}/backend/cmd/cmp",
       "env": {},
       "args": [
@@ -19,8 +21,8 @@
         "--protoboards-path=./cmp-protoboards/",
         "--auth-duration=0",
         "-t=74c1e9e2450886060b5bf736b935cd0bf960837f",
-        "--github-client-id=c170bbdba5cb2ea8c3e6",
-        "--github-client-secret=55c35715b0e4eebab7edbdeef3081bf890e79d22"
+        "--github-client-id=38eee21805ad07ffd8d4",
+        "--github-client-secret=cf355e9c219a0efa7556bb1de6cb740bbc3388b0"
       ],
       "showLog": true
       // "logOutput": "debugger"

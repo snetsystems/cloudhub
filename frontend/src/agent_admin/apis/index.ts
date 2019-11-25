@@ -27,7 +27,7 @@ const apiRequest = (pMethod, pRoute, pParams) => {
 	console.log(dParams)
 	console.log(pParams)
 
-	const url = 'http://localhost:8000/run' + pRoute
+	const url = 'http://61.250.122.43:8000/run' + pRoute
 	const headers = {
 		Accept: 'application/json',
 		'Content-type': 'application/json',
