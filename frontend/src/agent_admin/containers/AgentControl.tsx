@@ -1,3 +1,4 @@
+// Libraries
 import React, { PureComponent } from "react";
 import _ from "lodash";
 
@@ -5,8 +6,6 @@ import _ from "lodash";
 import Threesizer from "src/shared/components/threesizer/Threesizer";
 import AgentControlTable from "src/agent_admin/components/AgentControlTable";
 import AgentControlConsole from "src/agent_admin/components/AgentControlConsole";
-import PageSpinner from "src/shared/components/PageSpinner";
-import { ErrorHandling } from "src/shared/decorators/errors";
 
 // APIs
 import {
@@ -17,20 +16,24 @@ import {
   runLocalPkgInstallTelegraf
 } from "src/agent_admin/apis";
 
-//const
+// const
 import { HANDLE_HORIZONTAL } from "src/shared/constants";
 
 // Types
 import { Minion, RemoteDataState } from "src/types";
 
+// Decorators
+import { ErrorHandling } from "src/shared/decorators/errors";
+
 interface Props {
   currentUrl: string;
+  isUserAuthorized: boolean
 }
 
 interface State {
   MinionsObject: { [x: string]: Minion };
   Minions: Minion[];
-  proportions: Readonly<{}>;
+  proportions: number[]
   controlPageStatus: RemoteDataState;
   minionLog: string;
   isAllCheck: boolean;
@@ -41,7 +44,7 @@ class AgentControl extends PureComponent<Props, State> {
   constructor(props) {
     super(props);
     this.state = {
-      minionLog: "not load log",
+      minionLog: "<< Empty >>",
       proportions: [0.43, 0.57],
       MinionsObject: {},
       Minions: [],
@@ -62,17 +65,10 @@ class AgentControl extends PureComponent<Props, State> {
   public async componentDidMount() {
     this.getWheelKeyListAll();
     this.setState({ controlPageStatus: RemoteDataState.Loading });
-    console.debug("componentDidMount");
   }
 
-  public onClickTableRowCall() {
-    return console.log("row Called", this);
-  }
-
-  public handleAllCheck = () => {
+  public handleAllCheck = (_this: object): void => {
     const { Minions, isAllCheck } = this.state;
-    console.log("handleAllCheck");
-    console.log(Minions);
     if (isAllCheck === false) {
       Minions.map(m => (m.isCheck = true));
     } else {
@@ -81,7 +77,7 @@ class AgentControl extends PureComponent<Props, State> {
     this.setState({ isAllCheck: !isAllCheck, Minions });
   };
 
-  public handleMinionCheck = ({ _this }) => {
+  public handleMinionCheck = ({ _this }): void => {
     const { minions } = _this.props;
     const { Minions } = this.state;
     const index = Minions.indexOf(minions);
@@ -106,7 +102,6 @@ class AgentControl extends PureComponent<Props, State> {
 
       getLocalServiceStartTelegrafPromise.then(
         pLocalServiceStartTelegrafData => {
-          console.log(pLocalServiceStartTelegrafData);
           this.setState({
             minionLog: JSON.stringify(
               pLocalServiceStartTelegrafData.data.return[0],
@@ -123,7 +118,6 @@ class AgentControl extends PureComponent<Props, State> {
       );
       this.setState({ controlPageStatus: RemoteDataState.Loading });
       getLocalServiceStopTelegrafPromise.then(pLocalServiceStopTelegrafData => {
-        console.log(pLocalServiceStopTelegrafData);
         this.setState({
           minionLog: JSON.stringify(
             pLocalServiceStopTelegrafData.data.return[0],
@@ -134,7 +128,6 @@ class AgentControl extends PureComponent<Props, State> {
         this.getWheelKeyListAll();
       });
     }
-    // return console.log('action Called', host, isRunning)
   };
 
   public onClickRunCall = () => {
@@ -143,15 +136,12 @@ class AgentControl extends PureComponent<Props, State> {
       checkData => checkData.host
     );
 
-    console.log(host);
-
     this.setState({ controlPageStatus: RemoteDataState.Loading });
     const getLocalServiceStartTelegrafPromise = runLocalServiceStartTelegraf(
       host
     );
 
     getLocalServiceStartTelegrafPromise.then(pLocalServiceStartTelegrafData => {
-      console.log(pLocalServiceStartTelegrafData);
       this.setState({
         minionLog: JSON.stringify(
           pLocalServiceStartTelegrafData.data.return[0],
@@ -161,7 +151,6 @@ class AgentControl extends PureComponent<Props, State> {
       });
       this.getWheelKeyListAll();
     });
-    // return console.log('Run Called', this)
   };
 
   public onClickStopCall = () => {
@@ -170,14 +159,12 @@ class AgentControl extends PureComponent<Props, State> {
       checkData => checkData.host
     );
 
-    console.log(host);
     this.setState({ controlPageStatus: RemoteDataState.Loading });
     const getLocalServiceStopTelegrafPromise = runLocalServiceStopTelegraf(
       host
     );
 
     getLocalServiceStopTelegrafPromise.then(pLocalServiceStopTelegrafData => {
-      console.log(pLocalServiceStopTelegrafData);
       this.setState({
         minionLog: JSON.stringify(
           pLocalServiceStopTelegrafData.data.return[0],
@@ -187,7 +174,6 @@ class AgentControl extends PureComponent<Props, State> {
       });
       this.getWheelKeyListAll();
     });
-    // return console.log('Stop Called', this)
   };
 
   public onClickInstallCall = () => {
@@ -196,15 +182,11 @@ class AgentControl extends PureComponent<Props, State> {
       checkData => checkData.host
     );
 
-    console.log(host);
-
     this.setState({ controlPageStatus: RemoteDataState.Loading });
 
     const getLocalCpGetDirTelegrafPromise = runLocalCpGetDirTelegraf(host);
 
     getLocalCpGetDirTelegrafPromise.then(pLocalCpGetDirTelegrafData => {
-      console.log("getLocalCpGetDirTelegrafPromise");
-      console.log(pLocalCpGetDirTelegrafData.data.return[0]);
       this.setState({
         minionLog: JSON.stringify(
           pLocalCpGetDirTelegrafData.data.return,
@@ -218,7 +200,6 @@ class AgentControl extends PureComponent<Props, State> {
       );
 
       getLocalPkgInstallTelegrafPromise.then(pLocalPkgInstallTelegrafData => {
-        console.log(pLocalPkgInstallTelegrafData.data.return[0]);
         this.setState({
           minionLog: JSON.stringify(
             pLocalPkgInstallTelegrafData.data.return[0],
@@ -230,8 +211,6 @@ class AgentControl extends PureComponent<Props, State> {
 
       this.getWheelKeyListAll();
     });
-
-    //return console.log('Install Called', this)
   };
 
   render() {
@@ -265,13 +244,10 @@ class AgentControl extends PureComponent<Props, State> {
   private renderAgentPageTop = () => {
     const { Minions, controlPageStatus, isAllCheck } = this.state;
 
-    console.log("MinionsObject", Minions);
-
     return (
       <AgentControlTable
         minions={Minions}
         controlPageStatus={controlPageStatus}
-        onClickTableRow={this.onClickTableRowCall}
         onClickAction={this.onClickActionCall}
         onClickRun={this.onClickRunCall}
         onClickStop={this.onClickStopCall}

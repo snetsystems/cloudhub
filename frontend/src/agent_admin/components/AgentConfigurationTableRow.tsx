@@ -1,21 +1,26 @@
+// Libraries
 import React, { PureComponent } from "react";
-import { AGENT_TABLE_SIZING } from "src/hosts/constants/tableSizing";
 
+// Components
+import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
+
+// Constants
+import { AGENT_TABLE_SIZING } from "src/agent_admin/constants/tableSizing";
+
+// Types
 import { Minion } from "src/types";
 
+// Decorators
+import { ErrorHandling } from 'src/shared/decorators/errors';
+
 interface Props {
-  // key: Readonly<Props>
   minions: Minion;
   focusedHost: string;
-  // ip: string
-  // host: string
-  // status: string
-  // currentUrl: string
-  // // onClickTableRow: () => void
-  // onClickModal: ({}) => object
-  // handleWheelKeyCommand: () => void
+  onClickTableRow: AgentConfiguration['onClickTableRowCall']
+  onClickAction: AgentConfiguration['onClickActionCall']
 }
 
+@ErrorHandling
 class AgentConfigurationTableRow extends PureComponent<Props> {
   constructor(props) {
     super(props);
@@ -33,16 +38,29 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
     return this.TableRowEachPage;
   }
 
-  private get TableRowEachPage() {
-    const { minions, onClickTableRow, onClickAction } = this.props;
+  private get handleOnClickTableRow() {
+    const { minions, onClickTableRow } = this.props
+    const { ip, host } = minions
 
+    return onClickTableRow(host, ip)
+  }
+
+  private get handleOnClickAction() {
+    const { minions, onClickAction } = this.props
+    const { host, isRunning } = minions
+
+    return onClickAction(host, isRunning)
+  }
+
+  private get TableRowEachPage(): JSX.Element {
+    const { minions } = this.props;
     const { osVersion, os, ip, host, isRunning } = minions;
     const { StatusWidth, HostWidth, IPWidth } = AGENT_TABLE_SIZING;
 
     return (
       <div
         className={this.focusedClasses(host)}
-        onClick={onClickTableRow(host, ip)}
+        onClick={this.handleOnClickTableRow}
       >
         <div className="hosts-table--td" style={{ width: HostWidth }}>
           {host}
@@ -59,22 +77,14 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
         <div className="hosts-table--td" style={{ width: IPWidth }}>
           {ip}
         </div>
+
         <div className="hosts-table--td" style={{ width: StatusWidth }}>
-          {isRunning === true ? (
-            <button
-              className="btn btn-default action-call"
-              onClick={onClickAction(host, isRunning)}
-            >
-              ■
-            </button>
-          ) : (
-            <button
-              className="btn btn-default action-call"
-              onClick={onClickAction(host, isRunning)}
-            >
-              ▶
-            </button>
-          )}
+          <button
+            className="btn btn-default action-call"
+            onClick={this.handleOnClickAction}
+          >
+            {isRunning === true ? <>■</> : <>▶</>}
+          </button>
         </div>
       </div>
     );

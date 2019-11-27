@@ -1,3 +1,4 @@
+// Libraries
 import React, { PureComponent } from "react";
 import _ from "lodash";
 
@@ -6,8 +7,6 @@ import Threesizer from "src/shared/components/threesizer/Threesizer";
 import AgentMinionsTable from "src/agent_admin/components/AgentMinionsTable";
 import AgentMinionsConsole from "src/agent_admin/components/AgentMinionsConsole";
 import AgentMinionsModal from "src/agent_admin/components/AgentMinionsModal";
-
-import { ErrorHandling } from "src/shared/decorators/errors";
 
 // APIs
 import {
@@ -20,22 +19,26 @@ import {
   runDeleteKey
 } from "src/agent_admin/apis";
 
-//const
+// Constants
 import { HANDLE_HORIZONTAL } from "src/shared/constants";
 
 // Types
 import { Minion, RemoteDataState } from "src/types";
 
+// Decorators
+import { ErrorHandling } from "src/shared/decorators/errors";
+
 interface Props {
-  currentUrl: string;
+  isUserAuthorized: boolean
+  currentUrl: string
 }
 interface State {
-  MinionsObject: { [x: string]: Minion };
-  minionsPageStatus: RemoteDataState;
-  minionLog: string;
-  currentUrl: "";
-  proportions: number[];
-  focusedHost: string;
+  MinionsObject: { [x: string]: Minion }
+  minionsPageStatus: RemoteDataState
+  minionLog: string
+  currentUrl: string
+  proportions: number[]
+  focusedHost: string
 }
 
 @ErrorHandling
@@ -43,7 +46,7 @@ class AgentMinions extends PureComponent<Props, State> {
   constructor(props) {
     super(props);
     this.state = {
-      minionLog: "not load log",
+      minionLog: "<< Empty >>",
       proportions: [0.43, 0.57],
       MinionsObject: {},
       currentUrl: "",
@@ -54,9 +57,7 @@ class AgentMinions extends PureComponent<Props, State> {
 
   getWheelKeyListAll = async () => {
     const response = await getMinionKeyListAll();
-
     const updateMinionsIP = await getMinionsIP(response);
-
     const newMinions = await getMinionsOS(updateMinionsIP);
 
     this.setState({
@@ -67,11 +68,9 @@ class AgentMinions extends PureComponent<Props, State> {
 
   public async componentDidMount() {
     this.getWheelKeyListAll();
-
     this.setState({ minionsPageStatus: RemoteDataState.Loading });
-
-    console.debug("componentDidMount");
   }
+
 
   onClickTableRowCall = (host: string) => () => {
     this.setState({
@@ -92,13 +91,11 @@ class AgentMinions extends PureComponent<Props, State> {
   };
 
   handleWheelKeyCommand = (host: string, cmdstatus: string) => {
-    console.log("handleWheelKeyCommand", host, cmdstatus);
     this.setState({ minionsPageStatus: RemoteDataState.Loading });
     if (cmdstatus == "ReJect") {
       const getWheelKeyCommandPromise = runRejectKey(host);
 
       getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
-        console.log(pWheelKeyCommandData);
         this.setState({
           minionLog: JSON.stringify(
             pWheelKeyCommandData.data.return[0],
@@ -112,7 +109,6 @@ class AgentMinions extends PureComponent<Props, State> {
       const getWheelKeyCommandPromise = runAcceptKey(host);
 
       getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
-        console.log(pWheelKeyCommandData);
         this.setState({
           minionLog: JSON.stringify(
             pWheelKeyCommandData.data.return[0],
@@ -126,7 +122,6 @@ class AgentMinions extends PureComponent<Props, State> {
       const getWheelKeyCommandPromise = runDeleteKey(host);
 
       getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
-        console.log(pWheelKeyCommandData);
         this.setState({
           minionLog: JSON.stringify(
             pWheelKeyCommandData.data.return[0],
@@ -144,13 +139,14 @@ class AgentMinions extends PureComponent<Props, State> {
     host,
     status,
     _this,
+    idx,
     handleWheelKeyCommand
   }) {
-    console.log(status);
     return (
       <AgentMinionsModal
         name={name}
         host={host}
+        idx={idx}
         status={status}
         targetObject={_this}
         handleWheelKeyCommand={handleWheelKeyCommand}
@@ -171,13 +167,13 @@ class AgentMinions extends PureComponent<Props, State> {
             />
           </div>
         ) : (
-          <div
-            className="generic-empty-state"
-            style={{ backgroundColor: "#292933" }}
-          >
-            <h4>Not Allowed User</h4>
-          </div>
-        )}
+            <div
+              className="generic-empty-state"
+              style={{ backgroundColor: "#292933" }}
+            >
+              <h4>Not Allowed User</h4>
+            </div>
+          )}
       </>
     );
   }
@@ -187,7 +183,6 @@ class AgentMinions extends PureComponent<Props, State> {
   };
 
   private renderAgentPageTop = () => {
-    // const {parentUrl} = this.props
     const { MinionsObject, minionsPageStatus, focusedHost } = this.state;
     return (
       <AgentMinionsTable

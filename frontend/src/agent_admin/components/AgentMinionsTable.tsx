@@ -1,32 +1,38 @@
+// Libraries
 import React, { PureComponent } from 'react'
-
 import _ from 'lodash'
 import memoize from 'memoize-one'
 
+// Components
 import SearchBar from 'src/hosts/components/SearchBar'
+import AgentMinions from 'src/agent_admin/containers/AgentMinions'
 import AgentMinionsTableRow from 'src/agent_admin/components/AgentMinionsTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-
 import PageSpinner from 'src/shared/components/PageSpinner'
 
-import { AGENT_TABLE_SIZING } from 'src/hosts/constants/tableSizing'
+// Constants
+import { AGENT_TABLE_SIZING } from 'src/agent_admin/constants/tableSizing'
 
-import { Source, RemoteDataState, Minion } from 'src/types'
+// Types
+import { RemoteDataState, Minion } from 'src/types'
 
+// Decorators
 import { ErrorHandling } from 'src/shared/decorators/errors'
 
 enum SortDirection {
 	ASC = 'asc',
 	DESC = 'desc',
 }
+
 export interface Props {
 	minions: Minion[]
 	minionsPageStatus: RemoteDataState
-	onClickTableRow: () => void
-	onClickModal: ({ }) => object
-	handleWheelKeyCommand: () => void
 	focusedHost: string
+	onClickModal: ({ }) => object
+	onClickTableRow: AgentMinions['onClickTableRowCall']
+	handleWheelKeyCommand: (host: string, cmdstatus: string) => void
 }
+
 interface State {
 	searchTerm: string
 	sortDirection: SortDirection
@@ -52,19 +58,7 @@ class AgentMinionsTable extends PureComponent<Props, State> {
 	public filter(allHosts, searchTerm) {
 		const filterText = searchTerm.toLowerCase()
 		return allHosts.filter((h) => {
-			// const apps = h.apps ? h.apps.join(', ') : ''
-
-			// let tagResult = false
-			// if (h.tags) {
-			//   tagResult = Object.keys(h.tags).reduce((acc, key) => {
-			//     return acc || h.tags[key].toLowerCase().includes(filterText)
-			//   }, false)
-			// } else {
-			//   tagResult = false
-			// }
 			return h.host.toLowerCase().includes(filterText)
-			// apps.toLowerCase().includes(filterText) ||
-			// tagResult
 		})
 	}
 
@@ -104,12 +98,6 @@ class AgentMinionsTable extends PureComponent<Props, State> {
 		return 'hosts-table--th sortable-header'
 	}
 
-	public componentWillMount() { }
-
-	public componentDidMount() { }
-
-	public componentWillUnmount() { }
-
 	private get AgentTableHeader() {
 		return this.AgentTableHeaderEachPage
 	}
@@ -117,18 +105,16 @@ class AgentMinionsTable extends PureComponent<Props, State> {
 	private get AgentTableContents() {
 		const { minions, minionsPageStatus } = this.props
 		const { sortKey, sortDirection, searchTerm } = this.state
-
 		const sortedHosts = this.getSortedHosts(minions, searchTerm, sortKey, sortDirection)
 
-		// if (minionsPageStatus === RemoteDataState.Loading) {
-		//   return this.LoadingState
-		// }
 		if (minionsPageStatus === RemoteDataState.Error) {
 			return this.ErrorState
 		}
+
 		if (minionsPageStatus === RemoteDataState.Done && minions.length === 0) {
 			return this.NoHostsState
 		}
+
 		if (minionsPageStatus === RemoteDataState.Done && sortedHosts.length === 0) {
 			return this.NoSortedHostsState
 		}
@@ -203,14 +189,14 @@ class AgentMinionsTable extends PureComponent<Props, State> {
 	}
 
 	private get AgentTableHeaderEachPage() {
-		const { CheckWidth, NameWidth, IPWidth, HostWidth, StatusWidth } = AGENT_TABLE_SIZING
+		const { HostWidth, IPWidth, StatusWidth } = AGENT_TABLE_SIZING
 		return (
 			<div className="hosts-table--thead">
 				<div className="hosts-table--tr">
 					<div
 						onClick={this.updateSort('name')}
 						className={this.sortableClasses('name')}
-						style={{ width: NameWidth }}
+						style={{ width: HostWidth }}
 					>
 						Host
 						<span className="icon caret-up" />
@@ -263,23 +249,26 @@ class AgentMinionsTable extends PureComponent<Props, State> {
 		const sortedHosts = this.getSortedHosts(minions, searchTerm, sortKey, sortDirection)
 
 		return (
-			<div className="hosts-table">
-				{this.AgentTableHeader}
-				<FancyScrollbar
-					children={sortedHosts.map((m, i) => (
-						<AgentMinionsTableRow
-							key={i}
-							minions={m}
-							onClickTableRow={onClickTableRow}
-							onClickModal={onClickModal}
-							handleWheelKeyCommand={handleWheelKeyCommand}
-							focusedHost={focusedHost}
+			<>
+				{sortedHosts.length > 0 ?
+					<div className="hosts-table">
+						{this.AgentTableHeader}
+						<FancyScrollbar
+							children={sortedHosts.map((m, i) => (
+								<AgentMinionsTableRow
+									key={i}
+									idx={i}
+									minions={m}
+									onClickTableRow={onClickTableRow}
+									onClickModal={onClickModal}
+									handleWheelKeyCommand={handleWheelKeyCommand}
+									focusedHost={focusedHost}
+								/>
+							))}
+							className="hosts-table--tbody"
 						/>
-					))}
-					itemHeight={26}
-					className="hosts-table--tbody"
-				/>
-			</div>
+					</div> : null}</>
+
 		)
 	}
 }

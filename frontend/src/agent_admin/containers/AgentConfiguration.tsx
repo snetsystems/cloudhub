@@ -1,3 +1,4 @@
+// Libraries
 import React, { PureComponent } from 'react';
 import _ from 'lodash';
 
@@ -8,7 +9,9 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar';
 import AgentCodeEditor from 'src/agent_admin/components/AgentCodeEditor';
 import AgentToolbarFunction from 'src/agent_admin/components/AgentToolbarFunction';
 import PageSpinner from 'src/shared/components/PageSpinner';
+import { globalSetting } from "src/agent_admin/help";
 
+// Decorators
 import { ErrorHandling } from 'src/shared/decorators/errors';
 
 // APIs
@@ -29,7 +32,8 @@ import { HANDLE_HORIZONTAL, HANDLE_VERTICAL } from 'src/shared/constants';
 // Types
 import { Minion, RemoteDataState } from 'src/types';
 interface Props {
-	currentUrl: string;
+	currentUrl: string
+	isUserAuthorized: boolean
 }
 
 interface State {
@@ -39,20 +43,19 @@ interface State {
 	collectorConfigStatus: RemoteDataState;
 	measurementsTitle: string;
 	serviceMeasurements: {
-		name: string;
+		name: string
 		isActivity: boolean;
 	}[];
 	defaultMeasurements: {
-		name: string;
+		name: string
 		isActivity: boolean;
 	}[];
 	horizontalProportions: number[];
 	verticalProportions: number[];
 	description: string;
-	focusedMeasure: Readonly<{}>;
-	focusedMeasurePosition: Readonly<{}>;
-	refresh: boolean;
-	script: string;
+	focusedMeasure: string;
+	focusedMeasurePosition: { top: number, left: number }
+	configScript: string
 	selectHost: string;
 	responseMessage: string;
 	defaultService: string[];
@@ -90,9 +93,8 @@ class AgentConfiguration extends PureComponent<Props, State> {
 			verticalProportions: [0.43, 0.57],
 			description: '',
 			focusedMeasure: '',
-			focusedMeasurePosition: {},
-			refresh: false,
-			script: '',
+			focusedMeasurePosition: { top: null, left: null },
+			configScript: '',
 			selectHost: '',
 			responseMessage: '',
 			focusedHost: '',
@@ -133,9 +135,6 @@ class AgentConfiguration extends PureComponent<Props, State> {
 		if (measurementsStatus === RemoteDataState.Error) {
 			return this.ErrorState;
 		}
-		// if (serviceMeasurements.length === 0) {
-		//   return this.NoMeasurementsState
-		// }
 
 		return this.MeasurementsContentBody;
 	}
@@ -143,9 +142,6 @@ class AgentConfiguration extends PureComponent<Props, State> {
 	private get CollectorConfigContent() {
 		const { collectorConfigStatus } = this.state;
 
-		// if (collectorConfigStatus === RemoteDataState.Loading) {
-		//   return this.LoadingState;
-		// }
 
 		if (collectorConfigStatus === RemoteDataState.Error) {
 			return this.ErrorState;
@@ -178,17 +174,7 @@ class AgentConfiguration extends PureComponent<Props, State> {
 		);
 	}
 
-	// private get NoMeasurementsState(): JSX.Element {
-	//   return (
-	//     <div className="generic-empty-state">
-	//       <h4 style={{margin: '90px 0'}}>No data found</h4>
-	//     </div>
-	//   )
-	// }
-
 	public onClickTableRowCall = (host: string, ip: string) => () => {
-		console.log(host);
-
 		this.setState({
 			configPageStatus: RemoteDataState.Loading,
 			measurementsStatus: RemoteDataState.Loading,
@@ -200,7 +186,7 @@ class AgentConfiguration extends PureComponent<Props, State> {
 
 		getLocalFileReadPromise.then((pLocalFileReadData) => {
 			this.setState({
-				script: pLocalFileReadData.data.return[0][host],
+				configScript: pLocalFileReadData.data.return[0][host],
 				selectHost: host,
 				collectorConfigStatus: RemoteDataState.Done,
 				configPageStatus: RemoteDataState.Done
@@ -210,7 +196,7 @@ class AgentConfiguration extends PureComponent<Props, State> {
 		const getLocalServiceGetRunningPromise = getLocalServiceGetRunning(host);
 
 		getLocalServiceGetRunningPromise.then((pLocalServiceGetRunningData) => {
-			console.log(pLocalServiceGetRunningData.data.return[0][host]);
+
 			let getServiceRunning = this.state.defaultService
 				.filter((m) => pLocalServiceGetRunningData.data.return[0][host].includes(m))
 				.map((sMeasure) => {
@@ -227,17 +213,6 @@ class AgentConfiguration extends PureComponent<Props, State> {
 				};
 			});
 
-			// for (const k of pLocalServiceGetRunningData.data.return[0][host]) {
-			//   //console.log(k)
-			//   if (~this.state.defaultService.indexOf(k)) {
-			//     console.log(k)
-			//     getServiceRunning.push(k)
-			//   }
-			// }
-
-			console.log(getServiceRunning);
-			console.log(getDefaultMeasure);
-
 			this.setState({
 				serviceMeasurements: getServiceRunning,
 				defaultMeasurements: getDefaultMeasure,
@@ -251,50 +226,34 @@ class AgentConfiguration extends PureComponent<Props, State> {
 		if (isRunning === false) {
 			const getLocalServiceStartTelegrafPromise = runLocalServiceStartTelegraf(host);
 
-			getLocalServiceStartTelegrafPromise.then((pLocalServiceStartTelegrafData) => {
-				console.log(pLocalServiceStartTelegrafData);
+			getLocalServiceStartTelegrafPromise.then(() => {
 				this.getWheelKeyListAll();
 			});
 		} else {
 			const getLocalServiceStopTelegrafPromise = runLocalServiceStopTelegraf(host);
 
-			getLocalServiceStopTelegrafPromise.then((pLocalServiceStopTelegrafData) => {
-				console.log(pLocalServiceStopTelegrafData);
+			getLocalServiceStopTelegrafPromise.then(() => {
 				this.getWheelKeyListAll();
 			});
 		}
-		// return console.log('action Called', host, isRunning)
 	};
 
-	// public onClickSaveCall() {
-	//   return console.log("Save Called", this);
-	// }
-
-	// public onClickTestCall() {
-	//   return console.log("Test Called", this);
-	// }
-
 	public onClickApplyCall = () => {
-		const { selectHost, script } = this.state;
-
-		console.log('Apply Called', selectHost, script);
+		const { selectHost, configScript } = this.state;
 		this.setState({
 			configPageStatus: RemoteDataState.Loading,
 			collectorConfigStatus: RemoteDataState.Loading
 		});
-		const getLocalFileWritePromise = getLocalFileWrite(selectHost, script);
+		const getLocalFileWritePromise = getLocalFileWrite(selectHost, configScript);
 
 		getLocalFileWritePromise.then((pLocalFileWriteData) => {
 			this.setState({
 				responseMessage: pLocalFileWriteData.data.return[0][selectHost]
 			});
 
-			console.log('Apply Response Message:', pLocalFileWriteData.data.return[0][selectHost]);
-
 			const getLocalServiceReStartTelegrafPromise = runLocalServiceReStartTelegraf(selectHost);
 
-			getLocalServiceReStartTelegrafPromise.then((pLocalServiceReStartTelegrafData) => {
-				console.log(pLocalServiceReStartTelegrafData);
+			getLocalServiceReStartTelegrafPromise.then(() => {
 				this.getWheelKeyListAll();
 			});
 		});
@@ -302,10 +261,7 @@ class AgentConfiguration extends PureComponent<Props, State> {
 
 	public async componentDidMount() {
 		this.getWheelKeyListAll();
-
 		this.setState({ configPageStatus: RemoteDataState.Loading });
-
-		console.debug('componentDidMount');
 	}
 
 	render() {
@@ -346,14 +302,9 @@ class AgentConfiguration extends PureComponent<Props, State> {
 			? (serviceMeasurements[_thisProps.idx].isActivity = true)
 			: (serviceMeasurements[_thisProps.idx].isActivity = false);
 
-		console.log(mapServiceMeasurements);
-
 		const getRunnerSaltCmdTelegrafPromise = getRunnerSaltCmdTelegraf(_thisProps.name);
 
-		let getDescription = '';
-
 		getRunnerSaltCmdTelegrafPromise.then((pRunnerSaltCmdTelegrafData) => {
-			console.log(pRunnerSaltCmdTelegrafData.data.return[0]);
 
 			this.setState({
 				serviceMeasurements: [...mapServiceMeasurements],
@@ -362,19 +313,7 @@ class AgentConfiguration extends PureComponent<Props, State> {
 				focusedMeasurePosition: clickPosition,
 				description: pRunnerSaltCmdTelegrafData.data.return[0]
 			});
-
-			// getDescription = JSON.stringify(pRunnerSaltCmdTelegrafData.data.return[0])
 		});
-
-		console.log(getDescription);
-
-		// this.setState({
-		//   serviceMeasurements: [...mapServiceMeasurements],
-		//   defaultMeasurements: [...mapDefaultMeasurements],
-		//   focusedMeasure: _thisProps.name,
-		//   focusedMeasurePosition: clickPosition,
-		//   description: getDescription,
-		// })
 	};
 
 	private handleFocusedDefaultMeasure = ({ clickPosition, _thisProps }) => {
@@ -394,87 +333,18 @@ class AgentConfiguration extends PureComponent<Props, State> {
 			? (defaultMeasurements[_thisProps.idx].isActivity = true)
 			: (defaultMeasurements[_thisProps.idx].isActivity = false);
 
-		console.log(defaultMeasurements);
-
 		if (_thisProps.name === 'global setting') {
 			this.setState({
 				defaultMeasurements: [...mapDefaultMeasurements],
 				serviceMeasurements: [...mapServiceMeasurements],
 				focusedMeasure: _thisProps.name,
 				focusedMeasurePosition: clickPosition,
-				description: `[agent]
-  ## Default data collection interval for all inputs
-  interval = "10s"
-  ## Rounds collection interval to 'interval'
-  ## ie, if interval="10s" then always collect on :00, :10, :20, etc.
-  round_interval = true
-
-  ## Telegraf will send metrics to outputs in batches of at most
-  ## metric_batch_size metrics.
-  ## This controls the size of writes that Telegraf sends to output plugins.
-  metric_batch_size = 1000
-
-  ## Maximum number of unwritten metrics per output.
-  metric_buffer_limit = 10000
-
-  ## Collection jitter is used to jitter the collection by a random amount.
-  ## Each plugin will sleep for a random time within jitter before collecting.
-  ## This can be used to avoid many plugins querying things like sysfs at the
-  ## same time, which can have a measurable effect on the system.
-  collection_jitter = "0s"
-
-  ## Default flushing interval for all outputs. Maximum flush_interval will be
-  ## flush_interval + flush_jitter
-  flush_interval = "10s"
-  ## Jitter the flush interval by a random amount. This is primarily to avoid
-  ## large write spikes for users running a large number of telegraf instances.
-  ## ie, a jitter of 5s and interval 10s means flushes will happen every 10-15s
-  flush_jitter = "0s"
-
-  ## By default or when set to "0s", precision will be set to the same
-  ## timestamp order as the collection interval, with the maximum being 1s.
-  ##   ie, when interval = "10s", precision will be "1s"
-  ##       when interval = "250ms", precision will be "1ms"
-  ## Precision will NOT be used for service inputs. It is up to each individual
-  ## service input to set the timestamp at the appropriate precision.
-  ## Valid time units are "ns", "us" (or "쨉s"), "ms", "s".
-  precision = ""
-
-  ## Log at debug level.
-  # debug = false
-  ## Log only error level messages.
-  # quiet = false
-
-  ## Log file name, the empty string means to log to stderr.
-  # logfile = ""
-
-  ## The logfile will be rotated after the time interval specified.  When set
-  ## to 0 no time based rotation is performed.  Logs are rotated only when
-  ## written to, if there is no log activity rotation may be delayed.
-  # logfile_rotation_interval = "0d"
-
-  ## The logfile will be rotated when it becomes larger than the specified
-  ## size.  When set to 0 no size based rotation is performed.
-  # logfile_rotation_max_size = "0MB"
-
-  ## Maximum number of rotated archives to keep, any older logs are deleted.
-  ## If set to -1, no archives are removed.
-  # logfile_rotation_max_archives = 5
-
-  ## Override default hostname, if empty use os.Hostname()
-  hostname = ""
-  ## If set to true, do no set the "host" tag in the telegraf agent.
-  omit_hostname = false`
+				description: globalSetting
 			});
 		} else {
 			const getRunnerSaltCmdTelegrafPromise = getRunnerSaltCmdTelegraf(_thisProps.name);
 
-			// let getDescription = '';
-
-			// console.log(getDescription);
-
 			getRunnerSaltCmdTelegrafPromise.then((pRunnerSaltCmdTelegrafData) => {
-				console.log(pRunnerSaltCmdTelegrafData.data.return[0]);
 
 				this.setState({
 					defaultMeasurements: [...mapDefaultMeasurements],
@@ -482,17 +352,13 @@ class AgentConfiguration extends PureComponent<Props, State> {
 					focusedMeasure: _thisProps.name,
 					focusedMeasurePosition: clickPosition,
 					description: pRunnerSaltCmdTelegrafData.data.return[0]
-				});
-				// getDescription = JSON.stringify(pRunnerSaltCmdTelegrafData.data.return[0])
-			});
+				})
+			})
 		}
-
-	};
+	}
 
 	private handleServiceClose = () => {
-		const { serviceMeasurements, defaultMeasurements } = this.state;
-
-		console.log(defaultMeasurements);
+		const { serviceMeasurements } = this.state
 
 		const mapServiceMeasurements = serviceMeasurements.map((m) => {
 			m.isActivity = false;
@@ -502,14 +368,12 @@ class AgentConfiguration extends PureComponent<Props, State> {
 		this.setState({
 			serviceMeasurements: [...mapServiceMeasurements],
 			focusedMeasure: '',
-			focusedMeasurePosition: []
+			focusedMeasurePosition: { top: null, left: null }
 		});
 	};
 
 	private handleDefaultClose = () => {
-		const { defaultMeasurements, serviceMeasurements } = this.state;
-
-		console.log(serviceMeasurements);
+		const { defaultMeasurements } = this.state;
 
 		const mapDefaultMeasurements = defaultMeasurements.map((m) => {
 			m.isActivity = false;
@@ -519,7 +383,7 @@ class AgentConfiguration extends PureComponent<Props, State> {
 		this.setState({
 			defaultMeasurements: [...mapDefaultMeasurements],
 			focusedMeasure: '',
-			focusedMeasurePosition: []
+			focusedMeasurePosition: { top: null, left: null }
 		});
 	};
 
@@ -531,9 +395,8 @@ class AgentConfiguration extends PureComponent<Props, State> {
 		this.setState({ verticalProportions });
 	};
 
-	private onChangeScript = (script) => {
-		console.log('onChangeScript');
-		this.setState({ script });
+	private onChangeScript = (script: string): void => {
+		this.setState({ configScript: script });
 	};
 
 	private renderAgentPageTop = () => {
@@ -599,40 +462,26 @@ class AgentConfiguration extends PureComponent<Props, State> {
 			description,
 			focusedMeasure,
 			focusedMeasurePosition,
-			refresh
 		} = this.state;
 		return (
 			<FancyScrollbar>
-				<div
-					style={{
-						color: '#f58220',
-						fontSize: '12px',
-						background: '#232323',
-						padding: '10px',
-						margin: '5px 0px',
-						width: '100%'
-					}}
-				>
-					{' '}
+				<div className="measurements-query-builder--contain">
 					(Service)
 				</div>
 				<div className="query-builder--list">
-					{serviceMeasurements.map((v, i) => {
-						return (
-							<AgentToolbarFunction
-								name={v.name}
-								isActivity={v.isActivity}
-								key={i}
-								idx={i}
-								handleFocusedMeasure={this.handleFocusedServiceMeasure.bind(this)}
-								handleClose={this.handleServiceClose}
-								description={description}
-								focusedMeasure={focusedMeasure}
-								focusedPosition={focusedMeasurePosition}
-								refresh={refresh}
-							/>
-						);
-					})}
+					{serviceMeasurements.map((v: { name: string, isActivity: boolean }, idx): JSX.Element => (
+						<AgentToolbarFunction
+							name={v.name}
+							isActivity={v.isActivity}
+							idx={idx}
+							handleFocusedMeasure={this.handleFocusedServiceMeasure}
+							handleClose={this.handleServiceClose}
+							description={description}
+							focusedMeasure={focusedMeasure}
+							focusedPosition={focusedMeasurePosition}
+						/>
+					)
+					)}
 				</div>
 				<div
 					style={{
@@ -660,7 +509,6 @@ class AgentConfiguration extends PureComponent<Props, State> {
 								description={description}
 								focusedMeasure={focusedMeasure}
 								focusedPosition={focusedMeasurePosition}
-								refresh={refresh}
 							/>
 						);
 					})}
@@ -678,10 +526,7 @@ class AgentConfiguration extends PureComponent<Props, State> {
 					<h2 className="panel-title">collector.conf</h2>
 					<div>
 						<button
-							className="btn btn-inline_block btn-default"
-							style={{
-								marginLeft: '5px'
-							}}
+							className="btn btn-inline_block btn-default agent--btn"
 							onClick={this.onClickApplyCall}
 						>
 							APPLY
@@ -695,16 +540,10 @@ class AgentConfiguration extends PureComponent<Props, State> {
 	}
 
 	private get CollectorConfigBody() {
+		const { configScript } = this.state
 		return (
-			<div
-				style={{
-					width: '100%',
-					height: '100%',
-					overflow: 'hidden',
-					position: 'relative'
-				}}
-			>
-				<AgentCodeEditor script={this.state.script} onChangeScript={this.onChangeScript} />
+			<div className='collect-config--half'>
+				<AgentCodeEditor configScript={configScript} onChangeScript={this.onChangeScript} />
 			</div>
 		);
 	}

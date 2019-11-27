@@ -1,71 +1,74 @@
+// Libraries
 import React, { PureComponent } from "react";
+
+// Components
 import FancyScrollbar from "src/shared/components/FancyScrollbar";
 
-class AgentMinionsConsole extends PureComponent {
+interface Props {
+  res: string
+}
+
+class AgentMinionsConsole extends PureComponent<Props> {
   constructor(props) {
     super(props);
   }
 
-  public prettyJson(jsonText) {
-    if (!jsonText) {
-      return jsonText;
-    }
+  // public prettyJson(jsonText) {
 
-    var prettyJson = new Array();
-    var depth = 0;
-    var currChar;
-    var prevChar;
-    var doubleQuoteIn = false;
+  //   if (!jsonText) return jsonText;
 
-    for (var i = 0; i < jsonText.length; i++) {
-      currChar = jsonText.charAt(i);
+  //   var prettyJson = new Array();
+  //   var depth = 0;
+  //   var currChar;
+  //   var prevChar;
+  //   var doubleQuoteIn = false;
 
-      if (currChar == '"') {
-        if (prevChar != "\\") {
-          doubleQuoteIn = !doubleQuoteIn;
-        }
-      }
-      switch (currChar) {
-        case "{":
-          prettyJson.push(currChar);
-          if (!doubleQuoteIn) {
-            prettyJson.push("\n");
-            this.insertTab(prettyJson, ++depth);
-          }
-          break;
-        case "}":
-          if (!doubleQuoteIn) {
-            prettyJson.push("\n");
-            this.insertTab(prettyJson, --depth);
-          }
-          prettyJson.push(currChar);
-          break;
-        case ",":
-          prettyJson.push(currChar);
-          if (!doubleQuoteIn) {
-            prettyJson.push("\n");
-            this.insertTab(prettyJson, depth);
-          }
-          break;
-        default:
-          prettyJson.push(currChar);
-          break;
-      }
-      prevChar = currChar;
-    }
+  //   for (var i = 0; i < jsonText.length; i++) {
+  //     currChar = jsonText.charAt(i);
 
-    console.log(prettyJson);
+  //     if (currChar == '"') {
+  //       if (prevChar != "\\") {
+  //         doubleQuoteIn = !doubleQuoteIn;
+  //       }
+  //     }
+  //     switch (currChar) {
+  //       case "{":
+  //         prettyJson.push(currChar);
+  //         if (!doubleQuoteIn) {
+  //           prettyJson.push("\n");
+  //           this.insertTab(prettyJson, ++depth);
+  //         }
+  //         break;
+  //       case "}":
+  //         if (!doubleQuoteIn) {
+  //           prettyJson.push("\n");
+  //           this.insertTab(prettyJson, --depth);
+  //         }
+  //         prettyJson.push(currChar);
+  //         break;
+  //       case ",":
+  //         prettyJson.push(currChar);
+  //         if (!doubleQuoteIn) {
+  //           prettyJson.push("\n");
+  //           this.insertTab(prettyJson, depth);
+  //         }
+  //         break;
+  //       default:
+  //         prettyJson.push(currChar);
+  //         break;
+  //     }
+  //     prevChar = currChar;
+  //   }
+  //   return prettyJson.join("");
+  // }
 
-    return prettyJson.join("");
-  }
+  // public insertTab(prettyJson, depth) {
+  //   const TAB = "";
 
-  public insertTab(prettyJson, depth) {
-    const TAB = "";
-
-    for (var i = 0; i < depth; i++) {
-      prettyJson.push(TAB);
-    }
-  }
+  //   for (var i = 0; i < depth; i++) {
+  //     prettyJson.push(TAB);
+  //   }
+  // }
 
   render() {
     const { res } = this.props;

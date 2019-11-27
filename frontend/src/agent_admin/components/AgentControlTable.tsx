@@ -1,35 +1,40 @@
+// Libraries
 import React, { PureComponent } from "react";
-
 import _ from "lodash";
 import memoize from "memoize-one";
 
-import SearchBar from "src/hosts/components/SearchBar";
+// Components
 import AgentControlTableRow from "src/agent_admin/components/AgentControlTableRow";
+import SearchBar from "src/hosts/components/SearchBar";
 import FancyScrollbar from "src/shared/components/FancyScrollbar";
-
 import PageSpinner from "src/shared/components/PageSpinner";
 
-import { AGENT_TABLE_SIZING } from "src/hosts/constants/tableSizing";
+// Contants
+import { AGENT_TABLE_SIZING } from "src/agent_admin/constants/tableSizing";
 
-import { Source, RemoteDataState, Minion } from "src/types";
+// Types
+import { RemoteDataState, Minion } from "src/types";
 
+// Decorator
 import { ErrorHandling } from "src/shared/decorators/errors";
 
 enum SortDirection {
   ASC = "asc",
   DESC = "desc"
 }
+
 export interface Props {
   minions: Minion[];
   controlPageStatus: RemoteDataState;
-  onClickTableRow: () => void;
-  onClickAction: () => void;
+  isAllCheck: boolean;
+  onClickAction: (host: string, isRunning: boolean) => () => void;
   onClickRun: () => void;
   onClickStop: () => void;
   onClickInstall: () => void;
-  //handleAllCheck: () => object
-  // handleWheelKeyCommand: () => void
+  handleAllCheck: ({ _this: object }) => void;
+  handleMinionCheck: ({ _this: object }) => void;
 }
+
 interface State {
   searchTerm: string;
   sortDirection: SortDirection;
@@ -60,19 +65,7 @@ class AgentControlTable extends PureComponent<Props, State> {
   public filter(allHosts, searchTerm) {
     const filterText = searchTerm.toLowerCase();
     return allHosts.filter(h => {
-      // const apps = h.apps ? h.apps.join(', ') : ''
-
-      // let tagResult = false
-      // if (h.tags) {
-      //   tagResult = Object.keys(h.tags).reduce((acc, key) => {
-      //     return acc || h.tags[key].toLowerCase().includes(filterText)
-      //   }, false)
-      // } else {
-      //   tagResult = false
-      // }
       return h.host.toLowerCase().includes(filterText);
-      // apps.toLowerCase().includes(filterText) ||
-      // tagResult
     });
   }
 
@@ -104,7 +97,7 @@ class AgentControlTable extends PureComponent<Props, State> {
     }
   };
 
-  public sortableClasses = key => {
+  public sortableClasses = (key: string): string => {
     const { sortKey, sortDirection } = this.state;
     if (sortKey === key) {
       if (sortDirection === SortDirection.ASC) {
@@ -115,30 +108,13 @@ class AgentControlTable extends PureComponent<Props, State> {
     return "hosts-table--th sortable-header";
   };
 
-  public componentWillMount() {}
-
-  public componentDidMount() {}
-
-  public componentWillUnmount() {}
-
   private get AgentTableHeader(): JSX.Element {
     return this.AgentTableHeaderEachPage;
   }
 
   private get AgentTableContents(): JSX.Element {
     const { minions, controlPageStatus } = this.props;
-    const { sortKey, sortDirection, searchTerm } = this.state;
 
-    const sortedHosts = this.getSortedHosts(
-      minions,
-      searchTerm,
-      sortKey,
-      sortDirection
-    );
-
-    // if (controlPageStatus === RemoteDataState.Loading) {
-    //   return this.LoadingState;
-    // }
     if (controlPageStatus === RemoteDataState.Error) {
       return this.ErrorState;
     }
@@ -154,15 +130,7 @@ class AgentControlTable extends PureComponent<Props, State> {
 
   private get LoadingState(): JSX.Element {
     return (
-      <div
-        style={{
-          position: "absolute",
-          zIndex: 3,
-          backgroundColor: "rgba(0,0,0,0.5)",
-          width: "100%",
-          height: "100%"
-        }}
-      >
+      <div className="agent--loding-state">
         <PageSpinner />
       </div>
     );
@@ -236,11 +204,8 @@ class AgentControlTable extends PureComponent<Props, State> {
             disabled={
               controlPageStatus === RemoteDataState.Loading ? true : false
             }
-            className="btn btn-inline_block btn-default"
+            className="btn btn-inline_block btn-default agent--btn"
             onClick={onClickStop.bind(this)}
-            style={{
-              marginLeft: "5px"
-            }}
           >
             STOP
           </button>
@@ -248,11 +213,8 @@ class AgentControlTable extends PureComponent<Props, State> {
             disabled={
               controlPageStatus === RemoteDataState.Loading ? true : false
             }
-            className="btn btn-inline_block btn-default"
+            className="btn btn-inline_block btn-default agent--btn"
             onClick={onClickInstall.bind(this)}
-            style={{
-              marginLeft: "5px"
-            }}
           >
             INSTALL
           </button>
@@ -350,11 +312,7 @@ class AgentControlTable extends PureComponent<Props, State> {
   private get AgentTableWithHosts() {
     const {
       minions,
-      onClickTableRow,
       onClickAction,
-      onClickRun,
-      onClickStop,
-      onClickInstall,
       isAllCheck,
       handleMinionCheck
     } = this.props;
@@ -371,21 +329,16 @@ class AgentControlTable extends PureComponent<Props, State> {
       <div className="hosts-table">
         {this.AgentTableHeader}
         <FancyScrollbar
-          children={sortedHosts.map((m, i) => (
+          children={sortedHosts.map((m: Minion, i: number): JSX.Element => (
             <AgentControlTableRow
               key={i}
               minions={m}
-              onClickTableRow={onClickTableRow}
-              onClickAction={onClickAction}
-              onClickRun={onClickRun}
-              onClickStop={onClickStop}
-              onClickInstall={onClickInstall}
               isCheck={m.isCheck}
               isAllCheck={isAllCheck}
+              onClickAction={onClickAction}
               handleMinionCheck={handleMinionCheck}
             />
           ))}
-          itemHeight={26}
           className="hosts-table--tbody"
         />
       </div>

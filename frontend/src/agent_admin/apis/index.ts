@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from 'axios'
+import axios from 'axios'
 import { Minion } from 'src/types'
 
 interface MinionsObject {
@@ -12,7 +12,6 @@ const EmptyMionin: Minion = {
 	osVersion: '',
 	status: '',
 	isCheck: false,
-	//app: [],
 }
 
 const apiRequest = (pMethod, pRoute, pParams) => {
@@ -24,30 +23,13 @@ const apiRequest = (pMethod, pRoute, pParams) => {
 
 	Object.assign(dParams, pParams)
 
-	console.log(dParams)
-	console.log(pParams)
-
 	const url = 'http://61.250.122.43:8000/run' + pRoute
 	const headers = {
 		Accept: 'application/json',
 		'Content-type': 'application/json',
 	}
 
-	// return axios({
-	//   method: pMethod,
-	//   url: url,
-	//   headers: headers,
-	//   data: {
-	//     username: dParams.username,
-	//     password: dParams.password,
-	//     eauth: dParams.eauth,
-	//     client: pParams.client,
-	//     fun: pParams.fun,
-	//   },
-	// })
 	const param = JSON.stringify(dParams)
-
-	console.log(JSON.stringify(dParams))
 
 	return axios({
 		method: pMethod,
@@ -59,11 +41,7 @@ const apiRequest = (pMethod, pRoute, pParams) => {
 
 export const getMinionKeyListAllAsync = async (): Promise<MinionsObject> => {
 	const minions: MinionsObject = {}
-
 	const info = await Promise.all([getWheelKeyListAll(), getRunnerManageAllowed(), getLocalGrainsItems('')])
-
-	console.log(info)
-	console.log(info[0].data.return[0].data.return.minions)
 
 	const info2 = await Promise.all([
 		getLocalServiceEnabledTelegraf(info[0].data.return[0].data.return.minions),
@@ -77,8 +55,6 @@ export const getMinionKeyListAllAsync = async (): Promise<MinionsObject> => {
 	const installList = info2[0].data.return[0]
 	const statusList = info2[1].data.return[0]
 
-	console.log('list', keyList, ipList, osList, installList, statusList)
-
 	for (const k of keyList)
 		minions[k] = {
 			host: k,
@@ -91,16 +67,12 @@ export const getMinionKeyListAllAsync = async (): Promise<MinionsObject> => {
 			isRunning: statusList[k],
 		}
 
-	console.log(minions)
-
 	return minions
 }
 
 export const getMinionKeyListAll = async (): Promise<MinionsObject> => {
 	const minions: MinionsObject = {}
-
 	const wheelKeyListAllPromise = getWheelKeyListAll()
-	//const getRunnerManageAllowedPromise = getRunnerManageAllowed()
 
 	return wheelKeyListAllPromise.then((pWheelKeyListAllData) => {
 		for (const k of pWheelKeyListAllData.data.return[0].data.return.minions)
@@ -109,20 +81,6 @@ export const getMinionKeyListAll = async (): Promise<MinionsObject> => {
 				host: k,
 				status: 'Accept',
 			}
-
-		// getRunnerManageAllowedPromise.then(pRunnerManageAllowedData => {
-		//   Object.keys(pRunnerManageAllowedData.data.return[0]).forEach(function(
-		//     key
-		//   ) {
-		//     console.log(key, pRunnerManageAllowedData.data.return[0][key])
-		//     minions[key] = {
-		//       ...EmptyMionin,
-		//       ip: pRunnerManageAllowedData.data.return[0][key],
-		//     }
-		//   })
-
-		//   console.log(minions)
-		// })
 
 		for (const k of pWheelKeyListAllData.data.return[0].data.return.minions_pre)
 			minions[k] = {
@@ -144,9 +102,7 @@ export const getMinionKeyListAll = async (): Promise<MinionsObject> => {
 
 export const getMinionAcceptKeyListAll = async (): Promise<MinionsObject> => {
 	const minions: MinionsObject = {}
-
 	const wheelKeyListAllPromise = getWheelKeyListAll()
-	//const getRunnerManageAllowedPromise = getRunnerManageAllowed()
 
 	return wheelKeyListAllPromise.then((pWheelKeyListAllData) => {
 		for (const k of pWheelKeyListAllData.data.return[0].data.return.minions)
@@ -163,12 +119,9 @@ export const getMinionAcceptKeyListAll = async (): Promise<MinionsObject> => {
 export const getMinionsIP = async (minions: MinionsObject): Promise<MinionsObject> => {
 	const newMinions = { ...minions }
 
-	console.log('getMinionsIP')
-
 	const getRunnerManageAllowedPromise = getRunnerManageAllowed()
 	return getRunnerManageAllowedPromise.then((pRunnerManageAllowedData) => {
 		Object.keys(pRunnerManageAllowedData.data.return[0]).forEach(function (k) {
-			console.log(k, pRunnerManageAllowedData.data.return[0][k])
 			newMinions[k] = {
 				host: k,
 				status: newMinions[k].status,
@@ -182,9 +135,6 @@ export const getMinionsIP = async (minions: MinionsObject): Promise<MinionsObjec
 
 export const getMinionsOS = async (minions: MinionsObject): Promise<MinionsObject> => {
 	const newMinions = { ...minions }
-
-	console.log('getMinionsOS')
-
 	const getLocalGrainsItemsPromise = getLocalGrainsItems('')
 
 	return getLocalGrainsItemsPromise.then((pLocalGrainsItemsData) => {
@@ -206,15 +156,9 @@ export const getMinionsOS = async (minions: MinionsObject): Promise<MinionsObjec
 
 export const getTelegrafInstalled = async (minions: MinionsObject): Promise<MinionsObject> => {
 	const newMinions = { ...minions }
-	const pMinionid = ''
-
-	console.log('getTelegrafInstalled')
-	console.log(Object.keys(newMinions))
-
 	const getLocalServiceEnabledTelegrafPromise = getLocalServiceEnabledTelegraf(Object.keys(newMinions))
 
 	return getLocalServiceEnabledTelegrafPromise.then((pLocalServiceEnabledTelegrafData) => {
-		console.log(pLocalServiceEnabledTelegrafData.data.return[0])
 		Object.keys(pLocalServiceEnabledTelegrafData.data.return[0]).forEach(function (k) {
 			if (newMinions.hasOwnProperty(k)) {
 				newMinions[k] = {
@@ -237,15 +181,9 @@ export const getTelegrafInstalled = async (minions: MinionsObject): Promise<Mini
 
 export const getTelegrafServiceStatus = async (minions: MinionsObject): Promise<MinionsObject> => {
 	const newMinions = { ...minions }
-	const pMinionid = ''
-
-	console.log('getTelegrafServiceStatus')
-	console.log(Object.keys(newMinions))
-
 	const getLocalServiceStatusTelegrafPromise = getLocalServiceStatusTelegraf(Object.keys(newMinions))
 
 	return getLocalServiceStatusTelegrafPromise.then((pLocalServiceStatusTelegrafData) => {
-		console.log(pLocalServiceStatusTelegrafData.data.return[0])
 		Object.keys(pLocalServiceStatusTelegrafData.data.return[0]).forEach(function (k) {
 			if (newMinions.hasOwnProperty(k)) {
 				newMinions[k] = {
@@ -369,31 +307,6 @@ export function getLocalServiceEnabledTelegraf(pMinionId) {
 		params.tgt = '*'
 	}
 	return apiRequest('POST', '/', params)
-
-	// const dParams = {
-	//   username: 'salt',
-	//   password: 'salt',
-	//   eauth: 'pam',
-	// }
-
-	// Object.assign(dParams, params)
-
-	// const url = 'http://192.168.56.105:8000/run' + '/'
-	// const headers = {
-	//   Accept: 'application/json',
-	//   'Content-type': 'application/json',
-	// }
-
-	// const param = JSON.stringify(dParams)
-
-	// console.log(JSON.stringify(dParams))
-
-	// return axios({
-	//   method: 'POST',
-	//   url: url,
-	//   headers: headers,
-	//   data: param,
-	// })
 }
 
 export function getLocalServiceStatusTelegraf(pMinionId) {
@@ -412,30 +325,6 @@ export function getLocalServiceStatusTelegraf(pMinionId) {
 		params.tgt = '*'
 	}
 	return apiRequest('POST', '/', params)
-	// const dParams = {
-	//   username: 'salt',
-	//   password: 'salt',
-	//   eauth: 'pam',
-	// }
-
-	// Object.assign(dParams, params)
-
-	// const url = 'http://192.168.56.105:8000/run' + '/'
-	// const headers = {
-	//   Accept: 'application/json',
-	//   'Content-type': 'application/json',
-	// }
-
-	// const param = JSON.stringify(dParams)
-
-	// console.log(JSON.stringify(dParams))
-
-	// return axios({
-	//   method: 'POST',
-	//   url: url,
-	//   headers: headers,
-	//   data: param,
-	// })
 }
 
 export function runLocalServiceStartTelegraf(pMinionId) {

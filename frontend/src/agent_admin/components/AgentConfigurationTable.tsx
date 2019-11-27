@@ -1,36 +1,37 @@
+// Libraries
 import React, { PureComponent } from "react";
-
 import _ from "lodash";
 import memoize from "memoize-one";
 
-import SearchBar from "src/hosts/components/SearchBar";
+// Components
+import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
 import AgentConfigurationTableRow from "src/agent_admin/components/AgentConfigurationTableRow";
+import SearchBar from "src/hosts/components/SearchBar";
+import PageSpinner from "src/shared/components/PageSpinner";
 import FancyScrollbar from "src/shared/components/FancyScrollbar";
 
-import PageSpinner from "src/shared/components/PageSpinner";
+// Constants
+import { AGENT_TABLE_SIZING } from "src/agent_admin/constants/tableSizing";
 
-import { AGENT_TABLE_SIZING } from "src/hosts/constants/tableSizing";
+// Types
+import { RemoteDataState, Minion } from "src/types";
 
-import { Source, RemoteDataState, Minion } from "src/types";
-
+// Decorators
 import { ErrorHandling } from "src/shared/decorators/errors";
-import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
 
 enum SortDirection {
   ASC = "asc",
   DESC = "desc"
 }
-export interface Props {
+
+interface Props {
   minions: Minion[]
   configPageStatus: RemoteDataState
   onClickTableRow: AgentConfiguration['onClickTableRowCall']
   onClickAction: AgentConfiguration['onClickActionCall']
   focusedHost: string
-  // onClickRun: () => void
-  // onClickStop: () => void
-  // onClickInstall: () => void
-  // handleWheelKeyCommand: () => void
 }
+
 interface State {
   searchTerm: string;
   sortDirection: SortDirection;
@@ -104,12 +105,6 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     return "hosts-table--th sortable-header";
   };
 
-  public componentWillMount() { }
-
-  public componentDidMount() { }
-
-  public componentWillUnmount() { }
-
   private get AgentTableContents() {
     const { minions, configPageStatus } = this.props;
     const { sortKey, sortDirection, searchTerm } = this.state;
@@ -120,10 +115,6 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
       sortKey,
       sortDirection
     );
-
-    // if (configPageStatus === RemoteDataState.Loading) {
-    //   return this.LoadingState
-    // }
 
     if (configPageStatus === RemoteDataState.Error) {
       return this.ErrorState;
@@ -140,13 +131,9 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
 
   private get LoadingState(): JSX.Element {
     return (
-      <div
+      <div className="agent--loding-state"
         style={{
-          position: "absolute",
-          zIndex: 3,
-          backgroundColor: "rgba(0,0,0,0.5)",
-          width: "100%",
-          height: "100%"
+
         }}
       >
         <PageSpinner />
@@ -203,7 +190,6 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
   private get AgentTitle() {
     const { minions } = this.props;
     const { sortKey, sortDirection, searchTerm } = this.state;
-
     const filteredMinion = minions.filter(m => m.isInstall === true);
 
     const sortedHosts = this.getSortedHosts(
@@ -275,7 +261,6 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
   private get AgentTableWithHosts() {
     const { minions, onClickTableRow, onClickAction, focusedHost } = this.props;
     const { sortKey, sortDirection, searchTerm } = this.state;
-
     const filteredMinion = minions.filter(m => m.isInstall === true);
 
     const sortedHosts = this.getSortedHosts(
@@ -289,7 +274,7 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
       <div className="hosts-table">
         {this.AgentTableHeader}
         <FancyScrollbar
-          children={sortedHosts.map((m, i) => (
+          children={sortedHosts.map((m: Minion, i: number): JSX.Element => (
             <AgentConfigurationTableRow
               key={i}
               minions={m}
@@ -298,7 +283,6 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
               focusedHost={focusedHost}
             />
           ))}
-          itemHeight={26}
           className="hosts-table--tbody"
         />
       </div>

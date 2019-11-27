@@ -1,19 +1,20 @@
+// Libraries
 import React, { PureComponent } from 'react'
-import { AGENT_TABLE_SIZING } from 'src/hosts/constants/tableSizing'
 
+// Constants
+import { AGENT_TABLE_SIZING } from 'src/agent_admin/constants/tableSizing'
+import AgentMinions from 'src/agent_admin/containers/AgentMinions'
+
+// Types
 import { Minion } from 'src/types'
 
 interface Props {
-	key: Readonly<Props>
+	idx: number
 	minions: Minion
-	// ip: string
-	// host: string
-	// status: string
-	// currentUrl: string
-	// onClickTableRow: () => void
-	onClickModal: ({ }) => object
-	handleWheelKeyCommand: () => void
 	focusedHost: string
+	onClickTableRow: AgentMinions['onClickTableRowCall']
+	onClickModal: ({ }) => object
+	handleWheelKeyCommand: (host: string, cmdstatus: string) => void
 }
 
 class AgentMinionsTableRow extends PureComponent<Props> {
@@ -88,18 +89,22 @@ class AgentMinionsTableRow extends PureComponent<Props> {
 	}
 
 	render() {
-		console.log('rowRender')
 		return this.TableRowEachPage
 	}
 
-	private get TableRowEachPage() {
-		const { key, minions, onClickTableRow, onClickModal, handleWheelKeyCommand } = this.props
+	private get handleOnClickTableRow() {
+		const { minions, onClickTableRow } = this.props
+		const { host } = minions
+		return onClickTableRow(host)
+	}
 
+	private get TableRowEachPage() {
+		const { idx, minions, onClickModal, handleWheelKeyCommand } = this.props
 		const { osVersion, os, ip, host, status } = minions
 		const { StatusWidth, HostWidth, IPWidth } = AGENT_TABLE_SIZING
 
 		return (
-			<div className={this.focusedClasses(host)} onClick={onClickTableRow(host)}>
+			<div className={this.focusedClasses(host)} onClick={this.handleOnClickTableRow}>
 				<div className="hosts-table--td" style={{ width: HostWidth }}>
 					{host}
 				</div>
@@ -118,14 +123,14 @@ class AgentMinionsTableRow extends PureComponent<Props> {
 				<div className="hosts-table--td" style={{ width: StatusWidth }}>
 					{this.isStatusIndicator(status)}
 				</div>
-				<div className="hosts-table--td" id={`table-row--select${key}`} style={{ width: StatusWidth }}>
+				<div className="hosts-table--td" id={`table-row--select${idx}`} style={{ width: StatusWidth }}>
 					{onClickModal({
 						name: '=',
 						host,
 						status,
 						_this: this,
 						handleWheelKeyCommand,
-						key,
+						idx,
 					})}
 				</div>
 			</div>
