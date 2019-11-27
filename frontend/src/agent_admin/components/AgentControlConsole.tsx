@@ -1,19 +1,19 @@
 // Libraries
-import React, { PureComponent } from "react";
+import React, { PureComponent } from "react"
 
 // Constants
-import FancyScrollbar from "src/shared/components/FancyScrollbar";
+import FancyScrollbar from "src/shared/components/FancyScrollbar"
 
 interface Props {
   res: {}
 }
 class AgentControlConsole extends PureComponent<Props> {
   constructor(props) {
-    super(props);
+    super(props)
   }
 
   render() {
-    const { res } = this.props;
+    const { res } = this.props
     return (
       <div className="panel">
         <div className="panel-heading">
@@ -39,8 +39,8 @@ class AgentControlConsole extends PureComponent<Props> {
           </div>
         </div>
       </div>
-    );
+    )
   }
 }
 
-export default AgentControlConsole;
+export default AgentControlConsole

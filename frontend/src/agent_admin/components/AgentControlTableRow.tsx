@@ -1,14 +1,14 @@
 // Libraries
-import React, { PureComponent } from "react";
+import React, { PureComponent } from "react"
 
 // Components
-import AgentControl from "src/agent_admin/containers/AgentControl";
+import AgentControl from "src/agent_admin/containers/AgentControl"
 
 // Constants
-import { AGENT_TABLE_SIZING } from "src/agent_admin/constants/tableSizing";
+import { AGENT_TABLE_SIZING } from "src/agent_admin/constants/tableSizing"
 
 // Types
-import { Minion } from "src/types";
+import { Minion } from "src/types"
 
 interface Props {
   minions: Minion
@@ -20,22 +20,22 @@ interface Props {
 
 class AgentControlTableRow extends PureComponent<Props> {
   constructor(props) {
-    super(props);
+    super(props)
   }
 
   public focusedClasses = (): string => {
-    const { isCheck } = this.props;
-    return isCheck ? "hosts-table--tr focused" : "hosts-table--tr";
-  };
+    const { isCheck } = this.props
+    return isCheck ? "hosts-table--tr focused" : "hosts-table--tr"
+  }
 
   public getHandleMinionCheck = (event) => {
-    event.stopPropagation();
-    const { handleMinionCheck } = this.props;
-    return handleMinionCheck({ _this: this });
-  };
+    event.stopPropagation()
+    const { handleMinionCheck } = this.props
+    return handleMinionCheck({ _this: this })
+  }
 
   public render() {
-    return this.TableRowEachPage;
+    return this.TableRowEachPage
   }
 
   private get TableRowEachPage() {
@@ -80,7 +80,7 @@ class AgentControlTableRow extends PureComponent<Props> {
           </button>
         </div>
       </div>
-    );
+    )
   }
 
   private get handleOnClickAction() {
@@ -90,4 +90,4 @@ class AgentControlTableRow extends PureComponent<Props> {
   }
 }
 
-export default AgentControlTableRow;
+export default AgentControlTableRow

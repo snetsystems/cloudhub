@@ -1,21 +1,21 @@
 // Libraries
-import React, { PureComponent } from "react";
+import React, { PureComponent } from "react"
 
 // Components
 import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
 
 // Constants
-import { AGENT_TABLE_SIZING } from "src/agent_admin/constants/tableSizing";
+import { AGENT_TABLE_SIZING } from "src/agent_admin/constants/tableSizing"
 
 // Types
-import { Minion } from "src/types";
+import { Minion } from "src/types"
 
 // Decorators
-import { ErrorHandling } from 'src/shared/decorators/errors';
+import { ErrorHandling } from 'src/shared/decorators/errors'
 
 interface Props {
-  minions: Minion;
-  focusedHost: string;
+  minions: Minion
+  focusedHost: string
   onClickTableRow: AgentConfiguration['onClickTableRowCall']
   onClickAction: AgentConfiguration['onClickActionCall']
 }
@@ -23,19 +23,19 @@ interface Props {
 @ErrorHandling
 class AgentConfigurationTableRow extends PureComponent<Props> {
   constructor(props) {
-    super(props);
+    super(props)
   }
 
   public focusedClasses = (host: string): string => {
-    const { focusedHost } = this.props;
+    const { focusedHost } = this.props
     if (host === focusedHost) {
-      return "hosts-table--tr focused";
+      return "hosts-table--tr focused"
     }
-    return "hosts-table--tr";
-  };
+    return "hosts-table--tr"
+  }
 
   render() {
-    return this.TableRowEachPage;
+    return this.TableRowEachPage
   }
 
   private get handleOnClickTableRow() {
@@ -53,9 +53,9 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
   }
 
   private get TableRowEachPage(): JSX.Element {
-    const { minions } = this.props;
-    const { osVersion, os, ip, host, isRunning } = minions;
-    const { StatusWidth, HostWidth, IPWidth } = AGENT_TABLE_SIZING;
+    const { minions } = this.props
+    const { osVersion, os, ip, host, isRunning } = minions
+    const { StatusWidth, HostWidth, IPWidth } = AGENT_TABLE_SIZING
 
     return (
       <div
@@ -87,8 +87,8 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
           </button>
         </div>
       </div>
-    );
+    )
   }
 }
 
-export default AgentConfigurationTableRow;
+export default AgentConfigurationTableRow

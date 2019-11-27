@@ -1,18 +1,18 @@
 // Libraries
-import React, { PureComponent } from 'react';
-import _ from 'lodash';
+import React, { PureComponent } from 'react'
+import _ from 'lodash'
 
 // Components
-import Threesizer from 'src/shared/components/threesizer/Threesizer';
-import AgentConfigurationTable from 'src/agent_admin/components/AgentConfigurationTable';
-import FancyScrollbar from 'src/shared/components/FancyScrollbar';
-import AgentCodeEditor from 'src/agent_admin/components/AgentCodeEditor';
-import AgentToolbarFunction from 'src/agent_admin/components/AgentToolbarFunction';
-import PageSpinner from 'src/shared/components/PageSpinner';
-import { globalSetting } from "src/agent_admin/help";
+import Threesizer from 'src/shared/components/threesizer/Threesizer'
+import AgentConfigurationTable from 'src/agent_admin/components/AgentConfigurationTable'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import AgentCodeEditor from 'src/agent_admin/components/AgentCodeEditor'
+import AgentToolbarFunction from 'src/agent_admin/components/AgentToolbarFunction'
+import PageSpinner from 'src/shared/components/PageSpinner'
+import { globalSetting } from "src/agent_admin/help"
 
 // Decorators
-import { ErrorHandling } from 'src/shared/decorators/errors';
+import { ErrorHandling } from 'src/shared/decorators/errors'
 
 // APIs
 import {
@@ -24,42 +24,42 @@ import {
 	runLocalServiceReStartTelegraf,
 	getLocalServiceGetRunning,
 	getRunnerSaltCmdTelegraf
-} from 'src/agent_admin/apis';
+} from 'src/agent_admin/apis'
 
 //const
-import { HANDLE_HORIZONTAL, HANDLE_VERTICAL } from 'src/shared/constants';
+import { HANDLE_HORIZONTAL, HANDLE_VERTICAL } from 'src/shared/constants'
 
 // Types
-import { Minion, RemoteDataState } from 'src/types';
+import { Minion, RemoteDataState } from 'src/types'
 interface Props {
 	currentUrl: string
 	isUserAuthorized: boolean
 }
 
 interface State {
-	MinionsObject: { [x: string]: Minion };
-	configPageStatus: RemoteDataState;
-	measurementsStatus: RemoteDataState;
-	collectorConfigStatus: RemoteDataState;
-	measurementsTitle: string;
+	MinionsObject: { [x: string]: Minion }
+	configPageStatus: RemoteDataState
+	measurementsStatus: RemoteDataState
+	collectorConfigStatus: RemoteDataState
+	measurementsTitle: string
 	serviceMeasurements: {
 		name: string
-		isActivity: boolean;
-	}[];
+		isActivity: boolean
+	}[]
 	defaultMeasurements: {
 		name: string
-		isActivity: boolean;
-	}[];
-	horizontalProportions: number[];
-	verticalProportions: number[];
-	description: string;
-	focusedMeasure: string;
+		isActivity: boolean
+	}[]
+	horizontalProportions: number[]
+	verticalProportions: number[]
+	description: string
+	focusedMeasure: string
 	focusedMeasurePosition: { top: number, left: number }
 	configScript: string
-	selectHost: string;
-	responseMessage: string;
-	defaultService: string[];
-	focusedHost: string;
+	selectHost: string
+	responseMessage: string
+	defaultService: string[]
+	focusedHost: string
 }
 
 const defaultMeasurementsData = [
@@ -75,12 +75,12 @@ const defaultMeasurementsData = [
 	'system',
 	'swap',
 	'temp'
-];
+]
 
 @ErrorHandling
 class AgentConfiguration extends PureComponent<Props, State> {
 	constructor(props) {
-		super(props);
+		super(props)
 		this.state = {
 			MinionsObject: {},
 			configPageStatus: RemoteDataState.NotStarted,
@@ -116,38 +116,38 @@ class AgentConfiguration extends PureComponent<Props, State> {
 				'tomcat',
 				'rsyslog'
 			]
-		};
+		}
 	}
 
 	getWheelKeyListAll = async () => {
-		const hostListObject = await getMinionKeyListAllAsync();
+		const hostListObject = await getMinionKeyListAllAsync()
 
 		this.setState({
 			MinionsObject: hostListObject,
 			configPageStatus: RemoteDataState.Done,
 			collectorConfigStatus: RemoteDataState.Done
-		});
-	};
+		})
+	}
 
 	private get MeasurementsContent() {
-		const { measurementsStatus } = this.state;
+		const { measurementsStatus } = this.state
 
 		if (measurementsStatus === RemoteDataState.Error) {
-			return this.ErrorState;
+			return this.ErrorState
 		}
 
-		return this.MeasurementsContentBody;
+		return this.MeasurementsContentBody
 	}
 
 	private get CollectorConfigContent() {
-		const { collectorConfigStatus } = this.state;
+		const { collectorConfigStatus } = this.state
 
 
 		if (collectorConfigStatus === RemoteDataState.Error) {
-			return this.ErrorState;
+			return this.ErrorState
 		}
 
-		return this.CollectorConfigBody;
+		return this.CollectorConfigBody
 	}
 
 	private get LoadingState(): JSX.Element {
@@ -163,7 +163,7 @@ class AgentConfiguration extends PureComponent<Props, State> {
 			>
 				<PageSpinner />
 			</div>
-		);
+		)
 	}
 
 	private get ErrorState(): JSX.Element {
@@ -171,7 +171,7 @@ class AgentConfiguration extends PureComponent<Props, State> {
 			<div className="generic-empty-state" >
 				<h4 style={{ margin: '90px 0' }}>There was a problem loading data</h4>
 			</div>
-		);
+		)
 	}
 
 	public onClickTableRowCall = (host: string, ip: string) => () => {
@@ -180,9 +180,9 @@ class AgentConfiguration extends PureComponent<Props, State> {
 			measurementsStatus: RemoteDataState.Loading,
 			collectorConfigStatus: RemoteDataState.Loading,
 			focusedHost: host
-		});
+		})
 
-		const getLocalFileReadPromise = getLocalFileRead(host);
+		const getLocalFileReadPromise = getLocalFileRead(host)
 
 		getLocalFileReadPromise.then((pLocalFileReadData) => {
 			this.setState({
@@ -190,10 +190,10 @@ class AgentConfiguration extends PureComponent<Props, State> {
 				selectHost: host,
 				collectorConfigStatus: RemoteDataState.Done,
 				configPageStatus: RemoteDataState.Done
-			});
-		});
+			})
+		})
 
-		const getLocalServiceGetRunningPromise = getLocalServiceGetRunning(host);
+		const getLocalServiceGetRunningPromise = getLocalServiceGetRunning(host)
 
 		getLocalServiceGetRunningPromise.then((pLocalServiceGetRunningData) => {
 
@@ -203,69 +203,69 @@ class AgentConfiguration extends PureComponent<Props, State> {
 					return {
 						name: sMeasure,
 						isActivity: false
-					};
-				});
+					}
+				})
 
 			let getDefaultMeasure = defaultMeasurementsData.map((dMeasure) => {
 				return {
 					name: dMeasure,
 					isActivity: false
-				};
-			});
+				}
+			})
 
 			this.setState({
 				serviceMeasurements: getServiceRunning,
 				defaultMeasurements: getDefaultMeasure,
 				measurementsTitle: host + '-' + ip,
 				measurementsStatus: RemoteDataState.Done
-			});
-		});
-	};
+			})
+		})
+	}
 
 	public onClickActionCall = (host: string, isRunning: boolean) => () => {
 		if (isRunning === false) {
-			const getLocalServiceStartTelegrafPromise = runLocalServiceStartTelegraf(host);
+			const getLocalServiceStartTelegrafPromise = runLocalServiceStartTelegraf(host)
 
 			getLocalServiceStartTelegrafPromise.then(() => {
-				this.getWheelKeyListAll();
-			});
+				this.getWheelKeyListAll()
+			})
 		} else {
-			const getLocalServiceStopTelegrafPromise = runLocalServiceStopTelegraf(host);
+			const getLocalServiceStopTelegrafPromise = runLocalServiceStopTelegraf(host)
 
 			getLocalServiceStopTelegrafPromise.then(() => {
-				this.getWheelKeyListAll();
-			});
+				this.getWheelKeyListAll()
+			})
 		}
-	};
+	}
 
 	public onClickApplyCall = () => {
-		const { selectHost, configScript } = this.state;
+		const { selectHost, configScript } = this.state
 		this.setState({
 			configPageStatus: RemoteDataState.Loading,
 			collectorConfigStatus: RemoteDataState.Loading
-		});
-		const getLocalFileWritePromise = getLocalFileWrite(selectHost, configScript);
+		})
+		const getLocalFileWritePromise = getLocalFileWrite(selectHost, configScript)
 
 		getLocalFileWritePromise.then((pLocalFileWriteData) => {
 			this.setState({
 				responseMessage: pLocalFileWriteData.data.return[0][selectHost]
-			});
+			})
 
-			const getLocalServiceReStartTelegrafPromise = runLocalServiceReStartTelegraf(selectHost);
+			const getLocalServiceReStartTelegrafPromise = runLocalServiceReStartTelegraf(selectHost)
 
 			getLocalServiceReStartTelegrafPromise.then(() => {
-				this.getWheelKeyListAll();
-			});
-		});
-	};
+				this.getWheelKeyListAll()
+			})
+		})
+	}
 
 	public async componentDidMount() {
-		this.getWheelKeyListAll();
-		this.setState({ configPageStatus: RemoteDataState.Loading });
+		this.getWheelKeyListAll()
+		this.setState({ configPageStatus: RemoteDataState.Loading })
 	}
 
 	render() {
-		const { isUserAuthorized } = this.props;
+		const { isUserAuthorized } = this.props
 		return (
 			<>
 				{isUserAuthorized ? (
@@ -282,27 +282,27 @@ class AgentConfiguration extends PureComponent<Props, State> {
 						</div>
 					)}
 			</>
-		);
+		)
 	}
 
 	private handleFocusedServiceMeasure = ({ clickPosition, _thisProps }) => {
-		const { serviceMeasurements, defaultMeasurements } = this.state;
+		const { serviceMeasurements, defaultMeasurements } = this.state
 
 		const mapServiceMeasurements = serviceMeasurements.map((m) => {
-			m.isActivity = false;
-			return m;
-		});
+			m.isActivity = false
+			return m
+		})
 
 		const mapDefaultMeasurements = defaultMeasurements.map((m) => {
-			m.isActivity = false;
-			return m;
-		});
+			m.isActivity = false
+			return m
+		})
 
 		serviceMeasurements[_thisProps.idx].isActivity === false
 			? (serviceMeasurements[_thisProps.idx].isActivity = true)
-			: (serviceMeasurements[_thisProps.idx].isActivity = false);
+			: (serviceMeasurements[_thisProps.idx].isActivity = false)
 
-		const getRunnerSaltCmdTelegrafPromise = getRunnerSaltCmdTelegraf(_thisProps.name);
+		const getRunnerSaltCmdTelegrafPromise = getRunnerSaltCmdTelegraf(_thisProps.name)
 
 		getRunnerSaltCmdTelegrafPromise.then((pRunnerSaltCmdTelegrafData) => {
 
@@ -312,26 +312,26 @@ class AgentConfiguration extends PureComponent<Props, State> {
 				focusedMeasure: _thisProps.name,
 				focusedMeasurePosition: clickPosition,
 				description: pRunnerSaltCmdTelegrafData.data.return[0]
-			});
-		});
-	};
+			})
+		})
+	}
 
 	private handleFocusedDefaultMeasure = ({ clickPosition, _thisProps }) => {
-		const { defaultMeasurements, serviceMeasurements } = this.state;
+		const { defaultMeasurements, serviceMeasurements } = this.state
 
 		const mapDefaultMeasurements = defaultMeasurements.map((m) => {
-			m.isActivity = false;
-			return m;
-		});
+			m.isActivity = false
+			return m
+		})
 
 		const mapServiceMeasurements = serviceMeasurements.map((m) => {
-			m.isActivity = false;
-			return m;
-		});
+			m.isActivity = false
+			return m
+		})
 
 		defaultMeasurements[_thisProps.idx].isActivity === false
 			? (defaultMeasurements[_thisProps.idx].isActivity = true)
-			: (defaultMeasurements[_thisProps.idx].isActivity = false);
+			: (defaultMeasurements[_thisProps.idx].isActivity = false)
 
 		if (_thisProps.name === 'global setting') {
 			this.setState({
@@ -340,9 +340,9 @@ class AgentConfiguration extends PureComponent<Props, State> {
 				focusedMeasure: _thisProps.name,
 				focusedMeasurePosition: clickPosition,
 				description: globalSetting
-			});
+			})
 		} else {
-			const getRunnerSaltCmdTelegrafPromise = getRunnerSaltCmdTelegraf(_thisProps.name);
+			const getRunnerSaltCmdTelegrafPromise = getRunnerSaltCmdTelegraf(_thisProps.name)
 
 			getRunnerSaltCmdTelegrafPromise.then((pRunnerSaltCmdTelegrafData) => {
 
@@ -361,46 +361,46 @@ class AgentConfiguration extends PureComponent<Props, State> {
 		const { serviceMeasurements } = this.state
 
 		const mapServiceMeasurements = serviceMeasurements.map((m) => {
-			m.isActivity = false;
-			return m;
-		});
+			m.isActivity = false
+			return m
+		})
 
 		this.setState({
 			serviceMeasurements: [...mapServiceMeasurements],
 			focusedMeasure: '',
 			focusedMeasurePosition: { top: null, left: null }
-		});
-	};
+		})
+	}
 
 	private handleDefaultClose = () => {
-		const { defaultMeasurements } = this.state;
+		const { defaultMeasurements } = this.state
 
 		const mapDefaultMeasurements = defaultMeasurements.map((m) => {
-			m.isActivity = false;
-			return m;
-		});
+			m.isActivity = false
+			return m
+		})
 
 		this.setState({
 			defaultMeasurements: [...mapDefaultMeasurements],
 			focusedMeasure: '',
 			focusedMeasurePosition: { top: null, left: null }
-		});
-	};
+		})
+	}
 
 	private horizontalHandleResize = (horizontalProportions: number[]) => {
-		this.setState({ horizontalProportions });
-	};
+		this.setState({ horizontalProportions })
+	}
 
 	private verticalHandleResize = (verticalProportions: number[]) => {
-		this.setState({ verticalProportions });
-	};
+		this.setState({ verticalProportions })
+	}
 
 	private onChangeScript = (script: string): void => {
-		this.setState({ configScript: script });
-	};
+		this.setState({ configScript: script })
+	}
 
 	private renderAgentPageTop = () => {
-		const { MinionsObject, configPageStatus, focusedHost } = this.state;
+		const { MinionsObject, configPageStatus, focusedHost } = this.state
 
 		return (
 			<AgentConfigurationTable
@@ -410,8 +410,8 @@ class AgentConfiguration extends PureComponent<Props, State> {
 				onClickAction={this.onClickActionCall}
 				focusedHost={focusedHost}
 			/>
-		);
-	};
+		)
+	}
 
 	private renderAgentPageBottom = () => {
 		return (
@@ -420,11 +420,11 @@ class AgentConfiguration extends PureComponent<Props, State> {
 				divisions={this.verticalDivisions}
 				onResize={this.verticalHandleResize}
 			/>
-		);
-	};
+		)
+	}
 
 	private Measurements() {
-		const { measurementsTitle, measurementsStatus } = this.state;
+		const { measurementsTitle, measurementsStatus } = this.state
 		return (
 			<div className="panel">
 				{measurementsStatus === RemoteDataState.Loading ? this.LoadingState : null}
@@ -452,7 +452,7 @@ class AgentConfiguration extends PureComponent<Props, State> {
 				</div>
 				<div className="panel-body">{this.MeasurementsContent}</div>
 			</div>
-		);
+		)
 	}
 
 	private get MeasurementsContentBody() {
@@ -462,7 +462,7 @@ class AgentConfiguration extends PureComponent<Props, State> {
 			description,
 			focusedMeasure,
 			focusedMeasurePosition,
-		} = this.state;
+		} = this.state
 		return (
 			<FancyScrollbar>
 				<div className="measurements-query-builder--contain">
@@ -510,15 +510,15 @@ class AgentConfiguration extends PureComponent<Props, State> {
 								focusedMeasure={focusedMeasure}
 								focusedPosition={focusedMeasurePosition}
 							/>
-						);
+						)
 					})}
 				</div>
 			</FancyScrollbar>
-		);
+		)
 	}
 
 	private CollectorConfig() {
-		const { collectorConfigStatus } = this.state;
+		const { collectorConfigStatus } = this.state
 		return (
 			<div className="panel">
 				{collectorConfigStatus === RemoteDataState.Loading ? this.LoadingState : null}
@@ -536,7 +536,7 @@ class AgentConfiguration extends PureComponent<Props, State> {
 
 				<div className="panel-body">{this.CollectorConfigContent}</div>
 			</div>
-		);
+		)
 	}
 
 	private get CollectorConfigBody() {
@@ -545,12 +545,12 @@ class AgentConfiguration extends PureComponent<Props, State> {
 			<div className='collect-config--half'>
 				<AgentCodeEditor configScript={configScript} onChangeScript={this.onChangeScript} />
 			</div>
-		);
+		)
 	}
 
 	private get horizontalDivisions() {
-		const { horizontalProportions } = this.state;
-		const [topSize, bottomSize] = horizontalProportions;
+		const { horizontalProportions } = this.state
+		const [topSize, bottomSize] = horizontalProportions
 
 		return [
 			{
@@ -571,12 +571,12 @@ class AgentConfiguration extends PureComponent<Props, State> {
 				headerOrientation: HANDLE_HORIZONTAL,
 				size: bottomSize
 			}
-		];
+		]
 	}
 
 	private get verticalDivisions() {
-		const { verticalProportions } = this.state;
-		const [rightSize, leftSize] = verticalProportions;
+		const { verticalProportions } = this.state
+		const [rightSize, leftSize] = verticalProportions
 
 		return [
 			{
@@ -597,8 +597,8 @@ class AgentConfiguration extends PureComponent<Props, State> {
 				headerOrientation: HANDLE_VERTICAL,
 				size: leftSize
 			}
-		];
+		]
 	}
 }
 
-export default AgentConfiguration;
+export default AgentConfiguration

@@ -1,8 +1,8 @@
 // Libraries
-import React from "react";
+import React from "react"
 
 // Components
-import ReactModal from "react-modal";
+import ReactModal from "react-modal"
 
 // Decorators
 import { ErrorHandling } from 'src/shared/decorators/errors'
@@ -24,63 +24,63 @@ interface State {
 @ErrorHandling
 class AgentMinionsModal extends React.Component<Props, State> {
   constructor(props) {
-    super(props);
+    super(props)
     this.state = {
       showModal: false,
       target: { top: null, left: null }
-    };
+    }
 
-    this.handleOpenModal = this.handleOpenModal.bind(this);
-    this.handleCloseModal = this.handleCloseModal.bind(this);
-    this.onClickAccept = this.onClickAccept.bind(this);
-    this.onClickReject = this.onClickReject.bind(this);
-    this.onClickDelete = this.onClickDelete.bind(this);
+    this.handleOpenModal = this.handleOpenModal.bind(this)
+    this.handleCloseModal = this.handleCloseModal.bind(this)
+    this.onClickAccept = this.onClickAccept.bind(this)
+    this.onClickReject = this.onClickReject.bind(this)
+    this.onClickDelete = this.onClickDelete.bind(this)
   }
 
   handleOpenModal(event) {
-    event.stopPropagation();
-    const { name } = this.props;
+    event.stopPropagation()
+    const { name } = this.props
     event.target.innerText === name
       ? this.setState({
         showModal: true,
         target: event.target.getBoundingClientRect()
       })
-      : this.setState({ showModal: true });
+      : this.setState({ showModal: true })
   }
 
   handleCloseModal() {
-    this.setState({ showModal: false });
+    this.setState({ showModal: false })
   }
 
   componentDidMount() {
     const { idx } = this.props
-    ReactModal.setAppElement(`#table-row--select${idx}`);
+    ReactModal.setAppElement(`#table-row--select${idx}`)
   }
 
   onClickAccept(event) {
-    const { handleWheelKeyCommand, host } = this.props;
-    handleWheelKeyCommand(host, "Accept");
-    event.stopPropagation();
-    this.handleCloseModal();
+    const { handleWheelKeyCommand, host } = this.props
+    handleWheelKeyCommand(host, "Accept")
+    event.stopPropagation()
+    this.handleCloseModal()
   }
 
   onClickReject(event) {
-    const { handleWheelKeyCommand, host } = this.props;
-    handleWheelKeyCommand(host, "ReJect");
-    event.stopPropagation();
-    this.handleCloseModal();
+    const { handleWheelKeyCommand, host } = this.props
+    handleWheelKeyCommand(host, "ReJect")
+    event.stopPropagation()
+    this.handleCloseModal()
   }
 
   onClickDelete(event) {
-    const { handleWheelKeyCommand, host } = this.props;
-    handleWheelKeyCommand(host, "Delete");
-    event.stopPropagation();
-    this.handleCloseModal();
+    const { handleWheelKeyCommand, host } = this.props
+    handleWheelKeyCommand(host, "Delete")
+    event.stopPropagation()
+    this.handleCloseModal()
   }
 
   render() {
-    const { name, status } = this.props;
-    const { target } = this.state;
+    const { name, status } = this.props
+    const { target } = this.state
 
     return (
       <button
@@ -126,8 +126,8 @@ class AgentMinionsModal extends React.Component<Props, State> {
           </div>
         </ReactModal>
       </button>
-    );
+    )
   }
 }
 
-export default AgentMinionsModal;
+export default AgentMinionsModal
