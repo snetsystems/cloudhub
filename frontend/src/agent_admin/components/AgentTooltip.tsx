@@ -10,12 +10,12 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 interface Props {
   description: string
   onDismiss: () => void
-  tipPosition?: {top: number; right: number; left: number}
-  pivot: string
+  tipPosition: {top: number; left: number}
 }
 
 interface State {
-  bottomPosition: number | null
+  bottomPosition: number
+  currentWidth: number
 }
 
 const MAX_HEIGHT = 400
@@ -26,7 +26,7 @@ class AgentTooltip extends PureComponent<Props, State> {
 
   public constructor(props: Props) {
     super(props)
-    this.state = {bottomPosition: null, currentWidth: ''}
+    this.state = {bottomPosition: null, currentWidth: null}
   }
 
   public componentDidMount() {
