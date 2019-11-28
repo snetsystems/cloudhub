@@ -1,27 +1,31 @@
-import React from 'react'
+// Libraries
+import React, {PureComponent} from 'react'
 import {Controlled as ReactCodeMirror, IInstance} from 'react-codemirror2'
 import {EditorChange} from 'codemirror'
 
+// Components
+import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
+
 interface Props {
-  script: string
+  configScript: string
+  onChangeScript: AgentConfiguration['onChangeScript']
 }
 
 interface State {
   script: string
 }
 
-class AgentCodeEditor extends React.PureComponent<State, Props> {
+class AgentCodeEditor extends PureComponent<Props, State> {
   constructor(props) {
     super(props)
-
     this.state = {
-      script: props.script,
+      script: props.configScript,
     }
   }
 
   componentWillReceiveProps(newProps) {
-    if (newProps.script != this.state.script) {
-      this.setState({script: newProps.script})
+    if (this.state.script !== newProps.configScript) {
+      this.setState({script: newProps.configScript})
     }
   }
 
@@ -47,9 +51,11 @@ class AgentCodeEditor extends React.PureComponent<State, Props> {
         options={options}
         onBeforeChange={this.beforeChange}
         onChange={this.updateChange}
+        onTouchStart={this.onTouchStart}
       />
     )
   }
+  private onTouchStart = () => {}
 
   private beforeChange = (
     ___: IInstance,
@@ -64,7 +70,8 @@ class AgentCodeEditor extends React.PureComponent<State, Props> {
     ____: EditorChange,
     script: string
   ): void => {
-    this.props.onChangeScript(script)
+    const {onChangeScript} = this.props
+    return onChangeScript(script)
   }
 }
 

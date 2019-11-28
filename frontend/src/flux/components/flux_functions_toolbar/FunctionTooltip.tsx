@@ -22,8 +22,7 @@ import { ErrorHandling } from "src/shared/decorators/errors";
 interface Props {
   func: FluxToolbarFunction;
   onDismiss: () => void;
-  tipPosition?: { top: number; right: number; left: number };
-  pivot: string;
+  tipPosition?: { top: number; right: number; };
 }
 
 interface State {
@@ -87,57 +86,30 @@ class FunctionTooltip extends PureComponent<Props, State> {
   }
 
   private get handleCaretClassName() {
-    const { pivot } = this.props;
-
-    return pivot === "right" || pivot === undefined
-      ? "flux-functions-toolbar--tooltip-caret"
-      : "flux-functions-toolbar--tooltip-caret tooltip-caret--left";
+    return "flux-functions-toolbar--tooltip-caret"
   }
 
   private get handleToolTipClassName() {
-    const { pivot } = this.props;
-
-    return pivot === "right" || pivot === undefined
-      ? "flux-functions-toolbar--tooltip"
-      : "flux-functions-toolbar--tooltip tooltip--left";
+    return "flux-functions-toolbar--tooltip"
   }
 
   private get styleCaretPosition(): CSSProperties {
     const {
-      tipPosition: { top, right, left, width },
-      pivot
+      tipPosition: { top, right }
     } = this.props;
 
-    const calcPostion =
-      pivot === "right" || pivot === undefined
-        ? {
-            right: `${right + 4}px`
-          }
-        : {
-            left: `${left + width + 10}px`
-          };
-
-    return { top: `${Math.min(top, window.innerHeight)}px`, ...calcPostion };
+    return { top: `${Math.min(top, window.innerHeight)}px`, right: `${right + 4}px` };
   }
 
   private get stylePosition(): CSSProperties {
     const {
-      tipPosition: { top, right, left, width },
-      pivot
+      tipPosition: { top, right }
     } = this.props;
     const { bottomPosition } = this.state;
 
-    const calcPostion =
-      pivot === "right" || pivot === undefined
-        ? {
-            right: `${right + 2}px`
-          }
-        : {
-            left: `${left + width + 8}px`
-          };
     return {
       bottom: `${bottomPosition || window.innerHeight - top - 15}px`,
-      ...calcPostion
+      right: `${right + 2}px`
     };
   }
 
