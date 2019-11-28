@@ -1,8 +1,8 @@
 // Libraries
-import React, { PureComponent } from "react"
+import React, {PureComponent} from 'react'
 
 // Constants
-import FancyScrollbar from "src/shared/components/FancyScrollbar"
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 interface Props {
   res: {}
@@ -13,28 +13,16 @@ class AgentControlConsole extends PureComponent<Props> {
   }
 
   render() {
-    const { res } = this.props
+    const {res} = this.props
     return (
       <div className="panel">
         <div className="panel-heading">
           <h2 className="panel-title">Console</h2>
         </div>
         <div className="panel-body">
-          <div
-            className="console-zone"
-            style={{
-              background: "#232323",
-              padding: "15px",
-              borderRadius: "5px",
-              height: "100%",
-              width: "100%",
-              resize: "none"
-            }}
-          >
+          <div className="console-zone">
             <FancyScrollbar>
-              <pre className="console-zone--pre">
-                {res}
-              </pre>
+              <pre className="console-zone--pre">{res}</pre>
             </FancyScrollbar>
           </div>
         </div>

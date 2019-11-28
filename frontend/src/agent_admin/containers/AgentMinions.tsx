@@ -1,12 +1,12 @@
 // Libraries
-import React, { PureComponent } from "react"
-import _ from "lodash"
+import React, {PureComponent} from 'react'
+import _ from 'lodash'
 
 // Components
-import Threesizer from "src/shared/components/threesizer/Threesizer"
-import AgentMinionsTable from "src/agent_admin/components/AgentMinionsTable"
-import AgentMinionsConsole from "src/agent_admin/components/AgentMinionsConsole"
-import AgentMinionsModal from "src/agent_admin/components/AgentMinionsModal"
+import Threesizer from 'src/shared/components/threesizer/Threesizer'
+import AgentMinionsTable from 'src/agent_admin/components/AgentMinionsTable'
+import AgentMinionsConsole from 'src/agent_admin/components/AgentMinionsConsole'
+import AgentMinionsModal from 'src/agent_admin/components/AgentMinionsModal'
 
 // APIs
 import {
@@ -16,24 +16,24 @@ import {
   getLocalGrainsItem,
   runAcceptKey,
   runRejectKey,
-  runDeleteKey
-} from "src/agent_admin/apis"
+  runDeleteKey,
+} from 'src/agent_admin/apis'
 
 // Constants
-import { HANDLE_HORIZONTAL } from "src/shared/constants"
+import {HANDLE_HORIZONTAL} from 'src/shared/constants'
 
 // Types
-import { Minion, RemoteDataState } from "src/types"
+import {Minion, RemoteDataState} from 'src/types'
 
 // Decorators
-import { ErrorHandling } from "src/shared/decorators/errors"
+import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
   isUserAuthorized: boolean
   currentUrl: string
 }
 interface State {
-  MinionsObject: { [x: string]: Minion }
+  MinionsObject: {[x: string]: Minion}
   minionsPageStatus: RemoteDataState
   minionLog: string
   currentUrl: string
@@ -46,12 +46,12 @@ class AgentMinions extends PureComponent<Props, State> {
   constructor(props) {
     super(props)
     this.state = {
-      minionLog: "<< Empty >>",
+      minionLog: '<< Empty >>',
       proportions: [0.43, 0.57],
       MinionsObject: {},
-      currentUrl: "",
+      currentUrl: '',
       minionsPageStatus: RemoteDataState.NotStarted,
-      focusedHost: ""
+      focusedHost: '',
     }
   }
 
@@ -62,20 +62,19 @@ class AgentMinions extends PureComponent<Props, State> {
 
     this.setState({
       MinionsObject: newMinions,
-      minionsPageStatus: RemoteDataState.Done
+      minionsPageStatus: RemoteDataState.Done,
     })
   }
 
   public async componentDidMount() {
     this.getWheelKeyListAll()
-    this.setState({ minionsPageStatus: RemoteDataState.Loading })
+    this.setState({minionsPageStatus: RemoteDataState.Loading})
   }
-
 
   onClickTableRowCall = (host: string) => () => {
     this.setState({
       focusedHost: host,
-      minionsPageStatus: RemoteDataState.Loading
+      minionsPageStatus: RemoteDataState.Loading,
     })
     const getLocalGrainsItemPromise = getLocalGrainsItem(host)
     getLocalGrainsItemPromise.then(pLocalGrainsItemData => {
@@ -85,14 +84,14 @@ class AgentMinions extends PureComponent<Props, State> {
           null,
           4
         ),
-        minionsPageStatus: RemoteDataState.Done
+        minionsPageStatus: RemoteDataState.Done,
       })
     })
   }
 
   handleWheelKeyCommand = (host: string, cmdstatus: string) => {
-    this.setState({ minionsPageStatus: RemoteDataState.Loading })
-    if (cmdstatus == "ReJect") {
+    this.setState({minionsPageStatus: RemoteDataState.Loading})
+    if (cmdstatus == 'ReJect') {
       const getWheelKeyCommandPromise = runRejectKey(host)
 
       getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
@@ -101,11 +100,11 @@ class AgentMinions extends PureComponent<Props, State> {
             pWheelKeyCommandData.data.return[0],
             null,
             4
-          )
+          ),
         })
         this.getWheelKeyListAll()
       })
-    } else if (cmdstatus == "Accept") {
+    } else if (cmdstatus == 'Accept') {
       const getWheelKeyCommandPromise = runAcceptKey(host)
 
       getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
@@ -114,11 +113,11 @@ class AgentMinions extends PureComponent<Props, State> {
             pWheelKeyCommandData.data.return[0],
             null,
             4
-          )
+          ),
         })
         this.getWheelKeyListAll()
       })
-    } else if (cmdstatus == "Delete") {
+    } else if (cmdstatus == 'Delete') {
       const getWheelKeyCommandPromise = runDeleteKey(host)
 
       getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
@@ -127,7 +126,7 @@ class AgentMinions extends PureComponent<Props, State> {
             pWheelKeyCommandData.data.return[0],
             null,
             4
-          )
+          ),
         })
         this.getWheelKeyListAll()
       })
@@ -140,7 +139,7 @@ class AgentMinions extends PureComponent<Props, State> {
     status,
     _this,
     idx,
-    handleWheelKeyCommand
+    handleWheelKeyCommand,
   }) {
     return (
       <AgentMinionsModal
@@ -155,7 +154,7 @@ class AgentMinions extends PureComponent<Props, State> {
   }
 
   render() {
-    const { isUserAuthorized } = this.props
+    const {isUserAuthorized} = this.props
     return (
       <>
         {isUserAuthorized ? (
@@ -167,23 +166,23 @@ class AgentMinions extends PureComponent<Props, State> {
             />
           </div>
         ) : (
-            <div
-              className="generic-empty-state"
-              style={{ backgroundColor: "#292933" }}
-            >
-              <h4>Not Allowed User</h4>
-            </div>
-          )}
+          <div
+            className="generic-empty-state"
+            style={{backgroundColor: '#292933'}}
+          >
+            <h4>Not Allowed User</h4>
+          </div>
+        )}
       </>
     )
   }
 
   private handleResize = (proportions: number[]) => {
-    this.setState({ proportions })
+    this.setState({proportions})
   }
 
   private renderAgentPageTop = () => {
-    const { MinionsObject, minionsPageStatus, focusedHost } = this.state
+    const {MinionsObject, minionsPageStatus, focusedHost} = this.state
     return (
       <AgentMinionsTable
         minions={_.values(MinionsObject)}
@@ -197,33 +196,33 @@ class AgentMinions extends PureComponent<Props, State> {
   }
 
   private renderAgentPageBottom = () => {
-    const { minionLog } = this.state
+    const {minionLog} = this.state
     return <AgentMinionsConsole res={minionLog} />
   }
 
   private get horizontalDivisions() {
-    const { proportions } = this.state
+    const {proportions} = this.state
     const [topSize, bottomSize] = proportions
 
     return [
       {
-        name: "",
-        handleDisplay: "none",
+        name: '',
+        handleDisplay: 'none',
         headerButtons: [],
         menuOptions: [],
         render: this.renderAgentPageTop,
         headerOrientation: HANDLE_HORIZONTAL,
-        size: topSize
+        size: topSize,
       },
       {
-        name: "",
+        name: '',
         handlePixels: 8,
         headerButtons: [],
         menuOptions: [],
         render: this.renderAgentPageBottom,
         headerOrientation: HANDLE_HORIZONTAL,
-        size: bottomSize
-      }
+        size: bottomSize,
+      },
     ]
   }
 }

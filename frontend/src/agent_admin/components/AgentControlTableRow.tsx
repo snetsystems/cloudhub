@@ -1,14 +1,14 @@
 // Libraries
-import React, { PureComponent } from "react"
+import React, {PureComponent} from 'react'
 
 // Components
-import AgentControl from "src/agent_admin/containers/AgentControl"
+import AgentControl from 'src/agent_admin/containers/AgentControl'
 
 // Constants
-import { AGENT_TABLE_SIZING } from "src/agent_admin/constants/tableSizing"
+import {AGENT_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
 
 // Types
-import { Minion } from "src/types"
+import {Minion} from 'src/types'
 
 interface Props {
   minions: Minion
@@ -24,14 +24,14 @@ class AgentControlTableRow extends PureComponent<Props> {
   }
 
   public focusedClasses = (): string => {
-    const { isCheck } = this.props
-    return isCheck ? "hosts-table--tr focused" : "hosts-table--tr"
+    const {isCheck} = this.props
+    return isCheck ? 'hosts-table--tr focused' : 'hosts-table--tr'
   }
 
-  public getHandleMinionCheck = (event) => {
+  public getHandleMinionCheck = event => {
     event.stopPropagation()
-    const { handleMinionCheck } = this.props
-    return handleMinionCheck({ _this: this })
+    const {handleMinionCheck} = this.props
+    return handleMinionCheck({_this: this})
   }
 
   public render() {
@@ -39,13 +39,13 @@ class AgentControlTableRow extends PureComponent<Props> {
   }
 
   private get TableRowEachPage() {
-    const { minions, isCheck } = this.props
-    const { osVersion, os, ip, host, isInstall, isRunning } = minions
-    const { CheckWidth, StatusWidth, HostWidth, IPWidth } = AGENT_TABLE_SIZING
+    const {minions, isCheck} = this.props
+    const {osVersion, os, ip, host, isInstall, isRunning} = minions
+    const {CheckWidth, StatusWidth, HostWidth, IPWidth} = AGENT_TABLE_SIZING
 
     return (
       <div className={this.focusedClasses()}>
-        <div className="hosts-table--td" style={{ width: CheckWidth }}>
+        <div className="hosts-table--td" style={{width: CheckWidth}}>
           <input
             type="checkbox"
             checked={isCheck}
@@ -53,25 +53,25 @@ class AgentControlTableRow extends PureComponent<Props> {
             readOnly
           />
         </div>
-        <div className="hosts-table--td" style={{ width: HostWidth }}>
+        <div className="hosts-table--td" style={{width: HostWidth}}>
           {host}
         </div>
 
-        <div className="hosts-table--td" style={{ width: IPWidth }}>
+        <div className="hosts-table--td" style={{width: IPWidth}}>
           {os}
         </div>
 
-        <div className="hosts-table--td" style={{ width: IPWidth }}>
+        <div className="hosts-table--td" style={{width: IPWidth}}>
           {osVersion}
         </div>
 
-        <div className="hosts-table--td" style={{ width: IPWidth }}>
+        <div className="hosts-table--td" style={{width: IPWidth}}>
           {ip}
         </div>
-        <div className="hosts-table--td" style={{ width: StatusWidth }}>
-          {isInstall === true ? "Enable" : "Disable"}
+        <div className="hosts-table--td" style={{width: StatusWidth}}>
+          {isInstall === true ? 'Enable' : 'Disable'}
         </div>
-        <div className="hosts-table--td" style={{ width: StatusWidth }}>
+        <div className="hosts-table--td" style={{width: StatusWidth}}>
           <button
             className="btn btn-default action-call"
             onClick={this.handleOnClickAction}
@@ -84,8 +84,8 @@ class AgentControlTableRow extends PureComponent<Props> {
   }
 
   private get handleOnClickAction() {
-    const { minions, onClickAction } = this.props
-    const { host, isRunning } = minions
+    const {minions, onClickAction} = this.props
+    const {host, isRunning} = minions
     return onClickAction(host, isRunning)
   }
 }

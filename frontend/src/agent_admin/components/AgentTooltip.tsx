@@ -1,16 +1,16 @@
 // Libraries
-import React, { PureComponent, MouseEvent, CSSProperties, createRef } from 'react'
+import React, {PureComponent, MouseEvent, CSSProperties, createRef} from 'react'
 
 // Components
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 // Decorators
-import { ErrorHandling } from 'src/shared/decorators/errors'
+import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
   description: string
   onDismiss: () => void
-  tipPosition: { top: number, left: number }
+  tipPosition: {top: number; left: number}
 }
 
 interface State {
@@ -26,7 +26,7 @@ class AgentTooltip extends PureComponent<Props, State> {
 
   public constructor(props: Props) {
     super(props)
-    this.state = { bottomPosition: null, currentWidth: null }
+    this.state = {bottomPosition: null, currentWidth: null}
   }
 
   public componentDidMount() {
@@ -37,14 +37,14 @@ class AgentTooltip extends PureComponent<Props, State> {
     } = this.tooltipRef.current.getBoundingClientRect()
 
     if (bottom > window.innerHeight) {
-      this.setState({ bottomPosition: height / 2, currentWidth: width })
+      this.setState({bottomPosition: height / 2, currentWidth: width})
     } else {
-      this.setState({ currentWidth: width })
+      this.setState({currentWidth: width})
     }
   }
 
   public render() {
-    const { description } = this.props
+    const {description} = this.props
 
     return (
       <>
@@ -91,7 +91,7 @@ class AgentTooltip extends PureComponent<Props, State> {
 
   private get styleCaretPosition(): CSSProperties {
     const {
-      tipPosition: { top, left },
+      tipPosition: {top, left},
     } = this.props
 
     return {
@@ -102,9 +102,9 @@ class AgentTooltip extends PureComponent<Props, State> {
 
   private get stylePosition(): CSSProperties {
     const {
-      tipPosition: { top, left },
+      tipPosition: {top, left},
     } = this.props
-    const { bottomPosition, currentWidth } = this.state
+    const {bottomPosition, currentWidth} = this.state
 
     return {
       bottom: `${bottomPosition || window.innerHeight - top - 15}px`,
@@ -113,7 +113,7 @@ class AgentTooltip extends PureComponent<Props, State> {
   }
 
   private handleDismiss = (e: MouseEvent<HTMLElement>) => {
-    const { onDismiss } = this.props
+    const {onDismiss} = this.props
 
     e.preventDefault()
     e.stopPropagation()

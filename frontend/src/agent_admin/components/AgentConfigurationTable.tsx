@@ -1,27 +1,27 @@
 // Libraries
-import React, { PureComponent } from "react"
-import _ from "lodash"
-import memoize from "memoize-one"
+import React, {PureComponent} from 'react'
+import _ from 'lodash'
+import memoize from 'memoize-one'
 
 // Components
 import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
-import AgentConfigurationTableRow from "src/agent_admin/components/AgentConfigurationTableRow"
-import SearchBar from "src/hosts/components/SearchBar"
-import PageSpinner from "src/shared/components/PageSpinner"
-import FancyScrollbar from "src/shared/components/FancyScrollbar"
+import AgentConfigurationTableRow from 'src/agent_admin/components/AgentConfigurationTableRow'
+import SearchBar from 'src/hosts/components/SearchBar'
+import PageSpinner from 'src/shared/components/PageSpinner'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 // Constants
-import { AGENT_TABLE_SIZING } from "src/agent_admin/constants/tableSizing"
+import {AGENT_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
 
 // Types
-import { RemoteDataState, Minion } from "src/types"
+import {RemoteDataState, Minion} from 'src/types'
 
 // Decorators
-import { ErrorHandling } from "src/shared/decorators/errors"
+import {ErrorHandling} from 'src/shared/decorators/errors'
 
 enum SortDirection {
-  ASC = "asc",
-  DESC = "desc"
+  ASC = 'asc',
+  DESC = 'desc',
 }
 
 interface Props {
@@ -44,9 +44,9 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     super(props)
 
     this.state = {
-      searchTerm: "",
+      searchTerm: '',
       sortDirection: SortDirection.ASC,
-      sortKey: "name"
+      sortKey: 'name',
     }
   }
 
@@ -78,36 +78,36 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
   }
 
   public updateSearchTerm = searchTerm => {
-    this.setState({ searchTerm })
+    this.setState({searchTerm})
   }
 
   public updateSort = key => () => {
-    const { sortKey, sortDirection } = this.state
+    const {sortKey, sortDirection} = this.state
     if (sortKey === key) {
       const reverseDirection =
         sortDirection === SortDirection.ASC
           ? SortDirection.DESC
           : SortDirection.ASC
-      this.setState({ sortDirection: reverseDirection })
+      this.setState({sortDirection: reverseDirection})
     } else {
-      this.setState({ sortKey: key, sortDirection: SortDirection.ASC })
+      this.setState({sortKey: key, sortDirection: SortDirection.ASC})
     }
   }
 
   public sortableClasses = key => {
-    const { sortKey, sortDirection } = this.state
+    const {sortKey, sortDirection} = this.state
     if (sortKey === key) {
       if (sortDirection === SortDirection.ASC) {
-        return "hosts-table--th sortable-header sorting-ascending"
+        return 'hosts-table--th sortable-header sorting-ascending'
       }
-      return "hosts-table--th sortable-header sorting-descending"
+      return 'hosts-table--th sortable-header sorting-descending'
     }
-    return "hosts-table--th sortable-header"
+    return 'hosts-table--th sortable-header'
   }
 
   private get AgentTableContents() {
-    const { minions, configPageStatus } = this.props
-    const { sortKey, sortDirection, searchTerm } = this.state
+    const {minions, configPageStatus} = this.props
+    const {sortKey, sortDirection, searchTerm} = this.state
 
     const sortedHosts = this.getSortedHosts(
       minions,
@@ -131,7 +131,7 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
 
   private get LoadingState(): JSX.Element {
     return (
-      <div className="agent--loding-state">
+      <div className="agent--state agent--loding-state">
         <PageSpinner />
       </div>
     )
@@ -139,32 +139,30 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
 
   private get ErrorState(): JSX.Element {
     return (
-      <div className="generic-empty-state">
-        <h4 style={{ margin: "90px 0" }}>There was a problem loading hosts</h4>
+      <div className="agent--state generic-empty-state">
+        <h4>There was a problem loading hosts</h4>
       </div>
     )
   }
 
   private get NoHostsState(): JSX.Element {
     return (
-      <div className="generic-empty-state">
-        <h4 style={{ margin: "90px 0" }}>No Hosts found</h4>
+      <div className="agent--state generic-empty-state">
+        <h4>No Hosts found</h4>
       </div>
     )
   }
 
   private get NoSortedHostsState(): JSX.Element {
     return (
-      <div className="generic-empty-state">
-        <h4 style={{ margin: "90px 0" }}>
-          There are no hosts that match the search criteria
-        </h4>
+      <div className="agent--state generic-empty-state">
+        <h4>There are no hosts that match the search criteria</h4>
       </div>
     )
   }
 
   public render() {
-    const { configPageStatus } = this.props
+    const {configPageStatus} = this.props
 
     return (
       <div className="panel">
@@ -184,8 +182,8 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
   }
 
   private get AgentTitle() {
-    const { minions } = this.props
-    const { sortKey, sortDirection, searchTerm } = this.state
+    const {minions} = this.props
+    const {sortKey, sortDirection, searchTerm} = this.state
     const filteredMinion = minions.filter(m => m.isInstall === true)
 
     const sortedHosts = this.getSortedHosts(
@@ -202,46 +200,46 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     return `${hostsCount} Minions`
   }
   private get AgentTableHeaderEachPage() {
-    const { IPWidth, HostWidth, StatusWidth } = AGENT_TABLE_SIZING
+    const {IPWidth, HostWidth, StatusWidth} = AGENT_TABLE_SIZING
     return (
       <div className="hosts-table--thead">
         <div className="hosts-table--tr">
           <div
-            onClick={this.updateSort("name")}
-            className={this.sortableClasses("name")}
-            style={{ width: HostWidth }}
+            onClick={this.updateSort('name')}
+            className={this.sortableClasses('name')}
+            style={{width: HostWidth}}
           >
             Host
             <span className="icon caret-up" />
           </div>
           <div
-            onClick={this.updateSort("operatingSystem")}
-            className={this.sortableClasses("operatingSystem")}
-            style={{ width: IPWidth }}
+            onClick={this.updateSort('operatingSystem')}
+            className={this.sortableClasses('operatingSystem')}
+            style={{width: IPWidth}}
           >
             OS
             <span className="icon caret-up" />
           </div>
           <div
-            onClick={this.updateSort("operatingSystem")}
-            className={this.sortableClasses("operatingSystem")}
-            style={{ width: IPWidth }}
+            onClick={this.updateSort('operatingSystem')}
+            className={this.sortableClasses('operatingSystem')}
+            style={{width: IPWidth}}
           >
             OS Version
             <span className="icon caret-up" />
           </div>
 
           <div
-            onClick={this.updateSort("deltaUptime")}
-            className={this.sortableClasses("deltaUptime")}
-            style={{ width: IPWidth }}
+            onClick={this.updateSort('deltaUptime')}
+            className={this.sortableClasses('deltaUptime')}
+            style={{width: IPWidth}}
           >
             IP
             <span className="icon caret-up" />
           </div>
           <div
-            className={this.sortableClasses("cpu")}
-            style={{ width: StatusWidth }}
+            className={this.sortableClasses('cpu')}
+            style={{width: StatusWidth}}
           >
             Action
           </div>
@@ -255,8 +253,8 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
   }
 
   private get AgentTableWithHosts() {
-    const { minions, onClickTableRow, onClickAction, focusedHost } = this.props
-    const { sortKey, sortDirection, searchTerm } = this.state
+    const {minions, onClickTableRow, onClickAction, focusedHost} = this.props
+    const {sortKey, sortDirection, searchTerm} = this.state
     const filteredMinion = minions.filter(m => m.isInstall === true)
 
     const sortedHosts = this.getSortedHosts(
@@ -269,18 +267,22 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     return (
       <div className="hosts-table">
         {this.AgentTableHeader}
-        <FancyScrollbar
-          children={sortedHosts.map((m: Minion, i: number): JSX.Element => (
-            <AgentConfigurationTableRow
-              key={i}
-              minions={m}
-              onClickTableRow={onClickTableRow}
-              onClickAction={onClickAction}
-              focusedHost={focusedHost}
-            />
-          ))}
-          className="hosts-table--tbody"
-        />
+        {sortedHosts.length > 0 ? (
+          <FancyScrollbar
+            children={sortedHosts.map(
+              (m: Minion, i: number): JSX.Element => (
+                <AgentConfigurationTableRow
+                  key={i}
+                  minions={m}
+                  onClickTableRow={onClickTableRow}
+                  onClickAction={onClickAction}
+                  focusedHost={focusedHost}
+                />
+              )
+            )}
+            className="hosts-table--tbody"
+          />
+        ) : null}
       </div>
     )
   }

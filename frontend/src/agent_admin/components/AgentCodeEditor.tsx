@@ -1,11 +1,10 @@
 // Libraries
-import React, { PureComponent } from 'react'
-import { Controlled as ReactCodeMirror, IInstance } from 'react-codemirror2'
-import { EditorChange } from 'codemirror'
+import React, {PureComponent} from 'react'
+import {Controlled as ReactCodeMirror, IInstance} from 'react-codemirror2'
+import {EditorChange} from 'codemirror'
 
 // Components
 import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
-
 
 interface Props {
   configScript: string
@@ -20,13 +19,13 @@ class AgentCodeEditor extends PureComponent<Props, State> {
   constructor(props) {
     super(props)
     this.state = {
-      script: props.configScript
+      script: props.configScript,
     }
   }
 
   componentWillReceiveProps(newProps) {
     if (this.state.script !== newProps.configScript) {
-      this.setState({ script: newProps.configScript })
+      this.setState({script: newProps.configScript})
     }
   }
 
@@ -56,14 +55,14 @@ class AgentCodeEditor extends PureComponent<Props, State> {
       />
     )
   }
-  private onTouchStart = () => { }
+  private onTouchStart = () => {}
 
   private beforeChange = (
     ___: IInstance,
     ____: EditorChange,
     script: string
   ): void => {
-    return this.setState({ script })
+    return this.setState({script})
   }
 
   private updateChange = (
@@ -71,7 +70,7 @@ class AgentCodeEditor extends PureComponent<Props, State> {
     ____: EditorChange,
     script: string
   ): void => {
-    const { onChangeScript } = this.props
+    const {onChangeScript} = this.props
     return onChangeScript(script)
   }
 }

@@ -1,17 +1,17 @@
 // Libraries
-import React, { PureComponent } from "react"
+import React, {PureComponent} from 'react'
 
 // Components
 import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
 
 // Constants
-import { AGENT_TABLE_SIZING } from "src/agent_admin/constants/tableSizing"
+import {AGENT_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
 
 // Types
-import { Minion } from "src/types"
+import {Minion} from 'src/types'
 
 // Decorators
-import { ErrorHandling } from 'src/shared/decorators/errors'
+import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
   minions: Minion
@@ -27,11 +27,11 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
   }
 
   public focusedClasses = (host: string): string => {
-    const { focusedHost } = this.props
+    const {focusedHost} = this.props
     if (host === focusedHost) {
-      return "hosts-table--tr focused"
+      return 'agent--row hosts-table--tr focused'
     }
-    return "hosts-table--tr"
+    return 'agent--row hosts-table--tr'
   }
 
   render() {
@@ -39,46 +39,46 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
   }
 
   private get handleOnClickTableRow() {
-    const { minions, onClickTableRow } = this.props
-    const { ip, host } = minions
+    const {minions, onClickTableRow} = this.props
+    const {ip, host} = minions
 
     return onClickTableRow(host, ip)
   }
 
   private get handleOnClickAction() {
-    const { minions, onClickAction } = this.props
-    const { host, isRunning } = minions
+    const {minions, onClickAction} = this.props
+    const {host, isRunning} = minions
 
     return onClickAction(host, isRunning)
   }
 
   private get TableRowEachPage(): JSX.Element {
-    const { minions } = this.props
-    const { osVersion, os, ip, host, isRunning } = minions
-    const { StatusWidth, HostWidth, IPWidth } = AGENT_TABLE_SIZING
+    const {minions} = this.props
+    const {osVersion, os, ip, host, isRunning} = minions
+    const {StatusWidth, HostWidth, IPWidth} = AGENT_TABLE_SIZING
 
     return (
       <div
         className={this.focusedClasses(host)}
         onClick={this.handleOnClickTableRow}
       >
-        <div className="hosts-table--td" style={{ width: HostWidth }}>
+        <div className="hosts-table--td" style={{width: HostWidth}}>
           {host}
         </div>
 
-        <div className="hosts-table--td" style={{ width: IPWidth }}>
+        <div className="hosts-table--td" style={{width: IPWidth}}>
           {os}
         </div>
 
-        <div className="hosts-table--td" style={{ width: IPWidth }}>
+        <div className="hosts-table--td" style={{width: IPWidth}}>
           {osVersion}
         </div>
 
-        <div className="hosts-table--td" style={{ width: IPWidth }}>
+        <div className="hosts-table--td" style={{width: IPWidth}}>
           {ip}
         </div>
 
-        <div className="hosts-table--td" style={{ width: StatusWidth }}>
+        <div className="hosts-table--td" style={{width: StatusWidth}}>
           <button
             className="btn btn-default action-call"
             onClick={this.handleOnClickAction}

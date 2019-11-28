@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent } from 'react'
+import React, {PureComponent} from 'react'
 import _ from 'lodash'
 
 // Components
@@ -7,7 +7,7 @@ import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
 import AgentTooltip from 'src/agent_admin/components/AgentTooltip'
 
 // Decorator
-import { ErrorHandling } from 'src/shared/decorators/errors'
+import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
   name: string | null
@@ -15,7 +15,7 @@ interface Props {
   idx: number
   description: string
   focusedMeasure: string
-  focusedPosition: { top: number, left: number }
+  focusedPosition: {top: number; left: number}
   handleFocusedMeasure: AgentConfiguration['handleFocusedServiceMeasure']
   handleClose: () => void
 }
@@ -37,19 +37,19 @@ class AgentToolbarFunction extends PureComponent<Props, State> {
 
   componentWillReceiveProps(newProps) {
     if (this.state.isActive !== newProps.isActivity) {
-      this.setState({ isActive: newProps.isActivity })
+      this.setState({isActive: newProps.isActivity})
     }
   }
 
-  componentWillUnmount() { }
+  componentWillUnmount() {}
 
   render() {
-    const { name, isActivity } = this.props
+    const {name, isActivity} = this.props
     return (
       <>
         <div
           className="query-builder--list-item"
-          style={{ position: 'relative' }}
+          style={{position: 'relative'}}
         >
           {`${name}`}
           <button
@@ -70,13 +70,13 @@ class AgentToolbarFunction extends PureComponent<Props, State> {
   }
 
   private handleFocusing = () => {
-    const { handleFocusedMeasure } = this.props
+    const {handleFocusedMeasure} = this.props
     const clickPosition = this.functionRef.current.getBoundingClientRect()
-    handleFocusedMeasure({ clickPosition, _thisProps: this.props })
+    handleFocusedMeasure({clickPosition, _thisProps: this.props})
   }
 
   private get tooltip(): JSX.Element {
-    const { focusedPosition, handleClose, description } = this.props
+    const {focusedPosition, handleClose, description} = this.props
     if (this.state.isActive) {
       return (
         <AgentTooltip

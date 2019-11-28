@@ -1,8 +1,6 @@
 // agent.scss
-.agent--row {
-	cursor: pointer;
-}
 
+/***** layout start *****/
 .agent--input {
 	cursor: pointer;
 }
@@ -26,7 +24,48 @@
 	overflow: hidden;
 	position: relative;
 }
+
+/***** layout end   *****/
+
+/***** table start *****/
+.agent--state {
+	h4 {
+		margin: 90px 0;
+	}
+
+	&.agent--loding-state {
+		position: absolute;
+		z-index: 7;
+		background-color: rgba(0, 0, 0, 0.5);
+		width: 100%;
+		height: 100%;
+	}
+}
+
+.agent--row {
+	cursor: pointer;
+}
+
+.agent--indicator {
+	&.indicator--primary {
+		color: $c-rainforest
+	}
+
+	&.indicator--fail {
+		color: $c-topaz
+	}
+}
+
+/***** table end   *****/
+
+/***** console start *****/
 .console-zone {
+	background: #232323;
+	padding: 15px;
+	border-radius: 5px;
+	height: 100%;
+	width: 100%;
+
 	.console-zone--pre {
 		color: #fff;
 		white-space: pre-wrap;
@@ -34,10 +73,7 @@
 	}
 }
 
-.agent--loding-state {
-	position: absolute;
-	z-index: 7;
-	background-color: rgba(0,0,0,0.5);
-	width: 100%;
-	height: 100%;
-}
+/***** console end   *****/
+
+/***** tooltip start *****/
+/***** tooltip end   *****/

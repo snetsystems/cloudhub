@@ -1,29 +1,24 @@
 // Libraries
-import React, { PureComponent } from 'react'
-import { connect } from 'react-redux'
+import React, {PureComponent} from 'react'
+import {connect} from 'react-redux'
 
 // Components
-import { Page } from 'src/reusable_ui'
+import {Page} from 'src/reusable_ui'
 import SubSections from 'src/shared/components/SubSections'
 import AgentMinions from 'src/agent_admin/containers/AgentMinions'
 import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
 import AgentControl from 'src/agent_admin/containers/AgentControl'
 
 // Constants
-import {
-  isUserAuthorized,
-  SUPERADMIN_ROLE,
-} from 'src/auth/Authorized'
+import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
 // Types
-import {
-  RemoteDataState
-} from 'src/types'
+import {RemoteDataState} from 'src/types'
 
 interface Props {
   me: {}
-  source: { id: number }
-  params: { tab: string }
+  source: {id: number}
+  params: {tab: string}
 }
 
 class AgentAdminPage extends PureComponent<Props> {
@@ -71,7 +66,7 @@ class AgentAdminPage extends PureComponent<Props> {
             currentUrl={'agent-configuration'}
           />
         ),
-      }
+      },
     ]
   }
 
@@ -79,7 +74,7 @@ class AgentAdminPage extends PureComponent<Props> {
     const {
       me,
       source,
-      params: { tab },
+      params: {tab},
     } = this.props
     return (
       <Page>
@@ -104,7 +99,7 @@ class AgentAdminPage extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps = ({ auth: { me } }) => ({
+const mapStateToProps = ({auth: {me}}) => ({
   me,
 })
 

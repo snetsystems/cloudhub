@@ -1,5 +1,5 @@
 // Libraries
-import React, { PureComponent } from 'react'
+import React, {PureComponent} from 'react'
 import _ from 'lodash'
 
 // Components
@@ -9,596 +9,615 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import AgentCodeEditor from 'src/agent_admin/components/AgentCodeEditor'
 import AgentToolbarFunction from 'src/agent_admin/components/AgentToolbarFunction'
 import PageSpinner from 'src/shared/components/PageSpinner'
-import { globalSetting } from "src/agent_admin/help"
+import {globalSetting} from 'src/agent_admin/help'
 
 // Decorators
-import { ErrorHandling } from 'src/shared/decorators/errors'
+import {ErrorHandling} from 'src/shared/decorators/errors'
 
 // APIs
 import {
-	getMinionKeyListAllAsync,
-	runLocalServiceStartTelegraf,
-	runLocalServiceStopTelegraf,
-	getLocalFileRead,
-	getLocalFileWrite,
-	runLocalServiceReStartTelegraf,
-	getLocalServiceGetRunning,
-	getRunnerSaltCmdTelegraf
+  getMinionKeyListAllAsync,
+  runLocalServiceStartTelegraf,
+  runLocalServiceStopTelegraf,
+  getLocalFileRead,
+  getLocalFileWrite,
+  runLocalServiceReStartTelegraf,
+  getLocalServiceGetRunning,
+  getRunnerSaltCmdTelegraf,
 } from 'src/agent_admin/apis'
 
 //const
-import { HANDLE_HORIZONTAL, HANDLE_VERTICAL } from 'src/shared/constants'
+import {HANDLE_HORIZONTAL, HANDLE_VERTICAL} from 'src/shared/constants'
 
 // Types
-import { Minion, RemoteDataState } from 'src/types'
+import {Minion, RemoteDataState} from 'src/types'
 interface Props {
-	currentUrl: string
-	isUserAuthorized: boolean
+  currentUrl: string
+  isUserAuthorized: boolean
 }
 
 interface State {
-	MinionsObject: { [x: string]: Minion }
-	configPageStatus: RemoteDataState
-	measurementsStatus: RemoteDataState
-	collectorConfigStatus: RemoteDataState
-	measurementsTitle: string
-	serviceMeasurements: {
-		name: string
-		isActivity: boolean
-	}[]
-	defaultMeasurements: {
-		name: string
-		isActivity: boolean
-	}[]
-	horizontalProportions: number[]
-	verticalProportions: number[]
-	description: string
-	focusedMeasure: string
-	focusedMeasurePosition: { top: number, left: number }
-	configScript: string
-	selectHost: string
-	responseMessage: string
-	defaultService: string[]
-	focusedHost: string
+  MinionsObject: {[x: string]: Minion}
+  configPageStatus: RemoteDataState
+  measurementsStatus: RemoteDataState
+  collectorConfigStatus: RemoteDataState
+  measurementsTitle: string
+  serviceMeasurements: {
+    name: string
+    isActivity: boolean
+  }[]
+  defaultMeasurements: {
+    name: string
+    isActivity: boolean
+  }[]
+  horizontalProportions: number[]
+  verticalProportions: number[]
+  description: string
+  focusedMeasure: string
+  focusedMeasurePosition: {top: number; left: number}
+  configScript: string
+  selectHost: string
+  responseMessage: string
+  defaultService: string[]
+  focusedHost: string
 }
 
 const defaultMeasurementsData = [
-	'global setting',
-	'cpu',
-	'disk',
-	'diskio',
-	'mem',
-	'net',
-	'netstat',
-	'ping',
-	'processes',
-	'system',
-	'swap',
-	'temp'
+  'global setting',
+  'cpu',
+  'disk',
+  'diskio',
+  'mem',
+  'net',
+  'netstat',
+  'ping',
+  'processes',
+  'system',
+  'swap',
+  'temp',
 ]
 
 @ErrorHandling
 class AgentConfiguration extends PureComponent<Props, State> {
-	constructor(props) {
-		super(props)
-		this.state = {
-			MinionsObject: {},
-			configPageStatus: RemoteDataState.NotStarted,
-			measurementsStatus: RemoteDataState.NotStarted,
-			collectorConfigStatus: RemoteDataState.NotStarted,
-			measurementsTitle: '',
-			serviceMeasurements: [],
-			defaultMeasurements: [],
-			horizontalProportions: [0.43, 0.57],
-			verticalProportions: [0.43, 0.57],
-			description: '',
-			focusedMeasure: '',
-			focusedMeasurePosition: { top: null, left: null },
-			configScript: '',
-			selectHost: '',
-			responseMessage: '',
-			focusedHost: '',
-			defaultService: [
-				'apache',
-				'nginx',
-				'iis',
-				'docker',
-				'influxdb',
-				'mysqld',
-				'mssql',
-				'mongodb',
-				'postgresql',
-				'redis',
-				'activemq',
-				'rabbitmq',
-				'kafka',
-				'zookeeper',
-				'tomcat',
-				'rsyslog'
-			]
-		}
-	}
+  constructor(props) {
+    super(props)
+    this.state = {
+      MinionsObject: {},
+      configPageStatus: RemoteDataState.NotStarted,
+      measurementsStatus: RemoteDataState.NotStarted,
+      collectorConfigStatus: RemoteDataState.NotStarted,
+      measurementsTitle: '',
+      serviceMeasurements: [],
+      defaultMeasurements: [],
+      horizontalProportions: [0.43, 0.57],
+      verticalProportions: [0.43, 0.57],
+      description: '',
+      focusedMeasure: '',
+      focusedMeasurePosition: {top: null, left: null},
+      configScript: '',
+      selectHost: '',
+      responseMessage: '',
+      focusedHost: '',
+      defaultService: [
+        'apache',
+        'nginx',
+        'iis',
+        'docker',
+        'influxdb',
+        'mysqld',
+        'mssql',
+        'mongodb',
+        'postgresql',
+        'redis',
+        'activemq',
+        'rabbitmq',
+        'kafka',
+        'zookeeper',
+        'tomcat',
+        'rsyslog',
+      ],
+    }
+  }
 
-	getWheelKeyListAll = async () => {
-		const hostListObject = await getMinionKeyListAllAsync()
+  getWheelKeyListAll = async () => {
+    const hostListObject = await getMinionKeyListAllAsync()
 
-		this.setState({
-			MinionsObject: hostListObject,
-			configPageStatus: RemoteDataState.Done,
-			collectorConfigStatus: RemoteDataState.Done
-		})
-	}
+    this.setState({
+      MinionsObject: hostListObject,
+      configPageStatus: RemoteDataState.Done,
+      collectorConfigStatus: RemoteDataState.Done,
+    })
+  }
 
-	private get MeasurementsContent() {
-		const { measurementsStatus } = this.state
+  private get MeasurementsContent() {
+    const {measurementsStatus} = this.state
 
-		if (measurementsStatus === RemoteDataState.Error) {
-			return this.ErrorState
-		}
+    if (measurementsStatus === RemoteDataState.Error) {
+      return this.ErrorState
+    }
 
-		return this.MeasurementsContentBody
-	}
+    return this.MeasurementsContentBody
+  }
 
-	private get CollectorConfigContent() {
-		const { collectorConfigStatus } = this.state
+  private get CollectorConfigContent() {
+    const {collectorConfigStatus} = this.state
 
+    if (collectorConfigStatus === RemoteDataState.Error) {
+      return this.ErrorState
+    }
 
-		if (collectorConfigStatus === RemoteDataState.Error) {
-			return this.ErrorState
-		}
+    return this.CollectorConfigBody
+  }
 
-		return this.CollectorConfigBody
-	}
+  private get LoadingState(): JSX.Element {
+    return (
+      <div
+        style={{
+          position: 'absolute',
+          zIndex: 7,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          width: '100%',
+          height: '100%',
+        }}
+      >
+        <PageSpinner />
+      </div>
+    )
+  }
 
-	private get LoadingState(): JSX.Element {
-		return (
-			<div
-				style={{
-					position: 'absolute',
-					zIndex: 7,
-					backgroundColor: 'rgba(0,0,0,0.5)',
-					width: '100%',
-					height: '100%'
-				}}
-			>
-				<PageSpinner />
-			</div>
-		)
-	}
+  private get ErrorState(): JSX.Element {
+    return (
+      <div className="generic-empty-state">
+        <h4 style={{margin: '90px 0'}}>There was a problem loading data</h4>
+      </div>
+    )
+  }
 
-	private get ErrorState(): JSX.Element {
-		return (
-			<div className="generic-empty-state" >
-				<h4 style={{ margin: '90px 0' }}>There was a problem loading data</h4>
-			</div>
-		)
-	}
+  public onClickTableRowCall = (host: string, ip: string) => () => {
+    this.setState({
+      configPageStatus: RemoteDataState.Loading,
+      measurementsStatus: RemoteDataState.Loading,
+      collectorConfigStatus: RemoteDataState.Loading,
+      focusedHost: host,
+    })
 
-	public onClickTableRowCall = (host: string, ip: string) => () => {
-		this.setState({
-			configPageStatus: RemoteDataState.Loading,
-			measurementsStatus: RemoteDataState.Loading,
-			collectorConfigStatus: RemoteDataState.Loading,
-			focusedHost: host
-		})
+    const getLocalFileReadPromise = getLocalFileRead(host)
 
-		const getLocalFileReadPromise = getLocalFileRead(host)
+    getLocalFileReadPromise.then(pLocalFileReadData => {
+      this.setState({
+        configScript: pLocalFileReadData.data.return[0][host],
+        selectHost: host,
+        collectorConfigStatus: RemoteDataState.Done,
+        configPageStatus: RemoteDataState.Done,
+      })
+    })
 
-		getLocalFileReadPromise.then((pLocalFileReadData) => {
-			this.setState({
-				configScript: pLocalFileReadData.data.return[0][host],
-				selectHost: host,
-				collectorConfigStatus: RemoteDataState.Done,
-				configPageStatus: RemoteDataState.Done
-			})
-		})
+    const getLocalServiceGetRunningPromise = getLocalServiceGetRunning(host)
 
-		const getLocalServiceGetRunningPromise = getLocalServiceGetRunning(host)
+    getLocalServiceGetRunningPromise.then(pLocalServiceGetRunningData => {
+      let getServiceRunning = this.state.defaultService
+        .filter(m =>
+          pLocalServiceGetRunningData.data.return[0][host].includes(m)
+        )
+        .map(sMeasure => {
+          return {
+            name: sMeasure,
+            isActivity: false,
+          }
+        })
 
-		getLocalServiceGetRunningPromise.then((pLocalServiceGetRunningData) => {
+      let getDefaultMeasure = defaultMeasurementsData.map(dMeasure => {
+        return {
+          name: dMeasure,
+          isActivity: false,
+        }
+      })
 
-			let getServiceRunning = this.state.defaultService
-				.filter((m) => pLocalServiceGetRunningData.data.return[0][host].includes(m))
-				.map((sMeasure) => {
-					return {
-						name: sMeasure,
-						isActivity: false
-					}
-				})
+      this.setState({
+        serviceMeasurements: getServiceRunning,
+        defaultMeasurements: getDefaultMeasure,
+        measurementsTitle: host + '-' + ip,
+        measurementsStatus: RemoteDataState.Done,
+      })
+    })
+  }
 
-			let getDefaultMeasure = defaultMeasurementsData.map((dMeasure) => {
-				return {
-					name: dMeasure,
-					isActivity: false
-				}
-			})
+  public onClickActionCall = (host: string, isRunning: boolean) => () => {
+    if (isRunning === false) {
+      const getLocalServiceStartTelegrafPromise = runLocalServiceStartTelegraf(
+        host
+      )
 
-			this.setState({
-				serviceMeasurements: getServiceRunning,
-				defaultMeasurements: getDefaultMeasure,
-				measurementsTitle: host + '-' + ip,
-				measurementsStatus: RemoteDataState.Done
-			})
-		})
-	}
+      getLocalServiceStartTelegrafPromise.then(() => {
+        this.getWheelKeyListAll()
+      })
+    } else {
+      const getLocalServiceStopTelegrafPromise = runLocalServiceStopTelegraf(
+        host
+      )
 
-	public onClickActionCall = (host: string, isRunning: boolean) => () => {
-		if (isRunning === false) {
-			const getLocalServiceStartTelegrafPromise = runLocalServiceStartTelegraf(host)
+      getLocalServiceStopTelegrafPromise.then(() => {
+        this.getWheelKeyListAll()
+      })
+    }
+  }
 
-			getLocalServiceStartTelegrafPromise.then(() => {
-				this.getWheelKeyListAll()
-			})
-		} else {
-			const getLocalServiceStopTelegrafPromise = runLocalServiceStopTelegraf(host)
+  public onClickApplyCall = () => {
+    const {selectHost, configScript} = this.state
+    this.setState({
+      configPageStatus: RemoteDataState.Loading,
+      collectorConfigStatus: RemoteDataState.Loading,
+    })
+    const getLocalFileWritePromise = getLocalFileWrite(selectHost, configScript)
 
-			getLocalServiceStopTelegrafPromise.then(() => {
-				this.getWheelKeyListAll()
-			})
-		}
-	}
+    getLocalFileWritePromise.then(pLocalFileWriteData => {
+      this.setState({
+        responseMessage: pLocalFileWriteData.data.return[0][selectHost],
+      })
 
-	public onClickApplyCall = () => {
-		const { selectHost, configScript } = this.state
-		this.setState({
-			configPageStatus: RemoteDataState.Loading,
-			collectorConfigStatus: RemoteDataState.Loading
-		})
-		const getLocalFileWritePromise = getLocalFileWrite(selectHost, configScript)
+      const getLocalServiceReStartTelegrafPromise = runLocalServiceReStartTelegraf(
+        selectHost
+      )
 
-		getLocalFileWritePromise.then((pLocalFileWriteData) => {
-			this.setState({
-				responseMessage: pLocalFileWriteData.data.return[0][selectHost]
-			})
+      getLocalServiceReStartTelegrafPromise.then(() => {
+        this.getWheelKeyListAll()
+      })
+    })
+  }
 
-			const getLocalServiceReStartTelegrafPromise = runLocalServiceReStartTelegraf(selectHost)
+  public async componentDidMount() {
+    this.getWheelKeyListAll()
+    this.setState({configPageStatus: RemoteDataState.Loading})
+  }
 
-			getLocalServiceReStartTelegrafPromise.then(() => {
-				this.getWheelKeyListAll()
-			})
-		})
-	}
+  render() {
+    const {isUserAuthorized} = this.props
+    return (
+      <>
+        {isUserAuthorized ? (
+          <div className="panel panel-solid">
+            <Threesizer
+              orientation={HANDLE_HORIZONTAL}
+              divisions={this.horizontalDivisions}
+              onResize={this.horizontalHandleResize}
+            />
+          </div>
+        ) : (
+          <div
+            className="generic-empty-state"
+            style={{backgroundColor: '#292933'}}
+          >
+            <h4>Not Allowed User</h4>
+          </div>
+        )}
+      </>
+    )
+  }
 
-	public async componentDidMount() {
-		this.getWheelKeyListAll()
-		this.setState({ configPageStatus: RemoteDataState.Loading })
-	}
+  private handleFocusedServiceMeasure = ({clickPosition, _thisProps}) => {
+    const {serviceMeasurements, defaultMeasurements} = this.state
 
-	render() {
-		const { isUserAuthorized } = this.props
-		return (
-			<>
-				{isUserAuthorized ? (
-					<div className="panel panel-solid">
-						<Threesizer
-							orientation={HANDLE_HORIZONTAL}
-							divisions={this.horizontalDivisions}
-							onResize={this.horizontalHandleResize}
-						/>
-					</div>
-				) : (
-						<div className="generic-empty-state" style={{ backgroundColor: '#292933' }}>
-							<h4>Not Allowed User</h4>
-						</div>
-					)}
-			</>
-		)
-	}
+    const mapServiceMeasurements = serviceMeasurements.map(m => {
+      m.isActivity = false
+      return m
+    })
 
-	private handleFocusedServiceMeasure = ({ clickPosition, _thisProps }) => {
-		const { serviceMeasurements, defaultMeasurements } = this.state
+    const mapDefaultMeasurements = defaultMeasurements.map(m => {
+      m.isActivity = false
+      return m
+    })
 
-		const mapServiceMeasurements = serviceMeasurements.map((m) => {
-			m.isActivity = false
-			return m
-		})
+    serviceMeasurements[_thisProps.idx].isActivity === false
+      ? (serviceMeasurements[_thisProps.idx].isActivity = true)
+      : (serviceMeasurements[_thisProps.idx].isActivity = false)
 
-		const mapDefaultMeasurements = defaultMeasurements.map((m) => {
-			m.isActivity = false
-			return m
-		})
+    const getRunnerSaltCmdTelegrafPromise = getRunnerSaltCmdTelegraf(
+      _thisProps.name
+    )
 
-		serviceMeasurements[_thisProps.idx].isActivity === false
-			? (serviceMeasurements[_thisProps.idx].isActivity = true)
-			: (serviceMeasurements[_thisProps.idx].isActivity = false)
+    getRunnerSaltCmdTelegrafPromise.then(pRunnerSaltCmdTelegrafData => {
+      this.setState({
+        serviceMeasurements: [...mapServiceMeasurements],
+        defaultMeasurements: [...mapDefaultMeasurements],
+        focusedMeasure: _thisProps.name,
+        focusedMeasurePosition: clickPosition,
+        description: pRunnerSaltCmdTelegrafData.data.return[0],
+      })
+    })
+  }
 
-		const getRunnerSaltCmdTelegrafPromise = getRunnerSaltCmdTelegraf(_thisProps.name)
+  private handleFocusedDefaultMeasure = ({clickPosition, _thisProps}) => {
+    const {defaultMeasurements, serviceMeasurements} = this.state
 
-		getRunnerSaltCmdTelegrafPromise.then((pRunnerSaltCmdTelegrafData) => {
+    const mapDefaultMeasurements = defaultMeasurements.map(m => {
+      m.isActivity = false
+      return m
+    })
 
-			this.setState({
-				serviceMeasurements: [...mapServiceMeasurements],
-				defaultMeasurements: [...mapDefaultMeasurements],
-				focusedMeasure: _thisProps.name,
-				focusedMeasurePosition: clickPosition,
-				description: pRunnerSaltCmdTelegrafData.data.return[0]
-			})
-		})
-	}
+    const mapServiceMeasurements = serviceMeasurements.map(m => {
+      m.isActivity = false
+      return m
+    })
 
-	private handleFocusedDefaultMeasure = ({ clickPosition, _thisProps }) => {
-		const { defaultMeasurements, serviceMeasurements } = this.state
+    defaultMeasurements[_thisProps.idx].isActivity === false
+      ? (defaultMeasurements[_thisProps.idx].isActivity = true)
+      : (defaultMeasurements[_thisProps.idx].isActivity = false)
 
-		const mapDefaultMeasurements = defaultMeasurements.map((m) => {
-			m.isActivity = false
-			return m
-		})
+    if (_thisProps.name === 'global setting') {
+      this.setState({
+        defaultMeasurements: [...mapDefaultMeasurements],
+        serviceMeasurements: [...mapServiceMeasurements],
+        focusedMeasure: _thisProps.name,
+        focusedMeasurePosition: clickPosition,
+        description: globalSetting,
+      })
+    } else {
+      const getRunnerSaltCmdTelegrafPromise = getRunnerSaltCmdTelegraf(
+        _thisProps.name
+      )
 
-		const mapServiceMeasurements = serviceMeasurements.map((m) => {
-			m.isActivity = false
-			return m
-		})
+      getRunnerSaltCmdTelegrafPromise.then(pRunnerSaltCmdTelegrafData => {
+        this.setState({
+          defaultMeasurements: [...mapDefaultMeasurements],
+          serviceMeasurements: [...mapServiceMeasurements],
+          focusedMeasure: _thisProps.name,
+          focusedMeasurePosition: clickPosition,
+          description: pRunnerSaltCmdTelegrafData.data.return[0],
+        })
+      })
+    }
+  }
 
-		defaultMeasurements[_thisProps.idx].isActivity === false
-			? (defaultMeasurements[_thisProps.idx].isActivity = true)
-			: (defaultMeasurements[_thisProps.idx].isActivity = false)
+  private handleServiceClose = () => {
+    const {serviceMeasurements} = this.state
 
-		if (_thisProps.name === 'global setting') {
-			this.setState({
-				defaultMeasurements: [...mapDefaultMeasurements],
-				serviceMeasurements: [...mapServiceMeasurements],
-				focusedMeasure: _thisProps.name,
-				focusedMeasurePosition: clickPosition,
-				description: globalSetting
-			})
-		} else {
-			const getRunnerSaltCmdTelegrafPromise = getRunnerSaltCmdTelegraf(_thisProps.name)
+    const mapServiceMeasurements = serviceMeasurements.map(m => {
+      m.isActivity = false
+      return m
+    })
 
-			getRunnerSaltCmdTelegrafPromise.then((pRunnerSaltCmdTelegrafData) => {
+    this.setState({
+      serviceMeasurements: [...mapServiceMeasurements],
+      focusedMeasure: '',
+      focusedMeasurePosition: {top: null, left: null},
+    })
+  }
 
-				this.setState({
-					defaultMeasurements: [...mapDefaultMeasurements],
-					serviceMeasurements: [...mapServiceMeasurements],
-					focusedMeasure: _thisProps.name,
-					focusedMeasurePosition: clickPosition,
-					description: pRunnerSaltCmdTelegrafData.data.return[0]
-				})
-			})
-		}
-	}
+  private handleDefaultClose = () => {
+    const {defaultMeasurements} = this.state
 
-	private handleServiceClose = () => {
-		const { serviceMeasurements } = this.state
+    const mapDefaultMeasurements = defaultMeasurements.map(m => {
+      m.isActivity = false
+      return m
+    })
 
-		const mapServiceMeasurements = serviceMeasurements.map((m) => {
-			m.isActivity = false
-			return m
-		})
+    this.setState({
+      defaultMeasurements: [...mapDefaultMeasurements],
+      focusedMeasure: '',
+      focusedMeasurePosition: {top: null, left: null},
+    })
+  }
 
-		this.setState({
-			serviceMeasurements: [...mapServiceMeasurements],
-			focusedMeasure: '',
-			focusedMeasurePosition: { top: null, left: null }
-		})
-	}
+  private horizontalHandleResize = (horizontalProportions: number[]) => {
+    this.setState({horizontalProportions})
+  }
 
-	private handleDefaultClose = () => {
-		const { defaultMeasurements } = this.state
+  private verticalHandleResize = (verticalProportions: number[]) => {
+    this.setState({verticalProportions})
+  }
 
-		const mapDefaultMeasurements = defaultMeasurements.map((m) => {
-			m.isActivity = false
-			return m
-		})
+  private onChangeScript = (script: string): void => {
+    this.setState({configScript: script})
+  }
 
-		this.setState({
-			defaultMeasurements: [...mapDefaultMeasurements],
-			focusedMeasure: '',
-			focusedMeasurePosition: { top: null, left: null }
-		})
-	}
+  private renderAgentPageTop = () => {
+    const {MinionsObject, configPageStatus, focusedHost} = this.state
 
-	private horizontalHandleResize = (horizontalProportions: number[]) => {
-		this.setState({ horizontalProportions })
-	}
+    return (
+      <AgentConfigurationTable
+        minions={_.values(MinionsObject)}
+        configPageStatus={configPageStatus}
+        onClickTableRow={this.onClickTableRowCall}
+        onClickAction={this.onClickActionCall}
+        focusedHost={focusedHost}
+      />
+    )
+  }
 
-	private verticalHandleResize = (verticalProportions: number[]) => {
-		this.setState({ verticalProportions })
-	}
+  private renderAgentPageBottom = () => {
+    return (
+      <Threesizer
+        orientation={HANDLE_VERTICAL}
+        divisions={this.verticalDivisions}
+        onResize={this.verticalHandleResize}
+      />
+    )
+  }
 
-	private onChangeScript = (script: string): void => {
-		this.setState({ configScript: script })
-	}
+  private Measurements() {
+    const {measurementsTitle, measurementsStatus} = this.state
+    return (
+      <div className="panel">
+        {measurementsStatus === RemoteDataState.Loading
+          ? this.LoadingState
+          : null}
+        <div className="panel-heading">
+          <h2
+            className="panel-title"
+            style={{
+              width: '100%',
+            }}
+          >
+            measurements
+            <div
+              style={{
+                color: '#f58220',
+                fontSize: '12px',
+                background: '#232323',
+                padding: '10px',
+                margin: '5px 0px',
+                width: '100%',
+              }}
+            >
+              {measurementsTitle}
+            </div>
+          </h2>
+        </div>
+        <div className="panel-body">{this.MeasurementsContent}</div>
+      </div>
+    )
+  }
 
-	private renderAgentPageTop = () => {
-		const { MinionsObject, configPageStatus, focusedHost } = this.state
+  private get MeasurementsContentBody() {
+    const {
+      serviceMeasurements,
+      defaultMeasurements,
+      description,
+      focusedMeasure,
+      focusedMeasurePosition,
+    } = this.state
+    return (
+      <FancyScrollbar>
+        <div className="measurements-query-builder--contain">(Service)</div>
+        <div className="query-builder--list">
+          {serviceMeasurements.map(
+            (v: {name: string; isActivity: boolean}, idx): JSX.Element => (
+              <AgentToolbarFunction
+                name={v.name}
+                isActivity={v.isActivity}
+                idx={idx}
+                handleFocusedMeasure={this.handleFocusedServiceMeasure}
+                handleClose={this.handleServiceClose}
+                description={description}
+                focusedMeasure={focusedMeasure}
+                focusedPosition={focusedMeasurePosition}
+              />
+            )
+          )}
+        </div>
+        <div
+          style={{
+            color: '#f58220',
+            fontSize: '12px',
+            background: '#232323',
+            padding: '10px',
+            margin: '5px 0px',
+            width: '100%',
+          }}
+        >
+          {' '}
+          (Default measurements)
+        </div>
+        <div className="query-builder--list">
+          {defaultMeasurements.map((v, i) => {
+            return (
+              <AgentToolbarFunction
+                name={v.name}
+                isActivity={v.isActivity}
+                key={i}
+                idx={i}
+                handleFocusedMeasure={this.handleFocusedDefaultMeasure.bind(
+                  this
+                )}
+                handleClose={this.handleDefaultClose}
+                description={description}
+                focusedMeasure={focusedMeasure}
+                focusedPosition={focusedMeasurePosition}
+              />
+            )
+          })}
+        </div>
+      </FancyScrollbar>
+    )
+  }
 
-		return (
-			<AgentConfigurationTable
-				minions={_.values(MinionsObject)}
-				configPageStatus={configPageStatus}
-				onClickTableRow={this.onClickTableRowCall}
-				onClickAction={this.onClickActionCall}
-				focusedHost={focusedHost}
-			/>
-		)
-	}
+  private CollectorConfig() {
+    const {collectorConfigStatus} = this.state
+    return (
+      <div className="panel">
+        {collectorConfigStatus === RemoteDataState.Loading
+          ? this.LoadingState
+          : null}
+        <div className="panel-heading">
+          <h2 className="panel-title">collector.conf</h2>
+          <div>
+            <button
+              className="btn btn-inline_block btn-default agent--btn"
+              onClick={this.onClickApplyCall}
+            >
+              APPLY
+            </button>
+          </div>
+        </div>
 
-	private renderAgentPageBottom = () => {
-		return (
-			<Threesizer
-				orientation={HANDLE_VERTICAL}
-				divisions={this.verticalDivisions}
-				onResize={this.verticalHandleResize}
-			/>
-		)
-	}
+        <div className="panel-body">{this.CollectorConfigContent}</div>
+      </div>
+    )
+  }
 
-	private Measurements() {
-		const { measurementsTitle, measurementsStatus } = this.state
-		return (
-			<div className="panel">
-				{measurementsStatus === RemoteDataState.Loading ? this.LoadingState : null}
-				<div className="panel-heading">
-					<h2
-						className="panel-title"
-						style={{
-							width: '100%'
-						}}
-					>
-						measurements
-						<div
-							style={{
-								color: '#f58220',
-								fontSize: '12px',
-								background: '#232323',
-								padding: '10px',
-								margin: '5px 0px',
-								width: '100%'
-							}}
-						>
-							{measurementsTitle}
-						</div>
-					</h2>
-				</div>
-				<div className="panel-body">{this.MeasurementsContent}</div>
-			</div>
-		)
-	}
+  private get CollectorConfigBody() {
+    const {configScript} = this.state
+    return (
+      <div className="collect-config--half">
+        <AgentCodeEditor
+          configScript={configScript}
+          onChangeScript={this.onChangeScript}
+        />
+      </div>
+    )
+  }
 
-	private get MeasurementsContentBody() {
-		const {
-			serviceMeasurements,
-			defaultMeasurements,
-			description,
-			focusedMeasure,
-			focusedMeasurePosition,
-		} = this.state
-		return (
-			<FancyScrollbar>
-				<div className="measurements-query-builder--contain">
-					(Service)
-				</div>
-				<div className="query-builder--list">
-					{serviceMeasurements.map((v: { name: string, isActivity: boolean }, idx): JSX.Element => (
-						<AgentToolbarFunction
-							name={v.name}
-							isActivity={v.isActivity}
-							idx={idx}
-							handleFocusedMeasure={this.handleFocusedServiceMeasure}
-							handleClose={this.handleServiceClose}
-							description={description}
-							focusedMeasure={focusedMeasure}
-							focusedPosition={focusedMeasurePosition}
-						/>
-					)
-					)}
-				</div>
-				<div
-					style={{
-						color: '#f58220',
-						fontSize: '12px',
-						background: '#232323',
-						padding: '10px',
-						margin: '5px 0px',
-						width: '100%'
-					}}
-				>
-					{' '}
-					(Default measurements)
-				</div>
-				<div className="query-builder--list">
-					{defaultMeasurements.map((v, i) => {
-						return (
-							<AgentToolbarFunction
-								name={v.name}
-								isActivity={v.isActivity}
-								key={i}
-								idx={i}
-								handleFocusedMeasure={this.handleFocusedDefaultMeasure.bind(this)}
-								handleClose={this.handleDefaultClose}
-								description={description}
-								focusedMeasure={focusedMeasure}
-								focusedPosition={focusedMeasurePosition}
-							/>
-						)
-					})}
-				</div>
-			</FancyScrollbar>
-		)
-	}
+  private get horizontalDivisions() {
+    const {horizontalProportions} = this.state
+    const [topSize, bottomSize] = horizontalProportions
 
-	private CollectorConfig() {
-		const { collectorConfigStatus } = this.state
-		return (
-			<div className="panel">
-				{collectorConfigStatus === RemoteDataState.Loading ? this.LoadingState : null}
-				<div className="panel-heading">
-					<h2 className="panel-title">collector.conf</h2>
-					<div>
-						<button
-							className="btn btn-inline_block btn-default agent--btn"
-							onClick={this.onClickApplyCall}
-						>
-							APPLY
-						</button>
-					</div>
-				</div>
+    return [
+      {
+        name: '',
+        handleDisplay: 'none',
+        headerButtons: [],
+        menuOptions: [],
+        render: this.renderAgentPageTop,
+        headerOrientation: HANDLE_HORIZONTAL,
+        size: topSize,
+      },
+      {
+        name: '',
+        handlePixels: 8,
+        headerButtons: [],
+        menuOptions: [],
+        render: this.renderAgentPageBottom,
+        headerOrientation: HANDLE_HORIZONTAL,
+        size: bottomSize,
+      },
+    ]
+  }
 
-				<div className="panel-body">{this.CollectorConfigContent}</div>
-			</div>
-		)
-	}
+  private get verticalDivisions() {
+    const {verticalProportions} = this.state
+    const [rightSize, leftSize] = verticalProportions
 
-	private get CollectorConfigBody() {
-		const { configScript } = this.state
-		return (
-			<div className='collect-config--half'>
-				<AgentCodeEditor configScript={configScript} onChangeScript={this.onChangeScript} />
-			</div>
-		)
-	}
-
-	private get horizontalDivisions() {
-		const { horizontalProportions } = this.state
-		const [topSize, bottomSize] = horizontalProportions
-
-		return [
-			{
-				name: '',
-				handleDisplay: 'none',
-				headerButtons: [],
-				menuOptions: [],
-				render: this.renderAgentPageTop,
-				headerOrientation: HANDLE_HORIZONTAL,
-				size: topSize
-			},
-			{
-				name: '',
-				handlePixels: 8,
-				headerButtons: [],
-				menuOptions: [],
-				render: this.renderAgentPageBottom,
-				headerOrientation: HANDLE_HORIZONTAL,
-				size: bottomSize
-			}
-		]
-	}
-
-	private get verticalDivisions() {
-		const { verticalProportions } = this.state
-		const [rightSize, leftSize] = verticalProportions
-
-		return [
-			{
-				name: '',
-				handleDisplay: 'none',
-				headerButtons: [],
-				menuOptions: [],
-				render: this.Measurements.bind(this),
-				headerOrientation: HANDLE_VERTICAL,
-				size: rightSize
-			},
-			{
-				name: '',
-				handlePixels: 8,
-				headerButtons: [],
-				menuOptions: [],
-				render: this.CollectorConfig.bind(this),
-				headerOrientation: HANDLE_VERTICAL,
-				size: leftSize
-			}
-		]
-	}
+    return [
+      {
+        name: '',
+        handleDisplay: 'none',
+        headerButtons: [],
+        menuOptions: [],
+        render: this.Measurements.bind(this),
+        headerOrientation: HANDLE_VERTICAL,
+        size: rightSize,
+      },
+      {
+        name: '',
+        handlePixels: 8,
+        headerButtons: [],
+        menuOptions: [],
+        render: this.CollectorConfig.bind(this),
+        headerOrientation: HANDLE_VERTICAL,
+        size: leftSize,
+      },
+    ]
+  }
 }
 
 export default AgentConfiguration
