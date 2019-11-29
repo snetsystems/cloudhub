@@ -25,6 +25,8 @@ interface State {
   searchTerm: string
   sortDirection: SortDirection
   sortKey: string
+
+  routerCount: string
 }
 
 @ErrorHandling
@@ -36,6 +38,7 @@ class RouterTable extends PureComponent<Props, State> {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
       sortKey: 'assetId',
+      routerCount: '0',
     }
   }
 
@@ -49,10 +52,11 @@ class RouterTable extends PureComponent<Props, State> {
   )
 
   public render() {
+    const {routerCount} = this.state
     return (
       <div className="panel">
         <div className="panel-heading">
-          <h2 className="panel-title">Routers</h2>
+          <h2 className="panel-title">{routerCount} Routers</h2>
           <SearchBar
             placeholder="Filter by Router..."
             onSearch={this.updateSearchTerm}
@@ -174,6 +178,8 @@ class RouterTable extends PureComponent<Props, State> {
       sortKey,
       sortDirection
     )
+
+    this.setState({routerCount: sortedRouters.length})
 
     return (
       <FancyScrollbar

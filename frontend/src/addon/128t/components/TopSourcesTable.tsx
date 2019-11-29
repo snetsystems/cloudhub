@@ -23,6 +23,8 @@ interface State {
   searchTerm: string
   sortDirection: SortDirection
   sortKey: string
+
+  topSourceCount: string
 }
 
 @ErrorHandling
@@ -33,6 +35,7 @@ class TopSourcesTable extends PureComponent<Props, State> {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
       sortKey: 'ip',
+      topSourceCount: '0',
     }
   }
 
@@ -46,10 +49,11 @@ class TopSourcesTable extends PureComponent<Props, State> {
   )
 
   public render() {
+    const {topSourceCount} = this.state
     return (
       <div className="panel">
         <div className="panel-heading">
-          <h2 className="panel-title">Top Sources</h2>
+          <h2 className="panel-title">{topSourceCount} Top Sources</h2>
         </div>
         <div className="panel-body">
           <div className="hosts-table">
@@ -130,7 +134,7 @@ class TopSourcesTable extends PureComponent<Props, State> {
       sortKey,
       sortDirection
     )
-
+    this.setState({topSourceCount: sortedTopSources.length})
     return (
       <FancyScrollbar
         children={sortedTopSources.map((r, i) => (
