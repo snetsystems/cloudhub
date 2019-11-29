@@ -1,7 +1,79 @@
-.agent--row {
-  cursor: pointer;
+// agent.scss
+
+/***** layout start *****/
+.agent--input {
+	cursor: pointer;
 }
 
-.agent--input {
-  cursor: pointer;
+.agent--btn {
+	margin-left: 5px !important;
 }
+
+.measurements-query-builder--contain {
+	color: #f58220;
+	font-size: 12px;
+	background: #232323;
+	padding: 10px;
+	margin: 5px 0px;
+	width: 100%;
+}
+
+.collect-config--half {
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+	position: relative;
+}
+
+/***** layout end   *****/
+
+/***** table start *****/
+.agent--state {
+	h4 {
+		margin: 90px 0;
+	}
+
+	&.agent--loding-state {
+		position: absolute;
+		z-index: 7;
+		background-color: rgba(0, 0, 0, 0.5);
+		width: 100%;
+		height: 100%;
+	}
+}
+
+.agent--row {
+	cursor: pointer;
+}
+
+.agent--indicator {
+	&.indicator--primary {
+		color: $c-rainforest
+	}
+
+	&.indicator--fail {
+		color: $c-topaz
+	}
+}
+
+/***** table end   *****/
+
+/***** console start *****/
+.console-zone {
+	background: #232323;
+	padding: 15px;
+	border-radius: 5px;
+	height: 100%;
+	width: 100%;
+
+	.console-zone--pre {
+		color: #fff;
+		white-space: pre-wrap;
+		background-color: transparent;
+	}
+}
+
+/***** console end   *****/
+
+/***** tooltip start *****/
+/***** tooltip end   *****/
