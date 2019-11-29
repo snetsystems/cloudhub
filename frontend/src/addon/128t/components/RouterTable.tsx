@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react'
+import React, {PureComponent} from 'react'
 
 import _ from 'lodash'
 import memoize from 'memoize-one'
@@ -7,9 +7,9 @@ import SearchBar from 'src/hosts/components/SearchBar'
 import RouterTableRow from 'src/addon/128t/components/RouterTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
-import { Router } from 'src/types'
-import { ErrorHandling } from 'src/shared/decorators/errors'
-import { ROUTER_TABLE_SIZING } from 'src/addon/128t/constants/tableSizing'
+import {Router} from 'src/types'
+import {ErrorHandling} from 'src/shared/decorators/errors'
+import {ROUTER_TABLE_SIZING} from 'src/addon/128t/constants/tableSizing'
 
 enum SortDirection {
   ASC = 'asc',
@@ -18,7 +18,7 @@ enum SortDirection {
 
 export interface Props {
   routers: Router[]
-  onClickModal: ({ name, _this, onClickfn }) => JSX.Element
+  onClickModal: ({name, _this, onClickfn}) => JSX.Element
 }
 
 interface State {
@@ -52,7 +52,7 @@ class RouterTable extends PureComponent<Props, State> {
   )
 
   public render() {
-    const { routerCount } = this.state
+    const {routerCount} = this.state
     return (
       <div className="panel">
         <div className="panel-heading">
@@ -92,7 +92,7 @@ class RouterTable extends PureComponent<Props, State> {
         <div
           onClick={this.updateSort('assetId')}
           className={this.sortableClasses('assetId')}
-          style={{ width: ASSETID }}
+          style={{width: ASSETID}}
         >
           Asset ID
           <span className="icon caret-up" />
@@ -101,7 +101,7 @@ class RouterTable extends PureComponent<Props, State> {
         <div
           onClick={this.updateSort('routerstatus')}
           className={this.sortableClasses('routerstatus')}
-          style={{ width: ROUTERSTATUS }}
+          style={{width: ROUTERSTATUS}}
         >
           Router Status
           <span className="icon caret-up" />
@@ -109,7 +109,7 @@ class RouterTable extends PureComponent<Props, State> {
         <div
           onClick={this.updateSort('networkstatus')}
           className={this.sortableClasses('networkstatus')}
-          style={{ width: NETWORKSTATUS }}
+          style={{width: NETWORKSTATUS}}
         >
           Network Status
           <span className="icon caret-up" />
@@ -117,7 +117,7 @@ class RouterTable extends PureComponent<Props, State> {
         <div
           onClick={this.updateSort('applicationstatus')}
           className={this.sortableClasses('applicationstatus')}
-          style={{ width: APPLICATIONSTATUS }}
+          style={{width: APPLICATIONSTATUS}}
         >
           Application Status
           <span className="icon caret-up" />
@@ -125,7 +125,7 @@ class RouterTable extends PureComponent<Props, State> {
         <div
           onClick={this.updateSort('cpu')}
           className={this.sortableClasses('cpu')}
-          style={{ width: CPU }}
+          style={{width: CPU}}
         >
           CPU
           <span className="icon caret-up" />
@@ -133,7 +133,7 @@ class RouterTable extends PureComponent<Props, State> {
         <div
           onClick={this.updateSort('memory')}
           className={this.sortableClasses('memory')}
-          style={{ width: MEMORY }}
+          style={{width: MEMORY}}
         >
           Memory
           <span className="icon caret-up" />
@@ -141,7 +141,7 @@ class RouterTable extends PureComponent<Props, State> {
         <div
           onClick={this.updateSort('sdplextraffic')}
           className={this.sortableClasses('sdplextraffic')}
-          style={{ width: SDPLEXTRAFFICUSAGE }}
+          style={{width: SDPLEXTRAFFICUSAGE}}
         >
           SDPlex traffic usage
           <span className="icon caret-up" />
@@ -149,7 +149,7 @@ class RouterTable extends PureComponent<Props, State> {
         <div
           onClick={this.updateSort('config')}
           className={this.sortableClasses('config')}
-          style={{ width: CONFIG }}
+          style={{width: CONFIG}}
         >
           Config
           <span className="icon caret-up" />
@@ -157,7 +157,7 @@ class RouterTable extends PureComponent<Props, State> {
         <div
           onClick={this.updateSort('firmware')}
           className={this.sortableClasses('firmware')}
-          style={{ width: FIRMWARE }}
+          style={{width: FIRMWARE}}
         >
           Firmware
           <span className="icon caret-up" />
@@ -168,8 +168,8 @@ class RouterTable extends PureComponent<Props, State> {
 
   // data add
   private get TableData() {
-    const { routers, onClickModal } = this.props
-    const { sortKey, sortDirection, searchTerm } = this.state
+    const {routers, onClickModal} = this.props
+    const {sortKey, sortDirection, searchTerm} = this.state
 
     //const sortedRouters = routers
     const sortedRouters = this.getSortedRouters(
@@ -179,7 +179,7 @@ class RouterTable extends PureComponent<Props, State> {
       sortDirection
     )
 
-    this.setState({ routerCount: sortedRouters.length })
+    this.setState({routerCount: sortedRouters.length})
 
     return (
       <FancyScrollbar
@@ -217,24 +217,24 @@ class RouterTable extends PureComponent<Props, State> {
   }
 
   public updateSearchTerm = searchTerm => {
-    this.setState({ searchTerm })
+    this.setState({searchTerm})
   }
 
   public updateSort = key => () => {
-    const { sortKey, sortDirection } = this.state
+    const {sortKey, sortDirection} = this.state
     if (sortKey === key) {
       const reverseDirection =
         sortDirection === SortDirection.ASC
           ? SortDirection.DESC
           : SortDirection.ASC
-      this.setState({ sortDirection: reverseDirection })
+      this.setState({sortDirection: reverseDirection})
     } else {
-      this.setState({ sortKey: key, sortDirection: SortDirection.ASC })
+      this.setState({sortKey: key, sortDirection: SortDirection.ASC})
     }
   }
 
   public sortableClasses = (key: string): string => {
-    const { sortKey, sortDirection } = this.state
+    const {sortKey, sortDirection} = this.state
     if (sortKey === key) {
       if (sortDirection === SortDirection.ASC) {
         return 'hosts-table--th sortable-header sorting-ascending'

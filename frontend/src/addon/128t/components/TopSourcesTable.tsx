@@ -1,4 +1,4 @@
-import React, { PureComponent } from 'react'
+import React, {PureComponent} from 'react'
 
 import _ from 'lodash'
 import memoize from 'memoize-one'
@@ -6,9 +6,9 @@ import memoize from 'memoize-one'
 import TopSourcesTableRow from 'src/addon/128t/components/TopSourcesTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
-import { TopSources } from 'src/types'
-import { ErrorHandling } from 'src/shared/decorators/errors'
-import { TOPSOURCES_TABLE_SIZING } from 'src/addon/128t/constants/tableSizing'
+import {TopSources} from 'src/types'
+import {ErrorHandling} from 'src/shared/decorators/errors'
+import {TOPSOURCES_TABLE_SIZING} from 'src/addon/128t/constants/tableSizing'
 
 enum SortDirection {
   ASC = 'asc',
@@ -49,7 +49,7 @@ class TopSourcesTable extends PureComponent<Props, State> {
   )
 
   public render() {
-    const { topSourceCount } = this.state
+    const {topSourceCount} = this.state
     return (
       <div className="panel">
         <div className="panel-heading">
@@ -81,7 +81,7 @@ class TopSourcesTable extends PureComponent<Props, State> {
         <div
           onClick={this.updateSort('ip')}
           className={this.sortableClasses('ip')}
-          style={{ width: IP }}
+          style={{width: IP}}
         >
           IP
           <span className="icon caret-up" />
@@ -89,7 +89,7 @@ class TopSourcesTable extends PureComponent<Props, State> {
         <div
           onClick={this.updateSort('tenant')}
           className={this.sortableClasses('tenant')}
-          style={{ width: TENANT }}
+          style={{width: TENANT}}
         >
           Tenant
           <span className="icon caret-up" />
@@ -97,7 +97,7 @@ class TopSourcesTable extends PureComponent<Props, State> {
         <div
           onClick={this.updateSort('bandwidth')}
           className={this.sortableClasses('bandwidth')}
-          style={{ width: CURRENTBANDWIDTH }}
+          style={{width: CURRENTBANDWIDTH}}
         >
           Current bandwidth
           <span className="icon caret-up" />
@@ -105,7 +105,7 @@ class TopSourcesTable extends PureComponent<Props, State> {
         <div
           onClick={this.updateSort('totaldata')}
           className={this.sortableClasses('totaldata')}
-          style={{ width: TOTALDATA }}
+          style={{width: TOTALDATA}}
         >
           Total Data
           <span className="icon caret-up" />
@@ -113,7 +113,7 @@ class TopSourcesTable extends PureComponent<Props, State> {
         <div
           onClick={this.updateSort('sessioncnt')}
           className={this.sortableClasses('sessioncnt')}
-          style={{ width: SESSIONCOUNT }}
+          style={{width: SESSIONCOUNT}}
         >
           Session count
           <span className="icon caret-up" />
@@ -124,8 +124,8 @@ class TopSourcesTable extends PureComponent<Props, State> {
 
   // data add
   private get TableData() {
-    const { topSources } = this.props
-    const { sortKey, sortDirection, searchTerm } = this.state
+    const {topSources} = this.props
+    const {sortKey, sortDirection, searchTerm} = this.state
 
     //const sortedTopSources = topSources
     const sortedTopSources = this.getSortedTopSources(
@@ -134,7 +134,7 @@ class TopSourcesTable extends PureComponent<Props, State> {
       sortKey,
       sortDirection
     )
-    this.setState({ topSourceCount: sortedTopSources.length })
+    this.setState({topSourceCount: sortedTopSources.length})
     return (
       <FancyScrollbar
         children={sortedTopSources.map((r, i) => (
@@ -171,24 +171,24 @@ class TopSourcesTable extends PureComponent<Props, State> {
   }
 
   public updateSearchTerm = searchTerm => {
-    this.setState({ searchTerm })
+    this.setState({searchTerm})
   }
 
   public updateSort = key => () => {
-    const { sortKey, sortDirection } = this.state
+    const {sortKey, sortDirection} = this.state
     if (sortKey === key) {
       const reverseDirection =
         sortDirection === SortDirection.ASC
           ? SortDirection.DESC
           : SortDirection.ASC
-      this.setState({ sortDirection: reverseDirection })
+      this.setState({sortDirection: reverseDirection})
     } else {
-      this.setState({ sortKey: key, sortDirection: SortDirection.ASC })
+      this.setState({sortKey: key, sortDirection: SortDirection.ASC})
     }
   }
 
   public sortableClasses = (key: string): string => {
-    const { sortKey, sortDirection } = this.state
+    const {sortKey, sortDirection} = this.state
     if (sortKey === key) {
       if (sortDirection === SortDirection.ASC) {
         return 'hosts-table--th sortable-header sorting-ascending'
