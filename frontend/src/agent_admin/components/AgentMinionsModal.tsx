@@ -1,5 +1,5 @@
 // Libraries
-import React from 'react'
+import React, {PureComponent} from 'react'
 
 // Components
 import ReactModal from 'react-modal'
@@ -22,7 +22,7 @@ interface State {
 }
 
 @ErrorHandling
-class AgentMinionsModal extends React.Component<Props, State> {
+class AgentMinionsModal extends PureComponent<Props, State> {
   constructor(props) {
     super(props)
     this.state = {

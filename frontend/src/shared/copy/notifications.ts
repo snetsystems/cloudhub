@@ -35,7 +35,7 @@ export const notifyGenericFail = (): string =>
 
 export const notifyNewVersion = (version: string): Notification => ({
   type: 'info',
-  icon: 'cubo-uniform',
+  icon: '_snet--logo',
   duration: INFINITE,
   message: `Welcome to the latest CMP (${version}). Local settings cleared.`,
 })
@@ -888,4 +888,80 @@ export const csvExportFailed: Notification = {
 export const annotationsError = (message: string): Notification => ({
   ...defaultErrorNotification,
   message,
+})
+
+//  Cloud Smart Hub AgentPage Sources Notifications
+//  ----------------------------------------------------------------------------
+export const notifyAgentApplySucceeded = (
+  sourceName: string
+): Notification => ({
+  ...defaultSuccessNotification,
+  icon: 'server2',
+  message: `Collector Configuration ${sourceName} successfully.`,
+})
+
+export const notifyAgentLoadedSucceeded = (
+  sourceName: string
+): Notification => ({
+  ...defaultSuccessNotification,
+  icon: 'server2',
+  message: `Collector Configuration ${sourceName} successfully.`,
+})
+
+export const notifyAgentStopSucceeded = (sourceName: string): Notification => ({
+  ...defaultSuccessNotification,
+  icon: 'server2',
+  message: `Collector Configuration ${sourceName} successfully.`,
+})
+
+export const notifyAgentStartSucceeded = (
+  sourceName: string
+): Notification => ({
+  ...defaultSuccessNotification,
+  icon: 'server2',
+  message: `Collector ${sourceName} successfully.`,
+})
+
+export const notifyAgentAcceptSucceeded = (
+  sourceName: string
+): Notification => ({
+  ...defaultSuccessNotification,
+  icon: 'server2',
+  message: `Collector ${sourceName} successfully.`,
+})
+
+export const notifyAgentRejectSucceeded = (
+  sourceName: string
+): Notification => ({
+  ...defaultSuccessNotification,
+  icon: 'server2',
+  message: `Collector ${sourceName} successfully.`,
+})
+
+export const notifyAgentDeleteSucceeded = (
+  sourceName: string
+): Notification => ({
+  ...defaultSuccessNotification,
+  icon: 'server2',
+  message: `Collector ${sourceName} successfully.`,
+})
+
+export const notifyAgentLoadFailed = (error): Notification => ({
+  ...defaultErrorNotification,
+  message: `Agent Load Failed, ${error}`,
+})
+
+export const notifyAgentAcceptFailed = (error): Notification => ({
+  ...defaultErrorNotification,
+  message: `Agent Accept Failed, ${error}`,
+})
+
+export const notifyAgentRejectFailed = (error): Notification => ({
+  ...defaultErrorNotification,
+  message: `Agent Reject Failed, ${error}`,
+})
+
+export const notifyAgentDeleteFailed = (error): Notification => ({
+  ...defaultErrorNotification,
+  message: `Agent Delete Failed, ${error}`,
 })

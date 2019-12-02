@@ -1,5 +1,6 @@
 // Libraries
 import React, {PureComponent} from 'react'
+import {connect} from 'react-redux'
 import _ from 'lodash'
 
 // Components
@@ -19,16 +20,35 @@ import {
   runDeleteKey,
 } from 'src/agent_admin/apis'
 
+// Notification
+import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {
+  notifyAgentAcceptSucceeded,
+  notifyAgentRejectSucceeded,
+  notifyAgentDeleteSucceeded,
+  notifyAgentLoadedSucceeded,
+  notifyAgentLoadFailed,
+  notifyAgentAcceptFailed,
+  notifyAgentRejectFailed,
+  notifyAgentDeleteFailed,
+} from 'src/shared/copy/notifications'
+
 // Constants
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
 
 // Types
-import {Minion, RemoteDataState} from 'src/types'
+import {
+  Minion,
+  RemoteDataState,
+  Notification,
+  NotificationFunc,
+} from 'src/types'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
+  notify: (message: Notification | NotificationFunc) => void
   isUserAuthorized: boolean
   currentUrl: string
 }
@@ -55,19 +75,62 @@ class AgentMinions extends PureComponent<Props, State> {
     }
   }
 
-  getWheelKeyListAll = async () => {
-    const response = await getMinionKeyListAll()
-    const updateMinionsIP = await getMinionsIP(response)
-    const newMinions = await getMinionsOS(updateMinionsIP)
+  getWheelKeyListAll = async userDoing => {
+    const {notify} = this.props
+    try {
+      const response = await getMinionKeyListAll()
+      const updateMinionsIP = await getMinionsIP(response)
+      const newMinions = await getMinionsOS(updateMinionsIP)
 
-    this.setState({
-      MinionsObject: newMinions,
-      minionsPageStatus: RemoteDataState.Done,
-    })
+      this.setState({
+        MinionsObject: newMinions,
+        minionsPageStatus: RemoteDataState.Done,
+      })
+
+      switch (userDoing) {
+        case 'load':
+          notify(notifyAgentLoadedSucceeded('Load Success'))
+          break
+        case 'accept':
+          notify(notifyAgentAcceptSucceeded('Accept Success'))
+          break
+        case 'reject':
+          notify(notifyAgentRejectSucceeded('Reject Success'))
+          break
+        case 'delete':
+          notify(notifyAgentDeleteSucceeded('Delete Success'))
+          break
+
+        default:
+          return
+      }
+    } catch (e) {
+      console.log('userDong Here!!!!', userDoing, e)
+      this.setState({
+        minionsPageStatus: RemoteDataState.Done,
+      })
+      switch (userDoing) {
+        case 'load':
+          notify(notifyAgentLoadFailed(`${e}`))
+          break
+        case 'accept':
+          notify(notifyAgentAcceptFailed('Accept Failed'))
+          break
+        case 'reject':
+          notify(notifyAgentRejectFailed('Reject Failed'))
+          break
+        case 'delete':
+          notify(notifyAgentDeleteFailed('Delete Failed'))
+          break
+
+        default:
+          return
+      }
+    }
   }
 
   public async componentDidMount() {
-    this.getWheelKeyListAll()
+    this.getWheelKeyListAll('load')
     this.setState({minionsPageStatus: RemoteDataState.Loading})
   }
 
@@ -102,7 +165,7 @@ class AgentMinions extends PureComponent<Props, State> {
             4
           ),
         })
-        this.getWheelKeyListAll()
+        this.getWheelKeyListAll('reject')
       })
     } else if (cmdstatus == 'Accept') {
       const getWheelKeyCommandPromise = runAcceptKey(host)
@@ -115,7 +178,7 @@ class AgentMinions extends PureComponent<Props, State> {
             4
           ),
         })
-        this.getWheelKeyListAll()
+        this.getWheelKeyListAll('accept')
       })
     } else if (cmdstatus == 'Delete') {
       const getWheelKeyCommandPromise = runDeleteKey(host)
@@ -128,7 +191,7 @@ class AgentMinions extends PureComponent<Props, State> {
             4
           ),
         })
-        this.getWheelKeyListAll()
+        this.getWheelKeyListAll('delete')
       })
     }
   }
@@ -226,5 +289,8 @@ class AgentMinions extends PureComponent<Props, State> {
     ]
   }
 }
+const mdtp = {
+  notify: notifyAction,
+}
 
-export default AgentMinions
+export default connect(null, mdtp, null)(AgentMinions)

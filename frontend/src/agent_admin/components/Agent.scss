@@ -1,9 +1,33 @@
 // agent.scss
 
 /***** layout start *****/
-.agent--input {
-	cursor: pointer;
+
+.agent-input--container {
+	width: 780px;
+
+	.agent--input {
+		cursor: pointer;
+
+		&.agent--input-address {
+			width: calc(50% - 5px);
+			margin-right: 5px;
+			cursor: text;
+		}
+
+		&.agent--input-id {
+			width: calc(25% - 5px);
+			margin-right: 5px;
+			cursor: text;
+		}
+
+		&.agent--input-password {
+			width: calc(25% - 5px);
+			margin-right: 5px;
+			cursor: text;
+		}
+	}
 }
+
 
 .agent--btn {
 	margin-left: 5px !important;

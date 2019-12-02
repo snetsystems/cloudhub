@@ -21,16 +21,50 @@ interface Props {
   params: {tab: string}
 }
 
-class AgentAdminPage extends PureComponent<Props> {
+interface State {
+  agentPageStatus: RemoteDataState
+  isSelectBoxView: boolean
+  minions: []
+  userAddress: string
+  userId: string
+  userPassword: string
+  [x: string]: {}
+}
+
+const localStorageKey = 'agentPage'
+const localStorageObj = 'agentPageState'
+
+class AgentAdminPage extends PureComponent<Props, State> {
   constructor(props) {
     super(props)
 
     this.state = {
-      hostsPageStatus: RemoteDataState.NotStarted,
+      agentPageStatus: RemoteDataState.NotStarted,
       isSelectBoxView: true,
       minions: [],
+      userAddress: 'http://',
+      userId: '',
+      userPassword: '',
     }
   }
+
+  componentWillMount() {
+    const getLocalStorageItem = this.getLocalStorage({
+      localKey: localStorageKey,
+      objKey: localStorageObj,
+    })
+    const thisState = Object.keys(this.state)
+    const parseObject = JSON.parse(getLocalStorageItem)[localStorageObj]
+    const localState = Object.keys(parseObject)
+
+    thisState.map(s => {
+      localState.map(ls => {
+        s === ls ? this.setState({[s]: parseObject[ls]}) : null
+      })
+    })
+  }
+
+  componentWillUnmount() {}
 
   public sections = me => {
     return [
@@ -76,13 +110,37 @@ class AgentAdminPage extends PureComponent<Props> {
       source,
       params: {tab},
     } = this.props
+
+    const {userAddress, userId, userPassword} = this.state
     return (
       <Page>
         <Page.Header>
           <Page.Header.Left>
             <Page.Title title="Agent Configuration" />
           </Page.Header.Left>
-          <Page.Header.Right />
+          <Page.Header.Right>
+            <div className="agent-input--container">
+              <input
+                type="url"
+                className="form-control input-sm agent--input agent--input-address"
+                value={userAddress}
+                onChange={this.handleInputChange('userAddress')}
+              />
+              <input
+                className="form-control input-sm agent--input agent--input-id"
+                placeholder="Insert Host ID"
+                value={userId}
+                onChange={this.handleInputChange('userId')}
+              />
+              <input
+                type="password"
+                className="form-control input-sm agent--input agent--input-password"
+                placeholder="Insert Host Password"
+                value={userPassword}
+                onChange={this.handleInputChange('userPassword')}
+              />
+            </div>
+          </Page.Header.Right>
         </Page.Header>
         <Page.Contents fullWidth={true}>
           <div className="container-fluid full-height">
@@ -96,6 +154,42 @@ class AgentAdminPage extends PureComponent<Props> {
         </Page.Contents>
       </Page>
     )
+  }
+
+  private handleInputChange = target => event => {
+    this.handleLocalStorage({
+      localKey: localStorageKey,
+      objKey: localStorageObj,
+      target,
+      _event: event,
+    })
+
+    this.setState({[target]: event.target.value})
+  }
+
+  private getLocalStorage = ({localKey, objKey}) => {
+    const getItem = localStorage.getItem(localKey)
+    if (getItem === null) {
+      localStorage.setItem(localKey, JSON.stringify({[objKey]: {}}))
+      return localStorage.getItem(localKey)
+    } else {
+      return getItem
+    }
+  }
+
+  private setLocalStorage = ({localKey, objKey}) => {
+    return localStorage.setItem(localKey, objKey)
+  }
+
+  private handleLocalStorage = ({localKey, objKey, target, _event}) => {
+    const getLocalStorageItem = this.getLocalStorage({localKey, objKey})
+    const getInputData = {[target]: _event.target.value}
+    const parseObject = JSON.parse(getLocalStorageItem)
+    const parseString = JSON.stringify({
+      [objKey]: Object.assign(parseObject[objKey], getInputData),
+    })
+
+    this.setLocalStorage({localKey, objKey: parseString})
   }
 }
 

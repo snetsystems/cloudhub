@@ -1,5 +1,6 @@
 // Libraries
 import React, {PureComponent} from 'react'
+import {connect} from 'react-redux'
 import _ from 'lodash'
 
 // Components
@@ -26,12 +27,28 @@ import {
   getRunnerSaltCmdTelegraf,
 } from 'src/agent_admin/apis'
 
-//const
+// Notification
+import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {
+  notifyAgentApplySucceeded,
+  notifyAgentLoadedSucceeded,
+  notifyAgentStopSucceeded,
+  notifyAgentStartSucceeded,
+} from 'src/shared/copy/notifications'
+
+// Constants
 import {HANDLE_HORIZONTAL, HANDLE_VERTICAL} from 'src/shared/constants'
 
 // Types
-import {Minion, RemoteDataState} from 'src/types'
+import {
+  Minion,
+  RemoteDataState,
+  Notification,
+  NotificationFunc,
+} from 'src/types'
+
 interface Props {
+  notify: (message: Notification | NotificationFunc) => void
   currentUrl: string
   isUserAuthorized: boolean
 }
@@ -119,14 +136,33 @@ class AgentConfiguration extends PureComponent<Props, State> {
     }
   }
 
-  getWheelKeyListAll = async () => {
+  getWheelKeyListAll = async userDoing => {
     const hostListObject = await getMinionKeyListAllAsync()
+    const {notify} = this.props
 
     this.setState({
       MinionsObject: hostListObject,
       configPageStatus: RemoteDataState.Done,
       collectorConfigStatus: RemoteDataState.Done,
     })
+
+    switch (userDoing) {
+      case 'load':
+        notify(notifyAgentLoadedSucceeded('Load Success'))
+        break
+      case 'apply':
+        notify(notifyAgentApplySucceeded('Apply Success'))
+        break
+      case 'stop':
+        notify(notifyAgentStopSucceeded('Stop Success'))
+        break
+      case 'start':
+        notify(notifyAgentStartSucceeded('Start Success'))
+        break
+
+      default:
+        return
+    }
   }
 
   private get MeasurementsContent() {
@@ -229,7 +265,7 @@ class AgentConfiguration extends PureComponent<Props, State> {
       )
 
       getLocalServiceStartTelegrafPromise.then(() => {
-        this.getWheelKeyListAll()
+        this.getWheelKeyListAll('start')
       })
     } else {
       const getLocalServiceStopTelegrafPromise = runLocalServiceStopTelegraf(
@@ -237,7 +273,7 @@ class AgentConfiguration extends PureComponent<Props, State> {
       )
 
       getLocalServiceStopTelegrafPromise.then(() => {
-        this.getWheelKeyListAll()
+        this.getWheelKeyListAll('stop')
       })
     }
   }
@@ -248,6 +284,7 @@ class AgentConfiguration extends PureComponent<Props, State> {
       configPageStatus: RemoteDataState.Loading,
       collectorConfigStatus: RemoteDataState.Loading,
     })
+
     const getLocalFileWritePromise = getLocalFileWrite(selectHost, configScript)
 
     getLocalFileWritePromise.then(pLocalFileWriteData => {
@@ -260,13 +297,13 @@ class AgentConfiguration extends PureComponent<Props, State> {
       )
 
       getLocalServiceReStartTelegrafPromise.then(() => {
-        this.getWheelKeyListAll()
+        this.getWheelKeyListAll('apply')
       })
     })
   }
 
   public async componentDidMount() {
-    this.getWheelKeyListAll()
+    this.getWheelKeyListAll('load')
     this.setState({configPageStatus: RemoteDataState.Loading})
   }
 
@@ -620,4 +657,8 @@ class AgentConfiguration extends PureComponent<Props, State> {
   }
 }
 
-export default AgentConfiguration
+const mdtp = {
+  notify: notifyAction,
+}
+
+export default connect(null, mdtp, null)(AgentConfiguration)
