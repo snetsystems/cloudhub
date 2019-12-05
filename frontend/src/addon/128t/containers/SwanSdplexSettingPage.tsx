@@ -1,5 +1,5 @@
 // Libraries
-import React, {Component} from 'react'
+import React, {PureComponent} from 'react'
 
 // Components
 
@@ -12,7 +12,7 @@ interface State {}
 interface Props {}
 
 @ErrorHandling
-class SwanSdplexSettingPage extends Component<Props, State> {
+class SwanSdplexSettingPage extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
   }

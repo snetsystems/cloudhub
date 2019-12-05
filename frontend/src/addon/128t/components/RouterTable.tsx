@@ -51,6 +51,19 @@ class RouterTable extends PureComponent<Props, State> {
     ) => this.sort(this.filter(routers, searchTerm), sortKey, sortDirection)
   )
 
+  public componentWillMount() {
+    const {routers} = this.props
+    const {sortKey, sortDirection, searchTerm} = this.state
+
+    const sortedRouters = this.getSortedRouters(
+      routers,
+      searchTerm,
+      sortKey,
+      sortDirection
+    )
+
+    this.setState({routerCount: sortedRouters.length})
+  }
   public render() {
     const {routerCount} = this.state
     return (
@@ -178,8 +191,6 @@ class RouterTable extends PureComponent<Props, State> {
       sortKey,
       sortDirection
     )
-
-    this.setState({routerCount: sortedRouters.length})
 
     return (
       <FancyScrollbar

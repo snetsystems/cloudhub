@@ -47,7 +47,19 @@ class TopSourcesTable extends PureComponent<Props, State> {
       sortDirection: SortDirection
     ) => this.sort(this.filter(topSources, searchTerm), sortKey, sortDirection)
   )
+  public componentWillMount() {
+    const {topSources} = this.props
+    const {sortKey, sortDirection, searchTerm} = this.state
 
+    //const sortedTopSources = topSources
+    const sortedTopSources = this.getSortedTopSources(
+      topSources,
+      searchTerm,
+      sortKey,
+      sortDirection
+    )
+    this.setState({topSourceCount: sortedTopSources.length})
+  }
   public render() {
     const {topSourceCount} = this.state
     return (
@@ -134,7 +146,7 @@ class TopSourcesTable extends PureComponent<Props, State> {
       sortKey,
       sortDirection
     )
-    this.setState({topSourceCount: sortedTopSources.length})
+
     return (
       <FancyScrollbar
         children={sortedTopSources.map((r, i) => (

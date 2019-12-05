@@ -1,6 +1,6 @@
 {
   "parser": "babel-eslint",
-  "plugins": ["react", "prettier", "babel", "jest"],
+  "plugins": ["react", "react-hooks", "prettier", "babel", "jest"],
   "extends": ["prettier", "prettier/react"],
   "env": {
     "browser": true,
@@ -225,6 +225,8 @@
     "react/require-extension": 0,
     "react/self-closing-comp": 0,
     "react/sort-comp": 0,
+    "react-hooks/rules-of-hooks": "error",
+    "react-hooks/exhaustive-deps": "warn",
     "prettier/prettier": [
       "error",
       {
