@@ -1,6 +1,7 @@
 // Libraries
 import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
+import {bindActionCreators} from 'redux'
 
 // Components
 import {Page} from 'src/reusable_ui'
@@ -15,53 +16,54 @@ import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 // Types
 import {RemoteDataState} from 'src/types'
 
+import {UpdateMasterAddress} from 'src/agent_admin/actions/'
+
 interface Props {
   me: {}
   source: {id: number}
   params: {tab: string}
+  masterAddress: string
+  masterId: string
+  masterPassword: string
+  handleKeyDown: () => void
 }
 
 interface State {
   agentPageStatus: RemoteDataState
   isSelectBoxView: boolean
   minions: []
-  userAddress: string
-  userId: string
-  userPassword: string
+  // userAddress: string
+  // userId: string
+  // userPassword: string
   [x: string]: {}
 }
 
-const localStorageKey = 'agentPage'
-const localStorageObj = 'agentPageState'
+// const localStorageKey = 'agentPage'
+// const localStorageObj = 'agentPageState'
 
 class AgentAdminPage extends PureComponent<Props, State> {
   constructor(props) {
     super(props)
-
     this.state = {
       agentPageStatus: RemoteDataState.NotStarted,
       isSelectBoxView: true,
       minions: [],
-      userAddress: 'http://',
-      userId: '',
-      userPassword: '',
     }
   }
 
   componentWillMount() {
-    const getLocalStorageItem = this.getLocalStorage({
-      localKey: localStorageKey,
-      objKey: localStorageObj,
-    })
-    const thisState = Object.keys(this.state)
-    const parseObject = JSON.parse(getLocalStorageItem)[localStorageObj]
-    const localState = Object.keys(parseObject)
-
-    thisState.map(s => {
-      localState.map(ls => {
-        s === ls ? this.setState({[s]: parseObject[ls]}) : null
-      })
-    })
+    // const getLocalStorageItem = this.getLocalStorage({
+    //   localKey: localStorageKey,
+    //   objKey: localStorageObj,
+    // })
+    // const thisState = Object.keys(this.state)
+    // const parseObject = JSON.parse(getLocalStorageItem)[localStorageObj]
+    // const localState = Object.keys(parseObject)
+    // thisState.map(s => {
+    //   localState.map(ls => {
+    //     s === ls ? this.setState({[s]: parseObject[ls]}) : null
+    //   })
+    // })
   }
 
   componentWillUnmount() {}
@@ -109,9 +111,13 @@ class AgentAdminPage extends PureComponent<Props, State> {
       me,
       source,
       params: {tab},
+      masterAddress,
+      masterId,
+      masterPassword,
     } = this.props
 
-    const {userAddress, userId, userPassword} = this.state
+    console.log('masterAddress', masterAddress)
+    // const {userAddress, userId, userPassword} = this.state
     return (
       <Page>
         <Page.Header>
@@ -123,21 +129,24 @@ class AgentAdminPage extends PureComponent<Props, State> {
               <input
                 type="url"
                 className="form-control input-sm agent--input agent--input-address"
-                value={userAddress}
-                onChange={this.handleInputChange('userAddress')}
+                value={masterAddress}
+                // onChange={this.handleUpdateMasterAddress}
+                onChange={this.props.handleKeyDown}
+                // onChange={this.handleInputChange('userAddress')}
               />
               <input
                 className="form-control input-sm agent--input agent--input-id"
                 placeholder="Insert Host ID"
-                value={userId}
-                onChange={this.handleInputChange('userId')}
+                value={masterId}
+
+                // onChange={this.handleInputChange('userId')}
               />
               <input
                 type="password"
                 className="form-control input-sm agent--input agent--input-password"
                 placeholder="Insert Host Password"
-                value={userPassword}
-                onChange={this.handleInputChange('userPassword')}
+                value={masterPassword}
+                // onChange={this.handleInputChange('userPassword')}
               />
             </div>
           </Page.Header.Right>
@@ -156,45 +165,69 @@ class AgentAdminPage extends PureComponent<Props, State> {
     )
   }
 
-  private handleInputChange = target => event => {
-    this.handleLocalStorage({
-      localKey: localStorageKey,
-      objKey: localStorageObj,
-      target,
-      _event: event,
-    })
+  // handleKeyDown = e => {
+  //   console.log(e.key)
+  //   if (e.key === 'enter') {
+  //     console.log('keydown')
+  //     return UpdateMasterAddress(e.target.value)
+  //   }
+  // }
 
-    this.setState({[target]: event.target.value})
-  }
+  // private handleUpdateMasterAddress = e => {
+  //   console.log(e.target.value)
+  //   return UpdateMasterAddress(e.target.value)
+  // }
 
-  private getLocalStorage = ({localKey, objKey}) => {
-    const getItem = localStorage.getItem(localKey)
-    if (getItem === null) {
-      localStorage.setItem(localKey, JSON.stringify({[objKey]: {}}))
-      return localStorage.getItem(localKey)
-    } else {
-      return getItem
-    }
-  }
+  // private handleInputChange = target => event => {
+  //   console.log(event.target.value)
+  //   this.handleLocalStorage({
+  //     localKey: localStorageKey,
+  //     objKey: localStorageObj,
+  //     target,
+  //     _event: event,
+  //   })
+  //   this.setState({[target]: event.target.value})
+  // }
 
-  private setLocalStorage = ({localKey, objKey}) => {
-    return localStorage.setItem(localKey, objKey)
-  }
+  // private getLocalStorage = ({localKey, objKey}) => {
+  //   const getItem = localStorage.getItem(localKey)
+  //   if (getItem === null) {
+  //     localStorage.setItem(localKey, JSON.stringify({[objKey]: {}}))
+  //     return localStorage.getItem(localKey)
+  //   } else {
+  //     return getItem
+  //   }
+  // }
 
-  private handleLocalStorage = ({localKey, objKey, target, _event}) => {
-    const getLocalStorageItem = this.getLocalStorage({localKey, objKey})
-    const getInputData = {[target]: _event.target.value}
-    const parseObject = JSON.parse(getLocalStorageItem)
-    const parseString = JSON.stringify({
-      [objKey]: Object.assign(parseObject[objKey], getInputData),
-    })
+  // private setLocalStorage = ({localKey, objKey}) => {
+  //   return localStorage.setItem(localKey, objKey)
+  // }
 
-    this.setLocalStorage({localKey, objKey: parseString})
-  }
+  // private handleLocalStorage = ({localKey, objKey, target, _event}) => {
+  //   const getLocalStorageItem = this.getLocalStorage({localKey, objKey})
+  //   const getInputData = {[target]: _event.target.value}
+  //   const parseObject = JSON.parse(getLocalStorageItem)
+  //   const parseString = JSON.stringify({
+  //     [objKey]: Object.assign(parseObject[objKey], getInputData),
+  //   })
+
+  //   this.setLocalStorage({localKey, objKey: parseString})
+  // }
 }
 
-const mapStateToProps = ({auth: {me}}) => ({
+const mapStateToProps = ({
+  auth: {me},
+  agentReducer: {masterAddress, masterId, masterPassword, masterToken},
+}) => ({
   me,
+  masterAddress,
+  masterId,
+  masterPassword,
+  masterToken,
 })
 
-export default connect(mapStateToProps, null)(AgentAdminPage)
+const mapDispatchToProps = dispatch => ({
+  handleKeyDown: bindActionCreators(UpdateMasterAddress, dispatch),
+})
+
+export default connect(mapStateToProps, mapDispatchToProps)(AgentAdminPage)

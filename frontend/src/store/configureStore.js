@@ -17,6 +17,7 @@ import cellEditorOverlay from 'src/dashboards/reducers/cellEditorOverlay'
 import dashTimeV1 from 'src/dashboards/reducers/dashTimeV1'
 import persistStateEnhancer from './persistStateEnhancer'
 import servicesReducer from 'src/shared/reducers/services'
+import agentReducer from 'src/agent_admin/reducers/agentReducer'
 
 const rootReducer = combineReducers({
   ...statusReducers,
@@ -27,6 +28,7 @@ const rootReducer = combineReducers({
   dashboardUI,
   cellEditorOverlay,
   dashTimeV1,
+  agentReducer,
   logs: logsReducer,
   routing: routerReducer,
   services: servicesReducer,

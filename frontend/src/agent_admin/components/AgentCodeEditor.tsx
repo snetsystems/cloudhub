@@ -3,12 +3,10 @@ import React, {PureComponent} from 'react'
 import {Controlled as ReactCodeMirror, IInstance} from 'react-codemirror2'
 import {EditorChange} from 'codemirror'
 
-// Components
-import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
-
 interface Props {
   configScript: string
-  onChangeScript: AgentConfiguration['onChangeScript']
+  onChangeScript: (string) => void
+  handleScript: () => void
 }
 
 interface State {

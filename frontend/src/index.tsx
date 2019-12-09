@@ -78,7 +78,6 @@ const browserHistory = useRouterHistory(createHistory)({
 
 const store = configureStore(loadLocalStorage(errorsQueue), browserHistory)
 const {dispatch} = store
-
 browserHistory.listen(() => {
   dispatch(disablePresentationMode())
 })
