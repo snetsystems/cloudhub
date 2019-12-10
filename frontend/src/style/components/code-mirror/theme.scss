@@ -8,6 +8,7 @@
   width: 100%;
   height: 100%;
 }
+
 .CodeMirror {
   border-radius: 0 0 $radius $radius;
   font-family: $code-font;
@@ -69,14 +70,14 @@ div.CodeMirror-selected,
 }
 
 .CodeMirror-line::selection,
-.CodeMirror-line > span::selection,
-.CodeMirror-line > span > span::selection {
+.CodeMirror-line>span::selection,
+.CodeMirror-line>span>span::selection {
   background: rgba(255, 255, 255, 0.1);
 }
 
 .CodeMirror-line::-moz-selection,
-.CodeMirror-line > span::-moz-selection,
-.CodeMirror-line > span > span::-moz-selection {
+.CodeMirror-line>span::-moz-selection,
+.CodeMirror-line>span>span::-moz-selection {
   background: rgba(255, 255, 255, 0.1);
 }
 
@@ -94,3 +95,4 @@ div.CodeMirror-selected,
 @import 'influxql-read-only';
 @import 'hints';
 @import 'markdown';
+@import 'agent-conf';

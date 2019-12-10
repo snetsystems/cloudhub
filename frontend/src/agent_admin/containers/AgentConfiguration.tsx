@@ -98,6 +98,31 @@ const defaultMeasurementsData = [
   'temp',
 ]
 
+const measureMatch = [
+  'mysql',
+  'MSSQLSERVER',
+  'influxdb',
+  'mongodb',
+  'postgresql',
+  'redis',
+  'oracle',
+  'activemq',
+  'rabbitmq',
+  'kafka',
+  'zookeeper',
+  'tomcat',
+  'apache2',
+  'httpd',
+  'nginx',
+  'Iisadmin',
+  'Msftpsvc',
+  'Nntpsvc',
+  'Smtpsvc',
+  'W3svc',
+  'system',
+  'win_system',
+]
+
 @ErrorHandling
 class AgentConfiguration extends PureComponent<Props, State> {
   constructor(props) {
@@ -639,14 +664,14 @@ class AgentConfiguration extends PureComponent<Props, State> {
         </div>
 
         <div className="panel-body">{this.CollectorConfigContent}</div>
-        <OverlayTechnology visible={isOverlayVisible}>
+        {/* <OverlayTechnology visible={isOverlayVisible}>
           <AgentConfigureModal
             onCancel={() =>
               this.setState({isOverlayVisible: !this.state.isOverlayVisible})
             }
             onConfirm={() => alert('confirm!')}
           />
-        </OverlayTechnology>
+        </OverlayTechnology> */}
       </div>
     )
   }

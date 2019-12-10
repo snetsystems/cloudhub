@@ -4,6 +4,7 @@ import {
   modeInfluxQL,
   modeInfluxQLReadOnly,
   modeMarkdown,
+  modeAgentConf,
 } from 'src/shared/constants/codeMirrorModes'
 import 'codemirror/addon/hint/show-hint'
 
@@ -385,3 +386,4 @@ CodeMirror.defineSimpleMode('tickscript', modeTickscript)
 CodeMirror.defineSimpleMode('influxQL', modeInfluxQL)
 CodeMirror.defineSimpleMode('influxQLReadOnly', modeInfluxQLReadOnly)
 CodeMirror.defineSimpleMode('markdown', modeMarkdown)
+CodeMirror.defineSimpleMode('agentConf', modeAgentConf)

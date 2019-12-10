@@ -6,7 +6,6 @@ import {EditorChange} from 'codemirror'
 interface Props {
   configScript: string
   onChangeScript: (string) => void
-  handleScript: () => void
 }
 
 interface State {
@@ -36,9 +35,11 @@ class AgentCodeEditor extends PureComponent<Props, State> {
       indentUnit: 2,
       smartIndent: false,
       electricChars: false,
-      theme: 'time-machine',
       completeSingle: false,
       gutters: ['error-gutter'],
+      lineWrapping: true,
+      mode: 'agentConf',
+      theme: 'agent-conf',
     }
 
     return (

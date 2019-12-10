@@ -1,5 +1,6 @@
 // Libraries
 import React, {PureComponent, MouseEvent, CSSProperties, createRef} from 'react'
+import {Controlled as ReactCodeMirror} from 'react-codemirror2'
 
 // Components
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
@@ -45,6 +46,20 @@ class AgentTooltip extends PureComponent<Props, State> {
 
   public render() {
     const {description} = this.props
+    const options = {
+      tabIndex: 1,
+      readonly: true,
+      lineNumbers: true,
+      autoRefresh: true,
+      indentUnit: 2,
+      smartIndent: false,
+      electricChars: false,
+      completeSingle: false,
+      gutters: ['error-gutter'],
+      lineWrapping: true,
+      mode: 'agentConf',
+      theme: 'agent-conf',
+    }
 
     return (
       <>
@@ -60,7 +75,7 @@ class AgentTooltip extends PureComponent<Props, State> {
           <div
             className="flux-functions-toolbar--tooltip-contents"
             style={{
-              width: 400 + 'px',
+              maxWidth: 600 + 'px',
             }}
           >
             <FancyScrollbar
@@ -68,7 +83,7 @@ class AgentTooltip extends PureComponent<Props, State> {
               maxHeight={MAX_HEIGHT}
               autoHide={false}
             >
-              <article className="flux-functions-toolbar--description">
+              {/* <article className="flux-functions-toolbar--description">
                 <pre
                   style={{
                     color: '#fff',
@@ -77,7 +92,16 @@ class AgentTooltip extends PureComponent<Props, State> {
                 >
                   {description}
                 </pre>
-              </article>
+              </article> */}
+              <ReactCodeMirror
+                autoFocus={false}
+                autoCursor={false}
+                value={description}
+                options={options}
+                onBeforeChange={() => false}
+                onChange={() => false}
+                onTouchStart={() => false}
+              />
             </FancyScrollbar>
           </div>
         </div>
