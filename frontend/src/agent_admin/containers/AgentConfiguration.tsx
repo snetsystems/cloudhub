@@ -11,8 +11,8 @@ import AgentCodeEditor from 'src/agent_admin/components/AgentCodeEditor'
 import AgentToolbarFunction from 'src/agent_admin/components/AgentToolbarFunction'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import {globalSetting} from 'src/agent_admin/help'
-import OverlayTechnology from 'src/reusable_ui/components/overlays/OverlayTechnology'
-import AgentConfigureModal from 'src/agent_admin/components/AgentConfigureModal'
+// import OverlayTechnology from 'src/reusable_ui/components/overlays/OverlayTechnology'
+// import AgentConfigureModal from 'src/agent_admin/components/AgentConfigureModal'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -99,32 +99,60 @@ const defaultMeasurementsData = [
 ]
 
 const measureMatch = [
-  'mysql',
-  'MSSQLSERVER',
-  'influxdb',
-  'mongodb',
-  'postgresql',
-  'redis',
-  'oracle',
-  'activemq',
-  'rabbitmq',
-  'kafka',
-  'zookeeper',
-  'tomcat',
-  'apache2',
-  'httpd',
-  'nginx',
-  'Iisadmin',
-  'Msftpsvc',
-  'Nntpsvc',
-  'Smtpsvc',
-  'W3svc',
-  'system',
-  'win_system',
+  {mysql: ['mysql', 'mysqld']},
+  {mssql: ['mssql', 'MSSQLSERVER']},
+  {influxdb: ['influxdb']},
+  {mongodb: ['mongodb']},
+  {postgresql: ['postgresql']},
+  {redis: ['redis']},
+  {oracle: ['oracle']},
+  {activemq: ['activemq']},
+  {rabbitmq: ['rabbitmq']},
+  {kafka: ['kafka']},
+  {zookeeper: ['zookeeper']},
+  {tomcat: ['tomcat']},
+  {apache: ['apache', 'apache2', 'httpd']},
+  {nginx: ['nginx']},
+  {iis: ['Iisadmin', 'Msftpsvc', 'Nntpsvc', 'Smtpsvc', 'W3svc']},
+  {system: ['system']},
+  {win_system: ['win_system']},
+  {docker: ['docker']},
 ]
 
+const serviceMeasure = _.uniq(
+  _.flattenDeep(
+    _.concat(
+      [],
+      Object.keys(measureMatch).map(k => Object.keys(measureMatch[k])),
+      Object.keys(measureMatch).map(k => Object.values(measureMatch[k]))
+    )
+  )
+)
+
+interface measureMatch {
+  measureMatch: [
+    {mysql: string[]},
+    {mssql: string[]},
+    {influxdb: string[]},
+    {postgresql: string[]},
+    {oracle: string[]},
+    {activemq: string[]},
+    {rabbitmq: string[]},
+    {kafka: string[]},
+    {zookeeper: string[]},
+    {tomcat: string[]},
+    {apache: string[]},
+    {nginx: string[]},
+    {iis: string[]},
+    {system: string[]},
+    {win_system: string[]},
+    {docker: string[]},
+    string
+  ]
+}
+
 @ErrorHandling
-class AgentConfiguration extends PureComponent<Props, State> {
+class AgentConfiguration extends PureComponent<Props, State, measureMatch> {
   constructor(props) {
     super(props)
     this.state = {
@@ -146,28 +174,11 @@ class AgentConfiguration extends PureComponent<Props, State> {
       selectHost: '',
       responseMessage: '',
       focusedHost: '',
-      defaultService: [
-        'apache',
-        'nginx',
-        'iis',
-        'docker',
-        'influxdb',
-        'mysqld',
-        'mssql',
-        'mongodb',
-        'postgresql',
-        'redis',
-        'activemq',
-        'rabbitmq',
-        'kafka',
-        'zookeeper',
-        'tomcat',
-        'rsyslog',
-      ],
+      defaultService: serviceMeasure,
     }
   }
 
-  getWheelKeyListAll = async userDoing => {
+  getWheelKeyListAll = async (userDoing: string) => {
     const hostListObject = await getMinionKeyListAllAsync()
     const {notify} = this.props
 
@@ -279,6 +290,8 @@ class AgentConfiguration extends PureComponent<Props, State> {
           isActivity: false,
         }
       })
+
+      console.log('getServiceRunning', getServiceRunning)
 
       this.setState({
         serviceMeasurements: getServiceRunning,
@@ -407,8 +420,25 @@ class AgentConfiguration extends PureComponent<Props, State> {
     )
   }
 
-  private handleFocusedServiceMeasure = ({clickPosition, _thisProps}) => {
+  private handleFocusedServiceMeasure = ({
+    clickPosition,
+    _thisProps,
+  }: {
+    clickPosition: {top: number; left: number}
+    _thisProps: {name: string; idx: number}
+  }) => {
+    console.log(_thisProps.name)
+
     const {serviceMeasurements, defaultMeasurements} = this.state
+    const filterdMeasureName = Object.keys(measureMatch).filter(k =>
+      _.includes(Object.values(measureMatch[Number(k)])[0], _thisProps.name)
+    )
+    console.log('serviceMeasurements', serviceMeasurements)
+
+    const measureName =
+      filterdMeasureName.length === 0
+        ? _thisProps.name
+        : Object.keys(measureMatch[Number(filterdMeasureName)])[0]
 
     const mapServiceMeasurements = serviceMeasurements.map(m => {
       m.isActivity = false
@@ -425,20 +455,20 @@ class AgentConfiguration extends PureComponent<Props, State> {
       : (serviceMeasurements[_thisProps.idx].isActivity = false)
 
     const getRunnerSaltCmdTelegrafPromise = getRunnerSaltCmdTelegraf(
-      _thisProps.name
+      measureName
     )
 
     getRunnerSaltCmdTelegrafPromise.then(pRunnerSaltCmdTelegrafData => {
       this.setState({
         serviceMeasurements: [...mapServiceMeasurements],
         defaultMeasurements: [...mapDefaultMeasurements],
-        focusedMeasure: _thisProps.name,
+        focusedMeasure: measureName,
         focusedMeasurePosition: clickPosition,
         description: pRunnerSaltCmdTelegrafData.data.return[0],
       })
     })
   }
-
+  ////////////////////////////////////////////////////////////////////////////////////
   private handleFocusedDefaultMeasure = ({clickPosition, _thisProps}) => {
     const {defaultMeasurements, serviceMeasurements} = this.state
 
@@ -645,7 +675,8 @@ class AgentConfiguration extends PureComponent<Props, State> {
   }
 
   private CollectorConfig() {
-    const {collectorConfigStatus, isOverlayVisible} = this.state
+    const {collectorConfigStatus} = this.state
+    // isOverlayVisible
     return (
       <div className="panel">
         {collectorConfigStatus === RemoteDataState.Loading

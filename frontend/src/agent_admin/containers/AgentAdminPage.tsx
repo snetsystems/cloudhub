@@ -116,7 +116,6 @@ class AgentAdminPage extends PureComponent<Props, State> {
       masterPassword,
     } = this.props
 
-    console.log('masterAddress', masterAddress)
     // const {userAddress, userId, userPassword} = this.state
     return (
       <Page>
@@ -138,7 +137,7 @@ class AgentAdminPage extends PureComponent<Props, State> {
                 className="form-control input-sm agent--input agent--input-id"
                 placeholder="Insert Host ID"
                 value={masterId}
-
+                readOnly
                 // onChange={this.handleInputChange('userId')}
               />
               <input
@@ -146,6 +145,7 @@ class AgentAdminPage extends PureComponent<Props, State> {
                 className="form-control input-sm agent--input agent--input-password"
                 placeholder="Insert Host Password"
                 value={masterPassword}
+                readOnly
                 // onChange={this.handleInputChange('userPassword')}
               />
             </div>
