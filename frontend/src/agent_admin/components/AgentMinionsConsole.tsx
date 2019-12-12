@@ -2,7 +2,7 @@
 import React, {PureComponent} from 'react'
 
 // Components
-import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import CodeMirrorConsole from 'src/agent_admin/components/CodeMirrorConsole'
 
 interface Props {
   res: string
@@ -14,18 +14,13 @@ class AgentMinionsConsole extends PureComponent<Props> {
   }
 
   render() {
-    const {res} = this.props
     return (
       <div className="panel">
         <div className="panel-heading">
           <h2 className="panel-title">Console</h2>
         </div>
         <div className="panel-body">
-          <div className="console-zone">
-            <FancyScrollbar>
-              <pre className="console-zone--pre">{res}</pre>
-            </FancyScrollbar>
-          </div>
+          <CodeMirrorConsole res={this.props.res} />
         </div>
       </div>
     )

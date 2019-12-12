@@ -447,3 +447,18 @@ export const modeAgentConf = {
     },
   ],
 }
+
+export const modeLogger = {
+  // The start state contains the rules that are intially used
+  start: [
+    // Agent Syntax
+    {
+      regex: /true|false|TRUE|FALSE/,
+      token: 'boolean',
+    },
+    {
+      regex: /errors|Errors|ERRORS|error|Error|ERROR/,
+      token: 'error',
+    },
+  ],
+}

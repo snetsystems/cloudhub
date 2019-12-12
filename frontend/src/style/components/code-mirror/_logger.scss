@@ -1,0 +1,89 @@
+/*
+  CodeMirror "Time Machine" Theme
+  ------------------------------------------------------------------------------
+  Intended for use with the Flux CodeMirror Mode
+*/
+
+.console-zone {
+    .CodeMirror-gutters {
+        background: #151515;
+
+        .CodeMirror-gutter {
+            background-color: transparent;
+        }
+    }
+
+    .CodeMirror-cursor {
+        width: 2px;
+        border: 0;
+        background-color: $g20-white;
+        box-shadow: none
+    }
+}
+
+.cm-s-logger {
+    background-color: #151515;
+    color: $g11-sidewalk;
+    padding-right: 13px;
+
+    .cm-error {
+        color: $s-ligntGrapefruit;
+    }
+
+    .cm-variable {
+        color: $c-pool;
+        font-weight: 400;
+    }
+
+    .cm-agent-title {
+        color: #f58220;
+    }
+
+    .cm-arrow-function,
+    .cm-function-arg,
+    .cm-function-arg-ref {
+        color: #ff4d96;
+    }
+
+    .cm-operator {
+        color: $g15-platinum;
+    }
+
+    .cm-string-single,
+    .cm-string-double {
+        color: $c-honeydew;
+    }
+
+    .cm-boolean {
+        color: $c-viridian;
+    }
+
+    .cm-object {
+        color: $c-honeydew;
+    }
+
+    .cm-null {
+        color: $c-dreamsicle;
+    }
+
+    .cm-number {
+        color: $c-hydrogen;
+    }
+
+    .cm-comment {
+        color: $g10-wolf;
+    }
+
+    .CodeMirror-scrollbar-filler {
+        background-color: transparent;
+    }
+
+    .CodeMirror-vscrollbar,
+    .CodeMirror-hscrollbar {
+        @include custom-scrollbar-round(#151515, $s-orange);
+
+        &::-webkit-scrollbar-thumb {
+            border-width: 5px;
+        }
+    }
+}
