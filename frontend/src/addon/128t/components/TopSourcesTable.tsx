@@ -6,9 +6,9 @@ import memoize from 'memoize-one'
 import TopSourcesTableRow from 'src/addon/128t/components/TopSourcesTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
-import {TopSources} from 'src/types'
+import {TopSource} from 'src/addon/128t/types'
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {TOPSOURCES_TABLE_SIZING} from 'src/addon/128t/constants/tableSizing'
+import {TOPSOURCES_TABLE_SIZING} from 'src/addon/128t/constants'
 
 enum SortDirection {
   ASC = 'asc',
@@ -16,7 +16,7 @@ enum SortDirection {
 }
 
 export interface Props {
-  topSources: TopSources[]
+  topSources: TopSource[]
 }
 
 interface State {
@@ -107,14 +107,6 @@ class TopSourcesTable extends PureComponent<Props, State> {
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('bandwidth')}
-          className={this.sortableClasses('bandwidth')}
-          style={{width: CURRENTBANDWIDTH}}
-        >
-          Current bandwidth
-          <span className="icon caret-up" />
-        </div>
-        <div
           onClick={this.updateSort('totaldata')}
           className={this.sortableClasses('totaldata')}
           style={{width: TOTALDATA}}
@@ -128,6 +120,14 @@ class TopSourcesTable extends PureComponent<Props, State> {
           style={{width: SESSIONCOUNT}}
         >
           Session count
+          <span className="icon caret-up" />
+        </div>
+        <div
+          onClick={this.updateSort('bandwidth')}
+          className={this.sortableClasses('bandwidth')}
+          style={{width: CURRENTBANDWIDTH}}
+        >
+          Bandwidth
           <span className="icon caret-up" />
         </div>
       </>

@@ -1,6 +1,6 @@
-import { LayoutCell, LayoutQuery } from "./layouts";
-import { Service, NewService, ServiceLinks } from "./services";
-import { Links, Organization, Role, Permission, User, Me } from "./auth";
+import {LayoutCell, LayoutQuery} from './layouts'
+import {Service, NewService, ServiceLinks} from './services'
+import {Links, Organization, Role, Permission, User, Me} from './auth'
 import {
   PBCell,
   Cell,
@@ -11,8 +11,8 @@ import {
   Dashboard,
   CellType,
   Protoboard,
-  QueryType
-} from "./dashboards";
+  QueryType,
+} from './dashboards'
 import {
   Template,
   TemplateQuery,
@@ -20,8 +20,8 @@ import {
   TemplateType,
   TemplateValueType,
   TemplateUpdate,
-  TemplateBuilderProps
-} from "./tempVars";
+  TemplateBuilderProps,
+} from './tempVars'
 import {
   GroupBy,
   Query,
@@ -37,41 +37,40 @@ import {
   QueryStatus,
   Tag,
   Tags,
-  TagValues
-} from "./queries";
+  TagValues,
+} from './queries'
 import {
   AlertRule,
   Kapacitor,
   Task,
   RuleValues,
-  AlertRuleType
-} from "./kapacitor";
+  AlertRuleType,
+} from './kapacitor'
 import {
   NewSource,
   Source,
   SourceLinks,
-  SourceAuthenticationMethod
-} from "./sources";
-import { DropdownAction, DropdownItem } from "./shared";
+  SourceAuthenticationMethod,
+} from './sources'
+import {DropdownAction, DropdownItem} from './shared'
 import {
   Notification,
   NotificationFunc,
-  NotificationAction
-} from "./notifications";
-import { FluxTable, ScriptStatus, SchemaFilter, RemoteDataState } from "./flux";
+  NotificationAction,
+} from './notifications'
+import {FluxTable, ScriptStatus, SchemaFilter, RemoteDataState} from './flux'
 import {
   DygraphSeries,
   DygraphValue,
   DygraphAxis,
   DygraphClass,
-  DygraphData
-} from "./dygraphs";
-import { JSONFeedData } from "./status";
-import { Annotation } from "./annotations";
-import { WriteDataMode, QueryUpdateState } from "./dataExplorer";
-import { Host, Layout } from "./hosts";
-import { Minion } from "./minions";
-import { Router, TopSources } from "./routers";
+  DygraphData,
+} from './dygraphs'
+import {JSONFeedData} from './status'
+import {Annotation} from './annotations'
+import {WriteDataMode, QueryUpdateState} from './dataExplorer'
+import {Host, Layout} from './hosts'
+import {Minion} from './minions'
 
 export {
   Me,
@@ -147,6 +146,4 @@ export {
   QueryType,
   QueryUpdateState,
   Minion,
-  Router,
-  TopSources
-};
+}

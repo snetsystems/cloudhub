@@ -7,6 +7,15 @@ export const isTruncatedNumber = <T>(
   decimalPlaces: DecimalPlaces
 ): value is number => isFinite(value) && decimalPlaces.isEnforced
 
+export const fixedDecimalPercentage = (
+  value: number,
+  digits: number
+): number | string => {
+  return value === null || value === undefined
+    ? ''
+    : `${value.toFixed(digits)}%`
+}
+
 export const toFixed = (
   value: number,
   decimalPlaces: DecimalPlaces

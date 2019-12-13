@@ -1,25 +1,14 @@
 import gql from 'graphql-tag'
 
 export const GET_ALLROUTERS_INFO = gql`
-  query routers_info($startTime: String, $endTime: String) {
+  query routers_info {
     allRouters {
       nodes {
         name
         locationCoordinates
         managementConnected
-        isHighlyAvailable
-        bandwidth_avg: analytic(
-          metric: BANDWIDTH
-          transform: AVERAGE
-          startTime: $startTime
-          endTime: $endTime
-        )
-        session_cnt_avg: analytic(
-          metric: SESSION_COUNT
-          transform: AVERAGE
-          startTime: $startTime
-          endTime: $endTime
-        )
+        bandwidth_avg: analytic(metric: BANDWIDTH, transform: AVERAGE)
+        session_arrivals: analytic(metric: SESSION_ARRIVAL_RATE, transform: SUM)
         nodes {
           nodes {
             assetId
@@ -40,7 +29,6 @@ export const GET_ALLROUTERS_INFO = gql`
               partition
             }
             state {
-              status
               startTime
               softwareVersion
             }
@@ -65,7 +53,6 @@ export const GET_ALLROUTERS_INFO = gql`
           destination {
             address
             port
-            commonName
           }
         }
       }

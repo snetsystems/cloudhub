@@ -12,6 +12,7 @@ interface State {
   domObj: any
   target: any
 }
+
 class RouterModal extends React.Component<Props, State> {
   constructor(props) {
     super(props)
