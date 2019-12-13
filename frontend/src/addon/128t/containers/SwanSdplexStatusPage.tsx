@@ -7,6 +7,12 @@ import {Page} from 'src/reusable_ui'
 // Types
 import {Router, TopSource, TopSession} from 'src/addon/128t/types'
 
+//Middleware
+import {
+  setLocalStorage,
+  getLocalStorage,
+} from 'src/shared/middleware/localStorage'
+
 // Components
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 // import RouterModal from 'src/addon/128t/components/RouterModal'
@@ -86,12 +92,37 @@ interface Proportions {
 }
 
 const SwanSdplexStatusPage = () => {
+  let [topSize, bottomSize] = [0.4, 0.6]
+  let assetId = ''
+
+  const addon = getLocalStorage('addon')
+  if (addon) {
+    ;[topSize, bottomSize] = _.get(addon, 'T128.proportions')
+    assetId = _.get(addon, 'T128.focusedAssetId')
+  }
+
   const [proportions, setProportions] = useState<Proportions>({
-    proportions: [0.4, 0.6],
+    proportions: [topSize, bottomSize],
   })
+
+  const [focusedAssetId, setFocusedAssetId] = useState<string>(assetId)
+
+  useEffect(() => {
+    return () => {
+      setLocalStorage('addon', {
+        T128: {
+          proportions: _.get(proportions, 'proportions'),
+          focusedAssetId,
+        },
+      })
+    }
+  }, [proportions, focusedAssetId])
+
   const [emitData, setRoutersInfo] = useState<EmitData>({
     routers: [],
   })
+
+  const [topSources, setTopSources] = useState<TopSource[]>([])
 
   const {loading, data} = useQuery<Response, Variables>(GET_ALLROUTERS_INFO, {
     // variables: {
@@ -112,9 +143,7 @@ const SwanSdplexStatusPage = () => {
             let router: Router = {
               assetId: node.name,
               locationCoordinates: node.locationCoordinates,
-              managementConnected: node.managementConnected
-                ? 'Connected'
-                : 'Disconnected',
+              managementConnected: node.managementConnected,
               bandwidth_avg: node.bandwidth_avg,
               session_arrivals: node.session_arrivals,
               topSources: node.topSources,
@@ -174,12 +203,20 @@ const SwanSdplexStatusPage = () => {
         )
 
         setRoutersInfo(emits)
+
+        if (focusedAssetId) {
+          const router = emits.routers.find(node => {
+            return node.assetId === focusedAssetId
+          })
+          if (router && router.topSources) setTopSources(router.topSources)
+        }
       }
     }
   }, [data])
 
   const horizontalDivisions = () => {
     const [topSize, bottomSize] = _.get(proportions, 'proportions')
+
     return [
       {
         name: '',
@@ -187,7 +224,13 @@ const SwanSdplexStatusPage = () => {
         headerButtons: [],
         menuOptions: [],
         render: () => {
-          return <RouterTable routers={emitData.routers} />
+          return (
+            <RouterTable
+              routers={emitData.routers}
+              focusedAssetId={focusedAssetId}
+              onClickTableRow={handleClickTableRow}
+            />
+          )
         },
         headerOrientation: HANDLE_HORIZONTAL,
         size: topSize,
@@ -198,12 +241,22 @@ const SwanSdplexStatusPage = () => {
         headerButtons: [],
         menuOptions: [],
         render: () => {
-          return <TopSourcesTable topSources={emitData.routers[0].topSources} />
+          return <TopSourcesTable topSources={topSources} />
         },
         headerOrientation: HANDLE_HORIZONTAL,
         size: bottomSize,
       },
     ]
+  }
+
+  const handleClickTableRow = (
+    topSources: TopSource[],
+    focusedAssetId: string
+  ) => () => {
+    if (topSources) setTopSources(topSources)
+    else setTopSources([])
+
+    setFocusedAssetId(focusedAssetId)
   }
 
   return (

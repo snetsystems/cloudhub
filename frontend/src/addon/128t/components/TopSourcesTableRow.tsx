@@ -7,21 +7,9 @@ interface Props {
   topSources: TopSource
 }
 
-interface State {
-  showModal: boolean
-}
-
-class TopSourcesTableRow extends PureComponent<Props, State> {
+class TopSourcesTableRow extends PureComponent<Props> {
   constructor(props) {
     super(props)
-
-    this.state = {
-      showModal: false,
-    }
-  }
-
-  public focusedClasses = (): string => {
-    return 'hosts-table--tr'
   }
 
   private TableItem = ({width, title}) => {
@@ -53,7 +41,7 @@ class TopSourcesTableRow extends PureComponent<Props, State> {
     } = TOPSOURCES_TABLE_SIZING
 
     return (
-      <div className={this.focusedClasses()}>
+      <div className={'hosts-table--tr'}>
         <this.TableItem title={ip} width={IP} />
         <this.TableItem title={tenant} width={TENANT} />
         <this.TableItem title={transBytes(totalData, 2)} width={TOTALDATA} />
@@ -64,12 +52,6 @@ class TopSourcesTableRow extends PureComponent<Props, State> {
         />
       </div>
     )
-  }
-
-  public onClickApplybuttonHide = () => {
-    this.setState({
-      showModal: false,
-    })
   }
 }
 

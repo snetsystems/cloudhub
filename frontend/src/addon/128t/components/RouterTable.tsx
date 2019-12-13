@@ -7,7 +7,7 @@ import SearchBar from 'src/hosts/components/SearchBar'
 import RouterTableRow from 'src/addon/128t/components/RouterTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
-import {Router} from 'src/addon/128t/types'
+import {Router, TopSource} from 'src/addon/128t/types'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {ROUTER_TABLE_SIZING} from 'src/addon/128t/constants'
 
@@ -18,6 +18,11 @@ enum SortDirection {
 
 export interface Props {
   routers: Router[]
+  focusedAssetId: string
+  onClickTableRow: (
+    topSources: TopSource[],
+    focusedAssetId: string
+  ) => () => void
 }
 
 interface State {
@@ -205,7 +210,7 @@ class RouterTable extends PureComponent<Props, State> {
 
   // data add
   private get TableData() {
-    const {routers} = this.props
+    const {routers, focusedAssetId, onClickTableRow} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
     //const sortedRouters = routers
@@ -219,7 +224,12 @@ class RouterTable extends PureComponent<Props, State> {
     return (
       <FancyScrollbar
         children={sortedRouters.map((r: Router, i: number) => (
-          <RouterTableRow router={r} key={i} />
+          <RouterTableRow
+            onClickTableRow={onClickTableRow}
+            focusedAssetId={focusedAssetId}
+            router={r}
+            key={i}
+          />
         ))}
       />
     )

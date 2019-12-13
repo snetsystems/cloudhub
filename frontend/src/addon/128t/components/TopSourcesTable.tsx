@@ -29,7 +29,7 @@ interface State {
 
 @ErrorHandling
 class TopSourcesTable extends PureComponent<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props)
     this.state = {
       searchTerm: '',
@@ -41,17 +41,41 @@ class TopSourcesTable extends PureComponent<Props, State> {
 
   public getSortedTopSources = memoize(
     (
-      topSources,
+      topSources: TopSource[],
       searchTerm: string,
       sortKey: string,
       sortDirection: SortDirection
     ) => this.sort(this.filter(topSources, searchTerm), sortKey, sortDirection)
   )
+
   public componentWillMount() {
     const {topSources} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
-    //const sortedTopSources = topSources
+    this.setSourceCount(topSources, searchTerm, sortKey, sortDirection)
+  }
+
+  public componentWillReceiveProps(nextProps: Props) {
+    const {topSources} = this.props
+    if (topSources === nextProps.topSources) return
+    const {sortKey, sortDirection, searchTerm} = this.state
+
+    console.log('componentWillReceiveProps')
+
+    this.setSourceCount(
+      nextProps.topSources,
+      searchTerm,
+      sortKey,
+      sortDirection
+    )
+  }
+
+  private setSourceCount(
+    topSources: TopSource[],
+    searchTerm: string,
+    sortKey: string,
+    sortDirection: SortDirection
+  ) {
     const sortedTopSources = this.getSortedTopSources(
       topSources,
       searchTerm,
@@ -60,6 +84,7 @@ class TopSourcesTable extends PureComponent<Props, State> {
     )
     this.setState({topSourceCount: sortedTopSources.length})
   }
+
   public render() {
     const {topSourceCount} = this.state
     return (
@@ -76,7 +101,6 @@ class TopSourcesTable extends PureComponent<Props, State> {
           </div>
         </div>
       </div>
-      // </div>
     )
   }
 

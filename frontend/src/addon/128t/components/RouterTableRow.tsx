@@ -1,27 +1,27 @@
 import React, {PureComponent} from 'react'
 import {ROUTER_TABLE_SIZING} from 'src/addon/128t/constants'
-import {Router} from 'src/addon/128t/types'
+import {Router, TopSource} from 'src/addon/128t/types'
 import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
 import {transBps} from 'src/shared/utils/units'
 
 interface Props {
   router: Router
+  focusedAssetId: string
+  onClickTableRow: (
+    topSources: TopSource[],
+    focusedAssetId: string
+  ) => () => void
 }
 
-interface State {
-  showModal: boolean
-}
-
-class RouterTableRow extends PureComponent<Props, State> {
+class RouterTableRow extends PureComponent<Props> {
   constructor(props: Props) {
     super(props)
-
-    this.state = {
-      showModal: false,
-    }
   }
 
   public focusedClasses = (): string => {
+    const {assetId} = this.props.router
+    const {focusedAssetId} = this.props
+    if (assetId === focusedAssetId) return 'hosts-table--tr focused'
     return 'hosts-table--tr'
   }
 
@@ -50,9 +50,11 @@ class RouterTableRow extends PureComponent<Props, State> {
       memoryUsage,
       cpuUsage,
       diskUsage,
-      // topSources,
+      topSources,
       // topSessions,
     } = this.props.router
+
+    const {onClickTableRow} = this.props
 
     const {
       ASSETID,
@@ -70,7 +72,10 @@ class RouterTableRow extends PureComponent<Props, State> {
     } = ROUTER_TABLE_SIZING
 
     return (
-      <div className={this.focusedClasses()}>
+      <div
+        className={this.focusedClasses()}
+        onClick={onClickTableRow(topSources, assetId)}
+      >
         <this.TableItem title={assetId} width={ASSETID} />
         <this.TableItem title={role} width={ROLE} />
         <this.TableItem
@@ -84,7 +89,9 @@ class RouterTableRow extends PureComponent<Props, State> {
           width={LOCATIONCOORDINATES}
         />
         <this.TableItem
-          title={managementConnected}
+          title={(() => {
+            return managementConnected ? 'Connected' : 'Disconnected'
+          })()}
           width={MANAGEMENTCONNECTED}
         />
         <this.TableItem title={startTime} width={STARTTIME} />
