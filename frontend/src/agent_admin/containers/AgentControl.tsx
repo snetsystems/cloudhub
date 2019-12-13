@@ -174,6 +174,19 @@ class AgentControl extends PureComponent<Props, State> {
 
   public onClickInstallCall = () => {
     const {Minions} = this.state
+
+    const filteredHost = Minions.filter(m => m.isCheck === true).filter(
+      m => m.isInstall === true
+    )
+
+    filteredHost.length > 0
+      ? alert('Installed minions are included.')
+      : this.onClickInstall()
+  }
+
+  public onClickInstall = () => {
+    const {Minions} = this.state
+
     const host = Minions.filter(m => m.isCheck === true).map(
       checkData => checkData.host
     )

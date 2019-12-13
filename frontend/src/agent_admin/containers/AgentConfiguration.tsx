@@ -188,6 +188,8 @@ class AgentConfiguration extends PureComponent<Props, State, measureMatch> {
       collectorConfigStatus: RemoteDataState.Done,
     })
 
+    this.onClickTableRowCall(host: 'minion01', ip: '192.168.56.102')
+
     switch (userDoing) {
       case 'load':
         notify(notifyAgentLoadedSucceeded('Load Success'))
@@ -259,6 +261,8 @@ class AgentConfiguration extends PureComponent<Props, State, measureMatch> {
       focusedHost: host,
     })
 
+    localStorage.setItem('AgentPage', JSON.stringify({focusedHost: host}))
+
     const getLocalFileReadPromise = getLocalFileRead(host)
 
     getLocalFileReadPromise.then(pLocalFileReadData => {
@@ -290,8 +294,6 @@ class AgentConfiguration extends PureComponent<Props, State, measureMatch> {
           isActivity: false,
         }
       })
-
-      console.log('getServiceRunning', getServiceRunning)
 
       this.setState({
         serviceMeasurements: getServiceRunning,
@@ -394,6 +396,13 @@ class AgentConfiguration extends PureComponent<Props, State, measureMatch> {
   public async componentDidMount() {
     this.getWheelKeyListAll('load')
     this.setState({configPageStatus: RemoteDataState.Loading})
+
+    let localStorageDummy =
+      localStorage.getItem('AgentPage') === null
+        ? localStorage.setItem('AgentPage', JSON.stringify({focusedHost: ''}))
+        : JSON.parse(localStorage.getItem('AgentPage'))
+
+    console.log('localStorageDummy', localStorageDummy.focusedHost)
   }
 
   render() {

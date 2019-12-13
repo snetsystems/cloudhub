@@ -2,6 +2,7 @@
 import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
 import _ from 'lodash'
+import yaml from 'js-yaml'
 
 // Components
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
@@ -105,7 +106,6 @@ class AgentMinions extends PureComponent<Props, State> {
           return
       }
     } catch (e) {
-      console.log('userDong Here!!!!', userDoing, e)
       this.setState({
         minionsPageStatus: RemoteDataState.Done,
       })
@@ -142,11 +142,7 @@ class AgentMinions extends PureComponent<Props, State> {
     const getLocalGrainsItemPromise = getLocalGrainsItem(host)
     getLocalGrainsItemPromise.then(pLocalGrainsItemData => {
       this.setState({
-        minionLog: JSON.stringify(
-          pLocalGrainsItemData.data.return[0][host],
-          null,
-          4
-        ),
+        minionLog: yaml.dump(pLocalGrainsItemData.data.return[0][host]),
         minionsPageStatus: RemoteDataState.Done,
       })
     })
@@ -159,11 +155,7 @@ class AgentMinions extends PureComponent<Props, State> {
 
       getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
         this.setState({
-          minionLog: JSON.stringify(
-            pWheelKeyCommandData.data.return[0],
-            null,
-            4
-          ),
+          minionLog: yaml.dump(pWheelKeyCommandData.data.return[0]),
         })
         this.getWheelKeyListAll('reject')
       })
@@ -172,11 +164,7 @@ class AgentMinions extends PureComponent<Props, State> {
 
       getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
         this.setState({
-          minionLog: JSON.stringify(
-            pWheelKeyCommandData.data.return[0],
-            null,
-            4
-          ),
+          minionLog: yaml.dump(pWheelKeyCommandData.data.return[0]),
         })
         this.getWheelKeyListAll('accept')
       })
@@ -185,11 +173,7 @@ class AgentMinions extends PureComponent<Props, State> {
 
       getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
         this.setState({
-          minionLog: JSON.stringify(
-            pWheelKeyCommandData.data.return[0],
-            null,
-            4
-          ),
+          minionLog: yaml.dump(pWheelKeyCommandData.data.return[0]),
         })
         this.getWheelKeyListAll('delete')
       })

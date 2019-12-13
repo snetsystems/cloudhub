@@ -1,6 +1,5 @@
 import React, {PureComponent} from 'react'
 import {Controlled as ReactCodeMirror} from 'react-codemirror2'
-
 interface Props {
   res: string
 }

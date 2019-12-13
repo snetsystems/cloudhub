@@ -24,6 +24,7 @@ const apiRequest = (pMethod, pRoute, pParams) => {
   Object.assign(dParams, pParams)
 
   //http://61.250.122.43:8000
+  //http://192.168.56.101:8000
   const url = 'http://192.168.56.101:8000/run' + pRoute
   const headers = {
     Accept: 'application/json',
