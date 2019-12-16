@@ -58,18 +58,18 @@ class AgentControlTable extends PureComponent<Props, State> {
       minions,
       searchTerm: string,
       sortKey: string,
-      sortDirection: SortDirection
+      sortDirection: SortDirection.ASC
     ) => this.sort(this.filter(minions, searchTerm), sortKey, sortDirection)
   )
 
-  public filter(allHosts, searchTerm) {
+  public filter(allHosts, searchTerm: string) {
     const filterText = searchTerm.toLowerCase()
     return allHosts.filter(h => {
       return h.host.toLowerCase().includes(filterText)
     })
   }
 
-  public sort(hosts, key, direction) {
+  public sort(hosts: [], key: string, direction: SortDirection) {
     switch (direction) {
       case SortDirection.ASC:
         return _.sortBy(hosts, e => e[key])
@@ -313,7 +313,7 @@ class AgentControlTable extends PureComponent<Props, State> {
     const {minions, onClickAction, isAllCheck, handleMinionCheck} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
-    const sortedHosts = this.getSortedHosts(
+    const sortedHosts: [] = this.getSortedHosts(
       minions,
       searchTerm,
       sortKey,

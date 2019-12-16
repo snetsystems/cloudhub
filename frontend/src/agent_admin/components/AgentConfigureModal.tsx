@@ -7,7 +7,6 @@ import {
   Form,
   Button,
   ComponentColor,
-  ComponentStatus,
 } from 'src/reusable_ui'
 
 interface Props {
@@ -15,10 +14,8 @@ interface Props {
   onConfirm: () => void
 }
 
-interface State {}
-
-class AgentConfigureModal extends PureComponent<Props, State> {
-  render() {
+class AgentConfigureModal extends PureComponent<Props> {
+  public render() {
     const {onCancel, onConfirm} = this.props
 
     return (
@@ -37,7 +34,6 @@ class AgentConfigureModal extends PureComponent<Props, State> {
                 color={ComponentColor.Success}
                 text={`Confirm`}
                 titleText="Must choose at least 1 dashboard and set a name"
-                // status={this.submitButtonStatus}
                 onClick={onConfirm}
               />
               <Button text="Cancel" onClick={onCancel} />

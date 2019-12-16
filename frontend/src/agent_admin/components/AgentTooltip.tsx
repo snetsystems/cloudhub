@@ -71,7 +71,7 @@ class AgentTooltip extends PureComponent<Props, State> {
           <button
             className="flux-functions-toolbar--tooltip-dismiss"
             onClick={this.handleDismiss}
-          />{' '}
+          />
           <div
             className="flux-functions-toolbar--tooltip-contents"
             style={{
@@ -83,16 +83,6 @@ class AgentTooltip extends PureComponent<Props, State> {
               maxHeight={MAX_HEIGHT}
               autoHide={false}
             >
-              {/* <article className="flux-functions-toolbar--description">
-                <pre
-                  style={{
-                    color: '#fff',
-                    whiteSpace: 'pre-wrap',
-                  }}
-                >
-                  {description}
-                </pre>
-              </article> */}
               <ReactCodeMirror
                 autoFocus={false}
                 autoCursor={false}

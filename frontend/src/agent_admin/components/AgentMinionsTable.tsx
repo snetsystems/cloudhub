@@ -5,7 +5,7 @@ import memoize from 'memoize-one'
 
 // Components
 import SearchBar from 'src/hosts/components/SearchBar'
-import AgentMinions from 'src/agent_admin/containers/AgentMinions'
+import {AgentMinions} from 'src/agent_admin/containers/AgentMinions'
 import AgentMinionsTableRow from 'src/agent_admin/components/AgentMinionsTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import PageSpinner from 'src/shared/components/PageSpinner'
@@ -53,7 +53,7 @@ class AgentMinionsTable extends PureComponent<Props, State> {
 
   public getSortedHosts = memoize(
     (
-      minions,
+      minions: Minion[],
       searchTerm: string,
       sortKey: string,
       sortDirection: SortDirection
@@ -67,7 +67,7 @@ class AgentMinionsTable extends PureComponent<Props, State> {
     })
   }
 
-  public sort(hosts, key, direction) {
+  public sort(hosts: [], key: string, direction: SortDirection): string[] {
     switch (direction) {
       case SortDirection.ASC:
         return _.sortBy(hosts, e => e[key])
@@ -78,7 +78,7 @@ class AgentMinionsTable extends PureComponent<Props, State> {
     }
   }
 
-  public updateSearchTerm = searchTerm => {
+  public updateSearchTerm = (searchTerm: string) => {
     this.setState({searchTerm})
   }
 
@@ -283,7 +283,7 @@ class AgentMinionsTable extends PureComponent<Props, State> {
     } = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
-    const sortedHosts = this.getSortedHosts(
+    const sortedHosts: [] = this.getSortedHosts(
       minions,
       searchTerm,
       sortKey,
@@ -296,7 +296,7 @@ class AgentMinionsTable extends PureComponent<Props, State> {
           {this.AgentTableHeader}
           {sortedHosts.length > 0 ? (
             <FancyScrollbar
-              children={sortedHosts.map((m, i) => (
+              children={sortedHosts.map((m: Minion, i: number) => (
                 <AgentMinionsTableRow
                   key={i}
                   idx={i}

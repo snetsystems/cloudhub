@@ -2,7 +2,7 @@
 import React, {PureComponent} from 'react'
 
 // Components
-import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
+import {AgentConfiguration} from 'src/agent_admin/containers/AgentConfiguration'
 
 // Constants
 import {AGENT_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
@@ -22,7 +22,7 @@ interface Props {
 
 @ErrorHandling
 class AgentConfigurationTableRow extends PureComponent<Props> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props)
   }
 
@@ -34,7 +34,7 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
     return 'agent--row hosts-table--tr'
   }
 
-  render() {
+  public render() {
     return this.TableRowEachPage
   }
 

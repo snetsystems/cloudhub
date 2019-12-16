@@ -15,11 +15,10 @@ import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
 // Types
 import {RemoteDataState} from 'src/types'
-
 import {UpdateMasterAddress} from 'src/agent_admin/actions/'
 
 interface Props {
-  me: {}
+  me: {role: string}
   source: {id: number}
   params: {tab: string}
   masterAddress: string
@@ -42,7 +41,7 @@ interface State {
 // const localStorageObj = 'agentPageState'
 
 class AgentAdminPage extends PureComponent<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props)
     this.state = {
       agentPageStatus: RemoteDataState.NotStarted,
@@ -65,8 +64,6 @@ class AgentAdminPage extends PureComponent<Props, State> {
     //   })
     // })
   }
-
-  componentWillUnmount() {}
 
   public sections = me => {
     return [

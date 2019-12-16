@@ -152,7 +152,11 @@ interface measureMatch {
 }
 
 @ErrorHandling
-class AgentConfiguration extends PureComponent<Props, State, measureMatch> {
+export class AgentConfiguration extends PureComponent<
+  Props,
+  State,
+  measureMatch
+> {
   constructor(props) {
     super(props)
     this.state = {
@@ -188,7 +192,7 @@ class AgentConfiguration extends PureComponent<Props, State, measureMatch> {
       collectorConfigStatus: RemoteDataState.Done,
     })
 
-    this.onClickTableRowCall(host: 'minion01', ip: '192.168.56.102')
+    // this.onClickTableRowCall(host: 'minion01', ip: '192.168.56.102')
 
     switch (userDoing) {
       case 'load':
@@ -785,4 +789,4 @@ const mdtp = {
   notify: notifyAction,
 }
 
-export default connect(null, mdtp, null)(AgentConfiguration)
+export default connect(null, mdtp)(AgentConfiguration)

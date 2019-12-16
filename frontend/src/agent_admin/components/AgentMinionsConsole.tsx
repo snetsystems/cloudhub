@@ -9,10 +9,6 @@ interface Props {
 }
 
 class AgentMinionsConsole extends PureComponent<Props> {
-  constructor(props) {
-    super(props)
-  }
-
   render() {
     return (
       <div className="panel">

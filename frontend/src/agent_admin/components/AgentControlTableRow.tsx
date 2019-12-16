@@ -19,10 +19,6 @@ interface Props {
 }
 
 class AgentControlTableRow extends PureComponent<Props> {
-  constructor(props) {
-    super(props)
-  }
-
   public focusedClasses = (): string => {
     const {isCheck} = this.props
     return isCheck ? 'hosts-table--tr focused' : 'hosts-table--tr'

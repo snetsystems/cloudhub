@@ -3,7 +3,7 @@ import React, {PureComponent} from 'react'
 
 // Constants
 import {AGENT_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
-import AgentMinions from 'src/agent_admin/containers/AgentMinions'
+import {AgentMinions} from 'src/agent_admin/containers/AgentMinions'
 
 // Types
 import {Minion} from 'src/types'
@@ -18,7 +18,7 @@ interface Props {
 }
 
 class AgentMinionsTableRow extends PureComponent<Props> {
-  constructor(props) {
+  constructor(props: Readonly<Props>) {
     super(props)
   }
 

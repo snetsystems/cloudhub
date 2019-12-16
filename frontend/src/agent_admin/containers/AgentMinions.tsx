@@ -63,7 +63,7 @@ interface State {
 }
 
 @ErrorHandling
-class AgentMinions extends PureComponent<Props, State> {
+export class AgentMinions extends PureComponent<Props, State> {
   constructor(props) {
     super(props)
     this.state = {
