@@ -13,7 +13,8 @@ import PageSpinner from 'src/shared/components/PageSpinner'
 import {AGENT_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
 
 // Types
-import {RemoteDataState, Minion} from 'src/types'
+import {RemoteDataState} from 'src/types'
+import {Minion} from 'src/agent_admin/type'
 
 // Decorator
 import {ErrorHandling} from 'src/shared/decorators/errors'

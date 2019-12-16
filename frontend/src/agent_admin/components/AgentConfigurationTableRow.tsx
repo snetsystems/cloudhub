@@ -8,7 +8,7 @@ import {AgentConfiguration} from 'src/agent_admin/containers/AgentConfiguration'
 import {AGENT_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
 
 // Types
-import {Minion} from 'src/types'
+import {Minion} from 'src/agent_admin/type'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'

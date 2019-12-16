@@ -14,7 +14,8 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {AGENT_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
 
 // Types
-import {RemoteDataState, Minion} from 'src/types'
+import {RemoteDataState} from 'src/types'
+import {Minion} from 'src/agent_admin/type'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'

@@ -1,8 +1,28 @@
 import axios from 'axios'
-import {Minion} from 'src/types'
+import {Minion} from 'src/agent_admin/type'
 
 interface MinionsObject {
   [x: string]: Minion
+}
+
+interface Params {
+  client?: string
+  fun?: string
+  arg?: string[] | string
+  tgt_type?: string
+  tgt?: string[] | string
+  match?: string
+  include_rejected?: string
+  include_denied?: string
+  include_accepted?: string
+  kwarg?: {
+    name?: string
+    path?: string
+    dest?: string
+    makedirs?: string
+    fun?: string
+    cmd?: string
+  }
 }
 
 const EmptyMionin: Minion = {
@@ -14,7 +34,7 @@ const EmptyMionin: Minion = {
   isCheck: false,
 }
 
-const apiRequest = (pMethod, pRoute, pParams) => {
+const apiRequest = (pMethod: string, pRoute: string, pParams: Params) => {
   const dParams = {
     username: 'saltdev',
     password: 'saltdev',
@@ -25,7 +45,7 @@ const apiRequest = (pMethod, pRoute, pParams) => {
 
   //http://61.250.122.43:8000
   //http://192.168.56.101:8000
-  const url = 'http://192.168.56.101:8000/run' + pRoute
+  const url = 'http://61.250.122.43:8000/run' + pRoute
   const headers = {
     Accept: 'application/json',
     'Content-type': 'application/json',
@@ -229,7 +249,7 @@ export const getTelegrafServiceStatus = async (
   )
 }
 
-export function getLocalGrainsItem(pMinionId) {
+export function getLocalGrainsItem(pMinionId: string) {
   const params = {
     client: 'local',
     tgt: pMinionId,
@@ -266,7 +286,7 @@ export function getLocalGrainsItem(pMinionId) {
   return apiRequest('POST', '/', params)
 }
 
-export function runAcceptKey(pMinionId) {
+export function runAcceptKey(pMinionId: string) {
   const params = {
     client: 'wheel',
     fun: 'key.accept',
@@ -278,7 +298,7 @@ export function runAcceptKey(pMinionId) {
   return apiRequest('POST', '/', params)
 }
 
-export function runRejectKey(pMinionId) {
+export function runRejectKey(pMinionId: string) {
   const params = {
     client: 'wheel',
     fun: 'key.reject',
@@ -289,7 +309,7 @@ export function runRejectKey(pMinionId) {
   return apiRequest('POST', '/', params)
 }
 
-export function runDeleteKey(pMinionId) {
+export function runDeleteKey(pMinionId: string) {
   const params = {
     client: 'wheel',
     fun: 'key.delete',
@@ -354,7 +374,7 @@ export function getLocalServiceStatusTelegraf(pMinionId) {
   return apiRequest('POST', '/', params)
 }
 
-export function runLocalServiceStartTelegraf(pMinionId) {
+export function runLocalServiceStartTelegraf(pMinionId: string) {
   const params = {
     client: 'local',
     fun: 'service.start',
@@ -372,7 +392,7 @@ export function runLocalServiceStartTelegraf(pMinionId) {
   return apiRequest('POST', '/', params)
 }
 
-export function runLocalServiceStopTelegraf(pMinionId) {
+export function runLocalServiceStopTelegraf(pMinionId: string) {
   const params = {
     client: 'local',
     fun: 'service.stop',
@@ -390,7 +410,7 @@ export function runLocalServiceStopTelegraf(pMinionId) {
   return apiRequest('POST', '/', params)
 }
 
-export function runLocalServiceReStartTelegraf(pMinionId) {
+export function runLocalServiceReStartTelegraf(pMinionId: string) {
   const params = {
     client: 'local',
     fun: 'service.restart',
@@ -408,7 +428,7 @@ export function runLocalServiceReStartTelegraf(pMinionId) {
   return apiRequest('POST', '/', params)
 }
 
-export function runLocalCpGetDirTelegraf(pMinionId) {
+export function runLocalCpGetDirTelegraf(pMinionId: string) {
   const params = {
     client: 'local',
     fun: 'cp.get_dir',
@@ -430,7 +450,7 @@ export function runLocalCpGetDirTelegraf(pMinionId) {
   return apiRequest('POST', '/', params)
 }
 
-export function runLocalPkgInstallTelegraf(pMinionId) {
+export function runLocalPkgInstallTelegraf(pMinionId: string) {
   const params = {
     client: 'local',
     fun: 'pkg.install',
@@ -450,7 +470,7 @@ export function runLocalPkgInstallTelegraf(pMinionId) {
   return apiRequest('POST', '/', params)
 }
 
-export function getLocalGrainsItems(pMinionId) {
+export function getLocalGrainsItems(pMinionId: string) {
   const params = {
     client: 'local',
     fun: 'grains.items',
@@ -467,7 +487,7 @@ export function getLocalGrainsItems(pMinionId) {
   return apiRequest('POST', '/', params)
 }
 
-export function getLocalFileRead(pMinionId) {
+export function getLocalFileRead(pMinionId: string) {
   const params = {
     client: 'local',
     fun: 'file.read',
@@ -487,7 +507,7 @@ export function getLocalFileRead(pMinionId) {
   return apiRequest('POST', '/', params)
 }
 
-export function getLocalFileWrite(pMinionId, pScript) {
+export function getLocalFileWrite(pMinionId: string, pScript: string) {
   const params = {
     client: 'local',
     fun: 'file.write',
@@ -508,7 +528,7 @@ export function getLocalFileWrite(pMinionId, pScript) {
   return apiRequest('POST', '/', params)
 }
 
-export function getLocalServiceGetRunning(pMinionId) {
+export function getLocalServiceGetRunning(pMinionId: string) {
   const params = {
     client: 'local',
     fun: 'service.get_running',
@@ -525,7 +545,7 @@ export function getLocalServiceGetRunning(pMinionId) {
   return apiRequest('POST', '/', params)
 }
 
-export function getRunnerSaltCmdTelegraf(pMeasurements) {
+export function getRunnerSaltCmdTelegraf(pMeasurements: string) {
   const params = {
     client: 'runner',
     fun: 'salt.cmd',

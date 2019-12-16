@@ -38,12 +38,8 @@ import {
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
 
 // Types
-import {
-  Minion,
-  RemoteDataState,
-  Notification,
-  NotificationFunc,
-} from 'src/types'
+import {RemoteDataState, Notification, NotificationFunc} from 'src/types'
+import {Minion} from 'src/agent_admin/type'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -76,7 +72,7 @@ export class AgentMinions extends PureComponent<Props, State> {
     }
   }
 
-  getWheelKeyListAll = async userDoing => {
+  getWheelKeyListAll = async (userDoing: string) => {
     const {notify} = this.props
     try {
       const response = await getMinionKeyListAll()
@@ -187,6 +183,13 @@ export class AgentMinions extends PureComponent<Props, State> {
     _this,
     idx,
     handleWheelKeyCommand,
+  }: {
+    name: string
+    host: string
+    status: string
+    _this: HTMLElement
+    idx: number
+    handleWheelKeyCommand: () => void
   }) {
     return (
       <AgentMinionsModal
@@ -200,7 +203,7 @@ export class AgentMinions extends PureComponent<Props, State> {
     )
   }
 
-  render() {
+  public render() {
     const {isUserAuthorized} = this.props
     return (
       <>
@@ -213,10 +216,7 @@ export class AgentMinions extends PureComponent<Props, State> {
             />
           </div>
         ) : (
-          <div
-            className="generic-empty-state"
-            style={{backgroundColor: '#292933'}}
-          >
+          <div className="generic-empty-state agent-table--empty-state">
             <h4>Not Allowed User</h4>
           </div>
         )}

@@ -14,7 +14,8 @@ import PageSpinner from 'src/shared/components/PageSpinner'
 import {AGENT_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
 
 // Types
-import {RemoteDataState, Minion} from 'src/types'
+import {RemoteDataState} from 'src/types'
+import {Minion} from 'src/agent_admin/type'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -234,16 +235,16 @@ class AgentMinionsTable extends PureComponent<Props, State> {
             <span className="icon caret-up" />
           </div>
           <div
-            onClick={this.updateSort('operatingSystem')}
-            className={this.sortableClasses('operatingSystem')}
+            onClick={this.updateSort('OS')}
+            className={this.sortableClasses('OS')}
             style={{width: IPWidth}}
           >
             OS
             <span className="icon caret-up" />
           </div>
           <div
-            onClick={this.updateSort('operatingSystem')}
-            className={this.sortableClasses('operatingSystem')}
+            onClick={this.updateSort('OSVersion')}
+            className={this.sortableClasses('OSVersion')}
             style={{width: IPWidth}}
           >
             OS Version

@@ -42,12 +42,8 @@ import {
 import {HANDLE_HORIZONTAL, HANDLE_VERTICAL} from 'src/shared/constants'
 
 // Types
-import {
-  Minion,
-  RemoteDataState,
-  Notification,
-  NotificationFunc,
-} from 'src/types'
+import {RemoteDataState, Notification, NotificationFunc} from 'src/types'
+import {Minion} from 'src/agent_admin/type'
 
 interface Props {
   notify: (message: Notification | NotificationFunc) => void

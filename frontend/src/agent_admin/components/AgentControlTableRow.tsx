@@ -8,7 +8,7 @@ import AgentControl from 'src/agent_admin/containers/AgentControl'
 import {AGENT_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
 
 // Types
-import {Minion} from 'src/types'
+import {Minion} from 'src/agent_admin/type'
 
 interface Props {
   minions: Minion

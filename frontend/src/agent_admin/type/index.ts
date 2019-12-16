@@ -9,5 +9,4 @@ export interface Minion {
   isSaveFile?: string
   isAccept?: boolean
   isCheck?: boolean
-  //app?: []
 }
