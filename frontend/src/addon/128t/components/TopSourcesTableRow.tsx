@@ -8,7 +8,7 @@ interface Props {
 }
 
 class TopSourcesTableRow extends PureComponent<Props> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props)
   }
 
