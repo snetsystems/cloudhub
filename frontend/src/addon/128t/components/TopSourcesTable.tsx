@@ -60,8 +60,6 @@ class TopSourcesTable extends PureComponent<Props, State> {
     if (topSources === nextProps.topSources) return
     const {sortKey, sortDirection, searchTerm} = this.state
 
-    console.log('componentWillReceiveProps')
-
     this.setSourceCount(
       nextProps.topSources,
       searchTerm,
