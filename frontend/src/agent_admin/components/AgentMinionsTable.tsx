@@ -60,14 +60,18 @@ class AgentMinionsTable extends PureComponent<Props, State> {
     ) => this.sort(this.filter(minions, searchTerm), sortKey, sortDirection)
   )
 
-  public filter(allHosts, searchTerm) {
+  public filter(allHosts: Minion[], searchTerm: string): Minion[] {
     const filterText = searchTerm.toLowerCase()
     return allHosts.filter(h => {
       return h.host.toLowerCase().includes(filterText)
     })
   }
 
-  public sort(hosts: [], key: string, direction: SortDirection): string[] {
+  public sort(
+    hosts: Minion[],
+    key: string,
+    direction: SortDirection
+  ): Minion[] {
     switch (direction) {
       case SortDirection.ASC:
         return _.sortBy(hosts, e => e[key])
@@ -247,16 +251,16 @@ class AgentMinionsTable extends PureComponent<Props, State> {
           </div>
 
           <div
-            onClick={this.updateSort('deltaUptime')}
-            className={this.sortableClasses('deltaUptime')}
+            onClick={this.updateSort('ip')}
+            className={this.sortableClasses('ip')}
             style={{width: IPWidth}}
           >
             IP
             <span className="icon caret-up" />
           </div>
           <div
-            onClick={this.updateSort('load')}
-            className={this.sortableClasses('load')}
+            onClick={this.updateSort('deltaUptime')}
+            className={this.sortableClasses('deltaUptime')}
             style={{width: StatusWidth}}
           >
             Status

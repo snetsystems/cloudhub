@@ -268,16 +268,16 @@ class AgentControlTable extends PureComponent<Props, State> {
             <span className="icon caret-up" />
           </div>
           <div
-            onClick={this.updateSort('operatingSystem')}
-            className={this.sortableClasses('operatingSystem')}
+            onClick={this.updateSort('OS')}
+            className={this.sortableClasses('OS')}
             style={{width: IPWidth}}
           >
             OS
             <span className="icon caret-up" />
           </div>
           <div
-            onClick={this.updateSort('operatingSystem')}
-            className={this.sortableClasses('operatingSystem')}
+            onClick={this.updateSort('OSVersion')}
+            className={this.sortableClasses('OSVersion')}
             style={{width: IPWidth}}
           >
             OS Version
@@ -285,8 +285,8 @@ class AgentControlTable extends PureComponent<Props, State> {
           </div>
 
           <div
-            onClick={this.updateSort('deltaUptime')}
-            className={this.sortableClasses('deltaUptime')}
+            onClick={this.updateSort('ip')}
+            className={this.sortableClasses('ip')}
             style={{width: IPWidth}}
           >
             IP
