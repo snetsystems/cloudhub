@@ -30,6 +30,8 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
 - Hosts to Infrastructures and basic charts added.
 - Visualization added by criteria of Applications.
 - Continuous installation and deployment for telegraf's agent and configuration.
+- Addon features
+  - 128T Router & SDPlex Features.
 
 ## Setting in VSCode
 
