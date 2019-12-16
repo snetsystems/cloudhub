@@ -374,8 +374,8 @@ export function getLocalServiceStatusTelegraf(pMinionId) {
   return apiRequest('POST', '/', params)
 }
 
-export function runLocalServiceStartTelegraf(pMinionId: string) {
-  const params = {
+export function runLocalServiceStartTelegraf(pMinionId: string | string[]) {
+  const params: Params = {
     client: 'local',
     fun: 'service.start',
     arg: 'telegraf',
@@ -392,8 +392,8 @@ export function runLocalServiceStartTelegraf(pMinionId: string) {
   return apiRequest('POST', '/', params)
 }
 
-export function runLocalServiceStopTelegraf(pMinionId: string) {
-  const params = {
+export function runLocalServiceStopTelegraf(pMinionId: string | string[]) {
+  const params: Params = {
     client: 'local',
     fun: 'service.stop',
     arg: 'telegraf',
@@ -411,7 +411,7 @@ export function runLocalServiceStopTelegraf(pMinionId: string) {
 }
 
 export function runLocalServiceReStartTelegraf(pMinionId: string) {
-  const params = {
+  const params: Params = {
     client: 'local',
     fun: 'service.restart',
     arg: 'telegraf',
@@ -428,8 +428,8 @@ export function runLocalServiceReStartTelegraf(pMinionId: string) {
   return apiRequest('POST', '/', params)
 }
 
-export function runLocalCpGetDirTelegraf(pMinionId: string) {
-  const params = {
+export function runLocalCpGetDirTelegraf(pMinionId: string[]) {
+  const params: Params = {
     client: 'local',
     fun: 'cp.get_dir',
     kwarg: {
@@ -450,8 +450,8 @@ export function runLocalCpGetDirTelegraf(pMinionId: string) {
   return apiRequest('POST', '/', params)
 }
 
-export function runLocalPkgInstallTelegraf(pMinionId: string) {
-  const params = {
+export function runLocalPkgInstallTelegraf(pMinionId: string[]) {
+  const params: Params = {
     client: 'local',
     fun: 'pkg.install',
     kwarg: {
