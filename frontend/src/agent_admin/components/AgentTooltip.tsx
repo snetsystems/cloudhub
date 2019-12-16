@@ -49,7 +49,7 @@ class AgentTooltip extends PureComponent<Props, State> {
     const options = {
       tabIndex: 1,
       readonly: true,
-      lineNumbers: true,
+      lineNumbers: false,
       autoRefresh: true,
       indentUnit: 2,
       smartIndent: false,
