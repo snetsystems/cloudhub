@@ -86,10 +86,7 @@ ProvidersPage.propTypes = {
   notify: func.isRequired,
 }
 
-const mapStateToProps = ({
-  links,
-  adminCMP: {organizations, mappings},
-}) => ({
+const mapStateToProps = ({links, adminCMP: {organizations, mappings}}) => ({
   links,
   organizations,
   mappings,
@@ -100,6 +97,7 @@ const mapDispatchToProps = dispatch => ({
   notify: bindActionCreators(notifyAction, dispatch),
 })
 
-export default connect(mapStateToProps, mapDispatchToProps)(
-  ErrorHandling(ProvidersPage)
-)
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(ErrorHandling(ProvidersPage))
