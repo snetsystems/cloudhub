@@ -3,6 +3,7 @@ import {Minion} from 'src/agent_admin/type'
 
 interface MinionsObject {
   [x: string]: Minion
+  k?: Minion
 }
 
 interface Params {
@@ -15,6 +16,7 @@ interface Params {
   include_rejected?: string
   include_denied?: string
   include_accepted?: string
+  show_ip?: string
   kwarg?: {
     name?: string
     path?: string
@@ -22,6 +24,7 @@ interface Params {
     makedirs?: string
     fun?: string
     cmd?: string
+    args?: string[] | string
   }
 }
 
@@ -43,8 +46,6 @@ const apiRequest = (pMethod: string, pRoute: string, pParams: Params) => {
 
   Object.assign(dParams, pParams)
 
-  //http://61.250.122.43:8000
-  //http://192.168.56.101:8000
   const url = 'http://61.250.122.43:8000/run' + pRoute
   const headers = {
     Accept: 'application/json',
@@ -74,7 +75,7 @@ export const getMinionKeyListAllAsync = async (): Promise<MinionsObject> => {
     getLocalServiceStatusTelegraf(info[0].data.return[0].data.return.minions),
   ])
 
-  const keyList = info[0].data.return[0].data.return.minions
+  const keyList: Minion[] = info[0].data.return[0].data.return.minions
   const ipList = info[1].data.return[0]
   const osList = info[2].data.return[0]
 
@@ -338,8 +339,8 @@ export function getRunnerManageAllowed() {
   return apiRequest('POST', '/', params)
 }
 
-export function getLocalServiceEnabledTelegraf(pMinionId) {
-  const params = {
+export function getLocalServiceEnabledTelegraf(pMinionId: string[]) {
+  const params: Params = {
     client: 'local',
     fun: 'service.enabled',
     arg: 'telegraf',
@@ -356,8 +357,8 @@ export function getLocalServiceEnabledTelegraf(pMinionId) {
   return apiRequest('POST', '/', params)
 }
 
-export function getLocalServiceStatusTelegraf(pMinionId) {
-  const params = {
+export function getLocalServiceStatusTelegraf(pMinionId: string[]) {
+  const params: Params = {
     client: 'local',
     fun: 'service.status',
     arg: 'telegraf',
@@ -471,7 +472,7 @@ export function runLocalPkgInstallTelegraf(pMinionId: string[]) {
 }
 
 export function getLocalGrainsItems(pMinionId: string) {
-  const params = {
+  const params: Params = {
     client: 'local',
     fun: 'grains.items',
     tgt_type: '',
@@ -488,7 +489,7 @@ export function getLocalGrainsItems(pMinionId: string) {
 }
 
 export function getLocalFileRead(pMinionId: string) {
-  const params = {
+  const params: Params = {
     client: 'local',
     fun: 'file.read',
     tgt_type: '',
@@ -508,7 +509,7 @@ export function getLocalFileRead(pMinionId: string) {
 }
 
 export function getLocalFileWrite(pMinionId: string, pScript: string) {
-  const params = {
+  const params: Params = {
     client: 'local',
     fun: 'file.write',
     tgt_type: '',
@@ -529,7 +530,7 @@ export function getLocalFileWrite(pMinionId: string, pScript: string) {
 }
 
 export function getLocalServiceGetRunning(pMinionId: string) {
-  const params = {
+  const params: Params = {
     client: 'local',
     fun: 'service.get_running',
     tgt_type: '',
