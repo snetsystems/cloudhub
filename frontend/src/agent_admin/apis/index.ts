@@ -3,7 +3,6 @@ import {Minion} from 'src/agent_admin/type'
 
 interface MinionsObject {
   [x: string]: Minion
-  k?: Minion
 }
 
 interface Params {
