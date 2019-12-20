@@ -74,7 +74,7 @@ export const getMinionKeyListAllAsync = async (): Promise<MinionsObject> => {
     getLocalServiceStatusTelegraf(info[0].data.return[0].data.return.minions),
   ])
 
-  const keyList: Minion[] = info[0].data.return[0].data.return.minions
+  const keyList = info[0].data.return[0].data.return.minions
   const ipList = info[1].data.return[0]
   const osList = info[2].data.return[0]
 

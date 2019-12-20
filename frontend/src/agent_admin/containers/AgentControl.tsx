@@ -61,6 +61,7 @@ class AgentControl extends PureComponent<Props, State> {
     this.setState({
       Minions: _.values(hostListObject),
       controlPageStatus: RemoteDataState.Done,
+      isAllCheck: false,
     })
   }
 
@@ -176,18 +177,6 @@ class AgentControl extends PureComponent<Props, State> {
   public onClickInstallCall = () => {
     const {Minions} = this.state
 
-    const filteredHost = Minions.filter(m => m.isCheck === true).filter(
-      m => m.isInstall === true
-    )
-
-    filteredHost.length > 0
-      ? alert('Installed minions are included.')
-      : this.onClickInstall()
-  }
-
-  public onClickInstall = () => {
-    const {Minions} = this.state
-
     const host = Minions.filter(m => m.isCheck === true).map(
       checkData => checkData.host
     )
@@ -219,6 +208,11 @@ class AgentControl extends PureComponent<Props, State> {
 
       this.getWheelKeyListAll()
     })
+  }
+
+  public notSelectMinion = ({_this}) => {
+    console.log(_this.props.minions)
+    alert('NotSelectMinion')
   }
 
   render() {

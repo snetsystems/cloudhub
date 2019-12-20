@@ -36,8 +36,30 @@
 	margin-left: 5px !important;
 }
 
+.message-zone {
+	text-align: left;
+}
+
 .measurements-query-builder--contain {
-	color: #f58220;
+	color: $s-orange;
+	font-size: 12px;
+	background: #232323;
+	padding: 10px;
+	margin: 5px 0px;
+	width: 100%;
+}
+
+.measurements-title {
+	color: $s-orange;
+	font-size: 12px;
+	background: #232323;
+	padding: 10px;
+	margin: 5px 0px;
+	width: 100%;
+}
+
+.default-measurements {
+	color: $s-orange;
 	font-size: 12px;
 	background: #232323;
 	padding: 10px;
@@ -73,6 +95,18 @@
 	cursor: pointer;
 }
 
+.pabel-body--agent-control {
+	padding: 20px;
+	padding-top: 0px;
+	text-align: right;
+
+	.overlay--body {
+		padding-bottom: 25px;
+		padding-top: 18px;
+		min-height: unset;
+	}
+}
+
 .agent--indicator {
 	&.indicator--primary {
 		color: $c-rainforest
@@ -97,6 +131,10 @@
 		color: #fff;
 		white-space: pre-wrap;
 		background-color: transparent;
+	}
+
+	.react-codemirror2 {
+		height: calc(100% - 30px);
 	}
 }
 

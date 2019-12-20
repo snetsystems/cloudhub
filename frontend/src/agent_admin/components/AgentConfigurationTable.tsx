@@ -99,7 +99,7 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     }
   }
 
-  public sortableClasses = (key: string) => {
+  public sortableClasses = (key: string): string => {
     const {sortKey, sortDirection} = this.state
     if (sortKey === key) {
       if (sortDirection === SortDirection.ASC) {
@@ -110,11 +110,11 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     return 'hosts-table--th sortable-header'
   }
 
-  private get AgentTableContents() {
+  private get AgentTableContents(): JSX.Element {
     const {minions, configPageStatus} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
-    const sortedHosts = this.getSortedHosts(
+    const sortedHosts: Minion[] = this.getSortedHosts(
       minions,
       searchTerm,
       sortKey,

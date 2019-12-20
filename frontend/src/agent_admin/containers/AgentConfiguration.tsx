@@ -11,8 +11,6 @@ import AgentCodeEditor from 'src/agent_admin/components/AgentCodeEditor'
 import AgentToolbarFunction from 'src/agent_admin/components/AgentToolbarFunction'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import {globalSetting} from 'src/agent_admin/help'
-// import OverlayTechnology from 'src/reusable_ui/components/overlays/OverlayTechnology'
-// import AgentConfigureModal from 'src/agent_admin/components/AgentConfigureModal'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -52,8 +50,6 @@ interface Props {
 }
 
 interface State {
-  isOverlayVisible: boolean
-  isConfigureChange: boolean
   MinionsObject: {[x: string]: Minion}
   configPageStatus: RemoteDataState
   measurementsStatus: RemoteDataState
@@ -153,15 +149,13 @@ export class AgentConfiguration extends PureComponent<
   State,
   measureMatch
 > {
-  constructor(props) {
+  constructor(props: Props) {
     super(props)
     this.state = {
       MinionsObject: {},
       configPageStatus: RemoteDataState.NotStarted,
       measurementsStatus: RemoteDataState.NotStarted,
       collectorConfigStatus: RemoteDataState.NotStarted,
-      isOverlayVisible: true,
-      isConfigureChange: false,
       measurementsTitle: '',
       serviceMeasurements: [],
       defaultMeasurements: [],
@@ -187,8 +181,6 @@ export class AgentConfiguration extends PureComponent<
       configPageStatus: RemoteDataState.Done,
       collectorConfigStatus: RemoteDataState.Done,
     })
-
-    // this.onClickTableRowCall(host: 'minion01', ip: '192.168.56.102')
 
     switch (userDoing) {
       case 'load':
@@ -324,73 +316,28 @@ export class AgentConfiguration extends PureComponent<
     }
   }
 
-  Modal = (funcAgree, funcCancel) => message => {
-    return (
-      <div>
-        {message}
-        <button onClick={funcCancel}>cancel</button>
-        <button onClick={funcAgree}>agree</button>
-      </div>
-    )
-  }
-
-  modalAgree = () => {
+  public onClickApplyCall = () => {
     const {selectHost, configScript} = this.state
     this.setState({
       configPageStatus: RemoteDataState.Loading,
       collectorConfigStatus: RemoteDataState.Loading,
     })
+
     const getLocalFileWritePromise = getLocalFileWrite(selectHost, configScript)
+
     getLocalFileWritePromise.then(pLocalFileWriteData => {
       this.setState({
         responseMessage: pLocalFileWriteData.data.return[0][selectHost],
       })
+
       const getLocalServiceReStartTelegrafPromise = runLocalServiceReStartTelegraf(
         selectHost
       )
+
       getLocalServiceReStartTelegrafPromise.then(() => {
         this.getWheelKeyListAll('apply')
       })
     })
-  }
-
-  modalCancel = () => {
-    this.setState({isConfigureChange: !this.state.isConfigureChange})
-  }
-
-  enteredModal = this.Modal(this.modalAgree, this.modalCancel)
-
-  handleApplyCall = () => {}
-
-  public onClickApplyCall = () => {
-    this.state.isConfigureChange
-      ? this.enteredModal('수정된 내용이 있습니다. Apply를 하시겠습니까?')
-      : null
-
-    // Agree Type
-    // const {selectHost, configScript} = this.state
-    // this.setState({
-    //   configPageStatus: RemoteDataState.Loading,
-    //   collectorConfigStatus: RemoteDataState.Loading,
-    // })
-
-    // const getLocalFileWritePromise = getLocalFileWrite(selectHost, configScript)
-
-    // getLocalFileWritePromise.then(pLocalFileWriteData => {
-    //   this.setState({
-    //     responseMessage: pLocalFileWriteData.data.return[0][selectHost],
-    //   })
-
-    //   const getLocalServiceReStartTelegrafPromise = runLocalServiceReStartTelegraf(
-    //     selectHost
-    //   )
-
-    //   getLocalServiceReStartTelegrafPromise.then(() => {
-    //     this.getWheelKeyListAll('apply')
-    //   })
-    // })
-
-    // Cancel Type
   }
 
   public async componentDidMount() {
@@ -477,7 +424,7 @@ export class AgentConfiguration extends PureComponent<
       })
     })
   }
-  ////////////////////////////////////////////////////////////////////////////////////
+
   private handleFocusedDefaultMeasure = ({clickPosition, _thisProps}) => {
     const {defaultMeasurements, serviceMeasurements} = this.state
 
@@ -559,7 +506,7 @@ export class AgentConfiguration extends PureComponent<
   }
 
   private onChangeScript = (script: string): void => {
-    this.setState({configScript: script, isConfigureChange: true})
+    this.setState({configScript: script})
   }
 
   private renderAgentPageTop = () => {
@@ -601,16 +548,7 @@ export class AgentConfiguration extends PureComponent<
             }}
           >
             measurements
-            <div
-              style={{
-                color: '#f58220',
-                fontSize: '12px',
-                background: '#232323',
-                padding: '10px',
-                margin: '5px 0px',
-                width: '100%',
-              }}
-            >
+            <div className="measurements-title" style={{}}>
               {measurementsTitle}
             </div>
           </h2>
@@ -647,19 +585,7 @@ export class AgentConfiguration extends PureComponent<
             )
           )}
         </div>
-        <div
-          style={{
-            color: '#f58220',
-            fontSize: '12px',
-            background: '#232323',
-            padding: '10px',
-            margin: '5px 0px',
-            width: '100%',
-          }}
-        >
-          {' '}
-          (Default measurements)
-        </div>
+        <div className={'default-measurements'}> (Default measurements)</div>
         <div className="query-builder--list">
           {defaultMeasurements.map((v, i) => {
             return (
@@ -685,7 +611,6 @@ export class AgentConfiguration extends PureComponent<
 
   private CollectorConfig() {
     const {collectorConfigStatus} = this.state
-    // isOverlayVisible
     return (
       <div className="panel">
         {collectorConfigStatus === RemoteDataState.Loading
@@ -704,14 +629,6 @@ export class AgentConfiguration extends PureComponent<
         </div>
 
         <div className="panel-body">{this.CollectorConfigContent}</div>
-        {/* <OverlayTechnology visible={isOverlayVisible}>
-          <AgentConfigureModal
-            onCancel={() =>
-              this.setState({isOverlayVisible: !this.state.isOverlayVisible})
-            }
-            onConfirm={() => alert('confirm!')}
-          />
-        </OverlayTechnology> */}
       </div>
     )
   }
