@@ -133,8 +133,15 @@
 		background-color: transparent;
 	}
 
-	.react-codemirror2 {
-		height: calc(100% - 30px);
+}
+
+.agent-page {
+	.subsection .panel.panel-solid .panel-body {
+		height: calc(100% - 45px);
+	}
+
+	.CodeMirror-sizer {
+		margin-bottom: 0 !important;
 	}
 }
 

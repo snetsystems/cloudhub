@@ -1,7 +1,7 @@
 // Libraries
 import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
-import {bindActionCreators} from 'redux'
+import _ from 'lodash'
 
 // Components
 import {Page} from 'src/reusable_ui'
@@ -15,15 +15,11 @@ import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
 // Types
 import {RemoteDataState} from 'src/types'
-import {UpdateMasterAddress} from 'src/agent_admin/actions/'
 
 interface Props {
-  me: {role: string}
+  meRole: string
   source: {id: number}
   params: {tab: string}
-  masterAddress: string
-  masterId: string
-  masterPassword: string
   handleKeyDown: () => void
 }
 
@@ -31,14 +27,8 @@ interface State {
   agentPageStatus: RemoteDataState
   isSelectBoxView: boolean
   minions: []
-  // userAddress: string
-  // userId: string
-  // userPassword: string
   [x: string]: {}
 }
-
-// const localStorageKey = 'agentPage'
-// const localStorageObj = 'agentPageState'
 
 class AgentAdminPage extends PureComponent<Props, State> {
   constructor(props: Props) {
@@ -50,30 +40,15 @@ class AgentAdminPage extends PureComponent<Props, State> {
     }
   }
 
-  componentWillMount() {
-    // const getLocalStorageItem = this.getLocalStorage({
-    //   localKey: localStorageKey,
-    //   objKey: localStorageObj,
-    // })
-    // const thisState = Object.keys(this.state)
-    // const parseObject = JSON.parse(getLocalStorageItem)[localStorageObj]
-    // const localState = Object.keys(parseObject)
-    // thisState.map(s => {
-    //   localState.map(ls => {
-    //     s === ls ? this.setState({[s]: parseObject[ls]}) : null
-    //   })
-    // })
-  }
-
-  public sections = me => {
+  public sections = meRole => {
     return [
       {
         url: 'agent-minions',
         name: 'Minions',
-        enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
+        enabled: isUserAuthorized(meRole, SUPERADMIN_ROLE),
         component: (
           <AgentMinions
-            isUserAuthorized={isUserAuthorized(me.role, SUPERADMIN_ROLE)}
+            isUserAuthorized={isUserAuthorized(meRole, SUPERADMIN_ROLE)}
             currentUrl={'agent-minions'}
           />
         ),
@@ -81,10 +56,10 @@ class AgentAdminPage extends PureComponent<Props, State> {
       {
         url: 'agent-control',
         name: 'Collector Control',
-        enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
+        enabled: isUserAuthorized(meRole, SUPERADMIN_ROLE),
         component: (
           <AgentControl
-            isUserAuthorized={isUserAuthorized(me.role, SUPERADMIN_ROLE)}
+            isUserAuthorized={isUserAuthorized(meRole, SUPERADMIN_ROLE)}
             currentUrl={'agent-control'}
           />
         ),
@@ -92,10 +67,10 @@ class AgentAdminPage extends PureComponent<Props, State> {
       {
         url: 'agent-configuration',
         name: 'Collector Config',
-        enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
+        enabled: isUserAuthorized(meRole, SUPERADMIN_ROLE),
         component: (
           <AgentConfiguration
-            isUserAuthorized={isUserAuthorized(me.role, SUPERADMIN_ROLE)}
+            isUserAuthorized={isUserAuthorized(meRole, SUPERADMIN_ROLE)}
             currentUrl={'agent-configuration'}
           />
         ),
@@ -105,15 +80,10 @@ class AgentAdminPage extends PureComponent<Props, State> {
 
   render() {
     const {
-      me,
+      meRole,
       source,
       params: {tab},
-      masterAddress,
-      masterId,
-      masterPassword,
     } = this.props
-
-    // const {userAddress, userId, userPassword} = this.state
     return (
       <Page>
         <Page.Header>
@@ -125,7 +95,7 @@ class AgentAdminPage extends PureComponent<Props, State> {
               <input
                 type="url"
                 className="form-control input-sm agent--input agent--input-address"
-                value={masterAddress}
+                // value={masterAddress}
                 // onChange={this.handleUpdateMasterAddress}
                 onChange={this.props.handleKeyDown}
                 // onChange={this.handleInputChange('userAddress')}
@@ -133,7 +103,7 @@ class AgentAdminPage extends PureComponent<Props, State> {
               <input
                 className="form-control input-sm agent--input agent--input-id"
                 placeholder="Insert Host ID"
-                value={masterId}
+                // value={masterId}
                 readOnly
                 // onChange={this.handleInputChange('userId')}
               />
@@ -141,7 +111,7 @@ class AgentAdminPage extends PureComponent<Props, State> {
                 type="password"
                 className="form-control input-sm agent--input agent--input-password"
                 placeholder="Insert Host Password"
-                value={masterPassword}
+                // value={masterPassword}
                 readOnly
                 // onChange={this.handleInputChange('userPassword')}
               />
@@ -149,9 +119,9 @@ class AgentAdminPage extends PureComponent<Props, State> {
           </Page.Header.Right>
         </Page.Header>
         <Page.Contents fullWidth={true}>
-          <div className="container-fluid full-height">
+          <div className="container-fluid full-height agent-page">
             <SubSections
-              sections={this.sections(me)}
+              sections={this.sections(meRole)}
               activeSection={tab}
               parentUrl="agent-admin"
               sourceID={source.id}
@@ -161,70 +131,13 @@ class AgentAdminPage extends PureComponent<Props, State> {
       </Page>
     )
   }
-
-  // handleKeyDown = e => {
-  //   console.log(e.key)
-  //   if (e.key === 'enter') {
-  //     console.log('keydown')
-  //     return UpdateMasterAddress(e.target.value)
-  //   }
-  // }
-
-  // private handleUpdateMasterAddress = e => {
-  //   console.log(e.target.value)
-  //   return UpdateMasterAddress(e.target.value)
-  // }
-
-  // private handleInputChange = target => event => {
-  //   console.log(event.target.value)
-  //   this.handleLocalStorage({
-  //     localKey: localStorageKey,
-  //     objKey: localStorageObj,
-  //     target,
-  //     _event: event,
-  //   })
-  //   this.setState({[target]: event.target.value})
-  // }
-
-  // private getLocalStorage = ({localKey, objKey}) => {
-  //   const getItem = localStorage.getItem(localKey)
-  //   if (getItem === null) {
-  //     localStorage.setItem(localKey, JSON.stringify({[objKey]: {}}))
-  //     return localStorage.getItem(localKey)
-  //   } else {
-  //     return getItem
-  //   }
-  // }
-
-  // private setLocalStorage = ({localKey, objKey}) => {
-  //   return localStorage.setItem(localKey, objKey)
-  // }
-
-  // private handleLocalStorage = ({localKey, objKey, target, _event}) => {
-  //   const getLocalStorageItem = this.getLocalStorage({localKey, objKey})
-  //   const getInputData = {[target]: _event.target.value}
-  //   const parseObject = JSON.parse(getLocalStorageItem)
-  //   const parseString = JSON.stringify({
-  //     [objKey]: Object.assign(parseObject[objKey], getInputData),
-  //   })
-
-  //   this.setLocalStorage({localKey, objKey: parseString})
-  // }
 }
 
-const mapStateToProps = ({
-  auth: {me},
-  agentReducer: {masterAddress, masterId, masterPassword, masterToken},
-}) => ({
-  me,
-  masterAddress,
-  masterId,
-  masterPassword,
-  masterToken,
-})
+const mapStateToProps = ({auth: {me}}) => {
+  const meRole = _.get(me, 'role', null)
+  return {
+    meRole,
+  }
+}
 
-const mapDispatchToProps = dispatch => ({
-  handleKeyDown: bindActionCreators(UpdateMasterAddress, dispatch),
-})
-
-export default connect(mapStateToProps, mapDispatchToProps)(AgentAdminPage)
+export default connect(mapStateToProps, null)(AgentAdminPage)
