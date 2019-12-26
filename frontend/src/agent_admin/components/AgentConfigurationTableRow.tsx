@@ -1,5 +1,5 @@
 // Libraries
-import React, {PureComponent} from 'react'
+import React, {PureComponent, MouseEvent} from 'react'
 
 // Components
 import {AgentConfiguration} from 'src/agent_admin/containers/AgentConfiguration'
@@ -38,20 +38,20 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
     return this.TableRowEachPage
   }
 
-  private get handleOnClickTableRow() {
+  private handleOnClickTableRow = (): void => {
     const {minions, onClickTableRow} = this.props
     const {ip, host} = minions
 
-    return onClickTableRow(host, ip)
+    onClickTableRow(host, ip)
   }
 
-  private get handleOnClickAction() {
+  private handleOnClickAction = (e: MouseEvent): void => {
+    e.stopPropagation()
     const {minions, onClickAction} = this.props
     const {host, isRunning} = minions
 
-    return onClickAction(host, isRunning)
+    onClickAction(host, isRunning)
   }
-
   private get TableRowEachPage(): JSX.Element {
     const {minions} = this.props
     const {osVersion, os, ip, host, isRunning} = minions
@@ -83,7 +83,7 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
             className="btn btn-default action-call"
             onClick={this.handleOnClickAction}
           >
-            {isRunning === true ? <>■</> : <>▶</>}
+            <>{isRunning === true ? '■' : '▶'}</>
           </button>
         </div>
       </div>

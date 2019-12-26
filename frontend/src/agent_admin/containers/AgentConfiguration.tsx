@@ -175,6 +175,7 @@ export class AgentConfiguration extends PureComponent<
       MinionsObject: hostListObject,
       configPageStatus: RemoteDataState.Done,
       collectorConfigStatus: RemoteDataState.Done,
+      measurementsStatus: RemoteDataState.Done,
     })
 
     notify(notifyAgentSucceeded(userDoing))
@@ -224,7 +225,7 @@ export class AgentConfiguration extends PureComponent<
     )
   }
 
-  public onClickTableRowCall = (host: string, ip: string) => () => {
+  public onClickTableRowCall = (host: string, ip: string): void => {
     this.setState({
       configPageStatus: RemoteDataState.Loading,
       measurementsStatus: RemoteDataState.Loading,
@@ -276,7 +277,15 @@ export class AgentConfiguration extends PureComponent<
     })
   }
 
-  public onClickActionCall = (host: string, isRunning: boolean) => () => {
+  public onClickActionCall = (host: string, isRunning: boolean) => {
+    console.log('onClickActionCall', host, isRunning)
+
+    this.setState({
+      configPageStatus: RemoteDataState.Loading,
+      measurementsStatus: RemoteDataState.Loading,
+      collectorConfigStatus: RemoteDataState.Loading,
+    })
+
     if (isRunning === false) {
       const getLocalServiceStartTelegrafPromise = runLocalServiceStartTelegraf(
         host
@@ -528,9 +537,7 @@ export class AgentConfiguration extends PureComponent<
             }}
           >
             measurements
-            <div className="measurements-title" style={{}}>
-              {measurementsTitle}
-            </div>
+            <div className="measurements-title">{measurementsTitle}</div>
           </h2>
         </div>
         <div className="panel-body">{this.MeasurementsContent}</div>
