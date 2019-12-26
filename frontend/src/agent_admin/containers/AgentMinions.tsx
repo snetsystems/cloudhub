@@ -23,16 +23,7 @@ import {
 
 // Notification
 import {notify as notifyAction} from 'src/shared/actions/notifications'
-import {
-  notifyAgentAcceptSucceeded,
-  notifyAgentRejectSucceeded,
-  notifyAgentDeleteSucceeded,
-  notifyAgentLoadedSucceeded,
-  notifyAgentLoadFailed,
-  notifyAgentAcceptFailed,
-  notifyAgentRejectFailed,
-  notifyAgentDeleteFailed,
-} from 'src/shared/copy/notifications'
+import {notifyAgentSucceeded} from 'src/agent_admin/components/Notifications'
 
 // Constants
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
@@ -74,55 +65,16 @@ export class AgentMinions extends PureComponent<Props, State> {
 
   getWheelKeyListAll = async (userDoing: string) => {
     const {notify} = this.props
-    try {
-      const response = await getMinionKeyListAll()
-      const updateMinionsIP = await getMinionsIP(response)
-      const newMinions = await getMinionsOS(updateMinionsIP)
 
-      this.setState({
-        MinionsObject: newMinions,
-        minionsPageStatus: RemoteDataState.Done,
-      })
+    const response = await getMinionKeyListAll()
+    const updateMinionsIP = await getMinionsIP(response)
+    const newMinions = await getMinionsOS(updateMinionsIP)
 
-      switch (userDoing) {
-        case 'load':
-          notify(notifyAgentLoadedSucceeded('Load Success'))
-          break
-        case 'accept':
-          notify(notifyAgentAcceptSucceeded('Accept Success'))
-          break
-        case 'reject':
-          notify(notifyAgentRejectSucceeded('Reject Success'))
-          break
-        case 'delete':
-          notify(notifyAgentDeleteSucceeded('Delete Success'))
-          break
-
-        default:
-          return
-      }
-    } catch (e) {
-      this.setState({
-        minionsPageStatus: RemoteDataState.Done,
-      })
-      switch (userDoing) {
-        case 'load':
-          notify(notifyAgentLoadFailed(`${e}`))
-          break
-        case 'accept':
-          notify(notifyAgentAcceptFailed('Accept Failed'))
-          break
-        case 'reject':
-          notify(notifyAgentRejectFailed('Reject Failed'))
-          break
-        case 'delete':
-          notify(notifyAgentDeleteFailed('Delete Failed'))
-          break
-
-        default:
-          return
-      }
-    }
+    this.setState({
+      MinionsObject: newMinions,
+      minionsPageStatus: RemoteDataState.Done,
+    })
+    notify(notifyAgentSucceeded(userDoing))
   }
 
   public async componentDidMount() {
@@ -141,6 +93,7 @@ export class AgentMinions extends PureComponent<Props, State> {
         minionLog: yaml.dump(pLocalGrainsItemData.data.return[0][host]),
         minionsPageStatus: RemoteDataState.Done,
       })
+      this.props.notify(notifyAgentSucceeded('Get Info'))
     })
   }
 

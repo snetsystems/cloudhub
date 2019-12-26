@@ -29,12 +29,7 @@ import {
 
 // Notification
 import {notify as notifyAction} from 'src/shared/actions/notifications'
-import {
-  notifyAgentApplySucceeded,
-  notifyAgentLoadedSucceeded,
-  notifyAgentStopSucceeded,
-  notifyAgentStartSucceeded,
-} from 'src/shared/copy/notifications'
+import {notifyAgentSucceeded} from 'src/agent_admin/components/Notifications'
 
 // Constants
 import {HANDLE_HORIZONTAL, HANDLE_VERTICAL} from 'src/shared/constants'
@@ -182,23 +177,7 @@ export class AgentConfiguration extends PureComponent<
       collectorConfigStatus: RemoteDataState.Done,
     })
 
-    switch (userDoing) {
-      case 'load':
-        notify(notifyAgentLoadedSucceeded('Load Success'))
-        break
-      case 'apply':
-        notify(notifyAgentApplySucceeded('Apply Success'))
-        break
-      case 'stop':
-        notify(notifyAgentStopSucceeded('Stop Success'))
-        break
-      case 'start':
-        notify(notifyAgentStartSucceeded('Start Success'))
-        break
-
-      default:
-        return
-    }
+    notify(notifyAgentSucceeded(userDoing))
   }
 
   private get MeasurementsContent() {
@@ -264,6 +243,7 @@ export class AgentConfiguration extends PureComponent<
         collectorConfigStatus: RemoteDataState.Done,
         configPageStatus: RemoteDataState.Done,
       })
+      this.props.notify(notifyAgentSucceeded('Get Agent Config'))
     })
 
     const getLocalServiceGetRunningPromise = getLocalServiceGetRunning(host)
