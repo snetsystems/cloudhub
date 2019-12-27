@@ -39,6 +39,7 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 //Middleware
 import {getLocalStorage} from 'src/shared/middleware/localStorage'
+import {setLocalStorage} from 'src/shared/middleware/localStorage'
 
 // Utils
 import {generateForHosts} from 'src/utils/tempVars'
@@ -244,6 +245,9 @@ export class Applications extends PureComponent<Props, State> {
   }
 
   public componentWillUnmount() {
+    setLocalStorage('ApplicationTreeMenuState', {
+      initialSource: [{key: this.state.initialActiveKey}],
+    })
     clearInterval(this.intervalID)
     this.intervalID = null
     GlobalAutoRefresher.stopPolling()
@@ -385,7 +389,12 @@ export class Applications extends PureComponent<Props, State> {
 
   private onSelectedHost = (props: Item) => {
     if (props.level === 0 || props.level === 1) {
-      this.setState({focusedHost: '', focusedApp: '', isNotSelectStatus: true})
+      this.setState({
+        focusedHost: '',
+        focusedApp: '',
+        isNotSelectStatus: true,
+        initialActiveKey: props.key,
+      })
     }
 
     if (props.level === 2) {
@@ -394,6 +403,7 @@ export class Applications extends PureComponent<Props, State> {
         focusedHost: props.label,
         focusedApp: apps[1],
         isNotSelectStatus: false,
+        initialActiveKey: props.key,
       })
     }
   }
@@ -557,8 +567,8 @@ export class Applications extends PureComponent<Props, State> {
         return x.measurement < y.measurement
           ? -1
           : x.measurement > y.measurement
-            ? 1
-            : 0
+          ? 1
+          : 0
       })
 
     return {filteredLayouts}
