@@ -33,7 +33,7 @@ flush_jitter = "0s"
 ##       when interval = "250ms", precision will be "1ms"
 ## Precision will NOT be used for service inputs. It is up to each individual
 ## service input to set the timestamp at the appropriate precision.
-## Valid time units are "ns", "us" (or "쨉s"), "ms", "s".
+## Valid time units are "ns", "us" (or "µs"), "ms", "s".
 precision = ""
 
 ## Log at debug level.
