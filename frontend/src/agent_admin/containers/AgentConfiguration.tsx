@@ -9,8 +9,16 @@ import AgentConfigurationTable from 'src/agent_admin/components/AgentConfigurati
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import AgentCodeEditor from 'src/agent_admin/components/AgentCodeEditor'
 import AgentToolbarFunction from 'src/agent_admin/components/AgentToolbarFunction'
+import AgentConfigModal from 'src/agent_admin/components/AgentConfigModal'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import {globalSetting} from 'src/agent_admin/help'
+
+// Middleware
+import {
+  setLocalStorage,
+  getLocalStorage,
+  verifyLocalStorage,
+} from 'src/shared/middleware/localStorage'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -68,6 +76,11 @@ interface State {
   responseMessage: string
   defaultService: string[]
   focusedHost: string
+  focusedHostIp: string
+  isInitEditor: boolean
+  isApplyBtnDisabled: boolean
+  isGetLocalStorage: boolean
+  isModalVisible: boolean
 }
 
 const defaultMeasurementsData = [
@@ -163,7 +176,12 @@ export class AgentConfiguration extends PureComponent<
       selectHost: '',
       responseMessage: '',
       focusedHost: '',
+      focusedHostIp: '',
       defaultService: serviceMeasure,
+      isInitEditor: true,
+      isApplyBtnDisabled: true,
+      isGetLocalStorage: false,
+      isModalVisible: false,
     }
   }
 
@@ -231,6 +249,9 @@ export class AgentConfiguration extends PureComponent<
       measurementsStatus: RemoteDataState.Loading,
       collectorConfigStatus: RemoteDataState.Loading,
       focusedHost: host,
+      focusedHostIp: ip,
+      isInitEditor: true,
+      isGetLocalStorage: false,
     })
 
     localStorage.setItem('AgentPage', JSON.stringify({focusedHost: host}))
@@ -278,8 +299,6 @@ export class AgentConfiguration extends PureComponent<
   }
 
   public onClickActionCall = (host: string, isRunning: boolean) => {
-    console.log('onClickActionCall', host, isRunning)
-
     this.setState({
       configPageStatus: RemoteDataState.Loading,
       measurementsStatus: RemoteDataState.Loading,
@@ -316,6 +335,8 @@ export class AgentConfiguration extends PureComponent<
 
     getLocalFileWritePromise.then(pLocalFileWriteData => {
       this.setState({
+        isApplyBtnDisabled: true,
+        isGetLocalStorage: false,
         responseMessage: pLocalFileWriteData.data.return[0][selectHost],
       })
 
@@ -329,16 +350,100 @@ export class AgentConfiguration extends PureComponent<
     })
   }
 
-  public async componentDidMount() {
+  public getConfigInfo = async (answer: boolean) => {
+    const getItem = getLocalStorage('AgentConfigPage')
+    const {
+      configScript,
+      focusedHost,
+      focusedHostIp,
+      isApplyBtnDisabled,
+    } = getItem
+
+    if (answer) {
+      await this.getWheelKeyListAll('load')
+      this.setState({
+        configScript,
+        focusedHost,
+        focusedHostIp,
+        isApplyBtnDisabled,
+        isInitEditor: false,
+        measurementsStatus: RemoteDataState.Loading,
+      })
+      const getLocalServiceGetRunningPromise = getLocalServiceGetRunning(
+        focusedHost
+      )
+      getLocalServiceGetRunningPromise.then(pLocalServiceGetRunningData => {
+        let getServiceRunning = this.state.defaultService
+          .filter(m =>
+            pLocalServiceGetRunningData.data.return[0][focusedHost].includes(m)
+          )
+          .map(sMeasure => {
+            return {
+              name: sMeasure,
+              isActivity: false,
+            }
+          })
+
+        let getDefaultMeasure = defaultMeasurementsData.map(dMeasure => {
+          return {
+            name: dMeasure,
+            isActivity: false,
+          }
+        })
+
+        this.setState({
+          serviceMeasurements: getServiceRunning,
+          defaultMeasurements: getDefaultMeasure,
+          measurementsStatus: RemoteDataState.Done,
+          measurementsTitle: focusedHost + '-' + focusedHostIp,
+        })
+      })
+    } else {
+      setLocalStorage('AgentConfigPage', {
+        focusedHost: '',
+        focusedHostIp: '',
+        configScript: '',
+        isApplyBtnDisabled: true,
+      })
+    }
+  }
+
+  public async componentWillMount() {
     this.getWheelKeyListAll('load')
     this.setState({configPageStatus: RemoteDataState.Loading})
 
-    let localStorageDummy =
-      localStorage.getItem('AgentPage') === null
-        ? localStorage.setItem('AgentPage', JSON.stringify({focusedHost: ''}))
-        : JSON.parse(localStorage.getItem('AgentPage'))
+    verifyLocalStorage(getLocalStorage, setLocalStorage, 'AgentConfigPage', {
+      focusedHost: '',
+      focusedHostIp: '',
+      configScript: '',
+      isApplyBtnDisabled: false,
+    })
 
-    console.log('localStorageDummy', localStorageDummy.focusedHost)
+    const getItem = getLocalStorage('AgentConfigPage')
+    const {isApplyBtnDisabled} = getItem
+
+    if (!isApplyBtnDisabled) {
+      this.setState({
+        isModalVisible: true,
+        isGetLocalStorage: !isApplyBtnDisabled,
+      })
+    }
+  }
+
+  public componentWillUnmount() {
+    const {
+      focusedHost,
+      focusedHostIp,
+      configScript,
+      isApplyBtnDisabled,
+    } = this.state
+
+    setLocalStorage('AgentConfigPage', {
+      focusedHost: isApplyBtnDisabled ? '' : focusedHost,
+      focusedHostIp: isApplyBtnDisabled ? '' : focusedHostIp,
+      configScript: isApplyBtnDisabled ? '' : configScript,
+      isApplyBtnDisabled,
+    })
   }
 
   render() {
@@ -351,6 +456,21 @@ export class AgentConfiguration extends PureComponent<
               orientation={HANDLE_HORIZONTAL}
               divisions={this.horizontalDivisions}
               onResize={this.horizontalHandleResize}
+            />
+            <AgentConfigModal
+              visible={this.state.isModalVisible}
+              headingTitle={'Check for You'}
+              message={'Do you want to import previous changes?'}
+              cancelText={'No'}
+              confirmText={'Yes'}
+              onCancel={() => {
+                this.setState({isModalVisible: !this.state.isModalVisible})
+                this.getConfigInfo(false)
+              }}
+              onConfirm={() => {
+                this.setState({isModalVisible: !this.state.isModalVisible})
+                this.getConfigInfo(true)
+              }}
             />
           </div>
         ) : (
@@ -372,13 +492,10 @@ export class AgentConfiguration extends PureComponent<
     clickPosition: {top: number; left: number}
     _thisProps: {name: string; idx: number}
   }) => {
-    console.log(_thisProps.name)
-
     const {serviceMeasurements, defaultMeasurements} = this.state
     const filterdMeasureName = Object.keys(measureMatch).filter(k =>
       _.includes(Object.values(measureMatch[Number(k)])[0], _thisProps.name)
     )
-    console.log('serviceMeasurements', serviceMeasurements)
 
     const measureName =
       filterdMeasureName.length === 0
@@ -495,7 +612,26 @@ export class AgentConfiguration extends PureComponent<
   }
 
   private onChangeScript = (script: string): void => {
-    this.setState({configScript: script})
+    const {isInitEditor, isGetLocalStorage} = this.state
+    if (isInitEditor) {
+      if (isGetLocalStorage) {
+        this.setState({
+          isApplyBtnDisabled: false,
+          isInitEditor: false,
+        })
+      } else {
+        this.setState({
+          isApplyBtnDisabled: true,
+          isInitEditor: false,
+        })
+      }
+    } else {
+      this.setState({
+        isInitEditor: false,
+        isApplyBtnDisabled: false,
+        configScript: script,
+      })
+    }
   }
 
   private renderAgentPageTop = () => {
@@ -597,7 +733,7 @@ export class AgentConfiguration extends PureComponent<
   }
 
   private CollectorConfig() {
-    const {collectorConfigStatus} = this.state
+    const {collectorConfigStatus, isApplyBtnDisabled} = this.state
     return (
       <div className="panel">
         {collectorConfigStatus === RemoteDataState.Loading
@@ -609,6 +745,7 @@ export class AgentConfiguration extends PureComponent<
             <button
               className="btn btn-inline_block btn-default agent--btn"
               onClick={this.onClickApplyCall}
+              disabled={isApplyBtnDisabled}
             >
               APPLY
             </button>
