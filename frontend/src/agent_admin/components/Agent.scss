@@ -3,149 +3,168 @@
 /***** layout start *****/
 
 .agent-input--container {
-	width: 780px;
+  width: 780px;
 
-	.agent--input {
-		cursor: pointer;
+  .agent--input {
+    cursor: pointer;
 
-		&.agent--input-address {
-			width: calc(50% - 5px);
-			margin-right: 5px;
-			cursor: text;
-		}
+    &.agent--input-address {
+      width: calc(50% - 5px);
+      margin-right: 5px;
+      cursor: text;
+    }
 
-		&.agent--input-id {
-			width: calc(25% - 5px);
-			margin-right: 5px;
-			cursor: text;
-		}
+    &.agent--input-id {
+      width: calc(25% - 5px);
+      margin-right: 5px;
+      cursor: text;
+    }
 
-		&.agent--input-password {
-			width: calc(25% - 5px);
-			margin-right: 5px;
-			cursor: text;
-		}
-	}
+    &.agent--input-password {
+      width: calc(25% - 5px);
+      margin-right: 5px;
+      cursor: text;
+    }
+  }
 }
 
 .agent-table--empty-state {
-	background-color: #292933
+  background-color: #292933;
 }
 
 .agent--btn {
-	margin-left: 5px !important;
+  margin-left: 5px !important;
 }
 
 .message-zone {
-	text-align: left;
+  text-align: left;
 }
 
 .measurements-query-builder--contain {
-	color: $s-orange;
-	font-size: 12px;
-	background: #232323;
-	padding: 10px;
-	margin: 5px 0px;
-	width: 100%;
+  color: $s-orange;
+  font-size: 12px;
+  background: #232323;
+  padding: 10px;
+  margin: 5px 0px;
+  width: 100%;
 }
 
 .measurements-title {
-	color: $s-orange;
-	font-size: 12px;
-	background: #232323;
-	padding: 10px;
-	margin: 5px 0px;
-	width: 100%;
+  color: $s-orange;
+  font-size: 12px;
+  background: #232323;
+  padding: 10px;
+  margin: 5px 0px;
+  width: 100%;
 }
 
 .default-measurements {
-	color: $s-orange;
-	font-size: 12px;
-	background: #232323;
-	padding: 10px;
-	margin: 5px 0px;
-	width: 100%;
+  color: $s-orange;
+  font-size: 12px;
+  background: #232323;
+  padding: 10px;
+  margin: 5px 0px;
+  width: 100%;
 }
 
 .collect-config--half {
-	width: 100%;
-	height: 100%;
-	overflow: hidden;
-	position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
 }
 
 /***** layout end   *****/
 
 /***** table start *****/
 .agent--state {
-	h4 {
-		margin: 90px 0;
-	}
+  h4 {
+    margin: 90px 0;
+  }
 
-	&.agent--loding-state {
-		position: absolute;
-		z-index: 7;
-		background-color: rgba(0, 0, 0, 0.5);
-		width: 100%;
-		height: 100%;
-	}
+  &.agent--loding-state {
+    position: absolute;
+    z-index: 7;
+    background-color: rgba(0, 0, 0, 0.5);
+    width: 100%;
+    height: 100%;
+  }
 }
 
 .agent--row {
-	cursor: pointer;
+  cursor: pointer;
 }
 
 .pabel-body--agent-control {
-	padding: 20px;
-	padding-top: 0px;
-	text-align: right;
+  padding: 20px;
+  padding-top: 0px;
+  text-align: right;
 
-	.overlay--body {
-		padding-bottom: 25px;
-		padding-top: 18px;
-		min-height: unset;
-	}
+  .overlay--body {
+    padding-bottom: 25px;
+    padding-top: 18px;
+    min-height: unset;
+  }
 }
 
 .agent--indicator {
-	&.indicator--primary {
-		color: $c-rainforest
-	}
+  &.indicator--primary {
+    color: $c-rainforest;
+  }
 
-	&.indicator--fail {
-		color: $c-topaz
-	}
+  &.indicator--fail {
+    color: $c-topaz;
+  }
 }
 
 /***** table end   *****/
 
 /***** console start *****/
 .console-zone {
-	background: #151515;
-	padding: 15px 0 15px 15px;
-	border-radius: 5px;
-	height: 100%;
-	width: 100%;
+  background: #151515;
+  padding: 15px 0 15px 15px;
+  border-radius: 5px;
+  height: 100%;
+  width: 100%;
 
-	.console-zone--pre {
-		color: #fff;
-		white-space: pre-wrap;
-		background-color: transparent;
-	}
-
+  .console-zone--pre {
+    color: #fff;
+    white-space: pre-wrap;
+    background-color: transparent;
+  }
 }
 
 .agent-page {
-	.subsection .panel.panel-solid .panel-body {
-		height: calc(100% - 45px);
-	}
+  .subsection .panel.panel-solid .panel-body {
+    height: calc(100% - 45px);
+  }
 
-	.CodeMirror-sizer {
-		margin-bottom: 0 !important;
-	}
+  .CodeMirror-sizer {
+    margin-bottom: 0 !important;
+  }
 }
 
 /***** console end   *****/
 
 /***** tooltip start *****/
 /***** tooltip end   *****/
+
+/***** agentConnecttooltip start *****/
+.agent-connect-tips {
+  @include no-user-select();
+  display: inline-block;
+  padding: 0 4px;
+  border: 0;
+  height: 30px;
+  line-height: 30px;
+  color: $g13-mist;
+  font-weight: 700;
+  font-size: 12px;
+
+  > .icon {
+    display: inline-block;
+    font-size: 16px;
+    margin: 0 4px;
+  }
+}
+/***** agentConnecttooltip end   *****/
