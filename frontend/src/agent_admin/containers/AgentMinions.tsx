@@ -1,5 +1,6 @@
 // Libraries
 import React, {PureComponent} from 'react'
+import {connect} from 'react-redux'
 import _ from 'lodash'
 import yaml from 'js-yaml'
 
@@ -20,19 +21,27 @@ import {
   runDeleteKey,
 } from 'src/agent_admin/apis'
 
+// Notification
+import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {notifyAgentConnectFailed} from 'src/agent_admin/components/notifications'
+
 // Constants
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
 
 // Types
-import {RemoteDataState} from 'src/types'
+import {RemoteDataState, Notification, NotificationFunc} from 'src/types'
 import {Minion} from 'src/agent_admin/type'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
+  notify: (message: Notification | NotificationFunc) => void
   isUserAuthorized: boolean
   currentUrl: string
+  saltMasterUrl: string
+  saltMasterToken: string
+  onLogout: () => void
 }
 interface State {
   MinionsObject: {[x: string]: Minion}
@@ -58,19 +67,53 @@ export class AgentMinions extends PureComponent<Props, State> {
   }
 
   getWheelKeyListAll = async () => {
-    const response = await getMinionKeyListAll()
-    const updateMinionsIP = await getMinionsIP(response)
-    const newMinions = await getMinionsOS(updateMinionsIP)
+    try {
+      const response = await getMinionKeyListAll()
+      const updateMinionsIP = await getMinionsIP(response)
+      const newMinions = await getMinionsOS(updateMinionsIP)
 
-    this.setState({
-      MinionsObject: newMinions,
-      minionsPageStatus: RemoteDataState.Done,
-    })
+      this.setState({
+        MinionsObject: newMinions,
+        minionsPageStatus: RemoteDataState.Done,
+      })
+    } catch (e) {
+      const {onLogout} = this.props
+      //console.log(e.response.status)
+
+      this.setState({
+        minionsPageStatus: RemoteDataState.Done,
+      })
+
+      onLogout()
+    }
   }
 
   public async componentWillMount() {
-    this.getWheelKeyListAll()
-    this.setState({minionsPageStatus: RemoteDataState.Loading})
+    const {notify, saltMasterToken} = this.props
+    if (saltMasterToken !== null && saltMasterToken !== '') {
+      this.getWheelKeyListAll()
+      this.setState({minionsPageStatus: RemoteDataState.Loading})
+    } else {
+      this.setState({minionsPageStatus: RemoteDataState.Done})
+      notify(notifyAgentConnectFailed('Token is not valid.'))
+    }
+  }
+
+  public async componentDidUpdate(nextProps) {
+    if (nextProps.saltMasterToken !== this.props.saltMasterToken) {
+      if (
+        this.props.saltMasterToken !== '' &&
+        this.props.saltMasterToken !== null
+      ) {
+        this.getWheelKeyListAll()
+        this.setState({minionsPageStatus: RemoteDataState.Loading})
+      } else if (
+        this.props.saltMasterToken === null ||
+        this.props.saltMasterToken === ''
+      ) {
+        this.setState({MinionsObject: null})
+      }
+    }
   }
 
   onClickTableRowCall = (host: string) => () => {
@@ -217,4 +260,8 @@ export class AgentMinions extends PureComponent<Props, State> {
   }
 }
 
-export default AgentMinions
+const mdtp = {
+  notify: notifyAction,
+}
+
+export default connect(null, mdtp, null)(AgentMinions)

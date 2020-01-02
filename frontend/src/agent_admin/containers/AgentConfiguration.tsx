@@ -1,5 +1,6 @@
 // Libraries
 import React, {PureComponent} from 'react'
+import {connect} from 'react-redux'
 import _ from 'lodash'
 
 // Components
@@ -34,16 +35,24 @@ import {
   getRunnerSaltCmdTelegraf,
 } from 'src/agent_admin/apis'
 
+// Notification
+import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {notifyAgentConnectFailed} from 'src/agent_admin/components/notifications'
+
 // Constants
 import {HANDLE_HORIZONTAL, HANDLE_VERTICAL} from 'src/shared/constants'
 
 // Types
-import {RemoteDataState} from 'src/types'
+import {RemoteDataState, Notification, NotificationFunc} from 'src/types'
 import {Minion} from 'src/agent_admin/type'
 
 interface Props {
+  notify: (message: Notification | NotificationFunc) => void
   currentUrl: string
   isUserAuthorized: boolean
+  saltMasterUrl: string
+  saltMasterToken: string
+  onLogout: () => void
 }
 
 interface State {
@@ -180,14 +189,100 @@ export class AgentConfiguration extends PureComponent<
   }
 
   getWheelKeyListAll = async () => {
-    const hostListObject = await getMinionKeyListAllAsync()
+    try {
+      const hostListObject = await getMinionKeyListAllAsync()
 
-    this.setState({
-      MinionsObject: hostListObject,
-      configPageStatus: RemoteDataState.Done,
-      collectorConfigStatus: RemoteDataState.Done,
-      measurementsStatus: RemoteDataState.Done,
+      this.setState({
+        MinionsObject: hostListObject,
+        configPageStatus: RemoteDataState.Done,
+        collectorConfigStatus: RemoteDataState.Done,
+        measurementsStatus: RemoteDataState.Done,
+      })
+    } catch (e) {
+      const {onLogout} = this.props
+      //console.log(e.response.status)
+
+      this.setState({
+        configPageStatus: RemoteDataState.Done,
+        collectorConfigStatus: RemoteDataState.Done,
+        measurementsStatus: RemoteDataState.Done,
+      })
+
+      onLogout()
+    }
+  }
+
+  public async componentWillMount() {
+    const {notify, saltMasterToken} = this.props
+    if (saltMasterToken !== null && saltMasterToken !== '') {
+      this.getWheelKeyListAll()
+      this.setState({configPageStatus: RemoteDataState.Loading})
+
+      verifyLocalStorage(getLocalStorage, setLocalStorage, 'AgentConfigPage', {
+        focusedHost: '',
+        focusedHostIp: '',
+        configScript: '',
+        isApplyBtnDisabled: false,
+      })
+
+      const getItem = getLocalStorage('AgentConfigPage')
+      const {isApplyBtnDisabled} = getItem
+
+      if (!isApplyBtnDisabled) {
+        this.setState({
+          isModalVisible: true,
+          isGetLocalStorage: !isApplyBtnDisabled,
+        })
+      }
+    } else {
+      this.setState({configPageStatus: RemoteDataState.Done})
+      notify(notifyAgentConnectFailed('Token is not valid.'))
+    }
+  }
+
+  public componentWillUnmount() {
+    const {
+      focusedHost,
+      focusedHostIp,
+      configScript,
+      isApplyBtnDisabled,
+    } = this.state
+
+    setLocalStorage('AgentConfigPage', {
+      focusedHost: isApplyBtnDisabled ? '' : focusedHost,
+      focusedHostIp: isApplyBtnDisabled ? '' : focusedHostIp,
+      configScript: isApplyBtnDisabled ? '' : configScript,
+      isApplyBtnDisabled,
     })
+  }
+
+  public async componentDidUpdate(nextProps) {
+    if (
+      nextProps.saltMasterToken !== this.props.saltMasterToken &&
+      this.props.saltMasterToken !== '' &&
+      this.props.saltMasterToken !== null
+    ) {
+      this.getWheelKeyListAll()
+      this.setState({configPageStatus: RemoteDataState.Loading})
+    } else {
+      if (
+        nextProps.saltMasterToken !== this.props.saltMasterToken &&
+        (this.props.saltMasterToken === null ||
+          this.props.saltMasterToken === '')
+      ) {
+        localStorage.removeItem('AgentConfigPage')
+
+        this.setState({
+          MinionsObject: null,
+          measurementsTitle: '',
+          serviceMeasurements: [],
+          defaultMeasurements: [],
+          description: '',
+          configScript: '',
+          focusedHost: '',
+        })
+      }
+    }
   }
 
   private get MeasurementsContent() {
@@ -244,8 +339,6 @@ export class AgentConfiguration extends PureComponent<
       isInitEditor: true,
       isGetLocalStorage: false,
     })
-
-    localStorage.setItem('AgentPage', JSON.stringify({focusedHost: host}))
 
     const getLocalFileReadPromise = getLocalFileRead(host)
 
@@ -396,44 +489,6 @@ export class AgentConfiguration extends PureComponent<
         isApplyBtnDisabled: true,
       })
     }
-  }
-
-  public async componentWillMount() {
-    this.getWheelKeyListAll()
-    this.setState({configPageStatus: RemoteDataState.Loading})
-
-    verifyLocalStorage(getLocalStorage, setLocalStorage, 'AgentConfigPage', {
-      focusedHost: '',
-      focusedHostIp: '',
-      configScript: '',
-      isApplyBtnDisabled: false,
-    })
-
-    const getItem = getLocalStorage('AgentConfigPage')
-    const {isApplyBtnDisabled} = getItem
-
-    if (!isApplyBtnDisabled) {
-      this.setState({
-        isModalVisible: true,
-        isGetLocalStorage: !isApplyBtnDisabled,
-      })
-    }
-  }
-
-  public componentWillUnmount() {
-    const {
-      focusedHost,
-      focusedHostIp,
-      configScript,
-      isApplyBtnDisabled,
-    } = this.state
-
-    setLocalStorage('AgentConfigPage', {
-      focusedHost: isApplyBtnDisabled ? '' : focusedHost,
-      focusedHostIp: isApplyBtnDisabled ? '' : focusedHostIp,
-      configScript: isApplyBtnDisabled ? '' : configScript,
-      isApplyBtnDisabled,
-    })
   }
 
   render() {
@@ -812,4 +867,8 @@ export class AgentConfiguration extends PureComponent<
   }
 }
 
-export default AgentConfiguration
+const mdtp = {
+  notify: notifyAction,
+}
+
+export default connect(null, mdtp)(AgentConfiguration)

@@ -23,6 +23,21 @@ const defaultSuccessNotification: NotificationExcludingMessage = {
 
 //  Cloud Smart Hub AgentPage Sources Notifications
 //  ----------------------------------------------------------------------------
+export const notifyAgentConnectSucceeded = (sourceName: string) => ({
+  ...defaultSuccessNotification,
+  icon: 'server2',
+  message: `Agent Connect successfully. ${sourceName}`,
+})
+
+export const notifyAgentConnectFailed = (error: string): Notification => ({
+  ...defaultErrorNotification,
+  message: `Agent Connect Failed, ${error}`,
+})
+
+export const notifyAgentDisconnected = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Agent Disconnected.`,
+})
 
 export const notifyAgentSucceeded = (sourceName: string) => ({
   ...defaultSuccessNotification,

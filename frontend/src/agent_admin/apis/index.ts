@@ -36,20 +36,18 @@ const EmptyMionin: Minion = {
   isCheck: false,
 }
 
-const apiRequest = (pMethod: string, pRoute: string, pParams: Params) => {
-  const dParams = {
-    username: 'saltdev',
-    password: 'saltdev',
-    eauth: 'pam',
+const apiRequest = (pMethod, pRoute, pParams) => {
+  const dParams = {}
+  const saltMasterUrl = window.localStorage.getItem('salt-master-url')
+  const url = saltMasterUrl + pRoute
+  const token = window.localStorage.getItem('salt-master-token')
+  const headers = {
+    Accept: 'application/json',
+    'X-Auth-Token': token !== null ? token : '',
+    'Content-type': 'application/json',
   }
 
   Object.assign(dParams, pParams)
-
-  const url = 'http://61.250.122.43:8000/run' + pRoute
-  const headers = {
-    Accept: 'application/json',
-    'Content-type': 'application/json',
-  }
 
   const param = JSON.stringify(dParams)
 
@@ -59,6 +57,25 @@ const apiRequest = (pMethod: string, pRoute: string, pParams: Params) => {
     headers: headers,
     data: param,
   })
+    .then(response => {
+      return response
+    })
+    .catch(error => {
+      return error
+    })
+}
+
+export function getSaltToken(pUserName, pPassWord, pEauth = 'pam') {
+  const params = {
+    username: pUserName,
+    password: pPassWord,
+    eauth: pEauth,
+  }
+
+  // store it as the default login method
+  window.localStorage.setItem('eauth', pEauth)
+
+  return apiRequest('POST', '/login', params)
 }
 
 export const getMinionKeyListAllAsync = async (): Promise<MinionsObject> => {

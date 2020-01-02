@@ -30,6 +30,9 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 interface Props {
   currentUrl: string
   isUserAuthorized: boolean
+  saltMasterUrl: string
+  saltMasterToken: string
+  onLogout: () => void
 }
 
 interface State {
@@ -66,18 +69,45 @@ class AgentControl extends PureComponent<Props, State> {
   }
 
   public async componentWillMount() {
-    this.getWheelKeyListAll()
-    this.setState({controlPageStatus: RemoteDataState.Loading})
+    const {saltMasterToken} = this.props
+    if (saltMasterToken !== null && saltMasterToken !== '') {
+      this.getWheelKeyListAll()
+      this.setState({controlPageStatus: RemoteDataState.Loading})
+    } else {
+      this.setState({controlPageStatus: RemoteDataState.Done})
+    }
+  }
+
+  public async componentDidUpdate(nextProps) {
+    if (nextProps.saltMasterToken !== this.props.saltMasterToken) {
+      if (
+        this.props.saltMasterToken !== '' &&
+        this.props.saltMasterToken !== null
+      ) {
+        this.getWheelKeyListAll()
+        this.setState({controlPageStatus: RemoteDataState.Loading})
+      } else {
+        this.setState({
+          Minions: [],
+        })
+      }
+    }
   }
 
   public handleAllCheck = (_this: object): void => {
-    const {Minions, isAllCheck} = this.state
-    if (isAllCheck === false) {
-      Minions.map(m => (m.isCheck = true))
+    const {saltMasterToken} = this.props
+
+    if (saltMasterToken !== null && saltMasterToken !== '') {
+      const {Minions, isAllCheck} = this.state
+      if (isAllCheck === false) {
+        Minions.map(m => (m.isCheck = true))
+      } else {
+        Minions.map(m => (m.isCheck = false))
+      }
+      this.setState({isAllCheck: !isAllCheck, Minions})
     } else {
-      Minions.map(m => (m.isCheck = false))
+      this.setState({controlPageStatus: RemoteDataState.Done})
     }
-    this.setState({isAllCheck: !isAllCheck, Minions})
   }
 
   public handleMinionCheck = ({_this}): void => {

@@ -41,6 +41,8 @@ class AgentControlModal extends PureComponent<Props, State> {
     const {onConfirm, minions, name} = this.props
     let checkMinion: Minion[] = []
 
+    console.log(minions)
+
     switch (name) {
       case 'RUN':
         checkMinion = minions.filter(m => m.isRunning === true)

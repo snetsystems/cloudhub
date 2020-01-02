@@ -9,14 +9,28 @@ import SubSections from 'src/shared/components/SubSections'
 import AgentMinions from 'src/agent_admin/containers/AgentMinions'
 import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
 import AgentControl from 'src/agent_admin/containers/AgentControl'
+import AgentConnectTips from 'src/agent_admin/components/AgentConnectTips'
+import AgentConnectForm from 'src/agent_admin/components/AgentConnectForm'
+
+// Notification
+import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {
+  notifyAgentConnectFailed,
+  notifyAgentConnectSucceeded,
+  notifyAgentDisconnected,
+} from 'src/agent_admin/components/notifications'
+
+// APIs
+import {getSaltToken} from 'src/agent_admin/apis'
 
 // Constants
 import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
 // Types
-import {RemoteDataState} from 'src/types'
+import {RemoteDataState, Notification, NotificationFunc} from 'src/types'
 
 interface Props {
+  notify: (message: Notification | NotificationFunc) => void
   meRole: string
   source: {id: number}
   params: {tab: string}
@@ -28,6 +42,12 @@ interface State {
   isSelectBoxView: boolean
   minions: []
   [x: string]: {}
+  isTokenCheck: boolean
+  masterUrl: string
+  masterId: string
+  masterPwd: string
+  saltMasterUrl: string
+  saltMasterToken: string
 }
 
 class AgentAdminPage extends PureComponent<Props, State> {
@@ -37,10 +57,40 @@ class AgentAdminPage extends PureComponent<Props, State> {
       agentPageStatus: RemoteDataState.NotStarted,
       isSelectBoxView: true,
       minions: [],
+      isTokenCheck: true,
+      masterUrl: 'http://',
+      masterId: '',
+      masterPwd: '',
+      saltMasterUrl: '',
+      saltMasterToken: '',
+    }
+  }
+
+  componentWillMount() {
+    const saltMasterUrl = window.localStorage.getItem('salt-master-url')
+    const saltMasterToken = window.localStorage.getItem('salt-master-token')
+
+    if (saltMasterToken !== null) {
+      this.setState({
+        isTokenCheck: true,
+        saltMasterUrl: saltMasterUrl,
+        saltMasterToken: saltMasterToken,
+      })
+    } else {
+      this.setState({
+        masterUrl: 'http://',
+        masterId: '',
+        masterPwd: '',
+        saltMasterUrl: '',
+        saltMasterToken: '',
+        isTokenCheck: false,
+      })
     }
   }
 
   public sections = (meRole: string) => {
+    const {saltMasterUrl, saltMasterToken} = this.state
+
     return [
       {
         url: 'agent-minions',
@@ -50,6 +100,9 @@ class AgentAdminPage extends PureComponent<Props, State> {
           <AgentMinions
             isUserAuthorized={isUserAuthorized(meRole, SUPERADMIN_ROLE)}
             currentUrl={'agent-minions'}
+            saltMasterUrl={saltMasterUrl}
+            saltMasterToken={saltMasterToken}
+            onLogout={this.handleLogout}
           />
         ),
       },
@@ -61,6 +114,9 @@ class AgentAdminPage extends PureComponent<Props, State> {
           <AgentControl
             isUserAuthorized={isUserAuthorized(meRole, SUPERADMIN_ROLE)}
             currentUrl={'agent-control'}
+            saltMasterUrl={saltMasterUrl}
+            saltMasterToken={saltMasterToken}
+            onLogout={this.handleLogout}
           />
         ),
       },
@@ -72,6 +128,9 @@ class AgentAdminPage extends PureComponent<Props, State> {
           <AgentConfiguration
             isUserAuthorized={isUserAuthorized(meRole, SUPERADMIN_ROLE)}
             currentUrl={'agent-configuration'}
+            saltMasterUrl={saltMasterUrl}
+            saltMasterToken={saltMasterToken}
+            onLogout={this.handleLogout}
           />
         ),
       },
@@ -84,6 +143,15 @@ class AgentAdminPage extends PureComponent<Props, State> {
       source,
       params: {tab},
     } = this.props
+
+    const {
+      isTokenCheck,
+      saltMasterUrl,
+      masterUrl,
+      masterId,
+      masterPwd,
+    } = this.state
+
     return (
       <Page>
         <Page.Header>
@@ -91,31 +159,18 @@ class AgentAdminPage extends PureComponent<Props, State> {
             <Page.Title title="Agent Configuration" />
           </Page.Header.Left>
           <Page.Header.Right>
-            <div className="agent-input--container">
-              <input
-                type="url"
-                className="form-control input-sm agent--input agent--input-address"
-                // value={masterAddress}
-                // onChange={this.handleUpdateMasterAddress}
-                onChange={this.props.handleKeyDown}
-                // onChange={this.handleInputChange('userAddress')}
-              />
-              <input
-                className="form-control input-sm agent--input agent--input-id"
-                placeholder="Insert Host ID"
-                // value={masterId}
-                readOnly
-                // onChange={this.handleInputChange('userId')}
-              />
-              <input
-                type="password"
-                className="form-control input-sm agent--input agent--input-password"
-                placeholder="Insert Host Password"
-                // value={masterPassword}
-                readOnly
-                // onChange={this.handleInputChange('userPassword')}
-              />
-            </div>
+            <AgentConnectForm
+              onLoginClick={this.handleLogin}
+              onLogoutClick={this.handleLogout}
+              onChangeUrl={this.handleChangeMasterUrl}
+              onChangeId={this.handleChangeMasterId}
+              onChangePwd={this.handleChangeMasterPwd}
+              masterUrl={masterUrl}
+              masterId={masterId}
+              masterPwd={masterPwd}
+              isTokenCheck={isTokenCheck}
+            />
+            <AgentConnectTips saltMasterUrl={saltMasterUrl} />
           </Page.Header.Right>
         </Page.Header>
         <Page.Contents fullWidth={true}>
@@ -131,6 +186,68 @@ class AgentAdminPage extends PureComponent<Props, State> {
       </Page>
     )
   }
+
+  handleLogin = () => {
+    const {notify} = this.props
+    const {masterUrl, masterId, masterPwd} = this.state
+
+    window.localStorage.removeItem('salt-master-url')
+    window.localStorage.removeItem('salt-master-token')
+
+    window.localStorage.setItem('salt-master-url', masterUrl)
+
+    const resSaltToken = getSaltToken(masterId, masterPwd)
+
+    resSaltToken.then(pResSaltTokenData => {
+      if (
+        pResSaltTokenData.message !== undefined &&
+        pResSaltTokenData.message !== null
+      ) {
+        notify(notifyAgentConnectFailed(pResSaltTokenData.message))
+        //console.log(pResSaltTokenData.message)
+      } else {
+        window.localStorage.setItem(
+          'salt-master-token',
+          pResSaltTokenData.data.return[0].token
+        )
+        this.setState({
+          saltMasterUrl: masterUrl,
+          saltMasterToken: pResSaltTokenData.data.return[0].token,
+          isTokenCheck: true,
+        })
+        notify(notifyAgentConnectSucceeded(masterUrl))
+      }
+    })
+  }
+
+  handleLogout = () => {
+    const {notify} = this.props
+
+    window.localStorage.removeItem('salt-master-url')
+    window.localStorage.removeItem('salt-master-token')
+
+    this.setState({
+      masterUrl: 'http://',
+      masterId: '',
+      masterPwd: '',
+      saltMasterUrl: '',
+      saltMasterToken: '',
+      isTokenCheck: false,
+    })
+    notify(notifyAgentDisconnected())
+  }
+
+  public handleChangeMasterUrl = e => {
+    this.setState({masterUrl: e.target.value})
+  }
+
+  public handleChangeMasterId = e => {
+    this.setState({masterId: e.target.value})
+  }
+
+  public handleChangeMasterPwd = e => {
+    this.setState({masterPwd: e.target.value})
+  }
 }
 
 const mapStateToProps = ({auth: {me}}) => {
@@ -140,4 +257,12 @@ const mapStateToProps = ({auth: {me}}) => {
   }
 }
 
-export default connect(mapStateToProps, null)(AgentAdminPage)
+const mapDispatchToProps = {
+  notify: notifyAction,
+}
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+  null
+)(AgentAdminPage)
