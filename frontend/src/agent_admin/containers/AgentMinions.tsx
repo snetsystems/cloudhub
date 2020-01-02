@@ -1,6 +1,5 @@
 // Libraries
 import React, {PureComponent} from 'react'
-import {connect} from 'react-redux'
 import _ from 'lodash'
 import yaml from 'js-yaml'
 
@@ -21,22 +20,17 @@ import {
   runDeleteKey,
 } from 'src/agent_admin/apis'
 
-// Notification
-import {notify as notifyAction} from 'src/shared/actions/notifications'
-import {notifyAgentSucceeded} from 'src/agent_admin/components/Notifications'
-
 // Constants
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
 
 // Types
-import {RemoteDataState, Notification, NotificationFunc} from 'src/types'
+import {RemoteDataState} from 'src/types'
 import {Minion} from 'src/agent_admin/type'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
-  notify: (message: Notification | NotificationFunc) => void
   isUserAuthorized: boolean
   currentUrl: string
 }
@@ -63,9 +57,7 @@ export class AgentMinions extends PureComponent<Props, State> {
     }
   }
 
-  getWheelKeyListAll = async (userDoing: string) => {
-    const {notify} = this.props
-
+  getWheelKeyListAll = async () => {
     const response = await getMinionKeyListAll()
     const updateMinionsIP = await getMinionsIP(response)
     const newMinions = await getMinionsOS(updateMinionsIP)
@@ -74,11 +66,10 @@ export class AgentMinions extends PureComponent<Props, State> {
       MinionsObject: newMinions,
       minionsPageStatus: RemoteDataState.Done,
     })
-    notify(notifyAgentSucceeded(userDoing))
   }
 
-  public async componentDidMount() {
-    this.getWheelKeyListAll('load')
+  public async componentWillMount() {
+    this.getWheelKeyListAll()
     this.setState({minionsPageStatus: RemoteDataState.Loading})
   }
 
@@ -93,7 +84,6 @@ export class AgentMinions extends PureComponent<Props, State> {
         minionLog: yaml.dump(pLocalGrainsItemData.data.return[0][host]),
         minionsPageStatus: RemoteDataState.Done,
       })
-      this.props.notify(notifyAgentSucceeded('Get Info'))
     })
   }
 
@@ -106,7 +96,7 @@ export class AgentMinions extends PureComponent<Props, State> {
         this.setState({
           minionLog: yaml.dump(pWheelKeyCommandData.data.return[0]),
         })
-        this.getWheelKeyListAll('reject')
+        this.getWheelKeyListAll()
       })
     } else if (cmdstatus == 'Accept') {
       const getWheelKeyCommandPromise = runAcceptKey(host)
@@ -115,7 +105,7 @@ export class AgentMinions extends PureComponent<Props, State> {
         this.setState({
           minionLog: yaml.dump(pWheelKeyCommandData.data.return[0]),
         })
-        this.getWheelKeyListAll('accept')
+        this.getWheelKeyListAll()
       })
     } else if (cmdstatus == 'Delete') {
       const getWheelKeyCommandPromise = runDeleteKey(host)
@@ -124,7 +114,7 @@ export class AgentMinions extends PureComponent<Props, State> {
         this.setState({
           minionLog: yaml.dump(pWheelKeyCommandData.data.return[0]),
         })
-        this.getWheelKeyListAll('delete')
+        this.getWheelKeyListAll()
       })
     }
   }
@@ -226,8 +216,5 @@ export class AgentMinions extends PureComponent<Props, State> {
     ]
   }
 }
-const mdtp = {
-  notify: notifyAction,
-}
 
-export default connect(null, mdtp, null)(AgentMinions)
+export default AgentMinions

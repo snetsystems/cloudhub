@@ -1,23 +1,17 @@
 import React, {PureComponent} from 'react'
 import {Controlled as ReactCodeMirror, IInstance} from 'react-codemirror2'
-import {Editor, Doc} from 'codemirror'
+import {Editor} from 'codemirror'
 
 interface Props {
   res: string
 }
-
-interface State {}
 
 interface ReactCodeMirrorEditor extends IInstance {
   editor: Editor
   doc: {height: number}
 }
 
-class CodeMirrorConsole extends PureComponent<
-  Props,
-  State,
-  ReactCodeMirrorEditor
-> {
+class CodeMirrorConsole extends PureComponent<Props, ReactCodeMirrorEditor> {
   constructor(props: Props) {
     super(props)
   }

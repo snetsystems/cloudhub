@@ -65,7 +65,7 @@ class AgentControl extends PureComponent<Props, State> {
     })
   }
 
-  public async componentDidMount() {
+  public async componentWillMount() {
     this.getWheelKeyListAll()
     this.setState({controlPageStatus: RemoteDataState.Loading})
   }
@@ -208,11 +208,6 @@ class AgentControl extends PureComponent<Props, State> {
 
       this.getWheelKeyListAll()
     })
-  }
-
-  public notSelectMinion = ({_this}) => {
-    console.log(_this.props.minions)
-    alert('NotSelectMinion')
   }
 
   render() {

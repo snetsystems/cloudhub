@@ -84,7 +84,7 @@ export const notifyAgentDeleteSucceeded = (
   message: `Collector ${sourceName} successfully.`,
 })
 
-export const notifyAgentLoadFailed = (error): Notification => ({
+export const notifyAgentLoadFailed = (error: Error): Notification => ({
   ...defaultErrorNotification,
   message: `Agent Load Failed, ${error}`,
 })

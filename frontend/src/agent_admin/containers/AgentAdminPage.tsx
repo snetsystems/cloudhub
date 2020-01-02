@@ -40,7 +40,7 @@ class AgentAdminPage extends PureComponent<Props, State> {
     }
   }
 
-  public sections = meRole => {
+  public sections = (meRole: string) => {
     return [
       {
         url: 'agent-minions',

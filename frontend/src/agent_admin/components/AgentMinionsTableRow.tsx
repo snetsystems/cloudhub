@@ -30,15 +30,7 @@ class AgentMinionsTableRow extends PureComponent<Props> {
     return 'agent--row hosts-table--tr'
   }
 
-  public isAcceptIndicator = isAccept => {
-    if (isAccept === 'true') {
-      return <div className="agent--indicator indicator--primary">Accepted</div>
-    }
-
-    return <div className="agent--indicator indicator--fail">unAccept</div>
-  }
-
-  public isStatusIndicator = status => {
+  public isStatusIndicator = (status: string) => {
     if (status === 'Accept') {
       return <div className="agent--indicator indicator--primary">Accepted</div>
     } else if (status === 'UnAccept') {
