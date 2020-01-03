@@ -1,7 +1,13 @@
 import React, {ChangeEvent, PureComponent} from 'react'
+import {LoginEvent} from 'src/agent_admin/containers/AgentAdminPage'
 
 interface Props {
-  onLoginClick: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void
+  onLoginClick: (
+    e:
+      | LoginEvent
+      | React.KeyboardEvent<HTMLInputElement>
+      | React.MouseEvent<HTMLButtonElement, MouseEvent>
+  ) => void
   onLogoutClick: (e: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void
   onChangeUrl: (e: ChangeEvent<HTMLInputElement>) => void
   onChangeId: (e: ChangeEvent<HTMLInputElement>) => void
@@ -36,18 +42,21 @@ class AgentConnectForm extends PureComponent<Props> {
                 className="form-control input-sm agent--input agent--input-address"
                 onChange={onChangeUrl}
                 value={masterUrl}
+                spellCheck={false}
               />
               <input
                 className="form-control input-sm agent--input agent--input-id"
                 placeholder="Insert Host ID"
                 onChange={onChangeId}
                 value={masterId}
+                spellCheck={false}
               />
               <input
                 type="password"
                 className="form-control input-sm agent--input agent--input-password"
                 placeholder="Insert Host Password"
                 onChange={onChangePwd}
+                onKeyDown={onLoginClick}
                 value={masterPwd}
               />
             </div>
@@ -55,12 +64,6 @@ class AgentConnectForm extends PureComponent<Props> {
               {' '}
               LOGIN
             </button>
-            {/* <span
-                className="icon icon-login agent-login"
-                onClick={this.handleLogin}
-              >
-                LOGIN
-              </span> */}
           </>
         ) : (
           <>
