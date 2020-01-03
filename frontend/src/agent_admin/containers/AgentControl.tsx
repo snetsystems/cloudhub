@@ -1,6 +1,7 @@
 // Libraries
 import React, {PureComponent} from 'react'
 import _ from 'lodash'
+import {connect} from 'react-redux'
 import yaml from 'js-yaml'
 
 // Components
@@ -17,17 +18,22 @@ import {
   runLocalPkgInstallTelegraf,
 } from 'src/agent_admin/apis'
 
+// Notification
+import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {notifyAgentConnectFailed} from 'src/agent_admin/components/notifications'
+
 // const
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
 
 // Types
-import {RemoteDataState} from 'src/types'
+import {RemoteDataState, Notification, NotificationFunc} from 'src/types'
 import {Minion} from 'src/agent_admin/type'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
+  notify: (message: Notification | NotificationFunc) => void
   currentUrl: string
   isUserAuthorized: boolean
   saltMasterUrl: string
@@ -69,12 +75,13 @@ class AgentControl extends PureComponent<Props, State> {
   }
 
   public async componentWillMount() {
-    const {saltMasterToken} = this.props
+    const {notify, saltMasterToken} = this.props
     if (saltMasterToken !== null && saltMasterToken !== '') {
       this.getWheelKeyListAll()
       this.setState({controlPageStatus: RemoteDataState.Loading})
     } else {
       this.setState({controlPageStatus: RemoteDataState.Done})
+      notify(notifyAgentConnectFailed('Token is not valid.'))
     }
   }
 
@@ -318,4 +325,8 @@ class AgentControl extends PureComponent<Props, State> {
   }
 }
 
-export default AgentControl
+const mdtp = {
+  notify: notifyAction,
+}
+
+export default connect(null, mdtp)(AgentControl)
