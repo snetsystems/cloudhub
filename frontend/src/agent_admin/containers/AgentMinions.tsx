@@ -78,7 +78,6 @@ export class AgentMinions extends PureComponent<Props, State> {
       })
     } catch (e) {
       const {onLogout} = this.props
-      //console.log(e.response.status)
 
       this.setState({
         minionsPageStatus: RemoteDataState.Done,

@@ -25,6 +25,9 @@ interface Params {
     cmd?: string
     args?: string[] | string
   }
+  username?: string
+  password?: string
+  eauth?: string
 }
 
 const EmptyMionin: Minion = {
@@ -36,7 +39,11 @@ const EmptyMionin: Minion = {
   isCheck: false,
 }
 
-const apiRequest = (pMethod, pRoute, pParams) => {
+const apiRequest = async (
+  pMethod: string,
+  pRoute: string,
+  pParams: Params
+): Promise<MinionsObject | any> => {
   const dParams = {}
   const saltMasterUrl = window.localStorage.getItem('salt-master-url')
   const url = saltMasterUrl + pRoute
@@ -65,7 +72,11 @@ const apiRequest = (pMethod, pRoute, pParams) => {
     })
 }
 
-export function getSaltToken(pUserName, pPassWord, pEauth = 'pam') {
+export function getSaltToken(
+  pUserName: string,
+  pPassWord: string,
+  pEauth: string = 'pam'
+) {
   const params = {
     username: pUserName,
     password: pPassWord,

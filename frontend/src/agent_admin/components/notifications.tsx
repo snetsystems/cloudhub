@@ -104,17 +104,17 @@ export const notifyAgentLoadFailed = (error: Error): Notification => ({
   message: `Agent Load Failed, ${error}`,
 })
 
-export const notifyAgentAcceptFailed = (error): Notification => ({
+export const notifyAgentAcceptFailed = (error: Error): Notification => ({
   ...defaultErrorNotification,
   message: `Agent Accept Failed, ${error}`,
 })
 
-export const notifyAgentRejectFailed = (error): Notification => ({
+export const notifyAgentRejectFailed = (error: Error): Notification => ({
   ...defaultErrorNotification,
   message: `Agent Reject Failed, ${error}`,
 })
 
-export const notifyAgentDeleteFailed = (error): Notification => ({
+export const notifyAgentDeleteFailed = (error: Error): Notification => ({
   ...defaultErrorNotification,
   message: `Agent Delete Failed, ${error}`,
 })

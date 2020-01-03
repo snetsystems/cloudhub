@@ -1,5 +1,5 @@
 // Libraries
-import React, {PureComponent} from 'react'
+import React, {PureComponent, ChangeEvent, MouseEvent} from 'react'
 import {connect} from 'react-redux'
 import _ from 'lodash'
 
@@ -48,6 +48,11 @@ interface State {
   masterPwd: string
   saltMasterUrl: string
   saltMasterToken: string
+}
+
+export interface LoginEvent extends MouseEvent<KeyboardEvent> {
+  onClick?: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  onKeydown?: React.KeyboardEvent<HTMLInputElement>
 }
 
 class AgentAdminPage extends PureComponent<Props, State> {
@@ -187,37 +192,38 @@ class AgentAdminPage extends PureComponent<Props, State> {
     )
   }
 
-  handleLogin = () => {
-    const {notify} = this.props
-    const {masterUrl, masterId, masterPwd} = this.state
+  handleLogin = (e: LoginEvent) => {
+    if (e.nativeEvent.which === 13 || e.nativeEvent.which === 1) {
+      const {notify} = this.props
+      const {masterUrl, masterId, masterPwd} = this.state
 
-    window.localStorage.removeItem('salt-master-url')
-    window.localStorage.removeItem('salt-master-token')
+      window.localStorage.removeItem('salt-master-url')
+      window.localStorage.removeItem('salt-master-token')
 
-    window.localStorage.setItem('salt-master-url', masterUrl)
+      window.localStorage.setItem('salt-master-url', masterUrl)
 
-    const resSaltToken = getSaltToken(masterId, masterPwd)
+      const resSaltToken = getSaltToken(masterId, masterPwd)
 
-    resSaltToken.then(pResSaltTokenData => {
-      if (
-        pResSaltTokenData.message !== undefined &&
-        pResSaltTokenData.message !== null
-      ) {
-        notify(notifyAgentConnectFailed(pResSaltTokenData.message))
-        //console.log(pResSaltTokenData.message)
-      } else {
-        window.localStorage.setItem(
-          'salt-master-token',
-          pResSaltTokenData.data.return[0].token
-        )
-        this.setState({
-          saltMasterUrl: masterUrl,
-          saltMasterToken: pResSaltTokenData.data.return[0].token,
-          isTokenCheck: true,
-        })
-        notify(notifyAgentConnectSucceeded(masterUrl))
-      }
-    })
+      resSaltToken.then(pResSaltTokenData => {
+        if (
+          pResSaltTokenData.message !== undefined &&
+          pResSaltTokenData.message !== null
+        ) {
+          notify(notifyAgentConnectFailed(pResSaltTokenData.message))
+        } else {
+          window.localStorage.setItem(
+            'salt-master-token',
+            pResSaltTokenData.data.return[0].token
+          )
+          this.setState({
+            saltMasterUrl: masterUrl,
+            saltMasterToken: pResSaltTokenData.data.return[0].token,
+            isTokenCheck: true,
+          })
+          notify(notifyAgentConnectSucceeded(masterUrl))
+        }
+      })
+    }
   }
 
   handleLogout = () => {
@@ -237,15 +243,15 @@ class AgentAdminPage extends PureComponent<Props, State> {
     notify(notifyAgentDisconnected())
   }
 
-  public handleChangeMasterUrl = e => {
+  public handleChangeMasterUrl = (e: ChangeEvent<HTMLInputElement>) => {
     this.setState({masterUrl: e.target.value})
   }
 
-  public handleChangeMasterId = e => {
+  public handleChangeMasterId = (e: ChangeEvent<HTMLInputElement>) => {
     this.setState({masterId: e.target.value})
   }
 
-  public handleChangeMasterPwd = e => {
+  public handleChangeMasterPwd = (e: ChangeEvent<HTMLInputElement>) => {
     this.setState({masterPwd: e.target.value})
   }
 }

@@ -18,6 +18,7 @@ import {
   setLocalStorage,
   getLocalStorage,
   verifyLocalStorage,
+  removeLocalStorage,
 } from 'src/shared/middleware/localStorage'
 
 // Decorators
@@ -200,7 +201,6 @@ export class AgentConfiguration extends PureComponent<
       })
     } catch (e) {
       const {onLogout} = this.props
-      //console.log(e.response.status)
 
       this.setState({
         configPageStatus: RemoteDataState.Done,
@@ -270,7 +270,7 @@ export class AgentConfiguration extends PureComponent<
         (this.props.saltMasterToken === null ||
           this.props.saltMasterToken === '')
       ) {
-        localStorage.removeItem('AgentConfigPage')
+        removeLocalStorage('AgentConfigPage')
 
         this.setState({
           MinionsObject: null,
@@ -393,7 +393,7 @@ export class AgentConfiguration extends PureComponent<
         host
       )
 
-      getLocalServiceStartTelegrafPromise.then(() => {
+      getLocalServiceStartTelegrafPromise.then((): void => {
         this.getWheelKeyListAll()
       })
     } else {
@@ -401,7 +401,7 @@ export class AgentConfiguration extends PureComponent<
         host
       )
 
-      getLocalServiceStopTelegrafPromise.then(() => {
+      getLocalServiceStopTelegrafPromise.then((): void => {
         this.getWheelKeyListAll()
       })
     }
@@ -416,7 +416,7 @@ export class AgentConfiguration extends PureComponent<
 
     const getLocalFileWritePromise = getLocalFileWrite(selectHost, configScript)
 
-    getLocalFileWritePromise.then(pLocalFileWriteData => {
+    getLocalFileWritePromise.then((pLocalFileWriteData): void => {
       this.setState({
         isApplyBtnDisabled: true,
         isGetLocalStorage: false,
@@ -427,7 +427,7 @@ export class AgentConfiguration extends PureComponent<
         selectHost
       )
 
-      getLocalServiceReStartTelegrafPromise.then(() => {
+      getLocalServiceReStartTelegrafPromise.then((): void => {
         this.getWheelKeyListAll()
       })
     })
@@ -618,7 +618,7 @@ export class AgentConfiguration extends PureComponent<
     }
   }
 
-  private handleServiceClose = () => {
+  private handleServiceClose = (): void => {
     const {serviceMeasurements} = this.state
 
     const mapServiceMeasurements = serviceMeasurements.map(m => {
@@ -633,7 +633,7 @@ export class AgentConfiguration extends PureComponent<
     })
   }
 
-  private handleDefaultClose = () => {
+  private handleDefaultClose = (): void => {
     const {defaultMeasurements} = this.state
 
     const mapDefaultMeasurements = defaultMeasurements.map(m => {
@@ -648,11 +648,11 @@ export class AgentConfiguration extends PureComponent<
     })
   }
 
-  private horizontalHandleResize = (horizontalProportions: number[]) => {
+  private horizontalHandleResize = (horizontalProportions: number[]): void => {
     this.setState({horizontalProportions})
   }
 
-  private verticalHandleResize = (verticalProportions: number[]) => {
+  private verticalHandleResize = (verticalProportions: number[]): void => {
     this.setState({verticalProportions})
   }
 

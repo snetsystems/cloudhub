@@ -39,28 +39,27 @@ class AgentControlModal extends PureComponent<Props, State> {
 
   handleOnClick = () => {
     const {onConfirm, minions, name} = this.props
-    let checkMinion: Minion[] = []
+    let checkMinion: Minion[] = minions.filter(m => m.isCheck === true)
+    let commandMinion: Minion[] = []
 
-    console.log(minions)
-
-    switch (name) {
-      case 'RUN':
-        checkMinion = minions.filter(m => m.isRunning === true)
-        checkMinion.length > 0
+    switch (name.toLocaleLowerCase()) {
+      case 'run':
+        commandMinion = checkMinion.filter(m => m.isRunning === true)
+        commandMinion.length > 0
           ? this.setState({isVisible: !this.state.isVisible})
           : onConfirm()
         break
 
-      case 'STOP':
-        checkMinion = minions.filter(m => m.isRunning === false)
-        checkMinion.length > 0
+      case 'stop':
+        commandMinion = checkMinion.filter(m => m.isRunning === false)
+        commandMinion.length > 0
           ? this.setState({isVisible: !this.state.isVisible})
           : onConfirm()
         break
 
-      case 'INSTALL':
-        checkMinion = minions.filter(m => m.isInstall === true)
-        checkMinion.length > 0
+      case 'install':
+        commandMinion = checkMinion.filter(m => m.isInstall === true)
+        commandMinion.length > 0
           ? this.setState({isVisible: !this.state.isVisible})
           : onConfirm()
         break
