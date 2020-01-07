@@ -1,6 +1,8 @@
 // Libraries
 import React, {PureComponent} from 'react'
+import {connect} from 'react-redux'
 import _ from 'lodash'
+import yaml from 'js-yaml'
 
 // Components
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
@@ -19,18 +21,27 @@ import {
   runDeleteKey,
 } from 'src/agent_admin/apis'
 
+// Notification
+import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {notifyAgentConnectFailed} from 'src/agent_admin/components/notifications'
+
 // Constants
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
 
 // Types
-import {Minion, RemoteDataState} from 'src/types'
+import {RemoteDataState, Notification, NotificationFunc} from 'src/types'
+import {Minion} from 'src/agent_admin/type'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
+  notify: (message: Notification | NotificationFunc) => void
   isUserAuthorized: boolean
   currentUrl: string
+  saltMasterUrl: string
+  saltMasterToken: string
+  onLogout: () => void
 }
 interface State {
   MinionsObject: {[x: string]: Minion}
@@ -42,7 +53,7 @@ interface State {
 }
 
 @ErrorHandling
-class AgentMinions extends PureComponent<Props, State> {
+export class AgentMinions extends PureComponent<Props, State> {
   constructor(props) {
     super(props)
     this.state = {
@@ -56,19 +67,52 @@ class AgentMinions extends PureComponent<Props, State> {
   }
 
   getWheelKeyListAll = async () => {
-    const response = await getMinionKeyListAll()
-    const updateMinionsIP = await getMinionsIP(response)
-    const newMinions = await getMinionsOS(updateMinionsIP)
+    try {
+      const response = await getMinionKeyListAll()
+      const updateMinionsIP = await getMinionsIP(response)
+      const newMinions = await getMinionsOS(updateMinionsIP)
 
-    this.setState({
-      MinionsObject: newMinions,
-      minionsPageStatus: RemoteDataState.Done,
-    })
+      this.setState({
+        MinionsObject: newMinions,
+        minionsPageStatus: RemoteDataState.Done,
+      })
+    } catch (e) {
+      const {onLogout} = this.props
+
+      this.setState({
+        minionsPageStatus: RemoteDataState.Done,
+      })
+
+      onLogout()
+    }
   }
 
-  public async componentDidMount() {
-    this.getWheelKeyListAll()
-    this.setState({minionsPageStatus: RemoteDataState.Loading})
+  public async componentWillMount() {
+    const {notify, saltMasterToken} = this.props
+    if (saltMasterToken !== null && saltMasterToken !== '') {
+      this.getWheelKeyListAll()
+      this.setState({minionsPageStatus: RemoteDataState.Loading})
+    } else {
+      this.setState({minionsPageStatus: RemoteDataState.Done})
+      notify(notifyAgentConnectFailed('Token is not valid.'))
+    }
+  }
+
+  public async componentDidUpdate(nextProps) {
+    if (nextProps.saltMasterToken !== this.props.saltMasterToken) {
+      if (
+        this.props.saltMasterToken !== '' &&
+        this.props.saltMasterToken !== null
+      ) {
+        this.getWheelKeyListAll()
+        this.setState({minionsPageStatus: RemoteDataState.Loading})
+      } else if (
+        this.props.saltMasterToken === null ||
+        this.props.saltMasterToken === ''
+      ) {
+        this.setState({MinionsObject: null})
+      }
+    }
   }
 
   onClickTableRowCall = (host: string) => () => {
@@ -79,11 +123,7 @@ class AgentMinions extends PureComponent<Props, State> {
     const getLocalGrainsItemPromise = getLocalGrainsItem(host)
     getLocalGrainsItemPromise.then(pLocalGrainsItemData => {
       this.setState({
-        minionLog: JSON.stringify(
-          pLocalGrainsItemData.data.return[0][host],
-          null,
-          4
-        ),
+        minionLog: yaml.dump(pLocalGrainsItemData.data.return[0][host]),
         minionsPageStatus: RemoteDataState.Done,
       })
     })
@@ -96,11 +136,7 @@ class AgentMinions extends PureComponent<Props, State> {
 
       getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
         this.setState({
-          minionLog: JSON.stringify(
-            pWheelKeyCommandData.data.return[0],
-            null,
-            4
-          ),
+          minionLog: yaml.dump(pWheelKeyCommandData.data.return[0]),
         })
         this.getWheelKeyListAll()
       })
@@ -109,11 +145,7 @@ class AgentMinions extends PureComponent<Props, State> {
 
       getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
         this.setState({
-          minionLog: JSON.stringify(
-            pWheelKeyCommandData.data.return[0],
-            null,
-            4
-          ),
+          minionLog: yaml.dump(pWheelKeyCommandData.data.return[0]),
         })
         this.getWheelKeyListAll()
       })
@@ -122,11 +154,7 @@ class AgentMinions extends PureComponent<Props, State> {
 
       getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
         this.setState({
-          minionLog: JSON.stringify(
-            pWheelKeyCommandData.data.return[0],
-            null,
-            4
-          ),
+          minionLog: yaml.dump(pWheelKeyCommandData.data.return[0]),
         })
         this.getWheelKeyListAll()
       })
@@ -140,6 +168,13 @@ class AgentMinions extends PureComponent<Props, State> {
     _this,
     idx,
     handleWheelKeyCommand,
+  }: {
+    name: string
+    host: string
+    status: string
+    _this: HTMLElement
+    idx: number
+    handleWheelKeyCommand: () => void
   }) {
     return (
       <AgentMinionsModal
@@ -153,7 +188,7 @@ class AgentMinions extends PureComponent<Props, State> {
     )
   }
 
-  render() {
+  public render() {
     const {isUserAuthorized} = this.props
     return (
       <>
@@ -166,10 +201,7 @@ class AgentMinions extends PureComponent<Props, State> {
             />
           </div>
         ) : (
-          <div
-            className="generic-empty-state"
-            style={{backgroundColor: '#292933'}}
-          >
+          <div className="generic-empty-state agent-table--empty-state">
             <h4>Not Allowed User</h4>
           </div>
         )}
@@ -227,4 +259,8 @@ class AgentMinions extends PureComponent<Props, State> {
   }
 }
 
-export default AgentMinions
+const mdtp = {
+  notify: notifyAction,
+}
+
+export default connect(null, mdtp, null)(AgentMinions)

@@ -35,7 +35,7 @@ export const notifyGenericFail = (): string =>
 
 export const notifyNewVersion = (version: string): Notification => ({
   type: 'info',
-  icon: 'cubo-uniform',
+  icon: '_snet--logo',
   duration: INFINITE,
   message: `Welcome to the latest CMP (${version}). Local settings cleared.`,
 })

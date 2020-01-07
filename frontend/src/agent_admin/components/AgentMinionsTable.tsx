@@ -5,7 +5,7 @@ import memoize from 'memoize-one'
 
 // Components
 import SearchBar from 'src/hosts/components/SearchBar'
-import AgentMinions from 'src/agent_admin/containers/AgentMinions'
+import {AgentMinions} from 'src/agent_admin/containers/AgentMinions'
 import AgentMinionsTableRow from 'src/agent_admin/components/AgentMinionsTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import PageSpinner from 'src/shared/components/PageSpinner'
@@ -14,7 +14,8 @@ import PageSpinner from 'src/shared/components/PageSpinner'
 import {AGENT_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
 
 // Types
-import {RemoteDataState, Minion} from 'src/types'
+import {RemoteDataState} from 'src/types'
+import {Minion} from 'src/agent_admin/type'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -53,21 +54,25 @@ class AgentMinionsTable extends PureComponent<Props, State> {
 
   public getSortedHosts = memoize(
     (
-      minions,
+      minions: Minion[],
       searchTerm: string,
       sortKey: string,
       sortDirection: SortDirection
     ) => this.sort(this.filter(minions, searchTerm), sortKey, sortDirection)
   )
 
-  public filter(allHosts, searchTerm) {
+  public filter(allHosts: Minion[], searchTerm: string): Minion[] {
     const filterText = searchTerm.toLowerCase()
     return allHosts.filter(h => {
       return h.host.toLowerCase().includes(filterText)
     })
   }
 
-  public sort(hosts, key, direction) {
+  public sort(
+    hosts: Minion[],
+    key: string,
+    direction: SortDirection
+  ): Minion[] {
     switch (direction) {
       case SortDirection.ASC:
         return _.sortBy(hosts, e => e[key])
@@ -78,7 +83,7 @@ class AgentMinionsTable extends PureComponent<Props, State> {
     }
   }
 
-  public updateSearchTerm = searchTerm => {
+  public updateSearchTerm = (searchTerm: string) => {
     this.setState({searchTerm})
   }
 
@@ -230,16 +235,16 @@ class AgentMinionsTable extends PureComponent<Props, State> {
             <span className="icon caret-up" />
           </div>
           <div
-            onClick={this.updateSort('operatingSystem')}
-            className={this.sortableClasses('operatingSystem')}
+            onClick={this.updateSort('OS')}
+            className={this.sortableClasses('OS')}
             style={{width: IPWidth}}
           >
             OS
             <span className="icon caret-up" />
           </div>
           <div
-            onClick={this.updateSort('operatingSystem')}
-            className={this.sortableClasses('operatingSystem')}
+            onClick={this.updateSort('OSVersion')}
+            className={this.sortableClasses('OSVersion')}
             style={{width: IPWidth}}
           >
             OS Version
@@ -247,16 +252,16 @@ class AgentMinionsTable extends PureComponent<Props, State> {
           </div>
 
           <div
-            onClick={this.updateSort('deltaUptime')}
-            className={this.sortableClasses('deltaUptime')}
+            onClick={this.updateSort('ip')}
+            className={this.sortableClasses('ip')}
             style={{width: IPWidth}}
           >
             IP
             <span className="icon caret-up" />
           </div>
           <div
-            onClick={this.updateSort('load')}
-            className={this.sortableClasses('load')}
+            onClick={this.updateSort('deltaUptime')}
+            className={this.sortableClasses('deltaUptime')}
             style={{width: StatusWidth}}
           >
             Status
@@ -283,7 +288,7 @@ class AgentMinionsTable extends PureComponent<Props, State> {
     } = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
-    const sortedHosts = this.getSortedHosts(
+    const sortedHosts: [] = this.getSortedHosts(
       minions,
       searchTerm,
       sortKey,
@@ -296,7 +301,7 @@ class AgentMinionsTable extends PureComponent<Props, State> {
           {this.AgentTableHeader}
           {sortedHosts.length > 0 ? (
             <FancyScrollbar
-              children={sortedHosts.map((m, i) => (
+              children={sortedHosts.map((m: Minion, i: number) => (
                 <AgentMinionsTableRow
                   key={i}
                   idx={i}

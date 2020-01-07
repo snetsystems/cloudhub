@@ -8,12 +8,14 @@ import AgentControlTableRow from 'src/agent_admin/components/AgentControlTableRo
 import SearchBar from 'src/hosts/components/SearchBar'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import PageSpinner from 'src/shared/components/PageSpinner'
+import AgentControlModal from 'src/agent_admin/components/AgentControlModal'
 
 // Contants
 import {AGENT_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
 
 // Types
-import {RemoteDataState, Minion} from 'src/types'
+import {RemoteDataState} from 'src/types'
+import {Minion} from 'src/agent_admin/type'
 
 // Decorator
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -55,21 +57,25 @@ class AgentControlTable extends PureComponent<Props, State> {
 
   public getSortedHosts = memoize(
     (
-      minions,
+      minions: Minion[],
       searchTerm: string,
       sortKey: string,
-      sortDirection: SortDirection
+      sortDirection: SortDirection.ASC
     ) => this.sort(this.filter(minions, searchTerm), sortKey, sortDirection)
   )
 
-  public filter(allHosts, searchTerm) {
+  public filter(allHosts: Minion[], searchTerm: string): Minion[] {
     const filterText = searchTerm.toLowerCase()
     return allHosts.filter(h => {
       return h.host.toLowerCase().includes(filterText)
     })
   }
 
-  public sort(hosts, key, direction) {
+  public sort(
+    hosts: Minion[],
+    key: string,
+    direction: SortDirection
+  ): Minion[] {
     switch (direction) {
       case SortDirection.ASC:
         return _.sortBy(hosts, e => e[key])
@@ -80,11 +86,11 @@ class AgentControlTable extends PureComponent<Props, State> {
     }
   }
 
-  public updateSearchTerm = searchTerm => {
+  public updateSearchTerm = (searchTerm: string): void => {
     this.setState({searchTerm})
   }
 
-  public updateSort = key => () => {
+  public updateSort = (key: string) => () => {
     const {sortKey, sortDirection} = this.state
     if (sortKey === key) {
       const reverseDirection =
@@ -168,7 +174,12 @@ class AgentControlTable extends PureComponent<Props, State> {
       onClickStop,
       onClickInstall,
       controlPageStatus,
+      minions,
     } = this.props
+
+    const isCheckedMinions = !(
+      minions.filter(m => m.isCheck === true).length > 0
+    )
 
     return (
       <div className="panel">
@@ -183,41 +194,42 @@ class AgentControlTable extends PureComponent<Props, State> {
           />
         </div>
         <div className="panel-body">{this.AgentTableContents}</div>
-        <div
-          className=""
-          style={{
-            padding: '20px',
-            paddingTop: '0px',
-            textAlign: 'right',
-          }}
-        >
-          <button
-            disabled={
-              controlPageStatus === RemoteDataState.Loading ? true : false
-            }
-            className="btn btn-inline_block btn-default"
-            onClick={onClickRun.bind(this)}
-          >
-            RUN
-          </button>
-          <button
-            disabled={
-              controlPageStatus === RemoteDataState.Loading ? true : false
-            }
-            className="btn btn-inline_block btn-default agent--btn"
-            onClick={onClickStop.bind(this)}
-          >
-            STOP
-          </button>
-          <button
-            disabled={
-              controlPageStatus === RemoteDataState.Loading ? true : false
-            }
-            className="btn btn-inline_block btn-default agent--btn"
-            onClick={onClickInstall.bind(this)}
-          >
-            INSTALL
-          </button>
+        <div className="pabel-body--agent-control">
+          <AgentControlModal
+            disabled={isCheckedMinions}
+            minions={minions}
+            name={'RUN'}
+            message={'running agents included. keep going?'}
+            buttonClassName={'btn btn-inline_block btn-default agent--btn'}
+            cancelText={'Cancel'}
+            confirmText={'Go Run'}
+            onCancel={() => {}}
+            onConfirm={onClickRun.bind(this)}
+          />
+
+          <AgentControlModal
+            disabled={isCheckedMinions}
+            minions={minions}
+            name={'STOP'}
+            message={'stoped agents included. keep going?'}
+            buttonClassName={'btn btn-inline_block btn-default agent--btn'}
+            cancelText={'Cancel'}
+            confirmText={'Go STOP'}
+            onCancel={() => {}}
+            onConfirm={onClickStop.bind(this)}
+          />
+
+          <AgentControlModal
+            disabled={isCheckedMinions}
+            minions={minions}
+            name={'INSTALL'}
+            message={'Agents with Telegraf installed are included. keep going?'}
+            buttonClassName={'btn btn-inline_block btn-default agent--btn'}
+            cancelText={'Cancel'}
+            confirmText={'Go Run'}
+            onCancel={() => {}}
+            onConfirm={onClickInstall.bind(this)}
+          />
         </div>
       </div>
     )
@@ -268,16 +280,16 @@ class AgentControlTable extends PureComponent<Props, State> {
             <span className="icon caret-up" />
           </div>
           <div
-            onClick={this.updateSort('operatingSystem')}
-            className={this.sortableClasses('operatingSystem')}
+            onClick={this.updateSort('OS')}
+            className={this.sortableClasses('OS')}
             style={{width: IPWidth}}
           >
             OS
             <span className="icon caret-up" />
           </div>
           <div
-            onClick={this.updateSort('operatingSystem')}
-            className={this.sortableClasses('operatingSystem')}
+            onClick={this.updateSort('OSVersion')}
+            className={this.sortableClasses('OSVersion')}
             style={{width: IPWidth}}
           >
             OS Version
@@ -285,8 +297,8 @@ class AgentControlTable extends PureComponent<Props, State> {
           </div>
 
           <div
-            onClick={this.updateSort('deltaUptime')}
-            className={this.sortableClasses('deltaUptime')}
+            onClick={this.updateSort('ip')}
+            className={this.sortableClasses('ip')}
             style={{width: IPWidth}}
           >
             IP
@@ -313,7 +325,7 @@ class AgentControlTable extends PureComponent<Props, State> {
     const {minions, onClickAction, isAllCheck, handleMinionCheck} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
-    const sortedHosts = this.getSortedHosts(
+    const sortedHosts: [] = this.getSortedHosts(
       minions,
       searchTerm,
       sortKey,
