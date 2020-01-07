@@ -3,7 +3,7 @@ import React, {PureComponent} from 'react'
 import _ from 'lodash'
 
 // Components
-import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
+import {AgentConfiguration} from 'src/agent_admin/containers/AgentConfiguration'
 import AgentTooltip from 'src/agent_admin/components/AgentTooltip'
 
 // Decorator

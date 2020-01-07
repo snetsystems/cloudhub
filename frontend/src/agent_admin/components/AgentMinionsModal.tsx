@@ -1,5 +1,5 @@
 // Libraries
-import React from 'react'
+import React, {PureComponent, MouseEvent} from 'react'
 
 // Components
 import ReactModal from 'react-modal'
@@ -22,7 +22,7 @@ interface State {
 }
 
 @ErrorHandling
-class AgentMinionsModal extends React.Component<Props, State> {
+class AgentMinionsModal extends PureComponent<Props, State> {
   constructor(props) {
     super(props)
     this.state = {
@@ -37,7 +37,7 @@ class AgentMinionsModal extends React.Component<Props, State> {
     this.onClickDelete = this.onClickDelete.bind(this)
   }
 
-  handleOpenModal(event) {
+  public handleOpenModal(event) {
     event.stopPropagation()
     const {name} = this.props
     event.target.innerText === name
@@ -48,37 +48,37 @@ class AgentMinionsModal extends React.Component<Props, State> {
       : this.setState({showModal: true})
   }
 
-  handleCloseModal() {
+  public handleCloseModal(): void {
     this.setState({showModal: false})
   }
 
-  componentDidMount() {
+  public componentDidMount(): void {
     const {idx} = this.props
     ReactModal.setAppElement(`#table-row--select${idx}`)
   }
 
-  onClickAccept(event) {
+  public onClickAccept(event: MouseEvent<HTMLElement>): void {
     const {handleWheelKeyCommand, host} = this.props
     handleWheelKeyCommand(host, 'Accept')
     event.stopPropagation()
     this.handleCloseModal()
   }
 
-  onClickReject(event) {
+  public onClickReject(event: MouseEvent<HTMLElement>): void {
     const {handleWheelKeyCommand, host} = this.props
     handleWheelKeyCommand(host, 'ReJect')
     event.stopPropagation()
     this.handleCloseModal()
   }
 
-  onClickDelete(event) {
+  public onClickDelete(event: MouseEvent<HTMLElement>): void {
     const {handleWheelKeyCommand, host} = this.props
     handleWheelKeyCommand(host, 'Delete')
     event.stopPropagation()
     this.handleCloseModal()
   }
 
-  render() {
+  public render() {
     const {name, status} = this.props
     const {target} = this.state
 

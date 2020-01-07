@@ -1,6 +1,8 @@
 // Libraries
 import React, {PureComponent} from 'react'
 import _ from 'lodash'
+import {connect} from 'react-redux'
+import yaml from 'js-yaml'
 
 // Components
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
@@ -16,18 +18,27 @@ import {
   runLocalPkgInstallTelegraf,
 } from 'src/agent_admin/apis'
 
+// Notification
+import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {notifyAgentConnectFailed} from 'src/agent_admin/components/notifications'
+
 // const
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
 
 // Types
-import {Minion, RemoteDataState} from 'src/types'
+import {RemoteDataState, Notification, NotificationFunc} from 'src/types'
+import {Minion} from 'src/agent_admin/type'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
+  notify: (message: Notification | NotificationFunc) => void
   currentUrl: string
   isUserAuthorized: boolean
+  saltMasterUrl: string
+  saltMasterToken: string
+  onLogout: () => void
 }
 
 interface State {
@@ -59,22 +70,51 @@ class AgentControl extends PureComponent<Props, State> {
     this.setState({
       Minions: _.values(hostListObject),
       controlPageStatus: RemoteDataState.Done,
+      isAllCheck: false,
     })
   }
 
-  public async componentDidMount() {
-    this.getWheelKeyListAll()
-    this.setState({controlPageStatus: RemoteDataState.Loading})
+  public async componentWillMount() {
+    const {notify, saltMasterToken} = this.props
+    if (saltMasterToken !== null && saltMasterToken !== '') {
+      this.getWheelKeyListAll()
+      this.setState({controlPageStatus: RemoteDataState.Loading})
+    } else {
+      this.setState({controlPageStatus: RemoteDataState.Done})
+      notify(notifyAgentConnectFailed('Token is not valid.'))
+    }
+  }
+
+  public async componentDidUpdate(nextProps) {
+    if (nextProps.saltMasterToken !== this.props.saltMasterToken) {
+      if (
+        this.props.saltMasterToken !== '' &&
+        this.props.saltMasterToken !== null
+      ) {
+        this.getWheelKeyListAll()
+        this.setState({controlPageStatus: RemoteDataState.Loading})
+      } else {
+        this.setState({
+          Minions: [],
+        })
+      }
+    }
   }
 
   public handleAllCheck = (_this: object): void => {
-    const {Minions, isAllCheck} = this.state
-    if (isAllCheck === false) {
-      Minions.map(m => (m.isCheck = true))
+    const {saltMasterToken} = this.props
+
+    if (saltMasterToken !== null && saltMasterToken !== '') {
+      const {Minions, isAllCheck} = this.state
+      if (isAllCheck === false) {
+        Minions.map(m => (m.isCheck = true))
+      } else {
+        Minions.map(m => (m.isCheck = false))
+      }
+      this.setState({isAllCheck: !isAllCheck, Minions})
     } else {
-      Minions.map(m => (m.isCheck = false))
+      this.setState({controlPageStatus: RemoteDataState.Done})
     }
-    this.setState({isAllCheck: !isAllCheck, Minions})
   }
 
   public handleMinionCheck = ({_this}): void => {
@@ -103,11 +143,10 @@ class AgentControl extends PureComponent<Props, State> {
       getLocalServiceStartTelegrafPromise.then(
         pLocalServiceStartTelegrafData => {
           this.setState({
-            minionLog: JSON.stringify(
-              pLocalServiceStartTelegrafData.data.return[0],
-              null,
-              4
-            ),
+            minionLog:
+              'Service Start' +
+              '\n' +
+              yaml.dump(pLocalServiceStartTelegrafData.data.return[0]),
           })
           this.getWheelKeyListAll()
         }
@@ -119,11 +158,10 @@ class AgentControl extends PureComponent<Props, State> {
       this.setState({controlPageStatus: RemoteDataState.Loading})
       getLocalServiceStopTelegrafPromise.then(pLocalServiceStopTelegrafData => {
         this.setState({
-          minionLog: JSON.stringify(
-            pLocalServiceStopTelegrafData.data.return[0],
-            null,
-            4
-          ),
+          minionLog:
+            'Service Stop' +
+            '\n' +
+            yaml.dump(pLocalServiceStopTelegrafData.data.return[0]),
         })
         this.getWheelKeyListAll()
       })
@@ -143,11 +181,10 @@ class AgentControl extends PureComponent<Props, State> {
 
     getLocalServiceStartTelegrafPromise.then(pLocalServiceStartTelegrafData => {
       this.setState({
-        minionLog: JSON.stringify(
-          pLocalServiceStartTelegrafData.data.return[0],
-          null,
-          4
-        ),
+        minionLog:
+          'Service Start' +
+          '\n' +
+          yaml.dump(pLocalServiceStartTelegrafData.data.return[0]),
       })
       this.getWheelKeyListAll()
     })
@@ -164,18 +201,19 @@ class AgentControl extends PureComponent<Props, State> {
 
     getLocalServiceStopTelegrafPromise.then(pLocalServiceStopTelegrafData => {
       this.setState({
-        minionLog: JSON.stringify(
-          pLocalServiceStopTelegrafData.data.return[0],
-          null,
-          4
-        ),
+        minionLog:
+          'Service Stop' +
+          '\n' +
+          yaml.dump(pLocalServiceStopTelegrafData.data.return[0]),
       })
+
       this.getWheelKeyListAll()
     })
   }
 
   public onClickInstallCall = () => {
     const {Minions} = this.state
+
     const host = Minions.filter(m => m.isCheck === true).map(
       checkData => checkData.host
     )
@@ -186,22 +224,22 @@ class AgentControl extends PureComponent<Props, State> {
 
     getLocalCpGetDirTelegrafPromise.then(pLocalCpGetDirTelegrafData => {
       this.setState({
-        minionLog: JSON.stringify(
-          pLocalCpGetDirTelegrafData.data.return,
-          null,
-          4
-        ),
+        minionLog:
+          'Dir Telegraf ' +
+          '\n' +
+          yaml.dump(pLocalCpGetDirTelegrafData.data.return[0]),
       })
 
       const getLocalPkgInstallTelegrafPromise = runLocalPkgInstallTelegraf(host)
 
       getLocalPkgInstallTelegrafPromise.then(pLocalPkgInstallTelegrafData => {
         this.setState({
-          minionLog: JSON.stringify(
-            pLocalPkgInstallTelegrafData.data.return[0],
-            null,
-            4
-          ),
+          minionLog:
+            this.state.minionLog +
+            '\n' +
+            'Install Response' +
+            '\n' +
+            yaml.dump(pLocalPkgInstallTelegrafData.data.return[0]),
         })
       })
 
@@ -287,4 +325,8 @@ class AgentControl extends PureComponent<Props, State> {
   }
 }
 
-export default AgentControl
+const mdtp = {
+  notify: notifyAction,
+}
+
+export default connect(null, mdtp)(AgentControl)

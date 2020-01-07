@@ -3,10 +3,10 @@ import React, {PureComponent} from 'react'
 
 // Constants
 import {AGENT_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
-import AgentMinions from 'src/agent_admin/containers/AgentMinions'
+import {AgentMinions} from 'src/agent_admin/containers/AgentMinions'
 
 // Types
-import {Minion} from 'src/types'
+import {Minion} from 'src/agent_admin/type'
 
 interface Props {
   idx: number
@@ -18,7 +18,7 @@ interface Props {
 }
 
 class AgentMinionsTableRow extends PureComponent<Props> {
-  constructor(props) {
+  constructor(props: Readonly<Props>) {
     super(props)
   }
 
@@ -30,15 +30,7 @@ class AgentMinionsTableRow extends PureComponent<Props> {
     return 'agent--row hosts-table--tr'
   }
 
-  public isAcceptIndicator = isAccept => {
-    if (isAccept === 'true') {
-      return <div className="agent--indicator indicator--primary">Accepted</div>
-    }
-
-    return <div className="agent--indicator indicator--fail">unAccept</div>
-  }
-
-  public isStatusIndicator = status => {
+  public isStatusIndicator = (status: string) => {
     if (status === 'Accept') {
       return <div className="agent--indicator indicator--primary">Accepted</div>
     } else if (status === 'UnAccept') {
