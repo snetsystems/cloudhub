@@ -1,136 +1,100 @@
-import React, { PureComponent } from 'react'
-import { AGENT_TABLE_SIZING } from 'src/hosts/constants/tableSizing'
+// Libraries
+import React, {PureComponent} from 'react'
 
-import { Minion } from 'src/types'
+// Constants
+import {AGENT_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
+import {AgentMinions} from 'src/agent_admin/containers/AgentMinions'
+
+// Types
+import {Minion} from 'src/agent_admin/type'
 
 interface Props {
-	key: Readonly<Props>
-	minions: Minion
-	// ip: string
-	// host: string
-	// status: string
-	// currentUrl: string
-	// onClickTableRow: () => void
-	onClickModal: ({ }) => object
-	handleWheelKeyCommand: () => void
-	focusedHost: string
+  idx: number
+  minions: Minion
+  focusedHost: string
+  onClickTableRow: AgentMinions['onClickTableRowCall']
+  onClickModal: ({}) => object
+  handleWheelKeyCommand: (host: string, cmdstatus: string) => void
 }
 
 class AgentMinionsTableRow extends PureComponent<Props> {
-	constructor(props) {
-		super(props)
-	}
+  constructor(props: Readonly<Props>) {
+    super(props)
+  }
 
-	public focusedClasses = (host: string): string => {
-		const { focusedHost } = this.props
-		if (host === focusedHost) {
-			return 'hosts-table--tr focused'
-		}
-		return 'hosts-table--tr'
-	}
+  public focusedClasses = (host: string): string => {
+    const {focusedHost} = this.props
+    if (host === focusedHost) {
+      return 'agent--row hosts-table--tr focused'
+    }
+    return 'agent--row hosts-table--tr'
+  }
 
-	public isAcceptIndicator = (isAccept) => {
-		if (isAccept === 'true') {
-			return (
-				<div
-					style={{
-						color: '#4ed8a0',
-					}}
-				>
-					Accepted
-				</div>
-			)
-		}
+  public isStatusIndicator = (status: string) => {
+    if (status === 'Accept') {
+      return <div className="agent--indicator indicator--primary">Accepted</div>
+    } else if (status === 'UnAccept') {
+      return <div className="agent--indicator indicator--fail">UnAccept</div>
+    } else if (status === 'ReJect') {
+      return <div className="agent--indicator indicator--fail">ReJect</div>
+    }
+  }
 
-		return (
-			<div
-				style={{
-					color: '#e85b1c',
-				}}
-			>
-				unAccept
-			</div>
-		)
-	}
+  render() {
+    return this.TableRowEachPage
+  }
 
-	public isStatusIndicator = (status) => {
-		if (status === 'Accept') {
-			return (
-				<div
-					style={{
-						color: '#4ed8a0',
-					}}
-				>
-					Accepted
-				</div>
-			)
-		} else if (status === 'UnAccept') {
-			return (
-				<div
-					style={{
-						color: '#e85b1c',
-					}}
-				>
-					UnAccept
-				</div>
-			)
-		} else if (status === 'ReJect') {
-			return (
-				<div
-					style={{
-						color: '#e85b1c',
-					}}
-				>
-					ReJect
-				</div>
-			)
-		}
-	}
+  private get handleOnClickTableRow() {
+    const {minions, onClickTableRow} = this.props
+    const {host} = minions
+    return onClickTableRow(host)
+  }
 
-	render() {
-		console.log('rowRender')
-		return this.TableRowEachPage
-	}
+  private get TableRowEachPage() {
+    const {idx, minions, onClickModal, handleWheelKeyCommand} = this.props
+    const {osVersion, os, ip, host, status} = minions
+    const {StatusWidth, HostWidth, IPWidth} = AGENT_TABLE_SIZING
 
-	private get TableRowEachPage() {
-		const { key, minions, onClickTableRow, onClickModal, handleWheelKeyCommand } = this.props
+    return (
+      <div
+        className={this.focusedClasses(host)}
+        onClick={this.handleOnClickTableRow}
+      >
+        <div className="hosts-table--td" style={{width: HostWidth}}>
+          {host}
+        </div>
 
-		const { osVersion, os, ip, host, status } = minions
-		const { StatusWidth, HostWidth, IPWidth } = AGENT_TABLE_SIZING
+        <div className="hosts-table--td" style={{width: IPWidth}}>
+          {os}
+        </div>
 
-		return (
-			<div className={this.focusedClasses(host)} onClick={onClickTableRow(host)}>
-				<div className="hosts-table--td" style={{ width: HostWidth }}>
-					{host}
-				</div>
+        <div className="hosts-table--td" style={{width: IPWidth}}>
+          {osVersion}
+        </div>
 
-				<div className="hosts-table--td" style={{ width: IPWidth }}>
-					{os}
-				</div>
-
-				<div className="hosts-table--td" style={{ width: IPWidth }}>
-					{osVersion}
-				</div>
-
-				<div className="hosts-table--td" style={{ width: IPWidth }}>
-					{ip}
-				</div>
-				<div className="hosts-table--td" style={{ width: StatusWidth }}>
-					{this.isStatusIndicator(status)}
-				</div>
-				<div className="hosts-table--td" id={`table-row--select${key}`} style={{ width: StatusWidth }}>
-					{onClickModal({
-						name: '=',
-						host,
-						status,
-						_this: this,
-						handleWheelKeyCommand,
-						key,
-					})}
-				</div>
-			</div>
-		)
-	}
+        <div className="hosts-table--td" style={{width: IPWidth}}>
+          {ip}
+        </div>
+        <div className="hosts-table--td" style={{width: StatusWidth}}>
+          {this.isStatusIndicator(status)}
+        </div>
+        <div
+          className="hosts-table--td"
+          id={`table-row--select${idx}`}
+          style={{width: StatusWidth}}
+        >
+          {onClickModal({
+            name: '=',
+            host,
+            status,
+            _this: this,
+            handleWheelKeyCommand,
+            idx,
+          })}
+        </div>
+      </div>
+    )
+  }
 }
 
 export default AgentMinionsTableRow

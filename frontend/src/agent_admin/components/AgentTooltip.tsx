@@ -1,5 +1,6 @@
 // Libraries
 import React, {PureComponent, MouseEvent, CSSProperties, createRef} from 'react'
+import {Controlled as ReactCodeMirror} from 'react-codemirror2'
 
 // Components
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
@@ -10,12 +11,12 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 interface Props {
   description: string
   onDismiss: () => void
-  tipPosition?: {top: number; right: number; left: number}
-  pivot: string
+  tipPosition: {top: number; left: number}
 }
 
 interface State {
-  bottomPosition: number | null
+  bottomPosition: number
+  currentWidth: number
 }
 
 const MAX_HEIGHT = 400
@@ -26,7 +27,7 @@ class AgentTooltip extends PureComponent<Props, State> {
 
   public constructor(props: Props) {
     super(props)
-    this.state = {bottomPosition: null, currentWidth: ''}
+    this.state = {bottomPosition: null, currentWidth: null}
   }
 
   public componentDidMount() {
@@ -45,6 +46,20 @@ class AgentTooltip extends PureComponent<Props, State> {
 
   public render() {
     const {description} = this.props
+    const options = {
+      tabIndex: 1,
+      readonly: true,
+      lineNumbers: false,
+      autoRefresh: true,
+      indentUnit: 2,
+      smartIndent: false,
+      electricChars: false,
+      completeSingle: false,
+      gutters: ['error-gutter'],
+      lineWrapping: true,
+      mode: 'agentConf',
+      theme: 'agent-conf',
+    }
 
     return (
       <>
@@ -56,11 +71,11 @@ class AgentTooltip extends PureComponent<Props, State> {
           <button
             className="flux-functions-toolbar--tooltip-dismiss"
             onClick={this.handleDismiss}
-          />{' '}
+          />
           <div
             className="flux-functions-toolbar--tooltip-contents"
             style={{
-              width: 400 + 'px',
+              maxWidth: 600 + 'px',
             }}
           >
             <FancyScrollbar
@@ -68,16 +83,15 @@ class AgentTooltip extends PureComponent<Props, State> {
               maxHeight={MAX_HEIGHT}
               autoHide={false}
             >
-              <article className="flux-functions-toolbar--description">
-                <pre
-                  style={{
-                    color: '#fff',
-                    whiteSpace: 'pre-wrap',
-                  }}
-                >
-                  {description}
-                </pre>
-              </article>
+              <ReactCodeMirror
+                autoFocus={false}
+                autoCursor={false}
+                value={description}
+                options={options}
+                onBeforeChange={() => false}
+                onChange={() => false}
+                onTouchStart={() => false}
+              />
             </FancyScrollbar>
           </div>
         </div>

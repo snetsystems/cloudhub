@@ -1,31 +1,32 @@
-import React from 'react'
+// Libraries
+import React, {PureComponent} from 'react'
 import {Controlled as ReactCodeMirror, IInstance} from 'react-codemirror2'
 import {EditorChange} from 'codemirror'
 
 interface Props {
-  script: string
+  configScript: string
+  onChangeScript: (script: string) => void
 }
 
 interface State {
   script: string
 }
 
-class AgentCodeEditor extends React.PureComponent<State, Props> {
-  constructor(props) {
+class AgentCodeEditor extends PureComponent<Props, State> {
+  constructor(props: Props) {
     super(props)
-
     this.state = {
-      script: props.script,
+      script: props.configScript,
     }
   }
 
-  componentWillReceiveProps(newProps) {
-    if (newProps.script != this.state.script) {
-      this.setState({script: newProps.script})
+  public componentWillReceiveProps(newProps: Props) {
+    if (this.state.script !== newProps.configScript) {
+      this.setState({script: newProps.configScript})
     }
   }
 
-  render() {
+  public render() {
     const options = {
       tabIndex: 1,
       readonly: false,
@@ -34,9 +35,11 @@ class AgentCodeEditor extends React.PureComponent<State, Props> {
       indentUnit: 2,
       smartIndent: false,
       electricChars: false,
-      theme: 'time-machine',
       completeSingle: false,
       gutters: ['error-gutter'],
+      lineWrapping: true,
+      mode: 'agentConf',
+      theme: 'agent-conf',
     }
 
     return (
@@ -47,15 +50,17 @@ class AgentCodeEditor extends React.PureComponent<State, Props> {
         options={options}
         onBeforeChange={this.beforeChange}
         onChange={this.updateChange}
+        onTouchStart={this.onTouchStart}
       />
     )
   }
+  private onTouchStart = (): void => {}
 
   private beforeChange = (
     ___: IInstance,
     ____: EditorChange,
     script: string
-  ): void => {
+  ) => {
     return this.setState({script})
   }
 
@@ -63,8 +68,9 @@ class AgentCodeEditor extends React.PureComponent<State, Props> {
     ___: IInstance,
     ____: EditorChange,
     script: string
-  ): void => {
-    this.props.onChangeScript(script)
+  ) => {
+    const {onChangeScript} = this.props
+    return onChangeScript(script)
   }
 }
 

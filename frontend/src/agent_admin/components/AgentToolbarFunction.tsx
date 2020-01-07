@@ -1,13 +1,35 @@
+// Libraries
 import React, {PureComponent} from 'react'
 import _ from 'lodash'
+
+// Components
+import {AgentConfiguration} from 'src/agent_admin/containers/AgentConfiguration'
 import AgentTooltip from 'src/agent_admin/components/AgentTooltip'
+
+// Decorator
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
+interface Props {
+  name: string | null
+  isActivity: boolean
+  idx: number
+  description: string
+  focusedMeasure: string
+  focusedPosition: {top: number; left: number}
+  handleFocusedMeasure: AgentConfiguration['handleFocusedServiceMeasure']
+  handleClose: () => void
+}
+
+interface State {
+  isActive: Readonly<Props>
+}
+
 @ErrorHandling
-class AgentToolbarFunction extends PureComponent {
-  private functionRef = React.createRef()
+class AgentToolbarFunction extends PureComponent<Props, State> {
+  private functionRef: React.RefObject<HTMLButtonElement> = React.createRef()
   constructor(props) {
     super(props)
+
     this.state = {
       isActive: props.isActivity,
     }
@@ -50,7 +72,6 @@ class AgentToolbarFunction extends PureComponent {
   private handleFocusing = () => {
     const {handleFocusedMeasure} = this.props
     const clickPosition = this.functionRef.current.getBoundingClientRect()
-    console.log({clickPosition})
     handleFocusedMeasure({clickPosition, _thisProps: this.props})
   }
 

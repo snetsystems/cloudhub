@@ -1,177 +1,187 @@
-import React, {PureComponent} from 'react'
+// Libraries
+import React, {PureComponent, ChangeEvent, MouseEvent} from 'react'
 import {connect} from 'react-redux'
+import _ from 'lodash'
 
+// Components
 import {Page} from 'src/reusable_ui'
 import SubSections from 'src/shared/components/SubSections'
-
 import AgentMinions from 'src/agent_admin/containers/AgentMinions'
 import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
 import AgentControl from 'src/agent_admin/containers/AgentControl'
-// import AgentLog from "src/agent_admin/containers/AgentLog";
-// import TestAPI from "src/agent_admin/test/TestAPI";
+import AgentConnectTips from 'src/agent_admin/components/AgentConnectTips'
+import AgentConnectForm from 'src/agent_admin/components/AgentConnectForm'
 
+// Notification
+import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {
-  isUserAuthorized,
-  ADMIN_ROLE,
-  SUPERADMIN_ROLE,
-} from 'src/auth/Authorized'
+  notifyAgentConnectFailed,
+  notifyAgentConnectSucceeded,
+  notifyAgentDisconnected,
+} from 'src/agent_admin/components/notifications'
+
+// APIs
+import {getSaltToken} from 'src/agent_admin/apis'
+
+// Constants
+import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
 // Types
-import {
-  Source,
-  Links,
-  NotificationAction,
-  RemoteDataState,
-  Host,
-  Layout,
-  TimeRange,
-} from 'src/types'
+import {RemoteDataState, Notification, NotificationFunc} from 'src/types'
 
 interface Props {
-  me: {}
-  source: {}
-  params: {}
+  notify: (message: Notification | NotificationFunc) => void
+  meRole: string
+  source: {id: number}
+  params: {tab: string}
+  handleKeyDown: () => void
 }
 
-class AgentAdminPage extends PureComponent<Props> {
-  constructor(props) {
-    super(props)
+interface State {
+  agentPageStatus: RemoteDataState
+  isSelectBoxView: boolean
+  minions: []
+  [x: string]: {}
+  isTokenCheck: boolean
+  masterUrl: string
+  masterId: string
+  masterPwd: string
+  saltMasterUrl: string
+  saltMasterToken: string
+}
 
+export interface LoginEvent extends MouseEvent<KeyboardEvent> {
+  onClick?: React.MouseEvent<HTMLButtonElement, MouseEvent>
+  onKeydown?: React.KeyboardEvent<HTMLInputElement>
+}
+
+class AgentAdminPage extends PureComponent<Props, State> {
+  constructor(props: Props) {
+    super(props)
     this.state = {
-      hostsPageStatus: RemoteDataState.NotStarted,
+      agentPageStatus: RemoteDataState.NotStarted,
       isSelectBoxView: true,
       minions: [],
+      isTokenCheck: true,
+      masterUrl: 'http://',
+      masterId: '',
+      masterPwd: '',
+      saltMasterUrl: '',
+      saltMasterToken: '',
     }
   }
 
-  public sections = me => {
+  componentWillMount() {
+    const saltMasterUrl = window.localStorage.getItem('salt-master-url')
+    const saltMasterToken = window.localStorage.getItem('salt-master-token')
+
+    if (saltMasterToken !== null) {
+      this.setState({
+        isTokenCheck: true,
+        saltMasterUrl: saltMasterUrl,
+        saltMasterToken: saltMasterToken,
+      })
+    } else {
+      this.setState({
+        masterUrl: 'http://',
+        masterId: '',
+        masterPwd: '',
+        saltMasterUrl: '',
+        saltMasterToken: '',
+        isTokenCheck: false,
+      })
+    }
+  }
+
+  public sections = (meRole: string) => {
+    const {saltMasterUrl, saltMasterToken} = this.state
+
     return [
       {
         url: 'agent-minions',
         name: 'Minions',
-        enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
+        enabled: isUserAuthorized(meRole, SUPERADMIN_ROLE),
         component: (
           <AgentMinions
-            isUserAuthorized={isUserAuthorized(me.role, SUPERADMIN_ROLE)}
+            isUserAuthorized={isUserAuthorized(meRole, SUPERADMIN_ROLE)}
             currentUrl={'agent-minions'}
-            // minions={this.state.minions}
+            saltMasterUrl={saltMasterUrl}
+            saltMasterToken={saltMasterToken}
+            onLogout={this.handleLogout}
           />
         ),
       },
       {
         url: 'agent-control',
         name: 'Collector Control',
-        enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
+        enabled: isUserAuthorized(meRole, SUPERADMIN_ROLE),
         component: (
           <AgentControl
-            isUserAuthorized={isUserAuthorized(me.role, SUPERADMIN_ROLE)}
+            isUserAuthorized={isUserAuthorized(meRole, SUPERADMIN_ROLE)}
             currentUrl={'agent-control'}
-            // minions={this.state.minions}
+            saltMasterUrl={saltMasterUrl}
+            saltMasterToken={saltMasterToken}
+            onLogout={this.handleLogout}
           />
         ),
       },
       {
         url: 'agent-configuration',
         name: 'Collector Config',
-        enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
+        enabled: isUserAuthorized(meRole, SUPERADMIN_ROLE),
         component: (
           <AgentConfiguration
-            isUserAuthorized={isUserAuthorized(me.role, SUPERADMIN_ROLE)}
+            isUserAuthorized={isUserAuthorized(meRole, SUPERADMIN_ROLE)}
             currentUrl={'agent-configuration'}
-            // minions={this.state.minions}
+            saltMasterUrl={saltMasterUrl}
+            saltMasterToken={saltMasterToken}
+            onLogout={this.handleLogout}
           />
         ),
       },
-      // {
-      //   url: 'agent-log',
-      //   name: 'Log',
-      //   enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
-      //   component: <AgentLog currentUrl={'agent-log'} minions={minions} />,
-      // },
-      // {
-      //   url: 'agent-TestAPI',
-      //   name: 'TestAPI',
-      //   enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
-      //   component: <TestAPI currentUrl={'agent-TestAPI'} minions={minions} />,
-      // },
     ]
-  }
-
-  public componentWillMount() {
-    this.setState({
-      minions: [
-        {
-          host: 'host1',
-          os: 'ubuntu',
-          osVersion: '19.1',
-          ip: '192.168.0.1',
-          isRunning: true,
-          isInstall: false,
-          isSaveFile: false,
-          isAccept: true,
-        },
-        {
-          host: 'host2',
-          os: 'debian',
-          osVersion: '9.1',
-          ip: '192.168.0.2',
-          isRunning: true,
-          isInstall: true,
-          isSaveFile: true,
-          isAccept: true,
-        },
-        {
-          host: 'host3',
-          os: 'window',
-          osVersion: 'Server',
-          ip: '192.168.0.3',
-          isRunning: false,
-          isInstall: true,
-          isSaveFile: true,
-          isAccept: true,
-        },
-        {
-          host: 'host4',
-          os: 'window',
-          osVersion: 'Server',
-          ip: '',
-          isRunning: false,
-          isInstall: false,
-          isSaveFile: false,
-          isAccept: false,
-        },
-        {
-          host: 'host5',
-          os: 'window',
-          osVersion: 'Server',
-          ip: '',
-          isRunning: false,
-          isInstall: false,
-          isSaveFile: false,
-          isAccept: false,
-        },
-      ],
-    })
   }
 
   render() {
     const {
-      me,
+      meRole,
       source,
       params: {tab},
     } = this.props
+
+    const {
+      isTokenCheck,
+      saltMasterUrl,
+      masterUrl,
+      masterId,
+      masterPwd,
+    } = this.state
+
     return (
       <Page>
         <Page.Header>
           <Page.Header.Left>
             <Page.Title title="Agent Configuration" />
           </Page.Header.Left>
-          <Page.Header.Right />
+          <Page.Header.Right>
+            <AgentConnectForm
+              onLoginClick={this.handleLogin}
+              onLogoutClick={this.handleLogout}
+              onChangeUrl={this.handleChangeMasterUrl}
+              onChangeId={this.handleChangeMasterId}
+              onChangePwd={this.handleChangeMasterPwd}
+              masterUrl={masterUrl}
+              masterId={masterId}
+              masterPwd={masterPwd}
+              isTokenCheck={isTokenCheck}
+            />
+            <AgentConnectTips saltMasterUrl={saltMasterUrl} />
+          </Page.Header.Right>
         </Page.Header>
         <Page.Contents fullWidth={true}>
-          <div className="container-fluid full-height">
+          <div className="container-fluid full-height agent-page">
             <SubSections
-              sections={this.sections(me)}
+              sections={this.sections(meRole)}
               activeSection={tab}
               parentUrl="agent-admin"
               sourceID={source.id}
@@ -181,10 +191,84 @@ class AgentAdminPage extends PureComponent<Props> {
       </Page>
     )
   }
+
+  handleLogin = (e: LoginEvent) => {
+    if (e.nativeEvent.which === 13 || e.nativeEvent.which === 1) {
+      const {notify} = this.props
+      const {masterUrl, masterId, masterPwd} = this.state
+
+      window.localStorage.removeItem('salt-master-url')
+      window.localStorage.removeItem('salt-master-token')
+
+      window.localStorage.setItem('salt-master-url', masterUrl)
+
+      const resSaltToken = getSaltToken(masterId, masterPwd)
+
+      resSaltToken.then(pResSaltTokenData => {
+        if (
+          pResSaltTokenData.message !== undefined &&
+          pResSaltTokenData.message !== null
+        ) {
+          notify(notifyAgentConnectFailed(pResSaltTokenData.message))
+        } else {
+          window.localStorage.setItem(
+            'salt-master-token',
+            pResSaltTokenData.data.return[0].token
+          )
+          this.setState({
+            saltMasterUrl: masterUrl,
+            saltMasterToken: pResSaltTokenData.data.return[0].token,
+            isTokenCheck: true,
+          })
+          notify(notifyAgentConnectSucceeded(masterUrl))
+        }
+      })
+    }
+  }
+
+  handleLogout = () => {
+    const {notify} = this.props
+
+    window.localStorage.removeItem('salt-master-url')
+    window.localStorage.removeItem('salt-master-token')
+
+    this.setState({
+      masterUrl: 'http://',
+      masterId: '',
+      masterPwd: '',
+      saltMasterUrl: '',
+      saltMasterToken: '',
+      isTokenCheck: false,
+    })
+    notify(notifyAgentDisconnected())
+  }
+
+  public handleChangeMasterUrl = (e: ChangeEvent<HTMLInputElement>) => {
+    this.setState({masterUrl: e.target.value})
+  }
+
+  public handleChangeMasterId = (e: ChangeEvent<HTMLInputElement>) => {
+    this.setState({masterId: e.target.value})
+  }
+
+  public handleChangeMasterPwd = (e: ChangeEvent<HTMLInputElement>) => {
+    this.setState({masterPwd: e.target.value})
+  }
 }
 
-const mapStateToProps = ({auth: {me}}) => ({
-  me,
-})
+const mapStateToProps = ({auth: {me}}) => {
+  const meRole = _.get(me, 'role', null)
+  return {
+    meRole,
+  }
+}
 
-export default connect(mapStateToProps, null)(AgentAdminPage)
+const mapDispatchToProps = {
+  notify: notifyAction,
+}
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+  null
+)(AgentAdminPage)

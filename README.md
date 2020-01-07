@@ -1,4 +1,4 @@
-# SCMP (Snet Cloud Monitoring Portal) - Latest v0.0.8
+# SCMP (Snet Cloud Monitoring Portal) - Special edition for 128T/SDPlex
 
 ## Intro.
 
@@ -30,6 +30,8 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
 - Hosts to Infrastructures and basic charts added.
 - Visualization added by criteria of Applications.
 - Continuous installation and deployment for telegraf's agent and configuration.
+- Addon features
+  - 128T Router & SDPlex Features.
 
 ## Setting in VSCode
 
@@ -53,24 +55,33 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
   "files.eol": "\n",
   "go.formatTool": "goimports",
   "go.lintOnSave": "package",
+  "prettier.singleQuote": true,
+  "prettier.bracketSpacing": false,
+  "prettier.semi": false,
+  "prettier.trailingComma": "es5",
   "eslint.alwaysShowStatus": true,
   "[jsonc]": {
-    "editor.defaultFormatter": "vscode.json-language-features"
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[javascript]": {
-    "editor.defaultFormatter": "vscode.typescript-language-features"
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "debug.showInStatusBar": "always",
   "[typescriptreact]": {
-    "editor.defaultFormatter": "vscode.typescript-language-features"
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[json]": {
-    "editor.defaultFormatter": "vscode.json-language-features"
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "debug.toolBarLocation": "docked",
   "[typescript]": {
-    "editor.defaultFormatter": "vscode.typescript-language-features"
-  }
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "window.zoomLevel": 0,
+  "gitlens.views.repositories.files.layout": "tree",
+  "git.ignoreLegacyWarning": true,
+  "screencastMode.onlyKeyboardShortcuts": true,
+  "diffEditor.ignoreTrimWhitespace": false
 }
 ```
 

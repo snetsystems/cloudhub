@@ -112,6 +112,7 @@ const mapDispatchToProps = dispatch => ({
   notify: bindActionCreators(notifyAction, dispatch),
 })
 
-export default connect(mapStateToProps, mapDispatchToProps)(
-  ErrorHandling(QueriesPage)
-)
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(ErrorHandling(QueriesPage))

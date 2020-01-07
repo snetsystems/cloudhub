@@ -24,7 +24,6 @@ import {
 } from 'src/auth'
 import CheckSources from 'src/CheckSources'
 import {StatusPage} from 'src/status'
-import {SwanSdplexStatusPage, SwanSdplexSettingPage} from 'src/addon/128t'
 import DataExplorerPage from 'src/data_explorer'
 import {DashboardsPage, DashboardPage} from 'src/dashboards'
 import {HostsPage, HostPage} from 'src/hosts'
@@ -40,6 +39,7 @@ import {
 import {AdminCMPPage, AdminInfluxDBPage} from 'src/admin'
 import {ManageSources, OnboardingWizard} from 'src/sources'
 import {AgentAdminPage} from 'src/agent_admin'
+import {GraphqlProvider} from 'src/addon/128t'
 
 import NotFound from 'src/shared/components/NotFound'
 import PageSpinner from 'src/shared/components/PageSpinner'
@@ -181,12 +181,16 @@ class Root extends PureComponent<{}, State> {
                 <Route path="manage-sources" component={ManageSources} />
                 <Route path="agent-admin/:tab" component={AgentAdminPage} />
                 <Route
-                  path="add-on/128t/status"
-                  component={SwanSdplexStatusPage}
+                  path="add-on/128t-status"
+                  component={() => {
+                    return <GraphqlProvider page={'SwanSdplexStatusPage'} />
+                  }}
                 />
                 <Route
-                  path="add-on/128t/setting"
-                  component={SwanSdplexSettingPage}
+                  path="add-on/128t-setting"
+                  component={() => {
+                    return <GraphqlProvider page={'SwanSdplexSettingPage'} />
+                  }}
                 />
               </Route>
             </Route>

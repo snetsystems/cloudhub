@@ -1,37 +1,26 @@
 import React, {PureComponent} from 'react'
-import {TOPSOURCES_TABLE_SIZING} from 'src/addon/128t/constants/tableSizing'
-import {TopSources} from 'src/types'
+import {TOPSOURCES_TABLE_SIZING} from 'src/addon/128t/constants'
+import {TopSource} from 'src/addon/128t/types'
+import {transBytes, transBps} from 'src/shared/utils/units'
 
 interface Props {
-  topSources: TopSources
+  topSources: TopSource
 }
 
-interface State {
-  showModal: boolean
-}
-
-const TableItem = ({width, title}) => {
-  return (
-    <div
-      className="hosts-table--td"
-      style={{width: width, alignItems: 'center', lineHeight: '200%'}}
-    >
-      {title}
-    </div>
-  )
-}
-
-class TopSourcesTableRow extends PureComponent<Props, State> {
-  constructor(props) {
+class TopSourcesTableRow extends PureComponent<Props> {
+  constructor(props: Props) {
     super(props)
-
-    this.state = {
-      showModal: false,
-    }
   }
 
-  public focusedClasses = (): string => {
-    return 'hosts-table--tr'
+  private TableItem = ({width, title}) => {
+    return (
+      <div
+        className="hosts-table--td"
+        style={{width: width, alignItems: 'center', lineHeight: '200%'}}
+      >
+        {title}
+      </div>
+    )
   }
 
   render() {
@@ -52,20 +41,17 @@ class TopSourcesTableRow extends PureComponent<Props, State> {
     } = TOPSOURCES_TABLE_SIZING
 
     return (
-      <div className={this.focusedClasses()}>
-        <TableItem title={ip} width={IP} />
-        <TableItem title={tenant} width={TENANT} />
-        <TableItem title={currentBandwidth} width={CURRENTBANDWIDTH} />
-        <TableItem title={totalData} width={TOTALDATA} />
-        <TableItem title={sessionCount} width={SESSIONCOUNT} />
+      <div className={'hosts-table--tr'}>
+        <this.TableItem title={ip} width={IP} />
+        <this.TableItem title={tenant} width={TENANT} />
+        <this.TableItem title={transBytes(totalData, 2)} width={TOTALDATA} />
+        <this.TableItem title={sessionCount} width={SESSIONCOUNT} />
+        <this.TableItem
+          title={transBps(currentBandwidth * 8, 2)}
+          width={CURRENTBANDWIDTH}
+        />
       </div>
     )
-  }
-
-  public onClickApplybuttonHide = () => {
-    this.setState({
-      showModal: false,
-    })
   }
 }
 

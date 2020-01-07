@@ -379,3 +379,86 @@ export const modeMarkdown = {
     lineComment: '//',
   },
 }
+
+export const modeAgentConf = {
+  // The start state contains the rules that are intially used
+  start: [
+    // Agent Syntax
+    {
+      regex: /[\w\d]+(?=\s[=]\s)/,
+      token: 'variable',
+    },
+    {
+      regex: /[=][>]/,
+      token: 'arrow-function',
+    },
+    {
+      regex: /\w+(?=[)]\s[=][>])(?![(])/,
+      token: 'function-arg',
+    },
+    {
+      regex: /\w+(?=[[]["]|[.])/,
+      token: 'function-arg-ref',
+    },
+    {
+      regex: /AND|OR|[=][=]|[!][=]|[<][=]|[>][=]/,
+      token: 'operator',
+    },
+    // The regex matches the token, the token property contains the type
+    {
+      regex: /"(?:[^\\]|\\.)*?(?:"|$)/,
+      token: 'string-double',
+    },
+    {
+      regex: /'(?:[^\\]|\\.)*?(?:'|$)/,
+      token: 'string-single',
+    },
+    {
+      regex: /(function)(\s+)([a-z$][\w$]*)/,
+      token: ['keyword', null, 'variable-2'],
+    },
+    {
+      regex: /true|false|TRUE|FALSE/,
+      token: 'boolean',
+    },
+    {
+      regex: /null|undefined/,
+      token: 'null',
+    },
+    {
+      regex: /0x[a-f\d]+|[-+]?(?:\.\d+|\d+\.?\d*)(?:e[-+]?\d+)?/i,
+      token: 'number',
+    },
+    {
+      regex: /({.+:.+})/,
+      token: 'object',
+    },
+    {
+      regex: /\#.*/,
+      token: 'comment',
+    },
+    {
+      regex: /[-+\/*=<>!]+/,
+      token: 'operator',
+    },
+    {
+      regex: /\[(?:[^\\]|\\.)*?(?:|$)]+/,
+      token: 'agent-title',
+    },
+  ],
+}
+
+export const modeLogger = {
+  // The start state contains the rules that are intially used
+  start: [
+    // Agent Syntax
+    {
+      regex: /true|false|TRUE|FALSE/,
+      token: 'boolean',
+    },
+    {
+      regex: /errors|Errors|ERRORS|error|Error|ERROR/,
+      token: 'error',
+    },
+  ],
+}

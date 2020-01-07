@@ -1,197 +1,171 @@
-import React, { PureComponent } from "react";
+// Libraries
+import React, {PureComponent} from 'react'
+import _ from 'lodash'
+import memoize from 'memoize-one'
 
-import _ from "lodash";
-import memoize from "memoize-one";
+// Components
+import AgentControlTableRow from 'src/agent_admin/components/AgentControlTableRow'
+import SearchBar from 'src/hosts/components/SearchBar'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import PageSpinner from 'src/shared/components/PageSpinner'
+import AgentControlModal from 'src/agent_admin/components/AgentControlModal'
 
-import SearchBar from "src/hosts/components/SearchBar";
-import AgentControlTableRow from "src/agent_admin/components/AgentControlTableRow";
-import FancyScrollbar from "src/shared/components/FancyScrollbar";
+// Contants
+import {AGENT_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
 
-import PageSpinner from "src/shared/components/PageSpinner";
+// Types
+import {RemoteDataState} from 'src/types'
+import {Minion} from 'src/agent_admin/type'
 
-import { AGENT_TABLE_SIZING } from "src/hosts/constants/tableSizing";
-
-import { Source, RemoteDataState, Minion } from "src/types";
-
-import { ErrorHandling } from "src/shared/decorators/errors";
+// Decorator
+import {ErrorHandling} from 'src/shared/decorators/errors'
 
 enum SortDirection {
-  ASC = "asc",
-  DESC = "desc"
+  ASC = 'asc',
+  DESC = 'desc',
 }
+
 export interface Props {
-  minions: Minion[];
-  controlPageStatus: RemoteDataState;
-  onClickTableRow: () => void;
-  onClickAction: () => void;
-  onClickRun: () => void;
-  onClickStop: () => void;
-  onClickInstall: () => void;
-  //handleAllCheck: () => object
-  // handleWheelKeyCommand: () => void
+  minions: Minion[]
+  controlPageStatus: RemoteDataState
+  isAllCheck: boolean
+  onClickAction: (host: string, isRunning: boolean) => () => void
+  onClickRun: () => void
+  onClickStop: () => void
+  onClickInstall: () => void
+  handleAllCheck: ({_this: object}) => void
+  handleMinionCheck: ({_this: object}) => void
 }
+
 interface State {
-  searchTerm: string;
-  sortDirection: SortDirection;
-  sortKey: string;
+  searchTerm: string
+  sortDirection: SortDirection
+  sortKey: string
 }
 
 @ErrorHandling
 class AgentControlTable extends PureComponent<Props, State> {
   constructor(props: Props) {
-    super(props);
+    super(props)
 
     this.state = {
-      searchTerm: "",
+      searchTerm: '',
       sortDirection: SortDirection.ASC,
-      sortKey: "name"
-    };
+      sortKey: 'name',
+    }
   }
 
   public getSortedHosts = memoize(
     (
-      minions,
+      minions: Minion[],
       searchTerm: string,
       sortKey: string,
-      sortDirection: SortDirection
+      sortDirection: SortDirection.ASC
     ) => this.sort(this.filter(minions, searchTerm), sortKey, sortDirection)
-  );
+  )
 
-  public filter(allHosts, searchTerm) {
-    const filterText = searchTerm.toLowerCase();
+  public filter(allHosts: Minion[], searchTerm: string): Minion[] {
+    const filterText = searchTerm.toLowerCase()
     return allHosts.filter(h => {
-      // const apps = h.apps ? h.apps.join(', ') : ''
-
-      // let tagResult = false
-      // if (h.tags) {
-      //   tagResult = Object.keys(h.tags).reduce((acc, key) => {
-      //     return acc || h.tags[key].toLowerCase().includes(filterText)
-      //   }, false)
-      // } else {
-      //   tagResult = false
-      // }
-      return h.host.toLowerCase().includes(filterText);
-      // apps.toLowerCase().includes(filterText) ||
-      // tagResult
-    });
+      return h.host.toLowerCase().includes(filterText)
+    })
   }
 
-  public sort(hosts, key, direction) {
+  public sort(
+    hosts: Minion[],
+    key: string,
+    direction: SortDirection
+  ): Minion[] {
     switch (direction) {
       case SortDirection.ASC:
-        return _.sortBy(hosts, e => e[key]);
+        return _.sortBy(hosts, e => e[key])
       case SortDirection.DESC:
-        return _.sortBy(hosts, e => e[key]).reverse();
+        return _.sortBy(hosts, e => e[key]).reverse()
       default:
-        return hosts;
+        return hosts
     }
   }
 
-  public updateSearchTerm = searchTerm => {
-    this.setState({ searchTerm });
-  };
+  public updateSearchTerm = (searchTerm: string): void => {
+    this.setState({searchTerm})
+  }
 
-  public updateSort = key => () => {
-    const { sortKey, sortDirection } = this.state;
+  public updateSort = (key: string) => () => {
+    const {sortKey, sortDirection} = this.state
     if (sortKey === key) {
       const reverseDirection =
         sortDirection === SortDirection.ASC
           ? SortDirection.DESC
-          : SortDirection.ASC;
-      this.setState({ sortDirection: reverseDirection });
+          : SortDirection.ASC
+      this.setState({sortDirection: reverseDirection})
     } else {
-      this.setState({ sortKey: key, sortDirection: SortDirection.ASC });
+      this.setState({sortKey: key, sortDirection: SortDirection.ASC})
     }
-  };
+  }
 
-  public sortableClasses = key => {
-    const { sortKey, sortDirection } = this.state;
+  public sortableClasses = (key: string): string => {
+    const {sortKey, sortDirection} = this.state
     if (sortKey === key) {
       if (sortDirection === SortDirection.ASC) {
-        return "hosts-table--th sortable-header sorting-ascending";
+        return 'hosts-table--th sortable-header sorting-ascending'
       }
-      return "hosts-table--th sortable-header sorting-descending";
+      return 'hosts-table--th sortable-header sorting-descending'
     }
-    return "hosts-table--th sortable-header";
-  };
-
-  public componentWillMount() {}
-
-  public componentDidMount() {}
-
-  public componentWillUnmount() {}
+    return 'hosts-table--th sortable-header'
+  }
 
   private get AgentTableHeader(): JSX.Element {
-    return this.AgentTableHeaderEachPage;
+    return this.AgentTableHeaderEachPage
   }
 
   private get AgentTableContents(): JSX.Element {
-    const { minions, controlPageStatus } = this.props;
-    const { sortKey, sortDirection, searchTerm } = this.state;
+    const {minions, controlPageStatus} = this.props
 
-    const sortedHosts = this.getSortedHosts(
-      minions,
-      searchTerm,
-      sortKey,
-      sortDirection
-    );
-
-    // if (controlPageStatus === RemoteDataState.Loading) {
-    //   return this.LoadingState;
-    // }
     if (controlPageStatus === RemoteDataState.Error) {
-      return this.ErrorState;
+      return this.ErrorState
     }
     if (controlPageStatus === RemoteDataState.Done && minions.length === 0) {
-      return this.NoHostsState;
+      return this.NoHostsState
     }
     if (controlPageStatus === RemoteDataState.Done && minions.length === 0) {
-      return this.NoSortedHostsState;
+      return this.NoSortedHostsState
     }
 
-    return this.AgentTableWithHosts;
+    return this.AgentTableWithHosts
   }
 
   private get LoadingState(): JSX.Element {
     return (
-      <div
-        style={{
-          position: "absolute",
-          zIndex: 3,
-          backgroundColor: "rgba(0,0,0,0.5)",
-          width: "100%",
-          height: "100%"
-        }}
-      >
+      <div className="agent--state agent--loding-state">
         <PageSpinner />
       </div>
-    );
+    )
   }
 
   private get ErrorState(): JSX.Element {
     return (
-      <div className="generic-empty-state">
-        <h4 style={{ margin: "90px 0" }}>There was a problem loading hosts</h4>
+      <div className="agent--state generic-empty-state">
+        <h4 style={{margin: '90px 0'}}>There was a problem loading hosts</h4>
       </div>
-    );
+    )
   }
 
   private get NoHostsState(): JSX.Element {
     return (
-      <div className="generic-empty-state">
-        <h4 style={{ margin: "90px 0" }}>No Hosts found</h4>
+      <div className="agent--state generic-empty-state">
+        <h4 style={{margin: '90px 0'}}>No Hosts found</h4>
       </div>
-    );
+    )
   }
 
   private get NoSortedHostsState(): JSX.Element {
     return (
-      <div className="generic-empty-state">
-        <h4 style={{ margin: "90px 0" }}>
+      <div className="agent--state generic-empty-state">
+        <h4 style={{margin: '90px 0'}}>
           There are no hosts that match the search criteria
         </h4>
       </div>
-    );
+    )
   }
 
   public render() {
@@ -199,8 +173,13 @@ class AgentControlTable extends PureComponent<Props, State> {
       onClickRun,
       onClickStop,
       onClickInstall,
-      controlPageStatus
-    } = this.props;
+      controlPageStatus,
+      minions,
+    } = this.props
+
+    const isCheckedMinions = !(
+      minions.filter(m => m.isCheck === true).length > 0
+    )
 
     return (
       <div className="panel">
@@ -215,81 +194,76 @@ class AgentControlTable extends PureComponent<Props, State> {
           />
         </div>
         <div className="panel-body">{this.AgentTableContents}</div>
-        <div
-          className=""
-          style={{
-            padding: "20px",
-            paddingTop: "0px",
-            textAlign: "right"
-          }}
-        >
-          <button
-            disabled={
-              controlPageStatus === RemoteDataState.Loading ? true : false
-            }
-            className="btn btn-inline_block btn-default"
-            onClick={onClickRun.bind(this)}
-          >
-            RUN
-          </button>
-          <button
-            disabled={
-              controlPageStatus === RemoteDataState.Loading ? true : false
-            }
-            className="btn btn-inline_block btn-default"
-            onClick={onClickStop.bind(this)}
-            style={{
-              marginLeft: "5px"
-            }}
-          >
-            STOP
-          </button>
-          <button
-            disabled={
-              controlPageStatus === RemoteDataState.Loading ? true : false
-            }
-            className="btn btn-inline_block btn-default"
-            onClick={onClickInstall.bind(this)}
-            style={{
-              marginLeft: "5px"
-            }}
-          >
-            INSTALL
-          </button>
+        <div className="pabel-body--agent-control">
+          <AgentControlModal
+            disabled={isCheckedMinions}
+            minions={minions}
+            name={'RUN'}
+            message={'running agents included. keep going?'}
+            buttonClassName={'btn btn-inline_block btn-default agent--btn'}
+            cancelText={'Cancel'}
+            confirmText={'Go Run'}
+            onCancel={() => {}}
+            onConfirm={onClickRun.bind(this)}
+          />
+
+          <AgentControlModal
+            disabled={isCheckedMinions}
+            minions={minions}
+            name={'STOP'}
+            message={'stoped agents included. keep going?'}
+            buttonClassName={'btn btn-inline_block btn-default agent--btn'}
+            cancelText={'Cancel'}
+            confirmText={'Go STOP'}
+            onCancel={() => {}}
+            onConfirm={onClickStop.bind(this)}
+          />
+
+          <AgentControlModal
+            disabled={isCheckedMinions}
+            minions={minions}
+            name={'INSTALL'}
+            message={'Agents with Telegraf installed are included. keep going?'}
+            buttonClassName={'btn btn-inline_block btn-default agent--btn'}
+            cancelText={'Cancel'}
+            confirmText={'Go Run'}
+            onCancel={() => {}}
+            onConfirm={onClickInstall.bind(this)}
+          />
         </div>
       </div>
-    );
+    )
   }
 
   private getHandleAllCheck = () => {
-    const { handleAllCheck } = this.props;
-    return handleAllCheck({ _this: this });
-  };
+    const {handleAllCheck} = this.props
+    return handleAllCheck({_this: this})
+  }
 
   private get AgentTitle() {
-    const { minions } = this.props;
-    const { sortKey, sortDirection, searchTerm } = this.state;
+    const {minions} = this.props
+    const {sortKey, sortDirection, searchTerm} = this.state
     const sortedHosts = this.getSortedHosts(
       minions,
       searchTerm,
       sortKey,
       sortDirection
-    );
+    )
 
-    const hostsCount = sortedHosts.length;
+    const hostsCount = sortedHosts.length
     if (hostsCount === 1) {
-      return `1 Minions`;
+      return `1 Minions`
     }
-    return `${hostsCount} Minions`;
+    return `${hostsCount} Minions`
   }
 
   private get AgentTableHeaderEachPage() {
-    const { isAllCheck } = this.props;
-    const { CheckWidth, IPWidth, HostWidth, StatusWidth } = AGENT_TABLE_SIZING;
+    const {isAllCheck} = this.props
+    const {CheckWidth, IPWidth, HostWidth, StatusWidth} = AGENT_TABLE_SIZING
     return (
       <div className="hosts-table--thead">
         <div className="hosts-table--tr">
-          <div style={{ width: CheckWidth }} className="hosts-table--th">
+          <div style={{width: CheckWidth}} className="hosts-table--th">
             <input
               type="checkbox"
               checked={isAllCheck}
@@ -298,99 +272,89 @@ class AgentControlTable extends PureComponent<Props, State> {
             />
           </div>
           <div
-            onClick={this.updateSort("name")}
-            className={this.sortableClasses("name")}
-            style={{ width: HostWidth }}
+            onClick={this.updateSort('name')}
+            className={this.sortableClasses('name')}
+            style={{width: HostWidth}}
           >
             Host
             <span className="icon caret-up" />
           </div>
           <div
-            onClick={this.updateSort("operatingSystem")}
-            className={this.sortableClasses("operatingSystem")}
-            style={{ width: IPWidth }}
+            onClick={this.updateSort('OS')}
+            className={this.sortableClasses('OS')}
+            style={{width: IPWidth}}
           >
             OS
             <span className="icon caret-up" />
           </div>
           <div
-            onClick={this.updateSort("operatingSystem")}
-            className={this.sortableClasses("operatingSystem")}
-            style={{ width: IPWidth }}
+            onClick={this.updateSort('OSVersion')}
+            className={this.sortableClasses('OSVersion')}
+            style={{width: IPWidth}}
           >
             OS Version
             <span className="icon caret-up" />
           </div>
 
           <div
-            onClick={this.updateSort("deltaUptime")}
-            className={this.sortableClasses("deltaUptime")}
-            style={{ width: IPWidth }}
+            onClick={this.updateSort('ip')}
+            className={this.sortableClasses('ip')}
+            style={{width: IPWidth}}
           >
             IP
             <span className="icon caret-up" />
           </div>
           <div
             className="hosts-table--th list-type"
-            style={{ width: StatusWidth }}
+            style={{width: StatusWidth}}
           >
             Enabled
           </div>
           <div
-            className={this.sortableClasses("cpu")}
-            style={{ width: StatusWidth }}
+            className={this.sortableClasses('cpu')}
+            style={{width: StatusWidth}}
           >
             Action
           </div>
         </div>
       </div>
-    );
+    )
   }
 
   private get AgentTableWithHosts() {
-    const {
-      minions,
-      onClickTableRow,
-      onClickAction,
-      onClickRun,
-      onClickStop,
-      onClickInstall,
-      isAllCheck,
-      handleMinionCheck
-    } = this.props;
-    const { sortKey, sortDirection, searchTerm } = this.state;
+    const {minions, onClickAction, isAllCheck, handleMinionCheck} = this.props
+    const {sortKey, sortDirection, searchTerm} = this.state
 
-    const sortedHosts = this.getSortedHosts(
+    const sortedHosts: [] = this.getSortedHosts(
       minions,
       searchTerm,
       sortKey,
       sortDirection
-    );
+    )
 
     return (
       <div className="hosts-table">
         {this.AgentTableHeader}
-        <FancyScrollbar
-          children={sortedHosts.map((m, i) => (
-            <AgentControlTableRow
-              key={i}
-              minions={m}
-              onClickTableRow={onClickTableRow}
-              onClickAction={onClickAction}
-              onClickRun={onClickRun}
-              onClickStop={onClickStop}
-              onClickInstall={onClickInstall}
-              isCheck={m.isCheck}
-              isAllCheck={isAllCheck}
-              handleMinionCheck={handleMinionCheck}
-            />
-          ))}
-          itemHeight={26}
-          className="hosts-table--tbody"
-        />
+        {sortedHosts.length > 0 ? (
+          <FancyScrollbar
+            children={sortedHosts.map(
+              (m: Minion, i: number): JSX.Element => (
+                <AgentControlTableRow
+                  key={i}
+                  minions={m}
+                  isCheck={m.isCheck}
+                  isAllCheck={isAllCheck}
+                  onClickAction={onClickAction}
+                  handleMinionCheck={handleMinionCheck}
+                />
+              )
+            )}
+            className="hosts-table--tbody"
+          />
+        ) : null}
       </div>
-    );
+    )
   }
 }
 
-export default AgentControlTable;
+export default AgentControlTable

@@ -7,9 +7,9 @@ import SearchBar from 'src/hosts/components/SearchBar'
 import RouterTableRow from 'src/addon/128t/components/RouterTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
-import {Router} from 'src/types'
+import {Router, TopSource} from 'src/addon/128t/types'
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {ROUTER_TABLE_SIZING} from 'src/addon/128t/constants/tableSizing'
+import {ROUTER_TABLE_SIZING} from 'src/addon/128t/constants'
 
 enum SortDirection {
   ASC = 'asc',
@@ -18,41 +18,62 @@ enum SortDirection {
 
 export interface Props {
   routers: Router[]
-  onClickModal: ({name, _this, onClickfn}) => JSX.Element
+  focusedAssetId: string
+  onClickTableRow: (
+    topSources: TopSource[],
+    focusedAssetId: string
+  ) => () => void
 }
 
 interface State {
   searchTerm: string
   sortDirection: SortDirection
   sortKey: string
+  routerCount: string
 }
 
 @ErrorHandling
 class RouterTable extends PureComponent<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props)
 
     this.state = {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
       sortKey: 'assetId',
+      routerCount: '0',
     }
   }
 
   public getSortedRouters = memoize(
     (
-      routers,
+      routers: Router[],
       searchTerm: string,
       sortKey: string,
       sortDirection: SortDirection
     ) => this.sort(this.filter(routers, searchTerm), sortKey, sortDirection)
   )
 
+  public componentWillMount() {
+    const {routers} = this.props
+    const {sortKey, sortDirection, searchTerm} = this.state
+
+    const sortedRouters = this.getSortedRouters(
+      routers,
+      searchTerm,
+      sortKey,
+      sortDirection
+    )
+
+    this.setState({routerCount: sortedRouters.length})
+  }
+
   public render() {
+    const {routerCount} = this.state
     return (
       <div className="panel">
         <div className="panel-heading">
-          <h2 className="panel-title">Routers</h2>
+          <h2 className="panel-title">{routerCount} Routers</h2>
           <SearchBar
             placeholder="Filter by Router..."
             onSearch={this.updateSearchTerm}
@@ -67,21 +88,23 @@ class RouterTable extends PureComponent<Props, State> {
           </div>
         </div>
       </div>
-      // </div>
     )
   }
 
   private get TableHeader() {
     const {
       ASSETID,
-      ROUTERSTATUS,
-      NETWORKSTATUS,
-      APPLICATIONSTATUS,
-      CPU,
-      MEMORY,
-      SDPLEXTRAFFICUSAGE,
-      CONFIG,
-      FIRMWARE,
+      LOCATIONCOORDINATES,
+      MANAGEMENTCONNECTED,
+      BANDWIDTH_AVG,
+      SESSION_CNT_AVG,
+      ENABLED,
+      ROLE,
+      STARTTIME,
+      SOFTWAREVERSION,
+      MEMORYUSAGE,
+      CPUUSAGE,
+      DISKUSAGE,
     } = ROUTER_TABLE_SIZING
     return (
       <>
@@ -93,69 +116,92 @@ class RouterTable extends PureComponent<Props, State> {
           Asset ID
           <span className="icon caret-up" />
         </div>
-
         <div
-          onClick={this.updateSort('routerstatus')}
-          className={this.sortableClasses('routerstatus')}
-          style={{width: ROUTERSTATUS}}
+          onClick={this.updateSort('role')}
+          className={this.sortableClasses('role')}
+          style={{width: ROLE}}
         >
-          Router Status
+          Role
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('networkstatus')}
-          className={this.sortableClasses('networkstatus')}
-          style={{width: NETWORKSTATUS}}
+          onClick={this.updateSort('enabled')}
+          className={this.sortableClasses('enabled')}
+          style={{width: ENABLED}}
         >
-          Network Status
+          Enabled
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('applicationstatus')}
-          className={this.sortableClasses('applicationstatus')}
-          style={{width: APPLICATIONSTATUS}}
+          onClick={this.updateSort('locationCoordinates')}
+          className={this.sortableClasses('locationCoordinates')}
+          style={{width: LOCATIONCOORDINATES}}
         >
-          Application Status
+          Location Coordinates
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('cpu')}
-          className={this.sortableClasses('cpu')}
-          style={{width: CPU}}
+          onClick={this.updateSort('managementConnected')}
+          className={this.sortableClasses('managementConnected')}
+          style={{width: MANAGEMENTCONNECTED}}
+        >
+          State
+          <span className="icon caret-up" />
+        </div>
+        <div
+          onClick={this.updateSort('startTime')}
+          className={this.sortableClasses('startTime')}
+          style={{width: STARTTIME}}
+        >
+          Uptime
+          <span className="icon caret-up" />
+        </div>
+        <div
+          onClick={this.updateSort('softwareVersion')}
+          className={this.sortableClasses('softwareVersion')}
+          style={{width: SOFTWAREVERSION}}
+        >
+          Version
+          <span className="icon caret-up" />
+        </div>
+        <div
+          onClick={this.updateSort('cpuUsage')}
+          className={this.sortableClasses('cpuUsage')}
+          style={{width: CPUUSAGE}}
         >
           CPU
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('memory')}
-          className={this.sortableClasses('memory')}
-          style={{width: MEMORY}}
+          onClick={this.updateSort('memoryUsage')}
+          className={this.sortableClasses('memoryUsage')}
+          style={{width: MEMORYUSAGE}}
         >
           Memory
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('sdplextraffic')}
-          className={this.sortableClasses('sdplextraffic')}
-          style={{width: SDPLEXTRAFFICUSAGE}}
+          onClick={this.updateSort('diskUsage')}
+          className={this.sortableClasses('diskUsage')}
+          style={{width: DISKUSAGE}}
         >
-          SDPlex traffic usage
+          Disk(/)
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('config')}
-          className={this.sortableClasses('config')}
-          style={{width: CONFIG}}
+          onClick={this.updateSort('bandwidth_avg')}
+          className={this.sortableClasses('bandwidth_avg')}
+          style={{width: BANDWIDTH_AVG}}
         >
-          Config
+          Avg. B/W
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('firmware')}
-          className={this.sortableClasses('firmware')}
-          style={{width: FIRMWARE}}
+          onClick={this.updateSort('session_arrivals')}
+          className={this.sortableClasses('session_arrivals')}
+          style={{width: SESSION_CNT_AVG}}
         >
-          Firmware
+          Session Arrivals
           <span className="icon caret-up" />
         </div>
       </>
@@ -164,7 +210,7 @@ class RouterTable extends PureComponent<Props, State> {
 
   // data add
   private get TableData() {
-    const {routers, onClickModal} = this.props
+    const {routers, focusedAssetId, onClickTableRow} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
     //const sortedRouters = routers
@@ -177,29 +223,26 @@ class RouterTable extends PureComponent<Props, State> {
 
     return (
       <FancyScrollbar
-        children={sortedRouters.map((r, i) => (
-          <RouterTableRow onClickModal={onClickModal} router={r} key={i} />
+        children={sortedRouters.map((r: Router, i: number) => (
+          <RouterTableRow
+            onClickTableRow={onClickTableRow}
+            focusedAssetId={focusedAssetId}
+            router={r}
+            key={i}
+          />
         ))}
       />
     )
   }
 
-  public filter(allrouters, searchTerm) {
+  public filter(allrouters: Router[], searchTerm: string) {
     const filterText = searchTerm.toLowerCase()
     return allrouters.filter(h => {
-      let tagResult = false
-      if (h.tags) {
-        tagResult = Object.keys(h.tags).reduce((acc, key) => {
-          return acc || h.tags[key].toLowerCase().includes(filterText)
-        }, false)
-      } else {
-        tagResult = false
-      }
-      return h.assetID.toLowerCase().includes(filterText) || tagResult
+      return h.assetId.toLowerCase().includes(filterText)
     })
   }
 
-  public sort(allrouters, key, direction) {
+  public sort(allrouters: Router[], key: string, direction: SortDirection) {
     switch (direction) {
       case SortDirection.ASC:
         return _.sortBy(allrouters, e => e[key])
@@ -210,11 +253,11 @@ class RouterTable extends PureComponent<Props, State> {
     }
   }
 
-  public updateSearchTerm = searchTerm => {
+  public updateSearchTerm = (searchTerm: string) => {
     this.setState({searchTerm})
   }
 
-  public updateSort = key => () => {
+  public updateSort = (key: string) => () => {
     const {sortKey, sortDirection} = this.state
     if (sortKey === key) {
       const reverseDirection =
