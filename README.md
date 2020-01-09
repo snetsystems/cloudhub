@@ -1,4 +1,4 @@
-# SCMP (Snet Cloud Monitoring Portal) - Special edition for 128T/SDPlex
+# SCMP (Snet Cloud Monitoring Portal) - Special edition for dev-0.9.1
 
 ## Intro.
 
