@@ -23,7 +23,6 @@ interface State {
   searchTerm: string
   sortDirection: SortDirection
   sortKey: string
-
   topSourceCount: string
 }
 

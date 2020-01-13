@@ -12,14 +12,39 @@ class TopSourcesTableRow extends PureComponent<Props> {
     super(props)
   }
 
-  private TableItem = ({width, title}) => {
+  private TableItem = ({width, title, className}) => {
     return (
-      <div
-        className="hosts-table--td"
-        style={{width: width, alignItems: 'center', lineHeight: '200%'}}
-      >
+      <div className={`hosts-table--td ${className}`} style={{width: width}}>
         {title}
       </div>
+    )
+  }
+
+  private unitIndicator = (value: string | number): JSX.Element => {
+    const divider = String(value).split(' ')
+    return (
+      <>
+        {divider[0]}
+        <span
+          style={{
+            width: '50px',
+          }}
+        >
+          <span
+            style={{
+              padding: '1px 5px',
+              borderRadius: '5px',
+              background: '#313131',
+              textAlign: 'left',
+              marginLeft: '5px',
+              fontSize: '10px',
+              border: '1px solid #a1a1a1',
+            }}
+          >
+            {divider[1]}
+          </span>
+        </span>
+      </>
     )
   }
 
@@ -41,14 +66,26 @@ class TopSourcesTableRow extends PureComponent<Props> {
     } = TOPSOURCES_TABLE_SIZING
 
     return (
-      <div className={'hosts-table--tr'}>
-        <this.TableItem title={ip} width={IP} />
-        <this.TableItem title={tenant} width={TENANT} />
-        <this.TableItem title={transBytes(totalData, 2)} width={TOTALDATA} />
-        <this.TableItem title={sessionCount} width={SESSIONCOUNT} />
+      <div
+        className={'hosts-table--tr'}
+        style={{borderBottom: '1px solid #353535'}}
+      >
+        <this.TableItem title={ip} width={IP} className={'align--start'} />
+        <this.TableItem title={tenant} width={TENANT} className={''} />
         <this.TableItem
-          title={transBps(currentBandwidth * 8, 2)}
+          title={sessionCount}
+          width={SESSIONCOUNT}
+          className={'align--end'}
+        />
+        <this.TableItem
+          title={this.unitIndicator(transBps(currentBandwidth * 8, 2))}
           width={CURRENTBANDWIDTH}
+          className={'align--end'}
+        />
+        <this.TableItem
+          title={this.unitIndicator(transBytes(totalData, 2))}
+          width={TOTALDATA}
+          className={'align--end'}
         />
       </div>
     )

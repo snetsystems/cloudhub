@@ -7,7 +7,7 @@ import SearchBar from 'src/hosts/components/SearchBar'
 import RouterTableRow from 'src/addon/128t/components/RouterTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
-import {Router, TopSource} from 'src/addon/128t/types'
+import {Router, TopSource, TopSession} from 'src/addon/128t/types'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {ROUTER_TABLE_SIZING} from 'src/addon/128t/constants'
 
@@ -21,6 +21,7 @@ export interface Props {
   focusedAssetId: string
   onClickTableRow: (
     topSources: TopSource[],
+    topSessions: TopSession[],
     focusedAssetId: string
   ) => () => void
 }
@@ -145,7 +146,7 @@ class RouterTable extends PureComponent<Props, State> {
           className={this.sortableClasses('managementConnected')}
           style={{width: MANAGEMENTCONNECTED}}
         >
-          State
+          Connected
           <span className="icon caret-up" />
         </div>
         <div

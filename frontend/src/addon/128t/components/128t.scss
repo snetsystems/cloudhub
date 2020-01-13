@@ -1,0 +1,19 @@
+.swan-sdpldex-status-page__container {
+    height: 350px;
+
+    .hosts-table--tr {
+        cursor: pointer;
+
+        .hosts-table--td.align--start {
+            justify-content: flex-start;
+        }
+
+        .hosts-table--td.align--end {
+            justify-content: flex-end;
+        }
+
+        .hosts-table--td.align--center {
+            justify-content: center;
+        }
+    }
+}

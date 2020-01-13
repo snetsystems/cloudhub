@@ -1,6 +1,6 @@
 import React, {PureComponent} from 'react'
 import {ROUTER_TABLE_SIZING} from 'src/addon/128t/constants'
-import {Router, TopSource} from 'src/addon/128t/types'
+import {Router, TopSource, TopSession} from 'src/addon/128t/types'
 import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
 import {transBps} from 'src/shared/utils/units'
 
@@ -9,6 +9,7 @@ interface Props {
   focusedAssetId: string
   onClickTableRow: (
     topSources: TopSource[],
+    topSessions: TopSession[],
     focusedAssetId: string
   ) => () => void
 }
@@ -25,14 +26,39 @@ class RouterTableRow extends PureComponent<Props> {
     return 'hosts-table--tr'
   }
 
-  private TableItem = ({width, title}) => {
+  private TableItem = ({width, title, className}) => {
     return (
-      <div
-        className="hosts-table--td"
-        style={{width: width, alignItems: 'center'}}
-      >
-        {title}
+      <div className={`hosts-table--td ${className}`} style={{width: width}}>
+        {title ? title : '-'}
       </div>
+    )
+  }
+
+  private unitIndicator = (value: string | number): JSX.Element => {
+    const divider = String(value).split(' ')
+    return (
+      <>
+        {divider[0]}
+        <span
+          style={{
+            width: '50px',
+          }}
+        >
+          <span
+            style={{
+              padding: '1px 5px',
+              borderRadius: '5px',
+              background: '#313131',
+              textAlign: 'left',
+              marginLeft: '5px',
+              fontSize: '10px',
+              border: '1px solid #a1a1a1',
+            }}
+          >
+            {divider[1]}
+          </span>
+        </span>
+      </>
     )
   }
 
@@ -51,7 +77,7 @@ class RouterTableRow extends PureComponent<Props> {
       cpuUsage,
       diskUsage,
       topSources,
-      // topSessions,
+      topSessions,
     } = this.props.router
 
     const {onClickTableRow} = this.props
@@ -74,45 +100,99 @@ class RouterTableRow extends PureComponent<Props> {
     return (
       <div
         className={this.focusedClasses()}
-        onClick={onClickTableRow(topSources, assetId)}
+        onClick={onClickTableRow(topSources, topSessions, assetId)}
+        style={{borderBottom: '1px solid #353535'}}
       >
-        <this.TableItem title={assetId} width={ASSETID} />
-        <this.TableItem title={role} width={ROLE} />
+        <this.TableItem title={assetId} width={ASSETID} className={''} />
+        <this.TableItem title={role} width={ROLE} className={''} />
         <this.TableItem
           title={(() => {
-            return enabled ? 'True' : 'False'
+            return enabled ? (
+              <span
+                style={{
+                  width: '12px',
+                  height: '12px',
+                  background: '#4ed8a0',
+                  borderRadius: '100%',
+                }}
+              ></span>
+            ) : (
+              <span
+                style={{
+                  width: '12px',
+                  height: '12px',
+                  background: '#e85b1c',
+                  borderRadius: '100%',
+                }}
+              ></span>
+            )
           })()}
           width={ENABLED}
+          className={'align--start'}
         />
+
         <this.TableItem
           title={locationCoordinates}
           width={LOCATIONCOORDINATES}
+          className={''}
         />
         <this.TableItem
           title={(() => {
-            return managementConnected ? 'Connected' : 'Disconnected'
+            return managementConnected ? (
+              <span
+                style={{
+                  width: '12px',
+                  height: '12px',
+                  background: '#4ed8a0',
+                  borderRadius: '100%',
+                }}
+              ></span>
+            ) : (
+              <span
+                style={{
+                  width: '12px',
+                  height: '12px',
+                  background: '#e85b1c',
+                  borderRadius: '100%',
+                }}
+              ></span>
+            )
           })()}
           width={MANAGEMENTCONNECTED}
+          className={'align--start'}
         />
-        <this.TableItem title={startTime} width={STARTTIME} />
-        <this.TableItem title={softwareVersion} width={SOFTWAREVERSION} />
+
+        <this.TableItem title={startTime} width={STARTTIME} className={''} />
+        <this.TableItem
+          title={softwareVersion}
+          width={SOFTWAREVERSION}
+          className={'align--end'}
+        />
         <this.TableItem
           title={fixedDecimalPercentage(cpuUsage, 2)}
           width={CPUUSAGE}
+          className={'align--end'}
         />
         <this.TableItem
           title={fixedDecimalPercentage(memoryUsage, 2)}
           width={MEMORYUSAGE}
+          className={'align--end'}
         />
         <this.TableItem
           title={fixedDecimalPercentage(diskUsage, 2)}
           width={DISKUSAGE}
+          className={'align--end'}
         />
         <this.TableItem
-          title={transBps(bandwidth_avg * 8, 2)}
-          width={BANDWIDTH_AVG}
+          title={session_arrivals}
+          width={SESSION_CNT_AVG}
+          className={'align--end'}
         />
-        <this.TableItem title={session_arrivals} width={SESSION_CNT_AVG} />
+        <this.TableItem
+          title={this.unitIndicator(transBps(bandwidth_avg * 8, 2))}
+          width={BANDWIDTH_AVG}
+          className={'align--end'}
+        />
       </div>
     )
   }
