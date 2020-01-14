@@ -3,6 +3,7 @@ import React, {PureComponent} from 'react'
 import _ from 'lodash'
 import memoize from 'memoize-one'
 
+import SearchBar from 'src/hosts/components/SearchBar'
 import TopSessionsTableRow from 'src/addon/128t/components/TopSessionsTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
@@ -24,6 +25,7 @@ interface State {
   sortDirection: SortDirection
   sortKey: string
   topSessionCount: string
+  visible: boolean
 }
 
 @ErrorHandling
@@ -35,6 +37,7 @@ class TopSessionsTable extends PureComponent<Props, State> {
       sortDirection: SortDirection.ASC,
       sortKey: 'service',
       topSessionCount: '0',
+      visible: true,
     }
   }
 
@@ -82,21 +85,59 @@ class TopSessionsTable extends PureComponent<Props, State> {
     this.setState({topSessionCount: sortedTopSessions.length})
   }
 
+  private onClickHandleVisible = () => {
+    this.setState({visible: !this.state.visible})
+  }
+
   public render() {
-    const {topSessionCount} = this.state
+    const {topSessionCount, visible} = this.state
     return (
-      <div className="panel">
+      <div className={`panel ${visible ? 'panel-height' : ''}`}>
         <div className="panel-heading">
+          <button
+            onClick={this.onClickHandleVisible}
+            style={{
+              flex: 'none',
+              padding: '5px 10px',
+              marginRight: '10px',
+              width: '30px',
+              background: 'none',
+              border: '0 none',
+              color: '#555',
+            }}
+          >
+            {visible ? '▼' : '▲'}
+          </button>
           <h2 className="panel-title">{topSessionCount} Top Sessions</h2>
-        </div>
-        <div className="panel-body">
-          <div className="hosts-table">
-            <div className="hosts-table--thead">
-              <div className="hosts-table--tr">{this.TableHeader}</div>
-            </div>
-            {this.TableData}
+          <span
+            className={'panel-heading-dividebar'}
+            style={{
+              display: 'block',
+              height: '2px',
+              backgroundColor: 'rgb(56,56,70)',
+              flex: 'auto',
+              margin: '0 15px',
+            }}
+          ></span>
+          <div style={{flex: 'none'}}>
+            <SearchBar
+              placeholder="Filter by Tenant..."
+              onSearch={this.updateSearchTerm}
+            />
           </div>
         </div>
+        {visible ? (
+          <div className="panel-body">
+            <div className="hosts-table">
+              <div className="hosts-table--thead">
+                <div className={'hosts-table--tr'}>{this.TableHeader}</div>
+              </div>
+              {this.TableData}
+            </div>
+          </div>
+        ) : (
+          ''
+        )}
       </div>
     )
   }
@@ -206,7 +247,7 @@ class TopSessionsTable extends PureComponent<Props, State> {
   public filter(allTopSessions: TopSession[], searchTerm: string) {
     const filterText = searchTerm.toLowerCase()
     return allTopSessions.filter(h => {
-      return h.service.toLowerCase().includes(filterText)
+      return h.tenant.toLowerCase().includes(filterText)
     })
   }
 
@@ -226,6 +267,10 @@ class TopSessionsTable extends PureComponent<Props, State> {
       default:
         return allTopSessions
     }
+  }
+
+  public updateSearchTerm = (searchTerm: string) => {
+    this.setState({searchTerm})
   }
 
   public updateSort = (key: string) => (): void => {

@@ -1,5 +1,16 @@
 .swan-sdpldex-status-page__container {
-    height: 350px;
+    button:focus {
+        outline: 0 none;
+    }
+
+    .panel {
+        margin: 0;
+
+        &.panel-height {
+            height: 350px;
+            margin-bottom: 20px;
+        }
+    }
 
     .hosts-table--tr {
         cursor: pointer;

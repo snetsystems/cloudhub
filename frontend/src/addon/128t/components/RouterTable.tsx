@@ -31,6 +31,7 @@ interface State {
   sortDirection: SortDirection
   sortKey: string
   routerCount: string
+  visible: boolean
 }
 
 @ErrorHandling
@@ -43,6 +44,7 @@ class RouterTable extends PureComponent<Props, State> {
       sortDirection: SortDirection.ASC,
       sortKey: 'assetId',
       routerCount: '0',
+      visible: true,
     }
   }
 
@@ -69,25 +71,66 @@ class RouterTable extends PureComponent<Props, State> {
     this.setState({routerCount: sortedRouters.length})
   }
 
+  private onClickHandleVisible = () => {
+    this.setState({visible: !this.state.visible})
+  }
+
   public render() {
-    const {routerCount} = this.state
+    const {routerCount, visible} = this.state
     return (
-      <div className="panel">
+      <div className={`panel ${visible ? 'panel-height' : ''}`}>
         <div className="panel-heading">
-          <h2 className="panel-title">{routerCount} Routers</h2>
-          <SearchBar
-            placeholder="Filter by Router..."
-            onSearch={this.updateSearchTerm}
-          />
-        </div>
-        <div className="panel-body">
-          <div className="hosts-table">
-            <div className="hosts-table--thead">
-              <div className="hosts-table--tr">{this.TableHeader}</div>
-            </div>
-            {this.TableData}
+          <button
+            onClick={this.onClickHandleVisible}
+            style={{
+              flex: 'none',
+              padding: '5px 10px',
+              marginRight: '10px',
+              width: '30px',
+              background: 'none',
+              border: '0 none',
+              color: '#555',
+            }}
+          >
+            {visible ? '▼' : '▲'}
+          </button>
+          <h2
+            className="panel-title"
+            style={{
+              flex: 'none',
+            }}
+          >
+            {routerCount} Routers
+          </h2>
+          <span
+            className={'panel-heading-dividebar'}
+            style={{
+              display: 'block',
+              height: '2px',
+              backgroundColor: 'rgb(56,56,70)',
+              flex: 'auto',
+              margin: '0 15px',
+            }}
+          ></span>
+          <div style={{flex: 'none'}}>
+            <SearchBar
+              placeholder="Filter by Router..."
+              onSearch={this.updateSearchTerm}
+            />
           </div>
         </div>
+        {visible ? (
+          <div className="panel-body">
+            <div className="hosts-table">
+              <div className="hosts-table--thead">
+                <div className={'hosts-table--tr'}>{this.TableHeader}</div>
+              </div>
+              {this.TableData}
+            </div>
+          </div>
+        ) : (
+          ''
+        )}
       </div>
     )
   }
