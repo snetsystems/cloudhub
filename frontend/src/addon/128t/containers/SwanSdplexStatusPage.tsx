@@ -14,7 +14,7 @@ import {
 } from 'src/shared/middleware/localStorage'
 
 // Components
-// import Threesizer from 'src/shared/components/threesizer/Threesizer'
+import Threesizer from 'src/shared/components/threesizer/Threesizer'
 // import RouterModal from 'src/addon/128t/components/RouterModal'
 import PageSpinner from 'src/shared/components/PageSpinner'
 
@@ -25,7 +25,7 @@ import TopSessionsTable from 'src/addon/128t/components/TopSessionsTable'
 
 //const
 import {GET_ALLROUTERS_INFO} from 'src/addon/128t/constants'
-// import {HANDLE_HORIZONTAL} from 'src/shared/constants'
+import {HANDLE_VERTICAL} from 'src/shared/constants'
 
 interface Response {
   data: {
@@ -88,23 +88,23 @@ interface EmitData {
   routers: Router[]
 }
 
-// interface Proportions {
-//   proportions: number[]
-// }
+interface Proportions {
+  proportions: number[]
+}
 
 const SwanSdplexStatusPage = () => {
-  // let [topSize, bottomSize] = [0.4, 0.6]
+  let [topSize, bottomSize] = [0.4, 0.6]
   let assetId = ''
 
   const addon = getLocalStorage('addon')
   if (addon) {
-    // ;[topSize, bottomSize] = _.get(addon, 'T128.proportions')
+    // [topSize, bottomSize] = _.get(addon, 'T128.proportions')
     assetId = _.get(addon, 'T128.focusedAssetId')
   }
 
-  // const [proportions, setProportions] = useState<Proportions>({
-  //   proportions: [topSize, bottomSize],
-  // })
+  const [proportions, setProportions] = useState<Proportions>({
+    proportions: [topSize, bottomSize],
+  })
 
   const [focusedAssetId, setFocusedAssetId] = useState<string>(assetId)
 
@@ -226,40 +226,42 @@ const SwanSdplexStatusPage = () => {
     }
   }, [data])
 
-  // const horizontalDivisions = () => {
-  //   const [topSize, bottomSize] = _.get(proportions, 'proportions')
+  const verticalDivisions = () => {
+    const [topSize, bottomSize] = _.get(proportions, 'proportions')
 
-  //   return [
-  //     {
-  //       name: '',
-  //       handleDisplay: 'none',
-  //       headerButtons: [],
-  //       menuOptions: [],
-  //       render: () => {
-  //         return (
-  //           <RouterTable
-  //             routers={emitData.routers}
-  //             focusedAssetId={focusedAssetId}
-  //             onClickTableRow={handleClickTableRow}
-  //           />
-  //         )
-  //       },
-  //       headerOrientation: HANDLE_HORIZONTAL,
-  //       size: topSize,
-  //     },
-  //     {
-  //       name: '',
-  //       handlePixels: 8,
-  //       headerButtons: [],
-  //       menuOptions: [],
-  //       render: () => {
-  //         return <TopSourcesTable topSources={topSources} />
-  //       },
-  //       headerOrientation: HANDLE_HORIZONTAL,
-  //       size: bottomSize,
-  //     },
-  //   ]
-  // }
+    return [
+      {
+        name: '',
+        handleDisplay: 'none',
+        headerButtons: [],
+        menuOptions: [],
+        render: () => {
+          return (
+            <div style={{padding: '0 15px'}}>
+              <TopSourcesTable topSources={topSources} />
+            </div>
+          )
+        },
+        headerOrientation: HANDLE_VERTICAL,
+        size: topSize,
+      },
+      {
+        name: '',
+        handlePixels: 5,
+        headerButtons: [],
+        menuOptions: [],
+        render: () => {
+          return (
+            <div style={{padding: '0 15px'}}>
+              <TopSessionsTable topSessions={topSessions} />
+            </div>
+          )
+        },
+        headerOrientation: HANDLE_VERTICAL,
+        size: bottomSize,
+      },
+    ]
+  }
 
   const handleClickTableRow = (
     topSources: TopSource[],
@@ -293,18 +295,23 @@ const SwanSdplexStatusPage = () => {
               focusedAssetId={focusedAssetId}
               onClickTableRow={handleClickTableRow}
             />
-            <TopSourcesTable topSources={topSources} />
-            <TopSessionsTable topSessions={topSessions} />
-            {/* {console.log(this.state.topSessions)} */}
-            {/* <TopSessionsTable /> */}
+            <span
+              className={'panel-heading-dividebar'}
+              style={{
+                display: 'block',
+                height: '2px',
+                backgroundColor: 'rgb(56,56,70)',
+                flex: 'auto',
+              }}
+            ></span>
+            <Threesizer
+              orientation={HANDLE_VERTICAL}
+              divisions={verticalDivisions()}
+              onResize={(sizes: number[]) => {
+                setProportions({proportions: sizes})
+              }}
+            />
           </div>
-          // <Threesizer
-          //   orientation={HANDLE_HORIZONTAL}
-          //   divisions={horizontalDivisions()}
-          //   onResize={(sizes: number[]) => {
-          //     setProportions({proportions: sizes})
-          //   }}
-          // />
         )}
       </Page.Contents>
     </Page>

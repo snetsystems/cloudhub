@@ -169,27 +169,30 @@ class TopSourcesTable extends PureComponent<Props, State> {
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('totaldata')}
-          className={this.sortableClasses('totaldata')}
-          style={{width: TOTALDATA}}
-        >
-          Total Data
-          <span className="icon caret-up" />
-        </div>
-        <div
           onClick={this.updateSort('sessioncnt')}
           className={this.sortableClasses('sessioncnt')}
           style={{width: SESSIONCOUNT}}
+          title="Session Count"
         >
-          Session count
+          S/C
           <span className="icon caret-up" />
         </div>
         <div
           onClick={this.updateSort('bandwidth')}
           className={this.sortableClasses('bandwidth')}
           style={{width: CURRENTBANDWIDTH}}
+          title="Band Width"
         >
-          Bandwidth
+          B/W
+          <span className="icon caret-up" />
+        </div>
+        <div
+          onClick={this.updateSort('totaldata')}
+          className={this.sortableClasses('totaldata')}
+          style={{width: TOTALDATA}}
+          title="Total Data"
+        >
+          T/D
           <span className="icon caret-up" />
         </div>
       </>

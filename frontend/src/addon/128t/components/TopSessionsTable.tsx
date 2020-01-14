@@ -191,32 +191,36 @@ class TopSessionsTable extends PureComponent<Props, State> {
           onClick={this.updateSort('sourceAddress')}
           className={this.sortableClasses('sourceAddress')}
           style={{width: TOPSESSION_SOURCE_ADDRESS}}
+          title="Source Address"
         >
-          Source Address
+          S/A
           <span className="icon caret-up" />
         </div>
         <div
           onClick={this.updateSort('sourcsourcePort')}
           className={this.sortableClasses('sourcsourcePort')}
           style={{width: TOPSESSION_SOURCE_PORT}}
+          title="Source Port"
         >
-          Source Port
+          S/P
           <span className="icon caret-up" />
         </div>
         <div
           onClick={this.updateSort('destinationAddress')}
           className={this.sortableClasses('destinationAddress')}
           style={{width: TOPSESSION_DESTINATION_ADDRESS}}
+          title="Destination Address"
         >
-          Destination Address
+          D/A
           <span className="icon caret-up" />
         </div>
         <div
           onClick={this.updateSort('destinationPort')}
           className={this.sortableClasses('destinationPort')}
           style={{width: TOPSESSION_DESTINATION_PORT}}
+          title="Destination Port"
         >
-          Destination Port
+          D/P
           <span className="icon caret-up" />
         </div>
       </>
