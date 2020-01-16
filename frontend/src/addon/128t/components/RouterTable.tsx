@@ -1,9 +1,8 @@
 import React, {PureComponent} from 'react'
-
 import _ from 'lodash'
 import memoize from 'memoize-one'
 
-import SearchBar from 'src/hosts/components/SearchBar'
+// import {GridCell} from 'src/addon/128t/components/GridLayoutRenderer'
 import RouterTableRow from 'src/addon/128t/components/RouterTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
@@ -31,7 +30,6 @@ interface State {
   sortDirection: SortDirection
   sortKey: string
   routerCount: string
-  visible: boolean
 }
 
 @ErrorHandling
@@ -44,7 +42,6 @@ class RouterTable extends PureComponent<Props, State> {
       sortDirection: SortDirection.ASC,
       sortKey: 'assetId',
       routerCount: '0',
-      visible: true,
     }
   }
 
@@ -71,66 +68,17 @@ class RouterTable extends PureComponent<Props, State> {
     this.setState({routerCount: sortedRouters.length})
   }
 
-  private onClickHandleVisible = () => {
-    this.setState({visible: !this.state.visible})
-  }
-
   public render() {
-    const {routerCount, visible} = this.state
     return (
-      <div className={`panel ${visible ? 'panel-height' : ''}`}>
-        <div className="panel-heading">
-          <button
-            onClick={this.onClickHandleVisible}
-            style={{
-              flex: 'none',
-              padding: '5px 10px',
-              marginRight: '10px',
-              width: '30px',
-              background: 'none',
-              border: '0 none',
-              color: '#555',
-            }}
-          >
-            {visible ? '▼' : '▲'}
-          </button>
-          <h2
-            className="panel-title"
-            style={{
-              flex: 'none',
-            }}
-          >
-            {routerCount} Routers
-          </h2>
-          <span
-            className={'panel-heading-dividebar'}
-            style={{
-              display: 'block',
-              height: '2px',
-              backgroundColor: 'rgb(56,56,70)',
-              flex: 'auto',
-              margin: '0 15px',
-            }}
-          ></span>
-          <div style={{flex: 'none'}}>
-            <SearchBar
-              placeholder="Filter by Router..."
-              onSearch={this.updateSearchTerm}
-            />
+      <div className={`panel`}>
+        <div className="panel-body">
+          <div className="hosts-table">
+            <div className="hosts-table--thead">
+              <div className={'hosts-table--tr'}>{this.TableHeader}</div>
+            </div>
+            {this.TableData}
           </div>
         </div>
-        {visible ? (
-          <div className="panel-body">
-            <div className="hosts-table">
-              <div className="hosts-table--thead">
-                <div className={'hosts-table--tr'}>{this.TableHeader}</div>
-              </div>
-              {this.TableData}
-            </div>
-          </div>
-        ) : (
-          ''
-        )}
       </div>
     )
   }

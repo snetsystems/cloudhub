@@ -1,14 +1,17 @@
+// libraries
 import React, {PureComponent} from 'react'
-
 import _ from 'lodash'
 import memoize from 'memoize-one'
 
-import SearchBar from 'src/hosts/components/SearchBar'
+// components
 import TopSourcesTableRow from 'src/addon/128t/components/TopSourcesTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
+// type
 import {TopSource} from 'src/addon/128t/types'
 import {ErrorHandling} from 'src/shared/decorators/errors'
+
+// constants
 import {TOPSOURCES_TABLE_SIZING} from 'src/addon/128t/constants'
 
 enum SortDirection {
@@ -25,7 +28,6 @@ interface State {
   sortDirection: SortDirection
   sortKey: string
   topSourceCount: string
-  visible: boolean
 }
 
 @ErrorHandling
@@ -37,7 +39,6 @@ class TopSourcesTable extends PureComponent<Props, State> {
       sortDirection: SortDirection.ASC,
       sortKey: 'ip',
       topSourceCount: '0',
-      visible: true,
     }
   }
 
@@ -85,59 +86,17 @@ class TopSourcesTable extends PureComponent<Props, State> {
     this.setState({topSourceCount: sortedTopSources.length})
   }
 
-  private onClickHandleVisible = () => {
-    this.setState({visible: !this.state.visible})
-  }
-
   public render() {
-    const {topSourceCount, visible} = this.state
     return (
-      <div className={`panel ${visible ? 'panel-height' : ''}`}>
-        <div className="panel-heading">
-          <button
-            onClick={this.onClickHandleVisible}
-            style={{
-              flex: 'none',
-              padding: '5px 10px',
-              marginRight: '10px',
-              width: '30px',
-              background: 'none',
-              border: '0 none',
-              color: '#555',
-            }}
-          >
-            {visible ? '▼' : '▲'}
-          </button>
-          <h2 className="panel-title">{topSourceCount} Top Sources</h2>
-          <span
-            className={'panel-heading-dividebar'}
-            style={{
-              display: 'block',
-              height: '2px',
-              backgroundColor: 'rgb(56,56,70)',
-              flex: 'auto',
-              margin: '0 15px',
-            }}
-          ></span>
-          <div style={{flex: 'none'}}>
-            <SearchBar
-              placeholder="Filter by Tenant..."
-              onSearch={this.updateSearchTerm}
-            />
+      <div className={`panel`}>
+        <div className="panel-body">
+          <div className="hosts-table">
+            <div className="hosts-table--thead">
+              <div className={'hosts-table--tr'}>{this.TableHeader}</div>
+            </div>
+            {this.TableData}
           </div>
         </div>
-        {visible ? (
-          <div className="panel-body">
-            <div className="hosts-table">
-              <div className="hosts-table--thead">
-                <div className={'hosts-table--tr'}>{this.TableHeader}</div>
-              </div>
-              {this.TableData}
-            </div>
-          </div>
-        ) : (
-          ''
-        )}
       </div>
     )
   }
@@ -214,9 +173,11 @@ class TopSourcesTable extends PureComponent<Props, State> {
 
     return (
       <FancyScrollbar
-        children={sortedTopSources.map((r, i) => (
-          <TopSourcesTableRow topSources={r} key={i} />
-        ))}
+        children={sortedTopSources.map(
+          (r: TopSource, i: number): JSX.Element => (
+            <TopSourcesTableRow topSources={r} key={i} />
+          )
+        )}
       />
     )
   }

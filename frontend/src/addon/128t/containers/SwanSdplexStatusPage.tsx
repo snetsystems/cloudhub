@@ -5,7 +5,7 @@ import {useQuery} from '@apollo/react-hooks'
 import {Page} from 'src/reusable_ui'
 
 // Types
-import {Router, TopSource, TopSession} from 'src/addon/128t/types'
+import {Router, TopSource, TopSession, GridCell} from 'src/addon/128t/types'
 
 //Middleware
 import {
@@ -14,18 +14,13 @@ import {
 } from 'src/shared/middleware/localStorage'
 
 // Components
-import Threesizer from 'src/shared/components/threesizer/Threesizer'
+import GridLayoutRenderer from 'src/addon/128t/components/GridLayoutRenderer'
 // import RouterModal from 'src/addon/128t/components/RouterModal'
 import PageSpinner from 'src/shared/components/PageSpinner'
 
-// table
-import RouterTable from 'src/addon/128t/components/RouterTable'
-import TopSourcesTable from 'src/addon/128t/components/TopSourcesTable'
-import TopSessionsTable from 'src/addon/128t/components/TopSessionsTable'
-
 //const
 import {GET_ALLROUTERS_INFO} from 'src/addon/128t/constants'
-import {HANDLE_VERTICAL} from 'src/shared/constants'
+import {cell} from 'test/resources'
 
 interface Response {
   data: {
@@ -88,23 +83,13 @@ interface EmitData {
   routers: Router[]
 }
 
-interface Proportions {
-  proportions: number[]
-}
-
 const SwanSdplexStatusPage = () => {
-  let [topSize, bottomSize] = [0.4, 0.6]
   let assetId = ''
 
   const addon = getLocalStorage('addon')
   if (addon) {
-    // [topSize, bottomSize] = _.get(addon, 'T128.proportions')
     assetId = _.get(addon, 'T128.focusedAssetId')
   }
-
-  const [proportions, setProportions] = useState<Proportions>({
-    proportions: [topSize, bottomSize],
-  })
 
   const [focusedAssetId, setFocusedAssetId] = useState<string>(assetId)
 
@@ -112,13 +97,11 @@ const SwanSdplexStatusPage = () => {
     return () => {
       setLocalStorage('addon', {
         T128: {
-          // proportions: _.get(proportions, 'proportions'),
           focusedAssetId,
         },
       })
     }
   }, [focusedAssetId])
-  //[proportions, focusedAssetId]
 
   const [emitData, setRoutersInfo] = useState<EmitData>({
     routers: [],
@@ -126,6 +109,37 @@ const SwanSdplexStatusPage = () => {
 
   const [topSources, setTopSources] = useState<TopSource[]>([])
   const [topSessions, setTopSessions] = useState<TopSession[]>([])
+  const [cells, setCells] = useState<
+    GridCell<Router[] | TopSource[] | TopSession[]>[]
+  >([
+    {
+      i: 'routers',
+      x: 0,
+      y: 0,
+      w: 12,
+      h: 3,
+      sources: [],
+      name: 'Routers',
+    },
+    {
+      i: 'topSources',
+      x: 0,
+      y: 1,
+      w: 5,
+      h: 4,
+      sources: [],
+      name: 'Top Sources',
+    },
+    {
+      i: 'topSessions',
+      x: 6,
+      y: 1,
+      w: 7,
+      h: 4,
+      sources: [],
+      name: 'Top Sessions',
+    },
+  ])
 
   const {loading, data} = useQuery<Response, Variables>(GET_ALLROUTERS_INFO, {
     // variables: {
@@ -226,41 +240,65 @@ const SwanSdplexStatusPage = () => {
     }
   }, [data])
 
-  const verticalDivisions = () => {
-    const [topSize, bottomSize] = _.get(proportions, 'proportions')
+  useEffect(() => {
+    setCells(
+      cells.map(cell => {
+        switch (cell.i) {
+          case 'routers':
+            return {
+              ...cell,
+              sources: emitData.routers,
+            }
+          case 'topSources':
+            return {
+              ...cell,
+              sources: topSources,
+            }
+          case 'topSessions':
+            return {
+              ...cell,
+              sources: topSessions,
+            }
+          default:
+            return cell
+        }
+      })
+    )
+  }, [emitData, topSources, topSessions])
 
-    return [
-      {
-        name: '',
-        handleDisplay: 'none',
-        headerButtons: [],
-        menuOptions: [],
-        render: () => {
-          return (
-            <div style={{padding: '0 15px'}}>
-              <TopSourcesTable topSources={topSources} />
-            </div>
-          )
-        },
-        headerOrientation: HANDLE_VERTICAL,
-        size: topSize,
-      },
-      {
-        name: '',
-        handlePixels: 5,
-        headerButtons: [],
-        menuOptions: [],
-        render: () => {
-          return (
-            <div style={{padding: '0 15px'}}>
-              <TopSessionsTable topSessions={topSessions} />
-            </div>
-          )
-        },
-        headerOrientation: HANDLE_VERTICAL,
-        size: bottomSize,
-      },
-    ]
+  const handleUpdatePosition = (newCells): void => {
+    setCells(
+      newCells.map((newCell, i) => {
+        switch (newCell.i) {
+          case 'routers':
+            return {
+              ...cells[i],
+              x: newCell.x,
+              y: newCell.y,
+              w: newCell.w,
+              h: newCell.h,
+            }
+          case 'topSources':
+            return {
+              ...cells[i],
+              x: newCell.x,
+              y: newCell.y,
+              w: newCell.w,
+              h: newCell.h,
+            }
+          case 'topSessions':
+            return {
+              ...cells[i],
+              x: newCell.x,
+              y: newCell.y,
+              w: newCell.w,
+              h: newCell.h,
+            }
+          default:
+            return cells
+        }
+      })
+    )
   }
 
   const handleClickTableRow = (
@@ -285,33 +323,20 @@ const SwanSdplexStatusPage = () => {
         </Page.Header.Left>
         <Page.Header.Right showSourceIndicator={true} />
       </Page.Header>
-      <Page.Contents scrollable={true}>
+      <Page.Contents
+        scrollable={true}
+        className={'swan-sdpldex-status-page__container'}
+      >
         {loading || _.isEmpty(emitData.routers) ? (
           <PageSpinner />
         ) : (
-          <div className="swan-sdpldex-status-page__container">
-            <RouterTable
-              routers={emitData.routers}
-              focusedAssetId={focusedAssetId}
-              onClickTableRow={handleClickTableRow}
-            />
-            <span
-              className={'panel-heading-dividebar'}
-              style={{
-                display: 'block',
-                height: '2px',
-                backgroundColor: 'rgb(56,56,70)',
-                flex: 'auto',
-              }}
-            ></span>
-            <Threesizer
-              orientation={HANDLE_VERTICAL}
-              divisions={verticalDivisions()}
-              onResize={(sizes: number[]) => {
-                setProportions({proportions: sizes})
-              }}
-            />
-          </div>
+          <GridLayoutRenderer
+            focusedAssetId={focusedAssetId}
+            onPositionChange={handleUpdatePosition}
+            onClickTableRow={handleClickTableRow}
+            isLayoutMoveEnale={true}
+            cells={cells}
+          />
         )}
       </Page.Contents>
     </Page>

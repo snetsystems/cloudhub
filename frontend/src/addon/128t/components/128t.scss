@@ -1,34 +1,7 @@
 .swan-sdpldex-status-page__container {
-    button:focus {
-        outline: 0 none;
-    }
-
     .panel {
-        margin: 0;
-
-        &.panel-height {
-            height: 350px;
-            margin-bottom: 20px;
+        .panel-body {
+            height: 100%;
         }
-    }
-
-    .hosts-table--tr {
-        cursor: pointer;
-
-        .hosts-table--td.align--start {
-            justify-content: flex-start;
-        }
-
-        .hosts-table--td.align--end {
-            justify-content: flex-end;
-        }
-
-        .hosts-table--td.align--center {
-            justify-content: center;
-        }
-    }
-
-    .threesizer--handle:after {
-        display: block;
     }
 }

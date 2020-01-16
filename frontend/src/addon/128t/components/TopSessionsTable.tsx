@@ -25,7 +25,6 @@ interface State {
   sortDirection: SortDirection
   sortKey: string
   topSessionCount: string
-  visible: boolean
 }
 
 @ErrorHandling
@@ -37,7 +36,6 @@ class TopSessionsTable extends PureComponent<Props, State> {
       sortDirection: SortDirection.ASC,
       sortKey: 'service',
       topSessionCount: '0',
-      visible: true,
     }
   }
 
@@ -85,59 +83,17 @@ class TopSessionsTable extends PureComponent<Props, State> {
     this.setState({topSessionCount: sortedTopSessions.length})
   }
 
-  private onClickHandleVisible = () => {
-    this.setState({visible: !this.state.visible})
-  }
-
   public render() {
-    const {topSessionCount, visible} = this.state
     return (
-      <div className={`panel ${visible ? 'panel-height' : ''}`}>
-        <div className="panel-heading">
-          <button
-            onClick={this.onClickHandleVisible}
-            style={{
-              flex: 'none',
-              padding: '5px 10px',
-              marginRight: '10px',
-              width: '30px',
-              background: 'none',
-              border: '0 none',
-              color: '#555',
-            }}
-          >
-            {visible ? '▼' : '▲'}
-          </button>
-          <h2 className="panel-title">{topSessionCount} Top Sessions</h2>
-          <span
-            className={'panel-heading-dividebar'}
-            style={{
-              display: 'block',
-              height: '2px',
-              backgroundColor: 'rgb(56,56,70)',
-              flex: 'auto',
-              margin: '0 15px',
-            }}
-          ></span>
-          <div style={{flex: 'none'}}>
-            <SearchBar
-              placeholder="Filter by Tenant..."
-              onSearch={this.updateSearchTerm}
-            />
+      <div className={`panel`}>
+        <div className="panel-body">
+          <div className="hosts-table">
+            <div className="hosts-table--thead">
+              <div className={'hosts-table--tr'}>{this.TableHeader}</div>
+            </div>
+            {this.TableData}
           </div>
         </div>
-        {visible ? (
-          <div className="panel-body">
-            <div className="hosts-table">
-              <div className="hosts-table--thead">
-                <div className={'hosts-table--tr'}>{this.TableHeader}</div>
-              </div>
-              {this.TableData}
-            </div>
-          </div>
-        ) : (
-          ''
-        )}
       </div>
     )
   }
@@ -241,9 +197,11 @@ class TopSessionsTable extends PureComponent<Props, State> {
 
     return (
       <FancyScrollbar
-        children={sortedTopSessions.map((r, i) => (
-          <TopSessionsTableRow topSessions={r} key={i} />
-        ))}
+        children={sortedTopSessions.map(
+          (r: TopSession, i: number): JSX.Element => (
+            <TopSessionsTableRow topSessions={r} key={i} />
+          )
+        )}
       />
     )
   }
@@ -256,16 +214,13 @@ class TopSessionsTable extends PureComponent<Props, State> {
   }
 
   public sort(allTopSessions: TopSession[], key: string, direction: string) {
-    console.log({direction, key, allTopSessions})
     switch (direction) {
       case SortDirection.ASC:
         return _.sortBy<TopSession>(allTopSessions, e => {
-          console.log(e[key])
           return e[key]
         })
       case SortDirection.DESC:
         return _.sortBy<TopSession>(allTopSessions, e => {
-          console.log(e[key])
           return e[key]
         }).reverse()
       default:

@@ -3,13 +3,12 @@ import {TOPSESSIONS_TABLE_SIZING} from 'src/addon/128t/constants'
 import {TopSession} from 'src/addon/128t/types'
 
 interface Props {
-  topSessions: TopSession[]
+  topSessions: TopSession
 }
 
 class TopSessionsTableRow extends PureComponent<Props> {
   constructor(props: Props) {
     super(props)
-    console.log(props)
   }
 
   private TableItem = ({width, title, className}) => {
