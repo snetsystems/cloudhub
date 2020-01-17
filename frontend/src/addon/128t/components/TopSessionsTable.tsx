@@ -3,7 +3,8 @@ import React, {PureComponent} from 'react'
 import _ from 'lodash'
 import memoize from 'memoize-one'
 
-import SearchBar from 'src/hosts/components/SearchBar'
+// import SearchBar from 'src/hosts/components/SearchBar'
+import GridLayoutCellHeaderSearchbar from 'src/addon/128t/components/GridLayoutCellHeaderSearchbar'
 import TopSessionsTableRow from 'src/addon/128t/components/TopSessionsTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
@@ -86,6 +87,15 @@ class TopSessionsTable extends PureComponent<Props, State> {
   public render() {
     return (
       <div className={`panel`}>
+        <div className="panel-heading">
+          <h2 className="panel-title">
+            {this.state.topSessionCount} TopSessions
+          </h2>
+          <GridLayoutCellHeaderSearchbar
+            placeholder="Filter by Tenant..."
+            onSearch={this.updateSearchTerm}
+          />
+        </div>
         <div className="panel-body">
           <div className="hosts-table">
             <div className="hosts-table--thead">

@@ -6,8 +6,11 @@ import memoize from 'memoize-one'
 // components
 import TopSourcesTableRow from 'src/addon/128t/components/TopSourcesTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+// import SearchBar from 'src/hosts/components/SearchBar'
+import GridLayoutCellHeaderSearchbar from 'src/addon/128t/components/GridLayoutCellHeaderSearchbar'
 
 // type
+import {GridSource} from 'src/addon/128t/containers/SwanSdplexStatusPage'
 import {TopSource} from 'src/addon/128t/types'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
@@ -89,6 +92,15 @@ class TopSourcesTable extends PureComponent<Props, State> {
   public render() {
     return (
       <div className={`panel`}>
+        <div className="panel-heading">
+          <h2 className="panel-title">
+            {this.state.topSourceCount} TopSources title
+          </h2>
+          <GridLayoutCellHeaderSearchbar
+            placeholder="Filter by Tenant..."
+            onSearch={this.updateSearchTerm}
+          />
+        </div>
         <div className="panel-body">
           <div className="hosts-table">
             <div className="hosts-table--thead">

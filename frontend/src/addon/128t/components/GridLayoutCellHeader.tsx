@@ -3,6 +3,9 @@ import React, {PureComponent} from 'react'
 import classnames from 'classnames'
 import chroma from 'chroma-js'
 
+// Components
+// import GridLayoutCellHeaderSearchbar from 'src/addon/128t/components/GridLayoutCellHeaderSearchbar'
+
 // Error Handler
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
@@ -52,9 +55,12 @@ class GridLayoutCellHeader extends PureComponent<Props> {
     }
 
     return (
-      <span className={className} style={nameStyle}>
-        {cellName}
-      </span>
+      <>
+        <span className={className} style={nameStyle}>
+          {cellName}
+        </span>
+        {/* <GridLayoutCellHeaderSearchbar /> */}
+      </>
     )
   }
 

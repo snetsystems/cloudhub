@@ -2,6 +2,18 @@
     .panel {
         .panel-body {
             height: 100%;
+
+
+        }
+    }
+
+    .grid-layout-header--search-bar {
+        z-index: 3;
+        height: 24px;
+        margin-right: 3px;
+
+        .form-control.input-sm {
+            height: 24px;
         }
     }
 }

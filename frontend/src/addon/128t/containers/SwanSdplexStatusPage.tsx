@@ -1,26 +1,35 @@
+// Libraries
 import _ from 'lodash'
 import React, {useState, useEffect} from 'react'
 import {useQuery} from '@apollo/react-hooks'
 
+// Components
+import GridLayoutRenderer from 'src/addon/128t/components/GridLayoutRenderer'
+import PageSpinner from 'src/shared/components/PageSpinner'
 import {Page} from 'src/reusable_ui'
 
 // Types
-import {Router, TopSource, TopSession, GridCell} from 'src/addon/128t/types'
+import {Router, TopSource, TopSession} from 'src/addon/128t/types'
 
-//Middleware
+// Middleware
 import {
+  verifyLocalStorage,
   setLocalStorage,
   getLocalStorage,
 } from 'src/shared/middleware/localStorage'
 
-// Components
-import GridLayoutRenderer from 'src/addon/128t/components/GridLayoutRenderer'
-// import RouterModal from 'src/addon/128t/components/RouterModal'
-import PageSpinner from 'src/shared/components/PageSpinner'
-
-//const
+// Const
 import {GET_ALLROUTERS_INFO} from 'src/addon/128t/constants'
-import {cell} from 'test/resources'
+
+export interface GridCell<T> {
+  x: number
+  y: number
+  w: number
+  h: number
+  i: string
+  name: string
+  sources?: T
+}
 
 interface Response {
   data: {
@@ -84,62 +93,60 @@ interface EmitData {
 }
 
 const SwanSdplexStatusPage = () => {
-  let assetId = ''
-
-  const addon = getLocalStorage('addon')
-  if (addon) {
-    assetId = _.get(addon, 'T128.focusedAssetId')
-  }
+  let assetId: string = ''
+  let getCells: GridCell<Router[] | TopSource[] | TopSession[]>[] = []
 
   const [focusedAssetId, setFocusedAssetId] = useState<string>(assetId)
-
-  useEffect(() => {
-    return () => {
-      setLocalStorage('addon', {
-        T128: {
-          focusedAssetId,
-        },
-      })
-    }
-  }, [focusedAssetId])
-
   const [emitData, setRoutersInfo] = useState<EmitData>({
     routers: [],
   })
 
   const [topSources, setTopSources] = useState<TopSource[]>([])
   const [topSessions, setTopSessions] = useState<TopSession[]>([])
-  const [cells, setCells] = useState<
-    GridCell<Router[] | TopSource[] | TopSession[]>[]
-  >([
-    {
-      i: 'routers',
-      x: 0,
-      y: 0,
-      w: 12,
-      h: 3,
-      sources: [],
-      name: 'Routers',
-    },
-    {
-      i: 'topSources',
-      x: 0,
-      y: 1,
-      w: 5,
-      h: 4,
-      sources: [],
-      name: 'Top Sources',
-    },
-    {
-      i: 'topSessions',
-      x: 6,
-      y: 1,
-      w: 7,
-      h: 4,
-      sources: [],
-      name: 'Top Sessions',
-    },
-  ])
+
+  // verifyLocalStorage(getLocalStorage, setLocalStorage, 'addon', {
+  //   T128: {
+  //     focusedAssetId: '',
+  //     cells: [
+  //       {
+  //         i: 'routers',
+  //         x: 0,
+  //         y: 0,
+  //         w: 12,
+  //         h: 3,
+  //         sources: emitData.routers,
+  //         name: 'Routers',
+  //       },
+  //       {
+  //         i: 'topSources',
+  //         x: 0,
+  //         y: 1,
+  //         w: 5,
+  //         h: 4,
+  //         sources: topSources,
+  //         name: 'Top Sources',
+  //       },
+  //       {
+  //         i: 'topSessions',
+  //         x: 6,
+  //         y: 1,
+  //         w: 7,
+  //         h: 4,
+  //         sources: topSessions,
+  //         name: 'Top Sessions',
+  //       },
+  //     ],
+  //   },
+  // })
+
+  const addon = getLocalStorage('addon')
+
+  if (addon) {
+    assetId = _.get(addon, 'T128.focusedAssetId')
+    // getCells = _.get(addon, 'T128.cells')
+  }
+
+  const [cells, setCells] = useState([])
 
   const {loading, data} = useQuery<Response, Variables>(GET_ALLROUTERS_INFO, {
     // variables: {
@@ -240,64 +247,31 @@ const SwanSdplexStatusPage = () => {
     }
   }, [data])
 
-  useEffect(() => {
-    setCells(
-      cells.map(cell => {
-        switch (cell.i) {
-          case 'routers':
-            return {
-              ...cell,
-              sources: emitData.routers,
-            }
-          case 'topSources':
-            return {
-              ...cell,
-              sources: topSources,
-            }
-          case 'topSessions':
-            return {
-              ...cell,
-              sources: topSessions,
-            }
-          default:
-            return cell
-        }
-      })
-    )
-  }, [emitData, topSources, topSessions])
+  // useEffect(() => {
+  //   // setCells([])
+  // }, [emitData])
 
-  const handleUpdatePosition = (newCells): void => {
-    setCells(
-      newCells.map((newCell, i) => {
-        switch (newCell.i) {
-          case 'routers':
-            return {
-              ...cells[i],
-              x: newCell.x,
-              y: newCell.y,
-              w: newCell.w,
-              h: newCell.h,
-            }
-          case 'topSources':
-            return {
-              ...cells[i],
-              x: newCell.x,
-              y: newCell.y,
-              w: newCell.w,
-              h: newCell.h,
-            }
-          case 'topSessions':
-            return {
-              ...cells[i],
-              x: newCell.x,
-              y: newCell.y,
-              w: newCell.w,
-              h: newCell.h,
-            }
-          default:
-            return cells
-        }
-      })
+  // useEffect(() => {
+  //   setLocalStorage('addon', {
+  //     T128: {
+  //       focusedAssetId,
+  //       cells: Object.assign(cells).map(cell => {
+  //         delete cell.sources
+  //         return cell
+  //       }),
+  //     },
+  //   })
+  // }, [focusedAssetId, cells])
+
+  const handleUpdatePosition = (
+    newCells: GridCell<Router[] | TopSource[] | TopSession[]>[]
+  ) => {
+    newCells.map(newCell =>
+      cells.map(cell =>
+        newCell.i === cell.i
+          ? {x: newCell.x, y: newCell.y, w: newCell.w, h: newCell.h}
+          : ''
+      )
     )
   }
 
@@ -331,11 +305,14 @@ const SwanSdplexStatusPage = () => {
           <PageSpinner />
         ) : (
           <GridLayoutRenderer
+            // layout={layout}
             focusedAssetId={focusedAssetId}
-            onPositionChange={handleUpdatePosition}
-            onClickTableRow={handleClickTableRow}
+            routersData={emitData.routers}
+            topSessionsData={topSessions}
+            topSourcesData={topSources}
             isLayoutMoveEnale={true}
-            cells={cells}
+            onClickTableRow={handleClickTableRow}
+            onPositionChange={handleUpdatePosition}
           />
         )}
       </Page.Contents>

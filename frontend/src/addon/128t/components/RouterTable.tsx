@@ -2,12 +2,17 @@ import React, {PureComponent} from 'react'
 import _ from 'lodash'
 import memoize from 'memoize-one'
 
-// import {GridCell} from 'src/addon/128t/components/GridLayoutRenderer'
+// import SearchBar from 'src/hosts/components/SearchBar'
+import GridLayoutCellHeaderSearchbar from 'src/addon/128t/components/GridLayoutCellHeaderSearchbar'
 import RouterTableRow from 'src/addon/128t/components/RouterTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
+//type
+// import {GridSource} from 'src/addon/128t/containers/SwanSdplexStatusPage'
 import {Router, TopSource, TopSession} from 'src/addon/128t/types'
+
 import {ErrorHandling} from 'src/shared/decorators/errors'
+
 import {ROUTER_TABLE_SIZING} from 'src/addon/128t/constants'
 
 enum SortDirection {
@@ -57,20 +62,27 @@ class RouterTable extends PureComponent<Props, State> {
   public componentWillMount() {
     const {routers} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
-
     const sortedRouters = this.getSortedRouters(
       routers,
       searchTerm,
       sortKey,
       sortDirection
     )
-
     this.setState({routerCount: sortedRouters.length})
   }
 
   public render() {
     return (
       <div className={`panel`}>
+        <div className="panel-heading">
+          <h2 className="panel-title grid-layout--draggable dash-graph--draggable dash-graph--heading-draggable grid-layout--draggable dash-graph--heading">
+            {this.props.routers.length} Routers
+          </h2>
+          <GridLayoutCellHeaderSearchbar
+            placeholder="Filter by Asset ID..."
+            onSearch={this.updateSearchTerm}
+          />
+        </div>
         <div className="panel-body">
           <div className="hosts-table">
             <div className="hosts-table--thead">
@@ -205,6 +217,7 @@ class RouterTable extends PureComponent<Props, State> {
     const {routers, focusedAssetId, onClickTableRow} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
+    console.log('routers ', routers)
     //const sortedRouters = routers
     const sortedRouters = this.getSortedRouters(
       routers,

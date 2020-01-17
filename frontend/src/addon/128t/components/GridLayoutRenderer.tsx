@@ -6,8 +6,13 @@ const GridLayout = WidthProvider(ReactGridLayout)
 // Components
 import GridLayoutLayer from 'src/addon/128t/components/GridLayoutLayer'
 
+// table
+import RouterTable from 'src/addon/128t/components/RouterTable'
+import TopSourcesTable from 'src/addon/128t/components/TopSourcesTable'
+import TopSessionsTable from 'src/addon/128t/components/TopSessionsTable'
+
 // Utils
-import {fastMap} from 'src/utils/fast'
+import {fastMap, fastReduce} from 'src/utils/fast'
 
 // Constants
 import {
@@ -20,19 +25,21 @@ import {
 
 //type
 import {Router, TopSource, TopSession, GridCell} from 'src/addon/128t/types'
+// import {GridSource} from '../containers/SwanSdplexStatusPage'
 
 interface Props {
+  layout: {}
   focusedAssetId: string
+  routersData: Router[]
+  topSessionsData: TopSession[]
+  topSourcesData: TopSource[]
   isLayoutMoveEnale: boolean
-  onPositionChange: (
-    cells: GridCell<Router[] | TopSource[] | TopSession[]>[]
-  ) => void
   onClickTableRow: (
     topSources: TopSource[],
     topSessions: TopSession[],
     focusedAssetId: string
   ) => () => void
-  cells: GridCell<Router[] | TopSource[] | TopSession[]>[]
+  onPositionChange: (cells) => void
 }
 
 interface State {
@@ -50,13 +57,47 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
 
   public render() {
     const {
-      cells,
       isLayoutMoveEnale,
       onClickTableRow,
       focusedAssetId,
+      routersData,
+      topSourcesData,
+      topSessionsData,
+      layout,
     } = this.props
     const {rowHeight} = this.state
+    const cells = [
+      {
+        i: 'routers',
+        x: 0,
+        y: 0,
+        w: 12,
+        h: 3,
+        sources: routersData,
+        name: 'Routers',
+      },
+      {
+        i: 'topSources',
+        x: 0,
+        y: 1,
+        w: 5,
+        h: 4,
+        sources: topSourcesData,
+        name: 'Top Sources',
+      },
+      {
+        i: 'topSessions',
+        x: 6,
+        y: 1,
+        w: 7,
+        h: 4,
+        sources: topSessionsData,
+        name: 'Top Sessions',
+      },
+    ]
 
+    console.log('routersData', routersData)
+    console.log('cells', cells)
     return (
       <GridLayout
         layout={cells}
@@ -70,56 +111,67 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
         isDraggable={isLayoutMoveEnale}
         isResizable={isLayoutMoveEnale}
       >
-        {fastMap(cells, cell => (
-          <div key={cell.i}>
-            <GridLayoutLayer
-              key={cell.i}
-              cell={cell}
-              isEditable={isLayoutMoveEnale}
-              onClickTableRow={onClickTableRow}
-              focusedAssetId={focusedAssetId}
-            />
-          </div>
-        ))}
+        <div key="routers">
+          <RouterTable
+            routers={routersData}
+            onClickTableRow={onClickTableRow}
+            focusedAssetId={focusedAssetId}
+          />
+        </div>
+        <div key="topSources">
+          <TopSourcesTable topSources={topSourcesData} />
+        </div>
+        <div key="topSessions">
+          <TopSessionsTable topSessions={topSessionsData} />
+        </div>
       </GridLayout>
     )
   }
 
-  private handleLayoutChange = layout => {
-    if (!this.props.onPositionChange) {
-      return
-    }
+  // private handleLayoutChange = layout => {
+  //   if (!this.props.onPositionChange) {
+  //     return
+  //   }
 
-    let changed = false
+  //   let changed = false
 
-    const newCells = this.props.cells.map(cell => {
-      const l = layout.find(ly => ly.i === cell.i)
+  //   const newCells = this.props.cells.map(cell => {
+  //     const l: {
+  //       x: number
+  //       y: number
+  //       h: number
+  //       w: number
+  //       name: string
+  //       sources: Router[] | TopSource[] | TopSession[]
+  //     } = layout.find(
+  //       (ly: GridCell<Router[] | TopSource[] | TopSession[]>) => ly.i === cell.i
+  //     )
 
-      if (
-        cell.x !== l.x ||
-        cell.y !== l.y ||
-        cell.h !== l.h ||
-        cell.w !== l.w
-      ) {
-        changed = true
-      }
+  //     if (
+  //       cell.x !== l.x ||
+  //       cell.y !== l.y ||
+  //       cell.h !== l.h ||
+  //       cell.w !== l.w
+  //     ) {
+  //       changed = true
+  //     }
 
-      const newLayout = {
-        x: l.x,
-        y: l.y,
-        h: l.h,
-        w: l.w,
-      }
+  //     const newLayout = {
+  //       x: l.x,
+  //       y: l.y,
+  //       h: l.h,
+  //       w: l.w,
+  //     }
 
-      return {
-        ...cell,
-        ...newLayout,
-      }
-    })
-    if (changed) {
-      this.props.onPositionChange(newCells)
-    }
-  }
+  //     return {
+  //       ...cell,
+  //       ...newLayout,
+  //     }
+  //   })
+  //   if (changed) {
+  //     this.props.onPositionChange(newCells)
+  //   }
+  // }
 
   private calculateRowHeight = () => {
     return (
