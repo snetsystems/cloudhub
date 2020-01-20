@@ -1,5 +1,5 @@
 // Libraries
-import React, {PureComponent, ChangeEvent, MouseEvent} from 'react'
+import React, {PureComponent, ChangeEvent} from 'react'
 import _ from 'lodash'
 
 // Decorators
@@ -16,7 +16,7 @@ interface State {
 }
 
 @ErrorHandling
-class GridLayoutCellHeaderSearchbar extends PureComponent<Props, State> {
+class GridLayoutSearchbar extends PureComponent<Props, State> {
   public static defaultProps: Partial<Props> = {
     width: 260,
   }
@@ -39,7 +39,6 @@ class GridLayoutCellHeaderSearchbar extends PureComponent<Props, State> {
     return (
       <div
         className="grid-layout-header--search-bar search-widget"
-        onClick={this.handleOnclick}
         style={{width: `${width}px`}}
       >
         <input
@@ -53,18 +52,13 @@ class GridLayoutCellHeaderSearchbar extends PureComponent<Props, State> {
     )
   }
 
-  private handleSearch = () => {
+  private handleSearch = (): void => {
     this.props.onSearch(this.state.searchTerm)
   }
 
-  private handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+  private handleChange = (e: ChangeEvent<HTMLInputElement>): void => {
     this.setState({searchTerm: e.target.value}, this.debouncedHandleSearch)
-  }
-
-  private handleOnclick = (e: MouseEvent) => {
-    e.stopPropagation()
-    return false
   }
 }
 
-export default GridLayoutCellHeaderSearchbar
+export default GridLayoutSearchbar

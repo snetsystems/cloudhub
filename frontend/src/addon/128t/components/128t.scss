@@ -1,9 +1,17 @@
 .swan-sdpldex-status-page__container {
+    .container-fluid {
+        height: auto;
+    }
+
     .panel {
+        margin-bottom: 10px;
+
+        .panel-heading {
+            padding: 5px 5px 0 5px;
+        }
+
         .panel-body {
-            height: 100%;
-
-
+            padding: 5px;
         }
     }
 
@@ -14,6 +22,57 @@
 
         .form-control.input-sm {
             height: 24px;
+        }
+    }
+
+    .dash-graph--name {
+        width: 100%;
+        font-weight: bold;
+        letter-spacing: 0.1px;
+    }
+
+    .dash-graph--heading {
+        width: 100%;
+    }
+
+    .align--start {
+        justify-content: flex-start
+    }
+
+    .align--center {
+        justify-content: center
+    }
+
+    .align--end {
+        justify-content: flex-end
+    }
+
+    .indicator-unit--wrap {
+        width: 30px;
+        text-align: left;
+        margin: 0 10px;
+    }
+
+    .indicator-unit {
+        font-size: 10px;
+    }
+
+    .hosts-table--tr {
+        border-bottom: 1px solid #353535;
+    }
+
+    .generic-empty-state {
+        height: calc(100% - 45px)
+    }
+
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        background: #e85b1c;
+        border-radius: 100%;
+
+        &.status-indicator--enabled {
+            background: #4ed8a0;
         }
     }
 }

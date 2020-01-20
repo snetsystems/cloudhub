@@ -1,4 +1,5 @@
 import React, {PureComponent} from 'react'
+import {unitIndicator} from 'src/addon/128t/reusable'
 import {TOPSOURCES_TABLE_SIZING} from 'src/addon/128t/constants'
 import {TopSource} from 'src/addon/128t/types'
 import {transBytes, transBps} from 'src/shared/utils/units'
@@ -20,34 +21,6 @@ class TopSourcesTableRow extends PureComponent<Props> {
     )
   }
 
-  private unitIndicator = (value: string | number): JSX.Element => {
-    const divider = String(value).split(' ')
-    return (
-      <>
-        {divider[0]}
-        <span
-          style={{
-            width: '50px',
-          }}
-        >
-          <span
-            style={{
-              padding: '1px 5px',
-              borderRadius: '5px',
-              background: '#313131',
-              textAlign: 'left',
-              marginLeft: '5px',
-              fontSize: '10px',
-              border: '1px solid #a1a1a1',
-            }}
-          >
-            {divider[1]}
-          </span>
-        </span>
-      </>
-    )
-  }
-
   render() {
     const {
       ip,
@@ -66,10 +39,7 @@ class TopSourcesTableRow extends PureComponent<Props> {
     } = TOPSOURCES_TABLE_SIZING
 
     return (
-      <div
-        className={'hosts-table--tr'}
-        style={{borderBottom: '1px solid #353535'}}
-      >
+      <div className={'hosts-table--tr'}>
         <this.TableItem title={ip} width={IP} className={'align--start'} />
         <this.TableItem title={tenant} width={TENANT} className={''} />
         <this.TableItem
@@ -78,12 +48,12 @@ class TopSourcesTableRow extends PureComponent<Props> {
           className={'align--end'}
         />
         <this.TableItem
-          title={this.unitIndicator(transBps(currentBandwidth * 8, 2))}
+          title={unitIndicator(transBps(currentBandwidth * 8, 2), ' ')}
           width={CURRENTBANDWIDTH}
           className={'align--end'}
         />
         <this.TableItem
-          title={this.unitIndicator(transBytes(totalData, 2))}
+          title={unitIndicator(transBytes(totalData, 2), ' ')}
           width={TOTALDATA}
           className={'align--end'}
         />

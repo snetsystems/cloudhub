@@ -1,21 +1,23 @@
-// libraries
+// Libraries
 import React, {PureComponent} from 'react'
 import _ from 'lodash'
 import memoize from 'memoize-one'
+import classnames from 'classnames'
+import chroma from 'chroma-js'
 
 // components
 import TopSourcesTableRow from 'src/addon/128t/components/TopSourcesTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-// import SearchBar from 'src/hosts/components/SearchBar'
-import GridLayoutCellHeaderSearchbar from 'src/addon/128t/components/GridLayoutCellHeaderSearchbar'
+import GridLayoutSearchBar from 'src/addon/128t/components/GridLayoutSearchBar'
+import {NoHostsState} from 'src/addon/128t/reusable'
 
 // type
-import {GridSource} from 'src/addon/128t/containers/SwanSdplexStatusPage'
 import {TopSource} from 'src/addon/128t/types'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 // constants
 import {TOPSOURCES_TABLE_SIZING} from 'src/addon/128t/constants'
+import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
 
 enum SortDirection {
   ASC = 'asc',
@@ -24,6 +26,9 @@ enum SortDirection {
 
 export interface Props {
   topSources: TopSource[]
+  isEditable: boolean
+  cellBackgroundColor: string
+  cellTextColor: string
 }
 
 interface State {
@@ -93,13 +98,14 @@ class TopSourcesTable extends PureComponent<Props, State> {
     return (
       <div className={`panel`}>
         <div className="panel-heading">
-          <h2 className="panel-title">
-            {this.state.topSourceCount} TopSources title
-          </h2>
-          <GridLayoutCellHeaderSearchbar
-            placeholder="Filter by Tenant..."
-            onSearch={this.updateSearchTerm}
-          />
+          <div className={this.headingClass}>
+            {this.cellName}
+            {this.headingBar}
+            <GridLayoutSearchBar
+              placeholder="Filter by Tenant..."
+              onSearch={this.updateSearchTerm}
+            />
+          </div>
         </div>
         <div className="panel-body">
           <div className="hosts-table">
@@ -170,12 +176,10 @@ class TopSourcesTable extends PureComponent<Props, State> {
     )
   }
 
-  // data add
   private get TableData() {
     const {topSources} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
-    //const sortedTopSources = topSources
     const sortedTopSources = this.getSortedTopSources(
       topSources,
       searchTerm,
@@ -184,14 +188,72 @@ class TopSourcesTable extends PureComponent<Props, State> {
     )
 
     return (
-      <FancyScrollbar
-        children={sortedTopSources.map(
-          (r: TopSource, i: number): JSX.Element => (
-            <TopSourcesTableRow topSources={r} key={i} />
-          )
+      <>
+        {topSources.length > 0 ? (
+          <FancyScrollbar
+            children={sortedTopSources.map(
+              (r: TopSource, i: number): JSX.Element => (
+                <TopSourcesTableRow topSources={r} key={i} />
+              )
+            )}
+          />
+        ) : (
+          <NoHostsState />
         )}
-      />
+      </>
     )
+  }
+
+  private get headingClass() {
+    const {isEditable} = this.props
+    return classnames('dash-graph--heading', {
+      'dash-graph--draggable dash-graph--heading-draggable': isEditable,
+      'dash-graph--heading-draggable': isEditable,
+    })
+  }
+
+  private get cellName(): JSX.Element {
+    const {cellTextColor, cellBackgroundColor, topSources} = this.props
+
+    let nameStyle = {}
+
+    if (cellBackgroundColor !== DEFAULT_CELL_BG_COLOR) {
+      nameStyle = {
+        color: cellTextColor,
+      }
+    }
+
+    return (
+      <>
+        <h2
+          className={`dash-graph--name grid-layout--draggable`}
+          style={nameStyle}
+        >
+          {topSources.length} Top Sources
+        </h2>
+      </>
+    )
+  }
+
+  private get headingBar(): JSX.Element {
+    const {isEditable, cellBackgroundColor} = this.props
+
+    if (isEditable) {
+      let barStyle
+
+      if (cellBackgroundColor !== DEFAULT_CELL_BG_COLOR) {
+        barStyle = {
+          backgroundColor: chroma(cellBackgroundColor).brighten(),
+        }
+      }
+
+      return (
+        <>
+          <div className="dash-graph--heading-bar" style={barStyle} />
+          <div className="dash-graph--heading-dragger" />
+        </>
+      )
+    }
   }
 
   public filter(alltopsources: TopSource[], searchTerm: string) {

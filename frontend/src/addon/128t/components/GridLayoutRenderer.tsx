@@ -1,45 +1,43 @@
 // Libraries
-import React, {PureComponent} from 'react'
+import React, {PureComponent, CSSProperties} from 'react'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 const GridLayout = WidthProvider(ReactGridLayout)
 
 // Components
-import GridLayoutLayer from 'src/addon/128t/components/GridLayoutLayer'
-
-// table
 import RouterTable from 'src/addon/128t/components/RouterTable'
 import TopSourcesTable from 'src/addon/128t/components/TopSourcesTable'
 import TopSessionsTable from 'src/addon/128t/components/TopSessionsTable'
 
-// Utils
-import {fastMap, fastReduce} from 'src/utils/fast'
-
 // Constants
 import {
-  // TODO: get these const values dynamically
   STATUS_PAGE_ROW_COUNT,
   PAGE_HEADER_HEIGHT,
   PAGE_CONTAINER_MARGIN,
   LAYOUT_MARGIN,
 } from 'src/shared/constants'
 
+import {
+  DEFAULT_CELL_BG_COLOR,
+  DEFAULT_CELL_TEXT_COLOR,
+} from 'src/dashboards/constants'
+
 //type
-import {Router, TopSource, TopSession, GridCell} from 'src/addon/128t/types'
-// import {GridSource} from '../containers/SwanSdplexStatusPage'
+import {Router, TopSource, TopSession} from 'src/addon/128t/types'
+import {cellLayoutInfo} from 'src/addon/128t/containers/SwanSdplexStatusPage'
 
 interface Props {
-  layout: {}
+  layout: cellLayoutInfo[]
   focusedAssetId: string
   routersData: Router[]
   topSessionsData: TopSession[]
   topSourcesData: TopSource[]
-  isLayoutMoveEnale: boolean
+  isSwanSdplexStatus: boolean
   onClickTableRow: (
     topSources: TopSource[],
     topSessions: TopSession[],
     focusedAssetId: string
   ) => () => void
-  onPositionChange: (cells) => void
+  onPositionChange: (cellsLayout: cellLayoutInfo[]) => void
 }
 
 interface State {
@@ -47,6 +45,9 @@ interface State {
 }
 
 class GridLayoutRenderer extends PureComponent<Props, State> {
+  private cellBackgroundColor: string = DEFAULT_CELL_BG_COLOR
+  private cellTextColor: string = DEFAULT_CELL_TEXT_COLOR
+
   constructor(props: Props) {
     super(props)
 
@@ -57,123 +58,95 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
 
   public render() {
     const {
-      isLayoutMoveEnale,
+      layout,
+      isSwanSdplexStatus,
       onClickTableRow,
       focusedAssetId,
       routersData,
       topSourcesData,
       topSessionsData,
-      layout,
     } = this.props
     const {rowHeight} = this.state
-    const cells = [
-      {
-        i: 'routers',
-        x: 0,
-        y: 0,
-        w: 12,
-        h: 3,
-        sources: routersData,
-        name: 'Routers',
-      },
-      {
-        i: 'topSources',
-        x: 0,
-        y: 1,
-        w: 5,
-        h: 4,
-        sources: topSourcesData,
-        name: 'Top Sources',
-      },
-      {
-        i: 'topSessions',
-        x: 6,
-        y: 1,
-        w: 7,
-        h: 4,
-        sources: topSessionsData,
-        name: 'Top Sessions',
-      },
-    ]
 
-    console.log('routersData', routersData)
-    console.log('cells', cells)
     return (
       <GridLayout
-        layout={cells}
+        layout={layout}
         cols={12}
         rowHeight={rowHeight}
         margin={[LAYOUT_MARGIN, LAYOUT_MARGIN]}
         containerPadding={[0, 0]}
-        useCSSTransforms={false}
+        useCSSTransforms={true}
         onLayoutChange={this.handleLayoutChange}
         draggableHandle={'.grid-layout--draggable'}
-        isDraggable={isLayoutMoveEnale}
-        isResizable={isLayoutMoveEnale}
+        isDraggable={isSwanSdplexStatus}
+        isResizable={isSwanSdplexStatus}
       >
-        <div key="routers">
+        <div key="routers" className="dash-graph" style={this.cellStyle}>
           <RouterTable
             routers={routersData}
             onClickTableRow={onClickTableRow}
             focusedAssetId={focusedAssetId}
+            isEditable={isSwanSdplexStatus}
+            cellTextColor={this.cellTextColor}
+            cellBackgroundColor={this.cellBackgroundColor}
           />
         </div>
-        <div key="topSources">
-          <TopSourcesTable topSources={topSourcesData} />
+        <div key="topSources" className="dash-graph" style={this.cellStyle}>
+          <TopSourcesTable
+            topSources={topSourcesData}
+            isEditable={isSwanSdplexStatus}
+            cellTextColor={this.cellTextColor}
+            cellBackgroundColor={this.cellBackgroundColor}
+          />
         </div>
-        <div key="topSessions">
-          <TopSessionsTable topSessions={topSessionsData} />
+        <div key="topSessions" className="dash-graph" style={this.cellStyle}>
+          <TopSessionsTable
+            topSessions={topSessionsData}
+            isEditable={isSwanSdplexStatus}
+            cellTextColor={this.cellTextColor}
+            cellBackgroundColor={this.cellBackgroundColor}
+          />
         </div>
       </GridLayout>
     )
   }
 
-  // private handleLayoutChange = layout => {
-  //   if (!this.props.onPositionChange) {
-  //     return
-  //   }
+  private handleLayoutChange = (cellsLayout: cellLayoutInfo[]): void => {
+    if (!this.props.onPositionChange) return
+    let changed = false
+    const newCellsLayout = this.props.layout.map(lo => {
+      const l = cellsLayout.find(cellLayout => cellLayout.i === lo.i)
 
-  //   let changed = false
+      if (lo.x !== l.x || lo.y !== l.y || lo.h !== l.h || lo.w !== l.w) {
+        changed = true
+      }
 
-  //   const newCells = this.props.cells.map(cell => {
-  //     const l: {
-  //       x: number
-  //       y: number
-  //       h: number
-  //       w: number
-  //       name: string
-  //       sources: Router[] | TopSource[] | TopSession[]
-  //     } = layout.find(
-  //       (ly: GridCell<Router[] | TopSource[] | TopSession[]>) => ly.i === cell.i
-  //     )
+      const newLayout = {
+        x: l.x,
+        y: l.y,
+        h: l.h,
+        w: l.w,
+      }
 
-  //     if (
-  //       cell.x !== l.x ||
-  //       cell.y !== l.y ||
-  //       cell.h !== l.h ||
-  //       cell.w !== l.w
-  //     ) {
-  //       changed = true
-  //     }
+      return {
+        ...lo,
+        ...newLayout,
+      }
+    })
 
-  //     const newLayout = {
-  //       x: l.x,
-  //       y: l.y,
-  //       h: l.h,
-  //       w: l.w,
-  //     }
+    if (changed) {
+      this.props.onPositionChange(newCellsLayout)
+    }
+  }
 
-  //     return {
-  //       ...cell,
-  //       ...newLayout,
-  //     }
-  //   })
-  //   if (changed) {
-  //     this.props.onPositionChange(newCells)
-  //   }
-  // }
+  private get cellStyle(): CSSProperties {
+    return {
+      backgroundColor: this.cellBackgroundColor,
+      borderColor: this.cellBackgroundColor,
+    }
+  }
 
-  private calculateRowHeight = () => {
+  private calculateRowHeight = (): number => {
     return (
       (window.innerHeight -
         STATUS_PAGE_ROW_COUNT * LAYOUT_MARGIN -

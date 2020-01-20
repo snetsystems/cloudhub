@@ -41,10 +41,7 @@ class TopSessionsTableRow extends PureComponent<Props> {
     } = TOPSESSIONS_TABLE_SIZING
 
     return (
-      <div
-        className={'hosts-table--tr'}
-        style={{borderBottom: '1px solid #353535'}}
-      >
+      <div className={'hosts-table--tr'}>
         <this.TableItem
           title={service}
           width={TOPSESSION_SERVICE}

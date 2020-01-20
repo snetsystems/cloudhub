@@ -1,19 +1,25 @@
+// Libraries
 import React, {PureComponent} from 'react'
 import _ from 'lodash'
 import memoize from 'memoize-one'
+import classnames from 'classnames'
+import chroma from 'chroma-js'
 
-// import SearchBar from 'src/hosts/components/SearchBar'
-import GridLayoutCellHeaderSearchbar from 'src/addon/128t/components/GridLayoutCellHeaderSearchbar'
+// Components
+import GridLayoutSearchBar from 'src/addon/128t/components/GridLayoutSearchBar'
 import RouterTableRow from 'src/addon/128t/components/RouterTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import {NoHostsState} from 'src/addon/128t/reusable'
 
 //type
-// import {GridSource} from 'src/addon/128t/containers/SwanSdplexStatusPage'
 import {Router, TopSource, TopSession} from 'src/addon/128t/types'
 
-import {ErrorHandling} from 'src/shared/decorators/errors'
-
+// constants
 import {ROUTER_TABLE_SIZING} from 'src/addon/128t/constants'
+import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
+
+// Error Handler
+import {ErrorHandling} from 'src/shared/decorators/errors'
 
 enum SortDirection {
   ASC = 'asc',
@@ -21,6 +27,9 @@ enum SortDirection {
 }
 
 export interface Props {
+  cellBackgroundColor: string
+  cellTextColor: string
+  isEditable: boolean
   routers: Router[]
   focusedAssetId: string
   onClickTableRow: (
@@ -75,13 +84,14 @@ class RouterTable extends PureComponent<Props, State> {
     return (
       <div className={`panel`}>
         <div className="panel-heading">
-          <h2 className="panel-title grid-layout--draggable dash-graph--draggable dash-graph--heading-draggable grid-layout--draggable dash-graph--heading">
-            {this.props.routers.length} Routers
-          </h2>
-          <GridLayoutCellHeaderSearchbar
-            placeholder="Filter by Asset ID..."
-            onSearch={this.updateSearchTerm}
-          />
+          <div className={this.headingClass}>
+            {this.cellName}
+            {this.headingBar}
+            <GridLayoutSearchBar
+              placeholder="Filter by Asset ID..."
+              onSearch={this.updateSearchTerm}
+            />
+          </div>
         </div>
         <div className="panel-body">
           <div className="hosts-table">
@@ -217,8 +227,6 @@ class RouterTable extends PureComponent<Props, State> {
     const {routers, focusedAssetId, onClickTableRow} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
-    console.log('routers ', routers)
-    //const sortedRouters = routers
     const sortedRouters = this.getSortedRouters(
       routers,
       searchTerm,
@@ -227,17 +235,75 @@ class RouterTable extends PureComponent<Props, State> {
     )
 
     return (
-      <FancyScrollbar
-        children={sortedRouters.map((r: Router, i: number) => (
-          <RouterTableRow
-            onClickTableRow={onClickTableRow}
-            focusedAssetId={focusedAssetId}
-            router={r}
-            key={i}
+      <>
+        {routers.length > 0 ? (
+          <FancyScrollbar
+            children={sortedRouters.map((r: Router, i: number) => (
+              <RouterTableRow
+                onClickTableRow={onClickTableRow}
+                focusedAssetId={focusedAssetId}
+                router={r}
+                key={i}
+              />
+            ))}
           />
-        ))}
-      />
+        ) : (
+          <NoHostsState />
+        )}
+      </>
     )
+  }
+
+  private get headingClass() {
+    const {isEditable} = this.props
+    return classnames('dash-graph--heading', {
+      'dash-graph--draggable dash-graph--heading-draggable': isEditable,
+      'dash-graph--heading-draggable': isEditable,
+    })
+  }
+
+  private get cellName(): JSX.Element {
+    const {cellTextColor, cellBackgroundColor, routers} = this.props
+
+    let nameStyle = {}
+
+    if (cellBackgroundColor !== DEFAULT_CELL_BG_COLOR) {
+      nameStyle = {
+        color: cellTextColor,
+      }
+    }
+
+    return (
+      <>
+        <h2
+          className={`dash-graph--name grid-layout--draggable`}
+          style={nameStyle}
+        >
+          {routers.length} Routers
+        </h2>
+      </>
+    )
+  }
+
+  private get headingBar(): JSX.Element {
+    const {isEditable, cellBackgroundColor} = this.props
+
+    if (isEditable) {
+      let barStyle
+
+      if (cellBackgroundColor !== DEFAULT_CELL_BG_COLOR) {
+        barStyle = {
+          backgroundColor: chroma(cellBackgroundColor).brighten(),
+        }
+      }
+
+      return (
+        <>
+          <div className="dash-graph--heading-bar" style={barStyle} />
+          <div className="dash-graph--heading-dragger" />
+        </>
+      )
+    }
   }
 
   public filter(allrouters: Router[], searchTerm: string) {

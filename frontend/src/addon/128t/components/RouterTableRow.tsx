@@ -1,4 +1,6 @@
 import React, {PureComponent} from 'react'
+import classnames from 'classnames'
+import {unitIndicator} from 'src/addon/128t/reusable'
 import {ROUTER_TABLE_SIZING} from 'src/addon/128t/constants'
 import {Router, TopSource, TopSession} from 'src/addon/128t/types'
 import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
@@ -26,50 +28,47 @@ class RouterTableRow extends PureComponent<Props> {
     return 'hosts-table--tr'
   }
 
-  private TableItem = ({width, title, className}) => {
+  private TableItem = ({
+    width,
+    title,
+    className = '',
+  }: {
+    width: string
+    title: string | number | JSX.Element
+    className: string
+  }) => {
     return (
       <div className={`hosts-table--td ${className}`} style={{width: width}}>
         {title ? title : '-'}
       </div>
     )
   }
-
-  private unitIndicator = (value: string | number): JSX.Element => {
-    const divider = String(value).split(' ')
+  private responseIndicator = (isEnabled: boolean): JSX.Element => {
     return (
-      <>
-        {divider[0]}
-        <span
-          style={{
-            width: '50px',
-          }}
-        >
-          <span
-            style={{
-              padding: '1px 5px',
-              borderRadius: '5px',
-              background: '#313131',
-              textAlign: 'left',
-              marginLeft: '5px',
-              fontSize: '10px',
-              border: '1px solid #a1a1a1',
-            }}
-          >
-            {divider[1]}
-          </span>
-        </span>
-      </>
+      <span
+        className={classnames('status-indicator', {
+          'status-indicator--enabled': isEnabled,
+        })}
+      />
     )
+  }
+
+  private get enabledIndicator(): JSX.Element {
+    const {enabled} = this.props.router
+    return this.responseIndicator(enabled)
+  }
+
+  private get connectedIndicator(): JSX.Element {
+    const {managementConnected} = this.props.router
+    return this.responseIndicator(managementConnected)
   }
 
   render() {
     const {
       assetId,
       locationCoordinates,
-      managementConnected,
       bandwidth_avg,
       session_arrivals,
-      enabled,
       role,
       startTime,
       softwareVersion,
@@ -101,32 +100,11 @@ class RouterTableRow extends PureComponent<Props> {
       <div
         className={this.focusedClasses()}
         onClick={onClickTableRow(topSources, topSessions, assetId)}
-        style={{borderBottom: '1px solid #353535'}}
       >
         <this.TableItem title={assetId} width={ASSETID} className={''} />
         <this.TableItem title={role} width={ROLE} className={''} />
         <this.TableItem
-          title={(() => {
-            return enabled ? (
-              <span
-                style={{
-                  width: '12px',
-                  height: '12px',
-                  background: '#4ed8a0',
-                  borderRadius: '100%',
-                }}
-              ></span>
-            ) : (
-              <span
-                style={{
-                  width: '12px',
-                  height: '12px',
-                  background: '#e85b1c',
-                  borderRadius: '100%',
-                }}
-              ></span>
-            )
-          })()}
+          title={this.enabledIndicator}
           width={ENABLED}
           className={'align--start'}
         />
@@ -137,27 +115,7 @@ class RouterTableRow extends PureComponent<Props> {
           className={''}
         />
         <this.TableItem
-          title={(() => {
-            return managementConnected ? (
-              <span
-                style={{
-                  width: '12px',
-                  height: '12px',
-                  background: '#4ed8a0',
-                  borderRadius: '100%',
-                }}
-              ></span>
-            ) : (
-              <span
-                style={{
-                  width: '12px',
-                  height: '12px',
-                  background: '#e85b1c',
-                  borderRadius: '100%',
-                }}
-              ></span>
-            )
-          })()}
+          title={this.connectedIndicator}
           width={MANAGEMENTCONNECTED}
           className={'align--start'}
         />
@@ -189,7 +147,7 @@ class RouterTableRow extends PureComponent<Props> {
           className={'align--end'}
         />
         <this.TableItem
-          title={this.unitIndicator(transBps(bandwidth_avg * 8, 2))}
+          title={unitIndicator(transBps(bandwidth_avg * 8, 2), ' ')}
           width={BANDWIDTH_AVG}
           className={'align--end'}
         />
