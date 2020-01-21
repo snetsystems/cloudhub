@@ -7,6 +7,7 @@ const GridLayout = WidthProvider(ReactGridLayout)
 import RouterTable from 'src/addon/128t/components/RouterTable'
 import TopSourcesTable from 'src/addon/128t/components/TopSourcesTable'
 import TopSessionsTable from 'src/addon/128t/components/TopSessionsTable'
+import RouterMaps from 'src/addon/128t/components/RouterMaps'
 
 // Constants
 import {
@@ -86,6 +87,13 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
             routers={routersData}
             onClickTableRow={onClickTableRow}
             focusedAssetId={focusedAssetId}
+            isEditable={isSwanSdplexStatus}
+            cellTextColor={this.cellTextColor}
+            cellBackgroundColor={this.cellBackgroundColor}
+          />
+        </div>
+        <div key="googleMaps" className="dash-graph" style={this.cellStyle}>
+          <RouterMaps
             isEditable={isSwanSdplexStatus}
             cellTextColor={this.cellTextColor}
             cellBackgroundColor={this.cellBackgroundColor}

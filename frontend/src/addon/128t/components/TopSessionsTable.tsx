@@ -64,8 +64,6 @@ class TopSessionsTable extends PureComponent<Props, State> {
         sortKey,
         sortDirection
       )
-
-      console.log({sorted})
       return sorted
     }
   )
@@ -113,7 +111,7 @@ class TopSessionsTable extends PureComponent<Props, State> {
             {this.cellName}
             {this.headingBar}
             <GridLayoutSearchBar
-              placeholder="Filter by Asset ID..."
+              placeholder="Filter by Tenant..."
               onSearch={this.updateSearchTerm}
             />
           </div>
@@ -226,9 +224,6 @@ class TopSessionsTable extends PureComponent<Props, State> {
       sortKey,
       sortDirection
     )
-
-    console.log('table render ', sortedTopSessions)
-    console.log('table render ', {searchTerm, sortKey, sortDirection})
 
     return (
       <>
