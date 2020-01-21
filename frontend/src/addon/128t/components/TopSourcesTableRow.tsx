@@ -13,10 +13,18 @@ class TopSourcesTableRow extends PureComponent<Props> {
     super(props)
   }
 
-  private TableItem = ({width, title, className}) => {
+  private TableItem = ({
+    width,
+    title,
+    className = '',
+  }: {
+    width: string
+    title: string | number | JSX.Element
+    className: string
+  }) => {
     return (
       <div className={`hosts-table--td ${className}`} style={{width: width}}>
-        {title}
+        {title ? title : '-'}
       </div>
     )
   }

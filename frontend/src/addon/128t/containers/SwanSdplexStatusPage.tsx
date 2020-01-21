@@ -164,7 +164,12 @@ const SwanSdplexStatusPage = () => {
               bandwidth_avg: node.bandwidth_avg,
               session_arrivals: node.session_arrivals,
               topSources: node.topSources,
-              topSessions: node.topSessions,
+              topSessions: node.topSessions
+                ? node.topSessions.map(topSession => ({
+                    ...topSession,
+                    value: Number(topSession.value),
+                  }))
+                : [],
             }
 
             const nodeDetail: NodeDetail = _.head(node.nodes.nodes)
@@ -253,7 +258,7 @@ const SwanSdplexStatusPage = () => {
     topSources: TopSource[],
     topSessions: TopSession[],
     focusedAssetId: string
-  ) => () => {
+  ) => (): void => {
     if (topSources) setTopSources(topSources)
     else setTopSources([])
 

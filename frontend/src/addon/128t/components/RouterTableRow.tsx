@@ -39,10 +39,11 @@ class RouterTableRow extends PureComponent<Props> {
   }) => {
     return (
       <div className={`hosts-table--td ${className}`} style={{width: width}}>
-        {title ? title : '-'}
+        {title || title === 0 ? title : '-'}
       </div>
     )
   }
+
   private responseIndicator = (isEnabled: boolean): JSX.Element => {
     return (
       <span
@@ -142,13 +143,13 @@ class RouterTableRow extends PureComponent<Props> {
           className={'align--end'}
         />
         <this.TableItem
-          title={session_arrivals}
-          width={SESSION_CNT_AVG}
+          title={unitIndicator(transBps(bandwidth_avg * 8, 2), ' ')}
+          width={BANDWIDTH_AVG}
           className={'align--end'}
         />
         <this.TableItem
-          title={unitIndicator(transBps(bandwidth_avg * 8, 2), ' ')}
-          width={BANDWIDTH_AVG}
+          title={session_arrivals}
+          width={SESSION_CNT_AVG}
           className={'align--end'}
         />
       </div>

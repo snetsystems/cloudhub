@@ -289,7 +289,7 @@ class RouterTable extends PureComponent<Props, State> {
     const {isEditable, cellBackgroundColor} = this.props
 
     if (isEditable) {
-      let barStyle
+      let barStyle = {}
 
       if (cellBackgroundColor !== DEFAULT_CELL_BG_COLOR) {
         barStyle = {
@@ -318,7 +318,12 @@ class RouterTable extends PureComponent<Props, State> {
       case SortDirection.ASC:
         return _.sortBy(allrouters, e => e[key])
       case SortDirection.DESC:
-        return _.sortBy(allrouters, e => e[key]).reverse()
+        const sortDesc = _.sortBy(
+          allrouters,
+          [e => e[key] || e[key] === 0],
+          ['asc']
+        ).reverse()
+        return sortDesc
       default:
         return allrouters
     }
@@ -328,7 +333,7 @@ class RouterTable extends PureComponent<Props, State> {
     this.setState({searchTerm})
   }
 
-  public updateSort = (key: string) => () => {
+  public updateSort = (key: string) => (): void => {
     const {sortKey, sortDirection} = this.state
     if (sortKey === key) {
       const reverseDirection =

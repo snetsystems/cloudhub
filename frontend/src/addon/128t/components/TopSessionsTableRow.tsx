@@ -11,7 +11,15 @@ class TopSessionsTableRow extends PureComponent<Props> {
     super(props)
   }
 
-  private TableItem = ({width, title, className}) => {
+  private TableItem = ({
+    width,
+    title,
+    className = '',
+  }: {
+    width: string
+    title: string | number | JSX.Element
+    className: string
+  }) => {
     return (
       <div className={`hosts-table--td ${className}`} style={{width: width}}>
         {title}
@@ -66,7 +74,7 @@ class TopSessionsTableRow extends PureComponent<Props> {
         <this.TableItem
           title={source.address}
           width={TOPSESSION_SOURCE_ADDRESS}
-          className={'align--end'}
+          className={'align--start'}
         />
         <this.TableItem
           title={source.port}
@@ -76,7 +84,7 @@ class TopSessionsTableRow extends PureComponent<Props> {
         <this.TableItem
           title={destination.address}
           width={TOPSESSION_DESTINATION_ADDRESS}
-          className={'align--end'}
+          className={'align--start'}
         />
         <this.TableItem
           title={destination.port}

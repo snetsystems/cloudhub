@@ -37,7 +37,7 @@ interface State {
   searchTerm: string
   sortDirection: SortDirection
   sortKey: string
-  topSessionCount: string
+  topSessionCount: number
 }
 
 @ErrorHandling
@@ -48,7 +48,7 @@ class TopSessionsTable extends PureComponent<Props, State> {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
       sortKey: 'service',
-      topSessionCount: '0',
+      topSessionCount: 0,
     }
   }
 
@@ -58,7 +58,16 @@ class TopSessionsTable extends PureComponent<Props, State> {
       searchTerm: string,
       sortKey: string,
       sortDirection: SortDirection
-    ) => this.sort(this.filter(topSessions, searchTerm), sortKey, sortDirection)
+    ) => {
+      const sorted = this.sort(
+        this.filter(topSessions, searchTerm),
+        sortKey,
+        sortDirection
+      )
+
+      console.log({sorted})
+      return sorted
+    }
   )
 
   public componentWillMount() {
@@ -167,8 +176,8 @@ class TopSessionsTable extends PureComponent<Props, State> {
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('sourceAddress')}
-          className={this.sortableClasses('sourceAddress')}
+          onClick={this.updateSort('source.address')}
+          className={this.sortableClasses('source.address')}
           style={{width: TOPSESSION_SOURCE_ADDRESS}}
           title="Source Address"
         >
@@ -176,8 +185,8 @@ class TopSessionsTable extends PureComponent<Props, State> {
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('sourcsourcePort')}
-          className={this.sortableClasses('sourcsourcePort')}
+          onClick={this.updateSort('source.port')}
+          className={this.sortableClasses('sourcePort')}
           style={{width: TOPSESSION_SOURCE_PORT}}
           title="Source Port"
         >
@@ -185,8 +194,8 @@ class TopSessionsTable extends PureComponent<Props, State> {
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('destinationAddress')}
-          className={this.sortableClasses('destinationAddress')}
+          onClick={this.updateSort('destination.address')}
+          className={this.sortableClasses('destination.address')}
           style={{width: TOPSESSION_DESTINATION_ADDRESS}}
           title="Destination Address"
         >
@@ -194,8 +203,8 @@ class TopSessionsTable extends PureComponent<Props, State> {
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('destinationPort')}
-          className={this.sortableClasses('destinationPort')}
+          onClick={this.updateSort('destination.port')}
+          className={this.sortableClasses('destination.port')}
           style={{width: TOPSESSION_DESTINATION_PORT}}
           title="Destination Port"
         >
@@ -217,6 +226,9 @@ class TopSessionsTable extends PureComponent<Props, State> {
       sortKey,
       sortDirection
     )
+
+    console.log('table render ', sortedTopSessions)
+    console.log('table render ', {searchTerm, sortKey, sortDirection})
 
     return (
       <>
@@ -270,7 +282,7 @@ class TopSessionsTable extends PureComponent<Props, State> {
     const {isEditable, cellBackgroundColor} = this.props
 
     if (isEditable) {
-      let barStyle
+      let barStyle = {}
 
       if (cellBackgroundColor !== DEFAULT_CELL_BG_COLOR) {
         barStyle = {
@@ -295,14 +307,16 @@ class TopSessionsTable extends PureComponent<Props, State> {
   }
 
   public sort(allTopSessions: TopSession[], key: string, direction: string) {
+    let dumpKey: string | string[] =
+      key.indexOf('.') > -1 ? key.split('.') : key
     switch (direction) {
       case SortDirection.ASC:
-        return _.sortBy<TopSession>(allTopSessions, e => {
-          return e[key]
+        return _.sortBy(allTopSessions, e => {
+          return Array.isArray(dumpKey) ? e[dumpKey[0]][dumpKey[1]] : e[dumpKey]
         })
       case SortDirection.DESC:
-        return _.sortBy<TopSession>(allTopSessions, e => {
-          return e[key]
+        return _.sortBy(allTopSessions, e => {
+          return Array.isArray(dumpKey) ? e[dumpKey[0]][dumpKey[1]] : e[dumpKey]
         }).reverse()
       default:
         return allTopSessions

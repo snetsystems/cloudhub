@@ -146,8 +146,8 @@ class TopSourcesTable extends PureComponent<Props, State> {
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('sessioncnt')}
-          className={this.sortableClasses('sessioncnt')}
+          onClick={this.updateSort('sessionCount')}
+          className={this.sortableClasses('sessionCount')}
           style={{width: SESSIONCOUNT}}
           title="Session Count"
         >
@@ -155,8 +155,8 @@ class TopSourcesTable extends PureComponent<Props, State> {
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('bandwidth')}
-          className={this.sortableClasses('bandwidth')}
+          onClick={this.updateSort('currentBandwidth')}
+          className={this.sortableClasses('currentBandwidth')}
           style={{width: CURRENTBANDWIDTH}}
           title="Band Width"
         >
@@ -164,8 +164,8 @@ class TopSourcesTable extends PureComponent<Props, State> {
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('totaldata')}
-          className={this.sortableClasses('totaldata')}
+          onClick={this.updateSort('totalData')}
+          className={this.sortableClasses('totalData')}
           style={{width: TOTALDATA}}
           title="Total Data"
         >
@@ -204,7 +204,7 @@ class TopSourcesTable extends PureComponent<Props, State> {
     )
   }
 
-  private get headingClass() {
+  private get headingClass(): string {
     const {isEditable} = this.props
     return classnames('dash-graph--heading', {
       'dash-graph--draggable dash-graph--heading-draggable': isEditable,
@@ -224,14 +224,12 @@ class TopSourcesTable extends PureComponent<Props, State> {
     }
 
     return (
-      <>
-        <h2
-          className={`dash-graph--name grid-layout--draggable`}
-          style={nameStyle}
-        >
-          {topSources.length} Top Sources
-        </h2>
-      </>
+      <h2
+        className={`dash-graph--name grid-layout--draggable`}
+        style={nameStyle}
+      >
+        {topSources.length} Top Sources
+      </h2>
     )
   }
 
@@ -239,7 +237,7 @@ class TopSourcesTable extends PureComponent<Props, State> {
     const {isEditable, cellBackgroundColor} = this.props
 
     if (isEditable) {
-      let barStyle
+      let barStyle = {}
 
       if (cellBackgroundColor !== DEFAULT_CELL_BG_COLOR) {
         barStyle = {
@@ -274,11 +272,11 @@ class TopSourcesTable extends PureComponent<Props, State> {
     }
   }
 
-  public updateSearchTerm = (searchTerm: string) => {
+  public updateSearchTerm = (searchTerm: string): void => {
     this.setState({searchTerm})
   }
 
-  public updateSort = (key: string) => () => {
+  public updateSort = (key: string) => (): void => {
     const {sortKey, sortDirection} = this.state
     if (sortKey === key) {
       const reverseDirection =

@@ -14,11 +14,11 @@ export const ROUTER_TABLE_SIZING = {
 }
 
 export const TOPSOURCES_TABLE_SIZING = {
-  IP: 'calc(34% - 50px)',
+  IP: 'calc(34% - 100px)',
   TENANT: '20%',
   CURRENTBANDWIDTH: '23%',
   TOTALDATA: '23%',
-  SESSIONCOUNT: '50px',
+  SESSIONCOUNT: '100px',
 }
 
 export const TOPSESSIONS_TABLE_SIZING = {
