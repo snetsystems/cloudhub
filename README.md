@@ -1,6 +1,6 @@
 # SCMP (Snet Cloud Monitoring Portal) - Special edition for dev-0.9.1
 
-## Intro.
+## Intro
 
 **SCMP** is **another branch** of an open-source web application derived from Influxdata's **_Chronograf_** written in Go and React.js that provides the tools to visualize your monitoring data and easily create alerting and automation rules.
 
