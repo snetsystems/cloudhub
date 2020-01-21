@@ -1,4 +1,5 @@
 import React, {PureComponent} from 'react'
+import {unitIndicator} from 'src/addon/128t/reusable'
 import {TOPSOURCES_TABLE_SIZING} from 'src/addon/128t/constants'
 import {TopSource} from 'src/addon/128t/types'
 import {transBytes, transBps} from 'src/shared/utils/units'
@@ -12,13 +13,18 @@ class TopSourcesTableRow extends PureComponent<Props> {
     super(props)
   }
 
-  private TableItem = ({width, title}) => {
+  private TableItem = ({
+    width,
+    title,
+    className = '',
+  }: {
+    width: string
+    title: string | number | JSX.Element
+    className: string
+  }) => {
     return (
-      <div
-        className="hosts-table--td"
-        style={{width: width, alignItems: 'center', lineHeight: '200%'}}
-      >
-        {title}
+      <div className={`hosts-table--td ${className}`} style={{width: width}}>
+        {title ? title : '-'}
       </div>
     )
   }
@@ -42,13 +48,22 @@ class TopSourcesTableRow extends PureComponent<Props> {
 
     return (
       <div className={'hosts-table--tr'}>
-        <this.TableItem title={ip} width={IP} />
-        <this.TableItem title={tenant} width={TENANT} />
-        <this.TableItem title={transBytes(totalData, 2)} width={TOTALDATA} />
-        <this.TableItem title={sessionCount} width={SESSIONCOUNT} />
+        <this.TableItem title={ip} width={IP} className={'align--start'} />
+        <this.TableItem title={tenant} width={TENANT} className={''} />
         <this.TableItem
-          title={transBps(currentBandwidth * 8, 2)}
+          title={sessionCount}
+          width={SESSIONCOUNT}
+          className={'align--end'}
+        />
+        <this.TableItem
+          title={unitIndicator(transBps(currentBandwidth * 8, 2), ' ')}
           width={CURRENTBANDWIDTH}
+          className={'align--end'}
+        />
+        <this.TableItem
+          title={unitIndicator(transBytes(totalData, 2), ' ')}
+          width={TOTALDATA}
+          className={'align--end'}
         />
       </div>
     )

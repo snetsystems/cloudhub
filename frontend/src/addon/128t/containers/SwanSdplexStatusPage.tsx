@@ -1,30 +1,33 @@
+// Libraries
 import _ from 'lodash'
 import React, {useState, useEffect} from 'react'
 import {useQuery} from '@apollo/react-hooks'
 
+// Components
+import GridLayoutRenderer from 'src/addon/128t/components/GridLayoutRenderer'
+import PageSpinner from 'src/shared/components/PageSpinner'
 import {Page} from 'src/reusable_ui'
 
 // Types
 import {Router, TopSource, TopSession} from 'src/addon/128t/types'
 
-//Middleware
+// Middleware
 import {
+  verifyLocalStorage,
   setLocalStorage,
   getLocalStorage,
 } from 'src/shared/middleware/localStorage'
 
-// Components
-import Threesizer from 'src/shared/components/threesizer/Threesizer'
-// import RouterModal from 'src/addon/128t/components/RouterModal'
-import PageSpinner from 'src/shared/components/PageSpinner'
-
-// table
-import RouterTable from 'src/addon/128t/components/RouterTable'
-import TopSourcesTable from 'src/addon/128t/components/TopSourcesTable'
-
-//const
+// Const
 import {GET_ALLROUTERS_INFO} from 'src/addon/128t/constants'
-import {HANDLE_HORIZONTAL} from 'src/shared/constants'
+
+export interface cellLayoutInfo {
+  i: string
+  x: number
+  y: number
+  w: number
+  h: number
+}
 
 interface Response {
   data: {
@@ -87,42 +90,56 @@ interface EmitData {
   routers: Router[]
 }
 
-interface Proportions {
-  proportions: number[]
-}
-
 const SwanSdplexStatusPage = () => {
-  let [topSize, bottomSize] = [0.4, 0.6]
-  let assetId = ''
+  let assetId: string = ''
+  let getCellsLayout: cellLayoutInfo[] = []
+  const initCellsLayout = [
+    {
+      i: 'routers',
+      x: 0,
+      y: 0,
+      w: 12,
+      h: 3,
+    },
+    {
+      i: 'topSources',
+      x: 0,
+      y: 1,
+      w: 5,
+      h: 4,
+    },
+    {
+      i: 'topSessions',
+      x: 6,
+      y: 1,
+      w: 7,
+      h: 4,
+    },
+  ]
+
+  verifyLocalStorage(getLocalStorage, setLocalStorage, 'addon', {
+    T128: {
+      focusedAssetId: '',
+      cellsLayoutInfo: initCellsLayout,
+    },
+  })
 
   const addon = getLocalStorage('addon')
   if (addon) {
-    ;[topSize, bottomSize] = _.get(addon, 'T128.proportions')
     assetId = _.get(addon, 'T128.focusedAssetId')
+    getCellsLayout = _.get(addon, 'T128.cellsLayoutInfo')
   }
 
-  const [proportions, setProportions] = useState<Proportions>({
-    proportions: [topSize, bottomSize],
-  })
-
   const [focusedAssetId, setFocusedAssetId] = useState<string>(assetId)
-
-  useEffect(() => {
-    return () => {
-      setLocalStorage('addon', {
-        T128: {
-          proportions: _.get(proportions, 'proportions'),
-          focusedAssetId,
-        },
-      })
-    }
-  }, [proportions, focusedAssetId])
-
   const [emitData, setRoutersInfo] = useState<EmitData>({
     routers: [],
   })
 
   const [topSources, setTopSources] = useState<TopSource[]>([])
+  const [topSessions, setTopSessions] = useState<TopSession[]>([])
+  const [cellsLayoutInfo, setCellsLayoutInfo] = useState<cellLayoutInfo[]>(
+    getCellsLayout
+  )
 
   const {loading, data} = useQuery<Response, Variables>(GET_ALLROUTERS_INFO, {
     // variables: {
@@ -147,50 +164,63 @@ const SwanSdplexStatusPage = () => {
               bandwidth_avg: node.bandwidth_avg,
               session_arrivals: node.session_arrivals,
               topSources: node.topSources,
-              topSessions: node.topSessions,
+              topSessions: node.topSessions
+                ? node.topSessions.map(topSession => ({
+                    ...topSession,
+                    value: Number(topSession.value),
+                  }))
+                : [],
             }
 
             const nodeDetail: NodeDetail = _.head(node.nodes.nodes)
             if (nodeDetail) {
-              router = {
-                ...router,
-                enabled: _.get(nodeDetail, 'enabled'),
-                role: _.get(nodeDetail, 'role'),
-                startTime: _.get(nodeDetail, 'state.startTime'),
-                softwareVersion: _.get(nodeDetail, 'state.softwareVersion'),
-                memoryUsage: (() => {
-                  const capacity: number = _.get(nodeDetail, 'memory.capacity')
-                  const usage: number = _.get(nodeDetail, 'memory.usage')
-                  return capacity > 0 ? (usage / capacity) * 100 : null
-                })(),
-                cpuUsage: (() => {
-                  const cpus: CPU[] = _.get(nodeDetail, 'cpu')
-                  const sum: number[] = _.reduce(
-                    cpus,
-                    (acc: number[], cpu: CPU) => {
-                      if (cpu.type === 'packetProcessing') return acc
-                      acc[0] += cpu.utilization
-                      acc[1] += 1
-                      return acc
-                    },
-                    [0, 0]
-                  )
-                  return sum[1] > 0 ? sum[0] / sum[1] : null
-                })(),
-                diskUsage: (() => {
-                  const disks: Disk[] = _.get(nodeDetail, 'disk')
-                  const rootPatitions: Disk[] = _.filter(
-                    disks,
-                    (disk: Disk) => {
-                      return disk.partition === '/'
-                    }
-                  )
-                  if (_.isEmpty(rootPatitions)) return null
+              try {
+                router = {
+                  ...router,
+                  enabled: _.get(nodeDetail, 'enabled'),
+                  role: _.get(nodeDetail, 'role'),
+                  startTime: _.get(nodeDetail, 'state.startTime'),
+                  softwareVersion: _.get(nodeDetail, 'state.softwareVersion'),
+                  memoryUsage: (() => {
+                    const capacity: number = _.get(
+                      nodeDetail,
+                      'memory.capacity'
+                    )
+                    const usage: number = _.get(nodeDetail, 'memory.usage')
+                    return capacity > 0 ? (usage / capacity) * 100 : null
+                  })(),
+                  cpuUsage: (() => {
+                    const cpus: CPU[] = _.get(nodeDetail, 'cpu')
+                    const sum: number[] = _.reduce(
+                      cpus,
+                      (acc: number[], cpu: CPU) => {
+                        if (cpu.type === 'packetProcessing') return acc
+                        acc[0] += cpu.utilization
+                        acc[1] += 1
+                        return acc
+                      },
+                      [0, 0]
+                    )
+                    return sum[1] > 0 ? sum[0] / sum[1] : null
+                  })(),
+                  diskUsage: (() => {
+                    const disks: Disk[] = _.get(nodeDetail, 'disk')
+                    const rootPatitions: Disk[] = _.filter(
+                      disks,
+                      (disk: Disk) => {
+                        return disk.partition === '/'
+                      }
+                    )
+                    if (_.isEmpty(rootPatitions)) return null
 
-                  return rootPatitions[0].capacity > 0
-                    ? (rootPatitions[0].usage / rootPatitions[0].capacity) * 100
-                    : null
-                })(),
+                    return rootPatitions[0].capacity > 0
+                      ? (rootPatitions[0].usage / rootPatitions[0].capacity) *
+                          100
+                      : null
+                  })(),
+                }
+              } catch (e) {
+                console.log('node detail', e)
               }
             }
 
@@ -209,54 +239,37 @@ const SwanSdplexStatusPage = () => {
             return node.assetId === focusedAssetId
           })
           if (router && router.topSources) setTopSources(router.topSources)
+          if (router && router.topSessions) setTopSessions(router.topSessions)
         }
       }
     }
   }, [data])
 
-  const horizontalDivisions = () => {
-    const [topSize, bottomSize] = _.get(proportions, 'proportions')
-
-    return [
-      {
-        name: '',
-        handleDisplay: 'none',
-        headerButtons: [],
-        menuOptions: [],
-        render: () => {
-          return (
-            <RouterTable
-              routers={emitData.routers}
-              focusedAssetId={focusedAssetId}
-              onClickTableRow={handleClickTableRow}
-            />
-          )
-        },
-        headerOrientation: HANDLE_HORIZONTAL,
-        size: topSize,
+  useEffect(() => {
+    setLocalStorage('addon', {
+      T128: {
+        focusedAssetId,
+        cellsLayoutInfo,
       },
-      {
-        name: '',
-        handlePixels: 8,
-        headerButtons: [],
-        menuOptions: [],
-        render: () => {
-          return <TopSourcesTable topSources={topSources} />
-        },
-        headerOrientation: HANDLE_HORIZONTAL,
-        size: bottomSize,
-      },
-    ]
-  }
+    })
+  }, [focusedAssetId, cellsLayoutInfo])
 
   const handleClickTableRow = (
     topSources: TopSource[],
+    topSessions: TopSession[],
     focusedAssetId: string
-  ) => () => {
+  ) => (): void => {
     if (topSources) setTopSources(topSources)
     else setTopSources([])
 
+    if (topSessions) setTopSessions(topSessions)
+    else setTopSessions([])
+
     setFocusedAssetId(focusedAssetId)
+  }
+
+  const handleUpdatePosition = (layout: cellLayoutInfo[]): void => {
+    setCellsLayoutInfo(layout)
   }
 
   return (
@@ -265,18 +278,31 @@ const SwanSdplexStatusPage = () => {
         <Page.Header.Left>
           <Page.Title title="128T/SDPlex - Status" />
         </Page.Header.Left>
-        <Page.Header.Right showSourceIndicator={true} />
+        <Page.Header.Right showSourceIndicator={true}>
+          <button
+            onClick={() => setCellsLayoutInfo(initCellsLayout)}
+            className="button button-sm button-default"
+          >
+            reset
+          </button>
+        </Page.Header.Right>
       </Page.Header>
-      <Page.Contents scrollable={true}>
+      <Page.Contents
+        scrollable={true}
+        className={'swan-sdpldex-status-page__container'}
+      >
         {loading || _.isEmpty(emitData.routers) ? (
           <PageSpinner />
         ) : (
-          <Threesizer
-            orientation={HANDLE_HORIZONTAL}
-            divisions={horizontalDivisions()}
-            onResize={(sizes: number[]) => {
-              setProportions({proportions: sizes})
-            }}
+          <GridLayoutRenderer
+            focusedAssetId={focusedAssetId}
+            isSwanSdplexStatus={true}
+            onClickTableRow={handleClickTableRow}
+            routersData={emitData.routers}
+            topSessionsData={topSessions}
+            topSourcesData={topSources}
+            onPositionChange={handleUpdatePosition}
+            layout={cellsLayoutInfo}
           />
         )}
       </Page.Contents>

@@ -5,17 +5,17 @@ import memoize from 'memoize-one'
 import classnames from 'classnames'
 import chroma from 'chroma-js'
 
-// Components
+// import SearchBar from 'src/hosts/components/SearchBar'
 import GridLayoutSearchBar from 'src/addon/128t/components/GridLayoutSearchBar'
-import RouterTableRow from 'src/addon/128t/components/RouterTableRow'
+import TopSessionsTableRow from 'src/addon/128t/components/TopSessionsTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {NoHostsState} from 'src/addon/128t/reusable'
 
 //type
-import {Router, TopSource, TopSession} from 'src/addon/128t/types'
+import {TopSession} from 'src/addon/128t/types'
 
 // constants
-import {ROUTER_TABLE_SIZING} from 'src/addon/128t/constants'
+import {TOPSESSIONS_TABLE_SIZING} from 'src/addon/128t/constants'
 import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
 
 // Error Handler
@@ -27,57 +27,82 @@ enum SortDirection {
 }
 
 export interface Props {
+  topSessions: TopSession[]
+  isEditable: boolean
   cellBackgroundColor: string
   cellTextColor: string
-  isEditable: boolean
-  routers: Router[]
-  focusedAssetId: string
-  onClickTableRow: (
-    topSources: TopSource[],
-    topSessions: TopSession[],
-    focusedAssetId: string
-  ) => () => void
 }
 
 interface State {
   searchTerm: string
   sortDirection: SortDirection
   sortKey: string
-  routerCount: string
+  topSessionCount: number
 }
 
 @ErrorHandling
-class RouterTable extends PureComponent<Props, State> {
+class TopSessionsTable extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
-
     this.state = {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
-      sortKey: 'assetId',
-      routerCount: '0',
+      sortKey: 'service',
+      topSessionCount: 0,
     }
   }
 
-  public getSortedRouters = memoize(
+  public getSortedTopSessions = memoize(
     (
-      routers: Router[],
+      topSessions: TopSession[],
       searchTerm: string,
       sortKey: string,
       sortDirection: SortDirection
-    ) => this.sort(this.filter(routers, searchTerm), sortKey, sortDirection)
+    ) => {
+      const sorted = this.sort(
+        this.filter(topSessions, searchTerm),
+        sortKey,
+        sortDirection
+      )
+
+      console.log({sorted})
+      return sorted
+    }
   )
 
   public componentWillMount() {
-    const {routers} = this.props
+    const {topSessions} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
-    const sortedRouters = this.getSortedRouters(
-      routers,
+
+    this.setSessionCount(topSessions, searchTerm, sortKey, sortDirection)
+  }
+
+  public componentWillReceiveProps(nextProps: Props) {
+    const {topSessions} = this.props
+    if (topSessions === nextProps.topSessions) return
+    const {sortKey, sortDirection, searchTerm} = this.state
+
+    this.setSessionCount(
+      nextProps.topSessions,
       searchTerm,
       sortKey,
       sortDirection
     )
-    this.setState({routerCount: sortedRouters.length})
+  }
+
+  private setSessionCount(
+    topSessions: TopSession[],
+    searchTerm: string,
+    sortKey: string,
+    sortDirection: SortDirection
+  ) {
+    const sortedTopSessions = this.getSortedTopSessions(
+      topSessions,
+      searchTerm,
+      sortKey,
+      sortDirection
+    )
+    this.setState({topSessionCount: sortedTopSessions.length})
   }
 
   public render() {
@@ -107,115 +132,83 @@ class RouterTable extends PureComponent<Props, State> {
 
   private get TableHeader() {
     const {
-      ASSETID,
-      LOCATIONCOORDINATES,
-      MANAGEMENTCONNECTED,
-      BANDWIDTH_AVG,
-      SESSION_CNT_AVG,
-      ENABLED,
-      ROLE,
-      STARTTIME,
-      SOFTWAREVERSION,
-      MEMORYUSAGE,
-      CPUUSAGE,
-      DISKUSAGE,
-    } = ROUTER_TABLE_SIZING
+      TOPSESSION_SERVICE,
+      TOPSESSION_TENANT,
+      TOPSESSION_VALUE,
+      TOPSESSION_PROTOCOL,
+      TOPSESSION_SOURCE_ADDRESS,
+      TOPSESSION_SOURCE_PORT,
+      TOPSESSION_DESTINATION_ADDRESS,
+      TOPSESSION_DESTINATION_PORT,
+    } = TOPSESSIONS_TABLE_SIZING
     return (
       <>
         <div
-          onClick={this.updateSort('assetId')}
-          className={this.sortableClasses('assetId')}
-          style={{width: ASSETID}}
+          onClick={this.updateSort('service')}
+          className={this.sortableClasses('service')}
+          style={{width: TOPSESSION_SERVICE}}
         >
-          Asset ID
+          Service
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('role')}
-          className={this.sortableClasses('role')}
-          style={{width: ROLE}}
+          onClick={this.updateSort('tenant')}
+          className={this.sortableClasses('tenant')}
+          style={{width: TOPSESSION_TENANT}}
         >
-          Role
+          Tenant
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('enabled')}
-          className={this.sortableClasses('enabled')}
-          style={{width: ENABLED}}
+          onClick={this.updateSort('value')}
+          className={this.sortableClasses('value')}
+          style={{width: TOPSESSION_VALUE}}
         >
-          Enabled
+          Value
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('locationCoordinates')}
-          className={this.sortableClasses('locationCoordinates')}
-          style={{width: LOCATIONCOORDINATES}}
+          onClick={this.updateSort('protocol')}
+          className={this.sortableClasses('protocol')}
+          style={{width: TOPSESSION_PROTOCOL}}
         >
-          Location Coordinates
+          Protocol
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('managementConnected')}
-          className={this.sortableClasses('managementConnected')}
-          style={{width: MANAGEMENTCONNECTED}}
+          onClick={this.updateSort('source.address')}
+          className={this.sortableClasses('source.address')}
+          style={{width: TOPSESSION_SOURCE_ADDRESS}}
+          title="Source Address"
         >
-          Connected
+          S/A
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('startTime')}
-          className={this.sortableClasses('startTime')}
-          style={{width: STARTTIME}}
+          onClick={this.updateSort('source.port')}
+          className={this.sortableClasses('sourcePort')}
+          style={{width: TOPSESSION_SOURCE_PORT}}
+          title="Source Port"
         >
-          Uptime
+          S/P
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('softwareVersion')}
-          className={this.sortableClasses('softwareVersion')}
-          style={{width: SOFTWAREVERSION}}
+          onClick={this.updateSort('destination.address')}
+          className={this.sortableClasses('destination.address')}
+          style={{width: TOPSESSION_DESTINATION_ADDRESS}}
+          title="Destination Address"
         >
-          Version
+          D/A
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('cpuUsage')}
-          className={this.sortableClasses('cpuUsage')}
-          style={{width: CPUUSAGE}}
+          onClick={this.updateSort('destination.port')}
+          className={this.sortableClasses('destination.port')}
+          style={{width: TOPSESSION_DESTINATION_PORT}}
+          title="Destination Port"
         >
-          CPU
-          <span className="icon caret-up" />
-        </div>
-        <div
-          onClick={this.updateSort('memoryUsage')}
-          className={this.sortableClasses('memoryUsage')}
-          style={{width: MEMORYUSAGE}}
-        >
-          Memory
-          <span className="icon caret-up" />
-        </div>
-        <div
-          onClick={this.updateSort('diskUsage')}
-          className={this.sortableClasses('diskUsage')}
-          style={{width: DISKUSAGE}}
-        >
-          Disk(/)
-          <span className="icon caret-up" />
-        </div>
-        <div
-          onClick={this.updateSort('bandwidth_avg')}
-          className={this.sortableClasses('bandwidth_avg')}
-          style={{width: BANDWIDTH_AVG}}
-        >
-          Avg. B/W
-          <span className="icon caret-up" />
-        </div>
-        <div
-          onClick={this.updateSort('session_arrivals')}
-          className={this.sortableClasses('session_arrivals')}
-          style={{width: SESSION_CNT_AVG}}
-        >
-          Session Arrivals
+          D/P
           <span className="icon caret-up" />
         </div>
       </>
@@ -224,28 +217,28 @@ class RouterTable extends PureComponent<Props, State> {
 
   // data add
   private get TableData() {
-    const {routers, focusedAssetId, onClickTableRow} = this.props
+    const {topSessions} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
-    const sortedRouters = this.getSortedRouters(
-      routers,
+    const sortedTopSessions = this.getSortedTopSessions(
+      topSessions,
       searchTerm,
       sortKey,
       sortDirection
     )
 
+    console.log('table render ', sortedTopSessions)
+    console.log('table render ', {searchTerm, sortKey, sortDirection})
+
     return (
       <>
-        {routers.length > 0 ? (
+        {topSessions.length > 0 ? (
           <FancyScrollbar
-            children={sortedRouters.map((r: Router, i: number) => (
-              <RouterTableRow
-                onClickTableRow={onClickTableRow}
-                focusedAssetId={focusedAssetId}
-                router={r}
-                key={i}
-              />
-            ))}
+            children={sortedTopSessions.map(
+              (r: TopSession, i: number): JSX.Element => (
+                <TopSessionsTableRow topSessions={r} key={i} />
+              )
+            )}
           />
         ) : (
           <NoHostsState />
@@ -263,7 +256,7 @@ class RouterTable extends PureComponent<Props, State> {
   }
 
   private get cellName(): JSX.Element {
-    const {cellTextColor, cellBackgroundColor, routers} = this.props
+    const {cellTextColor, cellBackgroundColor, topSessions} = this.props
 
     let nameStyle = {}
 
@@ -279,7 +272,7 @@ class RouterTable extends PureComponent<Props, State> {
           className={`dash-graph--name grid-layout--draggable`}
           style={nameStyle}
         >
-          {routers.length} Routers
+          {topSessions.length} Top Sessions
         </h2>
       </>
     )
@@ -306,26 +299,27 @@ class RouterTable extends PureComponent<Props, State> {
     }
   }
 
-  public filter(allrouters: Router[], searchTerm: string) {
+  public filter(allTopSessions: TopSession[], searchTerm: string) {
     const filterText = searchTerm.toLowerCase()
-    return allrouters.filter(h => {
-      return h.assetId.toLowerCase().includes(filterText)
+    return allTopSessions.filter(h => {
+      return h.tenant.toLowerCase().includes(filterText)
     })
   }
 
-  public sort(allrouters: Router[], key: string, direction: SortDirection) {
+  public sort(allTopSessions: TopSession[], key: string, direction: string) {
+    let dumpKey: string | string[] =
+      key.indexOf('.') > -1 ? key.split('.') : key
     switch (direction) {
       case SortDirection.ASC:
-        return _.sortBy(allrouters, e => e[key])
+        return _.sortBy(allTopSessions, e => {
+          return Array.isArray(dumpKey) ? e[dumpKey[0]][dumpKey[1]] : e[dumpKey]
+        })
       case SortDirection.DESC:
-        const sortDesc = _.sortBy(
-          allrouters,
-          [e => e[key] || e[key] === 0],
-          ['asc']
-        ).reverse()
-        return sortDesc
+        return _.sortBy(allTopSessions, e => {
+          return Array.isArray(dumpKey) ? e[dumpKey[0]][dumpKey[1]] : e[dumpKey]
+        }).reverse()
       default:
-        return allrouters
+        return allTopSessions
     }
   }
 
@@ -358,4 +352,4 @@ class RouterTable extends PureComponent<Props, State> {
   }
 }
 
-export default RouterTable
+export default TopSessionsTable

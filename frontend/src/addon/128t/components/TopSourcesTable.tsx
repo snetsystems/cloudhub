@@ -1,14 +1,23 @@
+// Libraries
 import React, {PureComponent} from 'react'
-
 import _ from 'lodash'
 import memoize from 'memoize-one'
+import classnames from 'classnames'
+import chroma from 'chroma-js'
 
+// components
 import TopSourcesTableRow from 'src/addon/128t/components/TopSourcesTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import GridLayoutSearchBar from 'src/addon/128t/components/GridLayoutSearchBar'
+import {NoHostsState} from 'src/addon/128t/reusable'
 
+// type
 import {TopSource} from 'src/addon/128t/types'
 import {ErrorHandling} from 'src/shared/decorators/errors'
+
+// constants
 import {TOPSOURCES_TABLE_SIZING} from 'src/addon/128t/constants'
+import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
 
 enum SortDirection {
   ASC = 'asc',
@@ -17,13 +26,15 @@ enum SortDirection {
 
 export interface Props {
   topSources: TopSource[]
+  isEditable: boolean
+  cellBackgroundColor: string
+  cellTextColor: string
 }
 
 interface State {
   searchTerm: string
   sortDirection: SortDirection
   sortKey: string
-
   topSourceCount: string
 }
 
@@ -84,16 +95,22 @@ class TopSourcesTable extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {topSourceCount} = this.state
     return (
-      <div className="panel">
+      <div className={`panel`}>
         <div className="panel-heading">
-          <h2 className="panel-title">{topSourceCount} Top Sources</h2>
+          <div className={this.headingClass}>
+            {this.cellName}
+            {this.headingBar}
+            <GridLayoutSearchBar
+              placeholder="Filter by Tenant..."
+              onSearch={this.updateSearchTerm}
+            />
+          </div>
         </div>
         <div className="panel-body">
           <div className="hosts-table">
             <div className="hosts-table--thead">
-              <div className="hosts-table--tr">{this.TableHeader}</div>
+              <div className={'hosts-table--tr'}>{this.TableHeader}</div>
             </div>
             {this.TableData}
           </div>
@@ -129,39 +146,40 @@ class TopSourcesTable extends PureComponent<Props, State> {
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('totaldata')}
-          className={this.sortableClasses('totaldata')}
-          style={{width: TOTALDATA}}
-        >
-          Total Data
-          <span className="icon caret-up" />
-        </div>
-        <div
-          onClick={this.updateSort('sessioncnt')}
-          className={this.sortableClasses('sessioncnt')}
+          onClick={this.updateSort('sessionCount')}
+          className={this.sortableClasses('sessionCount')}
           style={{width: SESSIONCOUNT}}
+          title="Session Count"
         >
-          Session count
+          S/C
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('bandwidth')}
-          className={this.sortableClasses('bandwidth')}
+          onClick={this.updateSort('currentBandwidth')}
+          className={this.sortableClasses('currentBandwidth')}
           style={{width: CURRENTBANDWIDTH}}
+          title="Band Width"
         >
-          Bandwidth
+          B/W
+          <span className="icon caret-up" />
+        </div>
+        <div
+          onClick={this.updateSort('totalData')}
+          className={this.sortableClasses('totalData')}
+          style={{width: TOTALDATA}}
+          title="Total Data"
+        >
+          T/D
           <span className="icon caret-up" />
         </div>
       </>
     )
   }
 
-  // data add
   private get TableData() {
     const {topSources} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
-    //const sortedTopSources = topSources
     const sortedTopSources = this.getSortedTopSources(
       topSources,
       searchTerm,
@@ -170,18 +188,76 @@ class TopSourcesTable extends PureComponent<Props, State> {
     )
 
     return (
-      <FancyScrollbar
-        children={sortedTopSources.map((r, i) => (
-          <TopSourcesTableRow topSources={r} key={i} />
-        ))}
-      />
+      <>
+        {topSources.length > 0 ? (
+          <FancyScrollbar
+            children={sortedTopSources.map(
+              (r: TopSource, i: number): JSX.Element => (
+                <TopSourcesTableRow topSources={r} key={i} />
+              )
+            )}
+          />
+        ) : (
+          <NoHostsState />
+        )}
+      </>
     )
+  }
+
+  private get headingClass(): string {
+    const {isEditable} = this.props
+    return classnames('dash-graph--heading', {
+      'dash-graph--draggable dash-graph--heading-draggable': isEditable,
+      'dash-graph--heading-draggable': isEditable,
+    })
+  }
+
+  private get cellName(): JSX.Element {
+    const {cellTextColor, cellBackgroundColor, topSources} = this.props
+
+    let nameStyle = {}
+
+    if (cellBackgroundColor !== DEFAULT_CELL_BG_COLOR) {
+      nameStyle = {
+        color: cellTextColor,
+      }
+    }
+
+    return (
+      <h2
+        className={`dash-graph--name grid-layout--draggable`}
+        style={nameStyle}
+      >
+        {topSources.length} Top Sources
+      </h2>
+    )
+  }
+
+  private get headingBar(): JSX.Element {
+    const {isEditable, cellBackgroundColor} = this.props
+
+    if (isEditable) {
+      let barStyle = {}
+
+      if (cellBackgroundColor !== DEFAULT_CELL_BG_COLOR) {
+        barStyle = {
+          backgroundColor: chroma(cellBackgroundColor).brighten(),
+        }
+      }
+
+      return (
+        <>
+          <div className="dash-graph--heading-bar" style={barStyle} />
+          <div className="dash-graph--heading-dragger" />
+        </>
+      )
+    }
   }
 
   public filter(alltopsources: TopSource[], searchTerm: string) {
     const filterText = searchTerm.toLowerCase()
     return alltopsources.filter(h => {
-      return h.ip.toLowerCase().includes(filterText)
+      return h.tenant.toLowerCase().includes(filterText)
     })
   }
 
@@ -196,7 +272,11 @@ class TopSourcesTable extends PureComponent<Props, State> {
     }
   }
 
-  public updateSort = (key: string) => () => {
+  public updateSearchTerm = (searchTerm: string): void => {
+    this.setState({searchTerm})
+  }
+
+  public updateSort = (key: string) => (): void => {
     const {sortKey, sortDirection} = this.state
     if (sortKey === key) {
       const reverseDirection =
