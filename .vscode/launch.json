@@ -41,7 +41,7 @@
     }
   ]
 }
-// Configure Chronograf to use SSL
+// Configure SCMP to use SSL
 /*
 {
   // Use IntelliSense to learn about possible attributes.

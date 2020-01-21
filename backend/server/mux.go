@@ -144,8 +144,8 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	}
 
 	/* Documentation */
-	// router.GET("/swagger.json", Spec())
-	// router.GET("/docs", Redoc("/swagger.json"))
+	router.GET("/swagger.json", Spec())
+	router.GET("/docs", Redoc("/swagger.json"))
 
 	/* API */
 	// Organizations
