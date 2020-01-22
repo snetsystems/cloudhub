@@ -9,21 +9,25 @@
       "type": "go",
       "request": "launch",
       "mode": "debug",
-      "buildFlags": ["-ldflags='-X main.version=0.1.0'"],
+      "buildFlags": ["-ldflags='-X main.version=dev-0.9.1'"],
       "program": "${workspaceFolder}/backend/cmd/cmp",
       "env": {},
       "args": [
         "-l=debug",
         "-d",
+        "-u=salt:http://61.250.122.43:8000/",
+        "-u=128T-Oncue:https://211.189.153.40/api/v1/graphql",
+        "-k=salt:lndXJlIl0sImlhdCI6MTU3NDAzNjAxM30",
+        "-k=128T-Oncue:eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiYWRtaW4iLCJzY29wZXMiOlsiY29uZmlndXJlIl0sImlhdCI6MTU3NDAzNjAxM30.beW77E48pOhNKHNuFB6q343hg5XGbV7HzUcI-8LaV4RJTOiOALpA4NPWF4nDmFcveVuGuH8rETnLNbeXFa2zmssbCg_TfaAt49yyq_Meg43TYXKOYl5pl7mJ1k-nte0zW4fX2J6brRE5ouvU3e2ssvRVmvsnuqWxdQ1Doqm4e2zLaVIblMsb80DpSr7AZfbF5Ld11KwUPIxAsU7LIN_tfKfy4-LPqwN78eD6fGcb_u6m2sm5jVZihuwKmzhIVEVIHtnGbr2oSrAHLrpeokLCGctXF1b7pCt7pCWIeBqyr7EjjOx90d8LoH49idMPLymDR_NPi-8Cs0GXszJtW82DuA",
         "-c=./cmp-canned/",
         "--protoboards-path=./cmp-protoboards/",
-        "--auth-duration=0",
+        "--auth-duration=10m",
         "-t=74c1e9e2450886060b5bf736b935cd0bf960837f",
-        "--github-client-id=38eee21805ad07ffd8d4",
-        "--github-client-secret=cf355e9c219a0efa7556bb1de6cb740bbc3388b0"
+        "-i=38eee21805ad07ffd8d4",
+        "-s=cf355e9c219a0efa7556bb1de6cb740bbc3388b0",
+        "--custom-link=128T Condutor:https://211.189.153.40"
       ],
       "showLog": true
-      // "logOutput": "debugger"
     },
     {
       "name": "Launch Chrome",
@@ -55,19 +59,24 @@
       "request": "launch",
       "mode": "debug",
       "buildFlags": [
-        "-ldflags='-X main.version=0.1.0'"
+        "-ldflags='-X main.version=dev-0.9.1'"
       ],
       "program": "${workspaceFolder}/backend/cmd/cmp",
       "env": {},
       "args": [
         "-l=debug",
         "-d",
+        "-u=salt:http://61.250.122.43:8000/",
+        "-u=128T-Oncue:https://211.189.153.40/api/v1/graphql",
+        "-k=salt:lndXJlIl0sImlhdCI6MTU3NDAzNjAxM30",
+        "-k=128T-Oncue:eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiYWRtaW4iLCJzY29wZXMiOlsiY29uZmlndXJlIl0sImlhdCI6MTU3NDAzNjAxM30.beW77E48pOhNKHNuFB6q343hg5XGbV7HzUcI-8LaV4RJTOiOALpA4NPWF4nDmFcveVuGuH8rETnLNbeXFa2zmssbCg_TfaAt49yyq_Meg43TYXKOYl5pl7mJ1k-nte0zW4fX2J6brRE5ouvU3e2ssvRVmvsnuqWxdQ1Doqm4e2zLaVIblMsb80DpSr7AZfbF5Ld11KwUPIxAsU7LIN_tfKfy4-LPqwN78eD6fGcb_u6m2sm5jVZihuwKmzhIVEVIHtnGbr2oSrAHLrpeokLCGctXF1b7pCt7pCWIeBqyr7EjjOx90d8LoH49idMPLymDR_NPi-8Cs0GXszJtW82DuA",
         "-c=./cmp-canned/",
         "--protoboards-path=./cmp-protoboards/",
-        "--auth-duration=0",
+        "--auth-duration=10m",
         "-t=74c1e9e2450886060b5bf736b935cd0bf960837f",
-        "--github-client-id=a223f151c864e889f6dc",
-        "--github-client-secret=099120393404fa3c3316f860b7d5c417f1ad5514",
+        "-i=38eee21805ad07ffd8d4",
+        "-s=cf355e9c219a0efa7556bb1de6cb740bbc3388b0",
+        "--custom-link=128T Condutor:https://211.189.153.40"
         "--cert=${workspaceFolder}/backend/cmd/cmp/testing.pem"
       ],
       "showLog": true

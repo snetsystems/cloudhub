@@ -32,6 +32,12 @@ type CustomLink struct {
 	URL  string `json:"url"`
 }
 
+type getAddonLinksResponse struct {
+	Name  string `json:"names"`
+	URL   string `json:"url"`
+	Token string `json:"tokens"`
+}
+
 // NewCustomLinks transforms `--custom-link` CLI flag data or `CUSTOM_LINKS` ENV
 // var data into a data structure that the CMP client will expect
 func NewCustomLinks(links map[string]string) ([]CustomLink, error) {

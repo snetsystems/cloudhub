@@ -49,6 +49,7 @@ type getRoutesResponse struct {
 	ExternalLinks      getExternalLinksResponse           `json:"external"`         // All external links for the client to use
 	OrganizationConfig getOrganizationConfigLinksResponse `json:"orgConfig"`        // Location of the organization config endpoint
 	Flux               getFluxLinksResponse               `json:"flux"`
+	Addons             []getAddonLinksResponse            `json:"addons"`
 }
 
 // AllRoutes is a handler that returns all links to resources in CMP server, as well as
@@ -60,6 +61,8 @@ type AllRoutes struct {
 	LogoutLink   string                                 // Location of the logout route for all auth routes. If no auth, this can be empty.
 	StatusFeed   string                                 // External link to the JSON Feed for the News Feed on the client's Status Page
 	CustomLinks  map[string]string                      // Custom external links for client's User menu, as passed in via CLI/ENV
+	AddonURLs    map[string]string                      // URLs for using in Addon Features, as passed in via CLI/ENV
+	AddonTokens  map[string]string                      // Tokens to access to Addon Features API, as passed in via CLI/ENV
 	Logger       cmp.Logger
 }
 
@@ -111,6 +114,7 @@ func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			AST:         "/cmp/v1/flux/ast",
 			Suggestions: "/cmp/v1/flux/suggestions",
 		},
+		Addons: make([]getAddonLinksResponse, len(a.AddonURLs)),
 	}
 
 	// The JSON response will have no field present for the LogoutLink if there is no logout link.
@@ -120,6 +124,19 @@ func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	for i, route := range a.AuthRoutes {
 		routes.Auth[i] = route
+	}
+
+	if len(routes.Addons) > 0 {
+		i := 0
+		for name, url := range a.AddonURLs {
+			token := a.AddonTokens[name]
+			routes.Addons[i] = getAddonLinksResponse{
+				Name:  name,
+				URL:   url,
+				Token: token,
+			}
+			i++
+		}
 	}
 
 	encodeJSON(w, http.StatusOK, routes, a.Logger)

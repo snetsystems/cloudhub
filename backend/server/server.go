@@ -5,18 +5,15 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
-	"math/rand"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
 	"regexp"
-	"runtime"
 	"strconv"
 	"time"
 
-	client "github.com/influxdata/usage-client/v1"
 	flags "github.com/jessevdk/go-flags"
 	cmp "github.com/snetsystems/cmp/backend"
 	"github.com/snetsystems/cmp/backend/bolt"
@@ -56,6 +53,10 @@ type Server struct {
 
 	NewSources string `long:"new-sources" description:"Config for adding a new InfluxDB source and Kapacitor server, in JSON as an array of objects, and surrounded by single quotes. E.g. --new-sources='[{\"influxdb\":{\"name\":\"Influx 1\",\"username\":\"user1\",\"password\":\"pass1\",\"url\":\"http://localhost:8086\",\"metaUrl\":\"http://metaurl.com\",\"type\":\"influx-enterprise\",\"insecureSkipVerify\":false,\"default\":true,\"telegraf\":\"telegraf\",\"sharedSecret\":\"cubeapples\"},\"kapacitor\":{\"name\":\"Kapa 1\",\"url\":\"http://localhost:9092\",\"active\":true}}]'" env:"NEW_SOURCES" hidden:"true"`
 
+	// Addons      []string          `short:"a" long:"addons" value-name:"mutiple-choice" choice:"salt" choice:"128t-oncue" description:"Features list what want to use (env comma separated)" env:"ADDON_FEATURES" env-delim:","`
+	AddonURLs   map[string]string `short:"u" long:"addon-url" description:"Support addon is [salt, 128t-oncue]. API URLs to be used to the client for a request to addon API servers. Multiple URL can be added by using multiple of the same flag with different 'name:url' values, or as an environment variable with comma-separated 'name:url' values. E.g. via flags: '--addon-url=salt:{url} --addon-url=128t-oncue:{url}'. E.g. via environment variable: 'export ADDON_URL=salt:{url},128t-oncue:{url}'" env:"ADDON_URL" env-delim:","`
+	AddonTokens map[string]string `short:"k" long:"addon-tokens" description:"Support addon is [salt, 128t-oncue]. API tokens to be used to the client for a request to addon API servers. Multiple tokens can be added by using multiple of the same flag with different 'name:token' values, or as an environment variable with comma-separated 'name:token' values. E.g. via flags: '--addon-tokens=salt:{token} --addon-tokens=128t-oncue:{token}'. E.g. via environment variable: 'export ADDON_TOKENS=salt:{token},128t-oncue:{token}'" env:"ADDON_TOKENS" env-delim:","`
+
 	Develop         bool          `short:"d" long:"develop" description:"Run server in develop mode."`
 	BoltPath        string        `short:"b" long:"bolt-path" description:"Full path to boltDB file (e.g. './cmp-v1.db')" env:"BOLT_PATH" default:"cmp-v1.db"`
 	CannedPath      string        `short:"c" long:"canned-path" description:"Path to directory of pre-canned application layouts (/usr/share/cmp/canned)" env:"CANNED_PATH" default:"canned"`
@@ -68,22 +69,22 @@ type Server struct {
 
 	GithubClientID     string   `short:"i" long:"github-client-id" description:"Github Client ID for OAuth 2 support" env:"GH_CLIENT_ID"`
 	GithubClientSecret string   `short:"s" long:"github-client-secret" description:"Github Client Secret for OAuth 2 support" env:"GH_CLIENT_SECRET"`
-	GithubOrgs         []string `short:"o" long:"github-organization" description:"Github organization user is required to have active membership" env:"GH_ORGS" env-delim:","`
+	GithubOrgs         []string `short:"o" long:"github-organization" description:"Github organization user is required to have active membership (env comma separated)" env:"GH_ORGS" env-delim:","`
 
 	GoogleClientID     string   `long:"google-client-id" description:"Google Client ID for OAuth 2 support" env:"GOOGLE_CLIENT_ID"`
 	GoogleClientSecret string   `long:"google-client-secret" description:"Google Client Secret for OAuth 2 support" env:"GOOGLE_CLIENT_SECRET"`
-	GoogleDomains      []string `long:"google-domains" description:"Google email domain user is required to have active membership" env:"GOOGLE_DOMAINS" env-delim:","`
+	GoogleDomains      []string `long:"google-domains" description:"Google email domain user is required to have active membership (env comma separated)" env:"GOOGLE_DOMAINS" env-delim:","`
 	PublicURL          string   `long:"public-url" description:"Full public URL used to access CMP from a web browser. Used for OAuth2 authentication. (http://localhost:8888)" env:"PUBLIC_URL"`
 
 	HerokuClientID      string   `long:"heroku-client-id" description:"Heroku Client ID for OAuth 2 support" env:"HEROKU_CLIENT_ID"`
 	HerokuSecret        string   `long:"heroku-secret" description:"Heroku Secret for OAuth 2 support" env:"HEROKU_SECRET"`
-	HerokuOrganizations []string `long:"heroku-organization" description:"Heroku Organization Memberships a user is required to have for access to CMP (comma separated)" env:"HEROKU_ORGS" env-delim:","`
+	HerokuOrganizations []string `long:"heroku-organization" description:"Heroku Organization Memberships a user is required to have for access to CMP (env comma separated)" env:"HEROKU_ORGS" env-delim:","`
 
 	GenericName         string   `long:"generic-name" description:"Generic OAuth2 name presented on the login page"  env:"GENERIC_NAME"`
 	GenericClientID     string   `long:"generic-client-id" description:"Generic OAuth2 Client ID. Can be used own OAuth2 service."  env:"GENERIC_CLIENT_ID"`
 	GenericClientSecret string   `long:"generic-client-secret" description:"Generic OAuth2 Client Secret" env:"GENERIC_CLIENT_SECRET"`
-	GenericScopes       []string `long:"generic-scopes" description:"Scopes requested by provider of web client." default:"user:email" env:"GENERIC_SCOPES" env-delim:","`
-	GenericDomains      []string `long:"generic-domains" description:"Email domain users' email address to have (example.com)" env:"GENERIC_DOMAINS" env-delim:","`
+	GenericScopes       []string `long:"generic-scopes" description:"Scopes requested by provider of web client." default:"user:email (env comma separated)" env:"GENERIC_SCOPES" env-delim:","`
+	GenericDomains      []string `long:"generic-domains" description:"Email domain users' email address to have (example.com) (env comma separated)" env:"GENERIC_DOMAINS" env-delim:","`
 	GenericAuthURL      string   `long:"generic-auth-url" description:"OAuth 2.0 provider's authorization endpoint URL" env:"GENERIC_AUTH_URL"`
 	GenericTokenURL     string   `long:"generic-token-url" description:"OAuth 2.0 provider's token endpoint URL" env:"GENERIC_TOKEN_URL"`
 	GenericAPIURL       string   `long:"generic-api-url" description:"URL that returns OpenID UserInfo compatible information." env:"GENERIC_API_URL"`
@@ -92,20 +93,19 @@ type Server struct {
 	Auth0Domain        string   `long:"auth0-domain" description:"Subdomain of auth0.com used for Auth0 OAuth2 authentication" env:"AUTH0_DOMAIN"`
 	Auth0ClientID      string   `long:"auth0-client-id" description:"Auth0 Client ID for OAuth2 support" env:"AUTH0_CLIENT_ID"`
 	Auth0ClientSecret  string   `long:"auth0-client-secret" description:"Auth0 Client Secret for OAuth2 support" env:"AUTH0_CLIENT_SECRET"`
-	Auth0Organizations []string `long:"auth0-organizations" description:"Auth0 organizations permitted to access CMP (comma separated)" env:"AUTH0_ORGS" env-delim:","`
+	Auth0Organizations []string `long:"auth0-organizations" description:"Auth0 organizations permitted to access CMP (env comma separated)" env:"AUTH0_ORGS" env-delim:","`
 	Auth0SuperAdminOrg string   `long:"auth0-superadmin-org" description:"Auth0 organization from which users are automatically granted SuperAdmin status" env:"AUTH0_SUPERADMIN_ORG"`
 
 	StatusFeedURL          string            `long:"status-feed-url" description:"URL of a JSON Feed to display as a News Feed on the client Status page." default:"https://www.snetsystems.com/feed/json" env:"STATUS_FEED_URL"`
 	CustomLinks            map[string]string `long:"custom-link" description:"Custom link to be added to the client User menu. Multiple links can be added by using multiple of the same flag with different 'name:url' values, or as an environment variable with comma-separated 'name:url' values. E.g. via flags: '--custom-link=snetsystems:https://www.snetsystems.com --custom-link=CMP:https://github.com/snetsystems/cmp'. E.g. via environment variable: 'export CUSTOM_LINKS=snetsystems:https://www.snetsystems.com,CMP:https://github.com/snetsystems/cmp'" env:"CUSTOM_LINKS" env-delim:","`
 	TelegrafSystemInterval time.Duration     `long:"telegraf-system-interval" default:"1m" description:"Duration used in the GROUP BY time interval for the hosts list" env:"TELEGRAF_SYSTEM_INTERVAL"`
 
-	ReportingDisabled bool   `short:"r" long:"reporting-disabled" description:"Disable reporting of usage stats (os,arch,version,cluster_id,uptime) once every 24hr" env:"REPORTING_DISABLED"`
-	LogLevel          string `short:"l" long:"log-level" value-name:"choice" choice:"debug" choice:"info" choice:"error" default:"info" description:"Set the logging level" env:"LOG_LEVEL"`
-	Basepath          string `short:"p" long:"basepath" description:"A URL path prefix under which all CMP routes will be mounted. (Note: PREFIX_ROUTES has been deprecated. Now, if basepath is set, all routes will be prefixed with it.)" env:"BASE_PATH"`
-	ShowVersion       bool   `short:"v" long:"version" description:"Show CMP version info"`
-	BuildInfo         cmp.BuildInfo
-	Listener          net.Listener
-	handler           http.Handler
+	LogLevel    string `short:"l" long:"log-level" value-name:"choice" choice:"debug" choice:"info" choice:"error" default:"info" description:"Set the logging level" env:"LOG_LEVEL"`
+	Basepath    string `short:"p" long:"basepath" description:"A URL path prefix under which all CMP routes will be mounted. (Note: PREFIX_ROUTES has been deprecated. Now, if basepath is set, all routes will be prefixed with it.)" env:"BASE_PATH"`
+	ShowVersion bool   `short:"v" long:"version" description:"Show CMP version info"`
+	BuildInfo   cmp.BuildInfo
+	Listener    net.Listener
+	handler     http.Handler
 }
 
 func provide(p oauth2.Provider, m oauth2.Mux, ok func() bool) func(func(oauth2.Provider, oauth2.Mux)) {
@@ -321,11 +321,12 @@ func (s *Server) Serve(ctx context.Context) error {
 		CustomLinks:   s.CustomLinks,
 		PprofEnabled:  s.PprofEnabled,
 		DisableGZip:   s.DisableGZip,
+		AddonURLs:     s.AddonURLs,
+		AddonTokens:   s.AddonTokens,
 	}, service)
 
 	// Add CMP's version header to all requests
 	s.handler = Version(s.BuildInfo.Version, s.handler)
-	fmt.Println(s.handler)
 
 	if s.useTLS() {
 		// Add HSTS to instruct all browsers to change from http to https
@@ -356,9 +357,6 @@ func (s *Server) Serve(ctx context.Context) error {
 	}
 	httpServer.SetKeepAlivesEnabled(true)
 
-	if !s.ReportingDisabled {
-		go reportUsageStats(s.BuildInfo, logger)
-	}
 	scheme := "http"
 	if s.useTLS() {
 		scheme = "https"
@@ -515,44 +513,4 @@ func openService(ctx context.Context, buildInfo cmp.BuildInfo, boltPath string, 
 func validBasepath(basepath string) bool {
 	re := regexp.MustCompile(`(\/{1}[\w-]+)+`)
 	return re.ReplaceAllLiteralString(basepath, "") == ""
-}
-
-// reportUsageStats starts periodic server reporting.
-func reportUsageStats(bi cmp.BuildInfo, logger cmp.Logger) {
-	rand.Seed(time.Now().UTC().UnixNano())
-	serverID := strconv.FormatUint(uint64(rand.Int63()), 10)
-	reporter := client.New("")
-	values := client.Values{
-		"os":         runtime.GOOS,
-		"arch":       runtime.GOARCH,
-		"version":    bi.Version,
-		"cluster_id": serverID,
-		"uptime":     time.Since(startTime).Seconds(),
-	}
-	l := logger.WithField("component", "usage").
-		WithField("reporting_addr", reporter.URL).
-		WithField("freq", "24h").
-		WithField("stats", "os,arch,version,cluster_id,uptime")
-	l.Info("Reporting usage stats")
-	_, _ = reporter.Save(clientUsage(values))
-
-	ticker := time.NewTicker(24 * time.Hour)
-	defer ticker.Stop()
-	for {
-		<-ticker.C
-		values["uptime"] = time.Since(startTime).Seconds()
-		l.Debug("Reporting usage stats")
-		go reporter.Save(clientUsage(values))
-	}
-}
-
-func clientUsage(values client.Values) *client.Usage {
-	return &client.Usage{
-		Product: "cmp-ng",
-		Data: []client.UsageData{
-			{
-				Values: values,
-			},
-		},
-	}
 }
