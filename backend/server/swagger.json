@@ -6041,13 +6041,33 @@
     "Routes": {
       "type": "object",
       "properties": {
-        "me": {
-          "description": "Location of the me endpoint.",
+        "layouts": {
+          "description": "Location of the layouts endpoint",
           "type": "string",
           "format": "url"
         },
-        "layouts": {
-          "description": "Location of the layouts endpoint",
+        "protoboards": {
+          "description": "Location of the dashboard templates list endpoint",
+          "type": "string",
+          "format": "url"
+        },
+        "users": {
+          "description": "Location of the users in current group endpoint",
+          "type": "string",
+          "format": "url"
+        },
+        "allUsers": {
+          "description": "Location of all users endpoint",
+          "type": "string",
+          "format": "url"
+        },
+        "organizations": {
+          "description": "Location of all organizations endpoint",
+          "type": "string",
+          "format": "url"
+        },
+        "mappings": {
+          "description": "Location of the organiaztion mappings endpoint",
           "type": "string",
           "format": "url"
         },
@@ -6056,8 +6076,13 @@
           "type": "string",
           "format": "url"
         },
-        "mappings": {
-          "description": "Location of the application mappings endpoint",
+        "me": {
+          "description": "Location of the me endpoint.",
+          "type": "string",
+          "format": "url"
+        },
+        "environment": {
+          "description": "Location of the environment endpoint.",
           "type": "string",
           "format": "url"
         },
@@ -6065,6 +6090,19 @@
           "description": "location of the dashboards endpoint",
           "type": "string",
           "format": "url"
+        },
+        "config": {
+          "type": "object",
+          "properties": {
+            "self": {
+              "type": "string",
+              "format": "url"
+            },
+            "auth": {
+              "type": "string",
+              "format": "url"
+            }
+          }
         },
         "external": {
           "description": "external links provided to client, ex. status feed URL",
@@ -6092,23 +6130,85 @@
               }
             }
           }
+        },
+        "addons": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "description": "Currently, 'salt' and '128T-Oncue' supported",
+                "type": "string"
+              },
+              "url": {
+                "description": "Base URL of API",
+                "type": "string"
+              },
+              "token": {
+                "description": "token for the authentication",
+                "type": "string"
+              }
+            }
+          }
         }
       },
       "example": {
         "layouts": "/cmp/v1/layouts",
+        "protoboards": "/cmp/v1/protoboards",
+        "users": "/cmp/v1/organizations/default/users",
+        "allUsers": "/cmp/v1/users",
+        "organizations": "/cmp/v1/organizations",
         "mappings": "/cmp/v1/mappings",
         "sources": "/cmp/v1/sources",
         "me": "/cmp/v1/me",
+        "environment": "/cmp/v1/env",
         "dashboards": "/cmp/v1/dashboards",
+        "config": {
+          "self": "/cmp/v1/config",
+          "auth": "/cmp/v1/config/auth"
+        },
+        "cells": "/cmp/v2/cells",
+        "dashboardsv2": "/cmp/v2/dashboards",
+        "auth": [
+          {
+            "name": "github",
+            "label": "Github",
+            "login": "/oauth/github/login",
+            "logout": "/oauth/github/logout",
+            "callback": "/oauth/github/callback"
+          }
+        ],
+        "logout": "/oauth/logout",
         "external": {
-          "statusFeed": "http://news.influxdata.com/feed.json",
+          "statusFeed": "https://www.snetgroup.info/",
           "custom": [
             {
-              "name": "InfluxData",
-              "url": "https://www.influxdata.com"
+              "name": "128T Condutor",
+              "url": "https://211.189.153.40"
             }
           ]
-        }
+        },
+        "orgConfig": {
+          "self": "/cmp/v1/org_config",
+          "logViewer": "/cmp/v1/org_config/logviewer"
+        },
+        "flux": {
+          "ast": "/cmp/v1/flux/ast",
+          "self": "/cmp/v1/flux",
+          "suggestions": "/cmp/v1/flux/suggestions"
+        },
+        "addons": [
+          {
+            "name": "salt",
+            "url": "http://61.250.122.43:8000/",
+            "token": "lndXJlIl0sImlhdCI6MTU3NDAzNjAxM30"
+          },
+          {
+            "name": "128T-Oncue",
+            "url": "https://211.189.153.40/api/v1/graphql",
+            "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiYWRtaW4iLCJzY29wZXMiOlsiY29uZmlndXJlIl0sImlhdCI6MTU3NDAzNjAxM30.beW77E48pOhNKHNuFB6q343hg5XGbV7HzUcI-8LaV4RJTOiOALpA4NPWF4nDmFcveVuGuH8rETnLNbeXFa2zmssbCg_TfaAt49yyq_Meg43TYXKOYl5pl7mJ1k-nte0zW4fX2J6brRE5ouvU3e2ssvRVmvsnuqWxdQ1Doqm4e2zLaVIblMsb80DpSr7AZfbF5Ld11KwUPIxAsU7LIN_tfKfy4-LPqwN78eD6fGcb_u6m2sm5jVZihuwKmzhIVEVIHtnGbr2oSrAHLrpeokLCGctXF1b7pCt7pCWIeBqyr7EjjOx90d8LoH49idMPLymDR_NPi-8Cs0GXszJtW82DuA"
+          }
+        ]
       }
     },
     "Link": {
@@ -6166,7 +6266,7 @@
             "endTime": "2018-07-09T17:48:08.652Z",
             "text": "todo: investigate this spike",
             "tags": {
-              "repo": "influxdata/cmp"
+              "repo": "snetsystems/cmp"
             },
             "links": {
               "self": "/cmp/v1/sources/1/annotations/59434c1c-fa16-40e9-8b92-af71544cc3eb"
@@ -6230,7 +6330,7 @@
         "endTime": "2018-07-09T17:48:08.652Z",
         "text": "no name",
         "tags": {
-          "repo": "influxdata/cmp"
+          "repo": "snetsystems/cmp"
         },
         "links": {
           "self": "/cmp/v1/sources/1/annotations/59434c1c-fa16-40e9-8b92-af71544cc3eb"
