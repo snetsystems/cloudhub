@@ -33,9 +33,9 @@ type CustomLink struct {
 }
 
 type getAddonLinksResponse struct {
-	Name  string `json:"names"`
+	Name  string `json:"name"`
 	URL   string `json:"url"`
-	Token string `json:"tokens"`
+	Token string `json:"token"`
 }
 
 // NewCustomLinks transforms `--custom-link` CLI flag data or `CUSTOM_LINKS` ENV

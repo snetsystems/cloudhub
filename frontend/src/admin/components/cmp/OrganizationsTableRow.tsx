@@ -15,7 +15,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import {DEFAULT_ORG_ID} from 'src/admin/constants/cmpAdmin'
 import {USER_ROLES} from 'src/admin/constants/cmpAdmin'
 import {Organization} from 'src/types'
-import {Links} from 'src/types/auth'
+import {Links} from 'src/types'
 
 interface CurrentOrganization {
   name: string

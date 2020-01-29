@@ -12,7 +12,7 @@ import {errorThrown} from 'src/shared/actions/errors'
 
 import {notifyUserSwitchedOrgs} from 'src/shared/copy/notifications'
 
-import {Me, Organization} from 'src/types/auth'
+import {Me, Organization} from 'src/types'
 
 export type Action =
   | AuthExpiredAction

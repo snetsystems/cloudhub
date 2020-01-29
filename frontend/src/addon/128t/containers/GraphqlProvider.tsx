@@ -29,12 +29,6 @@ const GraphqlProvider: SFC<Props> = page => {
         ...headers,
         authorization: token ? `Bearer ${token}` : '',
       },
-      // fetchOptions: {
-      //   rejectUnauthorized: false,
-      //   // requestCert: true,
-      //   // agent: false,
-      //   // strictSSL: false,
-      // },
     }
   })
 
