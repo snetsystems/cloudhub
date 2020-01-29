@@ -13,11 +13,11 @@ import {
   NavListItem,
 } from 'src/side_nav/components/NavItems'
 
-import {DEFAULT_HOME_PAGE} from 'src/shared/constants'
+import {DEFAULT_HOME_PAGE, AddonType} from 'src/shared/constants'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-import {Params, Location, Links, Me} from 'src/types/sideNav'
-import {Source} from 'src/types'
+import {Params, Location, Me} from 'src/types/sideNav'
+import {Source, Links} from 'src/types'
 
 interface Props {
   sources: Source[]
@@ -36,6 +36,17 @@ class SideNav extends PureComponent<Props> {
     super(props)
   }
 
+  private isExistInLinks = (name: string): boolean => {
+    const {links} = this.props
+
+    return links.addons &&
+      links.addons.findIndex(item => {
+        return item.name === name
+      }) !== -1
+      ? true
+      : false
+  }
+
   public render() {
     const {
       params: {sourceID},
@@ -52,6 +63,8 @@ class SideNav extends PureComponent<Props> {
     const id = sourceID || _.get(defaultSource, 'id', 0)
     const sourcePrefix = `/sources/${id}`
     const isDefaultPage = location.split('/').includes(DEFAULT_HOME_PAGE)
+    const isUsingSalt = this.isExistInLinks(AddonType.salt)
+    const isUsing128T = this.isExistInLinks(AddonType.router128T)
 
     return isHidden ? null : (
       <nav className="sidebar">
@@ -176,9 +189,11 @@ class SideNav extends PureComponent<Props> {
           <NavListItem link={`${sourcePrefix}/manage-sources`}>
             Configuration
           </NavListItem>
-          <NavListItem link={`${sourcePrefix}/agent-admin/agent-minions`}>
-            Agent Configuration
-          </NavListItem>
+          {isUsingSalt ? (
+            <NavListItem link={`${sourcePrefix}/agent-admin/agent-minions`}>
+              Agent Configuration
+            </NavListItem>
+          ) : null}
         </NavBlock>
         {isUsingAuth ? (
           <UserNavBlock
@@ -188,23 +203,25 @@ class SideNav extends PureComponent<Props> {
             sourcePrefix={sourcePrefix}
           />
         ) : null}
-        <NavBlock
-          highlightWhen={['128t-status', '128t-setting']}
-          icon="cube"
-          link={`${sourcePrefix}/add-on/128t-status`}
-          location={location}
-        >
-          <NavHeader
+        {isUsing128T ? (
+          <NavBlock
+            highlightWhen={['128t-status', '128t-setting']}
+            icon="cube"
             link={`${sourcePrefix}/add-on/128t-status`}
-            title="128T/SDPlex"
-          />
-          <NavListItem link={`${sourcePrefix}/add-on/128t-status`}>
-            Status
-          </NavListItem>
-          <NavListItem link={`${sourcePrefix}/add-on/128t-setting`}>
-            Setting
-          </NavListItem>
-        </NavBlock>
+            location={location}
+          >
+            <NavHeader
+              link={`${sourcePrefix}/add-on/128t-status`}
+              title="128T/Oncue"
+            />
+            <NavListItem link={`${sourcePrefix}/add-on/128t-status`}>
+              Status
+            </NavListItem>
+            <NavListItem link={`${sourcePrefix}/add-on/128t-setting`}>
+              Setting
+            </NavListItem>
+          </NavBlock>
+        ) : null}
         {/* <div className="sidebar--item cursor-default symbol-company" /> */}
       </nav>
     )

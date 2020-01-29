@@ -1,7 +1,7 @@
 import _ from 'lodash'
 
 import {SUPERADMIN_ROLE, MEMBER_ROLE} from 'src/auth/Authorized'
-import {Me} from 'src/types/auth'
+import {Me} from 'src/types'
 
 export const getMeRole = (me: Me): string => {
   const currentRoleOrg = me.roles.find(

@@ -283,7 +283,7 @@ const SwanSdplexStatusPage = () => {
     <Page className="hosts-list-page">
       <Page.Header fullWidth={true}>
         <Page.Header.Left>
-          <Page.Title title="128T/SDPlex - Status" />
+          <Page.Title title="128T/Oncue - Status" />
         </Page.Header.Left>
         <Page.Header.Right showSourceIndicator={true}>
           <button

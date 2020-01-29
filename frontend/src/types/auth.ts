@@ -93,11 +93,18 @@ export interface Links {
   organizations: string
   sources: string
   users: string
+  addons: Addon[]
 }
 
 export interface ExternalLink {
   name: string
   url: string
+}
+
+export interface Addon {
+  name: string
+  url: string
+  token: string
 }
 
 interface ExternalLinks {
