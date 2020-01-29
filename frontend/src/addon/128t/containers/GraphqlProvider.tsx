@@ -19,11 +19,9 @@ interface Props {
 }
 
 const GraphqlProvider: SFC<Props> = (props: Props) => {
-  const addon = ((): Addon => {
-    return props.addons.find(addon => {
-      return addon.name === AddonType.router128T
-    })
-  })()
+  const addon = props.addons.find(addon => {
+    return addon.name === AddonType.router128T
+  })
 
   const httpLink = createHttpLink({
     uri: addon.url,
