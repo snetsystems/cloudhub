@@ -13,7 +13,7 @@ import {
   NavListItem,
 } from 'src/side_nav/components/NavItems'
 
-import {DEFAULT_HOME_PAGE} from 'src/shared/constants'
+import {DEFAULT_HOME_PAGE, AddonType} from 'src/shared/constants'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import {Params, Location, Me} from 'src/types/sideNav'
@@ -63,8 +63,8 @@ class SideNav extends PureComponent<Props> {
     const id = sourceID || _.get(defaultSource, 'id', 0)
     const sourcePrefix = `/sources/${id}`
     const isDefaultPage = location.split('/').includes(DEFAULT_HOME_PAGE)
-    const isUsingSalt = this.isExistInLinks('salt')
-    const isUsing128T = this.isExistInLinks('128T-Oncue')
+    const isUsingSalt = this.isExistInLinks(AddonType.salt)
+    const isUsing128T = this.isExistInLinks(AddonType.router128T)
 
     return isHidden ? null : (
       <nav className="sidebar">

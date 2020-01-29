@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import React, {SFC} from 'react'
+import {connect} from 'react-redux'
 import {ApolloProvider} from '@apollo/react-hooks'
 import ApolloClient from 'apollo-client'
 import {InMemoryCache} from 'apollo-cache-inmemory'
@@ -9,21 +10,27 @@ import {setContext} from 'apollo-link-context'
 import {SwanSdplexStatusPage} from 'src/addon/128t'
 import {SwanSdplexSettingPage} from 'src/addon/128t'
 
-const graphqlUri = 'https://211.189.153.40/api/v1/graphql'
-const loginToken =
-  'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiYWRtaW4iLCJzY29wZXMiOlsiY29uZmlndXJlIl0sImlhdCI6MTU3NDAzNjAxM30.beW77E48pOhNKHNuFB6q343hg5XGbV7HzUcI-8LaV4RJTOiOALpA4NPWF4nDmFcveVuGuH8rETnLNbeXFa2zmssbCg_TfaAt49yyq_Meg43TYXKOYl5pl7mJ1k-nte0zW4fX2J6brRE5ouvU3e2ssvRVmvsnuqWxdQ1Doqm4e2zLaVIblMsb80DpSr7AZfbF5Ld11KwUPIxAsU7LIN_tfKfy4-LPqwN78eD6fGcb_u6m2sm5jVZihuwKmzhIVEVIHtnGbr2oSrAHLrpeokLCGctXF1b7pCt7pCWIeBqyr7EjjOx90d8LoH49idMPLymDR_NPi-8Cs0GXszJtW82DuA'
+import {Addon} from 'src/types/auth'
+import {AddonType} from 'src/shared/constants'
 
 interface Props {
   page: string
+  addons: Addon[]
 }
 
-const GraphqlProvider: SFC<Props> = page => {
+const GraphqlProvider: SFC<Props> = (props: Props) => {
+  const addon = ((): Addon => {
+    return props.addons.find(addon => {
+      return addon.name === AddonType.router128T
+    })
+  })()
+
   const httpLink = createHttpLink({
-    uri: graphqlUri,
+    uri: addon.url,
   })
 
   const authLink = setContext((_, {headers}) => {
-    const token = loginToken
+    const token = addon.token
     return {
       headers: {
         ...headers,
@@ -37,7 +44,7 @@ const GraphqlProvider: SFC<Props> = page => {
     cache: new InMemoryCache(),
   })
 
-  if (_.get(page, 'page') === 'SwanSdplexStatusPage') {
+  if (props.page === 'SwanSdplexStatusPage') {
     return (
       <ApolloProvider client={client}>
         <SwanSdplexStatusPage />
@@ -52,4 +59,8 @@ const GraphqlProvider: SFC<Props> = page => {
   }
 }
 
-export default GraphqlProvider
+const mapStateToProps = ({links: {addons}}) => {
+  return {addons}
+}
+
+export default connect(mapStateToProps, null)(GraphqlProvider)
