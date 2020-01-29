@@ -1,10 +1,11 @@
-import React, {PureComponent} from 'react'
+import React from 'react'
 import classnames from 'classnames'
-import {unitIndicator} from 'src/addon/128t/reusable'
+import {unitIndicator, usageIndacator} from 'src/addon/128t/reusable'
 import {ROUTER_TABLE_SIZING} from 'src/addon/128t/constants'
 import {Router, TopSource, TopSession} from 'src/addon/128t/types'
 import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
 import {transBps} from 'src/shared/utils/units'
+import {TableBodyRowItem} from 'src/addon/128t/reusable/layout'
 
 interface Props {
   router: Router
@@ -16,35 +17,43 @@ interface Props {
   ) => () => void
 }
 
-class RouterTableRow extends PureComponent<Props> {
-  constructor(props: Props) {
-    super(props)
-  }
+const RouterTableRow = ({onClickTableRow, focusedAssetId, router}: Props) => {
+  const {
+    assetId,
+    locationCoordinates,
+    bandwidth_avg,
+    session_arrivals,
+    role,
+    startTime,
+    softwareVersion,
+    memoryUsage,
+    cpuUsage,
+    diskUsage,
+    topSources,
+    topSessions,
+  } = router
 
-  public focusedClasses = (): string => {
-    const {assetId} = this.props.router
-    const {focusedAssetId} = this.props
+  const {
+    ASSETID,
+    LOCATIONCOORDINATES,
+    MANAGEMENTCONNECTED,
+    BANDWIDTH_AVG,
+    SESSION_CNT_AVG,
+    ENABLED,
+    ROLE,
+    STARTTIME,
+    SOFTWAREVERSION,
+    MEMORYUSAGE,
+    CPUUSAGE,
+    DISKUSAGE,
+  } = ROUTER_TABLE_SIZING
+
+  const focusedClasses = (assetId: Router['assetId']): string => {
     if (assetId === focusedAssetId) return 'hosts-table--tr focused'
     return 'hosts-table--tr'
   }
 
-  private TableItem = ({
-    width,
-    title,
-    className = '',
-  }: {
-    width: string
-    title: string | number | JSX.Element
-    className: string
-  }) => {
-    return (
-      <div className={`hosts-table--td ${className}`} style={{width: width}}>
-        {title || title === 0 ? title : '-'}
-      </div>
-    )
-  }
-
-  private responseIndicator = (isEnabled: boolean): JSX.Element => {
+  const responseIndicator = (isEnabled: boolean): JSX.Element => {
     return (
       <span
         className={classnames('status-indicator', {
@@ -54,107 +63,72 @@ class RouterTableRow extends PureComponent<Props> {
     )
   }
 
-  private get enabledIndicator(): JSX.Element {
-    const {enabled} = this.props.router
-    return this.responseIndicator(enabled)
+  const enabledIndicator = (enabled: Router['enabled']): JSX.Element => {
+    return responseIndicator(enabled)
   }
 
-  private get connectedIndicator(): JSX.Element {
-    const {managementConnected} = this.props.router
-    return this.responseIndicator(managementConnected)
+  const connectedIndicator = (
+    managementConnected: Router['managementConnected']
+  ): JSX.Element => {
+    return responseIndicator(managementConnected)
   }
 
-  render() {
-    const {
-      assetId,
-      locationCoordinates,
-      bandwidth_avg,
-      session_arrivals,
-      role,
-      startTime,
-      softwareVersion,
-      memoryUsage,
-      cpuUsage,
-      diskUsage,
-      topSources,
-      topSessions,
-    } = this.props.router
+  return (
+    <div
+      className={focusedClasses(router.assetId)}
+      onClick={onClickTableRow(topSources, topSessions, assetId)}
+    >
+      <TableBodyRowItem title={assetId} width={ASSETID} />
+      <TableBodyRowItem title={role} width={ROLE} />
+      <TableBodyRowItem
+        title={enabledIndicator(router.enabled)}
+        width={ENABLED}
+        className={'align--start'}
+      />
 
-    const {onClickTableRow} = this.props
+      <TableBodyRowItem
+        title={locationCoordinates}
+        width={LOCATIONCOORDINATES}
+      />
+      <TableBodyRowItem
+        title={connectedIndicator(router.managementConnected)}
+        width={MANAGEMENTCONNECTED}
+        className={'align--start'}
+      />
 
-    const {
-      ASSETID,
-      LOCATIONCOORDINATES,
-      MANAGEMENTCONNECTED,
-      BANDWIDTH_AVG,
-      SESSION_CNT_AVG,
-      ENABLED,
-      ROLE,
-      STARTTIME,
-      SOFTWAREVERSION,
-      MEMORYUSAGE,
-      CPUUSAGE,
-      DISKUSAGE,
-    } = ROUTER_TABLE_SIZING
-
-    return (
-      <div
-        className={this.focusedClasses()}
-        onClick={onClickTableRow(topSources, topSessions, assetId)}
-      >
-        <this.TableItem title={assetId} width={ASSETID} className={''} />
-        <this.TableItem title={role} width={ROLE} className={''} />
-        <this.TableItem
-          title={this.enabledIndicator}
-          width={ENABLED}
-          className={'align--start'}
-        />
-
-        <this.TableItem
-          title={locationCoordinates}
-          width={LOCATIONCOORDINATES}
-          className={''}
-        />
-        <this.TableItem
-          title={this.connectedIndicator}
-          width={MANAGEMENTCONNECTED}
-          className={'align--start'}
-        />
-
-        <this.TableItem title={startTime} width={STARTTIME} className={''} />
-        <this.TableItem
-          title={softwareVersion}
-          width={SOFTWAREVERSION}
-          className={'align--end'}
-        />
-        <this.TableItem
-          title={fixedDecimalPercentage(cpuUsage, 2)}
-          width={CPUUSAGE}
-          className={'align--end'}
-        />
-        <this.TableItem
-          title={fixedDecimalPercentage(memoryUsage, 2)}
-          width={MEMORYUSAGE}
-          className={'align--end'}
-        />
-        <this.TableItem
-          title={fixedDecimalPercentage(diskUsage, 2)}
-          width={DISKUSAGE}
-          className={'align--end'}
-        />
-        <this.TableItem
-          title={unitIndicator(transBps(bandwidth_avg * 8, 2), ' ')}
-          width={BANDWIDTH_AVG}
-          className={'align--end'}
-        />
-        <this.TableItem
-          title={session_arrivals}
-          width={SESSION_CNT_AVG}
-          className={'align--end'}
-        />
-      </div>
-    )
-  }
+      <TableBodyRowItem title={startTime} width={STARTTIME} />
+      <TableBodyRowItem
+        title={softwareVersion}
+        width={SOFTWAREVERSION}
+        className={'align--end'}
+      />
+      <TableBodyRowItem
+        title={usageIndacator({value: fixedDecimalPercentage(cpuUsage, 2)})}
+        width={CPUUSAGE}
+        className={'align--end'}
+      />
+      <TableBodyRowItem
+        title={usageIndacator({value: fixedDecimalPercentage(memoryUsage, 2)})}
+        width={MEMORYUSAGE}
+        className={'align--end'}
+      />
+      <TableBodyRowItem
+        title={usageIndacator({value: fixedDecimalPercentage(diskUsage, 2)})}
+        width={DISKUSAGE}
+        className={'align--end'}
+      />
+      <TableBodyRowItem
+        title={unitIndicator(transBps(bandwidth_avg * 8, 2), ' ')}
+        width={BANDWIDTH_AVG}
+        className={'align--end'}
+      />
+      <TableBodyRowItem
+        title={session_arrivals}
+        width={SESSION_CNT_AVG}
+        className={'align--end'}
+      />
+    </div>
+  )
 }
 
 export default RouterTableRow

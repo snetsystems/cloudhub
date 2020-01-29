@@ -1,99 +1,71 @@
-import React, {PureComponent} from 'react'
+import React from 'react'
 import {TOPSESSIONS_TABLE_SIZING} from 'src/addon/128t/constants'
 import {TopSession} from 'src/addon/128t/types'
+import {TableBodyRowItem} from 'src/addon/128t/reusable/layout'
 
 interface Props {
   topSessions: TopSession
 }
 
-class TopSessionsTableRow extends PureComponent<Props> {
-  constructor(props: Props) {
-    super(props)
-  }
+const TopSessionsTableRow = ({topSessions}: Props) => {
+  const {service, tenant, value, protocol, source, destination} = topSessions
 
-  private TableItem = ({
-    width,
-    title,
-    className = '',
-  }: {
-    width: string
-    title: string | number | JSX.Element
-    className: string
-  }) => {
-    return (
-      <div className={`hosts-table--td ${className}`} style={{width: width}}>
-        {title}
-      </div>
-    )
-  }
+  const {
+    TOPSESSION_SERVICE,
+    TOPSESSION_TENANT,
+    TOPSESSION_VALUE,
+    TOPSESSION_PROTOCOL,
+    TOPSESSION_SOURCE_ADDRESS,
+    TOPSESSION_SOURCE_PORT,
+    TOPSESSION_DESTINATION_ADDRESS,
+    TOPSESSION_DESTINATION_PORT,
+  } = TOPSESSIONS_TABLE_SIZING
 
-  render() {
-    const {
-      service,
-      tenant,
-      value,
-      protocol,
-      source,
-      destination,
-    } = this.props.topSessions
+  return (
+    <div className={'hosts-table--tr'}>
+      <TableBodyRowItem
+        title={service}
+        width={TOPSESSION_SERVICE}
+        className={'align--start'}
+      />
+      <TableBodyRowItem
+        title={tenant}
+        width={TOPSESSION_TENANT}
+        className={''}
+      />
 
-    const {
-      TOPSESSION_SERVICE,
-      TOPSESSION_TENANT,
-      TOPSESSION_VALUE,
-      TOPSESSION_PROTOCOL,
-      TOPSESSION_SOURCE_ADDRESS,
-      TOPSESSION_SOURCE_PORT,
-      TOPSESSION_DESTINATION_ADDRESS,
-      TOPSESSION_DESTINATION_PORT,
-    } = TOPSESSIONS_TABLE_SIZING
-
-    return (
-      <div className={'hosts-table--tr'}>
-        <this.TableItem
-          title={service}
-          width={TOPSESSION_SERVICE}
-          className={'align--start'}
-        />
-        <this.TableItem
-          title={tenant}
-          width={TOPSESSION_TENANT}
-          className={''}
-        />
-
-        <this.TableItem
-          title={value}
-          width={TOPSESSION_VALUE}
-          className={'align--end'}
-        />
-        <this.TableItem
-          title={protocol}
-          width={TOPSESSION_PROTOCOL}
-          className={'align--start'}
-        />
-        <this.TableItem
-          title={source.address}
-          width={TOPSESSION_SOURCE_ADDRESS}
-          className={'align--start'}
-        />
-        <this.TableItem
-          title={source.port}
-          width={TOPSESSION_SOURCE_PORT}
-          className={'align--end'}
-        />
-        <this.TableItem
-          title={destination.address}
-          width={TOPSESSION_DESTINATION_ADDRESS}
-          className={'align--start'}
-        />
-        <this.TableItem
-          title={destination.port}
-          width={TOPSESSION_DESTINATION_PORT}
-          className={'align--end'}
-        />
-      </div>
-    )
-  }
+      <TableBodyRowItem
+        title={value}
+        width={TOPSESSION_VALUE}
+        className={'align--end'}
+      />
+      <TableBodyRowItem
+        title={protocol}
+        width={TOPSESSION_PROTOCOL}
+        className={'align--start'}
+      />
+      <TableBodyRowItem
+        title={source.address}
+        width={TOPSESSION_SOURCE_ADDRESS}
+        className={'align--start'}
+      />
+      <TableBodyRowItem
+        title={source.port}
+        width={TOPSESSION_SOURCE_PORT}
+        className={'align--end'}
+      />
+      <TableBodyRowItem
+        title={destination.address}
+        width={TOPSESSION_DESTINATION_ADDRESS}
+        className={'align--start'}
+      />
+      <TableBodyRowItem
+        title={destination.port}
+        width={TOPSESSION_DESTINATION_PORT}
+        className={'align--end'}
+      />
+    </div>
+  )
 }
 
 export default TopSessionsTableRow

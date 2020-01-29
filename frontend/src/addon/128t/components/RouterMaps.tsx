@@ -1,16 +1,19 @@
 // Libraries
 import React, {PureComponent} from 'react'
 import _ from 'lodash'
-import classnames from 'classnames'
-import chroma from 'chroma-js'
 
 // components
 import GridLayoutSearchBar from 'src/addon/128t/components/GridLayoutSearchBar'
+import {
+  CellName,
+  HeadingBar,
+  PanelHeader,
+  Panel,
+  PanelBody,
+} from 'src/addon/128t/reusable/layout'
 
 // type
 import {ErrorHandling} from 'src/shared/decorators/errors'
-
-import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
 
 export interface Props {
   isEditable: boolean
@@ -28,20 +31,27 @@ class RouterMaps extends PureComponent<Props, State> {
   }
 
   public render() {
+    const {isEditable, cellTextColor, cellBackgroundColor} = this.props
     return (
-      <div className={`panel`}>
-        <div className="panel-heading">
-          <div className={this.headingClass}>
-            {this.cellName}
-            {this.headingBar}
-            <GridLayoutSearchBar
-              placeholder="Filter by Ip..."
-              onSearch={this.updateSearchTerm}
-            />
-          </div>
-        </div>
-        <div className="panel-body">{this.mapData}</div>
-      </div>
+      <Panel>
+        <PanelHeader isEditable={isEditable}>
+          <CellName
+            cellTextColor={cellTextColor}
+            cellBackgroundColor={cellBackgroundColor}
+            value={[]}
+            name={'Routers in Map'}
+          />
+          <HeadingBar
+            isEditable={isEditable}
+            cellBackgroundColor={cellBackgroundColor}
+          />
+          <GridLayoutSearchBar
+            placeholder="Filter by Ip..."
+            onSearch={this.updateSearchTerm}
+          />
+        </PanelHeader>
+        <PanelBody>{this.mapData}</PanelBody>
+      </Panel>
     )
   }
 
@@ -53,57 +63,7 @@ class RouterMaps extends PureComponent<Props, State> {
     )
   }
 
-  private get headingClass(): string {
-    const {isEditable} = this.props
-    return classnames('dash-graph--heading', {
-      'dash-graph--draggable dash-graph--heading-draggable': isEditable,
-      'dash-graph--heading-draggable': isEditable,
-    })
-  }
-
-  private get cellName(): JSX.Element {
-    const {cellTextColor, cellBackgroundColor} = this.props
-
-    let nameStyle = {}
-
-    if (cellBackgroundColor !== DEFAULT_CELL_BG_COLOR) {
-      nameStyle = {
-        color: cellTextColor,
-      }
-    }
-
-    return (
-      <h2
-        className={`dash-graph--name grid-layout--draggable`}
-        style={nameStyle}
-      >
-        Routers in Map
-      </h2>
-    )
-  }
-
-  private get headingBar(): JSX.Element {
-    const {isEditable, cellBackgroundColor} = this.props
-
-    if (isEditable) {
-      let barStyle = {}
-
-      if (cellBackgroundColor !== DEFAULT_CELL_BG_COLOR) {
-        barStyle = {
-          backgroundColor: chroma(cellBackgroundColor).brighten(),
-        }
-      }
-
-      return (
-        <>
-          <div className="dash-graph--heading-bar" style={barStyle} />
-          <div className="dash-graph--heading-dragger" />
-        </>
-      )
-    }
-  }
-
-  public updateSearchTerm = (searchTerm: string): void => {
+  private updateSearchTerm = (searchTerm: string): void => {
     this.setState({searchTerm})
   }
 }

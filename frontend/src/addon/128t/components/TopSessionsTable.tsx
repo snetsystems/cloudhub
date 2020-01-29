@@ -2,29 +2,36 @@
 import React, {PureComponent} from 'react'
 import _ from 'lodash'
 import memoize from 'memoize-one'
-import classnames from 'classnames'
-import chroma from 'chroma-js'
 
 // import SearchBar from 'src/hosts/components/SearchBar'
 import GridLayoutSearchBar from 'src/addon/128t/components/GridLayoutSearchBar'
 import TopSessionsTableRow from 'src/addon/128t/components/TopSessionsTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-import {NoHostsState} from 'src/addon/128t/reusable'
+import {
+  NoHostsState,
+  sortableClasses,
+  SortDirection,
+} from 'src/addon/128t/reusable'
+
+import {
+  CellName,
+  HeadingBar,
+  PanelHeader,
+  Panel,
+  PanelBody,
+  Table,
+  TableHeader,
+  TableBody,
+} from 'src/addon/128t/reusable/layout'
 
 //type
 import {TopSession} from 'src/addon/128t/types'
 
 // constants
 import {TOPSESSIONS_TABLE_SIZING} from 'src/addon/128t/constants'
-import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
 
 // Error Handler
 import {ErrorHandling} from 'src/shared/decorators/errors'
-
-enum SortDirection {
-  ASC = 'asc',
-  DESC = 'desc',
-}
 
 export interface Props {
   topSessions: TopSession[]
@@ -94,7 +101,7 @@ class TopSessionsTable extends PureComponent<Props, State> {
     sortKey: string,
     sortDirection: SortDirection
   ) {
-    const sortedTopSessions = this.getSortedTopSessions(
+    const sortedTopSessions: TopSession[] = this.getSortedTopSessions(
       topSessions,
       searchTerm,
       sortKey,
@@ -104,27 +111,37 @@ class TopSessionsTable extends PureComponent<Props, State> {
   }
 
   public render() {
+    const {
+      isEditable,
+      cellTextColor,
+      cellBackgroundColor,
+      topSessions,
+    } = this.props
     return (
-      <div className={`panel`}>
-        <div className="panel-heading">
-          <div className={this.headingClass}>
-            {this.cellName}
-            {this.headingBar}
-            <GridLayoutSearchBar
-              placeholder="Filter by Tenant..."
-              onSearch={this.updateSearchTerm}
-            />
-          </div>
-        </div>
-        <div className="panel-body">
-          <div className="hosts-table">
-            <div className="hosts-table--thead">
-              <div className={'hosts-table--tr'}>{this.TableHeader}</div>
-            </div>
-            {this.TableData}
-          </div>
-        </div>
-      </div>
+      <Panel>
+        <PanelHeader isEditable={isEditable}>
+          <CellName
+            cellTextColor={cellTextColor}
+            cellBackgroundColor={cellBackgroundColor}
+            value={topSessions}
+            name={'Top Sources'}
+          />
+          <HeadingBar
+            isEditable={isEditable}
+            cellBackgroundColor={cellBackgroundColor}
+          />
+          <GridLayoutSearchBar
+            placeholder="Filter by Tenant..."
+            onSearch={this.updateSearchTerm}
+          />
+        </PanelHeader>
+        <PanelBody>
+          <Table>
+            <TableHeader>{this.TableHeader}</TableHeader>
+            <TableBody>{this.TableData}</TableBody>
+          </Table>
+        </PanelBody>
+      </Panel>
     )
   }
 
@@ -139,11 +156,12 @@ class TopSessionsTable extends PureComponent<Props, State> {
       TOPSESSION_DESTINATION_ADDRESS,
       TOPSESSION_DESTINATION_PORT,
     } = TOPSESSIONS_TABLE_SIZING
+    const {sortKey, sortDirection} = this.state
     return (
       <>
         <div
           onClick={this.updateSort('service')}
-          className={this.sortableClasses('service')}
+          className={sortableClasses({sortKey, sortDirection, key: 'service'})}
           style={{width: TOPSESSION_SERVICE}}
         >
           Service
@@ -151,7 +169,7 @@ class TopSessionsTable extends PureComponent<Props, State> {
         </div>
         <div
           onClick={this.updateSort('tenant')}
-          className={this.sortableClasses('tenant')}
+          className={sortableClasses({sortKey, sortDirection, key: 'tenant'})}
           style={{width: TOPSESSION_TENANT}}
         >
           Tenant
@@ -159,7 +177,7 @@ class TopSessionsTable extends PureComponent<Props, State> {
         </div>
         <div
           onClick={this.updateSort('value')}
-          className={this.sortableClasses('value')}
+          className={sortableClasses({sortKey, sortDirection, key: 'value'})}
           style={{width: TOPSESSION_VALUE}}
         >
           Value
@@ -167,7 +185,7 @@ class TopSessionsTable extends PureComponent<Props, State> {
         </div>
         <div
           onClick={this.updateSort('protocol')}
-          className={this.sortableClasses('protocol')}
+          className={sortableClasses({sortKey, sortDirection, key: 'protocol'})}
           style={{width: TOPSESSION_PROTOCOL}}
         >
           Protocol
@@ -175,7 +193,11 @@ class TopSessionsTable extends PureComponent<Props, State> {
         </div>
         <div
           onClick={this.updateSort('source.address')}
-          className={this.sortableClasses('source.address')}
+          className={sortableClasses({
+            sortKey,
+            sortDirection,
+            key: 'source.address',
+          })}
           style={{width: TOPSESSION_SOURCE_ADDRESS}}
           title="Source Address"
         >
@@ -184,7 +206,11 @@ class TopSessionsTable extends PureComponent<Props, State> {
         </div>
         <div
           onClick={this.updateSort('source.port')}
-          className={this.sortableClasses('sourcePort')}
+          className={sortableClasses({
+            sortKey,
+            sortDirection,
+            key: 'sourcePort',
+          })}
           style={{width: TOPSESSION_SOURCE_PORT}}
           title="Source Port"
         >
@@ -193,7 +219,11 @@ class TopSessionsTable extends PureComponent<Props, State> {
         </div>
         <div
           onClick={this.updateSort('destination.address')}
-          className={this.sortableClasses('destination.address')}
+          className={sortableClasses({
+            sortKey,
+            sortDirection,
+            key: 'destination.address',
+          })}
           style={{width: TOPSESSION_DESTINATION_ADDRESS}}
           title="Destination Address"
         >
@@ -202,7 +232,11 @@ class TopSessionsTable extends PureComponent<Props, State> {
         </div>
         <div
           onClick={this.updateSort('destination.port')}
-          className={this.sortableClasses('destination.port')}
+          className={sortableClasses({
+            sortKey,
+            sortDirection,
+            key: 'destination.port',
+          })}
           style={{width: TOPSESSION_DESTINATION_PORT}}
           title="Destination Port"
         >
@@ -213,7 +247,6 @@ class TopSessionsTable extends PureComponent<Props, State> {
     )
   }
 
-  // data add
   private get TableData() {
     const {topSessions} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
@@ -242,66 +275,14 @@ class TopSessionsTable extends PureComponent<Props, State> {
     )
   }
 
-  private get headingClass() {
-    const {isEditable} = this.props
-    return classnames('dash-graph--heading', {
-      'dash-graph--draggable dash-graph--heading-draggable': isEditable,
-      'dash-graph--heading-draggable': isEditable,
-    })
-  }
-
-  private get cellName(): JSX.Element {
-    const {cellTextColor, cellBackgroundColor, topSessions} = this.props
-
-    let nameStyle = {}
-
-    if (cellBackgroundColor !== DEFAULT_CELL_BG_COLOR) {
-      nameStyle = {
-        color: cellTextColor,
-      }
-    }
-
-    return (
-      <>
-        <h2
-          className={`dash-graph--name grid-layout--draggable`}
-          style={nameStyle}
-        >
-          {topSessions.length} Top Sessions
-        </h2>
-      </>
-    )
-  }
-
-  private get headingBar(): JSX.Element {
-    const {isEditable, cellBackgroundColor} = this.props
-
-    if (isEditable) {
-      let barStyle = {}
-
-      if (cellBackgroundColor !== DEFAULT_CELL_BG_COLOR) {
-        barStyle = {
-          backgroundColor: chroma(cellBackgroundColor).brighten(),
-        }
-      }
-
-      return (
-        <>
-          <div className="dash-graph--heading-bar" style={barStyle} />
-          <div className="dash-graph--heading-dragger" />
-        </>
-      )
-    }
-  }
-
-  public filter(allTopSessions: TopSession[], searchTerm: string) {
+  private filter(allTopSessions: TopSession[], searchTerm: string) {
     const filterText = searchTerm.toLowerCase()
     return allTopSessions.filter(h => {
       return h.tenant.toLowerCase().includes(filterText)
     })
   }
 
-  public sort(allTopSessions: TopSession[], key: string, direction: string) {
+  private sort(allTopSessions: TopSession[], key: string, direction: string) {
     let dumpKey: string | string[] =
       key.indexOf('.') > -1 ? key.split('.') : key
     switch (direction) {
@@ -318,11 +299,11 @@ class TopSessionsTable extends PureComponent<Props, State> {
     }
   }
 
-  public updateSearchTerm = (searchTerm: string) => {
+  private updateSearchTerm = (searchTerm: string) => {
     this.setState({searchTerm})
   }
 
-  public updateSort = (key: string) => (): void => {
+  private updateSort = (key: string) => (): void => {
     const {sortKey, sortDirection} = this.state
     if (sortKey === key) {
       const reverseDirection =
@@ -333,17 +314,6 @@ class TopSessionsTable extends PureComponent<Props, State> {
     } else {
       this.setState({sortKey: key, sortDirection: SortDirection.ASC})
     }
-  }
-
-  public sortableClasses = (key: string): string => {
-    const {sortKey, sortDirection} = this.state
-    if (sortKey === key) {
-      if (sortDirection === SortDirection.ASC) {
-        return 'hosts-table--th sortable-header sorting-ascending'
-      }
-      return 'hosts-table--th sortable-header sorting-descending'
-    }
-    return 'hosts-table--th sortable-header'
   }
 }
 
