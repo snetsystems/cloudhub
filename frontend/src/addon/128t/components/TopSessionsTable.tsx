@@ -7,11 +7,7 @@ import memoize from 'memoize-one'
 import GridLayoutSearchBar from 'src/addon/128t/components/GridLayoutSearchBar'
 import TopSessionsTableRow from 'src/addon/128t/components/TopSessionsTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-import {
-  NoHostsState,
-  sortableClasses,
-  SortDirection,
-} from 'src/addon/128t/reusable'
+import {NoHostsState, sortableClasses} from 'src/addon/128t/reusable'
 
 import {
   CellName,
@@ -25,7 +21,7 @@ import {
 } from 'src/addon/128t/reusable/layout'
 
 //type
-import {TopSession} from 'src/addon/128t/types'
+import {TopSession, SortDirection} from 'src/addon/128t/types'
 
 // constants
 import {TOPSESSIONS_TABLE_SIZING} from 'src/addon/128t/constants'

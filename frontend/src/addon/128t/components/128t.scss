@@ -36,15 +36,15 @@
     }
 
     .align--start {
-        justify-content: flex-start
+        justify-content: flex-start;
     }
 
     .align--center {
-        justify-content: center
+        justify-content: center;
     }
 
     .align--end {
-        justify-content: flex-end
+        justify-content: flex-end;
     }
 
     .indicator-unit--wrap {
@@ -84,15 +84,15 @@
         .UsageIndacator-value {
 
             &.UsageIndacator--caution {
-                color: $s-oragne2
+                color: $s-oragne2;
             }
 
             &.UsageIndacator--warning {
-                color: $c-topaz
+                color: $c-topaz;
             }
 
             &.UsageIndacator--danger {
-                color: red
+                color: red;
             }
         }
 
@@ -103,15 +103,15 @@
             margin-top: 2px;
 
             &.UsageIndacator--caution {
-                background: $s-oragne2
+                background: $s-oragne2;
             }
 
             &.UsageIndacator--warning {
-                background: $c-topaz
+                background: $c-topaz;
             }
 
             &.UsageIndacator--danger {
-                background: red
+                background: red;
             }
         }
     }
