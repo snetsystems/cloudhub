@@ -2,27 +2,30 @@
 import React, {PureComponent} from 'react'
 import _ from 'lodash'
 import memoize from 'memoize-one'
-import classnames from 'classnames'
-import chroma from 'chroma-js'
 
 // components
+import GridLayoutSearchBar from 'src/addon/128t/components/GridLayoutSearchBar'
 import TopSourcesTableRow from 'src/addon/128t/components/TopSourcesTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-import GridLayoutSearchBar from 'src/addon/128t/components/GridLayoutSearchBar'
-import {NoHostsState} from 'src/addon/128t/reusable'
+import {NoHostsState, sortableClasses} from 'src/addon/128t/reusable'
+
+import {
+  CellName,
+  HeadingBar,
+  PanelHeader,
+  Panel,
+  PanelBody,
+  Table,
+  TableHeader,
+  TableBody,
+} from 'src/addon/128t/reusable/layout'
 
 // type
-import {TopSource} from 'src/addon/128t/types'
+import {TopSource, SortDirection} from 'src/addon/128t/types'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 // constants
 import {TOPSOURCES_TABLE_SIZING} from 'src/addon/128t/constants'
-import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
-
-enum SortDirection {
-  ASC = 'asc',
-  DESC = 'desc',
-}
 
 export interface Props {
   topSources: TopSource[]
@@ -35,7 +38,7 @@ interface State {
   searchTerm: string
   sortDirection: SortDirection
   sortKey: string
-  topSourceCount: string
+  topSourceCount: number
 }
 
 @ErrorHandling
@@ -46,7 +49,7 @@ class TopSourcesTable extends PureComponent<Props, State> {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
       sortKey: 'ip',
-      topSourceCount: '0',
+      topSourceCount: 0,
     }
   }
 
@@ -85,7 +88,7 @@ class TopSourcesTable extends PureComponent<Props, State> {
     sortKey: string,
     sortDirection: SortDirection
   ) {
-    const sortedTopSources = this.getSortedTopSources(
+    const sortedTopSources: TopSource[] = this.getSortedTopSources(
       topSources,
       searchTerm,
       sortKey,
@@ -95,27 +98,37 @@ class TopSourcesTable extends PureComponent<Props, State> {
   }
 
   public render() {
+    const {
+      isEditable,
+      cellTextColor,
+      cellBackgroundColor,
+      topSources,
+    } = this.props
     return (
-      <div className={`panel`}>
-        <div className="panel-heading">
-          <div className={this.headingClass}>
-            {this.cellName}
-            {this.headingBar}
-            <GridLayoutSearchBar
-              placeholder="Filter by Tenant..."
-              onSearch={this.updateSearchTerm}
-            />
-          </div>
-        </div>
-        <div className="panel-body">
-          <div className="hosts-table">
-            <div className="hosts-table--thead">
-              <div className={'hosts-table--tr'}>{this.TableHeader}</div>
-            </div>
-            {this.TableData}
-          </div>
-        </div>
-      </div>
+      <Panel>
+        <PanelHeader isEditable={isEditable}>
+          <CellName
+            cellTextColor={cellTextColor}
+            cellBackgroundColor={cellBackgroundColor}
+            value={topSources}
+            name={'Top Sources'}
+          />
+          <HeadingBar
+            isEditable={isEditable}
+            cellBackgroundColor={cellBackgroundColor}
+          />
+          <GridLayoutSearchBar
+            placeholder="Filter by Tenant..."
+            onSearch={this.updateSearchTerm}
+          />
+        </PanelHeader>
+        <PanelBody>
+          <Table>
+            <TableHeader>{this.TableHeader}</TableHeader>
+            <TableBody>{this.TableData}</TableBody>
+          </Table>
+        </PanelBody>
+      </Panel>
     )
   }
 
@@ -127,11 +140,12 @@ class TopSourcesTable extends PureComponent<Props, State> {
       TOTALDATA,
       SESSIONCOUNT,
     } = TOPSOURCES_TABLE_SIZING
+    const {sortKey, sortDirection} = this.state
     return (
       <>
         <div
           onClick={this.updateSort('ip')}
-          className={this.sortableClasses('ip')}
+          className={sortableClasses({sortKey, sortDirection, key: 'ip'})}
           style={{width: IP}}
         >
           IP
@@ -139,7 +153,7 @@ class TopSourcesTable extends PureComponent<Props, State> {
         </div>
         <div
           onClick={this.updateSort('tenant')}
-          className={this.sortableClasses('tenant')}
+          className={sortableClasses({sortKey, sortDirection, key: 'tenant'})}
           style={{width: TENANT}}
         >
           Tenant
@@ -147,7 +161,11 @@ class TopSourcesTable extends PureComponent<Props, State> {
         </div>
         <div
           onClick={this.updateSort('sessionCount')}
-          className={this.sortableClasses('sessionCount')}
+          className={sortableClasses({
+            sortKey,
+            sortDirection,
+            key: 'sessionCount',
+          })}
           style={{width: SESSIONCOUNT}}
           title="Session Count"
         >
@@ -156,7 +174,11 @@ class TopSourcesTable extends PureComponent<Props, State> {
         </div>
         <div
           onClick={this.updateSort('currentBandwidth')}
-          className={this.sortableClasses('currentBandwidth')}
+          className={sortableClasses({
+            sortKey,
+            sortDirection,
+            key: 'currentBandwidth',
+          })}
           style={{width: CURRENTBANDWIDTH}}
           title="Band Width"
         >
@@ -165,7 +187,11 @@ class TopSourcesTable extends PureComponent<Props, State> {
         </div>
         <div
           onClick={this.updateSort('totalData')}
-          className={this.sortableClasses('totalData')}
+          className={sortableClasses({
+            sortKey,
+            sortDirection,
+            key: 'totalData',
+          })}
           style={{width: TOTALDATA}}
           title="Total Data"
         >
@@ -204,64 +230,14 @@ class TopSourcesTable extends PureComponent<Props, State> {
     )
   }
 
-  private get headingClass(): string {
-    const {isEditable} = this.props
-    return classnames('dash-graph--heading', {
-      'dash-graph--draggable dash-graph--heading-draggable': isEditable,
-      'dash-graph--heading-draggable': isEditable,
-    })
-  }
-
-  private get cellName(): JSX.Element {
-    const {cellTextColor, cellBackgroundColor, topSources} = this.props
-
-    let nameStyle = {}
-
-    if (cellBackgroundColor !== DEFAULT_CELL_BG_COLOR) {
-      nameStyle = {
-        color: cellTextColor,
-      }
-    }
-
-    return (
-      <h2
-        className={`dash-graph--name grid-layout--draggable`}
-        style={nameStyle}
-      >
-        {topSources.length} Top Sources
-      </h2>
-    )
-  }
-
-  private get headingBar(): JSX.Element {
-    const {isEditable, cellBackgroundColor} = this.props
-
-    if (isEditable) {
-      let barStyle = {}
-
-      if (cellBackgroundColor !== DEFAULT_CELL_BG_COLOR) {
-        barStyle = {
-          backgroundColor: chroma(cellBackgroundColor).brighten(),
-        }
-      }
-
-      return (
-        <>
-          <div className="dash-graph--heading-bar" style={barStyle} />
-          <div className="dash-graph--heading-dragger" />
-        </>
-      )
-    }
-  }
-
-  public filter(alltopsources: TopSource[], searchTerm: string) {
+  private filter(alltopsources: TopSource[], searchTerm: string) {
     const filterText = searchTerm.toLowerCase()
     return alltopsources.filter(h => {
       return h.tenant.toLowerCase().includes(filterText)
     })
   }
 
-  public sort(alltopsources: TopSource[], key: string, direction: string) {
+  private sort(alltopsources: TopSource[], key: string, direction: string) {
     switch (direction) {
       case SortDirection.ASC:
         return _.sortBy(alltopsources, e => e[key])
@@ -272,11 +248,11 @@ class TopSourcesTable extends PureComponent<Props, State> {
     }
   }
 
-  public updateSearchTerm = (searchTerm: string): void => {
+  private updateSearchTerm = (searchTerm: string): void => {
     this.setState({searchTerm})
   }
 
-  public updateSort = (key: string) => (): void => {
+  private updateSort = (key: string) => (): void => {
     const {sortKey, sortDirection} = this.state
     if (sortKey === key) {
       const reverseDirection =
@@ -287,17 +263,6 @@ class TopSourcesTable extends PureComponent<Props, State> {
     } else {
       this.setState({sortKey: key, sortDirection: SortDirection.ASC})
     }
-  }
-
-  public sortableClasses = (key: string): string => {
-    const {sortKey, sortDirection} = this.state
-    if (sortKey === key) {
-      if (sortDirection === SortDirection.ASC) {
-        return 'hosts-table--th sortable-header sorting-ascending'
-      }
-      return 'hosts-table--th sortable-header sorting-descending'
-    }
-    return 'hosts-table--th sortable-header'
   }
 }
 

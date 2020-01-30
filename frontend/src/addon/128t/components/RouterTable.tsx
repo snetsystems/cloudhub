@@ -2,29 +2,37 @@
 import React, {PureComponent} from 'react'
 import _ from 'lodash'
 import memoize from 'memoize-one'
-import classnames from 'classnames'
-import chroma from 'chroma-js'
 
 // Components
 import GridLayoutSearchBar from 'src/addon/128t/components/GridLayoutSearchBar'
 import RouterTableRow from 'src/addon/128t/components/RouterTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-import {NoHostsState} from 'src/addon/128t/reusable'
+import {NoHostsState, sortableClasses} from 'src/addon/128t/reusable'
+
+import {
+  CellName,
+  HeadingBar,
+  PanelHeader,
+  Panel,
+  PanelBody,
+  Table,
+  TableHeader,
+  TableBody,
+} from 'src/addon/128t/reusable/layout'
 
 //type
-import {Router, TopSource, TopSession} from 'src/addon/128t/types'
+import {
+  Router,
+  TopSource,
+  TopSession,
+  SortDirection,
+} from 'src/addon/128t/types'
 
 // constants
 import {ROUTER_TABLE_SIZING} from 'src/addon/128t/constants'
-import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
 
 // Error Handler
 import {ErrorHandling} from 'src/shared/decorators/errors'
-
-enum SortDirection {
-  ASC = 'asc',
-  DESC = 'desc',
-}
 
 export interface Props {
   cellBackgroundColor: string
@@ -43,7 +51,7 @@ interface State {
   searchTerm: string
   sortDirection: SortDirection
   sortKey: string
-  routerCount: string
+  routerCount: number
 }
 
 @ErrorHandling
@@ -55,7 +63,7 @@ class RouterTable extends PureComponent<Props, State> {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
       sortKey: 'assetId',
-      routerCount: '0',
+      routerCount: 0,
     }
   }
 
@@ -71,7 +79,7 @@ class RouterTable extends PureComponent<Props, State> {
   public componentWillMount() {
     const {routers} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
-    const sortedRouters = this.getSortedRouters(
+    const sortedRouters: Router[] = this.getSortedRouters(
       routers,
       searchTerm,
       sortKey,
@@ -81,27 +89,32 @@ class RouterTable extends PureComponent<Props, State> {
   }
 
   public render() {
+    const {isEditable, cellTextColor, cellBackgroundColor, routers} = this.props
     return (
-      <div className={`panel`}>
-        <div className="panel-heading">
-          <div className={this.headingClass}>
-            {this.cellName}
-            {this.headingBar}
-            <GridLayoutSearchBar
-              placeholder="Filter by Asset ID..."
-              onSearch={this.updateSearchTerm}
-            />
-          </div>
-        </div>
-        <div className="panel-body">
-          <div className="hosts-table">
-            <div className="hosts-table--thead">
-              <div className={'hosts-table--tr'}>{this.TableHeader}</div>
-            </div>
-            {this.TableData}
-          </div>
-        </div>
-      </div>
+      <Panel>
+        <PanelHeader isEditable={isEditable}>
+          <CellName
+            cellTextColor={cellTextColor}
+            cellBackgroundColor={cellBackgroundColor}
+            value={routers}
+            name={'Routers'}
+          />
+          <HeadingBar
+            isEditable={isEditable}
+            cellBackgroundColor={cellBackgroundColor}
+          />
+          <GridLayoutSearchBar
+            placeholder="Filter by Asset ID..."
+            onSearch={this.updateSearchTerm}
+          />
+        </PanelHeader>
+        <PanelBody>
+          <Table>
+            <TableHeader>{this.TableHeader}</TableHeader>
+            <TableBody>{this.TableData}</TableBody>
+          </Table>
+        </PanelBody>
+      </Panel>
     )
   }
 
@@ -120,11 +133,12 @@ class RouterTable extends PureComponent<Props, State> {
       CPUUSAGE,
       DISKUSAGE,
     } = ROUTER_TABLE_SIZING
+    const {sortKey, sortDirection} = this.state
     return (
       <>
         <div
           onClick={this.updateSort('assetId')}
-          className={this.sortableClasses('assetId')}
+          className={sortableClasses({sortKey, sortDirection, key: 'assetId'})}
           style={{width: ASSETID}}
         >
           Asset ID
@@ -132,7 +146,7 @@ class RouterTable extends PureComponent<Props, State> {
         </div>
         <div
           onClick={this.updateSort('role')}
-          className={this.sortableClasses('role')}
+          className={sortableClasses({sortKey, sortDirection, key: 'role'})}
           style={{width: ROLE}}
         >
           Role
@@ -140,7 +154,7 @@ class RouterTable extends PureComponent<Props, State> {
         </div>
         <div
           onClick={this.updateSort('enabled')}
-          className={this.sortableClasses('enabled')}
+          className={sortableClasses({sortKey, sortDirection, key: 'enabled'})}
           style={{width: ENABLED}}
         >
           Enabled
@@ -148,7 +162,11 @@ class RouterTable extends PureComponent<Props, State> {
         </div>
         <div
           onClick={this.updateSort('locationCoordinates')}
-          className={this.sortableClasses('locationCoordinates')}
+          className={sortableClasses({
+            sortKey,
+            sortDirection,
+            key: 'locationCoordinates',
+          })}
           style={{width: LOCATIONCOORDINATES}}
         >
           Location Coordinates
@@ -156,7 +174,11 @@ class RouterTable extends PureComponent<Props, State> {
         </div>
         <div
           onClick={this.updateSort('managementConnected')}
-          className={this.sortableClasses('managementConnected')}
+          className={sortableClasses({
+            sortKey,
+            sortDirection,
+            key: 'managementConnected',
+          })}
           style={{width: MANAGEMENTCONNECTED}}
         >
           Connected
@@ -164,7 +186,11 @@ class RouterTable extends PureComponent<Props, State> {
         </div>
         <div
           onClick={this.updateSort('startTime')}
-          className={this.sortableClasses('startTime')}
+          className={sortableClasses({
+            sortKey,
+            sortDirection,
+            key: 'startTime',
+          })}
           style={{width: STARTTIME}}
         >
           Uptime
@@ -172,7 +198,11 @@ class RouterTable extends PureComponent<Props, State> {
         </div>
         <div
           onClick={this.updateSort('softwareVersion')}
-          className={this.sortableClasses('softwareVersion')}
+          className={sortableClasses({
+            sortKey,
+            sortDirection,
+            key: 'softwareVersion',
+          })}
           style={{width: SOFTWAREVERSION}}
         >
           Version
@@ -180,7 +210,7 @@ class RouterTable extends PureComponent<Props, State> {
         </div>
         <div
           onClick={this.updateSort('cpuUsage')}
-          className={this.sortableClasses('cpuUsage')}
+          className={sortableClasses({sortKey, sortDirection, key: 'cpuUsage'})}
           style={{width: CPUUSAGE}}
         >
           CPU
@@ -188,7 +218,11 @@ class RouterTable extends PureComponent<Props, State> {
         </div>
         <div
           onClick={this.updateSort('memoryUsage')}
-          className={this.sortableClasses('memoryUsage')}
+          className={sortableClasses({
+            sortKey,
+            sortDirection,
+            key: 'memoryUsage',
+          })}
           style={{width: MEMORYUSAGE}}
         >
           Memory
@@ -196,7 +230,11 @@ class RouterTable extends PureComponent<Props, State> {
         </div>
         <div
           onClick={this.updateSort('diskUsage')}
-          className={this.sortableClasses('diskUsage')}
+          className={sortableClasses({
+            sortKey,
+            sortDirection,
+            key: 'diskUsage',
+          })}
           style={{width: DISKUSAGE}}
         >
           Disk(/)
@@ -204,7 +242,11 @@ class RouterTable extends PureComponent<Props, State> {
         </div>
         <div
           onClick={this.updateSort('bandwidth_avg')}
-          className={this.sortableClasses('bandwidth_avg')}
+          className={sortableClasses({
+            sortKey,
+            sortDirection,
+            key: 'bandwidth_avg',
+          })}
           style={{width: BANDWIDTH_AVG}}
         >
           Avg. B/W
@@ -212,7 +254,11 @@ class RouterTable extends PureComponent<Props, State> {
         </div>
         <div
           onClick={this.updateSort('session_arrivals')}
-          className={this.sortableClasses('session_arrivals')}
+          className={sortableClasses({
+            sortKey,
+            sortDirection,
+            key: 'session_arrivals',
+          })}
           style={{width: SESSION_CNT_AVG}}
         >
           Session Arrivals
@@ -222,7 +268,6 @@ class RouterTable extends PureComponent<Props, State> {
     )
   }
 
-  // data add
   private get TableData() {
     const {routers, focusedAssetId, onClickTableRow} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
@@ -254,73 +299,21 @@ class RouterTable extends PureComponent<Props, State> {
     )
   }
 
-  private get headingClass() {
-    const {isEditable} = this.props
-    return classnames('dash-graph--heading', {
-      'dash-graph--draggable dash-graph--heading-draggable': isEditable,
-      'dash-graph--heading-draggable': isEditable,
-    })
-  }
-
-  private get cellName(): JSX.Element {
-    const {cellTextColor, cellBackgroundColor, routers} = this.props
-
-    let nameStyle = {}
-
-    if (cellBackgroundColor !== DEFAULT_CELL_BG_COLOR) {
-      nameStyle = {
-        color: cellTextColor,
-      }
-    }
-
-    return (
-      <>
-        <h2
-          className={`dash-graph--name grid-layout--draggable`}
-          style={nameStyle}
-        >
-          {routers.length} Routers
-        </h2>
-      </>
-    )
-  }
-
-  private get headingBar(): JSX.Element {
-    const {isEditable, cellBackgroundColor} = this.props
-
-    if (isEditable) {
-      let barStyle = {}
-
-      if (cellBackgroundColor !== DEFAULT_CELL_BG_COLOR) {
-        barStyle = {
-          backgroundColor: chroma(cellBackgroundColor).brighten(),
-        }
-      }
-
-      return (
-        <>
-          <div className="dash-graph--heading-bar" style={barStyle} />
-          <div className="dash-graph--heading-dragger" />
-        </>
-      )
-    }
-  }
-
-  public filter(allrouters: Router[], searchTerm: string) {
+  private filter(allrouters: Router[], searchTerm: string) {
     const filterText = searchTerm.toLowerCase()
     return allrouters.filter(h => {
       return h.assetId.toLowerCase().includes(filterText)
     })
   }
 
-  public sort(allrouters: Router[], key: string, direction: SortDirection) {
+  private sort(allrouters: Router[], key: string, direction: SortDirection) {
     switch (direction) {
       case SortDirection.ASC:
         return _.sortBy(allrouters, e => e[key])
       case SortDirection.DESC:
         const sortDesc = _.sortBy(
           allrouters,
-          [e => e[key] || e[key] === 0],
+          [e => e[key] || e[key] === 0 || e[key] === ''],
           ['asc']
         ).reverse()
         return sortDesc
@@ -329,11 +322,11 @@ class RouterTable extends PureComponent<Props, State> {
     }
   }
 
-  public updateSearchTerm = (searchTerm: string) => {
+  private updateSearchTerm = (searchTerm: string) => {
     this.setState({searchTerm})
   }
 
-  public updateSort = (key: string) => (): void => {
+  private updateSort = (key: string) => (): void => {
     const {sortKey, sortDirection} = this.state
     if (sortKey === key) {
       const reverseDirection =
@@ -344,17 +337,6 @@ class RouterTable extends PureComponent<Props, State> {
     } else {
       this.setState({sortKey: key, sortDirection: SortDirection.ASC})
     }
-  }
-
-  public sortableClasses = (key: string): string => {
-    const {sortKey, sortDirection} = this.state
-    if (sortKey === key) {
-      if (sortDirection === SortDirection.ASC) {
-        return 'hosts-table--th sortable-header sorting-ascending'
-      }
-      return 'hosts-table--th sortable-header sorting-descending'
-    }
-    return 'hosts-table--th sortable-header'
   }
 }
 
