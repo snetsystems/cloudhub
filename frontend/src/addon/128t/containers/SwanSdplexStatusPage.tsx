@@ -93,7 +93,7 @@ interface EmitData {
 const SwanSdplexStatusPage = () => {
   let assetId: string = ''
   let getCellsLayout: cellLayoutInfo[] = []
-  const initCellsLayout = [
+  const initCellsLayout: cellLayoutInfo[] = [
     {
       i: 'routers',
       x: 0,
