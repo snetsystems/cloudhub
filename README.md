@@ -1,6 +1,6 @@
-# SCMP (Snet Cloud Monitoring Portal) - Special edition for dev-0.9.1
+# SCMP (Snet Cloud Monitoring Portal) - Special edition for 0.9.1
 
-## Intro.
+## Intro
 
 **SCMP** is **another branch** of an open-source web application derived from Influxdata's **_Chronograf_** written in Go and React.js that provides the tools to visualize your monitoring data and easily create alerting and automation rules.
 
@@ -30,7 +30,7 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
 - Hosts to Infrastructures and basic charts added.
 - Visualization added by criteria of Applications.
 - Continuous installation and deployment for telegraf's agent and configuration.
-- Addon features
+- Optionable Addon features
   - 128T Router & SDPlex Features.
 
 ## Setting in VSCode

@@ -32,6 +32,8 @@ type MuxOpts struct {
 	CustomLinks   map[string]string // Any custom external links for client's User menu
 	PprofEnabled  bool              // Mount pprof routes for profiling
 	DisableGZip   bool              // Optionally disable gzip.
+	AddonURLs     map[string]string // URLs for using in Addon Features, as passed in via CLI/ENV
+	AddonTokens   map[string]string // Tokens to access to Addon Features API, as passed in via CLI/ENV
 }
 
 // NewMux attaches all the route handlers; handler returned servers cmp.
@@ -361,6 +363,8 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 		Logger:      opts.Logger,
 		StatusFeed:  opts.StatusFeedURL,
 		CustomLinks: opts.CustomLinks,
+		AddonURLs:   opts.AddonURLs,
+		AddonTokens: opts.AddonTokens,
 	}
 
 	getPrincipal := func(r *http.Request) oauth2.Principal {

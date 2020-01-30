@@ -26,7 +26,7 @@ export interface TopSource {
 export interface TopSession {
   service: string
   tenant: string
-  value: string
+  value: number
   protocol: string
   source: {
     address: string

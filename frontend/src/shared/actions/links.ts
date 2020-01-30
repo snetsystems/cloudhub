@@ -6,7 +6,7 @@ import {errorThrown} from 'src/shared/actions/errors'
 
 import {linksLink} from 'src/shared/constants'
 
-import {Links} from 'src/types/auth'
+import {Links} from 'src/types'
 
 export enum ActionTypes {
   LinksGetRequested = 'LINKS_GET_REQUESTED',

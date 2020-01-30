@@ -2,7 +2,7 @@
 import React, {PureComponent} from 'react'
 
 // Components
-import AgentControl from 'src/agent_admin/containers/AgentControl'
+import {AgentControl} from 'src/agent_admin/containers/AgentControl'
 
 // Constants
 import {AGENT_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'

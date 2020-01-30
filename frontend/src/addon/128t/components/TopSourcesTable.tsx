@@ -1,30 +1,44 @@
+// Libraries
 import React, {PureComponent} from 'react'
-
 import _ from 'lodash'
 import memoize from 'memoize-one'
 
+// components
+import GridLayoutSearchBar from 'src/addon/128t/components/GridLayoutSearchBar'
 import TopSourcesTableRow from 'src/addon/128t/components/TopSourcesTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import {NoHostsState, sortableClasses} from 'src/addon/128t/reusable'
 
-import {TopSource} from 'src/addon/128t/types'
+import {
+  CellName,
+  HeadingBar,
+  PanelHeader,
+  Panel,
+  PanelBody,
+  Table,
+  TableHeader,
+  TableBody,
+} from 'src/addon/128t/reusable/layout'
+
+// type
+import {TopSource, SortDirection} from 'src/addon/128t/types'
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {TOPSOURCES_TABLE_SIZING} from 'src/addon/128t/constants'
 
-enum SortDirection {
-  ASC = 'asc',
-  DESC = 'desc',
-}
+// constants
+import {TOPSOURCES_TABLE_SIZING} from 'src/addon/128t/constants'
 
 export interface Props {
   topSources: TopSource[]
+  isEditable: boolean
+  cellBackgroundColor: string
+  cellTextColor: string
 }
 
 interface State {
   searchTerm: string
   sortDirection: SortDirection
   sortKey: string
-
-  topSourceCount: string
+  topSourceCount: number
 }
 
 @ErrorHandling
@@ -35,7 +49,7 @@ class TopSourcesTable extends PureComponent<Props, State> {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
       sortKey: 'ip',
-      topSourceCount: '0',
+      topSourceCount: 0,
     }
   }
 
@@ -74,7 +88,7 @@ class TopSourcesTable extends PureComponent<Props, State> {
     sortKey: string,
     sortDirection: SortDirection
   ) {
-    const sortedTopSources = this.getSortedTopSources(
+    const sortedTopSources: TopSource[] = this.getSortedTopSources(
       topSources,
       searchTerm,
       sortKey,
@@ -84,21 +98,37 @@ class TopSourcesTable extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {topSourceCount} = this.state
+    const {
+      isEditable,
+      cellTextColor,
+      cellBackgroundColor,
+      topSources,
+    } = this.props
     return (
-      <div className="panel">
-        <div className="panel-heading">
-          <h2 className="panel-title">{topSourceCount} Top Sources</h2>
-        </div>
-        <div className="panel-body">
-          <div className="hosts-table">
-            <div className="hosts-table--thead">
-              <div className="hosts-table--tr">{this.TableHeader}</div>
-            </div>
-            {this.TableData}
-          </div>
-        </div>
-      </div>
+      <Panel>
+        <PanelHeader isEditable={isEditable}>
+          <CellName
+            cellTextColor={cellTextColor}
+            cellBackgroundColor={cellBackgroundColor}
+            value={topSources}
+            name={'Top Sources'}
+          />
+          <HeadingBar
+            isEditable={isEditable}
+            cellBackgroundColor={cellBackgroundColor}
+          />
+          <GridLayoutSearchBar
+            placeholder="Filter by Tenant..."
+            onSearch={this.updateSearchTerm}
+          />
+        </PanelHeader>
+        <PanelBody>
+          <Table>
+            <TableHeader>{this.TableHeader}</TableHeader>
+            <TableBody>{this.TableData}</TableBody>
+          </Table>
+        </PanelBody>
+      </Panel>
     )
   }
 
@@ -110,11 +140,12 @@ class TopSourcesTable extends PureComponent<Props, State> {
       TOTALDATA,
       SESSIONCOUNT,
     } = TOPSOURCES_TABLE_SIZING
+    const {sortKey, sortDirection} = this.state
     return (
       <>
         <div
           onClick={this.updateSort('ip')}
-          className={this.sortableClasses('ip')}
+          className={sortableClasses({sortKey, sortDirection, key: 'ip'})}
           style={{width: IP}}
         >
           IP
@@ -122,46 +153,59 @@ class TopSourcesTable extends PureComponent<Props, State> {
         </div>
         <div
           onClick={this.updateSort('tenant')}
-          className={this.sortableClasses('tenant')}
+          className={sortableClasses({sortKey, sortDirection, key: 'tenant'})}
           style={{width: TENANT}}
         >
           Tenant
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('totaldata')}
-          className={this.sortableClasses('totaldata')}
-          style={{width: TOTALDATA}}
-        >
-          Total Data
-          <span className="icon caret-up" />
-        </div>
-        <div
-          onClick={this.updateSort('sessioncnt')}
-          className={this.sortableClasses('sessioncnt')}
+          onClick={this.updateSort('sessionCount')}
+          className={sortableClasses({
+            sortKey,
+            sortDirection,
+            key: 'sessionCount',
+          })}
           style={{width: SESSIONCOUNT}}
+          title="Session Count"
         >
-          Session count
+          S/C
           <span className="icon caret-up" />
         </div>
         <div
-          onClick={this.updateSort('bandwidth')}
-          className={this.sortableClasses('bandwidth')}
+          onClick={this.updateSort('currentBandwidth')}
+          className={sortableClasses({
+            sortKey,
+            sortDirection,
+            key: 'currentBandwidth',
+          })}
           style={{width: CURRENTBANDWIDTH}}
+          title="Band Width"
         >
-          Bandwidth
+          B/W
+          <span className="icon caret-up" />
+        </div>
+        <div
+          onClick={this.updateSort('totalData')}
+          className={sortableClasses({
+            sortKey,
+            sortDirection,
+            key: 'totalData',
+          })}
+          style={{width: TOTALDATA}}
+          title="Total Data"
+        >
+          T/D
           <span className="icon caret-up" />
         </div>
       </>
     )
   }
 
-  // data add
   private get TableData() {
     const {topSources} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
-    //const sortedTopSources = topSources
     const sortedTopSources = this.getSortedTopSources(
       topSources,
       searchTerm,
@@ -170,22 +214,30 @@ class TopSourcesTable extends PureComponent<Props, State> {
     )
 
     return (
-      <FancyScrollbar
-        children={sortedTopSources.map((r, i) => (
-          <TopSourcesTableRow topSources={r} key={i} />
-        ))}
-      />
+      <>
+        {topSources.length > 0 ? (
+          <FancyScrollbar
+            children={sortedTopSources.map(
+              (r: TopSource, i: number): JSX.Element => (
+                <TopSourcesTableRow topSources={r} key={i} />
+              )
+            )}
+          />
+        ) : (
+          <NoHostsState />
+        )}
+      </>
     )
   }
 
-  public filter(alltopsources: TopSource[], searchTerm: string) {
+  private filter(alltopsources: TopSource[], searchTerm: string) {
     const filterText = searchTerm.toLowerCase()
     return alltopsources.filter(h => {
-      return h.ip.toLowerCase().includes(filterText)
+      return h.tenant.toLowerCase().includes(filterText)
     })
   }
 
-  public sort(alltopsources: TopSource[], key: string, direction: string) {
+  private sort(alltopsources: TopSource[], key: string, direction: string) {
     switch (direction) {
       case SortDirection.ASC:
         return _.sortBy(alltopsources, e => e[key])
@@ -196,7 +248,11 @@ class TopSourcesTable extends PureComponent<Props, State> {
     }
   }
 
-  public updateSort = (key: string) => () => {
+  private updateSearchTerm = (searchTerm: string): void => {
+    this.setState({searchTerm})
+  }
+
+  private updateSort = (key: string) => (): void => {
     const {sortKey, sortDirection} = this.state
     if (sortKey === key) {
       const reverseDirection =
@@ -207,17 +263,6 @@ class TopSourcesTable extends PureComponent<Props, State> {
     } else {
       this.setState({sortKey: key, sortDirection: SortDirection.ASC})
     }
-  }
-
-  public sortableClasses = (key: string): string => {
-    const {sortKey, sortDirection} = this.state
-    if (sortKey === key) {
-      if (sortDirection === SortDirection.ASC) {
-        return 'hosts-table--th sortable-header sorting-ascending'
-      }
-      return 'hosts-table--th sortable-header sorting-descending'
-    }
-    return 'hosts-table--th sortable-header'
   }
 }
 

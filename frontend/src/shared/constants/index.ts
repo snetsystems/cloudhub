@@ -88,7 +88,11 @@ export const DEFAULT_LINE_COLORS = [
   // 1 Color Palettes
   [['#00C9FF'], ['#00C9FF'], ['#00C9FF']],
   // 2 Color Palettes
-  [['#00C9FF', '#00C9FF'], ['#00C9FF', '#00C9FF'], ['#00C9FF', '#00C9FF']],
+  [
+    ['#00C9FF', '#00C9FF'],
+    ['#00C9FF', '#00C9FF'],
+    ['#00C9FF', '#00C9FF'],
+  ],
   // 3 Color Palettes
   [
     ['#00C9FF', '#9394FF', '#4ED8A0'],
@@ -513,4 +517,9 @@ export const QUERY_BUILDER_LIST_ITEM_HEIGHT = 28
 export enum DataType {
   flux = 'flux',
   influxQL = 'influxQL',
+}
+
+export enum AddonType {
+  salt = 'salt',
+  router128T = '128T-Oncue',
 }

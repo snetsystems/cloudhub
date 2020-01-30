@@ -1,121 +1,134 @@
-import React, {PureComponent} from 'react'
+import React from 'react'
+import classnames from 'classnames'
+import {unitIndicator, usageIndacator} from 'src/addon/128t/reusable'
 import {ROUTER_TABLE_SIZING} from 'src/addon/128t/constants'
-import {Router, TopSource} from 'src/addon/128t/types'
+import {Router, TopSource, TopSession} from 'src/addon/128t/types'
 import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
 import {transBps} from 'src/shared/utils/units'
+import {TableBodyRowItem} from 'src/addon/128t/reusable/layout'
 
 interface Props {
   router: Router
   focusedAssetId: string
   onClickTableRow: (
     topSources: TopSource[],
+    topSessions: TopSession[],
     focusedAssetId: string
   ) => () => void
 }
 
-class RouterTableRow extends PureComponent<Props> {
-  constructor(props: Props) {
-    super(props)
-  }
+const RouterTableRow = ({onClickTableRow, focusedAssetId, router}: Props) => {
+  const {
+    assetId,
+    locationCoordinates,
+    bandwidth_avg,
+    session_arrivals,
+    role,
+    startTime,
+    softwareVersion,
+    memoryUsage,
+    cpuUsage,
+    diskUsage,
+    topSources,
+    topSessions,
+  } = router
 
-  public focusedClasses = (): string => {
-    const {assetId} = this.props.router
-    const {focusedAssetId} = this.props
+  const {
+    ASSETID,
+    LOCATIONCOORDINATES,
+    MANAGEMENTCONNECTED,
+    BANDWIDTH_AVG,
+    SESSION_CNT_AVG,
+    ENABLED,
+    ROLE,
+    STARTTIME,
+    SOFTWAREVERSION,
+    MEMORYUSAGE,
+    CPUUSAGE,
+    DISKUSAGE,
+  } = ROUTER_TABLE_SIZING
+
+  const focusedClasses = (assetId: Router['assetId']): string => {
     if (assetId === focusedAssetId) return 'hosts-table--tr focused'
     return 'hosts-table--tr'
   }
 
-  private TableItem = ({width, title}) => {
+  const responseIndicator = (isEnabled: boolean): JSX.Element => {
     return (
-      <div
-        className="hosts-table--td"
-        style={{width: width, alignItems: 'center'}}
-      >
-        {title}
-      </div>
+      <span
+        className={classnames('status-indicator', {
+          'status-indicator--enabled': isEnabled,
+        })}
+      />
     )
   }
 
-  render() {
-    const {
-      assetId,
-      locationCoordinates,
-      managementConnected,
-      bandwidth_avg,
-      session_arrivals,
-      enabled,
-      role,
-      startTime,
-      softwareVersion,
-      memoryUsage,
-      cpuUsage,
-      diskUsage,
-      topSources,
-      // topSessions,
-    } = this.props.router
-
-    const {onClickTableRow} = this.props
-
-    const {
-      ASSETID,
-      LOCATIONCOORDINATES,
-      MANAGEMENTCONNECTED,
-      BANDWIDTH_AVG,
-      SESSION_CNT_AVG,
-      ENABLED,
-      ROLE,
-      STARTTIME,
-      SOFTWAREVERSION,
-      MEMORYUSAGE,
-      CPUUSAGE,
-      DISKUSAGE,
-    } = ROUTER_TABLE_SIZING
-
-    return (
-      <div
-        className={this.focusedClasses()}
-        onClick={onClickTableRow(topSources, assetId)}
-      >
-        <this.TableItem title={assetId} width={ASSETID} />
-        <this.TableItem title={role} width={ROLE} />
-        <this.TableItem
-          title={(() => {
-            return enabled ? 'True' : 'False'
-          })()}
-          width={ENABLED}
-        />
-        <this.TableItem
-          title={locationCoordinates}
-          width={LOCATIONCOORDINATES}
-        />
-        <this.TableItem
-          title={(() => {
-            return managementConnected ? 'Connected' : 'Disconnected'
-          })()}
-          width={MANAGEMENTCONNECTED}
-        />
-        <this.TableItem title={startTime} width={STARTTIME} />
-        <this.TableItem title={softwareVersion} width={SOFTWAREVERSION} />
-        <this.TableItem
-          title={fixedDecimalPercentage(cpuUsage, 2)}
-          width={CPUUSAGE}
-        />
-        <this.TableItem
-          title={fixedDecimalPercentage(memoryUsage, 2)}
-          width={MEMORYUSAGE}
-        />
-        <this.TableItem
-          title={fixedDecimalPercentage(diskUsage, 2)}
-          width={DISKUSAGE}
-        />
-        <this.TableItem
-          title={transBps(bandwidth_avg * 8, 2)}
-          width={BANDWIDTH_AVG}
-        />
-        <this.TableItem title={session_arrivals} width={SESSION_CNT_AVG} />
-      </div>
-    )
+  const enabledIndicator = (enabled: Router['enabled']): JSX.Element => {
+    return responseIndicator(enabled)
   }
+
+  const connectedIndicator = (
+    managementConnected: Router['managementConnected']
+  ): JSX.Element => {
+    return responseIndicator(managementConnected)
+  }
+
+  return (
+    <div
+      className={focusedClasses(router.assetId)}
+      onClick={onClickTableRow(topSources, topSessions, assetId)}
+    >
+      <TableBodyRowItem title={assetId} width={ASSETID} />
+      <TableBodyRowItem title={role} width={ROLE} />
+      <TableBodyRowItem
+        title={enabledIndicator(router.enabled)}
+        width={ENABLED}
+        className={'align--start'}
+      />
+
+      <TableBodyRowItem
+        title={locationCoordinates}
+        width={LOCATIONCOORDINATES}
+      />
+      <TableBodyRowItem
+        title={connectedIndicator(router.managementConnected)}
+        width={MANAGEMENTCONNECTED}
+        className={'align--start'}
+      />
+
+      <TableBodyRowItem title={startTime} width={STARTTIME} />
+      <TableBodyRowItem
+        title={softwareVersion}
+        width={SOFTWAREVERSION}
+        className={'align--end'}
+      />
+      <TableBodyRowItem
+        title={usageIndacator({value: fixedDecimalPercentage(cpuUsage, 2)})}
+        width={CPUUSAGE}
+        className={'align--end'}
+      />
+      <TableBodyRowItem
+        title={usageIndacator({value: fixedDecimalPercentage(memoryUsage, 2)})}
+        width={MEMORYUSAGE}
+        className={'align--end'}
+      />
+      <TableBodyRowItem
+        title={usageIndacator({value: fixedDecimalPercentage(diskUsage, 2)})}
+        width={DISKUSAGE}
+        className={'align--end'}
+      />
+      <TableBodyRowItem
+        title={unitIndicator(transBps(bandwidth_avg * 8, 2), ' ')}
+        width={BANDWIDTH_AVG}
+        className={'align--end'}
+      />
+      <TableBodyRowItem
+        title={session_arrivals}
+        width={SESSION_CNT_AVG}
+        className={'align--end'}
+      />
+    </div>
+  )
 }
 
 export default RouterTableRow

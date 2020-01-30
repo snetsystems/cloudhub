@@ -278,21 +278,19 @@ class DashboardPage extends Component<Props, State> {
           onToggleShowAnnotationControls={this.toggleAnnotationControls}
           handleClickPresentationButton={handleClickPresentationButton}
         />
-        {!inPresentationMode &&
-          showTemplateVariableControlBar && (
-            <TemplateControlBar
-              templates={dashboard && dashboard.templates}
-              meRole={meRole}
-              isUsingAuth={isUsingAuth}
-              onSaveTemplates={this.handleSaveTemplateVariables}
-              onPickTemplate={this.handlePickTemplate}
-              source={source}
-            />
-          )}
-        {!inPresentationMode &&
-          showAnnotationControls && (
-            <AnnotationControlBar dashboardID={dashboardID} source={source} />
-          )}
+        {!inPresentationMode && showTemplateVariableControlBar && (
+          <TemplateControlBar
+            templates={dashboard && dashboard.templates}
+            meRole={meRole}
+            isUsingAuth={isUsingAuth}
+            onSaveTemplates={this.handleSaveTemplateVariables}
+            onPickTemplate={this.handlePickTemplate}
+            source={source}
+          />
+        )}
+        {!inPresentationMode && showAnnotationControls && (
+          <AnnotationControlBar dashboardID={dashboardID} source={source} />
+        )}
         {this.showDashboard ? (
           <Dashboard
             source={source}
@@ -586,6 +584,7 @@ const mdtp = {
   handleDismissEditingAnnotation: dismissEditingAnnotation,
 }
 
-export default connect(mstp, mdtp)(
-  ManualRefresh<Props>(withRouter<Props>(DashboardPage))
-)
+export default connect(
+  mstp,
+  mdtp
+)(ManualRefresh<Props>(withRouter<Props>(DashboardPage)))

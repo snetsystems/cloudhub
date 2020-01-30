@@ -22,7 +22,7 @@ class SwanSdplexSettingPage extends PureComponent<Props, State> {
       <Page>
         <Page.Header fullWidth={true}>
           <Page.Header.Left>
-            <Page.Title title="128T/SDPlex - Setting" />
+            <Page.Title title="128T/Oncue - Setting" />
           </Page.Header.Left>
           <Page.Header.Right showSourceIndicator={true} />
         </Page.Header>

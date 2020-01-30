@@ -1,58 +1,46 @@
-import React, {PureComponent} from 'react'
+import React from 'react'
+import {unitIndicator} from 'src/addon/128t/reusable'
 import {TOPSOURCES_TABLE_SIZING} from 'src/addon/128t/constants'
 import {TopSource} from 'src/addon/128t/types'
 import {transBytes, transBps} from 'src/shared/utils/units'
+import {TableBodyRowItem} from 'src/addon/128t/reusable/layout'
 
 interface Props {
   topSources: TopSource
 }
 
-class TopSourcesTableRow extends PureComponent<Props> {
-  constructor(props: Props) {
-    super(props)
-  }
+const TopSourcesTableRow = ({topSources}: Props) => {
+  const {ip, tenant, currentBandwidth, totalData, sessionCount} = topSources
 
-  private TableItem = ({width, title}) => {
-    return (
-      <div
-        className="hosts-table--td"
-        style={{width: width, alignItems: 'center', lineHeight: '200%'}}
-      >
-        {title}
-      </div>
-    )
-  }
+  const {
+    IP,
+    TENANT,
+    CURRENTBANDWIDTH,
+    TOTALDATA,
+    SESSIONCOUNT,
+  } = TOPSOURCES_TABLE_SIZING
 
-  render() {
-    const {
-      ip,
-      tenant,
-      currentBandwidth,
-      totalData,
-      sessionCount,
-    } = this.props.topSources
-
-    const {
-      IP,
-      TENANT,
-      CURRENTBANDWIDTH,
-      TOTALDATA,
-      SESSIONCOUNT,
-    } = TOPSOURCES_TABLE_SIZING
-
-    return (
-      <div className={'hosts-table--tr'}>
-        <this.TableItem title={ip} width={IP} />
-        <this.TableItem title={tenant} width={TENANT} />
-        <this.TableItem title={transBytes(totalData, 2)} width={TOTALDATA} />
-        <this.TableItem title={sessionCount} width={SESSIONCOUNT} />
-        <this.TableItem
-          title={transBps(currentBandwidth * 8, 2)}
-          width={CURRENTBANDWIDTH}
-        />
-      </div>
-    )
-  }
+  return (
+    <div className={'hosts-table--tr'}>
+      <TableBodyRowItem title={ip} width={IP} className={'align--start'} />
+      <TableBodyRowItem title={tenant} width={TENANT} className={''} />
+      <TableBodyRowItem
+        title={sessionCount}
+        width={SESSIONCOUNT}
+        className={'align--end'}
+      />
+      <TableBodyRowItem
+        title={unitIndicator(transBps(currentBandwidth * 8, 2), ' ')}
+        width={CURRENTBANDWIDTH}
+        className={'align--end'}
+      />
+      <TableBodyRowItem
+        title={unitIndicator(transBytes(totalData, 2), ' ')}
+        width={TOTALDATA}
+        className={'align--end'}
+      />
+    </div>
+  )
 }
 
 export default TopSourcesTableRow

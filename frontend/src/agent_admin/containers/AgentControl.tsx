@@ -51,7 +51,7 @@ interface State {
 }
 
 @ErrorHandling
-class AgentControl extends PureComponent<Props, State> {
+export class AgentControl extends PureComponent<Props, State> {
   constructor(props) {
     super(props)
     this.state = {

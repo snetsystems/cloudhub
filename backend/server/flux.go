@@ -13,6 +13,7 @@ import (
 	"github.com/bouk/httprouter"
 	"github.com/influxdata/flux"
 	"github.com/influxdata/flux/ast"
+
 	// _ "github.com/influxdata/flux/builtin"
 	"github.com/influxdata/flux/complete"
 	"github.com/snetsystems/cmp/backend/influx"

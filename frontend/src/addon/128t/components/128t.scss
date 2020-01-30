@@ -1,0 +1,119 @@
+.swan-sdpldex-status-page__container {
+    .container-fluid {
+        height: auto;
+    }
+
+    .panel {
+        margin-bottom: 10px;
+
+        .panel-heading {
+            padding: 5px 5px 0 5px;
+        }
+
+        .panel-body {
+            padding: 5px;
+        }
+    }
+
+    .grid-layout-header--search-bar {
+        z-index: 3;
+        height: 24px;
+        margin-right: 3px;
+
+        .form-control.input-sm {
+            height: 24px;
+        }
+    }
+
+    .dash-graph--name {
+        width: 100%;
+        font-weight: bold;
+        letter-spacing: 0.1px;
+    }
+
+    .dash-graph--heading {
+        width: 100%;
+    }
+
+    .align--start {
+        justify-content: flex-start;
+    }
+
+    .align--center {
+        justify-content: center;
+    }
+
+    .align--end {
+        justify-content: flex-end;
+    }
+
+    .indicator-unit--wrap {
+        width: 30px;
+        text-align: left;
+        margin: 0 10px;
+    }
+
+    .indicator-unit {
+        font-size: 10px;
+    }
+
+    .hosts-table--tr {
+        border-bottom: 1px solid #353535;
+    }
+
+    .generic-empty-state {
+        height: calc(100% - 45px)
+    }
+
+    .status-indicator {
+        width: 12px;
+        height: 12px;
+        background: #e85b1c;
+        border-radius: 100%;
+
+        &.status-indicator--enabled {
+            background: #4ed8a0;
+        }
+    }
+
+    .UsageIndacator-container {
+
+        width: 100%;
+        text-align: center;
+
+        .UsageIndacator-value {
+
+            &.UsageIndacator--caution {
+                color: $s-oragne2;
+            }
+
+            &.UsageIndacator--warning {
+                color: $c-topaz;
+            }
+
+            &.UsageIndacator--danger {
+                color: red;
+            }
+        }
+
+        .UsageIndacator {
+            height: 2px;
+            text-align: center;
+            background: -webkit-linear-gradient(left, #2de5a5 0%, #298bdb 100%);
+            margin-top: 2px;
+
+            &.UsageIndacator--caution {
+                background: $s-oragne2;
+            }
+
+            &.UsageIndacator--warning {
+                background: $c-topaz;
+            }
+
+            &.UsageIndacator--danger {
+                background: red;
+            }
+        }
+    }
+
+}
