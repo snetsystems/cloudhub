@@ -119,6 +119,7 @@
 .router-map-container {
   height: 100%;
   z-index: 3;
+  position: relative;
 }
 
 .leaflet-popup-content {
@@ -128,4 +129,9 @@
 .leaflet-popup-content-wrapper {
   border-radius: 3px;
 }
+
+.button-square .button-icon._reset-layout-align {
+  margin-top: 3px;
+}
+
 /***** routerMap end   *****/

@@ -182,8 +182,8 @@ export const usageIndacator = ({
     <div className="UsageIndacator-container">
       <div
         className={classnames('UsageIndacator-value', {
-          'UsageIndacator--caution': numValue >= 70,
-          'UsageIndacator--warning': numValue >= 80,
+          'UsageIndacator--caution': numValue >= 50,
+          'UsageIndacator--warning': numValue >= 70,
           'UsageIndacator--danger': numValue >= 90,
         })}
       >
@@ -191,8 +191,8 @@ export const usageIndacator = ({
       </div>
       <div
         className={classnames('UsageIndacator', {
-          'UsageIndacator--caution': numValue >= 70,
-          'UsageIndacator--warning': numValue >= 80,
+          'UsageIndacator--caution': numValue >= 50,
+          'UsageIndacator--warning': numValue >= 70,
           'UsageIndacator--danger': numValue >= 90,
         })}
       ></div>

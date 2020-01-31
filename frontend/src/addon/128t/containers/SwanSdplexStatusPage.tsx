@@ -99,39 +99,63 @@ const SwanSdplexStatusPage = () => {
       x: 0,
       y: 0,
       w: 12,
-      h: 3,
+      h: 4,
     },
     {
       i: 'leafletMap',
       x: 0,
-      y: 3,
-      w: 12,
-      h: 4,
+      y: 4,
+      w: 7,
+      h: 8,
     },
     {
       i: 'topSources',
-      x: 0,
-      y: 7,
+      x: 7,
+      y: 8,
       w: 5,
       h: 4,
     },
     {
       i: 'topSessions',
-      x: 6,
-      y: 7,
-      w: 7,
+      x: 7,
+      y: 4,
+      w: 5,
       h: 4,
     },
   ]
 
-  verifyLocalStorage(getLocalStorage, setLocalStorage, 'addon', {
+  const inputLocalStorageInitData = {
     T128: {
       focusedAssetId: '',
       cellsLayoutInfo: initCellsLayout,
     },
-  })
+  }
 
-  const addon = getLocalStorage('addon')
+  verifyLocalStorage(
+    getLocalStorage,
+    setLocalStorage,
+    'addon',
+    inputLocalStorageInitData
+  )
+
+  let addon = getLocalStorage('addon')
+  const check = addon.T128.hasOwnProperty('cellsLayoutInfo')
+
+  if (check) {
+    let propertyCheck = addon.T128.cellsLayoutInfo.map(
+      (cell: cellLayoutInfo, idx: number) =>
+        cell.i === inputLocalStorageInitData.T128.cellsLayoutInfo[idx].i
+    )
+
+    if (propertyCheck.indexOf(false) > -1) {
+      setLocalStorage('addon', inputLocalStorageInitData)
+    }
+  } else {
+    setLocalStorage('addon', inputLocalStorageInitData)
+  }
+
+  addon = getLocalStorage('addon')
+
   if (addon) {
     assetId = _.get(addon, 'T128.focusedAssetId')
     getCellsLayout = _.get(addon, 'T128.cellsLayoutInfo')
@@ -302,9 +326,9 @@ const SwanSdplexStatusPage = () => {
         <Page.Header.Right showSourceIndicator={true}>
           <button
             onClick={() => setCellsLayoutInfo(initCellsLayout)}
-            className="button button-sm button-default"
+            className="button button-sm button-default button-square"
           >
-            reset
+            <span className="button-icon icon _reset-layout _reset-layout-align" />
           </button>
         </Page.Header.Right>
       </Page.Header>
