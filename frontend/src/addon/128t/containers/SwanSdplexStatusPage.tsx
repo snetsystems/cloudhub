@@ -102,7 +102,7 @@ const SwanSdplexStatusPage = () => {
       h: 3,
     },
     {
-      i: 'googleMaps',
+      i: 'leafletMap',
       x: 0,
       y: 3,
       w: 12,
@@ -275,6 +275,20 @@ const SwanSdplexStatusPage = () => {
     setFocusedAssetId(focusedAssetId)
   }
 
+  const handleClickMapMarker = (
+    topSources: TopSource[],
+    topSessions: TopSession[],
+    focusedAssetId: string
+  ) => {
+    if (topSources) setTopSources(topSources)
+    else setTopSources([])
+
+    if (topSessions) setTopSessions(topSessions)
+    else setTopSessions([])
+
+    setFocusedAssetId(focusedAssetId)
+  }
+
   const handleUpdatePosition = (layout: cellLayoutInfo[]): void => {
     setCellsLayoutInfo(layout)
   }
@@ -310,6 +324,7 @@ const SwanSdplexStatusPage = () => {
             topSourcesData={topSources}
             onPositionChange={handleUpdatePosition}
             layout={cellsLayoutInfo}
+            onClickMapMarker={handleClickMapMarker}
           />
         )}
       </Page.Contents>

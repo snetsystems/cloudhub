@@ -39,6 +39,11 @@ interface Props {
     focusedAssetId: string
   ) => () => void
   onPositionChange: (cellsLayout: cellLayoutInfo[]) => void
+  onClickMapMarker: (
+    topSources: TopSource[],
+    topSessions: TopSession[],
+    focusedAssetId: string
+  ) => void
 }
 
 interface State {
@@ -66,6 +71,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       routersData,
       topSourcesData,
       topSessionsData,
+      onClickMapMarker,
     } = this.props
     const {rowHeight} = this.state
 
@@ -92,8 +98,12 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
             cellBackgroundColor={this.cellBackgroundColor}
           />
         </div>
-        <div key="googleMaps" className="dash-graph" style={this.cellStyle}>
+        <div key="leafletMap" className="dash-graph" style={this.cellStyle}>
           <RouterMaps
+            layout={layout}
+            routers={routersData}
+            focusedAssetId={focusedAssetId}
+            onClickMapMarker={onClickMapMarker}
             isEditable={isSwanSdplexStatus}
             cellTextColor={this.cellTextColor}
             cellBackgroundColor={this.cellBackgroundColor}
