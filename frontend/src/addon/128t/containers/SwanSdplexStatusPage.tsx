@@ -5,6 +5,7 @@ import {useQuery} from '@apollo/react-hooks'
 
 // Components
 import GridLayoutRenderer from 'src/addon/128t/components/GridLayoutRenderer'
+import ResetLayoutTips from 'src/addon/128t/components/ResetLayoutTips'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import {Page} from 'src/reusable_ui'
 
@@ -328,7 +329,7 @@ const SwanSdplexStatusPage = () => {
             onClick={() => setCellsLayoutInfo(initCellsLayout)}
             className="button button-sm button-default button-square"
           >
-            <span className="button-icon icon _reset-layout _reset-layout-align" />
+            <ResetLayoutTips />
           </button>
         </Page.Header.Right>
       </Page.Header>
