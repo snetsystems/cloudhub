@@ -10,8 +10,8 @@ frontend/coverage
 # backend/cmd/cmp/cmp-protoboards
 
 # Binaries
-backend/cmd/cmp/*scmp*
-backend/cmd/cmp/*scmpctl*
+backend/cmd/cmp/scmp
+backend/cmd/cmp/scmpctl
 backend/cmd/cmp/*debug*
 
 # Dotfiles
