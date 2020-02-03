@@ -5,12 +5,14 @@ import {useQuery} from '@apollo/react-hooks'
 
 // Components
 import GridLayoutRenderer from 'src/addon/128t/components/GridLayoutRenderer'
+import RouterSourceIndicator from 'src/addon/128t/components/RouterSourceIndicator'
 import ResetLayoutTips from 'src/addon/128t/components/ResetLayoutTips'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import {Page} from 'src/reusable_ui'
 
 // Types
 import {Router, TopSource, TopSession} from 'src/addon/128t/types'
+import {Addon} from 'src/types/auth'
 
 // Middleware
 import {
@@ -91,7 +93,7 @@ interface EmitData {
   routers: Router[]
 }
 
-const SwanSdplexStatusPage = () => {
+const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
   let assetId: string = ''
   let getCellsLayout: cellLayoutInfo[] = []
   const initCellsLayout: cellLayoutInfo[] = [
@@ -324,7 +326,8 @@ const SwanSdplexStatusPage = () => {
         <Page.Header.Left>
           <Page.Title title="128T/Oncue - Status" />
         </Page.Header.Left>
-        <Page.Header.Right showSourceIndicator={true}>
+        <Page.Header.Right>
+          <RouterSourceIndicator addons={addons} />
           <button
             onClick={() => setCellsLayoutInfo(initCellsLayout)}
             className="button button-sm button-default button-square"

@@ -249,7 +249,7 @@ class RouterTable extends PureComponent<Props, State> {
           })}
           style={{width: BANDWIDTH_AVG}}
         >
-          Avg. B/W
+          Average <br /> Band Width
           <span className="icon caret-up" />
         </div>
         <div
@@ -261,7 +261,9 @@ class RouterTable extends PureComponent<Props, State> {
           })}
           style={{width: SESSION_CNT_AVG}}
         >
-          Session Arrivals
+          Session
+          <br />
+          Arrivals
           <span className="icon caret-up" />
         </div>
       </>

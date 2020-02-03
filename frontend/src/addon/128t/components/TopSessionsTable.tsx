@@ -120,7 +120,7 @@ class TopSessionsTable extends PureComponent<Props, State> {
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
             value={topSessions}
-            name={'Top Sources'}
+            name={'Top Sessions'}
           />
           <HeadingBar
             isEditable={isEditable}
@@ -197,7 +197,7 @@ class TopSessionsTable extends PureComponent<Props, State> {
           style={{width: TOPSESSION_SOURCE_ADDRESS}}
           title="Source Address"
         >
-          S/A
+          Session Address
           <span className="icon caret-up" />
         </div>
         <div
@@ -210,7 +210,7 @@ class TopSessionsTable extends PureComponent<Props, State> {
           style={{width: TOPSESSION_SOURCE_PORT}}
           title="Source Port"
         >
-          S/P
+          Source Port
           <span className="icon caret-up" />
         </div>
         <div
@@ -223,7 +223,7 @@ class TopSessionsTable extends PureComponent<Props, State> {
           style={{width: TOPSESSION_DESTINATION_ADDRESS}}
           title="Destination Address"
         >
-          D/A
+          Destination Address
           <span className="icon caret-up" />
         </div>
         <div
@@ -236,7 +236,7 @@ class TopSessionsTable extends PureComponent<Props, State> {
           style={{width: TOPSESSION_DESTINATION_PORT}}
           title="Destination Port"
         >
-          D/P
+          Destination Port
           <span className="icon caret-up" />
         </div>
       </>

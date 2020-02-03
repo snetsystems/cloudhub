@@ -45,7 +45,7 @@ const GraphqlProvider: SFC<Props> = (props: Props) => {
   if (props.page === 'SwanSdplexStatusPage') {
     return (
       <ApolloProvider client={client}>
-        <SwanSdplexStatusPage />
+        <SwanSdplexStatusPage addons={props.addons} />
       </ApolloProvider>
     )
   } else {
