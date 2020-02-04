@@ -16,6 +16,7 @@ type Service struct {
 	SuperAdminProviderGroups superAdminProviderGroups
 	Env                      cmp.Environment
 	Databases                cmp.Databases
+	AddonURLs                map[string]string
 }
 
 type superAdminProviderGroups struct {

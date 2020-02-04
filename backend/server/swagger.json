@@ -6141,7 +6141,7 @@
                 "type": "string"
               },
               "url": {
-                "description": "Base URL of API",
+                "description": "Base URL or Proxy URL of API",
                 "type": "string"
               },
               "token": {
@@ -6200,7 +6200,7 @@
         "addons": [
           {
             "name": "salt",
-            "url": "http://61.250.122.43:8000/",
+            "url": "/cmp/v1/salt",
             "token": "lndXJlIl0sImlhdCI6MTU3NDAzNjAxM30"
           },
           {

@@ -289,7 +289,7 @@ func (s *Server) Serve(ctx context.Context) error {
 			Error(err)
 		return err
 	}
-	service := openService(ctx, s.BuildInfo, s.BoltPath, s.newBuilders(logger), s.ProtoboardsPath, logger, s.useAuth(), s.Auth0SuperAdminOrg, s.TelegrafSystemInterval)
+	service := openService(ctx, s.BuildInfo, s.BoltPath, s.newBuilders(logger), s.ProtoboardsPath, logger, s.useAuth(), s.Auth0SuperAdminOrg, s.TelegrafSystemInterval, s.AddonURLs)
 
 	if !validBasepath(s.Basepath) {
 		err := fmt.Errorf("Invalid basepath, must follow format \"/mybasepath\"")
@@ -427,7 +427,7 @@ func (s *Server) newBuilders(logger cmp.Logger) builders {
 	}
 }
 
-func openService(ctx context.Context, buildInfo cmp.BuildInfo, boltPath string, builder builders, protoboardsPath string, logger cmp.Logger, useAuth bool, auth0SuperAdminOrg string, telegrafSystemInterval time.Duration) Service {
+func openService(ctx context.Context, buildInfo cmp.BuildInfo, boltPath string, builder builders, protoboardsPath string, logger cmp.Logger, useAuth bool, auth0SuperAdminOrg string, telegrafSystemInterval time.Duration, addonURLs map[string]string) Service {
 
 	db := bolt.NewClient()
 	db.Path = boltPath
@@ -506,6 +506,7 @@ func openService(ctx context.Context, buildInfo cmp.BuildInfo, boltPath string, 
 		Databases:                &influx.Client{Logger: logger},
 		SuperAdminProviderGroups: superAdminProviderGroups{auth0: auth0SuperAdminOrg},
 		Env:                      cmp.Environment{TelegrafSystemInterval: telegrafSystemInterval},
+		AddonURLs:                addonURLs,
 	}
 }
 

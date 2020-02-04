@@ -130,9 +130,18 @@ func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		i := 0
 		for name, url := range a.AddonURLs {
 			token := a.AddonTokens[name]
+
+			var emitURL string
+			switch name {
+			case "salt":
+				emitURL = "/cmp/v1/salt"
+			default:
+				emitURL = url
+			}
+
 			routes.Addons[i] = getAddonLinksResponse{
 				Name:  name,
-				URL:   url,
+				URL:   emitURL,
 				Token: token,
 			}
 			i++
