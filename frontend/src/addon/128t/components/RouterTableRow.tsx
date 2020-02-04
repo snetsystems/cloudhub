@@ -6,6 +6,7 @@ import {Router, TopSource, TopSession} from 'src/addon/128t/types'
 import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
 import {transBps} from 'src/shared/utils/units'
 import {TableBodyRowItem} from 'src/addon/128t/reusable/layout'
+import GeoLocationIndicator from 'src/addon/128t/components/GeoLocationIndicator'
 
 interface Props {
   router: Router
@@ -46,6 +47,7 @@ const RouterTableRow = ({onClickTableRow, focusedAssetId, router}: Props) => {
     MEMORYUSAGE,
     CPUUSAGE,
     DISKUSAGE,
+    CHECKBOX,
   } = ROUTER_TABLE_SIZING
 
   const focusedClasses = (assetId: Router['assetId']): string => {
@@ -73,11 +75,22 @@ const RouterTableRow = ({onClickTableRow, focusedAssetId, router}: Props) => {
     return responseIndicator(managementConnected)
   }
 
+  const geoLocationIndicatorCall = (
+    locationCoordinates: Router['locationCoordinates']
+  ): JSX.Element => {
+    return locationCoordinates ? (
+      <GeoLocationIndicator locationCoordinates={locationCoordinates} />
+    ) : (
+      <div>-</div>
+    )
+  }
+
   return (
     <div
       className={focusedClasses(router.assetId)}
       onClick={onClickTableRow(topSources, topSessions, assetId)}
     >
+      <TableBodyRowItem title={<input type="checkbox" />} width={CHECKBOX} />
       <TableBodyRowItem title={assetId} width={ASSETID} />
       <TableBodyRowItem title={role} width={ROLE} />
       <TableBodyRowItem
@@ -87,7 +100,7 @@ const RouterTableRow = ({onClickTableRow, focusedAssetId, router}: Props) => {
       />
 
       <TableBodyRowItem
-        title={locationCoordinates}
+        title={geoLocationIndicatorCall(locationCoordinates)}
         width={LOCATIONCOORDINATES}
       />
       <TableBodyRowItem

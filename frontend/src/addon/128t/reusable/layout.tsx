@@ -86,12 +86,14 @@ export const CellName = ({
   cellBackgroundColor,
   value,
   name,
+  sizeVisible = true,
 }: {
   cellTextColor: string
   cellBackgroundColor: string
   value: Router[] | TopSource[] | TopSession[] | []
   name: string
-}): JSX.Element => {
+  sizeVisible?: boolean
+}): JSX.Element | null => {
   let nameStyle = {}
 
   if (cellBackgroundColor !== DEFAULT_CELL_BG_COLOR) {
@@ -102,7 +104,7 @@ export const CellName = ({
 
   return (
     <h2 className={`dash-graph--name grid-layout--draggable`} style={nameStyle}>
-      {value.length + ' ' + name}
+      {sizeVisible ? value.length : null} {name}
     </h2>
   )
 }
@@ -140,7 +142,7 @@ export const ErrorState = (): JSX.Element => (
 
 export const NoHostsState = (): JSX.Element => (
   <div className="generic-empty-state">
-    <h4 style={{margin: '90px 0'}}>No information or no information found. </h4>
+    <h4 style={{margin: '90px 0'}}>No Data. </h4>
   </div>
 )
 
@@ -182,8 +184,8 @@ export const usageIndacator = ({
     <div className="UsageIndacator-container">
       <div
         className={classnames('UsageIndacator-value', {
-          'UsageIndacator--caution': numValue >= 70,
-          'UsageIndacator--warning': numValue >= 80,
+          'UsageIndacator--caution': numValue >= 50,
+          'UsageIndacator--warning': numValue >= 70,
           'UsageIndacator--danger': numValue >= 90,
         })}
       >
@@ -191,8 +193,8 @@ export const usageIndacator = ({
       </div>
       <div
         className={classnames('UsageIndacator', {
-          'UsageIndacator--caution': numValue >= 70,
-          'UsageIndacator--warning': numValue >= 80,
+          'UsageIndacator--caution': numValue >= 50,
+          'UsageIndacator--warning': numValue >= 70,
           'UsageIndacator--danger': numValue >= 90,
         })}
       ></div>

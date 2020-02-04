@@ -1,119 +1,226 @@
 .swan-sdpldex-status-page__container {
-    .container-fluid {
-        height: auto;
+  .hosts-table--th {
+    display: flex;
+    align-items: center;
+    overflow: hidden
+  }
+
+  .hosts-table--td {
+    overflow: hidden
+  }
+
+  .container-fluid {
+    height: auto;
+  }
+
+  .panel {
+    margin-bottom: 10px;
+
+    .panel-heading {
+      padding: 5px 5px 0 5px;
     }
 
-    .panel {
-        margin-bottom: 10px;
+    .panel-body {
+      padding: 5px;
+    }
+  }
 
-        .panel-heading {
-            padding: 5px 5px 0 5px;
-        }
+  .grid-layout-header--search-bar {
+    z-index: 3;
+    height: 24px;
+    margin-right: 3px;
 
-        .panel-body {
-            padding: 5px;
-        }
+    .form-control.input-sm {
+      height: 24px;
+    }
+  }
+
+  .dash-graph--name {
+    width: 100%;
+    font-weight: bold;
+    letter-spacing: 0.1px;
+  }
+
+  .dash-graph--heading {
+    width: 100%;
+  }
+
+  .align--start {
+    justify-content: flex-start;
+  }
+
+  .align--center {
+    justify-content: center;
+  }
+
+  .align--end {
+    justify-content: flex-end;
+  }
+
+  .indicator-unit--wrap {
+    width: 30px;
+    text-align: left;
+    margin: 0 10px;
+  }
+
+  .indicator-unit {
+    font-size: 10px;
+  }
+
+  .hosts-table--tr {
+    border-bottom: 1px solid #353535;
+  }
+
+  .generic-empty-state {
+    height: calc(100% - 45px);
+  }
+
+  .status-indicator {
+    width: 12px;
+    height: 12px;
+    background: #e85b1c;
+    border-radius: 100%;
+
+    &.status-indicator--enabled {
+      background: #4ed8a0;
+    }
+  }
+
+  .UsageIndacator-container {
+    width: 100%;
+    text-align: center;
+
+    .UsageIndacator-value {
+      &.UsageIndacator--caution {
+        color: $s-oragne2;
+      }
+
+      &.UsageIndacator--warning {
+        color: $c-topaz;
+      }
+
+      &.UsageIndacator--danger {
+        color: red;
+      }
     }
 
-    .grid-layout-header--search-bar {
-        z-index: 3;
-        height: 24px;
-        margin-right: 3px;
+    .UsageIndacator {
+      height: 2px;
+      text-align: center;
+      background: -webkit-linear-gradient(left, #2de5a5 0%, #298bdb 100%);
+      margin-top: 2px;
 
-        .form-control.input-sm {
-            height: 24px;
-        }
+      &.UsageIndacator--caution {
+        background: $s-oragne2;
+      }
+
+      &.UsageIndacator--warning {
+        background: $c-topaz;
+      }
+
+      &.UsageIndacator--danger {
+        background: red;
+      }
+    }
+  }
+
+  .dash-graph--heading--button-box {
+    position: relative;
+    z-index: 3;
+    margin-right: 7px;
+
+    .button {
+      height: 24px;
+      line-height: 22px;
     }
 
-    .dash-graph--name {
-        width: 100%;
-        font-weight: bold;
-        letter-spacing: 0.1px;
+    .is-new {
+      position: absolute;
+      background: $s-deepOrange2;
+      border-radius: 3px;
+      top: -8px;
+      right: 0px;
+      display: inline-block;
+      color: #fff;
+      padding: 0px 3px;
+      font-size: 11px;
     }
-
-    .dash-graph--heading {
-        width: 100%;
-    }
-
-    .align--start {
-        justify-content: flex-start;
-    }
-
-    .align--center {
-        justify-content: center;
-    }
-
-    .align--end {
-        justify-content: flex-end;
-    }
-
-    .indicator-unit--wrap {
-        width: 30px;
-        text-align: left;
-        margin: 0 10px;
-    }
-
-    .indicator-unit {
-        font-size: 10px;
-    }
-
-    .hosts-table--tr {
-        border-bottom: 1px solid #353535;
-    }
-
-    .generic-empty-state {
-        height: calc(100% - 45px)
-    }
-
-    .status-indicator {
-        width: 12px;
-        height: 12px;
-        background: #e85b1c;
-        border-radius: 100%;
-
-        &.status-indicator--enabled {
-            background: #4ed8a0;
-        }
-    }
-
-    .UsageIndacator-container {
-
-        width: 100%;
-        text-align: center;
-
-        .UsageIndacator-value {
-
-            &.UsageIndacator--caution {
-                color: $s-oragne2;
-            }
-
-            &.UsageIndacator--warning {
-                color: $c-topaz;
-            }
-
-            &.UsageIndacator--danger {
-                color: red;
-            }
-        }
-
-        .UsageIndacator {
-            height: 2px;
-            text-align: center;
-            background: -webkit-linear-gradient(left, #2de5a5 0%, #298bdb 100%);
-            margin-top: 2px;
-
-            &.UsageIndacator--caution {
-                background: $s-oragne2;
-            }
-
-            &.UsageIndacator--warning {
-                background: $c-topaz;
-            }
-
-            &.UsageIndacator--danger {
-                background: red;
-            }
-        }
-    }
-
+  }
 }
+
+
+/***** routerMap start *****/
+
+.router-connect-tips {
+  @include no-user-select();
+  display: inline-block;
+  padding: 0 4px;
+  border: 0;
+  height: 30px;
+  line-height: 30px;
+  color: $g13-mist;
+  font-weight: 700;
+  font-size: 12px;
+
+  >.icon {
+    display: inline-block;
+    font-size: 16px;
+    margin: 0 4px;
+  }
+}
+
+.router-map-container {
+  height: 100%;
+  z-index: 3;
+  position: relative;
+
+  .leaflet-popup-content-wrapper {
+    border-radius: 3px;
+    background-color: $g2-kevlar;
+    color: #fff;
+
+    .leaflet-popup-content {
+      text-align: center;
+      margin: 5px 8px;
+    }
+  }
+
+  .leaflet-popup-tip-container {
+    width: 20px;
+    height: 10px;
+    margin-left: -10px;
+
+    .leaflet-popup-tip {
+      width: 8px;
+      height: 8px;
+      margin: -4px auto 0;
+      background-color: $g2-kevlar;
+    }
+  }
+}
+
+#router-connect-tips-tooltip {
+  top: 10px !important;
+}
+
+.router-connect-tips {
+  .__react_component_tooltip.place-left:after {
+    top: 10%;
+  }
+}
+
+.reset-layout-tips {
+  .__react_component_tooltip.place-left.type-dark.influx-tooltip {
+    top: 10px !important;
+  }
+
+  .__react_component_tooltip.place-left:after {
+    top: 30%;
+  }
+}
+
+.button-square .button-icon._reset-layout-align {
+  margin-top: 3px;
+}
+
+/***** routerMap end   *****/
