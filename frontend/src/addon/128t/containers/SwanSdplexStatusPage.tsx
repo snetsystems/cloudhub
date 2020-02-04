@@ -5,11 +5,14 @@ import {useQuery} from '@apollo/react-hooks'
 
 // Components
 import GridLayoutRenderer from 'src/addon/128t/components/GridLayoutRenderer'
+import RouterSourceIndicator from 'src/addon/128t/components/RouterSourceIndicator'
+import ResetLayoutTips from 'src/addon/128t/components/ResetLayoutTips'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import {Page} from 'src/reusable_ui'
 
 // Types
 import {Router, TopSource, TopSession} from 'src/addon/128t/types'
+import {Addon} from 'src/types/auth'
 
 // Middleware
 import {
@@ -90,7 +93,7 @@ interface EmitData {
   routers: Router[]
 }
 
-const SwanSdplexStatusPage = () => {
+const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
   let assetId: string = ''
   let getCellsLayout: cellLayoutInfo[] = []
   const initCellsLayout: cellLayoutInfo[] = [
@@ -99,39 +102,63 @@ const SwanSdplexStatusPage = () => {
       x: 0,
       y: 0,
       w: 12,
-      h: 3,
-    },
-    {
-      i: 'googleMaps',
-      x: 0,
-      y: 3,
-      w: 12,
       h: 4,
     },
     {
-      i: 'topSources',
+      i: 'leafletMap',
       x: 0,
-      y: 7,
+      y: 4,
+      w: 7,
+      h: 8,
+    },
+    {
+      i: 'topSources',
+      x: 7,
+      y: 8,
       w: 5,
       h: 4,
     },
     {
       i: 'topSessions',
-      x: 6,
-      y: 7,
-      w: 7,
+      x: 7,
+      y: 4,
+      w: 5,
       h: 4,
     },
   ]
 
-  verifyLocalStorage(getLocalStorage, setLocalStorage, 'addon', {
+  const inputLocalStorageInitData = {
     T128: {
       focusedAssetId: '',
       cellsLayoutInfo: initCellsLayout,
     },
-  })
+  }
 
-  const addon = getLocalStorage('addon')
+  verifyLocalStorage(
+    getLocalStorage,
+    setLocalStorage,
+    'addon',
+    inputLocalStorageInitData
+  )
+
+  let addon = getLocalStorage('addon')
+  const check = addon.T128.hasOwnProperty('cellsLayoutInfo')
+
+  if (check) {
+    let propertyCheck = addon.T128.cellsLayoutInfo.map(
+      (cell: cellLayoutInfo, idx: number) =>
+        cell.i === inputLocalStorageInitData.T128.cellsLayoutInfo[idx].i
+    )
+
+    if (propertyCheck.indexOf(false) > -1) {
+      setLocalStorage('addon', inputLocalStorageInitData)
+    }
+  } else {
+    setLocalStorage('addon', inputLocalStorageInitData)
+  }
+
+  addon = getLocalStorage('addon')
+
   if (addon) {
     assetId = _.get(addon, 'T128.focusedAssetId')
     getCellsLayout = _.get(addon, 'T128.cellsLayoutInfo')
@@ -275,6 +302,20 @@ const SwanSdplexStatusPage = () => {
     setFocusedAssetId(focusedAssetId)
   }
 
+  const handleClickMapMarker = (
+    topSources: TopSource[],
+    topSessions: TopSession[],
+    focusedAssetId: string
+  ) => {
+    if (topSources) setTopSources(topSources)
+    else setTopSources([])
+
+    if (topSessions) setTopSessions(topSessions)
+    else setTopSessions([])
+
+    setFocusedAssetId(focusedAssetId)
+  }
+
   const handleUpdatePosition = (layout: cellLayoutInfo[]): void => {
     setCellsLayoutInfo(layout)
   }
@@ -285,12 +326,13 @@ const SwanSdplexStatusPage = () => {
         <Page.Header.Left>
           <Page.Title title="128T/Oncue - Status" />
         </Page.Header.Left>
-        <Page.Header.Right showSourceIndicator={true}>
+        <Page.Header.Right>
+          <RouterSourceIndicator addons={addons} />
           <button
             onClick={() => setCellsLayoutInfo(initCellsLayout)}
-            className="button button-sm button-default"
+            className="button button-sm button-default button-square"
           >
-            reset
+            <ResetLayoutTips />
           </button>
         </Page.Header.Right>
       </Page.Header>
@@ -310,6 +352,7 @@ const SwanSdplexStatusPage = () => {
             topSourcesData={topSources}
             onPositionChange={handleUpdatePosition}
             layout={cellsLayoutInfo}
+            onClickMapMarker={handleClickMapMarker}
           />
         )}
       </Page.Contents>
