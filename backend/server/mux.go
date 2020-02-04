@@ -242,7 +242,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.GET("/cmp/v1/salt", EnsureAdmin(service.SaltProxyGet))
 	router.POST("/cmp/v1/salt", EnsureAdmin(service.SaltProxyPost))
 	router.PATCH("/cmp/v1/salt", EnsureAdmin(service.SaltProxyPatch))
-	router.DELETE("/cmp/v1/salty", EnsureAdmin(service.SaltProxyDelete))
+	router.DELETE("/cmp/v1/salt", EnsureAdmin(service.SaltProxyDelete))
 
 	// Kapacitor
 	router.GET("/cmp/v1/sources/:id/kapacitors", EnsureViewer(service.Kapacitors))
