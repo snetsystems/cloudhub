@@ -1,6 +1,6 @@
 export const ROUTER_TABLE_SIZING = {
-  ASSETID: '16%',
-  LOCATIONCOORDINATES: '15%',
+  ASSETID: 'calc(13% - 30px)',
+  LOCATIONCOORDINATES: '8%',
   MANAGEMENTCONNECTED: '8%',
   BANDWIDTH_AVG: '8%',
   SESSION_CNT_AVG: '5%',
@@ -11,6 +11,7 @@ export const ROUTER_TABLE_SIZING = {
   MEMORYUSAGE: '8%',
   CPUUSAGE: '8%',
   DISKUSAGE: '8%',
+  CHECKBOX: '30px',
 }
 
 export const TOPSOURCES_TABLE_SIZING = {

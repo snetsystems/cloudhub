@@ -207,6 +207,7 @@ class RouterMaps extends PureComponent<Props, State> {
             cellBackgroundColor={cellBackgroundColor}
             value={[]}
             name={'Routers in Map'}
+            sizeVisible={false}
           />
           <HeadingBar
             isEditable={isEditable}

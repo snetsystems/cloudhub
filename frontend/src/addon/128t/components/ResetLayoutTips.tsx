@@ -1,8 +1,7 @@
 import React, {SFC} from 'react'
 import ReactTooltip from 'react-tooltip'
 
-const resetLayoutTipsText =
-  '<p>Press this button to reset to the default layout.</p>'
+const resetLayoutTipsText = '<p>Click this to reset to the default layout.</p>'
 
 const ResetLayoutTips: SFC = () => (
   <div
