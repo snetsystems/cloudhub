@@ -169,7 +169,7 @@ class TopSourcesTable extends PureComponent<Props, State> {
           style={{width: SESSIONCOUNT}}
           title="Session Count"
         >
-          S/C
+          Session Count
           <span className="icon caret-up" />
         </div>
         <div
@@ -182,7 +182,7 @@ class TopSourcesTable extends PureComponent<Props, State> {
           style={{width: CURRENTBANDWIDTH}}
           title="Band Width"
         >
-          B/W
+          Band Width
           <span className="icon caret-up" />
         </div>
         <div
@@ -195,7 +195,7 @@ class TopSourcesTable extends PureComponent<Props, State> {
           style={{width: TOTALDATA}}
           title="Total Data"
         >
-          T/D
+          Total Data
           <span className="icon caret-up" />
         </div>
       </>

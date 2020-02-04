@@ -88,6 +88,17 @@ class RouterTable extends PureComponent<Props, State> {
     this.setState({routerCount: sortedRouters.length})
   }
 
+  private HeadingButton = ({buttonName, isNew}) => {
+    return (
+      <div className={'dash-graph--heading--button-box'}>
+        {isNew ? <span className="is-new">new</span> : ''}
+        <button className={'button button-sm button-default'}>
+          {buttonName}
+        </button>
+      </div>
+    )
+  }
+
   public render() {
     const {isEditable, cellTextColor, cellBackgroundColor, routers} = this.props
     return (
@@ -103,6 +114,8 @@ class RouterTable extends PureComponent<Props, State> {
             isEditable={isEditable}
             cellBackgroundColor={cellBackgroundColor}
           />
+          <this.HeadingButton buttonName={'firmware'} isNew={true} />
+          <this.HeadingButton buttonName={'config'} isNew={false} />
           <GridLayoutSearchBar
             placeholder="Filter by Asset ID..."
             onSearch={this.updateSearchTerm}
@@ -132,10 +145,17 @@ class RouterTable extends PureComponent<Props, State> {
       MEMORYUSAGE,
       CPUUSAGE,
       DISKUSAGE,
+      CHECKBOX,
     } = ROUTER_TABLE_SIZING
     const {sortKey, sortDirection} = this.state
     return (
       <>
+        <div
+          className={sortableClasses({sortKey, sortDirection, key: 'assetId'})}
+          style={{width: CHECKBOX}}
+        >
+          <input type="checkbox" />
+        </div>
         <div
           onClick={this.updateSort('assetId')}
           className={sortableClasses({sortKey, sortDirection, key: 'assetId'})}
@@ -169,7 +189,7 @@ class RouterTable extends PureComponent<Props, State> {
           })}
           style={{width: LOCATIONCOORDINATES}}
         >
-          Location Coordinates
+          Location
           <span className="icon caret-up" />
         </div>
         <div
@@ -249,7 +269,7 @@ class RouterTable extends PureComponent<Props, State> {
           })}
           style={{width: BANDWIDTH_AVG}}
         >
-          Avg. B/W
+          Average <br /> Band Width
           <span className="icon caret-up" />
         </div>
         <div
@@ -261,7 +281,9 @@ class RouterTable extends PureComponent<Props, State> {
           })}
           style={{width: SESSION_CNT_AVG}}
         >
-          Session Arrivals
+          Session
+          <br />
+          Arrivals
           <span className="icon caret-up" />
         </div>
       </>
