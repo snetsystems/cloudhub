@@ -35,7 +35,7 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
 
 ## Setting in VSCode
 
-- Add the followings into **_setting.json_** to **User Setting** namespace.
+- Add the followings into **User Setting** or **Workspace Setting**.
 
 ```
 {
@@ -49,6 +49,7 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
   "editor.largeFileOptimizations": false,
   "editor.formatOnSave": true,
   "editor.renderWhitespace": "none",
+  "editor.wordWrap": "on",
   "workbench.startupEditor": "newUntitledFile",
   "explorer.confirmDelete": false,
   "explorer.confirmDragAndDrop": false,
