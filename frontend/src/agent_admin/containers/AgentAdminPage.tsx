@@ -1,5 +1,5 @@
 // Libraries
-import React, {PureComponent, ChangeEvent, MouseEvent} from 'react'
+import React, {PureComponent, MouseEvent} from 'react'
 import {connect} from 'react-redux'
 import _ from 'lodash'
 
@@ -9,19 +9,9 @@ import SubSections from 'src/shared/components/SubSections'
 import AgentMinions from 'src/agent_admin/containers/AgentMinions'
 import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
 import AgentControl from 'src/agent_admin/containers/AgentControl'
-import AgentConnectTips from 'src/agent_admin/components/AgentConnectTips'
-import AgentConnectForm from 'src/agent_admin/components/AgentConnectForm'
 
 // Notification
 import {notify as notifyAction} from 'src/shared/actions/notifications'
-import {
-  notifyAgentConnectFailed,
-  notifyAgentConnectSucceeded,
-  notifyAgentDisconnected,
-} from 'src/agent_admin/components/notifications'
-
-// APIs
-import {getSaltToken} from 'src/agent_admin/apis'
 
 // Constants
 import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
@@ -29,12 +19,16 @@ import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 // Types
 import {RemoteDataState, Notification, NotificationFunc} from 'src/types'
 
+import {Addon} from 'src/types/auth'
+import {AddonType} from 'src/shared/constants'
+
 interface Props {
   notify: (message: Notification | NotificationFunc) => void
   meRole: string
   source: {id: number}
   params: {tab: string}
   handleKeyDown: () => void
+  addons: Addon[]
 }
 
 interface State {
@@ -42,10 +36,6 @@ interface State {
   isSelectBoxView: boolean
   minions: []
   [x: string]: {}
-  isTokenCheck: boolean
-  masterUrl: string
-  masterId: string
-  masterPwd: string
   saltMasterUrl: string
   saltMasterToken: string
 }
@@ -62,33 +52,25 @@ class AgentAdminPage extends PureComponent<Props, State> {
       agentPageStatus: RemoteDataState.NotStarted,
       isSelectBoxView: true,
       minions: [],
-      isTokenCheck: true,
-      masterUrl: 'http://',
-      masterId: '',
-      masterPwd: '',
       saltMasterUrl: '',
       saltMasterToken: '',
     }
   }
 
   componentWillMount() {
-    const saltMasterUrl = window.localStorage.getItem('salt-master-url')
-    const saltMasterToken = window.localStorage.getItem('salt-master-token')
+    const addon = this.props.addons.find(addon => {
+      return addon.name === AddonType.salt
+    })
+
+    const saltMasterUrl = addon.url
+    const saltMasterToken = addon.token
+
+    console.log('Addon', addon)
 
     if (saltMasterToken !== null) {
       this.setState({
-        isTokenCheck: true,
         saltMasterUrl: saltMasterUrl,
         saltMasterToken: saltMasterToken,
-      })
-    } else {
-      this.setState({
-        masterUrl: 'http://',
-        masterId: '',
-        masterPwd: '',
-        saltMasterUrl: '',
-        saltMasterToken: '',
-        isTokenCheck: false,
       })
     }
   }
@@ -107,7 +89,6 @@ class AgentAdminPage extends PureComponent<Props, State> {
             currentUrl={'agent-minions'}
             saltMasterUrl={saltMasterUrl}
             saltMasterToken={saltMasterToken}
-            onLogout={this.handleLogout}
           />
         ),
       },
@@ -121,7 +102,6 @@ class AgentAdminPage extends PureComponent<Props, State> {
             currentUrl={'agent-control'}
             saltMasterUrl={saltMasterUrl}
             saltMasterToken={saltMasterToken}
-            onLogout={this.handleLogout}
           />
         ),
       },
@@ -135,7 +115,6 @@ class AgentAdminPage extends PureComponent<Props, State> {
             currentUrl={'agent-configuration'}
             saltMasterUrl={saltMasterUrl}
             saltMasterToken={saltMasterToken}
-            onLogout={this.handleLogout}
           />
         ),
       },
@@ -149,34 +128,13 @@ class AgentAdminPage extends PureComponent<Props, State> {
       params: {tab},
     } = this.props
 
-    const {
-      isTokenCheck,
-      saltMasterUrl,
-      masterUrl,
-      masterId,
-      masterPwd,
-    } = this.state
-
     return (
       <Page>
         <Page.Header>
           <Page.Header.Left>
             <Page.Title title="Agent Configuration" />
           </Page.Header.Left>
-          <Page.Header.Right>
-            <AgentConnectForm
-              onLoginClick={this.handleLogin}
-              onLogoutClick={this.handleLogout}
-              onChangeUrl={this.handleChangeMasterUrl}
-              onChangeId={this.handleChangeMasterId}
-              onChangePwd={this.handleChangeMasterPwd}
-              masterUrl={masterUrl}
-              masterId={masterId}
-              masterPwd={masterPwd}
-              isTokenCheck={isTokenCheck}
-            />
-            <AgentConnectTips saltMasterUrl={saltMasterUrl} />
-          </Page.Header.Right>
+          <Page.Header.Right></Page.Header.Right>
         </Page.Header>
         <Page.Contents fullWidth={true}>
           <div className="container-fluid full-height agent-page">
@@ -191,75 +149,13 @@ class AgentAdminPage extends PureComponent<Props, State> {
       </Page>
     )
   }
-
-  handleLogin = (e: LoginEvent) => {
-    if (e.nativeEvent.which === 13 || e.nativeEvent.which === 1) {
-      const {notify} = this.props
-      const {masterUrl, masterId, masterPwd} = this.state
-
-      window.localStorage.removeItem('salt-master-url')
-      window.localStorage.removeItem('salt-master-token')
-
-      window.localStorage.setItem('salt-master-url', masterUrl)
-
-      const resSaltToken = getSaltToken(masterId, masterPwd)
-
-      resSaltToken.then(pResSaltTokenData => {
-        if (
-          pResSaltTokenData.message !== undefined &&
-          pResSaltTokenData.message !== null
-        ) {
-          notify(notifyAgentConnectFailed(pResSaltTokenData.message))
-        } else {
-          window.localStorage.setItem(
-            'salt-master-token',
-            pResSaltTokenData.data.return[0].token
-          )
-          this.setState({
-            saltMasterUrl: masterUrl,
-            saltMasterToken: pResSaltTokenData.data.return[0].token,
-            isTokenCheck: true,
-          })
-          notify(notifyAgentConnectSucceeded(masterUrl))
-        }
-      })
-    }
-  }
-
-  handleLogout = () => {
-    const {notify} = this.props
-
-    window.localStorage.removeItem('salt-master-url')
-    window.localStorage.removeItem('salt-master-token')
-
-    this.setState({
-      masterUrl: 'http://',
-      masterId: '',
-      masterPwd: '',
-      saltMasterUrl: '',
-      saltMasterToken: '',
-      isTokenCheck: false,
-    })
-    notify(notifyAgentDisconnected())
-  }
-
-  public handleChangeMasterUrl = (e: ChangeEvent<HTMLInputElement>) => {
-    this.setState({masterUrl: e.target.value})
-  }
-
-  public handleChangeMasterId = (e: ChangeEvent<HTMLInputElement>) => {
-    this.setState({masterId: e.target.value})
-  }
-
-  public handleChangeMasterPwd = (e: ChangeEvent<HTMLInputElement>) => {
-    this.setState({masterPwd: e.target.value})
-  }
 }
 
-const mapStateToProps = ({auth: {me}}) => {
+const mapStateToProps = ({auth: {me}, links: {addons}}) => {
   const meRole = _.get(me, 'role', null)
   return {
     meRole,
+    addons,
   }
 }
 
