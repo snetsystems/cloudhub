@@ -25,8 +25,10 @@ import {
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 // APIs
+import {getMinionKeyListAllAsync} from 'src/agent_admin/apis'
+
+// SaltStack
 import {
-  getMinionKeyListAllAsync,
   runLocalServiceStartTelegraf,
   runLocalServiceStopTelegraf,
   getLocalFileRead,
@@ -34,7 +36,7 @@ import {
   runLocalServiceReStartTelegraf,
   getLocalServiceGetRunning,
   getRunnerSaltCmdTelegraf,
-} from 'src/agent_admin/apis'
+} from 'src/shared/apis/saltStack'
 
 // Notification
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -53,7 +55,6 @@ interface Props {
   isUserAuthorized: boolean
   saltMasterUrl: string
   saltMasterToken: string
-  onLogout: () => void
 }
 
 interface State {
@@ -190,26 +191,18 @@ export class AgentConfiguration extends PureComponent<
   }
 
   getWheelKeyListAll = async () => {
-    try {
-      const hostListObject = await getMinionKeyListAllAsync()
+    const {saltMasterUrl, saltMasterToken} = this.props
+    const hostListObject = await getMinionKeyListAllAsync(
+      saltMasterUrl,
+      saltMasterToken
+    )
 
-      this.setState({
-        MinionsObject: hostListObject,
-        configPageStatus: RemoteDataState.Done,
-        collectorConfigStatus: RemoteDataState.Done,
-        measurementsStatus: RemoteDataState.Done,
-      })
-    } catch (e) {
-      const {onLogout} = this.props
-
-      this.setState({
-        configPageStatus: RemoteDataState.Done,
-        collectorConfigStatus: RemoteDataState.Done,
-        measurementsStatus: RemoteDataState.Done,
-      })
-
-      onLogout()
-    }
+    this.setState({
+      MinionsObject: hostListObject,
+      configPageStatus: RemoteDataState.Done,
+      collectorConfigStatus: RemoteDataState.Done,
+      measurementsStatus: RemoteDataState.Done,
+    })
   }
 
   public async componentWillMount() {
@@ -330,6 +323,8 @@ export class AgentConfiguration extends PureComponent<
   }
 
   public onClickTableRowCall = (host: string, ip: string): void => {
+    const {saltMasterUrl, saltMasterToken} = this.props
+
     this.setState({
       configPageStatus: RemoteDataState.Loading,
       measurementsStatus: RemoteDataState.Loading,
@@ -340,7 +335,11 @@ export class AgentConfiguration extends PureComponent<
       isGetLocalStorage: false,
     })
 
-    const getLocalFileReadPromise = getLocalFileRead(host)
+    const getLocalFileReadPromise = getLocalFileRead(
+      saltMasterUrl,
+      saltMasterToken,
+      host
+    )
 
     getLocalFileReadPromise.then(pLocalFileReadData => {
       this.setState({
@@ -351,7 +350,11 @@ export class AgentConfiguration extends PureComponent<
       })
     })
 
-    const getLocalServiceGetRunningPromise = getLocalServiceGetRunning(host)
+    const getLocalServiceGetRunningPromise = getLocalServiceGetRunning(
+      saltMasterUrl,
+      saltMasterToken,
+      host
+    )
 
     getLocalServiceGetRunningPromise.then(pLocalServiceGetRunningData => {
       let getServiceRunning = this.state.defaultService
@@ -382,6 +385,7 @@ export class AgentConfiguration extends PureComponent<
   }
 
   public onClickActionCall = (host: string, isRunning: boolean) => {
+    const {saltMasterUrl, saltMasterToken} = this.props
     this.setState({
       configPageStatus: RemoteDataState.Loading,
       measurementsStatus: RemoteDataState.Loading,
@@ -390,6 +394,8 @@ export class AgentConfiguration extends PureComponent<
 
     if (isRunning === false) {
       const getLocalServiceStartTelegrafPromise = runLocalServiceStartTelegraf(
+        saltMasterUrl,
+        saltMasterToken,
         host
       )
 
@@ -398,6 +404,8 @@ export class AgentConfiguration extends PureComponent<
       })
     } else {
       const getLocalServiceStopTelegrafPromise = runLocalServiceStopTelegraf(
+        saltMasterUrl,
+        saltMasterToken,
         host
       )
 
@@ -408,13 +416,19 @@ export class AgentConfiguration extends PureComponent<
   }
 
   public onClickApplyCall = () => {
+    const {saltMasterUrl, saltMasterToken} = this.props
     const {selectHost, configScript} = this.state
     this.setState({
       configPageStatus: RemoteDataState.Loading,
       collectorConfigStatus: RemoteDataState.Loading,
     })
 
-    const getLocalFileWritePromise = getLocalFileWrite(selectHost, configScript)
+    const getLocalFileWritePromise = getLocalFileWrite(
+      saltMasterUrl,
+      saltMasterToken,
+      selectHost,
+      configScript
+    )
 
     getLocalFileWritePromise.then((pLocalFileWriteData): void => {
       this.setState({
@@ -424,6 +438,8 @@ export class AgentConfiguration extends PureComponent<
       })
 
       const getLocalServiceReStartTelegrafPromise = runLocalServiceReStartTelegraf(
+        saltMasterUrl,
+        saltMasterToken,
         selectHost
       )
 
@@ -434,6 +450,7 @@ export class AgentConfiguration extends PureComponent<
   }
 
   public getConfigInfo = async (answer: boolean) => {
+    const {saltMasterUrl, saltMasterToken} = this.props
     const getItem = getLocalStorage('AgentConfigPage')
     const {
       configScript,
@@ -453,6 +470,8 @@ export class AgentConfiguration extends PureComponent<
         measurementsStatus: RemoteDataState.Loading,
       })
       const getLocalServiceGetRunningPromise = getLocalServiceGetRunning(
+        saltMasterUrl,
+        saltMasterToken,
         focusedHost
       )
       getLocalServiceGetRunningPromise.then(pLocalServiceGetRunningData => {
@@ -537,6 +556,7 @@ export class AgentConfiguration extends PureComponent<
     clickPosition: {top: number; left: number}
     _thisProps: {name: string; idx: number}
   }) => {
+    const {saltMasterUrl, saltMasterToken} = this.props
     const {serviceMeasurements, defaultMeasurements} = this.state
     const filterdMeasureName = Object.keys(measureMatch).filter(k =>
       _.includes(Object.values(measureMatch[Number(k)])[0], _thisProps.name)
@@ -562,6 +582,8 @@ export class AgentConfiguration extends PureComponent<
       : (serviceMeasurements[_thisProps.idx].isActivity = false)
 
     const getRunnerSaltCmdTelegrafPromise = getRunnerSaltCmdTelegraf(
+      saltMasterUrl,
+      saltMasterToken,
       measureName
     )
 
@@ -577,6 +599,7 @@ export class AgentConfiguration extends PureComponent<
   }
 
   private handleFocusedDefaultMeasure = ({clickPosition, _thisProps}) => {
+    const {saltMasterUrl, saltMasterToken} = this.props
     const {defaultMeasurements, serviceMeasurements} = this.state
 
     const mapDefaultMeasurements = defaultMeasurements.map(m => {
@@ -603,6 +626,8 @@ export class AgentConfiguration extends PureComponent<
       })
     } else {
       const getRunnerSaltCmdTelegrafPromise = getRunnerSaltCmdTelegraf(
+        saltMasterUrl,
+        saltMasterToken,
         _thisProps.name
       )
 
