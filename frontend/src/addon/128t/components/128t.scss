@@ -127,11 +127,12 @@
   .dash-graph--heading--button-box {
     position: relative;
     z-index: 3;
-    margin-right: 7px;
+    margin-right: 10px;
 
-    .button {
-      height: 24px;
-      line-height: 22px;
+    .btn-group-sm>.btn,
+    .btn.btn-sm {
+      height: 22px;
+      line-height: 20px;
     }
 
     .is-new {
@@ -144,6 +145,52 @@
       color: #fff;
       padding: 0px 3px;
       font-size: 11px;
+      z-index: 2;
+    }
+
+    div.dropdown.dropdown-stretch,
+    div.dropdown.dropdown-stretch>div.dropdown-toggle,
+    div.dropdown.dropdown-stretch>button.dropdown-toggle {
+      z-index: 1;
+    }
+
+    .dropdown>.dropdown-toggle.btn-sm .dropdown-selected {
+      padding-right: 15px;
+    }
+
+    .dropdown.open .dropdown-menu {
+      width: max-content !important;
+      top: 26px;
+      z-index: 1;
+    }
+  }
+
+  .list-section-title {
+    font-size: 15px;
+    cursor: default;
+  }
+
+  .list-section-container {
+    .list-section--row {
+      align-items: center;
+      background-color: #292933;
+      padding: 8px 24px;
+      cursor: default;
+
+      &.list-section--row-first {
+        border-top-left-radius: 5px;
+        border-top-right-radius: 5px;
+      }
+
+      &.list-section--row-last {
+        border-bottom-left-radius: 5px;
+        border-bottom-right-radius: 5px;
+      }
+    }
+
+    ol {
+      margin-top: 0px;
+      margin-bottom: 0px;
     }
   }
 }

@@ -13,6 +13,7 @@ export interface Router {
   diskUsage?: number
   topSources?: TopSource[]
   topSessions?: TopSession[]
+  isCheck?: boolean
 }
 
 export interface TopSource {

@@ -8,6 +8,7 @@ import GridLayoutSearchBar from 'src/addon/128t/components/GridLayoutSearchBar'
 import RouterTableRow from 'src/addon/128t/components/RouterTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {NoHostsState, sortableClasses} from 'src/addon/128t/reusable'
+import Dropdown from 'src/shared/components/Dropdown'
 
 import {
   CellName,
@@ -39,12 +40,18 @@ export interface Props {
   cellTextColor: string
   isEditable: boolean
   routers: Router[]
+  isRoutersAllCheck: boolean
   focusedAssetId: string
   onClickTableRow: (
     topSources: TopSource[],
     topSessions: TopSession[],
     focusedAssetId: string
   ) => () => void
+  handleOnChoose: ({selectItem: string}) => void
+  handleRouterCheck: ({router: Router}) => void
+  handleRoutersAllCheck: () => void
+  firmwareVersion: string[]
+  configVersion: string[]
 }
 
 interface State {
@@ -52,6 +59,13 @@ interface State {
   sortDirection: SortDirection
   sortKey: string
   routerCount: number
+}
+
+interface HeadingButton {
+  buttonName: string
+  isNew: boolean
+  handleOnChoose?: ({_this: object, selectItem: string}) => void
+  items: string[]
 }
 
 @ErrorHandling
@@ -88,19 +102,35 @@ class RouterTable extends PureComponent<Props, State> {
     this.setState({routerCount: sortedRouters.length})
   }
 
-  private HeadingButton = ({buttonName, isNew}) => {
+  private getHandleOnChoose = (selectItem: {text: string}) => {
+    this.props.handleOnChoose({selectItem: selectItem.text})
+  }
+
+  private HeadingButton = (props: HeadingButton) => {
+    const {buttonName, isNew, items} = props
     return (
       <div className={'dash-graph--heading--button-box'}>
         {isNew ? <span className="is-new">new</span> : ''}
-        <button className={'button button-sm button-default'}>
-          {buttonName}
-        </button>
+        <Dropdown
+          items={items}
+          onChoose={this.getHandleOnChoose}
+          selected={buttonName}
+          className="dropdown-stretch"
+        />
       </div>
     )
   }
 
   public render() {
-    const {isEditable, cellTextColor, cellBackgroundColor, routers} = this.props
+    const {
+      isEditable,
+      cellTextColor,
+      cellBackgroundColor,
+      routers,
+      handleOnChoose,
+      firmwareVersion,
+      configVersion,
+    } = this.props
     return (
       <Panel>
         <PanelHeader isEditable={isEditable}>
@@ -114,8 +144,18 @@ class RouterTable extends PureComponent<Props, State> {
             isEditable={isEditable}
             cellBackgroundColor={cellBackgroundColor}
           />
-          <this.HeadingButton buttonName={'firmware'} isNew={true} />
-          <this.HeadingButton buttonName={'config'} isNew={false} />
+
+          <this.HeadingButton
+            buttonName={'firmware'}
+            isNew={true}
+            handleOnChoose={handleOnChoose}
+            items={firmwareVersion}
+          />
+          <this.HeadingButton
+            buttonName={'config'}
+            isNew={false}
+            items={configVersion}
+          />
           <GridLayoutSearchBar
             placeholder="Filter by Asset ID..."
             onSearch={this.updateSearchTerm}
@@ -148,13 +188,19 @@ class RouterTable extends PureComponent<Props, State> {
       CHECKBOX,
     } = ROUTER_TABLE_SIZING
     const {sortKey, sortDirection} = this.state
+    const {isRoutersAllCheck, handleRoutersAllCheck} = this.props
     return (
       <>
         <div
           className={sortableClasses({sortKey, sortDirection, key: 'assetId'})}
           style={{width: CHECKBOX}}
         >
-          <input type="checkbox" />
+          <input
+            type="checkbox"
+            checked={isRoutersAllCheck}
+            onClick={handleRoutersAllCheck}
+            readOnly
+          />
         </div>
         <div
           onClick={this.updateSort('assetId')}
@@ -291,7 +337,12 @@ class RouterTable extends PureComponent<Props, State> {
   }
 
   private get TableData() {
-    const {routers, focusedAssetId, onClickTableRow} = this.props
+    const {
+      routers,
+      focusedAssetId,
+      onClickTableRow,
+      handleRouterCheck,
+    } = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
     const sortedRouters = this.getSortedRouters(
@@ -307,8 +358,10 @@ class RouterTable extends PureComponent<Props, State> {
           <FancyScrollbar
             children={sortedRouters.map((r: Router, i: number) => (
               <RouterTableRow
+                handleRouterCheck={handleRouterCheck}
                 onClickTableRow={onClickTableRow}
                 focusedAssetId={focusedAssetId}
+                isCheck={r.isCheck}
                 router={r}
                 key={i}
               />
