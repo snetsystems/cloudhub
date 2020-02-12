@@ -47,7 +47,7 @@
       "name": "Launch Chrome via Proxy",
       "type": "chrome",
       "request": "launch",
-      "url": "https://localhost:8080/",
+      "url": "http://localhost:8080/",
       "webRoot": "${workspaceFolder}/frontend/src"
     }
   ]
