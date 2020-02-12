@@ -25,8 +25,8 @@ func main() {
 	}
 
 	parser := flags.NewParser(&srv, flags.Default)
-	parser.ShortDescription = `CMP(Cloud Monitoring Portal)`
-	parser.LongDescription = `Options for CMP(Cloud Monitoring Portal)`
+	parser.ShortDescription = `CSH (Cloud Smart Hub)`
+	parser.LongDescription = `Options for CSH (Cloud Smart Hub)`
 
 	if _, err := parser.Parse(); err != nil {
 		code := 1
@@ -39,7 +39,7 @@ func main() {
 	}
 
 	if srv.ShowVersion {
-		log.Printf("CMP %s (git commit: %s)\n", version, commit)
+		log.Printf("CSH %s (git commit: %s)\n", version, commit)
 		os.Exit(0)
 	}
 
