@@ -9,6 +9,7 @@ import RouterTableRow from 'src/addon/128t/components/RouterTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {NoHostsState, sortableClasses} from 'src/addon/128t/reusable'
 import Dropdown from 'src/shared/components/Dropdown'
+import LoadingSpinner from 'src/flux/components/LoadingSpinner'
 
 import {
   CellName,
@@ -27,6 +28,7 @@ import {
   TopSource,
   TopSession,
   SortDirection,
+  SaltDirFile,
 } from 'src/addon/128t/types'
 
 // constants
@@ -50,8 +52,9 @@ export interface Props {
   handleOnChoose: ({selectItem: string}) => void
   handleRouterCheck: ({router: Router}) => void
   handleRoutersAllCheck: () => void
-  firmwareVersion: string[]
-  configVersion: string[]
+  handleFocusedBtnName: ({buttonName: string}) => void
+  firmwares: SaltDirFile
+  configs: SaltDirFile
 }
 
 interface State {
@@ -65,7 +68,9 @@ interface HeadingButton {
   buttonName: string
   isNew: boolean
   handleOnChoose?: ({_this: object, selectItem: string}) => void
+  handleFocusedBtnName: ({buttonName: string}) => void
   items: string[]
+  buttonStatus: boolean
 }
 
 @ErrorHandling
@@ -107,20 +112,31 @@ class RouterTable extends PureComponent<Props, State> {
   }
 
   private HeadingButton = (props: HeadingButton) => {
-    const {buttonName, isNew, items} = props
+    const {buttonName, isNew, items, handleFocusedBtnName, buttonStatus} = props
     return (
       <div className={'dash-graph--heading--button-box'}>
+        {buttonStatus ? (
+          <div className={'loading-box'}>
+            <LoadingSpinner />
+          </div>
+        ) : null}
+
         {isNew ? <span className="is-new">new</span> : ''}
         <Dropdown
           items={items}
           onChoose={this.getHandleOnChoose}
           selected={buttonName}
           className="dropdown-stretch"
+          onClick={() => {
+            handleFocusedBtnName({buttonName})
+          }}
         />
       </div>
     )
   }
-
+  public extractionFilesName = (items: SaltDirItem[]): string[] => {
+    return items.map(item => item.applicationFullName)
+  }
   public render() {
     const {
       isEditable,
@@ -128,9 +144,11 @@ class RouterTable extends PureComponent<Props, State> {
       cellBackgroundColor,
       routers,
       handleOnChoose,
-      firmwareVersion,
-      configVersion,
+      firmwares,
+      configs,
+      handleFocusedBtnName,
     } = this.props
+
     return (
       <Panel>
         <PanelHeader isEditable={isEditable}>
@@ -144,17 +162,20 @@ class RouterTable extends PureComponent<Props, State> {
             isEditable={isEditable}
             cellBackgroundColor={cellBackgroundColor}
           />
-
           <this.HeadingButton
-            buttonName={'firmware'}
-            isNew={true}
+            buttonName={'firmwares'}
+            isNew={this.newChecker(firmwares.files)}
             handleOnChoose={handleOnChoose}
-            items={firmwareVersion}
+            handleFocusedBtnName={handleFocusedBtnName}
+            items={this.extractionFilesName(firmwares.files)}
+            buttonStatus={firmwares.isLoading}
           />
           <this.HeadingButton
-            buttonName={'config'}
-            isNew={false}
-            items={configVersion}
+            buttonName={'configs'}
+            isNew={this.newChecker(configs.files)}
+            handleFocusedBtnName={handleFocusedBtnName}
+            items={this.extractionFilesName(configs.files)}
+            buttonStatus={configs.isLoading}
           />
           <GridLayoutSearchBar
             placeholder="Filter by Asset ID..."
@@ -169,6 +190,14 @@ class RouterTable extends PureComponent<Props, State> {
         </PanelBody>
       </Panel>
     )
+  }
+
+  private newChecker = (items: SaltDirItem[]): boolean => {
+    if (items.length === 0) return
+    const today = new Date().getTime()
+    const oneDay = 86400000
+
+    return items[0].updateGetTime + oneDay > today
   }
 
   private get TableHeader() {

@@ -65,8 +65,6 @@ class AgentAdminPage extends PureComponent<Props, State> {
     const saltMasterUrl = addon.url
     const saltMasterToken = addon.token
 
-    console.log('Addon', addon)
-
     if (saltMasterToken !== null) {
       this.setState({
         saltMasterUrl: saltMasterUrl,

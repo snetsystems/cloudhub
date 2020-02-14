@@ -14,6 +14,12 @@ import RouterMaps from 'src/addon/128t/components/RouterMaps'
 import RouterModal from 'src/addon/128t/components/RouterModal'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
+// Apis
+import {
+  getRunnerSaltCmdDirectory,
+  getLocalDeliveryToMinion,
+} from 'src/shared/apis/saltStack'
+
 // Constants
 import {
   STATUS_PAGE_ROW_COUNT,
@@ -27,10 +33,20 @@ import {
   DEFAULT_CELL_TEXT_COLOR,
 } from 'src/dashboards/constants'
 
+import {SALT_FULL_DIRECTORY, SALT_MIN_DIRECTORY} from 'src/addon/128t/constants'
+
 //type
-import {Router, TopSource, TopSession} from 'src/addon/128t/types'
+import {
+  Router,
+  TopSource,
+  TopSession,
+  SaltDirFileInfo,
+  CheckRouter,
+  SaltDirFile,
+} from 'src/addon/128t/types'
 import {cellLayoutInfo} from 'src/addon/128t/containers/SwanSdplexStatusPage'
 import {ComponentStatus} from 'src/reusable_ui/types'
+import {Addon} from 'src/types/auth'
 
 interface Props {
   layout: cellLayoutInfo[]
@@ -50,6 +66,7 @@ interface Props {
     topSessions: TopSession[],
     focusedAssetId: string
   ) => void
+  addons: Addon[]
 }
 
 interface State {
@@ -57,19 +74,15 @@ interface State {
   isRoutersAllCheck: boolean
   isModalVisible: boolean
   chooseMenu: string
-  checkRouters: {assetId: string; isCheck: boolean}[]
+  checkRouters: CheckRouter[]
+  firmwares: SaltDirFile
+  configs: SaltDirFile
+  focusedBtn: string
 }
 
 class GridLayoutRenderer extends PureComponent<Props, State> {
   private cellBackgroundColor: string = DEFAULT_CELL_BG_COLOR
   private cellTextColor: string = DEFAULT_CELL_TEXT_COLOR
-  private firmwareVersion: string[] = [
-    'firmware-v4.7.5',
-    'firmware-v4.7.6',
-    'firmware-v4.7.9',
-  ]
-
-  private configVersion: string[] = ['config-v1', 'config-v2', 'config-v3']
 
   constructor(props: Props) {
     super(props)
@@ -80,6 +93,9 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       isModalVisible: false,
       checkRouters: [],
       chooseMenu: '',
+      firmwares: {files: [], isLoading: true},
+      configs: {files: [], isLoading: true},
+      focusedBtn: '',
     }
   }
 
@@ -96,7 +112,82 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     })
   }
 
-  public handleRoutersAllCheck = () => {
+  public componentDidMount() {
+    this.getSaltDirectoryItems()
+  }
+
+  public getRunnerSaltCmdDirectoryData = async (
+    url: string,
+    token: string,
+    fullDir: string,
+    dir: string
+  ) => {
+    let applications: SaltDirFileInfo[] = []
+
+    const getDirectoryItems = await getRunnerSaltCmdDirectory(
+      url,
+      token,
+      fullDir
+    )
+
+    const generatorFileInfo = (time: string, item: string): SaltDirFileInfo => {
+      return {
+        updateTime: time,
+        updateGetTime: new Date(time).getTime(),
+        application: item.replace(time, '').trim(),
+        applicationFullName: item,
+        fullPathDirectory: fullDir,
+        pathDirectory: dir,
+      }
+    }
+
+    if (getDirectoryItems.data.return[0].indexOf('\n') > -1) {
+      applications = getDirectoryItems.data.return[0]
+        .split('\n')
+        .map((item: string) => {
+          const time: string = item.substring(0, item.indexOf(' '))
+          return generatorFileInfo(time, item)
+        })
+    } else {
+      const time: string = getDirectoryItems.data.return[0].substring(
+        0,
+        getDirectoryItems.data.return[0].indexOf(' ')
+      )
+      applications = [generatorFileInfo(time, getDirectoryItems.data.return[0])]
+    }
+
+    applications.sort(function(a, b) {
+      return b.updateGetTime - a.updateGetTime
+    })
+
+    return {files: applications, isLoading: false}
+  }
+
+  public getSaltDirectoryItems = async () => {
+    const {addons} = this.props
+    const salt = addons.find(addon => addon.name === 'salt')
+
+    const getFirmwareData = await this.getRunnerSaltCmdDirectoryData(
+      salt.url,
+      salt.token,
+      SALT_FULL_DIRECTORY.FIRMWARE,
+      SALT_MIN_DIRECTORY.FIRMWARE
+    )
+
+    const getConfigData = await this.getRunnerSaltCmdDirectoryData(
+      salt.url,
+      salt.token,
+      SALT_FULL_DIRECTORY.CONFIG,
+      SALT_MIN_DIRECTORY.CONFIG
+    )
+
+    this.setState({
+      firmwares: getFirmwareData,
+      configs: getConfigData,
+    })
+  }
+
+  public handleRoutersAllCheck = (): void => {
     const {isRoutersAllCheck, checkRouters} = this.state
 
     if (!isRoutersAllCheck) {
@@ -132,7 +223,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     })
   }
 
-  public handleOnChoose = ({selectItem}: {selectItem: string}) => {
+  public handleOnChoose = ({selectItem}: {selectItem: string}): void => {
     this.setState({
       isModalVisible: !this.state.isModalVisible,
       chooseMenu: selectItem,
@@ -150,13 +241,22 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       topSessionsData,
       onClickMapMarker,
     } = this.props
-    const {rowHeight, isRoutersAllCheck, checkRouters} = this.state
+    const {
+      rowHeight,
+      isRoutersAllCheck,
+      checkRouters,
+      firmwares,
+      configs,
+    } = this.state
 
-    const checkRouterData: Router[] = routersData.map((router, i) => {
-      router.isCheck = checkRouters[i].isCheck
-      return router
-    })
-    const checkedList = _.filter(checkRouters, ['isCheck', true])
+    const checkRouterData: Router[] = routersData.map(
+      (router, i): Router => {
+        router.isCheck = checkRouters[i].isCheck
+        return router
+      }
+    )
+
+    const checkedList: CheckRouter[] = _.filter(checkRouters, ['isCheck', true])
 
     return (
       <>
@@ -182,10 +282,11 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
               cellBackgroundColor={this.cellBackgroundColor}
               handleOnChoose={this.handleOnChoose}
               handleRouterCheck={this.handleRouterCheck}
+              handleFocusedBtnName={this.handleFocusedBtnName}
               isRoutersAllCheck={isRoutersAllCheck}
               handleRoutersAllCheck={this.handleRoutersAllCheck}
-              firmwareVersion={this.firmwareVersion}
-              configVersion={this.configVersion}
+              firmwares={firmwares}
+              configs={configs}
             />
           </div>
           <div key="leafletMap" className="dash-graph" style={this.cellStyle}>
@@ -299,16 +400,46 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     )
   }
 
-  private handleModalConfirm = (): void => {
-    const {checkRouters, chooseMenu} = this.state
-    const checkedList = _.flattenDeep(
-      _.filter(checkRouters, ['isCheck', true]).map(checkRouter =>
-        _.valuesIn(_.pick(checkRouter, _.keys({assetId: null})))
-      )
-    )
+  private handleFocusedBtnName = ({buttonName}: {buttonName: string}): void => {
+    this.setState({focusedBtn: buttonName})
+  }
 
-    //
-    console.log({chooseMenu, checkedList})
+  private handleModalConfirm = (): void => {
+    const {checkRouters, chooseMenu, focusedBtn} = this.state
+    const {addons} = this.props
+    const salt = addons.find(addon => addon.name === 'salt')
+
+    const checkedHostName: string = checkRouters
+      .filter(router => router.isCheck === true)
+      .map(router => router.assetId)
+      .toString()
+
+    const chooseMenuInfo: SaltDirFileInfo = this.state[focusedBtn].filter(
+      (host: SaltDirFileInfo): boolean =>
+        host.applicationFullName === chooseMenu
+    )[0]
+
+    this.handleGetDeliveryToMinion(
+      salt.url,
+      salt.token,
+      chooseMenuInfo,
+      checkedHostName
+    )
+  }
+
+  private handleGetDeliveryToMinion = (
+    url: string,
+    token: string,
+    chooseMenuInfo: SaltDirFileInfo,
+    checkedHost: string
+  ): void => {
+    getLocalDeliveryToMinion(
+      url,
+      token,
+      chooseMenuInfo.pathDirectory + chooseMenuInfo.application,
+      checkedHost,
+      chooseMenuInfo.fullPathDirectory
+    )
   }
 
   private handleLayoutChange = (cellsLayout: cellLayoutInfo[]): void => {
