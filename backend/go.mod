@@ -24,3 +24,5 @@ require (
 	golang.org/x/oauth2 v0.0.0-20181017192945-9dcd33a902f4
 	google.golang.org/api v0.0.0-20170214011559-bc20c61134e1
 )
+
+go 1.13

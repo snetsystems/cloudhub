@@ -28,6 +28,9 @@
         "-t=74c1e9e2450886060b5bf736b935cd0bf960837f",
         "-i=a223f151c864e889f6dc",
         "-s=099120393404fa3c3316f860b7d5c417f1ad5514",
+        "--google-client-id=31132339126-ugobni9kn8dd0o6ic1868ou6u0pnrcam.apps.googleusercontent.com",
+        "--google-client-secret=vXbc-qGznYka-BehNclBkqfp",
+        "--public-url=https://localhost",
         "--custom-link=128T Condutor:https://211.189.153.40"
       ],
       "showLog": true
@@ -44,7 +47,7 @@
       "name": "Launch Chrome via Proxy",
       "type": "chrome",
       "request": "launch",
-      "url": "https://localhost:8080/",
+      "url": "http://localhost:8080/",
       "webRoot": "${workspaceFolder}/frontend/src"
     }
   ]

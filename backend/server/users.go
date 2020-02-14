@@ -356,7 +356,7 @@ func setSuperAdmin(ctx context.Context, req userRequest, user *cmp.User) error {
 	} else if !isSuperAdmin && (user.SuperAdmin != req.SuperAdmin) {
 		// If req.SuperAdmin has been set, and the request was not made with the SuperAdmin
 		// context, return error
-		return fmt.Errorf("User does not have authorization required to set SuperAdmin status. See https://github.com/influxdata/cmp/issues/2601 for more information.")
+		return fmt.Errorf("User does not have authorization required to set SuperAdmin status'.' See https://github.com/influxdata/cmp/issues/2601 for more information'.'")
 	}
 
 	return nil
