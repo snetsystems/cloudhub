@@ -166,15 +166,26 @@
   }
 
   .list-section-title {
-    font-size: 15px;
+    font-size: 13px;
     cursor: default;
   }
 
   .list-section-container {
+    h4 {
+      margin-top: 15px;
+      margin-bottom: 5px
+    }
+
+    h4:first-child {
+      margin-top: 0px;
+    }
+
+
+
     .list-section--row {
       align-items: center;
       background-color: #292933;
-      padding: 8px 24px;
+      padding: 5px 24px;
       cursor: default;
 
       &.list-section--row-first {
@@ -194,8 +205,9 @@
     }
   }
 
-  input.form-control.input-sm {
-    padding: 8px 24px;
+  .form-control.input-sm {
+    height: 25px;
+    padding: 5px 24px;
   }
 
   .fancy-scroll--container {
@@ -222,6 +234,33 @@
     }
   }
 
+  .overlay--container {
+    width: 380px;
+
+    .overlay--heading {
+      height: 35px;
+      padding: 0 15px;
+    }
+
+    .overlay--title {
+      font-size: 16px;
+    }
+
+    .overlay--body {
+      padding: 15px;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    .form--submit {
+      margin-top: 0px;
+    }
+
+    hr {
+      height: 1px;
+      margin: 15px 0;
+    }
+  }
 
 }
 

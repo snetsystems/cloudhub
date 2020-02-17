@@ -433,7 +433,6 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
           <div className="list-section--row list-section--row-first list-section--row-last">
             {chooseMenu}
           </div>
-          <hr />
           <h4 className="list-section-title">Send to Collector Directory</h4>
           <input
             type="text"
@@ -443,47 +442,48 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
             onChange={this.onChangeSendToCollectorDirectory}
             spellCheck={false}
           />
-        </div>
-        <hr />
-        {checkedList.length > 0 ? (
-          <>
-            <h4 className="list-section-title">
-              {checkedList.length} Selected Host List
-            </h4>
-            <div
-              className="list-section-container"
-              style={{
-                height:
-                  checkedList.length < 1
-                    ? '36px'
-                    : checkedList.length < 3
-                    ? '72px'
-                    : checkedList.length > 5
-                    ? '150px'
-                    : checkedList.length * 31 + 'px',
-              }}
-            >
-              <FancyScrollbar
-                children={
-                  <ol className="list-section--row list-section--row-first list-section--row-last">
-                    {checkedList.map(list => (
-                      <li key={list.assetId}>{list.assetId}</li>
-                    ))}
-                  </ol>
-                }
-              />
-            </div>
-          </>
-        ) : (
-          <>
-            <h4 className="list-section-title">Host not selected</h4>
-            <div className="list-section-container">
-              <div className="list-section--row list-section--row-first list-section--row-last">
-                Empty
+
+          {checkedList.length > 0 ? (
+            <>
+              <h4 className="list-section-title">
+                {checkedList.length} Selected Host List
+              </h4>
+              <div
+                className="list-section-container"
+                style={{
+                  height:
+                    checkedList.length < 1
+                      ? '36px'
+                      : checkedList.length < 3
+                      ? '72px'
+                      : checkedList.length > 5
+                      ? '150px'
+                      : checkedList.length * 31 + 'px',
+                }}
+              >
+                <FancyScrollbar
+                  autoHide={false}
+                  children={
+                    <ol className="list-section--row list-section--row-first list-section--row-last">
+                      {checkedList.map(list => (
+                        <li key={list.assetId}>{list.assetId}</li>
+                      ))}
+                    </ol>
+                  }
+                />
               </div>
-            </div>
-          </>
-        )}
+            </>
+          ) : (
+            <>
+              <h4 className="list-section-title">Host not selected</h4>
+              <div className="list-section-container">
+                <div className="list-section--row list-section--row-first list-section--row-last">
+                  Empty
+                </div>
+              </div>
+            </>
+          )}
+        </div>
       </>
     )
   }
