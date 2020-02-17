@@ -40,6 +40,8 @@ const apiRequest = async (pUrl: string, pToken: string, pParams: Params) => {
 
   const param = JSON.stringify(Object.assign(dParams, pParams))
 
+  console.log({param})
+
   return axios({
     method: 'POST',
     url,

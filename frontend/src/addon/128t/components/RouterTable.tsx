@@ -29,6 +29,7 @@ import {
   TopSession,
   SortDirection,
   SaltDirFile,
+  SaltDirFileInfo,
 } from 'src/addon/128t/types'
 
 // constants
@@ -71,6 +72,7 @@ interface HeadingButton {
   handleFocusedBtnName: ({buttonName: string}) => void
   items: string[]
   buttonStatus: boolean
+  isDisabled: boolean
 }
 
 @ErrorHandling
@@ -112,7 +114,14 @@ class RouterTable extends PureComponent<Props, State> {
   }
 
   private HeadingButton = (props: HeadingButton) => {
-    const {buttonName, isNew, items, handleFocusedBtnName, buttonStatus} = props
+    const {
+      buttonName,
+      isNew,
+      items,
+      handleFocusedBtnName,
+      buttonStatus,
+      isDisabled,
+    } = props
     return (
       <div className={'dash-graph--heading--button-box'}>
         {buttonStatus ? (
@@ -127,6 +136,7 @@ class RouterTable extends PureComponent<Props, State> {
           onChoose={this.getHandleOnChoose}
           selected={buttonName}
           className="dropdown-stretch"
+          disabled={isDisabled}
           onClick={() => {
             handleFocusedBtnName({buttonName})
           }}
@@ -134,7 +144,7 @@ class RouterTable extends PureComponent<Props, State> {
       </div>
     )
   }
-  public extractionFilesName = (items: SaltDirItem[]): string[] => {
+  public extractionFilesName = (items: SaltDirFileInfo[]): string[] => {
     return items.map(item => item.applicationFullName)
   }
   public render() {
@@ -169,6 +179,7 @@ class RouterTable extends PureComponent<Props, State> {
             handleFocusedBtnName={handleFocusedBtnName}
             items={this.extractionFilesName(firmwares.files)}
             buttonStatus={firmwares.isLoading}
+            isDisabled={firmwares.isFailed}
           />
           <this.HeadingButton
             buttonName={'configs'}
@@ -176,6 +187,7 @@ class RouterTable extends PureComponent<Props, State> {
             handleFocusedBtnName={handleFocusedBtnName}
             items={this.extractionFilesName(configs.files)}
             buttonStatus={configs.isLoading}
+            isDisabled={configs.isFailed}
           />
           <GridLayoutSearchBar
             placeholder="Filter by Asset ID..."
@@ -192,7 +204,7 @@ class RouterTable extends PureComponent<Props, State> {
     )
   }
 
-  private newChecker = (items: SaltDirItem[]): boolean => {
+  private newChecker = (items: SaltDirFileInfo[]): boolean => {
     if (items.length === 0) return
     const today = new Date().getTime()
     const oneDay = 86400000

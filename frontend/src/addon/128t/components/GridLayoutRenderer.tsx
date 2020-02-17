@@ -1,6 +1,7 @@
 // Libraries
 import React, {PureComponent, CSSProperties} from 'react'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
+import {connect} from 'react-redux'
 
 import _ from 'lodash'
 
@@ -47,8 +48,19 @@ import {
 import {cellLayoutInfo} from 'src/addon/128t/containers/SwanSdplexStatusPage'
 import {ComponentStatus} from 'src/reusable_ui/types'
 import {Addon} from 'src/types/auth'
+import {Notification, NotificationFunc} from 'src/types'
+
+// Notification
+import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {
+  notify_128TGetMasterDirFiles_Successed,
+  notify_128TGetMasterDirFiles_Failed,
+  notify_128TSendFilesToCollector_Successed,
+  notify_128TSendFilesToCollector_Failed,
+} from 'src/addon/128T/components/Notifications'
 
 interface Props {
+  notify: (message: Notification | NotificationFunc) => void
   layout: cellLayoutInfo[]
   focusedAssetId: string
   routersData: Router[]
@@ -93,8 +105,8 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       isModalVisible: false,
       checkRouters: [],
       chooseMenu: '',
-      firmwares: {files: [], isLoading: true},
-      configs: {files: [], isLoading: true},
+      firmwares: {files: [], isLoading: true, isFailed: false},
+      configs: {files: [], isLoading: true, isFailed: false},
       focusedBtn: '',
     }
   }
@@ -113,7 +125,11 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   }
 
   public componentDidMount() {
-    this.getSaltDirectoryItems()
+    try {
+      this.getSaltDirectoryItems()
+    } catch (e) {
+      console.error(e)
+    }
   }
 
   public getRunnerSaltCmdDirectoryData = async (
@@ -122,8 +138,8 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     fullDir: string,
     dir: string
   ) => {
+    const {notify} = this.props
     let applications: SaltDirFileInfo[] = []
-
     const getDirectoryItems = await getRunnerSaltCmdDirectory(
       url,
       token,
@@ -141,26 +157,38 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       }
     }
 
-    if (getDirectoryItems.data.return[0].indexOf('\n') > -1) {
-      applications = getDirectoryItems.data.return[0]
-        .split('\n')
-        .map((item: string) => {
-          const time: string = item.substring(0, item.indexOf(' '))
-          return generatorFileInfo(time, item)
-        })
+    if (getDirectoryItems.request.status !== 200) {
+      applications = [generatorFileInfo('0', 'Token is not valid.')]
+      notify(notify_128TGetMasterDirFiles_Failed(`Token is not valid.`))
     } else {
-      const time: string = getDirectoryItems.data.return[0].substring(
-        0,
-        getDirectoryItems.data.return[0].indexOf(' ')
-      )
-      applications = [generatorFileInfo(time, getDirectoryItems.data.return[0])]
+      const getData = getDirectoryItems.data.return[0]
+      if (
+        getData.length === 0 ||
+        getData.indexOf('No such file or directory') > -1
+      ) {
+        applications = [generatorFileInfo('0', 'No File')]
+        notify(notify_128TGetMasterDirFiles_Failed(`${fullDir} No File`))
+      } else {
+        if (getData.indexOf('\n') > -1) {
+          applications = getData.split('\n').map((item: string) => {
+            const time: string = item.substring(0, item.indexOf(' '))
+            return generatorFileInfo(time, item)
+          })
+        } else {
+          const time: string = getData.substring(0, getData.indexOf(' '))
+          applications = [generatorFileInfo(time, getData)]
+        }
+
+        applications.sort(function(a, b) {
+          return b.updateGetTime - a.updateGetTime
+        })
+      }
     }
-
-    applications.sort(function(a, b) {
-      return b.updateGetTime - a.updateGetTime
-    })
-
-    return {files: applications, isLoading: false}
+    return {
+      files: applications,
+      isLoading: false,
+      isFailed: applications[0].updateTime === '0' ? true : false,
+    }
   }
 
   public getSaltDirectoryItems = async () => {
@@ -406,7 +434,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
 
   private handleModalConfirm = (): void => {
     const {checkRouters, chooseMenu, focusedBtn} = this.state
-    const {addons} = this.props
+    const {addons, notify} = this.props
     const salt = addons.find(addon => addon.name === 'salt')
 
     const checkedHostName: string = checkRouters
@@ -414,7 +442,9 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       .map(router => router.assetId)
       .toString()
 
-    const chooseMenuInfo: SaltDirFileInfo = this.state[focusedBtn].filter(
+    console.log(this.state[focusedBtn])
+
+    const chooseMenuInfo: SaltDirFileInfo = this.state[focusedBtn].files.filter(
       (host: SaltDirFileInfo): boolean =>
         host.applicationFullName === chooseMenu
     )[0]
@@ -424,7 +454,12 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       salt.token,
       chooseMenuInfo,
       checkedHostName
-    )
+    ).then(res => {
+      console.log(res.data.return[0])
+      Object.keys(res.data.return[0]).length > 0
+        ? notify(notify_128TSendFilesToCollector_Successed(focusedBtn))
+        : notify(notify_128TSendFilesToCollector_Failed(focusedBtn))
+    })
   }
 
   private handleGetDeliveryToMinion = (
@@ -432,8 +467,8 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     token: string,
     chooseMenuInfo: SaltDirFileInfo,
     checkedHost: string
-  ): void => {
-    getLocalDeliveryToMinion(
+  ): Promise<any> => {
+    return getLocalDeliveryToMinion(
       url,
       token,
       chooseMenuInfo.pathDirectory + chooseMenuInfo.application,
@@ -489,4 +524,8 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   }
 }
 
-export default GridLayoutRenderer
+const mdtp = {
+  notify: notifyAction,
+}
+
+export default connect(null, mdtp)(GridLayoutRenderer)

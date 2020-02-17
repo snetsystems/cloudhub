@@ -56,4 +56,5 @@ export interface CheckRouter {
 export interface SaltDirFile {
   files: SaltDirFileInfo[]
   isLoading?: boolean
+  isFailed?: boolean
 }
