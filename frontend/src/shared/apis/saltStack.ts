@@ -438,9 +438,9 @@ export function getRunnerSaltCmdDirectory(
 export function getLocalDeliveryToMinion(
   pUrl: string,
   pToken: string,
-  pChoosefile: string,
   pMinionId: string,
-  pMinionDir: string
+  pMinionDir: string,
+  pChoosefile: string
 ) {
   const params = {
     eauth: 'pam',

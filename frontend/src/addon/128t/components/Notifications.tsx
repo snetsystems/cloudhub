@@ -33,7 +33,7 @@ export const notify_128TGetMasterDirFiles_Failed = (
   error: string
 ): Notification => ({
   ...defaultErrorNotification,
-  message: `128T et Master Files Failed, ${error}`,
+  message: `128T Get Master Files Failed, ${error}`,
 })
 
 export const notify_128TSendFilesToCollector_Successed = (

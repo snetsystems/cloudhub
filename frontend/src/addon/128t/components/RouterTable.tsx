@@ -54,8 +54,8 @@ export interface Props {
   handleRouterCheck: ({router: Router}) => void
   handleRoutersAllCheck: () => void
   handleFocusedBtnName: ({buttonName: string}) => void
-  firmwares: SaltDirFile
-  configs: SaltDirFile
+  firmware: SaltDirFile
+  config: SaltDirFile
 }
 
 interface State {
@@ -154,8 +154,8 @@ class RouterTable extends PureComponent<Props, State> {
       cellBackgroundColor,
       routers,
       handleOnChoose,
-      firmwares,
-      configs,
+      firmware,
+      config,
       handleFocusedBtnName,
     } = this.props
 
@@ -173,21 +173,21 @@ class RouterTable extends PureComponent<Props, State> {
             cellBackgroundColor={cellBackgroundColor}
           />
           <this.HeadingButton
-            buttonName={'firmwares'}
-            isNew={this.newChecker(firmwares.files)}
+            buttonName={'firmware'}
+            isNew={this.newChecker(firmware.files)}
             handleOnChoose={handleOnChoose}
             handleFocusedBtnName={handleFocusedBtnName}
-            items={this.extractionFilesName(firmwares.files)}
-            buttonStatus={firmwares.isLoading}
-            isDisabled={firmwares.isFailed}
+            items={this.extractionFilesName(firmware.files)}
+            buttonStatus={firmware.isLoading}
+            isDisabled={firmware.isFailed}
           />
           <this.HeadingButton
-            buttonName={'configs'}
-            isNew={this.newChecker(configs.files)}
+            buttonName={'config'}
+            isNew={this.newChecker(config.files)}
             handleFocusedBtnName={handleFocusedBtnName}
-            items={this.extractionFilesName(configs.files)}
-            buttonStatus={configs.isLoading}
-            isDisabled={configs.isFailed}
+            items={this.extractionFilesName(config.files)}
+            buttonStatus={config.isLoading}
+            isDisabled={config.isFailed}
           />
           <GridLayoutSearchBar
             placeholder="Filter by Asset ID..."
