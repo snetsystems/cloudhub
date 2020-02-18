@@ -89,7 +89,6 @@ interface State {
   firmware: SaltDirFile
   config: SaltDirFile
   focusedBtn: string
-  sendToCollectorDirectory: string
   sendToDirectory: string
 }
 
@@ -103,6 +102,8 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     NoFile: 'no file',
   }
 
+  private defaultCollectorDirectory = '/srv/salt/prod/dmt/'
+
   constructor(props: Props) {
     super(props)
 
@@ -115,7 +116,6 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       firmware: {files: [], isLoading: true},
       config: {files: [], isLoading: true},
       focusedBtn: '',
-      sendToCollectorDirectory: '/srv/salt/prod/dmt/',
       sendToDirectory: '',
     }
   }
@@ -316,7 +316,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       checkRouters,
       firmware,
       config,
-      sendToCollectorDirectory,
+      sendToDirectory,
     } = this.state
 
     const checkRouterData: Router[] = routersData.map(
@@ -402,7 +402,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
           isVisible={this.state.isModalVisible}
           isUseButton={false}
           confirmButtonStatus={
-            checkedList.length > 0 && sendToCollectorDirectory.length > 0
+            checkedList.length > 0 && sendToDirectory.length > 0
               ? ComponentStatus.Default
               : ComponentStatus.Disabled
           }
@@ -437,6 +437,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
             value={sendToDirectory}
             placeholder="enter"
             onChange={this.onChangeSendToDirectory}
+            onBlur={this.onBlurInputValueCheck}
             spellCheck={false}
           />
 
@@ -485,10 +486,17 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     )
   }
 
+  private onBlurInputValueCheck = () => {
+    const {sendToDirectory} = this.state
+    if (sendToDirectory[sendToDirectory.length - 1] !== '/') {
+      this.setState({sendToDirectory: sendToDirectory + '/'})
+    }
+  }
+
   private handleFocusedBtnName = ({buttonName}: {buttonName: string}): void => {
     this.setState({
       focusedBtn: buttonName,
-      sendToDirectory: this.state.sendToCollectorDirectory + buttonName + '/',
+      sendToDirectory: this.defaultCollectorDirectory + buttonName + '/',
     })
   }
 
