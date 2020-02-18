@@ -40,8 +40,6 @@ const apiRequest = async (pUrl: string, pToken: string, pParams: Params) => {
 
   const param = JSON.stringify(Object.assign(dParams, pParams))
 
-  console.log({param})
-
   return axios({
     method: 'POST',
     url,
@@ -152,7 +150,7 @@ export function getRunnerManageAllowed(pUrl: string, pToken: string) {
 export function getLocalServiceEnabledTelegraf(
   pUrl: string,
   pToken: string,
-  pMinionId: string[]
+  pMinionId: string
 ) {
   const params: Params = {
     client: 'local',
@@ -174,7 +172,7 @@ export function getLocalServiceEnabledTelegraf(
 export function getLocalServiceStatusTelegraf(
   pUrl: string,
   pToken: string,
-  pMinionId: string[]
+  pMinionId: string
 ) {
   const params: Params = {
     client: 'local',
@@ -196,7 +194,7 @@ export function getLocalServiceStatusTelegraf(
 export function runLocalServiceStartTelegraf(
   pUrl: string,
   pToken: string,
-  pMinionId: string | string[]
+  pMinionId: string
 ) {
   const params: Params = {
     client: 'local',
@@ -218,7 +216,7 @@ export function runLocalServiceStartTelegraf(
 export function runLocalServiceStopTelegraf(
   pUrl: string,
   pToken: string,
-  pMinionId: string | string[]
+  pMinionId: string
 ) {
   const params: Params = {
     client: 'local',
@@ -262,7 +260,7 @@ export function runLocalServiceReStartTelegraf(
 export function runLocalCpGetDirTelegraf(
   pUrl: string,
   pToken: string,
-  pMinionId: string[]
+  pMinionId: string
 ) {
   const params: Params = {
     client: 'local',
@@ -288,7 +286,7 @@ export function runLocalCpGetDirTelegraf(
 export function runLocalPkgInstallTelegraf(
   pUrl: string,
   pToken: string,
-  pMinionId: string[]
+  pMinionId: string
 ) {
   const params: Params = {
     client: 'local',
@@ -415,6 +413,28 @@ export function getRunnerSaltCmdTelegraf(
     },
   }
 
+  return apiRequest(pUrl, pToken, params)
+}
+
+export function runLocalGroupAdduser(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string
+) {
+  const params: Params = {
+    client: 'local',
+    fun: 'group.adduser',
+    tgt_type: '',
+    tgt: '',
+    arg: ['root', 'telegraf'],
+  }
+  if (pMinionId) {
+    params.tgt_type = 'list'
+    params.tgt = pMinionId
+  } else {
+    params.tgt_type = 'glob'
+    params.tgt = '*'
+  }
   return apiRequest(pUrl, pToken, params)
 }
 

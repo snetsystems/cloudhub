@@ -1,3 +1,4 @@
+import _ from 'lodash'
 import {Minion} from 'src/agent_admin/type'
 import {
   getWheelKeyListAll,
@@ -25,28 +26,30 @@ export const getMinionKeyListAllAsync = async (
   pToken: string
 ): Promise<MinionsObject> => {
   const minions: MinionsObject = {}
-  const info = await Promise.all([
-    getWheelKeyListAll(pUrl, pToken),
-    getRunnerManageAllowed(pUrl, pToken),
-    getLocalGrainsItems(pUrl, pToken, ''),
-  ])
+  const info = await getRunnerManageAllowed(pUrl, pToken)
+
+  const info1 = await getLocalGrainsItems(
+    pUrl,
+    pToken,
+    Object.keys(info.data.return[0]).toString()
+  )
 
   const info2 = await Promise.all([
     getLocalServiceEnabledTelegraf(
       pUrl,
       pToken,
-      info[0].data.return[0].data.return.minions
+      Object.keys(info.data.return[0]).toString()
     ),
     getLocalServiceStatusTelegraf(
       pUrl,
       pToken,
-      info[0].data.return[0].data.return.minions
+      Object.keys(info.data.return[0]).toString()
     ),
   ])
 
-  const keyList = info[0].data.return[0].data.return.minions
-  const ipList = info[1].data.return[0]
-  const osList = info[2].data.return[0]
+  const keyList = Object.keys(info.data.return[0])
+  const ipList = info.data.return[0]
+  const osList = info1.data.return[0]
 
   const installList = info2[0].data.return[0]
   const statusList = info2[1].data.return[0]
@@ -146,7 +149,14 @@ export const getMinionsOS = async (
   minions: MinionsObject
 ): Promise<MinionsObject> => {
   const newMinions = {...minions}
-  const getLocalGrainsItemsPromise = getLocalGrainsItems(pUrl, pToken, '')
+  const getLocalGrainsItemsPromise = getLocalGrainsItems(
+    pUrl,
+    pToken,
+    _.values(newMinions)
+      .filter(f => f.ip != null && f.ip != '')
+      .map(m => m.host)
+      .toString()
+  )
 
   return getLocalGrainsItemsPromise.then(pLocalGrainsItemsData => {
     Object.keys(pLocalGrainsItemsData.data.return[0]).forEach(function(k) {
@@ -174,7 +184,7 @@ export const getTelegrafInstalled = async (
   const getLocalServiceEnabledTelegrafPromise = getLocalServiceEnabledTelegraf(
     pUrl,
     pToken,
-    Object.keys(newMinions)
+    Object.keys(newMinions).toString()
   )
 
   return getLocalServiceEnabledTelegrafPromise.then(
@@ -211,7 +221,7 @@ export const getTelegrafServiceStatus = async (
   const getLocalServiceStatusTelegrafPromise = getLocalServiceStatusTelegraf(
     pUrl,
     pToken,
-    Object.keys(newMinions)
+    Object.keys(newMinions).toString()
   )
 
   return getLocalServiceStatusTelegrafPromise.then(
