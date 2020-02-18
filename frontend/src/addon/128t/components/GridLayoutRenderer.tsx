@@ -90,6 +90,7 @@ interface State {
   config: SaltDirFile
   focusedBtn: string
   sendToCollectorDirectory: string
+  sendToDirectory: string
 }
 
 class GridLayoutRenderer extends PureComponent<Props, State> {
@@ -115,6 +116,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       config: {files: [], isLoading: true},
       focusedBtn: '',
       sendToCollectorDirectory: '/srv/salt/prod/dmt/',
+      sendToDirectory: '',
     }
   }
 
@@ -411,19 +413,14 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       </>
     )
   }
-  private onChangeSendToCollectorDirectory = (
+  private onChangeSendToDirectory = (
     e: ChangeEvent<HTMLInputElement>
   ): void => {
-    this.setState({sendToCollectorDirectory: e.target.value})
+    this.setState({sendToDirectory: e.target.value})
   }
 
   private userSelectOrderList = (): JSX.Element => {
-    const {
-      checkRouters,
-      chooseMenu,
-      sendToCollectorDirectory,
-      focusedBtn,
-    } = this.state
+    const {checkRouters, chooseMenu, sendToDirectory} = this.state
     const checkedList = _.filter(checkRouters, ['isCheck', true])
 
     return (
@@ -437,9 +434,9 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
           <input
             type="text"
             className={'form-control input-sm'}
-            value={sendToCollectorDirectory + focusedBtn + '/'}
+            value={sendToDirectory}
             placeholder="enter"
-            onChange={this.onChangeSendToCollectorDirectory}
+            onChange={this.onChangeSendToDirectory}
             spellCheck={false}
           />
 
@@ -489,16 +486,14 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   }
 
   private handleFocusedBtnName = ({buttonName}: {buttonName: string}): void => {
-    this.setState({focusedBtn: buttonName})
+    this.setState({
+      focusedBtn: buttonName,
+      sendToDirectory: this.state.sendToCollectorDirectory + buttonName + '/',
+    })
   }
 
   private handleModalConfirm = (): void => {
-    const {
-      checkRouters,
-      chooseMenu,
-      focusedBtn,
-      sendToCollectorDirectory,
-    } = this.state
+    const {checkRouters, chooseMenu, focusedBtn, sendToDirectory} = this.state
     const {addons, notify} = this.props
     const salt = addons.find(addon => addon.name === 'salt')
 
@@ -516,7 +511,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       salt.url,
       salt.token,
       checkedHostName,
-      sendToCollectorDirectory + focusedBtn + '/',
+      sendToDirectory,
       chooseMenuInfo.pathDirectory + chooseMenuInfo.application
     ).then(res => {
       Object.keys(res.data.return[0]).length > 0
