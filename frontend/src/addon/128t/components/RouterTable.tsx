@@ -8,6 +8,8 @@ import GridLayoutSearchBar from 'src/addon/128t/components/GridLayoutSearchBar'
 import RouterTableRow from 'src/addon/128t/components/RouterTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {NoHostsState, sortableClasses} from 'src/addon/128t/reusable'
+import Dropdown from 'src/shared/components/Dropdown'
+import LoadingSpinner from 'src/flux/components/LoadingSpinner'
 
 import {
   CellName,
@@ -26,6 +28,8 @@ import {
   TopSource,
   TopSession,
   SortDirection,
+  SaltDirFile,
+  SaltDirFileInfo,
 } from 'src/addon/128t/types'
 
 // constants
@@ -39,12 +43,19 @@ export interface Props {
   cellTextColor: string
   isEditable: boolean
   routers: Router[]
+  isRoutersAllCheck: boolean
   focusedAssetId: string
   onClickTableRow: (
     topSources: TopSource[],
     topSessions: TopSession[],
     focusedAssetId: string
   ) => () => void
+  handleOnChoose: ({selectItem: string}) => void
+  handleRouterCheck: ({router: Router}) => void
+  handleRoutersAllCheck: () => void
+  handleFocusedBtnName: ({buttonName: string}) => void
+  firmware: SaltDirFile
+  config: SaltDirFile
 }
 
 interface State {
@@ -52,6 +63,16 @@ interface State {
   sortDirection: SortDirection
   sortKey: string
   routerCount: number
+}
+
+interface HeadingButton {
+  buttonName: string
+  isNew: boolean
+  handleOnChoose?: ({_this: object, selectItem: string}) => void
+  handleFocusedBtnName: ({buttonName: string}) => void
+  items: string[]
+  buttonStatus: boolean
+  isDisabled: boolean
 }
 
 @ErrorHandling
@@ -88,19 +109,56 @@ class RouterTable extends PureComponent<Props, State> {
     this.setState({routerCount: sortedRouters.length})
   }
 
-  private HeadingButton = ({buttonName, isNew}) => {
+  private getHandleOnChoose = (selectItem: {text: string}) => {
+    this.props.handleOnChoose({selectItem: selectItem.text})
+  }
+
+  private HeadingButton = (props: HeadingButton) => {
+    const {
+      buttonName,
+      isNew,
+      items,
+      handleFocusedBtnName,
+      buttonStatus,
+      isDisabled,
+    } = props
     return (
       <div className={'dash-graph--heading--button-box'}>
+        {buttonStatus ? (
+          <div className={'loading-box'}>
+            <LoadingSpinner />
+          </div>
+        ) : null}
+
         {isNew ? <span className="is-new">new</span> : ''}
-        <button className={'button button-sm button-default'}>
-          {buttonName}
-        </button>
+        <Dropdown
+          items={items}
+          onChoose={this.getHandleOnChoose}
+          selected={buttonName}
+          className="dropdown-stretch"
+          disabled={isDisabled}
+          onClick={() => {
+            handleFocusedBtnName({buttonName})
+          }}
+        />
       </div>
     )
   }
-
+  public extractionFilesName = (items: SaltDirFileInfo[]): string[] => {
+    return items.map(item => item.applicationFullName)
+  }
   public render() {
-    const {isEditable, cellTextColor, cellBackgroundColor, routers} = this.props
+    const {
+      isEditable,
+      cellTextColor,
+      cellBackgroundColor,
+      routers,
+      handleOnChoose,
+      firmware,
+      config,
+      handleFocusedBtnName,
+    } = this.props
+
     return (
       <Panel>
         <PanelHeader isEditable={isEditable}>
@@ -114,8 +172,23 @@ class RouterTable extends PureComponent<Props, State> {
             isEditable={isEditable}
             cellBackgroundColor={cellBackgroundColor}
           />
-          <this.HeadingButton buttonName={'firmware'} isNew={true} />
-          <this.HeadingButton buttonName={'config'} isNew={false} />
+          <this.HeadingButton
+            buttonName={'firmware'}
+            isNew={this.newChecker(firmware.files)}
+            handleOnChoose={handleOnChoose}
+            handleFocusedBtnName={handleFocusedBtnName}
+            items={this.extractionFilesName(firmware.files)}
+            buttonStatus={firmware.isLoading}
+            isDisabled={firmware.isFailed}
+          />
+          <this.HeadingButton
+            buttonName={'config'}
+            isNew={this.newChecker(config.files)}
+            handleFocusedBtnName={handleFocusedBtnName}
+            items={this.extractionFilesName(config.files)}
+            buttonStatus={config.isLoading}
+            isDisabled={config.isFailed}
+          />
           <GridLayoutSearchBar
             placeholder="Filter by Asset ID..."
             onSearch={this.updateSearchTerm}
@@ -129,6 +202,14 @@ class RouterTable extends PureComponent<Props, State> {
         </PanelBody>
       </Panel>
     )
+  }
+
+  private newChecker = (items: SaltDirFileInfo[]): boolean => {
+    if (items.length === 0) return
+    const today = new Date().getTime()
+    const oneDay = 86400000
+
+    return items[0].updateGetTime + oneDay > today
   }
 
   private get TableHeader() {
@@ -148,13 +229,19 @@ class RouterTable extends PureComponent<Props, State> {
       CHECKBOX,
     } = ROUTER_TABLE_SIZING
     const {sortKey, sortDirection} = this.state
+    const {isRoutersAllCheck, handleRoutersAllCheck} = this.props
     return (
       <>
         <div
           className={sortableClasses({sortKey, sortDirection, key: 'assetId'})}
           style={{width: CHECKBOX}}
         >
-          <input type="checkbox" />
+          <input
+            type="checkbox"
+            checked={isRoutersAllCheck}
+            onClick={handleRoutersAllCheck}
+            readOnly
+          />
         </div>
         <div
           onClick={this.updateSort('assetId')}
@@ -291,7 +378,12 @@ class RouterTable extends PureComponent<Props, State> {
   }
 
   private get TableData() {
-    const {routers, focusedAssetId, onClickTableRow} = this.props
+    const {
+      routers,
+      focusedAssetId,
+      onClickTableRow,
+      handleRouterCheck,
+    } = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
     const sortedRouters = this.getSortedRouters(
@@ -307,8 +399,10 @@ class RouterTable extends PureComponent<Props, State> {
           <FancyScrollbar
             children={sortedRouters.map((r: Router, i: number) => (
               <RouterTableRow
+                handleRouterCheck={handleRouterCheck}
                 onClickTableRow={onClickTableRow}
                 focusedAssetId={focusedAssetId}
+                isCheck={r.isCheck}
                 router={r}
                 key={i}
               />

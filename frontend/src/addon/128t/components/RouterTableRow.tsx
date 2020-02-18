@@ -9,6 +9,8 @@ import {TableBodyRowItem} from 'src/addon/128t/reusable/layout'
 import GeoLocationIndicator from 'src/addon/128t/components/GeoLocationIndicator'
 
 interface Props {
+  isCheck: boolean
+  handleRouterCheck: ({router: Router}) => void
   router: Router
   focusedAssetId: string
   onClickTableRow: (
@@ -18,7 +20,13 @@ interface Props {
   ) => () => void
 }
 
-const RouterTableRow = ({onClickTableRow, focusedAssetId, router}: Props) => {
+const RouterTableRow = ({
+  handleRouterCheck,
+  onClickTableRow,
+  focusedAssetId,
+  router,
+  isCheck,
+}: Props) => {
   const {
     assetId,
     locationCoordinates,
@@ -85,12 +93,27 @@ const RouterTableRow = ({onClickTableRow, focusedAssetId, router}: Props) => {
     )
   }
 
+  const getHandleRouterCheck = (event: MouseEvent) => {
+    event.stopPropagation()
+    handleRouterCheck({router})
+  }
+
   return (
     <div
       className={focusedClasses(router.assetId)}
       onClick={onClickTableRow(topSources, topSessions, assetId)}
     >
-      <TableBodyRowItem title={<input type="checkbox" />} width={CHECKBOX} />
+      <TableBodyRowItem
+        title={
+          <input
+            type="checkbox"
+            checked={isCheck}
+            onClick={getHandleRouterCheck.bind(router)}
+            readOnly
+          />
+        }
+        width={CHECKBOX}
+      />
       <TableBodyRowItem title={assetId} width={ASSETID} />
       <TableBodyRowItem title={role} width={ROLE} />
       <TableBodyRowItem
@@ -113,7 +136,7 @@ const RouterTableRow = ({onClickTableRow, focusedAssetId, router}: Props) => {
       <TableBodyRowItem
         title={softwareVersion}
         width={SOFTWAREVERSION}
-        className={'align--end'}
+        className={'align--start'}
       />
       <TableBodyRowItem
         title={usageIndacator({value: fixedDecimalPercentage(cpuUsage, 2)})}

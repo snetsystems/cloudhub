@@ -13,6 +13,7 @@ export interface Router {
   diskUsage?: number
   topSources?: TopSource[]
   topSessions?: TopSession[]
+  isCheck?: boolean
 }
 
 export interface TopSource {
@@ -36,4 +37,24 @@ export interface TopSession {
     address: string
     port: number
   }
+}
+
+export interface SaltDirFileInfo {
+  updateTime?: string
+  updateGetTime?: number
+  application?: string
+  applicationFullName?: string
+  pathDirectory?: string
+  fullPathDirectory?: string
+}
+
+export interface CheckRouter {
+  assetId: string
+  isCheck: boolean
+}
+
+export interface SaltDirFile {
+  files: SaltDirFileInfo[]
+  isLoading?: boolean
+  isFailed?: boolean
 }

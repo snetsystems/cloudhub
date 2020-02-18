@@ -6,7 +6,7 @@ interface Props {
   addons: Addon[]
 }
 
-const RouterSourceIndicator: SFC<Props> = ({addons}) => {
+const RouterSourceIndicator: SFC<Props> = ({addons}): JSX.Element => {
   let routerConnectTipsText = ''
 
   if (addons) {

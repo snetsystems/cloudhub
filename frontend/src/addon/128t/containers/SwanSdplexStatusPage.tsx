@@ -353,6 +353,7 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
             onPositionChange={handleUpdatePosition}
             layout={cellsLayoutInfo}
             onClickMapMarker={handleClickMapMarker}
+            addons={addons}
           />
         )}
       </Page.Contents>
