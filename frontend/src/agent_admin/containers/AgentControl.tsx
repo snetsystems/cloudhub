@@ -18,6 +18,7 @@ import {
   runLocalServiceStopTelegraf,
   runLocalCpGetDirTelegraf,
   runLocalPkgInstallTelegraf,
+  runLocalGroupAdduser,
 } from 'src/shared/apis/saltStack'
 
 // Notification
@@ -190,7 +191,7 @@ export class AgentControl extends PureComponent<Props, State> {
     const getLocalServiceStartTelegrafPromise = runLocalServiceStartTelegraf(
       saltMasterUrl,
       saltMasterToken,
-      host
+      _.values(host).toString()
     )
 
     getLocalServiceStartTelegrafPromise.then(pLocalServiceStartTelegrafData => {
@@ -215,7 +216,7 @@ export class AgentControl extends PureComponent<Props, State> {
     const getLocalServiceStopTelegrafPromise = runLocalServiceStopTelegraf(
       saltMasterUrl,
       saltMasterToken,
-      host
+      _.values(host).toString()
     )
 
     getLocalServiceStopTelegrafPromise.then(pLocalServiceStopTelegrafData => {
@@ -243,7 +244,7 @@ export class AgentControl extends PureComponent<Props, State> {
     const getLocalCpGetDirTelegrafPromise = runLocalCpGetDirTelegraf(
       saltMasterUrl,
       saltMasterToken,
-      host
+      _.values(host).toString()
     )
 
     getLocalCpGetDirTelegrafPromise.then(pLocalCpGetDirTelegrafData => {
@@ -257,7 +258,7 @@ export class AgentControl extends PureComponent<Props, State> {
       const getLocalPkgInstallTelegrafPromise = runLocalPkgInstallTelegraf(
         saltMasterUrl,
         saltMasterToken,
-        host
+        _.values(host).toString()
       )
 
       getLocalPkgInstallTelegrafPromise.then(pLocalPkgInstallTelegrafData => {
@@ -268,6 +269,23 @@ export class AgentControl extends PureComponent<Props, State> {
             'Install Response' +
             '\n' +
             yaml.dump(pLocalPkgInstallTelegrafData.data.return[0]),
+        })
+
+        const getLocalGroupAdduserPromise = runLocalGroupAdduser(
+          saltMasterUrl,
+          saltMasterToken,
+          _.values(host).toString()
+        )
+
+        getLocalGroupAdduserPromise.then(pLocalGroupAdduserData => {
+          this.setState({
+            minionLog:
+              this.state.minionLog +
+              '\n' +
+              'Group Add User' +
+              '\n' +
+              yaml.dump(pLocalGroupAdduserData.data.return[0]),
+          })
         })
       })
 

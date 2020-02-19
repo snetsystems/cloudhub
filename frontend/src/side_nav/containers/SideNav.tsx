@@ -222,7 +222,7 @@ class SideNav extends PureComponent<Props> {
             </NavListItem>
           </NavBlock>
         ) : null}
-        {/* <div className="sidebar--item cursor-default symbol-company" /> */}
+        <div className="sidebar--item cursor-default symbol-company" />
       </nav>
     )
   }

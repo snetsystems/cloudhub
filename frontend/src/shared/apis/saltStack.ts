@@ -12,6 +12,9 @@ interface Params {
   include_accepted?: string
   show_ip?: string
   kwarg?: {
+    username?: string
+    password?: string
+    eauth?: string
     name?: string
     path?: string
     dest?: string
@@ -23,12 +26,12 @@ interface Params {
   username?: string
   password?: string
   eauth?: string
+  token_expire?: number
 }
 
 const apiRequest = async (pUrl: string, pToken: string, pParams: Params) => {
   const dParams = {token: pToken, eauth: 'pam'}
   const saltMasterUrl = pUrl
-  //const token = pToken
   const url = saltMasterUrl + '/'
   const headers = {
     Accept: 'application/json',
@@ -39,8 +42,8 @@ const apiRequest = async (pUrl: string, pToken: string, pParams: Params) => {
 
   return axios({
     method: 'POST',
-    url: url,
-    headers: headers,
+    url,
+    headers,
     data: param,
   })
     .then(response => {
@@ -147,7 +150,7 @@ export function getRunnerManageAllowed(pUrl: string, pToken: string) {
 export function getLocalServiceEnabledTelegraf(
   pUrl: string,
   pToken: string,
-  pMinionId: string[]
+  pMinionId: string
 ) {
   const params: Params = {
     client: 'local',
@@ -169,7 +172,7 @@ export function getLocalServiceEnabledTelegraf(
 export function getLocalServiceStatusTelegraf(
   pUrl: string,
   pToken: string,
-  pMinionId: string[]
+  pMinionId: string
 ) {
   const params: Params = {
     client: 'local',
@@ -191,7 +194,7 @@ export function getLocalServiceStatusTelegraf(
 export function runLocalServiceStartTelegraf(
   pUrl: string,
   pToken: string,
-  pMinionId: string | string[]
+  pMinionId: string
 ) {
   const params: Params = {
     client: 'local',
@@ -213,7 +216,7 @@ export function runLocalServiceStartTelegraf(
 export function runLocalServiceStopTelegraf(
   pUrl: string,
   pToken: string,
-  pMinionId: string | string[]
+  pMinionId: string
 ) {
   const params: Params = {
     client: 'local',
@@ -257,7 +260,7 @@ export function runLocalServiceReStartTelegraf(
 export function runLocalCpGetDirTelegraf(
   pUrl: string,
   pToken: string,
-  pMinionId: string[]
+  pMinionId: string
 ) {
   const params: Params = {
     client: 'local',
@@ -283,7 +286,7 @@ export function runLocalCpGetDirTelegraf(
 export function runLocalPkgInstallTelegraf(
   pUrl: string,
   pToken: string,
-  pMinionId: string[]
+  pMinionId: string
 ) {
   const params: Params = {
     client: 'local',
@@ -408,6 +411,76 @@ export function getRunnerSaltCmdTelegraf(
       fun: 'cmd.run',
       cmd: 'telegraf --usage ' + pMeasurements,
     },
+  }
+
+  return apiRequest(pUrl, pToken, params)
+}
+
+export function runLocalGroupAdduser(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string
+) {
+  const params: Params = {
+    client: 'local',
+    fun: 'group.adduser',
+    tgt_type: '',
+    tgt: '',
+    arg: ['root', 'telegraf'],
+  }
+  if (pMinionId) {
+    params.tgt_type = 'list'
+    params.tgt = pMinionId
+  } else {
+    params.tgt_type = 'glob'
+    params.tgt = '*'
+  }
+  return apiRequest(pUrl, pToken, params)
+}
+
+export function getRunnerSaltCmdDirectory(
+  pUrl: string,
+  pToken: string,
+  pDirPath: string
+) {
+  const params = {
+    eauth: 'pam',
+    client: 'runner',
+    fun: 'salt.cmd',
+    kwarg: {
+      fun: 'cmd.shell',
+      cmd: `ls -lt --time-style=long-iso ${pDirPath} | grep ^- | awk \'{printf "%sT%s %s\\n",$6,$7,$NF}\'`,
+    },
+  }
+  return apiRequest(pUrl, pToken, params)
+}
+
+export function getLocalDeliveryToMinion(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pMinionDir: string,
+  pChoosefile: string
+) {
+  const params = {
+    eauth: 'pam',
+    client: 'local',
+    tgt: '',
+    tgt_type: '',
+    fun: 'cp.get_file',
+    kwarg: {
+      path: `salt://${pChoosefile}`,
+      dest: pMinionDir,
+      makedirs: 'True',
+    },
+  }
+
+  if (pMinionId) {
+    params.tgt_type = 'list'
+    params.tgt = pMinionId
+  } else {
+    params.tgt_type = 'glob'
+    params.tgt = '*'
   }
 
   return apiRequest(pUrl, pToken, params)
