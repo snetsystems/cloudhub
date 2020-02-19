@@ -86,6 +86,7 @@ for f in CONFIGURATION_FILES:
 
 targets = {
     'csh': './cmd/cmp',
+    'cshctl': './cmd/cmp',
 }
 
 supported_builds = {
@@ -895,8 +896,6 @@ def main(args):
                 return 1
             build_output.get(platform).update({arch: od})
 
-    args.package = True
-
     # Build packages
     if args.package:
         if not check_path_for("fpm"):
@@ -983,7 +982,7 @@ def main(args):
                 "md5": generate_md5_from_file(p),
                 "filename": p_name,
                 "name": nice_name,
-                "link": "https://github.com/snetsystems/cmp/packages" + p_name.rsplit('/', 1)[-1],
+                "link": "https://github.com/snetsystems/cmp/packages/" + p_name.rsplit('/', 1)[-1],
             }
 
         # Print the downloads in Markdown format for the release

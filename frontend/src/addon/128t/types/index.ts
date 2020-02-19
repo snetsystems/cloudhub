@@ -1,3 +1,20 @@
-import {Router, TopSource, TopSession} from 'src/addon/128t/types/routers'
+import {
+  Router,
+  TopSource,
+  TopSession,
+  SaltDirFileInfo,
+  CheckRouter,
+  SaltDirFile,
+} from 'src/addon/128t/types/routers'
 import {GridCell} from 'src/addon/128t/types/grid'
-export {Router, TopSource, TopSession, GridCell}
+import {SortDirection} from 'src/addon/128t/types/table'
+export {
+  Router,
+  TopSource,
+  TopSession,
+  GridCell,
+  SortDirection,
+  SaltDirFileInfo,
+  CheckRouter,
+  SaltDirFile,
+}

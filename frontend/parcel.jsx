@@ -12,7 +12,7 @@ const handleProxyError = err => {
 }
 
 const proxyMiddleware = proxy('/cmp/v1', {
-  target: 'http://localhost:8888',
+  target: 'https://localhost',
   logLevel: 'silent',
   changeOrigin: true,
   onError: handleProxyError,
