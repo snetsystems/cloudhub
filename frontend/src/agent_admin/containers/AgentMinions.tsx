@@ -15,11 +15,14 @@ import {
   getMinionKeyListAll,
   getMinionsIP,
   getMinionsOS,
+} from 'src/agent_admin/apis'
+// SaltStack
+import {
   getLocalGrainsItem,
   runAcceptKey,
   runRejectKey,
   runDeleteKey,
-} from 'src/agent_admin/apis'
+} from 'src/shared/apis/saltStack'
 
 // Notification
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -41,7 +44,6 @@ interface Props {
   currentUrl: string
   saltMasterUrl: string
   saltMasterToken: string
-  onLogout: () => void
 }
 interface State {
   MinionsObject: {[x: string]: Minion}
@@ -67,23 +69,29 @@ export class AgentMinions extends PureComponent<Props, State> {
   }
 
   getWheelKeyListAll = async () => {
+    const {notify, saltMasterUrl, saltMasterToken} = this.props
     try {
-      const response = await getMinionKeyListAll()
-      const updateMinionsIP = await getMinionsIP(response)
-      const newMinions = await getMinionsOS(updateMinionsIP)
+      const response = await getMinionKeyListAll(saltMasterUrl, saltMasterToken)
+      const updateMinionsIP = await getMinionsIP(
+        saltMasterUrl,
+        saltMasterToken,
+        response
+      )
+      const newMinions = await getMinionsOS(
+        saltMasterUrl,
+        saltMasterToken,
+        updateMinionsIP
+      )
 
       this.setState({
         MinionsObject: newMinions,
         minionsPageStatus: RemoteDataState.Done,
       })
     } catch (e) {
-      const {onLogout} = this.props
-
       this.setState({
         minionsPageStatus: RemoteDataState.Done,
       })
-
-      onLogout()
+      notify(notifyAgentConnectFailed('Token is not valid.'))
     }
   }
 
@@ -116,11 +124,16 @@ export class AgentMinions extends PureComponent<Props, State> {
   }
 
   onClickTableRowCall = (host: string) => () => {
+    const {saltMasterUrl, saltMasterToken} = this.props
     this.setState({
       focusedHost: host,
       minionsPageStatus: RemoteDataState.Loading,
     })
-    const getLocalGrainsItemPromise = getLocalGrainsItem(host)
+    const getLocalGrainsItemPromise = getLocalGrainsItem(
+      saltMasterUrl,
+      saltMasterToken,
+      host
+    )
     getLocalGrainsItemPromise.then(pLocalGrainsItemData => {
       this.setState({
         minionLog: yaml.dump(pLocalGrainsItemData.data.return[0][host]),
@@ -130,9 +143,14 @@ export class AgentMinions extends PureComponent<Props, State> {
   }
 
   handleWheelKeyCommand = (host: string, cmdstatus: string) => {
+    const {saltMasterUrl, saltMasterToken} = this.props
     this.setState({minionsPageStatus: RemoteDataState.Loading})
     if (cmdstatus == 'ReJect') {
-      const getWheelKeyCommandPromise = runRejectKey(host)
+      const getWheelKeyCommandPromise = runRejectKey(
+        saltMasterUrl,
+        saltMasterToken,
+        host
+      )
 
       getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
         this.setState({
@@ -141,7 +159,11 @@ export class AgentMinions extends PureComponent<Props, State> {
         this.getWheelKeyListAll()
       })
     } else if (cmdstatus == 'Accept') {
-      const getWheelKeyCommandPromise = runAcceptKey(host)
+      const getWheelKeyCommandPromise = runAcceptKey(
+        saltMasterUrl,
+        saltMasterToken,
+        host
+      )
 
       getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
         this.setState({
@@ -150,7 +172,11 @@ export class AgentMinions extends PureComponent<Props, State> {
         this.getWheelKeyListAll()
       })
     } else if (cmdstatus == 'Delete') {
-      const getWheelKeyCommandPromise = runDeleteKey(host)
+      const getWheelKeyCommandPromise = runDeleteKey(
+        saltMasterUrl,
+        saltMasterToken,
+        host
+      )
 
       getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
         this.setState({

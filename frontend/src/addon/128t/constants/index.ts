@@ -4,10 +4,16 @@ import {
   TOPSESSIONS_TABLE_SIZING,
 } from 'src/addon/128t/constants/tableSizing'
 import {GET_ALLROUTERS_INFO} from 'src/addon/128t/constants/query'
+import {
+  SALT_FULL_DIRECTORY,
+  SALT_MIN_DIRECTORY,
+} from 'src/addon/128t/constants/directory'
 
 export {
   ROUTER_TABLE_SIZING,
   TOPSOURCES_TABLE_SIZING,
   TOPSESSIONS_TABLE_SIZING,
   GET_ALLROUTERS_INFO,
+  SALT_FULL_DIRECTORY,
+  SALT_MIN_DIRECTORY,
 }

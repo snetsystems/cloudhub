@@ -84,6 +84,7 @@
   "dependencies": {
     "@apollo/react-hooks": "^3.1.3",
     "@babel/runtime": "^7.0.0",
+    "@types/leaflet": "^1.5.8",
     "apollo-cache-inmemory": "^1.6.3",
     "apollo-client": "^2.6.4",
     "apollo-link-context": "^1.0.19",
@@ -106,6 +107,7 @@
     "graphql-tag": "^2.10.1",
     "he": "^1.1.1",
     "js-yaml": "^3.13.1",
+    "leaflet": "^1.6.0",
     "level-js": "^3.0.0",
     "levelup": "^3.1.1",
     "lodash": "^4.3.0",

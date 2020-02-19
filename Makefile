@@ -8,8 +8,8 @@ UISOURCES := $(shell find frontend -type f -not \( -path frontend/build/\* -o -p
 
 unexport LDFLAGS
 LDFLAGS=-ldflags "-s -X main.version=${VERSION} -X main.commit=${COMMIT}"
-BINARY=scmp
-CTLBINARY=scmpctl
+BINARY=csh
+CTLBINARY=cshctl
 GO111MODULE=on
 
 .PHONY: all build gobuild assets dep clean test gotest gotestrace jstest run run-dev ctags

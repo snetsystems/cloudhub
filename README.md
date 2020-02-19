@@ -32,10 +32,16 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
 - Continuous installation and deployment for telegraf's agent and configuration.
 - Optionable Addon features
   - 128T Router & SDPlex Features.
+<p align="center">
+  <img src="https://github.com/snetsystems/cmp/blob/dev-0.9.1/docs/images/infrastructure.png"/>
+  <img src="https://github.com/snetsystems/cmp/blob/dev-0.9.1/docs/images/applications.png"/>
+  <img src="https://github.com/snetsystems/cmp/blob/dev-0.9.1/docs/images/agent_configure.png"/>
+  <img src="https://github.com/snetsystems/cmp/blob/dev-0.9.1/docs/images/128T.png"/>
+</p>
 
 ## Setting in VSCode
 
-- Add the followings into **_setting.json_** to **User Setting** namespace.
+- Add the followings into **User Setting** or **Workspace Setting**.
 
 ```
 {
@@ -49,6 +55,7 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
   "editor.largeFileOptimizations": false,
   "editor.formatOnSave": true,
   "editor.renderWhitespace": "none",
+  "editor.wordWrap": "on",
   "workbench.startupEditor": "newUntitledFile",
   "explorer.confirmDelete": false,
   "explorer.confirmDragAndDrop": false,
