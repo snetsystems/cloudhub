@@ -56,7 +56,7 @@ import {
   notify_128TGetMasterDirFiles_Failed,
   notify_128TSendFilesToCollector_Successed,
   notify_128TSendFilesToCollector_Failed,
-} from 'src/addon/128T/components/Notifications'
+} from 'src/addon/128t/components/Notifications'
 
 interface Props {
   notify: (message: Notification | NotificationFunc) => void
