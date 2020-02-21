@@ -4,12 +4,14 @@
 After=network-online.target
 
 [Service]
-User=root
-Group=root
+User=snet
+Group=snet
 Environment="HOST=0.0.0.0"
 Environment="PORT=8888"
+#Environment="PORT=443"
+#Environment="TLS_CERTIFICATE=/usr/lib/csh/key/scmp_self_signed.pem"
 Environment="BOLT_PATH=/var/lib/csh/cmp-v1.db"
-Environment="CANNED_PATH=/usr/share/csh/canned"
+Environment="CANNED_PATH=/usr/share/csh/cmp-canned"
 Environment="PROTOBOARDS_PATH=/usr/share/csh/cmp-protoboards"
 EnvironmentFile=-/etc/default/csh
 ExecStart=/usr/bin/csh $CSH_OPTS

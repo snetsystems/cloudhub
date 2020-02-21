@@ -5,9 +5,12 @@
 SCRIPT="/usr/bin/csh"
 export HOST="0.0.0.0"
 export PORT="8888"
+#export PORT="443"
+#export TLS_CERTIFICATE="/usr/lib/csh/key/scmp_self_signed.pem"
 export BOLT_PATH="/var/lib/csh/cmp-v1.db"
-export CANNED_PATH="/usr/share/csh/canned"
+export CANNED_PATH="/usr/share/csh/cmp-canned"
 export PROTOBOARDS_PATH="/usr/share/csh/cmp-protoboards"
+
 # Options to pass to the script on startup
 . /etc/default/csh
 SCRIPT_OPTS=${CSH_OPTS}
@@ -16,7 +19,7 @@ SCRIPT_OPTS=${CSH_OPTS}
 RUNAS=snet
 
 # PID file for process
-PIDFILE=/usr/bin/csh
+PIDFILE=csh
 
 # Where to redirect logging to
 LOGFILE=/var/log/csh/csh.log

@@ -25,9 +25,10 @@ LOG_DIR = "/var/log/csh"
 DATA_DIR = "/var/lib/csh"
 SCRIPT_DIR = "/usr/lib/csh/scripts"
 LOGROTATE_DIR = "/etc/logrotate.d"
-CANNED_DIR = "/usr/share/csh/canned"
+CANNED_DIR = "/usr/share/csh/cmp-canned"
 PROTOBOARDS_DIR = "/usr/share/csh/cmp-protoboards"
 RESOURCES_DIR = "/usr/share/csh/resources"
+KEY_DIR = "/usr/lib/csh/key"
 
 INIT_SCRIPT = "etc/scripts/init.sh"
 SYSTEMD_SCRIPT = "etc/scripts/csh.service"
@@ -37,6 +38,7 @@ POSTUNINST_SCRIPT = "etc/scripts/post-uninstall.sh"
 LOGROTATE_SCRIPT = "etc/scripts/logrotate"
 CANNED_SCRIPTS = "backend/canned/*json"
 PROTOBOARDS_SCRIPTS = "backend/protoboards/*json"
+KEY_FILE = "backend/cmd/cmp/scmp_self_signed.pem"
 
 # Default AWS S3 bucket for uploads
 DEFAULT_BUCKET = "snetsystems.co.kr/csh/artifacts"
@@ -86,7 +88,7 @@ for f in CONFIGURATION_FILES:
 
 targets = {
     'csh': './cmd/cmp',
-    'cshctl': './cmd/cmp',
+    # 'cshctl': './cmd/cmp',
 }
 
 supported_builds = {
@@ -131,7 +133,8 @@ def create_package_fs(build_root):
         LOGROTATE_DIR[1:],
         CANNED_DIR[1:],
         PROTOBOARDS_DIR[1:],
-        RESOURCES_DIR[1:]
+        RESOURCES_DIR[1:],
+        KEY_DIR[1:]
     ]
     for d in dirs:
         os.makedirs(os.path.join(build_root, d))
@@ -148,7 +151,8 @@ def package_scripts(build_root, config_only=False, windows=False):
         files = [
             (INIT_SCRIPT, SCRIPT_DIR, "init.sh"),
             (SYSTEMD_SCRIPT, SCRIPT_DIR, "csh.service"),
-            (LOGROTATE_SCRIPT, LOGROTATE_DIR, "csh")
+            (LOGROTATE_SCRIPT, LOGROTATE_DIR, "csh"),
+            (KEY_FILE, KEY_DIR, "scmp_self_signed.pem")
         ]
         for script, dir, name in files:
             dest = os.path.join(build_root, dir[1:], name)
