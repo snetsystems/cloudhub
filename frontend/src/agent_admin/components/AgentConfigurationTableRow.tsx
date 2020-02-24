@@ -3,6 +3,7 @@ import React, {PureComponent, MouseEvent} from 'react'
 
 // Components
 import {AgentConfiguration} from 'src/agent_admin/containers/AgentConfiguration'
+import {OSIndicator} from 'src/agent_admin/components/AgentIndicator'
 
 // Constants
 import {AGENT_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
@@ -67,7 +68,7 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
         </div>
 
         <div className="hosts-table--td" style={{width: IPWidth}}>
-          {os}
+          <OSIndicator os={os} />
         </div>
 
         <div className="hosts-table--td" style={{width: IPWidth}}>

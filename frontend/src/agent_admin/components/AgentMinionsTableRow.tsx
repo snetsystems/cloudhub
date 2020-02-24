@@ -4,6 +4,7 @@ import React, {PureComponent} from 'react'
 // Constants
 import {AGENT_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
 import {AgentMinions} from 'src/agent_admin/containers/AgentMinions'
+import {OSIndicator} from 'src/agent_admin/components/AgentIndicator'
 
 // Types
 import {Minion} from 'src/agent_admin/type'
@@ -65,7 +66,7 @@ class AgentMinionsTableRow extends PureComponent<Props> {
         </div>
 
         <div className="hosts-table--td" style={{width: IPWidth}}>
-          {os}
+          <OSIndicator os={os} />
         </div>
 
         <div className="hosts-table--td" style={{width: IPWidth}}>

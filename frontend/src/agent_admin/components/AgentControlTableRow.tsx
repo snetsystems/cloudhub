@@ -3,6 +3,7 @@ import React, {PureComponent} from 'react'
 
 // Components
 import {AgentControl} from 'src/agent_admin/containers/AgentControl'
+import {OSIndicator} from 'src/agent_admin/components/AgentIndicator'
 
 // Constants
 import {AGENT_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
@@ -54,7 +55,7 @@ class AgentControlTableRow extends PureComponent<Props> {
         </div>
 
         <div className="hosts-table--td" style={{width: IPWidth}}>
-          {os}
+          <OSIndicator os={os} />
         </div>
 
         <div className="hosts-table--td" style={{width: IPWidth}}>

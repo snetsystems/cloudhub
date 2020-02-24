@@ -161,10 +161,74 @@
   font-weight: 700;
   font-size: 12px;
 
-  > .icon {
+  >.icon {
     display: inline-block;
     font-size: 16px;
     margin: 0 4px;
   }
 }
+
 /***** agentConnecttooltip end   *****/
+$OperatingSystems: aix,
+centos,
+freebsd,
+netbsd,
+redhat,
+univention,
+alpine,
+chapeau,
+gentoo,
+nilinuxrt,
+scientificlinux,
+vmware,
+alt,
+cloudlinux,
+kde-neon,
+nilinuxrt-xfce,
+smartos,
+void,
+amazon,
+darwin,
+korora,
+oel,
+solaris,
+windows,
+antergos,
+debian,
+macos,
+openbsd,
+steamos,
+arch,
+elementary,
+manjaro,
+opensolaris,
+suse,
+arch-arm,
+fedora,
+mint,
+raspbian,
+ubuntu;
+
+.os-icon {
+  width: 100%;
+  display: flex;
+  position: relative;
+  padding-left: 25px;
+}
+
+.os-icon::after {
+  content: '';
+  display: flex;
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  top: -2px;
+  left: 0;
+}
+
+@each $OperatingSystem in $OperatingSystems {
+  .os-#{$OperatingSystem}::after {
+    background: url("../agent_admin/components/assets/os/os-#{$OperatingSystem}.png");
+    background-size: cover;
+  }
+}
