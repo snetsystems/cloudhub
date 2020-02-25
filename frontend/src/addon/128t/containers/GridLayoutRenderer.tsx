@@ -398,7 +398,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
           }}
           message={<this.userSelectOrderList />}
           cancelText={'Cancel'}
-          confirmText={'Go Run'}
+          confirmText={'OK'}
           isVisible={this.state.isModalVisible}
           isUseButton={false}
           confirmButtonStatus={

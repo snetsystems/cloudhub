@@ -202,7 +202,7 @@ class AgentControlTable extends PureComponent<Props, State> {
             message={'running agents included. keep going?'}
             buttonClassName={'btn btn-inline_block btn-default agent--btn'}
             cancelText={'Cancel'}
-            confirmText={'Go Run'}
+            confirmText={'OK'}
             onCancel={() => {}}
             onConfirm={onClickRun.bind(this)}
           />
@@ -226,7 +226,7 @@ class AgentControlTable extends PureComponent<Props, State> {
             message={'Agents with Telegraf installed are included. keep going?'}
             buttonClassName={'btn btn-inline_block btn-default agent--btn'}
             cancelText={'Cancel'}
-            confirmText={'Go Run'}
+            confirmText={'OK'}
             onCancel={() => {}}
             onConfirm={onClickInstall.bind(this)}
           />
