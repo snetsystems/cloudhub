@@ -21,6 +21,7 @@ interface Params {
     makedirs?: string
     fun?: string
     cmd?: string
+    sources?: string
     args?: string[] | string
   }
   username?: string
@@ -292,7 +293,7 @@ export function runLocalPkgInstallTelegraf(
     client: 'local',
     fun: 'pkg.install',
     kwarg: {
-      name: '//srv/salt/prod/telegraf/telegraf-1.12.4-1.x86_64.rpm',
+      sources: '[{"telegraf": "salt://telegraf/telegraf-1.12.4-1.x86_64.rpm"}]',
     },
     tgt_type: '',
     tgt: '',
