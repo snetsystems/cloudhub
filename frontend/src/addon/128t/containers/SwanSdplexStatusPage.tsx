@@ -67,6 +67,9 @@ interface NodeDetail {
     startTime: string
     softwareVersion: string
   }
+  deviceInterfaces: {
+    nodes: NetworkInterfaces[]
+  }
 }
 
 interface CPU {
@@ -84,6 +87,23 @@ interface Disk {
   capacity: number
   usage: number
   partition: string
+}
+
+interface NetworkInterfaces {
+  networkInterfaces: {
+    nodes: Addresses[]
+  }
+}
+
+interface Addresses {
+  name: string
+  addresses: {
+    nodes: IpAddress[]
+  }
+}
+
+interface IpAddress {
+  ipAddress: string
 }
 
 interface Variables {
@@ -253,6 +273,58 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
                       ? (rootPatitions[0].usage / rootPatitions[0].capacity) *
                           100
                       : null
+                  })(),
+                  ipAddress: (() => {
+                    const networkInterfaces: NetworkInterfaces[] = _.get(
+                      nodeDetail,
+                      'deviceInterfaces.nodes'
+                    )
+
+                    const addresses: Addresses[] = _.reduce(
+                      networkInterfaces,
+                      (
+                        addresses: Addresses[],
+                        networkInterface: NetworkInterfaces
+                      ) => {
+                        const addressesNode: Addresses[] = _.reduce(
+                          _.get(networkInterface, 'networkInterfaces.nodes'),
+                          (addresses: Addresses[], value) => {
+                            addresses = [...addresses, value]
+                            return addresses
+                          },
+                          []
+                        )
+
+                        addressesNode.map((m: Addresses) => addresses.push(m))
+
+                        return addresses
+                      },
+                      []
+                    )
+
+                    const ipAddress: IpAddress[] = _.reduce(
+                      addresses.filter(f => f.name.toLowerCase() === 'wan0'),
+                      (ipAddress: IpAddress[], address: Addresses) => {
+                        const ipAddresses: IpAddress[] = _.reduce(
+                          _.get(address, 'addresses.nodes'),
+                          (ipAddress: IpAddress[], value) => {
+                            ipAddress = [...ipAddress, value]
+                            return ipAddress
+                          },
+                          []
+                        )
+
+                        ipAddresses.map((m: IpAddress) => ipAddress.push(m))
+
+                        return ipAddress
+                      },
+                      []
+                    )
+
+                    return ipAddress
+                      .filter(f => f.ipAddress != null)
+                      .map(m => m.ipAddress)
+                      .toString()
                   })(),
                 }
               } catch (e) {

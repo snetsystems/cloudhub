@@ -29,6 +29,7 @@ const RouterTableRow = ({
 }: Props) => {
   const {
     assetId,
+    ipAddress,
     locationCoordinates,
     bandwidth_avg,
     session_arrivals,
@@ -44,6 +45,7 @@ const RouterTableRow = ({
 
   const {
     ASSETID,
+    IPADDRESS,
     LOCATIONCOORDINATES,
     MANAGEMENTCONNECTED,
     BANDWIDTH_AVG,
@@ -115,6 +117,7 @@ const RouterTableRow = ({
         width={CHECKBOX}
       />
       <TableBodyRowItem title={assetId} width={ASSETID} />
+      <TableBodyRowItem title={ipAddress} width={IPADDRESS} />
       <TableBodyRowItem title={role} width={ROLE} />
       <TableBodyRowItem
         title={enabledIndicator(router.enabled)}
