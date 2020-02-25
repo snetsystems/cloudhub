@@ -2,7 +2,9 @@
 import React, {PureComponent} from 'react'
 
 // Components
-import CodeMirrorConsole from 'src/agent_admin/components/CodeMirrorConsole'
+import CodeMirrorConsole, {
+  scrolltoBottom,
+} from 'src/agent_admin/components/CodeMirrorConsole'
 
 interface Props {
   res: string
@@ -16,7 +18,10 @@ class AgentControlConsole extends PureComponent<Props> {
           <h2 className="panel-title">Console</h2>
         </div>
         <div className="panel-body">
-          <CodeMirrorConsole res={this.props.res} />
+          <CodeMirrorConsole
+            res={this.props.res}
+            handleOnChange={scrolltoBottom}
+          />
         </div>
       </div>
     )
