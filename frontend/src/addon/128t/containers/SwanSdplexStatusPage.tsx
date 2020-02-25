@@ -3,8 +3,10 @@ import _ from 'lodash'
 import React, {useState, useEffect} from 'react'
 import {useQuery} from '@apollo/react-hooks'
 
+// Container Components
+import GridLayoutRenderer from 'src/addon/128t/containers/GridLayoutRenderer'
+
 // Components
-import GridLayoutRenderer from 'src/addon/128t/components/GridLayoutRenderer'
 import RouterSourceIndicator from 'src/addon/128t/components/RouterSourceIndicator'
 import ResetLayoutTips from 'src/addon/128t/components/ResetLayoutTips'
 import PageSpinner from 'src/shared/components/PageSpinner'

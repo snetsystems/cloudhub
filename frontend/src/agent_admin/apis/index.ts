@@ -12,7 +12,7 @@ interface MinionsObject {
   [x: string]: Minion
 }
 
-const EmptyMionin: Minion = {
+const EmptyMinion: Minion = {
   host: '',
   ip: '',
   os: '',
@@ -79,14 +79,14 @@ export const getMinionKeyListAll = async (
   return wheelKeyListAllPromise.then(pWheelKeyListAllData => {
     for (const k of pWheelKeyListAllData.data.return[0].data.return.minions)
       minions[k] = {
-        ...EmptyMionin,
+        ...EmptyMinion,
         host: k,
         status: 'Accept',
       }
 
     for (const k of pWheelKeyListAllData.data.return[0].data.return.minions_pre)
       minions[k] = {
-        ...EmptyMionin,
+        ...EmptyMinion,
         host: k,
         status: 'UnAccept',
       }
@@ -94,7 +94,7 @@ export const getMinionKeyListAll = async (
     for (const k of pWheelKeyListAllData.data.return[0].data.return
       .minions_rejected)
       minions[k] = {
-        ...EmptyMionin,
+        ...EmptyMinion,
         host: k,
         status: 'ReJect',
       }
@@ -113,7 +113,7 @@ export const getMinionAcceptKeyListAll = async (
   return wheelKeyListAllPromise.then(pWheelKeyListAllData => {
     for (const k of pWheelKeyListAllData.data.return[0].data.return.minions)
       minions[k] = {
-        ...EmptyMionin,
+        ...EmptyMinion,
         host: k,
         status: 'Accept',
       }

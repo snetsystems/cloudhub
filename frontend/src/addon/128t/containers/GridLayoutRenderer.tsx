@@ -56,7 +56,7 @@ import {
   notify_128TGetMasterDirFiles_Failed,
   notify_128TSendFilesToCollector_Successed,
   notify_128TSendFilesToCollector_Failed,
-} from 'src/addon/128T/components/Notifications'
+} from 'src/addon/128t/components/Notifications'
 
 interface Props {
   notify: (message: Notification | NotificationFunc) => void
@@ -99,7 +99,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     Success: '200, OK',
   }
   private GetStatus = {
-    NoFile: 'no file',
+    Empty: '<< Empty >>',
   }
 
   private defaultCollectorDirectory = '/srv/salt/prod/dmt/'
@@ -166,7 +166,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
         applications = [
           this.generatorFileInfo({
             time: '',
-            item: this.GetStatus.NoFile,
+            item: this.GetStatus.Empty,
             fullDir,
             dir,
           }),
@@ -291,7 +291,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   }
 
   public handleOnChoose = ({selectItem}: {selectItem: string}): void => {
-    if (selectItem !== this.GetStatus.NoFile) {
+    if (selectItem !== this.GetStatus.Empty) {
       this.setState({
         isModalVisible: !this.state.isModalVisible,
         chooseMenu: selectItem,
