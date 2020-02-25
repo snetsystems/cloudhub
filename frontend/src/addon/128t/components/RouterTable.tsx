@@ -215,6 +215,7 @@ class RouterTable extends PureComponent<Props, State> {
   private get TableHeader() {
     const {
       ASSETID,
+      IPADDRESS,
       LOCATIONCOORDINATES,
       MANAGEMENTCONNECTED,
       BANDWIDTH_AVG,
@@ -249,6 +250,18 @@ class RouterTable extends PureComponent<Props, State> {
           style={{width: ASSETID}}
         >
           Asset ID
+          <span className="icon caret-up" />
+        </div>
+        <div
+          onClick={this.updateSort('ipAddress')}
+          className={sortableClasses({
+            sortKey,
+            sortDirection,
+            key: 'ipAddress',
+          })}
+          style={{width: IPADDRESS}}
+        >
+          IP Address
           <span className="icon caret-up" />
         </div>
         <div

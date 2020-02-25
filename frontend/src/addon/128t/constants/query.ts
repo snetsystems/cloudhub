@@ -32,6 +32,20 @@ export const GET_ALLROUTERS_INFO = gql`
               startTime
               softwareVersion
             }
+            deviceInterfaces {
+              nodes {
+                networkInterfaces {
+                  nodes {
+                    name
+                    addresses {
+                      nodes {
+                        ipAddress
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
         topSources {

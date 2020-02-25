@@ -1,5 +1,6 @@
 export interface Router {
   assetId: string
+  ipAddress?: string
   locationCoordinates?: string
   managementConnected?: boolean
   bandwidth_avg?: number
