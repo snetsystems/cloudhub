@@ -22,6 +22,7 @@ interface Props {
   disabled: boolean
   minions: Minion[]
   buttonClassName: string
+  customClass?: string
 }
 
 interface State {
@@ -79,6 +80,7 @@ class AgentControlModal extends PureComponent<Props, State> {
       cancelText,
       confirmText,
       buttonClassName,
+      customClass,
     } = this.props
     const {isVisible} = this.state
     return (
@@ -112,6 +114,7 @@ class AgentControlModal extends PureComponent<Props, State> {
                       this.setState({isVisible: !this.state.isVisible})
                       onConfirm()
                     }}
+                    customClass={customClass}
                   />
                   <Button
                     text={cancelText}
@@ -119,6 +122,7 @@ class AgentControlModal extends PureComponent<Props, State> {
                       this.setState({isVisible: !this.state.isVisible})
                       onCancel()
                     }}
+                    customClass={customClass}
                   />
                 </Form.Footer>
               </Form>

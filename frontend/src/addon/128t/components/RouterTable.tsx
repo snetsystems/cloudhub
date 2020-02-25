@@ -173,7 +173,7 @@ class RouterTable extends PureComponent<Props, State> {
             cellBackgroundColor={cellBackgroundColor}
           />
           <this.HeadingButton
-            buttonName={'firmware'}
+            buttonName={'Firmware'}
             isNew={this.newChecker(firmware.files)}
             handleOnChoose={handleOnChoose}
             handleFocusedBtnName={handleFocusedBtnName}
@@ -182,7 +182,7 @@ class RouterTable extends PureComponent<Props, State> {
             isDisabled={firmware.isFailed}
           />
           <this.HeadingButton
-            buttonName={'config'}
+            buttonName={'Config'}
             isNew={this.newChecker(config.files)}
             handleFocusedBtnName={handleFocusedBtnName}
             items={this.extractionFilesName(config.files)}

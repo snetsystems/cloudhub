@@ -229,6 +229,7 @@ class AgentControlTable extends PureComponent<Props, State> {
             confirmText={'OK'}
             onCancel={() => {}}
             onConfirm={onClickInstall.bind(this)}
+            customClass={'agent-default-button'}
           />
         </div>
       </div>
