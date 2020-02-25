@@ -303,7 +303,9 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
                     )
 
                     const ipAddress: IpAddress[] = _.reduce(
-                      addresses.filter(f => f.name.toLowerCase() === 'wan0'),
+                      addresses.filter(
+                        f => f.name.toLowerCase().indexOf('wan') > -1
+                      ),
                       (ipAddress: IpAddress[], address: Addresses) => {
                         const ipAddresses: IpAddress[] = _.reduce(
                           _.get(address, 'addresses.nodes'),
@@ -313,9 +315,7 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
                           },
                           []
                         )
-
                         ipAddresses.map((m: IpAddress) => ipAddress.push(m))
-
                         return ipAddress
                       },
                       []
@@ -323,8 +323,7 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
 
                     return ipAddress
                       .filter(f => f.ipAddress != null)
-                      .map(m => m.ipAddress)
-                      .toString()
+                      .map(m => m.ipAddress)[0]
                   })(),
                 }
               } catch (e) {
