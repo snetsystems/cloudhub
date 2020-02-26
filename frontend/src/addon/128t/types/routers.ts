@@ -1,5 +1,6 @@
 export interface Router {
-  assetId: string
+  name: string
+  assetId?: string
   ipAddress?: string
   locationCoordinates?: string
   managementConnected?: boolean

@@ -214,7 +214,7 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
           nodes,
           (emits: EmitData, node: Node) => {
             let router: Router = {
-              assetId: node.name,
+              name: node.name,
               locationCoordinates: node.locationCoordinates,
               managementConnected: node.managementConnected,
               bandwidth_avg: node.bandwidth_avg,
@@ -233,6 +233,7 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
               try {
                 router = {
                   ...router,
+                  assetId: _.get(nodeDetail, 'assetId'),
                   enabled: _.get(nodeDetail, 'enabled'),
                   role: _.get(nodeDetail, 'role'),
                   startTime: _.get(nodeDetail, 'state.startTime'),

@@ -249,7 +249,7 @@ class RouterTable extends PureComponent<Props, State> {
           className={sortableClasses({sortKey, sortDirection, key: 'assetId'})}
           style={{width: ASSETID}}
         >
-          Asset ID
+          Router
           <span className="icon caret-up" />
         </div>
         <div
