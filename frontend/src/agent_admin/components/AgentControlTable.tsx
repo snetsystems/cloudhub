@@ -11,19 +11,14 @@ import PageSpinner from 'src/shared/components/PageSpinner'
 import AgentControlModal from 'src/agent_admin/components/AgentControlModal'
 
 // Contants
-import {AGENT_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
+import {AGENT_CONTROL_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
 
 // Types
 import {RemoteDataState} from 'src/types'
-import {Minion} from 'src/agent_admin/type'
+import {Minion, SortDirection} from 'src/agent_admin/type'
 
 // Decorator
 import {ErrorHandling} from 'src/shared/decorators/errors'
-
-enum SortDirection {
-  ASC = 'asc',
-  DESC = 'desc',
-}
 
 export interface Props {
   minions: Minion[]
@@ -51,7 +46,7 @@ class AgentControlTable extends PureComponent<Props, State> {
     this.state = {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
-      sortKey: 'name',
+      sortKey: 'host',
     }
   }
 
@@ -78,9 +73,9 @@ class AgentControlTable extends PureComponent<Props, State> {
   ): Minion[] {
     switch (direction) {
       case SortDirection.ASC:
-        return _.sortBy(hosts, e => e[key])
+        return _.sortBy(hosts, e => e[key].toLowerCase())
       case SortDirection.DESC:
-        return _.sortBy(hosts, e => e[key]).reverse()
+        return _.sortBy(hosts, e => e[key].toLowerCase()).reverse()
       default:
         return hosts
     }
@@ -202,7 +197,7 @@ class AgentControlTable extends PureComponent<Props, State> {
             message={'running agents included. keep going?'}
             buttonClassName={'btn btn-inline_block btn-default agent--btn'}
             cancelText={'Cancel'}
-            confirmText={'Go Run'}
+            confirmText={'OK'}
             onCancel={() => {}}
             onConfirm={onClickRun.bind(this)}
           />
@@ -226,9 +221,10 @@ class AgentControlTable extends PureComponent<Props, State> {
             message={'Agents with Telegraf installed are included. keep going?'}
             buttonClassName={'btn btn-inline_block btn-default agent--btn'}
             cancelText={'Cancel'}
-            confirmText={'Go Run'}
+            confirmText={'OK'}
             onCancel={() => {}}
             onConfirm={onClickInstall.bind(this)}
+            customClass={'agent-default-button'}
           />
         </div>
       </div>
@@ -259,7 +255,15 @@ class AgentControlTable extends PureComponent<Props, State> {
 
   private get AgentTableHeaderEachPage() {
     const {isAllCheck} = this.props
-    const {CheckWidth, IPWidth, HostWidth, StatusWidth} = AGENT_TABLE_SIZING
+    const {
+      CheckWidth,
+      StatusWidth,
+      HostWidth,
+      OSWidth,
+      OSVersionWidth,
+      IPWidth,
+      ActionWidth,
+    } = AGENT_CONTROL_TABLE_SIZING
     return (
       <div className="hosts-table--thead">
         <div className="hosts-table--tr">
@@ -272,25 +276,25 @@ class AgentControlTable extends PureComponent<Props, State> {
             />
           </div>
           <div
-            onClick={this.updateSort('name')}
-            className={this.sortableClasses('name')}
+            onClick={this.updateSort('host')}
+            className={this.sortableClasses('host')}
             style={{width: HostWidth}}
           >
             Host
             <span className="icon caret-up" />
           </div>
           <div
-            onClick={this.updateSort('OS')}
-            className={this.sortableClasses('OS')}
-            style={{width: IPWidth}}
+            onClick={this.updateSort('os')}
+            className={this.sortableClasses('os')}
+            style={{width: OSWidth}}
           >
             OS
             <span className="icon caret-up" />
           </div>
           <div
-            onClick={this.updateSort('OSVersion')}
-            className={this.sortableClasses('OSVersion')}
-            style={{width: IPWidth}}
+            onClick={this.updateSort('osVersion')}
+            className={this.sortableClasses('osVersion')}
+            style={{width: OSVersionWidth}}
           >
             OS Version
             <span className="icon caret-up" />
@@ -311,8 +315,8 @@ class AgentControlTable extends PureComponent<Props, State> {
             Enabled
           </div>
           <div
-            className={this.sortableClasses('cpu')}
-            style={{width: StatusWidth}}
+            className="hosts-table--th list-type"
+            style={{width: ActionWidth}}
           >
             Action
           </div>

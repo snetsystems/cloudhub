@@ -241,54 +241,36 @@ export class AgentControl extends PureComponent<Props, State> {
 
     this.setState({controlPageStatus: RemoteDataState.Loading})
 
-    const getLocalCpGetDirTelegrafPromise = runLocalCpGetDirTelegraf(
+    const getLocalPkgInstallTelegrafPromise = runLocalPkgInstallTelegraf(
       saltMasterUrl,
       saltMasterToken,
       _.values(host).toString()
     )
 
-    getLocalCpGetDirTelegrafPromise.then(pLocalCpGetDirTelegrafData => {
+    getLocalPkgInstallTelegrafPromise.then(pLocalPkgInstallTelegrafData => {
       this.setState({
         minionLog:
-          'Dir Telegraf ' +
+          'Install Response' +
           '\n' +
-          yaml.dump(pLocalCpGetDirTelegrafData.data.return[0]),
+          yaml.dump(pLocalPkgInstallTelegrafData.data.return[0]),
       })
 
-      const getLocalPkgInstallTelegrafPromise = runLocalPkgInstallTelegraf(
+      const getLocalGroupAdduserPromise = runLocalGroupAdduser(
         saltMasterUrl,
         saltMasterToken,
         _.values(host).toString()
       )
 
-      getLocalPkgInstallTelegrafPromise.then(pLocalPkgInstallTelegrafData => {
+      getLocalGroupAdduserPromise.then(pLocalGroupAdduserData => {
         this.setState({
           minionLog:
             this.state.minionLog +
             '\n' +
-            'Install Response' +
+            'Group Add User' +
             '\n' +
-            yaml.dump(pLocalPkgInstallTelegrafData.data.return[0]),
-        })
-
-        const getLocalGroupAdduserPromise = runLocalGroupAdduser(
-          saltMasterUrl,
-          saltMasterToken,
-          _.values(host).toString()
-        )
-
-        getLocalGroupAdduserPromise.then(pLocalGroupAdduserData => {
-          this.setState({
-            minionLog:
-              this.state.minionLog +
-              '\n' +
-              'Group Add User' +
-              '\n' +
-              yaml.dump(pLocalGroupAdduserData.data.return[0]),
-          })
+            yaml.dump(pLocalGroupAdduserData.data.return[0]),
         })
       })
-
       this.getWheelKeyListAll()
     })
   }

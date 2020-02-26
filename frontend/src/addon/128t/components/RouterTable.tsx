@@ -173,7 +173,7 @@ class RouterTable extends PureComponent<Props, State> {
             cellBackgroundColor={cellBackgroundColor}
           />
           <this.HeadingButton
-            buttonName={'firmware'}
+            buttonName={'Firmware'}
             isNew={this.newChecker(firmware.files)}
             handleOnChoose={handleOnChoose}
             handleFocusedBtnName={handleFocusedBtnName}
@@ -182,7 +182,7 @@ class RouterTable extends PureComponent<Props, State> {
             isDisabled={firmware.isFailed}
           />
           <this.HeadingButton
-            buttonName={'config'}
+            buttonName={'Config'}
             isNew={this.newChecker(config.files)}
             handleFocusedBtnName={handleFocusedBtnName}
             items={this.extractionFilesName(config.files)}
@@ -215,6 +215,7 @@ class RouterTable extends PureComponent<Props, State> {
   private get TableHeader() {
     const {
       ASSETID,
+      IPADDRESS,
       LOCATIONCOORDINATES,
       MANAGEMENTCONNECTED,
       BANDWIDTH_AVG,
@@ -248,7 +249,19 @@ class RouterTable extends PureComponent<Props, State> {
           className={sortableClasses({sortKey, sortDirection, key: 'assetId'})}
           style={{width: ASSETID}}
         >
-          Asset ID
+          Router
+          <span className="icon caret-up" />
+        </div>
+        <div
+          onClick={this.updateSort('ipAddress')}
+          className={sortableClasses({
+            sortKey,
+            sortDirection,
+            key: 'ipAddress',
+          })}
+          style={{width: IPADDRESS}}
+        >
+          IP Address
           <span className="icon caret-up" />
         </div>
         <div

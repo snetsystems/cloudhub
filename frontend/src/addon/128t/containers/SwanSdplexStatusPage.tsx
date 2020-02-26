@@ -3,8 +3,10 @@ import _ from 'lodash'
 import React, {useState, useEffect} from 'react'
 import {useQuery} from '@apollo/react-hooks'
 
+// Container Components
+import GridLayoutRenderer from 'src/addon/128t/containers/GridLayoutRenderer'
+
 // Components
-import GridLayoutRenderer from 'src/addon/128t/components/GridLayoutRenderer'
 import RouterSourceIndicator from 'src/addon/128t/components/RouterSourceIndicator'
 import ResetLayoutTips from 'src/addon/128t/components/ResetLayoutTips'
 import PageSpinner from 'src/shared/components/PageSpinner'
@@ -65,6 +67,9 @@ interface NodeDetail {
     startTime: string
     softwareVersion: string
   }
+  deviceInterfaces: {
+    nodes: NetworkInterfaces[]
+  }
 }
 
 interface CPU {
@@ -82,6 +87,23 @@ interface Disk {
   capacity: number
   usage: number
   partition: string
+}
+
+interface NetworkInterfaces {
+  networkInterfaces: {
+    nodes: Addresses[]
+  }
+}
+
+interface Addresses {
+  name: string
+  addresses: {
+    nodes: IpAddress[]
+  }
+}
+
+interface IpAddress {
+  ipAddress: string
 }
 
 interface Variables {
@@ -192,7 +214,7 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
           nodes,
           (emits: EmitData, node: Node) => {
             let router: Router = {
-              assetId: node.name,
+              name: node.name,
               locationCoordinates: node.locationCoordinates,
               managementConnected: node.managementConnected,
               bandwidth_avg: node.bandwidth_avg,
@@ -211,6 +233,7 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
               try {
                 router = {
                   ...router,
+                  assetId: _.get(nodeDetail, 'assetId'),
                   enabled: _.get(nodeDetail, 'enabled'),
                   role: _.get(nodeDetail, 'role'),
                   startTime: _.get(nodeDetail, 'state.startTime'),
@@ -251,6 +274,57 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
                       ? (rootPatitions[0].usage / rootPatitions[0].capacity) *
                           100
                       : null
+                  })(),
+                  ipAddress: (() => {
+                    const networkInterfaces: NetworkInterfaces[] = _.get(
+                      nodeDetail,
+                      'deviceInterfaces.nodes'
+                    )
+
+                    const addresses: Addresses[] = _.reduce(
+                      networkInterfaces,
+                      (
+                        addresses: Addresses[],
+                        networkInterface: NetworkInterfaces
+                      ) => {
+                        const addressesNode: Addresses[] = _.reduce(
+                          _.get(networkInterface, 'networkInterfaces.nodes'),
+                          (addresses: Addresses[], value) => {
+                            addresses = [...addresses, value]
+                            return addresses
+                          },
+                          []
+                        )
+
+                        addressesNode.map((m: Addresses) => addresses.push(m))
+
+                        return addresses
+                      },
+                      []
+                    )
+
+                    const ipAddress: IpAddress[] = _.reduce(
+                      addresses.filter(
+                        f => f.name.toLowerCase().indexOf('wan') > -1
+                      ),
+                      (ipAddress: IpAddress[], address: Addresses) => {
+                        const ipAddresses: IpAddress[] = _.reduce(
+                          _.get(address, 'addresses.nodes'),
+                          (ipAddress: IpAddress[], value) => {
+                            ipAddress = [...ipAddress, value]
+                            return ipAddress
+                          },
+                          []
+                        )
+                        ipAddresses.map((m: IpAddress) => ipAddress.push(m))
+                        return ipAddress
+                      },
+                      []
+                    )
+
+                    return ipAddress
+                      .filter(f => f.ipAddress != null)
+                      .map(m => m.ipAddress)[0]
                   })(),
                 }
               } catch (e) {
