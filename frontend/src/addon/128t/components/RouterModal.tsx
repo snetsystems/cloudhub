@@ -24,6 +24,7 @@ interface Props {
   headingTitle: string
   isUseButton: boolean
   confirmButtonStatus: ComponentStatus
+  customClass?: string
 }
 
 const RouterModal = (props: Props): JSX.Element => {
@@ -40,6 +41,7 @@ const RouterModal = (props: Props): JSX.Element => {
     headingTitle,
     isUseButton,
     confirmButtonStatus,
+    customClass,
   } = props
 
   return (
@@ -70,6 +72,7 @@ const RouterModal = (props: Props): JSX.Element => {
                     onConfirm()
                   }}
                   status={confirmButtonStatus}
+                  customClass={customClass}
                 />
                 <Button
                   text={cancelText}

@@ -378,7 +378,7 @@ export class AgentConfiguration extends PureComponent<
       this.setState({
         serviceMeasurements: getServiceRunning,
         defaultMeasurements: getDefaultMeasure,
-        measurementsTitle: host + '-' + ip,
+        measurementsTitle: host + ' - ' + ip,
         measurementsStatus: RemoteDataState.Done,
       })
     })
@@ -737,7 +737,7 @@ export class AgentConfiguration extends PureComponent<
           : null}
         <div className="panel-heading">
           <h2
-            className="panel-title"
+            className="panel-title use-user-select"
             style={{
               width: '100%',
             }}

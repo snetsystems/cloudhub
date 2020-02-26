@@ -129,17 +129,24 @@ export class AgentMinions extends PureComponent<Props, State> {
       focusedHost: host,
       minionsPageStatus: RemoteDataState.Loading,
     })
-    const getLocalGrainsItemPromise = getLocalGrainsItem(
-      saltMasterUrl,
-      saltMasterToken,
-      host
-    )
-    getLocalGrainsItemPromise.then(pLocalGrainsItemData => {
+    if (this.state.MinionsObject[host].ip.length > 0) {
+      const getLocalGrainsItemPromise = getLocalGrainsItem(
+        saltMasterUrl,
+        saltMasterToken,
+        host
+      )
+      getLocalGrainsItemPromise.then(pLocalGrainsItemData => {
+        this.setState({
+          minionLog: yaml.dump(pLocalGrainsItemData.data.return[0][host]),
+          minionsPageStatus: RemoteDataState.Done,
+        })
+      })
+    } else {
       this.setState({
-        minionLog: yaml.dump(pLocalGrainsItemData.data.return[0][host]),
+        minionLog: '',
         minionsPageStatus: RemoteDataState.Done,
       })
-    })
+    }
   }
 
   handleWheelKeyCommand = (host: string, cmdstatus: string) => {

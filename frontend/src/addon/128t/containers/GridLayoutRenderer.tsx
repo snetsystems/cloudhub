@@ -397,8 +397,9 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
             this.setState({isModalVisible: !this.state.isModalVisible})
           }}
           message={<this.userSelectOrderList />}
+          customClass={'agent-default-button'}
           cancelText={'Cancel'}
-          confirmText={'Go Run'}
+          confirmText={'OK'}
           isVisible={this.state.isModalVisible}
           isUseButton={false}
           confirmButtonStatus={
@@ -494,6 +495,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   }
 
   private handleFocusedBtnName = ({buttonName}: {buttonName: string}): void => {
+    buttonName = buttonName.toLowerCase()
     this.setState({
       focusedBtn: buttonName,
       sendToDirectory: this.defaultCollectorDirectory + buttonName + '/',

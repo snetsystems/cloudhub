@@ -11,19 +11,14 @@ import PageSpinner from 'src/shared/components/PageSpinner'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 // Constants
-import {AGENT_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
+import {AGENT_CONFIGURATION_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
 
 // Types
 import {RemoteDataState} from 'src/types'
-import {Minion} from 'src/agent_admin/type'
+import {Minion, SortDirection} from 'src/agent_admin/type'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
-
-enum SortDirection {
-  ASC = 'asc',
-  DESC = 'desc',
-}
 
 interface Props {
   minions: Minion[]
@@ -47,7 +42,7 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     this.state = {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
-      sortKey: 'name',
+      sortKey: 'host',
     }
   }
 
@@ -74,9 +69,9 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
   ): Minion[] {
     switch (direction) {
       case SortDirection.ASC:
-        return _.sortBy(hosts, e => e[key])
+        return _.sortBy(hosts, e => e[key].toLowerCase())
       case SortDirection.DESC:
-        return _.sortBy(hosts, e => e[key]).reverse()
+        return _.sortBy(hosts, e => e[key].toLowerCase()).reverse()
       default:
         return hosts
     }
@@ -206,30 +201,36 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
   }
 
   private get AgentTableHeaderEachPage() {
-    const {IPWidth, HostWidth, StatusWidth} = AGENT_TABLE_SIZING
+    const {
+      HostWidth,
+      OSWidth,
+      OSVersionWidth,
+      IPWidth,
+      ActionWidth,
+    } = AGENT_CONFIGURATION_TABLE_SIZING
     return (
       <div className="hosts-table--thead">
         <div className="hosts-table--tr">
           <div
-            onClick={this.updateSort('name')}
-            className={this.sortableClasses('name')}
+            onClick={this.updateSort('host')}
+            className={this.sortableClasses('host')}
             style={{width: HostWidth}}
           >
             Host
             <span className="icon caret-up" />
           </div>
           <div
-            onClick={this.updateSort('OS')}
-            className={this.sortableClasses('OS')}
-            style={{width: IPWidth}}
+            onClick={this.updateSort('os')}
+            className={this.sortableClasses('os')}
+            style={{width: OSWidth}}
           >
             OS
             <span className="icon caret-up" />
           </div>
           <div
-            onClick={this.updateSort('OSVersion')}
-            className={this.sortableClasses('OSVersion')}
-            style={{width: IPWidth}}
+            onClick={this.updateSort('osVersion')}
+            className={this.sortableClasses('osVersion')}
+            style={{width: OSVersionWidth}}
           >
             OS Version
             <span className="icon caret-up" />
@@ -244,8 +245,8 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
             <span className="icon caret-up" />
           </div>
           <div
-            className={this.sortableClasses('cpu')}
-            style={{width: StatusWidth}}
+            className="hosts-table--th list-type"
+            style={{width: ActionWidth}}
           >
             Action
           </div>
