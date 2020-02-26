@@ -2,9 +2,10 @@
 import React, {PureComponent} from 'react'
 
 // Constants
-import {AGENT_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
+import {AGENT_MINION_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
 import {AgentMinions} from 'src/agent_admin/containers/AgentMinions'
 import {OSIndicator} from 'src/agent_admin/components/AgentIndicator'
+import {TableBodyRowItem} from 'src/agent_admin/reusable/'
 
 // Types
 import {Minion} from 'src/agent_admin/type'
@@ -54,45 +55,46 @@ class AgentMinionsTableRow extends PureComponent<Props> {
   private get TableRowEachPage() {
     const {idx, minions, onClickModal, handleWheelKeyCommand} = this.props
     const {osVersion, os, ip, host, status} = minions
-    const {StatusWidth, HostWidth, IPWidth} = AGENT_TABLE_SIZING
+    const {
+      HostWidth,
+      OSWidth,
+      OSVersionWidth,
+      IPWidth,
+      StatusWidth,
+      OperationWidth,
+    } = AGENT_MINION_TABLE_SIZING
 
     return (
       <div
         className={this.focusedClasses(host)}
         onClick={this.handleOnClickTableRow}
       >
-        <div className="hosts-table--td" style={{width: HostWidth}}>
-          {host}
-        </div>
-
-        <div className="hosts-table--td" style={{width: IPWidth}}>
-          <OSIndicator os={os} />
-        </div>
-
-        <div className="hosts-table--td" style={{width: IPWidth}}>
-          {osVersion}
-        </div>
-
-        <div className="hosts-table--td" style={{width: IPWidth}}>
-          {ip}
-        </div>
-        <div className="hosts-table--td" style={{width: StatusWidth}}>
-          {this.isStatusIndicator(status)}
-        </div>
-        <div
-          className="hosts-table--td"
-          id={`table-row--select${idx}`}
-          style={{width: StatusWidth}}
-        >
-          {onClickModal({
-            name: '=',
-            host,
-            status,
-            _this: this,
-            handleWheelKeyCommand,
-            idx,
-          })}
-        </div>
+        <TableBodyRowItem title={host} width={HostWidth} />
+        <TableBodyRowItem
+          title={os ? <OSIndicator os={os} /> : ''}
+          width={OSWidth}
+        />
+        <TableBodyRowItem title={osVersion} width={OSVersionWidth} />
+        <TableBodyRowItem title={ip} width={IPWidth} />
+        <TableBodyRowItem
+          title={this.isStatusIndicator(status)}
+          width={StatusWidth}
+        />
+        <TableBodyRowItem
+          title={
+            <div id={`table-row--select${idx}`}>
+              {onClickModal({
+                name: '=',
+                host,
+                status,
+                _this: this,
+                handleWheelKeyCommand,
+                idx,
+              })}
+            </div>
+          }
+          width={OperationWidth}
+        />
       </div>
     )
   }

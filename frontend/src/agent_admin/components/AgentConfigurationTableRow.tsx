@@ -6,7 +6,7 @@ import {AgentConfiguration} from 'src/agent_admin/containers/AgentConfiguration'
 import {OSIndicator} from 'src/agent_admin/components/AgentIndicator'
 
 // Constants
-import {AGENT_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
+import {AGENT_CONFIGURATION_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
 
 // Types
 import {Minion} from 'src/agent_admin/type'
@@ -56,7 +56,13 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
   private get TableRowEachPage(): JSX.Element {
     const {minions} = this.props
     const {osVersion, os, ip, host, isRunning} = minions
-    const {StatusWidth, HostWidth, IPWidth} = AGENT_TABLE_SIZING
+    const {
+      HostWidth,
+      OSWidth,
+      OSVersionWidth,
+      IPWidth,
+      ActionWidth,
+    } = AGENT_CONFIGURATION_TABLE_SIZING
 
     return (
       <div
@@ -67,11 +73,11 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
           {host}
         </div>
 
-        <div className="hosts-table--td" style={{width: IPWidth}}>
+        <div className="hosts-table--td" style={{width: OSWidth}}>
           <OSIndicator os={os} />
         </div>
 
-        <div className="hosts-table--td" style={{width: IPWidth}}>
+        <div className="hosts-table--td" style={{width: OSVersionWidth}}>
           {osVersion}
         </div>
 
@@ -79,7 +85,7 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
           {ip}
         </div>
 
-        <div className="hosts-table--td" style={{width: StatusWidth}}>
+        <div className="hosts-table--td" style={{width: ActionWidth}}>
           <button
             className="btn btn-default action-call"
             onClick={this.handleOnClickAction}
