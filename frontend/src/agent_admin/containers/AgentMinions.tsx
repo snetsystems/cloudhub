@@ -125,11 +125,16 @@ export class AgentMinions extends PureComponent<Props, State> {
 
   onClickTableRowCall = (host: string) => () => {
     const {saltMasterUrl, saltMasterToken} = this.props
+    const {MinionsObject} = this.state
     this.setState({
       focusedHost: host,
       minionsPageStatus: RemoteDataState.Loading,
     })
-    if (this.state.MinionsObject[host].ip.length > 0) {
+
+    if (
+      MinionsObject[host].os.length > 0 &&
+      MinionsObject[host].ip.length > 0
+    ) {
       const getLocalGrainsItemPromise = getLocalGrainsItem(
         saltMasterUrl,
         saltMasterToken,
