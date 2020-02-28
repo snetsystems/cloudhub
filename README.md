@@ -1,4 +1,4 @@
-# SCMP (Snet Cloud Monitoring Portal) - Special edition for 0.9.1
+# SCMP (Snet Cloud Monitoring Portal) - Special edition for 0.9.2
 
 ## Intro
 
@@ -32,12 +32,12 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
 - Continuous installation and deployment for telegraf's agent and configuration.
 - Optionable Addon features
   - 128T Router & SDPlex Features.
-<p align="center">
-  <img src="https://github.com/snetsystems/cmp/blob/dev-0.9.1/docs/images/infrastructure.png"/>
-  <img src="https://github.com/snetsystems/cmp/blob/dev-0.9.1/docs/images/applications.png"/>
-  <img src="https://github.com/snetsystems/cmp/blob/dev-0.9.1/docs/images/agent_configure.png"/>
-  <img src="https://github.com/snetsystems/cmp/blob/dev-0.9.1/docs/images/128T.png"/>
-</p>
+    <p align="center">
+      <img src="https://github.com/snetsystems/cmp/blob/dev-0.9.2/docs/images/infrastructure.png"/>
+      <img src="https://github.com/snetsystems/cmp/blob/dev-0.9.2/docs/images/applications.png"/>
+      <img src="https://github.com/snetsystems/cmp/blob/dev-0.9.2/docs/images/agent_configure.png"/>
+      <img src="https://github.com/snetsystems/cmp/blob/dev-0.9.2/docs/images/128T.png"/>
+    </p>
 
 ## Setting in VSCode
 
