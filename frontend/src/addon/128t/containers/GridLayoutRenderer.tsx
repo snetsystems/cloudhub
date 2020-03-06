@@ -431,7 +431,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
           <div className="list-section--row list-section--row-first list-section--row-last">
             {chooseMenu}
           </div>
-          <h4 className="list-section-title">Send to Collector Directory</h4>
+          <h4 className="list-section-title">Destination Directory</h4>
           <input
             type="text"
             className={'form-control input-sm'}
