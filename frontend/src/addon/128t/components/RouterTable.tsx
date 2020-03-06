@@ -190,7 +190,7 @@ class RouterTable extends PureComponent<Props, State> {
             isDisabled={config.isFailed}
           />
           <GridLayoutSearchBar
-            placeholder="Filter by Asset ID..."
+            placeholder="Filter by Router..."
             onSearch={this.updateSearchTerm}
           />
         </PanelHeader>
