@@ -215,7 +215,7 @@ export class AgentConfiguration extends PureComponent<
         focusedHost: '',
         focusedHostIp: '',
         configScript: '',
-        isApplyBtnDisabled: false,
+        isApplyBtnDisabled: true,
       })
 
       const getItem = getLocalStorage('AgentConfigPage')
@@ -523,7 +523,7 @@ export class AgentConfiguration extends PureComponent<
             />
             <AgentConfigModal
               visible={this.state.isModalVisible}
-              headingTitle={'Check for You'}
+              headingTitle={'Confirm'}
               message={'Do you want to import previous changes?'}
               cancelText={'No'}
               confirmText={'Yes'}

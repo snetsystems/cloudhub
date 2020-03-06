@@ -95,7 +95,7 @@ class AgentControlModal extends PureComponent<Props, State> {
         <OverlayTechnology visible={isVisible}>
           <OverlayContainer>
             <OverlayHeading
-              title="Check for You"
+              title="Confirm"
               onDismiss={() => {
                 this.setState({isVisible: !this.state.isVisible})
                 onCancel()
