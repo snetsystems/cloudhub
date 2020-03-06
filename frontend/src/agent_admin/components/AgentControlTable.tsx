@@ -194,7 +194,9 @@ class AgentControlTable extends PureComponent<Props, State> {
             disabled={isCheckedMinions}
             minions={minions}
             name={'RUN'}
-            message={'running agents included. keep going?'}
+            message={
+              'There is already run a collector at least one, do you go on?'
+            }
             buttonClassName={'btn btn-inline_block btn-default agent--btn'}
             cancelText={'Cancel'}
             confirmText={'OK'}
@@ -206,7 +208,9 @@ class AgentControlTable extends PureComponent<Props, State> {
             disabled={isCheckedMinions}
             minions={minions}
             name={'STOP'}
-            message={'stoped agents included. keep going?'}
+            message={
+              'There is already stoped a collector at least one, do you go on?'
+            }
             buttonClassName={'btn btn-inline_block btn-default agent--btn'}
             cancelText={'Cancel'}
             confirmText={'Go STOP'}
@@ -218,7 +222,9 @@ class AgentControlTable extends PureComponent<Props, State> {
             disabled={isCheckedMinions}
             minions={minions}
             name={'INSTALL'}
-            message={'Agents with Telegraf installed are included. keep going?'}
+            message={
+              'There is already installed a collector at least one, do you go on?'
+            }
             buttonClassName={'btn btn-inline_block btn-default agent--btn'}
             cancelText={'Cancel'}
             confirmText={'OK'}
