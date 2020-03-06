@@ -474,9 +474,11 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
             </>
           ) : (
             <>
-              <h4 className="list-section-title">Host not selected</h4>
+              <h4 className="list-section-title caution-word">
+                Host not selected
+              </h4>
               <div className="list-section-container">
-                <div className="list-section--row list-section--row-first list-section--row-last">
+                <div className="list-section--row list-section--row-first list-section--row-last caution-word">
                   Empty
                 </div>
               </div>
