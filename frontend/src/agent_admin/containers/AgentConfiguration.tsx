@@ -215,7 +215,7 @@ export class AgentConfiguration extends PureComponent<
         focusedHost: '',
         focusedHostIp: '',
         configScript: '',
-        isApplyBtnDisabled: false,
+        isApplyBtnDisabled: true,
       })
 
       const getItem = getLocalStorage('AgentConfigPage')
