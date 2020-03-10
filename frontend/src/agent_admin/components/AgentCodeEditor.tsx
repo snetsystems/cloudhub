@@ -16,8 +16,13 @@ class AgentCodeEditor extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = {
-      script: props.configScript,
+      script: '',
     }
+  }
+
+  public componentDidMount() {
+    const {configScript} = this.props
+    this.setState({script: configScript})
   }
 
   public componentWillReceiveProps(newProps: Props) {
@@ -61,7 +66,8 @@ class AgentCodeEditor extends PureComponent<Props, State> {
     ____: EditorChange,
     script: string
   ) => {
-    return this.setState({script})
+    const {onChangeScript} = this.props
+    return onChangeScript(script)
   }
 
   private updateChange = (
