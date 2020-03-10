@@ -31,6 +31,9 @@
         "--google-client-id=31132339126-ugobni9kn8dd0o6ic1868ou6u0pnrcam.apps.googleusercontent.com",
         "--google-client-secret=vXbc-qGznYka-BehNclBkqfp",
         "--public-url=https://localhost",
+        "--auth0-domain=https://cloudhub.auth0.com",
+        "--auth0-client-id=UBGn72F6kGpXxRL0qDFB17RqhN1SStCy",
+        "--auth0-client-secret=ipcQQy3SkMPL6SiCWF-Lm5KtX5xsz7Ty_IiBUYfOSJcUuKKJRXAxf7Q6clxD4_zG",
         "--custom-link=128T Condutor:https://211.189.153.40"
       ],
       "showLog": true
