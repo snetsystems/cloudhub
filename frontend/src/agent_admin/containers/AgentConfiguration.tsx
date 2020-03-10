@@ -323,7 +323,6 @@ export class AgentConfiguration extends PureComponent<
   }
 
   public onClickTableRowCall = (host: string, ip: string): void => {
-    if (this.state.focusedHost === host) return
     const {saltMasterUrl, saltMasterToken} = this.props
 
     this.setState({
@@ -343,11 +342,8 @@ export class AgentConfiguration extends PureComponent<
     )
 
     getLocalFileReadPromise.then(pLocalFileReadData => {
-      const hostLocalFileReadData = pLocalFileReadData.data.return[0][
-        host
-      ].substring(0, pLocalFileReadData.data.return[0][host].lastIndexOf('\n'))
       this.setState({
-        configScript: hostLocalFileReadData,
+        configScript: pLocalFileReadData.data.return[0][host],
         selectHost: host,
         collectorConfigStatus: RemoteDataState.Done,
         configPageStatus: RemoteDataState.Done,
