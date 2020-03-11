@@ -13,17 +13,12 @@ interface State {
 }
 
 class AgentCodeEditor extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props)
-    this.state = {
-      script: props.configScript,
-    }
+  public static getDerivedStateFromProps(nextProps: Props, prevState: State) {
+    return {...prevState, script: nextProps.configScript}
   }
 
-  public componentWillReceiveProps(newProps: Props) {
-    if (this.state.script !== newProps.configScript) {
-      this.setState({script: newProps.configScript})
-    }
+  public state = {
+    script: '',
   }
 
   public render() {
@@ -54,6 +49,7 @@ class AgentCodeEditor extends PureComponent<Props, State> {
       />
     )
   }
+
   private onTouchStart = (): void => {}
 
   private beforeChange = (
@@ -61,7 +57,8 @@ class AgentCodeEditor extends PureComponent<Props, State> {
     ____: EditorChange,
     script: string
   ) => {
-    return this.setState({script})
+    const {onChangeScript} = this.props
+    return onChangeScript(script)
   }
 
   private updateChange = (
