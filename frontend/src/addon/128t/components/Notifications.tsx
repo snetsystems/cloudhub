@@ -26,14 +26,14 @@ const defaultSuccessNotification: NotificationExcludingMessage = {
 export const notify_128TGetMasterDirFiles_Successed = (sourceName: string) => ({
   ...defaultSuccessNotification,
   icon: 'server2',
-  message: `128T Get Master Files Successfully. ${sourceName}`,
+  message: `SWAN Get Master Files Successfully. ${sourceName}`,
 })
 
 export const notify_128TGetMasterDirFiles_Failed = (
   error: string
 ): Notification => ({
   ...defaultErrorNotification,
-  message: `128T Get Master Files Failed, ${error}`,
+  message: `SWAN Get Master Files Failed, ${error}`,
 })
 
 export const notify_128TSendFilesToCollector_Successed = (
@@ -41,12 +41,12 @@ export const notify_128TSendFilesToCollector_Successed = (
 ) => ({
   ...defaultSuccessNotification,
   icon: 'server2',
-  message: `128T Send Files To Collector Successfully. ${sourceName} file`,
+  message: `SWAN Send Files To Collector Successfully. ${sourceName} file`,
 })
 
 export const notify_128TSendFilesToCollector_Failed = (
   error: string
 ): Notification => ({
   ...defaultErrorNotification,
-  message: `128T Send Files To Collector Failed, ${error} file`,
+  message: `SWAN Send Files To Collector Failed, ${error} file`,
 })

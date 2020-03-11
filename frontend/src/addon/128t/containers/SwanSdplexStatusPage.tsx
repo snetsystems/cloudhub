@@ -398,7 +398,7 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
     <Page className="hosts-list-page">
       <Page.Header fullWidth={true}>
         <Page.Header.Left>
-          <Page.Title title="128T/Oncue - Status" />
+          <Page.Title title="SWAN/Oncue - Status" />
         </Page.Header.Left>
         <Page.Header.Right>
           <RouterSourceIndicator addons={addons} />

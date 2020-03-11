@@ -212,7 +212,7 @@ class SideNav extends PureComponent<Props> {
           >
             <NavHeader
               link={`${sourcePrefix}/add-on/128t-status`}
-              title="128T/Oncue"
+              title="SWAN/Oncue"
             />
             <NavListItem link={`${sourcePrefix}/add-on/128t-status`}>
               Status
