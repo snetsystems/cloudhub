@@ -51,7 +51,7 @@ const AdminCMPPage = ({me, source, params: {tab}}) => (
   <Page>
     <Page.Header>
       <Page.Header.Left>
-        <Page.Title title="Cloud Smart Hub Admin" />
+        <Page.Title title="Cloud Hub Admin" />
       </Page.Header.Left>
       <Page.Header.Right />
     </Page.Header>

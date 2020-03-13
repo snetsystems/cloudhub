@@ -21,7 +21,7 @@ const defaultSuccessNotification: NotificationExcludingMessage = {
   duration: FIVE_SECONDS,
 }
 
-//  Cloud Smart Hub Addon/128T Sources Notifications
+//  Cloud Hub Addon/128T Sources Notifications
 //  ----------------------------------------------------------------------------
 export const notify_128TGetMasterDirFiles_Successed = (sourceName: string) => ({
   ...defaultSuccessNotification,
