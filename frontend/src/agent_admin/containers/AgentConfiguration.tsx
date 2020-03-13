@@ -86,6 +86,14 @@ interface State {
   isGetLocalStorage: boolean
   isModalVisible: boolean
   isCollectorInstalled: boolean
+  isModalCall: boolean
+}
+
+interface LocalStorageAgentConfig {
+  focusedHost?: string
+  focusedHostIp?: string
+  configScript?: string
+  isApplyBtnDisabled?: boolean
 }
 
 const defaultMeasurementsData = [
@@ -187,6 +195,7 @@ export class AgentConfiguration extends PureComponent<
       isGetLocalStorage: false,
       isModalVisible: false,
       isCollectorInstalled: false,
+      isModalCall: false,
     }
   }
 
@@ -197,10 +206,26 @@ export class AgentConfiguration extends PureComponent<
       saltMasterToken
     )
 
-    const isInstallCheck = _.includes(_.map(hostListObject, 'isInstall'), true)
+    const isInstallCheck = _.filter(hostListObject, ['isInstall', true])
+
+    if (!this.state.isModalCall) {
+      const getItem: LocalStorageAgentConfig = getLocalStorage(
+        'AgentConfigPage'
+      )
+      const {isApplyBtnDisabled, focusedHost} = getItem
+      const getHostCompare = _.find(isInstallCheck, ['host', focusedHost])
+
+      if (!isApplyBtnDisabled && Boolean(getHostCompare)) {
+        this.setState({
+          isModalCall: true,
+          isModalVisible: true,
+          isGetLocalStorage: !isApplyBtnDisabled,
+        })
+      }
+    }
 
     this.setState({
-      isCollectorInstalled: isInstallCheck,
+      isCollectorInstalled: Boolean(isInstallCheck.length),
       MinionsObject: hostListObject,
       configPageStatus: RemoteDataState.Done,
       collectorConfigStatus: RemoteDataState.Done,
@@ -220,16 +245,6 @@ export class AgentConfiguration extends PureComponent<
         configScript: '',
         isApplyBtnDisabled: true,
       })
-
-      const getItem = getLocalStorage('AgentConfigPage')
-      const {isApplyBtnDisabled} = getItem
-
-      if (!isApplyBtnDisabled) {
-        this.setState({
-          isModalVisible: true,
-          isGetLocalStorage: !isApplyBtnDisabled,
-        })
-      }
     } else {
       this.setState({configPageStatus: RemoteDataState.Done})
       notify(notifyAgentConnectFailed('Token is not valid.'))
@@ -467,7 +482,6 @@ export class AgentConfiguration extends PureComponent<
     } = getItem
 
     if (answer) {
-      await this.getWheelKeyListAll()
       this.setState({
         configScript,
         focusedHost,
@@ -476,6 +490,9 @@ export class AgentConfiguration extends PureComponent<
         isInitEditor: false,
         measurementsStatus: RemoteDataState.Loading,
       })
+
+      await this.getWheelKeyListAll()
+
       const getLocalServiceGetRunningPromise = getLocalServiceGetRunning(
         saltMasterUrl,
         saltMasterToken,
