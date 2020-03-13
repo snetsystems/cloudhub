@@ -26,6 +26,7 @@ interface Props {
   onClickTableRow: AgentConfiguration['onClickTableRowCall']
   onClickAction: AgentConfiguration['onClickActionCall']
   focusedHost: string
+  isCollectorInstalled: boolean
 }
 
 interface State {
@@ -106,7 +107,7 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
   }
 
   private get AgentTableContents(): JSX.Element {
-    const {minions, configPageStatus} = this.props
+    const {minions, configPageStatus, isCollectorInstalled} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
     const sortedHosts: Minion[] = this.getSortedHosts(
@@ -124,6 +125,10 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     }
     if (configPageStatus === RemoteDataState.Done && sortedHosts.length === 0) {
       return this.NoSortedHostsState
+    }
+
+    if (configPageStatus === RemoteDataState.Done && !isCollectorInstalled) {
+      return this.NoInstalledCollector
     }
 
     return this.AgentTableWithHosts
@@ -157,6 +162,14 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     return (
       <div className="agent--state generic-empty-state">
         <h4>There are no hosts that match the search criteria</h4>
+      </div>
+    )
+  }
+
+  private get NoInstalledCollector(): JSX.Element {
+    return (
+      <div className="agent--state generic-empty-state">
+        <h4 style={{margin: '90px 0'}}>There is no installed collector.</h4>
       </div>
     )
   }

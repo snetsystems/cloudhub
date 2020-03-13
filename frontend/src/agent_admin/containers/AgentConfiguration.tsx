@@ -77,7 +77,6 @@ interface State {
   focusedMeasure: string
   focusedMeasurePosition: {top: number; left: number}
   configScript: string
-  selectHost: string
   responseMessage: string
   defaultService: string[]
   focusedHost: string
@@ -86,6 +85,7 @@ interface State {
   isApplyBtnDisabled: boolean
   isGetLocalStorage: boolean
   isModalVisible: boolean
+  isCollectorInstalled: boolean
 }
 
 const defaultMeasurementsData = [
@@ -178,7 +178,6 @@ export class AgentConfiguration extends PureComponent<
       focusedMeasure: '',
       focusedMeasurePosition: {top: null, left: null},
       configScript: '',
-      selectHost: '',
       responseMessage: '',
       focusedHost: '',
       focusedHostIp: '',
@@ -187,6 +186,7 @@ export class AgentConfiguration extends PureComponent<
       isApplyBtnDisabled: true,
       isGetLocalStorage: false,
       isModalVisible: false,
+      isCollectorInstalled: false,
     }
   }
 
@@ -197,7 +197,10 @@ export class AgentConfiguration extends PureComponent<
       saltMasterToken
     )
 
+    const isInstallCheck = _.includes(_.map(hostListObject, 'isInstall'), true)
+
     this.setState({
+      isCollectorInstalled: isInstallCheck,
       MinionsObject: hostListObject,
       configPageStatus: RemoteDataState.Done,
       collectorConfigStatus: RemoteDataState.Done,
@@ -249,9 +252,9 @@ export class AgentConfiguration extends PureComponent<
     })
   }
 
-  public async componentDidUpdate(nextProps) {
+  public async componentDidUpdate(prevProps: Props) {
     if (
-      nextProps.saltMasterToken !== this.props.saltMasterToken &&
+      prevProps.saltMasterToken !== this.props.saltMasterToken &&
       this.props.saltMasterToken !== '' &&
       this.props.saltMasterToken !== null
     ) {
@@ -259,7 +262,7 @@ export class AgentConfiguration extends PureComponent<
       this.setState({configPageStatus: RemoteDataState.Loading})
     } else {
       if (
-        nextProps.saltMasterToken !== this.props.saltMasterToken &&
+        prevProps.saltMasterToken !== this.props.saltMasterToken &&
         (this.props.saltMasterToken === null ||
           this.props.saltMasterToken === '')
       ) {
@@ -348,7 +351,7 @@ export class AgentConfiguration extends PureComponent<
       ].substring(0, pLocalFileReadData.data.return[0][host].lastIndexOf('\n'))
       this.setState({
         configScript: hostLocalFileReadData,
-        selectHost: host,
+        focusedHost: host,
         collectorConfigStatus: RemoteDataState.Done,
         configPageStatus: RemoteDataState.Done,
       })
@@ -421,7 +424,7 @@ export class AgentConfiguration extends PureComponent<
 
   public onClickApplyCall = () => {
     const {saltMasterUrl, saltMasterToken} = this.props
-    const {selectHost, configScript} = this.state
+    const {focusedHost, configScript} = this.state
     this.setState({
       configPageStatus: RemoteDataState.Loading,
       collectorConfigStatus: RemoteDataState.Loading,
@@ -430,7 +433,7 @@ export class AgentConfiguration extends PureComponent<
     const getLocalFileWritePromise = getLocalFileWrite(
       saltMasterUrl,
       saltMasterToken,
-      selectHost,
+      focusedHost,
       configScript
     )
 
@@ -438,13 +441,13 @@ export class AgentConfiguration extends PureComponent<
       this.setState({
         isApplyBtnDisabled: true,
         isGetLocalStorage: false,
-        responseMessage: pLocalFileWriteData.data.return[0][selectHost],
+        responseMessage: pLocalFileWriteData.data.return[0][focusedHost],
       })
 
       const getLocalServiceReStartTelegrafPromise = runLocalServiceReStartTelegraf(
         saltMasterUrl,
         saltMasterToken,
-        selectHost
+        focusedHost
       )
 
       getLocalServiceReStartTelegrafPromise.then((): void => {
@@ -709,7 +712,12 @@ export class AgentConfiguration extends PureComponent<
   }
 
   private renderAgentPageTop = () => {
-    const {MinionsObject, configPageStatus, focusedHost} = this.state
+    const {
+      MinionsObject,
+      configPageStatus,
+      focusedHost,
+      isCollectorInstalled,
+    } = this.state
 
     return (
       <AgentConfigurationTable
@@ -718,6 +726,7 @@ export class AgentConfiguration extends PureComponent<
         onClickTableRow={this.onClickTableRowCall}
         onClickAction={this.onClickActionCall}
         focusedHost={focusedHost}
+        isCollectorInstalled={isCollectorInstalled}
       />
     )
   }
