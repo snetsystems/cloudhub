@@ -4,6 +4,7 @@ import React, {PureComponent} from 'react'
 // Components
 import {AgentControl} from 'src/agent_admin/containers/AgentControl'
 import {OSIndicator} from 'src/agent_admin/components/AgentIndicator'
+import {TableBodyRowItem} from 'src/agent_admin/reusable/'
 
 // Constants
 import {AGENT_CONTROL_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
@@ -50,40 +51,39 @@ class AgentControlTableRow extends PureComponent<Props> {
 
     return (
       <div className={this.focusedClasses()}>
-        <div className="hosts-table--td" style={{width: CheckWidth}}>
-          <input
-            type="checkbox"
-            checked={isCheck}
-            onClick={this.getHandleMinionCheck}
-            readOnly
-          />
-        </div>
-        <div className="hosts-table--td" style={{width: HostWidth}}>
-          {host}
-        </div>
-
-        <div className="hosts-table--td" style={{width: OSWidth}}>
-          <OSIndicator os={os} />
-        </div>
-
-        <div className="hosts-table--td" style={{width: OSVersionWidth}}>
-          {osVersion}
-        </div>
-
-        <div className="hosts-table--td" style={{width: IPWidth}}>
-          {ip}
-        </div>
-        <div className="hosts-table--td" style={{width: StatusWidth}}>
-          {isInstall === true ? 'Enable' : 'Disable'}
-        </div>
-        <div className="hosts-table--td" style={{width: ActionWidth}}>
-          <button
-            className="btn btn-default action-call"
-            onClick={this.handleOnClickAction}
-          >
-            {isRunning === true ? <>■</> : <>▶</>}
-          </button>
-        </div>
+        <TableBodyRowItem
+          title={
+            <input
+              type="checkbox"
+              checked={isCheck}
+              onClick={this.getHandleMinionCheck}
+              readOnly
+            />
+          }
+          width={CheckWidth}
+        />
+        <TableBodyRowItem title={host} width={HostWidth} />
+        <TableBodyRowItem
+          title={os ? <OSIndicator os={os} /> : ''}
+          width={OSWidth}
+        />
+        <TableBodyRowItem title={osVersion} width={OSVersionWidth} />
+        <TableBodyRowItem title={ip} width={IPWidth} />
+        <TableBodyRowItem
+          title={isInstall === true ? 'Enable' : 'Disable'}
+          width={StatusWidth}
+        />
+        <TableBodyRowItem
+          title={
+            <button
+              className="btn btn-default action-call"
+              onClick={this.handleOnClickAction}
+            >
+              {isRunning === true ? <>■</> : <>▶</>}
+            </button>
+          }
+          width={ActionWidth}
+        />
       </div>
     )
   }

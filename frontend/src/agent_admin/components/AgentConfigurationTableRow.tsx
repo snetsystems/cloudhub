@@ -4,6 +4,7 @@ import React, {PureComponent, MouseEvent} from 'react'
 // Components
 import {AgentConfiguration} from 'src/agent_admin/containers/AgentConfiguration'
 import {OSIndicator} from 'src/agent_admin/components/AgentIndicator'
+import {TableBodyRowItem} from 'src/agent_admin/reusable/'
 
 // Constants
 import {AGENT_CONFIGURATION_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
@@ -69,30 +70,24 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
         className={this.focusedClasses(host)}
         onClick={this.handleOnClickTableRow}
       >
-        <div className="hosts-table--td" style={{width: HostWidth}}>
-          {host}
-        </div>
-
-        <div className="hosts-table--td" style={{width: OSWidth}}>
-          <OSIndicator os={os} />
-        </div>
-
-        <div className="hosts-table--td" style={{width: OSVersionWidth}}>
-          {osVersion}
-        </div>
-
-        <div className="hosts-table--td" style={{width: IPWidth}}>
-          {ip}
-        </div>
-
-        <div className="hosts-table--td" style={{width: ActionWidth}}>
-          <button
-            className="btn btn-default action-call"
-            onClick={this.handleOnClickAction}
-          >
-            <>{isRunning === true ? '■' : '▶'}</>
-          </button>
-        </div>
+        <TableBodyRowItem title={host} width={HostWidth} />
+        <TableBodyRowItem
+          title={os ? <OSIndicator os={os} /> : ''}
+          width={OSWidth}
+        />
+        <TableBodyRowItem title={osVersion} width={OSVersionWidth} />
+        <TableBodyRowItem title={ip} width={IPWidth} />
+        <TableBodyRowItem
+          title={
+            <button
+              className="btn btn-default action-call"
+              onClick={this.handleOnClickAction}
+            >
+              <>{isRunning === true ? '■' : '▶'}</>
+            </button>
+          }
+          width={ActionWidth}
+        />
       </div>
     )
   }
