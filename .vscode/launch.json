@@ -20,10 +20,10 @@
         "--cert=${workspaceFolder}/backend/cmd/cmp/scmp_self_signed.pem",
         // "-u=salt:http://61.250.122.43:8000/run",
         "-u=salt:http://61.250.122.140:8000/run",
-        "-u=128T-Oncue:https://211.189.153.40/api/v1/graphql",
+        "-u=swan:https://211.189.153.40/api/v1/graphql",
         // "-k=salt:d579ab9d2f188d8d9beb8a65aabc80b5db2506b2e5989e526b9616d427e55201", // 61.250.122.43
         "-k=salt:175ac9a46642172763dba1c9ee9e4e17d9e57c25c750335067c0815be7d72a0b", // 61.250.122.140
-        "-k=128T-Oncue:eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiYWRtaW4iLCJzY29wZXMiOlsiY29uZmlndXJlIl0sImlhdCI6MTU3NDAzNjAxM30.beW77E48pOhNKHNuFB6q343hg5XGbV7HzUcI-8LaV4RJTOiOALpA4NPWF4nDmFcveVuGuH8rETnLNbeXFa2zmssbCg_TfaAt49yyq_Meg43TYXKOYl5pl7mJ1k-nte0zW4fX2J6brRE5ouvU3e2ssvRVmvsnuqWxdQ1Doqm4e2zLaVIblMsb80DpSr7AZfbF5Ld11KwUPIxAsU7LIN_tfKfy4-LPqwN78eD6fGcb_u6m2sm5jVZihuwKmzhIVEVIHtnGbr2oSrAHLrpeokLCGctXF1b7pCt7pCWIeBqyr7EjjOx90d8LoH49idMPLymDR_NPi-8Cs0GXszJtW82DuA", // 211.189.153.40
+        "-k=swan:eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiYWRtaW4iLCJzY29wZXMiOlsiY29uZmlndXJlIl0sImlhdCI6MTU3NDAzNjAxM30.beW77E48pOhNKHNuFB6q343hg5XGbV7HzUcI-8LaV4RJTOiOALpA4NPWF4nDmFcveVuGuH8rETnLNbeXFa2zmssbCg_TfaAt49yyq_Meg43TYXKOYl5pl7mJ1k-nte0zW4fX2J6brRE5ouvU3e2ssvRVmvsnuqWxdQ1Doqm4e2zLaVIblMsb80DpSr7AZfbF5Ld11KwUPIxAsU7LIN_tfKfy4-LPqwN78eD6fGcb_u6m2sm5jVZihuwKmzhIVEVIHtnGbr2oSrAHLrpeokLCGctXF1b7pCt7pCWIeBqyr7EjjOx90d8LoH49idMPLymDR_NPi-8Cs0GXszJtW82DuA", // 211.189.153.40
         "-c=./cmp-canned/",
         "--protoboards-path=./cmp-protoboards/",
         // "--auth-duration=24h", //default:"720h(30d)", 0 means authentication expires on browser close
@@ -36,7 +36,7 @@
         "--auth0-domain=https://cloudhub.auth0.com",
         "--auth0-client-id=UBGn72F6kGpXxRL0qDFB17RqhN1SStCy",
         "--auth0-client-secret=ipcQQy3SkMPL6SiCWF-Lm5KtX5xsz7Ty_IiBUYfOSJcUuKKJRXAxf7Q6clxD4_zG",
-        "--custom-link=128T Condutor:https://211.189.153.40"
+        "--custom-link=SWAN Condutor:https://211.189.153.40"
       ],
       "showLog": true
       // "logOutput": "debugger"
@@ -78,15 +78,15 @@
         "-d",
         "-u=salt:http://61.250.122.43:8000/",
         "-k=salt:lndXJlIl0sImlhdCI6MTU3NDAzNjAxM30",
-        "-u=128T-Oncue:https://211.189.153.40/api/v1/graphql",
-        "-k=128T-Oncue:eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiYWRtaW4iLCJzY29wZXMiOlsiY29uZmlndXJlIl0sImlhdCI6MTU3NDAzNjAxM30.beW77E48pOhNKHNuFB6q343hg5XGbV7HzUcI-8LaV4RJTOiOALpA4NPWF4nDmFcveVuGuH8rETnLNbeXFa2zmssbCg_TfaAt49yyq_Meg43TYXKOYl5pl7mJ1k-nte0zW4fX2J6brRE5ouvU3e2ssvRVmvsnuqWxdQ1Doqm4e2zLaVIblMsb80DpSr7AZfbF5Ld11KwUPIxAsU7LIN_tfKfy4-LPqwN78eD6fGcb_u6m2sm5jVZihuwKmzhIVEVIHtnGbr2oSrAHLrpeokLCGctXF1b7pCt7pCWIeBqyr7EjjOx90d8LoH49idMPLymDR_NPi-8Cs0GXszJtW82DuA",
+        "-u=swan:https://211.189.153.40/api/v1/graphql",
+        "-k=swan:eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiYWRtaW4iLCJzY29wZXMiOlsiY29uZmlndXJlIl0sImlhdCI6MTU3NDAzNjAxM30.beW77E48pOhNKHNuFB6q343hg5XGbV7HzUcI-8LaV4RJTOiOALpA4NPWF4nDmFcveVuGuH8rETnLNbeXFa2zmssbCg_TfaAt49yyq_Meg43TYXKOYl5pl7mJ1k-nte0zW4fX2J6brRE5ouvU3e2ssvRVmvsnuqWxdQ1Doqm4e2zLaVIblMsb80DpSr7AZfbF5Ld11KwUPIxAsU7LIN_tfKfy4-LPqwN78eD6fGcb_u6m2sm5jVZihuwKmzhIVEVIHtnGbr2oSrAHLrpeokLCGctXF1b7pCt7pCWIeBqyr7EjjOx90d8LoH49idMPLymDR_NPi-8Cs0GXszJtW82DuA",
         "-c=./cmp-canned/",
         "--protoboards-path=./cmp-protoboards/",
         // "--auth-duration=24h", //default:"720h(30d)", 0 means authentication expires on browser close
         "-t=74c1e9e2450886060b5bf736b935cd0bf960837f",
         "-i=38eee21805ad07ffd8d4",
         "-s=cf355e9c219a0efa7556bb1de6cb740bbc3388b0",
-        "--custom-link=128T Condutor:https://211.189.153.40"
+        "--custom-link=SWAN Condutor:https://211.189.153.40"
       ],
       "showLog": true
     },

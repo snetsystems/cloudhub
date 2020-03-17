@@ -21,19 +21,13 @@ const defaultSuccessNotification: NotificationExcludingMessage = {
   duration: FIVE_SECONDS,
 }
 
-//  Cloud Hub Addon/128T Sources Notifications
+//  Cloud Hub Addon/SWAN Sources Notifications
 //  ----------------------------------------------------------------------------
-export const notify_128TGetMasterDirFiles_Successed = (sourceName: string) => ({
-  ...defaultSuccessNotification,
-  icon: 'server2',
-  message: `SWAN Get Master Files Successfully. ${sourceName}`,
-})
-
 export const notify_128TGetMasterDirFiles_Failed = (
   error: string
 ): Notification => ({
   ...defaultErrorNotification,
-  message: `SWAN Get Master Files Failed, ${error}`,
+  message: `Getting file list is failed on the Master, ${error}`,
 })
 
 export const notify_128TSendFilesToCollector_Successed = (
@@ -41,12 +35,12 @@ export const notify_128TSendFilesToCollector_Successed = (
 ) => ({
   ...defaultSuccessNotification,
   icon: 'server2',
-  message: `SWAN Send Files To Collector Successfully. ${sourceName} file`,
+  message: `Sending ${sourceName} is successful`,
 })
 
 export const notify_128TSendFilesToCollector_Failed = (
   error: string
 ): Notification => ({
   ...defaultErrorNotification,
-  message: `SWAN Send Files To Collector Failed, ${error} file`,
+  message: `Sending ${error} is failed`,
 })

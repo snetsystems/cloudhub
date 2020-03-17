@@ -521,5 +521,5 @@ export enum DataType {
 
 export enum AddonType {
   salt = 'salt',
-  router128T = '128T-Oncue',
+  router128T = 'swan',
 }

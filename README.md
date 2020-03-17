@@ -31,12 +31,12 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
 - Visualization added by criteria of Applications.
 - Continuous installation and deployment for telegraf's agent and configuration.
 - Optionable Addon features
-  - 128T Router & SDPlex Features.
+  - SWAN Router & SDPlex(Oncue) Features.
     <p align="center">
-      <img src="https://github.com/snetsystems/cmp/blob/dev-0.9.2/docs/images/infrastructure.png"/>
-      <img src="https://github.com/snetsystems/cmp/blob/dev-0.9.2/docs/images/applications.png"/>
-      <img src="https://github.com/snetsystems/cmp/blob/dev-0.9.2/docs/images/agent_configure.png"/>
-      <img src="https://github.com/snetsystems/cmp/blob/dev-0.9.2/docs/images/128T.png"/>
+      <img src="https://github.com/snetsystems/cmp/blob/master/docs/images/infrastructure.png"/>
+      <img src="https://github.com/snetsystems/cmp/blob/master/docs/images/applications.png"/>
+      <img src="https://github.com/snetsystems/cmp/blob/master/docs/images/agent_configure.png"/>
+      <img src="https://github.com/snetsystems/cmp/blob/master/docs/images/128T.png"/>
     </p>
 
 ## Setting in VSCode
