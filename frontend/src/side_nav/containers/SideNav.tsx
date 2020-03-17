@@ -169,7 +169,7 @@ class SideNav extends PureComponent<Props> {
             <NavListItem
               link={`${sourcePrefix}/admin-cmp/current-organization`}
             >
-              Cloud Smart Hub
+              Cloud Hub
             </NavListItem>
             <NavListItem link={`${sourcePrefix}/admin-influxdb/databases`}>
               InfluxDB
@@ -205,21 +205,21 @@ class SideNav extends PureComponent<Props> {
         ) : null}
         {isUsing128T ? (
           <NavBlock
-            highlightWhen={['128t-status', '128t-setting']}
+            highlightWhen={['swan-status', 'swan-setting']}
             icon="cube"
-            link={`${sourcePrefix}/add-on/128t-status`}
+            link={`${sourcePrefix}/add-on/swan-status`}
             location={location}
           >
             <NavHeader
-              link={`${sourcePrefix}/add-on/128t-status`}
-              title="128T/Oncue"
+              link={`${sourcePrefix}/add-on/swan-status`}
+              title="SWAN/Oncue"
             />
-            <NavListItem link={`${sourcePrefix}/add-on/128t-status`}>
+            <NavListItem link={`${sourcePrefix}/add-on/swan-status`}>
               Status
             </NavListItem>
-            <NavListItem link={`${sourcePrefix}/add-on/128t-setting`}>
+            {/* <NavListItem link={`${sourcePrefix}/add-on/swan-setting`}>
               Setting
-            </NavListItem>
+            </NavListItem> */}
           </NavBlock>
         ) : null}
         <div className="sidebar--item cursor-default symbol-company" />

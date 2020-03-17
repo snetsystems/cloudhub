@@ -10,10 +10,10 @@ const RouterSourceIndicator: SFC<Props> = ({addons}): JSX.Element => {
   let routerConnectTipsText = ''
 
   if (addons) {
-    let oncue = addons.find(addon => addon.name.toUpperCase() === '128T-ONCUE')
-    if (oncue !== undefined) {
-      routerConnectTipsText = `<h1>${oncue.name.toUpperCase()} URL:</h1><p><code>${
-        oncue.url
+    let swan = addons.find(addon => addon.name.toUpperCase() === 'SWAN')
+    if (swan !== undefined) {
+      routerConnectTipsText = `<h1>${swan.name.toUpperCase()} URL:</h1><p><code>${
+        swan.url
       }</code></p>`
     } else {
       routerConnectTipsText = `<p>not connected</p>`

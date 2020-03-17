@@ -17,11 +17,14 @@ const Login = ({authData: {auth}}) => {
     <div>
       <Notifications />
       <SplashPage>
-        <h1 className="auth-text-logo">
-          <b>Cloud Smart Hub</b>
+        <h1
+          className="auth-text-logo"
+          style={{position: 'absolute', top: '-9999px', left: '-9999px'}}
+        >
+          Cloud Hub
         </h1>
         <p>
-          <b>{VERSION}</b> / Time-Series Data Visualization
+          <b>{VERSION}</b> / Real-Time Applications Monitoring
         </p>
         {auth.links &&
           auth.links.map(({name, login, label}) => (

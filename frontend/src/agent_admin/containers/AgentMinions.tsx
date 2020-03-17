@@ -131,10 +131,7 @@ export class AgentMinions extends PureComponent<Props, State> {
       minionsPageStatus: RemoteDataState.Loading,
     })
 
-    if (
-      MinionsObject[host].os.length > 0 &&
-      MinionsObject[host].ip.length > 0
-    ) {
+    if (MinionsObject[host].status === 'Accept') {
       const getLocalGrainsItemPromise = getLocalGrainsItem(
         saltMasterUrl,
         saltMasterToken,

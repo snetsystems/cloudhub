@@ -1,25 +1,25 @@
 #!/bin/bash
 
 function disable_systemd {
-    systemctl disable csh
-    rm -f /lib/systemd/system/csh.service
+    systemctl disable cloudhub
+    rm -f /lib/systemd/system/cloudhub.service
 }
 
 function disable_update_rcd {
-    update-rc.d -f csh remove
-    rm -f /etc/init.d/csh
+    update-rc.d -f cloudhub remove
+    rm -f /etc/init.d/cloudhub
 }
 
 function disable_chkconfig {
-    chkconfig --del csh
-    rm -f /etc/init.d/csh
+    chkconfig --del cloudhub
+    rm -f /etc/init.d/cloudhub
 }
 
 if [[ -f /etc/redhat-release ]]; then
     # RHEL-variant logic
     if [[ "$1" = "0" ]]; then
-	# csh is no longer installed, remove from init system
-	rm -f /etc/default/csh
+	# cloudhub is no longer installed, remove from init system
+	rm -f /etc/default/cloudhub
 	
 	which systemctl &>/dev/null
 	if [[ $? -eq 0 ]]; then
@@ -33,7 +33,7 @@ elif [[ -f /etc/lsb-release ]]; then
     # Debian/Ubuntu logic
     if [[ "$1" != "upgrade" ]]; then
 	# Remove/purge
-	rm -f /etc/default/csh
+	rm -f /etc/default/cloudhub
 	
 	which systemctl &>/dev/null
 	if [[ $? -eq 0 ]]; then
@@ -48,8 +48,8 @@ elif [[ -f /etc/os-release ]]; then
     if [[ $ID = "amzn" ]]; then
 	# Amazon Linux logic
 	if [[ "$1" = "0" ]]; then
-	    # csh is no longer installed, remove from init system
-	    rm -f /etc/default/csh
+	    # cloudhub is no longer installed, remove from init system
+	    rm -f /etc/default/cloudhub
 	    disable_chkconfig
 	fi
     fi

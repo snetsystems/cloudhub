@@ -1,28 +1,28 @@
 #!/bin/bash
-# If you modify this, please make sure to also edit csh.service
+# If you modify this, please make sure to also edit cloudhub.service
 
 # Script to execute when starting
-SCRIPT="/usr/bin/csh"
+SCRIPT="/usr/bin/cloudhub"
 export HOST="0.0.0.0"
 export PORT="8888"
 #export PORT="443"
-#export TLS_CERTIFICATE="/usr/lib/csh/key/scmp_self_signed.pem"
-export BOLT_PATH="/var/lib/csh/cmp-v1.db"
-export CANNED_PATH="/usr/share/csh/cmp-canned"
-export PROTOBOARDS_PATH="/usr/share/csh/cmp-protoboards"
+#export TLS_CERTIFICATE="/usr/lib/cloudhub/key/scmp_self_signed.pem"
+export BOLT_PATH="/var/lib/cloudhub/cmp-v1.db"
+export CANNED_PATH="/usr/share/cloudhub/cmp-canned"
+export PROTOBOARDS_PATH="/usr/share/cloudhub/cmp-protoboards"
 
 # Options to pass to the script on startup
-. /etc/default/csh
+. /etc/default/cloudhub
 SCRIPT_OPTS=${CSH_OPTS}
 
 # User to run the process under
 RUNAS=snet
 
 # PID file for process
-PIDFILE=csh
+PIDFILE=cloudhub
 
 # Where to redirect logging to
-LOGFILE=/var/log/csh/csh.log
+LOGFILE=/var/log/cloudhub/cloudhub.log
 
 start() {   
     if [[ -f $PIDFILE ]]; then

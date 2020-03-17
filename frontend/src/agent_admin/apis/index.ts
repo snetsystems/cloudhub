@@ -26,30 +26,28 @@ export const getMinionKeyListAllAsync = async (
   pToken: string
 ): Promise<MinionsObject> => {
   const minions: MinionsObject = {}
-  const info = await getRunnerManageAllowed(pUrl, pToken)
-
-  const info1 = await getLocalGrainsItems(
-    pUrl,
-    pToken,
-    Object.keys(info.data.return[0]).toString()
-  )
+  const info = await Promise.all([
+    getWheelKeyListAll(pUrl, pToken),
+    getRunnerManageAllowed(pUrl, pToken),
+    getLocalGrainsItems(pUrl, pToken, ''),
+  ])
 
   const info2 = await Promise.all([
     getLocalServiceEnabledTelegraf(
       pUrl,
       pToken,
-      Object.keys(info.data.return[0]).toString()
+      info[0].data.return[0].data.return.minions
     ),
     getLocalServiceStatusTelegraf(
       pUrl,
       pToken,
-      Object.keys(info.data.return[0]).toString()
+      info[0].data.return[0].data.return.minions
     ),
   ])
 
-  const keyList = Object.keys(info.data.return[0])
-  const ipList = info.data.return[0]
-  const osList = info1.data.return[0]
+  const keyList = info[0].data.return[0].data.return.minions
+  const ipList = info[1].data.return[0]
+  const osList = info[2].data.return[0]
 
   const installList = info2[0].data.return[0]
   const statusList = info2[1].data.return[0]
@@ -153,7 +151,6 @@ export const getMinionsOS = async (
     pUrl,
     pToken,
     _.values(newMinions)
-      .filter(f => f.ip != null && f.ip != '')
       .map(m => m.host)
       .toString()
   )

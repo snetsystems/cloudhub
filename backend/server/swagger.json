@@ -1,8 +1,8 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "Cloud Smart Hub",
-    "description": "API endpoints for Cloud Smart Hub",
+    "title": "CloudHub",
+    "description": "API endpoints for CloudHub",
     "version": "0.9.2"
   },
   "schemes": ["http"],
@@ -2314,7 +2314,7 @@
       "get": {
         "tags": ["layouts", "mappings"],
         "summary": "Mappings between app names and measurements",
-        "description": "Mappings provide a means to alias measurement names found within a telegraf database and application layouts found within Cloud Smart Hub\n",
+        "description": "Mappings provide a means to alias measurement names found within a telegraf database and application layouts found within CloudHub\n",
         "responses": {
           "200": {
             "description": "An array of mappings",
@@ -2760,7 +2760,7 @@
       "post": {
         "tags": ["organizations", "users"],
         "summary": "Create new organization",
-        "description": "Creates a Cloud Smart Hub organization in the store",
+        "description": "Creates a CloudHub organization in the store",
         "parameters": [
           {
             "name": "organization",
@@ -2856,7 +2856,7 @@
       "patch": {
         "tags": ["organizations", "users"],
         "summary": "Update existing organization",
-        "description": "Updates a Cloud Smart Hub organization in the store",
+        "description": "Updates a CloudHub organization in the store",
         "parameters": [
           {
             "name": "id",
@@ -2918,7 +2918,7 @@
       "delete": {
         "tags": ["organizations", "users"],
         "summary": "Delete organization",
-        "description": "Deletes a Cloud Smart Hub organization in the store",
+        "description": "Deletes a CloudHub organization in the store",
         "parameters": [
           {
             "name": "id",
@@ -2962,8 +2962,8 @@
     "/users": {
       "get": {
         "tags": ["organizations", "users"],
-        "summary": "Retrieve all Cloud Smart Hub users within the current organization",
-        "description": "Returns all Cloud Smart Hub users within the current organization from the store",
+        "summary": "Retrieve all CloudHub users within the current organization",
+        "description": "Returns all CloudHub users within the current organization from the store",
         "responses": {
           "200": {
             "description": "Successfully retrieved all users from the store",
@@ -2994,7 +2994,7 @@
       "post": {
         "tags": ["organizations", "users"],
         "summary": "Create new user",
-        "description": "Creates a Cloud Smart Hub user in the store",
+        "description": "Creates a CloudHub user in the store",
         "parameters": [
           {
             "name": "user",
@@ -3096,7 +3096,7 @@
       "patch": {
         "tags": ["organizations", "users"],
         "summary": "Update existing user",
-        "description": "Updates a Cloud Smart Hub user in the store",
+        "description": "Updates a CloudHub user in the store",
         "parameters": [
           {
             "name": "id",
@@ -3170,7 +3170,7 @@
       "delete": {
         "tags": ["organizations", "users"],
         "summary": "Delete user",
-        "description": "Deletes a Cloud Smart Hub user in the store",
+        "description": "Deletes a CloudHub user in the store",
         "parameters": [
           {
             "name": "id",
@@ -3628,7 +3628,7 @@
   "definitions": {
     "Organization": {
       "type": "object",
-      "description": "A group of Cloud Smart Hub users with various role-based access-control.",
+      "description": "A group of CloudHub users with various role-based access-control.",
       "properties": {
         "defaultRole": {
           "description": "The default role that new users in this organization will have.",
@@ -3691,7 +3691,7 @@
     },
     "User": {
       "type": "object",
-      "description": "A Cloud Smart Hub user with role-based access-control to an organization's resources.",
+      "description": "A CloudHub user with role-based access-control to an organization's resources.",
       "properties": {
         "id": {
           "type": "string",
@@ -3777,7 +3777,7 @@
       "type": "object",
       "properties": {
         "name": {
-          "description": "A Cloud Smart Hub user's role within an organization.",
+          "description": "A CloudHub user's role within an organization.",
           "type": "string",
           "enum": ["member", "viewer", "editor", "admin"]
         },
@@ -4756,7 +4756,7 @@
         },
         "organization": {
           "type": "string",
-          "description": "Organization that this source belongs to, when Cloud Smart Hub auth is in use",
+          "description": "Organization that this source belongs to, when CloudHub auth is in use",
           "default": "default"
         },
         "role": {
@@ -6137,7 +6137,7 @@
             "type": "object",
             "properties": {
               "name": {
-                "description": "Currently, 'salt' and '128T-Oncue' supported",
+                "description": "Currently, 'salt' and 'SWAN' supported",
                 "type": "string"
               },
               "url": {
@@ -6183,7 +6183,7 @@
           "statusFeed": "https://www.snetgroup.info/",
           "custom": [
             {
-              "name": "128T Condutor",
+              "name": "SWAN Condutor",
               "url": "https://211.189.153.40"
             }
           ]
@@ -6204,7 +6204,7 @@
             "token": "lndXJlIl0sImlhdCI6MTU3NDAzNjAxM30"
           },
           {
-            "name": "128T-Oncue",
+            "name": "SWAN",
             "url": "https://211.189.153.40/api/v1/graphql",
             "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiYWRtaW4iLCJzY29wZXMiOlsiY29uZmlndXJlIl0sImlhdCI6MTU3NDAzNjAxM30.beW77E48pOhNKHNuFB6q343hg5XGbV7HzUcI-8LaV4RJTOiOALpA4NPWF4nDmFcveVuGuH8rETnLNbeXFa2zmssbCg_TfaAt49yyq_Meg43TYXKOYl5pl7mJ1k-nte0zW4fX2J6brRE5ouvU3e2ssvRVmvsnuqWxdQ1Doqm4e2zLaVIblMsb80DpSr7AZfbF5Ld11KwUPIxAsU7LIN_tfKfy4-LPqwN78eD6fGcb_u6m2sm5jVZihuwKmzhIVEVIHtnGbr2oSrAHLrpeokLCGctXF1b7pCt7pCWIeBqyr7EjjOx90d8LoH49idMPLymDR_NPi-8Cs0GXszJtW82DuA"
           }

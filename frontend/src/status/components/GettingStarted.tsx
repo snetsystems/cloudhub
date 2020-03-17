@@ -11,15 +11,16 @@ class GettingStarted extends Component {
         <div className="getting-started">
           <div className="getting-started--cell intro">
             <h5>
-              <span className="icon cubo-uniform" /> Welcome to Cloud Smart Hub!
+              <span className="icon cubo-uniform" /> Welcome to Cloud Hub!
             </h5>
             <p>Follow the links below to explore CMP’s features.</p>
           </div>
           <div className="getting-started--cell">
             <p>
               <strong>Install the TICK Stack</strong>
-              <br />Save some time and use this handy tool to install the rest
-              of the stack:
+              <br />
+              Save some time and use this handy tool to install the rest of the
+              stack:
             </p>
             <p>
               <a href="https://github.com/influxdata/sandbox" target="_blank">
@@ -85,7 +86,8 @@ class GettingStarted extends Component {
               on our&nbsp;
               <a href="https://community.influxdata.com/" target="_blank">
                 Community Forum
-              </a>.
+              </a>
+              .
             </p>
           </div>
         </div>

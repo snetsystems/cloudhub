@@ -70,9 +70,9 @@ class AgentMinionsTable extends PureComponent<Props, State> {
   ): Minion[] {
     switch (direction) {
       case SortDirection.ASC:
-        return _.sortBy(hosts, e => e[key].toLowerCase())
+        return _.sortBy(hosts, e => e[key])
       case SortDirection.DESC:
-        return _.sortBy(hosts, e => e[key].toLowerCase()).reverse()
+        return _.sortBy(hosts, e => e[key]).reverse()
       default:
         return hosts
     }
@@ -261,8 +261,13 @@ class AgentMinionsTable extends PureComponent<Props, State> {
             IP
             <span className="icon caret-up" />
           </div>
-          <div className="hosts-table--th" style={{width: StatusWidth}}>
+          <div
+            onClick={this.updateSort('status')}
+            className={this.sortableClasses('status')}
+            style={{width: StatusWidth}}
+          >
             Status
+            <span className="icon caret-up" />
           </div>
           <div
             className="hosts-table--th list-type"

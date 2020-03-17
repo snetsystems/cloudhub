@@ -29,7 +29,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Kapacitor} from 'src/types'
 
 export const defaultName = 'My Kapacitor'
-export const kapacitorPort = '9092'
+export const kapacitorPort = '9094'
 
 interface Props {
   source: Source

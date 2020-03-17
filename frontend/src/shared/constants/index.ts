@@ -18,8 +18,8 @@ export const PERMISSIONS = {
     displayName: 'View Admin',
   },
   ViewCMP: {
-    description: 'Can use Cloud Smart Hub tools',
-    displayName: 'View Cloud Smart Hub',
+    description: 'Can use Cloud Hub tools',
+    displayName: 'View Cloud Hub',
   },
   CreateDatabase: {
     description: 'Can create databases',
@@ -453,7 +453,7 @@ export const DEFAULT_SOURCE = {
 }
 
 export const DEFAULT_KAPACITOR = {
-  url: 'http://kapacitor:9092/',
+  url: 'http://kapacitor:9094/',
   name: 'New Kapacitor',
   username: '',
   password: '',
@@ -521,5 +521,5 @@ export enum DataType {
 
 export enum AddonType {
   salt = 'salt',
-  router128T = '128T-Oncue',
+  router128T = 'swan',
 }

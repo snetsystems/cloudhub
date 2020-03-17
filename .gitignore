@@ -10,7 +10,7 @@ frontend/coverage
 # backend/cmd/cmp/cmp-protoboards
 
 # Binaries
-backend/cmd/cmp/csh
+backend/cmd/cmp/cloudhub
 # backend/cmd/cmp/scmp
 backend/cmd/cmp/cshctl
 backend/cmd/cmp/*debug*

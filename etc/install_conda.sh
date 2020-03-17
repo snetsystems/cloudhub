@@ -28,7 +28,7 @@ conda_insatll() {
     ### create salt-minion config
     DIR=$PREFIX/etc/salt
     if [ ! -d $DIR ]; then
-        mkdir -p $DIR
+        mkdir -p $DIR > /dev/null 2>&1
     fi
     echo "# Set the location of the salt master server. If the master server cannot be
     # resolved, then the minion will fail to start.
@@ -50,6 +50,51 @@ conda_insatll() {
         notifempty
         compress
     }" > /etc/logrotate.d/snet-salt
+
+    if [ "$MASTER_INSTALL" == "y" ]; then
+        DIR=$PREFIX/etc/salt/master.d
+        if [ ! -d $DIR ]; then
+            mkdir -p $DIR > /dev/null 2>&1
+        fi
+
+        yes w | pip install CherryPy
+
+        ### create salt-master service
+        echo "[Unit]
+        Description=The Salt Master
+        After=network.target
+
+        [Service]
+        KillMode=process
+        Type=notify
+        NotifyAccess=all
+        LimitNOFILE=100000
+        ExecStart=$PREFIX/envs/saltenv/bin/salt-master -c '$PREFIX/etc/salt'
+
+        [Install]
+        WantedBy=multi-user.target" > /usr/lib/systemd/system/snet-salt-master.service
+        systemctl enable snet-salt-master.service > /dev/null 2>&1
+        echo "Create Success snet-salt-master.service"
+
+        ### create salt-api service
+        echo "[Unit]
+        Description=The Salt API
+        After=network.target
+
+        [Service]
+        KillMode=process
+        Type=notify
+        NotifyAccess=all
+        LimitNOFILE=8192
+        ExecStart=$PREFIX/envs/saltenv/bin/salt-api -c '$PREFIX/etc/salt'
+
+        [Install]
+        WantedBy=multi-user.target" > /usr/lib/systemd/system/snet-salt-api.service
+        systemctl enable snet-salt-api.service > /dev/null 2>&1
+        echo "Create Success snet-salt-api.service"
+        echo "You need start 'snet-salt-master.service', 'snet-salt-api.service'"
+        echo "--------------------------------------------------"
+    fi
     
     ### create salt-minion service
     echo "[Unit]
@@ -65,8 +110,8 @@ conda_insatll() {
 
     [Install]
     WantedBy=multi-user.target" > /usr/lib/systemd/system/snet-salt-minion.service
-    systemctl daemon-reload
-    systemctl enable snet-salt-minion.service
+    systemctl daemon-reload > /dev/null 2>&1
+    systemctl enable snet-salt-minion.service > /dev/null 2>&1
     echo "Create Success snet-salt-minion.service"
     echo "Install Complete!"
     printf "Do you want to start the 'snet-salt-minion.service' [y/N]?" 
@@ -112,6 +157,12 @@ if [ "$MASTER" == "" ]; then
     printf "ERROR: Enter the Salt-Master IP, please try -h\\n" "$x"
     exit 1
 fi
+
+printf "Do you install Salt-Master?' [y/N]?" 
+read -r MASTER_INSTALL
+# if [ "$MASTER_INSTALL" == "y" ]; then
+#     systemctl start snet-salt-minion.service
+# fi
 
 echo "
 --------------------------------------------------

@@ -77,7 +77,7 @@ const csvName = () => {
   // Strange time format since `:` can't be used in a filename
   const now = moment().format('YYYY-MM-DD-HH-mm')
 
-  return `${now} Cloud Smart Hub Data.csv`
+  return `${now} Cloud Hub Data.csv`
 }
 
 export const downloadCSV = (csv: string, title: string) => {
