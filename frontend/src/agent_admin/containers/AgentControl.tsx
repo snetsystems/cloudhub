@@ -16,7 +16,6 @@ import {getMinionKeyListAllAsync} from 'src/agent_admin/apis'
 import {
   runLocalServiceStartTelegraf,
   runLocalServiceStopTelegraf,
-  runLocalCpGetDirTelegraf,
   runLocalPkgInstallTelegraf,
   runLocalGroupAdduser,
 } from 'src/shared/apis/saltStack'

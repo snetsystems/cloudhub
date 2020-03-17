@@ -8,7 +8,7 @@ UISOURCES := $(shell find frontend -type f -not \( -path frontend/build/\* -o -p
 
 unexport LDFLAGS
 LDFLAGS=-ldflags "-s -X main.version=${VERSION} -X main.commit=${COMMIT}"
-BINARY=csh
+BINARY=cloudhub
 CTLBINARY=cshctl
 GO111MODULE=on
 

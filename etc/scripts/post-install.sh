@@ -1,41 +1,41 @@
 #!/bin/bash
 
 BIN_DIR=/usr/bin
-DATA_DIR=/var/lib/csh
-LOG_DIR=/var/log/csh
-SCRIPT_DIR=/usr/lib/csh/scripts
+DATA_DIR=/var/lib/cloudhub
+LOG_DIR=/var/log/cloudhub
+SCRIPT_DIR=/usr/lib/cloudhub/scripts
 LOGROTATE_DIR=/etc/logrotate.d
 
 function install_init {
-    cp -f $SCRIPT_DIR/init.sh /etc/init.d/csh
-    chmod +x /etc/init.d/csh
+    cp -f $SCRIPT_DIR/init.sh /etc/init.d/cloudhub
+    chmod +x /etc/init.d/cloudhub
 }
 
 function install_systemd {
     # Remove any existing symlinks
-    rm -f /etc/systemd/system/csh.service
+    rm -f /etc/systemd/system/cloudhub.service
 
-    cp -f $SCRIPT_DIR/csh.service /lib/systemd/system/csh.service
-    systemctl enable csh || true
+    cp -f $SCRIPT_DIR/cloudhub.service /lib/systemd/system/cloudhub.service
+    systemctl enable cloudhub || true
     systemctl daemon-reload || true
 }
 
 function install_update_rcd {
-    update-rc.d csh defaults
+    update-rc.d cloudhub defaults
 }
 
 function install_chkconfig {
-    chkconfig --add csh
+    chkconfig --add cloudhub
 }
 
 # Remove legacy symlink, if it exists
-if [[ -L /etc/init.d/csh ]]; then
-    rm -f /etc/init.d/csh
+if [[ -L /etc/init.d/cloudhub ]]; then
+    rm -f /etc/init.d/cloudhub
 fi
 
 # Add defaults file, if it doesn't exist
-if [[ ! -f /etc/default/csh ]]; then
-    touch /etc/default/csh
+if [[ ! -f /etc/default/cloudhub ]]; then
+    touch /etc/default/cloudhub
 fi
 
 # Distribution-specific logic
@@ -65,12 +65,12 @@ elif [[ -f /etc/debian_version ]]; then
     which systemctl &>/dev/null
     if [[ $? -eq 0 ]]; then
     	install_systemd
-        systemctl restart csh || echo "WARNING: systemd not running."
+        systemctl restart cloudhub || echo "WARNING: systemd not running."
     else
     	# Assuming sysv
     	install_init
     	install_update_rcd
-        invoke-rc.d csh restart
+        invoke-rc.d cloudhub restart
     fi
 elif [[ -f /etc/os-release ]]; then
     source /etc/os-release

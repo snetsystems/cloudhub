@@ -24,7 +24,7 @@ const Login = ({authData: {auth}}) => {
           Cloud Hub
         </h1>
         <p>
-          <b>{VERSION}</b> / Time-Series Data Visualization
+          <b>{VERSION}</b> / Real-Time Applications Monitoring
         </p>
         {auth.links &&
           auth.links.map(({name, login, label}) => (

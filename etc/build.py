@@ -13,25 +13,25 @@ import argparse
 import json
 
 ################
-# CloudSmartHub Variables
+# CloudHub Variables
 ################
 
 # Packaging variables
-PACKAGE_NAME = "CloudSmartHub"
+PACKAGE_NAME = "CloudHub"
 USER = "snet"
 GROUP = "snet"
 INSTALL_ROOT_DIR = "/usr/bin"
-LOG_DIR = "/var/log/csh"
-DATA_DIR = "/var/lib/csh"
-SCRIPT_DIR = "/usr/lib/csh/scripts"
+LOG_DIR = "/var/log/cloudhub"
+DATA_DIR = "/var/lib/cloudhub"
+SCRIPT_DIR = "/usr/lib/cloudhub/scripts"
 LOGROTATE_DIR = "/etc/logrotate.d"
-CANNED_DIR = "/usr/share/csh/cmp-canned"
-PROTOBOARDS_DIR = "/usr/share/csh/cmp-protoboards"
-RESOURCES_DIR = "/usr/share/csh/resources"
-KEY_DIR = "/usr/lib/csh/key"
+CANNED_DIR = "/usr/share/cloudhub/cmp-canned"
+PROTOBOARDS_DIR = "/usr/share/cloudhub/cmp-protoboards"
+RESOURCES_DIR = "/usr/share/cloudhub/resources"
+KEY_DIR = "/usr/lib/cloudhub/key"
 
 INIT_SCRIPT = "etc/scripts/init.sh"
-SYSTEMD_SCRIPT = "etc/scripts/csh.service"
+SYSTEMD_SCRIPT = "etc/scripts/cloudhub.service"
 PREINST_SCRIPT = "etc/scripts/pre-install.sh"
 POSTINST_SCRIPT = "etc/scripts/post-install.sh"
 POSTUNINST_SCRIPT = "etc/scripts/post-uninstall.sh"
@@ -41,10 +41,10 @@ PROTOBOARDS_SCRIPTS = "backend/protoboards/*json"
 KEY_FILE = "backend/cmd/cmp/scmp_self_signed.pem"
 
 # Default AWS S3 bucket for uploads
-DEFAULT_BUCKET = "snetsystems.co.kr/csh/artifacts"
+DEFAULT_BUCKET = "snetsystems.co.kr/cloudhub/artifacts"
 
 CONFIGURATION_FILES = [
-    LOGROTATE_DIR + '/csh',
+    LOGROTATE_DIR + '/cloudhub',
 ]
 
 PACKAGE_LICENSE = "AGPLv3"
@@ -87,7 +87,7 @@ for f in CONFIGURATION_FILES:
     fpm_common_args += " --config-files {}".format(f)
 
 targets = {
-    'csh': './cmd/cmp',
+    'cloudhub': './cmd/cmp',
     # 'cshctl': './cmd/cmp',
 }
 
@@ -105,14 +105,14 @@ supported_packages = {
 }
 
 ################
-# CloudSmartHub Functions
+# CloudHub Functions
 ################
 
 
 def print_banner():
     logging.info("""
 
-CloudSmartHub
+CloudHub
 
   Build Script
 """)
@@ -150,8 +150,8 @@ def package_scripts(build_root, config_only=False, windows=False):
         logging.debug("Copying scripts to build directory.")
         files = [
             (INIT_SCRIPT, SCRIPT_DIR, "init.sh"),
-            (SYSTEMD_SCRIPT, SCRIPT_DIR, "csh.service"),
-            (LOGROTATE_SCRIPT, LOGROTATE_DIR, "csh"),
+            (SYSTEMD_SCRIPT, SCRIPT_DIR, "cloudhub.service"),
+            (LOGROTATE_SCRIPT, LOGROTATE_DIR, "cloudhub"),
             (KEY_FILE, KEY_DIR, "scmp_self_signed.pem")
         ]
         for script, dir, name in files:
@@ -221,7 +221,7 @@ def run_tests(race, parallel, timeout, no_vet):
     return True
 
 ################
-# All CloudSmartHub-specific content above this line
+# All CloudHub-specific content above this line
 ################
 
 
@@ -999,7 +999,7 @@ def main(args):
             lines.sort()
 
             print("## Docker")
-            print("`docker pull csh:"+get_current_version_tag() + "`")
+            print("`docker pull cloudhub:"+get_current_version_tag() + "`")
             print("")
             print("## Packages")
             print("")
