@@ -36,7 +36,7 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
       <img src="https://github.com/snetsystems/cmp/blob/master/docs/images/infrastructure.png"/>
       <img src="https://github.com/snetsystems/cmp/blob/master/docs/images/applications.png"/>
       <img src="https://github.com/snetsystems/cmp/blob/master/docs/images/agent_configure.png"/>
-      <img src="https://github.com/snetsystems/cmp/blob/master/docs/images/128T.png"/>
+      <img src="https://github.com/snetsystems/cmp/blob/master/docs/images/swan.png"/>
     </p>
 
 ## Setting in VSCode
