@@ -70,9 +70,9 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
   ): Minion[] {
     switch (direction) {
       case SortDirection.ASC:
-        return _.sortBy(hosts, e => e[key].toLowerCase())
+        return _.sortBy(hosts, e => e[key])
       case SortDirection.DESC:
-        return _.sortBy(hosts, e => e[key].toLowerCase()).reverse()
+        return _.sortBy(hosts, e => e[key]).reverse()
       default:
         return hosts
     }
