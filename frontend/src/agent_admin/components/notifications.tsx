@@ -21,7 +21,7 @@ const defaultSuccessNotification: NotificationExcludingMessage = {
   duration: FIVE_SECONDS,
 }
 
-//  Cloud Smart Hub AgentPage Sources Notifications
+//  Cloud Hub AgentPage Sources Notifications
 //  ----------------------------------------------------------------------------
 export const notifyAgentConnectSucceeded = (sourceName: string) => ({
   ...defaultSuccessNotification,

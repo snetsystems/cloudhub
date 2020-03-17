@@ -77,7 +77,6 @@ interface State {
   focusedMeasure: string
   focusedMeasurePosition: {top: number; left: number}
   configScript: string
-  selectHost: string
   responseMessage: string
   defaultService: string[]
   focusedHost: string
@@ -86,6 +85,15 @@ interface State {
   isApplyBtnDisabled: boolean
   isGetLocalStorage: boolean
   isModalVisible: boolean
+  isCollectorInstalled: boolean
+  isModalCall: boolean
+}
+
+interface LocalStorageAgentConfig {
+  focusedHost?: string
+  focusedHostIp?: string
+  configScript?: string
+  isApplyBtnDisabled?: boolean
 }
 
 const defaultMeasurementsData = [
@@ -178,7 +186,6 @@ export class AgentConfiguration extends PureComponent<
       focusedMeasure: '',
       focusedMeasurePosition: {top: null, left: null},
       configScript: '',
-      selectHost: '',
       responseMessage: '',
       focusedHost: '',
       focusedHostIp: '',
@@ -187,6 +194,8 @@ export class AgentConfiguration extends PureComponent<
       isApplyBtnDisabled: true,
       isGetLocalStorage: false,
       isModalVisible: false,
+      isCollectorInstalled: false,
+      isModalCall: false,
     }
   }
 
@@ -197,7 +206,26 @@ export class AgentConfiguration extends PureComponent<
       saltMasterToken
     )
 
+    const isInstallCheck = _.filter(hostListObject, ['isInstall', true])
+
+    if (!this.state.isModalCall) {
+      const getItem: LocalStorageAgentConfig = getLocalStorage(
+        'AgentConfigPage'
+      )
+      const {isApplyBtnDisabled, focusedHost} = getItem
+      const getHostCompare = _.find(isInstallCheck, ['host', focusedHost])
+
+      if (!isApplyBtnDisabled && Boolean(getHostCompare)) {
+        this.setState({
+          isModalCall: true,
+          isModalVisible: true,
+          isGetLocalStorage: !isApplyBtnDisabled,
+        })
+      }
+    }
+
     this.setState({
+      isCollectorInstalled: Boolean(isInstallCheck.length),
       MinionsObject: hostListObject,
       configPageStatus: RemoteDataState.Done,
       collectorConfigStatus: RemoteDataState.Done,
@@ -217,16 +245,6 @@ export class AgentConfiguration extends PureComponent<
         configScript: '',
         isApplyBtnDisabled: true,
       })
-
-      const getItem = getLocalStorage('AgentConfigPage')
-      const {isApplyBtnDisabled} = getItem
-
-      if (!isApplyBtnDisabled) {
-        this.setState({
-          isModalVisible: true,
-          isGetLocalStorage: !isApplyBtnDisabled,
-        })
-      }
     } else {
       this.setState({configPageStatus: RemoteDataState.Done})
       notify(notifyAgentConnectFailed('Token is not valid.'))
@@ -249,9 +267,9 @@ export class AgentConfiguration extends PureComponent<
     })
   }
 
-  public async componentDidUpdate(nextProps) {
+  public async componentDidUpdate(prevProps: Props) {
     if (
-      nextProps.saltMasterToken !== this.props.saltMasterToken &&
+      prevProps.saltMasterToken !== this.props.saltMasterToken &&
       this.props.saltMasterToken !== '' &&
       this.props.saltMasterToken !== null
     ) {
@@ -259,7 +277,7 @@ export class AgentConfiguration extends PureComponent<
       this.setState({configPageStatus: RemoteDataState.Loading})
     } else {
       if (
-        nextProps.saltMasterToken !== this.props.saltMasterToken &&
+        prevProps.saltMasterToken !== this.props.saltMasterToken &&
         (this.props.saltMasterToken === null ||
           this.props.saltMasterToken === '')
       ) {
@@ -348,7 +366,7 @@ export class AgentConfiguration extends PureComponent<
       ].substring(0, pLocalFileReadData.data.return[0][host].lastIndexOf('\n'))
       this.setState({
         configScript: hostLocalFileReadData,
-        selectHost: host,
+        focusedHost: host,
         collectorConfigStatus: RemoteDataState.Done,
         configPageStatus: RemoteDataState.Done,
       })
@@ -421,7 +439,7 @@ export class AgentConfiguration extends PureComponent<
 
   public onClickApplyCall = () => {
     const {saltMasterUrl, saltMasterToken} = this.props
-    const {selectHost, configScript} = this.state
+    const {focusedHost, configScript} = this.state
     this.setState({
       configPageStatus: RemoteDataState.Loading,
       collectorConfigStatus: RemoteDataState.Loading,
@@ -430,7 +448,7 @@ export class AgentConfiguration extends PureComponent<
     const getLocalFileWritePromise = getLocalFileWrite(
       saltMasterUrl,
       saltMasterToken,
-      selectHost,
+      focusedHost,
       configScript
     )
 
@@ -438,13 +456,13 @@ export class AgentConfiguration extends PureComponent<
       this.setState({
         isApplyBtnDisabled: true,
         isGetLocalStorage: false,
-        responseMessage: pLocalFileWriteData.data.return[0][selectHost],
+        responseMessage: pLocalFileWriteData.data.return[0][focusedHost],
       })
 
       const getLocalServiceReStartTelegrafPromise = runLocalServiceReStartTelegraf(
         saltMasterUrl,
         saltMasterToken,
-        selectHost
+        focusedHost
       )
 
       getLocalServiceReStartTelegrafPromise.then((): void => {
@@ -464,7 +482,6 @@ export class AgentConfiguration extends PureComponent<
     } = getItem
 
     if (answer) {
-      await this.getWheelKeyListAll()
       this.setState({
         configScript,
         focusedHost,
@@ -473,6 +490,9 @@ export class AgentConfiguration extends PureComponent<
         isInitEditor: false,
         measurementsStatus: RemoteDataState.Loading,
       })
+
+      await this.getWheelKeyListAll()
+
       const getLocalServiceGetRunningPromise = getLocalServiceGetRunning(
         saltMasterUrl,
         saltMasterToken,
@@ -709,7 +729,12 @@ export class AgentConfiguration extends PureComponent<
   }
 
   private renderAgentPageTop = () => {
-    const {MinionsObject, configPageStatus, focusedHost} = this.state
+    const {
+      MinionsObject,
+      configPageStatus,
+      focusedHost,
+      isCollectorInstalled,
+    } = this.state
 
     return (
       <AgentConfigurationTable
@@ -718,6 +743,7 @@ export class AgentConfiguration extends PureComponent<
         onClickTableRow={this.onClickTableRowCall}
         onClickAction={this.onClickActionCall}
         focusedHost={focusedHost}
+        isCollectorInstalled={isCollectorInstalled}
       />
     )
   }

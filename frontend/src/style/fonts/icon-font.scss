@@ -329,4 +329,8 @@
   &._reset-layout:before {
     content: '\e961';
   }
+
+  &.auth0:before {
+    content: '\e962';
+  }
 }

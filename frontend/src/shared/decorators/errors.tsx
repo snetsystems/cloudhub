@@ -13,7 +13,7 @@ class DefaultError extends Component<{error: Error}> {
   public render() {
     const {error} = this.props
     const {stack, message} = error
-    const finalMessage = ` Cloud Smart Hub (${VERSION}) ${message}`
+    const finalMessage = ` Cloud Hub (${VERSION}) ${message}`
     const mdMarker = '```'
     const template = `
 
@@ -34,7 +34,7 @@ ${mdMarker}
 
     return (
       <p className="unexpected-error">
-        A Cloud Smart Hub error has occurred. Please report the issue&nbsp;
+        A Cloud Hub error has occurred. Please report the issue&nbsp;
         <a href={href}>here</a>.
       </p>
     )

@@ -13,6 +13,7 @@
   @include gradient-v($g3-castle, $g0-obsidian);
   padding: $sidebar--width;
 }
+
 .auth-image {
   background-image: url('../../assets/images/auth-bg.svg');
   background-size: cover;
@@ -25,6 +26,7 @@
   left: 0;
   z-index: 2;
 }
+
 .auth-box {
   z-index: 90;
   position: absolute;
@@ -43,36 +45,40 @@
     font-size: 52px;
     letter-spacing: 1px;
   }
+
   p {
     color: $g11-sidewalk;
     @include no-user-select();
   }
 
-  > .btn {
+  >.btn {
     margin-top: 6px;
     margin-bottom: 6px;
 
     &:first-of-type {
       margin-top: ($sidebar--width / 2);
     }
+
     &:last-child {
       margin-bottom: $sidebar--width;
     }
 
-    > .icon {
+    >.icon {
       font-size: 20px;
       margin-right: 8px;
     }
   }
 }
+
 .auth-logo {
-  background-image: url('../../assets/images/CloudSmartHub_logo.svg');
+  background-image: url('../../assets/images/CloudHub_logo.svg');
   background-size: 100% 100%;
   background-position: center center;
   background-repeat: no-repeat;
-  width: 100px;
-  height: 100px;
+  width: 480px;
+  height: 200px;
 }
+
 .auth-credits {
   @include no-user-select();
   font-weight: 600;
@@ -109,10 +115,11 @@
   align-items: center;
   justify-content: center;
 
-  > h3 {
+  >h3 {
     white-space: nowrap;
   }
-  > p {
+
+  >p {
     text-align: center;
   }
 
@@ -128,6 +135,7 @@
   flex-direction: column;
   align-items: stretch;
 }
+
 .auth--list-item {
   height: 70px;
   padding: 0 20px;
@@ -138,14 +146,17 @@
   border-radius: 4px;
   margin: 2px 0;
 }
+
 .auth--list-info {
   @include no-user-select();
 }
+
 .auth--list-org {
   font-size: 17px;
   font-weight: 400;
   color: $g11-sidewalk;
 }
+
 .auth--list-role {
   font-weight: 700;
   color: $g13-mist;
@@ -157,11 +168,12 @@
   margin: 2px -10px;
   padding: 0 30px;
 
-  > .auth--list-info > .auth--list-org,
-  > .auth--list-info > .auth--list-role {
+  >.auth--list-info>.auth--list-org,
+  >.auth--list-info>.auth--list-role {
     color: $g20-white;
   }
 }
+
 .auth--list-blocked {
   font-size: 13px;
   text-align: center;
@@ -169,6 +181,7 @@
   color: $g9-mountain;
   @include no-user-select();
 }
+
 .btn.auth--logout {
   margin-top: 30px;
 }
