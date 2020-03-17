@@ -10,7 +10,7 @@
       "type": "go",
       "request": "launch",
       "mode": "debug",
-      "buildFlags": "-ldflags='-X main.version=0.9.2'",
+      "buildFlags": "-ldflags='-X main.version=1.0.0'",
       "program": "${workspaceFolder}/backend/cmd/cmp",
       "env": {},
       "args": [
@@ -70,7 +70,7 @@
       "type": "go",
       "request": "launch",
       "mode": "debug",
-      "buildFlags": ["-ldflags='-X main.version=0.9.2'"],
+      "buildFlags": ["-ldflags='-X main.version=1.0.0'"],
       "program": "${workspaceFolder}/backend/cmd/cmp",
       "env": {},
       "args": [

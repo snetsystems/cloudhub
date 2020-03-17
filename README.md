@@ -1,4 +1,4 @@
-# SCMP (Snet Cloud Monitoring Portal) - Special edition for 0.9.2
+# SCMP (Snet Cloud Monitoring Portal) - 1.0.0
 
 ## Intro
 

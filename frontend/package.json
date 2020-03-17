@@ -1,6 +1,6 @@
 {
   "name": "frontend",
-  "version": "0.9.2",
+  "version": "1.0.0",
   "private": true,
   "description": "This is CMP's User interface made in React & Typescript",
   "author": "Jack Kim",
