@@ -1,12 +1,12 @@
 package kapacitor
 
 import "testing"
-import cmp "github.com/snetsystems/cmp/backend"
+import cloudhub "github.com/snetsystems/cloudhub/backend"
 
 func TestInfluxOut(t *testing.T) {
 	tests := []struct {
 		name string
-		want cmp.TICKScript
+		want cloudhub.TICKScript
 	}{
 		{
 			name: "Test influxDBOut kapacitor node",
@@ -28,15 +28,15 @@ func TestInfluxOut(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		got, err := InfluxOut(cmp.AlertRule{
+		got, err := InfluxOut(cloudhub.AlertRule{
 			Name:    "name",
 			Trigger: "deadman",
-			Query: &cmp.QueryConfig{
-				Fields: []cmp.Field{
+			Query: &cloudhub.QueryConfig{
+				Fields: []cloudhub.Field{
 					{
 						Value: "mean",
 						Type:  "func",
-						Args: []cmp.Field{
+						Args: []cloudhub.Field{
 							{
 								Value: "usage_user",
 								Type:  "field",

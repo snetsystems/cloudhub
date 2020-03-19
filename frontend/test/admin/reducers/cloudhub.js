@@ -1,6 +1,6 @@
-import reducer from 'src/admin/reducers/cmp'
+import reducer from 'src/admin/reducers/cloudhub'
 
-import {loadUsers} from 'src/admin/actions/cmp'
+import {loadUsers} from 'src/admin/actions/cloudhub'
 let state
 
 const users = [
@@ -21,7 +21,7 @@ const users = [
     scheme: 'oauth2',
     superAdmin: true,
     links: {
-      self: '/cmp/v1/users/666',
+      self: '/cloudhub/v1/users/666',
     },
     organizations: [
       {
@@ -56,7 +56,7 @@ const users = [
     scheme: 'oauth2',
     superAdmin: false,
     links: {
-      self: '/cmp/v1/users/831',
+      self: '/cloudhub/v1/users/831',
     },
     organizations: [
       {
@@ -92,7 +92,7 @@ const users = [
     scheme: 'oauth2',
     superAdmin: false,
     links: {
-      self: '/cmp/v1/users/720',
+      self: '/cloudhub/v1/users/720',
     },
     organizations: [
       {
@@ -115,13 +115,13 @@ const users = [
     scheme: 'oauth2',
     superAdmin: false,
     links: {
-      self: '/cmp/v1/users/271',
+      self: '/cloudhub/v1/users/271',
     },
     organizations: [],
   },
 ]
 
-describe('Admin.SCMP.Reducers', () => {
+describe('Admin.CloudHub.Reducers', () => {
   it('it can load all users', () => {
     const actual = reducer(state, loadUsers({users}))
     const expected = {

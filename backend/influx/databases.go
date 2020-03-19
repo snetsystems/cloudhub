@@ -6,31 +6,31 @@ import (
 	"encoding/json"
 	"fmt"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // AllDB returns all databases from within Influx
-func (c *Client) AllDB(ctx context.Context) ([]cmp.Database, error) {
+func (c *Client) AllDB(ctx context.Context) ([]cloudhub.Database, error) {
 	return c.showDatabases(ctx)
 }
 
 // CreateDB creates a database within Influx
-func (c *Client) CreateDB(ctx context.Context, db *cmp.Database) (*cmp.Database, error) {
-	_, err := c.Query(ctx, cmp.Query{
+func (c *Client) CreateDB(ctx context.Context, db *cloudhub.Database) (*cloudhub.Database, error) {
+	_, err := c.Query(ctx, cloudhub.Query{
 		Command: fmt.Sprintf(`CREATE DATABASE "%s"`, db.Name),
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	res := &cmp.Database{Name: db.Name}
+	res := &cloudhub.Database{Name: db.Name}
 
 	return res, nil
 }
 
 // DropDB drops a database within Influx
 func (c *Client) DropDB(ctx context.Context, db string) error {
-	_, err := c.Query(ctx, cmp.Query{
+	_, err := c.Query(ctx, cloudhub.Query{
 		Command: fmt.Sprintf(`DROP DATABASE "%s"`, db),
 		DB:      db,
 	})
@@ -41,14 +41,14 @@ func (c *Client) DropDB(ctx context.Context, db string) error {
 }
 
 // AllRP returns all the retention policies for a specific database
-func (c *Client) AllRP(ctx context.Context, db string) ([]cmp.RetentionPolicy, error) {
+func (c *Client) AllRP(ctx context.Context, db string) ([]cloudhub.RetentionPolicy, error) {
 	return c.showRetentionPolicies(ctx, db)
 }
 
-func (c *Client) getRP(ctx context.Context, db, rp string) (cmp.RetentionPolicy, error) {
+func (c *Client) getRP(ctx context.Context, db, rp string) (cloudhub.RetentionPolicy, error) {
 	rs, err := c.AllRP(ctx, db)
 	if err != nil {
-		return cmp.RetentionPolicy{}, err
+		return cloudhub.RetentionPolicy{}, err
 	}
 
 	for _, r := range rs {
@@ -56,11 +56,11 @@ func (c *Client) getRP(ctx context.Context, db, rp string) (cmp.RetentionPolicy,
 			return r, nil
 		}
 	}
-	return cmp.RetentionPolicy{}, fmt.Errorf("unknown retention policy")
+	return cloudhub.RetentionPolicy{}, fmt.Errorf("unknown retention policy")
 }
 
 // CreateRP creates a retention policy for a specific database
-func (c *Client) CreateRP(ctx context.Context, db string, rp *cmp.RetentionPolicy) (*cmp.RetentionPolicy, error) {
+func (c *Client) CreateRP(ctx context.Context, db string, rp *cloudhub.RetentionPolicy) (*cloudhub.RetentionPolicy, error) {
 	query := fmt.Sprintf(`CREATE RETENTION POLICY "%s" ON "%s" DURATION %s REPLICATION %d`, rp.Name, db, rp.Duration, rp.Replication)
 	if len(rp.ShardDuration) != 0 {
 		query = fmt.Sprintf(`%s SHARD DURATION %s`, query, rp.ShardDuration)
@@ -70,7 +70,7 @@ func (c *Client) CreateRP(ctx context.Context, db string, rp *cmp.RetentionPolic
 		query = fmt.Sprintf(`%s DEFAULT`, query)
 	}
 
-	_, err := c.Query(ctx, cmp.Query{
+	_, err := c.Query(ctx, cloudhub.Query{
 		Command: query,
 		DB:      db,
 	})
@@ -87,7 +87,7 @@ func (c *Client) CreateRP(ctx context.Context, db string, rp *cmp.RetentionPolic
 }
 
 // UpdateRP updates a specific retention policy for a specific database
-func (c *Client) UpdateRP(ctx context.Context, db string, rp string, upd *cmp.RetentionPolicy) (*cmp.RetentionPolicy, error) {
+func (c *Client) UpdateRP(ctx context.Context, db string, rp string, upd *cloudhub.RetentionPolicy) (*cloudhub.RetentionPolicy, error) {
 	var buffer bytes.Buffer
 	buffer.WriteString(fmt.Sprintf(`ALTER RETENTION POLICY "%s" ON "%s"`, rp, db))
 	if len(upd.Duration) > 0 {
@@ -102,7 +102,7 @@ func (c *Client) UpdateRP(ctx context.Context, db string, rp string, upd *cmp.Re
 	if upd.Default == true {
 		buffer.WriteString(" DEFAULT")
 	}
-	queryRes, err := c.Query(ctx, cmp.Query{
+	queryRes, err := c.Query(ctx, cloudhub.Query{
 		Command: buffer.String(),
 		DB:      db,
 		RP:      rp,
@@ -140,7 +140,7 @@ func (c *Client) UpdateRP(ctx context.Context, db string, rp string, upd *cmp.Re
 
 // DropRP removes a specific retention policy for a specific database
 func (c *Client) DropRP(ctx context.Context, db string, rp string) error {
-	_, err := c.Query(ctx, cmp.Query{
+	_, err := c.Query(ctx, cloudhub.Query{
 		Command: fmt.Sprintf(`DROP RETENTION POLICY "%s" ON "%s"`, rp, db),
 		DB:      db,
 		RP:      rp,
@@ -154,12 +154,12 @@ func (c *Client) DropRP(ctx context.Context, db string, rp string) error {
 // GetMeasurements returns measurements in a specified database, paginated by
 // optional limit and offset. If no limit or offset is provided, it defaults to
 // a limit of 100 measurements with no offset.
-func (c *Client) GetMeasurements(ctx context.Context, db string, limit, offset int) ([]cmp.Measurement, error) {
+func (c *Client) GetMeasurements(ctx context.Context, db string, limit, offset int) ([]cloudhub.Measurement, error) {
 	return c.showMeasurements(ctx, db, limit, offset)
 }
 
-func (c *Client) showDatabases(ctx context.Context) ([]cmp.Database, error) {
-	res, err := c.Query(ctx, cmp.Query{
+func (c *Client) showDatabases(ctx context.Context) ([]cloudhub.Database, error) {
+	res, err := c.Query(ctx, cloudhub.Query{
 		Command: `SHOW DATABASES`,
 	})
 	if err != nil {
@@ -178,8 +178,8 @@ func (c *Client) showDatabases(ctx context.Context) ([]cmp.Database, error) {
 	return results.Databases(), nil
 }
 
-func (c *Client) showRetentionPolicies(ctx context.Context, db string) ([]cmp.RetentionPolicy, error) {
-	retentionPolicies, err := c.Query(ctx, cmp.Query{
+func (c *Client) showRetentionPolicies(ctx context.Context, db string) ([]cloudhub.RetentionPolicy, error) {
+	retentionPolicies, err := c.Query(ctx, cloudhub.Query{
 		Command: fmt.Sprintf(`SHOW RETENTION POLICIES ON "%s"`, db),
 		DB:      db,
 	})
@@ -200,7 +200,7 @@ func (c *Client) showRetentionPolicies(ctx context.Context, db string) ([]cmp.Re
 	return results.RetentionPolicies(), nil
 }
 
-func (c *Client) showMeasurements(ctx context.Context, db string, limit, offset int) ([]cmp.Measurement, error) {
+func (c *Client) showMeasurements(ctx context.Context, db string, limit, offset int) ([]cloudhub.Measurement, error) {
 	show := fmt.Sprintf(`SHOW MEASUREMENTS ON "%s"`, db)
 	if limit > 0 {
 		show += fmt.Sprintf(" LIMIT %d", limit)
@@ -210,7 +210,7 @@ func (c *Client) showMeasurements(ctx context.Context, db string, limit, offset 
 		show += fmt.Sprintf(" OFFSET %d", offset)
 	}
 
-	measurements, err := c.Query(ctx, cmp.Query{
+	measurements, err := c.Query(ctx, cloudhub.Query{
 		Command: show,
 		DB:      db,
 	})

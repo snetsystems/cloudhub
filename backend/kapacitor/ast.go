@@ -11,7 +11,7 @@ import (
 	"github.com/influxdata/kapacitor/tick"
 	"github.com/influxdata/kapacitor/tick/ast"
 	"github.com/influxdata/kapacitor/tick/stateful"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 func varString(kapaVar string, vars map[string]tick.Var) (string, bool) {
@@ -89,7 +89,7 @@ type WhereFilter struct {
 }
 
 func varWhereFilter(vars map[string]tick.Var) (WhereFilter, bool) {
-	// All cmp TICKScripts have whereFilters.
+	// All cloudhub TICKScripts have whereFilters.
 	v, ok := vars["whereFilter"]
 	if !ok {
 		return WhereFilter{}, ok
@@ -97,14 +97,14 @@ func varWhereFilter(vars map[string]tick.Var) (WhereFilter, bool) {
 	filter := WhereFilter{}
 	filter.TagValues = make(map[string][]string)
 
-	// All cmp TICKScript's whereFilter use a lambda function.
+	// All cloudhub TICKScript's whereFilter use a lambda function.
 	value, ok := v.Value.(*ast.LambdaNode)
 	if !ok {
 		return WhereFilter{}, ok
 	}
 
 	lambda := value.ExpressionString()
-	// CMP TICKScripts use lambda: TRUE as a pass-throug where clause
+	// CloudHub TICKScripts use lambda: TRUE as a pass-throug where clause
 	// if the script does not have a where clause set.
 	if lambda == "TRUE" {
 		return WhereFilter{}, true
@@ -139,7 +139,7 @@ func varWhereFilter(vars map[string]tick.Var) (WhereFilter, bool) {
 	return filter, true
 }
 
-// CommonVars includes all the variables of a cmp TICKScript
+// CommonVars includes all the variables of a cloudhub TICKScript
 type CommonVars struct {
 	DB          string
 	RP          string
@@ -176,7 +176,7 @@ type DeadmanVars struct{}
 
 func extractCommonVars(vars map[string]tick.Var) (CommonVars, error) {
 	res := CommonVars{}
-	// All these variables must exist to be a cmp TICKScript
+	// All these variables must exist to be a cloudhub TICKScript
 	// If any of these don't exist, then this isn't a tickscript we can process
 	var ok bool
 	res.DB, ok = varString("db", vars)
@@ -204,20 +204,20 @@ func extractCommonVars(vars map[string]tick.Var) (CommonVars, error) {
 		return CommonVars{}, ErrNotChronoTickscript
 	}
 
-	// All cmp TICKScripts have groupBy. Possible to be empty list though.
+	// All cloudhub TICKScripts have groupBy. Possible to be empty list though.
 	groups, ok := varStringList("groupBy", vars)
 	if !ok {
 		return CommonVars{}, ErrNotChronoTickscript
 	}
 	res.GroupBy = groups
 
-	// All cmp TICKScripts must have a whereFitler.  Could be empty.
+	// All cloudhub TICKScripts must have a whereFitler.  Could be empty.
 	res.Filter, ok = varWhereFilter(vars)
 	if !ok {
 		return CommonVars{}, ErrNotChronoTickscript
 	}
 
-	// Some cmp TICKScripts have details associated with the alert.
+	// Some cloudhub TICKScripts have details associated with the alert.
 	// Typically, this is the body of an email alert.
 	if detail, ok := varString("details", vars); ok {
 		res.Detail = detail
@@ -281,7 +281,7 @@ type FieldFunc struct {
 	Func  string
 }
 
-func extractFieldFunc(script cmp.TICKScript) FieldFunc {
+func extractFieldFunc(script cloudhub.TICKScript) FieldFunc {
 	// If the TICKScript is relative or threshold alert with an aggregate
 	// then the aggregate function and field is in the form |func('field').as('value')
 	var re = regexp.MustCompile(`(?Um)\|(\w+)\('(.*)'\)\s*\.as\('value'\)`)
@@ -311,7 +311,7 @@ type CritCondition struct {
 	Operators []string
 }
 
-func extractCrit(script cmp.TICKScript) CritCondition {
+func extractCrit(script cloudhub.TICKScript) CritCondition {
 	// Threshold and relative alerts have the form .crit(lambda: "value" op crit)
 	// Threshold range alerts have the form .crit(lambda: "value" op lower op "value" op upper)
 	var re = regexp.MustCompile(`(?Um)\.crit\(lambda:\s+"value"\s+(.*)\s+crit\)`)
@@ -343,7 +343,7 @@ func extractCrit(script cmp.TICKScript) CritCondition {
 // alertType reads the TICKscript and returns the specific
 // alerting type. If it is unable to determine it will
 // return ErrNotChronoTickscript
-func alertType(script cmp.TICKScript) (string, error) {
+func alertType(script cloudhub.TICKScript) (string, error) {
 	t := string(script)
 	if strings.Contains(t, `var triggerType = 'threshold'`) {
 		if strings.Contains(t, `var crit = `) {
@@ -366,9 +366,9 @@ func alertType(script cmp.TICKScript) (string, error) {
 }
 
 // Reverse converts tickscript to an AlertRule
-func Reverse(script cmp.TICKScript) (cmp.AlertRule, error) {
-	rule := cmp.AlertRule{
-		Query: &cmp.QueryConfig{},
+func Reverse(script cloudhub.TICKScript) (cloudhub.AlertRule, error) {
+	rule := cloudhub.AlertRule{
+		Query: &cloudhub.QueryConfig{},
 	}
 	t, err := alertType(script)
 	if err != nil {
@@ -378,7 +378,7 @@ func Reverse(script cmp.TICKScript) (cmp.AlertRule, error) {
 	scope := stateful.NewScope()
 	template, err := pipeline.CreateTemplatePipeline(string(script), pipeline.StreamEdge, scope, &deadman{})
 	if err != nil {
-		return cmp.AlertRule{}, err
+		return cloudhub.AlertRule{}, err
 	}
 	vars := template.Vars()
 
@@ -423,11 +423,11 @@ func Reverse(script cmp.TICKScript) (cmp.AlertRule, error) {
 		rule.Query.GroupBy.Time = commonVars.Period
 		rule.Every = commonVars.Every
 		if fieldFunc.Func != "" {
-			rule.Query.Fields = []cmp.Field{
+			rule.Query.Fields = []cloudhub.Field{
 				{
 					Type:  "func",
 					Value: fieldFunc.Func,
-					Args: []cmp.Field{
+					Args: []cloudhub.Field{
 						{
 							Value: fieldFunc.Field,
 							Type:  "field",
@@ -436,7 +436,7 @@ func Reverse(script cmp.TICKScript) (cmp.AlertRule, error) {
 				},
 			}
 		} else {
-			rule.Query.Fields = []cmp.Field{
+			rule.Query.Fields = []cloudhub.Field{
 				{
 					Type:  "field",
 					Value: fieldFunc.Field,
@@ -480,14 +480,14 @@ func Reverse(script cmp.TICKScript) (cmp.AlertRule, error) {
 
 	p, err := pipeline.CreatePipeline(string(script), pipeline.StreamEdge, stateful.NewScope(), &deadman{}, vars)
 	if err != nil {
-		return cmp.AlertRule{}, err
+		return cloudhub.AlertRule{}, err
 	}
 
 	err = extractAlertNodes(p, &rule)
 	return rule, err
 }
 
-func extractAlertNodes(p *pipeline.Pipeline, rule *cmp.AlertRule) error {
+func extractAlertNodes(p *pipeline.Pipeline, rule *cloudhub.AlertRule) error {
 	return p.Walk(func(n pipeline.Node) error {
 		switch node := n.(type) {
 		case *pipeline.AlertNode:

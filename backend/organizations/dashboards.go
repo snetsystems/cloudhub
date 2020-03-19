@@ -3,22 +3,22 @@ package organizations
 import (
 	"context"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-// ensure that DashboardsStore implements cmp.DashboardStore
-var _ cmp.DashboardsStore = &DashboardsStore{}
+// ensure that DashboardsStore implements cloudhub.DashboardStore
+var _ cloudhub.DashboardsStore = &DashboardsStore{}
 
 // DashboardsStore facade on a DashboardStore that filters dashboards
 // by organization.
 type DashboardsStore struct {
-	store        cmp.DashboardsStore
+	store        cloudhub.DashboardsStore
 	organization string
 }
 
 // NewDashboardsStore creates a new DashboardsStore from an existing
-// cmp.DashboardStore and an organization string
-func NewDashboardsStore(s cmp.DashboardsStore, org string) *DashboardsStore {
+// cloudhub.DashboardStore and an organization string
+func NewDashboardsStore(s cloudhub.DashboardsStore, org string) *DashboardsStore {
 	return &DashboardsStore{
 		store:        s,
 		organization: org,
@@ -27,7 +27,7 @@ func NewDashboardsStore(s cmp.DashboardsStore, org string) *DashboardsStore {
 
 // All retrieves all dashboards from the underlying DashboardStore and filters them
 // by organization.
-func (s *DashboardsStore) All(ctx context.Context) ([]cmp.Dashboard, error) {
+func (s *DashboardsStore) All(ctx context.Context) ([]cloudhub.Dashboard, error) {
 	err := validOrganization(ctx)
 	if err != nil {
 		return nil, err
@@ -52,10 +52,10 @@ func (s *DashboardsStore) All(ctx context.Context) ([]cmp.Dashboard, error) {
 
 // Add creates a new Dashboard in the DashboardsStore with dashboard.Organization set to be the
 // organization from the dashboard store.
-func (s *DashboardsStore) Add(ctx context.Context, d cmp.Dashboard) (cmp.Dashboard, error) {
+func (s *DashboardsStore) Add(ctx context.Context, d cloudhub.Dashboard) (cloudhub.Dashboard, error) {
 	err := validOrganization(ctx)
 	if err != nil {
-		return cmp.Dashboard{}, err
+		return cloudhub.Dashboard{}, err
 	}
 
 	d.Organization = s.organization
@@ -63,7 +63,7 @@ func (s *DashboardsStore) Add(ctx context.Context, d cmp.Dashboard) (cmp.Dashboa
 }
 
 // Delete the dashboard from DashboardsStore
-func (s *DashboardsStore) Delete(ctx context.Context, d cmp.Dashboard) error {
+func (s *DashboardsStore) Delete(ctx context.Context, d cloudhub.Dashboard) error {
 	err := validOrganization(ctx)
 	if err != nil {
 		return err
@@ -78,26 +78,26 @@ func (s *DashboardsStore) Delete(ctx context.Context, d cmp.Dashboard) error {
 }
 
 // Get returns a Dashboard if the id exists and belongs to the organization that is set.
-func (s *DashboardsStore) Get(ctx context.Context, id cmp.DashboardID) (cmp.Dashboard, error) {
+func (s *DashboardsStore) Get(ctx context.Context, id cloudhub.DashboardID) (cloudhub.Dashboard, error) {
 	err := validOrganization(ctx)
 	if err != nil {
-		return cmp.Dashboard{}, err
+		return cloudhub.Dashboard{}, err
 	}
 
 	d, err := s.store.Get(ctx, id)
 	if err != nil {
-		return cmp.Dashboard{}, err
+		return cloudhub.Dashboard{}, err
 	}
 
 	if d.Organization != s.organization {
-		return cmp.Dashboard{}, cmp.ErrDashboardNotFound
+		return cloudhub.Dashboard{}, cloudhub.ErrDashboardNotFound
 	}
 
 	return d, nil
 }
 
 // Update the dashboard in DashboardsStore.
-func (s *DashboardsStore) Update(ctx context.Context, d cmp.Dashboard) error {
+func (s *DashboardsStore) Update(ctx context.Context, d cloudhub.Dashboard) error {
 	err := validOrganization(ctx)
 	if err != nil {
 		return err

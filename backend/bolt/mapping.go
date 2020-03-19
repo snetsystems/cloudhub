@@ -5,12 +5,12 @@ import (
 	"fmt"
 
 	"github.com/boltdb/bolt"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/bolt/internal"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/bolt/internal"
 )
 
-// Ensure MappingsStore implements cmp.MappingsStore.
-var _ cmp.MappingsStore = &MappingsStore{}
+// Ensure MappingsStore implements cloudhub.MappingsStore.
+var _ cloudhub.MappingsStore = &MappingsStore{}
 
 var (
 	// MappingsBucket is the bucket where organizations are stored.
@@ -28,7 +28,7 @@ func (s *MappingsStore) Migrate(ctx context.Context) error {
 }
 
 // Add creates a new Mapping in the MappingsStore
-func (s *MappingsStore) Add(ctx context.Context, o *cmp.Mapping) (*cmp.Mapping, error) {
+func (s *MappingsStore) Add(ctx context.Context, o *cloudhub.Mapping) (*cloudhub.Mapping, error) {
 	err := s.client.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(MappingsBucket)
 		seq, err := b.NextSequence()
@@ -53,9 +53,9 @@ func (s *MappingsStore) Add(ctx context.Context, o *cmp.Mapping) (*cmp.Mapping, 
 }
 
 // All returns all known organizations
-func (s *MappingsStore) All(ctx context.Context) ([]cmp.Mapping, error) {
-	var mappings []cmp.Mapping
-	err := s.each(ctx, func(m *cmp.Mapping) {
+func (s *MappingsStore) All(ctx context.Context) ([]cloudhub.Mapping, error) {
+	var mappings []cloudhub.Mapping
+	err := s.each(ctx, func(m *cloudhub.Mapping) {
 		mappings = append(mappings, *m)
 	})
 
@@ -67,7 +67,7 @@ func (s *MappingsStore) All(ctx context.Context) ([]cmp.Mapping, error) {
 }
 
 // Delete the organization from MappingsStore
-func (s *MappingsStore) Delete(ctx context.Context, o *cmp.Mapping) error {
+func (s *MappingsStore) Delete(ctx context.Context, o *cloudhub.Mapping) error {
 	_, err := s.get(ctx, o.ID)
 	if err != nil {
 		return err
@@ -80,12 +80,12 @@ func (s *MappingsStore) Delete(ctx context.Context, o *cmp.Mapping) error {
 	return nil
 }
 
-func (s *MappingsStore) get(ctx context.Context, id string) (*cmp.Mapping, error) {
-	var o cmp.Mapping
+func (s *MappingsStore) get(ctx context.Context, id string) (*cloudhub.Mapping, error) {
+	var o cloudhub.Mapping
 	err := s.client.db.View(func(tx *bolt.Tx) error {
 		v := tx.Bucket(MappingsBucket).Get([]byte(id))
 		if v == nil {
-			return cmp.ErrMappingNotFound
+			return cloudhub.ErrMappingNotFound
 		}
 		return internal.UnmarshalMapping(v, &o)
 	})
@@ -97,10 +97,10 @@ func (s *MappingsStore) get(ctx context.Context, id string) (*cmp.Mapping, error
 	return &o, nil
 }
 
-func (s *MappingsStore) each(ctx context.Context, fn func(*cmp.Mapping)) error {
+func (s *MappingsStore) each(ctx context.Context, fn func(*cloudhub.Mapping)) error {
 	return s.client.db.View(func(tx *bolt.Tx) error {
 		return tx.Bucket(MappingsBucket).ForEach(func(k, v []byte) error {
-			var m cmp.Mapping
+			var m cloudhub.Mapping
 			if err := internal.UnmarshalMapping(v, &m); err != nil {
 				return err
 			}
@@ -111,12 +111,12 @@ func (s *MappingsStore) each(ctx context.Context, fn func(*cmp.Mapping)) error {
 }
 
 // Get returns a Mapping if the id exists.
-func (s *MappingsStore) Get(ctx context.Context, id string) (*cmp.Mapping, error) {
+func (s *MappingsStore) Get(ctx context.Context, id string) (*cloudhub.Mapping, error) {
 	return s.get(ctx, id)
 }
 
 // Update the organization in MappingsStore
-func (s *MappingsStore) Update(ctx context.Context, o *cmp.Mapping) error {
+func (s *MappingsStore) Update(ctx context.Context, o *cloudhub.Mapping) error {
 	return s.client.db.Update(func(tx *bolt.Tx) error {
 		if v, err := internal.MarshalMapping(o); err != nil {
 			return err

@@ -21,7 +21,7 @@ const defaultSuccessNotification: NotificationExcludingMessage = {
   duration: FIVE_SECONDS,
 }
 
-//  Cloud Hub Addon/SWAN Sources Notifications
+//  CloudHub Addon/SWAN Sources Notifications
 //  ----------------------------------------------------------------------------
 export const notify_128TGetMasterDirFiles_Failed = (
   error: string

@@ -4,18 +4,18 @@ import (
 	"context"
 	"fmt"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 var (
 	// AllowAllDB means a user gets both read and write permissions for a db
-	AllowAllDB = cmp.Allowances{"WRITE", "READ"}
+	AllowAllDB = cloudhub.Allowances{"WRITE", "READ"}
 	// AllowAllAdmin means a user gets both read and write permissions for an admin
-	AllowAllAdmin = cmp.Allowances{"ALL"}
+	AllowAllAdmin = cloudhub.Allowances{"ALL"}
 	// AllowRead means a user is only able to read the database.
-	AllowRead = cmp.Allowances{"READ"}
+	AllowRead = cloudhub.Allowances{"READ"}
 	// AllowWrite means a user is able to only write to the database
-	AllowWrite = cmp.Allowances{"WRITE"}
+	AllowWrite = cloudhub.Allowances{"WRITE"}
 	// NoPrivileges occasionally shows up as a response for a users grants.
 	NoPrivileges = "NO PRIVILEGES"
 	// AllPrivileges means that a user has both read and write perms
@@ -29,14 +29,14 @@ var (
 )
 
 // Permissions return just READ and WRITE for OSS Influx
-func (c *Client) Permissions(context.Context) cmp.Permissions {
-	return cmp.Permissions{
+func (c *Client) Permissions(context.Context) cloudhub.Permissions {
+	return cloudhub.Permissions{
 		{
-			Scope:   cmp.AllScope,
+			Scope:   cloudhub.AllScope,
 			Allowed: AllowAllAdmin,
 		},
 		{
-			Scope:   cmp.DBScope,
+			Scope:   cloudhub.DBScope,
 			Allowed: AllowAllDB,
 		},
 	}
@@ -49,9 +49,9 @@ type showResults []struct {
 	} `json:"series"`
 }
 
-// Users converts SHOW USERS to cmp Users
-func (r *showResults) Users() []cmp.User {
-	res := []cmp.User{}
+// Users converts SHOW USERS to cloudhub Users
+func (r *showResults) Users() []cloudhub.User {
+	res := []cloudhub.User{}
 	for _, u := range *r {
 		for _, s := range u.Series {
 			for _, v := range s.Values {
@@ -60,9 +60,9 @@ func (r *showResults) Users() []cmp.User {
 				} else if admin, ok := v[1].(bool); !ok {
 					continue
 				} else {
-					c := cmp.User{
+					c := cloudhub.User{
 						Name:        name,
-						Permissions: cmp.Permissions{},
+						Permissions: cloudhub.Permissions{},
 					}
 					if admin {
 						c.Permissions = adminPerms()
@@ -75,16 +75,16 @@ func (r *showResults) Users() []cmp.User {
 	return res
 }
 
-// Databases converts SHOW DATABASES to cmp Databases
-func (r *showResults) Databases() []cmp.Database {
-	res := []cmp.Database{}
+// Databases converts SHOW DATABASES to cloudhub Databases
+func (r *showResults) Databases() []cloudhub.Database {
+	res := []cloudhub.Database{}
 	for _, u := range *r {
 		for _, s := range u.Series {
 			for _, v := range s.Values {
 				if name, ok := v[0].(string); !ok {
 					continue
 				} else {
-					d := cmp.Database{Name: name}
+					d := cloudhub.Database{Name: name}
 					res = append(res, d)
 				}
 			}
@@ -93,8 +93,8 @@ func (r *showResults) Databases() []cmp.Database {
 	return res
 }
 
-func (r *showResults) RetentionPolicies() []cmp.RetentionPolicy {
-	res := []cmp.RetentionPolicy{}
+func (r *showResults) RetentionPolicies() []cloudhub.RetentionPolicy {
+	res := []cloudhub.RetentionPolicy{}
 	for _, u := range *r {
 		for _, s := range u.Series {
 			for _, v := range s.Values {
@@ -109,7 +109,7 @@ func (r *showResults) RetentionPolicies() []cmp.RetentionPolicy {
 				} else if def, ok := v[4].(bool); !ok {
 					continue
 				} else {
-					d := cmp.RetentionPolicy{
+					d := cloudhub.RetentionPolicy{
 						Name:          name,
 						Duration:      duration,
 						ShardDuration: sduration,
@@ -124,16 +124,16 @@ func (r *showResults) RetentionPolicies() []cmp.RetentionPolicy {
 	return res
 }
 
-// Measurements converts SHOW MEASUREMENTS to cmp Measurement
-func (r *showResults) Measurements() []cmp.Measurement {
-	res := []cmp.Measurement{}
+// Measurements converts SHOW MEASUREMENTS to cloudhub Measurement
+func (r *showResults) Measurements() []cloudhub.Measurement {
+	res := []cloudhub.Measurement{}
 	for _, u := range *r {
 		for _, s := range u.Series {
 			for _, v := range s.Values {
 				if name, ok := v[0].(string); !ok {
 					continue
 				} else {
-					d := cmp.Measurement{Name: name}
+					d := cloudhub.Measurement{Name: name}
 					res = append(res, d)
 				}
 			}
@@ -142,9 +142,9 @@ func (r *showResults) Measurements() []cmp.Measurement {
 	return res
 }
 
-// Permissions converts SHOW GRANTS to cmp.Permissions
-func (r *showResults) Permissions() cmp.Permissions {
-	res := []cmp.Permission{}
+// Permissions converts SHOW GRANTS to cloudhub.Permissions
+func (r *showResults) Permissions() cloudhub.Permissions {
+	res := []cloudhub.Permission{}
 	for _, u := range *r {
 		for _, s := range u.Series {
 			for _, v := range s.Values {
@@ -153,9 +153,9 @@ func (r *showResults) Permissions() cmp.Permissions {
 				} else if priv, ok := v[1].(string); !ok {
 					continue
 				} else {
-					c := cmp.Permission{
+					c := cloudhub.Permission{
 						Name:  db,
-						Scope: cmp.DBScope,
+						Scope: cloudhub.DBScope,
 					}
 					switch priv {
 					case AllPrivileges, All:
@@ -176,18 +176,18 @@ func (r *showResults) Permissions() cmp.Permissions {
 	return res
 }
 
-func adminPerms() cmp.Permissions {
-	return []cmp.Permission{
+func adminPerms() cloudhub.Permissions {
+	return []cloudhub.Permission{
 		{
-			Scope:   cmp.AllScope,
+			Scope:   cloudhub.AllScope,
 			Allowed: AllowAllAdmin,
 		},
 	}
 }
 
 // ToInfluxQL converts the permission into InfluxQL
-func ToInfluxQL(action, preposition, username string, perm cmp.Permission) string {
-	if perm.Scope == cmp.AllScope {
+func ToInfluxQL(action, preposition, username string, perm cloudhub.Permission) string {
+	if perm.Scope == cloudhub.AllScope {
 		return fmt.Sprintf(`%s ALL PRIVILEGES %s "%s"`, action, preposition, username)
 	} else if len(perm.Allowed) == 0 {
 		// All privileges are to be removed for this user on this database
@@ -201,20 +201,20 @@ func ToInfluxQL(action, preposition, username string, perm cmp.Permission) strin
 }
 
 // ToRevoke converts the permission into InfluxQL revokes
-func ToRevoke(username string, perm cmp.Permission) string {
+func ToRevoke(username string, perm cloudhub.Permission) string {
 	return ToInfluxQL("REVOKE", "FROM", username, perm)
 }
 
 // ToGrant converts the permission into InfluxQL grants
-func ToGrant(username string, perm cmp.Permission) string {
+func ToGrant(username string, perm cloudhub.Permission) string {
 	if len(perm.Allowed) == 0 {
 		return ""
 	}
 	return ToInfluxQL("GRANT", "TO", username, perm)
 }
 
-// ToPriv converts cmp allowances to InfluxQL
-func ToPriv(a cmp.Allowances) string {
+// ToPriv converts cloudhub allowances to InfluxQL
+func ToPriv(a cloudhub.Allowances) string {
 	if len(a) == 0 {
 		return NoPrivileges
 	}
@@ -241,7 +241,7 @@ func ToPriv(a cmp.Allowances) string {
 }
 
 // Difference compares two permission sets and returns a set to be revoked and a set to be added
-func Difference(wants cmp.Permissions, haves cmp.Permissions) (revoke cmp.Permissions, add cmp.Permissions) {
+func Difference(wants cloudhub.Permissions, haves cloudhub.Permissions) (revoke cloudhub.Permissions, add cloudhub.Permissions) {
 	for _, want := range wants {
 		found := false
 		for _, got := range haves {

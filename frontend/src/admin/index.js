@@ -1,4 +1,4 @@
 import AdminInfluxDBPage from './containers/AdminInfluxDBPage'
-import AdminCMPPage from './containers/cmp/AdminCMPPage'
+import AdminCloudHubPage from './containers/cloudhub/AdminCloudHubPage'
 
-export {AdminCMPPage, AdminInfluxDBPage}
+export {AdminCloudHubPage, AdminInfluxDBPage}

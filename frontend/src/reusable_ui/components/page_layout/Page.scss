@@ -14,7 +14,7 @@
 .page-contents,
 .page-contents--split {
   position: relative;
-  height: calc(100% - #{$s-cmp-page-header-height}) !important;
+  height: calc(100% - #{$s-cloudhub-page-header-height}) !important;
   flex: 1 0 0;
   @include gradient-v($g2-kevlar, $g0-obsidian);
 
@@ -30,7 +30,7 @@
 
 .container-fluid {
   margin: 0 auto;
-  padding: ($s-cmp-page-header-height / 2) $s-page-wrapper-padding;
+  padding: ($s-cloudhub-page-header-height / 2) $s-page-wrapper-padding;
   max-width: $s-page-wrapper-max-width;
   &.full-height {
     height: 100%;
@@ -42,7 +42,7 @@
 
 .template-control-bar + .page-contents,
 .annotation-control-bar + .page-contents {
-  height: calc(100% - #{$s-cmp-page-header-height * 2}) !important;
+  height: calc(100% - #{$s-cloudhub-page-header-height * 2}) !important;
 }
 
 /* Presentation Mode */
@@ -61,7 +61,7 @@
 */
 
 .page-header {
-  height: $s-cmp-page-header-height;
+  height: $s-cloudhub-page-header-height;
   padding: 0 $s-page-wrapper-padding;
   display: flex;
   justify-content: center;
@@ -126,8 +126,8 @@
 }
 // TODO: Refactor this to be a part of overlay styles
 .page-header__dismiss {
-  width: ($s-cmp-page-header-height - 20px);
-  height: ($s-cmp-page-header-height - 20px);
+  width: ($s-cloudhub-page-header-height - 20px);
+  height: ($s-cloudhub-page-header-height - 20px);
   position: relative;
   /* Use psuedo elements to render the X */
   &:before,

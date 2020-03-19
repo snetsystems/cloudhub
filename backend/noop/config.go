@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-// ensure ConfigStore implements cmp.ConfigStore
-var _ cmp.ConfigStore = &ConfigStore{}
+// ensure ConfigStore implements cloudhub.ConfigStore
+var _ cloudhub.ConfigStore = &ConfigStore{}
 
 // ConfigStore ...
 type ConfigStore struct{}
@@ -19,11 +19,11 @@ func (s *ConfigStore) Initialize(context.Context) error {
 }
 
 // Get ...
-func (s *ConfigStore) Get(context.Context) (*cmp.Config, error) {
-	return nil, cmp.ErrConfigNotFound
+func (s *ConfigStore) Get(context.Context) (*cloudhub.Config, error) {
+	return nil, cloudhub.ErrConfigNotFound
 }
 
 // Update ...
-func (s *ConfigStore) Update(context.Context, *cmp.Config) error {
+func (s *ConfigStore) Update(context.Context, *cloudhub.Config) error {
 	return fmt.Errorf("cannot update conifg")
 }

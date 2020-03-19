@@ -1,4 +1,4 @@
-package cmp
+package cloudhub
 
 import "encoding/json"
 

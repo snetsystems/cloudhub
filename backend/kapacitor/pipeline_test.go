@@ -36,7 +36,7 @@ var messageField = 'message'
 
 var durationField = 'duration'
 
-var outputDB = 'cmp'
+var outputDB = 'cloudhub'
 
 var outputRP = 'autogen'
 
@@ -120,7 +120,7 @@ alert4
 
 alert4
     |influxDBOut()
-        .database('cmp')
+        .database('cloudhub')
         .retentionPolicy('autogen')
         .measurement('alerts')
         .buffer(1000)
@@ -174,7 +174,7 @@ func TestPipelineJSONDeadman(t *testing.T) {
 
     var durationField = 'duration'
 
-    var outputDB = 'cmp'
+    var outputDB = 'cloudhub'
 
     var outputRP = 'autogen'
 
@@ -260,7 +260,7 @@ alert5
         .tags()
         .keep('value', 'message', 'duration')
     |influxDBOut()
-        .database('cmp')
+        .database('cloudhub')
         .retentionPolicy('autogen')
         .measurement('alerts')
         .buffer(1000)
@@ -306,7 +306,7 @@ alert5
         .tags()
         .keep('value', 'message', 'duration')
     |influxDBOut()
-        .database('cmp')
+        .database('cloudhub')
         .retentionPolicy('autogen')
         .measurement('alerts')
         .buffer(1000)

@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"sort"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/oauth2"
-	"github.com/snetsystems/cmp/backend/organizations"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/oauth2"
+	"github.com/snetsystems/cloudhub/backend/organizations"
 )
 
 type meLinks struct {
@@ -17,10 +17,10 @@ type meLinks struct {
 }
 
 type meResponse struct {
-	*cmp.User
+	*cloudhub.User
 	Links               meLinks            `json:"links"`
-	Organizations       []cmp.Organization `json:"organizations"`
-	CurrentOrganization *cmp.Organization  `json:"currentOrganization,omitempty"`
+	Organizations       []cloudhub.Organization `json:"organizations"`
+	CurrentOrganization *cloudhub.Organization  `json:"currentOrganization,omitempty"`
 }
 
 type noAuthMeResponse struct {
@@ -30,18 +30,18 @@ type noAuthMeResponse struct {
 func newNoAuthMeResponse() noAuthMeResponse {
 	return noAuthMeResponse{
 		Links: meLinks{
-			Self: "/cmp/v1/me",
+			Self: "/cloudhub/v1/me",
 		},
 	}
 }
 
 // If new user response is nil, return an empty meResponse because it
 // indicates authentication is not needed
-func newMeResponse(usr *cmp.User, org string) meResponse {
-	base := "/cmp/v1"
+func newMeResponse(usr *cloudhub.User, org string) meResponse {
+	base := "/cloudhub/v1"
 	name := "me"
 	if usr != nil {
-		base = fmt.Sprintf("/cmp/v1/organizations/%s/users", org)
+		base = fmt.Sprintf("/cloudhub/v1/organizations/%s/users", org)
 		name = PathEscape(fmt.Sprintf("%d", usr.ID))
 	}
 
@@ -107,7 +107,7 @@ func (s *Service) UpdateMe(auth oauth2.Authenticator) func(http.ResponseWriter, 
 		}
 
 		// validate that the organization exists
-		org, err := s.Store.Organizations(serverCtx).Get(serverCtx, cmp.OrganizationQuery{ID: &req.Organization})
+		org, err := s.Store.Organizations(serverCtx).Get(serverCtx, cloudhub.OrganizationQuery{ID: &req.Organization})
 		if err != nil {
 			Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 			return
@@ -134,15 +134,15 @@ func (s *Service) UpdateMe(auth oauth2.Authenticator) func(http.ResponseWriter, 
 			invalidData(w, err, s.Logger)
 			return
 		}
-		_, err = s.Store.Users(ctx).Get(ctx, cmp.UserQuery{
+		_, err = s.Store.Users(ctx).Get(ctx, cloudhub.UserQuery{
 			Name:     &p.Subject,
 			Provider: &p.Issuer,
 			Scheme:   &scheme,
 		})
-		if err == cmp.ErrUserNotFound {
+		if err == cloudhub.ErrUserNotFound {
 			// If the user was not found, check to see if they are a super admin. If
 			// they are, add them to the organization.
-			u, err := s.Store.Users(serverCtx).Get(serverCtx, cmp.UserQuery{
+			u, err := s.Store.Users(serverCtx).Get(serverCtx, cloudhub.UserQuery{
 				Name:     &p.Subject,
 				Provider: &p.Issuer,
 				Scheme:   &scheme,
@@ -155,13 +155,13 @@ func (s *Service) UpdateMe(auth oauth2.Authenticator) func(http.ResponseWriter, 
 			if u.SuperAdmin == false {
 				// Since a user is not a part of this organization and not a super admin,
 				// we should tell them that they are Forbidden (403) from accessing this resource
-				Error(w, http.StatusForbidden, cmp.ErrUserNotFound.Error(), s.Logger)
+				Error(w, http.StatusForbidden, cloudhub.ErrUserNotFound.Error(), s.Logger)
 				return
 			}
 
 			// If the user is a super admin give them an admin role in the
 			// requested organization.
-			u.Roles = append(u.Roles, cmp.Role{
+			u.Roles = append(u.Roles, cloudhub.Role{
 				Organization: org.ID,
 				Name:         org.DefaultRole,
 			})
@@ -222,12 +222,12 @@ func (s *Service) Me(w http.ResponseWriter, r *http.Request) {
 		p.Organization = defaultOrg.ID
 	}
 
-	usr, err := s.Store.Users(serverCtx).Get(serverCtx, cmp.UserQuery{
+	usr, err := s.Store.Users(serverCtx).Get(serverCtx, cloudhub.UserQuery{
 		Name:     &p.Subject,
 		Provider: &p.Issuer,
 		Scheme:   &scheme,
 	})
-	if err != nil && err != cmp.ErrUserNotFound {
+	if err != nil && err != cloudhub.ErrUserNotFound {
 		unknownErrorWithMessage(w, err, s.Logger)
 		return
 	}
@@ -244,8 +244,8 @@ func (s *Service) Me(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		currentOrg, err := s.Store.Organizations(serverCtx).Get(serverCtx, cmp.OrganizationQuery{ID: &p.Organization})
-		if err == cmp.ErrOrganizationNotFound {
+		currentOrg, err := s.Store.Organizations(serverCtx).Get(serverCtx, cloudhub.OrganizationQuery{ID: &p.Organization})
+		if err == cloudhub.ErrOrganizationNotFound {
 			// The intent is to force a the user to go through another auth flow
 			Error(w, http.StatusForbidden, "user's current organization was not found", s.Logger)
 			return
@@ -269,7 +269,7 @@ func (s *Service) Me(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Because we didnt find a user, making a new one
-	user := &cmp.User{
+	user := &cloudhub.User{
 		Name:     p.Subject,
 		Provider: p.Issuer,
 		// TODO: This Scheme value is hard-coded temporarily since we only currently
@@ -292,7 +292,7 @@ func (s *Service) Me(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !superAdmin && len(roles) == 0 {
-		Error(w, http.StatusForbidden, "This CMP is private. To gain access, you must be explicitly added by an administrator.", s.Logger)
+		Error(w, http.StatusForbidden, "This CloudHub is private. To gain access, you must be explicitly added by an administrator.", s.Logger)
 		return
 	}
 
@@ -306,7 +306,7 @@ func (s *Service) Me(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		if !hasDefaultOrgRole {
-			roles = append(roles, cmp.Role{
+			roles = append(roles, cloudhub.Role{
 				Name:         defaultOrg.DefaultRole,
 				Organization: defaultOrg.ID,
 			})
@@ -327,7 +327,7 @@ func (s *Service) Me(w http.ResponseWriter, r *http.Request) {
 		unknownErrorWithMessage(w, err, s.Logger)
 		return
 	}
-	currentOrg, err := s.Store.Organizations(serverCtx).Get(serverCtx, cmp.OrganizationQuery{ID: &p.Organization})
+	currentOrg, err := s.Store.Organizations(serverCtx).Get(serverCtx, cloudhub.OrganizationQuery{ID: &p.Organization})
 	if err != nil {
 		unknownErrorWithMessage(w, err, s.Logger)
 		return
@@ -365,7 +365,7 @@ func (s *Service) newUsersAreSuperAdmin() bool {
 	return cfg.Auth.SuperAdminNewUsers
 }
 
-func (s *Service) usersOrganizations(ctx context.Context, u *cmp.User) ([]cmp.Organization, error) {
+func (s *Service) usersOrganizations(ctx context.Context, u *cloudhub.User) ([]cloudhub.Organization, error) {
 	if u == nil {
 		// TODO(desa): better error
 		return nil, fmt.Errorf("user was nil")
@@ -376,12 +376,12 @@ func (s *Service) usersOrganizations(ctx context.Context, u *cmp.User) ([]cmp.Or
 		orgIDs[role.Organization] = true
 	}
 
-	orgs := []cmp.Organization{}
+	orgs := []cloudhub.Organization{}
 	for orgID := range orgIDs {
-		org, err := s.Store.Organizations(ctx).Get(ctx, cmp.OrganizationQuery{ID: &orgID})
+		org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &orgID})
 
 		// There can be race conditions between deleting a organization and the me query
-		if err == cmp.ErrOrganizationNotFound {
+		if err == cloudhub.ErrOrganizationNotFound {
 			continue
 		}
 
@@ -399,7 +399,7 @@ func (s *Service) usersOrganizations(ctx context.Context, u *cmp.User) ([]cmp.Or
 	return orgs, nil
 }
 
-func hasRoleInDefaultOrganization(u *cmp.User, orgID string) bool {
+func hasRoleInDefaultOrganization(u *cloudhub.User, orgID string) bool {
 	for _, role := range u.Roles {
 		if role.Organization == orgID {
 			return true

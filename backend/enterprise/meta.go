@@ -13,8 +13,8 @@ import (
 	"net/url"
 	"time"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/influx"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/influx"
 )
 
 // Shared transports for all clients to prevent leaking connections
@@ -563,6 +563,6 @@ func (m *MetaClient) Do(ctx context.Context, path, method string, authorizer inf
 	case resp := <-resps:
 		return resp.Response, resp.Err
 	case <-ctx.Done():
-		return nil, cmp.ErrUpstreamTimeout
+		return nil, cloudhub.ErrUpstreamTimeout
 	}
 }

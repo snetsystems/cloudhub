@@ -8,13 +8,13 @@ import (
 	"path"
 	"strconv"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // KapExt is the the file extension searched for in the directory for kapacitor files
 const KapExt = ".kap"
 
-var _ cmp.ServersStore = &Kapacitors{}
+var _ cloudhub.ServersStore = &Kapacitors{}
 
 // Kapacitors are JSON kapacitors stored in the filesystem
 type Kapacitors struct {
@@ -23,12 +23,12 @@ type Kapacitors struct {
 	Create  func(string, interface{}) error             // Create will write kapacitor to file.
 	ReadDir func(dirname string) ([]os.FileInfo, error) // ReadDir reads the directory named by dirname and returns a list of directory entries sorted by filename.
 	Remove  func(name string) error                     // Remove file
-	IDs     cmp.ID                                      // IDs generate unique ids for new kapacitors
-	Logger  cmp.Logger
+	IDs     cloudhub.ID                                      // IDs generate unique ids for new kapacitors
+	Logger  cloudhub.Logger
 }
 
 // NewKapacitors constructs a kapacitor store wrapping a file system directory
-func NewKapacitors(dir string, ids cmp.ID, logger cmp.Logger) cmp.ServersStore {
+func NewKapacitors(dir string, ids cloudhub.ID, logger cloudhub.Logger) cloudhub.ServersStore {
 	return &Kapacitors{
 		Dir:     dir,
 		Load:    load,
@@ -40,24 +40,24 @@ func NewKapacitors(dir string, ids cmp.ID, logger cmp.Logger) cmp.ServersStore {
 	}
 }
 
-func kapacitorFile(dir string, kapacitor cmp.Server) string {
+func kapacitorFile(dir string, kapacitor cloudhub.Server) string {
 	base := fmt.Sprintf("%s%s", kapacitor.Name, KapExt)
 	return path.Join(dir, base)
 }
 
 // All returns all kapacitors from the directory
-func (d *Kapacitors) All(ctx context.Context) ([]cmp.Server, error) {
+func (d *Kapacitors) All(ctx context.Context) ([]cloudhub.Server, error) {
 	files, err := d.ReadDir(d.Dir)
 	if err != nil {
 		return nil, err
 	}
 
-	kapacitors := []cmp.Server{}
+	kapacitors := []cloudhub.Server{}
 	for _, file := range files {
 		if path.Ext(file.Name()) != KapExt {
 			continue
 		}
-		var kapacitor cmp.Server
+		var kapacitor cloudhub.Server
 		if err := d.Load(path.Join(d.Dir, file.Name()), &kapacitor); err != nil {
 			var fmtErr = fmt.Errorf("Error loading kapacitor configuration from %v:\n%v", path.Join(d.Dir, file.Name()), err)
 			d.Logger.Error(fmtErr)
@@ -70,13 +70,13 @@ func (d *Kapacitors) All(ctx context.Context) ([]cmp.Server, error) {
 }
 
 // Add creates a new kapacitor within the directory
-func (d *Kapacitors) Add(ctx context.Context, kapacitor cmp.Server) (cmp.Server, error) {
+func (d *Kapacitors) Add(ctx context.Context, kapacitor cloudhub.Server) (cloudhub.Server, error) {
 	genID, err := d.IDs.Generate()
 	if err != nil {
 		d.Logger.
 			WithField("component", "kapacitor").
 			Error("Unable to generate ID")
-		return cmp.Server{}, err
+		return cloudhub.Server{}, err
 	}
 
 	id, err := strconv.Atoi(genID)
@@ -84,14 +84,14 @@ func (d *Kapacitors) Add(ctx context.Context, kapacitor cmp.Server) (cmp.Server,
 		d.Logger.
 			WithField("component", "kapacitor").
 			Error("Unable to convert ID")
-		return cmp.Server{}, err
+		return cloudhub.Server{}, err
 	}
 
 	kapacitor.ID = id
 
 	file := kapacitorFile(d.Dir, kapacitor)
 	if err = d.Create(file, kapacitor); err != nil {
-		if err == cmp.ErrServerInvalid {
+		if err == cloudhub.ErrServerInvalid {
 			d.Logger.
 				WithField("component", "kapacitor").
 				WithField("name", file).
@@ -102,13 +102,13 @@ func (d *Kapacitors) Add(ctx context.Context, kapacitor cmp.Server) (cmp.Server,
 				WithField("name", file).
 				Error("Unable to write kapacitor:", err)
 		}
-		return cmp.Server{}, err
+		return cloudhub.Server{}, err
 	}
 	return kapacitor, nil
 }
 
 // Delete removes a kapacitor file from the directory
-func (d *Kapacitors) Delete(ctx context.Context, kapacitor cmp.Server) error {
+func (d *Kapacitors) Delete(ctx context.Context, kapacitor cloudhub.Server) error {
 	_, file, err := d.idToFile(kapacitor.ID)
 	if err != nil {
 		return err
@@ -125,27 +125,27 @@ func (d *Kapacitors) Delete(ctx context.Context, kapacitor cmp.Server) error {
 }
 
 // Get returns a kapacitor file from the kapacitor directory
-func (d *Kapacitors) Get(ctx context.Context, id int) (cmp.Server, error) {
+func (d *Kapacitors) Get(ctx context.Context, id int) (cloudhub.Server, error) {
 	board, file, err := d.idToFile(id)
 	if err != nil {
-		if err == cmp.ErrServerNotFound {
+		if err == cloudhub.ErrServerNotFound {
 			d.Logger.
 				WithField("component", "kapacitor").
 				WithField("name", file).
 				Error("Unable to read file")
-		} else if err == cmp.ErrServerInvalid {
+		} else if err == cloudhub.ErrServerInvalid {
 			d.Logger.
 				WithField("component", "kapacitor").
 				WithField("name", file).
 				Error("File is not a kapacitor")
 		}
-		return cmp.Server{}, err
+		return cloudhub.Server{}, err
 	}
 	return board, nil
 }
 
 // Update replaces a kapacitor from the file system directory
-func (d *Kapacitors) Update(ctx context.Context, kapacitor cmp.Server) error {
+func (d *Kapacitors) Update(ctx context.Context, kapacitor cloudhub.Server) error {
 	board, _, err := d.idToFile(kapacitor.ID)
 	if err != nil {
 		return err
@@ -159,13 +159,13 @@ func (d *Kapacitors) Update(ctx context.Context, kapacitor cmp.Server) error {
 }
 
 // idToFile takes an id and finds the associated filename
-func (d *Kapacitors) idToFile(id int) (cmp.Server, string, error) {
+func (d *Kapacitors) idToFile(id int) (cloudhub.Server, string, error) {
 	// Because the entire kapacitor information is not known at this point, we need
 	// to try to find the name of the file through matching the ID in the kapacitor
 	// content with the ID passed.
 	files, err := d.ReadDir(d.Dir)
 	if err != nil {
-		return cmp.Server{}, "", err
+		return cloudhub.Server{}, "", err
 	}
 
 	for _, f := range files {
@@ -173,14 +173,14 @@ func (d *Kapacitors) idToFile(id int) (cmp.Server, string, error) {
 			continue
 		}
 		file := path.Join(d.Dir, f.Name())
-		var kapacitor cmp.Server
+		var kapacitor cloudhub.Server
 		if err := d.Load(file, &kapacitor); err != nil {
-			return cmp.Server{}, "", err
+			return cloudhub.Server{}, "", err
 		}
 		if kapacitor.ID == id {
 			return kapacitor, file, nil
 		}
 	}
 
-	return cmp.Server{}, "", cmp.ErrServerNotFound
+	return cloudhub.Server{}, "", cloudhub.ErrServerNotFound
 }

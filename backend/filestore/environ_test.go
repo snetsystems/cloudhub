@@ -13,7 +13,7 @@ func Test_environ(t *testing.T) {
 	}{
 		{
 			name:  "environment variable is returned",
-			key:   "CMP_TEST_ENVIRON",
+			key:   "CloudHub_TEST_ENVIRON",
 			value: "howdy",
 		},
 	}

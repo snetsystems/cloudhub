@@ -14,15 +14,15 @@ import {
   createMapping as createMappingAJAX,
   updateMapping as updateMappingAJAX,
   deleteMapping as deleteMappingAJAX,
-} from 'src/admin/apis/cmp'
+} from 'src/admin/apis/cloudhub'
 
 import {notify} from 'shared/actions/notifications'
 import {errorThrown} from 'shared/actions/errors'
 import {
   notifyMappingDeleted,
-  notifyCMPOrgDeleted,
-  notifyCMPUserUpdated,
-  notifyCMPUserDeleted,
+  notifyCloudHubOrgDeleted,
+  notifyCloudHubUserUpdated,
+  notifyCloudHubUserDeleted,
 } from 'shared/copy/notifications'
 
 import {REVERT_STATE_DELAY} from 'shared/constants'
@@ -31,28 +31,28 @@ import {REVERT_STATE_DELAY} from 'shared/constants'
 
 // response contains `users` and `links`
 export const loadUsers = ({users}) => ({
-  type: 'CMP_LOAD_USERS',
+  type: 'CloudHub_LOAD_USERS',
   payload: {
     users,
   },
 })
 
 export const loadOrganizations = ({organizations}) => ({
-  type: 'CMP_LOAD_ORGANIZATIONS',
+  type: 'CloudHub_LOAD_ORGANIZATIONS',
   payload: {
     organizations,
   },
 })
 
 export const addUser = user => ({
-  type: 'CMP_ADD_USER',
+  type: 'CloudHub_ADD_USER',
   payload: {
     user,
   },
 })
 
 export const updateUser = (user, updatedUser) => ({
-  type: 'CMP_UPDATE_USER',
+  type: 'CloudHub_UPDATE_USER',
   payload: {
     user,
     updatedUser,
@@ -60,7 +60,7 @@ export const updateUser = (user, updatedUser) => ({
 })
 
 export const syncUser = (staleUser, syncedUser) => ({
-  type: 'CMP_SYNC_USER',
+  type: 'CloudHub_SYNC_USER',
   payload: {
     staleUser,
     syncedUser,
@@ -68,21 +68,21 @@ export const syncUser = (staleUser, syncedUser) => ({
 })
 
 export const removeUser = user => ({
-  type: 'CMP_REMOVE_USER',
+  type: 'CloudHub_REMOVE_USER',
   payload: {
     user,
   },
 })
 
 export const addOrganization = organization => ({
-  type: 'CMP_ADD_ORGANIZATION',
+  type: 'CloudHub_ADD_ORGANIZATION',
   payload: {
     organization,
   },
 })
 
 export const renameOrganization = (organization, newName) => ({
-  type: 'CMP_RENAME_ORGANIZATION',
+  type: 'CloudHub_RENAME_ORGANIZATION',
   payload: {
     organization,
     newName,
@@ -90,7 +90,7 @@ export const renameOrganization = (organization, newName) => ({
 })
 
 export const syncOrganization = (staleOrganization, syncedOrganization) => ({
-  type: 'CMP_SYNC_ORGANIZATION',
+  type: 'CloudHub_SYNC_ORGANIZATION',
   payload: {
     staleOrganization,
     syncedOrganization,
@@ -98,21 +98,21 @@ export const syncOrganization = (staleOrganization, syncedOrganization) => ({
 })
 
 export const removeOrganization = organization => ({
-  type: 'CMP_REMOVE_ORGANIZATION',
+  type: 'CloudHub_REMOVE_ORGANIZATION',
   payload: {
     organization,
   },
 })
 
 export const loadMappings = ({mappings}) => ({
-  type: 'CMP_LOAD_MAPPINGS',
+  type: 'CloudHub_LOAD_MAPPINGS',
   payload: {
     mappings,
   },
 })
 
 export const updateMapping = (staleMapping, updatedMapping) => ({
-  type: 'CMP_UPDATE_MAPPING',
+  type: 'CloudHub_UPDATE_MAPPING',
   payload: {
     staleMapping,
     updatedMapping,
@@ -120,14 +120,14 @@ export const updateMapping = (staleMapping, updatedMapping) => ({
 })
 
 export const addMapping = mapping => ({
-  type: 'CMP_ADD_MAPPING',
+  type: 'CloudHub_ADD_MAPPING',
   payload: {
     mapping,
   },
 })
 
 export const removeMapping = mapping => ({
-  type: 'CMP_REMOVE_MAPPING',
+  type: 'CloudHub_REMOVE_MAPPING',
   payload: {
     mapping,
   },
@@ -239,7 +239,7 @@ export const updateUserAsync = (
       provider: null,
       scheme: null,
     })
-    dispatch(notify(notifyCMPUserUpdated(successMessage)))
+    dispatch(notify(notifyCloudHubUserUpdated(successMessage)))
     // it's not necessary to syncUser again but it's useful for good
     // measure and for the clarity of insight in the redux story
     dispatch(syncUser(user, data))
@@ -256,7 +256,7 @@ export const deleteUserAsync = (
   dispatch(removeUser(user))
   try {
     await deleteUserAJAX(user)
-    dispatch(notify(notifyCMPUserDeleted(user.name, isAbsoluteDelete)))
+    dispatch(notify(notifyCloudHubUserDeleted(user.name, isAbsoluteDelete)))
   } catch (error) {
     dispatch(errorThrown(error))
     dispatch(addUser(user))
@@ -307,7 +307,7 @@ export const deleteOrganizationAsync = organization => async dispatch => {
   dispatch(removeOrganization(organization))
   try {
     await deleteOrganizationAJAX(organization)
-    dispatch(notify(notifyCMPOrgDeleted(organization.name)))
+    dispatch(notify(notifyCloudHubOrgDeleted(organization.name)))
   } catch (error) {
     dispatch(errorThrown(error))
     dispatch(addOrganization(organization))

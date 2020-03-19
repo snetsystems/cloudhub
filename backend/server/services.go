@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"net/url"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/flux"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/flux"
 )
 
 type postServiceRequest struct {
@@ -65,11 +65,11 @@ type service struct {
 	Links              serviceLinks           `json:"links"`              // Links are URI locations related to service
 }
 
-func newService(srv cmp.Server) service {
+func newService(srv cloudhub.Server) service {
 	if srv.Metadata == nil {
 		srv.Metadata = make(map[string]interface{})
 	}
-	httpAPISrcs := "/cmp/v1/sources"
+	httpAPISrcs := "/cloudhub/v1/sources"
 	return service{
 		ID:                 srv.ID,
 		SrcID:              srv.SrcID,
@@ -123,7 +123,7 @@ func (s *Service) NewService(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	srv := cmp.Server{
+	srv := cloudhub.Server{
 		SrcID:              srcID,
 		Name:               *req.Name,
 		Username:           req.Username,

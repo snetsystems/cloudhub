@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 type organizationConfigLinks struct {
@@ -15,14 +15,14 @@ type organizationConfigLinks struct {
 
 type organizationConfigResponse struct {
 	Links organizationConfigLinks `json:"links"`
-	cmp.OrganizationConfig
+	cloudhub.OrganizationConfig
 }
 
-func newOrganizationConfigResponse(c cmp.OrganizationConfig) *organizationConfigResponse {
+func newOrganizationConfigResponse(c cloudhub.OrganizationConfig) *organizationConfigResponse {
 	return &organizationConfigResponse{
 		Links: organizationConfigLinks{
-			Self:      "/cmp/v1/org_config",
-			LogViewer: "/cmp/v1/org_config/logviewer",
+			Self:      "/cloudhub/v1/org_config",
+			LogViewer: "/cloudhub/v1/org_config/logviewer",
 		},
 		OrganizationConfig: c,
 	}
@@ -30,13 +30,13 @@ func newOrganizationConfigResponse(c cmp.OrganizationConfig) *organizationConfig
 
 type logViewerConfigResponse struct {
 	Links selfLinks `json:"links"`
-	cmp.LogViewerConfig
+	cloudhub.LogViewerConfig
 }
 
-func newLogViewerConfigResponse(c cmp.LogViewerConfig) *logViewerConfigResponse {
+func newLogViewerConfigResponse(c cloudhub.LogViewerConfig) *logViewerConfigResponse {
 	return &logViewerConfigResponse{
 		Links: selfLinks{
-			Self: "/cmp/v1/org_config/logviewer",
+			Self: "/cloudhub/v1/org_config/logviewer",
 		},
 		LogViewerConfig: c,
 	}
@@ -95,7 +95,7 @@ func (s *Service) ReplaceOrganizationLogViewerConfig(w http.ResponseWriter, r *h
 		return
 	}
 
-	var logViewerConfig cmp.LogViewerConfig
+	var logViewerConfig cloudhub.LogViewerConfig
 	if err := json.NewDecoder(r.Body).Decode(&logViewerConfig); err != nil {
 		invalidJSON(w, s.Logger)
 		return
@@ -125,7 +125,7 @@ func (s *Service) ReplaceOrganizationLogViewerConfig(w http.ResponseWriter, r *h
 // columns with the same name or position value, each column must have a visbility
 // of either "visible" or "hidden" and if a column is of type severity, it must have
 // at least one severity format of type icon, text, or both
-func validLogViewerConfig(c cmp.LogViewerConfig) error {
+func validLogViewerConfig(c cloudhub.LogViewerConfig) error {
 	if len(c.Columns) == 0 {
 		return fmt.Errorf("Invalid log viewer config: must have at least 1 column")
 	}

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/url"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 var _ Provider = &Auth0{}
@@ -67,7 +67,7 @@ func (a *Auth0) Group(provider *http.Client) (string, error) {
 }
 
 // NewAuth0 ...
-func NewAuth0(auth0Domain, clientID, clientSecret, redirectURL string, organizations []string, logger cmp.Logger) (Auth0, error) {
+func NewAuth0(auth0Domain, clientID, clientSecret, redirectURL string, organizations []string, logger cloudhub.Logger) (Auth0, error) {
 	domain, err := url.Parse(auth0Domain)
 	if err != nil {
 		return Auth0{}, err

@@ -3,12 +3,12 @@ import PropTypes from 'prop-types'
 
 import uuid from 'uuid'
 
-import AllUsersTableHeader from 'src/admin/components/cmp/AllUsersTableHeader'
-import AllUsersTableRowNew from 'src/admin/components/cmp/AllUsersTableRowNew'
-import AllUsersTableRow from 'src/admin/components/cmp/AllUsersTableRow'
+import AllUsersTableHeader from 'src/admin/components/cloudhub/AllUsersTableHeader'
+import AllUsersTableRowNew from 'src/admin/components/cloudhub/AllUsersTableRowNew'
+import AllUsersTableRow from 'src/admin/components/cloudhub/AllUsersTableRow'
 import PageSpinner from 'src/shared/components/PageSpinner'
 
-import {ALL_USERS_TABLE} from 'src/admin/constants/cmpTableSizing'
+import {ALL_USERS_TABLE} from 'src/admin/constants/cloudhubTableSizing'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 const {
@@ -20,8 +20,8 @@ const {
 } = ALL_USERS_TABLE
 
 import {
-  notifyCMPUserAddedToOrg,
-  notifyCMPUserRemovedFromOrg,
+  notifyCloudHubUserAddedToOrg,
+  notifyCloudHubUserRemovedFromOrg,
 } from 'shared/copy/notifications'
 
 class AllUsersTable extends Component {
@@ -55,7 +55,7 @@ class AllUsersTable extends Component {
     this.props.onUpdateUserRoles(
       user,
       newRoles,
-      notifyCMPUserAddedToOrg(user.name, organization.name)
+      notifyCloudHubUserAddedToOrg(user.name, organization.name)
     )
   }
 
@@ -69,7 +69,7 @@ class AllUsersTable extends Component {
     this.props.onUpdateUserRoles(
       user,
       newRoles,
-      notifyCMPUserRemovedFromOrg(user.name, name)
+      notifyCloudHubUserRemovedFromOrg(user.name, name)
     )
   }
 
@@ -118,7 +118,7 @@ class AllUsersTable extends Component {
           onChangeAuthConfig={this.handleUpdateAuthConfig}
         />
         <div className="panel-body">
-          <table className="table table-highlight v-center cmp-admin-table">
+          <table className="table table-highlight v-center cloudhub-admin-table">
             <thead>
               <tr>
                 <th>Username</th>

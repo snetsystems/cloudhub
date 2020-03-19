@@ -13,7 +13,7 @@ import {createDashboard} from 'src/dashboards/apis'
 import {
   getDashboardsAsync,
   deleteDashboardAsync,
-  getCMPVersion,
+  getCloudHubVersion,
   importDashboardAsync,
   retainRangesDashTimeV1 as retainRangesDashTimeV1Action,
 } from 'src/dashboards/actions'
@@ -40,7 +40,7 @@ export interface Props {
   router: InjectedRouter
   dashboard: Dashboard
   handleGetDashboards: () => Promise<Dashboard[]>
-  handleGetCMPVersion: () => string
+  handleGetCloudHubVersion: () => string
   handleDeleteDashboard: (dashboard: Dashboard) => void
   handleImportDashboard: (dashboard: Dashboard) => void
   notify: (message: Notification) => void
@@ -157,8 +157,8 @@ export class DashboardsPage extends PureComponent<Props, State> {
   private modifyDashboardForDownload = async (
     dashboard: Dashboard
   ): Promise<DashboardFile> => {
-    const {sources, handleGetCMPVersion} = this.props
-    const version = await handleGetCMPVersion()
+    const {sources, handleGetCloudHubVersion} = this.props
+    const version = await handleGetCloudHubVersion()
 
     return mapDashboardForDownload(sources, dashboard, version)
   }
@@ -193,7 +193,7 @@ const mapStateToProps = ({
 const mapDispatchToProps = {
   handleGetDashboards: getDashboardsAsync,
   handleDeleteDashboard: deleteDashboardAsync,
-  handleGetCMPVersion: getCMPVersion,
+  handleGetCloudHubVersion: getCloudHubVersion,
   handleImportDashboard: importDashboardAsync,
   notify: notifyAction,
   retainRangesDashTimeV1: retainRangesDashTimeV1Action,

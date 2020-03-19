@@ -2,7 +2,7 @@ import React from 'react'
 
 import {shallow} from 'enzyme'
 
-import {AllUsersPage} from 'src/admin/containers/cmp/AllUsersPage'
+import {AllUsersPage} from 'src/admin/containers/cloudhub/AllUsersPage'
 
 import {authLinks as links} from 'test/resources'
 
@@ -40,7 +40,7 @@ const setup = (override = {}) => {
   }
 }
 
-describe('Admin.Containers.SCMP.AllUsersPage', () => {
+describe('Admin.Containers.CloudHub.AllUsersPage', () => {
   describe('rendering', () => {
     it('renders', () => {
       const {wrapper} = setup()

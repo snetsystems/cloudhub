@@ -4,12 +4,12 @@ import (
 	"context"
 
 	"github.com/boltdb/bolt"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/bolt/internal"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/bolt/internal"
 )
 
-// Ensure LayoutsStore implements cmp.LayoutsStore.
-var _ cmp.LayoutsStore = &LayoutsStore{}
+// Ensure LayoutsStore implements cloudhub.LayoutsStore.
+var _ cloudhub.LayoutsStore = &LayoutsStore{}
 
 // LayoutsBucket is the bolt bucket layouts are stored in
 var LayoutsBucket = []byte("Layout")
@@ -17,7 +17,7 @@ var LayoutsBucket = []byte("Layout")
 // LayoutsStore is the bolt implementation to store layouts
 type LayoutsStore struct {
 	client *Client
-	IDs    cmp.ID
+	IDs    cloudhub.ID
 }
 
 // Migrate ...
@@ -26,11 +26,11 @@ func (s *LayoutsStore) Migrate(ctx context.Context) error {
 }
 
 // All returns all known layouts
-func (s *LayoutsStore) All(ctx context.Context) ([]cmp.Layout, error) {
-	var srcs []cmp.Layout
+func (s *LayoutsStore) All(ctx context.Context) ([]cloudhub.Layout, error) {
+	var srcs []cloudhub.Layout
 	if err := s.client.db.View(func(tx *bolt.Tx) error {
 		if err := tx.Bucket(LayoutsBucket).ForEach(func(k, v []byte) error {
-			var src cmp.Layout
+			var src cloudhub.Layout
 			if err := internal.UnmarshalLayout(v, &src); err != nil {
 				return err
 			}
@@ -49,7 +49,7 @@ func (s *LayoutsStore) All(ctx context.Context) ([]cmp.Layout, error) {
 }
 
 // Add creates a new Layout in the LayoutsStore.
-func (s *LayoutsStore) Add(ctx context.Context, src cmp.Layout) (cmp.Layout, error) {
+func (s *LayoutsStore) Add(ctx context.Context, src cloudhub.Layout) (cloudhub.Layout, error) {
 	if err := s.client.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(LayoutsBucket)
 		id, err := s.IDs.Generate()
@@ -65,14 +65,14 @@ func (s *LayoutsStore) Add(ctx context.Context, src cmp.Layout) (cmp.Layout, err
 		}
 		return nil
 	}); err != nil {
-		return cmp.Layout{}, err
+		return cloudhub.Layout{}, err
 	}
 
 	return src, nil
 }
 
 // Delete removes the Layout from the LayoutsStore
-func (s *LayoutsStore) Delete(ctx context.Context, src cmp.Layout) error {
+func (s *LayoutsStore) Delete(ctx context.Context, src cloudhub.Layout) error {
 	_, err := s.Get(ctx, src.ID)
 	if err != nil {
 		return err
@@ -90,29 +90,29 @@ func (s *LayoutsStore) Delete(ctx context.Context, src cmp.Layout) error {
 }
 
 // Get returns a Layout if the id exists.
-func (s *LayoutsStore) Get(ctx context.Context, id string) (cmp.Layout, error) {
-	var src cmp.Layout
+func (s *LayoutsStore) Get(ctx context.Context, id string) (cloudhub.Layout, error) {
+	var src cloudhub.Layout
 	if err := s.client.db.View(func(tx *bolt.Tx) error {
 		if v := tx.Bucket(LayoutsBucket).Get([]byte(id)); v == nil {
-			return cmp.ErrLayoutNotFound
+			return cloudhub.ErrLayoutNotFound
 		} else if err := internal.UnmarshalLayout(v, &src); err != nil {
 			return err
 		}
 		return nil
 	}); err != nil {
-		return cmp.Layout{}, err
+		return cloudhub.Layout{}, err
 	}
 
 	return src, nil
 }
 
 // Update a Layout
-func (s *LayoutsStore) Update(ctx context.Context, src cmp.Layout) error {
+func (s *LayoutsStore) Update(ctx context.Context, src cloudhub.Layout) error {
 	if err := s.client.db.Update(func(tx *bolt.Tx) error {
 		// Get an existing layout with the same ID.
 		b := tx.Bucket(LayoutsBucket)
 		if v := b.Get([]byte(src.ID)); v == nil {
-			return cmp.ErrLayoutNotFound
+			return cloudhub.ErrLayoutNotFound
 		}
 
 		if v, err := internal.MarshalLayout(src); err != nil {

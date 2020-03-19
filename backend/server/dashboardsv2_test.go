@@ -11,9 +11,9 @@ import (
 	"testing"
 
 	"github.com/bouk/httprouter"
-	"github.com/snetsystems/cmp/backend/log"
-	"github.com/snetsystems/cmp/backend/mocks"
-	"github.com/snetsystems/cmp/backend/v2"
+	"github.com/snetsystems/cloudhub/backend/log"
+	"github.com/snetsystems/cloudhub/backend/mocks"
+	"github.com/snetsystems/cloudhub/backend/v2"
 )
 
 func TestService_DashboardsV2(t *testing.T) {
@@ -50,7 +50,7 @@ func TestService_DashboardsV2(t *testing.T) {
 										Y:   2,
 										W:   3,
 										H:   4,
-										Ref: "/cmp/v2/cells/12",
+										Ref: "/cloudhub/v2/cells/12",
 									},
 								},
 							},
@@ -69,7 +69,7 @@ func TestService_DashboardsV2(t *testing.T) {
 				body: `
 {
   "links": {
-    "self": "/cmp/v2/dashboards"
+    "self": "/cloudhub/v2/dashboards"
   },
   "dashboards": [
     {
@@ -81,11 +81,11 @@ func TestService_DashboardsV2(t *testing.T) {
           "y": 2,
           "w": 3,
           "h": 4,
-          "ref": "/cmp/v2/cells/12"
+          "ref": "/cloudhub/v2/cells/12"
         }
       ],
       "links": {
-        "self": "/cmp/v2/dashboards/0"
+        "self": "/cloudhub/v2/dashboards/0"
       }
     },
     {
@@ -93,7 +93,7 @@ func TestService_DashboardsV2(t *testing.T) {
       "name": "example",
       "cells": [],
       "links": {
-        "self": "/cmp/v2/dashboards/2"
+        "self": "/cloudhub/v2/dashboards/2"
       }
     }
   ]
@@ -117,7 +117,7 @@ func TestService_DashboardsV2(t *testing.T) {
 				body: `
 {
   "links": {
-    "self": "/cmp/v2/dashboards"
+    "self": "/cloudhub/v2/dashboards"
   },
   "dashboards": []
 }`,
@@ -200,7 +200,7 @@ func TestService_DashboardIDV2(t *testing.T) {
 										Y:   2,
 										W:   3,
 										H:   4,
-										Ref: "/cmp/v2/cells/12",
+										Ref: "/cloudhub/v2/cells/12",
 									},
 								},
 							}, nil
@@ -226,11 +226,11 @@ func TestService_DashboardIDV2(t *testing.T) {
       "y": 2,
       "w": 3,
       "h": 4,
-      "ref": "/cmp/v2/cells/12"
+      "ref": "/cloudhub/v2/cells/12"
     }
   ],
   "links": {
-    "self": "/cmp/v2/dashboards/2"
+    "self": "/cloudhub/v2/dashboards/2"
   }
 }
 `,
@@ -335,7 +335,7 @@ func TestService_NewDashboardV2(t *testing.T) {
 							Y:   2,
 							W:   3,
 							H:   4,
-							Ref: "/cmp/v2/cells/12",
+							Ref: "/cloudhub/v2/cells/12",
 						},
 					},
 				},
@@ -353,11 +353,11 @@ func TestService_NewDashboardV2(t *testing.T) {
       "y": 2,
       "w": 3,
       "h": 4,
-      "ref": "/cmp/v2/cells/12"
+      "ref": "/cloudhub/v2/cells/12"
     }
   ],
   "links": {
-    "self": "/cmp/v2/dashboards/2"
+    "self": "/cloudhub/v2/dashboards/2"
   }
 }
 `,
@@ -537,7 +537,7 @@ func TestService_UpdateDashboardV2(t *testing.T) {
 										Y:   2,
 										W:   3,
 										H:   4,
-										Ref: "/cmp/v2/cells/12",
+										Ref: "/cloudhub/v2/cells/12",
 									},
 								},
 							}
@@ -574,11 +574,11 @@ func TestService_UpdateDashboardV2(t *testing.T) {
       "y": 2,
       "w": 3,
       "h": 4,
-      "ref": "/cmp/v2/cells/12"
+      "ref": "/cloudhub/v2/cells/12"
     }
   ],
   "links": {
-    "self": "/cmp/v2/dashboards/2"
+    "self": "/cloudhub/v2/dashboards/2"
   }
 }
 `,
@@ -599,7 +599,7 @@ func TestService_UpdateDashboardV2(t *testing.T) {
 										Y:   2,
 										W:   3,
 										H:   4,
-										Ref: "/cmp/v2/cells/12",
+										Ref: "/cloudhub/v2/cells/12",
 									},
 								},
 							}
@@ -627,14 +627,14 @@ func TestService_UpdateDashboardV2(t *testing.T) {
 						Y:   2,
 						W:   3,
 						H:   4,
-						Ref: "/cmp/v2/cells/12",
+						Ref: "/cloudhub/v2/cells/12",
 					},
 					{
 						X:   2,
 						Y:   3,
 						W:   4,
 						H:   5,
-						Ref: "/cmp/v2/cells/1",
+						Ref: "/cloudhub/v2/cells/1",
 					},
 				},
 			},
@@ -651,18 +651,18 @@ func TestService_UpdateDashboardV2(t *testing.T) {
       "y": 2,
       "w": 3,
       "h": 4,
-      "ref": "/cmp/v2/cells/12"
+      "ref": "/cloudhub/v2/cells/12"
     },
     {
       "x": 2,
       "y": 3,
       "w": 4,
       "h": 5,
-      "ref": "/cmp/v2/cells/1"
+      "ref": "/cloudhub/v2/cells/1"
     }
   ],
   "links": {
-    "self": "/cmp/v2/dashboards/2"
+    "self": "/cloudhub/v2/dashboards/2"
   }
 }
 `,

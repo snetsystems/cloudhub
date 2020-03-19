@@ -36,7 +36,7 @@ import {
   KapacitorRulesPage,
   TickscriptPage,
 } from 'src/kapacitor'
-import {AdminCMPPage, AdminInfluxDBPage} from 'src/admin'
+import {AdminCloudHubPage, AdminInfluxDBPage} from 'src/admin'
 import {ManageSources, OnboardingWizard} from 'src/sources'
 import {AgentAdminPage} from 'src/agent_admin'
 import {GraphqlProvider} from 'src/addon/128t'
@@ -51,7 +51,7 @@ import {disablePresentationMode} from 'src/shared/actions/app'
 import {errorThrown} from 'src/shared/actions/errors'
 import {notify} from 'src/shared/actions/notifications'
 
-import 'src/style/cmp.scss'
+import 'src/style/cloudhub.scss'
 
 import {HEARTBEAT_INTERVAL} from 'src/shared/constants'
 
@@ -173,7 +173,10 @@ class Root extends PureComponent<{}, State> {
                   path="kapacitors/:id/edit:hash"
                   component={KapacitorPage}
                 />
-                <Route path="admin-cmp/:tab" component={AdminCMPPage} />
+                <Route
+                  path="admin-cloudhub/:tab"
+                  component={AdminCloudHubPage}
+                />
                 <Route
                   path="admin-influxdb/:tab"
                   component={AdminInfluxDBPage}

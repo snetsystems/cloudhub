@@ -14,8 +14,8 @@ import (
 
 	"github.com/bouk/httprouter"
 	gocmp "github.com/google/go-cmp/cmp"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/mocks"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/mocks"
 )
 
 func Test_Cells_CorrectAxis(t *testing.T) {
@@ -23,20 +23,20 @@ func Test_Cells_CorrectAxis(t *testing.T) {
 
 	axisTests := []struct {
 		name       string
-		cell       *cmp.DashboardCell
+		cell       *cloudhub.DashboardCell
 		shouldFail bool
 	}{
 		{
 			name: "correct axes",
-			cell: &cmp.DashboardCell{
-				Axes: map[string]cmp.Axis{
-					"x": cmp.Axis{
+			cell: &cloudhub.DashboardCell{
+				Axes: map[string]cloudhub.Axis{
+					"x": cloudhub.Axis{
 						Bounds: []string{"0", "100"},
 					},
-					"y": cmp.Axis{
+					"y": cloudhub.Axis{
 						Bounds: []string{"0", "100"},
 					},
-					"y2": cmp.Axis{
+					"y2": cloudhub.Axis{
 						Bounds: []string{"0", "100"},
 					},
 				},
@@ -44,12 +44,12 @@ func Test_Cells_CorrectAxis(t *testing.T) {
 		},
 		{
 			name: "invalid axes present",
-			cell: &cmp.DashboardCell{
-				Axes: map[string]cmp.Axis{
-					"axis of evil": cmp.Axis{
+			cell: &cloudhub.DashboardCell{
+				Axes: map[string]cloudhub.Axis{
+					"axis of evil": cloudhub.Axis{
 						Bounds: []string{"666", "666"},
 					},
-					"axis of awesome": cmp.Axis{
+					"axis of awesome": cloudhub.Axis{
 						Bounds: []string{"1337", "31337"},
 					},
 				},
@@ -58,9 +58,9 @@ func Test_Cells_CorrectAxis(t *testing.T) {
 		},
 		{
 			name: "linear scale value",
-			cell: &cmp.DashboardCell{
-				Axes: map[string]cmp.Axis{
-					"x": cmp.Axis{
+			cell: &cloudhub.DashboardCell{
+				Axes: map[string]cloudhub.Axis{
+					"x": cloudhub.Axis{
 						Scale:  "linear",
 						Bounds: []string{"0", "100"},
 					},
@@ -69,9 +69,9 @@ func Test_Cells_CorrectAxis(t *testing.T) {
 		},
 		{
 			name: "log scale value",
-			cell: &cmp.DashboardCell{
-				Axes: map[string]cmp.Axis{
-					"x": cmp.Axis{
+			cell: &cloudhub.DashboardCell{
+				Axes: map[string]cloudhub.Axis{
+					"x": cloudhub.Axis{
 						Scale:  "log",
 						Bounds: []string{"0", "100"},
 					},
@@ -80,9 +80,9 @@ func Test_Cells_CorrectAxis(t *testing.T) {
 		},
 		{
 			name: "invalid scale value",
-			cell: &cmp.DashboardCell{
-				Axes: map[string]cmp.Axis{
-					"x": cmp.Axis{
+			cell: &cloudhub.DashboardCell{
+				Axes: map[string]cloudhub.Axis{
+					"x": cloudhub.Axis{
 						Scale:  "potatoes",
 						Bounds: []string{"0", "100"},
 					},
@@ -92,9 +92,9 @@ func Test_Cells_CorrectAxis(t *testing.T) {
 		},
 		{
 			name: "base 10 axis",
-			cell: &cmp.DashboardCell{
-				Axes: map[string]cmp.Axis{
-					"x": cmp.Axis{
+			cell: &cloudhub.DashboardCell{
+				Axes: map[string]cloudhub.Axis{
+					"x": cloudhub.Axis{
 						Base:   "10",
 						Bounds: []string{"0", "100"},
 					},
@@ -103,9 +103,9 @@ func Test_Cells_CorrectAxis(t *testing.T) {
 		},
 		{
 			name: "base 2 axis",
-			cell: &cmp.DashboardCell{
-				Axes: map[string]cmp.Axis{
-					"x": cmp.Axis{
+			cell: &cloudhub.DashboardCell{
+				Axes: map[string]cloudhub.Axis{
+					"x": cloudhub.Axis{
 						Base:   "2",
 						Bounds: []string{"0", "100"},
 					},
@@ -114,9 +114,9 @@ func Test_Cells_CorrectAxis(t *testing.T) {
 		},
 		{
 			name: "invalid base",
-			cell: &cmp.DashboardCell{
-				Axes: map[string]cmp.Axis{
-					"x": cmp.Axis{
+			cell: &cloudhub.DashboardCell{
+				Axes: map[string]cloudhub.Axis{
+					"x": cloudhub.Axis{
 						Base:   "all your base are belong to us",
 						Bounds: []string{"0", "100"},
 					},
@@ -142,31 +142,31 @@ func Test_Service_DashboardCells(t *testing.T) {
 		name         string
 		reqURL       *url.URL
 		ctxParams    map[string]string
-		mockResponse []cmp.DashboardCell
-		expected     []cmp.DashboardCell
+		mockResponse []cloudhub.DashboardCell
+		expected     []cloudhub.DashboardCell
 		expectedCode int
 	}{
 		{
 			name: "happy path",
 			reqURL: &url.URL{
-				Path: "/cmp/v1/dashboards/1/cells",
+				Path: "/cloudhub/v1/dashboards/1/cells",
 			},
 			ctxParams: map[string]string{
 				"id": "1",
 			},
-			mockResponse: []cmp.DashboardCell{},
-			expected:     []cmp.DashboardCell{},
+			mockResponse: []cloudhub.DashboardCell{},
+			expected:     []cloudhub.DashboardCell{},
 			expectedCode: http.StatusOK,
 		},
 		{
 			name: "cell axes should always be \"x\", \"y\", and \"y2\"",
 			reqURL: &url.URL{
-				Path: "/cmp/v1/dashboards/1/cells",
+				Path: "/cloudhub/v1/dashboards/1/cells",
 			},
 			ctxParams: map[string]string{
 				"id": "1",
 			},
-			mockResponse: []cmp.DashboardCell{
+			mockResponse: []cloudhub.DashboardCell{
 				{
 					ID:             "3899be5a-f6eb-4347-b949-de2f4fbea859",
 					X:              0,
@@ -175,12 +175,12 @@ func Test_Service_DashboardCells(t *testing.T) {
 					H:              4,
 					Name:           "CPU",
 					Type:           "bar",
-					Queries:        []cmp.DashboardQuery{},
-					Axes:           map[string]cmp.Axis{},
+					Queries:        []cloudhub.DashboardQuery{},
+					Axes:           map[string]cloudhub.Axis{},
 					NoteVisibility: "",
 				},
 			},
-			expected: []cmp.DashboardCell{
+			expected: []cloudhub.DashboardCell{
 				{
 					ID:         "3899be5a-f6eb-4347-b949-de2f4fbea859",
 					X:          0,
@@ -189,16 +189,16 @@ func Test_Service_DashboardCells(t *testing.T) {
 					H:          4,
 					Name:       "CPU",
 					Type:       "bar",
-					Queries:    []cmp.DashboardQuery{},
-					CellColors: []cmp.CellColor{},
-					Axes: map[string]cmp.Axis{
-						"x": cmp.Axis{
+					Queries:    []cloudhub.DashboardQuery{},
+					CellColors: []cloudhub.CellColor{},
+					Axes: map[string]cloudhub.Axis{
+						"x": cloudhub.Axis{
 							Bounds: []string{"", ""},
 						},
-						"y": cmp.Axis{
+						"y": cloudhub.Axis{
 							Bounds: []string{"", ""},
 						},
-						"y2": cmp.Axis{
+						"y2": cloudhub.Axis{
 							Bounds: []string{"", ""},
 						},
 					},
@@ -233,11 +233,11 @@ func Test_Service_DashboardCells(t *testing.T) {
 			svc := &Service{
 				Store: &mocks.Store{
 					DashboardsStore: &mocks.DashboardsStore{
-						GetF: func(ctx context.Context, id cmp.DashboardID) (cmp.Dashboard, error) {
-							return cmp.Dashboard{
-								ID:        cmp.DashboardID(1),
+						GetF: func(ctx context.Context, id cloudhub.DashboardID) (cloudhub.Dashboard, error) {
+							return cloudhub.Dashboard{
+								ID:        cloudhub.DashboardID(1),
 								Cells:     test.mockResponse,
-								Templates: []cmp.Template{},
+								Templates: []cloudhub.Template{},
 								Name:      "empty dashboard",
 							}, nil
 						},
@@ -251,7 +251,7 @@ func Test_Service_DashboardCells(t *testing.T) {
 
 			// setup frame to decode response into
 			respFrame := []struct {
-				cmp.DashboardCell
+				cloudhub.DashboardCell
 				Links json.RawMessage `json:"links"` // ignore links
 			}{}
 
@@ -268,7 +268,7 @@ func Test_Service_DashboardCells(t *testing.T) {
 			}
 
 			// extract actual
-			actual := []cmp.DashboardCell{}
+			actual := []cloudhub.DashboardCell{}
 			for _, rsp := range respFrame {
 				actual = append(actual, rsp.DashboardCell)
 			}
@@ -284,13 +284,13 @@ func Test_Service_DashboardCells(t *testing.T) {
 func TestHasCorrectColors(t *testing.T) {
 	tests := []struct {
 		name    string
-		c       *cmp.DashboardCell
+		c       *cloudhub.DashboardCell
 		wantErr bool
 	}{
 		{
 			name: "min type is valid",
-			c: &cmp.DashboardCell{
-				CellColors: []cmp.CellColor{
+			c: &cloudhub.DashboardCell{
+				CellColors: []cloudhub.CellColor{
 					{
 						Type: "min",
 						Hex:  "#FFFFFF",
@@ -300,8 +300,8 @@ func TestHasCorrectColors(t *testing.T) {
 		},
 		{
 			name: "max type is valid",
-			c: &cmp.DashboardCell{
-				CellColors: []cmp.CellColor{
+			c: &cloudhub.DashboardCell{
+				CellColors: []cloudhub.CellColor{
 					{
 						Type: "max",
 						Hex:  "#FFFFFF",
@@ -311,8 +311,8 @@ func TestHasCorrectColors(t *testing.T) {
 		},
 		{
 			name: "threshold type is valid",
-			c: &cmp.DashboardCell{
-				CellColors: []cmp.CellColor{
+			c: &cloudhub.DashboardCell{
+				CellColors: []cloudhub.CellColor{
 					{
 						Type: "threshold",
 						Hex:  "#FFFFFF",
@@ -322,8 +322,8 @@ func TestHasCorrectColors(t *testing.T) {
 		},
 		{
 			name: "invalid color type",
-			c: &cmp.DashboardCell{
-				CellColors: []cmp.CellColor{
+			c: &cloudhub.DashboardCell{
+				CellColors: []cloudhub.CellColor{
 					{
 						Type: "unknown",
 						Hex:  "#FFFFFF",
@@ -334,8 +334,8 @@ func TestHasCorrectColors(t *testing.T) {
 		},
 		{
 			name: "invalid color hex",
-			c: &cmp.DashboardCell{
-				CellColors: []cmp.CellColor{
+			c: &cloudhub.DashboardCell{
+				CellColors: []cloudhub.CellColor{
 					{
 						Type: "min",
 						Hex:  "bad",
@@ -357,7 +357,7 @@ func TestHasCorrectColors(t *testing.T) {
 func TestService_ReplaceDashboardCell(t *testing.T) {
 	tests := []struct {
 		name            string
-		DashboardsStore cmp.DashboardsStore
+		DashboardsStore cloudhub.DashboardsStore
 		ID              string
 		CID             string
 		w               *httptest.ResponseRecorder
@@ -369,32 +369,32 @@ func TestService_ReplaceDashboardCell(t *testing.T) {
 			ID:   "1",
 			CID:  "3c5c4102-fa40-4585-a8f9-917c77e37192",
 			DashboardsStore: &mocks.DashboardsStore{
-				UpdateF: func(ctx context.Context, target cmp.Dashboard) error {
+				UpdateF: func(ctx context.Context, target cloudhub.Dashboard) error {
 					return nil
 				},
-				GetF: func(ctx context.Context, ID cmp.DashboardID) (cmp.Dashboard, error) {
-					return cmp.Dashboard{
+				GetF: func(ctx context.Context, ID cloudhub.DashboardID) (cloudhub.Dashboard, error) {
+					return cloudhub.Dashboard{
 						ID: ID,
-						Cells: []cmp.DashboardCell{
+						Cells: []cloudhub.DashboardCell{
 							{
 								ID:   "3c5c4102-fa40-4585-a8f9-917c77e37192",
 								W:    4,
 								H:    4,
 								Name: "Untitled Cell",
-								Queries: []cmp.DashboardQuery{
+								Queries: []cloudhub.DashboardQuery{
 									{
 										Command: "SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)",
-										QueryConfig: cmp.QueryConfig{
+										QueryConfig: cloudhub.QueryConfig{
 											ID:              "3cd3eaa4-a4b8-44b3-b69e-0c7bf6b91d9e",
 											Database:        "telegraf",
 											Measurement:     "cpu",
 											RetentionPolicy: "autogen",
-											Fields: []cmp.Field{
+											Fields: []cloudhub.Field{
 												{
 													Value: "mean",
 													Type:  "func",
 													Alias: "mean_usage_user",
-													Args: []cmp.Field{
+													Args: []cloudhub.Field{
 														{
 															Value: "usage_user",
 															Type:  "field",
@@ -407,21 +407,21 @@ func TestService_ReplaceDashboardCell(t *testing.T) {
 													"ChristohersMBP2.lan",
 												},
 											},
-											GroupBy: cmp.GroupBy{
+											GroupBy: cloudhub.GroupBy{
 												Time: "2s",
 												Tags: []string{},
 											},
 											AreTagsAccepted: true,
 											Fill:            "null",
 											RawText:         strPtr("SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)"),
-											Range: &cmp.DurationRange{
+											Range: &cloudhub.DurationRange{
 												Lower: "now() - 15m"},
-											Shifts: []cmp.TimeShift{},
+											Shifts: []cloudhub.TimeShift{},
 										},
 										Type: "influxql",
 									},
 								},
-								Axes: map[string]cmp.Axis{
+								Axes: map[string]cloudhub.Axis{
 									"x": {
 										Bounds: []string{"", ""},
 									},
@@ -433,7 +433,7 @@ func TestService_ReplaceDashboardCell(t *testing.T) {
 									},
 								},
 								Type: "line",
-								CellColors: []cmp.CellColor{
+								CellColors: []cloudhub.CellColor{
 									{
 										ID:    "0",
 										Type:  "min",
@@ -535,23 +535,23 @@ func TestService_ReplaceDashboardCell(t *testing.T) {
 					"noteVisibility": "default",
 					"links": {
 					  "self":
-						"/cmp/v1/dashboards/6/cells/3c5c4102-fa40-4585-a8f9-917c77e37192"
+						"/cloudhub/v1/dashboards/6/cells/3c5c4102-fa40-4585-a8f9-917c77e37192"
 					}
 				  }
 				  `))),
-			want: `{"i":"3c5c4102-fa40-4585-a8f9-917c77e37192","x":0,"y":0,"w":4,"h":4,"name":"Untitled Cell","queries":[{"query":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","queryConfig":{"id":"3cd3eaa4-a4b8-44b3-b69e-0c7bf6b91d9e","database":"telegraf","measurement":"cpu","retentionPolicy":"autogen","fields":[{"value":"mean","type":"func","alias":"mean_usage_user","args":[{"value":"usage_user","type":"field","alias":""}]}],"tags":{"cpu":["ChristohersMBP2.lan"]},"groupBy":{"time":"2s","tags":[]},"areTagsAccepted":true,"fill":"null","rawText":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","range":{"upper":"","lower":"now() - 15m"},"shifts":[]},"source":"","type":"influxql"}],"axes":{"x":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y2":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""}},"type":"line","colors":[{"id":"0","type":"min","hex":"#00C9FF","name":"laser","value":"0"},{"id":"1","type":"max","hex":"#9394FF","name":"comet","value":"100"}],"legend":{},"tableOptions":{"verticalTimeAxis":false,"sortBy":{"internalName":"","displayName":"","visible":false},"wrapping":"","fixFirstColumn":false},"fieldOptions":null,"timeFormat":"","decimalPlaces":{"isEnforced":false,"digits":0},"note":"","noteVisibility":"default","links":{"self":"/cmp/v1/dashboards/1/cells/3c5c4102-fa40-4585-a8f9-917c77e37192"}}
+			want: `{"i":"3c5c4102-fa40-4585-a8f9-917c77e37192","x":0,"y":0,"w":4,"h":4,"name":"Untitled Cell","queries":[{"query":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","queryConfig":{"id":"3cd3eaa4-a4b8-44b3-b69e-0c7bf6b91d9e","database":"telegraf","measurement":"cpu","retentionPolicy":"autogen","fields":[{"value":"mean","type":"func","alias":"mean_usage_user","args":[{"value":"usage_user","type":"field","alias":""}]}],"tags":{"cpu":["ChristohersMBP2.lan"]},"groupBy":{"time":"2s","tags":[]},"areTagsAccepted":true,"fill":"null","rawText":"SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)","range":{"upper":"","lower":"now() - 15m"},"shifts":[]},"source":"","type":"influxql"}],"axes":{"x":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""},"y2":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"","scale":""}},"type":"line","colors":[{"id":"0","type":"min","hex":"#00C9FF","name":"laser","value":"0"},{"id":"1","type":"max","hex":"#9394FF","name":"comet","value":"100"}],"legend":{},"tableOptions":{"verticalTimeAxis":false,"sortBy":{"internalName":"","displayName":"","visible":false},"wrapping":"","fixFirstColumn":false},"fieldOptions":null,"timeFormat":"","decimalPlaces":{"isEnforced":false,"digits":0},"note":"","noteVisibility":"default","links":{"self":"/cloudhub/v1/dashboards/1/cells/3c5c4102-fa40-4585-a8f9-917c77e37192"}}
 `,
 		},
 		{
 			name: "dashboard doesn't exist",
 			ID:   "1",
 			DashboardsStore: &mocks.DashboardsStore{
-				GetF: func(ctx context.Context, ID cmp.DashboardID) (cmp.Dashboard, error) {
-					return cmp.Dashboard{}, fmt.Errorf("doesn't exist")
+				GetF: func(ctx context.Context, ID cloudhub.DashboardID) (cloudhub.Dashboard, error) {
+					return cloudhub.Dashboard{}, fmt.Errorf("doesn't exist")
 				},
 			},
 			w:    httptest.NewRecorder(),
-			r:    httptest.NewRequest("PUT", "/cmp/v1/dashboards/1/cells/3c5c4102-fa40-4585-a8f9-917c77e37192", nil),
+			r:    httptest.NewRequest("PUT", "/cloudhub/v1/dashboards/1/cells/3c5c4102-fa40-4585-a8f9-917c77e37192", nil),
 			want: `{"code":404,"message":"ID 1 not found"}`,
 		},
 		{
@@ -559,12 +559,12 @@ func TestService_ReplaceDashboardCell(t *testing.T) {
 			ID:   "1",
 			CID:  "3c5c4102-fa40-4585-a8f9-917c77e37192",
 			DashboardsStore: &mocks.DashboardsStore{
-				GetF: func(ctx context.Context, ID cmp.DashboardID) (cmp.Dashboard, error) {
-					return cmp.Dashboard{}, nil
+				GetF: func(ctx context.Context, ID cloudhub.DashboardID) (cloudhub.Dashboard, error) {
+					return cloudhub.Dashboard{}, nil
 				},
 			},
 			w:    httptest.NewRecorder(),
-			r:    httptest.NewRequest("PUT", "/cmp/v1/dashboards/1/cells/3c5c4102-fa40-4585-a8f9-917c77e37192", nil),
+			r:    httptest.NewRequest("PUT", "/cloudhub/v1/dashboards/1/cells/3c5c4102-fa40-4585-a8f9-917c77e37192", nil),
 			want: `{"code":404,"message":"ID 3c5c4102-fa40-4585-a8f9-917c77e37192 not found"}`,
 		},
 		{
@@ -572,10 +572,10 @@ func TestService_ReplaceDashboardCell(t *testing.T) {
 			ID:   "1",
 			CID:  "3c5c4102-fa40-4585-a8f9-917c77e37192",
 			DashboardsStore: &mocks.DashboardsStore{
-				GetF: func(ctx context.Context, ID cmp.DashboardID) (cmp.Dashboard, error) {
-					return cmp.Dashboard{
+				GetF: func(ctx context.Context, ID cloudhub.DashboardID) (cloudhub.Dashboard, error) {
+					return cloudhub.Dashboard{
 						ID: ID,
-						Cells: []cmp.DashboardCell{
+						Cells: []cloudhub.DashboardCell{
 							{
 								ID: "3c5c4102-fa40-4585-a8f9-917c77e37192",
 							},
@@ -584,7 +584,7 @@ func TestService_ReplaceDashboardCell(t *testing.T) {
 				},
 			},
 			w: httptest.NewRecorder(),
-			r: httptest.NewRequest("PUT", "/cmp/v1/dashboards/1/cells/3c5c4102-fa40-4585-a8f9-917c77e37192", bytes.NewReader([]byte(`{
+			r: httptest.NewRequest("PUT", "/cloudhub/v1/dashboards/1/cells/3c5c4102-fa40-4585-a8f9-917c77e37192", bytes.NewReader([]byte(`{
 					"i": "3c5c4102-fa40-4585-a8f9-917c77e37192",
 					"x": 0,
 					"y": 0,
@@ -611,10 +611,10 @@ func TestService_ReplaceDashboardCell(t *testing.T) {
 			ID:   "1",
 			CID:  "3c5c4102-fa40-4585-a8f9-917c77e37192",
 			DashboardsStore: &mocks.DashboardsStore{
-				GetF: func(ctx context.Context, ID cmp.DashboardID) (cmp.Dashboard, error) {
-					return cmp.Dashboard{
+				GetF: func(ctx context.Context, ID cloudhub.DashboardID) (cloudhub.Dashboard, error) {
+					return cloudhub.Dashboard{
 						ID: ID,
-						Cells: []cmp.DashboardCell{
+						Cells: []cloudhub.DashboardCell{
 							{
 								ID: "3c5c4102-fa40-4585-a8f9-917c77e37192",
 							},
@@ -623,7 +623,7 @@ func TestService_ReplaceDashboardCell(t *testing.T) {
 				},
 			},
 			w:    httptest.NewRecorder(),
-			r:    httptest.NewRequest("PUT", "/cmp/v1/dashboards/1/cells/3c5c4102-fa40-4585-a8f9-917c77e37192", nil),
+			r:    httptest.NewRequest("PUT", "/cloudhub/v1/dashboards/1/cells/3c5c4102-fa40-4585-a8f9-917c77e37192", nil),
 			want: `{"code":400,"message":"Unparsable JSON"}`,
 		},
 		{
@@ -631,13 +631,13 @@ func TestService_ReplaceDashboardCell(t *testing.T) {
 			ID:   "1",
 			CID:  "3c5c4102-fa40-4585-a8f9-917c77e37192",
 			DashboardsStore: &mocks.DashboardsStore{
-				UpdateF: func(ctx context.Context, target cmp.Dashboard) error {
+				UpdateF: func(ctx context.Context, target cloudhub.Dashboard) error {
 					return fmt.Errorf("error")
 				},
-				GetF: func(ctx context.Context, ID cmp.DashboardID) (cmp.Dashboard, error) {
-					return cmp.Dashboard{
+				GetF: func(ctx context.Context, ID cloudhub.DashboardID) (cloudhub.Dashboard, error) {
+					return cloudhub.Dashboard{
 						ID: ID,
-						Cells: []cmp.DashboardCell{
+						Cells: []cloudhub.DashboardCell{
 							{
 								ID: "3c5c4102-fa40-4585-a8f9-917c77e37192",
 							},
@@ -646,7 +646,7 @@ func TestService_ReplaceDashboardCell(t *testing.T) {
 				},
 			},
 			w: httptest.NewRecorder(),
-			r: httptest.NewRequest("PUT", "/cmp/v1/dashboards/1/cells/3c5c4102-fa40-4585-a8f9-917c77e37192", bytes.NewReader([]byte(`{
+			r: httptest.NewRequest("PUT", "/cloudhub/v1/dashboards/1/cells/3c5c4102-fa40-4585-a8f9-917c77e37192", bytes.NewReader([]byte(`{
 					"i": "3c5c4102-fa40-4585-a8f9-917c77e37192",
 					"x": 0,
 					"y": 0,
@@ -697,36 +697,36 @@ func strPtr(s string) *string {
 func Test_newCellResponses(t *testing.T) {
 	tests := []struct {
 		name   string
-		dID    cmp.DashboardID
-		dcells []cmp.DashboardCell
+		dID    cloudhub.DashboardID
+		dcells []cloudhub.DashboardCell
 		want   []dashboardCellResponse
 	}{
 		{
 			name: "all fields set",
-			dID:  cmp.DashboardID(1),
-			dcells: []cmp.DashboardCell{
-				cmp.DashboardCell{
+			dID:  cloudhub.DashboardID(1),
+			dcells: []cloudhub.DashboardCell{
+				cloudhub.DashboardCell{
 					ID:   "445f8dc0-4d73-4168-8477-f628690d18a3",
 					X:    0,
 					Y:    0,
 					W:    4,
 					H:    4,
 					Name: "Untitled Cell",
-					Queries: []cmp.DashboardQuery{
+					Queries: []cloudhub.DashboardQuery{
 						{
 							Command: "SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)",
 							Label:   "",
-							QueryConfig: cmp.QueryConfig{
+							QueryConfig: cloudhub.QueryConfig{
 								ID:              "8d5ec6da-13a5-423e-9026-7bc45649766c",
 								Database:        "telegraf",
 								Measurement:     "cpu",
 								RetentionPolicy: "autogen",
-								Fields: []cmp.Field{
+								Fields: []cloudhub.Field{
 									{
 										Value: "mean",
 										Type:  "func",
 										Alias: "mean_usage_user",
-										Args: []cmp.Field{
+										Args: []cloudhub.Field{
 											{
 												Value: "usage_user",
 												Type:  "field",
@@ -736,13 +736,13 @@ func Test_newCellResponses(t *testing.T) {
 									},
 								},
 								Tags: map[string][]string{"cpu": []string{"ChristohersMBP2.lan"}},
-								GroupBy: cmp.GroupBy{
+								GroupBy: cloudhub.GroupBy{
 									Time: "2s",
 								},
 								AreTagsAccepted: true,
 								Fill:            "null",
 								RawText:         strPtr("SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)"),
-								Range: &cmp.DurationRange{
+								Range: &cloudhub.DurationRange{
 									Lower: "now() - 15m",
 								},
 							},
@@ -750,23 +750,23 @@ func Test_newCellResponses(t *testing.T) {
 							Type:   "influxql",
 						},
 					},
-					Axes: map[string]cmp.Axis{
-						"x": cmp.Axis{
+					Axes: map[string]cloudhub.Axis{
+						"x": cloudhub.Axis{
 							Bounds: []string{"", ""},
 						},
-						"y": cmp.Axis{
+						"y": cloudhub.Axis{
 							Bounds: []string{"", ""},
 						},
-						"y2": cmp.Axis{
+						"y2": cloudhub.Axis{
 							Bounds: []string{"", ""},
 						},
 					},
 					Type: "line",
-					CellColors: []cmp.CellColor{
-						cmp.CellColor{ID: "0", Type: "min", Hex: "#00C9FF", Name: "laser", Value: "0"},
-						cmp.CellColor{ID: "1", Type: "max", Hex: "#9394FF", Name: "comet", Value: "100"},
+					CellColors: []cloudhub.CellColor{
+						cloudhub.CellColor{ID: "0", Type: "min", Hex: "#00C9FF", Name: "laser", Value: "0"},
+						cloudhub.CellColor{ID: "1", Type: "max", Hex: "#9394FF", Name: "comet", Value: "100"},
 					},
-					Legend: cmp.Legend{
+					Legend: cloudhub.Legend{
 						Type:        "static",
 						Orientation: "bottom",
 					},
@@ -776,25 +776,25 @@ func Test_newCellResponses(t *testing.T) {
 			},
 			want: []dashboardCellResponse{
 				{
-					DashboardCell: cmp.DashboardCell{
+					DashboardCell: cloudhub.DashboardCell{
 						ID:   "445f8dc0-4d73-4168-8477-f628690d18a3",
 						W:    4,
 						H:    4,
 						Name: "Untitled Cell",
-						Queries: []cmp.DashboardQuery{
+						Queries: []cloudhub.DashboardQuery{
 							{
 								Command: "SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)",
-								QueryConfig: cmp.QueryConfig{
+								QueryConfig: cloudhub.QueryConfig{
 									ID:              "8d5ec6da-13a5-423e-9026-7bc45649766c",
 									Database:        "telegraf",
 									Measurement:     "cpu",
 									RetentionPolicy: "autogen",
-									Fields: []cmp.Field{
+									Fields: []cloudhub.Field{
 										{
 											Value: "mean",
 											Type:  "func",
 											Alias: "mean_usage_user",
-											Args: []cmp.Field{
+											Args: []cloudhub.Field{
 												{
 													Value: "usage_user",
 													Type:  "field",
@@ -803,32 +803,32 @@ func Test_newCellResponses(t *testing.T) {
 										},
 									},
 									Tags: map[string][]string{"cpu": {"ChristohersMBP2.lan"}},
-									GroupBy: cmp.GroupBy{
+									GroupBy: cloudhub.GroupBy{
 										Time: "2s",
 									},
 									AreTagsAccepted: true,
 									Fill:            "null",
 									RawText:         strPtr("SELECT mean(\"usage_user\") AS \"mean_usage_user\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > :dashboardTime: AND \"cpu\"=:cpu: GROUP BY :interval: FILL(null)"),
-									Range: &cmp.DurationRange{
+									Range: &cloudhub.DurationRange{
 										Lower: "now() - 15m",
 									},
 								},
 								Type: "influxql",
 							},
 						},
-						Axes: map[string]cmp.Axis{
-							"x": cmp.Axis{
+						Axes: map[string]cloudhub.Axis{
+							"x": cloudhub.Axis{
 								Bounds: []string{"", ""},
 							},
-							"y": cmp.Axis{
+							"y": cloudhub.Axis{
 								Bounds: []string{"", ""},
 							},
-							"y2": cmp.Axis{
+							"y2": cloudhub.Axis{
 								Bounds: []string{"", ""},
 							},
 						},
 						Type: "line",
-						CellColors: []cmp.CellColor{
+						CellColors: []cloudhub.CellColor{
 							{
 								ID:    "0",
 								Type:  "min",
@@ -844,7 +844,7 @@ func Test_newCellResponses(t *testing.T) {
 								Value: "100",
 							},
 						},
-						Legend: cmp.Legend{
+						Legend: cloudhub.Legend{
 							Type:        "static",
 							Orientation: "bottom",
 						},
@@ -852,15 +852,15 @@ func Test_newCellResponses(t *testing.T) {
 						NoteVisibility: "showWhenNoData",
 					},
 					Links: dashboardCellLinks{
-						Self: "/cmp/v1/dashboards/1/cells/445f8dc0-4d73-4168-8477-f628690d18a3"},
+						Self: "/cloudhub/v1/dashboards/1/cells/445f8dc0-4d73-4168-8477-f628690d18a3"},
 				},
 			},
 		},
 		{
 			name: "nothing set",
-			dID:  cmp.DashboardID(1),
-			dcells: []cmp.DashboardCell{
-				cmp.DashboardCell{
+			dID:  cloudhub.DashboardID(1),
+			dcells: []cloudhub.DashboardCell{
+				cloudhub.DashboardCell{
 					ID:   "445f8dc0-4d73-4168-8477-f628690d18a3",
 					X:    0,
 					Y:    0,
@@ -871,30 +871,30 @@ func Test_newCellResponses(t *testing.T) {
 			},
 			want: []dashboardCellResponse{
 				{
-					DashboardCell: cmp.DashboardCell{
+					DashboardCell: cloudhub.DashboardCell{
 						ID:      "445f8dc0-4d73-4168-8477-f628690d18a3",
 						W:       4,
 						H:       4,
 						Name:    "Untitled Cell",
-						Queries: []cmp.DashboardQuery{},
-						Axes: map[string]cmp.Axis{
-							"x": cmp.Axis{
+						Queries: []cloudhub.DashboardQuery{},
+						Axes: map[string]cloudhub.Axis{
+							"x": cloudhub.Axis{
 								Bounds: []string{"", ""},
 							},
-							"y": cmp.Axis{
+							"y": cloudhub.Axis{
 								Bounds: []string{"", ""},
 							},
-							"y2": cmp.Axis{
+							"y2": cloudhub.Axis{
 								Bounds: []string{"", ""},
 							},
 						},
-						CellColors:     []cmp.CellColor{},
-						Legend:         cmp.Legend{},
+						CellColors:     []cloudhub.CellColor{},
+						Legend:         cloudhub.Legend{},
 						Note:           "",
 						NoteVisibility: "default",
 					},
 					Links: dashboardCellLinks{
-						Self: "/cmp/v1/dashboards/1/cells/445f8dc0-4d73-4168-8477-f628690d18a3"},
+						Self: "/cloudhub/v1/dashboards/1/cells/445f8dc0-4d73-4168-8477-f628690d18a3"},
 				},
 			},
 		},
@@ -911,17 +911,17 @@ func Test_newCellResponses(t *testing.T) {
 func TestHasCorrectLegend(t *testing.T) {
 	tests := []struct {
 		name    string
-		c       *cmp.DashboardCell
+		c       *cloudhub.DashboardCell
 		wantErr bool
 	}{
 		{
 			name: "empty legend is ok",
-			c:    &cmp.DashboardCell{},
+			c:    &cloudhub.DashboardCell{},
 		},
 		{
 			name: "must have both an orientation and type",
-			c: &cmp.DashboardCell{
-				Legend: cmp.Legend{
+			c: &cloudhub.DashboardCell{
+				Legend: cloudhub.Legend{
 					Type: "static",
 				},
 			},
@@ -929,8 +929,8 @@ func TestHasCorrectLegend(t *testing.T) {
 		},
 		{
 			name: "must have both a type and orientation",
-			c: &cmp.DashboardCell{
-				Legend: cmp.Legend{
+			c: &cloudhub.DashboardCell{
+				Legend: cloudhub.Legend{
 					Orientation: "bottom",
 				},
 			},
@@ -938,8 +938,8 @@ func TestHasCorrectLegend(t *testing.T) {
 		},
 		{
 			name: "invalid types",
-			c: &cmp.DashboardCell{
-				Legend: cmp.Legend{
+			c: &cloudhub.DashboardCell{
+				Legend: cloudhub.Legend{
 					Type:        "no such type",
 					Orientation: "bottom",
 				},
@@ -948,8 +948,8 @@ func TestHasCorrectLegend(t *testing.T) {
 		},
 		{
 			name: "invalid orientation",
-			c: &cmp.DashboardCell{
-				Legend: cmp.Legend{
+			c: &cloudhub.DashboardCell{
+				Legend: cloudhub.Legend{
 					Type:        "static",
 					Orientation: "no such orientation",
 				},
@@ -958,8 +958,8 @@ func TestHasCorrectLegend(t *testing.T) {
 		},
 		{
 			name: "orientation bottom valid",
-			c: &cmp.DashboardCell{
-				Legend: cmp.Legend{
+			c: &cloudhub.DashboardCell{
+				Legend: cloudhub.Legend{
 					Type:        "static",
 					Orientation: "bottom",
 				},
@@ -967,8 +967,8 @@ func TestHasCorrectLegend(t *testing.T) {
 		},
 		{
 			name: "orientation top valid",
-			c: &cmp.DashboardCell{
-				Legend: cmp.Legend{
+			c: &cloudhub.DashboardCell{
+				Legend: cloudhub.Legend{
 					Type:        "static",
 					Orientation: "top",
 				},
@@ -976,8 +976,8 @@ func TestHasCorrectLegend(t *testing.T) {
 		},
 		{
 			name: "orientation right valid",
-			c: &cmp.DashboardCell{
-				Legend: cmp.Legend{
+			c: &cloudhub.DashboardCell{
+				Legend: cloudhub.Legend{
 					Type:        "static",
 					Orientation: "right",
 				},
@@ -985,8 +985,8 @@ func TestHasCorrectLegend(t *testing.T) {
 		},
 		{
 			name: "orientation left valid",
-			c: &cmp.DashboardCell{
-				Legend: cmp.Legend{
+			c: &cloudhub.DashboardCell{
+				Legend: cloudhub.Legend{
 					Type:        "static",
 					Orientation: "left",
 				},
@@ -1009,13 +1009,13 @@ func TestValidateNote(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		c       *cmp.DashboardCell
+		c       *cloudhub.DashboardCell
 		want    want
 		wantErr bool
 	}{
 		{
 			name: "note text & visibility defaults",
-			c:    &cmp.DashboardCell{},
+			c:    &cloudhub.DashboardCell{},
 			want: want{
 				Note:           "",
 				NoteVisibility: "default",
@@ -1024,7 +1024,7 @@ func TestValidateNote(t *testing.T) {
 		},
 		{
 			name: "note text - allows non-html",
-			c: &cmp.DashboardCell{
+			c: &cloudhub.DashboardCell{
 				Note: "pineapples are tasty",
 			},
 			want: want{
@@ -1035,7 +1035,7 @@ func TestValidateNote(t *testing.T) {
 		},
 		{
 			name: "note text - eliminates xss-vulnerable html",
-			c: &cmp.DashboardCell{
+			c: &cloudhub.DashboardCell{
 				Note: `
 <script>alert('bob');</script>
 <p>benevolent pineapples paragraph</p>
@@ -1062,7 +1062,7 @@ evil base
 		},
 		{
 			name: "note visibility - valid default value",
-			c: &cmp.DashboardCell{
+			c: &cloudhub.DashboardCell{
 				Note:           "",
 				NoteVisibility: "default",
 			},
@@ -1074,7 +1074,7 @@ evil base
 		},
 		{
 			name: "note visibility - valid non-default value",
-			c: &cmp.DashboardCell{
+			c: &cloudhub.DashboardCell{
 				Note:           "",
 				NoteVisibility: "showWhenNoData",
 			},
@@ -1086,7 +1086,7 @@ evil base
 		},
 		{
 			name: "note visibility - invalid value",
-			c: &cmp.DashboardCell{
+			c: &cloudhub.DashboardCell{
 				Note:           "",
 				NoteVisibility: "pineapple",
 			},
@@ -1113,13 +1113,13 @@ func TestHasCorrectQueryType(t *testing.T) {
 	tests := []struct {
 		name    string
 		wantErr bool
-		c       *cmp.DashboardCell
+		c       *cloudhub.DashboardCell
 	}{
 		{
 			name:    "Should error if type is not flux or influxql",
 			wantErr: true,
-			c: &cmp.DashboardCell{
-				Queries: []cmp.DashboardQuery{
+			c: &cloudhub.DashboardCell{
+				Queries: []cloudhub.DashboardQuery{
 					{
 						Type: "howdy",
 					},
@@ -1128,8 +1128,8 @@ func TestHasCorrectQueryType(t *testing.T) {
 		},
 		{
 			name: "A flux query type",
-			c: &cmp.DashboardCell{
-				Queries: []cmp.DashboardQuery{
+			c: &cloudhub.DashboardCell{
+				Queries: []cloudhub.DashboardQuery{
 					{
 						Type: "flux",
 					},
@@ -1138,8 +1138,8 @@ func TestHasCorrectQueryType(t *testing.T) {
 		},
 		{
 			name: "An influxql query type",
-			c: &cmp.DashboardCell{
-				Queries: []cmp.DashboardQuery{
+			c: &cloudhub.DashboardCell{
+				Queries: []cloudhub.DashboardQuery{
 					{
 						Type: "influxql",
 					},

@@ -6,25 +6,25 @@ import (
 
 	gocmp "github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/bolt"
-	"github.com/snetsystems/cmp/backend/roles"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/bolt"
+	"github.com/snetsystems/cloudhub/backend/roles"
 )
 
-var orgCmpOptions = gocmp.Options{
-	cmpopts.IgnoreFields(cmp.Organization{}, "ID"),
+var orgCloudHubOptions = gocmp.Options{
+	cmpopts.IgnoreFields(cloudhub.Organization{}, "ID"),
 	cmpopts.EquateEmpty(),
 }
 
 func TestOrganizationsStore_GetWithName(t *testing.T) {
 	type args struct {
 		ctx context.Context
-		org *cmp.Organization
+		org *cloudhub.Organization
 	}
 	tests := []struct {
 		name     string
 		args     args
-		want     *cmp.Organization
+		want     *cloudhub.Organization
 		wantErr  bool
 		addFirst bool
 	}{
@@ -32,7 +32,7 @@ func TestOrganizationsStore_GetWithName(t *testing.T) {
 			name: "Organization not found",
 			args: args{
 				ctx: context.Background(),
-				org: &cmp.Organization{},
+				org: &cloudhub.Organization{},
 			},
 			wantErr: true,
 		},
@@ -40,11 +40,11 @@ func TestOrganizationsStore_GetWithName(t *testing.T) {
 			name: "Get Organization",
 			args: args{
 				ctx: context.Background(),
-				org: &cmp.Organization{
+				org: &cloudhub.Organization{
 					Name: "EE - Evil Empire",
 				},
 			},
-			want: &cmp.Organization{
+			want: &cloudhub.Organization{
 				Name: "EE - Evil Empire",
 			},
 			addFirst: true,
@@ -67,14 +67,14 @@ func TestOrganizationsStore_GetWithName(t *testing.T) {
 				}
 			}
 
-			got, err := s.Get(tt.args.ctx, cmp.OrganizationQuery{Name: &tt.args.org.Name})
+			got, err := s.Get(tt.args.ctx, cloudhub.OrganizationQuery{Name: &tt.args.org.Name})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("%q. OrganizationsStore.Get() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 			}
 			if tt.wantErr {
 				return
 			}
-			if diff := gocmp.Diff(got, tt.want, orgCmpOptions...); diff != "" {
+			if diff := gocmp.Diff(got, tt.want, orgCloudHubOptions...); diff != "" {
 				t.Errorf("%q. OrganizationsStore.Get():\n-got/+want\ndiff %s", tt.name, diff)
 			}
 
@@ -85,12 +85,12 @@ func TestOrganizationsStore_GetWithName(t *testing.T) {
 func TestOrganizationsStore_GetWithID(t *testing.T) {
 	type args struct {
 		ctx context.Context
-		org *cmp.Organization
+		org *cloudhub.Organization
 	}
 	tests := []struct {
 		name     string
 		args     args
-		want     *cmp.Organization
+		want     *cloudhub.Organization
 		wantErr  bool
 		addFirst bool
 	}{
@@ -98,7 +98,7 @@ func TestOrganizationsStore_GetWithID(t *testing.T) {
 			name: "Organization not found",
 			args: args{
 				ctx: context.Background(),
-				org: &cmp.Organization{
+				org: &cloudhub.Organization{
 					ID: "1234",
 				},
 			},
@@ -108,11 +108,11 @@ func TestOrganizationsStore_GetWithID(t *testing.T) {
 			name: "Get Organization",
 			args: args{
 				ctx: context.Background(),
-				org: &cmp.Organization{
+				org: &cloudhub.Organization{
 					Name: "EE - Evil Empire",
 				},
 			},
-			want: &cmp.Organization{
+			want: &cloudhub.Organization{
 				Name: "EE - Evil Empire",
 			},
 			addFirst: true,
@@ -135,7 +135,7 @@ func TestOrganizationsStore_GetWithID(t *testing.T) {
 				}
 			}
 
-			got, err := s.Get(tt.args.ctx, cmp.OrganizationQuery{ID: &tt.args.org.ID})
+			got, err := s.Get(tt.args.ctx, cloudhub.OrganizationQuery{ID: &tt.args.org.ID})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("%q. OrganizationsStore.Get() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 				return
@@ -143,7 +143,7 @@ func TestOrganizationsStore_GetWithID(t *testing.T) {
 			if tt.wantErr {
 				return
 			}
-			if diff := gocmp.Diff(got, tt.want, orgCmpOptions...); diff != "" {
+			if diff := gocmp.Diff(got, tt.want, orgCloudHubOptions...); diff != "" {
 				t.Errorf("%q. OrganizationsStore.Get():\n-got/+want\ndiff %s", tt.name, diff)
 			}
 
@@ -154,19 +154,19 @@ func TestOrganizationsStore_GetWithID(t *testing.T) {
 func TestOrganizationsStore_All(t *testing.T) {
 	type args struct {
 		ctx  context.Context
-		orgs []cmp.Organization
+		orgs []cloudhub.Organization
 	}
 	tests := []struct {
 		name     string
 		args     args
-		want     []cmp.Organization
+		want     []cloudhub.Organization
 		addFirst bool
 	}{
 		{
 			name: "Get Organizations",
 			args: args{
 				ctx: context.Background(),
-				orgs: []cmp.Organization{
+				orgs: []cloudhub.Organization{
 					{
 						Name:        "EE - Evil Empire",
 						DefaultRole: roles.MemberRoleName,
@@ -177,7 +177,7 @@ func TestOrganizationsStore_All(t *testing.T) {
 					},
 				},
 			},
-			want: []cmp.Organization{
+			want: []cloudhub.Organization{
 				{
 					Name:        "EE - Evil Empire",
 					DefaultRole: roles.MemberRoleName,
@@ -218,7 +218,7 @@ func TestOrganizationsStore_All(t *testing.T) {
 				t.Fatal(err)
 				return
 			}
-			if diff := gocmp.Diff(got, tt.want, orgCmpOptions...); diff != "" {
+			if diff := gocmp.Diff(got, tt.want, orgCloudHubOptions...); diff != "" {
 				t.Errorf("%q. OrganizationsStore.All():\n-got/+want\ndiff %s", tt.name, diff)
 			}
 		})
@@ -227,19 +227,19 @@ func TestOrganizationsStore_All(t *testing.T) {
 
 func TestOrganizationsStore_Update(t *testing.T) {
 	type fields struct {
-		orgs []cmp.Organization
+		orgs []cloudhub.Organization
 	}
 	type args struct {
 		ctx     context.Context
-		initial *cmp.Organization
-		updates *cmp.Organization
+		initial *cloudhub.Organization
+		updates *cloudhub.Organization
 	}
 	tests := []struct {
 		name     string
 		fields   fields
 		args     args
 		addFirst bool
-		want     *cmp.Organization
+		want     *cloudhub.Organization
 		wantErr  bool
 	}{
 		{
@@ -247,11 +247,11 @@ func TestOrganizationsStore_Update(t *testing.T) {
 			fields: fields{},
 			args: args{
 				ctx: context.Background(),
-				initial: &cmp.Organization{
+				initial: &cloudhub.Organization{
 					ID:   "1234",
 					Name: "The Okay Place",
 				},
-				updates: &cmp.Organization{},
+				updates: &cloudhub.Organization{},
 			},
 			wantErr: true,
 		},
@@ -260,14 +260,14 @@ func TestOrganizationsStore_Update(t *testing.T) {
 			fields: fields{},
 			args: args{
 				ctx: context.Background(),
-				initial: &cmp.Organization{
+				initial: &cloudhub.Organization{
 					Name: "The Good Place",
 				},
-				updates: &cmp.Organization{
+				updates: &cloudhub.Organization{
 					Name: "The Bad Place",
 				},
 			},
-			want: &cmp.Organization{
+			want: &cloudhub.Organization{
 				Name: "The Bad Place",
 			},
 			addFirst: true,
@@ -277,14 +277,14 @@ func TestOrganizationsStore_Update(t *testing.T) {
 			fields: fields{},
 			args: args{
 				ctx: context.Background(),
-				initial: &cmp.Organization{
+				initial: &cloudhub.Organization{
 					Name: "The Good Place",
 				},
-				updates: &cmp.Organization{
+				updates: &cloudhub.Organization{
 					DefaultRole: roles.ViewerRoleName,
 				},
 			},
-			want: &cmp.Organization{
+			want: &cloudhub.Organization{
 				Name:        "The Good Place",
 				DefaultRole: roles.ViewerRoleName,
 			},
@@ -295,16 +295,16 @@ func TestOrganizationsStore_Update(t *testing.T) {
 			fields: fields{},
 			args: args{
 				ctx: context.Background(),
-				initial: &cmp.Organization{
+				initial: &cloudhub.Organization{
 					Name:        "The Good Place",
 					DefaultRole: roles.AdminRoleName,
 				},
-				updates: &cmp.Organization{
+				updates: &cloudhub.Organization{
 					Name:        "The Bad Place",
 					DefaultRole: roles.ViewerRoleName,
 				},
 			},
-			want: &cmp.Organization{
+			want: &cloudhub.Organization{
 				Name:        "The Bad Place",
 				DefaultRole: roles.ViewerRoleName,
 			},
@@ -315,16 +315,16 @@ func TestOrganizationsStore_Update(t *testing.T) {
 			fields: fields{},
 			args: args{
 				ctx: context.Background(),
-				initial: &cmp.Organization{
+				initial: &cloudhub.Organization{
 					Name:        "The Good Place",
 					DefaultRole: roles.ViewerRoleName,
 				},
-				updates: &cmp.Organization{
+				updates: &cloudhub.Organization{
 					Name:        "The Bad Place",
 					DefaultRole: roles.AdminRoleName,
 				},
 			},
-			want: &cmp.Organization{
+			want: &cloudhub.Organization{
 				Name:        "The Bad Place",
 				DefaultRole: roles.AdminRoleName,
 			},
@@ -335,15 +335,15 @@ func TestOrganizationsStore_Update(t *testing.T) {
 			fields: fields{},
 			args: args{
 				ctx: context.Background(),
-				initial: &cmp.Organization{
+				initial: &cloudhub.Organization{
 					Name:        "The Good Place",
 					DefaultRole: roles.EditorRoleName,
 				},
-				updates: &cmp.Organization{
+				updates: &cloudhub.Organization{
 					Name: "The Bad Place",
 				},
 			},
-			want: &cmp.Organization{
+			want: &cloudhub.Organization{
 				Name:        "The Bad Place",
 				DefaultRole: roles.EditorRoleName,
 			},
@@ -354,14 +354,14 @@ func TestOrganizationsStore_Update(t *testing.T) {
 			fields: fields{},
 			args: args{
 				ctx: context.Background(),
-				initial: &cmp.Organization{
+				initial: &cloudhub.Organization{
 					Name: "The Good Place",
 				},
-				updates: &cmp.Organization{
+				updates: &cloudhub.Organization{
 					Name: "The Bad Place",
 				},
 			},
-			want: &cmp.Organization{
+			want: &cloudhub.Organization{
 				Name: "The Bad Place",
 			},
 			addFirst: true,
@@ -369,7 +369,7 @@ func TestOrganizationsStore_Update(t *testing.T) {
 		{
 			name: "Update organization name - name already taken",
 			fields: fields{
-				orgs: []cmp.Organization{
+				orgs: []cloudhub.Organization{
 					{
 						Name: "The Bad Place",
 					},
@@ -377,10 +377,10 @@ func TestOrganizationsStore_Update(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				initial: &cmp.Organization{
+				initial: &cloudhub.Organization{
 					Name: "The Good Place",
 				},
-				updates: &cmp.Organization{
+				updates: &cloudhub.Organization{
 					Name: "The Bad Place",
 				},
 			},
@@ -424,11 +424,11 @@ func TestOrganizationsStore_Update(t *testing.T) {
 			continue
 		}
 
-		got, err := s.Get(tt.args.ctx, cmp.OrganizationQuery{Name: &tt.args.initial.Name})
+		got, err := s.Get(tt.args.ctx, cloudhub.OrganizationQuery{Name: &tt.args.initial.Name})
 		if err != nil {
 			t.Fatalf("failed to get organization: %v", err)
 		}
-		if diff := gocmp.Diff(got, tt.want, orgCmpOptions...); diff != "" {
+		if diff := gocmp.Diff(got, tt.want, orgCloudHubOptions...); diff != "" {
 			t.Errorf("%q. OrganizationsStore.Update():\n-got/+want\ndiff %s", tt.name, diff)
 		}
 	}
@@ -437,7 +437,7 @@ func TestOrganizationsStore_Update(t *testing.T) {
 func TestOrganizationStore_Delete(t *testing.T) {
 	type args struct {
 		ctx context.Context
-		org *cmp.Organization
+		org *cloudhub.Organization
 	}
 	tests := []struct {
 		name     string
@@ -449,7 +449,7 @@ func TestOrganizationStore_Delete(t *testing.T) {
 			name: "No such organization",
 			args: args{
 				ctx: context.Background(),
-				org: &cmp.Organization{
+				org: &cloudhub.Organization{
 					ID: "10",
 				},
 			},
@@ -459,7 +459,7 @@ func TestOrganizationStore_Delete(t *testing.T) {
 			name: "Delete new organization",
 			args: args{
 				ctx: context.Background(),
-				org: &cmp.Organization{
+				org: &cloudhub.Organization{
 					Name: "The Deleted Place",
 				},
 			},
@@ -522,23 +522,23 @@ func TestOrganizationStore_DeleteDefaultOrg(t *testing.T) {
 
 func TestOrganizationsStore_Add(t *testing.T) {
 	type fields struct {
-		orgs []cmp.Organization
+		orgs []cloudhub.Organization
 	}
 	type args struct {
 		ctx context.Context
-		org *cmp.Organization
+		org *cloudhub.Organization
 	}
 	tests := []struct {
 		name    string
 		fields  fields
 		args    args
-		want    *cmp.Organization
+		want    *cloudhub.Organization
 		wantErr bool
 	}{
 		{
 			name: "Add organization - organization already exists",
 			fields: fields{
-				orgs: []cmp.Organization{
+				orgs: []cloudhub.Organization{
 					{
 						Name: "The Good Place",
 					},
@@ -546,7 +546,7 @@ func TestOrganizationsStore_Add(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				org: &cmp.Organization{
+				org: &cloudhub.Organization{
 					Name: "The Good Place",
 				},
 			},
@@ -580,11 +580,11 @@ func TestOrganizationsStore_Add(t *testing.T) {
 			continue
 		}
 
-		got, err := s.Get(tt.args.ctx, cmp.OrganizationQuery{Name: &tt.args.org.Name})
+		got, err := s.Get(tt.args.ctx, cloudhub.OrganizationQuery{Name: &tt.args.org.Name})
 		if err != nil {
 			t.Fatalf("failed to get organization: %v", err)
 		}
-		if diff := gocmp.Diff(got, tt.want, orgCmpOptions...); diff != "" {
+		if diff := gocmp.Diff(got, tt.want, orgCloudHubOptions...); diff != "" {
 			t.Errorf("%q. OrganizationsStore.Update():\n-got/+want\ndiff %s", tt.name, diff)
 		}
 	}
@@ -592,7 +592,7 @@ func TestOrganizationsStore_Add(t *testing.T) {
 
 func TestOrganizationsStore_DefaultOrganization(t *testing.T) {
 	type fields struct {
-		orgs []cmp.Organization
+		orgs []cloudhub.Organization
 	}
 	type args struct {
 		ctx context.Context
@@ -601,13 +601,13 @@ func TestOrganizationsStore_DefaultOrganization(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    *cmp.Organization
+		want    *cloudhub.Organization
 		wantErr bool
 	}{
 		{
 			name: "Get Default Organization",
 			fields: fields{
-				orgs: []cmp.Organization{
+				orgs: []cloudhub.Organization{
 					{
 						Name: "The Good Place",
 					},
@@ -616,7 +616,7 @@ func TestOrganizationsStore_DefaultOrganization(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 			},
-			want: &cmp.Organization{
+			want: &cloudhub.Organization{
 				ID:          string(bolt.DefaultOrganizationID),
 				Name:        bolt.DefaultOrganizationName,
 				DefaultRole: bolt.DefaultOrganizationRole,
@@ -649,7 +649,7 @@ func TestOrganizationsStore_DefaultOrganization(t *testing.T) {
 			continue
 		}
 
-		if diff := gocmp.Diff(got, tt.want, orgCmpOptions...); diff != "" {
+		if diff := gocmp.Diff(got, tt.want, orgCloudHubOptions...); diff != "" {
 			t.Errorf("%q. OrganizationsStore.Update():\n-got/+want\ndiff %s", tt.name, diff)
 		}
 	}

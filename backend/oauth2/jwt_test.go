@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/snetsystems/cmp/backend/oauth2"
+	"github.com/snetsystems/cloudhub/backend/oauth2"
 )
 
 func TestAuthenticate(t *testing.T) {
@@ -39,7 +39,7 @@ func TestAuthenticate(t *testing.T) {
 			Token:    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIvY2hyb25vZ3JhZi92MS91c2Vycy8xIiwibmFtZSI6IkRvYyBCcm93biIsImlhdCI6LTQ0Njc3NDQwMCwiZXhwIjotNDQ2Nzc0Mzk5LCJuYmYiOi00NDY3NzQ0MDB9.Ga0zGXWTT2CBVnnIhIO5tUAuBEVk4bKPaT4t4MU1ngo",
 			Duration: time.Second,
 			Principal: oauth2.Principal{
-				Subject:   "/cmp/v1/users/1",
+				Subject:   "/cloudhub/v1/users/1",
 				ExpiresAt: history.Add(time.Second),
 				IssuedAt:  history,
 			},
@@ -50,7 +50,7 @@ func TestAuthenticate(t *testing.T) {
 			Token:    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIvY2hyb25vZ3JhZi92MS91c2Vycy8xIiwibmFtZSI6IkRvYyBCcm93biIsIm9yZyI6IjEzMzciLCJpYXQiOi00NDY3NzQ0MDAsImV4cCI6LTQ0Njc3NDM5OSwibmJmIjotNDQ2Nzc0NDAwfQ.b38MK5liimWsvvJr4a3GNYRDJOAN7WCrfZ0FfZftqjc",
 			Duration: time.Second,
 			Principal: oauth2.Principal{
-				Subject:      "/cmp/v1/users/1",
+				Subject:      "/cloudhub/v1/users/1",
 				Organization: "1337",
 				ExpiresAt:    history.Add(time.Second),
 				IssuedAt:     history,
@@ -139,7 +139,7 @@ func TestToken(t *testing.T) {
 		},
 	}
 	p := oauth2.Principal{
-		Subject:   "/cmp/v1/users/1",
+		Subject:   "/cloudhub/v1/users/1",
 		ExpiresAt: history.Add(time.Second),
 		IssuedAt:  history,
 	}

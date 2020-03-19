@@ -6,8 +6,8 @@ import (
 	"os"
 
 	"github.com/jessevdk/go-flags"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/server"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/server"
 )
 
 // Build flags
@@ -18,7 +18,7 @@ var (
 
 func main() {
 	srv := server.Server{
-		BuildInfo: cmp.BuildInfo{
+		BuildInfo: cloudhub.BuildInfo{
 			Version: version,
 			Commit:  commit,
 		},

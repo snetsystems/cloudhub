@@ -5,7 +5,7 @@ import (
 	"time"
 
 	gocmp "github.com/google/go-cmp/cmp"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 func TestConvert(t *testing.T) {
@@ -13,36 +13,36 @@ func TestConvert(t *testing.T) {
 		name     string
 		influxQL string
 		RawText  string
-		want     cmp.QueryConfig
+		want     cloudhub.QueryConfig
 		wantErr  bool
 	}{
 		{
 			name:     "Test field order",
 			influxQL: `SELECT "usage_idle", "usage_guest_nice", "usage_system", "usage_guest" FROM "telegraf"."autogen"."cpu" WHERE time > :dashboardTime:`,
-			want: cmp.QueryConfig{
+			want: cloudhub.QueryConfig{
 				Database:        "telegraf",
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
-				Fields: []cmp.Field{
-					cmp.Field{
+				Fields: []cloudhub.Field{
+					cloudhub.Field{
 						Value: "usage_idle",
 						Type:  "field",
 					},
-					cmp.Field{
+					cloudhub.Field{
 						Value: "usage_guest_nice",
 						Type:  "field",
 					},
-					cmp.Field{
+					cloudhub.Field{
 						Value: "usage_system",
 						Type:  "field",
 					},
-					cmp.Field{
+					cloudhub.Field{
 						Value: "usage_guest",
 						Type:  "field",
 					},
 				},
 				Tags: map[string][]string{},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Tags: []string{},
 				},
 			},
@@ -50,45 +50,45 @@ func TestConvert(t *testing.T) {
 		{
 			name:     "Test field function order",
 			influxQL: `SELECT mean("usage_idle"), median("usage_idle"), count("usage_guest_nice"), mean("usage_guest_nice") FROM "telegraf"."autogen"."cpu" WHERE time > :dashboardTime:`,
-			want: cmp.QueryConfig{
+			want: cloudhub.QueryConfig{
 				Database:        "telegraf",
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
-				Fields: []cmp.Field{
-					cmp.Field{
+				Fields: []cloudhub.Field{
+					cloudhub.Field{
 						Value: "mean",
 						Type:  "func",
-						Args: []cmp.Field{
+						Args: []cloudhub.Field{
 							{
 								Value: "usage_idle",
 								Type:  "field",
 							},
 						},
 					},
-					cmp.Field{
+					cloudhub.Field{
 						Value: "median",
 						Type:  "func",
-						Args: []cmp.Field{
+						Args: []cloudhub.Field{
 							{
 								Value: "usage_idle",
 								Type:  "field",
 							},
 						},
 					},
-					cmp.Field{
+					cloudhub.Field{
 						Value: "count",
 						Type:  "func",
-						Args: []cmp.Field{
+						Args: []cloudhub.Field{
 							{
 								Value: "usage_guest_nice",
 								Type:  "field",
 							},
 						},
 					},
-					cmp.Field{
+					cloudhub.Field{
 						Value: "mean",
 						Type:  "func",
-						Args: []cmp.Field{
+						Args: []cloudhub.Field{
 							{
 								Value: "usage_guest_nice",
 								Type:  "field",
@@ -97,7 +97,7 @@ func TestConvert(t *testing.T) {
 					},
 				},
 				Tags: map[string][]string{},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Tags: []string{},
 				},
 			},
@@ -106,10 +106,10 @@ func TestConvert(t *testing.T) {
 			name:     "Test named count field",
 			influxQL: `SELECT moving_average(mean("count"),14) FROM "usage_computed"."autogen".unique_clusters_by_day WHERE time > now() - 90d AND product = 'influxdb' group by time(1d)`,
 			RawText:  `SELECT moving_average(mean("count"),14) FROM "usage_computed"."autogen".unique_clusters_by_day WHERE time > now() - 90d AND product = 'influxdb' group by time(1d)`,
-			want: cmp.QueryConfig{
-				Fields: []cmp.Field{},
+			want: cloudhub.QueryConfig{
+				Fields: []cloudhub.Field{},
 				Tags:   map[string][]string{},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Tags: []string{},
 				},
 			},
@@ -118,10 +118,10 @@ func TestConvert(t *testing.T) {
 			name:     "Test math",
 			influxQL: `SELECT count("event_id")/3 as "event_count_id" from discource.autogen.discourse_events where time > now() - 7d group by time(1d), "event_type"`,
 			RawText:  `SELECT count("event_id")/3 as "event_count_id" from discource.autogen.discourse_events where time > now() - 7d group by time(1d), "event_type"`,
-			want: cmp.QueryConfig{
-				Fields: []cmp.Field{},
+			want: cloudhub.QueryConfig{
+				Fields: []cloudhub.Field{},
 				Tags:   map[string][]string{},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Tags: []string{},
 				},
 			},
@@ -129,23 +129,23 @@ func TestConvert(t *testing.T) {
 		{
 			name:     "Test range",
 			influxQL: `SELECT usage_user from telegraf.autogen.cpu where "host" != 'myhost' and time > now() - 15m`,
-			want: cmp.QueryConfig{
+			want: cloudhub.QueryConfig{
 				Database:        "telegraf",
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
-				Fields: []cmp.Field{
-					cmp.Field{
+				Fields: []cloudhub.Field{
+					cloudhub.Field{
 						Value: "usage_user",
 						Type:  "field",
 					},
 				},
 				Tags: map[string][]string{"host": []string{"myhost"}},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Time: "",
 					Tags: []string{},
 				},
 				AreTagsAccepted: false,
-				Range: &cmp.DurationRange{
+				Range: &cloudhub.DurationRange{
 					Lower: "now() - 15m",
 				},
 			},
@@ -154,10 +154,10 @@ func TestConvert(t *testing.T) {
 			name:     "Test invalid range",
 			influxQL: `SELECT usage_user from telegraf.autogen.cpu where "host" != 'myhost' and time > now() - 15`,
 			RawText:  `SELECT usage_user from telegraf.autogen.cpu where "host" != 'myhost' and time > now() - 15`,
-			want: cmp.QueryConfig{
-				Fields: []cmp.Field{},
+			want: cloudhub.QueryConfig{
+				Fields: []cloudhub.Field{},
 				Tags:   map[string][]string{},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Tags: []string{},
 				},
 			},
@@ -165,23 +165,23 @@ func TestConvert(t *testing.T) {
 		{
 			name:     "Test range with no duration",
 			influxQL: `SELECT usage_user from telegraf.autogen.cpu where "host" != 'myhost' and time > now()`,
-			want: cmp.QueryConfig{
+			want: cloudhub.QueryConfig{
 				Database:        "telegraf",
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
-				Fields: []cmp.Field{
-					cmp.Field{
+				Fields: []cloudhub.Field{
+					cloudhub.Field{
 						Value: "usage_user",
 						Type:  "field",
 					},
 				},
 				Tags: map[string][]string{"host": []string{"myhost"}},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Time: "",
 					Tags: []string{},
 				},
 				AreTagsAccepted: false,
-				Range: &cmp.DurationRange{
+				Range: &cloudhub.DurationRange{
 					Lower: "now() - 0s",
 				},
 			},
@@ -189,23 +189,23 @@ func TestConvert(t *testing.T) {
 		{
 			name:     "Test range with no tags",
 			influxQL: `SELECT usage_user from telegraf.autogen.cpu where time > now() - 15m`,
-			want: cmp.QueryConfig{
+			want: cloudhub.QueryConfig{
 				Database:        "telegraf",
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
 				Tags:            map[string][]string{},
-				Fields: []cmp.Field{
-					cmp.Field{
+				Fields: []cloudhub.Field{
+					cloudhub.Field{
 						Value: "usage_user",
 						Type:  "field",
 					},
 				},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Time: "",
 					Tags: []string{},
 				},
 				AreTagsAccepted: false,
-				Range: &cmp.DurationRange{
+				Range: &cloudhub.DurationRange{
 					Lower: "now() - 15m",
 				},
 			},
@@ -214,10 +214,10 @@ func TestConvert(t *testing.T) {
 			name:     "Test range with no tags nor duration",
 			influxQL: `SELECT usage_user from telegraf.autogen.cpu where time`,
 			RawText:  `SELECT usage_user from telegraf.autogen.cpu where time`,
-			want: cmp.QueryConfig{
-				Fields: []cmp.Field{},
+			want: cloudhub.QueryConfig{
+				Fields: []cloudhub.Field{},
 				Tags:   map[string][]string{},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Tags: []string{},
 				},
 			},
@@ -226,10 +226,10 @@ func TestConvert(t *testing.T) {
 			name:     "Test with no time range",
 			influxQL: `SELECT usage_user from telegraf.autogen.cpu where "host" != 'myhost' and time`,
 			RawText:  `SELECT usage_user from telegraf.autogen.cpu where "host" != 'myhost' and time`,
-			want: cmp.QueryConfig{
-				Fields: []cmp.Field{},
+			want: cloudhub.QueryConfig{
+				Fields: []cloudhub.Field{},
 				Tags:   map[string][]string{},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Tags: []string{},
 				},
 			},
@@ -237,18 +237,18 @@ func TestConvert(t *testing.T) {
 		{
 			name:     "Test with no where clauses",
 			influxQL: `SELECT usage_user from telegraf.autogen.cpu`,
-			want: cmp.QueryConfig{
+			want: cloudhub.QueryConfig{
 				Database:        "telegraf",
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
-				Fields: []cmp.Field{
-					cmp.Field{
+				Fields: []cloudhub.Field{
+					cloudhub.Field{
 						Value: "usage_user",
 						Type:  "field",
 					},
 				},
 				Tags: map[string][]string{},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Time: "",
 					Tags: []string{},
 				},
@@ -257,23 +257,23 @@ func TestConvert(t *testing.T) {
 		{
 			name:     "Test tags accepted",
 			influxQL: `SELECT usage_user from telegraf.autogen.cpu where "host" = 'myhost' and time > now() - 15m`,
-			want: cmp.QueryConfig{
+			want: cloudhub.QueryConfig{
 				Database:        "telegraf",
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
-				Fields: []cmp.Field{
-					cmp.Field{
+				Fields: []cloudhub.Field{
+					cloudhub.Field{
 						Value: "usage_user",
 						Type:  "field",
 					},
 				},
 				Tags: map[string][]string{"host": []string{"myhost"}},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Time: "",
 					Tags: []string{},
 				},
 				AreTagsAccepted: true,
-				Range: &cmp.DurationRange{
+				Range: &cloudhub.DurationRange{
 					Lower: "now() - 15m",
 					Upper: "",
 				},
@@ -282,12 +282,12 @@ func TestConvert(t *testing.T) {
 		{
 			name:     "Test multible tags not accepted",
 			influxQL: `SELECT usage_user from telegraf.autogen.cpu where time > now() - 15m and "host" != 'myhost' and "cpu" != 'cpu-total'`,
-			want: cmp.QueryConfig{
+			want: cloudhub.QueryConfig{
 				Database:        "telegraf",
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
-				Fields: []cmp.Field{
-					cmp.Field{
+				Fields: []cloudhub.Field{
+					cloudhub.Field{
 						Value: "usage_user",
 						Type:  "field",
 					},
@@ -300,12 +300,12 @@ func TestConvert(t *testing.T) {
 						"cpu-total",
 					},
 				},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Time: "",
 					Tags: []string{},
 				},
 				AreTagsAccepted: false,
-				Range: &cmp.DurationRange{
+				Range: &cloudhub.DurationRange{
 					Lower: "now() - 15m",
 					Upper: "",
 				},
@@ -315,10 +315,10 @@ func TestConvert(t *testing.T) {
 			name:     "Test mixed tag logic",
 			influxQL: `SELECT usage_user from telegraf.autogen.cpu where ("host" = 'myhost' or "this" = 'those') and ("howdy" != 'doody') and time > now() - 15m`,
 			RawText:  `SELECT usage_user from telegraf.autogen.cpu where ("host" = 'myhost' or "this" = 'those') and ("howdy" != 'doody') and time > now() - 15m`,
-			want: cmp.QueryConfig{
-				Fields: []cmp.Field{},
+			want: cloudhub.QueryConfig{
+				Fields: []cloudhub.Field{},
 				Tags:   map[string][]string{},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Tags: []string{},
 				},
 			},
@@ -326,12 +326,12 @@ func TestConvert(t *testing.T) {
 		{
 			name:     "Test tags accepted",
 			influxQL: `SELECT usage_user from telegraf.autogen.cpu where ("host" = 'myhost' OR "host" = 'yourhost') and ("these" = 'those') and time > now() - 15m`,
-			want: cmp.QueryConfig{
+			want: cloudhub.QueryConfig{
 				Database:        "telegraf",
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
-				Fields: []cmp.Field{
-					cmp.Field{
+				Fields: []cloudhub.Field{
+					cloudhub.Field{
 						Value: "usage_user",
 						Type:  "field",
 					},
@@ -340,12 +340,12 @@ func TestConvert(t *testing.T) {
 					"host":  []string{"myhost", "yourhost"},
 					"these": []string{"those"},
 				},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Time: "",
 					Tags: []string{},
 				},
 				AreTagsAccepted: true,
-				Range: &cmp.DurationRange{
+				Range: &cloudhub.DurationRange{
 					Lower: "now() - 15m",
 				},
 			},
@@ -353,24 +353,24 @@ func TestConvert(t *testing.T) {
 		{
 			name:     "Complex Logic with tags not accepted",
 			influxQL: `SELECT "usage_idle", "usage_guest_nice", "usage_system", "usage_guest" FROM "telegraf"."autogen"."cpu" WHERE time > now() - 15m AND ("cpu"!='cpu-total' OR "cpu"!='cpu0') AND ("host"!='dev-052978d6-us-east-2-meta-0' OR "host"!='dev-052978d6-us-east-2-data-5' OR "host"!='dev-052978d6-us-east-2-data-4' OR "host"!='dev-052978d6-us-east-2-data-3')`,
-			want: cmp.QueryConfig{
+			want: cloudhub.QueryConfig{
 				Database:        "telegraf",
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
-				Fields: []cmp.Field{
-					cmp.Field{
+				Fields: []cloudhub.Field{
+					cloudhub.Field{
 						Value: "usage_idle",
 						Type:  "field",
 					},
-					cmp.Field{
+					cloudhub.Field{
 						Value: "usage_guest_nice",
 						Type:  "field",
 					},
-					cmp.Field{
+					cloudhub.Field{
 						Value: "usage_system",
 						Type:  "field",
 					},
-					cmp.Field{
+					cloudhub.Field{
 						Value: "usage_guest",
 						Type:  "field",
 					},
@@ -387,12 +387,12 @@ func TestConvert(t *testing.T) {
 						"cpu0",
 					},
 				},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Time: "",
 					Tags: []string{},
 				},
 				AreTagsAccepted: false,
-				Range: &cmp.DurationRange{
+				Range: &cloudhub.DurationRange{
 					Lower: "now() - 15m",
 				},
 			},
@@ -400,24 +400,24 @@ func TestConvert(t *testing.T) {
 		{
 			name:     "Complex Logic with tags accepted",
 			influxQL: `SELECT "usage_idle", "usage_guest_nice", "usage_system", "usage_guest" FROM "telegraf"."autogen"."cpu" WHERE time > now() - 15m AND ("cpu" = 'cpu-total' OR "cpu" = 'cpu0') AND ("host" = 'dev-052978d6-us-east-2-meta-0' OR "host" = 'dev-052978d6-us-east-2-data-5' OR "host" = 'dev-052978d6-us-east-2-data-4' OR "host" = 'dev-052978d6-us-east-2-data-3')`,
-			want: cmp.QueryConfig{
+			want: cloudhub.QueryConfig{
 				Database:        "telegraf",
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
-				Fields: []cmp.Field{
-					cmp.Field{
+				Fields: []cloudhub.Field{
+					cloudhub.Field{
 						Value: "usage_idle",
 						Type:  "field",
 					},
-					cmp.Field{
+					cloudhub.Field{
 						Value: "usage_guest_nice",
 						Type:  "field",
 					},
-					cmp.Field{
+					cloudhub.Field{
 						Value: "usage_system",
 						Type:  "field",
 					},
-					cmp.Field{
+					cloudhub.Field{
 						Value: "usage_guest",
 						Type:  "field",
 					},
@@ -434,12 +434,12 @@ func TestConvert(t *testing.T) {
 						"cpu0",
 					},
 				},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Time: "",
 					Tags: []string{},
 				},
 				AreTagsAccepted: true,
-				Range: &cmp.DurationRange{
+				Range: &cloudhub.DurationRange{
 					Lower: "now() - 15m",
 				},
 			},
@@ -447,15 +447,15 @@ func TestConvert(t *testing.T) {
 		{
 			name:     "Test explicit non-null fill accepted",
 			influxQL: `SELECT mean("usage_idle") FROM "telegraf"."autogen"."cpu" WHERE time > now() - 15m GROUP BY time(1m) FILL(linear)`,
-			want: cmp.QueryConfig{
+			want: cloudhub.QueryConfig{
 				Database:        "telegraf",
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
-				Fields: []cmp.Field{
-					cmp.Field{
+				Fields: []cloudhub.Field{
+					cloudhub.Field{
 						Value: "mean",
 						Type:  "func",
-						Args: []cmp.Field{
+						Args: []cloudhub.Field{
 							{
 								Value: "usage_idle",
 								Type:  "field",
@@ -463,14 +463,14 @@ func TestConvert(t *testing.T) {
 						},
 					},
 				},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Time: "1m",
 					Tags: []string{},
 				},
 				Tags:            map[string][]string{},
 				AreTagsAccepted: false,
 				Fill:            "linear",
-				Range: &cmp.DurationRange{
+				Range: &cloudhub.DurationRange{
 					Lower: "now() - 15m",
 				},
 			},
@@ -478,15 +478,15 @@ func TestConvert(t *testing.T) {
 		{
 			name:     "Test explicit null fill accepted",
 			influxQL: `SELECT mean("usage_idle") FROM "telegraf"."autogen"."cpu" WHERE time > now() - 15m GROUP BY time(1m) FILL(null)`,
-			want: cmp.QueryConfig{
+			want: cloudhub.QueryConfig{
 				Database:        "telegraf",
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
-				Fields: []cmp.Field{
-					cmp.Field{
+				Fields: []cloudhub.Field{
+					cloudhub.Field{
 						Value: "mean",
 						Type:  "func",
-						Args: []cmp.Field{
+						Args: []cloudhub.Field{
 							{
 								Value: "usage_idle",
 								Type:  "field",
@@ -494,14 +494,14 @@ func TestConvert(t *testing.T) {
 						},
 					},
 				},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Time: "1m",
 					Tags: []string{},
 				},
 				Tags:            map[string][]string{},
 				AreTagsAccepted: false,
 				Fill:            "null",
-				Range: &cmp.DurationRange{
+				Range: &cloudhub.DurationRange{
 					Lower: "now() - 15m",
 				},
 			},
@@ -509,16 +509,16 @@ func TestConvert(t *testing.T) {
 		{
 			name:     "Test implicit null fill accepted and made explicit",
 			influxQL: `SELECT mean("usage_idle") as "mean_usage_idle" FROM "telegraf"."autogen"."cpu" WHERE time > now() - 15m GROUP BY time(1m)`,
-			want: cmp.QueryConfig{
+			want: cloudhub.QueryConfig{
 				Database:        "telegraf",
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
-				Fields: []cmp.Field{
-					cmp.Field{
+				Fields: []cloudhub.Field{
+					cloudhub.Field{
 						Value: "mean",
 						Type:  "func",
 						Alias: "mean_usage_idle",
-						Args: []cmp.Field{
+						Args: []cloudhub.Field{
 							{
 								Value: "usage_idle",
 								Type:  "field",
@@ -526,14 +526,14 @@ func TestConvert(t *testing.T) {
 						},
 					},
 				},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Time: "1m",
 					Tags: []string{},
 				},
 				Tags:            map[string][]string{},
 				AreTagsAccepted: false,
 				Fill:            "null",
-				Range: &cmp.DurationRange{
+				Range: &cloudhub.DurationRange{
 					Lower: "now() - 15m",
 				},
 			},
@@ -541,35 +541,35 @@ func TestConvert(t *testing.T) {
 		{
 			name:     "Test percentile with a number parameter",
 			influxQL: `SELECT percentile("usage_idle", 3.14) as "mean_usage_idle" FROM "telegraf"."autogen"."cpu" WHERE time > now() - 15m GROUP BY time(1m)`,
-			want: cmp.QueryConfig{
+			want: cloudhub.QueryConfig{
 				Database:        "telegraf",
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
-				Fields: []cmp.Field{
-					cmp.Field{
+				Fields: []cloudhub.Field{
+					cloudhub.Field{
 						Value: "percentile",
 						Type:  "func",
 						Alias: "mean_usage_idle",
-						Args: []cmp.Field{
+						Args: []cloudhub.Field{
 							{
 								Value: "usage_idle",
 								Type:  "field",
 							},
-							cmp.Field{
+							cloudhub.Field{
 								Value: "3.14",
 								Type:  "number",
 							},
 						},
 					},
 				},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Time: "1m",
 					Tags: []string{},
 				},
 				Tags:            map[string][]string{},
 				AreTagsAccepted: false,
 				Fill:            "null",
-				Range: &cmp.DurationRange{
+				Range: &cloudhub.DurationRange{
 					Lower: "now() - 15m",
 				},
 			},
@@ -577,29 +577,29 @@ func TestConvert(t *testing.T) {
 		{
 			name:     "Test top with 2 arguments",
 			influxQL: `SELECT TOP("water_level","location",2) FROM "h2o_feet"`,
-			want: cmp.QueryConfig{
+			want: cloudhub.QueryConfig{
 				Measurement: "h2o_feet",
-				Fields: []cmp.Field{
-					cmp.Field{
+				Fields: []cloudhub.Field{
+					cloudhub.Field{
 						Value: "top",
 						Type:  "func",
-						Args: []cmp.Field{
+						Args: []cloudhub.Field{
 							{
 								Value: "water_level",
 								Type:  "field",
 							},
-							cmp.Field{
+							cloudhub.Field{
 								Value: "location",
 								Type:  "field",
 							},
-							cmp.Field{
+							cloudhub.Field{
 								Value: "2",
 								Type:  "integer",
 							},
 						},
 					},
 				},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Tags: []string{},
 				},
 				Tags:            map[string][]string{},
@@ -609,13 +609,13 @@ func TestConvert(t *testing.T) {
 		{
 			name:     "count of a regex",
 			influxQL: ` SELECT COUNT(/water/) FROM "h2o_feet"`,
-			want: cmp.QueryConfig{
+			want: cloudhub.QueryConfig{
 				Measurement: "h2o_feet",
-				Fields: []cmp.Field{
-					cmp.Field{
+				Fields: []cloudhub.Field{
+					cloudhub.Field{
 						Value: "count",
 						Type:  "func",
-						Args: []cmp.Field{
+						Args: []cloudhub.Field{
 							{
 								Value: "water",
 								Type:  "regex",
@@ -623,7 +623,7 @@ func TestConvert(t *testing.T) {
 						},
 					},
 				},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Tags: []string{},
 				},
 				Tags:            map[string][]string{},
@@ -633,14 +633,14 @@ func TestConvert(t *testing.T) {
 		{
 			name:     "count with aggregate",
 			influxQL: `SELECT COUNT(water) as "count_water" FROM "h2o_feet"`,
-			want: cmp.QueryConfig{
+			want: cloudhub.QueryConfig{
 				Measurement: "h2o_feet",
-				Fields: []cmp.Field{
-					cmp.Field{
+				Fields: []cloudhub.Field{
+					cloudhub.Field{
 						Value: "count",
 						Type:  "func",
 						Alias: "count_water",
-						Args: []cmp.Field{
+						Args: []cloudhub.Field{
 							{
 								Value: "water",
 								Type:  "field",
@@ -648,7 +648,7 @@ func TestConvert(t *testing.T) {
 						},
 					},
 				},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Tags: []string{},
 				},
 				Tags:            map[string][]string{},
@@ -658,13 +658,13 @@ func TestConvert(t *testing.T) {
 		{
 			name:     "count of a wildcard",
 			influxQL: ` SELECT COUNT(*) FROM "h2o_feet"`,
-			want: cmp.QueryConfig{
+			want: cloudhub.QueryConfig{
 				Measurement: "h2o_feet",
-				Fields: []cmp.Field{
-					cmp.Field{
+				Fields: []cloudhub.Field{
+					cloudhub.Field{
 						Value: "count",
 						Type:  "func",
-						Args: []cmp.Field{
+						Args: []cloudhub.Field{
 							{
 								Value: "*",
 								Type:  "wildcard",
@@ -672,7 +672,7 @@ func TestConvert(t *testing.T) {
 						},
 					},
 				},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Tags: []string{},
 				},
 				Tags:            map[string][]string{},
@@ -682,15 +682,15 @@ func TestConvert(t *testing.T) {
 		{
 			name:     "Test fill number (int) accepted",
 			influxQL: `SELECT mean("usage_idle") FROM "telegraf"."autogen"."cpu" WHERE time > now() - 15m GROUP BY time(1m) FILL(1337)`,
-			want: cmp.QueryConfig{
+			want: cloudhub.QueryConfig{
 				Database:        "telegraf",
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
-				Fields: []cmp.Field{
-					cmp.Field{
+				Fields: []cloudhub.Field{
+					cloudhub.Field{
 						Value: "mean",
 						Type:  "func",
-						Args: []cmp.Field{
+						Args: []cloudhub.Field{
 							{
 								Value: "usage_idle",
 								Type:  "field",
@@ -698,14 +698,14 @@ func TestConvert(t *testing.T) {
 						},
 					},
 				},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Time: "1m",
 					Tags: []string{},
 				},
 				Tags:            map[string][]string{},
 				AreTagsAccepted: false,
 				Fill:            "1337",
-				Range: &cmp.DurationRange{
+				Range: &cloudhub.DurationRange{
 					Lower: "now() - 15m",
 				},
 			},
@@ -713,15 +713,15 @@ func TestConvert(t *testing.T) {
 		{
 			name:     "Test fill number (float) accepted",
 			influxQL: `SELECT mean("usage_idle") FROM "telegraf"."autogen"."cpu" WHERE time > now() - 15m GROUP BY time(1m) FILL(1.337)`,
-			want: cmp.QueryConfig{
+			want: cloudhub.QueryConfig{
 				Database:        "telegraf",
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
-				Fields: []cmp.Field{
-					cmp.Field{
+				Fields: []cloudhub.Field{
+					cloudhub.Field{
 						Value: "mean",
 						Type:  "func",
-						Args: []cmp.Field{
+						Args: []cloudhub.Field{
 							{
 								Value: "usage_idle",
 								Type:  "field",
@@ -729,14 +729,14 @@ func TestConvert(t *testing.T) {
 						},
 					},
 				},
-				GroupBy: cmp.GroupBy{
+				GroupBy: cloudhub.GroupBy{
 					Time: "1m",
 					Tags: []string{},
 				},
 				Tags:            map[string][]string{},
 				AreTagsAccepted: false,
 				Fill:            "1.337",
-				Range: &cmp.DurationRange{
+				Range: &cloudhub.DurationRange{
 					Lower: "now() - 15m",
 				},
 			},

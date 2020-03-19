@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"net/http"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/oauth2"
-	"github.com/snetsystems/cmp/backend/organizations"
-	"github.com/snetsystems/cmp/backend/roles"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/oauth2"
+	"github.com/snetsystems/cloudhub/backend/organizations"
+	"github.com/snetsystems/cloudhub/backend/roles"
 )
 
 // HasAuthorizedToken extracts the token from a request and validates it using the authenticator.
@@ -22,7 +22,7 @@ func HasAuthorizedToken(auth oauth2.Authenticator, r *http.Request) (oauth2.Prin
 // will be run.  The principal will be sent to the next handler via the request's
 // Context.  It is up to the next handler to determine if the principal has access.
 // On failure, will return http.StatusForbidden.
-func AuthorizedToken(auth oauth2.Authenticator, logger cmp.Logger, next http.Handler) http.HandlerFunc {
+func AuthorizedToken(auth oauth2.Authenticator, logger cloudhub.Logger, next http.Handler) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log := logger.
 			WithField("component", "token_auth").
@@ -57,7 +57,7 @@ func AuthorizedToken(auth oauth2.Authenticator, logger cmp.Logger, next http.Han
 }
 
 // RawStoreAccess gives a super admin access to the data store without a facade.
-func RawStoreAccess(logger cmp.Logger, next http.HandlerFunc) http.HandlerFunc {
+func RawStoreAccess(logger cloudhub.Logger, next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		if isServer := hasServerContext(ctx); isServer {
@@ -91,7 +91,7 @@ func AuthorizedUser(
 	store DataStore,
 	useAuth bool,
 	role string,
-	logger cmp.Logger,
+	logger cloudhub.Logger,
 	next http.HandlerFunc,
 ) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -142,7 +142,7 @@ func AuthorizedUser(
 		}
 
 		// validate that the organization exists
-		_, err = store.Organizations(serverCtx).Get(serverCtx, cmp.OrganizationQuery{ID: &p.Organization})
+		_, err = store.Organizations(serverCtx).Get(serverCtx, cloudhub.OrganizationQuery{ID: &p.Organization})
 		if err != nil {
 			log.Error(fmt.Sprintf("Failed to retrieve organization %s from organizations store", p.Organization))
 			Error(w, http.StatusForbidden, "User is not authorized", logger)
@@ -150,7 +150,7 @@ func AuthorizedUser(
 		}
 		ctx = context.WithValue(ctx, organizations.ContextKey, p.Organization)
 		// TODO: seems silly to look up a user twice
-		u, err := store.Users(serverCtx).Get(serverCtx, cmp.UserQuery{
+		u, err := store.Users(serverCtx).Get(serverCtx, cloudhub.UserQuery{
 			Name:     &p.Subject,
 			Provider: &p.Issuer,
 			Scheme:   &scheme,
@@ -182,7 +182,7 @@ func AuthorizedUser(
 			return
 		}
 
-		u, err = store.Users(ctx).Get(ctx, cmp.UserQuery{
+		u, err = store.Users(ctx).Get(ctx, cloudhub.UserQuery{
 			Name:     &p.Subject,
 			Provider: &p.Issuer,
 			Scheme:   &scheme,
@@ -195,7 +195,7 @@ func AuthorizedUser(
 
 		if hasAuthorizedRole(u, role) {
 			if len(u.Roles) != 1 {
-				msg := `User %d has too many role in organization. User: %#v.Please report this log at https://github.com/snetsystems/cmp/issues/new"`
+				msg := `User %d has too many role in organization. User: %#v.Please report this log at https://github.com/snetsystems/cloudhub/issues/new"`
 				log.Error(fmt.Sprint(msg, u.ID, u))
 				unknownErrorWithMessage(w, fmt.Errorf("please have administrator check logs and report error"), logger)
 				return
@@ -214,7 +214,7 @@ func AuthorizedUser(
 	})
 }
 
-func hasAuthorizedRole(u *cmp.User, role string) bool {
+func hasAuthorizedRole(u *cloudhub.User, role string) bool {
 	if u == nil {
 		return false
 	}

@@ -11,7 +11,7 @@ const errorForbidden = {
   headers: {
     date: 'Mon, 17 Apr 2017 18:35:34 GMT',
     'content-length': '0',
-    'x-cmp-version': '1.2.0-beta8-71-gd875ea4a',
+    'x-cloudhub-version': '1.2.0-beta8-71-gd875ea4a',
     'content-type': 'text/plain; charset=utf-8',
   },
   config: {
@@ -26,7 +26,7 @@ const errorForbidden = {
     xsrfHeaderName: 'X-XSRF-TOKEN',
     maxContentLength: -1,
     method: 'GET',
-    url: '/cmp/v1/me',
+    url: '/cloudhub/v1/me',
     data: '{}',
     params: {},
   },

@@ -4,12 +4,12 @@ import PropTypes from 'prop-types'
 import uuid from 'uuid'
 import _ from 'lodash'
 
-import UsersTableHeader from 'src/admin/components/cmp/UsersTableHeader'
-import UsersTableRowNew from 'src/admin/components/cmp/UsersTableRowNew'
-import UsersTableRow from 'src/admin/components/cmp/UsersTableRow'
+import UsersTableHeader from 'src/admin/components/cloudhub/UsersTableHeader'
+import UsersTableRowNew from 'src/admin/components/cloudhub/UsersTableRowNew'
+import UsersTableRow from 'src/admin/components/cloudhub/UsersTableRow'
 import PageSpinner from 'src/shared/components/PageSpinner'
 
-import {USERS_TABLE} from 'src/admin/constants/cmpTableSizing'
+import {USERS_TABLE} from 'src/admin/constants/cloudhubTableSizing'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 class UsersTable extends Component {
@@ -67,7 +67,7 @@ class UsersTable extends Component {
           organization={organization}
         />
         <div className="panel-body">
-          <table className="table table-highlight v-center cmp-admin-table">
+          <table className="table table-highlight v-center cloudhub-admin-table">
             <thead>
               <tr>
                 <th>Username</th>

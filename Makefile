@@ -9,7 +9,7 @@ UISOURCES := $(shell find frontend -type f -not \( -path frontend/build/\* -o -p
 unexport LDFLAGS
 LDFLAGS=-ldflags "-s -X main.version=${VERSION} -X main.commit=${COMMIT}"
 BINARY=cloudhub
-CTLBINARY=cshctl
+CTLBINARY=cloudhubctl
 GO111MODULE=on
 
 .PHONY: all build gobuild assets dep clean test gotest gotestrace jstest run run-dev ctags
@@ -23,8 +23,8 @@ build: assets ${BINARY}
 gobuild: .godep ${BINARY}
 
 ${BINARY}: $(SOURCES) .bindata .jsdep .godep
-	cd backend && GO111MODULE=on go build -o ./cmd/cmp/${BINARY} ${LDFLAGS} ./cmd/cmp/main.go
-	# cd backend && GO111MODULE=on go build -o ./cmd/cmpctl${CTLBINARY} ${LDFLAGS} ./cmd/cmpctl
+	cd backend && GO111MODULE=on go build -o ./cmd/cloudhub/${BINARY} ${LDFLAGS} ./cmd/cloudhub/main.go
+	# cd backend && GO111MODULE=on go build -o ./cmd/cloudhubctl${CTLBINARY} ${LDFLAGS} ./cmd/cloudhubctl
 
 assets: .jssrc .bindata
 
@@ -88,14 +88,14 @@ lint-ci:
 	cd frontend && yarn run eslint && yarn run tslint && yarn run tsc # fail fast for ci process
 
 run: ${BINARY}
-	./backend/cmd/cmp/${BINARY}
+	./backend/cmd/cloudhub/${BINARY}
 
 run-dev: ${BINARY}
 	mkdir -p frontend/build
-	cd ./backend/cmd/cmp/ && ./${BINARY} -d --log-level=debug --auth-duration=0 -t=74c1e9e2450886060b5bf736b935cd0bf960837f --github-client-id=c170bbdba5cb2ea8c3e6 --github-client-secret=55c35715b0e4eebab7edbdeef3081bf890e79d22
+	cd ./backend/cmd/cloudhub/ && ./${BINARY} -d --log-level=debug --auth-duration=0 -t=74c1e9e2450886060b5bf736b935cd0bf960837f --github-client-id=c170bbdba5cb2ea8c3e6 --github-client-secret=55c35715b0e4eebab7edbdeef3081bf890e79d22
 
 clean:
-	if [ -f backend/cmd/cmp/${BINARY} ] ; then rm backend/cmd/cmp/${BINARY} ; fi
+	if [ -f backend/cmd/cloudhub/${BINARY} ] ; then rm backend/cmd/cloudhub/${BINARY} ; fi
 	cd frontend && yarn run clean
 	cd frontend && rm -rf node_modules
 	rm -f backend/dist/dist_gen.go backend/canned/bin_gen.go backend/protoboards/bin_gen.go backend/server/swagger_gen.go

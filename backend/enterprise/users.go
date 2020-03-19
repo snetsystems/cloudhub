@@ -4,17 +4,17 @@ import (
 	"context"
 	"fmt"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // UserStore uses a control client operate on Influx Enterprise users
 type UserStore struct {
 	Ctrl
-	Logger cmp.Logger
+	Logger cloudhub.Logger
 }
 
 // Add creates a new User in Influx Enterprise
-func (c *UserStore) Add(ctx context.Context, u *cmp.User) (*cmp.User, error) {
+func (c *UserStore) Add(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
 	if err := c.Ctrl.CreateUser(ctx, u.Name, u.Passwd); err != nil {
 		return nil, err
 	}
@@ -29,11 +29,11 @@ func (c *UserStore) Add(ctx context.Context, u *cmp.User) (*cmp.User, error) {
 		}
 	}
 
-	return c.Get(ctx, cmp.UserQuery{Name: &u.Name})
+	return c.Get(ctx, cloudhub.UserQuery{Name: &u.Name})
 }
 
 // Delete the User from Influx Enterprise
-func (c *UserStore) Delete(ctx context.Context, u *cmp.User) error {
+func (c *UserStore) Delete(ctx context.Context, u *cloudhub.User) error {
 	return c.Ctrl.DeleteUser(ctx, u.Name)
 }
 
@@ -48,7 +48,7 @@ func (c *UserStore) Num(ctx context.Context) (int, error) {
 }
 
 // Get retrieves a user if name exists.
-func (c *UserStore) Get(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+func (c *UserStore) Get(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 	if q.Name == nil {
 		return nil, fmt.Errorf("query must specify name")
 	}
@@ -63,21 +63,21 @@ func (c *UserStore) Get(ctx context.Context, q cmp.UserQuery) (*cmp.User, error)
 	}
 
 	role := ur[*q.Name]
-	cr := role.ToCMP()
+	cr := role.ToCloudHub()
 	// For now we are removing all users from a role being returned.
 	for i, r := range cr {
-		r.Users = []cmp.User{}
+		r.Users = []cloudhub.User{}
 		cr[i] = r
 	}
-	return &cmp.User{
+	return &cloudhub.User{
 		Name:        u.Name,
-		Permissions: ToCMP(u.Permissions),
+		Permissions: ToCloudHub(u.Permissions),
 		Roles:       cr,
 	}, nil
 }
 
 // Update the user's permissions or roles
-func (c *UserStore) Update(ctx context.Context, u *cmp.User) error {
+func (c *UserStore) Update(ctx context.Context, u *cloudhub.User) error {
 	// Only allow one type of change at a time. If it is a password
 	// change then do it and return without any changes to permissions
 	if u.Passwd != "" {
@@ -130,7 +130,7 @@ func (c *UserStore) Update(ctx context.Context, u *cmp.User) error {
 }
 
 // All is all users in influx
-func (c *UserStore) All(ctx context.Context) ([]cmp.User, error) {
+func (c *UserStore) All(ctx context.Context) ([]cloudhub.User, error) {
 	all, err := c.Ctrl.Users(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -141,30 +141,30 @@ func (c *UserStore) All(ctx context.Context) ([]cmp.User, error) {
 		return nil, err
 	}
 
-	res := make([]cmp.User, len(all.Users))
+	res := make([]cloudhub.User, len(all.Users))
 	for i, user := range all.Users {
 		role := ur[user.Name]
-		cr := role.ToCMP()
+		cr := role.ToCloudHub()
 		// For now we are removing all users from a role being returned.
 		for i, r := range cr {
-			r.Users = []cmp.User{}
+			r.Users = []cloudhub.User{}
 			cr[i] = r
 		}
 
-		res[i] = cmp.User{
+		res[i] = cloudhub.User{
 			Name:        user.Name,
-			Permissions: ToCMP(user.Permissions),
+			Permissions: ToCloudHub(user.Permissions),
 			Roles:       cr,
 		}
 	}
 	return res, nil
 }
 
-// ToEnterprise converts cmp permission shape to enterprise
-func ToEnterprise(perms cmp.Permissions) Permissions {
+// ToEnterprise converts cloudhub permission shape to enterprise
+func ToEnterprise(perms cloudhub.Permissions) Permissions {
 	res := Permissions{}
 	for _, perm := range perms {
-		if perm.Scope == cmp.AllScope {
+		if perm.Scope == cloudhub.AllScope {
 			// Enterprise uses empty string as the key for all databases
 			res[""] = perm.Allowed
 		} else {
@@ -174,19 +174,19 @@ func ToEnterprise(perms cmp.Permissions) Permissions {
 	return res
 }
 
-// ToCMP converts enterprise permissions shape to cmp shape
-func ToCMP(perms Permissions) cmp.Permissions {
-	res := cmp.Permissions{}
+// ToCloudHub converts enterprise permissions shape to cloudhub shape
+func ToCloudHub(perms Permissions) cloudhub.Permissions {
+	res := cloudhub.Permissions{}
 	for db, perm := range perms {
 		// Enterprise uses empty string as the key for all databases
 		if db == "" {
-			res = append(res, cmp.Permission{
-				Scope:   cmp.AllScope,
+			res = append(res, cloudhub.Permission{
+				Scope:   cloudhub.AllScope,
 				Allowed: perm,
 			})
 		} else {
-			res = append(res, cmp.Permission{
-				Scope:   cmp.DBScope,
+			res = append(res, cloudhub.Permission{
+				Scope:   cloudhub.DBScope,
 				Name:    db,
 				Allowed: perm,
 			})

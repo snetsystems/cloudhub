@@ -3,7 +3,7 @@ package kapacitor
 import (
 	"fmt"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 const (
@@ -90,7 +90,7 @@ var DeadmanTrigger = `
 `
 
 // Trigger returns the trigger mechanism for a tickscript
-func Trigger(rule cmp.AlertRule) (string, error) {
+func Trigger(rule cloudhub.AlertRule) (string, error) {
 	var trigger string
 	var err error
 	switch rule.Trigger {
@@ -127,7 +127,7 @@ func Trigger(rule cmp.AlertRule) (string, error) {
 	return trigger, nil
 }
 
-func relativeTrigger(rule cmp.AlertRule) (string, error) {
+func relativeTrigger(rule cloudhub.AlertRule) (string, error) {
 	op, err := kapaOperator(rule.TriggerValues.Operator)
 	if err != nil {
 		return "", err
@@ -141,7 +141,7 @@ func relativeTrigger(rule cmp.AlertRule) (string, error) {
 	}
 }
 
-func thresholdTrigger(rule cmp.AlertRule) (string, error) {
+func thresholdTrigger(rule cloudhub.AlertRule) (string, error) {
 	op, err := kapaOperator(rule.TriggerValues.Operator)
 	if err != nil {
 		return "", err
@@ -149,7 +149,7 @@ func thresholdTrigger(rule cmp.AlertRule) (string, error) {
 	return fmt.Sprintf(ThresholdTrigger, op), nil
 }
 
-func thresholdRangeTrigger(rule cmp.AlertRule) (string, error) {
+func thresholdRangeTrigger(rule cloudhub.AlertRule) (string, error) {
 	ops, err := rangeOperators(rule.TriggerValues.Operator)
 	if err != nil {
 		return "", err

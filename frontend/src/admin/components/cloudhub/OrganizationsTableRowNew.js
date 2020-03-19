@@ -4,7 +4,7 @@ import PropTypes from 'prop-types'
 import ConfirmOrCancel from 'shared/components/ConfirmOrCancel'
 import Dropdown from 'shared/components/Dropdown'
 
-import {USER_ROLES} from 'src/admin/constants/cmpAdmin'
+import {USER_ROLES} from 'src/admin/constants/cloudhubAdmin'
 import {MEMBER_ROLE} from 'src/auth/Authorized'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 

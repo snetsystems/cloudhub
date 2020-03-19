@@ -6,7 +6,7 @@
     "version": "1.0.0"
   },
   "schemes": ["http"],
-  "basePath": "/cmp/v1",
+  "basePath": "/cloudhub/v1",
   "consumes": ["application/json"],
   "produces": ["application/json"],
   "paths": {
@@ -3211,7 +3211,7 @@
         }
       }
     },
-    "/cmp/v1/config": {
+    "/cloudhub/v1/config": {
       "get": {
         "tags": ["config"],
         "summary": "Returns the global application configuration",
@@ -3238,7 +3238,7 @@
         }
       }
     },
-    "/cmp/v1/config/auth": {
+    "/cloudhub/v1/config/auth": {
       "get": {
         "tags": ["config"],
         "summary": "Returns the global application configuration for auth",
@@ -3301,7 +3301,7 @@
         }
       }
     },
-    "/cmp/v1/org_config": {
+    "/cloudhub/v1/org_config": {
       "get": {
         "tags": ["organization config"],
         "summary": "Retrieve the organization configuration",
@@ -3328,7 +3328,7 @@
         }
       }
     },
-    "/cmp/v1/org_config/logviewer": {
+    "/cloudhub/v1/org_config/logviewer": {
       "get": {
         "tags": ["organization config"],
         "summary": "Retrieve the organization-specific log viewer configurations",
@@ -3423,7 +3423,7 @@
             "type": "string",
             "description": "An InfluxQL binary expression for querying annotations by their tags",
             "required": false,
-            "example": "repo =~ /cmp/"
+            "example": "repo =~ /cloudhub/"
           }
         ],
         "responses": {
@@ -3661,7 +3661,7 @@
         "defaultRole": "viewer",
         "id": "1",
         "links": {
-          "self": "/cmp/v1/organizations/1"
+          "self": "/cloudhub/v1/organizations/1"
         },
         "name": "Chronogiraffes"
       }
@@ -3739,7 +3739,7 @@
       "example": {
         "id": "1",
         "links": {
-          "self": "/cmp/v1/users/1"
+          "self": "/cloudhub/v1/users/1"
         },
         "name": "pineapple@cubeoctohedron.flux",
         "provider": "github",
@@ -3815,14 +3815,14 @@
             "shardDuration": "7d",
             "default": true,
             "links": {
-              "self": "/cmp/v1/sources/1/dbs/NOAA_water_database/rps/liquid"
+              "self": "/cloudhub/v1/sources/1/dbs/NOAA_water_database/rps/liquid"
             }
           }
         ],
         "links": {
-          "self": "/cmp/v1/sources/1/dbs/NOAA_water_database",
-          "rps": "/cmp/v1/sources/1/dbs/NOAA_water_database/rps",
-          "measurements": "/cmp/v1/sources/1/dbs/NOAA_water_database/measurements?limit=100&offset=0"
+          "self": "/cloudhub/v1/sources/1/dbs/NOAA_water_database",
+          "rps": "/cloudhub/v1/sources/1/dbs/NOAA_water_database/rps",
+          "measurements": "/cloudhub/v1/sources/1/dbs/NOAA_water_database/measurements?limit=100&offset=0"
         }
       },
       "properties": {
@@ -3893,9 +3893,9 @@
         "active": false,
         "insecureSkipVerify": false,
         "links": {
-          "proxy": "/cmp/v1/sources/4/kapacitors/4/proxy",
-          "self": "/cmp/v1/sources/4/kapacitors/4",
-          "rules": "/cmp/v1/sources/4/kapacitors/4/rules"
+          "proxy": "/cloudhub/v1/sources/4/kapacitors/4/proxy",
+          "self": "/cloudhub/v1/sources/4/kapacitors/4",
+          "rules": "/cloudhub/v1/sources/4/kapacitors/4/rules"
         }
       },
       "properties": {
@@ -3984,9 +3984,9 @@
           "active": true
         },
         "links": {
-          "proxy": "/cmp/v1/sources/1/services/1/proxy",
-          "self": "/cmp/v1/sources/1/services/1",
-          "source": "/cmp/v1/sources/1"
+          "proxy": "/cloudhub/v1/sources/1/services/1/proxy",
+          "self": "/cloudhub/v1/sources/1/services/1",
+          "source": "/cloudhub/v1/sources/1"
         }
       },
       "properties": {
@@ -4308,7 +4308,7 @@
         "shardDuration": "7d",
         "default": true,
         "links": {
-          "self": "/cmp/v1/sources/1/dbs/NOAA_water_database/rps/liquid"
+          "self": "/cloudhub/v1/sources/1/dbs/NOAA_water_database/rps/liquid"
         }
       },
       "properties": {
@@ -4395,9 +4395,9 @@
           }
         ],
         "links": {
-          "self": "/cmp/v1/sources/1/dbs/cmp/measurements?limit=100&offset=0",
-          "first": "/cmp/v1/sources/1/dbs/cmp/measurements?limit=100&offset=0",
-          "next": "/cmp/v1/sources/1/dbs/cmp/measurements?limit=100&offset=100"
+          "self": "/cloudhub/v1/sources/1/dbs/cloudhub/measurements?limit=100&offset=0",
+          "first": "/cloudhub/v1/sources/1/dbs/cloudhub/measurements?limit=100&offset=0",
+          "next": "/cloudhub/v1/sources/1/dbs/cloudhub/measurements?limit=100&offset=100"
         }
       }
     },
@@ -4413,7 +4413,7 @@
     "Rule": {
       "type": "object",
       "example": {
-        "id": "cmp-v1-b2b065ea-79bd-4e4f-8c0d-d0ef68477d38",
+        "id": "cloudhub-v1-b2b065ea-79bd-4e4f-8c0d-d0ef68477d38",
         "query": {
           "id": "ce72917d-1ecb-45ea-a6cb-4c122deb93c7",
           "database": "telegraf",
@@ -4455,7 +4455,7 @@
           "value": "10"
         },
         "name": "Untitled Rule",
-        "tickscript": "var db = 'telegraf'\n\nvar rp = 'autogen'\n\nvar measurement = 'cpu'\n\nvar groupBy = []\n\nvar whereFilter = lambda: TRUE\n\nvar period = 10m\n\nvar every = 30s\n\nvar name = 'Untitled Rule'\n\nvar idVar = name + ':{{.Group}}'\n\nvar message = 'too much spam'\n\nvar idTag = 'alertID'\n\nvar levelTag = 'level'\n\nvar messageField = 'message'\n\nvar durationField = 'duration'\n\nvar outputDB = 'cmp'\n\nvar outputRP = 'autogen'\n\nvar outputMeasurement = 'alerts'\n\nvar triggerType = 'threshold'\n\nvar details = 'muh body'\n\nvar crit = 10\n\nvar data = stream\n    |from()\n        .database(db)\n        .retentionPolicy(rp)\n        .measurement(measurement)\n        .groupBy(groupBy)\n        .where(whereFilter)\n    |window()\n        .period(period)\n        .every(every)\n        .align()\n    |max('usage_system')\n        .as('value')\n\nvar trigger = data\n    |alert()\n        .crit(lambda: \"value\" > crit)\n        .stateChangesOnly()\n        .message(message)\n        .id(idVar)\n        .idTag(idTag)\n        .levelTag(levelTag)\n        .messageField(messageField)\n        .durationField(durationField)\n        .details(details)\n        .alerta()\n\ntrigger\n    |influxDBOut()\n        .create()\n        .database(outputDB)\n        .retentionPolicy(outputRP)\n        .measurement(outputMeasurement)\n        .tag('alertName', name)\n        .tag('triggerType', triggerType)\n\ntrigger\n    |httpOut('output')\n",
+        "tickscript": "var db = 'telegraf'\n\nvar rp = 'autogen'\n\nvar measurement = 'cpu'\n\nvar groupBy = []\n\nvar whereFilter = lambda: TRUE\n\nvar period = 10m\n\nvar every = 30s\n\nvar name = 'Untitled Rule'\n\nvar idVar = name + ':{{.Group}}'\n\nvar message = 'too much spam'\n\nvar idTag = 'alertID'\n\nvar levelTag = 'level'\n\nvar messageField = 'message'\n\nvar durationField = 'duration'\n\nvar outputDB = 'cloudhub'\n\nvar outputRP = 'autogen'\n\nvar outputMeasurement = 'alerts'\n\nvar triggerType = 'threshold'\n\nvar details = 'muh body'\n\nvar crit = 10\n\nvar data = stream\n    |from()\n        .database(db)\n        .retentionPolicy(rp)\n        .measurement(measurement)\n        .groupBy(groupBy)\n        .where(whereFilter)\n    |window()\n        .period(period)\n        .every(every)\n        .align()\n    |max('usage_system')\n        .as('value')\n\nvar trigger = data\n    |alert()\n        .crit(lambda: \"value\" > crit)\n        .stateChangesOnly()\n        .message(message)\n        .id(idVar)\n        .idTag(idTag)\n        .levelTag(levelTag)\n        .messageField(messageField)\n        .durationField(durationField)\n        .details(details)\n        .alerta()\n\ntrigger\n    |influxDBOut()\n        .create()\n        .database(outputDB)\n        .retentionPolicy(outputRP)\n        .measurement(outputMeasurement)\n        .tag('alertName', name)\n        .tag('triggerType', triggerType)\n\ntrigger\n    |httpOut('output')\n",
         "type": "stream",
         "dbrps": [
           {
@@ -4470,9 +4470,9 @@
         "modified": "2017-05-23T15:57:42.625909746-05:00",
         "last-enabled": "2017-05-05T16:16:25.890210217-05:00",
         "links": {
-          "self": "/cmp/v1/sources/5/kapacitors/5/rules/cmp-v1-b2b065ea-79bd-4e4f-8c0d-d0ef68477d38",
-          "kapacitor": "/cmp/v1/sources/5/kapacitors/5/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcmp-v1-b2b065ea-79bd-4e4f-8c0d-d0ef68477d38",
-          "output": "/cmp/v1/sources/5/kapacitors/5/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcmp-v1-b2b065ea-79bd-4e4f-8c0d-d0ef68477d38%2Foutput"
+          "self": "/cloudhub/v1/sources/5/kapacitors/5/rules/cloudhub-v1-b2b065ea-79bd-4e4f-8c0d-d0ef68477d38",
+          "kapacitor": "/cloudhub/v1/sources/5/kapacitors/5/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcloudhub-v1-b2b065ea-79bd-4e4f-8c0d-d0ef68477d38",
+          "output": "/cloudhub/v1/sources/5/kapacitors/5/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcloudhub-v1-b2b065ea-79bd-4e4f-8c0d-d0ef68477d38%2Foutput"
         }
       },
       "required": ["query", "every", "trigger"],
@@ -4686,15 +4686,15 @@
         "authentication": "basic",
         "role": "viewer",
         "links": {
-          "self": "/cmp/v1/sources/4",
-          "kapacitors": "/cmp/v1/sources/4/kapacitors",
-          "proxy": "/cmp/v1/sources/4/proxy",
-          "write": "/cmp/v1/sources/4/write",
-          "queries": "/cmp/v1/sources/4/queries",
-          "permissions": "/cmp/v1/sources/4/permissions",
-          "users": "/cmp/v1/sources/4/users",
-          "roles": "/cmp/v1/sources/4/roles",
-          "health": "/cmp/v1/sources/4/health"
+          "self": "/cloudhub/v1/sources/4",
+          "kapacitors": "/cloudhub/v1/sources/4/kapacitors",
+          "proxy": "/cloudhub/v1/sources/4/proxy",
+          "write": "/cloudhub/v1/sources/4/write",
+          "queries": "/cloudhub/v1/sources/4/queries",
+          "permissions": "/cloudhub/v1/sources/4/permissions",
+          "users": "/cloudhub/v1/sources/4/users",
+          "roles": "/cloudhub/v1/sources/4/roles",
+          "health": "/cloudhub/v1/sources/4/health"
         }
       },
       "required": ["url"],
@@ -4964,7 +4964,7 @@
               {
                 "name": "admin",
                 "links": {
-                  "self": "/cmp/v1/sources/3/users/admin"
+                  "self": "/cloudhub/v1/sources/3/users/admin"
                 }
               }
             ],
@@ -4977,7 +4977,7 @@
               }
             ],
             "links": {
-              "self": "/cmp/v1/sources/3/roles/timetravelers"
+              "self": "/cloudhub/v1/sources/3/roles/timetravelers"
             }
           }
         ]
@@ -5016,7 +5016,7 @@
           {
             "name": "admin",
             "links": {
-              "self": "/cmp/v1/sources/3/users/admin"
+              "self": "/cloudhub/v1/sources/3/users/admin"
             }
           }
         ],
@@ -5029,7 +5029,7 @@
           }
         ],
         "links": {
-          "self": "/cmp/v1/sources/3/roles/timetravelers"
+          "self": "/cloudhub/v1/sources/3/roles/timetravelers"
         }
       }
     },
@@ -5078,12 +5078,12 @@
                   }
                 ],
                 "links": {
-                  "self": "/cmp/v1/sources/3/roles/timetravelers"
+                  "self": "/cloudhub/v1/sources/3/roles/timetravelers"
                 }
               }
             ],
             "links": {
-              "self": "/cmp/v1/sources/3/users/docbrown"
+              "self": "/cloudhub/v1/sources/3/users/docbrown"
             }
           }
         ]
@@ -5152,12 +5152,12 @@
               }
             ],
             "links": {
-              "self": "/cmp/v1/sources/3/roles/timetravelers"
+              "self": "/cloudhub/v1/sources/3/roles/timetravelers"
             }
           }
         ],
         "links": {
-          "self": "/cmp/v1/sources/3/users/docbrown"
+          "self": "/cloudhub/v1/sources/3/users/docbrown"
         }
       }
     },
@@ -5312,7 +5312,7 @@
           }
         ],
         "link": {
-          "href": "/cmp/v1/layouts/0e980b97-c162-487b-a815-3f955df62430",
+          "href": "/cloudhub/v1/layouts/0e980b97-c162-487b-a815-3f955df62430",
           "rel": "self"
         }
       }
@@ -5651,7 +5651,7 @@
         ],
         "name": "dashboard name",
         "links": {
-          "self": "/cmp/v1/dashboards/4"
+          "self": "/cloudhub/v1/dashboards/4"
         }
       }
     },
@@ -5732,7 +5732,7 @@
         ],
         "name": "lalalalala",
         "links": {
-          "self": "/cmp/v1/dashboards/4"
+          "self": "/cloudhub/v1/dashboards/4"
         }
       }
     },
@@ -6153,22 +6153,22 @@
         }
       },
       "example": {
-        "layouts": "/cmp/v1/layouts",
-        "protoboards": "/cmp/v1/protoboards",
-        "users": "/cmp/v1/organizations/default/users",
-        "allUsers": "/cmp/v1/users",
-        "organizations": "/cmp/v1/organizations",
-        "mappings": "/cmp/v1/mappings",
-        "sources": "/cmp/v1/sources",
-        "me": "/cmp/v1/me",
-        "environment": "/cmp/v1/env",
-        "dashboards": "/cmp/v1/dashboards",
+        "layouts": "/cloudhub/v1/layouts",
+        "protoboards": "/cloudhub/v1/protoboards",
+        "users": "/cloudhub/v1/organizations/default/users",
+        "allUsers": "/cloudhub/v1/users",
+        "organizations": "/cloudhub/v1/organizations",
+        "mappings": "/cloudhub/v1/mappings",
+        "sources": "/cloudhub/v1/sources",
+        "me": "/cloudhub/v1/me",
+        "environment": "/cloudhub/v1/env",
+        "dashboards": "/cloudhub/v1/dashboards",
         "config": {
-          "self": "/cmp/v1/config",
-          "auth": "/cmp/v1/config/auth"
+          "self": "/cloudhub/v1/config",
+          "auth": "/cloudhub/v1/config/auth"
         },
-        "cells": "/cmp/v2/cells",
-        "dashboardsv2": "/cmp/v2/dashboards",
+        "cells": "/cloudhub/v2/cells",
+        "dashboardsv2": "/cloudhub/v2/dashboards",
         "auth": [
           {
             "name": "github",
@@ -6189,18 +6189,18 @@
           ]
         },
         "orgConfig": {
-          "self": "/cmp/v1/org_config",
-          "logViewer": "/cmp/v1/org_config/logviewer"
+          "self": "/cloudhub/v1/org_config",
+          "logViewer": "/cloudhub/v1/org_config/logviewer"
         },
         "flux": {
-          "ast": "/cmp/v1/flux/ast",
-          "self": "/cmp/v1/flux",
-          "suggestions": "/cmp/v1/flux/suggestions"
+          "ast": "/cloudhub/v1/flux/ast",
+          "self": "/cloudhub/v1/flux",
+          "suggestions": "/cloudhub/v1/flux/suggestions"
         },
         "addons": [
           {
             "name": "salt",
-            "url": "/cmp/v1/salt",
+            "url": "/cloudhub/v1/salt",
             "token": "lndXJlIl0sImlhdCI6MTU3NDAzNjAxM30"
           },
           {
@@ -6257,7 +6257,7 @@
             "text": "unknown event",
             "tags": {},
             "links": {
-              "self": "/cmp/v1/sources/1/annotations/50ee18e8-8115-4fac-abed-24ce89e96047"
+              "self": "/cloudhub/v1/sources/1/annotations/50ee18e8-8115-4fac-abed-24ce89e96047"
             }
           },
           {
@@ -6266,10 +6266,10 @@
             "endTime": "2018-07-09T17:48:08.652Z",
             "text": "todo: investigate this spike",
             "tags": {
-              "repo": "snetsystems/cmp"
+              "repo": "snetsystems/cloudhub"
             },
             "links": {
-              "self": "/cmp/v1/sources/1/annotations/59434c1c-fa16-40e9-8b92-af71544cc3eb"
+              "self": "/cloudhub/v1/sources/1/annotations/59434c1c-fa16-40e9-8b92-af71544cc3eb"
             }
           }
         ]
@@ -6330,10 +6330,10 @@
         "endTime": "2018-07-09T17:48:08.652Z",
         "text": "no name",
         "tags": {
-          "repo": "snetsystems/cmp"
+          "repo": "snetsystems/cloudhub"
         },
         "links": {
-          "self": "/cmp/v1/sources/1/annotations/59434c1c-fa16-40e9-8b92-af71544cc3eb"
+          "self": "/cloudhub/v1/sources/1/annotations/59434c1c-fa16-40e9-8b92-af71544cc3eb"
         }
       }
     },

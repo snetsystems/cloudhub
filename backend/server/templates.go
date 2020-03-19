@@ -6,12 +6,12 @@ import (
 	"net/http"
 
 	"github.com/bouk/httprouter"
-	cmp "github.com/snetsystems/cmp/backend"
-	idgen "github.com/snetsystems/cmp/backend/id"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	idgen "github.com/snetsystems/cloudhub/backend/id"
 )
 
 // ValidTemplateRequest checks if the request sent to the server is the correct format.
-func ValidTemplateRequest(template *cmp.Template) error {
+func ValidTemplateRequest(template *cloudhub.Template) error {
 	switch template.Type {
 	default:
 		return fmt.Errorf("Unknown template type %s", template.Type)
@@ -42,11 +42,11 @@ type templateLinks struct {
 }
 
 type templateResponse struct {
-	cmp.Template
+	cloudhub.Template
 	Links templateLinks `json:"links"`
 }
 
-func newTemplateResponses(dID cmp.DashboardID, tmps []cmp.Template) []templateResponse {
+func newTemplateResponses(dID cloudhub.DashboardID, tmps []cloudhub.Template) []templateResponse {
 	res := make([]templateResponse, len(tmps))
 	for i, t := range tmps {
 		res[i] = newTemplateResponse(dID, t)
@@ -58,8 +58,8 @@ type templatesResponses struct {
 	Templates []templateResponse `json:"templates"`
 }
 
-func newTemplateResponse(dID cmp.DashboardID, tmp cmp.Template) templateResponse {
-	base := "/cmp/v1/dashboards"
+func newTemplateResponse(dID cloudhub.DashboardID, tmp cloudhub.Template) templateResponse {
+	base := "/cloudhub/v1/dashboards"
 	return templateResponse{
 		Template: tmp,
 		Links: templateLinks{
@@ -77,14 +77,14 @@ func (s *Service) Templates(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	d, err := s.Store.Dashboards(ctx).Get(ctx, cmp.DashboardID(id))
+	d, err := s.Store.Dashboards(ctx).Get(ctx, cloudhub.DashboardID(id))
 	if err != nil {
 		notFound(w, id, s.Logger)
 		return
 	}
 
 	res := templatesResponses{
-		Templates: newTemplateResponses(cmp.DashboardID(id), d.Templates),
+		Templates: newTemplateResponses(cloudhub.DashboardID(id), d.Templates),
 	}
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
@@ -98,13 +98,13 @@ func (s *Service) NewTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	dash, err := s.Store.Dashboards(ctx).Get(ctx, cmp.DashboardID(id))
+	dash, err := s.Store.Dashboards(ctx).Get(ctx, cloudhub.DashboardID(id))
 	if err != nil {
 		notFound(w, id, s.Logger)
 		return
 	}
 
-	var template cmp.Template
+	var template cloudhub.Template
 	if err := json.NewDecoder(r.Body).Decode(&template); err != nil {
 		invalidJSON(w, s.Logger)
 		return
@@ -122,7 +122,7 @@ func (s *Service) NewTemplate(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, msg, s.Logger)
 		return
 	}
-	template.ID = cmp.TemplateID(tid)
+	template.ID = cloudhub.TemplateID(tid)
 
 	dash.Templates = append(dash.Templates, template)
 	if err := s.Store.Dashboards(ctx).Update(ctx, dash); err != nil {
@@ -144,7 +144,7 @@ func (s *Service) TemplateID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dash, err := s.Store.Dashboards(ctx).Get(ctx, cmp.DashboardID(id))
+	dash, err := s.Store.Dashboards(ctx).Get(ctx, cloudhub.DashboardID(id))
 	if err != nil {
 		notFound(w, id, s.Logger)
 		return
@@ -152,8 +152,8 @@ func (s *Service) TemplateID(w http.ResponseWriter, r *http.Request) {
 
 	tid := httprouter.GetParamFromContext(ctx, "tid")
 	for _, t := range dash.Templates {
-		if t.ID == cmp.TemplateID(tid) {
-			res := newTemplateResponse(cmp.DashboardID(id), t)
+		if t.ID == cloudhub.TemplateID(tid) {
+			res := newTemplateResponse(cloudhub.DashboardID(id), t)
 			encodeJSON(w, http.StatusOK, res, s.Logger)
 			return
 		}
@@ -171,7 +171,7 @@ func (s *Service) RemoveTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	dash, err := s.Store.Dashboards(ctx).Get(ctx, cmp.DashboardID(id))
+	dash, err := s.Store.Dashboards(ctx).Get(ctx, cloudhub.DashboardID(id))
 	if err != nil {
 		notFound(w, id, s.Logger)
 		return
@@ -180,7 +180,7 @@ func (s *Service) RemoveTemplate(w http.ResponseWriter, r *http.Request) {
 	tid := httprouter.GetParamFromContext(ctx, "tid")
 	pos := -1
 	for i, t := range dash.Templates {
-		if t.ID == cmp.TemplateID(tid) {
+		if t.ID == cloudhub.TemplateID(tid) {
 			pos = i
 			break
 		}
@@ -209,7 +209,7 @@ func (s *Service) ReplaceTemplate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	dash, err := s.Store.Dashboards(ctx).Get(ctx, cmp.DashboardID(id))
+	dash, err := s.Store.Dashboards(ctx).Get(ctx, cloudhub.DashboardID(id))
 	if err != nil {
 		notFound(w, id, s.Logger)
 		return
@@ -218,7 +218,7 @@ func (s *Service) ReplaceTemplate(w http.ResponseWriter, r *http.Request) {
 	tid := httprouter.GetParamFromContext(ctx, "tid")
 	pos := -1
 	for i, t := range dash.Templates {
-		if t.ID == cmp.TemplateID(tid) {
+		if t.ID == cloudhub.TemplateID(tid) {
 			pos = i
 			break
 		}
@@ -228,7 +228,7 @@ func (s *Service) ReplaceTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var template cmp.Template
+	var template cloudhub.Template
 	if err := json.NewDecoder(r.Body).Decode(&template); err != nil {
 		invalidJSON(w, s.Logger)
 		return
@@ -238,7 +238,7 @@ func (s *Service) ReplaceTemplate(w http.ResponseWriter, r *http.Request) {
 		invalidData(w, err, s.Logger)
 		return
 	}
-	template.ID = cmp.TemplateID(tid)
+	template.ID = cloudhub.TemplateID(tid)
 
 	dash.Templates[pos] = template
 	if err := s.Store.Dashboards(ctx).Update(ctx, dash); err != nil {
@@ -247,6 +247,6 @@ func (s *Service) ReplaceTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res := newTemplateResponse(cmp.DashboardID(id), template)
+	res := newTemplateResponse(cloudhub.DashboardID(id), template)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }

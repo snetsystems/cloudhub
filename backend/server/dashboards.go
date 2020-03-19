@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 type dashboardLinks struct {
@@ -15,7 +15,7 @@ type dashboardLinks struct {
 }
 
 type dashboardResponse struct {
-	ID           cmp.DashboardID         `json:"id"`
+	ID           cloudhub.DashboardID         `json:"id"`
 	Cells        []dashboardCellResponse `json:"cells"`
 	Templates    []templateResponse      `json:"templates"`
 	Name         string                  `json:"name"`
@@ -27,8 +27,8 @@ type getDashboardsResponse struct {
 	Dashboards []*dashboardResponse `json:"dashboards"`
 }
 
-func newDashboardResponse(d cmp.Dashboard) *dashboardResponse {
-	base := "/cmp/v1/dashboards"
+func newDashboardResponse(d cloudhub.Dashboard) *dashboardResponse {
+	base := "/cloudhub/v1/dashboards"
 	dd := AddQueryConfigs(DashboardDefaults(d))
 	cells := newCellResponses(dd.ID, dd.Cells)
 	templates := newTemplateResponses(dd.ID, dd.Templates)
@@ -75,7 +75,7 @@ func (s *Service) DashboardID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	e, err := s.Store.Dashboards(ctx).Get(ctx, cmp.DashboardID(id))
+	e, err := s.Store.Dashboards(ctx).Get(ctx, cloudhub.DashboardID(id))
 	if err != nil {
 		notFound(w, id, s.Logger)
 		return
@@ -87,7 +87,7 @@ func (s *Service) DashboardID(w http.ResponseWriter, r *http.Request) {
 
 // NewDashboard creates and returns a new dashboard object
 func (s *Service) NewDashboard(w http.ResponseWriter, r *http.Request) {
-	var dashboard cmp.Dashboard
+	var dashboard cloudhub.Dashboard
 	var err error
 	if err := json.NewDecoder(r.Body).Decode(&dashboard); err != nil {
 		invalidJSON(w, s.Logger)
@@ -126,7 +126,7 @@ func (s *Service) RemoveDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	e, err := s.Store.Dashboards(ctx).Get(ctx, cmp.DashboardID(id))
+	e, err := s.Store.Dashboards(ctx).Get(ctx, cloudhub.DashboardID(id))
 	if err != nil {
 		notFound(w, id, s.Logger)
 		return
@@ -147,7 +147,7 @@ func (s *Service) ReplaceDashboard(w http.ResponseWriter, r *http.Request) {
 		msg := fmt.Sprintf("Could not parse dashboard ID: %s", err)
 		Error(w, http.StatusInternalServerError, msg, s.Logger)
 	}
-	id := cmp.DashboardID(idParam)
+	id := cloudhub.DashboardID(idParam)
 
 	_, err = s.Store.Dashboards(ctx).Get(ctx, id)
 	if err != nil {
@@ -155,7 +155,7 @@ func (s *Service) ReplaceDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req cmp.Dashboard
+	var req cloudhub.Dashboard
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		invalidJSON(w, s.Logger)
 		return
@@ -192,7 +192,7 @@ func (s *Service) UpdateDashboard(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, msg, s.Logger)
 		return
 	}
-	id := cmp.DashboardID(idParam)
+	id := cloudhub.DashboardID(idParam)
 
 	orig, err := s.Store.Dashboards(ctx).Get(ctx, id)
 	if err != nil {
@@ -200,7 +200,7 @@ func (s *Service) UpdateDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req cmp.Dashboard
+	var req cloudhub.Dashboard
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		invalidJSON(w, s.Logger)
 		return
@@ -236,7 +236,7 @@ func (s *Service) UpdateDashboard(w http.ResponseWriter, r *http.Request) {
 }
 
 // ValidDashboardRequest verifies that the dashboard cells have a query
-func ValidDashboardRequest(d *cmp.Dashboard, defaultOrgID string) error {
+func ValidDashboardRequest(d *cloudhub.Dashboard, defaultOrgID string) error {
 	if d.Organization == "" {
 		d.Organization = defaultOrgID
 	}
@@ -257,12 +257,12 @@ func ValidDashboardRequest(d *cmp.Dashboard, defaultOrgID string) error {
 
 // DashboardDefaults updates the dashboard with the default values
 // if none are specified
-func DashboardDefaults(d cmp.Dashboard) (newDash cmp.Dashboard) {
+func DashboardDefaults(d cloudhub.Dashboard) (newDash cloudhub.Dashboard) {
 	newDash.ID = d.ID
 	newDash.Templates = d.Templates
 	newDash.Name = d.Name
 	newDash.Organization = d.Organization
-	newDash.Cells = make([]cmp.DashboardCell, len(d.Cells))
+	newDash.Cells = make([]cloudhub.DashboardCell, len(d.Cells))
 
 	for i, c := range d.Cells {
 		CorrectWidthHeight(&c)
@@ -273,11 +273,11 @@ func DashboardDefaults(d cmp.Dashboard) (newDash cmp.Dashboard) {
 
 // AddQueryConfigs updates all the celsl in the dashboard to have query config
 // objects corresponding to their influxql queries.
-func AddQueryConfigs(d cmp.Dashboard) (newDash cmp.Dashboard) {
+func AddQueryConfigs(d cloudhub.Dashboard) (newDash cloudhub.Dashboard) {
 	newDash.ID = d.ID
 	newDash.Templates = d.Templates
 	newDash.Name = d.Name
-	newDash.Cells = make([]cmp.DashboardCell, len(d.Cells))
+	newDash.Cells = make([]cloudhub.DashboardCell, len(d.Cells))
 
 	for i, c := range d.Cells {
 		AddQueryConfig(&c)

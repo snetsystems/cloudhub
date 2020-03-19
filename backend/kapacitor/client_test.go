@@ -9,7 +9,7 @@ import (
 	gocmp "github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	client "github.com/influxdata/kapacitor/client/v1"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 type MockKapa struct {
@@ -74,8 +74,8 @@ func TestClient_All(t *testing.T) {
 		URL        string
 		Username   string
 		Password   string
-		ID         cmp.ID
-		Ticker     cmp.Ticker
+		ID         cloudhub.ID
+		Ticker     cloudhub.Ticker
 		kapaClient func(url, username, password string, insecureSkipVerify bool) (KapaClient, error)
 	}
 	type args struct {
@@ -127,13 +127,13 @@ func TestClient_All(t *testing.T) {
 					ID: "howdy",
 
 					HrefOutput: "/kapacitor/v1/tasks/howdy/output",
-					Rule: cmp.AlertRule{
+					Rule: cloudhub.AlertRule{
 						ID:         "howdy",
 						Name:       "howdy",
 						TICKScript: "",
 						Type:       "invalid",
 						Status:     "enabled",
-						DBRPs:      []cmp.DBRP{},
+						DBRPs:      []cloudhub.DBRP{},
 					},
 					TICKScript: "",
 				},
@@ -182,7 +182,7 @@ var messageField = 'message'
 
 var durationField = 'duration'
 
-var outputDB = 'cmp'
+var outputDB = 'cloudhub'
 
 var outputRP = 'autogen'
 
@@ -235,8 +235,8 @@ trigger
 					ID: "rule 1",
 
 					HrefOutput: "/kapacitor/v1/tasks/rule 1/output",
-					Rule: cmp.AlertRule{
-						DBRPs: []cmp.DBRP{
+					Rule: cloudhub.AlertRule{
+						DBRPs: []cloudhub.DBRP{
 							{
 
 								DB: "_internal",
@@ -271,7 +271,7 @@ var messageField = 'message'
 
 var durationField = 'duration'
 
-var outputDB = 'cmp'
+var outputDB = 'cloudhub'
 
 var outputRP = 'autogen'
 
@@ -318,24 +318,24 @@ trigger
     |httpOut('output')
 `,
 						Trigger: "threshold",
-						TriggerValues: cmp.TriggerValues{
+						TriggerValues: cloudhub.TriggerValues{
 							Operator: "greater than",
 							Value:    "90000",
 						},
-						AlertNodes: cmp.AlertNodes{
+						AlertNodes: cloudhub.AlertNodes{
 							IsStateChangesOnly: true,
 						},
-						Query: &cmp.QueryConfig{
+						Query: &cloudhub.QueryConfig{
 							Database:        "_internal",
 							RetentionPolicy: "monitor",
 							Measurement:     "cq",
-							Fields: []cmp.Field{
+							Fields: []cloudhub.Field{
 								{
 									Value: "queryOk",
 									Type:  "field",
 								},
 							},
-							GroupBy: cmp.GroupBy{
+							GroupBy: cloudhub.GroupBy{
 								Tags: []string{},
 							},
 							AreTagsAccepted: false,
@@ -387,8 +387,8 @@ func TestClient_Get(t *testing.T) {
 		URL        string
 		Username   string
 		Password   string
-		ID         cmp.ID
-		Ticker     cmp.Ticker
+		ID         cloudhub.ID
+		Ticker     cloudhub.Ticker
 		kapaClient func(url, username, password string, insecureSkipVerify bool) (KapaClient, error)
 	}
 	type args struct {
@@ -454,12 +454,12 @@ func TestClient_Get(t *testing.T) {
 			want: &Task{
 				ID:         "myid",
 				HrefOutput: "/kapacitor/v1/tasks/myid/output",
-				Rule: cmp.AlertRule{
+				Rule: cloudhub.AlertRule{
 					Type:   "stream",
 					Status: "enabled",
 					ID:     "myid",
 					Name:   "myid",
-					DBRPs: []cmp.DBRP{
+					DBRPs: []cloudhub.DBRP{
 						{
 							DB: "_internal",
 							RP: "autogen",
@@ -516,7 +516,7 @@ var messageField = 'message'
 
 var durationField = 'duration'
 
-var outputDB = 'cmp'
+var outputDB = 'cloudhub'
 
 var outputRP = 'autogen'
 
@@ -566,10 +566,10 @@ trigger
 			want: &Task{
 				ID:         "rule 1",
 				HrefOutput: "/kapacitor/v1/tasks/rule 1/output",
-				Rule: cmp.AlertRule{
+				Rule: cloudhub.AlertRule{
 					Type:   "stream",
 					Status: "enabled",
-					DBRPs: []cmp.DBRP{
+					DBRPs: []cloudhub.DBRP{
 						{
 
 							DB: "_internal",
@@ -602,7 +602,7 @@ var messageField = 'message'
 
 var durationField = 'duration'
 
-var outputDB = 'cmp'
+var outputDB = 'cloudhub'
 
 var outputRP = 'autogen'
 
@@ -649,24 +649,24 @@ trigger
     |httpOut('output')
 `,
 					Trigger: "threshold",
-					TriggerValues: cmp.TriggerValues{
+					TriggerValues: cloudhub.TriggerValues{
 						Operator: "greater than",
 						Value:    "90000",
 					},
-					AlertNodes: cmp.AlertNodes{
+					AlertNodes: cloudhub.AlertNodes{
 						IsStateChangesOnly: true,
 					},
-					Query: &cmp.QueryConfig{
+					Query: &cloudhub.QueryConfig{
 						Database:        "_internal",
 						RetentionPolicy: "monitor",
 						Measurement:     "cq",
-						Fields: []cmp.Field{
+						Fields: []cloudhub.Field{
 							{
 								Value: "queryOk",
 								Type:  "field",
 							},
 						},
-						GroupBy: cmp.GroupBy{
+						GroupBy: cloudhub.GroupBy{
 							Tags: []string{},
 						},
 						AreTagsAccepted: false,
@@ -721,8 +721,8 @@ func TestClient_updateStatus(t *testing.T) {
 		URL        string
 		Username   string
 		Password   string
-		ID         cmp.ID
-		Ticker     cmp.Ticker
+		ID         cloudhub.ID
+		Ticker     cloudhub.Ticker
 		kapaClient func(url, username, password string, insecureSkipVerify bool) (KapaClient, error)
 	}
 	type args struct {
@@ -776,11 +776,11 @@ func TestClient_updateStatus(t *testing.T) {
 				ID:         "howdy",
 				Href:       "/kapacitor/v1/tasks/howdy",
 				HrefOutput: "/kapacitor/v1/tasks/howdy/output",
-				Rule: cmp.AlertRule{
+				Rule: cloudhub.AlertRule{
 					ID:   "howdy",
 					Name: "howdy",
 					Type: "stream",
-					DBRPs: []cmp.DBRP{
+					DBRPs: []cloudhub.DBRP{
 						{
 
 							DB: "db",
@@ -846,11 +846,11 @@ func TestClient_updateStatus(t *testing.T) {
 				ID:         "howdy",
 				Href:       "/kapacitor/v1/tasks/howdy",
 				HrefOutput: "/kapacitor/v1/tasks/howdy/output",
-				Rule: cmp.AlertRule{
+				Rule: cloudhub.AlertRule{
 					ID:   "howdy",
 					Name: "howdy",
 					Type: "stream",
-					DBRPs: []cmp.DBRP{
+					DBRPs: []cloudhub.DBRP{
 						{
 
 							DB: "db",
@@ -895,14 +895,14 @@ func TestClient_Update(t *testing.T) {
 		URL        string
 		Username   string
 		Password   string
-		ID         cmp.ID
-		Ticker     cmp.Ticker
+		ID         cloudhub.ID
+		Ticker     cloudhub.Ticker
 		kapaClient func(url, username, password string, insecureSkipVerify bool) (KapaClient, error)
 	}
 	type args struct {
 		ctx  context.Context
 		href string
-		rule cmp.AlertRule
+		rule cloudhub.AlertRule
 	}
 	kapa := &MockKapa{}
 	tests := []struct {
@@ -927,9 +927,9 @@ func TestClient_Update(t *testing.T) {
 			args: args{
 				ctx:  context.Background(),
 				href: "/kapacitor/v1/tasks/howdy",
-				rule: cmp.AlertRule{
+				rule: cloudhub.AlertRule{
 					ID: "howdy",
-					Query: &cmp.QueryConfig{
+					Query: &cloudhub.QueryConfig{
 						Database:        "db",
 						RetentionPolicy: "rp",
 					},
@@ -961,14 +961,14 @@ func TestClient_Update(t *testing.T) {
 			args: args{
 				ctx:  context.Background(),
 				href: "/kapacitor/v1/tasks/howdy",
-				rule: cmp.AlertRule{
+				rule: cloudhub.AlertRule{
 					ID:   "howdy",
 					Name: "myname",
-					Query: &cmp.QueryConfig{
+					Query: &cloudhub.QueryConfig{
 						Database:        "db",
 						RetentionPolicy: "rp",
 						Measurement:     "meas",
-						Fields: []cmp.Field{
+						Fields: []cloudhub.Field{
 							{
 								Type:  "field",
 								Value: "usage_user",
@@ -976,7 +976,7 @@ func TestClient_Update(t *testing.T) {
 						},
 					},
 					Trigger: "threshold",
-					TriggerValues: cmp.TriggerValues{
+					TriggerValues: cloudhub.TriggerValues{
 						Operator: greaterThan,
 					},
 				},
@@ -1010,8 +1010,8 @@ func TestClient_Update(t *testing.T) {
 				ID:         "howdy",
 				Href:       "/kapacitor/v1/tasks/howdy",
 				HrefOutput: "/kapacitor/v1/tasks/howdy/output",
-				Rule: cmp.AlertRule{
-					DBRPs: []cmp.DBRP{
+				Rule: cloudhub.AlertRule{
+					DBRPs: []cloudhub.DBRP{
 						{
 
 							DB: "db",
@@ -1037,14 +1037,14 @@ func TestClient_Update(t *testing.T) {
 			args: args{
 				ctx:  context.Background(),
 				href: "/kapacitor/v1/tasks/howdy",
-				rule: cmp.AlertRule{
+				rule: cloudhub.AlertRule{
 					ID:   "howdy",
 					Name: "myname",
-					Query: &cmp.QueryConfig{
+					Query: &cloudhub.QueryConfig{
 						Database:        "db",
 						RetentionPolicy: "rp",
 						Measurement:     "meas",
-						Fields: []cmp.Field{
+						Fields: []cloudhub.Field{
 							{
 								Type:  "field",
 								Value: "usage_user",
@@ -1052,7 +1052,7 @@ func TestClient_Update(t *testing.T) {
 						},
 					},
 					Trigger: "threshold",
-					TriggerValues: cmp.TriggerValues{
+					TriggerValues: cloudhub.TriggerValues{
 						Operator: greaterThan,
 					},
 				},
@@ -1086,10 +1086,10 @@ func TestClient_Update(t *testing.T) {
 				ID:         "howdy",
 				Href:       "/kapacitor/v1/tasks/howdy",
 				HrefOutput: "/kapacitor/v1/tasks/howdy/output",
-				Rule: cmp.AlertRule{
+				Rule: cloudhub.AlertRule{
 					ID:   "howdy",
 					Name: "howdy",
-					DBRPs: []cmp.DBRP{
+					DBRPs: []cloudhub.DBRP{
 						{
 
 							DB: "db",
@@ -1114,12 +1114,12 @@ func TestClient_Update(t *testing.T) {
 			args: args{
 				ctx:  context.Background(),
 				href: "/kapacitor/v1/tasks/error",
-				rule: cmp.AlertRule{
+				rule: cloudhub.AlertRule{
 					ID: "error",
-					Query: &cmp.QueryConfig{
+					Query: &cloudhub.QueryConfig{
 						Database:        "db",
 						RetentionPolicy: "rp",
-						Fields: []cmp.Field{
+						Fields: []cloudhub.Field{
 							{
 								Value: "usage_user",
 								Type:  "field",
@@ -1127,7 +1127,7 @@ func TestClient_Update(t *testing.T) {
 						},
 					},
 					Trigger: Relative,
-					TriggerValues: cmp.TriggerValues{
+					TriggerValues: cloudhub.TriggerValues{
 						Operator: insideRange,
 					},
 				},
@@ -1145,9 +1145,9 @@ func TestClient_Update(t *testing.T) {
 			args: args{
 				ctx:  context.Background(),
 				href: "/kapacitor/v1/tasks/error",
-				rule: cmp.AlertRule{
+				rule: cloudhub.AlertRule{
 					ID: "error",
-					Query: &cmp.QueryConfig{
+					Query: &cloudhub.QueryConfig{
 						Database:        "db",
 						RetentionPolicy: "rp",
 					},
@@ -1166,14 +1166,14 @@ func TestClient_Update(t *testing.T) {
 			args: args{
 				ctx:  context.Background(),
 				href: "/kapacitor/v1/tasks/error",
-				rule: cmp.AlertRule{
+				rule: cloudhub.AlertRule{
 					ID:      "error",
 					Trigger: Threshold,
-					TriggerValues: cmp.TriggerValues{
+					TriggerValues: cloudhub.TriggerValues{
 						Period: "1d",
 					},
 					Name: "myname",
-					Query: &cmp.QueryConfig{
+					Query: &cloudhub.QueryConfig{
 						Database:        "db",
 						RetentionPolicy: "rp",
 						Measurement:     "meas",
@@ -1193,13 +1193,13 @@ func TestClient_Update(t *testing.T) {
 			args: args{
 				ctx:  context.Background(),
 				href: "/kapacitor/v1/tasks/error",
-				rule: cmp.AlertRule{
+				rule: cloudhub.AlertRule{
 					ID:      "error",
 					Trigger: Deadman,
-					TriggerValues: cmp.TriggerValues{
+					TriggerValues: cloudhub.TriggerValues{
 						Period: "1d",
 					},
-					Query: &cmp.QueryConfig{
+					Query: &cloudhub.QueryConfig{
 						Database:        "db",
 						RetentionPolicy: "rp",
 						Measurement:     "meas",
@@ -1219,11 +1219,11 @@ func TestClient_Update(t *testing.T) {
 			args: args{
 				ctx:  context.Background(),
 				href: "/kapacitor/v1/tasks/error",
-				rule: cmp.AlertRule{
+				rule: cloudhub.AlertRule{
 					ID:      "error",
 					Name:    "myname",
 					Trigger: Deadman,
-					Query: &cmp.QueryConfig{
+					Query: &cloudhub.QueryConfig{
 						Database:        "db",
 						RetentionPolicy: "rp",
 						Measurement:     "meas",
@@ -1255,11 +1255,11 @@ func TestClient_Update(t *testing.T) {
 			if !gocmp.Equal(got, tt.want) {
 				t.Errorf("%q. Client.Update() = -got/+want %s", tt.name, gocmp.Diff(got, tt.want))
 			}
-			var cmpOptions = gocmp.Options{
+			var cloudhubOptions = gocmp.Options{
 				cmpopts.IgnoreFields(client.UpdateTaskOptions{}, "TICKscript"),
 			}
-			if !gocmp.Equal(kapa.UpdateTaskOptions, tt.updateTaskOptions, cmpOptions...) {
-				t.Errorf("Client.Update() = %s", gocmp.Diff(got, tt.updateTaskOptions, cmpOptions...))
+			if !gocmp.Equal(kapa.UpdateTaskOptions, tt.updateTaskOptions, cloudhubOptions...) {
+				t.Errorf("Client.Update() = %s", gocmp.Diff(got, tt.updateTaskOptions, cloudhubOptions...))
 			}
 			if tt.wantStatus != kapa.LastStatus {
 				t.Errorf("Client.Update() = %v, want %v", kapa.LastStatus, tt.wantStatus)
@@ -1273,13 +1273,13 @@ func TestClient_Create(t *testing.T) {
 		URL        string
 		Username   string
 		Password   string
-		ID         cmp.ID
-		Ticker     cmp.Ticker
+		ID         cloudhub.ID
+		Ticker     cloudhub.Ticker
 		kapaClient func(url, username, password string, insecureSkipVerify bool) (KapaClient, error)
 	}
 	type args struct {
 		ctx  context.Context
-		rule cmp.AlertRule
+		rule cloudhub.AlertRule
 	}
 	kapa := &MockKapa{}
 	tests := []struct {
@@ -1305,14 +1305,14 @@ func TestClient_Create(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				rule: cmp.AlertRule{
+				rule: cloudhub.AlertRule{
 					ID:   "",
 					Name: "myname's",
-					Query: &cmp.QueryConfig{
+					Query: &cloudhub.QueryConfig{
 						Database:        "db",
 						RetentionPolicy: "rp",
 						Measurement:     "meas",
-						GroupBy: cmp.GroupBy{
+						GroupBy: cloudhub.GroupBy{
 							Tags: []string{
 								"tag1",
 								"tag2",
@@ -1320,13 +1320,13 @@ func TestClient_Create(t *testing.T) {
 						},
 					},
 					Trigger: Deadman,
-					TriggerValues: cmp.TriggerValues{
+					TriggerValues: cloudhub.TriggerValues{
 						Period: "1d",
 					},
 				},
 			},
 			resTask: client.Task{
-				ID:     "cmp-v1-howdy",
+				ID:     "cloudhub-v1-howdy",
 				Status: client.Enabled,
 				Type:   client.StreamTask,
 				DBRPs: []client.DBRP{
@@ -1336,7 +1336,7 @@ func TestClient_Create(t *testing.T) {
 					},
 				},
 				Link: client.Link{
-					Href: "/kapacitor/v1/tasks/cmp-v1-howdy",
+					Href: "/kapacitor/v1/tasks/cloudhub-v1-howdy",
 				},
 			},
 			createTaskOptions: &client.CreateTaskOptions{
@@ -1366,7 +1366,7 @@ var messageField = 'message'
 
 var durationField = 'duration'
 
-var outputDB = 'cmp'
+var outputDB = 'cloudhub'
 
 var outputRP = 'autogen'
 
@@ -1413,7 +1413,7 @@ trigger
     |httpOut('output')
 `,
 
-				ID:     "cmp-v1-howdy",
+				ID:     "cloudhub-v1-howdy",
 				Type:   client.StreamTask,
 				Status: client.Enabled,
 				DBRPs: []client.DBRP{
@@ -1424,12 +1424,12 @@ trigger
 				},
 			},
 			want: &Task{
-				ID:         "cmp-v1-howdy",
-				Href:       "/kapacitor/v1/tasks/cmp-v1-howdy",
-				HrefOutput: "/kapacitor/v1/tasks/cmp-v1-howdy/output",
-				Rule: cmp.AlertRule{
+				ID:         "cloudhub-v1-howdy",
+				Href:       "/kapacitor/v1/tasks/cloudhub-v1-howdy",
+				HrefOutput: "/kapacitor/v1/tasks/cloudhub-v1-howdy/output",
+				Rule: cloudhub.AlertRule{
 					Type: "stream",
-					DBRPs: []cmp.DBRP{
+					DBRPs: []cloudhub.DBRP{
 						{
 
 							DB: "db",
@@ -1437,8 +1437,8 @@ trigger
 						},
 					},
 					Status: "enabled",
-					ID:     "cmp-v1-howdy",
-					Name:   "cmp-v1-howdy",
+					ID:     "cloudhub-v1-howdy",
+					Name:   "cloudhub-v1-howdy",
 				},
 			},
 		},
@@ -1455,22 +1455,22 @@ trigger
 			},
 			args: args{
 				ctx: context.Background(),
-				rule: cmp.AlertRule{
+				rule: cloudhub.AlertRule{
 					ID:   "",
 					Name: "myname's",
-					Query: &cmp.QueryConfig{
+					Query: &cloudhub.QueryConfig{
 						Database:        "db",
 						RetentionPolicy: "rp",
 						Measurement:     "meas",
 					},
 					Trigger: Deadman,
-					TriggerValues: cmp.TriggerValues{
+					TriggerValues: cloudhub.TriggerValues{
 						Period: "1d",
 					},
 				},
 			},
 			resTask: client.Task{
-				ID:     "cmp-v1-howdy",
+				ID:     "cloudhub-v1-howdy",
 				Status: client.Enabled,
 				Type:   client.StreamTask,
 				DBRPs: []client.DBRP{
@@ -1480,7 +1480,7 @@ trigger
 					},
 				},
 				Link: client.Link{
-					Href: "/kapacitor/v1/tasks/cmp-v1-howdy",
+					Href: "/kapacitor/v1/tasks/cloudhub-v1-howdy",
 				},
 			},
 			createTaskOptions: &client.CreateTaskOptions{
@@ -1510,7 +1510,7 @@ var messageField = 'message'
 
 var durationField = 'duration'
 
-var outputDB = 'cmp'
+var outputDB = 'cloudhub'
 
 var outputRP = 'autogen'
 
@@ -1557,7 +1557,7 @@ trigger
     |httpOut('output')
 `,
 
-				ID:     "cmp-v1-howdy",
+				ID:     "cloudhub-v1-howdy",
 				Type:   client.StreamTask,
 				Status: client.Enabled,
 				DBRPs: []client.DBRP{
@@ -1568,12 +1568,12 @@ trigger
 				},
 			},
 			want: &Task{
-				ID:         "cmp-v1-howdy",
-				Href:       "/kapacitor/v1/tasks/cmp-v1-howdy",
-				HrefOutput: "/kapacitor/v1/tasks/cmp-v1-howdy/output",
-				Rule: cmp.AlertRule{
+				ID:         "cloudhub-v1-howdy",
+				Href:       "/kapacitor/v1/tasks/cloudhub-v1-howdy",
+				HrefOutput: "/kapacitor/v1/tasks/cloudhub-v1-howdy/output",
+				Rule: cloudhub.AlertRule{
 					Type: "stream",
-					DBRPs: []cmp.DBRP{
+					DBRPs: []cloudhub.DBRP{
 						{
 
 							DB: "db",
@@ -1581,8 +1581,8 @@ trigger
 						},
 					},
 					Status: "enabled",
-					ID:     "cmp-v1-howdy",
-					Name:   "cmp-v1-howdy",
+					ID:     "cloudhub-v1-howdy",
+					Name:   "cloudhub-v1-howdy",
 				},
 			},
 		},
@@ -1599,9 +1599,9 @@ trigger
 			},
 			args: args{
 				ctx: context.Background(),
-				rule: cmp.AlertRule{
+				rule: cloudhub.AlertRule{
 					ID: "howdy",
-					Query: &cmp.QueryConfig{
+					Query: &cloudhub.QueryConfig{
 						Database:        "db",
 						RetentionPolicy: "rp",
 					},
@@ -1609,7 +1609,7 @@ trigger
 			},
 			resError: fmt.Errorf("error"),
 			createTaskOptions: &client.CreateTaskOptions{
-				ID:     "cmp-v1-howdy",
+				ID:     "cloudhub-v1-howdy",
 				Type:   client.StreamTask,
 				Status: client.Enabled,
 				DBRPs: []client.DBRP{

@@ -9,13 +9,13 @@ import (
 	"path"
 	"strconv"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // DashExt is the the file extension searched for in the directory for dashboard files
 const DashExt = ".dashboard"
 
-var _ cmp.DashboardsStore = &Dashboards{}
+var _ cloudhub.DashboardsStore = &Dashboards{}
 
 // Dashboards are JSON dashboards stored in the filesystem
 type Dashboards struct {
@@ -24,12 +24,12 @@ type Dashboards struct {
 	Create  func(string, interface{}) error             // Create will write dashboard to file.
 	ReadDir func(dirname string) ([]os.FileInfo, error) // ReadDir reads the directory named by dirname and returns a list of directory entries sorted by filename.
 	Remove  func(name string) error                     // Remove file
-	IDs     cmp.ID                                      // IDs generate unique ids for new dashboards
-	Logger  cmp.Logger
+	IDs     cloudhub.ID                                      // IDs generate unique ids for new dashboards
+	Logger  cloudhub.Logger
 }
 
 // NewDashboards constructs a dashboard store wrapping a file system directory
-func NewDashboards(dir string, ids cmp.ID, logger cmp.Logger) cmp.DashboardsStore {
+func NewDashboards(dir string, ids cloudhub.ID, logger cloudhub.Logger) cloudhub.DashboardsStore {
 	return &Dashboards{
 		Dir:     dir,
 		Load:    load,
@@ -41,7 +41,7 @@ func NewDashboards(dir string, ids cmp.ID, logger cmp.Logger) cmp.DashboardsStor
 	}
 }
 
-func dashboardFile(dir string, dashboard cmp.Dashboard) string {
+func dashboardFile(dir string, dashboard cloudhub.Dashboard) string {
 	base := fmt.Sprintf("%s%s", dashboard.Name, DashExt)
 	return path.Join(dir, base)
 }
@@ -72,18 +72,18 @@ func create(file string, resource interface{}) error {
 }
 
 // All returns all dashboards from the directory
-func (d *Dashboards) All(ctx context.Context) ([]cmp.Dashboard, error) {
+func (d *Dashboards) All(ctx context.Context) ([]cloudhub.Dashboard, error) {
 	files, err := d.ReadDir(d.Dir)
 	if err != nil {
 		return nil, err
 	}
 
-	dashboards := []cmp.Dashboard{}
+	dashboards := []cloudhub.Dashboard{}
 	for _, file := range files {
 		if path.Ext(file.Name()) != DashExt {
 			continue
 		}
-		var dashboard cmp.Dashboard
+		var dashboard cloudhub.Dashboard
 		if err := d.Load(path.Join(d.Dir, file.Name()), &dashboard); err != nil {
 			continue // We want to load all files we can.
 		} else {
@@ -94,13 +94,13 @@ func (d *Dashboards) All(ctx context.Context) ([]cmp.Dashboard, error) {
 }
 
 // Add creates a new dashboard within the directory
-func (d *Dashboards) Add(ctx context.Context, dashboard cmp.Dashboard) (cmp.Dashboard, error) {
+func (d *Dashboards) Add(ctx context.Context, dashboard cloudhub.Dashboard) (cloudhub.Dashboard, error) {
 	genID, err := d.IDs.Generate()
 	if err != nil {
 		d.Logger.
 			WithField("component", "dashboard").
 			Error("Unable to generate ID")
-		return cmp.Dashboard{}, err
+		return cloudhub.Dashboard{}, err
 	}
 
 	id, err := strconv.Atoi(genID)
@@ -108,14 +108,14 @@ func (d *Dashboards) Add(ctx context.Context, dashboard cmp.Dashboard) (cmp.Dash
 		d.Logger.
 			WithField("component", "dashboard").
 			Error("Unable to convert ID")
-		return cmp.Dashboard{}, err
+		return cloudhub.Dashboard{}, err
 	}
 
-	dashboard.ID = cmp.DashboardID(id)
+	dashboard.ID = cloudhub.DashboardID(id)
 
 	file := dashboardFile(d.Dir, dashboard)
 	if err = d.Create(file, dashboard); err != nil {
-		if err == cmp.ErrDashboardInvalid {
+		if err == cloudhub.ErrDashboardInvalid {
 			d.Logger.
 				WithField("component", "dashboard").
 				WithField("name", file).
@@ -126,13 +126,13 @@ func (d *Dashboards) Add(ctx context.Context, dashboard cmp.Dashboard) (cmp.Dash
 				WithField("name", file).
 				Error("Unable to write dashboard:", err)
 		}
-		return cmp.Dashboard{}, err
+		return cloudhub.Dashboard{}, err
 	}
 	return dashboard, nil
 }
 
 // Delete removes a dashboard file from the directory
-func (d *Dashboards) Delete(ctx context.Context, dashboard cmp.Dashboard) error {
+func (d *Dashboards) Delete(ctx context.Context, dashboard cloudhub.Dashboard) error {
 	_, file, err := d.idToFile(dashboard.ID)
 	if err != nil {
 		return err
@@ -149,27 +149,27 @@ func (d *Dashboards) Delete(ctx context.Context, dashboard cmp.Dashboard) error 
 }
 
 // Get returns a dashboard file from the dashboard directory
-func (d *Dashboards) Get(ctx context.Context, id cmp.DashboardID) (cmp.Dashboard, error) {
+func (d *Dashboards) Get(ctx context.Context, id cloudhub.DashboardID) (cloudhub.Dashboard, error) {
 	board, file, err := d.idToFile(id)
 	if err != nil {
-		if err == cmp.ErrDashboardNotFound {
+		if err == cloudhub.ErrDashboardNotFound {
 			d.Logger.
 				WithField("component", "dashboard").
 				WithField("name", file).
 				Error("Unable to read file")
-		} else if err == cmp.ErrDashboardInvalid {
+		} else if err == cloudhub.ErrDashboardInvalid {
 			d.Logger.
 				WithField("component", "dashboard").
 				WithField("name", file).
 				Error("File is not a dashboard")
 		}
-		return cmp.Dashboard{}, err
+		return cloudhub.Dashboard{}, err
 	}
 	return board, nil
 }
 
 // Update replaces a dashboard from the file system directory
-func (d *Dashboards) Update(ctx context.Context, dashboard cmp.Dashboard) error {
+func (d *Dashboards) Update(ctx context.Context, dashboard cloudhub.Dashboard) error {
 	board, _, err := d.idToFile(dashboard.ID)
 	if err != nil {
 		return err
@@ -183,13 +183,13 @@ func (d *Dashboards) Update(ctx context.Context, dashboard cmp.Dashboard) error 
 }
 
 // idToFile takes an id and finds the associated filename
-func (d *Dashboards) idToFile(id cmp.DashboardID) (cmp.Dashboard, string, error) {
+func (d *Dashboards) idToFile(id cloudhub.DashboardID) (cloudhub.Dashboard, string, error) {
 	// Because the entire dashboard information is not known at this point, we need
 	// to try to find the name of the file through matching the ID in the dashboard
 	// content with the ID passed.
 	files, err := d.ReadDir(d.Dir)
 	if err != nil {
-		return cmp.Dashboard{}, "", err
+		return cloudhub.Dashboard{}, "", err
 	}
 
 	for _, f := range files {
@@ -197,14 +197,14 @@ func (d *Dashboards) idToFile(id cmp.DashboardID) (cmp.Dashboard, string, error)
 			continue
 		}
 		file := path.Join(d.Dir, f.Name())
-		var dashboard cmp.Dashboard
+		var dashboard cloudhub.Dashboard
 		if err := d.Load(file, &dashboard); err != nil {
-			return cmp.Dashboard{}, "", err
+			return cloudhub.Dashboard{}, "", err
 		}
 		if dashboard.ID == id {
 			return dashboard, file, nil
 		}
 	}
 
-	return cmp.Dashboard{}, "", cmp.ErrDashboardNotFound
+	return cloudhub.Dashboard{}, "", cloudhub.ErrDashboardNotFound
 }

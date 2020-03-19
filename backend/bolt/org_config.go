@@ -5,14 +5,14 @@ import (
 	"fmt"
 
 	"github.com/boltdb/bolt"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/bolt/internal"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/bolt/internal"
 )
 
-// Ensure OrganizationConfigStore implements cmp.OrganizationConfigStore.
-var _ cmp.OrganizationConfigStore = &OrganizationConfigStore{}
+// Ensure OrganizationConfigStore implements cloudhub.OrganizationConfigStore.
+var _ cloudhub.OrganizationConfigStore = &OrganizationConfigStore{}
 
-// OrganizationConfigBucket is used to store cmp organization configurations
+// OrganizationConfigBucket is used to store cloudhub organization configurations
 var OrganizationConfigBucket = []byte("OrganizationConfigV1")
 
 // OrganizationConfigStore uses bolt to store and retrieve organization configurations
@@ -26,8 +26,8 @@ func (s *OrganizationConfigStore) Migrate(ctx context.Context) error {
 }
 
 // Get retrieves an OrganizationConfig from the store
-func (s *OrganizationConfigStore) Get(ctx context.Context, orgID string) (*cmp.OrganizationConfig, error) {
-	var c cmp.OrganizationConfig
+func (s *OrganizationConfigStore) Get(ctx context.Context, orgID string) (*cloudhub.OrganizationConfig, error) {
+	var c cloudhub.OrganizationConfig
 
 	err := s.client.db.View(func(tx *bolt.Tx) error {
 		return s.get(ctx, tx, orgID, &c)
@@ -40,20 +40,20 @@ func (s *OrganizationConfigStore) Get(ctx context.Context, orgID string) (*cmp.O
 	return &c, nil
 }
 
-func (s *OrganizationConfigStore) get(ctx context.Context, tx *bolt.Tx, orgID string, c *cmp.OrganizationConfig) error {
+func (s *OrganizationConfigStore) get(ctx context.Context, tx *bolt.Tx, orgID string, c *cloudhub.OrganizationConfig) error {
 	v := tx.Bucket(OrganizationConfigBucket).Get([]byte(orgID))
 	if len(v) == 0 {
-		return cmp.ErrOrganizationConfigNotFound
+		return cloudhub.ErrOrganizationConfigNotFound
 	}
 	return internal.UnmarshalOrganizationConfig(v, c)
 }
 
 // FindOrCreate gets an OrganizationConfig from the store or creates one if none exists for this organization
-func (s *OrganizationConfigStore) FindOrCreate(ctx context.Context, orgID string) (*cmp.OrganizationConfig, error) {
-	var c cmp.OrganizationConfig
+func (s *OrganizationConfigStore) FindOrCreate(ctx context.Context, orgID string) (*cloudhub.OrganizationConfig, error) {
+	var c cloudhub.OrganizationConfig
 	err := s.client.db.Update(func(tx *bolt.Tx) error {
 		err := s.get(ctx, tx, orgID, &c)
-		if err == cmp.ErrOrganizationConfigNotFound {
+		if err == cloudhub.ErrOrganizationConfigNotFound {
 			c = newOrganizationConfig(orgID)
 			return s.put(ctx, tx, &c)
 		}
@@ -67,13 +67,13 @@ func (s *OrganizationConfigStore) FindOrCreate(ctx context.Context, orgID string
 }
 
 // Put replaces the OrganizationConfig in the store
-func (s *OrganizationConfigStore) Put(ctx context.Context, c *cmp.OrganizationConfig) error {
+func (s *OrganizationConfigStore) Put(ctx context.Context, c *cloudhub.OrganizationConfig) error {
 	return s.client.db.Update(func(tx *bolt.Tx) error {
 		return s.put(ctx, tx, c)
 	})
 }
 
-func (s *OrganizationConfigStore) put(ctx context.Context, tx *bolt.Tx, c *cmp.OrganizationConfig) error {
+func (s *OrganizationConfigStore) put(ctx context.Context, tx *bolt.Tx, c *cloudhub.OrganizationConfig) error {
 	if c == nil {
 		return fmt.Errorf("config provided was nil")
 	}
@@ -85,15 +85,15 @@ func (s *OrganizationConfigStore) put(ctx context.Context, tx *bolt.Tx, c *cmp.O
 	return nil
 }
 
-func newOrganizationConfig(orgID string) cmp.OrganizationConfig {
-	return cmp.OrganizationConfig{
+func newOrganizationConfig(orgID string) cloudhub.OrganizationConfig {
+	return cloudhub.OrganizationConfig{
 		OrganizationID: orgID,
-		LogViewer: cmp.LogViewerConfig{
-			Columns: []cmp.LogViewerColumn{
+		LogViewer: cloudhub.LogViewerConfig{
+			Columns: []cloudhub.LogViewerColumn{
 				{
 					Name:     "time",
 					Position: 0,
-					Encodings: []cmp.ColumnEncoding{
+					Encodings: []cloudhub.ColumnEncoding{
 						{
 							Type:  "visibility",
 							Value: "hidden",
@@ -103,7 +103,7 @@ func newOrganizationConfig(orgID string) cmp.OrganizationConfig {
 				{
 					Name:     "severity",
 					Position: 1,
-					Encodings: []cmp.ColumnEncoding{
+					Encodings: []cloudhub.ColumnEncoding{
 
 						{
 							Type:  "visibility",
@@ -162,7 +162,7 @@ func newOrganizationConfig(orgID string) cmp.OrganizationConfig {
 				{
 					Name:     "timestamp",
 					Position: 2,
-					Encodings: []cmp.ColumnEncoding{
+					Encodings: []cloudhub.ColumnEncoding{
 
 						{
 							Type:  "visibility",
@@ -173,7 +173,7 @@ func newOrganizationConfig(orgID string) cmp.OrganizationConfig {
 				{
 					Name:     "message",
 					Position: 3,
-					Encodings: []cmp.ColumnEncoding{
+					Encodings: []cloudhub.ColumnEncoding{
 
 						{
 							Type:  "visibility",
@@ -184,7 +184,7 @@ func newOrganizationConfig(orgID string) cmp.OrganizationConfig {
 				{
 					Name:     "facility",
 					Position: 4,
-					Encodings: []cmp.ColumnEncoding{
+					Encodings: []cloudhub.ColumnEncoding{
 
 						{
 							Type:  "visibility",
@@ -195,7 +195,7 @@ func newOrganizationConfig(orgID string) cmp.OrganizationConfig {
 				{
 					Name:     "procid",
 					Position: 5,
-					Encodings: []cmp.ColumnEncoding{
+					Encodings: []cloudhub.ColumnEncoding{
 
 						{
 							Type:  "visibility",
@@ -210,7 +210,7 @@ func newOrganizationConfig(orgID string) cmp.OrganizationConfig {
 				{
 					Name:     "appname",
 					Position: 6,
-					Encodings: []cmp.ColumnEncoding{
+					Encodings: []cloudhub.ColumnEncoding{
 						{
 							Type:  "visibility",
 							Value: "visible",
@@ -224,7 +224,7 @@ func newOrganizationConfig(orgID string) cmp.OrganizationConfig {
 				{
 					Name:     "hostname",
 					Position: 7,
-					Encodings: []cmp.ColumnEncoding{
+					Encodings: []cloudhub.ColumnEncoding{
 						{
 							Type:  "visibility",
 							Value: "visible",
@@ -234,7 +234,7 @@ func newOrganizationConfig(orgID string) cmp.OrganizationConfig {
 				{
 					Name:     "host",
 					Position: 8,
-					Encodings: []cmp.ColumnEncoding{
+					Encodings: []cloudhub.ColumnEncoding{
 						{
 							Type:  "visibility",
 							Value: "visible",

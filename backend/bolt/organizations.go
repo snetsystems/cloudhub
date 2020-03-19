@@ -5,13 +5,13 @@ import (
 	"fmt"
 
 	"github.com/boltdb/bolt"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/bolt/internal"
-	"github.com/snetsystems/cmp/backend/organizations"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/bolt/internal"
+	"github.com/snetsystems/cloudhub/backend/organizations"
 )
 
-// Ensure OrganizationsStore implements cmp.OrganizationsStore.
-var _ cmp.OrganizationsStore = &OrganizationsStore{}
+// Ensure OrganizationsStore implements cloudhub.OrganizationsStore.
+var _ cloudhub.OrganizationsStore = &OrganizationsStore{}
 
 var (
 	// OrganizationsBucket is the bucket where organizations are stored.
@@ -39,18 +39,18 @@ func (s *OrganizationsStore) Migrate(ctx context.Context) error {
 
 // CreateDefault does a findOrCreate on the default organization
 func (s *OrganizationsStore) CreateDefault(ctx context.Context) error {
-	o := cmp.Organization{
+	o := cloudhub.Organization{
 		ID:          string(DefaultOrganizationID),
 		Name:        DefaultOrganizationName,
 		DefaultRole: DefaultOrganizationRole,
 	}
 
-	m := cmp.Mapping{
+	m := cloudhub.Mapping{
 		ID:                   string(DefaultOrganizationID),
 		Organization:         string(DefaultOrganizationID),
-		Provider:             cmp.MappingWildcard,
-		Scheme:               cmp.MappingWildcard,
-		ProviderOrganization: cmp.MappingWildcard,
+		Provider:             cloudhub.MappingWildcard,
+		Scheme:               cloudhub.MappingWildcard,
+		ProviderOrganization: cloudhub.MappingWildcard,
 	}
 	return s.client.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(OrganizationsBucket)
@@ -80,9 +80,9 @@ func (s *OrganizationsStore) CreateDefault(ctx context.Context) error {
 }
 
 func (s *OrganizationsStore) nameIsUnique(ctx context.Context, name string) bool {
-	_, err := s.Get(ctx, cmp.OrganizationQuery{Name: &name})
+	_, err := s.Get(ctx, cloudhub.OrganizationQuery{Name: &name})
 	switch err {
-	case cmp.ErrOrganizationNotFound:
+	case cloudhub.ErrOrganizationNotFound:
 		return true
 	default:
 		return false
@@ -90,8 +90,8 @@ func (s *OrganizationsStore) nameIsUnique(ctx context.Context, name string) bool
 }
 
 // DefaultOrganization returns the default organization
-func (s *OrganizationsStore) DefaultOrganization(ctx context.Context) (*cmp.Organization, error) {
-	var org cmp.Organization
+func (s *OrganizationsStore) DefaultOrganization(ctx context.Context) (*cloudhub.Organization, error) {
+	var org cloudhub.Organization
 	if err := s.client.db.View(func(tx *bolt.Tx) error {
 		v := tx.Bucket(OrganizationsBucket).Get(DefaultOrganizationID)
 		return internal.UnmarshalOrganization(v, &org)
@@ -103,9 +103,9 @@ func (s *OrganizationsStore) DefaultOrganization(ctx context.Context) (*cmp.Orga
 }
 
 // Add creates a new Organization in the OrganizationsStore
-func (s *OrganizationsStore) Add(ctx context.Context, o *cmp.Organization) (*cmp.Organization, error) {
+func (s *OrganizationsStore) Add(ctx context.Context, o *cloudhub.Organization) (*cloudhub.Organization, error) {
 	if !s.nameIsUnique(ctx, o.Name) {
-		return nil, cmp.ErrOrganizationAlreadyExists
+		return nil, cloudhub.ErrOrganizationAlreadyExists
 	}
 	err := s.client.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(OrganizationsBucket)
@@ -127,9 +127,9 @@ func (s *OrganizationsStore) Add(ctx context.Context, o *cmp.Organization) (*cmp
 }
 
 // All returns all known organizations
-func (s *OrganizationsStore) All(ctx context.Context) ([]cmp.Organization, error) {
-	var orgs []cmp.Organization
-	err := s.each(ctx, func(o *cmp.Organization) {
+func (s *OrganizationsStore) All(ctx context.Context) ([]cloudhub.Organization, error) {
+	var orgs []cloudhub.Organization
+	err := s.each(ctx, func(o *cloudhub.Organization) {
 		orgs = append(orgs, *o)
 	})
 
@@ -141,9 +141,9 @@ func (s *OrganizationsStore) All(ctx context.Context) ([]cmp.Organization, error
 }
 
 // Delete the organization from OrganizationsStore
-func (s *OrganizationsStore) Delete(ctx context.Context, o *cmp.Organization) error {
+func (s *OrganizationsStore) Delete(ctx context.Context, o *cloudhub.Organization) error {
 	if o.ID == string(DefaultOrganizationID) {
-		return cmp.ErrCannotDeleteDefaultOrganization
+		return cloudhub.ErrCannotDeleteDefaultOrganization
 	}
 	_, err := s.get(ctx, o.ID)
 	if err != nil {
@@ -220,12 +220,12 @@ func (s *OrganizationsStore) Delete(ctx context.Context, o *cmp.Organization) er
 	return nil
 }
 
-func (s *OrganizationsStore) get(ctx context.Context, id string) (*cmp.Organization, error) {
-	var o cmp.Organization
+func (s *OrganizationsStore) get(ctx context.Context, id string) (*cloudhub.Organization, error) {
+	var o cloudhub.Organization
 	err := s.client.db.View(func(tx *bolt.Tx) error {
 		v := tx.Bucket(OrganizationsBucket).Get([]byte(id))
 		if v == nil {
-			return cmp.ErrOrganizationNotFound
+			return cloudhub.ErrOrganizationNotFound
 		}
 		return internal.UnmarshalOrganization(v, &o)
 	})
@@ -237,10 +237,10 @@ func (s *OrganizationsStore) get(ctx context.Context, id string) (*cmp.Organizat
 	return &o, nil
 }
 
-func (s *OrganizationsStore) each(ctx context.Context, fn func(*cmp.Organization)) error {
+func (s *OrganizationsStore) each(ctx context.Context, fn func(*cloudhub.Organization)) error {
 	return s.client.db.View(func(tx *bolt.Tx) error {
 		return tx.Bucket(OrganizationsBucket).ForEach(func(k, v []byte) error {
-			var org cmp.Organization
+			var org cloudhub.Organization
 			if err := internal.UnmarshalOrganization(v, &org); err != nil {
 				return err
 			}
@@ -254,14 +254,14 @@ func (s *OrganizationsStore) each(ctx context.Context, fn func(*cmp.Organization
 // If an ID is provided in the query, the lookup time for an organization will be O(1).
 // If Name is provided, the lookup time will be O(n).
 // Get expects that only one of ID or Name will be specified, but will prefer ID over Name if both are specified.
-func (s *OrganizationsStore) Get(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+func (s *OrganizationsStore) Get(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 	if q.ID != nil {
 		return s.get(ctx, *q.ID)
 	}
 
 	if q.Name != nil {
-		var org *cmp.Organization
-		err := s.each(ctx, func(o *cmp.Organization) {
+		var org *cloudhub.Organization
+		err := s.each(ctx, func(o *cloudhub.Organization) {
 			if org != nil {
 				return
 			}
@@ -276,7 +276,7 @@ func (s *OrganizationsStore) Get(ctx context.Context, q cmp.OrganizationQuery) (
 		}
 
 		if org == nil {
-			return nil, cmp.ErrOrganizationNotFound
+			return nil, cloudhub.ErrOrganizationNotFound
 		}
 
 		return org, nil
@@ -285,13 +285,13 @@ func (s *OrganizationsStore) Get(ctx context.Context, q cmp.OrganizationQuery) (
 }
 
 // Update the organization in OrganizationsStore
-func (s *OrganizationsStore) Update(ctx context.Context, o *cmp.Organization) error {
+func (s *OrganizationsStore) Update(ctx context.Context, o *cloudhub.Organization) error {
 	org, err := s.get(ctx, o.ID)
 	if err != nil {
 		return err
 	}
 	if o.Name != org.Name && !s.nameIsUnique(ctx, o.Name) {
-		return cmp.ErrOrganizationAlreadyExists
+		return cloudhub.ErrOrganizationAlreadyExists
 	}
 	return s.client.db.Update(func(tx *bolt.Tx) error {
 		if v, err := internal.MarshalOrganization(o); err != nil {

@@ -5,12 +5,12 @@ import (
 	"strconv"
 
 	"github.com/boltdb/bolt"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/bolt/internal"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/bolt/internal"
 )
 
-// Ensure DashboardsStore implements cmp.DashboardsStore.
-var _ cmp.DashboardsStore = &DashboardsStore{}
+// Ensure DashboardsStore implements cloudhub.DashboardsStore.
+var _ cloudhub.DashboardsStore = &DashboardsStore{}
 
 // DashboardsBucket is the bolt bucket dashboards are stored in
 var DashboardsBucket = []byte("Dashboard")
@@ -18,11 +18,11 @@ var DashboardsBucket = []byte("Dashboard")
 // DashboardsStore is the bolt implementation of storing dashboards
 type DashboardsStore struct {
 	client *Client
-	IDs    cmp.ID
+	IDs    cloudhub.ID
 }
 
 // AddIDs is a migration function that adds ID information to existing dashboards
-func (d *DashboardsStore) AddIDs(ctx context.Context, boards []cmp.Dashboard) error {
+func (d *DashboardsStore) AddIDs(ctx context.Context, boards []cloudhub.Dashboard) error {
 	for _, board := range boards {
 		update := false
 		for i, cell := range board.Cells {
@@ -76,11 +76,11 @@ func (d *DashboardsStore) Migrate(ctx context.Context) error {
 }
 
 // All returns all known dashboards
-func (d *DashboardsStore) All(ctx context.Context) ([]cmp.Dashboard, error) {
-	var srcs []cmp.Dashboard
+func (d *DashboardsStore) All(ctx context.Context) ([]cloudhub.Dashboard, error) {
+	var srcs []cloudhub.Dashboard
 	if err := d.client.db.View(func(tx *bolt.Tx) error {
 		if err := tx.Bucket(DashboardsBucket).ForEach(func(k, v []byte) error {
-			var src cmp.Dashboard
+			var src cloudhub.Dashboard
 			if err := internal.UnmarshalDashboard(v, &src); err != nil {
 				return err
 			}
@@ -98,12 +98,12 @@ func (d *DashboardsStore) All(ctx context.Context) ([]cmp.Dashboard, error) {
 }
 
 // Add creates a new Dashboard in the DashboardsStore
-func (d *DashboardsStore) Add(ctx context.Context, src cmp.Dashboard) (cmp.Dashboard, error) {
+func (d *DashboardsStore) Add(ctx context.Context, src cloudhub.Dashboard) (cloudhub.Dashboard, error) {
 	if err := d.client.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(DashboardsBucket)
 		id, _ := b.NextSequence()
 
-		src.ID = cmp.DashboardID(id)
+		src.ID = cloudhub.DashboardID(id)
 		// TODO: use FormatInt
 		strID := strconv.Itoa(int(id))
 		for i, cell := range src.Cells {
@@ -120,32 +120,32 @@ func (d *DashboardsStore) Add(ctx context.Context, src cmp.Dashboard) (cmp.Dashb
 		}
 		return b.Put([]byte(strID), v)
 	}); err != nil {
-		return cmp.Dashboard{}, err
+		return cloudhub.Dashboard{}, err
 	}
 
 	return src, nil
 }
 
 // Get returns a Dashboard if the id exists.
-func (d *DashboardsStore) Get(ctx context.Context, id cmp.DashboardID) (cmp.Dashboard, error) {
-	var src cmp.Dashboard
+func (d *DashboardsStore) Get(ctx context.Context, id cloudhub.DashboardID) (cloudhub.Dashboard, error) {
+	var src cloudhub.Dashboard
 	if err := d.client.db.View(func(tx *bolt.Tx) error {
 		strID := strconv.Itoa(int(id))
 		if v := tx.Bucket(DashboardsBucket).Get([]byte(strID)); v == nil {
-			return cmp.ErrDashboardNotFound
+			return cloudhub.ErrDashboardNotFound
 		} else if err := internal.UnmarshalDashboard(v, &src); err != nil {
 			return err
 		}
 		return nil
 	}); err != nil {
-		return cmp.Dashboard{}, err
+		return cloudhub.Dashboard{}, err
 	}
 
 	return src, nil
 }
 
 // Delete the dashboard from DashboardsStore
-func (d *DashboardsStore) Delete(ctx context.Context, dash cmp.Dashboard) error {
+func (d *DashboardsStore) Delete(ctx context.Context, dash cloudhub.Dashboard) error {
 	if err := d.client.db.Update(func(tx *bolt.Tx) error {
 		strID := strconv.Itoa(int(dash.ID))
 		if err := tx.Bucket(DashboardsBucket).Delete([]byte(strID)); err != nil {
@@ -160,13 +160,13 @@ func (d *DashboardsStore) Delete(ctx context.Context, dash cmp.Dashboard) error 
 }
 
 // Update the dashboard in DashboardsStore
-func (d *DashboardsStore) Update(ctx context.Context, dash cmp.Dashboard) error {
+func (d *DashboardsStore) Update(ctx context.Context, dash cloudhub.Dashboard) error {
 	if err := d.client.db.Update(func(tx *bolt.Tx) error {
 		// Get an existing dashboard with the same ID.
 		b := tx.Bucket(DashboardsBucket)
 		strID := strconv.Itoa(int(dash.ID))
 		if v := b.Get([]byte(strID)); v == nil {
-			return cmp.ErrDashboardNotFound
+			return cloudhub.ErrDashboardNotFound
 		}
 
 		for i, cell := range dash.Cells {

@@ -5,19 +5,19 @@ import (
 	"testing"
 
 	gocmp "github.com/google/go-cmp/cmp"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 func TestReverse(t *testing.T) {
 	tests := []struct {
 		name    string
-		script  cmp.TICKScript
-		want    cmp.AlertRule
+		script  cloudhub.TICKScript
+		want    cloudhub.AlertRule
 		wantErr bool
 	}{
 		{
 			name: "simple stream tickscript",
-			script: cmp.TICKScript(`
+			script: cloudhub.TICKScript(`
 														var name = 'name'
 														var triggerType = 'threshold'
 														var every = 30s
@@ -66,49 +66,49 @@ func TestReverse(t *testing.T) {
 															.header('key', 'value')
 															`),
 
-			want: cmp.AlertRule{
+			want: cloudhub.AlertRule{
 				Name:    "name",
 				Trigger: "threshold",
-				AlertNodes: cmp.AlertNodes{
+				AlertNodes: cloudhub.AlertNodes{
 					IsStateChangesOnly: true,
-					Slack: []*cmp.Slack{
+					Slack: []*cloudhub.Slack{
 						{},
 					},
-					VictorOps: []*cmp.VictorOps{
+					VictorOps: []*cloudhub.VictorOps{
 						{},
 					},
-					Email: []*cmp.Email{
+					Email: []*cloudhub.Email{
 						{
 							To: []string{"howdy@howdy.com", "doody@doody.com"},
 						},
 					},
-					Log: []*cmp.Log{
+					Log: []*cloudhub.Log{
 						{
 							FilePath: "/tmp/alerts.log",
 						},
 					},
-					Posts: []*cmp.Post{
+					Posts: []*cloudhub.Post{
 						{
 							URL:     "http://backin.tm",
 							Headers: map[string]string{"key": "value"},
 						},
 					},
 				},
-				TriggerValues: cmp.TriggerValues{
+				TriggerValues: cloudhub.TriggerValues{
 					Operator: "greater than",
 					Value:    "90",
 				},
 				Every:   "30s",
 				Message: "message",
 				Details: "details",
-				Query: &cmp.QueryConfig{
+				Query: &cloudhub.QueryConfig{
 					Database:        "telegraf",
 					RetentionPolicy: "autogen",
 					Measurement:     "cpu",
-					Fields: []cmp.Field{
+					Fields: []cloudhub.Field{
 						{
 							Value: "mean",
-							Args: []cmp.Field{
+							Args: []cloudhub.Field{
 								{
 									Value: "usage_user",
 									Type:  "field",
@@ -117,7 +117,7 @@ func TestReverse(t *testing.T) {
 							Type: "func",
 						},
 					},
-					GroupBy: cmp.GroupBy{
+					GroupBy: cloudhub.GroupBy{
 						Time: "10m0s",
 						Tags: []string{"host", "cluster_id"},
 					},
@@ -164,7 +164,7 @@ func TestReverse(t *testing.T) {
 
 		var durationField = 'duration'
 
-		var outputDB = 'cmp'
+		var outputDB = 'cloudhub'
 
 		var outputRP = 'autogen'
 
@@ -213,15 +213,15 @@ func TestReverse(t *testing.T) {
 
 		trigger
 		    |httpOut('output')`,
-			want: cmp.AlertRule{
-				Query: &cmp.QueryConfig{
+			want: cloudhub.AlertRule{
+				Query: &cloudhub.QueryConfig{
 					Database:        "telegraf",
 					Measurement:     "cpu",
 					RetentionPolicy: "autogen",
-					Fields: []cmp.Field{
+					Fields: []cloudhub.Field{
 						{
 							Value: "mean",
-							Args: []cmp.Field{
+							Args: []cloudhub.Field{
 								{
 									Value: "usage_user",
 									Type:  "field",
@@ -234,23 +234,23 @@ func TestReverse(t *testing.T) {
 						"cpu":  []string{"cpu_total"},
 						"host": []string{"acc-0eabc309-eu-west-1-data-3", "prod"},
 					},
-					GroupBy: cmp.GroupBy{
+					GroupBy: cloudhub.GroupBy{
 						Time: "10m0s",
 						Tags: []string{"host", "cluster_id"},
 					},
 					AreTagsAccepted: true,
 				},
 				Every: "30s",
-				AlertNodes: cmp.AlertNodes{
+				AlertNodes: cloudhub.AlertNodes{
 					IsStateChangesOnly: true,
 
-					Slack: []*cmp.Slack{
+					Slack: []*cloudhub.Slack{
 						{},
 					},
-					VictorOps: []*cmp.VictorOps{
+					VictorOps: []*cloudhub.VictorOps{
 						{},
 					},
-					Email: []*cmp.Email{
+					Email: []*cloudhub.Email{
 						{
 							To: []string{},
 						},
@@ -258,7 +258,7 @@ func TestReverse(t *testing.T) {
 				},
 				Message: "message",
 				Trigger: "threshold",
-				TriggerValues: cmp.TriggerValues{
+				TriggerValues: cloudhub.TriggerValues{
 					Operator: "greater than",
 					Value:    "90",
 				},
@@ -295,7 +295,7 @@ func TestReverse(t *testing.T) {
 
 		var durationField = 'duration'
 
-		var outputDB = 'cmp'
+		var outputDB = 'cloudhub'
 
 		var outputRP = 'autogen'
 
@@ -346,30 +346,30 @@ func TestReverse(t *testing.T) {
 		trigger
 		    |httpOut('output')
 		`,
-			want: cmp.AlertRule{
+			want: cloudhub.AlertRule{
 				Name:    "haproxy",
 				Trigger: "threshold",
-				AlertNodes: cmp.AlertNodes{
+				AlertNodes: cloudhub.AlertNodes{
 					IsStateChangesOnly: true,
-					Email: []*cmp.Email{
+					Email: []*cloudhub.Email{
 						{To: []string{}},
 					},
 				},
-				TriggerValues: cmp.TriggerValues{
+				TriggerValues: cloudhub.TriggerValues{
 					Operator: "equal to",
 					Value:    "DOWN",
 				},
 				Every:   "10s",
 				Message: `Haproxy monitor : {{.ID}} : {{ index .Tags "server" }} : {{ index .Tags "pxname" }} is {{ .Level }} `,
 				Details: "Email template",
-				Query: &cmp.QueryConfig{
+				Query: &cloudhub.QueryConfig{
 					Database:        "influxdb",
 					RetentionPolicy: "autogen",
 					Measurement:     "haproxy",
-					Fields: []cmp.Field{
+					Fields: []cloudhub.Field{
 						{
 							Value: "last",
-							Args: []cmp.Field{
+							Args: []cloudhub.Field{
 								{
 									Value: "status",
 									Type:  "field",
@@ -378,7 +378,7 @@ func TestReverse(t *testing.T) {
 							Type: "func",
 						},
 					},
-					GroupBy: cmp.GroupBy{
+					GroupBy: cloudhub.GroupBy{
 						Time: "10s",
 						Tags: []string{"pxname"},
 					},
@@ -416,7 +416,7 @@ func TestReverse(t *testing.T) {
 
 		var durationField = 'duration'
 
-		var outputDB = 'cmp'
+		var outputDB = 'cloudhub'
 
 		var outputRP = 'autogen'
 
@@ -467,30 +467,30 @@ func TestReverse(t *testing.T) {
 		trigger
 		    |httpOut('output')
 		`,
-			want: cmp.AlertRule{
+			want: cloudhub.AlertRule{
 				Name:    "haproxy",
 				Trigger: "threshold",
-				AlertNodes: cmp.AlertNodes{
+				AlertNodes: cloudhub.AlertNodes{
 					IsStateChangesOnly: true,
-					Email: []*cmp.Email{
+					Email: []*cloudhub.Email{
 						{To: []string{}},
 					},
 				},
-				TriggerValues: cmp.TriggerValues{
+				TriggerValues: cloudhub.TriggerValues{
 					Operator: "greater than",
 					Value:    "DOWN",
 				},
 				Every:   "10s",
 				Message: `Haproxy monitor : {{.ID}} : {{ index .Tags "server" }} : {{ index .Tags "pxname" }} is {{ .Level }} `,
 				Details: "Email template",
-				Query: &cmp.QueryConfig{
+				Query: &cloudhub.QueryConfig{
 					Database:        "influxdb",
 					RetentionPolicy: "autogen",
 					Measurement:     "haproxy",
-					Fields: []cmp.Field{
+					Fields: []cloudhub.Field{
 						{
 							Value: "last",
-							Args: []cmp.Field{
+							Args: []cloudhub.Field{
 								{
 									Value: "status",
 									Type:  "field",
@@ -499,7 +499,7 @@ func TestReverse(t *testing.T) {
 							Type: "func",
 						},
 					},
-					GroupBy: cmp.GroupBy{
+					GroupBy: cloudhub.GroupBy{
 						Time: "10s",
 						Tags: []string{"pxname"},
 					},
@@ -537,7 +537,7 @@ func TestReverse(t *testing.T) {
 
 		var durationField = 'duration'
 
-		var outputDB = 'cmp'
+		var outputDB = 'cloudhub'
 
 		var outputRP = 'autogen'
 
@@ -590,36 +590,36 @@ func TestReverse(t *testing.T) {
 		trigger
 		    |httpOut('output')
 		`,
-			want: cmp.AlertRule{
+			want: cloudhub.AlertRule{
 				Name:    "name",
 				Trigger: "threshold",
-				AlertNodes: cmp.AlertNodes{
+				AlertNodes: cloudhub.AlertNodes{
 					IsStateChangesOnly: true,
-					Slack: []*cmp.Slack{
+					Slack: []*cloudhub.Slack{
 						{},
 					},
-					VictorOps: []*cmp.VictorOps{
+					VictorOps: []*cloudhub.VictorOps{
 						{},
 					},
-					Email: []*cmp.Email{
+					Email: []*cloudhub.Email{
 						{To: []string{}},
 					},
 				},
-				TriggerValues: cmp.TriggerValues{
+				TriggerValues: cloudhub.TriggerValues{
 					Operator: "greater than",
 					Value:    "90",
 				},
 				Every:   "30s",
 				Message: "message",
 				Details: "details",
-				Query: &cmp.QueryConfig{
+				Query: &cloudhub.QueryConfig{
 					Database:        "telegraf",
 					Measurement:     "cpu",
 					RetentionPolicy: "autogen",
-					Fields: []cmp.Field{
+					Fields: []cloudhub.Field{
 						{
 							Value: "mean",
-							Args: []cmp.Field{
+							Args: []cloudhub.Field{
 								{
 									Value: "usage_user",
 									Type:  "field",
@@ -637,7 +637,7 @@ func TestReverse(t *testing.T) {
 							"cpu_total",
 						},
 					},
-					GroupBy: cmp.GroupBy{
+					GroupBy: cloudhub.GroupBy{
 						Time: "10m0s",
 						Tags: []string{"host", "cluster_id"},
 					},
@@ -675,7 +675,7 @@ func TestReverse(t *testing.T) {
 
 		var durationField = 'duration'
 
-		var outputDB = 'cmp'
+		var outputDB = 'cloudhub'
 
 		var outputRP = 'autogen'
 
@@ -727,36 +727,36 @@ func TestReverse(t *testing.T) {
 		trigger
 		    |httpOut('output')
 		`,
-			want: cmp.AlertRule{
+			want: cloudhub.AlertRule{
 				Name:    "name",
 				Trigger: "threshold",
-				AlertNodes: cmp.AlertNodes{
+				AlertNodes: cloudhub.AlertNodes{
 					IsStateChangesOnly: true,
-					Slack: []*cmp.Slack{
+					Slack: []*cloudhub.Slack{
 						{},
 					},
-					VictorOps: []*cmp.VictorOps{
+					VictorOps: []*cloudhub.VictorOps{
 						{},
 					},
-					Email: []*cmp.Email{
+					Email: []*cloudhub.Email{
 						{To: []string{}},
 					},
 				},
-				TriggerValues: cmp.TriggerValues{
+				TriggerValues: cloudhub.TriggerValues{
 					Operator:   "inside range",
 					Value:      "90",
 					RangeValue: "100",
 				},
 				Every:   "30s",
 				Message: "message",
-				Query: &cmp.QueryConfig{
+				Query: &cloudhub.QueryConfig{
 					Database:        "telegraf",
 					Measurement:     "cpu",
 					RetentionPolicy: "autogen",
-					Fields: []cmp.Field{
+					Fields: []cloudhub.Field{
 						{
 							Value: "mean",
-							Args: []cmp.Field{
+							Args: []cloudhub.Field{
 								{
 									Value: "usage_user",
 									Type:  "field",
@@ -774,7 +774,7 @@ func TestReverse(t *testing.T) {
 							"cpu_total",
 						},
 					},
-					GroupBy: cmp.GroupBy{
+					GroupBy: cloudhub.GroupBy{
 						Time: "10m0s",
 						Tags: []string{"host", "cluster_id"},
 					},
@@ -812,7 +812,7 @@ func TestReverse(t *testing.T) {
 
 		var durationField = 'duration'
 
-		var outputDB = 'cmp'
+		var outputDB = 'cloudhub'
 
 		var outputRP = 'autogen'
 
@@ -864,36 +864,36 @@ func TestReverse(t *testing.T) {
 		trigger
 		    |httpOut('output')
 		`,
-			want: cmp.AlertRule{
+			want: cloudhub.AlertRule{
 				Name:    "name",
 				Trigger: "threshold",
-				AlertNodes: cmp.AlertNodes{
+				AlertNodes: cloudhub.AlertNodes{
 					IsStateChangesOnly: true,
-					Slack: []*cmp.Slack{
+					Slack: []*cloudhub.Slack{
 						{},
 					},
-					VictorOps: []*cmp.VictorOps{
+					VictorOps: []*cloudhub.VictorOps{
 						{},
 					},
-					Email: []*cmp.Email{
+					Email: []*cloudhub.Email{
 						{To: []string{}},
 					},
 				},
-				TriggerValues: cmp.TriggerValues{
+				TriggerValues: cloudhub.TriggerValues{
 					Operator:   "outside range",
 					Value:      "90",
 					RangeValue: "100",
 				},
 				Every:   "30s",
 				Message: "message",
-				Query: &cmp.QueryConfig{
+				Query: &cloudhub.QueryConfig{
 					Database:        "telegraf",
 					Measurement:     "cpu",
 					RetentionPolicy: "autogen",
-					Fields: []cmp.Field{
+					Fields: []cloudhub.Field{
 						{
 							Value: "mean",
-							Args: []cmp.Field{
+							Args: []cloudhub.Field{
 								{
 									Value: "usage_user",
 									Type:  "field",
@@ -911,7 +911,7 @@ func TestReverse(t *testing.T) {
 							"cpu_total",
 						},
 					},
-					GroupBy: cmp.GroupBy{
+					GroupBy: cloudhub.GroupBy{
 						Time: "10m0s",
 						Tags: []string{"host", "cluster_id"},
 					},
@@ -945,7 +945,7 @@ func TestReverse(t *testing.T) {
 
 		var durationField = 'duration'
 
-		var outputDB = 'cmp'
+		var outputDB = 'cloudhub'
 
 		var outputRP = 'autogen'
 
@@ -991,31 +991,31 @@ func TestReverse(t *testing.T) {
 		trigger
 		    |httpOut('output')
 		`,
-			want: cmp.AlertRule{
+			want: cloudhub.AlertRule{
 				Name:    "name",
 				Trigger: "threshold",
-				AlertNodes: cmp.AlertNodes{
+				AlertNodes: cloudhub.AlertNodes{
 					IsStateChangesOnly: true,
-					Slack: []*cmp.Slack{
+					Slack: []*cloudhub.Slack{
 						{},
 					},
-					VictorOps: []*cmp.VictorOps{
+					VictorOps: []*cloudhub.VictorOps{
 						{},
 					},
-					Email: []*cmp.Email{
+					Email: []*cloudhub.Email{
 						{To: []string{}},
 					},
 				},
-				TriggerValues: cmp.TriggerValues{
+				TriggerValues: cloudhub.TriggerValues{
 					Operator: "greater than",
 					Value:    "90",
 				},
 				Message: "message",
-				Query: &cmp.QueryConfig{
+				Query: &cloudhub.QueryConfig{
 					Database:        "telegraf",
 					Measurement:     "cpu",
 					RetentionPolicy: "autogen",
-					Fields: []cmp.Field{
+					Fields: []cloudhub.Field{
 						{
 							Value: "usage_user",
 							Type:  "field",
@@ -1030,7 +1030,7 @@ func TestReverse(t *testing.T) {
 							"cpu_total",
 						},
 					},
-					GroupBy: cmp.GroupBy{
+					GroupBy: cloudhub.GroupBy{
 						Tags: []string{"host", "cluster_id"},
 					},
 					AreTagsAccepted: true,
@@ -1067,7 +1067,7 @@ var messageField = 'message'
 
 var durationField = 'duration'
 
-var outputDB = 'cmp'
+var outputDB = 'cloudhub'
 
 var outputRP = 'autogen'
 
@@ -1129,22 +1129,22 @@ trigger
 trigger
     |httpOut('output')
 `,
-			want: cmp.AlertRule{
+			want: cloudhub.AlertRule{
 				Name:    "name",
 				Trigger: "relative",
-				AlertNodes: cmp.AlertNodes{
+				AlertNodes: cloudhub.AlertNodes{
 					IsStateChangesOnly: true,
-					Slack: []*cmp.Slack{
+					Slack: []*cloudhub.Slack{
 						{},
 					},
-					VictorOps: []*cmp.VictorOps{
+					VictorOps: []*cloudhub.VictorOps{
 						{},
 					},
-					Email: []*cmp.Email{
+					Email: []*cloudhub.Email{
 						{To: []string{}},
 					},
 				},
-				TriggerValues: cmp.TriggerValues{
+				TriggerValues: cloudhub.TriggerValues{
 					Change:   "% change",
 					Shift:    "1m0s",
 					Operator: "greater than",
@@ -1152,14 +1152,14 @@ trigger
 				},
 				Every:   "30s",
 				Message: "message",
-				Query: &cmp.QueryConfig{
+				Query: &cloudhub.QueryConfig{
 					Database:        "telegraf",
 					Measurement:     "cpu",
 					RetentionPolicy: "autogen",
-					Fields: []cmp.Field{
+					Fields: []cloudhub.Field{
 						{
 							Value: "mean",
-							Args: []cmp.Field{
+							Args: []cloudhub.Field{
 								{
 									Value: "usage_user",
 									Type:  "field",
@@ -1177,7 +1177,7 @@ trigger
 							"cpu_total",
 						},
 					},
-					GroupBy: cmp.GroupBy{
+					GroupBy: cloudhub.GroupBy{
 						Time: "10m0s",
 						Tags: []string{"host", "cluster_id"},
 					},
@@ -1215,7 +1215,7 @@ var messageField = 'message'
 
 var durationField = 'duration'
 
-var outputDB = 'cmp'
+var outputDB = 'cloudhub'
 
 var outputRP = 'autogen'
 
@@ -1277,22 +1277,22 @@ trigger
 trigger
     |httpOut('output')
 `,
-			want: cmp.AlertRule{
+			want: cloudhub.AlertRule{
 				Name:    "name",
 				Trigger: "relative",
-				AlertNodes: cmp.AlertNodes{
+				AlertNodes: cloudhub.AlertNodes{
 					IsStateChangesOnly: true,
-					Slack: []*cmp.Slack{
+					Slack: []*cloudhub.Slack{
 						{},
 					},
-					VictorOps: []*cmp.VictorOps{
+					VictorOps: []*cloudhub.VictorOps{
 						{},
 					},
-					Email: []*cmp.Email{
+					Email: []*cloudhub.Email{
 						{To: []string{}},
 					},
 				},
-				TriggerValues: cmp.TriggerValues{
+				TriggerValues: cloudhub.TriggerValues{
 					Change:   "change",
 					Shift:    "1m0s",
 					Operator: "greater than",
@@ -1300,14 +1300,14 @@ trigger
 				},
 				Every:   "30s",
 				Message: "message",
-				Query: &cmp.QueryConfig{
+				Query: &cloudhub.QueryConfig{
 					Database:        "telegraf",
 					Measurement:     "cpu",
 					RetentionPolicy: "autogen",
-					Fields: []cmp.Field{
+					Fields: []cloudhub.Field{
 						{
 							Value: "mean",
-							Args: []cmp.Field{
+							Args: []cloudhub.Field{
 								{
 									Value: "usage_user",
 									Type:  "field",
@@ -1325,7 +1325,7 @@ trigger
 							"cpu_total",
 						},
 					},
-					GroupBy: cmp.GroupBy{
+					GroupBy: cloudhub.GroupBy{
 						Time: "10m0s",
 						Tags: []string{"host", "cluster_id"},
 					},
@@ -1361,7 +1361,7 @@ var messageField = 'message'
 
 var durationField = 'duration'
 
-var outputDB = 'cmp'
+var outputDB = 'cloudhub'
 
 var outputRP = 'autogen'
 
@@ -1407,26 +1407,26 @@ trigger
 trigger
     |httpOut('output')
 `,
-			want: cmp.AlertRule{
+			want: cloudhub.AlertRule{
 				Name:    "name",
 				Trigger: "deadman",
-				AlertNodes: cmp.AlertNodes{
+				AlertNodes: cloudhub.AlertNodes{
 					IsStateChangesOnly: true,
-					Slack: []*cmp.Slack{
+					Slack: []*cloudhub.Slack{
 						{},
 					},
-					VictorOps: []*cmp.VictorOps{
+					VictorOps: []*cloudhub.VictorOps{
 						{},
 					},
-					Email: []*cmp.Email{
+					Email: []*cloudhub.Email{
 						{To: []string{}},
 					},
 				},
-				TriggerValues: cmp.TriggerValues{
+				TriggerValues: cloudhub.TriggerValues{
 					Period: "10m0s",
 				},
 				Message: "message",
-				Query: &cmp.QueryConfig{
+				Query: &cloudhub.QueryConfig{
 					Database:        "telegraf",
 					Measurement:     "cpu",
 					RetentionPolicy: "autogen",
@@ -1439,7 +1439,7 @@ trigger
 							"cpu_total",
 						},
 					},
-					GroupBy: cmp.GroupBy{
+					GroupBy: cloudhub.GroupBy{
 						Time: "",
 						Tags: []string{"host", "cluster_id"},
 					},
@@ -1473,7 +1473,7 @@ var messageField = 'message'
 
 var durationField = 'duration'
 
-var outputDB = 'cmp'
+var outputDB = 'cloudhub'
 
 var outputRP = 'autogen'
 
@@ -1516,30 +1516,30 @@ trigger
 trigger
     |httpOut('output')
 `,
-			want: cmp.AlertRule{
+			want: cloudhub.AlertRule{
 				Name:    "rule 1",
 				Trigger: "threshold",
-				TriggerValues: cmp.TriggerValues{
+				TriggerValues: cloudhub.TriggerValues{
 					Operator: "greater than",
 					Value:    "90000",
 				},
 				Every:   "",
 				Message: "",
 				Details: "",
-				AlertNodes: cmp.AlertNodes{
+				AlertNodes: cloudhub.AlertNodes{
 					IsStateChangesOnly: true,
 				},
-				Query: &cmp.QueryConfig{
+				Query: &cloudhub.QueryConfig{
 					Database:        "_internal",
 					RetentionPolicy: "monitor",
 					Measurement:     "cq",
-					Fields: []cmp.Field{
+					Fields: []cloudhub.Field{
 						{
 							Value: "queryOk",
 							Type:  "field",
 						},
 					},
-					GroupBy: cmp.GroupBy{
+					GroupBy: cloudhub.GroupBy{
 						Tags: []string{},
 					},
 					AreTagsAccepted: false,

@@ -3,19 +3,19 @@ package kapacitor
 import (
 	"testing"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 func TestTrigger(t *testing.T) {
 	tests := []struct {
 		name    string
-		rule    cmp.AlertRule
+		rule    cloudhub.AlertRule
 		want    string
 		wantErr bool
 	}{
 		{
 			name: "Test Deadman",
-			rule: cmp.AlertRule{
+			rule: cloudhub.AlertRule{
 				Trigger: "deadman",
 			},
 			want: `var trigger = data
@@ -32,9 +32,9 @@ func TestTrigger(t *testing.T) {
 		},
 		{
 			name: "Test Relative",
-			rule: cmp.AlertRule{
+			rule: cloudhub.AlertRule{
 				Trigger: "relative",
-				TriggerValues: cmp.TriggerValues{
+				TriggerValues: cloudhub.TriggerValues{
 					Operator: "greater than",
 					Change:   "% change",
 				},
@@ -64,9 +64,9 @@ var trigger = past
 		},
 		{
 			name: "Test Relative percent change",
-			rule: cmp.AlertRule{
+			rule: cloudhub.AlertRule{
 				Trigger: "relative",
-				TriggerValues: cmp.TriggerValues{
+				TriggerValues: cloudhub.TriggerValues{
 					Operator: "greater than",
 					Change:   "change",
 				},
@@ -96,9 +96,9 @@ var trigger = past
 		},
 		{
 			name: "Test Threshold",
-			rule: cmp.AlertRule{
+			rule: cloudhub.AlertRule{
 				Trigger: "threshold",
-				TriggerValues: cmp.TriggerValues{
+				TriggerValues: cloudhub.TriggerValues{
 					Operator: "greater than",
 				},
 			},
@@ -117,7 +117,7 @@ var trigger = past
 		},
 		{
 			name: "Test Invalid",
-			rule: cmp.AlertRule{
+			rule: cloudhub.AlertRule{
 				Trigger: "invalid",
 			},
 			want:    ``,

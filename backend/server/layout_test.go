@@ -9,35 +9,35 @@ import (
 	"testing"
 
 	gocmp "github.com/google/go-cmp/cmp"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/mocks"
-	"github.com/snetsystems/cmp/backend/server"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/mocks"
+	"github.com/snetsystems/cloudhub/backend/server"
 )
 
 func Test_Layouts(t *testing.T) {
 	layoutTests := []struct {
 		name       string
-		expected   cmp.Layout
-		allLayouts []cmp.Layout
+		expected   cloudhub.Layout
+		allLayouts []cloudhub.Layout
 		focusedApp string // should filter all layouts to this app only
 		shouldErr  bool
 	}{
 		{
 			"empty layout",
-			cmp.Layout{},
-			[]cmp.Layout{},
+			cloudhub.Layout{},
+			[]cloudhub.Layout{},
 			"",
 			false,
 		},
 		{
 			"several layouts",
-			cmp.Layout{
+			cloudhub.Layout{
 				ID:          "d20a21c8-69f1-4780-90fe-e69f5e4d138c",
 				Application: "influxdb",
 				Measurement: "influxdb",
 			},
-			[]cmp.Layout{
-				cmp.Layout{
+			[]cloudhub.Layout{
+				cloudhub.Layout{
 					ID:          "d20a21c8-69f1-4780-90fe-e69f5e4d138c",
 					Application: "influxdb",
 					Measurement: "influxdb",
@@ -48,21 +48,21 @@ func Test_Layouts(t *testing.T) {
 		},
 		{
 			"filtered app",
-			cmp.Layout{
+			cloudhub.Layout{
 				ID:          "d20a21c8-69f1-4780-90fe-e69f5e4d138c",
 				Application: "influxdb",
 				Measurement: "influxdb",
 			},
-			[]cmp.Layout{
-				cmp.Layout{
+			[]cloudhub.Layout{
+				cloudhub.Layout{
 					ID:          "d20a21c8-69f1-4780-90fe-e69f5e4d138c",
 					Application: "influxdb",
 					Measurement: "influxdb",
 				},
-				cmp.Layout{
+				cloudhub.Layout{
 					ID:          "b020101b-ea6b-4c8c-9f0e-db0ba501f4ef",
-					Application: "cmp",
-					Measurement: "cmp",
+					Application: "cloudhub",
+					Measurement: "cloudhub",
 				},
 			},
 			"influxdb",
@@ -70,11 +70,11 @@ func Test_Layouts(t *testing.T) {
 		},
 		{
 			"axis zero values",
-			cmp.Layout{
+			cloudhub.Layout{
 				ID:          "d20a21c8-69f1-4780-90fe-e69f5e4d138c",
 				Application: "influxdb",
 				Measurement: "influxdb",
-				Cells: []cmp.Cell{
+				Cells: []cloudhub.Cell{
 					{
 						X:          0,
 						Y:          0,
@@ -82,34 +82,34 @@ func Test_Layouts(t *testing.T) {
 						H:          4,
 						I:          "3b0e646b-2ca3-4df2-95a5-fd80915459dd",
 						Name:       "A Graph",
-						CellColors: []cmp.CellColor{},
-						Axes: map[string]cmp.Axis{
-							"x": cmp.Axis{
+						CellColors: []cloudhub.CellColor{},
+						Axes: map[string]cloudhub.Axis{
+							"x": cloudhub.Axis{
 								Bounds: []string{},
 							},
-							"y": cmp.Axis{
+							"y": cloudhub.Axis{
 								Bounds: []string{},
 							},
-							"y2": cmp.Axis{
+							"y2": cloudhub.Axis{
 								Bounds: []string{},
 							},
 						},
 					},
 				},
 			},
-			[]cmp.Layout{
-				cmp.Layout{
+			[]cloudhub.Layout{
+				cloudhub.Layout{
 					ID:          "d20a21c8-69f1-4780-90fe-e69f5e4d138c",
 					Application: "influxdb",
 					Measurement: "influxdb",
-					Cells: []cmp.Cell{
+					Cells: []cloudhub.Cell{
 						{
 							X:          0,
 							Y:          0,
 							W:          4,
 							H:          4,
 							I:          "3b0e646b-2ca3-4df2-95a5-fd80915459dd",
-							CellColors: []cmp.CellColor{},
+							CellColors: []cloudhub.CellColor{},
 							Name:       "A Graph",
 						},
 					},
@@ -125,13 +125,13 @@ func Test_Layouts(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			// setup mock cmp.Service and mock logger
+			// setup mock cloudhub.Service and mock logger
 			lg := &mocks.TestLogger{}
 			svc := server.Service{
 				Store: &mocks.Store{LayoutsStore: &mocks.LayoutsStore{
-					AllF: func(ctx context.Context) ([]cmp.Layout, error) {
+					AllF: func(ctx context.Context) ([]cloudhub.Layout, error) {
 						if len(test.allLayouts) == 0 {
-							return []cmp.Layout{
+							return []cloudhub.Layout{
 								test.expected,
 							}, nil
 						} else {
@@ -146,7 +146,7 @@ func Test_Layouts(t *testing.T) {
 			// setup mock request and response
 			rr := httptest.NewRecorder()
 			reqURL := url.URL{
-				Path: "/cmp/v1/layouts",
+				Path: "/cloudhub/v1/layouts",
 			}
 			params := reqURL.Query()
 
@@ -166,7 +166,7 @@ func Test_Layouts(t *testing.T) {
 			// create a throwaway frame to unwrap Layouts
 			respFrame := struct {
 				Layouts []struct {
-					cmp.Layout
+					cloudhub.Layout
 					Link interface{} `json:"-"`
 				} `json:"layouts"`
 			}{}

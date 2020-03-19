@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"time"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // tm generates an id based on current time
@@ -12,8 +12,8 @@ type tm struct {
 	Now func() time.Time
 }
 
-// NewTime builds a cmp.ID generator based on current time
-func NewTime() cmp.ID {
+// NewTime builds a cloudhub.ID generator based on current time
+func NewTime() cloudhub.ID {
 	return &tm{
 		Now: time.Now,
 	}

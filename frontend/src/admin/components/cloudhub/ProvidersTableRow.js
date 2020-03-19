@@ -5,7 +5,7 @@ import ConfirmButton from 'shared/components/ConfirmButton'
 import Dropdown from 'shared/components/Dropdown'
 import InputClickToEdit from 'shared/components/InputClickToEdit'
 
-import {DEFAULT_MAPPING_ID} from 'src/admin/constants/cmpAdmin'
+import {DEFAULT_MAPPING_ID} from 'src/admin/constants/cloudhubAdmin'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 class ProvidersTableRow extends Component {

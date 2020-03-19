@@ -6,37 +6,37 @@ import (
 
 	gocmp "github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // IgnoreFields is used because ID is created by BoltDB and cannot be predicted reliably
 // EquateEmpty is used because we want nil slices, arrays, and maps to be equal to the empty map
 var diffOptions = gocmp.Options{
-	cmpopts.IgnoreFields(cmp.Dashboard{}, "ID"),
-	cmpopts.IgnoreFields(cmp.DashboardCell{}, "ID"),
+	cmpopts.IgnoreFields(cloudhub.Dashboard{}, "ID"),
+	cmpopts.IgnoreFields(cloudhub.DashboardCell{}, "ID"),
 	cmpopts.EquateEmpty(),
 }
 
 func TestDashboardsStore_Add(t *testing.T) {
 	type args struct {
 		ctx       context.Context
-		dashboard *cmp.Dashboard
+		dashboard *cloudhub.Dashboard
 		addFirst  bool
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    *cmp.Dashboard
+		want    *cloudhub.Dashboard
 		wantErr bool
 	}{
 		{
 			name: "Add new Dashboard",
 			args: args{
 				ctx: context.Background(),
-				dashboard: &cmp.Dashboard{
-					Cells: []cmp.DashboardCell{
+				dashboard: &cloudhub.Dashboard{
+					Cells: []cloudhub.DashboardCell{
 						{
-							Axes: map[string]cmp.Axis{
+							Axes: map[string]cloudhub.Axis{
 								"x": {
 									Bounds: []string{"1", "2"},
 									Label:  "label",
@@ -51,10 +51,10 @@ func TestDashboardsStore_Add(t *testing.T) {
 					Name: "best name",
 				},
 			},
-			want: &cmp.Dashboard{
-				Cells: []cmp.DashboardCell{
+			want: &cloudhub.Dashboard{
+				Cells: []cloudhub.DashboardCell{
 					{
-						Axes: map[string]cmp.Axis{
+						Axes: map[string]cloudhub.Axis{
 							"x": {
 								Bounds: []string{"1", "2"},
 								Label:  "label",
@@ -64,13 +64,13 @@ func TestDashboardsStore_Add(t *testing.T) {
 								Scale:  "log",
 							},
 						},
-						Queries:      []cmp.DashboardQuery{},
+						Queries:      []cloudhub.DashboardQuery{},
 						Type:         "line",
-						CellColors:   []cmp.CellColor{},
-						FieldOptions: []cmp.RenamableField{},
+						CellColors:   []cloudhub.CellColor{},
+						FieldOptions: []cloudhub.RenamableField{},
 					},
 				},
-				Templates: []cmp.Template{},
+				Templates: []cloudhub.Template{},
 				Name:      "best name",
 			},
 		},
@@ -96,7 +96,7 @@ func TestDashboardsStore_Add(t *testing.T) {
 			continue
 		}
 
-		got, err = s.Get(tt.args.ctx, cmp.DashboardID(got.ID))
+		got, err = s.Get(tt.args.ctx, cloudhub.DashboardID(got.ID))
 		if err != nil {
 			t.Fatalf("failed to get Dashboard: %v", err)
 		}

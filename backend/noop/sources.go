@@ -4,36 +4,36 @@ import (
 	"context"
 	"fmt"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-// ensure SourcesStore implements cmp.SourcesStore
-var _ cmp.SourcesStore = &SourcesStore{}
+// ensure SourcesStore implements cloudhub.SourcesStore
+var _ cloudhub.SourcesStore = &SourcesStore{}
 
 // SourcesStore ...
 type SourcesStore struct{}
 
 // All ...
-func (s *SourcesStore) All(context.Context) ([]cmp.Source, error) {
+func (s *SourcesStore) All(context.Context) ([]cloudhub.Source, error) {
 	return nil, fmt.Errorf("no sources found")
 }
 
 // Add ...
-func (s *SourcesStore) Add(context.Context, cmp.Source) (cmp.Source, error) {
-	return cmp.Source{}, fmt.Errorf("failed to add source")
+func (s *SourcesStore) Add(context.Context, cloudhub.Source) (cloudhub.Source, error) {
+	return cloudhub.Source{}, fmt.Errorf("failed to add source")
 }
 
 // Delete ...
-func (s *SourcesStore) Delete(context.Context, cmp.Source) error {
+func (s *SourcesStore) Delete(context.Context, cloudhub.Source) error {
 	return fmt.Errorf("failed to delete source")
 }
 
 // Get ...
-func (s *SourcesStore) Get(ctx context.Context, ID int) (cmp.Source, error) {
-	return cmp.Source{}, cmp.ErrSourceNotFound
+func (s *SourcesStore) Get(ctx context.Context, ID int) (cloudhub.Source, error) {
+	return cloudhub.Source{}, cloudhub.ErrSourceNotFound
 }
 
 // Update ...
-func (s *SourcesStore) Update(context.Context, cmp.Source) error {
+func (s *SourcesStore) Update(context.Context, cloudhub.Source) error {
 	return fmt.Errorf("failed to update source")
 }

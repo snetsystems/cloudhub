@@ -4,12 +4,12 @@ import (
 	"context"
 
 	"github.com/boltdb/bolt"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/bolt/internal"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/bolt/internal"
 )
 
-// Ensure ServersStore implements cmp.ServersStore.
-var _ cmp.ServersStore = &ServersStore{}
+// Ensure ServersStore implements cloudhub.ServersStore.
+var _ cloudhub.ServersStore = &ServersStore{}
 
 // ServersBucket is the bolt bucket to store lists of servers
 var ServersBucket = []byte("Servers")
@@ -45,8 +45,8 @@ func (s *ServersStore) Migrate(ctx context.Context) error {
 }
 
 // All returns all known servers
-func (s *ServersStore) All(ctx context.Context) ([]cmp.Server, error) {
-	var srcs []cmp.Server
+func (s *ServersStore) All(ctx context.Context) ([]cloudhub.Server, error) {
+	var srcs []cloudhub.Server
 	if err := s.client.db.View(func(tx *bolt.Tx) error {
 		var err error
 		srcs, err = s.all(ctx, tx)
@@ -63,7 +63,7 @@ func (s *ServersStore) All(ctx context.Context) ([]cmp.Server, error) {
 }
 
 // Add creates a new Server in the ServerStore.
-func (s *ServersStore) Add(ctx context.Context, src cmp.Server) (cmp.Server, error) {
+func (s *ServersStore) Add(ctx context.Context, src cloudhub.Server) (cloudhub.Server, error) {
 	if err := s.client.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(ServersBucket)
 		seq, err := b.NextSequence()
@@ -79,14 +79,14 @@ func (s *ServersStore) Add(ctx context.Context, src cmp.Server) (cmp.Server, err
 		}
 		return nil
 	}); err != nil {
-		return cmp.Server{}, err
+		return cloudhub.Server{}, err
 	}
 
 	return src, nil
 }
 
 // Delete removes the Server from the ServersStore
-func (s *ServersStore) Delete(ctx context.Context, src cmp.Server) error {
+func (s *ServersStore) Delete(ctx context.Context, src cloudhub.Server) error {
 	if err := s.client.db.Update(func(tx *bolt.Tx) error {
 		if err := tx.Bucket(ServersBucket).Delete(itob(src.ID)); err != nil {
 			return err
@@ -100,29 +100,29 @@ func (s *ServersStore) Delete(ctx context.Context, src cmp.Server) error {
 }
 
 // Get returns a Server if the id exists.
-func (s *ServersStore) Get(ctx context.Context, id int) (cmp.Server, error) {
-	var src cmp.Server
+func (s *ServersStore) Get(ctx context.Context, id int) (cloudhub.Server, error) {
+	var src cloudhub.Server
 	if err := s.client.db.View(func(tx *bolt.Tx) error {
 		if v := tx.Bucket(ServersBucket).Get(itob(id)); v == nil {
-			return cmp.ErrServerNotFound
+			return cloudhub.ErrServerNotFound
 		} else if err := internal.UnmarshalServer(v, &src); err != nil {
 			return err
 		}
 		return nil
 	}); err != nil {
-		return cmp.Server{}, err
+		return cloudhub.Server{}, err
 	}
 
 	return src, nil
 }
 
 // Update a Server
-func (s *ServersStore) Update(ctx context.Context, src cmp.Server) error {
+func (s *ServersStore) Update(ctx context.Context, src cloudhub.Server) error {
 	if err := s.client.db.Update(func(tx *bolt.Tx) error {
 		// Get an existing server with the same ID.
 		b := tx.Bucket(ServersBucket)
 		if v := b.Get(itob(src.ID)); v == nil {
-			return cmp.ErrServerNotFound
+			return cloudhub.ErrServerNotFound
 		}
 
 		if v, err := internal.MarshalServer(src); err != nil {
@@ -138,10 +138,10 @@ func (s *ServersStore) Update(ctx context.Context, src cmp.Server) error {
 	return nil
 }
 
-func (s *ServersStore) all(ctx context.Context, tx *bolt.Tx) ([]cmp.Server, error) {
-	var srcs []cmp.Server
+func (s *ServersStore) all(ctx context.Context, tx *bolt.Tx) ([]cloudhub.Server, error) {
+	var srcs []cloudhub.Server
 	if err := tx.Bucket(ServersBucket).ForEach(func(k, v []byte) error {
-		var src cmp.Server
+		var src cloudhub.Server
 		if err := internal.UnmarshalServer(v, &src); err != nil {
 			return err
 		}

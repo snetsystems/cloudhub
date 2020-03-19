@@ -4,16 +4,16 @@ import (
 	"net/http"
 	libpath "path"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-var _ cmp.Router = &MountableRouter{}
+var _ cloudhub.Router = &MountableRouter{}
 
-// MountableRouter is an implementation of a cmp.Router which supports
-// prefixing each route of a Delegated cmp.Router with a prefix.
+// MountableRouter is an implementation of a cloudhub.Router which supports
+// prefixing each route of a Delegated cloudhub.Router with a prefix.
 type MountableRouter struct {
 	Prefix   string
-	Delegate cmp.Router
+	Delegate cloudhub.Router
 }
 
 // DELETE defines a route responding to a DELETE request that will be prefixed

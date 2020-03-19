@@ -3,20 +3,20 @@ package mocks
 import (
 	"context"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-var _ cmp.ProtoboardsStore = &ProtoboardsStore{}
+var _ cloudhub.ProtoboardsStore = &ProtoboardsStore{}
 
 type ProtoboardsStore struct {
-	AllF func(ctx context.Context) ([]cmp.Protoboard, error)
-	GetF func(ctx context.Context, id string) (cmp.Protoboard, error)
+	AllF func(ctx context.Context) ([]cloudhub.Protoboard, error)
+	GetF func(ctx context.Context, id string) (cloudhub.Protoboard, error)
 }
 
-func (s *ProtoboardsStore) All(ctx context.Context) ([]cmp.Protoboard, error) {
+func (s *ProtoboardsStore) All(ctx context.Context) ([]cloudhub.Protoboard, error) {
 	return s.AllF(ctx)
 }
 
-func (s *ProtoboardsStore) Get(ctx context.Context, id string) (cmp.Protoboard, error) {
+func (s *ProtoboardsStore) Get(ctx context.Context, id string) (cloudhub.Protoboard, error) {
 	return s.GetF(ctx, id)
 }

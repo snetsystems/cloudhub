@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/Sirupsen/logrus"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // Level type
@@ -49,7 +49,7 @@ func ParseLevel(lvl string) Level {
 	}
 }
 
-// LogrusLogger is a cmp.Logger that uses logrus to process logs
+// LogrusLogger is a cloudhub.Logger that uses logrus to process logs
 type logrusLogger struct {
 	l *logrus.Entry
 }
@@ -78,7 +78,7 @@ func (ll *logrusLogger) Panic(items ...interface{}) {
 	ll.l.Panic(items...)
 }
 
-func (ll *logrusLogger) WithField(key string, value interface{}) cmp.Logger {
+func (ll *logrusLogger) WithField(key string, value interface{}) cloudhub.Logger {
 	return &logrusLogger{ll.l.WithField(key, value)}
 }
 
@@ -87,7 +87,7 @@ func (ll *logrusLogger) Writer() *io.PipeWriter {
 }
 
 // New wraps a logrus Logger
-func New(l Level) cmp.Logger {
+func New(l Level) cloudhub.Logger {
 	logger := &logrus.Logger{
 		Out:       os.Stderr,
 		Formatter: new(logrus.TextFormatter),

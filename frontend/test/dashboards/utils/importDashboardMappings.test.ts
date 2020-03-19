@@ -26,8 +26,8 @@ describe('Dashboards.Utils.importDashboardMappings', () => {
     })
 
     it('maps cells to their sources from the import', () => {
-      const sourceLink1 = '/cmp/v1/sources/1'
-      const sourceLink2 = '/cmp/v1/sources/2'
+      const sourceLink1 = '/cloudhub/v1/sources/1'
+      const sourceLink2 = '/cloudhub/v1/sources/2'
       const cellName1 = 'Cell 1'
       const cellName2 = 'Cell 2'
       const cellName3 = 'Cell 3'
@@ -71,8 +71,8 @@ describe('Dashboards.Utils.importDashboardMappings', () => {
 
     it('maps imported sources to the current source by default', () => {
       const currentSource = {...source, id: 10, name: 'MY SOURCE'}
-      const sourceLink1 = '/cmp/v1/sources/1'
-      const sourceLink2 = '/cmp/v1/sources/2'
+      const sourceLink1 = '/cloudhub/v1/sources/1'
+      const sourceLink2 = '/cloudhub/v1/sources/2'
       const cellName1 = 'Cell 1'
       const cellName2 = 'Cell 2'
       const cellID1 = '1'
@@ -154,7 +154,7 @@ describe('Dashboards.Utils.importDashboardMappings', () => {
 
   describe('mapQueriesInCell', () => {
     it('returns cell with source from sourceMappings', () => {
-      const sourceLink1 = '/cmp/v1/sources/1'
+      const sourceLink1 = '/cloudhub/v1/sources/1'
       const sourceID = '1'
       const sourceMappings = {
         [sourceID]: DYNAMIC_SOURCE_INFO,
@@ -174,7 +174,7 @@ describe('Dashboards.Utils.importDashboardMappings', () => {
 
   describe('getSourceIDFromLink', () => {
     it('returns the id after sources in a link', () => {
-      const sourceLink = '/cmp/v1/sources/10'
+      const sourceLink = '/cloudhub/v1/sources/10'
       const expected = '10'
       const actual = getSourceIDFromLink(sourceLink)
       expect(actual).toBe(expected)
@@ -185,7 +185,7 @@ describe('Dashboards.Utils.importDashboardMappings', () => {
     it('returns source info from a source', () => {
       const name = 'name'
       const id = 'id'
-      const link = '/cmp/v1/sources/10'
+      const link = '/cloudhub/v1/sources/10'
 
       const links = {...source.links, self: link}
       const s = {...source, name, links, id}

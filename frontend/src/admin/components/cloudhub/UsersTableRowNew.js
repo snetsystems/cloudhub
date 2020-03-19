@@ -8,9 +8,9 @@ import {notify as notifyAction} from 'shared/actions/notifications'
 import Dropdown from 'shared/components/Dropdown'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {notifyCMPUserMissingNameAndProvider} from 'shared/copy/notifications'
-import {USERS_TABLE} from 'src/admin/constants/cmpTableSizing'
-import {USER_ROLES} from 'src/admin/constants/cmpAdmin'
+import {notifyCloudHubUserMissingNameAndProvider} from 'shared/copy/notifications'
+import {USERS_TABLE} from 'src/admin/constants/cloudhubTableSizing'
+import {USER_ROLES} from 'src/admin/constants/cloudhubAdmin'
 
 class UsersTableRowNew extends Component {
   constructor(props) {
@@ -66,7 +66,7 @@ class UsersTableRowNew extends Component {
 
     if (e.key === 'Enter') {
       if (preventCreate) {
-        return this.props.notify(notifyCMPUserMissingNameAndProvider())
+        return this.props.notify(notifyCloudHubUserMissingNameAndProvider())
       }
       this.handleConfirmCreateUser()
     }
@@ -81,7 +81,7 @@ class UsersTableRowNew extends Component {
     const preventCreate = !name || !provider
 
     return (
-      <tr className="cmp-admin-table--new-user">
+      <tr className="cloudhub-admin-table--new-user">
         <td>
           <input
             className="form-control input-xs"

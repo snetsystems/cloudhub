@@ -12,26 +12,26 @@ import (
 	"testing"
 	"time"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/filestore"
-	clog "github.com/snetsystems/cmp/backend/log"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/filestore"
+	clog "github.com/snetsystems/cloudhub/backend/log"
 )
 
 func Test_Protoboard_All(t *testing.T) {
 	t.Parallel()
 	var tests = []struct {
-		Existing []cmp.Protoboard
+		Existing []cloudhub.Protoboard
 		Err      error
 	}{
 		{
-			Existing: []cmp.Protoboard{
+			Existing: []cloudhub.Protoboard{
 				{ID: "1"},
 				{ID: "2"},
 			},
 			Err: nil,
 		},
 		{
-			Existing: []cmp.Protoboard{},
+			Existing: []cloudhub.Protoboard{},
 			Err:      nil,
 		},
 		{
@@ -54,33 +54,33 @@ func Test_Protoboard_All(t *testing.T) {
 func Test_Protoboard_Get(t *testing.T) {
 	t.Parallel()
 	var tests = []struct {
-		Existing []cmp.Protoboard
+		Existing []cloudhub.Protoboard
 		ID       string
-		Expected cmp.Protoboard
+		Expected cloudhub.Protoboard
 		Err      error
 	}{
 		{
-			Existing: []cmp.Protoboard{
+			Existing: []cloudhub.Protoboard{
 				{ID: "1"},
 				{ID: "2"},
 			},
 			ID: "1",
-			Expected: cmp.Protoboard{
+			Expected: cloudhub.Protoboard{
 				ID: "1",
 			},
 			Err: nil,
 		},
 		{
-			Existing: []cmp.Protoboard{},
+			Existing: []cloudhub.Protoboard{},
 			ID:       "1",
-			Expected: cmp.Protoboard{},
-			Err:      cmp.ErrProtoboardNotFound,
+			Expected: cloudhub.Protoboard{},
+			Err:      cloudhub.ErrProtoboardNotFound,
 		},
 		{
 			Existing: nil,
 			ID:       "1",
-			Expected: cmp.Protoboard{},
-			Err:      cmp.ErrProtoboardNotFound,
+			Expected: cloudhub.Protoboard{},
+			Err:      cloudhub.ErrProtoboardNotFound,
 		},
 	}
 	for i, test := range tests {
@@ -138,23 +138,23 @@ func (m *Mock_Protoboard_ID) Generate() (string, error) {
 	return strconv.Itoa(m.id), nil
 }
 
-func MockProtoboards(existing []cmp.Protoboard, expected error) (filestore.Protoboards, *map[string]cmp.Protoboard) {
-	protoboards := map[string]cmp.Protoboard{}
-	fileName := func(dir string, protoboard cmp.Protoboard) string {
+func MockProtoboards(existing []cloudhub.Protoboard, expected error) (filestore.Protoboards, *map[string]cloudhub.Protoboard) {
+	protoboards := map[string]cloudhub.Protoboard{}
+	fileName := func(dir string, protoboard cloudhub.Protoboard) string {
 		return path.Join(dir, protoboard.ID+".json")
 	}
 	dir := "dir"
 	for _, l := range existing {
 		protoboards[fileName(dir, l)] = l
 	}
-	load := func(file string) (cmp.Protoboard, error) {
+	load := func(file string) (cloudhub.Protoboard, error) {
 		if expected != nil {
-			return cmp.Protoboard{}, expected
+			return cloudhub.Protoboard{}, expected
 		}
 
 		l, ok := protoboards[file]
 		if !ok {
-			return cmp.Protoboard{}, cmp.ErrProtoboardNotFound
+			return cloudhub.Protoboard{}, cloudhub.ErrProtoboardNotFound
 		}
 		return l, nil
 	}

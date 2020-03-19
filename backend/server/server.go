@@ -15,12 +15,12 @@ import (
 	"time"
 
 	flags "github.com/jessevdk/go-flags"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/bolt"
-	idgen "github.com/snetsystems/cmp/backend/id"
-	"github.com/snetsystems/cmp/backend/influx"
-	clog "github.com/snetsystems/cmp/backend/log"
-	"github.com/snetsystems/cmp/backend/oauth2"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/bolt"
+	idgen "github.com/snetsystems/cloudhub/backend/id"
+	"github.com/snetsystems/cloudhub/backend/influx"
+	clog "github.com/snetsystems/cloudhub/backend/log"
+	"github.com/snetsystems/cloudhub/backend/oauth2"
 	"github.com/tylerb/graceful"
 )
 
@@ -32,7 +32,7 @@ func init() {
 	startTime = time.Now().UTC()
 }
 
-// Server for the CMP API
+// Server for the CloudHub API
 type Server struct {
 	Host        string `long:"host" description:"The IP to listen on" default:"0.0.0.0" env:"HOST"`
 	Port        int    `long:"port" description:"The port to listen on for insecure connections, defaults to a random value" default:"8888" env:"PORT"`
@@ -57,10 +57,10 @@ type Server struct {
 	AddonTokens map[string]string `short:"k" long:"addon-tokens" description:"Support addon is [salt, swan]. API tokens to be used to the client for a request to addon API servers. Multiple tokens can be added by using multiple of the same flag with different 'name:token' values, or as an environment variable with comma-separated 'name:token' values. E.g. via flags: '--addon-tokens=salt:{token} --addon-tokens=swan:{token}'. E.g. via environment variable: 'export ADDON_TOKENS=salt:{token},swan:{token}'" env:"ADDON_TOKENS" env-delim:","`
 
 	Develop         bool          `short:"d" long:"develop" description:"Run server in develop mode."`
-	BoltPath        string        `short:"b" long:"bolt-path" description:"Full path to boltDB file (e.g. './cmp-v1.db')" env:"BOLT_PATH" default:"cmp-v1.db"`
-	CannedPath      string        `short:"c" long:"canned-path" description:"Path to directory of pre-canned application layouts (/usr/share/cmp/canned)" env:"CANNED_PATH" default:"canned"`
-	ProtoboardsPath string        `long:"protoboards-path" description:"Path to directory of protoboards (/usr/share/cmp/protoboards)" env:"PROTOBOARDS_PATH" default:"protoboards"`
-	ResourcesPath   string        `long:"resources-path" description:"Path to directory of pre-canned dashboards, sources, kapacitors, and organizations (/usr/share/cmp/resources)" env:"RESOURCES_PATH" default:"canned"`
+	BoltPath        string        `short:"b" long:"bolt-path" description:"Full path to boltDB file (e.g. './cloudhub-v1.db')" env:"BOLT_PATH" default:"cloudhub-v1.db"`
+	CannedPath      string        `short:"c" long:"canned-path" description:"Path to directory of pre-canned application layouts (/usr/share/cloudhub/canned)" env:"CANNED_PATH" default:"canned"`
+	ProtoboardsPath string        `long:"protoboards-path" description:"Path to directory of protoboards (/usr/share/cloudhub/protoboards)" env:"PROTOBOARDS_PATH" default:"protoboards"`
+	ResourcesPath   string        `long:"resources-path" description:"Path to directory of pre-canned dashboards, sources, kapacitors, and organizations (/usr/share/cloudhub/resources)" env:"RESOURCES_PATH" default:"canned"`
 	TokenSecret     string        `short:"t" long:"token-secret" description:"Secret to sign tokens" env:"TOKEN_SECRET"`
 	JwksURL         string        `long:"jwks-url" description:"URL that returns OpenID Key Discovery JWKS document." env:"JWKS_URL"`
 	UseIDToken      bool          `long:"use-id-token" description:"Enable id_token processing." env:"USE_ID_TOKEN"`
@@ -73,11 +73,11 @@ type Server struct {
 	GoogleClientID     string   `long:"google-client-id" description:"Google Client ID for OAuth 2 support" env:"GOOGLE_CLIENT_ID"`
 	GoogleClientSecret string   `long:"google-client-secret" description:"Google Client Secret for OAuth 2 support" env:"GOOGLE_CLIENT_SECRET"`
 	GoogleDomains      []string `long:"google-domains" description:"Google email domain user is required to have active membership (env comma separated)" env:"GOOGLE_DOMAINS" env-delim:","`
-	PublicURL          string   `long:"public-url" description:"Full public URL used to access CMP from a web browser. Used for OAuth2 authentication. (http://localhost:8888)" env:"PUBLIC_URL"`
+	PublicURL          string   `long:"public-url" description:"Full public URL used to access CloudHub from a web browser. Used for OAuth2 authentication. (http://localhost:8888)" env:"PUBLIC_URL"`
 
 	HerokuClientID      string   `long:"heroku-client-id" description:"Heroku Client ID for OAuth 2 support" env:"HEROKU_CLIENT_ID"`
 	HerokuSecret        string   `long:"heroku-secret" description:"Heroku Secret for OAuth 2 support" env:"HEROKU_SECRET"`
-	HerokuOrganizations []string `long:"heroku-organization" description:"Heroku Organization Memberships a user is required to have for access to CMP (env comma separated)" env:"HEROKU_ORGS" env-delim:","`
+	HerokuOrganizations []string `long:"heroku-organization" description:"Heroku Organization Memberships a user is required to have for access to CloudHub (env comma separated)" env:"HEROKU_ORGS" env-delim:","`
 
 	GenericName         string   `long:"generic-name" description:"Generic OAuth2 name presented on the login page"  env:"GENERIC_NAME"`
 	GenericClientID     string   `long:"generic-client-id" description:"Generic OAuth2 Client ID. Can be used own OAuth2 service."  env:"GENERIC_CLIENT_ID"`
@@ -92,17 +92,17 @@ type Server struct {
 	Auth0Domain        string   `long:"auth0-domain" description:"Subdomain of auth0.com used for Auth0 OAuth2 authentication" env:"AUTH0_DOMAIN"`
 	Auth0ClientID      string   `long:"auth0-client-id" description:"Auth0 Client ID for OAuth2 support" env:"AUTH0_CLIENT_ID"`
 	Auth0ClientSecret  string   `long:"auth0-client-secret" description:"Auth0 Client Secret for OAuth2 support" env:"AUTH0_CLIENT_SECRET"`
-	Auth0Organizations []string `long:"auth0-organizations" description:"Auth0 organizations permitted to access CMP (env comma separated)" env:"AUTH0_ORGS" env-delim:","`
+	Auth0Organizations []string `long:"auth0-organizations" description:"Auth0 organizations permitted to access CloudHub (env comma separated)" env:"AUTH0_ORGS" env-delim:","`
 	Auth0SuperAdminOrg string   `long:"auth0-superadmin-org" description:"Auth0 organization from which users are automatically granted SuperAdmin status" env:"AUTH0_SUPERADMIN_ORG"`
 
 	StatusFeedURL          string            `long:"status-feed-url" description:"URL of a JSON Feed to display as a News Feed on the client Status page." default:"https://www.snetgroup.info/" env:"STATUS_FEED_URL"`
-	CustomLinks            map[string]string `long:"custom-link" description:"Custom link to be added to the client User menu. Multiple links can be added by using multiple of the same flag with different 'name:url' values, or as an environment variable with comma-separated 'name:url' values. E.g. via flags: '--custom-link=snetsystems:https://www.snetsystems.com --custom-link=CMP:https://github.com/snetsystems/cmp'. E.g. via environment variable: 'export CUSTOM_LINKS=snetsystems:https://www.snetsystems.com,CMP:https://github.com/snetsystems/cmp'" env:"CUSTOM_LINKS" env-delim:","`
+	CustomLinks            map[string]string `long:"custom-link" description:"Custom link to be added to the client User menu. Multiple links can be added by using multiple of the same flag with different 'name:url' values, or as an environment variable with comma-separated 'name:url' values. E.g. via flags: '--custom-link=snetsystems:https://www.snetsystems.com --custom-link=CloudHub:https://github.com/snetsystems/cloudhub'. E.g. via environment variable: 'export CUSTOM_LINKS=snetsystems:https://www.snetsystems.com,CloudHub:https://github.com/snetsystems/cloudhub'" env:"CUSTOM_LINKS" env-delim:","`
 	TelegrafSystemInterval time.Duration     `long:"telegraf-system-interval" default:"1m" description:"Duration used in the GROUP BY time interval for the hosts list" env:"TELEGRAF_SYSTEM_INTERVAL"`
 
 	LogLevel    string `short:"l" long:"log-level" value-name:"choice" choice:"debug" choice:"info" choice:"error" default:"info" description:"Set the logging level" env:"LOG_LEVEL"`
-	Basepath    string `short:"p" long:"basepath" description:"A URL path prefix under which all CMP routes will be mounted. (Note: PREFIX_ROUTES has been deprecated. Now, if basepath is set, all routes will be prefixed with it.)" env:"BASE_PATH"`
-	ShowVersion bool   `short:"v" long:"version" description:"Show CMP version info"`
-	BuildInfo   cmp.BuildInfo
+	Basepath    string `short:"p" long:"basepath" description:"A URL path prefix under which all CloudHub routes will be mounted. (Note: PREFIX_ROUTES has been deprecated. Now, if basepath is set, all routes will be prefixed with it.)" env:"BASE_PATH"`
+	ShowVersion bool   `short:"v" long:"version" description:"Show CloudHub version info"`
+	BuildInfo   cloudhub.BuildInfo
 	Listener    net.Listener
 	handler     http.Handler
 }
@@ -142,7 +142,7 @@ func (s *Server) UseGenericOAuth2() bool {
 		s.GenericTokenURL != ""
 }
 
-func (s *Server) githubOAuth(logger cmp.Logger, auth oauth2.Authenticator) (oauth2.Provider, oauth2.Mux, func() bool) {
+func (s *Server) githubOAuth(logger cloudhub.Logger, auth oauth2.Authenticator) (oauth2.Provider, oauth2.Mux, func() bool) {
 	gh := oauth2.Github{
 		ClientID:     s.GithubClientID,
 		ClientSecret: s.GithubClientSecret,
@@ -154,7 +154,7 @@ func (s *Server) githubOAuth(logger cmp.Logger, auth oauth2.Authenticator) (oaut
 	return &gh, ghMux, s.UseGithub
 }
 
-func (s *Server) googleOAuth(logger cmp.Logger, auth oauth2.Authenticator) (oauth2.Provider, oauth2.Mux, func() bool) {
+func (s *Server) googleOAuth(logger cloudhub.Logger, auth oauth2.Authenticator) (oauth2.Provider, oauth2.Mux, func() bool) {
 	redirectURL := s.PublicURL + s.Basepath + "/oauth/google/callback"
 	google := oauth2.Google{
 		ClientID:     s.GoogleClientID,
@@ -168,7 +168,7 @@ func (s *Server) googleOAuth(logger cmp.Logger, auth oauth2.Authenticator) (oaut
 	return &google, goMux, s.UseGoogle
 }
 
-func (s *Server) herokuOAuth(logger cmp.Logger, auth oauth2.Authenticator) (oauth2.Provider, oauth2.Mux, func() bool) {
+func (s *Server) herokuOAuth(logger cloudhub.Logger, auth oauth2.Authenticator) (oauth2.Provider, oauth2.Mux, func() bool) {
 	heroku := oauth2.Heroku{
 		ClientID:      s.HerokuClientID,
 		ClientSecret:  s.HerokuSecret,
@@ -180,7 +180,7 @@ func (s *Server) herokuOAuth(logger cmp.Logger, auth oauth2.Authenticator) (oaut
 	return &heroku, hMux, s.UseHeroku
 }
 
-func (s *Server) genericOAuth(logger cmp.Logger, auth oauth2.Authenticator) (oauth2.Provider, oauth2.Mux, func() bool) {
+func (s *Server) genericOAuth(logger cloudhub.Logger, auth oauth2.Authenticator) (oauth2.Provider, oauth2.Mux, func() bool) {
 	gen := oauth2.Generic{
 		PageName:       s.GenericName,
 		ClientID:       s.GenericClientID,
@@ -199,7 +199,7 @@ func (s *Server) genericOAuth(logger cmp.Logger, auth oauth2.Authenticator) (oau
 	return &gen, genMux, s.UseGenericOAuth2
 }
 
-func (s *Server) auth0OAuth(logger cmp.Logger, auth oauth2.Authenticator) (oauth2.Provider, oauth2.Mux, func() bool) {
+func (s *Server) auth0OAuth(logger cloudhub.Logger, auth oauth2.Authenticator) (oauth2.Provider, oauth2.Mux, func() bool) {
 	redirectPath := path.Join(s.Basepath, "oauth", "auth0", "callback")
 	redirectURL, err := url.Parse(s.PublicURL)
 	if err != nil {
@@ -278,7 +278,7 @@ func (s *Server) NewListener() (net.Listener, error) {
 	return listener, nil
 }
 
-// Serve starts and runs the CMP server
+// Serve starts and runs the CloudHub server
 func (s *Server) Serve(ctx context.Context) error {
 	logger := clog.New(clog.ParseLevel(s.LogLevel))
 	_, err := NewCustomLinks(s.CustomLinks)
@@ -324,7 +324,7 @@ func (s *Server) Serve(ctx context.Context) error {
 		AddonTokens:   s.AddonTokens,
 	}, service)
 
-	// Add CMP's version header to all requests
+	// Add CloudHub's version header to all requests
 	s.handler = Version(s.BuildInfo.Version, s.handler)
 
 	if s.useTLS() {
@@ -362,7 +362,7 @@ func (s *Server) Serve(ctx context.Context) error {
 	}
 	logger.
 		WithField("component", "server").
-		Info("Serving CMP at ", scheme, "://", s.Listener.Addr())
+		Info("Serving CloudHub at ", scheme, "://", s.Listener.Addr())
 
 	if err := httpServer.Serve(s.Listener); err != nil {
 		logger.
@@ -373,7 +373,7 @@ func (s *Server) Serve(ctx context.Context) error {
 
 	logger.
 		WithField("component", "server").
-		Info("Stopped serving CMP at ", scheme, "://", s.Listener.Addr())
+		Info("Stopped serving CloudHub at ", scheme, "://", s.Listener.Addr())
 
 	return nil
 }
@@ -387,7 +387,7 @@ type builders struct {
 	Protoboards   ProtoboardsBuilder
 }
 
-func (s *Server) newBuilders(logger cmp.Logger) builders {
+func (s *Server) newBuilders(logger cloudhub.Logger) builders {
 	return builders{
 		Layouts: &MultiLayoutBuilder{
 			Logger:     logger,
@@ -427,7 +427,7 @@ func (s *Server) newBuilders(logger cmp.Logger) builders {
 	}
 }
 
-func openService(ctx context.Context, buildInfo cmp.BuildInfo, boltPath string, builder builders, protoboardsPath string, logger cmp.Logger, useAuth bool, auth0SuperAdminOrg string, telegrafSystemInterval time.Duration, addonURLs map[string]string) Service {
+func openService(ctx context.Context, buildInfo cloudhub.BuildInfo, boltPath string, builder builders, protoboardsPath string, logger cloudhub.Logger, useAuth bool, auth0SuperAdminOrg string, telegrafSystemInterval time.Duration, addonURLs map[string]string) Service {
 
 	db := bolt.NewClient()
 	db.Path = boltPath
@@ -505,7 +505,7 @@ func openService(ctx context.Context, buildInfo cmp.BuildInfo, boltPath string, 
 		UseAuth:                  useAuth,
 		Databases:                &influx.Client{Logger: logger},
 		SuperAdminProviderGroups: superAdminProviderGroups{auth0: auth0SuperAdminOrg},
-		Env:                      cmp.Environment{TelegrafSystemInterval: telegrafSystemInterval},
+		Env:                      cloudhub.Environment{TelegrafSystemInterval: telegrafSystemInterval},
 		AddonURLs:                addonURLs,
 	}
 }

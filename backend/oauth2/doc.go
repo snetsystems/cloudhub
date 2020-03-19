@@ -4,7 +4,7 @@
 // This is how the pieces of this package fit together:
 //
 //  ┌────────────────────────────────────────┐
-//  │github.com/snetsystems/cmp/oauth2        │
+//  │github.com/snetsystems/cloudhub/oauth2        │
 //  ├────────────────────────────────────────┴────────────────────────────────────┐
 //  │┌────────────────────┐                                                       │
 //  ││   <<interface>>    │        ┌─────────────────────────┐                    │
@@ -58,7 +58,7 @@
 // implements is pictured below for reference.
 //
 //      ┌─────────┐                ┌───────────┐                     ┌────────┐
-//      │ Browser │                │    CMP    │                     │Provider│
+//      │ Browser │                │    CloudHub    │                     │Provider│
 //      └─────────┘                └───────────┘                     └────────┘
 //           │                           │                                │
 //           ├─────── GET /auth ─────────▶                                │
@@ -70,7 +70,7 @@
 //           ├──────────────── GET /auth w/ callback ─────────────────────▶
 //           │                           │                                │
 //           │                           │                                │
-//           ◀─ ─ ─ ─ ─ ─ ─   302 to CMP Callback  ─ ─ ─ ─ ─ ─ ─ ─ ┤
+//           ◀─ ─ ─ ─ ─ ─ ─   302 to CloudHub Callback  ─ ─ ─ ─ ─ ─ ─ ─ ┤
 //           │                           │                                │
 //           │   Code and State from     │                                │
 //           │        Provider           │                                │
@@ -88,10 +88,10 @@
 //           │                           │                                │
 //           │                           │                                │
 //
-// The browser ultimately receives a cookie from CMP, authorizing it.
+// The browser ultimately receives a cookie from CloudHub, authorizing it.
 // Its contents are encoded as a JWT whose "sub" claim is the user's email
 // address for whatever provider they have authenticated with. Each request to
-// CMP will validate the contents of this JWT against the `TOKEN_SECRET`
+// CloudHub will validate the contents of this JWT against the `TOKEN_SECRET`
 // and checked for expiration. The JWT's "sub" becomes the
 // https://en.wikipedia.org/wiki/Principal_(computer_security) used for
 // authorization to resources.
@@ -104,7 +104,7 @@
 //
 //   /oauth/{provider}/login
 //
-// The `/oauth` endpoint redirects to the Provider for OAuth.  CMP sets
+// The `/oauth` endpoint redirects to the Provider for OAuth.  CloudHub sets
 // the OAuth `state` request parameter to a JWT with a random "sub".  Using
 // $TOKEN_SECRET `/oauth/github/callback` can validate the `state` parameter
 // without needing `state` to be saved.
@@ -115,7 +115,7 @@
 //
 // First, it will validate the `state` JWT from the `/oauth` endpoint. `JWT` validation
 // only requires access to the signature token.  Therefore, there is no need for `state`
-// to be saved.  Additionally, multiple CMP servers will not need to share third
+// to be saved.  Additionally, multiple CloudHub servers will not need to share third
 // party storage to synchronize `state`. If this validation fails, the request
 // will be redirected to `/login`.
 //
@@ -131,7 +131,7 @@
 //
 // Next, the request is redirected to `/`.
 //
-// For all API calls to `/cmp/v1`, the server checks for the existence and validity
+// For all API calls to `/cloudhub/v1`, the server checks for the existence and validity
 // of the JWT within the cookie value.
 // If the request did not have a valid JWT, the API returns `HTTP/1.1 401 Unauthorized`.
 //

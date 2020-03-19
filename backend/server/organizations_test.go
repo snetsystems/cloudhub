@@ -11,16 +11,16 @@ import (
 	"testing"
 
 	"github.com/bouk/httprouter"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/log"
-	"github.com/snetsystems/cmp/backend/mocks"
-	"github.com/snetsystems/cmp/backend/roles"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/log"
+	"github.com/snetsystems/cloudhub/backend/mocks"
+	"github.com/snetsystems/cloudhub/backend/roles"
 )
 
 func TestService_OrganizationID(t *testing.T) {
 	type fields struct {
-		OrganizationsStore cmp.OrganizationsStore
-		Logger             cmp.Logger
+		OrganizationsStore cloudhub.OrganizationsStore
+		Logger             cloudhub.Logger
 	}
 	type args struct {
 		w *httptest.ResponseRecorder
@@ -48,10 +48,10 @@ func TestService_OrganizationID(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				OrganizationsStore: &mocks.OrganizationsStore{
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						switch *q.ID {
 						case "1337":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:   "1337",
 								Name: "The Good Place",
 							}, nil
@@ -64,7 +64,7 @@ func TestService_OrganizationID(t *testing.T) {
 			id:              "1337",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"links":{"self":"/cmp/v1/organizations/1337"},"id":"1337","name":"The Good Place"}`,
+			wantBody:        `{"links":{"self":"/cloudhub/v1/organizations/1337"},"id":"1337","name":"The Good Place"}`,
 		},
 		{
 			name: "Get Single Organization",
@@ -79,10 +79,10 @@ func TestService_OrganizationID(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				OrganizationsStore: &mocks.OrganizationsStore{
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						switch *q.ID {
 						case "1337":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:   "1337",
 								Name: "The Good Place",
 							}, nil
@@ -95,7 +95,7 @@ func TestService_OrganizationID(t *testing.T) {
 			id:              "1337",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1337","name":"The Good Place","links":{"self":"/cmp/v1/organizations/1337"}}`,
+			wantBody:        `{"id":"1337","name":"The Good Place","links":{"self":"/cloudhub/v1/organizations/1337"}}`,
 		},
 	}
 
@@ -138,8 +138,8 @@ func TestService_OrganizationID(t *testing.T) {
 
 func TestService_Organizations(t *testing.T) {
 	type fields struct {
-		OrganizationsStore cmp.OrganizationsStore
-		Logger             cmp.Logger
+		OrganizationsStore cloudhub.OrganizationsStore
+		Logger             cloudhub.Logger
 	}
 	type args struct {
 		w *httptest.ResponseRecorder
@@ -166,13 +166,13 @@ func TestService_Organizations(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				OrganizationsStore: &mocks.OrganizationsStore{
-					AllF: func(ctx context.Context) ([]cmp.Organization, error) {
-						return []cmp.Organization{
-							cmp.Organization{
+					AllF: func(ctx context.Context) ([]cloudhub.Organization, error) {
+						return []cloudhub.Organization{
+							cloudhub.Organization{
 								ID:   "1337",
 								Name: "The Good Place",
 							},
-							cmp.Organization{
+							cloudhub.Organization{
 								ID:   "100",
 								Name: "The Bad Place",
 							},
@@ -182,7 +182,7 @@ func TestService_Organizations(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"links":{"self":"/cmp/v1/organizations"},"organizations":[{"links":{"self":"/cmp/v1/organizations/1337"},"id":"1337","name":"The Good Place"},{"links":{"self":"/cmp/v1/organizations/100"},"id":"100","name":"The Bad Place"}]}`,
+			wantBody:        `{"links":{"self":"/cloudhub/v1/organizations"},"organizations":[{"links":{"self":"/cloudhub/v1/organizations/1337"},"id":"1337","name":"The Good Place"},{"links":{"self":"/cloudhub/v1/organizations/100"},"id":"100","name":"The Bad Place"}]}`,
 		},
 	}
 
@@ -216,8 +216,8 @@ func TestService_Organizations(t *testing.T) {
 
 func TestService_UpdateOrganization(t *testing.T) {
 	type fields struct {
-		OrganizationsStore cmp.OrganizationsStore
-		Logger             cmp.Logger
+		OrganizationsStore cloudhub.OrganizationsStore
+		Logger             cloudhub.Logger
 	}
 	type args struct {
 		w      *httptest.ResponseRecorder
@@ -250,11 +250,11 @@ func TestService_UpdateOrganization(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				OrganizationsStore: &mocks.OrganizationsStore{
-					UpdateF: func(ctx context.Context, o *cmp.Organization) error {
+					UpdateF: func(ctx context.Context, o *cloudhub.Organization) error {
 						return nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "1337",
 							Name:        "The Good Place",
 							DefaultRole: roles.ViewerRoleName,
@@ -265,7 +265,7 @@ func TestService_UpdateOrganization(t *testing.T) {
 			id:              "1337",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1337","name":"The Bad Place","defaultRole":"viewer","links":{"self":"/cmp/v1/organizations/1337"}}`,
+			wantBody:        `{"id":"1337","name":"The Bad Place","defaultRole":"viewer","links":{"self":"/cloudhub/v1/organizations/1337"}}`,
 		},
 		{
 			name: "Update Organization - nothing to update",
@@ -281,11 +281,11 @@ func TestService_UpdateOrganization(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				OrganizationsStore: &mocks.OrganizationsStore{
-					UpdateF: func(ctx context.Context, o *cmp.Organization) error {
+					UpdateF: func(ctx context.Context, o *cloudhub.Organization) error {
 						return nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "1337",
 							Name:        "The Good Place",
 							DefaultRole: roles.ViewerRoleName,
@@ -314,11 +314,11 @@ func TestService_UpdateOrganization(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				OrganizationsStore: &mocks.OrganizationsStore{
-					UpdateF: func(ctx context.Context, o *cmp.Organization) error {
+					UpdateF: func(ctx context.Context, o *cloudhub.Organization) error {
 						return nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "1337",
 							Name:        "The Good Place",
 							DefaultRole: roles.MemberRoleName,
@@ -329,7 +329,7 @@ func TestService_UpdateOrganization(t *testing.T) {
 			id:              "1337",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"links":{"self":"/cmp/v1/organizations/1337"},"id":"1337","name":"The Good Place","defaultRole":"viewer"}`,
+			wantBody:        `{"links":{"self":"/cloudhub/v1/organizations/1337"},"id":"1337","name":"The Good Place","defaultRole":"viewer"}`,
 		},
 		{
 			name: "Update Organization - invalid update",
@@ -345,10 +345,10 @@ func TestService_UpdateOrganization(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				OrganizationsStore: &mocks.OrganizationsStore{
-					UpdateF: func(ctx context.Context, o *cmp.Organization) error {
+					UpdateF: func(ctx context.Context, o *cloudhub.Organization) error {
 						return nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						return nil, nil
 					},
 				},
@@ -374,10 +374,10 @@ func TestService_UpdateOrganization(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				OrganizationsStore: &mocks.OrganizationsStore{
-					UpdateF: func(ctx context.Context, o *cmp.Organization) error {
+					UpdateF: func(ctx context.Context, o *cloudhub.Organization) error {
 						return nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						return nil, nil
 					},
 				},
@@ -429,8 +429,8 @@ func TestService_UpdateOrganization(t *testing.T) {
 
 func TestService_RemoveOrganization(t *testing.T) {
 	type fields struct {
-		OrganizationsStore cmp.OrganizationsStore
-		Logger             cmp.Logger
+		OrganizationsStore cloudhub.OrganizationsStore
+		Logger             cloudhub.Logger
 	}
 	type args struct {
 		w *httptest.ResponseRecorder
@@ -456,13 +456,13 @@ func TestService_RemoveOrganization(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DeleteF: func(ctx context.Context, o *cmp.Organization) error {
+					DeleteF: func(ctx context.Context, o *cloudhub.Organization) error {
 						return nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						switch *q.ID {
 						case "1337":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:   "1337",
 								Name: "The Good Place",
 							}, nil
@@ -506,15 +506,15 @@ func TestService_RemoveOrganization(t *testing.T) {
 
 func TestService_NewOrganization(t *testing.T) {
 	type fields struct {
-		OrganizationsStore cmp.OrganizationsStore
-		UsersStore         cmp.UsersStore
-		Logger             cmp.Logger
+		OrganizationsStore cloudhub.OrganizationsStore
+		UsersStore         cloudhub.UsersStore
+		Logger             cloudhub.Logger
 	}
 	type args struct {
 		w    *httptest.ResponseRecorder
 		r    *http.Request
 		org  *organizationRequest
-		user *cmp.User
+		user *cloudhub.User
 	}
 	tests := []struct {
 		name            string
@@ -534,7 +534,7 @@ func TestService_NewOrganization(t *testing.T) {
 					"http://any.url", // can be any valid URL as we are bypassing mux
 					nil,
 				),
-				user: &cmp.User{
+				user: &cloudhub.User{
 					ID:       1,
 					Name:     "bobetta",
 					Provider: "github",
@@ -547,8 +547,8 @@ func TestService_NewOrganization(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				UsersStore: &mocks.UsersStore{
-					AddF: func(ctx context.Context, u *cmp.User) (*cmp.User, error) {
-						return &cmp.User{
+					AddF: func(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
+						return &cloudhub.User{
 							ID:       1,
 							Name:     "bobetta",
 							Provider: "github",
@@ -557,8 +557,8 @@ func TestService_NewOrganization(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					AddF: func(ctx context.Context, o *cmp.Organization) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					AddF: func(ctx context.Context, o *cloudhub.Organization) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The Good Place",
 						}, nil
@@ -567,7 +567,7 @@ func TestService_NewOrganization(t *testing.T) {
 			},
 			wantStatus:      http.StatusCreated,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1337","name":"The Good Place","links":{"self":"/cmp/v1/organizations/1337"}}`,
+			wantBody:        `{"id":"1337","name":"The Good Place","links":{"self":"/cloudhub/v1/organizations/1337"}}`,
 		},
 		{
 			name: "Fail to create Organization - no org name",
@@ -578,7 +578,7 @@ func TestService_NewOrganization(t *testing.T) {
 					"http://any.url", // can be any valid URL as we are bypassing mux
 					nil,
 				),
-				user: &cmp.User{
+				user: &cloudhub.User{
 					ID:       1,
 					Name:     "bobetta",
 					Provider: "github",
@@ -589,8 +589,8 @@ func TestService_NewOrganization(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				UsersStore: &mocks.UsersStore{
-					AddF: func(ctx context.Context, u *cmp.User) (*cmp.User, error) {
-						return &cmp.User{
+					AddF: func(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
+						return &cloudhub.User{
 							ID:       1,
 							Name:     "bobetta",
 							Provider: "github",
@@ -599,14 +599,14 @@ func TestService_NewOrganization(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					AddF: func(ctx context.Context, o *cmp.Organization) (*cmp.Organization, error) {
+					AddF: func(ctx context.Context, o *cloudhub.Organization) (*cloudhub.Organization, error) {
 						return nil, nil
 					},
 				},
 			},
 			wantStatus:      http.StatusUnprocessableEntity,
 			wantContentType: "application/json",
-			wantBody:        `{"code":422,"message":"Name required on CMP Organization request body"}`,
+			wantBody:        `{"code":422,"message":"Name required on CloudHub Organization request body"}`,
 		},
 		{
 			name: "Create Organization - no user on context",
@@ -624,8 +624,8 @@ func TestService_NewOrganization(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				UsersStore: &mocks.UsersStore{
-					AddF: func(ctx context.Context, u *cmp.User) (*cmp.User, error) {
-						return &cmp.User{
+					AddF: func(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
+						return &cloudhub.User{
 							ID:       1,
 							Name:     "bobetta",
 							Provider: "github",
@@ -634,13 +634,13 @@ func TestService_NewOrganization(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					AddF: func(ctx context.Context, o *cmp.Organization) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					AddF: func(ctx context.Context, o *cloudhub.Organization) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The Good Place",
 						}, nil
 					},
-					DeleteF: func(ctx context.Context, o *cmp.Organization) error {
+					DeleteF: func(ctx context.Context, o *cloudhub.Organization) error {
 						return nil
 					},
 				},
@@ -661,7 +661,7 @@ func TestService_NewOrganization(t *testing.T) {
 				org: &organizationRequest{
 					Name: "The Good Place",
 				},
-				user: &cmp.User{
+				user: &cloudhub.User{
 					ID:       1,
 					Name:     "bobetta",
 					Provider: "github",
@@ -671,18 +671,18 @@ func TestService_NewOrganization(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				UsersStore: &mocks.UsersStore{
-					AddF: func(ctx context.Context, u *cmp.User) (*cmp.User, error) {
+					AddF: func(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
 						return nil, fmt.Errorf("failed to add user to org")
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					AddF: func(ctx context.Context, o *cmp.Organization) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					AddF: func(ctx context.Context, o *cloudhub.Organization) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The Good Place",
 						}, nil
 					},
-					DeleteF: func(ctx context.Context, o *cmp.Organization) error {
+					DeleteF: func(ctx context.Context, o *cloudhub.Organization) error {
 						return nil
 					},
 				},

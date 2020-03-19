@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 func TestInterfaceImplementation(t *testing.T) {
-	var _ cmp.ServersStore = &KapacitorStore{}
+	var _ cloudhub.ServersStore = &KapacitorStore{}
 }
 
 func TestKapacitorStoreAll(t *testing.T) {
@@ -23,7 +23,7 @@ func TestKapacitorStoreAll(t *testing.T) {
 		t.Fatal("Store should be empty")
 	}
 
-	store.Kapacitor = &cmp.Server{}
+	store.Kapacitor = &cloudhub.Server{}
 	kaps, err = store.All(ctx)
 	if err != nil {
 		t.Fatal("All should not throw an error with an empty Store")
@@ -37,7 +37,7 @@ func TestKapacitorStoreAdd(t *testing.T) {
 	ctx := context.Background()
 
 	store := KapacitorStore{}
-	_, err := store.Add(ctx, cmp.Server{})
+	_, err := store.Add(ctx, cloudhub.Server{})
 	if err == nil {
 		t.Fatal("Store should not support adding another source")
 	}
@@ -47,22 +47,22 @@ func TestKapacitorStoreDelete(t *testing.T) {
 	ctx := context.Background()
 
 	store := KapacitorStore{}
-	err := store.Delete(ctx, cmp.Server{})
+	err := store.Delete(ctx, cloudhub.Server{})
 	if err == nil {
 		t.Fatal("Delete should not operate on an empty Store")
 	}
 
-	store.Kapacitor = &cmp.Server{
+	store.Kapacitor = &cloudhub.Server{
 		ID: 9,
 	}
-	err = store.Delete(ctx, cmp.Server{
+	err = store.Delete(ctx, cloudhub.Server{
 		ID: 8,
 	})
 	if err == nil {
 		t.Fatal("Delete should not remove elements with the wrong ID")
 	}
 
-	err = store.Delete(ctx, cmp.Server{
+	err = store.Delete(ctx, cloudhub.Server{
 		ID: 9,
 	})
 	if err != nil {
@@ -79,7 +79,7 @@ func TestKapacitorStoreGet(t *testing.T) {
 		t.Fatal("Get should return an error for an empty Store")
 	}
 
-	store.Kapacitor = &cmp.Server{
+	store.Kapacitor = &cloudhub.Server{
 		ID: 9,
 	}
 	_, err = store.Get(ctx, 8)
@@ -87,7 +87,7 @@ func TestKapacitorStoreGet(t *testing.T) {
 		t.Fatal("Get should return an error if it finds no matches")
 	}
 
-	store.Kapacitor = &cmp.Server{
+	store.Kapacitor = &cloudhub.Server{
 		ID: 9,
 	}
 	kap, err := store.Get(ctx, 9)
@@ -100,25 +100,25 @@ func TestKapacitorStoreUpdate(t *testing.T) {
 	ctx := context.Background()
 
 	store := KapacitorStore{}
-	err := store.Update(ctx, cmp.Server{})
+	err := store.Update(ctx, cloudhub.Server{})
 	if err == nil {
 		t.Fatal("Update fhouls return an error for an empty Store")
 	}
 
-	store.Kapacitor = &cmp.Server{
+	store.Kapacitor = &cloudhub.Server{
 		ID: 9,
 	}
-	err = store.Update(ctx, cmp.Server{
+	err = store.Update(ctx, cloudhub.Server{
 		ID: 8,
 	})
 	if err == nil {
 		t.Fatal("Update should return an error if it finds no matches")
 	}
 
-	store.Kapacitor = &cmp.Server{
+	store.Kapacitor = &cloudhub.Server{
 		ID: 9,
 	}
-	err = store.Update(ctx, cmp.Server{
+	err = store.Update(ctx, cloudhub.Server{
 		ID:  9,
 		URL: "http://crystal.pepsi.com",
 	})

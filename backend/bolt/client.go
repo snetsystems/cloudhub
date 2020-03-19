@@ -9,13 +9,13 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/id"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/id"
 )
 
 const (
 	// ErrUnableToOpen means we had an issue establishing a connection (or creating the database)
-	ErrUnableToOpen = "Unable to open boltdb; is there a cmp already running?  %v"
+	ErrUnableToOpen = "Unable to open boltdb; is there a cloudhub already running?  %v"
 	// ErrUnableToBackup means we couldn't copy the db file into ./backup
 	ErrUnableToBackup = "Unable to backup your database prior to migrations:  %v"
 	// ErrUnableToInitialize means we couldn't create missing Buckets (maybe a timeout)
@@ -28,10 +28,10 @@ const (
 type Client struct {
 	Path      string
 	db        *bolt.DB
-	logger    cmp.Logger
+	logger    cloudhub.Logger
 	isNew     bool
 	Now       func() time.Time
-	LayoutIDs cmp.ID
+	LayoutIDs cloudhub.ID
 
 	BuildStore              *BuildStore
 	SourcesStore            *SourcesStore
@@ -87,7 +87,7 @@ func (b Backup) Backup() bool {
 }
 
 // Open / create boltDB file.
-func (c *Client) Open(ctx context.Context, logger cmp.Logger, build cmp.BuildInfo, opts ...Option) error {
+func (c *Client) Open(ctx context.Context, logger cloudhub.Logger, build cloudhub.BuildInfo, opts ...Option) error {
 	if _, err := os.Stat(c.Path); os.IsNotExist(err) {
 		c.isNew = true
 	} else if err != nil {
@@ -180,7 +180,7 @@ func (c *Client) initialize(ctx context.Context) error {
 }
 
 // migrate moves data from an old schema to a new schema in each Store
-func (c *Client) migrate(ctx context.Context, build cmp.BuildInfo) error {
+func (c *Client) migrate(ctx context.Context, build cloudhub.BuildInfo) error {
 	if c.db != nil {
 		// Runtime migrations
 		if err := c.OrganizationsStore.Migrate(ctx); err != nil {
@@ -263,7 +263,7 @@ func (c *Client) copy(ctx context.Context, version string) error {
 // - If this is a fresh install, don't create a backup and store the current version
 // - If we are on the same version, don't create a backup
 // - If the version has changed, create a backup and store the current version
-func (c *Client) backup(ctx context.Context, build cmp.BuildInfo) error {
+func (c *Client) backup(ctx context.Context, build cloudhub.BuildInfo) error {
 	lastBuild, err := c.BuildStore.Get(ctx)
 	if err != nil {
 		return err

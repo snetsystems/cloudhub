@@ -6,24 +6,24 @@ import (
 	"reflect"
 	"testing"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/enterprise"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/enterprise"
 )
 
 func TestClient_Add(t *testing.T) {
 	type fields struct {
 		Ctrl   *mockCtrl
-		Logger cmp.Logger
+		Logger cloudhub.Logger
 	}
 	type args struct {
 		ctx context.Context
-		u   *cmp.User
+		u   *cloudhub.User
 	}
 	tests := []struct {
 		name    string
 		fields  fields
 		args    args
-		want    *cmp.User
+		want    *cloudhub.User
 		wantErr bool
 	}{
 		{
@@ -42,7 +42,7 @@ func TestClient_Add(t *testing.T) {
 							Password: "johnny be good",
 							Permissions: map[string][]string{
 								"": {
-									"ViewCMP",
+									"ViewCloudHub",
 									"ReadData",
 									"WriteData",
 								},
@@ -56,20 +56,20 @@ func TestClient_Add(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name:   "marty",
 					Passwd: "johnny be good",
 				},
 			},
-			want: &cmp.User{
+			want: &cloudhub.User{
 				Name: "marty",
-				Permissions: cmp.Permissions{
+				Permissions: cloudhub.Permissions{
 					{
-						Scope:   cmp.AllScope,
-						Allowed: cmp.Allowances{"ViewCMP", "ReadData", "WriteData"},
+						Scope:   cloudhub.AllScope,
+						Allowed: cloudhub.Allowances{"ViewCloudHub", "ReadData", "WriteData"},
 					},
 				},
-				Roles: []cmp.Role{},
+				Roles: []cloudhub.Role{},
 			},
 		},
 		{
@@ -88,7 +88,7 @@ func TestClient_Add(t *testing.T) {
 							Password: "johnny be good",
 							Permissions: map[string][]string{
 								"": {
-									"ViewCMP",
+									"ViewCloudHub",
 									"ReadData",
 									"WriteData",
 								},
@@ -113,29 +113,29 @@ func TestClient_Add(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name:   "marty",
 					Passwd: "johnny be good",
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name: "admin",
 						},
 					},
 				},
 			},
-			want: &cmp.User{
+			want: &cloudhub.User{
 				Name: "marty",
-				Permissions: cmp.Permissions{
+				Permissions: cloudhub.Permissions{
 					{
-						Scope:   cmp.AllScope,
-						Allowed: cmp.Allowances{"ViewCMP", "ReadData", "WriteData"},
+						Scope:   cloudhub.AllScope,
+						Allowed: cloudhub.Allowances{"ViewCloudHub", "ReadData", "WriteData"},
 					},
 				},
-				Roles: []cmp.Role{
+				Roles: []cloudhub.Role{
 					{
 						Name:        "admin",
-						Users:       []cmp.User{},
-						Permissions: cmp.Permissions{},
+						Users:       []cloudhub.User{},
+						Permissions: cloudhub.Permissions{},
 					},
 				},
 			},
@@ -151,7 +151,7 @@ func TestClient_Add(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name:   "marty",
 					Passwd: "johnny be good",
 				},
@@ -178,11 +178,11 @@ func TestClient_Add(t *testing.T) {
 func TestClient_Delete(t *testing.T) {
 	type fields struct {
 		Ctrl   *mockCtrl
-		Logger cmp.Logger
+		Logger cloudhub.Logger
 	}
 	type args struct {
 		ctx context.Context
-		u   *cmp.User
+		u   *cloudhub.User
 	}
 	tests := []struct {
 		name    string
@@ -201,7 +201,7 @@ func TestClient_Delete(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name:   "marty",
 					Passwd: "johnny be good",
 				},
@@ -218,7 +218,7 @@ func TestClient_Delete(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name:   "marty",
 					Passwd: "johnny be good",
 				},
@@ -240,7 +240,7 @@ func TestClient_Delete(t *testing.T) {
 func TestClient_Get(t *testing.T) {
 	type fields struct {
 		Ctrl   *mockCtrl
-		Logger cmp.Logger
+		Logger cloudhub.Logger
 	}
 	type args struct {
 		ctx  context.Context
@@ -250,7 +250,7 @@ func TestClient_Get(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    *cmp.User
+		want    *cloudhub.User
 		wantErr bool
 	}{
 		{
@@ -263,7 +263,7 @@ func TestClient_Get(t *testing.T) {
 							Password: "johnny be good",
 							Permissions: map[string][]string{
 								"": {
-									"ViewCMP",
+									"ViewCloudHub",
 									"ReadData",
 									"WriteData",
 								},
@@ -279,15 +279,15 @@ func TestClient_Get(t *testing.T) {
 				ctx:  context.Background(),
 				name: "marty",
 			},
-			want: &cmp.User{
+			want: &cloudhub.User{
 				Name: "marty",
-				Permissions: cmp.Permissions{
+				Permissions: cloudhub.Permissions{
 					{
-						Scope:   cmp.AllScope,
-						Allowed: cmp.Allowances{"ViewCMP", "ReadData", "WriteData"},
+						Scope:   cloudhub.AllScope,
+						Allowed: cloudhub.Allowances{"ViewCloudHub", "ReadData", "WriteData"},
 					},
 				},
-				Roles: []cmp.Role{},
+				Roles: []cloudhub.Role{},
 			},
 		},
 		{
@@ -300,7 +300,7 @@ func TestClient_Get(t *testing.T) {
 							Password: "johnny be good",
 							Permissions: map[string][]string{
 								"": {
-									"ViewCMP",
+									"ViewCloudHub",
 									"ReadData",
 									"WriteData",
 								},
@@ -315,7 +315,7 @@ func TestClient_Get(t *testing.T) {
 										Name: "timetravels",
 										Permissions: map[string][]string{
 											"": {
-												"ViewCMP",
+												"ViewCloudHub",
 												"ReadData",
 												"WriteData",
 											},
@@ -332,24 +332,24 @@ func TestClient_Get(t *testing.T) {
 				ctx:  context.Background(),
 				name: "marty",
 			},
-			want: &cmp.User{
+			want: &cloudhub.User{
 				Name: "marty",
-				Permissions: cmp.Permissions{
+				Permissions: cloudhub.Permissions{
 					{
-						Scope:   cmp.AllScope,
-						Allowed: cmp.Allowances{"ViewCMP", "ReadData", "WriteData"},
+						Scope:   cloudhub.AllScope,
+						Allowed: cloudhub.Allowances{"ViewCloudHub", "ReadData", "WriteData"},
 					},
 				},
-				Roles: []cmp.Role{
+				Roles: []cloudhub.Role{
 					{
 						Name: "timetravels",
-						Permissions: cmp.Permissions{
+						Permissions: cloudhub.Permissions{
 							{
-								Scope:   cmp.AllScope,
-								Allowed: cmp.Allowances{"ViewCMP", "ReadData", "WriteData"},
+								Scope:   cloudhub.AllScope,
+								Allowed: cloudhub.Allowances{"ViewCloudHub", "ReadData", "WriteData"},
 							},
 						},
-						Users: []cmp.User{},
+						Users: []cloudhub.User{},
 					},
 				},
 			},
@@ -375,7 +375,7 @@ func TestClient_Get(t *testing.T) {
 			Ctrl:   tt.fields.Ctrl,
 			Logger: tt.fields.Logger,
 		}
-		got, err := c.Get(tt.args.ctx, cmp.UserQuery{Name: &tt.args.name})
+		got, err := c.Get(tt.args.ctx, cloudhub.UserQuery{Name: &tt.args.name})
 		if (err != nil) != tt.wantErr {
 			t.Errorf("%q. Client.Get() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 			continue
@@ -389,11 +389,11 @@ func TestClient_Get(t *testing.T) {
 func TestClient_Update(t *testing.T) {
 	type fields struct {
 		Ctrl   *mockCtrl
-		Logger cmp.Logger
+		Logger cloudhub.Logger
 	}
 	type args struct {
 		ctx context.Context
-		u   *cmp.User
+		u   *cloudhub.User
 	}
 	tests := []struct {
 		name    string
@@ -412,7 +412,7 @@ func TestClient_Update(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name:   "marty",
 					Passwd: "johnny be good",
 				},
@@ -429,7 +429,7 @@ func TestClient_Update(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name:   "marty",
 					Passwd: "johnny be good",
 				},
@@ -450,12 +450,12 @@ func TestClient_Update(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name: "marty",
-					Permissions: cmp.Permissions{
+					Permissions: cloudhub.Permissions{
 						{
-							Scope:   cmp.AllScope,
-							Allowed: cmp.Allowances{"ViewCMP", "KapacitorAPI"},
+							Scope:   cloudhub.AllScope,
+							Allowed: cloudhub.Allowances{"ViewCloudHub", "KapacitorAPI"},
 						},
 					},
 				},
@@ -479,15 +479,15 @@ func TestClient_Update(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name: "marty",
-					Permissions: cmp.Permissions{
+					Permissions: cloudhub.Permissions{
 						{
-							Scope:   cmp.AllScope,
-							Allowed: cmp.Allowances{"ViewCMP", "KapacitorAPI"},
+							Scope:   cloudhub.AllScope,
+							Allowed: cloudhub.Allowances{"ViewCloudHub", "KapacitorAPI"},
 						},
 					},
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name: "adminrole",
 						},
@@ -510,12 +510,12 @@ func TestClient_Update(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name: "marty",
-					Permissions: cmp.Permissions{
+					Permissions: cloudhub.Permissions{
 						{
-							Scope:   cmp.AllScope,
-							Allowed: cmp.Allowances{"ViewCMP", "KapacitorAPI"},
+							Scope:   cloudhub.AllScope,
+							Allowed: cloudhub.Allowances{"ViewCloudHub", "KapacitorAPI"},
 						},
 					},
 				},
@@ -537,7 +537,7 @@ func TestClient_Update(t *testing.T) {
 func TestClient_Num(t *testing.T) {
 	type fields struct {
 		Ctrl   *mockCtrl
-		Logger cmp.Logger
+		Logger cloudhub.Logger
 	}
 	type args struct {
 		ctx context.Context
@@ -546,7 +546,7 @@ func TestClient_Num(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    []cmp.User
+		want    []cloudhub.User
 		wantErr bool
 	}{
 		{
@@ -561,7 +561,7 @@ func TestClient_Num(t *testing.T) {
 									Password: "johnny be good",
 									Permissions: map[string][]string{
 										"": {
-											"ViewCMP",
+											"ViewCloudHub",
 											"ReadData",
 											"WriteData",
 										},
@@ -578,16 +578,16 @@ func TestClient_Num(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 			},
-			want: []cmp.User{
+			want: []cloudhub.User{
 				{
 					Name: "marty",
-					Permissions: cmp.Permissions{
+					Permissions: cloudhub.Permissions{
 						{
-							Scope:   cmp.AllScope,
-							Allowed: cmp.Allowances{"ViewCMP", "ReadData", "WriteData"},
+							Scope:   cloudhub.AllScope,
+							Allowed: cloudhub.Allowances{"ViewCloudHub", "ReadData", "WriteData"},
 						},
 					},
-					Roles: []cmp.Role{},
+					Roles: []cloudhub.Role{},
 				},
 			},
 		},
@@ -625,7 +625,7 @@ func TestClient_Num(t *testing.T) {
 func TestClient_All(t *testing.T) {
 	type fields struct {
 		Ctrl   *mockCtrl
-		Logger cmp.Logger
+		Logger cloudhub.Logger
 	}
 	type args struct {
 		ctx context.Context
@@ -634,7 +634,7 @@ func TestClient_All(t *testing.T) {
 		name    string
 		fields  fields
 		args    args
-		want    []cmp.User
+		want    []cloudhub.User
 		wantErr bool
 	}{
 		{
@@ -649,7 +649,7 @@ func TestClient_All(t *testing.T) {
 									Password: "johnny be good",
 									Permissions: map[string][]string{
 										"": {
-											"ViewCMP",
+											"ViewCloudHub",
 											"ReadData",
 											"WriteData",
 										},
@@ -666,16 +666,16 @@ func TestClient_All(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 			},
-			want: []cmp.User{
+			want: []cloudhub.User{
 				{
 					Name: "marty",
-					Permissions: cmp.Permissions{
+					Permissions: cloudhub.Permissions{
 						{
-							Scope:   cmp.AllScope,
-							Allowed: cmp.Allowances{"ViewCMP", "ReadData", "WriteData"},
+							Scope:   cloudhub.AllScope,
+							Allowed: cloudhub.Allowances{"ViewCloudHub", "ReadData", "WriteData"},
 						},
 					},
-					Roles: []cmp.Role{},
+					Roles: []cloudhub.Role{},
 				},
 			},
 		},
@@ -713,27 +713,27 @@ func TestClient_All(t *testing.T) {
 func Test_ToEnterprise(t *testing.T) {
 	tests := []struct {
 		name  string
-		perms cmp.Permissions
+		perms cloudhub.Permissions
 		want  enterprise.Permissions
 	}{
 		{
 			name: "All Scopes",
-			want: enterprise.Permissions{"": []string{"ViewCMP", "KapacitorAPI"}},
-			perms: cmp.Permissions{
+			want: enterprise.Permissions{"": []string{"ViewCloudHub", "KapacitorAPI"}},
+			perms: cloudhub.Permissions{
 				{
-					Scope:   cmp.AllScope,
-					Allowed: cmp.Allowances{"ViewCMP", "KapacitorAPI"},
+					Scope:   cloudhub.AllScope,
+					Allowed: cloudhub.Allowances{"ViewCloudHub", "KapacitorAPI"},
 				},
 			},
 		},
 		{
 			name: "DB Scope",
 			want: enterprise.Permissions{"telegraf": []string{"ReadData", "WriteData"}},
-			perms: cmp.Permissions{
+			perms: cloudhub.Permissions{
 				{
-					Scope:   cmp.DBScope,
+					Scope:   cloudhub.DBScope,
 					Name:    "telegraf",
-					Allowed: cmp.Allowances{"ReadData", "WriteData"},
+					Allowed: cloudhub.Allowances{"ReadData", "WriteData"},
 				},
 			},
 		},
@@ -745,37 +745,37 @@ func Test_ToEnterprise(t *testing.T) {
 	}
 }
 
-func Test_ToCMP(t *testing.T) {
+func Test_ToCloudHub(t *testing.T) {
 	tests := []struct {
 		name  string
 		perms enterprise.Permissions
-		want  cmp.Permissions
+		want  cloudhub.Permissions
 	}{
 		{
 			name:  "All Scopes",
-			perms: enterprise.Permissions{"": []string{"ViewCMP", "KapacitorAPI"}},
-			want: cmp.Permissions{
+			perms: enterprise.Permissions{"": []string{"ViewCloudHub", "KapacitorAPI"}},
+			want: cloudhub.Permissions{
 				{
-					Scope:   cmp.AllScope,
-					Allowed: cmp.Allowances{"ViewCMP", "KapacitorAPI"},
+					Scope:   cloudhub.AllScope,
+					Allowed: cloudhub.Allowances{"ViewCloudHub", "KapacitorAPI"},
 				},
 			},
 		},
 		{
 			name:  "DB Scope",
 			perms: enterprise.Permissions{"telegraf": []string{"ReadData", "WriteData"}},
-			want: cmp.Permissions{
+			want: cloudhub.Permissions{
 				{
-					Scope:   cmp.DBScope,
+					Scope:   cloudhub.DBScope,
 					Name:    "telegraf",
-					Allowed: cmp.Allowances{"ReadData", "WriteData"},
+					Allowed: cloudhub.Allowances{"ReadData", "WriteData"},
 				},
 			},
 		},
 	}
 	for _, tt := range tests {
-		if got := enterprise.ToCMP(tt.perms); !reflect.DeepEqual(got, tt.want) {
-			t.Errorf("%q. toCMP() = %v, want %v", tt.name, got, tt.want)
+		if got := enterprise.ToCloudHub(tt.perms); !reflect.DeepEqual(got, tt.want) {
+			t.Errorf("%q. toCloudHub() = %v, want %v", tt.name, got, tt.want)
 		}
 	}
 }

@@ -157,19 +157,19 @@ class SideNav extends PureComponent<Props> {
           }
         >
           <NavBlock
-            highlightWhen={['admin-cmp', 'admin-influxdb']}
+            highlightWhen={['admin-cloudhub', 'admin-influxdb']}
             icon="crown-outline"
-            link={`${sourcePrefix}/admin-cmp/current-organization`}
+            link={`${sourcePrefix}/admin-cloudhub/current-organization`}
             location={location}
           >
             <NavHeader
-              link={`${sourcePrefix}/admin-cmp/current-organization`}
+              link={`${sourcePrefix}/admin-cloudhub/current-organization`}
               title="Admin"
             />
             <NavListItem
-              link={`${sourcePrefix}/admin-cmp/current-organization`}
+              link={`${sourcePrefix}/admin-cloudhub/current-organization`}
             >
-              Cloud Hub
+              CloudHub
             </NavListItem>
             <NavListItem link={`${sourcePrefix}/admin-influxdb/databases`}>
               InfluxDB

@@ -4,31 +4,31 @@ import (
 	"testing"
 	"time"
 
-	"github.com/snetsystems/cmp/backend"
+	"github.com/snetsystems/cloudhub/backend"
 )
 
 func Test_toLineProtocol(t *testing.T) {
 	tests := []struct {
 		name    string
-		point   *cmp.Point
+		point   *cloudhub.Point
 		want    string
 		wantErr bool
 	}{
 		0: {
 			name:    "requires a measurement",
-			point:   &cmp.Point{},
+			point:   &cloudhub.Point{},
 			wantErr: true,
 		},
 		1: {
 			name: "requires at least one field",
-			point: &cmp.Point{
+			point: &cloudhub.Point{
 				Measurement: "telegraf",
 			},
 			wantErr: true,
 		},
 		2: {
 			name: "no tags produces line protocol",
-			point: &cmp.Point{
+			point: &cloudhub.Point{
 				Measurement: "telegraf",
 				Fields: map[string]interface{}{
 					"myfield": 1,
@@ -38,7 +38,7 @@ func Test_toLineProtocol(t *testing.T) {
 		},
 		3: {
 			name: "test all influx data types",
-			point: &cmp.Point{
+			point: &cloudhub.Point{
 				Measurement: "telegraf",
 				Fields: map[string]interface{}{
 					"int":          19,
@@ -53,7 +53,7 @@ func Test_toLineProtocol(t *testing.T) {
 		},
 		4: {
 			name: "test all influx data types",
-			point: &cmp.Point{
+			point: &cloudhub.Point{
 				Measurement: "telegraf",
 				Tags: map[string]string{
 					"marty": "mcfly",
@@ -73,7 +73,7 @@ func Test_toLineProtocol(t *testing.T) {
 		},
 		5: {
 			name: "measurements with comma or spaces are escaped",
-			point: &cmp.Point{
+			point: &cloudhub.Point{
 				Measurement: "O Romeo, Romeo, wherefore art thou Romeo",
 				Tags: map[string]string{
 					"part": "JULIET",
@@ -89,7 +89,7 @@ func Test_toLineProtocol(t *testing.T) {
 		},
 		6: {
 			name: "tags with comma, quota, space, equal are escaped",
-			point: &cmp.Point{
+			point: &cloudhub.Point{
 				Measurement: "quotes",
 				Tags: map[string]string{
 					"comma,": "comma,",
@@ -105,7 +105,7 @@ func Test_toLineProtocol(t *testing.T) {
 		},
 		7: {
 			name: "fields with quotes or backslashes are escaped",
-			point: &cmp.Point{
+			point: &cloudhub.Point{
 				Measurement: "quotes",
 				Fields: map[string]interface{}{
 					`quote"\`: `quote"\`,

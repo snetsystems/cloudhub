@@ -5,11 +5,11 @@ import (
 	"io"
 	"testing"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-// NewLogger returns a mock logger that implements cmp.Logger
-func NewLogger() cmp.Logger {
+// NewLogger returns a mock logger that implements cloudhub.Logger
+func NewLogger() cloudhub.Logger {
 	return &TestLogger{}
 }
 
@@ -19,7 +19,7 @@ type LogMessage struct {
 	Body  string
 }
 
-// TestLogger is a cmp.Logger which allows assertions to be made on the
+// TestLogger is a cloudhub.Logger which allows assertions to be made on the
 // contents of its messages.
 type TestLogger struct {
 	Messages []LogMessage
@@ -41,7 +41,7 @@ func (tl *TestLogger) Error(args ...interface{}) {
 }
 
 // WithField is for test
-func (tl *TestLogger) WithField(key string, value interface{}) cmp.Logger {
+func (tl *TestLogger) WithField(key string, value interface{}) cloudhub.Logger {
 	return tl
 }
 

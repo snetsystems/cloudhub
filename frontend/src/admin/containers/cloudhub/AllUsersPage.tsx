@@ -2,12 +2,12 @@ import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 
-import * as adminCMPActionCreators from 'src/admin/actions/cmp'
+import * as adminCloudHubActionCreators from 'src/admin/actions/cloudhub'
 import * as configActionCreators from 'src/shared/actions/config'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-import AllUsersTable from 'src/admin/components/cmp/AllUsersTable'
+import AllUsersTable from 'src/admin/components/cloudhub/AllUsersTable'
 import {
   Links,
   Organization,
@@ -151,7 +151,7 @@ export class AllUsersPage extends PureComponent<Props, State> {
 
 const mapStateToProps = ({
   links,
-  adminCMP: {organizations, users},
+  adminCloudHub: {organizations, users},
   config: {auth: authConfig},
 }) => ({
   authConfig,
@@ -161,7 +161,7 @@ const mapStateToProps = ({
 })
 
 const mapDispatchToProps = dispatch => ({
-  actionsAdmin: bindActionCreators(adminCMPActionCreators, dispatch),
+  actionsAdmin: bindActionCreators(adminCloudHubActionCreators, dispatch),
   actionsConfig: bindActionCreators(configActionCreators, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
 })

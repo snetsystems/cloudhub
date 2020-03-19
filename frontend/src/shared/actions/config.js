@@ -6,33 +6,33 @@ import {
 import {errorThrown} from 'shared/actions/errors'
 
 export const getAuthConfigRequested = () => ({
-  type: 'CMP_GET_AUTH_CONFIG_REQUESTED',
+  type: 'CloudHub_GET_AUTH_CONFIG_REQUESTED',
 })
 
 export const getAuthConfigCompleted = authConfig => ({
-  type: 'CMP_GET_AUTH_CONFIG_COMPLETED',
+  type: 'CloudHub_GET_AUTH_CONFIG_COMPLETED',
   payload: {
     authConfig,
   },
 })
 
 export const getAuthConfigFailed = () => ({
-  type: 'CMP_GET_AUTH_CONFIG_FAILED',
+  type: 'CloudHub_GET_AUTH_CONFIG_FAILED',
 })
 
 export const updateAuthConfigRequested = authConfig => ({
-  type: 'CMP_UPDATE_AUTH_CONFIG_REQUESTED',
+  type: 'CloudHub_UPDATE_AUTH_CONFIG_REQUESTED',
   payload: {
     authConfig,
   },
 })
 
 export const updateAuthConfigCompleted = () => ({
-  type: 'CMP_UPDATE_AUTH_CONFIG_COMPLETED',
+  type: 'CloudHub_UPDATE_AUTH_CONFIG_COMPLETED',
 })
 
 export const updateAuthConfigFailed = authConfig => ({
-  type: 'CMP_UPDATE_AUTH_CONFIG_FAILED',
+  type: 'CloudHub_UPDATE_AUTH_CONFIG_FAILED',
   payload: {
     authConfig,
   },

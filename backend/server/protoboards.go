@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/bouk/httprouter"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 type protoboardLinks struct {
@@ -13,12 +13,12 @@ type protoboardLinks struct {
 }
 
 type protoboardResponse struct {
-	cmp.Protoboard
+	cloudhub.Protoboard
 	Links protoboardLinks `json:"links"`
 }
 
-func newProtoboardResponse(protoboard cmp.Protoboard) protoboardResponse {
-	httpAPIProtoboards := "/cmp/v1/protoboards"
+func newProtoboardResponse(protoboard cloudhub.Protoboard) protoboardResponse {
+	httpAPIProtoboards := "/cloudhub/v1/protoboards"
 	selfLink := fmt.Sprintf("%s/%s", httpAPIProtoboards, protoboard.ID)
 
 	return protoboardResponse{

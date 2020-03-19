@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/influxdata/influxdb/influxql"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // TimeRangeAsEpochNano extracs the min and max epoch times from the expression
@@ -60,7 +60,7 @@ func ParseTime(influxQL string, now time.Time) (time.Duration, error) {
 }
 
 // Convert changes an InfluxQL query to a QueryConfig
-func Convert(influxQL string) (cmp.QueryConfig, error) {
+func Convert(influxQL string) (cloudhub.QueryConfig, error) {
 	itsDashboardTime := false
 	intervalTime := false
 
@@ -76,7 +76,7 @@ func Convert(influxQL string) (cmp.QueryConfig, error) {
 
 	query, err := influxql.ParseQuery(influxQL)
 	if err != nil {
-		return cmp.QueryConfig{}, err
+		return cloudhub.QueryConfig{}, err
 	}
 
 	if itsDashboardTime {
@@ -87,16 +87,16 @@ func Convert(influxQL string) (cmp.QueryConfig, error) {
 		influxQL = strings.Replace(influxQL, "8675309ns", ":interval:", -1)
 	}
 
-	raw := cmp.QueryConfig{
+	raw := cloudhub.QueryConfig{
 		RawText: &influxQL,
-		Fields:  []cmp.Field{},
-		GroupBy: cmp.GroupBy{
+		Fields:  []cloudhub.Field{},
+		GroupBy: cloudhub.GroupBy{
 			Tags: []string{},
 		},
 		Tags: make(map[string][]string, 0),
 	}
-	qc := cmp.QueryConfig{
-		GroupBy: cmp.GroupBy{
+	qc := cloudhub.QueryConfig{
+		GroupBy: cloudhub.GroupBy{
 			Tags: []string{},
 		},
 		Tags: make(map[string][]string, 0),
@@ -186,7 +186,7 @@ func Convert(influxQL string) (cmp.QueryConfig, error) {
 		}
 	}
 
-	qc.Fields = []cmp.Field{}
+	qc.Fields = []cloudhub.Field{}
 	for _, fld := range stmt.Fields {
 		switch f := fld.Expr.(type) {
 		default:
@@ -197,31 +197,31 @@ func Convert(influxQL string) (cmp.QueryConfig, error) {
 				return raw, nil
 			}
 
-			fldArgs := []cmp.Field{}
+			fldArgs := []cloudhub.Field{}
 			for _, arg := range f.Args {
 				switch ref := arg.(type) {
 				case *influxql.VarRef:
-					fldArgs = append(fldArgs, cmp.Field{
+					fldArgs = append(fldArgs, cloudhub.Field{
 						Value: ref.Val,
 						Type:  "field",
 					})
 				case *influxql.IntegerLiteral:
-					fldArgs = append(fldArgs, cmp.Field{
+					fldArgs = append(fldArgs, cloudhub.Field{
 						Value: strconv.FormatInt(ref.Val, 10),
 						Type:  "integer",
 					})
 				case *influxql.NumberLiteral:
-					fldArgs = append(fldArgs, cmp.Field{
+					fldArgs = append(fldArgs, cloudhub.Field{
 						Value: strconv.FormatFloat(ref.Val, 'f', -1, 64),
 						Type:  "number",
 					})
 				case *influxql.RegexLiteral:
-					fldArgs = append(fldArgs, cmp.Field{
+					fldArgs = append(fldArgs, cloudhub.Field{
 						Value: ref.Val.String(),
 						Type:  "regex",
 					})
 				case *influxql.Wildcard:
-					fldArgs = append(fldArgs, cmp.Field{
+					fldArgs = append(fldArgs, cloudhub.Field{
 						Value: "*",
 						Type:  "wildcard",
 					})
@@ -230,7 +230,7 @@ func Convert(influxQL string) (cmp.QueryConfig, error) {
 				}
 			}
 
-			qc.Fields = append(qc.Fields, cmp.Field{
+			qc.Fields = append(qc.Fields, cloudhub.Field{
 				Value: f.Name,
 				Type:  "func",
 				Alias: fld.Alias,
@@ -240,7 +240,7 @@ func Convert(influxQL string) (cmp.QueryConfig, error) {
 			if f.Type != influxql.Unknown {
 				return raw, nil
 			}
-			qc.Fields = append(qc.Fields, cmp.Field{
+			qc.Fields = append(qc.Fields, cloudhub.Field{
 				Value: f.Val,
 				Type:  "field",
 				Alias: fld.Alias,
@@ -281,7 +281,7 @@ func Convert(influxQL string) (cmp.QueryConfig, error) {
 	// If the condition has a time range we report back its duration
 	if dur, ok := hasTimeRange(stmt.Condition); ok {
 		if !itsDashboardTime {
-			qc.Range = &cmp.DurationRange{
+			qc.Range = &cloudhub.DurationRange{
 				Lower: "now() - " + shortDur(dur),
 			}
 		} else {

@@ -5,13 +5,13 @@ import (
 	"fmt"
 
 	"github.com/gogo/protobuf/proto"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 //go:generate protoc --gogo_out=. internal.proto
 
 // MarshalBuild encodes a build to binary protobuf format.
-func MarshalBuild(b cmp.BuildInfo) ([]byte, error) {
+func MarshalBuild(b cloudhub.BuildInfo) ([]byte, error) {
 	return proto.Marshal(&BuildInfo{
 		Version: b.Version,
 		Commit:  b.Commit,
@@ -19,7 +19,7 @@ func MarshalBuild(b cmp.BuildInfo) ([]byte, error) {
 }
 
 // UnmarshalBuild decodes a build from binary protobuf data.
-func UnmarshalBuild(data []byte, b *cmp.BuildInfo) error {
+func UnmarshalBuild(data []byte, b *cloudhub.BuildInfo) error {
 	var pb BuildInfo
 	if err := proto.Unmarshal(data, &pb); err != nil {
 		return err
@@ -31,7 +31,7 @@ func UnmarshalBuild(data []byte, b *cmp.BuildInfo) error {
 }
 
 // MarshalSource encodes a source to binary protobuf format.
-func MarshalSource(s cmp.Source) ([]byte, error) {
+func MarshalSource(s cloudhub.Source) ([]byte, error) {
 	return proto.Marshal(&Source{
 		ID:                 int64(s.ID),
 		Name:               s.Name,
@@ -52,7 +52,7 @@ func MarshalSource(s cmp.Source) ([]byte, error) {
 }
 
 // UnmarshalSource decodes a source from binary protobuf data.
-func UnmarshalSource(data []byte, s *cmp.Source) error {
+func UnmarshalSource(data []byte, s *cloudhub.Source) error {
 	var pb Source
 	if err := proto.Unmarshal(data, &pb); err != nil {
 		return err
@@ -77,7 +77,7 @@ func UnmarshalSource(data []byte, s *cmp.Source) error {
 }
 
 // MarshalServer encodes a server to binary protobuf format.
-func MarshalServer(s cmp.Server) ([]byte, error) {
+func MarshalServer(s cloudhub.Server) ([]byte, error) {
 	var (
 		metadata []byte
 		err      error
@@ -102,7 +102,7 @@ func MarshalServer(s cmp.Server) ([]byte, error) {
 }
 
 // UnmarshalServer decodes a server from binary protobuf data.
-func UnmarshalServer(data []byte, s *cmp.Server) error {
+func UnmarshalServer(data []byte, s *cloudhub.Server) error {
 	var pb Server
 	if err := proto.Unmarshal(data, &pb); err != nil {
 		return err
@@ -129,7 +129,7 @@ func UnmarshalServer(data []byte, s *cmp.Server) error {
 }
 
 // MarshalLayout encodes a layout to binary protobuf format.
-func MarshalLayout(l cmp.Layout) ([]byte, error) {
+func MarshalLayout(l cloudhub.Layout) ([]byte, error) {
 	cells := make([]*Cell, len(l.Cells))
 	for i, c := range l.Cells {
 		queries := make([]*Query, len(c.Queries))
@@ -179,7 +179,7 @@ func MarshalLayout(l cmp.Layout) ([]byte, error) {
 }
 
 // UnmarshalLayout decodes a layout from binary protobuf data.
-func UnmarshalLayout(data []byte, l *cmp.Layout) error {
+func UnmarshalLayout(data []byte, l *cloudhub.Layout) error {
 	var pb Layout
 	if err := proto.Unmarshal(data, &pb); err != nil {
 		return err
@@ -189,11 +189,11 @@ func UnmarshalLayout(data []byte, l *cmp.Layout) error {
 	l.Measurement = pb.Measurement
 	l.Application = pb.Application
 	l.Autoflow = pb.Autoflow
-	cells := make([]cmp.Cell, len(pb.Cells))
+	cells := make([]cloudhub.Cell, len(pb.Cells))
 	for i, c := range pb.Cells {
-		queries := make([]cmp.Query, len(c.Queries))
+		queries := make([]cloudhub.Query, len(c.Queries))
 		for j, q := range c.Queries {
-			queries[j] = cmp.Query{
+			queries[j] = cloudhub.Query{
 				Command:  q.Command,
 				DB:       q.DB,
 				RP:       q.RP,
@@ -202,21 +202,21 @@ func UnmarshalLayout(data []byte, l *cmp.Layout) error {
 				Label:    q.Label,
 			}
 			if q.Range.Upper != q.Range.Lower {
-				queries[j].Range = &cmp.Range{
+				queries[j].Range = &cloudhub.Range{
 					Upper: q.Range.Upper,
 					Lower: q.Range.Lower,
 				}
 			}
 		}
-		axes := make(map[string]cmp.Axis, len(c.Axes))
+		axes := make(map[string]cloudhub.Axis, len(c.Axes))
 		for a, r := range c.Axes {
-			axes[a] = cmp.Axis{
+			axes[a] = cloudhub.Axis{
 				Bounds: r.Bounds,
 				Label:  r.Label,
 			}
 		}
 
-		cells[i] = cmp.Cell{
+		cells[i] = cloudhub.Cell{
 			X:       c.X,
 			Y:       c.Y,
 			W:       c.W,
@@ -233,7 +233,7 @@ func UnmarshalLayout(data []byte, l *cmp.Layout) error {
 }
 
 // MarshalDashboard encodes a dashboard to binary protobuf format.
-func MarshalDashboard(d cmp.Dashboard) ([]byte, error) {
+func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 	cells := make([]*DashboardCell, len(d.Cells))
 	for i, c := range d.Cells {
 		queries := make([]*Query, len(c.Queries))
@@ -382,21 +382,21 @@ func MarshalDashboard(d cmp.Dashboard) ([]byte, error) {
 }
 
 // UnmarshalDashboard decodes a layout from binary protobuf data.
-func UnmarshalDashboard(data []byte, d *cmp.Dashboard) error {
+func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 	var pb Dashboard
 	if err := proto.Unmarshal(data, &pb); err != nil {
 		return err
 	}
 
-	cells := make([]cmp.DashboardCell, len(pb.Cells))
+	cells := make([]cloudhub.DashboardCell, len(pb.Cells))
 	for i, c := range pb.Cells {
-		queries := make([]cmp.DashboardQuery, len(c.Queries))
+		queries := make([]cloudhub.DashboardQuery, len(c.Queries))
 		for j, q := range c.Queries {
 			queryType := "influxql"
 			if q.Type != "" {
 				queryType = q.Type
 			}
-			queries[j] = cmp.DashboardQuery{
+			queries[j] = cloudhub.DashboardQuery{
 				Command: q.Command,
 				Label:   q.Label,
 				Source:  q.Source,
@@ -404,15 +404,15 @@ func UnmarshalDashboard(data []byte, d *cmp.Dashboard) error {
 			}
 
 			if q.Range.Upper != q.Range.Lower {
-				queries[j].Range = &cmp.Range{
+				queries[j].Range = &cloudhub.Range{
 					Upper: q.Range.Upper,
 					Lower: q.Range.Lower,
 				}
 			}
 
-			shifts := make([]cmp.TimeShift, len(q.Shifts))
+			shifts := make([]cloudhub.TimeShift, len(q.Shifts))
 			for k := range q.Shifts {
-				shift := cmp.TimeShift{
+				shift := cloudhub.TimeShift{
 					Label:    q.Shifts[k].Label,
 					Unit:     q.Shifts[k].Unit,
 					Quantity: q.Shifts[k].Quantity,
@@ -424,9 +424,9 @@ func UnmarshalDashboard(data []byte, d *cmp.Dashboard) error {
 			queries[j].Shifts = shifts
 		}
 
-		colors := make([]cmp.CellColor, len(c.Colors))
+		colors := make([]cloudhub.CellColor, len(c.Colors))
 		for j, color := range c.Colors {
-			colors[j] = cmp.CellColor{
+			colors[j] = cloudhub.CellColor{
 				ID:    color.ID,
 				Type:  color.Type,
 				Hex:   color.Hex,
@@ -435,7 +435,7 @@ func UnmarshalDashboard(data []byte, d *cmp.Dashboard) error {
 			}
 		}
 
-		axes := make(map[string]cmp.Axis, len(c.Axes))
+		axes := make(map[string]cloudhub.Axis, len(c.Axes))
 		for a, r := range c.Axes {
 			// axis base defaults to 10
 			if r.Base == "" {
@@ -446,7 +446,7 @@ func UnmarshalDashboard(data []byte, d *cmp.Dashboard) error {
 				r.Scale = "linear"
 			}
 
-			axis := cmp.Axis{
+			axis := cloudhub.Axis{
 				Bounds: r.Bounds,
 				Label:  r.Label,
 				Prefix: r.Prefix,
@@ -458,15 +458,15 @@ func UnmarshalDashboard(data []byte, d *cmp.Dashboard) error {
 			axes[a] = axis
 		}
 
-		legend := cmp.Legend{}
+		legend := cloudhub.Legend{}
 		if c.Legend != nil {
 			legend.Type = c.Legend.Type
 			legend.Orientation = c.Legend.Orientation
 		}
 
-		tableOptions := cmp.TableOptions{}
+		tableOptions := cloudhub.TableOptions{}
 		if c.TableOptions != nil {
-			sortBy := cmp.RenamableField{}
+			sortBy := cloudhub.RenamableField{}
 			if c.TableOptions.SortBy != nil {
 				sortBy.InternalName = c.TableOptions.SortBy.InternalName
 				sortBy.DisplayName = c.TableOptions.SortBy.DisplayName
@@ -478,15 +478,15 @@ func UnmarshalDashboard(data []byte, d *cmp.Dashboard) error {
 			tableOptions.FixFirstColumn = c.TableOptions.FixFirstColumn
 		}
 
-		fieldOptions := make([]cmp.RenamableField, len(c.FieldOptions))
+		fieldOptions := make([]cloudhub.RenamableField, len(c.FieldOptions))
 		for i, field := range c.FieldOptions {
-			fieldOptions[i] = cmp.RenamableField{}
+			fieldOptions[i] = cloudhub.RenamableField{}
 			fieldOptions[i].InternalName = field.InternalName
 			fieldOptions[i].DisplayName = field.DisplayName
 			fieldOptions[i].Visible = field.Visible
 		}
 
-		decimalPlaces := cmp.DecimalPlaces{}
+		decimalPlaces := cloudhub.DecimalPlaces{}
 		if c.DecimalPlaces != nil {
 			decimalPlaces.IsEnforced = c.DecimalPlaces.IsEnforced
 			decimalPlaces.Digits = c.DecimalPlaces.Digits
@@ -505,7 +505,7 @@ func UnmarshalDashboard(data []byte, d *cmp.Dashboard) error {
 			cellType = "line"
 		}
 
-		cells[i] = cmp.DashboardCell{
+		cells[i] = cloudhub.DashboardCell{
 			ID:             c.ID,
 			X:              c.X,
 			Y:              c.Y,
@@ -526,11 +526,11 @@ func UnmarshalDashboard(data []byte, d *cmp.Dashboard) error {
 		}
 	}
 
-	templates := make([]cmp.Template, len(pb.Templates))
+	templates := make([]cloudhub.Template, len(pb.Templates))
 	for i, t := range pb.Templates {
-		vals := make([]cmp.TemplateValue, len(t.Values))
+		vals := make([]cloudhub.TemplateValue, len(t.Values))
 		for j, v := range t.Values {
-			vals[j] = cmp.TemplateValue{
+			vals[j] = cloudhub.TemplateValue{
 				Selected: v.Selected,
 				Type:     v.Type,
 				Value:    v.Value,
@@ -538,9 +538,9 @@ func UnmarshalDashboard(data []byte, d *cmp.Dashboard) error {
 			}
 		}
 
-		template := cmp.Template{
-			ID: cmp.TemplateID(t.ID),
-			TemplateVar: cmp.TemplateVar{
+		template := cloudhub.Template{
+			ID: cloudhub.TemplateID(t.ID),
+			TemplateVar: cloudhub.TemplateVar{
 				Var:    t.TempVar,
 				Values: vals,
 			},
@@ -549,7 +549,7 @@ func UnmarshalDashboard(data []byte, d *cmp.Dashboard) error {
 		}
 
 		if t.Query != nil {
-			template.Query = &cmp.TemplateQuery{
+			template.Query = &cloudhub.TemplateQuery{
 				Command:     t.Query.Command,
 				DB:          t.Query.Db,
 				RP:          t.Query.Rp,
@@ -561,7 +561,7 @@ func UnmarshalDashboard(data []byte, d *cmp.Dashboard) error {
 		templates[i] = template
 	}
 
-	d.ID = cmp.DashboardID(pb.ID)
+	d.ID = cloudhub.DashboardID(pb.ID)
 	d.Cells = cells
 	d.Templates = templates
 	d.Name = pb.Name
@@ -571,7 +571,7 @@ func UnmarshalDashboard(data []byte, d *cmp.Dashboard) error {
 
 // ScopedAlert contains the source and the kapacitor id
 type ScopedAlert struct {
-	cmp.AlertRule
+	cloudhub.AlertRule
 	SrcID  int
 	KapaID int
 }
@@ -608,7 +608,7 @@ func UnmarshalAlertRule(data []byte, r *ScopedAlert) error {
 
 // MarshalUser encodes a user to binary protobuf format.
 // We are ignoring the password for now.
-func MarshalUser(u *cmp.User) ([]byte, error) {
+func MarshalUser(u *cloudhub.User) ([]byte, error) {
 	roles := make([]*Role, len(u.Roles))
 	for i, role := range u.Roles {
 		roles[i] = &Role{
@@ -634,14 +634,14 @@ func MarshalUserPB(u *User) ([]byte, error) {
 
 // UnmarshalUser decodes a user from binary protobuf data.
 // We are ignoring the password for now.
-func UnmarshalUser(data []byte, u *cmp.User) error {
+func UnmarshalUser(data []byte, u *cloudhub.User) error {
 	var pb User
 	if err := UnmarshalUserPB(data, &pb); err != nil {
 		return err
 	}
-	roles := make([]cmp.Role, len(pb.Roles))
+	roles := make([]cloudhub.Role, len(pb.Roles))
 	for i, role := range pb.Roles {
-		roles[i] = cmp.Role{
+		roles[i] = cloudhub.Role{
 			Organization: role.Organization,
 			Name:         role.Name,
 		}
@@ -663,7 +663,7 @@ func UnmarshalUserPB(data []byte, u *User) error {
 }
 
 // MarshalRole encodes a role to binary protobuf format.
-func MarshalRole(r *cmp.Role) ([]byte, error) {
+func MarshalRole(r *cloudhub.Role) ([]byte, error) {
 	return MarshalRolePB(&Role{
 		Organization: r.Organization,
 		Name:         r.Name,
@@ -676,7 +676,7 @@ func MarshalRolePB(r *Role) ([]byte, error) {
 }
 
 // UnmarshalRole decodes a role from binary protobuf data.
-func UnmarshalRole(data []byte, r *cmp.Role) error {
+func UnmarshalRole(data []byte, r *cloudhub.Role) error {
 	var pb Role
 	if err := UnmarshalRolePB(data, &pb); err != nil {
 		return err
@@ -693,7 +693,7 @@ func UnmarshalRolePB(data []byte, r *Role) error {
 }
 
 // MarshalOrganization encodes a organization to binary protobuf format.
-func MarshalOrganization(o *cmp.Organization) ([]byte, error) {
+func MarshalOrganization(o *cloudhub.Organization) ([]byte, error) {
 
 	return MarshalOrganizationPB(&Organization{
 		ID:          o.ID,
@@ -708,7 +708,7 @@ func MarshalOrganizationPB(o *Organization) ([]byte, error) {
 }
 
 // UnmarshalOrganization decodes a organization from binary protobuf data.
-func UnmarshalOrganization(data []byte, o *cmp.Organization) error {
+func UnmarshalOrganization(data []byte, o *cloudhub.Organization) error {
 	var pb Organization
 	if err := UnmarshalOrganizationPB(data, &pb); err != nil {
 		return err
@@ -726,7 +726,7 @@ func UnmarshalOrganizationPB(data []byte, o *Organization) error {
 }
 
 // MarshalConfig encodes a config to binary protobuf format.
-func MarshalConfig(c *cmp.Config) ([]byte, error) {
+func MarshalConfig(c *cloudhub.Config) ([]byte, error) {
 	return MarshalConfigPB(&Config{
 		Auth: &AuthConfig{
 			SuperAdminNewUsers: c.Auth.SuperAdminNewUsers,
@@ -740,7 +740,7 @@ func MarshalConfigPB(c *Config) ([]byte, error) {
 }
 
 // UnmarshalConfig decodes a config from binary protobuf data.
-func UnmarshalConfig(data []byte, c *cmp.Config) error {
+func UnmarshalConfig(data []byte, c *cloudhub.Config) error {
 	var pb Config
 	if err := UnmarshalConfigPB(data, &pb); err != nil {
 		return err
@@ -759,7 +759,7 @@ func UnmarshalConfigPB(data []byte, c *Config) error {
 }
 
 // MarshalOrganizationConfig encodes a config to binary protobuf format.
-func MarshalOrganizationConfig(c *cmp.OrganizationConfig) ([]byte, error) {
+func MarshalOrganizationConfig(c *cloudhub.OrganizationConfig) ([]byte, error) {
 	columns := make([]*LogViewerColumn, len(c.LogViewer.Columns))
 
 	for i, column := range c.LogViewer.Columns {
@@ -794,7 +794,7 @@ func MarshalOrganizationConfigPB(c *OrganizationConfig) ([]byte, error) {
 }
 
 // UnmarshalOrganizationConfig decodes a config from binary protobuf data.
-func UnmarshalOrganizationConfig(data []byte, c *cmp.OrganizationConfig) error {
+func UnmarshalOrganizationConfig(data []byte, c *cloudhub.OrganizationConfig) error {
 	var pb OrganizationConfig
 
 	if err := UnmarshalOrganizationConfigPB(data, &pb); err != nil {
@@ -807,13 +807,13 @@ func UnmarshalOrganizationConfig(data []byte, c *cmp.OrganizationConfig) error {
 
 	c.OrganizationID = pb.OrganizationID
 
-	columns := make([]cmp.LogViewerColumn, len(pb.LogViewer.Columns))
+	columns := make([]cloudhub.LogViewerColumn, len(pb.LogViewer.Columns))
 
 	for i, c := range pb.LogViewer.Columns {
 		columns[i].Name = c.Name
 		columns[i].Position = c.Position
 
-		encodings := make([]cmp.ColumnEncoding, len(c.Encodings))
+		encodings := make([]cloudhub.ColumnEncoding, len(c.Encodings))
 		for j, e := range c.Encodings {
 			encodings[j].Type = e.Type
 			encodings[j].Value = e.Value
@@ -831,7 +831,7 @@ func UnmarshalOrganizationConfig(data []byte, c *cmp.OrganizationConfig) error {
 }
 
 // Ensures the hostname is added since it was missing in 1.6.2
-func ensureHostnameColumn(c *cmp.OrganizationConfig) {
+func ensureHostnameColumn(c *cloudhub.OrganizationConfig) {
 	var maxPosition int32
 
 	for _, v := range c.LogViewer.Columns {
@@ -847,11 +847,11 @@ func ensureHostnameColumn(c *cmp.OrganizationConfig) {
 	c.LogViewer.Columns = append(c.LogViewer.Columns, newHostnameColumn(maxPosition+1))
 }
 
-func newHostnameColumn(p int32) cmp.LogViewerColumn {
-	return cmp.LogViewerColumn{
+func newHostnameColumn(p int32) cloudhub.LogViewerColumn {
+	return cloudhub.LogViewerColumn{
 		Name:     "hostname",
 		Position: p,
-		Encodings: []cmp.ColumnEncoding{
+		Encodings: []cloudhub.ColumnEncoding{
 			{
 				Type:  "visibility",
 				Value: "visible",
@@ -866,7 +866,7 @@ func UnmarshalOrganizationConfigPB(data []byte, c *OrganizationConfig) error {
 }
 
 // MarshalMapping encodes a mapping to binary protobuf format.
-func MarshalMapping(m *cmp.Mapping) ([]byte, error) {
+func MarshalMapping(m *cloudhub.Mapping) ([]byte, error) {
 
 	return MarshalMappingPB(&Mapping{
 		Provider:             m.Provider,
@@ -883,7 +883,7 @@ func MarshalMappingPB(m *Mapping) ([]byte, error) {
 }
 
 // UnmarshalMapping decodes a mapping from binary protobuf data.
-func UnmarshalMapping(data []byte, m *cmp.Mapping) error {
+func UnmarshalMapping(data []byte, m *cloudhub.Mapping) error {
 	var pb Mapping
 	if err := UnmarshalMappingPB(data, &pb); err != nil {
 		return err

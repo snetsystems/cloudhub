@@ -8,11 +8,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	clog "github.com/snetsystems/cmp/backend/log"
-	"github.com/snetsystems/cmp/backend/mocks"
-	"github.com/snetsystems/cmp/backend/oauth2"
-	"github.com/snetsystems/cmp/backend/roles"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	clog "github.com/snetsystems/cloudhub/backend/log"
+	"github.com/snetsystems/cloudhub/backend/mocks"
+	"github.com/snetsystems/cloudhub/backend/oauth2"
+	"github.com/snetsystems/cloudhub/backend/roles"
 )
 
 func TestAuthorizedToken(t *testing.T) {
@@ -65,9 +65,9 @@ func TestAuthorizedToken(t *testing.T) {
 }
 func TestAuthorizedUser(t *testing.T) {
 	type fields struct {
-		UsersStore         cmp.UsersStore
-		OrganizationsStore cmp.OrganizationsStore
-		Logger             cmp.Logger
+		UsersStore         cloudhub.UsersStore
+		OrganizationsStore cloudhub.OrganizationsStore
+		Logger             cloudhub.Logger
 	}
 	type args struct {
 		principal *oauth2.Principal
@@ -90,8 +90,8 @@ func TestAuthorizedUser(t *testing.T) {
 			fields: fields{
 				UsersStore: &mocks.UsersStore{},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
@@ -111,16 +111,16 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "User with member role is member authorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.MemberRoleName,
 									Organization: "1337",
@@ -130,16 +130,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -167,16 +167,16 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "User with viewer role is member authorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.ViewerRoleName,
 									Organization: "1337",
@@ -186,16 +186,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -223,16 +223,16 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "User with editor role is member authorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.EditorRoleName,
 									Organization: "1337",
@@ -242,16 +242,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -279,16 +279,16 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "User with admin role is member authorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.AdminRoleName,
 									Organization: "1337",
@@ -298,16 +298,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -335,16 +335,16 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "User with viewer role is viewer authorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.ViewerRoleName,
 									Organization: "1337",
@@ -354,16 +354,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -391,16 +391,16 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "User with editor role is viewer authorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.EditorRoleName,
 									Organization: "1337",
@@ -410,16 +410,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -447,16 +447,16 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "User with admin role is viewer authorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.AdminRoleName,
 									Organization: "1337",
@@ -466,16 +466,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -503,16 +503,16 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "User with viewer role is editor unauthorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.ViewerRoleName,
 									Organization: "1337",
@@ -522,16 +522,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -555,16 +555,16 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "User with editor role is editor authorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.EditorRoleName,
 									Organization: "1337",
@@ -574,16 +574,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -611,16 +611,16 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "User with admin role is editor authorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.AdminRoleName,
 									Organization: "1337",
@@ -630,16 +630,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -667,16 +667,16 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "User with viewer role is admin unauthorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.ViewerRoleName,
 									Organization: "1337",
@@ -686,16 +686,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -719,16 +719,16 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "User with editor role is admin unauthorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.EditorRoleName,
 									Organization: "1337",
@@ -738,16 +738,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -771,16 +771,16 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "User with admin role is admin authorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.AdminRoleName,
 									Organization: "1337",
@@ -790,16 +790,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -827,30 +827,30 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "User with no role is viewer unauthorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles:    []cmp.Role{},
+							Roles:    []cloudhub.Role{},
 						}, nil
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -874,30 +874,30 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "User with no role is editor unauthorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles:    []cmp.Role{},
+							Roles:    []cloudhub.Role{},
 						}, nil
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -921,30 +921,30 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "User with no role is admin unauthorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles:    []cmp.Role{},
+							Roles:    []cloudhub.Role{},
 						}, nil
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -968,16 +968,16 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "User with unknown role is viewer unauthorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name: "sweet_role",
 								},
@@ -986,16 +986,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -1019,16 +1019,16 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "User with unknown role is editor unauthorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name: "sweet_role",
 								},
@@ -1037,17 +1037,17 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
 					},
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
@@ -1070,16 +1070,16 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "User with unknown role is admin unauthorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name: "sweet_role",
 								},
@@ -1088,16 +1088,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -1121,16 +1121,16 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "User with viewer role is SuperAdmin unauthorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.ViewerRoleName,
 									Organization: "1337",
@@ -1140,16 +1140,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -1173,16 +1173,16 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "User with editor role is SuperAdmin unauthorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.EditorRoleName,
 									Organization: "1337",
@@ -1192,16 +1192,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -1225,16 +1225,16 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "User with admin role is SuperAdmin unauthorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.AdminRoleName,
 									Organization: "1337",
@@ -1244,16 +1244,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -1277,17 +1277,17 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "SuperAdmin is Viewer authorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:         1337,
 							Name:       "billysteve",
 							Provider:   "google",
 							Scheme:     "oauth2",
 							SuperAdmin: true,
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.MemberRoleName,
 									Organization: "1337",
@@ -1297,16 +1297,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -1334,17 +1334,17 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "SuperAdmin is Editor authorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:         1337,
 							Name:       "billysteve",
 							Provider:   "google",
 							Scheme:     "oauth2",
 							SuperAdmin: true,
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.MemberRoleName,
 									Organization: "1337",
@@ -1354,16 +1354,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -1391,17 +1391,17 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "SuperAdmin is Admin authorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:         1337,
 							Name:       "billysteve",
 							Provider:   "google",
 							Scheme:     "oauth2",
 							SuperAdmin: true,
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.MemberRoleName,
 									Organization: "1337",
@@ -1411,16 +1411,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -1448,17 +1448,17 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "SuperAdmin is SuperAdmin authorized",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:         1337,
 							Name:       "billysteve",
 							Provider:   "google",
 							Scheme:     "oauth2",
 							SuperAdmin: true,
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.MemberRoleName,
 									Organization: "1337",
@@ -1468,16 +1468,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -1505,16 +1505,16 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "Invalid principal – principal is nil",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.AdminRoleName,
 									Organization: "1337",
@@ -1524,16 +1524,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -1553,16 +1553,16 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "Invalid principal - missing organization",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.AdminRoleName,
 									Organization: "1337",
@@ -1572,16 +1572,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -1604,16 +1604,16 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "Invalid principal - organization id not uint64",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.AdminRoleName,
 									Organization: "1337",
@@ -1623,16 +1623,16 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -1656,16 +1656,16 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "Failed to retrieve organization",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							ID:       1337,
 							Name:     "billysteve",
 							Provider: "google",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.AdminRoleName,
 									Organization: "1337",
@@ -1675,23 +1675,23 @@ func TestAuthorizedUser(t *testing.T) {
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
 						switch *q.ID {
 						case "1338":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:   "1338",
 								Name: "The ShillBillThrilliettas",
 							}, nil
 						default:
-							return nil, cmp.ErrOrganizationNotFound
+							return nil, cloudhub.ErrOrganizationNotFound
 						}
 					},
 				},
@@ -1713,18 +1713,18 @@ func TestAuthorizedUser(t *testing.T) {
 			name: "Failed to retrieve user",
 			fields: fields{
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
 						switch *q.Name {
 						case "billysteve":
-							return &cmp.User{
+							return &cloudhub.User{
 								ID:       1337,
 								Name:     "billysteve",
 								Provider: "google",
 								Scheme:   "oauth2",
-								Roles: []cmp.Role{
+								Roles: []cloudhub.Role{
 									{
 										Name:         roles.AdminRoleName,
 										Organization: "1337",
@@ -1732,21 +1732,21 @@ func TestAuthorizedUser(t *testing.T) {
 								},
 							}, nil
 						default:
-							return nil, cmp.ErrUserNotFound
+							return nil, cloudhub.ErrUserNotFound
 						}
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -1837,12 +1837,12 @@ func TestAuthorizedUser(t *testing.T) {
 
 func TestRawStoreAccess(t *testing.T) {
 	type fields struct {
-		Logger cmp.Logger
+		Logger cloudhub.Logger
 	}
 	type args struct {
 		principal     *oauth2.Principal
 		serverContext bool
-		user          *cmp.User
+		user          *cloudhub.User
 	}
 	type wants struct {
 		authorized       bool
@@ -1873,7 +1873,7 @@ func TestRawStoreAccess(t *testing.T) {
 				Logger: clog.New(clog.DebugLevel),
 			},
 			args: args{
-				user: &cmp.User{
+				user: &cloudhub.User{
 					SuperAdmin: true,
 				},
 			},
@@ -1888,7 +1888,7 @@ func TestRawStoreAccess(t *testing.T) {
 				Logger: clog.New(clog.DebugLevel),
 			},
 			args: args{
-				user: &cmp.User{
+				user: &cloudhub.User{
 					SuperAdmin: false,
 				},
 			},

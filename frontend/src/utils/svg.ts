@@ -4,7 +4,7 @@ export const clipPathUrl = elementId => {
   //
   //     <rect clip-path="url(#some-svg-element-id") ... />
   //
-  // SCMP supports a [`--basepath`][0] option that rewrites all instances
+  // CloudHub supports a [`--basepath`][0] option that rewrites all instances
   // of `url(` occuring in asset files as they are served, which breaks usages
   // of `url(#...)` strings in SVG elements. This issue has been fixed for
   // standalone SVG files by [#3402][1], but not for inline SVG elements (i.e.

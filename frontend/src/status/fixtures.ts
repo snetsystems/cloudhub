@@ -43,11 +43,11 @@ export const fixtureStatusPageCells: Cell[] = [
     queries: [
       {
         id: '1234',
-        query: `SELECT count("value") AS "count_value" FROM "cmp"."autogen"."alerts" WHERE time > ${TEMP_VAR_DASHBOARD_TIME} GROUP BY time(1d)`,
+        query: `SELECT count("value") AS "count_value" FROM "cloudhub"."autogen"."alerts" WHERE time > ${TEMP_VAR_DASHBOARD_TIME} GROUP BY time(1d)`,
         source: '',
         type: QueryType.InfluxQL,
         queryConfig: {
-          database: 'cmp',
+          database: 'cloudhub',
           measurement: 'alerts',
           retentionPolicy: 'autogen',
           fields: [
@@ -75,7 +75,7 @@ export const fixtureStatusPageCells: Cell[] = [
       },
     ],
     links: {
-      self: '/cmp/v1/status/23/cells/c-bar-graphs-fly',
+      self: '/cloudhub/v1/status/23/cells/c-bar-graphs-fly',
     },
   },
   {

@@ -11,9 +11,9 @@ import (
 
 	"github.com/bouk/httprouter"
 	gocmp "github.com/google/go-cmp/cmp"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/mocks"
-	"github.com/snetsystems/cmp/backend/server"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/mocks"
+	"github.com/snetsystems/cloudhub/backend/server"
 )
 
 const tickScript = `
@@ -28,18 +28,18 @@ stream
 func TestValidRuleRequest(t *testing.T) {
 	tests := []struct {
 		name    string
-		rule    cmp.AlertRule
+		rule    cloudhub.AlertRule
 		wantErr bool
 	}{
 		{
 			name: "No every with functions",
-			rule: cmp.AlertRule{
-				Query: &cmp.QueryConfig{
-					Fields: []cmp.Field{
+			rule: cloudhub.AlertRule{
+				Query: &cloudhub.QueryConfig{
+					Fields: []cloudhub.Field{
 						{
 							Value: "max",
 							Type:  "func",
-							Args: []cmp.Field{
+							Args: []cloudhub.Field{
 								{
 									Value: "oldmanpeabody",
 									Type:  "field",
@@ -53,14 +53,14 @@ func TestValidRuleRequest(t *testing.T) {
 		},
 		{
 			name: "With every",
-			rule: cmp.AlertRule{
+			rule: cloudhub.AlertRule{
 				Every: "10s",
-				Query: &cmp.QueryConfig{
-					Fields: []cmp.Field{
+				Query: &cloudhub.QueryConfig{
+					Fields: []cloudhub.Field{
 						{
 							Value: "max",
 							Type:  "func",
-							Args: []cmp.Field{
+							Args: []cloudhub.Field{
 								{
 									Value: "oldmanpeabody",
 									Type:  "field",
@@ -73,7 +73,7 @@ func TestValidRuleRequest(t *testing.T) {
 		},
 		{
 			name:    "No query config",
-			rule:    cmp.AlertRule{},
+			rule:    cloudhub.AlertRule{},
 			wantErr: true,
 		},
 	}
@@ -90,49 +90,49 @@ func Test_KapacitorRulesGet(t *testing.T) {
 	kapaTests := []struct {
 		name        string
 		requestPath string
-		mockAlerts  []cmp.AlertRule
-		expected    []cmp.AlertRule
+		mockAlerts  []cloudhub.AlertRule
+		expected    []cloudhub.AlertRule
 	}{
 		{
 			name:        "basic",
-			requestPath: "/cmp/v1/sources/1/kapacitors/1/rules",
-			mockAlerts: []cmp.AlertRule{
+			requestPath: "/cloudhub/v1/sources/1/kapacitors/1/rules",
+			mockAlerts: []cloudhub.AlertRule{
 				{
 					ID:         "cpu_alert",
 					Name:       "cpu_alert",
 					Status:     "enabled",
 					Type:       "stream",
-					DBRPs:      []cmp.DBRP{{DB: "telegraf", RP: "autogen"}},
+					DBRPs:      []cloudhub.DBRP{{DB: "telegraf", RP: "autogen"}},
 					TICKScript: tickScript,
 				},
 			},
-			expected: []cmp.AlertRule{
+			expected: []cloudhub.AlertRule{
 				{
 					ID:         "cpu_alert",
 					Name:       "cpu_alert",
 					Status:     "enabled",
 					Type:       "stream",
-					DBRPs:      []cmp.DBRP{{DB: "telegraf", RP: "autogen"}},
+					DBRPs:      []cloudhub.DBRP{{DB: "telegraf", RP: "autogen"}},
 					TICKScript: tickScript,
-					AlertNodes: cmp.AlertNodes{
-						Posts:      []*cmp.Post{},
-						TCPs:       []*cmp.TCP{},
-						Email:      []*cmp.Email{},
-						Exec:       []*cmp.Exec{},
-						Log:        []*cmp.Log{},
-						VictorOps:  []*cmp.VictorOps{},
-						PagerDuty:  []*cmp.PagerDuty{},
-						PagerDuty2: []*cmp.PagerDuty{},
-						Pushover:   []*cmp.Pushover{},
-						Sensu:      []*cmp.Sensu{},
-						Slack:      []*cmp.Slack{},
-						Telegram:   []*cmp.Telegram{},
-						HipChat:    []*cmp.HipChat{},
-						Alerta:     []*cmp.Alerta{},
-						OpsGenie:   []*cmp.OpsGenie{},
-						OpsGenie2:  []*cmp.OpsGenie{},
-						Talk:       []*cmp.Talk{},
-						Kafka:      []*cmp.Kafka{},
+					AlertNodes: cloudhub.AlertNodes{
+						Posts:      []*cloudhub.Post{},
+						TCPs:       []*cloudhub.TCP{},
+						Email:      []*cloudhub.Email{},
+						Exec:       []*cloudhub.Exec{},
+						Log:        []*cloudhub.Log{},
+						VictorOps:  []*cloudhub.VictorOps{},
+						PagerDuty:  []*cloudhub.PagerDuty{},
+						PagerDuty2: []*cloudhub.PagerDuty{},
+						Pushover:   []*cloudhub.Pushover{},
+						Sensu:      []*cloudhub.Sensu{},
+						Slack:      []*cloudhub.Slack{},
+						Telegram:   []*cloudhub.Telegram{},
+						HipChat:    []*cloudhub.HipChat{},
+						Alerta:     []*cloudhub.Alerta{},
+						OpsGenie:   []*cloudhub.OpsGenie{},
+						OpsGenie2:  []*cloudhub.OpsGenie{},
+						Talk:       []*cloudhub.Talk{},
+						Kafka:      []*cloudhub.Kafka{},
 					},
 				},
 			},
@@ -165,7 +165,7 @@ func Test_KapacitorRulesGet(t *testing.T) {
 						"script": tickScript,
 						"status": "enabled",
 						"type":   "stream",
-						"dbrps": []cmp.DBRP{
+						"dbrps": []cloudhub.DBRP{
 							{
 								DB: "telegraf",
 								RP: "autogen",
@@ -207,16 +207,16 @@ func Test_KapacitorRulesGet(t *testing.T) {
 			svc := &server.Service{
 				Store: &mocks.Store{
 					SourcesStore: &mocks.SourcesStore{
-						GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-							return cmp.Source{
+						GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+							return cloudhub.Source{
 								ID:                 ID,
 								InsecureSkipVerify: true,
 							}, nil
 						},
 					},
 					ServersStore: &mocks.ServersStore{
-						GetF: func(ctx context.Context, ID int) (cmp.Server, error) {
-							return cmp.Server{
+						GetF: func(ctx context.Context, ID int) (cloudhub.Server, error) {
+							return cloudhub.Server{
 								SrcID: ID,
 								URL:   kapaSrv.URL,
 							}, nil
@@ -251,7 +251,7 @@ func Test_KapacitorRulesGet(t *testing.T) {
 			// destructure response
 			frame := struct {
 				Rules []struct {
-					cmp.AlertRule
+					cloudhub.AlertRule
 					Links json.RawMessage `json:"links"`
 				} `json:"rules"`
 			}{}
@@ -263,7 +263,7 @@ func Test_KapacitorRulesGet(t *testing.T) {
 				t.Fatal("Err decoding kapa rule response: err:", err)
 			}
 
-			actual := make([]cmp.AlertRule, len(frame.Rules))
+			actual := make([]cloudhub.AlertRule, len(frame.Rules))
 
 			for i := range frame.Rules {
 				actual[i] = frame.Rules[i].AlertRule

@@ -4,29 +4,29 @@ import (
 	"fmt"
 	"testing"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 func TestVarsCritStringEqual(t *testing.T) {
-	alert := cmp.AlertRule{
+	alert := cloudhub.AlertRule{
 		Name:    "name",
 		Trigger: "threshold",
-		TriggerValues: cmp.TriggerValues{
+		TriggerValues: cloudhub.TriggerValues{
 			Operator: "equal to",
 			Value:    "DOWN",
 		},
 		Every: "30s",
-		Query: &cmp.QueryConfig{
+		Query: &cloudhub.QueryConfig{
 			Database:        "telegraf",
 			Measurement:     "haproxy",
 			RetentionPolicy: "autogen",
-			Fields: []cmp.Field{
+			Fields: []cloudhub.Field{
 				{
 					Value: "status",
 					Type:  "field",
 				},
 			},
-			GroupBy: cmp.GroupBy{
+			GroupBy: cloudhub.GroupBy{
 				Time: "10m",
 				Tags: []string{"pxname"},
 			},

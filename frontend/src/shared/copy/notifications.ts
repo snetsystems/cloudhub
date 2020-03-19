@@ -37,7 +37,7 @@ export const notifyNewVersion = (version: string): Notification => ({
   type: 'info',
   icon: '_snet--logo',
   duration: INFINITE,
-  message: `Welcome to the latest CMP (${version}). Local settings cleared.`,
+  message: `Welcome to the latest CloudHub (${version}). Local settings cleared.`,
 })
 
 export const notifyLoadLocalSettingsFailed = (error: string): Notification => ({
@@ -229,7 +229,7 @@ export const notifyCurrentOrgDeleted = (): Notification => ({
   message: 'Your current organization was deleted.',
 })
 
-//  Cloud Hub Admin Notifications
+//  CloudHub Admin Notifications
 //  ----------------------------------------------------------------------------
 export const notifyMappingDeleted = (
   id: string,
@@ -239,27 +239,27 @@ export const notifyMappingDeleted = (
   message: `Mapping ${id}/${scheme} deleted successfully.`,
 })
 
-export const notifyCMPUserAddedToOrg = (
+export const notifyCloudHubUserAddedToOrg = (
   user: string,
   organization: string
 ): string => `${user} has been added to ${organization} successfully.`
 
-export const notifyCMPUserRemovedFromOrg = (
+export const notifyCloudHubUserRemovedFromOrg = (
   user: string,
   organization: string
 ): string => `${user} has been removed from ${organization} successfully.`
 
-export const notifyCMPUserUpdated = (message: string): Notification => ({
+export const notifyCloudHubUserUpdated = (message: string): Notification => ({
   ...defaultSuccessNotification,
   message,
 })
 
-export const notifyCMPOrgDeleted = (orgName: string): Notification => ({
+export const notifyCloudHubOrgDeleted = (orgName: string): Notification => ({
   ...defaultSuccessNotification,
   message: `Organization ${orgName} deleted successfully.`,
 })
 
-export const notifyCMPUserDeleted = (
+export const notifyCloudHubUserDeleted = (
   user: string,
   isAbsoluteDelete: boolean
 ): Notification => ({
@@ -271,7 +271,7 @@ export const notifyCMPUserDeleted = (
   }`,
 })
 
-export const notifyCMPUserMissingNameAndProvider = (): Notification => ({
+export const notifyCloudHubUserMissingNameAndProvider = (): Notification => ({
   ...defaultErrorNotification,
   type: 'warning',
   message: 'User must have a Name and Provider.',

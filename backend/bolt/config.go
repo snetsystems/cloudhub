@@ -5,14 +5,14 @@ import (
 	"fmt"
 
 	"github.com/boltdb/bolt"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/bolt/internal"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/bolt/internal"
 )
 
-// Ensure ConfigStore implements cmp.ConfigStore.
-var _ cmp.ConfigStore = &ConfigStore{}
+// Ensure ConfigStore implements cloudhub.ConfigStore.
+var _ cloudhub.ConfigStore = &ConfigStore{}
 
-// ConfigBucket is used to store CMP application state
+// ConfigBucket is used to store CloudHub application state
 var ConfigBucket = []byte("ConfigV1")
 
 // configID is the boltDB key where the configuration object is stored
@@ -34,8 +34,8 @@ func (s *ConfigStore) Migrate(ctx context.Context) error {
 
 // Initialize ...
 func (s *ConfigStore) Initialize(ctx context.Context) error {
-	cfg := cmp.Config{
-		Auth: cmp.AuthConfig{
+	cfg := cloudhub.Config{
+		Auth: cloudhub.AuthConfig{
 			SuperAdminNewUsers: false,
 		},
 	}
@@ -43,12 +43,12 @@ func (s *ConfigStore) Initialize(ctx context.Context) error {
 }
 
 // Get ...
-func (s *ConfigStore) Get(ctx context.Context) (*cmp.Config, error) {
-	var cfg cmp.Config
+func (s *ConfigStore) Get(ctx context.Context) (*cloudhub.Config, error) {
+	var cfg cloudhub.Config
 	err := s.client.db.View(func(tx *bolt.Tx) error {
 		v := tx.Bucket(ConfigBucket).Get(configID)
 		if v == nil {
-			return cmp.ErrConfigNotFound
+			return cloudhub.ErrConfigNotFound
 		}
 		return internal.UnmarshalConfig(v, &cfg)
 	})
@@ -60,7 +60,7 @@ func (s *ConfigStore) Get(ctx context.Context) (*cmp.Config, error) {
 }
 
 // Update ...
-func (s *ConfigStore) Update(ctx context.Context, cfg *cmp.Config) error {
+func (s *ConfigStore) Update(ctx context.Context, cfg *cloudhub.Config) error {
 	if cfg == nil {
 		return fmt.Errorf("config provided was nil")
 	}

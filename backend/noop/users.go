@@ -4,37 +4,37 @@ import (
 	"context"
 	"fmt"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-// ensure UsersStore implements cmp.UsersStore
-var _ cmp.UsersStore = &UsersStore{}
+// ensure UsersStore implements cloudhub.UsersStore
+var _ cloudhub.UsersStore = &UsersStore{}
 
 // UsersStore ...
 type UsersStore struct{}
 
 // All ...
-func (s *UsersStore) All(context.Context) ([]cmp.User, error) {
+func (s *UsersStore) All(context.Context) ([]cloudhub.User, error) {
 	return nil, fmt.Errorf("no users found")
 }
 
 // Add ...
-func (s *UsersStore) Add(context.Context, *cmp.User) (*cmp.User, error) {
+func (s *UsersStore) Add(context.Context, *cloudhub.User) (*cloudhub.User, error) {
 	return nil, fmt.Errorf("failed to add user")
 }
 
 // Delete ...
-func (s *UsersStore) Delete(context.Context, *cmp.User) error {
+func (s *UsersStore) Delete(context.Context, *cloudhub.User) error {
 	return fmt.Errorf("failed to delete user")
 }
 
 // Get ...
-func (s *UsersStore) Get(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
-	return nil, cmp.ErrUserNotFound
+func (s *UsersStore) Get(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
+	return nil, cloudhub.ErrUserNotFound
 }
 
 // Update ...
-func (s *UsersStore) Update(context.Context, *cmp.User) error {
+func (s *UsersStore) Update(context.Context, *cloudhub.User) error {
 	return fmt.Errorf("failed to update user")
 }
 

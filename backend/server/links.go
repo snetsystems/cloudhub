@@ -39,7 +39,7 @@ type getAddonLinksResponse struct {
 }
 
 // NewCustomLinks transforms `--custom-link` CLI flag data or `CUSTOM_LINKS` ENV
-// var data into a data structure that the CMP client will expect
+// var data into a data structure that the CloudHub client will expect
 func NewCustomLinks(links map[string]string) ([]CustomLink, error) {
 	customLinks := make([]CustomLink, 0, len(links))
 	for name, link := range links {

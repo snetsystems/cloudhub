@@ -1,6 +1,6 @@
 package mocks
 
-// NewResponse returns a mocked cmp.Response
+// NewResponse returns a mocked cloudhub.Response
 func NewResponse(res string, err error) *Response {
 	return &Response{
 		res: res,
@@ -8,7 +8,7 @@ func NewResponse(res string, err error) *Response {
 	}
 }
 
-// Response is a mocked cmp.Response
+// Response is a mocked cloudhub.Response
 type Response struct {
 	res string
 	err error

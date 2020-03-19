@@ -3,9 +3,9 @@ package multistore
 import (
 	"testing"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 func TestInterfaceImplementation(t *testing.T) {
-	var _ cmp.ServersStore = &KapacitorStore{}
+	var _ cloudhub.ServersStore = &KapacitorStore{}
 }

@@ -10,9 +10,9 @@ import (
 
 	"github.com/NYTimes/gziphandler"
 	"github.com/bouk/httprouter"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/oauth2"
-	"github.com/snetsystems/cmp/backend/roles"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/oauth2"
+	"github.com/snetsystems/cloudhub/backend/roles"
 )
 
 const (
@@ -22,9 +22,9 @@ const (
 
 // MuxOpts are the options for the router.  Mostly related to auth.
 type MuxOpts struct {
-	Logger        cmp.Logger
+	Logger        cloudhub.Logger
 	Develop       bool                 // Develop loads assets from filesystem instead of bindata
-	Basepath      string               // URL path prefix under which all cmp routes will be mounted
+	Basepath      string               // URL path prefix under which all cloudhub routes will be mounted
 	UseAuth       bool                 // UseAuth turns on Github OAuth and JWT
 	Auth          oauth2.Authenticator // Auth is used to authenticate and authorize
 	ProviderFuncs []func(func(oauth2.Provider, oauth2.Mux))
@@ -36,7 +36,7 @@ type MuxOpts struct {
 	AddonTokens   map[string]string // Tokens to access to Addon Features API, as passed in via CLI/ENV
 }
 
-// NewMux attaches all the route handlers; handler returned servers cmp.
+// NewMux attaches all the route handlers; handler returned servers cloudhub.
 func NewMux(opts MuxOpts, service Service) http.Handler {
 	hr := httprouter.New()
 
@@ -62,7 +62,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	// the server.
 	hr.NotFound = assets
 
-	var router cmp.Router = hr
+	var router cloudhub.Router = hr
 
 	// Set route prefix for all routes if basepath is present
 	if opts.Basepath != "" {
@@ -151,219 +151,219 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	/* API */
 	// Organizations
-	router.GET("/cmp/v1/organizations", EnsureAdmin(service.Organizations))
-	router.POST("/cmp/v1/organizations", EnsureSuperAdmin(service.NewOrganization))
+	router.GET("/cloudhub/v1/organizations", EnsureAdmin(service.Organizations))
+	router.POST("/cloudhub/v1/organizations", EnsureSuperAdmin(service.NewOrganization))
 
-	router.GET("/cmp/v1/organizations/:oid", EnsureAdmin(service.OrganizationID))
-	router.PATCH("/cmp/v1/organizations/:oid", EnsureSuperAdmin(service.UpdateOrganization))
-	router.DELETE("/cmp/v1/organizations/:oid", EnsureSuperAdmin(service.RemoveOrganization))
+	router.GET("/cloudhub/v1/organizations/:oid", EnsureAdmin(service.OrganizationID))
+	router.PATCH("/cloudhub/v1/organizations/:oid", EnsureSuperAdmin(service.UpdateOrganization))
+	router.DELETE("/cloudhub/v1/organizations/:oid", EnsureSuperAdmin(service.RemoveOrganization))
 
 	// Mappings
-	router.GET("/cmp/v1/mappings", EnsureSuperAdmin(service.Mappings))
-	router.POST("/cmp/v1/mappings", EnsureSuperAdmin(service.NewMapping))
+	router.GET("/cloudhub/v1/mappings", EnsureSuperAdmin(service.Mappings))
+	router.POST("/cloudhub/v1/mappings", EnsureSuperAdmin(service.NewMapping))
 
-	router.PUT("/cmp/v1/mappings/:id", EnsureSuperAdmin(service.UpdateMapping))
-	router.DELETE("/cmp/v1/mappings/:id", EnsureSuperAdmin(service.RemoveMapping))
+	router.PUT("/cloudhub/v1/mappings/:id", EnsureSuperAdmin(service.UpdateMapping))
+	router.DELETE("/cloudhub/v1/mappings/:id", EnsureSuperAdmin(service.RemoveMapping))
 
 	// Sources
-	router.GET("/cmp/v1/sources", EnsureViewer(service.Sources))
-	router.POST("/cmp/v1/sources", EnsureEditor(service.NewSource))
+	router.GET("/cloudhub/v1/sources", EnsureViewer(service.Sources))
+	router.POST("/cloudhub/v1/sources", EnsureEditor(service.NewSource))
 
-	router.GET("/cmp/v1/sources/:id", EnsureViewer(service.SourcesID))
-	router.PATCH("/cmp/v1/sources/:id", EnsureEditor(service.UpdateSource))
-	router.DELETE("/cmp/v1/sources/:id", EnsureEditor(service.RemoveSource))
-	router.GET("/cmp/v1/sources/:id/health", EnsureViewer(service.SourceHealth))
+	router.GET("/cloudhub/v1/sources/:id", EnsureViewer(service.SourcesID))
+	router.PATCH("/cloudhub/v1/sources/:id", EnsureEditor(service.UpdateSource))
+	router.DELETE("/cloudhub/v1/sources/:id", EnsureEditor(service.RemoveSource))
+	router.GET("/cloudhub/v1/sources/:id/health", EnsureViewer(service.SourceHealth))
 
 	// Flux
-	router.GET("/cmp/v1/flux", EnsureViewer(service.Flux))
-	router.POST("/cmp/v1/flux/ast", EnsureViewer(service.FluxAST))
-	router.GET("/cmp/v1/flux/suggestions", EnsureViewer(service.FluxSuggestions))
-	router.GET("/cmp/v1/flux/suggestions/:name", EnsureViewer(service.FluxSuggestion))
+	router.GET("/cloudhub/v1/flux", EnsureViewer(service.Flux))
+	router.POST("/cloudhub/v1/flux/ast", EnsureViewer(service.FluxAST))
+	router.GET("/cloudhub/v1/flux/suggestions", EnsureViewer(service.FluxSuggestions))
+	router.GET("/cloudhub/v1/flux/suggestions/:name", EnsureViewer(service.FluxSuggestion))
 
 	// Source Proxy to Influx; Has gzip compression around the handler
 	influx := gziphandler.GzipHandler(EnsureViewer(service.Influx))
-	router.Handler("POST", "/cmp/v1/sources/:id/proxy", influx)
+	router.Handler("POST", "/cloudhub/v1/sources/:id/proxy", influx)
 
 	// Source Proxy to Influx's flux endpoint; compression because the responses from
 	// flux could be large.
-	router.POST("/cmp/v1/sources/:id/proxy/flux", EnsureViewer(service.ProxyFlux))
+	router.POST("/cloudhub/v1/sources/:id/proxy/flux", EnsureViewer(service.ProxyFlux))
 
 	// Write proxies line protocol write requests to InfluxDB
-	router.POST("/cmp/v1/sources/:id/write", EnsureViewer(service.Write))
+	router.POST("/cloudhub/v1/sources/:id/write", EnsureViewer(service.Write))
 
 	// Queries is used to analyze a specific queries and does not create any
 	// resources. It's a POST because Queries are POSTed to InfluxDB, but this
 	// only modifies InfluxDB resources with certain metaqueries, e.g. DROP DATABASE.
 	//
 	// Admins should ensure that the InfluxDB source as the proper permissions
-	// intended for CMP Users with the Viewer Role type.
-	router.POST("/cmp/v1/sources/:id/queries", EnsureViewer(service.Queries))
+	// intended for CloudHub Users with the Viewer Role type.
+	router.POST("/cloudhub/v1/sources/:id/queries", EnsureViewer(service.Queries))
 
 	// Annotations are user-defined events associated with this source
-	router.GET("/cmp/v1/sources/:id/annotations", EnsureViewer(service.Annotations))
-	router.POST("/cmp/v1/sources/:id/annotations", EnsureEditor(service.NewAnnotation))
-	router.GET("/cmp/v1/sources/:id/annotations/:aid", EnsureViewer(service.Annotation))
-	router.DELETE("/cmp/v1/sources/:id/annotations/:aid", EnsureEditor(service.RemoveAnnotation))
-	router.PATCH("/cmp/v1/sources/:id/annotations/:aid", EnsureEditor(service.UpdateAnnotation))
+	router.GET("/cloudhub/v1/sources/:id/annotations", EnsureViewer(service.Annotations))
+	router.POST("/cloudhub/v1/sources/:id/annotations", EnsureEditor(service.NewAnnotation))
+	router.GET("/cloudhub/v1/sources/:id/annotations/:aid", EnsureViewer(service.Annotation))
+	router.DELETE("/cloudhub/v1/sources/:id/annotations/:aid", EnsureEditor(service.RemoveAnnotation))
+	router.PATCH("/cloudhub/v1/sources/:id/annotations/:aid", EnsureEditor(service.UpdateAnnotation))
 
 	// All possible permissions for users in this source
-	router.GET("/cmp/v1/sources/:id/permissions", EnsureViewer(service.Permissions))
+	router.GET("/cloudhub/v1/sources/:id/permissions", EnsureViewer(service.Permissions))
 
 	// Users associated with the data source
-	router.GET("/cmp/v1/sources/:id/users", EnsureAdmin(service.SourceUsers))
-	router.POST("/cmp/v1/sources/:id/users", EnsureAdmin(service.NewSourceUser))
+	router.GET("/cloudhub/v1/sources/:id/users", EnsureAdmin(service.SourceUsers))
+	router.POST("/cloudhub/v1/sources/:id/users", EnsureAdmin(service.NewSourceUser))
 
-	router.GET("/cmp/v1/sources/:id/users/:uid", EnsureAdmin(service.SourceUserID))
-	router.DELETE("/cmp/v1/sources/:id/users/:uid", EnsureAdmin(service.RemoveSourceUser))
-	router.PATCH("/cmp/v1/sources/:id/users/:uid", EnsureAdmin(service.UpdateSourceUser))
+	router.GET("/cloudhub/v1/sources/:id/users/:uid", EnsureAdmin(service.SourceUserID))
+	router.DELETE("/cloudhub/v1/sources/:id/users/:uid", EnsureAdmin(service.RemoveSourceUser))
+	router.PATCH("/cloudhub/v1/sources/:id/users/:uid", EnsureAdmin(service.UpdateSourceUser))
 
 	// Roles associated with the data source
-	router.GET("/cmp/v1/sources/:id/roles", EnsureViewer(service.SourceRoles))
-	router.POST("/cmp/v1/sources/:id/roles", EnsureEditor(service.NewSourceRole))
+	router.GET("/cloudhub/v1/sources/:id/roles", EnsureViewer(service.SourceRoles))
+	router.POST("/cloudhub/v1/sources/:id/roles", EnsureEditor(service.NewSourceRole))
 
-	router.GET("/cmp/v1/sources/:id/roles/:rid", EnsureViewer(service.SourceRoleID))
-	router.DELETE("/cmp/v1/sources/:id/roles/:rid", EnsureEditor(service.RemoveSourceRole))
-	router.PATCH("/cmp/v1/sources/:id/roles/:rid", EnsureEditor(service.UpdateSourceRole))
+	router.GET("/cloudhub/v1/sources/:id/roles/:rid", EnsureViewer(service.SourceRoleID))
+	router.DELETE("/cloudhub/v1/sources/:id/roles/:rid", EnsureEditor(service.RemoveSourceRole))
+	router.PATCH("/cloudhub/v1/sources/:id/roles/:rid", EnsureEditor(service.UpdateSourceRole))
 
-	// Services are resources that cmp proxies to
-	router.GET("/cmp/v1/sources/:id/services", EnsureViewer(service.Services))
-	router.POST("/cmp/v1/sources/:id/services", EnsureEditor(service.NewService))
-	router.GET("/cmp/v1/sources/:id/services/:kid", EnsureViewer(service.ServiceID))
-	router.PATCH("/cmp/v1/sources/:id/services/:kid", EnsureEditor(service.UpdateService))
-	router.DELETE("/cmp/v1/sources/:id/services/:kid", EnsureEditor(service.RemoveService))
+	// Services are resources that cloudhub proxies to
+	router.GET("/cloudhub/v1/sources/:id/services", EnsureViewer(service.Services))
+	router.POST("/cloudhub/v1/sources/:id/services", EnsureEditor(service.NewService))
+	router.GET("/cloudhub/v1/sources/:id/services/:kid", EnsureViewer(service.ServiceID))
+	router.PATCH("/cloudhub/v1/sources/:id/services/:kid", EnsureEditor(service.UpdateService))
+	router.DELETE("/cloudhub/v1/sources/:id/services/:kid", EnsureEditor(service.RemoveService))
 
 	// Service Proxy
-	router.GET("/cmp/v1/sources/:id/services/:kid/proxy", EnsureViewer(service.ProxyGet))
-	router.POST("/cmp/v1/sources/:id/services/:kid/proxy", EnsureEditor(service.ProxyPost))
-	router.PATCH("/cmp/v1/sources/:id/services/:kid/proxy", EnsureEditor(service.ProxyPatch))
-	router.DELETE("/cmp/v1/sources/:id/services/:kid/proxy", EnsureEditor(service.ProxyDelete))
+	router.GET("/cloudhub/v1/sources/:id/services/:kid/proxy", EnsureViewer(service.ProxyGet))
+	router.POST("/cloudhub/v1/sources/:id/services/:kid/proxy", EnsureEditor(service.ProxyPost))
+	router.PATCH("/cloudhub/v1/sources/:id/services/:kid/proxy", EnsureEditor(service.ProxyPatch))
+	router.DELETE("/cloudhub/v1/sources/:id/services/:kid/proxy", EnsureEditor(service.ProxyDelete))
 
 	// Salt Proxy
-	router.GET("/cmp/v1/salt", EnsureAdmin(service.SaltProxyGet))
-	router.POST("/cmp/v1/salt", EnsureAdmin(service.SaltProxyPost))
-	router.PATCH("/cmp/v1/salt", EnsureAdmin(service.SaltProxyPatch))
-	router.DELETE("/cmp/v1/salt", EnsureAdmin(service.SaltProxyDelete))
+	router.GET("/cloudhub/v1/salt", EnsureAdmin(service.SaltProxyGet))
+	router.POST("/cloudhub/v1/salt", EnsureAdmin(service.SaltProxyPost))
+	router.PATCH("/cloudhub/v1/salt", EnsureAdmin(service.SaltProxyPatch))
+	router.DELETE("/cloudhub/v1/salt", EnsureAdmin(service.SaltProxyDelete))
 
 	// Kapacitor
-	router.GET("/cmp/v1/sources/:id/kapacitors", EnsureViewer(service.Kapacitors))
-	router.POST("/cmp/v1/sources/:id/kapacitors", EnsureEditor(service.NewKapacitor))
+	router.GET("/cloudhub/v1/sources/:id/kapacitors", EnsureViewer(service.Kapacitors))
+	router.POST("/cloudhub/v1/sources/:id/kapacitors", EnsureEditor(service.NewKapacitor))
 
-	router.GET("/cmp/v1/sources/:id/kapacitors/:kid", EnsureViewer(service.KapacitorsID))
-	router.PATCH("/cmp/v1/sources/:id/kapacitors/:kid", EnsureEditor(service.UpdateKapacitor))
-	router.DELETE("/cmp/v1/sources/:id/kapacitors/:kid", EnsureEditor(service.RemoveKapacitor))
+	router.GET("/cloudhub/v1/sources/:id/kapacitors/:kid", EnsureViewer(service.KapacitorsID))
+	router.PATCH("/cloudhub/v1/sources/:id/kapacitors/:kid", EnsureEditor(service.UpdateKapacitor))
+	router.DELETE("/cloudhub/v1/sources/:id/kapacitors/:kid", EnsureEditor(service.RemoveKapacitor))
 
 	// Kapacitor rules
-	router.GET("/cmp/v1/sources/:id/kapacitors/:kid/rules", EnsureViewer(service.KapacitorRulesGet))
-	router.POST("/cmp/v1/sources/:id/kapacitors/:kid/rules", EnsureEditor(service.KapacitorRulesPost))
+	router.GET("/cloudhub/v1/sources/:id/kapacitors/:kid/rules", EnsureViewer(service.KapacitorRulesGet))
+	router.POST("/cloudhub/v1/sources/:id/kapacitors/:kid/rules", EnsureEditor(service.KapacitorRulesPost))
 
-	router.GET("/cmp/v1/sources/:id/kapacitors/:kid/rules/:tid", EnsureViewer(service.KapacitorRulesID))
-	router.PUT("/cmp/v1/sources/:id/kapacitors/:kid/rules/:tid", EnsureEditor(service.KapacitorRulesPut))
-	router.PATCH("/cmp/v1/sources/:id/kapacitors/:kid/rules/:tid", EnsureEditor(service.KapacitorRulesStatus))
-	router.DELETE("/cmp/v1/sources/:id/kapacitors/:kid/rules/:tid", EnsureEditor(service.KapacitorRulesDelete))
+	router.GET("/cloudhub/v1/sources/:id/kapacitors/:kid/rules/:tid", EnsureViewer(service.KapacitorRulesID))
+	router.PUT("/cloudhub/v1/sources/:id/kapacitors/:kid/rules/:tid", EnsureEditor(service.KapacitorRulesPut))
+	router.PATCH("/cloudhub/v1/sources/:id/kapacitors/:kid/rules/:tid", EnsureEditor(service.KapacitorRulesStatus))
+	router.DELETE("/cloudhub/v1/sources/:id/kapacitors/:kid/rules/:tid", EnsureEditor(service.KapacitorRulesDelete))
 
 	// Kapacitor Proxy
-	router.GET("/cmp/v1/sources/:id/kapacitors/:kid/proxy", EnsureViewer(service.ProxyGet))
-	router.POST("/cmp/v1/sources/:id/kapacitors/:kid/proxy", EnsureEditor(service.ProxyPost))
-	router.PATCH("/cmp/v1/sources/:id/kapacitors/:kid/proxy", EnsureEditor(service.ProxyPatch))
-	router.DELETE("/cmp/v1/sources/:id/kapacitors/:kid/proxy", EnsureEditor(service.ProxyDelete))
+	router.GET("/cloudhub/v1/sources/:id/kapacitors/:kid/proxy", EnsureViewer(service.ProxyGet))
+	router.POST("/cloudhub/v1/sources/:id/kapacitors/:kid/proxy", EnsureEditor(service.ProxyPost))
+	router.PATCH("/cloudhub/v1/sources/:id/kapacitors/:kid/proxy", EnsureEditor(service.ProxyPatch))
+	router.DELETE("/cloudhub/v1/sources/:id/kapacitors/:kid/proxy", EnsureEditor(service.ProxyDelete))
 
 	// Layouts
-	router.GET("/cmp/v1/layouts", EnsureViewer(service.Layouts))
-	router.GET("/cmp/v1/layouts/:id", EnsureViewer(service.LayoutsID))
+	router.GET("/cloudhub/v1/layouts", EnsureViewer(service.Layouts))
+	router.GET("/cloudhub/v1/layouts/:id", EnsureViewer(service.LayoutsID))
 
 	// Protoboards
-	router.GET("/cmp/v1/protoboards", EnsureViewer(service.Protoboards))
-	router.GET("/cmp/v1/protoboards/:id", EnsureViewer(service.ProtoboardsID))
+	router.GET("/cloudhub/v1/protoboards", EnsureViewer(service.Protoboards))
+	router.GET("/cloudhub/v1/protoboards/:id", EnsureViewer(service.ProtoboardsID))
 
-	// Users associated with CMP
-	router.GET("/cmp/v1/me", service.Me)
+	// Users associated with CloudHub
+	router.GET("/cloudhub/v1/me", service.Me)
 
-	// Set current cmp organization the user is logged into
-	router.PUT("/cmp/v1/me", service.UpdateMe(opts.Auth))
+	// Set current cloudhub organization the user is logged into
+	router.PUT("/cloudhub/v1/me", service.UpdateMe(opts.Auth))
 
 	// TODO: what to do about admin's being able to set superadmin
-	router.GET("/cmp/v1/organizations/:oid/users", EnsureAdmin(ensureOrgMatches(service.Users)))
-	router.POST("/cmp/v1/organizations/:oid/users", EnsureAdmin(ensureOrgMatches(service.NewUser)))
+	router.GET("/cloudhub/v1/organizations/:oid/users", EnsureAdmin(ensureOrgMatches(service.Users)))
+	router.POST("/cloudhub/v1/organizations/:oid/users", EnsureAdmin(ensureOrgMatches(service.NewUser)))
 
-	router.GET("/cmp/v1/organizations/:oid/users/:id", EnsureAdmin(ensureOrgMatches(service.UserID)))
-	router.DELETE("/cmp/v1/organizations/:oid/users/:id", EnsureAdmin(ensureOrgMatches(service.RemoveUser)))
-	router.PATCH("/cmp/v1/organizations/:oid/users/:id", EnsureAdmin(ensureOrgMatches(service.UpdateUser)))
+	router.GET("/cloudhub/v1/organizations/:oid/users/:id", EnsureAdmin(ensureOrgMatches(service.UserID)))
+	router.DELETE("/cloudhub/v1/organizations/:oid/users/:id", EnsureAdmin(ensureOrgMatches(service.RemoveUser)))
+	router.PATCH("/cloudhub/v1/organizations/:oid/users/:id", EnsureAdmin(ensureOrgMatches(service.UpdateUser)))
 
-	router.GET("/cmp/v1/users", EnsureSuperAdmin(rawStoreAccess(service.Users)))
-	router.POST("/cmp/v1/users", EnsureSuperAdmin(rawStoreAccess(service.NewUser)))
+	router.GET("/cloudhub/v1/users", EnsureSuperAdmin(rawStoreAccess(service.Users)))
+	router.POST("/cloudhub/v1/users", EnsureSuperAdmin(rawStoreAccess(service.NewUser)))
 
-	router.GET("/cmp/v1/users/:id", EnsureSuperAdmin(rawStoreAccess(service.UserID)))
-	router.DELETE("/cmp/v1/users/:id", EnsureSuperAdmin(rawStoreAccess(service.RemoveUser)))
-	router.PATCH("/cmp/v1/users/:id", EnsureSuperAdmin(rawStoreAccess(service.UpdateUser)))
+	router.GET("/cloudhub/v1/users/:id", EnsureSuperAdmin(rawStoreAccess(service.UserID)))
+	router.DELETE("/cloudhub/v1/users/:id", EnsureSuperAdmin(rawStoreAccess(service.RemoveUser)))
+	router.PATCH("/cloudhub/v1/users/:id", EnsureSuperAdmin(rawStoreAccess(service.UpdateUser)))
 
 	// Dashboards
-	router.GET("/cmp/v1/dashboards", EnsureViewer(service.Dashboards))
-	router.POST("/cmp/v1/dashboards", EnsureEditor(service.NewDashboard))
+	router.GET("/cloudhub/v1/dashboards", EnsureViewer(service.Dashboards))
+	router.POST("/cloudhub/v1/dashboards", EnsureEditor(service.NewDashboard))
 
-	router.GET("/cmp/v1/dashboards/:id", EnsureViewer(service.DashboardID))
-	router.DELETE("/cmp/v1/dashboards/:id", EnsureEditor(service.RemoveDashboard))
-	router.PUT("/cmp/v1/dashboards/:id", EnsureEditor(service.ReplaceDashboard))
-	router.PATCH("/cmp/v1/dashboards/:id", EnsureEditor(service.UpdateDashboard))
+	router.GET("/cloudhub/v1/dashboards/:id", EnsureViewer(service.DashboardID))
+	router.DELETE("/cloudhub/v1/dashboards/:id", EnsureEditor(service.RemoveDashboard))
+	router.PUT("/cloudhub/v1/dashboards/:id", EnsureEditor(service.ReplaceDashboard))
+	router.PATCH("/cloudhub/v1/dashboards/:id", EnsureEditor(service.UpdateDashboard))
 
 	// Dashboard Cells
-	router.GET("/cmp/v1/dashboards/:id/cells", EnsureViewer(service.DashboardCells))
-	router.POST("/cmp/v1/dashboards/:id/cells", EnsureEditor(service.NewDashboardCell))
+	router.GET("/cloudhub/v1/dashboards/:id/cells", EnsureViewer(service.DashboardCells))
+	router.POST("/cloudhub/v1/dashboards/:id/cells", EnsureEditor(service.NewDashboardCell))
 
-	router.GET("/cmp/v1/dashboards/:id/cells/:cid", EnsureViewer(service.DashboardCellID))
-	router.DELETE("/cmp/v1/dashboards/:id/cells/:cid", EnsureEditor(service.RemoveDashboardCell))
-	router.PUT("/cmp/v1/dashboards/:id/cells/:cid", EnsureEditor(service.ReplaceDashboardCell))
+	router.GET("/cloudhub/v1/dashboards/:id/cells/:cid", EnsureViewer(service.DashboardCellID))
+	router.DELETE("/cloudhub/v1/dashboards/:id/cells/:cid", EnsureEditor(service.RemoveDashboardCell))
+	router.PUT("/cloudhub/v1/dashboards/:id/cells/:cid", EnsureEditor(service.ReplaceDashboardCell))
 
 	// Dashboard Templates
-	router.GET("/cmp/v1/dashboards/:id/templates", EnsureViewer(service.Templates))
-	router.POST("/cmp/v1/dashboards/:id/templates", EnsureEditor(service.NewTemplate))
+	router.GET("/cloudhub/v1/dashboards/:id/templates", EnsureViewer(service.Templates))
+	router.POST("/cloudhub/v1/dashboards/:id/templates", EnsureEditor(service.NewTemplate))
 
-	router.GET("/cmp/v1/dashboards/:id/templates/:tid", EnsureViewer(service.TemplateID))
-	router.DELETE("/cmp/v1/dashboards/:id/templates/:tid", EnsureEditor(service.RemoveTemplate))
-	router.PUT("/cmp/v1/dashboards/:id/templates/:tid", EnsureEditor(service.ReplaceTemplate))
+	router.GET("/cloudhub/v1/dashboards/:id/templates/:tid", EnsureViewer(service.TemplateID))
+	router.DELETE("/cloudhub/v1/dashboards/:id/templates/:tid", EnsureEditor(service.RemoveTemplate))
+	router.PUT("/cloudhub/v1/dashboards/:id/templates/:tid", EnsureEditor(service.ReplaceTemplate))
 
 	// Databases
-	router.GET("/cmp/v1/sources/:id/dbs", EnsureViewer(service.GetDatabases))
-	router.POST("/cmp/v1/sources/:id/dbs", EnsureEditor(service.NewDatabase))
+	router.GET("/cloudhub/v1/sources/:id/dbs", EnsureViewer(service.GetDatabases))
+	router.POST("/cloudhub/v1/sources/:id/dbs", EnsureEditor(service.NewDatabase))
 
-	router.DELETE("/cmp/v1/sources/:id/dbs/:db", EnsureEditor(service.DropDatabase))
+	router.DELETE("/cloudhub/v1/sources/:id/dbs/:db", EnsureEditor(service.DropDatabase))
 
 	// Retention Policies
-	router.GET("/cmp/v1/sources/:id/dbs/:db/rps", EnsureViewer(service.RetentionPolicies))
-	router.POST("/cmp/v1/sources/:id/dbs/:db/rps", EnsureEditor(service.NewRetentionPolicy))
+	router.GET("/cloudhub/v1/sources/:id/dbs/:db/rps", EnsureViewer(service.RetentionPolicies))
+	router.POST("/cloudhub/v1/sources/:id/dbs/:db/rps", EnsureEditor(service.NewRetentionPolicy))
 
-	router.PUT("/cmp/v1/sources/:id/dbs/:db/rps/:rp", EnsureEditor(service.UpdateRetentionPolicy))
-	router.DELETE("/cmp/v1/sources/:id/dbs/:db/rps/:rp", EnsureEditor(service.DropRetentionPolicy))
+	router.PUT("/cloudhub/v1/sources/:id/dbs/:db/rps/:rp", EnsureEditor(service.UpdateRetentionPolicy))
+	router.DELETE("/cloudhub/v1/sources/:id/dbs/:db/rps/:rp", EnsureEditor(service.DropRetentionPolicy))
 
 	// Measurements
-	router.GET("/cmp/v1/sources/:id/dbs/:db/measurements", EnsureViewer(service.Measurements))
+	router.GET("/cloudhub/v1/sources/:id/dbs/:db/measurements", EnsureViewer(service.Measurements))
 
-	// Global application config for CMP
-	router.GET("/cmp/v1/config", EnsureSuperAdmin(service.Config))
-	router.GET("/cmp/v1/config/auth", EnsureSuperAdmin(service.AuthConfig))
-	router.PUT("/cmp/v1/config/auth", EnsureSuperAdmin(service.ReplaceAuthConfig))
+	// Global application config for CloudHub
+	router.GET("/cloudhub/v1/config", EnsureSuperAdmin(service.Config))
+	router.GET("/cloudhub/v1/config/auth", EnsureSuperAdmin(service.AuthConfig))
+	router.PUT("/cloudhub/v1/config/auth", EnsureSuperAdmin(service.ReplaceAuthConfig))
 
-	// Organization config settings for CMP
-	router.GET("/cmp/v1/org_config", EnsureViewer(service.OrganizationConfig))
-	router.GET("/cmp/v1/org_config/logviewer", EnsureViewer(service.OrganizationLogViewerConfig))
-	router.PUT("/cmp/v1/org_config/logviewer", EnsureEditor(service.ReplaceOrganizationLogViewerConfig))
+	// Organization config settings for CloudHub
+	router.GET("/cloudhub/v1/org_config", EnsureViewer(service.OrganizationConfig))
+	router.GET("/cloudhub/v1/org_config/logviewer", EnsureViewer(service.OrganizationLogViewerConfig))
+	router.PUT("/cloudhub/v1/org_config/logviewer", EnsureEditor(service.ReplaceOrganizationLogViewerConfig))
 
-	router.GET("/cmp/v1/env", EnsureViewer(service.Environment))
+	router.GET("/cloudhub/v1/env", EnsureViewer(service.Environment))
 
 	/// V2 Cells
-	router.GET("/cmp/v2/cells", EnsureViewer(service.CellsV2))
-	router.POST("/cmp/v2/cells", EnsureEditor(service.NewCellV2))
+	router.GET("/cloudhub/v2/cells", EnsureViewer(service.CellsV2))
+	router.POST("/cloudhub/v2/cells", EnsureEditor(service.NewCellV2))
 
-	router.GET("/cmp/v2/cells/:id", EnsureViewer(service.CellIDV2))
-	router.DELETE("/cmp/v2/cells/:id", EnsureEditor(service.RemoveCellV2))
-	router.PATCH("/cmp/v2/cells/:id", EnsureEditor(service.UpdateCellV2))
+	router.GET("/cloudhub/v2/cells/:id", EnsureViewer(service.CellIDV2))
+	router.DELETE("/cloudhub/v2/cells/:id", EnsureEditor(service.RemoveCellV2))
+	router.PATCH("/cloudhub/v2/cells/:id", EnsureEditor(service.UpdateCellV2))
 
 	// V2 Dashboards
-	router.GET("/cmp/v2/dashboards", EnsureViewer(service.DashboardsV2))
-	router.POST("/cmp/v2/dashboards", EnsureEditor(service.NewDashboardV2))
+	router.GET("/cloudhub/v2/dashboards", EnsureViewer(service.DashboardsV2))
+	router.POST("/cloudhub/v2/dashboards", EnsureEditor(service.NewDashboardV2))
 
-	router.GET("/cmp/v2/dashboards/:id", EnsureViewer(service.DashboardIDV2))
-	router.DELETE("/cmp/v2/dashboards/:id", EnsureEditor(service.RemoveDashboardV2))
-	router.PATCH("/cmp/v2/dashboards/:id", EnsureEditor(service.UpdateDashboardV2))
+	router.GET("/cloudhub/v2/dashboards/:id", EnsureViewer(service.DashboardIDV2))
+	router.DELETE("/cloudhub/v2/dashboards/:id", EnsureEditor(service.RemoveDashboardV2))
+	router.PATCH("/cloudhub/v2/dashboards/:id", EnsureEditor(service.UpdateDashboardV2))
 
 	allRoutes := &AllRoutes{
 		Logger:      opts.Logger,
@@ -378,7 +378,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 		return p
 	}
 	allRoutes.GetPrincipal = getPrincipal
-	router.Handler("GET", "/cmp/v1/", allRoutes)
+	router.Handler("GET", "/cloudhub/v1/", allRoutes)
 
 	var out http.Handler
 
@@ -400,7 +400,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 }
 
 // AuthAPI adds the OAuth routes if auth is enabled.
-func AuthAPI(opts MuxOpts, router cmp.Router) (http.Handler, AuthRoutes) {
+func AuthAPI(opts MuxOpts, router cloudhub.Router) (http.Handler, AuthRoutes) {
 	routes := AuthRoutes{}
 	for _, pf := range opts.ProviderFuncs {
 		pf(func(p oauth2.Provider, m oauth2.Mux) {
@@ -427,7 +427,7 @@ func AuthAPI(opts MuxOpts, router cmp.Router) (http.Handler, AuthRoutes) {
 		})
 	}
 
-	rootPath := path.Join(opts.Basepath, "/cmp/v1")
+	rootPath := path.Join(opts.Basepath, "/cloudhub/v1")
 	logoutPath := path.Join(opts.Basepath, "/oauth/logout")
 
 	tokenMiddleware := AuthorizedToken(opts.Auth, opts.Logger, router)
@@ -442,7 +442,7 @@ func AuthAPI(opts MuxOpts, router cmp.Router) (http.Handler, AuthRoutes) {
 	}), routes
 }
 
-func encodeJSON(w http.ResponseWriter, status int, v interface{}, logger cmp.Logger) {
+func encodeJSON(w http.ResponseWriter, status int, v interface{}, logger cloudhub.Logger) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(v); err != nil {
@@ -451,7 +451,7 @@ func encodeJSON(w http.ResponseWriter, status int, v interface{}, logger cmp.Log
 }
 
 // Error writes an JSON message
-func Error(w http.ResponseWriter, code int, msg string, logger cmp.Logger) {
+func Error(w http.ResponseWriter, code int, msg string, logger cloudhub.Logger) {
 	e := ErrorMessage{
 		Code:    code,
 		Message: msg,
@@ -471,19 +471,19 @@ func Error(w http.ResponseWriter, code int, msg string, logger cmp.Logger) {
 	_, _ = w.Write(b)
 }
 
-func invalidData(w http.ResponseWriter, err error, logger cmp.Logger) {
+func invalidData(w http.ResponseWriter, err error, logger cloudhub.Logger) {
 	Error(w, http.StatusUnprocessableEntity, fmt.Sprintf("%v", err), logger)
 }
 
-func invalidJSON(w http.ResponseWriter, logger cmp.Logger) {
+func invalidJSON(w http.ResponseWriter, logger cloudhub.Logger) {
 	Error(w, http.StatusBadRequest, "Unparsable JSON", logger)
 }
 
-func unknownErrorWithMessage(w http.ResponseWriter, err error, logger cmp.Logger) {
+func unknownErrorWithMessage(w http.ResponseWriter, err error, logger cloudhub.Logger) {
 	Error(w, http.StatusInternalServerError, fmt.Sprintf("Unknown error: %v", err), logger)
 }
 
-func notFound(w http.ResponseWriter, id interface{}, logger cmp.Logger) {
+func notFound(w http.ResponseWriter, id interface{}, logger cloudhub.Logger) {
 	Error(w, http.StatusNotFound, fmt.Sprintf("ID %v not found", id), logger)
 }
 

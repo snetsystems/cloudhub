@@ -4,11 +4,11 @@ import linksReducer from 'shared/reducers/links'
 import {linksGetCompleted} from 'shared/actions/links'
 
 const links = {
-  layouts: '/cmp/v1/layouts',
-  mappings: '/cmp/v1/mappings',
-  sources: '/cmp/v1/sources',
-  me: '/cmp/v1/me',
-  dashboards: '/cmp/v1/dashboards',
+  layouts: '/cloudhub/v1/layouts',
+  mappings: '/cloudhub/v1/mappings',
+  sources: '/cloudhub/v1/sources',
+  me: '/cloudhub/v1/me',
+  dashboards: '/cloudhub/v1/dashboards',
   auth: [
     {
       name: 'github',

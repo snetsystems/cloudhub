@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/snetsystems/cmp/backend/oauth2"
+	"github.com/snetsystems/cloudhub/backend/oauth2"
 )
 
 // Authenticator implements a OAuth2 authenticator

@@ -8,9 +8,9 @@ import (
 
 	"golang.org/x/net/context"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/influx"
-	"github.com/snetsystems/cmp/backend/influx/queries"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/influx"
+	"github.com/snetsystems/cloudhub/backend/influx/queries"
 )
 
 // QueryRequest is query that will be converted to a queryConfig
@@ -23,7 +23,7 @@ type QueryRequest struct {
 // of the template variables
 type QueriesRequest struct {
 	Queries      []QueryRequest    `json:"queries"`
-	TemplateVars []cmp.TemplateVar `json:"tempVars,omitempty"`
+	TemplateVars []cloudhub.TemplateVar `json:"tempVars,omitempty"`
 }
 
 // QueryResponse is the return result of a QueryRequest including
@@ -32,7 +32,7 @@ type QueryResponse struct {
 	Duration       int64                    `json:"durationMs"`
 	ID             string                   `json:"id"`
 	Query          string                   `json:"query"`
-	QueryConfig    cmp.QueryConfig          `json:"queryConfig"`
+	QueryConfig    cloudhub.QueryConfig          `json:"queryConfig"`
 	QueryAST       *queries.SelectStatement `json:"queryAST,omitempty"`
 	QueryTemplated *string                  `json:"queryTemplated,omitempty"`
 }
@@ -77,7 +77,7 @@ func (s *Service) Queries(w http.ResponseWriter, r *http.Request) {
 			Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 			return
 		}
-		qc.Shifts = []cmp.TimeShift{}
+		qc.Shifts = []cloudhub.TimeShift{}
 		qr.QueryConfig = qc
 
 		if stmt, err := queries.ParseSelect(q.Query); err == nil {
@@ -101,7 +101,7 @@ func (s *Service) Queries(w http.ResponseWriter, r *http.Request) {
 }
 
 // DefaultRP will add the default retention policy to the QC if one has not been specified
-func (s *Service) DefaultRP(ctx context.Context, qc *cmp.QueryConfig, src *cmp.Source) error {
+func (s *Service) DefaultRP(ctx context.Context, qc *cloudhub.QueryConfig, src *cloudhub.Source) error {
 	// Only need to find the default RP IFF the qc's rp is empty
 	if qc.RetentionPolicy != "" {
 		return nil

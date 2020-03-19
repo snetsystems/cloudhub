@@ -11,14 +11,14 @@ import (
 	"time"
 
 	gojwt "github.com/dgrijalva/jwt-go"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/influx"
-	"github.com/snetsystems/cmp/backend/log"
-	"github.com/snetsystems/cmp/backend/mocks"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/influx"
+	"github.com/snetsystems/cloudhub/backend/log"
+	"github.com/snetsystems/cloudhub/backend/mocks"
 )
 
 // NewClient initializes an HTTP Client for InfluxDB.
-func NewClient(host string, lg cmp.Logger) (*influx.Client, error) {
+func NewClient(host string, lg cloudhub.Logger) (*influx.Client, error) {
 	l := lg.WithField("host", host)
 	u, err := url.Parse(host)
 	if err != nil {
@@ -44,13 +44,13 @@ func Test_Influx_MakesRequestsToQueryEndpoint(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	var series cmp.TimeSeries
+	var series cloudhub.TimeSeries
 	series, err := NewClient(ts.URL, log.New(log.DebugLevel))
 	if err != nil {
 		t.Fatal("Unexpected error initializing client: err:", err)
 	}
 
-	query := cmp.Query{
+	query := cloudhub.Query{
 		Command: "show databases",
 	}
 	_, err = series.Query(context.Background(), query)
@@ -100,7 +100,7 @@ func Test_Influx_AuthorizationBearer(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	src := &cmp.Source{
+	src := &cloudhub.Source{
 		Username:     "AzureDiamond",
 		URL:          ts.URL,
 		SharedSecret: "42",
@@ -110,7 +110,7 @@ func Test_Influx_AuthorizationBearer(t *testing.T) {
 	}
 	series.Connect(context.Background(), src)
 
-	query := cmp.Query{
+	query := cloudhub.Query{
 		Command: "show databases",
 	}
 	_, err := series.Query(context.Background(), query)
@@ -158,14 +158,14 @@ func Test_Influx_AuthorizationBearerCtx(t *testing.T) {
 		Logger: log.New(log.DebugLevel),
 	}
 
-	err := series.Connect(context.Background(), &cmp.Source{
+	err := series.Connect(context.Background(), &cloudhub.Source{
 		Username:           "AzureDiamond",
 		SharedSecret:       "hunter2",
 		URL:                ts.URL,
 		InsecureSkipVerify: true,
 	})
 
-	query := cmp.Query{
+	query := cloudhub.Query{
 		Command: "show databases",
 	}
 	_, err = series.Query(context.Background(), query)
@@ -188,7 +188,7 @@ func Test_Influx_AuthorizationBearerFailure(t *testing.T) {
 		Logger:     log.New(log.DebugLevel),
 	}
 
-	query := cmp.Query{
+	query := cloudhub.Query{
 		Command: "show databases",
 	}
 	_, err := series.Query(context.Background(), query)
@@ -205,20 +205,20 @@ func Test_Influx_HTTPS_Failure(t *testing.T) {
 	defer ts.Close()
 
 	ctx := context.Background()
-	var series cmp.TimeSeries
+	var series cloudhub.TimeSeries
 	series, err := NewClient(ts.URL, log.New(log.DebugLevel))
 	if err != nil {
 		t.Fatal("Unexpected error initializing client: err:", err)
 	}
 
-	src := cmp.Source{
+	src := cloudhub.Source{
 		URL: ts.URL,
 	}
 	if err := series.Connect(ctx, &src); err != nil {
 		t.Fatal("Unexpected error connecting to client: err:", err)
 	}
 
-	query := cmp.Query{
+	query := cloudhub.Query{
 		Command: "show databases",
 	}
 	_, err = series.Query(ctx, query)
@@ -249,13 +249,13 @@ func Test_Influx_HTTPS_InsecureSkipVerify(t *testing.T) {
 	defer ts.Close()
 
 	ctx := context.Background()
-	var series cmp.TimeSeries
+	var series cloudhub.TimeSeries
 	series, err := NewClient(ts.URL, log.New(log.DebugLevel))
 	if err != nil {
 		t.Fatal("Unexpected error initializing client: err:", err)
 	}
 
-	src := cmp.Source{
+	src := cloudhub.Source{
 		URL:                ts.URL,
 		InsecureSkipVerify: true,
 	}
@@ -263,7 +263,7 @@ func Test_Influx_HTTPS_InsecureSkipVerify(t *testing.T) {
 		t.Fatal("Unexpected error connecting to client: err:", err)
 	}
 
-	query := cmp.Query{
+	query := cloudhub.Query{
 		Command: "show databases",
 	}
 	_, err = series.Query(ctx, query)
@@ -276,7 +276,7 @@ func Test_Influx_HTTPS_InsecureSkipVerify(t *testing.T) {
 	}
 	called = false
 	q = ""
-	query = cmp.Query{
+	query = cloudhub.Query{
 		Command: `select "usage_user" from cpu`,
 	}
 	_, err = series.Query(ctx, query)
@@ -313,7 +313,7 @@ func Test_Influx_CancelsInFlightRequests(t *testing.T) {
 
 	errs := make(chan (error))
 	go func() {
-		query := cmp.Query{
+		query := cloudhub.Query{
 			Command: "show databases",
 		}
 
@@ -345,7 +345,7 @@ func Test_Influx_CancelsInFlightRequests(t *testing.T) {
 	}
 
 	err := <-errs
-	if err != cmp.ErrUpstreamTimeout {
+	if err != cloudhub.ErrUpstreamTimeout {
 		t.Error("Expected timeout error but wasn't. err was", err)
 	}
 }
@@ -368,7 +368,7 @@ func Test_Influx_ReportsInfluxErrs(t *testing.T) {
 		t.Fatal("Encountered unexpected error while initializing influx client: err:", err)
 	}
 
-	_, err = cl.Query(context.Background(), cmp.Query{
+	_, err = cl.Query(context.Background(), cloudhub.Query{
 		Command: "show shards",
 		DB:      "_internal",
 		RP:      "autogen",
@@ -390,11 +390,11 @@ func TestClient_write(t *testing.T) {
 	type fields struct {
 		Authorizer         influx.Authorizer
 		InsecureSkipVerify bool
-		Logger             cmp.Logger
+		Logger             cloudhub.Logger
 	}
 	type args struct {
 		ctx   context.Context
-		point cmp.Point
+		point cloudhub.Point
 	}
 	tests := []struct {
 		name    string
@@ -410,7 +410,7 @@ func TestClient_write(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				point: cmp.Point{
+				point: cloudhub.Point{
 					Database:        "mydb",
 					RetentionPolicy: "myrp",
 					Measurement:     "mymeas",
@@ -429,7 +429,7 @@ func TestClient_write(t *testing.T) {
 			name: "point without fields",
 			args: args{
 				ctx:   context.Background(),
-				point: cmp.Point{},
+				point: cloudhub.Point{},
 			},
 			wantErr: true,
 		},
@@ -440,7 +440,7 @@ func TestClient_write(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				point: cmp.Point{
+				point: cloudhub.Point{
 					Database:        "mydb",
 					RetentionPolicy: "myrp",
 					Measurement:     "mymeas",
@@ -463,7 +463,7 @@ func TestClient_write(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				point: cmp.Point{
+				point: cloudhub.Point{
 					Database:        "mydb",
 					RetentionPolicy: "myrp",
 					Measurement:     "mymeas",
@@ -486,7 +486,7 @@ func TestClient_write(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				point: cmp.Point{
+				point: cloudhub.Point{
 					Database:        "mydb",
 					RetentionPolicy: "myrp",
 					Measurement:     "mymeas",
@@ -529,7 +529,7 @@ func TestClient_write(t *testing.T) {
 				InsecureSkipVerify: tt.fields.InsecureSkipVerify,
 				Logger:             tt.fields.Logger,
 			}
-			if err := c.Write(tt.args.ctx, []cmp.Point{tt.args.point}); (err != nil) != tt.wantErr {
+			if err := c.Write(tt.args.ctx, []cloudhub.Point{tt.args.point}); (err != nil) != tt.wantErr {
 				t.Errorf("Client.write() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})

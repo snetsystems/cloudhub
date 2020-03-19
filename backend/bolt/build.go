@@ -4,27 +4,27 @@ import (
 	"context"
 
 	"github.com/boltdb/bolt"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/bolt/internal"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/bolt/internal"
 )
 
-// Ensure BuildStore struct implements cmp.BuildStore interface
-var _ cmp.BuildStore = &BuildStore{}
+// Ensure BuildStore struct implements cloudhub.BuildStore interface
+var _ cloudhub.BuildStore = &BuildStore{}
 
-// BuildBucket is the bolt bucket used to store CMP build information
+// BuildBucket is the bolt bucket used to store CloudHub build information
 var BuildBucket = []byte("Build")
 
 // BuildKey is the constant key used in the bolt bucket
 var BuildKey = []byte("build")
 
-// BuildStore is a bolt implementation to store CMP build information
+// BuildStore is a bolt implementation to store CloudHub build information
 type BuildStore struct {
 	client *Client
 }
 
-// Get retrieves CMP build information from the database
-func (s *BuildStore) Get(ctx context.Context) (cmp.BuildInfo, error) {
-	var build cmp.BuildInfo
+// Get retrieves CloudHub build information from the database
+func (s *BuildStore) Get(ctx context.Context) (cloudhub.BuildInfo, error) {
+	var build cloudhub.BuildInfo
 	if err := s.client.db.View(func(tx *bolt.Tx) error {
 		var err error
 		build, err = s.get(ctx, tx)
@@ -33,14 +33,14 @@ func (s *BuildStore) Get(ctx context.Context) (cmp.BuildInfo, error) {
 		}
 		return nil
 	}); err != nil {
-		return cmp.BuildInfo{}, err
+		return cloudhub.BuildInfo{}, err
 	}
 
 	return build, nil
 }
 
-// Update overwrites the current CMP build information in the database
-func (s *BuildStore) Update(ctx context.Context, build cmp.BuildInfo) error {
+// Update overwrites the current CloudHub build information in the database
+func (s *BuildStore) Update(ctx context.Context, build cloudhub.BuildInfo) error {
 	if err := s.client.db.Update(func(tx *bolt.Tx) error {
 		return s.update(ctx, build, tx)
 	}); err != nil {
@@ -51,14 +51,14 @@ func (s *BuildStore) Update(ctx context.Context, build cmp.BuildInfo) error {
 }
 
 // Migrate simply stores the current version in the database
-func (s *BuildStore) Migrate(ctx context.Context, build cmp.BuildInfo) error {
+func (s *BuildStore) Migrate(ctx context.Context, build cloudhub.BuildInfo) error {
 	return s.Update(ctx, build)
 }
 
 // get retrieves the current build, falling back to a default when missing
-func (s *BuildStore) get(ctx context.Context, tx *bolt.Tx) (cmp.BuildInfo, error) {
-	var build cmp.BuildInfo
-	defaultBuild := cmp.BuildInfo{
+func (s *BuildStore) get(ctx context.Context, tx *bolt.Tx) (cloudhub.BuildInfo, error) {
+	var build cloudhub.BuildInfo
+	defaultBuild := cloudhub.BuildInfo{
 		Version: "pre-1.4.0.0",
 		Commit:  "",
 	}
@@ -73,7 +73,7 @@ func (s *BuildStore) get(ctx context.Context, tx *bolt.Tx) (cmp.BuildInfo, error
 	return build, nil
 }
 
-func (s *BuildStore) update(ctx context.Context, build cmp.BuildInfo, tx *bolt.Tx) error {
+func (s *BuildStore) update(ctx context.Context, build cloudhub.BuildInfo, tx *bolt.Tx) error {
 	if v, err := internal.MarshalBuild(build); err != nil {
 		return err
 	} else if err := tx.Bucket(BuildBucket).Put(BuildKey, v); err != nil {

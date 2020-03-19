@@ -6,23 +6,23 @@ import (
 
 	gocmp "github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-var mappingCmpOptions = gocmp.Options{
-	cmpopts.IgnoreFields(cmp.Mapping{}, "ID"),
+var mappingCloudHubOptions = gocmp.Options{
+	cmpopts.IgnoreFields(cloudhub.Mapping{}, "ID"),
 	cmpopts.EquateEmpty(),
 }
 
 func TestMappingStore_Add(t *testing.T) {
 	type fields struct {
-		mappings []*cmp.Mapping
+		mappings []*cloudhub.Mapping
 	}
 	type args struct {
-		mapping *cmp.Mapping
+		mapping *cloudhub.Mapping
 	}
 	type wants struct {
-		mapping *cmp.Mapping
+		mapping *cloudhub.Mapping
 		err     error
 	}
 	tests := []struct {
@@ -34,7 +34,7 @@ func TestMappingStore_Add(t *testing.T) {
 		{
 			name: "default with wildcards",
 			args: args{
-				mapping: &cmp.Mapping{
+				mapping: &cloudhub.Mapping{
 					Organization:         "default",
 					Provider:             "*",
 					Scheme:               "*",
@@ -42,7 +42,7 @@ func TestMappingStore_Add(t *testing.T) {
 				},
 			},
 			wants: wants{
-				mapping: &cmp.Mapping{
+				mapping: &cloudhub.Mapping{
 					Organization:         "default",
 					Provider:             "*",
 					Scheme:               "*",
@@ -53,7 +53,7 @@ func TestMappingStore_Add(t *testing.T) {
 		{
 			name: "simple",
 			args: args{
-				mapping: &cmp.Mapping{
+				mapping: &cloudhub.Mapping{
 					Organization:         "default",
 					Provider:             "github",
 					Scheme:               "oauth2",
@@ -61,7 +61,7 @@ func TestMappingStore_Add(t *testing.T) {
 				},
 			},
 			wants: wants{
-				mapping: &cmp.Mapping{
+				mapping: &cloudhub.Mapping{
 					Organization:         "default",
 					Provider:             "github",
 					Scheme:               "oauth2",
@@ -99,7 +99,7 @@ func TestMappingStore_Add(t *testing.T) {
 				t.Fatalf("failed to get mapping: %v", err)
 				return
 			}
-			if diff := gocmp.Diff(got, tt.wants.mapping, mappingCmpOptions...); diff != "" {
+			if diff := gocmp.Diff(got, tt.wants.mapping, mappingCloudHubOptions...); diff != "" {
 				t.Errorf("MappingStore.Add():\n-got/+want\ndiff %s", diff)
 				return
 			}
@@ -109,12 +109,12 @@ func TestMappingStore_Add(t *testing.T) {
 
 func TestMappingStore_All(t *testing.T) {
 	type fields struct {
-		mappings []*cmp.Mapping
+		mappings []*cloudhub.Mapping
 	}
 	type args struct {
 	}
 	type wants struct {
-		mappings []cmp.Mapping
+		mappings []cloudhub.Mapping
 		err      error
 	}
 	tests := []struct {
@@ -126,8 +126,8 @@ func TestMappingStore_All(t *testing.T) {
 		{
 			name: "simple",
 			fields: fields{
-				mappings: []*cmp.Mapping{
-					&cmp.Mapping{
+				mappings: []*cloudhub.Mapping{
+					&cloudhub.Mapping{
 						Organization:         "0",
 						Provider:             "google",
 						Scheme:               "ldap",
@@ -136,14 +136,14 @@ func TestMappingStore_All(t *testing.T) {
 				},
 			},
 			wants: wants{
-				mappings: []cmp.Mapping{
-					cmp.Mapping{
+				mappings: []cloudhub.Mapping{
+					cloudhub.Mapping{
 						Organization:         "0",
 						Provider:             "google",
 						Scheme:               "ldap",
 						ProviderOrganization: "*",
 					},
-					cmp.Mapping{
+					cloudhub.Mapping{
 						Organization:         "default",
 						Provider:             "*",
 						Scheme:               "*",
@@ -177,7 +177,7 @@ func TestMappingStore_All(t *testing.T) {
 				return
 			}
 
-			if diff := gocmp.Diff(got, tt.wants.mappings, mappingCmpOptions...); diff != "" {
+			if diff := gocmp.Diff(got, tt.wants.mappings, mappingCloudHubOptions...); diff != "" {
 				t.Errorf("MappingStore.All():\n-got/+want\ndiff %s", diff)
 				return
 			}
@@ -187,10 +187,10 @@ func TestMappingStore_All(t *testing.T) {
 
 func TestMappingStore_Delete(t *testing.T) {
 	type fields struct {
-		mappings []*cmp.Mapping
+		mappings []*cloudhub.Mapping
 	}
 	type args struct {
-		mapping *cmp.Mapping
+		mapping *cloudhub.Mapping
 	}
 	type wants struct {
 		err error
@@ -204,14 +204,14 @@ func TestMappingStore_Delete(t *testing.T) {
 		{
 			name: "simple",
 			fields: fields{
-				mappings: []*cmp.Mapping{
-					&cmp.Mapping{
+				mappings: []*cloudhub.Mapping{
+					&cloudhub.Mapping{
 						Organization:         "default",
 						Provider:             "*",
 						Scheme:               "*",
 						ProviderOrganization: "*",
 					},
-					&cmp.Mapping{
+					&cloudhub.Mapping{
 						Organization:         "0",
 						Provider:             "google",
 						Scheme:               "ldap",
@@ -220,7 +220,7 @@ func TestMappingStore_Delete(t *testing.T) {
 				},
 			},
 			args: args{
-				mapping: &cmp.Mapping{
+				mapping: &cloudhub.Mapping{
 					ID:                   "1",
 					Organization:         "default",
 					Provider:             "*",
@@ -235,14 +235,14 @@ func TestMappingStore_Delete(t *testing.T) {
 		{
 			name: "mapping not found",
 			fields: fields{
-				mappings: []*cmp.Mapping{
-					&cmp.Mapping{
+				mappings: []*cloudhub.Mapping{
+					&cloudhub.Mapping{
 						Organization:         "default",
 						Provider:             "*",
 						Scheme:               "*",
 						ProviderOrganization: "*",
 					},
-					&cmp.Mapping{
+					&cloudhub.Mapping{
 						Organization:         "0",
 						Provider:             "google",
 						Scheme:               "ldap",
@@ -251,7 +251,7 @@ func TestMappingStore_Delete(t *testing.T) {
 				},
 			},
 			args: args{
-				mapping: &cmp.Mapping{
+				mapping: &cloudhub.Mapping{
 					ID:                   "0",
 					Organization:         "default",
 					Provider:             "*",
@@ -260,7 +260,7 @@ func TestMappingStore_Delete(t *testing.T) {
 				},
 			},
 			wants: wants{
-				err: cmp.ErrMappingNotFound,
+				err: cloudhub.ErrMappingNotFound,
 			},
 		},
 	}
@@ -293,13 +293,13 @@ func TestMappingStore_Delete(t *testing.T) {
 
 func TestMappingStore_Get(t *testing.T) {
 	type fields struct {
-		mappings []*cmp.Mapping
+		mappings []*cloudhub.Mapping
 	}
 	type args struct {
 		mappingID string
 	}
 	type wants struct {
-		mapping *cmp.Mapping
+		mapping *cloudhub.Mapping
 		err     error
 	}
 	tests := []struct {
@@ -311,14 +311,14 @@ func TestMappingStore_Get(t *testing.T) {
 		{
 			name: "simple",
 			fields: fields{
-				mappings: []*cmp.Mapping{
-					&cmp.Mapping{
+				mappings: []*cloudhub.Mapping{
+					&cloudhub.Mapping{
 						Organization:         "default",
 						Provider:             "*",
 						Scheme:               "*",
 						ProviderOrganization: "*",
 					},
-					&cmp.Mapping{
+					&cloudhub.Mapping{
 						Organization:         "0",
 						Provider:             "google",
 						Scheme:               "ldap",
@@ -330,7 +330,7 @@ func TestMappingStore_Get(t *testing.T) {
 				mappingID: "1",
 			},
 			wants: wants{
-				mapping: &cmp.Mapping{
+				mapping: &cloudhub.Mapping{
 					ID:                   "1",
 					Organization:         "default",
 					Provider:             "*",
@@ -343,14 +343,14 @@ func TestMappingStore_Get(t *testing.T) {
 		{
 			name: "mapping not found",
 			fields: fields{
-				mappings: []*cmp.Mapping{
-					&cmp.Mapping{
+				mappings: []*cloudhub.Mapping{
+					&cloudhub.Mapping{
 						Organization:         "default",
 						Provider:             "*",
 						Scheme:               "*",
 						ProviderOrganization: "*",
 					},
-					&cmp.Mapping{
+					&cloudhub.Mapping{
 						Organization:         "0",
 						Provider:             "google",
 						Scheme:               "ldap",
@@ -362,7 +362,7 @@ func TestMappingStore_Get(t *testing.T) {
 				mappingID: "0",
 			},
 			wants: wants{
-				err: cmp.ErrMappingNotFound,
+				err: cloudhub.ErrMappingNotFound,
 			},
 		},
 	}
@@ -388,7 +388,7 @@ func TestMappingStore_Get(t *testing.T) {
 				t.Errorf("MappingsStore.Get() error = %v, want error %v", err, tt.wants.err)
 				return
 			}
-			if diff := gocmp.Diff(got, tt.wants.mapping, mappingCmpOptions...); diff != "" {
+			if diff := gocmp.Diff(got, tt.wants.mapping, mappingCloudHubOptions...); diff != "" {
 				t.Errorf("MappingStore.Get():\n-got/+want\ndiff %s", diff)
 				return
 			}
@@ -398,13 +398,13 @@ func TestMappingStore_Get(t *testing.T) {
 
 func TestMappingStore_Update(t *testing.T) {
 	type fields struct {
-		mappings []*cmp.Mapping
+		mappings []*cloudhub.Mapping
 	}
 	type args struct {
-		mapping *cmp.Mapping
+		mapping *cloudhub.Mapping
 	}
 	type wants struct {
-		mapping *cmp.Mapping
+		mapping *cloudhub.Mapping
 		err     error
 	}
 	tests := []struct {
@@ -416,14 +416,14 @@ func TestMappingStore_Update(t *testing.T) {
 		{
 			name: "simple",
 			fields: fields{
-				mappings: []*cmp.Mapping{
-					&cmp.Mapping{
+				mappings: []*cloudhub.Mapping{
+					&cloudhub.Mapping{
 						Organization:         "default",
 						Provider:             "*",
 						Scheme:               "*",
 						ProviderOrganization: "*",
 					},
-					&cmp.Mapping{
+					&cloudhub.Mapping{
 						Organization:         "0",
 						Provider:             "google",
 						Scheme:               "ldap",
@@ -432,7 +432,7 @@ func TestMappingStore_Update(t *testing.T) {
 				},
 			},
 			args: args{
-				mapping: &cmp.Mapping{
+				mapping: &cloudhub.Mapping{
 					ID:                   "1",
 					Organization:         "default",
 					Provider:             "cool",
@@ -441,7 +441,7 @@ func TestMappingStore_Update(t *testing.T) {
 				},
 			},
 			wants: wants{
-				mapping: &cmp.Mapping{
+				mapping: &cloudhub.Mapping{
 					ID:                   "1",
 					Organization:         "default",
 					Provider:             "cool",
@@ -474,7 +474,7 @@ func TestMappingStore_Update(t *testing.T) {
 				t.Errorf("MappingsStore.Update() error = %v, want error %v", err, tt.wants.err)
 				return
 			}
-			if diff := gocmp.Diff(tt.args.mapping, tt.wants.mapping, mappingCmpOptions...); diff != "" {
+			if diff := gocmp.Diff(tt.args.mapping, tt.wants.mapping, mappingCloudHubOptions...); diff != "" {
 				t.Errorf("MappingStore.Update():\n-got/+want\ndiff %s", diff)
 				return
 			}

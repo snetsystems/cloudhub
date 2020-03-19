@@ -3,43 +3,43 @@ package mocks
 import (
 	"context"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	platform "github.com/snetsystems/cmp/backend/v2"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	platform "github.com/snetsystems/cloudhub/backend/v2"
 )
 
-var _ cmp.DashboardsStore = &DashboardsStore{}
+var _ cloudhub.DashboardsStore = &DashboardsStore{}
 
 // DashboardsStore mock allows all functions to be set for testing
 type DashboardsStore struct {
-	AddF    func(ctx context.Context, newDashboard cmp.Dashboard) (cmp.Dashboard, error)
-	AllF    func(ctx context.Context) ([]cmp.Dashboard, error)
-	DeleteF func(ctx context.Context, target cmp.Dashboard) error
-	GetF    func(ctx context.Context, id cmp.DashboardID) (cmp.Dashboard, error)
-	UpdateF func(ctx context.Context, target cmp.Dashboard) error
+	AddF    func(ctx context.Context, newDashboard cloudhub.Dashboard) (cloudhub.Dashboard, error)
+	AllF    func(ctx context.Context) ([]cloudhub.Dashboard, error)
+	DeleteF func(ctx context.Context, target cloudhub.Dashboard) error
+	GetF    func(ctx context.Context, id cloudhub.DashboardID) (cloudhub.Dashboard, error)
+	UpdateF func(ctx context.Context, target cloudhub.Dashboard) error
 }
 
 // Add ...
-func (d *DashboardsStore) Add(ctx context.Context, newDashboard cmp.Dashboard) (cmp.Dashboard, error) {
+func (d *DashboardsStore) Add(ctx context.Context, newDashboard cloudhub.Dashboard) (cloudhub.Dashboard, error) {
 	return d.AddF(ctx, newDashboard)
 }
 
 // All ...
-func (d *DashboardsStore) All(ctx context.Context) ([]cmp.Dashboard, error) {
+func (d *DashboardsStore) All(ctx context.Context) ([]cloudhub.Dashboard, error) {
 	return d.AllF(ctx)
 }
 
 // Delete ...
-func (d *DashboardsStore) Delete(ctx context.Context, target cmp.Dashboard) error {
+func (d *DashboardsStore) Delete(ctx context.Context, target cloudhub.Dashboard) error {
 	return d.DeleteF(ctx, target)
 }
 
 // Get ...
-func (d *DashboardsStore) Get(ctx context.Context, id cmp.DashboardID) (cmp.Dashboard, error) {
+func (d *DashboardsStore) Get(ctx context.Context, id cloudhub.DashboardID) (cloudhub.Dashboard, error) {
 	return d.GetF(ctx, id)
 }
 
 // Update ...
-func (d *DashboardsStore) Update(ctx context.Context, target cmp.Dashboard) error {
+func (d *DashboardsStore) Update(ctx context.Context, target cloudhub.Dashboard) error {
 	return d.UpdateF(ctx, target)
 }
 

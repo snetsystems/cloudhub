@@ -7,21 +7,21 @@ import (
 
 	gocmp "github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/mocks"
-	"github.com/snetsystems/cmp/backend/organizations"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/mocks"
+	"github.com/snetsystems/cloudhub/backend/organizations"
 )
 
 // IgnoreFields is used because ID cannot be predicted reliably
 // EquateEmpty is used because we want nil slices, arrays, and maps to be equal to the empty map
-var dashboardCmpOptions = gocmp.Options{
+var dashboardCloudHubOptions = gocmp.Options{
 	cmpopts.EquateEmpty(),
-	cmpopts.IgnoreFields(cmp.Dashboard{}, "ID"),
+	cmpopts.IgnoreFields(cloudhub.Dashboard{}, "ID"),
 }
 
 func TestDashboards_All(t *testing.T) {
 	type fields struct {
-		DashboardsStore cmp.DashboardsStore
+		DashboardsStore cloudhub.DashboardsStore
 	}
 	type args struct {
 		organization string
@@ -31,15 +31,15 @@ func TestDashboards_All(t *testing.T) {
 		name    string
 		args    args
 		fields  fields
-		want    []cmp.Dashboard
-		wantRaw []cmp.Dashboard
+		want    []cloudhub.Dashboard
+		wantRaw []cloudhub.Dashboard
 		wantErr bool
 	}{
 		{
 			name: "No Dashboards",
 			fields: fields{
 				DashboardsStore: &mocks.DashboardsStore{
-					AllF: func(ctx context.Context) ([]cmp.Dashboard, error) {
+					AllF: func(ctx context.Context) ([]cloudhub.Dashboard, error) {
 						return nil, fmt.Errorf("No Dashboards")
 					},
 				},
@@ -50,8 +50,8 @@ func TestDashboards_All(t *testing.T) {
 			name: "All Dashboards",
 			fields: fields{
 				DashboardsStore: &mocks.DashboardsStore{
-					AllF: func(ctx context.Context) ([]cmp.Dashboard, error) {
-						return []cmp.Dashboard{
+					AllF: func(ctx context.Context) ([]cloudhub.Dashboard, error) {
+						return []cloudhub.Dashboard{
 							{
 								Name:         "howdy",
 								Organization: "1337",
@@ -68,7 +68,7 @@ func TestDashboards_All(t *testing.T) {
 				organization: "1337",
 				ctx:          context.Background(),
 			},
-			want: []cmp.Dashboard{
+			want: []cloudhub.Dashboard{
 				{
 					Name:         "howdy",
 					Organization: "1337",
@@ -85,7 +85,7 @@ func TestDashboards_All(t *testing.T) {
 			continue
 		}
 		for i, got := range gots {
-			if diff := gocmp.Diff(got, tt.want[i], dashboardCmpOptions...); diff != "" {
+			if diff := gocmp.Diff(got, tt.want[i], dashboardCloudHubOptions...); diff != "" {
 				t.Errorf("%q. DashboardsStore.All():\n-got/+want\ndiff %s", tt.name, diff)
 			}
 		}
@@ -94,29 +94,29 @@ func TestDashboards_All(t *testing.T) {
 
 func TestDashboards_Add(t *testing.T) {
 	type fields struct {
-		DashboardsStore cmp.DashboardsStore
+		DashboardsStore cloudhub.DashboardsStore
 	}
 	type args struct {
 		organization string
 		ctx          context.Context
-		dashboard    cmp.Dashboard
+		dashboard    cloudhub.Dashboard
 	}
 	tests := []struct {
 		name    string
 		args    args
 		fields  fields
-		want    cmp.Dashboard
+		want    cloudhub.Dashboard
 		wantErr bool
 	}{
 		{
 			name: "Add Dashboard",
 			fields: fields{
 				DashboardsStore: &mocks.DashboardsStore{
-					AddF: func(ctx context.Context, s cmp.Dashboard) (cmp.Dashboard, error) {
+					AddF: func(ctx context.Context, s cloudhub.Dashboard) (cloudhub.Dashboard, error) {
 						return s, nil
 					},
-					GetF: func(ctx context.Context, id cmp.DashboardID) (cmp.Dashboard, error) {
-						return cmp.Dashboard{
+					GetF: func(ctx context.Context, id cloudhub.DashboardID) (cloudhub.Dashboard, error) {
+						return cloudhub.Dashboard{
 							ID:           1229,
 							Name:         "howdy",
 							Organization: "1337",
@@ -127,12 +127,12 @@ func TestDashboards_Add(t *testing.T) {
 			args: args{
 				organization: "1337",
 				ctx:          context.Background(),
-				dashboard: cmp.Dashboard{
+				dashboard: cloudhub.Dashboard{
 					ID:   1229,
 					Name: "howdy",
 				},
 			},
-			want: cmp.Dashboard{
+			want: cloudhub.Dashboard{
 				Name:         "howdy",
 				Organization: "1337",
 			},
@@ -147,7 +147,7 @@ func TestDashboards_Add(t *testing.T) {
 			continue
 		}
 		got, err := s.Get(tt.args.ctx, d.ID)
-		if diff := gocmp.Diff(got, tt.want, dashboardCmpOptions...); diff != "" {
+		if diff := gocmp.Diff(got, tt.want, dashboardCloudHubOptions...); diff != "" {
 			t.Errorf("%q. DashboardsStore.Add():\n-got/+want\ndiff %s", tt.name, diff)
 		}
 	}
@@ -155,18 +155,18 @@ func TestDashboards_Add(t *testing.T) {
 
 func TestDashboards_Delete(t *testing.T) {
 	type fields struct {
-		DashboardsStore cmp.DashboardsStore
+		DashboardsStore cloudhub.DashboardsStore
 	}
 	type args struct {
 		organization string
 		ctx          context.Context
-		dashboard    cmp.Dashboard
+		dashboard    cloudhub.Dashboard
 	}
 	tests := []struct {
 		name     string
 		fields   fields
 		args     args
-		want     []cmp.Dashboard
+		want     []cloudhub.Dashboard
 		addFirst bool
 		wantErr  bool
 	}{
@@ -174,11 +174,11 @@ func TestDashboards_Delete(t *testing.T) {
 			name: "Delete dashboard",
 			fields: fields{
 				DashboardsStore: &mocks.DashboardsStore{
-					DeleteF: func(ctx context.Context, s cmp.Dashboard) error {
+					DeleteF: func(ctx context.Context, s cloudhub.Dashboard) error {
 						return nil
 					},
-					GetF: func(ctx context.Context, id cmp.DashboardID) (cmp.Dashboard, error) {
-						return cmp.Dashboard{
+					GetF: func(ctx context.Context, id cloudhub.DashboardID) (cloudhub.Dashboard, error) {
+						return cloudhub.Dashboard{
 							ID:           1229,
 							Name:         "howdy",
 							Organization: "1337",
@@ -189,7 +189,7 @@ func TestDashboards_Delete(t *testing.T) {
 			args: args{
 				organization: "1337",
 				ctx:          context.Background(),
-				dashboard: cmp.Dashboard{
+				dashboard: cloudhub.Dashboard{
 					ID:           1229,
 					Name:         "howdy",
 					Organization: "1337",
@@ -211,18 +211,18 @@ func TestDashboards_Delete(t *testing.T) {
 
 func TestDashboards_Get(t *testing.T) {
 	type fields struct {
-		DashboardsStore cmp.DashboardsStore
+		DashboardsStore cloudhub.DashboardsStore
 	}
 	type args struct {
 		organization string
 		ctx          context.Context
-		dashboard    cmp.Dashboard
+		dashboard    cloudhub.Dashboard
 	}
 	tests := []struct {
 		name     string
 		fields   fields
 		args     args
-		want     cmp.Dashboard
+		want     cloudhub.Dashboard
 		addFirst bool
 		wantErr  bool
 	}{
@@ -230,8 +230,8 @@ func TestDashboards_Get(t *testing.T) {
 			name: "Get Dashboard",
 			fields: fields{
 				DashboardsStore: &mocks.DashboardsStore{
-					GetF: func(ctx context.Context, id cmp.DashboardID) (cmp.Dashboard, error) {
-						return cmp.Dashboard{
+					GetF: func(ctx context.Context, id cloudhub.DashboardID) (cloudhub.Dashboard, error) {
+						return cloudhub.Dashboard{
 							ID:           1229,
 							Name:         "howdy",
 							Organization: "1337",
@@ -242,13 +242,13 @@ func TestDashboards_Get(t *testing.T) {
 			args: args{
 				organization: "1337",
 				ctx:          context.Background(),
-				dashboard: cmp.Dashboard{
+				dashboard: cloudhub.Dashboard{
 					ID:           1229,
 					Name:         "howdy",
 					Organization: "1337",
 				},
 			},
-			want: cmp.Dashboard{
+			want: cloudhub.Dashboard{
 				ID:           1229,
 				Name:         "howdy",
 				Organization: "1337",
@@ -263,7 +263,7 @@ func TestDashboards_Get(t *testing.T) {
 			t.Errorf("%q. DashboardsStore.Get() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 			continue
 		}
-		if diff := gocmp.Diff(got, tt.want, dashboardCmpOptions...); diff != "" {
+		if diff := gocmp.Diff(got, tt.want, dashboardCloudHubOptions...); diff != "" {
 			t.Errorf("%q. DashboardsStore.Get():\n-got/+want\ndiff %s", tt.name, diff)
 		}
 	}
@@ -271,19 +271,19 @@ func TestDashboards_Get(t *testing.T) {
 
 func TestDashboards_Update(t *testing.T) {
 	type fields struct {
-		DashboardsStore cmp.DashboardsStore
+		DashboardsStore cloudhub.DashboardsStore
 	}
 	type args struct {
 		organization string
 		ctx          context.Context
-		dashboard    cmp.Dashboard
+		dashboard    cloudhub.Dashboard
 		name         string
 	}
 	tests := []struct {
 		name     string
 		fields   fields
 		args     args
-		want     cmp.Dashboard
+		want     cloudhub.Dashboard
 		addFirst bool
 		wantErr  bool
 	}{
@@ -291,11 +291,11 @@ func TestDashboards_Update(t *testing.T) {
 			name: "Update Dashboard Name",
 			fields: fields{
 				DashboardsStore: &mocks.DashboardsStore{
-					UpdateF: func(ctx context.Context, s cmp.Dashboard) error {
+					UpdateF: func(ctx context.Context, s cloudhub.Dashboard) error {
 						return nil
 					},
-					GetF: func(ctx context.Context, id cmp.DashboardID) (cmp.Dashboard, error) {
-						return cmp.Dashboard{
+					GetF: func(ctx context.Context, id cloudhub.DashboardID) (cloudhub.Dashboard, error) {
+						return cloudhub.Dashboard{
 							ID:           1229,
 							Name:         "doody",
 							Organization: "1337",
@@ -306,14 +306,14 @@ func TestDashboards_Update(t *testing.T) {
 			args: args{
 				organization: "1337",
 				ctx:          context.Background(),
-				dashboard: cmp.Dashboard{
+				dashboard: cloudhub.Dashboard{
 					ID:           1229,
 					Name:         "howdy",
 					Organization: "1337",
 				},
 				name: "doody",
 			},
-			want: cmp.Dashboard{
+			want: cloudhub.Dashboard{
 				Name:         "doody",
 				Organization: "1337",
 			},
@@ -332,7 +332,7 @@ func TestDashboards_Update(t *testing.T) {
 			continue
 		}
 		got, err := s.Get(tt.args.ctx, tt.args.dashboard.ID)
-		if diff := gocmp.Diff(got, tt.want, dashboardCmpOptions...); diff != "" {
+		if diff := gocmp.Diff(got, tt.want, dashboardCloudHubOptions...); diff != "" {
 			t.Errorf("%q. DashboardsStore.Update():\n-got/+want\ndiff %s", tt.name, diff)
 		}
 	}

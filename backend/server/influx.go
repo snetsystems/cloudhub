@@ -10,13 +10,13 @@ import (
 	"net/url"
 	"time"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	uuid "github.com/snetsystems/cmp/backend/id"
-	"github.com/snetsystems/cmp/backend/influx"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	uuid "github.com/snetsystems/cloudhub/backend/id"
+	"github.com/snetsystems/cloudhub/backend/influx"
 )
 
 // ValidInfluxRequest checks if queries specify a command.
-func ValidInfluxRequest(p cmp.Query) error {
+func ValidInfluxRequest(p cloudhub.Query) error {
 	if p.Command == "" {
 		return fmt.Errorf("query field required")
 	}
@@ -36,7 +36,7 @@ func (s *Service) Influx(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req cmp.Query
+	var req cloudhub.Query
 	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
 		invalidJSON(w, s.Logger)
 		return
@@ -68,7 +68,7 @@ func (s *Service) Influx(w http.ResponseWriter, r *http.Request) {
 
 	response, err := ts.Query(ctx, req)
 	if err != nil {
-		if err == cmp.ErrUpstreamTimeout {
+		if err == cloudhub.ErrUpstreamTimeout {
 			msg := "Timeout waiting for Influx response"
 			Error(w, http.StatusRequestTimeout, msg, s.Logger)
 			return

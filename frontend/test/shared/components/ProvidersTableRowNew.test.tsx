@@ -1,5 +1,5 @@
 import React from 'react'
-import ProvidersTableRowNew from 'src/admin/components/cmp/ProvidersTableRowNew'
+import ProvidersTableRowNew from 'src/admin/components/cloudhub/ProvidersTableRowNew'
 import ConfirmOrCancel from 'src/shared/components/ConfirmOrCancel'
 import InputClickToEdit from 'src/shared/components/InputClickToEdit'
 

@@ -4,8 +4,8 @@ import Dropdown from 'src/shared/components/Dropdown'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {USER_ROLES} from 'src/admin/constants/cmpAdmin'
-import {USERS_TABLE} from 'src/admin/constants/cmpTableSizing'
+import {USER_ROLES} from 'src/admin/constants/cloudhubAdmin'
+import {USERS_TABLE} from 'src/admin/constants/cloudhubTableSizing'
 import {User, Role} from 'src/types'
 
 interface Organization {
@@ -33,10 +33,10 @@ class UsersTableRow extends PureComponent<Props> {
     const {colRole, colProvider, colScheme} = USERS_TABLE
 
     return (
-      <tr className={'cmp-admin-table--user'}>
+      <tr className={'cloudhub-admin-table--user'}>
         <td>
           {this.isMe ? (
-            <strong className="cmp-user--me">
+            <strong className="cloudhub-user--me">
               <span className="icon user" />
               {user.name}
             </strong>
@@ -45,7 +45,7 @@ class UsersTableRow extends PureComponent<Props> {
           )}
         </td>
         <td style={{width: colRole}}>
-          <span className="cmp-user--role">
+          <span className="cloudhub-user--role">
             <Dropdown
               items={this.rolesDropdownItems}
               selected={this.currentRole.name}

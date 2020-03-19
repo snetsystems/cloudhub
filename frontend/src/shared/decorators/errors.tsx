@@ -13,7 +13,7 @@ class DefaultError extends Component<{error: Error}> {
   public render() {
     const {error} = this.props
     const {stack, message} = error
-    const finalMessage = ` Cloud Hub (${VERSION}) ${message}`
+    const finalMessage = ` CloudHub (${VERSION}) ${message}`
     const mdMarker = '```'
     const template = `
 
@@ -29,12 +29,12 @@ ${mdMarker}
 
     `
     const href = encodeURI(
-      `https://github.com/snetsystems/cmp/issues/new?title=${finalMessage}&body=${template}`
+      `https://github.com/snetsystems/cloudhub/issues/new?title=${finalMessage}&body=${template}`
     )
 
     return (
       <p className="unexpected-error">
-        A Cloud Hub error has occurred. Please report the issue&nbsp;
+        A CloudHub error has occurred. Please report the issue&nbsp;
         <a href={href}>here</a>.
       </p>
     )

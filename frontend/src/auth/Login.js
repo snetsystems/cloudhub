@@ -21,7 +21,7 @@ const Login = ({authData: {auth}}) => {
           className="auth-text-logo"
           style={{position: 'absolute', top: '-9999px', left: '-9999px'}}
         >
-          Cloud Hub
+          CloudHub
         </h1>
         <p>
           <b>{VERSION}</b> / Real-Time Applications Monitoring

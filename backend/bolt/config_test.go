@@ -5,12 +5,12 @@ import (
 	"testing"
 
 	gocmp "github.com/google/go-cmp/cmp"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 func TestConfig_Get(t *testing.T) {
 	type wants struct {
-		config *cmp.Config
+		config *cloudhub.Config
 		err    error
 	}
 	tests := []struct {
@@ -20,8 +20,8 @@ func TestConfig_Get(t *testing.T) {
 		{
 			name: "Get config",
 			wants: wants{
-				config: &cmp.Config{
-					Auth: cmp.AuthConfig{
+				config: &cloudhub.Config{
+					Auth: cloudhub.AuthConfig{
 						SuperAdminNewUsers: false,
 					},
 				},
@@ -49,10 +49,10 @@ func TestConfig_Get(t *testing.T) {
 
 func TestConfig_Update(t *testing.T) {
 	type args struct {
-		config *cmp.Config
+		config *cloudhub.Config
 	}
 	type wants struct {
-		config *cmp.Config
+		config *cloudhub.Config
 		err    error
 	}
 	tests := []struct {
@@ -63,15 +63,15 @@ func TestConfig_Update(t *testing.T) {
 		{
 			name: "Set config",
 			args: args{
-				config: &cmp.Config{
-					Auth: cmp.AuthConfig{
+				config: &cloudhub.Config{
+					Auth: cloudhub.AuthConfig{
 						SuperAdminNewUsers: false,
 					},
 				},
 			},
 			wants: wants{
-				config: &cmp.Config{
-					Auth: cmp.AuthConfig{
+				config: &cloudhub.Config{
+					Auth: cloudhub.AuthConfig{
 						SuperAdminNewUsers: false,
 					},
 				},

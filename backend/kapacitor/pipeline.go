@@ -6,12 +6,12 @@ import (
 
 	"github.com/influxdata/kapacitor/pipeline"
 	totick "github.com/influxdata/kapacitor/pipeline/tick"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // MarshalTICK converts tickscript to JSON representation
 func MarshalTICK(script string) ([]byte, error) {
-	pipeline, err := newPipeline(cmp.TICKScript(script))
+	pipeline, err := newPipeline(cloudhub.TICKScript(script))
 	if err != nil {
 		return nil, err
 	}

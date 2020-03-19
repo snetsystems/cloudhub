@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/google/go-github/github"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"golang.org/x/oauth2"
 	ogh "golang.org/x/oauth2/github"
 )
@@ -24,7 +24,7 @@ type Github struct {
 	ClientID     string
 	ClientSecret string
 	Orgs         []string // Optional github organization checking
-	Logger       cmp.Logger
+	Logger       cloudhub.Logger
 }
 
 // Name is the name of the provider.
@@ -114,7 +114,7 @@ func randomString(length int) string {
 	return base64.StdEncoding.EncodeToString(k)
 }
 
-func logResponseError(log cmp.Logger, resp *github.Response, err error) {
+func logResponseError(log cloudhub.Logger, resp *github.Response, err error) {
 	switch resp.StatusCode {
 	case http.StatusUnauthorized, http.StatusForbidden:
 		log.Error("OAuth access to email address forbidden ", err.Error())
@@ -136,7 +136,7 @@ func isMember(requiredOrgs []string, userOrgs []*github.Organization) bool {
 }
 
 // getOrganizations gets all organization for the currently authenticated user.
-func getOrganizations(client *github.Client, log cmp.Logger) ([]*github.Organization, error) {
+func getOrganizations(client *github.Client, log cloudhub.Logger) ([]*github.Organization, error) {
 	// Get all pages of results
 	var allOrgs []*github.Organization
 	ctx := context.Background()
@@ -160,7 +160,7 @@ func getOrganizations(client *github.Client, log cmp.Logger) ([]*github.Organiza
 }
 
 // getPrimaryEmail gets the primary email account for the authenticated user.
-func getPrimaryEmail(client *github.Client, log cmp.Logger) (string, error) {
+func getPrimaryEmail(client *github.Client, log cloudhub.Logger) (string, error) {
 	ctx := context.Background()
 	emails, resp, err := client.Users.ListEmails(ctx, nil)
 	if err != nil {

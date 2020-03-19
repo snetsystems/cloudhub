@@ -165,7 +165,7 @@ export interface DashboardSwitcherLinks {
 
 // Dashboards Imports
 interface DashboardFileMetaSection {
-  cmpVersion?: string
+  cloudhubVersion?: string
   sources?: ImportedSources
 }
 

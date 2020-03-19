@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/bouk/httprouter"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/oauth2"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/oauth2"
 )
 
 func (s *Service) mapPrincipalToSuperAdmin(p oauth2.Principal) bool {
@@ -28,16 +28,16 @@ func (s *Service) mapPrincipalToSuperAdmin(p oauth2.Principal) bool {
 	return superAdmin
 }
 
-func (s *Service) mapPrincipalToRoles(ctx context.Context, p oauth2.Principal) ([]cmp.Role, error) {
+func (s *Service) mapPrincipalToRoles(ctx context.Context, p oauth2.Principal) ([]cloudhub.Role, error) {
 	mappings, err := s.Store.Mappings(ctx).All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	roles := []cmp.Role{}
+	roles := []cloudhub.Role{}
 MappingsLoop:
 	for _, mapping := range mappings {
 		if applyMapping(mapping, p) {
-			org, err := s.Store.Organizations(ctx).Get(ctx, cmp.OrganizationQuery{ID: &mapping.Organization})
+			org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &mapping.Organization})
 			if err != nil {
 				continue MappingsLoop
 			}
@@ -47,27 +47,27 @@ MappingsLoop:
 					continue MappingsLoop
 				}
 			}
-			roles = append(roles, cmp.Role{Organization: org.ID, Name: org.DefaultRole})
+			roles = append(roles, cloudhub.Role{Organization: org.ID, Name: org.DefaultRole})
 		}
 	}
 
 	return roles, nil
 }
 
-func applyMapping(m cmp.Mapping, p oauth2.Principal) bool {
+func applyMapping(m cloudhub.Mapping, p oauth2.Principal) bool {
 	switch m.Provider {
-	case cmp.MappingWildcard, p.Issuer:
+	case cloudhub.MappingWildcard, p.Issuer:
 	default:
 		return false
 	}
 
 	switch m.Scheme {
-	case cmp.MappingWildcard, "oauth2":
+	case cloudhub.MappingWildcard, "oauth2":
 	default:
 		return false
 	}
 
-	if m.ProviderOrganization == cmp.MappingWildcard {
+	if m.ProviderOrganization == cloudhub.MappingWildcard {
 		return true
 	}
 
@@ -86,7 +86,7 @@ func matchGroup(match string, groups []string) bool {
 	return false
 }
 
-type mappingsRequest cmp.Mapping
+type mappingsRequest cloudhub.Mapping
 
 // Valid determines if a mapping request is valid
 func (m *mappingsRequest) Valid() error {
@@ -105,14 +105,14 @@ func (m *mappingsRequest) Valid() error {
 
 type mappingResponse struct {
 	Links selfLinks `json:"links"`
-	cmp.Mapping
+	cloudhub.Mapping
 }
 
-func newMappingResponse(m cmp.Mapping) *mappingResponse {
+func newMappingResponse(m cloudhub.Mapping) *mappingResponse {
 
 	return &mappingResponse{
 		Links: selfLinks{
-			Self: fmt.Sprintf("/cmp/v1/mappings/%s", m.ID),
+			Self: fmt.Sprintf("/cloudhub/v1/mappings/%s", m.ID),
 		},
 		Mapping: m,
 	}
@@ -123,14 +123,14 @@ type mappingsResponse struct {
 	Mappings []*mappingResponse `json:"mappings"`
 }
 
-func newMappingsResponse(ms []cmp.Mapping) *mappingsResponse {
+func newMappingsResponse(ms []cloudhub.Mapping) *mappingsResponse {
 	mappings := []*mappingResponse{}
 	for _, m := range ms {
 		mappings = append(mappings, newMappingResponse(m))
 	}
 	return &mappingsResponse{
 		Links: selfLinks{
-			Self: "/cmp/v1/mappings",
+			Self: "/cloudhub/v1/mappings",
 		},
 		Mappings: mappings,
 	}
@@ -172,7 +172,7 @@ func (s *Service) NewMapping(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mapping := &cmp.Mapping{
+	mapping := &cloudhub.Mapping{
 		Organization:         req.Organization,
 		Scheme:               req.Scheme,
 		Provider:             req.Provider,
@@ -211,7 +211,7 @@ func (s *Service) UpdateMapping(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mapping := &cmp.Mapping{
+	mapping := &cloudhub.Mapping{
 		ID:                   req.ID,
 		Organization:         req.Organization,
 		Scheme:               req.Scheme,
@@ -236,7 +236,7 @@ func (s *Service) RemoveMapping(w http.ResponseWriter, r *http.Request) {
 	id := httprouter.GetParamFromContext(ctx, "id")
 
 	m, err := s.Store.Mappings(ctx).Get(ctx, id)
-	if err == cmp.ErrMappingNotFound {
+	if err == cloudhub.ErrMappingNotFound {
 		Error(w, http.StatusNotFound, err.Error(), s.Logger)
 		return
 	}
@@ -255,7 +255,7 @@ func (s *Service) RemoveMapping(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Service) organizationExists(ctx context.Context, orgID string) bool {
-	if _, err := s.Store.Organizations(ctx).Get(ctx, cmp.OrganizationQuery{ID: &orgID}); err != nil {
+	if _, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &orgID}); err != nil {
 		return false
 	}
 

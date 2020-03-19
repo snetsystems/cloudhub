@@ -3,23 +3,23 @@ package kapacitor
 import (
 	"testing"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 func TestAlertServices(t *testing.T) {
 	tests := []struct {
 		name    string
-		rule    cmp.AlertRule
-		want    cmp.TICKScript
+		rule    cloudhub.AlertRule
+		want    cloudhub.TICKScript
 		wantErr bool
 	}{
 		{
 			name: "Test several valid services",
-			rule: cmp.AlertRule{
-				AlertNodes: cmp.AlertNodes{
-					Slack:     []*cmp.Slack{{}},
-					VictorOps: []*cmp.VictorOps{{}},
-					Email:     []*cmp.Email{{}},
+			rule: cloudhub.AlertRule{
+				AlertNodes: cloudhub.AlertNodes{
+					Slack:     []*cloudhub.Slack{{}},
+					VictorOps: []*cloudhub.VictorOps{{}},
+					Email:     []*cloudhub.Email{{}},
 				},
 			},
 			want: `alert()
@@ -30,9 +30,9 @@ func TestAlertServices(t *testing.T) {
 		},
 		{
 			name: "Test single valid service",
-			rule: cmp.AlertRule{
-				AlertNodes: cmp.AlertNodes{
-					Slack: []*cmp.Slack{{}},
+			rule: cloudhub.AlertRule{
+				AlertNodes: cloudhub.AlertNodes{
+					Slack: []*cloudhub.Slack{{}},
 				},
 			},
 			want: `alert()
@@ -41,9 +41,9 @@ func TestAlertServices(t *testing.T) {
 		},
 		{
 			name: "Test pushoverservice",
-			rule: cmp.AlertRule{
-				AlertNodes: cmp.AlertNodes{
-					Pushover: []*cmp.Pushover{
+			rule: cloudhub.AlertRule{
+				AlertNodes: cloudhub.AlertNodes{
+					Pushover: []*cloudhub.Pushover{
 						{
 							Device:   "asdf",
 							Title:    "asdf",
@@ -65,9 +65,9 @@ func TestAlertServices(t *testing.T) {
 		},
 		{
 			name: "Test single valid service and property",
-			rule: cmp.AlertRule{
-				AlertNodes: cmp.AlertNodes{
-					Slack: []*cmp.Slack{
+			rule: cloudhub.AlertRule{
+				AlertNodes: cloudhub.AlertNodes{
+					Slack: []*cloudhub.Slack{
 						{
 							Channel: "#general",
 						},
@@ -81,9 +81,9 @@ func TestAlertServices(t *testing.T) {
 		},
 		{
 			name: "Test tcp",
-			rule: cmp.AlertRule{
-				AlertNodes: cmp.AlertNodes{
-					TCPs: []*cmp.TCP{
+			rule: cloudhub.AlertRule{
+				AlertNodes: cloudhub.AlertNodes{
+					TCPs: []*cloudhub.TCP{
 						{
 							Address: "myaddress:22",
 						},
@@ -96,9 +96,9 @@ func TestAlertServices(t *testing.T) {
 		},
 		{
 			name: "Test log",
-			rule: cmp.AlertRule{
-				AlertNodes: cmp.AlertNodes{
-					Log: []*cmp.Log{
+			rule: cloudhub.AlertRule{
+				AlertNodes: cloudhub.AlertNodes{
+					Log: []*cloudhub.Log{
 						{
 							FilePath: "/tmp/alerts.log",
 						},
@@ -111,9 +111,9 @@ func TestAlertServices(t *testing.T) {
 		},
 		{
 			name: "Test http as post",
-			rule: cmp.AlertRule{
-				AlertNodes: cmp.AlertNodes{
-					Posts: []*cmp.Post{
+			rule: cloudhub.AlertRule{
+				AlertNodes: cloudhub.AlertNodes{
+					Posts: []*cloudhub.Post{
 						{
 							URL: "http://myaddress",
 						},
@@ -126,9 +126,9 @@ func TestAlertServices(t *testing.T) {
 		},
 		{
 			name: "Test post with headers",
-			rule: cmp.AlertRule{
-				AlertNodes: cmp.AlertNodes{
-					Posts: []*cmp.Post{
+			rule: cloudhub.AlertRule{
+				AlertNodes: cloudhub.AlertNodes{
+					Posts: []*cloudhub.Post{
 						{
 							URL:     "http://myaddress",
 							Headers: map[string]string{"key": "value"},
@@ -165,15 +165,15 @@ func TestAlertServices(t *testing.T) {
 func Test_addAlertNodes(t *testing.T) {
 	tests := []struct {
 		name     string
-		handlers cmp.AlertNodes
+		handlers cloudhub.AlertNodes
 		want     string
 		wantErr  bool
 	}{
 		{
 			name: "test email alerts",
-			handlers: cmp.AlertNodes{
+			handlers: cloudhub.AlertNodes{
 				IsStateChangesOnly: true,
-				Email: []*cmp.Email{
+				Email: []*cloudhub.Email{
 					{
 						To: []string{
 							"me@me.com", "you@you.com",
@@ -190,9 +190,9 @@ func Test_addAlertNodes(t *testing.T) {
 		},
 		{
 			name: "test pushover alerts",
-			handlers: cmp.AlertNodes{
+			handlers: cloudhub.AlertNodes{
 				IsStateChangesOnly: true,
-				Pushover: []*cmp.Pushover{
+				Pushover: []*cloudhub.Pushover{
 					{
 						Device:   "asdf",
 						Title:    "asdf",

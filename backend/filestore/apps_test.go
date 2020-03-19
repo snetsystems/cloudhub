@@ -12,19 +12,19 @@ import (
 	"testing"
 	"time"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/filestore"
-	clog "github.com/snetsystems/cmp/backend/log"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/filestore"
+	clog "github.com/snetsystems/cloudhub/backend/log"
 )
 
 func TestAll(t *testing.T) {
 	t.Parallel()
 	var tests = []struct {
-		Existing []cmp.Layout
+		Existing []cloudhub.Layout
 		Err      error
 	}{
 		{
-			Existing: []cmp.Layout{
+			Existing: []cloudhub.Layout{
 				{ID: "1",
 					Application: "howdy",
 				},
@@ -35,7 +35,7 @@ func TestAll(t *testing.T) {
 			Err: nil,
 		},
 		{
-			Existing: []cmp.Layout{},
+			Existing: []cloudhub.Layout{},
 			Err:      nil,
 		},
 		{
@@ -58,13 +58,13 @@ func TestAll(t *testing.T) {
 func TestAdd(t *testing.T) {
 	t.Parallel()
 	var tests = []struct {
-		Existing   []cmp.Layout
-		Add        cmp.Layout
+		Existing   []cloudhub.Layout
+		Add        cloudhub.Layout
 		ExpectedID string
 		Err        error
 	}{
 		{
-			Existing: []cmp.Layout{
+			Existing: []cloudhub.Layout{
 				{ID: "1",
 					Application: "howdy",
 				},
@@ -72,15 +72,15 @@ func TestAdd(t *testing.T) {
 					Application: "doody",
 				},
 			},
-			Add: cmp.Layout{
+			Add: cloudhub.Layout{
 				Application: "newbie",
 			},
 			ExpectedID: "3",
 			Err:        nil,
 		},
 		{
-			Existing: []cmp.Layout{},
-			Add: cmp.Layout{
+			Existing: []cloudhub.Layout{},
+			Add: cloudhub.Layout{
 				Application: "newbie",
 			},
 			ExpectedID: "1",
@@ -88,7 +88,7 @@ func TestAdd(t *testing.T) {
 		},
 		{
 			Existing: nil,
-			Add: cmp.Layout{
+			Add: cloudhub.Layout{
 				Application: "newbie",
 			},
 			ExpectedID: "",
@@ -111,13 +111,13 @@ func TestAdd(t *testing.T) {
 func TestDelete(t *testing.T) {
 	t.Parallel()
 	var tests = []struct {
-		Existing []cmp.Layout
+		Existing []cloudhub.Layout
 		DeleteID string
-		Expected map[string]cmp.Layout
+		Expected map[string]cloudhub.Layout
 		Err      error
 	}{
 		{
-			Existing: []cmp.Layout{
+			Existing: []cloudhub.Layout{
 				{ID: "1",
 					Application: "howdy",
 				},
@@ -126,7 +126,7 @@ func TestDelete(t *testing.T) {
 				},
 			},
 			DeleteID: "1",
-			Expected: map[string]cmp.Layout{
+			Expected: map[string]cloudhub.Layout{
 				"dir/2.json": {ID: "2",
 					Application: "doody",
 				},
@@ -134,21 +134,21 @@ func TestDelete(t *testing.T) {
 			Err: nil,
 		},
 		{
-			Existing: []cmp.Layout{},
+			Existing: []cloudhub.Layout{},
 			DeleteID: "1",
-			Expected: map[string]cmp.Layout{},
-			Err:      cmp.ErrLayoutNotFound,
+			Expected: map[string]cloudhub.Layout{},
+			Err:      cloudhub.ErrLayoutNotFound,
 		},
 		{
 			Existing: nil,
 			DeleteID: "1",
-			Expected: map[string]cmp.Layout{},
+			Expected: map[string]cloudhub.Layout{},
 			Err:      errors.New("Error"),
 		},
 	}
 	for i, test := range tests {
 		apps, actual := MockApps(test.Existing, test.Err)
-		err := apps.Delete(context.Background(), cmp.Layout{ID: test.DeleteID})
+		err := apps.Delete(context.Background(), cloudhub.Layout{ID: test.DeleteID})
 		if err != test.Err {
 			t.Errorf("Test %d: apps delete error expected: %v; actual: %v", i, test.Err, err)
 		}
@@ -161,13 +161,13 @@ func TestDelete(t *testing.T) {
 func TestGet(t *testing.T) {
 	t.Parallel()
 	var tests = []struct {
-		Existing []cmp.Layout
+		Existing []cloudhub.Layout
 		ID       string
-		Expected cmp.Layout
+		Expected cloudhub.Layout
 		Err      error
 	}{
 		{
-			Existing: []cmp.Layout{
+			Existing: []cloudhub.Layout{
 				{ID: "1",
 					Application: "howdy",
 				},
@@ -176,23 +176,23 @@ func TestGet(t *testing.T) {
 				},
 			},
 			ID: "1",
-			Expected: cmp.Layout{
+			Expected: cloudhub.Layout{
 				ID:          "1",
 				Application: "howdy",
 			},
 			Err: nil,
 		},
 		{
-			Existing: []cmp.Layout{},
+			Existing: []cloudhub.Layout{},
 			ID:       "1",
-			Expected: cmp.Layout{},
-			Err:      cmp.ErrLayoutNotFound,
+			Expected: cloudhub.Layout{},
+			Err:      cloudhub.ErrLayoutNotFound,
 		},
 		{
 			Existing: nil,
 			ID:       "1",
-			Expected: cmp.Layout{},
-			Err:      cmp.ErrLayoutNotFound,
+			Expected: cloudhub.Layout{},
+			Err:      cloudhub.ErrLayoutNotFound,
 		},
 	}
 	for i, test := range tests {
@@ -210,13 +210,13 @@ func TestGet(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	t.Parallel()
 	var tests = []struct {
-		Existing []cmp.Layout
-		Update   cmp.Layout
-		Expected map[string]cmp.Layout
+		Existing []cloudhub.Layout
+		Update   cloudhub.Layout
+		Expected map[string]cloudhub.Layout
 		Err      error
 	}{
 		{
-			Existing: []cmp.Layout{
+			Existing: []cloudhub.Layout{
 				{ID: "1",
 					Application: "howdy",
 				},
@@ -224,12 +224,12 @@ func TestUpdate(t *testing.T) {
 					Application: "doody",
 				},
 			},
-			Update: cmp.Layout{
+			Update: cloudhub.Layout{
 				ID:          "1",
 				Application: "hello",
 				Measurement: "measurement",
 			},
-			Expected: map[string]cmp.Layout{
+			Expected: map[string]cloudhub.Layout{
 				"dir/1.json": {ID: "1",
 					Application: "hello",
 					Measurement: "measurement",
@@ -241,20 +241,20 @@ func TestUpdate(t *testing.T) {
 			Err: nil,
 		},
 		{
-			Existing: []cmp.Layout{},
-			Update: cmp.Layout{
+			Existing: []cloudhub.Layout{},
+			Update: cloudhub.Layout{
 				ID: "1",
 			},
-			Expected: map[string]cmp.Layout{},
-			Err:      cmp.ErrLayoutNotFound,
+			Expected: map[string]cloudhub.Layout{},
+			Err:      cloudhub.ErrLayoutNotFound,
 		},
 		{
 			Existing: nil,
-			Update: cmp.Layout{
+			Update: cloudhub.Layout{
 				ID: "1",
 			},
-			Expected: map[string]cmp.Layout{},
-			Err:      cmp.ErrLayoutNotFound,
+			Expected: map[string]cloudhub.Layout{},
+			Err:      cloudhub.ErrLayoutNotFound,
 		},
 	}
 	for i, test := range tests {
@@ -312,28 +312,28 @@ func (m *MockID) Generate() (string, error) {
 	return strconv.Itoa(m.id), nil
 }
 
-func MockApps(existing []cmp.Layout, expected error) (filestore.Apps, *map[string]cmp.Layout) {
-	layouts := map[string]cmp.Layout{}
-	fileName := func(dir string, layout cmp.Layout) string {
+func MockApps(existing []cloudhub.Layout, expected error) (filestore.Apps, *map[string]cloudhub.Layout) {
+	layouts := map[string]cloudhub.Layout{}
+	fileName := func(dir string, layout cloudhub.Layout) string {
 		return path.Join(dir, layout.ID+".json")
 	}
 	dir := "dir"
 	for _, l := range existing {
 		layouts[fileName(dir, l)] = l
 	}
-	load := func(file string) (cmp.Layout, error) {
+	load := func(file string) (cloudhub.Layout, error) {
 		if expected != nil {
-			return cmp.Layout{}, expected
+			return cloudhub.Layout{}, expected
 		}
 
 		l, ok := layouts[file]
 		if !ok {
-			return cmp.Layout{}, cmp.ErrLayoutNotFound
+			return cloudhub.Layout{}, cloudhub.ErrLayoutNotFound
 		}
 		return l, nil
 	}
 
-	create := func(file string, layout cmp.Layout) error {
+	create := func(file string, layout cloudhub.Layout) error {
 		if expected != nil {
 			return expected
 		}
@@ -358,7 +358,7 @@ func MockApps(existing []cmp.Layout, expected error) (filestore.Apps, *map[strin
 			return expected
 		}
 		if _, ok := layouts[name]; !ok {
-			return cmp.ErrLayoutNotFound
+			return cloudhub.ErrLayoutNotFound
 		}
 		delete(layouts, name)
 		return nil

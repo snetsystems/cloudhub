@@ -25,17 +25,17 @@ import {LineColor, ColorNumber} from 'src/types/colors'
 import {ServerLogConfig, ServerColumn} from 'src/types/logs'
 
 export const sourceLinks: SourceLinks = {
-  services: '/cmp/v1/sources/4',
-  self: '/cmp/v1/sources/4',
-  kapacitors: '/cmp/v1/sources/4/kapacitors',
-  proxy: '/cmp/v1/sources/4/proxy',
-  queries: '/cmp/v1/sources/4/queries',
-  write: '/cmp/v1/sources/4/write',
-  permissions: '/cmp/v1/sources/4/permissions',
-  users: '/cmp/v1/sources/4/users',
-  databases: '/cmp/v1/sources/4/dbs',
-  annotations: '/cmp/v1/sources/4/annotations',
-  health: '/cmp/v1/sources/4/health',
+  services: '/cloudhub/v1/sources/4',
+  self: '/cloudhub/v1/sources/4',
+  kapacitors: '/cloudhub/v1/sources/4/kapacitors',
+  proxy: '/cloudhub/v1/sources/4/proxy',
+  queries: '/cloudhub/v1/sources/4/queries',
+  write: '/cloudhub/v1/sources/4/write',
+  permissions: '/cloudhub/v1/sources/4/permissions',
+  users: '/cloudhub/v1/sources/4/users',
+  databases: '/cloudhub/v1/sources/4/dbs',
+  annotations: '/cloudhub/v1/sources/4/annotations',
+  health: '/cloudhub/v1/sources/4/health',
 }
 
 export const source: Source = {
@@ -65,9 +65,9 @@ export const service: Service = {
     active: true,
   },
   links: {
-    proxy: '/cmp/v1/sources/1/services/1/proxy',
-    self: '/cmp/v1/sources/1/services/1',
-    source: '/cmp/v1/sources/1',
+    proxy: '/cloudhub/v1/sources/1/services/1/proxy',
+    self: '/cloudhub/v1/sources/1/services/1',
+    source: '/cloudhub/v1/sources/1',
   },
 }
 
@@ -204,7 +204,8 @@ export const cell: Cell = {
   timeFormat: 'MM/DD/YYYY HH:mm:ss',
   decimalPlaces,
   links: {
-    self: '/cmp/v1/dashboards/9/cells/67435af2-17bf-4caa-a5fc-0dd1ffb40dab',
+    self:
+      '/cloudhub/v1/dashboards/9/cells/67435af2-17bf-4caa-a5fc-0dd1ffb40dab',
   },
   inView: true,
   note: 'I am a note!',

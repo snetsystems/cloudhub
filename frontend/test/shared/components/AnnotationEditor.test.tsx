@@ -10,7 +10,7 @@ const generateProps = () => ({
     endTime: 1533665166679,
     text: 'Name Me',
     tags: {foo: 'bar'},
-    links: {self: '/cmp/v1/sources/1/annotations/0'},
+    links: {self: '/cloudhub/v1/sources/1/annotations/0'},
   },
   onCancel: () => {},
   onSave: jest.fn(),

@@ -9,22 +9,22 @@ import (
 	"testing"
 
 	"github.com/bouk/httprouter"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/log"
-	"github.com/snetsystems/cmp/backend/mocks"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/log"
+	"github.com/snetsystems/cloudhub/backend/mocks"
 )
 
 func TestService_GetDatabases(t *testing.T) {
 	type fields struct {
-		SourcesStore     cmp.SourcesStore
-		ServersStore     cmp.ServersStore
-		LayoutsStore     cmp.LayoutsStore
-		UsersStore       cmp.UsersStore
-		DashboardsStore  cmp.DashboardsStore
+		SourcesStore     cloudhub.SourcesStore
+		ServersStore     cloudhub.ServersStore
+		LayoutsStore     cloudhub.LayoutsStore
+		UsersStore       cloudhub.UsersStore
+		DashboardsStore  cloudhub.DashboardsStore
 		TimeSeriesClient TimeSeriesClient
-		Logger           cmp.Logger
+		Logger           cloudhub.Logger
 		UseAuth          bool
-		Databases        cmp.Databases
+		Databases        cloudhub.Databases
 	}
 	type args struct {
 		w http.ResponseWriter
@@ -59,15 +59,15 @@ func TestService_GetDatabases(t *testing.T) {
 
 func TestService_NewDatabase(t *testing.T) {
 	type fields struct {
-		SourcesStore     cmp.SourcesStore
-		ServersStore     cmp.ServersStore
-		LayoutsStore     cmp.LayoutsStore
-		UsersStore       cmp.UsersStore
-		DashboardsStore  cmp.DashboardsStore
+		SourcesStore     cloudhub.SourcesStore
+		ServersStore     cloudhub.ServersStore
+		LayoutsStore     cloudhub.LayoutsStore
+		UsersStore       cloudhub.UsersStore
+		DashboardsStore  cloudhub.DashboardsStore
 		TimeSeriesClient TimeSeriesClient
-		Logger           cmp.Logger
+		Logger           cloudhub.Logger
 		UseAuth          bool
-		Databases        cmp.Databases
+		Databases        cloudhub.Databases
 	}
 	type args struct {
 		w http.ResponseWriter
@@ -102,15 +102,15 @@ func TestService_NewDatabase(t *testing.T) {
 
 func TestService_DropDatabase(t *testing.T) {
 	type fields struct {
-		SourcesStore     cmp.SourcesStore
-		ServersStore     cmp.ServersStore
-		LayoutsStore     cmp.LayoutsStore
-		UsersStore       cmp.UsersStore
-		DashboardsStore  cmp.DashboardsStore
+		SourcesStore     cloudhub.SourcesStore
+		ServersStore     cloudhub.ServersStore
+		LayoutsStore     cloudhub.LayoutsStore
+		UsersStore       cloudhub.UsersStore
+		DashboardsStore  cloudhub.DashboardsStore
 		TimeSeriesClient TimeSeriesClient
-		Logger           cmp.Logger
+		Logger           cloudhub.Logger
 		UseAuth          bool
-		Databases        cmp.Databases
+		Databases        cloudhub.Databases
 	}
 	type args struct {
 		w http.ResponseWriter
@@ -145,15 +145,15 @@ func TestService_DropDatabase(t *testing.T) {
 
 func TestService_RetentionPolicies(t *testing.T) {
 	type fields struct {
-		SourcesStore     cmp.SourcesStore
-		ServersStore     cmp.ServersStore
-		LayoutsStore     cmp.LayoutsStore
-		UsersStore       cmp.UsersStore
-		DashboardsStore  cmp.DashboardsStore
+		SourcesStore     cloudhub.SourcesStore
+		ServersStore     cloudhub.ServersStore
+		LayoutsStore     cloudhub.LayoutsStore
+		UsersStore       cloudhub.UsersStore
+		DashboardsStore  cloudhub.DashboardsStore
 		TimeSeriesClient TimeSeriesClient
-		Logger           cmp.Logger
+		Logger           cloudhub.Logger
 		UseAuth          bool
-		Databases        cmp.Databases
+		Databases        cloudhub.Databases
 	}
 	type args struct {
 		w http.ResponseWriter
@@ -188,15 +188,15 @@ func TestService_RetentionPolicies(t *testing.T) {
 
 func TestService_NewRetentionPolicy(t *testing.T) {
 	type fields struct {
-		SourcesStore     cmp.SourcesStore
-		ServersStore     cmp.ServersStore
-		LayoutsStore     cmp.LayoutsStore
-		UsersStore       cmp.UsersStore
-		DashboardsStore  cmp.DashboardsStore
+		SourcesStore     cloudhub.SourcesStore
+		ServersStore     cloudhub.ServersStore
+		LayoutsStore     cloudhub.LayoutsStore
+		UsersStore       cloudhub.UsersStore
+		DashboardsStore  cloudhub.DashboardsStore
 		TimeSeriesClient TimeSeriesClient
-		Logger           cmp.Logger
+		Logger           cloudhub.Logger
 		UseAuth          bool
-		Databases        cmp.Databases
+		Databases        cloudhub.Databases
 	}
 	type args struct {
 		w http.ResponseWriter
@@ -231,15 +231,15 @@ func TestService_NewRetentionPolicy(t *testing.T) {
 
 func TestService_UpdateRetentionPolicy(t *testing.T) {
 	type fields struct {
-		SourcesStore     cmp.SourcesStore
-		ServersStore     cmp.ServersStore
-		LayoutsStore     cmp.LayoutsStore
-		UsersStore       cmp.UsersStore
-		DashboardsStore  cmp.DashboardsStore
+		SourcesStore     cloudhub.SourcesStore
+		ServersStore     cloudhub.ServersStore
+		LayoutsStore     cloudhub.LayoutsStore
+		UsersStore       cloudhub.UsersStore
+		DashboardsStore  cloudhub.DashboardsStore
 		TimeSeriesClient TimeSeriesClient
-		Logger           cmp.Logger
+		Logger           cloudhub.Logger
 		UseAuth          bool
-		Databases        cmp.Databases
+		Databases        cloudhub.Databases
 	}
 	type args struct {
 		w http.ResponseWriter
@@ -274,15 +274,15 @@ func TestService_UpdateRetentionPolicy(t *testing.T) {
 
 func TestService_DropRetentionPolicy(t *testing.T) {
 	type fields struct {
-		SourcesStore     cmp.SourcesStore
-		ServersStore     cmp.ServersStore
-		LayoutsStore     cmp.LayoutsStore
-		UsersStore       cmp.UsersStore
-		DashboardsStore  cmp.DashboardsStore
+		SourcesStore     cloudhub.SourcesStore
+		ServersStore     cloudhub.ServersStore
+		LayoutsStore     cloudhub.LayoutsStore
+		UsersStore       cloudhub.UsersStore
+		DashboardsStore  cloudhub.DashboardsStore
 		TimeSeriesClient TimeSeriesClient
-		Logger           cmp.Logger
+		Logger           cloudhub.Logger
 		UseAuth          bool
-		Databases        cmp.Databases
+		Databases        cloudhub.Databases
 	}
 	type args struct {
 		w http.ResponseWriter
@@ -317,9 +317,9 @@ func TestService_DropRetentionPolicy(t *testing.T) {
 
 func TestService_Measurements(t *testing.T) {
 	type fields struct {
-		SourcesStore cmp.SourcesStore
-		Logger       cmp.Logger
-		Databases    cmp.Databases
+		SourcesStore cloudhub.SourcesStore
+		Logger       cloudhub.Logger
+		Databases    cloudhub.Databases
 	}
 	type args struct {
 		queryParams map[string]string
@@ -338,18 +338,18 @@ func TestService_Measurements(t *testing.T) {
 			name: "Gets 100 measurements when no limit or offset provided",
 			fields: fields{
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, srcID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, srcID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID: 0,
 						}, nil
 					},
 				},
 				Databases: &mocks.Databases{
-					ConnectF: func(context.Context, *cmp.Source) error {
+					ConnectF: func(context.Context, *cloudhub.Source) error {
 						return nil
 					},
-					GetMeasurementsF: func(ctx context.Context, db string, limit, offset int) ([]cmp.Measurement, error) {
-						return []cmp.Measurement{
+					GetMeasurementsF: func(ctx context.Context, db string, limit, offset int) ([]cloudhub.Measurement, error) {
+						return []cloudhub.Measurement{
 							{
 								Name: "pineapple",
 							},
@@ -368,7 +368,7 @@ func TestService_Measurements(t *testing.T) {
 			},
 			wants: wants{
 				statusCode: 200,
-				body: `{"measurements":[{"name":"pineapple"},{"name":"cubeapple"},{"name":"pinecube"}],"links":{"self":"/cmp/v1/sources/0/dbs/pineapples/measurements?limit=100\u0026offset=0","first":"/cmp/v1/sources/0/dbs/pineapples/measurements?limit=100\u0026offset=0","next":"/cmp/v1/sources/0/dbs/pineapples/measurements?limit=100\u0026offset=100"}}
+				body: `{"measurements":[{"name":"pineapple"},{"name":"cubeapple"},{"name":"pinecube"}],"links":{"self":"/cloudhub/v1/sources/0/dbs/pineapples/measurements?limit=100\u0026offset=0","first":"/cloudhub/v1/sources/0/dbs/pineapples/measurements?limit=100\u0026offset=0","next":"/cloudhub/v1/sources/0/dbs/pineapples/measurements?limit=100\u0026offset=100"}}
 `,
 			},
 		},
@@ -376,8 +376,8 @@ func TestService_Measurements(t *testing.T) {
 			name: "Fails when invalid limit value provided",
 			fields: fields{
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, srcID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, srcID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID: 0,
 						}, nil
 					},
@@ -397,8 +397,8 @@ func TestService_Measurements(t *testing.T) {
 			name: "Fails when invalid offset value provided",
 			fields: fields{
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, srcID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, srcID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID: 0,
 						}, nil
 					},
@@ -418,18 +418,18 @@ func TestService_Measurements(t *testing.T) {
 			name: "Overrides limit less than or equal to 0 with limit 100",
 			fields: fields{
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, srcID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, srcID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID: 0,
 						}, nil
 					},
 				},
 				Databases: &mocks.Databases{
-					ConnectF: func(context.Context, *cmp.Source) error {
+					ConnectF: func(context.Context, *cloudhub.Source) error {
 						return nil
 					},
-					GetMeasurementsF: func(ctx context.Context, db string, limit, offset int) ([]cmp.Measurement, error) {
-						return []cmp.Measurement{
+					GetMeasurementsF: func(ctx context.Context, db string, limit, offset int) ([]cloudhub.Measurement, error) {
+						return []cloudhub.Measurement{
 							{
 								Name: "pineapple",
 							},
@@ -450,7 +450,7 @@ func TestService_Measurements(t *testing.T) {
 			},
 			wants: wants{
 				statusCode: 200,
-				body: `{"measurements":[{"name":"pineapple"},{"name":"cubeapple"},{"name":"pinecube"}],"links":{"self":"/cmp/v1/sources/0/dbs/pineapples/measurements?limit=100\u0026offset=0","first":"/cmp/v1/sources/0/dbs/pineapples/measurements?limit=100\u0026offset=0","next":"/cmp/v1/sources/0/dbs/pineapples/measurements?limit=100\u0026offset=100"}}
+				body: `{"measurements":[{"name":"pineapple"},{"name":"cubeapple"},{"name":"pinecube"}],"links":{"self":"/cloudhub/v1/sources/0/dbs/pineapples/measurements?limit=100\u0026offset=0","first":"/cloudhub/v1/sources/0/dbs/pineapples/measurements?limit=100\u0026offset=0","next":"/cloudhub/v1/sources/0/dbs/pineapples/measurements?limit=100\u0026offset=100"}}
 `,
 			},
 		},
@@ -458,18 +458,18 @@ func TestService_Measurements(t *testing.T) {
 			name: "Overrides offset less than 0 with offset 0",
 			fields: fields{
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, srcID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, srcID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID: 0,
 						}, nil
 					},
 				},
 				Databases: &mocks.Databases{
-					ConnectF: func(context.Context, *cmp.Source) error {
+					ConnectF: func(context.Context, *cloudhub.Source) error {
 						return nil
 					},
-					GetMeasurementsF: func(ctx context.Context, db string, limit, offset int) ([]cmp.Measurement, error) {
-						return []cmp.Measurement{
+					GetMeasurementsF: func(ctx context.Context, db string, limit, offset int) ([]cloudhub.Measurement, error) {
+						return []cloudhub.Measurement{
 							{
 								Name: "pineapple",
 							},
@@ -490,7 +490,7 @@ func TestService_Measurements(t *testing.T) {
 			},
 			wants: wants{
 				statusCode: 200,
-				body: `{"measurements":[{"name":"pineapple"},{"name":"cubeapple"},{"name":"pinecube"}],"links":{"self":"/cmp/v1/sources/0/dbs/pineapples/measurements?limit=100\u0026offset=0","first":"/cmp/v1/sources/0/dbs/pineapples/measurements?limit=100\u0026offset=0","next":"/cmp/v1/sources/0/dbs/pineapples/measurements?limit=100\u0026offset=100"}}
+				body: `{"measurements":[{"name":"pineapple"},{"name":"cubeapple"},{"name":"pinecube"}],"links":{"self":"/cloudhub/v1/sources/0/dbs/pineapples/measurements?limit=100\u0026offset=0","first":"/cloudhub/v1/sources/0/dbs/pineapples/measurements?limit=100\u0026offset=0","next":"/cloudhub/v1/sources/0/dbs/pineapples/measurements?limit=100\u0026offset=100"}}
 `,
 			},
 		},
@@ -498,18 +498,18 @@ func TestService_Measurements(t *testing.T) {
 			name: "Provides a prev link when offset exceeds limit",
 			fields: fields{
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, srcID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, srcID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID: 0,
 						}, nil
 					},
 				},
 				Databases: &mocks.Databases{
-					ConnectF: func(context.Context, *cmp.Source) error {
+					ConnectF: func(context.Context, *cloudhub.Source) error {
 						return nil
 					},
-					GetMeasurementsF: func(ctx context.Context, db string, limit, offset int) ([]cmp.Measurement, error) {
-						return []cmp.Measurement{
+					GetMeasurementsF: func(ctx context.Context, db string, limit, offset int) ([]cloudhub.Measurement, error) {
+						return []cloudhub.Measurement{
 							{
 								Name: "pineapple",
 							},
@@ -540,7 +540,7 @@ func TestService_Measurements(t *testing.T) {
 			},
 			wants: wants{
 				statusCode: 200,
-				body: `{"measurements":[{"name":"pineapple"},{"name":"cubeapple"},{"name":"pinecube"},{"name":"billietta"},{"name":"bobbetta"},{"name":"bobcube"}],"links":{"self":"/cmp/v1/sources/0/dbs/pineapples/measurements?limit=2\u0026offset=4","first":"/cmp/v1/sources/0/dbs/pineapples/measurements?limit=2\u0026offset=0","next":"/cmp/v1/sources/0/dbs/pineapples/measurements?limit=2\u0026offset=6","prev":"/cmp/v1/sources/0/dbs/pineapples/measurements?limit=2\u0026offset=2"}}
+				body: `{"measurements":[{"name":"pineapple"},{"name":"cubeapple"},{"name":"pinecube"},{"name":"billietta"},{"name":"bobbetta"},{"name":"bobcube"}],"links":{"self":"/cloudhub/v1/sources/0/dbs/pineapples/measurements?limit=2\u0026offset=4","first":"/cloudhub/v1/sources/0/dbs/pineapples/measurements?limit=2\u0026offset=0","next":"/cloudhub/v1/sources/0/dbs/pineapples/measurements?limit=2\u0026offset=6","prev":"/cloudhub/v1/sources/0/dbs/pineapples/measurements?limit=2\u0026offset=2"}}
 `,
 			},
 		},
@@ -609,7 +609,7 @@ func TestService_Measurements(t *testing.T) {
 
 func TestValidDatabaseRequest(t *testing.T) {
 	type args struct {
-		d *cmp.Database
+		d *cloudhub.Database
 	}
 	tests := []struct {
 		name    string
@@ -629,7 +629,7 @@ func TestValidDatabaseRequest(t *testing.T) {
 
 func TestValidRetentionPolicyRequest(t *testing.T) {
 	type args struct {
-		rp *cmp.RetentionPolicy
+		rp *cloudhub.RetentionPolicy
 	}
 	tests := []struct {
 		name    string

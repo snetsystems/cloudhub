@@ -6,14 +6,14 @@ SCRIPT="/usr/bin/cloudhub"
 export HOST="0.0.0.0"
 export PORT="8888"
 #export PORT="443"
-#export TLS_CERTIFICATE="/usr/lib/cloudhub/key/scmp_self_signed.pem"
-export BOLT_PATH="/var/lib/cloudhub/cmp-v1.db"
-export CANNED_PATH="/usr/share/cloudhub/cmp-canned"
-export PROTOBOARDS_PATH="/usr/share/cloudhub/cmp-protoboards"
+#export TLS_CERTIFICATE="/usr/lib/cloudhub/key/cloudhub_self_signed.pem"
+export BOLT_PATH="/var/lib/cloudhub/cloudhub-v1.db"
+export CANNED_PATH="/usr/share/cloudhub/cloudhub-canned"
+export PROTOBOARDS_PATH="/usr/share/cloudhub/cloudhub-protoboards"
 
 # Options to pass to the script on startup
 . /etc/default/cloudhub
-SCRIPT_OPTS=${CSH_OPTS}
+SCRIPT_OPTS=${CLOUDHUB_OPTS}
 
 # User to run the process under
 RUNAS=snet

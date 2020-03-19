@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 var (
@@ -31,7 +31,7 @@ var (
 	)
 )
 
-func toLineProtocol(point *cmp.Point) (string, error) {
+func toLineProtocol(point *cloudhub.Point) (string, error) {
 	measurement := escapeMeasurement.Replace(point.Measurement)
 	if len(measurement) == 0 {
 		return "", fmt.Errorf("measurement required to write point")

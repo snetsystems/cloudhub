@@ -1,4 +1,4 @@
-package cmp
+package cloudhub
 
 import (
 	"context"
@@ -45,7 +45,7 @@ const (
 	ErrInvalidCellQueryType            = Error("invalid cell query type: must be 'flux' or 'influxql'")
 )
 
-// Error is a domain error encountered while processing CMP requests
+// Error is a domain error encountered while processing CloudHub requests
 type Error string
 
 func (e Error) Error() string {
@@ -909,7 +909,7 @@ type BuildInfo struct {
 	Commit  string
 }
 
-// BuildStore is the storage and retrieval of CMP build information
+// BuildStore is the storage and retrieval of CloudHub build information
 type BuildStore interface {
 	Get(context.Context) (BuildInfo, error)
 	Update(context.Context, BuildInfo) error

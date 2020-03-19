@@ -2,7 +2,7 @@ package mocks
 
 import (
 	client "github.com/influxdata/kapacitor/client/v1"
-	"github.com/snetsystems/cmp/backend/kapacitor"
+	"github.com/snetsystems/cloudhub/backend/kapacitor"
 )
 
 var _ kapacitor.KapaClient = &KapaClient{}

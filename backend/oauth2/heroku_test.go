@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	clog "github.com/snetsystems/cmp/backend/log"
-	"github.com/snetsystems/cmp/backend/oauth2"
+	clog "github.com/snetsystems/cloudhub/backend/log"
+	"github.com/snetsystems/cloudhub/backend/oauth2"
 )
 
 func Test_Heroku_PrincipalID_ExtractsEmailAddress(t *testing.T) {

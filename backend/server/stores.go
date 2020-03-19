@@ -3,11 +3,11 @@ package server
 import (
 	"context"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/noop"
-	"github.com/snetsystems/cmp/backend/organizations"
-	"github.com/snetsystems/cmp/backend/roles"
-	platform "github.com/snetsystems/cmp/backend/v2"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/noop"
+	"github.com/snetsystems/cloudhub/backend/organizations"
+	"github.com/snetsystems/cloudhub/backend/roles"
+	platform "github.com/snetsystems/cloudhub/backend/v2"
 )
 
 // hasOrganizationContext retrieves organization specified on context
@@ -54,13 +54,13 @@ type userContextKey string
 const UserContextKey = userContextKey("user")
 
 // hasUserContext speficies if the context contains
-// the UserContextKey and that the value stored there is cmp.User
-func hasUserContext(ctx context.Context) (*cmp.User, bool) {
+// the UserContextKey and that the value stored there is cloudhub.User
+func hasUserContext(ctx context.Context) (*cloudhub.User, bool) {
 	// prevents panic in case of nil context
 	if ctx == nil {
 		return nil, false
 	}
-	u, ok := ctx.Value(UserContextKey).(*cmp.User)
+	u, ok := ctx.Value(UserContextKey).(*cloudhub.User)
 	// should never happen
 	if !ok {
 		return nil, false
@@ -84,16 +84,16 @@ func hasSuperAdminContext(ctx context.Context) bool {
 // DataStore is collection of resources that are used by the Service
 // Abstracting this into an interface was useful for isolated testing
 type DataStore interface {
-	Sources(ctx context.Context) cmp.SourcesStore
-	Servers(ctx context.Context) cmp.ServersStore
-	Layouts(ctx context.Context) cmp.LayoutsStore
-	Protoboards(ctx context.Context) cmp.ProtoboardsStore
-	Users(ctx context.Context) cmp.UsersStore
-	Organizations(ctx context.Context) cmp.OrganizationsStore
-	Mappings(ctx context.Context) cmp.MappingsStore
-	Dashboards(ctx context.Context) cmp.DashboardsStore
-	Config(ctx context.Context) cmp.ConfigStore
-	OrganizationConfig(ctx context.Context) cmp.OrganizationConfigStore
+	Sources(ctx context.Context) cloudhub.SourcesStore
+	Servers(ctx context.Context) cloudhub.ServersStore
+	Layouts(ctx context.Context) cloudhub.LayoutsStore
+	Protoboards(ctx context.Context) cloudhub.ProtoboardsStore
+	Users(ctx context.Context) cloudhub.UsersStore
+	Organizations(ctx context.Context) cloudhub.OrganizationsStore
+	Mappings(ctx context.Context) cloudhub.MappingsStore
+	Dashboards(ctx context.Context) cloudhub.DashboardsStore
+	Config(ctx context.Context) cloudhub.ConfigStore
+	OrganizationConfig(ctx context.Context) cloudhub.OrganizationConfigStore
 	Cells(ctx context.Context) platform.CellService
 	DashboardsV2(ctx context.Context) platform.DashboardService
 }
@@ -103,23 +103,23 @@ var _ DataStore = &Store{}
 
 // Store implements the DataStore interface
 type Store struct {
-	SourcesStore            cmp.SourcesStore
-	ServersStore            cmp.ServersStore
-	LayoutsStore            cmp.LayoutsStore
-	ProtoboardsStore        cmp.ProtoboardsStore
-	UsersStore              cmp.UsersStore
-	DashboardsStore         cmp.DashboardsStore
-	MappingsStore           cmp.MappingsStore
-	OrganizationsStore      cmp.OrganizationsStore
-	ConfigStore             cmp.ConfigStore
-	OrganizationConfigStore cmp.OrganizationConfigStore
+	SourcesStore            cloudhub.SourcesStore
+	ServersStore            cloudhub.ServersStore
+	LayoutsStore            cloudhub.LayoutsStore
+	ProtoboardsStore        cloudhub.ProtoboardsStore
+	UsersStore              cloudhub.UsersStore
+	DashboardsStore         cloudhub.DashboardsStore
+	MappingsStore           cloudhub.MappingsStore
+	OrganizationsStore      cloudhub.OrganizationsStore
+	ConfigStore             cloudhub.ConfigStore
+	OrganizationConfigStore cloudhub.OrganizationConfigStore
 	CellService             platform.CellService
 	DashboardService        platform.DashboardService
 }
 
 // Sources returns a noop.SourcesStore if the context has no organization specified
 // and an organization.SourcesStore otherwise.
-func (s *Store) Sources(ctx context.Context) cmp.SourcesStore {
+func (s *Store) Sources(ctx context.Context) cloudhub.SourcesStore {
 	if isServer := hasServerContext(ctx); isServer {
 		return s.SourcesStore
 	}
@@ -132,7 +132,7 @@ func (s *Store) Sources(ctx context.Context) cmp.SourcesStore {
 
 // Servers returns a noop.ServersStore if the context has no organization specified
 // and an organization.ServersStore otherwise.
-func (s *Store) Servers(ctx context.Context) cmp.ServersStore {
+func (s *Store) Servers(ctx context.Context) cloudhub.ServersStore {
 	if isServer := hasServerContext(ctx); isServer {
 		return s.ServersStore
 	}
@@ -144,22 +144,22 @@ func (s *Store) Servers(ctx context.Context) cmp.ServersStore {
 }
 
 // Layouts returns all layouts in the underlying layouts store.
-func (s *Store) Layouts(ctx context.Context) cmp.LayoutsStore {
+func (s *Store) Layouts(ctx context.Context) cloudhub.LayoutsStore {
 	return s.LayoutsStore
 }
 
 // Protoboards returns all protoboards in the underlying protoboards store.
-func (s *Store) Protoboards(ctx context.Context) cmp.ProtoboardsStore {
+func (s *Store) Protoboards(ctx context.Context) cloudhub.ProtoboardsStore {
 	return s.ProtoboardsStore
 }
 
-// Users returns a cmp.UsersStore.
-// If the context is a server context, then the underlying cmp.UsersStore
+// Users returns a cloudhub.UsersStore.
+// If the context is a server context, then the underlying cloudhub.UsersStore
 // is returned.
 // If there is an organization specified on context, then an organizations.UsersStore
 // is returned.
 // If niether are specified, a noop.UsersStore is returned.
-func (s *Store) Users(ctx context.Context) cmp.UsersStore {
+func (s *Store) Users(ctx context.Context) cloudhub.UsersStore {
 	if isServer := hasServerContext(ctx); isServer {
 		return s.UsersStore
 	}
@@ -172,7 +172,7 @@ func (s *Store) Users(ctx context.Context) cmp.UsersStore {
 
 // Dashboards returns a noop.DashboardsStore if the context has no organization specified
 // and an organization.DashboardsStore otherwise.
-func (s *Store) Dashboards(ctx context.Context) cmp.DashboardsStore {
+func (s *Store) Dashboards(ctx context.Context) cloudhub.DashboardsStore {
 	if isServer := hasServerContext(ctx); isServer {
 		return s.DashboardsStore
 	}
@@ -185,7 +185,7 @@ func (s *Store) Dashboards(ctx context.Context) cmp.DashboardsStore {
 
 // OrganizationConfig returns a noop.OrganizationConfigStore if the context has no organization specified
 // and an organization.OrganizationConfigStore otherwise.
-func (s *Store) OrganizationConfig(ctx context.Context) cmp.OrganizationConfigStore {
+func (s *Store) OrganizationConfig(ctx context.Context) cloudhub.OrganizationConfigStore {
 	if orgID, ok := hasOrganizationContext(ctx); ok {
 		return organizations.NewOrganizationConfigStore(s.OrganizationConfigStore, orgID)
 	}
@@ -194,7 +194,7 @@ func (s *Store) OrganizationConfig(ctx context.Context) cmp.OrganizationConfigSt
 }
 
 // Organizations returns the underlying OrganizationsStore.
-func (s *Store) Organizations(ctx context.Context) cmp.OrganizationsStore {
+func (s *Store) Organizations(ctx context.Context) cloudhub.OrganizationsStore {
 	if isServer := hasServerContext(ctx); isServer {
 		return s.OrganizationsStore
 	}
@@ -208,7 +208,7 @@ func (s *Store) Organizations(ctx context.Context) cmp.OrganizationsStore {
 }
 
 // Config returns the underlying ConfigStore.
-func (s *Store) Config(ctx context.Context) cmp.ConfigStore {
+func (s *Store) Config(ctx context.Context) cloudhub.ConfigStore {
 	if isServer := hasServerContext(ctx); isServer {
 		return s.ConfigStore
 	}
@@ -220,7 +220,7 @@ func (s *Store) Config(ctx context.Context) cmp.ConfigStore {
 }
 
 // Mappings returns the underlying MappingsStore.
-func (s *Store) Mappings(ctx context.Context) cmp.MappingsStore {
+func (s *Store) Mappings(ctx context.Context) cloudhub.MappingsStore {
 	if isServer := hasServerContext(ctx); isServer {
 		return s.MappingsStore
 	}

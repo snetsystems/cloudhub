@@ -12,19 +12,19 @@ import (
 
 	"github.com/bouk/httprouter"
 	gocmp "github.com/google/go-cmp/cmp"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/log"
-	"github.com/snetsystems/cmp/backend/mocks"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/log"
+	"github.com/snetsystems/cloudhub/backend/mocks"
 )
 
 func Test_ValidSourceRequest(t *testing.T) {
 	type args struct {
-		source       *cmp.Source
+		source       *cloudhub.Source
 		defaultOrgID string
 	}
 	type wants struct {
 		err    error
-		source *cmp.Source
+		source *cloudhub.Source
 	}
 	tests := []struct {
 		name  string
@@ -41,10 +41,10 @@ func Test_ValidSourceRequest(t *testing.T) {
 		{
 			name: "missing url",
 			args: args{
-				source: &cmp.Source{
+				source: &cloudhub.Source{
 					ID:                 1,
 					Name:               "I'm a really great source",
-					Type:               cmp.InfluxDB,
+					Type:               cloudhub.InfluxDB,
 					Username:           "fancy",
 					Password:           "i'm so",
 					SharedSecret:       "supersecret",
@@ -62,7 +62,7 @@ func Test_ValidSourceRequest(t *testing.T) {
 		{
 			name: "invalid source type",
 			args: args{
-				source: &cmp.Source{
+				source: &cloudhub.Source{
 					ID:                 1,
 					Name:               "I'm a really great source",
 					Type:               "non-existent-type",
@@ -85,10 +85,10 @@ func Test_ValidSourceRequest(t *testing.T) {
 			name: "set organization to be default org if not specified",
 			args: args{
 				defaultOrgID: "2",
-				source: &cmp.Source{
+				source: &cloudhub.Source{
 					ID:                 1,
 					Name:               "I'm a really great source",
-					Type:               cmp.InfluxDB,
+					Type:               cloudhub.InfluxDB,
 					Username:           "fancy",
 					Password:           "i'm so",
 					SharedSecret:       "supersecret",
@@ -100,10 +100,10 @@ func Test_ValidSourceRequest(t *testing.T) {
 				},
 			},
 			wants: wants{
-				source: &cmp.Source{
+				source: &cloudhub.Source{
 					ID:                 1,
 					Name:               "I'm a really great source",
-					Type:               cmp.InfluxDB,
+					Type:               cloudhub.InfluxDB,
 					Username:           "fancy",
 					Password:           "i'm so",
 					SharedSecret:       "supersecret",
@@ -119,10 +119,10 @@ func Test_ValidSourceRequest(t *testing.T) {
 		{
 			name: "bad url",
 			args: args{
-				source: &cmp.Source{
+				source: &cloudhub.Source{
 					ID:                 1,
 					Name:               "I'm a really great source",
-					Type:               cmp.InfluxDB,
+					Type:               cloudhub.InfluxDB,
 					Username:           "fancy",
 					Password:           "i'm so",
 					SharedSecret:       "supersecret",
@@ -159,60 +159,60 @@ func Test_ValidSourceRequest(t *testing.T) {
 func Test_newSourceResponse(t *testing.T) {
 	tests := []struct {
 		name string
-		src  cmp.Source
+		src  cloudhub.Source
 		want sourceResponse
 	}{
 		{
 			name: "Test empty telegraf",
-			src: cmp.Source{
+			src: cloudhub.Source{
 				ID:       1,
 				Telegraf: "",
 			},
 			want: sourceResponse{
-				Source: cmp.Source{
+				Source: cloudhub.Source{
 					ID:       1,
 					Telegraf: "telegraf",
 				},
 				AuthenticationMethod: "unknown",
 				Links: sourceLinks{
-					Self:        "/cmp/v1/sources/1",
-					Services:    "/cmp/v1/sources/1/services",
-					Proxy:       "/cmp/v1/sources/1/proxy",
-					Queries:     "/cmp/v1/sources/1/queries",
-					Write:       "/cmp/v1/sources/1/write",
-					Kapacitors:  "/cmp/v1/sources/1/kapacitors",
-					Users:       "/cmp/v1/sources/1/users",
-					Permissions: "/cmp/v1/sources/1/permissions",
-					Databases:   "/cmp/v1/sources/1/dbs",
-					Annotations: "/cmp/v1/sources/1/annotations",
-					Health:      "/cmp/v1/sources/1/health",
+					Self:        "/cloudhub/v1/sources/1",
+					Services:    "/cloudhub/v1/sources/1/services",
+					Proxy:       "/cloudhub/v1/sources/1/proxy",
+					Queries:     "/cloudhub/v1/sources/1/queries",
+					Write:       "/cloudhub/v1/sources/1/write",
+					Kapacitors:  "/cloudhub/v1/sources/1/kapacitors",
+					Users:       "/cloudhub/v1/sources/1/users",
+					Permissions: "/cloudhub/v1/sources/1/permissions",
+					Databases:   "/cloudhub/v1/sources/1/dbs",
+					Annotations: "/cloudhub/v1/sources/1/annotations",
+					Health:      "/cloudhub/v1/sources/1/health",
 				},
 			},
 		},
 		{
 			name: "Test non-default telegraf",
-			src: cmp.Source{
+			src: cloudhub.Source{
 				ID:       1,
 				Telegraf: "howdy",
 			},
 			want: sourceResponse{
-				Source: cmp.Source{
+				Source: cloudhub.Source{
 					ID:       1,
 					Telegraf: "howdy",
 				},
 				AuthenticationMethod: "unknown",
 				Links: sourceLinks{
-					Self:        "/cmp/v1/sources/1",
-					Proxy:       "/cmp/v1/sources/1/proxy",
-					Services:    "/cmp/v1/sources/1/services",
-					Queries:     "/cmp/v1/sources/1/queries",
-					Write:       "/cmp/v1/sources/1/write",
-					Kapacitors:  "/cmp/v1/sources/1/kapacitors",
-					Users:       "/cmp/v1/sources/1/users",
-					Permissions: "/cmp/v1/sources/1/permissions",
-					Databases:   "/cmp/v1/sources/1/dbs",
-					Annotations: "/cmp/v1/sources/1/annotations",
-					Health:      "/cmp/v1/sources/1/health",
+					Self:        "/cloudhub/v1/sources/1",
+					Proxy:       "/cloudhub/v1/sources/1/proxy",
+					Services:    "/cloudhub/v1/sources/1/services",
+					Queries:     "/cloudhub/v1/sources/1/queries",
+					Write:       "/cloudhub/v1/sources/1/write",
+					Kapacitors:  "/cloudhub/v1/sources/1/kapacitors",
+					Users:       "/cloudhub/v1/sources/1/users",
+					Permissions: "/cloudhub/v1/sources/1/permissions",
+					Databases:   "/cloudhub/v1/sources/1/dbs",
+					Annotations: "/cloudhub/v1/sources/1/annotations",
+					Health:      "/cloudhub/v1/sources/1/health",
 				},
 			},
 		},
@@ -226,14 +226,14 @@ func Test_newSourceResponse(t *testing.T) {
 
 func TestService_newSourceKapacitor(t *testing.T) {
 	type fields struct {
-		SourcesStore cmp.SourcesStore
-		ServersStore cmp.ServersStore
-		Logger       cmp.Logger
+		SourcesStore cloudhub.SourcesStore
+		ServersStore cloudhub.ServersStore
+		Logger       cloudhub.Logger
 	}
 	type args struct {
 		ctx  context.Context
-		src  cmp.Source
-		kapa cmp.Server
+		src  cloudhub.Source
+		kapa cloudhub.Server
 	}
 	srcCount := 0
 	srvCount := 0
@@ -249,17 +249,17 @@ func TestService_newSourceKapacitor(t *testing.T) {
 			name: "Add when no existing sources",
 			fields: fields{
 				SourcesStore: &mocks.SourcesStore{
-					AllF: func(ctx context.Context) ([]cmp.Source, error) {
-						return []cmp.Source{}, nil
+					AllF: func(ctx context.Context) ([]cloudhub.Source, error) {
+						return []cloudhub.Source{}, nil
 					},
-					AddF: func(ctx context.Context, src cmp.Source) (cmp.Source, error) {
+					AddF: func(ctx context.Context, src cloudhub.Source) (cloudhub.Source, error) {
 						srcCount++
 						src.ID = srcCount
 						return src, nil
 					},
 				},
 				ServersStore: &mocks.ServersStore{
-					AddF: func(ctx context.Context, srv cmp.Server) (cmp.Server, error) {
+					AddF: func(ctx context.Context, srv cloudhub.Server) (cloudhub.Server, error) {
 						srvCount++
 						return srv, nil
 					},
@@ -267,10 +267,10 @@ func TestService_newSourceKapacitor(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				src: cmp.Source{
+				src: cloudhub.Source{
 					Name: "Influx 1",
 				},
-				kapa: cmp.Server{
+				kapa: cloudhub.Server{
 					Name: "Kapa 1",
 				},
 			},
@@ -281,21 +281,21 @@ func TestService_newSourceKapacitor(t *testing.T) {
 			name: "Should not add if existing source",
 			fields: fields{
 				SourcesStore: &mocks.SourcesStore{
-					AllF: func(ctx context.Context) ([]cmp.Source, error) {
-						return []cmp.Source{
+					AllF: func(ctx context.Context) ([]cloudhub.Source, error) {
+						return []cloudhub.Source{
 							{
 								Name: "Influx 1",
 							},
 						}, nil
 					},
-					AddF: func(ctx context.Context, src cmp.Source) (cmp.Source, error) {
+					AddF: func(ctx context.Context, src cloudhub.Source) (cloudhub.Source, error) {
 						srcCount++
 						src.ID = srcCount
 						return src, nil
 					},
 				},
 				ServersStore: &mocks.ServersStore{
-					AddF: func(ctx context.Context, srv cmp.Server) (cmp.Server, error) {
+					AddF: func(ctx context.Context, srv cloudhub.Server) (cloudhub.Server, error) {
 						srvCount++
 						return srv, nil
 					},
@@ -304,10 +304,10 @@ func TestService_newSourceKapacitor(t *testing.T) {
 			},
 			args: args{
 				ctx: context.Background(),
-				src: cmp.Source{
+				src: cloudhub.Source{
 					Name: "Influx 1",
 				},
-				kapa: cmp.Server{
+				kapa: cloudhub.Server{
 					Name: "Kapa 1",
 				},
 			},
@@ -318,7 +318,7 @@ func TestService_newSourceKapacitor(t *testing.T) {
 			name: "Error if All returns error",
 			fields: fields{
 				SourcesStore: &mocks.SourcesStore{
-					AllF: func(ctx context.Context) ([]cmp.Source, error) {
+					AllF: func(ctx context.Context) ([]cloudhub.Source, error) {
 						return nil, fmt.Errorf("error")
 					},
 				},
@@ -333,11 +333,11 @@ func TestService_newSourceKapacitor(t *testing.T) {
 			name: "Error if Add returns error",
 			fields: fields{
 				SourcesStore: &mocks.SourcesStore{
-					AllF: func(ctx context.Context) ([]cmp.Source, error) {
-						return []cmp.Source{}, nil
+					AllF: func(ctx context.Context) ([]cloudhub.Source, error) {
+						return []cloudhub.Source{}, nil
 					},
-					AddF: func(ctx context.Context, src cmp.Source) (cmp.Source, error) {
-						return cmp.Source{}, fmt.Errorf("error")
+					AddF: func(ctx context.Context, src cloudhub.Source) (cloudhub.Source, error) {
+						return cloudhub.Source{}, fmt.Errorf("error")
 					},
 				},
 				Logger: &mocks.TestLogger{},
@@ -351,29 +351,29 @@ func TestService_newSourceKapacitor(t *testing.T) {
 			name: "Error if kapa add is error",
 			fields: fields{
 				SourcesStore: &mocks.SourcesStore{
-					AllF: func(ctx context.Context) ([]cmp.Source, error) {
-						return []cmp.Source{}, nil
+					AllF: func(ctx context.Context) ([]cloudhub.Source, error) {
+						return []cloudhub.Source{}, nil
 					},
-					AddF: func(ctx context.Context, src cmp.Source) (cmp.Source, error) {
+					AddF: func(ctx context.Context, src cloudhub.Source) (cloudhub.Source, error) {
 						srcCount++
 						src.ID = srcCount
 						return src, nil
 					},
 				},
 				ServersStore: &mocks.ServersStore{
-					AddF: func(ctx context.Context, srv cmp.Server) (cmp.Server, error) {
+					AddF: func(ctx context.Context, srv cloudhub.Server) (cloudhub.Server, error) {
 						srvCount++
-						return cmp.Server{}, fmt.Errorf("error")
+						return cloudhub.Server{}, fmt.Errorf("error")
 					},
 				},
 				Logger: &mocks.TestLogger{},
 			},
 			args: args{
 				ctx: context.Background(),
-				src: cmp.Source{
+				src: cloudhub.Source{
 					Name: "Influx 1",
 				},
-				kapa: cmp.Server{
+				kapa: cloudhub.Server{
 					Name: "Kapa 1",
 				},
 			},
@@ -405,8 +405,8 @@ func TestService_newSourceKapacitor(t *testing.T) {
 
 func TestService_SourcesID(t *testing.T) {
 	type fields struct {
-		SourcesStore cmp.SourcesStore
-		Logger       cmp.Logger
+		SourcesStore cloudhub.SourcesStore
+		Logger       cloudhub.Logger
 	}
 	type args struct {
 		w *httptest.ResponseRecorder
@@ -433,8 +433,8 @@ func TestService_SourcesID(t *testing.T) {
 			},
 			fields: fields{
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID: 1,
 						}, nil
 					},
@@ -444,7 +444,7 @@ func TestService_SourcesID(t *testing.T) {
 			ID:              "1",
 			wantStatusCode:  200,
 			wantContentType: "application/json",
-			wantBody: `{"id":"1","name":"","url":"","default":false,"telegraf":"telegraf","organization":"","defaultRP":"","version":"Unknown","authentication":"unknown","links":{"self":"/cmp/v1/sources/1","kapacitors":"/cmp/v1/sources/1/kapacitors","services":"/cmp/v1/sources/1/services","proxy":"/cmp/v1/sources/1/proxy","queries":"/cmp/v1/sources/1/queries","write":"/cmp/v1/sources/1/write","permissions":"/cmp/v1/sources/1/permissions","users":"/cmp/v1/sources/1/users","databases":"/cmp/v1/sources/1/dbs","annotations":"/cmp/v1/sources/1/annotations","health":"/cmp/v1/sources/1/health"}}
+			wantBody: `{"id":"1","name":"","url":"","default":false,"telegraf":"telegraf","organization":"","defaultRP":"","version":"Unknown","authentication":"unknown","links":{"self":"/cloudhub/v1/sources/1","kapacitors":"/cloudhub/v1/sources/1/kapacitors","services":"/cloudhub/v1/sources/1/services","proxy":"/cloudhub/v1/sources/1/proxy","queries":"/cloudhub/v1/sources/1/queries","write":"/cloudhub/v1/sources/1/write","permissions":"/cloudhub/v1/sources/1/permissions","users":"/cloudhub/v1/sources/1/users","databases":"/cloudhub/v1/sources/1/dbs","annotations":"/cloudhub/v1/sources/1/annotations","health":"/cloudhub/v1/sources/1/health"}}
 `,
 		},
 	}
@@ -483,9 +483,9 @@ func TestService_SourcesID(t *testing.T) {
 }
 func TestService_UpdateSource(t *testing.T) {
 	type fields struct {
-		SourcesStore       cmp.SourcesStore
-		OrganizationsStore cmp.OrganizationsStore
-		Logger             cmp.Logger
+		SourcesStore       cloudhub.SourcesStore
+		OrganizationsStore cloudhub.OrganizationsStore
+		Logger             cloudhub.Logger
 	}
 	type args struct {
 		w *httptest.ResponseRecorder
@@ -511,18 +511,18 @@ func TestService_UpdateSource(t *testing.T) {
 			},
 			fields: fields{
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID: 1,
 						}, nil
 					},
-					UpdateF: func(ctx context.Context, upd cmp.Source) error {
+					UpdateF: func(ctx context.Context, upd cloudhub.Source) error {
 						return nil
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "pineapple_kingdom",
 						}, nil
@@ -534,7 +534,7 @@ func TestService_UpdateSource(t *testing.T) {
 			wantStatusCode:  200,
 			wantContentType: "application/json",
 			wantBody: func(url string) string {
-				return fmt.Sprintf(`{"id":"1","name":"marty","type":"influx","username":"bob","url":"%s","metaUrl":"http://murl","default":false,"telegraf":"murlin","organization":"1337","defaultRP":"pineapple","authentication":"basic","links":{"self":"/cmp/v1/sources/1","kapacitors":"/cmp/v1/sources/1/kapacitors","services":"/cmp/v1/sources/1/services","proxy":"/cmp/v1/sources/1/proxy","queries":"/cmp/v1/sources/1/queries","write":"/cmp/v1/sources/1/write","permissions":"/cmp/v1/sources/1/permissions","users":"/cmp/v1/sources/1/users","databases":"/cmp/v1/sources/1/dbs","annotations":"/cmp/v1/sources/1/annotations","health":"/cmp/v1/sources/1/health"}}
+				return fmt.Sprintf(`{"id":"1","name":"marty","type":"influx","username":"bob","url":"%s","metaUrl":"http://murl","default":false,"telegraf":"murlin","organization":"1337","defaultRP":"pineapple","authentication":"basic","links":{"self":"/cloudhub/v1/sources/1","kapacitors":"/cloudhub/v1/sources/1/kapacitors","services":"/cloudhub/v1/sources/1/services","proxy":"/cloudhub/v1/sources/1/proxy","queries":"/cloudhub/v1/sources/1/queries","write":"/cloudhub/v1/sources/1/write","permissions":"/cloudhub/v1/sources/1/permissions","users":"/cloudhub/v1/sources/1/users","databases":"/cloudhub/v1/sources/1/dbs","annotations":"/cloudhub/v1/sources/1/annotations","health":"/cloudhub/v1/sources/1/health"}}
 `, url)
 			},
 		},
@@ -587,9 +587,9 @@ func TestService_UpdateSource(t *testing.T) {
 
 func TestService_NewSourceUser(t *testing.T) {
 	type fields struct {
-		SourcesStore cmp.SourcesStore
+		SourcesStore cloudhub.SourcesStore
 		TimeSeries   TimeSeriesClient
-		Logger       cmp.Logger
+		Logger       cloudhub.Logger
 		UseAuth      bool
 	}
 	type args struct {
@@ -611,7 +611,7 @@ func TestService_NewSourceUser(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"POST",
-					"http://local/cmp/v1/sources/1",
+					"http://local/cloudhub/v1/sources/1",
 					ioutil.NopCloser(
 						bytes.NewReader([]byte(`{"name": "marty", "password": "the_lake"}`)))),
 			},
@@ -619,8 +619,8 @@ func TestService_NewSourceUser(t *testing.T) {
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID:       1,
 							Name:     "muh source",
 							Username: "name",
@@ -630,17 +630,17 @@ func TestService_NewSourceUser(t *testing.T) {
 					},
 				},
 				TimeSeries: &mocks.TimeSeries{
-					ConnectF: func(ctx context.Context, src *cmp.Source) error {
+					ConnectF: func(ctx context.Context, src *cloudhub.Source) error {
 						return nil
 					},
-					UsersF: func(ctx context.Context) cmp.UsersStore {
+					UsersF: func(ctx context.Context) cloudhub.UsersStore {
 						return &mocks.UsersStore{
-							AddF: func(ctx context.Context, u *cmp.User) (*cmp.User, error) {
+							AddF: func(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
 								return u, nil
 							},
 						}
 					},
-					RolesF: func(ctx context.Context) (cmp.RolesStore, error) {
+					RolesF: func(ctx context.Context) (cloudhub.RolesStore, error) {
 						return nil, fmt.Errorf("no roles")
 					},
 				},
@@ -648,7 +648,7 @@ func TestService_NewSourceUser(t *testing.T) {
 			ID:              "1",
 			wantStatus:      http.StatusCreated,
 			wantContentType: "application/json",
-			wantBody: `{"links":{"self":"/cmp/v1/sources/1/users/marty"},"name":"marty","permissions":[]}
+			wantBody: `{"links":{"self":"/cloudhub/v1/sources/1/users/marty"},"name":"marty","permissions":[]}
 `,
 		},
 		{
@@ -657,7 +657,7 @@ func TestService_NewSourceUser(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"POST",
-					"http://local/cmp/v1/sources/1",
+					"http://local/cloudhub/v1/sources/1",
 					ioutil.NopCloser(
 						bytes.NewReader([]byte(`{"name": "marty", "password": "the_lake"}`)))),
 			},
@@ -665,8 +665,8 @@ func TestService_NewSourceUser(t *testing.T) {
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID:       1,
 							Name:     "muh source",
 							Username: "name",
@@ -676,17 +676,17 @@ func TestService_NewSourceUser(t *testing.T) {
 					},
 				},
 				TimeSeries: &mocks.TimeSeries{
-					ConnectF: func(ctx context.Context, src *cmp.Source) error {
+					ConnectF: func(ctx context.Context, src *cloudhub.Source) error {
 						return nil
 					},
-					UsersF: func(ctx context.Context) cmp.UsersStore {
+					UsersF: func(ctx context.Context) cloudhub.UsersStore {
 						return &mocks.UsersStore{
-							AddF: func(ctx context.Context, u *cmp.User) (*cmp.User, error) {
+							AddF: func(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
 								return u, nil
 							},
 						}
 					},
-					RolesF: func(ctx context.Context) (cmp.RolesStore, error) {
+					RolesF: func(ctx context.Context) (cloudhub.RolesStore, error) {
 						return nil, nil
 					},
 				},
@@ -694,7 +694,7 @@ func TestService_NewSourceUser(t *testing.T) {
 			ID:              "1",
 			wantStatus:      http.StatusCreated,
 			wantContentType: "application/json",
-			wantBody: `{"links":{"self":"/cmp/v1/sources/1/users/marty"},"name":"marty","permissions":[],"roles":[]}
+			wantBody: `{"links":{"self":"/cloudhub/v1/sources/1/users/marty"},"name":"marty","permissions":[],"roles":[]}
 `,
 		},
 		{
@@ -703,7 +703,7 @@ func TestService_NewSourceUser(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"POST",
-					"http://local/cmp/v1/sources/1",
+					"http://local/cloudhub/v1/sources/1",
 					ioutil.NopCloser(
 						bytes.NewReader([]byte(`{"name": "marty", "password": "the_lake"}`)))),
 			},
@@ -711,8 +711,8 @@ func TestService_NewSourceUser(t *testing.T) {
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID:       1,
 							Name:     "muh source",
 							Username: "name",
@@ -722,12 +722,12 @@ func TestService_NewSourceUser(t *testing.T) {
 					},
 				},
 				TimeSeries: &mocks.TimeSeries{
-					ConnectF: func(ctx context.Context, src *cmp.Source) error {
+					ConnectF: func(ctx context.Context, src *cloudhub.Source) error {
 						return nil
 					},
-					UsersF: func(ctx context.Context) cmp.UsersStore {
+					UsersF: func(ctx context.Context) cloudhub.UsersStore {
 						return &mocks.UsersStore{
-							AddF: func(ctx context.Context, u *cmp.User) (*cmp.User, error) {
+							AddF: func(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
 								return nil, fmt.Errorf("Weight Has Nothing to Do With It")
 							},
 						}
@@ -745,7 +745,7 @@ func TestService_NewSourceUser(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"POST",
-					"http://local/cmp/v1/sources/1",
+					"http://local/cloudhub/v1/sources/1",
 					ioutil.NopCloser(
 						bytes.NewReader([]byte(`{"name": "marty", "password": "the_lake"}`)))),
 			},
@@ -753,8 +753,8 @@ func TestService_NewSourceUser(t *testing.T) {
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID:       1,
 							Name:     "muh source",
 							Username: "name",
@@ -764,7 +764,7 @@ func TestService_NewSourceUser(t *testing.T) {
 					},
 				},
 				TimeSeries: &mocks.TimeSeries{
-					ConnectF: func(ctx context.Context, src *cmp.Source) error {
+					ConnectF: func(ctx context.Context, src *cloudhub.Source) error {
 						return fmt.Errorf("Biff just happens to be my supervisor")
 					},
 				},
@@ -780,7 +780,7 @@ func TestService_NewSourceUser(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"POST",
-					"http://local/cmp/v1/sources/1",
+					"http://local/cloudhub/v1/sources/1",
 					ioutil.NopCloser(
 						bytes.NewReader([]byte(`{"name": "marty", "password": "the_lake"}`)))),
 			},
@@ -788,8 +788,8 @@ func TestService_NewSourceUser(t *testing.T) {
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-						return cmp.Source{}, fmt.Errorf("No McFly ever amounted to anything in the history of Hill Valley")
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{}, fmt.Errorf("No McFly ever amounted to anything in the history of Hill Valley")
 					},
 				},
 			},
@@ -804,7 +804,7 @@ func TestService_NewSourceUser(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"POST",
-					"http://local/cmp/v1/sources/1",
+					"http://local/cloudhub/v1/sources/1",
 					ioutil.NopCloser(
 						bytes.NewReader([]byte(`{"name": "marty", "password": "the_lake"}`)))),
 			},
@@ -823,7 +823,7 @@ func TestService_NewSourceUser(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"POST",
-					"http://local/cmp/v1/sources/1",
+					"http://local/cloudhub/v1/sources/1",
 					ioutil.NopCloser(
 						bytes.NewReader([]byte(`{"password": "the_lake"}`)))),
 			},
@@ -842,7 +842,7 @@ func TestService_NewSourceUser(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"POST",
-					"http://local/cmp/v1/sources/1",
+					"http://local/cloudhub/v1/sources/1",
 					ioutil.NopCloser(
 						bytes.NewReader([]byte(`{password}`)))),
 			},
@@ -895,9 +895,9 @@ func TestService_NewSourceUser(t *testing.T) {
 
 func TestService_SourceUsers(t *testing.T) {
 	type fields struct {
-		SourcesStore cmp.SourcesStore
+		SourcesStore cloudhub.SourcesStore
 		TimeSeries   TimeSeriesClient
-		Logger       cmp.Logger
+		Logger       cloudhub.Logger
 		UseAuth      bool
 	}
 	type args struct {
@@ -919,15 +919,15 @@ func TestService_SourceUsers(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"GET",
-					"http://local/cmp/v1/sources/1",
+					"http://local/cloudhub/v1/sources/1",
 					nil),
 			},
 			fields: fields{
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID:       1,
 							Name:     "muh source",
 							Username: "name",
@@ -937,23 +937,23 @@ func TestService_SourceUsers(t *testing.T) {
 					},
 				},
 				TimeSeries: &mocks.TimeSeries{
-					ConnectF: func(ctx context.Context, src *cmp.Source) error {
+					ConnectF: func(ctx context.Context, src *cloudhub.Source) error {
 						return nil
 					},
-					RolesF: func(ctx context.Context) (cmp.RolesStore, error) {
+					RolesF: func(ctx context.Context) (cloudhub.RolesStore, error) {
 						return nil, fmt.Errorf("no roles")
 					},
-					UsersF: func(ctx context.Context) cmp.UsersStore {
+					UsersF: func(ctx context.Context) cloudhub.UsersStore {
 						return &mocks.UsersStore{
-							AllF: func(ctx context.Context) ([]cmp.User, error) {
-								return []cmp.User{
+							AllF: func(ctx context.Context) ([]cloudhub.User, error) {
+								return []cloudhub.User{
 									{
 										Name:   "strickland",
 										Passwd: "discipline",
-										Permissions: cmp.Permissions{
+										Permissions: cloudhub.Permissions{
 											{
-												Scope:   cmp.AllScope,
-												Allowed: cmp.Allowances{"READ"},
+												Scope:   cloudhub.AllScope,
+												Allowed: cloudhub.Allowances{"READ"},
 											},
 										},
 									},
@@ -966,7 +966,7 @@ func TestService_SourceUsers(t *testing.T) {
 			ID:              "1",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody: `{"users":[{"links":{"self":"/cmp/v1/sources/1/users/strickland"},"name":"strickland","permissions":[{"scope":"all","allowed":["READ"]}]}]}
+			wantBody: `{"users":[{"links":{"self":"/cloudhub/v1/sources/1/users/strickland"},"name":"strickland","permissions":[{"scope":"all","allowed":["READ"]}]}]}
 `,
 		},
 		{
@@ -975,15 +975,15 @@ func TestService_SourceUsers(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"GET",
-					"http://local/cmp/v1/sources/1",
+					"http://local/cloudhub/v1/sources/1",
 					nil),
 			},
 			fields: fields{
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID:       1,
 							Name:     "muh source",
 							Username: "name",
@@ -993,23 +993,23 @@ func TestService_SourceUsers(t *testing.T) {
 					},
 				},
 				TimeSeries: &mocks.TimeSeries{
-					ConnectF: func(ctx context.Context, src *cmp.Source) error {
+					ConnectF: func(ctx context.Context, src *cloudhub.Source) error {
 						return nil
 					},
-					RolesF: func(ctx context.Context) (cmp.RolesStore, error) {
+					RolesF: func(ctx context.Context) (cloudhub.RolesStore, error) {
 						return nil, nil
 					},
-					UsersF: func(ctx context.Context) cmp.UsersStore {
+					UsersF: func(ctx context.Context) cloudhub.UsersStore {
 						return &mocks.UsersStore{
-							AllF: func(ctx context.Context) ([]cmp.User, error) {
-								return []cmp.User{
+							AllF: func(ctx context.Context) ([]cloudhub.User, error) {
+								return []cloudhub.User{
 									{
 										Name:   "strickland",
 										Passwd: "discipline",
-										Permissions: cmp.Permissions{
+										Permissions: cloudhub.Permissions{
 											{
-												Scope:   cmp.AllScope,
-												Allowed: cmp.Allowances{"READ"},
+												Scope:   cloudhub.AllScope,
+												Allowed: cloudhub.Allowances{"READ"},
 											},
 										},
 									},
@@ -1022,7 +1022,7 @@ func TestService_SourceUsers(t *testing.T) {
 			ID:              "1",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody: `{"users":[{"links":{"self":"/cmp/v1/sources/1/users/strickland"},"name":"strickland","permissions":[{"scope":"all","allowed":["READ"]}],"roles":[]}]}
+			wantBody: `{"users":[{"links":{"self":"/cloudhub/v1/sources/1/users/strickland"},"name":"strickland","permissions":[{"scope":"all","allowed":["READ"]}],"roles":[]}]}
 `,
 		},
 	}
@@ -1063,9 +1063,9 @@ func TestService_SourceUsers(t *testing.T) {
 
 func TestService_SourceUserID(t *testing.T) {
 	type fields struct {
-		SourcesStore cmp.SourcesStore
+		SourcesStore cloudhub.SourcesStore
 		TimeSeries   TimeSeriesClient
-		Logger       cmp.Logger
+		Logger       cloudhub.Logger
 		UseAuth      bool
 	}
 	type args struct {
@@ -1088,15 +1088,15 @@ func TestService_SourceUserID(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"GET",
-					"http://local/cmp/v1/sources/1",
+					"http://local/cloudhub/v1/sources/1",
 					nil),
 			},
 			fields: fields{
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID:       1,
 							Name:     "muh source",
 							Username: "name",
@@ -1106,22 +1106,22 @@ func TestService_SourceUserID(t *testing.T) {
 					},
 				},
 				TimeSeries: &mocks.TimeSeries{
-					ConnectF: func(ctx context.Context, src *cmp.Source) error {
+					ConnectF: func(ctx context.Context, src *cloudhub.Source) error {
 						return nil
 					},
-					RolesF: func(ctx context.Context) (cmp.RolesStore, error) {
+					RolesF: func(ctx context.Context) (cloudhub.RolesStore, error) {
 						return nil, fmt.Errorf("no roles")
 					},
-					UsersF: func(ctx context.Context) cmp.UsersStore {
+					UsersF: func(ctx context.Context) cloudhub.UsersStore {
 						return &mocks.UsersStore{
-							GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
-								return &cmp.User{
+							GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
+								return &cloudhub.User{
 									Name:   "strickland",
 									Passwd: "discipline",
-									Permissions: cmp.Permissions{
+									Permissions: cloudhub.Permissions{
 										{
-											Scope:   cmp.AllScope,
-											Allowed: cmp.Allowances{"READ"},
+											Scope:   cloudhub.AllScope,
+											Allowed: cloudhub.Allowances{"READ"},
 										},
 									},
 								}, nil
@@ -1134,7 +1134,7 @@ func TestService_SourceUserID(t *testing.T) {
 			UID:             "strickland",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody: `{"links":{"self":"/cmp/v1/sources/1/users/strickland"},"name":"strickland","permissions":[{"scope":"all","allowed":["READ"]}]}
+			wantBody: `{"links":{"self":"/cloudhub/v1/sources/1/users/strickland"},"name":"strickland","permissions":[{"scope":"all","allowed":["READ"]}]}
 `,
 		},
 		{
@@ -1143,15 +1143,15 @@ func TestService_SourceUserID(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"GET",
-					"http://local/cmp/v1/sources/1",
+					"http://local/cloudhub/v1/sources/1",
 					nil),
 			},
 			fields: fields{
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID:       1,
 							Name:     "muh source",
 							Username: "name",
@@ -1161,22 +1161,22 @@ func TestService_SourceUserID(t *testing.T) {
 					},
 				},
 				TimeSeries: &mocks.TimeSeries{
-					ConnectF: func(ctx context.Context, src *cmp.Source) error {
+					ConnectF: func(ctx context.Context, src *cloudhub.Source) error {
 						return nil
 					},
-					RolesF: func(ctx context.Context) (cmp.RolesStore, error) {
+					RolesF: func(ctx context.Context) (cloudhub.RolesStore, error) {
 						return nil, nil
 					},
-					UsersF: func(ctx context.Context) cmp.UsersStore {
+					UsersF: func(ctx context.Context) cloudhub.UsersStore {
 						return &mocks.UsersStore{
-							GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
-								return &cmp.User{
+							GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
+								return &cloudhub.User{
 									Name:   "strickland",
 									Passwd: "discipline",
-									Permissions: cmp.Permissions{
+									Permissions: cloudhub.Permissions{
 										{
-											Scope:   cmp.AllScope,
-											Allowed: cmp.Allowances{"READ"},
+											Scope:   cloudhub.AllScope,
+											Allowed: cloudhub.Allowances{"READ"},
 										},
 									},
 								}, nil
@@ -1189,7 +1189,7 @@ func TestService_SourceUserID(t *testing.T) {
 			UID:             "strickland",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody: `{"links":{"self":"/cmp/v1/sources/1/users/strickland"},"name":"strickland","permissions":[{"scope":"all","allowed":["READ"]}],"roles":[]}
+			wantBody: `{"links":{"self":"/cloudhub/v1/sources/1/users/strickland"},"name":"strickland","permissions":[{"scope":"all","allowed":["READ"]}],"roles":[]}
 `,
 		},
 	}
@@ -1230,9 +1230,9 @@ func TestService_SourceUserID(t *testing.T) {
 
 func TestService_RemoveSourceUser(t *testing.T) {
 	type fields struct {
-		SourcesStore cmp.SourcesStore
+		SourcesStore cloudhub.SourcesStore
 		TimeSeries   TimeSeriesClient
-		Logger       cmp.Logger
+		Logger       cloudhub.Logger
 		UseAuth      bool
 	}
 	type args struct {
@@ -1255,15 +1255,15 @@ func TestService_RemoveSourceUser(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"GET",
-					"http://local/cmp/v1/sources/1",
+					"http://local/cloudhub/v1/sources/1",
 					nil),
 			},
 			fields: fields{
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID:       1,
 							Name:     "muh source",
 							Username: "name",
@@ -1273,12 +1273,12 @@ func TestService_RemoveSourceUser(t *testing.T) {
 					},
 				},
 				TimeSeries: &mocks.TimeSeries{
-					ConnectF: func(ctx context.Context, src *cmp.Source) error {
+					ConnectF: func(ctx context.Context, src *cloudhub.Source) error {
 						return nil
 					},
-					UsersF: func(ctx context.Context) cmp.UsersStore {
+					UsersF: func(ctx context.Context) cloudhub.UsersStore {
 						return &mocks.UsersStore{
-							DeleteF: func(ctx context.Context, u *cmp.User) error {
+							DeleteF: func(ctx context.Context, u *cloudhub.User) error {
 								return nil
 							},
 						}
@@ -1326,9 +1326,9 @@ func TestService_RemoveSourceUser(t *testing.T) {
 
 func TestService_UpdateSourceUser(t *testing.T) {
 	type fields struct {
-		SourcesStore cmp.SourcesStore
+		SourcesStore cloudhub.SourcesStore
 		TimeSeries   TimeSeriesClient
-		Logger       cmp.Logger
+		Logger       cloudhub.Logger
 		UseAuth      bool
 	}
 	type args struct {
@@ -1351,7 +1351,7 @@ func TestService_UpdateSourceUser(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"POST",
-					"http://local/cmp/v1/sources/1",
+					"http://local/cloudhub/v1/sources/1",
 					ioutil.NopCloser(
 						bytes.NewReader([]byte(`{"name": "marty", "password": "the_lake"}`)))),
 			},
@@ -1359,8 +1359,8 @@ func TestService_UpdateSourceUser(t *testing.T) {
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID:       1,
 							Name:     "muh source",
 							Username: "name",
@@ -1370,19 +1370,19 @@ func TestService_UpdateSourceUser(t *testing.T) {
 					},
 				},
 				TimeSeries: &mocks.TimeSeries{
-					ConnectF: func(ctx context.Context, src *cmp.Source) error {
+					ConnectF: func(ctx context.Context, src *cloudhub.Source) error {
 						return nil
 					},
-					RolesF: func(ctx context.Context) (cmp.RolesStore, error) {
+					RolesF: func(ctx context.Context) (cloudhub.RolesStore, error) {
 						return nil, fmt.Errorf("no roles")
 					},
-					UsersF: func(ctx context.Context) cmp.UsersStore {
+					UsersF: func(ctx context.Context) cloudhub.UsersStore {
 						return &mocks.UsersStore{
-							UpdateF: func(ctx context.Context, u *cmp.User) error {
+							UpdateF: func(ctx context.Context, u *cloudhub.User) error {
 								return nil
 							},
-							GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
-								return &cmp.User{
+							GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
+								return &cloudhub.User{
 									Name: "marty",
 								}, nil
 							},
@@ -1394,7 +1394,7 @@ func TestService_UpdateSourceUser(t *testing.T) {
 			UID:             "marty",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody: `{"links":{"self":"/cmp/v1/sources/1/users/marty"},"name":"marty","permissions":[]}
+			wantBody: `{"links":{"self":"/cloudhub/v1/sources/1/users/marty"},"name":"marty","permissions":[]}
 `,
 		},
 		{
@@ -1403,7 +1403,7 @@ func TestService_UpdateSourceUser(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"POST",
-					"http://local/cmp/v1/sources/1",
+					"http://local/cloudhub/v1/sources/1",
 					ioutil.NopCloser(
 						bytes.NewReader([]byte(`{"name": "marty", "password": "the_lake"}`)))),
 			},
@@ -1411,8 +1411,8 @@ func TestService_UpdateSourceUser(t *testing.T) {
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID:       1,
 							Name:     "muh source",
 							Username: "name",
@@ -1422,19 +1422,19 @@ func TestService_UpdateSourceUser(t *testing.T) {
 					},
 				},
 				TimeSeries: &mocks.TimeSeries{
-					ConnectF: func(ctx context.Context, src *cmp.Source) error {
+					ConnectF: func(ctx context.Context, src *cloudhub.Source) error {
 						return nil
 					},
-					RolesF: func(ctx context.Context) (cmp.RolesStore, error) {
+					RolesF: func(ctx context.Context) (cloudhub.RolesStore, error) {
 						return nil, nil
 					},
-					UsersF: func(ctx context.Context) cmp.UsersStore {
+					UsersF: func(ctx context.Context) cloudhub.UsersStore {
 						return &mocks.UsersStore{
-							UpdateF: func(ctx context.Context, u *cmp.User) error {
+							UpdateF: func(ctx context.Context, u *cloudhub.User) error {
 								return nil
 							},
-							GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
-								return &cmp.User{
+							GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
+								return &cloudhub.User{
 									Name: "marty",
 								}, nil
 							},
@@ -1446,7 +1446,7 @@ func TestService_UpdateSourceUser(t *testing.T) {
 			UID:             "marty",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody: `{"links":{"self":"/cmp/v1/sources/1/users/marty"},"name":"marty","permissions":[],"roles":[]}
+			wantBody: `{"links":{"self":"/cloudhub/v1/sources/1/users/marty"},"name":"marty","permissions":[],"roles":[]}
 `,
 		},
 		{
@@ -1455,7 +1455,7 @@ func TestService_UpdateSourceUser(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"POST",
-					"http://local/cmp/v1/sources/1",
+					"http://local/cloudhub/v1/sources/1",
 					ioutil.NopCloser(
 						bytes.NewReader([]byte(`{"name": "marty"}`)))),
 			},
@@ -1510,9 +1510,9 @@ func TestService_UpdateSourceUser(t *testing.T) {
 
 func TestService_NewSourceRole(t *testing.T) {
 	type fields struct {
-		SourcesStore cmp.SourcesStore
+		SourcesStore cloudhub.SourcesStore
 		TimeSeries   TimeSeriesClient
-		Logger       cmp.Logger
+		Logger       cloudhub.Logger
 	}
 	type args struct {
 		w *httptest.ResponseRecorder
@@ -1533,7 +1533,7 @@ func TestService_NewSourceRole(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"POST",
-					"http://server.local/cmp/v1/sources/1/roles",
+					"http://server.local/cloudhub/v1/sources/1/roles",
 					ioutil.NopCloser(
 						bytes.NewReader([]byte(`{BAD}`)))),
 			},
@@ -1550,7 +1550,7 @@ func TestService_NewSourceRole(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"POST",
-					"http://server.local/cmp/v1/sources/1/roles",
+					"http://server.local/cloudhub/v1/sources/1/roles",
 					ioutil.NopCloser(
 						bytes.NewReader([]byte(`{"name": ""}`)))),
 			},
@@ -1568,7 +1568,7 @@ func TestService_NewSourceRole(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"POST",
-					"http://server.local/cmp/v1/sources/1/roles",
+					"http://server.local/cloudhub/v1/sources/1/roles",
 					ioutil.NopCloser(
 						bytes.NewReader([]byte(`{"name": "newrole"}`)))),
 			},
@@ -1586,15 +1586,15 @@ func TestService_NewSourceRole(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"POST",
-					"http://server.local/cmp/v1/sources/1/roles",
+					"http://server.local/cloudhub/v1/sources/1/roles",
 					ioutil.NopCloser(
 						bytes.NewReader([]byte(`{"name": "role"}`)))),
 			},
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID:       1,
 							Name:     "muh source",
 							Username: "name",
@@ -1604,10 +1604,10 @@ func TestService_NewSourceRole(t *testing.T) {
 					},
 				},
 				TimeSeries: &mocks.TimeSeries{
-					ConnectF: func(ctx context.Context, src *cmp.Source) error {
+					ConnectF: func(ctx context.Context, src *cloudhub.Source) error {
 						return nil
 					},
-					RolesF: func(ctx context.Context) (cmp.RolesStore, error) {
+					RolesF: func(ctx context.Context) (cloudhub.RolesStore, error) {
 						return nil, fmt.Errorf("roles not supported")
 					},
 				},
@@ -1623,15 +1623,15 @@ func TestService_NewSourceRole(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"POST",
-					"http://server.local/cmp/v1/sources/1/roles",
+					"http://server.local/cloudhub/v1/sources/1/roles",
 					ioutil.NopCloser(
 						bytes.NewReader([]byte(`{"name": "role"}`)))),
 			},
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID:       1,
 							Name:     "muh source",
 							Username: "name",
@@ -1641,15 +1641,15 @@ func TestService_NewSourceRole(t *testing.T) {
 					},
 				},
 				TimeSeries: &mocks.TimeSeries{
-					ConnectF: func(ctx context.Context, src *cmp.Source) error {
+					ConnectF: func(ctx context.Context, src *cloudhub.Source) error {
 						return nil
 					},
-					RolesF: func(ctx context.Context) (cmp.RolesStore, error) {
+					RolesF: func(ctx context.Context) (cloudhub.RolesStore, error) {
 						return &mocks.RolesStore{
-							AddF: func(ctx context.Context, u *cmp.Role) (*cmp.Role, error) {
+							AddF: func(ctx context.Context, u *cloudhub.Role) (*cloudhub.Role, error) {
 								return nil, fmt.Errorf("server had and issue")
 							},
-							GetF: func(ctx context.Context, name string) (*cmp.Role, error) {
+							GetF: func(ctx context.Context, name string) (*cloudhub.Role, error) {
 								return nil, fmt.Errorf("No such role")
 							},
 						}, nil
@@ -1667,15 +1667,15 @@ func TestService_NewSourceRole(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"POST",
-					"http://server.local/cmp/v1/sources/1/roles",
+					"http://server.local/cloudhub/v1/sources/1/roles",
 					ioutil.NopCloser(
 						bytes.NewReader([]byte(`{"name": "biffsgang","users": [{"name": "match"},{"name": "skinhead"},{"name": "3-d"}]}`)))),
 			},
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID:       1,
 							Name:     "muh source",
 							Username: "name",
@@ -1685,15 +1685,15 @@ func TestService_NewSourceRole(t *testing.T) {
 					},
 				},
 				TimeSeries: &mocks.TimeSeries{
-					ConnectF: func(ctx context.Context, src *cmp.Source) error {
+					ConnectF: func(ctx context.Context, src *cloudhub.Source) error {
 						return nil
 					},
-					RolesF: func(ctx context.Context) (cmp.RolesStore, error) {
+					RolesF: func(ctx context.Context) (cloudhub.RolesStore, error) {
 						return &mocks.RolesStore{
-							AddF: func(ctx context.Context, u *cmp.Role) (*cmp.Role, error) {
+							AddF: func(ctx context.Context, u *cloudhub.Role) (*cloudhub.Role, error) {
 								return u, nil
 							},
-							GetF: func(ctx context.Context, name string) (*cmp.Role, error) {
+							GetF: func(ctx context.Context, name string) (*cloudhub.Role, error) {
 								return nil, fmt.Errorf("no such role")
 							},
 						}, nil
@@ -1703,7 +1703,7 @@ func TestService_NewSourceRole(t *testing.T) {
 			ID:              "1",
 			wantStatus:      http.StatusCreated,
 			wantContentType: "application/json",
-			wantBody: `{"users":[{"links":{"self":"/cmp/v1/sources/1/users/match"},"name":"match"},{"links":{"self":"/cmp/v1/sources/1/users/skinhead"},"name":"skinhead"},{"links":{"self":"/cmp/v1/sources/1/users/3-d"},"name":"3-d"}],"name":"biffsgang","permissions":[],"links":{"self":"/cmp/v1/sources/1/roles/biffsgang"}}
+			wantBody: `{"users":[{"links":{"self":"/cloudhub/v1/sources/1/users/match"},"name":"match"},{"links":{"self":"/cloudhub/v1/sources/1/users/skinhead"},"name":"skinhead"},{"links":{"self":"/cloudhub/v1/sources/1/users/3-d"},"name":"3-d"}],"name":"biffsgang","permissions":[],"links":{"self":"/cloudhub/v1/sources/1/roles/biffsgang"}}
 `,
 		},
 	}
@@ -1744,9 +1744,9 @@ func TestService_NewSourceRole(t *testing.T) {
 
 func TestService_UpdateSourceRole(t *testing.T) {
 	type fields struct {
-		SourcesStore cmp.SourcesStore
+		SourcesStore cloudhub.SourcesStore
 		TimeSeries   TimeSeriesClient
-		Logger       cmp.Logger
+		Logger       cloudhub.Logger
 	}
 	type args struct {
 		w *httptest.ResponseRecorder
@@ -1768,15 +1768,15 @@ func TestService_UpdateSourceRole(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"POST",
-					"http://server.local/cmp/v1/sources/1/roles",
+					"http://server.local/cloudhub/v1/sources/1/roles",
 					ioutil.NopCloser(
 						bytes.NewReader([]byte(`{"name": "biffsgang","users": [{"name": "match"},{"name": "skinhead"},{"name": "3-d"}]}`)))),
 			},
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID:       1,
 							Name:     "muh source",
 							Username: "name",
@@ -1786,18 +1786,18 @@ func TestService_UpdateSourceRole(t *testing.T) {
 					},
 				},
 				TimeSeries: &mocks.TimeSeries{
-					ConnectF: func(ctx context.Context, src *cmp.Source) error {
+					ConnectF: func(ctx context.Context, src *cloudhub.Source) error {
 						return nil
 					},
-					RolesF: func(ctx context.Context) (cmp.RolesStore, error) {
+					RolesF: func(ctx context.Context) (cloudhub.RolesStore, error) {
 						return &mocks.RolesStore{
-							UpdateF: func(ctx context.Context, u *cmp.Role) error {
+							UpdateF: func(ctx context.Context, u *cloudhub.Role) error {
 								return nil
 							},
-							GetF: func(ctx context.Context, name string) (*cmp.Role, error) {
-								return &cmp.Role{
+							GetF: func(ctx context.Context, name string) (*cloudhub.Role, error) {
+								return &cloudhub.Role{
 									Name: "biffsgang",
-									Users: []cmp.User{
+									Users: []cloudhub.User{
 										{
 											Name: "match",
 										},
@@ -1818,7 +1818,7 @@ func TestService_UpdateSourceRole(t *testing.T) {
 			RoleID:          "biffsgang",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody: `{"users":[{"links":{"self":"/cmp/v1/sources/1/users/match"},"name":"match"},{"links":{"self":"/cmp/v1/sources/1/users/skinhead"},"name":"skinhead"},{"links":{"self":"/cmp/v1/sources/1/users/3-d"},"name":"3-d"}],"name":"biffsgang","permissions":[],"links":{"self":"/cmp/v1/sources/1/roles/biffsgang"}}
+			wantBody: `{"users":[{"links":{"self":"/cloudhub/v1/sources/1/users/match"},"name":"match"},{"links":{"self":"/cloudhub/v1/sources/1/users/skinhead"},"name":"skinhead"},{"links":{"self":"/cloudhub/v1/sources/1/users/3-d"},"name":"3-d"}],"name":"biffsgang","permissions":[],"links":{"self":"/cloudhub/v1/sources/1/roles/biffsgang"}}
 `,
 		},
 	}
@@ -1864,9 +1864,9 @@ func TestService_UpdateSourceRole(t *testing.T) {
 
 func TestService_SourceRoleID(t *testing.T) {
 	type fields struct {
-		SourcesStore cmp.SourcesStore
+		SourcesStore cloudhub.SourcesStore
 		TimeSeries   TimeSeriesClient
-		Logger       cmp.Logger
+		Logger       cloudhub.Logger
 	}
 	type args struct {
 		w *httptest.ResponseRecorder
@@ -1888,14 +1888,14 @@ func TestService_SourceRoleID(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"GET",
-					"http://server.local/cmp/v1/sources/1/roles/biffsgang",
+					"http://server.local/cloudhub/v1/sources/1/roles/biffsgang",
 					nil),
 			},
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID:       1,
 							Name:     "muh source",
 							Username: "name",
@@ -1905,24 +1905,24 @@ func TestService_SourceRoleID(t *testing.T) {
 					},
 				},
 				TimeSeries: &mocks.TimeSeries{
-					ConnectF: func(ctx context.Context, src *cmp.Source) error {
+					ConnectF: func(ctx context.Context, src *cloudhub.Source) error {
 						return nil
 					},
-					RolesF: func(ctx context.Context) (cmp.RolesStore, error) {
+					RolesF: func(ctx context.Context) (cloudhub.RolesStore, error) {
 						return &mocks.RolesStore{
-							GetF: func(ctx context.Context, name string) (*cmp.Role, error) {
-								return &cmp.Role{
+							GetF: func(ctx context.Context, name string) (*cloudhub.Role, error) {
+								return &cloudhub.Role{
 									Name: "biffsgang",
-									Permissions: cmp.Permissions{
+									Permissions: cloudhub.Permissions{
 										{
 											Name:  "grays_sports_almanac",
 											Scope: "DBScope",
-											Allowed: cmp.Allowances{
+											Allowed: cloudhub.Allowances{
 												"ReadData",
 											},
 										},
 									},
-									Users: []cmp.User{
+									Users: []cloudhub.User{
 										{
 											Name: "match",
 										},
@@ -1943,7 +1943,7 @@ func TestService_SourceRoleID(t *testing.T) {
 			RoleID:          "biffsgang",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody: `{"users":[{"links":{"self":"/cmp/v1/sources/1/users/match"},"name":"match"},{"links":{"self":"/cmp/v1/sources/1/users/skinhead"},"name":"skinhead"},{"links":{"self":"/cmp/v1/sources/1/users/3-d"},"name":"3-d"}],"name":"biffsgang","permissions":[{"scope":"DBScope","name":"grays_sports_almanac","allowed":["ReadData"]}],"links":{"self":"/cmp/v1/sources/1/roles/biffsgang"}}
+			wantBody: `{"users":[{"links":{"self":"/cloudhub/v1/sources/1/users/match"},"name":"match"},{"links":{"self":"/cloudhub/v1/sources/1/users/skinhead"},"name":"skinhead"},{"links":{"self":"/cloudhub/v1/sources/1/users/3-d"},"name":"3-d"}],"name":"biffsgang","permissions":[{"scope":"DBScope","name":"grays_sports_almanac","allowed":["ReadData"]}],"links":{"self":"/cloudhub/v1/sources/1/roles/biffsgang"}}
 `,
 		},
 	}
@@ -1989,9 +1989,9 @@ func TestService_SourceRoleID(t *testing.T) {
 
 func TestService_RemoveSourceRole(t *testing.T) {
 	type fields struct {
-		SourcesStore cmp.SourcesStore
+		SourcesStore cloudhub.SourcesStore
 		TimeSeries   TimeSeriesClient
-		Logger       cmp.Logger
+		Logger       cloudhub.Logger
 	}
 	type args struct {
 		w *httptest.ResponseRecorder
@@ -2011,14 +2011,14 @@ func TestService_RemoveSourceRole(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"GET",
-					"http://server.local/cmp/v1/sources/1/roles/biffsgang",
+					"http://server.local/cloudhub/v1/sources/1/roles/biffsgang",
 					nil),
 			},
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID:       1,
 							Name:     "muh source",
 							Username: "name",
@@ -2028,12 +2028,12 @@ func TestService_RemoveSourceRole(t *testing.T) {
 					},
 				},
 				TimeSeries: &mocks.TimeSeries{
-					ConnectF: func(ctx context.Context, src *cmp.Source) error {
+					ConnectF: func(ctx context.Context, src *cloudhub.Source) error {
 						return nil
 					},
-					RolesF: func(ctx context.Context) (cmp.RolesStore, error) {
+					RolesF: func(ctx context.Context) (cloudhub.RolesStore, error) {
 						return &mocks.RolesStore{
-							DeleteF: func(context.Context, *cmp.Role) error {
+							DeleteF: func(context.Context, *cloudhub.Role) error {
 								return nil
 							},
 						}, nil
@@ -2078,9 +2078,9 @@ func TestService_RemoveSourceRole(t *testing.T) {
 
 func TestService_SourceRoles(t *testing.T) {
 	type fields struct {
-		SourcesStore cmp.SourcesStore
+		SourcesStore cloudhub.SourcesStore
 		TimeSeries   TimeSeriesClient
-		Logger       cmp.Logger
+		Logger       cloudhub.Logger
 	}
 	type args struct {
 		w *httptest.ResponseRecorder
@@ -2102,38 +2102,38 @@ func TestService_SourceRoles(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"GET",
-					"http://server.local/cmp/v1/sources/1/roles",
+					"http://server.local/cloudhub/v1/sources/1/roles",
 					nil),
 			},
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID: 1,
 						}, nil
 					},
 				},
 				TimeSeries: &mocks.TimeSeries{
-					ConnectF: func(ctx context.Context, src *cmp.Source) error {
+					ConnectF: func(ctx context.Context, src *cloudhub.Source) error {
 						return nil
 					},
-					RolesF: func(ctx context.Context) (cmp.RolesStore, error) {
+					RolesF: func(ctx context.Context) (cloudhub.RolesStore, error) {
 						return &mocks.RolesStore{
-							AllF: func(ctx context.Context) ([]cmp.Role, error) {
-								return []cmp.Role{
-									cmp.Role{
+							AllF: func(ctx context.Context) ([]cloudhub.Role, error) {
+								return []cloudhub.Role{
+									cloudhub.Role{
 										Name: "biffsgang",
-										Permissions: cmp.Permissions{
+										Permissions: cloudhub.Permissions{
 											{
 												Name:  "grays_sports_almanac",
 												Scope: "DBScope",
-												Allowed: cmp.Allowances{
+												Allowed: cloudhub.Allowances{
 													"ReadData",
 												},
 											},
 										},
-										Users: []cmp.User{
+										Users: []cloudhub.User{
 											{
 												Name: "match",
 											},
@@ -2155,7 +2155,7 @@ func TestService_SourceRoles(t *testing.T) {
 			RoleID:          "biffsgang",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody: `{"roles":[{"users":[{"links":{"self":"/cmp/v1/sources/1/users/match"},"name":"match"},{"links":{"self":"/cmp/v1/sources/1/users/skinhead"},"name":"skinhead"},{"links":{"self":"/cmp/v1/sources/1/users/3-d"},"name":"3-d"}],"name":"biffsgang","permissions":[{"scope":"DBScope","name":"grays_sports_almanac","allowed":["ReadData"]}],"links":{"self":"/cmp/v1/sources/1/roles/biffsgang"}}]}
+			wantBody: `{"roles":[{"users":[{"links":{"self":"/cloudhub/v1/sources/1/users/match"},"name":"match"},{"links":{"self":"/cloudhub/v1/sources/1/users/skinhead"},"name":"skinhead"},{"links":{"self":"/cloudhub/v1/sources/1/users/3-d"},"name":"3-d"}],"name":"biffsgang","permissions":[{"scope":"DBScope","name":"grays_sports_almanac","allowed":["ReadData"]}],"links":{"self":"/cloudhub/v1/sources/1/roles/biffsgang"}}]}
 `,
 		},
 	}

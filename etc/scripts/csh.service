@@ -9,12 +9,12 @@ Group=snet
 Environment="HOST=0.0.0.0"
 Environment="PORT=8888"
 #Environment="PORT=443"
-#Environment="TLS_CERTIFICATE=/usr/lib/cloudhub/key/scmp_self_signed.pem"
-Environment="BOLT_PATH=/var/lib/cloudhub/cmp-v1.db"
-Environment="CANNED_PATH=/usr/share/cloudhub/cmp-canned"
-Environment="PROTOBOARDS_PATH=/usr/share/cloudhub/cmp-protoboards"
+#Environment="TLS_CERTIFICATE=/usr/lib/cloudhub/key/cloudhub_self_signed.pem"
+Environment="BOLT_PATH=/var/lib/cloudhub/cloudhub-v1.db"
+Environment="CANNED_PATH=/usr/share/cloudhub/cloudhub-canned"
+Environment="PROTOBOARDS_PATH=/usr/share/cloudhub/cloudhub-protoboards"
 EnvironmentFile=-/etc/default/cloudhub
-ExecStart=/usr/bin/cloudhub $CSH_OPTS
+ExecStart=/usr/bin/cloudhub $CLOUDHUB_OPTS
 KillMode=control-group
 Restart=on-failure
 

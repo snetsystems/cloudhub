@@ -3,10 +3,10 @@ import PropTypes from 'prop-types'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 
-import * as adminCMPActionCreators from 'src/admin/actions/cmp'
+import * as adminCloudHubActionCreators from 'src/admin/actions/cloudhub'
 import {notify as notifyAction} from 'shared/actions/notifications'
 
-import ProvidersTable from 'src/admin/components/cmp/ProvidersTable'
+import ProvidersTable from 'src/admin/components/cloudhub/ProvidersTable'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 class ProvidersPage extends Component {
@@ -86,14 +86,17 @@ ProvidersPage.propTypes = {
   notify: func.isRequired,
 }
 
-const mapStateToProps = ({links, adminCMP: {organizations, mappings}}) => ({
+const mapStateToProps = ({
+  links,
+  adminCloudHub: {organizations, mappings},
+}) => ({
   links,
   organizations,
   mappings,
 })
 
 const mapDispatchToProps = dispatch => ({
-  actions: bindActionCreators(adminCMPActionCreators, dispatch),
+  actions: bindActionCreators(adminCloudHubActionCreators, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
 })
 

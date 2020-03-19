@@ -3,11 +3,11 @@ package kapacitor
 import (
 	"fmt"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // Data returns the tickscript data section for querying
-func Data(rule cmp.AlertRule) (string, error) {
+func Data(rule cloudhub.AlertRule) (string, error) {
 	if rule.Query.RawText != nil && *rule.Query.RawText != "" {
 		batch := `
      var data = batch

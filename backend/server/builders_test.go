@@ -3,7 +3,7 @@ package server_test
 import (
 	"testing"
 
-	"github.com/snetsystems/cmp/backend/server"
+	"github.com/snetsystems/cloudhub/backend/server"
 )
 
 func TestLayoutBuilder(t *testing.T) {

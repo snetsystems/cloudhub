@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/influxdata/influxdb/influxql"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/influx"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/influx"
 )
 
 const (
@@ -28,12 +28,12 @@ type annotationResponse struct {
 	StartTime string             `json:"startTime"` // StartTime in RFC3339 of the start of the annotation
 	EndTime   string             `json:"endTime"`   // EndTime in RFC3339 of the end of the annotation
 	Text      string             `json:"text"`      // Text is the associated user-facing text describing the annotation
-	Tags      cmp.AnnotationTags `json:"tags"`      // Tags is a collection of user defined key/value pairs that contextualize the annotation
+	Tags      cloudhub.AnnotationTags `json:"tags"`      // Tags is a collection of user defined key/value pairs that contextualize the annotation
 	Links     annotationLinks    `json:"links"`
 }
 
-func newAnnotationResponse(src cmp.Source, a *cmp.Annotation) annotationResponse {
-	base := "/cmp/v1/sources"
+func newAnnotationResponse(src cloudhub.Source, a *cloudhub.Annotation) annotationResponse {
+	base := "/cloudhub/v1/sources"
 	res := annotationResponse{
 		ID:        a.ID,
 		StartTime: a.StartTime.UTC().Format(timeMilliFormat),
@@ -46,7 +46,7 @@ func newAnnotationResponse(src cmp.Source, a *cmp.Annotation) annotationResponse
 	}
 
 	if res.Tags == nil {
-		res.Tags = cmp.AnnotationTags{}
+		res.Tags = cloudhub.AnnotationTags{}
 	}
 
 	if a.EndTime.IsZero() {
@@ -60,7 +60,7 @@ type annotationsResponse struct {
 	Annotations []annotationResponse `json:"annotations"`
 }
 
-func newAnnotationsResponse(src cmp.Source, as []cmp.Annotation) annotationsResponse {
+func newAnnotationsResponse(src cloudhub.Source, as []cloudhub.Annotation) annotationsResponse {
 	annotations := make([]annotationResponse, len(as))
 	for i, a := range as {
 		annotations[i] = newAnnotationResponse(src, &a)
@@ -70,18 +70,18 @@ func newAnnotationsResponse(src cmp.Source, as []cmp.Annotation) annotationsResp
 	}
 }
 
-func parseTagQueryParam(tagQuery string) (*cmp.AnnotationTagFilter, error) {
+func parseTagQueryParam(tagQuery string) (*cloudhub.AnnotationTagFilter, error) {
 	expr, err := influxql.ParseExpr(tagQuery)
 	if err != nil {
-		return &cmp.AnnotationTagFilter{}, errors.New("Invalid tag query param")
+		return &cloudhub.AnnotationTagFilter{}, errors.New("Invalid tag query param")
 	}
 
 	binaryExpr, ok := expr.(*influxql.BinaryExpr)
 	if !ok {
-		return &cmp.AnnotationTagFilter{}, errors.New("Invalid tag query param")
+		return &cloudhub.AnnotationTagFilter{}, errors.New("Invalid tag query param")
 	}
 
-	filter := cmp.AnnotationTagFilter{
+	filter := cloudhub.AnnotationTagFilter{
 		Key:        binaryExpr.LHS.String(),
 		Value:      binaryExpr.RHS.String(),
 		Comparator: binaryExpr.Op.String(),
@@ -90,7 +90,7 @@ func parseTagQueryParam(tagQuery string) (*cmp.AnnotationTagFilter, error) {
 	return &filter, nil
 }
 
-func validAnnotationQuery(query url.Values) (startTime, stopTime time.Time, filters []*cmp.AnnotationTagFilter, err error) {
+func validAnnotationQuery(query url.Values) (startTime, stopTime time.Time, filters []*cloudhub.AnnotationTagFilter, err error) {
 	start := query.Get(since)
 	if start == "" {
 		return startTime, stopTime, filters, fmt.Errorf("since parameter is required")
@@ -211,7 +211,7 @@ func (s *Service) Annotation(w http.ResponseWriter, r *http.Request) {
 	store := influx.NewAnnotationStore(ts)
 	anno, err := store.Get(ctx, annoID)
 	if err != nil {
-		if err != cmp.ErrAnnotationNotFound {
+		if err != cloudhub.ErrAnnotationNotFound {
 			msg := fmt.Errorf("Error loading annotation: %v", err)
 			unknownErrorWithMessage(w, msg, s.Logger)
 			return
@@ -228,7 +228,7 @@ type newAnnotationRequest struct {
 	StartTime time.Time
 	EndTime   time.Time
 	Text      string             `json:"text,omitempty"` // Text is the associated user-facing text describing the annotation
-	Tags      cmp.AnnotationTags `json:"tags"`
+	Tags      cloudhub.AnnotationTags `json:"tags"`
 }
 
 func (ar *newAnnotationRequest) UnmarshalJSON(data []byte) error {
@@ -262,8 +262,8 @@ func (ar *newAnnotationRequest) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (ar *newAnnotationRequest) Annotation() *cmp.Annotation {
-	return &cmp.Annotation{
+func (ar *newAnnotationRequest) Annotation() *cloudhub.Annotation {
+	return &cloudhub.Annotation{
 		StartTime: ar.StartTime,
 		EndTime:   ar.EndTime,
 		Text:      ar.Text,
@@ -313,7 +313,7 @@ func (s *Service) NewAnnotation(w http.ResponseWriter, r *http.Request) {
 	store := influx.NewAnnotationStore(ts)
 	anno, err := store.Add(ctx, req.Annotation())
 	if err != nil {
-		if err == cmp.ErrUpstreamTimeout {
+		if err == cloudhub.ErrUpstreamTimeout {
 			msg := "Timeout waiting for response"
 			Error(w, http.StatusRequestTimeout, msg, s.Logger)
 			return
@@ -363,7 +363,7 @@ func (s *Service) RemoveAnnotation(w http.ResponseWriter, r *http.Request) {
 
 	store := influx.NewAnnotationStore(ts)
 	if err = store.Delete(ctx, annoID); err != nil {
-		if err == cmp.ErrUpstreamTimeout {
+		if err == cloudhub.ErrUpstreamTimeout {
 			msg := "Timeout waiting for  response"
 			Error(w, http.StatusRequestTimeout, msg, s.Logger)
 			return
@@ -379,7 +379,7 @@ type updateAnnotationRequest struct {
 	StartTime *time.Time         `json:"startTime,omitempty"` // StartTime is the time in rfc3339 milliseconds
 	EndTime   *time.Time         `json:"endTime,omitempty"`   // EndTime is the time in rfc3339 milliseconds
 	Text      *string            `json:"text,omitempty"`      // Text is the associated user-facing text describing the annotation
-	Tags      cmp.AnnotationTags `json:"tags"`
+	Tags      cloudhub.AnnotationTags `json:"tags"`
 }
 
 // TODO: make sure that endtime is after starttime
@@ -486,7 +486,7 @@ func (s *Service) UpdateAnnotation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err = store.Update(ctx, cur); err != nil {
-		if err == cmp.ErrUpstreamTimeout {
+		if err == cloudhub.ErrUpstreamTimeout {
 			msg := "Timeout waiting for response"
 			Error(w, http.StatusRequestTimeout, msg, s.Logger)
 			return

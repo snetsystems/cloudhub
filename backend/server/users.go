@@ -9,8 +9,8 @@ import (
 	"strconv"
 
 	"github.com/bouk/httprouter"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/roles"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/roles"
 )
 
 type userRequest struct {
@@ -19,18 +19,18 @@ type userRequest struct {
 	Provider   string     `json:"provider"`
 	Scheme     string     `json:"scheme"`
 	SuperAdmin bool       `json:"superAdmin"`
-	Roles      []cmp.Role `json:"roles"`
+	Roles      []cloudhub.Role `json:"roles"`
 }
 
 func (r *userRequest) ValidCreate() error {
 	if r.Name == "" {
-		return fmt.Errorf("Name required on CMP User request body")
+		return fmt.Errorf("Name required on CloudHub User request body")
 	}
 	if r.Provider == "" {
-		return fmt.Errorf("Provider required on CMP User request body")
+		return fmt.Errorf("Provider required on CloudHub User request body")
 	}
 	if r.Scheme == "" {
-		return fmt.Errorf("Scheme required on CMP User request body")
+		return fmt.Errorf("Scheme required on CloudHub User request body")
 	}
 
 	// TODO: This Scheme value is hard-coded temporarily since we only currently
@@ -76,21 +76,21 @@ type userResponse struct {
 	Provider   string     `json:"provider"`
 	Scheme     string     `json:"scheme"`
 	SuperAdmin bool       `json:"superAdmin"`
-	Roles      []cmp.Role `json:"roles"`
+	Roles      []cloudhub.Role `json:"roles"`
 }
 
-func newUserResponse(u *cmp.User, org string) *userResponse {
+func newUserResponse(u *cloudhub.User, org string) *userResponse {
 	// This ensures that any user response with no roles returns an empty array instead of
 	// null when marshaled into JSON. That way, JavaScript doesn't need any guard on the
 	// key existing and it can simply be iterated over.
 	if u.Roles == nil {
-		u.Roles = []cmp.Role{}
+		u.Roles = []cloudhub.Role{}
 	}
 	var selfLink string
 	if org != "" {
-		selfLink = fmt.Sprintf("/cmp/v1/organizations/%s/users/%d", org, u.ID)
+		selfLink = fmt.Sprintf("/cloudhub/v1/organizations/%s/users/%d", org, u.ID)
 	} else {
-		selfLink = fmt.Sprintf("/cmp/v1/users/%d", u.ID)
+		selfLink = fmt.Sprintf("/cloudhub/v1/users/%d", u.ID)
 	}
 	return &userResponse{
 		ID:         u.ID,
@@ -110,7 +110,7 @@ type usersResponse struct {
 	Users []*userResponse `json:"users"`
 }
 
-func newUsersResponse(users []cmp.User, org string) *usersResponse {
+func newUsersResponse(users []cloudhub.User, org string) *usersResponse {
 	usersResp := make([]*userResponse, len(users))
 	for i, user := range users {
 		usersResp[i] = newUserResponse(&user, org)
@@ -121,9 +121,9 @@ func newUsersResponse(users []cmp.User, org string) *usersResponse {
 
 	var selfLink string
 	if org != "" {
-		selfLink = fmt.Sprintf("/cmp/v1/organizations/%s/users", org)
+		selfLink = fmt.Sprintf("/cloudhub/v1/organizations/%s/users", org)
 	} else {
-		selfLink = "/cmp/v1/users"
+		selfLink = "/cloudhub/v1/users"
 	}
 	return &usersResponse{
 		Users: usersResp,
@@ -133,7 +133,7 @@ func newUsersResponse(users []cmp.User, org string) *usersResponse {
 	}
 }
 
-// UserID retrieves a CMP user with ID from store
+// UserID retrieves a CloudHub user with ID from store
 func (s *Service) UserID(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -143,7 +143,7 @@ func (s *Service) UserID(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusBadRequest, fmt.Sprintf("invalid user id: %s", err.Error()), s.Logger)
 		return
 	}
-	user, err := s.Store.Users(ctx).Get(ctx, cmp.UserQuery{ID: &id})
+	user, err := s.Store.Users(ctx).Get(ctx, cloudhub.UserQuery{ID: &id})
 	if err != nil {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
@@ -155,7 +155,7 @@ func (s *Service) UserID(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
 
-// NewUser adds a new CMP user to store
+// NewUser adds a new CloudHub user to store
 func (s *Service) NewUser(w http.ResponseWriter, r *http.Request) {
 	var req userRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -182,7 +182,7 @@ func (s *Service) NewUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := &cmp.User{
+	user := &cloudhub.User{
 		Name:     req.Name,
 		Provider: req.Provider,
 		Scheme:   req.Scheme,
@@ -210,7 +210,7 @@ func (s *Service) NewUser(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusCreated, cu, s.Logger)
 }
 
-// RemoveUser deletes a CMP user from store
+// RemoveUser deletes a CloudHub user from store
 func (s *Service) RemoveUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	idStr := httprouter.GetParamFromContext(ctx, "id")
@@ -220,7 +220,7 @@ func (s *Service) RemoveUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := s.Store.Users(ctx).Get(ctx, cmp.UserQuery{ID: &id})
+	u, err := s.Store.Users(ctx).Get(ctx, cloudhub.UserQuery{ID: &id})
 	if err != nil {
 		Error(w, http.StatusNotFound, err.Error(), s.Logger)
 		return
@@ -233,7 +233,7 @@ func (s *Service) RemoveUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// UpdateUser updates a CMP user in store
+// UpdateUser updates a CloudHub user in store
 func (s *Service) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	var req userRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -254,7 +254,7 @@ func (s *Service) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := s.Store.Users(ctx).Get(ctx, cmp.UserQuery{ID: &id})
+	u, err := s.Store.Users(ctx).Get(ctx, cloudhub.UserQuery{ID: &id})
 	if err != nil {
 		Error(w, http.StatusNotFound, err.Error(), s.Logger)
 		return
@@ -323,7 +323,7 @@ func (s *Service) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, cu, s.Logger)
 }
 
-// Users retrieves all CMP users from store
+// Users retrieves all CloudHub users from store
 func (s *Service) Users(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
@@ -338,7 +338,7 @@ func (s *Service) Users(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
 
-func setSuperAdmin(ctx context.Context, req userRequest, user *cmp.User) error {
+func setSuperAdmin(ctx context.Context, req userRequest, user *cloudhub.User) error {
 	// At a high level, this function checks the following
 	//   1. Is the user making the request a SuperAdmin.
 	//      If they are, allow them to make whatever changes they please.
@@ -350,22 +350,22 @@ func setSuperAdmin(ctx context.Context, req userRequest, user *cmp.User) error {
 	//      changes were requested.
 
 	// Only allow users to set SuperAdmin if they have the superadmin context
-	// TODO(desa): Refactor this https://github.com/influxdata/cmp/issues/2207
+	// TODO(desa): Refactor this https://github.com/influxdata/cloudhub/issues/2207
 	if isSuperAdmin := hasSuperAdminContext(ctx); isSuperAdmin {
 		user.SuperAdmin = req.SuperAdmin
 	} else if !isSuperAdmin && (user.SuperAdmin != req.SuperAdmin) {
 		// If req.SuperAdmin has been set, and the request was not made with the SuperAdmin
 		// context, return error
-		return fmt.Errorf("User does not have authorization required to set SuperAdmin status'.' See https://github.com/influxdata/cmp/issues/2601 for more information'.'")
+		return fmt.Errorf("User does not have authorization required to set SuperAdmin status'.' See https://github.com/influxdata/cloudhub/issues/2601 for more information'.'")
 	}
 
 	return nil
 }
 
-func (s *Service) validRoles(ctx context.Context, rs []cmp.Role) error {
+func (s *Service) validRoles(ctx context.Context, rs []cloudhub.Role) error {
 	for i, role := range rs {
 		// verify that the organization exists
-		org, err := s.Store.Organizations(ctx).Get(ctx, cmp.OrganizationQuery{ID: &role.Organization})
+		org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &role.Organization})
 		if err != nil {
 			return err
 		}

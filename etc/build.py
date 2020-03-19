@@ -25,8 +25,8 @@ LOG_DIR = "/var/log/cloudhub"
 DATA_DIR = "/var/lib/cloudhub"
 SCRIPT_DIR = "/usr/lib/cloudhub/scripts"
 LOGROTATE_DIR = "/etc/logrotate.d"
-CANNED_DIR = "/usr/share/cloudhub/cmp-canned"
-PROTOBOARDS_DIR = "/usr/share/cloudhub/cmp-protoboards"
+CANNED_DIR = "/usr/share/cloudhub/cloudhub-canned"
+PROTOBOARDS_DIR = "/usr/share/cloudhub/cloudhub-protoboards"
 RESOURCES_DIR = "/usr/share/cloudhub/resources"
 KEY_DIR = "/usr/lib/cloudhub/key"
 
@@ -38,7 +38,7 @@ POSTUNINST_SCRIPT = "etc/scripts/post-uninstall.sh"
 LOGROTATE_SCRIPT = "etc/scripts/logrotate"
 CANNED_SCRIPTS = "backend/canned/*json"
 PROTOBOARDS_SCRIPTS = "backend/protoboards/*json"
-KEY_FILE = "backend/cmd/cmp/scmp_self_signed.pem"
+KEY_FILE = "backend/cmd/cloudhub/cloudhub_self_signed.pem"
 
 # Default AWS S3 bucket for uploads
 DEFAULT_BUCKET = "snetsystems.co.kr/cloudhub/artifacts"
@@ -48,7 +48,7 @@ CONFIGURATION_FILES = [
 ]
 
 PACKAGE_LICENSE = "AGPLv3"
-PACKAGE_URL = "https://github.com/snetsystems/cmp"
+PACKAGE_URL = "https://github.com/snetsystems/cloudhub"
 MAINTAINER = "saas@snetsystems.co.kr"
 VENDOR = "SNetSystems"
 DESCRIPTION = "Open source monitoring and visualization UI for the entire TICK stack."
@@ -87,8 +87,8 @@ for f in CONFIGURATION_FILES:
     fpm_common_args += " --config-files {}".format(f)
 
 targets = {
-    'cloudhub': './cmd/cmp',
-    # 'cshctl': './cmd/cmp',
+    'cloudhub': './cmd/cloudhub',
+    # 'cloudhubctl': './cmd/cloudhubctl',
 }
 
 supported_builds = {
@@ -152,7 +152,7 @@ def package_scripts(build_root, config_only=False, windows=False):
             (INIT_SCRIPT, SCRIPT_DIR, "init.sh"),
             (SYSTEMD_SCRIPT, SCRIPT_DIR, "cloudhub.service"),
             (LOGROTATE_SCRIPT, LOGROTATE_DIR, "cloudhub"),
-            (KEY_FILE, KEY_DIR, "scmp_self_signed.pem")
+            (KEY_FILE, KEY_DIR, "cloudhub_self_signed.pem")
         ]
         for script, dir, name in files:
             dest = os.path.join(build_root, dir[1:], name)
@@ -986,7 +986,7 @@ def main(args):
                 "md5": generate_md5_from_file(p),
                 "filename": p_name,
                 "name": nice_name,
-                "link": "https://github.com/snetsystems/cmp/packages/" + p_name.rsplit('/', 1)[-1],
+                "link": "https://github.com/snetsystems/cloudhub/packages/" + p_name.rsplit('/', 1)[-1],
             }
 
         # Print the downloads in Markdown format for the release

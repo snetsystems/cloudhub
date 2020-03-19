@@ -40,7 +40,7 @@ export const loadDashboardLinks = async (
 
 export const getDashboard = async dashboardID => {
   try {
-    const url = `/cmp/v1/dashboards/${dashboardID}`
+    const url = `/cloudhub/v1/dashboards/${dashboardID}`
     return manager.get(url)
   } catch (error) {
     console.error(error)

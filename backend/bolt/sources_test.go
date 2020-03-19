@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"testing"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/bolt"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/bolt"
 )
 
 // Ensure an SourceStore can store, retrieve, update, and delete sources.
@@ -19,8 +19,8 @@ func TestSourceStore(t *testing.T) {
 
 	s := c.SourcesStore
 
-	srcs := []cmp.Source{
-		cmp.Source{
+	srcs := []cloudhub.Source{
+		cloudhub.Source{
 			Name:         "Of Truth",
 			Type:         "influx",
 			Username:     "marty",
@@ -30,7 +30,7 @@ func TestSourceStore(t *testing.T) {
 			Organization: "1337",
 			DefaultRP:    "pineapple",
 		},
-		cmp.Source{
+		cloudhub.Source{
 			Name:         "HipToBeSquare",
 			Type:         "influx",
 			Username:     "calvinklein",
@@ -39,7 +39,7 @@ func TestSourceStore(t *testing.T) {
 			Default:      true,
 			Organization: "1337",
 		},
-		cmp.Source{
+		cloudhub.Source{
 			Name:               "HipToBeSquare",
 			Type:               "influx",
 			Username:           "calvinklein",
@@ -103,7 +103,7 @@ func TestSourceStore(t *testing.T) {
 	}
 
 	// Attempt to add a new default source
-	srcs = append(srcs, cmp.Source{
+	srcs = append(srcs, cloudhub.Source{
 		Name:         "Biff Tannen",
 		Type:         "influx",
 		Username:     "HELLO",
@@ -135,8 +135,8 @@ func TestSourceStore(t *testing.T) {
 	}
 
 	// Confirm source has been deleted.
-	if _, err := s.Get(ctx, srcs[0].ID); err != cmp.ErrSourceNotFound {
-		t.Fatalf("source delete error: got %v, expected %v", err, cmp.ErrSourceNotFound)
+	if _, err := s.Get(ctx, srcs[0].ID); err != cloudhub.ErrSourceNotFound {
+		t.Fatalf("source delete error: got %v, expected %v", err, cloudhub.ErrSourceNotFound)
 	}
 
 	// Delete the other source we created
@@ -162,7 +162,7 @@ func TestSourceStore(t *testing.T) {
 
 	// Try to add one source as a non-default and ensure that it becomes a
 	// default
-	src := mustAddSource(t, s, cmp.Source{
+	src := mustAddSource(t, s, cloudhub.Source{
 		Name:         "Biff Tannen",
 		Type:         "influx",
 		Username:     "HELLO",
@@ -179,14 +179,14 @@ func TestSourceStore(t *testing.T) {
 	}
 }
 
-func mustUpdateSource(t *testing.T, s *bolt.SourcesStore, src cmp.Source) {
+func mustUpdateSource(t *testing.T, s *bolt.SourcesStore, src cloudhub.Source) {
 	ctx := context.Background()
 	if err := s.Update(ctx, src); err != nil {
 		t.Fatal(err)
 	}
 }
 
-func mustAddSource(t *testing.T, s *bolt.SourcesStore, src cmp.Source) cmp.Source {
+func mustAddSource(t *testing.T, s *bolt.SourcesStore, src cloudhub.Source) cloudhub.Source {
 	ctx := context.Background()
 	if src, err := s.Add(ctx, src); err != nil {
 		t.Fatal(err)
