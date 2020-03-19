@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/snetsystems/cmp/backend/mocks"
-	"github.com/snetsystems/cmp/backend/server"
+	"github.com/snetsystems/cloudhub/backend/mocks"
+	"github.com/snetsystems/cloudhub/backend/server"
 )
 
 var prefixerTests = []struct {
@@ -52,8 +52,8 @@ var prefixerTests = []struct {
 		<html>
 			<head>
 				<meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
-				<title>CMP</title>
-			<link rel="shortcut icon" href="/favicon.ico"><link href="/cmp.css" rel="stylesheet"></head>
+				<title>CloudHub</title>
+			<link rel="shortcut icon" href="/favicon.ico"><link href="/cloudhub.css" rel="stylesheet"></head>
 			<body>
 				<div id='react-root'></div>
 			<script type="text/javascript" src="/manifest.7489452b099f9581ca1b.dev.js"></script><script type="text/javascript" src="/vendor.568c0101d870a13ecff9.dev.js"></script><script type="text/javascript" src="/app.13d0ce0b33609be3802b.dev.js"></script></body>
@@ -62,8 +62,8 @@ var prefixerTests = []struct {
 		<html>
 			<head>
 				<meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
-				<title>CMP</title>
-			<link rel="shortcut icon" href="/arbitraryprefix/favicon.ico"><link href="/arbitraryprefix/cmp.css" rel="stylesheet"></head>
+				<title>CloudHub</title>
+			<link rel="shortcut icon" href="/arbitraryprefix/favicon.ico"><link href="/arbitraryprefix/cloudhub.css" rel="stylesheet"></head>
 			<body>
 				<div id='react-root'></div>
 			<script type="text/javascript" src="/arbitraryprefix/manifest.7489452b099f9581ca1b.dev.js"></script><script type="text/javascript" src="/arbitraryprefix/vendor.568c0101d870a13ecff9.dev.js"></script><script type="text/javascript" src="/arbitraryprefix/app.13d0ce0b33609be3802b.dev.js"></script></body>

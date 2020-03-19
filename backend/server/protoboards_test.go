@@ -11,8 +11,8 @@ import (
 	"testing"
 
 	"github.com/bouk/httprouter"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/mocks"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/mocks"
 )
 
 func Test_Protoboards(t *testing.T) {
@@ -25,7 +25,7 @@ func Test_Protoboards(t *testing.T) {
 	tests := []struct {
 		name      string
 		wants     wants
-		arg       []cmp.Protoboard
+		arg       []cloudhub.Protoboard
 		shouldErr bool
 	}{
 		{
@@ -35,7 +35,7 @@ func Test_Protoboards(t *testing.T) {
 				contentType: "application/json",
 				body:        `{"protoboards":[]}`,
 			},
-			arg:       []cmp.Protoboard{},
+			arg:       []cloudhub.Protoboard{},
 			shouldErr: false,
 		},
 		{
@@ -43,11 +43,11 @@ func Test_Protoboards(t *testing.T) {
 			wants: wants{
 				statusCode:  http.StatusOK,
 				contentType: "application/json",
-				body:        `{"protoboards":[{"id":"1","meta":{"name":"protodashboard 1","icon":"http://example.com/icon.png","version":"1.2.3","measurements":["m1","m2"],"dashboardVersion":"1.7.0","description":"this is great","author":"Chronogiraffe","license":"Apache-2.0","url":"http://example.com"},"data":{"cells":[{"x":0,"y":0,"w":0,"h":0,"name":"","queries":null,"axes":null,"type":"","colors":null,"legend":{},"tableOptions":{"verticalTimeAxis":false,"sortBy":{"internalName":"","displayName":"","visible":false},"wrapping":"","fixFirstColumn":false},"fieldOptions":null,"timeFormat":"","decimalPlaces":{"isEnforced":false,"digits":0},"note":"","noteVisibility":""}],"templates":[{"tempVar":"","values":null,"id":"","type":"","label":""}]},"links":{"self":"/cmp/v1/protoboards/1"}},{"id":"2","meta":{"name":"protodashboard 2","icon":"http://example.com/icon.png","version":"1.2.3","measurements":["m1","m2"],"dashboardVersion":"1.7.0","description":"this is great","author":"Chronogiraffe","license":"Apache-2.0","url":"http://example.com"},"data":{"cells":[{"x":8,"y":0,"w":3,"h":5,"name":"Untitled Cell","queries":[{"query":"SELECT mean(\"usage_steal\") AS \"mean_usage_steal\", mean(\"usage_system\") AS \"mean_usage_system\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"host\"='denizs-MacBook-Pro.local' GROUP BY time(:interval:) FILL(null)","queryConfig":{"database":"telegraf","measurement":"cpu","retentionPolicy":"autogen","fields":[{"value":"mean","type":"func","alias":"mean_usage_steal","args":[{"value":"usage_steal","type":"field","alias":""}]},{"value":"mean","type":"func","alias":"mean_usage_system","args":[{"value":"usage_steal","type":"field","alias":""}]}],"tags":{"host":["denizs-MacBook-Pro.local"]},"groupBy":{"time":"auto","tags":[]},"areTagsAccepted":true,"fill":"null","rawText":null,"range":null,"shifts":null},"source":"","type":"influxql"}],"axes":{"x":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"10","scale":"linear"},"y":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"10","scale":"linear"},"y2":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"10","scale":"linear"}},"type":"line","colors":[],"legend":{},"tableOptions":{"verticalTimeAxis":false,"sortBy":{"internalName":"","displayName":"","visible":false},"wrapping":"","fixFirstColumn":false},"fieldOptions":[],"timeFormat":"","decimalPlaces":{"isEnforced":true,"digits":2},"note":"","noteVisibility":""}],"templates":null},"links":{"self":"/cmp/v1/protoboards/2"}}]}`},
-			arg: []cmp.Protoboard{
-				cmp.Protoboard{
+				body:        `{"protoboards":[{"id":"1","meta":{"name":"protodashboard 1","icon":"http://example.com/icon.png","version":"1.2.3","measurements":["m1","m2"],"dashboardVersion":"1.7.0","description":"this is great","author":"Chronogiraffe","license":"Apache-2.0","url":"http://example.com"},"data":{"cells":[{"x":0,"y":0,"w":0,"h":0,"name":"","queries":null,"axes":null,"type":"","colors":null,"legend":{},"tableOptions":{"verticalTimeAxis":false,"sortBy":{"internalName":"","displayName":"","visible":false},"wrapping":"","fixFirstColumn":false},"fieldOptions":null,"timeFormat":"","decimalPlaces":{"isEnforced":false,"digits":0},"note":"","noteVisibility":""}],"templates":[{"tempVar":"","values":null,"id":"","type":"","label":""}]},"links":{"self":"/cloudhub/v1/protoboards/1"}},{"id":"2","meta":{"name":"protodashboard 2","icon":"http://example.com/icon.png","version":"1.2.3","measurements":["m1","m2"],"dashboardVersion":"1.7.0","description":"this is great","author":"Chronogiraffe","license":"Apache-2.0","url":"http://example.com"},"data":{"cells":[{"x":8,"y":0,"w":3,"h":5,"name":"Untitled Cell","queries":[{"query":"SELECT mean(\"usage_steal\") AS \"mean_usage_steal\", mean(\"usage_system\") AS \"mean_usage_system\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time \u003e :dashboardTime: AND \"host\"='denizs-MacBook-Pro.local' GROUP BY time(:interval:) FILL(null)","queryConfig":{"database":"telegraf","measurement":"cpu","retentionPolicy":"autogen","fields":[{"value":"mean","type":"func","alias":"mean_usage_steal","args":[{"value":"usage_steal","type":"field","alias":""}]},{"value":"mean","type":"func","alias":"mean_usage_system","args":[{"value":"usage_steal","type":"field","alias":""}]}],"tags":{"host":["denizs-MacBook-Pro.local"]},"groupBy":{"time":"auto","tags":[]},"areTagsAccepted":true,"fill":"null","rawText":null,"range":null,"shifts":null},"source":"","type":"influxql"}],"axes":{"x":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"10","scale":"linear"},"y":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"10","scale":"linear"},"y2":{"bounds":["",""],"label":"","prefix":"","suffix":"","base":"10","scale":"linear"}},"type":"line","colors":[],"legend":{},"tableOptions":{"verticalTimeAxis":false,"sortBy":{"internalName":"","displayName":"","visible":false},"wrapping":"","fixFirstColumn":false},"fieldOptions":[],"timeFormat":"","decimalPlaces":{"isEnforced":true,"digits":2},"note":"","noteVisibility":""}],"templates":null},"links":{"self":"/cloudhub/v1/protoboards/2"}}]}`},
+			arg: []cloudhub.Protoboard{
+				cloudhub.Protoboard{
 					ID: "1",
-					Meta: cmp.ProtoboardMeta{
+					Meta: cloudhub.ProtoboardMeta{
 						Name:             "protodashboard 1",
 						Measurements:     []string{"m1", "m2"},
 						Icon:             "http://example.com/icon.png",
@@ -58,18 +58,18 @@ func Test_Protoboards(t *testing.T) {
 						License:          "Apache-2.0",
 						URL:              "http://example.com",
 					},
-					Data: cmp.ProtoboardData{Cells: []cmp.ProtoboardCell{cmp.ProtoboardCell{}}, Templates: []cmp.Template{cmp.Template{}}}},
-				cmp.Protoboard{
+					Data: cloudhub.ProtoboardData{Cells: []cloudhub.ProtoboardCell{cloudhub.ProtoboardCell{}}, Templates: []cloudhub.Template{cloudhub.Template{}}}},
+				cloudhub.Protoboard{
 					ID:   "2",
-					Meta: cmp.ProtoboardMeta{Name: "protodashboard 2", Measurements: []string{"m1", "m2"}, Icon: "http://example.com/icon.png", Version: "1.2.3", DashboardVersion: "1.7.0", Description: "this is great", Author: "Chronogiraffe", License: "Apache-2.0", URL: "http://example.com"},
-					Data: cmp.ProtoboardData{Cells: []cmp.ProtoboardCell{cmp.ProtoboardCell{
+					Meta: cloudhub.ProtoboardMeta{Name: "protodashboard 2", Measurements: []string{"m1", "m2"}, Icon: "http://example.com/icon.png", Version: "1.2.3", DashboardVersion: "1.7.0", Description: "this is great", Author: "Chronogiraffe", License: "Apache-2.0", URL: "http://example.com"},
+					Data: cloudhub.ProtoboardData{Cells: []cloudhub.ProtoboardCell{cloudhub.ProtoboardCell{
 						X:    8,
 						Y:    0,
 						W:    3,
 						H:    5,
 						Name: "Untitled Cell",
-						Axes: map[string]cmp.Axis{
-							"x": cmp.Axis{
+						Axes: map[string]cloudhub.Axis{
+							"x": cloudhub.Axis{
 								Bounds: []string{"", ""},
 								Label:  "",
 								Prefix: "",
@@ -77,7 +77,7 @@ func Test_Protoboards(t *testing.T) {
 								Base:   "10",
 								Scale:  "linear",
 							},
-							"y": cmp.Axis{
+							"y": cloudhub.Axis{
 								Bounds: []string{"", ""},
 								Label:  "",
 								Prefix: "",
@@ -85,7 +85,7 @@ func Test_Protoboards(t *testing.T) {
 								Base:   "10",
 								Scale:  "linear",
 							},
-							"y2": cmp.Axis{
+							"y2": cloudhub.Axis{
 								Bounds: []string{"", ""},
 								Label:  "",
 								Prefix: "",
@@ -95,14 +95,14 @@ func Test_Protoboards(t *testing.T) {
 							},
 						},
 						Type:       "line",
-						CellColors: []cmp.CellColor{},
-						Legend: cmp.Legend{
+						CellColors: []cloudhub.CellColor{},
+						Legend: cloudhub.Legend{
 							Type:        "",
 							Orientation: "",
 						},
-						TableOptions: cmp.TableOptions{
+						TableOptions: cloudhub.TableOptions{
 							VerticalTimeAxis: false,
-							SortBy: cmp.RenamableField{
+							SortBy: cloudhub.RenamableField{
 								InternalName: "",
 								DisplayName:  "",
 								Visible:      false,
@@ -110,42 +110,42 @@ func Test_Protoboards(t *testing.T) {
 							Wrapping:       "",
 							FixFirstColumn: false,
 						},
-						FieldOptions: []cmp.RenamableField{},
+						FieldOptions: []cloudhub.RenamableField{},
 						TimeFormat:   "",
-						DecimalPlaces: cmp.DecimalPlaces{
+						DecimalPlaces: cloudhub.DecimalPlaces{
 							IsEnforced: true,
 							Digits:     2,
 						},
 						Note:           "",
 						NoteVisibility: "",
-						Queries: []cmp.DashboardQuery{
-							cmp.DashboardQuery{
+						Queries: []cloudhub.DashboardQuery{
+							cloudhub.DashboardQuery{
 								Command: "SELECT mean(\"usage_steal\") AS \"mean_usage_steal\", mean(\"usage_system\") AS \"mean_usage_system\" FROM \"telegraf\".\"autogen\".\"cpu\" WHERE time > :dashboardTime: AND \"host\"='denizs-MacBook-Pro.local' GROUP BY time(:interval:) FILL(null)",
 								Label:   "",
-								QueryConfig: cmp.QueryConfig{
+								QueryConfig: cloudhub.QueryConfig{
 									ID:              "",
 									Database:        "telegraf",
 									Measurement:     "cpu",
 									RetentionPolicy: "autogen",
-									Fields: []cmp.Field{
-										cmp.Field{
+									Fields: []cloudhub.Field{
+										cloudhub.Field{
 											Value: "mean",
 											Type:  "func",
 											Alias: "mean_usage_steal",
-											Args: []cmp.Field{
-												cmp.Field{
+											Args: []cloudhub.Field{
+												cloudhub.Field{
 													Value: "usage_steal",
 													Type:  "field",
 													Alias: "",
 												},
 											},
 										},
-										cmp.Field{
+										cloudhub.Field{
 											Value: "mean",
 											Type:  "func",
 											Alias: "mean_usage_system",
-											Args: []cmp.Field{
-												cmp.Field{
+											Args: []cloudhub.Field{
+												cloudhub.Field{
 													Value: "usage_steal",
 													Type:  "field",
 													Alias: "",
@@ -158,7 +158,7 @@ func Test_Protoboards(t *testing.T) {
 											"denizs-MacBook-Pro.local",
 										},
 									},
-									GroupBy: cmp.GroupBy{
+									GroupBy: cloudhub.GroupBy{
 										Time: "auto",
 										Tags: []string{},
 									},
@@ -177,11 +177,11 @@ func Test_Protoboards(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			// setup mock cmp.Service and mock logger
+			// setup mock cloudhub.Service and mock logger
 			lg := &mocks.TestLogger{}
 			svc := Service{
 				Store: &mocks.Store{ProtoboardsStore: &mocks.ProtoboardsStore{
-					AllF: func(ctx context.Context) ([]cmp.Protoboard, error) {
+					AllF: func(ctx context.Context) ([]cloudhub.Protoboard, error) {
 						return tt.arg, nil
 					},
 				},
@@ -192,7 +192,7 @@ func Test_Protoboards(t *testing.T) {
 			// setup mock request and response
 			rr := httptest.NewRecorder()
 			reqURL := url.URL{
-				Path: "/cmp/v1/protoboards",
+				Path: "/cloudhub/v1/protoboards",
 			}
 
 			req := httptest.NewRequest("GET", reqURL.RequestURI(), strings.NewReader(""))
@@ -239,7 +239,7 @@ func Test_ProtoboardsID(t *testing.T) {
 			wants: wants{
 				statusCode:  http.StatusOK,
 				contentType: "application/json",
-				body:        `{"id":"1","meta":{"name":"","version":"","dashboardVersion":""},"data":{"cells":null},"links":{"self":"/cmp/v1/protoboards/1"}}`,
+				body:        `{"id":"1","meta":{"name":"","version":"","dashboardVersion":""},"data":{"cells":null},"links":{"self":"/cloudhub/v1/protoboards/1"}}`,
 			},
 			args: args{
 				id: "1",
@@ -263,26 +263,26 @@ func Test_ProtoboardsID(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			// setup mock cmp.Service and mock logger
+			// setup mock cloudhub.Service and mock logger
 			lg := &mocks.TestLogger{}
 			svc := Service{
 				Store: &mocks.Store{ProtoboardsStore: &mocks.ProtoboardsStore{
-					GetF: func(ctx context.Context, id string) (cmp.Protoboard, error) {
+					GetF: func(ctx context.Context, id string) (cloudhub.Protoboard, error) {
 						switch id {
 						case "1":
-							return cmp.Protoboard{
+							return cloudhub.Protoboard{
 								ID:   "1",
-								Meta: cmp.ProtoboardMeta{},
-								Data: cmp.ProtoboardData{},
+								Meta: cloudhub.ProtoboardMeta{},
+								Data: cloudhub.ProtoboardData{},
 							}, nil
 						case "2":
-							return cmp.Protoboard{
+							return cloudhub.Protoboard{
 								ID:   "2",
-								Meta: cmp.ProtoboardMeta{},
-								Data: cmp.ProtoboardData{},
+								Meta: cloudhub.ProtoboardMeta{},
+								Data: cloudhub.ProtoboardData{},
 							}, nil
 						}
-						return cmp.Protoboard{}, cmp.ErrProtoboardNotFound
+						return cloudhub.Protoboard{}, cloudhub.ErrProtoboardNotFound
 					},
 				},
 				},
@@ -292,7 +292,7 @@ func Test_ProtoboardsID(t *testing.T) {
 			// setup mock request and response
 			rr := httptest.NewRecorder()
 			reqURL := url.URL{
-				Path: fmt.Sprintf("/cmp/v1/protoboards/%s", tt.args.id),
+				Path: fmt.Sprintf("/cloudhub/v1/protoboards/%s", tt.args.id),
 			}
 
 			req := httptest.NewRequest("GET", reqURL.RequestURI(), strings.NewReader(""))

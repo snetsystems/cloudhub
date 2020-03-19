@@ -17,7 +17,7 @@ export const PERMISSIONS = {
     description: 'Can view or edit admin screens',
     displayName: 'View Admin',
   },
-  ViewCMP: {
+  ViewCloudHub: {
     description: 'Can use CloudHub tools',
     displayName: 'View CloudHub',
   },
@@ -483,7 +483,7 @@ export const TEMPLATES: Template[] = [interval]
 export const IS_STATIC_LEGEND = legend =>
   _.get(legend, 'type', false) === 'static'
 
-export const linksLink = '/cmp/v1'
+export const linksLink = '/cloudhub/v1'
 
 export const cellSupportsAnnotations = cellType => {
   const supportedTypes = [

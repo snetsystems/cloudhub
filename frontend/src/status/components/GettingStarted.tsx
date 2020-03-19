@@ -13,7 +13,7 @@ class GettingStarted extends Component {
             <h5>
               <span className="icon cubo-uniform" /> Welcome to CloudHub!
             </h5>
-            <p>Follow the links below to explore CMP’s features.</p>
+            <p>Follow the links below to explore CloudHub’s features.</p>
           </div>
           <div className="getting-started--cell">
             <p>
@@ -34,42 +34,42 @@ class GettingStarted extends Component {
             </p>
             <p>
               <a
-                href="https://docs.influxdata.com/cmp/latest/guides/create-a-dashboard/"
+                href="https://docs.influxdata.com/cloudhub/latest/guides/create-a-dashboard/"
                 target="_blank"
               >
                 Create a Dashboard
               </a>
               <br />
               <a
-                href="https://docs.influxdata.com/cmp/latest/guides/create-a-kapacitor-alert/"
+                href="https://docs.influxdata.com/cloudhub/latest/guides/create-a-kapacitor-alert/"
                 target="_blank"
               >
                 Create a Kapacitor Alert
               </a>
               <br />
               <a
-                href="https://docs.influxdata.com/cmp/latest/guides/configure-kapacitor-event-handlers/"
+                href="https://docs.influxdata.com/cloudhub/latest/guides/configure-kapacitor-event-handlers/"
                 target="_blank"
               >
                 Configure Kapacitor Event Handlers
               </a>
               <br />
               <a
-                href="https://docs.influxdata.com/cmp/latest/guides/transition-web-admin-interface/"
+                href="https://docs.influxdata.com/cloudhub/latest/guides/transition-web-admin-interface/"
                 target="_blank"
               >
                 Transition from InfluxDB's Web Admin Interface
               </a>
               <br />
               <a
-                href="https://docs.influxdata.com/cmp/latest/guides/dashboard-template-variables/"
+                href="https://docs.influxdata.com/cloudhub/latest/guides/dashboard-template-variables/"
                 target="_blank"
               >
                 Dashboard Template Variables
               </a>
               <br />
               <a
-                href="https://docs.influxdata.com/cmp/latest/guides/advanced-kapacitor/"
+                href="https://docs.influxdata.com/cloudhub/latest/guides/advanced-kapacitor/"
                 target="_blank"
               >
                 Advanced Kapacitor Usage

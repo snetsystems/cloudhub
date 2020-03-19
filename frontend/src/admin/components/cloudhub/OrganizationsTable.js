@@ -4,8 +4,8 @@ import PropTypes from 'prop-types'
 import uuid from 'uuid'
 import _ from 'lodash'
 
-import OrganizationsTableRow from 'src/admin/components/cmp/OrganizationsTableRow'
-import OrganizationsTableRowNew from 'src/admin/components/cmp/OrganizationsTableRowNew'
+import OrganizationsTableRow from 'src/admin/components/cloudhub/OrganizationsTableRow'
+import OrganizationsTableRowNew from 'src/admin/components/cloudhub/OrganizationsTableRowNew'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import PageSpinner from 'src/shared/components/PageSpinner'
 

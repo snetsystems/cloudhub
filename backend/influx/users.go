@@ -5,12 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // Add a new User in InfluxDB
-func (c *Client) Add(ctx context.Context, u *cmp.User) (*cmp.User, error) {
-	_, err := c.Query(ctx, cmp.Query{
+func (c *Client) Add(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
+	_, err := c.Query(ctx, cloudhub.Query{
 		Command: fmt.Sprintf(`CREATE USER "%s" WITH PASSWORD '%s'`, u.Name, u.Passwd),
 	})
 	if err != nil {
@@ -21,12 +21,12 @@ func (c *Client) Add(ctx context.Context, u *cmp.User) (*cmp.User, error) {
 			return nil, err
 		}
 	}
-	return c.Get(ctx, cmp.UserQuery{Name: &u.Name})
+	return c.Get(ctx, cloudhub.UserQuery{Name: &u.Name})
 }
 
 // Delete the User from InfluxDB
-func (c *Client) Delete(ctx context.Context, u *cmp.User) error {
-	res, err := c.Query(ctx, cmp.Query{
+func (c *Client) Delete(ctx context.Context, u *cloudhub.User) error {
+	res, err := c.Query(ctx, cloudhub.Query{
 		Command: fmt.Sprintf(`DROP USER "%s"`, u.Name),
 	})
 	if err != nil {
@@ -54,7 +54,7 @@ func (c *Client) Delete(ctx context.Context, u *cmp.User) error {
 }
 
 // Get retrieves a user if name exists.
-func (c *Client) Get(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+func (c *Client) Get(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 	if q.Name == nil {
 		return nil, fmt.Errorf("query must specify name")
 	}
@@ -79,14 +79,14 @@ func (c *Client) Get(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
 }
 
 // Update the user's permissions or roles
-func (c *Client) Update(ctx context.Context, u *cmp.User) error {
+func (c *Client) Update(ctx context.Context, u *cloudhub.User) error {
 	// Only allow one type of change at a time. If it is a password
 	// change then do it and return without any changes to permissions
 	if u.Passwd != "" {
 		return c.updatePassword(ctx, u.Name, u.Passwd)
 	}
 
-	user, err := c.Get(ctx, cmp.UserQuery{Name: &u.Name})
+	user, err := c.Get(ctx, cloudhub.UserQuery{Name: &u.Name})
 	if err != nil {
 		return err
 	}
@@ -107,7 +107,7 @@ func (c *Client) Update(ctx context.Context, u *cmp.User) error {
 }
 
 // All users in influx
-func (c *Client) All(ctx context.Context) ([]cmp.User, error) {
+func (c *Client) All(ctx context.Context) ([]cloudhub.User, error) {
 	users, err := c.showUsers(ctx)
 	if err != nil {
 		return nil, err
@@ -136,9 +136,9 @@ func (c *Client) Num(ctx context.Context) (int, error) {
 	return len(all), nil
 }
 
-// showUsers runs SHOW USERS InfluxQL command and returns cmp users.
-func (c *Client) showUsers(ctx context.Context) ([]cmp.User, error) {
-	res, err := c.Query(ctx, cmp.Query{
+// showUsers runs SHOW USERS InfluxQL command and returns cloudhub users.
+func (c *Client) showUsers(ctx context.Context) ([]cloudhub.User, error) {
+	res, err := c.Query(ctx, cloudhub.Query{
 		Command: `SHOW USERS`,
 	})
 	if err != nil {
@@ -157,32 +157,32 @@ func (c *Client) showUsers(ctx context.Context) ([]cmp.User, error) {
 	return results.Users(), nil
 }
 
-func (c *Client) grantPermission(ctx context.Context, username string, perm cmp.Permission) error {
+func (c *Client) grantPermission(ctx context.Context, username string, perm cloudhub.Permission) error {
 	query := ToGrant(username, perm)
 	if query == "" {
 		return nil
 	}
 
-	_, err := c.Query(ctx, cmp.Query{
+	_, err := c.Query(ctx, cloudhub.Query{
 		Command: query,
 	})
 	return err
 }
 
-func (c *Client) revokePermission(ctx context.Context, username string, perm cmp.Permission) error {
+func (c *Client) revokePermission(ctx context.Context, username string, perm cloudhub.Permission) error {
 	query := ToRevoke(username, perm)
 	if query == "" {
 		return nil
 	}
 
-	_, err := c.Query(ctx, cmp.Query{
+	_, err := c.Query(ctx, cloudhub.Query{
 		Command: query,
 	})
 	return err
 }
 
-func (c *Client) userPermissions(ctx context.Context, name string) (cmp.Permissions, error) {
-	res, err := c.Query(ctx, cmp.Query{
+func (c *Client) userPermissions(ctx context.Context, name string) (cloudhub.Permissions, error) {
+	res, err := c.Query(ctx, cloudhub.Query{
 		Command: fmt.Sprintf(`SHOW GRANTS FOR "%s"`, name),
 	})
 	if err != nil {
@@ -202,7 +202,7 @@ func (c *Client) userPermissions(ctx context.Context, name string) (cmp.Permissi
 }
 
 func (c *Client) updatePassword(ctx context.Context, name, passwd string) error {
-	res, err := c.Query(ctx, cmp.Query{
+	res, err := c.Query(ctx, cloudhub.Query{
 		Command: fmt.Sprintf(`SET PASSWORD for "%s" = '%s'`, name, passwd),
 	})
 	if err != nil {

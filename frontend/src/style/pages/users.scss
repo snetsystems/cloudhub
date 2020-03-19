@@ -1,28 +1,28 @@
 /*
-    Styles for SCMP Users Admin Page
+    Styles for CloudHub Users Admin Page
     ----------------------------------------------------------------------------
 */
 
-.cmp-user--role,
-.cmp-user--org {
+.cloudhub-user--role,
+.cloudhub-user--org {
   display: inline-block;
   width: 100%;
   height: 22px;
   line-height: 22px;
 }
-.cmp-user--role,
-.cmp-user--org,
-table.table.cmp-admin-table .dropdown {
+.cloudhub-user--role,
+.cloudhub-user--org,
+table.table.cloudhub-admin-table .dropdown {
   margin-bottom: 2px;
 
   &:last-child {
     margin: 0;
   }
 }
-.cmp-user--org {
+.cloudhub-user--org {
   padding-left: 7px;
 }
-table.table.cmp-admin-table thead tr th.align-with-col-text {
+table.table.cloudhub-admin-table thead tr th.align-with-col-text {
   padding-left: 15px;
 }
 .dropdown-label {
@@ -31,19 +31,19 @@ table.table.cmp-admin-table thead tr th.align-with-col-text {
   color: $g13-mist;
   font-size: 14px;
 }
-.panel-body.cmp-admin-table--panel {
+.panel-body.cloudhub-admin-table--panel {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
   padding-top: 11px;
 }
-.cmp-admin-table--batch {
+.cloudhub-admin-table--batch {
   border-radius: 5px 5px 0 0;
   background-color: $g4-onyx;
   padding: 11px 38px;
   display: flex;
   align-items: center;
 }
-.cmp-admin-table--batch-actions {
+.cloudhub-admin-table--batch-actions {
   display: flex;
   align-items: center;
 
@@ -52,7 +52,7 @@ table.table.cmp-admin-table thead tr th.align-with-col-text {
     margin-left: 4px;
   }
 }
-.cmp-admin-table--num-selected {
+.cloudhub-admin-table--num-selected {
   @include no-user-select();
   margin: 0px 11px 0 0;
   display: inline-block;
@@ -67,9 +67,9 @@ table.table.cmp-admin-table thead tr th.align-with-col-text {
 }
 
 /* Make dropdowns in admin table appear as plaintext until hover */
-table.table.cmp-admin-table
+table.table.cloudhub-admin-table
   tbody
-  tr.cmp-admin-table--user
+  tr.cloudhub-admin-table--user
   td
   div.dropdown
   div.btn.dropdown-toggle {
@@ -81,17 +81,17 @@ table.table.cmp-admin-table
     opacity: 0;
   }
 }
-table.table.cmp-admin-table
+table.table.cloudhub-admin-table
   tbody
-  tr.cmp-admin-table--user.selected
+  tr.cloudhub-admin-table--user.selected
   td
   div.dropdown
   div.btn.dropdown-toggle {
   background-color: $g5-pepper;
 }
-table.table.cmp-admin-table
+table.table.cloudhub-admin-table
   tbody
-  tr.cmp-admin-table--user:hover
+  tr.cloudhub-admin-table--user:hover
   td
   div.dropdown
   div.btn.dropdown-toggle {
@@ -106,15 +106,15 @@ table.table.cmp-admin-table
     background-color: $s-deepOrange2;
   }
 }
-table.table.cmp-admin-table
+table.table.cloudhub-admin-table
   tbody
-  tr.cmp-admin-table--user
+  tr.cloudhub-admin-table--user
   td
   div.dropdown.open
   div.btn.dropdown-toggle,
-table.table.cmp-admin-table
+table.table.cloudhub-admin-table
   tbody
-  tr.cmp-admin-table--user
+  tr.cloudhub-admin-table--user
   td
   div.dropdown.open
   div.btn.dropdown-toggle:hover {
@@ -127,12 +127,12 @@ table.table.cmp-admin-table
 }
 
 /* Styles for new user row */
-table.table.cmp-admin-table tbody tr.cmp-admin-table--new-user {
+table.table.cloudhub-admin-table tbody tr.cloudhub-admin-table--new-user {
   background-color: $g4-onyx;
 }
 
 /* Highlight "Me" in the users table */
-.cmp-user--me {
+.cloudhub-user--me {
   color: $s-orange;
   white-space: nowrap;
 

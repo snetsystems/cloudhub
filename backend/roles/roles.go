@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 type contextKey string
@@ -31,7 +31,7 @@ func validRole(ctx context.Context) error {
 	}
 }
 
-// CMP User Roles
+// CloudHub User Roles
 const (
 	MemberRoleName   = "member"
 	ViewerRoleName   = "viewer"
@@ -45,22 +45,22 @@ const (
 
 var (
 	// MemberRole is the role for a user who can only perform No operations.
-	MemberRole = cmp.Role{
+	MemberRole = cloudhub.Role{
 		Name: MemberRoleName,
 	}
 
 	// ViewerRole is the role for a user who can only perform READ operations on Dashboards, Rules, Sources, and Servers,
-	ViewerRole = cmp.Role{
+	ViewerRole = cloudhub.Role{
 		Name: ViewerRoleName,
 	}
 
 	// EditorRole is the role for a user who can perform READ and WRITE operations on Dashboards, Rules, Sources, and Servers.
-	EditorRole = cmp.Role{
+	EditorRole = cloudhub.Role{
 		Name: EditorRoleName,
 	}
 
 	// AdminRole is the role for a user who can perform READ and WRITE operations on Dashboards, Rules, Sources, Servers, and Users
-	AdminRole = cmp.Role{
+	AdminRole = cloudhub.Role{
 		Name: AdminRoleName,
 	}
 )

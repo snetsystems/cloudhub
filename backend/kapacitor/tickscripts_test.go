@@ -6,34 +6,34 @@ import (
 
 	gocmp "github.com/google/go-cmp/cmp"
 	"github.com/sergi/go-diff/diffmatchpatch"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 func TestGenerate(t *testing.T) {
-	alert := cmp.AlertRule{
+	alert := cloudhub.AlertRule{
 		Name:    "name",
 		Trigger: "relative",
-		AlertNodes: cmp.AlertNodes{
-			Slack:     []*cmp.Slack{{}},
-			VictorOps: []*cmp.VictorOps{{}},
-			Email:     []*cmp.Email{{}},
+		AlertNodes: cloudhub.AlertNodes{
+			Slack:     []*cloudhub.Slack{{}},
+			VictorOps: []*cloudhub.VictorOps{{}},
+			Email:     []*cloudhub.Email{{}},
 		},
-		TriggerValues: cmp.TriggerValues{
+		TriggerValues: cloudhub.TriggerValues{
 			Change:   "change",
 			Shift:    "1m",
 			Operator: "greater than",
 			Value:    "90",
 		},
 		Every: "30s",
-		Query: &cmp.QueryConfig{
+		Query: &cloudhub.QueryConfig{
 			Database:        "telegraf",
 			Measurement:     "cpu",
 			RetentionPolicy: "autogen",
-			Fields: []cmp.Field{
+			Fields: []cloudhub.Field{
 				{
 					Value: "mean",
 					Type:  "func",
-					Args: []cmp.Field{
+					Args: []cloudhub.Field{
 						{
 							Value: "usage_user",
 							Type:  "field",
@@ -50,7 +50,7 @@ func TestGenerate(t *testing.T) {
 					"cpu_total",
 				},
 			},
-			GroupBy: cmp.GroupBy{
+			GroupBy: cloudhub.GroupBy{
 				Time: "10m",
 				Tags: []string{"host", "cluster_id"},
 			},
@@ -66,29 +66,29 @@ func TestGenerate(t *testing.T) {
 }
 
 func TestThreshold(t *testing.T) {
-	alert := cmp.AlertRule{
+	alert := cloudhub.AlertRule{
 		Name:    "name",
 		Trigger: "threshold",
-		AlertNodes: cmp.AlertNodes{
-			Slack:     []*cmp.Slack{{}},
-			VictorOps: []*cmp.VictorOps{{}},
-			Email:     []*cmp.Email{{}},
+		AlertNodes: cloudhub.AlertNodes{
+			Slack:     []*cloudhub.Slack{{}},
+			VictorOps: []*cloudhub.VictorOps{{}},
+			Email:     []*cloudhub.Email{{}},
 		},
-		TriggerValues: cmp.TriggerValues{
+		TriggerValues: cloudhub.TriggerValues{
 			Operator: "greater than",
 			Value:    "90",
 		},
 		Every:   "30s",
 		Message: "message",
-		Query: &cmp.QueryConfig{
+		Query: &cloudhub.QueryConfig{
 			Database:        "telegraf",
 			Measurement:     "cpu",
 			RetentionPolicy: "autogen",
-			Fields: []cmp.Field{
+			Fields: []cloudhub.Field{
 				{
 					Value: "mean",
 					Type:  "func",
-					Args: []cmp.Field{
+					Args: []cloudhub.Field{
 						{
 							Value: "usage_user",
 							Type:  "field",
@@ -105,7 +105,7 @@ func TestThreshold(t *testing.T) {
 					"cpu_total",
 				},
 			},
-			GroupBy: cmp.GroupBy{
+			GroupBy: cloudhub.GroupBy{
 				Time: "10m",
 				Tags: []string{"host", "cluster_id"},
 			},
@@ -115,8 +115,8 @@ func TestThreshold(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		alert   cmp.AlertRule
-		want    cmp.TICKScript
+		alert   cloudhub.AlertRule
+		want    cloudhub.TICKScript
 		wantErr bool
 	}{
 		{
@@ -150,7 +150,7 @@ var messageField = 'message'
 
 var durationField = 'duration'
 
-var outputDB = 'cmp'
+var outputDB = 'cloudhub'
 
 var outputRP = 'autogen'
 
@@ -222,28 +222,28 @@ trigger
 }
 
 func TestThresholdStringCrit(t *testing.T) {
-	alert := cmp.AlertRule{
+	alert := cloudhub.AlertRule{
 		Name:    "haproxy",
 		Trigger: "threshold",
-		AlertNodes: cmp.AlertNodes{
-			Email: []*cmp.Email{{}},
+		AlertNodes: cloudhub.AlertNodes{
+			Email: []*cloudhub.Email{{}},
 		},
-		TriggerValues: cmp.TriggerValues{
+		TriggerValues: cloudhub.TriggerValues{
 			Operator: "equal to",
 			Value:    "DOWN",
 		},
 		Every:   "10s",
 		Message: `Haproxy monitor : {{.ID}} : {{ index .Tags "server" }} : {{ index .Tags "pxname" }} is {{ .Level }} `,
 		Details: "Email template",
-		Query: &cmp.QueryConfig{
+		Query: &cloudhub.QueryConfig{
 			Database:        "influxdb",
 			RetentionPolicy: "autogen",
 			Measurement:     "haproxy",
-			Fields: []cmp.Field{
+			Fields: []cloudhub.Field{
 				{
 					Value: "last",
 					Type:  "func",
-					Args: []cmp.Field{
+					Args: []cloudhub.Field{
 						{
 							Value: "status",
 							Type:  "field",
@@ -251,7 +251,7 @@ func TestThresholdStringCrit(t *testing.T) {
 					},
 				},
 			},
-			GroupBy: cmp.GroupBy{
+			GroupBy: cloudhub.GroupBy{
 				Time: "10s",
 				Tags: []string{"pxname"},
 			},
@@ -261,8 +261,8 @@ func TestThresholdStringCrit(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		alert   cmp.AlertRule
-		want    cmp.TICKScript
+		alert   cloudhub.AlertRule
+		want    cloudhub.TICKScript
 		wantErr bool
 	}{
 		{
@@ -296,7 +296,7 @@ var messageField = 'message'
 
 var durationField = 'duration'
 
-var outputDB = 'cmp'
+var outputDB = 'cloudhub'
 
 var outputRP = 'autogen'
 
@@ -371,28 +371,28 @@ trigger
 // TODO: Check with Nathaniel if kapacitor can do inequalities on strings
 // If it cannot, I think we should add operator checks.
 func TestThresholdStringCritGreater(t *testing.T) {
-	alert := cmp.AlertRule{
+	alert := cloudhub.AlertRule{
 		Name:    "haproxy",
 		Trigger: "threshold",
-		AlertNodes: cmp.AlertNodes{
-			Email: []*cmp.Email{{}},
+		AlertNodes: cloudhub.AlertNodes{
+			Email: []*cloudhub.Email{{}},
 		},
-		TriggerValues: cmp.TriggerValues{
+		TriggerValues: cloudhub.TriggerValues{
 			Operator: "greater than",
 			Value:    "DOWN",
 		},
 		Every:   "10s",
 		Message: `Haproxy monitor : {{.ID}} : {{ index .Tags "server" }} : {{ index .Tags "pxname" }} is {{ .Level }} `,
 		Details: "Email template",
-		Query: &cmp.QueryConfig{
+		Query: &cloudhub.QueryConfig{
 			Database:        "influxdb",
 			RetentionPolicy: "autogen",
 			Measurement:     "haproxy",
-			Fields: []cmp.Field{
+			Fields: []cloudhub.Field{
 				{
 					Value: "last",
 					Type:  "func",
-					Args: []cmp.Field{
+					Args: []cloudhub.Field{
 						{
 							Value: "status",
 							Type:  "field",
@@ -400,7 +400,7 @@ func TestThresholdStringCritGreater(t *testing.T) {
 					},
 				},
 			},
-			GroupBy: cmp.GroupBy{
+			GroupBy: cloudhub.GroupBy{
 				Time: "10s",
 				Tags: []string{"pxname"},
 			},
@@ -410,8 +410,8 @@ func TestThresholdStringCritGreater(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		alert   cmp.AlertRule
-		want    cmp.TICKScript
+		alert   cloudhub.AlertRule
+		want    cloudhub.TICKScript
 		wantErr bool
 	}{
 		{
@@ -445,7 +445,7 @@ var messageField = 'message'
 
 var durationField = 'duration'
 
-var outputDB = 'cmp'
+var outputDB = 'cloudhub'
 
 var outputRP = 'autogen'
 
@@ -518,30 +518,30 @@ trigger
 }
 
 func TestThresholdDetail(t *testing.T) {
-	alert := cmp.AlertRule{
+	alert := cloudhub.AlertRule{
 		Name:    "name",
 		Trigger: "threshold",
-		AlertNodes: cmp.AlertNodes{
-			Slack:     []*cmp.Slack{{}},
-			VictorOps: []*cmp.VictorOps{{}},
-			Email:     []*cmp.Email{{}},
+		AlertNodes: cloudhub.AlertNodes{
+			Slack:     []*cloudhub.Slack{{}},
+			VictorOps: []*cloudhub.VictorOps{{}},
+			Email:     []*cloudhub.Email{{}},
 		},
-		TriggerValues: cmp.TriggerValues{
+		TriggerValues: cloudhub.TriggerValues{
 			Operator: "greater than",
 			Value:    "90",
 		},
 		Every:   "30s",
 		Message: "message",
 		Details: "details",
-		Query: &cmp.QueryConfig{
+		Query: &cloudhub.QueryConfig{
 			Database:        "telegraf",
 			Measurement:     "cpu",
 			RetentionPolicy: "autogen",
-			Fields: []cmp.Field{
+			Fields: []cloudhub.Field{
 				{
 					Value: "mean",
 					Type:  "func",
-					Args: []cmp.Field{
+					Args: []cloudhub.Field{
 						{
 							Value: "usage_user",
 							Type:  "field",
@@ -558,7 +558,7 @@ func TestThresholdDetail(t *testing.T) {
 					"cpu_total",
 				},
 			},
-			GroupBy: cmp.GroupBy{
+			GroupBy: cloudhub.GroupBy{
 				Time: "10m",
 				Tags: []string{"host", "cluster_id"},
 			},
@@ -568,8 +568,8 @@ func TestThresholdDetail(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		alert   cmp.AlertRule
-		want    cmp.TICKScript
+		alert   cloudhub.AlertRule
+		want    cloudhub.TICKScript
 		wantErr bool
 	}{
 		{
@@ -603,7 +603,7 @@ var messageField = 'message'
 
 var durationField = 'duration'
 
-var outputDB = 'cmp'
+var outputDB = 'cloudhub'
 
 var outputRP = 'autogen'
 
@@ -678,30 +678,30 @@ trigger
 }
 
 func TestThresholdInsideRange(t *testing.T) {
-	alert := cmp.AlertRule{
+	alert := cloudhub.AlertRule{
 		Name:    "name",
 		Trigger: "threshold",
-		AlertNodes: cmp.AlertNodes{
-			Slack:     []*cmp.Slack{{}},
-			VictorOps: []*cmp.VictorOps{{}},
-			Email:     []*cmp.Email{{}},
+		AlertNodes: cloudhub.AlertNodes{
+			Slack:     []*cloudhub.Slack{{}},
+			VictorOps: []*cloudhub.VictorOps{{}},
+			Email:     []*cloudhub.Email{{}},
 		},
-		TriggerValues: cmp.TriggerValues{
+		TriggerValues: cloudhub.TriggerValues{
 			Operator:   "inside range",
 			Value:      "90",
 			RangeValue: "100",
 		},
 		Every:   "30s",
 		Message: "message",
-		Query: &cmp.QueryConfig{
+		Query: &cloudhub.QueryConfig{
 			Database:        "telegraf",
 			Measurement:     "cpu",
 			RetentionPolicy: "autogen",
-			Fields: []cmp.Field{
+			Fields: []cloudhub.Field{
 				{
 					Value: "mean",
 					Type:  "func",
-					Args: []cmp.Field{
+					Args: []cloudhub.Field{
 						{
 							Value: "usage_user",
 							Type:  "field",
@@ -718,7 +718,7 @@ func TestThresholdInsideRange(t *testing.T) {
 					"cpu_total",
 				},
 			},
-			GroupBy: cmp.GroupBy{
+			GroupBy: cloudhub.GroupBy{
 				Time: "10m",
 				Tags: []string{"host", "cluster_id"},
 			},
@@ -728,8 +728,8 @@ func TestThresholdInsideRange(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		alert   cmp.AlertRule
-		want    cmp.TICKScript
+		alert   cloudhub.AlertRule
+		want    cloudhub.TICKScript
 		wantErr bool
 	}{
 		{
@@ -763,7 +763,7 @@ var messageField = 'message'
 
 var durationField = 'duration'
 
-var outputDB = 'cmp'
+var outputDB = 'cloudhub'
 
 var outputRP = 'autogen'
 
@@ -837,30 +837,30 @@ trigger
 }
 
 func TestThresholdOutsideRange(t *testing.T) {
-	alert := cmp.AlertRule{
+	alert := cloudhub.AlertRule{
 		Name:    "name",
 		Trigger: "threshold",
-		AlertNodes: cmp.AlertNodes{
-			Slack:     []*cmp.Slack{{}},
-			VictorOps: []*cmp.VictorOps{{}},
-			Email:     []*cmp.Email{{}},
+		AlertNodes: cloudhub.AlertNodes{
+			Slack:     []*cloudhub.Slack{{}},
+			VictorOps: []*cloudhub.VictorOps{{}},
+			Email:     []*cloudhub.Email{{}},
 		},
-		TriggerValues: cmp.TriggerValues{
+		TriggerValues: cloudhub.TriggerValues{
 			Operator:   "outside range",
 			Value:      "90",
 			RangeValue: "100",
 		},
 		Every:   "30s",
 		Message: "message",
-		Query: &cmp.QueryConfig{
+		Query: &cloudhub.QueryConfig{
 			Database:        "telegraf",
 			Measurement:     "cpu",
 			RetentionPolicy: "autogen",
-			Fields: []cmp.Field{
+			Fields: []cloudhub.Field{
 				{
 					Value: "mean",
 					Type:  "func",
-					Args: []cmp.Field{
+					Args: []cloudhub.Field{
 						{
 							Value: "usage_user",
 							Type:  "field",
@@ -877,7 +877,7 @@ func TestThresholdOutsideRange(t *testing.T) {
 					"cpu_total",
 				},
 			},
-			GroupBy: cmp.GroupBy{
+			GroupBy: cloudhub.GroupBy{
 				Time: "10m",
 				Tags: []string{"host", "cluster_id"},
 			},
@@ -887,8 +887,8 @@ func TestThresholdOutsideRange(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		alert   cmp.AlertRule
-		want    cmp.TICKScript
+		alert   cloudhub.AlertRule
+		want    cloudhub.TICKScript
 		wantErr bool
 	}{
 		{
@@ -922,7 +922,7 @@ var messageField = 'message'
 
 var durationField = 'duration'
 
-var outputDB = 'cmp'
+var outputDB = 'cloudhub'
 
 var outputRP = 'autogen'
 
@@ -996,25 +996,25 @@ trigger
 }
 
 func TestThresholdNoAggregate(t *testing.T) {
-	alert := cmp.AlertRule{
+	alert := cloudhub.AlertRule{
 		Name:    "name",
 		Trigger: "threshold",
-		AlertNodes: cmp.AlertNodes{
-			Slack:     []*cmp.Slack{{}},
-			VictorOps: []*cmp.VictorOps{{}},
-			Email:     []*cmp.Email{{}},
+		AlertNodes: cloudhub.AlertNodes{
+			Slack:     []*cloudhub.Slack{{}},
+			VictorOps: []*cloudhub.VictorOps{{}},
+			Email:     []*cloudhub.Email{{}},
 		},
-		TriggerValues: cmp.TriggerValues{
+		TriggerValues: cloudhub.TriggerValues{
 			Operator: "greater than",
 			Value:    "90",
 		},
 		Every:   "30s",
 		Message: "message",
-		Query: &cmp.QueryConfig{
+		Query: &cloudhub.QueryConfig{
 			Database:        "telegraf",
 			Measurement:     "cpu",
 			RetentionPolicy: "autogen",
-			Fields: []cmp.Field{
+			Fields: []cloudhub.Field{
 				{
 					Value: "usage_user",
 					Type:  "field",
@@ -1029,7 +1029,7 @@ func TestThresholdNoAggregate(t *testing.T) {
 					"cpu_total",
 				},
 			},
-			GroupBy: cmp.GroupBy{
+			GroupBy: cloudhub.GroupBy{
 				Time: "10m",
 				Tags: []string{"host", "cluster_id"},
 			},
@@ -1039,8 +1039,8 @@ func TestThresholdNoAggregate(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		alert   cmp.AlertRule
-		want    cmp.TICKScript
+		alert   cloudhub.AlertRule
+		want    cloudhub.TICKScript
 		wantErr bool
 	}{
 		{
@@ -1070,7 +1070,7 @@ var messageField = 'message'
 
 var durationField = 'duration'
 
-var outputDB = 'cmp'
+var outputDB = 'cloudhub'
 
 var outputRP = 'autogen'
 
@@ -1138,15 +1138,15 @@ trigger
 }
 
 func TestRelative(t *testing.T) {
-	alert := cmp.AlertRule{
+	alert := cloudhub.AlertRule{
 		Name:    "name",
 		Trigger: "relative",
-		AlertNodes: cmp.AlertNodes{
-			Slack:     []*cmp.Slack{{}},
-			VictorOps: []*cmp.VictorOps{{}},
-			Email:     []*cmp.Email{{}},
+		AlertNodes: cloudhub.AlertNodes{
+			Slack:     []*cloudhub.Slack{{}},
+			VictorOps: []*cloudhub.VictorOps{{}},
+			Email:     []*cloudhub.Email{{}},
 		},
-		TriggerValues: cmp.TriggerValues{
+		TriggerValues: cloudhub.TriggerValues{
 			Change:   "% change",
 			Shift:    "1m",
 			Operator: "greater than",
@@ -1154,15 +1154,15 @@ func TestRelative(t *testing.T) {
 		},
 		Every:   "30s",
 		Message: "message",
-		Query: &cmp.QueryConfig{
+		Query: &cloudhub.QueryConfig{
 			Database:        "telegraf",
 			Measurement:     "cpu",
 			RetentionPolicy: "autogen",
-			Fields: []cmp.Field{
+			Fields: []cloudhub.Field{
 				{
 					Value: "mean",
 					Type:  "func",
-					Args: []cmp.Field{
+					Args: []cloudhub.Field{
 						{
 							Value: "usage_user",
 							Type:  "field",
@@ -1179,7 +1179,7 @@ func TestRelative(t *testing.T) {
 					"cpu_total",
 				},
 			},
-			GroupBy: cmp.GroupBy{
+			GroupBy: cloudhub.GroupBy{
 				Time: "10m",
 				Tags: []string{"host", "cluster_id"},
 			},
@@ -1189,8 +1189,8 @@ func TestRelative(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		alert   cmp.AlertRule
-		want    cmp.TICKScript
+		alert   cloudhub.AlertRule
+		want    cloudhub.TICKScript
 		wantErr bool
 	}{
 		{
@@ -1224,7 +1224,7 @@ var messageField = 'message'
 
 var durationField = 'duration'
 
-var outputDB = 'cmp'
+var outputDB = 'cloudhub'
 
 var outputRP = 'autogen'
 
@@ -1308,15 +1308,15 @@ trigger
 }
 
 func TestRelativeChange(t *testing.T) {
-	alert := cmp.AlertRule{
+	alert := cloudhub.AlertRule{
 		Name:    "name",
 		Trigger: "relative",
-		AlertNodes: cmp.AlertNodes{
-			Slack:     []*cmp.Slack{{}},
-			VictorOps: []*cmp.VictorOps{{}},
-			Email:     []*cmp.Email{{}},
+		AlertNodes: cloudhub.AlertNodes{
+			Slack:     []*cloudhub.Slack{{}},
+			VictorOps: []*cloudhub.VictorOps{{}},
+			Email:     []*cloudhub.Email{{}},
 		},
-		TriggerValues: cmp.TriggerValues{
+		TriggerValues: cloudhub.TriggerValues{
 			Change:   "change",
 			Shift:    "1m",
 			Operator: "greater than",
@@ -1324,15 +1324,15 @@ func TestRelativeChange(t *testing.T) {
 		},
 		Every:   "30s",
 		Message: "message",
-		Query: &cmp.QueryConfig{
+		Query: &cloudhub.QueryConfig{
 			Database:        "telegraf",
 			Measurement:     "cpu",
 			RetentionPolicy: "autogen",
-			Fields: []cmp.Field{
+			Fields: []cloudhub.Field{
 				{
 					Value: "mean",
 					Type:  "func",
-					Args: []cmp.Field{
+					Args: []cloudhub.Field{
 						{
 							Value: "usage_user",
 							Type:  "field",
@@ -1349,7 +1349,7 @@ func TestRelativeChange(t *testing.T) {
 					"cpu_total",
 				},
 			},
-			GroupBy: cmp.GroupBy{
+			GroupBy: cloudhub.GroupBy{
 				Time: "10m",
 				Tags: []string{"host", "cluster_id"},
 			},
@@ -1359,8 +1359,8 @@ func TestRelativeChange(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		alert   cmp.AlertRule
-		want    cmp.TICKScript
+		alert   cloudhub.AlertRule
+		want    cloudhub.TICKScript
 		wantErr bool
 	}{
 		{
@@ -1394,7 +1394,7 @@ var messageField = 'message'
 
 var durationField = 'duration'
 
-var outputDB = 'cmp'
+var outputDB = 'cloudhub'
 
 var outputRP = 'autogen'
 
@@ -1478,28 +1478,28 @@ trigger
 }
 
 func TestDeadman(t *testing.T) {
-	alert := cmp.AlertRule{
+	alert := cloudhub.AlertRule{
 		Name:    "name",
 		Trigger: "deadman",
-		AlertNodes: cmp.AlertNodes{
-			Slack:     []*cmp.Slack{{}},
-			VictorOps: []*cmp.VictorOps{{}},
-			Email:     []*cmp.Email{{}},
+		AlertNodes: cloudhub.AlertNodes{
+			Slack:     []*cloudhub.Slack{{}},
+			VictorOps: []*cloudhub.VictorOps{{}},
+			Email:     []*cloudhub.Email{{}},
 		},
-		TriggerValues: cmp.TriggerValues{
+		TriggerValues: cloudhub.TriggerValues{
 			Period: "10m",
 		},
 		Every:   "30s",
 		Message: "message",
-		Query: &cmp.QueryConfig{
+		Query: &cloudhub.QueryConfig{
 			Database:        "telegraf",
 			Measurement:     "cpu",
 			RetentionPolicy: "autogen",
-			Fields: []cmp.Field{
+			Fields: []cloudhub.Field{
 				{
 					Value: "mean",
 					Type:  "func",
-					Args: []cmp.Field{
+					Args: []cloudhub.Field{
 						{
 							Value: "usage_user",
 							Type:  "field",
@@ -1516,7 +1516,7 @@ func TestDeadman(t *testing.T) {
 					"cpu_total",
 				},
 			},
-			GroupBy: cmp.GroupBy{
+			GroupBy: cloudhub.GroupBy{
 				Time: "",
 				Tags: []string{"host", "cluster_id"},
 			},
@@ -1526,8 +1526,8 @@ func TestDeadman(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		alert   cmp.AlertRule
-		want    cmp.TICKScript
+		alert   cloudhub.AlertRule
+		want    cloudhub.TICKScript
 		wantErr bool
 	}{
 		{
@@ -1559,7 +1559,7 @@ var messageField = 'message'
 
 var durationField = 'duration'
 
-var outputDB = 'cmp'
+var outputDB = 'cloudhub'
 
 var outputRP = 'autogen'
 

@@ -29,7 +29,7 @@ const defaultMe = {
   currentOrganization: '',
   name: 'wishful_modal@overlay.technology',
   links: {
-    self: '/cmp/v1/users/wishful_modal@overlay.technology',
+    self: '/cloudhub/v1/users/wishful_modal@overlay.technology',
   },
 }
 

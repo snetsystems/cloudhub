@@ -3,27 +3,27 @@ package multistore
 import (
 	"context"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-// Ensure DashboardsStore implements cmp.DashboardsStore.
-var _ cmp.DashboardsStore = &DashboardsStore{}
+// Ensure DashboardsStore implements cloudhub.DashboardsStore.
+var _ cloudhub.DashboardsStore = &DashboardsStore{}
 
-// DashboardsStore implements the cmp.DashboardsStore interface, and
+// DashboardsStore implements the cloudhub.DashboardsStore interface, and
 // delegates to all contained DashboardsStores
 type DashboardsStore struct {
-	Stores []cmp.DashboardsStore
+	Stores []cloudhub.DashboardsStore
 }
 
 // All concatenates the Dashboards of all contained Stores
-func (multi *DashboardsStore) All(ctx context.Context) ([]cmp.Dashboard, error) {
-	all := []cmp.Dashboard{}
-	boardSet := map[cmp.DashboardID]struct{}{}
+func (multi *DashboardsStore) All(ctx context.Context) ([]cloudhub.Dashboard, error) {
+	all := []cloudhub.Dashboard{}
+	boardSet := map[cloudhub.DashboardID]struct{}{}
 
 	ok := false
 	var err error
 	for _, store := range multi.Stores {
-		var boards []cmp.Dashboard
+		var boards []cloudhub.Dashboard
 		boards, err = store.All(ctx)
 		if err != nil {
 			// If this Store is unable to return an array of dashboards, skip to the
@@ -47,20 +47,20 @@ func (multi *DashboardsStore) All(ctx context.Context) ([]cmp.Dashboard, error) 
 }
 
 // Add the dashboard to the first responsive Store
-func (multi *DashboardsStore) Add(ctx context.Context, dashboard cmp.Dashboard) (cmp.Dashboard, error) {
+func (multi *DashboardsStore) Add(ctx context.Context, dashboard cloudhub.Dashboard) (cloudhub.Dashboard, error) {
 	var err error
 	for _, store := range multi.Stores {
-		var d cmp.Dashboard
+		var d cloudhub.Dashboard
 		d, err = store.Add(ctx, dashboard)
 		if err == nil {
 			return d, nil
 		}
 	}
-	return cmp.Dashboard{}, nil
+	return cloudhub.Dashboard{}, nil
 }
 
 // Delete delegates to all Stores, returns success if one Store is successful
-func (multi *DashboardsStore) Delete(ctx context.Context, dashboard cmp.Dashboard) error {
+func (multi *DashboardsStore) Delete(ctx context.Context, dashboard cloudhub.Dashboard) error {
 	var err error
 	for _, store := range multi.Stores {
 		err = store.Delete(ctx, dashboard)
@@ -72,20 +72,20 @@ func (multi *DashboardsStore) Delete(ctx context.Context, dashboard cmp.Dashboar
 }
 
 // Get finds the Dashboard by id among all contained Stores
-func (multi *DashboardsStore) Get(ctx context.Context, id cmp.DashboardID) (cmp.Dashboard, error) {
+func (multi *DashboardsStore) Get(ctx context.Context, id cloudhub.DashboardID) (cloudhub.Dashboard, error) {
 	var err error
 	for _, store := range multi.Stores {
-		var d cmp.Dashboard
+		var d cloudhub.Dashboard
 		d, err = store.Get(ctx, id)
 		if err == nil {
 			return d, nil
 		}
 	}
-	return cmp.Dashboard{}, nil
+	return cloudhub.Dashboard{}, nil
 }
 
 // Update the first responsive Store
-func (multi *DashboardsStore) Update(ctx context.Context, dashboard cmp.Dashboard) error {
+func (multi *DashboardsStore) Update(ctx context.Context, dashboard cloudhub.Dashboard) error {
 	var err error
 	for _, store := range multi.Stores {
 		err = store.Update(ctx, dashboard)

@@ -3,11 +3,11 @@ import PropTypes from 'prop-types'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 
-import * as adminCMPActionCreators from 'src/admin/actions/cmp'
+import * as adminCloudHubActionCreators from 'src/admin/actions/cloudhub'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-import UsersTable from 'src/admin/components/cmp/UsersTable'
+import UsersTable from 'src/admin/components/cloudhub/UsersTable'
 
 class UsersPage extends PureComponent {
   constructor(props) {
@@ -31,8 +31,8 @@ class UsersPage extends PureComponent {
       actions: {updateUserAsync},
     } = this.props
     const updatedRole = {...currentRole, name}
-    const newRoles = user.roles.map(
-      r => (r.organization === currentRole.organization ? updatedRole : r)
+    const newRoles = user.roles.map(r =>
+      r.organization === currentRole.organization ? updatedRole : r
     )
     updateUserAsync(
       user,
@@ -116,17 +116,18 @@ UsersPage.propTypes = {
   notify: func.isRequired,
 }
 
-const mapStateToProps = ({links, adminCMP: {organizations, users}}) => ({
+const mapStateToProps = ({links, adminCloudHub: {organizations, users}}) => ({
   links,
   organizations,
   users,
 })
 
 const mapDispatchToProps = dispatch => ({
-  actions: bindActionCreators(adminCMPActionCreators, dispatch),
+  actions: bindActionCreators(adminCloudHubActionCreators, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
 })
 
-export default connect(mapStateToProps, mapDispatchToProps)(
-  ErrorHandling(UsersPage)
-)
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(ErrorHandling(UsersPage))

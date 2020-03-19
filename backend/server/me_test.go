@@ -10,23 +10,23 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/log"
-	"github.com/snetsystems/cmp/backend/mocks"
-	"github.com/snetsystems/cmp/backend/oauth2"
-	"github.com/snetsystems/cmp/backend/roles"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/log"
+	"github.com/snetsystems/cloudhub/backend/mocks"
+	"github.com/snetsystems/cloudhub/backend/oauth2"
+	"github.com/snetsystems/cloudhub/backend/roles"
 )
 
 type MockUsers struct{}
 
 func TestService_Me(t *testing.T) {
 	type fields struct {
-		UsersStore               cmp.UsersStore
-		OrganizationsStore       cmp.OrganizationsStore
-		MappingsStore            cmp.MappingsStore
-		ConfigStore              cmp.ConfigStore
+		UsersStore               cloudhub.UsersStore
+		OrganizationsStore       cloudhub.OrganizationsStore
+		MappingsStore            cloudhub.MappingsStore
+		ConfigStore              cloudhub.ConfigStore
 		SuperAdminProviderGroups superAdminProviderGroups
-		Logger                   cmp.Logger
+		Logger                   cloudhub.Logger
 		UseAuth                  bool
 	}
 	type args struct {
@@ -52,42 +52,42 @@ func TestService_Me(t *testing.T) {
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				ConfigStore: &mocks.ConfigStore{
-					Config: &cmp.Config{
-						Auth: cmp.AuthConfig{
+					Config: &cloudhub.Config{
+						Auth: cloudhub.AuthConfig{
 							SuperAdminNewUsers: false,
 						},
 					},
 				},
 				MappingsStore: &mocks.MappingsStore{
-					AllF: func(ctx context.Context) ([]cmp.Mapping, error) {
-						return []cmp.Mapping{
+					AllF: func(ctx context.Context) ([]cloudhub.Mapping, error) {
+						return []cloudhub.Mapping{
 							{
 								Organization:         "0",
-								Provider:             cmp.MappingWildcard,
-								Scheme:               cmp.MappingWildcard,
-								ProviderOrganization: cmp.MappingWildcard,
+								Provider:             cloudhub.MappingWildcard,
+								Scheme:               cloudhub.MappingWildcard,
+								ProviderOrganization: cloudhub.MappingWildcard,
 							},
 						}, nil
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "Default",
 							DefaultRole: roles.ViewerRoleName,
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						switch *q.ID {
 						case "0":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:          "0",
 								Name:        "Default",
 								DefaultRole: roles.ViewerRoleName,
 							}, nil
 						case "1":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:   "1",
 								Name: "The Bad Place",
 							}, nil
@@ -100,17 +100,17 @@ func TestService_Me(t *testing.T) {
 						// This function gets to verify that there is at least one first user
 						return 1, nil
 					},
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							Name:     "me",
 							Provider: "github",
 							Scheme:   "oauth2",
 						}, nil
 					},
-					UpdateF: func(ctx context.Context, u *cmp.User) error {
+					UpdateF: func(ctx context.Context, u *cloudhub.User) error {
 						return nil
 					},
 				},
@@ -121,7 +121,7 @@ func TestService_Me(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"name":"me","roles":null,"provider":"github","scheme":"oauth2","links":{"self":"/cmp/v1/organizations/0/users/0"},"organizations":[],"currentOrganization":{"id":"0","name":"Default","defaultRole":"viewer"}}`,
+			wantBody:        `{"name":"me","roles":null,"provider":"github","scheme":"oauth2","links":{"self":"/cloudhub/v1/organizations/0/users/0"},"organizations":[],"currentOrganization":{"id":"0","name":"Default","defaultRole":"viewer"}}`,
 		},
 		{
 			name: "Existing superadmin - not member of any organization",
@@ -133,28 +133,28 @@ func TestService_Me(t *testing.T) {
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				MappingsStore: &mocks.MappingsStore{
-					AllF: func(ctx context.Context) ([]cmp.Mapping, error) {
-						return []cmp.Mapping{}, nil
+					AllF: func(ctx context.Context) ([]cloudhub.Mapping, error) {
+						return []cloudhub.Mapping{}, nil
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "Default",
 							DefaultRole: roles.ViewerRoleName,
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						switch *q.ID {
 						case "0":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:          "0",
 								Name:        "Default",
 								DefaultRole: roles.ViewerRoleName,
 							}, nil
 						case "1":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:   "1",
 								Name: "The Bad Place",
 							}, nil
@@ -167,18 +167,18 @@ func TestService_Me(t *testing.T) {
 						// This function gets to verify that there is at least one first user
 						return 1, nil
 					},
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							Name:       "me",
 							Provider:   "github",
 							Scheme:     "oauth2",
 							SuperAdmin: true,
 						}, nil
 					},
-					UpdateF: func(ctx context.Context, u *cmp.User) error {
+					UpdateF: func(ctx context.Context, u *cloudhub.User) error {
 						return nil
 					},
 				},
@@ -189,7 +189,7 @@ func TestService_Me(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"name":"me","roles":null,"provider":"github","scheme":"oauth2","superAdmin":true,"links":{"self":"/cmp/v1/organizations/0/users/0"},"organizations":[],"currentOrganization":{"id":"0","name":"Default","defaultRole":"viewer"}}`,
+			wantBody:        `{"name":"me","roles":null,"provider":"github","scheme":"oauth2","superAdmin":true,"links":{"self":"/cloudhub/v1/organizations/0/users/0"},"organizations":[],"currentOrganization":{"id":"0","name":"Default","defaultRole":"viewer"}}`,
 		},
 		{
 			name: "Existing user - organization doesn't exist",
@@ -201,42 +201,42 @@ func TestService_Me(t *testing.T) {
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				MappingsStore: &mocks.MappingsStore{
-					AllF: func(ctx context.Context) ([]cmp.Mapping, error) {
-						return []cmp.Mapping{}, nil
+					AllF: func(ctx context.Context) ([]cloudhub.Mapping, error) {
+						return []cloudhub.Mapping{}, nil
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "Default",
 							DefaultRole: roles.ViewerRoleName,
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						switch *q.ID {
 						case "0":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:          "0",
 								Name:        "Default",
 								DefaultRole: roles.ViewerRoleName,
 							}, nil
 						}
-						return nil, cmp.ErrOrganizationNotFound
+						return nil, cloudhub.ErrOrganizationNotFound
 					},
 				},
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							Name:     "me",
 							Provider: "github",
 							Scheme:   "oauth2",
 						}, nil
 					},
-					UpdateF: func(ctx context.Context, u *cmp.User) error {
+					UpdateF: func(ctx context.Context, u *cloudhub.User) error {
 						return nil
 					},
 				},
@@ -260,42 +260,42 @@ func TestService_Me(t *testing.T) {
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				ConfigStore: &mocks.ConfigStore{
-					Config: &cmp.Config{
-						Auth: cmp.AuthConfig{
+					Config: &cloudhub.Config{
+						Auth: cloudhub.AuthConfig{
 							SuperAdminNewUsers: true,
 						},
 					},
 				},
 				MappingsStore: &mocks.MappingsStore{
-					AllF: func(ctx context.Context) ([]cmp.Mapping, error) {
-						return []cmp.Mapping{
+					AllF: func(ctx context.Context) ([]cloudhub.Mapping, error) {
+						return []cloudhub.Mapping{
 							{
 								Organization:         "0",
-								Provider:             cmp.MappingWildcard,
-								Scheme:               cmp.MappingWildcard,
-								ProviderOrganization: cmp.MappingWildcard,
+								Provider:             cloudhub.MappingWildcard,
+								Scheme:               cloudhub.MappingWildcard,
+								ProviderOrganization: cloudhub.MappingWildcard,
 							},
 						}, nil
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "The Gnarly Default",
 							DefaultRole: roles.ViewerRoleName,
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "The Gnarly Default",
 							DefaultRole: roles.ViewerRoleName,
 						}, nil
 					},
-					AllF: func(ctx context.Context) ([]cmp.Organization, error) {
-						return []cmp.Organization{
-							cmp.Organization{
+					AllF: func(ctx context.Context) ([]cloudhub.Organization, error) {
+						return []cloudhub.Organization{
+							cloudhub.Organization{
 								ID:          "0",
 								Name:        "The Gnarly Default",
 								DefaultRole: roles.ViewerRoleName,
@@ -308,16 +308,16 @@ func TestService_Me(t *testing.T) {
 						// This function gets to verify that there is at least one first user
 						return 1, nil
 					},
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return nil, cmp.ErrUserNotFound
+						return nil, cloudhub.ErrUserNotFound
 					},
-					AddF: func(ctx context.Context, u *cmp.User) (*cmp.User, error) {
+					AddF: func(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
 						return u, nil
 					},
-					UpdateF: func(ctx context.Context, u *cmp.User) error {
+					UpdateF: func(ctx context.Context, u *cloudhub.User) error {
 						return nil
 					},
 				},
@@ -328,7 +328,7 @@ func TestService_Me(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"name":"secret","superAdmin":true,"roles":[{"name":"viewer","organization":"0"}],"provider":"auth0","scheme":"oauth2","links":{"self":"/cmp/v1/organizations/0/users/0"},"organizations":[{"id":"0","name":"The Gnarly Default","defaultRole":"viewer"}],"currentOrganization":{"id":"0","name":"The Gnarly Default","defaultRole":"viewer"}}`,
+			wantBody:        `{"name":"secret","superAdmin":true,"roles":[{"name":"viewer","organization":"0"}],"provider":"auth0","scheme":"oauth2","links":{"self":"/cloudhub/v1/organizations/0/users/0"},"organizations":[{"id":"0","name":"The Gnarly Default","defaultRole":"viewer"}],"currentOrganization":{"id":"0","name":"The Gnarly Default","defaultRole":"viewer"}}`,
 		},
 		{
 			name: "New user - New users not super admin, not first user",
@@ -340,42 +340,42 @@ func TestService_Me(t *testing.T) {
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				ConfigStore: &mocks.ConfigStore{
-					Config: &cmp.Config{
-						Auth: cmp.AuthConfig{
+					Config: &cloudhub.Config{
+						Auth: cloudhub.AuthConfig{
 							SuperAdminNewUsers: false,
 						},
 					},
 				},
 				MappingsStore: &mocks.MappingsStore{
-					AllF: func(ctx context.Context) ([]cmp.Mapping, error) {
-						return []cmp.Mapping{
+					AllF: func(ctx context.Context) ([]cloudhub.Mapping, error) {
+						return []cloudhub.Mapping{
 							{
 								Organization:         "0",
-								Provider:             cmp.MappingWildcard,
-								Scheme:               cmp.MappingWildcard,
-								ProviderOrganization: cmp.MappingWildcard,
+								Provider:             cloudhub.MappingWildcard,
+								Scheme:               cloudhub.MappingWildcard,
+								ProviderOrganization: cloudhub.MappingWildcard,
 							},
 						}, nil
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "The Gnarly Default",
 							DefaultRole: roles.ViewerRoleName,
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "The Gnarly Default",
 							DefaultRole: roles.ViewerRoleName,
 						}, nil
 					},
-					AllF: func(ctx context.Context) ([]cmp.Organization, error) {
-						return []cmp.Organization{
-							cmp.Organization{
+					AllF: func(ctx context.Context) ([]cloudhub.Organization, error) {
+						return []cloudhub.Organization{
+							cloudhub.Organization{
 								ID:          "0",
 								Name:        "The Gnarly Default",
 								DefaultRole: roles.ViewerRoleName,
@@ -388,16 +388,16 @@ func TestService_Me(t *testing.T) {
 						// This function gets to verify that there is at least one first user
 						return 1, nil
 					},
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return nil, cmp.ErrUserNotFound
+						return nil, cloudhub.ErrUserNotFound
 					},
-					AddF: func(ctx context.Context, u *cmp.User) (*cmp.User, error) {
+					AddF: func(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
 						return u, nil
 					},
-					UpdateF: func(ctx context.Context, u *cmp.User) error {
+					UpdateF: func(ctx context.Context, u *cloudhub.User) error {
 						return nil
 					},
 				},
@@ -408,7 +408,7 @@ func TestService_Me(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"name":"secret","roles":[{"name":"viewer","organization":"0"}],"provider":"auth0","scheme":"oauth2","links":{"self":"/cmp/v1/organizations/0/users/0"},"organizations":[{"id":"0","name":"The Gnarly Default","defaultRole":"viewer"}],"currentOrganization":{"id":"0","name":"The Gnarly Default","defaultRole":"viewer"}}`,
+			wantBody:        `{"name":"secret","roles":[{"name":"viewer","organization":"0"}],"provider":"auth0","scheme":"oauth2","links":{"self":"/cloudhub/v1/organizations/0/users/0"},"organizations":[{"id":"0","name":"The Gnarly Default","defaultRole":"viewer"}],"currentOrganization":{"id":"0","name":"The Gnarly Default","defaultRole":"viewer"}}`,
 		},
 		{
 			name: "New user - New users not super admin, first user",
@@ -420,42 +420,42 @@ func TestService_Me(t *testing.T) {
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				ConfigStore: &mocks.ConfigStore{
-					Config: &cmp.Config{
-						Auth: cmp.AuthConfig{
+					Config: &cloudhub.Config{
+						Auth: cloudhub.AuthConfig{
 							SuperAdminNewUsers: false,
 						},
 					},
 				},
 				MappingsStore: &mocks.MappingsStore{
-					AllF: func(ctx context.Context) ([]cmp.Mapping, error) {
-						return []cmp.Mapping{
+					AllF: func(ctx context.Context) ([]cloudhub.Mapping, error) {
+						return []cloudhub.Mapping{
 							{
 								Organization:         "0",
-								Provider:             cmp.MappingWildcard,
-								Scheme:               cmp.MappingWildcard,
-								ProviderOrganization: cmp.MappingWildcard,
+								Provider:             cloudhub.MappingWildcard,
+								Scheme:               cloudhub.MappingWildcard,
+								ProviderOrganization: cloudhub.MappingWildcard,
 							},
 						}, nil
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "The Gnarly Default",
 							DefaultRole: roles.ViewerRoleName,
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "The Gnarly Default",
 							DefaultRole: roles.ViewerRoleName,
 						}, nil
 					},
-					AllF: func(ctx context.Context) ([]cmp.Organization, error) {
-						return []cmp.Organization{
-							cmp.Organization{
+					AllF: func(ctx context.Context) ([]cloudhub.Organization, error) {
+						return []cloudhub.Organization{
+							cloudhub.Organization{
 								ID:          "0",
 								Name:        "The Gnarly Default",
 								DefaultRole: roles.ViewerRoleName,
@@ -468,16 +468,16 @@ func TestService_Me(t *testing.T) {
 						// This function gets to verify that there is at least one first user
 						return 0, nil
 					},
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return nil, cmp.ErrUserNotFound
+						return nil, cloudhub.ErrUserNotFound
 					},
-					AddF: func(ctx context.Context, u *cmp.User) (*cmp.User, error) {
+					AddF: func(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
 						return u, nil
 					},
-					UpdateF: func(ctx context.Context, u *cmp.User) error {
+					UpdateF: func(ctx context.Context, u *cloudhub.User) error {
 						return nil
 					},
 				},
@@ -488,7 +488,7 @@ func TestService_Me(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"name":"secret","superAdmin":true,"roles":[{"name":"viewer","organization":"0"}],"provider":"auth0","scheme":"oauth2","links":{"self":"/cmp/v1/organizations/0/users/0"},"organizations":[{"id":"0","name":"The Gnarly Default","defaultRole":"viewer"}],"currentOrganization":{"id":"0","name":"The Gnarly Default","defaultRole":"viewer"}}`,
+			wantBody:        `{"name":"secret","superAdmin":true,"roles":[{"name":"viewer","organization":"0"}],"provider":"auth0","scheme":"oauth2","links":{"self":"/cloudhub/v1/organizations/0/users/0"},"organizations":[{"id":"0","name":"The Gnarly Default","defaultRole":"viewer"}],"currentOrganization":{"id":"0","name":"The Gnarly Default","defaultRole":"viewer"}}`,
 		},
 		{
 			name: "Error adding user",
@@ -499,33 +499,33 @@ func TestService_Me(t *testing.T) {
 			fields: fields{
 				UseAuth: true,
 				ConfigStore: &mocks.ConfigStore{
-					Config: &cmp.Config{
-						Auth: cmp.AuthConfig{
+					Config: &cloudhub.Config{
+						Auth: cloudhub.AuthConfig{
 							SuperAdminNewUsers: false,
 						},
 					},
 				},
 				MappingsStore: &mocks.MappingsStore{
-					AllF: func(ctx context.Context) ([]cmp.Mapping, error) {
-						return []cmp.Mapping{}, nil
+					AllF: func(ctx context.Context) ([]cloudhub.Mapping, error) {
+						return []cloudhub.Mapping{}, nil
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:   "0",
 							Name: "The Bad Place",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:   "0",
 							Name: "The Bad Place",
 						}, nil
 					},
-					AllF: func(ctx context.Context) ([]cmp.Organization, error) {
-						return []cmp.Organization{
-							cmp.Organization{
+					AllF: func(ctx context.Context) ([]cloudhub.Organization, error) {
+						return []cloudhub.Organization{
+							cloudhub.Organization{
 								ID:          "0",
 								Name:        "The Bad Place",
 								DefaultRole: roles.ViewerRoleName,
@@ -538,13 +538,13 @@ func TestService_Me(t *testing.T) {
 						// This function gets to verify that there is at least one first user
 						return 1, nil
 					},
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
-						return nil, cmp.ErrUserNotFound
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
+						return nil, cloudhub.ErrUserNotFound
 					},
-					AddF: func(ctx context.Context, u *cmp.User) (*cmp.User, error) {
+					AddF: func(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
 						return nil, fmt.Errorf("Why Heavy?")
 					},
-					UpdateF: func(ctx context.Context, u *cmp.User) error {
+					UpdateF: func(ctx context.Context, u *cloudhub.User) error {
 						return nil
 					},
 				},
@@ -556,7 +556,7 @@ func TestService_Me(t *testing.T) {
 			},
 			wantStatus:      http.StatusForbidden,
 			wantContentType: "application/json",
-			wantBody:        `{"code":403,"message":"This CMP is private. To gain access, you must be explicitly added by an administrator."}`,
+			wantBody:        `{"code":403,"message":"This CloudHub is private. To gain access, you must be explicitly added by an administrator."}`,
 		},
 		{
 			name: "No Auth",
@@ -567,8 +567,8 @@ func TestService_Me(t *testing.T) {
 			fields: fields{
 				UseAuth: false,
 				ConfigStore: &mocks.ConfigStore{
-					Config: &cmp.Config{
-						Auth: cmp.AuthConfig{
+					Config: &cloudhub.Config{
+						Auth: cloudhub.AuthConfig{
 							SuperAdminNewUsers: false,
 						},
 					},
@@ -577,7 +577,7 @@ func TestService_Me(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"links":{"self":"/cmp/v1/me"}}`,
+			wantBody:        `{"links":{"self":"/cloudhub/v1/me"}}`,
 		},
 		{
 			name: "Empty Principal",
@@ -588,8 +588,8 @@ func TestService_Me(t *testing.T) {
 			fields: fields{
 				UseAuth: true,
 				ConfigStore: &mocks.ConfigStore{
-					Config: &cmp.Config{
-						Auth: cmp.AuthConfig{
+					Config: &cloudhub.Config{
+						Auth: cloudhub.AuthConfig{
 							SuperAdminNewUsers: false,
 						},
 					},
@@ -603,7 +603,7 @@ func TestService_Me(t *testing.T) {
 			},
 		},
 		{
-			name: "new user - CMP is private",
+			name: "new user - CloudHub is private",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest("GET", "http://example.com/foo", nil),
@@ -612,20 +612,20 @@ func TestService_Me(t *testing.T) {
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				ConfigStore: mocks.ConfigStore{
-					Config: &cmp.Config{
-						Auth: cmp.AuthConfig{
+					Config: &cloudhub.Config{
+						Auth: cloudhub.AuthConfig{
 							SuperAdminNewUsers: false,
 						},
 					},
 				},
 				MappingsStore: &mocks.MappingsStore{
-					AllF: func(ctx context.Context) ([]cmp.Mapping, error) {
-						return []cmp.Mapping{}, nil
+					AllF: func(ctx context.Context) ([]cloudhub.Mapping, error) {
+						return []cloudhub.Mapping{}, nil
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "The Bad Place",
 							DefaultRole: roles.MemberRoleName,
@@ -637,16 +637,16 @@ func TestService_Me(t *testing.T) {
 						// This function gets to verify that there is at least one first user
 						return 1, nil
 					},
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return nil, cmp.ErrUserNotFound
+						return nil, cloudhub.ErrUserNotFound
 					},
-					AddF: func(ctx context.Context, u *cmp.User) (*cmp.User, error) {
+					AddF: func(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
 						return u, nil
 					},
-					UpdateF: func(ctx context.Context, u *cmp.User) error {
+					UpdateF: func(ctx context.Context, u *cloudhub.User) error {
 						return nil
 					},
 				},
@@ -657,10 +657,10 @@ func TestService_Me(t *testing.T) {
 			},
 			wantStatus:      http.StatusForbidden,
 			wantContentType: "application/json",
-			wantBody:        `{"code":403,"message":"This CMP is private. To gain access, you must be explicitly added by an administrator."}`,
+			wantBody:        `{"code":403,"message":"This CloudHub is private. To gain access, you must be explicitly added by an administrator."}`,
 		},
 		{
-			name: "new user - CMP is private, user is in auth0 superadmin group",
+			name: "new user - CloudHub is private, user is in auth0 superadmin group",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest("GET", "http://example.com/foo", nil),
@@ -672,27 +672,27 @@ func TestService_Me(t *testing.T) {
 				},
 				Logger: log.New(log.DebugLevel),
 				ConfigStore: mocks.ConfigStore{
-					Config: &cmp.Config{
-						Auth: cmp.AuthConfig{
+					Config: &cloudhub.Config{
+						Auth: cloudhub.AuthConfig{
 							SuperAdminNewUsers: false,
 						},
 					},
 				},
 				MappingsStore: &mocks.MappingsStore{
-					AllF: func(ctx context.Context) ([]cmp.Mapping, error) {
-						return []cmp.Mapping{}, nil
+					AllF: func(ctx context.Context) ([]cloudhub.Mapping, error) {
+						return []cloudhub.Mapping{}, nil
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "The Bad Place",
 							DefaultRole: roles.MemberRoleName,
 						}, nil
 					},
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "The Bad Place",
 							DefaultRole: roles.MemberRoleName,
@@ -704,16 +704,16 @@ func TestService_Me(t *testing.T) {
 						// This function gets to verify that there is at least one first user
 						return 1, nil
 					},
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return nil, cmp.ErrUserNotFound
+						return nil, cloudhub.ErrUserNotFound
 					},
-					AddF: func(ctx context.Context, u *cmp.User) (*cmp.User, error) {
+					AddF: func(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
 						return u, nil
 					},
-					UpdateF: func(ctx context.Context, u *cmp.User) error {
+					UpdateF: func(ctx context.Context, u *cloudhub.User) error {
 						return nil
 					},
 				},
@@ -725,10 +725,10 @@ func TestService_Me(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"name":"secret","roles":[{"name":"member","organization":"0"}],"provider":"auth0","scheme":"oauth2","superAdmin":true,"links":{"self":"/cmp/v1/organizations/0/users/0"},"organizations":[{"id":"0","name":"The Bad Place","defaultRole":"member"}],"currentOrganization":{"id":"0","name":"The Bad Place","defaultRole":"member"}}`,
+			wantBody:        `{"name":"secret","roles":[{"name":"member","organization":"0"}],"provider":"auth0","scheme":"oauth2","superAdmin":true,"links":{"self":"/cloudhub/v1/organizations/0/users/0"},"organizations":[{"id":"0","name":"The Bad Place","defaultRole":"member"}],"currentOrganization":{"id":"0","name":"The Bad Place","defaultRole":"member"}}`,
 		},
 		{
-			name: "new user - CMP is private, user is not in auth0 superadmin group",
+			name: "new user - CloudHub is private, user is not in auth0 superadmin group",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest("GET", "http://example.com/foo", nil),
@@ -740,27 +740,27 @@ func TestService_Me(t *testing.T) {
 				},
 				Logger: log.New(log.DebugLevel),
 				ConfigStore: mocks.ConfigStore{
-					Config: &cmp.Config{
-						Auth: cmp.AuthConfig{
+					Config: &cloudhub.Config{
+						Auth: cloudhub.AuthConfig{
 							SuperAdminNewUsers: false,
 						},
 					},
 				},
 				MappingsStore: &mocks.MappingsStore{
-					AllF: func(ctx context.Context) ([]cmp.Mapping, error) {
-						return []cmp.Mapping{}, nil
+					AllF: func(ctx context.Context) ([]cloudhub.Mapping, error) {
+						return []cloudhub.Mapping{}, nil
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "The Bad Place",
 							DefaultRole: roles.MemberRoleName,
 						}, nil
 					},
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "The Bad Place",
 							DefaultRole: roles.MemberRoleName,
@@ -772,16 +772,16 @@ func TestService_Me(t *testing.T) {
 						// This function gets to verify that there is at least one first user
 						return 1, nil
 					},
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return nil, cmp.ErrUserNotFound
+						return nil, cloudhub.ErrUserNotFound
 					},
-					AddF: func(ctx context.Context, u *cmp.User) (*cmp.User, error) {
+					AddF: func(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
 						return u, nil
 					},
-					UpdateF: func(ctx context.Context, u *cmp.User) error {
+					UpdateF: func(ctx context.Context, u *cloudhub.User) error {
 						return nil
 					},
 				},
@@ -793,10 +793,10 @@ func TestService_Me(t *testing.T) {
 			},
 			wantStatus:      http.StatusForbidden,
 			wantContentType: "application/json",
-			wantBody:        `{"code":403,"message":"This CMP is private. To gain access, you must be explicitly added by an administrator."}`,
+			wantBody:        `{"code":403,"message":"This CloudHub is private. To gain access, you must be explicitly added by an administrator."}`,
 		},
 		{
-			name: "new user - CMP is not private, user is in auth0 superadmin group",
+			name: "new user - CloudHub is not private, user is in auth0 superadmin group",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest("GET", "http://example.com/foo", nil),
@@ -808,34 +808,34 @@ func TestService_Me(t *testing.T) {
 				},
 				Logger: log.New(log.DebugLevel),
 				ConfigStore: mocks.ConfigStore{
-					Config: &cmp.Config{
-						Auth: cmp.AuthConfig{
+					Config: &cloudhub.Config{
+						Auth: cloudhub.AuthConfig{
 							SuperAdminNewUsers: false,
 						},
 					},
 				},
 				MappingsStore: &mocks.MappingsStore{
-					AllF: func(ctx context.Context) ([]cmp.Mapping, error) {
-						return []cmp.Mapping{
+					AllF: func(ctx context.Context) ([]cloudhub.Mapping, error) {
+						return []cloudhub.Mapping{
 							{
 								Organization:         "0",
-								Provider:             cmp.MappingWildcard,
-								Scheme:               cmp.MappingWildcard,
-								ProviderOrganization: cmp.MappingWildcard,
+								Provider:             cloudhub.MappingWildcard,
+								Scheme:               cloudhub.MappingWildcard,
+								ProviderOrganization: cloudhub.MappingWildcard,
 							},
 						}, nil
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "The Bad Place",
 							DefaultRole: roles.MemberRoleName,
 						}, nil
 					},
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "The Bad Place",
 							DefaultRole: roles.MemberRoleName,
@@ -847,16 +847,16 @@ func TestService_Me(t *testing.T) {
 						// This function gets to verify that there is at least one first user
 						return 1, nil
 					},
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return nil, cmp.ErrUserNotFound
+						return nil, cloudhub.ErrUserNotFound
 					},
-					AddF: func(ctx context.Context, u *cmp.User) (*cmp.User, error) {
+					AddF: func(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
 						return u, nil
 					},
-					UpdateF: func(ctx context.Context, u *cmp.User) error {
+					UpdateF: func(ctx context.Context, u *cloudhub.User) error {
 						return nil
 					},
 				},
@@ -868,10 +868,10 @@ func TestService_Me(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"name":"secret","roles":[{"name":"member","organization":"0"}],"provider":"auth0","scheme":"oauth2","superAdmin":true,"links":{"self":"/cmp/v1/organizations/0/users/0"},"organizations":[{"id":"0","name":"The Bad Place","defaultRole":"member"}],"currentOrganization":{"id":"0","name":"The Bad Place","defaultRole":"member"}}`,
+			wantBody:        `{"name":"secret","roles":[{"name":"member","organization":"0"}],"provider":"auth0","scheme":"oauth2","superAdmin":true,"links":{"self":"/cloudhub/v1/organizations/0/users/0"},"organizations":[{"id":"0","name":"The Bad Place","defaultRole":"member"}],"currentOrganization":{"id":"0","name":"The Bad Place","defaultRole":"member"}}`,
 		},
 		{
-			name: "new user - CMP is not private (has a fully open wildcard mapping to an org), user is not in auth0 superadmin group",
+			name: "new user - CloudHub is not private (has a fully open wildcard mapping to an org), user is not in auth0 superadmin group",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest("GET", "http://example.com/foo", nil),
@@ -883,34 +883,34 @@ func TestService_Me(t *testing.T) {
 				},
 				Logger: log.New(log.DebugLevel),
 				ConfigStore: mocks.ConfigStore{
-					Config: &cmp.Config{
-						Auth: cmp.AuthConfig{
+					Config: &cloudhub.Config{
+						Auth: cloudhub.AuthConfig{
 							SuperAdminNewUsers: false,
 						},
 					},
 				},
 				MappingsStore: &mocks.MappingsStore{
-					AllF: func(ctx context.Context) ([]cmp.Mapping, error) {
-						return []cmp.Mapping{
+					AllF: func(ctx context.Context) ([]cloudhub.Mapping, error) {
+						return []cloudhub.Mapping{
 							{
 								Organization:         "0",
-								Provider:             cmp.MappingWildcard,
-								Scheme:               cmp.MappingWildcard,
-								ProviderOrganization: cmp.MappingWildcard,
+								Provider:             cloudhub.MappingWildcard,
+								Scheme:               cloudhub.MappingWildcard,
+								ProviderOrganization: cloudhub.MappingWildcard,
 							},
 						}, nil
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "The Bad Place",
 							DefaultRole: roles.MemberRoleName,
 						}, nil
 					},
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "The Bad Place",
 							DefaultRole: roles.MemberRoleName,
@@ -922,16 +922,16 @@ func TestService_Me(t *testing.T) {
 						// This function gets to verify that there is at least one first user
 						return 1, nil
 					},
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return nil, cmp.ErrUserNotFound
+						return nil, cloudhub.ErrUserNotFound
 					},
-					AddF: func(ctx context.Context, u *cmp.User) (*cmp.User, error) {
+					AddF: func(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
 						return u, nil
 					},
-					UpdateF: func(ctx context.Context, u *cmp.User) error {
+					UpdateF: func(ctx context.Context, u *cloudhub.User) error {
 						return nil
 					},
 				},
@@ -943,10 +943,10 @@ func TestService_Me(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"name":"secret","roles":[{"name":"member","organization":"0"}],"provider":"auth0","scheme":"oauth2","links":{"self":"/cmp/v1/organizations/0/users/0"},"organizations":[{"id":"0","name":"The Bad Place","defaultRole":"member"}],"currentOrganization":{"id":"0","name":"The Bad Place","defaultRole":"member"}}`,
+			wantBody:        `{"name":"secret","roles":[{"name":"member","organization":"0"}],"provider":"auth0","scheme":"oauth2","links":{"self":"/cloudhub/v1/organizations/0/users/0"},"organizations":[{"id":"0","name":"The Bad Place","defaultRole":"member"}],"currentOrganization":{"id":"0","name":"The Bad Place","defaultRole":"member"}}`,
 		},
 		{
-			name: "Existing user - CMP is not private, user doesn't have SuperAdmin status, user is in auth0 superadmin group",
+			name: "Existing user - CloudHub is not private, user doesn't have SuperAdmin status, user is in auth0 superadmin group",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest("GET", "http://example.com/foo", nil),
@@ -958,30 +958,30 @@ func TestService_Me(t *testing.T) {
 				},
 				Logger: log.New(log.DebugLevel),
 				ConfigStore: mocks.ConfigStore{
-					Config: &cmp.Config{},
+					Config: &cloudhub.Config{},
 				},
 				MappingsStore: &mocks.MappingsStore{
-					AllF: func(ctx context.Context) ([]cmp.Mapping, error) {
-						return []cmp.Mapping{
+					AllF: func(ctx context.Context) ([]cloudhub.Mapping, error) {
+						return []cloudhub.Mapping{
 							{
 								Organization:         "0",
-								Provider:             cmp.MappingWildcard,
-								Scheme:               cmp.MappingWildcard,
-								ProviderOrganization: cmp.MappingWildcard,
+								Provider:             cloudhub.MappingWildcard,
+								Scheme:               cloudhub.MappingWildcard,
+								ProviderOrganization: cloudhub.MappingWildcard,
 							},
 						}, nil
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "The Bad Place",
 							DefaultRole: roles.MemberRoleName,
 						}, nil
 					},
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "The Bad Place",
 							DefaultRole: roles.MemberRoleName,
@@ -993,15 +993,15 @@ func TestService_Me(t *testing.T) {
 						// This function gets to verify that there is at least one first user
 						return 1, nil
 					},
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							Name:     "secret",
 							Provider: "auth0",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.MemberRoleName,
 									Organization: "0",
@@ -1009,10 +1009,10 @@ func TestService_Me(t *testing.T) {
 							},
 						}, nil
 					},
-					AddF: func(ctx context.Context, u *cmp.User) (*cmp.User, error) {
+					AddF: func(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
 						return u, nil
 					},
-					UpdateF: func(ctx context.Context, u *cmp.User) error {
+					UpdateF: func(ctx context.Context, u *cloudhub.User) error {
 						return nil
 					},
 				},
@@ -1024,10 +1024,10 @@ func TestService_Me(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"name":"secret","roles":[{"name":"member","organization":"0"}],"provider":"auth0","scheme":"oauth2","superAdmin":true,"links":{"self":"/cmp/v1/organizations/0/users/0"},"organizations":[{"id":"0","name":"The Bad Place","defaultRole":"member"}],"currentOrganization":{"id":"0","name":"The Bad Place","defaultRole":"member"}}`,
+			wantBody:        `{"name":"secret","roles":[{"name":"member","organization":"0"}],"provider":"auth0","scheme":"oauth2","superAdmin":true,"links":{"self":"/cloudhub/v1/organizations/0/users/0"},"organizations":[{"id":"0","name":"The Bad Place","defaultRole":"member"}],"currentOrganization":{"id":"0","name":"The Bad Place","defaultRole":"member"}}`,
 		},
 		{
-			name: "Existing user - CMP is not private, user has SuperAdmin status, user is in auth0 superadmin group",
+			name: "Existing user - CloudHub is not private, user has SuperAdmin status, user is in auth0 superadmin group",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest("GET", "http://example.com/foo", nil),
@@ -1039,30 +1039,30 @@ func TestService_Me(t *testing.T) {
 				},
 				Logger: log.New(log.DebugLevel),
 				ConfigStore: mocks.ConfigStore{
-					Config: &cmp.Config{},
+					Config: &cloudhub.Config{},
 				},
 				MappingsStore: &mocks.MappingsStore{
-					AllF: func(ctx context.Context) ([]cmp.Mapping, error) {
-						return []cmp.Mapping{
+					AllF: func(ctx context.Context) ([]cloudhub.Mapping, error) {
+						return []cloudhub.Mapping{
 							{
 								Organization:         "0",
-								Provider:             cmp.MappingWildcard,
-								Scheme:               cmp.MappingWildcard,
-								ProviderOrganization: cmp.MappingWildcard,
+								Provider:             cloudhub.MappingWildcard,
+								Scheme:               cloudhub.MappingWildcard,
+								ProviderOrganization: cloudhub.MappingWildcard,
 							},
 						}, nil
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "The Bad Place",
 							DefaultRole: roles.MemberRoleName,
 						}, nil
 					},
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "The Bad Place",
 							DefaultRole: roles.MemberRoleName,
@@ -1074,15 +1074,15 @@ func TestService_Me(t *testing.T) {
 						// This function gets to verify that there is at least one first user
 						return 1, nil
 					},
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							Name:     "secret",
 							Provider: "auth0",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.MemberRoleName,
 									Organization: "0",
@@ -1091,10 +1091,10 @@ func TestService_Me(t *testing.T) {
 							SuperAdmin: true,
 						}, nil
 					},
-					AddF: func(ctx context.Context, u *cmp.User) (*cmp.User, error) {
+					AddF: func(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
 						return u, nil
 					},
-					UpdateF: func(ctx context.Context, u *cmp.User) error {
+					UpdateF: func(ctx context.Context, u *cloudhub.User) error {
 						return nil
 					},
 				},
@@ -1106,7 +1106,7 @@ func TestService_Me(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"name":"secret","roles":[{"name":"member","organization":"0"}],"provider":"auth0","scheme":"oauth2","superAdmin":true,"links":{"self":"/cmp/v1/organizations/0/users/0"},"organizations":[{"id":"0","name":"The Bad Place","defaultRole":"member"}],"currentOrganization":{"id":"0","name":"The Bad Place","defaultRole":"member"}}`,
+			wantBody:        `{"name":"secret","roles":[{"name":"member","organization":"0"}],"provider":"auth0","scheme":"oauth2","superAdmin":true,"links":{"self":"/cloudhub/v1/organizations/0/users/0"},"organizations":[{"id":"0","name":"The Bad Place","defaultRole":"member"}],"currentOrganization":{"id":"0","name":"The Bad Place","defaultRole":"member"}}`,
 		},
 	}
 	for _, tt := range tests {
@@ -1146,9 +1146,9 @@ func TestService_Me(t *testing.T) {
 
 func TestService_UpdateMe(t *testing.T) {
 	type fields struct {
-		UsersStore         cmp.UsersStore
-		OrganizationsStore cmp.OrganizationsStore
-		Logger             cmp.Logger
+		UsersStore         cloudhub.UsersStore
+		OrganizationsStore cloudhub.OrganizationsStore
+		Logger             cloudhub.Logger
 		UseAuth            bool
 	}
 	type args struct {
@@ -1180,15 +1180,15 @@ func TestService_UpdateMe(t *testing.T) {
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							Name:     "me",
 							Provider: "github",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.AdminRoleName,
 									Organization: "1337",
@@ -1196,31 +1196,31 @@ func TestService_UpdateMe(t *testing.T) {
 							},
 						}, nil
 					},
-					UpdateF: func(ctx context.Context, u *cmp.User) error {
+					UpdateF: func(ctx context.Context, u *cloudhub.User) error {
 						return nil
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "Default",
 							DefaultRole: roles.AdminRoleName,
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
 						switch *q.ID {
 						case "0":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:          "0",
 								Name:        "Default",
 								DefaultRole: roles.AdminRoleName,
 							}, nil
 						case "1337":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:   "1337",
 								Name: "The ShillBillThrilliettas",
 							}, nil
@@ -1235,7 +1235,7 @@ func TestService_UpdateMe(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"name":"me","roles":[{"name":"admin","organization":"1337"}],"provider":"github","scheme":"oauth2","links":{"self":"/cmp/v1/organizations/1337/users/0"},"organizations":[{"id":"1337","name":"The ShillBillThrilliettas"}],"currentOrganization":{"id":"1337","name":"The ShillBillThrilliettas"}}`,
+			wantBody:        `{"name":"me","roles":[{"name":"admin","organization":"1337"}],"provider":"github","scheme":"oauth2","links":{"self":"/cloudhub/v1/organizations/1337/users/0"},"organizations":[{"id":"1337","name":"The ShillBillThrilliettas"}],"currentOrganization":{"id":"1337","name":"The ShillBillThrilliettas"}}`,
 		},
 		{
 			name: "Change the current User's organization",
@@ -1251,15 +1251,15 @@ func TestService_UpdateMe(t *testing.T) {
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							Name:     "me",
 							Provider: "github",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.AdminRoleName,
 									Organization: "1337",
@@ -1267,30 +1267,30 @@ func TestService_UpdateMe(t *testing.T) {
 							},
 						}, nil
 					},
-					UpdateF: func(ctx context.Context, u *cmp.User) error {
+					UpdateF: func(ctx context.Context, u *cloudhub.User) error {
 						return nil
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "Default",
 							DefaultRole: roles.EditorRoleName,
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
 						switch *q.ID {
 						case "1337":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:   "1337",
 								Name: "The ThrillShilliettos",
 							}, nil
 						case "0":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:          "0",
 								Name:        "Default",
 								DefaultRole: roles.EditorRoleName,
@@ -1307,7 +1307,7 @@ func TestService_UpdateMe(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"name":"me","roles":[{"name":"admin","organization":"1337"}],"provider":"github","scheme":"oauth2","links":{"self":"/cmp/v1/organizations/1337/users/0"},"organizations":[{"id":"1337","name":"The ThrillShilliettos"}],"currentOrganization":{"id":"1337","name":"The ThrillShilliettos"}}`,
+			wantBody:        `{"name":"me","roles":[{"name":"admin","organization":"1337"}],"provider":"github","scheme":"oauth2","links":{"self":"/cloudhub/v1/organizations/1337/users/0"},"organizations":[{"id":"1337","name":"The ThrillShilliettos"}],"currentOrganization":{"id":"1337","name":"The ThrillShilliettos"}}`,
 		},
 		{
 			name: "Unable to find requested user in valid organization",
@@ -1323,15 +1323,15 @@ func TestService_UpdateMe(t *testing.T) {
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							Name:     "me",
 							Provider: "github",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.AdminRoleName,
 									Organization: "1338",
@@ -1339,21 +1339,21 @@ func TestService_UpdateMe(t *testing.T) {
 							},
 						}, nil
 					},
-					UpdateF: func(ctx context.Context, u *cmp.User) error {
+					UpdateF: func(ctx context.Context, u *cloudhub.User) error {
 						return nil
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						if q.ID == nil {
 							return nil, fmt.Errorf("Invalid organization query: missing ID")
 						}
-						return &cmp.Organization{
+						return &cloudhub.Organization{
 							ID:   "1337",
 							Name: "The ShillBillThrilliettas",
 						}, nil
@@ -1383,15 +1383,15 @@ func TestService_UpdateMe(t *testing.T) {
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						if q.Name == nil || q.Provider == nil || q.Scheme == nil {
 							return nil, fmt.Errorf("Invalid user query: missing Name, Provider, and/or Scheme")
 						}
-						return &cmp.User{
+						return &cloudhub.User{
 							Name:     "me",
 							Provider: "github",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.AdminRoleName,
 									Organization: "1337",
@@ -1399,18 +1399,18 @@ func TestService_UpdateMe(t *testing.T) {
 							},
 						}, nil
 					},
-					UpdateF: func(ctx context.Context, u *cmp.User) error {
+					UpdateF: func(ctx context.Context, u *cloudhub.User) error {
 						return nil
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "0",
 						}, nil
 					},
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
-						return nil, cmp.ErrOrganizationNotFound
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						return nil, cloudhub.ErrOrganizationNotFound
 					},
 				},
 			},

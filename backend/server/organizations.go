@@ -7,9 +7,9 @@ import (
 	"net/http"
 
 	"github.com/bouk/httprouter"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/organizations"
-	"github.com/snetsystems/cmp/backend/roles"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/organizations"
+	"github.com/snetsystems/cloudhub/backend/roles"
 )
 
 type organizationRequest struct {
@@ -19,7 +19,7 @@ type organizationRequest struct {
 
 func (r *organizationRequest) ValidCreate() error {
 	if r.Name == "" {
-		return fmt.Errorf("Name required on CMP Organization request body")
+		return fmt.Errorf("Name required on CloudHub Organization request body")
 	}
 
 	return r.ValidDefaultRole()
@@ -52,17 +52,17 @@ func (r *organizationRequest) ValidDefaultRole() error {
 
 type organizationResponse struct {
 	Links selfLinks `json:"links"`
-	cmp.Organization
+	cloudhub.Organization
 }
 
-func newOrganizationResponse(o *cmp.Organization) *organizationResponse {
+func newOrganizationResponse(o *cloudhub.Organization) *organizationResponse {
 	if o == nil {
-		o = &cmp.Organization{}
+		o = &cloudhub.Organization{}
 	}
 	return &organizationResponse{
 		Organization: *o,
 		Links: selfLinks{
-			Self: fmt.Sprintf("/cmp/v1/organizations/%s", o.ID),
+			Self: fmt.Sprintf("/cloudhub/v1/organizations/%s", o.ID),
 		},
 	}
 }
@@ -72,7 +72,7 @@ type organizationsResponse struct {
 	Organizations []*organizationResponse `json:"organizations"`
 }
 
-func newOrganizationsResponse(orgs []cmp.Organization) *organizationsResponse {
+func newOrganizationsResponse(orgs []cloudhub.Organization) *organizationsResponse {
 	orgsResp := make([]*organizationResponse, len(orgs))
 	for i, org := range orgs {
 		orgsResp[i] = newOrganizationResponse(&org)
@@ -80,7 +80,7 @@ func newOrganizationsResponse(orgs []cmp.Organization) *organizationsResponse {
 	return &organizationsResponse{
 		Organizations: orgsResp,
 		Links: selfLinks{
-			Self: "/cmp/v1/organizations",
+			Self: "/cloudhub/v1/organizations",
 		},
 	}
 }
@@ -113,7 +113,7 @@ func (s *Service) NewOrganization(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	org := &cmp.Organization{
+	org := &cloudhub.Organization{
 		Name:        req.Name,
 		DefaultRole: req.DefaultRole,
 	}
@@ -134,7 +134,7 @@ func (s *Service) NewOrganization(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user.Roles = []cmp.Role{
+	user.Roles = []cloudhub.Role{
 		{
 			Organization: res.ID,
 			Name:         roles.AdminRoleName,
@@ -162,7 +162,7 @@ func (s *Service) OrganizationID(w http.ResponseWriter, r *http.Request) {
 
 	id := httprouter.GetParamFromContext(ctx, "oid")
 
-	org, err := s.Store.Organizations(ctx).Get(ctx, cmp.OrganizationQuery{ID: &id})
+	org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &id})
 	if err != nil {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
@@ -188,7 +188,7 @@ func (s *Service) UpdateOrganization(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := httprouter.GetParamFromContext(ctx, "oid")
 
-	org, err := s.Store.Organizations(ctx).Get(ctx, cmp.OrganizationQuery{ID: &id})
+	org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &id})
 	if err != nil {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
@@ -219,7 +219,7 @@ func (s *Service) RemoveOrganization(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := httprouter.GetParamFromContext(ctx, "oid")
 
-	org, err := s.Store.Organizations(ctx).Get(ctx, cmp.OrganizationQuery{ID: &id})
+	org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &id})
 	if err != nil {
 		Error(w, http.StatusNotFound, err.Error(), s.Logger)
 		return

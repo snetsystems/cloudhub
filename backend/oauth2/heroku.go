@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"golang.org/x/oauth2"
 	hrk "golang.org/x/oauth2/heroku"
 )
@@ -19,7 +19,7 @@ const (
 )
 
 // Heroku is an OAuth2 Provider allowing users to authenticate with Heroku to
-// gain access to CMP
+// gain access to CloudHub
 type Heroku struct {
 	// OAuth2 Secrets
 	ClientID     string
@@ -27,7 +27,7 @@ type Heroku struct {
 
 	Organizations []string // set of organizations permitted to access the protected resource. Empty means "all"
 
-	Logger cmp.Logger
+	Logger cloudhub.Logger
 }
 
 // Config returns the OAuth2 exchange information and endpoints

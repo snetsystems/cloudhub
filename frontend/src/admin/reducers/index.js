@@ -1,4 +1,4 @@
-import adminCMP from './cmp'
+import adminCloudHub from './cloudhub'
 import adminInfluxDB from './influxdb'
 
-export default {adminCMP, adminInfluxDB}
+export default {adminCloudHub, adminInfluxDB}

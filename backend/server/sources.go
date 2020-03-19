@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"github.com/bouk/httprouter"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/enterprise"
-	"github.com/snetsystems/cmp/backend/flux"
-	"github.com/snetsystems/cmp/backend/influx"
-	"github.com/snetsystems/cmp/backend/organizations"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/enterprise"
+	"github.com/snetsystems/cloudhub/backend/flux"
+	"github.com/snetsystems/cloudhub/backend/influx"
+	"github.com/snetsystems/cloudhub/backend/organizations"
 )
 
 type sourceLinks struct {
@@ -34,7 +34,7 @@ type sourceLinks struct {
 }
 
 type sourceResponse struct {
-	cmp.Source
+	cloudhub.Source
 	AuthenticationMethod string      `json:"authentication"`
 	Links                sourceLinks `json:"links"`
 }
@@ -44,7 +44,7 @@ type authenticationResponse struct {
 	AuthenticationMethod string
 }
 
-func sourceAuthenticationMethod(ctx context.Context, src cmp.Source) authenticationResponse {
+func sourceAuthenticationMethod(ctx context.Context, src cloudhub.Source) authenticationResponse {
 	ldapEnabled := false
 	if src.MetaURL != "" {
 		authorizer := influx.DefaultAuthorization(&src)
@@ -78,7 +78,7 @@ var (
 	defaultTransport = &http.Transport{}
 )
 
-func hasFlux(ctx context.Context, src cmp.Source) (bool, error) {
+func hasFlux(ctx context.Context, src cloudhub.Source) (bool, error) {
 	url, err := url.ParseRequestURI(src.URL)
 	if err != nil {
 		return false, err
@@ -92,7 +92,7 @@ func hasFlux(ctx context.Context, src cmp.Source) (bool, error) {
 	return cli.FluxEnabled()
 }
 
-func newSourceResponse(ctx context.Context, src cmp.Source) sourceResponse {
+func newSourceResponse(ctx context.Context, src cloudhub.Source) sourceResponse {
 	// If telegraf is not set, we'll set it to the default value.
 	if src.Telegraf == "" {
 		src.Telegraf = "telegraf"
@@ -104,7 +104,7 @@ func newSourceResponse(ctx context.Context, src cmp.Source) sourceResponse {
 	src.Password = ""
 	src.SharedSecret = ""
 
-	httpAPISrcs := "/cmp/v1/sources"
+	httpAPISrcs := "/cloudhub/v1/sources"
 	res := sourceResponse{
 		Source:               src,
 		AuthenticationMethod: authMethod.AuthenticationMethod,
@@ -134,7 +134,7 @@ func newSourceResponse(ctx context.Context, src cmp.Source) sourceResponse {
 	// MetaURL is currently a string, but eventually, we'd like to change it
 	// to a slice. Checking len(src.MetaURL) is functionally equivalent to
 	// checking if it is equal to the empty string.
-	if src.Type == cmp.InfluxEnterprise && len(src.MetaURL) != 0 {
+	if src.Type == cloudhub.InfluxEnterprise && len(src.MetaURL) != 0 {
 		res.Links.Roles = fmt.Sprintf("%s/%d/roles", httpAPISrcs, src.ID)
 	}
 	return res
@@ -142,7 +142,7 @@ func newSourceResponse(ctx context.Context, src cmp.Source) sourceResponse {
 
 // NewSource adds a new valid source to the store
 func (s *Service) NewSource(w http.ResponseWriter, r *http.Request) {
-	var src cmp.Source
+	var src cloudhub.Source
 	if err := json.NewDecoder(r.Body).Decode(&src); err != nil {
 		invalidJSON(w, s.Logger)
 		return
@@ -190,7 +190,7 @@ func (s *Service) NewSource(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusCreated, res, s.Logger)
 }
 
-func (s *Service) tsdbVersion(ctx context.Context, src *cmp.Source) (string, error) {
+func (s *Service) tsdbVersion(ctx context.Context, src *cloudhub.Source) (string, error) {
 	cli := &influx.Client{
 		Logger: s.Logger,
 	}
@@ -205,7 +205,7 @@ func (s *Service) tsdbVersion(ctx context.Context, src *cmp.Source) (string, err
 	return cli.Version(ctx)
 }
 
-func (s *Service) tsdbType(ctx context.Context, src *cmp.Source) (string, error) {
+func (s *Service) tsdbType(ctx context.Context, src *cloudhub.Source) (string, error) {
 	cli := &influx.Client{
 		Logger: s.Logger,
 	}
@@ -284,10 +284,10 @@ func (s *Service) RemoveSource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	src := cmp.Source{ID: id}
+	src := cloudhub.Source{ID: id}
 	ctx := r.Context()
 	if err = s.Store.Sources(ctx).Delete(ctx, src); err != nil {
-		if err == cmp.ErrSourceNotFound {
+		if err == cloudhub.ErrSourceNotFound {
 			notFound(w, id, s.Logger)
 		} else {
 			unknownErrorWithMessage(w, err, s.Logger)
@@ -353,7 +353,7 @@ func (s *Service) removeSrcsKapa(ctx context.Context, srcID int) error {
 	}
 
 	for _, kapaID := range deleteKapa {
-		kapa := cmp.Server{
+		kapa := cloudhub.Server{
 			ID: kapaID,
 		}
 		s.Logger.Debug("Deleting kapacitor resource id ", kapa.ID)
@@ -381,7 +381,7 @@ func (s *Service) UpdateSource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req cmp.Source
+	var req cloudhub.Source
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		invalidJSON(w, s.Logger)
 		return
@@ -448,7 +448,7 @@ func (s *Service) UpdateSource(w http.ResponseWriter, r *http.Request) {
 }
 
 // ValidSourceRequest checks if name, url, type, and role are valid
-func ValidSourceRequest(s *cmp.Source, defaultOrgID string) error {
+func ValidSourceRequest(s *cloudhub.Source, defaultOrgID string) error {
 	if s == nil {
 		return fmt.Errorf("source must be non-nil")
 	}
@@ -458,7 +458,7 @@ func ValidSourceRequest(s *cmp.Source, defaultOrgID string) error {
 	}
 	// Type must be influx or influx-enterprise
 	if s.Type != "" {
-		if s.Type != cmp.InfluxDB && s.Type != cmp.InfluxEnterprise && s.Type != cmp.InfluxRelay {
+		if s.Type != cloudhub.InfluxDB && s.Type != cloudhub.InfluxEnterprise && s.Type != cloudhub.InfluxRelay {
 			return fmt.Errorf("invalid source type %s", s.Type)
 		}
 	}
@@ -487,8 +487,8 @@ func (s *Service) HandleNewSources(ctx context.Context, input string) error {
 	s.Logger.Error("--new-sources is deprecated and will be removed in a future version.")
 
 	var srcsKaps []struct {
-		Source    cmp.Source `json:"influxdb"`
-		Kapacitor cmp.Server `json:"kapacitor"`
+		Source    cloudhub.Source `json:"influxdb"`
+		Kapacitor cloudhub.Server `json:"kapacitor"`
 	}
 	if err := json.Unmarshal([]byte(input), &srcsKaps); err != nil {
 		s.Logger.
@@ -522,7 +522,7 @@ func (s *Service) HandleNewSources(ctx context.Context, input string) error {
 }
 
 // newSourceKapacitor adds sources to BoltDB idempotently by name, as well as respective kapacitors
-func (s *Service) newSourceKapacitor(ctx context.Context, src cmp.Source, kapa cmp.Server) error {
+func (s *Service) newSourceKapacitor(ctx context.Context, src cloudhub.Source, kapa cloudhub.Server) error {
 	srcs, err := s.Store.Sources(ctx).All(ctx)
 	if err != nil {
 		return err
@@ -572,7 +572,7 @@ func (s *Service) NewSourceUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	store := ts.Users(ctx)
-	user := &cmp.User{
+	user := &cloudhub.User{
 		Name:        req.Username,
 		Passwd:      req.Password,
 		Permissions: req.Permissions,
@@ -641,7 +641,7 @@ func (s *Service) SourceUserID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	store := ts.Users(ctx)
-	u, err := store.Get(ctx, cmp.UserQuery{Name: &uid})
+	u, err := store.Get(ctx, cloudhub.UserQuery{Name: &uid})
 	if err != nil {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
@@ -664,7 +664,7 @@ func (s *Service) RemoveSourceUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := store.Delete(ctx, &cmp.User{Name: uid}); err != nil {
+	if err := store.Delete(ctx, &cloudhub.User{Name: uid}); err != nil {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
@@ -691,7 +691,7 @@ func (s *Service) UpdateSourceUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := &cmp.User{
+	user := &cloudhub.User{
 		Name:        uid,
 		Passwd:      req.Password,
 		Permissions: req.Permissions,
@@ -704,7 +704,7 @@ func (s *Service) UpdateSourceUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := store.Get(ctx, cmp.UserQuery{Name: &uid})
+	u, err := store.Get(ctx, cloudhub.UserQuery{Name: &uid})
 	if err != nil {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
@@ -718,7 +718,7 @@ func (s *Service) UpdateSourceUser(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
 
-func (s *Service) sourcesSeries(ctx context.Context, w http.ResponseWriter, r *http.Request) (int, cmp.TimeSeries, error) {
+func (s *Service) sourcesSeries(ctx context.Context, w http.ResponseWriter, r *http.Request) (int, cloudhub.TimeSeries, error) {
 	srcID, err := paramID("id", r)
 	if err != nil {
 		Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
@@ -746,7 +746,7 @@ func (s *Service) sourcesSeries(ctx context.Context, w http.ResponseWriter, r *h
 	return srcID, ts, nil
 }
 
-func (s *Service) sourceUsersStore(ctx context.Context, w http.ResponseWriter, r *http.Request) (int, cmp.UsersStore, error) {
+func (s *Service) sourceUsersStore(ctx context.Context, w http.ResponseWriter, r *http.Request) (int, cloudhub.UsersStore, error) {
 	srcID, ts, err := s.sourcesSeries(ctx, w, r)
 	if err != nil {
 		return 0, nil, err
@@ -757,7 +757,7 @@ func (s *Service) sourceUsersStore(ctx context.Context, w http.ResponseWriter, r
 }
 
 // hasRoles checks if the influx source has roles or not
-func (s *Service) hasRoles(ctx context.Context, ts cmp.TimeSeries) (cmp.RolesStore, bool) {
+func (s *Service) hasRoles(ctx context.Context, ts cloudhub.TimeSeries) (cloudhub.RolesStore, bool) {
 	store, err := ts.Roles(ctx)
 	if err != nil {
 		return nil, false
@@ -768,8 +768,8 @@ func (s *Service) hasRoles(ctx context.Context, ts cmp.TimeSeries) (cmp.RolesSto
 type sourceUserRequest struct {
 	Username    string          `json:"name,omitempty"`        // Username for new account
 	Password    string          `json:"password,omitempty"`    // Password for new account
-	Permissions cmp.Permissions `json:"permissions,omitempty"` // Optional permissions
-	Roles       []cmp.Role      `json:"roles,omitempty"`       // Optional roles
+	Permissions cloudhub.Permissions `json:"permissions,omitempty"` // Optional permissions
+	Roles       []cloudhub.Role      `json:"roles,omitempty"`       // Optional roles
 }
 
 func (r *sourceUserRequest) ValidCreate() error {
@@ -795,7 +795,7 @@ func (r *sourceUserRequest) ValidUpdate() error {
 
 type sourceUserResponse struct {
 	Name           string               // Username for new account
-	Permissions    cmp.Permissions      // Account's permissions
+	Permissions    cloudhub.Permissions      // Account's permissions
 	Roles          []sourceRoleResponse // Roles if source uses them
 	Links          selfLinks            // Links are URI locations related to user
 	hasPermissions bool
@@ -825,17 +825,17 @@ func newSourceUserResponse(srcID int, name string) *sourceUserResponse {
 	}
 }
 
-func (u *sourceUserResponse) WithPermissions(perms cmp.Permissions) *sourceUserResponse {
+func (u *sourceUserResponse) WithPermissions(perms cloudhub.Permissions) *sourceUserResponse {
 	u.hasPermissions = true
 	if perms == nil {
-		perms = make(cmp.Permissions, 0)
+		perms = make(cloudhub.Permissions, 0)
 	}
 	u.Permissions = perms
 	return u
 }
 
 // WithRoles adds roles to the HTTP JSON response for a user
-func (u *sourceUserResponse) WithRoles(srcID int, roles []cmp.Role) *sourceUserResponse {
+func (u *sourceUserResponse) WithRoles(srcID int, roles []cloudhub.Role) *sourceUserResponse {
 	u.hasRoles = true
 	rr := make([]sourceRoleResponse, len(roles))
 	for i, role := range roles {
@@ -850,7 +850,7 @@ type selfLinks struct {
 }
 
 func newSelfLinks(id int, parent, resource string) selfLinks {
-	httpAPISrcs := "/cmp/v1/sources"
+	httpAPISrcs := "/cloudhub/v1/sources"
 	u := &url.URL{Path: resource}
 	encodedResource := u.String()
 	return selfLinks{
@@ -1011,7 +1011,7 @@ func (s *Service) RemoveSourceRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rid := httprouter.GetParamFromContext(ctx, "rid")
-	if err := roles.Delete(ctx, &cmp.Role{Name: rid}); err != nil {
+	if err := roles.Delete(ctx, &cloudhub.Role{Name: rid}); err != nil {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
@@ -1020,7 +1020,7 @@ func (s *Service) RemoveSourceRole(w http.ResponseWriter, r *http.Request) {
 
 // sourceRoleRequest is the format used for both creating and updating roles
 type sourceRoleRequest struct {
-	cmp.Role
+	cloudhub.Role
 }
 
 func (r *sourceRoleRequest) ValidCreate() error {
@@ -1050,11 +1050,11 @@ func (r *sourceRoleRequest) ValidUpdate() error {
 type sourceRoleResponse struct {
 	Users       []*sourceUserResponse `json:"users"`
 	Name        string                `json:"name"`
-	Permissions cmp.Permissions       `json:"permissions"`
+	Permissions cloudhub.Permissions       `json:"permissions"`
 	Links       selfLinks             `json:"links"`
 }
 
-func newSourceRoleResponse(srcID int, res *cmp.Role) sourceRoleResponse {
+func newSourceRoleResponse(srcID int, res *cloudhub.Role) sourceRoleResponse {
 	su := make([]*sourceUserResponse, len(res.Users))
 	for i := range res.Users {
 		name := res.Users[i].Name
@@ -1062,7 +1062,7 @@ func newSourceRoleResponse(srcID int, res *cmp.Role) sourceRoleResponse {
 	}
 
 	if res.Permissions == nil {
-		res.Permissions = make(cmp.Permissions, 0)
+		res.Permissions = make(cloudhub.Permissions, 0)
 	}
 	return sourceRoleResponse{
 		Name:        res.Name,

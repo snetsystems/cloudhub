@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/bouk/httprouter"
-	"github.com/snetsystems/cmp/backend/v2"
+	"github.com/snetsystems/cloudhub/backend/v2"
 )
 
 type cellV2Links struct {
@@ -39,7 +39,7 @@ func (r cellV2Response) MarshalJSON() ([]byte, error) {
 func newCellV2Response(c *platform.Cell) cellV2Response {
 	return cellV2Response{
 		Links: cellV2Links{
-			Self: fmt.Sprintf("/cmp/v2/cells/%s", c.ID),
+			Self: fmt.Sprintf("/cloudhub/v2/cells/%s", c.ID),
 		},
 		Cell: *c,
 	}
@@ -70,7 +70,7 @@ type getCellsResponse struct {
 func (s *Service) encodeGetCellsResponse(w http.ResponseWriter, cells []*platform.Cell) {
 	res := getCellsResponse{
 		Links: getCellsLinks{
-			Self: "/cmp/v2/cells",
+			Self: "/cloudhub/v2/cells",
 		},
 		Cells: make([]cellV2Response, 0, len(cells)),
 	}

@@ -7,8 +7,8 @@ import (
 
 	"github.com/bouk/httprouter"
 	"github.com/microcosm-cc/bluemonday"
-	cmp "github.com/snetsystems/cmp/backend"
-	idgen "github.com/snetsystems/cmp/backend/id"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	idgen "github.com/snetsystems/cloudhub/backend/id"
 )
 
 const (
@@ -23,17 +23,17 @@ type dashboardCellLinks struct {
 }
 
 type dashboardCellResponse struct {
-	cmp.DashboardCell
+	cloudhub.DashboardCell
 	Links dashboardCellLinks `json:"links"`
 }
 
-func newCellResponse(dID cmp.DashboardID, cell cmp.DashboardCell) dashboardCellResponse {
-	base := "/cmp/v1/dashboards"
+func newCellResponse(dID cloudhub.DashboardID, cell cloudhub.DashboardCell) dashboardCellResponse {
+	base := "/cloudhub/v1/dashboards"
 	if cell.Queries == nil {
-		cell.Queries = []cmp.DashboardQuery{}
+		cell.Queries = []cloudhub.DashboardQuery{}
 	}
 	if cell.CellColors == nil {
-		cell.CellColors = []cmp.CellColor{}
+		cell.CellColors = []cloudhub.CellColor{}
 	}
 	for i := range cell.Queries {
 		if cell.Queries[i].Type == "" {
@@ -41,7 +41,7 @@ func newCellResponse(dID cmp.DashboardID, cell cmp.DashboardCell) dashboardCellR
 		}
 	}
 	// Copy to handle race condition
-	newAxes := make(map[string]cmp.Axis, len(cell.Axes))
+	newAxes := make(map[string]cloudhub.Axis, len(cell.Axes))
 	for k, v := range cell.Axes {
 		if len(v.Bounds) == 0 {
 			v.Bounds = []string{"", ""}
@@ -52,7 +52,7 @@ func newCellResponse(dID cmp.DashboardID, cell cmp.DashboardCell) dashboardCellR
 	// ensure x, y, and y2 axes always returned
 	for _, lbl := range []string{"x", "y", "y2"} {
 		if _, found := newAxes[lbl]; !found {
-			newAxes[lbl] = cmp.Axis{
+			newAxes[lbl] = cloudhub.Axis{
 				Bounds: []string{"", ""},
 			}
 		}
@@ -71,7 +71,7 @@ func newCellResponse(dID cmp.DashboardID, cell cmp.DashboardCell) dashboardCellR
 	}
 }
 
-func newCellResponses(dID cmp.DashboardID, dcells []cmp.DashboardCell) []dashboardCellResponse {
+func newCellResponses(dID cloudhub.DashboardID, dcells []cloudhub.DashboardCell) []dashboardCellResponse {
 	cells := make([]dashboardCellResponse, len(dcells))
 	for i, cell := range dcells {
 		cells[i] = newCellResponse(dID, cell)
@@ -81,9 +81,9 @@ func newCellResponses(dID cmp.DashboardID, dcells []cmp.DashboardCell) []dashboa
 
 // ValidDashboardCellRequest verifies that the dashboard cells have a query and
 // have the correct axes specified
-func ValidDashboardCellRequest(c *cmp.DashboardCell) error {
+func ValidDashboardCellRequest(c *cloudhub.DashboardCell) error {
 	if c == nil {
-		return fmt.Errorf("CMP dashboard cell was nil")
+		return fmt.Errorf("CloudHub dashboard cell was nil")
 	}
 
 	if err := ValidateNote(c); err != nil {
@@ -111,18 +111,18 @@ func ValidDashboardCellRequest(c *cmp.DashboardCell) error {
 }
 
 // HasCorrectAxes verifies that only permitted axes exist within a DashboardCell
-func HasCorrectAxes(c *cmp.DashboardCell) error {
+func HasCorrectAxes(c *cloudhub.DashboardCell) error {
 	for label, axis := range c.Axes {
 		if !oneOf(label, "x", "y", "y2") {
-			return cmp.ErrInvalidAxis
+			return cloudhub.ErrInvalidAxis
 		}
 
 		if !oneOf(axis.Scale, "linear", "log", "") {
-			return cmp.ErrInvalidAxis
+			return cloudhub.ErrInvalidAxis
 		}
 
 		if !oneOf(axis.Base, "10", "2", "", "raw") {
-			return cmp.ErrInvalidAxis
+			return cloudhub.ErrInvalidAxis
 		}
 	}
 
@@ -130,47 +130,47 @@ func HasCorrectAxes(c *cmp.DashboardCell) error {
 }
 
 // HasCorrectColors verifies that the format of each color is correct
-func HasCorrectColors(c *cmp.DashboardCell) error {
+func HasCorrectColors(c *cloudhub.DashboardCell) error {
 	for _, color := range c.CellColors {
 		if !oneOf(color.Type, "max", "min", "threshold", "text", "background", "scale") {
-			return cmp.ErrInvalidColorType
+			return cloudhub.ErrInvalidColorType
 		}
 		if len(color.Hex) != 7 {
-			return cmp.ErrInvalidColor
+			return cloudhub.ErrInvalidColor
 		}
 	}
 	return nil
 }
 
 // HasCorrectLegend verifies that the format of the legend is correct
-func HasCorrectLegend(c *cmp.DashboardCell) error {
+func HasCorrectLegend(c *cloudhub.DashboardCell) error {
 	// No legend set
 	if c.Legend.Type == "" && c.Legend.Orientation == "" {
 		return nil
 	}
 
 	if c.Legend.Type == "" || c.Legend.Orientation == "" {
-		return cmp.ErrInvalidLegend
+		return cloudhub.ErrInvalidLegend
 	}
 	if !oneOf(c.Legend.Orientation, "top", "bottom", "right", "left") {
-		return cmp.ErrInvalidLegendOrient
+		return cloudhub.ErrInvalidLegendOrient
 	}
 
 	// Remember! if we add other types, update ErrInvalidLegendType
 	if !oneOf(c.Legend.Type, "static") {
-		return cmp.ErrInvalidLegendType
+		return cloudhub.ErrInvalidLegendType
 	}
 	return nil
 }
 
 // HasCorrectQueryType ensures that all query types have a non-empty value
-func HasCorrectQueryType(c *cmp.DashboardCell) error {
+func HasCorrectQueryType(c *cloudhub.DashboardCell) error {
 	for i := range c.Queries {
 		if c.Queries[i].Type == "" {
 			c.Queries[i].Type = "influxql"
 		}
 		if c.Queries[i].Type != "flux" && c.Queries[i].Type != "influxql" {
-			return cmp.ErrInvalidCellQueryType
+			return cloudhub.ErrInvalidCellQueryType
 		}
 	}
 	return nil
@@ -189,7 +189,7 @@ func oneOf(prop string, validOpts ...string) bool {
 
 // CorrectWidthHeight changes the cell to have at least the
 // minimum width and height
-func CorrectWidthHeight(c *cmp.DashboardCell) {
+func CorrectWidthHeight(c *cloudhub.DashboardCell) {
 	if c.W < 1 {
 		c.W = DefaultWidth
 	}
@@ -199,7 +199,7 @@ func CorrectWidthHeight(c *cmp.DashboardCell) {
 }
 
 // MoveTimeShift moves TimeShift from the QueryConfig to the DashboardQuery
-func MoveTimeShift(c *cmp.DashboardCell) {
+func MoveTimeShift(c *cloudhub.DashboardCell) {
 	for i, query := range c.Queries {
 		query.Shifts = query.QueryConfig.Shifts
 		c.Queries[i] = query
@@ -209,10 +209,10 @@ func MoveTimeShift(c *cmp.DashboardCell) {
 // AddQueryConfig updates a cell by converting InfluxQL into queryconfigs
 // If influxql cannot be represented by a full query config, then, the
 // query config's raw text is set to the command.
-func AddQueryConfig(c *cmp.DashboardCell) {
+func AddQueryConfig(c *cloudhub.DashboardCell) {
 	for i, q := range c.Queries {
 		qc := ToQueryConfig(q.Command)
-		qc.Shifts = append([]cmp.TimeShift(nil), q.Shifts...)
+		qc.Shifts = append([]cloudhub.TimeShift(nil), q.Shifts...)
 		q.Shifts = nil
 		q.QueryConfig = qc
 		c.Queries[i] = q
@@ -220,7 +220,7 @@ func AddQueryConfig(c *cmp.DashboardCell) {
 }
 
 // ValidateNote sanitizes note html against XSS attacks and validates note visibility
-func ValidateNote(c *cmp.DashboardCell) error {
+func ValidateNote(c *cloudhub.DashboardCell) error {
 	p := bluemonday.UGCPolicy()
 	c.Note = p.Sanitize(c.Note)
 
@@ -228,7 +228,7 @@ func ValidateNote(c *cmp.DashboardCell) error {
 		c.NoteVisibility = "default"
 	}
 	if c.NoteVisibility != "default" && c.NoteVisibility != "showWhenNoData" {
-		return fmt.Errorf("CMP dashboard cell note visibility value is invalid")
+		return fmt.Errorf("CloudHub dashboard cell note visibility value is invalid")
 	}
 
 	return nil
@@ -243,7 +243,7 @@ func (s *Service) DashboardCells(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	e, err := s.Store.Dashboards(ctx).Get(ctx, cmp.DashboardID(id))
+	e, err := s.Store.Dashboards(ctx).Get(ctx, cloudhub.DashboardID(id))
 	if err != nil {
 		notFound(w, id, s.Logger)
 		return
@@ -263,12 +263,12 @@ func (s *Service) NewDashboardCell(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	dash, err := s.Store.Dashboards(ctx).Get(ctx, cmp.DashboardID(id))
+	dash, err := s.Store.Dashboards(ctx).Get(ctx, cloudhub.DashboardID(id))
 	if err != nil {
 		notFound(w, id, s.Logger)
 		return
 	}
-	var cell cmp.DashboardCell
+	var cell cloudhub.DashboardCell
 	if err := json.NewDecoder(r.Body).Decode(&cell); err != nil {
 		invalidJSON(w, s.Logger)
 		return
@@ -313,7 +313,7 @@ func (s *Service) DashboardCellID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dash, err := s.Store.Dashboards(ctx).Get(ctx, cmp.DashboardID(id))
+	dash, err := s.Store.Dashboards(ctx).Get(ctx, cloudhub.DashboardID(id))
 	if err != nil {
 		notFound(w, id, s.Logger)
 		return
@@ -339,7 +339,7 @@ func (s *Service) RemoveDashboardCell(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	dash, err := s.Store.Dashboards(ctx).Get(ctx, cmp.DashboardID(id))
+	dash, err := s.Store.Dashboards(ctx).Get(ctx, cloudhub.DashboardID(id))
 	if err != nil {
 		notFound(w, id, s.Logger)
 		return
@@ -376,7 +376,7 @@ func (s *Service) ReplaceDashboardCell(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	dash, err := s.Store.Dashboards(ctx).Get(ctx, cmp.DashboardID(id))
+	dash, err := s.Store.Dashboards(ctx).Get(ctx, cloudhub.DashboardID(id))
 	if err != nil {
 		notFound(w, id, s.Logger)
 		return
@@ -395,7 +395,7 @@ func (s *Service) ReplaceDashboardCell(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var cell cmp.DashboardCell
+	var cell cloudhub.DashboardCell
 	if err := json.NewDecoder(r.Body).Decode(&cell); err != nil {
 		invalidJSON(w, s.Logger)
 		return

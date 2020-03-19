@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"regexp"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // ErrNotFlusher
@@ -20,7 +20,7 @@ type URLPrefixer struct {
 	Prefix string       // the prefix to be appended after any detected Attrs
 	Next   http.Handler // the http.Handler which will generate the content to be modified by this handler
 	Attrs  [][]byte     // a list of attrs that should have their URLs prefixed. For example `src="` or `href="` would be valid
-	Logger cmp.Logger   // The logger where prefixing errors will be dispatched to
+	Logger cloudhub.Logger   // The logger where prefixing errors will be dispatched to
 }
 
 type wrapResponseWriter struct {
@@ -178,7 +178,7 @@ func (up *URLPrefixer) maxlen(targets ...[]byte) int {
 // with the provided prefix. Additionally, it will prefix any `data-basepath`
 // attributes as well for informing front end logic about any prefixes. `next`
 // is the next http.Handler that will have its output prefixed
-func NewDefaultURLPrefixer(prefix string, next http.Handler, lg cmp.Logger) *URLPrefixer {
+func NewDefaultURLPrefixer(prefix string, next http.Handler, lg cloudhub.Logger) *URLPrefixer {
 	return &URLPrefixer{
 		Prefix: prefix,
 		Next:   next,

@@ -8,10 +8,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/log"
-	"github.com/snetsystems/cmp/backend/mocks"
-	"github.com/snetsystems/cmp/backend/organizations"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/log"
+	"github.com/snetsystems/cloudhub/backend/mocks"
+	"github.com/snetsystems/cloudhub/backend/organizations"
 )
 
 func TestOrganizationConfig(t *testing.T) {
@@ -19,7 +19,7 @@ func TestOrganizationConfig(t *testing.T) {
 		organizationID string
 	}
 	type fields struct {
-		organizationConfigStore cmp.OrganizationConfigStore
+		organizationConfigStore cloudhub.OrganizationConfigStore
 	}
 	type wants struct {
 		statusCode  int
@@ -40,17 +40,17 @@ func TestOrganizationConfig(t *testing.T) {
 			},
 			fields: fields{
 				organizationConfigStore: &mocks.OrganizationConfigStore{
-					FindOrCreateF: func(ctx context.Context, orgID string) (*cmp.OrganizationConfig, error) {
+					FindOrCreateF: func(ctx context.Context, orgID string) (*cloudhub.OrganizationConfig, error) {
 						switch orgID {
 						case "default":
-							return &cmp.OrganizationConfig{
+							return &cloudhub.OrganizationConfig{
 								OrganizationID: "default",
-								LogViewer: cmp.LogViewerConfig{
-									Columns: []cmp.LogViewerColumn{
+								LogViewer: cloudhub.LogViewerConfig{
+									Columns: []cloudhub.LogViewerColumn{
 										{
 											Name:     "time",
 											Position: 0,
-											Encodings: []cmp.ColumnEncoding{
+											Encodings: []cloudhub.ColumnEncoding{
 												{
 													Type:  "visibility",
 													Value: "hidden",
@@ -60,7 +60,7 @@ func TestOrganizationConfig(t *testing.T) {
 										{
 											Name:     "severity",
 											Position: 1,
-											Encodings: []cmp.ColumnEncoding{
+											Encodings: []cloudhub.ColumnEncoding{
 
 												{
 													Type:  "visibility",
@@ -79,7 +79,7 @@ func TestOrganizationConfig(t *testing.T) {
 										{
 											Name:     "timestamp",
 											Position: 2,
-											Encodings: []cmp.ColumnEncoding{
+											Encodings: []cloudhub.ColumnEncoding{
 
 												{
 													Type:  "visibility",
@@ -90,7 +90,7 @@ func TestOrganizationConfig(t *testing.T) {
 										{
 											Name:     "message",
 											Position: 3,
-											Encodings: []cmp.ColumnEncoding{
+											Encodings: []cloudhub.ColumnEncoding{
 
 												{
 													Type:  "visibility",
@@ -101,7 +101,7 @@ func TestOrganizationConfig(t *testing.T) {
 										{
 											Name:     "facility",
 											Position: 4,
-											Encodings: []cmp.ColumnEncoding{
+											Encodings: []cloudhub.ColumnEncoding{
 
 												{
 													Type:  "visibility",
@@ -112,7 +112,7 @@ func TestOrganizationConfig(t *testing.T) {
 										{
 											Name:     "procid",
 											Position: 5,
-											Encodings: []cmp.ColumnEncoding{
+											Encodings: []cloudhub.ColumnEncoding{
 
 												{
 													Type:  "visibility",
@@ -127,7 +127,7 @@ func TestOrganizationConfig(t *testing.T) {
 										{
 											Name:     "appname",
 											Position: 6,
-											Encodings: []cmp.ColumnEncoding{
+											Encodings: []cloudhub.ColumnEncoding{
 												{
 													Type:  "visibility",
 													Value: "visible",
@@ -141,7 +141,7 @@ func TestOrganizationConfig(t *testing.T) {
 										{
 											Name:     "host",
 											Position: 7,
-											Encodings: []cmp.ColumnEncoding{
+											Encodings: []cloudhub.ColumnEncoding{
 												{
 													Type:  "visibility",
 													Value: "visible",
@@ -152,7 +152,7 @@ func TestOrganizationConfig(t *testing.T) {
 								},
 							}, nil
 						default:
-							return nil, cmp.ErrOrganizationConfigNotFound
+							return nil, cloudhub.ErrOrganizationConfigNotFound
 						}
 					},
 				},
@@ -160,7 +160,7 @@ func TestOrganizationConfig(t *testing.T) {
 			wants: wants{
 				statusCode:  200,
 				contentType: "application/json",
-				body:        `{"links":{"self":"/cmp/v1/org_config","logViewer":"/cmp/v1/org_config/logviewer"},"organization":"default","logViewer":{"columns":[{"name":"time","position":0,"encodings":[{"type":"visibility","value":"hidden"}]},{"name":"severity","position":1,"encodings":[{"type":"visibility","value":"visible"},{"type":"label","value":"icon"},{"type":"label","value":"text"}]},{"name":"timestamp","position":2,"encodings":[{"type":"visibility","value":"visible"}]},{"name":"message","position":3,"encodings":[{"type":"visibility","value":"visible"}]},{"name":"facility","position":4,"encodings":[{"type":"visibility","value":"visible"}]},{"name":"procid","position":5,"encodings":[{"type":"visibility","value":"visible"},{"type":"displayName","value":"Proc ID"}]},{"name":"appname","position":6,"encodings":[{"type":"visibility","value":"visible"},{"type":"displayName","value":"Application"}]},{"name":"host","position":7,"encodings":[{"type":"visibility","value":"visible"}]}]}}`,
+				body:        `{"links":{"self":"/cloudhub/v1/org_config","logViewer":"/cloudhub/v1/org_config/logviewer"},"organization":"default","logViewer":{"columns":[{"name":"time","position":0,"encodings":[{"type":"visibility","value":"hidden"}]},{"name":"severity","position":1,"encodings":[{"type":"visibility","value":"visible"},{"type":"label","value":"icon"},{"type":"label","value":"text"}]},{"name":"timestamp","position":2,"encodings":[{"type":"visibility","value":"visible"}]},{"name":"message","position":3,"encodings":[{"type":"visibility","value":"visible"}]},{"name":"facility","position":4,"encodings":[{"type":"visibility","value":"visible"}]},{"name":"procid","position":5,"encodings":[{"type":"visibility","value":"visible"},{"type":"displayName","value":"Proc ID"}]},{"name":"appname","position":6,"encodings":[{"type":"visibility","value":"visible"},{"type":"displayName","value":"Application"}]},{"name":"host","position":7,"encodings":[{"type":"visibility","value":"visible"}]}]}}`,
 			},
 		},
 	}
@@ -203,7 +203,7 @@ func TestLogViewerOrganizationConfig(t *testing.T) {
 		organizationID string
 	}
 	type fields struct {
-		organizationConfigStore cmp.OrganizationConfigStore
+		organizationConfigStore cloudhub.OrganizationConfigStore
 	}
 	type wants struct {
 		statusCode  int
@@ -224,16 +224,16 @@ func TestLogViewerOrganizationConfig(t *testing.T) {
 			},
 			fields: fields{
 				organizationConfigStore: &mocks.OrganizationConfigStore{
-					FindOrCreateF: func(ctx context.Context, orgID string) (*cmp.OrganizationConfig, error) {
+					FindOrCreateF: func(ctx context.Context, orgID string) (*cloudhub.OrganizationConfig, error) {
 						switch orgID {
 						case "default":
-							return &cmp.OrganizationConfig{
-								LogViewer: cmp.LogViewerConfig{
-									Columns: []cmp.LogViewerColumn{
+							return &cloudhub.OrganizationConfig{
+								LogViewer: cloudhub.LogViewerConfig{
+									Columns: []cloudhub.LogViewerColumn{
 										{
 											Name:     "severity",
 											Position: 0,
-											Encodings: []cmp.ColumnEncoding{
+											Encodings: []cloudhub.ColumnEncoding{
 												{
 													Type:  "color",
 													Value: "emergency",
@@ -254,7 +254,7 @@ func TestLogViewerOrganizationConfig(t *testing.T) {
 								},
 							}, nil
 						default:
-							return nil, cmp.ErrOrganizationConfigNotFound
+							return nil, cloudhub.ErrOrganizationConfigNotFound
 						}
 					},
 				},
@@ -262,7 +262,7 @@ func TestLogViewerOrganizationConfig(t *testing.T) {
 			wants: wants{
 				statusCode:  200,
 				contentType: "application/json",
-				body:        `{"links":{"self":"/cmp/v1/org_config/logviewer"},"columns":[{"name":"severity","position":0,"encodings":[{"type":"color","value":"emergency","name":"ruby"},{"type":"color","value":"info","name":"rainforest"},{"type":"displayName","value":"Log Severity"}]}]}`,
+				body:        `{"links":{"self":"/cloudhub/v1/org_config/logviewer"},"columns":[{"name":"severity","position":0,"encodings":[{"type":"color","value":"emergency","name":"ruby"},{"type":"color","value":"info","name":"rainforest"},{"type":"displayName","value":"Log Severity"}]}]}`,
 			},
 		},
 	}
@@ -302,7 +302,7 @@ func TestLogViewerOrganizationConfig(t *testing.T) {
 
 func TestReplaceLogViewerOrganizationConfig(t *testing.T) {
 	type fields struct {
-		organizationConfigStore cmp.OrganizationConfigStore
+		organizationConfigStore cloudhub.OrganizationConfigStore
 	}
 	type args struct {
 		payload        interface{} // expects JSON serializable struct
@@ -324,16 +324,16 @@ func TestReplaceLogViewerOrganizationConfig(t *testing.T) {
 			name: "Set log viewer configuration",
 			fields: fields{
 				organizationConfigStore: &mocks.OrganizationConfigStore{
-					FindOrCreateF: func(ctx context.Context, orgID string) (*cmp.OrganizationConfig, error) {
+					FindOrCreateF: func(ctx context.Context, orgID string) (*cloudhub.OrganizationConfig, error) {
 						switch orgID {
 						case "1337":
-							return &cmp.OrganizationConfig{
-								LogViewer: cmp.LogViewerConfig{
-									Columns: []cmp.LogViewerColumn{
+							return &cloudhub.OrganizationConfig{
+								LogViewer: cloudhub.LogViewerConfig{
+									Columns: []cloudhub.LogViewerColumn{
 										{
 											Name:     "severity",
 											Position: 0,
-											Encodings: []cmp.ColumnEncoding{
+											Encodings: []cloudhub.ColumnEncoding{
 												{
 													Type:  "color",
 													Value: "info",
@@ -353,21 +353,21 @@ func TestReplaceLogViewerOrganizationConfig(t *testing.T) {
 								},
 							}, nil
 						default:
-							return nil, cmp.ErrOrganizationConfigNotFound
+							return nil, cloudhub.ErrOrganizationConfigNotFound
 						}
 					},
-					PutF: func(ctx context.Context, target *cmp.OrganizationConfig) error {
+					PutF: func(ctx context.Context, target *cloudhub.OrganizationConfig) error {
 						return nil
 					},
 				},
 			},
 			args: args{
-				payload: cmp.LogViewerConfig{
-					Columns: []cmp.LogViewerColumn{
+				payload: cloudhub.LogViewerConfig{
+					Columns: []cloudhub.LogViewerColumn{
 						{
 							Name:     "severity",
 							Position: 1,
-							Encodings: []cmp.ColumnEncoding{
+							Encodings: []cloudhub.ColumnEncoding{
 								{
 									Type:  "color",
 									Value: "info",
@@ -391,7 +391,7 @@ func TestReplaceLogViewerOrganizationConfig(t *testing.T) {
 						{
 							Name:     "messages",
 							Position: 0,
-							Encodings: []cmp.ColumnEncoding{
+							Encodings: []cloudhub.ColumnEncoding{
 								{
 									Type:  "displayName",
 									Value: "Log Messages",
@@ -409,23 +409,23 @@ func TestReplaceLogViewerOrganizationConfig(t *testing.T) {
 			wants: wants{
 				statusCode:  200,
 				contentType: "application/json",
-				body:        `{"links":{"self":"/cmp/v1/org_config/logviewer"},"columns":[{"name":"severity","position":1,"encodings":[{"type":"color","value":"info","name":"pineapple"},{"type":"color","value":"emergency","name":"ruby"},{"type":"visibility","value":"visible"},{"type":"label","value":"icon"}]},{"name":"messages","position":0,"encodings":[{"type":"displayName","value":"Log Messages"},{"type":"visibility","value":"visible"}]}]}`,
+				body:        `{"links":{"self":"/cloudhub/v1/org_config/logviewer"},"columns":[{"name":"severity","position":1,"encodings":[{"type":"color","value":"info","name":"pineapple"},{"type":"color","value":"emergency","name":"ruby"},{"type":"visibility","value":"visible"},{"type":"label","value":"icon"}]},{"name":"messages","position":0,"encodings":[{"type":"displayName","value":"Log Messages"},{"type":"visibility","value":"visible"}]}]}`,
 			},
 		},
 		{
 			name: "Set invalid log viewer configuration – empty",
 			fields: fields{
 				organizationConfigStore: &mocks.OrganizationConfigStore{
-					FindOrCreateF: func(ctx context.Context, orgID string) (*cmp.OrganizationConfig, error) {
+					FindOrCreateF: func(ctx context.Context, orgID string) (*cloudhub.OrganizationConfig, error) {
 						switch orgID {
 						case "1337":
-							return &cmp.OrganizationConfig{
-								LogViewer: cmp.LogViewerConfig{
-									Columns: []cmp.LogViewerColumn{
+							return &cloudhub.OrganizationConfig{
+								LogViewer: cloudhub.LogViewerConfig{
+									Columns: []cloudhub.LogViewerColumn{
 										{
 											Name:     "severity",
 											Position: 0,
-											Encodings: []cmp.ColumnEncoding{
+											Encodings: []cloudhub.ColumnEncoding{
 												{
 													Type:  "color",
 													Value: "info",
@@ -445,17 +445,17 @@ func TestReplaceLogViewerOrganizationConfig(t *testing.T) {
 								},
 							}, nil
 						default:
-							return nil, cmp.ErrOrganizationConfigNotFound
+							return nil, cloudhub.ErrOrganizationConfigNotFound
 						}
 					},
-					PutF: func(ctx context.Context, target *cmp.OrganizationConfig) error {
+					PutF: func(ctx context.Context, target *cloudhub.OrganizationConfig) error {
 						return nil
 					},
 				},
 			},
 			args: args{
-				payload: cmp.LogViewerConfig{
-					Columns: []cmp.LogViewerColumn{},
+				payload: cloudhub.LogViewerConfig{
+					Columns: []cloudhub.LogViewerColumn{},
 				},
 				organizationID: "1337",
 			},
@@ -469,16 +469,16 @@ func TestReplaceLogViewerOrganizationConfig(t *testing.T) {
 			name: "Set invalid log viewer configuration - duplicate column name",
 			fields: fields{
 				organizationConfigStore: &mocks.OrganizationConfigStore{
-					FindOrCreateF: func(ctx context.Context, orgID string) (*cmp.OrganizationConfig, error) {
+					FindOrCreateF: func(ctx context.Context, orgID string) (*cloudhub.OrganizationConfig, error) {
 						switch orgID {
 						case "1337":
-							return &cmp.OrganizationConfig{
-								LogViewer: cmp.LogViewerConfig{
-									Columns: []cmp.LogViewerColumn{
+							return &cloudhub.OrganizationConfig{
+								LogViewer: cloudhub.LogViewerConfig{
+									Columns: []cloudhub.LogViewerColumn{
 										{
 											Name:     "procid",
 											Position: 0,
-											Encodings: []cmp.ColumnEncoding{
+											Encodings: []cloudhub.ColumnEncoding{
 												{
 													Type:  "visibility",
 													Value: "hidden",
@@ -489,21 +489,21 @@ func TestReplaceLogViewerOrganizationConfig(t *testing.T) {
 								},
 							}, nil
 						default:
-							return nil, cmp.ErrOrganizationConfigNotFound
+							return nil, cloudhub.ErrOrganizationConfigNotFound
 						}
 					},
-					PutF: func(ctx context.Context, target *cmp.OrganizationConfig) error {
+					PutF: func(ctx context.Context, target *cloudhub.OrganizationConfig) error {
 						return nil
 					},
 				},
 			},
 			args: args{
-				payload: cmp.LogViewerConfig{
-					Columns: []cmp.LogViewerColumn{
+				payload: cloudhub.LogViewerConfig{
+					Columns: []cloudhub.LogViewerColumn{
 						{
 							Name:     "procid",
 							Position: 0,
-							Encodings: []cmp.ColumnEncoding{
+							Encodings: []cloudhub.ColumnEncoding{
 								{
 									Type:  "visibility",
 									Value: "hidden",
@@ -513,7 +513,7 @@ func TestReplaceLogViewerOrganizationConfig(t *testing.T) {
 						{
 							Name:     "procid",
 							Position: 1,
-							Encodings: []cmp.ColumnEncoding{
+							Encodings: []cloudhub.ColumnEncoding{
 								{
 									Type:  "visibility",
 									Value: "hidden",
@@ -534,16 +534,16 @@ func TestReplaceLogViewerOrganizationConfig(t *testing.T) {
 			name: "Set invalid log viewer configuration - multiple columns with same position value",
 			fields: fields{
 				organizationConfigStore: &mocks.OrganizationConfigStore{
-					FindOrCreateF: func(ctx context.Context, orgID string) (*cmp.OrganizationConfig, error) {
+					FindOrCreateF: func(ctx context.Context, orgID string) (*cloudhub.OrganizationConfig, error) {
 						switch orgID {
 						case "1337":
-							return &cmp.OrganizationConfig{
-								LogViewer: cmp.LogViewerConfig{
-									Columns: []cmp.LogViewerColumn{
+							return &cloudhub.OrganizationConfig{
+								LogViewer: cloudhub.LogViewerConfig{
+									Columns: []cloudhub.LogViewerColumn{
 										{
 											Name:     "procid",
 											Position: 0,
-											Encodings: []cmp.ColumnEncoding{
+											Encodings: []cloudhub.ColumnEncoding{
 												{
 													Type:  "visibility",
 													Value: "hidden",
@@ -554,21 +554,21 @@ func TestReplaceLogViewerOrganizationConfig(t *testing.T) {
 								},
 							}, nil
 						default:
-							return nil, cmp.ErrOrganizationConfigNotFound
+							return nil, cloudhub.ErrOrganizationConfigNotFound
 						}
 					},
-					PutF: func(ctx context.Context, target *cmp.OrganizationConfig) error {
+					PutF: func(ctx context.Context, target *cloudhub.OrganizationConfig) error {
 						return nil
 					},
 				},
 			},
 			args: args{
-				payload: cmp.LogViewerConfig{
-					Columns: []cmp.LogViewerColumn{
+				payload: cloudhub.LogViewerConfig{
+					Columns: []cloudhub.LogViewerColumn{
 						{
 							Name:     "procid",
 							Position: 0,
-							Encodings: []cmp.ColumnEncoding{
+							Encodings: []cloudhub.ColumnEncoding{
 								{
 									Type:  "visibility",
 									Value: "hidden",
@@ -578,7 +578,7 @@ func TestReplaceLogViewerOrganizationConfig(t *testing.T) {
 						{
 							Name:     "timestamp",
 							Position: 0,
-							Encodings: []cmp.ColumnEncoding{
+							Encodings: []cloudhub.ColumnEncoding{
 								{
 									Type:  "visibility",
 									Value: "hidden",
@@ -599,16 +599,16 @@ func TestReplaceLogViewerOrganizationConfig(t *testing.T) {
 			name: "Set invalid log viewer configuration – no visibility",
 			fields: fields{
 				organizationConfigStore: &mocks.OrganizationConfigStore{
-					FindOrCreateF: func(ctx context.Context, orgID string) (*cmp.OrganizationConfig, error) {
+					FindOrCreateF: func(ctx context.Context, orgID string) (*cloudhub.OrganizationConfig, error) {
 						switch orgID {
 						case "1337":
-							return &cmp.OrganizationConfig{
-								LogViewer: cmp.LogViewerConfig{
-									Columns: []cmp.LogViewerColumn{
+							return &cloudhub.OrganizationConfig{
+								LogViewer: cloudhub.LogViewerConfig{
+									Columns: []cloudhub.LogViewerColumn{
 										{
 											Name:     "severity",
 											Position: 0,
-											Encodings: []cmp.ColumnEncoding{
+											Encodings: []cloudhub.ColumnEncoding{
 												{
 													Type:  "color",
 													Value: "info",
@@ -624,21 +624,21 @@ func TestReplaceLogViewerOrganizationConfig(t *testing.T) {
 								},
 							}, nil
 						default:
-							return nil, cmp.ErrOrganizationConfigNotFound
+							return nil, cloudhub.ErrOrganizationConfigNotFound
 						}
 					},
-					PutF: func(ctx context.Context, target *cmp.OrganizationConfig) error {
+					PutF: func(ctx context.Context, target *cloudhub.OrganizationConfig) error {
 						return nil
 					},
 				},
 			},
 			args: args{
-				payload: cmp.LogViewerConfig{
-					Columns: []cmp.LogViewerColumn{
+				payload: cloudhub.LogViewerConfig{
+					Columns: []cloudhub.LogViewerColumn{
 						{
 							Name:     "severity",
 							Position: 1,
-							Encodings: []cmp.ColumnEncoding{
+							Encodings: []cloudhub.ColumnEncoding{
 								{
 									Type:  "color",
 									Value: "info",
@@ -704,7 +704,7 @@ func TestReplaceLogViewerOrganizationConfig(t *testing.T) {
 
 func Test_validLogViewerConfig(t *testing.T) {
 	type args struct {
-		LogViewer cmp.LogViewerConfig
+		LogViewer cloudhub.LogViewerConfig
 	}
 
 	tests := []struct {
@@ -715,7 +715,7 @@ func Test_validLogViewerConfig(t *testing.T) {
 		{
 			name: "cannot have 0 columns",
 			args: args{
-				LogViewer: cmp.LogViewerConfig{
+				LogViewer: cloudhub.LogViewerConfig{
 					Columns: nil,
 				},
 			},
@@ -724,12 +724,12 @@ func Test_validLogViewerConfig(t *testing.T) {
 		{
 			name: "can have 1 column",
 			args: args{
-				LogViewer: cmp.LogViewerConfig{
-					Columns: []cmp.LogViewerColumn{
+				LogViewer: cloudhub.LogViewerConfig{
+					Columns: []cloudhub.LogViewerColumn{
 						{
 							Name:     "timestamp",
 							Position: 2,
-							Encodings: []cmp.ColumnEncoding{
+							Encodings: []cloudhub.ColumnEncoding{
 
 								{
 									Type:  "visibility",
@@ -745,12 +745,12 @@ func Test_validLogViewerConfig(t *testing.T) {
 		{
 			name: "can have more than 1 column",
 			args: args{
-				LogViewer: cmp.LogViewerConfig{
-					Columns: []cmp.LogViewerColumn{
+				LogViewer: cloudhub.LogViewerConfig{
+					Columns: []cloudhub.LogViewerColumn{
 						{
 							Name:     "timestamp",
 							Position: 2,
-							Encodings: []cmp.ColumnEncoding{
+							Encodings: []cloudhub.ColumnEncoding{
 
 								{
 									Type:  "visibility",
@@ -761,7 +761,7 @@ func Test_validLogViewerConfig(t *testing.T) {
 						{
 							Name:     "message",
 							Position: 3,
-							Encodings: []cmp.ColumnEncoding{
+							Encodings: []cloudhub.ColumnEncoding{
 
 								{
 									Type:  "visibility",
@@ -772,7 +772,7 @@ func Test_validLogViewerConfig(t *testing.T) {
 						{
 							Name:     "facility",
 							Position: 4,
-							Encodings: []cmp.ColumnEncoding{
+							Encodings: []cloudhub.ColumnEncoding{
 
 								{
 									Type:  "visibility",
@@ -788,12 +788,12 @@ func Test_validLogViewerConfig(t *testing.T) {
 		{
 			name: "cannot have multiple columns with the same name value",
 			args: args{
-				LogViewer: cmp.LogViewerConfig{
-					Columns: []cmp.LogViewerColumn{
+				LogViewer: cloudhub.LogViewerConfig{
+					Columns: []cloudhub.LogViewerColumn{
 						{
 							Name:     "timestamp",
 							Position: 2,
-							Encodings: []cmp.ColumnEncoding{
+							Encodings: []cloudhub.ColumnEncoding{
 
 								{
 									Type:  "visibility",
@@ -804,7 +804,7 @@ func Test_validLogViewerConfig(t *testing.T) {
 						{
 							Name:     "timestamp",
 							Position: 3,
-							Encodings: []cmp.ColumnEncoding{
+							Encodings: []cloudhub.ColumnEncoding{
 
 								{
 									Type:  "visibility",
@@ -820,12 +820,12 @@ func Test_validLogViewerConfig(t *testing.T) {
 		{
 			name: "cannot have multiple columns with the same position value",
 			args: args{
-				LogViewer: cmp.LogViewerConfig{
-					Columns: []cmp.LogViewerColumn{
+				LogViewer: cloudhub.LogViewerConfig{
+					Columns: []cloudhub.LogViewerColumn{
 						{
 							Name:     "timestamp",
 							Position: 2,
-							Encodings: []cmp.ColumnEncoding{
+							Encodings: []cloudhub.ColumnEncoding{
 
 								{
 									Type:  "visibility",
@@ -836,7 +836,7 @@ func Test_validLogViewerConfig(t *testing.T) {
 						{
 							Name:     "message",
 							Position: 2,
-							Encodings: []cmp.ColumnEncoding{
+							Encodings: []cloudhub.ColumnEncoding{
 
 								{
 									Type:  "visibility",
@@ -852,12 +852,12 @@ func Test_validLogViewerConfig(t *testing.T) {
 		{
 			name: "each column must have a visibility encoding value of either 'visible' or 'hidden'",
 			args: args{
-				LogViewer: cmp.LogViewerConfig{
-					Columns: []cmp.LogViewerColumn{
+				LogViewer: cloudhub.LogViewerConfig{
+					Columns: []cloudhub.LogViewerColumn{
 						{
 							Name:     "timestamp",
 							Position: 2,
-							Encodings: []cmp.ColumnEncoding{
+							Encodings: []cloudhub.ColumnEncoding{
 
 								{
 									Type:  "visibility",
@@ -868,7 +868,7 @@ func Test_validLogViewerConfig(t *testing.T) {
 						{
 							Name:     "message",
 							Position: 3,
-							Encodings: []cmp.ColumnEncoding{
+							Encodings: []cloudhub.ColumnEncoding{
 
 								{
 									Type:  "visibility",
@@ -884,12 +884,12 @@ func Test_validLogViewerConfig(t *testing.T) {
 		{
 			name: "severity column can have 1 of each icon and text label encoding",
 			args: args{
-				LogViewer: cmp.LogViewerConfig{
-					Columns: []cmp.LogViewerColumn{
+				LogViewer: cloudhub.LogViewerConfig{
+					Columns: []cloudhub.LogViewerColumn{
 						{
 							Name:     "severity",
 							Position: 0,
-							Encodings: []cmp.ColumnEncoding{
+							Encodings: []cloudhub.ColumnEncoding{
 								{
 									Type:  "visibility",
 									Value: "visible",
@@ -917,12 +917,12 @@ func Test_validLogViewerConfig(t *testing.T) {
 		{
 			name: "severity column can 1 icon label encoding",
 			args: args{
-				LogViewer: cmp.LogViewerConfig{
-					Columns: []cmp.LogViewerColumn{
+				LogViewer: cloudhub.LogViewerConfig{
+					Columns: []cloudhub.LogViewerColumn{
 						{
 							Name:     "severity",
 							Position: 0,
-							Encodings: []cmp.ColumnEncoding{
+							Encodings: []cloudhub.ColumnEncoding{
 								{
 									Type:  "visibility",
 									Value: "visible",
@@ -946,12 +946,12 @@ func Test_validLogViewerConfig(t *testing.T) {
 		{
 			name: "severity column can have 1 text label encoding",
 			args: args{
-				LogViewer: cmp.LogViewerConfig{
-					Columns: []cmp.LogViewerColumn{
+				LogViewer: cloudhub.LogViewerConfig{
+					Columns: []cloudhub.LogViewerColumn{
 						{
 							Name:     "severity",
 							Position: 0,
-							Encodings: []cmp.ColumnEncoding{
+							Encodings: []cloudhub.ColumnEncoding{
 								{
 									Type:  "visibility",
 									Value: "visible",
@@ -975,12 +975,12 @@ func Test_validLogViewerConfig(t *testing.T) {
 		{
 			name: "severity column cannot have 0 label encodings",
 			args: args{
-				LogViewer: cmp.LogViewerConfig{
-					Columns: []cmp.LogViewerColumn{
+				LogViewer: cloudhub.LogViewerConfig{
+					Columns: []cloudhub.LogViewerColumn{
 						{
 							Name:     "severity",
 							Position: 0,
-							Encodings: []cmp.ColumnEncoding{
+							Encodings: []cloudhub.ColumnEncoding{
 								{
 									Type:  "visibility",
 									Value: "visible",
@@ -1000,12 +1000,12 @@ func Test_validLogViewerConfig(t *testing.T) {
 		{
 			name: "severity column cannot have more than 1 icon label encoding",
 			args: args{
-				LogViewer: cmp.LogViewerConfig{
-					Columns: []cmp.LogViewerColumn{
+				LogViewer: cloudhub.LogViewerConfig{
+					Columns: []cloudhub.LogViewerColumn{
 						{
 							Name:     "severity",
 							Position: 0,
-							Encodings: []cmp.ColumnEncoding{
+							Encodings: []cloudhub.ColumnEncoding{
 								{
 									Type:  "visibility",
 									Value: "visible",
@@ -1033,12 +1033,12 @@ func Test_validLogViewerConfig(t *testing.T) {
 		{
 			name: "severity column cannot have more than 1 text label encoding",
 			args: args{
-				LogViewer: cmp.LogViewerConfig{
-					Columns: []cmp.LogViewerColumn{
+				LogViewer: cloudhub.LogViewerConfig{
+					Columns: []cloudhub.LogViewerColumn{
 						{
 							Name:     "severity",
 							Position: 0,
-							Encodings: []cmp.ColumnEncoding{
+							Encodings: []cloudhub.ColumnEncoding{
 								{
 									Type:  "visibility",
 									Value: "visible",

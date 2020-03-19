@@ -39,10 +39,10 @@ export const mapCellsToSources = (cells: Cell[]) => {
 export const mapDashboardForDownload = (
   originalSources: Source[],
   originalDashboard: Dashboard,
-  cmpVersion: string
+  cloudhubVersion: string
 ): DashboardFile => {
   const sources = mapSourcesForDownload(originalSources)
-  const meta = {cmpVersion, sources}
+  const meta = {cloudhubVersion, sources}
 
   const dashboard = {
     ...originalDashboard,

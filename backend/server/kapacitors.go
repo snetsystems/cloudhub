@@ -7,8 +7,8 @@ import (
 	"net/url"
 
 	"github.com/bouk/httprouter"
-	cmp "github.com/snetsystems/cmp/backend"
-	kapa "github.com/snetsystems/cmp/backend/kapacitor"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	kapa "github.com/snetsystems/cloudhub/backend/kapacitor"
 )
 
 type postKapacitorRequest struct {
@@ -92,7 +92,7 @@ func (s *Service) NewKapacitor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	srv := cmp.Server{
+	srv := cloudhub.Server{
 		SrcID:              srcID,
 		Name:               *req.Name,
 		Username:           req.Username,
@@ -114,8 +114,8 @@ func (s *Service) NewKapacitor(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusCreated, res, s.Logger)
 }
 
-func newKapacitor(srv cmp.Server) kapacitor {
-	httpAPISrcs := "/cmp/v1/sources"
+func newKapacitor(srv cloudhub.Server) kapacitor {
+	httpAPISrcs := "/cloudhub/v1/sources"
 	return kapacitor{
 		ID:                 srv.ID,
 		Name:               srv.Name,
@@ -326,7 +326,7 @@ func (s *Service) KapacitorRulesPost(w http.ResponseWriter, r *http.Request) {
 
 	c := kapa.NewClient(srv.URL, srv.Username, srv.Password, srv.InsecureSkipVerify)
 
-	var req cmp.AlertRule
+	var req cloudhub.AlertRule
 	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
 		invalidData(w, err, s.Logger)
 		return
@@ -361,7 +361,7 @@ type alertLinks struct {
 }
 
 type alertResponse struct {
-	cmp.AlertRule
+	cloudhub.AlertRule
 	Links alertLinks `json:"links"`
 }
 
@@ -370,14 +370,14 @@ func newAlertResponse(task *kapa.Task, srcID, kapaID int) *alertResponse {
 	res := &alertResponse{
 		AlertRule: task.Rule,
 		Links: alertLinks{
-			Self:      fmt.Sprintf("/cmp/v1/sources/%d/kapacitors/%d/rules/%s", srcID, kapaID, task.ID),
-			Kapacitor: fmt.Sprintf("/cmp/v1/sources/%d/kapacitors/%d/proxy?path=%s", srcID, kapaID, url.QueryEscape(task.Href)),
-			Output:    fmt.Sprintf("/cmp/v1/sources/%d/kapacitors/%d/proxy?path=%s", srcID, kapaID, url.QueryEscape(task.HrefOutput)),
+			Self:      fmt.Sprintf("/cloudhub/v1/sources/%d/kapacitors/%d/rules/%s", srcID, kapaID, task.ID),
+			Kapacitor: fmt.Sprintf("/cloudhub/v1/sources/%d/kapacitors/%d/proxy?path=%s", srcID, kapaID, url.QueryEscape(task.Href)),
+			Output:    fmt.Sprintf("/cloudhub/v1/sources/%d/kapacitors/%d/proxy?path=%s", srcID, kapaID, url.QueryEscape(task.HrefOutput)),
 		},
 	}
 
 	if res.AlertNodes.Alerta == nil {
-		res.AlertNodes.Alerta = []*cmp.Alerta{}
+		res.AlertNodes.Alerta = []*cloudhub.Alerta{}
 	}
 
 	for i, a := range res.AlertNodes.Alerta {
@@ -388,7 +388,7 @@ func newAlertResponse(task *kapa.Task, srcID, kapaID int) *alertResponse {
 	}
 
 	if res.AlertNodes.Email == nil {
-		res.AlertNodes.Email = []*cmp.Email{}
+		res.AlertNodes.Email = []*cloudhub.Email{}
 	}
 
 	for i, a := range res.AlertNodes.Email {
@@ -399,7 +399,7 @@ func newAlertResponse(task *kapa.Task, srcID, kapaID int) *alertResponse {
 	}
 
 	if res.AlertNodes.Exec == nil {
-		res.AlertNodes.Exec = []*cmp.Exec{}
+		res.AlertNodes.Exec = []*cloudhub.Exec{}
 	}
 
 	for i, a := range res.AlertNodes.Exec {
@@ -410,19 +410,19 @@ func newAlertResponse(task *kapa.Task, srcID, kapaID int) *alertResponse {
 	}
 
 	if res.AlertNodes.HipChat == nil {
-		res.AlertNodes.HipChat = []*cmp.HipChat{}
+		res.AlertNodes.HipChat = []*cloudhub.HipChat{}
 	}
 
 	if res.AlertNodes.Kafka == nil {
-		res.AlertNodes.Kafka = []*cmp.Kafka{}
+		res.AlertNodes.Kafka = []*cloudhub.Kafka{}
 	}
 
 	if res.AlertNodes.Log == nil {
-		res.AlertNodes.Log = []*cmp.Log{}
+		res.AlertNodes.Log = []*cloudhub.Log{}
 	}
 
 	if res.AlertNodes.OpsGenie == nil {
-		res.AlertNodes.OpsGenie = []*cmp.OpsGenie{}
+		res.AlertNodes.OpsGenie = []*cloudhub.OpsGenie{}
 	}
 
 	for i, a := range res.AlertNodes.OpsGenie {
@@ -438,7 +438,7 @@ func newAlertResponse(task *kapa.Task, srcID, kapaID int) *alertResponse {
 	}
 
 	if res.AlertNodes.OpsGenie2 == nil {
-		res.AlertNodes.OpsGenie2 = []*cmp.OpsGenie{}
+		res.AlertNodes.OpsGenie2 = []*cloudhub.OpsGenie{}
 	}
 
 	for i, a := range res.AlertNodes.OpsGenie2 {
@@ -454,15 +454,15 @@ func newAlertResponse(task *kapa.Task, srcID, kapaID int) *alertResponse {
 	}
 
 	if res.AlertNodes.PagerDuty == nil {
-		res.AlertNodes.PagerDuty = []*cmp.PagerDuty{}
+		res.AlertNodes.PagerDuty = []*cloudhub.PagerDuty{}
 	}
 
 	if res.AlertNodes.PagerDuty2 == nil {
-		res.AlertNodes.PagerDuty2 = []*cmp.PagerDuty{}
+		res.AlertNodes.PagerDuty2 = []*cloudhub.PagerDuty{}
 	}
 
 	if res.AlertNodes.Posts == nil {
-		res.AlertNodes.Posts = []*cmp.Post{}
+		res.AlertNodes.Posts = []*cloudhub.Post{}
 	}
 
 	for i, a := range res.AlertNodes.Posts {
@@ -473,11 +473,11 @@ func newAlertResponse(task *kapa.Task, srcID, kapaID int) *alertResponse {
 	}
 
 	if res.AlertNodes.Pushover == nil {
-		res.AlertNodes.Pushover = []*cmp.Pushover{}
+		res.AlertNodes.Pushover = []*cloudhub.Pushover{}
 	}
 
 	if res.AlertNodes.Sensu == nil {
-		res.AlertNodes.Sensu = []*cmp.Sensu{}
+		res.AlertNodes.Sensu = []*cloudhub.Sensu{}
 	}
 
 	for i, a := range res.AlertNodes.Sensu {
@@ -488,23 +488,23 @@ func newAlertResponse(task *kapa.Task, srcID, kapaID int) *alertResponse {
 	}
 
 	if res.AlertNodes.Slack == nil {
-		res.AlertNodes.Slack = []*cmp.Slack{}
+		res.AlertNodes.Slack = []*cloudhub.Slack{}
 	}
 
 	if res.AlertNodes.Talk == nil {
-		res.AlertNodes.Talk = []*cmp.Talk{}
+		res.AlertNodes.Talk = []*cloudhub.Talk{}
 	}
 
 	if res.AlertNodes.TCPs == nil {
-		res.AlertNodes.TCPs = []*cmp.TCP{}
+		res.AlertNodes.TCPs = []*cloudhub.TCP{}
 	}
 
 	if res.AlertNodes.Telegram == nil {
-		res.AlertNodes.Telegram = []*cmp.Telegram{}
+		res.AlertNodes.Telegram = []*cloudhub.Telegram{}
 	}
 
 	if res.AlertNodes.VictorOps == nil {
-		res.AlertNodes.VictorOps = []*cmp.VictorOps{}
+		res.AlertNodes.VictorOps = []*cloudhub.VictorOps{}
 	}
 
 	if res.Query != nil {
@@ -513,7 +513,7 @@ func newAlertResponse(task *kapa.Task, srcID, kapaID int) *alertResponse {
 		}
 
 		if res.Query.Fields == nil {
-			res.Query.Fields = make([]cmp.Field, 0)
+			res.Query.Fields = make([]cloudhub.Field, 0)
 		}
 
 		if res.Query.GroupBy.Tags == nil {
@@ -528,7 +528,7 @@ func newAlertResponse(task *kapa.Task, srcID, kapaID int) *alertResponse {
 }
 
 // ValidRuleRequest checks if the requested rule change is valid
-func ValidRuleRequest(rule cmp.AlertRule) error {
+func ValidRuleRequest(rule cloudhub.AlertRule) error {
 	if rule.Query == nil {
 		return fmt.Errorf("invalid alert rule: no query defined")
 	}
@@ -569,7 +569,7 @@ func (s *Service) KapacitorRulesPut(w http.ResponseWriter, r *http.Request) {
 
 	tid := httprouter.GetParamFromContext(ctx, "tid")
 	c := kapa.NewClient(srv.URL, srv.Username, srv.Password, srv.InsecureSkipVerify)
-	var req cmp.AlertRule
+	var req cloudhub.AlertRule
 	if err = json.NewDecoder(r.Body).Decode(&req); err != nil {
 		invalidData(w, err, s.Logger)
 		return
@@ -584,7 +584,7 @@ func (s *Service) KapacitorRulesPut(w http.ResponseWriter, r *http.Request) {
 
 	// Check if the rule exists and is scoped correctly
 	if _, err = c.Get(ctx, tid); err != nil {
-		if err == cmp.ErrAlertNotFound {
+		if err == cloudhub.ErrAlertNotFound {
 			notFound(w, id, s.Logger)
 			return
 		}
@@ -653,7 +653,7 @@ func (s *Service) KapacitorRulesStatus(w http.ResponseWriter, r *http.Request) {
 	// Check if the rule exists and is scoped correctly
 	_, err = c.Get(ctx, tid)
 	if err != nil {
-		if err == cmp.ErrAlertNotFound {
+		if err == cloudhub.ErrAlertNotFound {
 			notFound(w, id, s.Logger)
 			return
 		}
@@ -746,7 +746,7 @@ func (s *Service) KapacitorRulesID(w http.ResponseWriter, r *http.Request) {
 	// Check if the rule exists within scope
 	task, err := c.Get(ctx, tid)
 	if err != nil {
-		if err == cmp.ErrAlertNotFound {
+		if err == cloudhub.ErrAlertNotFound {
 			notFound(w, id, s.Logger)
 			return
 		}
@@ -784,7 +784,7 @@ func (s *Service) KapacitorRulesDelete(w http.ResponseWriter, r *http.Request) {
 	tid := httprouter.GetParamFromContext(ctx, "tid")
 	// Check if the rule is linked to this server and kapacitor
 	if _, err := c.Get(ctx, tid); err != nil {
-		if err == cmp.ErrAlertNotFound {
+		if err == cloudhub.ErrAlertNotFound {
 			notFound(w, id, s.Logger)
 			return
 		}

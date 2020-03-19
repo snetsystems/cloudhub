@@ -3,11 +3,11 @@ package kapacitor
 import (
 	"fmt"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // InfluxOut creates a kapacitor influxDBOut node to write alert data to Database, RP, Measurement.
-func InfluxOut(rule cmp.AlertRule) (string, error) {
+func InfluxOut(rule cloudhub.AlertRule) (string, error) {
 	// For some of the alert, the data needs to be renamed (normalized)
 	// before being sent to influxdb.
 

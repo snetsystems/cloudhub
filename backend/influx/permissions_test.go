@@ -5,33 +5,33 @@ import (
 	"reflect"
 	"testing"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 func TestDifference(t *testing.T) {
 	t.Parallel()
 	type args struct {
-		wants cmp.Permissions
-		haves cmp.Permissions
+		wants cloudhub.Permissions
+		haves cloudhub.Permissions
 	}
 	tests := []struct {
 		name       string
 		args       args
-		wantRevoke cmp.Permissions
-		wantAdd    cmp.Permissions
+		wantRevoke cloudhub.Permissions
+		wantAdd    cloudhub.Permissions
 	}{
 		{
 			name: "add write to permissions",
 			args: args{
-				wants: cmp.Permissions{
-					cmp.Permission{
+				wants: cloudhub.Permissions{
+					cloudhub.Permission{
 						Scope:   "database",
 						Name:    "tensorflowdb",
 						Allowed: []string{"READ", "WRITE"},
 					},
 				},
-				haves: cmp.Permissions{
-					cmp.Permission{
+				haves: cloudhub.Permissions{
+					cloudhub.Permission{
 						Scope:   "database",
 						Name:    "tensorflowdb",
 						Allowed: []string{"READ"},
@@ -39,8 +39,8 @@ func TestDifference(t *testing.T) {
 				},
 			},
 			wantRevoke: nil,
-			wantAdd: cmp.Permissions{
-				cmp.Permission{
+			wantAdd: cloudhub.Permissions{
+				cloudhub.Permission{
 					Scope:   "database",
 					Name:    "tensorflowdb",
 					Allowed: []string{"READ", "WRITE"},
@@ -50,15 +50,15 @@ func TestDifference(t *testing.T) {
 		{
 			name: "revoke write to permissions",
 			args: args{
-				wants: cmp.Permissions{
-					cmp.Permission{
+				wants: cloudhub.Permissions{
+					cloudhub.Permission{
 						Scope:   "database",
 						Name:    "tensorflowdb",
 						Allowed: []string{"READ"},
 					},
 				},
-				haves: cmp.Permissions{
-					cmp.Permission{
+				haves: cloudhub.Permissions{
+					cloudhub.Permission{
 						Scope:   "database",
 						Name:    "tensorflowdb",
 						Allowed: []string{"READ", "WRITE"},
@@ -66,8 +66,8 @@ func TestDifference(t *testing.T) {
 				},
 			},
 			wantRevoke: nil,
-			wantAdd: cmp.Permissions{
-				cmp.Permission{
+			wantAdd: cloudhub.Permissions{
+				cloudhub.Permission{
 					Scope:   "database",
 					Name:    "tensorflowdb",
 					Allowed: []string{"READ"},
@@ -77,23 +77,23 @@ func TestDifference(t *testing.T) {
 		{
 			name: "revoke all permissions",
 			args: args{
-				wants: cmp.Permissions{
-					cmp.Permission{
+				wants: cloudhub.Permissions{
+					cloudhub.Permission{
 						Scope:   "database",
 						Name:    "tensorflowdb",
 						Allowed: []string{},
 					},
 				},
-				haves: cmp.Permissions{
-					cmp.Permission{
+				haves: cloudhub.Permissions{
+					cloudhub.Permission{
 						Scope:   "database",
 						Name:    "tensorflowdb",
 						Allowed: []string{"READ", "WRITE"},
 					},
 				},
 			},
-			wantRevoke: cmp.Permissions{
-				cmp.Permission{
+			wantRevoke: cloudhub.Permissions{
+				cloudhub.Permission{
 					Scope:   "database",
 					Name:    "tensorflowdb",
 					Allowed: []string{},
@@ -104,30 +104,30 @@ func TestDifference(t *testing.T) {
 		{
 			name: "add permissions different db",
 			args: args{
-				wants: cmp.Permissions{
-					cmp.Permission{
+				wants: cloudhub.Permissions{
+					cloudhub.Permission{
 						Scope:   "database",
 						Name:    "new",
 						Allowed: []string{"READ"},
 					},
 				},
-				haves: cmp.Permissions{
-					cmp.Permission{
+				haves: cloudhub.Permissions{
+					cloudhub.Permission{
 						Scope:   "database",
 						Name:    "old",
 						Allowed: []string{"READ", "WRITE"},
 					},
 				},
 			},
-			wantRevoke: cmp.Permissions{
-				cmp.Permission{
+			wantRevoke: cloudhub.Permissions{
+				cloudhub.Permission{
 					Scope:   "database",
 					Name:    "old",
 					Allowed: []string{"READ", "WRITE"},
 				},
 			},
-			wantAdd: cmp.Permissions{
-				cmp.Permission{
+			wantAdd: cloudhub.Permissions{
+				cloudhub.Permission{
 					Scope:   "database",
 					Name:    "new",
 					Allowed: []string{"READ"},
@@ -149,7 +149,7 @@ func TestDifference(t *testing.T) {
 func TestToPriv(t *testing.T) {
 	t.Parallel()
 	type args struct {
-		a cmp.Allowances
+		a cloudhub.Allowances
 	}
 	tests := []struct {
 		name string
@@ -159,42 +159,42 @@ func TestToPriv(t *testing.T) {
 		{
 			name: "no privs",
 			args: args{
-				a: cmp.Allowances{},
+				a: cloudhub.Allowances{},
 			},
 			want: NoPrivileges,
 		},
 		{
 			name: "read and write privs",
 			args: args{
-				a: cmp.Allowances{"READ", "WRITE"},
+				a: cloudhub.Allowances{"READ", "WRITE"},
 			},
 			want: All,
 		},
 		{
 			name: "write privs",
 			args: args{
-				a: cmp.Allowances{"WRITE"},
+				a: cloudhub.Allowances{"WRITE"},
 			},
 			want: Write,
 		},
 		{
 			name: "read privs",
 			args: args{
-				a: cmp.Allowances{"READ"},
+				a: cloudhub.Allowances{"READ"},
 			},
 			want: Read,
 		},
 		{
 			name: "all privs",
 			args: args{
-				a: cmp.Allowances{"ALL"},
+				a: cloudhub.Allowances{"ALL"},
 			},
 			want: All,
 		},
 		{
 			name: "bad privs",
 			args: args{
-				a: cmp.Allowances{"BAD"},
+				a: cloudhub.Allowances{"BAD"},
 			},
 			want: NoPrivileges,
 		},
@@ -210,7 +210,7 @@ func TestToGrant(t *testing.T) {
 	t.Parallel()
 	type args struct {
 		username string
-		perm     cmp.Permission
+		perm     cloudhub.Permission
 	}
 	tests := []struct {
 		name string
@@ -221,9 +221,9 @@ func TestToGrant(t *testing.T) {
 			name: "grant all for all dbs",
 			args: args{
 				username: "biff",
-				perm: cmp.Permission{
-					Scope:   cmp.AllScope,
-					Allowed: cmp.Allowances{"ALL"},
+				perm: cloudhub.Permission{
+					Scope:   cloudhub.AllScope,
+					Allowed: cloudhub.Allowances{"ALL"},
 				},
 			},
 			want: `GRANT ALL PRIVILEGES TO "biff"`,
@@ -232,10 +232,10 @@ func TestToGrant(t *testing.T) {
 			name: "grant all for one db",
 			args: args{
 				username: "biff",
-				perm: cmp.Permission{
-					Scope:   cmp.DBScope,
+				perm: cloudhub.Permission{
+					Scope:   cloudhub.DBScope,
 					Name:    "gray_sports_almanac",
-					Allowed: cmp.Allowances{"ALL"},
+					Allowed: cloudhub.Allowances{"ALL"},
 				},
 			},
 			want: `GRANT ALL ON "gray_sports_almanac" TO "biff"`,
@@ -244,10 +244,10 @@ func TestToGrant(t *testing.T) {
 			name: "bad allowance",
 			args: args{
 				username: "biff",
-				perm: cmp.Permission{
-					Scope:   cmp.DBScope,
+				perm: cloudhub.Permission{
+					Scope:   cloudhub.DBScope,
 					Name:    "gray_sports_almanac",
-					Allowed: cmp.Allowances{"bad"},
+					Allowed: cloudhub.Allowances{"bad"},
 				},
 			},
 			want: "",
@@ -264,7 +264,7 @@ func TestToRevoke(t *testing.T) {
 	t.Parallel()
 	type args struct {
 		username string
-		perm     cmp.Permission
+		perm     cloudhub.Permission
 	}
 	tests := []struct {
 		name string
@@ -275,9 +275,9 @@ func TestToRevoke(t *testing.T) {
 			name: "revoke all for all dbs",
 			args: args{
 				username: "biff",
-				perm: cmp.Permission{
-					Scope:   cmp.AllScope,
-					Allowed: cmp.Allowances{"ALL"},
+				perm: cloudhub.Permission{
+					Scope:   cloudhub.AllScope,
+					Allowed: cloudhub.Allowances{"ALL"},
 				},
 			},
 			want: `REVOKE ALL PRIVILEGES FROM "biff"`,
@@ -286,10 +286,10 @@ func TestToRevoke(t *testing.T) {
 			name: "revoke all for one db",
 			args: args{
 				username: "biff",
-				perm: cmp.Permission{
-					Scope:   cmp.DBScope,
+				perm: cloudhub.Permission{
+					Scope:   cloudhub.DBScope,
 					Name:    "pleasure_paradice",
-					Allowed: cmp.Allowances{},
+					Allowed: cloudhub.Allowances{},
 				},
 			},
 			want: `REVOKE ALL PRIVILEGES ON "pleasure_paradice" FROM "biff"`,
@@ -307,31 +307,31 @@ func Test_showResults_Users(t *testing.T) {
 	tests := []struct {
 		name   string
 		octets []byte
-		want   []cmp.User
+		want   []cloudhub.User
 	}{
 		{
 			name:   "admin and non-admin",
 			octets: []byte(`[{"series":[{"columns":["user","admin"],"values":[["admin",true],["reader",false]]}]}]`),
-			want: []cmp.User{
+			want: []cloudhub.User{
 				{
 					Name: "admin",
-					Permissions: cmp.Permissions{
+					Permissions: cloudhub.Permissions{
 						{
-							Scope:   cmp.AllScope,
-							Allowed: cmp.Allowances{"ALL"},
+							Scope:   cloudhub.AllScope,
+							Allowed: cloudhub.Allowances{"ALL"},
 						},
 					},
 				},
 				{
 					Name:        "reader",
-					Permissions: cmp.Permissions{},
+					Permissions: cloudhub.Permissions{},
 				},
 			},
 		},
 		{
 			name:   "bad JSON",
 			octets: []byte(`[{"series":[{"columns":["user","admin"],"values":[[1,true],["reader","false"]]}]}]`),
-			want:   []cmp.User{},
+			want:   []cloudhub.User{},
 		},
 	}
 
@@ -349,13 +349,13 @@ func Test_showResults_Permissions(t *testing.T) {
 	tests := []struct {
 		name   string
 		octets []byte
-		want   cmp.Permissions
+		want   cloudhub.Permissions
 	}{
 		{
 			name:   "write for one db",
 			octets: []byte(`[{"series":[{"columns":["database","privilege"],"values":[["tensorflowdb","WRITE"]]}]}]`),
-			want: cmp.Permissions{
-				cmp.Permission{
+			want: cloudhub.Permissions{
+				cloudhub.Permission{
 					Scope:   "database",
 					Name:    "tensorflowdb",
 					Allowed: []string{"WRITE"},
@@ -365,8 +365,8 @@ func Test_showResults_Permissions(t *testing.T) {
 		{
 			name:   "all for one db",
 			octets: []byte(`[{"series":[{"columns":["database","privilege"],"values":[["tensorflowdb","ALL PRIVILEGES"]]}]}]`),
-			want: cmp.Permissions{
-				cmp.Permission{
+			want: cloudhub.Permissions{
+				cloudhub.Permission{
 					Scope:   "database",
 					Name:    "tensorflowdb",
 					Allowed: []string{"WRITE", "READ"},
@@ -376,8 +376,8 @@ func Test_showResults_Permissions(t *testing.T) {
 		{
 			name:   "read for one db",
 			octets: []byte(`[{"series":[{"columns":["database","privilege"],"values":[["tensorflowdb","READ"]]}]}]`),
-			want: cmp.Permissions{
-				cmp.Permission{
+			want: cloudhub.Permissions{
+				cloudhub.Permission{
 					Scope:   "database",
 					Name:    "tensorflowdb",
 					Allowed: []string{"READ"},
@@ -387,8 +387,8 @@ func Test_showResults_Permissions(t *testing.T) {
 		{
 			name:   "other all for one db",
 			octets: []byte(`[{"series":[{"columns":["database","privilege"],"values":[["tensorflowdb","ALL"]]}]}]`),
-			want: cmp.Permissions{
-				cmp.Permission{
+			want: cloudhub.Permissions{
+				cloudhub.Permission{
 					Scope:   "database",
 					Name:    "tensorflowdb",
 					Allowed: []string{"WRITE", "READ"},
@@ -398,17 +398,17 @@ func Test_showResults_Permissions(t *testing.T) {
 		{
 			name:   "other all for one db",
 			octets: []byte(`[{"series":[{"columns":["database","privilege"],"values":[["tensorflowdb","NO PRIVILEGES"]]}]}]`),
-			want:   cmp.Permissions{},
+			want:   cloudhub.Permissions{},
 		},
 		{
 			name:   "bad JSON",
 			octets: []byte(`[{"series":[{"columns":["database","privilege"],"values":[[1,"WRITE"]]}]}]`),
-			want:   cmp.Permissions{},
+			want:   cloudhub.Permissions{},
 		},
 		{
 			name:   "bad JSON",
 			octets: []byte(`[{"series":[{"columns":["database","privilege"],"values":[["tensorflowdb",1]]}]}]`),
-			want:   cmp.Permissions{},
+			want:   cloudhub.Permissions{},
 		},
 	}
 

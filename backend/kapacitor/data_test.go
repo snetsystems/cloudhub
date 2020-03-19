@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 var config = `{
@@ -38,12 +38,12 @@ var config = `{
 }`
 
 func TestData(t *testing.T) {
-	q := cmp.QueryConfig{}
+	q := cloudhub.QueryConfig{}
 	err := json.Unmarshal([]byte(config), &q)
 	if err != nil {
 		t.Errorf("Error unmarshaling %v", err)
 	}
-	alert := cmp.AlertRule{
+	alert := cloudhub.AlertRule{
 		Trigger: "deadman",
 		Query:   &q,
 	}

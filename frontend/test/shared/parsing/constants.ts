@@ -362,7 +362,7 @@ export const config = {
     'content-encoding': 'gzip',
     'request-id': '7cbcdc60-dc74-11e7-abeb-000000000000',
     'content-length': '1121',
-    'x-cmp-version': '1.3.8.0-1002-g59bb3f9e',
+    'x-cloudhub-version': '1.3.8.0-1002-g59bb3f9e',
     'content-type': 'application/json; charset=utf-8',
   },
   config: {
@@ -376,7 +376,7 @@ export const config = {
     xsrfHeaderName: 'X-XSRF-TOKEN',
     maxContentLength: -1,
     method: 'GET',
-    url: '/cmp/v1/sources/20/kapacitors/8/proxy',
+    url: '/cloudhub/v1/sources/20/kapacitors/8/proxy',
     data: '',
     params: {
       path: '/kapacitor/v1/config',
@@ -389,7 +389,7 @@ export const config = {
   external: {
     statusFeed: 'https://www.influxdata.com/feed/json',
   },
-  meLink: '/cmp/v1/me',
+  meLink: '/cloudhub/v1/me',
 }
 
 export const configResponse = [
@@ -833,7 +833,7 @@ export const emptyConfig = {
     'content-encoding': 'gzip',
     'request-id': '31e90f0a-dc85-11e7-801f-000000000000',
     'content-length': '1060',
-    'x-cmp-version': '1.3.8.0-1002-g59bb3f9e',
+    'x-cloudhub-version': '1.3.8.0-1002-g59bb3f9e',
     'content-type': 'application/json; charset=utf-8',
   },
   config: {
@@ -847,7 +847,7 @@ export const emptyConfig = {
     xsrfHeaderName: 'X-XSRF-TOKEN',
     maxContentLength: -1,
     method: 'GET',
-    url: '/cmp/v1/sources/21/kapacitors/7/proxy',
+    url: '/cloudhub/v1/sources/21/kapacitors/7/proxy',
     data: '',
     params: {
       path: '/kapacitor/v1/config',
@@ -860,7 +860,7 @@ export const emptyConfig = {
   external: {
     statusFeed: 'https://www.influxdata.com/feed/json',
   },
-  meLink: '/cmp/v1/me',
+  meLink: '/cloudhub/v1/me',
 }
 
 export const emptyConfigResponse = [
@@ -1188,11 +1188,11 @@ export const handlersOfKindExpected = {
 }
 
 export const rule = {
-  id: 'cmp-v1-8e3ba5df-f5ca-4cf4-848e-7e4a4acde86e',
+  id: 'cloudhub-v1-8e3ba5df-f5ca-4cf4-848e-7e4a4acde86e',
   tickscript:
-    "var db = 'telegraf'\n\nvar rp = 'autogen'\n\nvar measurement = 'cpu'\n\nvar groupBy = []\n\nvar whereFilter = lambda: (\"host\" == 'denizs-MacBook-Pro.local')\n\nvar name = 'Untitled Rule'\n\nvar idVar = name + ':{{.Group}}'\n\nvar message = ''\n\nvar idTag = 'alertID'\n\nvar levelTag = 'level'\n\nvar messageField = 'message'\n\nvar durationField = 'duration'\n\nvar outputDB = 'cmp'\n\nvar outputRP = 'autogen'\n\nvar outputMeasurement = 'alerts'\n\nvar triggerType = 'threshold'\n\nvar details = 'lkajsd;fl'\n\nvar crit = 30\n\nvar data = stream\n    |from()\n        .database(db)\n        .retentionPolicy(rp)\n        .measurement(measurement)\n        .groupBy(groupBy)\n        .where(whereFilter)\n    |eval(lambda: \"usage_system\")\n        .as('value')\n\nvar trigger = data\n    |alert()\n        .crit(lambda: \"value\" > crit)\n        .stateChangesOnly()\n        .message(message)\n        .id(idVar)\n        .idTag(idTag)\n        .levelTag(levelTag)\n        .messageField(messageField)\n        .durationField(durationField)\n        .details(details)\n        .post('http://example.com')\n        .header('key', 'val')\n        .tcp('exampleendpoint.com:8082')\n        .email()\n        .to('bob@domain.com')\n        .email()\n        .to('asdfsdf')\n        .exec('command', 'arg')\n        .log('/tmp/log')\n        .victorOps()\n        .routingKey('victoropsasdf')\n        .pagerDuty()\n        .pushover()\n        .device('asdf')\n        .title('asdf')\n        .sound('asdf')\n        .sensu()\n        .source('Kapacitor')\n        .handlers('asdf')\n        .slack()\n        .channel('slack')\n        .username('asdf')\n        .iconEmoji('asdf')\n        .telegram()\n        .chatId('telegram')\n        .parseMode('Markdown')\n        .hipChat()\n        .room('room')\n        .alerta()\n        .resource('alerta')\n        .event('alerta')\n        .environment('alerta')\n        .group('alerta')\n        .value('alerta')\n        .origin('alerta')\n        .services('alerta')\n        .opsGenie()\n        .teams('team')\n        .recipients('recip')\n        .opsGenie()\n        .teams('team')\n        .recipients('team')\n        .talk()\n\ntrigger\n    |eval(lambda: float(\"value\"))\n        .as('value')\n        .keep()\n    |influxDBOut()\n        .create()\n        .database(outputDB)\n        .retentionPolicy(outputRP)\n        .measurement(outputMeasurement)\n        .tag('alertName', name)\n        .tag('triggerType', triggerType)\n\ntrigger\n    |httpOut('output')\n",
+    "var db = 'telegraf'\n\nvar rp = 'autogen'\n\nvar measurement = 'cpu'\n\nvar groupBy = []\n\nvar whereFilter = lambda: (\"host\" == 'denizs-MacBook-Pro.local')\n\nvar name = 'Untitled Rule'\n\nvar idVar = name + ':{{.Group}}'\n\nvar message = ''\n\nvar idTag = 'alertID'\n\nvar levelTag = 'level'\n\nvar messageField = 'message'\n\nvar durationField = 'duration'\n\nvar outputDB = 'cloudhub'\n\nvar outputRP = 'autogen'\n\nvar outputMeasurement = 'alerts'\n\nvar triggerType = 'threshold'\n\nvar details = 'lkajsd;fl'\n\nvar crit = 30\n\nvar data = stream\n    |from()\n        .database(db)\n        .retentionPolicy(rp)\n        .measurement(measurement)\n        .groupBy(groupBy)\n        .where(whereFilter)\n    |eval(lambda: \"usage_system\")\n        .as('value')\n\nvar trigger = data\n    |alert()\n        .crit(lambda: \"value\" > crit)\n        .stateChangesOnly()\n        .message(message)\n        .id(idVar)\n        .idTag(idTag)\n        .levelTag(levelTag)\n        .messageField(messageField)\n        .durationField(durationField)\n        .details(details)\n        .post('http://example.com')\n        .header('key', 'val')\n        .tcp('exampleendpoint.com:8082')\n        .email()\n        .to('bob@domain.com')\n        .email()\n        .to('asdfsdf')\n        .exec('command', 'arg')\n        .log('/tmp/log')\n        .victorOps()\n        .routingKey('victoropsasdf')\n        .pagerDuty()\n        .pushover()\n        .device('asdf')\n        .title('asdf')\n        .sound('asdf')\n        .sensu()\n        .source('Kapacitor')\n        .handlers('asdf')\n        .slack()\n        .channel('slack')\n        .username('asdf')\n        .iconEmoji('asdf')\n        .telegram()\n        .chatId('telegram')\n        .parseMode('Markdown')\n        .hipChat()\n        .room('room')\n        .alerta()\n        .resource('alerta')\n        .event('alerta')\n        .environment('alerta')\n        .group('alerta')\n        .value('alerta')\n        .origin('alerta')\n        .services('alerta')\n        .opsGenie()\n        .teams('team')\n        .recipients('recip')\n        .opsGenie()\n        .teams('team')\n        .recipients('team')\n        .talk()\n\ntrigger\n    |eval(lambda: float(\"value\"))\n        .as('value')\n        .keep()\n    |influxDBOut()\n        .create()\n        .database(outputDB)\n        .retentionPolicy(outputRP)\n        .measurement(outputMeasurement)\n        .tag('alertName', name)\n        .tag('triggerType', triggerType)\n\ntrigger\n    |httpOut('output')\n",
   query: {
-    id: 'cmp-v1-8e3ba5df-f5ca-4cf4-848e-7e4a4acde86e',
+    id: 'cloudhub-v1-8e3ba5df-f5ca-4cf4-848e-7e4a4acde86e',
     database: 'telegraf',
     measurement: 'cpu',
     retentionPolicy: 'autogen',
@@ -1348,11 +1348,11 @@ export const rule = {
   'last-enabled': '2017-12-08T18:54:22.697657606-08:00',
   links: {
     self:
-      '/cmp/v1/sources/21/kapacitors/7/rules/cmp-v1-8e3ba5df-f5ca-4cf4-848e-7e4a4acde86e',
+      '/cloudhub/v1/sources/21/kapacitors/7/rules/cloudhub-v1-8e3ba5df-f5ca-4cf4-848e-7e4a4acde86e',
     kapacitor:
-      '/cmp/v1/sources/21/kapacitors/7/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcmp-v1-8e3ba5df-f5ca-4cf4-848e-7e4a4acde86e',
+      '/cloudhub/v1/sources/21/kapacitors/7/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcloudhub-v1-8e3ba5df-f5ca-4cf4-848e-7e4a4acde86e',
     output:
-      '/cmp/v1/sources/21/kapacitors/7/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcmp-v1-8e3ba5df-f5ca-4cf4-848e-7e4a4acde86e%2Foutput',
+      '/cloudhub/v1/sources/21/kapacitors/7/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcloudhub-v1-8e3ba5df-f5ca-4cf4-848e-7e4a4acde86e%2Foutput',
   },
-  queryID: 'cmp-v1-8e3ba5df-f5ca-4cf4-848e-7e4a4acde86e',
+  queryID: 'cloudhub-v1-8e3ba5df-f5ca-4cf4-848e-7e4a4acde86e',
 }

@@ -7,16 +7,16 @@ import (
 	"testing"
 
 	"github.com/bouk/httprouter"
-	"github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/log"
-	"github.com/snetsystems/cmp/backend/mocks"
-	"github.com/snetsystems/cmp/backend/oauth2"
+	"github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/log"
+	"github.com/snetsystems/cloudhub/backend/mocks"
+	"github.com/snetsystems/cloudhub/backend/oauth2"
 )
 
 func TestRouteMatchesPrincipal(t *testing.T) {
 	type fields struct {
-		OrganizationsStore cmp.OrganizationsStore
-		Logger             cmp.Logger
+		OrganizationsStore cloudhub.OrganizationsStore
+		Logger             cloudhub.Logger
 	}
 	type args struct {
 		useAuth      bool
@@ -37,8 +37,8 @@ func TestRouteMatchesPrincipal(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "default",
 						}, nil
 					},
@@ -67,8 +67,8 @@ func TestRouteMatchesPrincipal(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "default",
 						}, nil
 					},
@@ -97,8 +97,8 @@ func TestRouteMatchesPrincipal(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "default",
 						}, nil
 					},
@@ -123,8 +123,8 @@ func TestRouteMatchesPrincipal(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				OrganizationsStore: &mocks.OrganizationsStore{
-					DefaultOrganizationF: func(ctx context.Context) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					DefaultOrganizationF: func(ctx context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID: "default",
 						}, nil
 					},

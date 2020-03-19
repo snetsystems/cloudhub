@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/bouk/httprouter"
-	platform "github.com/snetsystems/cmp/backend/v2"
+	platform "github.com/snetsystems/cloudhub/backend/v2"
 )
 
 type dashboardV2Links struct {
@@ -26,7 +26,7 @@ func newDashboardV2Response(d *platform.Dashboard) dashboardV2Response {
 	}
 	return dashboardV2Response{
 		Links: dashboardV2Links{
-			Self: fmt.Sprintf("/cmp/v2/dashboards/%s", d.ID),
+			Self: fmt.Sprintf("/cloudhub/v2/dashboards/%s", d.ID),
 		},
 		Dashboard: *d,
 	}
@@ -57,7 +57,7 @@ type getDashboardsV2Response struct {
 func (s *Service) encodeGetDashboardsResponse(w http.ResponseWriter, dashboards []*platform.Dashboard) {
 	res := getDashboardsV2Response{
 		Links: getDashboardsV2Links{
-			Self: "/cmp/v2/dashboards",
+			Self: "/cloudhub/v2/dashboards",
 		},
 		Dashboards: make([]dashboardV2Response, 0, len(dashboards)),
 	}

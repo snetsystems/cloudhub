@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
-	platform "github.com/snetsystems/cmp/backend/v2"
+	platform "github.com/snetsystems/cloudhub/backend/v2"
 )
 
 func TestCell_MarshalJSON(t *testing.T) {
@@ -38,7 +38,7 @@ func TestCell_MarshalJSON(t *testing.T) {
   "id": "0",
   "name": "hello",
   "visualization": {
-    "type": "cmp-v1",
+    "type": "cloudhub-v1",
     "queries": null,
     "axes": null,
     "visualizationType": "line",

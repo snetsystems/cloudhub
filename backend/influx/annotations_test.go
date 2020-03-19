@@ -9,25 +9,25 @@ import (
 	"time"
 
 	gocmp "github.com/google/go-cmp/cmp"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/mocks"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/mocks"
 )
 
 func Test_toPoint(t *testing.T) {
 	tests := []struct {
 		name string
-		anno *cmp.Annotation
+		anno *cloudhub.Annotation
 		now  time.Time
-		want cmp.Point
+		want cloudhub.Point
 	}{
 		0: {
 			name: "convert annotation to point w/o start and end times",
-			anno: &cmp.Annotation{
+			anno: &cloudhub.Annotation{
 				ID:   "1",
 				Text: "mytext",
 			},
 			now: time.Unix(0, 0),
-			want: cmp.Point{
+			want: cloudhub.Point{
 				Database:        AnnotationsDB,
 				RetentionPolicy: DefaultRP,
 				Measurement:     DefaultMeasurement,
@@ -45,14 +45,14 @@ func Test_toPoint(t *testing.T) {
 		},
 		1: {
 			name: "convert annotation to point with start/end time",
-			anno: &cmp.Annotation{
+			anno: &cloudhub.Annotation{
 				ID:        "1",
 				Text:      "mytext",
 				StartTime: time.Unix(100, 0),
 				EndTime:   time.Unix(200, 0),
 			},
 			now: time.Unix(0, 0),
-			want: cmp.Point{
+			want: cloudhub.Point{
 				Database:        AnnotationsDB,
 				RetentionPolicy: DefaultRP,
 				Measurement:     DefaultMeasurement,
@@ -81,18 +81,18 @@ func Test_toPoint(t *testing.T) {
 func Test_toDeletedPoint(t *testing.T) {
 	tests := []struct {
 		name string
-		anno *cmp.Annotation
+		anno *cloudhub.Annotation
 		now  time.Time
-		want cmp.Point
+		want cloudhub.Point
 	}{
 		0: {
 			name: "convert annotation to point w/o start and end times",
-			anno: &cmp.Annotation{
+			anno: &cloudhub.Annotation{
 				ID:      "1",
 				EndTime: time.Unix(0, 0),
 			},
 			now: time.Unix(0, 0),
-			want: cmp.Point{
+			want: cloudhub.Point{
 				Database:        AnnotationsDB,
 				RetentionPolicy: DefaultRP,
 				Measurement:     DefaultMeasurement,
@@ -257,15 +257,15 @@ func TestAnnotationStore_queryAnnotations(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		client  cmp.TimeSeries
+		client  cloudhub.TimeSeries
 		args    args
-		want    []cmp.Annotation
+		want    []cloudhub.Annotation
 		wantErr bool
 	}{
 		{
 			name: "query error returns an error",
 			client: &mocks.TimeSeries{
-				QueryF: func(context.Context, cmp.Query) (cmp.Response, error) {
+				QueryF: func(context.Context, cloudhub.Query) (cloudhub.Response, error) {
 					return nil, fmt.Errorf("error")
 				},
 			},
@@ -274,7 +274,7 @@ func TestAnnotationStore_queryAnnotations(t *testing.T) {
 		{
 			name: "response marshal error returns an error",
 			client: &mocks.TimeSeries{
-				QueryF: func(context.Context, cmp.Query) (cmp.Response, error) {
+				QueryF: func(context.Context, cloudhub.Query) (cloudhub.Response, error) {
 					return mocks.NewResponse("", fmt.Errorf("")), nil
 				},
 			},
@@ -283,7 +283,7 @@ func TestAnnotationStore_queryAnnotations(t *testing.T) {
 		{
 			name: "Bad JSON returns an error",
 			client: &mocks.TimeSeries{
-				QueryF: func(context.Context, cmp.Query) (cmp.Response, error) {
+				QueryF: func(context.Context, cloudhub.Query) (cloudhub.Response, error) {
 					return mocks.NewResponse(`{}`, nil), nil
 				},
 			},
@@ -293,7 +293,7 @@ func TestAnnotationStore_queryAnnotations(t *testing.T) {
 		{
 			name: "Incorrect fields returns error",
 			client: &mocks.TimeSeries{
-				QueryF: func(context.Context, cmp.Query) (cmp.Response, error) {
+				QueryF: func(context.Context, cloudhub.Query) (cloudhub.Response, error) {
 					return mocks.NewResponse(`[{
 						"series": [
 							{
@@ -327,7 +327,7 @@ func TestAnnotationStore_queryAnnotations(t *testing.T) {
 		{
 			name: "two annotation response",
 			client: &mocks.TimeSeries{
-				QueryF: func(context.Context, cmp.Query) (cmp.Response, error) {
+				QueryF: func(context.Context, cloudhub.Query) (cloudhub.Response, error) {
 					return mocks.NewResponse(`[
 						{
 							"series": [
@@ -362,27 +362,27 @@ func TestAnnotationStore_queryAnnotations(t *testing.T) {
 					]`, nil), nil
 				},
 			},
-			want: []cmp.Annotation{
+			want: []cloudhub.Annotation{
 				{
 					EndTime:   time.Unix(0, 1516920177345000000),
 					StartTime: time.Unix(0, 0),
 					Text:      "mytext2",
 					ID:        "ea0aa94b-969a-4cd5-912a-5db61d502268",
-					Tags:      cmp.AnnotationTags{},
+					Tags:      cloudhub.AnnotationTags{},
 				},
 				{
 					EndTime:   time.Unix(0, 1516920177345000000),
 					StartTime: time.Unix(0, 0),
 					Text:      "mytext",
 					ID:        "ecf3a75d-f1c0-40e8-9790-902701467e92",
-					Tags:      cmp.AnnotationTags{},
+					Tags:      cloudhub.AnnotationTags{},
 				},
 			},
 		},
 		{
 			name: "same id returns one",
 			client: &mocks.TimeSeries{
-				QueryF: func(context.Context, cmp.Query) (cmp.Response, error) {
+				QueryF: func(context.Context, cloudhub.Query) (cloudhub.Response, error) {
 					return mocks.NewResponse(`[
 						{
 							"series": [
@@ -417,24 +417,24 @@ func TestAnnotationStore_queryAnnotations(t *testing.T) {
 					]`, nil), nil
 				},
 			},
-			want: []cmp.Annotation{
+			want: []cloudhub.Annotation{
 				{
 					EndTime:   time.Unix(0, 1516920177345000000),
 					StartTime: time.Unix(0, 0),
 					Text:      "mytext2",
 					ID:        "ea0aa94b-969a-4cd5-912a-5db61d502268",
-					Tags:      cmp.AnnotationTags{},
+					Tags:      cloudhub.AnnotationTags{},
 				},
 			},
 		},
 		{
 			name: "no responses returns empty array",
 			client: &mocks.TimeSeries{
-				QueryF: func(context.Context, cmp.Query) (cmp.Response, error) {
+				QueryF: func(context.Context, cloudhub.Query) (cloudhub.Response, error) {
 					return mocks.NewResponse(`[ { } ]`, nil), nil
 				},
 			},
-			want: []cmp.Annotation{},
+			want: []cloudhub.Annotation{},
 		},
 	}
 	for _, tt := range tests {
@@ -456,12 +456,12 @@ func TestAnnotationStore_queryAnnotations(t *testing.T) {
 
 func TestAnnotationStore_Update(t *testing.T) {
 	type fields struct {
-		client cmp.TimeSeries
+		client cloudhub.TimeSeries
 		now    Now
 	}
 	type args struct {
 		ctx  context.Context
-		anno *cmp.Annotation
+		anno *cloudhub.Annotation
 	}
 	tests := []struct {
 		name    string
@@ -473,17 +473,17 @@ func TestAnnotationStore_Update(t *testing.T) {
 			name: "no responses returns error",
 			fields: fields{
 				client: &mocks.TimeSeries{
-					QueryF: func(context.Context, cmp.Query) (cmp.Response, error) {
+					QueryF: func(context.Context, cloudhub.Query) (cloudhub.Response, error) {
 						return mocks.NewResponse(`[ { } ]`, nil), nil
 					},
-					WriteF: func(context.Context, []cmp.Point) error {
+					WriteF: func(context.Context, []cloudhub.Point) error {
 						return nil
 					},
 				},
 			},
 			args: args{
 				ctx: context.Background(),
-				anno: &cmp.Annotation{
+				anno: &cloudhub.Annotation{
 					ID: "1",
 				},
 			},
@@ -494,7 +494,7 @@ func TestAnnotationStore_Update(t *testing.T) {
 			fields: fields{
 				now: func() time.Time { return time.Time{} },
 				client: &mocks.TimeSeries{
-					QueryF: func(context.Context, cmp.Query) (cmp.Response, error) {
+					QueryF: func(context.Context, cloudhub.Query) (cloudhub.Response, error) {
 						return mocks.NewResponse(`[
 							{
 								"series": [
@@ -528,14 +528,14 @@ func TestAnnotationStore_Update(t *testing.T) {
 							}
 						]`, nil), nil
 					},
-					WriteF: func(context.Context, []cmp.Point) error {
+					WriteF: func(context.Context, []cloudhub.Point) error {
 						return fmt.Errorf("error")
 					},
 				},
 			},
 			args: args{
 				ctx: context.Background(),
-				anno: &cmp.Annotation{
+				anno: &cloudhub.Annotation{
 					ID: "1",
 				},
 			},
@@ -546,7 +546,7 @@ func TestAnnotationStore_Update(t *testing.T) {
 			fields: fields{
 				now: func() time.Time { return time.Time{} },
 				client: &mocks.TimeSeries{
-					QueryF: func(context.Context, cmp.Query) (cmp.Response, error) {
+					QueryF: func(context.Context, cloudhub.Query) (cloudhub.Response, error) {
 						return mocks.NewResponse(`[
 							{
 								"series": [
@@ -573,14 +573,14 @@ func TestAnnotationStore_Update(t *testing.T) {
 							}
 						]`, nil), nil
 					},
-					WriteF: func(context.Context, []cmp.Point) error {
+					WriteF: func(context.Context, []cloudhub.Point) error {
 						return nil
 					},
 				},
 			},
 			args: args{
 				ctx: context.Background(),
-				anno: &cmp.Annotation{
+				anno: &cloudhub.Annotation{
 					ID: "1",
 				},
 			},
@@ -590,7 +590,7 @@ func TestAnnotationStore_Update(t *testing.T) {
 			fields: fields{
 				now: func() time.Time { return time.Time{} },
 				client: &mocks.TimeSeries{
-					QueryF: func(context.Context, cmp.Query) (cmp.Response, error) {
+					QueryF: func(context.Context, cloudhub.Query) (cloudhub.Response, error) {
 						return mocks.NewResponse(`[
 							{
 								"series": [
@@ -617,14 +617,14 @@ func TestAnnotationStore_Update(t *testing.T) {
 							}
 						]`, nil), nil
 					},
-					WriteF: func(context.Context, []cmp.Point) error {
+					WriteF: func(context.Context, []cloudhub.Point) error {
 						return nil
 					},
 				},
 			},
 			args: args{
 				ctx: context.Background(),
-				anno: &cmp.Annotation{
+				anno: &cloudhub.Annotation{
 					ID:      "ecf3a75d-f1c0-40e8-9790-902701467e92",
 					EndTime: time.Unix(0, 1516920177345000000),
 				},

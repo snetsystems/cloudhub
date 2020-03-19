@@ -2,8 +2,8 @@ import React, {Component} from 'react'
 import PropTypes from 'prop-types'
 
 import uuid from 'uuid'
-import ProvidersTableRow from 'src/admin/components/cmp/ProvidersTableRow'
-import ProvidersTableRowNew from 'src/admin/components/cmp/ProvidersTableRowNew'
+import ProvidersTableRow from 'src/admin/components/cloudhub/ProvidersTableRow'
+import ProvidersTableRowNew from 'src/admin/components/cloudhub/ProvidersTableRowNew'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import PageSpinner from 'src/shared/components/PageSpinner'
 

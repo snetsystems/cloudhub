@@ -3,19 +3,19 @@ package enterprise
 import (
 	"context"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // RolesStore uses a control client operate on Influx Enterprise roles.  Roles are
 // groups of permissions applied to groups of users
 type RolesStore struct {
 	Ctrl
-	Logger cmp.Logger
+	Logger cloudhub.Logger
 }
 
 // Add creates a new Role in Influx Enterprise
 // This must be done in three smaller steps: creating, setting permissions, setting users.
-func (c *RolesStore) Add(ctx context.Context, u *cmp.Role) (*cmp.Role, error) {
+func (c *RolesStore) Add(ctx context.Context, u *cloudhub.Role) (*cloudhub.Role, error) {
 	if err := c.Ctrl.CreateRole(ctx, u.Name); err != nil {
 		return nil, err
 	}
@@ -34,38 +34,38 @@ func (c *RolesStore) Add(ctx context.Context, u *cmp.Role) (*cmp.Role, error) {
 }
 
 // Delete the Role from Influx Enterprise
-func (c *RolesStore) Delete(ctx context.Context, u *cmp.Role) error {
+func (c *RolesStore) Delete(ctx context.Context, u *cloudhub.Role) error {
 	return c.Ctrl.DeleteRole(ctx, u.Name)
 }
 
 // Get retrieves a Role if name exists.
-func (c *RolesStore) Get(ctx context.Context, name string) (*cmp.Role, error) {
+func (c *RolesStore) Get(ctx context.Context, name string) (*cloudhub.Role, error) {
 	role, err := c.Ctrl.Role(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 
 	// Hydrate all the users to gather their permissions and their roles.
-	users := make([]cmp.User, len(role.Users))
+	users := make([]cloudhub.User, len(role.Users))
 	for i, u := range role.Users {
 		user, err := c.Ctrl.User(ctx, u)
 		if err != nil {
 			return nil, err
 		}
-		users[i] = cmp.User{
+		users[i] = cloudhub.User{
 			Name:        user.Name,
-			Permissions: ToCMP(user.Permissions),
+			Permissions: ToCloudHub(user.Permissions),
 		}
 	}
-	return &cmp.Role{
+	return &cloudhub.Role{
 		Name:        role.Name,
-		Permissions: ToCMP(role.Permissions),
+		Permissions: ToCloudHub(role.Permissions),
 		Users:       users,
 	}, nil
 }
 
 // Update the Role's permissions and roles
-func (c *RolesStore) Update(ctx context.Context, u *cmp.Role) error {
+func (c *RolesStore) Update(ctx context.Context, u *cloudhub.Role) error {
 	if u.Permissions != nil {
 		perms := ToEnterprise(u.Permissions)
 		if err := c.Ctrl.SetRolePerms(ctx, u.Name, perms); err != nil {
@@ -83,29 +83,29 @@ func (c *RolesStore) Update(ctx context.Context, u *cmp.Role) error {
 }
 
 // All is all Roles in influx
-func (c *RolesStore) All(ctx context.Context) ([]cmp.Role, error) {
+func (c *RolesStore) All(ctx context.Context) ([]cloudhub.Role, error) {
 	all, err := c.Ctrl.Roles(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return all.ToCMP(), nil
+	return all.ToCloudHub(), nil
 }
 
-// ToCMP converts enterprise roles to cmp
-func (r *Roles) ToCMP() []cmp.Role {
-	res := make([]cmp.Role, len(r.Roles))
+// ToCloudHub converts enterprise roles to cloudhub
+func (r *Roles) ToCloudHub() []cloudhub.Role {
+	res := make([]cloudhub.Role, len(r.Roles))
 	for i, role := range r.Roles {
-		users := make([]cmp.User, len(role.Users))
+		users := make([]cloudhub.User, len(role.Users))
 		for i, user := range role.Users {
-			users[i] = cmp.User{
+			users[i] = cloudhub.User{
 				Name: user,
 			}
 		}
 
-		res[i] = cmp.Role{
+		res[i] = cloudhub.Role{
 			Name:        role.Name,
-			Permissions: ToCMP(role.Permissions),
+			Permissions: ToCloudHub(role.Permissions),
 			Users:       users,
 		}
 	}

@@ -11,16 +11,16 @@ import (
 	"testing"
 
 	"github.com/bouk/httprouter"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/log"
-	"github.com/snetsystems/cmp/backend/mocks"
-	"github.com/snetsystems/cmp/backend/roles"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/log"
+	"github.com/snetsystems/cloudhub/backend/mocks"
+	"github.com/snetsystems/cloudhub/backend/roles"
 )
 
 func TestService_UserID(t *testing.T) {
 	type fields struct {
-		UsersStore cmp.UsersStore
-		Logger     cmp.Logger
+		UsersStore cloudhub.UsersStore
+		Logger     cloudhub.Logger
 	}
 	type args struct {
 		w *httptest.ResponseRecorder
@@ -36,7 +36,7 @@ func TestService_UserID(t *testing.T) {
 		wantBody        string
 	}{
 		{
-			name: "Get Single CMP User",
+			name: "Get Single CloudHub User",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
@@ -48,15 +48,15 @@ func TestService_UserID(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						switch *q.ID {
 						case 1337:
-							return &cmp.User{
+							return &cloudhub.User{
 								ID:       1337,
 								Name:     "billysteve",
 								Provider: "google",
 								Scheme:   "oauth2",
-								Roles: []cmp.Role{
+								Roles: []cloudhub.Role{
 									roles.ViewerRole,
 								},
 							}, nil
@@ -69,7 +69,7 @@ func TestService_UserID(t *testing.T) {
 			id:              "1337",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1337","superAdmin":false,"name":"billysteve","provider":"google","scheme":"oauth2","links":{"self":"/cmp/v1/users/1337"},"roles":[{"name":"viewer"}]}`,
+			wantBody:        `{"id":"1337","superAdmin":false,"name":"billysteve","provider":"google","scheme":"oauth2","links":{"self":"/cloudhub/v1/users/1337"},"roles":[{"name":"viewer"}]}`,
 		},
 	}
 
@@ -112,16 +112,16 @@ func TestService_UserID(t *testing.T) {
 
 func TestService_NewUser(t *testing.T) {
 	type fields struct {
-		UsersStore         cmp.UsersStore
-		OrganizationsStore cmp.OrganizationsStore
-		ConfigStore        cmp.ConfigStore
-		Logger             cmp.Logger
+		UsersStore         cloudhub.UsersStore
+		OrganizationsStore cloudhub.OrganizationsStore
+		ConfigStore        cloudhub.ConfigStore
+		Logger             cloudhub.Logger
 	}
 	type args struct {
 		w           *httptest.ResponseRecorder
 		r           *http.Request
 		user        *userRequest
-		userKeyUser *cmp.User
+		userKeyUser *cloudhub.User
 	}
 	tests := []struct {
 		name            string
@@ -132,7 +132,7 @@ func TestService_NewUser(t *testing.T) {
 		wantBody        string
 	}{
 		{
-			name: "Create a new CMP User",
+			name: "Create a new CloudHub User",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
@@ -149,30 +149,30 @@ func TestService_NewUser(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				ConfigStore: &mocks.ConfigStore{
-					Config: &cmp.Config{
-						Auth: cmp.AuthConfig{
+					Config: &cloudhub.Config{
+						Auth: cloudhub.AuthConfig{
 							SuperAdminNewUsers: false,
 						},
 					},
 				},
 				UsersStore: &mocks.UsersStore{
-					AddF: func(ctx context.Context, user *cmp.User) (*cmp.User, error) {
-						return &cmp.User{
+					AddF: func(ctx context.Context, user *cloudhub.User) (*cloudhub.User, error) {
+						return &cloudhub.User{
 							ID:       1338,
 							Name:     "bob",
 							Provider: "github",
 							Scheme:   "oauth2",
-							Roles:    []cmp.Role{},
+							Roles:    []cloudhub.Role{},
 						}, nil
 					},
 				},
 			},
 			wantStatus:      http.StatusCreated,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1338","superAdmin":false,"name":"bob","provider":"github","scheme":"oauth2","roles":[],"links":{"self":"/cmp/v1/users/1338"}}`,
+			wantBody:        `{"id":"1338","superAdmin":false,"name":"bob","provider":"github","scheme":"oauth2","roles":[],"links":{"self":"/cloudhub/v1/users/1338"}}`,
 		},
 		{
-			name: "Create a new CMP User with multiple roles",
+			name: "Create a new CloudHub User with multiple roles",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
@@ -184,7 +184,7 @@ func TestService_NewUser(t *testing.T) {
 					Name:     "bob",
 					Provider: "github",
 					Scheme:   "oauth2",
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name:         roles.AdminRoleName,
 							Organization: "1",
@@ -199,23 +199,23 @@ func TestService_NewUser(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				ConfigStore: &mocks.ConfigStore{
-					Config: &cmp.Config{
-						Auth: cmp.AuthConfig{
+					Config: &cloudhub.Config{
+						Auth: cloudhub.AuthConfig{
 							SuperAdminNewUsers: false,
 						},
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						switch *q.ID {
 						case "1":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:          "1",
 								Name:        "org",
 								DefaultRole: roles.ViewerRoleName,
 							}, nil
 						case "2":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:          "2",
 								Name:        "another",
 								DefaultRole: roles.MemberRoleName,
@@ -225,13 +225,13 @@ func TestService_NewUser(t *testing.T) {
 					},
 				},
 				UsersStore: &mocks.UsersStore{
-					AddF: func(ctx context.Context, user *cmp.User) (*cmp.User, error) {
-						return &cmp.User{
+					AddF: func(ctx context.Context, user *cloudhub.User) (*cloudhub.User, error) {
+						return &cloudhub.User{
 							ID:       1338,
 							Name:     "bob",
 							Provider: "github",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.AdminRoleName,
 									Organization: "1",
@@ -247,10 +247,10 @@ func TestService_NewUser(t *testing.T) {
 			},
 			wantStatus:      http.StatusCreated,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1338","superAdmin":false,"name":"bob","provider":"github","scheme":"oauth2","roles":[{"name":"admin","organization":"1"},{"name":"viewer","organization":"2"}],"links":{"self":"/cmp/v1/users/1338"}}`,
+			wantBody:        `{"id":"1338","superAdmin":false,"name":"bob","provider":"github","scheme":"oauth2","roles":[{"name":"admin","organization":"1"},{"name":"viewer","organization":"2"}],"links":{"self":"/cloudhub/v1/users/1338"}}`,
 		},
 		{
-			name: "Create a new CMP User with multiple roles same org",
+			name: "Create a new CloudHub User with multiple roles same org",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
@@ -262,7 +262,7 @@ func TestService_NewUser(t *testing.T) {
 					Name:     "bob",
 					Provider: "github",
 					Scheme:   "oauth2",
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name:         roles.AdminRoleName,
 							Organization: "1",
@@ -277,20 +277,20 @@ func TestService_NewUser(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				ConfigStore: &mocks.ConfigStore{
-					Config: &cmp.Config{
-						Auth: cmp.AuthConfig{
+					Config: &cloudhub.Config{
+						Auth: cloudhub.AuthConfig{
 							SuperAdminNewUsers: false,
 						},
 					},
 				},
 				UsersStore: &mocks.UsersStore{
-					AddF: func(ctx context.Context, user *cmp.User) (*cmp.User, error) {
-						return &cmp.User{
+					AddF: func(ctx context.Context, user *cloudhub.User) (*cloudhub.User, error) {
+						return &cloudhub.User{
 							ID:       1338,
 							Name:     "bob",
 							Provider: "github",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.AdminRoleName,
 									Organization: "1",
@@ -323,7 +323,7 @@ func TestService_NewUser(t *testing.T) {
 					Scheme:     "oauth2",
 					SuperAdmin: true,
 				},
-				userKeyUser: &cmp.User{
+				userKeyUser: &cloudhub.User{
 					ID:         0,
 					Name:       "coolUser",
 					Provider:   "github",
@@ -334,27 +334,27 @@ func TestService_NewUser(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				ConfigStore: &mocks.ConfigStore{
-					Config: &cmp.Config{
-						Auth: cmp.AuthConfig{
+					Config: &cloudhub.Config{
+						Auth: cloudhub.AuthConfig{
 							SuperAdminNewUsers: false,
 						},
 					},
 				},
 				UsersStore: &mocks.UsersStore{
-					AddF: func(ctx context.Context, user *cmp.User) (*cmp.User, error) {
-						return &cmp.User{
+					AddF: func(ctx context.Context, user *cloudhub.User) (*cloudhub.User, error) {
+						return &cloudhub.User{
 							ID:       1338,
 							Name:     "bob",
 							Provider: "github",
 							Scheme:   "oauth2",
-							Roles:    []cmp.Role{},
+							Roles:    []cloudhub.Role{},
 						}, nil
 					},
 				},
 			},
 			wantStatus:      http.StatusUnauthorized,
 			wantContentType: "application/json",
-			wantBody:        `{"code":401,"message":"User does not have authorization required to set SuperAdmin status. See https://github.com/influxdata/cmp/issues/2601 for more information."}`,
+			wantBody:        `{"code":401,"message":"User does not have authorization required to set SuperAdmin status. See https://github.com/influxdata/cloudhub/issues/2601 for more information."}`,
 		},
 		{
 			name: "Create a new SuperAdmin User - as superadmin",
@@ -371,7 +371,7 @@ func TestService_NewUser(t *testing.T) {
 					Scheme:     "oauth2",
 					SuperAdmin: true,
 				},
-				userKeyUser: &cmp.User{
+				userKeyUser: &cloudhub.User{
 					ID:         0,
 					Name:       "coolUser",
 					Provider:   "github",
@@ -382,20 +382,20 @@ func TestService_NewUser(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				ConfigStore: &mocks.ConfigStore{
-					Config: &cmp.Config{
-						Auth: cmp.AuthConfig{
+					Config: &cloudhub.Config{
+						Auth: cloudhub.AuthConfig{
 							SuperAdminNewUsers: false,
 						},
 					},
 				},
 				UsersStore: &mocks.UsersStore{
-					AddF: func(ctx context.Context, user *cmp.User) (*cmp.User, error) {
-						return &cmp.User{
+					AddF: func(ctx context.Context, user *cloudhub.User) (*cloudhub.User, error) {
+						return &cloudhub.User{
 							ID:         1338,
 							Name:       "bob",
 							Provider:   "github",
 							Scheme:     "oauth2",
-							Roles:      []cmp.Role{},
+							Roles:      []cloudhub.Role{},
 							SuperAdmin: true,
 						}, nil
 					},
@@ -403,7 +403,7 @@ func TestService_NewUser(t *testing.T) {
 			},
 			wantStatus:      http.StatusCreated,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1338","superAdmin":true,"name":"bob","provider":"github","scheme":"oauth2","roles":[],"links":{"self":"/cmp/v1/users/1338"}}`,
+			wantBody:        `{"id":"1338","superAdmin":true,"name":"bob","provider":"github","scheme":"oauth2","roles":[],"links":{"self":"/cloudhub/v1/users/1338"}}`,
 		},
 		{
 			name: "Create a new User with SuperAdminNewUsers: true in ConfigStore",
@@ -419,7 +419,7 @@ func TestService_NewUser(t *testing.T) {
 					Provider: "github",
 					Scheme:   "oauth2",
 				},
-				userKeyUser: &cmp.User{
+				userKeyUser: &cloudhub.User{
 					ID:         0,
 					Name:       "coolUser",
 					Provider:   "github",
@@ -430,14 +430,14 @@ func TestService_NewUser(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				ConfigStore: &mocks.ConfigStore{
-					Config: &cmp.Config{
-						Auth: cmp.AuthConfig{
+					Config: &cloudhub.Config{
+						Auth: cloudhub.AuthConfig{
 							SuperAdminNewUsers: true,
 						},
 					},
 				},
 				UsersStore: &mocks.UsersStore{
-					AddF: func(ctx context.Context, user *cmp.User) (*cmp.User, error) {
+					AddF: func(ctx context.Context, user *cloudhub.User) (*cloudhub.User, error) {
 						user.ID = 1338
 						return user, nil
 					},
@@ -445,10 +445,10 @@ func TestService_NewUser(t *testing.T) {
 			},
 			wantStatus:      http.StatusCreated,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1338","superAdmin":true,"name":"bob","provider":"github","scheme":"oauth2","roles":[],"links":{"self":"/cmp/v1/users/1338"}}`,
+			wantBody:        `{"id":"1338","superAdmin":true,"name":"bob","provider":"github","scheme":"oauth2","roles":[],"links":{"self":"/cloudhub/v1/users/1338"}}`,
 		},
 		{
-			name: "Create a new CMP User with multiple roles with wildcard default role",
+			name: "Create a new CloudHub User with multiple roles with wildcard default role",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
@@ -460,7 +460,7 @@ func TestService_NewUser(t *testing.T) {
 					Name:     "bob",
 					Provider: "github",
 					Scheme:   "oauth2",
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name:         roles.AdminRoleName,
 							Organization: "1",
@@ -475,23 +475,23 @@ func TestService_NewUser(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				ConfigStore: &mocks.ConfigStore{
-					Config: &cmp.Config{
-						Auth: cmp.AuthConfig{
+					Config: &cloudhub.Config{
+						Auth: cloudhub.AuthConfig{
 							SuperAdminNewUsers: false,
 						},
 					},
 				},
 				OrganizationsStore: &mocks.OrganizationsStore{
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						switch *q.ID {
 						case "1":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:          "1",
 								Name:        "org",
 								DefaultRole: roles.ViewerRoleName,
 							}, nil
 						case "2":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:          "2",
 								Name:        "another",
 								DefaultRole: roles.MemberRoleName,
@@ -501,13 +501,13 @@ func TestService_NewUser(t *testing.T) {
 					},
 				},
 				UsersStore: &mocks.UsersStore{
-					AddF: func(ctx context.Context, user *cmp.User) (*cmp.User, error) {
-						return &cmp.User{
+					AddF: func(ctx context.Context, user *cloudhub.User) (*cloudhub.User, error) {
+						return &cloudhub.User{
 							ID:       1338,
 							Name:     "bob",
 							Provider: "github",
 							Scheme:   "oauth2",
-							Roles: []cmp.Role{
+							Roles: []cloudhub.Role{
 								{
 									Name:         roles.AdminRoleName,
 									Organization: "1",
@@ -523,7 +523,7 @@ func TestService_NewUser(t *testing.T) {
 			},
 			wantStatus:      http.StatusCreated,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1338","superAdmin":false,"name":"bob","provider":"github","scheme":"oauth2","roles":[{"name":"admin","organization":"1"},{"name":"member","organization":"2"}],"links":{"self":"/cmp/v1/users/1338"}}`,
+			wantBody:        `{"id":"1338","superAdmin":false,"name":"bob","provider":"github","scheme":"oauth2","roles":[{"name":"admin","organization":"1"},{"name":"member","organization":"2"}],"links":{"self":"/cloudhub/v1/users/1338"}}`,
 		},
 	}
 
@@ -569,13 +569,13 @@ func TestService_NewUser(t *testing.T) {
 
 func TestService_RemoveUser(t *testing.T) {
 	type fields struct {
-		UsersStore cmp.UsersStore
-		Logger     cmp.Logger
+		UsersStore cloudhub.UsersStore
+		Logger     cloudhub.Logger
 	}
 	type args struct {
 		w    *httptest.ResponseRecorder
 		r    *http.Request
-		user *cmp.User
+		user *cloudhub.User
 		id   string
 	}
 	tests := []struct {
@@ -586,14 +586,14 @@ func TestService_RemoveUser(t *testing.T) {
 		wantBody   string
 	}{
 		{
-			name: "Delete a CMP User",
+			name: "Delete a CloudHub User",
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						switch *q.ID {
 						case 1339:
-							return &cmp.User{
+							return &cloudhub.User{
 								ID:       1339,
 								Name:     "helena",
 								Provider: "heroku",
@@ -603,7 +603,7 @@ func TestService_RemoveUser(t *testing.T) {
 							return nil, fmt.Errorf("User with ID %d not found", *q.ID)
 						}
 					},
-					DeleteF: func(ctx context.Context, user *cmp.User) error {
+					DeleteF: func(ctx context.Context, user *cloudhub.User) error {
 						return nil
 					},
 				},
@@ -615,7 +615,7 @@ func TestService_RemoveUser(t *testing.T) {
 					"http://any.url",
 					nil,
 				),
-				user: &cmp.User{
+				user: &cloudhub.User{
 					ID:       1338,
 					Name:     "helena",
 					Provider: "heroku",
@@ -630,10 +630,10 @@ func TestService_RemoveUser(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				UsersStore: &mocks.UsersStore{
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						switch *q.ID {
 						case 1339:
-							return &cmp.User{
+							return &cloudhub.User{
 								ID:       1339,
 								Name:     "helena",
 								Provider: "heroku",
@@ -643,7 +643,7 @@ func TestService_RemoveUser(t *testing.T) {
 							return nil, fmt.Errorf("User with ID %d not found", *q.ID)
 						}
 					},
-					DeleteF: func(ctx context.Context, user *cmp.User) error {
+					DeleteF: func(ctx context.Context, user *cloudhub.User) error {
 						return nil
 					},
 				},
@@ -655,7 +655,7 @@ func TestService_RemoveUser(t *testing.T) {
 					"http://any.url",
 					nil,
 				),
-				user: &cmp.User{
+				user: &cloudhub.User{
 					ID:       1339,
 					Name:     "helena",
 					Provider: "heroku",
@@ -712,15 +712,15 @@ func TestService_RemoveUser(t *testing.T) {
 
 func TestService_UpdateUser(t *testing.T) {
 	type fields struct {
-		UsersStore         cmp.UsersStore
-		OrganizationsStore cmp.OrganizationsStore
-		Logger             cmp.Logger
+		UsersStore         cloudhub.UsersStore
+		OrganizationsStore cloudhub.OrganizationsStore
+		Logger             cloudhub.Logger
 	}
 	type args struct {
 		w           *httptest.ResponseRecorder
 		r           *http.Request
 		user        *userRequest
-		userKeyUser *cmp.User
+		userKeyUser *cloudhub.User
 	}
 	tests := []struct {
 		name            string
@@ -732,22 +732,22 @@ func TestService_UpdateUser(t *testing.T) {
 		wantBody        string
 	}{
 		{
-			name: "Update a CMP user - no roles",
+			name: "Update a CloudHub user - no roles",
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				UsersStore: &mocks.UsersStore{
-					UpdateF: func(ctx context.Context, user *cmp.User) error {
+					UpdateF: func(ctx context.Context, user *cloudhub.User) error {
 						return nil
 					},
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						switch *q.ID {
 						case 1336:
-							return &cmp.User{
+							return &cloudhub.User{
 								ID:       1336,
 								Name:     "bobbetta",
 								Provider: "github",
 								Scheme:   "oauth2",
-								Roles: []cmp.Role{
+								Roles: []cloudhub.Role{
 									{
 										Name:         roles.EditorRoleName,
 										Organization: "1",
@@ -767,7 +767,7 @@ func TestService_UpdateUser(t *testing.T) {
 					"http://any.url",
 					nil,
 				),
-				userKeyUser: &cmp.User{
+				userKeyUser: &cloudhub.User{
 					ID:         0,
 					Name:       "coolUser",
 					Provider:   "github",
@@ -776,23 +776,23 @@ func TestService_UpdateUser(t *testing.T) {
 				},
 				user: &userRequest{
 					ID:    1336,
-					Roles: []cmp.Role{},
+					Roles: []cloudhub.Role{},
 				},
 			},
 			id:              "1336",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1336","superAdmin":false,"name":"bobbetta","provider":"github","scheme":"oauth2","links":{"self":"/cmp/v1/users/1336"},"roles":[]}`,
+			wantBody:        `{"id":"1336","superAdmin":false,"name":"bobbetta","provider":"github","scheme":"oauth2","links":{"self":"/cloudhub/v1/users/1336"},"roles":[]}`,
 		},
 		{
-			name: "Update a CMP user",
+			name: "Update a CloudHub user",
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				OrganizationsStore: &mocks.OrganizationsStore{
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						switch *q.ID {
 						case "1":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:          "1",
 								Name:        "org",
 								DefaultRole: roles.ViewerRoleName,
@@ -802,18 +802,18 @@ func TestService_UpdateUser(t *testing.T) {
 					},
 				},
 				UsersStore: &mocks.UsersStore{
-					UpdateF: func(ctx context.Context, user *cmp.User) error {
+					UpdateF: func(ctx context.Context, user *cloudhub.User) error {
 						return nil
 					},
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						switch *q.ID {
 						case 1336:
-							return &cmp.User{
+							return &cloudhub.User{
 								ID:       1336,
 								Name:     "bobbetta",
 								Provider: "github",
 								Scheme:   "oauth2",
-								Roles: []cmp.Role{
+								Roles: []cloudhub.Role{
 									{
 										Name:         roles.EditorRoleName,
 										Organization: "1",
@@ -833,7 +833,7 @@ func TestService_UpdateUser(t *testing.T) {
 					"http://any.url",
 					nil,
 				),
-				userKeyUser: &cmp.User{
+				userKeyUser: &cloudhub.User{
 					ID:         0,
 					Name:       "coolUser",
 					Provider:   "github",
@@ -842,7 +842,7 @@ func TestService_UpdateUser(t *testing.T) {
 				},
 				user: &userRequest{
 					ID: 1336,
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name:         roles.AdminRoleName,
 							Organization: "1",
@@ -853,23 +853,23 @@ func TestService_UpdateUser(t *testing.T) {
 			id:              "1336",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1336","superAdmin":false,"name":"bobbetta","provider":"github","scheme":"oauth2","links":{"self":"/cmp/v1/users/1336"},"roles":[{"name":"admin","organization":"1"}]}`,
+			wantBody:        `{"id":"1336","superAdmin":false,"name":"bobbetta","provider":"github","scheme":"oauth2","links":{"self":"/cloudhub/v1/users/1336"},"roles":[{"name":"admin","organization":"1"}]}`,
 		},
 		{
-			name: "Update a CMP user roles different orgs",
+			name: "Update a CloudHub user roles different orgs",
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				OrganizationsStore: &mocks.OrganizationsStore{
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						switch *q.ID {
 						case "1":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:          "1",
 								Name:        "org",
 								DefaultRole: roles.ViewerRoleName,
 							}, nil
 						case "2":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:          "2",
 								Name:        "another",
 								DefaultRole: roles.ViewerRoleName,
@@ -879,18 +879,18 @@ func TestService_UpdateUser(t *testing.T) {
 					},
 				},
 				UsersStore: &mocks.UsersStore{
-					UpdateF: func(ctx context.Context, user *cmp.User) error {
+					UpdateF: func(ctx context.Context, user *cloudhub.User) error {
 						return nil
 					},
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						switch *q.ID {
 						case 1336:
-							return &cmp.User{
+							return &cloudhub.User{
 								ID:       1336,
 								Name:     "bobbetta",
 								Provider: "github",
 								Scheme:   "oauth2",
-								Roles: []cmp.Role{
+								Roles: []cloudhub.Role{
 									roles.EditorRole,
 								},
 							}, nil
@@ -907,7 +907,7 @@ func TestService_UpdateUser(t *testing.T) {
 					"http://any.url",
 					nil,
 				),
-				userKeyUser: &cmp.User{
+				userKeyUser: &cloudhub.User{
 					ID:         0,
 					Name:       "coolUser",
 					Provider:   "github",
@@ -916,7 +916,7 @@ func TestService_UpdateUser(t *testing.T) {
 				},
 				user: &userRequest{
 					ID: 1336,
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name:         roles.AdminRoleName,
 							Organization: "1",
@@ -931,25 +931,25 @@ func TestService_UpdateUser(t *testing.T) {
 			id:              "1336",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1336","superAdmin":false,"name":"bobbetta","provider":"github","scheme":"oauth2","links":{"self":"/cmp/v1/users/1336"},"roles":[{"name":"admin","organization":"1"},{"name":"viewer","organization":"2"}]}`,
+			wantBody:        `{"id":"1336","superAdmin":false,"name":"bobbetta","provider":"github","scheme":"oauth2","links":{"self":"/cloudhub/v1/users/1336"},"roles":[{"name":"admin","organization":"1"},{"name":"viewer","organization":"2"}]}`,
 		},
 		{
-			name: "Update a CMP user roles same org",
+			name: "Update a CloudHub user roles same org",
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				UsersStore: &mocks.UsersStore{
-					UpdateF: func(ctx context.Context, user *cmp.User) error {
+					UpdateF: func(ctx context.Context, user *cloudhub.User) error {
 						return nil
 					},
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						switch *q.ID {
 						case 1336:
-							return &cmp.User{
+							return &cloudhub.User{
 								ID:       1336,
 								Name:     "bobbetta",
 								Provider: "github",
 								Scheme:   "oauth2",
-								Roles: []cmp.Role{
+								Roles: []cloudhub.Role{
 									roles.EditorRole,
 								},
 							}, nil
@@ -968,7 +968,7 @@ func TestService_UpdateUser(t *testing.T) {
 				),
 				user: &userRequest{
 					ID: 1336,
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name:         roles.AdminRoleName,
 							Organization: "1",
@@ -990,10 +990,10 @@ func TestService_UpdateUser(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				OrganizationsStore: &mocks.OrganizationsStore{
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						switch *q.ID {
 						case "1":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:          "1",
 								Name:        "org",
 								DefaultRole: roles.ViewerRoleName,
@@ -1003,19 +1003,19 @@ func TestService_UpdateUser(t *testing.T) {
 					},
 				},
 				UsersStore: &mocks.UsersStore{
-					UpdateF: func(ctx context.Context, user *cmp.User) error {
+					UpdateF: func(ctx context.Context, user *cloudhub.User) error {
 						return nil
 					},
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						switch *q.ID {
 						case 1336:
-							return &cmp.User{
+							return &cloudhub.User{
 								ID:         1336,
 								Name:       "bobbetta",
 								Provider:   "github",
 								Scheme:     "oauth2",
 								SuperAdmin: true,
-								Roles: []cmp.Role{
+								Roles: []cloudhub.Role{
 									{
 										Name:         roles.EditorRoleName,
 										Organization: "1",
@@ -1038,7 +1038,7 @@ func TestService_UpdateUser(t *testing.T) {
 				user: &userRequest{
 					ID:         1336,
 					SuperAdmin: false,
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name:         roles.AdminRoleName,
 							Organization: "1",
@@ -1056,10 +1056,10 @@ func TestService_UpdateUser(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				OrganizationsStore: &mocks.OrganizationsStore{
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						switch *q.ID {
 						case "1":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:          "1",
 								Name:        "org",
 								DefaultRole: roles.ViewerRoleName,
@@ -1069,19 +1069,19 @@ func TestService_UpdateUser(t *testing.T) {
 					},
 				},
 				UsersStore: &mocks.UsersStore{
-					UpdateF: func(ctx context.Context, user *cmp.User) error {
+					UpdateF: func(ctx context.Context, user *cloudhub.User) error {
 						return nil
 					},
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						switch *q.ID {
 						case 1336:
-							return &cmp.User{
+							return &cloudhub.User{
 								ID:         1336,
 								Name:       "bobbetta",
 								Provider:   "github",
 								Scheme:     "oauth2",
 								SuperAdmin: true,
-								Roles: []cmp.Role{
+								Roles: []cloudhub.Role{
 									{
 										Name:         roles.EditorRoleName,
 										Organization: "1",
@@ -1104,14 +1104,14 @@ func TestService_UpdateUser(t *testing.T) {
 				user: &userRequest{
 					ID:         1336,
 					SuperAdmin: false,
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name:         roles.AdminRoleName,
 							Organization: "1",
 						},
 					},
 				},
-				userKeyUser: &cmp.User{
+				userKeyUser: &cloudhub.User{
 					ID:         1336,
 					Name:       "coolUser",
 					Provider:   "github",
@@ -1129,10 +1129,10 @@ func TestService_UpdateUser(t *testing.T) {
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				OrganizationsStore: &mocks.OrganizationsStore{
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						switch *q.ID {
 						case "1":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:          "1",
 								Name:        "org",
 								DefaultRole: roles.ViewerRoleName,
@@ -1142,19 +1142,19 @@ func TestService_UpdateUser(t *testing.T) {
 					},
 				},
 				UsersStore: &mocks.UsersStore{
-					UpdateF: func(ctx context.Context, user *cmp.User) error {
+					UpdateF: func(ctx context.Context, user *cloudhub.User) error {
 						return nil
 					},
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						switch *q.ID {
 						case 1336:
-							return &cmp.User{
+							return &cloudhub.User{
 								ID:         1336,
 								Name:       "bobbetta",
 								Provider:   "github",
 								Scheme:     "oauth2",
 								SuperAdmin: true,
-								Roles: []cmp.Role{
+								Roles: []cloudhub.Role{
 									{
 										Name:         roles.EditorRoleName,
 										Organization: "1",
@@ -1177,14 +1177,14 @@ func TestService_UpdateUser(t *testing.T) {
 				user: &userRequest{
 					ID:         1336,
 					SuperAdmin: true,
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name:         roles.AdminRoleName,
 							Organization: "1",
 						},
 					},
 				},
-				userKeyUser: &cmp.User{
+				userKeyUser: &cloudhub.User{
 					ID:         0,
 					Name:       "coolUser",
 					Provider:   "github",
@@ -1195,17 +1195,17 @@ func TestService_UpdateUser(t *testing.T) {
 			id:              "1336",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"links":{"self":"/cmp/v1/users/1336"},"id":"1336","name":"bobbetta","provider":"github","scheme":"oauth2","superAdmin":true,"roles":[{"name":"admin","organization":"1"}]}`,
+			wantBody:        `{"links":{"self":"/cloudhub/v1/users/1336"},"id":"1336","name":"bobbetta","provider":"github","scheme":"oauth2","superAdmin":true,"roles":[{"name":"admin","organization":"1"}]}`,
 		},
 		{
-			name: "Update a CMP user to super admin - without super admin context",
+			name: "Update a CloudHub user to super admin - without super admin context",
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				OrganizationsStore: &mocks.OrganizationsStore{
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						switch *q.ID {
 						case "1":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:          "1",
 								Name:        "org",
 								DefaultRole: roles.ViewerRoleName,
@@ -1215,18 +1215,18 @@ func TestService_UpdateUser(t *testing.T) {
 					},
 				},
 				UsersStore: &mocks.UsersStore{
-					UpdateF: func(ctx context.Context, user *cmp.User) error {
+					UpdateF: func(ctx context.Context, user *cloudhub.User) error {
 						return nil
 					},
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						switch *q.ID {
 						case 1336:
-							return &cmp.User{
+							return &cloudhub.User{
 								ID:       1336,
 								Name:     "bobbetta",
 								Provider: "github",
 								Scheme:   "oauth2",
-								Roles: []cmp.Role{
+								Roles: []cloudhub.Role{
 									roles.EditorRole,
 								},
 							}, nil
@@ -1246,14 +1246,14 @@ func TestService_UpdateUser(t *testing.T) {
 				user: &userRequest{
 					ID:         1336,
 					SuperAdmin: true,
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name:         roles.AdminRoleName,
 							Organization: "1",
 						},
 					},
 				},
-				userKeyUser: &cmp.User{
+				userKeyUser: &cloudhub.User{
 					ID:         0,
 					Name:       "coolUser",
 					Provider:   "github",
@@ -1264,17 +1264,17 @@ func TestService_UpdateUser(t *testing.T) {
 			id:              "1336",
 			wantStatus:      http.StatusUnauthorized,
 			wantContentType: "application/json",
-			wantBody:        `{"code":401,"message":"User does not have authorization required to set SuperAdmin status. See https://github.com/influxdata/cmp/issues/2601 for more information."}`,
+			wantBody:        `{"code":401,"message":"User does not have authorization required to set SuperAdmin status. See https://github.com/influxdata/cloudhub/issues/2601 for more information."}`,
 		},
 		{
-			name: "Update a CMP user to super admin - with super admin context",
+			name: "Update a CloudHub user to super admin - with super admin context",
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				OrganizationsStore: &mocks.OrganizationsStore{
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 						switch *q.ID {
 						case "1":
-							return &cmp.Organization{
+							return &cloudhub.Organization{
 								ID:          "1",
 								Name:        "org",
 								DefaultRole: roles.ViewerRoleName,
@@ -1284,18 +1284,18 @@ func TestService_UpdateUser(t *testing.T) {
 					},
 				},
 				UsersStore: &mocks.UsersStore{
-					UpdateF: func(ctx context.Context, user *cmp.User) error {
+					UpdateF: func(ctx context.Context, user *cloudhub.User) error {
 						return nil
 					},
-					GetF: func(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 						switch *q.ID {
 						case 1336:
-							return &cmp.User{
+							return &cloudhub.User{
 								ID:       1336,
 								Name:     "bobbetta",
 								Provider: "github",
 								Scheme:   "oauth2",
-								Roles: []cmp.Role{
+								Roles: []cloudhub.Role{
 									roles.EditorRole,
 								},
 							}, nil
@@ -1315,14 +1315,14 @@ func TestService_UpdateUser(t *testing.T) {
 				user: &userRequest{
 					ID:         1336,
 					SuperAdmin: true,
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name:         roles.AdminRoleName,
 							Organization: "1",
 						},
 					},
 				},
-				userKeyUser: &cmp.User{
+				userKeyUser: &cloudhub.User{
 					ID:         0,
 					Name:       "coolUser",
 					Provider:   "github",
@@ -1333,7 +1333,7 @@ func TestService_UpdateUser(t *testing.T) {
 			id:              "1336",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1336","superAdmin":true,"name":"bobbetta","provider":"github","scheme":"oauth2","links":{"self":"/cmp/v1/users/1336"},"roles":[{"name":"admin","organization":"1"}]}`,
+			wantBody:        `{"id":"1336","superAdmin":true,"name":"bobbetta","provider":"github","scheme":"oauth2","links":{"self":"/cloudhub/v1/users/1336"},"roles":[{"name":"admin","organization":"1"}]}`,
 		},
 	}
 	for _, tt := range tests {
@@ -1384,8 +1384,8 @@ func TestService_UpdateUser(t *testing.T) {
 
 func TestService_Users(t *testing.T) {
 	type fields struct {
-		UsersStore cmp.UsersStore
-		Logger     cmp.Logger
+		UsersStore cloudhub.UsersStore
+		Logger     cloudhub.Logger
 	}
 	type args struct {
 		w *httptest.ResponseRecorder
@@ -1400,18 +1400,18 @@ func TestService_Users(t *testing.T) {
 		wantBody        string
 	}{
 		{
-			name: "Get all CMP users",
+			name: "Get all CloudHub users",
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				UsersStore: &mocks.UsersStore{
-					AllF: func(ctx context.Context) ([]cmp.User, error) {
-						return []cmp.User{
+					AllF: func(ctx context.Context) ([]cloudhub.User, error) {
+						return []cloudhub.User{
 							{
 								ID:       1337,
 								Name:     "billysteve",
 								Provider: "google",
 								Scheme:   "oauth2",
-								Roles: []cmp.Role{
+								Roles: []cloudhub.Role{
 									roles.EditorRole,
 								},
 							},
@@ -1435,15 +1435,15 @@ func TestService_Users(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"users":[{"id":"1337","superAdmin":false,"name":"billysteve","provider":"google","scheme":"oauth2","roles":[{"name":"editor"}],"links":{"self":"/cmp/v1/users/1337"}},{"id":"1338","superAdmin":false,"name":"bobbettastuhvetta","provider":"auth0","scheme":"oauth2","roles":[],"links":{"self":"/cmp/v1/users/1338"}}],"links":{"self":"/cmp/v1/users"}}`,
+			wantBody:        `{"users":[{"id":"1337","superAdmin":false,"name":"billysteve","provider":"google","scheme":"oauth2","roles":[{"name":"editor"}],"links":{"self":"/cloudhub/v1/users/1337"}},{"id":"1338","superAdmin":false,"name":"bobbettastuhvetta","provider":"auth0","scheme":"oauth2","roles":[],"links":{"self":"/cloudhub/v1/users/1338"}}],"links":{"self":"/cloudhub/v1/users"}}`,
 		},
 		{
-			name: "Get all CMP users, ensuring order of users in response",
+			name: "Get all CloudHub users, ensuring order of users in response",
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				UsersStore: &mocks.UsersStore{
-					AllF: func(ctx context.Context) ([]cmp.User, error) {
-						return []cmp.User{
+					AllF: func(ctx context.Context) ([]cloudhub.User, error) {
+						return []cloudhub.User{
 							{
 								ID:       1338,
 								Name:     "bobbettastuhvetta",
@@ -1455,7 +1455,7 @@ func TestService_Users(t *testing.T) {
 								Name:     "billysteve",
 								Provider: "google",
 								Scheme:   "oauth2",
-								Roles: []cmp.Role{
+								Roles: []cloudhub.Role{
 									roles.EditorRole,
 								},
 							},
@@ -1473,7 +1473,7 @@ func TestService_Users(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"users":[{"id":"1337","superAdmin":false,"name":"billysteve","provider":"google","scheme":"oauth2","roles":[{"name":"editor"}],"links":{"self":"/cmp/v1/users/1337"}},{"id":"1338","superAdmin":false,"name":"bobbettastuhvetta","provider":"auth0","scheme":"oauth2","roles":[],"links":{"self":"/cmp/v1/users/1338"}}],"links":{"self":"/cmp/v1/users"}}`,
+			wantBody:        `{"users":[{"id":"1337","superAdmin":false,"name":"billysteve","provider":"google","scheme":"oauth2","roles":[{"name":"editor"}],"links":{"self":"/cloudhub/v1/users/1337"}},{"id":"1338","superAdmin":false,"name":"bobbettastuhvetta","provider":"auth0","scheme":"oauth2","roles":[],"links":{"self":"/cloudhub/v1/users/1338"}}],"links":{"self":"/cloudhub/v1/users"}}`,
 		},
 	}
 
@@ -1523,7 +1523,7 @@ func TestUserRequest_ValidCreate(t *testing.T) {
 					Name:     "billietta",
 					Provider: "auth0",
 					Scheme:   "oauth2",
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name:         roles.EditorRoleName,
 							Organization: "1",
@@ -1541,7 +1541,7 @@ func TestUserRequest_ValidCreate(t *testing.T) {
 					ID:       1337,
 					Provider: "auth0",
 					Scheme:   "oauth2",
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name:         roles.EditorRoleName,
 							Organization: "1",
@@ -1550,7 +1550,7 @@ func TestUserRequest_ValidCreate(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			err:     fmt.Errorf("Name required on CMP User request body"),
+			err:     fmt.Errorf("Name required on CloudHub User request body"),
 		},
 		{
 			name: "Invalid – Provider missing",
@@ -1559,7 +1559,7 @@ func TestUserRequest_ValidCreate(t *testing.T) {
 					ID:     1337,
 					Name:   "billietta",
 					Scheme: "oauth2",
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name:         roles.EditorRoleName,
 							Organization: "1",
@@ -1568,7 +1568,7 @@ func TestUserRequest_ValidCreate(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			err:     fmt.Errorf("Provider required on CMP User request body"),
+			err:     fmt.Errorf("Provider required on CloudHub User request body"),
 		},
 		{
 			name: "Invalid – Scheme missing",
@@ -1577,7 +1577,7 @@ func TestUserRequest_ValidCreate(t *testing.T) {
 					ID:       1337,
 					Name:     "billietta",
 					Provider: "auth0",
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name:         roles.EditorRoleName,
 							Organization: "1",
@@ -1586,7 +1586,7 @@ func TestUserRequest_ValidCreate(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			err:     fmt.Errorf("Scheme required on CMP User request body"),
+			err:     fmt.Errorf("Scheme required on CloudHub User request body"),
 		},
 		{
 			name: "Invalid roles - bad role name",
@@ -1596,7 +1596,7 @@ func TestUserRequest_ValidCreate(t *testing.T) {
 					Name:     "billietta",
 					Provider: "auth0",
 					Scheme:   "oauth2",
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name:         "BilliettaSpecialRole",
 							Organization: "1",
@@ -1615,7 +1615,7 @@ func TestUserRequest_ValidCreate(t *testing.T) {
 					Name:     "billietta",
 					Provider: "auth0",
 					Scheme:   "oauth2",
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name: roles.EditorRoleName,
 						},
@@ -1659,7 +1659,7 @@ func TestUserRequest_ValidUpdate(t *testing.T) {
 			args: args{
 				u: &userRequest{
 					ID: 1337,
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name:         roles.EditorRoleName,
 							Organization: "1",
@@ -1686,7 +1686,7 @@ func TestUserRequest_ValidUpdate(t *testing.T) {
 					Name:     "billietta",
 					Provider: "auth0",
 					Scheme:   "oauth2",
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name:         "BillietaSpecialOrg",
 							Organization: "0",
@@ -1705,7 +1705,7 @@ func TestUserRequest_ValidUpdate(t *testing.T) {
 					Name:     "billietta",
 					Provider: "auth0",
 					Scheme:   "oauth2",
-					Roles:    []cmp.Role{},
+					Roles:    []cloudhub.Role{},
 				},
 			},
 			wantErr: false,
@@ -1718,7 +1718,7 @@ func TestUserRequest_ValidUpdate(t *testing.T) {
 					Name:     "billietta",
 					Provider: "auth0",
 					Scheme:   "oauth2",
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name:         "BillietaSpecialOrg",
 							Organization: "0",
@@ -1737,7 +1737,7 @@ func TestUserRequest_ValidUpdate(t *testing.T) {
 					Name:     "billietta",
 					Provider: "auth0",
 					Scheme:   "oauth2",
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name:         roles.AdminRoleName,
 							Organization: "0",

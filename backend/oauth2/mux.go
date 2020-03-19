@@ -5,7 +5,7 @@ import (
 	"path"
 	"time"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"golang.org/x/oauth2"
 )
 
@@ -16,7 +16,7 @@ var _ Mux = &AuthMux{}
 const TenMinutes = 10 * time.Minute
 
 // NewAuthMux constructs a Mux handler that checks a cookie against the authenticator
-func NewAuthMux(p Provider, a Authenticator, t Tokenizer, basepath string, l cmp.Logger, UseIDToken bool) *AuthMux {
+func NewAuthMux(p Provider, a Authenticator, t Tokenizer, basepath string, l cloudhub.Logger, UseIDToken bool) *AuthMux {
 	return &AuthMux{
 		Provider:   p,
 		Auth:       a,
@@ -32,13 +32,13 @@ func NewAuthMux(p Provider, a Authenticator, t Tokenizer, basepath string, l cmp
 // AuthMux services an Oauth2 interaction with a provider and browser and
 // stores the resultant token in the user's browser as a cookie. The benefit of
 // this is that the cookie's authenticity can be verified independently by any
-// CMP instance as long as the Authenticator has no external
+// CloudHub instance as long as the Authenticator has no external
 // dependencies (e.g. on a Database).
 type AuthMux struct {
 	Provider   Provider         // Provider is the OAuth2 service
 	Auth       Authenticator    // Auth is used to Authorize after successful OAuth2 callback and Expire on Logout
 	Tokens     Tokenizer        // Tokens is used to create and validate OAuth2 "state"
-	Logger     cmp.Logger       // Logger is used to give some more information about the OAuth2 process
+	Logger     cloudhub.Logger       // Logger is used to give some more information about the OAuth2 process
 	SuccessURL string           // SuccessURL is redirect location after successful authorization
 	FailureURL string           // FailureURL is redirect location after authorization failure
 	Now        func() time.Time // Now returns the current time (for testing)
@@ -59,7 +59,7 @@ func (j *AuthMux) Login() http.Handler {
 		csrf := randomString(32) // 32 is not important... just long
 		now := j.Now()
 
-		// This token will be valid for 10 minutes.  Any cmp server will
+		// This token will be valid for 10 minutes.  Any cloudhub server will
 		// be able to validate this token.
 		p := Principal{
 			Subject:   csrf,

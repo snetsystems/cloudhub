@@ -9,35 +9,35 @@ import (
 	"strings"
 	"time"
 
-	"github.com/snetsystems/cmp/backend/id"
+	"github.com/snetsystems/cloudhub/backend/id"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 const (
-	// AllAnnotations returns all annotations from the CMP database
+	// AllAnnotations returns all annotations from the CloudHub database
 	AllAnnotations = `SELECT * FROM "annotations" WHERE "deleted"=false AND time >= %dns and "start_time" <= %d %s ORDER BY time DESC`
-	// GetAnnotationID returns all annotations from the CMP database where id is %s
+	// GetAnnotationID returns all annotations from the CloudHub database where id is %s
 	GetAnnotationID = `SELECT * FROM "annotations" WHERE "id"='%s' AND "deleted"=false ORDER BY time DESC`
-	// AnnotationsDB is CMP.  Perhaps later we allow this to be changed
-	AnnotationsDB = "cmp"
+	// AnnotationsDB is CloudHub.  Perhaps later we allow this to be changed
+	AnnotationsDB = "cloudhub"
 	// DefaultRP is autogen. Perhaps later we allow this to be changed
 	DefaultRP = "autogen"
 	// DefaultMeasurement is annotations.
 	DefaultMeasurement = "annotations"
 )
 
-var _ cmp.AnnotationStore = &AnnotationStore{}
+var _ cloudhub.AnnotationStore = &AnnotationStore{}
 
 // AnnotationStore stores annotations within InfluxDB
 type AnnotationStore struct {
-	client cmp.TimeSeries
-	id     cmp.ID
+	client cloudhub.TimeSeries
+	id     cloudhub.ID
 	now    Now
 }
 
 // NewAnnotationStore constructs an annoation store with a client
-func NewAnnotationStore(client cmp.TimeSeries) *AnnotationStore {
+func NewAnnotationStore(client cloudhub.TimeSeries) *AnnotationStore {
 	return &AnnotationStore{
 		client: client,
 		id:     &id.UUID{},
@@ -46,7 +46,7 @@ func NewAnnotationStore(client cmp.TimeSeries) *AnnotationStore {
 }
 
 // All lists all Annotations
-func (a *AnnotationStore) All(ctx context.Context, start, stop time.Time, filters []*cmp.AnnotationTagFilter) ([]cmp.Annotation, error) {
+func (a *AnnotationStore) All(ctx context.Context, start, stop time.Time, filters []*cloudhub.AnnotationTagFilter) ([]cloudhub.Annotation, error) {
 	exprs := make([]string, len(filters))
 
 	for i, f := range filters {
@@ -63,25 +63,25 @@ func (a *AnnotationStore) All(ctx context.Context, start, stop time.Time, filter
 }
 
 // Get retrieves an annotation
-func (a *AnnotationStore) Get(ctx context.Context, id string) (*cmp.Annotation, error) {
+func (a *AnnotationStore) Get(ctx context.Context, id string) (*cloudhub.Annotation, error) {
 	annos, err := a.queryAnnotations(ctx, fmt.Sprintf(GetAnnotationID, id))
 	if err != nil {
 		return nil, err
 	}
 	if len(annos) == 0 {
-		return nil, cmp.ErrAnnotationNotFound
+		return nil, cloudhub.ErrAnnotationNotFound
 	}
 	return &annos[0], nil
 }
 
 // Add creates a new annotation in the store
-func (a *AnnotationStore) Add(ctx context.Context, anno *cmp.Annotation) (*cmp.Annotation, error) {
+func (a *AnnotationStore) Add(ctx context.Context, anno *cloudhub.Annotation) (*cloudhub.Annotation, error) {
 	var err error
 	anno.ID, err = a.id.Generate()
 	if err != nil {
 		return nil, err
 	}
-	return anno, a.client.Write(ctx, []cmp.Point{
+	return anno, a.client.Write(ctx, []cloudhub.Point{
 		toPoint(anno, a.now()),
 	})
 }
@@ -92,36 +92,36 @@ func (a *AnnotationStore) Delete(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-	return a.client.Write(ctx, []cmp.Point{
+	return a.client.Write(ctx, []cloudhub.Point{
 		toDeletedPoint(cur, a.now()),
 	})
 }
 
 // Update replaces annotation; if the annotation's time is different, it
 // also removes the previous annotation
-func (a *AnnotationStore) Update(ctx context.Context, anno *cmp.Annotation) error {
+func (a *AnnotationStore) Update(ctx context.Context, anno *cloudhub.Annotation) error {
 	cur, err := a.Get(ctx, anno.ID)
 	if err != nil {
 		return err
 	}
 
-	if err := a.client.Write(ctx, []cmp.Point{toPoint(anno, a.now())}); err != nil {
+	if err := a.client.Write(ctx, []cloudhub.Point{toPoint(anno, a.now())}); err != nil {
 		return err
 	}
 
 	// If the updated annotation has a different time, then, we must
 	// delete the previous annotation
 	if !cur.EndTime.Equal(anno.EndTime) {
-		return a.client.Write(ctx, []cmp.Point{
+		return a.client.Write(ctx, []cloudhub.Point{
 			toDeletedPoint(cur, a.now()),
 		})
 	}
 	return nil
 }
 
-// queryAnnotations queries the CMP db and produces all annotations
-func (a *AnnotationStore) queryAnnotations(ctx context.Context, query string) ([]cmp.Annotation, error) {
-	res, err := a.client.Query(ctx, cmp.Query{
+// queryAnnotations queries the CloudHub db and produces all annotations
+func (a *AnnotationStore) queryAnnotations(ctx context.Context, query string) ([]cloudhub.Annotation, error) {
+	res, err := a.client.Query(ctx, cloudhub.Query{
 		Command: query,
 		DB:      AnnotationsDB,
 		Epoch:   "ns",
@@ -143,8 +143,8 @@ func (a *AnnotationStore) queryAnnotations(ctx context.Context, query string) ([
 	return results.Annotations()
 }
 
-func toPoint(anno *cmp.Annotation, now time.Time) cmp.Point {
-	tags := cmp.AnnotationTags{
+func toPoint(anno *cloudhub.Annotation, now time.Time) cloudhub.Point {
+	tags := cloudhub.AnnotationTags{
 		"id": anno.ID,
 	}
 
@@ -152,7 +152,7 @@ func toPoint(anno *cmp.Annotation, now time.Time) cmp.Point {
 		tags[k] = v
 	}
 
-	return cmp.Point{
+	return cloudhub.Point{
 		Database:        AnnotationsDB,
 		RetentionPolicy: DefaultRP,
 		Measurement:     DefaultMeasurement,
@@ -167,8 +167,8 @@ func toPoint(anno *cmp.Annotation, now time.Time) cmp.Point {
 	}
 }
 
-func toDeletedPoint(anno *cmp.Annotation, now time.Time) cmp.Point {
-	tags := cmp.AnnotationTags{
+func toDeletedPoint(anno *cloudhub.Annotation, now time.Time) cloudhub.Point {
+	tags := cloudhub.AnnotationTags{
 		"id": anno.ID,
 	}
 
@@ -176,7 +176,7 @@ func toDeletedPoint(anno *cmp.Annotation, now time.Time) cmp.Point {
 		tags[k] = v
 	}
 
-	return cmp.Point{
+	return cloudhub.Point{
 		Database:        AnnotationsDB,
 		RetentionPolicy: DefaultRP,
 		Measurement:     DefaultMeasurement,
@@ -233,14 +233,14 @@ type influxResults []struct {
 // annotationResult is an intermediate struct to track the latest modified
 // time of an annotation
 type annotationResult struct {
-	cmp.Annotation
+	cloudhub.Annotation
 	// modTime is bookkeeping to handle the case when an update fails; the latest
 	// modTime will be the record returned
 	modTime int64
 }
 
 // Annotations converts AllAnnotations query to annotations
-func (r *influxResults) Annotations() (res []cmp.Annotation, err error) {
+func (r *influxResults) Annotations() (res []cloudhub.Annotation, err error) {
 	annos := map[string]annotationResult{}
 	for _, u := range *r {
 		for _, s := range u.Series {
@@ -304,12 +304,12 @@ func (r *influxResults) Annotations() (res []cmp.Annotation, err error) {
 					return
 				}
 
-				anno.Tags = cmp.AnnotationTags{}
+				anno.Tags = cloudhub.AnnotationTags{}
 
 				// Collect all other columns as tags
 				for i, vv := range v {
 					key := s.Columns[i]
-					err := cmp.ValidateAnnotationTagKey(key)
+					err := cloudhub.ValidateAnnotationTagKey(key)
 					svv, ok := vv.(string)
 
 					// Ignore blacklisted tags and tags that cannot be coerced to a string
@@ -329,7 +329,7 @@ func (r *influxResults) Annotations() (res []cmp.Annotation, err error) {
 			}
 		}
 	}
-	res = []cmp.Annotation{}
+	res = []cloudhub.Annotation{}
 	for _, a := range annos {
 		res = append(res, a.Annotation)
 	}

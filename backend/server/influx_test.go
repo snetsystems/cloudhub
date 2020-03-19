@@ -10,13 +10,13 @@ import (
 
 	"github.com/bouk/httprouter"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/mocks"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/mocks"
 )
 
 func TestService_Influx(t *testing.T) {
 	type fields struct {
-		SourcesStore cmp.SourcesStore
+		SourcesStore cloudhub.SourcesStore
 		TimeSeries   TimeSeriesClient
 	}
 	type args struct {
@@ -39,18 +39,18 @@ func TestService_Influx(t *testing.T) {
 			name: "Proxies request to Influxdb",
 			fields: fields{
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID:  1337,
 							URL: "http://any.url",
 						}, nil
 					},
 				},
 				TimeSeries: &mocks.TimeSeries{
-					ConnectF: func(ctx context.Context, src *cmp.Source) error {
+					ConnectF: func(ctx context.Context, src *cloudhub.Source) error {
 						return nil
 					},
-					QueryF: func(ctx context.Context, query cmp.Query) (cmp.Response, error) {
+					QueryF: func(ctx context.Context, query cloudhub.Query) (cloudhub.Response, error) {
 						return mocks.NewResponse(
 								`{"results":[{"statement_id":0,"series":[{"name":"cpu","columns":["key","value"],"values":[["cpu","cpu-total"],["cpu","cpu0"],["cpu","cpu1"],["cpu","cpu2"],["cpu","cpu3"],["host","pineapples-MBP"],["host","pineapples-MacBook-Pro.local"]]}]}]}`,
 								nil,

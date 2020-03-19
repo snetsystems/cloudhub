@@ -7,14 +7,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/log"
-	"github.com/snetsystems/cmp/backend/mocks"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/log"
+	"github.com/snetsystems/cloudhub/backend/mocks"
 )
 
 func TestConfig(t *testing.T) {
 	type fields struct {
-		ConfigStore cmp.ConfigStore
+		ConfigStore cloudhub.ConfigStore
 	}
 	type wants struct {
 		statusCode  int
@@ -31,8 +31,8 @@ func TestConfig(t *testing.T) {
 			name: "Get global application configuration",
 			fields: fields{
 				ConfigStore: &mocks.ConfigStore{
-					Config: &cmp.Config{
-						Auth: cmp.AuthConfig{
+					Config: &cloudhub.Config{
+						Auth: cloudhub.AuthConfig{
 							SuperAdminNewUsers: false,
 						},
 					},
@@ -41,7 +41,7 @@ func TestConfig(t *testing.T) {
 			wants: wants{
 				statusCode:  200,
 				contentType: "application/json",
-				body:        `{"links":{"self":"/cmp/v1/config","auth":"/cmp/v1/config/auth"},"auth":{"superAdminNewUsers":false}}`,
+				body:        `{"links":{"self":"/cloudhub/v1/config","auth":"/cloudhub/v1/config/auth"},"auth":{"superAdminNewUsers":false}}`,
 			},
 		},
 	}
@@ -79,7 +79,7 @@ func TestConfig(t *testing.T) {
 
 func TestAuthConfig(t *testing.T) {
 	type fields struct {
-		ConfigStore cmp.ConfigStore
+		ConfigStore cloudhub.ConfigStore
 	}
 	type wants struct {
 		statusCode  int
@@ -96,8 +96,8 @@ func TestAuthConfig(t *testing.T) {
 			name: "Get auth configuration",
 			fields: fields{
 				ConfigStore: &mocks.ConfigStore{
-					Config: &cmp.Config{
-						Auth: cmp.AuthConfig{
+					Config: &cloudhub.Config{
+						Auth: cloudhub.AuthConfig{
 							SuperAdminNewUsers: false,
 						},
 					},
@@ -106,7 +106,7 @@ func TestAuthConfig(t *testing.T) {
 			wants: wants{
 				statusCode:  200,
 				contentType: "application/json",
-				body:        `{"superAdminNewUsers": false, "links": {"self": "/cmp/v1/config/auth"}}`,
+				body:        `{"superAdminNewUsers": false, "links": {"self": "/cloudhub/v1/config/auth"}}`,
 			},
 		},
 	}
@@ -144,7 +144,7 @@ func TestAuthConfig(t *testing.T) {
 
 func TestReplaceAuthConfig(t *testing.T) {
 	type fields struct {
-		ConfigStore cmp.ConfigStore
+		ConfigStore cloudhub.ConfigStore
 	}
 	type args struct {
 		payload interface{} // expects JSON serializable struct
@@ -165,22 +165,22 @@ func TestReplaceAuthConfig(t *testing.T) {
 			name: "Set auth configuration",
 			fields: fields{
 				ConfigStore: &mocks.ConfigStore{
-					Config: &cmp.Config{
-						Auth: cmp.AuthConfig{
+					Config: &cloudhub.Config{
+						Auth: cloudhub.AuthConfig{
 							SuperAdminNewUsers: false,
 						},
 					},
 				},
 			},
 			args: args{
-				payload: cmp.AuthConfig{
+				payload: cloudhub.AuthConfig{
 					SuperAdminNewUsers: true,
 				},
 			},
 			wants: wants{
 				statusCode:  200,
 				contentType: "application/json",
-				body:        `{"superAdminNewUsers": true, "links": {"self": "/cmp/v1/config/auth"}}`,
+				body:        `{"superAdminNewUsers": true, "links": {"self": "/cloudhub/v1/config/auth"}}`,
 			},
 		},
 	}

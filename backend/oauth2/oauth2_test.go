@@ -11,7 +11,7 @@ import (
 	goauth "golang.org/x/oauth2"
 
 	gojwt "github.com/dgrijalva/jwt-go"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 var _ Provider = &MockProvider{}
@@ -96,7 +96,7 @@ func (y *YesManTokenizer) GetClaims(tokenString string) (gojwt.MapClaims, error)
 	return gojwt.MapClaims{}, nil
 }
 
-func NewTestTripper(log cmp.Logger, ts *httptest.Server, rt http.RoundTripper) (*TestTripper, error) {
+func NewTestTripper(log cloudhub.Logger, ts *httptest.Server, rt http.RoundTripper) (*TestTripper, error) {
 	url, err := url.Parse(ts.URL)
 	if err != nil {
 		return nil, err
@@ -105,7 +105,7 @@ func NewTestTripper(log cmp.Logger, ts *httptest.Server, rt http.RoundTripper) (
 }
 
 type TestTripper struct {
-	Log cmp.Logger
+	Log cloudhub.Logger
 
 	rt    http.RoundTripper
 	tsURL *url.URL

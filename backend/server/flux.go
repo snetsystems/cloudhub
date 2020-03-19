@@ -16,7 +16,7 @@ import (
 
 	// _ "github.com/influxdata/flux/builtin"
 	"github.com/influxdata/flux/complete"
-	"github.com/snetsystems/cmp/backend/influx"
+	"github.com/snetsystems/cloudhub/backend/influx"
 )
 
 // Params are params
@@ -44,7 +44,7 @@ type fluxResponse struct {
 
 // Flux returns a list of links for the Flux API
 func (s *Service) Flux(w http.ResponseWriter, r *http.Request) {
-	httpAPIFlux := "/cmp/v1/flux"
+	httpAPIFlux := "/cloudhub/v1/flux"
 	res := fluxResponse{
 		Links: fluxLinks{
 			Self:        fmt.Sprintf("%s", httpAPIFlux),

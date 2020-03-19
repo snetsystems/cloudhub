@@ -106,7 +106,7 @@ func UnmarshalVisualizationJSON(b []byte) (Visualization, error) {
 
 	var vis Visualization
 	switch t.Type {
-	case "cmp-v1":
+	case "cloudhub-v1":
 		var qv V1Visualization
 		if err := json.Unmarshal(v.B, &qv); err != nil {
 			return nil, err
@@ -134,7 +134,7 @@ func MarshalVisualizationJSON(v Visualization) ([]byte, error) {
 			Type string `json:"type"`
 			V1Visualization
 		}{
-			Type:            "cmp-v1",
+			Type:            "cloudhub-v1",
 			V1Visualization: vis,
 		}
 	default:
@@ -213,7 +213,7 @@ func (u CellUpdate) MarshalJSON() ([]byte, error) {
 type V1Visualization struct {
 	Queries []DashboardQuery `json:"queries"`
 	Axes    map[string]Axis  `json:"axes"`
-	// TODO: cmp will have to use visualizationType rather than type
+	// TODO: cloudhub will have to use visualizationType rather than type
 	Type          string           `json:"visualizationType"`
 	CellColors    []CellColor      `json:"colors"`
 	Legend        Legend           `json:"legend"`
@@ -227,7 +227,7 @@ type V1Visualization struct {
 func (V1Visualization) Visualization() {}
 
 /////////////////////////////
-// Old CMP Types
+// Old CloudHub Types
 /////////////////////////////
 
 // DashboardQuery includes state for the query builder.  This is a transition

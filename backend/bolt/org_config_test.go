@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	gocmp "github.com/google/go-cmp/cmp"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 func TestOrganizationConfig_FindOrCreate(t *testing.T) {
@@ -13,7 +13,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 		organizationID string
 	}
 	type wants struct {
-		organizationConfig *cmp.OrganizationConfig
+		organizationConfig *cloudhub.OrganizationConfig
 		err                error
 	}
 	tests := []struct {
@@ -29,14 +29,14 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 			},
 			addFirst: false,
 			wants: wants{
-				organizationConfig: &cmp.OrganizationConfig{
+				organizationConfig: &cloudhub.OrganizationConfig{
 					OrganizationID: "default",
-					LogViewer: cmp.LogViewerConfig{
-						Columns: []cmp.LogViewerColumn{
+					LogViewer: cloudhub.LogViewerConfig{
+						Columns: []cloudhub.LogViewerColumn{
 							{
 								Name:     "time",
 								Position: 0,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "hidden",
@@ -46,7 +46,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "severity",
 								Position: 1,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -105,7 +105,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "timestamp",
 								Position: 2,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -116,7 +116,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "message",
 								Position: 3,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -127,7 +127,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "facility",
 								Position: 4,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -138,7 +138,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "procid",
 								Position: 5,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -153,7 +153,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "appname",
 								Position: 6,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -167,7 +167,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "hostname",
 								Position: 7,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -177,7 +177,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "host",
 								Position: 8,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -196,14 +196,14 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 			},
 			addFirst: false,
 			wants: wants{
-				organizationConfig: &cmp.OrganizationConfig{
+				organizationConfig: &cloudhub.OrganizationConfig{
 					OrganizationID: "1",
-					LogViewer: cmp.LogViewerConfig{
-						Columns: []cmp.LogViewerColumn{
+					LogViewer: cloudhub.LogViewerConfig{
+						Columns: []cloudhub.LogViewerColumn{
 							{
 								Name:     "time",
 								Position: 0,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "hidden",
@@ -213,7 +213,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "severity",
 								Position: 1,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -272,7 +272,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "timestamp",
 								Position: 2,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -283,7 +283,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "message",
 								Position: 3,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -294,7 +294,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "facility",
 								Position: 4,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -305,7 +305,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "procid",
 								Position: 5,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -320,7 +320,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "appname",
 								Position: 6,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -334,7 +334,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "hostname",
 								Position: 7,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -344,7 +344,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "host",
 								Position: 8,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -363,14 +363,14 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 			},
 			addFirst: true,
 			wants: wants{
-				organizationConfig: &cmp.OrganizationConfig{
+				organizationConfig: &cloudhub.OrganizationConfig{
 					OrganizationID: "default",
-					LogViewer: cmp.LogViewerConfig{
-						Columns: []cmp.LogViewerColumn{
+					LogViewer: cloudhub.LogViewerConfig{
+						Columns: []cloudhub.LogViewerColumn{
 							{
 								Name:     "time",
 								Position: 1,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "hidden",
@@ -380,7 +380,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "severity",
 								Position: 0,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -439,7 +439,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "timestamp",
 								Position: 2,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -450,7 +450,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "message",
 								Position: 3,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -461,7 +461,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "facility",
 								Position: 4,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -472,7 +472,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "procid",
 								Position: 5,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -487,7 +487,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "appname",
 								Position: 6,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -501,7 +501,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "host",
 								Position: 7,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -511,7 +511,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "hostname",
 								Position: 8,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -530,14 +530,14 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 			},
 			addFirst: true,
 			wants: wants{
-				organizationConfig: &cmp.OrganizationConfig{
+				organizationConfig: &cloudhub.OrganizationConfig{
 					OrganizationID: "1",
-					LogViewer: cmp.LogViewerConfig{
-						Columns: []cmp.LogViewerColumn{
+					LogViewer: cloudhub.LogViewerConfig{
+						Columns: []cloudhub.LogViewerColumn{
 							{
 								Name:     "time",
 								Position: 1,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "hidden",
@@ -547,7 +547,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "severity",
 								Position: 0,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -606,7 +606,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "timestamp",
 								Position: 2,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -617,7 +617,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "message",
 								Position: 3,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -628,7 +628,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "facility",
 								Position: 4,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -639,7 +639,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "procid",
 								Position: 5,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -654,7 +654,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "appname",
 								Position: 6,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -668,7 +668,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "host",
 								Position: 7,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -678,7 +678,7 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 							{
 								Name:     "hostname",
 								Position: 8,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -729,11 +729,11 @@ func TestOrganizationConfig_FindOrCreate(t *testing.T) {
 
 func TestOrganizationConfig_Put(t *testing.T) {
 	type args struct {
-		organizationConfig *cmp.OrganizationConfig
+		organizationConfig *cloudhub.OrganizationConfig
 		organizationID     string
 	}
 	type wants struct {
-		organizationConfig *cmp.OrganizationConfig
+		organizationConfig *cloudhub.OrganizationConfig
 		err                error
 	}
 	tests := []struct {
@@ -744,14 +744,14 @@ func TestOrganizationConfig_Put(t *testing.T) {
 		{
 			name: "Set default org config",
 			args: args{
-				organizationConfig: &cmp.OrganizationConfig{
+				organizationConfig: &cloudhub.OrganizationConfig{
 					OrganizationID: "default",
-					LogViewer: cmp.LogViewerConfig{
-						Columns: []cmp.LogViewerColumn{
+					LogViewer: cloudhub.LogViewerConfig{
+						Columns: []cloudhub.LogViewerColumn{
 							{
 								Name:     "time",
 								Position: 1,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -761,7 +761,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "severity",
 								Position: 0,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -776,7 +776,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "timestamp",
 								Position: 2,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -787,7 +787,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "message",
 								Position: 3,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -798,7 +798,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "facility",
 								Position: 4,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -809,7 +809,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "procid",
 								Position: 5,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -824,7 +824,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "appname",
 								Position: 6,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -838,7 +838,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "host",
 								Position: 7,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -851,13 +851,13 @@ func TestOrganizationConfig_Put(t *testing.T) {
 				organizationID: "default",
 			},
 			wants: wants{
-				organizationConfig: &cmp.OrganizationConfig{
-					LogViewer: cmp.LogViewerConfig{
-						Columns: []cmp.LogViewerColumn{
+				organizationConfig: &cloudhub.OrganizationConfig{
+					LogViewer: cloudhub.LogViewerConfig{
+						Columns: []cloudhub.LogViewerColumn{
 							{
 								Name:     "time",
 								Position: 1,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -867,7 +867,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "severity",
 								Position: 0,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -882,7 +882,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "timestamp",
 								Position: 2,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -893,7 +893,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "message",
 								Position: 3,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -904,7 +904,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "facility",
 								Position: 4,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -915,7 +915,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "procid",
 								Position: 5,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -930,7 +930,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "appname",
 								Position: 6,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -944,7 +944,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "host",
 								Position: 7,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -954,7 +954,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "hostname",
 								Position: 8,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -970,14 +970,14 @@ func TestOrganizationConfig_Put(t *testing.T) {
 		{
 			name: "Set non-default org config",
 			args: args{
-				organizationConfig: &cmp.OrganizationConfig{
+				organizationConfig: &cloudhub.OrganizationConfig{
 					OrganizationID: "1337",
-					LogViewer: cmp.LogViewerConfig{
-						Columns: []cmp.LogViewerColumn{
+					LogViewer: cloudhub.LogViewerConfig{
+						Columns: []cloudhub.LogViewerColumn{
 							{
 								Name:     "time",
 								Position: 1,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -987,7 +987,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "severity",
 								Position: 0,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -1002,7 +1002,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "timestamp",
 								Position: 2,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -1013,7 +1013,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "message",
 								Position: 3,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -1024,7 +1024,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "facility",
 								Position: 4,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -1035,7 +1035,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "procid",
 								Position: 5,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -1050,7 +1050,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "appname",
 								Position: 6,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -1064,7 +1064,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "hostname",
 								Position: 7,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -1074,7 +1074,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "host",
 								Position: 8,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -1087,13 +1087,13 @@ func TestOrganizationConfig_Put(t *testing.T) {
 				organizationID: "1337",
 			},
 			wants: wants{
-				organizationConfig: &cmp.OrganizationConfig{
-					LogViewer: cmp.LogViewerConfig{
-						Columns: []cmp.LogViewerColumn{
+				organizationConfig: &cloudhub.OrganizationConfig{
+					LogViewer: cloudhub.LogViewerConfig{
+						Columns: []cloudhub.LogViewerColumn{
 							{
 								Name:     "time",
 								Position: 1,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -1103,7 +1103,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "severity",
 								Position: 0,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -1118,7 +1118,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "timestamp",
 								Position: 2,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -1129,7 +1129,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "message",
 								Position: 3,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -1140,7 +1140,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "facility",
 								Position: 4,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -1151,7 +1151,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "procid",
 								Position: 5,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 
 									{
 										Type:  "visibility",
@@ -1166,7 +1166,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "appname",
 								Position: 6,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -1180,7 +1180,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "hostname",
 								Position: 7,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",
@@ -1190,7 +1190,7 @@ func TestOrganizationConfig_Put(t *testing.T) {
 							{
 								Name:     "host",
 								Position: 8,
-								Encodings: []cmp.ColumnEncoding{
+								Encodings: []cloudhub.ColumnEncoding{
 									{
 										Type:  "visibility",
 										Value: "visible",

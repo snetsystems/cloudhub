@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/snetsystems/cmp/backend/influx"
+	"github.com/snetsystems/cloudhub/backend/influx"
 )
 
 func TestMetaClient_ShowCluster(t *testing.T) {
@@ -154,7 +154,7 @@ func TestMetaClient_Users(t *testing.T) {
 				},
 				client: NewMockClient(
 					http.StatusOK,
-					[]byte(`{"users":[{"name":"admin","hash":"1234","permissions":{"":["ViewAdmin","ViewCMP"]}}]}`),
+					[]byte(`{"users":[{"name":"admin","hash":"1234","permissions":{"":["ViewAdmin","ViewCloudHub"]}}]}`),
 					nil,
 					nil,
 				),
@@ -169,7 +169,7 @@ func TestMetaClient_Users(t *testing.T) {
 						Name: "admin",
 						Permissions: map[string][]string{
 							"": []string{
-								"ViewAdmin", "ViewCMP",
+								"ViewAdmin", "ViewCloudHub",
 							},
 						},
 					},
@@ -185,7 +185,7 @@ func TestMetaClient_Users(t *testing.T) {
 				},
 				client: NewMockClient(
 					http.StatusOK,
-					[]byte(`{"users":[{"name":"admin","hash":"1234","permissions":{"":["ViewAdmin","ViewCMP"]}}]}`),
+					[]byte(`{"users":[{"name":"admin","hash":"1234","permissions":{"":["ViewAdmin","ViewCloudHub"]}}]}`),
 					nil,
 					nil,
 				),
@@ -200,7 +200,7 @@ func TestMetaClient_Users(t *testing.T) {
 						Name: "admin",
 						Permissions: map[string][]string{
 							"": []string{
-								"ViewAdmin", "ViewCMP",
+								"ViewAdmin", "ViewCloudHub",
 							},
 						},
 					},
@@ -216,7 +216,7 @@ func TestMetaClient_Users(t *testing.T) {
 				},
 				client: NewMockClient(
 					http.StatusOK,
-					[]byte(`{"users":[{"name":"admin","hash":"1234","permissions":{"":["ViewAdmin","ViewCMP"]}}]}`),
+					[]byte(`{"users":[{"name":"admin","hash":"1234","permissions":{"":["ViewAdmin","ViewCloudHub"]}}]}`),
 					nil,
 					fmt.Errorf("time circuits on. Flux Capacitor... fluxxing"),
 				),
@@ -291,7 +291,7 @@ func TestMetaClient_User(t *testing.T) {
 				},
 				client: NewMockClient(
 					http.StatusOK,
-					[]byte(`{"users":[{"name":"admin","hash":"1234","permissions":{"":["ViewAdmin","ViewCMP"]}}]}`),
+					[]byte(`{"users":[{"name":"admin","hash":"1234","permissions":{"":["ViewAdmin","ViewCloudHub"]}}]}`),
 					nil,
 					nil,
 				),
@@ -304,7 +304,7 @@ func TestMetaClient_User(t *testing.T) {
 				Name: "admin",
 				Permissions: map[string][]string{
 					"": []string{
-						"ViewAdmin", "ViewCMP",
+						"ViewAdmin", "ViewCloudHub",
 					},
 				},
 			},
@@ -606,7 +606,7 @@ func TestMetaClient_SetUserPerms(t *testing.T) {
 				},
 				client: NewMockClient(
 					http.StatusOK,
-					[]byte(`{"users":[{"name":"admin","hash":"1234","permissions":{"":["ViewAdmin","ViewCMP"]}}]}`),
+					[]byte(`{"users":[{"name":"admin","hash":"1234","permissions":{"":["ViewAdmin","ViewCloudHub"]}}]}`),
 					nil,
 					nil,
 				),
@@ -615,7 +615,7 @@ func TestMetaClient_SetUserPerms(t *testing.T) {
 				ctx:  context.Background(),
 				name: "admin",
 			},
-			wantRm: `{"action":"remove-permissions","user":{"name":"admin","permissions":{"":["ViewAdmin","ViewCMP"]}}}`,
+			wantRm: `{"action":"remove-permissions","user":{"name":"admin","permissions":{"":["ViewAdmin","ViewCloudHub"]}}}`,
 		},
 		{
 			name: "Remove some permissions and add others",
@@ -626,7 +626,7 @@ func TestMetaClient_SetUserPerms(t *testing.T) {
 				},
 				client: NewMockClient(
 					http.StatusOK,
-					[]byte(`{"users":[{"name":"admin","hash":"1234","permissions":{"":["ViewAdmin","ViewCMP"]}}]}`),
+					[]byte(`{"users":[{"name":"admin","hash":"1234","permissions":{"":["ViewAdmin","ViewCloudHub"]}}]}`),
 					nil,
 					nil,
 				),
@@ -640,7 +640,7 @@ func TestMetaClient_SetUserPerms(t *testing.T) {
 					},
 				},
 			},
-			wantRm:  `{"action":"remove-permissions","user":{"name":"admin","permissions":{"":["ViewAdmin","ViewCMP"]}}}`,
+			wantRm:  `{"action":"remove-permissions","user":{"name":"admin","permissions":{"":["ViewAdmin","ViewCloudHub"]}}}`,
 			wantAdd: `{"action":"add-permissions","user":{"name":"admin","permissions":{"telegraf":["ReadData"]}}}`,
 		},
 	}
@@ -725,7 +725,7 @@ func TestMetaClient_Roles(t *testing.T) {
 				},
 				client: NewMockClient(
 					http.StatusOK,
-					[]byte(`{"roles":[{"name":"admin","users":["marty"],"permissions":{"":["ViewAdmin","ViewCMP"]}}]}`),
+					[]byte(`{"roles":[{"name":"admin","users":["marty"],"permissions":{"":["ViewAdmin","ViewCloudHub"]}}]}`),
 					nil,
 					nil,
 				),
@@ -740,7 +740,7 @@ func TestMetaClient_Roles(t *testing.T) {
 						Name: "admin",
 						Permissions: map[string][]string{
 							"": []string{
-								"ViewAdmin", "ViewCMP",
+								"ViewAdmin", "ViewCloudHub",
 							},
 						},
 						Users: []string{"marty"},
@@ -757,7 +757,7 @@ func TestMetaClient_Roles(t *testing.T) {
 				},
 				client: NewMockClient(
 					http.StatusOK,
-					[]byte(`{"roles":[{"name":"admin","users":["marty"],"permissions":{"":["ViewAdmin","ViewCMP"]}}]}`),
+					[]byte(`{"roles":[{"name":"admin","users":["marty"],"permissions":{"":["ViewAdmin","ViewCloudHub"]}}]}`),
 					nil,
 					nil,
 				),
@@ -772,7 +772,7 @@ func TestMetaClient_Roles(t *testing.T) {
 						Name: "admin",
 						Permissions: map[string][]string{
 							"": []string{
-								"ViewAdmin", "ViewCMP",
+								"ViewAdmin", "ViewCloudHub",
 							},
 						},
 						Users: []string{"marty"},
@@ -824,7 +824,7 @@ func TestMetaClient_Role(t *testing.T) {
 				},
 				client: NewMockClient(
 					http.StatusOK,
-					[]byte(`{"roles":[{"name":"admin","users":["marty"],"permissions":{"":["ViewAdmin","ViewCMP"]}}]}`),
+					[]byte(`{"roles":[{"name":"admin","users":["marty"],"permissions":{"":["ViewAdmin","ViewCloudHub"]}}]}`),
 					nil,
 					nil,
 				),
@@ -837,7 +837,7 @@ func TestMetaClient_Role(t *testing.T) {
 				Name: "admin",
 				Permissions: map[string][]string{
 					"": []string{
-						"ViewAdmin", "ViewCMP",
+						"ViewAdmin", "ViewCloudHub",
 					},
 				},
 				Users: []string{"marty"},
@@ -907,7 +907,7 @@ func TestMetaClient_UserRoles(t *testing.T) {
 				},
 				client: NewMockClient(
 					http.StatusOK,
-					[]byte(`{"roles":[{"name":"timetravelers","users":["marty","docbrown"],"permissions":{"":["ViewAdmin","ViewCMP"]}},{"name":"mcfly","users":["marty","george"],"permissions":{"":["ViewAdmin","ViewCMP"]}}]}`),
+					[]byte(`{"roles":[{"name":"timetravelers","users":["marty","docbrown"],"permissions":{"":["ViewAdmin","ViewCloudHub"]}},{"name":"mcfly","users":["marty","george"],"permissions":{"":["ViewAdmin","ViewCloudHub"]}}]}`),
 					nil,
 					nil,
 				),
@@ -923,7 +923,7 @@ func TestMetaClient_UserRoles(t *testing.T) {
 							Name: "timetravelers",
 							Permissions: map[string][]string{
 								"": []string{
-									"ViewAdmin", "ViewCMP",
+									"ViewAdmin", "ViewCloudHub",
 								},
 							},
 							Users: []string{"marty", "docbrown"},
@@ -932,7 +932,7 @@ func TestMetaClient_UserRoles(t *testing.T) {
 							Name: "mcfly",
 							Permissions: map[string][]string{
 								"": []string{
-									"ViewAdmin", "ViewCMP",
+									"ViewAdmin", "ViewCloudHub",
 								},
 							},
 							Users: []string{"marty", "george"},
@@ -945,7 +945,7 @@ func TestMetaClient_UserRoles(t *testing.T) {
 							Name: "timetravelers",
 							Permissions: map[string][]string{
 								"": []string{
-									"ViewAdmin", "ViewCMP",
+									"ViewAdmin", "ViewCloudHub",
 								},
 							},
 							Users: []string{"marty", "docbrown"},
@@ -958,7 +958,7 @@ func TestMetaClient_UserRoles(t *testing.T) {
 							Name: "mcfly",
 							Permissions: map[string][]string{
 								"": []string{
-									"ViewAdmin", "ViewCMP",
+									"ViewAdmin", "ViewCloudHub",
 								},
 							},
 							Users: []string{"marty", "george"},
@@ -1148,7 +1148,7 @@ func TestMetaClient_SetRolePerms(t *testing.T) {
 				},
 				client: NewMockClient(
 					http.StatusOK,
-					[]byte(`{"roles":[{"name":"admin","users":["marty"],"permissions":{"":["ViewAdmin","ViewCMP"]}}]}`),
+					[]byte(`{"roles":[{"name":"admin","users":["marty"],"permissions":{"":["ViewAdmin","ViewCloudHub"]}}]}`),
 					nil,
 					nil,
 				),
@@ -1157,7 +1157,7 @@ func TestMetaClient_SetRolePerms(t *testing.T) {
 				ctx:  context.Background(),
 				name: "admin",
 			},
-			wantRm: `{"action":"remove-permissions","role":{"name":"admin","permissions":{"":["ViewAdmin","ViewCMP"]}}}`,
+			wantRm: `{"action":"remove-permissions","role":{"name":"admin","permissions":{"":["ViewAdmin","ViewCloudHub"]}}}`,
 		},
 		{
 			name: "Remove some users and add permissions to other",
@@ -1168,7 +1168,7 @@ func TestMetaClient_SetRolePerms(t *testing.T) {
 				},
 				client: NewMockClient(
 					http.StatusOK,
-					[]byte(`{"roles":[{"name":"admin","users":["marty"],"permissions":{"":["ViewAdmin","ViewCMP"]}}]}`),
+					[]byte(`{"roles":[{"name":"admin","users":["marty"],"permissions":{"":["ViewAdmin","ViewCloudHub"]}}]}`),
 					nil,
 					nil,
 				),
@@ -1182,7 +1182,7 @@ func TestMetaClient_SetRolePerms(t *testing.T) {
 					},
 				},
 			},
-			wantRm:  `{"action":"remove-permissions","role":{"name":"admin","permissions":{"":["ViewAdmin","ViewCMP"]}}}`,
+			wantRm:  `{"action":"remove-permissions","role":{"name":"admin","permissions":{"":["ViewAdmin","ViewCloudHub"]}}}`,
 			wantAdd: `{"action":"add-permissions","role":{"name":"admin","permissions":{"telegraf":["ReadData"]}}}`,
 		},
 	}
@@ -1268,7 +1268,7 @@ func TestMetaClient_SetRoleUsers(t *testing.T) {
 				},
 				client: NewMockClient(
 					http.StatusOK,
-					[]byte(`{"roles":[{"name":"admin","users":["marty"],"permissions":{"":["ViewAdmin","ViewCMP"]}}]}`),
+					[]byte(`{"roles":[{"name":"admin","users":["marty"],"permissions":{"":["ViewAdmin","ViewCloudHub"]}}]}`),
 					nil,
 					nil,
 				),
@@ -1288,7 +1288,7 @@ func TestMetaClient_SetRoleUsers(t *testing.T) {
 				},
 				client: NewMockClient(
 					http.StatusOK,
-					[]byte(`{"roles":[{"name":"admin","users":[],"permissions":{"":["ViewAdmin","ViewCMP"]}}]}`),
+					[]byte(`{"roles":[{"name":"admin","users":[],"permissions":{"":["ViewAdmin","ViewCloudHub"]}}]}`),
 					nil,
 					nil,
 				),

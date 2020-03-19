@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"time"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // Shared transports for all clients to prevent leaking connections.
@@ -49,7 +49,7 @@ func (c *Client) pingTimeout(ctx context.Context) error {
 	case resp := <-resps:
 		return resp
 	case <-ctx.Done():
-		return cmp.ErrUpstreamTimeout
+		return cloudhub.ErrUpstreamTimeout
 	}
 }
 

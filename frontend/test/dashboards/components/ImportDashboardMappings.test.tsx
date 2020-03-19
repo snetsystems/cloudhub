@@ -33,7 +33,7 @@ describe('Dashboards.Components.ImportDashboardMappings', () => {
 
   describe('if there are cells and no importedSources', () => {
     it('should display a table with rows', () => {
-      const queryWithSource = {...query, source: '/cmp/v1/sources/1'}
+      const queryWithSource = {...query, source: '/cloudhub/v1/sources/1'}
       const cellWithSource = {...cell, queries: [queryWithSource]}
       const cells = [cellWithSource]
       const {wrapper} = setup({cells})
@@ -51,7 +51,7 @@ describe('Dashboards.Components.ImportDashboardMappings', () => {
 
   describe('if there are cells and imported sources', () => {
     it('should display a table with rows correlating to source names', () => {
-      const sourceLink = '/cmp/v1/sources/1'
+      const sourceLink = '/cloudhub/v1/sources/1'
       const queryWithSource = {...query, source: sourceLink}
       const cellWithSource = {...cell, queries: [queryWithSource]}
       const cells = [cellWithSource]

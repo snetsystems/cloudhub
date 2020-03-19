@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"golang.org/x/oauth2"
 	goauth2 "google.golang.org/api/oauth2/v2"
 )
@@ -23,7 +23,7 @@ type Google struct {
 	ClientSecret string
 	RedirectURL  string
 	Domains      []string // Optional google email domain checking
-	Logger       cmp.Logger
+	Logger       cloudhub.Logger
 }
 
 // Name is the name of the provider

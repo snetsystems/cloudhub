@@ -5,12 +5,12 @@ import (
 	"testing"
 
 	gocmp "github.com/google/go-cmp/cmp"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/bolt/internal"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/bolt/internal"
 )
 
 func TestMarshalSource(t *testing.T) {
-	v := cmp.Source{
+	v := cloudhub.Source{
 		ID:       12,
 		Name:     "Fountain of Truth",
 		Type:     "influx",
@@ -22,7 +22,7 @@ func TestMarshalSource(t *testing.T) {
 		Telegraf: "telegraf",
 	}
 
-	var vv cmp.Source
+	var vv cloudhub.Source
 	if buf, err := internal.MarshalSource(v); err != nil {
 		t.Fatal(err)
 	} else if err := internal.UnmarshalSource(buf, &vv); err != nil {
@@ -42,7 +42,7 @@ func TestMarshalSource(t *testing.T) {
 	}
 }
 func TestMarshalSourceWithSecret(t *testing.T) {
-	v := cmp.Source{
+	v := cloudhub.Source{
 		ID:           12,
 		Name:         "Fountain of Truth",
 		Type:         "influx",
@@ -54,7 +54,7 @@ func TestMarshalSourceWithSecret(t *testing.T) {
 		Telegraf:     "telegraf",
 	}
 
-	var vv cmp.Source
+	var vv cloudhub.Source
 	if buf, err := internal.MarshalSource(v); err != nil {
 		t.Fatal(err)
 	} else if err := internal.UnmarshalSource(buf, &vv); err != nil {
@@ -75,7 +75,7 @@ func TestMarshalSourceWithSecret(t *testing.T) {
 }
 
 func TestMarshalServer(t *testing.T) {
-	v := cmp.Server{
+	v := cloudhub.Server{
 		ID:                 12,
 		SrcID:              2,
 		Name:               "Fountain of Truth",
@@ -85,7 +85,7 @@ func TestMarshalServer(t *testing.T) {
 		InsecureSkipVerify: true,
 	}
 
-	var vv cmp.Server
+	var vv cloudhub.Server
 	if buf, err := internal.MarshalServer(v); err != nil {
 		t.Fatal(err)
 	} else if err := internal.UnmarshalServer(buf, &vv); err != nil {
@@ -96,11 +96,11 @@ func TestMarshalServer(t *testing.T) {
 }
 
 func TestMarshalLayout(t *testing.T) {
-	layout := cmp.Layout{
+	layout := cloudhub.Layout{
 		ID:          "id",
 		Measurement: "measurement",
 		Application: "app",
-		Cells: []cmp.Cell{
+		Cells: []cloudhub.Cell{
 			{
 				X:    1,
 				Y:    1,
@@ -109,15 +109,15 @@ func TestMarshalLayout(t *testing.T) {
 				I:    "anotherid",
 				Type: "line",
 				Name: "cell1",
-				Axes: map[string]cmp.Axis{
-					"y": cmp.Axis{
+				Axes: map[string]cloudhub.Axis{
+					"y": cloudhub.Axis{
 						Bounds: []string{"0", "100"},
 						Label:  "foo",
 					},
 				},
-				Queries: []cmp.Query{
+				Queries: []cloudhub.Query{
 					{
-						Range: &cmp.Range{
+						Range: &cloudhub.Range{
 							Lower: 1,
 							Upper: 2,
 						},
@@ -135,7 +135,7 @@ func TestMarshalLayout(t *testing.T) {
 		},
 	}
 
-	var vv cmp.Layout
+	var vv cloudhub.Layout
 	if buf, err := internal.MarshalLayout(layout); err != nil {
 		t.Fatal(err)
 	} else if err := internal.UnmarshalLayout(buf, &vv); err != nil {
@@ -146,9 +146,9 @@ func TestMarshalLayout(t *testing.T) {
 }
 
 func Test_MarshalDashboard(t *testing.T) {
-	dashboard := cmp.Dashboard{
+	dashboard := cloudhub.Dashboard{
 		ID: 1,
-		Cells: []cmp.DashboardCell{
+		Cells: []cloudhub.DashboardCell{
 			{
 				ID:   "9b5367de-c552-4322-a9e8-7f384cbd235c",
 				X:    0,
@@ -156,20 +156,20 @@ func Test_MarshalDashboard(t *testing.T) {
 				W:    4,
 				H:    4,
 				Name: "Super awesome query",
-				Queries: []cmp.DashboardQuery{
+				Queries: []cloudhub.DashboardQuery{
 					{
 						Command: "select * from cpu",
 						Label:   "CPU Utilization",
-						Range: &cmp.Range{
+						Range: &cloudhub.Range{
 							Upper: int64(100),
 						},
-						Source: "/cmp/v1/sources/1",
-						Shifts: []cmp.TimeShift{},
+						Source: "/cloudhub/v1/sources/1",
+						Shifts: []cloudhub.TimeShift{},
 						Type:   "influxql",
 					},
 				},
-				Axes: map[string]cmp.Axis{
-					"y": cmp.Axis{
+				Axes: map[string]cloudhub.Axis{
+					"y": cloudhub.Axis{
 						Bounds: []string{"0", "3", "1-7", "foo"},
 						Label:  "foo",
 						Prefix: "M",
@@ -179,7 +179,7 @@ func Test_MarshalDashboard(t *testing.T) {
 					},
 				},
 				Type: "line",
-				CellColors: []cmp.CellColor{
+				CellColors: []cloudhub.CellColor{
 					{
 						ID:    "myid",
 						Type:  "min",
@@ -195,16 +195,16 @@ func Test_MarshalDashboard(t *testing.T) {
 						Value: "100",
 					},
 				},
-				TableOptions: cmp.TableOptions{},
-				FieldOptions: []cmp.RenamableField{},
+				TableOptions: cloudhub.TableOptions{},
+				FieldOptions: []cloudhub.RenamableField{},
 				TimeFormat:   "",
 			},
 		},
-		Templates: []cmp.Template{},
+		Templates: []cloudhub.Template{},
 		Name:      "Dashboard",
 	}
 
-	var actual cmp.Dashboard
+	var actual cloudhub.Dashboard
 	if buf, err := internal.MarshalDashboard(dashboard); err != nil {
 		t.Fatal("Error marshaling dashboard: err", err)
 	} else if err := internal.UnmarshalDashboard(buf, &actual); err != nil {
@@ -215,9 +215,9 @@ func Test_MarshalDashboard(t *testing.T) {
 }
 
 func Test_MarshalDashboard_WithLegacyBounds(t *testing.T) {
-	dashboard := cmp.Dashboard{
+	dashboard := cloudhub.Dashboard{
 		ID: 1,
-		Cells: []cmp.DashboardCell{
+		Cells: []cloudhub.DashboardCell{
 			{
 				ID:   "9b5367de-c552-4322-a9e8-7f384cbd235c",
 				X:    0,
@@ -225,23 +225,23 @@ func Test_MarshalDashboard_WithLegacyBounds(t *testing.T) {
 				W:    4,
 				H:    4,
 				Name: "Super awesome query",
-				Queries: []cmp.DashboardQuery{
+				Queries: []cloudhub.DashboardQuery{
 					{
 						Command: "select * from cpu",
 						Label:   "CPU Utilization",
-						Range: &cmp.Range{
+						Range: &cloudhub.Range{
 							Upper: int64(100),
 						},
-						Shifts: []cmp.TimeShift{},
+						Shifts: []cloudhub.TimeShift{},
 						Type:   "influxql",
 					},
 				},
-				Axes: map[string]cmp.Axis{
-					"y": cmp.Axis{
+				Axes: map[string]cloudhub.Axis{
+					"y": cloudhub.Axis{
 						LegacyBounds: [2]int64{0, 5},
 					},
 				},
-				CellColors: []cmp.CellColor{
+				CellColors: []cloudhub.CellColor{
 					{
 						ID:    "myid",
 						Type:  "min",
@@ -257,23 +257,23 @@ func Test_MarshalDashboard_WithLegacyBounds(t *testing.T) {
 						Value: "100",
 					},
 				},
-				Legend: cmp.Legend{
+				Legend: cloudhub.Legend{
 					Type:        "static",
 					Orientation: "bottom",
 				},
-				TableOptions: cmp.TableOptions{},
+				TableOptions: cloudhub.TableOptions{},
 				TimeFormat:   "MM:DD:YYYY",
-				FieldOptions: []cmp.RenamableField{},
+				FieldOptions: []cloudhub.RenamableField{},
 				Type:         "line",
 			},
 		},
-		Templates: []cmp.Template{},
+		Templates: []cloudhub.Template{},
 		Name:      "Dashboard",
 	}
 
-	expected := cmp.Dashboard{
+	expected := cloudhub.Dashboard{
 		ID: 1,
-		Cells: []cmp.DashboardCell{
+		Cells: []cloudhub.DashboardCell{
 			{
 				ID:   "9b5367de-c552-4322-a9e8-7f384cbd235c",
 				X:    0,
@@ -281,24 +281,24 @@ func Test_MarshalDashboard_WithLegacyBounds(t *testing.T) {
 				W:    4,
 				H:    4,
 				Name: "Super awesome query",
-				Queries: []cmp.DashboardQuery{
+				Queries: []cloudhub.DashboardQuery{
 					{
 						Command: "select * from cpu",
 						Label:   "CPU Utilization",
-						Range: &cmp.Range{
+						Range: &cloudhub.Range{
 							Upper: int64(100),
 						},
-						Shifts: []cmp.TimeShift{},
+						Shifts: []cloudhub.TimeShift{},
 						Type:   "influxql",
 					},
 				},
-				Axes: map[string]cmp.Axis{
-					"y": cmp.Axis{
+				Axes: map[string]cloudhub.Axis{
+					"y": cloudhub.Axis{
 						Base:  "10",
 						Scale: "linear",
 					},
 				},
-				CellColors: []cmp.CellColor{
+				CellColors: []cloudhub.CellColor{
 					{
 						ID:    "myid",
 						Type:  "min",
@@ -314,21 +314,21 @@ func Test_MarshalDashboard_WithLegacyBounds(t *testing.T) {
 						Value: "100",
 					},
 				},
-				Legend: cmp.Legend{
+				Legend: cloudhub.Legend{
 					Type:        "static",
 					Orientation: "bottom",
 				},
-				TableOptions: cmp.TableOptions{},
-				FieldOptions: []cmp.RenamableField{},
+				TableOptions: cloudhub.TableOptions{},
+				FieldOptions: []cloudhub.RenamableField{},
 				TimeFormat:   "MM:DD:YYYY",
 				Type:         "line",
 			},
 		},
-		Templates: []cmp.Template{},
+		Templates: []cloudhub.Template{},
 		Name:      "Dashboard",
 	}
 
-	var actual cmp.Dashboard
+	var actual cloudhub.Dashboard
 	if buf, err := internal.MarshalDashboard(dashboard); err != nil {
 		t.Fatal("Error marshaling dashboard: err", err)
 	} else if err := internal.UnmarshalDashboard(buf, &actual); err != nil {
@@ -339,9 +339,9 @@ func Test_MarshalDashboard_WithLegacyBounds(t *testing.T) {
 }
 
 func Test_MarshalDashboard_WithEmptyLegacyBounds(t *testing.T) {
-	dashboard := cmp.Dashboard{
+	dashboard := cloudhub.Dashboard{
 		ID: 1,
-		Cells: []cmp.DashboardCell{
+		Cells: []cloudhub.DashboardCell{
 			{
 				ID:   "9b5367de-c552-4322-a9e8-7f384cbd235c",
 				X:    0,
@@ -349,23 +349,23 @@ func Test_MarshalDashboard_WithEmptyLegacyBounds(t *testing.T) {
 				W:    4,
 				H:    4,
 				Name: "Super awesome query",
-				Queries: []cmp.DashboardQuery{
+				Queries: []cloudhub.DashboardQuery{
 					{
 						Command: "select * from cpu",
 						Label:   "CPU Utilization",
-						Range: &cmp.Range{
+						Range: &cloudhub.Range{
 							Upper: int64(100),
 						},
-						Shifts: []cmp.TimeShift{},
+						Shifts: []cloudhub.TimeShift{},
 						Type:   "flux",
 					},
 				},
-				Axes: map[string]cmp.Axis{
-					"y": cmp.Axis{
+				Axes: map[string]cloudhub.Axis{
+					"y": cloudhub.Axis{
 						LegacyBounds: [2]int64{},
 					},
 				},
-				CellColors: []cmp.CellColor{
+				CellColors: []cloudhub.CellColor{
 					{
 						ID:    "myid",
 						Type:  "min",
@@ -382,18 +382,18 @@ func Test_MarshalDashboard_WithEmptyLegacyBounds(t *testing.T) {
 					},
 				},
 				Type:         "line",
-				TableOptions: cmp.TableOptions{},
-				FieldOptions: []cmp.RenamableField{},
+				TableOptions: cloudhub.TableOptions{},
+				FieldOptions: []cloudhub.RenamableField{},
 				TimeFormat:   "MM:DD:YYYY",
 			},
 		},
-		Templates: []cmp.Template{},
+		Templates: []cloudhub.Template{},
 		Name:      "Dashboard",
 	}
 
-	expected := cmp.Dashboard{
+	expected := cloudhub.Dashboard{
 		ID: 1,
-		Cells: []cmp.DashboardCell{
+		Cells: []cloudhub.DashboardCell{
 			{
 				ID:   "9b5367de-c552-4322-a9e8-7f384cbd235c",
 				X:    0,
@@ -401,24 +401,24 @@ func Test_MarshalDashboard_WithEmptyLegacyBounds(t *testing.T) {
 				W:    4,
 				H:    4,
 				Name: "Super awesome query",
-				Queries: []cmp.DashboardQuery{
+				Queries: []cloudhub.DashboardQuery{
 					{
 						Command: "select * from cpu",
 						Label:   "CPU Utilization",
-						Range: &cmp.Range{
+						Range: &cloudhub.Range{
 							Upper: int64(100),
 						},
-						Shifts: []cmp.TimeShift{},
+						Shifts: []cloudhub.TimeShift{},
 						Type:   "flux",
 					},
 				},
-				Axes: map[string]cmp.Axis{
-					"y": cmp.Axis{
+				Axes: map[string]cloudhub.Axis{
+					"y": cloudhub.Axis{
 						Base:  "10",
 						Scale: "linear",
 					},
 				},
-				CellColors: []cmp.CellColor{
+				CellColors: []cloudhub.CellColor{
 					{
 						ID:    "myid",
 						Type:  "min",
@@ -434,17 +434,17 @@ func Test_MarshalDashboard_WithEmptyLegacyBounds(t *testing.T) {
 						Value: "100",
 					},
 				},
-				TableOptions: cmp.TableOptions{},
-				FieldOptions: []cmp.RenamableField{},
+				TableOptions: cloudhub.TableOptions{},
+				FieldOptions: []cloudhub.RenamableField{},
 				TimeFormat:   "MM:DD:YYYY",
 				Type:         "line",
 			},
 		},
-		Templates: []cmp.Template{},
+		Templates: []cloudhub.Template{},
 		Name:      "Dashboard",
 	}
 
-	var actual cmp.Dashboard
+	var actual cloudhub.Dashboard
 	if buf, err := internal.MarshalDashboard(dashboard); err != nil {
 		t.Fatal("Error marshaling dashboard: err", err)
 	} else if err := internal.UnmarshalDashboard(buf, &actual); err != nil {
@@ -455,32 +455,32 @@ func Test_MarshalDashboard_WithEmptyLegacyBounds(t *testing.T) {
 }
 
 func Test_MarshalDashboard_WithEmptyCellType(t *testing.T) {
-	dashboard := cmp.Dashboard{
+	dashboard := cloudhub.Dashboard{
 		ID: 1,
-		Cells: []cmp.DashboardCell{
+		Cells: []cloudhub.DashboardCell{
 			{
 				ID: "9b5367de-c552-4322-a9e8-7f384cbd235c",
 			},
 		},
 	}
 
-	expected := cmp.Dashboard{
+	expected := cloudhub.Dashboard{
 		ID: 1,
-		Cells: []cmp.DashboardCell{
+		Cells: []cloudhub.DashboardCell{
 			{
 				ID:           "9b5367de-c552-4322-a9e8-7f384cbd235c",
 				Type:         "line",
-				Queries:      []cmp.DashboardQuery{},
-				Axes:         map[string]cmp.Axis{},
-				CellColors:   []cmp.CellColor{},
-				TableOptions: cmp.TableOptions{},
-				FieldOptions: []cmp.RenamableField{},
+				Queries:      []cloudhub.DashboardQuery{},
+				Axes:         map[string]cloudhub.Axis{},
+				CellColors:   []cloudhub.CellColor{},
+				TableOptions: cloudhub.TableOptions{},
+				FieldOptions: []cloudhub.RenamableField{},
 			},
 		},
-		Templates: []cmp.Template{},
+		Templates: []cloudhub.Template{},
 	}
 
-	var actual cmp.Dashboard
+	var actual cloudhub.Dashboard
 	if buf, err := internal.MarshalDashboard(dashboard); err != nil {
 		t.Fatal("Error marshaling dashboard: err", err)
 	} else if err := internal.UnmarshalDashboard(buf, &actual); err != nil {

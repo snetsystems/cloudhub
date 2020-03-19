@@ -29,7 +29,7 @@ ${mdMarker}
 
     `
     const href = encodeURI(
-      `https://github.com/snetsystems/cmp/issues/new?title=${finalMessage}&body=${template}`
+      `https://github.com/snetsystems/cloudhub/issues/new?title=${finalMessage}&body=${template}`
     )
 
     return (

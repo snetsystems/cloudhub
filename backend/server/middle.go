@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/bouk/httprouter"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // RouteMatchesPrincipal checks that the organization on context matches the organization
@@ -12,7 +12,7 @@ import (
 func RouteMatchesPrincipal(
 	store DataStore,
 	useAuth bool,
-	logger cmp.Logger,
+	logger cloudhub.Logger,
 	next http.HandlerFunc,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

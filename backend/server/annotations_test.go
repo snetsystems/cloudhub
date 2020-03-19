@@ -9,14 +9,14 @@ import (
 	"testing"
 
 	"github.com/bouk/httprouter"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/mocks"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/mocks"
 )
 
 var mockStore = &mocks.Store{
 	SourcesStore: &mocks.SourcesStore{
-		GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-			return cmp.Source{
+		GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+			return cloudhub.Source{
 				ID: ID,
 			}, nil
 		},
@@ -40,28 +40,28 @@ func TestService_Annotations(t *testing.T) {
 		{
 			name: "error no id",
 			w:    httptest.NewRecorder(),
-			r:    httptest.NewRequest("GET", "/cmp/v1/sources/1/annotations", bytes.NewReader([]byte(`howdy`))),
+			r:    httptest.NewRequest("GET", "/cloudhub/v1/sources/1/annotations", bytes.NewReader([]byte(`howdy`))),
 			want: `{"code":422,"message":"Error converting ID "}`,
 		},
 		{
 			name: "no since parameter",
 			ID:   "1",
 			w:    httptest.NewRecorder(),
-			r:    httptest.NewRequest("GET", "/cmp/v1/sources/1/annotations", bytes.NewReader([]byte(`howdy`))),
+			r:    httptest.NewRequest("GET", "/cloudhub/v1/sources/1/annotations", bytes.NewReader([]byte(`howdy`))),
 			want: `{"code":422,"message":"since parameter is required"}`,
 		},
 		{
 			name: "invalid since parameter",
 			ID:   "1",
 			w:    httptest.NewRecorder(),
-			r:    httptest.NewRequest("GET", "/cmp/v1/sources/1/annotations?since=howdy", bytes.NewReader([]byte(`howdy`))),
+			r:    httptest.NewRequest("GET", "/cloudhub/v1/sources/1/annotations?since=howdy", bytes.NewReader([]byte(`howdy`))),
 			want: `{"code":422,"message":"parsing time \"howdy\" as \"2006-01-02T15:04:05.999Z07:00\": cannot parse \"howdy\" as \"2006\""}`,
 		},
 		{
 			name: "invalid tag parameter",
 			ID:   "1",
 			w:    httptest.NewRecorder(),
-			r:    httptest.NewRequest("GET", "/cmp/v1/sources/1/annotations?since=2018-08-04T00:00:00.000Z&tag=nonsense", bytes.NewReader([]byte(`howdy`))),
+			r:    httptest.NewRequest("GET", "/cloudhub/v1/sources/1/annotations?since=2018-08-04T00:00:00.000Z&tag=nonsense", bytes.NewReader([]byte(`howdy`))),
 			want: `{"code":422,"message":"Invalid tag query param"}`,
 		},
 		{
@@ -69,15 +69,15 @@ func TestService_Annotations(t *testing.T) {
 			fields: fields{
 				Store: &mocks.Store{
 					SourcesStore: &mocks.SourcesStore{
-						GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-							return cmp.Source{}, fmt.Errorf("error")
+						GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+							return cloudhub.Source{}, fmt.Errorf("error")
 						},
 					},
 				},
 			},
 			ID:   "1",
 			w:    httptest.NewRecorder(),
-			r:    httptest.NewRequest("GET", "/cmp/v1/sources/1/annotations?since=1985-04-12T23:20:50.52Z", bytes.NewReader([]byte(`howdy`))),
+			r:    httptest.NewRequest("GET", "/cloudhub/v1/sources/1/annotations?since=1985-04-12T23:20:50.52Z", bytes.NewReader([]byte(`howdy`))),
 			want: `{"code":404,"message":"ID 1 not found"}`,
 		},
 		{
@@ -85,14 +85,14 @@ func TestService_Annotations(t *testing.T) {
 			fields: fields{
 				Store: mockStore,
 				TimeSeriesClient: &mocks.TimeSeries{
-					ConnectF: func(context.Context, *cmp.Source) error {
+					ConnectF: func(context.Context, *cloudhub.Source) error {
 						return fmt.Errorf("error)")
 					},
 				},
 			},
 			ID:   "1",
 			w:    httptest.NewRecorder(),
-			r:    httptest.NewRequest("GET", "/cmp/v1/sources/1/annotations?since=1985-04-12T23:20:50.52Z", bytes.NewReader([]byte(`howdy`))),
+			r:    httptest.NewRequest("GET", "/cloudhub/v1/sources/1/annotations?since=1985-04-12T23:20:50.52Z", bytes.NewReader([]byte(`howdy`))),
 			want: `{"code":400,"message":"Unable to connect to source 1: error)"}`,
 		},
 		{
@@ -100,17 +100,17 @@ func TestService_Annotations(t *testing.T) {
 			fields: fields{
 				Store: mockStore,
 				TimeSeriesClient: &mocks.TimeSeries{
-					ConnectF: func(context.Context, *cmp.Source) error {
+					ConnectF: func(context.Context, *cloudhub.Source) error {
 						return nil
 					},
-					QueryF: func(context.Context, cmp.Query) (cmp.Response, error) {
+					QueryF: func(context.Context, cloudhub.Query) (cloudhub.Response, error) {
 						return mocks.NewResponse(`{[]}`, nil), nil
 					},
 				},
 			},
 			ID:   "1",
 			w:    httptest.NewRecorder(),
-			r:    httptest.NewRequest("GET", "/cmp/v1/sources/1/annotations?since=1985-04-12T23:20:50.52Z", bytes.NewReader([]byte(`howdy`))),
+			r:    httptest.NewRequest("GET", "/cloudhub/v1/sources/1/annotations?since=1985-04-12T23:20:50.52Z", bytes.NewReader([]byte(`howdy`))),
 			want: `{"code":500,"message":"Unknown error: Error loading annotations: invalid character '[' looking for beginning of object key string"}`,
 		},
 		{
@@ -118,10 +118,10 @@ func TestService_Annotations(t *testing.T) {
 			fields: fields{
 				Store: mockStore,
 				TimeSeriesClient: &mocks.TimeSeries{
-					ConnectF: func(context.Context, *cmp.Source) error {
+					ConnectF: func(context.Context, *cloudhub.Source) error {
 						return nil
 					},
-					QueryF: func(context.Context, cmp.Query) (cmp.Response, error) {
+					QueryF: func(context.Context, cloudhub.Query) (cloudhub.Response, error) {
 						return mocks.NewResponse(`[
 							{
 								"series": [
@@ -152,8 +152,8 @@ func TestService_Annotations(t *testing.T) {
 			},
 			ID: "1",
 			w:  httptest.NewRecorder(),
-			r:  httptest.NewRequest("GET", "/cmp/v1/sources/1/annotations?since=1985-04-12T23:20:50.52Z", bytes.NewReader([]byte(`howdy`))),
-			want: `{"annotations":[{"id":"ea0aa94b-969a-4cd5-912a-5db61d502268","startTime":"1970-01-01T00:00:00Z","endTime":"2018-01-25T22:42:57.345Z","text":"mytext","tags":{},"links":{"self":"/cmp/v1/sources/1/annotations/ea0aa94b-969a-4cd5-912a-5db61d502268"}}]}
+			r:  httptest.NewRequest("GET", "/cloudhub/v1/sources/1/annotations?since=1985-04-12T23:20:50.52Z", bytes.NewReader([]byte(`howdy`))),
+			want: `{"annotations":[{"id":"ea0aa94b-969a-4cd5-912a-5db61d502268","startTime":"1970-01-01T00:00:00Z","endTime":"2018-01-25T22:42:57.345Z","text":"mytext","tags":{},"links":{"self":"/cloudhub/v1/sources/1/annotations/ea0aa94b-969a-4cd5-912a-5db61d502268"}}]}
 `,
 		},
 		{
@@ -161,17 +161,17 @@ func TestService_Annotations(t *testing.T) {
 			fields: fields{
 				Store: mockStore,
 				TimeSeriesClient: &mocks.TimeSeries{
-					ConnectF: func(context.Context, *cmp.Source) error {
+					ConnectF: func(context.Context, *cloudhub.Source) error {
 						return nil
 					},
-					QueryF: func(context.Context, cmp.Query) (cmp.Response, error) {
+					QueryF: func(context.Context, cloudhub.Query) (cloudhub.Response, error) {
 						return mocks.NewResponse(`[]`, nil), nil
 					},
 				},
 			},
 			ID: "1",
 			w:  httptest.NewRecorder(),
-			r:  httptest.NewRequest("GET", "/cmp/v1/sources/1/annotations?since=1985-04-12T23:20:50.52Z&tag=foo%20%3D~%20%2Fbar%2F", bytes.NewReader([]byte(`howdy`))),
+			r:  httptest.NewRequest("GET", "/cloudhub/v1/sources/1/annotations?since=1985-04-12T23:20:50.52Z&tag=foo%20%3D~%20%2Fbar%2F", bytes.NewReader([]byte(`howdy`))),
 			want: `{"annotations":[]}
 `,
 		},
@@ -201,13 +201,13 @@ func TestService_Annotations(t *testing.T) {
 }
 
 func TestService_UpdateAnnotation(t *testing.T) {
-	url := "/cmp/v1/sources/1/annotations/1"
+	url := "/cloudhub/v1/sources/1/annotations/1"
 
 	timeSeriesClient := &mocks.TimeSeries{
-		ConnectF: func(context.Context, *cmp.Source) error {
+		ConnectF: func(context.Context, *cloudhub.Source) error {
 			return nil
 		},
-		QueryF: func(context.Context, cmp.Query) (cmp.Response, error) {
+		QueryF: func(context.Context, cloudhub.Query) (cloudhub.Response, error) {
 			return mocks.NewResponse(`[
 							{
 								"series": [
@@ -234,7 +234,7 @@ func TestService_UpdateAnnotation(t *testing.T) {
 							}
 						]`, nil), nil
 		},
-		WriteF: func(context.Context, []cmp.Point) error {
+		WriteF: func(context.Context, []cloudhub.Point) error {
 			return nil
 		},
 	}
@@ -251,7 +251,7 @@ func TestService_UpdateAnnotation(t *testing.T) {
 	}{
 		{
 			body: `{"id":"1","text":"newtext","tags":{"foo":"bar"}}`,
-			want: `{"id":"1","startTime":"1970-01-01T00:00:00Z","endTime":"2018-01-25T22:42:57.345Z","text":"newtext","tags":{"foo":"bar"},"links":{"self":"/cmp/v1/sources/1/annotations/1"}}
+			want: `{"id":"1","startTime":"1970-01-01T00:00:00Z","endTime":"2018-01-25T22:42:57.345Z","text":"newtext","tags":{"foo":"bar"},"links":{"self":"/cloudhub/v1/sources/1/annotations/1"}}
 `,
 		},
 		{

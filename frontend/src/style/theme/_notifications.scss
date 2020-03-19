@@ -9,7 +9,7 @@ $notification-margin: 12px;
   position: fixed;
   right: $notification-margin;
   width: 360px;
-  top: $s-cmp-page-header-height + $notification-margin;
+  top: $s-cloudhub-page-header-height + $notification-margin;
   z-index: $z--notifications;
 }
 

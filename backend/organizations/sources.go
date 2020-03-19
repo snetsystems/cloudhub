@@ -3,22 +3,22 @@ package organizations
 import (
 	"context"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-// ensure that SourcesStore implements cmp.SourceStore
-var _ cmp.SourcesStore = &SourcesStore{}
+// ensure that SourcesStore implements cloudhub.SourceStore
+var _ cloudhub.SourcesStore = &SourcesStore{}
 
 // SourcesStore facade on a SourceStore that filters sources
 // by organization.
 type SourcesStore struct {
-	store        cmp.SourcesStore
+	store        cloudhub.SourcesStore
 	organization string
 }
 
 // NewSourcesStore creates a new SourcesStore from an existing
-// cmp.SourceStore and an organization string
-func NewSourcesStore(s cmp.SourcesStore, org string) *SourcesStore {
+// cloudhub.SourceStore and an organization string
+func NewSourcesStore(s cloudhub.SourcesStore, org string) *SourcesStore {
 	return &SourcesStore{
 		store:        s,
 		organization: org,
@@ -27,7 +27,7 @@ func NewSourcesStore(s cmp.SourcesStore, org string) *SourcesStore {
 
 // All retrieves all sources from the underlying SourceStore and filters them
 // by organization.
-func (s *SourcesStore) All(ctx context.Context) ([]cmp.Source, error) {
+func (s *SourcesStore) All(ctx context.Context) ([]cloudhub.Source, error) {
 	err := validOrganization(ctx)
 	if err != nil {
 		return nil, err
@@ -52,10 +52,10 @@ func (s *SourcesStore) All(ctx context.Context) ([]cmp.Source, error) {
 
 // Add creates a new Source in the SourcesStore with source.Organization set to be the
 // organization from the source store.
-func (s *SourcesStore) Add(ctx context.Context, d cmp.Source) (cmp.Source, error) {
+func (s *SourcesStore) Add(ctx context.Context, d cloudhub.Source) (cloudhub.Source, error) {
 	err := validOrganization(ctx)
 	if err != nil {
-		return cmp.Source{}, err
+		return cloudhub.Source{}, err
 	}
 
 	d.Organization = s.organization
@@ -63,7 +63,7 @@ func (s *SourcesStore) Add(ctx context.Context, d cmp.Source) (cmp.Source, error
 }
 
 // Delete the source from SourcesStore
-func (s *SourcesStore) Delete(ctx context.Context, d cmp.Source) error {
+func (s *SourcesStore) Delete(ctx context.Context, d cloudhub.Source) error {
 	err := validOrganization(ctx)
 	if err != nil {
 		return err
@@ -78,26 +78,26 @@ func (s *SourcesStore) Delete(ctx context.Context, d cmp.Source) error {
 }
 
 // Get returns a Source if the id exists and belongs to the organization that is set.
-func (s *SourcesStore) Get(ctx context.Context, id int) (cmp.Source, error) {
+func (s *SourcesStore) Get(ctx context.Context, id int) (cloudhub.Source, error) {
 	err := validOrganization(ctx)
 	if err != nil {
-		return cmp.Source{}, err
+		return cloudhub.Source{}, err
 	}
 
 	d, err := s.store.Get(ctx, id)
 	if err != nil {
-		return cmp.Source{}, err
+		return cloudhub.Source{}, err
 	}
 
 	if d.Organization != s.organization {
-		return cmp.Source{}, cmp.ErrSourceNotFound
+		return cloudhub.Source{}, cloudhub.ErrSourceNotFound
 	}
 
 	return d, nil
 }
 
 // Update the source in SourcesStore.
-func (s *SourcesStore) Update(ctx context.Context, d cmp.Source) error {
+func (s *SourcesStore) Update(ctx context.Context, d cloudhub.Source) error {
 	err := validOrganization(ctx)
 	if err != nil {
 		return err

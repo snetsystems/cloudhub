@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 type configLinks struct {
@@ -14,14 +14,14 @@ type configLinks struct {
 
 type configResponse struct {
 	Links configLinks `json:"links"`
-	cmp.Config
+	cloudhub.Config
 }
 
-func newConfigResponse(config cmp.Config) *configResponse {
+func newConfigResponse(config cloudhub.Config) *configResponse {
 	return &configResponse{
 		Links: configLinks{
-			Self: "/cmp/v1/config",
-			Auth: "/cmp/v1/config/auth",
+			Self: "/cloudhub/v1/config",
+			Auth: "/cloudhub/v1/config/auth",
 		},
 		Config: config,
 	}
@@ -29,13 +29,13 @@ func newConfigResponse(config cmp.Config) *configResponse {
 
 type authConfigResponse struct {
 	Links selfLinks `json:"links"`
-	cmp.AuthConfig
+	cloudhub.AuthConfig
 }
 
-func newAuthConfigResponse(config cmp.Config) *authConfigResponse {
+func newAuthConfigResponse(config cloudhub.Config) *authConfigResponse {
 	return &authConfigResponse{
 		Links: selfLinks{
-			Self: "/cmp/v1/config/auth",
+			Self: "/cloudhub/v1/config/auth",
 		},
 		AuthConfig: config.Auth,
 	}
@@ -84,7 +84,7 @@ func (s *Service) AuthConfig(w http.ResponseWriter, r *http.Request) {
 func (s *Service) ReplaceAuthConfig(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	var authConfig cmp.AuthConfig
+	var authConfig cloudhub.AuthConfig
 	if err := json.NewDecoder(r.Body).Decode(&authConfig); err != nil {
 		invalidJSON(w, s.Logger)
 		return

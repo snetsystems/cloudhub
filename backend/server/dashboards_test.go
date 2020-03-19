@@ -5,56 +5,56 @@ import (
 	"testing"
 
 	gocmp "github.com/google/go-cmp/cmp"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 func TestCorrectWidthHeight(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
 		name string
-		cell cmp.DashboardCell
-		want cmp.DashboardCell
+		cell cloudhub.DashboardCell
+		want cloudhub.DashboardCell
 	}{
 		{
 			name: "updates width",
-			cell: cmp.DashboardCell{
+			cell: cloudhub.DashboardCell{
 				W: 0,
 				H: 4,
 			},
-			want: cmp.DashboardCell{
+			want: cloudhub.DashboardCell{
 				W: 4,
 				H: 4,
 			},
 		},
 		{
 			name: "updates height",
-			cell: cmp.DashboardCell{
+			cell: cloudhub.DashboardCell{
 				W: 4,
 				H: 0,
 			},
-			want: cmp.DashboardCell{
+			want: cloudhub.DashboardCell{
 				W: 4,
 				H: 4,
 			},
 		},
 		{
 			name: "updates both",
-			cell: cmp.DashboardCell{
+			cell: cloudhub.DashboardCell{
 				W: 0,
 				H: 0,
 			},
-			want: cmp.DashboardCell{
+			want: cloudhub.DashboardCell{
 				W: 4,
 				H: 4,
 			},
 		},
 		{
 			name: "updates neither",
-			cell: cmp.DashboardCell{
+			cell: cloudhub.DashboardCell{
 				W: 4,
 				H: 4,
 			},
-			want: cmp.DashboardCell{
+			want: cloudhub.DashboardCell{
 				W: 4,
 				H: 4,
 			},
@@ -70,13 +70,13 @@ func TestCorrectWidthHeight(t *testing.T) {
 func TestDashboardDefaults(t *testing.T) {
 	tests := []struct {
 		name string
-		d    cmp.Dashboard
-		want cmp.Dashboard
+		d    cloudhub.Dashboard
+		want cloudhub.Dashboard
 	}{
 		{
 			name: "Updates all cell widths/heights",
-			d: cmp.Dashboard{
-				Cells: []cmp.DashboardCell{
+			d: cloudhub.Dashboard{
+				Cells: []cloudhub.DashboardCell{
 					{
 						W: 0,
 						H: 0,
@@ -87,8 +87,8 @@ func TestDashboardDefaults(t *testing.T) {
 					},
 				},
 			},
-			want: cmp.Dashboard{
-				Cells: []cmp.DashboardCell{
+			want: cloudhub.Dashboard{
+				Cells: []cloudhub.DashboardCell{
 					{
 						W: 4,
 						H: 4,
@@ -102,8 +102,8 @@ func TestDashboardDefaults(t *testing.T) {
 		},
 		{
 			name: "Updates no cell",
-			d: cmp.Dashboard{
-				Cells: []cmp.DashboardCell{
+			d: cloudhub.Dashboard{
+				Cells: []cloudhub.DashboardCell{
 					{
 						W: 4,
 						H: 4,
@@ -113,8 +113,8 @@ func TestDashboardDefaults(t *testing.T) {
 					},
 				},
 			},
-			want: cmp.Dashboard{
-				Cells: []cmp.DashboardCell{
+			want: cloudhub.Dashboard{
+				Cells: []cloudhub.DashboardCell{
 					{
 						W: 4,
 						H: 4,
@@ -137,19 +137,19 @@ func TestDashboardDefaults(t *testing.T) {
 func TestValidDashboardRequest(t *testing.T) {
 	tests := []struct {
 		name    string
-		d       cmp.Dashboard
-		want    cmp.Dashboard
+		d       cloudhub.Dashboard
+		want    cloudhub.Dashboard
 		wantErr bool
 	}{
 		{
 			name: "Updates all cell widths/heights",
-			d: cmp.Dashboard{
+			d: cloudhub.Dashboard{
 				Organization: "1337",
-				Cells: []cmp.DashboardCell{
+				Cells: []cloudhub.DashboardCell{
 					{
 						W: 0,
 						H: 0,
-						Queries: []cmp.DashboardQuery{
+						Queries: []cloudhub.DashboardQuery{
 							{
 								Command: "SELECT donors from hill_valley_preservation_society where time > 1985-10-25T08:00:00",
 								Type:    "influxql",
@@ -159,7 +159,7 @@ func TestValidDashboardRequest(t *testing.T) {
 					{
 						W: 2,
 						H: 2,
-						Queries: []cmp.DashboardQuery{
+						Queries: []cloudhub.DashboardQuery{
 							{
 								Command: "SELECT winning_horses from grays_sports_alamanc where time > 1955-11-1T00:00:00",
 								Type:    "influxql",
@@ -168,13 +168,13 @@ func TestValidDashboardRequest(t *testing.T) {
 					},
 				},
 			},
-			want: cmp.Dashboard{
+			want: cloudhub.Dashboard{
 				Organization: "1337",
-				Cells: []cmp.DashboardCell{
+				Cells: []cloudhub.DashboardCell{
 					{
 						W: 4,
 						H: 4,
-						Queries: []cmp.DashboardQuery{
+						Queries: []cloudhub.DashboardQuery{
 							{
 								Command: "SELECT donors from hill_valley_preservation_society where time > 1985-10-25T08:00:00",
 								Type:    "influxql",
@@ -185,7 +185,7 @@ func TestValidDashboardRequest(t *testing.T) {
 					{
 						W: 2,
 						H: 2,
-						Queries: []cmp.DashboardQuery{
+						Queries: []cloudhub.DashboardQuery{
 							{
 								Command: "SELECT winning_horses from grays_sports_alamanc where time > 1955-11-1T00:00:00",
 								Type:    "influxql",
@@ -213,23 +213,23 @@ func TestValidDashboardRequest(t *testing.T) {
 func Test_newDashboardResponse(t *testing.T) {
 	tests := []struct {
 		name string
-		d    cmp.Dashboard
+		d    cloudhub.Dashboard
 		want *dashboardResponse
 	}{
 		{
 			name: "creates a dashboard response",
-			d: cmp.Dashboard{
+			d: cloudhub.Dashboard{
 				Organization: "0",
-				Cells: []cmp.DashboardCell{
+				Cells: []cloudhub.DashboardCell{
 					{
 						ID: "a",
 						W:  0,
 						H:  0,
-						Queries: []cmp.DashboardQuery{
+						Queries: []cloudhub.DashboardQuery{
 							{
-								Source:  "/cmp/v1/sources/1",
+								Source:  "/cloudhub/v1/sources/1",
 								Command: "SELECT donors from hill_valley_preservation_society where time > '1985-10-25 08:00:00'",
-								Shifts: []cmp.TimeShift{
+								Shifts: []cloudhub.TimeShift{
 									{
 										Label:    "Best Week Evar",
 										Unit:     "d",
@@ -239,11 +239,11 @@ func Test_newDashboardResponse(t *testing.T) {
 								Type: "flux",
 							},
 						},
-						Axes: map[string]cmp.Axis{
-							"x": cmp.Axis{
+						Axes: map[string]cloudhub.Axis{
+							"x": cloudhub.Axis{
 								Bounds: []string{"0", "100"},
 							},
-							"y": cmp.Axis{
+							"y": cloudhub.Axis{
 								Bounds: []string{"2", "95"},
 								Label:  "foo",
 							},
@@ -253,10 +253,10 @@ func Test_newDashboardResponse(t *testing.T) {
 						ID: "b",
 						W:  0,
 						H:  0,
-						Queries: []cmp.DashboardQuery{
+						Queries: []cloudhub.DashboardQuery{
 							{
 								Type:    "flux",
-								Source:  "/cmp/v1/sources/2",
+								Source:  "/cloudhub/v1/sources/2",
 								Command: "SELECT winning_horses from grays_sports_alamanc where time > now() - 15m",
 							},
 						},
@@ -269,25 +269,25 @@ func Test_newDashboardResponse(t *testing.T) {
 				Cells: []dashboardCellResponse{
 					dashboardCellResponse{
 						Links: dashboardCellLinks{
-							Self: "/cmp/v1/dashboards/0/cells/a",
+							Self: "/cloudhub/v1/dashboards/0/cells/a",
 						},
-						DashboardCell: cmp.DashboardCell{
+						DashboardCell: cloudhub.DashboardCell{
 							ID: "a",
 							W:  4,
 							H:  4,
-							Queries: []cmp.DashboardQuery{
+							Queries: []cloudhub.DashboardQuery{
 								{
 									Command: "SELECT donors from hill_valley_preservation_society where time > '1985-10-25 08:00:00'",
-									Source:  "/cmp/v1/sources/1",
-									QueryConfig: cmp.QueryConfig{
+									Source:  "/cloudhub/v1/sources/1",
+									QueryConfig: cloudhub.QueryConfig{
 										RawText: &[]string{"SELECT donors from hill_valley_preservation_society where time > '1985-10-25 08:00:00'"}[0],
-										Fields:  []cmp.Field{},
-										GroupBy: cmp.GroupBy{
+										Fields:  []cloudhub.Field{},
+										GroupBy: cloudhub.GroupBy{
 											Tags: []string{},
 										},
 										Tags:            make(map[string][]string, 0),
 										AreTagsAccepted: false,
-										Shifts: []cmp.TimeShift{
+										Shifts: []cloudhub.TimeShift{
 											{
 												Label:    "Best Week Evar",
 												Unit:     "d",
@@ -298,16 +298,16 @@ func Test_newDashboardResponse(t *testing.T) {
 									Type: "flux",
 								},
 							},
-							CellColors: []cmp.CellColor{},
-							Axes: map[string]cmp.Axis{
-								"x": cmp.Axis{
+							CellColors: []cloudhub.CellColor{},
+							Axes: map[string]cloudhub.Axis{
+								"x": cloudhub.Axis{
 									Bounds: []string{"0", "100"},
 								},
-								"y": cmp.Axis{
+								"y": cloudhub.Axis{
 									Bounds: []string{"2", "95"},
 									Label:  "foo",
 								},
-								"y2": cmp.Axis{
+								"y2": cloudhub.Axis{
 									Bounds: []string{"", ""},
 								},
 							},
@@ -316,42 +316,42 @@ func Test_newDashboardResponse(t *testing.T) {
 					},
 					dashboardCellResponse{
 						Links: dashboardCellLinks{
-							Self: "/cmp/v1/dashboards/0/cells/b",
+							Self: "/cloudhub/v1/dashboards/0/cells/b",
 						},
-						DashboardCell: cmp.DashboardCell{
+						DashboardCell: cloudhub.DashboardCell{
 							ID: "b",
 							W:  4,
 							H:  4,
-							Axes: map[string]cmp.Axis{
-								"x": cmp.Axis{
+							Axes: map[string]cloudhub.Axis{
+								"x": cloudhub.Axis{
 									Bounds: []string{"", ""},
 								},
-								"y": cmp.Axis{
+								"y": cloudhub.Axis{
 									Bounds: []string{"", ""},
 								},
-								"y2": cmp.Axis{
+								"y2": cloudhub.Axis{
 									Bounds: []string{"", ""},
 								},
 							},
-							CellColors: []cmp.CellColor{},
-							Queries: []cmp.DashboardQuery{
+							CellColors: []cloudhub.CellColor{},
+							Queries: []cloudhub.DashboardQuery{
 								{
 									Command: "SELECT winning_horses from grays_sports_alamanc where time > now() - 15m",
-									Source:  "/cmp/v1/sources/2",
-									QueryConfig: cmp.QueryConfig{
+									Source:  "/cloudhub/v1/sources/2",
+									QueryConfig: cloudhub.QueryConfig{
 										Measurement: "grays_sports_alamanc",
-										Fields: []cmp.Field{
+										Fields: []cloudhub.Field{
 											{
 												Type:  "field",
 												Value: "winning_horses",
 											},
 										},
-										GroupBy: cmp.GroupBy{
+										GroupBy: cloudhub.GroupBy{
 											Tags: []string{},
 										},
 										Tags:            make(map[string][]string, 0),
 										AreTagsAccepted: false,
-										Range: &cmp.DurationRange{
+										Range: &cloudhub.DurationRange{
 											Lower: "now() - 15m",
 										},
 									},
@@ -363,9 +363,9 @@ func Test_newDashboardResponse(t *testing.T) {
 					},
 				},
 				Links: dashboardLinks{
-					Self:      "/cmp/v1/dashboards/0",
-					Cells:     "/cmp/v1/dashboards/0/cells",
-					Templates: "/cmp/v1/dashboards/0/templates",
+					Self:      "/cloudhub/v1/dashboards/0",
+					Cells:     "/cloudhub/v1/dashboards/0/cells",
+					Templates: "/cloudhub/v1/dashboards/0/templates",
 				},
 			},
 		},

@@ -7,24 +7,24 @@ import (
 	"os"
 	"path"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // OrgExt is the the file extension searched for in the directory for org files
 const OrgExt = ".org"
 
-var _ cmp.OrganizationsStore = &Organizations{}
+var _ cloudhub.OrganizationsStore = &Organizations{}
 
 // Organizations are JSON orgs stored in the filesystem
 type Organizations struct {
 	Dir     string                                      // Dir is the directory containing the orgs.
 	Load    func(string, interface{}) error             // Load loads string name and org passed in as interface
 	ReadDir func(dirname string) ([]os.FileInfo, error) // ReadDir reads the directory named by dirname and returns a list of directory entries sorted by filename.
-	Logger  cmp.Logger
+	Logger  cloudhub.Logger
 }
 
 // NewOrganizations constructs a org store wrapping a file system directory
-func NewOrganizations(dir string, logger cmp.Logger) cmp.OrganizationsStore {
+func NewOrganizations(dir string, logger cloudhub.Logger) cloudhub.OrganizationsStore {
 	return &Organizations{
 		Dir:     dir,
 		Load:    load,
@@ -33,24 +33,24 @@ func NewOrganizations(dir string, logger cmp.Logger) cmp.OrganizationsStore {
 	}
 }
 
-func orgFile(dir string, org cmp.Organization) string {
+func orgFile(dir string, org cloudhub.Organization) string {
 	base := fmt.Sprintf("%s%s", org.Name, OrgExt)
 	return path.Join(dir, base)
 }
 
 // All returns all orgs from the directory
-func (o *Organizations) All(ctx context.Context) ([]cmp.Organization, error) {
+func (o *Organizations) All(ctx context.Context) ([]cloudhub.Organization, error) {
 	files, err := o.ReadDir(o.Dir)
 	if err != nil {
 		return nil, err
 	}
 
-	orgs := []cmp.Organization{}
+	orgs := []cloudhub.Organization{}
 	for _, file := range files {
 		if path.Ext(file.Name()) != OrgExt {
 			continue
 		}
-		var org cmp.Organization
+		var org cloudhub.Organization
 		if err := o.Load(path.Join(o.Dir, file.Name()), &org); err != nil {
 			continue // We want to load all files we can.
 		} else {
@@ -61,23 +61,23 @@ func (o *Organizations) All(ctx context.Context) ([]cmp.Organization, error) {
 }
 
 // Get returns a org file from the org directory
-func (o *Organizations) Get(ctx context.Context, query cmp.OrganizationQuery) (*cmp.Organization, error) {
+func (o *Organizations) Get(ctx context.Context, query cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 	org, _, err := o.findOrg(query)
 	return org, err
 }
 
 // Add is not allowed for the filesystem organization store
-func (o *Organizations) Add(ctx context.Context, org *cmp.Organization) (*cmp.Organization, error) {
+func (o *Organizations) Add(ctx context.Context, org *cloudhub.Organization) (*cloudhub.Organization, error) {
 	return nil, fmt.Errorf("unable to add organizations to the filesystem")
 }
 
 // Delete is not allowed for the filesystem organization store
-func (o *Organizations) Delete(ctx context.Context, org *cmp.Organization) error {
+func (o *Organizations) Delete(ctx context.Context, org *cloudhub.Organization) error {
 	return fmt.Errorf("unable to delete an organization from the filesystem")
 }
 
 // Update is not allowed for the filesystem organization store
-func (o *Organizations) Update(ctx context.Context, org *cmp.Organization) error {
+func (o *Organizations) Update(ctx context.Context, org *cloudhub.Organization) error {
 	return fmt.Errorf("unable to update organizations on the filesystem")
 }
 
@@ -87,12 +87,12 @@ func (o *Organizations) CreateDefault(ctx context.Context) error {
 }
 
 // DefaultOrganization is not allowed for the filesystem organization store
-func (o *Organizations) DefaultOrganization(ctx context.Context) (*cmp.Organization, error) {
+func (o *Organizations) DefaultOrganization(ctx context.Context) (*cloudhub.Organization, error) {
 	return nil, fmt.Errorf("unable to get default organizations from the filestore")
 }
 
 // findOrg takes an OrganizationQuery and finds the associated filename
-func (o *Organizations) findOrg(query cmp.OrganizationQuery) (*cmp.Organization, string, error) {
+func (o *Organizations) findOrg(query cloudhub.OrganizationQuery) (*cloudhub.Organization, string, error) {
 	// Because the entire org information is not known at this point, we need
 	// to try to find the name of the file through matching the ID or name in the org
 	// content with the ID passed.
@@ -106,7 +106,7 @@ func (o *Organizations) findOrg(query cmp.OrganizationQuery) (*cmp.Organization,
 			continue
 		}
 		file := path.Join(o.Dir, f.Name())
-		var org cmp.Organization
+		var org cloudhub.Organization
 		if err := o.Load(file, &org); err != nil {
 			return nil, "", err
 		}
@@ -118,5 +118,5 @@ func (o *Organizations) findOrg(query cmp.OrganizationQuery) (*cmp.Organization,
 		}
 	}
 
-	return nil, "", cmp.ErrOrganizationNotFound
+	return nil, "", cloudhub.ErrOrganizationNotFound
 }

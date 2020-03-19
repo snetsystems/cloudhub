@@ -7,22 +7,22 @@ import (
 
 	gocmp "github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/mocks"
-	"github.com/snetsystems/cmp/backend/organizations"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/mocks"
+	"github.com/snetsystems/cloudhub/backend/organizations"
 )
 
 // IgnoreFields is used because ID cannot be predicted reliably
 // EquateEmpty is used because we want nil slices, arrays, and maps to be equal to the empty map
-var serverCmpOptions = gocmp.Options{
+var serverCloudHubOptions = gocmp.Options{
 	cmpopts.EquateEmpty(),
-	cmpopts.IgnoreFields(cmp.Server{}, "ID"),
-	cmpopts.IgnoreFields(cmp.Server{}, "Active"),
+	cmpopts.IgnoreFields(cloudhub.Server{}, "ID"),
+	cmpopts.IgnoreFields(cloudhub.Server{}, "Active"),
 }
 
 func TestServers_All(t *testing.T) {
 	type fields struct {
-		ServersStore cmp.ServersStore
+		ServersStore cloudhub.ServersStore
 	}
 	type args struct {
 		organization string
@@ -32,15 +32,15 @@ func TestServers_All(t *testing.T) {
 		name    string
 		args    args
 		fields  fields
-		want    []cmp.Server
-		wantRaw []cmp.Server
+		want    []cloudhub.Server
+		wantRaw []cloudhub.Server
 		wantErr bool
 	}{
 		{
 			name: "No Servers",
 			fields: fields{
 				ServersStore: &mocks.ServersStore{
-					AllF: func(ctx context.Context) ([]cmp.Server, error) {
+					AllF: func(ctx context.Context) ([]cloudhub.Server, error) {
 						return nil, fmt.Errorf("No Servers")
 					},
 				},
@@ -51,8 +51,8 @@ func TestServers_All(t *testing.T) {
 			name: "All Servers",
 			fields: fields{
 				ServersStore: &mocks.ServersStore{
-					AllF: func(ctx context.Context) ([]cmp.Server, error) {
-						return []cmp.Server{
+					AllF: func(ctx context.Context) ([]cloudhub.Server, error) {
+						return []cloudhub.Server{
 							{
 								Name:         "howdy",
 								Organization: "1337",
@@ -69,7 +69,7 @@ func TestServers_All(t *testing.T) {
 				organization: "1337",
 				ctx:          context.Background(),
 			},
-			want: []cmp.Server{
+			want: []cloudhub.Server{
 				{
 					Name:         "howdy",
 					Organization: "1337",
@@ -86,7 +86,7 @@ func TestServers_All(t *testing.T) {
 			continue
 		}
 		for i, got := range gots {
-			if diff := gocmp.Diff(got, tt.want[i], serverCmpOptions...); diff != "" {
+			if diff := gocmp.Diff(got, tt.want[i], serverCloudHubOptions...); diff != "" {
 				t.Errorf("%q. ServersStore.All():\n-got/+want\ndiff %s", tt.name, diff)
 			}
 		}
@@ -95,48 +95,48 @@ func TestServers_All(t *testing.T) {
 
 func TestServers_Add(t *testing.T) {
 	type fields struct {
-		ServersStore cmp.ServersStore
+		ServersStore cloudhub.ServersStore
 	}
 	type args struct {
 		organization string
 		ctx          context.Context
-		server       cmp.Server
+		server       cloudhub.Server
 	}
 	tests := []struct {
 		name    string
 		args    args
 		fields  fields
-		want    cmp.Server
+		want    cloudhub.Server
 		wantErr bool
 	}{
 		{
 			name: "Add Server",
 			fields: fields{
 				ServersStore: &mocks.ServersStore{
-					AddF: func(ctx context.Context, s cmp.Server) (cmp.Server, error) {
+					AddF: func(ctx context.Context, s cloudhub.Server) (cloudhub.Server, error) {
 						return s, nil
 					},
-					GetF: func(ctx context.Context, id int) (cmp.Server, error) {
-						return cmp.Server{
+					GetF: func(ctx context.Context, id int) (cloudhub.Server, error) {
+						return cloudhub.Server{
 							ID:           1229,
 							Name:         "howdy",
 							Organization: "1337",
 						}, nil
 					},
-					AllF: func(ctx context.Context) ([]cmp.Server, error) {
-						return []cmp.Server{}, nil
+					AllF: func(ctx context.Context) ([]cloudhub.Server, error) {
+						return []cloudhub.Server{}, nil
 					},
 				},
 			},
 			args: args{
 				organization: "1337",
 				ctx:          context.Background(),
-				server: cmp.Server{
+				server: cloudhub.Server{
 					ID:   1229,
 					Name: "howdy",
 				},
 			},
-			want: cmp.Server{
+			want: cloudhub.Server{
 				Name:         "howdy",
 				Organization: "1337",
 			},
@@ -151,7 +151,7 @@ func TestServers_Add(t *testing.T) {
 			continue
 		}
 		got, err := s.Get(tt.args.ctx, d.ID)
-		if diff := gocmp.Diff(got, tt.want, serverCmpOptions...); diff != "" {
+		if diff := gocmp.Diff(got, tt.want, serverCloudHubOptions...); diff != "" {
 			t.Errorf("%q. ServersStore.Add():\n-got/+want\ndiff %s", tt.name, diff)
 		}
 	}
@@ -159,18 +159,18 @@ func TestServers_Add(t *testing.T) {
 
 func TestServers_Delete(t *testing.T) {
 	type fields struct {
-		ServersStore cmp.ServersStore
+		ServersStore cloudhub.ServersStore
 	}
 	type args struct {
 		organization string
 		ctx          context.Context
-		server       cmp.Server
+		server       cloudhub.Server
 	}
 	tests := []struct {
 		name     string
 		fields   fields
 		args     args
-		want     []cmp.Server
+		want     []cloudhub.Server
 		addFirst bool
 		wantErr  bool
 	}{
@@ -178,11 +178,11 @@ func TestServers_Delete(t *testing.T) {
 			name: "Delete server",
 			fields: fields{
 				ServersStore: &mocks.ServersStore{
-					DeleteF: func(ctx context.Context, s cmp.Server) error {
+					DeleteF: func(ctx context.Context, s cloudhub.Server) error {
 						return nil
 					},
-					GetF: func(ctx context.Context, id int) (cmp.Server, error) {
-						return cmp.Server{
+					GetF: func(ctx context.Context, id int) (cloudhub.Server, error) {
+						return cloudhub.Server{
 							ID:           1229,
 							Name:         "howdy",
 							Organization: "1337",
@@ -193,7 +193,7 @@ func TestServers_Delete(t *testing.T) {
 			args: args{
 				organization: "1337",
 				ctx:          context.Background(),
-				server: cmp.Server{
+				server: cloudhub.Server{
 					ID:           1229,
 					Name:         "howdy",
 					Organization: "1337",
@@ -215,18 +215,18 @@ func TestServers_Delete(t *testing.T) {
 
 func TestServers_Get(t *testing.T) {
 	type fields struct {
-		ServersStore cmp.ServersStore
+		ServersStore cloudhub.ServersStore
 	}
 	type args struct {
 		organization string
 		ctx          context.Context
-		server       cmp.Server
+		server       cloudhub.Server
 	}
 	tests := []struct {
 		name     string
 		fields   fields
 		args     args
-		want     cmp.Server
+		want     cloudhub.Server
 		addFirst bool
 		wantErr  bool
 	}{
@@ -234,8 +234,8 @@ func TestServers_Get(t *testing.T) {
 			name: "Get Server",
 			fields: fields{
 				ServersStore: &mocks.ServersStore{
-					GetF: func(ctx context.Context, id int) (cmp.Server, error) {
-						return cmp.Server{
+					GetF: func(ctx context.Context, id int) (cloudhub.Server, error) {
+						return cloudhub.Server{
 							ID:           1229,
 							Name:         "howdy",
 							Organization: "1337",
@@ -246,13 +246,13 @@ func TestServers_Get(t *testing.T) {
 			args: args{
 				organization: "1337",
 				ctx:          context.Background(),
-				server: cmp.Server{
+				server: cloudhub.Server{
 					ID:           1229,
 					Name:         "howdy",
 					Organization: "1337",
 				},
 			},
-			want: cmp.Server{
+			want: cloudhub.Server{
 				ID:           1229,
 				Name:         "howdy",
 				Organization: "1337",
@@ -267,7 +267,7 @@ func TestServers_Get(t *testing.T) {
 			t.Errorf("%q. ServersStore.Get() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 			continue
 		}
-		if diff := gocmp.Diff(got, tt.want, serverCmpOptions...); diff != "" {
+		if diff := gocmp.Diff(got, tt.want, serverCloudHubOptions...); diff != "" {
 			t.Errorf("%q. ServersStore.Get():\n-got/+want\ndiff %s", tt.name, diff)
 		}
 	}
@@ -275,19 +275,19 @@ func TestServers_Get(t *testing.T) {
 
 func TestServers_Update(t *testing.T) {
 	type fields struct {
-		ServersStore cmp.ServersStore
+		ServersStore cloudhub.ServersStore
 	}
 	type args struct {
 		organization string
 		ctx          context.Context
-		server       cmp.Server
+		server       cloudhub.Server
 		name         string
 	}
 	tests := []struct {
 		name     string
 		fields   fields
 		args     args
-		want     cmp.Server
+		want     cloudhub.Server
 		addFirst bool
 		wantErr  bool
 	}{
@@ -295,32 +295,32 @@ func TestServers_Update(t *testing.T) {
 			name: "Update Server Name",
 			fields: fields{
 				ServersStore: &mocks.ServersStore{
-					UpdateF: func(ctx context.Context, s cmp.Server) error {
+					UpdateF: func(ctx context.Context, s cloudhub.Server) error {
 						return nil
 					},
-					GetF: func(ctx context.Context, id int) (cmp.Server, error) {
-						return cmp.Server{
+					GetF: func(ctx context.Context, id int) (cloudhub.Server, error) {
+						return cloudhub.Server{
 							ID:           1229,
 							Name:         "doody",
 							Organization: "1337",
 						}, nil
 					},
-					AllF: func(ctx context.Context) ([]cmp.Server, error) {
-						return []cmp.Server{}, nil
+					AllF: func(ctx context.Context) ([]cloudhub.Server, error) {
+						return []cloudhub.Server{}, nil
 					},
 				},
 			},
 			args: args{
 				organization: "1337",
 				ctx:          context.Background(),
-				server: cmp.Server{
+				server: cloudhub.Server{
 					ID:           1229,
 					Name:         "howdy",
 					Organization: "1337",
 				},
 				name: "doody",
 			},
-			want: cmp.Server{
+			want: cloudhub.Server{
 				Name:         "doody",
 				Organization: "1337",
 			},
@@ -339,7 +339,7 @@ func TestServers_Update(t *testing.T) {
 			continue
 		}
 		got, err := s.Get(tt.args.ctx, tt.args.server.ID)
-		if diff := gocmp.Diff(got, tt.want, serverCmpOptions...); diff != "" {
+		if diff := gocmp.Diff(got, tt.want, serverCloudHubOptions...); diff != "" {
 			t.Errorf("%q. ServersStore.Update():\n-got/+want\ndiff %s", tt.name, diff)
 		}
 	}

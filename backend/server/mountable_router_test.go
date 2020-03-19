@@ -11,14 +11,14 @@ import (
 	"testing"
 
 	"github.com/bouk/httprouter"
-	"github.com/snetsystems/cmp/backend/server"
+	"github.com/snetsystems/cloudhub/backend/server"
 )
 
 func Test_MountableRouter_MountsRoutesUnderPrefix(t *testing.T) {
 	t.Parallel()
 
 	mr := &server.MountableRouter{
-		Prefix:   "/cmp",
+		Prefix:   "/cloudhub",
 		Delegate: httprouter.New(),
 	}
 
@@ -30,7 +30,7 @@ func Test_MountableRouter_MountsRoutesUnderPrefix(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	resp, err := http.Get(ts.URL + "/cmp/biff")
+	resp, err := http.Get(ts.URL + "/cloudhub/biff")
 	if err != nil {
 		t.Fatal("Unexpected error fetching from mounted router: err:", err)
 	}
@@ -53,7 +53,7 @@ func Test_MountableRouter_PrefixesPosts(t *testing.T) {
 	t.Parallel()
 
 	mr := &server.MountableRouter{
-		Prefix:   "/cmp",
+		Prefix:   "/cloudhub",
 		Delegate: httprouter.New(),
 	}
 
@@ -71,7 +71,7 @@ func Test_MountableRouter_PrefixesPosts(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	resp, err := http.Post(ts.URL+"/cmp/doc", "text/plain", strings.NewReader(expected))
+	resp, err := http.Post(ts.URL+"/cloudhub/doc", "text/plain", strings.NewReader(expected))
 	if err != nil {
 		t.Fatal("Unexpected error posting to mounted router: err:", err)
 	}
@@ -89,7 +89,7 @@ func Test_MountableRouter_PrefixesPuts(t *testing.T) {
 	t.Parallel()
 
 	mr := &server.MountableRouter{
-		Prefix:   "/cmp",
+		Prefix:   "/cloudhub",
 		Delegate: httprouter.New(),
 	}
 
@@ -107,7 +107,7 @@ func Test_MountableRouter_PrefixesPuts(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	req := httptest.NewRequest(http.MethodPut, ts.URL+"/cmp/doc", strings.NewReader(expected))
+	req := httptest.NewRequest(http.MethodPut, ts.URL+"/cloudhub/doc", strings.NewReader(expected))
 	req.Header.Set("Content-Type", "text/plain; charset=utf-8")
 	req.Header.Set("Content-Length", fmt.Sprintf("%d", len(expected)))
 	req.RequestURI = ""
@@ -131,7 +131,7 @@ func Test_MountableRouter_PrefixesDeletes(t *testing.T) {
 	t.Parallel()
 
 	mr := &server.MountableRouter{
-		Prefix:   "/cmp",
+		Prefix:   "/cloudhub",
 		Delegate: httprouter.New(),
 	}
 
@@ -142,7 +142,7 @@ func Test_MountableRouter_PrefixesDeletes(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	req := httptest.NewRequest(http.MethodDelete, ts.URL+"/cmp/proto1985", nil)
+	req := httptest.NewRequest(http.MethodDelete, ts.URL+"/cloudhub/proto1985", nil)
 	req.RequestURI = ""
 
 	client := http.Client{}
@@ -165,7 +165,7 @@ func Test_MountableRouter_PrefixesPatches(t *testing.T) {
 	}
 
 	mr := &server.MountableRouter{
-		Prefix:   "/cmp",
+		Prefix:   "/cloudhub",
 		Delegate: httprouter.New(),
 	}
 
@@ -191,7 +191,7 @@ func Test_MountableRouter_PrefixesPatches(t *testing.T) {
 		w.Close()
 	}()
 
-	req := httptest.NewRequest(http.MethodPatch, ts.URL+"/cmp/1955", r)
+	req := httptest.NewRequest(http.MethodPatch, ts.URL+"/cloudhub/1955", r)
 	req.RequestURI = ""
 
 	client := http.Client{}
@@ -213,7 +213,7 @@ func Test_MountableRouter_PrefixesHandler(t *testing.T) {
 	t.Parallel()
 
 	mr := &server.MountableRouter{
-		Prefix:   "/cmp",
+		Prefix:   "/cloudhub",
 		Delegate: httprouter.New(),
 	}
 
@@ -225,7 +225,7 @@ func Test_MountableRouter_PrefixesHandler(t *testing.T) {
 	ts := httptest.NewServer(mr)
 	defer ts.Close()
 
-	req := httptest.NewRequest(http.MethodGet, ts.URL+"/cmp/recklessAmountOfPower", nil)
+	req := httptest.NewRequest(http.MethodGet, ts.URL+"/cloudhub/recklessAmountOfPower", nil)
 	req.RequestURI = ""
 
 	client := http.Client{}

@@ -7,13 +7,13 @@ import (
 	"net/http"
 
 	client "github.com/influxdata/kapacitor/client/v1"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/id"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/id"
 )
 
 const (
 	// Prefix is prepended to the ID of all alerts
-	Prefix = "cmp-v1-"
+	Prefix = "cloudhub-v1-"
 
 	// FetchRate is the rate Paginating Kapacitor Clients will consume responses
 	FetchRate = 100
@@ -32,8 +32,8 @@ type Client struct {
 	Username           string
 	Password           string
 	InsecureSkipVerify bool
-	ID                 cmp.ID
-	Ticker             cmp.Ticker
+	ID                 cloudhub.ID
+	Ticker             cloudhub.Ticker
 	kapaClient         func(url, username, password string, insecureSkipVerify bool) (KapaClient, error)
 }
 
@@ -64,22 +64,22 @@ type Task struct {
 	ID         string         // Kapacitor ID
 	Href       string         // Kapacitor relative URI
 	HrefOutput string         // Kapacitor relative URI to HTTPOutNode
-	Rule       cmp.AlertRule  // Rule is the rule that represents this Task
-	TICKScript cmp.TICKScript // TICKScript is the running script
+	Rule       cloudhub.AlertRule  // Rule is the rule that represents this Task
+	TICKScript cloudhub.TICKScript // TICKScript is the running script
 }
 
 // NewTask creates a task from a kapacitor client task
 func NewTask(task *client.Task) *Task {
-	dbrps := make([]cmp.DBRP, len(task.DBRPs))
+	dbrps := make([]cloudhub.DBRP, len(task.DBRPs))
 	for i := range task.DBRPs {
 		dbrps[i].DB = task.DBRPs[i].Database
 		dbrps[i].RP = task.DBRPs[i].RetentionPolicy
 	}
 
-	script := cmp.TICKScript(task.TICKscript)
+	script := cloudhub.TICKScript(task.TICKscript)
 	rule, err := Reverse(script)
 	if err != nil {
-		rule = cmp.AlertRule{
+		rule = cloudhub.AlertRule{
 			Name:  task.ID,
 			Query: nil,
 		}
@@ -119,7 +119,7 @@ func (c *Client) HrefOutput(ID string) string {
 }
 
 // Create builds and POSTs a tickscript to kapacitor
-func (c *Client) Create(ctx context.Context, rule cmp.AlertRule) (*Task, error) {
+func (c *Client) Create(ctx context.Context, rule cloudhub.AlertRule) (*Task, error) {
 	var opt *client.CreateTaskOptions
 	var err error
 	if rule.Query != nil {
@@ -145,7 +145,7 @@ func (c *Client) Create(ctx context.Context, rule cmp.AlertRule) (*Task, error) 
 	return NewTask(&task), nil
 }
 
-func (c *Client) createFromTick(rule cmp.AlertRule) (*client.CreateTaskOptions, error) {
+func (c *Client) createFromTick(rule cloudhub.AlertRule) (*client.CreateTaskOptions, error) {
 	dbrps := make([]client.DBRP, len(rule.DBRPs))
 	for i := range rule.DBRPs {
 		dbrps[i] = client.DBRP{
@@ -177,7 +177,7 @@ func (c *Client) createFromTick(rule cmp.AlertRule) (*client.CreateTaskOptions, 
 	}, nil
 }
 
-func (c *Client) createFromQueryConfig(rule cmp.AlertRule) (*client.CreateTaskOptions, error) {
+func (c *Client) createFromQueryConfig(rule cloudhub.AlertRule) (*client.CreateTaskOptions, error) {
 	id, err := c.ID.Generate()
 	if err != nil {
 		return nil, err
@@ -279,11 +279,11 @@ func (c *Client) All(ctx context.Context) (map[string]*Task, error) {
 	return all, nil
 }
 
-// Reverse builds a cmp.AlertRule and its QueryConfig from a tickscript
-func (c *Client) Reverse(id string, script cmp.TICKScript) cmp.AlertRule {
+// Reverse builds a cloudhub.AlertRule and its QueryConfig from a tickscript
+func (c *Client) Reverse(id string, script cloudhub.TICKScript) cloudhub.AlertRule {
 	rule, err := Reverse(script)
 	if err != nil {
-		return cmp.AlertRule{
+		return cloudhub.AlertRule{
 			ID:         id,
 			Name:       id,
 			Query:      nil,
@@ -304,14 +304,14 @@ func (c *Client) Get(ctx context.Context, id string) (*Task, error) {
 	href := c.Href(id)
 	task, err := kapa.Task(client.Link{Href: href}, nil)
 	if err != nil {
-		return nil, cmp.ErrAlertNotFound
+		return nil, cloudhub.ErrAlertNotFound
 	}
 
 	return NewTask(&task), nil
 }
 
 // Update changes the tickscript of a given id.
-func (c *Client) Update(ctx context.Context, href string, rule cmp.AlertRule) (*Task, error) {
+func (c *Client) Update(ctx context.Context, href string, rule cloudhub.AlertRule) (*Task, error) {
 	kapa, err := c.kapaClient(c.URL, c.Username, c.Password, c.InsecureSkipVerify)
 	if err != nil {
 		return nil, err
@@ -347,7 +347,7 @@ func (c *Client) Update(ctx context.Context, href string, rule cmp.AlertRule) (*
 	return NewTask(&task), nil
 }
 
-func (c *Client) updateFromQueryConfig(rule cmp.AlertRule) (*client.UpdateTaskOptions, error) {
+func (c *Client) updateFromQueryConfig(rule cloudhub.AlertRule) (*client.UpdateTaskOptions, error) {
 	script, err := c.Ticker.Generate(rule)
 	if err != nil {
 		return nil, err
@@ -367,7 +367,7 @@ func (c *Client) updateFromQueryConfig(rule cmp.AlertRule) (*client.UpdateTaskOp
 	}, nil
 }
 
-func (c *Client) updateFromTick(rule cmp.AlertRule) (*client.UpdateTaskOptions, error) {
+func (c *Client) updateFromTick(rule cloudhub.AlertRule) (*client.UpdateTaskOptions, error) {
 	dbrps := make([]client.DBRP, len(rule.DBRPs))
 	for i := range rule.DBRPs {
 		dbrps[i] = client.DBRP{
@@ -392,7 +392,7 @@ func (c *Client) updateFromTick(rule cmp.AlertRule) (*client.UpdateTaskOptions, 
 	}, nil
 }
 
-func toTask(q *cmp.QueryConfig) client.TaskType {
+func toTask(q *cloudhub.QueryConfig) client.TaskType {
 	if q == nil || q.RawText == nil || *q.RawText == "" {
 		return client.StreamTask
 	}

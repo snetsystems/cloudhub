@@ -7,10 +7,10 @@ import (
 	"reflect"
 	"testing"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/enterprise"
-	"github.com/snetsystems/cmp/backend/influx"
-	"github.com/snetsystems/cmp/backend/log"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/enterprise"
+	"github.com/snetsystems/cloudhub/backend/influx"
+	"github.com/snetsystems/cloudhub/backend/log"
 )
 
 func Test_Enterprise_FetchesDataNodes(t *testing.T) {
@@ -28,7 +28,7 @@ func Test_Enterprise_FetchesDataNodes(t *testing.T) {
 	}
 
 	bg := context.Background()
-	err := cl.Connect(bg, &cmp.Source{})
+	err := cl.Connect(bg, &cloudhub.Source{})
 
 	if err != nil {
 		t.Fatal("Unexpected error while creating enterprise client. err:", err)
@@ -57,12 +57,12 @@ func Test_Enterprise_IssuesQueries(t *testing.T) {
 		Logger: log.New(log.DebugLevel),
 	}
 
-	err := cl.Connect(context.Background(), &cmp.Source{})
+	err := cl.Connect(context.Background(), &cloudhub.Source{})
 	if err != nil {
 		t.Fatal("Unexpected error initializing client: err:", err)
 	}
 
-	_, err = cl.Query(context.Background(), cmp.Query{Command: "show shards", DB: "_internal", RP: "autogen"})
+	_, err = cl.Query(context.Background(), cloudhub.Query{Command: "show shards", DB: "_internal", RP: "autogen"})
 
 	if err != nil {
 		t.Fatal("Unexpected error while querying data node: err:", err)
@@ -85,23 +85,23 @@ func Test_Enterprise_AdvancesDataNodes(t *testing.T) {
 		},
 		false,
 		false,
-		cmp.TimeSeries(m1),
-		cmp.TimeSeries(m2))
+		cloudhub.TimeSeries(m1),
+		cloudhub.TimeSeries(m2))
 	if err != nil {
 		t.Error("Unexpected error while initializing client: err:", err)
 	}
 
-	err = cl.Connect(context.Background(), &cmp.Source{})
+	err = cl.Connect(context.Background(), &cloudhub.Source{})
 	if err != nil {
 		t.Error("Unexpected error while initializing client: err:", err)
 	}
 
-	_, err = cl.Query(context.Background(), cmp.Query{Command: "show shards", DB: "_internal", RP: "autogen"})
+	_, err = cl.Query(context.Background(), cloudhub.Query{Command: "show shards", DB: "_internal", RP: "autogen"})
 	if err != nil {
 		t.Fatal("Unexpected error while issuing query: err:", err)
 	}
 
-	_, err = cl.Query(context.Background(), cmp.Query{Command: "show shards", DB: "_internal", RP: "autogen"})
+	_, err = cl.Query(context.Background(), cloudhub.Query{Command: "show shards", DB: "_internal", RP: "autogen"})
 	if err != nil {
 		t.Fatal("Unexpected error while issuing query: err:", err)
 	}
@@ -191,12 +191,12 @@ func Test_Enterprise_ComplainsIfNotOpened(t *testing.T) {
 			Username: "docbrown",
 			Password: "1.21 gigawatts",
 		},
-		false, false, cmp.TimeSeries(m1))
+		false, false, cloudhub.TimeSeries(m1))
 	if err != nil {
 		t.Error("Expected ErrUnitialized, but was this err:", err)
 	}
-	_, err = cl.Query(context.Background(), cmp.Query{Command: "show shards", DB: "_internal", RP: "autogen"})
-	if err != cmp.ErrUninitialized {
+	_, err = cl.Query(context.Background(), cloudhub.Query{Command: "show shards", DB: "_internal", RP: "autogen"})
+	if err != cloudhub.ErrUninitialized {
 		t.Error("Expected ErrUnitialized, but was this err:", err)
 	}
 }
@@ -205,17 +205,17 @@ func TestClient_Permissions(t *testing.T) {
 	tests := []struct {
 		name string
 
-		want cmp.Permissions
+		want cloudhub.Permissions
 	}{
 		{
 			name: "All possible enterprise permissions",
-			want: cmp.Permissions{
+			want: cloudhub.Permissions{
 				{
-					Scope: cmp.AllScope,
-					Allowed: cmp.Allowances{
+					Scope: cloudhub.AllScope,
+					Allowed: cloudhub.Allowances{
 						"NoPermissions",
 						"ViewAdmin",
-						"ViewCMP",
+						"ViewCloudHub",
 						"CreateDatabase",
 						"CreateUserAndRole",
 						"AddRemoveNode",
@@ -235,11 +235,11 @@ func TestClient_Permissions(t *testing.T) {
 					},
 				},
 				{
-					Scope: cmp.DBScope,
-					Allowed: cmp.Allowances{
+					Scope: cloudhub.DBScope,
+					Allowed: cloudhub.Allowances{
 						"NoPermissions",
 						"ViewAdmin",
-						"ViewCMP",
+						"ViewCloudHub",
 						"CreateDatabase",
 						"CreateUserAndRole",
 						"AddRemoveNode",

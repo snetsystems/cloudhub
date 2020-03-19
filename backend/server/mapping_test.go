@@ -9,15 +9,15 @@ import (
 	"testing"
 
 	"github.com/bouk/httprouter"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/log"
-	"github.com/snetsystems/cmp/backend/mocks"
-	"github.com/snetsystems/cmp/backend/roles"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/log"
+	"github.com/snetsystems/cloudhub/backend/mocks"
+	"github.com/snetsystems/cloudhub/backend/roles"
 )
 
 func TestMappings_All(t *testing.T) {
 	type fields struct {
-		MappingsStore cmp.MappingsStore
+		MappingsStore cloudhub.MappingsStore
 	}
 	type args struct {
 	}
@@ -37,13 +37,13 @@ func TestMappings_All(t *testing.T) {
 			name: "get all mappings",
 			fields: fields{
 				MappingsStore: &mocks.MappingsStore{
-					AllF: func(ctx context.Context) ([]cmp.Mapping, error) {
-						return []cmp.Mapping{
+					AllF: func(ctx context.Context) ([]cloudhub.Mapping, error) {
+						return []cloudhub.Mapping{
 							{
 								Organization:         "0",
-								Provider:             cmp.MappingWildcard,
-								Scheme:               cmp.MappingWildcard,
-								ProviderOrganization: cmp.MappingWildcard,
+								Provider:             cloudhub.MappingWildcard,
+								Scheme:               cloudhub.MappingWildcard,
+								ProviderOrganization: cloudhub.MappingWildcard,
 							},
 						}, nil
 					},
@@ -52,7 +52,7 @@ func TestMappings_All(t *testing.T) {
 			wants: wants{
 				statusCode:  200,
 				contentType: "application/json",
-				body:        `{"links":{"self":"/cmp/v1/mappings"},"mappings":[{"links":{"self":"/cmp/v1/mappings/"},"id":"","organizationId":"0","provider":"*","scheme":"*","providerOrganization":"*"}]}`,
+				body:        `{"links":{"self":"/cloudhub/v1/mappings"},"mappings":[{"links":{"self":"/cloudhub/v1/mappings/"},"id":"","organizationId":"0","provider":"*","scheme":"*","providerOrganization":"*"}]}`,
 			},
 		},
 	}
@@ -89,11 +89,11 @@ func TestMappings_All(t *testing.T) {
 
 func TestMappings_Add(t *testing.T) {
 	type fields struct {
-		MappingsStore      cmp.MappingsStore
-		OrganizationsStore cmp.OrganizationsStore
+		MappingsStore      cloudhub.MappingsStore
+		OrganizationsStore cloudhub.OrganizationsStore
 	}
 	type args struct {
-		mapping *cmp.Mapping
+		mapping *cloudhub.Mapping
 	}
 	type wants struct {
 		statusCode  int
@@ -111,8 +111,8 @@ func TestMappings_Add(t *testing.T) {
 			name: "create new mapping",
 			fields: fields{
 				OrganizationsStore: &mocks.OrganizationsStore{
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "The Gnarly Default",
 							DefaultRole: roles.ViewerRoleName,
@@ -120,14 +120,14 @@ func TestMappings_Add(t *testing.T) {
 					},
 				},
 				MappingsStore: &mocks.MappingsStore{
-					AddF: func(ctx context.Context, m *cmp.Mapping) (*cmp.Mapping, error) {
+					AddF: func(ctx context.Context, m *cloudhub.Mapping) (*cloudhub.Mapping, error) {
 						m.ID = "0"
 						return m, nil
 					},
 				},
 			},
 			args: args{
-				mapping: &cmp.Mapping{
+				mapping: &cloudhub.Mapping{
 					Organization:         "0",
 					Provider:             "*",
 					Scheme:               "*",
@@ -137,7 +137,7 @@ func TestMappings_Add(t *testing.T) {
 			wants: wants{
 				statusCode:  201,
 				contentType: "application/json",
-				body:        `{"links":{"self":"/cmp/v1/mappings/0"},"id":"0","organizationId":"0","provider":"*","scheme":"*","providerOrganization":"*"}`,
+				body:        `{"links":{"self":"/cloudhub/v1/mappings/0"},"id":"0","organizationId":"0","provider":"*","scheme":"*","providerOrganization":"*"}`,
 			},
 		},
 	}
@@ -179,11 +179,11 @@ func TestMappings_Add(t *testing.T) {
 
 func TestMappings_Update(t *testing.T) {
 	type fields struct {
-		MappingsStore      cmp.MappingsStore
-		OrganizationsStore cmp.OrganizationsStore
+		MappingsStore      cloudhub.MappingsStore
+		OrganizationsStore cloudhub.OrganizationsStore
 	}
 	type args struct {
-		mapping *cmp.Mapping
+		mapping *cloudhub.Mapping
 	}
 	type wants struct {
 		statusCode  int
@@ -201,8 +201,8 @@ func TestMappings_Update(t *testing.T) {
 			name: "update new mapping",
 			fields: fields{
 				OrganizationsStore: &mocks.OrganizationsStore{
-					GetF: func(ctx context.Context, q cmp.OrganizationQuery) (*cmp.Organization, error) {
-						return &cmp.Organization{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
 							ID:          "0",
 							Name:        "The Gnarly Default",
 							DefaultRole: roles.ViewerRoleName,
@@ -210,13 +210,13 @@ func TestMappings_Update(t *testing.T) {
 					},
 				},
 				MappingsStore: &mocks.MappingsStore{
-					UpdateF: func(ctx context.Context, m *cmp.Mapping) error {
+					UpdateF: func(ctx context.Context, m *cloudhub.Mapping) error {
 						return nil
 					},
 				},
 			},
 			args: args{
-				mapping: &cmp.Mapping{
+				mapping: &cloudhub.Mapping{
 					ID:                   "1",
 					Organization:         "0",
 					Provider:             "*",
@@ -227,7 +227,7 @@ func TestMappings_Update(t *testing.T) {
 			wants: wants{
 				statusCode:  200,
 				contentType: "application/json",
-				body:        `{"links":{"self":"/cmp/v1/mappings/1"},"id":"1","organizationId":"0","provider":"*","scheme":"*","providerOrganization":"*"}`,
+				body:        `{"links":{"self":"/cloudhub/v1/mappings/1"},"id":"1","organizationId":"0","provider":"*","scheme":"*","providerOrganization":"*"}`,
 			},
 		},
 	}
@@ -277,7 +277,7 @@ func TestMappings_Update(t *testing.T) {
 
 func TestMappings_Remove(t *testing.T) {
 	type fields struct {
-		MappingsStore cmp.MappingsStore
+		MappingsStore cloudhub.MappingsStore
 	}
 	type args struct {
 		id string
@@ -298,8 +298,8 @@ func TestMappings_Remove(t *testing.T) {
 			name: "remove mapping",
 			fields: fields{
 				MappingsStore: &mocks.MappingsStore{
-					GetF: func(ctx context.Context, id string) (*cmp.Mapping, error) {
-						return &cmp.Mapping{
+					GetF: func(ctx context.Context, id string) (*cloudhub.Mapping, error) {
+						return &cloudhub.Mapping{
 							ID:                   "1",
 							Organization:         "0",
 							Provider:             "*",
@@ -307,7 +307,7 @@ func TestMappings_Remove(t *testing.T) {
 							ProviderOrganization: "*",
 						}, nil
 					},
-					DeleteF: func(ctx context.Context, m *cmp.Mapping) error {
+					DeleteF: func(ctx context.Context, m *cloudhub.Mapping) error {
 						return nil
 					},
 				},

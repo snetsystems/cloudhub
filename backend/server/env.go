@@ -3,7 +3,7 @@ package server
 import (
 	"net/http"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 type envResponse struct {
@@ -11,10 +11,10 @@ type envResponse struct {
 	TelegrafSystemInterval string    `json:"telegrafSystemInterval"`
 }
 
-func newEnvResponse(env cmp.Environment) *envResponse {
+func newEnvResponse(env cloudhub.Environment) *envResponse {
 	return &envResponse{
 		Links: selfLinks{
-			Self: "/cmp/v1/env",
+			Self: "/cloudhub/v1/env",
 		},
 		TelegrafSystemInterval: env.TelegrafSystemInterval.String(),
 	}

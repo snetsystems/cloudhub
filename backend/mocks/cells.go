@@ -3,7 +3,7 @@ package mocks
 import (
 	"context"
 
-	platform "github.com/snetsystems/cmp/backend/v2"
+	platform "github.com/snetsystems/cloudhub/backend/v2"
 )
 
 var _ platform.CellService = &CellService{}

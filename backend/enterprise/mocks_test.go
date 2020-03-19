@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"net/url"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/enterprise"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/enterprise"
 )
 
 type ControlClient struct {
@@ -109,29 +109,29 @@ func (r *Response) MarshalJSON() ([]byte, error) {
 	return json.Marshal(r)
 }
 
-func (ts *TimeSeries) Query(ctx context.Context, q cmp.Query) (cmp.Response, error) {
+func (ts *TimeSeries) Query(ctx context.Context, q cloudhub.Query) (cloudhub.Response, error) {
 	ts.QueryCtr++
 	return &Response{}, nil
 }
 
-func (ts *TimeSeries) Connect(ctx context.Context, src *cmp.Source) error {
+func (ts *TimeSeries) Connect(ctx context.Context, src *cloudhub.Source) error {
 	return nil
 }
 
-func (ts *TimeSeries) Write(ctx context.Context, points []cmp.Point) error {
+func (ts *TimeSeries) Write(ctx context.Context, points []cloudhub.Point) error {
 	return nil
 }
 
-func (ts *TimeSeries) Users(ctx context.Context) cmp.UsersStore {
+func (ts *TimeSeries) Users(ctx context.Context) cloudhub.UsersStore {
 	return nil
 }
 
-func (ts *TimeSeries) Roles(ctx context.Context) (cmp.RolesStore, error) {
+func (ts *TimeSeries) Roles(ctx context.Context) (cloudhub.RolesStore, error) {
 	return nil, nil
 }
 
-func (ts *TimeSeries) Permissions(ctx context.Context) cmp.Permissions {
-	return cmp.Permissions{}
+func (ts *TimeSeries) Permissions(ctx context.Context) cloudhub.Permissions {
+	return cloudhub.Permissions{}
 }
 
 func NewMockTimeSeries(urls ...string) *TimeSeries {

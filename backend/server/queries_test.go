@@ -8,14 +8,14 @@ import (
 	"testing"
 
 	"github.com/bouk/httprouter"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/mocks"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/mocks"
 )
 
 func TestService_Queries(t *testing.T) {
 	tests := []struct {
 		name         string
-		SourcesStore cmp.SourcesStore
+		SourcesStore cloudhub.SourcesStore
 		ID           string
 		w            *httptest.ResponseRecorder
 		r            *http.Request
@@ -24,8 +24,8 @@ func TestService_Queries(t *testing.T) {
 		{
 			name: "bad json",
 			SourcesStore: &mocks.SourcesStore{
-				GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-					return cmp.Source{
+				GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+					return cloudhub.Source{
 						ID: ID,
 					}, nil
 				},
@@ -45,8 +45,8 @@ func TestService_Queries(t *testing.T) {
 		{
 			name: "query with no template vars",
 			SourcesStore: &mocks.SourcesStore{
-				GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-					return cmp.Source{
+				GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+					return cloudhub.Source{
 						ID: ID,
 					}, nil
 				},
@@ -66,8 +66,8 @@ func TestService_Queries(t *testing.T) {
 		{
 			name: "query with unparsable query",
 			SourcesStore: &mocks.SourcesStore{
-				GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-					return cmp.Source{
+				GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+					return cloudhub.Source{
 						ID: ID,
 					}, nil
 				},

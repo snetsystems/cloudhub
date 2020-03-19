@@ -4,13 +4,13 @@ package bolt_test
 // 	"testing"
 
 // 	gocmp "github.com/google/go-cmp/cmp"
-// 	cmp "github.com/snetsystems/cmp/backend"
+// 	cloudhub "github.com/snetsystems/cloudhub/backend"
 // )
 
 // func
 // func TestBuildStore_Get(t *testing.T) {
 // 	type wants struct {
-// 		build *cmp.BuildInfo
+// 		build *cloudhub.BuildInfo
 // 		err   error
 // 	}
 // 	tests := []struct {
@@ -20,7 +20,7 @@ package bolt_test
 // 		{
 // 			name: "When the build info is missing",
 // 			wants: wants{
-// 				build: &cmp.BuildInfo{
+// 				build: &cloudhub.BuildInfo{
 // 					Version: "pre-1.4.0.0",
 // 					Commit:  "",
 // 				},

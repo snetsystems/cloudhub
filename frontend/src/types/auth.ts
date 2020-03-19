@@ -22,7 +22,7 @@ export enum InfluxDBPermissions {
   All = 'ALL',
   NoPermissions = 'NoPermissions',
   ViewAdmin = 'ViewAdmin',
-  ViewCMP = 'ViewCMP',
+  ViewCloudHub = 'ViewCloudHub',
   CreateDatabase = 'CreateDatabase',
   CreateUserAndRole = 'CreateUserAndRole',
   AddRemoveNode = 'AddRemoveNode',

@@ -3,16 +3,16 @@ package kapacitor
 import (
 	"fmt"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-var _ cmp.Ticker = &Alert{}
+var _ cloudhub.Ticker = &Alert{}
 
 // Alert defines alerting strings in template rendering
 type Alert struct{}
 
 // Generate creates a Tickscript from the alertrule
-func (a *Alert) Generate(rule cmp.AlertRule) (cmp.TICKScript, error) {
+func (a *Alert) Generate(rule cloudhub.AlertRule) (cloudhub.TICKScript, error) {
 	vars, err := Vars(rule)
 	if err != nil {
 		return "", err

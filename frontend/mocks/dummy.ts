@@ -14,17 +14,17 @@ export const source = {
   insecureSkipVerify: false,
   authentication: SourceAuthenticationMethod.Basic,
   links: {
-    self: '/cmp/v1/sources/2',
-    kapacitors: '/cmp/v1/sources/2/kapacitors',
-    proxy: '/cmp/v1/sources/2/proxy',
-    queries: '/cmp/v1/sources/2/queries',
-    write: '/cmp/v1/sources/2/write',
-    permissions: '/cmp/v1/sources/2/permissions',
-    users: '/cmp/v1/sources/2/users',
-    databases: '/cmp/v1/sources/2/dbs',
-    annotations: '/cmp/v1/sources/2/annotations',
-    services: '/cmp/v1/sources/2/services',
-    health: '/cmp/v1/sources/2/health',
+    self: '/cloudhub/v1/sources/2',
+    kapacitors: '/cloudhub/v1/sources/2/kapacitors',
+    proxy: '/cloudhub/v1/sources/2/proxy',
+    queries: '/cloudhub/v1/sources/2/queries',
+    write: '/cloudhub/v1/sources/2/write',
+    permissions: '/cloudhub/v1/sources/2/permissions',
+    users: '/cloudhub/v1/sources/2/users',
+    databases: '/cloudhub/v1/sources/2/dbs',
+    annotations: '/cloudhub/v1/sources/2/annotations',
+    services: '/cloudhub/v1/sources/2/services',
+    health: '/cloudhub/v1/sources/2/health',
   },
 }
 
@@ -44,8 +44,8 @@ export const kapacitor = {
   insecureSkipVerify: false,
   active: true,
   links: {
-    self: '/cmp/v1/sources/47/kapacitors/1',
-    proxy: '/cmp/v1/sources/47/kapacitors/1/proxy',
+    self: '/cloudhub/v1/sources/47/kapacitors/1',
+    proxy: '/cloudhub/v1/sources/47/kapacitors/1/proxy',
   },
   rules: [rule],
   status: 'enabled',
@@ -67,8 +67,8 @@ export const updateKapacitorBody = {
   password: 'pass',
   active: true,
   links: {
-    self: '/cmp/v1/sources/47/kapacitors/1',
-    proxy: '/cmp/v1/sources/47/kapacitors/1/proxy',
+    self: '/cloudhub/v1/sources/47/kapacitors/1',
+    proxy: '/cloudhub/v1/sources/47/kapacitors/1/proxy',
   },
 }
 

@@ -2,10 +2,10 @@ package id
 
 import (
 	uuid "github.com/satori/go.uuid"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-var _ cmp.ID = &UUID{}
+var _ cloudhub.ID = &UUID{}
 
 // UUID generates a V4 uuid
 type UUID struct{}

@@ -6,7 +6,7 @@ import (
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // Authorizer adds optional authorization header to request
@@ -22,7 +22,7 @@ type NoAuthorization struct{}
 func (n *NoAuthorization) Set(req *http.Request) error { return nil }
 
 // DefaultAuthorization creates either a shared JWT builder, basic auth or Noop
-func DefaultAuthorization(src *cmp.Source) Authorizer {
+func DefaultAuthorization(src *cloudhub.Source) Authorizer {
 	// Optionally, add the shared secret JWT token creation
 	if src.Username != "" && src.SharedSecret != "" {
 		return &BearerJWT{

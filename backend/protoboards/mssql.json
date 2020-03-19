@@ -481,7 +481,7 @@
               "range": null,
               "shifts": null
             },
-            "source": "/cmp/v1/sources/2",
+            "source": "/cloudhub/v1/sources/2",
             "type": "influxql"
           }
         ],

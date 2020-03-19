@@ -3,21 +3,21 @@ package organizations
 import (
 	"context"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-// ensure that OrganizationConfig implements cmp.OrganizationConfigStore
-var _ cmp.OrganizationConfigStore = &OrganizationConfigStore{}
+// ensure that OrganizationConfig implements cloudhub.OrganizationConfigStore
+var _ cloudhub.OrganizationConfigStore = &OrganizationConfigStore{}
 
 // OrganizationConfigStore facade on a OrganizationConfig that filters OrganizationConfigs by organization.
 type OrganizationConfigStore struct {
-	store        cmp.OrganizationConfigStore
+	store        cloudhub.OrganizationConfigStore
 	organization string
 }
 
 // NewOrganizationConfigStore creates a new OrganizationConfigStore from an existing
-// cmp.OrganizationConfigStore and an organization string
-func NewOrganizationConfigStore(s cmp.OrganizationConfigStore, orgID string) *OrganizationConfigStore {
+// cloudhub.OrganizationConfigStore and an organization string
+func NewOrganizationConfigStore(s cloudhub.OrganizationConfigStore, orgID string) *OrganizationConfigStore {
 	return &OrganizationConfigStore{
 		store:        s,
 		organization: orgID,
@@ -25,7 +25,7 @@ func NewOrganizationConfigStore(s cmp.OrganizationConfigStore, orgID string) *Or
 }
 
 // FindOrCreate gets an organization's config or creates one if none exists
-func (s *OrganizationConfigStore) FindOrCreate(ctx context.Context, orgID string) (*cmp.OrganizationConfig, error) {
+func (s *OrganizationConfigStore) FindOrCreate(ctx context.Context, orgID string) (*cloudhub.OrganizationConfig, error) {
 	var err = validOrganization(ctx)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func (s *OrganizationConfigStore) FindOrCreate(ctx context.Context, orgID string
 }
 
 // Put the OrganizationConfig in OrganizationConfigStore.
-func (s *OrganizationConfigStore) Put(ctx context.Context, c *cmp.OrganizationConfig) error {
+func (s *OrganizationConfigStore) Put(ctx context.Context, c *cloudhub.OrganizationConfig) error {
 	err := validOrganization(ctx)
 	if err != nil {
 		return err

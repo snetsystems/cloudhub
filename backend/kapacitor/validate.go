@@ -10,7 +10,7 @@ import (
 	"github.com/influxdata/kapacitor/tick"
 	"github.com/influxdata/kapacitor/tick/ast"
 	"github.com/influxdata/kapacitor/tick/stateful"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // ValidateAlert checks if the alert is a valid kapacitor alert service.
@@ -19,10 +19,10 @@ func ValidateAlert(service string) error {
 	// If a pipeline cannot be created then we know this is an invalid
 	// service.  At least with this version of kapacitor!
 	script := fmt.Sprintf("stream|from()|alert()%s", service)
-	return validateTick(cmp.TICKScript(script))
+	return validateTick(cloudhub.TICKScript(script))
 }
 
-func formatTick(tickscript string) (cmp.TICKScript, error) {
+func formatTick(tickscript string) (cloudhub.TICKScript, error) {
 	node, err := ast.Parse(tickscript)
 	if err != nil {
 		return "", err
@@ -30,15 +30,15 @@ func formatTick(tickscript string) (cmp.TICKScript, error) {
 
 	output := new(bytes.Buffer)
 	node.Format(output, "", true)
-	return cmp.TICKScript(output.String()), nil
+	return cloudhub.TICKScript(output.String()), nil
 }
 
-func validateTick(script cmp.TICKScript) error {
+func validateTick(script cloudhub.TICKScript) error {
 	_, err := newPipeline(script)
 	return err
 }
 
-func newPipeline(script cmp.TICKScript) (*pipeline.Pipeline, error) {
+func newPipeline(script cloudhub.TICKScript) (*pipeline.Pipeline, error) {
 	edge := pipeline.StreamEdge
 	if strings.Contains(string(script), "batch") {
 		edge = pipeline.BatchEdge

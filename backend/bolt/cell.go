@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/boltdb/bolt"
-	platform "github.com/snetsystems/cmp/backend/v2"
+	platform "github.com/snetsystems/cloudhub/backend/v2"
 )
 
 var (

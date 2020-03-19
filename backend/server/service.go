@@ -3,19 +3,19 @@ package server
 import (
 	"context"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/influx"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/influx"
 )
 
 // Service handles REST calls to the persistence
 type Service struct {
 	Store                    DataStore
 	TimeSeriesClient         TimeSeriesClient
-	Logger                   cmp.Logger
+	Logger                   cloudhub.Logger
 	UseAuth                  bool
 	SuperAdminProviderGroups superAdminProviderGroups
-	Env                      cmp.Environment
-	Databases                cmp.Databases
+	Env                      cloudhub.Environment
+	Databases                cloudhub.Databases
 	AddonURLs                map[string]string
 }
 
@@ -25,7 +25,7 @@ type superAdminProviderGroups struct {
 
 // TimeSeriesClient returns the correct client for a time series database.
 type TimeSeriesClient interface {
-	New(cmp.Source, cmp.Logger) (cmp.TimeSeries, error)
+	New(cloudhub.Source, cloudhub.Logger) (cloudhub.TimeSeries, error)
 }
 
 // ErrorMessage is the error response format for all service errors
@@ -35,7 +35,7 @@ type ErrorMessage struct {
 }
 
 // TimeSeries returns a new client connected to a time series database
-func (s *Service) TimeSeries(src cmp.Source) (cmp.TimeSeries, error) {
+func (s *Service) TimeSeries(src cloudhub.Source) (cloudhub.TimeSeries, error) {
 	return s.TimeSeriesClient.New(src, s.Logger)
 }
 
@@ -43,7 +43,7 @@ func (s *Service) TimeSeries(src cmp.Source) (cmp.TimeSeries, error) {
 type InfluxClient struct{}
 
 // New creates a client to connect to OSS
-func (c *InfluxClient) New(src cmp.Source, logger cmp.Logger) (cmp.TimeSeries, error) {
+func (c *InfluxClient) New(src cloudhub.Source, logger cloudhub.Logger) (cloudhub.TimeSeries, error) {
 	client := &influx.Client{
 		Logger: logger,
 	}

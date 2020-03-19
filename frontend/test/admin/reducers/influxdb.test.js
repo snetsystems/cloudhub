@@ -39,7 +39,7 @@ const u1 = {
       permissions: {
         allowed: [
           'ViewAdmin',
-          'ViewCMP',
+          'ViewCloudHub',
           'CreateDatabase',
           'CreateUserAndRole',
           'AddRemoveNode',
@@ -62,13 +62,13 @@ const u1 = {
     },
   ],
   permissions: [],
-  links: {self: '/cmp/v1/sources/1/users/acidburn'},
+  links: {self: '/cloudhub/v1/sources/1/users/acidburn'},
 }
 const u2 = {
   name: 'zerocool',
   roles: [],
   permissions: [],
-  links: {self: '/cmp/v1/sources/1/users/zerocool'},
+  links: {self: '/cloudhub/v1/sources/1/users/zerocool'},
 }
 const users = [u1, u2]
 
@@ -80,7 +80,7 @@ const r1 = {
     {
       allowed: [
         'ViewAdmin',
-        'ViewCMP',
+        'ViewCloudHub',
         'CreateDatabase',
         'CreateUserAndRole',
         'AddRemoveNode',
@@ -101,11 +101,11 @@ const r1 = {
       scope: 'all',
     },
   ],
-  links: {self: '/cmp/v1/sources/1/roles/hax0r'},
+  links: {self: '/cloudhub/v1/sources/1/roles/hax0r'},
 }
 const r2 = {
   name: 'l33tus3r',
-  links: {self: '/cmp/v1/sources/1/roles/l33tus3r'},
+  links: {self: '/cloudhub/v1/sources/1/roles/l33tus3r'},
 }
 const roles = [r1, r2]
 
@@ -120,18 +120,18 @@ const rp1 = {
   duration: '0',
   replication: 2,
   isDefault: true,
-  links: {self: '/cmp/v1/sources/1/db/db1/rp/rp1'},
+  links: {self: '/cloudhub/v1/sources/1/db/db1/rp/rp1'},
 }
 
 const db1 = {
   name: 'db1',
-  links: {self: '/cmp/v1/sources/1/db/db1'},
+  links: {self: '/cloudhub/v1/sources/1/db/db1'},
   retentionPolicies: [rp1],
 }
 
 const db2 = {
   name: 'db2',
-  links: {self: '/cmp/v1/sources/1/db/db2'},
+  links: {self: '/cloudhub/v1/sources/1/db/db2'},
   retentionPolicies: [],
   deleteCode: 'DELETE',
 }
@@ -339,7 +339,10 @@ describe('Admin.InfluxDB.Reducers', () => {
 
     const actual = reducer(state, filterRoles(text))
     const expected = {
-      roles: [{...r1, hidden: false}, {...r2, hidden: true}],
+      roles: [
+        {...r1, hidden: false},
+        {...r2, hidden: true},
+      ],
     }
 
     expect(actual.roles).toEqual(expected.roles)
@@ -354,7 +357,10 @@ describe('Admin.InfluxDB.Reducers', () => {
 
     const actual = reducer(state, filterUsers(text))
     const expected = {
-      users: [{...u1, hidden: true}, {...u2, hidden: false}],
+      users: [
+        {...u1, hidden: true},
+        {...u2, hidden: false},
+      ],
     }
 
     expect(actual.users).toEqual(expected.users)

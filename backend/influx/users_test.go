@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/log"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/log"
 )
 
 func TestClient_userPermissions(t *testing.T) {
@@ -24,7 +24,7 @@ func TestClient_userPermissions(t *testing.T) {
 		showGrants []byte
 		status     int
 		args       args
-		want       cmp.Permissions
+		want       cloudhub.Permissions
 		wantErr    bool
 	}{
 		{
@@ -35,8 +35,8 @@ func TestClient_userPermissions(t *testing.T) {
 				ctx:  context.Background(),
 				name: "docbrown",
 			},
-			want: cmp.Permissions{
-				cmp.Permission{
+			want: cloudhub.Permissions{
+				cloudhub.Permission{
 					Scope:   "database",
 					Name:    "mydb",
 					Allowed: []string{"WRITE", "READ"},
@@ -94,13 +94,13 @@ func TestClient_Add(t *testing.T) {
 	t.Parallel()
 	type args struct {
 		ctx context.Context
-		u   *cmp.User
+		u   *cloudhub.User
 	}
 	tests := []struct {
 		name        string
 		args        args
 		status      int
-		want        *cmp.User
+		want        *cloudhub.User
 		wantQueries []string
 		wantErr     bool
 	}{
@@ -109,7 +109,7 @@ func TestClient_Add(t *testing.T) {
 			status: http.StatusOK,
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name:   "docbrown",
 					Passwd: "Dont Need Roads",
 				},
@@ -119,12 +119,12 @@ func TestClient_Add(t *testing.T) {
 				`SHOW USERS`,
 				`SHOW GRANTS FOR "docbrown"`,
 			},
-			want: &cmp.User{
+			want: &cloudhub.User{
 				Name: "docbrown",
-				Permissions: cmp.Permissions{
-					cmp.Permission{
-						Scope: cmp.AllScope,
-						Allowed: cmp.Allowances{
+				Permissions: cloudhub.Permissions{
+					cloudhub.Permission{
+						Scope: cloudhub.AllScope,
+						Allowed: cloudhub.Allowances{
 							"ALL",
 						},
 					},
@@ -136,13 +136,13 @@ func TestClient_Add(t *testing.T) {
 			status: http.StatusOK,
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name:   "docbrown",
 					Passwd: "Dont Need Roads",
-					Permissions: cmp.Permissions{
-						cmp.Permission{
-							Scope: cmp.AllScope,
-							Allowed: cmp.Allowances{
+					Permissions: cloudhub.Permissions{
+						cloudhub.Permission{
+							Scope: cloudhub.AllScope,
+							Allowed: cloudhub.Allowances{
 								"ALL",
 							},
 						},
@@ -155,12 +155,12 @@ func TestClient_Add(t *testing.T) {
 				`SHOW USERS`,
 				`SHOW GRANTS FOR "docbrown"`,
 			},
-			want: &cmp.User{
+			want: &cloudhub.User{
 				Name: "docbrown",
-				Permissions: cmp.Permissions{
-					cmp.Permission{
-						Scope: cmp.AllScope,
-						Allowed: cmp.Allowances{
+				Permissions: cloudhub.Permissions{
+					cloudhub.Permission{
+						Scope: cloudhub.AllScope,
+						Allowed: cloudhub.Allowances{
 							"ALL",
 						},
 					},
@@ -172,7 +172,7 @@ func TestClient_Add(t *testing.T) {
 			status: http.StatusUnauthorized,
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name:   "docbrown",
 					Passwd: "Dont Need Roads",
 				},
@@ -221,7 +221,7 @@ func TestClient_Add(t *testing.T) {
 func TestClient_Delete(t *testing.T) {
 	type args struct {
 		ctx context.Context
-		u   *cmp.User
+		u   *cloudhub.User
 	}
 	tests := []struct {
 		name     string
@@ -236,7 +236,7 @@ func TestClient_Delete(t *testing.T) {
 			status:   http.StatusOK,
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name: "docbrown",
 				},
 			},
@@ -247,7 +247,7 @@ func TestClient_Delete(t *testing.T) {
 			status:   http.StatusOK,
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name: "docbrown",
 				},
 			},
@@ -259,7 +259,7 @@ func TestClient_Delete(t *testing.T) {
 			status:   http.StatusBadRequest,
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name: "docbrown",
 				},
 			},
@@ -271,7 +271,7 @@ func TestClient_Delete(t *testing.T) {
 			status:   http.StatusOK,
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name: "docbrown",
 				},
 			},
@@ -311,7 +311,7 @@ func TestClient_Get(t *testing.T) {
 		showUsers    []byte
 		statusGrants int
 		showGrants   []byte
-		want         *cmp.User
+		want         *cloudhub.User
 		wantErr      bool
 	}{
 		{
@@ -324,14 +324,14 @@ func TestClient_Get(t *testing.T) {
 				ctx:  context.Background(),
 				name: "docbrown",
 			},
-			want: &cmp.User{
+			want: &cloudhub.User{
 				Name: "docbrown",
-				Permissions: cmp.Permissions{
-					cmp.Permission{
+				Permissions: cloudhub.Permissions{
+					cloudhub.Permission{
 						Scope:   "all",
 						Allowed: []string{"ALL"},
 					},
-					cmp.Permission{
+					cloudhub.Permission{
 						Scope:   "database",
 						Name:    "mydb",
 						Allowed: []string{"WRITE", "READ"},
@@ -392,7 +392,7 @@ func TestClient_Get(t *testing.T) {
 			Logger: log.New(log.DebugLevel),
 		}
 		defer ts.Close()
-		got, err := c.Get(tt.args.ctx, cmp.UserQuery{Name: &tt.args.name})
+		got, err := c.Get(tt.args.ctx, cloudhub.UserQuery{Name: &tt.args.name})
 		if (err != nil) != tt.wantErr {
 			t.Errorf("%q. Client.Get() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 			continue
@@ -407,7 +407,7 @@ func TestClient_grantPermission(t *testing.T) {
 	type args struct {
 		ctx      context.Context
 		username string
-		perm     cmp.Permission
+		perm     cloudhub.Permission
 	}
 	tests := []struct {
 		name      string
@@ -424,7 +424,7 @@ func TestClient_grantPermission(t *testing.T) {
 			args: args{
 				ctx:      context.Background(),
 				username: "docbrown",
-				perm: cmp.Permission{
+				perm: cloudhub.Permission{
 					Scope:   "database",
 					Name:    "mydb",
 					Allowed: []string{"WRITE", "READ"},
@@ -439,7 +439,7 @@ func TestClient_grantPermission(t *testing.T) {
 			args: args{
 				ctx:      context.Background(),
 				username: "docbrown",
-				perm: cmp.Permission{
+				perm: cloudhub.Permission{
 					Scope:   "database",
 					Name:    "mydb",
 					Allowed: []string{"howdy"},
@@ -454,7 +454,7 @@ func TestClient_grantPermission(t *testing.T) {
 			args: args{
 				ctx:      context.Background(),
 				username: "docbrown",
-				perm: cmp.Permission{
+				perm: cloudhub.Permission{
 					Scope:   "database",
 					Name:    "mydb",
 					Allowed: []string{},
@@ -492,7 +492,7 @@ func TestClient_revokePermission(t *testing.T) {
 	type args struct {
 		ctx      context.Context
 		username string
-		perm     cmp.Permission
+		perm     cloudhub.Permission
 	}
 	tests := []struct {
 		name      string
@@ -509,7 +509,7 @@ func TestClient_revokePermission(t *testing.T) {
 			args: args{
 				ctx:      context.Background(),
 				username: "docbrown",
-				perm: cmp.Permission{
+				perm: cloudhub.Permission{
 					Scope:   "database",
 					Name:    "mydb",
 					Allowed: []string{"WRITE", "READ"},
@@ -524,7 +524,7 @@ func TestClient_revokePermission(t *testing.T) {
 			args: args{
 				ctx:      context.Background(),
 				username: "docbrown",
-				perm: cmp.Permission{
+				perm: cloudhub.Permission{
 					Scope:   "database",
 					Name:    "mydb",
 					Allowed: []string{"howdy"},
@@ -539,7 +539,7 @@ func TestClient_revokePermission(t *testing.T) {
 			args: args{
 				ctx:      context.Background(),
 				username: "docbrown",
-				perm: cmp.Permission{
+				perm: cloudhub.Permission{
 					Scope:   "database",
 					Name:    "mydb",
 					Allowed: []string{},
@@ -584,7 +584,7 @@ func TestClient_Num(t *testing.T) {
 		showUsers    []byte
 		statusGrants int
 		showGrants   []byte
-		want         []cmp.User
+		want         []cloudhub.User
 		wantErr      bool
 	}{
 		{
@@ -596,15 +596,15 @@ func TestClient_Num(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 			},
-			want: []cmp.User{
+			want: []cloudhub.User{
 				{
 					Name: "admin",
-					Permissions: cmp.Permissions{
-						cmp.Permission{
+					Permissions: cloudhub.Permissions{
+						cloudhub.Permission{
 							Scope:   "all",
 							Allowed: []string{"ALL"},
 						},
-						cmp.Permission{
+						cloudhub.Permission{
 							Scope:   "database",
 							Name:    "mydb",
 							Allowed: []string{"WRITE", "READ"},
@@ -613,12 +613,12 @@ func TestClient_Num(t *testing.T) {
 				},
 				{
 					Name: "docbrown",
-					Permissions: cmp.Permissions{
-						cmp.Permission{
+					Permissions: cloudhub.Permissions{
+						cloudhub.Permission{
 							Scope:   "all",
 							Allowed: []string{"ALL"},
 						},
-						cmp.Permission{
+						cloudhub.Permission{
 							Scope:   "database",
 							Name:    "mydb",
 							Allowed: []string{"WRITE", "READ"},
@@ -627,8 +627,8 @@ func TestClient_Num(t *testing.T) {
 				},
 				{
 					Name: "reader",
-					Permissions: cmp.Permissions{
-						cmp.Permission{
+					Permissions: cloudhub.Permissions{
+						cloudhub.Permission{
 							Scope:   "database",
 							Name:    "mydb",
 							Allowed: []string{"WRITE", "READ"},
@@ -680,7 +680,7 @@ func TestClient_All(t *testing.T) {
 		showUsers    []byte
 		statusGrants int
 		showGrants   []byte
-		want         []cmp.User
+		want         []cloudhub.User
 		wantErr      bool
 	}{
 		{
@@ -692,15 +692,15 @@ func TestClient_All(t *testing.T) {
 			args: args{
 				ctx: context.Background(),
 			},
-			want: []cmp.User{
+			want: []cloudhub.User{
 				{
 					Name: "admin",
-					Permissions: cmp.Permissions{
-						cmp.Permission{
+					Permissions: cloudhub.Permissions{
+						cloudhub.Permission{
 							Scope:   "all",
 							Allowed: []string{"ALL"},
 						},
-						cmp.Permission{
+						cloudhub.Permission{
 							Scope:   "database",
 							Name:    "mydb",
 							Allowed: []string{"WRITE", "READ"},
@@ -709,12 +709,12 @@ func TestClient_All(t *testing.T) {
 				},
 				{
 					Name: "docbrown",
-					Permissions: cmp.Permissions{
-						cmp.Permission{
+					Permissions: cloudhub.Permissions{
+						cloudhub.Permission{
 							Scope:   "all",
 							Allowed: []string{"ALL"},
 						},
-						cmp.Permission{
+						cloudhub.Permission{
 							Scope:   "database",
 							Name:    "mydb",
 							Allowed: []string{"WRITE", "READ"},
@@ -723,8 +723,8 @@ func TestClient_All(t *testing.T) {
 				},
 				{
 					Name: "reader",
-					Permissions: cmp.Permissions{
-						cmp.Permission{
+					Permissions: cloudhub.Permissions{
+						cloudhub.Permission{
 							Scope:   "database",
 							Name:    "mydb",
 							Allowed: []string{"WRITE", "READ"},
@@ -788,7 +788,7 @@ func TestClient_All(t *testing.T) {
 func TestClient_Update(t *testing.T) {
 	type args struct {
 		ctx context.Context
-		u   *cmp.User
+		u   *cloudhub.User
 	}
 	tests := []struct {
 		name           string
@@ -812,7 +812,7 @@ func TestClient_Update(t *testing.T) {
 			password:       []byte(`{"results":[]}`),
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name:   "docbrown",
 					Passwd: "hunter2",
 				},
@@ -833,9 +833,9 @@ func TestClient_Update(t *testing.T) {
 			grant:        []byte(`{"results":[]}`),
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name: "docbrown",
-					Permissions: cmp.Permissions{
+					Permissions: cloudhub.Permissions{
 						{
 							Scope:   "all",
 							Allowed: []string{"all"},
@@ -865,7 +865,7 @@ func TestClient_Update(t *testing.T) {
 			revoke:       []byte(`{"results":[]}`),
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name: "docbrown",
 				},
 			},
@@ -888,9 +888,9 @@ func TestClient_Update(t *testing.T) {
 			grant:        []byte(`{"results":[]}`),
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name: "docbrown",
-					Permissions: cmp.Permissions{
+					Permissions: cloudhub.Permissions{
 						{
 							Scope:   "all",
 							Allowed: []string{"all"},
@@ -922,9 +922,9 @@ func TestClient_Update(t *testing.T) {
 			grant:        []byte(`{"results":[]}`),
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name: "docbrown",
-					Permissions: cmp.Permissions{
+					Permissions: cloudhub.Permissions{
 						{
 							Scope:   "all",
 							Allowed: []string{},
@@ -962,9 +962,9 @@ func TestClient_Update(t *testing.T) {
 			grant:        []byte(`{"results":[]}`),
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name: "docbrown",
-					Permissions: cmp.Permissions{
+					Permissions: cloudhub.Permissions{
 						{
 							Scope:   "all",
 							Allowed: []string{"ALL"},
@@ -990,7 +990,7 @@ func TestClient_Update(t *testing.T) {
 			grant:        []byte(`{"results":[]}`),
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name: "docbrown",
 				},
 			},
@@ -1012,9 +1012,9 @@ func TestClient_Update(t *testing.T) {
 			wantErr:      true,
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name: "docbrown",
-					Permissions: cmp.Permissions{
+					Permissions: cloudhub.Permissions{
 						{
 							Scope:   "all",
 							Allowed: []string{},
@@ -1051,9 +1051,9 @@ func TestClient_Update(t *testing.T) {
 			wantErr:      true,
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name: "docbrown",
-					Permissions: cmp.Permissions{
+					Permissions: cloudhub.Permissions{
 						{
 							Scope:   "all",
 							Allowed: []string{},

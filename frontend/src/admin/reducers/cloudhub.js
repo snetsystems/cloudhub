@@ -9,22 +9,22 @@ const initialState = {
   },
 }
 
-const adminCMP = (state = initialState, action) => {
+const adminCloudHub = (state = initialState, action) => {
   switch (action.type) {
-    case 'CMP_LOAD_USERS': {
+    case 'CloudHub_LOAD_USERS': {
       return {...state, ...action.payload}
     }
 
-    case 'CMP_LOAD_ORGANIZATIONS': {
+    case 'CloudHub_LOAD_ORGANIZATIONS': {
       return {...state, ...action.payload}
     }
 
-    case 'CMP_ADD_USER': {
+    case 'CloudHub_ADD_USER': {
       const {user} = action.payload
       return {...state, users: [...state.users, user]}
     }
 
-    case 'CMP_UPDATE_USER': {
+    case 'CloudHub_UPDATE_USER': {
       const {user, updatedUser} = action.payload
       return {
         ...state,
@@ -33,7 +33,7 @@ const adminCMP = (state = initialState, action) => {
         ),
       }
     }
-    case 'CMP_SYNC_USER': {
+    case 'CloudHub_SYNC_USER': {
       const {staleUser, syncedUser} = action.payload
       return {
         ...state,
@@ -44,7 +44,7 @@ const adminCMP = (state = initialState, action) => {
       }
     }
 
-    case 'CMP_REMOVE_USER': {
+    case 'CloudHub_REMOVE_USER': {
       const {user} = action.payload
       return {
         ...state,
@@ -57,7 +57,7 @@ const adminCMP = (state = initialState, action) => {
       }
     }
 
-    case 'CMP_ADD_ORGANIZATION': {
+    case 'CloudHub_ADD_ORGANIZATION': {
       const {organization} = action.payload
       return {
         ...state,
@@ -65,7 +65,7 @@ const adminCMP = (state = initialState, action) => {
       }
     }
 
-    case 'CMP_RENAME_ORGANIZATION': {
+    case 'CloudHub_RENAME_ORGANIZATION': {
       const {organization, newName} = action.payload
       return {
         ...state,
@@ -75,7 +75,7 @@ const adminCMP = (state = initialState, action) => {
       }
     }
 
-    case 'CMP_SYNC_ORGANIZATION': {
+    case 'CloudHub_SYNC_ORGANIZATION': {
       const {staleOrganization, syncedOrganization} = action.payload
       return {
         ...state,
@@ -85,7 +85,7 @@ const adminCMP = (state = initialState, action) => {
       }
     }
 
-    case 'CMP_REMOVE_ORGANIZATION': {
+    case 'CloudHub_REMOVE_ORGANIZATION': {
       const {organization} = action.payload
       return {
         ...state,
@@ -97,7 +97,7 @@ const adminCMP = (state = initialState, action) => {
       }
     }
 
-    case 'CMP_LOAD_MAPPINGS': {
+    case 'CloudHub_LOAD_MAPPINGS': {
       const {mappings} = action.payload
       return {
         ...state,
@@ -105,7 +105,7 @@ const adminCMP = (state = initialState, action) => {
       }
     }
 
-    case 'CMP_UPDATE_MAPPING': {
+    case 'CloudHub_UPDATE_MAPPING': {
       const {staleMapping, updatedMapping} = action.payload
       return {
         ...state,
@@ -115,7 +115,7 @@ const adminCMP = (state = initialState, action) => {
       }
     }
 
-    case 'CMP_ADD_MAPPING': {
+    case 'CloudHub_ADD_MAPPING': {
       const {mapping} = action.payload
       return {
         ...state,
@@ -123,7 +123,7 @@ const adminCMP = (state = initialState, action) => {
       }
     }
 
-    case 'CMP_REMOVE_MAPPING': {
+    case 'CloudHub_REMOVE_MAPPING': {
       const {mapping} = action.payload
       return {
         ...state,
@@ -146,4 +146,4 @@ function replaceMapping(m, staleMapping, updatedMapping) {
   return m
 }
 
-export default adminCMP
+export default adminCloudHub

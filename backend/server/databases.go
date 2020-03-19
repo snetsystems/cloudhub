@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	"github.com/bouk/httprouter"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 const (
@@ -34,7 +34,7 @@ type dbResponse struct {
 
 // newDBResponse creates the response for the /databases endpoint
 func newDBResponse(srcID int, db string, rps []rpResponse) dbResponse {
-	base := "/cmp/v1/sources"
+	base := "/cloudhub/v1/sources"
 	return dbResponse{
 		Name: db,
 		RPs:  rps,
@@ -65,7 +65,7 @@ type rpResponse struct {
 
 // WithLinks adds links to an rpResponse in place
 func (r *rpResponse) WithLinks(srcID int, db string) {
-	base := "/cmp/v1/sources"
+	base := "/cloudhub/v1/sources"
 	r.Links = rpLinks{
 		Self: fmt.Sprintf("%s/%d/dbs/%s/rps/%s", base, srcID, db, r.Name),
 	}
@@ -83,7 +83,7 @@ type measurementLinks struct {
 }
 
 func newMeasurementLinks(src int, db string, limit, offset int) measurementLinks {
-	base := "/cmp/v1/sources"
+	base := "/cloudhub/v1/sources"
 	res := measurementLinks{
 		Self:  fmt.Sprintf("%s/%d/dbs/%s/measurements?limit=%d&offset=%d", base, src, db, limit, offset),
 		First: fmt.Sprintf("%s/%d/dbs/%s/measurements?limit=%d&offset=0", base, src, db, limit),
@@ -97,7 +97,7 @@ func newMeasurementLinks(src int, db string, limit, offset int) measurementLinks
 }
 
 type measurementsResponse struct {
-	Measurements []cmp.Measurement `json:"measurements"` // names of all measurements
+	Measurements []cloudhub.Measurement `json:"measurements"` // names of all measurements
 	Links        measurementLinks  `json:"links"`        // Links are the URI locations for measurements pages
 }
 
@@ -171,7 +171,7 @@ func (s *Service) NewDatabase(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	postedDB := &cmp.Database{}
+	postedDB := &cloudhub.Database{}
 	if err := json.NewDecoder(r.Body).Decode(postedDB); err != nil {
 		invalidJSON(w, s.Logger)
 		return
@@ -265,7 +265,7 @@ func (s *Service) RetentionPolicies(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
 
-func (s *Service) allRPs(ctx context.Context, dbsvc cmp.Databases, srcID int, db string) ([]rpResponse, error) {
+func (s *Service) allRPs(ctx context.Context, dbsvc cloudhub.Databases, srcID int, db string) ([]rpResponse, error) {
 	allRP, err := dbsvc.AllRP(ctx, db)
 	if err != nil {
 		return nil, err
@@ -309,7 +309,7 @@ func (s *Service) NewRetentionPolicy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	postedRP := &cmp.RetentionPolicy{}
+	postedRP := &cloudhub.RetentionPolicy{}
 	if err := json.NewDecoder(r.Body).Decode(postedRP); err != nil {
 		invalidJSON(w, s.Logger)
 		return
@@ -359,7 +359,7 @@ func (s *Service) UpdateRetentionPolicy(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	postedRP := &cmp.RetentionPolicy{}
+	postedRP := &cloudhub.RetentionPolicy{}
 	if err := json.NewDecoder(r.Body).Decode(postedRP); err != nil {
 		invalidJSON(w, s.Logger)
 		return
@@ -499,7 +499,7 @@ func validMeasurementQuery(query url.Values) (limit, offset int, err error) {
 }
 
 // ValidDatabaseRequest checks if the database posted is valid
-func ValidDatabaseRequest(d *cmp.Database) error {
+func ValidDatabaseRequest(d *cloudhub.Database) error {
 	if len(d.Name) == 0 {
 		return fmt.Errorf("name is required")
 	}
@@ -507,7 +507,7 @@ func ValidDatabaseRequest(d *cmp.Database) error {
 }
 
 // ValidRetentionPolicyRequest checks if a retention policy is valid on POST
-func ValidRetentionPolicyRequest(rp *cmp.RetentionPolicy) error {
+func ValidRetentionPolicyRequest(rp *cloudhub.RetentionPolicy) error {
 	if len(rp.Name) == 0 {
 		return fmt.Errorf("name is required")
 	}

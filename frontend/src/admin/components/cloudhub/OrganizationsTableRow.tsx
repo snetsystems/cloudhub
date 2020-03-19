@@ -12,8 +12,8 @@ import InputClickToEdit from 'src/shared/components/InputClickToEdit'
 import {meChangeOrganizationAsync} from 'src/shared/actions/auth'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {DEFAULT_ORG_ID} from 'src/admin/constants/cmpAdmin'
-import {USER_ROLES} from 'src/admin/constants/cmpAdmin'
+import {DEFAULT_ORG_ID} from 'src/admin/constants/cloudhubAdmin'
+import {USER_ROLES} from 'src/admin/constants/cloudhubAdmin'
 import {Organization} from 'src/types'
 import {Links} from 'src/types'
 

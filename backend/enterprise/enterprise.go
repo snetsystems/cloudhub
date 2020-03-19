@@ -6,11 +6,11 @@ import (
 	"net/url"
 	"strings"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/influx"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/influx"
 )
 
-var _ cmp.TimeSeries = &Client{}
+var _ cloudhub.TimeSeries = &Client{}
 
 // Ctrl represents administrative controls over an Influx Enterprise cluster
 type Ctrl interface {
@@ -41,16 +41,16 @@ type Ctrl interface {
 // are appropriately load balanced across the cluster.
 type Client struct {
 	Ctrl
-	UsersStore cmp.UsersStore
-	RolesStore cmp.RolesStore
-	Logger     cmp.Logger
+	UsersStore cloudhub.UsersStore
+	RolesStore cloudhub.RolesStore
+	Logger     cloudhub.Logger
 
 	dataNodes *ring.Ring
 	opened    bool
 }
 
 // NewClientWithTimeSeries initializes a Client with a known set of TimeSeries.
-func NewClientWithTimeSeries(lg cmp.Logger, mu string, authorizer influx.Authorizer, tls, insecure bool, series ...cmp.TimeSeries) (*Client, error) {
+func NewClientWithTimeSeries(lg cloudhub.Logger, mu string, authorizer influx.Authorizer, tls, insecure bool, series ...cloudhub.TimeSeries) (*Client, error) {
 	metaURL, err := parseMetaURL(mu, tls)
 	if err != nil {
 		return nil, err
@@ -84,7 +84,7 @@ func NewClientWithTimeSeries(lg cmp.Logger, mu string, authorizer influx.Authori
 // varieties. TLS is used when the URL contains "https" or when the TLS
 // parameter is set.  authorizer will add the correct `Authorization` headers
 // on the out-bound request.
-func NewClientWithURL(mu string, authorizer influx.Authorizer, tls bool, insecure bool, lg cmp.Logger) (*Client, error) {
+func NewClientWithURL(mu string, authorizer influx.Authorizer, tls bool, insecure bool, lg cloudhub.Logger) (*Client, error) {
 	metaURL, err := parseMetaURL(mu, tls)
 	if err != nil {
 		return nil, err
@@ -106,7 +106,7 @@ func NewClientWithURL(mu string, authorizer influx.Authorizer, tls bool, insecur
 }
 
 // Connect prepares a Client to process queries. It must be called prior to calling Query
-func (c *Client) Connect(ctx context.Context, src *cmp.Source) error {
+func (c *Client) Connect(ctx context.Context, src *cloudhub.Source) error {
 	c.opened = true
 	// return early if we already have dataNodes
 	if c.dataNodes != nil {
@@ -122,7 +122,7 @@ func (c *Client) Connect(ctx context.Context, src *cmp.Source) error {
 		cl := &influx.Client{
 			Logger: c.Logger,
 		}
-		dataSrc := &cmp.Source{}
+		dataSrc := &cloudhub.Source{}
 		*dataSrc = *src
 		dataSrc.URL = dn.HTTPAddr
 		if err := cl.Connect(ctx, dataSrc); err != nil {
@@ -136,37 +136,37 @@ func (c *Client) Connect(ctx context.Context, src *cmp.Source) error {
 
 // Query retrieves timeseries information pertaining to a specified query. It
 // can be cancelled by using a provided context.
-func (c *Client) Query(ctx context.Context, q cmp.Query) (cmp.Response, error) {
+func (c *Client) Query(ctx context.Context, q cloudhub.Query) (cloudhub.Response, error) {
 	if !c.opened {
-		return nil, cmp.ErrUninitialized
+		return nil, cloudhub.ErrUninitialized
 	}
 	return c.nextDataNode().Query(ctx, q)
 }
 
 // Write records points into a time series
-func (c *Client) Write(ctx context.Context, points []cmp.Point) error {
+func (c *Client) Write(ctx context.Context, points []cloudhub.Point) error {
 	if !c.opened {
-		return cmp.ErrUninitialized
+		return cloudhub.ErrUninitialized
 	}
 	return c.nextDataNode().Write(ctx, points)
 }
 
 // Users is the interface to the users within Influx Enterprise
-func (c *Client) Users(context.Context) cmp.UsersStore {
+func (c *Client) Users(context.Context) cloudhub.UsersStore {
 	return c.UsersStore
 }
 
 // Roles provide a grouping of permissions given to a grouping of users
-func (c *Client) Roles(ctx context.Context) (cmp.RolesStore, error) {
+func (c *Client) Roles(ctx context.Context) (cloudhub.RolesStore, error) {
 	return c.RolesStore, nil
 }
 
 // Permissions returns all Influx Enterprise permission strings
-func (c *Client) Permissions(context.Context) cmp.Permissions {
-	all := cmp.Allowances{
+func (c *Client) Permissions(context.Context) cloudhub.Permissions {
+	all := cloudhub.Allowances{
 		"NoPermissions",
 		"ViewAdmin",
-		"ViewCMP",
+		"ViewCloudHub",
 		"CreateDatabase",
 		"CreateUserAndRole",
 		"AddRemoveNode",
@@ -185,22 +185,22 @@ func (c *Client) Permissions(context.Context) cmp.Permissions {
 		"KapacitorConfigAPI",
 	}
 
-	return cmp.Permissions{
+	return cloudhub.Permissions{
 		{
-			Scope:   cmp.AllScope,
+			Scope:   cloudhub.AllScope,
 			Allowed: all,
 		},
 		{
-			Scope:   cmp.DBScope,
+			Scope:   cloudhub.DBScope,
 			Allowed: all,
 		},
 	}
 }
 
 // nextDataNode retrieves the next available data node
-func (c *Client) nextDataNode() cmp.TimeSeries {
+func (c *Client) nextDataNode() cloudhub.TimeSeries {
 	c.dataNodes = c.dataNodes.Next()
-	return c.dataNodes.Value.(cmp.TimeSeries)
+	return c.dataNodes.Value.(cloudhub.TimeSeries)
 }
 
 // parseMetaURL constructs a url from either a host:port combination or a

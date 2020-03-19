@@ -3,24 +3,24 @@ package multistore
 import (
 	"context"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // Layouts is a LayoutsStore that contains multiple LayoutsStores
 // The All method will return the set of all Layouts.
 // Each method will be tried against the Stores slice serially.
 type Layouts struct {
-	Stores []cmp.LayoutsStore
+	Stores []cloudhub.LayoutsStore
 }
 
 // All returns the set of all layouts
-func (s *Layouts) All(ctx context.Context) ([]cmp.Layout, error) {
-	all := []cmp.Layout{}
-	layoutSet := map[string]cmp.Layout{}
+func (s *Layouts) All(ctx context.Context) ([]cloudhub.Layout, error) {
+	all := []cloudhub.Layout{}
+	layoutSet := map[string]cloudhub.Layout{}
 	ok := false
 	var err error
 	for _, store := range s.Stores {
-		var layouts []cmp.Layout
+		var layouts []cloudhub.Layout
 		layouts, err = store.All(ctx)
 		if err != nil {
 			// Try to load as many layouts as possible
@@ -43,21 +43,21 @@ func (s *Layouts) All(ctx context.Context) ([]cmp.Layout, error) {
 }
 
 // Add creates a new dashboard in the LayoutsStore.  Tries each store sequentially until success.
-func (s *Layouts) Add(ctx context.Context, layout cmp.Layout) (cmp.Layout, error) {
+func (s *Layouts) Add(ctx context.Context, layout cloudhub.Layout) (cloudhub.Layout, error) {
 	var err error
 	for _, store := range s.Stores {
-		var l cmp.Layout
+		var l cloudhub.Layout
 		l, err = store.Add(ctx, layout)
 		if err == nil {
 			return l, nil
 		}
 	}
-	return cmp.Layout{}, err
+	return cloudhub.Layout{}, err
 }
 
 // Delete the dashboard from the store.  Searches through all stores to find Layout and
 // then deletes from that store.
-func (s *Layouts) Delete(ctx context.Context, layout cmp.Layout) error {
+func (s *Layouts) Delete(ctx context.Context, layout cloudhub.Layout) error {
 	var err error
 	for _, store := range s.Stores {
 		err = store.Delete(ctx, layout)
@@ -69,20 +69,20 @@ func (s *Layouts) Delete(ctx context.Context, layout cmp.Layout) error {
 }
 
 // Get retrieves Layout if `ID` exists.  Searches through each store sequentially until success.
-func (s *Layouts) Get(ctx context.Context, ID string) (cmp.Layout, error) {
+func (s *Layouts) Get(ctx context.Context, ID string) (cloudhub.Layout, error) {
 	var err error
 	for _, store := range s.Stores {
-		var l cmp.Layout
+		var l cloudhub.Layout
 		l, err = store.Get(ctx, ID)
 		if err == nil {
 			return l, nil
 		}
 	}
-	return cmp.Layout{}, err
+	return cloudhub.Layout{}, err
 }
 
 // Update the dashboard in the store.  Searches through each store sequentially until success.
-func (s *Layouts) Update(ctx context.Context, layout cmp.Layout) error {
+func (s *Layouts) Update(ctx context.Context, layout cloudhub.Layout) error {
 	var err error
 	for _, store := range s.Stores {
 		err = store.Update(ctx, layout)

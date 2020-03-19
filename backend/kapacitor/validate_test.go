@@ -1,7 +1,7 @@
 package kapacitor
 
 import "testing"
-import cmp "github.com/snetsystems/cmp/backend"
+import cloudhub "github.com/snetsystems/cloudhub/backend"
 
 func TestValidateAlert(t *testing.T) {
 	tests := []struct {
@@ -30,7 +30,7 @@ func TestValidateAlert(t *testing.T) {
 func Test_validateTick(t *testing.T) {
 	tests := []struct {
 		name    string
-		script  cmp.TICKScript
+		script  cloudhub.TICKScript
 		wantErr bool
 	}{
 		{

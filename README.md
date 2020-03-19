@@ -1,16 +1,16 @@
-# SCMP (Snet Cloud Monitoring Portal) - 1.0.0
+# CloudHub - 1.0.0
 
 ## Intro
 
-**SCMP** is **another branch** of an open-source web application derived from Influxdata's **_Chronograf_** written in Go and React.js that provides the tools to visualize your monitoring data and easily create alerting and automation rules.
+**CloudHub** is **another branch** of an open-source web application derived from Influxdata's **_Chronograf_** written in Go and React.js that provides the tools to visualize your monitoring data and easily create alerting and automation rules.
 
-Therefore, SCMP will be enhanced by adding our direction, such as automation of configuration management and monitoring the systems or applications over several Clouds.
+Therefore, CloudHub will be enhanced by adding our direction, such as automation of configuration management and monitoring the systems or applications over several Clouds.
 
-SCMP has been started with _Chronograf_ version **1.7.11**.
+CloudHub has been started with _Chronograf_ version **1.7.11**.
 
 ### Using the basic common features
 
-As we follow on using guides like the way of _TICK_ Script or _Flux_ queries, for more informations of the basic common features between _Chronograf_ 1.7.11 and SCMP refer to the following link.<br>
+As we follow on using guides like the way of _TICK_ Script or _Flux_ queries, for more informations of the basic common features between _Chronograf_ 1.7.11 and CloudHub refer to the following link.<br>
 [Github for **_chronograf_**](https://github.com/influxdata/chronograf/blob/master/README.md)<br>
 [Documents for **_TICK Stack_**](https://docs.influxdata.com/)
 
@@ -33,10 +33,10 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
 - Optionable Addon features
   - SWAN Router & SDPlex(Oncue) Features.
     <p align="center">
-      <img src="https://github.com/snetsystems/cmp/blob/master/docs/images/infrastructure.png"/>
-      <img src="https://github.com/snetsystems/cmp/blob/master/docs/images/applications.png"/>
-      <img src="https://github.com/snetsystems/cmp/blob/master/docs/images/agent_configure.png"/>
-      <img src="https://github.com/snetsystems/cmp/blob/master/docs/images/swan.png"/>
+      <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/infrastructure.png"/>
+      <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/applications.png"/>
+      <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/agent_configure.png"/>
+      <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/swan.png"/>
     </p>
 
 ## Setting in VSCode
@@ -96,7 +96,7 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
 
 ### Preparing dependencies
 
-- SCMP works with go 1.11+, node LTS, and yarn 1.7+.
+- CloudHub works with go 1.11+, node LTS, and yarn 1.7+.
 - In the case of Windows, it cannot be invoked "make" command,<br>So you need to download and install [GNUMake](http://gnuwin32.sourceforge.net/packages/make.htm) for windows.
   - [Direct download](http://gnuwin32.sourceforge.net/downlinks/make.php)
 
@@ -107,28 +107,28 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
 ```
 # If you're on Windows, run "Git Bash" and type the followings.
 
-$ go get github.com/snetsystems/cmp
-$ cd $GOPATH/src/github.com/snetsystems/cmp
+$ go get github.com/snetsystems/cloudhub
+$ cd $GOPATH/src/github.com/snetsystems/cloudhub
 $ make
 ```
 
 If well done, you can see the binary.
 
 ```
-$ cd backend/cmd/cmp
+$ cd backend/cmd/cloudhub
 $ ls -l
 total 28072
 ...
--rwxr-xr-x 1 Snetsystems 197121 28610048 Jul 15 09:09 scmp
+-rwxr-xr-x 1 Snetsystems 197121 28610048 Jul 15 09:09 cloudhub
 ```
 
-Once run scmp, 8888 port will be listened.
+Once run cloudhub, 8888 port will be listened.
 
 ```
-$ ./scmp
+$ ./cloudhub
 ```
 
-You can see the SCMP UI via browser: http://localhost:8888
+You can see the CloudHub UI via browser: http://localhost:8888
 
 ## How to debug via VSCode for Development.
 
@@ -140,7 +140,7 @@ $ cat snet.code-workspace
 {
   "folders": [
     {
-      "path": "cmp"
+      "path": "cloudhub"
     }
   ],
   "settings": {
@@ -174,8 +174,8 @@ For continuous debugging, you can use **"Launch Chrome"** after _**yarn start**_
 > >    "args": [
 > >      "-l=debug",
 > >      "-d"
-> >      "-c=./cmp-canned/",
-> >      "--protoboards-path=./cmp-protoboards/",
+> >      "-c=./cloudhub-canned/",
+> >      "--protoboards-path=./cloudhub-protoboards/",
 > >      "--auth-duration=0",
 > >      "-t=74c1e9e2450886060b5bf736b935cd0bf960837f",
 > >      "--github-client-id=c170bbdba5cb2ea8c3e6",
@@ -187,7 +187,7 @@ For continuous debugging, you can use **"Launch Chrome"** after _**yarn start**_
 If you run a not login mode, you can use **"Launch Chrome via Proxy"** after _**yarn start**_
 
 ```
-$ cd $CMP_PATH/frontend
+$ cd $CloudHub_PATH/frontend
 $ yarn start
 yarn run v1.15.2
 $ node parcel.jsx

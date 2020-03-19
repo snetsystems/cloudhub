@@ -37,17 +37,17 @@ export const me = {
 }
 
 export const sourceLinks: SourceLinks = {
-  services: '/cmp/v1/sources/16/services',
-  self: '/cmp/v1/sources/16',
-  kapacitors: '/cmp/v1/sources/16/kapacitors',
-  proxy: '/cmp/v1/sources/16/proxy',
-  queries: '/cmp/v1/sources/16/queries',
-  write: '/cmp/v1/sources/16/write',
-  permissions: '/cmp/v1/sources/16/permissions',
-  users: '/cmp/v1/sources/16/users',
-  databases: '/cmp/v1/sources/16/dbs',
-  annotations: '/cmp/v1/sources/16/annotations',
-  health: '/cmp/v1/sources/16/health',
+  services: '/cloudhub/v1/sources/16/services',
+  self: '/cloudhub/v1/sources/16',
+  kapacitors: '/cloudhub/v1/sources/16/kapacitors',
+  proxy: '/cloudhub/v1/sources/16/proxy',
+  queries: '/cloudhub/v1/sources/16/queries',
+  write: '/cloudhub/v1/sources/16/write',
+  permissions: '/cloudhub/v1/sources/16/permissions',
+  users: '/cloudhub/v1/sources/16/users',
+  databases: '/cloudhub/v1/sources/16/dbs',
+  annotations: '/cloudhub/v1/sources/16/annotations',
+  health: '/cloudhub/v1/sources/16/health',
 }
 
 export const source: Source = {
@@ -123,9 +123,9 @@ export const service = {
   active: false,
   insecureSkipVerify: false,
   links: {
-    source: '/cmp/v1/sources/1',
-    proxy: '/cmp/v1/sources/1/services/2/proxy',
-    self: '/cmp/v1/sources/1/services/2',
+    source: '/cloudhub/v1/sources/1',
+    proxy: '/cloudhub/v1/sources/1/services/2/proxy',
+    self: '/cloudhub/v1/sources/1/services/2',
   },
   metadata: {},
 }
@@ -134,9 +134,9 @@ export const kapacitorRules = [
   {
     id: '1',
     tickscript:
-      "var db = 'telegraf'\n\nvar rp = 'autogen'\n\nvar measurement = 'cpu'\n\nvar groupBy = ['cpu']\n\nvar whereFilter = lambda: (\"cpu\" != 'cpu-total' OR \"cpu\" != 'cpu1')\n\nvar period = 1h\n\nvar name = 'asdfasdfasdfasdfbob'\n\nvar idVar = name + ':{{.Group}}'\n\nvar message = ''\n\nvar idTag = 'alertID'\n\nvar levelTag = 'level'\n\nvar messageField = 'message'\n\nvar durationField = 'duration'\n\nvar outputDB = 'cmp'\n\nvar outputRP = 'autogen'\n\nvar outputMeasurement = 'alerts'\n\nvar triggerType = 'deadman'\n\nvar threshold = 0.0\n\nvar data = stream\n    |from()\n        .database(db)\n        .retentionPolicy(rp)\n        .measurement(measurement)\n        .groupBy(groupBy)\n        .where(whereFilter)\n\nvar trigger = data\n    |deadman(threshold, period)\n        .stateChangesOnly()\n        .message(message)\n        .id(idVar)\n        .idTag(idTag)\n        .levelTag(levelTag)\n        .messageField(messageField)\n        .durationField(durationField)\n        .stateChangesOnly()\n        .pushover()\n        .pushover()\n        .sensu()\n        .source('Kapacitorsdfasdf')\n        .handlers()\n\ntrigger\n    |eval(lambda: \"emitted\")\n        .as('value')\n        .keep('value', messageField, durationField)\n    |eval(lambda: float(\"value\"))\n        .as('value')\n        .keep()\n    |influxDBOut()\n        .create()\n        .database(outputDB)\n        .retentionPolicy(outputRP)\n        .measurement(outputMeasurement)\n        .tag('alertName', name)\n        .tag('triggerType', triggerType)\n\ntrigger\n    |httpOut('output')\n",
+      "var db = 'telegraf'\n\nvar rp = 'autogen'\n\nvar measurement = 'cpu'\n\nvar groupBy = ['cpu']\n\nvar whereFilter = lambda: (\"cpu\" != 'cpu-total' OR \"cpu\" != 'cpu1')\n\nvar period = 1h\n\nvar name = 'asdfasdfasdfasdfbob'\n\nvar idVar = name + ':{{.Group}}'\n\nvar message = ''\n\nvar idTag = 'alertID'\n\nvar levelTag = 'level'\n\nvar messageField = 'message'\n\nvar durationField = 'duration'\n\nvar outputDB = 'cloudhub'\n\nvar outputRP = 'autogen'\n\nvar outputMeasurement = 'alerts'\n\nvar triggerType = 'deadman'\n\nvar threshold = 0.0\n\nvar data = stream\n    |from()\n        .database(db)\n        .retentionPolicy(rp)\n        .measurement(measurement)\n        .groupBy(groupBy)\n        .where(whereFilter)\n\nvar trigger = data\n    |deadman(threshold, period)\n        .stateChangesOnly()\n        .message(message)\n        .id(idVar)\n        .idTag(idTag)\n        .levelTag(levelTag)\n        .messageField(messageField)\n        .durationField(durationField)\n        .stateChangesOnly()\n        .pushover()\n        .pushover()\n        .sensu()\n        .source('Kapacitorsdfasdf')\n        .handlers()\n\ntrigger\n    |eval(lambda: \"emitted\")\n        .as('value')\n        .keep('value', messageField, durationField)\n    |eval(lambda: float(\"value\"))\n        .as('value')\n        .keep()\n    |influxDBOut()\n        .create()\n        .database(outputDB)\n        .retentionPolicy(outputRP)\n        .measurement(outputMeasurement)\n        .tag('alertName', name)\n        .tag('triggerType', triggerType)\n\ntrigger\n    |httpOut('output')\n",
     query: {
-      id: 'cmp-v1-1bb60c5d-9c46-4601-8fdd-930ac5d2ae3d',
+      id: 'cloudhub-v1-1bb60c5d-9c46-4601-8fdd-930ac5d2ae3d',
       database: 'telegraf',
       measurement: 'cpu',
       retentionPolicy: 'autogen',
@@ -219,19 +219,19 @@ export const kapacitorRules = [
     'last-enabled': '2018-03-13T17:17:23.991640555-07:00',
     links: {
       self:
-        '/cmp/v1/sources/1/kapacitors/1/rules/cmp-v1-1bb60c5d-9c46-4601-8fdd-930ac5d2ae3d',
+        '/cloudhub/v1/sources/1/kapacitors/1/rules/cloudhub-v1-1bb60c5d-9c46-4601-8fdd-930ac5d2ae3d',
       kapacitor:
-        '/cmp/v1/sources/1/kapacitors/1/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcmp-v1-1bb60c5d-9c46-4601-8fdd-930ac5d2ae3d',
+        '/cloudhub/v1/sources/1/kapacitors/1/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcloudhub-v1-1bb60c5d-9c46-4601-8fdd-930ac5d2ae3d',
       output:
-        '/cmp/v1/sources/1/kapacitors/1/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcmp-v1-1bb60c5d-9c46-4601-8fdd-930ac5d2ae3d%2Foutput',
+        '/cloudhub/v1/sources/1/kapacitors/1/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcloudhub-v1-1bb60c5d-9c46-4601-8fdd-930ac5d2ae3d%2Foutput',
     },
   },
   {
-    id: 'cmp-v1-75b638b0-1530-4163-adab-c9631386e0a2',
+    id: 'cloudhub-v1-75b638b0-1530-4163-adab-c9631386e0a2',
     tickscript:
-      "var db = 'telegraf'\n\nvar rp = 'autogen'\n\nvar measurement = 'disk'\n\nvar groupBy = []\n\nvar whereFilter = lambda: TRUE\n\nvar name = 'Untitled bob'\n\nvar idVar = name + ':{{.Group}}'\n\nvar message = ''\n\nvar idTag = 'alertID'\n\nvar levelTag = 'level'\n\nvar messageField = 'message'\n\nvar durationField = 'duration'\n\nvar outputDB = 'cmp'\n\nvar outputRP = 'autogen'\n\nvar outputMeasurement = 'alerts'\n\nvar triggerType = 'threshold'\n\nvar crit = 0\n\nvar data = stream\n    |from()\n        .database(db)\n        .retentionPolicy(rp)\n        .measurement(measurement)\n        .groupBy(groupBy)\n        .where(whereFilter)\n    |eval(lambda: \"inodes_free\")\n        .as('value')\n\nvar trigger = data\n    |alert()\n        .crit(lambda: \"value\" == crit)\n        .stateChangesOnly()\n        .message(message)\n        .id(idVar)\n        .idTag(idTag)\n        .levelTag(levelTag)\n        .messageField(messageField)\n        .durationField(durationField)\n        .stateChangesOnly()\n        .email()\n        .pagerDuty()\n        .alerta()\n        .environment('bob')\n        .origin('kapacitoadfr')\n        .services()\n\ntrigger\n    |eval(lambda: float(\"value\"))\n        .as('value')\n        .keep()\n    |influxDBOut()\n        .create()\n        .database(outputDB)\n        .retentionPolicy(outputRP)\n        .measurement(outputMeasurement)\n        .tag('alertName', name)\n        .tag('triggerType', triggerType)\n\ntrigger\n    |httpOut('output')\n",
+      "var db = 'telegraf'\n\nvar rp = 'autogen'\n\nvar measurement = 'disk'\n\nvar groupBy = []\n\nvar whereFilter = lambda: TRUE\n\nvar name = 'Untitled bob'\n\nvar idVar = name + ':{{.Group}}'\n\nvar message = ''\n\nvar idTag = 'alertID'\n\nvar levelTag = 'level'\n\nvar messageField = 'message'\n\nvar durationField = 'duration'\n\nvar outputDB = 'cloudhub'\n\nvar outputRP = 'autogen'\n\nvar outputMeasurement = 'alerts'\n\nvar triggerType = 'threshold'\n\nvar crit = 0\n\nvar data = stream\n    |from()\n        .database(db)\n        .retentionPolicy(rp)\n        .measurement(measurement)\n        .groupBy(groupBy)\n        .where(whereFilter)\n    |eval(lambda: \"inodes_free\")\n        .as('value')\n\nvar trigger = data\n    |alert()\n        .crit(lambda: \"value\" == crit)\n        .stateChangesOnly()\n        .message(message)\n        .id(idVar)\n        .idTag(idTag)\n        .levelTag(levelTag)\n        .messageField(messageField)\n        .durationField(durationField)\n        .stateChangesOnly()\n        .email()\n        .pagerDuty()\n        .alerta()\n        .environment('bob')\n        .origin('kapacitoadfr')\n        .services()\n\ntrigger\n    |eval(lambda: float(\"value\"))\n        .as('value')\n        .keep()\n    |influxDBOut()\n        .create()\n        .database(outputDB)\n        .retentionPolicy(outputRP)\n        .measurement(outputMeasurement)\n        .tag('alertName', name)\n        .tag('triggerType', triggerType)\n\ntrigger\n    |httpOut('output')\n",
     query: {
-      id: 'cmp-v1-75b638b0-1530-4163-adab-c9631386e0a2',
+      id: 'cloudhub-v1-75b638b0-1530-4163-adab-c9631386e0a2',
       database: 'telegraf',
       measurement: 'disk',
       retentionPolicy: 'autogen',
@@ -316,19 +316,19 @@ export const kapacitorRules = [
     'last-enabled': '2018-03-14T18:46:32.409262103-07:00',
     links: {
       self:
-        '/cmp/v1/sources/1/kapacitors/1/rules/cmp-v1-75b638b0-1530-4163-adab-c9631386e0a2',
+        '/cloudhub/v1/sources/1/kapacitors/1/rules/cloudhub-v1-75b638b0-1530-4163-adab-c9631386e0a2',
       kapacitor:
-        '/cmp/v1/sources/1/kapacitors/1/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcmp-v1-75b638b0-1530-4163-adab-c9631386e0a2',
+        '/cloudhub/v1/sources/1/kapacitors/1/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcloudhub-v1-75b638b0-1530-4163-adab-c9631386e0a2',
       output:
-        '/cmp/v1/sources/1/kapacitors/1/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcmp-v1-75b638b0-1530-4163-adab-c9631386e0a2%2Foutput',
+        '/cloudhub/v1/sources/1/kapacitors/1/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcloudhub-v1-75b638b0-1530-4163-adab-c9631386e0a2%2Foutput',
     },
   },
   {
-    id: 'cmp-v1-7734918d-b8b6-460d-a416-34767ba76faa',
+    id: 'cloudhub-v1-7734918d-b8b6-460d-a416-34767ba76faa',
     tickscript:
-      "var db = 'telegraf'\n\nvar rp = 'autogen'\n\nvar measurement = 'cpu'\n\nvar groupBy = []\n\nvar whereFilter = lambda: (\"host\" == 'Bobs-MacBook-Pro.local')\n\nvar period = 24h\n\nvar name = 'xena'\n\nvar idVar = name + ':{{.Group}}'\n\nvar message = ''\n\nvar idTag = 'alertID'\n\nvar levelTag = 'level'\n\nvar messageField = 'message'\n\nvar durationField = 'duration'\n\nvar outputDB = 'cmp'\n\nvar outputRP = 'autogen'\n\nvar outputMeasurement = 'alerts'\n\nvar triggerType = 'deadman'\n\nvar threshold = 0.0\n\nvar data = stream\n    |from()\n        .database(db)\n        .retentionPolicy(rp)\n        .measurement(measurement)\n        .groupBy(groupBy)\n        .where(whereFilter)\n\nvar trigger = data\n    |deadman(threshold, period)\n        .stateChangesOnly()\n        .message(message)\n        .id(idVar)\n        .idTag(idTag)\n        .levelTag(levelTag)\n        .messageField(messageField)\n        .durationField(durationField)\n        .hipChat()\n        .room('asdf')\n\ntrigger\n    |eval(lambda: \"emitted\")\n        .as('value')\n        .keep('value', messageField, durationField)\n    |eval(lambda: float(\"value\"))\n        .as('value')\n        .keep()\n    |influxDBOut()\n        .create()\n        .database(outputDB)\n        .retentionPolicy(outputRP)\n        .measurement(outputMeasurement)\n        .tag('alertName', name)\n        .tag('triggerType', triggerType)\n\ntrigger\n    |httpOut('output')\n",
+      "var db = 'telegraf'\n\nvar rp = 'autogen'\n\nvar measurement = 'cpu'\n\nvar groupBy = []\n\nvar whereFilter = lambda: (\"host\" == 'Bobs-MacBook-Pro.local')\n\nvar period = 24h\n\nvar name = 'xena'\n\nvar idVar = name + ':{{.Group}}'\n\nvar message = ''\n\nvar idTag = 'alertID'\n\nvar levelTag = 'level'\n\nvar messageField = 'message'\n\nvar durationField = 'duration'\n\nvar outputDB = 'cloudhub'\n\nvar outputRP = 'autogen'\n\nvar outputMeasurement = 'alerts'\n\nvar triggerType = 'deadman'\n\nvar threshold = 0.0\n\nvar data = stream\n    |from()\n        .database(db)\n        .retentionPolicy(rp)\n        .measurement(measurement)\n        .groupBy(groupBy)\n        .where(whereFilter)\n\nvar trigger = data\n    |deadman(threshold, period)\n        .stateChangesOnly()\n        .message(message)\n        .id(idVar)\n        .idTag(idTag)\n        .levelTag(levelTag)\n        .messageField(messageField)\n        .durationField(durationField)\n        .hipChat()\n        .room('asdf')\n\ntrigger\n    |eval(lambda: \"emitted\")\n        .as('value')\n        .keep('value', messageField, durationField)\n    |eval(lambda: float(\"value\"))\n        .as('value')\n        .keep()\n    |influxDBOut()\n        .create()\n        .database(outputDB)\n        .retentionPolicy(outputRP)\n        .measurement(outputMeasurement)\n        .tag('alertName', name)\n        .tag('triggerType', triggerType)\n\ntrigger\n    |httpOut('output')\n",
     query: {
-      id: 'cmp-v1-7734918d-b8b6-460d-a416-34767ba76faa',
+      id: 'cloudhub-v1-7734918d-b8b6-460d-a416-34767ba76faa',
       database: 'telegraf',
       measurement: 'cpu',
       retentionPolicy: 'autogen',
@@ -394,18 +394,18 @@ export const kapacitorRules = [
     'last-enabled': '2018-03-13T17:17:15.964357573-07:00',
     links: {
       self:
-        '/cmp/v1/sources/1/kapacitors/1/rules/cmp-v1-7734918d-b8b6-460d-a416-34767ba76faa',
+        '/cloudhub/v1/sources/1/kapacitors/1/rules/cloudhub-v1-7734918d-b8b6-460d-a416-34767ba76faa',
       kapacitor:
-        '/cmp/v1/sources/1/kapacitors/1/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcmp-v1-7734918d-b8b6-460d-a416-34767ba76faa',
+        '/cloudhub/v1/sources/1/kapacitors/1/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcloudhub-v1-7734918d-b8b6-460d-a416-34767ba76faa',
       output:
-        '/cmp/v1/sources/1/kapacitors/1/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcmp-v1-7734918d-b8b6-460d-a416-34767ba76faa%2Foutput',
+        '/cloudhub/v1/sources/1/kapacitors/1/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcloudhub-v1-7734918d-b8b6-460d-a416-34767ba76faa%2Foutput',
     },
   },
   {
     // if rule has no `query` key, it will display as a tickscript task only
-    id: 'cmp-v1-7734918d-b8b6-460d-a416-34767ba76aac',
+    id: 'cloudhub-v1-7734918d-b8b6-460d-a416-34767ba76aac',
     tickscript:
-      "var db = 'telegraf'\n\nvar rp = 'autogen'\n\nvar measurement = 'cpu'\n\nvar groupBy = []\n\nvar whereFilter = lambda: (\"host\" == 'Bobs-MacBook-Pro.local')\n\nvar period = 24h\n\nvar name = 'xena'\n\nvar idVar = name + ':{{.Group}}'\n\nvar message = ''\n\nvar idTag = 'alertID'\n\nvar levelTag = 'level'\n\nvar messageField = 'message'\n\nvar durationField = 'duration'\n\nvar outputDB = 'cmp'\n\nvar outputRP = 'autogen'\n\nvar outputMeasurement = 'alerts'\n\nvar triggerType = 'deadman'\n\nvar threshold = 0.0\n\nvar data = stream\n    |from()\n        .database(db)\n        .retentionPolicy(rp)\n        .measurement(measurement)\n        .groupBy(groupBy)\n        .where(whereFilter)\n\nvar trigger = data\n    |deadman(threshold, period)\n        .stateChangesOnly()\n        .message(message)\n        .id(idVar)\n        .idTag(idTag)\n        .levelTag(levelTag)\n        .messageField(messageField)\n        .durationField(durationField)\n        .hipChat()\n        .room('asdf')\n\ntrigger\n    |eval(lambda: \"emitted\")\n        .as('value')\n        .keep('value', messageField, durationField)\n    |eval(lambda: float(\"value\"))\n        .as('value')\n        .keep()\n    |influxDBOut()\n        .create()\n        .database(outputDB)\n        .retentionPolicy(outputRP)\n        .measurement(outputMeasurement)\n        .tag('alertName', name)\n        .tag('triggerType', triggerType)\n\ntrigger\n    |httpOut('output')\n",
+      "var db = 'telegraf'\n\nvar rp = 'autogen'\n\nvar measurement = 'cpu'\n\nvar groupBy = []\n\nvar whereFilter = lambda: (\"host\" == 'Bobs-MacBook-Pro.local')\n\nvar period = 24h\n\nvar name = 'xena'\n\nvar idVar = name + ':{{.Group}}'\n\nvar message = ''\n\nvar idTag = 'alertID'\n\nvar levelTag = 'level'\n\nvar messageField = 'message'\n\nvar durationField = 'duration'\n\nvar outputDB = 'cloudhub'\n\nvar outputRP = 'autogen'\n\nvar outputMeasurement = 'alerts'\n\nvar triggerType = 'deadman'\n\nvar threshold = 0.0\n\nvar data = stream\n    |from()\n        .database(db)\n        .retentionPolicy(rp)\n        .measurement(measurement)\n        .groupBy(groupBy)\n        .where(whereFilter)\n\nvar trigger = data\n    |deadman(threshold, period)\n        .stateChangesOnly()\n        .message(message)\n        .id(idVar)\n        .idTag(idTag)\n        .levelTag(levelTag)\n        .messageField(messageField)\n        .durationField(durationField)\n        .hipChat()\n        .room('asdf')\n\ntrigger\n    |eval(lambda: \"emitted\")\n        .as('value')\n        .keep('value', messageField, durationField)\n    |eval(lambda: float(\"value\"))\n        .as('value')\n        .keep()\n    |influxDBOut()\n        .create()\n        .database(outputDB)\n        .retentionPolicy(outputRP)\n        .measurement(outputMeasurement)\n        .tag('alertName', name)\n        .tag('triggerType', triggerType)\n\ntrigger\n    |httpOut('output')\n",
     every: '',
     alertNodes: {
       typeOf: 'alert',
@@ -455,17 +455,17 @@ export const kapacitorRules = [
     'last-enabled': '2018-03-13T17:17:15.964357573-07:00',
     links: {
       self:
-        '/cmp/v1/sources/1/kapacitors/1/rules/cmp-v1-7734918d-b8b6-460d-a416-34767ba76aac',
+        '/cloudhub/v1/sources/1/kapacitors/1/rules/cloudhub-v1-7734918d-b8b6-460d-a416-34767ba76aac',
       kapacitor:
-        '/cmp/v1/sources/1/kapacitors/1/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcmp-v1-7734918d-b8b6-460d-a416-34767ba76aac',
+        '/cloudhub/v1/sources/1/kapacitors/1/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcloudhub-v1-7734918d-b8b6-460d-a416-34767ba76aac',
       output:
-        '/cmp/v1/sources/1/kapacitors/1/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcmp-v1-7734918d-b8b6-460d-a416-34767ba76aac%2Foutput',
+        '/cloudhub/v1/sources/1/kapacitors/1/proxy?path=%2Fkapacitor%2Fv1%2Ftasks%2Fcloudhub-v1-7734918d-b8b6-460d-a416-34767ba76aac%2Foutput',
     },
   },
 ]
 
 export const authLinks = {
-  allUsers: '/cmp/v1/users',
+  allUsers: '/cloudhub/v1/users',
   auth: [
     {
       callback: '/oauth/github/callback',
@@ -476,21 +476,21 @@ export const authLinks = {
     },
   ],
   config: {
-    auth: '/cmp/v1/config/auth',
-    self: '/cmp/v1/config',
+    auth: '/cloudhub/v1/config/auth',
+    self: '/cloudhub/v1/config',
   },
-  dashboards: '/cmp/v1/dashboards',
-  environment: '/cmp/v1/env',
+  dashboards: '/cloudhub/v1/dashboards',
+  environment: '/cloudhub/v1/env',
   external: {
     statusFeed: 'https://www.influxdata.com/feed/json',
   },
-  layouts: '/cmp/v1/layouts',
+  layouts: '/cloudhub/v1/layouts',
   logout: '/oauth/logout',
-  mappings: '/cmp/v1/mappings',
-  me: '/cmp/v1/me',
-  organizations: '/cmp/v1/organizations',
-  sources: '/cmp/v1/sources',
-  users: '/cmp/v1/organizations/default/users',
+  mappings: '/cloudhub/v1/mappings',
+  me: '/cloudhub/v1/me',
+  organizations: '/cloudhub/v1/organizations',
+  sources: '/cloudhub/v1/sources',
+  users: '/cloudhub/v1/organizations/default/users',
 }
 
 export const layout = {
@@ -609,7 +609,7 @@ export const layout = {
     },
   ],
   link: {
-    href: '/cmp/v1/layouts/6dfb4d49-20dc-4157-9018-2b1b1cb75c2d',
+    href: '/cloudhub/v1/layouts/6dfb4d49-20dc-4157-9018-2b1b1cb75c2d',
     rel: 'self',
   },
 }
@@ -711,7 +711,8 @@ export const cell: Cell = {
     digits: 1,
   },
   links: {
-    self: '/cmp/v1/dashboards/10/cells/8b3b7897-49b1-422c-9443-e9b778bcbf12',
+    self:
+      '/cloudhub/v1/dashboards/10/cells/8b3b7897-49b1-422c-9443-e9b778bcbf12',
   },
   legend: {},
   inView: true,

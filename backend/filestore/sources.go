@@ -8,13 +8,13 @@ import (
 	"path"
 	"strconv"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // SrcExt is the the file extension searched for in the directory for source files
 const SrcExt = ".src"
 
-var _ cmp.SourcesStore = &Sources{}
+var _ cloudhub.SourcesStore = &Sources{}
 
 // Sources are JSON sources stored in the filesystem
 type Sources struct {
@@ -23,12 +23,12 @@ type Sources struct {
 	Create  func(string, interface{}) error             // Create will write source to file.
 	ReadDir func(dirname string) ([]os.FileInfo, error) // ReadDir reads the directory named by dirname and returns a list of directory entries sorted by filename.
 	Remove  func(name string) error                     // Remove file
-	IDs     cmp.ID                                      // IDs generate unique ids for new sources
-	Logger  cmp.Logger
+	IDs     cloudhub.ID                                      // IDs generate unique ids for new sources
+	Logger  cloudhub.Logger
 }
 
 // NewSources constructs a source store wrapping a file system directory
-func NewSources(dir string, ids cmp.ID, logger cmp.Logger) cmp.SourcesStore {
+func NewSources(dir string, ids cloudhub.ID, logger cloudhub.Logger) cloudhub.SourcesStore {
 	return &Sources{
 		Dir:     dir,
 		Load:    load,
@@ -40,24 +40,24 @@ func NewSources(dir string, ids cmp.ID, logger cmp.Logger) cmp.SourcesStore {
 	}
 }
 
-func sourceFile(dir string, source cmp.Source) string {
+func sourceFile(dir string, source cloudhub.Source) string {
 	base := fmt.Sprintf("%s%s", source.Name, SrcExt)
 	return path.Join(dir, base)
 }
 
 // All returns all sources from the directory
-func (d *Sources) All(ctx context.Context) ([]cmp.Source, error) {
+func (d *Sources) All(ctx context.Context) ([]cloudhub.Source, error) {
 	files, err := d.ReadDir(d.Dir)
 	if err != nil {
 		return nil, err
 	}
 
-	sources := []cmp.Source{}
+	sources := []cloudhub.Source{}
 	for _, file := range files {
 		if path.Ext(file.Name()) != SrcExt {
 			continue
 		}
-		var source cmp.Source
+		var source cloudhub.Source
 		if err := d.Load(path.Join(d.Dir, file.Name()), &source); err != nil {
 			var fmtErr = fmt.Errorf("Error loading source configuration from %v:\n%v", path.Join(d.Dir, file.Name()), err)
 			d.Logger.Error(fmtErr)
@@ -70,13 +70,13 @@ func (d *Sources) All(ctx context.Context) ([]cmp.Source, error) {
 }
 
 // Add creates a new source within the directory
-func (d *Sources) Add(ctx context.Context, source cmp.Source) (cmp.Source, error) {
+func (d *Sources) Add(ctx context.Context, source cloudhub.Source) (cloudhub.Source, error) {
 	genID, err := d.IDs.Generate()
 	if err != nil {
 		d.Logger.
 			WithField("component", "source").
 			Error("Unable to generate ID")
-		return cmp.Source{}, err
+		return cloudhub.Source{}, err
 	}
 
 	id, err := strconv.Atoi(genID)
@@ -84,14 +84,14 @@ func (d *Sources) Add(ctx context.Context, source cmp.Source) (cmp.Source, error
 		d.Logger.
 			WithField("component", "source").
 			Error("Unable to convert ID")
-		return cmp.Source{}, err
+		return cloudhub.Source{}, err
 	}
 
 	source.ID = id
 
 	file := sourceFile(d.Dir, source)
 	if err = d.Create(file, source); err != nil {
-		if err == cmp.ErrSourceInvalid {
+		if err == cloudhub.ErrSourceInvalid {
 			d.Logger.
 				WithField("component", "source").
 				WithField("name", file).
@@ -102,13 +102,13 @@ func (d *Sources) Add(ctx context.Context, source cmp.Source) (cmp.Source, error
 				WithField("name", file).
 				Error("Unable to write source:", err)
 		}
-		return cmp.Source{}, err
+		return cloudhub.Source{}, err
 	}
 	return source, nil
 }
 
 // Delete removes a source file from the directory
-func (d *Sources) Delete(ctx context.Context, source cmp.Source) error {
+func (d *Sources) Delete(ctx context.Context, source cloudhub.Source) error {
 	_, file, err := d.idToFile(source.ID)
 	if err != nil {
 		return err
@@ -125,27 +125,27 @@ func (d *Sources) Delete(ctx context.Context, source cmp.Source) error {
 }
 
 // Get returns a source file from the source directory
-func (d *Sources) Get(ctx context.Context, id int) (cmp.Source, error) {
+func (d *Sources) Get(ctx context.Context, id int) (cloudhub.Source, error) {
 	board, file, err := d.idToFile(id)
 	if err != nil {
-		if err == cmp.ErrSourceNotFound {
+		if err == cloudhub.ErrSourceNotFound {
 			d.Logger.
 				WithField("component", "source").
 				WithField("name", file).
 				Error("Unable to read file")
-		} else if err == cmp.ErrSourceInvalid {
+		} else if err == cloudhub.ErrSourceInvalid {
 			d.Logger.
 				WithField("component", "source").
 				WithField("name", file).
 				Error("File is not a source")
 		}
-		return cmp.Source{}, err
+		return cloudhub.Source{}, err
 	}
 	return board, nil
 }
 
 // Update replaces a source from the file system directory
-func (d *Sources) Update(ctx context.Context, source cmp.Source) error {
+func (d *Sources) Update(ctx context.Context, source cloudhub.Source) error {
 	board, _, err := d.idToFile(source.ID)
 	if err != nil {
 		return err
@@ -159,13 +159,13 @@ func (d *Sources) Update(ctx context.Context, source cmp.Source) error {
 }
 
 // idToFile takes an id and finds the associated filename
-func (d *Sources) idToFile(id int) (cmp.Source, string, error) {
+func (d *Sources) idToFile(id int) (cloudhub.Source, string, error) {
 	// Because the entire source information is not known at this point, we need
 	// to try to find the name of the file through matching the ID in the source
 	// content with the ID passed.
 	files, err := d.ReadDir(d.Dir)
 	if err != nil {
-		return cmp.Source{}, "", err
+		return cloudhub.Source{}, "", err
 	}
 
 	for _, f := range files {
@@ -173,14 +173,14 @@ func (d *Sources) idToFile(id int) (cmp.Source, string, error) {
 			continue
 		}
 		file := path.Join(d.Dir, f.Name())
-		var source cmp.Source
+		var source cloudhub.Source
 		if err := d.Load(file, &source); err != nil {
-			return cmp.Source{}, "", err
+			return cloudhub.Source{}, "", err
 		}
 		if source.ID == id {
 			return source, file, nil
 		}
 	}
 
-	return cmp.Source{}, "", cmp.ErrSourceNotFound
+	return cloudhub.Source{}, "", cloudhub.ErrSourceNotFound
 }

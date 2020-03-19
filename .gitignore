@@ -6,14 +6,11 @@ frontend/dist
 frontend/.cache
 frontend/node_modules
 frontend/coverage
-# backend/cmd/cmp/cmp-canned
-# backend/cmd/cmp/cmp-protoboards
 
 # Binaries
-backend/cmd/cmp/cloudhub
-# backend/cmd/cmp/scmp
-backend/cmd/cmp/cshctl
-backend/cmd/cmp/*debug*
+backend/cmd/cloudhub/cloudhub
+backend/cmd/cloudhub/cloudhubctl
+backend/cmd/cloudhub/*debug*
 
 # Dotfiles
 .pull-request
@@ -27,9 +24,10 @@ backend/cmd/cmp/*debug*
 
 # Files
 go.sum
-cmp*.db*
+cloudhub*.db*
 *_gen.go
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 package-lock.json
+desktop.ini

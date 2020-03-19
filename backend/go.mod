@@ -1,4 +1,4 @@
-module github.com/snetsystems/cmp/backend
+module github.com/snetsystems/cloudhub/backend
 
 require (
 	github.com/NYTimes/gziphandler v0.0.0-20170104155701-6710af535839

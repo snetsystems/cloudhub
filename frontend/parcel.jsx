@@ -5,13 +5,15 @@ const express = require('express')
 
 const handleProxyError = err => {
   if (err.code === 'ECONNREFUSED') {
-    console.log('Cannot reach CMP server at localhost:8888. Is it running?')
+    console.log(
+      'Cannot reach CloudHub server at localhost:8888. Is it running?'
+    )
   } else {
     console.log(`Error: ${err.code}`)
   }
 }
 
-const proxyMiddleware = proxy('/cmp/v1', {
+const proxyMiddleware = proxy('/cloudhub/v1', {
   target: 'https://localhost',
   logLevel: 'silent',
   changeOrigin: true,

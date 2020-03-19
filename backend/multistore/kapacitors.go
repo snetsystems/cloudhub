@@ -3,27 +3,27 @@ package multistore
 import (
 	"context"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-// Ensure KapacitorStore implements cmp.ServersStore.
-var _ cmp.ServersStore = &KapacitorStore{}
+// Ensure KapacitorStore implements cloudhub.ServersStore.
+var _ cloudhub.ServersStore = &KapacitorStore{}
 
-// KapacitorStore implements the cmp.ServersStore interface, and
+// KapacitorStore implements the cloudhub.ServersStore interface, and
 // delegates to all contained KapacitorStores
 type KapacitorStore struct {
-	Stores []cmp.ServersStore
+	Stores []cloudhub.ServersStore
 }
 
 // All concatenates the Kapacitors of all contained Stores
-func (multi *KapacitorStore) All(ctx context.Context) ([]cmp.Server, error) {
-	all := []cmp.Server{}
+func (multi *KapacitorStore) All(ctx context.Context) ([]cloudhub.Server, error) {
+	all := []cloudhub.Server{}
 	kapSet := map[int]struct{}{}
 
 	ok := false
 	var err error
 	for _, store := range multi.Stores {
-		var kaps []cmp.Server
+		var kaps []cloudhub.Server
 		kaps, err = store.All(ctx)
 		if err != nil {
 			// If this Store is unable to return an array of kapacitors, skip to the
@@ -47,20 +47,20 @@ func (multi *KapacitorStore) All(ctx context.Context) ([]cmp.Server, error) {
 }
 
 // Add the kap to the first responsive Store
-func (multi *KapacitorStore) Add(ctx context.Context, kap cmp.Server) (cmp.Server, error) {
+func (multi *KapacitorStore) Add(ctx context.Context, kap cloudhub.Server) (cloudhub.Server, error) {
 	var err error
 	for _, store := range multi.Stores {
-		var k cmp.Server
+		var k cloudhub.Server
 		k, err = store.Add(ctx, kap)
 		if err == nil {
 			return k, nil
 		}
 	}
-	return cmp.Server{}, nil
+	return cloudhub.Server{}, nil
 }
 
 // Delete delegates to all Stores, returns success if one Store is successful
-func (multi *KapacitorStore) Delete(ctx context.Context, kap cmp.Server) error {
+func (multi *KapacitorStore) Delete(ctx context.Context, kap cloudhub.Server) error {
 	var err error
 	for _, store := range multi.Stores {
 		err = store.Delete(ctx, kap)
@@ -72,20 +72,20 @@ func (multi *KapacitorStore) Delete(ctx context.Context, kap cmp.Server) error {
 }
 
 // Get finds the Source by id among all contained Stores
-func (multi *KapacitorStore) Get(ctx context.Context, id int) (cmp.Server, error) {
+func (multi *KapacitorStore) Get(ctx context.Context, id int) (cloudhub.Server, error) {
 	var err error
 	for _, store := range multi.Stores {
-		var k cmp.Server
+		var k cloudhub.Server
 		k, err = store.Get(ctx, id)
 		if err == nil {
 			return k, nil
 		}
 	}
-	return cmp.Server{}, nil
+	return cloudhub.Server{}, nil
 }
 
 // Update the first responsive Store
-func (multi *KapacitorStore) Update(ctx context.Context, kap cmp.Server) error {
+func (multi *KapacitorStore) Update(ctx context.Context, kap cloudhub.Server) error {
 	var err error
 	for _, store := range multi.Stores {
 		err = store.Update(ctx, kap)

@@ -5,7 +5,7 @@ import Tags from 'src/shared/components/Tags'
 import SlideToggle from 'src/reusable_ui/components/slide_toggle/SlideToggle'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
 
-import {ALL_USERS_TABLE} from 'src/admin/constants/cmpTableSizing'
+import {ALL_USERS_TABLE} from 'src/admin/constants/cloudhubTableSizing'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {ComponentColor, ComponentSize} from 'src/reusable_ui/types'
 
@@ -65,7 +65,7 @@ export default class AllUsersTableRow extends Component<Props> {
     const {user, onRemoveFromOrganization, onAddToOrganization} = this.props
 
     return (
-      <tr className={'cmp-admin-table--user'}>
+      <tr className={'cloudhub-admin-table--user'}>
         {this.userNameTableCell}
         <td style={{width: colOrganizations}}>
           <Tags
@@ -120,7 +120,7 @@ export default class AllUsersTableRow extends Component<Props> {
     return (
       <td>
         {this.userIsMe ? (
-          <strong className="cmp-user--me">
+          <strong className="cloudhub-user--me">
             <span className="icon user" />
             {user.name}
           </strong>

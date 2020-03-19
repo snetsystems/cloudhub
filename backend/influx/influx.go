@@ -11,12 +11,12 @@ import (
 	"net/url"
 	"strings"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-var _ cmp.TimeSeries = &Client{}
-var _ cmp.TSDBStatus = &Client{}
-var _ cmp.Databases = &Client{}
+var _ cloudhub.TimeSeries = &Client{}
+var _ cloudhub.TSDBStatus = &Client{}
+var _ cloudhub.Databases = &Client{}
 
 // Shared transports for all clients to prevent leaking connections
 var (
@@ -31,7 +31,7 @@ type Client struct {
 	URL                *url.URL
 	Authorizer         Authorizer
 	InsecureSkipVerify bool
-	Logger             cmp.Logger
+	Logger             cloudhub.Logger
 }
 
 // Response is a partial JSON decoded InfluxQL response used
@@ -46,7 +46,7 @@ func (r Response) MarshalJSON() ([]byte, error) {
 	return r.Results, nil
 }
 
-func (c *Client) query(u *url.URL, q cmp.Query) (cmp.Response, error) {
+func (c *Client) query(u *url.URL, q cloudhub.Query) (cloudhub.Response, error) {
 	u.Path = "query"
 	req, err := http.NewRequest("POST", u.String(), nil)
 	if err != nil {
@@ -125,7 +125,7 @@ func (c *Client) query(u *url.URL, q cmp.Query) (cmp.Response, error) {
 }
 
 type result struct {
-	Response cmp.Response
+	Response cloudhub.Response
 	Err      error
 }
 
@@ -133,7 +133,7 @@ type result struct {
 // information specified by query. Queries must be "fully-qualified," and
 // include both the database and retention policy. In-flight requests can be
 // cancelled using the provided context.
-func (c *Client) Query(ctx context.Context, q cmp.Query) (cmp.Response, error) {
+func (c *Client) Query(ctx context.Context, q cloudhub.Query) (cloudhub.Response, error) {
 	resps := make(chan (result))
 	go func() {
 		resp, err := c.query(c.URL, q)
@@ -144,12 +144,12 @@ func (c *Client) Query(ctx context.Context, q cmp.Query) (cmp.Response, error) {
 	case resp := <-resps:
 		return resp.Response, resp.Err
 	case <-ctx.Done():
-		return nil, cmp.ErrUpstreamTimeout
+		return nil, cloudhub.ErrUpstreamTimeout
 	}
 }
 
 // Connect caches the URL and optional Bearer Authorization for the data source
-func (c *Client) Connect(ctx context.Context, src *cmp.Source) error {
+func (c *Client) Connect(ctx context.Context, src *cloudhub.Source) error {
 	u, err := url.Parse(src.URL)
 	if err != nil {
 		return err
@@ -165,12 +165,12 @@ func (c *Client) Connect(ctx context.Context, src *cmp.Source) error {
 }
 
 // Users transforms InfluxDB into a user store
-func (c *Client) Users(ctx context.Context) cmp.UsersStore {
+func (c *Client) Users(ctx context.Context) cloudhub.UsersStore {
 	return c
 }
 
 // Roles aren't support in OSS
-func (c *Client) Roles(ctx context.Context) (cmp.RolesStore, error) {
+func (c *Client) Roles(ctx context.Context) (cloudhub.RolesStore, error) {
 	return nil, fmt.Errorf("Roles not support in open-source InfluxDB.  Roles are support in Influx Enterprise")
 }
 
@@ -203,7 +203,7 @@ func (c *Client) pingTimeout(ctx context.Context) (string, string, error) {
 	case resp := <-resps:
 		return resp.Version, resp.Type, resp.Err
 	case <-ctx.Done():
-		return "", "", cmp.ErrUpstreamTimeout
+		return "", "", cloudhub.ErrUpstreamTimeout
 	}
 }
 
@@ -246,20 +246,20 @@ func (c *Client) ping(u *url.URL) (string, string, error) {
 
 	version := resp.Header.Get("X-Influxdb-Build")
 	if version == "ENT" {
-		return version, cmp.InfluxEnterprise, nil
+		return version, cloudhub.InfluxEnterprise, nil
 	}
 	version = resp.Header.Get("X-Influxdb-Version")
 	if strings.Contains(version, "-c") {
-		return version, cmp.InfluxEnterprise, nil
+		return version, cloudhub.InfluxEnterprise, nil
 	} else if strings.Contains(version, "relay") {
-		return version, cmp.InfluxRelay, nil
+		return version, cloudhub.InfluxRelay, nil
 	}
 
-	return version, cmp.InfluxDB, nil
+	return version, cloudhub.InfluxDB, nil
 }
 
 // Write POSTs line protocol to a database and retention policy
-func (c *Client) Write(ctx context.Context, points []cmp.Point) error {
+func (c *Client) Write(ctx context.Context, points []cloudhub.Point) error {
 	for _, point := range points {
 		if err := c.writePoint(ctx, &point); err != nil {
 			return err
@@ -268,7 +268,7 @@ func (c *Client) Write(ctx context.Context, points []cmp.Point) error {
 	return nil
 }
 
-func (c *Client) writePoint(ctx context.Context, point *cmp.Point) error {
+func (c *Client) writePoint(ctx context.Context, point *cloudhub.Point) error {
 	lp, err := toLineProtocol(point)
 	if err != nil {
 		return err
@@ -287,7 +287,7 @@ func (c *Client) writePoint(ctx context.Context, point *cmp.Point) error {
 
 	// If the database was not found, try to recreate it:
 	if strings.Contains(err.Error(), "database not found") {
-		_, err = c.CreateDB(ctx, &cmp.Database{
+		_, err = c.CreateDB(ctx, &cloudhub.Database{
 			Name: point.Database,
 		})
 		if err != nil {
@@ -356,6 +356,6 @@ func (c *Client) write(ctx context.Context, u *url.URL, db, rp, lp string) error
 	case err := <-errChan:
 		return err
 	case <-ctx.Done():
-		return cmp.ErrUpstreamTimeout
+		return cloudhub.ErrUpstreamTimeout
 	}
 }

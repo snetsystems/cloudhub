@@ -6,13 +6,13 @@ import (
 	"testing"
 	"time"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/log"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/log"
 )
 
 func TestEnvironment(t *testing.T) {
 	type fields struct {
-		Environment cmp.Environment
+		Environment cloudhub.Environment
 	}
 	type wants struct {
 		statusCode  int
@@ -28,14 +28,14 @@ func TestEnvironment(t *testing.T) {
 		{
 			name: "Get environment",
 			fields: fields{
-				Environment: cmp.Environment{
+				Environment: cloudhub.Environment{
 					TelegrafSystemInterval: 1 * time.Minute,
 				},
 			},
 			wants: wants{
 				statusCode:  200,
 				contentType: "application/json",
-				body:        `{"links":{"self":"/cmp/v1/env"},"telegrafSystemInterval":"1m0s"}`,
+				body:        `{"links":{"self":"/cloudhub/v1/env"},"telegrafSystemInterval":"1m0s"}`,
 			},
 		},
 	}

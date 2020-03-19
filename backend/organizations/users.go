@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-// Ensure UsersStore implements cmp.UsersStore.
-var _ cmp.UsersStore = &UsersStore{}
+// Ensure UsersStore implements cloudhub.UsersStore.
+var _ cloudhub.UsersStore = &UsersStore{}
 
 // UsersStore facade on a UserStore that filters a users roles
 // by organization.
@@ -20,12 +20,12 @@ var _ cmp.UsersStore = &UsersStore{}
 // that was provided on the UsersStore.
 type UsersStore struct {
 	organization string
-	store        cmp.UsersStore
+	store        cloudhub.UsersStore
 }
 
 // NewUsersStore creates a new UsersStore from an existing
-// cmp.UserStore and an organization string
-func NewUsersStore(s cmp.UsersStore, org string) *UsersStore {
+// cloudhub.UserStore and an organization string
+func NewUsersStore(s cloudhub.UsersStore, org string) *UsersStore {
 	return &UsersStore{
 		store:        s,
 		organization: org,
@@ -33,7 +33,7 @@ func NewUsersStore(s cmp.UsersStore, org string) *UsersStore {
 }
 
 // validOrganizationRoles ensures that each User Role has both an associated Organization and a Name
-func validOrganizationRoles(orgID string, u *cmp.User) error {
+func validOrganizationRoles(orgID string, u *cloudhub.User) error {
 	if u == nil || u.Roles == nil {
 		return nil
 	}
@@ -54,7 +54,7 @@ func validOrganizationRoles(orgID string, u *cmp.User) error {
 // Get searches the UsersStore for using the query.
 // The roles returned on the user are filtered to only contain roles that are for the organization
 // specified on the organization store.
-func (s *UsersStore) Get(ctx context.Context, q cmp.UserQuery) (*cmp.User, error) {
+func (s *UsersStore) Get(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 	err := validOrganization(ctx)
 	if err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func (s *UsersStore) Get(ctx context.Context, q cmp.UserQuery) (*cmp.User, error
 	if len(roles) == 0 {
 		// This means that the user does not belong to the organization
 		// and therefore, is not found.
-		return nil, cmp.ErrUserNotFound
+		return nil, cloudhub.ErrUserNotFound
 	}
 
 	usr.Roles = roles
@@ -89,7 +89,7 @@ func (s *UsersStore) Get(ctx context.Context, q cmp.UserQuery) (*cmp.User, error
 // If a user is not found in the underlying, it calls the underlying UsersStore Add method.
 // If a user is found, it removes any existing roles a user has for an organization and appends
 // the roles specified on the provided user and calls the uderlying UsersStore Update method.
-func (s *UsersStore) Add(ctx context.Context, u *cmp.User) (*cmp.User, error) {
+func (s *UsersStore) Add(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
 	err := validOrganization(ctx)
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func (s *UsersStore) Add(ctx context.Context, u *cmp.User) (*cmp.User, error) {
 	}
 
 	// retrieve the user from the underlying store
-	usr, err := s.store.Get(ctx, cmp.UserQuery{
+	usr, err := s.store.Get(ctx, cloudhub.UserQuery{
 		Name:     &u.Name,
 		Provider: &u.Provider,
 		Scheme:   &u.Scheme,
@@ -111,7 +111,7 @@ func (s *UsersStore) Add(ctx context.Context, u *cmp.User) (*cmp.User, error) {
 	case nil:
 		// If there is no error continue to the rest of the code
 		break
-	case cmp.ErrUserNotFound:
+	case cloudhub.ErrUserNotFound:
 		// If user is not found in the backed store, attempt to add the user
 		return s.store.Add(ctx, u)
 	default:
@@ -135,7 +135,7 @@ func (s *UsersStore) Add(ctx context.Context, u *cmp.User) (*cmp.User, error) {
 	// if this value is greater than 1 the user cannot be "added".
 	numRolesInOrganization := len(usr.Roles) - len(roles)
 	if numRolesInOrganization > 0 {
-		return nil, cmp.ErrUserAlreadyExists
+		return nil, cloudhub.ErrUserAlreadyExists
 	}
 
 	// Set the users roles to be the union of the roles set on the provided user
@@ -165,14 +165,14 @@ func (s *UsersStore) Add(ctx context.Context, u *cmp.User) (*cmp.User, error) {
 
 // Delete a user from the UsersStore. This is done by stripping a user of
 // any roles it has in the organization speicified on the UsersStore.
-func (s *UsersStore) Delete(ctx context.Context, usr *cmp.User) error {
+func (s *UsersStore) Delete(ctx context.Context, usr *cloudhub.User) error {
 	err := validOrganization(ctx)
 	if err != nil {
 		return err
 	}
 
 	// retrieve the user from the underlying store
-	u, err := s.store.Get(ctx, cmp.UserQuery{ID: &usr.ID})
+	u, err := s.store.Get(ctx, cloudhub.UserQuery{ID: &usr.ID})
 	if err != nil {
 		return err
 	}
@@ -190,7 +190,7 @@ func (s *UsersStore) Delete(ctx context.Context, usr *cmp.User) error {
 }
 
 // Update a user in the UsersStore.
-func (s *UsersStore) Update(ctx context.Context, usr *cmp.User) error {
+func (s *UsersStore) Update(ctx context.Context, usr *cloudhub.User) error {
 	err := validOrganization(ctx)
 	if err != nil {
 		return err
@@ -202,7 +202,7 @@ func (s *UsersStore) Update(ctx context.Context, usr *cmp.User) error {
 	}
 
 	// retrieve the user from the underlying store
-	u, err := s.store.Get(ctx, cmp.UserQuery{ID: &usr.ID})
+	u, err := s.store.Get(ctx, cloudhub.UserQuery{ID: &usr.ID})
 	if err != nil {
 		return err
 	}
@@ -229,7 +229,7 @@ func (s *UsersStore) Update(ctx context.Context, usr *cmp.User) error {
 
 // All returns all users where roles have been filters to be exclusively for
 // the organization provided on the UsersStore.
-func (s *UsersStore) All(ctx context.Context) ([]cmp.User, error) {
+func (s *UsersStore) All(ctx context.Context) ([]cloudhub.User, error) {
 	err := validOrganization(ctx)
 	if err != nil {
 		return nil, err

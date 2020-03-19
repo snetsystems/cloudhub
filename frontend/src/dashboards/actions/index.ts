@@ -409,10 +409,10 @@ export const getDashboardsAsync = () => async (
   }
 }
 
-export const getCMPVersion = () => async (): Promise<string> => {
+export const getCloudHubVersion = () => async (): Promise<string> => {
   try {
     const results = await getMe()
-    const version = _.get(results, 'headers.x-cmp-version')
+    const version = _.get(results, 'headers.x-cloudhub-version')
     return version
   } catch (error) {
     console.error(error)

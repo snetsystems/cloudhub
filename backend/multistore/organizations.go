@@ -5,27 +5,27 @@ import (
 	"fmt"
 	"strings"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-// Ensure OrganizationsStore implements cmp.OrganizationsStore.
-var _ cmp.OrganizationsStore = &OrganizationsStore{}
+// Ensure OrganizationsStore implements cloudhub.OrganizationsStore.
+var _ cloudhub.OrganizationsStore = &OrganizationsStore{}
 
-// OrganizationsStore implements the cmp.OrganizationsStore interface, and
+// OrganizationsStore implements the cloudhub.OrganizationsStore interface, and
 // delegates to all contained OrganizationsStores
 type OrganizationsStore struct {
-	Stores []cmp.OrganizationsStore
+	Stores []cloudhub.OrganizationsStore
 }
 
 // All concatenates the Organizations of all contained Stores
-func (multi *OrganizationsStore) All(ctx context.Context) ([]cmp.Organization, error) {
-	all := []cmp.Organization{}
+func (multi *OrganizationsStore) All(ctx context.Context) ([]cloudhub.Organization, error) {
+	all := []cloudhub.Organization{}
 	orgSet := map[string]struct{}{}
 
 	ok := false
 	var err error
 	for _, store := range multi.Stores {
-		var orgs []cmp.Organization
+		var orgs []cloudhub.Organization
 		orgs, err = store.All(ctx)
 		if err != nil {
 			// If this Store is unable to return an array of orgs, skip to the
@@ -49,10 +49,10 @@ func (multi *OrganizationsStore) All(ctx context.Context) ([]cmp.Organization, e
 }
 
 // Add the org to the first responsive Store
-func (multi *OrganizationsStore) Add(ctx context.Context, org *cmp.Organization) (*cmp.Organization, error) {
+func (multi *OrganizationsStore) Add(ctx context.Context, org *cloudhub.Organization) (*cloudhub.Organization, error) {
 	errors := []string{}
 	for _, store := range multi.Stores {
-		var o *cmp.Organization
+		var o *cloudhub.Organization
 		o, err := store.Add(ctx, org)
 		if err == nil {
 			return o, nil
@@ -63,7 +63,7 @@ func (multi *OrganizationsStore) Add(ctx context.Context, org *cmp.Organization)
 }
 
 // Delete delegates to all Stores, returns success if one Store is successful
-func (multi *OrganizationsStore) Delete(ctx context.Context, org *cmp.Organization) error {
+func (multi *OrganizationsStore) Delete(ctx context.Context, org *cloudhub.Organization) error {
 	errors := []string{}
 	for _, store := range multi.Stores {
 		err := store.Delete(ctx, org)
@@ -76,20 +76,20 @@ func (multi *OrganizationsStore) Delete(ctx context.Context, org *cmp.Organizati
 }
 
 // Get finds the Organization by id among all contained Stores
-func (multi *OrganizationsStore) Get(ctx context.Context, query cmp.OrganizationQuery) (*cmp.Organization, error) {
+func (multi *OrganizationsStore) Get(ctx context.Context, query cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
 	var err error
 	for _, store := range multi.Stores {
-		var o *cmp.Organization
+		var o *cloudhub.Organization
 		o, err = store.Get(ctx, query)
 		if err == nil {
 			return o, nil
 		}
 	}
-	return nil, cmp.ErrOrganizationNotFound
+	return nil, cloudhub.ErrOrganizationNotFound
 }
 
 // Update the first responsive Store
-func (multi *OrganizationsStore) Update(ctx context.Context, org *cmp.Organization) error {
+func (multi *OrganizationsStore) Update(ctx context.Context, org *cloudhub.Organization) error {
 	errors := []string{}
 	for _, store := range multi.Stores {
 		err := store.Update(ctx, org)
@@ -115,7 +115,7 @@ func (multi *OrganizationsStore) CreateDefault(ctx context.Context) error {
 }
 
 // DefaultOrganization returns the first successful DefaultOrganization
-func (multi *OrganizationsStore) DefaultOrganization(ctx context.Context) (*cmp.Organization, error) {
+func (multi *OrganizationsStore) DefaultOrganization(ctx context.Context) (*cloudhub.Organization, error) {
 	errors := []string{}
 	for _, store := range multi.Stores {
 		org, err := store.DefaultOrganization(ctx)

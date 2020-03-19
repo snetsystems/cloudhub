@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // Ensure an ServerStore can store, retrieve, update, and delete servers.
@@ -18,8 +18,8 @@ func TestServerStore(t *testing.T) {
 
 	s := c.ServersStore
 
-	srcs := []cmp.Server{
-		cmp.Server{
+	srcs := []cloudhub.Server{
+		cloudhub.Server{
 			Name:               "Of Truth",
 			SrcID:              10,
 			Username:           "marty",
@@ -29,7 +29,7 @@ func TestServerStore(t *testing.T) {
 			Organization:       "133",
 			InsecureSkipVerify: true,
 		},
-		cmp.Server{
+		cloudhub.Server{
 			Name:               "HipToBeSquare",
 			SrcID:              12,
 			Username:           "calvinklein",
@@ -85,8 +85,8 @@ func TestServerStore(t *testing.T) {
 	}
 
 	// Confirm server has been deleted.
-	if _, err := s.Get(ctx, srcs[0].ID); err != cmp.ErrServerNotFound {
-		t.Fatalf("server delete error: got %v, expected %v", err, cmp.ErrServerNotFound)
+	if _, err := s.Get(ctx, srcs[0].ID); err != cloudhub.ErrServerNotFound {
+		t.Fatalf("server delete error: got %v, expected %v", err, cloudhub.ErrServerNotFound)
 	}
 
 	if bsrcs, err := s.All(ctx); err != nil {

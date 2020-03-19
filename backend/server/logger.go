@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // statusWriterFlusher captures the status header of an http.ResponseWriter
@@ -32,7 +32,7 @@ func (w *statusWriter) Flush() {
 }
 
 // Logger is middleware that logs the request
-func Logger(logger cmp.Logger, next http.Handler) http.Handler {
+func Logger(logger cloudhub.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		now := time.Now()
 		logger.WithField("component", "server").

@@ -6,12 +6,12 @@ import (
 	"strconv"
 	"strings"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 var (
 	// Database is the output database for alerts.
-	Database = "cmp"
+	Database = "cloudhub"
 	// RP will be autogen for alerts because it is default.
 	RP = "autogen"
 	// Measurement will be alerts so that the app knows where to get this data.
@@ -27,7 +27,7 @@ var (
 )
 
 // Vars builds the top level vars for a kapacitor alert script
-func Vars(rule cmp.AlertRule) (string, error) {
+func Vars(rule cloudhub.AlertRule) (string, error) {
 	common, err := commonVars(rule)
 	if err != nil {
 		return "", err
@@ -98,7 +98,7 @@ func Escape(str string) string {
 	return strings.Replace(str, "'", `\'`, -1)
 }
 
-func commonVars(rule cmp.AlertRule) (string, error) {
+func commonVars(rule cloudhub.AlertRule) (string, error) {
 	n := new(NotEmpty)
 	n.Valid("database", rule.Query.Database)
 	n.Valid("retention policy", rule.Query.RetentionPolicy)
@@ -165,7 +165,7 @@ func commonVars(rule cmp.AlertRule) (string, error) {
 
 // window is only used if deadman or threshold/relative with aggregate.  Will return empty
 // if no period.
-func window(rule cmp.AlertRule) (string, error) {
+func window(rule cloudhub.AlertRule) (string, error) {
 	if rule.Trigger == Deadman {
 		if rule.TriggerValues.Period == "" {
 			return "", fmt.Errorf("period cannot be an empty string in deadman alert")
@@ -188,7 +188,7 @@ func window(rule cmp.AlertRule) (string, error) {
 	return "", nil
 }
 
-func groupBy(q *cmp.QueryConfig) string {
+func groupBy(q *cloudhub.QueryConfig) string {
 	groups := []string{}
 	if q != nil {
 		for _, tag := range q.GroupBy.Tags {
@@ -198,14 +198,14 @@ func groupBy(q *cmp.QueryConfig) string {
 	return "[" + strings.Join(groups, ",") + "]"
 }
 
-func idVar(q *cmp.QueryConfig) string {
+func idVar(q *cloudhub.QueryConfig) string {
 	if len(q.GroupBy.Tags) > 0 {
 		return `name + '-{{.Group}}'`
 	}
 	return "name"
 }
 
-func field(q *cmp.QueryConfig) (string, error) {
+func field(q *cloudhub.QueryConfig) (string, error) {
 	if q == nil {
 		return "", fmt.Errorf("No fields set in query")
 	}
@@ -232,7 +232,7 @@ func field(q *cmp.QueryConfig) (string, error) {
 	return f, nil
 }
 
-func whereFilter(q *cmp.QueryConfig) string {
+func whereFilter(q *cloudhub.QueryConfig) string {
 	if q != nil {
 		operator := "=="
 		if !q.AreTagsAccepted {

@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	clog "github.com/snetsystems/cmp/backend/log"
+	clog "github.com/snetsystems/cloudhub/backend/log"
 )
 
 var testTime = time.Date(1985, time.October, 25, 18, 0, 0, 0, time.UTC)

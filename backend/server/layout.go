@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/bouk/httprouter"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 type link struct {
@@ -14,12 +14,12 @@ type link struct {
 }
 
 type layoutResponse struct {
-	cmp.Layout
+	cloudhub.Layout
 	Link link `json:"link"`
 }
 
-func newLayoutResponse(layout cmp.Layout) layoutResponse {
-	httpAPILayouts := "/cmp/v1/layouts"
+func newLayoutResponse(layout cloudhub.Layout) layoutResponse {
+	httpAPILayouts := "/cloudhub/v1/layouts"
 	href := fmt.Sprintf("%s/%s", httpAPILayouts, layout.ID)
 	rel := "self"
 
@@ -27,16 +27,16 @@ func newLayoutResponse(layout cmp.Layout) layoutResponse {
 		axes := []string{"x", "y", "y2"}
 
 		if cell.Axes == nil {
-			layout.Cells[idx].Axes = make(map[string]cmp.Axis, len(axes))
+			layout.Cells[idx].Axes = make(map[string]cloudhub.Axis, len(axes))
 		}
 
 		if cell.CellColors == nil {
-			layout.Cells[idx].CellColors = []cmp.CellColor{}
+			layout.Cells[idx].CellColors = []cloudhub.CellColor{}
 		}
 
 		for _, axis := range axes {
 			if _, found := cell.Axes[axis]; !found {
-				layout.Cells[idx].Axes[axis] = cmp.Axis{
+				layout.Cells[idx].Axes[axis] = cloudhub.Axis{
 					Bounds: []string{},
 				}
 			}
@@ -75,7 +75,7 @@ func (s *Service) Layouts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	filter := func(layout *cmp.Layout) bool {
+	filter := func(layout *cloudhub.Layout) bool {
 		// If the length of the filter is zero then all values are acceptable.
 		if len(filtered) == 0 {
 			return true

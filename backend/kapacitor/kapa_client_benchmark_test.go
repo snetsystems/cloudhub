@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	client "github.com/influxdata/kapacitor/client/v1"
-	"github.com/snetsystems/cmp/backend/kapacitor"
-	"github.com/snetsystems/cmp/backend/mocks"
+	"github.com/snetsystems/cloudhub/backend/kapacitor"
+	"github.com/snetsystems/cloudhub/backend/mocks"
 )
 
 func BenchmarkKapaClient100(b *testing.B)    { benchmark_PaginatingKapaClient(100, b) }

@@ -9,16 +9,16 @@ import (
 	"testing"
 
 	"github.com/bouk/httprouter"
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/log"
-	"github.com/snetsystems/cmp/backend/mocks"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/log"
+	"github.com/snetsystems/cloudhub/backend/mocks"
 )
 
 func TestService_Permissions(t *testing.T) {
 	type fields struct {
-		SourcesStore cmp.SourcesStore
+		SourcesStore cloudhub.SourcesStore
 		TimeSeries   TimeSeriesClient
-		Logger       cmp.Logger
+		Logger       cloudhub.Logger
 		UseAuth      bool
 	}
 	type args struct {
@@ -40,7 +40,7 @@ func TestService_Permissions(t *testing.T) {
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
 					"POST",
-					"http://server.local/cmp/v1/sources/1",
+					"http://server.local/cloudhub/v1/sources/1",
 					ioutil.NopCloser(
 						bytes.NewReader([]byte(`{"name": "marty", "password": "the_lake"}`)))),
 			},
@@ -48,8 +48,8 @@ func TestService_Permissions(t *testing.T) {
 				UseAuth: true,
 				Logger:  log.New(log.DebugLevel),
 				SourcesStore: &mocks.SourcesStore{
-					GetF: func(ctx context.Context, ID int) (cmp.Source, error) {
-						return cmp.Source{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{
 							ID:       1,
 							Name:     "muh source",
 							Username: "name",
@@ -59,14 +59,14 @@ func TestService_Permissions(t *testing.T) {
 					},
 				},
 				TimeSeries: &mocks.TimeSeries{
-					ConnectF: func(ctx context.Context, src *cmp.Source) error {
+					ConnectF: func(ctx context.Context, src *cloudhub.Source) error {
 						return nil
 					},
-					PermissionsF: func(ctx context.Context) cmp.Permissions {
-						return cmp.Permissions{
+					PermissionsF: func(ctx context.Context) cloudhub.Permissions {
+						return cloudhub.Permissions{
 							{
-								Scope:   cmp.AllScope,
-								Allowed: cmp.Allowances{"READ", "WRITE"},
+								Scope:   cloudhub.AllScope,
+								Allowed: cloudhub.Allowances{"READ", "WRITE"},
 							},
 						}
 					},
@@ -75,7 +75,7 @@ func TestService_Permissions(t *testing.T) {
 			ID:              "1",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody: `{"permissions":[{"scope":"all","allowed":["READ","WRITE"]}],"links":{"self":"/cmp/v1/sources/1/permissions","source":"/cmp/v1/sources/1"}}
+			wantBody: `{"permissions":[{"scope":"all","allowed":["READ","WRITE"]}],"links":{"self":"/cloudhub/v1/sources/1/permissions","source":"/cloudhub/v1/sources/1"}}
 `,
 		},
 	}

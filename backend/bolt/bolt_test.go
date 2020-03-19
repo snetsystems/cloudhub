@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/bolt"
-	"github.com/snetsystems/cmp/backend/mocks"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/bolt"
+	"github.com/snetsystems/cloudhub/backend/mocks"
 )
 
 // TestNow is a set time for testing.
@@ -22,7 +22,7 @@ type TestClient struct {
 
 // NewTestClient creates new *bolt.Client with a set time and temp path.
 func NewTestClient() (*TestClient, error) {
-	f, err := ioutil.TempFile("", "cmp-bolt-")
+	f, err := ioutil.TempFile("", "cloudhub-bolt-")
 	if err != nil {
 		return nil, errors.New("unable to open temporary boltdb file")
 	}
@@ -34,7 +34,7 @@ func NewTestClient() (*TestClient, error) {
 	c.Path = f.Name()
 	c.Now = func() time.Time { return TestNow }
 
-	build := cmp.BuildInfo{
+	build := cloudhub.BuildInfo{
 		Version: "version",
 		Commit:  "commit",
 	}

@@ -1,6 +1,6 @@
 package platform
 
-// Error is a domain error encountered while processing CMP requests.
+// Error is a domain error encountered while processing CloudHub requests.
 type Error string
 
 // Error returns the string of an error.

@@ -4,36 +4,36 @@ import (
 	"context"
 	"fmt"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-// ensure MappingsStore implements cmp.MappingsStore
-var _ cmp.MappingsStore = &MappingsStore{}
+// ensure MappingsStore implements cloudhub.MappingsStore
+var _ cloudhub.MappingsStore = &MappingsStore{}
 
 // MappingsStore ...
 type MappingsStore struct{}
 
 // All ...
-func (s *MappingsStore) All(context.Context) ([]cmp.Mapping, error) {
+func (s *MappingsStore) All(context.Context) ([]cloudhub.Mapping, error) {
 	return nil, fmt.Errorf("no mappings found")
 }
 
 // Add ...
-func (s *MappingsStore) Add(context.Context, *cmp.Mapping) (*cmp.Mapping, error) {
+func (s *MappingsStore) Add(context.Context, *cloudhub.Mapping) (*cloudhub.Mapping, error) {
 	return nil, fmt.Errorf("failed to add mapping")
 }
 
 // Delete ...
-func (s *MappingsStore) Delete(context.Context, *cmp.Mapping) error {
+func (s *MappingsStore) Delete(context.Context, *cloudhub.Mapping) error {
 	return fmt.Errorf("failed to delete mapping")
 }
 
 // Get ...
-func (s *MappingsStore) Get(ctx context.Context, ID string) (*cmp.Mapping, error) {
-	return nil, cmp.ErrMappingNotFound
+func (s *MappingsStore) Get(ctx context.Context, ID string) (*cloudhub.Mapping, error) {
+	return nil, cloudhub.ErrMappingNotFound
 }
 
 // Update ...
-func (s *MappingsStore) Update(context.Context, *cmp.Mapping) error {
+func (s *MappingsStore) Update(context.Context, *cloudhub.Mapping) error {
 	return fmt.Errorf("failed to update mapping")
 }

@@ -6,25 +6,25 @@ import (
 
 	gocmp "github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // IgnoreFields is used because ID is created by BoltDB and cannot be predicted reliably
 // EquateEmpty is used because we want nil slices, arrays, and maps to be equal to the empty map
-var cmpOptions = gocmp.Options{
-	cmpopts.IgnoreFields(cmp.User{}, "ID"),
+var cloudhubOptions = gocmp.Options{
+	cmpopts.IgnoreFields(cloudhub.User{}, "ID"),
 	cmpopts.EquateEmpty(),
 }
 
 func TestUsersStore_GetWithID(t *testing.T) {
 	type args struct {
 		ctx context.Context
-		usr *cmp.User
+		usr *cloudhub.User
 	}
 	tests := []struct {
 		name     string
 		args     args
-		want     *cmp.User
+		want     *cloudhub.User
 		wantErr  bool
 		addFirst bool
 	}{
@@ -32,7 +32,7 @@ func TestUsersStore_GetWithID(t *testing.T) {
 			name: "User not found",
 			args: args{
 				ctx: context.Background(),
-				usr: &cmp.User{
+				usr: &cloudhub.User{
 					ID: 1337,
 				},
 			},
@@ -42,13 +42,13 @@ func TestUsersStore_GetWithID(t *testing.T) {
 			name: "Get user",
 			args: args{
 				ctx: context.Background(),
-				usr: &cmp.User{
+				usr: &cloudhub.User{
 					Name:     "billietta",
 					Provider: "google",
 					Scheme:   "oauth2",
 				},
 			},
-			want: &cmp.User{
+			want: &cloudhub.User{
 				Name:     "billietta",
 				Provider: "google",
 				Scheme:   "oauth2",
@@ -70,12 +70,12 @@ func TestUsersStore_GetWithID(t *testing.T) {
 				t.Fatal(err)
 			}
 		}
-		got, err := s.Get(tt.args.ctx, cmp.UserQuery{ID: &tt.args.usr.ID})
+		got, err := s.Get(tt.args.ctx, cloudhub.UserQuery{ID: &tt.args.usr.ID})
 		if (err != nil) != tt.wantErr {
 			t.Errorf("%q. UsersStore.Get() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 			continue
 		}
-		if diff := gocmp.Diff(got, tt.want, cmpOptions...); diff != "" {
+		if diff := gocmp.Diff(got, tt.want, cloudhubOptions...); diff != "" {
 			t.Errorf("%q. UsersStore.Get():\n-got/+want\ndiff %s", tt.name, diff)
 		}
 	}
@@ -86,12 +86,12 @@ func TestUsersStore_GetWithNameProviderScheme(t *testing.T) {
 		ctx      context.Context
 		name     string
 		provider string
-		usr      *cmp.User
+		usr      *cloudhub.User
 	}
 	tests := []struct {
 		name     string
 		args     args
-		want     *cmp.User
+		want     *cloudhub.User
 		wantErr  bool
 		addFirst bool
 	}{
@@ -99,7 +99,7 @@ func TestUsersStore_GetWithNameProviderScheme(t *testing.T) {
 			name: "User not found",
 			args: args{
 				ctx: context.Background(),
-				usr: &cmp.User{
+				usr: &cloudhub.User{
 					Name:     "billietta",
 					Provider: "google",
 					Scheme:   "oauth2",
@@ -111,13 +111,13 @@ func TestUsersStore_GetWithNameProviderScheme(t *testing.T) {
 			name: "Get user",
 			args: args{
 				ctx: context.Background(),
-				usr: &cmp.User{
+				usr: &cloudhub.User{
 					Name:     "billietta",
 					Provider: "google",
 					Scheme:   "oauth2",
 				},
 			},
-			want: &cmp.User{
+			want: &cloudhub.User{
 				Name:     "billietta",
 				Provider: "google",
 				Scheme:   "oauth2",
@@ -140,7 +140,7 @@ func TestUsersStore_GetWithNameProviderScheme(t *testing.T) {
 			}
 		}
 
-		got, err := s.Get(tt.args.ctx, cmp.UserQuery{
+		got, err := s.Get(tt.args.ctx, cloudhub.UserQuery{
 			Name:     &tt.args.usr.Name,
 			Provider: &tt.args.usr.Provider,
 			Scheme:   &tt.args.usr.Scheme,
@@ -149,7 +149,7 @@ func TestUsersStore_GetWithNameProviderScheme(t *testing.T) {
 			t.Errorf("%q. UsersStore.Get() error = %v, wantErr %v", tt.name, err, tt.wantErr)
 			continue
 		}
-		if diff := gocmp.Diff(got, tt.want, cmpOptions...); diff != "" {
+		if diff := gocmp.Diff(got, tt.want, cloudhubOptions...); diff != "" {
 			t.Errorf("%q. UsersStore.Get():\n-got/+want\ndiff %s", tt.name, diff)
 		}
 	}
@@ -164,7 +164,7 @@ func TestUsersStore_GetInvalid(t *testing.T) {
 
 	s := client.UsersStore
 
-	_, err = s.Get(context.Background(), cmp.UserQuery{})
+	_, err = s.Get(context.Background(), cloudhub.UserQuery{})
 	if err == nil {
 		t.Errorf("Invalid Get. UsersStore.Get() error = %v", err)
 	}
@@ -173,35 +173,35 @@ func TestUsersStore_GetInvalid(t *testing.T) {
 func TestUsersStore_Add(t *testing.T) {
 	type args struct {
 		ctx      context.Context
-		u        *cmp.User
+		u        *cloudhub.User
 		addFirst bool
 	}
 	tests := []struct {
 		name    string
 		args    args
-		want    *cmp.User
+		want    *cloudhub.User
 		wantErr bool
 	}{
 		{
 			name: "Add new user",
 			args: args{
 				ctx: context.Background(),
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name:     "docbrown",
 					Provider: "github",
 					Scheme:   "oauth2",
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name: "editor",
 						},
 					},
 				},
 			},
-			want: &cmp.User{
+			want: &cloudhub.User{
 				Name:     "docbrown",
 				Provider: "github",
 				Scheme:   "oauth2",
-				Roles: []cmp.Role{
+				Roles: []cloudhub.Role{
 					{
 						Name: "editor",
 					},
@@ -213,11 +213,11 @@ func TestUsersStore_Add(t *testing.T) {
 			args: args{
 				ctx:      context.Background(),
 				addFirst: true,
-				u: &cmp.User{
+				u: &cloudhub.User{
 					Name:     "docbrown",
 					Provider: "github",
 					Scheme:   "oauth2",
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name: "editor",
 						},
@@ -248,11 +248,11 @@ func TestUsersStore_Add(t *testing.T) {
 			continue
 		}
 
-		got, err = s.Get(tt.args.ctx, cmp.UserQuery{ID: &got.ID})
+		got, err = s.Get(tt.args.ctx, cloudhub.UserQuery{ID: &got.ID})
 		if err != nil {
 			t.Fatalf("failed to get user: %v", err)
 		}
-		if diff := gocmp.Diff(got, tt.want, cmpOptions...); diff != "" {
+		if diff := gocmp.Diff(got, tt.want, cloudhubOptions...); diff != "" {
 			t.Errorf("%q. UsersStore.Add():\n-got/+want\ndiff %s", tt.name, diff)
 		}
 	}
@@ -261,7 +261,7 @@ func TestUsersStore_Add(t *testing.T) {
 func TestUsersStore_Delete(t *testing.T) {
 	type args struct {
 		ctx  context.Context
-		user *cmp.User
+		user *cloudhub.User
 	}
 	tests := []struct {
 		name     string
@@ -273,7 +273,7 @@ func TestUsersStore_Delete(t *testing.T) {
 			name: "No such user",
 			args: args{
 				ctx: context.Background(),
-				user: &cmp.User{
+				user: &cloudhub.User{
 					ID: 10,
 				},
 			},
@@ -283,7 +283,7 @@ func TestUsersStore_Delete(t *testing.T) {
 			name: "Delete new user",
 			args: args{
 				ctx: context.Background(),
-				user: &cmp.User{
+				user: &cloudhub.User{
 					Name: "noone",
 				},
 			},
@@ -311,8 +311,8 @@ func TestUsersStore_Delete(t *testing.T) {
 func TestUsersStore_Update(t *testing.T) {
 	type args struct {
 		ctx      context.Context
-		usr      *cmp.User
-		roles    []cmp.Role
+		usr      *cloudhub.User
+		roles    []cloudhub.Role
 		provider string
 		scheme   string
 		name     string
@@ -321,14 +321,14 @@ func TestUsersStore_Update(t *testing.T) {
 		name     string
 		args     args
 		addFirst bool
-		want     *cmp.User
+		want     *cloudhub.User
 		wantErr  bool
 	}{
 		{
 			name: "No such user",
 			args: args{
 				ctx: context.Background(),
-				usr: &cmp.User{
+				usr: &cloudhub.User{
 					ID: 10,
 				},
 			},
@@ -338,27 +338,27 @@ func TestUsersStore_Update(t *testing.T) {
 			name: "Update user role",
 			args: args{
 				ctx: context.Background(),
-				usr: &cmp.User{
+				usr: &cloudhub.User{
 					Name:     "bobetta",
 					Provider: "github",
 					Scheme:   "oauth2",
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name: "viewer",
 						},
 					},
 				},
-				roles: []cmp.Role{
+				roles: []cloudhub.Role{
 					{
 						Name: "editor",
 					},
 				},
 			},
-			want: &cmp.User{
+			want: &cloudhub.User{
 				Name:     "bobetta",
 				Provider: "github",
 				Scheme:   "oauth2",
-				Roles: []cmp.Role{
+				Roles: []cloudhub.Role{
 					{
 						Name: "editor",
 					},
@@ -370,7 +370,7 @@ func TestUsersStore_Update(t *testing.T) {
 			name: "Update user provider and scheme",
 			args: args{
 				ctx: context.Background(),
-				usr: &cmp.User{
+				usr: &cloudhub.User{
 					Name:     "bobetta",
 					Provider: "github",
 					Scheme:   "oauth2",
@@ -379,7 +379,7 @@ func TestUsersStore_Update(t *testing.T) {
 				scheme:   "oauth2",
 				name:     "billietta",
 			},
-			want: &cmp.User{
+			want: &cloudhub.User{
 				Name:     "billietta",
 				Provider: "google",
 				Scheme:   "oauth2",
@@ -428,11 +428,11 @@ func TestUsersStore_Update(t *testing.T) {
 			continue
 		}
 
-		got, err := s.Get(tt.args.ctx, cmp.UserQuery{ID: &tt.args.usr.ID})
+		got, err := s.Get(tt.args.ctx, cloudhub.UserQuery{ID: &tt.args.usr.ID})
 		if err != nil {
 			t.Fatalf("failed to get user: %v", err)
 		}
-		if diff := gocmp.Diff(got, tt.want, cmpOptions...); diff != "" {
+		if diff := gocmp.Diff(got, tt.want, cloudhubOptions...); diff != "" {
 			t.Errorf("%q. UsersStore.Update():\n-got/+want\ndiff %s", tt.name, diff)
 		}
 	}
@@ -442,7 +442,7 @@ func TestUsersStore_All(t *testing.T) {
 	tests := []struct {
 		name     string
 		ctx      context.Context
-		want     []cmp.User
+		want     []cloudhub.User
 		addFirst bool
 		wantErr  bool
 	}{
@@ -451,12 +451,12 @@ func TestUsersStore_All(t *testing.T) {
 		},
 		{
 			name: "Update new user",
-			want: []cmp.User{
+			want: []cloudhub.User{
 				{
 					Name:     "howdy",
 					Provider: "github",
 					Scheme:   "oauth2",
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name: "viewer",
 						},
@@ -466,7 +466,7 @@ func TestUsersStore_All(t *testing.T) {
 					Name:     "doody",
 					Provider: "github",
 					Scheme:   "oauth2",
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name: "editor",
 						},
@@ -496,7 +496,7 @@ func TestUsersStore_All(t *testing.T) {
 			continue
 		}
 		for i, got := range gots {
-			if diff := gocmp.Diff(got, tt.want[i], cmpOptions...); diff != "" {
+			if diff := gocmp.Diff(got, tt.want[i], cloudhubOptions...); diff != "" {
 				t.Errorf("%q. UsersStore.All():\n-got/+want\ndiff %s", tt.name, diff)
 			}
 		}
@@ -507,7 +507,7 @@ func TestUsersStore_Num(t *testing.T) {
 	tests := []struct {
 		name    string
 		ctx     context.Context
-		users   []cmp.User
+		users   []cloudhub.User
 		want    int
 		wantErr bool
 	}{
@@ -518,12 +518,12 @@ func TestUsersStore_Num(t *testing.T) {
 		{
 			name: "Update new user",
 			want: 2,
-			users: []cmp.User{
+			users: []cloudhub.User{
 				{
 					Name:     "howdy",
 					Provider: "github",
 					Scheme:   "oauth2",
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name: "viewer",
 						},
@@ -533,7 +533,7 @@ func TestUsersStore_Num(t *testing.T) {
 					Name:     "doody",
 					Provider: "github",
 					Scheme:   "oauth2",
-					Roles: []cmp.Role{
+					Roles: []cloudhub.Role{
 						{
 							Name: "editor",
 						},

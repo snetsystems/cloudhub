@@ -8,7 +8,7 @@ interface Props {
 }
 
 const App: SFC<Props> = ({children}) => (
-  <div className="cmp-root">
+  <div className="cloudhub-root">
     <Notifications />
     <SideNav />
     {children}

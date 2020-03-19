@@ -11,9 +11,9 @@ import (
 	"testing"
 
 	"github.com/bouk/httprouter"
-	"github.com/snetsystems/cmp/backend/log"
-	"github.com/snetsystems/cmp/backend/mocks"
-	"github.com/snetsystems/cmp/backend/v2"
+	"github.com/snetsystems/cloudhub/backend/log"
+	"github.com/snetsystems/cloudhub/backend/mocks"
+	"github.com/snetsystems/cloudhub/backend/v2"
 )
 
 func TestService_CellsV2(t *testing.T) {
@@ -67,17 +67,17 @@ func TestService_CellsV2(t *testing.T) {
 				body: `
 {
   "links": {
-    "self": "/cmp/v2/cells"
+    "self": "/cloudhub/v2/cells"
   },
   "cells": [
     {
       "id": "0",
       "name": "hello",
       "links": {
-        "self": "/cmp/v2/cells/0"
+        "self": "/cloudhub/v2/cells/0"
       },
       "visualization": {
-        "type": "cmp-v1",
+        "type": "cloudhub-v1",
         "queries": null,
         "axes": null,
         "visualizationType": "line",
@@ -105,7 +105,7 @@ func TestService_CellsV2(t *testing.T) {
       "id": "2",
       "name": "example",
       "links": {
-        "self": "/cmp/v2/cells/2"
+        "self": "/cloudhub/v2/cells/2"
       },
       "visualization": {
         "type": "empty"
@@ -131,7 +131,7 @@ func TestService_CellsV2(t *testing.T) {
 				body: `
 {
   "links": {
-    "self": "/cmp/v2/cells"
+    "self": "/cloudhub/v2/cells"
   },
   "cells": []
 }`,
@@ -228,7 +228,7 @@ func TestService_CellIDV2(t *testing.T) {
   "id": "2",
   "name": "example",
   "links": {
-    "self": "/cmp/v2/cells/2"
+    "self": "/cloudhub/v2/cells/2"
   },
   "visualization": {
     "type": "empty"
@@ -345,10 +345,10 @@ func TestService_NewCellV2(t *testing.T) {
   "id": "2",
   "name": "hello",
   "links": {
-    "self": "/cmp/v2/cells/2"
+    "self": "/cloudhub/v2/cells/2"
   },
   "visualization": {
-    "type": "cmp-v1",
+    "type": "cloudhub-v1",
     "queries": null,
     "axes": null,
     "visualizationType": "line",
@@ -567,10 +567,10 @@ func TestService_UpdateCellV2(t *testing.T) {
   "id": "2",
   "name": "example",
   "links": {
-    "self": "/cmp/v2/cells/2"
+    "self": "/cloudhub/v2/cells/2"
   },
   "visualization": {
-    "type": "cmp-v1",
+    "type": "cloudhub-v1",
     "queries": null,
     "axes": null,
     "visualizationType": "line",

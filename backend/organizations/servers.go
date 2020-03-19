@@ -3,22 +3,22 @@ package organizations
 import (
 	"context"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-// ensure that ServersStore implements cmp.ServerStore
-var _ cmp.ServersStore = &ServersStore{}
+// ensure that ServersStore implements cloudhub.ServerStore
+var _ cloudhub.ServersStore = &ServersStore{}
 
 // ServersStore facade on a ServerStore that filters servers
 // by organization.
 type ServersStore struct {
-	store        cmp.ServersStore
+	store        cloudhub.ServersStore
 	organization string
 }
 
 // NewServersStore creates a new ServersStore from an existing
-// cmp.ServerStore and an organization string
-func NewServersStore(s cmp.ServersStore, org string) *ServersStore {
+// cloudhub.ServerStore and an organization string
+func NewServersStore(s cloudhub.ServersStore, org string) *ServersStore {
 	return &ServersStore{
 		store:        s,
 		organization: org,
@@ -27,7 +27,7 @@ func NewServersStore(s cmp.ServersStore, org string) *ServersStore {
 
 // All retrieves all servers from the underlying ServerStore and filters them
 // by organization.
-func (s *ServersStore) All(ctx context.Context) ([]cmp.Server, error) {
+func (s *ServersStore) All(ctx context.Context) ([]cloudhub.Server, error) {
 	err := validOrganization(ctx)
 	if err != nil {
 		return nil, err
@@ -51,15 +51,15 @@ func (s *ServersStore) All(ctx context.Context) ([]cmp.Server, error) {
 
 // Add creates a new Server in the ServersStore with server.Organization set to be the
 // organization from the server store.
-func (s *ServersStore) Add(ctx context.Context, src cmp.Server) (cmp.Server, error) {
+func (s *ServersStore) Add(ctx context.Context, src cloudhub.Server) (cloudhub.Server, error) {
 	err := validOrganization(ctx)
 	if err != nil {
-		return cmp.Server{}, err
+		return cloudhub.Server{}, err
 	}
 
 	// make the newly added source "active"
 	if err := s.resetActiveServer(ctx); err != nil {
-		return cmp.Server{}, err
+		return cloudhub.Server{}, err
 	}
 	src.Active = true
 
@@ -68,7 +68,7 @@ func (s *ServersStore) Add(ctx context.Context, src cmp.Server) (cmp.Server, err
 }
 
 // Delete the server from ServersStore
-func (s *ServersStore) Delete(ctx context.Context, d cmp.Server) error {
+func (s *ServersStore) Delete(ctx context.Context, d cloudhub.Server) error {
 	err := validOrganization(ctx)
 	if err != nil {
 		return err
@@ -83,26 +83,26 @@ func (s *ServersStore) Delete(ctx context.Context, d cmp.Server) error {
 }
 
 // Get returns a Server if the id exists and belongs to the organization that is set.
-func (s *ServersStore) Get(ctx context.Context, id int) (cmp.Server, error) {
+func (s *ServersStore) Get(ctx context.Context, id int) (cloudhub.Server, error) {
 	err := validOrganization(ctx)
 	if err != nil {
-		return cmp.Server{}, err
+		return cloudhub.Server{}, err
 	}
 
 	d, err := s.store.Get(ctx, id)
 	if err != nil {
-		return cmp.Server{}, err
+		return cloudhub.Server{}, err
 	}
 
 	if d.Organization != s.organization {
-		return cmp.Server{}, cmp.ErrServerNotFound
+		return cloudhub.Server{}, cloudhub.ErrServerNotFound
 	}
 
 	return d, nil
 }
 
 // Update the server in ServersStore.
-func (s *ServersStore) Update(ctx context.Context, src cmp.Server) error {
+func (s *ServersStore) Update(ctx context.Context, src cloudhub.Server) error {
 	err := validOrganization(ctx)
 	if err != nil {
 		return err

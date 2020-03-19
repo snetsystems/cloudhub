@@ -3,21 +3,21 @@ package server
 import (
 	"testing"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 func TestValidTemplateRequest(t *testing.T) {
 	tests := []struct {
 		name     string
-		template *cmp.Template
+		template *cloudhub.Template
 		wantErr  bool
 	}{
 		{
 			name: "Valid Template",
-			template: &cmp.Template{
+			template: &cloudhub.Template{
 				Type: "fieldKeys",
-				TemplateVar: cmp.TemplateVar{
-					Values: []cmp.TemplateValue{
+				TemplateVar: cloudhub.TemplateVar{
+					Values: []cloudhub.TemplateValue{
 						{
 							Type: "fieldKey",
 						},
@@ -28,10 +28,10 @@ func TestValidTemplateRequest(t *testing.T) {
 		{
 			name:    "Invalid Template Type",
 			wantErr: true,
-			template: &cmp.Template{
+			template: &cloudhub.Template{
 				Type: "Unknown Type",
-				TemplateVar: cmp.TemplateVar{
-					Values: []cmp.TemplateValue{
+				TemplateVar: cloudhub.TemplateVar{
+					Values: []cloudhub.TemplateValue{
 						{
 							Type: "fieldKey",
 						},
@@ -42,10 +42,10 @@ func TestValidTemplateRequest(t *testing.T) {
 		{
 			name:    "Invalid Template Variable Type",
 			wantErr: true,
-			template: &cmp.Template{
+			template: &cloudhub.Template{
 				Type: "csv",
-				TemplateVar: cmp.TemplateVar{
-					Values: []cmp.TemplateValue{
+				TemplateVar: cloudhub.TemplateVar{
+					Values: []cloudhub.TemplateValue{
 						{
 							Type: "unknown value",
 						},
@@ -56,16 +56,16 @@ func TestValidTemplateRequest(t *testing.T) {
 		{
 			name:    "No query set",
 			wantErr: true,
-			template: &cmp.Template{
+			template: &cloudhub.Template{
 				Type: "influxql",
 			},
 		},
 		{
 			name: "Valid Map type",
-			template: &cmp.Template{
+			template: &cloudhub.Template{
 				Type: "map",
-				TemplateVar: cmp.TemplateVar{
-					Values: []cmp.TemplateValue{
+				TemplateVar: cloudhub.TemplateVar{
+					Values: []cloudhub.TemplateValue{
 						{
 							Key:   "key",
 							Value: "value",
@@ -78,10 +78,10 @@ func TestValidTemplateRequest(t *testing.T) {
 		{
 			name:    "Map without Key",
 			wantErr: true,
-			template: &cmp.Template{
+			template: &cloudhub.Template{
 				Type: "map",
-				TemplateVar: cmp.TemplateVar{
-					Values: []cmp.TemplateValue{
+				TemplateVar: cloudhub.TemplateVar{
+					Values: []cloudhub.TemplateValue{
 						{
 							Value: "value",
 							Type:  "map",

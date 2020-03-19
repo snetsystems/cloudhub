@@ -3,11 +3,11 @@ import PropTypes from 'prop-types'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 
-import * as adminCMPActionCreators from 'src/admin/actions/cmp'
+import * as adminCloudHubActionCreators from 'src/admin/actions/cloudhub'
 import {getMeAsync} from 'shared/actions/auth'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-import OrganizationsTable from 'src/admin/components/cmp/OrganizationsTable'
+import OrganizationsTable from 'src/admin/components/cloudhub/OrganizationsTable'
 
 class OrganizationsPage extends Component {
   componentDidMount() {
@@ -118,7 +118,7 @@ OrganizationsPage.propTypes = {
 
 const mapStateToProps = ({
   links,
-  adminCMP: {organizations},
+  adminCloudHub: {organizations},
   auth: {me},
 }) => ({
   links,
@@ -127,10 +127,11 @@ const mapStateToProps = ({
 })
 
 const mapDispatchToProps = dispatch => ({
-  actionsAdmin: bindActionCreators(adminCMPActionCreators, dispatch),
+  actionsAdmin: bindActionCreators(adminCloudHubActionCreators, dispatch),
   getMe: bindActionCreators(getMeAsync, dispatch),
 })
 
-export default connect(mapStateToProps, mapDispatchToProps)(
-  ErrorHandling(OrganizationsPage)
-)
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(ErrorHandling(OrganizationsPage))

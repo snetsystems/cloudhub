@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	gojwt "github.com/dgrijalva/jwt-go"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"golang.org/x/oauth2"
 )
 
@@ -37,7 +37,7 @@ type Generic struct {
 	TokenURL       string
 	APIURL         string // APIURL returns OpenID Userinfo
 	APIKey         string // APIKey is the JSON key to lookup email address in APIURL response
-	Logger         cmp.Logger
+	Logger         cloudhub.Logger
 }
 
 // Name is the name of the provider

@@ -24,7 +24,7 @@ export const loadLocalStorage = (errorsQueue: any[]): LocalStorage | {} => {
         errorsQueue.push(notifyNewVersion(VERSION))
       }
 
-      console.debug('Cleared CMP localStorage state')
+      console.debug('Cleared CloudHub localStorage state')
 
       return {}
     }

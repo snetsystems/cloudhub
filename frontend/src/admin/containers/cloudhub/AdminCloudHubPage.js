@@ -5,9 +5,9 @@ import {connect} from 'react-redux'
 import {Page} from 'src/reusable_ui'
 import SubSections from 'src/shared/components/SubSections'
 
-import UsersPage from 'src/admin/containers/cmp/UsersPage'
-import AllUsersPage from 'src/admin/containers/cmp/AllUsersPage'
-import OrganizationsPage from 'src/admin/containers/cmp/OrganizationsPage'
+import UsersPage from 'src/admin/containers/cloudhub/UsersPage'
+import AllUsersPage from 'src/admin/containers/cloudhub/AllUsersPage'
+import OrganizationsPage from 'src/admin/containers/cloudhub/OrganizationsPage'
 import ProvidersPage from 'src/admin/containers/ProvidersPage'
 
 import {
@@ -47,7 +47,7 @@ const sections = me => [
   },
 ]
 
-const AdminCMPPage = ({me, source, params: {tab}}) => (
+const AdminCloudHubPage = ({me, source, params: {tab}}) => (
   <Page>
     <Page.Header>
       <Page.Header.Left>
@@ -60,7 +60,7 @@ const AdminCMPPage = ({me, source, params: {tab}}) => (
         <SubSections
           sections={sections(me)}
           activeSection={tab}
-          parentUrl="admin-cmp"
+          parentUrl="admin-cloudhub"
           sourceID={source.id}
         />
       </div>
@@ -70,7 +70,7 @@ const AdminCMPPage = ({me, source, params: {tab}}) => (
 
 const {shape, string} = PropTypes
 
-AdminCMPPage.propTypes = {
+AdminCloudHubPage.propTypes = {
   me: shape({
     id: string.isRequired,
     role: string.isRequired,
@@ -94,4 +94,4 @@ const mapStateToProps = ({auth: {me}}) => ({
   me,
 })
 
-export default connect(mapStateToProps, null)(AdminCMPPage)
+export default connect(mapStateToProps, null)(AdminCloudHubPage)

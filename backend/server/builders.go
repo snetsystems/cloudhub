@@ -1,32 +1,32 @@
 package server
 
 import (
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/canned"
-	"github.com/snetsystems/cmp/backend/filestore"
-	"github.com/snetsystems/cmp/backend/memdb"
-	"github.com/snetsystems/cmp/backend/multistore"
-	"github.com/snetsystems/cmp/backend/protoboards"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/canned"
+	"github.com/snetsystems/cloudhub/backend/filestore"
+	"github.com/snetsystems/cloudhub/backend/memdb"
+	"github.com/snetsystems/cloudhub/backend/multistore"
+	"github.com/snetsystems/cloudhub/backend/protoboards"
 )
 
 // LayoutBuilder is responsible for building Layouts
 type LayoutBuilder interface {
-	Build(cmp.LayoutsStore) (*multistore.Layouts, error)
+	Build(cloudhub.LayoutsStore) (*multistore.Layouts, error)
 }
 
 // MultiLayoutBuilder implements LayoutBuilder and will return a Layouts
 type MultiLayoutBuilder struct {
-	Logger     cmp.Logger
-	UUID       cmp.ID
+	Logger     cloudhub.Logger
+	UUID       cloudhub.ID
 	CannedPath string
 }
 
 // Build will construct a Layouts of canned and db-backed personalized
 // layouts
-func (builder *MultiLayoutBuilder) Build(db cmp.LayoutsStore) (*multistore.Layouts, error) {
+func (builder *MultiLayoutBuilder) Build(db cloudhub.LayoutsStore) (*multistore.Layouts, error) {
 	// These apps are those handled from a directory
 	apps := filestore.NewApps(builder.CannedPath, builder.UUID, builder.Logger)
-	// These apps are statically compiled into cmp
+	// These apps are statically compiled into cloudhub
 	binApps := &canned.BinLayoutsStore{
 		Logger: builder.Logger,
 	}
@@ -34,7 +34,7 @@ func (builder *MultiLayoutBuilder) Build(db cmp.LayoutsStore) (*multistore.Layou
 	// The idea here is that these stores form a hierarchy in which each is tried sequentially until
 	// the operation has success.  So, the database is preferred over filesystem over binary data.
 	layouts := &multistore.Layouts{
-		Stores: []cmp.LayoutsStore{
+		Stores: []cloudhub.LayoutsStore{
 			db,
 			apps,
 			binApps,
@@ -51,8 +51,8 @@ type ProtoboardsBuilder interface {
 
 // MultiProtoboardsBuilder implements LayoutBuilder and will return a Layouts
 type MultiProtoboardsBuilder struct {
-	Logger          cmp.Logger
-	UUID            cmp.ID
+	Logger          cloudhub.Logger
+	UUID            cloudhub.ID
 	ProtoboardsPath string
 }
 
@@ -61,7 +61,7 @@ type MultiProtoboardsBuilder struct {
 func (builder *MultiProtoboardsBuilder) Build() (*multistore.Protoboards, error) {
 	// These apps are those handled from a directory
 	filesystemPBs := filestore.NewProtoboards(builder.ProtoboardsPath, builder.UUID, builder.Logger)
-	// These apps are statically compiled into cmp
+	// These apps are statically compiled into cloudhub
 	binPBs := &protoboards.BinProtoboardsStore{
 		Logger: builder.Logger,
 	}
@@ -69,7 +69,7 @@ func (builder *MultiProtoboardsBuilder) Build() (*multistore.Protoboards, error)
 	// The idea here is that these stores form a hierarchy in which each is tried sequentially until
 	// the operation has success.  So, the database is preferred over filesystem over binary data.
 	protoboards := &multistore.Protoboards{
-		Stores: []cmp.ProtoboardsStore{
+		Stores: []cloudhub.ProtoboardsStore{
 			filesystemPBs,
 			binPBs,
 		},
@@ -80,25 +80,25 @@ func (builder *MultiProtoboardsBuilder) Build() (*multistore.Protoboards, error)
 
 // DashboardBuilder is responsible for building dashboards
 type DashboardBuilder interface {
-	Build(cmp.DashboardsStore) (*multistore.DashboardsStore, error)
+	Build(cloudhub.DashboardsStore) (*multistore.DashboardsStore, error)
 }
 
 // MultiDashboardBuilder builds a DashboardsStore backed by bolt and the filesystem
 type MultiDashboardBuilder struct {
-	Logger cmp.Logger
-	ID     cmp.ID
+	Logger cloudhub.Logger
+	ID     cloudhub.ID
 	Path   string
 }
 
 // Build will construct a Dashboard store of filesystem and db-backed dashboards
-func (builder *MultiDashboardBuilder) Build(db cmp.DashboardsStore) (*multistore.DashboardsStore, error) {
+func (builder *MultiDashboardBuilder) Build(db cloudhub.DashboardsStore) (*multistore.DashboardsStore, error) {
 	// These dashboards are those handled from a directory
 	files := filestore.NewDashboards(builder.Path, builder.ID, builder.Logger)
 	// Acts as a front-end to both the bolt dashboard and filesystem dashboards.
 	// The idea here is that these stores form a hierarchy in which each is tried sequentially until
 	// the operation has success.  So, the database is preferred over filesystem
 	dashboards := &multistore.DashboardsStore{
-		Stores: []cmp.DashboardsStore{
+		Stores: []cloudhub.DashboardsStore{
 			db,
 			files,
 		},
@@ -109,7 +109,7 @@ func (builder *MultiDashboardBuilder) Build(db cmp.DashboardsStore) (*multistore
 
 // SourcesBuilder builds a MultiSourceStore
 type SourcesBuilder interface {
-	Build(cmp.SourcesStore) (*multistore.SourcesStore, error)
+	Build(cloudhub.SourcesStore) (*multistore.SourcesStore, error)
 }
 
 // MultiSourceBuilder implements SourcesBuilder
@@ -118,30 +118,30 @@ type MultiSourceBuilder struct {
 	InfluxDBUsername string
 	InfluxDBPassword string
 
-	Logger cmp.Logger
-	ID     cmp.ID
+	Logger cloudhub.Logger
+	ID     cloudhub.ID
 	Path   string
 }
 
 // Build will return a MultiSourceStore
-func (fs *MultiSourceBuilder) Build(db cmp.SourcesStore) (*multistore.SourcesStore, error) {
+func (fs *MultiSourceBuilder) Build(db cloudhub.SourcesStore) (*multistore.SourcesStore, error) {
 	// These dashboards are those handled from a directory
 	files := filestore.NewSources(fs.Path, fs.ID, fs.Logger)
 
-	stores := []cmp.SourcesStore{db, files}
+	stores := []cloudhub.SourcesStore{db, files}
 
 	if fs.InfluxDBURL != "" {
 		influxStore := &memdb.SourcesStore{
-			Source: &cmp.Source{
+			Source: &cloudhub.Source{
 				ID:       0,
 				Name:     fs.InfluxDBURL,
-				Type:     cmp.InfluxDB,
+				Type:     cloudhub.InfluxDB,
 				Username: fs.InfluxDBUsername,
 				Password: fs.InfluxDBPassword,
 				URL:      fs.InfluxDBURL,
 				Default:  true,
 			}}
-		stores = append([]cmp.SourcesStore{influxStore}, stores...)
+		stores = append([]cloudhub.SourcesStore{influxStore}, stores...)
 	}
 	sources := &multistore.SourcesStore{
 		Stores: stores,
@@ -152,7 +152,7 @@ func (fs *MultiSourceBuilder) Build(db cmp.SourcesStore) (*multistore.SourcesSto
 
 // KapacitorBuilder builds a KapacitorStore
 type KapacitorBuilder interface {
-	Build(cmp.ServersStore) (*multistore.KapacitorStore, error)
+	Build(cloudhub.ServersStore) (*multistore.KapacitorStore, error)
 }
 
 // MultiKapacitorBuilder implements KapacitorBuilder
@@ -161,21 +161,21 @@ type MultiKapacitorBuilder struct {
 	KapacitorUsername string
 	KapacitorPassword string
 
-	Logger cmp.Logger
-	ID     cmp.ID
+	Logger cloudhub.Logger
+	ID     cloudhub.ID
 	Path   string
 }
 
 // Build will return a multistore facade KapacitorStore over memdb and bolt
-func (builder *MultiKapacitorBuilder) Build(db cmp.ServersStore) (*multistore.KapacitorStore, error) {
+func (builder *MultiKapacitorBuilder) Build(db cloudhub.ServersStore) (*multistore.KapacitorStore, error) {
 	// These dashboards are those handled from a directory
 	files := filestore.NewKapacitors(builder.Path, builder.ID, builder.Logger)
 
-	stores := []cmp.ServersStore{db, files}
+	stores := []cloudhub.ServersStore{db, files}
 
 	if builder.KapacitorURL != "" {
 		memStore := &memdb.KapacitorStore{
-			Kapacitor: &cmp.Server{
+			Kapacitor: &cloudhub.Server{
 				ID:       0,
 				SrcID:    0,
 				Name:     builder.KapacitorURL,
@@ -184,7 +184,7 @@ func (builder *MultiKapacitorBuilder) Build(db cmp.ServersStore) (*multistore.Ka
 				Password: builder.KapacitorPassword,
 			},
 		}
-		stores = append([]cmp.ServersStore{memStore}, stores...)
+		stores = append([]cloudhub.ServersStore{memStore}, stores...)
 	}
 	kapacitors := &multistore.KapacitorStore{
 		Stores: stores,
@@ -194,24 +194,24 @@ func (builder *MultiKapacitorBuilder) Build(db cmp.ServersStore) (*multistore.Ka
 
 // OrganizationBuilder is responsible for building dashboards
 type OrganizationBuilder interface {
-	Build(cmp.OrganizationsStore) (*multistore.OrganizationsStore, error)
+	Build(cloudhub.OrganizationsStore) (*multistore.OrganizationsStore, error)
 }
 
 // MultiOrganizationBuilder builds a OrganizationsStore backed by bolt and the filesystem
 type MultiOrganizationBuilder struct {
-	Logger cmp.Logger
+	Logger cloudhub.Logger
 	Path   string
 }
 
 // Build will construct a Organization store of filesystem and db-backed dashboards
-func (builder *MultiOrganizationBuilder) Build(db cmp.OrganizationsStore) (*multistore.OrganizationsStore, error) {
+func (builder *MultiOrganizationBuilder) Build(db cloudhub.OrganizationsStore) (*multistore.OrganizationsStore, error) {
 	// These organization are those handled from a directory
 	files := filestore.NewOrganizations(builder.Path, builder.Logger)
 	// Acts as a front-end to both the bolt org and filesystem orgs.
 	// The idea here is that these stores form a hierarchy in which each is tried sequentially until
 	// the operation has success.  So, the database is preferred over filesystem
 	orgs := &multistore.OrganizationsStore{
-		Stores: []cmp.OrganizationsStore{
+		Stores: []cloudhub.OrganizationsStore{
 			db,
 			files,
 		},

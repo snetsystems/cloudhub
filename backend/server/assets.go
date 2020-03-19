@@ -3,8 +3,8 @@ package server
 import (
 	"net/http"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/dist"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/dist"
 )
 
 const (
@@ -25,12 +25,12 @@ type AssetsOpts struct {
 	// Develop when true serves assets from frontend/build directory directly; false will use internal bindata.
 	Develop bool
 	// Logger will log the asset served
-	Logger cmp.Logger
+	Logger cloudhub.Logger
 }
 
 // Assets creates a middleware that will serve a single page app.
 func Assets(opts AssetsOpts) http.Handler {
-	var assets cmp.Assets
+	var assets cloudhub.Assets
 	if opts.Develop {
 		assets = &dist.DebugAssets{
 			Dir:     DebugDir,

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // Permissions returns all possible permissions for this source.
@@ -40,9 +40,9 @@ func (s *Service) Permissions(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
-	httpAPISrcs := "/cmp/v1/sources"
+	httpAPISrcs := "/cloudhub/v1/sources"
 	res := struct {
-		Permissions cmp.Permissions   `json:"permissions"`
+		Permissions cloudhub.Permissions   `json:"permissions"`
 		Links       map[string]string `json:"links"` // Links are URI locations related to user
 	}{
 		Permissions: perms,
@@ -54,15 +54,15 @@ func (s *Service) Permissions(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
 
-func validPermissions(perms *cmp.Permissions) error {
+func validPermissions(perms *cloudhub.Permissions) error {
 	if perms == nil {
 		return nil
 	}
 	for _, perm := range *perms {
-		if perm.Scope != cmp.AllScope && perm.Scope != cmp.DBScope {
+		if perm.Scope != cloudhub.AllScope && perm.Scope != cloudhub.DBScope {
 			return fmt.Errorf("Invalid permission scope")
 		}
-		if perm.Scope == cmp.DBScope && perm.Name == "" {
+		if perm.Scope == cloudhub.DBScope && perm.Name == "" {
 			return fmt.Errorf("Database scoped permission requires a name")
 		}
 	}

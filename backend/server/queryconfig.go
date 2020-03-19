@@ -3,22 +3,22 @@ package server
 import (
 	"fmt"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/influx"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/influx"
 )
 
 // ToQueryConfig converts InfluxQL into queryconfigs
 // If influxql cannot be represented by a full query config, then, the
 // query config's raw text is set to the query.
-func ToQueryConfig(query string) cmp.QueryConfig {
+func ToQueryConfig(query string) cloudhub.QueryConfig {
 	qc, err := influx.Convert(query)
 	if err == nil {
 		return qc
 	}
-	return cmp.QueryConfig{
+	return cloudhub.QueryConfig{
 		RawText: &query,
-		Fields:  []cmp.Field{},
-		GroupBy: cmp.GroupBy{
+		Fields:  []cloudhub.Field{},
+		GroupBy: cloudhub.GroupBy{
 			Tags: []string{},
 		},
 		Tags: make(map[string][]string, 0),
@@ -35,7 +35,7 @@ var validFieldTypes = map[string]bool{
 }
 
 // ValidateQueryConfig checks any query config input
-func ValidateQueryConfig(q *cmp.QueryConfig) error {
+func ValidateQueryConfig(q *cloudhub.QueryConfig) error {
 	for _, fld := range q.Fields {
 		invalid := fmt.Errorf(`invalid field type "%s" ; expect func, field, integer, number, regex, wildcard`, fld.Type)
 		if !validFieldTypes[fld.Type] {

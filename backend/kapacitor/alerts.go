@@ -8,11 +8,11 @@ import (
 
 	"github.com/influxdata/kapacitor/pipeline"
 	"github.com/influxdata/kapacitor/pipeline/tick"
-	cmp "github.com/snetsystems/cmp/backend"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // AlertServices generates alert chaining methods to be attached to an alert from all rule Services
-func AlertServices(rule cmp.AlertRule) (string, error) {
+func AlertServices(rule cloudhub.AlertRule) (string, error) {
 	node, err := addAlertNodes(rule.AlertNodes)
 	if err != nil {
 		return "", err
@@ -24,7 +24,7 @@ func AlertServices(rule cmp.AlertRule) (string, error) {
 	return node, nil
 }
 
-func addAlertNodes(handlers cmp.AlertNodes) (string, error) {
+func addAlertNodes(handlers cloudhub.AlertNodes) (string, error) {
 	octets, err := json.Marshal(&handlers)
 	if err != nil {
 		return "", err

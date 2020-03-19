@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	cmp "github.com/snetsystems/cmp/backend"
-	"github.com/snetsystems/cmp/backend/oauth2"
+	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/oauth2"
 )
 
 // AuthRoute are the routes for each type of OAuth2 provider
@@ -52,7 +52,7 @@ type getRoutesResponse struct {
 	Addons             []getAddonLinksResponse            `json:"addons"`
 }
 
-// AllRoutes is a handler that returns all links to resources in CMP server, as well as
+// AllRoutes is a handler that returns all links to resources in CloudHub server, as well as
 // external links for the client to know about, such as for JSON feeds or custom side nav buttons.
 // Optionally, routes for authentication can be returned.
 type AllRoutes struct {
@@ -63,10 +63,10 @@ type AllRoutes struct {
 	CustomLinks  map[string]string                      // Custom external links for client's User menu, as passed in via CLI/ENV
 	AddonURLs    map[string]string                      // URLs for using in Addon Features, as passed in via CLI/ENV
 	AddonTokens  map[string]string                      // Tokens to access to Addon Features API, as passed in via CLI/ENV
-	Logger       cmp.Logger
+	Logger       cloudhub.Logger
 }
 
-// serveHTTP returns all top level routes and external links within cmp
+// serveHTTP returns all top level routes and external links within cloudhub
 func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	customLinks, err := NewCustomLinks(a.CustomLinks)
 	if err != nil {
@@ -84,25 +84,25 @@ func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	routes := getRoutesResponse{
-		Sources:       "/cmp/v1/sources",
-		Layouts:       "/cmp/v1/layouts",
-		Protoboards:   "/cmp/v1/protoboards",
-		Users:         fmt.Sprintf("/cmp/v1/organizations/%s/users", org),
-		AllUsers:      "/cmp/v1/users",
-		Organizations: "/cmp/v1/organizations",
-		Me:            "/cmp/v1/me",
-		Environment:   "/cmp/v1/env",
-		Mappings:      "/cmp/v1/mappings",
-		Dashboards:    "/cmp/v1/dashboards",
-		DashboardsV2:  "/cmp/v2/dashboards",
-		Cells:         "/cmp/v2/cells",
+		Sources:       "/cloudhub/v1/sources",
+		Layouts:       "/cloudhub/v1/layouts",
+		Protoboards:   "/cloudhub/v1/protoboards",
+		Users:         fmt.Sprintf("/cloudhub/v1/organizations/%s/users", org),
+		AllUsers:      "/cloudhub/v1/users",
+		Organizations: "/cloudhub/v1/organizations",
+		Me:            "/cloudhub/v1/me",
+		Environment:   "/cloudhub/v1/env",
+		Mappings:      "/cloudhub/v1/mappings",
+		Dashboards:    "/cloudhub/v1/dashboards",
+		DashboardsV2:  "/cloudhub/v2/dashboards",
+		Cells:         "/cloudhub/v2/cells",
 		Config: getConfigLinksResponse{
-			Self: "/cmp/v1/config",
-			Auth: "/cmp/v1/config/auth",
+			Self: "/cloudhub/v1/config",
+			Auth: "/cloudhub/v1/config/auth",
 		},
 		OrganizationConfig: getOrganizationConfigLinksResponse{
-			Self:      "/cmp/v1/org_config",
-			LogViewer: "/cmp/v1/org_config/logviewer",
+			Self:      "/cloudhub/v1/org_config",
+			LogViewer: "/cloudhub/v1/org_config/logviewer",
 		},
 		Auth: make([]AuthRoute, len(a.AuthRoutes)), // We want to return at least an empty array, rather than null
 		ExternalLinks: getExternalLinksResponse{
@@ -110,9 +110,9 @@ func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			CustomLinks: customLinks,
 		},
 		Flux: getFluxLinksResponse{
-			Self:        "/cmp/v1/flux",
-			AST:         "/cmp/v1/flux/ast",
-			Suggestions: "/cmp/v1/flux/suggestions",
+			Self:        "/cloudhub/v1/flux",
+			AST:         "/cloudhub/v1/flux/ast",
+			Suggestions: "/cloudhub/v1/flux/suggestions",
 		},
 		Addons: make([]getAddonLinksResponse, len(a.AddonURLs)),
 	}
@@ -134,7 +134,7 @@ func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			var emitURL string
 			switch name {
 			case "salt":
-				emitURL = "/cmp/v1/salt"
+				emitURL = "/cloudhub/v1/salt"
 			default:
 				emitURL = url
 			}
