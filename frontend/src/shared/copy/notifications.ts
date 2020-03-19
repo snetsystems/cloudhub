@@ -229,7 +229,7 @@ export const notifyCurrentOrgDeleted = (): Notification => ({
   message: 'Your current organization was deleted.',
 })
 
-//  Cloud Hub Admin Notifications
+//  CloudHub Admin Notifications
 //  ----------------------------------------------------------------------------
 export const notifyMappingDeleted = (
   id: string,

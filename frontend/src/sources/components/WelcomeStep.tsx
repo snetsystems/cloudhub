@@ -26,8 +26,8 @@ class SourceStep extends PureComponent<Props> {
     return (
       <div className="wizard-step--bookend">
         <div className="auth-logo" />
-        <h1>Welcome to Cloud Hub</h1>
-        <p>You can start to use Cloud Hub in a few easy steps</p>
+        <h1>Welcome to CloudHub</h1>
+        <p>You can start to use CloudHub in a few easy steps</p>
       </div>
     )
   }

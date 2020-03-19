@@ -85,7 +85,7 @@ class ManageSources extends PureComponent<Props, State> {
             setActiveKapacitor={this.handleSetActiveKapacitor}
             toggleWizard={this.toggleWizard}
           />
-          <p className="version-number">Cloud Hub Version: {VERSION}</p>
+          <p className="version-number">CloudHub Version: {VERSION}</p>
         </Page.Contents>
         <ConnectionWizard
           isVisible={wizardVisibility}

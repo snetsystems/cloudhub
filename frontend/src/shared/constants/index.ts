@@ -18,8 +18,8 @@ export const PERMISSIONS = {
     displayName: 'View Admin',
   },
   ViewCMP: {
-    description: 'Can use Cloud Hub tools',
-    displayName: 'View Cloud Hub',
+    description: 'Can use CloudHub tools',
+    displayName: 'View CloudHub',
   },
   CreateDatabase: {
     description: 'Can create databases',

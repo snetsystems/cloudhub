@@ -141,7 +141,7 @@ export const getMeAsync = ({shouldResetMe = false} = {}) => async (
 // meChangeOrganizationAsync is for switching the user's current organization.
 //
 // Global links state also needs to be refreshed upon organization change so
-// that Admin Cloud Hub / Current Org User tab's link is valid, but this is
+// that Admin CloudHub / Current Org User tab's link is valid, but this is
 // happening automatically because we are using a browser redirect to reload
 // the application. If at some point we stop using a redirect and instead
 // make it a seamless SPA experience, a la issue #2463, we'll need to make sure
