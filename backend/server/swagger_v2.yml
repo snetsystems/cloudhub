@@ -1,7 +1,7 @@
-openapi: '3.0.0'
+openapi: "3.0.0"
 info:
   title: CloudHub
-  version: 1.0.0
+  version: 1.0.1
 servers:
   - url: /cloudhub/v2
 paths:
@@ -16,38 +16,38 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Cell'
+              $ref: "#/components/schemas/Cell"
       responses:
-        '201':
+        "201":
           description: Added cell
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Cell'
+                $ref: "#/components/schemas/Cell"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     get:
       tags:
         - Cells
       summary: Get all cells
       responses:
-        '200':
+        "200":
           description: all cells
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Cells'
+                $ref: "#/components/schemas/Cells"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/cells/{cellID}':
+                $ref: "#/components/schemas/Error"
+  "/cells/{cellID}":
     get:
       tags:
         - Cells
@@ -60,24 +60,24 @@ paths:
           required: true
           description: ID of cell to update
       responses:
-        '200':
+        "200":
           description: get a single cell
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Cell'
-        '404':
+                $ref: "#/components/schemas/Cell"
+        "404":
           description: cell not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     patch:
       tags:
         - Cells
@@ -88,7 +88,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Cell'
+              $ref: "#/components/schemas/Cell"
       parameters:
         - in: path
           name: cellID
@@ -97,24 +97,24 @@ paths:
           required: true
           description: ID of cell to update
       responses:
-        '200':
+        "200":
           description: Updated cell
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Cell'
-        '404':
+                $ref: "#/components/schemas/Cell"
+        "404":
           description: cell not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     delete:
       tags:
         - Cells
@@ -127,20 +127,20 @@ paths:
           required: true
           description: ID of cell to update
       responses:
-        '204':
+        "204":
           description: delete has been accepted
-        '404':
+        "404":
           description: cell not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /dashboards:
     post:
       tags:
@@ -152,38 +152,38 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Dashboard'
+              $ref: "#/components/schemas/Dashboard"
       responses:
-        '201':
+        "201":
           description: Added dashboard
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dashboard'
+                $ref: "#/components/schemas/Dashboard"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     get:
       tags:
         - Dashboards
       summary: Get all dashboards
       responses:
-        '200':
+        "200":
           description: all dashboards
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dashboards'
+                $ref: "#/components/schemas/Dashboards"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/dashboards/{dashboardID}':
+                $ref: "#/components/schemas/Error"
+  "/dashboards/{dashboardID}":
     get:
       tags:
         - Dashboards
@@ -196,24 +196,24 @@ paths:
           required: true
           description: ID of dashboard to update
       responses:
-        '200':
+        "200":
           description: get a single dashboard
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dashboard'
-        '404':
+                $ref: "#/components/schemas/Dashboard"
+        "404":
           description: dashboard not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     patch:
       tags:
         - Dashboards
@@ -224,7 +224,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Dashboard'
+              $ref: "#/components/schemas/Dashboard"
       parameters:
         - in: path
           name: dashboardID
@@ -233,24 +233,24 @@ paths:
           required: true
           description: ID of dashboard to update
       responses:
-        '200':
+        "200":
           description: Updated dashboard
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dashboard'
-        '404':
+                $ref: "#/components/schemas/Dashboard"
+        "404":
           description: dashboard not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     delete:
       tags:
         - Dashboards
@@ -263,20 +263,20 @@ paths:
           required: true
           description: ID of dashboard to update
       responses:
-        '204':
+        "204":
           description: delete has been accepted
-        '404':
+        "404":
           description: dashboard not found
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 components:
   schemas:
     Link:
@@ -293,7 +293,7 @@ components:
       readOnly: true
       properties:
         self:
-          $ref: '#/components/schemas/Link'
+          $ref: "#/components/schemas/Link"
       required: [self]
     Field:
       type: object
@@ -324,7 +324,7 @@ components:
           description: Args are the arguments to the function
           type: array
           items:
-            $ref: '#/components/schemas/Field'
+            $ref: "#/components/schemas/Field"
     QueryConfig:
       type: object
       required:
@@ -365,7 +365,7 @@ components:
         fields:
           type: array
           items:
-            $ref: '#/components/schemas/Field'
+            $ref: "#/components/schemas/Field"
         range:
           type: object
           properties:
@@ -406,7 +406,7 @@ components:
           format: url
           description: Optional URI for data source for this query
         queryConfig:
-          $ref: '#/components/schemas/QueryConfig'
+          $ref: "#/components/schemas/QueryConfig"
     Axis:
       type: object
       description: A description of a particular axis for a visualization
@@ -479,21 +479,21 @@ components:
       properties:
         type:
           type: string
-          enum: ['cloudhub-v1']
+          enum: ["cloudhub-v1"]
         queries:
           type: array
           items:
-            $ref: '#/components/schemas/DashboardQuery'
+            $ref: "#/components/schemas/DashboardQuery"
         axes:
           description: The viewport for a Cell's visualizations
           type: object
           properties:
             x:
-              $ref: '#/components/schemas/Axis'
+              $ref: "#/components/schemas/Axis"
             y:
-              $ref: '#/components/schemas/Axis'
+              $ref: "#/components/schemas/Axis"
             y2:
-              $ref: '#/components/schemas/Axis'
+              $ref: "#/components/schemas/Axis"
         graphType:
           description: The viewport for a cell's graph/visualization
           type: string
@@ -511,7 +511,7 @@ components:
           description: Colors define color encoding of data into a visualization
           type: array
           items:
-            $ref: '#/components/schemas/DashboardColor'
+            $ref: "#/components/schemas/DashboardColor"
         legend:
           description: Legend define encoding of data into a cell's legend
           type: object
@@ -539,7 +539,7 @@ components:
                 indicating whether the time axis will be displayed vertically
               type: boolean
             sortBy:
-              $ref: '#/components/schemas/RenamableField'
+              $ref: "#/components/schemas/RenamableField"
             wrapping:
               description: wrapping describes the text wrapping style to be used in table cells
               type: string
@@ -558,7 +558,7 @@ components:
             customization options
           type: array
           items:
-            $ref: '#/components/schemas/RenamableField'
+            $ref: "#/components/schemas/RenamableField"
         timeFormat:
           description: >-
             timeFormat describes the display format for time values according to
@@ -580,11 +580,11 @@ components:
       properties:
         type:
           type: string
-          enum: ['empty']
+          enum: ["empty"]
     Cell:
       properties:
         links:
-          $ref: '#/components/schemas/Links'
+          $ref: "#/components/schemas/Links"
         id:
           readOnly: true
           type: string
@@ -592,17 +592,17 @@ components:
           type: string
         visualization:
           oneOf:
-            - $ref: '#/components/schemas/V1Visualization'
-            - $ref: '#/components/schemas/EmptyVisualization'
+            - $ref: "#/components/schemas/V1Visualization"
+            - $ref: "#/components/schemas/EmptyVisualization"
     Cells:
       type: object
       properties:
         links:
-          $ref: '#/components/schemas/Links'
+          $ref: "#/components/schemas/Links"
         cells:
           type: array
           items:
-            $ref: '#/components/schemas/Cell'
+            $ref: "#/components/schemas/Cell"
     DashboardCell:
       type: object
       properties:
@@ -624,7 +624,7 @@ components:
     Dashboard:
       properties:
         links:
-          $ref: '#/components/schemas/Links'
+          $ref: "#/components/schemas/Links"
         id:
           readOnly: true
           type: string
@@ -633,16 +633,16 @@ components:
         cells:
           type: array
           items:
-            $ref: '#/components/schemas/DashboardCell'
+            $ref: "#/components/schemas/DashboardCell"
     Dashboards:
       type: object
       properties:
         links:
-          $ref: '#/components/schemas/Links'
+          $ref: "#/components/schemas/Links"
         dashboards:
           type: array
           items:
-            $ref: '#/components/schemas/Dashboards'
+            $ref: "#/components/schemas/Dashboards"
     Error:
       properties:
         code:

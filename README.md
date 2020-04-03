@@ -1,4 +1,4 @@
-# CloudHub - 1.0.0
+# CloudHub - 1.0.1
 
 ## Intro
 
