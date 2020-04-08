@@ -287,13 +287,14 @@ export function runLocalCpGetDirTelegraf(
 export function runLocalPkgInstallTelegraf(
   pUrl: string,
   pToken: string,
-  pMinionId: string
+  pMinionId: string,
+  pSelectCollector: string
 ) {
   const params: Params = {
     client: 'local',
     fun: 'pkg.install',
     kwarg: {
-      sources: '[{"telegraf": "salt://telegraf/telegraf-1.12.4-1.x86_64.rpm"}]',
+      sources: `[{"telegraf": "salt://telegraf/${pSelectCollector}"}]`,
     },
     tgt_type: '',
     tgt: '',
