@@ -58,5 +58,11 @@ export interface CheckRouter {
 export interface SaltDirFile {
   files: SaltDirFileInfo[]
   isLoading?: boolean
-  isFailed?: boolean
+  status?: string | GetSaltDirectoryInfo
+}
+
+export interface GetSaltDirectoryInfo {
+  data: {return: string[]}
+  status: number
+  statusText: string
 }

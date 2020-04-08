@@ -11,6 +11,7 @@ import AgentControlConsole from 'src/agent_admin/components/AgentControlConsole'
 
 // APIs
 import {getMinionKeyListAllAsync} from 'src/agent_admin/apis'
+import {getRunnerSaltCmdDirectory} from 'src/shared/apis/saltStack'
 
 // SaltStack
 import {
@@ -26,10 +27,21 @@ import {notifyAgentConnectFailed} from 'src/agent_admin/components/notifications
 
 // const
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
+import {
+  GET_STATUS,
+  SELECTBOX_TEXT,
+  NETWORK_ACCESS,
+  AGENT_COLLECTOR_DIRECTORY,
+} from 'src/agent_admin/constants'
 
 // Types
 import {RemoteDataState, Notification, NotificationFunc} from 'src/types'
-import {Minion} from 'src/agent_admin/type'
+import {
+  Minion,
+  GetAgentDirectoryInfo,
+  AgentDirFile,
+  AgentDirFileInfo,
+} from 'src/agent_admin/type'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -50,11 +62,13 @@ interface State {
   controlPageStatus: RemoteDataState
   minionLog: string
   isAllCheck: boolean
+  telegrafList: AgentDirFile
+  chooseMenu: string
 }
 
 @ErrorHandling
 export class AgentControl extends PureComponent<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props)
     this.state = {
       minionLog: '<< Empty >>',
@@ -63,10 +77,12 @@ export class AgentControl extends PureComponent<Props, State> {
       Minions: [],
       isAllCheck: false,
       controlPageStatus: RemoteDataState.NotStarted,
+      telegrafList: {files: [], isLoading: true},
+      chooseMenu: SELECTBOX_TEXT.DEFAULT,
     }
   }
 
-  getWheelKeyListAll = async () => {
+  public getWheelKeyListAll = async () => {
     const {saltMasterUrl, saltMasterToken} = this.props
     const hostListObject = await getMinionKeyListAllAsync(
       saltMasterUrl,
@@ -91,6 +107,14 @@ export class AgentControl extends PureComponent<Props, State> {
     }
   }
 
+  public componentDidMount() {
+    try {
+      this.getAgentDirectoryItems()
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   public async componentDidUpdate(nextProps) {
     if (nextProps.saltMasterToken !== this.props.saltMasterToken) {
       if (
@@ -104,6 +128,96 @@ export class AgentControl extends PureComponent<Props, State> {
           Minions: [],
         })
       }
+    }
+  }
+
+  public getAgentDirectoryItems = async () => {
+    const {saltMasterUrl, saltMasterToken} = this.props
+
+    const getTelegrafList: AgentDirFile = await this.getRunnerSaltCmdDirectoryData(
+      saltMasterUrl,
+      saltMasterToken,
+      AGENT_COLLECTOR_DIRECTORY.FULL_DIR
+    )
+
+    this.setState({
+      telegrafList: getTelegrafList,
+    })
+  }
+
+  public getRunnerSaltCmdDirectoryData = async (
+    url: string,
+    token: string,
+    fullDir: string
+  ): Promise<AgentDirFile> => {
+    let applications: AgentDirFileInfo[] = []
+    const getDirectoryItems: GetAgentDirectoryInfo = await getRunnerSaltCmdDirectory(
+      url,
+      token,
+      fullDir
+    )
+
+    if (
+      getDirectoryItems.status === 200 &&
+      getDirectoryItems.statusText === 'OK'
+    ) {
+      const getData: string = getDirectoryItems.data.return[0]
+      if (
+        getData.length === 0 ||
+        getData.indexOf('No such file or directory') > -1
+      ) {
+        applications = [
+          this.generatorFileInfo({
+            time: '',
+            item: GET_STATUS.EMPTY,
+            fullDir,
+          }),
+        ]
+      } else {
+        if (getData.indexOf('\n') > -1) {
+          applications = getData.split('\n').map((item: string) => {
+            const time: string = item.substring(0, item.indexOf(' '))
+            return this.generatorFileInfo({time, item, fullDir})
+          })
+        } else {
+          const time: string = getData.substring(0, getData.indexOf(' '))
+          applications = [
+            this.generatorFileInfo({time, item: getData, fullDir}),
+          ]
+        }
+
+        applications.sort(function(a, b) {
+          return b.updateGetTime - a.updateGetTime
+        })
+      }
+    }
+
+    return {
+      files: applications,
+      isLoading: false,
+      status:
+        getDirectoryItems.status === 200 &&
+        getDirectoryItems.statusText === 'OK'
+          ? NETWORK_ACCESS.SUCCESS
+          : getDirectoryItems,
+    }
+  }
+
+  public generatorFileInfo = ({
+    time,
+    item,
+    fullDir,
+  }: {
+    time: string
+    item: string
+    fullDir: string
+  }): AgentDirFileInfo => {
+    return {
+      updateTime: time,
+      updateGetTime: new Date(time).getTime(),
+      application: item.replace(time, '').trim(),
+      applicationFullName: item,
+      fullPathDirectory: fullDir,
     }
   }
 
@@ -232,7 +346,7 @@ export class AgentControl extends PureComponent<Props, State> {
 
   public onClickInstallCall = () => {
     const {saltMasterUrl, saltMasterToken} = this.props
-    const {Minions} = this.state
+    const {Minions, chooseMenu} = this.state
 
     const host = Minions.filter(m => m.isCheck === true).map(
       checkData => checkData.host
@@ -243,7 +357,8 @@ export class AgentControl extends PureComponent<Props, State> {
     const getLocalPkgInstallTelegrafPromise = runLocalPkgInstallTelegraf(
       saltMasterUrl,
       saltMasterToken,
-      _.values(host).toString()
+      _.values(host).toString(),
+      chooseMenu
     )
 
     getLocalPkgInstallTelegrafPromise.then(pLocalPkgInstallTelegrafData => {
@@ -272,6 +387,14 @@ export class AgentControl extends PureComponent<Props, State> {
       })
       this.getWheelKeyListAll()
     })
+  }
+
+  public handleOnChoose = ({selectItem}: {selectItem: string}): void => {
+    if (selectItem !== GET_STATUS.EMPTY) {
+      this.setState({
+        chooseMenu: selectItem,
+      })
+    }
   }
 
   render() {
@@ -303,7 +426,13 @@ export class AgentControl extends PureComponent<Props, State> {
   }
 
   private renderAgentPageTop = () => {
-    const {Minions, controlPageStatus, isAllCheck} = this.state
+    const {
+      Minions,
+      controlPageStatus,
+      isAllCheck,
+      telegrafList,
+      chooseMenu,
+    } = this.state
 
     return (
       <AgentControlTable
@@ -316,6 +445,9 @@ export class AgentControl extends PureComponent<Props, State> {
         isAllCheck={isAllCheck}
         handleAllCheck={this.handleAllCheck}
         handleMinionCheck={this.handleMinionCheck}
+        telegrafList={telegrafList}
+        handleOnChoose={this.handleOnChoose}
+        chooseMenu={chooseMenu}
       />
     )
   }

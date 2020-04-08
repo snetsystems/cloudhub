@@ -44,7 +44,9 @@ import {
   SaltDirFileInfo,
   CheckRouter,
   SaltDirFile,
+  GetSaltDirectoryInfo,
 } from 'src/addon/128t/types'
+import {NETWORK_ACCESS, GET_STATUS} from 'src/agent_admin/constants'
 import {cellLayoutInfo} from 'src/addon/128t/containers/SwanSdplexStatusPage'
 import {ComponentStatus} from 'src/reusable_ui/types'
 import {Addon} from 'src/types/auth'
@@ -95,14 +97,8 @@ interface State {
 class GridLayoutRenderer extends PureComponent<Props, State> {
   private cellBackgroundColor: string = DEFAULT_CELL_BG_COLOR
   private cellTextColor: string = DEFAULT_CELL_TEXT_COLOR
-  private NetworkAccess = {
-    Success: '200, OK',
-  }
-  private GetStatus = {
-    Empty: '<< Empty >>',
-  }
 
-  private defaultCollectorDirectory = '/srv/salt/prod/dmt/'
+  private DEFAULT_COLLECTOR_DIRECTORY = '/srv/salt/prod/dmt/'
 
   constructor(props: Props) {
     super(props)
@@ -146,9 +142,9 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     token: string,
     fullDir: string,
     dir: string
-  ) => {
+  ): Promise<SaltDirFile> => {
     let applications: SaltDirFileInfo[] = []
-    const getDirectoryItems = await getRunnerSaltCmdDirectory(
+    const getDirectoryItems: GetSaltDirectoryInfo = await getRunnerSaltCmdDirectory(
       url,
       token,
       fullDir
@@ -166,7 +162,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
         applications = [
           this.generatorFileInfo({
             time: '',
-            item: this.GetStatus.Empty,
+            item: GET_STATUS.EMPTY,
             fullDir,
             dir,
           }),
@@ -196,7 +192,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       status:
         getDirectoryItems.status === 200 &&
         getDirectoryItems.statusText === 'OK'
-          ? this.NetworkAccess.Success
+          ? NETWORK_ACCESS.SUCCESS
           : getDirectoryItems,
     }
   }
@@ -226,14 +222,14 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     const {addons, notify} = this.props
     const salt = addons.find(addon => addon.name === 'salt')
 
-    const getFirmwareData = await this.getRunnerSaltCmdDirectoryData(
+    const getFirmwareData: SaltDirFile = await this.getRunnerSaltCmdDirectoryData(
       salt.url,
       salt.token,
       SALT_FULL_DIRECTORY.FIRMWARE,
       SALT_MIN_DIRECTORY.FIRMWARE
     )
 
-    const getConfigData = await this.getRunnerSaltCmdDirectoryData(
+    const getConfigData: SaltDirFile = await this.getRunnerSaltCmdDirectoryData(
       salt.url,
       salt.token,
       SALT_FULL_DIRECTORY.CONFIG,
@@ -241,7 +237,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     )
 
     const isGetFailed = [getFirmwareData, getConfigData]
-      .map(obj => obj.status === this.NetworkAccess.Success)
+      .map(obj => obj.status === NETWORK_ACCESS.SUCCESS)
       .includes(true)
 
     if (!isGetFailed) {
@@ -291,7 +287,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   }
 
   public handleOnChoose = ({selectItem}: {selectItem: string}): void => {
-    if (selectItem !== this.GetStatus.Empty) {
+    if (selectItem !== GET_STATUS.EMPTY) {
       this.setState({
         isModalVisible: !this.state.isModalVisible,
         chooseMenu: selectItem,
@@ -500,7 +496,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     buttonName = buttonName.toLowerCase()
     this.setState({
       focusedBtn: buttonName,
-      sendToDirectory: this.defaultCollectorDirectory + buttonName + '/',
+      sendToDirectory: this.DEFAULT_COLLECTOR_DIRECTORY + buttonName + '/',
     })
   }
 

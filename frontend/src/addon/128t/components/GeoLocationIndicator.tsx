@@ -7,7 +7,7 @@ interface Props {
 }
 
 const GeoLocationIndicator: SFC<Props> = locationCoordinates => {
-  let locationText = `<p>${locationCoordinates.locationCoordinates.replace(
+  const locationText = `<p>${locationCoordinates.locationCoordinates.replace(
     '/',
     ''
   )}</p>`

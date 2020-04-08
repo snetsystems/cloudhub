@@ -179,7 +179,7 @@ class RouterTable extends PureComponent<Props, State> {
             handleFocusedBtnName={handleFocusedBtnName}
             items={this.extractionFilesName(firmware.files)}
             buttonStatus={firmware.isLoading}
-            isDisabled={firmware.isFailed}
+            isDisabled={false}
           />
           <this.HeadingButton
             buttonName={'Config'}
@@ -187,7 +187,7 @@ class RouterTable extends PureComponent<Props, State> {
             handleFocusedBtnName={handleFocusedBtnName}
             items={this.extractionFilesName(config.files)}
             buttonStatus={config.isLoading}
-            isDisabled={config.isFailed}
+            isDisabled={false}
           />
           <GridLayoutSearchBar
             placeholder="Filter by Router..."
