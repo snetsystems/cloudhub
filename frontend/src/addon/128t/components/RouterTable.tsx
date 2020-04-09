@@ -396,6 +396,7 @@ class RouterTable extends PureComponent<Props, State> {
       focusedAssetId,
       onClickTableRow,
       handleRouterCheck,
+      handleOnClickRouterName,
     } = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
@@ -412,6 +413,7 @@ class RouterTable extends PureComponent<Props, State> {
           <FancyScrollbar
             children={sortedRouters.map((r: Router, i: number) => (
               <RouterTableRow
+                handleOnClickRouterName={handleOnClickRouterName}
                 handleRouterCheck={handleRouterCheck}
                 onClickTableRow={onClickTableRow}
                 focusedAssetId={focusedAssetId}

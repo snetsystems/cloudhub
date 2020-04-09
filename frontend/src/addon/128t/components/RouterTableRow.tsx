@@ -8,6 +8,8 @@ import {transBps} from 'src/shared/utils/units'
 import {TableBodyRowItem} from 'src/addon/128t/reusable/layout'
 import GeoLocationIndicator from 'src/addon/128t/components/GeoLocationIndicator'
 
+import DataPopupFunction from 'src/addon/128t/components/DataPopupFunction'
+
 interface Props {
   isCheck: boolean
   handleRouterCheck: ({router: Router}) => void
@@ -26,6 +28,7 @@ const RouterTableRow = ({
   focusedAssetId,
   router,
   isCheck,
+  handleOnClickRouterName,
 }: Props) => {
   const {
     assetId,
@@ -116,7 +119,26 @@ const RouterTableRow = ({
         }
         width={CHECKBOX}
       />
-      <TableBodyRowItem title={assetId} width={ASSETID} />
+      <TableBodyRowItem
+        title={
+          <div
+            onClick={e => {
+              console.log(router)
+              handleOnClickRouterName({_this: this, eTarget: e.target, router})
+              e.stopPropagation()
+            }}
+          >
+            {assetId}
+            {/* <DataPopupFunction
+              func={{name: assetId}}
+              // onClickFunction={(funcName, funcExample) => {
+              //   console.log('hello')
+              // }}
+            /> */}
+          </div>
+        }
+        width={ASSETID}
+      />
       <TableBodyRowItem title={ipAddress} width={IPADDRESS} />
       <TableBodyRowItem title={role} width={ROLE} />
       <TableBodyRowItem

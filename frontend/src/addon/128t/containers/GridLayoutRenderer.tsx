@@ -13,6 +13,7 @@ import TopSourcesTable from 'src/addon/128t/components/TopSourcesTable'
 import TopSessionsTable from 'src/addon/128t/components/TopSessionsTable'
 import RouterMaps from 'src/addon/128t/components/RouterMaps'
 import RouterModal from 'src/addon/128t/components/RouterModal'
+import DataPopupFunction from 'src/addon/128t/components/DataPopupFunction'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 // Apis
@@ -86,12 +87,15 @@ interface State {
   rowHeight: number
   isRoutersAllCheck: boolean
   isModalVisible: boolean
+  isDataPopupVisible: boolean
   chooseMenu: string
   checkRouters: CheckRouter[]
   firmware: SaltDirFile
   config: SaltDirFile
   focusedBtn: string
   sendToDirectory: string
+  popupData: {}
+  popupFocuse: string
 }
 
 class GridLayoutRenderer extends PureComponent<Props, State> {
@@ -107,12 +111,15 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       rowHeight: this.calculateRowHeight(),
       isRoutersAllCheck: false,
       isModalVisible: false,
+      isDataPopupVisible: false,
       checkRouters: [],
       chooseMenu: '',
       firmware: {files: [], isLoading: true},
       config: {files: [], isLoading: true},
       focusedBtn: '',
       sendToDirectory: '',
+      popupData: {},
+      popupFocuse: '',
     }
   }
 
@@ -353,6 +360,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
               handleRoutersAllCheck={this.handleRoutersAllCheck}
               firmware={firmware}
               config={config}
+              handleOnClickRouterName={this.onClickRouterName}
             />
           </div>
           <div key="leafletMap" className="dash-graph" style={this.cellStyle}>
@@ -407,9 +415,36 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
           buttonDisabled={false}
           buttonName={''}
         />
+        {/* <DataPopupFunction
+          handleOnClick={this.handleOnClickDataPopup}
+          handleOnMouseLeave={() => console.log('onMouseLeave')}
+          func={{name: 'asd'}}
+          onClickFunction={(funcName, funcExample) => {
+            console.log('hello')
+          }}
+        /> */}
       </>
     )
   }
+
+  private onClickRouterName = data => {
+    this.refs = data.eTarget
+    this[data.router.name] = this.refs
+    const routerPosition = this[data.router.name].getBoundingClientRect()
+    console.log('data', data)
+    console.log('this', this)
+    console.log(routerPosition)
+  }
+
+  private DataPopupToggle = () => {
+    this.setState({isDataPopupVisible: !this.state.isDataPopupVisible})
+  }
+
+  private handleOnClickDataPopup = () => {
+    console.log('handleOnClickDataPopup')
+    this.DataPopupToggle
+  }
+
   private onChangeSendToDirectory = (
     e: ChangeEvent<HTMLInputElement>
   ): void => {

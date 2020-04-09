@@ -5,9 +5,9 @@
     overflow: hidden
   }
 
-  .hosts-table--td {
-    overflow: hidden
-  }
+  // .hosts-table--td {
+  //   overflow: hidden
+  // }
 
   .container-fluid {
     height: auto;
@@ -267,6 +267,13 @@
     font-weight: 600;
   }
 
+
+  /*
+
+transition-property: transform;
+    touch-action: none;
+    transform: translate(0px, 0px);
+    */
 }
 
 
