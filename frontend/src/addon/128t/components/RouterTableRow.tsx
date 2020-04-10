@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {MouseEvent} from 'react'
 import classnames from 'classnames'
 import {unitIndicator, usageIndacator} from 'src/addon/128t/reusable'
 import {ROUTER_TABLE_SIZING} from 'src/addon/128t/constants'
@@ -7,8 +7,7 @@ import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
 import {transBps} from 'src/shared/utils/units'
 import {TableBodyRowItem} from 'src/addon/128t/reusable/layout'
 import GeoLocationIndicator from 'src/addon/128t/components/GeoLocationIndicator'
-
-import DataPopupFunction from 'src/addon/128t/components/DataPopupFunction'
+import ReactTooltip from 'react-tooltip'
 
 interface Props {
   isCheck: boolean
@@ -20,6 +19,10 @@ interface Props {
     topSessions: TopSession[],
     focusedAssetId: string
   ) => () => void
+  handleOnClickRouterName: (data: {
+    _event: MouseEvent<HTMLElement>
+    router: Router
+  }) => void
 }
 
 const RouterTableRow = ({
@@ -28,7 +31,6 @@ const RouterTableRow = ({
   focusedAssetId,
   router,
   isCheck,
-  handleOnClickRouterName,
 }: Props) => {
   const {
     assetId,
@@ -122,19 +124,35 @@ const RouterTableRow = ({
       <TableBodyRowItem
         title={
           <div
-            onClick={e => {
-              console.log(router)
-              handleOnClickRouterName({_this: this, eTarget: e.target, router})
-              e.stopPropagation()
-            }}
+            className="table-connect-tips cursor--pointer table-item"
+            data-for="table-connect-tips-tooltip"
+            data-tip={`${assetId + assetId + assetId}
+${assetId + assetId + assetId}
+${assetId + assetId + assetId}
+${assetId + assetId + assetId}
+${assetId + assetId + assetId}
+${assetId + assetId + assetId}
+${assetId + assetId + assetId}
+${assetId + assetId + assetId}
+${assetId + assetId + assetId}
+${assetId + assetId + assetId}
+${assetId + assetId + assetId}
+${assetId + assetId + assetId}
+${assetId + assetId + assetId}
+${assetId + assetId + assetId}
+${assetId + assetId + assetId}`}
           >
-            {assetId}
-            {/* <DataPopupFunction
-              func={{name: assetId}}
-              // onClickFunction={(funcName, funcExample) => {
-              //   console.log('hello')
-              // }}
-            /> */}
+            <div>{assetId}</div>
+            <ReactTooltip
+              id="table-connect-tips-tooltip"
+              effect="solid"
+              html={true}
+              place="right"
+              class="influx-tooltip"
+              event={'click'}
+              multiline={true}
+              // eventOff={'mouseleave'}
+            />
           </div>
         }
         width={ASSETID}

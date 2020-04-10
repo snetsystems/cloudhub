@@ -1,5 +1,10 @@
 // Libraries
-import React, {PureComponent, CSSProperties, ChangeEvent} from 'react'
+import React, {
+  PureComponent,
+  CSSProperties,
+  ChangeEvent,
+  MouseEvent,
+} from 'react'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 import {connect} from 'react-redux'
 
@@ -13,7 +18,7 @@ import TopSourcesTable from 'src/addon/128t/components/TopSourcesTable'
 import TopSessionsTable from 'src/addon/128t/components/TopSessionsTable'
 import RouterMaps from 'src/addon/128t/components/RouterMaps'
 import RouterModal from 'src/addon/128t/components/RouterModal'
-import DataPopupFunction from 'src/addon/128t/components/DataPopupFunction'
+// import DataPopupFunction from 'src/addon/128t/components/DataPopupFunction'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 // Apis
@@ -96,6 +101,7 @@ interface State {
   sendToDirectory: string
   popupData: {}
   popupFocuse: string
+  routertableRect: {top: number; right: number}
 }
 
 class GridLayoutRenderer extends PureComponent<Props, State> {
@@ -103,6 +109,8 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   private cellTextColor: string = DEFAULT_CELL_TEXT_COLOR
 
   private DEFAULT_COLLECTOR_DIRECTORY = '/srv/salt/prod/dmt/'
+  private refDataPopup = React.createRef()
+  private routertableRef = React.createRef<HTMLDivElement>()
 
   constructor(props: Props) {
     super(props)
@@ -120,6 +128,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       sendToDirectory: '',
       popupData: {},
       popupFocuse: '',
+      routertableRect: {top: null, right: null},
     }
   }
 
@@ -142,6 +151,22 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     } catch (e) {
       console.error(e)
     }
+  }
+  //eslint
+  public componentDidUpdate(prevProps, prevState) {
+    const {top, right} = this.routertableRef.current.getBoundingClientRect()
+
+    const routertableRect = {top, right}
+
+    if (
+      prevState.routertableRect.top !== routertableRect.top ||
+      prevState.routertableRect.right !== routertableRect.right
+    ) {
+      // console.log('123123')
+      // this.setState({routertableRect})
+    }
+
+    // console.log(prevState.routertableRect.top !== routertableRect.top)
   }
 
   public getRunnerSaltCmdDirectoryData = async (
@@ -320,6 +345,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       firmware,
       config,
       sendToDirectory,
+      isDataPopupVisible,
     } = this.state
 
     const checkRouterData: Router[] = routersData.map(
@@ -345,7 +371,12 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
           isDraggable={isSwanSdplexStatus}
           isResizable={isSwanSdplexStatus}
         >
-          <div key="routers" className="dash-graph" style={this.cellStyle}>
+          <div
+            key="routers"
+            ref={this.routertableRef}
+            className="dash-graph router--table"
+            style={this.cellStyle}
+          >
             <RouterTable
               routers={checkRouterData}
               onClickTableRow={onClickTableRow}
@@ -360,7 +391,8 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
               handleRoutersAllCheck={this.handleRoutersAllCheck}
               firmware={firmware}
               config={config}
-              handleOnClickRouterName={this.onClickRouterName}
+              // handleOnClickRouterName={this.onClickRouterName}
+              // hanldeOnDismiss={this.handleDataPopupClose}
             />
           </div>
           <div key="leafletMap" className="dash-graph" style={this.cellStyle}>
@@ -415,35 +447,49 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
           buttonDisabled={false}
           buttonName={''}
         />
-        {/* <DataPopupFunction
-          handleOnClick={this.handleOnClickDataPopup}
-          handleOnMouseLeave={() => console.log('onMouseLeave')}
-          func={{name: 'asd'}}
-          onClickFunction={(funcName, funcExample) => {
-            console.log('hello')
-          }}
-        /> */}
+        {/* {isDataPopupVisible ? (
+          <DataPopupFunction
+            handleOnClick={this.handleOnClickDataPopup}
+            handleOnMouseLeave={() => console.log('onMouseLeave')}
+            hanldeOnDismiss={this.handleDataPopupClose}
+            data={{name: 'asd'}}
+            popupPosition={this.state.popupPosition}
+          />
+        ) : null} */}
       </>
     )
   }
 
-  private onClickRouterName = data => {
-    this.refs = data.eTarget
-    this[data.router.name] = this.refs
-    const routerPosition = this[data.router.name].getBoundingClientRect()
-    console.log('data', data)
-    console.log('this', this)
-    console.log(routerPosition)
-  }
+  // private onClickRouterName = (data: {
+  //   _event: MouseEvent<HTMLElement>
+  //   router: Router
+  // }): void => {
+  //   const {_event, router} = data
+  //   const {assetId} = router
 
-  private DataPopupToggle = () => {
-    this.setState({isDataPopupVisible: !this.state.isDataPopupVisible})
-  }
+  //   this[assetId] = _event.target
+  //   this[assetId].ref = this.refDataPopup
 
-  private handleOnClickDataPopup = () => {
-    console.log('handleOnClickDataPopup')
-    this.DataPopupToggle
-  }
+  //   const routerPosition = this[assetId].getBoundingClientRect()
+  //   const {top, right} = routerPosition
+
+  //   console.log(routerPosition)
+
+  //   this.setState({popupPosition: {top, right}})
+  //   this.handleDataPopupOpen()
+  // }
+
+  // private handleDataPopupOpen = () => {
+  //   this.setState({isDataPopupVisible: true})
+  // }
+
+  // private handleDataPopupClose = () => {
+  //   this.setState({isDataPopupVisible: false})
+  // }
+
+  // private handleOnClickDataPopup = () => {
+  //   console.log('handleOnClickDataPopup')
+  // }
 
   private onChangeSendToDirectory = (
     e: ChangeEvent<HTMLInputElement>

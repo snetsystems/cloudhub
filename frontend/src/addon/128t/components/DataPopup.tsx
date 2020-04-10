@@ -9,15 +9,18 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 // import TooltipLink from 'src/flux/components/flux_functions_toolbar/TooltipLink'
 
 // Types
-import {FluxToolbarFunction} from 'src/types/flux'
+// import {FluxToolbarFunction} from 'src/types/flux'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
-  func: FluxToolbarFunction
+  // handleOnClick: () => void
+  // handleOnMouseLeave: () => void
+  // hanldeOnDismiss: () => void
   onDismiss: () => void
-  tipPosition?: {top: number; right: number}
+  data: {name: string}
+  popupPosition: {top: number; right: number}
 }
 
 interface State {
@@ -36,8 +39,8 @@ class DataPopup extends PureComponent<Props, State> {
   }
 
   public componentDidMount() {
-    const {top, height} = this.tooltipRef.current.getBoundingClientRect()
-    console.log('DataPopup', this.tooltipRef.current.getBoundingClientRect())
+    // const {top, height} = this.tooltipRef.current.getBoundingClientRect()
+    // console.log('DataPopup', this.tooltipRef.current.getBoundingClientRect())
     // if (bottom > window.innerHeight) {
     //   this.setState({bottomPosition: height / 2})
     // }
@@ -54,6 +57,7 @@ class DataPopup extends PureComponent<Props, State> {
           style={this.stylePosition}
           className={this.handleToolTipClassName}
           ref={this.tooltipRef}
+          onBlur={this.props.onDismiss}
         >
           <button
             className="flux-functions-toolbar--tooltip-dismiss"
@@ -81,37 +85,20 @@ class DataPopup extends PureComponent<Props, State> {
     )
   }
 
-  // private get handleCaretClassName() {
-  //   return 'flux-functions-toolbar--tooltip-caret'
-  // }
-
   private get handleToolTipClassName() {
     return 'flux-functions-toolbar--tooltip'
   }
 
-  // private get styleCaretPosition(): CSSProperties {
-  //   const {
-  //     tipPosition: {top, left},
-  //   } = this.props
-  //   return {
-  //     top: `${Math.min(top, window.innerHeight)}px`,
-  //     left: `${left + 4}px`,
-  //   }
-  // }
-
   private get stylePosition(): CSSProperties {
     const {
-      tipPosition: {top, right},
+      popupPosition: {top, right},
     } = this.props
-    const {bottomPosition} = this.state
-    console.log('DataPopup stylePosition', this.props.tipPosition)
+    // const {bottomPosition} = this.state
+    console.log('DataPopup stylePosition', this.props.popupPosition)
     const position = {
-      top: '0px',
-      left: `${0}px`,
-      // left: `${right - 2}px`,
+      top: `${top}px`,
+      left: `${right}px`,
     }
-
-    console.log({position})
     return position
   }
 

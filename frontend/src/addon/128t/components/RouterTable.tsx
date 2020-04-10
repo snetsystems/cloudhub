@@ -1,5 +1,5 @@
 // Libraries
-import React, {PureComponent} from 'react'
+import React, {PureComponent, MouseEvent} from 'react'
 import _ from 'lodash'
 import memoize from 'memoize-one'
 
@@ -54,6 +54,10 @@ export interface Props {
   handleRouterCheck: ({router: Router}) => void
   handleRoutersAllCheck: () => void
   handleFocusedBtnName: ({buttonName: string}) => void
+  handleOnClickRouterName: (data: {
+    _event: MouseEvent<HTMLElement>
+    router: Router
+  }) => void
   firmware: SaltDirFile
   config: SaltDirFile
 }

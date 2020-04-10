@@ -267,15 +267,22 @@
     font-weight: 600;
   }
 
+  .cursor--pointer {
+    cursor: pointer;
+  }
 
-  /*
+  .table-item {
+    width: 100%;
+  }
 
-transition-property: transform;
-    touch-action: none;
-    transform: translate(0px, 0px);
-    */
+  .flux-functions-toolbar--tooltip {
+    transform: none;
+  }
+
+
 }
 
+.test_locationCoordinates {}
 
 /***** routerMap start *****/
 

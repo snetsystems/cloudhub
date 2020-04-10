@@ -4,15 +4,15 @@ import React, {PureComponent, createRef} from 'react'
 // Component
 import DataPopup from 'src/addon/128t/components/DataPopup'
 
-// Types
-import {FluxToolbarFunction} from 'src/types/flux'
-
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
-  func: FluxToolbarFunction
-  onClickFunction: (funcName: string, funcExample: string) => void
+  handleOnClick: () => void
+  handleOnMouseLeave: () => void
+  hanldeOnDismiss: () => void
+  data: {name: string}
+  popupPosition: {top: number; right: number}
 }
 
 interface State {
@@ -26,21 +26,24 @@ class DataPopupFunction extends PureComponent<Props, State> {
 
   constructor(props: Props) {
     super(props)
-
-    this.state = {isActive: false, clickPosition: undefined}
+    this.state = {
+      isActive: false,
+      clickPosition: {top: null, right: null},
+    }
   }
+
   public render() {
-    const {func} = this.props
+    const {data} = this.props
     console.log('DataPopupFunction')
     return (
       <div
         className="flux-functions-toolbar--function"
         ref={this.functionRef}
-        onMouseEnter={this.handleClick}
-        onMouseLeave={this.handleBlur}
+        onClick={this.handleClick}
+        onMouseLeave={this.handleStopHover}
       >
         {this.tooltip}
-        <dd onClick={this.handleClickFunction}>{func.name}</dd>
+        <dd onClick={this.handleClickFunction}>{data.name}</dd>
       </div>
     )
   }
@@ -49,32 +52,36 @@ class DataPopupFunction extends PureComponent<Props, State> {
     if (this.state.isActive) {
       return (
         <DataPopup
-          func={this.props.func}
-          onDismiss={this.handleClick}
-          tipPosition={this.state.clickPosition}
+          data={this.props.data}
+          onDismiss={this.handleStopHover}
+          // hanldeOnDismiss={this.props.hanldeOnDismiss}
+          popupPosition={this.state.clickPosition}
         />
       )
     }
   }
 
-  private handleClick = () => {
+  private handleClick = e => {
     const {top, right} = this.functionRef.current.getBoundingClientRect()
-    console.log(this.functionRef.current.getBoundingClientRect())
-    console.log('window.innerWidth', window.innerWidth)
-    console.log({top, right})
+    console.log(e.target.getBoundingClientRect())
+    console.log('tooltip', {top, right})
     // const left = right - window.innerWidth
     // console.log({left})
     this.setState({isActive: true, clickPosition: {top, right}})
   }
 
-  private handleBlur = () => {
+  private handleStopHover = () => {
     this.setState({isActive: false})
   }
 
-  private handleClickFunction = () => {
-    const {func, onClickFunction} = this.props
+  // private handleBlur = () => {
+  //   this.setState({isActive: false})
+  // }
 
-    onClickFunction(func.name, func.example)
+  private handleClickFunction = () => {
+    const {data} = this.props
+
+    // onClickFunction(func.name, func.example)
   }
 }
 
