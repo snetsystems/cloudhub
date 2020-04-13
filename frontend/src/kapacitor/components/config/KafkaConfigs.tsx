@@ -21,9 +21,9 @@ const DEFAULT_CONFIG = {
     'ssl-cert': '',
     'ssl-key': '',
     'insecure-skip-verify': false,
-    enabled: false,
+    enabled: false
   },
-  isNewConfig: true,
+  isNewConfig: true
 }
 
 interface Config {
@@ -47,15 +47,25 @@ interface Props {
 }
 
 interface State {
+  prevConfigs: Config[]
   configs: Config[]
 }
 
 @ErrorHandling
 class KafkaConfigs extends Component<Props, State> {
-  public static getDerivedStateFromProps(nextProps: Props, prevState: State) {
-    return {...prevState, configs: nextProps.configs}
+  constructor(props: Props) {
+    super(props)
+    this.state = {
+      prevConfigs: props.configs,
+      configs: this.props.configs
+    }
   }
-  public state: State = {configs: []}
+
+  public static getDerivedStateFromProps(props: Props, state: State) {
+    if (props.configs !== state.prevConfigs)
+      return {prevConfigs: props.configs, configs: props.configs}
+    return null
+  }
 
   public render() {
     const {onSave, onDelete, onTest, notify} = this.props
@@ -114,8 +124,7 @@ class KafkaConfigs extends Component<Props, State> {
   private handleAddConfig = (): void => {
     const {configs} = this.state
     const newConfig: Config = DEFAULT_CONFIG
-    const updatedConfigs = [...configs, newConfig]
-    this.setState({configs: updatedConfigs})
+    this.setState({configs: [...configs, newConfig]})
   }
 }
 
