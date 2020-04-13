@@ -3,7 +3,7 @@ import React, {
   PureComponent,
   CSSProperties,
   ChangeEvent,
-  MouseEvent,
+  MouseEvent
 } from 'react'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 import {connect} from 'react-redux'
@@ -24,7 +24,7 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 // Apis
 import {
   getRunnerSaltCmdDirectory,
-  getLocalDeliveryToMinion,
+  getLocalDeliveryToMinion
 } from 'src/shared/apis/saltStack'
 
 // Constants
@@ -32,12 +32,12 @@ import {
   STATUS_PAGE_ROW_COUNT,
   PAGE_HEADER_HEIGHT,
   PAGE_CONTAINER_MARGIN,
-  LAYOUT_MARGIN,
+  LAYOUT_MARGIN
 } from 'src/shared/constants'
 
 import {
   DEFAULT_CELL_BG_COLOR,
-  DEFAULT_CELL_TEXT_COLOR,
+  DEFAULT_CELL_TEXT_COLOR
 } from 'src/dashboards/constants'
 
 import {SALT_FULL_DIRECTORY, SALT_MIN_DIRECTORY} from 'src/addon/128t/constants'
@@ -50,7 +50,7 @@ import {
   SaltDirFileInfo,
   CheckRouter,
   SaltDirFile,
-  GetSaltDirectoryInfo,
+  GetSaltDirectoryInfo
 } from 'src/addon/128t/types'
 import {NETWORK_ACCESS, GET_STATUS} from 'src/agent_admin/constants'
 import {cellLayoutInfo} from 'src/addon/128t/containers/SwanSdplexStatusPage'
@@ -63,7 +63,7 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {
   notify_128TGetMasterDirFiles_Failed,
   notify_128TSendFilesToCollector_Successed,
-  notify_128TSendFilesToCollector_Failed,
+  notify_128TSendFilesToCollector_Failed
 } from 'src/addon/128t/components/Notifications'
 
 interface Props {
@@ -92,7 +92,7 @@ interface State {
   rowHeight: number
   isRoutersAllCheck: boolean
   isModalVisible: boolean
-  isDataPopupVisible: boolean
+  isRouterDataPopupVisible: boolean
   chooseMenu: string
   checkRouters: CheckRouter[]
   firmware: SaltDirFile
@@ -101,7 +101,7 @@ interface State {
   sendToDirectory: string
   popupData: {}
   popupFocuse: string
-  routertableRect: {top: number; right: number}
+  routerPopupPosition: {top: number; right: number}
 }
 
 class GridLayoutRenderer extends PureComponent<Props, State> {
@@ -119,7 +119,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       rowHeight: this.calculateRowHeight(),
       isRoutersAllCheck: false,
       isModalVisible: false,
-      isDataPopupVisible: false,
+      isRouterDataPopupVisible: false,
       checkRouters: [],
       chooseMenu: '',
       firmware: {files: [], isLoading: true},
@@ -128,7 +128,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       sendToDirectory: '',
       popupData: {},
       popupFocuse: '',
-      routertableRect: {top: null, right: null},
+      routerPopupPosition: {top: 0, right: 0}
     }
   }
 
@@ -136,12 +136,12 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     const checkRoutersData = this.props.routersData.map(router => {
       return {
         assetId: router.assetId,
-        isCheck: false,
+        isCheck: false
       }
     })
 
     this.setState({
-      checkRouters: checkRoutersData,
+      checkRouters: checkRoutersData
     })
   }
 
@@ -152,22 +152,22 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       console.error(e)
     }
   }
-  //eslint
-  public componentDidUpdate(prevProps, prevState) {
-    const {top, right} = this.routertableRef.current.getBoundingClientRect()
+  // //eslint
+  // public componentDidUpdate(prevProps, prevState) {
+  //   const {top, right} = this.routertableRef.current.getBoundingClientRect()
 
-    const routertableRect = {top, right}
+  //   const routertableRect = {top, right}
 
-    if (
-      prevState.routertableRect.top !== routertableRect.top ||
-      prevState.routertableRect.right !== routertableRect.right
-    ) {
-      // console.log('123123')
-      // this.setState({routertableRect})
-    }
+  //   if (
+  //     prevState.routertableRect.top !== routertableRect.top ||
+  //     prevState.routertableRect.right !== routertableRect.right
+  //   ) {
+  //     // console.log('123123')
+  //     // this.setState({routertableRect})
+  //   }
 
-    // console.log(prevState.routertableRect.top !== routertableRect.top)
-  }
+  //   // console.log(prevState.routertableRect.top !== routertableRect.top)
+  // }
 
   public getRunnerSaltCmdDirectoryData = async (
     url: string,
@@ -196,8 +196,8 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
             time: '',
             item: GET_STATUS.EMPTY,
             fullDir,
-            dir,
-          }),
+            dir
+          })
         ]
       } else {
         if (getData.indexOf('\n') > -1) {
@@ -208,7 +208,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
         } else {
           const time: string = getData.substring(0, getData.indexOf(' '))
           applications = [
-            this.generatorFileInfo({time, item: getData, fullDir, dir}),
+            this.generatorFileInfo({time, item: getData, fullDir, dir})
           ]
         }
 
@@ -225,7 +225,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
         getDirectoryItems.status === 200 &&
         getDirectoryItems.statusText === 'OK'
           ? NETWORK_ACCESS.SUCCESS
-          : getDirectoryItems,
+          : getDirectoryItems
     }
   }
 
@@ -233,7 +233,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     time,
     item,
     fullDir,
-    dir,
+    dir
   }: {
     time: string
     item: string
@@ -246,7 +246,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       application: item.replace(time, '').trim(),
       applicationFullName: item,
       fullPathDirectory: fullDir,
-      pathDirectory: dir,
+      pathDirectory: dir
     }
   }
 
@@ -278,7 +278,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
 
     this.setState({
       firmware: getFirmwareData,
-      config: getConfigData,
+      config: getConfigData
     })
   }
 
@@ -298,7 +298,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     }
     this.setState({
       isRoutersAllCheck: !isRoutersAllCheck,
-      checkRouters: [...checkRouters],
+      checkRouters: [...checkRouters]
     })
   }
 
@@ -314,7 +314,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
 
     this.setState({
       isRoutersAllCheck: false,
-      checkRouters: [...checkRouters],
+      checkRouters: [...checkRouters]
     })
   }
 
@@ -322,7 +322,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     if (selectItem !== GET_STATUS.EMPTY) {
       this.setState({
         isModalVisible: !this.state.isModalVisible,
-        chooseMenu: selectItem,
+        chooseMenu: selectItem
       })
     }
   }
@@ -336,7 +336,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       focusedAssetId,
       topSourcesData,
       topSessionsData,
-      onClickMapMarker,
+      onClickMapMarker
     } = this.props
     const {
       rowHeight,
@@ -345,7 +345,8 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       firmware,
       config,
       sendToDirectory,
-      isDataPopupVisible,
+      isRouterDataPopupVisible,
+      routerPopupPosition
     } = this.state
 
     const checkRouterData: Router[] = routersData.map(
@@ -374,7 +375,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
           <div
             key="routers"
             ref={this.routertableRef}
-            className="dash-graph router--table"
+            className="dash-graph grid-item--routers"
             style={this.cellStyle}
           >
             <RouterTable
@@ -391,8 +392,10 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
               handleRoutersAllCheck={this.handleRoutersAllCheck}
               firmware={firmware}
               config={config}
-              // handleOnClickRouterName={this.onClickRouterName}
-              // hanldeOnDismiss={this.handleDataPopupClose}
+              isRouterDataPopupVisible={isRouterDataPopupVisible}
+              handleOnClickRouterName={this.onClickRouterName}
+              hanldeOnDismiss={this.handleDataPopupClose}
+              routerPopupPosition={routerPopupPosition}
             />
           </div>
           <div key="leafletMap" className="dash-graph" style={this.cellStyle}>
@@ -447,6 +450,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
           buttonDisabled={false}
           buttonName={''}
         />
+
         {/* {isDataPopupVisible ? (
           <DataPopupFunction
             handleOnClick={this.handleOnClickDataPopup}
@@ -460,32 +464,57 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     )
   }
 
-  // private onClickRouterName = (data: {
-  //   _event: MouseEvent<HTMLElement>
-  //   router: Router
-  // }): void => {
-  //   const {_event, router} = data
-  //   const {assetId} = router
+  private onClickRouterName = (data: {
+    _event: MouseEvent<HTMLElement>
+    router: Router
+  }): void => {
+    const {_event, router} = data
+    const {assetId} = router
 
-  //   this[assetId] = _event.target
-  //   this[assetId].ref = this.refDataPopup
+    this[assetId] = _event.target
+    this[assetId].ref = this.refDataPopup
 
-  //   const routerPosition = this[assetId].getBoundingClientRect()
-  //   const {top, right} = routerPosition
+    const routerPosition = this[assetId].getBoundingClientRect()
 
-  //   console.log(routerPosition)
+    const {top, right} = routerPosition
+    const {parentTop, parentLeft} = this.getParent(this[assetId])
+    console.log('getParent', parentTop, parentLeft)
+    console.log('routerPosition', top, right)
+    // console.log(this)
 
-  //   this.setState({popupPosition: {top, right}})
-  //   this.handleDataPopupOpen()
-  // }
+    this.setState({
+      routerPopupPosition: {top: top - parentTop, right: right - parentLeft}
+    })
+    this.handleDataPopupOpen()
+    _event.stopPropagation()
+  }
 
-  // private handleDataPopupOpen = () => {
-  //   this.setState({isDataPopupVisible: true})
-  // }
+  private getParent = target => {
+    let currentParent = target
+    while (currentParent) {
+      if (
+        window.getComputedStyle(currentParent).getPropertyValue('transform') !==
+        'none'
+      ) {
+        break
+      }
+      currentParent = currentParent.parentElement
+    }
+    console.log('currentParent', currentParent)
+    const parentTop =
+      (currentParent && currentParent.getBoundingClientRect().top) || 0
+    const parentLeft =
+      (currentParent && currentParent.getBoundingClientRect().left) || 0
+    return {parentTop, parentLeft}
+  }
 
-  // private handleDataPopupClose = () => {
-  //   this.setState({isDataPopupVisible: false})
-  // }
+  private handleDataPopupOpen = () => {
+    this.setState({isRouterDataPopupVisible: true})
+  }
+
+  private handleDataPopupClose = () => {
+    this.setState({isRouterDataPopupVisible: false})
+  }
 
   // private handleOnClickDataPopup = () => {
   //   console.log('handleOnClickDataPopup')
@@ -534,7 +563,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
                       ? '72px'
                       : checkedList.length > 5
                       ? '150px'
-                      : checkedList.length * 31 + 'px',
+                      : checkedList.length * 31 + 'px'
                 }}
               >
                 <FancyScrollbar
@@ -577,7 +606,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     buttonName = buttonName.toLowerCase()
     this.setState({
       focusedBtn: buttonName,
-      sendToDirectory: this.DEFAULT_COLLECTOR_DIRECTORY + buttonName + '/',
+      sendToDirectory: this.DEFAULT_COLLECTOR_DIRECTORY + buttonName + '/'
     })
   }
 
@@ -638,12 +667,12 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
         x: l.x,
         y: l.y,
         h: l.h,
-        w: l.w,
+        w: l.w
       }
 
       return {
         ...lo,
-        ...newLayout,
+        ...newLayout
       }
     })
 
@@ -655,7 +684,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   private get cellStyle(): CSSProperties {
     return {
       backgroundColor: this.cellBackgroundColor,
-      borderColor: this.cellBackgroundColor,
+      borderColor: this.cellBackgroundColor
     }
   }
 
@@ -672,7 +701,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
 }
 
 const mdtp = {
-  notify: notifyAction,
+  notify: notifyAction
 }
 
 export default connect(null, mdtp)(GridLayoutRenderer)

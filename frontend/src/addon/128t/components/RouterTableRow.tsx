@@ -31,6 +31,7 @@ const RouterTableRow = ({
   focusedAssetId,
   router,
   isCheck,
+  handleOnClickRouterName
 }: Props) => {
   const {
     assetId,
@@ -45,7 +46,7 @@ const RouterTableRow = ({
     cpuUsage,
     diskUsage,
     topSources,
-    topSessions,
+    topSessions
   } = router
 
   const {
@@ -62,7 +63,7 @@ const RouterTableRow = ({
     MEMORYUSAGE,
     CPUUSAGE,
     DISKUSAGE,
-    CHECKBOX,
+    CHECKBOX
   } = ROUTER_TABLE_SIZING
 
   const focusedClasses = (assetId: Router['assetId']): string => {
@@ -74,7 +75,7 @@ const RouterTableRow = ({
     return (
       <span
         className={classnames('status-indicator', {
-          'status-indicator--enabled': isEnabled,
+          'status-indicator--enabled': isEnabled
         })}
       />
     )
@@ -124,35 +125,57 @@ const RouterTableRow = ({
       <TableBodyRowItem
         title={
           <div
-            className="table-connect-tips cursor--pointer table-item"
-            data-for="table-connect-tips-tooltip"
-            data-tip={`${assetId + assetId + assetId}
-${assetId + assetId + assetId}
-${assetId + assetId + assetId}
-${assetId + assetId + assetId}
-${assetId + assetId + assetId}
-${assetId + assetId + assetId}
-${assetId + assetId + assetId}
-${assetId + assetId + assetId}
-${assetId + assetId + assetId}
-${assetId + assetId + assetId}
-${assetId + assetId + assetId}
-${assetId + assetId + assetId}
-${assetId + assetId + assetId}
-${assetId + assetId + assetId}
-${assetId + assetId + assetId}`}
+            //             className="table-connect-tips cursor--pointer table-item"
+            //             data-for="table-connect-tips-tooltip"
+            //             data-tip={`${assetId + assetId + assetId}
+            // ${assetId + assetId + assetId}
+            // ${assetId + assetId + assetId}
+            // ${assetId + assetId + assetId}
+            // ${assetId + assetId + assetId}
+            // ${assetId + assetId + assetId}
+            // ${assetId + assetId + assetId}
+            // ${assetId + assetId + assetId}
+            // ${assetId + assetId + assetId}
+            // ${assetId + assetId + assetId}
+            // ${assetId + assetId + assetId}
+            // ${assetId + assetId + assetId}
+            // ${assetId + assetId + assetId}
+            // ${assetId + assetId + assetId}
+            // ${assetId + assetId + assetId}`}
+            onClick={e => {
+              handleOnClickRouterName({_event: e, router})
+            }}
+            style={{width: '100%'}}
           >
             <div>{assetId}</div>
-            <ReactTooltip
+            {/* <ReactTooltip
               id="table-connect-tips-tooltip"
               effect="solid"
               html={true}
               place="right"
               class="influx-tooltip"
               event={'click'}
+              overridePosition={(
+                {left, top},
+                currentEvent,
+                currentTarget,
+                node
+              ) => {
+                // console.log({left, top})
+                // console.log({currentEvent})
+                // console.log({currentTarget})
+                // console.log({node})
+                // console.log(currentEvent.offset)
+                // console.log(currentTarget.getBoundingClientRect())
+                return {
+                  left,
+                  top
+                }
+              }}
               multiline={true}
+
               // eventOff={'mouseleave'}
-            />
+            /> */}
           </div>
         }
         width={ASSETID}

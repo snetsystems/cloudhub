@@ -1,5 +1,5 @@
 // Libraries
-import React, {PureComponent, MouseEvent} from 'react'
+import React, {PureComponent} from 'react'
 import _ from 'lodash'
 import memoize from 'memoize-one'
 
@@ -10,6 +10,7 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {NoHostsState, sortableClasses} from 'src/addon/128t/reusable'
 import Dropdown from 'src/shared/components/Dropdown'
 import LoadingSpinner from 'src/flux/components/LoadingSpinner'
+import DataPopupFunction from 'src/addon/128t/components/DataPopupFunction'
 
 import {
   CellName,
@@ -19,7 +20,7 @@ import {
   PanelBody,
   Table,
   TableHeader,
-  TableBody,
+  TableBody
 } from 'src/addon/128t/reusable/layout'
 
 //type
@@ -29,7 +30,7 @@ import {
   TopSession,
   SortDirection,
   SaltDirFile,
-  SaltDirFileInfo,
+  SaltDirFileInfo
 } from 'src/addon/128t/types'
 
 // constants
@@ -54,12 +55,10 @@ export interface Props {
   handleRouterCheck: ({router: Router}) => void
   handleRoutersAllCheck: () => void
   handleFocusedBtnName: ({buttonName: string}) => void
-  handleOnClickRouterName: (data: {
-    _event: MouseEvent<HTMLElement>
-    router: Router
-  }) => void
   firmware: SaltDirFile
   config: SaltDirFile
+  isRouterDataPopupVisible: boolean
+  routerPopupPosition: {top: number; right: number}
 }
 
 interface State {
@@ -88,7 +87,7 @@ class RouterTable extends PureComponent<Props, State> {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
       sortKey: 'assetId',
-      routerCount: 0,
+      routerCount: 0
     }
   }
 
@@ -124,7 +123,7 @@ class RouterTable extends PureComponent<Props, State> {
       items,
       handleFocusedBtnName,
       buttonStatus,
-      isDisabled,
+      isDisabled
     } = props
     return (
       <div className={'dash-graph--heading--button-box'}>
@@ -160,7 +159,7 @@ class RouterTable extends PureComponent<Props, State> {
       handleOnChoose,
       firmware,
       config,
-      handleFocusedBtnName,
+      handleFocusedBtnName
     } = this.props
 
     return (
@@ -231,7 +230,7 @@ class RouterTable extends PureComponent<Props, State> {
       MEMORYUSAGE,
       CPUUSAGE,
       DISKUSAGE,
-      CHECKBOX,
+      CHECKBOX
     } = ROUTER_TABLE_SIZING
     const {sortKey, sortDirection} = this.state
     const {isRoutersAllCheck, handleRoutersAllCheck} = this.props
@@ -261,7 +260,7 @@ class RouterTable extends PureComponent<Props, State> {
           className={sortableClasses({
             sortKey,
             sortDirection,
-            key: 'ipAddress',
+            key: 'ipAddress'
           })}
           style={{width: IPADDRESS}}
         >
@@ -289,7 +288,7 @@ class RouterTable extends PureComponent<Props, State> {
           className={sortableClasses({
             sortKey,
             sortDirection,
-            key: 'locationCoordinates',
+            key: 'locationCoordinates'
           })}
           style={{width: LOCATIONCOORDINATES}}
         >
@@ -301,7 +300,7 @@ class RouterTable extends PureComponent<Props, State> {
           className={sortableClasses({
             sortKey,
             sortDirection,
-            key: 'managementConnected',
+            key: 'managementConnected'
           })}
           style={{width: MANAGEMENTCONNECTED}}
         >
@@ -313,7 +312,7 @@ class RouterTable extends PureComponent<Props, State> {
           className={sortableClasses({
             sortKey,
             sortDirection,
-            key: 'startTime',
+            key: 'startTime'
           })}
           style={{width: STARTTIME}}
         >
@@ -325,7 +324,7 @@ class RouterTable extends PureComponent<Props, State> {
           className={sortableClasses({
             sortKey,
             sortDirection,
-            key: 'softwareVersion',
+            key: 'softwareVersion'
           })}
           style={{width: SOFTWAREVERSION}}
         >
@@ -345,7 +344,7 @@ class RouterTable extends PureComponent<Props, State> {
           className={sortableClasses({
             sortKey,
             sortDirection,
-            key: 'memoryUsage',
+            key: 'memoryUsage'
           })}
           style={{width: MEMORYUSAGE}}
         >
@@ -357,7 +356,7 @@ class RouterTable extends PureComponent<Props, State> {
           className={sortableClasses({
             sortKey,
             sortDirection,
-            key: 'diskUsage',
+            key: 'diskUsage'
           })}
           style={{width: DISKUSAGE}}
         >
@@ -369,7 +368,7 @@ class RouterTable extends PureComponent<Props, State> {
           className={sortableClasses({
             sortKey,
             sortDirection,
-            key: 'bandwidth_avg',
+            key: 'bandwidth_avg'
           })}
           style={{width: BANDWIDTH_AVG}}
         >
@@ -381,7 +380,7 @@ class RouterTable extends PureComponent<Props, State> {
           className={sortableClasses({
             sortKey,
             sortDirection,
-            key: 'session_arrivals',
+            key: 'session_arrivals'
           })}
           style={{width: SESSION_CNT_AVG}}
         >
@@ -401,6 +400,9 @@ class RouterTable extends PureComponent<Props, State> {
       onClickTableRow,
       handleRouterCheck,
       handleOnClickRouterName,
+      isRouterDataPopupVisible,
+      hanldeOnDismiss,
+      routerPopupPosition
     } = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
@@ -411,22 +413,33 @@ class RouterTable extends PureComponent<Props, State> {
       sortDirection
     )
 
+    console.log('routerPopupPosition', routerPopupPosition)
+
     return (
       <>
         {routers.length > 0 ? (
-          <FancyScrollbar
-            children={sortedRouters.map((r: Router, i: number) => (
-              <RouterTableRow
-                handleOnClickRouterName={handleOnClickRouterName}
-                handleRouterCheck={handleRouterCheck}
-                onClickTableRow={onClickTableRow}
-                focusedAssetId={focusedAssetId}
-                isCheck={r.isCheck}
-                router={r}
-                key={i}
+          <>
+            <FancyScrollbar
+              children={sortedRouters.map((r: Router, i: number) => (
+                <RouterTableRow
+                  handleOnClickRouterName={handleOnClickRouterName}
+                  handleRouterCheck={handleRouterCheck}
+                  onClickTableRow={onClickTableRow}
+                  focusedAssetId={focusedAssetId}
+                  isCheck={r.isCheck}
+                  router={r}
+                  key={i}
+                />
+              ))}
+            />
+            {isRouterDataPopupVisible ? (
+              <DataPopupFunction
+                hanldeOnDismiss={hanldeOnDismiss}
+                data={{name: 'asd'}}
+                popupPosition={routerPopupPosition}
               />
-            ))}
-          />
+            ) : null}
+          </>
         ) : (
           <NoHostsState />
         )}

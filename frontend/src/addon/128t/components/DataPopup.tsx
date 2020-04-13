@@ -3,10 +3,10 @@ import React, {PureComponent, MouseEvent, CSSProperties, createRef} from 'react'
 
 // Components
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-// import TooltipDescription from 'src/flux/components/flux_functions_toolbar/TooltipDescription'
-// import TooltipArguments from 'src/flux/components/flux_functions_toolbar/TooltipArguments'
-// import TooltipExample from 'src/flux/components/flux_functions_toolbar/TooltipExample'
-// import TooltipLink from 'src/flux/components/flux_functions_toolbar/TooltipLink'
+import OncueServiceTable from 'src/addon/128t/components/OncueServiceTable'
+import ProtocolModulesTable from 'src/addon/128t/components/ProtocolModulesTable'
+import DeviceConnectionsTable from 'src/addon/128t/components/DeviceConnectionsTable'
+import ConnectionsTable from 'src/addon/128t/components/ConnectionsTable'
 
 // Types
 // import {FluxToolbarFunction} from 'src/types/flux'
@@ -15,10 +15,8 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
-  // handleOnClick: () => void
-  // handleOnMouseLeave: () => void
-  // hanldeOnDismiss: () => void
-  onDismiss: () => void
+  handleOnClick: () => void
+  hanldeOnDismiss: () => void
   data: {name: string}
   popupPosition: {top: number; right: number}
 }
@@ -38,18 +36,10 @@ class DataPopup extends PureComponent<Props, State> {
     this.state = {bottomPosition: null}
   }
 
-  public componentDidMount() {
-    // const {top, height} = this.tooltipRef.current.getBoundingClientRect()
-    // console.log('DataPopup', this.tooltipRef.current.getBoundingClientRect())
-    // if (bottom > window.innerHeight) {
-    //   this.setState({bottomPosition: height / 2})
-    // }
-  }
+  public componentDidMount() {}
 
   public render() {
-    const {
-      //   func: {desc, args, example, link},
-    } = this.props
+    const {data} = this.props
 
     return (
       <>
@@ -57,57 +47,65 @@ class DataPopup extends PureComponent<Props, State> {
           style={this.stylePosition}
           className={this.handleToolTipClassName}
           ref={this.tooltipRef}
-          onBlur={this.props.onDismiss}
+          onBlur={this.props.hanldeOnDismiss}
         >
-          <button
-            className="flux-functions-toolbar--tooltip-dismiss"
-            onClick={this.handleDismiss}
-          />{' '}
-          <div className="flux-functions-toolbar--tooltip-contents">
+          <button className="data-popup-dismiss" onClick={this.handleDismiss} />{' '}
+          <div className="data-popup-contents">
             <FancyScrollbar
               autoHeight={true}
               maxHeight={MAX_HEIGHT}
               autoHide={false}
             >
-              hello pop data
-              {/* <TooltipDescription description={desc} />
-              <TooltipArguments argsList={args} />
-              <TooltipExample example={example} />
-              <TooltipLink link={link} /> */}
+              <div className="datapopup-table--container">
+                <div className="datapopup-table--section">
+                  <div className="datapopup-table--section--full">
+                    <OncueServiceTable />
+                  </div>
+                </div>
+                <div className="datapopup-table--section">
+                  <div className="datapopup-table--section--half">
+                    <ProtocolModulesTable />
+                  </div>
+                  <div className="datapopup-table--section--half">
+                    <DeviceConnectionsTable />
+                  </div>
+                </div>
+                <div className="datapopup-table--section">
+                  <div className="datapopup-table--section--full">
+                    <ConnectionsTable />
+                  </div>
+                </div>
+              </div>
             </FancyScrollbar>
           </div>
         </div>
-        {/* <span
-          className={this.handleCaretClassName}
-          style={this.styleCaretPosition}
-        /> */}
       </>
     )
   }
 
   private get handleToolTipClassName() {
-    return 'flux-functions-toolbar--tooltip'
+    return 'data-popup-item'
   }
 
   private get stylePosition(): CSSProperties {
     const {
-      popupPosition: {top, right},
+      popupPosition: {top, right}
     } = this.props
     // const {bottomPosition} = this.state
     console.log('DataPopup stylePosition', this.props.popupPosition)
     const position = {
       top: `${top}px`,
-      left: `${right}px`,
+      left: `${right}px`
     }
     return position
   }
 
   private handleDismiss = (e: MouseEvent<HTMLElement>) => {
-    const {onDismiss} = this.props
+    const {hanldeOnDismiss} = this.props
 
+    hanldeOnDismiss()
     e.preventDefault()
     e.stopPropagation()
-    onDismiss()
   }
 }
 
