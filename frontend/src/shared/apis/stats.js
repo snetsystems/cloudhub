@@ -1,6 +1,5 @@
 import {buildInfluxUrl, proxy} from 'utils/queryUrlGenerator'
 
-// TODO: keep an eye on https://github.com/influxdata/plutonium/issues/359 and use /show-shards (or whatever
 // alternative is proposed) for disk usage when it's available.
 export function fetchShardDiskBytesForDatabase(host, database, clusterID) {
   const statement = `SELECT last(diskBytes) FROM "shard" WHERE "database"='${database}' AND clusterID='${clusterID}' GROUP BY nodeID, path, retentionPolicy`

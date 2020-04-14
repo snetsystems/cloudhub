@@ -43,7 +43,7 @@ class TelegramConfig extends PureComponent<Props, State> {
     super(props)
     this.state = {
       testEnabled: this.props.enabled,
-      enabled: _.get(this.props, 'config.options.enabled', false),
+      enabled: _.get(this.props, 'config.options.enabled', false)
     }
   }
 
@@ -64,7 +64,7 @@ class TelegramConfig extends PureComponent<Props, State> {
             <div className="alert-message">
               You need a{' '}
               <a
-                href="https://docs.influxdata.com/kapacitor/latest/guides/event-handler-setup/#telegram-setup"
+                href="https://seversky.atlassian.net/wiki/spaces/CSHD/pages/251133991/Configuring+CloudHub+alert+endpoints#Telegram"
                 target="_blank"
               >
                 Telegram Bot
@@ -230,7 +230,7 @@ class TelegramConfig extends PureComponent<Props, State> {
       'disable-web-page-preview': this.disableWebPagePreview.checked,
       'parse-mode': parseMode,
       token: this.token.value,
-      enabled: this.state.enabled,
+      enabled: this.state.enabled
     }
 
     const success = await this.props.onSave(properties)
