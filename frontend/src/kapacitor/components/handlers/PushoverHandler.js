@@ -7,7 +7,7 @@ const PushoverHandler = ({
   selectedHandler,
   handleModifyHandler,
   onGoToConfig,
-  validationError,
+  validationError
 }) =>
   selectedHandler.enabled ? (
     <div className="endpoint-tab-contents">
@@ -57,7 +57,7 @@ const PushoverHandler = ({
             handleModifyHandler={handleModifyHandler}
             fieldName="url"
             fieldDisplay="URL:"
-            placeholder="ex: https://influxdata.com"
+            placeholder="ex: https://www.snetgroup.info/"
           />
           <HandlerInput
             selectedHandler={selectedHandler}
@@ -96,7 +96,7 @@ PushoverHandler.propTypes = {
   selectedHandler: shape({}).isRequired,
   handleModifyHandler: func.isRequired,
   onGoToConfig: func.isRequired,
-  validationError: string.isRequired,
+  validationError: string.isRequired
 }
 
 export default PushoverHandler

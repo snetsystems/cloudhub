@@ -156,7 +156,6 @@ export interface Links {
 }
 
 // FluxTable is the result of a request to Flux
-// https://github.com/influxdata/platform/blob/master/query/docs/SPEC.md#response-format
 export interface FluxTable {
   id: string
   name: string
@@ -178,12 +177,12 @@ export enum RemoteDataState {
   NotStarted = 'NotStarted',
   Loading = 'Loading',
   Done = 'Done',
-  Error = 'Error',
+  Error = 'Error'
 }
 
 export enum VisType {
   Graph,
-  Table,
+  Table
 }
 
 export interface FluxToolbarArg {
