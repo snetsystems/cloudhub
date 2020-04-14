@@ -5,6 +5,7 @@ import {
   SaltDirFileInfo,
   CheckRouter,
   SaltDirFile,
+  GetSaltDirectoryInfo,
 } from 'src/addon/128t/types/routers'
 import {GridCell} from 'src/addon/128t/types/grid'
 import {SortDirection} from 'src/addon/128t/types/table'
@@ -15,6 +16,7 @@ export {
   GridCell,
   SortDirection,
   SaltDirFileInfo,
+  GetSaltDirectoryInfo,
   CheckRouter,
   SaltDirFile,
 }

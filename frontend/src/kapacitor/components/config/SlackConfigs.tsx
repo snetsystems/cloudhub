@@ -36,14 +36,14 @@ interface State {
 
 @ErrorHandling
 class SlackConfigs extends PureComponent<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props)
     this.state = {
-      configs: this.props.configs,
+      configs: this.props.configs
     }
   }
 
-  public componentWillReceiveProps(nextProps) {
+  public componentWillReceiveProps(nextProps: Props) {
     this.setState({configs: nextProps.configs})
   }
 
@@ -137,9 +137,9 @@ class SlackConfigs extends PureComponent<Props, State> {
       options: {
         url: false,
         channel: '',
-        workspace: null,
+        workspace: null
       },
-      isNewConfig: true,
+      isNewConfig: true
     }
     this.setState({configs: [...configs, newConfig]})
   }
