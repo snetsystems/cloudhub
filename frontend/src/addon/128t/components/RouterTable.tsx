@@ -19,7 +19,7 @@ import {
   PanelBody,
   Table,
   TableHeader,
-  TableBody
+  TableBody,
 } from 'src/addon/128t/reusable/layout'
 
 //type
@@ -30,7 +30,7 @@ import {
   SortDirection,
   SaltDirFile,
   SaltDirFileInfo,
-  OncueData
+  OncueData,
 } from 'src/addon/128t/types'
 
 // constants
@@ -95,7 +95,7 @@ class RouterTable extends PureComponent<Props, State> {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
       sortKey: 'assetId',
-      routerCount: 0
+      routerCount: 0,
     }
   }
 
@@ -131,7 +131,7 @@ class RouterTable extends PureComponent<Props, State> {
       items,
       handleFocusedBtnName,
       buttonStatus,
-      isDisabled
+      isDisabled,
     } = props
     return (
       <div className={'dash-graph--heading--button-box'}>
@@ -167,7 +167,7 @@ class RouterTable extends PureComponent<Props, State> {
       handleOnChoose,
       firmware,
       config,
-      handleFocusedBtnName
+      handleFocusedBtnName,
     } = this.props
 
     return (
@@ -238,7 +238,7 @@ class RouterTable extends PureComponent<Props, State> {
       MEMORYUSAGE,
       CPUUSAGE,
       DISKUSAGE,
-      CHECKBOX
+      CHECKBOX,
     } = ROUTER_TABLE_SIZING
     const {sortKey, sortDirection} = this.state
     const {isRoutersAllCheck, handleRoutersAllCheck} = this.props
@@ -268,7 +268,7 @@ class RouterTable extends PureComponent<Props, State> {
           className={sortableClasses({
             sortKey,
             sortDirection,
-            key: 'ipAddress'
+            key: 'ipAddress',
           })}
           style={{width: IPADDRESS}}
         >
@@ -296,7 +296,7 @@ class RouterTable extends PureComponent<Props, State> {
           className={sortableClasses({
             sortKey,
             sortDirection,
-            key: 'locationCoordinates'
+            key: 'locationCoordinates',
           })}
           style={{width: LOCATIONCOORDINATES}}
         >
@@ -308,7 +308,7 @@ class RouterTable extends PureComponent<Props, State> {
           className={sortableClasses({
             sortKey,
             sortDirection,
-            key: 'managementConnected'
+            key: 'managementConnected',
           })}
           style={{width: MANAGEMENTCONNECTED}}
         >
@@ -320,7 +320,7 @@ class RouterTable extends PureComponent<Props, State> {
           className={sortableClasses({
             sortKey,
             sortDirection,
-            key: 'startTime'
+            key: 'startTime',
           })}
           style={{width: STARTTIME}}
         >
@@ -332,7 +332,7 @@ class RouterTable extends PureComponent<Props, State> {
           className={sortableClasses({
             sortKey,
             sortDirection,
-            key: 'softwareVersion'
+            key: 'softwareVersion',
           })}
           style={{width: SOFTWAREVERSION}}
         >
@@ -352,7 +352,7 @@ class RouterTable extends PureComponent<Props, State> {
           className={sortableClasses({
             sortKey,
             sortDirection,
-            key: 'memoryUsage'
+            key: 'memoryUsage',
           })}
           style={{width: MEMORYUSAGE}}
         >
@@ -364,7 +364,7 @@ class RouterTable extends PureComponent<Props, State> {
           className={sortableClasses({
             sortKey,
             sortDirection,
-            key: 'diskUsage'
+            key: 'diskUsage',
           })}
           style={{width: DISKUSAGE}}
         >
@@ -376,7 +376,7 @@ class RouterTable extends PureComponent<Props, State> {
           className={sortableClasses({
             sortKey,
             sortDirection,
-            key: 'bandwidth_avg'
+            key: 'bandwidth_avg',
           })}
           style={{width: BANDWIDTH_AVG}}
         >
@@ -388,7 +388,7 @@ class RouterTable extends PureComponent<Props, State> {
           className={sortableClasses({
             sortKey,
             sortDirection,
-            key: 'session_arrivals'
+            key: 'session_arrivals',
           })}
           style={{width: SESSION_CNT_AVG}}
         >
@@ -411,7 +411,7 @@ class RouterTable extends PureComponent<Props, State> {
       isRouterDataPopupVisible,
       hanldeOnDismiss,
       routerPopupPosition,
-      oncueData
+      oncueData,
     } = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 

@@ -37,7 +37,7 @@ class DeviceConnectionsTable extends PureComponent<Props, State> {
     this.state = {
       searchTerm: '',
       sortKey: 'name',
-      sortDirection: SortDirection.ASC
+      sortDirection: SortDirection.ASC,
     }
   }
 

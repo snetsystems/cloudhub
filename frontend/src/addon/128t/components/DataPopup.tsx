@@ -1,5 +1,5 @@
 // Libraries
-import React, {PureComponent, MouseEvent, CSSProperties, createRef} from 'react'
+import React, {PureComponent, MouseEvent, CSSProperties} from 'react'
 
 // Components
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
@@ -22,22 +22,11 @@ interface Props {
   oncueData: OncueData
 }
 
-interface State {
-  bottomPosition: number | null
-}
-
-const MAX_HEIGHT = 400
-
 @ErrorHandling
-class DataPopup extends PureComponent<Props, State> {
-  private tooltipRef = createRef<HTMLDivElement>()
-
+class DataPopup extends PureComponent<Props> {
   public constructor(props: Props) {
     super(props)
-    this.state = {bottomPosition: null}
   }
-
-  public componentDidMount() {}
 
   public render() {
     const {oncueData} = this.props
@@ -46,16 +35,11 @@ class DataPopup extends PureComponent<Props, State> {
         <div
           style={this.stylePosition}
           className={this.handleToolTipClassName}
-          ref={this.tooltipRef}
           onBlur={this.props.hanldeOnDismiss}
         >
           <button className="data-popup-dismiss" onClick={this.handleDismiss} />{' '}
           <div className="data-popup-contents">
-            <FancyScrollbar
-              autoHeight={true}
-              maxHeight={MAX_HEIGHT}
-              autoHide={false}
-            >
+            <FancyScrollbar>
               <div className="datapopup-table--container">
                 <div className="datapopup-table--section">
                   <div className="datapopup-table--section--full">
@@ -95,12 +79,12 @@ class DataPopup extends PureComponent<Props, State> {
 
   private get stylePosition(): CSSProperties {
     const {
-      popupPosition: {top, right}
+      popupPosition: {top, right},
     } = this.props
 
     const position = {
       top: `${top}px`,
-      left: `${right}px`
+      left: `${right}px`,
     }
     return position
   }

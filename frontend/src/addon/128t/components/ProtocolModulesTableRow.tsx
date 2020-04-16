@@ -31,7 +31,7 @@ class ProtocolModulesTableRow extends PureComponent<Props> {
     const {
       PROTOCOL_MODULES_NAME,
       PROTOCOL_MODULES_VERSION,
-      PROTOCOL_MODULES_STATUS
+      PROTOCOL_MODULES_STATUS,
     } = PROTOCOL_MODULES_TABLE_SIZING
 
     return (
@@ -60,7 +60,9 @@ class ProtocolModulesTableRow extends PureComponent<Props> {
     )
   }
 
-  private focusedClasses = (focusedInProtocolModule): string => {
+  private focusedClasses = (
+    focusedInProtocolModule: ProtocolModule['name']
+  ): string => {
     const {protocolModule} = this.props
     if (protocolModule.name === focusedInProtocolModule)
       return 'hosts-table--tr focused'

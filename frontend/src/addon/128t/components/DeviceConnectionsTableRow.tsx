@@ -7,12 +7,15 @@ import {TableBodyRowItem} from 'src/addon/128t/reusable/layout'
 // Constants
 import {DEVICE_CONNECTIONS_TABLE_SIZING} from 'src/addon/128t/constants'
 
+// Type
+import {DeviceConnection} from 'src/addon/128t/types'
+
 // Error Handler
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
-  url: string
-  focusedInDeviceConnection: string
+  url: DeviceConnection['url']
+  focusedInDeviceConnection: DeviceConnection['url']
   onClickRow: (url: string) => void
 }
 
