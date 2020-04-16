@@ -7,7 +7,6 @@ import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
 import {transBps} from 'src/shared/utils/units'
 import {TableBodyRowItem} from 'src/addon/128t/reusable/layout'
 import GeoLocationIndicator from 'src/addon/128t/components/GeoLocationIndicator'
-import ReactTooltip from 'react-tooltip'
 
 interface Props {
   isCheck: boolean
@@ -125,57 +124,12 @@ const RouterTableRow = ({
       <TableBodyRowItem
         title={
           <div
-            //             className="table-connect-tips cursor--pointer table-item"
-            //             data-for="table-connect-tips-tooltip"
-            //             data-tip={`${assetId + assetId + assetId}
-            // ${assetId + assetId + assetId}
-            // ${assetId + assetId + assetId}
-            // ${assetId + assetId + assetId}
-            // ${assetId + assetId + assetId}
-            // ${assetId + assetId + assetId}
-            // ${assetId + assetId + assetId}
-            // ${assetId + assetId + assetId}
-            // ${assetId + assetId + assetId}
-            // ${assetId + assetId + assetId}
-            // ${assetId + assetId + assetId}
-            // ${assetId + assetId + assetId}
-            // ${assetId + assetId + assetId}
-            // ${assetId + assetId + assetId}
-            // ${assetId + assetId + assetId}`}
             onClick={e => {
               handleOnClickRouterName({_event: e, router})
             }}
             style={{width: '100%'}}
           >
             <div>{assetId}</div>
-            {/* <ReactTooltip
-              id="table-connect-tips-tooltip"
-              effect="solid"
-              html={true}
-              place="right"
-              class="influx-tooltip"
-              event={'click'}
-              overridePosition={(
-                {left, top},
-                currentEvent,
-                currentTarget,
-                node
-              ) => {
-                // console.log({left, top})
-                // console.log({currentEvent})
-                // console.log({currentTarget})
-                // console.log({node})
-                // console.log(currentEvent.offset)
-                // console.log(currentTarget.getBoundingClientRect())
-                return {
-                  left,
-                  top
-                }
-              }}
-              multiline={true}
-
-              // eventOff={'mouseleave'}
-            /> */}
           </div>
         }
         width={ASSETID}

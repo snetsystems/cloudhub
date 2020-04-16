@@ -1,28 +1,67 @@
+// Libraries
 import React, {PureComponent} from 'react'
+import _ from 'lodash'
+import memoize from 'memoize-one'
 
+// Components
 import {NoHostsState, sortableClasses} from 'src/addon/128t/reusable'
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableBodyRowItem,
-  sortableClasses
-} from 'src/addon/128t/reusable/layout'
+import {Table, TableHeader, TableBody} from 'src/addon/128t/reusable/layout'
+import ConnectionsTableRow from 'src/addon/128t/components/ConnectionsTableRow'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
-interface Props {}
-interface State {}
+// Constants
+import {CONNECTION_TABLE_SIZING} from 'src/addon/128t/constants'
 
+//type
+import {SortDirection, Connection, OncueData} from 'src/addon/128t/types'
+
+// Error Handler
+import {ErrorHandling} from 'src/shared/decorators/errors'
+
+interface Props {
+  oncueData: OncueData
+}
+
+interface State {
+  sortDirection: SortDirection
+  sortKey: string
+  searchTerm: string
+}
+
+@ErrorHandling
 class ConnectionsTable extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
 
-    this.state = {}
+    this.state = {
+      searchTerm: '',
+      sortKey: 'pathID',
+      sortDirection: SortDirection.ASC
+    }
   }
 
+  public getSortedConnections = memoize(
+    (
+      connections: Connection[],
+      searchTerm: string,
+      sortKey: string,
+      sortDirection: SortDirection
+    ) => this.sort(this.filter(connections, searchTerm), sortKey, sortDirection)
+  )
+
   render() {
+    const {oncueData} = this.props
+    const {focusedInDeviceConnection} = oncueData
     return (
-      <div>
-        <strong>Connections</strong>
+      <div className={'data-table-container min-height'}>
+        <strong className="data-table-title">
+          Connections
+          <span className="data-table-title-sub">
+            {focusedInDeviceConnection === ''
+              ? 'no select'
+              : focusedInDeviceConnection}
+          </span>
+        </strong>
         <Table>
           <TableHeader>{this.TableHeader}</TableHeader>
           <TableBody>{this.TableBody}</TableBody>
@@ -32,123 +71,151 @@ class ConnectionsTable extends PureComponent<Props, State> {
   }
 
   private get TableHeader() {
+    const {sortKey, sortDirection} = this.state
+    const {
+      CONNECTION_PATH_ID,
+      CONNECTION_CONNECTED,
+      CONNECTION_DISCONNECTED,
+      CONNECTION_IN_USER,
+      CONNECTION_DATA_COUNT,
+      CONNECTION_SPEED
+    } = CONNECTION_TABLE_SIZING
     return (
       <>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '10%'}}
+          className={sortableClasses({sortKey, sortDirection, key: 'pathID'})}
+          onClick={this.updateSort('pathID')}
+          style={{width: CONNECTION_PATH_ID}}
         >
-          Name
+          Path ID
+          <span className="icon caret-up" />
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '10%'}}
+          className={sortableClasses({
+            sortKey,
+            sortDirection,
+            key: 'connected'
+          })}
+          onClick={this.updateSort('connected')}
+          style={{width: CONNECTION_CONNECTED}}
         >
-          CPU
+          Connected
+          <span className="icon caret-up" />
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '10%'}}
+          className={sortableClasses({
+            sortKey,
+            sortDirection,
+            key: 'disconnected'
+          })}
+          onClick={this.updateSort('disconnected')}
+          style={{width: CONNECTION_DISCONNECTED}}
         >
-          Memory
+          Disconnected
+          <span className="icon caret-up" />
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '10%'}}
+          className={sortableClasses({sortKey, sortDirection, key: 'inUser'})}
+          onClick={this.updateSort('inUser')}
+          style={{width: CONNECTION_IN_USER}}
         >
-          Queue
+          In User
+          <span className="icon caret-up" />
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '10%'}}
+          className={sortableClasses({
+            sortKey,
+            sortDirection,
+            key: 'dataCount'
+          })}
+          onClick={this.updateSort('dataCount')}
+          style={{width: CONNECTION_DATA_COUNT}}
         >
-          Version
+          Data Count
+          <span className="icon caret-up" />
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '10%'}}
+          className={sortableClasses({sortKey, sortDirection, key: 'speed'})}
+          onClick={this.updateSort('speed')}
+          style={{width: CONNECTION_SPEED}}
         >
-          Status
-        </div>
-        <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '10%'}}
-        >
-          Listening Port
-        </div>
-        <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '10%'}}
-        >
-          Running Thread
-        </div>
-        <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '10%'}}
-        >
-          Processing Data Count
-        </div>
-        <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '10%'}}
-        >
-          Processing Speed
+          Speed
+          <span className="icon caret-up" />
         </div>
       </>
     )
   }
 
   private get TableBody() {
-    return (
-      <div className="hosts-table--tr">
-        <TableBodyRowItem
-          title={'Service1'}
-          width={'10%'}
-          className={'align--end'}
-        />
-        <TableBodyRowItem
-          title={'30.315'}
-          width={'10%'}
-          className={'align--end'}
-        />
-        <TableBodyRowItem
-          title={'50.55%'}
-          width={'10%'}
-          className={'align--end'}
-        />
-        <TableBodyRowItem
-          title={'60.5%'}
-          width={'10%'}
-          className={'align--end'}
-        />
-        <TableBodyRowItem
-          title={'1.1.2'}
-          width={'10%'}
-          className={'align--end'}
-        />
-        <TableBodyRowItem
-          title={'Running'}
-          width={'10%'}
-          className={'align--end'}
-        />
-        <TableBodyRowItem
-          title={'9090'}
-          width={'10%'}
-          className={'align--end'}
-        />
-        <TableBodyRowItem title={'10'} width={'10%'} className={'align--end'} />
-        <TableBodyRowItem
-          title={'100,000'}
-          width={'10%'}
-          className={'align--end'}
-        />
-        <TableBodyRowItem
-          title={'1,000'}
-          width={'10%'}
-          className={'align--end'}
-        />
-      </div>
+    const {oncueData} = this.props
+    const {connections} = oncueData
+    const {searchTerm, sortKey, sortDirection} = this.state
+
+    const sortedConnections = this.getSortedConnections(
+      connections,
+      searchTerm,
+      sortKey,
+      sortDirection
     )
+
+    return (
+      <>
+        {connections.length > 0 ? (
+          <FancyScrollbar
+            children={sortedConnections.map(
+              (connection: Connection): JSX.Element => (
+                <ConnectionsTableRow
+                  key={connection.pathID}
+                  connection={connection}
+                />
+              )
+            )}
+          />
+        ) : (
+          <NoHostsState />
+        )}
+      </>
+    )
+  }
+
+  private filter(connections: Connection[], searchTerm: string) {
+    const filterText = searchTerm.toLowerCase()
+    return connections.filter((connection: Connection) => {
+      return connection.pathID.toLowerCase().includes(filterText)
+    })
+  }
+
+  private sort(
+    connections: Connection[],
+    key: string,
+    direction: SortDirection
+  ) {
+    switch (direction) {
+      case SortDirection.ASC:
+        return _.sortBy(connections, e => e[key])
+      case SortDirection.DESC:
+        const sortDesc = _.sortBy(
+          connections,
+          [e => e[key] || e[key] === 0 || e[key] === ''],
+          ['asc']
+        ).reverse()
+        return sortDesc
+      default:
+        return connections
+    }
+  }
+
+  private updateSort = (key: string) => (): void => {
+    const {sortKey, sortDirection} = this.state
+    if (sortKey === key) {
+      const reverseDirection =
+        sortDirection === SortDirection.ASC
+          ? SortDirection.DESC
+          : SortDirection.ASC
+      this.setState({sortDirection: reverseDirection})
+    } else {
+      this.setState({sortKey: key, sortDirection: SortDirection.ASC})
+    }
   }
 }
 

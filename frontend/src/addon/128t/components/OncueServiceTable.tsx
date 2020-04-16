@@ -1,28 +1,39 @@
+// Libraries
 import React, {PureComponent} from 'react'
 
-import {NoHostsState, sortableClasses} from 'src/addon/128t/reusable'
+// Components
 import {
   Table,
   TableHeader,
   TableBody,
   TableBodyRowItem,
-  sortableClasses
+  usageIndacator
 } from 'src/addon/128t/reusable/layout'
 
-interface Props {}
+// type
+import {OncueData} from 'src/addon/128t/types'
 
-interface State {}
+// Error Handler
+import {ErrorHandling} from 'src/shared/decorators/errors'
 
-class OncueServiceTable extends PureComponent<Props, State> {
+interface Props {
+  oncueData: OncueData
+}
+
+@ErrorHandling
+class OncueServiceTable extends PureComponent<Props> {
   constructor(props: Props) {
     super(props)
-    this.state = {}
   }
 
   render() {
+    const {oncueData} = this.props
     return (
-      <div>
-        <strong>OncueServiceTable</strong>
+      <div className={'data-table-container'}>
+        <strong className="data-table-title">
+          OncueService
+          <span className="data-table-title-sub">{oncueData.router}</span>
+        </strong>
         <Table>
           <TableHeader>{this.TableHeader}</TableHeader>
           <TableBody>{this.TableBody}</TableBody>
@@ -99,55 +110,76 @@ class OncueServiceTable extends PureComponent<Props, State> {
   }
 
   private get TableBody() {
+    const {oncueData} = this.props
+    const {oncueService} = oncueData
+    const {
+      name,
+      cpu,
+      memory,
+      queue,
+      version,
+      status,
+      listeningPort,
+      runningThread,
+      processingDataCount,
+      processingSpeed
+    } = oncueService
+
     return (
-      <div className="hosts-table--tr">
-        <TableBodyRowItem
-          title={'Service1'}
-          width={'10%'}
-          className={'align--end'}
-        />
-        <TableBodyRowItem
-          title={'30.315'}
-          width={'10%'}
-          className={'align--end'}
-        />
-        <TableBodyRowItem
-          title={'50.55%'}
-          width={'10%'}
-          className={'align--end'}
-        />
-        <TableBodyRowItem
-          title={'60.5%'}
-          width={'10%'}
-          className={'align--end'}
-        />
-        <TableBodyRowItem
-          title={'1.1.2'}
-          width={'10%'}
-          className={'align--end'}
-        />
-        <TableBodyRowItem
-          title={'Running'}
-          width={'10%'}
-          className={'align--end'}
-        />
-        <TableBodyRowItem
-          title={'9090'}
-          width={'10%'}
-          className={'align--end'}
-        />
-        <TableBodyRowItem title={'10'} width={'10%'} className={'align--end'} />
-        <TableBodyRowItem
-          title={'100,000'}
-          width={'10%'}
-          className={'align--end'}
-        />
-        <TableBodyRowItem
-          title={'1,000'}
-          width={'10%'}
-          className={'align--end'}
-        />
-      </div>
+      <>
+        <div className="hosts-table--tr">
+          <TableBodyRowItem
+            title={name}
+            width={'10%'}
+            className={'align--end'}
+          />
+          <TableBodyRowItem
+            title={usageIndacator({value: cpu + ' %'})}
+            width={'10%'}
+            className={'align--end'}
+          />
+          <TableBodyRowItem
+            title={usageIndacator({value: memory + ' %'})}
+            width={'10%'}
+            className={'align--end'}
+          />
+          <TableBodyRowItem
+            title={usageIndacator({value: queue + ' %'})}
+            width={'10%'}
+            className={'align--end'}
+          />
+          <TableBodyRowItem
+            title={version}
+            width={'10%'}
+            className={'align--end'}
+          />
+          <TableBodyRowItem
+            title={status}
+            width={'10%'}
+            className={'align--end'}
+          />
+          <TableBodyRowItem
+            title={listeningPort}
+            width={'10%'}
+            className={'align--end'}
+          />
+          <TableBodyRowItem
+            title={runningThread}
+            width={'10%'}
+            className={'align--end'}
+          />
+          <TableBodyRowItem
+            title={processingDataCount}
+            width={'10%'}
+            className={'align--end'}
+          />
+          <TableBodyRowItem
+            title={processingSpeed}
+            width={'10%'}
+            className={'align--end'}
+          />
+        </div>
+      </>
     )
   }
 }

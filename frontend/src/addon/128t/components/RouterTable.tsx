@@ -1,5 +1,5 @@
 // Libraries
-import React, {PureComponent} from 'react'
+import React, {PureComponent, MouseEvent} from 'react'
 import _ from 'lodash'
 import memoize from 'memoize-one'
 
@@ -10,8 +10,7 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {NoHostsState, sortableClasses} from 'src/addon/128t/reusable'
 import Dropdown from 'src/shared/components/Dropdown'
 import LoadingSpinner from 'src/flux/components/LoadingSpinner'
-import DataPopupFunction from 'src/addon/128t/components/DataPopupFunction'
-
+import DataPopup from 'src/addon/128t/components/DataPopup'
 import {
   CellName,
   HeadingBar,
@@ -30,7 +29,8 @@ import {
   TopSession,
   SortDirection,
   SaltDirFile,
-  SaltDirFileInfo
+  SaltDirFileInfo,
+  OncueData
 } from 'src/addon/128t/types'
 
 // constants
@@ -59,6 +59,14 @@ export interface Props {
   config: SaltDirFile
   isRouterDataPopupVisible: boolean
   routerPopupPosition: {top: number; right: number}
+  handleOnClickRouterName: (data: {
+    _event: MouseEvent<HTMLElement>
+    router: Router
+  }) => void
+  hanldeOnDismiss: () => void
+  handleOnClickProtocolModulesRow: (name: string) => void
+  handleOnClickDeviceConnectionsRow: (url: string) => void
+  oncueData: OncueData
 }
 
 interface State {
@@ -402,7 +410,8 @@ class RouterTable extends PureComponent<Props, State> {
       handleOnClickRouterName,
       isRouterDataPopupVisible,
       hanldeOnDismiss,
-      routerPopupPosition
+      routerPopupPosition,
+      oncueData
     } = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
@@ -412,8 +421,6 @@ class RouterTable extends PureComponent<Props, State> {
       sortKey,
       sortDirection
     )
-
-    console.log('routerPopupPosition', routerPopupPosition)
 
     return (
       <>
@@ -433,10 +440,16 @@ class RouterTable extends PureComponent<Props, State> {
               ))}
             />
             {isRouterDataPopupVisible ? (
-              <DataPopupFunction
+              <DataPopup
+                oncueData={oncueData}
                 hanldeOnDismiss={hanldeOnDismiss}
-                data={{name: 'asd'}}
                 popupPosition={routerPopupPosition}
+                handleOnClickProtocolModulesRow={
+                  this.props.handleOnClickProtocolModulesRow
+                }
+                handleOnClickDeviceConnectionsRow={
+                  this.props.handleOnClickDeviceConnectionsRow
+                }
               />
             ) : null}
           </>

@@ -382,8 +382,50 @@
     .datapopup-table--section--half {
       margin-right: 9px;
       background-color: #111;
-      padding: 15px;
+      padding: 10px;
       border-radius: 5px;
+    }
+
+    .datapopup-table--section--full {
+      width: 100%;
+    }
+
+    .datapopup-table--section--half {
+      &.width-10 {
+        width: 10%
+      }
+
+      &.width-20 {
+        width: 20%
+      }
+
+      &.width-30 {
+        width: 30%
+      }
+
+      &.width-40 {
+        width: 40%
+      }
+
+      &.width-50 {
+        width: 50%
+      }
+
+      &.width-60 {
+        width: 60%
+      }
+
+      &.width-70 {
+        width: 70%
+      }
+
+      &.width-80 {
+        width: 80%
+      }
+
+      &.width-90 {
+        width: 90%
+      }
     }
 
     .datapopup-table--section--full:last-child,
@@ -444,14 +486,53 @@
     }
 
     .data-popup-contents {
-      border: 2px solid #f58220;
+      border: 2px solid $s-orange;
       border-radius: 4px;
       width: 100%;
       max-width: 800px;
       display: inline-flex;
       align-items: center;
       background-color: #1c1c21;
-      padding: 10px;
+    }
+
+    .hosts-table--th {
+      font-size: 11px;
+      padding: 5px;
     }
   }
+
+  .data-table-title {
+    display: inline-block;
+    padding-bottom: 5px;
+
+    .data-table-title-sub {
+      background: #282823;
+      color: $s-orange;
+      border-radius: 2px;
+      margin-left: 5px;
+      padding: 2px 5px 1px;
+      font-size: 12px;
+    }
+  }
+
+
+
+  .generic-empty-state {
+    height: 100%;
+  }
+
+  .data-table-container {
+    height: 100%;
+
+    &.min-height {
+      min-height: 110px;
+    }
+
+    .hosts-table {
+      height: calc(100% - 15px);
+    }
+
+  }
+
+
 }

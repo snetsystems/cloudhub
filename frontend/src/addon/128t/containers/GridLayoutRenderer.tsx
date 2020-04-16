@@ -7,7 +7,6 @@ import React, {
 } from 'react'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 import {connect} from 'react-redux'
-
 import _ from 'lodash'
 
 const GridLayout = WidthProvider(ReactGridLayout)
@@ -18,7 +17,6 @@ import TopSourcesTable from 'src/addon/128t/components/TopSourcesTable'
 import TopSessionsTable from 'src/addon/128t/components/TopSessionsTable'
 import RouterMaps from 'src/addon/128t/components/RouterMaps'
 import RouterModal from 'src/addon/128t/components/RouterModal'
-// import DataPopupFunction from 'src/addon/128t/components/DataPopupFunction'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 // Apis
@@ -50,7 +48,12 @@ import {
   SaltDirFileInfo,
   CheckRouter,
   SaltDirFile,
-  GetSaltDirectoryInfo
+  GetSaltDirectoryInfo,
+  OncueService,
+  DeviceConnection,
+  OncueData,
+  Connection,
+  ProtocolModule
 } from 'src/addon/128t/types'
 import {NETWORK_ACCESS, GET_STATUS} from 'src/agent_admin/constants'
 import {cellLayoutInfo} from 'src/addon/128t/containers/SwanSdplexStatusPage'
@@ -102,6 +105,7 @@ interface State {
   popupData: {}
   popupFocuse: string
   routerPopupPosition: {top: number; right: number}
+  oncueData: OncueData
 }
 
 class GridLayoutRenderer extends PureComponent<Props, State> {
@@ -109,7 +113,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   private cellTextColor: string = DEFAULT_CELL_TEXT_COLOR
 
   private DEFAULT_COLLECTOR_DIRECTORY = '/srv/salt/prod/dmt/'
-  private refDataPopup = React.createRef()
+  private refDataPopup = React.createRef<HTMLDivElement>()
   private routertableRef = React.createRef<HTMLDivElement>()
 
   constructor(props: Props) {
@@ -128,7 +132,16 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       sendToDirectory: '',
       popupData: {},
       popupFocuse: '',
-      routerPopupPosition: {top: 0, right: 0}
+      routerPopupPosition: {top: 0, right: 0},
+      oncueData: {
+        router: '',
+        focusedInProtocolModule: '',
+        focusedInDeviceConnection: '',
+        oncueService: null,
+        protocolModules: [],
+        deviceConnections: [],
+        connections: []
+      }
     }
   }
 
@@ -152,22 +165,6 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       console.error(e)
     }
   }
-  // //eslint
-  // public componentDidUpdate(prevProps, prevState) {
-  //   const {top, right} = this.routertableRef.current.getBoundingClientRect()
-
-  //   const routertableRect = {top, right}
-
-  //   if (
-  //     prevState.routertableRect.top !== routertableRect.top ||
-  //     prevState.routertableRect.right !== routertableRect.right
-  //   ) {
-  //     // console.log('123123')
-  //     // this.setState({routertableRect})
-  //   }
-
-  //   // console.log(prevState.routertableRect.top !== routertableRect.top)
-  // }
 
   public getRunnerSaltCmdDirectoryData = async (
     url: string,
@@ -346,7 +343,8 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       config,
       sendToDirectory,
       isRouterDataPopupVisible,
-      routerPopupPosition
+      routerPopupPosition,
+      oncueData
     } = this.state
 
     const checkRouterData: Router[] = routersData.map(
@@ -396,6 +394,11 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
               handleOnClickRouterName={this.onClickRouterName}
               hanldeOnDismiss={this.handleDataPopupClose}
               routerPopupPosition={routerPopupPosition}
+              oncueData={oncueData}
+              handleOnClickProtocolModulesRow={this.onClickProtocolModulesRow}
+              handleOnClickDeviceConnectionsRow={
+                this.onClickDeviceConnectionsRow
+              }
             />
           </div>
           <div key="leafletMap" className="dash-graph" style={this.cellStyle}>
@@ -450,18 +453,55 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
           buttonDisabled={false}
           buttonName={''}
         />
-
-        {/* {isDataPopupVisible ? (
-          <DataPopupFunction
-            handleOnClick={this.handleOnClickDataPopup}
-            handleOnMouseLeave={() => console.log('onMouseLeave')}
-            hanldeOnDismiss={this.handleDataPopupClose}
-            data={{name: 'asd'}}
-            popupPosition={this.state.popupPosition}
-          />
-        ) : null} */}
       </>
     )
+  }
+
+  private onClickProtocolModulesRow = (name: string): void => {
+    const urls: DeviceConnection[] = [
+      {url: '$protocol-module://192.168.1.10'},
+      {url: '$protocol-module://192.168.1.11'},
+      {url: '$protocol-module://192.168.1.12'}
+    ]
+
+    this.setState({
+      oncueData: {
+        ...this.state.oncueData,
+        focusedInProtocolModule: name,
+        deviceConnections: urls,
+        focusedInDeviceConnection: '',
+        connections: []
+      }
+    })
+  }
+
+  private onClickDeviceConnectionsRow = (url: string) => {
+    const connections: Connection[] = [
+      {
+        pathID: 'appname1-connectionsName1',
+        connected: 2,
+        disconnected: 2,
+        inUser: 2,
+        dataCount: 100000,
+        speed: 1000
+      },
+      {
+        pathID: 'appname1-connectionsName2',
+        connected: 2,
+        disconnected: 2,
+        inUser: 2,
+        dataCount: 100000,
+        speed: 1000
+      }
+    ]
+
+    this.setState({
+      oncueData: {
+        ...this.state.oncueData,
+        focusedInDeviceConnection: url,
+        connections
+      }
+    })
   }
 
   private onClickRouterName = (data: {
@@ -478,18 +518,50 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
 
     const {top, right} = routerPosition
     const {parentTop, parentLeft} = this.getParent(this[assetId])
-    console.log('getParent', parentTop, parentLeft)
-    console.log('routerPosition', top, right)
-    // console.log(this)
+
+    const oncueService: OncueService = {
+      name: 'Service1',
+      cpu: 30.31,
+      memory: 50.55,
+      queue: 60.5,
+      version: '1.1.2',
+      status: 'Running',
+      listeningPort: 9090,
+      runningThread: 10,
+      processingDataCount: 100000,
+      processingSpeed: 1000
+    }
+
+    const protocolModules: ProtocolModule[] = [
+      {
+        name: 'Modbus',
+        version: '1.0.2',
+        status: 'LOADED'
+      },
+      {
+        name: 'OPC DA',
+        version: '1.0.0',
+        status: 'LOADED'
+      }
+    ]
 
     this.setState({
-      routerPopupPosition: {top: top - parentTop, right: right - parentLeft}
+      routerPopupPosition: {top: top - parentTop, right: right - parentLeft},
+      oncueData: {
+        router: assetId,
+        oncueService,
+        protocolModules,
+        deviceConnections: [],
+        connections: [],
+        focusedInProtocolModule: '',
+        focusedInDeviceConnection: ''
+      }
     })
     this.handleDataPopupOpen()
     _event.stopPropagation()
   }
 
-  private getParent = target => {
+  private getParent = (target: HTMLElement) => {
     let currentParent = target
     while (currentParent) {
       if (
@@ -500,11 +572,13 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       }
       currentParent = currentParent.parentElement
     }
-    console.log('currentParent', currentParent)
+
     const parentTop =
       (currentParent && currentParent.getBoundingClientRect().top) || 0
+
     const parentLeft =
       (currentParent && currentParent.getBoundingClientRect().left) || 0
+
     return {parentTop, parentLeft}
   }
 
@@ -515,10 +589,6 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   private handleDataPopupClose = () => {
     this.setState({isRouterDataPopupVisible: false})
   }
-
-  // private handleOnClickDataPopup = () => {
-  //   console.log('handleOnClickDataPopup')
-  // }
 
   private onChangeSendToDirectory = (
     e: ChangeEvent<HTMLInputElement>

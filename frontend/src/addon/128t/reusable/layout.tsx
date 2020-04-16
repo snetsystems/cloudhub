@@ -11,11 +11,11 @@ import {
   Router,
   TopSource,
   TopSession,
-  SortDirection,
+  SortDirection
 } from 'src/addon/128t/types'
 
 export const Panel = ({
-  children,
+  children
 }: {
   children: JSX.Element | JSX.Element[]
 }): JSX.Element => {
@@ -28,7 +28,7 @@ export const PanelHeader = ({isEditable, children}) => {
       <div
         className={classnames('dash-graph--heading', {
           'dash-graph--draggable dash-graph--heading-draggable': isEditable,
-          'dash-graph--heading-draggable': isEditable,
+          'dash-graph--heading-draggable': isEditable
         })}
       >
         {children}
@@ -42,7 +42,7 @@ export const PanelBody = ({children}: {children: JSX.Element}): JSX.Element => {
 }
 
 export const Table = ({
-  children,
+  children
 }: {
   children: JSX.Element | JSX.Element[]
 }): JSX.Element => {
@@ -50,7 +50,7 @@ export const Table = ({
 }
 
 export const TableHeader = ({
-  children,
+  children
 }: {
   children: JSX.Element
 }): JSX.Element => {
@@ -62,13 +62,13 @@ export const TableHeader = ({
 }
 
 export const TableBody = ({children}: {children: JSX.Element}): JSX.Element => {
-  return children
+  return <div className="hosts-table--tbody">{children}</div>
 }
 
 export const TableBodyRowItem = ({
   width,
   title,
-  className,
+  className
 }: {
   width: string
   title: string | number | JSX.Element
@@ -86,7 +86,7 @@ export const CellName = ({
   cellBackgroundColor,
   value,
   name,
-  sizeVisible = true,
+  sizeVisible = true
 }: {
   cellTextColor: string
   cellBackgroundColor: string
@@ -98,7 +98,7 @@ export const CellName = ({
 
   if (cellBackgroundColor !== DEFAULT_CELL_BG_COLOR) {
     nameStyle = {
-      color: cellTextColor,
+      color: cellTextColor
     }
   }
 
@@ -111,7 +111,7 @@ export const CellName = ({
 
 export const HeadingBar = ({
   isEditable,
-  cellBackgroundColor,
+  cellBackgroundColor
 }: {
   isEditable: boolean
   cellBackgroundColor: string
@@ -121,7 +121,7 @@ export const HeadingBar = ({
 
     if (cellBackgroundColor !== DEFAULT_CELL_BG_COLOR) {
       barStyle = {
-        backgroundColor: chroma(cellBackgroundColor).brighten(),
+        backgroundColor: chroma(cellBackgroundColor).brighten()
       }
     }
 
@@ -142,7 +142,7 @@ export const ErrorState = (): JSX.Element => (
 
 export const NoHostsState = (): JSX.Element => (
   <div className="generic-empty-state">
-    <h4 style={{margin: '90px 0'}}>No Data. </h4>
+    <h4>No Data.</h4>
   </div>
 )
 
@@ -157,7 +157,7 @@ export const NoSortedHostsState = (): JSX.Element => (
 export const sortableClasses = ({
   sortKey,
   sortDirection,
-  key,
+  key
 }: {
   sortKey: string
   sortDirection: SortDirection
@@ -173,7 +173,7 @@ export const sortableClasses = ({
 }
 
 export const usageIndacator = ({
-  value,
+  value
 }: {
   value: string | number | React.ReactText
 }): JSX.Element => {
@@ -186,7 +186,7 @@ export const usageIndacator = ({
         className={classnames('UsageIndacator-value', {
           'UsageIndacator--caution': numValue >= 50,
           'UsageIndacator--warning': numValue >= 70,
-          'UsageIndacator--danger': numValue >= 90,
+          'UsageIndacator--danger': numValue >= 90
         })}
       >
         {value}
@@ -195,7 +195,7 @@ export const usageIndacator = ({
         className={classnames('UsageIndacator', {
           'UsageIndacator--caution': numValue >= 50,
           'UsageIndacator--warning': numValue >= 70,
-          'UsageIndacator--danger': numValue >= 90,
+          'UsageIndacator--danger': numValue >= 90
         })}
       ></div>
     </div>
