@@ -8,15 +8,15 @@ import (
 	"time"
 )
 
-// SaltProxy proxies requests to services using the path query parameter.
-func (s *Service) SaltProxy(w http.ResponseWriter, r *http.Request) {
+// OncueProxy proxies requests to services using the path query parameter.
+func (s *Service) OncueProxy(w http.ResponseWriter, r *http.Request) {
 	var uri string
 
 	path := r.URL.Query().Get("path")
-	uri = singleJoiningSlash(s.AddonURLs["salt"], path)
+	uri = singleJoiningSlash(s.AddonURLs["oncue"], path)
 	u, err := url.Parse(uri)
 	if err != nil {
-		msg := fmt.Sprintf("Error parsing salt url: %v", err)
+		msg := fmt.Sprintf("Error parsing oncue url: %v", err)
 		Error(w, http.StatusUnprocessableEntity, msg, s.Logger)
 		return
 	}
@@ -26,7 +26,7 @@ func (s *Service) SaltProxy(w http.ResponseWriter, r *http.Request) {
 		req.URL = u
 	}
 
-	// Without a FlushInterval the HTTP Chunked response for salt logs is
+	// Without a FlushInterval the HTTP Chunked response for oncue logs is
 	// buffered and flushed every 30 seconds.
 	proxy := &httputil.ReverseProxy{
 		Director:      director,
@@ -36,7 +36,7 @@ func (s *Service) SaltProxy(w http.ResponseWriter, r *http.Request) {
 	proxy.ServeHTTP(w, r)
 }
 
-// SaltProxyPost proxies POST to service
-func (s *Service) SaltProxyPost(w http.ResponseWriter, r *http.Request) {
-	s.SaltProxy(w, r)
+// OncueProxyGet proxies GET to service
+func (s *Service) OncueProxyGet(w http.ResponseWriter, r *http.Request) {
+	s.OncueProxy(w, r)
 }

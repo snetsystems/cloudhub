@@ -239,10 +239,10 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.DELETE("/cloudhub/v1/sources/:id/services/:kid/proxy", EnsureEditor(service.ProxyDelete))
 
 	// Salt Proxy
-	router.GET("/cloudhub/v1/salt", EnsureAdmin(service.SaltProxyGet))
 	router.POST("/cloudhub/v1/salt", EnsureAdmin(service.SaltProxyPost))
-	router.PATCH("/cloudhub/v1/salt", EnsureAdmin(service.SaltProxyPatch))
-	router.DELETE("/cloudhub/v1/salt", EnsureAdmin(service.SaltProxyDelete))
+
+	// Oncue Proxy
+	router.GET("/cloudhub/v1/oncue", EnsureAdmin(service.OncueProxyGet))
 
 	// Kapacitor
 	router.GET("/cloudhub/v1/sources/:id/kapacitors", EnsureViewer(service.Kapacitors))
