@@ -40,6 +40,7 @@ class ProtocolModulesTableRow extends PureComponent<Props> {
         onClick={() => {
           onClickRow(name)
         }}
+        style={{cursor: 'pointer'}}
       >
         <TableBodyRowItem
           title={name}

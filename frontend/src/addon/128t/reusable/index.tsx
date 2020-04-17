@@ -14,6 +14,7 @@ import {
   sortableClasses,
   usageIndacator,
   unitIndicator,
+  numberWithCommas,
 } from 'src/addon/128t/reusable/layout'
 
 export {
@@ -32,4 +33,5 @@ export {
   usageIndacator,
   sortableClasses,
   unitIndicator,
+  numberWithCommas,
 }

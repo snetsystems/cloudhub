@@ -30,7 +30,7 @@ const RouterTableRow = ({
   focusedAssetId,
   router,
   isCheck,
-  handleOnClickRouterName
+  handleOnClickRouterName,
 }: Props) => {
   const {
     assetId,
@@ -45,7 +45,7 @@ const RouterTableRow = ({
     cpuUsage,
     diskUsage,
     topSources,
-    topSessions
+    topSessions,
   } = router
 
   const {
@@ -62,7 +62,7 @@ const RouterTableRow = ({
     MEMORYUSAGE,
     CPUUSAGE,
     DISKUSAGE,
-    CHECKBOX
+    CHECKBOX,
   } = ROUTER_TABLE_SIZING
 
   const focusedClasses = (assetId: Router['assetId']): string => {
@@ -74,7 +74,7 @@ const RouterTableRow = ({
     return (
       <span
         className={classnames('status-indicator', {
-          'status-indicator--enabled': isEnabled
+          'status-indicator--enabled': isEnabled,
         })}
       />
     )
@@ -127,7 +127,7 @@ const RouterTableRow = ({
             onClick={e => {
               handleOnClickRouterName({_event: e, router})
             }}
-            style={{width: '100%'}}
+            style={{width: '100%', cursor: 'pointer'}}
           >
             <div>{assetId}</div>
           </div>

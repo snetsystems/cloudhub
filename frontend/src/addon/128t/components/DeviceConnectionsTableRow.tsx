@@ -33,6 +33,7 @@ class DeviceConnectionsTableRow extends PureComponent<Props> {
       <div
         className={this.focusedClasses(focusedInDeviceConnection)}
         onClick={() => onClickRow(url)}
+        style={{cursor: 'pointer'}}
       >
         <TableBodyRowItem
           title={url}

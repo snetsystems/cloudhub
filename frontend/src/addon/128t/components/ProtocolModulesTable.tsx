@@ -37,7 +37,7 @@ class ProtocolModulesTable extends PureComponent<Props, State> {
     this.state = {
       searchTerm: '',
       sortKey: 'name',
-      sortDirection: SortDirection.ASC
+      sortDirection: SortDirection.ASC,
     }
   }
 
@@ -72,7 +72,7 @@ class ProtocolModulesTable extends PureComponent<Props, State> {
     const {
       PROTOCOL_MODULES_NAME,
       PROTOCOL_MODULES_VERSION,
-      PROTOCOL_MODULES_STATUS
+      PROTOCOL_MODULES_STATUS,
     } = PROTOCOL_MODULES_TABLE_SIZING
 
     return (

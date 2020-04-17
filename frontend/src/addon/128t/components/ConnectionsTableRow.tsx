@@ -2,7 +2,10 @@
 import React, {PureComponent} from 'react'
 
 // Components
-import {TableBodyRowItem} from 'src/addon/128t/reusable/layout'
+import {
+  TableBodyRowItem,
+  numberWithCommas,
+} from 'src/addon/128t/reusable/layout'
 
 // Constants
 import {CONNECTION_TABLE_SIZING} from 'src/addon/128t/constants'
@@ -35,7 +38,7 @@ class ConnectionsTableRow extends PureComponent<Props> {
       CONNECTION_DISCONNECTED,
       CONNECTION_IN_USER,
       CONNECTION_DATA_COUNT,
-      CONNECTION_SPEED
+      CONNECTION_SPEED,
     } = CONNECTION_TABLE_SIZING
     return (
       <div className="hosts-table--tr">
@@ -45,27 +48,27 @@ class ConnectionsTableRow extends PureComponent<Props> {
           className={'align--end'}
         />
         <TableBodyRowItem
-          title={connection.connected}
+          title={numberWithCommas(connection.connected)}
           width={CONNECTION_CONNECTED}
           className={'align--end'}
         />
         <TableBodyRowItem
-          title={connection.disconnected}
+          title={numberWithCommas(connection.disconnected)}
           width={CONNECTION_DISCONNECTED}
           className={'align--end'}
         />
         <TableBodyRowItem
-          title={connection.inUser}
+          title={numberWithCommas(connection.inUser)}
           width={CONNECTION_IN_USER}
           className={'align--end'}
         />
         <TableBodyRowItem
-          title={connection.dataCount}
+          title={numberWithCommas(connection.dataCount)}
           width={CONNECTION_DATA_COUNT}
           className={'align--end'}
         />
         <TableBodyRowItem
-          title={connection.speed}
+          title={numberWithCommas(connection.speed)}
           width={CONNECTION_SPEED}
           className={'align--end'}
         />

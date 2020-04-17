@@ -7,8 +7,12 @@ import {
   TableHeader,
   TableBody,
   TableBodyRowItem,
-  usageIndacator
+  usageIndacator,
+  numberWithCommas,
 } from 'src/addon/128t/reusable/layout'
+
+// Constants
+import {ONCUE_SERVICE_TABLE_SIZING} from 'src/addon/128t/constants'
 
 // type
 import {OncueData} from 'src/addon/128t/types'
@@ -43,65 +47,77 @@ class OncueServiceTable extends PureComponent<Props> {
   }
 
   private get TableHeader() {
+    const {
+      ONCUE_SERVICE_NAME,
+      ONCUE_SERVICE_CPU,
+      ONCUE_SERVICE_MEMORY,
+      ONCUE_SERVICE_QUEUE,
+      ONCUE_SERVICE_VERSION,
+      ONCUE_SERVICE_STATUS,
+      ONCUE_SERVICE_LISTENING_PORT,
+      ONCUE_SERVICE_RUNNING_THREAD,
+      ONCUE_SERVICE_PROCESSING_DATA_COUNT,
+      ONCUE_SERVICE_PROCESSING_SPEED,
+    } = ONCUE_SERVICE_TABLE_SIZING
     return (
       <>
         <div
           className={'hosts-table--th sortable-header'}
-          style={{width: '10%'}}
+          style={{width: ONCUE_SERVICE_NAME}}
         >
           Name
         </div>
         <div
           className={'hosts-table--th sortable-header'}
-          style={{width: '10%'}}
+          style={{width: ONCUE_SERVICE_CPU}}
         >
           CPU
         </div>
         <div
           className={'hosts-table--th sortable-header'}
-          style={{width: '10%'}}
+          style={{width: ONCUE_SERVICE_MEMORY}}
         >
           Memory
         </div>
         <div
           className={'hosts-table--th sortable-header'}
-          style={{width: '10%'}}
+          style={{width: ONCUE_SERVICE_QUEUE}}
         >
           Queue
         </div>
         <div
           className={'hosts-table--th sortable-header'}
-          style={{width: '10%'}}
+          style={{width: ONCUE_SERVICE_VERSION}}
         >
           Version
         </div>
         <div
           className={'hosts-table--th sortable-header'}
-          style={{width: '10%'}}
+          style={{width: ONCUE_SERVICE_STATUS}}
         >
           Status
         </div>
         <div
           className={'hosts-table--th sortable-header'}
-          style={{width: '10%'}}
+          style={{width: ONCUE_SERVICE_LISTENING_PORT}}
         >
           Listening Port
         </div>
         <div
           className={'hosts-table--th sortable-header'}
-          style={{width: '10%'}}
+          style={{width: ONCUE_SERVICE_RUNNING_THREAD}}
         >
           Running Thread
         </div>
         <div
           className={'hosts-table--th sortable-header'}
-          style={{width: '10%'}}
+          style={{width: ONCUE_SERVICE_PROCESSING_DATA_COUNT}}
         >
           Processing Data Count
         </div>
         <div
           className={'hosts-table--th sortable-header'}
-          style={{width: '10%'}}
+          style={{width: ONCUE_SERVICE_PROCESSING_SPEED}}
         >
           Processing Speed
         </div>
@@ -122,60 +138,73 @@ class OncueServiceTable extends PureComponent<Props> {
       listeningPort,
       runningThread,
       processingDataCount,
-      processingSpeed
+      processingSpeed,
     } = oncueService
+
+    const {
+      ONCUE_SERVICE_NAME,
+      ONCUE_SERVICE_CPU,
+      ONCUE_SERVICE_MEMORY,
+      ONCUE_SERVICE_QUEUE,
+      ONCUE_SERVICE_VERSION,
+      ONCUE_SERVICE_STATUS,
+      ONCUE_SERVICE_LISTENING_PORT,
+      ONCUE_SERVICE_RUNNING_THREAD,
+      ONCUE_SERVICE_PROCESSING_DATA_COUNT,
+      ONCUE_SERVICE_PROCESSING_SPEED,
+    } = ONCUE_SERVICE_TABLE_SIZING
 
     return (
       <>
         <div className="hosts-table--tr">
           <TableBodyRowItem
             title={name}
-            width={'10%'}
+            width={ONCUE_SERVICE_NAME}
             className={'align--end'}
           />
           <TableBodyRowItem
             title={usageIndacator({value: cpu + ' %'})}
-            width={'10%'}
+            width={ONCUE_SERVICE_CPU}
             className={'align--end'}
           />
           <TableBodyRowItem
             title={usageIndacator({value: memory + ' %'})}
-            width={'10%'}
+            width={ONCUE_SERVICE_MEMORY}
             className={'align--end'}
           />
           <TableBodyRowItem
             title={usageIndacator({value: queue + ' %'})}
-            width={'10%'}
+            width={ONCUE_SERVICE_QUEUE}
             className={'align--end'}
           />
           <TableBodyRowItem
             title={version}
-            width={'10%'}
+            width={ONCUE_SERVICE_VERSION}
             className={'align--end'}
           />
           <TableBodyRowItem
             title={status}
-            width={'10%'}
+            width={ONCUE_SERVICE_STATUS}
             className={'align--end'}
           />
           <TableBodyRowItem
             title={listeningPort}
-            width={'10%'}
+            width={ONCUE_SERVICE_LISTENING_PORT}
             className={'align--end'}
           />
           <TableBodyRowItem
-            title={runningThread}
-            width={'10%'}
+            title={numberWithCommas(runningThread)}
+            width={ONCUE_SERVICE_RUNNING_THREAD}
             className={'align--end'}
           />
           <TableBodyRowItem
-            title={processingDataCount}
-            width={'10%'}
+            title={numberWithCommas(processingDataCount)}
+            width={ONCUE_SERVICE_PROCESSING_DATA_COUNT}
             className={'align--end'}
           />
           <TableBodyRowItem
-            title={processingSpeed}
-            width={'10%'}
+            title={numberWithCommas(processingSpeed)}
+            width={ONCUE_SERVICE_PROCESSING_SPEED}
             className={'align--end'}
           />
         </div>

@@ -24,6 +24,7 @@ interface Props {
 
 @ErrorHandling
 class DataPopup extends PureComponent<Props> {
+  private MAX_HEIGHT = 400
   public constructor(props: Props) {
     super(props)
   }
@@ -39,7 +40,11 @@ class DataPopup extends PureComponent<Props> {
         >
           <button className="data-popup-dismiss" onClick={this.handleDismiss} />{' '}
           <div className="data-popup-contents">
-            <FancyScrollbar>
+            <FancyScrollbar
+              autoHeight={true}
+              maxHeight={this.MAX_HEIGHT}
+              autoHide={false}
+            >
               <div className="datapopup-table--container">
                 <div className="datapopup-table--section">
                   <div className="datapopup-table--section--full">
