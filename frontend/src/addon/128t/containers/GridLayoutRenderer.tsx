@@ -99,8 +99,6 @@ interface State {
   config: SaltDirFile
   focusedBtn: string
   sendToDirectory: string
-  popupData: {}
-  popupFocuse: string
   routerPopupPosition: {top: number; right: number}
   oncueData: OncueData
 }
@@ -127,8 +125,6 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       config: {files: [], isLoading: true},
       focusedBtn: '',
       sendToDirectory: '',
-      popupData: {},
-      popupFocuse: '',
       routerPopupPosition: {top: 0, right: 0},
       oncueData: {
         router: '',
@@ -486,9 +482,6 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     router: Router
   }) => {
     const {_event, router} = data
-
-    _event.stopPropagation()
-
     const {assetId} = router
 
     this[assetId] = _event.target

@@ -156,7 +156,7 @@ class RouterTable extends PureComponent<Props, State> {
     )
   }
   public extractionFilesName = (items: SaltDirFileInfo[]): string[] => {
-    return items.map((item) => item.applicationFullName)
+    return items.map(item => item.applicationFullName)
   }
   public render() {
     const {
@@ -463,7 +463,7 @@ class RouterTable extends PureComponent<Props, State> {
 
   private filter(allrouters: Router[], searchTerm: string) {
     const filterText = searchTerm.toLowerCase()
-    return allrouters.filter((h) => {
+    return allrouters.filter(h => {
       return h.assetId.toLowerCase().includes(filterText)
     })
   }
@@ -471,11 +471,11 @@ class RouterTable extends PureComponent<Props, State> {
   private sort(allrouters: Router[], key: string, direction: SortDirection) {
     switch (direction) {
       case SortDirection.ASC:
-        return _.sortBy(allrouters, (e) => e[key])
+        return _.sortBy(allrouters, e => e[key])
       case SortDirection.DESC:
         const sortDesc = _.sortBy(
           allrouters,
-          [(e) => e[key] || e[key] === 0 || e[key] === ''],
+          [e => e[key] || e[key] === 0 || e[key] === ''],
           ['asc']
         ).reverse()
         return sortDesc

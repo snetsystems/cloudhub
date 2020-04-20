@@ -108,6 +108,17 @@ const RouterTableRow = ({
     handleRouterCheck({router})
   }
 
+  const getHandleOnClickRouterName = ({
+    _event,
+    router,
+  }: {
+    _event: MouseEvent<HTMLDivElement>
+    router: Router
+  }) => {
+    handleOnClickRouterName({_event, router})
+    event.stopPropagation()
+  }
+
   return (
     <div
       className={focusedClasses(router.assetId)}
@@ -127,8 +138,8 @@ const RouterTableRow = ({
       <TableBodyRowItem
         title={
           <div
-            onClick={(e) => {
-              handleOnClickRouterName({_event: e, router})
+            onClick={(event: MouseEvent<HTMLDivElement>): void => {
+              getHandleOnClickRouterName({_event: event, router})
             }}
             className={`cursor--pointer`}
             style={{width: '100%'}}
