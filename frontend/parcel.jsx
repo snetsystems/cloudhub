@@ -14,7 +14,7 @@ const handleProxyError = err => {
 }
 
 const proxyMiddleware = proxy('/cloudhub/v1', {
-  target: 'https://localhost',
+  target: 'http://localhost:8888',
   logLevel: 'silent',
   changeOrigin: true,
   onError: handleProxyError,
