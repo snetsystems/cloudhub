@@ -9,6 +9,15 @@
   //   overflow: hidden
   // }
 
+  .hosts-table-item--reactor {
+    // color: $s-brown;
+
+    &:hover,
+    &:active {
+      color: $s-deepOrange2;
+    }
+  }
+
   .container-fluid {
     height: auto;
   }
@@ -440,7 +449,7 @@
 
   .data-popup-item {
     padding-right: 8px;
-    width: 800px;
+    width: 1000px;
     position: fixed;
     transform: none;
     z-index: 30;
@@ -489,7 +498,7 @@
       border: 2px solid $s-orange;
       border-radius: 4px;
       width: 100%;
-      max-width: 800px;
+      max-width: 1000px;
       display: inline-flex;
       align-items: center;
       background-color: #1c1c21;

@@ -50,7 +50,6 @@ import {
   CheckRouter,
   SaltDirFile,
   GetSaltDirectoryInfo,
-  OncueService,
   OncueData,
 } from 'src/addon/128t/types'
 import {NETWORK_ACCESS, GET_STATUS} from 'src/agent_admin/constants'

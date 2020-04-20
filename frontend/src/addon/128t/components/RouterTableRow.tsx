@@ -70,6 +70,11 @@ const RouterTableRow = ({
     return 'hosts-table--tr'
   }
 
+  // const focusedClickRouterName = (assetId: Router['assetId']): string => {
+  //   if (assetId === focusedAssetId) return 'hosts-table--tr focused'
+  //   return 'hosts-table--tr'
+  // }
+
   const responseIndicator = (isEnabled: boolean): JSX.Element => {
     return (
       <span
@@ -124,12 +129,12 @@ const RouterTableRow = ({
       <TableBodyRowItem
         title={
           <div
-            onClick={e => {
+            onClick={(e) => {
               handleOnClickRouterName({_event: e, router})
             }}
             style={{width: '100%', cursor: 'pointer'}}
           >
-            <div>{assetId}</div>
+            <div className="hosts-table-item--reactor">{assetId}</div>
           </div>
         }
         width={ASSETID}

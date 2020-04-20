@@ -24,7 +24,7 @@ interface Props {
 
 @ErrorHandling
 class DataPopup extends PureComponent<Props> {
-  private MAX_HEIGHT = 400
+  private MAX_HEIGHT = 500
   public constructor(props: Props) {
     super(props)
   }
@@ -52,13 +52,13 @@ class DataPopup extends PureComponent<Props> {
                   </div>
                 </div>
                 <div className="datapopup-table--section">
-                  <div className="datapopup-table--section--half width-40">
+                  <div className="datapopup-table--section--half width-50">
                     <ProtocolModulesTable
                       oncueData={oncueData}
                       onClickRow={this.props.handleOnClickProtocolModulesRow}
                     />
                   </div>
-                  <div className="datapopup-table--section--half width-60">
+                  <div className="datapopup-table--section--half width-50">
                     <DeviceConnectionsTable
                       oncueData={oncueData}
                       onClickRow={this.props.handleOnClickDeviceConnectionsRow}
