@@ -10,9 +10,9 @@ export const PUSHOVER_DOCS_LINK = `<p>Need help setting up Pushover?<br/>Check o
 
 // Telegram
 const telegramChatIDLink =
-  'https://docs.influxdata.com/kapacitor/latest/guides/event-handler-setup/#telegram-chat-id'
+  'https://seversky.atlassian.net/wiki/spaces/CSHD/pages/251133991/Configuring+CloudHub+alert+endpoints#Chat-ID'
 export const TELEGRAM_CHAT_ID_TIP = `<p>Need help finding your chat id?<br/>Check out <a target='_blank' href='${telegramChatIDLink}'>these steps</a>.</p>`
 
 const telegramTokenLink =
-  'https://docs.influxdata.com/kapacitor/latest/guides/event-handler-setup/#telegram-api-access-token'
+  'https://seversky.atlassian.net/wiki/spaces/CSHD/pages/251133991/Configuring+CloudHub+alert+endpoints#Token'
 export const TELEGRAM_TOKEN_TIP = `<p>Need help finding your token?<br/>Check out <a target='_blank' href='${telegramTokenLink}'>these steps</a>.</p>`

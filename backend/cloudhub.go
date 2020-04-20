@@ -774,8 +774,8 @@ const MappingWildcard string = "*"
 //
 // One can think of a mapping like so:
 //     Provider:Scheme:Group -> Organization
-//     github:oauth2:influxdata -> Happy
-//     beyondcorp:ldap:influxdata -> TheBillHilliettas
+//     github:oauth2:cloudhub -> Happy
+//     beyondcorp:ldap:cloudhub -> TheBillHilliettas
 //
 // Any of Provider, Scheme, or Group may be provided as a wildcard *
 //     github:oauth2:* -> MyOrg

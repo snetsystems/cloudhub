@@ -17,14 +17,31 @@ class GettingStarted extends Component {
           </div>
           <div className="getting-started--cell">
             <p>
-              <strong>Install the TICK Stack</strong>
+              <strong>
+                <a
+                  href="https://seversky.atlassian.net/wiki/spaces/CSHD/pages/217612473/Installation+guide/"
+                  target="_blank"
+                >
+                  Install the CloudHub
+                </a>
+              </strong>
               <br />
               Save some time and use this handy tool to install the rest of the
               stack:
             </p>
             <p>
-              <a href="https://github.com/influxdata/sandbox" target="_blank">
-                <span className="icon github" /> TICK Sandbox
+              <a
+                href="https://seversky.atlassian.net/wiki/spaces/CSHD/pages/217022681/Installing+Server+Node#Install-Pre-required-Packages"
+                target="_blank"
+              >
+                Install Component Stack
+              </a>
+              <br />
+              <a
+                href="https://seversky.atlassian.net/wiki/spaces/CSHD/pages/219873404/Getting+started/"
+                target="_blank"
+              >
+                Getting started with quick guide
               </a>
             </p>
           </div>
@@ -34,42 +51,28 @@ class GettingStarted extends Component {
             </p>
             <p>
               <a
-                href="https://docs.influxdata.com/cloudhub/latest/guides/create-a-dashboard/"
+                href="https://seversky.atlassian.net/wiki/spaces/CSHD/pages/219873413/User+Guides/"
                 target="_blank"
               >
-                Create a Dashboard
+                User's guides for CloudHub
               </a>
               <br />
               <a
-                href="https://docs.influxdata.com/cloudhub/latest/guides/create-a-kapacitor-alert/"
+                href="https://seversky.atlassian.net/wiki/spaces/CSHD/pages/219447417/Administrator+s+Guides/"
                 target="_blank"
               >
-                Create a Kapacitor Alert
+                Administrator's guides for CloudHub
               </a>
               <br />
               <a
-                href="https://docs.influxdata.com/cloudhub/latest/guides/configure-kapacitor-event-handlers/"
+                href="https://seversky.atlassian.net/wiki/spaces/CSHD/pages/279281813/Case+Study/"
                 target="_blank"
               >
-                Configure Kapacitor Event Handlers
+                Useful cases study
               </a>
               <br />
               <a
-                href="https://docs.influxdata.com/cloudhub/latest/guides/transition-web-admin-interface/"
-                target="_blank"
-              >
-                Transition from InfluxDB's Web Admin Interface
-              </a>
-              <br />
-              <a
-                href="https://docs.influxdata.com/cloudhub/latest/guides/dashboard-template-variables/"
-                target="_blank"
-              >
-                Dashboard Template Variables
-              </a>
-              <br />
-              <a
-                href="https://docs.influxdata.com/cloudhub/latest/guides/advanced-kapacitor/"
+                href="https://seversky.atlassian.net/wiki/spaces/CSHD/pages/259817509/Advanced+Kapacitor+usage/"
                 target="_blank"
               >
                 Advanced Kapacitor Usage
@@ -78,16 +81,22 @@ class GettingStarted extends Component {
           </div>
           <div className="getting-started--cell">
             <p>
-              <strong>Questions & Comments</strong>
+              <strong>Release</strong>
             </p>
             <p>
-              If you have any product feedback please open a GitHub issue and
+              {/* If you have any product feedback please open a GitHub issue and
               we'll take a look. For any questions or other issues try posting
               on our&nbsp;
-              <a href="https://community.influxdata.com/" target="_blank">
+              <a href="https://community.snetsystems.com/" target="_blank">
                 Community Forum
               </a>
-              .
+              . */}
+              <a
+                href="https://github.com/snetsystems/cloudhub/releases/"
+                target="_blank"
+              >
+                <span className="icon github" /> Release informations
+              </a>
             </p>
           </div>
         </div>
