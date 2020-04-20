@@ -2,7 +2,7 @@ import React, {MouseEvent} from 'react'
 import classnames from 'classnames'
 import {unitIndicator, usageIndacator} from 'src/addon/128t/reusable'
 import {ROUTER_TABLE_SIZING} from 'src/addon/128t/constants'
-import {Router, TopSource, TopSession} from 'src/addon/128t/types'
+import {Router, TopSource, TopSession, OncueData} from 'src/addon/128t/types'
 import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
 import {transBps} from 'src/shared/utils/units'
 import {TableBodyRowItem} from 'src/addon/128t/reusable/layout'
@@ -22,6 +22,7 @@ interface Props {
     _event: MouseEvent<HTMLElement>
     router: Router
   }) => void
+  oncueData: OncueData
 }
 
 const RouterTableRow = ({
@@ -31,6 +32,7 @@ const RouterTableRow = ({
   router,
   isCheck,
   handleOnClickRouterName,
+  oncueData,
 }: Props) => {
   const {
     assetId,
@@ -66,14 +68,10 @@ const RouterTableRow = ({
   } = ROUTER_TABLE_SIZING
 
   const focusedClasses = (assetId: Router['assetId']): string => {
-    if (assetId === focusedAssetId) return 'hosts-table--tr focused'
-    return 'hosts-table--tr'
+    if (assetId === focusedAssetId)
+      return 'hosts-table--tr cursor--pointer focused'
+    return 'hosts-table--tr cursor--pointer'
   }
-
-  // const focusedClickRouterName = (assetId: Router['assetId']): string => {
-  //   if (assetId === focusedAssetId) return 'hosts-table--tr focused'
-  //   return 'hosts-table--tr'
-  // }
 
   const responseIndicator = (isEnabled: boolean): JSX.Element => {
     return (
@@ -132,9 +130,16 @@ const RouterTableRow = ({
             onClick={(e) => {
               handleOnClickRouterName({_event: e, router})
             }}
-            style={{width: '100%', cursor: 'pointer'}}
+            className={`cursor--pointer`}
+            style={{width: '100%'}}
           >
-            <div className="hosts-table-item--reactor">{assetId}</div>
+            <div
+              className={classnames('hosts-table-item', {
+                focused: oncueData.router === assetId,
+              })}
+            >
+              {assetId}
+            </div>
           </div>
         }
         width={ASSETID}

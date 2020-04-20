@@ -142,7 +142,7 @@ class ProtocolModulesTable extends PureComponent<Props, State> {
 
   private filter(protocolModules: ProtocolModule[], searchTerm: string) {
     const filterText = searchTerm.toLowerCase()
-    return protocolModules.filter((protocolModule) => {
+    return protocolModules.filter(protocolModule => {
       return protocolModule.name.toLowerCase().includes(filterText)
     })
   }
@@ -154,11 +154,11 @@ class ProtocolModulesTable extends PureComponent<Props, State> {
   ) {
     switch (direction) {
       case SortDirection.ASC:
-        return _.sortBy(protocolModules, (e) => e[key])
+        return _.sortBy(protocolModules, e => e[key])
       case SortDirection.DESC:
         const sortDesc = _.sortBy(
           protocolModules,
-          [(e) => e[key] || e[key] === 0 || e[key] === ''],
+          [e => e[key] || e[key] === 0 || e[key] === ''],
           ['asc']
         ).reverse()
         return sortDesc

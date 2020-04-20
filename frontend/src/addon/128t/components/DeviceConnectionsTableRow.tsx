@@ -8,7 +8,7 @@ import {TableBodyRowItem} from 'src/addon/128t/reusable/layout'
 import {DEVICE_CONNECTIONS_TABLE_SIZING} from 'src/addon/128t/constants'
 
 // Type
-import {DeviceConnection} from 'src/addon/128t/types'
+import {DeviceConnection, OncueData} from 'src/addon/128t/types'
 
 // Error Handler
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -33,21 +33,23 @@ class DeviceConnectionsTableRow extends PureComponent<Props> {
       <div
         className={this.focusedClasses(focusedInDeviceConnection)}
         onClick={() => onClickRow(url)}
-        style={{cursor: 'pointer'}}
       >
         <TableBodyRowItem
           title={url}
           width={DEVICE_CONNECTIONS_URL}
-          className={'align--end'}
+          className={'align--start'}
         />
       </div>
     )
   }
 
-  private focusedClasses = (focusedInDeviceConnection): string => {
+  private focusedClasses = (
+    focusedInDeviceConnection: OncueData['focusedInDeviceConnection']
+  ): string => {
     const {url} = this.props
-    if (url === focusedInDeviceConnection) return 'hosts-table--tr focused'
-    return 'hosts-table--tr'
+    if (url === focusedInDeviceConnection)
+      return 'hosts-table--tr cursor--pointer focused'
+    return 'hosts-table--t cursor--pointerr'
   }
 }
 

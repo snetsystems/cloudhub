@@ -5,16 +5,16 @@
     overflow: hidden
   }
 
-  // .hosts-table--td {
-  //   overflow: hidden
-  // }
-
-  .hosts-table-item--reactor {
-    // color: $s-brown;
+  .hosts-table-item {
+    transition: color 0.25s ease;
 
     &:hover,
     &:active {
-      color: $s-deepOrange2;
+      color: $s-brown;
+    }
+
+    &.focused {
+      color: $s-orange;
     }
   }
 
@@ -87,11 +87,11 @@
   .status-indicator {
     width: 12px;
     height: 12px;
-    background: #e85b1c;
+    background: $c-topaz;
     border-radius: 100%;
 
     &.status-indicator--enabled {
-      background: #4ed8a0;
+      background: $c-rainforest;
     }
   }
 
@@ -507,12 +507,15 @@
     .hosts-table--th {
       font-size: 11px;
       padding: 5px;
+      justify-content: center;
     }
   }
 
   .data-table-title {
     display: inline-block;
     padding-bottom: 5px;
+    font-size: 15px;
+    font-weight: 400;
 
     .data-table-title-sub {
       background: #282823;

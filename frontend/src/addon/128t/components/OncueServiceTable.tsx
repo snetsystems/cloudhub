@@ -150,37 +150,37 @@ class OncueServiceTable extends PureComponent<Props> {
             <TableBodyRowItem
               title={oncueService.name}
               width={ONCUE_SERVICE_NAME}
-              className={'align--end'}
+              className={'align--start'}
             />
             <TableBodyRowItem
               title={usageIndacator({value: oncueService.cpuUsage + ' %'})}
               width={ONCUE_SERVICE_CPU}
-              className={'align--end'}
+              className={'align--center'}
             />
             <TableBodyRowItem
               title={usageIndacator({value: oncueService.memoryUsage + ' %'})}
               width={ONCUE_SERVICE_MEMORY}
-              className={'align--end'}
+              className={'align--center'}
             />
             <TableBodyRowItem
               title={usageIndacator({value: oncueService.diskUsage + ' %'})}
               width={ONCUE_SERVICE_QUEUE}
-              className={'align--end'}
+              className={'align--center'}
             />
             <TableBodyRowItem
               title={oncueService.version}
               width={ONCUE_SERVICE_VERSION}
-              className={'align--end'}
+              className={'align--start'}
             />
             <TableBodyRowItem
               title={oncueService.status}
               width={ONCUE_SERVICE_STATUS}
-              className={'align--end'}
+              className={'align--start'}
             />
             <TableBodyRowItem
               title={oncueService.listeningPort}
               width={ONCUE_SERVICE_LISTENING_PORT}
-              className={'align--end'}
+              className={'align--start'}
             />
             <TableBodyRowItem
               title={numberWithCommas(oncueService.runningThread)}

@@ -40,7 +40,7 @@ class ConnectionsTableRow extends PureComponent<Props> {
         <TableBodyRowItem
           title={connection.pathId}
           width={CONNECTION_PATH_ID}
-          className={'align--end'}
+          className={'align--start'}
         />
         <TableBodyRowItem
           title={numberWithCommas(connection.connected)}

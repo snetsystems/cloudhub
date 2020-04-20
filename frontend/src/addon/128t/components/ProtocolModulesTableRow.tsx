@@ -40,22 +40,21 @@ class ProtocolModulesTableRow extends PureComponent<Props> {
         onClick={() => {
           onClickRow(name)
         }}
-        style={{cursor: 'pointer'}}
       >
         <TableBodyRowItem
           title={name}
           width={PROTOCOL_MODULES_NAME}
-          className={'align--end'}
+          className={'align--start'}
         />
         <TableBodyRowItem
           title={version}
           width={PROTOCOL_MODULES_VERSION}
-          className={'align--end'}
+          className={'align--start'}
         />
         <TableBodyRowItem
           title={status}
           width={PROTOCOL_MODULES_STATUS}
-          className={'align--end'}
+          className={'align--start'}
         />
       </div>
     )
@@ -66,8 +65,8 @@ class ProtocolModulesTableRow extends PureComponent<Props> {
   ): string => {
     const {protocolModule} = this.props
     if (protocolModule.name === focusedInProtocolModule)
-      return 'hosts-table--tr focused'
-    return 'hosts-table--tr'
+      return 'hosts-table--tr cursor--pointer focused'
+    return 'hosts-table--tr cursor--pointer'
   }
 }
 

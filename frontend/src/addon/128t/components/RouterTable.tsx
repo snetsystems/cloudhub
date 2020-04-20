@@ -436,6 +436,7 @@ class RouterTable extends PureComponent<Props, State> {
                   isCheck={r.isCheck}
                   router={r}
                   key={i}
+                  oncueData={oncueData}
                 />
               ))}
             />
