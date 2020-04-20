@@ -96,11 +96,11 @@ class DeviceConnectionsTable extends PureComponent<Props, State> {
 
   private get TableBody() {
     const {oncueData, onClickRow} = this.props
-    const {deviceConnections, focusedInDeviceConnection} = oncueData
+    const {deviceConnection, focusedInDeviceConnection} = oncueData
     const {searchTerm, sortKey, sortDirection} = this.state
 
     const sortedDeviceConnections = this.getSortedDeviceConnections(
-      deviceConnections,
+      deviceConnection,
       searchTerm,
       sortKey,
       sortDirection
@@ -108,7 +108,7 @@ class DeviceConnectionsTable extends PureComponent<Props, State> {
 
     return (
       <>
-        {deviceConnections.length > 0 ? (
+        {deviceConnection.length > 0 ? (
           <FancyScrollbar
             children={sortedDeviceConnections.map(
               (deviceConnection: DeviceConnection): JSX.Element => (
@@ -130,7 +130,7 @@ class DeviceConnectionsTable extends PureComponent<Props, State> {
 
   private filter(deviceConnections: DeviceConnection[], searchTerm: string) {
     const filterText = searchTerm.toLowerCase()
-    return deviceConnections.filter(deviceConnection => {
+    return deviceConnections.filter((deviceConnection) => {
       return deviceConnection.url.toLowerCase().includes(filterText)
     })
   }
@@ -142,11 +142,11 @@ class DeviceConnectionsTable extends PureComponent<Props, State> {
   ) {
     switch (direction) {
       case SortDirection.ASC:
-        return _.sortBy(deviceConnections, e => e[key])
+        return _.sortBy(deviceConnections, (e) => e[key])
       case SortDirection.DESC:
         const sortDesc = _.sortBy(
           deviceConnections,
-          [e => e[key] || e[key] === 0 || e[key] === ''],
+          [(e) => e[key] || e[key] === 0 || e[key] === ''],
           ['asc']
         ).reverse()
         return sortDesc

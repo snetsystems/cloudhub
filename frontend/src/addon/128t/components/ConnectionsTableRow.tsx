@@ -13,15 +13,10 @@ import {CONNECTION_TABLE_SIZING} from 'src/addon/128t/constants'
 // Error Handler
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
+import {Connection} from 'src/addon/128t/types'
+
 interface Props {
-  connection: {
-    pathID: string
-    connected: number
-    disconnected: number
-    inUser: number
-    dataCount: number
-    speed: number
-  }
+  connection: Connection
 }
 
 @ErrorHandling
@@ -43,7 +38,7 @@ class ConnectionsTableRow extends PureComponent<Props> {
     return (
       <div className="hosts-table--tr">
         <TableBodyRowItem
-          title={connection.pathID}
+          title={connection.pathId}
           width={CONNECTION_PATH_ID}
           className={'align--end'}
         />
@@ -58,17 +53,17 @@ class ConnectionsTableRow extends PureComponent<Props> {
           className={'align--end'}
         />
         <TableBodyRowItem
-          title={numberWithCommas(connection.inUser)}
+          title={numberWithCommas(connection.inUse)}
           width={CONNECTION_IN_USER}
           className={'align--end'}
         />
         <TableBodyRowItem
-          title={numberWithCommas(connection.dataCount)}
+          title={numberWithCommas(connection.processDataCount)}
           width={CONNECTION_DATA_COUNT}
           className={'align--end'}
         />
         <TableBodyRowItem
-          title={numberWithCommas(connection.speed)}
+          title={numberWithCommas(connection.processSpeed)}
           width={CONNECTION_SPEED}
           className={'align--end'}
         />
