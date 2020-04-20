@@ -62,33 +62,23 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
   "files.eol": "\n",
   "go.formatTool": "goimports",
   "go.lintOnSave": "package",
+  "go.autocompleteUnimportedPackages": true,
   "prettier.singleQuote": true,
   "prettier.bracketSpacing": false,
   "prettier.semi": false,
   "prettier.trailingComma": "es5",
+  "prettier.arrowParens": "avoid",
   "eslint.alwaysShowStatus": true,
-  "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "debug.showInStatusBar": "always",
-  "[typescriptreact]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "debug.toolBarLocation": "docked",
-  "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "files.associations": {
+    "*.yml": "yaml"
   },
   "window.zoomLevel": 0,
   "gitlens.views.repositories.files.layout": "tree",
   "git.ignoreLegacyWarning": true,
   "screencastMode.onlyKeyboardShortcuts": true,
-  "diffEditor.ignoreTrimWhitespace": false
+  "diffEditor.ignoreTrimWhitespace": false,
+  "workbench.sideBar.location": "left"
 }
 ```
 
