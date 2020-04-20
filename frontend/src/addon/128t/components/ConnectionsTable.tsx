@@ -36,7 +36,7 @@ class ConnectionsTable extends PureComponent<Props, State> {
     this.state = {
       searchTerm: '',
       sortKey: 'pathID',
-      sortDirection: SortDirection.ASC
+      sortDirection: SortDirection.ASC,
     }
   }
 
@@ -78,7 +78,7 @@ class ConnectionsTable extends PureComponent<Props, State> {
       CONNECTION_DISCONNECTED,
       CONNECTION_IN_USER,
       CONNECTION_DATA_COUNT,
-      CONNECTION_SPEED
+      CONNECTION_SPEED,
     } = CONNECTION_TABLE_SIZING
     return (
       <>
@@ -94,7 +94,7 @@ class ConnectionsTable extends PureComponent<Props, State> {
           className={sortableClasses({
             sortKey,
             sortDirection,
-            key: 'connected'
+            key: 'connected',
           })}
           onClick={this.updateSort('connected')}
           style={{width: CONNECTION_CONNECTED}}
@@ -106,7 +106,7 @@ class ConnectionsTable extends PureComponent<Props, State> {
           className={sortableClasses({
             sortKey,
             sortDirection,
-            key: 'disconnected'
+            key: 'disconnected',
           })}
           onClick={this.updateSort('disconnected')}
           style={{width: CONNECTION_DISCONNECTED}}
@@ -126,7 +126,7 @@ class ConnectionsTable extends PureComponent<Props, State> {
           className={sortableClasses({
             sortKey,
             sortDirection,
-            key: 'dataCount'
+            key: 'dataCount',
           })}
           onClick={this.updateSort('dataCount')}
           style={{width: CONNECTION_DATA_COUNT}}
@@ -148,11 +148,11 @@ class ConnectionsTable extends PureComponent<Props, State> {
 
   private get TableBody() {
     const {oncueData} = this.props
-    const {connections} = oncueData
+    const {connection} = oncueData
     const {searchTerm, sortKey, sortDirection} = this.state
 
     const sortedConnections = this.getSortedConnections(
-      connections,
+      connection,
       searchTerm,
       sortKey,
       sortDirection
@@ -160,12 +160,12 @@ class ConnectionsTable extends PureComponent<Props, State> {
 
     return (
       <>
-        {connections.length > 0 ? (
+        {connection.length > 0 ? (
           <FancyScrollbar
             children={sortedConnections.map(
               (connection: Connection): JSX.Element => (
                 <ConnectionsTableRow
-                  key={connection.pathID}
+                  key={connection.pathId}
                   connection={connection}
                 />
               )
@@ -181,7 +181,7 @@ class ConnectionsTable extends PureComponent<Props, State> {
   private filter(connections: Connection[], searchTerm: string) {
     const filterText = searchTerm.toLowerCase()
     return connections.filter((connection: Connection) => {
-      return connection.pathID.toLowerCase().includes(filterText)
+      return connection.pathId.toLowerCase().includes(filterText)
     })
   }
 
@@ -192,11 +192,11 @@ class ConnectionsTable extends PureComponent<Props, State> {
   ) {
     switch (direction) {
       case SortDirection.ASC:
-        return _.sortBy(connections, e => e[key])
+        return _.sortBy(connections, (e) => e[key])
       case SortDirection.DESC:
         const sortDesc = _.sortBy(
           connections,
-          [e => e[key] || e[key] === 0 || e[key] === ''],
+          [(e) => e[key] || e[key] === 0 || e[key] === ''],
           ['asc']
         ).reverse()
         return sortDesc

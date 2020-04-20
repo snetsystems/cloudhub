@@ -10,6 +10,7 @@ import {
   usageIndacator,
   numberWithCommas,
 } from 'src/addon/128t/reusable/layout'
+import {NoHostsState} from 'src/addon/128t/reusable'
 
 // Constants
 import {ONCUE_SERVICE_TABLE_SIZING} from 'src/addon/128t/constants'
@@ -128,18 +129,6 @@ class OncueServiceTable extends PureComponent<Props> {
   private get TableBody() {
     const {oncueData} = this.props
     const {oncueService} = oncueData
-    const {
-      name,
-      cpu,
-      memory,
-      queue,
-      version,
-      status,
-      listeningPort,
-      runningThread,
-      processingDataCount,
-      processingSpeed,
-    } = oncueService
 
     const {
       ONCUE_SERVICE_NAME,
@@ -156,58 +145,62 @@ class OncueServiceTable extends PureComponent<Props> {
 
     return (
       <>
-        <div className="hosts-table--tr">
-          <TableBodyRowItem
-            title={name}
-            width={ONCUE_SERVICE_NAME}
-            className={'align--end'}
-          />
-          <TableBodyRowItem
-            title={usageIndacator({value: cpu + ' %'})}
-            width={ONCUE_SERVICE_CPU}
-            className={'align--end'}
-          />
-          <TableBodyRowItem
-            title={usageIndacator({value: memory + ' %'})}
-            width={ONCUE_SERVICE_MEMORY}
-            className={'align--end'}
-          />
-          <TableBodyRowItem
-            title={usageIndacator({value: queue + ' %'})}
-            width={ONCUE_SERVICE_QUEUE}
-            className={'align--end'}
-          />
-          <TableBodyRowItem
-            title={version}
-            width={ONCUE_SERVICE_VERSION}
-            className={'align--end'}
-          />
-          <TableBodyRowItem
-            title={status}
-            width={ONCUE_SERVICE_STATUS}
-            className={'align--end'}
-          />
-          <TableBodyRowItem
-            title={listeningPort}
-            width={ONCUE_SERVICE_LISTENING_PORT}
-            className={'align--end'}
-          />
-          <TableBodyRowItem
-            title={numberWithCommas(runningThread)}
-            width={ONCUE_SERVICE_RUNNING_THREAD}
-            className={'align--end'}
-          />
-          <TableBodyRowItem
-            title={numberWithCommas(processingDataCount)}
-            width={ONCUE_SERVICE_PROCESSING_DATA_COUNT}
-            className={'align--end'}
-          />
-          <TableBodyRowItem
-            title={numberWithCommas(processingSpeed)}
-            width={ONCUE_SERVICE_PROCESSING_SPEED}
-            className={'align--end'}
-          />
-        </div>
+        {oncueService !== null ? (
+          <div className="hosts-table--tr">
+            <TableBodyRowItem
+              title={oncueService.name}
+              width={ONCUE_SERVICE_NAME}
+              className={'align--end'}
+            />
+            <TableBodyRowItem
+              title={usageIndacator({value: oncueService.cpuUsage + ' %'})}
+              width={ONCUE_SERVICE_CPU}
+              className={'align--end'}
+            />
+            <TableBodyRowItem
+              title={usageIndacator({value: oncueService.memoryUsage + ' %'})}
+              width={ONCUE_SERVICE_MEMORY}
+              className={'align--end'}
+            />
+            <TableBodyRowItem
+              title={usageIndacator({value: oncueService.diskUsage + ' %'})}
+              width={ONCUE_SERVICE_QUEUE}
+              className={'align--end'}
+            />
+            <TableBodyRowItem
+              title={oncueService.version}
+              width={ONCUE_SERVICE_VERSION}
+              className={'align--end'}
+            />
+            <TableBodyRowItem
+              title={oncueService.status}
+              width={ONCUE_SERVICE_STATUS}
+              className={'align--end'}
+            />
+            <TableBodyRowItem
+              title={oncueService.listeningPort}
+              width={ONCUE_SERVICE_LISTENING_PORT}
+              className={'align--end'}
+            />
+            <TableBodyRowItem
+              title={numberWithCommas(oncueService.runningThread)}
+              width={ONCUE_SERVICE_RUNNING_THREAD}
+              className={'align--end'}
+            />
+            <TableBodyRowItem
+              title={numberWithCommas(oncueService.processDataCount)}
+              width={ONCUE_SERVICE_PROCESSING_DATA_COUNT}
+              className={'align--end'}
+            />
+            <TableBodyRowItem
+              title={numberWithCommas(oncueService.processSpeed)}
+              width={ONCUE_SERVICE_PROCESSING_SPEED}
+              className={'align--end'}
+            />
+          </div>
+        ) : (
+          <NoHostsState />
+        )}
       </>
     )
   }

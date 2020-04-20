@@ -3,7 +3,7 @@ import React, {
   PureComponent,
   CSSProperties,
   ChangeEvent,
-  MouseEvent
+  MouseEvent,
 } from 'react'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 import {connect} from 'react-redux'
@@ -22,20 +22,21 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 // Apis
 import {
   getRunnerSaltCmdDirectory,
-  getLocalDeliveryToMinion
+  getLocalDeliveryToMinion,
 } from 'src/shared/apis/saltStack'
+import {getOncueServiceStatus} from 'src/addon/128t/api/index'
 
 // Constants
 import {
   STATUS_PAGE_ROW_COUNT,
   PAGE_HEADER_HEIGHT,
   PAGE_CONTAINER_MARGIN,
-  LAYOUT_MARGIN
+  LAYOUT_MARGIN,
 } from 'src/shared/constants'
 
 import {
   DEFAULT_CELL_BG_COLOR,
-  DEFAULT_CELL_TEXT_COLOR
+  DEFAULT_CELL_TEXT_COLOR,
 } from 'src/dashboards/constants'
 
 import {SALT_FULL_DIRECTORY, SALT_MIN_DIRECTORY} from 'src/addon/128t/constants'
@@ -50,10 +51,7 @@ import {
   SaltDirFile,
   GetSaltDirectoryInfo,
   OncueService,
-  DeviceConnection,
   OncueData,
-  Connection,
-  ProtocolModule
 } from 'src/addon/128t/types'
 import {NETWORK_ACCESS, GET_STATUS} from 'src/agent_admin/constants'
 import {cellLayoutInfo} from 'src/addon/128t/containers/SwanSdplexStatusPage'
@@ -66,7 +64,7 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {
   notify_128TGetMasterDirFiles_Failed,
   notify_128TSendFilesToCollector_Successed,
-  notify_128TSendFilesToCollector_Failed
+  notify_128TSendFilesToCollector_Failed,
 } from 'src/addon/128t/components/Notifications'
 
 interface Props {
@@ -138,23 +136,20 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
         focusedInProtocolModule: '',
         focusedInDeviceConnection: '',
         oncueService: null,
-        protocolModules: [],
-        deviceConnections: [],
-        connections: []
-      }
+      },
     }
   }
 
   public componentWillMount() {
-    const checkRoutersData = this.props.routersData.map(router => {
+    const checkRoutersData = this.props.routersData.map((router) => {
       return {
         assetId: router.assetId,
-        isCheck: false
+        isCheck: false,
       }
     })
 
     this.setState({
-      checkRouters: checkRoutersData
+      checkRouters: checkRoutersData,
     })
   }
 
@@ -193,8 +188,8 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
             time: '',
             item: GET_STATUS.EMPTY,
             fullDir,
-            dir
-          })
+            dir,
+          }),
         ]
       } else {
         if (getData.indexOf('\n') > -1) {
@@ -205,7 +200,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
         } else {
           const time: string = getData.substring(0, getData.indexOf(' '))
           applications = [
-            this.generatorFileInfo({time, item: getData, fullDir, dir})
+            this.generatorFileInfo({time, item: getData, fullDir, dir}),
           ]
         }
 
@@ -222,7 +217,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
         getDirectoryItems.status === 200 &&
         getDirectoryItems.statusText === 'OK'
           ? NETWORK_ACCESS.SUCCESS
-          : getDirectoryItems
+          : getDirectoryItems,
     }
   }
 
@@ -230,7 +225,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     time,
     item,
     fullDir,
-    dir
+    dir,
   }: {
     time: string
     item: string
@@ -243,13 +238,13 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       application: item.replace(time, '').trim(),
       applicationFullName: item,
       fullPathDirectory: fullDir,
-      pathDirectory: dir
+      pathDirectory: dir,
     }
   }
 
   public getSaltDirectoryItems = async () => {
     const {addons, notify} = this.props
-    const salt = addons.find(addon => addon.name === 'salt')
+    const salt = addons.find((addon) => addon.name === 'salt')
 
     const getFirmwareData: SaltDirFile = await this.getRunnerSaltCmdDirectoryData(
       salt.url,
@@ -266,7 +261,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     )
 
     const isGetFailed = [getFirmwareData, getConfigData]
-      .map(obj => obj.status === NETWORK_ACCESS.SUCCESS)
+      .map((obj) => obj.status === NETWORK_ACCESS.SUCCESS)
       .includes(true)
 
     if (!isGetFailed) {
@@ -275,7 +270,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
 
     this.setState({
       firmware: getFirmwareData,
-      config: getConfigData
+      config: getConfigData,
     })
   }
 
@@ -283,26 +278,26 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     const {isRoutersAllCheck, checkRouters} = this.state
 
     if (!isRoutersAllCheck) {
-      checkRouters.map(checkRouter => {
+      checkRouters.map((checkRouter) => {
         checkRouter.isCheck = true
         return checkRouter
       })
     } else {
-      checkRouters.map(checkRouter => {
+      checkRouters.map((checkRouter) => {
         checkRouter.isCheck = false
         return checkRouter
       })
     }
     this.setState({
       isRoutersAllCheck: !isRoutersAllCheck,
-      checkRouters: [...checkRouters]
+      checkRouters: [...checkRouters],
     })
   }
 
   public handleRouterCheck = ({router}: {router: Router}): void => {
     const {checkRouters} = this.state
     const index = checkRouters.indexOf(
-      checkRouters.find(checkRouter => checkRouter.assetId === router.assetId)
+      checkRouters.find((checkRouter) => checkRouter.assetId === router.assetId)
     )
 
     checkRouters[index].isCheck
@@ -311,7 +306,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
 
     this.setState({
       isRoutersAllCheck: false,
-      checkRouters: [...checkRouters]
+      checkRouters: [...checkRouters],
     })
   }
 
@@ -319,7 +314,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     if (selectItem !== GET_STATUS.EMPTY) {
       this.setState({
         isModalVisible: !this.state.isModalVisible,
-        chooseMenu: selectItem
+        chooseMenu: selectItem,
       })
     }
   }
@@ -333,7 +328,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       focusedAssetId,
       topSourcesData,
       topSessionsData,
-      onClickMapMarker
+      onClickMapMarker,
     } = this.props
     const {
       rowHeight,
@@ -344,7 +339,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       sendToDirectory,
       isRouterDataPopupVisible,
       routerPopupPosition,
-      oncueData
+      oncueData,
     } = this.state
 
     const checkRouterData: Router[] = routersData.map(
@@ -458,57 +453,43 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   }
 
   private onClickProtocolModulesRow = (name: string): void => {
-    const urls: DeviceConnection[] = [
-      {url: '$protocol-module://192.168.1.10'},
-      {url: '$protocol-module://192.168.1.11'},
-      {url: '$protocol-module://192.168.1.12'}
-    ]
-
     this.setState({
       oncueData: {
         ...this.state.oncueData,
+        deviceConnection: this.state.oncueData.protocolModule
+          .filter((f) => f.name === name)
+          .map((m) => m.deviceConnection)[0],
+        connection: this.state.oncueData.protocolModule
+          .filter((f) => f.name === name)
+          .map((m) => m.deviceConnection)[0][0].connection,
         focusedInProtocolModule: name,
-        deviceConnections: urls,
-        focusedInDeviceConnection: '',
-        connections: []
-      }
+        focusedInDeviceConnection: this.state.oncueData.protocolModule
+          .filter((f) => f.name === name)
+          .map((m) => m.deviceConnection)[0][0].url,
+      },
     })
   }
 
   private onClickDeviceConnectionsRow = (url: string) => {
-    const connections: Connection[] = [
-      {
-        pathID: 'appname1-connectionsName1',
-        connected: 2,
-        disconnected: 2,
-        inUser: 2,
-        dataCount: 100000,
-        speed: 1000
-      },
-      {
-        pathID: 'appname1-connectionsName2',
-        connected: 2,
-        disconnected: 2,
-        inUser: 2,
-        dataCount: 100000,
-        speed: 1000
-      }
-    ]
-
     this.setState({
       oncueData: {
         ...this.state.oncueData,
+        connection: this.state.oncueData.deviceConnection
+          .filter((f) => f.url === url)
+          .map((m) => m.connection)[0],
         focusedInDeviceConnection: url,
-        connections
-      }
+      },
     })
   }
 
-  private onClickRouterName = (data: {
+  private onClickRouterName = async (data: {
     _event: MouseEvent<HTMLElement>
     router: Router
-  }): void => {
+  }) => {
     const {_event, router} = data
+
+    _event.stopPropagation()
+
     const {assetId} = router
 
     this[assetId] = _event.target
@@ -519,46 +500,40 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     const {top, right} = routerPosition
     const {parentTop, parentLeft} = this.getParent(this[assetId])
 
-    const oncueService: OncueService = {
-      name: 'Service1',
-      cpu: 30.31,
-      memory: 50.55,
-      queue: 60.5,
-      version: '1.1.2',
-      status: 'Running',
-      listeningPort: 9090,
-      runningThread: 10,
-      processingDataCount: 100000,
-      processingSpeed: 1000
+    const {addons} = this.props
+    const salt = addons.find((addon) => addon.name === 'salt')
+
+    const response = await getOncueServiceStatus(salt.url, salt.token, assetId)
+
+    if (response != null) {
+      this.setState({
+        routerPopupPosition: {top: top - parentTop, right: right - parentLeft},
+        oncueData: {
+          router: assetId,
+          oncueService: response,
+          protocolModule: response.protocolModule,
+          deviceConnection: response.protocolModule[0].deviceConnection,
+          connection: response.protocolModule[0].deviceConnection[0].connection,
+          focusedInProtocolModule: response.protocolModule[0].name,
+          focusedInDeviceConnection:
+            response.protocolModule[0].deviceConnection[0].url,
+        },
+      })
+    } else {
+      this.setState({
+        routerPopupPosition: {top: top - parentTop, right: right - parentLeft},
+        oncueData: {
+          router: assetId,
+          oncueService: null,
+          protocolModule: [],
+          deviceConnection: [],
+          connection: [],
+          focusedInProtocolModule: '',
+          focusedInDeviceConnection: '',
+        },
+      })
     }
-
-    const protocolModules: ProtocolModule[] = [
-      {
-        name: 'Modbus',
-        version: '1.0.2',
-        status: 'LOADED'
-      },
-      {
-        name: 'OPC DA',
-        version: '1.0.0',
-        status: 'LOADED'
-      }
-    ]
-
-    this.setState({
-      routerPopupPosition: {top: top - parentTop, right: right - parentLeft},
-      oncueData: {
-        router: assetId,
-        oncueService,
-        protocolModules,
-        deviceConnections: [],
-        connections: [],
-        focusedInProtocolModule: '',
-        focusedInDeviceConnection: ''
-      }
-    })
     this.handleDataPopupOpen()
-    _event.stopPropagation()
   }
 
   private getParent = (target: HTMLElement) => {
@@ -633,14 +608,14 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
                       ? '72px'
                       : checkedList.length > 5
                       ? '150px'
-                      : checkedList.length * 31 + 'px'
+                      : checkedList.length * 31 + 'px',
                 }}
               >
                 <FancyScrollbar
                   autoHide={false}
                   children={
                     <ol className="list-section--row list-section--row-first list-section--row-last">
-                      {checkedList.map(list => (
+                      {checkedList.map((list) => (
                         <li key={list.assetId}>{list.assetId}</li>
                       ))}
                     </ol>
@@ -676,18 +651,18 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     buttonName = buttonName.toLowerCase()
     this.setState({
       focusedBtn: buttonName,
-      sendToDirectory: this.DEFAULT_COLLECTOR_DIRECTORY + buttonName + '/'
+      sendToDirectory: this.DEFAULT_COLLECTOR_DIRECTORY + buttonName + '/',
     })
   }
 
   private handleModalConfirm = (): void => {
     const {checkRouters, chooseMenu, focusedBtn, sendToDirectory} = this.state
     const {addons, notify} = this.props
-    const salt = addons.find(addon => addon.name === 'salt')
+    const salt = addons.find((addon) => addon.name === 'salt')
 
     const checkedHostName: string = checkRouters
-      .filter(router => router.isCheck === true)
-      .map(router => router.assetId)
+      .filter((router) => router.isCheck === true)
+      .map((router) => router.assetId)
       .toString()
 
     const chooseMenuInfo: SaltDirFileInfo = this.state[focusedBtn].files.filter(
@@ -701,7 +676,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       checkedHostName,
       sendToDirectory,
       chooseMenuInfo.pathDirectory + chooseMenuInfo.application
-    ).then(res => {
+    ).then((res) => {
       Object.keys(res.data.return[0]).length > 0
         ? notify(notify_128TSendFilesToCollector_Successed(focusedBtn))
         : notify(notify_128TSendFilesToCollector_Failed(focusedBtn))
@@ -726,8 +701,8 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   private handleLayoutChange = (cellsLayout: cellLayoutInfo[]): void => {
     if (!this.props.onPositionChange) return
     let changed = false
-    const newCellsLayout = this.props.layout.map(lo => {
-      const l = cellsLayout.find(cellLayout => cellLayout.i === lo.i)
+    const newCellsLayout = this.props.layout.map((lo) => {
+      const l = cellsLayout.find((cellLayout) => cellLayout.i === lo.i)
 
       if (lo.x !== l.x || lo.y !== l.y || lo.h !== l.h || lo.w !== l.w) {
         changed = true
@@ -737,12 +712,12 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
         x: l.x,
         y: l.y,
         h: l.h,
-        w: l.w
+        w: l.w,
       }
 
       return {
         ...lo,
-        ...newLayout
+        ...newLayout,
       }
     })
 
@@ -754,7 +729,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   private get cellStyle(): CSSProperties {
     return {
       backgroundColor: this.cellBackgroundColor,
-      borderColor: this.cellBackgroundColor
+      borderColor: this.cellBackgroundColor,
     }
   }
 
@@ -771,7 +746,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
 }
 
 const mdtp = {
-  notify: notifyAction
+  notify: notifyAction,
 }
 
 export default connect(null, mdtp)(GridLayoutRenderer)

@@ -1,33 +1,36 @@
 export interface OncueService {
   name: string
-  cpu: number
-  memory: number
-  queue: number
-  version: string
-  status: string
-  listeningPort: number
-  runningThread: number
-  processingDataCount: number
-  processingSpeed: number
+  memoryUsage?: number
+  cpuUsage?: number
+  diskUsage?: number
+  version?: string
+  status?: string
+  listeningPort?: string
+  runningThread?: number
+  processDataCount?: number
+  processSpeed?: number
+  protocolModule?: ProtocolModule[]
 }
 
 export interface ProtocolModule {
   name: string
-  version: string
-  status: string
+  version?: string
+  status?: string
+  deviceConnection?: DeviceConnection[]
 }
 
 export interface DeviceConnection {
   url: string
+  connection?: Connection[]
 }
 
 export interface Connection {
-  pathID: string
-  connected: number
-  disconnected: number
-  inUser: number
-  dataCount: number
-  speed: number
+  pathId: string
+  connected?: number
+  disconnected?: number
+  inUse?: number
+  processDataCount?: number
+  processSpeed?: number
 }
 
 export interface OncueData {
@@ -35,7 +38,7 @@ export interface OncueData {
   focusedInProtocolModule?: string
   focusedInDeviceConnection?: string
   oncueService?: OncueService
-  protocolModules?: ProtocolModule[]
-  deviceConnections?: DeviceConnection[]
-  connections?: Connection[]
+  protocolModule?: ProtocolModule[]
+  deviceConnection?: DeviceConnection[]
+  connection?: Connection[]
 }
