@@ -2,18 +2,16 @@
   .hosts-table--th {
     display: flex;
     align-items: center;
-    overflow: hidden
+    overflow: hidden;
   }
 
   .hosts-table-item {
     transition: color 0.25s ease;
+    color: $s-brown;
 
+    &.focused,
     &:hover,
     &:active {
-      color: $s-brown;
-    }
-
-    &.focused {
       color: $s-orange;
     }
   }
@@ -138,7 +136,7 @@
     z-index: 3;
     margin-right: 10px;
 
-    .btn-group-sm>.btn,
+    .btn-group-sm > .btn,
     .btn.btn-sm {
       height: 22px;
       line-height: 20px;
@@ -158,12 +156,12 @@
     }
 
     div.dropdown.dropdown-stretch,
-    div.dropdown.dropdown-stretch>div.dropdown-toggle,
-    div.dropdown.dropdown-stretch>button.dropdown-toggle {
+    div.dropdown.dropdown-stretch > div.dropdown-toggle,
+    div.dropdown.dropdown-stretch > button.dropdown-toggle {
       z-index: 1;
     }
 
-    .dropdown>.dropdown-toggle.btn-sm .dropdown-selected {
+    .dropdown > .dropdown-toggle.btn-sm .dropdown-selected {
       padding-right: 15px;
     }
 
@@ -182,14 +180,12 @@
   .list-section-container {
     h4 {
       margin-top: 15px;
-      margin-bottom: 5px
+      margin-bottom: 5px;
     }
 
     h4:first-child {
       margin-top: 0px;
     }
-
-
 
     .list-section--row {
       align-items: center;
@@ -238,7 +234,7 @@
       width: 100%;
     }
 
-    .loading-spinner .spinner>div {
+    .loading-spinner .spinner > div {
       background-color: $s-orange;
     }
   }
@@ -295,9 +291,7 @@
   .__react_component_tooltip {
     pointer-events: unset;
   }
-
 }
-
 
 /***** routerMap start *****/
 
@@ -312,7 +306,7 @@
   font-weight: 700;
   font-size: 12px;
 
-  >.icon {
+  > .icon {
     display: inline-block;
     font-size: 16px;
     margin: 0 4px;
@@ -401,39 +395,39 @@
 
     .datapopup-table--section--half {
       &.width-10 {
-        width: 10%
+        width: 10%;
       }
 
       &.width-20 {
-        width: 20%
+        width: 20%;
       }
 
       &.width-30 {
-        width: 30%
+        width: 30%;
       }
 
       &.width-40 {
-        width: 40%
+        width: 40%;
       }
 
       &.width-50 {
-        width: 50%
+        width: 50%;
       }
 
       &.width-60 {
-        width: 60%
+        width: 60%;
       }
 
       &.width-70 {
-        width: 70%
+        width: 70%;
       }
 
       &.width-80 {
-        width: 80%
+        width: 80%;
       }
 
       &.width-90 {
-        width: 90%
+        width: 90%;
       }
     }
 
@@ -470,7 +464,7 @@
 
       &:before,
       &:after {
-        content: "";
+        content: '';
         position: absolute;
         width: 13px;
         height: 3px;
@@ -507,7 +501,6 @@
     .hosts-table--th {
       font-size: 11px;
       padding: 5px;
-      justify-content: center;
     }
   }
 
@@ -527,8 +520,6 @@
     }
   }
 
-
-
   .generic-empty-state {
     height: 100%;
   }
@@ -543,8 +534,5 @@
     .hosts-table {
       height: calc(100% - 15px);
     }
-
   }
-
-
 }

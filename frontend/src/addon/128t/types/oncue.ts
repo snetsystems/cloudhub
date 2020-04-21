@@ -34,6 +34,7 @@ export interface Connection {
 }
 
 export interface OncueData {
+  isOncue: boolean
   router: string
   focusedInProtocolModule?: string
   focusedInDeviceConnection?: string

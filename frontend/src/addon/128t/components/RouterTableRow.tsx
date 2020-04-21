@@ -116,7 +116,7 @@ const RouterTableRow = ({
     router: Router
   }) => {
     handleOnClickRouterName({_event, router})
-    event.stopPropagation()
+    _event.stopPropagation()
   }
 
   return (
@@ -145,8 +145,9 @@ const RouterTableRow = ({
             style={{width: '100%'}}
           >
             <div
-              className={classnames('hosts-table-item', {
-                focused: oncueData.router === assetId,
+              className={classnames('', {
+                'hosts-table-item': oncueData.isOncue,
+                focused: oncueData.isOncue && oncueData.router === assetId,
               })}
             >
               {assetId}

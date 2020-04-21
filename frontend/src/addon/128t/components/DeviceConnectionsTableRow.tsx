@@ -49,7 +49,7 @@ class DeviceConnectionsTableRow extends PureComponent<Props> {
     const {url} = this.props
     if (url === focusedInDeviceConnection)
       return 'hosts-table--tr cursor--pointer focused'
-    return 'hosts-table--t cursor--pointerr'
+    return 'hosts-table--t cursor--pointer'
   }
 }
 

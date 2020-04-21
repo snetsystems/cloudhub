@@ -12,9 +12,10 @@ import {
 export const getOncueServiceStatus = async (
   pUrl: string,
   pToken: string,
-  pAssetId: string
+  pAssetId: string,
+  pPort: string
 ): Promise<OncueService> => {
-  const url = 'http://localhost:8900'
+  const url = `http://localhost:${pPort}`
 
   const info = await Promise.all([
     getLocalHttpQuery(
