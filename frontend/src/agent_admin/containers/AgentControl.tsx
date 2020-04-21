@@ -23,7 +23,7 @@ import {
 
 // Notification
 import {notify as notifyAction} from 'src/shared/actions/notifications'
-import {notifyAgentConnectFailed} from 'src/agent_admin/components/notifications'
+import {notifyAgentConnectFailed} from 'src/shared/copy/notifications'
 
 // const
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
