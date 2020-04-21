@@ -24,7 +24,7 @@
         // "-k=salt:175ac9a46642172763dba1c9ee9e4e17d9e57c25c750335067c0815be7d72a0b", // 61.250.122.140
         "-u=swan:https://211.189.153.40/api/v1/graphql",
         "-k=swan:eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiYWRtaW4iLCJzY29wZXMiOlsiY29uZmlndXJlIl0sImlhdCI6MTU3NDAzNjAxM30.beW77E48pOhNKHNuFB6q343hg5XGbV7HzUcI-8LaV4RJTOiOALpA4NPWF4nDmFcveVuGuH8rETnLNbeXFa2zmssbCg_TfaAt49yyq_Meg43TYXKOYl5pl7mJ1k-nte0zW4fX2J6brRE5ouvU3e2ssvRVmvsnuqWxdQ1Doqm4e2zLaVIblMsb80DpSr7AZfbF5Ld11KwUPIxAsU7LIN_tfKfy4-LPqwN78eD6fGcb_u6m2sm5jVZihuwKmzhIVEVIHtnGbr2oSrAHLrpeokLCGctXF1b7pCt7pCWIeBqyr7EjjOx90d8LoH49idMPLymDR_NPi-8Cs0GXszJtW82DuA", // 211.189.153.40
-        "-u=oncue:http://211.189.153.95:8900/oncue/0.5",
+        "-u=oncue:8900",
         "-c=./cloudhub-canned/",
         "--protoboards-path=./cloudhub-protoboards/",
         "--auth-duration=24h", //default:"720h(30d)", 0 means authentication expires on browser close
