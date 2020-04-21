@@ -16,16 +16,16 @@ import {
   deleteMapping as deleteMappingAJAX,
 } from 'src/admin/apis/cloudhub'
 
-import {notify} from 'shared/actions/notifications'
-import {errorThrown} from 'shared/actions/errors'
+import {notify} from 'src/shared/actions/notifications'
+import {errorThrown} from 'src/shared/actions/errors'
 import {
   notifyMappingDeleted,
   notifyCloudHubOrgDeleted,
   notifyCloudHubUserUpdated,
   notifyCloudHubUserDeleted,
-} from 'shared/copy/notifications'
+} from 'src/shared/copy/notifications'
 
-import {REVERT_STATE_DELAY} from 'shared/constants'
+import {REVERT_STATE_DELAY} from 'src/shared/constants'
 
 // action creators
 
