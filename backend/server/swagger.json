@@ -6162,7 +6162,7 @@
             "type": "object",
             "properties": {
               "name": {
-                "description": "Currently, 'salt', 'SWAN', 'oncue' supported",
+                "description": "Currently, 'salt', 'SWAN', supported",
                 "type": "string"
               },
               "url": {
@@ -6229,7 +6229,7 @@
             "token": "58163e8e0f6b3efcd7bbb1ad0e3a2ee53e8fae1248b291312e1bdbfc13b289d2"
           },
           {
-            "name": "SWAN",
+            "name": "swan",
             "url": "https://211.189.153.40/api/v1/graphql",
             "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiYWRtaW4iLCJzY29wZXMiOlsiY29uZmlndXJlIl0sImlhdCI6MTU3NDAzNjAxM30.beW77E48pOhNKHNuFB6q343hg5XGbV7HzUcI-8LaV4RJTOiOALpA4NPWF4nDmFcveVuGuH8rETnLNbeXFa2zmssbCg_TfaAt49yyq_Meg43TYXKOYl5pl7mJ1k-nte0zW4fX2J6brRE5ouvU3e2ssvRVmvsnuqWxdQ1Doqm4e2zLaVIblMsb80DpSr7AZfbF5Ld11KwUPIxAsU7LIN_tfKfy4-LPqwN78eD6fGcb_u6m2sm5jVZihuwKmzhIVEVIHtnGbr2oSrAHLrpeokLCGctXF1b7pCt7pCWIeBqyr7EjjOx90d8LoH49idMPLymDR_NPi-8Cs0GXszJtW82DuA"
           },
