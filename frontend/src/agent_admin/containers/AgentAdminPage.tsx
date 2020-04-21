@@ -18,9 +18,11 @@ import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
 // Types
 import {RemoteDataState, Notification, NotificationFunc} from 'src/types'
-
 import {Addon} from 'src/types/auth'
 import {AddonType} from 'src/shared/constants'
+
+// Decorators
+import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
   notify: (message: Notification | NotificationFunc) => void
@@ -45,6 +47,7 @@ export interface LoginEvent extends MouseEvent<KeyboardEvent> {
   onKeydown?: React.KeyboardEvent<HTMLInputElement>
 }
 
+@ErrorHandling
 class AgentAdminPage extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)

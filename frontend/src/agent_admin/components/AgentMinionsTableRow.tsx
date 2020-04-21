@@ -10,6 +10,9 @@ import {TableBodyRowItem} from 'src/agent_admin/reusable/'
 // Types
 import {Minion} from 'src/agent_admin/type'
 
+// Decorators
+import {ErrorHandling} from 'src/shared/decorators/errors'
+
 interface Props {
   idx: number
   minions: Minion
@@ -19,6 +22,7 @@ interface Props {
   handleWheelKeyCommand: (host: string, cmdstatus: string) => void
 }
 
+@ErrorHandling
 class AgentMinionsTableRow extends PureComponent<Props> {
   constructor(props: Readonly<Props>) {
     super(props)

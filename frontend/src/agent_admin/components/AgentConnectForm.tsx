@@ -1,5 +1,7 @@
 import React, {ChangeEvent, PureComponent} from 'react'
 import {LoginEvent} from 'src/agent_admin/containers/AgentAdminPage'
+// Decorators
+import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
   onLoginClick: (
@@ -18,6 +20,7 @@ interface Props {
   isTokenCheck: boolean
 }
 
+@ErrorHandling
 class AgentConnectForm extends PureComponent<Props> {
   public render() {
     const {

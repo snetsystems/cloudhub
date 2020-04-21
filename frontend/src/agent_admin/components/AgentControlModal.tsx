@@ -12,6 +12,9 @@ import OverlayTechnology from 'src/reusable_ui/components/overlays/OverlayTechno
 
 import {Minion} from 'src/agent_admin/type'
 
+// Decorators
+import {ErrorHandling} from 'src/shared/decorators/errors'
+
 interface Props {
   onCancel: () => void
   onConfirm: () => void
@@ -29,6 +32,7 @@ interface State {
   isVisible: boolean
 }
 
+@ErrorHandling
 class AgentControlModal extends PureComponent<Props, State> {
   constructor(props) {
     super(props)
