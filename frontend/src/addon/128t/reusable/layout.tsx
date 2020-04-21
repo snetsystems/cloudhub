@@ -62,7 +62,7 @@ export const TableHeader = ({
 }
 
 export const TableBody = ({children}: {children: JSX.Element}): JSX.Element => {
-  return children
+  return <div className="hosts-table--tbody">{children}</div>
 }
 
 export const TableBodyRowItem = ({
@@ -142,7 +142,7 @@ export const ErrorState = (): JSX.Element => (
 
 export const NoHostsState = (): JSX.Element => (
   <div className="generic-empty-state">
-    <h4 style={{margin: '90px 0'}}>No Data. </h4>
+    <h4>No Data.</h4>
   </div>
 )
 
@@ -215,4 +215,8 @@ export const unitIndicator = (
       </span>
     </>
   )
+}
+
+export const numberWithCommas = (x: number): string => {
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }

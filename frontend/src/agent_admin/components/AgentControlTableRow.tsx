@@ -12,6 +12,9 @@ import {AGENT_CONTROL_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
 // Types
 import {Minion} from 'src/agent_admin/type'
 
+// Decorators
+import {ErrorHandling} from 'src/shared/decorators/errors'
+
 interface Props {
   minions: Minion
   isCheck: boolean
@@ -20,6 +23,7 @@ interface Props {
   onClickAction: AgentControl['onClickActionCall']
 }
 
+@ErrorHandling
 class AgentControlTableRow extends PureComponent<Props> {
   public focusedClasses = (): string => {
     const {isCheck} = this.props

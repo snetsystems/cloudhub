@@ -1,8 +1,12 @@
 // Libraries
-import React, {PureComponent, CSSProperties, ChangeEvent} from 'react'
+import React, {
+  PureComponent,
+  CSSProperties,
+  ChangeEvent,
+  MouseEvent,
+} from 'react'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 import {connect} from 'react-redux'
-
 import _ from 'lodash'
 
 const GridLayout = WidthProvider(ReactGridLayout)
@@ -20,6 +24,7 @@ import {
   getRunnerSaltCmdDirectory,
   getLocalDeliveryToMinion,
 } from 'src/shared/apis/saltStack'
+import {getOncueServiceStatus} from 'src/addon/128t/api/index'
 
 // Constants
 import {
@@ -45,6 +50,7 @@ import {
   CheckRouter,
   SaltDirFile,
   GetSaltDirectoryInfo,
+  OncueData,
 } from 'src/addon/128t/types'
 import {NETWORK_ACCESS, GET_STATUS} from 'src/agent_admin/constants'
 import {cellLayoutInfo} from 'src/addon/128t/containers/SwanSdplexStatusPage'
@@ -59,6 +65,9 @@ import {
   notify_128TSendFilesToCollector_Successed,
   notify_128TSendFilesToCollector_Failed,
 } from 'src/addon/128t/components/Notifications'
+
+// Error
+import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
   notify: (message: Notification | NotificationFunc) => void
@@ -86,19 +95,25 @@ interface State {
   rowHeight: number
   isRoutersAllCheck: boolean
   isModalVisible: boolean
+  isRouterDataPopupVisible: boolean
   chooseMenu: string
   checkRouters: CheckRouter[]
   firmware: SaltDirFile
   config: SaltDirFile
   focusedBtn: string
   sendToDirectory: string
+  routerPopupPosition: {top: number; right: number}
+  oncueData: OncueData
 }
 
+@ErrorHandling
 class GridLayoutRenderer extends PureComponent<Props, State> {
   private cellBackgroundColor: string = DEFAULT_CELL_BG_COLOR
   private cellTextColor: string = DEFAULT_CELL_TEXT_COLOR
 
   private DEFAULT_COLLECTOR_DIRECTORY = '/srv/salt/prod/dmt/'
+  private refDataPopup = React.createRef<HTMLDivElement>()
+  private routertableRef = React.createRef<HTMLDivElement>()
 
   constructor(props: Props) {
     super(props)
@@ -107,12 +122,21 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       rowHeight: this.calculateRowHeight(),
       isRoutersAllCheck: false,
       isModalVisible: false,
+      isRouterDataPopupVisible: false,
       checkRouters: [],
       chooseMenu: '',
       firmware: {files: [], isLoading: true},
       config: {files: [], isLoading: true},
       focusedBtn: '',
       sendToDirectory: '',
+      routerPopupPosition: {top: 0, right: 0},
+      oncueData: {
+        isOncue: false,
+        router: '',
+        focusedInProtocolModule: '',
+        focusedInDeviceConnection: '',
+        oncueService: null,
+      },
     }
   }
 
@@ -124,8 +148,16 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       }
     })
 
+    const {addons} = this.props
+    const oncue = _.find(addons, addon => addon.name === 'oncue')
+    const isOncue = oncue === undefined ? false : true
+
     this.setState({
       checkRouters: checkRoutersData,
+      oncueData: {
+        ...this.state.oncueData,
+        isOncue,
+      },
     })
   }
 
@@ -313,6 +345,9 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       firmware,
       config,
       sendToDirectory,
+      isRouterDataPopupVisible,
+      routerPopupPosition,
+      oncueData,
     } = this.state
 
     const checkRouterData: Router[] = routersData.map(
@@ -338,7 +373,12 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
           isDraggable={isSwanSdplexStatus}
           isResizable={isSwanSdplexStatus}
         >
-          <div key="routers" className="dash-graph" style={this.cellStyle}>
+          <div
+            key="routers"
+            ref={this.routertableRef}
+            className="dash-graph grid-item--routers"
+            style={this.cellStyle}
+          >
             <RouterTable
               routers={checkRouterData}
               onClickTableRow={onClickTableRow}
@@ -353,6 +393,15 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
               handleRoutersAllCheck={this.handleRoutersAllCheck}
               firmware={firmware}
               config={config}
+              isRouterDataPopupVisible={isRouterDataPopupVisible}
+              handleOnClickRouterName={this.onClickRouterName}
+              hanldeOnDismiss={this.handleDataPopupClose}
+              routerPopupPosition={routerPopupPosition}
+              oncueData={oncueData}
+              handleOnClickProtocolModulesRow={this.onClickProtocolModulesRow}
+              handleOnClickDeviceConnectionsRow={
+                this.onClickDeviceConnectionsRow
+              }
             />
           </div>
           <div key="leafletMap" className="dash-graph" style={this.cellStyle}>
@@ -410,6 +459,146 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       </>
     )
   }
+
+  private onClickProtocolModulesRow = (name: string): void => {
+    this.setState({
+      oncueData: {
+        ...this.state.oncueData,
+        deviceConnection: this.state.oncueData.protocolModule
+          .filter(f => f.name === name)
+          .map(m => m.deviceConnection)[0],
+        connection: this.state.oncueData.protocolModule
+          .filter(f => f.name === name)
+          .map(m => m.deviceConnection)[0][0].connection,
+        focusedInProtocolModule: name,
+        focusedInDeviceConnection: this.state.oncueData.protocolModule
+          .filter(f => f.name === name)
+          .map(m => m.deviceConnection)[0][0].url,
+      },
+    })
+  }
+
+  private onClickDeviceConnectionsRow = (url: string) => {
+    this.setState({
+      oncueData: {
+        ...this.state.oncueData,
+        connection: this.state.oncueData.deviceConnection
+          .filter(f => f.url === url)
+          .map(m => m.connection)[0],
+        focusedInDeviceConnection: url,
+      },
+    })
+  }
+
+  private handleOnClickTableRow = (router: Router) => {
+    const {topSources, topSessions, assetId} = router
+    return this.props.onClickTableRow(topSources, topSessions, assetId)()
+  }
+  private onClickRouterName = async (data: {
+    _event: MouseEvent<HTMLElement>
+    router: Router
+  }) => {
+    if (this.state.oncueData.isOncue === false) {
+      this.handleOnClickTableRow(data.router)
+      return
+    }
+
+    const {_event, router} = data
+    const {assetId} = router
+
+    this[assetId] = _event.target
+    this[assetId].ref = this.refDataPopup
+
+    const routerPosition = this[assetId].getBoundingClientRect()
+
+    const {top, right} = routerPosition
+    const {parentTop, parentLeft} = this.getParent(this[assetId])
+
+    const {addons} = this.props
+    const salt = addons.find(addon => addon.name === 'salt')
+    const oncue = addons.find(addon => addon.name === 'oncue')
+
+    const response = await getOncueServiceStatus(
+      salt.url,
+      salt.token,
+      assetId,
+      oncue.url
+    )
+
+    if (response != null) {
+      this.setState({
+        routerPopupPosition: {top: top - parentTop, right: right - parentLeft},
+        oncueData: {
+          ...this.state.oncueData,
+          router: assetId,
+          oncueService: response,
+          protocolModule: response.protocolModule,
+          deviceConnection: response.protocolModule[0].deviceConnection,
+          connection: response.protocolModule[0].deviceConnection[0].connection,
+          focusedInProtocolModule: response.protocolModule[0].name,
+          focusedInDeviceConnection:
+            response.protocolModule[0].deviceConnection[0].url,
+        },
+      })
+    } else {
+      this.setState({
+        routerPopupPosition: {top: top - parentTop, right: right - parentLeft},
+        oncueData: {
+          ...this.state.oncueData,
+          router: assetId,
+          oncueService: null,
+          protocolModule: [],
+          deviceConnection: [],
+          connection: [],
+          focusedInProtocolModule: '',
+          focusedInDeviceConnection: '',
+        },
+      })
+    }
+    this.handleDataPopupOpen()
+  }
+
+  private getParent = (target: HTMLElement) => {
+    let currentParent = target
+    while (currentParent) {
+      if (
+        window.getComputedStyle(currentParent).getPropertyValue('transform') !==
+        'none'
+      ) {
+        break
+      }
+      currentParent = currentParent.parentElement
+    }
+
+    const parentTop =
+      (currentParent && currentParent.getBoundingClientRect().top) || 0
+
+    const parentLeft =
+      (currentParent && currentParent.getBoundingClientRect().left) || 0
+
+    return {parentTop, parentLeft}
+  }
+
+  private handleDataPopupOpen = () => {
+    this.setState({isRouterDataPopupVisible: true})
+  }
+
+  private handleDataPopupClose = () => {
+    this.setState({
+      isRouterDataPopupVisible: false,
+      oncueData: {
+        ...this.state.oncueData,
+        router: '',
+        oncueService: null,
+        protocolModule: [],
+        deviceConnection: [],
+        connection: [],
+        focusedInProtocolModule: '',
+        focusedInDeviceConnection: '',
+      },
+    })
+  }
+
   private onChangeSendToDirectory = (
     e: ChangeEvent<HTMLInputElement>
   ): void => {
