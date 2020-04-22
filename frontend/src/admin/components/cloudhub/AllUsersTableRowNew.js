@@ -7,7 +7,7 @@ import {notify as notifyAction} from 'shared/actions/notifications'
 import Dropdown from 'shared/components/Dropdown'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-import {notifyCloudHubUserMissingNameAndProvider} from 'shared/copy/notifications'
+import {notifyCloudHubUserMissingNameAndProvider} from 'src/shared/copy/notifications'
 import {ALL_USERS_TABLE} from 'src/admin/constants/cloudhubTableSizing'
 const {
   colOrganizations,

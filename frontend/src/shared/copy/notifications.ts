@@ -259,6 +259,13 @@ export const notifyCloudHubOrgDeleted = (orgName: string): Notification => ({
   message: `Organization ${orgName} deleted successfully.`,
 })
 
+export const notifyCloudHubOrgInvalidName = (): Notification => ({
+  ...defaultErrorNotification,
+  type: 'warning',
+  message:
+    'Group name must not have any blank and prevent the special symbols eg, #, $, &, ^, |, % etc. Regular Exp. pattern is applied by "/^w+$/"',
+})
+
 export const notifyCloudHubUserDeleted = (
   user: string,
   isAbsoluteDelete: boolean

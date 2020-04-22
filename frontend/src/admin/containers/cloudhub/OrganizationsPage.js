@@ -4,7 +4,7 @@ import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 
 import * as adminCloudHubActionCreators from 'src/admin/actions/cloudhub'
-import {getMeAsync} from 'shared/actions/auth'
+import {getMeAsync} from 'src/shared/actions/auth'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import OrganizationsTable from 'src/admin/components/cloudhub/OrganizationsTable'

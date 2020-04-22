@@ -10,7 +10,7 @@ import {notify as notifyAction} from 'shared/actions/notifications'
 import {formatRPDuration} from 'utils/formatting'
 import ConfirmButton from 'shared/components/ConfirmButton'
 import {DATABASE_TABLE} from 'src/admin/constants/tableSizing'
-import {notifyRetentionPolicyCantHaveEmptyFields} from 'shared/copy/notifications'
+import {notifyRetentionPolicyCantHaveEmptyFields} from 'src/shared/copy/notifications'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 class DatabaseRow extends Component {
