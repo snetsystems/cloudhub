@@ -464,7 +464,7 @@ class RouterTable extends PureComponent<Props, State> {
   private filter(allrouters: Router[], searchTerm: string) {
     const filterText = searchTerm.toLowerCase()
     return allrouters.filter(h => {
-      if (typeof h.assetId !== 'string') h.assetId = String(h.assetId)
+      if (!h.assetId) h.assetId = '-'
       return h.assetId.toLowerCase().includes(filterText)
     })
   }
