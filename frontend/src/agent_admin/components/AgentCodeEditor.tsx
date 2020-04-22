@@ -3,6 +3,9 @@ import React, {PureComponent} from 'react'
 import {Controlled as ReactCodeMirror, IInstance} from 'react-codemirror2'
 import {EditorChange} from 'codemirror'
 
+// Decorators
+import {ErrorHandling} from 'src/shared/decorators/errors'
+
 interface Props {
   configScript: string
   onChangeScript: (script: string) => void
@@ -12,6 +15,7 @@ interface State {
   script: string
 }
 
+@ErrorHandling
 class AgentCodeEditor extends PureComponent<Props, State> {
   public static getDerivedStateFromProps(nextProps: Props, prevState: State) {
     return {...prevState, script: nextProps.configScript}

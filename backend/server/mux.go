@@ -241,9 +241,6 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	// Salt Proxy
 	router.POST("/cloudhub/v1/salt", EnsureAdmin(service.SaltProxyPost))
 
-	// Oncue Proxy
-	router.GET("/cloudhub/v1/oncue", EnsureAdmin(service.OncueProxyGet))
-
 	// Kapacitor
 	router.GET("/cloudhub/v1/sources/:id/kapacitors", EnsureViewer(service.Kapacitors))
 	router.POST("/cloudhub/v1/sources/:id/kapacitors", EnsureEditor(service.NewKapacitor))

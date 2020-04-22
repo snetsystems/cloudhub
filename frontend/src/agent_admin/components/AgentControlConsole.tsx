@@ -6,10 +6,14 @@ import CodeMirrorConsole, {
   scrolltoBottom,
 } from 'src/agent_admin/components/CodeMirrorConsole'
 
+// Decorators
+import {ErrorHandling} from 'src/shared/decorators/errors'
+
 interface Props {
   res: string
 }
 
+@ErrorHandling
 class AgentControlConsole extends PureComponent<Props> {
   render() {
     return (

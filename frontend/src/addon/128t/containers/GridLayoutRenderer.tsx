@@ -66,6 +66,9 @@ import {
   notify_128TSendFilesToCollector_Failed,
 } from 'src/addon/128t/components/Notifications'
 
+// Error
+import {ErrorHandling} from 'src/shared/decorators/errors'
+
 interface Props {
   notify: (message: Notification | NotificationFunc) => void
   layout: cellLayoutInfo[]
@@ -103,6 +106,7 @@ interface State {
   oncueData: OncueData
 }
 
+@ErrorHandling
 class GridLayoutRenderer extends PureComponent<Props, State> {
   private cellBackgroundColor: string = DEFAULT_CELL_BG_COLOR
   private cellTextColor: string = DEFAULT_CELL_TEXT_COLOR
@@ -127,6 +131,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       sendToDirectory: '',
       routerPopupPosition: {top: 0, right: 0},
       oncueData: {
+        isOncue: false,
         router: '',
         focusedInProtocolModule: '',
         focusedInDeviceConnection: '',
@@ -143,8 +148,16 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       }
     })
 
+    const {addons} = this.props
+    const oncue = _.find(addons, addon => addon.name === 'oncue')
+    const isOncue = oncue === undefined ? false : true
+
     this.setState({
       checkRouters: checkRoutersData,
+      oncueData: {
+        ...this.state.oncueData,
+        isOncue,
+      },
     })
   }
 
@@ -477,10 +490,19 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     })
   }
 
+  private handleOnClickTableRow = (router: Router) => {
+    const {topSources, topSessions, assetId} = router
+    return this.props.onClickTableRow(topSources, topSessions, assetId)()
+  }
   private onClickRouterName = async (data: {
     _event: MouseEvent<HTMLElement>
     router: Router
   }) => {
+    if (this.state.oncueData.isOncue === false) {
+      this.handleOnClickTableRow(data.router)
+      return
+    }
+
     const {_event, router} = data
     const {assetId} = router
 
@@ -494,13 +516,20 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
 
     const {addons} = this.props
     const salt = addons.find(addon => addon.name === 'salt')
+    const oncue = addons.find(addon => addon.name === 'oncue')
 
-    const response = await getOncueServiceStatus(salt.url, salt.token, assetId)
+    const response = await getOncueServiceStatus(
+      salt.url,
+      salt.token,
+      assetId,
+      oncue.url
+    )
 
     if (response != null) {
       this.setState({
         routerPopupPosition: {top: top - parentTop, right: right - parentLeft},
         oncueData: {
+          ...this.state.oncueData,
           router: assetId,
           oncueService: response,
           protocolModule: response.protocolModule,
@@ -515,6 +544,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       this.setState({
         routerPopupPosition: {top: top - parentTop, right: right - parentLeft},
         oncueData: {
+          ...this.state.oncueData,
           router: assetId,
           oncueService: null,
           protocolModule: [],
@@ -557,6 +587,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     this.setState({
       isRouterDataPopupVisible: false,
       oncueData: {
+        ...this.state.oncueData,
         router: '',
         oncueService: null,
         protocolModule: [],

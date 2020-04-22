@@ -4,10 +4,14 @@ import React, {PureComponent} from 'react'
 // Components
 import CodeMirrorConsole from 'src/agent_admin/components/CodeMirrorConsole'
 
+// Decorators
+import {ErrorHandling} from 'src/shared/decorators/errors'
+
 interface Props {
   res: string
 }
 
+@ErrorHandling
 class AgentMinionsConsole extends PureComponent<Props> {
   render() {
     return (
