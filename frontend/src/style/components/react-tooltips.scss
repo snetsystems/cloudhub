@@ -28,6 +28,11 @@ $tooltip-code-color: $c-potassium;
   text-transform: none;
   text-align: left;
   cursor: default;
+  pointer-events: unset;
+
+  &.place-bottom {
+    margin-top: 5px;
+  }
 
   &.type-dark {
     background-color: $tooltip-bg;
