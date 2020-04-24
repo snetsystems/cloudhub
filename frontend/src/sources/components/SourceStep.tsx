@@ -7,6 +7,7 @@ import _ from 'lodash'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import WizardTextInput from 'src/reusable_ui/components/wizard/WizardTextInput'
 import WizardCheckbox from 'src/reusable_ui/components/wizard/WizardCheckbox'
+import Dropdown from 'src/shared/components/Dropdown'
 
 // Actions
 import {
@@ -29,10 +30,9 @@ import {
 } from 'src/shared/copy/notifications'
 import {insecureSkipVerifyText} from 'src/shared/copy/tooltipText'
 import {DEFAULT_SOURCE} from 'src/shared/constants'
-import {SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
 // Types
-import {Source, Me} from 'src/types'
+import {Source, Me, Organization} from 'src/types'
 import {NextReturn} from 'src/types/wizard'
 
 const isNewSource = (source: Partial<Source>) => !source.id
@@ -45,6 +45,7 @@ interface Props {
   source: Source
   onBoarding?: boolean
   me: Me
+  organizations: Organization[]
   isUsingAuth: boolean
 }
 
@@ -97,7 +98,23 @@ class SourceStep extends PureComponent<Props, State> {
 
   public render() {
     const {source} = this.state
-    const {isUsingAuth, onBoarding} = this.props
+    const {me, organizations, isUsingAuth, onBoarding} = this.props
+
+    let dropdownCurOrg: any = null
+    if (isUsingAuth) {
+      dropdownCurOrg = [
+        {
+          ...me.currentOrganization,
+          text: me.currentOrganization.name,
+        },
+      ]
+    }
+
+    const dropdownOrg = organizations.map(role => ({
+      ...role,
+      text: role.name,
+    }))
+
     return (
       <>
         {isUsingAuth && onBoarding && this.authIndicator}
@@ -125,11 +142,29 @@ class SourceStep extends PureComponent<Props, State> {
           type="password"
           onChange={this.onChangeInput('password')}
         />
-        <WizardTextInput
-          value={source.telegraf}
-          label="Telegraf Database Name"
-          onChange={this.onChangeInput('telegraf')}
-        />
+        <div className="form-group col-xs-6">
+          <label>Database(= Group) Name</label>
+          {me.superAdmin || !isUsingAuth ? (
+            <Dropdown
+              items={dropdownOrg}
+              // onChoose={this.handleChooseOrganization}
+              selected={
+                isNewSource
+                  ? isUsingAuth
+                    ? me.currentOrganization.name
+                    : 'Select...'
+                  : source.telegraf
+              }
+              className="dropdown-stretch"
+            />
+          ) : (
+            <Dropdown
+              items={dropdownCurOrg}
+              selected={me.currentOrganization.name}
+              className="dropdown-stretch"
+            />
+          )}
+        </div>
         <WizardTextInput
           value={source.defaultRP}
           label="Default Retention Policy"
@@ -172,7 +207,7 @@ class SourceStep extends PureComponent<Props, State> {
     const {me} = this.props
     return (
       <div className="text-center">
-        {me.role === SUPERADMIN_ROLE ? (
+        {me.superAdmin ? (
           <h4>
             The organization{' '}
             <strong>
@@ -201,7 +236,7 @@ class SourceStep extends PureComponent<Props, State> {
     return `http://${url}`
   }
 
-  private parseError = (error): string => {
+  private parseError = (error: any): string => {
     return getDeep<string>(error, 'data.message', error)
   }
 
