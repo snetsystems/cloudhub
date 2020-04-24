@@ -10,7 +10,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import OrganizationsTable from 'src/admin/components/cloudhub/OrganizationsTable'
 
 class OrganizationsPage extends Component {
-  componentDidMount() {
+  componentWillMount() {
     const {
       links,
       actionsAdmin: {loadOrganizationsAsync},
