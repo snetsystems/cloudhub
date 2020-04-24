@@ -204,7 +204,7 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
     //   endTime: '2019-11-26T02:01:00',
     // },
     errorPolicy: 'all',
-    pollInterval: 5000,
+    pollInterval: 50000,
   })
 
   const [activeEditorTab, setActiveEditorTab] = useState<string>('Topology')
@@ -443,14 +443,11 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
           )}
         </Page.Header.Right>
       </Page.Header>
-      <Page.Contents
-        scrollable={true}
-        className={'swan-sdpldex-status-page__container'}
-      >
-        {activeEditorTab === 'Data' ? (
-          loading || _.isEmpty(emitData.routers) ? (
-            <PageSpinner />
-          ) : (
+      <Page.Contents scrollable={true}>
+        {loading || _.isEmpty(emitData.routers) ? (
+          <PageSpinner />
+        ) : activeEditorTab === 'Data' ? (
+          <div className={'swan-sdpldex-status-page__container'}>
             <GridLayoutRenderer
               focusedAssetId={focusedAssetId}
               isSwanSdplexStatus={true}
@@ -463,9 +460,7 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
               onClickMapMarker={handleClickMapMarker}
               addons={addons}
             />
-          )
-        ) : loading || _.isEmpty(emitData.routers) ? (
-          <PageSpinner />
+          </div>
         ) : (
           <TopologyRanderer routersData={emitData.routers} />
         )}
