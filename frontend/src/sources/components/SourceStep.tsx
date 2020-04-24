@@ -147,7 +147,7 @@ class SourceStep extends PureComponent<Props, State> {
           {me.superAdmin || !isUsingAuth ? (
             <Dropdown
               items={dropdownOrg}
-              // onChoose={this.handleChooseOrganization}
+              onChoose={this.handleChooseOrganization}
               selected={
                 isNewSource
                   ? isUsingAuth
@@ -238,6 +238,10 @@ class SourceStep extends PureComponent<Props, State> {
 
   private parseError = (error: any): string => {
     return getDeep<string>(error, 'data.message', error)
+  }
+
+  private handleChooseOrganization = (org: Organization) => {
+    // this.setState({organizationId: org.id})
   }
 
   private onChangeInput = (key: string) => (value: string | boolean) => {
