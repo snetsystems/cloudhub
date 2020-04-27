@@ -1,6 +1,7 @@
 // Libraries
 import React, {PureComponent} from 'react'
 import {Graph} from 'react-d3-graph'
+import classnames from 'classnames'
 import _ from 'lodash'
 
 // Components
@@ -55,8 +56,7 @@ class TopologyRanderer extends PureComponent<Props, State> {
   private useRef = React.createRef<HTMLDivElement>()
 
   private imgTopNodeUrl = require('src/addon/128t/components/assets/topology-cloudhub.svg')
-  private imgConductorUrl = require('src/addon/128t/components/assets/conductor.png')
-  private imgNodeUrl = require('src/addon/128t/components/assets/topology-router.svg')
+  private iconCooldinate = require('src/addon/128t/components/assets/icon_cooldinate.svg')
 
   private defaultMargin = {left: 100, right: 100, top: 100, bottom: 300}
   private config = {
@@ -105,6 +105,7 @@ class TopologyRanderer extends PureComponent<Props, State> {
 
   private TOPOLOGY_ROLE = {
     COUNDUCTOR: 'conductor',
+    COMBO: 'combo',
     ROOT: 'root',
   }
 
@@ -141,11 +142,10 @@ class TopologyRanderer extends PureComponent<Props, State> {
     const {routersData} = this.props
     const nodes = routersData.map(m =>
       m.role === this.TOPOLOGY_ROLE.COUNDUCTOR
-        ? {id: m.assetId, label: m.assetId, svg: this.imgConductorUrl}
+        ? {id: m.assetId, label: m.assetId}
         : {
             id: m.assetId,
             label: m.assetId,
-            svg: this.imgNodeUrl,
           }
     )
 
@@ -181,11 +181,29 @@ class TopologyRanderer extends PureComponent<Props, State> {
   private generateCustomNode = ({node}) => {
     const {routersData} = this.props
     const routerData = _.find(routersData, r => r.assetId === node.id)
-    const {assetId, cpuUsage, diskUsage, memoryUsage} = routerData
+    const {
+      assetId,
+      cpuUsage,
+      diskUsage,
+      memoryUsage,
+      locationCoordinates,
+      role,
+    } = routerData
     const {TABLE_ROW_IN_HEADER, TABLE_ROW_IN_BODY} = TOPOLOGY_TABLE_SIZING
 
+    console.log('routerData', routerData)
+
     return (
-      <div className={'topology-table-container'}>
+      <div
+        className={classnames('topology-table-container', {
+          unconnected: cpuUsage === null,
+        })}
+      >
+        {locationCoordinates ? (
+          <span className={'icon-container'}>
+            <img src={this.iconCooldinate} />
+          </span>
+        ) : null}
         <strong className={'hosts-table-title'}>{assetId}</strong>
         <Table>
           <TableBody>
@@ -235,6 +253,12 @@ class TopologyRanderer extends PureComponent<Props, State> {
             </>
           </TableBody>
         </Table>
+        <div
+          className={classnames('table-background', {
+            'bg-combo': role === this.TOPOLOGY_ROLE.COMBO,
+            'bg-conductor': role === this.TOPOLOGY_ROLE.COUNDUCTOR,
+          })}
+        ></div>
       </div>
     )
   }
