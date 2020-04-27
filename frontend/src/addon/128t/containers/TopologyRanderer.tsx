@@ -3,6 +3,18 @@ import React, {PureComponent} from 'react'
 import {Graph} from 'react-d3-graph'
 import _ from 'lodash'
 
+// Components
+import {
+  Table,
+  TableBody,
+  TableBodyRowItem,
+  usageIndacator,
+} from 'src/addon/128t/reusable/layout'
+import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
+
+// constants
+import {TOPOLOGY_TABLE_SIZING} from 'src/addon/128t/constants'
+
 // Error Handler
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
@@ -52,18 +64,17 @@ class TopologyRanderer extends PureComponent<Props, State> {
     height: 0,
     nodeHighlightBehavior: true,
     staticGraphWithDragAndDrop: true,
-    directed: true,
+    directed: false,
     node: {
       color: '#f58220',
       fontColor: '#fff',
-      size: 350,
+      size: 2000,
       fontSize: 16,
       fontWeight: 'normal',
       highlightFontSize: 16,
       highlightStrokeColor: 'blue',
-      labelProperty: 'label',
+      renderLabel: false,
       symbolType: 'circle',
-      labelPosition: 'bottom',
     },
     link: {
       highlightColor: '#f58220',
@@ -82,19 +93,26 @@ class TopologyRanderer extends PureComponent<Props, State> {
     backgroundColor: '#292933',
   }
 
+  private initNodes = [
+    {
+      id: 'root',
+      label: 'CloudHub',
+      svg: this.imgTopNodeUrl,
+      size: 600,
+      labelPosition: 'top',
+    },
+  ]
+
+  private TOPOLOGY_ROLE = {
+    COUNDUCTOR: 'conductor',
+    ROOT: 'root',
+  }
+
   constructor(props: Props) {
     super(props)
     this.state = {
       nodeData: {
-        nodes: [
-          {
-            id: 'root',
-            label: 'CloudHub',
-            svg: this.imgTopNodeUrl,
-            size: 600,
-            labelPosition: 'top',
-          },
-        ],
+        nodes: this.initNodes,
         links: null,
       },
     }
@@ -106,36 +124,39 @@ class TopologyRanderer extends PureComponent<Props, State> {
     y: number
   ): void => {
     const {nodeData} = this.state
-    const beforeNodeData = nodeData
 
-    // console.log(`Node ${nodeId} moved to new position x= ${x} y= ${y}`)
-
-    beforeNodeData.nodes = beforeNodeData.nodes.map(m =>
+    const nodes = nodeData.nodes.map(m =>
       m.id === nodeId ? {...m, x: x, y: y} : m
     )
 
     this.setState({
       nodeData: {
-        nodes: nodeData.nodes.map(m =>
-          m.id === nodeId ? {...m, x: x, y: y} : m
-        ),
-        links: nodeData.links,
+        ...nodeData,
+        nodes,
       },
     })
   }
 
   public componentWillMount() {
+    const {routersData} = this.props
+    const nodes = routersData.map(m =>
+      m.role === this.TOPOLOGY_ROLE.COUNDUCTOR
+        ? {id: m.assetId, label: m.assetId, svg: this.imgConductorUrl}
+        : {
+            id: m.assetId,
+            label: m.assetId,
+            svg: this.imgNodeUrl,
+          }
+    )
+
+    const links = routersData.map(m => ({
+      source: this.TOPOLOGY_ROLE.ROOT,
+      target: m.assetId,
+    }))
+
     const nodeData: GraphNodeData = {
-      nodes: this.props.routersData.map(m => {
-        if (m.role === 'conductor') {
-          return {id: m.assetId, label: m.assetId, svg: this.imgConductorUrl}
-        } else {
-          return {id: m.assetId, label: m.assetId, svg: this.imgNodeUrl}
-        }
-      }),
-      links: this.props.routersData.map(m => {
-        return {source: 'root', target: m.assetId}
-      }),
+      nodes,
+      links,
     }
 
     this.setState({
@@ -157,84 +178,95 @@ class TopologyRanderer extends PureComponent<Props, State> {
     return this.defaultMargin.left + widthGap * index
   }
 
+  private generateCustomNode = ({node}) => {
+    const {routersData} = this.props
+    const routerData = _.find(routersData, r => r.assetId === node.id)
+    const {assetId, cpuUsage, diskUsage, memoryUsage} = routerData
+    const {TABLE_ROW_IN_HEADER, TABLE_ROW_IN_BODY} = TOPOLOGY_TABLE_SIZING
+
+    return (
+      <div className={'topology-table-container'}>
+        <strong className={'hosts-table-title'}>{assetId}</strong>
+        <Table>
+          <TableBody>
+            <>
+              <div className={this.focusedClasses()}>
+                <div
+                  className={this.headerClasses()}
+                  style={{width: TABLE_ROW_IN_HEADER}}
+                >
+                  cpu usage
+                </div>
+                <TableBodyRowItem
+                  title={usageIndacator({
+                    value: fixedDecimalPercentage(cpuUsage, 2),
+                  })}
+                  width={TABLE_ROW_IN_BODY}
+                ></TableBodyRowItem>
+              </div>
+              <div className={this.focusedClasses()}>
+                <div
+                  className={this.headerClasses()}
+                  style={{width: TABLE_ROW_IN_HEADER}}
+                >
+                  disk usage
+                </div>
+                <TableBodyRowItem
+                  title={usageIndacator({
+                    value: fixedDecimalPercentage(diskUsage, 2),
+                  })}
+                  width={TABLE_ROW_IN_BODY}
+                ></TableBodyRowItem>
+              </div>
+              <div className={this.focusedClasses()}>
+                <div
+                  className={this.headerClasses()}
+                  style={{width: TABLE_ROW_IN_HEADER}}
+                >
+                  memory usage
+                </div>
+                <TableBodyRowItem
+                  title={usageIndacator({
+                    value: fixedDecimalPercentage(memoryUsage, 2),
+                  })}
+                  width={TABLE_ROW_IN_BODY}
+                ></TableBodyRowItem>
+              </div>
+            </>
+          </TableBody>
+        </Table>
+      </div>
+    )
+  }
+
   public componentDidMount() {
-    console.log('componentDidMount', this.state.nodeData)
-
     const {nodeData} = this.state
-
     const dimensions = this.useRef.current.getBoundingClientRect()
+    const {width, height} = dimensions
 
-    this.config.width = dimensions.width
-    this.config.height = dimensions.height
+    const nodes = nodeData.nodes.map((m, index) =>
+      m.id === 'root'
+        ? {...m, x: dimensions.width / 2, y: this.defaultMargin.top}
+        : {
+            ...m,
+            x: this.getXCoordinate(index),
+            y: dimensions.height - this.defaultMargin.bottom,
+            viewGenerator: (node: GraphNode) => this.generateCustomNode({node}),
+          }
+    )
 
-    // this.setState({
-    //   nodeData: {
-    //     nodes: nodeData.nodes.map((m, index) =>
-    //       m.id === 'root'
-    //         ? {...m, x: dimensions.width / 2, y: this.defaultMargin.top}
-    //         : {
-    //             ...m,
-    //             x: this.getXCoordinate(index),
-    //             y: dimensions.height - this.defaultMargin.bottom,
-    //           }
-    //     ),
-    //     links: nodeData.links,
-    //   },
-    // })
+    this.config = {
+      ...this.config,
+      width,
+      height,
+    }
 
     this.setState({
       nodeData: {
-        nodes: nodeData.nodes.map((m, index) =>
-          m.id === 'root'
-            ? {...m, x: dimensions.width / 2, y: this.defaultMargin.top}
-            : {
-                ...m,
-                x: this.getXCoordinate(index),
-                y: dimensions.height - this.defaultMargin.bottom,
-              }
-        ),
-        links: nodeData.links,
+        ...nodeData,
+        nodes,
       },
     })
-
-    // const dimensions = this.useRef.current.getBoundingClientRect()
-
-    // config.width = dimensions.width
-    // config.height = dimensions.height
-
-    // const width =
-    //   (dimensions.width - (defaultMargin.left + defaultMargin.right)) / 6
-
-    // const data: GraphNodeData = {
-    //   nodes: [
-    //     {
-    //       id: 'root',
-    //       x: dimensions.width / 2,
-    //       y: 100,
-    //       svg:
-    //         'http://marvel-force-chart.surge.sh/marvel_force_chart_img/marvel.png',
-    //     },
-    //     {id: 'node1', x: 100, y: dimensions.height - 300},
-    //     {id: 'node2', x: 100 + width, y: dimensions.height - 300},
-    //     {id: 'node3', x: 100 + width * 2, y: dimensions.height - 300},
-    //     {id: 'node4', x: 100 + width * 3, y: dimensions.height - 300},
-    //     {id: 'node5', x: 100 + width * 4, y: dimensions.height - 300},
-    //     {id: 'node6', x: 100 + width * 5, y: dimensions.height - 300},
-    //     {id: 'node7', x: 100 + width * 6, y: dimensions.height - 300},
-    //   ],
-    //   links: [
-    //     {source: 'root', target: 'node1'},
-    //     {source: 'root', target: 'node2'},
-    //     {source: 'root', target: 'node3'},
-    //     {source: 'root', target: 'node4'},
-    //     {source: 'root', target: 'node5'},
-    //     {source: 'root', target: 'node6'},
-    //     {source: 'root', target: 'node7'},
-    //     {source: 'node7', target: 'root'},
-    //   ],
-    // }
-
-    // this.setState({nodeData: data})
   }
 
   public render() {
@@ -242,18 +274,24 @@ class TopologyRanderer extends PureComponent<Props, State> {
 
     return (
       <div style={this.containerStyles} ref={this.useRef}>
-        {this.state.nodeData.nodes[0].x > 0 ? (
+        {nodeData.nodes[0].x > 0 ? (
           <Graph
             id="graph-id"
             data={nodeData}
             config={this.config}
             onNodePositionChange={this.onNodePositionChange}
           />
-        ) : (
-          <></>
-        )}
+        ) : null}
       </div>
     )
+  }
+
+  private focusedClasses = (): string => {
+    return 'hosts-table--tr'
+  }
+
+  private headerClasses = (): string => {
+    return 'hosts-table--th'
   }
 }
 
