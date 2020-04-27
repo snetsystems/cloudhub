@@ -276,7 +276,7 @@ class TopologyRanderer extends PureComponent<Props, State> {
       <div style={this.containerStyles} ref={this.useRef}>
         {nodeData.nodes[0].x > 0 ? (
           <Graph
-            id="graph-id"
+            id="swan-topology"
             data={nodeData}
             config={this.config}
             onNodePositionChange={this.onNodePositionChange}
