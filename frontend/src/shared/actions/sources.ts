@@ -160,11 +160,6 @@ export const removeAndLoadSources = (source: Source) => async (
         throw err
       }
     }
-
-    const {
-      data: {sources: newSources},
-    } = await getSourcesAJAX()
-    dispatch(loadSources(newSources))
   } catch (err) {
     dispatch(notify(notifyServerError))
   }
