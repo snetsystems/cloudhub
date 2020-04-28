@@ -68,17 +68,11 @@ class ManageSources extends PureComponent<Props, State> {
     this.fetchKapacitors()
   }
 
-  public componentDidUpdate(prevProps: Props) {
-    if (prevProps.sources.length !== this.props.sources.length) {
+  public componentWillReceiveProps(nextProps: Props) {
+    if (nextProps.sources.length !== this.props.sources.length) {
       this.fetchKapacitors()
     }
   }
-
-  // public componentWillReceiveProps(nextProps: Props) {
-  //   if (nextProps.sources.length !== this.props.sources.length) {
-  //     this.fetchKapacitors()
-  //   }
-  // }
 
   public render() {
     const {

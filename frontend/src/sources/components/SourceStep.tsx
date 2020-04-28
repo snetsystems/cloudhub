@@ -130,7 +130,6 @@ class SourceStep extends PureComponent<Props, State> {
           label="Connection URL"
           onChange={this.onChangeInput('url')}
           valueModifier={this.URLModifier}
-          // onSubmit={this.handleSubmitUrl}
         />
         <WizardTextInput
           value={source.name}
@@ -254,33 +253,6 @@ class SourceStep extends PureComponent<Props, State> {
     this.setState({source: {...source, [key]: value}})
     setError(false)
   }
-
-  // private handleSubmitUrl = async (sourceURLstring: string) => {
-  //   const {source} = this.state
-  //   const metaserviceURL = new URL(source.metaUrl || DEFAULT_SOURCE.metaUrl)
-  //   const sourceURL = new URL(sourceURLstring || DEFAULT_SOURCE.url)
-
-  //   if (isNewSource(source)) {
-  //     try {
-  //       metaserviceURL.hostname = sourceURL.hostname
-  //       let sourceFromServer = await createSource(source)
-  //       sourceFromServer = {...sourceFromServer, metaUrl: metaserviceURL.href}
-  //       this.props.addSource(sourceFromServer)
-  //       this.setState({
-  //         source: sourceFromServer,
-  //       })
-  //     } catch (err) {}
-  //   } else {
-  //     try {
-  //       let sourceFromServer = await updateSource(source)
-  //       sourceFromServer = {...sourceFromServer, metaUrl: metaserviceURL.href}
-  //       this.props.updateSource(sourceFromServer)
-  //       this.setState({
-  //         source: sourceFromServer,
-  //       })
-  //     } catch (err) {}
-  //   }
-  // }
 
   private get sourceIsEdited(): boolean {
     const sourceInProps = this.props.source
