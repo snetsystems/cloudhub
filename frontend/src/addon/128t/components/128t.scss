@@ -93,44 +93,6 @@
     }
   }
 
-  .UsageIndacator-container {
-    width: 100%;
-    text-align: center;
-
-    .UsageIndacator-value {
-      &.UsageIndacator--caution {
-        color: $s-oragne2;
-      }
-
-      &.UsageIndacator--warning {
-        color: $c-topaz;
-      }
-
-      &.UsageIndacator--danger {
-        color: red;
-      }
-    }
-
-    .UsageIndacator {
-      height: 2px;
-      text-align: center;
-      background: -webkit-linear-gradient(left, #2de5a5 0%, #298bdb 100%);
-      margin-top: 2px;
-
-      &.UsageIndacator--caution {
-        background: $s-oragne2;
-      }
-
-      &.UsageIndacator--warning {
-        background: $c-topaz;
-      }
-
-      &.UsageIndacator--danger {
-        background: red;
-      }
-    }
-  }
-
   .dash-graph--heading--button-box {
     position: relative;
     z-index: 3;
@@ -535,4 +497,139 @@
       height: calc(100% - 15px);
     }
   }
+}
+
+.UsageIndacator-container {
+  width: 100%;
+  text-align: center;
+
+  .UsageIndacator-value {
+    &.UsageIndacator--caution {
+      color: $s-oragne2;
+    }
+
+    &.UsageIndacator--warning {
+      color: $c-topaz;
+    }
+
+    &.UsageIndacator--danger {
+      color: red;
+    }
+  }
+
+  .UsageIndacator {
+    height: 2px;
+    text-align: center;
+    background: -webkit-linear-gradient(left, #2de5a5 0%, #298bdb 100%);
+    margin-top: 2px;
+
+    &.UsageIndacator--caution {
+      background: $s-oragne2;
+    }
+
+    &.UsageIndacator--warning {
+      background: $c-topaz;
+    }
+
+    &.UsageIndacator--danger {
+      background: red;
+    }
+  }
+}
+
+$Roles: conductor, combo;
+
+.topology-table-container {
+  background-color: $g5-pepper;
+  color: $g19-ghost;
+  border: 2px solid $s-orange;
+  border-radius: 5px;
+  transform: translateY(42px);
+
+  &.unconnected {
+    border-color: #f1f1f1;
+  }
+
+  .table-background {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    opacity: 0.2;
+    background-size: contain;
+
+    &.bg-conductor {
+      &::after {
+        content: '';
+        background: url('../addon/128t/components/assets/role-conductor.svg')
+          no-repeat center;
+        display: flex;
+        width: 70%;
+        height: 100%;
+        margin: 0 auto;
+      }
+    }
+    &.bg-combo {
+      &::after {
+        content: '';
+        background: url('../addon/128t/components/assets/role-combo.svg')
+          no-repeat center;
+        display: flex;
+        width: 70%;
+        height: 100%;
+        margin: 0 auto;
+      }
+    }
+  }
+
+  .icon-container {
+    display: inline-block;
+    width: 15px;
+    height: 15px;
+    position: absolute;
+    top: -17px;
+    right: 3px;
+  }
+
+  .hosts-table-title {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    font-family: 'RobotoMono', monospace;
+    font-weight: 500;
+    padding: 8px 8px 2px;
+    line-height: 1.42857143em;
+    color: $g13-mist;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  .hosts-table-title-sub {
+    height: 15px;
+    overflow: hidden;
+    padding-right: 8px;
+
+    > img {
+      height: 100%;
+    }
+  }
+
+  .hosts-table {
+    .hosts-table--tr {
+      pointer-events: none;
+
+      .hosts-table--th {
+        font-size: 11px;
+      }
+      .hosts-table--td {
+        font-size: 11px;
+      }
+    }
+  }
+}
+
+#swan-topology-graph-wrapper {
+  height: 100%;
 }
