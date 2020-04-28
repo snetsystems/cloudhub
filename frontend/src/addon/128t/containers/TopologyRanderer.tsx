@@ -12,6 +12,13 @@ import {
   usageIndacator,
 } from 'src/addon/128t/reusable/layout'
 import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
+import LoadingSpinner from 'src/flux/components/LoadingSpinner'
+
+// Middleware
+import {
+  setLocalStorage,
+  getLocalStorage,
+} from 'src/shared/middleware/localStorage'
 
 // constants
 import {TOPOLOGY_TABLE_SIZING} from 'src/addon/128t/constants'
@@ -21,6 +28,12 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 
 //type
 import {Router} from 'src/addon/128t/types'
+
+interface SwanTopology {
+  id: string
+  x: number
+  y: number
+}
 
 interface GraphNodeData {
   nodes: GraphNode[]
@@ -125,10 +138,33 @@ class TopologyRanderer extends PureComponent<Props, State> {
     y: number
   ): void => {
     const {nodeData} = this.state
+    const addon = getLocalStorage('addon')
+    let {swanTopology}: {swanTopology: SwanTopology[]} = addon
 
-    const nodes = nodeData.nodes.map(m =>
-      m.id === nodeId ? {...m, x: x, y: y} : m
-    )
+    const nodes = nodeData.nodes.map(m => {
+      if (m.id === nodeId) {
+        const filtered = swanTopology.filter(s => s.id === nodeId)
+        if (filtered.length > 0) {
+          swanTopology = swanTopology.map(swan =>
+            swan.id === nodeId ? {id: nodeId, x, y} : swan
+          )
+
+          setLocalStorage('addon', {
+            ...addon,
+            swanTopology,
+          })
+        } else {
+          swanTopology.push({id: nodeId, x, y})
+          setLocalStorage('addon', {
+            ...addon,
+            swanTopology,
+          })
+        }
+        return {...m, x, y}
+      } else {
+        return m
+      }
+    })
 
     this.setState({
       nodeData: {
@@ -167,18 +203,91 @@ class TopologyRanderer extends PureComponent<Props, State> {
     })
   }
 
-  private getXCoordinate(index: number) {
+  public componentDidMount() {
+    const {nodeData} = this.state
     const dimensions = this.useRef.current.getBoundingClientRect()
+    const {width, height} = dimensions
 
-    const widthGap =
-      (dimensions.width -
-        (this.defaultMargin.left + this.defaultMargin.right)) /
-      this.state.nodeData.nodes.length
+    const addon = getLocalStorage('addon')
+    const check = addon.hasOwnProperty('swanTopology')
 
-    return this.defaultMargin.left + widthGap * index
+    let nodes = nodeData.nodes.map((m, index) =>
+      m.id === 'root'
+        ? {...m, x: dimensions.width / 2, y: this.defaultMargin.top}
+        : {
+            ...m,
+            x: this.getXCoordinate(index),
+            y: dimensions.height - this.defaultMargin.bottom,
+            viewGenerator: (node: GraphNode) => this.generateCustomNode({node}),
+          }
+    )
+
+    if (check) {
+      const {swanTopology}: {swanTopology: SwanTopology[]} = addon
+      nodes = nodes.map(m => {
+        const filtered = swanTopology.filter(s => s.id === m.id)
+        if (filtered.length > 0) {
+          const {x, y} = filtered[0]
+          return {
+            ...m,
+            x,
+            y,
+          }
+        } else {
+          return m
+        }
+      })
+    } else {
+      const {id, x, y} = nodes[0]
+      setLocalStorage('addon', {
+        ...addon,
+        swanTopology: [{id, x, y}],
+      })
+    }
+
+    this.config = {
+      ...this.config,
+      width,
+      height,
+    }
+
+    this.setState({
+      nodeData: {
+        ...nodeData,
+        nodes,
+      },
+    })
   }
 
-  private generateCustomNode = ({node}) => {
+  public render() {
+    const {nodeData} = this.state
+
+    return (
+      <div style={this.containerStyles} ref={this.useRef}>
+        {nodeData.nodes[0].x > 0 ? (
+          <Graph
+            id="swan-topology"
+            data={nodeData}
+            config={this.config}
+            onNodePositionChange={this.onNodePositionChange}
+          />
+        ) : (
+          <LoadingSpinner />
+        )}
+      </div>
+    )
+  }
+
+  private getXCoordinate(index: number) {
+    const dimensions = this.useRef.current.getBoundingClientRect()
+    const {left, right} = this.defaultMargin
+    const widthGap =
+      (dimensions.width - (left + right)) / this.state.nodeData.nodes.length
+
+    return left + widthGap * index
+  }
+
+  private generateCustomNode = ({node}: {node: GraphNode}) => {
     const {routersData} = this.props
     const routerData = _.find(routersData, r => r.assetId === node.id)
     const {
@@ -190,8 +299,6 @@ class TopologyRanderer extends PureComponent<Props, State> {
       role,
     } = routerData
     const {TABLE_ROW_IN_HEADER, TABLE_ROW_IN_BODY} = TOPOLOGY_TABLE_SIZING
-
-    console.log('routerData', routerData)
 
     return (
       <div
@@ -259,53 +366,6 @@ class TopologyRanderer extends PureComponent<Props, State> {
             'bg-conductor': role === this.TOPOLOGY_ROLE.COUNDUCTOR,
           })}
         ></div>
-      </div>
-    )
-  }
-
-  public componentDidMount() {
-    const {nodeData} = this.state
-    const dimensions = this.useRef.current.getBoundingClientRect()
-    const {width, height} = dimensions
-
-    const nodes = nodeData.nodes.map((m, index) =>
-      m.id === 'root'
-        ? {...m, x: dimensions.width / 2, y: this.defaultMargin.top}
-        : {
-            ...m,
-            x: this.getXCoordinate(index),
-            y: dimensions.height - this.defaultMargin.bottom,
-            viewGenerator: (node: GraphNode) => this.generateCustomNode({node}),
-          }
-    )
-
-    this.config = {
-      ...this.config,
-      width,
-      height,
-    }
-
-    this.setState({
-      nodeData: {
-        ...nodeData,
-        nodes,
-      },
-    })
-  }
-
-  public render() {
-    const {nodeData} = this.state
-
-    return (
-      <div style={this.containerStyles} ref={this.useRef}>
-        {nodeData.nodes[0].x > 0 ? (
-          <Graph
-            id="swan-topology"
-            data={nodeData}
-            config={this.config}
-            onNodePositionChange={this.onNodePositionChange}
-          />
-        ) : null}
       </div>
     )
   }

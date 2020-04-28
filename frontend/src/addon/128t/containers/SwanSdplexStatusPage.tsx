@@ -165,7 +165,9 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
   )
 
   let addon = getLocalStorage('addon')
-  const check = addon.T128.hasOwnProperty('cellsLayoutInfo')
+
+  const check =
+    addon.hasOwnProperty('T128') || addon.T128.hasOwnProperty('cellsLayoutInfo')
 
   if (check) {
     let propertyCheck = addon.T128.cellsLayoutInfo.map(
@@ -204,7 +206,7 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
     //   endTime: '2019-11-26T02:01:00',
     // },
     errorPolicy: 'all',
-    pollInterval: 50000,
+    pollInterval: 5000,
   })
 
   const [activeEditorTab, setActiveEditorTab] = useState<string>('Topology')
@@ -357,7 +359,9 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
   }, [data])
 
   useEffect(() => {
+    const addon = getLocalStorage('addon')
     setLocalStorage('addon', {
+      ...addon,
       T128: {
         focusedAssetId,
         cellsLayoutInfo,
