@@ -70,11 +70,15 @@ class ManageSources extends PureComponent<Props, State> {
 
   public componentDidUpdate(prevProps: Props) {
     if (prevProps.sources.length !== this.props.sources.length) {
-      this.props.sources.forEach(source => {
-        this.props.fetchKapacitors(source)
-      })
+      this.fetchKapacitors()
     }
   }
+
+  // public componentWillReceiveProps(nextProps: Props) {
+  //   if (nextProps.sources.length !== this.props.sources.length) {
+  //     this.fetchKapacitors()
+  //   }
+  // }
 
   public render() {
     const {
@@ -176,13 +180,25 @@ const mstp = ({
   sources,
 })
 
-const mdtp = dispatch => ({
-  notify: notifyAction,
+const mdtp = (dispatch: any) => ({
+  notify: bindActionCreators(notifyAction, dispatch),
   actionsAdmin: bindActionCreators(adminCloudHubActionCreators, dispatch),
-  removeAndLoadSources: sourcesActions.removeAndLoadSources,
-  fetchKapacitors: sourcesActions.fetchKapacitorsAsync,
-  setActiveKapacitor: sourcesActions.setActiveKapacitorAsync,
-  deleteKapacitor: sourcesActions.deleteKapacitorAsync,
+  removeAndLoadSources: bindActionCreators(
+    sourcesActions.removeAndLoadSources,
+    dispatch
+  ),
+  fetchKapacitors: bindActionCreators(
+    sourcesActions.fetchKapacitorsAsync,
+    dispatch
+  ),
+  setActiveKapacitor: bindActionCreators(
+    sourcesActions.setActiveKapacitorAsync,
+    dispatch
+  ),
+  deleteKapacitor: bindActionCreators(
+    sourcesActions.deleteKapacitorAsync,
+    dispatch
+  ),
 })
 
 export default connect(mstp, mdtp)(ManageSources)

@@ -63,6 +63,10 @@ class SourceStep extends PureComponent<Props, State> {
     this.state = {
       source: this.props.source || DEFAULT_SOURCE,
     }
+
+    if (!this.props.source && props.isUsingAuth) {
+      this.state.source.telegraf = props.me.currentOrganization.name
+    }
   }
 
   public next = async (): Promise<NextReturn> => {
@@ -110,10 +114,13 @@ class SourceStep extends PureComponent<Props, State> {
       ]
     }
 
-    const dropdownOrg = organizations.map(role => ({
-      ...role,
-      text: role.name,
-    }))
+    let dropdownOrg: any = null
+    if (organizations) {
+      dropdownOrg = organizations.map(role => ({
+        ...role,
+        text: role.name,
+      }))
+    }
 
     return (
       <>
@@ -123,7 +130,7 @@ class SourceStep extends PureComponent<Props, State> {
           label="Connection URL"
           onChange={this.onChangeInput('url')}
           valueModifier={this.URLModifier}
-          onSubmit={this.handleSubmitUrl}
+          // onSubmit={this.handleSubmitUrl}
         />
         <WizardTextInput
           value={source.name}
@@ -144,26 +151,20 @@ class SourceStep extends PureComponent<Props, State> {
         />
         <div className="form-group col-xs-6">
           <label>Database(= Group) Name</label>
-          {me.superAdmin || !isUsingAuth ? (
-            <Dropdown
-              items={dropdownOrg}
-              onChoose={this.handleChooseOrganization}
-              selected={
-                isNewSource
-                  ? isUsingAuth
-                    ? me.currentOrganization.name
-                    : 'Select...'
-                  : source.telegraf
-              }
-              className="dropdown-stretch"
-            />
-          ) : (
-            <Dropdown
-              items={dropdownCurOrg}
-              selected={me.currentOrganization.name}
-              className="dropdown-stretch"
-            />
-          )}
+          <Dropdown
+            items={
+              !isUsingAuth || me.superAdmin
+                ? onBoarding
+                  ? dropdownCurOrg
+                    ? dropdownCurOrg
+                    : [source.telegraf]
+                  : dropdownOrg
+                : dropdownCurOrg
+            }
+            onChoose={this.onChooseDropdown('telegraf')}
+            selected={source.telegraf}
+            className="dropdown-stretch"
+          />
         </div>
         <WizardTextInput
           value={source.defaultRP}
@@ -240,8 +241,11 @@ class SourceStep extends PureComponent<Props, State> {
     return getDeep<string>(error, 'data.message', error)
   }
 
-  private handleChooseOrganization = (org: Organization) => {
-    // this.setState({organizationId: org.id})
+  private onChooseDropdown = (key: string) => (org: Organization) => {
+    const {source} = this.state
+    const {setError} = this.props
+    this.setState({source: {...source, [key]: org.name}})
+    setError(false)
   }
 
   private onChangeInput = (key: string) => (value: string | boolean) => {
@@ -251,32 +255,32 @@ class SourceStep extends PureComponent<Props, State> {
     setError(false)
   }
 
-  private handleSubmitUrl = async (sourceURLstring: string) => {
-    const {source} = this.state
-    const metaserviceURL = new URL(source.metaUrl || DEFAULT_SOURCE.metaUrl)
-    const sourceURL = new URL(sourceURLstring || DEFAULT_SOURCE.url)
+  // private handleSubmitUrl = async (sourceURLstring: string) => {
+  //   const {source} = this.state
+  //   const metaserviceURL = new URL(source.metaUrl || DEFAULT_SOURCE.metaUrl)
+  //   const sourceURL = new URL(sourceURLstring || DEFAULT_SOURCE.url)
 
-    if (isNewSource(source)) {
-      try {
-        metaserviceURL.hostname = sourceURL.hostname
-        let sourceFromServer = await createSource(source)
-        sourceFromServer = {...sourceFromServer, metaUrl: metaserviceURL.href}
-        this.props.addSource(sourceFromServer)
-        this.setState({
-          source: sourceFromServer,
-        })
-      } catch (err) {}
-    } else {
-      try {
-        let sourceFromServer = await updateSource(source)
-        sourceFromServer = {...sourceFromServer, metaUrl: metaserviceURL.href}
-        this.props.updateSource(sourceFromServer)
-        this.setState({
-          source: sourceFromServer,
-        })
-      } catch (err) {}
-    }
-  }
+  //   if (isNewSource(source)) {
+  //     try {
+  //       metaserviceURL.hostname = sourceURL.hostname
+  //       let sourceFromServer = await createSource(source)
+  //       sourceFromServer = {...sourceFromServer, metaUrl: metaserviceURL.href}
+  //       this.props.addSource(sourceFromServer)
+  //       this.setState({
+  //         source: sourceFromServer,
+  //       })
+  //     } catch (err) {}
+  //   } else {
+  //     try {
+  //       let sourceFromServer = await updateSource(source)
+  //       sourceFromServer = {...sourceFromServer, metaUrl: metaserviceURL.href}
+  //       this.props.updateSource(sourceFromServer)
+  //       this.setState({
+  //         source: sourceFromServer,
+  //       })
+  //     } catch (err) {}
+  //   }
+  // }
 
   private get sourceIsEdited(): boolean {
     const sourceInProps = this.props.source
