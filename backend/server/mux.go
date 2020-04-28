@@ -151,7 +151,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	/* API */
 	// Organizations
-	router.GET("/cloudhub/v1/organizations", EnsureAdmin(service.Organizations))
+	router.GET("/cloudhub/v1/organizations", EnsureViewer(service.Organizations))
 	router.POST("/cloudhub/v1/organizations", EnsureSuperAdmin(service.NewOrganization))
 
 	router.GET("/cloudhub/v1/organizations/:oid", EnsureAdmin(service.OrganizationID))
