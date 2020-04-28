@@ -71,10 +71,10 @@ class TopologyRanderer extends PureComponent<Props, State> {
   private imgTopNodeUrl = require('src/addon/128t/components/assets/topology-cloudhub.svg')
   private iconCooldinate = require('src/addon/128t/components/assets/icon_cooldinate.svg')
 
-  private defaultMargin = {left: 100, right: 100, top: 100, bottom: 300}
+  private defaultMargin = {left: 100, right: 100, top: 100, bottom: 400}
   private config = {
-    width: 0,
-    height: 0,
+    width: '100%',
+    height: '100%',
     nodeHighlightBehavior: true,
     staticGraphWithDragAndDrop: true,
     directed: false,
@@ -206,8 +206,6 @@ class TopologyRanderer extends PureComponent<Props, State> {
   public componentDidMount() {
     const {nodeData} = this.state
     const dimensions = this.useRef.current.getBoundingClientRect()
-    const {width, height} = dimensions
-
     const addon = getLocalStorage('addon')
     const check = addon.hasOwnProperty('swanTopology')
 
@@ -245,12 +243,6 @@ class TopologyRanderer extends PureComponent<Props, State> {
       })
     }
 
-    this.config = {
-      ...this.config,
-      width,
-      height,
-    }
-
     this.setState({
       nodeData: {
         ...nodeData,
@@ -279,12 +271,7 @@ class TopologyRanderer extends PureComponent<Props, State> {
   }
 
   private getXCoordinate(index: number) {
-    const dimensions = this.useRef.current.getBoundingClientRect()
-    const {left, right} = this.defaultMargin
-    const widthGap =
-      (dimensions.width - (left + right)) / this.state.nodeData.nodes.length
-
-    return left + widthGap * index
+    return this.defaultMargin.left + 220 * index
   }
 
   private generateCustomNode = ({node}: {node: GraphNode}) => {
