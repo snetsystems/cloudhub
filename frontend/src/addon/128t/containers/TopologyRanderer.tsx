@@ -10,6 +10,8 @@ import {
   TableBody,
   TableBodyRowItem,
   usageIndacator,
+  usageTemperature,
+  usageSound,
 } from 'src/addon/128t/reusable/layout'
 import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
 import LoadingSpinner from 'src/flux/components/LoadingSpinner'
@@ -49,6 +51,9 @@ interface GraphNode {
   size?: number
   svg?: string
   labelPosition?: string
+  role?: string
+  temperature?: number
+  sound?: number
 }
 
 interface GraphLink {
@@ -56,12 +61,19 @@ interface GraphLink {
   target: string
 }
 
+// interface MachineData {
+//   role: string
+//   temperature: number
+//   sound: number
+// }
+
 interface Props {
   routersData: Router[]
 }
 
 interface State {
   nodeData: GraphNodeData
+  // machineData: MachineData []
 }
 
 @ErrorHandling
@@ -120,6 +132,153 @@ class TopologyRanderer extends PureComponent<Props, State> {
     COUNDUCTOR: 'conductor',
     COMBO: 'combo',
     ROOT: 'root',
+  }
+
+  private dummyData = {
+    links: [
+      {
+        source: 'SDPLEX_Seoul_TEST',
+        target: 'CNC 01',
+      },
+      {
+        source: 'SDPLEX_Seoul_TEST',
+        target: 'CNC 02',
+      },
+      {
+        source: 'SDPLEX-Seoul_TEST3',
+        target: 'CNC 03',
+      },
+      {
+        source: 'snet-china-soju',
+        target: 'CNC 04',
+      },
+      {
+        source: 'snet-china-soju',
+        target: 'CNC 05',
+      },
+      {
+        source: 'snet-indonesia',
+        target: 'CNC 06',
+      },
+      {
+        source: 'snet-seoul-office',
+        target: 'CNC 07',
+      },
+      {
+        source: 'snet-hanoi',
+        target: 'CNC 08',
+      },
+      {
+        source: 'snet-hochiminh',
+        target: 'CNC 09',
+      },
+      {
+        source: 'snetcon1',
+        target: 'CNC 10',
+      },
+    ],
+    nodes: [
+      {
+        id: 'CNC 01',
+        name: 'CNC 01',
+        x: 150,
+        y: 760,
+        role: 'machine',
+        temperature: 35,
+        sound: 40,
+        viewGenerator: (node: GraphNode) => this.generateMachineNode({node}),
+      },
+      {
+        id: 'CNC 02',
+        name: 'CNC 02',
+        x: 370,
+        y: 760,
+        role: 'machine',
+        temperature: 51,
+        sound: 56,
+        viewGenerator: (node: GraphNode) => this.generateMachineNode({node}),
+      },
+      {
+        id: 'CNC 03',
+        name: 'CNC 03',
+        x: 590,
+        y: 760,
+        role: 'machine',
+        temperature: 61,
+        sound: 66,
+        viewGenerator: (node: GraphNode) => this.generateMachineNode({node}),
+      },
+      {
+        id: 'CNC 04',
+        name: 'CNC 04',
+        x: 1640,
+        y: 760,
+        role: 'machine',
+        temperature: null,
+        sound: null,
+        viewGenerator: (node: GraphNode) => this.generateMachineNode({node}),
+      },
+      {
+        id: 'CNC 05',
+        name: 'CNC 05',
+        x: 1860,
+        y: 760,
+        role: 'machine',
+        temperature: 39,
+        sound: 41,
+        viewGenerator: (node: GraphNode) => this.generateMachineNode({node}),
+      },
+      {
+        id: 'CNC 06',
+        name: 'CNC 06',
+        x: 2080,
+        y: 760,
+        role: 'machine',
+        temperature: 29,
+        sound: 40,
+        viewGenerator: (node: GraphNode) => this.generateMachineNode({node}),
+      },
+      {
+        id: 'CNC 07',
+        name: 'CNC 07',
+        x: 2300,
+        y: 760,
+        role: 'machine',
+        temperature: 31,
+        sound: 67,
+        viewGenerator: (node: GraphNode) => this.generateMachineNode({node}),
+      },
+      {
+        id: 'CNC 08',
+        name: 'CNC 08',
+        x: 2520,
+        y: 760,
+        role: 'machine',
+        temperature: 51,
+        sound: 43,
+        viewGenerator: (node: GraphNode) => this.generateMachineNode({node}),
+      },
+      {
+        id: 'CNC 09',
+        name: 'CNC 09',
+        x: 2740,
+        y: 760,
+        role: 'machine',
+        temperature: 62,
+        sound: 55,
+        viewGenerator: (node: GraphNode) => this.generateMachineNode({node}),
+      },
+      {
+        id: 'CNC 10',
+        name: 'CNC 10',
+        x: 2960,
+        y: 760,
+        role: 'machine',
+        temperature: 33,
+        sound: 36,
+        viewGenerator: (node: GraphNode) => this.generateMachineNode({node}),
+      },
+    ],
   }
 
   constructor(props: Props) {
@@ -220,6 +379,12 @@ class TopologyRanderer extends PureComponent<Props, State> {
           }
     )
 
+    nodes = nodes.concat(this.dummyData.nodes)
+
+    let links = nodeData.links
+
+    links = links.concat(this.dummyData.links)
+
     if (check) {
       const {swanTopology}: {swanTopology: SwanTopology[]} = addon
       nodes = nodes.map(m => {
@@ -247,6 +412,7 @@ class TopologyRanderer extends PureComponent<Props, State> {
       nodeData: {
         ...nodeData,
         nodes,
+        links,
       },
     })
   }
@@ -274,6 +440,63 @@ class TopologyRanderer extends PureComponent<Props, State> {
     return this.defaultMargin.left + 220 * index
   }
 
+  private generateMachineNode = ({node}: {node: GraphNode}) => {
+    const {TABLE_ROW_IN_HEADER, TABLE_ROW_IN_BODY} = TOPOLOGY_TABLE_SIZING
+
+    return (
+      <div
+        className={classnames('topology-table-container', {
+          unconnected: node.sound === null,
+        })}
+      >
+        <strong className={'hosts-table-title'}>{node.id}</strong>
+        <Table>
+          <TableBody>
+            <>
+              <div className={this.focusedClasses()}>
+                <div
+                  className={this.headerClasses()}
+                  style={{width: TABLE_ROW_IN_HEADER}}
+                >
+                  TEMP
+                </div>
+                <TableBodyRowItem
+                  title={
+                    node.temperature !== null
+                      ? usageTemperature({
+                          value: `${node.temperature} ˚C`,
+                        })
+                      : '-'
+                  }
+                  width={TABLE_ROW_IN_BODY}
+                ></TableBodyRowItem>
+              </div>
+              <div className={this.focusedClasses()}>
+                <div
+                  className={this.headerClasses()}
+                  style={{width: TABLE_ROW_IN_HEADER}}
+                >
+                  SOUND
+                </div>
+                <TableBodyRowItem
+                  title={
+                    node.sound !== null
+                      ? usageSound({
+                          value: `${node.sound} dB`,
+                        })
+                      : '-'
+                  }
+                  width={TABLE_ROW_IN_BODY}
+                ></TableBodyRowItem>
+              </div>
+            </>
+          </TableBody>
+        </Table>
+        <div className={classnames('table-background bg-machine')}></div>
+      </div>
+    )
+  }
+
   private generateCustomNode = ({node}: {node: GraphNode}) => {
     const {routersData} = this.props
     const routerData = _.find(routersData, r => r.assetId === node.id)
@@ -285,6 +508,7 @@ class TopologyRanderer extends PureComponent<Props, State> {
       locationCoordinates,
       role,
     } = routerData
+
     const {TABLE_ROW_IN_HEADER, TABLE_ROW_IN_BODY} = TOPOLOGY_TABLE_SIZING
 
     return (

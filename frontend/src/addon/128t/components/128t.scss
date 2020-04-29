@@ -582,6 +582,17 @@ $Roles: conductor, combo;
         margin: 0 auto;
       }
     }
+    &.bg-machine {
+      &::after {
+        content: '';
+        background: url('../addon/128t/components/assets/topology_machine.png')
+          no-repeat center;
+        display: flex;
+        width: 70%;
+        height: 100%;
+        margin: 0 auto;
+      }
+    }
   }
 
   .icon-container {
