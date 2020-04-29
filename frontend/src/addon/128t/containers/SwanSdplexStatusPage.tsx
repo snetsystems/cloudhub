@@ -209,7 +209,7 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
     pollInterval: 5000,
   })
 
-  const [activeEditorTab, setActiveEditorTab] = useState<string>('Topology')
+  const [activeEditorTab, setActiveEditorTab] = useState<string>('Data')
 
   useEffect(() => {
     if (data) {
