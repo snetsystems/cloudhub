@@ -202,6 +202,66 @@ export const usageIndacator = ({
   )
 }
 
+export const usageTemperature = ({
+  value,
+}: {
+  value: string | number | React.ReactText
+}): JSX.Element => {
+  if (!value) return
+  const numValue = parseInt(value.toString())
+
+  return (
+    <div className="UsageIndacator-container">
+      <div
+        className={classnames('UsageIndacator-value', {
+          'UsageIndacator--caution': numValue >= 40,
+          'UsageIndacator--warning': numValue >= 50,
+          'UsageIndacator--danger': numValue >= 60,
+        })}
+      >
+        {value}
+      </div>
+      <div
+        className={classnames('UsageIndacator', {
+          'UsageIndacator--caution': numValue >= 40,
+          'UsageIndacator--warning': numValue >= 50,
+          'UsageIndacator--danger': numValue >= 60,
+        })}
+      ></div>
+    </div>
+  )
+}
+
+export const usageSound = ({
+  value,
+}: {
+  value: string | number | React.ReactText
+}): JSX.Element => {
+  if (!value) return
+  const numValue = parseInt(value.toString())
+
+  return (
+    <div className="UsageIndacator-container">
+      <div
+        className={classnames('UsageIndacator-value', {
+          'UsageIndacator--caution': numValue >= 45,
+          'UsageIndacator--warning': numValue >= 55,
+          'UsageIndacator--danger': numValue >= 65,
+        })}
+      >
+        {value}
+      </div>
+      <div
+        className={classnames('UsageIndacator', {
+          'UsageIndacator--caution': numValue >= 45,
+          'UsageIndacator--warning': numValue >= 55,
+          'UsageIndacator--danger': numValue >= 65,
+        })}
+      ></div>
+    </div>
+  )
+}
+
 export const unitIndicator = (
   value: string | number,
   splitUnit: string
