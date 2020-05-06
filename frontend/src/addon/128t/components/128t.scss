@@ -117,20 +117,30 @@
       z-index: 2;
     }
 
-    div.dropdown.dropdown-stretch,
-    div.dropdown.dropdown-stretch > div.dropdown-toggle,
-    div.dropdown.dropdown-stretch > button.dropdown-toggle {
-      z-index: 1;
-    }
+    .dropdown {
+      &.dropdown-stretch {
+        z-index: 1;
 
-    .dropdown > .dropdown-toggle.btn-sm .dropdown-selected {
-      padding-right: 15px;
-    }
+        > .dropdown-toggle {
+          z-index: 1;
+        }
+      }
 
-    .dropdown.open .dropdown-menu {
-      width: max-content !important;
-      top: 26px;
-      z-index: 1;
+      &.open {
+        .dropdown-menu {
+          width: max-content !important;
+          top: 26px;
+          z-index: 1;
+        }
+      }
+
+      > .dropdown-toggle {
+        &.btn-sm {
+          .dropdown-selected {
+            padding-right: 15px;
+          }
+        }
+      }
     }
   }
 
@@ -172,9 +182,11 @@
     }
   }
 
-  .form-control.input-sm {
-    height: 25px;
-    padding: 5px 24px;
+  .form-control {
+    &.input-sm {
+      height: 25px;
+      padding: 5px 24px;
+    }
   }
 
   .fancy-scroll--container {
@@ -196,8 +208,12 @@
       width: 100%;
     }
 
-    .loading-spinner .spinner > div {
-      background-color: $s-orange;
+    .loading-spinner {
+      .spinner {
+        > div {
+          background-color: $s-orange;
+        }
+      }
     }
   }
 
@@ -256,7 +272,6 @@
 }
 
 /***** routerMap start *****/
-
 .router-connect-tips {
   @include no-user-select();
   display: inline-block;
@@ -537,6 +552,8 @@
   }
 }
 
+/***** SWAN Topology style *****/
+
 $Roles: conductor, combo;
 
 .topology-table-container {
@@ -560,28 +577,21 @@ $Roles: conductor, combo;
     opacity: 0.5;
     background-size: contain;
 
-    &.bg-conductor {
-      &::after {
-        content: '';
-        background: url('../addon/128t/components/assets/role-conductor.svg')
-          no-repeat center;
-        display: flex;
-        width: 70%;
-        height: 100%;
-        margin: 0 auto;
+    @each $Role in $Roles {
+      &.bg-#{$Role} {
+        &::after {
+          content: '';
+          background: url('../addon/128t/components/assets/role-#{$Role}.svg')
+            no-repeat
+            center;
+          display: flex;
+          width: 70%;
+          height: 100%;
+          margin: 0 auto;
+        }
       }
     }
-    &.bg-combo {
-      &::after {
-        content: '';
-        background: url('../addon/128t/components/assets/role-combo.svg')
-          no-repeat center;
-        display: flex;
-        width: 70%;
-        height: 100%;
-        margin: 0 auto;
-      }
-    }
+
     &.bg-machine {
       &::after {
         content: '';
