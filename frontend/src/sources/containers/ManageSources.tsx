@@ -1,7 +1,9 @@
 import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
+import {bindActionCreators} from 'redux'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
+import {loadOrganizationsAsync} from 'src/admin/actions/cloudhub'
 import * as sourcesActions from 'src/shared/actions/sources'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
@@ -14,7 +16,7 @@ import {
   notifySourceDeleteFailed,
 } from 'src/shared/copy/notifications'
 
-import {Source, Notification} from 'src/types'
+import {Links, Me, Source, Notification, Organization} from 'src/types'
 import {ToggleWizard} from 'src/types/wizard'
 
 interface State {
@@ -25,8 +27,13 @@ interface State {
 }
 
 interface Props {
+  links: Links
   source: Source
   sources: Source[]
+  me: Me
+  organizations: Organization[]
+  isUsingAuth: boolean
+  loadOrganizations: (link: string) => void
   notify: (n: Notification) => void
   deleteKapacitor: sourcesActions.DeleteKapacitorAsync
   fetchKapacitors: sourcesActions.FetchKapacitorsAsync
@@ -48,20 +55,29 @@ class ManageSources extends PureComponent<Props, State> {
     }
   }
 
-  public componentDidMount() {
+  public async componentWillMount() {
+    const {links, loadOrganizations} = this.props
+
+    await Promise.all([loadOrganizations(links.organizations)])
+
     this.fetchKapacitors()
   }
 
-  public componentDidUpdate(prevProps: Props) {
-    if (prevProps.sources.length !== this.props.sources.length) {
-      this.props.sources.forEach(source => {
-        this.props.fetchKapacitors(source)
-      })
+  public componentWillReceiveProps(nextProps: Props) {
+    if (nextProps.sources.length !== this.props.sources.length) {
+      this.fetchKapacitors()
     }
   }
 
   public render() {
-    const {sources, source, deleteKapacitor} = this.props
+    const {
+      me,
+      organizations,
+      isUsingAuth,
+      sources,
+      source,
+      deleteKapacitor,
+    } = this.props
     const {
       wizardVisibility,
       sourceInWizard,
@@ -88,6 +104,9 @@ class ManageSources extends PureComponent<Props, State> {
           <p className="version-number">CloudHub Version: {VERSION}</p>
         </Page.Contents>
         <ConnectionWizard
+          me={me}
+          organizations={organizations}
+          isUsingAuth={isUsingAuth}
           isVisible={wizardVisibility}
           toggleVisibility={this.toggleWizard}
           source={sourceInWizard}
@@ -137,16 +156,38 @@ class ManageSources extends PureComponent<Props, State> {
   }
 }
 
-const mstp = ({sources}) => ({
+const mstp = ({
+  links,
+  adminCloudHub: {organizations},
+  auth: {isUsingAuth, me},
+  sources,
+}) => ({
+  links,
+  organizations,
+  isUsingAuth,
+  me,
   sources,
 })
 
-const mdtp = {
-  notify: notifyAction,
-  removeAndLoadSources: sourcesActions.removeAndLoadSources,
-  fetchKapacitors: sourcesActions.fetchKapacitorsAsync,
-  setActiveKapacitor: sourcesActions.setActiveKapacitorAsync,
-  deleteKapacitor: sourcesActions.deleteKapacitorAsync,
-}
+const mdtp = (dispatch: any) => ({
+  notify: bindActionCreators(notifyAction, dispatch),
+  loadOrganizations: bindActionCreators(loadOrganizationsAsync, dispatch),
+  removeAndLoadSources: bindActionCreators(
+    sourcesActions.removeAndLoadSources,
+    dispatch
+  ),
+  fetchKapacitors: bindActionCreators(
+    sourcesActions.fetchKapacitorsAsync,
+    dispatch
+  ),
+  setActiveKapacitor: bindActionCreators(
+    sourcesActions.setActiveKapacitorAsync,
+    dispatch
+  ),
+  deleteKapacitor: bindActionCreators(
+    sourcesActions.deleteKapacitorAsync,
+    dispatch
+  ),
+})
 
 export default connect(mstp, mdtp)(ManageSources)

@@ -213,7 +213,7 @@ class AgentControlTable extends PureComponent<Props, State> {
           />
         </div>
         <div className="panel-body">{this.AgentTableContents}</div>
-        <div className="pabel-body--agent-control">
+        <div className="panel-body--agent-control">
           <AgentControlModal
             disabled={isCheckedMinions}
             minions={minions}

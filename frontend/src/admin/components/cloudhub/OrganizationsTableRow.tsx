@@ -17,6 +17,10 @@ import {USER_ROLES} from 'src/admin/constants/cloudhubAdmin'
 import {Organization} from 'src/types'
 import {Links} from 'src/types'
 
+import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {notifyCloudHubOrgInvalidName} from 'src/shared/copy/notifications'
+import {Notification, NotificationFunc} from 'src/types'
+
 interface CurrentOrganization {
   name: string
   id: string
@@ -31,11 +35,12 @@ interface Props {
   meChangeOrganization: (me: string, id) => void
   links: Links
   router: InjectedRouter
+  notify: (message: Notification | NotificationFunc) => void
 }
 
 @ErrorHandling
 class OrganizationsTableRow extends Component<Props, {}> {
-  public shouldComponentUpdate(nextProps) {
+  public shouldComponentUpdate(nextProps: Props) {
     return !_.isEqual(this.props, nextProps)
   }
 
@@ -95,8 +100,14 @@ class OrganizationsTableRow extends Component<Props, {}> {
     router.push('')
   }
 
-  public handleUpdateOrgName = newName => {
-    const {organization, onRename} = this.props
+  public handleUpdateOrgName = (newName: string) => {
+    const {organization, onRename, notify} = this.props
+
+    const extract = newName.match(/^\w+$/)
+    if (!extract) {
+      notify(notifyCloudHubOrgInvalidName())
+      return
+    }
     onRename(organization, newName)
   }
 
@@ -111,12 +122,13 @@ class OrganizationsTableRow extends Component<Props, {}> {
   }
 }
 
-const mapDispatchToProps = dispatch => ({
-  meChangeOrganization: bindActionCreators(meChangeOrganizationAsync, dispatch),
-})
-
 const mapStateToProps = ({links}) => ({
   links,
+})
+
+const mapDispatchToProps = dispatch => ({
+  meChangeOrganization: bindActionCreators(meChangeOrganizationAsync, dispatch),
+  notify: bindActionCreators(notifyAction, dispatch),
 })
 
 export default withRouter(
