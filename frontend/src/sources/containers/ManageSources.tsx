@@ -3,7 +3,7 @@ import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-import * as adminCloudHubActionCreators from 'src/admin/actions/cloudhub'
+import {loadOrganizationsAsync} from 'src/admin/actions/cloudhub'
 import * as sourcesActions from 'src/shared/actions/sources'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
@@ -33,9 +33,7 @@ interface Props {
   me: Me
   organizations: Organization[]
   isUsingAuth: boolean
-  actionsAdmin: {
-    loadOrganizationsAsync: (link: string) => void
-  }
+  loadOrganizations: (link: string) => void
   notify: (n: Notification) => void
   deleteKapacitor: sourcesActions.DeleteKapacitorAsync
   fetchKapacitors: sourcesActions.FetchKapacitorsAsync
@@ -58,12 +56,9 @@ class ManageSources extends PureComponent<Props, State> {
   }
 
   public async componentWillMount() {
-    const {
-      links,
-      actionsAdmin: {loadOrganizationsAsync},
-    } = this.props
+    const {links, loadOrganizations} = this.props
 
-    await Promise.all([loadOrganizationsAsync(links.organizations)])
+    await Promise.all([loadOrganizations(links.organizations)])
 
     this.fetchKapacitors()
   }
@@ -176,7 +171,7 @@ const mstp = ({
 
 const mdtp = (dispatch: any) => ({
   notify: bindActionCreators(notifyAction, dispatch),
-  actionsAdmin: bindActionCreators(adminCloudHubActionCreators, dispatch),
+  loadOrganizations: bindActionCreators(loadOrganizationsAsync, dispatch),
   removeAndLoadSources: bindActionCreators(
     sourcesActions.removeAndLoadSources,
     dispatch
