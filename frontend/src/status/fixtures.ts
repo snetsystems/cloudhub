@@ -16,14 +16,14 @@ const emptyQuery: CellQuery = {
     groupBy: {},
     areTagsAccepted: false,
     rawText: null,
-    range: null,
+    range: null
   },
-  type: QueryType.InfluxQL,
+  type: QueryType.InfluxQL
 }
 
 const emptyAxes: Axes = {
   x: DEFAULT_AXIS,
-  y: DEFAULT_AXIS,
+  y: DEFAULT_AXIS
 }
 
 export const fixtureStatusPageCells: Cell[] = [
@@ -58,25 +58,25 @@ export const fixtureStatusPageCells: Cell[] = [
               args: [
                 {
                   value: 'value',
-                  type: 'field',
-                },
-              ],
-            },
+                  type: 'field'
+                }
+              ]
+            }
           ],
           tags: {},
           groupBy: {
             time: '1d',
-            tags: [],
+            tags: []
           },
           areTagsAccepted: false,
           rawText: null,
-          range: null,
-        },
-      },
+          range: null
+        }
+      }
     ],
     links: {
-      self: '/cloudhub/v1/status/23/cells/c-bar-graphs-fly',
-    },
+      self: '/cloudhub/v1/status/23/cells/c-bar-graphs-fly'
+    }
   },
   {
     ...NEW_DEFAULT_DASHBOARD_CELL,
@@ -87,12 +87,12 @@ export const fixtureStatusPageCells: Cell[] = [
     name: 'Alerts – Last 30 Days',
     x: 0,
     y: 5,
-    w: 12,
+    w: 6.5,
     h: 6,
     legend: {},
     queries: [emptyQuery],
     colors: DEFAULT_LINE_COLORS,
-    links: {self: ''},
+    links: {self: ''}
   },
   // {
   //   ...NEW_DEFAULT_DASHBOARD_CELL,
@@ -110,20 +110,20 @@ export const fixtureStatusPageCells: Cell[] = [
   //   colors: DEFAULT_LINE_COLORS,
   //   links: {self: ''},
   // },
-  // {
-  //   ...NEW_DEFAULT_DASHBOARD_CELL,
-  //   axes: emptyAxes,
-  //   i: 'getting-started',
-  //   type: CellType.Guide,
-  //   isWidget: true,
-  //   name: 'Getting Started',
-  //   x: 6.5,
-  //   y: 5,
-  //   w: 5.5,
-  //   h: 6,
-  //   legend: {},
-  //   queries: [emptyQuery],
-  //   colors: DEFAULT_LINE_COLORS,
-  //   links: {self: ''},
-  // },
+  {
+    ...NEW_DEFAULT_DASHBOARD_CELL,
+    axes: emptyAxes,
+    i: 'getting-started',
+    type: CellType.Guide,
+    isWidget: true,
+    name: 'Getting Started',
+    x: 6.5,
+    y: 5,
+    w: 5.5,
+    h: 6,
+    legend: {},
+    queries: [emptyQuery],
+    colors: DEFAULT_LINE_COLORS,
+    links: {self: ''}
+  }
 ]

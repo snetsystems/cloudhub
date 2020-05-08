@@ -1,25 +1,10 @@
 // All copy for notifications should be stored here for easy editing
 // and ensuring stylistic consistency
 import {Notification} from 'src/types'
-
-type NotificationExcludingMessage = Pick<
-  Notification,
-  Exclude<keyof Notification, 'message'>
->
-
-import {FIVE_SECONDS, TEN_SECONDS} from 'src/shared/constants/index'
-
-const defaultErrorNotification: NotificationExcludingMessage = {
-  type: 'error',
-  icon: 'alert-triangle',
-  duration: TEN_SECONDS,
-}
-
-const defaultSuccessNotification: NotificationExcludingMessage = {
-  type: 'success',
-  icon: 'checkmark',
-  duration: FIVE_SECONDS,
-}
+import {
+  defaultErrorNotification,
+  defaultSuccessNotification,
+} from 'src/shared/copy/notifications'
 
 //  CloudHub Addon/SWAN Sources Notifications
 //  ----------------------------------------------------------------------------

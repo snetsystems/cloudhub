@@ -40,18 +40,3 @@ func (s *Service) SaltProxy(w http.ResponseWriter, r *http.Request) {
 func (s *Service) SaltProxyPost(w http.ResponseWriter, r *http.Request) {
 	s.SaltProxy(w, r)
 }
-
-// SaltProxyPatch proxies PATCH to Service
-func (s *Service) SaltProxyPatch(w http.ResponseWriter, r *http.Request) {
-	s.SaltProxy(w, r)
-}
-
-// SaltProxyGet proxies GET to service
-func (s *Service) SaltProxyGet(w http.ResponseWriter, r *http.Request) {
-	s.SaltProxy(w, r)
-}
-
-// SaltProxyDelete proxies DELETE to service
-func (s *Service) SaltProxyDelete(w http.ResponseWriter, r *http.Request) {
-	s.SaltProxy(w, r)
-}

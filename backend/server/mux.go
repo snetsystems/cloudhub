@@ -151,7 +151,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	/* API */
 	// Organizations
-	router.GET("/cloudhub/v1/organizations", EnsureAdmin(service.Organizations))
+	router.GET("/cloudhub/v1/organizations", EnsureViewer(service.Organizations))
 	router.POST("/cloudhub/v1/organizations", EnsureSuperAdmin(service.NewOrganization))
 
 	router.GET("/cloudhub/v1/organizations/:oid", EnsureAdmin(service.OrganizationID))
@@ -239,10 +239,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.DELETE("/cloudhub/v1/sources/:id/services/:kid/proxy", EnsureEditor(service.ProxyDelete))
 
 	// Salt Proxy
-	router.GET("/cloudhub/v1/salt", EnsureAdmin(service.SaltProxyGet))
 	router.POST("/cloudhub/v1/salt", EnsureAdmin(service.SaltProxyPost))
-	router.PATCH("/cloudhub/v1/salt", EnsureAdmin(service.SaltProxyPatch))
-	router.DELETE("/cloudhub/v1/salt", EnsureAdmin(service.SaltProxyDelete))
 
 	// Kapacitor
 	router.GET("/cloudhub/v1/sources/:id/kapacitors", EnsureViewer(service.Kapacitors))

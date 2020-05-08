@@ -3211,7 +3211,7 @@
         }
       }
     },
-    "/cloudhub/v1/config": {
+    "/config": {
       "get": {
         "tags": ["config"],
         "summary": "Returns the global application configuration",
@@ -3238,7 +3238,7 @@
         }
       }
     },
-    "/cloudhub/v1/config/auth": {
+    "/config/auth": {
       "get": {
         "tags": ["config"],
         "summary": "Returns the global application configuration for auth",
@@ -3301,7 +3301,7 @@
         }
       }
     },
-    "/cloudhub/v1/org_config": {
+    "/org_config": {
       "get": {
         "tags": ["organization config"],
         "summary": "Retrieve the organization configuration",
@@ -3328,7 +3328,7 @@
         }
       }
     },
-    "/cloudhub/v1/org_config/logviewer": {
+    "/org_config/logviewer": {
       "get": {
         "tags": ["organization config"],
         "summary": "Retrieve the organization-specific log viewer configurations",
@@ -3619,6 +3619,31 @@
             "description": "Unexpected internal server error",
             "schema": {
               "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/salt": {
+      "post": {
+        "tags": ["proxy", "salt proxy"],
+        "description": "POST body directly to Salt backend. The response and status code from Salt is directly returned.",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "body",
+            "description": "Salt Command body",
+            "schema": {
+              "$ref": "#/definitions/SaltProxy"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Response directly from Salt",
+            "schema": {
+              "$ref": "#/definitions/SaltProxyResponse"
             }
           }
         }
@@ -6137,11 +6162,11 @@
             "type": "object",
             "properties": {
               "name": {
-                "description": "Currently, 'salt' and 'SWAN' supported",
+                "description": "Currently, 'salt', 'SWAN', supported",
                 "type": "string"
               },
               "url": {
-                "description": "Base URL or Proxy URL of API",
+                "description": "Base URL or Proxy URL of API but the case of oncue is port number",
                 "type": "string"
               },
               "token": {
@@ -6201,12 +6226,16 @@
           {
             "name": "salt",
             "url": "/cloudhub/v1/salt",
-            "token": "lndXJlIl0sImlhdCI6MTU3NDAzNjAxM30"
+            "token": "58163e8e0f6b3efcd7bbb1ad0e3a2ee53e8fae1248b291312e1bdbfc13b289d2"
           },
           {
-            "name": "SWAN",
+            "name": "swan",
             "url": "https://211.189.153.40/api/v1/graphql",
             "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiYWRtaW4iLCJzY29wZXMiOlsiY29uZmlndXJlIl0sImlhdCI6MTU3NDAzNjAxM30.beW77E48pOhNKHNuFB6q343hg5XGbV7HzUcI-8LaV4RJTOiOALpA4NPWF4nDmFcveVuGuH8rETnLNbeXFa2zmssbCg_TfaAt49yyq_Meg43TYXKOYl5pl7mJ1k-nte0zW4fX2J6brRE5ouvU3e2ssvRVmvsnuqWxdQ1Doqm4e2zLaVIblMsb80DpSr7AZfbF5Ld11KwUPIxAsU7LIN_tfKfy4-LPqwN78eD6fGcb_u6m2sm5jVZihuwKmzhIVEVIHtnGbr2oSrAHLrpeokLCGctXF1b7pCt7pCWIeBqyr7EjjOx90d8LoH49idMPLymDR_NPi-8Cs0GXszJtW82DuA"
+          },
+          {
+            "name": "oncue",
+            "url": "8900"
           }
         ]
       }
@@ -6371,6 +6400,28 @@
       },
       "example": {
         "text": "new annotation text"
+      }
+    },
+    "SaltProxy": {
+      "description": "Entirely used as the body for the request to the Salt backend.",
+      "type": "object",
+      "example": {
+        "token": "765a77ba67cc48f4a249059d5bb66b2912fb8f8590864f0347d46bb02eceb81f",
+        "eauth": "pam",
+        "client": "runner",
+        "fun": "manage.status"
+      }
+    },
+    "SaltProxyResponse": {
+      "description": "Entire response from the Salt API.",
+      "type": "object",
+      "example": {
+        "return": [
+          {
+            "up": ["jack-server-01.snet.com", "jack-server-02.snet.com"],
+            "down": []
+          }
+        ]
       }
     }
   }

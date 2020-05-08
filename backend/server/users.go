@@ -14,11 +14,11 @@ import (
 )
 
 type userRequest struct {
-	ID         uint64     `json:"id,string"`
-	Name       string     `json:"name"`
-	Provider   string     `json:"provider"`
-	Scheme     string     `json:"scheme"`
-	SuperAdmin bool       `json:"superAdmin"`
+	ID         uint64          `json:"id,string"`
+	Name       string          `json:"name"`
+	Provider   string          `json:"provider"`
+	Scheme     string          `json:"scheme"`
+	SuperAdmin bool            `json:"superAdmin"`
 	Roles      []cloudhub.Role `json:"roles"`
 }
 
@@ -70,12 +70,12 @@ func (r *userRequest) ValidRoles() error {
 }
 
 type userResponse struct {
-	Links      selfLinks  `json:"links"`
-	ID         uint64     `json:"id,string"`
-	Name       string     `json:"name"`
-	Provider   string     `json:"provider"`
-	Scheme     string     `json:"scheme"`
-	SuperAdmin bool       `json:"superAdmin"`
+	Links      selfLinks       `json:"links"`
+	ID         uint64          `json:"id,string"`
+	Name       string          `json:"name"`
+	Provider   string          `json:"provider"`
+	Scheme     string          `json:"scheme"`
+	SuperAdmin bool            `json:"superAdmin"`
 	Roles      []cloudhub.Role `json:"roles"`
 }
 
@@ -350,13 +350,12 @@ func setSuperAdmin(ctx context.Context, req userRequest, user *cloudhub.User) er
 	//      changes were requested.
 
 	// Only allow users to set SuperAdmin if they have the superadmin context
-	// TODO(desa): Refactor this https://github.com/influxdata/cloudhub/issues/2207
 	if isSuperAdmin := hasSuperAdminContext(ctx); isSuperAdmin {
 		user.SuperAdmin = req.SuperAdmin
 	} else if !isSuperAdmin && (user.SuperAdmin != req.SuperAdmin) {
 		// If req.SuperAdmin has been set, and the request was not made with the SuperAdmin
 		// context, return error
-		return fmt.Errorf("User does not have authorization required to set SuperAdmin status'.' See https://github.com/influxdata/cloudhub/issues/2601 for more information'.'")
+		return fmt.Errorf("User does not have authorization required to set SuperAdmin status'.'")
 	}
 
 	return nil

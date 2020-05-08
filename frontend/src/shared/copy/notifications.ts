@@ -10,19 +10,19 @@ type NotificationExcludingMessage = Pick<
 
 import {FIVE_SECONDS, TEN_SECONDS, INFINITE} from 'src/shared/constants/index'
 
-const defaultErrorNotification: NotificationExcludingMessage = {
+export const defaultErrorNotification: NotificationExcludingMessage = {
   type: 'error',
   icon: 'alert-triangle',
   duration: TEN_SECONDS,
 }
 
-const defaultSuccessNotification: NotificationExcludingMessage = {
+export const defaultSuccessNotification: NotificationExcludingMessage = {
   type: 'success',
   icon: 'checkmark',
   duration: FIVE_SECONDS,
 }
 
-const defaultDeletionNotification: NotificationExcludingMessage = {
+export const defaultDeletionNotification: NotificationExcludingMessage = {
   type: 'primary',
   icon: 'trash',
   duration: FIVE_SECONDS,
@@ -257,6 +257,13 @@ export const notifyCloudHubUserUpdated = (message: string): Notification => ({
 export const notifyCloudHubOrgDeleted = (orgName: string): Notification => ({
   ...defaultSuccessNotification,
   message: `Organization ${orgName} deleted successfully.`,
+})
+
+export const notifyCloudHubOrgInvalidName = (): Notification => ({
+  ...defaultErrorNotification,
+  type: 'warning',
+  message:
+    'Group name must not have any blank and prevent the special symbols eg, #, $, &, ^, |, % etc. Regular Exp. pattern is applied by "/^w+$/"',
 })
 
 export const notifyCloudHubUserDeleted = (
@@ -888,4 +895,117 @@ export const csvExportFailed: Notification = {
 export const annotationsError = (message: string): Notification => ({
   ...defaultErrorNotification,
   message,
+})
+
+//  CloudHub AgentPage Sources Notifications
+//  ----------------------------------------------------------------------------
+export const notifyAgentConnectSucceeded = (sourceName: string) => ({
+  ...defaultSuccessNotification,
+  icon: 'server2',
+  message: `Agent Connect successfully. ${sourceName}`,
+})
+
+export const notifyAgentConnectFailed = (error: string): Notification => ({
+  ...defaultErrorNotification,
+  message: `Agent Connect Failed, ${error}`,
+})
+
+export const notifyAgentDisconnected = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Agent Disconnected.`,
+})
+
+export const notifyAgentSucceeded = (sourceName: string) => ({
+  ...defaultSuccessNotification,
+  icon: 'server2',
+  message: `Collector ${sourceName} successfully.`,
+})
+
+export const notifyAgentApplySucceeded = (
+  sourceName: string
+): Notification => ({
+  ...defaultSuccessNotification,
+  icon: 'server2',
+  message: `Collector Configuration ${sourceName} successfully.`,
+})
+
+export const notifyAgentLoadedSucceeded = (
+  sourceName: string
+): Notification => ({
+  ...defaultSuccessNotification,
+  icon: 'server2',
+  message: `Collector Configuration ${sourceName} successfully.`,
+})
+
+export const notifyAgentStopSucceeded = (sourceName: string): Notification => ({
+  ...defaultSuccessNotification,
+  icon: 'server2',
+  message: `Collector Configuration ${sourceName} successfully.`,
+})
+
+export const notifyAgentConfigWrong = (error: Error): Notification => ({
+  ...defaultErrorNotification,
+  message: `Collector Configuration is wrong, ${error}`,
+})
+
+export const notifyAgentConfigNoMatchGroup = (error: string): Notification => ({
+  ...defaultErrorNotification,
+  message: `There is no group as "${error}"`,
+})
+
+export const notifyAgentConfigDBNameWrong = (error: string): Notification => ({
+  ...defaultErrorNotification,
+  message: `Database name must be "${error}"`,
+})
+
+export const notifyAgentStartSucceeded = (
+  sourceName: string
+): Notification => ({
+  ...defaultSuccessNotification,
+  icon: 'server2',
+  message: `Collector ${sourceName} successfully.`,
+})
+
+export const notifyAgentAcceptSucceeded = (
+  sourceName: string
+): Notification => ({
+  ...defaultSuccessNotification,
+  icon: 'server2',
+  message: `Collector ${sourceName} successfully.`,
+})
+
+export const notifyAgentRejectSucceeded = (
+  sourceName: string
+): Notification => ({
+  ...defaultSuccessNotification,
+  icon: 'server2',
+  message: `Collector ${sourceName} successfully.`,
+})
+
+export const notifyAgentDeleteSucceeded = (
+  sourceName: string
+): Notification => ({
+  ...defaultSuccessNotification,
+  icon: 'server2',
+  message: `Collector ${sourceName} successfully.`,
+})
+
+export const notifyAgentLoadFailed = (error: Error): Notification => ({
+  ...defaultErrorNotification,
+  message: `Agent Load Failed, ${error}`,
+})
+
+export const notifyAgentAcceptFailed = (error: Error): Notification => ({
+  ...defaultErrorNotification,
+  message: `Agent Accept Failed, ${error}`,
+})
+
+export const notifyAgentRejectFailed = (error: Error): Notification => ({
+  ...defaultErrorNotification,
+  message: `Agent Reject Failed, ${error}`,
+})
+
+export const notifyAgentDeleteFailed = (error: Error): Notification => ({
+  ...defaultErrorNotification,
+  message: `Agent Delete Failed, ${error}`,
 })

@@ -176,25 +176,55 @@ class SideNav extends PureComponent<Props> {
             </NavListItem>
           </NavBlock>
         </Authorized>
-        <NavBlock
-          highlightWhen={['manage-sources', 'agent-admin']}
-          icon="wrench"
-          link={`${sourcePrefix}/manage-sources`}
-          location={location}
+        <Authorized
+          requiredRole={ADMIN_ROLE}
+          replaceWithIfNotAuthorized={
+            <NavBlock
+              highlightWhen={['manage-sources']}
+              icon="wrench"
+              link={`${sourcePrefix}/manage-sources`}
+              location={location}
+            >
+              <NavHeader
+                link={`${sourcePrefix}/manage-sources`}
+                title="Configuration"
+              />
+            </NavBlock>
+          }
+          replaceWithIfNotUsingAuth={
+            <NavBlock
+              highlightWhen={['manage-sources']}
+              icon="wrench"
+              link={`${sourcePrefix}/manage-sources`}
+              location={location}
+            >
+              <NavHeader
+                link={`${sourcePrefix}/manage-sources`}
+                title="Configuration"
+              />
+            </NavBlock>
+          }
         >
-          <NavHeader
+          <NavBlock
+            highlightWhen={['manage-sources', 'agent-admin']}
+            icon="wrench"
             link={`${sourcePrefix}/manage-sources`}
-            title="Configuration"
-          />
-          <NavListItem link={`${sourcePrefix}/manage-sources`}>
-            Configuration
-          </NavListItem>
-          {isUsingSalt ? (
-            <NavListItem link={`${sourcePrefix}/agent-admin/agent-minions`}>
-              Agent Configuration
+            location={location}
+          >
+            <NavHeader
+              link={`${sourcePrefix}/manage-sources`}
+              title="Configuration"
+            />
+            <NavListItem link={`${sourcePrefix}/manage-sources`}>
+              Configuration
             </NavListItem>
-          ) : null}
-        </NavBlock>
+            {isUsingSalt ? (
+              <NavListItem link={`${sourcePrefix}/agent-admin/agent-minions`}>
+                Agent Configuration
+              </NavListItem>
+            ) : null}
+          </NavBlock>
+        </Authorized>
         {isUsingAuth ? (
           <UserNavBlock
             logoutLink={logoutLink}

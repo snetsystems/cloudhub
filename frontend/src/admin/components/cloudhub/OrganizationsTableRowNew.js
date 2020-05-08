@@ -1,19 +1,23 @@
 import React, {Component} from 'react'
+import {connect} from 'react-redux'
+import {bindActionCreators} from 'redux'
 import PropTypes from 'prop-types'
 
 import ConfirmOrCancel from 'shared/components/ConfirmOrCancel'
-import Dropdown from 'shared/components/Dropdown'
+import Dropdown from 'src/shared/components/Dropdown'
 
 import {USER_ROLES} from 'src/admin/constants/cloudhubAdmin'
 import {MEMBER_ROLE} from 'src/auth/Authorized'
 import {ErrorHandling} from 'src/shared/decorators/errors'
+import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {notifyCloudHubOrgInvalidName} from 'src/shared/copy/notifications'
 
 class OrganizationsTableRowNew extends Component {
   constructor(props) {
     super(props)
 
     this.state = {
-      name: 'Untitled Organization',
+      name: 'Untitled_Organization',
       defaultRole: MEMBER_ROLE,
     }
   }
@@ -30,6 +34,11 @@ class OrganizationsTableRowNew extends Component {
   }
 
   handleInputChange = e => {
+    const extract = e.target.value.match(/^\w+$/)
+    if (!extract) {
+      this.props.notify(notifyCloudHubOrgInvalidName())
+      return
+    }
     this.setState({name: e.target.value})
   }
 
@@ -99,6 +108,14 @@ const {func} = PropTypes
 OrganizationsTableRowNew.propTypes = {
   onCreateOrganization: func.isRequired,
   onCancelCreateOrganization: func.isRequired,
+  notify: func.isRequired,
 }
 
-export default ErrorHandling(OrganizationsTableRowNew)
+const mapDispatchToProps = dispatch => ({
+  notify: bindActionCreators(notifyAction, dispatch),
+})
+
+export default connect(
+  null,
+  mapDispatchToProps
+)(ErrorHandling(OrganizationsTableRowNew))

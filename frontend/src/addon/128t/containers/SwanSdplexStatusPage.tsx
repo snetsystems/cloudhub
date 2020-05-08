@@ -5,12 +5,13 @@ import {useQuery} from '@apollo/react-hooks'
 
 // Container Components
 import GridLayoutRenderer from 'src/addon/128t/containers/GridLayoutRenderer'
+import TopologyRanderer from 'src/addon/128t/containers/TopologyRanderer'
 
 // Components
 import RouterSourceIndicator from 'src/addon/128t/components/RouterSourceIndicator'
 import ResetLayoutTips from 'src/addon/128t/components/ResetLayoutTips'
 import PageSpinner from 'src/shared/components/PageSpinner'
-import {Page} from 'src/reusable_ui'
+import {Page, Radio, ButtonShape} from 'src/reusable_ui'
 
 // Types
 import {Router, TopSource, TopSession} from 'src/addon/128t/types'
@@ -164,7 +165,9 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
   )
 
   let addon = getLocalStorage('addon')
-  const check = addon.T128.hasOwnProperty('cellsLayoutInfo')
+
+  const check =
+    addon.hasOwnProperty('T128') || addon.T128.hasOwnProperty('cellsLayoutInfo')
 
   if (check) {
     let propertyCheck = addon.T128.cellsLayoutInfo.map(
@@ -205,6 +208,8 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
     errorPolicy: 'all',
     pollInterval: 5000,
   })
+
+  const [activeEditorTab, setActiveEditorTab] = useState<string>('Data')
 
   useEffect(() => {
     if (data) {
@@ -354,7 +359,9 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
   }, [data])
 
   useEffect(() => {
+    const addon = getLocalStorage('addon')
     setLocalStorage('addon', {
+      ...addon,
       T128: {
         focusedAssetId,
         cellsLayoutInfo,
@@ -394,41 +401,72 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
     setCellsLayoutInfo(layout)
   }
 
+  const onSetActiveEditorTab = (activeEditorTab: string): void => {
+    setActiveEditorTab(activeEditorTab)
+  }
+
   return (
     <Page className="hosts-list-page">
       <Page.Header fullWidth={true}>
         <Page.Header.Left>
           <Page.Title title="SWAN/Oncue - Status" />
         </Page.Header.Left>
+        <Page.Header.Center widthPixels={220}>
+          <Radio shape={ButtonShape.StretchToFit}>
+            <Radio.Button
+              id="deceo-tab-queries"
+              titleText="Data"
+              value="Data"
+              active={activeEditorTab === 'Data'}
+              onClick={onSetActiveEditorTab}
+            >
+              Data
+            </Radio.Button>
+            <Radio.Button
+              id="deceo-tab-vis"
+              titleText="Topology"
+              value="Topology"
+              active={activeEditorTab === 'Topology'}
+              onClick={onSetActiveEditorTab}
+            >
+              Topology
+            </Radio.Button>
+          </Radio>
+        </Page.Header.Center>
         <Page.Header.Right>
           <RouterSourceIndicator addons={addons} />
-          <button
-            onClick={() => setCellsLayoutInfo(initCellsLayout)}
-            className="button button-sm button-default button-square"
-          >
-            <ResetLayoutTips />
-          </button>
+          {activeEditorTab === 'Data' ? (
+            <button
+              onClick={() => setCellsLayoutInfo(initCellsLayout)}
+              className="button button-sm button-default button-square"
+            >
+              <ResetLayoutTips />
+            </button>
+          ) : (
+            <></>
+          )}
         </Page.Header.Right>
       </Page.Header>
-      <Page.Contents
-        scrollable={true}
-        className={'swan-sdpldex-status-page__container'}
-      >
+      <Page.Contents scrollable={true}>
         {loading || _.isEmpty(emitData.routers) ? (
           <PageSpinner />
+        ) : activeEditorTab === 'Data' ? (
+          <div className={'swan-sdpldex-status-page__container'}>
+            <GridLayoutRenderer
+              focusedAssetId={focusedAssetId}
+              isSwanSdplexStatus={true}
+              onClickTableRow={handleClickTableRow}
+              routersData={emitData.routers}
+              topSessionsData={topSessions}
+              topSourcesData={topSources}
+              onPositionChange={handleUpdatePosition}
+              layout={cellsLayoutInfo}
+              onClickMapMarker={handleClickMapMarker}
+              addons={addons}
+            />
+          </div>
         ) : (
-          <GridLayoutRenderer
-            focusedAssetId={focusedAssetId}
-            isSwanSdplexStatus={true}
-            onClickTableRow={handleClickTableRow}
-            routersData={emitData.routers}
-            topSessionsData={topSessions}
-            topSourcesData={topSources}
-            onPositionChange={handleUpdatePosition}
-            layout={cellsLayoutInfo}
-            onClickMapMarker={handleClickMapMarker}
-            addons={addons}
-          />
+          <TopologyRanderer routersData={emitData.routers} />
         )}
       </Page.Contents>
     </Page>

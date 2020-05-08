@@ -62,7 +62,7 @@ export const TableHeader = ({
 }
 
 export const TableBody = ({children}: {children: JSX.Element}): JSX.Element => {
-  return children
+  return <div className="hosts-table--tbody">{children}</div>
 }
 
 export const TableBodyRowItem = ({
@@ -142,7 +142,7 @@ export const ErrorState = (): JSX.Element => (
 
 export const NoHostsState = (): JSX.Element => (
   <div className="generic-empty-state">
-    <h4 style={{margin: '90px 0'}}>No Data. </h4>
+    <h4>No Data.</h4>
   </div>
 )
 
@@ -202,6 +202,66 @@ export const usageIndacator = ({
   )
 }
 
+export const usageTemperature = ({
+  value,
+}: {
+  value: string | number | React.ReactText
+}): JSX.Element => {
+  if (!value) return
+  const numValue = parseInt(value.toString())
+
+  return (
+    <div className="UsageIndacator-container">
+      <div
+        className={classnames('UsageIndacator-value', {
+          'UsageIndacator--caution': numValue >= 40,
+          'UsageIndacator--warning': numValue >= 50,
+          'UsageIndacator--danger': numValue >= 60,
+        })}
+      >
+        {value}
+      </div>
+      <div
+        className={classnames('UsageIndacator', {
+          'UsageIndacator--caution': numValue >= 40,
+          'UsageIndacator--warning': numValue >= 50,
+          'UsageIndacator--danger': numValue >= 60,
+        })}
+      ></div>
+    </div>
+  )
+}
+
+export const usageSound = ({
+  value,
+}: {
+  value: string | number | React.ReactText
+}): JSX.Element => {
+  if (!value) return
+  const numValue = parseInt(value.toString())
+
+  return (
+    <div className="UsageIndacator-container">
+      <div
+        className={classnames('UsageIndacator-value', {
+          'UsageIndacator--caution': numValue >= 45,
+          'UsageIndacator--warning': numValue >= 55,
+          'UsageIndacator--danger': numValue >= 65,
+        })}
+      >
+        {value}
+      </div>
+      <div
+        className={classnames('UsageIndacator', {
+          'UsageIndacator--caution': numValue >= 45,
+          'UsageIndacator--warning': numValue >= 55,
+          'UsageIndacator--danger': numValue >= 65,
+        })}
+      ></div>
+    </div>
+  )
+}
+
 export const unitIndicator = (
   value: string | number,
   splitUnit: string
@@ -215,4 +275,8 @@ export const unitIndicator = (
       </span>
     </>
   )
+}
+
+export const numberWithCommas = (x: number): string => {
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')
 }

@@ -3,15 +3,20 @@ import React, {PureComponent} from 'react'
 import {Controlled as ReactCodeMirror, IInstance} from 'react-codemirror2'
 import {EditorChange} from 'codemirror'
 
+// Decorators
+import {ErrorHandling} from 'src/shared/decorators/errors'
+
 interface Props {
   configScript: string
-  onChangeScript: (script: string) => void
+  onBeforeChangeScript: (_: IInstance, __: EditorChange, ___: string) => void
+  onChangeScript: (_: IInstance, __: EditorChange, ___: string) => void
 }
 
 interface State {
   script: string
 }
 
+@ErrorHandling
 class AgentCodeEditor extends PureComponent<Props, State> {
   public static getDerivedStateFromProps(nextProps: Props, prevState: State) {
     return {...prevState, script: nextProps.configScript}
@@ -22,6 +27,7 @@ class AgentCodeEditor extends PureComponent<Props, State> {
   }
 
   public render() {
+    const {onBeforeChangeScript, onChangeScript} = this.props
     const options = {
       tabIndex: 1,
       readonly: false,
@@ -43,32 +49,14 @@ class AgentCodeEditor extends PureComponent<Props, State> {
         autoCursor={true}
         value={this.state.script}
         options={options}
-        onBeforeChange={this.beforeChange}
-        onChange={this.updateChange}
+        onBeforeChange={onBeforeChangeScript}
+        onChange={onChangeScript}
         onTouchStart={this.onTouchStart}
       />
     )
   }
 
   private onTouchStart = (): void => {}
-
-  private beforeChange = (
-    ___: IInstance,
-    ____: EditorChange,
-    script: string
-  ) => {
-    const {onChangeScript} = this.props
-    return onChangeScript(script)
-  }
-
-  private updateChange = (
-    ___: IInstance,
-    ____: EditorChange,
-    script: string
-  ) => {
-    const {onChangeScript} = this.props
-    return onChangeScript(script)
-  }
 }
 
 export default AgentCodeEditor

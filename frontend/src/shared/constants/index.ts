@@ -447,7 +447,7 @@ export const DEFAULT_SOURCE = {
   username: '',
   password: '',
   default: false,
-  telegraf: 'telegraf',
+  telegraf: 'Default',
   insecureSkipVerify: false,
   metaUrl: 'http://influxdb:8091',
 }

@@ -1,5 +1,5 @@
 // Libraries
-import React, {PureComponent} from 'react'
+import React, {PureComponent, MouseEvent} from 'react'
 import _ from 'lodash'
 import memoize from 'memoize-one'
 
@@ -10,7 +10,7 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {NoHostsState, sortableClasses} from 'src/addon/128t/reusable'
 import Dropdown from 'src/shared/components/Dropdown'
 import LoadingSpinner from 'src/flux/components/LoadingSpinner'
-
+import DataPopup from 'src/addon/128t/components/DataPopup'
 import {
   CellName,
   HeadingBar,
@@ -30,6 +30,7 @@ import {
   SortDirection,
   SaltDirFile,
   SaltDirFileInfo,
+  OncueData,
 } from 'src/addon/128t/types'
 
 // constants
@@ -56,6 +57,16 @@ export interface Props {
   handleFocusedBtnName: ({buttonName: string}) => void
   firmware: SaltDirFile
   config: SaltDirFile
+  isRouterDataPopupVisible: boolean
+  routerPopupPosition: {top: number; right: number}
+  handleOnClickRouterName: (data: {
+    _event: MouseEvent<HTMLElement>
+    router: Router
+  }) => void
+  hanldeOnDismiss: () => void
+  handleOnClickProtocolModulesRow: (name: string) => void
+  handleOnClickDeviceConnectionsRow: (url: string) => void
+  oncueData: OncueData
 }
 
 interface State {
@@ -396,6 +407,11 @@ class RouterTable extends PureComponent<Props, State> {
       focusedAssetId,
       onClickTableRow,
       handleRouterCheck,
+      handleOnClickRouterName,
+      isRouterDataPopupVisible,
+      hanldeOnDismiss,
+      routerPopupPosition,
+      oncueData,
     } = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
@@ -409,18 +425,35 @@ class RouterTable extends PureComponent<Props, State> {
     return (
       <>
         {routers.length > 0 ? (
-          <FancyScrollbar
-            children={sortedRouters.map((r: Router, i: number) => (
-              <RouterTableRow
-                handleRouterCheck={handleRouterCheck}
-                onClickTableRow={onClickTableRow}
-                focusedAssetId={focusedAssetId}
-                isCheck={r.isCheck}
-                router={r}
-                key={i}
+          <>
+            <FancyScrollbar
+              children={sortedRouters.map((r: Router, i: number) => (
+                <RouterTableRow
+                  handleOnClickRouterName={handleOnClickRouterName}
+                  handleRouterCheck={handleRouterCheck}
+                  onClickTableRow={onClickTableRow}
+                  focusedAssetId={focusedAssetId}
+                  isCheck={r.isCheck}
+                  router={r}
+                  key={i}
+                  oncueData={oncueData}
+                />
+              ))}
+            />
+            {isRouterDataPopupVisible ? (
+              <DataPopup
+                oncueData={oncueData}
+                hanldeOnDismiss={hanldeOnDismiss}
+                popupPosition={routerPopupPosition}
+                handleOnClickProtocolModulesRow={
+                  this.props.handleOnClickProtocolModulesRow
+                }
+                handleOnClickDeviceConnectionsRow={
+                  this.props.handleOnClickDeviceConnectionsRow
+                }
               />
-            ))}
-          />
+            ) : null}
+          </>
         ) : (
           <NoHostsState />
         )}
@@ -431,6 +464,7 @@ class RouterTable extends PureComponent<Props, State> {
   private filter(allrouters: Router[], searchTerm: string) {
     const filterText = searchTerm.toLowerCase()
     return allrouters.filter(h => {
+      if (!h.assetId) h.assetId = '-'
       return h.assetId.toLowerCase().includes(filterText)
     })
   }

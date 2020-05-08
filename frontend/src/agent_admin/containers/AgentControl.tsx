@@ -23,7 +23,7 @@ import {
 
 // Notification
 import {notify as notifyAction} from 'src/shared/actions/notifications'
-import {notifyAgentConnectFailed} from 'src/agent_admin/components/notifications'
+import {notifyAgentConnectFailed} from 'src/shared/copy/notifications'
 
 // const
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
@@ -97,7 +97,10 @@ export class AgentControl extends PureComponent<Props, State> {
   }
 
   public async componentWillMount() {
-    const {notify} = this.props
+    const {notify, isUserAuthorized} = this.props
+
+    if (!isUserAuthorized) return
+
     try {
       this.getWheelKeyListAll()
       this.setState({controlPageStatus: RemoteDataState.Loading})
@@ -108,6 +111,10 @@ export class AgentControl extends PureComponent<Props, State> {
   }
 
   public componentDidMount() {
+    const {isUserAuthorized} = this.props
+
+    if (!isUserAuthorized) return
+
     try {
       this.getAgentDirectoryItems()
     } catch (e) {

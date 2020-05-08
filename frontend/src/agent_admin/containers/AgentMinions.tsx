@@ -26,7 +26,7 @@ import {
 
 // Notification
 import {notify as notifyAction} from 'src/shared/actions/notifications'
-import {notifyAgentConnectFailed} from 'src/agent_admin/components/notifications'
+import {notifyAgentConnectFailed} from 'src/shared/copy/notifications'
 
 // Constants
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
@@ -96,7 +96,10 @@ export class AgentMinions extends PureComponent<Props, State> {
   }
 
   public async componentWillMount() {
-    const {notify, saltMasterToken} = this.props
+    const {notify, saltMasterToken, isUserAuthorized} = this.props
+
+    if (!isUserAuthorized) return
+
     if (saltMasterToken !== null && saltMasterToken !== '') {
       this.getWheelKeyListAll()
       this.setState({minionsPageStatus: RemoteDataState.Loading})

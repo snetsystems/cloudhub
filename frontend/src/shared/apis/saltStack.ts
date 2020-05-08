@@ -23,6 +23,8 @@ interface Params {
     cmd?: string
     sources?: string
     args?: string[] | string
+    url?: string
+    method?: string
   }
   username?: string
   password?: string
@@ -47,10 +49,10 @@ const apiRequest = async (pUrl: string, pToken: string, pParams: Params) => {
     headers,
     data: param,
   })
-    .then(response => {
+    .then((response) => {
       return response
     })
-    .catch(error => {
+    .catch((error) => {
       return error
     })
 }
@@ -474,6 +476,36 @@ export function getLocalDeliveryToMinion(
       path: `salt://${pChoosefile}`,
       dest: pMinionDir,
       makedirs: 'True',
+    },
+  }
+
+  if (pMinionId) {
+    params.tgt_type = 'list'
+    params.tgt = pMinionId
+  } else {
+    params.tgt_type = 'glob'
+    params.tgt = '*'
+  }
+
+  return apiRequest(pUrl, pToken, params)
+}
+
+export function getLocalHttpQuery(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  apiURL: string,
+  apiMethod: string
+) {
+  const params = {
+    eauth: 'pam',
+    client: 'local',
+    fun: 'http.query',
+    tgt_type: '',
+    tgt: '',
+    kwarg: {
+      url: apiURL,
+      method: apiMethod,
     },
   }
 

@@ -1,8 +1,8 @@
-import React from 'react'
+import React, {MouseEvent} from 'react'
 import classnames from 'classnames'
 import {unitIndicator, usageIndacator} from 'src/addon/128t/reusable'
 import {ROUTER_TABLE_SIZING} from 'src/addon/128t/constants'
-import {Router, TopSource, TopSession} from 'src/addon/128t/types'
+import {Router, TopSource, TopSession, OncueData} from 'src/addon/128t/types'
 import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
 import {transBps} from 'src/shared/utils/units'
 import {TableBodyRowItem} from 'src/addon/128t/reusable/layout'
@@ -18,6 +18,11 @@ interface Props {
     topSessions: TopSession[],
     focusedAssetId: string
   ) => () => void
+  handleOnClickRouterName: (data: {
+    _event: MouseEvent<HTMLElement>
+    router: Router
+  }) => void
+  oncueData: OncueData
 }
 
 const RouterTableRow = ({
@@ -26,6 +31,8 @@ const RouterTableRow = ({
   focusedAssetId,
   router,
   isCheck,
+  handleOnClickRouterName,
+  oncueData,
 }: Props) => {
   const {
     assetId,
@@ -61,8 +68,9 @@ const RouterTableRow = ({
   } = ROUTER_TABLE_SIZING
 
   const focusedClasses = (assetId: Router['assetId']): string => {
-    if (assetId === focusedAssetId) return 'hosts-table--tr focused'
-    return 'hosts-table--tr'
+    if (assetId === focusedAssetId)
+      return 'hosts-table--tr cursor--pointer focused'
+    return 'hosts-table--tr cursor--pointer'
   }
 
   const responseIndicator = (isEnabled: boolean): JSX.Element => {
@@ -100,6 +108,17 @@ const RouterTableRow = ({
     handleRouterCheck({router})
   }
 
+  const getHandleOnClickRouterName = ({
+    _event,
+    router,
+  }: {
+    _event: MouseEvent<HTMLDivElement>
+    router: Router
+  }) => {
+    handleOnClickRouterName({_event, router})
+    _event.stopPropagation()
+  }
+
   return (
     <div
       className={focusedClasses(router.assetId)}
@@ -116,7 +135,27 @@ const RouterTableRow = ({
         }
         width={CHECKBOX}
       />
-      <TableBodyRowItem title={assetId} width={ASSETID} />
+      <TableBodyRowItem
+        title={
+          <div
+            onClick={(event: MouseEvent<HTMLDivElement>): void => {
+              getHandleOnClickRouterName({_event: event, router})
+            }}
+            className={`cursor--pointer`}
+            style={{width: '100%'}}
+          >
+            <div
+              className={classnames('', {
+                'hosts-table-item': oncueData.isOncue,
+                focused: oncueData.isOncue && oncueData.router === assetId,
+              })}
+            >
+              {assetId}
+            </div>
+          </div>
+        }
+        width={ASSETID}
+      />
       <TableBodyRowItem title={ipAddress} width={IPADDRESS} />
       <TableBodyRowItem title={role} width={ROLE} />
       <TableBodyRowItem

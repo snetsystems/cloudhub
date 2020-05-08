@@ -10,6 +10,9 @@ import {
 } from 'src/reusable_ui'
 import OverlayTechnology from 'src/reusable_ui/components/overlays/OverlayTechnology'
 
+// Decorators
+import {ErrorHandling} from 'src/shared/decorators/errors'
+
 interface Props {
   onCancel: () => void
   onConfirm: () => void
@@ -24,6 +27,7 @@ interface State {
   isVisible: boolean
 }
 
+@ErrorHandling
 class AgentConfigModal extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
