@@ -259,6 +259,13 @@ export const notifyCloudHubOrgDeleted = (orgName: string): Notification => ({
   message: `Organization ${orgName} deleted successfully.`,
 })
 
+export const notifyCloudHubOrgInvalidName = (): Notification => ({
+  ...defaultErrorNotification,
+  type: 'warning',
+  message:
+    'Group name must not have any blank and prevent the special symbols eg, #, $, &, ^, |, % etc. Regular Exp. pattern is applied by "/^w+$/"',
+})
+
 export const notifyCloudHubUserDeleted = (
   user: string,
   isAbsoluteDelete: boolean
@@ -934,6 +941,21 @@ export const notifyAgentStopSucceeded = (sourceName: string): Notification => ({
   ...defaultSuccessNotification,
   icon: 'server2',
   message: `Collector Configuration ${sourceName} successfully.`,
+})
+
+export const notifyAgentConfigWrong = (error: Error): Notification => ({
+  ...defaultErrorNotification,
+  message: `Collector Configuration is wrong, ${error}`,
+})
+
+export const notifyAgentConfigNoMatchGroup = (error: string): Notification => ({
+  ...defaultErrorNotification,
+  message: `There is no group as "${error}"`,
+})
+
+export const notifyAgentConfigDBNameWrong = (error: string): Notification => ({
+  ...defaultErrorNotification,
+  message: `Database name must be "${error}"`,
 })
 
 export const notifyAgentStartSucceeded = (

@@ -98,7 +98,7 @@
     cursor: pointer;
   }
 
-  .pabel-body--agent-control {
+  .panel-body--agent-control {
     display: flex;
     flex-direction: row;
     justify-content: flex-end;
@@ -174,7 +174,7 @@
     font-weight: 700;
     font-size: 12px;
 
-    >.icon {
+    > .icon {
       display: inline-block;
       font-size: 16px;
       margin: 0 4px;
@@ -182,45 +182,12 @@
   }
 
   /***** agentConnecttooltip end   *****/
-  $OperatingSystems: aix,
-  centos,
-  freebsd,
-  netbsd,
-  redhat,
-  univention,
-  alpine,
-  chapeau,
-  gentoo,
-  nilinuxrt,
-  scientificlinux,
-  vmware,
-  alt,
-  cloudlinux,
-  kde-neon,
-  nilinuxrt-xfce,
-  smartos,
-  void,
-  amazon,
-  darwin,
-  korora,
-  oel,
-  solaris,
-  windows,
-  antergos,
-  debian,
-  macos,
-  openbsd,
-  steamos,
-  arch,
-  elementary,
-  manjaro,
-  opensolaris,
-  suse,
-  arch-arm,
-  fedora,
-  mint,
-  raspbian,
-  ubuntu;
+  $OperatingSystems: aix, centos, freebsd, netbsd, redhat, univention, alpine,
+    chapeau, gentoo, nilinuxrt, scientificlinux, vmware, alt, cloudlinux,
+    kde-neon, nilinuxrt-xfce, smartos, void, amazon, darwin, korora, oel,
+    solaris, windows, antergos, debian, macos, openbsd, steamos, arch,
+    elementary, manjaro, opensolaris, suse, arch-arm, fedora, mint, raspbian,
+    ubuntu;
 
   .os-icon {
     width: 100%;
@@ -241,7 +208,7 @@
 
   @each $OperatingSystem in $OperatingSystems {
     .os-#{$OperatingSystem}::after {
-      background: url("../agent_admin/components/assets/os/os-#{$OperatingSystem}.png");
+      background: url('../agent_admin/components/assets/os/os-#{$OperatingSystem}.png');
       background-size: cover;
     }
   }
@@ -275,7 +242,7 @@
         width: 100%;
       }
 
-      .loading-spinner .spinner>div {
+      .loading-spinner .spinner > div {
         background-color: $s-orange;
       }
     }

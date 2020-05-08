@@ -13,7 +13,7 @@ interface Props {
 }
 
 @ErrorHandling
-class SourceStep extends PureComponent<Props> {
+class WelcomeStep extends PureComponent<Props> {
   constructor(props: Props) {
     super(props)
   }
@@ -37,4 +37,4 @@ const mdtp = {
   notify: notifyAction,
 }
 
-export default connect(null, mdtp, null, {withRef: true})(SourceStep)
+export default connect(null, mdtp, null, {withRef: true})(WelcomeStep)

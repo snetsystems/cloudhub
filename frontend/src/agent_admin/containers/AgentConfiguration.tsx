@@ -1,7 +1,11 @@
 // Libraries
 import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
+import {bindActionCreators} from 'redux'
 import _ from 'lodash'
+import * as TOML from '@iarna/toml'
+import {IInstance} from 'react-codemirror2'
+import {EditorChange} from 'codemirror'
 
 // Components
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
@@ -11,6 +15,7 @@ import AgentCodeEditor from 'src/agent_admin/components/AgentCodeEditor'
 import AgentToolbarFunction from 'src/agent_admin/components/AgentToolbarFunction'
 import AgentConfigModal from 'src/agent_admin/components/AgentConfigModal'
 import PageSpinner from 'src/shared/components/PageSpinner'
+import Dropdown from 'src/shared/components/Dropdown'
 import {globalSetting} from 'src/agent_admin/help'
 
 // Middleware
@@ -39,18 +44,37 @@ import {
 } from 'src/shared/apis/saltStack'
 
 // Notification
+import {loadOrganizationsAsync} from 'src/admin/actions/cloudhub'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
-import {notifyAgentConnectFailed} from 'src/shared/copy/notifications'
+import {
+  notifyAgentConnectFailed,
+  notifyAgentApplySucceeded,
+  notifyAgentConfigWrong,
+  notifyAgentConfigNoMatchGroup,
+  notifyAgentConfigDBNameWrong,
+} from 'src/shared/copy/notifications'
 
 // Constants
 import {HANDLE_HORIZONTAL, HANDLE_VERTICAL} from 'src/shared/constants'
+import {GET_STATUS} from 'src/agent_admin/constants'
 
 // Types
-import {RemoteDataState, Notification, NotificationFunc} from 'src/types'
+import {
+  Links,
+  Me,
+  Organization,
+  RemoteDataState,
+  Notification,
+  NotificationFunc,
+} from 'src/types'
 import {Minion} from 'src/agent_admin/type'
 
 interface Props {
   notify: (message: Notification | NotificationFunc) => void
+  loadOrganizations: (link: string) => void
+  links: Links
+  me: Me
+  organizations: Organization[]
   currentUrl: string
   isUserAuthorized: boolean
   saltMasterUrl: string
@@ -87,6 +111,7 @@ interface State {
   isModalVisible: boolean
   isCollectorInstalled: boolean
   isModalCall: boolean
+  selectedOrg: string
 }
 
 interface LocalStorageAgentConfig {
@@ -95,6 +120,8 @@ interface LocalStorageAgentConfig {
   configScript?: string
   isApplyBtnDisabled?: boolean
 }
+
+const DEFAULT_DROPDOWN_TEXT = 'Select Database(= Group)'
 
 const defaultMeasurementsData = [
   'global setting',
@@ -196,6 +223,7 @@ export class AgentConfiguration extends PureComponent<
       isModalVisible: false,
       isCollectorInstalled: false,
       isModalCall: false,
+      selectedOrg: DEFAULT_DROPDOWN_TEXT,
     }
   }
 
@@ -234,7 +262,18 @@ export class AgentConfiguration extends PureComponent<
   }
 
   public async componentWillMount() {
-    const {notify, saltMasterToken} = this.props
+    const {
+      notify,
+      links,
+      loadOrganizations,
+      saltMasterToken,
+      isUserAuthorized,
+    } = this.props
+
+    if (!isUserAuthorized) return
+
+    loadOrganizations(links.organizations)
+
     if (saltMasterToken !== null && saltMasterToken !== '') {
       this.getWheelKeyListAll()
       this.setState({configPageStatus: RemoteDataState.Loading})
@@ -364,11 +403,13 @@ export class AgentConfiguration extends PureComponent<
       const hostLocalFileReadData = pLocalFileReadData.data.return[0][
         host
       ].substring(0, pLocalFileReadData.data.return[0][host].lastIndexOf('\n'))
+
       this.setState({
         configScript: hostLocalFileReadData,
         focusedHost: host,
         collectorConfigStatus: RemoteDataState.Done,
         configPageStatus: RemoteDataState.Done,
+        selectedOrg: DEFAULT_DROPDOWN_TEXT,
       })
     })
 
@@ -438,8 +479,45 @@ export class AgentConfiguration extends PureComponent<
   }
 
   public onClickApplyCall = () => {
-    const {saltMasterUrl, saltMasterToken} = this.props
+    const {
+      notify,
+      saltMasterUrl,
+      saltMasterToken,
+      organizations,
+      me,
+    } = this.props
     const {focusedHost, configScript} = this.state
+
+    let isCheckDone = true
+    try {
+      const configObj = TOML.parse(configScript)
+      const influxdbs: any = _.get(configObj, 'outputs.influxdb')
+
+      influxdbs.map((db: any) => {
+        if (me.superAdmin) {
+          const idx = organizations.findIndex(org => {
+            return org.name === db.database
+          })
+          if (idx < 0) {
+            notify(notifyAgentConfigNoMatchGroup(db.database))
+            isCheckDone = false
+            return
+          }
+        } else {
+          if (db.database !== me.currentOrganization.name) {
+            notify(notifyAgentConfigDBNameWrong(me.currentOrganization.name))
+            isCheckDone = false
+            return
+          }
+        }
+      })
+    } catch (e) {
+      notify(notifyAgentConfigWrong(e))
+      return
+    }
+
+    if (!isCheckDone) return
+
     this.setState({
       configPageStatus: RemoteDataState.Loading,
       collectorConfigStatus: RemoteDataState.Loading,
@@ -452,23 +530,32 @@ export class AgentConfiguration extends PureComponent<
       configScript
     )
 
-    getLocalFileWritePromise.then((pLocalFileWriteData): void => {
-      this.setState({
-        isApplyBtnDisabled: true,
-        isGetLocalStorage: false,
-        responseMessage: pLocalFileWriteData.data.return[0][focusedHost],
-      })
+    getLocalFileWritePromise
+      .then((pLocalFileWriteData): void => {
+        this.setState({
+          isApplyBtnDisabled: true,
+          isGetLocalStorage: false,
+          responseMessage: pLocalFileWriteData.data.return[0][focusedHost],
+        })
 
-      const getLocalServiceReStartTelegrafPromise = runLocalServiceReStartTelegraf(
-        saltMasterUrl,
-        saltMasterToken,
-        focusedHost
-      )
+        const getLocalServiceReStartTelegrafPromise = runLocalServiceReStartTelegraf(
+          saltMasterUrl,
+          saltMasterToken,
+          focusedHost
+        )
 
-      getLocalServiceReStartTelegrafPromise.then((): void => {
-        this.getWheelKeyListAll()
+        getLocalServiceReStartTelegrafPromise
+          .then((): void => {
+            this.getWheelKeyListAll()
+            notify(notifyAgentApplySucceeded('is applied'))
+          })
+          .catch(e => {
+            console.error(e)
+          })
       })
-    })
+      .catch(e => {
+        console.error(e)
+      })
   }
 
   public getConfigInfo = async (answer: boolean) => {
@@ -705,7 +792,19 @@ export class AgentConfiguration extends PureComponent<
     this.setState({verticalProportions})
   }
 
-  private onChangeScript = (script: string): void => {
+  private onBeforeChangeScript = (
+    __: IInstance,
+    ___: EditorChange,
+    script: string
+  ) => {
+    this.setState({
+      isInitEditor: false,
+      isApplyBtnDisabled: false,
+      configScript: script,
+    })
+  }
+
+  private onChangeScript = (_: IInstance, __: EditorChange, ___: string) => {
     const {isInitEditor, isGetLocalStorage} = this.state
     if (isInitEditor) {
       if (isGetLocalStorage) {
@@ -721,9 +820,7 @@ export class AgentConfiguration extends PureComponent<
       }
     } else {
       this.setState({
-        isInitEditor: false,
         isApplyBtnDisabled: false,
-        configScript: script,
       })
     }
   }
@@ -796,6 +893,7 @@ export class AgentConfiguration extends PureComponent<
           {serviceMeasurements.map(
             (v: {name: string; isActivity: boolean}, idx): JSX.Element => (
               <AgentToolbarFunction
+                key={idx}
                 name={v.name}
                 isActivity={v.isActivity}
                 idx={idx}
@@ -833,7 +931,17 @@ export class AgentConfiguration extends PureComponent<
   }
 
   private CollectorConfig() {
-    const {collectorConfigStatus, isApplyBtnDisabled} = this.state
+    const {organizations, me} = this.props
+    const {collectorConfigStatus, isApplyBtnDisabled, selectedOrg} = this.state
+
+    let dropdownOrg: any = null
+    if (organizations) {
+      dropdownOrg = organizations.map(role => ({
+        ...role,
+        text: role.name,
+      }))
+    }
+
     return (
       <div className="panel">
         {collectorConfigStatus === RemoteDataState.Loading
@@ -841,14 +949,26 @@ export class AgentConfiguration extends PureComponent<
           : null}
         <div className="panel-heading">
           <h2 className="panel-title">collector.conf</h2>
-          <div>
-            <button
-              className="btn btn-inline_block btn-default agent--btn"
-              onClick={this.onClickApplyCall}
-              disabled={isApplyBtnDisabled}
-            >
-              APPLY
-            </button>
+          <div className="panel-heading">
+            <div className="agent-select--button-box">
+              {me.superAdmin ? (
+                <Dropdown
+                  items={dropdownOrg ? dropdownOrg : [{text: GET_STATUS.EMPTY}]}
+                  onChoose={this.onChooseDropdown}
+                  selected={selectedOrg}
+                  className="dropdown-stretch top"
+                />
+              ) : null}
+            </div>
+            <div>
+              <button
+                className="btn btn-inline_block btn-default agent--btn"
+                onClick={this.onClickApplyCall}
+                disabled={isApplyBtnDisabled}
+              >
+                APPLY
+              </button>
+            </div>
           </div>
         </div>
 
@@ -863,6 +983,7 @@ export class AgentConfiguration extends PureComponent<
       <div className="collect-config--half">
         <AgentCodeEditor
           configScript={configScript}
+          onBeforeChangeScript={this.onBeforeChangeScript}
           onChangeScript={this.onChangeScript}
         />
       </div>
@@ -920,10 +1041,48 @@ export class AgentConfiguration extends PureComponent<
       },
     ]
   }
+
+  private onChooseDropdown = (org: Organization) => {
+    const {selectedOrg, configScript} = this.state
+
+    if (selectedOrg === org.name) return
+
+    const configObj = TOML.parse(configScript)
+    const influxdbs: any = _.get(configObj, 'outputs.influxdb')
+
+    if (!influxdbs) {
+      return
+    }
+
+    let isChanged = false
+    influxdbs.map((influxdb: {database: string}) => {
+      if (_.get(influxdb, 'database') !== org.name) {
+        _.set(influxdb, 'database', org.name)
+        isChanged = true
+      }
+    })
+
+    if (isChanged)
+      this.setState({
+        selectedOrg: org.name,
+        configScript: TOML.stringify(configObj),
+      })
+    else
+      this.setState({
+        selectedOrg: org.name,
+      })
+  }
 }
 
-const mdtp = {
-  notify: notifyAction,
-}
+const mstp = ({links, adminCloudHub: {organizations}, auth: {me}}) => ({
+  links,
+  organizations,
+  me,
+})
 
-export default connect(null, mdtp)(AgentConfiguration)
+const mdtp = (dispatch: any) => ({
+  notify: bindActionCreators(notifyAction, dispatch),
+  loadOrganizations: bindActionCreators(loadOrganizationsAsync, dispatch),
+})
+
+export default connect(mstp, mdtp)(AgentConfiguration)
