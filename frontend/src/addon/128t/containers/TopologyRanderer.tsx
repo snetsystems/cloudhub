@@ -335,18 +335,11 @@ class TopologyRanderer extends PureComponent<Props, State> {
 
   public componentWillMount() {
     const {routersData} = this.props
-    const nodes = routersData.map(m =>
-      m.role === this.TOPOLOGY_ROLE.COUNDUCTOR
-        ? {id: m.assetId, label: m.assetId}
-        : {
-            id: m.assetId,
-            label: m.assetId,
-          }
-    )
+    const nodes = routersData.map(m => ({id: m.name, label: m.name}))
 
     const links = routersData.map(m => ({
       source: this.TOPOLOGY_ROLE.ROOT,
-      target: m.assetId,
+      target: m.name,
     }))
 
     const nodeData: GraphNodeData = {
@@ -379,11 +372,24 @@ class TopologyRanderer extends PureComponent<Props, State> {
           }
     )
 
-    nodes = nodes.concat(this.dummyData.nodes)
+    const filteredLinks = this.dummyData.links.filter(dummyLink => {
+      const links = nodeData.nodes.filter(node => {
+        if (node.id === dummyLink.source) return dummyLink
+      })
 
-    let links = nodeData.links
+      if (links.length > 0) return links
+    })
 
-    links = links.concat(this.dummyData.links)
+    const filteredNodes = this.dummyData.nodes.filter(node => {
+      const nodes = filteredLinks.filter(link => {
+        if (node.id === link.target) return node
+      })
+      if (nodes.length > 0) return nodes
+    })
+
+    nodes = nodes.concat(filteredNodes)
+
+    let links = nodeData.links.concat(filteredLinks)
 
     if (check) {
       const {swanTopology}: {swanTopology: SwanTopology[]} = addon
@@ -499,7 +505,7 @@ class TopologyRanderer extends PureComponent<Props, State> {
 
   private generateCustomNode = ({node}: {node: GraphNode}) => {
     const {routersData} = this.props
-    const routerData = _.find(routersData, r => r.assetId === node.id)
+    const routerData = _.find(routersData, r => r.name === node.id)
     const {
       assetId,
       cpuUsage,
@@ -522,7 +528,9 @@ class TopologyRanderer extends PureComponent<Props, State> {
             <img src={this.iconCooldinate} />
           </span>
         ) : null}
-        <strong className={'hosts-table-title'}>{assetId}</strong>
+        <strong className={'hosts-table-title'}>
+          {assetId ? assetId : '-'}
+        </strong>
         <Table>
           <TableBody>
             <>
