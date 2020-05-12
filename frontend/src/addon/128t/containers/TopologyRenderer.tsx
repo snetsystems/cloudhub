@@ -77,7 +77,7 @@ interface State {
 }
 
 @ErrorHandling
-class TopologyRanderer extends PureComponent<Props, State> {
+class TopologyRenderer extends PureComponent<Props, State> {
   private useRef = React.createRef<HTMLDivElement>()
 
   private imgTopNodeUrl = require('src/addon/128t/components/assets/topology-cloudhub.svg')
@@ -598,4 +598,4 @@ class TopologyRanderer extends PureComponent<Props, State> {
   }
 }
 
-export default TopologyRanderer
+export default TopologyRenderer

@@ -5,7 +5,7 @@ import {useQuery} from '@apollo/react-hooks'
 
 // Container Components
 import GridLayoutRenderer from 'src/addon/128t/containers/GridLayoutRenderer'
-import TopologyRanderer from 'src/addon/128t/containers/TopologyRanderer'
+import TopologyRenderer from 'src/addon/128t/containers/TopologyRenderer'
 
 // Components
 import RouterSourceIndicator from 'src/addon/128t/components/RouterSourceIndicator'
@@ -466,7 +466,7 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
             />
           </div>
         ) : (
-          <TopologyRanderer routersData={emitData.routers} />
+          <TopologyRenderer routersData={emitData.routers} />
         )}
       </Page.Contents>
     </Page>
