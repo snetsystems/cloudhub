@@ -124,7 +124,6 @@ export const getOncueServiceStatus = async (
           protocolModule: _.values(protocolModule),
         }
       }
-      console.log({oncueService})
       return oncueService
     } else {
       return null

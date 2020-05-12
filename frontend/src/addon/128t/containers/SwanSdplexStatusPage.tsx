@@ -332,8 +332,8 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
                       .map(m => m.ipAddress)[0]
                   })(),
                 }
-              } catch (e) {
-                console.log('node detail', e)
+              } catch (error) {
+                console.error('node detail', error)
               }
             }
 
