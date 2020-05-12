@@ -96,7 +96,10 @@ export class AgentMinions extends PureComponent<Props, State> {
   }
 
   public async componentWillMount() {
-    const {notify, saltMasterToken} = this.props
+    const {notify, saltMasterToken, isUserAuthorized} = this.props
+
+    if (!isUserAuthorized) return
+
     if (saltMasterToken !== null && saltMasterToken !== '') {
       this.getWheelKeyListAll()
       this.setState({minionsPageStatus: RemoteDataState.Loading})

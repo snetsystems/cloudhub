@@ -55,16 +55,15 @@ class ManageSources extends PureComponent<Props, State> {
     }
   }
 
-  public async componentWillMount() {
+  public async componentDidMount() {
     const {links, loadOrganizations} = this.props
 
-    await Promise.all([loadOrganizations(links.organizations)])
-
+    loadOrganizations(links.organizations)
     this.fetchKapacitors()
   }
 
-  public componentWillReceiveProps(nextProps: Props) {
-    if (nextProps.sources.length !== this.props.sources.length) {
+  public componentDidUpdate(prevProps: Props) {
+    if (prevProps.sources.length !== this.props.sources.length) {
       this.fetchKapacitors()
     }
   }

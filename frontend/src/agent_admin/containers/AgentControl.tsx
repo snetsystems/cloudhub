@@ -97,7 +97,10 @@ export class AgentControl extends PureComponent<Props, State> {
   }
 
   public async componentWillMount() {
-    const {notify} = this.props
+    const {notify, isUserAuthorized} = this.props
+
+    if (!isUserAuthorized) return
+
     try {
       this.getWheelKeyListAll()
       this.setState({controlPageStatus: RemoteDataState.Loading})
@@ -108,6 +111,10 @@ export class AgentControl extends PureComponent<Props, State> {
   }
 
   public componentDidMount() {
+    const {isUserAuthorized} = this.props
+
+    if (!isUserAuthorized) return
+
     try {
       this.getAgentDirectoryItems()
     } catch (e) {

@@ -4,6 +4,8 @@ import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import _ from 'lodash'
 import * as TOML from '@iarna/toml'
+import {IInstance} from 'react-codemirror2'
+import {EditorChange} from 'codemirror'
 
 // Components
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
@@ -44,7 +46,13 @@ import {
 // Notification
 import {loadOrganizationsAsync} from 'src/admin/actions/cloudhub'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
-import {notifyAgentConnectFailed} from 'src/shared/copy/notifications'
+import {
+  notifyAgentConnectFailed,
+  notifyAgentApplySucceeded,
+  notifyAgentConfigWrong,
+  notifyAgentConfigNoMatchGroup,
+  notifyAgentConfigDBNameWrong,
+} from 'src/shared/copy/notifications'
 
 // Constants
 import {HANDLE_HORIZONTAL, HANDLE_VERTICAL} from 'src/shared/constants'
@@ -254,9 +262,17 @@ export class AgentConfiguration extends PureComponent<
   }
 
   public async componentWillMount() {
-    const {notify, links, loadOrganizations, saltMasterToken} = this.props
+    const {
+      notify,
+      links,
+      loadOrganizations,
+      saltMasterToken,
+      isUserAuthorized,
+    } = this.props
 
-    await Promise.all([loadOrganizations(links.organizations)])
+    if (!isUserAuthorized) return
+
+    loadOrganizations(links.organizations)
 
     if (saltMasterToken !== null && saltMasterToken !== '') {
       this.getWheelKeyListAll()
@@ -463,8 +479,45 @@ export class AgentConfiguration extends PureComponent<
   }
 
   public onClickApplyCall = () => {
-    const {saltMasterUrl, saltMasterToken} = this.props
+    const {
+      notify,
+      saltMasterUrl,
+      saltMasterToken,
+      organizations,
+      me,
+    } = this.props
     const {focusedHost, configScript} = this.state
+
+    let isCheckDone = true
+    try {
+      const configObj = TOML.parse(configScript)
+      const influxdbs: any = _.get(configObj, 'outputs.influxdb')
+
+      influxdbs.map((db: any) => {
+        if (me.superAdmin) {
+          const idx = organizations.findIndex(org => {
+            return org.name === db.database
+          })
+          if (idx < 0) {
+            notify(notifyAgentConfigNoMatchGroup(db.database))
+            isCheckDone = false
+            return
+          }
+        } else {
+          if (db.database !== me.currentOrganization.name) {
+            notify(notifyAgentConfigDBNameWrong(me.currentOrganization.name))
+            isCheckDone = false
+            return
+          }
+        }
+      })
+    } catch (e) {
+      notify(notifyAgentConfigWrong(e))
+      return
+    }
+
+    if (!isCheckDone) return
+
     this.setState({
       configPageStatus: RemoteDataState.Loading,
       collectorConfigStatus: RemoteDataState.Loading,
@@ -477,23 +530,32 @@ export class AgentConfiguration extends PureComponent<
       configScript
     )
 
-    getLocalFileWritePromise.then((pLocalFileWriteData): void => {
-      this.setState({
-        isApplyBtnDisabled: true,
-        isGetLocalStorage: false,
-        responseMessage: pLocalFileWriteData.data.return[0][focusedHost],
-      })
+    getLocalFileWritePromise
+      .then((pLocalFileWriteData): void => {
+        this.setState({
+          isApplyBtnDisabled: true,
+          isGetLocalStorage: false,
+          responseMessage: pLocalFileWriteData.data.return[0][focusedHost],
+        })
 
-      const getLocalServiceReStartTelegrafPromise = runLocalServiceReStartTelegraf(
-        saltMasterUrl,
-        saltMasterToken,
-        focusedHost
-      )
+        const getLocalServiceReStartTelegrafPromise = runLocalServiceReStartTelegraf(
+          saltMasterUrl,
+          saltMasterToken,
+          focusedHost
+        )
 
-      getLocalServiceReStartTelegrafPromise.then((): void => {
-        this.getWheelKeyListAll()
+        getLocalServiceReStartTelegrafPromise
+          .then((): void => {
+            this.getWheelKeyListAll()
+            notify(notifyAgentApplySucceeded('is applied'))
+          })
+          .catch(e => {
+            console.error(e)
+          })
       })
-    })
+      .catch(e => {
+        console.error(e)
+      })
   }
 
   public getConfigInfo = async (answer: boolean) => {
@@ -730,7 +792,19 @@ export class AgentConfiguration extends PureComponent<
     this.setState({verticalProportions})
   }
 
-  private onChangeScript = (script: string): void => {
+  private onBeforeChangeScript = (
+    __: IInstance,
+    ___: EditorChange,
+    script: string
+  ) => {
+    this.setState({
+      isInitEditor: false,
+      isApplyBtnDisabled: false,
+      configScript: script,
+    })
+  }
+
+  private onChangeScript = (_: IInstance, __: EditorChange, ___: string) => {
     const {isInitEditor, isGetLocalStorage} = this.state
     if (isInitEditor) {
       if (isGetLocalStorage) {
@@ -746,9 +820,7 @@ export class AgentConfiguration extends PureComponent<
       }
     } else {
       this.setState({
-        isInitEditor: false,
         isApplyBtnDisabled: false,
-        configScript: script,
       })
     }
   }
@@ -911,6 +983,7 @@ export class AgentConfiguration extends PureComponent<
       <div className="collect-config--half">
         <AgentCodeEditor
           configScript={configScript}
+          onBeforeChangeScript={this.onBeforeChangeScript}
           onChangeScript={this.onChangeScript}
         />
       </div>
@@ -975,7 +1048,7 @@ export class AgentConfiguration extends PureComponent<
     if (selectedOrg === org.name) return
 
     const configObj = TOML.parse(configScript)
-    let influxdbs: any = _.get(configObj, 'outputs.influxdb')
+    const influxdbs: any = _.get(configObj, 'outputs.influxdb')
 
     if (!influxdbs) {
       return

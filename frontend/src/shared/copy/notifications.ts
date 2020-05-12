@@ -943,6 +943,21 @@ export const notifyAgentStopSucceeded = (sourceName: string): Notification => ({
   message: `Collector Configuration ${sourceName} successfully.`,
 })
 
+export const notifyAgentConfigWrong = (error: Error): Notification => ({
+  ...defaultErrorNotification,
+  message: `Collector Configuration is wrong, ${error}`,
+})
+
+export const notifyAgentConfigNoMatchGroup = (error: string): Notification => ({
+  ...defaultErrorNotification,
+  message: `There is no group as "${error}"`,
+})
+
+export const notifyAgentConfigDBNameWrong = (error: string): Notification => ({
+  ...defaultErrorNotification,
+  message: `Database name must be "${error}"`,
+})
+
 export const notifyAgentStartSucceeded = (
   sourceName: string
 ): Notification => ({

@@ -167,8 +167,8 @@ For continuous debugging, you can use **"Launch Chrome"** after _**yarn start**_
 > >      "-c=./cloudhub-canned/",
 > >      "--protoboards-path=./cloudhub-protoboards/",
 > >      "--auth-duration=0",
-> >      "-t=74c1e9e2450886060b5bf736b935cd0bf960837f",
-> >      "--github-client-id=c170bbdba5cb2ea8c3e6",
+> >      "-t=74c1e9e245088f060b5bff36b935cd0bf2976d35",
+> >      "--github-client-id=c170bbdbc5cb2ea8f6d3",
 > >      "--github-client-secret=55c35715b0e4eebab7edbdeef3081bf890e79d22"
 > >    ],
 > >    ...
