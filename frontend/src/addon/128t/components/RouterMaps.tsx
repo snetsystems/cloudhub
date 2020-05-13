@@ -67,20 +67,20 @@ export interface Props {
 }
 
 interface State {
-  defaultCenter: LatLngExpression
-  defaultZoom: number
   map: L.Map
   marker: L.Marker[]
 }
 
 @ErrorHandling
 class RouterMaps extends PureComponent<Props, State> {
+  private connectLine: L.Polyline = null
+  private defaultCenter: LatLngExpression = [36.5, 127.266667]
+  private defaultZoom: number = 6
+
   constructor(props: Props) {
     super(props)
 
     this.state = {
-      defaultCenter: [36.5, 127.266667],
-      defaultZoom: 6,
       map: null,
       marker: null,
     }
@@ -93,8 +93,8 @@ class RouterMaps extends PureComponent<Props, State> {
     })
 
     const map = L.map('map', {
-      center: this.state.defaultCenter,
-      zoom: this.state.defaultZoom,
+      center: this.defaultCenter,
+      zoom: this.defaultZoom,
       layers: [streets],
     })
 
@@ -102,36 +102,8 @@ class RouterMaps extends PureComponent<Props, State> {
       .filter((r: Router) => r.locationCoordinates != null)
       .map(r =>
         L.marker([
-          r.locationCoordinates.indexOf('+', 2) != -1
-            ? Number(
-                r.locationCoordinates.substr(
-                  0,
-                  r.locationCoordinates.indexOf('+', 2)
-                )
-              )
-            : Number(
-                r.locationCoordinates.substr(
-                  0,
-                  r.locationCoordinates.indexOf('-', 2)
-                )
-              ),
-          r.locationCoordinates.indexOf('+', 2) != -1
-            ? Number(
-                r.locationCoordinates
-                  .substr(
-                    r.locationCoordinates.indexOf('+', 2),
-                    r.locationCoordinates.length
-                  )
-                  .replace('/', '')
-              )
-            : Number(
-                r.locationCoordinates
-                  .substr(
-                    r.locationCoordinates.indexOf('-', 2),
-                    r.locationCoordinates.length
-                  )
-                  .replace('/', '')
-              ),
+          this.getCoordLatLng(r.locationCoordinates, 'lat'),
+          this.getCoordLatLng(r.locationCoordinates, 'lng'),
         ])
           .addTo(map)
           .bindPopup(r.assetId, {
@@ -146,8 +118,38 @@ class RouterMaps extends PureComponent<Props, State> {
       )
 
     marker
-      .filter(f => f.getPopup().getContent() === this.props.focusedAssetId)
+      .filter(
+        f =>
+          f.getLatLng().lat ===
+            this.props.routers
+              .filter(f => f.assetId === this.props.focusedAssetId)
+              .map(m => {
+                return this.getCoordLatLng(m.locationCoordinates, 'lat')
+              })[0] &&
+          f.getLatLng().lng ===
+            this.props.routers
+              .filter(f => f.assetId === this.props.focusedAssetId)
+              .map(m => {
+                return this.getCoordLatLng(m.locationCoordinates, 'lng')
+              })[0]
+      )
       .map(m => m.openPopup())
+
+    map.setView(
+      [
+        this.props.routers
+          .filter(f => f.assetId === this.props.focusedAssetId)
+          .map(m => {
+            return this.getCoordLatLng(m.locationCoordinates, 'lat')
+          })[0],
+        this.props.routers
+          .filter(f => f.assetId === this.props.focusedAssetId)
+          .map(m => {
+            return this.getCoordLatLng(m.locationCoordinates, 'lng')
+          })[0],
+      ],
+      this.defaultZoom
+    )
 
     this.setState({map: map, marker: marker})
   }
@@ -171,7 +173,21 @@ class RouterMaps extends PureComponent<Props, State> {
 
       if (focusedRouter.locationCoordinates !== null) {
         this.state.marker
-          .filter(f => f.getPopup().getContent() === focusedAssetId)
+          .filter(
+            f =>
+              f.getLatLng().lat ===
+                this.props.routers
+                  .filter(f => f.assetId === this.props.focusedAssetId)
+                  .map(m => {
+                    return this.getCoordLatLng(m.locationCoordinates, 'lat')
+                  })[0] &&
+              f.getLatLng().lng ===
+                this.props.routers
+                  .filter(f => f.assetId === this.props.focusedAssetId)
+                  .map(m => {
+                    return this.getCoordLatLng(m.locationCoordinates, 'lng')
+                  })[0]
+          )
           .map(m => m.openPopup())
       } else {
         this.state.marker.map(m => m.closePopup())
@@ -180,21 +196,96 @@ class RouterMaps extends PureComponent<Props, State> {
   }
 
   public onMarkerClick = event => {
+    const {routers, onClickMapMarker} = this.props
+
     event.target.openPopup()
 
-    this.props.routers
-      .filter(f => f.assetId === event.target.getPopup().getContent())
-      .map(m =>
-        this.props.onClickMapMarker(m.topSources, m.topSessions, m.assetId)
+    routers
+      .filter(
+        f =>
+          this.getCoordLatLng(f.locationCoordinates, 'lat') ===
+            event.target.getLatLng().lat &&
+          this.getCoordLatLng(f.locationCoordinates, 'lng') ===
+            event.target.getLatLng().lng
       )
+      .map(m => onClickMapMarker(m.topSources, m.topSessions, m.assetId))
   }
 
   public onMarkerMouseOver = event => {
+    this.setPeerPolyLine(
+      event.target.getLatLng().lat,
+      event.target.getLatLng().lng
+    )
     event.target.setIcon(routerIconOver)
   }
 
   public onMarkerMouseOut = event => {
     event.target.setIcon(routerIcon)
+    this.state.map.removeLayer(this.connectLine)
+  }
+
+  private setPeerPolyLine = (pLat: number, pLng: number) => {
+    const {routers} = this.props
+    const selectRouter = routers.filter(
+      f =>
+        this.getCoordLatLng(f.locationCoordinates, 'lat') === pLat &&
+        this.getCoordLatLng(f.locationCoordinates, 'lng') === pLng
+    )[0]
+
+    const sourceLatLng = {
+      lat: this.getCoordLatLng(selectRouter.locationCoordinates, 'lat'),
+      lng: this.getCoordLatLng(selectRouter.locationCoordinates, 'lng'),
+    }
+
+    const peersLatLng = selectRouter.peers.map(m => {
+      return [
+        sourceLatLng,
+        routers
+          .filter(f => f.name === m.name)
+          .map(rm => {
+            if (rm.locationCoordinates !== null) {
+              return {
+                lat: this.getCoordLatLng(rm.locationCoordinates, 'lat'),
+                lng: this.getCoordLatLng(rm.locationCoordinates, 'lng'),
+              }
+            } else {
+              return sourceLatLng
+            }
+          })[0],
+      ]
+    })
+
+    this.connectLine = L.polyline(peersLatLng, {color: '#9a9ea9'}).addTo(
+      this.state.map
+    )
+  }
+
+  private getCoordLatLng(pLatLng: string, pCoordLatLang: string) {
+    if (pCoordLatLang === 'lat') {
+      if (pLatLng !== null) {
+        return pLatLng.indexOf('+', 2) != -1
+          ? Number(pLatLng.substr(0, pLatLng.indexOf('+', 2)))
+          : Number(pLatLng.substr(0, pLatLng.indexOf('-', 2)))
+      } else {
+        return null
+      }
+    } else {
+      if (pLatLng !== null) {
+        return pLatLng.indexOf('+', 2) != -1
+          ? Number(
+              pLatLng
+                .substr(pLatLng.indexOf('+', 2), pLatLng.length)
+                .replace('/', '')
+            )
+          : Number(
+              pLatLng
+                .substr(pLatLng.indexOf('-', 2), pLatLng.length)
+                .replace('/', '')
+            )
+      } else {
+        return null
+      }
+    }
   }
 
   public render() {
