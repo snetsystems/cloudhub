@@ -7,6 +7,7 @@ import _ from 'lodash'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import WizardTextInput from 'src/reusable_ui/components/wizard/WizardTextInput'
 import WizardCheckbox from 'src/reusable_ui/components/wizard/WizardCheckbox'
+import Dropdown from 'src/shared/components/Dropdown'
 
 // Actions
 import {
@@ -29,10 +30,9 @@ import {
 } from 'src/shared/copy/notifications'
 import {insecureSkipVerifyText} from 'src/shared/copy/tooltipText'
 import {DEFAULT_SOURCE} from 'src/shared/constants'
-import {SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
 // Types
-import {Source, Me} from 'src/types'
+import {Source, Me, Organization} from 'src/types'
 import {NextReturn} from 'src/types/wizard'
 
 const isNewSource = (source: Partial<Source>) => !source.id
@@ -45,6 +45,7 @@ interface Props {
   source: Source
   onBoarding?: boolean
   me: Me
+  organizations: Organization[]
   isUsingAuth: boolean
 }
 
@@ -61,6 +62,10 @@ class SourceStep extends PureComponent<Props, State> {
     super(props)
     this.state = {
       source: this.props.source || DEFAULT_SOURCE,
+    }
+
+    if (!this.props.source && props.isUsingAuth) {
+      this.state.source.telegraf = props.me.currentOrganization.name
     }
   }
 
@@ -97,7 +102,26 @@ class SourceStep extends PureComponent<Props, State> {
 
   public render() {
     const {source} = this.state
-    const {isUsingAuth, onBoarding} = this.props
+    const {me, organizations, isUsingAuth, onBoarding} = this.props
+
+    let dropdownCurOrg: any = null
+    if (isUsingAuth) {
+      dropdownCurOrg = [
+        {
+          ...me.currentOrganization,
+          text: me.currentOrganization.name,
+        },
+      ]
+    }
+
+    let dropdownOrg: any = null
+    if (organizations) {
+      dropdownOrg = organizations.map(role => ({
+        ...role,
+        text: role.name,
+      }))
+    }
+
     return (
       <>
         {isUsingAuth && onBoarding && this.authIndicator}
@@ -106,7 +130,6 @@ class SourceStep extends PureComponent<Props, State> {
           label="Connection URL"
           onChange={this.onChangeInput('url')}
           valueModifier={this.URLModifier}
-          onSubmit={this.handleSubmitUrl}
         />
         <WizardTextInput
           value={source.name}
@@ -125,11 +148,23 @@ class SourceStep extends PureComponent<Props, State> {
           type="password"
           onChange={this.onChangeInput('password')}
         />
-        <WizardTextInput
-          value={source.telegraf}
-          label="Telegraf Database Name"
-          onChange={this.onChangeInput('telegraf')}
-        />
+        <div className="form-group col-xs-6">
+          <label>Database(= Group) Name</label>
+          <Dropdown
+            items={
+              !isUsingAuth || me.superAdmin
+                ? onBoarding
+                  ? dropdownCurOrg
+                    ? dropdownCurOrg
+                    : [source.telegraf]
+                  : dropdownOrg
+                : dropdownCurOrg
+            }
+            onChoose={this.onChooseDropdown('telegraf')}
+            selected={source.telegraf}
+            className="dropdown-stretch"
+          />
+        </div>
         <WizardTextInput
           value={source.defaultRP}
           label="Default Retention Policy"
@@ -172,7 +207,7 @@ class SourceStep extends PureComponent<Props, State> {
     const {me} = this.props
     return (
       <div className="text-center">
-        {me.role === SUPERADMIN_ROLE ? (
+        {me.superAdmin ? (
           <h4>
             The organization{' '}
             <strong>
@@ -201,8 +236,15 @@ class SourceStep extends PureComponent<Props, State> {
     return `http://${url}`
   }
 
-  private parseError = (error): string => {
+  private parseError = (error: any): string => {
     return getDeep<string>(error, 'data.message', error)
+  }
+
+  private onChooseDropdown = (key: string) => (org: Organization) => {
+    const {source} = this.state
+    const {setError} = this.props
+    this.setState({source: {...source, [key]: org.name}})
+    setError(false)
   }
 
   private onChangeInput = (key: string) => (value: string | boolean) => {
@@ -210,33 +252,6 @@ class SourceStep extends PureComponent<Props, State> {
     const {setError} = this.props
     this.setState({source: {...source, [key]: value}})
     setError(false)
-  }
-
-  private handleSubmitUrl = async (sourceURLstring: string) => {
-    const {source} = this.state
-    const metaserviceURL = new URL(source.metaUrl || DEFAULT_SOURCE.metaUrl)
-    const sourceURL = new URL(sourceURLstring || DEFAULT_SOURCE.url)
-
-    if (isNewSource(source)) {
-      try {
-        metaserviceURL.hostname = sourceURL.hostname
-        let sourceFromServer = await createSource(source)
-        sourceFromServer = {...sourceFromServer, metaUrl: metaserviceURL.href}
-        this.props.addSource(sourceFromServer)
-        this.setState({
-          source: sourceFromServer,
-        })
-      } catch (err) {}
-    } else {
-      try {
-        let sourceFromServer = await updateSource(source)
-        sourceFromServer = {...sourceFromServer, metaUrl: metaserviceURL.href}
-        this.props.updateSource(sourceFromServer)
-        this.setState({
-          source: sourceFromServer,
-        })
-      } catch (err) {}
-    }
   }
 
   private get sourceIsEdited(): boolean {

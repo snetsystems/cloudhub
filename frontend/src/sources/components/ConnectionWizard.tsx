@@ -13,13 +13,16 @@ import DashboardStep from 'src/sources/components/DashboardStep'
 import CompletionStep from 'src/sources/components/CompletionStep'
 
 // Types
-import {Kapacitor, Source, Protoboard} from 'src/types'
+import {Me, Organization, Kapacitor, Source, Protoboard} from 'src/types'
 import {ToggleWizard, NextReturn} from 'src/types/wizard'
 
 interface Props {
   isVisible: boolean
   toggleVisibility: ToggleWizard
   source: Source
+  me: Me
+  organizations: Organization[]
+  isUsingAuth: boolean
   jumpStep: number
   showNewKapacitor?: boolean
 }
@@ -65,7 +68,16 @@ class ConnectionWizard extends PureComponent<Props & WithRouterProps, State> {
   }
 
   public render() {
-    const {isVisible, toggleVisibility, jumpStep, showNewKapacitor} = this.props
+    const {
+      me,
+      organizations,
+      isUsingAuth,
+      isVisible,
+      toggleVisibility,
+      jumpStep,
+      showNewKapacitor,
+    } = this.props
+
     const {
       source,
       sourceError,
@@ -74,6 +86,7 @@ class ConnectionWizard extends PureComponent<Props & WithRouterProps, State> {
       dashboardError,
       dashboardsCreated,
     } = this.state
+
     return (
       <WizardOverlay
         visible={isVisible}
@@ -98,6 +111,9 @@ class ConnectionWizard extends PureComponent<Props & WithRouterProps, State> {
             ref={c => (this.sourceStepRef = c && c.getWrappedInstance())}
             setError={this.handleSetSourceError}
             source={source}
+            me={me}
+            organizations={organizations}
+            isUsingAuth={isUsingAuth}
           />
         </WizardStep>
         <WizardStep

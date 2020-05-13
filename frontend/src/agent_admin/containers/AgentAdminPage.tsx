@@ -14,7 +14,7 @@ import AgentControl from 'src/agent_admin/containers/AgentControl'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 // Constants
-import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
+import {isUserAuthorized, ADMIN_ROLE} from 'src/auth/Authorized'
 
 // Types
 import {RemoteDataState, Notification, NotificationFunc} from 'src/types'
@@ -83,10 +83,10 @@ class AgentAdminPage extends PureComponent<Props, State> {
       {
         url: 'agent-minions',
         name: 'Minions',
-        enabled: isUserAuthorized(meRole, SUPERADMIN_ROLE),
+        enabled: isUserAuthorized(meRole, ADMIN_ROLE),
         component: (
           <AgentMinions
-            isUserAuthorized={isUserAuthorized(meRole, SUPERADMIN_ROLE)}
+            isUserAuthorized={isUserAuthorized(meRole, ADMIN_ROLE)}
             currentUrl={'agent-minions'}
             saltMasterUrl={saltMasterUrl}
             saltMasterToken={saltMasterToken}
@@ -96,10 +96,10 @@ class AgentAdminPage extends PureComponent<Props, State> {
       {
         url: 'agent-control',
         name: 'Collector Control',
-        enabled: isUserAuthorized(meRole, SUPERADMIN_ROLE),
+        enabled: isUserAuthorized(meRole, ADMIN_ROLE),
         component: (
           <AgentControl
-            isUserAuthorized={isUserAuthorized(meRole, SUPERADMIN_ROLE)}
+            isUserAuthorized={isUserAuthorized(meRole, ADMIN_ROLE)}
             currentUrl={'agent-control'}
             saltMasterUrl={saltMasterUrl}
             saltMasterToken={saltMasterToken}
@@ -109,10 +109,10 @@ class AgentAdminPage extends PureComponent<Props, State> {
       {
         url: 'agent-configuration',
         name: 'Collector Config',
-        enabled: isUserAuthorized(meRole, SUPERADMIN_ROLE),
+        enabled: isUserAuthorized(meRole, ADMIN_ROLE),
         component: (
           <AgentConfiguration
-            isUserAuthorized={isUserAuthorized(meRole, SUPERADMIN_ROLE)}
+            isUserAuthorized={isUserAuthorized(meRole, ADMIN_ROLE)}
             currentUrl={'agent-configuration'}
             saltMasterUrl={saltMasterUrl}
             saltMasterToken={saltMasterToken}

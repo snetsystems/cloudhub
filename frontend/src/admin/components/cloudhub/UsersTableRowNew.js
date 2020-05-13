@@ -3,12 +3,12 @@ import PropTypes from 'prop-types'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 
-import {notify as notifyAction} from 'shared/actions/notifications'
+import {notify as notifyAction} from 'src/shared/actions/notifications'
 
-import Dropdown from 'shared/components/Dropdown'
+import Dropdown from 'src/shared/components/Dropdown'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {notifyCloudHubUserMissingNameAndProvider} from 'shared/copy/notifications'
+import {notifyCloudHubUserMissingNameAndProvider} from 'src/shared/copy/notifications'
 import {USERS_TABLE} from 'src/admin/constants/cloudhubTableSizing'
 import {USER_ROLES} from 'src/admin/constants/cloudhubAdmin'
 

@@ -4,11 +4,7 @@ import ConfirmOrCancel from 'src/shared/components/ConfirmOrCancel'
 import Dropdown from 'src/shared/components/Dropdown'
 import InputClickToEdit from 'src/shared/components/InputClickToEdit'
 import {ErrorHandling} from 'src/shared/decorators/errors'
-
-interface Organization {
-  id: string
-  name: string
-}
+import {Organization} from 'src/types'
 
 interface Scheme {
   text: string
