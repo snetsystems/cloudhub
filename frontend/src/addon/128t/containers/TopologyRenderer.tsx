@@ -61,19 +61,13 @@ interface GraphLink {
   target: string
 }
 
-// interface MachineData {
-//   role: string
-//   temperature: number
-//   sound: number
-// }
-
 interface Props {
   routersData: Router[]
 }
 
 interface State {
   nodeData: GraphNodeData
-  // machineData: MachineData []
+  isLocalstorage: boolean
 }
 
 @ErrorHandling
@@ -281,9 +275,12 @@ class TopologyRenderer extends PureComponent<Props, State> {
     ],
   }
 
+  private addon: {swanTopology?: SwanTopology[]}
+
   constructor(props: Props) {
     super(props)
     this.state = {
+      isLocalstorage: false,
       nodeData: {
         nodes: this.initNodes,
         links: [],
@@ -294,6 +291,9 @@ class TopologyRenderer extends PureComponent<Props, State> {
   public componentWillMount() {
     const {routersData} = this.props
     const customRouterData = this.modifyRoutersData(routersData)
+
+    this.addon = getLocalStorage('addon')
+    const isLocalstorage: boolean = this.addon.hasOwnProperty('swanTopology')
 
     let nodes = customRouterData.map(m => ({
       id: m.assetId,
@@ -310,6 +310,7 @@ class TopologyRenderer extends PureComponent<Props, State> {
     links = _.remove(links, link => link.target !== '-')
 
     this.setState({
+      isLocalstorage,
       nodeData: {
         nodes: this.state.nodeData.nodes.concat(nodes),
         links,
@@ -390,8 +391,8 @@ class TopologyRenderer extends PureComponent<Props, State> {
     y: number
   ): void => {
     const {nodeData} = this.state
-    const addon = getLocalStorage('addon')
-    let {swanTopology}: {swanTopology: SwanTopology[]} = addon
+
+    let {swanTopology} = this.addon
 
     const nodes = nodeData.nodes.map(m => {
       if (m.id === nodeId) {
@@ -402,13 +403,13 @@ class TopologyRenderer extends PureComponent<Props, State> {
           )
 
           setLocalStorage('addon', {
-            ...addon,
+            ...this.addon,
             swanTopology,
           })
         } else {
           swanTopology.push({id: nodeId, x, y})
           setLocalStorage('addon', {
-            ...addon,
+            ...this.addon,
             swanTopology,
           })
         }
@@ -435,9 +436,6 @@ class TopologyRenderer extends PureComponent<Props, State> {
     nodeData?: GraphNodeData
     dimensions?: DOMRect
   }): GraphNodeData => {
-    const addon = getLocalStorage('addon')
-    const check = addon.hasOwnProperty('swanTopology')
-
     let nodesInfo: GraphNodeData = {
       nodes: null,
       links: null,
@@ -484,8 +482,8 @@ class TopologyRenderer extends PureComponent<Props, State> {
       return link.target !== '-'
     })
 
-    if (check) {
-      const {swanTopology}: {swanTopology: SwanTopology[]} = addon
+    if (this.state.isLocalstorage) {
+      const {swanTopology} = this.addon
       nodes = nodes.map(m => {
         const filtered = swanTopology.filter(s => s.id === m.id)
         if (filtered.length > 0) {
@@ -502,7 +500,7 @@ class TopologyRenderer extends PureComponent<Props, State> {
     } else {
       const {id, x, y} = nodes[0]
       setLocalStorage('addon', {
-        ...addon,
+        ...this.addon,
         swanTopology: [{id, x, y}],
       })
     }
