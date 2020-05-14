@@ -23,7 +23,7 @@ import {
   setLocalStorage,
   getLocalStorage,
   verifyLocalStorage,
-  removeLocalStorage,
+  //removeLocalStorage,
 } from 'src/shared/middleware/localStorage'
 
 // Decorators
@@ -47,7 +47,6 @@ import {
 import {loadOrganizationsAsync} from 'src/admin/actions/cloudhub'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {
-  notifyAgentConnectFailed,
   notifyAgentApplySucceeded,
   notifyAgentConfigWrong,
   notifyAgentConfigNoMatchGroup,
@@ -67,7 +66,7 @@ import {
   Notification,
   NotificationFunc,
 } from 'src/types'
-import {Minion} from 'src/agent_admin/type'
+import {MinionsObject} from 'src/agent_admin/type'
 
 interface Props {
   notify: (message: Notification | NotificationFunc) => void
@@ -79,10 +78,13 @@ interface Props {
   isUserAuthorized: boolean
   saltMasterUrl: string
   saltMasterToken: string
+  minionsObject: MinionsObject
+  minionsStatus: RemoteDataState
+  handleGetMinionKeyListAll: () => void
 }
 
 interface State {
-  MinionsObject: {[x: string]: Minion}
+  //MinionsObject: {[x: string]: Minion}
   configPageStatus: RemoteDataState
   measurementsStatus: RemoteDataState
   collectorConfigStatus: RemoteDataState
@@ -200,7 +202,7 @@ export class AgentConfiguration extends PureComponent<
   constructor(props: Props) {
     super(props)
     this.state = {
-      MinionsObject: {},
+      // MinionsObject: {},
       configPageStatus: RemoteDataState.NotStarted,
       measurementsStatus: RemoteDataState.NotStarted,
       collectorConfigStatus: RemoteDataState.NotStarted,
@@ -254,29 +256,71 @@ export class AgentConfiguration extends PureComponent<
 
     this.setState({
       isCollectorInstalled: Boolean(isInstallCheck.length),
-      MinionsObject: hostListObject,
+      // MinionsObject: hostListObject,
       configPageStatus: RemoteDataState.Done,
       collectorConfigStatus: RemoteDataState.Done,
       measurementsStatus: RemoteDataState.Done,
     })
   }
 
-  public async componentWillMount() {
-    const {
-      notify,
-      links,
-      loadOrganizations,
-      saltMasterToken,
-      isUserAuthorized,
-    } = this.props
+  public componentWillMount() {
+    console.log('componentWillMount')
+    this.setState({configPageStatus: this.props.minionsStatus})
+  }
 
-    if (!isUserAuthorized) return
+  public componentDidMount() {
+    console.log('componentDidMount', this.props.minionsStatus)
+    const {minionsObject} = this.props
+    const isInstallCheck = _.filter(minionsObject, ['isInstall', true])
 
+    if (!this.state.isModalCall) {
+      const getItem: LocalStorageAgentConfig = getLocalStorage(
+        'AgentConfigPage'
+      )
+      const {isApplyBtnDisabled, focusedHost} = getItem
+      const getHostCompare = _.find(isInstallCheck, ['host', focusedHost])
+
+      if (!isApplyBtnDisabled && Boolean(getHostCompare)) {
+        this.setState({
+          isModalCall: true,
+          isModalVisible: true,
+          isGetLocalStorage: !isApplyBtnDisabled,
+        })
+      }
+    }
+
+    this.setState({
+      configPageStatus: this.props.minionsStatus,
+      isCollectorInstalled: Boolean(isInstallCheck.length),
+    })
+  }
+
+  public componentDidUpdate(nextProps: Props) {
+    const {links, loadOrganizations, minionsObject} = this.props
     loadOrganizations(links.organizations)
 
-    if (saltMasterToken !== null && saltMasterToken !== '') {
-      this.getWheelKeyListAll()
-      this.setState({configPageStatus: RemoteDataState.Loading})
+    if (nextProps.minionsObject !== this.props.minionsObject) {
+      console.log('componentDidUpdate')
+
+      // if (!isUserAuthorized) return
+
+      const isInstallCheck = _.filter(minionsObject, ['isInstall', true])
+
+      if (!this.state.isModalCall) {
+        const getItem: LocalStorageAgentConfig = getLocalStorage(
+          'AgentConfigPage'
+        )
+        const {isApplyBtnDisabled, focusedHost} = getItem
+        const getHostCompare = _.find(isInstallCheck, ['host', focusedHost])
+
+        if (!isApplyBtnDisabled && Boolean(getHostCompare)) {
+          this.setState({
+            isModalCall: true,
+            isModalVisible: true,
+            isGetLocalStorage: !isApplyBtnDisabled,
+          })
+        }
+      }
 
       verifyLocalStorage(getLocalStorage, setLocalStorage, 'AgentConfigPage', {
         focusedHost: '',
@@ -284,9 +328,14 @@ export class AgentConfiguration extends PureComponent<
         configScript: '',
         isApplyBtnDisabled: true,
       })
-    } else {
-      this.setState({configPageStatus: RemoteDataState.Done})
-      notify(notifyAgentConnectFailed('Token is not valid.'))
+
+      this.setState({
+        isCollectorInstalled: Boolean(isInstallCheck.length),
+        // MinionsObject: hostListObject,
+        configPageStatus: this.props.minionsStatus,
+        collectorConfigStatus: RemoteDataState.Done,
+        measurementsStatus: RemoteDataState.Done,
+      })
     }
   }
 
@@ -304,35 +353,6 @@ export class AgentConfiguration extends PureComponent<
       configScript: isApplyBtnDisabled ? '' : configScript,
       isApplyBtnDisabled,
     })
-  }
-
-  public async componentDidUpdate(prevProps: Props) {
-    if (
-      prevProps.saltMasterToken !== this.props.saltMasterToken &&
-      this.props.saltMasterToken !== '' &&
-      this.props.saltMasterToken !== null
-    ) {
-      this.getWheelKeyListAll()
-      this.setState({configPageStatus: RemoteDataState.Loading})
-    } else {
-      if (
-        prevProps.saltMasterToken !== this.props.saltMasterToken &&
-        (this.props.saltMasterToken === null ||
-          this.props.saltMasterToken === '')
-      ) {
-        removeLocalStorage('AgentConfigPage')
-
-        this.setState({
-          MinionsObject: null,
-          measurementsTitle: '',
-          serviceMeasurements: [],
-          defaultMeasurements: [],
-          description: '',
-          configScript: '',
-          focusedHost: '',
-        })
-      }
-    }
   }
 
   private get MeasurementsContent() {
@@ -558,7 +578,7 @@ export class AgentConfiguration extends PureComponent<
       })
   }
 
-  public getConfigInfo = async (answer: boolean) => {
+  public getConfigInfo = (answer: boolean) => {
     const {saltMasterUrl, saltMasterToken} = this.props
     const getItem = getLocalStorage('AgentConfigPage')
     const {
@@ -578,7 +598,7 @@ export class AgentConfiguration extends PureComponent<
         measurementsStatus: RemoteDataState.Loading,
       })
 
-      await this.getWheelKeyListAll()
+      //await this.getWheelKeyListAll()
 
       const getLocalServiceGetRunningPromise = getLocalServiceGetRunning(
         saltMasterUrl,
@@ -827,15 +847,16 @@ export class AgentConfiguration extends PureComponent<
 
   private renderAgentPageTop = () => {
     const {
-      MinionsObject,
+      // MinionsObject,
       configPageStatus,
       focusedHost,
       isCollectorInstalled,
     } = this.state
+    const {minionsObject} = this.props
 
     return (
       <AgentConfigurationTable
-        minions={_.values(MinionsObject)}
+        minions={_.values(minionsObject)}
         configPageStatus={configPageStatus}
         onClickTableRow={this.onClickTableRowCall}
         onClickAction={this.onClickActionCall}

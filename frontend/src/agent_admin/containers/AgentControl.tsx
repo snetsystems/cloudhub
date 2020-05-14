@@ -10,7 +10,6 @@ import AgentControlTable from 'src/agent_admin/components/AgentControlTable'
 import AgentControlConsole from 'src/agent_admin/components/AgentControlConsole'
 
 // APIs
-import {getMinionKeyListAllAsync} from 'src/agent_admin/apis'
 import {getRunnerSaltCmdDirectory} from 'src/shared/apis/saltStack'
 
 // SaltStack
@@ -23,7 +22,6 @@ import {
 
 // Notification
 import {notify as notifyAction} from 'src/shared/actions/notifications'
-import {notifyAgentConnectFailed} from 'src/shared/copy/notifications'
 
 // const
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
@@ -41,6 +39,7 @@ import {
   GetAgentDirectoryInfo,
   AgentDirFile,
   AgentDirFileInfo,
+  MinionsObject,
 } from 'src/agent_admin/type'
 
 // Decorators
@@ -53,10 +52,13 @@ interface Props {
   saltMasterUrl: string
   saltMasterToken: string
   onLogout: () => void
+  minionsObject: MinionsObject
+  minionsStatus: RemoteDataState
+  handleGetMinionKeyListAll: () => void
 }
 
 interface State {
-  MinionsObject: {[x: string]: Minion}
+  //MinionsObject: MinionsObject
   Minions: Minion[]
   proportions: number[]
   controlPageStatus: RemoteDataState
@@ -73,7 +75,7 @@ export class AgentControl extends PureComponent<Props, State> {
     this.state = {
       minionLog: '<< Empty >>',
       proportions: [0.43, 0.57],
-      MinionsObject: {},
+      //MinionsObject: {},
       Minions: [],
       isAllCheck: false,
       controlPageStatus: RemoteDataState.NotStarted,
@@ -82,38 +84,21 @@ export class AgentControl extends PureComponent<Props, State> {
     }
   }
 
-  public getWheelKeyListAll = async () => {
-    const {saltMasterUrl, saltMasterToken} = this.props
-    const hostListObject = await getMinionKeyListAllAsync(
-      saltMasterUrl,
-      saltMasterToken
-    )
-
-    this.setState({
-      Minions: _.values(hostListObject),
-      controlPageStatus: RemoteDataState.Done,
-      isAllCheck: false,
-    })
-  }
-
-  public async componentWillMount() {
-    const {notify, isUserAuthorized} = this.props
-
-    if (!isUserAuthorized) return
-
-    try {
-      this.getWheelKeyListAll()
-      this.setState({controlPageStatus: RemoteDataState.Loading})
-    } catch (e) {
-      this.setState({controlPageStatus: RemoteDataState.Done})
-      notify(notifyAgentConnectFailed('Token is not valid.'))
-    }
+  public componentWillMount() {
+    this.setState({controlPageStatus: this.props.minionsStatus})
   }
 
   public componentDidMount() {
     const {isUserAuthorized} = this.props
 
     if (!isUserAuthorized) return
+
+    this.setState({
+      Minions: _.values(this.props.minionsObject).filter(
+        f => f.isSaltRuning !== false
+      ),
+      controlPageStatus: this.props.minionsStatus,
+    })
 
     try {
       this.getAgentDirectoryItems()
@@ -123,18 +108,13 @@ export class AgentControl extends PureComponent<Props, State> {
   }
 
   public async componentDidUpdate(nextProps) {
-    if (nextProps.saltMasterToken !== this.props.saltMasterToken) {
-      if (
-        this.props.saltMasterToken !== '' &&
-        this.props.saltMasterToken !== null
-      ) {
-        this.getWheelKeyListAll()
-        this.setState({controlPageStatus: RemoteDataState.Loading})
-      } else {
-        this.setState({
-          Minions: [],
-        })
-      }
+    if (nextProps !== this.props) {
+      this.setState({
+        Minions: _.values(this.props.minionsObject).filter(
+          f => f.isSaltRuning !== false
+        ),
+        controlPageStatus: this.props.minionsStatus,
+      })
     }
   }
 
@@ -278,7 +258,7 @@ export class AgentControl extends PureComponent<Props, State> {
               '\n' +
               yaml.dump(pLocalServiceStartTelegrafData.data.return[0]),
           })
-          this.getWheelKeyListAll()
+          this.props.handleGetMinionKeyListAll()
         }
       )
     } else {
@@ -295,7 +275,7 @@ export class AgentControl extends PureComponent<Props, State> {
             '\n' +
             yaml.dump(pLocalServiceStopTelegrafData.data.return[0]),
         })
-        this.getWheelKeyListAll()
+        this.props.handleGetMinionKeyListAll()
       })
     }
   }
@@ -321,7 +301,7 @@ export class AgentControl extends PureComponent<Props, State> {
           '\n' +
           yaml.dump(pLocalServiceStartTelegrafData.data.return[0]),
       })
-      this.getWheelKeyListAll()
+      this.props.handleGetMinionKeyListAll()
     })
   }
 
@@ -347,7 +327,7 @@ export class AgentControl extends PureComponent<Props, State> {
           yaml.dump(pLocalServiceStopTelegrafData.data.return[0]),
       })
 
-      this.getWheelKeyListAll()
+      this.props.handleGetMinionKeyListAll()
     })
   }
 
@@ -392,7 +372,7 @@ export class AgentControl extends PureComponent<Props, State> {
             yaml.dump(pLocalGroupAdduserData.data.return[0]),
         })
       })
-      this.getWheelKeyListAll()
+      this.props.handleGetMinionKeyListAll()
     })
   }
 
