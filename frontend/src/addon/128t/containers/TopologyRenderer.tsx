@@ -286,12 +286,105 @@ class TopologyRenderer extends PureComponent<Props, State> {
     this.state = {
       nodeData: {
         nodes: this.initNodes,
-        links: null,
+        links: [],
       },
     }
   }
 
-  public onNodePositionChange = (
+  public componentWillMount() {
+    const {routersData} = this.props
+    const customRouterData = this.modifyRoutersData(routersData)
+
+    let nodes = customRouterData.map(m => ({
+      id: m.assetId,
+      label: m.assetId,
+    }))
+
+    nodes = _.remove(nodes, node => node.id !== '-')
+
+    let links = customRouterData.map(m => ({
+      source: this.TOPOLOGY_ROLE.ROOT,
+      target: m.assetId,
+    }))
+
+    links = _.remove(links, link => link.target !== '-')
+
+    this.setState({
+      nodeData: {
+        nodes: this.state.nodeData.nodes.concat(nodes),
+        links,
+      },
+    })
+  }
+
+  public componentDidMount() {
+    const {nodeData} = this.state
+    const {routersData} = this.props
+    const dimensions = this.useRef.current.getBoundingClientRect()
+
+    const genNode = this.generatorNodeData({nodeData, routersData, dimensions})
+    const {nodes, links} = genNode
+
+    this.setState({
+      nodeData: {
+        nodes,
+        links,
+      },
+    })
+  }
+
+  public componentDidUpdate(prevProps: Props) {
+    if (prevProps.routersData !== this.props.routersData) {
+      const {nodeData} = this.state
+      const {routersData} = this.props
+      const dimensions = this.useRef.current.getBoundingClientRect()
+
+      const genNode = this.generatorNodeData({
+        nodeData,
+        routersData,
+        dimensions,
+      })
+      const {nodes, links} = genNode
+
+      this.setState({
+        nodeData: {
+          nodes,
+          links,
+        },
+      })
+    }
+  }
+
+  public render() {
+    const {nodeData} = this.state
+
+    return (
+      <div style={this.containerStyles} ref={this.useRef}>
+        {nodeData.nodes[0].x > 0 ? (
+          <Graph
+            id="swan-topology"
+            data={nodeData}
+            config={this.config}
+            onNodePositionChange={this.onNodePositionChange}
+          />
+        ) : (
+          <LoadingSpinner />
+        )}
+      </div>
+    )
+  }
+
+  private modifyRoutersData = (routersData: Router[]): Router[] => {
+    return routersData.map(routerData => {
+      const {assetId} = routerData
+      return {
+        ...routerData,
+        assetId: assetId ? assetId : '-',
+      }
+    })
+  }
+
+  private onNodePositionChange = (
     nodeId: string,
     x: number,
     y: number
@@ -333,48 +426,44 @@ class TopologyRenderer extends PureComponent<Props, State> {
     })
   }
 
-  public componentWillMount() {
-    const {routersData} = this.props
-    const nodes = routersData.map(m => ({id: m.name, label: m.name}))
-
-    const links = routersData.map(m => ({
-      source: this.TOPOLOGY_ROLE.ROOT,
-      target: m.name,
-    }))
-
-    const nodeData: GraphNodeData = {
-      nodes,
-      links,
-    }
-
-    this.setState({
-      nodeData: {
-        nodes: this.state.nodeData.nodes.concat(nodeData.nodes),
-        links: nodeData.links,
-      },
-    })
-  }
-
-  public componentDidMount() {
-    const {nodeData} = this.state
-    const dimensions = this.useRef.current.getBoundingClientRect()
+  private generatorNodeData = ({
+    routersData,
+    nodeData,
+    dimensions,
+  }: {
+    routersData: Router[]
+    nodeData?: GraphNodeData
+    dimensions?: DOMRect
+  }): GraphNodeData => {
     const addon = getLocalStorage('addon')
     const check = addon.hasOwnProperty('swanTopology')
 
-    let nodes = nodeData.nodes.map((m, index) =>
+    let nodesInfo: GraphNodeData = {
+      nodes: null,
+      links: null,
+    }
+
+    let {nodes, links} = nodesInfo
+    const customRouterData = this.modifyRoutersData(routersData)
+
+    nodes = nodeData.nodes.map((m, index) =>
       m.id === 'root'
         ? {...m, x: dimensions.width / 2, y: this.defaultMargin.top}
         : {
             ...m,
             x: this.getXCoordinate(index),
             y: dimensions.height - this.defaultMargin.bottom,
-            viewGenerator: (node: GraphNode) => this.generateCustomNode({node}),
+            viewGenerator: (node: GraphNode) =>
+              this.GenerateCustomNode({
+                node,
+                routersData: customRouterData,
+              }),
           }
     )
 
     const filteredLinks = this.dummyData.links.filter(dummyLink => {
       const links = nodeData.nodes.filter(node => {
-        if (node.id === dummyLink.source) return dummyLink
+        if (node.id && node.id === dummyLink.source) return dummyLink
       })
 
       if (links.length > 0) return links
@@ -382,14 +471,18 @@ class TopologyRenderer extends PureComponent<Props, State> {
 
     const filteredNodes = this.dummyData.nodes.filter(node => {
       const nodes = filteredLinks.filter(link => {
-        if (node.id === link.target) return node
+        if (node.id && node.id === link.target) return node
       })
       if (nodes.length > 0) return nodes
     })
 
     nodes = nodes.concat(filteredNodes)
 
-    let links = nodeData.links.concat(filteredLinks)
+    links = nodeData.links.concat(filteredLinks)
+
+    links = _.remove(links, link => {
+      return link.target !== '-'
+    })
 
     if (check) {
       const {swanTopology}: {swanTopology: SwanTopology[]} = addon
@@ -414,32 +507,10 @@ class TopologyRenderer extends PureComponent<Props, State> {
       })
     }
 
-    this.setState({
-      nodeData: {
-        ...nodeData,
-        nodes,
-        links,
-      },
-    })
-  }
-
-  public render() {
-    const {nodeData} = this.state
-
-    return (
-      <div style={this.containerStyles} ref={this.useRef}>
-        {nodeData.nodes[0].x > 0 ? (
-          <Graph
-            id="swan-topology"
-            data={nodeData}
-            config={this.config}
-            onNodePositionChange={this.onNodePositionChange}
-          />
-        ) : (
-          <LoadingSpinner />
-        )}
-      </div>
-    )
+    return {
+      nodes,
+      links,
+    }
   }
 
   private getXCoordinate(index: number) {
@@ -503,9 +574,17 @@ class TopologyRenderer extends PureComponent<Props, State> {
     )
   }
 
-  private generateCustomNode = ({node}: {node: GraphNode}) => {
-    const {routersData} = this.props
-    const routerData = _.find(routersData, r => r.name === node.id)
+  private GenerateCustomNode = ({
+    node,
+    routersData,
+  }: {
+    node: GraphNode
+    routersData: Router[]
+  }) => {
+    const routerData = _.find(routersData, r => r.assetId === node.id)
+
+    if (!routerData) return
+
     const {
       assetId,
       cpuUsage,
@@ -528,9 +607,7 @@ class TopologyRenderer extends PureComponent<Props, State> {
             <img src={this.iconCooldinate} />
           </span>
         ) : null}
-        <strong className={'hosts-table-title'}>
-          {assetId ? assetId : '-'}
-        </strong>
+        <strong className={'hosts-table-title'}>{assetId}</strong>
         <Table>
           <TableBody>
             <>
