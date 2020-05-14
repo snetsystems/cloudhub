@@ -52,6 +52,9 @@ interface Node {
   nodes: {
     nodes: NodeDetail[]
   }
+  peers: {
+    nodes: PeerDetail[]
+  }
   topSources: TopSource[]
   topSessions: TopSession[]
 }
@@ -105,6 +108,10 @@ interface Addresses {
 
 interface IpAddress {
   ipAddress: string
+}
+
+interface PeerDetail {
+  name: string
 }
 
 interface Variables {
@@ -225,6 +232,7 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
               bandwidth_avg: node.bandwidth_avg,
               session_arrivals: node.session_arrivals,
               topSources: node.topSources,
+              peers: node.peers.nodes,
               topSessions: node.topSessions
                 ? node.topSessions.map(topSession => ({
                     ...topSession,
@@ -232,7 +240,6 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
                   }))
                 : [],
             }
-
             const nodeDetail: NodeDetail = _.head(node.nodes.nodes)
             if (nodeDetail) {
               try {
