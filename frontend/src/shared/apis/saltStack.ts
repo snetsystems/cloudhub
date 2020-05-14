@@ -1,4 +1,5 @@
 import axios from 'axios'
+import AJAX from 'src/utils/ajax'
 
 interface Params {
   client?: string
@@ -33,28 +34,27 @@ interface Params {
 }
 
 const apiRequest = async (pUrl: string, pToken: string, pParams: Params) => {
-  const dParams = {token: pToken, eauth: 'pam'}
-  const saltMasterUrl = pUrl
-  const url = saltMasterUrl + '/'
-  const headers = {
-    Accept: 'application/json',
-    'Content-type': 'application/json',
+  try {
+    const dParams = {token: pToken, eauth: 'pam'}
+    const saltMasterUrl = pUrl
+    const url = saltMasterUrl + '/'
+    const headers = {
+      Accept: 'application/json',
+      'Content-type': 'application/json',
+    }
+
+    const param = JSON.stringify(Object.assign(dParams, pParams))
+
+    return await AJAX({
+      method: 'POST',
+      url: url,
+      headers,
+      data: param,
+    })
+  } catch (error) {
+    console.error(error)
+    throw error
   }
-
-  const param = JSON.stringify(Object.assign(dParams, pParams))
-
-  return axios({
-    method: 'POST',
-    url,
-    headers,
-    data: param,
-  })
-    .then((response) => {
-      return response
-    })
-    .catch((error) => {
-      return error
-    })
 }
 
 export function getLocalGrainsItem(
@@ -132,12 +132,18 @@ export function runDeleteKey(pUrl: string, pToken: string, pMinionId: string) {
 }
 
 export function getWheelKeyListAll(pUrl: string, pToken: string) {
-  const params = {
-    client: 'wheel',
-    fun: 'key.list_all',
-  }
+  try {
+    const params = {
+      client: 'wheel',
+      fun: 'key.list_all',
+    }
+    const response = apiRequest(pUrl, pToken, params)
 
-  return apiRequest(pUrl, pToken, params)
+    return response
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
 }
 
 export function getRunnerManageAllowed(pUrl: string, pToken: string) {

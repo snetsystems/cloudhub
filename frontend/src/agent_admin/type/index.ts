@@ -1,5 +1,5 @@
 import {SortDirection} from 'src/agent_admin/type/table'
-import {Minion} from 'src/agent_admin/type/minion'
+import {Minion, MinionsObject} from 'src/agent_admin/type/minion'
 import {
   GetAgentDirectoryInfo,
   AgentDirFileInfo,
@@ -9,6 +9,7 @@ import {
 export {
   SortDirection,
   Minion,
+  MinionsObject,
   GetAgentDirectoryInfo,
   AgentDirFileInfo,
   AgentDirFile,
