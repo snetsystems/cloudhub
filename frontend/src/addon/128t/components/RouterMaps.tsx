@@ -135,21 +135,33 @@ class RouterMaps extends PureComponent<Props, State> {
       )
       .map(m => m.openPopup())
 
-    map.setView(
-      [
-        this.props.routers
-          .filter(f => f.assetId === this.props.focusedAssetId)
-          .map(m => {
-            return this.getCoordLatLng(m.locationCoordinates, 'lat')
-          })[0],
-        this.props.routers
-          .filter(f => f.assetId === this.props.focusedAssetId)
-          .map(m => {
-            return this.getCoordLatLng(m.locationCoordinates, 'lng')
-          })[0],
-      ],
-      this.defaultZoom
+    const focusedRouter = this.props.routers.filter(
+      f => f.assetId === this.props.focusedAssetId
     )
+
+    if (focusedRouter.length > 0) {
+      if (focusedRouter[0].locationCoordinates !== null) {
+        map.setView(
+          [
+            focusedRouter.map(m => {
+              if (m.locationCoordinates !== null) {
+                return this.getCoordLatLng(m.locationCoordinates, 'lat')
+              } else {
+                return this.defaultCenter[0]
+              }
+            })[0],
+            focusedRouter.map(m => {
+              if (m.locationCoordinates !== null) {
+                return this.getCoordLatLng(m.locationCoordinates, 'lng')
+              } else {
+                return this.defaultCenter[1]
+              }
+            })[0],
+          ],
+          this.defaultZoom
+        )
+      }
+    }
 
     this.setState({map: map, marker: marker})
   }

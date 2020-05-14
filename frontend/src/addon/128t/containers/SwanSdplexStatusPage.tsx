@@ -14,7 +14,7 @@ import PageSpinner from 'src/shared/components/PageSpinner'
 import {Page, Radio, ButtonShape} from 'src/reusable_ui'
 
 // Types
-import {Router, TopSource, TopSession} from 'src/addon/128t/types'
+import {Router, TopSource, TopSession, PeerDetail} from 'src/addon/128t/types'
 import {Addon} from 'src/types/auth'
 
 // Middleware
@@ -108,10 +108,6 @@ interface Addresses {
 
 interface IpAddress {
   ipAddress: string
-}
-
-interface PeerDetail {
-  name: string
 }
 
 interface Variables {
