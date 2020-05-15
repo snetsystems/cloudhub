@@ -84,20 +84,11 @@ export class AgentMinions extends PureComponent<Props, State> {
   }
 
   public componentWillMount() {
-    console.log('componentWillMount')
-    console.log(this.props.minionsStatus)
     this.setState({minionsPageStatus: this.props.minionsStatus})
   }
 
-  public async componentDidMount() {
-    console.log('componentDidMount')
-    console.log(this.props.minionsStatus)
-  }
-
-  public componentDidUpdate(nextProps) {
-    if (nextProps !== this.props) {
-      console.log('componentDidUpdate')
-      console.log(this.props.minionsStatus)
+  public componentDidUpdate(prevProps: Props) {
+    if (prevProps !== this.props) {
       this.setState({minionsPageStatus: this.props.minionsStatus})
     }
   }

@@ -51,6 +51,8 @@ import {
   notifyAgentConfigWrong,
   notifyAgentConfigNoMatchGroup,
   notifyAgentConfigDBNameWrong,
+  notifyAgentConfigHostNameWrong,
+  notifyAgentConfigHostNameChanged,
 } from 'src/shared/copy/notifications'
 
 // Constants
@@ -84,7 +86,6 @@ interface Props {
 }
 
 interface State {
-  //MinionsObject: {[x: string]: Minion}
   configPageStatus: RemoteDataState
   measurementsStatus: RemoteDataState
   collectorConfigStatus: RemoteDataState
@@ -264,12 +265,10 @@ export class AgentConfiguration extends PureComponent<
   }
 
   public componentWillMount() {
-    console.log('componentWillMount')
     this.setState({configPageStatus: this.props.minionsStatus})
   }
 
   public componentDidMount() {
-    console.log('componentDidMount', this.props.minionsStatus)
     const {minionsObject} = this.props
     const isInstallCheck = _.filter(minionsObject, ['isInstall', true])
 
@@ -295,14 +294,10 @@ export class AgentConfiguration extends PureComponent<
     })
   }
 
-  public componentDidUpdate(nextProps: Props) {
-    const {links, loadOrganizations, minionsObject} = this.props
-    loadOrganizations(links.organizations)
-
-    if (nextProps.minionsObject !== this.props.minionsObject) {
-      console.log('componentDidUpdate')
-
-      // if (!isUserAuthorized) return
+  public componentDidUpdate(prevProps: Props) {
+    if (prevProps.minionsObject !== this.props.minionsObject) {
+      const {links, loadOrganizations, minionsObject} = this.props
+      loadOrganizations(links.organizations)
 
       const isInstallCheck = _.filter(minionsObject, ['isInstall', true])
 
@@ -401,7 +396,7 @@ export class AgentConfiguration extends PureComponent<
 
   public onClickTableRowCall = (host: string, ip: string): void => {
     if (this.state.focusedHost === host) return
-    const {saltMasterUrl, saltMasterToken} = this.props
+    const {notify, saltMasterUrl, saltMasterToken} = this.props
 
     this.setState({
       configPageStatus: RemoteDataState.Loading,
@@ -424,8 +419,20 @@ export class AgentConfiguration extends PureComponent<
         host
       ].substring(0, pLocalFileReadData.data.return[0][host].lastIndexOf('\n'))
 
+      const configObj = TOML.parse(hostLocalFileReadData)
+      const agent: any = _.get(configObj, 'agent')
+
+      let isChanged = false
+      if (agent.hostname !== host) {
+        notify(notifyAgentConfigHostNameChanged(agent.hostname, host))
+        _.set(agent, 'hostname', host)
+        isChanged = true
+      }
+
       this.setState({
-        configScript: hostLocalFileReadData,
+        configScript: TOML.stringify(configObj),
+        isGetLocalStorage: isChanged,
+        isApplyBtnDisabled: isChanged ? !isChanged : true,
         focusedHost: host,
         collectorConfigStatus: RemoteDataState.Done,
         configPageStatus: RemoteDataState.Done,
@@ -512,25 +519,31 @@ export class AgentConfiguration extends PureComponent<
     try {
       const configObj = TOML.parse(configScript)
       const influxdbs: any = _.get(configObj, 'outputs.influxdb')
+      const agent: any = _.get(configObj, 'agent')
 
-      influxdbs.map((db: any) => {
-        if (me.superAdmin) {
-          const idx = organizations.findIndex(org => {
-            return org.name === db.database
-          })
+      if (me.superAdmin) {
+        if (agent.hostname !== focusedHost) {
+          notify(notifyAgentConfigHostNameWrong(focusedHost))
+          isCheckDone = false
+          return
+        }
+
+        influxdbs.forEach((db: any) => {
+          const idx = organizations.findIndex(org => org.name === db.database)
+
           if (idx < 0) {
             notify(notifyAgentConfigNoMatchGroup(db.database))
             isCheckDone = false
             return
           }
-        } else {
+
           if (db.database !== me.currentOrganization.name) {
             notify(notifyAgentConfigDBNameWrong(me.currentOrganization.name))
             isCheckDone = false
             return
           }
-        }
-      })
+        })
+      }
     } catch (e) {
       notify(notifyAgentConfigWrong(e))
       return
@@ -1064,24 +1077,38 @@ export class AgentConfiguration extends PureComponent<
   }
 
   private onChooseDropdown = (org: Organization) => {
-    const {selectedOrg, configScript} = this.state
+    const {selectedOrg, configScript, focusedHost} = this.state
 
     if (selectedOrg === org.name) return
 
     const configObj = TOML.parse(configScript)
     const influxdbs: any = _.get(configObj, 'outputs.influxdb')
+    const agent: any = _.get(configObj, 'agent')
 
-    if (!influxdbs) {
+    if (!influxdbs || !agent) {
       return
     }
 
     let isChanged = false
-    influxdbs.map((influxdb: {database: string}) => {
+
+    influxdbs.forEach((influxdb: {database: string}) => {
       if (_.get(influxdb, 'database') !== org.name) {
         _.set(influxdb, 'database', org.name)
-        isChanged = true
       }
     })
+
+    if (_.get(agent, 'hostname') !== focusedHost) {
+      _.set(agent, 'hostname', focusedHost)
+    }
+
+    const checker = _.some(
+      _.map(influxdbs, m => m.database === org.name),
+      false
+    )
+
+    if (!checker && _.get(agent, 'hostname') === focusedHost) {
+      isChanged = true
+    }
 
     if (isChanged)
       this.setState({

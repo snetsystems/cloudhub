@@ -92,11 +92,6 @@ class AgentAdminPage extends PureComponent<Props, State> {
     this.getMinionKeyListAll()
   }
 
-  componentDidMount() {
-    //console.log('componentDidMount', this.getMinions())
-    //this.setState({minionsObject: this.getMinions()})
-  }
-
   getMinionKeyListAll = async () => {
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
@@ -106,8 +101,6 @@ class AgentAdminPage extends PureComponent<Props, State> {
     const saltMasterToken = addon.token
 
     this.setState({minionsStatus: RemoteDataState.Loading})
-
-    //const hosts = await getAllHosts(this.props.source)
 
     const minionListObject = await this.props.handleGetMinionKeyListAll(
       saltMasterUrl,
