@@ -35,7 +35,7 @@ class OrganizationsTableRowNew extends Component {
 
   handleInputChange = e => {
     const extract = e.target.value.match(/^\w+$/)
-    if (!extract) {
+    if (e.target.value && !extract) {
       this.props.notify(notifyCloudHubOrgInvalidName())
       return
     }
