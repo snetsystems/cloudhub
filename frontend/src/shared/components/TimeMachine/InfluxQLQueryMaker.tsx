@@ -17,7 +17,7 @@ import {TYPE_QUERY_CONFIG} from 'src/dashboards/constants'
 import {AUTO_GROUP_BY} from 'src/shared/constants'
 
 // Types
-import {QueryConfig, Source, TimeRange, Template} from 'src/types'
+import {QueryConfig, Source, TimeRange, Template, Me} from 'src/types'
 
 const buildText = (q: QueryConfig): string => {
   return q.rawText || buildQuery(TYPE_QUERY_CONFIG, q.range, q) || ''
@@ -51,7 +51,11 @@ interface PassedProps {
   onEditRawText: (text: string) => Promise<void>
 }
 
-type Props = ConnectedProps & PassedProps
+interface Auth {
+  me: Me
+}
+
+type Props = ConnectedProps & PassedProps & Auth
 
 const QueryMaker: SFC<Props> = ({
   source,
@@ -76,6 +80,7 @@ const QueryMaker: SFC<Props> = ({
   onChooseMeasurement,
   onApplyFuncsToField,
   onToggleTagAcceptance,
+  me,
 }) => {
   if (!activeQuery || !activeQuery.id) {
     return (
@@ -124,6 +129,7 @@ const QueryMaker: SFC<Props> = ({
             onChooseMeasurement={onChooseMeasurement}
             onApplyFuncsToField={onApplyFuncsToField}
             onToggleTagAcceptance={onToggleTagAcceptance}
+            me={me}
           />
         </div>
       </div>
@@ -131,7 +137,7 @@ const QueryMaker: SFC<Props> = ({
   )
 }
 
-const ConnectedQueryMaker = (props: PassedProps) => (
+const ConnectedQueryMaker = (props: PassedProps & Auth) => (
   <Subscribe to={[TimeMachineContainer]}>
     {(container: TimeMachineContainer) => (
       <QueryMaker
