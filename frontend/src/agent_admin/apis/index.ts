@@ -129,14 +129,14 @@ export const getMinionKeyListAllAdmin = async (
         minions[k] = {
           ...EmptyMinion,
           host: k,
-          status: 'ReJect',
+          status: 'Reject',
           isSaltRuning: false,
         }
     } else {
       minions[k] = {
         ...EmptyMinion,
         host: k,
-        status: 'ReJect',
+        status: 'Reject',
         isSaltRuning: false,
       }
     }
@@ -217,7 +217,7 @@ export const getMinionKeyListAll = async (
       minions[k] = {
         ...EmptyMinion,
         host: k,
-        status: 'ReJect',
+        status: 'Reject',
       }
 
     return minions

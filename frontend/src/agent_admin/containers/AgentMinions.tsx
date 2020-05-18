@@ -123,7 +123,7 @@ export class AgentMinions extends PureComponent<Props, State> {
   handleWheelKeyCommand = (host: string, cmdstatus: string) => {
     const {saltMasterUrl, saltMasterToken} = this.props
     this.setState({minionsPageStatus: RemoteDataState.Loading})
-    if (cmdstatus == 'ReJect') {
+    if (cmdstatus == 'Reject') {
       const getWheelKeyCommandPromise = this.props.handleRunRejectKey(
         saltMasterUrl,
         saltMasterToken,
