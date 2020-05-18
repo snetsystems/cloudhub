@@ -4,18 +4,31 @@ import DataExplorer from './DataExplorer'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-import {Source} from 'src/types'
+import {Source, Me} from 'src/types'
+
+interface Auth {
+  me: Me
+}
 
 interface Props {
   source: Source
+  auth: Auth
 }
 
 @ErrorHandling
 class DataExplorerPage extends PureComponent<Props> {
+  constructor(props: Props) {
+    super(props)
+  }
+
   public render() {
+    const {
+      auth: {me},
+    } = this.props
+
     return (
       <div className="page">
-        <DataExplorer source={this.props.source} />
+        <DataExplorer source={this.props.source} me={me} />
       </div>
     )
   }
