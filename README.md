@@ -1,5 +1,4 @@
 # CloudHub - 1.0.1
-git checkout -b dev-1.0.1-jmroh origin/dev-1.0.1
 
 ## Intro
 
