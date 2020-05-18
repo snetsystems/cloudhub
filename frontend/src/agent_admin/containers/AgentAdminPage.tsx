@@ -92,7 +92,7 @@ class AgentAdminPage extends PureComponent<Props, State> {
     this.getMinionKeyListAll()
   }
 
-  getMinionKeyListAll = async () => {
+  public getMinionKeyListAll = async () => {
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
     })
@@ -170,6 +170,10 @@ class AgentAdminPage extends PureComponent<Props, State> {
     ]
   }
 
+  public onRefresh = () => {
+    this.getMinionKeyListAll()
+  }
+
   render() {
     const {
       meRole,
@@ -183,7 +187,14 @@ class AgentAdminPage extends PureComponent<Props, State> {
           <Page.Header.Left>
             <Page.Title title="Agent Configuration" />
           </Page.Header.Left>
-          <Page.Header.Right></Page.Header.Right>
+          <Page.Header.Right>
+            <button
+              className="button button-sm button-default button-square"
+              onClick={this.onRefresh}
+            >
+              <span className="button-icon icon refresh"></span>
+            </button>
+          </Page.Header.Right>
         </Page.Header>
         <Page.Contents fullWidth={true}>
           <div className="container-fluid full-height agent-page">

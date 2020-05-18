@@ -295,7 +295,10 @@ export class AgentConfiguration extends PureComponent<
   }
 
   public componentDidUpdate(prevProps: Props) {
-    if (prevProps.minionsObject !== this.props.minionsObject) {
+    if (
+      prevProps.minionsObject !== this.props.minionsObject ||
+      prevProps.minionsStatus !== this.props.minionsStatus
+    ) {
       const {links, loadOrganizations, minionsObject} = this.props
       loadOrganizations(links.organizations)
 
@@ -890,7 +893,7 @@ export class AgentConfiguration extends PureComponent<
   }
 
   private Measurements() {
-    const {measurementsTitle, measurementsStatus} = this.state
+    const {measurementsStatus} = this.state
     return (
       <div className="panel">
         {measurementsStatus === RemoteDataState.Loading
@@ -904,7 +907,6 @@ export class AgentConfiguration extends PureComponent<
             }}
           >
             measurements
-            <div className="measurements-title">{measurementsTitle}</div>
           </h2>
         </div>
         <div className="panel-body">{this.MeasurementsContent}</div>
@@ -919,10 +921,12 @@ export class AgentConfiguration extends PureComponent<
       description,
       focusedMeasure,
       focusedMeasurePosition,
+      measurementsTitle,
     } = this.state
     return (
       <FancyScrollbar>
-        <div className="measurements-query-builder--contain">(Service)</div>
+        <div className="measurements-title">{measurementsTitle}</div>
+        <div className="default-measurements">(Service)</div>
         <div className="query-builder--list">
           {serviceMeasurements.map(
             (v: {name: string; isActivity: boolean}, idx): JSX.Element => (
@@ -983,7 +987,7 @@ export class AgentConfiguration extends PureComponent<
           : null}
         <div className="panel-heading">
           <h2 className="panel-title">collector.conf</h2>
-          <div className="panel-heading">
+          <div className="panel-title-sub">
             <div className="agent-select--button-box">
               {me.superAdmin ? (
                 <Dropdown
