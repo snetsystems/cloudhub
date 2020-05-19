@@ -12,7 +12,6 @@ import {
   getMinionKeyListAll,
   getMinionsIP,
   getMinionsOS,
-  getMinionKeyListAllAsync as getMinionKeys,
 } from 'src/agent_admin/apis'
 
 // SaltStack
@@ -53,7 +52,6 @@ export enum ActionType {
   GetLocalServiceGetRunning = 'GET_LOCAL_SERVICE_GET_RUNNING',
   GetRunnerSaltCmdTelegraf = 'GET_RUNNER_SALT_CMD_TELEGRAF',
   GetRunnerSaltCmdDirectory = 'GET_RUNNER_SALT_CMD_DIRECTORY',
-  GetMinionKeys = 'GET_MINION_KEYS',
 }
 
 interface MinionKeyListAllAdminAction {
@@ -119,10 +117,6 @@ interface GetRunnerSaltCmdDirectoryAction {
   type: ActionType.GetRunnerSaltCmdDirectory
 }
 
-interface GetMinionKeysAction {
-  type: ActionType.GetMinionKeys
-}
-
 export type Action =
   | MinionKeyListAllAdminAction
   | MinionKeyListAllAction
@@ -143,7 +137,6 @@ export type Action =
   | GetLocalServiceGetRunningAction
   | GetRunnerSaltCmdTelegrafAction
   | GetRunnerSaltCmdDirectoryAction
-  | GetMinionKeysAction
 
 export const loadMinionKeyListAllAdmin = (): MinionKeyListAllAdminAction => ({
   type: ActionType.MinionKeyListAllAdmin,
@@ -215,10 +208,6 @@ export const cmdGetRunnerSaltCmdTelegraf = (): GetRunnerSaltCmdTelegrafAction =>
 
 export const loadGetRunnerSaltCmdDirectory = (): GetRunnerSaltCmdDirectoryAction => ({
   type: ActionType.GetRunnerSaltCmdDirectory,
-})
-
-export const loadGetMinionKeys = (): GetMinionKeysAction => ({
-  type: ActionType.GetMinionKeys,
 })
 
 export const getMinionKeyListAllAdminAsync = (
@@ -546,19 +535,6 @@ export const getRunnerSaltCmdDirectoryAsync = (
     dispatch(loadGetRunnerSaltCmdDirectory())
 
     return getDirectoryItems
-  } catch (error) {
-    console.error(error)
-    dispatch(errorThrown(error))
-  }
-}
-
-export const getMinionKeysAsync = (pUrl: string, pToken: string) => async (
-  dispatch: Dispatch<Action>
-) => {
-  try {
-    const getMinionKeysPromise = await getMinionKeys(pUrl, pToken)
-    dispatch(loadGetMinionKeys())
-    return getMinionKeysPromise
   } catch (error) {
     console.error(error)
     dispatch(errorThrown(error))

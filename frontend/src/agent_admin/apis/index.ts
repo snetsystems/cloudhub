@@ -29,52 +29,6 @@ const EmptyMinion: Minion = {
   isSaltRuning: false,
 }
 
-export const getMinionKeyListAllAsync = async (
-  pUrl: string,
-  pToken: string
-): Promise<MinionsObject> => {
-  const minions: MinionsObject = {}
-  const info = await Promise.all([
-    getWheelKeyListAll(pUrl, pToken),
-    getRunnerManageAllowed(pUrl, pToken),
-    getLocalGrainsItems(pUrl, pToken, ''),
-  ])
-
-  const info2 = await Promise.all([
-    getLocalServiceEnabledTelegraf(
-      pUrl,
-      pToken,
-      info[0].data.return[0].data.return.minions
-    ),
-    getLocalServiceStatusTelegraf(
-      pUrl,
-      pToken,
-      info[0].data.return[0].data.return.minions
-    ),
-  ])
-
-  const keyList = info[0].data.return[0].data.return.minions
-  const ipList = info[1].data.return[0]
-  const osList = info[2].data.return[0]
-
-  const installList = info2[0].data.return[0]
-  const statusList = info2[1].data.return[0]
-
-  for (const k of keyList)
-    minions[k] = {
-      host: k,
-      status: 'Accept',
-      isCheck: false,
-      ip: ipList[k],
-      os: osList[k].os,
-      osVersion: osList[k].osrelease,
-      isInstall: installList[k] != true ? false : installList[k],
-      isRunning: statusList[k],
-    }
-
-  return minions
-}
-
 export const getMinionKeyListAllAdmin = async (
   pUrl: string,
   pToken: string,
@@ -218,31 +172,6 @@ export const getMinionKeyListAll = async (
     }
 
   return minions
-  // return wheelKeyListAllPromise.then(pWheelKeyListAllData => {
-  //   for (const k of pWheelKeyListAllData.data.return[0].data.return.minions)
-  //     minions[k] = {
-  //       ...EmptyMinion,
-  //       host: k,
-  //       status: 'Accept',
-  //     }
-
-  //   for (const k of pWheelKeyListAllData.data.return[0].data.return.minions_pre)
-  //     minions[k] = {
-  //       ...EmptyMinion,
-  //       host: k,
-  //       status: 'UnAccept',
-  //     }
-
-  //   for (const k of pWheelKeyListAllData.data.return[0].data.return
-  //     .minions_rejected)
-  //     minions[k] = {
-  //       ...EmptyMinion,
-  //       host: k,
-  //       status: 'Reject',
-  //     }
-
-  //   return minions
-  // })
 }
 
 export const getMinionsIP = async (
@@ -262,17 +191,6 @@ export const getMinionsIP = async (
     }
   })
   return newMinions
-  // return getRunnerManageAllowedPromise.then(pRunnerManageAllowedData => {
-  // Object.keys(pRunnerManageAllowedData.data.return[0]).forEach(function(k) {
-  //   newMinions[k] = {
-  //     host: k,
-  //     status: newMinions[k].status,
-  //     isCheck: newMinions[k].isCheck,
-  //     ip: pRunnerManageAllowedData.data.return[0][k],
-  //   }
-  // })
-  // return newMinions
-  // })
 }
 
 export const getMinionsOS = async (
@@ -303,22 +221,6 @@ export const getMinionsOS = async (
   })
 
   return newMinions
-
-  // return getLocalGrainsItemsPromise.then(pLocalGrainsItemsData => {
-  //   Object.keys(pLocalGrainsItemsData.data.return[0]).forEach(function(k) {
-  //     if (newMinions.hasOwnProperty(k)) {
-  //       newMinions[k] = {
-  //         host: k,
-  //         status: newMinions[k].status,
-  //         isCheck: newMinions[k].isCheck,
-  //         ip: newMinions[k].ip,
-  //         os: pLocalGrainsItemsData.data.return[0][k].os,
-  //         osVersion: pLocalGrainsItemsData.data.return[0][k].osrelease,
-  //       }
-  //     }
-  //   })
-  //   return newMinions
-  // })
 }
 
 export const getTelegrafInstalled = async (
@@ -347,30 +249,6 @@ export const getTelegrafInstalled = async (
     }
   })
   return newMinions
-
-  // return getLocalServiceEnabledTelegrafPromise.then(
-  //   pLocalServiceEnabledTelegrafData => {
-  //     Object.keys(pLocalServiceEnabledTelegrafData.data.return[0]).forEach(
-  //       function(k) {
-  //         if (newMinions.hasOwnProperty(k)) {
-  //           newMinions[k] = {
-  //             host: k,
-  //             status: newMinions[k].status,
-  //             isCheck: newMinions[k].isCheck,
-  //             ip: newMinions[k].ip,
-  //             os: newMinions[k].os,
-  //             osVersion: newMinions[k].osVersion,
-  //             isInstall:
-  //               pLocalServiceEnabledTelegrafData.data.return[0][k] != true
-  //                 ? false
-  //                 : pLocalServiceEnabledTelegrafData.data.return[0][k],
-  //           }
-  //         }
-  //       }
-  //     )
-  //     return newMinions
-  //   }
-  // )
 }
 
 export const getTelegrafServiceStatus = async (
@@ -401,25 +279,4 @@ export const getTelegrafServiceStatus = async (
   })
 
   return newMinions
-  // return getLocalServiceStatusTelegrafPromise.then(
-  //   pLocalServiceStatusTelegrafData => {
-  //     Object.keys(pLocalServiceStatusTelegrafData.data.return[0]).forEach(
-  //       function(k) {
-  //         if (newMinions.hasOwnProperty(k)) {
-  //           newMinions[k] = {
-  //             host: k,
-  //             status: newMinions[k].status,
-  //             isCheck: newMinions[k].isCheck,
-  //             ip: newMinions[k].ip,
-  //             os: newMinions[k].os,
-  //             osVersion: newMinions[k].osVersion,
-  //             isInstall: newMinions[k].isInstall,
-  //             isRunning: pLocalServiceStatusTelegrafData.data.return[0][k],
-  //           }
-  //         }
-  //       }
-  //     )
-  //     return newMinions
-  //   }
-  // )
 }
