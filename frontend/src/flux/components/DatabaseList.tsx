@@ -6,11 +6,14 @@ import {showDatabases} from 'src/shared/apis/metaQuery'
 import showDatabasesParser from 'src/shared/parsing/showDatabases'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {Source, NotificationAction} from 'src/types'
+import {Source, NotificationAction, Me} from 'src/types'
+import _ from 'lodash'
+import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
 interface Props {
   source: Source
   notify: NotificationAction
+  me: Me
 }
 
 interface State {
@@ -33,12 +36,27 @@ class DatabaseList extends PureComponent<Props, State> {
 
   public async getDatabases() {
     const {source} = this.props
+    const me = this.props.me
+    const currentOrganization = _.get(me, 'currentOrganization')
+
     try {
       const {data} = await showDatabases(source.links.proxy)
       const {databases} = showDatabasesParser(data)
-      const sorted = databases.sort()
 
-      this.setState({databases: sorted})
+      if (databases && databases.length > 0) {
+        let roleDatabases: string[]
+
+        if (isUserAuthorized(me.role, SUPERADMIN_ROLE)) {
+          this.setState({databases: databases.sort()})
+        } else {
+          roleDatabases = _.filter(
+            databases,
+            database => database === currentOrganization.name
+          )
+
+          this.setState({databases: roleDatabases})
+        }
+      }
     } catch (err) {
       console.error(err)
     }

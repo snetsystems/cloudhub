@@ -32,7 +32,9 @@ import {
 } from 'src/shared/constants/fluxScriptWizard'
 
 // Types
-import {RemoteDataState, Source} from 'src/types'
+import {RemoteDataState, Source, Me} from 'src/types'
+import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
+import _ from 'lodash'
 
 // These constants are selected so that the dropdown menus will not overflow
 // out of the `.flux-script-wizard--wizard` window
@@ -45,6 +47,7 @@ interface Props {
   isWizardActive: boolean
   onSetIsWizardActive: (isWizardActive: boolean) => void
   onAddToScript: (script: string) => void
+  me: Me
 }
 
 interface State {
@@ -305,6 +308,8 @@ class FluxScriptWizard extends PureComponent<Props, State> {
 
   private fetchAndSetDBsToRPs = async () => {
     const {source} = this.props
+    const me = this.props.me
+    const currentOrganization = _.get(me, 'currentOrganization')
 
     this.setState({
       dbsToRPs: {},
@@ -323,6 +328,19 @@ class FluxScriptWizard extends PureComponent<Props, State> {
 
     try {
       dbsToRPs = await this.fetchDBsToRPs(source.links.proxy)
+
+      if (dbsToRPs) {
+        if (!isUserAuthorized(me.role, SUPERADMIN_ROLE)) {
+          dbsToRPs = _.reduce(
+            dbsToRPs,
+            (database: DBsToRPs, value, key) =>
+              (key.includes(currentOrganization.name) &&
+                !(database[key] = value)) ||
+              database,
+            {}
+          )
+        }
+      }
     } catch {
       this.setState({dbsToRPsStatus: RemoteDataState.Error})
 

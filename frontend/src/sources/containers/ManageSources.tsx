@@ -3,7 +3,6 @@ import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-import {loadOrganizationsAsync} from 'src/admin/actions/cloudhub'
 import * as sourcesActions from 'src/shared/actions/sources'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
@@ -16,7 +15,7 @@ import {
   notifySourceDeleteFailed,
 } from 'src/shared/copy/notifications'
 
-import {Links, Me, Source, Notification, Organization} from 'src/types'
+import {Me, Source, Notification, Organization} from 'src/types'
 import {ToggleWizard} from 'src/types/wizard'
 
 interface State {
@@ -27,13 +26,11 @@ interface State {
 }
 
 interface Props {
-  links: Links
   source: Source
   sources: Source[]
   me: Me
   organizations: Organization[]
   isUsingAuth: boolean
-  loadOrganizations: (link: string) => void
   notify: (n: Notification) => void
   deleteKapacitor: sourcesActions.DeleteKapacitorAsync
   fetchKapacitors: sourcesActions.FetchKapacitorsAsync
@@ -56,9 +53,6 @@ class ManageSources extends PureComponent<Props, State> {
   }
 
   public async componentDidMount() {
-    const {links, loadOrganizations} = this.props
-
-    loadOrganizations(links.organizations)
     this.fetchKapacitors()
   }
 
@@ -156,12 +150,10 @@ class ManageSources extends PureComponent<Props, State> {
 }
 
 const mstp = ({
-  links,
   adminCloudHub: {organizations},
   auth: {isUsingAuth, me},
   sources,
 }) => ({
-  links,
   organizations,
   isUsingAuth,
   me,
@@ -170,7 +162,6 @@ const mstp = ({
 
 const mdtp = (dispatch: any) => ({
   notify: bindActionCreators(notifyAction, dispatch),
-  loadOrganizations: bindActionCreators(loadOrganizationsAsync, dispatch),
   removeAndLoadSources: bindActionCreators(
     sourcesActions.removeAndLoadSources,
     dispatch
