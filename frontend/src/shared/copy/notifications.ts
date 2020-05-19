@@ -79,6 +79,14 @@ export const notifySessionTimedOut = (): Notification => ({
   message: 'Your session has timed out. Log in again to continue.',
 })
 
+export const notifyHttpErrorRespose = (
+  status: number,
+  errorMessage: string = ''
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `Sever ${status} error: ${errorMessage}.`,
+})
+
 export const notifyServerError: Notification = {
   ...defaultErrorNotification,
   message: 'Internal Server Error. Check API Logs.',
