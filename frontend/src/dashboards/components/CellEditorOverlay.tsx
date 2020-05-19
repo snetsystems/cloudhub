@@ -24,7 +24,7 @@ import {STATIC_LEGEND} from 'src/dashboards/constants/cellEditor'
 // Types
 import * as QueriesModels from 'src/types/queries'
 import * as SourcesModels from 'src/types/sources'
-import {NotificationAction, TimeRange, CellType} from 'src/types'
+import {NotificationAction, TimeRange, CellType, Me} from 'src/types'
 import {Template} from 'src/types/tempVars'
 import {
   Cell,
@@ -80,7 +80,11 @@ interface PassedProps {
   dashboardTimeRange: TimeRange
 }
 
-type Props = PassedProps & ConnectedProps
+interface Auth {
+  me: Me
+}
+
+type Props = PassedProps & ConnectedProps & Auth
 
 interface State {
   isStaticLegend: boolean
@@ -126,6 +130,7 @@ class CellEditorOverlay extends Component<Props, State> {
       source,
       sources,
       queryStatus,
+      me,
     } = this.props
 
     const {isStaticLegend} = this.state
@@ -150,6 +155,7 @@ class CellEditorOverlay extends Component<Props, State> {
           isStaticLegend={isStaticLegend}
           queryStatus={queryStatus}
           onUpdateScriptStatus={this.handleUpdateScriptStatus}
+          me={me}
         >
           {(activeEditorTab, onSetActiveEditorTab) => (
             <CEOHeader
@@ -328,7 +334,7 @@ class CellEditorOverlay extends Component<Props, State> {
   }
 }
 
-const ConnectedCellEditorOverlay = (props: PassedProps) => {
+const ConnectedCellEditorOverlay = (props: PassedProps & Auth) => {
   return (
     <Subscribe to={[TimeMachineContainer]}>
       {(container: TimeMachineContainer) => {
