@@ -11,7 +11,7 @@ import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
 import AgentControl from 'src/agent_admin/containers/AgentControl'
 
 // Actions
-import {getMinionKeyListAllAsyncAdmin} from 'src/agent_admin/actions'
+import {getMinionKeyListAllAdminAsync} from 'src/agent_admin/actions'
 
 // Notification
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -92,6 +92,14 @@ class AgentAdminPage extends PureComponent<Props, State> {
     this.getMinionKeyListAll()
   }
 
+  public setMinionStatus = ({
+    minionsStatus,
+  }: {
+    minionsStatus: RemoteDataState
+  }) => {
+    this.setState({minionsStatus})
+  }
+
   public getMinionKeyListAll = async () => {
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
@@ -116,7 +124,12 @@ class AgentAdminPage extends PureComponent<Props, State> {
   }
 
   public sections = (meRole: string) => {
-    const {saltMasterUrl, saltMasterToken} = this.state
+    const {
+      saltMasterUrl,
+      saltMasterToken,
+      minionsObject,
+      minionsStatus,
+    } = this.state
 
     return [
       {
@@ -129,9 +142,10 @@ class AgentAdminPage extends PureComponent<Props, State> {
             currentUrl={'agent-minions'}
             saltMasterUrl={saltMasterUrl}
             saltMasterToken={saltMasterToken}
-            minionsObject={this.state.minionsObject}
-            minionsStatus={this.state.minionsStatus}
+            minionsObject={minionsObject}
+            minionsStatus={minionsStatus}
             handleGetMinionKeyListAll={this.getMinionKeyListAll}
+            handleSetMinionStatus={this.setMinionStatus}
           />
         ),
       },
@@ -145,9 +159,10 @@ class AgentAdminPage extends PureComponent<Props, State> {
             currentUrl={'agent-control'}
             saltMasterUrl={saltMasterUrl}
             saltMasterToken={saltMasterToken}
-            minionsObject={this.state.minionsObject}
-            minionsStatus={this.state.minionsStatus}
+            minionsObject={minionsObject}
+            minionsStatus={minionsStatus}
             handleGetMinionKeyListAll={this.getMinionKeyListAll}
+            handleSetMinionStatus={this.setMinionStatus}
           />
         ),
       },
@@ -161,9 +176,10 @@ class AgentAdminPage extends PureComponent<Props, State> {
             currentUrl={'agent-configuration'}
             saltMasterUrl={saltMasterUrl}
             saltMasterToken={saltMasterToken}
-            minionsObject={this.state.minionsObject}
-            minionsStatus={this.state.minionsStatus}
+            minionsObject={minionsObject}
+            minionsStatus={minionsStatus}
             handleGetMinionKeyListAll={this.getMinionKeyListAll}
+            handleSetMinionStatus={this.setMinionStatus}
           />
         ),
       },
@@ -221,7 +237,7 @@ const mapStateToProps = ({auth: {me}, links: {addons}}) => {
 
 const mapDispatchToProps = {
   notify: notifyAction,
-  handleGetMinionKeyListAll: getMinionKeyListAllAsyncAdmin,
+  handleGetMinionKeyListAll: getMinionKeyListAllAdminAsync,
 }
 
 export default connect(

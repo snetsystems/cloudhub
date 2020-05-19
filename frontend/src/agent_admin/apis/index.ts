@@ -195,33 +195,54 @@ export const getMinionKeyListAll = async (
   pToken: string
 ): Promise<MinionsObject> => {
   const minions: MinionsObject = {}
-  const wheelKeyListAllPromise = getWheelKeyListAll(pUrl, pToken)
+  const {data} = await getWheelKeyListAll(pUrl, pToken)
+  for (const k of data.return[0].data.return.minions)
+    minions[k] = {
+      ...EmptyMinion,
+      host: k,
+      status: 'Accept',
+    }
 
-  return wheelKeyListAllPromise.then(pWheelKeyListAllData => {
-    for (const k of pWheelKeyListAllData.data.return[0].data.return.minions)
-      minions[k] = {
-        ...EmptyMinion,
-        host: k,
-        status: 'Accept',
-      }
+  for (const k of data.return[0].data.return.minions_pre)
+    minions[k] = {
+      ...EmptyMinion,
+      host: k,
+      status: 'UnAccept',
+    }
 
-    for (const k of pWheelKeyListAllData.data.return[0].data.return.minions_pre)
-      minions[k] = {
-        ...EmptyMinion,
-        host: k,
-        status: 'UnAccept',
-      }
+  for (const k of data.return[0].data.return.minions_rejected)
+    minions[k] = {
+      ...EmptyMinion,
+      host: k,
+      status: 'Reject',
+    }
 
-    for (const k of pWheelKeyListAllData.data.return[0].data.return
-      .minions_rejected)
-      minions[k] = {
-        ...EmptyMinion,
-        host: k,
-        status: 'Reject',
-      }
+  return minions
+  // return wheelKeyListAllPromise.then(pWheelKeyListAllData => {
+  //   for (const k of pWheelKeyListAllData.data.return[0].data.return.minions)
+  //     minions[k] = {
+  //       ...EmptyMinion,
+  //       host: k,
+  //       status: 'Accept',
+  //     }
 
-    return minions
-  })
+  //   for (const k of pWheelKeyListAllData.data.return[0].data.return.minions_pre)
+  //     minions[k] = {
+  //       ...EmptyMinion,
+  //       host: k,
+  //       status: 'UnAccept',
+  //     }
+
+  //   for (const k of pWheelKeyListAllData.data.return[0].data.return
+  //     .minions_rejected)
+  //     minions[k] = {
+  //       ...EmptyMinion,
+  //       host: k,
+  //       status: 'Reject',
+  //     }
+
+  //   return minions
+  // })
 }
 
 export const getMinionsIP = async (
@@ -231,18 +252,27 @@ export const getMinionsIP = async (
 ): Promise<MinionsObject> => {
   const newMinions = {...minions}
 
-  const getRunnerManageAllowedPromise = getRunnerManageAllowed(pUrl, pToken)
-  return getRunnerManageAllowedPromise.then(pRunnerManageAllowedData => {
-    Object.keys(pRunnerManageAllowedData.data.return[0]).forEach(function(k) {
-      newMinions[k] = {
-        host: k,
-        status: newMinions[k].status,
-        isCheck: newMinions[k].isCheck,
-        ip: pRunnerManageAllowedData.data.return[0][k],
-      }
-    })
-    return newMinions
+  const {data} = await getRunnerManageAllowed(pUrl, pToken)
+  Object.keys(data.return[0]).forEach(function(k) {
+    newMinions[k] = {
+      host: k,
+      status: newMinions[k].status,
+      isCheck: newMinions[k].isCheck,
+      ip: data.return[0][k],
+    }
   })
+  return newMinions
+  // return getRunnerManageAllowedPromise.then(pRunnerManageAllowedData => {
+  // Object.keys(pRunnerManageAllowedData.data.return[0]).forEach(function(k) {
+  //   newMinions[k] = {
+  //     host: k,
+  //     status: newMinions[k].status,
+  //     isCheck: newMinions[k].isCheck,
+  //     ip: pRunnerManageAllowedData.data.return[0][k],
+  //   }
+  // })
+  // return newMinions
+  // })
 }
 
 export const getMinionsOS = async (
@@ -251,7 +281,7 @@ export const getMinionsOS = async (
   minions: MinionsObject
 ): Promise<MinionsObject> => {
   const newMinions = {...minions}
-  const getLocalGrainsItemsPromise = getLocalGrainsItems(
+  const {data} = await getLocalGrainsItems(
     pUrl,
     pToken,
     _.values(newMinions)
@@ -259,21 +289,36 @@ export const getMinionsOS = async (
       .toString()
   )
 
-  return getLocalGrainsItemsPromise.then(pLocalGrainsItemsData => {
-    Object.keys(pLocalGrainsItemsData.data.return[0]).forEach(function(k) {
-      if (newMinions.hasOwnProperty(k)) {
-        newMinions[k] = {
-          host: k,
-          status: newMinions[k].status,
-          isCheck: newMinions[k].isCheck,
-          ip: newMinions[k].ip,
-          os: pLocalGrainsItemsData.data.return[0][k].os,
-          osVersion: pLocalGrainsItemsData.data.return[0][k].osrelease,
-        }
+  Object.keys(data.return[0]).forEach(function(k) {
+    if (newMinions.hasOwnProperty(k)) {
+      newMinions[k] = {
+        host: k,
+        status: newMinions[k].status,
+        isCheck: newMinions[k].isCheck,
+        ip: newMinions[k].ip,
+        os: data.return[0][k].os,
+        osVersion: data.return[0][k].osrelease,
       }
-    })
-    return newMinions
+    }
   })
+
+  return newMinions
+
+  // return getLocalGrainsItemsPromise.then(pLocalGrainsItemsData => {
+  //   Object.keys(pLocalGrainsItemsData.data.return[0]).forEach(function(k) {
+  //     if (newMinions.hasOwnProperty(k)) {
+  //       newMinions[k] = {
+  //         host: k,
+  //         status: newMinions[k].status,
+  //         isCheck: newMinions[k].isCheck,
+  //         ip: newMinions[k].ip,
+  //         os: pLocalGrainsItemsData.data.return[0][k].os,
+  //         osVersion: pLocalGrainsItemsData.data.return[0][k].osrelease,
+  //       }
+  //     }
+  //   })
+  //   return newMinions
+  // })
 }
 
 export const getTelegrafInstalled = async (
@@ -282,35 +327,50 @@ export const getTelegrafInstalled = async (
   minions: MinionsObject
 ): Promise<MinionsObject> => {
   const newMinions = {...minions}
-  const getLocalServiceEnabledTelegrafPromise = getLocalServiceEnabledTelegraf(
+  const {data} = await getLocalServiceEnabledTelegraf(
     pUrl,
     pToken,
     Object.keys(newMinions).toString()
   )
 
-  return getLocalServiceEnabledTelegrafPromise.then(
-    pLocalServiceEnabledTelegrafData => {
-      Object.keys(pLocalServiceEnabledTelegrafData.data.return[0]).forEach(
-        function(k) {
-          if (newMinions.hasOwnProperty(k)) {
-            newMinions[k] = {
-              host: k,
-              status: newMinions[k].status,
-              isCheck: newMinions[k].isCheck,
-              ip: newMinions[k].ip,
-              os: newMinions[k].os,
-              osVersion: newMinions[k].osVersion,
-              isInstall:
-                pLocalServiceEnabledTelegrafData.data.return[0][k] != true
-                  ? false
-                  : pLocalServiceEnabledTelegrafData.data.return[0][k],
-            }
-          }
-        }
-      )
-      return newMinions
+  Object.keys(data.return[0]).forEach(function(k) {
+    if (newMinions.hasOwnProperty(k)) {
+      newMinions[k] = {
+        host: k,
+        status: newMinions[k].status,
+        isCheck: newMinions[k].isCheck,
+        ip: newMinions[k].ip,
+        os: newMinions[k].os,
+        osVersion: newMinions[k].osVersion,
+        isInstall: data.return[0][k] != true ? false : data.return[0][k],
+      }
     }
-  )
+  })
+  return newMinions
+
+  // return getLocalServiceEnabledTelegrafPromise.then(
+  //   pLocalServiceEnabledTelegrafData => {
+  //     Object.keys(pLocalServiceEnabledTelegrafData.data.return[0]).forEach(
+  //       function(k) {
+  //         if (newMinions.hasOwnProperty(k)) {
+  //           newMinions[k] = {
+  //             host: k,
+  //             status: newMinions[k].status,
+  //             isCheck: newMinions[k].isCheck,
+  //             ip: newMinions[k].ip,
+  //             os: newMinions[k].os,
+  //             osVersion: newMinions[k].osVersion,
+  //             isInstall:
+  //               pLocalServiceEnabledTelegrafData.data.return[0][k] != true
+  //                 ? false
+  //                 : pLocalServiceEnabledTelegrafData.data.return[0][k],
+  //           }
+  //         }
+  //       }
+  //     )
+  //     return newMinions
+  //   }
+  // )
 }
 
 export const getTelegrafServiceStatus = async (
@@ -319,31 +379,47 @@ export const getTelegrafServiceStatus = async (
   minions: MinionsObject
 ): Promise<MinionsObject> => {
   const newMinions = {...minions}
-  const getLocalServiceStatusTelegrafPromise = getLocalServiceStatusTelegraf(
+  const {data} = await getLocalServiceStatusTelegraf(
     pUrl,
     pToken,
     Object.keys(newMinions).toString()
   )
 
-  return getLocalServiceStatusTelegrafPromise.then(
-    pLocalServiceStatusTelegrafData => {
-      Object.keys(pLocalServiceStatusTelegrafData.data.return[0]).forEach(
-        function(k) {
-          if (newMinions.hasOwnProperty(k)) {
-            newMinions[k] = {
-              host: k,
-              status: newMinions[k].status,
-              isCheck: newMinions[k].isCheck,
-              ip: newMinions[k].ip,
-              os: newMinions[k].os,
-              osVersion: newMinions[k].osVersion,
-              isInstall: newMinions[k].isInstall,
-              isRunning: pLocalServiceStatusTelegrafData.data.return[0][k],
-            }
-          }
-        }
-      )
-      return newMinions
+  Object.keys(data.return[0]).forEach(function(k) {
+    if (newMinions.hasOwnProperty(k)) {
+      newMinions[k] = {
+        host: k,
+        status: newMinions[k].status,
+        isCheck: newMinions[k].isCheck,
+        ip: newMinions[k].ip,
+        os: newMinions[k].os,
+        osVersion: newMinions[k].osVersion,
+        isInstall: newMinions[k].isInstall,
+        isRunning: data.return[0][k],
+      }
     }
-  )
+  })
+
+  return newMinions
+  // return getLocalServiceStatusTelegrafPromise.then(
+  //   pLocalServiceStatusTelegrafData => {
+  //     Object.keys(pLocalServiceStatusTelegrafData.data.return[0]).forEach(
+  //       function(k) {
+  //         if (newMinions.hasOwnProperty(k)) {
+  //           newMinions[k] = {
+  //             host: k,
+  //             status: newMinions[k].status,
+  //             isCheck: newMinions[k].isCheck,
+  //             ip: newMinions[k].ip,
+  //             os: newMinions[k].os,
+  //             osVersion: newMinions[k].osVersion,
+  //             isInstall: newMinions[k].isInstall,
+  //             isRunning: pLocalServiceStatusTelegrafData.data.return[0][k],
+  //           }
+  //         }
+  //       }
+  //     )
+  //     return newMinions
+  //   }
+  // )
 }

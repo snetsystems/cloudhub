@@ -205,21 +205,26 @@ export function runLocalServiceStartTelegraf(
   pToken: string,
   pMinionId: string
 ) {
-  const params: Params = {
-    client: 'local',
-    fun: 'service.start',
-    arg: 'telegraf',
-    tgt_type: '',
-    tgt: '',
+  try {
+    const params: Params = {
+      client: 'local',
+      fun: 'service.start',
+      arg: 'telegraf',
+      tgt_type: '',
+      tgt: '',
+    }
+    if (pMinionId) {
+      params.tgt_type = 'list'
+      params.tgt = pMinionId
+    } else {
+      params.tgt_type = 'glob'
+      params.tgt = '*'
+    }
+    return apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
   }
-  if (pMinionId) {
-    params.tgt_type = 'list'
-    params.tgt = pMinionId
-  } else {
-    params.tgt_type = 'glob'
-    params.tgt = '*'
-  }
-  return apiRequest(pUrl, pToken, params)
 }
 
 export function runLocalServiceStopTelegraf(
@@ -227,21 +232,26 @@ export function runLocalServiceStopTelegraf(
   pToken: string,
   pMinionId: string
 ) {
-  const params: Params = {
-    client: 'local',
-    fun: 'service.stop',
-    arg: 'telegraf',
-    tgt_type: '',
-    tgt: '',
+  try {
+    const params: Params = {
+      client: 'local',
+      fun: 'service.stop',
+      arg: 'telegraf',
+      tgt_type: '',
+      tgt: '',
+    }
+    if (pMinionId) {
+      params.tgt_type = 'list'
+      params.tgt = pMinionId
+    } else {
+      params.tgt_type = 'glob'
+      params.tgt = '*'
+    }
+    return apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
   }
-  if (pMinionId) {
-    params.tgt_type = 'list'
-    params.tgt = pMinionId
-  } else {
-    params.tgt_type = 'glob'
-    params.tgt = '*'
-  }
-  return apiRequest(pUrl, pToken, params)
 }
 
 export function runLocalServiceReStartTelegraf(
