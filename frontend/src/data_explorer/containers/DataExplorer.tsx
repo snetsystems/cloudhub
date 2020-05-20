@@ -60,6 +60,7 @@ import {
   QueryType,
   CellQuery,
   TimeRange,
+  Me,
 } from 'src/types'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Links} from 'src/types/flux'
@@ -101,7 +102,11 @@ interface ConnectedProps {
   onInitFluxScript: TimeMachineContainer['handleInitFluxScript']
 }
 
-type Props = PassedProps & ConnectedProps
+interface Auth {
+  me: Me
+}
+
+type Props = PassedProps & ConnectedProps & Auth
 
 interface State {
   isWriteFormVisible: boolean
@@ -164,6 +169,7 @@ export class DataExplorer extends PureComponent<Props, State> {
       notify,
       updateSourceLink,
       timeRange,
+      me,
     } = this.props
 
     const {isStaticLegend, isComponentMounted} = this.state
@@ -190,6 +196,7 @@ export class DataExplorer extends PureComponent<Props, State> {
             updateSourceLink={updateSourceLink}
             onResetFocus={this.handleResetFocus}
             onToggleStaticLegend={this.handleToggleStaticLegend}
+            me={me}
           >
             {(activeEditorTab, onSetActiveEditorTab) => (
               <DEHeader
@@ -424,7 +431,7 @@ export class DataExplorer extends PureComponent<Props, State> {
   }
 }
 
-const ConnectedDataExplorer = (props: PassedProps & WithRouterProps) => {
+const ConnectedDataExplorer = (props: PassedProps & WithRouterProps & Auth) => {
   return (
     <Subscribe to={[TimeMachineContainer]}>
       {(container: TimeMachineContainer) => {

@@ -44,7 +44,6 @@ import {
 } from 'src/shared/apis/saltStack'
 
 // Notification
-import {loadOrganizationsAsync} from 'src/admin/actions/cloudhub'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {
   notifyAgentConnectFailed,
@@ -60,7 +59,6 @@ import {GET_STATUS} from 'src/agent_admin/constants'
 
 // Types
 import {
-  Links,
   Me,
   Organization,
   RemoteDataState,
@@ -71,8 +69,6 @@ import {Minion} from 'src/agent_admin/type'
 
 interface Props {
   notify: (message: Notification | NotificationFunc) => void
-  loadOrganizations: (link: string) => void
-  links: Links
   me: Me
   organizations: Organization[]
   currentUrl: string
@@ -262,17 +258,9 @@ export class AgentConfiguration extends PureComponent<
   }
 
   public async componentWillMount() {
-    const {
-      notify,
-      links,
-      loadOrganizations,
-      saltMasterToken,
-      isUserAuthorized,
-    } = this.props
+    const {notify, saltMasterToken, isUserAuthorized} = this.props
 
     if (!isUserAuthorized) return
-
-    loadOrganizations(links.organizations)
 
     if (saltMasterToken !== null && saltMasterToken !== '') {
       this.getWheelKeyListAll()
@@ -1074,15 +1062,13 @@ export class AgentConfiguration extends PureComponent<
   }
 }
 
-const mstp = ({links, adminCloudHub: {organizations}, auth: {me}}) => ({
-  links,
+const mstp = ({adminCloudHub: {organizations}, auth: {me}}) => ({
   organizations,
   me,
 })
 
 const mdtp = (dispatch: any) => ({
   notify: bindActionCreators(notifyAction, dispatch),
-  loadOrganizations: bindActionCreators(loadOrganizationsAsync, dispatch),
 })
 
 export default connect(mstp, mdtp)(AgentConfiguration)

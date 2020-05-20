@@ -1,12 +1,12 @@
 #!/bin/sh -
 
-conda_insatll() {
+conda_install() {
     ### sh Download & Install
     curl -o $PREFIX/miniconda3.sh https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh;
     bash $PREFIX/miniconda3.sh -b -u -p $PREFIX
 
-    # echo ". $PREFIX/etc/profile.d/conda.sh" >> ~/.bashrc
-    # source ~/.bashrc > /dev/null 2>&1
+    echo ". $PREFIX/etc/profile.d/conda.sh" >> ~/.bashrc
+    source ~/.bashrc > /dev/null 2>&1
     source $PREFIX/etc/profile.d/conda.sh
 
     yum install -y gcc
@@ -23,7 +23,7 @@ conda_insatll() {
 
     ### salt-minion install
     yes w | pip install pyzmq PyYAML msgpack-python jinja2 futures tornado
-    yes w | pip install salt==2019.2.3
+    yes w | pip install salt==2019.2.5
 
     ### create salt-minion config
     DIR=$PREFIX/etc/salt
@@ -215,4 +215,4 @@ fi
 
 PREFIX=$(cd "$PREFIX"; pwd)
 
-conda_insatll
+conda_install

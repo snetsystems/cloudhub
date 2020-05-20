@@ -43,6 +43,7 @@ import {
   Query,
   QueryType,
   QueryUpdateState,
+  Me,
 } from 'src/types'
 import {SourceOption} from 'src/types/sources'
 import {Links, ScriptStatus} from 'src/types/flux'
@@ -97,7 +98,11 @@ interface State {
   autoRefreshDuration: number // milliseconds
 }
 
-type Props = PassedProps & ConnectedProps & ManualRefreshProps
+interface Auth {
+  me: Me
+}
+
+type Props = PassedProps & ConnectedProps & ManualRefreshProps & Auth
 
 class TimeMachine extends PureComponent<Props, State> {
   constructor(props: Props) {
@@ -330,6 +335,7 @@ class TimeMachine extends PureComponent<Props, State> {
       onManualRefresh,
       onChangeDraftScript,
       onUpdateScriptStatus,
+      me,
     } = this.props
 
     return (
@@ -343,6 +349,7 @@ class TimeMachine extends PureComponent<Props, State> {
         onManualRefresh={onManualRefresh}
         onChangeDraftScript={onChangeDraftScript}
         onUpdateStatus={onUpdateScriptStatus}
+        me={me}
       />
     )
   }
@@ -350,6 +357,7 @@ class TimeMachine extends PureComponent<Props, State> {
   private get influxQLBuilder(): JSX.Element {
     const {templates} = this.props
     const {activeQueryIndex} = this.state
+    const {me} = this.props
 
     return (
       <InfluxQLQueryMaker
@@ -362,6 +370,7 @@ class TimeMachine extends PureComponent<Props, State> {
         activeQuery={this.activeQuery}
         setActiveQueryIndex={this.handleSetActiveQueryIndex}
         onEditRawText={this.handleEditRawText}
+        me={me}
       />
     )
   }
@@ -549,7 +558,9 @@ class TimeMachine extends PureComponent<Props, State> {
   }
 }
 
-const ConnectedTimeMachine = (props: PassedProps & ManualRefreshProps) => {
+const ConnectedTimeMachine = (
+  props: PassedProps & ManualRefreshProps & Auth
+) => {
   return (
     <Subscribe to={[TimeMachineContainer]}>
       {(container: TimeMachineContainer) => {
