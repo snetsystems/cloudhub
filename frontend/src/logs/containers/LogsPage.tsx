@@ -1059,11 +1059,10 @@ class LogsPage extends Component<Props, State> {
   }
 
   private async changeCurrentNamespace() {
-    const namespace = this.props.currentNamespace
-    const currentOrganization = _.get(this.props.me, 'currentOrganization')
+    const {currentNamespace, currentNamespaces, me} = this.props
+    const currentOrganization = _.get(me, 'currentOrganization')
 
-    if (namespace.database !== currentOrganization.name) {
-      const {currentNamespaces} = this.props
+    if (currentNamespace.database !== currentOrganization.name) {
       const currentNamespace = currentNamespaces.find(
         db => db.database === currentOrganization.name
       )

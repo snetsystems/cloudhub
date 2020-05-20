@@ -83,7 +83,7 @@ class DatabaseList extends Component<DatabaseListProps, DatabaseListState> {
     try {
       const sorted = await getDatabasesWithRetentionPolicies(proxy)
 
-      if (currentOrganization !== undefined) {
+      if (!currentOrganization) {
         if (sorted && sorted.length > 0) {
           let roleNamespace: Namespace[]
 
