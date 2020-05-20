@@ -478,14 +478,8 @@ export class AgentConfiguration extends PureComponent<
       const influxdbs: any = _.get(configObj, 'outputs.influxdb')
       const agent: any = _.get(configObj, 'agent')
 
-      if (me.superAdmin) {
-        if (agent.hostname !== focusedHost) {
-          notify(notifyAgentConfigHostNameWrong(focusedHost))
-          isCheckDone = false
-          return
-        }
-
-        influxdbs.forEach((db: any) => {
+      influxdbs.forEach((db: any) => {
+        if (me.superAdmin) {
           const idx = organizations.findIndex(org => org.name === db.database)
 
           if (idx < 0) {
@@ -493,14 +487,20 @@ export class AgentConfiguration extends PureComponent<
             isCheckDone = false
             return
           }
-
+        } else {
           if (db.database !== me.currentOrganization.name) {
             notify(notifyAgentConfigDBNameWrong(me.currentOrganization.name))
             isCheckDone = false
             return
           }
-        })
-      }
+        }
+
+        if (agent.hostname !== focusedHost) {
+          notify(notifyAgentConfigHostNameWrong(focusedHost))
+          isCheckDone = false
+          return
+        }
+      })
     } catch (error) {
       notify(notifyAgentConfigWrong(error))
       return
