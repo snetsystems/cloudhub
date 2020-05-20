@@ -1,15 +1,16 @@
 import _ from 'lodash'
 
 import {authExpired} from 'src/shared/actions/auth'
-import {notify} from 'shared/actions/notifications'
+import {notify} from 'src/shared/actions/notifications'
 
-import {HTTP_FORBIDDEN} from 'shared/constants'
+import {HTTP_FORBIDDEN} from 'src/shared/constants'
 import {
   notifySessionTimedOut,
+  notifyHttpErrorRespose,
   notifyErrorWithAltText,
   notifyOrgIsPrivate,
   notifyCurrentOrgDeleted,
-} from 'shared/copy/notifications'
+} from 'src/shared/copy/notifications'
 
 const actionsAllowedDuringBlackout = [
   '@@',
@@ -30,7 +31,7 @@ const errorsMiddleware = store => next => action => {
   if (action.type === 'ERROR_THROWN') {
     const {
       error,
-      error: {status, auth},
+      error: {status, statusText, auth},
       altText,
       alertType = 'info',
     } = action
@@ -59,6 +60,7 @@ const errorsMiddleware = store => next => action => {
           allowNotifications = true
         }, notificationsBlackoutDuration)
       } else if (wasSessionTimeout) {
+        store.dispatch(notify(notifyHttpErrorRespose(status, statusText)))
         store.dispatch(notify(notifySessionTimedOut()))
 
         allowNotifications = false
@@ -69,8 +71,14 @@ const errorsMiddleware = store => next => action => {
     } else if (altText) {
       store.dispatch(notify(notifyErrorWithAltText(alertType, altText)))
     } else {
-      // TODO: actually do proper error handling
-      // store.dispatch(notify({type: alertType, 'Cannot communicate with server.'))
+      store.dispatch(
+        notify(
+          notifyHttpErrorRespose(
+            status,
+            `${statusText}: Cannot communicate with server.`
+          )
+        )
+      )
     }
   }
 

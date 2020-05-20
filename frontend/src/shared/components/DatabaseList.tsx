@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 
 import _ from 'lodash'
 
-import {QueryConfig, Source} from 'src/types'
+import {QueryConfig, Source, Me} from 'src/types'
 import {Namespace} from 'src/types/queries'
 
 import DatabaseListItem from 'src/shared/components/DatabaseListItem'
@@ -11,12 +11,14 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import {getDatabasesWithRetentionPolicies} from 'src/shared/apis/databases'
+import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
 interface DatabaseListProps {
   query: QueryConfig
   querySource?: Source
   onChooseNamespace: (namespace: Namespace) => void
   source?: Source
+  me?: Me
 }
 
 interface DatabaseListState {
@@ -74,10 +76,31 @@ class DatabaseList extends Component<DatabaseListProps, DatabaseListState> {
     const {source} = this.context
     const {querySource} = this.props
     const proxy = _.get(querySource, ['links', 'proxy'], source.links.proxy)
+    const me = this.props.me
+
+    const currentOrganization = _.get(me, 'currentOrganization')
 
     try {
       const sorted = await getDatabasesWithRetentionPolicies(proxy)
-      this.setState({namespaces: sorted})
+
+      if (!currentOrganization) {
+        if (sorted && sorted.length > 0) {
+          let roleNamespace: Namespace[]
+
+          if (isUserAuthorized(me.role, SUPERADMIN_ROLE)) {
+            this.setState({namespaces: sorted})
+          } else {
+            roleNamespace = _.filter(
+              sorted,
+              sorted => sorted.database === currentOrganization.name
+            )
+
+            this.setState({namespaces: roleNamespace})
+          }
+        }
+      } else {
+        this.setState({namespaces: sorted})
+      }
     } catch (err) {
       console.error(err)
     }

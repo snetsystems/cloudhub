@@ -91,14 +91,14 @@ export function getDefaultDBandRP(
   const dbs = Object.keys(dbsToRPs)
 
   // Pick telegraf if it exists
-  if (dbs.includes('telegraf')) {
-    return ['telegraf', dbsToRPs.telegraf[0]]
-  }
+  // if (dbs.includes('telegraf')) {
+  //   return ['telegraf', dbsToRPs.telegraf[0]]
+  // }
 
   // Pick nothing if nothing exists
-  if (!dbs.length || !dbsToRPs[dbs[0][0]]) {
-    return [null, null]
-  }
+  // if (!dbs.length || !dbsToRPs[dbs[0][0]]) {
+  //   return [null, null]
+  // }
 
   // Otherwise pick the first available DB and RP
   return [dbs[0], dbsToRPs[dbs[0]][0]]

@@ -18,6 +18,7 @@ import {
 
 import {getSourceHealth} from 'src/sources/apis'
 import {getSourcesAsync} from 'src/shared/actions/sources'
+import {loadOrganizationsAsync} from 'src/admin/actions/cloudhub'
 
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
@@ -25,7 +26,7 @@ import {DEFAULT_HOME_PAGE} from 'src/shared/constants'
 
 import * as copy from 'src/shared/copy/notifications'
 
-import {Source, Me, Notification, NotificationFunc} from 'src/types'
+import {Source, Me, Links, Notification, NotificationFunc} from 'src/types'
 
 interface Auth {
   isUsingAuth: boolean
@@ -42,6 +43,8 @@ interface Params {
 
 interface Props {
   getSources: () => void
+  getOrgAll: (link: string) => void
+  links: Links
   sources: Source[]
   children: ReactElement<any>
   params: Params
@@ -89,9 +92,11 @@ export class CheckSources extends Component<Props, State> {
     const {
       router,
       auth: {isUsingAuth, me},
+      links,
     } = this.props
     if (!isUsingAuth || isUserAuthorized(me.role, VIEWER_ROLE)) {
       await this.props.getSources()
+      await this.props.getOrgAll(links.organizations)
       this.setState({isFetching: false})
     } else {
       router.push('/purgatory')
@@ -217,16 +222,19 @@ export class CheckSources extends Component<Props, State> {
   }
 }
 
-const mapStateToProps = ({sources, auth}) => ({
+const mapStateToProps = ({sources, auth, links}) => ({
   sources,
   auth,
+  links,
 })
 
 const mapDispatchToProps = dispatch => ({
   getSources: bindActionCreators(getSourcesAsync, dispatch),
+  getOrgAll: bindActionCreators(loadOrganizationsAsync, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
 })
 
-export default connect(mapStateToProps, mapDispatchToProps)(
-  withRouter(CheckSources)
-)
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(withRouter(CheckSources))

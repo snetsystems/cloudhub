@@ -1,13 +1,18 @@
 import _ from 'lodash'
 import React, {PureComponent} from 'react'
-import {Source, Namespace} from 'src/types'
+import {Source, Namespace, Me} from 'src/types'
 
 import Dropdown from 'src/shared/components/Dropdown'
 import {Page} from 'src/reusable_ui'
-import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
+import Authorized, {
+  isUserAuthorized,
+  EDITOR_ROLE,
+  SUPERADMIN_ROLE,
+} from 'src/auth/Authorized'
 import LiveUpdatingStatus from 'src/logs/components/LiveUpdatingStatus'
 
 interface SourceItem {
+  url: string
   id: string
   text: string
 }
@@ -22,6 +27,7 @@ interface Props {
   liveUpdating: boolean
   onChangeLiveUpdatingStatus: () => void
   onShowOptionsOverlay: () => void
+  me: Me
 }
 
 class LogsHeader extends PureComponent<Props> {
@@ -81,9 +87,9 @@ class LogsHeader extends PureComponent<Props> {
       return ''
     }
 
-    const id = _.get(this.props, 'currentSource.id', '')
+    const url = _.get(this.props, 'currentSource.url', '')
     const currentItem = _.find(this.sourceDropDownItems, item => {
-      return item.id === id
+      return item.url === url
     })
 
     if (currentItem) {
@@ -105,13 +111,30 @@ class LogsHeader extends PureComponent<Props> {
 
   private get namespaceDropDownItems() {
     const {currentNamespaces} = this.props
+    const me = this.props.me
+    const currentOrganization = _.get(me, 'currentOrganization')
 
-    return currentNamespaces.map(namespace => {
-      return {
-        text: `${namespace.database}.${namespace.retentionPolicy}`,
-        ...namespace,
-      }
-    })
+    if (!currentNamespaces) {
+      return ''
+    }
+
+    if (isUserAuthorized(me.role, SUPERADMIN_ROLE)) {
+      return currentNamespaces.map(namespace => {
+        return {
+          text: `${namespace.database}.${namespace.retentionPolicy}`,
+          ...namespace,
+        }
+      })
+    } else {
+      return currentNamespaces
+        .filter(database => database.database === currentOrganization.name)
+        .map(namespace => {
+          return {
+            text: `${namespace.database}.${namespace.retentionPolicy}`,
+            ...namespace,
+          }
+        })
+    }
   }
 
   private get sourceDropDownItems(): SourceItem[] {
@@ -121,6 +144,7 @@ class LogsHeader extends PureComponent<Props> {
       return {
         text: `${source.name} @ ${source.url}`,
         id: source.id,
+        url: source.url,
       }
     })
   }

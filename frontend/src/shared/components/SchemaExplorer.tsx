@@ -10,7 +10,7 @@ import FieldList from 'src/shared/components/FieldList'
 import {TimeMachineContainer} from 'src/shared/utils/TimeMachineContainer'
 
 // Types
-import {QueryConfig, Source} from 'src/types'
+import {QueryConfig, Source, Me} from 'src/types'
 
 const actionBinder = (id, action) => (...args) => {
   return action(id, ...args)
@@ -33,6 +33,7 @@ interface Props {
   onChooseMeasurement: TimeMachineContainer['handleChooseMeasurement']
   onApplyFuncsToField: TimeMachineContainer['handleApplyFuncsToField']
   onToggleTagAcceptance: TimeMachineContainer['handleToggleTagAcceptance']
+  me: Me
 }
 
 const SchemaExplorer: SFC<Props> = ({
@@ -52,6 +53,7 @@ const SchemaExplorer: SFC<Props> = ({
   onApplyFuncsToField,
   onToggleTagAcceptance,
   isQuerySupportedByExplorer = true,
+  me,
 }) => {
   const {id} = query
 
@@ -61,6 +63,7 @@ const SchemaExplorer: SFC<Props> = ({
         query={query}
         querySource={source}
         onChooseNamespace={actionBinder(id, onChooseNamespace)}
+        me={me}
       />
       <MeasurementList
         query={query}
