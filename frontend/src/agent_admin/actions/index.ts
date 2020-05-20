@@ -9,9 +9,9 @@ import {Source} from 'src/types'
 // APIs
 import {
   getMinionKeyListAllAdmin,
-  getMinionKeyListAll,
-  getMinionsIP,
-  getMinionsOS,
+  // getMinionKeyListAll,
+  // getMinionsIP,
+  // getMinionsOS,
 } from 'src/agent_admin/apis'
 
 // SaltStack
@@ -229,51 +229,6 @@ export const getMinionKeyListAllAdminAsync = (
   } catch (error) {
     console.error(error)
     dispatch(errorThrown(error, `${error.status}: ${error.statusText}`))
-  }
-}
-
-export const getMinionKeyListAllAsync = (
-  pUrl: string,
-  pToken: string
-) => async (dispatch: Dispatch<Action>): Promise<MinionsObject> => {
-  try {
-    const minions: MinionsObject = await getMinionKeyListAll(pUrl, pToken)
-    dispatch(loadMinionKeyListAll())
-    return minions
-  } catch (error) {
-    console.error(error)
-    dispatch(errorThrown(error, `${error.status}: ${error.statusText}`))
-  }
-}
-
-export const getMinionsIPAsync = (
-  pUrl: string,
-  pToken: string,
-  pMinions: MinionsObject
-) => async (dispatch: Dispatch<Action>): Promise<MinionsObject> => {
-  try {
-    const minions: MinionsObject = await getMinionsIP(pUrl, pToken, pMinions)
-
-    dispatch(loadMinionIP())
-    return minions
-  } catch (error) {
-    console.error(error)
-    dispatch(errorThrown(error))
-  }
-}
-
-export const getMinionsOSAsync = (
-  pUrl: string,
-  pToken: string,
-  pMinions: MinionsObject
-) => async (dispatch: Dispatch<Action>): Promise<MinionsObject> => {
-  try {
-    const minions: MinionsObject = await getMinionsOS(pUrl, pToken, pMinions)
-    dispatch(loadMinionOS())
-    return minions
-  } catch (error) {
-    console.error(error)
-    dispatch(errorThrown(error))
   }
 }
 

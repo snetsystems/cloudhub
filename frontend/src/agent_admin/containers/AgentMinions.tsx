@@ -77,7 +77,7 @@ interface State {
 
 @ErrorHandling
 export class AgentMinions extends PureComponent<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props)
     this.state = {
       minionLog: '<< Empty >>',

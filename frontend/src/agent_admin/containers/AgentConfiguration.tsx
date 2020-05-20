@@ -315,27 +315,18 @@ export class AgentConfiguration extends PureComponent<
       const {minionsObject} = this.props
       let {isModalCall, isModalVisible, isGetLocalStorage} = this.state
 
-      const isInstallCheck = _.filter(minionsObject, ['isInstall', true])
-
-      if (!isModalCall) {
-        const {
-          isApplyBtnDisabled,
-          focusedHost,
-        }: LocalStorageAgentConfig = getLocalStorage('AgentConfigPage')
-        const getHostCompare = _.find(isInstallCheck, ['host', focusedHost])
-
-        if (!isApplyBtnDisabled && Boolean(getHostCompare)) {
-          isModalCall = true
-          isModalVisible = true
-          isGetLocalStorage = true
-        }
-      }
-
-      this.setState({
+      const checkData = this.checkData({
+        minionsObject,
         isModalCall,
         isModalVisible,
         isGetLocalStorage,
-        isCollectorInstalled: Boolean(isInstallCheck.length),
+      })
+
+      this.setState({
+        isModalCall: checkData.isModalCall,
+        isModalVisible: checkData.isModalVisible,
+        isGetLocalStorage: checkData.isGetLocalStorage,
+        isCollectorInstalled: checkData.isCollectorInstalled,
         configPageStatus: this.props.minionsStatus,
         collectorConfigStatus: RemoteDataState.Done,
         measurementsStatus: RemoteDataState.Done,
@@ -470,6 +461,7 @@ export class AgentConfiguration extends PureComponent<
       getLocalFileWrite,
       runLocalServiceReStartTelegraf,
       minionsObject,
+      handleGetMinionKeyListAll,
     } = this.props
     const {focusedHost, configScript} = this.state
     let {
@@ -561,6 +553,8 @@ export class AgentConfiguration extends PureComponent<
               collectorConfigStatus: RemoteDataState.Done,
               measurementsStatus: RemoteDataState.Done,
             })
+
+            handleGetMinionKeyListAll()
             notify(notifyAgentApplySucceeded('is applied'))
           })
           .catch(e => {
