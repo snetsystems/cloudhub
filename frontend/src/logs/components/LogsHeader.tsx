@@ -12,6 +12,7 @@ import Authorized, {
 import LiveUpdatingStatus from 'src/logs/components/LiveUpdatingStatus'
 
 interface SourceItem {
+  url: string
   id: string
   text: string
 }
@@ -86,9 +87,9 @@ class LogsHeader extends PureComponent<Props> {
       return ''
     }
 
-    const id = _.get(this.props, 'currentSource.id', '')
+    const url = _.get(this.props, 'currentSource.url', '')
     const currentItem = _.find(this.sourceDropDownItems, item => {
-      return item.id === id
+      return item.url === url
     })
 
     if (currentItem) {
@@ -125,9 +126,14 @@ class LogsHeader extends PureComponent<Props> {
         }
       })
     } else {
-      return currentNamespaces.filter(
-        database => database.database === currentOrganization.name
-      )
+      return currentNamespaces
+        .filter(database => database.database === currentOrganization.name)
+        .map(namespace => {
+          return {
+            text: `${namespace.database}.${namespace.retentionPolicy}`,
+            ...namespace,
+          }
+        })
     }
   }
 
@@ -138,6 +144,7 @@ class LogsHeader extends PureComponent<Props> {
       return {
         text: `${source.name} @ ${source.url}`,
         id: source.id,
+        url: source.url,
       }
     })
   }

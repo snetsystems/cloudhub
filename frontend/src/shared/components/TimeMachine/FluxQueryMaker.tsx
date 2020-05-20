@@ -85,7 +85,7 @@ class FluxQueryMaker extends PureComponent<Props, State> {
       draftScript,
       fluxProportions,
       onSetFluxProportions,
-      me
+      me,
     } = this.props
     const {suggestions, isWizardActive, draftScriptStatus} = this.state
 
@@ -234,7 +234,7 @@ class FluxQueryMaker extends PureComponent<Props, State> {
   private checkDraftScript = async () => {
     const {draftScript} = this.props
 
-    if (draftScript.trim() === '') {
+    if (draftScript.trim() === '' || draftScript.includes('telegraf')) {
       // Don't attempt to validate an empty script
       this.setState({draftScriptStatus: VALID_SCRIPT_STATUS})
 
