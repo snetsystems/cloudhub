@@ -334,8 +334,7 @@ class FluxScriptWizard extends PureComponent<Props, State> {
           dbsToRPs = _.reduce(
             dbsToRPs,
             (database: DBsToRPs, value, key) =>
-              (key.includes(currentOrganization.name) &&
-                !(database[key] = value)) ||
+              (key === currentOrganization.name && !(database[key] = value)) ||
               database,
             {}
           )
