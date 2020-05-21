@@ -350,7 +350,7 @@ export class AgentConfiguration extends PureComponent<
     })
   }
 
-  public onClickTableRowCall = async (host: string, ip: string) => {
+  public onClickTableRowCall = (host: string, ip: string) => {
     if (this.state.focusedHost === host) return
     const {
       notify,
@@ -376,32 +376,36 @@ export class AgentConfiguration extends PureComponent<
       host
     )
 
-    getLocalFileReadPromise.then(({data}) => {
-      const hostData = data.return[0][host]
-      const hostLocalFileReadData = hostData.substring(
-        0,
-        hostData.lastIndexOf('\n')
-      )
-      const configObj = TOML.parse(hostLocalFileReadData)
-      const agent: any = _.get(configObj, 'agent')
+    getLocalFileReadPromise
+      .then(({data}) => {
+        const hostData = data.return[0][host]
+        const hostLocalFileReadData = hostData.substring(
+          0,
+          hostData.lastIndexOf('\n')
+        )
+        const configObj = TOML.parse(hostLocalFileReadData)
+        const agent: any = _.get(configObj, 'agent')
 
-      let isChanged = false
+        let isChanged = false
 
-      if (agent.hostname !== host) {
-        notify(notifyAgentConfigHostNameChanged(agent.hostname, host))
-        _.set(agent, 'hostname', host)
-        isChanged = true
-      }
+        if (agent.hostname !== host) {
+          notify(notifyAgentConfigHostNameChanged(agent.hostname, host))
+          _.set(agent, 'hostname', host)
+          isChanged = true
+        }
 
-      this.setState({
-        configScript: TOML.stringify(configObj),
-        isGetLocalStorage: isChanged,
-        isApplyBtnDisabled: isChanged ? !isChanged : true,
-        collectorConfigStatus: RemoteDataState.Done,
-        configPageStatus: RemoteDataState.Done,
-        selectedOrg: this.DEFAULT_DROPDOWN_TEXT,
+        this.setState({
+          configScript: TOML.stringify(configObj),
+          isGetLocalStorage: isChanged,
+          isApplyBtnDisabled: isChanged ? !isChanged : true,
+          collectorConfigStatus: RemoteDataState.Done,
+          configPageStatus: RemoteDataState.Done,
+          selectedOrg: this.DEFAULT_DROPDOWN_TEXT,
+        })
       })
-    })
+      .catch(error => {
+        console.error(error)
+      })
 
     const getLocalServiceGetRunningPromise = getLocalServiceGetRunning(
       saltMasterUrl,
@@ -409,26 +413,32 @@ export class AgentConfiguration extends PureComponent<
       host
     )
 
-    getLocalServiceGetRunningPromise.then(({data}) => {
-      const {defaultService} = this.state
-      const getServiceRunning = defaultService
-        .filter(m => data.return[0][host].includes(m))
-        .map(sMeasure => ({
-          name: sMeasure,
-          isActivity: false,
-        }))
+    getLocalServiceGetRunningPromise
+      .then(({data}) => {
+        const {defaultService} = this.state
+        const getServiceRunning = defaultService
+          .filter(m => data.return[0][host].includes(m))
+          .map(sMeasure => ({
+            name: sMeasure,
+            isActivity: false,
+          }))
 
-      const getDefaultMeasure = this.defaultMeasurementsData.map(dMeasure => ({
-        name: dMeasure,
-        isActivity: false,
-      }))
+        const getDefaultMeasure = this.defaultMeasurementsData.map(
+          dMeasure => ({
+            name: dMeasure,
+            isActivity: false,
+          })
+        )
 
-      this.setState({
-        serviceMeasurements: getServiceRunning,
-        defaultMeasurements: getDefaultMeasure,
-        measurementsStatus: RemoteDataState.Done,
+        this.setState({
+          serviceMeasurements: getServiceRunning,
+          defaultMeasurements: getDefaultMeasure,
+          measurementsStatus: RemoteDataState.Done,
+        })
       })
-    })
+      .catch(error => {
+        console.error(error)
+      })
   }
 
   public onClickActionCall = async (host: string, isRunning: boolean) => {
@@ -763,7 +773,7 @@ export class AgentConfiguration extends PureComponent<
     )
   }
 
-  private handleFocusedServiceMeasure = ({
+  private handleFocusedServiceMeasure = async ({
     clickPosition,
     _thisProps,
   }: {
@@ -801,13 +811,12 @@ export class AgentConfiguration extends PureComponent<
       ? (serviceMeasurements[idx].isActivity = true)
       : (serviceMeasurements[idx].isActivity = false)
 
-    const getRunnerSaltCmdTelegrafPromise = getRunnerSaltCmdTelegraf(
-      saltMasterUrl,
-      saltMasterToken,
-      measureName
-    )
-
-    getRunnerSaltCmdTelegrafPromise.then(({data}) => {
+    try {
+      const {data} = await getRunnerSaltCmdTelegraf(
+        saltMasterUrl,
+        saltMasterToken,
+        measureName
+      )
       this.setState({
         serviceMeasurements: [...mapServiceMeasurements],
         defaultMeasurements: [...mapDefaultMeasurements],
@@ -815,10 +824,12 @@ export class AgentConfiguration extends PureComponent<
         focusedMeasurePosition: clickPosition,
         description: data.return[0],
       })
-    })
+    } catch (error) {
+      console.error(error)
+    }
   }
 
-  private handleFocusedDefaultMeasure = ({
+  private handleFocusedDefaultMeasure = async ({
     clickPosition,
     _thisProps,
   }: {
@@ -856,13 +867,12 @@ export class AgentConfiguration extends PureComponent<
         description: globalSetting,
       })
     } else {
-      const getRunnerSaltCmdTelegrafPromise = getRunnerSaltCmdTelegraf(
-        saltMasterUrl,
-        saltMasterToken,
-        name
-      )
-
-      getRunnerSaltCmdTelegrafPromise.then(({data}) => {
+      try {
+        const {data} = await getRunnerSaltCmdTelegraf(
+          saltMasterUrl,
+          saltMasterToken,
+          name
+        )
         this.setState({
           defaultMeasurements: [...mapDefaultMeasurements],
           serviceMeasurements: [...mapServiceMeasurements],
@@ -870,7 +880,9 @@ export class AgentConfiguration extends PureComponent<
           focusedMeasurePosition: clickPosition,
           description: data.return[0],
         })
-      })
+      } catch (error) {
+        console.error(error)
+      }
     }
   }
 

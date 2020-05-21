@@ -278,31 +278,36 @@ export class AgentControl extends PureComponent<Props, State> {
       handleGetMinionKeyListAll,
     } = this.props
 
-    let minionLog: State['minionLog'] = ''
     this.setState({controlPageStatus: RemoteDataState.Loading})
 
     if (isRunning === false) {
-      const {data} = await runLocalServiceStartTelegraf(
-        saltMasterUrl,
-        saltMasterToken,
-        host
-      )
-
-      minionLog = 'Service Start' + '\n' + yaml.dump(data.return[0])
+      try {
+        const {data} = await runLocalServiceStartTelegraf(
+          saltMasterUrl,
+          saltMasterToken,
+          host
+        )
+        this.setState({
+          minionLog: 'Service Start' + '\n' + yaml.dump(data.return[0]),
+        })
+      } catch (error) {
+        console.error(error)
+      }
     } else {
-      const {data} = await runLocalServiceStopTelegraf(
-        saltMasterUrl,
-        saltMasterToken,
-        host
-      )
+      try {
+        const {data} = await runLocalServiceStopTelegraf(
+          saltMasterUrl,
+          saltMasterToken,
+          host
+        )
 
-      minionLog = 'Service Stop' + '\n' + yaml.dump(data.return[0])
+        this.setState({
+          minionLog: 'Service Stop' + '\n' + yaml.dump(data.return[0]),
+        })
+      } catch (error) {
+        console.error(error)
+      }
     }
-
-    this.setState({
-      minionLog,
-    })
-
     handleGetMinionKeyListAll()
   }
 
@@ -317,26 +322,24 @@ export class AgentControl extends PureComponent<Props, State> {
 
     this.setState({controlPageStatus: RemoteDataState.Loading})
 
-    const host = Minions.filter(m => m.isCheck === true).map(
-      checkData => checkData.host
-    )
+    try {
+      const host = Minions.filter(m => m.isCheck === true).map(
+        checkData => checkData.host
+      )
 
-    let minionLog: State['minionLog'] = ''
+      const minion = _.values(host).toString()
+      const {data} = await runLocalServiceStartTelegraf(
+        saltMasterUrl,
+        saltMasterToken,
+        minion
+      )
 
-    const minion = _.values(host).toString()
-
-    const {data} = await runLocalServiceStartTelegraf(
-      saltMasterUrl,
-      saltMasterToken,
-      minion
-    )
-
-    minionLog = 'Service Start' + '\n' + yaml.dump(data.return[0])
-
-    this.setState({
-      minionLog,
-    })
-
+      this.setState({
+        minionLog: 'Service Start' + '\n' + yaml.dump(data.return[0]),
+      })
+    } catch (error) {
+      console.error(error)
+    }
     handleGetMinionKeyListAll()
   }
 
@@ -348,24 +351,25 @@ export class AgentControl extends PureComponent<Props, State> {
       handleGetMinionKeyListAll,
     } = this.props
     const {Minions} = this.state
-    const host = Minions.filter(m => m.isCheck === true).map(
-      checkData => checkData.host
-    )
-
     this.setState({controlPageStatus: RemoteDataState.Loading})
-    const minion = _.values(host).toString()
-    const {data} = await runLocalServiceStopTelegraf(
-      saltMasterUrl,
-      saltMasterToken,
-      minion
-    )
 
-    const minionLog: State['minionLog'] =
-      'Service Stop' + '\n' + yaml.dump(data.return[0])
+    try {
+      const host = Minions.filter(m => m.isCheck === true).map(
+        checkData => checkData.host
+      )
+      const minion = _.values(host).toString()
+      const {data} = await runLocalServiceStopTelegraf(
+        saltMasterUrl,
+        saltMasterToken,
+        minion
+      )
 
-    this.setState({
-      minionLog,
-    })
+      this.setState({
+        minionLog: 'Service Stop' + '\n' + yaml.dump(data.return[0]),
+      })
+    } catch (error) {
+      console.error(error)
+    }
 
     handleGetMinionKeyListAll()
   }
@@ -379,47 +383,44 @@ export class AgentControl extends PureComponent<Props, State> {
       handleGetMinionKeyListAll,
     } = this.props
     const {Minions, chooseMenu} = this.state
-
-    const host = Minions.filter(m => m.isCheck === true).map(
-      checkData => checkData.host
-    )
-
     this.setState({controlPageStatus: RemoteDataState.Loading})
 
-    const minion = _.values(host).toString()
-    const getLocalPkgInstallTelegrafPromise = await runLocalPkgInstallTelegraf(
-      saltMasterUrl,
-      saltMasterToken,
-      minion,
-      chooseMenu
-    )
+    try {
+      const host = Minions.filter(m => m.isCheck === true).map(
+        checkData => checkData.host
+      )
+      const minion = _.values(host).toString()
+      const getLocalPkgInstallTelegrafPromise = await runLocalPkgInstallTelegraf(
+        saltMasterUrl,
+        saltMasterToken,
+        minion,
+        chooseMenu
+      )
 
-    let minionLog =
-      'Install Response' +
-      '\n' +
-      yaml.dump(getLocalPkgInstallTelegrafPromise.data.return[0])
+      this.setState({
+        minionLog:
+          'Install Response' +
+          '\n' +
+          yaml.dump(getLocalPkgInstallTelegrafPromise.data.return[0]),
+      })
 
-    this.setState({
-      minionLog,
-    })
+      const getLocalGroupAdduserPromise = await runLocalGroupAdduser(
+        saltMasterUrl,
+        saltMasterToken,
+        minion
+      )
 
-    const getLocalGroupAdduserPromise = await runLocalGroupAdduser(
-      saltMasterUrl,
-      saltMasterToken,
-      minion
-    )
-
-    minionLog =
-      this.state.minionLog +
-      '\n' +
-      'Group Add User' +
-      '\n' +
-      yaml.dump(getLocalGroupAdduserPromise.data.return[0])
-
-    this.setState({
-      minionLog,
-    })
-
+      this.setState({
+        minionLog:
+          this.state.minionLog +
+          '\n' +
+          'Group Add User' +
+          '\n' +
+          yaml.dump(getLocalGroupAdduserPromise.data.return[0]),
+      })
+    } catch (error) {
+      console.error(error)
+    }
     handleGetMinionKeyListAll()
   }
 

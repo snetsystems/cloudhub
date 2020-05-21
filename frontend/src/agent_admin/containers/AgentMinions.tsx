@@ -112,16 +112,23 @@ export class AgentMinions extends PureComponent<Props, State> {
     })
 
     if (minionsObject[host].status === 'Accept') {
-      const {data} = await handleGetLocalGrainsItem(
-        saltMasterUrl,
-        saltMasterToken,
-        host
-      )
+      try {
+        const {data} = await handleGetLocalGrainsItem(
+          saltMasterUrl,
+          saltMasterToken,
+          host
+        )
 
-      this.setState({
-        minionLog: yaml.dump(data.return[0][host]),
-        minionsPageStatus: RemoteDataState.Done,
-      })
+        this.setState({
+          minionLog: yaml.dump(data.return[0][host]),
+          minionsPageStatus: RemoteDataState.Done,
+        })
+      } catch (error) {
+        this.setState({
+          minionLog: '',
+          minionsPageStatus: RemoteDataState.Done,
+        })
+      }
     } else {
       this.setState({
         minionLog: '',
@@ -141,43 +148,65 @@ export class AgentMinions extends PureComponent<Props, State> {
     } = this.props
 
     this.setState({minionsPageStatus: RemoteDataState.Loading})
+    switch (cmdstatus) {
+      case 'Reject': {
+        try {
+          const {data} = await handleRunRejectKey(
+            saltMasterUrl,
+            saltMasterToken,
+            host
+          )
 
-    if (cmdstatus === 'Reject') {
-      const {data} = await handleRunRejectKey(
-        saltMasterUrl,
-        saltMasterToken,
-        host
-      )
+          handleGetMinionKeyListAll()
 
-      handleGetMinionKeyListAll()
+          this.setState({
+            minionLog: yaml.dump(data.return[0]),
+          })
+        } catch (error) {
+          console.error(error)
+        }
+        return
+      }
+      case 'Accept': {
+        try {
+          const {data} = await handleRunAcceptKey(
+            saltMasterUrl,
+            saltMasterToken,
+            host
+          )
 
-      this.setState({
-        minionLog: yaml.dump(data.return[0]),
-      })
-    } else if (cmdstatus === 'Accept') {
-      const {data} = await handleRunAcceptKey(
-        saltMasterUrl,
-        saltMasterToken,
-        host
-      )
+          handleGetMinionKeyListAll()
 
-      handleGetMinionKeyListAll()
+          this.setState({
+            minionLog: yaml.dump(data.return[0]),
+          })
+        } catch (error) {
+          console.error(error)
+        }
+        return
+      }
+      case 'Delete': {
+        try {
+          const {data} = await handleRunDeleteKey(
+            saltMasterUrl,
+            saltMasterToken,
+            host
+          )
 
-      this.setState({
-        minionLog: yaml.dump(data.return[0]),
-      })
-    } else if (cmdstatus === 'Delete') {
-      const {data} = await handleRunDeleteKey(
-        saltMasterUrl,
-        saltMasterToken,
-        host
-      )
+          handleGetMinionKeyListAll()
 
-      handleGetMinionKeyListAll()
-
-      this.setState({
-        minionLog: yaml.dump(data.return[0]),
-      })
+          this.setState({
+            minionLog: yaml.dump(data.return[0]),
+          })
+        } catch (error) {
+          console.error(error)
+        }
+        return
+      }
+      default: {
+        handleGetMinionKeyListAll()
+        return
+      }
     }
   }
 
