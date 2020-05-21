@@ -48,7 +48,7 @@ import {
 import DeprecationWarning from 'src/admin/components/DeprecationWarning'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-import {Source, Kapacitor, Service} from 'src/types'
+import {Me, Source, Kapacitor, Service} from 'src/types'
 import {Notification} from 'src/types/notifications'
 import {ServiceProperties, SpecificConfigOptions} from 'src/types/kapacitor'
 
@@ -57,6 +57,10 @@ import {
   SupportedServices,
   AlertTypes,
 } from 'src/kapacitor/constants'
+
+interface Auth {
+  me: Me
+}
 
 interface Link {
   rel: string
@@ -97,6 +101,7 @@ interface Sections {
 
 interface Props {
   source: Source
+  auth: Auth
   kapacitor: Kapacitor
   notify: (message: Notification) => void
   hash: string
@@ -596,6 +601,7 @@ class AlertTabs extends PureComponent<Props, State> {
   }
 
   private isSupportedService = (serviceType: string): boolean => {
+    const {auth} = this.props
     const {services, configSections} = this.state
     const foundKapacitorService: Service = services.find(service => {
       return service.name === serviceType
@@ -612,7 +618,15 @@ class AlertTabs extends PureComponent<Props, State> {
       !_.isUndefined(foundSupportedService) &&
       !_.isUndefined(foundSection)
 
-    return isSupported
+    let isSTSuperAdminCheck: boolean = true
+    if (
+      (serviceType === 'smtp' || serviceType === 'telegram') &&
+      !auth.me.superAdmin
+    ) {
+      isSTSuperAdminCheck = false
+    }
+
+    return isSupported && isSTSuperAdminCheck
   }
 }
 
