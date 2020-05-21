@@ -269,7 +269,10 @@ export class AgentControl extends PureComponent<Props, State> {
     })
   }
 
-  public onClickActionCall = (host: string, isRunning: boolean) => async () => {
+  public onClickActionCall = (
+    host: string,
+    isRunning: boolean
+  ) => async (): Promise<void> => {
     const {
       saltMasterUrl,
       saltMasterToken,
