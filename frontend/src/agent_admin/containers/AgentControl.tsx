@@ -306,6 +306,7 @@ export class AgentControl extends PureComponent<Props, State> {
 
         this.setState({
           minionLog: 'Service Stop' + '\n' + yaml.dump(data.return[0]),
+          isAllCheck: false,
         })
       } catch (error) {
         console.error(error)
@@ -339,6 +340,7 @@ export class AgentControl extends PureComponent<Props, State> {
 
       this.setState({
         minionLog: 'Service Start' + '\n' + yaml.dump(data.return[0]),
+        isAllCheck: false,
       })
     } catch (error) {
       console.error(error)
@@ -369,6 +371,7 @@ export class AgentControl extends PureComponent<Props, State> {
 
       this.setState({
         minionLog: 'Service Stop' + '\n' + yaml.dump(data.return[0]),
+        isAllCheck: false,
       })
     } catch (error) {
       console.error(error)
@@ -420,6 +423,7 @@ export class AgentControl extends PureComponent<Props, State> {
           'Group Add User' +
           '\n' +
           yaml.dump(getLocalGroupAdduserPromise.data.return[0]),
+        isAllCheck: false,
       })
     } catch (error) {
       console.error(error)
