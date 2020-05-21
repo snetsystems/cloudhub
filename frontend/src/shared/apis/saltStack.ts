@@ -1,4 +1,3 @@
-import axios from 'axios'
 import AJAX from 'src/utils/ajax'
 
 interface Params {
