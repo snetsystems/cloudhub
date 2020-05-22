@@ -27,11 +27,16 @@ import {
   AlertRule,
   QueryConfig,
   Kapacitor,
+  Me,
 } from 'src/types'
 import {
   KapacitorQueryConfigActions,
   KapacitorRuleActions,
 } from 'src/types/actions'
+
+interface Auth {
+  me: Me
+}
 
 interface Params {
   ruleID: string
@@ -46,6 +51,7 @@ interface Props {
   queryConfigActions: KapacitorQueryConfigActions
   params: Params
   router: InjectedRouter
+  auth: Auth
 }
 
 interface State {
@@ -97,6 +103,7 @@ class KapacitorRulePage extends Component<Props, State> {
       ruleActions,
       queryConfigs,
       queryConfigActions,
+      auth: {me},
     } = this.props
     const {handlersFromConfig, kapacitor} = this.state
     const rule = this.rule
@@ -119,6 +126,7 @@ class KapacitorRulePage extends Component<Props, State> {
         router={router}
         kapacitor={kapacitor}
         configLink={`/sources/${source.id}/kapacitors/${this.kapacitorID}/edit`}
+        me={me}
       />
     )
   }

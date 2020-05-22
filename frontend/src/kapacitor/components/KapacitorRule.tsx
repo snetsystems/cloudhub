@@ -35,6 +35,7 @@ import {
   Kapacitor,
   QueryConfig,
   TimeRange,
+  Me,
 } from 'src/types'
 import {Handler} from 'src/types/kapacitor'
 import {
@@ -55,6 +56,7 @@ interface Props {
   router: InjectedRouter
   kapacitor: Kapacitor
   configLink: string
+  me: Me
 }
 
 interface Item {
@@ -86,6 +88,7 @@ class KapacitorRule extends Component<Props, State> {
       queryConfigs,
       handlersFromConfig,
       queryConfigActions,
+      me,
     } = this.props
     const {chooseTrigger, updateRuleValues} = ruleActions
     const {timeRange} = this.state
@@ -124,6 +127,7 @@ class KapacitorRule extends Component<Props, State> {
               onRuleTypeInputChange={this.handleRuleTypeInputChange}
               onRuleTypeDropdownChange={this.handleRuleTypeDropdownChange}
               onChooseTimeRange={this.handleChooseTimeRange}
+              me={me}
             />
             <RuleHandlers
               rule={rule}
