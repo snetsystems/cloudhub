@@ -10,12 +10,10 @@ import (
 )
 
 var (
-	// Database is the output database for alerts.
-	Database = "cloudhub"
 	// RP will be autogen for alerts because it is default.
 	RP = "autogen"
 	// Measurement will be alerts so that the app knows where to get this data.
-	Measurement = "alerts"
+	Measurement = "cloudhub_alerts"
 	// IDTag is the output tag key for the ID of the alert
 	IDTag = "alertID"
 	//LevelTag is the output tag key for the alert level information
@@ -149,7 +147,7 @@ func commonVars(rule cloudhub.AlertRule) (string, error) {
 		LevelTag,
 		MessageField,
 		DurationField,
-		Database,
+		Escape(rule.Query.Database),
 		RP,
 		Measurement,
 		rule.Trigger,
