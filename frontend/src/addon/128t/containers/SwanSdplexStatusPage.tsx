@@ -5,7 +5,7 @@ import {useQuery} from '@apollo/react-hooks'
 
 // Container Components
 import GridLayoutRenderer from 'src/addon/128t/containers/GridLayoutRenderer'
-import TopologyRanderer from 'src/addon/128t/containers/TopologyRanderer'
+import TopologyRenderer from 'src/addon/128t/containers/TopologyRenderer'
 
 // Components
 import RouterSourceIndicator from 'src/addon/128t/components/RouterSourceIndicator'
@@ -14,7 +14,7 @@ import PageSpinner from 'src/shared/components/PageSpinner'
 import {Page, Radio, ButtonShape} from 'src/reusable_ui'
 
 // Types
-import {Router, TopSource, TopSession} from 'src/addon/128t/types'
+import {Router, TopSource, TopSession, PeerDetail} from 'src/addon/128t/types'
 import {Addon} from 'src/types/auth'
 
 // Middleware
@@ -51,6 +51,9 @@ interface Node {
   session_arrivals: number
   nodes: {
     nodes: NodeDetail[]
+  }
+  peers: {
+    nodes: PeerDetail[]
   }
   topSources: TopSource[]
   topSessions: TopSession[]
@@ -225,6 +228,7 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
               bandwidth_avg: node.bandwidth_avg,
               session_arrivals: node.session_arrivals,
               topSources: node.topSources,
+              peers: node.peers.nodes,
               topSessions: node.topSessions
                 ? node.topSessions.map(topSession => ({
                     ...topSession,
@@ -232,7 +236,6 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
                   }))
                 : [],
             }
-
             const nodeDetail: NodeDetail = _.head(node.nodes.nodes)
             if (nodeDetail) {
               try {
@@ -332,8 +335,8 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
                       .map(m => m.ipAddress)[0]
                   })(),
                 }
-              } catch (e) {
-                console.log('node detail', e)
+              } catch (error) {
+                console.error('node detail', error)
               }
             }
 
@@ -466,7 +469,7 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
             />
           </div>
         ) : (
-          <TopologyRanderer routersData={emitData.routers} />
+          <TopologyRenderer routersData={emitData.routers} />
         )}
       </Page.Contents>
     </Page>

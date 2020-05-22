@@ -9,6 +9,11 @@ export const GET_ALLROUTERS_INFO = gql`
         managementConnected
         bandwidth_avg: analytic(metric: BANDWIDTH, transform: AVERAGE)
         session_arrivals: analytic(metric: SESSION_ARRIVAL_RATE, transform: SUM)
+        peers {
+          nodes {
+            name
+          }
+        }
         nodes {
           nodes {
             assetId

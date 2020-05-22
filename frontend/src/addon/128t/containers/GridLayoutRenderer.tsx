@@ -268,11 +268,11 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       SALT_MIN_DIRECTORY.CONFIG
     )
 
-    const isGetFailed = [getFirmwareData, getConfigData]
+    const isAccess = [getFirmwareData, getConfigData]
       .map(obj => obj.status === NETWORK_ACCESS.SUCCESS)
       .includes(true)
 
-    if (!isGetFailed) {
+    if (!isAccess) {
       notify(notify_128TGetMasterDirFiles_Failed('All Directory'))
     }
 
@@ -512,7 +512,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     const routerPosition = this[assetId].getBoundingClientRect()
 
     const {top, right} = routerPosition
-    const {parentTop, parentLeft} = this.getParent(this[assetId])
+    const {parentTop, parentLeft} = this.getParentPosition(this[assetId])
 
     const {addons} = this.props
     const salt = addons.find(addon => addon.name === 'salt')
@@ -558,7 +558,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     this.handleDataPopupOpen()
   }
 
-  private getParent = (target: HTMLElement) => {
+  private getParentPosition = (target: HTMLElement) => {
     let currentParent = target
     while (currentParent) {
       if (
