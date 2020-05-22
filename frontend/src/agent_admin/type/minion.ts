@@ -9,4 +9,9 @@ export interface Minion {
   isSaveFile?: string
   isAccept?: boolean
   isCheck?: boolean
+  isSaltRuning?: boolean
+}
+
+export interface MinionsObject {
+  [x: string]: Minion
 }

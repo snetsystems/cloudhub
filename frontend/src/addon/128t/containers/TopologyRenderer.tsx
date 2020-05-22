@@ -61,23 +61,17 @@ interface GraphLink {
   target: string
 }
 
-// interface MachineData {
-//   role: string
-//   temperature: number
-//   sound: number
-// }
-
 interface Props {
   routersData: Router[]
 }
 
 interface State {
   nodeData: GraphNodeData
-  // machineData: MachineData []
+  isLocalstorage: boolean
 }
 
 @ErrorHandling
-class TopologyRanderer extends PureComponent<Props, State> {
+class TopologyRenderer extends PureComponent<Props, State> {
   private useRef = React.createRef<HTMLDivElement>()
 
   private imgTopNodeUrl = require('src/addon/128t/components/assets/topology-cloudhub.svg')
@@ -281,140 +275,85 @@ class TopologyRanderer extends PureComponent<Props, State> {
     ],
   }
 
+  private addon: {swanTopology?: SwanTopology[]}
+
   constructor(props: Props) {
     super(props)
     this.state = {
+      isLocalstorage: false,
       nodeData: {
         nodes: this.initNodes,
-        links: null,
+        links: [],
       },
     }
-  }
-
-  public onNodePositionChange = (
-    nodeId: string,
-    x: number,
-    y: number
-  ): void => {
-    const {nodeData} = this.state
-    const addon = getLocalStorage('addon')
-    let {swanTopology}: {swanTopology: SwanTopology[]} = addon
-
-    const nodes = nodeData.nodes.map(m => {
-      if (m.id === nodeId) {
-        const filtered = swanTopology.filter(s => s.id === nodeId)
-        if (filtered.length > 0) {
-          swanTopology = swanTopology.map(swan =>
-            swan.id === nodeId ? {id: nodeId, x, y} : swan
-          )
-
-          setLocalStorage('addon', {
-            ...addon,
-            swanTopology,
-          })
-        } else {
-          swanTopology.push({id: nodeId, x, y})
-          setLocalStorage('addon', {
-            ...addon,
-            swanTopology,
-          })
-        }
-        return {...m, x, y}
-      } else {
-        return m
-      }
-    })
-
-    this.setState({
-      nodeData: {
-        ...nodeData,
-        nodes,
-      },
-    })
   }
 
   public componentWillMount() {
     const {routersData} = this.props
-    const nodes = routersData.map(m =>
-      m.role === this.TOPOLOGY_ROLE.COUNDUCTOR
-        ? {id: m.assetId, label: m.assetId}
-        : {
-            id: m.assetId,
-            label: m.assetId,
-          }
-    )
+    const customRouterData = this.modifyRoutersData(routersData)
 
-    const links = routersData.map(m => ({
+    this.addon = getLocalStorage('addon')
+    const isLocalstorage: boolean = this.addon.hasOwnProperty('swanTopology')
+
+    let nodes = customRouterData.map(m => ({
+      id: m.assetId,
+      label: m.assetId,
+    }))
+
+    nodes = _.remove(nodes, node => node.id !== '-')
+
+    let links = customRouterData.map(m => ({
       source: this.TOPOLOGY_ROLE.ROOT,
       target: m.assetId,
     }))
 
-    const nodeData: GraphNodeData = {
-      nodes,
-      links,
-    }
+    links = _.remove(links, link => link.target !== '-')
 
     this.setState({
+      isLocalstorage,
       nodeData: {
-        nodes: this.state.nodeData.nodes.concat(nodeData.nodes),
-        links: nodeData.links,
+        nodes: this.state.nodeData.nodes.concat(nodes),
+        links,
       },
     })
   }
 
   public componentDidMount() {
     const {nodeData} = this.state
+    const {routersData} = this.props
     const dimensions = this.useRef.current.getBoundingClientRect()
-    const addon = getLocalStorage('addon')
-    const check = addon.hasOwnProperty('swanTopology')
 
-    let nodes = nodeData.nodes.map((m, index) =>
-      m.id === 'root'
-        ? {...m, x: dimensions.width / 2, y: this.defaultMargin.top}
-        : {
-            ...m,
-            x: this.getXCoordinate(index),
-            y: dimensions.height - this.defaultMargin.bottom,
-            viewGenerator: (node: GraphNode) => this.generateCustomNode({node}),
-          }
-    )
-
-    nodes = nodes.concat(this.dummyData.nodes)
-
-    let links = nodeData.links
-
-    links = links.concat(this.dummyData.links)
-
-    if (check) {
-      const {swanTopology}: {swanTopology: SwanTopology[]} = addon
-      nodes = nodes.map(m => {
-        const filtered = swanTopology.filter(s => s.id === m.id)
-        if (filtered.length > 0) {
-          const {x, y} = filtered[0]
-          return {
-            ...m,
-            x,
-            y,
-          }
-        } else {
-          return m
-        }
-      })
-    } else {
-      const {id, x, y} = nodes[0]
-      setLocalStorage('addon', {
-        ...addon,
-        swanTopology: [{id, x, y}],
-      })
-    }
+    const genNode = this.generatorNodeData({nodeData, routersData, dimensions})
+    const {nodes, links} = genNode
 
     this.setState({
       nodeData: {
-        ...nodeData,
         nodes,
         links,
       },
     })
+  }
+
+  public componentDidUpdate(prevProps: Props) {
+    if (prevProps.routersData !== this.props.routersData) {
+      const {nodeData} = this.state
+      const {routersData} = this.props
+      const dimensions = this.useRef.current.getBoundingClientRect()
+
+      const genNode = this.generatorNodeData({
+        nodeData,
+        routersData,
+        dimensions,
+      })
+      const {nodes, links} = genNode
+
+      this.setState({
+        nodeData: {
+          nodes,
+          links,
+        },
+      })
+    }
   }
 
   public render() {
@@ -434,6 +373,142 @@ class TopologyRanderer extends PureComponent<Props, State> {
         )}
       </div>
     )
+  }
+
+  private modifyRoutersData = (routersData: Router[]): Router[] => {
+    return routersData.map(routerData => {
+      const {assetId} = routerData
+      return {
+        ...routerData,
+        assetId: assetId ? assetId : '-',
+      }
+    })
+  }
+
+  private onNodePositionChange = (
+    nodeId: string,
+    x: number,
+    y: number
+  ): void => {
+    const {nodeData} = this.state
+
+    let {swanTopology} = this.addon
+
+    const nodes = nodeData.nodes.map(m => {
+      if (m.id === nodeId) {
+        const filtered = swanTopology.filter(s => s.id === nodeId)
+        if (filtered.length > 0) {
+          swanTopology = swanTopology.map(swan =>
+            swan.id === nodeId ? {id: nodeId, x, y} : swan
+          )
+
+          setLocalStorage('addon', {
+            ...this.addon,
+            swanTopology,
+          })
+        } else {
+          swanTopology.push({id: nodeId, x, y})
+          setLocalStorage('addon', {
+            ...this.addon,
+            swanTopology,
+          })
+        }
+        return {...m, x, y}
+      } else {
+        return m
+      }
+    })
+
+    this.setState({
+      nodeData: {
+        ...nodeData,
+        nodes,
+      },
+    })
+  }
+
+  private generatorNodeData = ({
+    routersData,
+    nodeData,
+    dimensions,
+  }: {
+    routersData: Router[]
+    nodeData?: GraphNodeData
+    dimensions?: DOMRect
+  }): GraphNodeData => {
+    let nodesInfo: GraphNodeData = {
+      nodes: null,
+      links: null,
+    }
+
+    let {nodes, links} = nodesInfo
+    const customRouterData = this.modifyRoutersData(routersData)
+
+    nodes = nodeData.nodes.map((m, index) =>
+      m.id === 'root'
+        ? {...m, x: dimensions.width / 2, y: this.defaultMargin.top}
+        : {
+            ...m,
+            x: this.getXCoordinate(index),
+            y: dimensions.height - this.defaultMargin.bottom,
+            viewGenerator: (node: GraphNode) =>
+              this.GenerateCustomNode({
+                node,
+                routersData: customRouterData,
+              }),
+          }
+    )
+
+    const filteredLinks = this.dummyData.links.filter(dummyLink => {
+      const links = nodeData.nodes.filter(node => {
+        if (node.id && node.id === dummyLink.source) return dummyLink
+      })
+
+      if (links.length > 0) return links
+    })
+
+    const filteredNodes = this.dummyData.nodes.filter(node => {
+      const nodes = filteredLinks.filter(link => {
+        if (node.id && node.id === link.target) return node
+      })
+      if (nodes.length > 0) return nodes
+    })
+
+    nodes = nodes.concat(filteredNodes)
+
+    links = nodeData.links.concat(filteredLinks)
+
+    links = _.remove(links, link => {
+      return link.target !== '-'
+    })
+
+    if (this.state.isLocalstorage) {
+      const {swanTopology} = this.addon
+      nodes = nodes.map(m => {
+        const filtered = swanTopology.filter(s => s.id === m.id)
+        if (filtered.length > 0) {
+          const {x, y} = filtered[0]
+          return {
+            ...m,
+            x,
+            y,
+          }
+        } else {
+          return m
+        }
+      })
+    } else {
+      const {id, x, y} = nodes[0]
+      setLocalStorage('addon', {
+        ...this.addon,
+        swanTopology: [{id, x, y}],
+      })
+    }
+
+    return {
+      nodes,
+      links,
+    }
   }
 
   private getXCoordinate(index: number) {
@@ -497,9 +572,17 @@ class TopologyRanderer extends PureComponent<Props, State> {
     )
   }
 
-  private generateCustomNode = ({node}: {node: GraphNode}) => {
-    const {routersData} = this.props
+  private GenerateCustomNode = ({
+    node,
+    routersData,
+  }: {
+    node: GraphNode
+    routersData: Router[]
+  }) => {
     const routerData = _.find(routersData, r => r.assetId === node.id)
+
+    if (!routerData) return
+
     const {
       assetId,
       cpuUsage,
@@ -590,4 +673,4 @@ class TopologyRanderer extends PureComponent<Props, State> {
   }
 }
 
-export default TopologyRanderer
+export default TopologyRenderer
