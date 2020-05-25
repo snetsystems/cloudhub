@@ -43,12 +43,8 @@ import {
   KapacitorRuleActions,
 } from 'src/types/actions'
 
-interface Auth {
-  me: Me
-}
-
 interface Props {
-  auth: Auth
+  me: Me
   source: Source
   rule: AlertRule
   query: QueryConfig
@@ -92,7 +88,7 @@ class KapacitorRule extends Component<Props, State> {
       queryConfigs,
       handlersFromConfig,
       queryConfigActions,
-      auth,
+      me,
     } = this.props
     const {chooseTrigger, updateRuleValues} = ruleActions
     const {timeRange} = this.state
@@ -133,7 +129,7 @@ class KapacitorRule extends Component<Props, State> {
               onChooseTimeRange={this.handleChooseTimeRange}
             />
             <RuleHandlers
-              auth={auth}
+              me={me}
               rule={rule}
               ruleActions={ruleActions}
               handlersFromConfig={handlersFromConfig}

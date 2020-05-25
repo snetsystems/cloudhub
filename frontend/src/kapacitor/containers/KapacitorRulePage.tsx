@@ -115,7 +115,7 @@ class KapacitorRulePage extends Component<Props, State> {
 
     return (
       <KapacitorRule
-        auth={auth}
+        me={auth.me}
         source={source}
         rule={rule}
         query={query}

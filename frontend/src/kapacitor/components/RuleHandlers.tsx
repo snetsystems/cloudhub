@@ -11,10 +11,11 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import {Handler} from 'src/types/kapacitor'
 import {Me, AlertRule} from 'src/types'
-
-interface Auth {
-  me: Me
-}
+import {
+  MAXIMUM_STR_LENGTH,
+  SUBSTR_START_INDEX,
+  SUBSTR_END_INDEX,
+} from 'src/types/kapacitor'
 
 interface HandlerWithText extends Handler {
   text: string
@@ -27,7 +28,7 @@ interface RuleActions {
 }
 
 interface Props {
-  auth: Auth
+  me: Me
   rule: AlertRule
   ruleActions: RuleActions
   handlersFromConfig: Handler[]
@@ -180,17 +181,18 @@ class RuleHandlers extends PureComponent<Props, State> {
   }
 
   private handlersAuthCheck = (handler: Handler) => {
-    const {auth} = this.props
+    const {me} = this.props
     const configType: AlertTypes = _.get(handler, 'type')
     const handlerOrg: string = this.getHandlerOrg(handler)
-    const currentOrgName: string = _.get(
-      auth,
-      'me.currentOrganization.name',
-      ''
-    )
-
-    if (!auth.me.superAdmin) {
-      return configType !== AlertTypes.telegram && handlerOrg === currentOrgName
+    const currentOrgName: string = _.get(me, 'currentOrganization.name', '')
+    if (!me.superAdmin) {
+      if (configType === AlertTypes.kafka || configType === AlertTypes.slack) {
+        return handlerOrg === currentOrgName
+      } else if (configType === AlertTypes.telegram) {
+        return null
+      } else {
+        return handler
+      }
     }
 
     return handler
@@ -315,8 +317,11 @@ class RuleHandlers extends PureComponent<Props, State> {
         const kafkaId = _.get(handler, 'id') || _.get(handler, 'cluster')
         const kafkaBrokers = _.join(_.get(handler, 'brokers'), ', ') || ''
         const kafkaFullName = `${kafkaId} ${kafkaBrokers}`
-        if (kafkaFullName.length > 17) {
-          return `${kafkaFullName.substring(0, 16)}...`
+        if (kafkaFullName.length > MAXIMUM_STR_LENGTH) {
+          return `${kafkaFullName.substring(
+            SUBSTR_START_INDEX,
+            SUBSTR_END_INDEX
+          )}...`
         } else {
           return kafkaFullName
         }

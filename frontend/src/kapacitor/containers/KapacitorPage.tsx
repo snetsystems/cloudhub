@@ -166,7 +166,7 @@ export class KapacitorPage extends PureComponent<Props, State> {
         hash={hash}
         notify={notify}
         source={source}
-        auth={auth}
+        me={auth.me}
         exists={exists}
         kapacitor={kapacitor}
         onSubmit={this.handleSubmit}

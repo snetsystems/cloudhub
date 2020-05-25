@@ -7,10 +7,6 @@ import KapacitorFormSkipVerify from 'src/kapacitor/components/KapacitorFormSkipV
 
 import {Me, Kapacitor, Source, Notification, NotificationFunc} from 'src/types'
 
-interface Auth {
-  me: Me
-}
-
 interface Props {
   kapacitor: Kapacitor
   exists: boolean
@@ -20,7 +16,7 @@ interface Props {
   onCheckboxChange: (e: ChangeEvent<HTMLInputElement>) => void
   onChangeUrl: (e: ChangeEvent<HTMLInputElement>) => void
   source: Source
-  auth: Auth
+  me: Me
   hash: string
   notify: (message: Notification | NotificationFunc) => void
 }
@@ -37,7 +33,7 @@ class KapacitorForm extends PureComponent<Props> {
       onInputChange,
       onCheckboxChange,
       source,
-      auth,
+      me,
       hash,
       notify,
     } = this.props
@@ -124,7 +120,7 @@ class KapacitorForm extends PureComponent<Props> {
                   hash={hash}
                   exists={exists}
                   source={source}
-                  auth={auth}
+                  me={me}
                   kapacitor={kapacitor}
                   notify={notify}
                 />
