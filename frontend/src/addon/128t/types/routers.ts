@@ -16,7 +16,8 @@ export interface Router {
   topSources?: TopSource[]
   topSessions?: TopSession[]
   isCheck?: boolean
-  peers: PeerDetail[]
+  peers?: PeerDetail[]
+  group?: string
 }
 
 export interface TopSource {
@@ -70,4 +71,9 @@ export interface GetSaltDirectoryInfo {
 
 export interface PeerDetail {
   name: string
+}
+
+export interface GroupRouterData {
+  groupName: string
+  routers: Router[]
 }

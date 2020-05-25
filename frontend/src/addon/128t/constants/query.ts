@@ -1,8 +1,8 @@
 import gql from 'graphql-tag'
 
 export const GET_ALLROUTERS_INFO = gql`
-  query routers_info {
-    allRouters {
+  query routers_info($names: [String]) {
+    allRouters(names: $names) {
       nodes {
         name
         locationCoordinates

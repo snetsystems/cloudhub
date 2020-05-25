@@ -7,6 +7,7 @@ import {
   SaltDirFile,
   GetSaltDirectoryInfo,
   PeerDetail,
+  GroupRouterData,
 } from 'src/addon/128t/types/routers'
 import {GridCell} from 'src/addon/128t/types/grid'
 import {SortDirection} from 'src/addon/128t/types/table'
@@ -34,4 +35,5 @@ export {
   Connection,
   OncueData,
   PeerDetail,
+  GroupRouterData,
 }
