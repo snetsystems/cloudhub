@@ -54,8 +54,22 @@ class SlackConfigs extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {configs} = this.state
-    const {onSave, onTest, onEnabled} = this.props
+    let {configs} = this.state
+    const {onSave, onTest, onEnabled, me} = this.props
+
+    if (!me.superAdmin) {
+      configs = configs.filter(config => {
+        if (config.options.workspace === '') {
+          return false
+        }
+
+        const isCheck =
+          config.options.workspace
+            .split('-')[0]
+            .indexOf(me.currentOrganization.name) > -1
+        return isCheck
+      })
+    }
 
     return (
       <div>
