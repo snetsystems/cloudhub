@@ -2,12 +2,17 @@ import React, {SFC} from 'react'
 
 import AlertTabs from 'src/kapacitor/components/AlertTabs'
 
-import {Kapacitor, Source, Notification, NotificationFunc} from 'src/types'
+import {Kapacitor, Me, Source, Notification, NotificationFunc} from 'src/types'
+
+interface Auth {
+  me: Me
+}
 
 interface AlertOutputProps {
   exists: boolean
   kapacitor: Kapacitor
   source: Source
+  auth: Auth
   hash: string
   notify: (message: Notification | NotificationFunc) => void
 }
@@ -16,6 +21,7 @@ const AlertOutputs: SFC<AlertOutputProps> = ({
   hash,
   exists,
   source,
+  auth,
   kapacitor,
   notify,
 }) => {
@@ -24,6 +30,7 @@ const AlertOutputs: SFC<AlertOutputProps> = ({
       <AlertTabs
         hash={hash}
         source={source}
+        auth={auth}
         kapacitor={kapacitor}
         notify={notify}
       />
