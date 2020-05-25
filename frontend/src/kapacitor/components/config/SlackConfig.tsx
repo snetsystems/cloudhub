@@ -146,12 +146,6 @@ class SlackConfig extends PureComponent<Props, State> {
     this.setState({workspace: e.target.value})
   }
 
-  private get isNewConfig(): boolean {
-    const {isNewConfig} = this.props
-
-    return isNewConfig
-  }
-
   private get options(): Options {
     const {
       config: {options},
@@ -199,7 +193,7 @@ class SlackConfig extends PureComponent<Props, State> {
   }
 
   private get isNicknameDisabled(): boolean {
-    return !this.isNewConfig || this.isDefaultConfig
+    return true
   }
 
   private handleTest = (e: MouseEvent<HTMLButtonElement>) => {
@@ -230,7 +224,10 @@ class SlackConfig extends PureComponent<Props, State> {
     }
 
     if (isNewConfig) {
-      properties.workspace = workspace
+      properties.workspace = `${workspace}-${String(properties.channel).replace(
+        '#',
+        ''
+      )}`
     }
 
     const success = await this.props.onSave(properties, isNewConfig, workspace)

@@ -5,6 +5,7 @@ import {getDeep} from 'src/utils/wrappers'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import SlackConfig from 'src/kapacitor/components/config/SlackConfig'
 import {SlackProperties} from 'src/types/kapacitor'
+import {Me} from 'src/types'
 
 interface Config {
   options: {
@@ -28,9 +29,11 @@ interface Props {
   ) => void
   onEnabled: (specificConfig: string) => boolean
   isMultipleConfigsSupported: boolean
+  me: Me
 }
 
 interface State {
+  prevConfigs: Config[]
   configs: Config[]
 }
 
@@ -39,12 +42,15 @@ class SlackConfigs extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = {
-      configs: this.props.configs
+      prevConfigs: props.configs,
+      configs: this.props.configs,
     }
   }
 
-  public componentWillReceiveProps(nextProps: Props) {
-    this.setState({configs: nextProps.configs})
+  public static getDerivedStateFromProps(props: Props, state: State) {
+    if (props.configs !== state.prevConfigs)
+      return {prevConfigs: props.configs, configs: props.configs}
+    return null
   }
 
   public render() {
@@ -133,13 +139,15 @@ class SlackConfigs extends PureComponent<Props, State> {
 
   private addConfig = () => {
     const configs = this.configs
+    const {me} = this.props
     const newConfig = {
       options: {
         url: false,
         channel: '',
-        workspace: null
+        // workspace: null,
+        workspace: me.currentOrganization.name,
       },
-      isNewConfig: true
+      isNewConfig: true,
     }
     this.setState({configs: [...configs, newConfig]})
   }

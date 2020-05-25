@@ -48,7 +48,7 @@ import {
 import DeprecationWarning from 'src/admin/components/DeprecationWarning'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-import {Source, Kapacitor, Service} from 'src/types'
+import {Source, Kapacitor, Service, Me} from 'src/types'
 import {Notification} from 'src/types/notifications'
 import {ServiceProperties, SpecificConfigOptions} from 'src/types/kapacitor'
 
@@ -100,6 +100,7 @@ interface Props {
   kapacitor: Kapacitor
   notify: (message: Notification) => void
   hash: string
+  me: Me
 }
 
 interface State {
@@ -130,7 +131,7 @@ class AlertTabs extends PureComponent<Props, State> {
     }
   }
 
-  public componentWillReceiveProps(nextProps) {
+  public componentWillReceiveProps(nextProps: Props) {
     if (this.props.kapacitor.url !== nextProps.kapacitor.url) {
       this.refreshKapacitorConfig(nextProps.kapacitor)
     }
@@ -231,6 +232,8 @@ class AlertTabs extends PureComponent<Props, State> {
 
   private getConfig(config: string): JSX.Element {
     const {configSections} = this.state
+    const {me} = this.props
+
     switch (config) {
       case AlertTypes.alerta:
         return (
@@ -352,6 +355,7 @@ class AlertTabs extends PureComponent<Props, State> {
               AlertTypes.slack
             )}
             isMultipleConfigsSupported={this.isMultipleConfigsSupported}
+            me={me}
           />
         )
 
