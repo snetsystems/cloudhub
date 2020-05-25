@@ -79,6 +79,14 @@ export const notifySessionTimedOut = (): Notification => ({
   message: 'Your session has timed out. Log in again to continue.',
 })
 
+export const notifyHttpErrorRespose = (
+  status: number,
+  errorMessage: string = ''
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `Sever ${status} error: ${errorMessage}.`,
+})
+
 export const notifyServerError: Notification = {
   ...defaultErrorNotification,
   message: 'Internal Server Error. Check API Logs.',
@@ -956,6 +964,21 @@ export const notifyAgentConfigNoMatchGroup = (error: string): Notification => ({
 export const notifyAgentConfigDBNameWrong = (error: string): Notification => ({
   ...defaultErrorNotification,
   message: `Database name must be "${error}"`,
+})
+
+export const notifyAgentConfigHostNameWrong = (
+  error: string
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `Agent hostname must be "${error}"`,
+})
+
+export const notifyAgentConfigHostNameChanged = (
+  before: string,
+  after: string
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `Agent hostname changed "${before}" to "${after}"`,
 })
 
 export const notifyAgentStartSucceeded = (

@@ -76,7 +76,7 @@ import {SeverityFormatOptions, SEVERITY_SORTING_ORDER} from 'src/logs/constants'
 
 // Types
 import {Greys} from 'src/reusable_ui/types'
-import {Source, Namespace, NotificationAction} from 'src/types'
+import {Source, NotificationAction, Me, Namespace} from 'src/types'
 import {
   HistogramData,
   HistogramColor,
@@ -152,6 +152,7 @@ interface Props {
   searchStatus: SearchStatus
   clearSearchData: (searchStatus: SearchStatus) => void
   setSearchStatus: (SearchStatus: SearchStatus) => void
+  me: Me
 }
 
 interface State {
@@ -221,7 +222,10 @@ class LogsPage extends Component<Props, State> {
 
   public async componentDidMount() {
     await this.getSources()
+
     await this.setCurrentSource()
+
+    await this.changeCurrentNamespace()
 
     await this.props.getConfig(this.logConfigLink)
 
@@ -760,6 +764,7 @@ class LogsPage extends Component<Props, State> {
       currentSource,
       currentNamespaces,
       currentNamespace,
+      me,
     } = this.props
 
     return (
@@ -773,6 +778,7 @@ class LogsPage extends Component<Props, State> {
         currentNamespace={currentNamespace}
         onChangeLiveUpdatingStatus={this.handleChangeLiveUpdatingStatus}
         onShowOptionsOverlay={this.handleToggleOverlay}
+        me={me}
       />
     )
   }
@@ -1052,6 +1058,22 @@ class LogsPage extends Component<Props, State> {
     return this.props.searchStatus !== SearchStatus.MeasurementMissing
   }
 
+  private async changeCurrentNamespace() {
+    const {currentNamespace, currentNamespaces, me} = this.props
+    const currentOrganization = _.get(me, 'currentOrganization')
+
+    if (currentNamespace.database !== currentOrganization.name) {
+      const currentNamespace = currentNamespaces.find(
+        db => db.database === currentOrganization.name
+      )
+
+      await this.handleChooseNamespace({
+        database: currentNamespace.database,
+        retentionPolicy: currentNamespace.retentionPolicy,
+      })
+    }
+  }
+
   private updateQueryCount() {
     this.setState({queryCount: this.countCurrentQueries()})
   }
@@ -1088,6 +1110,7 @@ const mapStateToProps = ({
     nextTailLowerBound,
     searchStatus,
   },
+  auth: {me},
 }) => ({
   sources,
   currentSource,
@@ -1108,6 +1131,7 @@ const mapStateToProps = ({
   currentTailUpperBound,
   nextTailLowerBound,
   searchStatus,
+  me,
 })
 
 const mapDispatchToProps = {

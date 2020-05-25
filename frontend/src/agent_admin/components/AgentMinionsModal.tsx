@@ -66,7 +66,7 @@ class AgentMinionsModal extends PureComponent<Props, State> {
 
   public onClickReject(event: MouseEvent<HTMLElement>): void {
     const {handleWheelKeyCommand, host} = this.props
-    handleWheelKeyCommand(host, 'ReJect')
+    handleWheelKeyCommand(host, 'Reject')
     event.stopPropagation()
     this.handleCloseModal()
   }
@@ -109,7 +109,7 @@ class AgentMinionsModal extends PureComponent<Props, State> {
             onMouseLeave={this.handleCloseModal}
           >
             <div className="dropdown--menu">
-              {status === 'UnAccept' || status === 'ReJect' ? (
+              {status === 'UnAccept' || status === 'Reject' ? (
                 <div className="dropdown--item" onClick={this.onClickAccept}>
                   <div className="dropdown-item--children">Accept</div>
                 </div>

@@ -39,7 +39,7 @@
     text-align: left;
   }
 
-  .measurements-query-builder--contain {
+  .panel-title-sub .measurements-query-builder--contain {
     color: $s-orange;
     font-size: 12px;
     background: #232323;
@@ -151,7 +151,13 @@
   .CodeMirror-sizer {
     margin-bottom: 0 !important;
   }
-
+  .panel-heading {
+    height: 45px;
+  }
+  .panel-title-sub {
+    display: flex;
+    justify-content: space-around;
+  }
   .panel-title.use-user-select {
     user-select: text !important;
     -webkit-user-select: text !important;

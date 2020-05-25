@@ -23,6 +23,7 @@ const (
 
 // AllAlerts are properties all alert types will have
 var AllAlerts = `
+	.stateChangesOnly()
     .message(message)
 	.id(idVar)
 	.idTag(idTag)
@@ -112,14 +113,12 @@ func Trigger(rule cloudhub.AlertRule) (string, error) {
 		return "", err
 	}
 
-	// Only add stateChangesOnly to new rules
-	if rule.ID == "" {
-		trigger += `
-				.stateChangesOnly()
-		`
-	}
-
 	trigger += AllAlerts
+
+	// Only add stateChangesOnly to new rules => Always included
+	// if rule.ID == "" {
+	// 	trigger += `	.stateChangesOnly()`
+	// }
 
 	if rule.Details != "" {
 		trigger += Details

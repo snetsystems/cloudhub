@@ -61,6 +61,11 @@ interface Props {
   minionsObject: MinionsObject
   minionsStatus: RemoteDataState
   handleGetMinionKeyListAll: () => void
+  handleSetMinionStatus: ({
+    minionsStatus,
+  }: {
+    minionsStatus: RemoteDataState
+  }) => void
 }
 interface State {
   minionsPageStatus: RemoteDataState
@@ -72,7 +77,7 @@ interface State {
 
 @ErrorHandling
 export class AgentMinions extends PureComponent<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props)
     this.state = {
       minionLog: '<< Empty >>',
@@ -84,43 +89,46 @@ export class AgentMinions extends PureComponent<Props, State> {
   }
 
   public componentWillMount() {
-    console.log('componentWillMount')
-    console.log(this.props.minionsStatus)
     this.setState({minionsPageStatus: this.props.minionsStatus})
   }
 
-  public async componentDidMount() {
-    console.log('componentDidMount')
-    console.log(this.props.minionsStatus)
-  }
-
-  public componentDidUpdate(nextProps) {
-    if (nextProps !== this.props) {
-      console.log('componentDidUpdate')
-      console.log(this.props.minionsStatus)
+  public componentDidUpdate(prevProps: Props) {
+    if (prevProps !== this.props) {
       this.setState({minionsPageStatus: this.props.minionsStatus})
     }
   }
 
-  onClickTableRowCall = (host: string) => () => {
-    const {saltMasterUrl, saltMasterToken, minionsObject} = this.props
+  public onClickTableRowCall = (host: string) => async () => {
+    const {
+      saltMasterUrl,
+      saltMasterToken,
+      minionsObject,
+      handleGetLocalGrainsItem,
+    } = this.props
+
     this.setState({
       focusedHost: host,
       minionsPageStatus: RemoteDataState.Loading,
     })
 
     if (minionsObject[host].status === 'Accept') {
-      const getLocalGrainsItemPromise = this.props.handleGetLocalGrainsItem(
-        saltMasterUrl,
-        saltMasterToken,
-        host
-      )
-      getLocalGrainsItemPromise.then(pLocalGrainsItemData => {
+      try {
+        const {data} = await handleGetLocalGrainsItem(
+          saltMasterUrl,
+          saltMasterToken,
+          host
+        )
+
         this.setState({
-          minionLog: yaml.dump(pLocalGrainsItemData.data.return[0][host]),
+          minionLog: yaml.dump(data.return[0][host]),
           minionsPageStatus: RemoteDataState.Done,
         })
-      })
+      } catch (error) {
+        this.setState({
+          minionLog: '',
+          minionsPageStatus: RemoteDataState.Done,
+        })
+      }
     } else {
       this.setState({
         minionLog: '',
@@ -129,48 +137,76 @@ export class AgentMinions extends PureComponent<Props, State> {
     }
   }
 
-  handleWheelKeyCommand = (host: string, cmdstatus: string) => {
-    const {saltMasterUrl, saltMasterToken} = this.props
+  public handleWheelKeyCommand = async (host: string, cmdstatus: string) => {
+    const {
+      saltMasterUrl,
+      saltMasterToken,
+      handleRunRejectKey,
+      handleGetMinionKeyListAll,
+      handleRunAcceptKey,
+      handleRunDeleteKey,
+    } = this.props
+
     this.setState({minionsPageStatus: RemoteDataState.Loading})
-    if (cmdstatus == 'ReJect') {
-      const getWheelKeyCommandPromise = this.props.handleRunRejectKey(
-        saltMasterUrl,
-        saltMasterToken,
-        host
-      )
+    switch (cmdstatus) {
+      case 'Reject': {
+        try {
+          const {data} = await handleRunRejectKey(
+            saltMasterUrl,
+            saltMasterToken,
+            host
+          )
 
-      getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
-        this.setState({
-          minionLog: yaml.dump(pWheelKeyCommandData.data.return[0]),
-        })
-        this.props.handleGetMinionKeyListAll()
-      })
-    } else if (cmdstatus == 'Accept') {
-      const getWheelKeyCommandPromise = this.props.handleRunAcceptKey(
-        saltMasterUrl,
-        saltMasterToken,
-        host
-      )
+          handleGetMinionKeyListAll()
 
-      getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
-        this.setState({
-          minionLog: yaml.dump(pWheelKeyCommandData.data.return[0]),
-        })
-        this.props.handleGetMinionKeyListAll()
-      })
-    } else if (cmdstatus == 'Delete') {
-      const getWheelKeyCommandPromise = this.props.handleRunDeleteKey(
-        saltMasterUrl,
-        saltMasterToken,
-        host
-      )
+          this.setState({
+            minionLog: yaml.dump(data.return[0]),
+          })
+        } catch (error) {
+          console.error(error)
+        }
+        return
+      }
+      case 'Accept': {
+        try {
+          const {data} = await handleRunAcceptKey(
+            saltMasterUrl,
+            saltMasterToken,
+            host
+          )
 
-      getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
-        this.setState({
-          minionLog: yaml.dump(pWheelKeyCommandData.data.return[0]),
-        })
-        this.props.handleGetMinionKeyListAll()
-      })
+          handleGetMinionKeyListAll()
+
+          this.setState({
+            minionLog: yaml.dump(data.return[0]),
+          })
+        } catch (error) {
+          console.error(error)
+        }
+        return
+      }
+      case 'Delete': {
+        try {
+          const {data} = await handleRunDeleteKey(
+            saltMasterUrl,
+            saltMasterToken,
+            host
+          )
+
+          handleGetMinionKeyListAll()
+
+          this.setState({
+            minionLog: yaml.dump(data.return[0]),
+          })
+        } catch (error) {
+          console.error(error)
+        }
+        return
+      }
+      default: {
+        handleGetMinionKeyListAll()
+        return
+      }
     }
   }
 

@@ -9,9 +9,9 @@ import {Source} from 'src/types'
 // APIs
 import {
   getMinionKeyListAllAdmin,
-  getMinionKeyListAll,
-  getMinionsIP,
-  getMinionsOS,
+  // getMinionKeyListAll,
+  // getMinionsIP,
+  // getMinionsOS,
 } from 'src/agent_admin/apis'
 
 // SaltStack
@@ -20,6 +20,16 @@ import {
   runAcceptKey,
   runRejectKey,
   runDeleteKey,
+  runLocalServiceStartTelegraf,
+  runLocalServiceStopTelegraf,
+  runLocalPkgInstallTelegraf,
+  runLocalGroupAdduser,
+  getLocalFileRead,
+  getLocalFileWrite,
+  runLocalServiceReStartTelegraf,
+  getLocalServiceGetRunning,
+  getRunnerSaltCmdTelegraf,
+  getRunnerSaltCmdDirectory,
 } from 'src/shared/apis/saltStack'
 
 export enum ActionType {
@@ -31,9 +41,20 @@ export enum ActionType {
   RunAcceptKey = 'RUN_ACCEEPT_KEY',
   RunRejectKey = 'RUN_REJECT_KEY',
   RunDeleteKey = 'RUN_DELETE_KEY',
+  // --
+  RunLocalServiceStartTelegraf = 'RUN_LOCAL_SERVICE_START_TELEGRAF',
+  RunLocalServiceStopTelegraf = 'RUN_LOCAL_SERVICE_STOP_TELEGRAF',
+  RunLocalPkgInstallTelegraf = 'RUN_LOCAL_PKG_INSTALL_TELEGRAF',
+  RunLocalGroupAdduser = 'RUN_LOCAL_GROUP_ADD_USER',
+  GetLocalFileRead = 'GET_LOCAL_FILE_READ',
+  GetLocalFileWrite = 'GET_LOCAL_FILE_WRITE',
+  RunLocalServiceReStartTelegraf = 'RUN_LOCAL_SERVICE_RESTART_TELEGRAF',
+  GetLocalServiceGetRunning = 'GET_LOCAL_SERVICE_GET_RUNNING',
+  GetRunnerSaltCmdTelegraf = 'GET_RUNNER_SALT_CMD_TELEGRAF',
+  GetRunnerSaltCmdDirectory = 'GET_RUNNER_SALT_CMD_DIRECTORY',
 }
 
-interface MinionKeyListAllActionAdmin {
+interface MinionKeyListAllAdminAction {
   type: ActionType.MinionKeyListAllAdmin
 }
 
@@ -65,8 +86,39 @@ interface RunDeleteKeyAction {
   type: ActionType.RunDeleteKey
 }
 
+interface RunLocalServiceStartTelegrafAction {
+  type: ActionType.RunLocalServiceStartTelegraf
+}
+interface RunLocalServiceStopTelegrafAction {
+  type: ActionType.RunLocalServiceStopTelegraf
+}
+interface RunLocalPkgInstallTelegrafAction {
+  type: ActionType.RunLocalPkgInstallTelegraf
+}
+interface RunLocalGroupAdduserAction {
+  type: ActionType.RunLocalGroupAdduser
+}
+interface GetLocalFileReadAction {
+  type: ActionType.GetLocalFileRead
+}
+interface GetLocalFileWriteAction {
+  type: ActionType.GetLocalFileWrite
+}
+interface RunLocalServiceReStartTelegrafAction {
+  type: ActionType.RunLocalServiceReStartTelegraf
+}
+interface GetLocalServiceGetRunningAction {
+  type: ActionType.GetLocalServiceGetRunning
+}
+interface GetRunnerSaltCmdTelegrafAction {
+  type: ActionType.GetRunnerSaltCmdTelegraf
+}
+interface GetRunnerSaltCmdDirectoryAction {
+  type: ActionType.GetRunnerSaltCmdDirectory
+}
+
 export type Action =
-  | MinionKeyListAllActionAdmin
+  | MinionKeyListAllAdminAction
   | MinionKeyListAllAction
   | MinionIPAction
   | MinionOSAction
@@ -74,8 +126,19 @@ export type Action =
   | RunAcceptKeyAction
   | RunRejectKeyAction
   | RunDeleteKeyAction
+  // --
+  | RunLocalServiceStartTelegrafAction
+  | RunLocalServiceStopTelegrafAction
+  | RunLocalPkgInstallTelegrafAction
+  | RunLocalGroupAdduserAction
+  | GetLocalFileReadAction
+  | GetLocalFileWriteAction
+  | RunLocalServiceReStartTelegrafAction
+  | GetLocalServiceGetRunningAction
+  | GetRunnerSaltCmdTelegrafAction
+  | GetRunnerSaltCmdDirectoryAction
 
-export const loadMinionKeyListAllAdmin = (): MinionKeyListAllActionAdmin => ({
+export const loadMinionKeyListAllAdmin = (): MinionKeyListAllAdminAction => ({
   type: ActionType.MinionKeyListAllAdmin,
 })
 
@@ -107,7 +170,47 @@ export const cmdRunDeleteKey = (): RunDeleteKeyAction => ({
   type: ActionType.RunDeleteKey,
 })
 
-export const getMinionKeyListAllAsyncAdmin = (
+export const cmdRunLocalServiceStartTelegraf = (): RunLocalServiceStartTelegrafAction => ({
+  type: ActionType.RunLocalServiceStartTelegraf,
+})
+
+export const cmdRunLocalServiceStopTelegraf = (): RunLocalServiceStopTelegrafAction => ({
+  type: ActionType.RunLocalServiceStopTelegraf,
+})
+
+export const cmdRunLocalPkgInstallTelegraf = (): RunLocalPkgInstallTelegrafAction => ({
+  type: ActionType.RunLocalPkgInstallTelegraf,
+})
+
+export const cmdRunLocalGroupAdduser = (): RunLocalGroupAdduserAction => ({
+  type: ActionType.RunLocalGroupAdduser,
+})
+
+export const loadGetLocalFileRead = (): GetLocalFileReadAction => ({
+  type: ActionType.GetLocalFileRead,
+})
+
+export const cmdGetLocalFileWrite = (): GetLocalFileWriteAction => ({
+  type: ActionType.GetLocalFileWrite,
+})
+
+export const cmdRunLocalServiceReStartTelegraf = (): RunLocalServiceReStartTelegrafAction => ({
+  type: ActionType.RunLocalServiceReStartTelegraf,
+})
+
+export const cmdGetLocalServiceGetRunning = (): GetLocalServiceGetRunningAction => ({
+  type: ActionType.GetLocalServiceGetRunning,
+})
+
+export const cmdGetRunnerSaltCmdTelegraf = (): GetRunnerSaltCmdTelegrafAction => ({
+  type: ActionType.GetRunnerSaltCmdTelegraf,
+})
+
+export const loadGetRunnerSaltCmdDirectory = (): GetRunnerSaltCmdDirectoryAction => ({
+  type: ActionType.GetRunnerSaltCmdDirectory,
+})
+
+export const getMinionKeyListAllAdminAsync = (
   pUrl: string,
   pToken: string,
   pSource: Source,
@@ -129,53 +232,6 @@ export const getMinionKeyListAllAsyncAdmin = (
   }
 }
 
-export const getMinionKeyListAllAsync = (
-  pUrl: string,
-  pToken: string
-) => async (dispatch: Dispatch<Action>): Promise<MinionsObject> => {
-  try {
-    const minions: MinionsObject = await getMinionKeyListAll(pUrl, pToken)
-
-    dispatch(loadMinionKeyListAll())
-    return minions
-  } catch (error) {
-    console.error(error)
-    dispatch(errorThrown(error, `${error.status}: ${error.statusText}`))
-  }
-}
-
-export const getMinionsIPAsync = (
-  pUrl: string,
-  pToken: string,
-  pMinions: MinionsObject
-) => async (dispatch: Dispatch<Action>): Promise<MinionsObject> => {
-  try {
-    const minions: MinionsObject = await getMinionsIP(pUrl, pToken, pMinions)
-
-    dispatch(loadMinionIP())
-    return minions
-  } catch (error) {
-    console.error(error)
-    dispatch(errorThrown(error))
-  }
-}
-
-export const getMinionsOSAsync = (
-  pUrl: string,
-  pToken: string,
-  pMinions: MinionsObject
-) => async (dispatch: Dispatch<Action>): Promise<MinionsObject> => {
-  try {
-    const minions: MinionsObject = await getMinionsOS(pUrl, pToken, pMinions)
-
-    dispatch(loadMinionOS())
-    return minions
-  } catch (error) {
-    console.error(error)
-    dispatch(errorThrown(error))
-  }
-}
-
 export const getLocalGrainsItemAsync = (
   pUrl: string,
   pToken: string,
@@ -187,7 +243,6 @@ export const getLocalGrainsItemAsync = (
       pToken,
       pMinions
     )
-
     dispatch(loadLocalGrainsItem())
     return minions
   } catch (error) {
@@ -238,6 +293,203 @@ export const runDeleteKeyAsync = (
 
     dispatch(cmdRunDeleteKey())
     return minions
+  } catch (error) {
+    console.error(error)
+    dispatch(errorThrown(error))
+  }
+}
+
+export const runLocalServiceStartTelegrafAsync = (
+  pUrl: string,
+  pToken: string,
+  pMinionId: string
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const getLocalServiceStartTelegrafPromise = await runLocalServiceStartTelegraf(
+      pUrl,
+      pToken,
+      pMinionId
+    )
+    dispatch(cmdRunLocalServiceStartTelegraf())
+    return getLocalServiceStartTelegrafPromise
+  } catch (error) {
+    console.error(error)
+    dispatch(errorThrown(error))
+  }
+}
+
+export const runLocalServiceStopTelegrafAsync = (
+  pUrl: string,
+  pToken: string,
+  pMinionId: string
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const getLocalServiceStopTelegrafPromise = await runLocalServiceStopTelegraf(
+      pUrl,
+      pToken,
+      pMinionId
+    )
+    dispatch(cmdRunLocalServiceStopTelegraf())
+    return getLocalServiceStopTelegrafPromise
+  } catch (error) {
+    console.error(error)
+    dispatch(errorThrown(error))
+  }
+}
+
+export const runLocalPkgInstallTelegrafAsync = (
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pSelectCollector: string
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const runLocalPkgInstallTelegrafPromise = await runLocalPkgInstallTelegraf(
+      pUrl,
+      pToken,
+      pMinionId,
+      pSelectCollector
+    )
+    dispatch(cmdRunLocalPkgInstallTelegraf())
+    return runLocalPkgInstallTelegrafPromise
+  } catch (error) {
+    console.error(error)
+    dispatch(errorThrown(error))
+  }
+}
+
+export const runLocalGroupAdduserAsync = (
+  pUrl: string,
+  pToken: string,
+  pMinionId: string
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const runLocalGroupAdduserPromise = await runLocalGroupAdduser(
+      pUrl,
+      pToken,
+      pMinionId
+    )
+
+    dispatch(cmdRunLocalGroupAdduser())
+    return runLocalGroupAdduserPromise
+  } catch (error) {
+    console.error(error)
+    dispatch(errorThrown(error))
+  }
+}
+
+export const getLocalFileReadAsync = (
+  pUrl: string,
+  pToken: string,
+  pMinionId: string
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const getLocalFileReadPromise = await getLocalFileRead(
+      pUrl,
+      pToken,
+      pMinionId
+    )
+    dispatch(loadGetLocalFileRead())
+    return getLocalFileReadPromise
+  } catch (error) {
+    console.error(error)
+    dispatch(errorThrown(error))
+  }
+}
+
+export const getLocalFileWriteAsync = (
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pScript: string
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const getLocalFileWritePromise = await getLocalFileWrite(
+      pUrl,
+      pToken,
+      pMinionId,
+      pScript
+    )
+    dispatch(cmdGetLocalFileWrite())
+    return getLocalFileWritePromise
+  } catch (error) {
+    console.error(error)
+    dispatch(errorThrown(error))
+  }
+}
+
+export const runLocalServiceReStartTelegrafAsync = (
+  pUrl: string,
+  pToken: string,
+  pMinionId: string
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const runLocalServiceReStartTelegrafPromise = await runLocalServiceReStartTelegraf(
+      pUrl,
+      pToken,
+      pMinionId
+    )
+    dispatch(cmdRunLocalServiceReStartTelegraf())
+    return runLocalServiceReStartTelegrafPromise
+  } catch (error) {
+    console.error(error)
+    dispatch(errorThrown(error))
+  }
+}
+
+export const getLocalServiceGetRunningAsync = (
+  pUrl: string,
+  pToken: string,
+  pMinionId: string
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const getLocalServiceGetRunningPromise = await getLocalServiceGetRunning(
+      pUrl,
+      pToken,
+      pMinionId
+    )
+    dispatch(cmdGetLocalServiceGetRunning())
+    return getLocalServiceGetRunningPromise
+  } catch (error) {
+    console.error(error)
+    dispatch(errorThrown(error))
+  }
+}
+
+export const getRunnerSaltCmdTelegrafAsync = (
+  pUrl: string,
+  pToken: string,
+  pMeasurements: string
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const getRunnerSaltCmdTelegrafPromise = await getRunnerSaltCmdTelegraf(
+      pUrl,
+      pToken,
+      pMeasurements
+    )
+    dispatch(cmdGetRunnerSaltCmdTelegraf())
+    return getRunnerSaltCmdTelegrafPromise
+  } catch (error) {
+    console.error(error)
+    dispatch(errorThrown(error))
+  }
+}
+
+export const getRunnerSaltCmdDirectoryAsync = (
+  pUrl: string,
+  pToken: string,
+  pDirPath: string
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const getDirectoryItems = await getRunnerSaltCmdDirectory(
+      pUrl,
+      pToken,
+      pDirPath
+    )
+
+    dispatch(loadGetRunnerSaltCmdDirectory())
+
+    return getDirectoryItems
   } catch (error) {
     console.error(error)
     dispatch(errorThrown(error))

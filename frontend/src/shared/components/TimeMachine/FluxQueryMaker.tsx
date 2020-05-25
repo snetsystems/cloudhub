@@ -24,7 +24,7 @@ import {getSuggestions} from 'src/flux/helpers/suggestions'
 import {insertFluxFunction} from 'src/flux/helpers/scriptInsertion'
 
 // Types
-import {NotificationAction, Source} from 'src/types'
+import {NotificationAction, Source, Me} from 'src/types'
 import {Suggestion, Links, ScriptStatus} from 'src/types/flux'
 
 const CHECK_SCRIPT_DELAY = 600
@@ -47,7 +47,11 @@ interface PassedProps {
   notify: NotificationAction
 }
 
-type Props = ConnectedProps & PassedProps
+interface Auth {
+  me: Me
+}
+
+type Props = ConnectedProps & PassedProps & Auth
 
 interface State {
   suggestions: Suggestion[]
@@ -81,6 +85,7 @@ class FluxQueryMaker extends PureComponent<Props, State> {
       draftScript,
       fluxProportions,
       onSetFluxProportions,
+      me,
     } = this.props
     const {suggestions, isWizardActive, draftScriptStatus} = this.state
 
@@ -92,7 +97,9 @@ class FluxQueryMaker extends PureComponent<Props, State> {
         size: leftSize,
         headerButtons: [],
         menuOptions: [],
-        render: () => <SchemaExplorer source={source} notify={notify} />,
+        render: () => (
+          <SchemaExplorer source={source} notify={notify} me={me} />
+        ),
         headerOrientation: HANDLE_VERTICAL,
       },
       {
@@ -149,6 +156,7 @@ class FluxQueryMaker extends PureComponent<Props, State> {
         isWizardActive={isWizardActive}
         onSetIsWizardActive={this.handleSetIsWizardActive}
         onAddToScript={this.handleAddToScript}
+        me={me}
       >
         <Threesizer
           orientation={HANDLE_VERTICAL}
@@ -226,7 +234,7 @@ class FluxQueryMaker extends PureComponent<Props, State> {
   private checkDraftScript = async () => {
     const {draftScript} = this.props
 
-    if (draftScript.trim() === '') {
+    if (draftScript.trim() === '' || draftScript.includes('telegraf')) {
       // Don't attempt to validate an empty script
       this.setState({draftScriptStatus: VALID_SCRIPT_STATUS})
 
@@ -247,7 +255,7 @@ class FluxQueryMaker extends PureComponent<Props, State> {
   }
 }
 
-const ConnectedFluxQueryMaker = (props: PassedProps) => (
+const ConnectedFluxQueryMaker = (props: PassedProps & Auth) => (
   <Subscribe to={[TimeMachineContainer]}>
     {(container: TimeMachineContainer) => (
       <FluxQueryMaker
