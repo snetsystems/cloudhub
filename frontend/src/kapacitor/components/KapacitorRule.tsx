@@ -29,13 +29,13 @@ import {
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import {
+  Me,
   Source,
   AlertRule,
   Notification,
   Kapacitor,
   QueryConfig,
   TimeRange,
-  Me,
 } from 'src/types'
 import {Handler} from 'src/types/kapacitor'
 import {
@@ -43,7 +43,12 @@ import {
   KapacitorRuleActions,
 } from 'src/types/actions'
 
+interface Auth {
+  me: Me
+}
+
 interface Props {
+  auth: Auth
   source: Source
   rule: AlertRule
   query: QueryConfig
@@ -56,7 +61,6 @@ interface Props {
   router: InjectedRouter
   kapacitor: Kapacitor
   configLink: string
-  me: Me
 }
 
 interface Item {
@@ -88,7 +92,7 @@ class KapacitorRule extends Component<Props, State> {
       queryConfigs,
       handlersFromConfig,
       queryConfigActions,
-      me,
+      auth,
     } = this.props
     const {chooseTrigger, updateRuleValues} = ruleActions
     const {timeRange} = this.state
@@ -127,9 +131,10 @@ class KapacitorRule extends Component<Props, State> {
               onRuleTypeInputChange={this.handleRuleTypeInputChange}
               onRuleTypeDropdownChange={this.handleRuleTypeDropdownChange}
               onChooseTimeRange={this.handleChooseTimeRange}
-              me={me}
+              me={auth.me}
             />
             <RuleHandlers
+              auth={auth}
               rule={rule}
               ruleActions={ruleActions}
               handlersFromConfig={handlersFromConfig}

@@ -22,12 +22,12 @@ import {
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import {
+  Me,
   Source,
   Notification,
   AlertRule,
   QueryConfig,
   Kapacitor,
-  Me,
 } from 'src/types'
 import {
   KapacitorQueryConfigActions,
@@ -103,7 +103,7 @@ class KapacitorRulePage extends Component<Props, State> {
       ruleActions,
       queryConfigs,
       queryConfigActions,
-      auth: {me},
+      auth,
     } = this.props
     const {handlersFromConfig, kapacitor} = this.state
     const rule = this.rule
@@ -115,6 +115,7 @@ class KapacitorRulePage extends Component<Props, State> {
 
     return (
       <KapacitorRule
+        auth={auth}
         source={source}
         rule={rule}
         query={query}
@@ -126,7 +127,6 @@ class KapacitorRulePage extends Component<Props, State> {
         router={router}
         kapacitor={kapacitor}
         configLink={`/sources/${source.id}/kapacitors/${this.kapacitorID}/edit`}
-        me={me}
       />
     )
   }
