@@ -91,6 +91,7 @@ class SlackConfigs extends PureComponent<Props, State> {
               isNewConfig={isNewConfig}
               isDefaultConfig={isDefaultConfig}
               workspaceID={workspaceID}
+              me={me}
             />
           )
         })}
