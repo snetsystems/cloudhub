@@ -253,10 +253,13 @@ class SlackConfig extends PureComponent<Props, State> {
     }
 
     if (isNewConfig) {
-      properties.workspace = `${workspace}-${String(properties.channel).replace(
-        '#',
-        ''
-      )}`
+      if (properties.channel.length > 0) {
+        properties.workspace = `${workspace}-${String(
+          properties.channel
+        ).replace('#', '')}`
+      } else {
+        properties.workspace = `${workspace}`
+      }
     }
 
     const success = await this.props.onSave(properties, isNewConfig, workspace)

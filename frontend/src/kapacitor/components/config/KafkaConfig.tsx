@@ -316,7 +316,12 @@ class KafkaConfig extends PureComponent<Props, State> {
       const replaceBrokers = this.state.currentBrokers.map(broker =>
         broker.replace(':', '_')
       )
-      properties.id = `${this.state.id}-${replaceBrokers.join('-')}`
+
+      if (replaceBrokers.length > 0) {
+        properties.id = `${this.state.id}-${replaceBrokers.join('-')}`
+      } else {
+        properties.id = `${this.state.id}`
+      }
     }
 
     const success = await this.props.onSave(
