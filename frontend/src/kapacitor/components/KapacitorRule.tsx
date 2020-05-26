@@ -127,6 +127,7 @@ class KapacitorRule extends Component<Props, State> {
               onRuleTypeInputChange={this.handleRuleTypeInputChange}
               onRuleTypeDropdownChange={this.handleRuleTypeDropdownChange}
               onChooseTimeRange={this.handleChooseTimeRange}
+              me={me}
             />
             <RuleHandlers
               me={me}
