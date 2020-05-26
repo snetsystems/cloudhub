@@ -1,9 +1,11 @@
 import React, {PureComponent, MouseEvent, ChangeEvent} from 'react'
+import _ from 'lodash'
 
 import TagInput from 'src/shared/components/TagInput'
+import Dropdown from 'src/shared/components/Dropdown'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-import {Notification, NotificationFunc} from 'src/types'
+import {Notification, NotificationFunc, Me} from 'src/types'
 
 import {KafkaProperties} from 'src/types/kapacitor'
 import {notifyInvalidBatchSizeValue} from 'src/shared/copy/notifications'
@@ -34,17 +36,19 @@ interface Props {
   notify: (message: Notification | NotificationFunc) => void
   id: string
   onDelete: (specificConfig: string) => void
+  me: Me
 }
 
 interface State {
   currentBrokers: string[]
   testEnabled: boolean
   enabled: boolean
+  keyID: string
+  id?: string
 }
 
 @ErrorHandling
 class KafkaConfig extends PureComponent<Props, State> {
-  private id: HTMLInputElement
   private timeout: HTMLInputElement
   private batchSize: HTMLInputElement
   private batchTimeout: HTMLInputElement
@@ -54,22 +58,30 @@ class KafkaConfig extends PureComponent<Props, State> {
   private sslKey: HTMLInputElement
   private insecureSkipVerify: HTMLInputElement
 
-  constructor(props) {
+  constructor(props: Props) {
     super(props)
-
-    const {brokers} = props.config.options
+    const {config, me} = props
+    const {options} = config
+    const {brokers, id} = options
 
     this.state = {
       currentBrokers: brokers || [],
-      testEnabled: this.props.enabled,
+      testEnabled: props.enabled,
       enabled: getDeep<boolean>(this.props, 'config.options.enabled', false),
+      keyID: props.id,
+      id: this.isNewConfig ? me.currentOrganization.name : id,
     }
   }
 
+  public handleChooseDefaultRole = ({text}: {text: string}) => {
+    this.setState({id: text})
+  }
+
   public render() {
-    const {options} = this.props.config
-    const {id: keyID} = this.props
-    const id = options.id
+    const {me, config} = this.props
+    const {enabled, keyID, id} = this.state
+
+    const {options} = config
     const timeout = options.timeout
     const batchSize = options['batch-size']
     const batchTimeout = options['batch-timeout']
@@ -78,21 +90,35 @@ class KafkaConfig extends PureComponent<Props, State> {
     const sslCert = options['ssl-cert']
     const sslKey = options['ssl-key']
     const insecureSkipVerify = options['insecure-skip-verify']
-    const {enabled} = this.state
+
+    const {organizations} = me
+    const dropdownRolesItems = organizations.map(
+      organization => organization.name
+    )
 
     return (
       <form onSubmit={this.handleSubmit}>
         <div className="form-group col-xs-12">
           <label htmlFor={`${keyID}-id`}>ID</label>
-          <input
-            className="form-control"
-            id={`${keyID}-id`}
-            type="text"
-            ref={r => (this.id = r)}
-            defaultValue={id || ''}
-            onChange={this.disableTest}
-            readOnly={!this.isNewConfig}
-          />
+          {this.isNewConfig && me.superAdmin ? (
+            <Dropdown
+              items={dropdownRolesItems}
+              onChoose={this.handleChooseDefaultRole}
+              selected={id}
+              className="dropdown-stretch"
+              toggleStyle={{height: '38px'}}
+              disabled={this.isDefaultConfig}
+            />
+          ) : (
+            <input
+              className="form-control"
+              id={`${keyID}-id`}
+              type="text"
+              defaultValue={id || ''}
+              onChange={this.disableTest}
+              disabled={true}
+            />
+          )}
         </div>
         <TagInput
           title="Brokers"
@@ -287,7 +313,10 @@ class KafkaConfig extends PureComponent<Props, State> {
     }
 
     if (this.isNewConfig) {
-      properties.id = this.id.value
+      const replaceBrokers = this.state.currentBrokers.map(broker =>
+        broker.replace(':', '_')
+      )
+      properties.id = `${this.state.id}-${replaceBrokers.join('-')}`
     }
 
     const success = await this.props.onSave(

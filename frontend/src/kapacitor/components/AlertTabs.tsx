@@ -268,6 +268,7 @@ class AlertTabs extends PureComponent<Props, State> {
             notify={this.props.notify}
             isMultipleConfigsSupported={this.isMultipleConfigsSupported}
             onDelete={this.handleDeleteConfig(AlertTypes.kafka)}
+            me={me}
           />
         )
 
