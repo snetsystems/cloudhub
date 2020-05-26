@@ -74,32 +74,27 @@ class DatabaseList extends Component<DatabaseListProps, DatabaseListState> {
 
   public async getDbRp() {
     const {source} = this.context
-    const {querySource} = this.props
+    const {querySource, me} = this.props
     const proxy = _.get(querySource, ['links', 'proxy'], source.links.proxy)
-    const me = this.props.me
 
     const currentOrganization = _.get(me, 'currentOrganization')
 
     try {
       const sorted = await getDatabasesWithRetentionPolicies(proxy)
 
-      if (currentOrganization) {
-        if (sorted && sorted.length > 0) {
-          let roleNamespace: Namespace[]
+      if (sorted && sorted.length > 0) {
+        let roleNamespace: Namespace[]
 
-          if (isUserAuthorized(me.role, SUPERADMIN_ROLE)) {
-            this.setState({namespaces: sorted})
-          } else {
-            roleNamespace = _.filter(
-              sorted,
-              sorted => sorted.database === currentOrganization.name
-            )
+        if (isUserAuthorized(me.role, SUPERADMIN_ROLE)) {
+          this.setState({namespaces: sorted})
+        } else {
+          roleNamespace = _.filter(
+            sorted,
+            sorted => sorted.database === currentOrganization.name
+          )
 
-            this.setState({namespaces: roleNamespace})
-          }
+          this.setState({namespaces: roleNamespace})
         }
-      } else {
-        this.setState({namespaces: sorted})
       }
     } catch (err) {
       console.error(err)

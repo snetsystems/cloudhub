@@ -2,10 +2,14 @@ import React, {Component} from 'react'
 import Dropdown from 'src/shared/components/Dropdown'
 
 import {showDatabases} from 'src/shared/apis/metaQuery'
-import parsers from 'src/shared/parsing'
+//import parsers from 'src/shared/parsing'
+import showDatabasesParser from 'src/shared/parsing/showDatabases'
 import {Source} from 'src/types/sources'
 import {ErrorHandling} from 'src/shared/decorators/errors'
-const {databases: showDatabasesParser} = parsers
+import {Me} from 'src/types'
+import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
+import _ from 'lodash'
+//const {databases: showDatabasesParser} = parsers
 
 interface Database {
   text: string
@@ -17,6 +21,7 @@ interface Props {
   onStartEdit?: () => void
   onErrorThrown: (error: string) => void
   source: Source
+  me: Me
 }
 
 interface State {
@@ -58,23 +63,35 @@ class DatabaseDropdown extends Component<Props, State> {
   }
 
   private getDatabasesAsync = async (): Promise<void> => {
-    const {source, database, onSelectDatabase, onErrorThrown} = this.props
+    const {source, database, onSelectDatabase, onErrorThrown, me} = this.props
     const proxy = source.links.proxy
+    const currentOrganization = _.get(me, 'currentOrganization')
+
     try {
       const {data} = await showDatabases(proxy)
       const {databases, errors} = showDatabasesParser(data)
+
       if (errors.length > 0) {
         throw errors[0] // only one error can come back from this, but it's returned as an array
       }
 
-      const nonSystemDatabases = databases.filter(name => name !== '_internal')
+      let nonSystemDatabases: any[]
+      if (isUserAuthorized(me.role, SUPERADMIN_ROLE)) {
+        nonSystemDatabases = databases.filter(name => name !== '_internal')
+      } else {
+        nonSystemDatabases = databases.filter(
+          name => name !== '_internal' && name === currentOrganization.name
+        )
+      }
 
       this.setState({
-        databases: nonSystemDatabases,
+        databases: nonSystemDatabases.sort(),
       })
+
       const selectedDatabaseText = nonSystemDatabases.includes(database)
         ? database
         : nonSystemDatabases[0] || 'No databases'
+
       onSelectDatabase({
         text: selectedDatabaseText,
       })

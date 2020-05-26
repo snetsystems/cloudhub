@@ -1,7 +1,7 @@
 import React, {PureComponent} from 'react'
 import DatabaseDropdown from 'src/shared/components/DatabaseDropdown'
 import {Radio} from 'src/reusable_ui'
-import {Source, DropdownItem} from 'src/types'
+import {Source, DropdownItem, Me} from 'src/types'
 import {WriteDataMode} from 'src/types'
 
 interface Props {
@@ -12,6 +12,7 @@ interface Props {
   onClose: () => void
   mode: string
   source: Source
+  me: Me
 }
 
 class WriteDataHeader extends PureComponent<Props> {
@@ -22,6 +23,7 @@ class WriteDataHeader extends PureComponent<Props> {
       errorThrown,
       onClose,
       source,
+      me,
     } = this.props
 
     return (
@@ -33,6 +35,7 @@ class WriteDataHeader extends PureComponent<Props> {
             onSelectDatabase={handleSelectDatabase}
             database={selectedDatabase}
             onErrorThrown={errorThrown}
+            me={me}
           />
           {this.modeSelector}
         </div>

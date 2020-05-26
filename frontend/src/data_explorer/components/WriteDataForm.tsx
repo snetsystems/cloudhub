@@ -11,7 +11,7 @@ import WriteDataBody from 'src/data_explorer/components/WriteDataBody'
 import WriteDataHeader from 'src/data_explorer/components/WriteDataHeader'
 
 import {OVERLAY_TECHNOLOGY} from 'src/shared/constants/classNames'
-import {WriteDataMode} from 'src/types'
+import {WriteDataMode, Me} from 'src/types'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Source, DropdownItem} from 'src/types'
 
@@ -23,6 +23,7 @@ interface Props {
   onClose: () => void
   errorThrown: () => void
   writeLineProtocol: (source: Source, database: string, content: string) => void
+  me: Me
 }
 
 interface State {
@@ -55,7 +56,7 @@ class WriteDataForm extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {onClose, errorThrown, source} = this.props
+    const {onClose, errorThrown, source, me} = this.props
     const {dragClass} = this.state
 
     return (
@@ -75,6 +76,7 @@ class WriteDataForm extends PureComponent<Props, State> {
             errorThrown={errorThrown}
             onToggleMode={this.handleToggleMode}
             handleSelectDatabase={this.handleSelectDatabase}
+            me={me}
           />
           <WriteDataBody
             {...this.state}

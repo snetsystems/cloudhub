@@ -13,6 +13,7 @@ import {
   Source,
   TimeRange,
   AlertRuleType,
+  Me,
 } from 'src/types'
 import {KapacitorQueryConfigActions} from 'src/types/actions'
 
@@ -38,6 +39,7 @@ interface Props {
   queryConfigActions: KapacitorQueryConfigActions
   source: Source
   onChooseTimeRange: (timeRange: TimeRange) => void
+  me: Me
 }
 
 class ValuesSection extends Component<Props> {
@@ -105,7 +107,14 @@ class ValuesSection extends Component<Props> {
   }
 
   private get dataSection(): JSX.Element {
-    const {rule, query, timeRange, onAddEvery, queryConfigActions} = this.props
+    const {
+      rule,
+      query,
+      timeRange,
+      onAddEvery,
+      queryConfigActions,
+      me,
+    } = this.props
 
     return (
       <DataSection
@@ -115,6 +124,7 @@ class ValuesSection extends Component<Props> {
         actions={queryConfigActions}
         onAddEvery={onAddEvery}
         isDeadman={this.isDeadman(rule)}
+        me={me}
       />
     )
   }
