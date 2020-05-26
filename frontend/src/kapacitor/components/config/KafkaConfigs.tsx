@@ -69,24 +69,10 @@ class KafkaConfigs extends Component<Props, State> {
 
   public render() {
     const {onSave, onDelete, onTest, notify, me} = this.props
-    let {configs} = this
-
-    if (!me.superAdmin) {
-      configs = configs.filter(config => {
-        if (config.options.id === '') {
-          return false
-        }
-
-        const isCheck =
-          config.options.id.split('-')[0].indexOf(me.currentOrganization.name) >
-          -1
-        return isCheck
-      })
-    }
 
     return (
       <div>
-        {configs.map(c => {
+        {this.configs.map(c => {
           const enabled = getDeep<boolean>(c, 'options.enabled', false)
           const id = getDeep<string>(c, 'options.id', '')
           return (

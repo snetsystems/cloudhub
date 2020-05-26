@@ -54,26 +54,11 @@ class SlackConfigs extends PureComponent<Props, State> {
   }
 
   public render() {
-    let {configs} = this.state
     const {onSave, onTest, onEnabled, me} = this.props
-
-    if (!me.superAdmin) {
-      configs = configs.filter(config => {
-        if (config.options.workspace === '') {
-          return false
-        }
-
-        const isCheck =
-          config.options.workspace
-            .split('-')[0]
-            .indexOf(me.currentOrganization.name) > -1
-        return isCheck
-      })
-    }
 
     return (
       <div>
-        {configs.map(config => {
+        {this.configs.map(config => {
           const workspace = this.getWorkspace(config)
           const isNewConfig = this.isNewConfig(config)
           const enabled = onEnabled(workspace)
@@ -159,7 +144,6 @@ class SlackConfigs extends PureComponent<Props, State> {
       options: {
         url: false,
         channel: '',
-        // workspace: null,
         workspace: me.currentOrganization.name,
       },
       isNewConfig: true,

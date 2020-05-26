@@ -409,10 +409,80 @@ class AlertTabs extends PureComponent<Props, State> {
     kapacitor: Kapacitor
   ): Promise<void> => {
     try {
+      const {me} = this.props
       const {
         data: {sections},
       } = await getKapacitorConfig(kapacitor)
-      this.setState({configSections: sections})
+      let modifySections: Sections
+
+      if (!me.superAdmin) {
+        const getSlackElements: Section['elements'] = _.get(
+          sections,
+          'slack.elements'
+        )
+
+        const filteredSlackElements = getSlackElements.filter(
+          (element: Element) => {
+            const firstName = element.options.workspace.split('-')[0]
+            return firstName === me.currentOrganization.name
+          }
+        )
+
+        const slackElements =
+          filteredSlackElements.length > 0
+            ? filteredSlackElements
+            : [
+                {
+                  ...getSlackElements[0],
+                  options: {
+                    ...getSlackElements[0].options,
+                    channel: '',
+                    url: false,
+                    enabled: false,
+                    workspace: me.currentOrganization.name,
+                    default: false,
+                  },
+                  isNewConfig: true,
+                },
+              ]
+
+        const getKafkaElements: Section['elements'] = _.get(
+          sections,
+          'kafka.elements'
+        )
+
+        const filteredKafkaElements = getKafkaElements.filter(
+          (element: Element) => {
+            const firstName = element.options.id.split('-')[0]
+            return firstName === me.currentOrganization.name
+          }
+        )
+
+        const kafkaElements =
+          filteredKafkaElements.length > 0
+            ? filteredKafkaElements
+            : [
+                {
+                  ...getKafkaElements[0],
+                  options: {
+                    ...getKafkaElements[0].options,
+                    id: me.currentOrganization.name,
+                    brokers: [],
+                    'insecure-skip-verify': false,
+                  },
+                  isNewConfig: true,
+                },
+              ]
+
+        _.set(sections, 'slack.elements', slackElements)
+        _.set(sections, 'kafka.elements', kafkaElements)
+
+        modifySections = sections
+      } else {
+        modifySections = sections
+      }
+
+      this.setState({configSections: modifySections})
     } catch (error) {
       this.setState({configSections: null})
       this.props.notify(notifyRefreshKapacitorFailed())
