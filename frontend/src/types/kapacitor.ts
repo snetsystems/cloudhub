@@ -441,3 +441,7 @@ export interface LogItem {
   field?: object
   cluster?: string
 }
+
+export const MAXIMUM_STR_LENGTH = 17
+export const SUBSTR_START_INDEX = 0
+export const SUBSTR_END_INDEX = 16

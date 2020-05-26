@@ -10,7 +10,12 @@ import {DEFAULT_HANDLERS, AlertTypes} from 'src/kapacitor/constants'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import {Handler} from 'src/types/kapacitor'
-import {AlertRule} from 'src/types'
+import {Me, AlertRule} from 'src/types'
+import {
+  MAXIMUM_STR_LENGTH,
+  SUBSTR_START_INDEX,
+  SUBSTR_END_INDEX,
+} from 'src/types/kapacitor'
 
 interface HandlerWithText extends Handler {
   text: string
@@ -23,6 +28,7 @@ interface RuleActions {
 }
 
 interface Props {
+  me: Me
   rule: AlertRule
   ruleActions: RuleActions
   handlersFromConfig: Handler[]
@@ -90,7 +96,11 @@ class RuleHandlers extends PureComponent<Props, State> {
     } = this.props
     const {handlersOnThisAlert, selectedHandler} = this.state
 
-    const allHandlers: Handler[] = [...DEFAULT_HANDLERS, ...handlersFromConfig]
+    const allHandlers: Handler[] = _.filter<Handler>(
+      [...DEFAULT_HANDLERS, ...handlersFromConfig],
+      h => this.handlersAuthCheck(h)
+    )
+
     const mappedHandlers: HandlerWithText[] = this.mapWithNicknames(allHandlers)
 
     const mappedHandlersOnThisAlert: HandlerWithText[] = this.mapWithNicknames(
@@ -156,6 +166,36 @@ class RuleHandlers extends PureComponent<Props, State> {
         </div>
       </div>
     )
+  }
+
+  private getHandlerOrg = (handler: Handler): string => {
+    const configType: AlertTypes = _.get(handler, 'type')
+    switch (configType) {
+      case AlertTypes.slack:
+        return _.get(handler, 'workspace') || 'default'
+      case AlertTypes.kafka:
+        return _.get(handler, 'id') || _.get(handler, 'cluster')
+      default:
+        return null
+    }
+  }
+
+  private handlersAuthCheck = (handler: Handler) => {
+    const {me} = this.props
+    const configType: AlertTypes = _.get(handler, 'type')
+    const handlerOrg: string = this.getHandlerOrg(handler)
+    const currentOrgName: string = _.get(me, 'currentOrganization.name', '')
+    if (!me.superAdmin) {
+      if (configType === AlertTypes.kafka || configType === AlertTypes.slack) {
+        return handlerOrg === currentOrgName
+      } else if (configType === AlertTypes.telegram) {
+        return null
+      } else {
+        return handler
+      }
+    }
+
+    return handler
   }
 
   private handleChooseHandler = (ep: HandlerWithText): (() => void) => () => {
@@ -269,9 +309,23 @@ class RuleHandlers extends PureComponent<Props, State> {
     const configType: AlertTypes = _.get(handler, 'type')
     switch (configType) {
       case AlertTypes.slack:
-        return _.get(handler, 'workspace') || 'default'
+        const workspace = _.get(handler, 'workspace') || 'default'
+        const channel = _.get(handler, 'channel') || ''
+        return `${workspace} ${channel}`
+
       case AlertTypes.kafka:
-        return _.get(handler, 'id') || _.get(handler, 'cluster')
+        const kafkaId = _.get(handler, 'id') || _.get(handler, 'cluster')
+        const kafkaBrokers = _.join(_.get(handler, 'brokers'), ', ') || ''
+        const kafkaFullName = `${kafkaId} ${kafkaBrokers}`
+        if (kafkaFullName.length > MAXIMUM_STR_LENGTH) {
+          return `${kafkaFullName.substring(
+            SUBSTR_START_INDEX,
+            SUBSTR_END_INDEX
+          )}...`
+        } else {
+          return kafkaFullName
+        }
+
       default:
         return null
     }

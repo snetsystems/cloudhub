@@ -601,6 +601,7 @@ class AlertTabs extends PureComponent<Props, State> {
   }
 
   private isSupportedService = (serviceType: string): boolean => {
+    const {me} = this.props
     const {services, configSections} = this.state
     const foundKapacitorService: Service = services.find(service => {
       return service.name === serviceType
@@ -617,7 +618,15 @@ class AlertTabs extends PureComponent<Props, State> {
       !_.isUndefined(foundSupportedService) &&
       !_.isUndefined(foundSection)
 
-    return isSupported
+    let isSTSuperAdminCheck: boolean = true
+    if (
+      (serviceType === 'smtp' || serviceType === 'telegram') &&
+      !me.superAdmin
+    ) {
+      isSTSuperAdminCheck = false
+    }
+
+    return isSupported && isSTSuperAdminCheck
   }
 }
 

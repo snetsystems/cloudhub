@@ -31,6 +31,10 @@ import {Kapacitor} from 'src/types'
 export const defaultName = 'My Kapacitor'
 export const kapacitorPort = '9094'
 
+interface Auth {
+  me: Me
+}
+
 interface Props {
   me: Me
   source: Source
@@ -39,6 +43,7 @@ interface Props {
   router: {push: (url: string) => void}
   location: {pathname: string; hash: string}
   params: {id: string; hash: string}
+  auth: Auth
 }
 
 interface State {
