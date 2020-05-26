@@ -56,11 +56,7 @@ class SlackConfig extends PureComponent<Props, State> {
       chooseRole: _.get(this.props, 'me.currentOrganization.name') || '',
     }
   }
-  public handleChooseDefaultRole = ({
-    roleName: {text},
-  }: {
-    roleName: {text: string}
-  }) => {
+  public handleChooseDefaultRole = ({text}: {text: string}) => {
     this.setState({workspace: text})
   }
 
