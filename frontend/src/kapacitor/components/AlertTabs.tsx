@@ -58,10 +58,6 @@ import {
   AlertTypes,
 } from 'src/kapacitor/constants'
 
-interface Auth {
-  me: Me
-}
-
 interface Link {
   rel: string
   href: string
@@ -101,7 +97,7 @@ interface Sections {
 
 interface Props {
   source: Source
-  auth: Auth
+  me: Me
   kapacitor: Kapacitor
   notify: (message: Notification) => void
   hash: string
@@ -601,7 +597,7 @@ class AlertTabs extends PureComponent<Props, State> {
   }
 
   private isSupportedService = (serviceType: string): boolean => {
-    const {auth} = this.props
+    const {me} = this.props
     const {services, configSections} = this.state
     const foundKapacitorService: Service = services.find(service => {
       return service.name === serviceType
@@ -621,7 +617,7 @@ class AlertTabs extends PureComponent<Props, State> {
     let isSTSuperAdminCheck: boolean = true
     if (
       (serviceType === 'smtp' || serviceType === 'telegram') &&
-      !auth.me.superAdmin
+      !me.superAdmin
     ) {
       isSTSuperAdminCheck = false
     }
