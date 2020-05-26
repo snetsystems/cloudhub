@@ -263,8 +263,6 @@ class SlackConfig extends PureComponent<Props, State> {
       )}`
     }
 
-    console.log({properties})
-
     const success = await this.props.onSave(properties, isNewConfig, workspace)
     if (success) {
       this.setState({testEnabled: true})
