@@ -87,9 +87,9 @@ class LogsHeader extends PureComponent<Props> {
       return ''
     }
 
-    const url = _.get(this.props, 'currentSource.url', '')
+    const id = _.get(this.props, 'currentSource.id', '')
     const currentItem = _.find(this.sourceDropDownItems, item => {
-      return item.url === url
+      return item.id === id
     })
 
     if (currentItem) {
@@ -110,11 +110,13 @@ class LogsHeader extends PureComponent<Props> {
   }
 
   private get namespaceDropDownItems() {
-    const {currentNamespaces} = this.props
-    const me = this.props.me
-    const currentOrganization = _.get(me, 'currentOrganization')
+    const {currentNamespaces, currentNamespace, me} = this.props
 
     if (!currentNamespaces) {
+      return ''
+    }
+
+    if (!currentNamespace) {
       return ''
     }
 
@@ -127,7 +129,7 @@ class LogsHeader extends PureComponent<Props> {
       })
     } else {
       return currentNamespaces
-        .filter(database => database.database === currentOrganization.name)
+        .filter(database => database.database === currentNamespace.database)
         .map(namespace => {
           return {
             text: `${namespace.database}.${namespace.retentionPolicy}`,

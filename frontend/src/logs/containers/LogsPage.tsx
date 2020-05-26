@@ -333,17 +333,13 @@ class LogsPage extends Component<Props, State> {
   }
 
   private setCurrentSource = async () => {
-    if (!this.props.currentSource && this.props.sources.length > 0) {
+    if (this.props.sources.length > 0) {
       const source =
         this.props.sources.find(src => {
           return src.default
         }) || this.props.sources[0]
 
       return await this.props.getSourceAndPopulateNamespaces(source.id)
-    } else if (this.props.currentNamespace) {
-      return this.props.fetchNamespaceSyslogStatusAsync(
-        this.props.currentNamespace
-      )
     }
   }
 
@@ -359,6 +355,7 @@ class LogsPage extends Component<Props, State> {
 
     this.interval = window.setInterval(
       this.handleTailFetchingInterval,
+
       DEFAULT_TAIL_CHUNK_DURATION_MS
     )
 
