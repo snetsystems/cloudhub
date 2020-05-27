@@ -5,7 +5,7 @@ import Input from 'src/kapacitor/components/KapacitorFormInput'
 import {Page} from 'src/reusable_ui'
 import KapacitorFormSkipVerify from 'src/kapacitor/components/KapacitorFormSkipVerify'
 
-import {Me, Kapacitor, Source, Notification, NotificationFunc} from 'src/types'
+import {Kapacitor, Source, Notification, NotificationFunc, Me} from 'src/types'
 
 interface Props {
   kapacitor: Kapacitor
@@ -16,9 +16,9 @@ interface Props {
   onCheckboxChange: (e: ChangeEvent<HTMLInputElement>) => void
   onChangeUrl: (e: ChangeEvent<HTMLInputElement>) => void
   source: Source
-  me: Me
   hash: string
   notify: (message: Notification | NotificationFunc) => void
+  me: Me
 }
 
 class KapacitorForm extends PureComponent<Props> {
@@ -33,9 +33,9 @@ class KapacitorForm extends PureComponent<Props> {
       onInputChange,
       onCheckboxChange,
       source,
-      me,
       hash,
       notify,
+      me,
     } = this.props
 
     return (

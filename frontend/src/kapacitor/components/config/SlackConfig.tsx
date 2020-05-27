@@ -1,8 +1,10 @@
 import _ from 'lodash'
 import React, {PureComponent, ChangeEvent, MouseEvent} from 'react'
 import RedactedInput from 'src/kapacitor/components/config/RedactedInput'
+import Dropdown from 'src/shared/components/Dropdown'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {SlackProperties} from 'src/types/kapacitor'
+import {Me, Organization} from 'src/types'
 
 interface Options {
   url: boolean
@@ -30,12 +32,14 @@ interface Props {
   isNewConfig: boolean
   workspaceID: string
   isDefaultConfig: boolean
+  me: Me
 }
 
 interface State {
   testEnabled: boolean
   enabled: boolean
   workspace: string
+  chooseRole: Organization
 }
 
 @ErrorHandling
@@ -49,28 +53,47 @@ class SlackConfig extends PureComponent<Props, State> {
       testEnabled: this.props.enabled,
       enabled: _.get(this.props, 'config.options.enabled', false),
       workspace: _.get(this.props, 'config.options.workspace') || '',
+      chooseRole: _.get(this.props, 'me.currentOrganization.name') || '',
     }
+  }
+  public handleChooseDefaultRole = ({text}: {text: string}) => {
+    this.setState({workspace: text})
   }
 
   public render() {
     const {url, channel} = this.options
     const {testEnabled, enabled, workspace} = this.state
+    const {me} = this.props
+    const {organizations} = me
 
+    const dropdownRolesItems = organizations.map(
+      organization => organization.name
+    )
     return (
       <form onSubmit={this.handleSubmit}>
         <div className="form-group col-xs-12">
           <label htmlFor={`${this.workspaceID}-nickname`}>
             Nickname this Configuration
           </label>
-          <input
-            className="form-control"
-            id={`${this.workspaceID}-nickname`}
-            type="text"
-            placeholder={this.nicknamePlaceholder}
-            value={workspace}
-            onChange={this.handleWorkspaceChange}
-            disabled={this.isNicknameDisabled}
-          />
+          {this.isNewConfig && me.superAdmin ? (
+            <Dropdown
+              items={dropdownRolesItems}
+              onChoose={this.handleChooseDefaultRole}
+              selected={this.state.workspace}
+              className="dropdown-stretch"
+              toggleStyle={{height: '38px'}}
+            />
+          ) : (
+            <input
+              className="form-control"
+              id={`${this.workspaceID}-nickname`}
+              type="text"
+              placeholder={this.nicknamePlaceholder}
+              value={workspace}
+              onChange={this.handleWorkspaceChange}
+              disabled={this.isNicknameDisabled}
+            />
+          )}
         </div>
         <div className="form-group col-xs-12">
           <label htmlFor={`${this.workspaceID}-url`}>
@@ -199,7 +222,7 @@ class SlackConfig extends PureComponent<Props, State> {
   }
 
   private get isNicknameDisabled(): boolean {
-    return !this.isNewConfig || this.isDefaultConfig
+    return true
   }
 
   private handleTest = (e: MouseEvent<HTMLButtonElement>) => {
@@ -230,7 +253,13 @@ class SlackConfig extends PureComponent<Props, State> {
     }
 
     if (isNewConfig) {
-      properties.workspace = workspace
+      if (properties.channel.length > 0) {
+        properties.workspace = `${workspace}-${String(
+          properties.channel
+        ).replace('#', '')}`
+      } else {
+        properties.workspace = `${workspace}`
+      }
     }
 
     const success = await this.props.onSave(properties, isNewConfig, workspace)

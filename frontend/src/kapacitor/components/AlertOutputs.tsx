@@ -2,33 +2,33 @@ import React, {SFC} from 'react'
 
 import AlertTabs from 'src/kapacitor/components/AlertTabs'
 
-import {Kapacitor, Me, Source, Notification, NotificationFunc} from 'src/types'
+import {Kapacitor, Source, Notification, NotificationFunc, Me} from 'src/types'
 
 interface AlertOutputProps {
   exists: boolean
   kapacitor: Kapacitor
   source: Source
-  me: Me
   hash: string
   notify: (message: Notification | NotificationFunc) => void
+  me: Me
 }
 
 const AlertOutputs: SFC<AlertOutputProps> = ({
   hash,
   exists,
   source,
-  me,
   kapacitor,
   notify,
+  me,
 }) => {
   if (exists) {
     return (
       <AlertTabs
         hash={hash}
         source={source}
-        me={me}
         kapacitor={kapacitor}
         notify={notify}
+        me={me}
       />
     )
   }

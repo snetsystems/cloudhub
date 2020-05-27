@@ -187,7 +187,7 @@ class RuleHandlers extends PureComponent<Props, State> {
     const currentOrgName: string = _.get(me, 'currentOrganization.name', '')
     if (!me.superAdmin) {
       if (configType === AlertTypes.kafka || configType === AlertTypes.slack) {
-        return handlerOrg === currentOrgName
+        return handlerOrg.split('-')[0] === currentOrgName
       } else if (configType === AlertTypes.telegram) {
         return null
       } else {
@@ -310,13 +310,13 @@ class RuleHandlers extends PureComponent<Props, State> {
     switch (configType) {
       case AlertTypes.slack:
         const workspace = _.get(handler, 'workspace') || 'default'
-        const channel = _.get(handler, 'channel') || ''
-        return `${workspace} ${channel}`
+
+        return `${workspace}`
 
       case AlertTypes.kafka:
         const kafkaId = _.get(handler, 'id') || _.get(handler, 'cluster')
-        const kafkaBrokers = _.join(_.get(handler, 'brokers'), ', ') || ''
-        const kafkaFullName = `${kafkaId} ${kafkaBrokers}`
+        const kafkaFullName = `${kafkaId}`
+
         if (kafkaFullName.length > MAXIMUM_STR_LENGTH) {
           return `${kafkaFullName.substring(
             SUBSTR_START_INDEX,

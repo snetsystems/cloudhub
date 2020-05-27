@@ -5,26 +5,9 @@ import KafkaConfig from 'src/kapacitor/components/config/KafkaConfig'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import {KafkaProperties} from 'src/types/kapacitor'
-import {Notification, NotificationFunc} from 'src/types'
+import {Notification, NotificationFunc, Me} from 'src/types'
 
 import {getDeep} from 'src/utils/wrappers'
-
-const DEFAULT_CONFIG = {
-  options: {
-    id: '',
-    brokers: [],
-    timeout: '',
-    'batch-size': 0,
-    'batch-timeout': '',
-    'use-ssl': false,
-    'ssl-ca': '',
-    'ssl-cert': '',
-    'ssl-key': '',
-    'insecure-skip-verify': false,
-    enabled: false
-  },
-  isNewConfig: true
-}
 
 interface Config {
   options: KafkaProperties & {
@@ -44,6 +27,7 @@ interface Props {
   onEnabled: (specificConfig: string) => boolean
   notify: (message: Notification | NotificationFunc) => void
   isMultipleConfigsSupported: boolean
+  me: Me
 }
 
 interface State {
@@ -53,11 +37,27 @@ interface State {
 
 @ErrorHandling
 class KafkaConfigs extends Component<Props, State> {
+  private DEFAULT_CONFIG = {
+    options: {
+      id: this.props.me.currentOrganization.name,
+      brokers: [],
+      timeout: '',
+      'batch-size': 0,
+      'batch-timeout': '',
+      'use-ssl': false,
+      'ssl-ca': '',
+      'ssl-cert': '',
+      'ssl-key': '',
+      'insecure-skip-verify': false,
+      enabled: false,
+    },
+    isNewConfig: true,
+  }
   constructor(props: Props) {
     super(props)
     this.state = {
       prevConfigs: props.configs,
-      configs: this.props.configs
+      configs: this.props.configs,
     }
   }
 
@@ -68,7 +68,7 @@ class KafkaConfigs extends Component<Props, State> {
   }
 
   public render() {
-    const {onSave, onDelete, onTest, notify} = this.props
+    const {onSave, onDelete, onTest, notify, me} = this.props
 
     return (
       <div>
@@ -85,6 +85,7 @@ class KafkaConfigs extends Component<Props, State> {
               notify={notify}
               key={id}
               id={id}
+              me={me}
             />
           )
         })}
@@ -123,7 +124,7 @@ class KafkaConfigs extends Component<Props, State> {
 
   private handleAddConfig = (): void => {
     const {configs} = this.state
-    const newConfig: Config = DEFAULT_CONFIG
+    const newConfig: Config = this.DEFAULT_CONFIG
     this.setState({configs: [...configs, newConfig]})
   }
 }
