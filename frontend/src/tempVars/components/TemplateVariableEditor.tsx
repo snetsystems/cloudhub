@@ -40,6 +40,7 @@ import {
   Source,
   RemoteDataState,
   Notification,
+  Me,
 } from 'src/types'
 import {
   TEMPLATE_TYPES_LIST,
@@ -53,6 +54,7 @@ interface Props {
   template?: Template
   templates: Template[]
   source: Source
+  me: Me
   onCancel: () => void
   onCreate?: (template: Template) => Promise<any>
   onUpdate?: (template: Template) => Promise<any>
@@ -109,7 +111,7 @@ class TemplateVariableEditor extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {source, onCancel, notify, templates} = this.props
+    const {source, me, onCancel, notify, templates} = this.props
     const {nextTemplate, isNew} = this.state
     const TemplateBuilder = this.templateBuilder
 
@@ -162,6 +164,7 @@ class TemplateVariableEditor extends PureComponent<Props, State> {
               template={nextTemplate}
               templates={templates}
               source={source}
+              me={me}
               onUpdateTemplate={this.handleUpdateTemplate}
               notify={notify}
               onUpdateDefaultTemplateValue={

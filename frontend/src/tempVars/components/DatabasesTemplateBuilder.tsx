@@ -1,4 +1,5 @@
 import React, {PureComponent} from 'react'
+import _ from 'lodash'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {showDatabases} from 'src/shared/apis/metaQuery'
@@ -10,6 +11,8 @@ import {
   RemoteDataState,
   TemplateValueType,
 } from 'src/types'
+
+import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
 interface State {
   databasesStatus: RemoteDataState
@@ -54,7 +57,7 @@ class DatabasesTemplateBuilder extends PureComponent<
   }
 
   private async loadDatabases(): Promise<void> {
-    const {template, source, onUpdateTemplate} = this.props
+    const {template, source, onUpdateTemplate, me} = this.props
 
     this.setState({databasesStatus: RemoteDataState.Loading})
 
@@ -62,9 +65,22 @@ class DatabasesTemplateBuilder extends PureComponent<
       const {data} = await showDatabases(source.links.proxy)
       const {databases} = parseShowDatabases(data)
 
+      let roleDatabases: string[]
+
+      if (databases && databases.length > 0) {
+        if (isUserAuthorized(me.role, SUPERADMIN_ROLE)) {
+          roleDatabases = databases
+        } else {
+          roleDatabases = _.filter(
+            databases,
+            database => database === me.currentOrganization.name
+          )
+        }
+      }
+
       this.setState({databasesStatus: RemoteDataState.Done})
 
-      const nextValues = databases.map(db => {
+      const nextValues = roleDatabases.map(db => {
         return {
           type: TemplateValueType.Database,
           value: db,

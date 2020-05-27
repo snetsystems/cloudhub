@@ -18,7 +18,6 @@ import {HostNames} from 'src/types/hosts'
 
 // Actions
 import {getAllHostsAsync} from 'src/addon/128t/actions'
-import {loadOrganizationsAsync} from 'src/admin/actions/cloudhub'
 
 // Constants
 import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
@@ -35,7 +34,6 @@ interface Props {
   source: Source
   sources: Source[]
   handleGetAllHosts: (source: Source) => Promise<HostNames>
-  loadOrganizations: (link: string) => void
   organizations: Organization[]
 }
 
@@ -62,10 +60,6 @@ const GraphqlProvider: SFC<Props> = (props: Props) => {
     link: authLink.concat(httpLink),
     cache: new InMemoryCache(),
   })
-
-  useEffect(() => {
-    props.loadOrganizations(props.links.organizations)
-  }, [])
 
   const [groupHosts, setGroupHosts] = useState<GroupHosts[]>([])
 
@@ -107,7 +101,7 @@ const GraphqlProvider: SFC<Props> = (props: Props) => {
       }
 
       getAllHost()
-    }, [props.organizations])
+    }, [])
   }
 
   if (props.page === 'SwanSdplexStatusPage') {
@@ -140,7 +134,6 @@ const mapStateToProps = ({
 
 const mdtp = {
   handleGetAllHosts: getAllHostsAsync,
-  loadOrganizations: loadOrganizationsAsync,
 }
 
 export default connect(mapStateToProps, mdtp)(GraphqlProvider)

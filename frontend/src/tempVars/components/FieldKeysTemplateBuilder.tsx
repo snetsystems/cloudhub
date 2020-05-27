@@ -25,6 +25,7 @@ class FieldKeysTemplateBuilder extends PureComponent<TemplateBuilderProps> {
       template,
       templates,
       source,
+      me,
       onUpdateTemplate,
       onUpdateDefaultTemplateValue,
     } = this.props
@@ -37,6 +38,7 @@ class FieldKeysTemplateBuilder extends PureComponent<TemplateBuilderProps> {
         template={template}
         templates={templates}
         source={source}
+        me={me}
         onUpdateTemplate={onUpdateTemplate}
         onUpdateDefaultTemplateValue={onUpdateDefaultTemplateValue}
       />
