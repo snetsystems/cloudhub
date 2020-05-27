@@ -36,7 +36,7 @@ export interface Props {
   isAllCheck: boolean
   telegrafList: AgentDirFile
   chooseMenu: string
-  onClickAction: (host: string, isRunning: boolean) => () => void
+  onClickAction: (host: string, isRunning: boolean) => () => Promise<void>
   onClickRun: () => void
   onClickStop: () => void
   onClickInstall: () => void

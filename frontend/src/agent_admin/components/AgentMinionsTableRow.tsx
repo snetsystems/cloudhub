@@ -41,8 +41,8 @@ class AgentMinionsTableRow extends PureComponent<Props> {
       return <div className="agent--indicator indicator--primary">Accepted</div>
     } else if (status === 'UnAccept') {
       return <div className="agent--indicator indicator--fail">UnAccept</div>
-    } else if (status === 'ReJect') {
-      return <div className="agent--indicator indicator--fail">ReJect</div>
+    } else if (status === 'Reject') {
+      return <div className="agent--indicator indicator--fail">Reject</div>
     }
   }
 

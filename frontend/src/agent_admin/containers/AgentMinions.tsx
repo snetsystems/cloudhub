@@ -3,6 +3,7 @@ import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
 import _ from 'lodash'
 import yaml from 'js-yaml'
+import {AxiosResponse} from 'axios'
 
 // Components
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
@@ -10,43 +11,63 @@ import AgentMinionsTable from 'src/agent_admin/components/AgentMinionsTable'
 import AgentMinionsConsole from 'src/agent_admin/components/AgentMinionsConsole'
 import AgentMinionsModal from 'src/agent_admin/components/AgentMinionsModal'
 
-// APIs
+// Actions
 import {
-  getMinionKeyListAll,
-  getMinionsIP,
-  getMinionsOS,
-} from 'src/agent_admin/apis'
-// SaltStack
-import {
-  getLocalGrainsItem,
-  runAcceptKey,
-  runRejectKey,
-  runDeleteKey,
-} from 'src/shared/apis/saltStack'
+  getLocalGrainsItemAsync,
+  runAcceptKeyAsync,
+  runRejectKeyAsync,
+  runDeleteKeyAsync,
+} from 'src/agent_admin/actions'
 
 // Notification
 import {notify as notifyAction} from 'src/shared/actions/notifications'
-import {notifyAgentConnectFailed} from 'src/shared/copy/notifications'
 
 // Constants
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
 
 // Types
 import {RemoteDataState, Notification, NotificationFunc} from 'src/types'
-import {Minion} from 'src/agent_admin/type'
+import {MinionsObject} from 'src/agent_admin/type'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
   notify: (message: Notification | NotificationFunc) => void
+  handleGetLocalGrainsItem: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    minion: string
+  ) => Promise<AxiosResponse>
+  handleRunAcceptKey: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    minion: string
+  ) => Promise<AxiosResponse>
+  handleRunRejectKey: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    minion: string
+  ) => Promise<AxiosResponse>
+  handleRunDeleteKey: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    minion: string
+  ) => Promise<AxiosResponse>
   isUserAuthorized: boolean
   currentUrl: string
   saltMasterUrl: string
   saltMasterToken: string
+  minionsObject: MinionsObject
+  minionsStatus: RemoteDataState
+  handleGetMinionKeyListAll: () => void
+  handleSetMinionStatus: ({
+    minionsStatus,
+  }: {
+    minionsStatus: RemoteDataState
+  }) => void
 }
 interface State {
-  MinionsObject: {[x: string]: Minion}
   minionsPageStatus: RemoteDataState
   minionLog: string
   currentUrl: string
@@ -56,96 +77,58 @@ interface State {
 
 @ErrorHandling
 export class AgentMinions extends PureComponent<Props, State> {
-  constructor(props) {
+  constructor(props: Props) {
     super(props)
     this.state = {
       minionLog: '<< Empty >>',
       proportions: [0.43, 0.57],
-      MinionsObject: {},
       currentUrl: '',
       minionsPageStatus: RemoteDataState.NotStarted,
       focusedHost: '',
     }
   }
 
-  getWheelKeyListAll = async () => {
-    const {notify, saltMasterUrl, saltMasterToken} = this.props
-    try {
-      const response = await getMinionKeyListAll(saltMasterUrl, saltMasterToken)
-      const updateMinionsIP = await getMinionsIP(
-        saltMasterUrl,
-        saltMasterToken,
-        response
-      )
-      const newMinions = await getMinionsOS(
-        saltMasterUrl,
-        saltMasterToken,
-        updateMinionsIP
-      )
+  public componentWillMount() {
+    this.setState({minionsPageStatus: this.props.minionsStatus})
+  }
 
-      this.setState({
-        MinionsObject: newMinions,
-        minionsPageStatus: RemoteDataState.Done,
-      })
-    } catch (e) {
-      this.setState({
-        minionsPageStatus: RemoteDataState.Done,
-      })
-      notify(notifyAgentConnectFailed('Token is not valid.'))
+  public componentDidUpdate(prevProps: Props) {
+    if (prevProps !== this.props) {
+      this.setState({minionsPageStatus: this.props.minionsStatus})
     }
   }
 
-  public async componentWillMount() {
-    const {notify, saltMasterToken, isUserAuthorized} = this.props
+  public onClickTableRowCall = (host: string) => async () => {
+    const {
+      saltMasterUrl,
+      saltMasterToken,
+      minionsObject,
+      handleGetLocalGrainsItem,
+    } = this.props
 
-    if (!isUserAuthorized) return
-
-    if (saltMasterToken !== null && saltMasterToken !== '') {
-      this.getWheelKeyListAll()
-      this.setState({minionsPageStatus: RemoteDataState.Loading})
-    } else {
-      this.setState({minionsPageStatus: RemoteDataState.Done})
-      notify(notifyAgentConnectFailed('Token is not valid.'))
-    }
-  }
-
-  public async componentDidUpdate(nextProps) {
-    if (nextProps.saltMasterToken !== this.props.saltMasterToken) {
-      if (
-        this.props.saltMasterToken !== '' &&
-        this.props.saltMasterToken !== null
-      ) {
-        this.getWheelKeyListAll()
-        this.setState({minionsPageStatus: RemoteDataState.Loading})
-      } else if (
-        this.props.saltMasterToken === null ||
-        this.props.saltMasterToken === ''
-      ) {
-        this.setState({MinionsObject: null})
-      }
-    }
-  }
-
-  onClickTableRowCall = (host: string) => () => {
-    const {saltMasterUrl, saltMasterToken} = this.props
-    const {MinionsObject} = this.state
     this.setState({
       focusedHost: host,
       minionsPageStatus: RemoteDataState.Loading,
     })
 
-    if (MinionsObject[host].status === 'Accept') {
-      const getLocalGrainsItemPromise = getLocalGrainsItem(
-        saltMasterUrl,
-        saltMasterToken,
-        host
-      )
-      getLocalGrainsItemPromise.then(pLocalGrainsItemData => {
+    if (minionsObject[host].status === 'Accept') {
+      try {
+        const {data} = await handleGetLocalGrainsItem(
+          saltMasterUrl,
+          saltMasterToken,
+          host
+        )
+
         this.setState({
-          minionLog: yaml.dump(pLocalGrainsItemData.data.return[0][host]),
+          minionLog: yaml.dump(data.return[0][host]),
           minionsPageStatus: RemoteDataState.Done,
         })
-      })
+      } catch (error) {
+        this.setState({
+          minionLog: '',
+          minionsPageStatus: RemoteDataState.Done,
+        })
+      }
     } else {
       this.setState({
         minionLog: '',
@@ -154,48 +137,76 @@ export class AgentMinions extends PureComponent<Props, State> {
     }
   }
 
-  handleWheelKeyCommand = (host: string, cmdstatus: string) => {
-    const {saltMasterUrl, saltMasterToken} = this.props
+  public handleWheelKeyCommand = async (host: string, cmdstatus: string) => {
+    const {
+      saltMasterUrl,
+      saltMasterToken,
+      handleRunRejectKey,
+      handleGetMinionKeyListAll,
+      handleRunAcceptKey,
+      handleRunDeleteKey,
+    } = this.props
+
     this.setState({minionsPageStatus: RemoteDataState.Loading})
-    if (cmdstatus == 'ReJect') {
-      const getWheelKeyCommandPromise = runRejectKey(
-        saltMasterUrl,
-        saltMasterToken,
-        host
-      )
+    switch (cmdstatus) {
+      case 'Reject': {
+        try {
+          const {data} = await handleRunRejectKey(
+            saltMasterUrl,
+            saltMasterToken,
+            host
+          )
 
-      getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
-        this.setState({
-          minionLog: yaml.dump(pWheelKeyCommandData.data.return[0]),
-        })
-        this.getWheelKeyListAll()
-      })
-    } else if (cmdstatus == 'Accept') {
-      const getWheelKeyCommandPromise = runAcceptKey(
-        saltMasterUrl,
-        saltMasterToken,
-        host
-      )
+          handleGetMinionKeyListAll()
 
-      getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
-        this.setState({
-          minionLog: yaml.dump(pWheelKeyCommandData.data.return[0]),
-        })
-        this.getWheelKeyListAll()
-      })
-    } else if (cmdstatus == 'Delete') {
-      const getWheelKeyCommandPromise = runDeleteKey(
-        saltMasterUrl,
-        saltMasterToken,
-        host
-      )
+          this.setState({
+            minionLog: yaml.dump(data.return[0]),
+          })
+        } catch (error) {
+          console.error(error)
+        }
+        return
+      }
+      case 'Accept': {
+        try {
+          const {data} = await handleRunAcceptKey(
+            saltMasterUrl,
+            saltMasterToken,
+            host
+          )
 
-      getWheelKeyCommandPromise.then(pWheelKeyCommandData => {
-        this.setState({
-          minionLog: yaml.dump(pWheelKeyCommandData.data.return[0]),
-        })
-        this.getWheelKeyListAll()
-      })
+          handleGetMinionKeyListAll()
+
+          this.setState({
+            minionLog: yaml.dump(data.return[0]),
+          })
+        } catch (error) {
+          console.error(error)
+        }
+        return
+      }
+      case 'Delete': {
+        try {
+          const {data} = await handleRunDeleteKey(
+            saltMasterUrl,
+            saltMasterToken,
+            host
+          )
+
+          handleGetMinionKeyListAll()
+
+          this.setState({
+            minionLog: yaml.dump(data.return[0]),
+          })
+        } catch (error) {
+          console.error(error)
+        }
+        return
+      }
+      default: {
+        handleGetMinionKeyListAll()
+        return
+      }
     }
   }
 
@@ -252,10 +263,11 @@ export class AgentMinions extends PureComponent<Props, State> {
   }
 
   private renderAgentPageTop = () => {
-    const {MinionsObject, minionsPageStatus, focusedHost} = this.state
+    const {focusedHost, minionsPageStatus} = this.state
+    const {minionsObject} = this.props
     return (
       <AgentMinionsTable
-        minions={_.values(MinionsObject)}
+        minions={_.values(minionsObject)}
         minionsPageStatus={minionsPageStatus}
         onClickTableRow={this.onClickTableRowCall}
         onClickModal={this.onClickModalCall}
@@ -299,6 +311,10 @@ export class AgentMinions extends PureComponent<Props, State> {
 
 const mdtp = {
   notify: notifyAction,
+  handleGetLocalGrainsItem: getLocalGrainsItemAsync,
+  handleRunAcceptKey: runAcceptKeyAsync,
+  handleRunRejectKey: runRejectKeyAsync,
+  handleRunDeleteKey: runDeleteKeyAsync,
 }
 
 export default connect(null, mdtp, null)(AgentMinions)

@@ -185,8 +185,13 @@ class Root extends PureComponent<{}, State> {
                 <Route path="agent-admin/:tab" component={AgentAdminPage} />
                 <Route
                   path="add-on/swan-status"
-                  component={() => {
-                    return <GraphqlProvider page={'SwanSdplexStatusPage'} />
+                  component={props => {
+                    return (
+                      <GraphqlProvider
+                        {...props}
+                        page={'SwanSdplexStatusPage'}
+                      />
+                    )
                   }}
                 />
                 <Route

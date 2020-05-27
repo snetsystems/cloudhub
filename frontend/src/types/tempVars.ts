@@ -1,4 +1,4 @@
-import {Source} from 'src/types'
+import {Source, Me} from 'src/types'
 import {Notification} from 'src/types/notifications'
 
 export enum TemplateValueType {
@@ -72,6 +72,7 @@ export interface TemplateBuilderProps {
   template: Template
   templates: Template[]
   source: Source
+  me: Me
   onUpdateTemplate: (nextTemplate: Template) => void
   onUpdateDefaultTemplateValue: (item: TemplateValue) => void
   notify?: (message: Notification) => void

@@ -22,6 +22,7 @@ import {
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import {
+  Me,
   Source,
   Notification,
   AlertRule,
@@ -32,6 +33,10 @@ import {
   KapacitorQueryConfigActions,
   KapacitorRuleActions,
 } from 'src/types/actions'
+
+interface Auth {
+  me: Me
+}
 
 interface Params {
   ruleID: string
@@ -46,6 +51,7 @@ interface Props {
   queryConfigActions: KapacitorQueryConfigActions
   params: Params
   router: InjectedRouter
+  auth: Auth
 }
 
 interface State {
@@ -97,6 +103,7 @@ class KapacitorRulePage extends Component<Props, State> {
       ruleActions,
       queryConfigs,
       queryConfigActions,
+      auth,
     } = this.props
     const {handlersFromConfig, kapacitor} = this.state
     const rule = this.rule
@@ -108,6 +115,7 @@ class KapacitorRulePage extends Component<Props, State> {
 
     return (
       <KapacitorRule
+        me={auth.me}
         source={source}
         rule={rule}
         query={query}

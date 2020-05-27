@@ -966,6 +966,21 @@ export const notifyAgentConfigDBNameWrong = (error: string): Notification => ({
   message: `Database name must be "${error}"`,
 })
 
+export const notifyAgentConfigHostNameWrong = (
+  error: string
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `Agent hostname must be "${error}"`,
+})
+
+export const notifyAgentConfigHostNameChanged = (
+  before: string,
+  after: string
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `Agent hostname changed "${before}" to "${after}"`,
+})
+
 export const notifyAgentStartSucceeded = (
   sourceName: string
 ): Notification => ({

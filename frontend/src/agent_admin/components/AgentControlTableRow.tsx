@@ -1,5 +1,6 @@
 // Libraries
 import React, {PureComponent} from 'react'
+import _ from 'lodash'
 
 // Components
 import {AgentControl} from 'src/agent_admin/containers/AgentControl'
@@ -25,15 +26,14 @@ interface Props {
 
 @ErrorHandling
 class AgentControlTableRow extends PureComponent<Props> {
-  public focusedClasses = (): string => {
-    const {isCheck} = this.props
-    return isCheck ? 'hosts-table--tr focused' : 'hosts-table--tr'
-  }
+  public focusedClasses = (): string =>
+    Boolean(this.props.isCheck) ? 'hosts-table--tr focused' : 'hosts-table--tr'
 
-  public getHandleMinionCheck = event => {
+  public getHandleMinionCheck = (
+    event: React.MouseEvent<HTMLInputElement, MouseEvent>
+  ) => {
     event.stopPropagation()
-    const {handleMinionCheck} = this.props
-    return handleMinionCheck({_this: this})
+    return this.props.handleMinionCheck({_this: this})
   }
 
   public render() {
@@ -59,7 +59,7 @@ class AgentControlTableRow extends PureComponent<Props> {
           title={
             <input
               type="checkbox"
-              checked={isCheck}
+              checked={Boolean(isCheck)}
               onClick={this.getHandleMinionCheck}
               readOnly
             />

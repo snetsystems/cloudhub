@@ -1,11 +1,11 @@
 // Libraries
 import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
-import {bindActionCreators} from 'redux'
 import _ from 'lodash'
 import * as TOML from '@iarna/toml'
 import {IInstance} from 'react-codemirror2'
 import {EditorChange} from 'codemirror'
+import {AxiosResponse} from 'axios'
 
 // Components
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
@@ -23,34 +23,32 @@ import {
   setLocalStorage,
   getLocalStorage,
   verifyLocalStorage,
-  removeLocalStorage,
 } from 'src/shared/middleware/localStorage'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-// APIs
-import {getMinionKeyListAllAsync} from 'src/agent_admin/apis'
-
-// SaltStack
+// Actions
 import {
-  runLocalServiceStartTelegraf,
-  runLocalServiceStopTelegraf,
-  getLocalFileRead,
-  getLocalFileWrite,
-  runLocalServiceReStartTelegraf,
-  getLocalServiceGetRunning,
-  getRunnerSaltCmdTelegraf,
-} from 'src/shared/apis/saltStack'
+  runLocalServiceStartTelegrafAsync,
+  runLocalServiceStopTelegrafAsync,
+  runLocalGroupAdduserAsync,
+  getLocalFileReadAsync,
+  getLocalFileWriteAsync,
+  runLocalServiceReStartTelegrafAsync,
+  getLocalServiceGetRunningAsync,
+  getRunnerSaltCmdTelegrafAsync,
+} from 'src/agent_admin/actions'
 
 // Notification
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {
-  notifyAgentConnectFailed,
   notifyAgentApplySucceeded,
   notifyAgentConfigWrong,
   notifyAgentConfigNoMatchGroup,
   notifyAgentConfigDBNameWrong,
+  notifyAgentConfigHostNameWrong,
+  notifyAgentConfigHostNameChanged,
 } from 'src/shared/copy/notifications'
 
 // Constants
@@ -65,7 +63,7 @@ import {
   Notification,
   NotificationFunc,
 } from 'src/types'
-import {Minion} from 'src/agent_admin/type'
+import {MinionsObject} from 'src/agent_admin/type'
 
 interface Props {
   notify: (message: Notification | NotificationFunc) => void
@@ -75,14 +73,61 @@ interface Props {
   isUserAuthorized: boolean
   saltMasterUrl: string
   saltMasterToken: string
+  minionsObject: MinionsObject
+  minionsStatus: RemoteDataState
+  handleGetMinionKeyListAll: () => void
+  handleSetMinionStatus: ({
+    minionsStatus,
+  }: {
+    minionsStatus: RemoteDataState
+  }) => void
+  runLocalServiceStartTelegraf: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    minion: string
+  ) => Promise<AxiosResponse>
+  runLocalServiceStopTelegraf: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    minion: string
+  ) => Promise<AxiosResponse>
+  runLocalGroupAdduser: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    minion: string
+  ) => Promise<AxiosResponse>
+  getLocalFileRead: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    minion: string
+  ) => Promise<AxiosResponse>
+  getLocalFileWrite: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    minion: string,
+    script: string
+  ) => Promise<AxiosResponse>
+  runLocalServiceReStartTelegraf: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    minion: string
+  ) => Promise<AxiosResponse>
+  getLocalServiceGetRunning: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    minion: string
+  ) => Promise<AxiosResponse>
+  getRunnerSaltCmdTelegraf: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    measurements: string
+  ) => Promise<AxiosResponse>
 }
 
 interface State {
-  MinionsObject: {[x: string]: Minion}
   configPageStatus: RemoteDataState
   measurementsStatus: RemoteDataState
   collectorConfigStatus: RemoteDataState
-  measurementsTitle: string
   serviceMeasurements: {
     name: string
     isActivity: boolean
@@ -117,54 +162,6 @@ interface LocalStorageAgentConfig {
   isApplyBtnDisabled?: boolean
 }
 
-const DEFAULT_DROPDOWN_TEXT = 'Select Database(= Group)'
-
-const defaultMeasurementsData = [
-  'global setting',
-  'cpu',
-  'disk',
-  'diskio',
-  'mem',
-  'net',
-  'netstat',
-  'ping',
-  'processes',
-  'system',
-  'swap',
-  'temp',
-]
-
-const measureMatch = [
-  {mysql: ['mysql', 'mysqld']},
-  {mssql: ['mssql', 'MSSQLSERVER']},
-  {influxdb: ['influxdb']},
-  {mongodb: ['mongodb']},
-  {postgresql: ['postgresql']},
-  {redis: ['redis']},
-  {oracle: ['oracle']},
-  {activemq: ['activemq']},
-  {rabbitmq: ['rabbitmq']},
-  {kafka: ['kafka']},
-  {zookeeper: ['zookeeper']},
-  {tomcat: ['tomcat']},
-  {apache: ['apache', 'apache2', 'httpd']},
-  {nginx: ['nginx']},
-  {iis: ['Iisadmin', 'Msftpsvc', 'Nntpsvc', 'Smtpsvc', 'W3svc']},
-  {system: ['system']},
-  {win_system: ['win_system']},
-  {docker: ['docker']},
-]
-
-const serviceMeasure = _.uniq(
-  _.flattenDeep(
-    _.concat(
-      [],
-      Object.keys(measureMatch).map(k => Object.keys(measureMatch[k])),
-      Object.keys(measureMatch).map(k => Object.values(measureMatch[k]))
-    )
-  )
-)
-
 interface measureMatch {
   measureMatch: [
     {mysql: string[]},
@@ -193,14 +190,64 @@ export class AgentConfiguration extends PureComponent<
   State,
   measureMatch
 > {
+  private DEFAULT_DROPDOWN_TEXT = 'Select Database(= Group)'
+
+  private defaultMeasurementsData = [
+    'global setting',
+    'cpu',
+    'disk',
+    'diskio',
+    'mem',
+    'net',
+    'netstat',
+    'ping',
+    'processes',
+    'system',
+    'swap',
+    'temp',
+  ]
+
+  private measureMatch = [
+    {mysql: ['mysql', 'mysqld']},
+    {mssql: ['mssql', 'MSSQLSERVER']},
+    {influxdb: ['influxdb']},
+    {mongodb: ['mongodb']},
+    {postgresql: ['postgresql']},
+    {redis: ['redis']},
+    {oracle: ['oracle']},
+    {activemq: ['activemq']},
+    {rabbitmq: ['rabbitmq']},
+    {kafka: ['kafka']},
+    {zookeeper: ['zookeeper']},
+    {tomcat: ['tomcat']},
+    {apache: ['apache', 'apache2', 'httpd']},
+    {nginx: ['nginx']},
+    {iis: ['Iisadmin', 'Msftpsvc', 'Nntpsvc', 'Smtpsvc', 'W3svc']},
+    {system: ['system']},
+    {win_system: ['win_system']},
+    {docker: ['docker']},
+  ]
+
+  private serviceMeasure = _.uniq(
+    _.flattenDeep(
+      _.concat(
+        [],
+        Object.keys(this.measureMatch).map(k =>
+          Object.keys(this.measureMatch[k])
+        ),
+        Object.keys(this.measureMatch).map(k =>
+          Object.values(this.measureMatch[k])
+        )
+      )
+    )
+  )
+
   constructor(props: Props) {
     super(props)
     this.state = {
-      MinionsObject: {},
       configPageStatus: RemoteDataState.NotStarted,
       measurementsStatus: RemoteDataState.NotStarted,
       collectorConfigStatus: RemoteDataState.NotStarted,
-      measurementsTitle: '',
       serviceMeasurements: [],
       defaultMeasurements: [],
       horizontalProportions: [0.43, 0.57],
@@ -212,69 +259,78 @@ export class AgentConfiguration extends PureComponent<
       responseMessage: '',
       focusedHost: '',
       focusedHostIp: '',
-      defaultService: serviceMeasure,
+      defaultService: this.serviceMeasure,
       isInitEditor: true,
       isApplyBtnDisabled: true,
       isGetLocalStorage: false,
       isModalVisible: false,
       isCollectorInstalled: false,
       isModalCall: false,
-      selectedOrg: DEFAULT_DROPDOWN_TEXT,
+      selectedOrg: this.DEFAULT_DROPDOWN_TEXT,
     }
   }
 
-  getWheelKeyListAll = async () => {
-    const {saltMasterUrl, saltMasterToken} = this.props
-    const hostListObject = await getMinionKeyListAllAsync(
-      saltMasterUrl,
-      saltMasterToken
-    )
+  public componentWillMount() {
+    verifyLocalStorage(getLocalStorage, setLocalStorage, 'AgentConfigPage', {
+      focusedHost: '',
+      focusedHostIp: '',
+      configScript: '',
+      isApplyBtnDisabled: true,
+    })
 
-    const isInstallCheck = _.filter(hostListObject, ['isInstall', true])
+    this.setState({configPageStatus: this.props.minionsStatus})
+  }
 
-    if (!this.state.isModalCall) {
-      const getItem: LocalStorageAgentConfig = getLocalStorage(
-        'AgentConfigPage'
-      )
-      const {isApplyBtnDisabled, focusedHost} = getItem
-      const getHostCompare = _.find(isInstallCheck, ['host', focusedHost])
+  public componentDidMount() {
+    const {minionsObject} = this.props
+    let {
+      isModalCall,
+      isModalVisible,
+      isGetLocalStorage,
+      isCollectorInstalled,
+    } = this.state
 
-      if (!isApplyBtnDisabled && Boolean(getHostCompare)) {
-        this.setState({
-          isModalCall: true,
-          isModalVisible: true,
-          isGetLocalStorage: !isApplyBtnDisabled,
-        })
-      }
-    }
+    const checkData = this.checkData({
+      isModalCall,
+      isModalVisible,
+      isGetLocalStorage,
+      isCollectorInstalled,
+      minionsObject,
+    })
 
     this.setState({
-      isCollectorInstalled: Boolean(isInstallCheck.length),
-      MinionsObject: hostListObject,
-      configPageStatus: RemoteDataState.Done,
-      collectorConfigStatus: RemoteDataState.Done,
-      measurementsStatus: RemoteDataState.Done,
+      isModalCall: checkData.isModalCall,
+      isModalVisible: checkData.isModalVisible,
+      isGetLocalStorage: checkData.isGetLocalStorage,
+      isCollectorInstalled: checkData.isCollectorInstalled,
+      configPageStatus: this.props.minionsStatus,
     })
   }
 
-  public async componentWillMount() {
-    const {notify, saltMasterToken, isUserAuthorized} = this.props
+  public componentDidUpdate(prevProps: Props) {
+    if (
+      prevProps.minionsObject !== this.props.minionsObject ||
+      prevProps.minionsStatus !== this.props.minionsStatus
+    ) {
+      const {minionsObject} = this.props
+      let {isModalCall, isModalVisible, isGetLocalStorage} = this.state
 
-    if (!isUserAuthorized) return
-
-    if (saltMasterToken !== null && saltMasterToken !== '') {
-      this.getWheelKeyListAll()
-      this.setState({configPageStatus: RemoteDataState.Loading})
-
-      verifyLocalStorage(getLocalStorage, setLocalStorage, 'AgentConfigPage', {
-        focusedHost: '',
-        focusedHostIp: '',
-        configScript: '',
-        isApplyBtnDisabled: true,
+      const checkData = this.checkData({
+        minionsObject,
+        isModalCall,
+        isModalVisible,
+        isGetLocalStorage,
       })
-    } else {
-      this.setState({configPageStatus: RemoteDataState.Done})
-      notify(notifyAgentConnectFailed('Token is not valid.'))
+
+      this.setState({
+        isModalCall: checkData.isModalCall,
+        isModalVisible: checkData.isModalVisible,
+        isGetLocalStorage: checkData.isGetLocalStorage,
+        isCollectorInstalled: checkData.isCollectorInstalled,
+        configPageStatus: this.props.minionsStatus,
+        collectorConfigStatus: RemoteDataState.Done,
+        measurementsStatus: RemoteDataState.Done,
+      })
     }
   }
 
@@ -294,82 +350,15 @@ export class AgentConfiguration extends PureComponent<
     })
   }
 
-  public async componentDidUpdate(prevProps: Props) {
-    if (
-      prevProps.saltMasterToken !== this.props.saltMasterToken &&
-      this.props.saltMasterToken !== '' &&
-      this.props.saltMasterToken !== null
-    ) {
-      this.getWheelKeyListAll()
-      this.setState({configPageStatus: RemoteDataState.Loading})
-    } else {
-      if (
-        prevProps.saltMasterToken !== this.props.saltMasterToken &&
-        (this.props.saltMasterToken === null ||
-          this.props.saltMasterToken === '')
-      ) {
-        removeLocalStorage('AgentConfigPage')
-
-        this.setState({
-          MinionsObject: null,
-          measurementsTitle: '',
-          serviceMeasurements: [],
-          defaultMeasurements: [],
-          description: '',
-          configScript: '',
-          focusedHost: '',
-        })
-      }
-    }
-  }
-
-  private get MeasurementsContent() {
-    const {measurementsStatus} = this.state
-
-    if (measurementsStatus === RemoteDataState.Error) {
-      return this.ErrorState
-    }
-
-    return this.MeasurementsContentBody
-  }
-
-  private get CollectorConfigContent() {
-    const {collectorConfigStatus} = this.state
-
-    if (collectorConfigStatus === RemoteDataState.Error) {
-      return this.ErrorState
-    }
-
-    return this.CollectorConfigBody
-  }
-
-  private get LoadingState(): JSX.Element {
-    return (
-      <div
-        style={{
-          position: 'absolute',
-          zIndex: 7,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          width: '100%',
-          height: '100%',
-        }}
-      >
-        <PageSpinner />
-      </div>
-    )
-  }
-
-  private get ErrorState(): JSX.Element {
-    return (
-      <div className="generic-empty-state">
-        <h4 style={{margin: '90px 0'}}>There was a problem loading data</h4>
-      </div>
-    )
-  }
-
-  public onClickTableRowCall = (host: string, ip: string): void => {
+  public onClickTableRowCall = (host: string, ip: string) => {
     if (this.state.focusedHost === host) return
-    const {saltMasterUrl, saltMasterToken} = this.props
+    const {
+      notify,
+      saltMasterUrl,
+      saltMasterToken,
+      getLocalFileRead,
+      getLocalServiceGetRunning,
+    } = this.props
 
     this.setState({
       configPageStatus: RemoteDataState.Loading,
@@ -387,19 +376,36 @@ export class AgentConfiguration extends PureComponent<
       host
     )
 
-    getLocalFileReadPromise.then(pLocalFileReadData => {
-      const hostLocalFileReadData = pLocalFileReadData.data.return[0][
-        host
-      ].substring(0, pLocalFileReadData.data.return[0][host].lastIndexOf('\n'))
+    getLocalFileReadPromise
+      .then(({data}) => {
+        const hostData = data.return[0][host]
+        const hostLocalFileReadData = hostData.substring(
+          0,
+          hostData.lastIndexOf('\n')
+        )
+        const configObj = TOML.parse(hostLocalFileReadData)
+        const agent: any = _.get(configObj, 'agent')
 
-      this.setState({
-        configScript: hostLocalFileReadData,
-        focusedHost: host,
-        collectorConfigStatus: RemoteDataState.Done,
-        configPageStatus: RemoteDataState.Done,
-        selectedOrg: DEFAULT_DROPDOWN_TEXT,
+        let isChanged = false
+
+        if (agent.hostname !== host) {
+          notify(notifyAgentConfigHostNameChanged(agent.hostname, host))
+          _.set(agent, 'hostname', host)
+          isChanged = true
+        }
+
+        this.setState({
+          configScript: TOML.stringify(configObj),
+          isGetLocalStorage: isChanged,
+          isApplyBtnDisabled: isChanged ? !isChanged : true,
+          collectorConfigStatus: RemoteDataState.Done,
+          configPageStatus: RemoteDataState.Done,
+          selectedOrg: this.DEFAULT_DROPDOWN_TEXT,
+        })
       })
-    })
+      .catch(error => {
+        console.error(error)
+      })
 
     const getLocalServiceGetRunningPromise = getLocalServiceGetRunning(
       saltMasterUrl,
@@ -407,63 +413,52 @@ export class AgentConfiguration extends PureComponent<
       host
     )
 
-    getLocalServiceGetRunningPromise.then(pLocalServiceGetRunningData => {
-      let getServiceRunning = this.state.defaultService
-        .filter(m =>
-          pLocalServiceGetRunningData.data.return[0][host].includes(m)
-        )
-        .map(sMeasure => {
-          return {
+    getLocalServiceGetRunningPromise
+      .then(({data}) => {
+        const {defaultService} = this.state
+        const getServiceRunning = defaultService
+          .filter(m => data.return[0][host].includes(m))
+          .map(sMeasure => ({
             name: sMeasure,
             isActivity: false,
-          }
+          }))
+
+        const getDefaultMeasure = this.defaultMeasurementsData.map(
+          dMeasure => ({
+            name: dMeasure,
+            isActivity: false,
+          })
+        )
+
+        this.setState({
+          serviceMeasurements: getServiceRunning,
+          defaultMeasurements: getDefaultMeasure,
+          measurementsStatus: RemoteDataState.Done,
         })
-
-      let getDefaultMeasure = defaultMeasurementsData.map(dMeasure => {
-        return {
-          name: dMeasure,
-          isActivity: false,
-        }
       })
-
-      this.setState({
-        serviceMeasurements: getServiceRunning,
-        defaultMeasurements: getDefaultMeasure,
-        measurementsTitle: host + ' - ' + ip,
-        measurementsStatus: RemoteDataState.Done,
+      .catch(error => {
+        console.error(error)
       })
-    })
   }
 
-  public onClickActionCall = (host: string, isRunning: boolean) => {
-    const {saltMasterUrl, saltMasterToken} = this.props
+  public onClickActionCall = async (host: string, isRunning: boolean) => {
+    const {
+      saltMasterUrl,
+      saltMasterToken,
+      runLocalServiceStartTelegraf,
+      runLocalServiceStopTelegraf,
+      handleGetMinionKeyListAll,
+    } = this.props
+
     this.setState({
       configPageStatus: RemoteDataState.Loading,
-      measurementsStatus: RemoteDataState.Loading,
-      collectorConfigStatus: RemoteDataState.Loading,
     })
 
-    if (isRunning === false) {
-      const getLocalServiceStartTelegrafPromise = runLocalServiceStartTelegraf(
-        saltMasterUrl,
-        saltMasterToken,
-        host
-      )
+    isRunning
+      ? await runLocalServiceStopTelegraf(saltMasterUrl, saltMasterToken, host)
+      : await runLocalServiceStartTelegraf(saltMasterUrl, saltMasterToken, host)
 
-      getLocalServiceStartTelegrafPromise.then((): void => {
-        this.getWheelKeyListAll()
-      })
-    } else {
-      const getLocalServiceStopTelegrafPromise = runLocalServiceStopTelegraf(
-        saltMasterUrl,
-        saltMasterToken,
-        host
-      )
-
-      getLocalServiceStopTelegrafPromise.then((): void => {
-        this.getWheelKeyListAll()
-      })
-    }
+    handleGetMinionKeyListAll()
   }
 
   public onClickApplyCall = () => {
@@ -473,19 +468,30 @@ export class AgentConfiguration extends PureComponent<
       saltMasterToken,
       organizations,
       me,
+      getLocalFileWrite,
+      runLocalServiceReStartTelegraf,
+      minionsObject,
+      handleGetMinionKeyListAll,
     } = this.props
     const {focusedHost, configScript} = this.state
+    let {
+      isModalCall,
+      isModalVisible,
+      isApplyBtnDisabled,
+      isGetLocalStorage,
+      responseMessage,
+    } = this.state
 
     let isCheckDone = true
     try {
       const configObj = TOML.parse(configScript)
       const influxdbs: any = _.get(configObj, 'outputs.influxdb')
+      const agent: any = _.get(configObj, 'agent')
 
-      influxdbs.map((db: any) => {
+      influxdbs.forEach((db: any) => {
         if (me.superAdmin) {
-          const idx = organizations.findIndex(org => {
-            return org.name === db.database
-          })
+          const idx = organizations.findIndex(org => org.name === db.database)
+
           if (idx < 0) {
             notify(notifyAgentConfigNoMatchGroup(db.database))
             isCheckDone = false
@@ -498,9 +504,15 @@ export class AgentConfiguration extends PureComponent<
             return
           }
         }
+
+        if (agent.hostname !== focusedHost) {
+          notify(notifyAgentConfigHostNameWrong(focusedHost))
+          isCheckDone = false
+          return
+        }
       })
-    } catch (e) {
-      notify(notifyAgentConfigWrong(e))
+    } catch (error) {
+      notify(notifyAgentConfigWrong(error))
       return
     }
 
@@ -519,12 +531,10 @@ export class AgentConfiguration extends PureComponent<
     )
 
     getLocalFileWritePromise
-      .then((pLocalFileWriteData): void => {
-        this.setState({
-          isApplyBtnDisabled: true,
-          isGetLocalStorage: false,
-          responseMessage: pLocalFileWriteData.data.return[0][focusedHost],
-        })
+      .then(({data}): void => {
+        isApplyBtnDisabled = true
+        isGetLocalStorage = false
+        responseMessage = data.return[0][focusedHost]
 
         const getLocalServiceReStartTelegrafPromise = runLocalServiceReStartTelegraf(
           saltMasterUrl,
@@ -533,8 +543,28 @@ export class AgentConfiguration extends PureComponent<
         )
 
         getLocalServiceReStartTelegrafPromise
-          .then((): void => {
-            this.getWheelKeyListAll()
+          .then(() => {
+            const checkData = this.checkData({
+              isModalCall,
+              isModalVisible,
+              isApplyBtnDisabled,
+              isGetLocalStorage,
+              minionsObject,
+            })
+
+            this.setState({
+              isModalCall: checkData.isModalCall,
+              isModalVisible: checkData.isModalVisible,
+              isGetLocalStorage: checkData.isGetLocalStorage,
+              isCollectorInstalled: checkData.isCollectorInstalled,
+              isApplyBtnDisabled: checkData.isApplyBtnDisabled,
+              responseMessage,
+              configPageStatus: RemoteDataState.Done,
+              collectorConfigStatus: RemoteDataState.Done,
+              measurementsStatus: RemoteDataState.Done,
+            })
+
+            handleGetMinionKeyListAll()
             notify(notifyAgentApplySucceeded('is applied'))
           })
           .catch(e => {
@@ -546,15 +576,19 @@ export class AgentConfiguration extends PureComponent<
       })
   }
 
-  public getConfigInfo = async (answer: boolean) => {
-    const {saltMasterUrl, saltMasterToken} = this.props
-    const getItem = getLocalStorage('AgentConfigPage')
+  public getConfigInfo = (answer: boolean) => {
+    const {
+      saltMasterUrl,
+      saltMasterToken,
+      getLocalServiceGetRunning,
+    } = this.props
+
     const {
       configScript,
       focusedHost,
       focusedHostIp,
       isApplyBtnDisabled,
-    } = getItem
+    }: LocalStorageAgentConfig = getLocalStorage('AgentConfigPage')
 
     if (answer) {
       this.setState({
@@ -566,18 +600,15 @@ export class AgentConfiguration extends PureComponent<
         measurementsStatus: RemoteDataState.Loading,
       })
 
-      await this.getWheelKeyListAll()
-
       const getLocalServiceGetRunningPromise = getLocalServiceGetRunning(
         saltMasterUrl,
         saltMasterToken,
         focusedHost
       )
-      getLocalServiceGetRunningPromise.then(pLocalServiceGetRunningData => {
+
+      getLocalServiceGetRunningPromise.then(({data}) => {
         let getServiceRunning = this.state.defaultService
-          .filter(m =>
-            pLocalServiceGetRunningData.data.return[0][focusedHost].includes(m)
-          )
+          .filter(m => data.return[0][focusedHost].includes(m))
           .map(sMeasure => {
             return {
               name: sMeasure,
@@ -585,7 +616,7 @@ export class AgentConfiguration extends PureComponent<
             }
           })
 
-        let getDefaultMeasure = defaultMeasurementsData.map(dMeasure => {
+        let getDefaultMeasure = this.defaultMeasurementsData.map(dMeasure => {
           return {
             name: dMeasure,
             isActivity: false,
@@ -596,7 +627,6 @@ export class AgentConfiguration extends PureComponent<
           serviceMeasurements: getServiceRunning,
           defaultMeasurements: getDefaultMeasure,
           measurementsStatus: RemoteDataState.Done,
-          measurementsTitle: focusedHost + '-' + focusedHostIp,
         })
       })
     } else {
@@ -648,23 +678,124 @@ export class AgentConfiguration extends PureComponent<
     )
   }
 
-  private handleFocusedServiceMeasure = ({
+  private checkData = ({
+    minionsObject,
+    isModalCall,
+    isModalVisible,
+    isGetLocalStorage,
+    isCollectorInstalled,
+    isApplyBtnDisabled,
+  }: {
+    minionsObject?: Props['minionsObject']
+    isModalCall?: State['isModalCall']
+    isModalVisible?: State['isModalVisible']
+    isGetLocalStorage?: State['isGetLocalStorage']
+    isCollectorInstalled?: State['isCollectorInstalled']
+    isApplyBtnDisabled?: State['isApplyBtnDisabled']
+  }): {
+    minionsObject?: Props['minionsObject']
+    isModalCall?: State['isModalCall']
+    isModalVisible?: State['isModalVisible']
+    isGetLocalStorage?: State['isGetLocalStorage']
+    isCollectorInstalled?: State['isCollectorInstalled']
+    isApplyBtnDisabled?: State['isApplyBtnDisabled']
+  } => {
+    const CollectorInstalledMinions = _.filter(minionsObject, [
+      'isInstall',
+      true,
+    ])
+
+    isCollectorInstalled = Boolean(CollectorInstalledMinions.length)
+
+    if (!isModalCall) {
+      const {
+        isApplyBtnDisabled,
+        focusedHost,
+      }: LocalStorageAgentConfig = getLocalStorage('AgentConfigPage')
+
+      const getHostCompare = _.find(CollectorInstalledMinions, [
+        'host',
+        focusedHost,
+      ])
+
+      if (!isApplyBtnDisabled && Boolean(getHostCompare)) {
+        isModalCall = true
+        isModalVisible = true
+        isGetLocalStorage = true
+      }
+    }
+
+    return {
+      minionsObject,
+      isModalCall,
+      isModalVisible,
+      isGetLocalStorage,
+      isCollectorInstalled,
+      isApplyBtnDisabled,
+    }
+  }
+
+  private get MeasurementsContent() {
+    if (this.state.measurementsStatus === RemoteDataState.Error)
+      return this.ErrorState
+
+    return this.MeasurementsContentBody
+  }
+
+  private get CollectorConfigContent() {
+    if (this.state.collectorConfigStatus === RemoteDataState.Error)
+      return this.ErrorState
+
+    return this.CollectorConfigBody
+  }
+
+  private get LoadingState(): JSX.Element {
+    return (
+      <div
+        style={{
+          position: 'absolute',
+          zIndex: 7,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          width: '100%',
+          height: '100%',
+        }}
+      >
+        <PageSpinner />
+      </div>
+    )
+  }
+
+  private get ErrorState(): JSX.Element {
+    return (
+      <div className="generic-empty-state">
+        <h4 style={{margin: '90px 0'}}>There was a problem loading data</h4>
+      </div>
+    )
+  }
+
+  private handleFocusedServiceMeasure = async ({
     clickPosition,
     _thisProps,
   }: {
     clickPosition: {top: number; left: number}
     _thisProps: {name: string; idx: number}
   }) => {
-    const {saltMasterUrl, saltMasterToken} = this.props
+    const {
+      saltMasterUrl,
+      saltMasterToken,
+      getRunnerSaltCmdTelegraf,
+    } = this.props
     const {serviceMeasurements, defaultMeasurements} = this.state
-    const filterdMeasureName = Object.keys(measureMatch).filter(k =>
-      _.includes(Object.values(measureMatch[Number(k)])[0], _thisProps.name)
+    const {name, idx} = _thisProps
+
+    const filterdMeasureName = Object.keys(this.measureMatch).filter(k =>
+      _.includes(_.values(this.measureMatch[Number(k)])[0], name)
     )
 
     const measureName =
       filterdMeasureName.length === 0
-        ? _thisProps.name
-        : Object.keys(measureMatch[Number(filterdMeasureName)])[0]
+        ? name
+        : Object.keys(this.measureMatch[Number(filterdMeasureName)])[0]
 
     const mapServiceMeasurements = serviceMeasurements.map(m => {
       m.isActivity = false
@@ -676,30 +807,42 @@ export class AgentConfiguration extends PureComponent<
       return m
     })
 
-    serviceMeasurements[_thisProps.idx].isActivity === false
-      ? (serviceMeasurements[_thisProps.idx].isActivity = true)
-      : (serviceMeasurements[_thisProps.idx].isActivity = false)
+    serviceMeasurements[idx].isActivity === false
+      ? (serviceMeasurements[idx].isActivity = true)
+      : (serviceMeasurements[idx].isActivity = false)
 
-    const getRunnerSaltCmdTelegrafPromise = getRunnerSaltCmdTelegraf(
-      saltMasterUrl,
-      saltMasterToken,
-      measureName
-    )
-
-    getRunnerSaltCmdTelegrafPromise.then(pRunnerSaltCmdTelegrafData => {
+    try {
+      const {data} = await getRunnerSaltCmdTelegraf(
+        saltMasterUrl,
+        saltMasterToken,
+        measureName
+      )
       this.setState({
         serviceMeasurements: [...mapServiceMeasurements],
         defaultMeasurements: [...mapDefaultMeasurements],
         focusedMeasure: measureName,
         focusedMeasurePosition: clickPosition,
-        description: pRunnerSaltCmdTelegrafData.data.return[0],
+        description: data.return[0],
       })
-    })
+    } catch (error) {
+      console.error(error)
+    }
   }
 
-  private handleFocusedDefaultMeasure = ({clickPosition, _thisProps}) => {
-    const {saltMasterUrl, saltMasterToken} = this.props
+  private handleFocusedDefaultMeasure = async ({
+    clickPosition,
+    _thisProps,
+  }: {
+    clickPosition: {top: number; left: number}
+    _thisProps: {name: string; idx: number}
+  }) => {
+    const {
+      saltMasterUrl,
+      saltMasterToken,
+      getRunnerSaltCmdTelegraf,
+    } = this.props
     const {defaultMeasurements, serviceMeasurements} = this.state
+    const {idx, name} = _thisProps
 
     const mapDefaultMeasurements = defaultMeasurements.map(m => {
       m.isActivity = false
@@ -711,34 +854,35 @@ export class AgentConfiguration extends PureComponent<
       return m
     })
 
-    defaultMeasurements[_thisProps.idx].isActivity === false
-      ? (defaultMeasurements[_thisProps.idx].isActivity = true)
-      : (defaultMeasurements[_thisProps.idx].isActivity = false)
+    defaultMeasurements[idx].isActivity === false
+      ? (defaultMeasurements[idx].isActivity = true)
+      : (defaultMeasurements[idx].isActivity = false)
 
-    if (_thisProps.name === 'global setting') {
+    if (name === 'global setting') {
       this.setState({
         defaultMeasurements: [...mapDefaultMeasurements],
         serviceMeasurements: [...mapServiceMeasurements],
-        focusedMeasure: _thisProps.name,
+        focusedMeasure: name,
         focusedMeasurePosition: clickPosition,
         description: globalSetting,
       })
     } else {
-      const getRunnerSaltCmdTelegrafPromise = getRunnerSaltCmdTelegraf(
-        saltMasterUrl,
-        saltMasterToken,
-        _thisProps.name
-      )
-
-      getRunnerSaltCmdTelegrafPromise.then(pRunnerSaltCmdTelegrafData => {
+      try {
+        const {data} = await getRunnerSaltCmdTelegraf(
+          saltMasterUrl,
+          saltMasterToken,
+          name
+        )
         this.setState({
           defaultMeasurements: [...mapDefaultMeasurements],
           serviceMeasurements: [...mapServiceMeasurements],
-          focusedMeasure: _thisProps.name,
+          focusedMeasure: name,
           focusedMeasurePosition: clickPosition,
-          description: pRunnerSaltCmdTelegrafData.data.return[0],
+          description: data.return[0],
         })
-      })
+      } catch (error) {
+        console.error(error)
+      }
     }
   }
 
@@ -814,16 +958,12 @@ export class AgentConfiguration extends PureComponent<
   }
 
   private renderAgentPageTop = () => {
-    const {
-      MinionsObject,
-      configPageStatus,
-      focusedHost,
-      isCollectorInstalled,
-    } = this.state
+    const {configPageStatus, focusedHost, isCollectorInstalled} = this.state
+    const {minionsObject} = this.props
 
     return (
       <AgentConfigurationTable
-        minions={_.values(MinionsObject)}
+        minions={_.values(minionsObject)}
         configPageStatus={configPageStatus}
         onClickTableRow={this.onClickTableRowCall}
         onClickAction={this.onClickActionCall}
@@ -844,7 +984,7 @@ export class AgentConfiguration extends PureComponent<
   }
 
   private Measurements() {
-    const {measurementsTitle, measurementsStatus} = this.state
+    const {measurementsStatus} = this.state
     return (
       <div className="panel">
         {measurementsStatus === RemoteDataState.Loading
@@ -858,7 +998,6 @@ export class AgentConfiguration extends PureComponent<
             }}
           >
             measurements
-            <div className="measurements-title">{measurementsTitle}</div>
           </h2>
         </div>
         <div className="panel-body">{this.MeasurementsContent}</div>
@@ -873,10 +1012,17 @@ export class AgentConfiguration extends PureComponent<
       description,
       focusedMeasure,
       focusedMeasurePosition,
+      focusedHost,
+      focusedHostIp,
     } = this.state
     return (
       <FancyScrollbar>
-        <div className="measurements-query-builder--contain">(Service)</div>
+        <div className="measurements-title">
+          {focusedHost && focusedHostIp
+            ? `${focusedHost} - ${focusedHostIp}`
+            : null}
+        </div>
+        <div className="default-measurements">(Service)</div>
         <div className="query-builder--list">
           {serviceMeasurements.map(
             (v: {name: string; isActivity: boolean}, idx): JSX.Element => (
@@ -937,7 +1083,7 @@ export class AgentConfiguration extends PureComponent<
           : null}
         <div className="panel-heading">
           <h2 className="panel-title">collector.conf</h2>
-          <div className="panel-heading">
+          <div className="panel-title-sub">
             <div className="agent-select--button-box">
               {me.superAdmin ? (
                 <Dropdown
@@ -1031,24 +1177,36 @@ export class AgentConfiguration extends PureComponent<
   }
 
   private onChooseDropdown = (org: Organization) => {
-    const {selectedOrg, configScript} = this.state
+    const {selectedOrg, configScript, focusedHost} = this.state
 
     if (selectedOrg === org.name) return
 
     const configObj = TOML.parse(configScript)
     const influxdbs: any = _.get(configObj, 'outputs.influxdb')
+    const agent: any = _.get(configObj, 'agent')
 
-    if (!influxdbs) {
-      return
-    }
+    if (!influxdbs || !agent) return
 
     let isChanged = false
-    influxdbs.map((influxdb: {database: string}) => {
+
+    influxdbs.forEach((influxdb: {database: string}) => {
       if (_.get(influxdb, 'database') !== org.name) {
         _.set(influxdb, 'database', org.name)
-        isChanged = true
       }
     })
+
+    if (_.get(agent, 'hostname') !== focusedHost) {
+      _.set(agent, 'hostname', focusedHost)
+    }
+
+    const checker = _.some(
+      _.map(influxdbs, m => m.database === org.name),
+      false
+    )
+
+    if (!checker && _.get(agent, 'hostname') === focusedHost) {
+      isChanged = true
+    }
 
     if (isChanged)
       this.setState({
@@ -1067,8 +1225,16 @@ const mstp = ({adminCloudHub: {organizations}, auth: {me}}) => ({
   me,
 })
 
-const mdtp = (dispatch: any) => ({
-  notify: bindActionCreators(notifyAction, dispatch),
-})
+const mdtp = {
+  notify: notifyAction,
+  runLocalServiceStartTelegraf: runLocalServiceStartTelegrafAsync,
+  runLocalServiceStopTelegraf: runLocalServiceStopTelegrafAsync,
+  runLocalGroupAdduser: runLocalGroupAdduserAsync,
+  getLocalFileRead: getLocalFileReadAsync,
+  getLocalFileWrite: getLocalFileWriteAsync,
+  runLocalServiceReStartTelegraf: runLocalServiceReStartTelegrafAsync,
+  getLocalServiceGetRunning: getLocalServiceGetRunningAsync,
+  getRunnerSaltCmdTelegraf: getRunnerSaltCmdTelegrafAsync,
+}
 
 export default connect(mstp, mdtp)(AgentConfiguration)

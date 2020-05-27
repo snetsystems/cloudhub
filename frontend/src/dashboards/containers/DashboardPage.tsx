@@ -56,7 +56,7 @@ import * as QueriesModels from 'src/types/queries'
 import * as SourcesModels from 'src/types/sources'
 import * as TempVarsModels from 'src/types/tempVars'
 import {NewDefaultCell} from 'src/types/dashboards'
-import {NotificationAction} from 'src/types'
+import {NotificationAction, Me} from 'src/types'
 import {AnnotationsDisplaySetting} from 'src/types/annotations'
 import {Links} from 'src/types/flux'
 import {createTimeRangeTemplates} from 'src/shared/utils/templates'
@@ -83,7 +83,7 @@ interface Props extends ManualRefreshProps, WithRouterProps {
   handleClickPresentationButton: AppActions.DelayEnablePresentationModeDispatcher
   cellQueryStatus: QueriesModels.QueryStatus
   errorThrown: ErrorsActions.ErrorThrownActionCreator
-  meRole: string
+  me: Me
   isUsingAuth: boolean
   router: InjectedRouter
   notify: NotificationAction
@@ -199,7 +199,7 @@ class DashboardPage extends Component<Props, State> {
       notify,
       fluxLinks,
       isUsingAuth,
-      meRole,
+      me,
       source,
       sources,
       timeRange,
@@ -247,6 +247,7 @@ class DashboardPage extends Component<Props, State> {
           <CellEditorOverlay
             source={source}
             sources={sources}
+            me={me}
             notify={notify}
             fluxLinks={fluxLinks}
             cell={selectedCell}
@@ -281,7 +282,7 @@ class DashboardPage extends Component<Props, State> {
         {!inPresentationMode && showTemplateVariableControlBar && (
           <TemplateControlBar
             templates={dashboard && dashboard.templates}
-            meRole={meRole}
+            me={me}
             isUsingAuth={isUsingAuth}
             onSaveTemplates={this.handleSaveTemplateVariables}
             onPickTemplate={this.handlePickTemplate}
@@ -527,8 +528,6 @@ const mstp = (state, {params: {dashboardID}}) => {
     cellEditorOverlay: {cell, timeRange: editorTimeRange},
   } = state
 
-  const meRole = _.get(me, 'role', null)
-
   const timeRange = getTimeRange(state, dashboardID)
 
   const dashboard = dashboards.find(
@@ -539,7 +538,7 @@ const mstp = (state, {params: {dashboardID}}) => {
 
   return {
     sources,
-    meRole,
+    me,
     dashboard,
     fluxLinks: links.flux,
     dashboardID: Number(dashboardID),

@@ -56,7 +56,7 @@ import {NETWORK_ACCESS, GET_STATUS} from 'src/agent_admin/constants'
 import {cellLayoutInfo} from 'src/addon/128t/containers/SwanSdplexStatusPage'
 import {ComponentStatus} from 'src/reusable_ui/types'
 import {Addon} from 'src/types/auth'
-import {Notification, NotificationFunc} from 'src/types'
+import {Notification, NotificationFunc, Me} from 'src/types'
 
 // Notification
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -69,7 +69,12 @@ import {
 // Error
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
+interface Auth {
+  me: Me
+}
+
 interface Props {
+  auth: Auth
   notify: (message: Notification | NotificationFunc) => void
   layout: cellLayoutInfo[]
   focusedAssetId: string
@@ -268,11 +273,11 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       SALT_MIN_DIRECTORY.CONFIG
     )
 
-    const isGetFailed = [getFirmwareData, getConfigData]
+    const isAccess = [getFirmwareData, getConfigData]
       .map(obj => obj.status === NETWORK_ACCESS.SUCCESS)
       .includes(true)
 
-    if (!isGetFailed) {
+    if (!isAccess) {
       notify(notify_128TGetMasterDirFiles_Failed('All Directory'))
     }
 
@@ -329,6 +334,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
 
   public render() {
     const {
+      auth,
       layout,
       routersData,
       isSwanSdplexStatus,
@@ -380,6 +386,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
             style={this.cellStyle}
           >
             <RouterTable
+              me={auth.me}
               routers={checkRouterData}
               onClickTableRow={onClickTableRow}
               focusedAssetId={focusedAssetId}
@@ -512,7 +519,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     const routerPosition = this[assetId].getBoundingClientRect()
 
     const {top, right} = routerPosition
-    const {parentTop, parentLeft} = this.getParent(this[assetId])
+    const {parentTop, parentLeft} = this.getParentPosition(this[assetId])
 
     const {addons} = this.props
     const salt = addons.find(addon => addon.name === 'salt')
@@ -558,7 +565,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     this.handleDataPopupOpen()
   }
 
-  private getParent = (target: HTMLElement) => {
+  private getParentPosition = (target: HTMLElement) => {
     let currentParent = target
     while (currentParent) {
       if (
@@ -779,8 +786,12 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   }
 }
 
+const mapStateToProps = ({auth}) => ({
+  auth,
+})
+
 const mdtp = {
   notify: notifyAction,
 }
 
-export default connect(null, mdtp)(GridLayoutRenderer)
+export default connect(mapStateToProps, mdtp)(GridLayoutRenderer)
