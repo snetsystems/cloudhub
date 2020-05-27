@@ -48,7 +48,7 @@ import {
 import DeprecationWarning from 'src/admin/components/DeprecationWarning'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-import {Source, Kapacitor, Service} from 'src/types'
+import {Source, Kapacitor, Service, Me} from 'src/types'
 import {Notification} from 'src/types/notifications'
 import {ServiceProperties, SpecificConfigOptions} from 'src/types/kapacitor'
 
@@ -100,6 +100,7 @@ interface Props {
   kapacitor: Kapacitor
   notify: (message: Notification) => void
   hash: string
+  me: Me
 }
 
 interface State {
@@ -130,7 +131,7 @@ class AlertTabs extends PureComponent<Props, State> {
     }
   }
 
-  public componentWillReceiveProps(nextProps) {
+  public componentWillReceiveProps(nextProps: Props) {
     if (this.props.kapacitor.url !== nextProps.kapacitor.url) {
       this.refreshKapacitorConfig(nextProps.kapacitor)
     }
@@ -231,6 +232,8 @@ class AlertTabs extends PureComponent<Props, State> {
 
   private getConfig(config: string): JSX.Element {
     const {configSections} = this.state
+    const {me} = this.props
+
     switch (config) {
       case AlertTypes.alerta:
         return (
@@ -265,6 +268,7 @@ class AlertTabs extends PureComponent<Props, State> {
             notify={this.props.notify}
             isMultipleConfigsSupported={this.isMultipleConfigsSupported}
             onDelete={this.handleDeleteConfig(AlertTypes.kafka)}
+            me={me}
           />
         )
 
@@ -352,6 +356,7 @@ class AlertTabs extends PureComponent<Props, State> {
               AlertTypes.slack
             )}
             isMultipleConfigsSupported={this.isMultipleConfigsSupported}
+            me={me}
           />
         )
 
@@ -404,10 +409,80 @@ class AlertTabs extends PureComponent<Props, State> {
     kapacitor: Kapacitor
   ): Promise<void> => {
     try {
+      const {me} = this.props
       const {
         data: {sections},
       } = await getKapacitorConfig(kapacitor)
-      this.setState({configSections: sections})
+      let modifySections: Sections
+
+      if (!me.superAdmin) {
+        const getSlackElements: Section['elements'] = _.get(
+          sections,
+          'slack.elements'
+        )
+
+        const filteredSlackElements = getSlackElements.filter(
+          (element: Element) => {
+            const firstName = element.options.workspace.split('-')[0]
+            return firstName === me.currentOrganization.name
+          }
+        )
+
+        const slackElements =
+          filteredSlackElements.length > 0
+            ? filteredSlackElements
+            : [
+                {
+                  ...getSlackElements[0],
+                  options: {
+                    ...getSlackElements[0].options,
+                    channel: '',
+                    url: false,
+                    enabled: false,
+                    workspace: me.currentOrganization.name,
+                    default: false,
+                  },
+                  isNewConfig: true,
+                },
+              ]
+
+        const getKafkaElements: Section['elements'] = _.get(
+          sections,
+          'kafka.elements'
+        )
+
+        const filteredKafkaElements = getKafkaElements.filter(
+          (element: Element) => {
+            const firstName = element.options.id.split('-')[0]
+            return firstName === me.currentOrganization.name
+          }
+        )
+
+        const kafkaElements =
+          filteredKafkaElements.length > 0
+            ? filteredKafkaElements
+            : [
+                {
+                  ...getKafkaElements[0],
+                  options: {
+                    ...getKafkaElements[0].options,
+                    id: me.currentOrganization.name,
+                    brokers: [],
+                    'insecure-skip-verify': false,
+                  },
+                  isNewConfig: true,
+                },
+              ]
+
+        _.set(sections, 'slack.elements', slackElements)
+        _.set(sections, 'kafka.elements', kafkaElements)
+
+        modifySections = sections
+      } else {
+        modifySections = sections
+      }
+
+      this.setState({configSections: modifySections})
     } catch (error) {
       this.setState({configSections: null})
       this.props.notify(notifyRefreshKapacitorFailed())
@@ -596,6 +671,7 @@ class AlertTabs extends PureComponent<Props, State> {
   }
 
   private isSupportedService = (serviceType: string): boolean => {
+    const {me} = this.props
     const {services, configSections} = this.state
     const foundKapacitorService: Service = services.find(service => {
       return service.name === serviceType
@@ -612,7 +688,15 @@ class AlertTabs extends PureComponent<Props, State> {
       !_.isUndefined(foundSupportedService) &&
       !_.isUndefined(foundSection)
 
-    return isSupported
+    let isSTSuperAdminCheck: boolean = true
+    if (
+      (serviceType === 'smtp' || serviceType === 'telegram') &&
+      !me.superAdmin
+    ) {
+      isSTSuperAdminCheck = false
+    }
+
+    return isSupported && isSTSuperAdminCheck
   }
 }
 

@@ -35,27 +35,28 @@ class DatabaseList extends PureComponent<Props, State> {
   }
 
   public async getDatabases() {
-    const {source} = this.props
-    const me = this.props.me
+    const {source, me} = this.props
     const currentOrganization = _.get(me, 'currentOrganization')
 
     try {
       const {data} = await showDatabases(source.links.proxy)
-      const {databases} = showDatabasesParser(data)
+      const {databases, errors} = showDatabasesParser(data)
 
-      if (databases && databases.length > 0) {
-        let roleDatabases: string[]
+      if (errors.length > 0) {
+        throw errors[0] // only one error can come back from this, but it's returned as an array
+      }
 
-        if (isUserAuthorized(me.role, SUPERADMIN_ROLE)) {
-          this.setState({databases: databases.sort()})
-        } else {
-          roleDatabases = _.filter(
-            databases,
-            database => database === currentOrganization.name
-          )
+      let roleDatabases: string[]
 
-          this.setState({databases: roleDatabases})
-        }
+      if (isUserAuthorized(me.role, SUPERADMIN_ROLE)) {
+        this.setState({databases: databases.sort()})
+      } else {
+        roleDatabases = _.filter(
+          databases,
+          database => database === currentOrganization.name
+        )
+
+        this.setState({databases: roleDatabases})
       }
     } catch (err) {
       console.error(err)

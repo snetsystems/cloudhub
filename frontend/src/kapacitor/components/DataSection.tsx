@@ -16,6 +16,7 @@ import {
   Source,
   TimeRange,
   Tag,
+  Me,
 } from 'src/types'
 import {KapacitorQueryConfigActions} from 'src/types/actions'
 
@@ -26,11 +27,12 @@ interface Props {
   isKapacitorRule: boolean
   onAddEvery: (every?: string) => void
   timeRange: TimeRange
+  me: Me
 }
 
 class DataSection extends PureComponent<Props> {
   public render() {
-    const {query, isDeadman, isKapacitorRule, onAddEvery} = this.props
+    const {query, isDeadman, isKapacitorRule, onAddEvery, me} = this.props
 
     return (
       <SourceContext.Consumer>
@@ -40,6 +42,7 @@ class DataSection extends PureComponent<Props> {
               <DatabaseList
                 query={query}
                 onChooseNamespace={this.handleChooseNamespace}
+                me={me}
               />
               <MeasurementList
                 query={query}

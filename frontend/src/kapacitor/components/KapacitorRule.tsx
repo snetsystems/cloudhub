@@ -29,6 +29,7 @@ import {
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import {
+  Me,
   Source,
   AlertRule,
   Notification,
@@ -43,6 +44,7 @@ import {
 } from 'src/types/actions'
 
 interface Props {
+  me: Me
   source: Source
   rule: AlertRule
   query: QueryConfig
@@ -86,6 +88,7 @@ class KapacitorRule extends Component<Props, State> {
       queryConfigs,
       handlersFromConfig,
       queryConfigActions,
+      me,
     } = this.props
     const {chooseTrigger, updateRuleValues} = ruleActions
     const {timeRange} = this.state
@@ -124,8 +127,10 @@ class KapacitorRule extends Component<Props, State> {
               onRuleTypeInputChange={this.handleRuleTypeInputChange}
               onRuleTypeDropdownChange={this.handleRuleTypeDropdownChange}
               onChooseTimeRange={this.handleChooseTimeRange}
+              me={me}
             />
             <RuleHandlers
+              me={me}
               rule={rule}
               ruleActions={ruleActions}
               handlersFromConfig={handlersFromConfig}

@@ -5,7 +5,7 @@ import {bindActionCreators} from 'redux'
 
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
-import {Source, Notification, NotificationFunc} from 'src/types'
+import {Source, Notification, NotificationFunc, Me} from 'src/types'
 
 import {
   createKapacitor,
@@ -31,13 +31,19 @@ import {Kapacitor} from 'src/types'
 export const defaultName = 'My Kapacitor'
 export const kapacitorPort = '9094'
 
+interface Auth {
+  me: Me
+}
+
 interface Props {
+  me: Me
   source: Source
   notify: (message: Notification | NotificationFunc) => void
   kapacitor: Kapacitor
   router: {push: (url: string) => void}
   location: {pathname: string; hash: string}
   params: {id: string; hash: string}
+  auth: Auth
 }
 
 interface State {
@@ -152,7 +158,7 @@ export class KapacitorPage extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {source, location, params, notify} = this.props
+    const {source, location, params, notify, me} = this.props
     const hash = (location && location.hash) || (params && params.hash) || ''
     const {exists, kapacitor} = this.state
 
@@ -161,6 +167,7 @@ export class KapacitorPage extends PureComponent<Props, State> {
         hash={hash}
         notify={notify}
         source={source}
+        me={me}
         exists={exists}
         kapacitor={kapacitor}
         onSubmit={this.handleSubmit}
@@ -207,8 +214,13 @@ export class KapacitorPage extends PureComponent<Props, State> {
   }
 }
 
+const mapStateToProps = ({auth: {me}}) => ({me})
+
 const mapDispatchToProps = dispatch => ({
   notify: bindActionCreators(notifyAction, dispatch),
 })
 
-export default connect(null, mapDispatchToProps)(withRouter(KapacitorPage))
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(withRouter(KapacitorPage))
