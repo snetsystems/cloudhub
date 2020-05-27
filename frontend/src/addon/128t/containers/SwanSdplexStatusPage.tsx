@@ -14,7 +14,13 @@ import PageSpinner from 'src/shared/components/PageSpinner'
 import {Page, Radio, ButtonShape} from 'src/reusable_ui'
 
 // Types
-import {Router, TopSource, TopSession, PeerDetail} from 'src/addon/128t/types'
+import {
+  Router,
+  TopSource,
+  TopSession,
+  PeerDetail,
+  GroupRouterData,
+} from 'src/addon/128t/types'
 import {Addon} from 'src/types/auth'
 
 // Middleware
@@ -26,6 +32,9 @@ import {
 
 // Const
 import {GET_ALLROUTERS_INFO} from 'src/addon/128t/constants'
+
+// APIs
+import {HostNames} from 'src/types/hosts'
 
 export interface cellLayoutInfo {
   i: string
@@ -111,15 +120,27 @@ interface IpAddress {
 }
 
 interface Variables {
-  startTime: string
-  endTime: string
+  names: string[]
 }
 
 interface EmitData {
   routers: Router[]
 }
 
-const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
+interface GroupHosts {
+  name: string
+  hosts: HostNames
+}
+
+const SwanSdplexStatusPage = ({
+  addons,
+  meRole,
+  groupHosts,
+}: {
+  addons: Addon[]
+  meRole: string
+  groupHosts: GroupHosts[]
+}) => {
   let assetId: string = ''
   let getCellsLayout: cellLayoutInfo[] = []
   const initCellsLayout: cellLayoutInfo[] = [
@@ -203,155 +224,211 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
     getCellsLayout
   )
 
+  const gHosts: {group: string; hostName: string}[] = []
+  _.values(groupHosts).map(g =>
+    _.values(g.hosts).map(h => gHosts.push({group: g.name, hostName: h.name}))
+  )
+
+  const [groupRouterData, setGroupRouterData] = useState<GroupRouterData[]>([
+    {
+      groupName: '',
+      routers: [],
+    },
+  ])
+
   const {loading, data} = useQuery<Response, Variables>(GET_ALLROUTERS_INFO, {
-    // variables: {
-    //   startTime: '2019-11-26T02:00:00',
-    //   endTime: '2019-11-26T02:01:00',
-    // },
+    variables: {
+      names: gHosts.map(m => m.hostName),
+    },
     errorPolicy: 'all',
     pollInterval: 5000,
   })
 
   const [activeEditorTab, setActiveEditorTab] = useState<string>('Data')
 
+  const groupRouter = _.values(groupHosts).map(g => {
+    return {
+      ...groupRouter,
+      groupName: g.name,
+      routers: _.values(g.hosts),
+    }
+  })
+
   useEffect(() => {
     if (data) {
       const nodes: Node[] = _.get(data, 'allRouters.nodes')
-      if (nodes) {
+
+      const groupRoutersData: GroupRouterData[] = _.values(groupRouter)
+
+      if (groupRoutersData) {
+        let routerData: Router[] = []
+
         const emits = _.reduce(
-          nodes,
-          (emits: EmitData, node: Node) => {
-            let router: Router = {
-              name: node.name,
-              locationCoordinates: node.locationCoordinates,
-              managementConnected: node.managementConnected,
-              bandwidth_avg: node.bandwidth_avg,
-              session_arrivals: node.session_arrivals,
-              topSources: node.topSources,
-              peers: node.peers.nodes,
-              topSessions: node.topSessions
-                ? node.topSessions.map(topSession => ({
-                    ...topSession,
-                    value: Number(topSession.value),
-                  }))
-                : [],
-            }
-            const nodeDetail: NodeDetail = _.head(node.nodes.nodes)
-            if (nodeDetail) {
-              try {
-                router = {
-                  ...router,
-                  assetId: _.get(nodeDetail, 'assetId'),
-                  enabled: _.get(nodeDetail, 'enabled'),
-                  role: _.get(nodeDetail, 'role'),
-                  startTime: _.get(nodeDetail, 'state.startTime'),
-                  softwareVersion: _.get(nodeDetail, 'state.softwareVersion'),
-                  memoryUsage: (() => {
-                    const capacity: number = _.get(
-                      nodeDetail,
-                      'memory.capacity'
-                    )
-                    const usage: number = _.get(nodeDetail, 'memory.usage')
-                    return capacity > 0 ? (usage / capacity) * 100 : null
-                  })(),
-                  cpuUsage: (() => {
-                    const cpus: CPU[] = _.get(nodeDetail, 'cpu')
-                    const sum: number[] = _.reduce(
-                      cpus,
-                      (acc: number[], cpu: CPU) => {
-                        if (cpu.type === 'packetProcessing') return acc
-                        acc[0] += cpu.utilization
-                        acc[1] += 1
-                        return acc
-                      },
-                      [0, 0]
-                    )
-                    return sum[1] > 0 ? sum[0] / sum[1] : null
-                  })(),
-                  diskUsage: (() => {
-                    const disks: Disk[] = _.get(nodeDetail, 'disk')
-                    const rootPatitions: Disk[] = _.filter(
-                      disks,
-                      (disk: Disk) => {
-                        return disk.partition === '/'
+          groupRoutersData,
+          (emits: GroupRouterData[], groupRouter: GroupRouterData) => {
+            const routers = _.reduce(
+              groupRouter.routers,
+              (routers: Router[], groupRouter: Router) => {
+                const node: Node = nodes.find(f => f.name === groupRouter.name)
+                if (node) {
+                  let router: Router = {
+                    name: node.name,
+                    locationCoordinates: node.locationCoordinates,
+                    managementConnected: node.managementConnected,
+                    bandwidth_avg: node.bandwidth_avg,
+                    session_arrivals: node.session_arrivals,
+                    topSources: node.topSources,
+                    peers: node.peers.nodes,
+                    topSessions: node.topSessions
+                      ? node.topSessions.map(topSession => ({
+                          ...topSession,
+                          value: Number(topSession.value),
+                        }))
+                      : [],
+                  }
+                  const nodeDetail: NodeDetail = _.head(node.nodes.nodes)
+                  if (nodeDetail) {
+                    try {
+                      router = {
+                        ...router,
+                        group: gHosts.find(
+                          f => f.hostName === _.get(nodeDetail, 'assetId')
+                        ).group,
+                        assetId: _.get(nodeDetail, 'assetId'),
+                        enabled: _.get(nodeDetail, 'enabled'),
+                        role: _.get(nodeDetail, 'role'),
+                        startTime: _.get(nodeDetail, 'state.startTime'),
+                        softwareVersion: _.get(
+                          nodeDetail,
+                          'state.softwareVersion'
+                        ),
+                        memoryUsage: (() => {
+                          const capacity: number = _.get(
+                            nodeDetail,
+                            'memory.capacity'
+                          )
+                          const usage: number = _.get(
+                            nodeDetail,
+                            'memory.usage'
+                          )
+                          return capacity > 0 ? (usage / capacity) * 100 : null
+                        })(),
+                        cpuUsage: (() => {
+                          const cpus: CPU[] = _.get(nodeDetail, 'cpu')
+                          const sum: number[] = _.reduce(
+                            cpus,
+                            (acc: number[], cpu: CPU) => {
+                              if (cpu.type === 'packetProcessing') return acc
+                              acc[0] += cpu.utilization
+                              acc[1] += 1
+                              return acc
+                            },
+                            [0, 0]
+                          )
+                          return sum[1] > 0 ? sum[0] / sum[1] : null
+                        })(),
+                        diskUsage: (() => {
+                          const disks: Disk[] = _.get(nodeDetail, 'disk')
+                          const rootPatitions: Disk[] = _.filter(
+                            disks,
+                            (disk: Disk) => {
+                              return disk.partition === '/'
+                            }
+                          )
+                          if (_.isEmpty(rootPatitions)) return null
+
+                          return rootPatitions[0].capacity > 0
+                            ? (rootPatitions[0].usage /
+                                rootPatitions[0].capacity) *
+                                100
+                            : null
+                        })(),
+                        ipAddress: (() => {
+                          const networkInterfaces: NetworkInterfaces[] = _.get(
+                            nodeDetail,
+                            'deviceInterfaces.nodes'
+                          )
+
+                          const addresses: Addresses[] = _.reduce(
+                            networkInterfaces,
+                            (
+                              addresses: Addresses[],
+                              networkInterface: NetworkInterfaces
+                            ) => {
+                              const addressesNode: Addresses[] = _.reduce(
+                                _.get(
+                                  networkInterface,
+                                  'networkInterfaces.nodes'
+                                ),
+                                (addresses: Addresses[], value) => {
+                                  addresses = [...addresses, value]
+                                  return addresses
+                                },
+                                []
+                              )
+
+                              addressesNode.map((m: Addresses) =>
+                                addresses.push(m)
+                              )
+
+                              return addresses
+                            },
+                            []
+                          )
+
+                          const ipAddress: IpAddress[] = _.reduce(
+                            addresses.filter(
+                              f => f.name.toLowerCase().indexOf('wan') > -1
+                            ),
+                            (ipAddress: IpAddress[], address: Addresses) => {
+                              const ipAddresses: IpAddress[] = _.reduce(
+                                _.get(address, 'addresses.nodes'),
+                                (ipAddress: IpAddress[], value) => {
+                                  ipAddress = [...ipAddress, value]
+                                  return ipAddress
+                                },
+                                []
+                              )
+                              ipAddresses.map((m: IpAddress) =>
+                                ipAddress.push(m)
+                              )
+                              return ipAddress
+                            },
+                            []
+                          )
+
+                          return ipAddress
+                            .filter(f => f.ipAddress != null)
+                            .map(m => m.ipAddress)[0]
+                        })(),
                       }
-                    )
-                    if (_.isEmpty(rootPatitions)) return null
-
-                    return rootPatitions[0].capacity > 0
-                      ? (rootPatitions[0].usage / rootPatitions[0].capacity) *
-                          100
-                      : null
-                  })(),
-                  ipAddress: (() => {
-                    const networkInterfaces: NetworkInterfaces[] = _.get(
-                      nodeDetail,
-                      'deviceInterfaces.nodes'
-                    )
-
-                    const addresses: Addresses[] = _.reduce(
-                      networkInterfaces,
-                      (
-                        addresses: Addresses[],
-                        networkInterface: NetworkInterfaces
-                      ) => {
-                        const addressesNode: Addresses[] = _.reduce(
-                          _.get(networkInterface, 'networkInterfaces.nodes'),
-                          (addresses: Addresses[], value) => {
-                            addresses = [...addresses, value]
-                            return addresses
-                          },
-                          []
-                        )
-
-                        addressesNode.map((m: Addresses) => addresses.push(m))
-
-                        return addresses
-                      },
-                      []
-                    )
-
-                    const ipAddress: IpAddress[] = _.reduce(
-                      addresses.filter(
-                        f => f.name.toLowerCase().indexOf('wan') > -1
-                      ),
-                      (ipAddress: IpAddress[], address: Addresses) => {
-                        const ipAddresses: IpAddress[] = _.reduce(
-                          _.get(address, 'addresses.nodes'),
-                          (ipAddress: IpAddress[], value) => {
-                            ipAddress = [...ipAddress, value]
-                            return ipAddress
-                          },
-                          []
-                        )
-                        ipAddresses.map((m: IpAddress) => ipAddress.push(m))
-                        return ipAddress
-                      },
-                      []
-                    )
-
-                    return ipAddress
-                      .filter(f => f.ipAddress != null)
-                      .map(m => m.ipAddress)[0]
-                  })(),
+                    } catch (error) {
+                      console.error('node detail', error)
+                    }
+                  }
+                  routers = [...routers, router]
+                  routerData = [...routerData, router]
                 }
-              } catch (error) {
-                console.error('node detail', error)
-              }
-            }
+                return routers
+              },
+              []
+            )
 
-            emits.routers = [...emits.routers, router]
+            emits = [
+              ...emits,
+              {groupName: groupRouter.groupName, routers: routers},
+            ]
+
             return emits
           },
-          {
-            routers: [],
-          }
+          []
         )
 
-        setRoutersInfo(emits)
+        setGroupRouterData(emits)
+        setRoutersInfo({routers: routerData})
 
         if (focusedAssetId) {
-          const router = emits.routers.find(node => {
+          const router = routerData.find(node => {
             return node.assetId === focusedAssetId
           })
           if (router && router.topSources) setTopSources(router.topSources)
@@ -469,7 +546,10 @@ const SwanSdplexStatusPage = ({addons}: {addons: Addon[]}) => {
             />
           </div>
         ) : (
-          <TopologyRenderer routersData={emitData.routers} />
+          <TopologyRenderer
+            meRole={meRole}
+            groupRoutersData={groupRouterData}
+          />
         )}
       </Page.Contents>
     </Page>
