@@ -1,5 +1,6 @@
 // Libraries
 import React, {PureComponent} from 'react'
+import {connect} from 'react-redux'
 import {Graph} from 'react-d3-graph'
 import classnames from 'classnames'
 import _ from 'lodash'
@@ -24,12 +25,13 @@ import {
 
 // constants
 import {TOPOLOGY_TABLE_SIZING} from 'src/addon/128t/constants'
+import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
 // Error Handler
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 //type
-import {Router} from 'src/addon/128t/types'
+import {Router, GroupRouterData} from 'src/addon/128t/types'
 
 interface SwanTopology {
   id: string
@@ -52,6 +54,7 @@ interface GraphNode {
   svg?: string
   labelPosition?: string
   role?: string
+  router?: Router
   temperature?: number
   sound?: number
 }
@@ -62,12 +65,12 @@ interface GraphLink {
 }
 
 interface Props {
-  routersData: Router[]
+  meRole: string
+  groupRoutersData: GroupRouterData[]
 }
 
 interface State {
   nodeData: GraphNodeData
-  isLocalstorage: boolean
 }
 
 @ErrorHandling
@@ -116,6 +119,7 @@ class TopologyRenderer extends PureComponent<Props, State> {
     {
       id: 'root',
       label: 'CloudHub',
+      role: 'root',
       svg: this.imgTopNodeUrl,
       size: 600,
       labelPosition: 'top',
@@ -123,9 +127,11 @@ class TopologyRenderer extends PureComponent<Props, State> {
   ]
 
   private TOPOLOGY_ROLE = {
+    ROOT: 'root',
+    GROUP: 'group',
+    ROUTER: 'router',
     COUNDUCTOR: 'conductor',
     COMBO: 'combo',
-    ROOT: 'root',
   }
 
   private dummyData = {
@@ -167,7 +173,7 @@ class TopologyRenderer extends PureComponent<Props, State> {
         target: 'CNC 09',
       },
       {
-        source: 'snetcon1',
+        source: 'snet-hochiminh',
         target: 'CNC 10',
       },
     ],
@@ -280,50 +286,20 @@ class TopologyRenderer extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = {
-      isLocalstorage: false,
       nodeData: {
-        nodes: this.initNodes,
+        nodes: [],
         links: [],
       },
     }
   }
 
-  public componentWillMount() {
-    const {routersData} = this.props
-    const customRouterData = this.modifyRoutersData(routersData)
-
-    this.addon = getLocalStorage('addon')
-    const isLocalstorage: boolean = this.addon.hasOwnProperty('swanTopology')
-
-    let nodes = customRouterData.map(m => ({
-      id: m.assetId,
-      label: m.assetId,
-    }))
-
-    nodes = _.remove(nodes, node => node.id !== '-')
-
-    let links = customRouterData.map(m => ({
-      source: this.TOPOLOGY_ROLE.ROOT,
-      target: m.assetId,
-    }))
-
-    links = _.remove(links, link => link.target !== '-')
-
-    this.setState({
-      isLocalstorage,
-      nodeData: {
-        nodes: this.state.nodeData.nodes.concat(nodes),
-        links,
-      },
-    })
-  }
-
   public componentDidMount() {
-    const {nodeData} = this.state
-    const {routersData} = this.props
+    this.addon = getLocalStorage('addon')
     const dimensions = this.useRef.current.getBoundingClientRect()
 
-    const genNode = this.generatorNodeData({nodeData, routersData, dimensions})
+    const genNode = this.generatorNodeData({
+      dimensions,
+    })
     const {nodes, links} = genNode
 
     this.setState({
@@ -335,14 +311,10 @@ class TopologyRenderer extends PureComponent<Props, State> {
   }
 
   public componentDidUpdate(prevProps: Props) {
-    if (prevProps.routersData !== this.props.routersData) {
-      const {nodeData} = this.state
-      const {routersData} = this.props
+    if (prevProps.groupRoutersData !== this.props.groupRoutersData) {
       const dimensions = this.useRef.current.getBoundingClientRect()
 
       const genNode = this.generatorNodeData({
-        nodeData,
-        routersData,
         dimensions,
       })
       const {nodes, links} = genNode
@@ -361,7 +333,7 @@ class TopologyRenderer extends PureComponent<Props, State> {
 
     return (
       <div style={this.containerStyles} ref={this.useRef}>
-        {nodeData.nodes[0].x > 0 ? (
+        {nodeData.nodes.length > 0 ? (
           <Graph
             id="swan-topology"
             data={nodeData}
@@ -375,12 +347,16 @@ class TopologyRenderer extends PureComponent<Props, State> {
     )
   }
 
-  private modifyRoutersData = (routersData: Router[]): Router[] => {
-    return routersData.map(routerData => {
-      const {assetId} = routerData
+  private modifyRoutersData = (
+    groupRouterData: GroupRouterData[]
+  ): GroupRouterData[] => {
+    return groupRouterData.map(g => {
       return {
-        ...routerData,
-        assetId: assetId ? assetId : '-',
+        groupName: g.groupName,
+        routers: g.routers.map(r => {
+          const {assetId} = r
+          return {...r, assetId: assetId ? assetId : '-'}
+        }),
       }
     })
   }
@@ -428,61 +404,214 @@ class TopologyRenderer extends PureComponent<Props, State> {
   }
 
   private generatorNodeData = ({
-    routersData,
-    nodeData,
     dimensions,
   }: {
-    routersData: Router[]
     nodeData?: GraphNodeData
     dimensions?: DOMRect
   }): GraphNodeData => {
+    const isLocalstorage: boolean = this.addon.hasOwnProperty('swanTopology')
+    const {meRole, groupRoutersData} = this.props
+    const customGroupRoutersData = this.modifyRoutersData(groupRoutersData)
+
+    let nodesData: GraphNodeData = null
+
+    if (isUserAuthorized(meRole, SUPERADMIN_ROLE)) {
+      if (customGroupRoutersData) {
+        let nodeData = _.reduce(
+          customGroupRoutersData,
+          (nodeData: GraphNodeData, groupRouter: GroupRouterData) => {
+            nodeData = {
+              ...nodeData,
+              nodes: [
+                ...nodeData.nodes,
+                {
+                  id: groupRouter.groupName,
+                  label: groupRouter.groupName,
+                  role: this.TOPOLOGY_ROLE.GROUP,
+                },
+              ],
+              links: [
+                ...nodeData.links,
+                {
+                  source: this.TOPOLOGY_ROLE.ROOT,
+                  target: groupRouter.groupName,
+                },
+              ],
+            }
+
+            if (groupRouter.routers.length > 0) {
+              const routerNodeData = _.reduce(
+                groupRouter.routers,
+                (routerNodeData: GraphNodeData, router: Router) => {
+                  if (router.assetId !== '-') {
+                    routerNodeData = {
+                      ...routerNodeData,
+                      nodes: [
+                        ...routerNodeData.nodes,
+                        {
+                          id: router.assetId,
+                          label: router.assetId,
+                          role: this.TOPOLOGY_ROLE.ROUTER,
+                          router: router,
+                          size: 2000,
+                        },
+                      ],
+                      links: [
+                        ...routerNodeData.links,
+                        {source: groupRouter.groupName, target: router.assetId},
+                      ],
+                    }
+                  }
+                  return routerNodeData
+                },
+                {nodes: [], links: []}
+              )
+
+              nodeData = {
+                ...nodeData,
+                nodes: nodeData.nodes.concat(routerNodeData.nodes),
+                links: nodeData.links.concat(routerNodeData.links),
+              }
+            }
+
+            return nodeData
+          },
+          {nodes: [], links: []}
+        )
+
+        nodeData = {...nodeData, nodes: nodeData.nodes.concat(this.initNodes)}
+
+        nodesData = nodeData
+      }
+    } else {
+      if (customGroupRoutersData) {
+        let nodeData = _.reduce(
+          customGroupRoutersData,
+          (nodeData: GraphNodeData, groupRouter: GroupRouterData) => {
+            if (groupRouter.routers.length > 0) {
+              const routerNodeData = _.reduce(
+                groupRouter.routers,
+                (routerNodeData: GraphNodeData, router: Router) => {
+                  if (router.assetId !== '-') {
+                    routerNodeData = {
+                      ...routerNodeData,
+                      nodes: [
+                        ...routerNodeData.nodes,
+                        {
+                          id: router.assetId,
+                          label: router.assetId,
+                          role: this.TOPOLOGY_ROLE.ROUTER,
+                          router: router,
+                          size: 2000,
+                        },
+                      ],
+                      links: [
+                        ...routerNodeData.links,
+                        {
+                          source: this.TOPOLOGY_ROLE.ROOT,
+                          target: router.assetId,
+                        },
+                      ],
+                    }
+                  }
+                  return routerNodeData
+                },
+                {nodes: [], links: []}
+              )
+
+              nodeData = {
+                ...nodeData,
+                nodes: nodeData.nodes.concat(routerNodeData.nodes),
+                links: nodeData.links.concat(routerNodeData.links),
+              }
+            }
+
+            return nodeData
+          },
+          {nodes: [], links: []}
+        )
+
+        nodeData = {...nodeData, nodes: nodeData.nodes.concat(this.initNodes)}
+
+        nodesData = nodeData
+      }
+    }
+
     let nodesInfo: GraphNodeData = {
-      nodes: null,
-      links: null,
+      nodes: [],
+      links: [],
     }
 
     let {nodes, links} = nodesInfo
-    const customRouterData = this.modifyRoutersData(routersData)
 
-    nodes = nodeData.nodes.map((m, index) =>
-      m.id === 'root'
-        ? {...m, x: dimensions.width / 2, y: this.defaultMargin.top}
-        : {
-            ...m,
-            x: this.getXCoordinate(index),
-            y: dimensions.height - this.defaultMargin.bottom,
-            viewGenerator: (node: GraphNode) =>
-              this.GenerateCustomNode({
-                node,
-                routersData: customRouterData,
-              }),
-          }
-    )
+    let gIndex = 0
+    let rIndex = 0
 
-    const filteredLinks = this.dummyData.links.filter(dummyLink => {
-      const links = nodeData.nodes.filter(node => {
-        if (node.id && node.id === dummyLink.source) return dummyLink
+    nodes = nodesData.nodes.map(m => {
+      if (m.role === 'root') {
+        return {...m, x: dimensions.width / 2, y: this.defaultMargin.top}
+      } else if (m.role === 'group') {
+        return {
+          ...m,
+          x: this.getXCoordinate(gIndex++, m.role),
+          y: this.defaultMargin.top + 120,
+          viewGenerator: (node: GraphNode) =>
+            this.GenerateGroupNode({
+              node,
+            }),
+        }
+      } else if (m.role === 'router') {
+        return {
+          ...m,
+          x: this.getXCoordinate(rIndex++, m.role),
+          y: dimensions.height - this.defaultMargin.bottom,
+          viewGenerator: (node: GraphNode) =>
+            this.GenerateRouterNode({
+              node,
+            }),
+        }
+      } else {
+        return {
+          ...m,
+        }
+      }
+    })
+
+    if (
+      this.dummyData.nodes.filter(dummyNode => {
+        const nodes = nodesData.nodes.filter(node => {
+          if (node.id && node.id === dummyNode.id) return dummyNode
+        })
+        if (nodes.length > 0) return nodes
+      }).length <= 0
+    ) {
+      const filteredLinks = this.dummyData.links.filter(dummyLink => {
+        const links = nodesData.nodes.filter(node => {
+          if (node.id && node.id === dummyLink.source) return dummyLink
+        })
+
+        if (links.length > 0) return links
       })
 
-      if (links.length > 0) return links
-    })
-
-    const filteredNodes = this.dummyData.nodes.filter(node => {
-      const nodes = filteredLinks.filter(link => {
-        if (node.id && node.id === link.target) return node
+      const filteredNodes = this.dummyData.nodes.filter(node => {
+        const nodes = filteredLinks.filter(link => {
+          if (node.id && node.id === link.target) return node
+        })
+        if (nodes.length > 0) return nodes
       })
-      if (nodes.length > 0) return nodes
-    })
 
-    nodes = nodes.concat(filteredNodes)
+      nodes = nodes.concat(filteredNodes)
 
-    links = nodeData.links.concat(filteredLinks)
+      links = nodesData.links.concat(filteredLinks)
 
-    links = _.remove(links, link => {
-      return link.target !== '-'
-    })
+      links = _.remove(links, link => {
+        return link.target !== '-'
+      })
+    } else {
+      links = nodesData.links
+    }
 
-    if (this.state.isLocalstorage) {
+    if (isLocalstorage) {
       const {swanTopology} = this.addon
       nodes = nodes.map(m => {
         const filtered = swanTopology.filter(s => s.id === m.id)
@@ -511,75 +640,33 @@ class TopologyRenderer extends PureComponent<Props, State> {
     }
   }
 
-  private getXCoordinate(index: number) {
-    return this.defaultMargin.left + 220 * index
+  private getXCoordinate(index: number, role: string) {
+    let xCoordinate: number = 0
+    if (role === this.TOPOLOGY_ROLE.GROUP) {
+      xCoordinate = this.defaultMargin.left + 100 + 400 * index
+    } else {
+      xCoordinate = this.defaultMargin.left + 220 * index
+    }
+    return xCoordinate
   }
 
-  private generateMachineNode = ({node}: {node: GraphNode}) => {
-    const {TABLE_ROW_IN_HEADER, TABLE_ROW_IN_BODY} = TOPOLOGY_TABLE_SIZING
-
+  private GenerateGroupNode = ({node}: {node: GraphNode}) => {
     return (
       <div
-        className={classnames('topology-table-container', {
-          unconnected: node.sound === null,
-        })}
+        className={classnames('topology-table-container')}
+        style={{transform: 'translateY(72px)'}}
       >
-        <strong className={'hosts-table-title'}>{node.id}</strong>
-        <Table>
-          <TableBody>
-            <>
-              <div className={this.focusedClasses()}>
-                <div
-                  className={this.headerClasses()}
-                  style={{width: TABLE_ROW_IN_HEADER}}
-                >
-                  TEMP
-                </div>
-                <TableBodyRowItem
-                  title={
-                    node.temperature !== null
-                      ? usageTemperature({
-                          value: `${node.temperature} ˚C`,
-                        })
-                      : '-'
-                  }
-                  width={TABLE_ROW_IN_BODY}
-                ></TableBodyRowItem>
-              </div>
-              <div className={this.focusedClasses()}>
-                <div
-                  className={this.headerClasses()}
-                  style={{width: TABLE_ROW_IN_HEADER}}
-                >
-                  SOUND
-                </div>
-                <TableBodyRowItem
-                  title={
-                    node.sound !== null
-                      ? usageSound({
-                          value: `${node.sound} dB`,
-                        })
-                      : '-'
-                  }
-                  width={TABLE_ROW_IN_BODY}
-                ></TableBodyRowItem>
-              </div>
-            </>
-          </TableBody>
-        </Table>
-        <div className={classnames('table-background bg-machine')}></div>
+        <strong className={'hosts-table-title'}>
+          <div className={classnames('topology-group-title-container')}>
+            {node.id}
+          </div>
+        </strong>
       </div>
     )
   }
 
-  private GenerateCustomNode = ({
-    node,
-    routersData,
-  }: {
-    node: GraphNode
-    routersData: Router[]
-  }) => {
-    const routerData = _.find(routersData, r => r.assetId === node.id)
+  private GenerateRouterNode = ({node}: {node: GraphNode}) => {
+    const routerData = node.router
 
     if (!routerData) return
 
@@ -664,6 +751,63 @@ class TopologyRenderer extends PureComponent<Props, State> {
     )
   }
 
+  private generateMachineNode = ({node}: {node: GraphNode}) => {
+    const {TABLE_ROW_IN_HEADER, TABLE_ROW_IN_BODY} = TOPOLOGY_TABLE_SIZING
+
+    return (
+      <div
+        className={classnames('topology-table-container', {
+          unconnected: node.sound === null,
+        })}
+      >
+        <strong className={'hosts-table-title'}>{node.id}</strong>
+        <Table>
+          <TableBody>
+            <>
+              <div className={this.focusedClasses()}>
+                <div
+                  className={this.headerClasses()}
+                  style={{width: TABLE_ROW_IN_HEADER}}
+                >
+                  TEMP
+                </div>
+                <TableBodyRowItem
+                  title={
+                    node.temperature !== null
+                      ? usageTemperature({
+                          value: `${node.temperature} ˚C`,
+                        })
+                      : '-'
+                  }
+                  width={TABLE_ROW_IN_BODY}
+                ></TableBodyRowItem>
+              </div>
+              <div className={this.focusedClasses()}>
+                <div
+                  className={this.headerClasses()}
+                  style={{width: TABLE_ROW_IN_HEADER}}
+                >
+                  SOUND
+                </div>
+                <TableBodyRowItem
+                  title={
+                    node.sound !== null
+                      ? usageSound({
+                          value: `${node.sound} dB`,
+                        })
+                      : '-'
+                  }
+                  width={TABLE_ROW_IN_BODY}
+                ></TableBodyRowItem>
+              </div>
+            </>
+          </TableBody>
+        </Table>
+        <div className={classnames('table-background bg-machine')}></div>
+      </div>
+    )
+  }
+
   private focusedClasses = (): string => {
     return 'hosts-table--tr'
   }
@@ -673,4 +817,9 @@ class TopologyRenderer extends PureComponent<Props, State> {
   }
 }
 
-export default TopologyRenderer
+const mapStateToProps = ({auth: {me}}) => {
+  const meRole = _.get(me, 'role', null)
+  return {meRole}
+}
+
+export default connect(mapStateToProps, null)(TopologyRenderer)

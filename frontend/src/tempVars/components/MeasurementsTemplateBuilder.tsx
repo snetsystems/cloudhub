@@ -15,6 +15,8 @@ import {
   TemplateValueType,
 } from 'src/types'
 
+import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
+
 interface State {
   databases: string[]
   databasesStatus: RemoteDataState
@@ -81,7 +83,7 @@ class MeasurementsTemplateBuilder extends PureComponent<
   }
 
   private async loadDatabases(): Promise<void> {
-    const {source} = this.props
+    const {source, me} = this.props
 
     this.setState({databasesStatus: RemoteDataState.Loading})
 
@@ -90,13 +92,26 @@ class MeasurementsTemplateBuilder extends PureComponent<
       const {databases} = parseShowDatabases(data)
       const {selectedDatabase} = this.state
 
+      let roleDatabases: string[]
+
+      if (databases && databases.length > 0) {
+        if (isUserAuthorized(me.role, SUPERADMIN_ROLE)) {
+          roleDatabases = databases
+        } else {
+          roleDatabases = _.filter(
+            databases,
+            database => database === me.currentOrganization.name
+          )
+        }
+      }
+
       this.setState({
-        databases,
+        databases: roleDatabases,
         databasesStatus: RemoteDataState.Done,
       })
 
       if (!selectedDatabase) {
-        this.handleChooseDatabase(_.get(databases, 0, ''))
+        this.handleChooseDatabase(_.get(roleDatabases, 0, ''))
       }
     } catch (error) {
       this.setState({databasesStatus: RemoteDataState.Error})

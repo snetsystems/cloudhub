@@ -8,10 +8,10 @@ import TemplateVariableEditor from 'src/tempVars/components/TemplateVariableEdit
 import Authorized, {EDITOR_ROLE} from 'src/auth/Authorized'
 import {graphFromTemplates} from 'src/tempVars/utils/graph'
 
-import {Template, TemplateValue, Source} from 'src/types'
+import {Template, TemplateValue, Source, Me} from 'src/types'
 
 interface Props {
-  meRole: string
+  me: Me
   isUsingAuth: boolean
   templates: Template[]
   source: Source
@@ -32,7 +32,7 @@ class TemplateControlBar extends Component<Props, State> {
   }
 
   public render() {
-    const {templates, source} = this.props
+    const {templates, source, me} = this.props
     const {isAdding} = this.state
 
     return (
@@ -44,6 +44,7 @@ class TemplateControlBar extends Component<Props, State> {
               <TemplateVariableEditor
                 templates={templates}
                 source={source}
+                me={me}
                 onCreate={this.handleCreateTemplate}
                 onCancel={this.handleCancelAddVariable}
               />
@@ -65,7 +66,7 @@ class TemplateControlBar extends Component<Props, State> {
   }
 
   public renderTemplateControls() {
-    const {templates, onPickTemplate, meRole, isUsingAuth, source} = this.props
+    const {templates, onPickTemplate, me, isUsingAuth, source} = this.props
 
     if (!templates || !templates.length) {
       return (
@@ -81,7 +82,7 @@ class TemplateControlBar extends Component<Props, State> {
       return (
         <TemplateControl
           key={template.id}
-          meRole={meRole}
+          me={me}
           isUsingAuth={isUsingAuth}
           template={template}
           templates={templates}

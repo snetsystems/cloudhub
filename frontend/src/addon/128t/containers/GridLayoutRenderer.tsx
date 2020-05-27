@@ -56,7 +56,7 @@ import {NETWORK_ACCESS, GET_STATUS} from 'src/agent_admin/constants'
 import {cellLayoutInfo} from 'src/addon/128t/containers/SwanSdplexStatusPage'
 import {ComponentStatus} from 'src/reusable_ui/types'
 import {Addon} from 'src/types/auth'
-import {Notification, NotificationFunc} from 'src/types'
+import {Notification, NotificationFunc, Me} from 'src/types'
 
 // Notification
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -69,7 +69,12 @@ import {
 // Error
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
+interface Auth {
+  me: Me
+}
+
 interface Props {
+  auth: Auth
   notify: (message: Notification | NotificationFunc) => void
   layout: cellLayoutInfo[]
   focusedAssetId: string
@@ -329,6 +334,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
 
   public render() {
     const {
+      auth,
       layout,
       routersData,
       isSwanSdplexStatus,
@@ -380,6 +386,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
             style={this.cellStyle}
           >
             <RouterTable
+              me={auth.me}
               routers={checkRouterData}
               onClickTableRow={onClickTableRow}
               focusedAssetId={focusedAssetId}
@@ -779,8 +786,12 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   }
 }
 
+const mapStateToProps = ({auth}) => ({
+  auth,
+})
+
 const mdtp = {
   notify: notifyAction,
 }
 
-export default connect(null, mdtp)(GridLayoutRenderer)
+export default connect(mapStateToProps, mdtp)(GridLayoutRenderer)

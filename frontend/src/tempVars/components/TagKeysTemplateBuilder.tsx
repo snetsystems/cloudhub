@@ -28,6 +28,7 @@ class TagKeysTemplateBuilder extends PureComponent<TemplateBuilderProps> {
       template,
       templates,
       source,
+      me,
       onUpdateTemplate,
       onUpdateDefaultTemplateValue,
     } = this.props
@@ -40,6 +41,7 @@ class TagKeysTemplateBuilder extends PureComponent<TemplateBuilderProps> {
         template={template}
         templates={templates}
         source={source}
+        me={me}
         onUpdateTemplate={onUpdateTemplate}
         onUpdateDefaultTemplateValue={onUpdateDefaultTemplateValue}
       />

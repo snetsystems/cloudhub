@@ -22,7 +22,10 @@ import {
   TableBody,
 } from 'src/addon/128t/reusable/layout'
 
-//type
+// Authorized
+import {ADMIN_ROLE, SUPERADMIN_ROLE} from 'src/auth/Authorized'
+
+// type
 import {
   Router,
   TopSource,
@@ -33,6 +36,8 @@ import {
   OncueData,
 } from 'src/addon/128t/types'
 
+import {Me} from 'src/types'
+
 // constants
 import {ROUTER_TABLE_SIZING} from 'src/addon/128t/constants'
 
@@ -40,6 +45,7 @@ import {ROUTER_TABLE_SIZING} from 'src/addon/128t/constants'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 export interface Props {
+  me: Me
   cellBackgroundColor: string
   cellTextColor: string
   isEditable: boolean
@@ -160,6 +166,7 @@ class RouterTable extends PureComponent<Props, State> {
   }
   public render() {
     const {
+      me,
       isEditable,
       cellTextColor,
       cellBackgroundColor,
@@ -169,6 +176,8 @@ class RouterTable extends PureComponent<Props, State> {
       config,
       handleFocusedBtnName,
     } = this.props
+
+    const meRole = _.get(me, 'role', '')
 
     return (
       <Panel>
@@ -183,23 +192,27 @@ class RouterTable extends PureComponent<Props, State> {
             isEditable={isEditable}
             cellBackgroundColor={cellBackgroundColor}
           />
-          <this.HeadingButton
-            buttonName={'Firmware'}
-            isNew={this.newChecker(firmware.files)}
-            handleOnChoose={handleOnChoose}
-            handleFocusedBtnName={handleFocusedBtnName}
-            items={this.extractionFilesName(firmware.files)}
-            buttonStatus={firmware.isLoading}
-            isDisabled={false}
-          />
-          <this.HeadingButton
-            buttonName={'Config'}
-            isNew={this.newChecker(config.files)}
-            handleFocusedBtnName={handleFocusedBtnName}
-            items={this.extractionFilesName(config.files)}
-            buttonStatus={config.isLoading}
-            isDisabled={false}
-          />
+          {(meRole === SUPERADMIN_ROLE || meRole === ADMIN_ROLE) && (
+            <this.HeadingButton
+              buttonName={'Firmware'}
+              isNew={this.newChecker(firmware.files)}
+              handleOnChoose={handleOnChoose}
+              handleFocusedBtnName={handleFocusedBtnName}
+              items={this.extractionFilesName(firmware.files)}
+              buttonStatus={firmware.isLoading}
+              isDisabled={false}
+            />
+          )}
+          {(meRole === SUPERADMIN_ROLE || meRole === ADMIN_ROLE) && (
+            <this.HeadingButton
+              buttonName={'Config'}
+              isNew={this.newChecker(config.files)}
+              handleFocusedBtnName={handleFocusedBtnName}
+              items={this.extractionFilesName(config.files)}
+              buttonStatus={config.isLoading}
+              isDisabled={false}
+            />
+          )}
           <GridLayoutSearchBar
             placeholder="Filter by Router..."
             onSearch={this.updateSearchTerm}
