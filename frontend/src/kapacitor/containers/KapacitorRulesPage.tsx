@@ -1,6 +1,7 @@
 // Libraries
 import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
+import _ from 'lodash'
 
 // APIs
 import {pingKapacitor} from 'src/shared/apis'
@@ -28,12 +29,14 @@ import {
   RemoteDataState,
   Notification,
   NotificationFunc,
+  Me,
 } from 'src/types'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import NoKapacitorError from 'src/shared/components/NoKapacitorError'
 import {getDeep} from 'src/utils/wrappers'
+import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
 interface Props {
   source: Source
@@ -46,10 +49,15 @@ interface Props {
   fetchKapacitors: sourcesActions.FetchKapacitorsAsync
   setActiveKapacitor: sourcesActions.SetActiveKapacitorAsync
   rules: AlertRule[]
+  auth: Auth
 }
 
 interface State {
   loading: RemoteDataState
+}
+
+interface Auth {
+  me: Me
 }
 
 @ErrorHandling
@@ -99,15 +107,26 @@ export class KapacitorRulesPage extends PureComponent<Props, State> {
 
   private get rules(): JSX.Element {
     const kapacitor = this.kapacitor
-    const {source, rules} = this.props
+    const {source, rules, auth} = this.props
 
     if (!kapacitor) {
       return <NoKapacitorError source={source} />
     }
 
+    const currentOrganization = _.get(auth.me, 'currentOrganization')
+    let meRules: AlertRule[]
+
+    if (isUserAuthorized(auth.me.role, SUPERADMIN_ROLE)) {
+      meRules = _.cloneDeep(rules)
+    } else {
+      meRules = _.filter(rules, rule =>
+        rule.query ? rule.query.database === currentOrganization.name : false
+      )
+    }
+
     return (
       <KapacitorRules
-        rules={rules}
+        rules={meRules}
         source={source}
         onDelete={this.handleDeleteRule}
         onChangeRuleStatus={this.handleRuleStatus}

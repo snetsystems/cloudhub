@@ -1,5 +1,6 @@
 import React, {PureComponent} from 'react'
 import {getDeep} from 'src/utils/wrappers'
+import _ from 'lodash'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import Dropdown from 'src/shared/components/Dropdown'
@@ -16,6 +17,7 @@ import {
   Source,
 } from 'src/types'
 
+import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 interface Props extends TemplateBuilderProps {
   queryPrefix: string
   templateValueType: TemplateValueType
@@ -110,7 +112,7 @@ class KeysTemplateBuilder extends PureComponent<Props, State> {
   }
 
   private async loadDatabases(): Promise<void> {
-    const {source} = this.props
+    const {source, me} = this.props
 
     this.setState({databasesStatus: RemoteDataState.Loading})
 
@@ -119,13 +121,26 @@ class KeysTemplateBuilder extends PureComponent<Props, State> {
       const {databases} = parseShowDatabases(data)
       const {selectedDatabase} = this.state
 
+      let roleDatabases: string[]
+
+      if (databases && databases.length > 0) {
+        if (isUserAuthorized(me.role, SUPERADMIN_ROLE)) {
+          roleDatabases = databases
+        } else {
+          roleDatabases = _.filter(
+            databases,
+            database => database === me.currentOrganization.name
+          )
+        }
+      }
+
       this.setState({
-        databases,
+        databases: roleDatabases,
         databasesStatus: RemoteDataState.Done,
       })
 
       if (!selectedDatabase) {
-        this.handleChooseDatabase(getDeep(databases, 0, ''))
+        this.handleChooseDatabase(getDeep(roleDatabases, 0, ''))
       }
     } catch (error) {
       this.setState({databasesStatus: RemoteDataState.Error})

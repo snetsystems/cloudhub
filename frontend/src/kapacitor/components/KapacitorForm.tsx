@@ -5,7 +5,7 @@ import Input from 'src/kapacitor/components/KapacitorFormInput'
 import {Page} from 'src/reusable_ui'
 import KapacitorFormSkipVerify from 'src/kapacitor/components/KapacitorFormSkipVerify'
 
-import {Kapacitor, Source, Notification, NotificationFunc} from 'src/types'
+import {Kapacitor, Source, Notification, NotificationFunc, Me} from 'src/types'
 
 interface Props {
   kapacitor: Kapacitor
@@ -18,6 +18,7 @@ interface Props {
   source: Source
   hash: string
   notify: (message: Notification | NotificationFunc) => void
+  me: Me
 }
 
 class KapacitorForm extends PureComponent<Props> {
@@ -34,6 +35,7 @@ class KapacitorForm extends PureComponent<Props> {
       source,
       hash,
       notify,
+      me,
     } = this.props
 
     return (
@@ -118,6 +120,7 @@ class KapacitorForm extends PureComponent<Props> {
                   hash={hash}
                   exists={exists}
                   source={source}
+                  me={me}
                   kapacitor={kapacitor}
                   notify={notify}
                 />

@@ -156,7 +156,7 @@ class AgentMinionsTable extends PureComponent<Props, State> {
 
   private get ErrorState(): JSX.Element {
     return (
-      <div className="generic-empty-state">
+      <div className="agent--state generic-empty-state">
         <h4 style={{margin: '90px 0'}}>There was a problem loading hosts</h4>
       </div>
     )
@@ -164,7 +164,7 @@ class AgentMinionsTable extends PureComponent<Props, State> {
 
   private get NoHostsState(): JSX.Element {
     return (
-      <div className="generic-empty-state">
+      <div className="agent--state generic-empty-state">
         <h4 style={{margin: '90px 0'}}>No Hosts found</h4>
       </div>
     )
@@ -172,7 +172,7 @@ class AgentMinionsTable extends PureComponent<Props, State> {
 
   private get NoSortedHostsState(): JSX.Element {
     return (
-      <div className="generic-empty-state">
+      <div className="agent--state generic-empty-state">
         <h4 style={{margin: '90px 0'}}>
           There are no hosts that match the search criteria
         </h4>

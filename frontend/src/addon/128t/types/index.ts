@@ -5,7 +5,9 @@ import {
   SaltDirFileInfo,
   CheckRouter,
   SaltDirFile,
-  GetSaltDirectoryInfo
+  GetSaltDirectoryInfo,
+  PeerDetail,
+  GroupRouterData,
 } from 'src/addon/128t/types/routers'
 import {GridCell} from 'src/addon/128t/types/grid'
 import {SortDirection} from 'src/addon/128t/types/table'
@@ -14,7 +16,7 @@ import {
   ProtocolModule,
   DeviceConnection,
   Connection,
-  OncueData
+  OncueData,
 } from 'src/addon/128t/types/oncue'
 
 export {
@@ -31,5 +33,7 @@ export {
   ProtocolModule,
   DeviceConnection,
   Connection,
-  OncueData
+  OncueData,
+  PeerDetail,
+  GroupRouterData,
 }
