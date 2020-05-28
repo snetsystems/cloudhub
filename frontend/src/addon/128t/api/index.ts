@@ -131,6 +131,6 @@ export const getOncueServiceStatus = async (
       return null
     }
   } catch (error) {
-    console.log(error)
+    console.error(error)
   }
 }
