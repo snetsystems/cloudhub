@@ -57,11 +57,11 @@ export interface Props {
   cellBackgroundColor: string
   cellTextColor: string
   routers: Router[]
-  focusedAssetId: string
+  focusedNodeName: string
   onClickMapMarker: (
     topSources: TopSource[],
     topSessions: TopSession[],
-    focusedAssetId: string
+    focusedNodeName: string
   ) => void
   layout: cellLayoutInfo[]
 }
@@ -106,7 +106,7 @@ class RouterMaps extends PureComponent<Props, State> {
           this.getCoordLatLng(r.locationCoordinates, 'lng'),
         ])
           .addTo(map)
-          .bindPopup(r.assetId, {
+          .bindPopup(r.nodeName, {
             closeButton: false,
             closeOnEscapeKey: false,
             closeOnClick: false,
@@ -122,13 +122,13 @@ class RouterMaps extends PureComponent<Props, State> {
         f =>
           f.getLatLng().lat ===
             this.props.routers
-              .filter(f => f.assetId === this.props.focusedAssetId)
+              .filter(f => f.nodeName === this.props.focusedNodeName)
               .map(m => {
                 return this.getCoordLatLng(m.locationCoordinates, 'lat')
               })[0] &&
           f.getLatLng().lng ===
             this.props.routers
-              .filter(f => f.assetId === this.props.focusedAssetId)
+              .filter(f => f.nodeName === this.props.focusedNodeName)
               .map(m => {
                 return this.getCoordLatLng(m.locationCoordinates, 'lng')
               })[0]
@@ -136,7 +136,7 @@ class RouterMaps extends PureComponent<Props, State> {
       .map(m => m.openPopup())
 
     const focusedRouter = this.props.routers.filter(
-      f => f.assetId === this.props.focusedAssetId
+      f => f.nodeName === this.props.focusedNodeName
     )
 
     if (focusedRouter.length > 0) {
@@ -167,7 +167,7 @@ class RouterMaps extends PureComponent<Props, State> {
   }
 
   componentDidUpdate(nextProps: Props) {
-    const {focusedAssetId, layout} = this.props
+    const {focusedNodeName, layout} = this.props
 
     if (layout !== nextProps.layout) {
       if (
@@ -178,9 +178,9 @@ class RouterMaps extends PureComponent<Props, State> {
       }
     }
 
-    if (focusedAssetId !== nextProps.focusedAssetId) {
+    if (focusedNodeName !== nextProps.focusedNodeName) {
       const focusedRouter = this.props.routers.find(
-        r => r.assetId === focusedAssetId
+        r => r.nodeName === focusedNodeName
       )
 
       if (focusedRouter.locationCoordinates !== null) {
@@ -189,13 +189,13 @@ class RouterMaps extends PureComponent<Props, State> {
             f =>
               f.getLatLng().lat ===
                 this.props.routers
-                  .filter(f => f.assetId === this.props.focusedAssetId)
+                  .filter(f => f.nodeName === this.props.focusedNodeName)
                   .map(m => {
                     return this.getCoordLatLng(m.locationCoordinates, 'lat')
                   })[0] &&
               f.getLatLng().lng ===
                 this.props.routers
-                  .filter(f => f.assetId === this.props.focusedAssetId)
+                  .filter(f => f.nodeName === this.props.focusedNodeName)
                   .map(m => {
                     return this.getCoordLatLng(m.locationCoordinates, 'lng')
                   })[0]
@@ -220,7 +220,7 @@ class RouterMaps extends PureComponent<Props, State> {
           this.getCoordLatLng(f.locationCoordinates, 'lng') ===
             event.target.getLatLng().lng
       )
-      .map(m => onClickMapMarker(m.topSources, m.topSessions, m.assetId))
+      .map(m => onClickMapMarker(m.topSources, m.topSessions, m.nodeName))
   }
 
   public onMarkerMouseOver = event => {

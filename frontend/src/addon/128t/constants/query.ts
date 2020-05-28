@@ -16,7 +16,7 @@ export const GET_ALLROUTERS_INFO = gql`
         }
         nodes {
           nodes {
-            assetId
+            name
             enabled
             role
             cpu {

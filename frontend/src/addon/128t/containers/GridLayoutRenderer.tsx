@@ -80,7 +80,7 @@ interface Props {
   auth: Auth
   notify: (message: Notification | NotificationFunc) => void
   layout: cellLayoutInfo[]
-  focusedAssetId: string
+  focusedNodeName: string
   routersData: Router[]
   topSessionsData: TopSession[]
   topSourcesData: TopSource[]
@@ -88,13 +88,13 @@ interface Props {
   onClickTableRow: (
     topSources: TopSource[],
     topSessions: TopSession[],
-    focusedAssetId: string
+    focusedNodeName: string
   ) => () => void
   onPositionChange: (cellsLayout: cellLayoutInfo[]) => void
   onClickMapMarker: (
     topSources: TopSource[],
     topSessions: TopSession[],
-    focusedAssetId: string
+    focusedNodeName: string
   ) => void
   addons: Addon[]
 }
@@ -151,7 +151,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   public componentWillMount() {
     const checkRoutersData = this.props.routersData.map(router => {
       return {
-        assetId: router.assetId,
+        nodeName: router.nodeName,
         isCheck: false,
       }
     })
@@ -318,7 +318,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   public handleRouterCheck = ({router}: {router: Router}): void => {
     const {checkRouters} = this.state
     const index = checkRouters.indexOf(
-      checkRouters.find(checkRouter => checkRouter.assetId === router.assetId)
+      checkRouters.find(checkRouter => checkRouter.nodeName === router.nodeName)
     )
 
     checkRouters[index].isCheck
@@ -347,7 +347,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       routersData,
       isSwanSdplexStatus,
       onClickTableRow,
-      focusedAssetId,
+      focusedNodeName,
       topSourcesData,
       topSessionsData,
       onClickMapMarker,
@@ -397,7 +397,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
               me={auth.me}
               routers={checkRouterData}
               onClickTableRow={onClickTableRow}
-              focusedAssetId={focusedAssetId}
+              focusedNodeName={focusedNodeName}
               isEditable={isSwanSdplexStatus}
               cellTextColor={this.cellTextColor}
               cellBackgroundColor={this.cellBackgroundColor}
@@ -423,7 +423,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
             <RouterMaps
               layout={layout}
               routers={routersData}
-              focusedAssetId={focusedAssetId}
+              focusedNodeName={focusedNodeName}
               onClickMapMarker={onClickMapMarker}
               isEditable={isSwanSdplexStatus}
               cellTextColor={this.cellTextColor}
@@ -506,8 +506,8 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   }
 
   private handleOnClickTableRow = (router: Router) => {
-    const {topSources, topSessions, assetId} = router
-    return this.props.onClickTableRow(topSources, topSessions, assetId)()
+    const {topSources, topSessions, nodeName} = router
+    return this.props.onClickTableRow(topSources, topSessions, nodeName)()
   }
   private onClickRouterName = async (data: {
     _event: MouseEvent<HTMLElement>
@@ -519,15 +519,15 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     }
 
     const {_event, router} = data
-    const {assetId} = router
+    const {nodeName} = router
 
-    this[assetId] = _event.target
-    this[assetId].ref = this.refDataPopup
+    this[nodeName] = _event.target
+    this[nodeName].ref = this.refDataPopup
 
-    const routerPosition = this[assetId].getBoundingClientRect()
+    const routerPosition = this[nodeName].getBoundingClientRect()
 
     const {top, right} = routerPosition
-    const {parentTop, parentLeft} = this.getParentPosition(this[assetId])
+    const {parentTop, parentLeft} = this.getParentPosition(this[nodeName])
 
     const {addons} = this.props
     const salt = addons.find(addon => addon.name === 'salt')
@@ -536,7 +536,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     const response = await getOncueServiceStatus(
       salt.url,
       salt.token,
-      assetId,
+      nodeName,
       oncue.url
     )
 
@@ -545,7 +545,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
         routerPopupPosition: {top: top - parentTop, right: right - parentLeft},
         oncueData: {
           ...this.state.oncueData,
-          router: assetId,
+          router: nodeName,
           oncueService: response,
           protocolModule: response.protocolModule,
           deviceConnection: response.protocolModule[0].deviceConnection,
@@ -560,7 +560,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
         routerPopupPosition: {top: top - parentTop, right: right - parentLeft},
         oncueData: {
           ...this.state.oncueData,
-          router: assetId,
+          router: nodeName,
           oncueService: null,
           protocolModule: [],
           deviceConnection: [],
@@ -665,7 +665,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
                   children={
                     <ol className="list-section--row list-section--row-first list-section--row-last">
                       {checkedList.map(list => (
-                        <li key={list.assetId}>{list.assetId}</li>
+                        <li key={list.nodeName}>{list.nodeName}</li>
                       ))}
                     </ol>
                   }
@@ -711,7 +711,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
 
     const checkedHostName: string = checkRouters
       .filter(router => router.isCheck === true)
-      .map(router => router.assetId)
+      .map(router => router.nodeName)
       .toString()
 
     const chooseMenuInfo: SaltDirFileInfo = this.state[focusedBtn].files.filter(
