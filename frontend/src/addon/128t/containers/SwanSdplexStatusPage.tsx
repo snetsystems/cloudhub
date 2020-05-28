@@ -292,9 +292,7 @@ const SwanSdplexStatusPage = ({
                     try {
                       router = {
                         ...router,
-                        group: gHosts.find(
-                          f => f.hostName === _.get(nodeDetail, 'assetId')
-                        ).group,
+                        group: groupRouter.name,
                         assetId: _.get(nodeDetail, 'assetId'),
                         enabled: _.get(nodeDetail, 'enabled'),
                         role: _.get(nodeDetail, 'role'),
