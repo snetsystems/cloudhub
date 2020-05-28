@@ -547,11 +547,11 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     const {focusedRouterName} = this.state
     const salt = addons.find(addon => addon.name === 'salt')
     const oncue = addons.find(addon => addon.name === 'oncue')
-
+    routerName = routerName ? routerName : focusedRouterName
     const response = await getOncueServiceStatus(
       salt.url,
       salt.token,
-      routerName ? routerName : focusedRouterName,
+      routerName,
       oncue.url
     )
 
@@ -559,7 +559,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       this.setState({
         oncueData: {
           ...this.state.oncueData,
-          router: this.props.focusedAssetId,
+          router: routerName,
           oncueService: response,
           protocolModule: response.protocolModule,
           deviceConnection: response.protocolModule[0].deviceConnection,

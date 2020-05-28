@@ -42,7 +42,10 @@ export const getOncueServiceStatus = async (
       ),
     ])
 
-    if (info[0].data.return[0][pAssetId] !== false) {
+    if (
+      info[0].data.return[0][pAssetId] !== false ||
+      !info[0].data.return[0][pAssetId].lowercase().indexOf('error')
+    ) {
       if (Object.keys(info[0].data.return[0]).length > 0) {
         let oncueService: OncueService = {
           name: JSON.parse(info[1].data.return[0][pAssetId].body).info[0][
