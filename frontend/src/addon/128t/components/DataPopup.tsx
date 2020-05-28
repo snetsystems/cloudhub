@@ -20,6 +20,9 @@ interface Props {
   handleOnClickDeviceConnectionsRow: (url: string) => void
   popupPosition: {top: number; right: number}
   oncueData: OncueData
+  routerDataPopupAutoRefresh: number
+  onChooseRouterDataPopupAutoRefresh: (milliseconds: number) => void
+  onManualRouterDataPopupRefresh: () => void
 }
 
 @ErrorHandling
@@ -30,15 +33,20 @@ class DataPopup extends PureComponent<Props> {
   }
 
   public render() {
-    const {oncueData} = this.props
+    const {
+      oncueData,
+      routerDataPopupAutoRefresh,
+      onChooseRouterDataPopupAutoRefresh,
+      onManualRouterDataPopupRefresh,
+    } = this.props
     return (
       <div className="data-popup-container">
         <div
           style={this.stylePosition}
           className={this.handleToolTipClassName}
-          onBlur={this.props.hanldeOnDismiss}
+          // onBlur={this.props.hanldeOnDismiss}
         >
-          <button className="data-popup-dismiss" onClick={this.handleDismiss} />{' '}
+          <button className="data-popup-dismiss" onClick={this.handleDismiss} />
           <div className="data-popup-contents">
             <FancyScrollbar
               autoHeight={true}
@@ -48,7 +56,16 @@ class DataPopup extends PureComponent<Props> {
               <div className="datapopup-table--container">
                 <div className="datapopup-table--section">
                   <div className="datapopup-table--section--full">
-                    <OncueServiceTable oncueData={oncueData} />
+                    <OncueServiceTable
+                      oncueData={oncueData}
+                      routerDataPopupAutoRefresh={routerDataPopupAutoRefresh}
+                      onChooseRouterDataPopupAutoRefresh={
+                        onChooseRouterDataPopupAutoRefresh
+                      }
+                      onManualRouterDataPopupRefresh={
+                        onManualRouterDataPopupRefresh
+                      }
+                    />
                   </div>
                 </div>
                 <div className="datapopup-table--section">

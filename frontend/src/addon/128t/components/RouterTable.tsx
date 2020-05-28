@@ -73,6 +73,9 @@ export interface Props {
   handleOnClickProtocolModulesRow: (name: string) => void
   handleOnClickDeviceConnectionsRow: (url: string) => void
   oncueData: OncueData
+  routerDataPopupAutoRefresh: number
+  onChooseRouterDataPopupAutoRefresh: (milliseconds: number) => void
+  onManualRouterDataPopupRefresh: () => void
 }
 
 interface State {
@@ -425,6 +428,9 @@ class RouterTable extends PureComponent<Props, State> {
       hanldeOnDismiss,
       routerPopupPosition,
       oncueData,
+      routerDataPopupAutoRefresh,
+      onChooseRouterDataPopupAutoRefresh,
+      onManualRouterDataPopupRefresh,
     } = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
@@ -464,6 +470,11 @@ class RouterTable extends PureComponent<Props, State> {
                 handleOnClickDeviceConnectionsRow={
                   this.props.handleOnClickDeviceConnectionsRow
                 }
+                routerDataPopupAutoRefresh={routerDataPopupAutoRefresh}
+                onChooseRouterDataPopupAutoRefresh={
+                  onChooseRouterDataPopupAutoRefresh
+                }
+                onManualRouterDataPopupRefresh={onManualRouterDataPopupRefresh}
               />
             ) : null}
           </>

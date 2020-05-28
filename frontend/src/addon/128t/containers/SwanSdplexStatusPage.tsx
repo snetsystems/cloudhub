@@ -178,6 +178,7 @@ const SwanSdplexStatusPage = ({
     T128: {
       focusedAssetId: '',
       cellsLayoutInfo: initCellsLayout,
+      oncueAutoRefresh: 0,
     },
   }
 
@@ -443,6 +444,7 @@ const SwanSdplexStatusPage = ({
     setLocalStorage('addon', {
       ...addon,
       T128: {
+        ...addon.T128,
         focusedAssetId,
         cellsLayoutInfo,
       },
