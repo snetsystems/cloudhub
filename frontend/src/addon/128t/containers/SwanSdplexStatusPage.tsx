@@ -178,6 +178,7 @@ const SwanSdplexStatusPage = ({
     T128: {
       focusedNodeName: '',
       cellsLayoutInfo: initCellsLayout,
+      oncueAutoRefresh: 0,
     },
   }
 
@@ -290,9 +291,7 @@ const SwanSdplexStatusPage = ({
                     try {
                       router = {
                         ...router,
-                        group: gHosts.find(
-                          f => f.hostName === _.get(nodeDetail, 'name')
-                        ).group,
+                        group: groupRouter.name,
                         nodeName: _.get(nodeDetail, 'name'),
                         enabled: _.get(nodeDetail, 'enabled'),
                         role: _.get(nodeDetail, 'role'),
@@ -442,6 +441,7 @@ const SwanSdplexStatusPage = ({
     setLocalStorage('addon', {
       ...addon,
       T128: {
+        ...addon.T128,
         focusedNodeName,
         cellsLayoutInfo,
       },

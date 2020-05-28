@@ -41,6 +41,12 @@ import {
 
 import {SALT_FULL_DIRECTORY, SALT_MIN_DIRECTORY} from 'src/addon/128t/constants'
 
+// Middleware
+import {
+  setLocalStorage,
+  getLocalStorage,
+} from 'src/shared/middleware/localStorage'
+
 // Authorized
 import {ADMIN_ROLE, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
@@ -112,6 +118,8 @@ interface State {
   sendToDirectory: string
   routerPopupPosition: {top: number; right: number}
   oncueData: OncueData
+  routerDataPopupAutoRefresh: number
+  selectedNodeName: string
 }
 
 @ErrorHandling
@@ -122,6 +130,8 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   private DEFAULT_COLLECTOR_DIRECTORY = '/srv/salt/prod/dmt/'
   private refDataPopup = React.createRef<HTMLDivElement>()
   private routertableRef = React.createRef<HTMLDivElement>()
+
+  private timerOncueData: NodeJS.Timer
 
   constructor(props: Props) {
     super(props)
@@ -145,6 +155,8 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
         focusedInDeviceConnection: '',
         oncueService: null,
       },
+      routerDataPopupAutoRefresh: 0,
+      selectedNodeName: '',
     }
   }
 
@@ -156,6 +168,9 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       }
     })
 
+    const addon = getLocalStorage('addon')
+    const oncueAutoRefresh: number = _.get(addon, 'T128.oncueAutoRefresh')
+
     const {addons} = this.props
     const oncue = _.find(addons, addon => addon.name === 'oncue')
     const isOncue = oncue === undefined ? false : true
@@ -166,6 +181,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
         ...this.state.oncueData,
         isOncue,
       },
+      routerDataPopupAutoRefresh: oncueAutoRefresh,
     })
   }
 
@@ -175,6 +191,36 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     } catch (e) {
       console.error(e)
     }
+  }
+
+  public componentDidUpdate(__: Props, prevState: State) {
+    if (
+      prevState.routerDataPopupAutoRefresh !==
+      this.state.routerDataPopupAutoRefresh
+    ) {
+      const {routerDataPopupAutoRefresh} = this.state
+
+      const addon = getLocalStorage('addon')
+      setLocalStorage('addon', {
+        ...addon,
+        T128: {
+          ...addon.T128,
+          oncueAutoRefresh: routerDataPopupAutoRefresh,
+        },
+      })
+
+      if (routerDataPopupAutoRefresh) {
+        this.timerOncueData = setInterval(async () => {
+          await this.fetchOncueServiceStatus()
+        }, routerDataPopupAutoRefresh)
+      } else {
+        this.cleanIntervalOncueServiceStatus()
+      }
+    }
+  }
+
+  public componentWillUnmount() {
+    this.cleanIntervalOncueServiceStatus()
   }
 
   public getRunnerSaltCmdDirectoryData = async (
@@ -259,40 +305,44 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   }
 
   public getSaltDirectoryItems = async () => {
-    const {auth, addons, notify} = this.props
-    const salt = addons.find(addon => addon.name === 'salt')
-    const meRole = _.get(auth, 'me.role', '')
+    try {
+      const {auth, addons, notify} = this.props
+      const salt = addons.find(addon => addon.name === 'salt')
+      const meRole = _.get(auth, 'me.role', '')
 
-    if (meRole !== SUPERADMIN_ROLE && meRole !== ADMIN_ROLE) {
-      return
+      if (meRole !== SUPERADMIN_ROLE && meRole !== ADMIN_ROLE) {
+        return
+      }
+
+      const getFirmwareData: SaltDirFile = await this.getRunnerSaltCmdDirectoryData(
+        salt.url,
+        salt.token,
+        SALT_FULL_DIRECTORY.FIRMWARE,
+        SALT_MIN_DIRECTORY.FIRMWARE
+      )
+
+      const getConfigData: SaltDirFile = await this.getRunnerSaltCmdDirectoryData(
+        salt.url,
+        salt.token,
+        SALT_FULL_DIRECTORY.CONFIG,
+        SALT_MIN_DIRECTORY.CONFIG
+      )
+
+      const isAccess = [getFirmwareData, getConfigData]
+        .map(obj => obj.status === NETWORK_ACCESS.SUCCESS)
+        .includes(true)
+
+      if (!isAccess) {
+        notify(notify_128TGetMasterDirFiles_Failed('All Directory'))
+      }
+
+      this.setState({
+        firmware: getFirmwareData,
+        config: getConfigData,
+      })
+    } catch (error) {
+      console.error(error)
     }
-
-    const getFirmwareData: SaltDirFile = await this.getRunnerSaltCmdDirectoryData(
-      salt.url,
-      salt.token,
-      SALT_FULL_DIRECTORY.FIRMWARE,
-      SALT_MIN_DIRECTORY.FIRMWARE
-    )
-
-    const getConfigData: SaltDirFile = await this.getRunnerSaltCmdDirectoryData(
-      salt.url,
-      salt.token,
-      SALT_FULL_DIRECTORY.CONFIG,
-      SALT_MIN_DIRECTORY.CONFIG
-    )
-
-    const isAccess = [getFirmwareData, getConfigData]
-      .map(obj => obj.status === NETWORK_ACCESS.SUCCESS)
-      .includes(true)
-
-    if (!isAccess) {
-      notify(notify_128TGetMasterDirFiles_Failed('All Directory'))
-    }
-
-    this.setState({
-      firmware: getFirmwareData,
-      config: getConfigData,
-    })
   }
 
   public handleRoutersAllCheck = (): void => {
@@ -362,6 +412,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       isRouterDataPopupVisible,
       routerPopupPosition,
       oncueData,
+      routerDataPopupAutoRefresh,
     } = this.state
 
     const checkRouterData: Router[] = routersData.map(
@@ -409,13 +460,20 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
               firmware={firmware}
               config={config}
               isRouterDataPopupVisible={isRouterDataPopupVisible}
-              handleOnClickRouterName={this.onClickRouterName}
+              handleOnClickNodeName={this.onClickNodeName}
               hanldeOnDismiss={this.handleDataPopupClose}
               routerPopupPosition={routerPopupPosition}
               oncueData={oncueData}
               handleOnClickProtocolModulesRow={this.onClickProtocolModulesRow}
               handleOnClickDeviceConnectionsRow={
                 this.onClickDeviceConnectionsRow
+              }
+              routerDataPopupAutoRefresh={routerDataPopupAutoRefresh}
+              onChooseRouterDataPopupAutoRefresh={
+                this.onChooseRouterDataPopupAutoRefresh
+              }
+              onManualRouterDataPopupRefresh={
+                this.handleOnManualRouterDataPopupRefresh
               }
             />
           </div>
@@ -475,6 +533,67 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     )
   }
 
+  private handleOnManualRouterDataPopupRefresh = () => {
+    event.stopPropagation()
+    this.onManualRouterDataPopupRefresh()
+  }
+
+  private cleanIntervalOncueServiceStatus = () => {
+    clearInterval(this.timerOncueData)
+  }
+
+  private fetchOncueServiceStatus = async (nodeName?: string) => {
+    const {addons} = this.props
+    const {selectedNodeName} = this.state
+    const salt = addons.find(addon => addon.name === 'salt')
+    const oncue = addons.find(addon => addon.name === 'oncue')
+    nodeName = nodeName ? nodeName : selectedNodeName
+    const response = await getOncueServiceStatus(
+      salt.url,
+      salt.token,
+      nodeName,
+      oncue.url
+    )
+
+    if (response) {
+      this.setState({
+        oncueData: {
+          ...this.state.oncueData,
+          router: nodeName,
+          oncueService: response,
+          protocolModule: response.protocolModule,
+          deviceConnection: response.protocolModule[0].deviceConnection,
+          connection: response.protocolModule[0].deviceConnection[0].connection,
+          focusedInProtocolModule: response.protocolModule[0].name,
+          focusedInDeviceConnection:
+            response.protocolModule[0].deviceConnection[0].url,
+        },
+      })
+    } else {
+      this.setState({
+        oncueData: {
+          ...this.state.oncueData,
+          router: nodeName,
+          oncueService: null,
+          protocolModule: [],
+          deviceConnection: [],
+          connection: [],
+          focusedInProtocolModule: '',
+          focusedInDeviceConnection: '',
+        },
+      })
+    }
+  }
+
+  private onChooseRouterDataPopupAutoRefresh = (milliseconds: number) => {
+    this.setState({routerDataPopupAutoRefresh: milliseconds})
+  }
+
+  private onManualRouterDataPopupRefresh = _.debounce(
+    this.fetchOncueServiceStatus,
+    1000
+  )
+
   private onClickProtocolModulesRow = (name: string): void => {
     this.setState({
       oncueData: {
@@ -509,7 +628,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     const {topSources, topSessions, nodeName} = router
     return this.props.onClickTableRow(topSources, topSessions, nodeName)()
   }
-  private onClickRouterName = async (data: {
+  private onClickNodeName = async (data: {
     _event: MouseEvent<HTMLElement>
     router: Router
   }) => {
@@ -529,47 +648,13 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     const {top, right} = routerPosition
     const {parentTop, parentLeft} = this.getParentPosition(this[nodeName])
 
-    const {addons} = this.props
-    const salt = addons.find(addon => addon.name === 'salt')
-    const oncue = addons.find(addon => addon.name === 'oncue')
+    await this.fetchOncueServiceStatus(nodeName)
 
-    const response = await getOncueServiceStatus(
-      salt.url,
-      salt.token,
-      nodeName,
-      oncue.url
-    )
+    this.setState({
+      routerPopupPosition: {top: top - parentTop, right: right - parentLeft},
+      selectedNodeName: nodeName,
+    })
 
-    if (response != null) {
-      this.setState({
-        routerPopupPosition: {top: top - parentTop, right: right - parentLeft},
-        oncueData: {
-          ...this.state.oncueData,
-          router: nodeName,
-          oncueService: response,
-          protocolModule: response.protocolModule,
-          deviceConnection: response.protocolModule[0].deviceConnection,
-          connection: response.protocolModule[0].deviceConnection[0].connection,
-          focusedInProtocolModule: response.protocolModule[0].name,
-          focusedInDeviceConnection:
-            response.protocolModule[0].deviceConnection[0].url,
-        },
-      })
-    } else {
-      this.setState({
-        routerPopupPosition: {top: top - parentTop, right: right - parentLeft},
-        oncueData: {
-          ...this.state.oncueData,
-          router: nodeName,
-          oncueService: null,
-          protocolModule: [],
-          deviceConnection: [],
-          connection: [],
-          focusedInProtocolModule: '',
-          focusedInDeviceConnection: '',
-        },
-      })
-    }
     this.handleDataPopupOpen()
   }
 
@@ -599,6 +684,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   }
 
   private handleDataPopupClose = () => {
+    this.cleanIntervalOncueServiceStatus()
     this.setState({
       isRouterDataPopupVisible: false,
       oncueData: {
@@ -800,6 +886,7 @@ const mapStateToProps = ({auth}) => ({
 
 const mdtp = {
   notify: notifyAction,
+  getRunnerSaltCmdDirectory: getRunnerSaltCmdDirectory,
 }
 
 export default connect(mapStateToProps, mdtp)(GridLayoutRenderer)

@@ -65,7 +65,7 @@ export interface Props {
   config: SaltDirFile
   isRouterDataPopupVisible: boolean
   routerPopupPosition: {top: number; right: number}
-  handleOnClickRouterName: (data: {
+  handleOnClickNodeName: (data: {
     _event: MouseEvent<HTMLElement>
     router: Router
   }) => void
@@ -73,6 +73,9 @@ export interface Props {
   handleOnClickProtocolModulesRow: (name: string) => void
   handleOnClickDeviceConnectionsRow: (url: string) => void
   oncueData: OncueData
+  routerDataPopupAutoRefresh: number
+  onChooseRouterDataPopupAutoRefresh: (milliseconds: number) => void
+  onManualRouterDataPopupRefresh: () => void
 }
 
 interface State {
@@ -420,11 +423,14 @@ class RouterTable extends PureComponent<Props, State> {
       focusedNodeName,
       onClickTableRow,
       handleRouterCheck,
-      handleOnClickRouterName,
+      handleOnClickNodeName,
       isRouterDataPopupVisible,
       hanldeOnDismiss,
       routerPopupPosition,
       oncueData,
+      routerDataPopupAutoRefresh,
+      onChooseRouterDataPopupAutoRefresh,
+      onManualRouterDataPopupRefresh,
     } = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
@@ -442,7 +448,7 @@ class RouterTable extends PureComponent<Props, State> {
             <FancyScrollbar
               children={sortedRouters.map((r: Router, i: number) => (
                 <RouterTableRow
-                  handleOnClickRouterName={handleOnClickRouterName}
+                  handleOnClickNodeName={handleOnClickNodeName}
                   handleRouterCheck={handleRouterCheck}
                   onClickTableRow={onClickTableRow}
                   focusedNodeName={focusedNodeName}
@@ -464,6 +470,11 @@ class RouterTable extends PureComponent<Props, State> {
                 handleOnClickDeviceConnectionsRow={
                   this.props.handleOnClickDeviceConnectionsRow
                 }
+                routerDataPopupAutoRefresh={routerDataPopupAutoRefresh}
+                onChooseRouterDataPopupAutoRefresh={
+                  onChooseRouterDataPopupAutoRefresh
+                }
+                onManualRouterDataPopupRefresh={onManualRouterDataPopupRefresh}
               />
             ) : null}
           </>

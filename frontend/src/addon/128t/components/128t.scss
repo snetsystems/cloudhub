@@ -353,6 +353,25 @@
 .datapopup-table--container {
   display: flex;
   flex-direction: column;
+  .data-table-heading {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 0 10px 0px;
+  }
+
+  .button-sm,
+  .dropdown.dropdown-sm {
+    height: 25px;
+  }
+
+  // .button-sm,
+  .button-sm {
+    font-size: 12px;
+    .button-icon {
+      font-size: 12px;
+      transform: translateY(-20%);
+    }
+  }
 
   .datapopup-table--section {
     display: flex;
