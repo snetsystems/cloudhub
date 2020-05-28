@@ -8,11 +8,8 @@ export const measurements = async (
   bucket: string
 ): Promise<any> => {
   const script = `
-    from(bucket:"${bucket}") 
-        |> range(start:-30d) 
-        |> group(columns:["_measurement"], mode: "by")
-        |> distinct(column:"_measurement") 
-        |> group()
+    import "influxdata/influxdb/v1"
+    v1.measurements(bucket:"${bucket}")
     `
 
   return proxy(source, script)
@@ -62,16 +59,16 @@ export const tagKeys = async (
     tagKeyFilter = `|> filter(fn: (r) => ${predicates.join(' and ')} )`
   }
 
+  const predicate = '(r) => true'
+
   const script = `
-    from(bucket: "${bucket}")
-      |> range(start: -30d)
-      ${tagsetFilter(filter)}
-      |> keys()
-      |> keep(columns: ["_value"])
-      |> group()
-      |> distinct()
-      |> map(fn: (r) => r._value)
-      ${tagKeyFilter}
+    import "influxdata/influxdb/v1"
+    v1.tagKeys(
+      bucket: "${bucket}",
+      predicate: ${predicate},
+      start: -30d,
+    )
+    ${tagKeyFilter}
     `
 
   return proxy(source, script)
@@ -103,15 +100,19 @@ export const tagValues = async ({
   const limitFunc = count ? '' : `|> limit(n:${limit})`
   const countFunc = count ? '|> count()' : ''
 
+  const predicate = '(r) => true'
+
   const script = `
-    from(bucket:"${bucket}")
-      |> range(start:-30d)
-      ${regexFilter}
-      |> group(columns:["${tagKey}"], mode: "by")
-      |> distinct(column:"${tagKey}")
-      |> group(columns:["_stop","_start"], mode: "by")
-      ${limitFunc}
-      ${countFunc}
+    import "influxdata/influxdb/v1"
+    v1.tagValues(
+      bucket: "${bucket}",
+      predicate: ${predicate},
+      tag: "${tagKey}",
+      start: -30d,
+    )
+     ${regexFilter}
+     ${limitFunc}
+     ${countFunc}
   `
 
   return proxy(source, script)
@@ -153,9 +154,7 @@ export const proxy = async (source: Source, script: string) => {
   try {
     const response = await AJAX({
       method: 'POST',
-      url: `${
-        source.links.flux
-      }?path=/api/v2/query${mark}organization=defaultorgname`,
+      url: `${source.links.flux}?path=/api/v2/query${mark}organization=defaultorgname`,
       data,
       headers: {'Content-Type': 'application/json'},
     })

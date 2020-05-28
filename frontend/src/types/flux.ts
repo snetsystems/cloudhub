@@ -177,12 +177,12 @@ export enum RemoteDataState {
   NotStarted = 'NotStarted',
   Loading = 'Loading',
   Done = 'Done',
-  Error = 'Error'
+  Error = 'Error',
 }
 
 export enum VisType {
   Graph,
-  Table
+  Table,
 }
 
 export interface FluxToolbarArg {
@@ -194,6 +194,7 @@ export interface FluxToolbarArg {
 export interface FluxToolbarFunction {
   name: string
   args: FluxToolbarArg[]
+  package: string
   desc: string
   example: string
   category: string

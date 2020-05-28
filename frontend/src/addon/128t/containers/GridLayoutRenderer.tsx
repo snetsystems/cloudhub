@@ -47,6 +47,9 @@ import {
   getLocalStorage,
 } from 'src/shared/middleware/localStorage'
 
+// Authorized
+import {ADMIN_ROLE, SUPERADMIN_ROLE} from 'src/auth/Authorized'
+
 //type
 import {
   Router,
@@ -303,8 +306,13 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
 
   public getSaltDirectoryItems = async () => {
     try {
-      const {addons, notify} = this.props
+      const {auth, addons, notify} = this.props
       const salt = addons.find(addon => addon.name === 'salt')
+      const meRole = _.get(auth, 'me.role', '')
+
+      if (meRole !== SUPERADMIN_ROLE && meRole !== ADMIN_ROLE) {
+        return
+      }
 
       const getFirmwareData: SaltDirFile = await this.getRunnerSaltCmdDirectoryData(
         salt.url,
