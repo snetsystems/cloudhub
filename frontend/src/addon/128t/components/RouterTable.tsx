@@ -65,7 +65,7 @@ export interface Props {
   config: SaltDirFile
   isRouterDataPopupVisible: boolean
   routerPopupPosition: {top: number; right: number}
-  handleOnClickRouterName: (data: {
+  handleOnClickNodeName: (data: {
     _event: MouseEvent<HTMLElement>
     router: Router
   }) => void
@@ -423,7 +423,7 @@ class RouterTable extends PureComponent<Props, State> {
       focusedNodeName,
       onClickTableRow,
       handleRouterCheck,
-      handleOnClickRouterName,
+      handleOnClickNodeName,
       isRouterDataPopupVisible,
       hanldeOnDismiss,
       routerPopupPosition,
@@ -448,7 +448,7 @@ class RouterTable extends PureComponent<Props, State> {
             <FancyScrollbar
               children={sortedRouters.map((r: Router, i: number) => (
                 <RouterTableRow
-                  handleOnClickRouterName={handleOnClickRouterName}
+                  handleOnClickNodeName={handleOnClickNodeName}
                   handleRouterCheck={handleRouterCheck}
                   onClickTableRow={onClickTableRow}
                   focusedNodeName={focusedNodeName}

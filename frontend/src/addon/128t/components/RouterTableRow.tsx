@@ -18,7 +18,7 @@ interface Props {
     topSessions: TopSession[],
     focusedNodeName: string
   ) => () => void
-  handleOnClickRouterName: (data: {
+  handleOnClickNodeName: (data: {
     _event: MouseEvent<HTMLElement>
     router: Router
   }) => void
@@ -31,7 +31,7 @@ const RouterTableRow = ({
   focusedNodeName,
   router,
   isCheck,
-  handleOnClickRouterName,
+  handleOnClickNodeName,
   oncueData,
 }: Props) => {
   const {
@@ -108,14 +108,14 @@ const RouterTableRow = ({
     handleRouterCheck({router})
   }
 
-  const getHandleOnClickRouterName = ({
+  const getHandleOnClickNodeName = ({
     _event,
     router,
   }: {
     _event: MouseEvent<HTMLDivElement>
     router: Router
   }) => {
-    handleOnClickRouterName({_event, router})
+    handleOnClickNodeName({_event, router})
     _event.stopPropagation()
   }
 
@@ -139,7 +139,7 @@ const RouterTableRow = ({
         title={
           <div
             onClick={(event: MouseEvent<HTMLDivElement>): void => {
-              getHandleOnClickRouterName({_event: event, router})
+              getHandleOnClickNodeName({_event: event, router})
             }}
             className={`cursor--pointer`}
             style={{width: '100%'}}

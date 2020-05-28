@@ -119,7 +119,7 @@ interface State {
   routerPopupPosition: {top: number; right: number}
   oncueData: OncueData
   routerDataPopupAutoRefresh: number
-  focusedRouterName: string
+  selectedNodeName: string
 }
 
 @ErrorHandling
@@ -156,7 +156,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
         oncueService: null,
       },
       routerDataPopupAutoRefresh: 0,
-      focusedRouterName: '',
+      selectedNodeName: '',
     }
   }
 
@@ -460,7 +460,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
               firmware={firmware}
               config={config}
               isRouterDataPopupVisible={isRouterDataPopupVisible}
-              handleOnClickRouterName={this.onClickRouterName}
+              handleOnClickNodeName={this.onClickNodeName}
               hanldeOnDismiss={this.handleDataPopupClose}
               routerPopupPosition={routerPopupPosition}
               oncueData={oncueData}
@@ -544,10 +544,10 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
 
   private fetchOncueServiceStatus = async (nodeName?: string) => {
     const {addons} = this.props
-    const {focusedRouterName} = this.state
+    const {selectedNodeName} = this.state
     const salt = addons.find(addon => addon.name === 'salt')
     const oncue = addons.find(addon => addon.name === 'oncue')
-    nodeName = nodeName ? nodeName : focusedRouterName
+    nodeName = nodeName ? nodeName : selectedNodeName
     const response = await getOncueServiceStatus(
       salt.url,
       salt.token,
@@ -628,7 +628,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     const {topSources, topSessions, nodeName} = router
     return this.props.onClickTableRow(topSources, topSessions, nodeName)()
   }
-  private onClickRouterName = async (data: {
+  private onClickNodeName = async (data: {
     _event: MouseEvent<HTMLElement>
     router: Router
   }) => {
@@ -652,46 +652,9 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
 
     this.setState({
       routerPopupPosition: {top: top - parentTop, right: right - parentLeft},
-      focusedRouterName: nodeName,
+      selectedNodeName: nodeName,
     })
 
-    // const response = await getOncueServiceStatus(
-    //   salt.url,
-    //   salt.token,
-    //   nodeName,
-    //   oncue.url
-    // )
-
-    // if (response != null) {
-    //   this.setState({
-    //     routerPopupPosition: {top: top - parentTop, right: right - parentLeft},
-    //     oncueData: {
-    //       ...this.state.oncueData,
-    //       router: nodeName,
-    //       oncueService: response,
-    //       protocolModule: response.protocolModule,
-    //       deviceConnection: response.protocolModule[0].deviceConnection,
-    //       connection: response.protocolModule[0].deviceConnection[0].connection,
-    //       focusedInProtocolModule: response.protocolModule[0].name,
-    //       focusedInDeviceConnection:
-    //         response.protocolModule[0].deviceConnection[0].url,
-    //     },
-    //   })
-    // } else {
-    //   this.setState({
-    //     routerPopupPosition: {top: top - parentTop, right: right - parentLeft},
-    //     oncueData: {
-    //       ...this.state.oncueData,
-    //       router: nodeName,
-    //       oncueService: null,
-    //       protocolModule: [],
-    //       deviceConnection: [],
-    //       connection: [],
-    //       focusedInProtocolModule: '',
-    //       focusedInDeviceConnection: '',
-    //     },
-    //   })
-    // }
     this.handleDataPopupOpen()
   }
 
