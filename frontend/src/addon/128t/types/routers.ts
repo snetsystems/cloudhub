@@ -1,6 +1,6 @@
 export interface Router {
   name: string
-  assetId?: string
+  nodeName?: string
   ipAddress?: string
   locationCoordinates?: string
   managementConnected?: boolean
@@ -53,7 +53,7 @@ export interface SaltDirFileInfo {
 }
 
 export interface CheckRouter {
-  assetId: string
+  nodeName: string
   isCheck: boolean
 }
 
