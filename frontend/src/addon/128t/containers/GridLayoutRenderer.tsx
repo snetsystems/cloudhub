@@ -41,6 +41,9 @@ import {
 
 import {SALT_FULL_DIRECTORY, SALT_MIN_DIRECTORY} from 'src/addon/128t/constants'
 
+// Authorized
+import {ADMIN_ROLE, SUPERADMIN_ROLE} from 'src/auth/Authorized'
+
 //type
 import {
   Router,
@@ -256,8 +259,13 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   }
 
   public getSaltDirectoryItems = async () => {
-    const {addons, notify} = this.props
+    const {auth, addons, notify} = this.props
     const salt = addons.find(addon => addon.name === 'salt')
+    const meRole = _.get(auth, 'me.role', '')
+
+    if (meRole !== SUPERADMIN_ROLE && meRole !== ADMIN_ROLE) {
+      return
+    }
 
     const getFirmwareData: SaltDirFile = await this.getRunnerSaltCmdDirectoryData(
       salt.url,
