@@ -1,5 +1,5 @@
 export const ROUTER_TABLE_SIZING = {
-  ASSETID: 'calc(13% - 30px)',
+  NODENAME: 'calc(13% - 30px)',
   IPADDRESS: '8%',
   LOCATIONCOORDINATES: '8%',
   MANAGEMENTCONNECTED: '8%',

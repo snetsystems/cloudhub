@@ -12,11 +12,11 @@ interface Props {
   isCheck: boolean
   handleRouterCheck: ({router: Router}) => void
   router: Router
-  focusedAssetId: string
+  focusedNodeName: string
   onClickTableRow: (
     topSources: TopSource[],
     topSessions: TopSession[],
-    focusedAssetId: string
+    focusedNodeName: string
   ) => () => void
   handleOnClickRouterName: (data: {
     _event: MouseEvent<HTMLElement>
@@ -28,14 +28,14 @@ interface Props {
 const RouterTableRow = ({
   handleRouterCheck,
   onClickTableRow,
-  focusedAssetId,
+  focusedNodeName,
   router,
   isCheck,
   handleOnClickRouterName,
   oncueData,
 }: Props) => {
   const {
-    assetId,
+    nodeName,
     ipAddress,
     locationCoordinates,
     bandwidth_avg,
@@ -51,7 +51,7 @@ const RouterTableRow = ({
   } = router
 
   const {
-    ASSETID,
+    NODENAME,
     IPADDRESS,
     LOCATIONCOORDINATES,
     MANAGEMENTCONNECTED,
@@ -67,8 +67,8 @@ const RouterTableRow = ({
     CHECKBOX,
   } = ROUTER_TABLE_SIZING
 
-  const focusedClasses = (assetId: Router['assetId']): string => {
-    if (assetId === focusedAssetId)
+  const focusedClasses = (nodeName: Router['nodeName']): string => {
+    if (nodeName === focusedNodeName)
       return 'hosts-table--tr cursor--pointer focused'
     return 'hosts-table--tr cursor--pointer'
   }
@@ -121,8 +121,8 @@ const RouterTableRow = ({
 
   return (
     <div
-      className={focusedClasses(router.assetId)}
-      onClick={onClickTableRow(topSources, topSessions, assetId)}
+      className={focusedClasses(router.nodeName)}
+      onClick={onClickTableRow(topSources, topSessions, nodeName)}
     >
       <TableBodyRowItem
         title={
@@ -147,14 +147,14 @@ const RouterTableRow = ({
             <div
               className={classnames('', {
                 'hosts-table-item': oncueData.isOncue,
-                focused: oncueData.isOncue && oncueData.router === assetId,
+                focused: oncueData.isOncue && oncueData.router === nodeName,
               })}
             >
-              {assetId}
+              {nodeName}
             </div>
           </div>
         }
-        width={ASSETID}
+        width={NODENAME}
       />
       <TableBodyRowItem title={ipAddress} width={IPADDRESS} />
       <TableBodyRowItem title={role} width={ROLE} />

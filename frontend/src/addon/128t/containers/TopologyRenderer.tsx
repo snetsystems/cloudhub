@@ -354,8 +354,8 @@ class TopologyRenderer extends PureComponent<Props, State> {
       return {
         groupName: g.groupName,
         routers: g.routers.map(r => {
-          const {assetId} = r
-          return {...r, assetId: assetId ? assetId : '-'}
+          const {nodeName} = r
+          return {...r, nodeName: nodeName ? nodeName : '-'}
         }),
       }
     })
@@ -443,14 +443,14 @@ class TopologyRenderer extends PureComponent<Props, State> {
               const routerNodeData = _.reduce(
                 groupRouter.routers,
                 (routerNodeData: GraphNodeData, router: Router) => {
-                  if (router.assetId !== '-') {
+                  if (router.nodeName !== '-') {
                     routerNodeData = {
                       ...routerNodeData,
                       nodes: [
                         ...routerNodeData.nodes,
                         {
-                          id: router.assetId,
-                          label: router.assetId,
+                          id: router.nodeName,
+                          label: router.nodeName,
                           role: this.TOPOLOGY_ROLE.ROUTER,
                           router: router,
                           size: 2000,
@@ -458,7 +458,10 @@ class TopologyRenderer extends PureComponent<Props, State> {
                       ],
                       links: [
                         ...routerNodeData.links,
-                        {source: groupRouter.groupName, target: router.assetId},
+                        {
+                          source: groupRouter.groupName,
+                          target: router.nodeName,
+                        },
                       ],
                     }
                   }
@@ -492,14 +495,14 @@ class TopologyRenderer extends PureComponent<Props, State> {
               const routerNodeData = _.reduce(
                 groupRouter.routers,
                 (routerNodeData: GraphNodeData, router: Router) => {
-                  if (router.assetId !== '-') {
+                  if (router.nodeName !== '-') {
                     routerNodeData = {
                       ...routerNodeData,
                       nodes: [
                         ...routerNodeData.nodes,
                         {
-                          id: router.assetId,
-                          label: router.assetId,
+                          id: router.nodeName,
+                          label: router.nodeName,
                           role: this.TOPOLOGY_ROLE.ROUTER,
                           router: router,
                           size: 2000,
@@ -509,7 +512,7 @@ class TopologyRenderer extends PureComponent<Props, State> {
                         ...routerNodeData.links,
                         {
                           source: this.TOPOLOGY_ROLE.ROOT,
-                          target: router.assetId,
+                          target: router.nodeName,
                         },
                       ],
                     }
@@ -671,7 +674,7 @@ class TopologyRenderer extends PureComponent<Props, State> {
     if (!routerData) return
 
     const {
-      assetId,
+      nodeName,
       cpuUsage,
       diskUsage,
       memoryUsage,
@@ -692,7 +695,7 @@ class TopologyRenderer extends PureComponent<Props, State> {
             <img src={this.iconCooldinate} />
           </span>
         ) : null}
-        <strong className={'hosts-table-title'}>{assetId}</strong>
+        <strong className={'hosts-table-title'}>{nodeName}</strong>
         <Table>
           <TableBody>
             <>
