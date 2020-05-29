@@ -51,13 +51,7 @@ class DataPopup extends PureComponent<Props> {
 
     return (
       <div className="data-popup-container">
-        <div
-          style={this.stylePosition}
-          className={this.handleToolTipClassName}
-          onKeyDown={e => {
-            console.log(e)
-          }}
-        >
+        <div style={this.stylePosition} className={this.handleToolTipClassName}>
           <button className="data-popup-dismiss" onClick={this.handleDismiss} />
           <div className="data-popup-contents">
             <FancyScrollbar
