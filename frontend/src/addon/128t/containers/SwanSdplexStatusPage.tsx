@@ -69,7 +69,7 @@ interface Node {
 }
 
 interface NodeDetail {
-  assetId: string
+  nodeName: string
   enabled: boolean
   role: string
   cpu: CPU[]
@@ -141,7 +141,7 @@ const SwanSdplexStatusPage = ({
   meRole: string
   groupHosts: GroupHosts[]
 }) => {
-  let assetId: string = ''
+  let nodeName: string = ''
   let getCellsLayout: cellLayoutInfo[] = []
   const initCellsLayout: cellLayoutInfo[] = [
     {
@@ -176,8 +176,9 @@ const SwanSdplexStatusPage = ({
 
   const inputLocalStorageInitData = {
     T128: {
-      focusedAssetId: '',
+      focusedNodeName: '',
       cellsLayoutInfo: initCellsLayout,
+      oncueAutoRefresh: 0,
     },
   }
 
@@ -209,11 +210,11 @@ const SwanSdplexStatusPage = ({
   addon = getLocalStorage('addon')
 
   if (addon) {
-    assetId = _.get(addon, 'T128.focusedAssetId')
+    nodeName = _.get(addon, 'T128.focusedNodeName')
     getCellsLayout = _.get(addon, 'T128.cellsLayoutInfo')
   }
 
-  const [focusedAssetId, setFocusedAssetId] = useState<string>(assetId)
+  const [focusedNodeName, setFocusedNodeName] = useState<string>(nodeName)
   const [emitData, setRoutersInfo] = useState<EmitData>({
     routers: [],
   })
@@ -257,7 +258,6 @@ const SwanSdplexStatusPage = ({
   useEffect(() => {
     if (data) {
       const nodes: Node[] = _.get(data, 'allRouters.nodes')
-
       const groupRoutersData: GroupRouterData[] = _.values(groupRouter)
 
       if (groupRoutersData) {
@@ -291,10 +291,8 @@ const SwanSdplexStatusPage = ({
                     try {
                       router = {
                         ...router,
-                        group: gHosts.find(
-                          f => f.hostName === _.get(nodeDetail, 'assetId')
-                        ).group,
-                        assetId: _.get(nodeDetail, 'assetId'),
+                        group: groupRouter.name,
+                        nodeName: _.get(nodeDetail, 'name'),
                         enabled: _.get(nodeDetail, 'enabled'),
                         role: _.get(nodeDetail, 'role'),
                         startTime: _.get(nodeDetail, 'state.startTime'),
@@ -427,9 +425,9 @@ const SwanSdplexStatusPage = ({
         setGroupRouterData(emits)
         setRoutersInfo({routers: routerData})
 
-        if (focusedAssetId) {
+        if (focusedNodeName) {
           const router = routerData.find(node => {
-            return node.assetId === focusedAssetId
+            return node.nodeName === focusedNodeName
           })
           if (router && router.topSources) setTopSources(router.topSources)
           if (router && router.topSessions) setTopSessions(router.topSessions)
@@ -443,16 +441,17 @@ const SwanSdplexStatusPage = ({
     setLocalStorage('addon', {
       ...addon,
       T128: {
-        focusedAssetId,
+        ...addon.T128,
+        focusedNodeName,
         cellsLayoutInfo,
       },
     })
-  }, [focusedAssetId, cellsLayoutInfo])
+  }, [focusedNodeName, cellsLayoutInfo])
 
   const handleClickTableRow = (
     topSources: TopSource[],
     topSessions: TopSession[],
-    focusedAssetId: string
+    focusedNodeName: string
   ) => (): void => {
     if (topSources) setTopSources(topSources)
     else setTopSources([])
@@ -460,13 +459,13 @@ const SwanSdplexStatusPage = ({
     if (topSessions) setTopSessions(topSessions)
     else setTopSessions([])
 
-    setFocusedAssetId(focusedAssetId)
+    setFocusedNodeName(focusedNodeName)
   }
 
   const handleClickMapMarker = (
     topSources: TopSource[],
     topSessions: TopSession[],
-    focusedAssetId: string
+    focusedNodeName: string
   ) => {
     if (topSources) setTopSources(topSources)
     else setTopSources([])
@@ -474,7 +473,7 @@ const SwanSdplexStatusPage = ({
     if (topSessions) setTopSessions(topSessions)
     else setTopSessions([])
 
-    setFocusedAssetId(focusedAssetId)
+    setFocusedNodeName(focusedNodeName)
   }
 
   const handleUpdatePosition = (layout: cellLayoutInfo[]): void => {
@@ -533,7 +532,7 @@ const SwanSdplexStatusPage = ({
         ) : activeEditorTab === 'Data' ? (
           <div className={'swan-sdpldex-status-page__container'}>
             <GridLayoutRenderer
-              focusedAssetId={focusedAssetId}
+              focusedNodeName={focusedNodeName}
               isSwanSdplexStatus={true}
               onClickTableRow={handleClickTableRow}
               routersData={emitData.routers}

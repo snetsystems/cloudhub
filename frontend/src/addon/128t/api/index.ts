@@ -12,7 +12,7 @@ import {
 export const getOncueServiceStatus = async (
   pUrl: string,
   pToken: string,
-  pAssetId: string,
+  pNodeName: string,
   pPort: string
 ): Promise<OncueService> => {
   const url = `http://localhost:${pPort}`
@@ -22,57 +22,56 @@ export const getOncueServiceStatus = async (
       getLocalHttpQuery(
         pUrl,
         pToken,
-        pAssetId,
+        pNodeName,
         url + '/oncue/0.5/oncue-suite/oncue-service-resource/monitoring',
         'GET'
       ),
       getLocalHttpQuery(
         pUrl,
         pToken,
-        pAssetId,
+        pNodeName,
         url + '/oncue/0.5/oncue-suite/oncue-service/monitoring',
         'GET'
       ),
       getLocalHttpQuery(
         pUrl,
         pToken,
-        pAssetId,
+        pNodeName,
         url + '/oncue/0.5/oncue-suite/protocol-modules/monitoring',
         'GET'
       ),
     ])
 
-    if (info[0].data.return[0][pAssetId] !== false) {
+    if (info[0].data.return[0][pNodeName] !== false) {
       if (Object.keys(info[0].data.return[0]).length > 0) {
         let oncueService: OncueService = {
-          name: JSON.parse(info[1].data.return[0][pAssetId].body).info[0][
+          name: JSON.parse(info[1].data.return[0][pNodeName].body).info[0][
             'oncue-service'
           ].name,
-          version: JSON.parse(info[1].data.return[0][pAssetId].body).info[0][
+          version: JSON.parse(info[1].data.return[0][pNodeName].body).info[0][
             'oncue-service'
           ].version,
-          status: JSON.parse(info[1].data.return[0][pAssetId].body).info[0][
+          status: JSON.parse(info[1].data.return[0][pNodeName].body).info[0][
             'oncue-service'
           ].status,
-          listeningPort: JSON.parse(info[1].data.return[0][pAssetId].body)
+          listeningPort: JSON.parse(info[1].data.return[0][pNodeName].body)
             .info[0]['oncue-service']['listening-port'],
-          runningThread: JSON.parse(info[1].data.return[0][pAssetId].body)
+          runningThread: JSON.parse(info[1].data.return[0][pNodeName].body)
             .info[0]['oncue-service']['running-thread-count'],
-          processDataCount: JSON.parse(info[1].data.return[0][pAssetId].body)
+          processDataCount: JSON.parse(info[1].data.return[0][pNodeName].body)
             .info[0]['oncue-service']['processing-data-count'],
-          processSpeed: JSON.parse(info[1].data.return[0][pAssetId].body)
+          processSpeed: JSON.parse(info[1].data.return[0][pNodeName].body)
             .info[0]['oncue-service']['processing-speed'],
         }
 
         if (Object.keys(info[0].data.return[0]).length > 0) {
           oncueService = {
             ...oncueService,
-            cpuUsage: JSON.parse(info[0].data.return[0][pAssetId].body).info[0][
-              'oncue-service-resources'
-            ].cpu.usage,
-            memoryUsage: JSON.parse(info[0].data.return[0][pAssetId].body)
+            cpuUsage: JSON.parse(info[0].data.return[0][pNodeName].body)
+              .info[0]['oncue-service-resources'].cpu.usage,
+            memoryUsage: JSON.parse(info[0].data.return[0][pNodeName].body)
               .info[0]['oncue-service-resources'].memory.usage,
-            diskUsage: JSON.parse(info[0].data.return[0][pAssetId].body)
+            diskUsage: JSON.parse(info[0].data.return[0][pNodeName].body)
               .info[0]['oncue-service-resources'].queue.usage,
           }
         }
@@ -80,7 +79,7 @@ export const getOncueServiceStatus = async (
         if (Object.keys(info[2].data.return[0]).length > 0) {
           const protocolModule: ProtocolModule[] = []
 
-          for (const k of JSON.parse(info[2].data.return[0][pAssetId].body)
+          for (const k of JSON.parse(info[2].data.return[0][pNodeName].body)
             .info[0]['protocol-modules']) {
             protocolModule[k['protocol-module'].name] = {
               name: k['protocol-module'].name,
@@ -131,6 +130,6 @@ export const getOncueServiceStatus = async (
       return null
     }
   } catch (error) {
-    console.log(error)
+    console.error(error)
   }
 }

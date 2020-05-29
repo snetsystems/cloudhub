@@ -20,25 +20,39 @@ interface Props {
   handleOnClickDeviceConnectionsRow: (url: string) => void
   popupPosition: {top: number; right: number}
   oncueData: OncueData
+  routerDataPopupAutoRefresh: number
+  onChooseRouterDataPopupAutoRefresh: (milliseconds: number) => void
+  onManualRouterDataPopupRefresh: () => void
 }
 
 @ErrorHandling
 class DataPopup extends PureComponent<Props> {
   private MAX_HEIGHT = 500
+
   public constructor(props: Props) {
     super(props)
   }
 
   public render() {
-    const {oncueData} = this.props
+    const {
+      oncueData,
+      routerDataPopupAutoRefresh,
+      onChooseRouterDataPopupAutoRefresh,
+      onManualRouterDataPopupRefresh,
+    } = this.props
+
+    window.addEventListener('keyup', event => {
+      const escapeKeyCode = 27
+      // fallback for browsers that don't support event.key
+      if (event.key === 'Escape' || event.keyCode === escapeKeyCode) {
+        this.props.hanldeOnDismiss()
+      }
+    })
+
     return (
       <div className="data-popup-container">
-        <div
-          style={this.stylePosition}
-          className={this.handleToolTipClassName}
-          onBlur={this.props.hanldeOnDismiss}
-        >
-          <button className="data-popup-dismiss" onClick={this.handleDismiss} />{' '}
+        <div style={this.stylePosition} className={this.handleToolTipClassName}>
+          <button className="data-popup-dismiss" onClick={this.handleDismiss} />
           <div className="data-popup-contents">
             <FancyScrollbar
               autoHeight={true}
@@ -48,7 +62,16 @@ class DataPopup extends PureComponent<Props> {
               <div className="datapopup-table--container">
                 <div className="datapopup-table--section">
                   <div className="datapopup-table--section--full">
-                    <OncueServiceTable oncueData={oncueData} />
+                    <OncueServiceTable
+                      oncueData={oncueData}
+                      routerDataPopupAutoRefresh={routerDataPopupAutoRefresh}
+                      onChooseRouterDataPopupAutoRefresh={
+                        onChooseRouterDataPopupAutoRefresh
+                      }
+                      onManualRouterDataPopupRefresh={
+                        onManualRouterDataPopupRefresh
+                      }
+                    />
                   </div>
                 </div>
                 <div className="datapopup-table--section">
@@ -95,9 +118,7 @@ class DataPopup extends PureComponent<Props> {
   }
 
   private handleDismiss = (e: MouseEvent<HTMLElement>) => {
-    const {hanldeOnDismiss} = this.props
-
-    hanldeOnDismiss()
+    this.props.hanldeOnDismiss()
     e.preventDefault()
     e.stopPropagation()
   }

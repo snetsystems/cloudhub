@@ -32,6 +32,6 @@ export const getAllHostsAsync = (pSource: Source) => async (
     return hosts
   } catch (error) {
     console.error(error)
-    dispatch(errorThrown(error, `${error.status}: ${error.statusText}`))
+    dispatch(errorThrown(error))
   }
 }

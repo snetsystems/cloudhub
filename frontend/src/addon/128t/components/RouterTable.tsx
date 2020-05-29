@@ -51,11 +51,11 @@ export interface Props {
   isEditable: boolean
   routers: Router[]
   isRoutersAllCheck: boolean
-  focusedAssetId: string
+  focusedNodeName: string
   onClickTableRow: (
     topSources: TopSource[],
     topSessions: TopSession[],
-    focusedAssetId: string
+    focusedNodeName: string
   ) => () => void
   handleOnChoose: ({selectItem: string}) => void
   handleRouterCheck: ({router: Router}) => void
@@ -65,7 +65,7 @@ export interface Props {
   config: SaltDirFile
   isRouterDataPopupVisible: boolean
   routerPopupPosition: {top: number; right: number}
-  handleOnClickRouterName: (data: {
+  handleOnClickNodeName: (data: {
     _event: MouseEvent<HTMLElement>
     router: Router
   }) => void
@@ -73,6 +73,9 @@ export interface Props {
   handleOnClickProtocolModulesRow: (name: string) => void
   handleOnClickDeviceConnectionsRow: (url: string) => void
   oncueData: OncueData
+  routerDataPopupAutoRefresh: number
+  onChooseRouterDataPopupAutoRefresh: (milliseconds: number) => void
+  onManualRouterDataPopupRefresh: () => void
 }
 
 interface State {
@@ -100,7 +103,7 @@ class RouterTable extends PureComponent<Props, State> {
     this.state = {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
-      sortKey: 'assetId',
+      sortKey: 'nodeName',
       routerCount: 0,
     }
   }
@@ -238,7 +241,7 @@ class RouterTable extends PureComponent<Props, State> {
 
   private get TableHeader() {
     const {
-      ASSETID,
+      NODENAME,
       IPADDRESS,
       LOCATIONCOORDINATES,
       MANAGEMENTCONNECTED,
@@ -258,7 +261,7 @@ class RouterTable extends PureComponent<Props, State> {
     return (
       <>
         <div
-          className={sortableClasses({sortKey, sortDirection, key: 'assetId'})}
+          className={sortableClasses({sortKey, sortDirection, key: 'nodeName'})}
           style={{width: CHECKBOX}}
         >
           <input
@@ -269,9 +272,9 @@ class RouterTable extends PureComponent<Props, State> {
           />
         </div>
         <div
-          onClick={this.updateSort('assetId')}
-          className={sortableClasses({sortKey, sortDirection, key: 'assetId'})}
-          style={{width: ASSETID}}
+          onClick={this.updateSort('nodeName')}
+          className={sortableClasses({sortKey, sortDirection, key: 'nodeName'})}
+          style={{width: NODENAME}}
         >
           Router
           <span className="icon caret-up" />
@@ -417,14 +420,17 @@ class RouterTable extends PureComponent<Props, State> {
   private get TableData() {
     const {
       routers,
-      focusedAssetId,
+      focusedNodeName,
       onClickTableRow,
       handleRouterCheck,
-      handleOnClickRouterName,
+      handleOnClickNodeName,
       isRouterDataPopupVisible,
       hanldeOnDismiss,
       routerPopupPosition,
       oncueData,
+      routerDataPopupAutoRefresh,
+      onChooseRouterDataPopupAutoRefresh,
+      onManualRouterDataPopupRefresh,
     } = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
@@ -442,10 +448,10 @@ class RouterTable extends PureComponent<Props, State> {
             <FancyScrollbar
               children={sortedRouters.map((r: Router, i: number) => (
                 <RouterTableRow
-                  handleOnClickRouterName={handleOnClickRouterName}
+                  handleOnClickNodeName={handleOnClickNodeName}
                   handleRouterCheck={handleRouterCheck}
                   onClickTableRow={onClickTableRow}
-                  focusedAssetId={focusedAssetId}
+                  focusedNodeName={focusedNodeName}
                   isCheck={r.isCheck}
                   router={r}
                   key={i}
@@ -464,6 +470,11 @@ class RouterTable extends PureComponent<Props, State> {
                 handleOnClickDeviceConnectionsRow={
                   this.props.handleOnClickDeviceConnectionsRow
                 }
+                routerDataPopupAutoRefresh={routerDataPopupAutoRefresh}
+                onChooseRouterDataPopupAutoRefresh={
+                  onChooseRouterDataPopupAutoRefresh
+                }
+                onManualRouterDataPopupRefresh={onManualRouterDataPopupRefresh}
               />
             ) : null}
           </>
@@ -477,8 +488,8 @@ class RouterTable extends PureComponent<Props, State> {
   private filter(allrouters: Router[], searchTerm: string) {
     const filterText = searchTerm.toLowerCase()
     return allrouters.filter(h => {
-      if (!h.assetId) h.assetId = '-'
-      return h.assetId.toLowerCase().includes(filterText)
+      if (!h.nodeName) h.nodeName = '-'
+      return h.nodeName.toLowerCase().includes(filterText)
     })
   }
 
