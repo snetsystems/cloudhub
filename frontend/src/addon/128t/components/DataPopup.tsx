@@ -28,6 +28,7 @@ interface Props {
 @ErrorHandling
 class DataPopup extends PureComponent<Props> {
   private MAX_HEIGHT = 500
+
   public constructor(props: Props) {
     super(props)
   }
@@ -39,13 +40,18 @@ class DataPopup extends PureComponent<Props> {
       onChooseRouterDataPopupAutoRefresh,
       onManualRouterDataPopupRefresh,
     } = this.props
+
+    window.addEventListener('keyup', event => {
+      const escapeKeyCode = 27
+      // fallback for browsers that don't support event.key
+      if (event.key === 'Escape' || event.keyCode === escapeKeyCode) {
+        this.props.hanldeOnDismiss()
+      }
+    })
+
     return (
       <div className="data-popup-container">
-        <div
-          style={this.stylePosition}
-          className={this.handleToolTipClassName}
-          // onBlur={this.props.hanldeOnDismiss}
-        >
+        <div style={this.stylePosition} className={this.handleToolTipClassName}>
           <button className="data-popup-dismiss" onClick={this.handleDismiss} />
           <div className="data-popup-contents">
             <FancyScrollbar
@@ -112,9 +118,7 @@ class DataPopup extends PureComponent<Props> {
   }
 
   private handleDismiss = (e: MouseEvent<HTMLElement>) => {
-    const {hanldeOnDismiss} = this.props
-
-    hanldeOnDismiss()
+    this.props.hanldeOnDismiss()
     e.preventDefault()
     e.stopPropagation()
   }
