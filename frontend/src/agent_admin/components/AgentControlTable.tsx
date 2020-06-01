@@ -342,13 +342,18 @@ class AgentControlTable extends PureComponent<Props, State> {
       <div className="hosts-table--thead">
         <div className="hosts-table--tr">
           <div style={{width: CheckWidth}} className="hosts-table--th">
-            <input
-              type="checkbox"
-              checked={isAllCheck}
-              onClick={this.getHandleAllCheck}
-              readOnly
-            />
+            <div className="dark-checkbox">
+              <input
+                id={'agent-control--all-check'}
+                type="checkbox"
+                checked={isAllCheck}
+                onClick={this.getHandleAllCheck}
+                readOnly
+              />
+              <label htmlFor={'agent-control--all-check'} />
+            </div>
           </div>
+
           <div
             onClick={this.updateSort('host')}
             className={this.sortableClasses('host')}

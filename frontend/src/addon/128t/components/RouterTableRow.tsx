@@ -126,12 +126,16 @@ const RouterTableRow = ({
     >
       <TableBodyRowItem
         title={
-          <input
-            type="checkbox"
-            checked={isCheck}
-            onClick={getHandleRouterCheck.bind(router)}
-            readOnly
-          />
+          <div className="dark-checkbox">
+            <input
+              id={`router-table--${nodeName}`}
+              type="checkbox"
+              checked={isCheck}
+              onClick={getHandleRouterCheck.bind(router)}
+              readOnly
+            />
+            <label htmlFor={`router-table--${nodeName}`} />
+          </div>
         }
         width={CHECKBOX}
       />

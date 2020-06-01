@@ -257,4 +257,10 @@
   .threesizer--division {
     overflow: visible;
   }
+
+  .dark-checkbox {
+    label {
+      border: 1px solid #555;
+    }
+  }
 }
