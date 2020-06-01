@@ -221,7 +221,9 @@ class AgentControlTable extends PureComponent<Props, State> {
             message={
               'There is already run a collector at least one, do you go on?'
             }
-            buttonClassName={'btn btn-inline_block btn-default agent--btn'}
+            buttonClassName={
+              'btn btn-inline_block btn-default agent--btn btn-primary'
+            }
             cancelText={'Cancel'}
             confirmText={'OK'}
             onCancel={() => {}}
@@ -235,7 +237,9 @@ class AgentControlTable extends PureComponent<Props, State> {
             message={
               'There is already stoped a collector at least one, do you go on?'
             }
-            buttonClassName={'btn btn-inline_block btn-default agent--btn'}
+            buttonClassName={
+              'btn btn-inline_block btn-default agent--btn btn-primary'
+            }
             cancelText={'Cancel'}
             confirmText={'Go STOP'}
             onCancel={() => {}}
@@ -252,7 +256,9 @@ class AgentControlTable extends PureComponent<Props, State> {
             message={
               'There is already installed a collector at least one, do you go on?'
             }
-            buttonClassName={'btn btn-inline_block btn-default agent--btn'}
+            buttonClassName={
+              'btn btn-inline_block btn-default agent--btn btn-primary'
+            }
             cancelText={'Cancel'}
             confirmText={'OK'}
             onCancel={() => {}}
