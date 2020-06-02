@@ -1,4 +1,4 @@
-# CloudHub - 1.0.1
+# CloudHub
 
 ## Intro
 
@@ -29,7 +29,8 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
 - Window build & run Env. support.
 - Hosts to Infrastructures and basic charts added.
 - Visualization added by criteria of Applications.
-- Continuous installation and deployment for telegraf's agent and configuration.
+- Telegraf daemon management and configuration editing and deploying remotely via SaltStack.
+- Tenant by a group for influxdb data sources, Kapacitor alerts, etc.
 - Optionable Addon features
   - SWAN Router & SDPlex(Oncue) Features.
     <p align="center">
@@ -38,6 +39,11 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
       <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/agent_configure.png"/>
       <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/swan.png"/>
     </p>
+
+## Change log
+
+We've been managing this project with Github's [Projects](https://github.com/snetsystems/cloudhub/projects) since v0.9.1 last Mar.
+You could know the changelog by versions via that.
 
 ## Setting in VSCode
 
