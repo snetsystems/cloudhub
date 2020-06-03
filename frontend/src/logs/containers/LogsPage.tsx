@@ -166,6 +166,7 @@ interface State {
 }
 
 class LogsPage extends Component<Props, State> {
+  private isMount = false
   public static getDerivedStateFromProps(props: Props) {
     const severityLevelColors: SeverityLevelColor[] = _.get(
       props.logConfig,
@@ -221,6 +222,7 @@ class LogsPage extends Component<Props, State> {
   }
 
   public async componentDidMount() {
+    this.isMount = true
     await this.getSources()
 
     await this.setCurrentSource()
@@ -240,6 +242,7 @@ class LogsPage extends Component<Props, State> {
   }
 
   public componentWillUnmount() {
+    this.isMount = false
     this.clearTailInterval()
     this.cancelChunks()
   }
@@ -348,18 +351,20 @@ class LogsPage extends Component<Props, State> {
   }
 
   private startLogsTailFetchingInterval = () => {
-    this.flushTailBuffer()
-    this.clearTailInterval()
+    if (this.isMount && !this.interval) {
+      this.flushTailBuffer()
+      this.clearTailInterval()
 
-    this.props.setNextTailLowerBound(Date.now())
+      this.props.setNextTailLowerBound(Date.now())
 
-    this.interval = window.setInterval(
-      this.handleTailFetchingInterval,
+      this.interval = window.setInterval(
+        this.handleTailFetchingInterval,
 
-      DEFAULT_TAIL_CHUNK_DURATION_MS
-    )
+        DEFAULT_TAIL_CHUNK_DURATION_MS
+      )
 
-    this.setState({liveUpdating: true})
+      this.setState({liveUpdating: true})
+    }
   }
 
   private handleTailFetchingInterval = async () => {
