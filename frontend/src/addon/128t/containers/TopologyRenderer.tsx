@@ -1,6 +1,5 @@
 // Libraries
 import React, {PureComponent} from 'react'
-import {connect} from 'react-redux'
 import {Graph} from 'react-d3-graph'
 import classnames from 'classnames'
 import _ from 'lodash'
@@ -65,6 +64,7 @@ interface GraphLink {
 }
 
 interface Props {
+  isUsingAuth: boolean
   meRole: string
   groupRouterNodesData: GroupRouterNodeData[]
 }
@@ -420,12 +420,12 @@ class TopologyRenderer extends PureComponent<Props, State> {
     dimensions?: DOMRect
   }): GraphNodeData => {
     const isLocalstorage: boolean = this.addon.hasOwnProperty('swanTopology')
-    const {meRole, groupRouterNodesData} = this.props
+    const {isUsingAuth, meRole, groupRouterNodesData} = this.props
     const customGroupRoutersData = this.modifyRoutersData(groupRouterNodesData)
 
     let nodesData: GraphNodeData = null
 
-    if (isUserAuthorized(meRole, SUPERADMIN_ROLE)) {
+    if (!isUsingAuth || isUserAuthorized(meRole, SUPERADMIN_ROLE)) {
       if (customGroupRoutersData) {
         let nodeData = _.reduce(
           customGroupRoutersData,
@@ -830,9 +830,4 @@ class TopologyRenderer extends PureComponent<Props, State> {
   }
 }
 
-const mapStateToProps = ({auth: {me}}) => {
-  const meRole = _.get(me, 'role', null)
-  return {meRole}
-}
-
-export default connect(mapStateToProps, null)(TopologyRenderer)
+export default TopologyRenderer

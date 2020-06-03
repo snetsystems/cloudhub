@@ -43,6 +43,7 @@ interface GroupHosts {
 interface Props {
   page: string
   links: Links
+  isUsingAuth: boolean
   meRole: string
   source: Source
   sources: Source[]
@@ -77,7 +78,7 @@ const GraphqlProvider: SFC<Props> = (props: Props) => {
 
   const [groupHosts, setGroupHosts] = useState<GroupHosts[]>([])
 
-  if (!isUserAuthorized(props.meRole, SUPERADMIN_ROLE)) {
+  if (props.isUsingAuth && !isUserAuthorized(props.meRole, SUPERADMIN_ROLE)) {
     useEffect(() => {
       let gHosts: GroupHosts[] = []
       const getAllHost = async () => {
@@ -121,6 +122,7 @@ const GraphqlProvider: SFC<Props> = (props: Props) => {
       <ApolloProvider client={client}>
         <SwanSdplexStatusPage
           addons={props.links.addons}
+          isUsingAuth={props.isUsingAuth}
           meRole={props.meRole}
           groupHosts={groupHosts}
         />
@@ -136,12 +138,12 @@ const GraphqlProvider: SFC<Props> = (props: Props) => {
 }
 
 const mapStateToProps = ({
-  auth: {me},
+  auth: {isUsingAuth, me},
   links,
   adminCloudHub: {organizations},
 }) => {
   const meRole = _.get(me, 'role', null)
-  return {meRole, links, organizations}
+  return {isUsingAuth, meRole, links, organizations}
 }
 
 const mdtp = {

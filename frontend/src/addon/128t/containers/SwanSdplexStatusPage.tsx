@@ -140,10 +140,12 @@ interface GroupHosts {
 
 const SwanSdplexStatusPage = ({
   addons,
+  isUsingAuth,
   meRole,
   groupHosts,
 }: {
   addons: Addon[]
+  isUsingAuth: boolean
   meRole: string
   groupHosts: GroupHosts[]
 }) => {
@@ -249,12 +251,13 @@ const SwanSdplexStatusPage = ({
 
   const {loading, data} = useQuery<Response, Variables>(GET_ALLROUTERS_INFO, {
     variables: {
-      names: !isUserAuthorized(meRole, SUPERADMIN_ROLE)
-        ? gHosts.map(m => m.hostName)
-        : [],
+      names:
+        isUsingAuth && !isUserAuthorized(meRole, SUPERADMIN_ROLE)
+          ? gHosts.map(m => m.hostName)
+          : [],
     },
     errorPolicy: 'all',
-    pollInterval: 5000,
+    pollInterval: 10000,
   })
 
   const groupRouter: GroupRouterNodeData[] = _.values(groupHosts).map(g => {
@@ -424,7 +427,7 @@ const SwanSdplexStatusPage = ({
           []
         )
 
-        if (isUserAuthorized(meRole, SUPERADMIN_ROLE)) {
+        if (!isUsingAuth || isUserAuthorized(meRole, SUPERADMIN_ROLE)) {
           const notGroupNode: RouterNode[] = _.reduce(
             nodes,
             (routerNodes: RouterNode[], node: Node) => {
@@ -681,6 +684,7 @@ const SwanSdplexStatusPage = ({
           </div>
         ) : (
           <TopologyRenderer
+            isUsingAuth={isUsingAuth}
             meRole={meRole}
             groupRouterNodesData={groupRouterNodesData}
           />
