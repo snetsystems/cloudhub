@@ -1,6 +1,5 @@
 // Libraries
 import React, {PureComponent} from 'react'
-import {connect} from 'react-redux'
 import {Graph} from 'react-d3-graph'
 import classnames from 'classnames'
 import _ from 'lodash'
@@ -31,7 +30,7 @@ import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 //type
-import {Router, GroupRouterData} from 'src/addon/128t/types'
+import {RouterNode, GroupRouterNodeData} from 'src/addon/128t/types'
 
 interface SwanTopology {
   id: string
@@ -54,7 +53,7 @@ interface GraphNode {
   svg?: string
   labelPosition?: string
   role?: string
-  router?: Router
+  routerNode?: RouterNode
   temperature?: number
   sound?: number
 }
@@ -65,8 +64,9 @@ interface GraphLink {
 }
 
 interface Props {
+  isUsingAuth: boolean
   meRole: string
-  groupRoutersData: GroupRouterData[]
+  groupRouterNodesData: GroupRouterNodeData[]
 }
 
 interface State {
@@ -311,7 +311,7 @@ class TopologyRenderer extends PureComponent<Props, State> {
   }
 
   public componentDidUpdate(prevProps: Props) {
-    if (prevProps.groupRoutersData !== this.props.groupRoutersData) {
+    if (prevProps.groupRouterNodesData !== this.props.groupRouterNodesData) {
       const dimensions = this.useRef.current.getBoundingClientRect()
 
       const genNode = this.generatorNodeData({
@@ -348,12 +348,12 @@ class TopologyRenderer extends PureComponent<Props, State> {
   }
 
   private modifyRoutersData = (
-    groupRouterData: GroupRouterData[]
-  ): GroupRouterData[] => {
-    return groupRouterData.map(g => {
+    groupRouterNodesData: GroupRouterNodeData[]
+  ): GroupRouterNodeData[] => {
+    return groupRouterNodesData.map(g => {
       return {
         groupName: g.groupName,
-        routers: g.routers.map(r => {
+        routerNodes: g.routerNodes.map(r => {
           const {nodeName} = r
           return {...r, nodeName: nodeName ? nodeName : '-'}
         }),
@@ -368,20 +368,30 @@ class TopologyRenderer extends PureComponent<Props, State> {
   ): void => {
     const {nodeData} = this.state
 
+    this.addon = getLocalStorage('addon')
+
     let {swanTopology} = this.addon
 
     const nodes = nodeData.nodes.map(m => {
       if (m.id === nodeId) {
-        const filtered = swanTopology.filter(s => s.id === nodeId)
-        if (filtered.length > 0) {
-          swanTopology = swanTopology.map(swan =>
-            swan.id === nodeId ? {id: nodeId, x, y} : swan
-          )
+        if (swanTopology) {
+          const filtered = swanTopology.filter(s => s.id === nodeId)
+          if (filtered.length > 0) {
+            swanTopology = swanTopology.map(swan =>
+              swan.id === nodeId ? {id: nodeId, x, y} : swan
+            )
 
-          setLocalStorage('addon', {
-            ...this.addon,
-            swanTopology,
-          })
+            setLocalStorage('addon', {
+              ...this.addon,
+              swanTopology,
+            })
+          } else {
+            swanTopology.push({id: nodeId, x, y})
+            setLocalStorage('addon', {
+              ...this.addon,
+              swanTopology,
+            })
+          }
         } else {
           swanTopology.push({id: nodeId, x, y})
           setLocalStorage('addon', {
@@ -410,23 +420,23 @@ class TopologyRenderer extends PureComponent<Props, State> {
     dimensions?: DOMRect
   }): GraphNodeData => {
     const isLocalstorage: boolean = this.addon.hasOwnProperty('swanTopology')
-    const {meRole, groupRoutersData} = this.props
-    const customGroupRoutersData = this.modifyRoutersData(groupRoutersData)
+    const {isUsingAuth, meRole, groupRouterNodesData} = this.props
+    const customGroupRoutersData = this.modifyRoutersData(groupRouterNodesData)
 
     let nodesData: GraphNodeData = null
 
-    if (isUserAuthorized(meRole, SUPERADMIN_ROLE)) {
+    if (!isUsingAuth || isUserAuthorized(meRole, SUPERADMIN_ROLE)) {
       if (customGroupRoutersData) {
         let nodeData = _.reduce(
           customGroupRoutersData,
-          (nodeData: GraphNodeData, groupRouter: GroupRouterData) => {
+          (nodeData: GraphNodeData, groupRouterNode: GroupRouterNodeData) => {
             nodeData = {
               ...nodeData,
               nodes: [
                 ...nodeData.nodes,
                 {
-                  id: groupRouter.groupName,
-                  label: groupRouter.groupName,
+                  id: groupRouterNode.groupName,
+                  label: groupRouterNode.groupName,
                   role: this.TOPOLOGY_ROLE.GROUP,
                 },
               ],
@@ -434,33 +444,33 @@ class TopologyRenderer extends PureComponent<Props, State> {
                 ...nodeData.links,
                 {
                   source: this.TOPOLOGY_ROLE.ROOT,
-                  target: groupRouter.groupName,
+                  target: groupRouterNode.groupName,
                 },
               ],
             }
 
-            if (groupRouter.routers.length > 0) {
+            if (groupRouterNode.routerNodes.length > 0) {
               const routerNodeData = _.reduce(
-                groupRouter.routers,
-                (routerNodeData: GraphNodeData, router: Router) => {
-                  if (router.nodeName !== '-') {
+                groupRouterNode.routerNodes,
+                (routerNodeData: GraphNodeData, routerNode: RouterNode) => {
+                  if (routerNode.nodeName !== '-') {
                     routerNodeData = {
                       ...routerNodeData,
                       nodes: [
                         ...routerNodeData.nodes,
                         {
-                          id: router.nodeName,
-                          label: router.nodeName,
+                          id: routerNode.nodeName,
+                          label: routerNode.nodeName,
                           role: this.TOPOLOGY_ROLE.ROUTER,
-                          router: router,
+                          routerNode: routerNode,
                           size: 2000,
                         },
                       ],
                       links: [
                         ...routerNodeData.links,
                         {
-                          source: groupRouter.groupName,
-                          target: router.nodeName,
+                          source: groupRouterNode.groupName,
+                          target: routerNode.nodeName,
                         },
                       ],
                     }
@@ -490,21 +500,21 @@ class TopologyRenderer extends PureComponent<Props, State> {
       if (customGroupRoutersData) {
         let nodeData = _.reduce(
           customGroupRoutersData,
-          (nodeData: GraphNodeData, groupRouter: GroupRouterData) => {
-            if (groupRouter.routers.length > 0) {
+          (nodeData: GraphNodeData, groupRouterNode: GroupRouterNodeData) => {
+            if (groupRouterNode.routerNodes.length > 0) {
               const routerNodeData = _.reduce(
-                groupRouter.routers,
-                (routerNodeData: GraphNodeData, router: Router) => {
-                  if (router.nodeName !== '-') {
+                groupRouterNode.routerNodes,
+                (routerNodeData: GraphNodeData, routerNode: RouterNode) => {
+                  if (routerNode.nodeName !== '-') {
                     routerNodeData = {
                       ...routerNodeData,
                       nodes: [
                         ...routerNodeData.nodes,
                         {
-                          id: router.nodeName,
-                          label: router.nodeName,
+                          id: routerNode.nodeName,
+                          label: routerNode.nodeName,
                           role: this.TOPOLOGY_ROLE.ROUTER,
-                          router: router,
+                          routerNode: routerNode,
                           size: 2000,
                         },
                       ],
@@ -512,7 +522,7 @@ class TopologyRenderer extends PureComponent<Props, State> {
                         ...routerNodeData.links,
                         {
                           source: this.TOPOLOGY_ROLE.ROOT,
-                          target: router.nodeName,
+                          target: routerNode.nodeName,
                         },
                       ],
                     }
@@ -669,7 +679,7 @@ class TopologyRenderer extends PureComponent<Props, State> {
   }
 
   private GenerateRouterNode = ({node}: {node: GraphNode}) => {
-    const routerData = node.router
+    const routerData = node.routerNode
 
     if (!routerData) return
 
@@ -820,9 +830,4 @@ class TopologyRenderer extends PureComponent<Props, State> {
   }
 }
 
-const mapStateToProps = ({auth: {me}}) => {
-  const meRole = _.get(me, 'role', null)
-  return {meRole}
-}
-
-export default connect(mapStateToProps, null)(TopologyRenderer)
+export default TopologyRenderer
