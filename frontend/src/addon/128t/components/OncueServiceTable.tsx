@@ -48,7 +48,7 @@ class OncueServiceTable extends PureComponent<Props> {
           <div className={'data-table-heading--left'}>
             <strong className="data-table-title">
               OncueService
-              <span className="data-table-title-sub">{oncueData.router}</span>
+              <span className="data-table-title-sub">{oncueData.nodeName}</span>
             </strong>
           </div>
           <div className={'data-table-heading--right'}>
