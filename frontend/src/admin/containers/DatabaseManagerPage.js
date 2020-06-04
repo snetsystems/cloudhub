@@ -42,7 +42,7 @@ class DatabaseManagerPage extends Component {
   }
 
   handleEditDatabase = database => e => {
-    this.props.actions.editDatabase(database, {name: e.target.value})
+    this.props.actions.editDatabase(database, {name: e.text})
   }
 
   handleCreateDatabase = database => {
@@ -107,10 +107,12 @@ class DatabaseManagerPage extends Component {
   }
 
   render() {
-    const {source, databases, actions, notify} = this.props
+    const {source, databases, actions, notify, auth, organizations} = this.props
 
     return (
       <DatabaseManager
+        auth={auth}
+        organizations={organizations}
         notify={notify}
         databases={databases}
         isRFDisplayed={!!source.metaUrl}
@@ -138,6 +140,7 @@ const {arrayOf, bool, func, number, shape, string} = PropTypes
 
 DatabaseManagerPage.propTypes = {
   auth: shape().isRequired,
+  organizations: arrayOf(shape()),
   source: shape({
     links: shape({
       proxy: string,
@@ -177,10 +180,12 @@ DatabaseManagerPage.propTypes = {
 const mapStateToProps = ({
   adminInfluxDB: {databases, retentionPolicies},
   auth,
+  adminCloudHub: {organizations},
 }) => ({
   databases,
   retentionPolicies,
   auth,
+  organizations,
 })
 
 const mapDispatchToProps = dispatch => ({

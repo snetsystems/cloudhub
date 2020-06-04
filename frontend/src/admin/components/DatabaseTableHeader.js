@@ -7,6 +7,7 @@ import {bindActionCreators} from 'redux'
 import {notify as notifyAction} from 'shared/actions/notifications'
 import ConfirmOrCancel from 'shared/components/ConfirmOrCancel'
 import {notifyDatabaseDeleteConfirmationRequired} from 'shared/copy/notifications'
+import Dropdown from 'src/shared/components/Dropdown'
 
 const DatabaseTableHeader = ({
   database,
@@ -21,10 +22,12 @@ const DatabaseTableHeader = ({
   onDatabaseDeleteConfirm,
   onAddRetentionPolicy,
   isAddRPDisabled,
+  organizations,
 }) => {
   if (database.isEditing) {
     return (
       <EditHeader
+        organizations={organizations}
         database={database}
         onEdit={onEdit}
         onKeyDown={onKeyDown}
@@ -118,31 +121,30 @@ const Header = ({
   )
 }
 
-const EditHeader = ({database, onEdit, onKeyDown, onConfirm, onCancel}) => (
-  <div className="db-manager-header db-manager-header--edit">
-    <input
-      className="form-control input-sm"
-      name="name"
-      type="text"
-      value={database.name}
-      placeholder="Name this Database"
-      onChange={onEdit(database)}
-      onKeyDown={onKeyDown(database)}
-      autoFocus={true}
-      spellCheck={false}
-      autoComplete="false"
-    />
-    <ConfirmOrCancel
-      item={database}
-      onConfirm={onConfirm}
-      onCancel={onCancel}
-    />
-  </div>
-)
+const EditHeader = ({database, onEdit, onConfirm, onCancel, organizations}) => {
+  organizations = organizations.map(org => org.name)
 
-const {func, shape, bool} = PropTypes
+  return (
+    <div className="db-manager-header db-manager-header--edit">
+      <Dropdown
+        items={organizations}
+        onChoose={onEdit(database)}
+        selected={database.name}
+        className="dropdown-stretch top"
+      />
+      <ConfirmOrCancel
+        item={database}
+        onConfirm={onConfirm}
+        onCancel={onCancel}
+      />
+    </div>
+  )
+}
+
+const {func, shape, bool, arrayOf} = PropTypes
 
 DatabaseTableHeader.propTypes = {
+  organizations: arrayOf(shape()),
   onEdit: func,
   notify: func.isRequired,
   database: shape(),
@@ -170,6 +172,7 @@ Header.propTypes = {
 }
 
 EditHeader.propTypes = {
+  organizations: arrayOf(shape()),
   database: shape(),
   onEdit: func,
   onKeyDown: func,

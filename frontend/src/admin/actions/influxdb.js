@@ -92,8 +92,9 @@ export const addRole = () => ({
   type: 'INFLUXDB_ADD_ROLE',
 })
 
-export const addDatabase = () => ({
+export const addDatabase = name => ({
   type: 'INFLUXDB_ADD_DATABASE',
+  payload: {name},
 })
 
 export const addRetentionPolicy = database => ({
