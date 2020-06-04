@@ -20,6 +20,7 @@ import {
   setQueryToKill as setQueryToKillAction,
   killQueryAsync,
 } from 'src/admin/actions/influxdb'
+import {eachRoleQueries} from 'src/admin/utils/eachRoleWorker'
 
 import {notify as notifyAction} from 'shared/actions/notifications'
 
@@ -41,15 +42,19 @@ class QueriesPage extends Component {
   }
 
   updateQueries = () => {
-    const {source, notify, loadQueries} = this.props
+    const {source, notify, loadQueries, auth} = this.props
     showDatabases(source.links.proxy).then(resp => {
       const {databases, errors} = showDatabasesParser(resp.data)
+      const checkDatabases = eachRoleQueries(databases, auth)
+
       if (errors.length) {
         errors.forEach(message => notify(notifyQueriesError(message)))
         return
       }
 
-      const fetches = databases.map(db => showQueries(source.links.proxy, db))
+      const fetches = checkDatabases.map(db =>
+        showQueries(source.links.proxy, db)
+      )
 
       Promise.all(fetches).then(queryResponses => {
         const allQueries = []
@@ -87,6 +92,7 @@ class QueriesPage extends Component {
 const {arrayOf, func, string, shape} = PropTypes
 
 QueriesPage.propTypes = {
+  auth: shape().isRequired,
   source: shape({
     links: shape({
       proxy: string,
@@ -100,9 +106,10 @@ QueriesPage.propTypes = {
   notify: func.isRequired,
 }
 
-const mapStateToProps = ({adminInfluxDB: {queries, queryIDToKill}}) => ({
+const mapStateToProps = ({adminInfluxDB: {queries, queryIDToKill}, auth}) => ({
   queries,
   queryIDToKill,
+  auth,
 })
 
 const mapDispatchToProps = dispatch => ({

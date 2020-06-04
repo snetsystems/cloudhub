@@ -27,9 +27,10 @@ class DatabaseManagerPage extends Component {
         links: {databases},
       },
       actions,
+      auth,
     } = this.props
 
-    actions.loadDBsAndRPsAsync(databases)
+    actions.loadDBsAndRPsAsync(databases, auth)
   }
 
   handleDeleteRetentionPolicy = (db, rp) => () => {
@@ -107,6 +108,7 @@ class DatabaseManagerPage extends Component {
 
   render() {
     const {source, databases, actions, notify} = this.props
+
     return (
       <DatabaseManager
         notify={notify}
@@ -135,6 +137,7 @@ class DatabaseManagerPage extends Component {
 const {arrayOf, bool, func, number, shape, string} = PropTypes
 
 DatabaseManagerPage.propTypes = {
+  auth: shape().isRequired,
   source: shape({
     links: shape({
       proxy: string,
@@ -171,9 +174,13 @@ DatabaseManagerPage.propTypes = {
   notify: func.isRequired,
 }
 
-const mapStateToProps = ({adminInfluxDB: {databases, retentionPolicies}}) => ({
+const mapStateToProps = ({
+  adminInfluxDB: {databases, retentionPolicies},
+  auth,
+}) => ({
   databases,
   retentionPolicies,
+  auth,
 })
 
 const mapDispatchToProps = dispatch => ({
