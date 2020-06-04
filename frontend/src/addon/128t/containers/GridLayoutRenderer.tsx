@@ -52,7 +52,7 @@ import {ADMIN_ROLE, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
 //type
 import {
-  Router,
+  RouterNode,
   TopSource,
   TopSession,
   SaltDirFileInfo,
@@ -87,7 +87,7 @@ interface Props {
   notify: (message: Notification | NotificationFunc) => void
   layout: cellLayoutInfo[]
   focusedNodeName: string
-  routersData: Router[]
+  routerNodesData: RouterNode[]
   topSessionsData: TopSession[]
   topSourcesData: TopSource[]
   isSwanSdplexStatus: boolean
@@ -150,7 +150,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       routerPopupPosition: {top: 0, right: 0},
       oncueData: {
         isOncue: false,
-        router: '',
+        nodeName: '',
         focusedInProtocolModule: '',
         focusedInDeviceConnection: '',
         oncueService: null,
@@ -161,11 +161,8 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   }
 
   public componentWillMount() {
-    const checkRoutersData = this.props.routersData.map(router => {
-      return {
-        nodeName: router.nodeName,
-        isCheck: false,
-      }
+    const checkRoutersData = this.props.routerNodesData.map(router => {
+      return {group: router.group, nodeName: router.nodeName, isCheck: false}
     })
 
     const addon = getLocalStorage('addon')
@@ -359,16 +356,21 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
         return checkRouter
       })
     }
+
     this.setState({
       isRoutersAllCheck: !isRoutersAllCheck,
       checkRouters: [...checkRouters],
     })
   }
 
-  public handleRouterCheck = ({router}: {router: Router}): void => {
+  public handleRouterCheck = ({routerNode}: {routerNode: RouterNode}): void => {
     const {checkRouters} = this.state
     const index = checkRouters.indexOf(
-      checkRouters.find(checkRouter => checkRouter.nodeName === router.nodeName)
+      checkRouters.find(
+        checkRouter =>
+          checkRouter.nodeName === routerNode.nodeName &&
+          checkRouter.group === routerNode.group
+      )
     )
 
     checkRouters[index].isCheck
@@ -394,7 +396,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     const {
       auth,
       layout,
-      routersData,
+      routerNodesData,
       isSwanSdplexStatus,
       onClickTableRow,
       focusedNodeName,
@@ -415,8 +417,8 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       routerDataPopupAutoRefresh,
     } = this.state
 
-    const checkRouterData: Router[] = routersData.map(
-      (router, i): Router => {
+    const checkRouterData: RouterNode[] = routerNodesData.map(
+      (router, i): RouterNode => {
         router.isCheck = checkRouters[i].isCheck
         return router
       }
@@ -446,7 +448,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
           >
             <RouterTable
               me={auth.me}
-              routers={checkRouterData}
+              routerNodes={checkRouterData}
               onClickTableRow={onClickTableRow}
               focusedNodeName={focusedNodeName}
               isEditable={isSwanSdplexStatus}
@@ -480,7 +482,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
           <div key="leafletMap" className="dash-graph" style={this.cellStyle}>
             <RouterMaps
               layout={layout}
-              routers={routersData}
+              routerNodes={routerNodesData}
               focusedNodeName={focusedNodeName}
               onClickMapMarker={onClickMapMarker}
               isEditable={isSwanSdplexStatus}
@@ -559,7 +561,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       this.setState({
         oncueData: {
           ...this.state.oncueData,
-          router: nodeName,
+          nodeName: nodeName,
           oncueService: response,
           protocolModule: response.protocolModule,
           deviceConnection: response.protocolModule[0].deviceConnection,
@@ -573,7 +575,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       this.setState({
         oncueData: {
           ...this.state.oncueData,
-          router: nodeName,
+          nodeName: nodeName,
           oncueService: null,
           protocolModule: [],
           deviceConnection: [],
@@ -624,21 +626,22 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     })
   }
 
-  private handleOnClickTableRow = (router: Router) => {
-    const {topSources, topSessions, nodeName} = router
+  private handleOnClickTableRow = (routerNode: RouterNode) => {
+    const {topSources, topSessions, nodeName} = routerNode
     return this.props.onClickTableRow(topSources, topSessions, nodeName)()
   }
+
   private onClickNodeName = async (data: {
     _event: MouseEvent<HTMLElement>
-    router: Router
+    routerNode: RouterNode
   }) => {
     if (this.state.oncueData.isOncue === false) {
-      this.handleOnClickTableRow(data.router)
+      this.handleOnClickTableRow(data.routerNode)
       return
     }
 
-    const {_event, router} = data
-    const {nodeName} = router
+    const {_event, routerNode} = data
+    const {nodeName} = routerNode
 
     this[nodeName] = _event.target
     this[nodeName].ref = this.refDataPopup
@@ -689,7 +692,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       isRouterDataPopupVisible: false,
       oncueData: {
         ...this.state.oncueData,
-        router: '',
+        nodeName: '',
         oncueService: null,
         protocolModule: [],
         deviceConnection: [],

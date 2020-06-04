@@ -2,7 +2,12 @@ import React, {MouseEvent} from 'react'
 import classnames from 'classnames'
 import {unitIndicator, usageIndacator} from 'src/addon/128t/reusable'
 import {ROUTER_TABLE_SIZING} from 'src/addon/128t/constants'
-import {Router, TopSource, TopSession, OncueData} from 'src/addon/128t/types'
+import {
+  RouterNode,
+  TopSource,
+  TopSession,
+  OncueData,
+} from 'src/addon/128t/types'
 import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
 import {transBps} from 'src/shared/utils/units'
 import {TableBodyRowItem} from 'src/addon/128t/reusable/layout'
@@ -10,8 +15,8 @@ import GeoLocationIndicator from 'src/addon/128t/components/GeoLocationIndicator
 
 interface Props {
   isCheck: boolean
-  handleRouterCheck: ({router: Router}) => void
-  router: Router
+  handleRouterCheck: ({routerNode: RouterNode}) => void
+  routerNode: RouterNode
   focusedNodeName: string
   onClickTableRow: (
     topSources: TopSource[],
@@ -20,7 +25,7 @@ interface Props {
   ) => () => void
   handleOnClickNodeName: (data: {
     _event: MouseEvent<HTMLElement>
-    router: Router
+    routerNode: RouterNode
   }) => void
   oncueData: OncueData
 }
@@ -29,12 +34,13 @@ const RouterTableRow = ({
   handleRouterCheck,
   onClickTableRow,
   focusedNodeName,
-  router,
+  routerNode,
   isCheck,
   handleOnClickNodeName,
   oncueData,
 }: Props) => {
   const {
+    group,
     nodeName,
     ipAddress,
     locationCoordinates,
@@ -48,10 +54,13 @@ const RouterTableRow = ({
     diskUsage,
     topSources,
     topSessions,
-  } = router
+    deltaUptime,
+    winDeltaUptime,
+  } = routerNode
 
   const {
     NODENAME,
+    GROUP,
     IPADDRESS,
     LOCATIONCOORDINATES,
     MANAGEMENTCONNECTED,
@@ -67,7 +76,7 @@ const RouterTableRow = ({
     CHECKBOX,
   } = ROUTER_TABLE_SIZING
 
-  const focusedClasses = (nodeName: Router['nodeName']): string => {
+  const focusedClasses = (nodeName: RouterNode['nodeName']): string => {
     if (nodeName === focusedNodeName)
       return 'hosts-table--tr cursor--pointer focused'
     return 'hosts-table--tr cursor--pointer'
@@ -83,18 +92,18 @@ const RouterTableRow = ({
     )
   }
 
-  const enabledIndicator = (enabled: Router['enabled']): JSX.Element => {
+  const enabledIndicator = (enabled: RouterNode['enabled']): JSX.Element => {
     return responseIndicator(enabled)
   }
 
   const connectedIndicator = (
-    managementConnected: Router['managementConnected']
+    managementConnected: RouterNode['managementConnected']
   ): JSX.Element => {
     return responseIndicator(managementConnected)
   }
 
   const geoLocationIndicatorCall = (
-    locationCoordinates: Router['locationCoordinates']
+    locationCoordinates: RouterNode['locationCoordinates']
   ): JSX.Element => {
     return locationCoordinates ? (
       <GeoLocationIndicator locationCoordinates={locationCoordinates} />
@@ -105,23 +114,23 @@ const RouterTableRow = ({
 
   const getHandleRouterCheck = (event: MouseEvent) => {
     event.stopPropagation()
-    handleRouterCheck({router})
+    handleRouterCheck({routerNode})
   }
 
   const getHandleOnClickNodeName = ({
     _event,
-    router,
+    routerNode,
   }: {
     _event: MouseEvent<HTMLDivElement>
-    router: Router
+    routerNode: RouterNode
   }) => {
-    handleOnClickNodeName({_event, router})
+    handleOnClickNodeName({_event, routerNode})
     _event.stopPropagation()
   }
 
   return (
     <div
-      className={focusedClasses(router.nodeName)}
+      className={focusedClasses(routerNode.nodeName)}
       onClick={onClickTableRow(topSources, topSessions, nodeName)}
     >
       <TableBodyRowItem
@@ -131,7 +140,7 @@ const RouterTableRow = ({
               id={`router-table--${nodeName}`}
               type="checkbox"
               checked={isCheck}
-              onClick={getHandleRouterCheck.bind(router)}
+              onClick={getHandleRouterCheck.bind(routerNode)}
               readOnly
             />
             <label htmlFor={`router-table--${nodeName}`} />
@@ -143,16 +152,23 @@ const RouterTableRow = ({
         title={
           <div
             onClick={(event: MouseEvent<HTMLDivElement>): void => {
-              getHandleOnClickNodeName({_event: event, router})
+              getHandleOnClickNodeName({_event: event, routerNode})
             }}
             className={`cursor--pointer`}
             style={{width: '100%'}}
           >
             <div
-              className={classnames('', {
-                'hosts-table-item': oncueData.isOncue,
-                focused: oncueData.isOncue && oncueData.router === nodeName,
-              })}
+              className={classnames(
+                '',
+                Math.max(deltaUptime || 0, winDeltaUptime || 0) > 0 ||
+                  group === 'root'
+                  ? {
+                      'hosts-table-item': oncueData.isOncue,
+                      focused:
+                        oncueData.isOncue && oncueData.nodeName === nodeName,
+                    }
+                  : {}
+              )}
             >
               {nodeName}
             </div>
@@ -160,10 +176,11 @@ const RouterTableRow = ({
         }
         width={NODENAME}
       />
+      <TableBodyRowItem title={group !== 'root' ? group : '-'} width={GROUP} />
       <TableBodyRowItem title={ipAddress} width={IPADDRESS} />
       <TableBodyRowItem title={role} width={ROLE} />
       <TableBodyRowItem
-        title={enabledIndicator(router.enabled)}
+        title={enabledIndicator(routerNode.enabled)}
         width={ENABLED}
         className={'align--start'}
       />
@@ -173,7 +190,7 @@ const RouterTableRow = ({
         width={LOCATIONCOORDINATES}
       />
       <TableBodyRowItem
-        title={connectedIndicator(router.managementConnected)}
+        title={connectedIndicator(routerNode.managementConnected)}
         width={MANAGEMENTCONNECTED}
         className={'align--start'}
       />

@@ -97,9 +97,11 @@ import {
   FetchLoop,
 } from 'src/types/logs'
 import {RemoteDataState} from 'src/types'
+import {Params} from '../../types/sideNav'
 
 interface Props {
   sources: Source[]
+  source: Source | null
   currentSource: Source | null
   currentNamespaces: Namespace[]
   currentNamespace: Namespace
@@ -227,8 +229,6 @@ class LogsPage extends Component<Props, State> {
 
     await this.setCurrentSource()
 
-    await this.changeCurrentNamespace()
-
     await this.props.getConfig(this.logConfigLink)
 
     if (this.isMeasurementInNamespace) {
@@ -336,14 +336,7 @@ class LogsPage extends Component<Props, State> {
   }
 
   private setCurrentSource = async () => {
-    if (this.props.sources.length > 0) {
-      const source =
-        this.props.sources.find(src => {
-          return src.default
-        }) || this.props.sources[0]
-
-      return await this.props.getSourceAndPopulateNamespaces(source.id)
-    }
+    await this.props.getSourceAndPopulateNamespaces(this.props.source.id)
   }
 
   private handleExpandMessage = () => {
@@ -1058,22 +1051,6 @@ class LogsPage extends Component<Props, State> {
 
   private get isMeasurementInNamespace(): boolean {
     return this.props.searchStatus !== SearchStatus.MeasurementMissing
-  }
-
-  private async changeCurrentNamespace() {
-    const {currentNamespace, currentNamespaces, me} = this.props
-    const currentOrganization = _.get(me, 'currentOrganization')
-
-    if (currentNamespace.database !== currentOrganization.name) {
-      const currentNamespace = currentNamespaces.find(
-        db => db.database === currentOrganization.name
-      )
-
-      await this.handleChooseNamespace({
-        database: currentNamespace.database,
-        retentionPolicy: currentNamespace.retentionPolicy,
-      })
-    }
   }
 
   private updateQueryCount() {

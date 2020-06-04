@@ -36,7 +36,11 @@ class DatabaseList extends PureComponent<Props, State> {
 
   public async getDatabases() {
     const {source, me} = this.props
-    const currentOrganization = _.get(me, 'currentOrganization')
+    const currentOrganization = _.get(
+      me,
+      'currentOrganization.name',
+      source.telegraf
+    )
 
     try {
       const {data} = await showDatabases(source.links.proxy)
@@ -53,7 +57,7 @@ class DatabaseList extends PureComponent<Props, State> {
       } else {
         roleDatabases = _.filter(
           databases,
-          database => database === currentOrganization.name
+          database => database === currentOrganization
         )
 
         this.setState({databases: roleDatabases})

@@ -113,14 +113,18 @@ export class KapacitorRulesPage extends PureComponent<Props, State> {
       return <NoKapacitorError source={source} />
     }
 
-    const currentOrganization = _.get(auth.me, 'currentOrganization')
+    const currentOrganization = _.get(
+      auth.me,
+      'currentOrganization.name',
+      source.telegraf
+    )
     let meRules: AlertRule[]
 
     if (isUserAuthorized(auth.me.role, SUPERADMIN_ROLE)) {
       meRules = _.cloneDeep(rules)
     } else {
       meRules = _.filter(rules, rule =>
-        rule.query ? rule.query.database === currentOrganization.name : false
+        rule.query ? rule.query.database === currentOrganization : false
       )
     }
 
