@@ -120,7 +120,7 @@ class LogsHeader extends PureComponent<Props> {
       return ''
     }
 
-    if (isUserAuthorized(me.role, SUPERADMIN_ROLE)) {
+    if (isUserAuthorized(me.role, SUPERADMIN_ROLE) || !me.role) {
       return currentNamespaces.map(namespace => {
         return {
           text: `${namespace.database}.${namespace.retentionPolicy}`,
