@@ -52,7 +52,7 @@ class DatabaseList extends PureComponent<Props, State> {
 
       let roleDatabases: string[]
 
-      if (isUserAuthorized(me.role, SUPERADMIN_ROLE)) {
+      if (isUserAuthorized(me.role, SUPERADMIN_ROLE) || !me.role) {
         this.setState({databases: databases.sort()})
       } else {
         roleDatabases = _.filter(
