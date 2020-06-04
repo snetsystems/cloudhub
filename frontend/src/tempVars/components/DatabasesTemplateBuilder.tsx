@@ -68,7 +68,7 @@ class DatabasesTemplateBuilder extends PureComponent<
       let roleDatabases: string[]
 
       if (databases && databases.length > 0) {
-        if (isUserAuthorized(me.role, SUPERADMIN_ROLE)) {
+        if (isUserAuthorized(me.role, SUPERADMIN_ROLE) || !me.role) {
           roleDatabases = databases
         } else {
           roleDatabases = _.filter(

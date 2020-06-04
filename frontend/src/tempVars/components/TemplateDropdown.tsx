@@ -18,7 +18,7 @@ const TemplateDropdown: SFC<Props> = props => {
 
   let dropdownItems = []
 
-  if (isUserAuthorized(me.role, SUPERADMIN_ROLE)) {
+  if (isUserAuthorized(me.role, SUPERADMIN_ROLE) || !me.role) {
     dropdownItems = template.values.map(value => {
       if (value.type === TemplateValueType.Map) {
         return {...value, text: value.key}

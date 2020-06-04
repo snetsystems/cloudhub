@@ -88,7 +88,7 @@ class DatabaseList extends Component<DatabaseListProps, DatabaseListState> {
       if (sorted && sorted.length > 0) {
         let roleNamespace: Namespace[]
 
-        if (isUserAuthorized(me.role, SUPERADMIN_ROLE)) {
+        if (isUserAuthorized(me.role, SUPERADMIN_ROLE) || !me.role) {
           this.setState({namespaces: sorted})
         } else {
           roleNamespace = _.filter(
