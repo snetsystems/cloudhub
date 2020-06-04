@@ -121,7 +121,11 @@ class AlertsApp extends PureComponent<Props, State> {
       this.props.source.links.proxy,
       this.state.timeRange,
       this.state.limit * this.state.limitMultiplier,
-      this.props.me.currentOrganization.name
+      _.get(
+        this.props.me,
+        'currentOrganization.name',
+        this.props.source.telegraf
+      )
     ).then(resp => {
       const results = []
 

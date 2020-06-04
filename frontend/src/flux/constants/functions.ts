@@ -463,7 +463,7 @@ export const FUNCTIONS: FluxToolbarFunction[] = [
       'https://docs.influxdata.com/flux/latest/stdlib/built-in/transformations/aggregates/covariance/',
   },
   {
-    name: 'csv.from',
+    name: 'csv.from(file)',
     args: [
       {
         name: 'file',
@@ -484,7 +484,7 @@ export const FUNCTIONS: FluxToolbarFunction[] = [
     link: 'https://docs.influxdata.com/flux/latest/stdlib/csv/from/',
   },
   {
-    name: 'csv.from',
+    name: 'csv.from(url)',
     args: [
       {
         name: 'url',

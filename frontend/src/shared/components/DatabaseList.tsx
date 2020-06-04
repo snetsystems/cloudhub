@@ -76,8 +76,11 @@ class DatabaseList extends Component<DatabaseListProps, DatabaseListState> {
     const {source} = this.context
     const {querySource, me} = this.props
     const proxy = _.get(querySource, ['links', 'proxy'], source.links.proxy)
-
-    const currentOrganization = _.get(me, 'currentOrganization')
+    const currentOrganization = _.get(
+      me,
+      'currentOrganization.name',
+      source.telegraf
+    )
 
     try {
       const sorted = await getDatabasesWithRetentionPolicies(proxy)
@@ -90,7 +93,7 @@ class DatabaseList extends Component<DatabaseListProps, DatabaseListState> {
         } else {
           roleNamespace = _.filter(
             sorted,
-            sorted => sorted.database === currentOrganization.name
+            sorted => sorted.database === currentOrganization
           )
 
           this.setState({namespaces: roleNamespace})

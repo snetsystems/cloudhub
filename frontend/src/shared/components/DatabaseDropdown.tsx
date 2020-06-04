@@ -65,7 +65,11 @@ class DatabaseDropdown extends Component<Props, State> {
   private getDatabasesAsync = async (): Promise<void> => {
     const {source, database, onSelectDatabase, onErrorThrown, me} = this.props
     const proxy = source.links.proxy
-    const currentOrganization = _.get(me, 'currentOrganization')
+    const currentOrganization = _.get(
+      me,
+      'currentOrganization.name',
+      source.telegraf
+    )
 
     try {
       const {data} = await showDatabases(proxy)
@@ -80,7 +84,7 @@ class DatabaseDropdown extends Component<Props, State> {
         nonSystemDatabases = databases.filter(name => name !== '_internal')
       } else {
         nonSystemDatabases = databases.filter(
-          name => name !== '_internal' && name === currentOrganization.name
+          name => name !== '_internal' && name === currentOrganization
         )
       }
 
