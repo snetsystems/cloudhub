@@ -5,7 +5,7 @@ import KafkaConfig from 'src/kapacitor/components/config/KafkaConfig'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import {KafkaProperties} from 'src/types/kapacitor'
-import {Notification, NotificationFunc, Me} from 'src/types'
+import {Notification, NotificationFunc, Me, Organization} from 'src/types'
 
 import {getDeep} from 'src/utils/wrappers'
 
@@ -28,6 +28,7 @@ interface Props {
   notify: (message: Notification | NotificationFunc) => void
   isMultipleConfigsSupported: boolean
   me: Me
+  organizations: Organization[]
 }
 
 interface State {
@@ -68,7 +69,7 @@ class KafkaConfigs extends Component<Props, State> {
   }
 
   public render() {
-    const {onSave, onDelete, onTest, notify, me} = this.props
+    const {onSave, onDelete, onTest, notify, me, organizations} = this.props
 
     return (
       <div>
@@ -86,6 +87,7 @@ class KafkaConfigs extends Component<Props, State> {
               key={id}
               id={id}
               me={me}
+              organizations={organizations}
             />
           )
         })}
