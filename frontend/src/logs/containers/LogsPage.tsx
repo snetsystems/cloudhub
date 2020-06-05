@@ -97,7 +97,6 @@ import {
   FetchLoop,
 } from 'src/types/logs'
 import {RemoteDataState} from 'src/types'
-import {Params} from '../../types/sideNav'
 
 interface Props {
   sources: Source[]
