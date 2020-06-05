@@ -85,6 +85,33 @@ func (s *OrganizationConfigStore) put(ctx context.Context, tx *bolt.Tx, c *cloud
 	return nil
 }
 
+// All returns all known OrganizationConfig
+func (s *OrganizationConfigStore) All(ctx context.Context) ([]cloudhub.OrganizationConfig, error) {
+	var orgs []cloudhub.OrganizationConfig
+	err := s.each(ctx, func(o *cloudhub.OrganizationConfig) {
+		orgs = append(orgs, *o)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return orgs, nil
+}
+
+func (s *OrganizationConfigStore) each(ctx context.Context, fn func(*cloudhub.OrganizationConfig)) error {
+	return s.client.db.View(func(tx *bolt.Tx) error {
+		return tx.Bucket(OrganizationConfigBucket).ForEach(func(k, v []byte) error {
+			var orgCfg cloudhub.OrganizationConfig
+			if err := internal.UnmarshalOrganizationConfig(v, &orgCfg); err != nil {
+				return err
+			}
+			fn(&orgCfg)
+			return nil
+		})
+	})
+}
+
 func newOrganizationConfig(orgID string) cloudhub.OrganizationConfig {
 	return cloudhub.OrganizationConfig{
 		OrganizationID: orgID,
