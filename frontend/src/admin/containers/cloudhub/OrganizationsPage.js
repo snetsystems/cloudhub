@@ -64,8 +64,13 @@ class OrganizationsPage extends Component {
   }
 
   render() {
-    const {meCurrentOrganization, organizations, me} = this.props
-
+    const {
+      meCurrentOrganization,
+      organizations,
+      me,
+      ForceSessionAbortInputRole,
+    } = this.props
+    ForceSessionAbortInputRole(SUPERADMIN_ROLE)
     const organization = organizations.find(
       o => o.id === meCurrentOrganization.id
     )
