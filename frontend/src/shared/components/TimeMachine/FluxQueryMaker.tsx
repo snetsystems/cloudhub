@@ -164,6 +164,7 @@ class FluxQueryMaker extends PureComponent<Props, State> {
         onSetIsWizardActive={this.handleSetIsWizardActive}
         onAddToScript={this.handleAddToScript}
         me={me}
+        isUsingAuth={isUsingAuth}
       >
         <Threesizer
           orientation={HANDLE_VERTICAL}
