@@ -9,8 +9,6 @@ export const EDITOR_ROLE = 'editor'
 export const ADMIN_ROLE = 'admin'
 export const SUPERADMIN_ROLE = 'superadmin'
 
-export const indexRole = [SUPERADMIN_ROLE, ADMIN_ROLE, EDITOR_ROLE, VIEWER_ROLE]
-
 export const isUserAuthorized = (meRole, requiredRole) => {
   switch (requiredRole) {
     case VIEWER_ROLE:

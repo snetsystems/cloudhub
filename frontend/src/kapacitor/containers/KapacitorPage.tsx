@@ -32,7 +32,7 @@ import {
   notifyKapacitorUpdated,
 } from 'src/shared/copy/notifications'
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {VIEWER_ROLE} from 'src/auth/Authorized'
+import {EDITOR_ROLE} from 'src/auth/Authorized'
 export const defaultName = 'My Kapacitor'
 export const kapacitorPort = '9094'
 
@@ -77,7 +77,7 @@ export class KapacitorPage extends PureComponent<Props, State> {
       ForceSessionAbortInputRole,
     } = this.props
 
-    ForceSessionAbortInputRole(VIEWER_ROLE)
+    ForceSessionAbortInputRole(EDITOR_ROLE)
 
     if (!id) {
       return
@@ -168,10 +168,18 @@ export class KapacitorPage extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {source, location, params, notify, me, organizations} = this.props
+    const {
+      source,
+      location,
+      params,
+      notify,
+      me,
+      organizations,
+      ForceSessionAbortInputRole,
+    } = this.props
     const hash = (location && location.hash) || (params && params.hash) || ''
     const {exists, kapacitor} = this.state
-
+    ForceSessionAbortInputRole(EDITOR_ROLE)
     return (
       <KapacitorForm
         hash={hash}

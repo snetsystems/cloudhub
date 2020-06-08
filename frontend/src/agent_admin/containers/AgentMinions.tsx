@@ -25,7 +25,7 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 // Constants
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
-import {EDITOR_ROLE} from 'src/auth/Authorized'
+import {ADMIN_ROLE} from 'src/auth/Authorized'
 
 // Types
 import {RemoteDataState, Notification, NotificationFunc} from 'src/types'
@@ -95,7 +95,7 @@ export class AgentMinions extends PureComponent<Props, State> {
   }
 
   public componentWillMount() {
-    this.props.ForceSessionAbortInputRole(EDITOR_ROLE)
+    this.props.ForceSessionAbortInputRole(ADMIN_ROLE)
     this.setState({minionsPageStatus: this.props.minionsStatus})
   }
 
@@ -245,7 +245,9 @@ export class AgentMinions extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {isUserAuthorized} = this.props
+    const {isUserAuthorized, ForceSessionAbortInputRole} = this.props
+    ForceSessionAbortInputRole(ADMIN_ROLE)
+
     return (
       <>
         {isUserAuthorized ? (

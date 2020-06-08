@@ -3,7 +3,7 @@ import {errorThrown} from 'src/shared/actions/errors'
 import {HTTP_FORBIDDEN} from 'src/shared/constants'
 import {Me} from 'src/types/auth'
 import {
-  indexRole,
+  isUserAuthorized,
   VIEWER_ROLE,
   EDITOR_ROLE,
   ADMIN_ROLE,
@@ -53,17 +53,11 @@ export const ForceSessionAbortInputRole = (
   } = auth
 
   if (isUsingAuth) {
-    const meRoleIndex = indexRole.indexOf(meRole)
-    const requireRoleIndex = indexRole.indexOf(requireRole)
-
-    if (requireRoleIndex >= 0) {
-      if (meRoleIndex >= requireRoleIndex) {
-        return ForceSessionAbort({auth})(dispatch)
-      }
+    if (!isUserAuthorized(meRole, requireRole)) {
+      return ForceSessionAbort({auth})(dispatch)
     }
   } else {
     if (isNoAuthOuting) {
-      this.props.route('/state')
       return ForceSessionAbort({auth})(dispatch)
     }
   }

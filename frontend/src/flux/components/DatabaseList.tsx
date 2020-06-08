@@ -14,6 +14,7 @@ interface Props {
   source: Source
   notify: NotificationAction
   me: Me
+  isUsingAuth: boolean
 }
 
 interface State {
@@ -35,12 +36,8 @@ class DatabaseList extends PureComponent<Props, State> {
   }
 
   public async getDatabases() {
-    const {source, me} = this.props
-    const currentOrganization = _.get(
-      me,
-      'currentOrganization.name',
-      source.telegraf
-    )
+    const {source, me, isUsingAuth} = this.props
+    const currentOrganization = _.get(me, 'currentOrganization.name')
 
     try {
       const {data} = await showDatabases(source.links.proxy)
@@ -52,7 +49,7 @@ class DatabaseList extends PureComponent<Props, State> {
 
       let roleDatabases: string[]
 
-      if (isUserAuthorized(me.role, SUPERADMIN_ROLE) || !me.role) {
+      if (isUserAuthorized(me.role, SUPERADMIN_ROLE) || !isUsingAuth) {
         this.setState({databases: databases.sort()})
       } else {
         roleDatabases = _.filter(

@@ -73,6 +73,7 @@ export interface TemplateBuilderProps {
   templates: Template[]
   source: Source
   me: Me
+  isUsingAuth: boolean
   onUpdateTemplate: (nextTemplate: Template) => void
   onUpdateDefaultTemplateValue: (item: TemplateValue) => void
   notify?: (message: Notification) => void

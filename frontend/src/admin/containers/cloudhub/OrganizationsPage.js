@@ -9,17 +9,18 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import OrganizationsTable from 'src/admin/components/cloudhub/OrganizationsTable'
 
-import {ADMIN_ROLE} from 'src/auth/Authorized'
-import {ForceSessionAbortInputRole} from 'src/shared/actions/session'
+import {SUPERADMIN_ROLE} from 'src/auth/Authorized'
+import {ForceSessionAbortInputRole as ForceSessionAbortInputRoleAsync} from 'src/shared/actions/session'
 
 class OrganizationsPage extends Component {
   componentWillMount() {
     const {
       links,
       actionsAdmin: {loadOrganizationsAsync},
+      ForceSessionAbortInputRole,
     } = this.props
 
-    this.props.ForceSessionAbortInputRole(ADMIN_ROLE)
+    ForceSessionAbortInputRole(SUPERADMIN_ROLE)
     loadOrganizationsAsync(links.organizations)
   }
 
@@ -63,8 +64,13 @@ class OrganizationsPage extends Component {
   }
 
   render() {
-    const {meCurrentOrganization, organizations, me} = this.props
-
+    const {
+      meCurrentOrganization,
+      organizations,
+      me,
+      ForceSessionAbortInputRole,
+    } = this.props
+    ForceSessionAbortInputRole(SUPERADMIN_ROLE)
     const organization = organizations.find(
       o => o.id === meCurrentOrganization.id
     )
@@ -137,7 +143,7 @@ const mapDispatchToProps = dispatch => ({
   actionsAdmin: bindActionCreators(adminCloudHubActionCreators, dispatch),
   getMe: bindActionCreators(getMeAsync, dispatch),
   ForceSessionAbortInputRole: bindActionCreators(
-    ForceSessionAbortInputRole,
+    ForceSessionAbortInputRoleAsync,
     dispatch
   ),
 })

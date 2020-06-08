@@ -83,7 +83,7 @@ class MeasurementsTemplateBuilder extends PureComponent<
   }
 
   private async loadDatabases(): Promise<void> {
-    const {source, me} = this.props
+    const {source, me, isUsingAuth} = this.props
 
     this.setState({databasesStatus: RemoteDataState.Loading})
 
@@ -95,7 +95,7 @@ class MeasurementsTemplateBuilder extends PureComponent<
       let roleDatabases: string[]
 
       if (databases && databases.length > 0) {
-        if (isUserAuthorized(me.role, SUPERADMIN_ROLE) || !me.role) {
+        if (isUserAuthorized(me.role, SUPERADMIN_ROLE) || !isUsingAuth) {
           roleDatabases = databases
         } else {
           roleDatabases = _.filter(

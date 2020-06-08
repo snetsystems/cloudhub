@@ -58,6 +58,7 @@ interface State {
 
 interface Auth {
   me: Me
+  isUsingAuth: boolean
 }
 
 @ErrorHandling
@@ -113,14 +114,10 @@ export class KapacitorRulesPage extends PureComponent<Props, State> {
       return <NoKapacitorError source={source} />
     }
 
-    const currentOrganization = _.get(
-      auth.me,
-      'currentOrganization.name',
-      source.telegraf
-    )
+    const currentOrganization = _.get(auth.me, 'currentOrganization.name')
     let meRules: AlertRule[]
 
-    if (isUserAuthorized(auth.me.role, SUPERADMIN_ROLE)) {
+    if (isUserAuthorized(auth.me.role, SUPERADMIN_ROLE) || !auth.isUsingAuth) {
       meRules = _.cloneDeep(rules)
     } else {
       meRules = _.filter(rules, rule =>
