@@ -32,7 +32,7 @@ class TemplateControlBar extends Component<Props, State> {
   }
 
   public render() {
-    const {templates, source, me} = this.props
+    const {templates, source, me, isUsingAuth} = this.props
     const {isAdding} = this.state
 
     return (
@@ -45,6 +45,7 @@ class TemplateControlBar extends Component<Props, State> {
                 templates={templates}
                 source={source}
                 me={me}
+                isUsingAuth={isUsingAuth}
                 onCreate={this.handleCreateTemplate}
                 onCancel={this.handleCancelAddVariable}
               />

@@ -57,7 +57,7 @@ class DatabasesTemplateBuilder extends PureComponent<
   }
 
   private async loadDatabases(): Promise<void> {
-    const {template, source, onUpdateTemplate, me} = this.props
+    const {template, source, onUpdateTemplate, me, isUsingAuth} = this.props
 
     this.setState({databasesStatus: RemoteDataState.Loading})
 
@@ -68,7 +68,7 @@ class DatabasesTemplateBuilder extends PureComponent<
       let roleDatabases: string[]
 
       if (databases && databases.length > 0) {
-        if (isUserAuthorized(me.role, SUPERADMIN_ROLE) || !me.role) {
+        if (isUserAuthorized(me.role, SUPERADMIN_ROLE) || !isUsingAuth) {
           roleDatabases = databases
         } else {
           roleDatabases = _.filter(
