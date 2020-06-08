@@ -84,6 +84,7 @@ class TemplateControl extends PureComponent<Props, State> {
             templates={templates}
             source={source}
             me={me}
+            isUsingAuth={isUsingAuth}
             onCreate={onCreateTemplate}
             onUpdate={this.handleUpdateTemplate}
             onDelete={this.handleDelete}
