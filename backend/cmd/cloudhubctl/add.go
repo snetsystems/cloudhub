@@ -107,7 +107,7 @@ OrgLoop:
 	}
 
 	w := NewTabWriter()
-	WriteHeaders(w)
+	WriteUserHeaders(w)
 	WriteUser(w, user)
 	w.Flush()
 
