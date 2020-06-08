@@ -4,13 +4,14 @@ import {withRouter} from 'react-router'
 import {bindActionCreators} from 'redux'
 
 import {notify as notifyAction} from 'src/shared/actions/notifications'
-
+import {UserRole, ForceSessionAbortInputRole} from 'src/shared/actions/session'
 import {
   Source,
   Notification,
   NotificationFunc,
   Me,
   Organization,
+  Kapacitor,
 } from 'src/types'
 
 import {
@@ -20,7 +21,7 @@ import {
   updateKapacitor,
 } from 'src/shared/apis'
 
-import KapacitorForm from '../components/KapacitorForm'
+import KapacitorForm from 'src/kapacitor/components/KapacitorForm'
 
 import {
   notifyKapacitorConnectionFailed,
@@ -31,17 +32,12 @@ import {
   notifyKapacitorUpdated,
 } from 'src/shared/copy/notifications'
 import {ErrorHandling} from 'src/shared/decorators/errors'
-
-import {Kapacitor} from 'src/types'
-
+import {EDITOR_ROLE} from 'src/auth/Authorized'
 export const defaultName = 'My Kapacitor'
 export const kapacitorPort = '9094'
 
-interface Auth {
-  me: Me
-}
-
 interface Props {
+  isUsingAuth: boolean
   me: Me
   organizations: Organization[]
   source: Source
@@ -50,7 +46,10 @@ interface Props {
   router: {push: (url: string) => void}
   location: {pathname: string; hash: string}
   params: {id: string; hash: string}
-  auth: Auth
+  ForceSessionAbortInputRole: (
+    requireRole: UserRole,
+    isNoAuthOuting?: boolean
+  ) => void
 }
 
 interface State {
@@ -75,7 +74,11 @@ export class KapacitorPage extends PureComponent<Props, State> {
       source,
       params: {id},
       notify,
+      ForceSessionAbortInputRole,
     } = this.props
+
+    ForceSessionAbortInputRole(EDITOR_ROLE)
+
     if (!id) {
       return
     }
@@ -165,10 +168,18 @@ export class KapacitorPage extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {source, location, params, notify, me, organizations} = this.props
+    const {
+      source,
+      location,
+      params,
+      notify,
+      me,
+      organizations,
+      ForceSessionAbortInputRole,
+    } = this.props
     const hash = (location && location.hash) || (params && params.hash) || ''
     const {exists, kapacitor} = this.state
-
+    ForceSessionAbortInputRole(EDITOR_ROLE)
     return (
       <KapacitorForm
         hash={hash}
@@ -222,13 +233,21 @@ export class KapacitorPage extends PureComponent<Props, State> {
   }
 }
 
-const mapStateToProps = ({auth: {me}, adminCloudHub: {organizations}}) => ({
+const mapStateToProps = ({
+  auth: {me, isUsingAuth},
+  adminCloudHub: {organizations},
+}) => ({
   me,
   organizations,
+  isUsingAuth,
 })
 
 const mapDispatchToProps = dispatch => ({
   notify: bindActionCreators(notifyAction, dispatch),
+  ForceSessionAbortInputRole: bindActionCreators(
+    ForceSessionAbortInputRole,
+    dispatch
+  ),
 })
 
 export default connect(

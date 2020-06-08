@@ -9,12 +9,18 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import OrganizationsTable from 'src/admin/components/cloudhub/OrganizationsTable'
 
+import {SUPERADMIN_ROLE} from 'src/auth/Authorized'
+import {ForceSessionAbortInputRole as ForceSessionAbortInputRoleAsync} from 'src/shared/actions/session'
+
 class OrganizationsPage extends Component {
   componentWillMount() {
     const {
       links,
       actionsAdmin: {loadOrganizationsAsync},
+      ForceSessionAbortInputRole,
     } = this.props
+
+    ForceSessionAbortInputRole(SUPERADMIN_ROLE)
     loadOrganizationsAsync(links.organizations)
   }
 
@@ -114,21 +120,27 @@ OrganizationsPage.propTypes = {
       })
     ),
   }),
+  ForceSessionAbortInputRole: func.isRequired,
 }
 
 const mapStateToProps = ({
   links,
   adminCloudHub: {organizations},
-  auth: {me},
+  auth: {me, isUsingAuth},
 }) => ({
   links,
   organizations,
   me,
+  isUsingAuth,
 })
 
 const mapDispatchToProps = dispatch => ({
   actionsAdmin: bindActionCreators(adminCloudHubActionCreators, dispatch),
   getMe: bindActionCreators(getMeAsync, dispatch),
+  ForceSessionAbortInputRole: bindActionCreators(
+    ForceSessionAbortInputRoleAsync,
+    dispatch
+  ),
 })
 
 export default connect(
