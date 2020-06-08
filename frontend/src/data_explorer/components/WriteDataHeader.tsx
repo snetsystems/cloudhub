@@ -13,6 +13,7 @@ interface Props {
   mode: string
   source: Source
   me: Me
+  isUsingAuth: boolean
 }
 
 class WriteDataHeader extends PureComponent<Props> {
@@ -24,6 +25,7 @@ class WriteDataHeader extends PureComponent<Props> {
       onClose,
       source,
       me,
+      isUsingAuth,
     } = this.props
 
     return (
@@ -36,6 +38,7 @@ class WriteDataHeader extends PureComponent<Props> {
             database={selectedDatabase}
             onErrorThrown={errorThrown}
             me={me}
+            isUsingAuth={isUsingAuth}
           />
           {this.modeSelector}
         </div>

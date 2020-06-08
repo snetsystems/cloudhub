@@ -10,15 +10,16 @@ import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 interface Props {
   template: Template
   me: Me
+  isUsingAuth: boolean
   onPickValue: (v: TemplateValue) => void
 }
 
 const TemplateDropdown: SFC<Props> = props => {
-  const {template, me, onPickValue} = props
+  const {template, me, isUsingAuth, onPickValue} = props
 
   let dropdownItems = []
 
-  if (isUserAuthorized(me.role, SUPERADMIN_ROLE) || !me.role) {
+  if (isUserAuthorized(me.role, SUPERADMIN_ROLE) || !isUsingAuth) {
     dropdownItems = template.values.map(value => {
       if (value.type === TemplateValueType.Map) {
         return {...value, text: value.key}

@@ -82,6 +82,7 @@ interface PassedProps {
 
 interface Auth {
   me: Me
+  isUsingAuth: boolean
 }
 
 type Props = PassedProps & ConnectedProps & Auth
@@ -131,6 +132,7 @@ class CellEditorOverlay extends Component<Props, State> {
       sources,
       queryStatus,
       me,
+      isUsingAuth,
     } = this.props
 
     const {isStaticLegend} = this.state
@@ -156,6 +158,7 @@ class CellEditorOverlay extends Component<Props, State> {
           queryStatus={queryStatus}
           onUpdateScriptStatus={this.handleUpdateScriptStatus}
           me={me}
+          isUsingAuth={isUsingAuth}
         >
           {(activeEditorTab, onSetActiveEditorTab) => (
             <CEOHeader

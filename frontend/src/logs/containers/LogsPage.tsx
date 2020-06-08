@@ -97,7 +97,6 @@ import {
   FetchLoop,
 } from 'src/types/logs'
 import {RemoteDataState} from 'src/types'
-import {Params} from '../../types/sideNav'
 
 interface Props {
   sources: Source[]
@@ -155,6 +154,7 @@ interface Props {
   clearSearchData: (searchStatus: SearchStatus) => void
   setSearchStatus: (SearchStatus: SearchStatus) => void
   me: Me
+  isUsingAuth: boolean
 }
 
 interface State {
@@ -760,6 +760,7 @@ class LogsPage extends Component<Props, State> {
       currentNamespaces,
       currentNamespace,
       me,
+      isUsingAuth,
     } = this.props
 
     return (
@@ -774,6 +775,7 @@ class LogsPage extends Component<Props, State> {
         onChangeLiveUpdatingStatus={this.handleChangeLiveUpdatingStatus}
         onShowOptionsOverlay={this.handleToggleOverlay}
         me={me}
+        isUsingAuth={isUsingAuth}
       />
     )
   }
@@ -1089,7 +1091,7 @@ const mapStateToProps = ({
     nextTailLowerBound,
     searchStatus,
   },
-  auth: {me},
+  auth: {me, isUsingAuth},
 }) => ({
   sources,
   currentSource,
@@ -1111,6 +1113,7 @@ const mapStateToProps = ({
   nextTailLowerBound,
   searchStatus,
   me,
+  isUsingAuth,
 })
 
 const mapDispatchToProps = {

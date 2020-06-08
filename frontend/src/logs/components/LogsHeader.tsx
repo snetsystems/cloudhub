@@ -28,6 +28,7 @@ interface Props {
   onChangeLiveUpdatingStatus: () => void
   onShowOptionsOverlay: () => void
   me: Me
+  isUsingAuth: boolean
 }
 
 class LogsHeader extends PureComponent<Props> {
@@ -110,7 +111,7 @@ class LogsHeader extends PureComponent<Props> {
   }
 
   private get namespaceDropDownItems() {
-    const {currentNamespaces, currentNamespace, me} = this.props
+    const {currentNamespaces, currentNamespace, me, isUsingAuth} = this.props
 
     if (!currentNamespaces) {
       return ''
@@ -120,7 +121,7 @@ class LogsHeader extends PureComponent<Props> {
       return ''
     }
 
-    if (isUserAuthorized(me.role, SUPERADMIN_ROLE) || !me.role) {
+    if (isUserAuthorized(me.role, SUPERADMIN_ROLE) || !isUsingAuth) {
       return currentNamespaces.map(namespace => {
         return {
           text: `${namespace.database}.${namespace.retentionPolicy}`,

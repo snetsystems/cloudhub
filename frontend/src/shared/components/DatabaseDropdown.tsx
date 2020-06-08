@@ -22,6 +22,7 @@ interface Props {
   onErrorThrown: (error: string) => void
   source: Source
   me: Me
+  isUsingAuth: boolean
 }
 
 interface State {
@@ -63,13 +64,16 @@ class DatabaseDropdown extends Component<Props, State> {
   }
 
   private getDatabasesAsync = async (): Promise<void> => {
-    const {source, database, onSelectDatabase, onErrorThrown, me} = this.props
-    const proxy = source.links.proxy
-    const currentOrganization = _.get(
+    const {
+      source,
+      database,
+      onSelectDatabase,
+      onErrorThrown,
       me,
-      'currentOrganization.name',
-      source.telegraf
-    )
+      isUsingAuth,
+    } = this.props
+    const proxy = source.links.proxy
+    const currentOrganization = _.get(me, 'currentOrganization.name')
 
     try {
       const {data} = await showDatabases(proxy)
@@ -80,11 +84,11 @@ class DatabaseDropdown extends Component<Props, State> {
       }
 
       let nonSystemDatabases: any[]
-      if (isUserAuthorized(me.role, SUPERADMIN_ROLE)) {
-        nonSystemDatabases = databases.filter(name => name !== '_internal')
+      if (isUserAuthorized(me.role, SUPERADMIN_ROLE) || !isUsingAuth) {
+        nonSystemDatabases = databases
       } else {
         nonSystemDatabases = databases.filter(
-          name => name !== '_internal' && name === currentOrganization
+          name => name === currentOrganization
         )
       }
 
