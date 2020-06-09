@@ -64,7 +64,7 @@ class MeasurementsList extends PureComponent<Props, State> {
   private get measurements(): JSX.Element | JSX.Element[] {
     const {source, db, notify, loading} = this.props
     const {searchTerm} = this.state
-    const measurementEntries = Object.entries(this.props.measurements)
+    const measurementEntries = Object.entries(this.props.measurements).sort()
 
     if (loading === RemoteDataState.Error) {
       return (
