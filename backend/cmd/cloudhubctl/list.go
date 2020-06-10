@@ -61,9 +61,12 @@ func (s *StoreCommand) Execute(args []string) error {
 			}
 		} else {
 			WriteCellHeaders(w)
+			id := strconv.Itoa(s.ID)
+
 			for _, layout := range layouts {
-				if strconv.Itoa(s.ID) == layout.ID {
+				if id == layout.ID {
 					WriteLalyoutCell(w, &layout)
+					break
 				}
 			}
 		}
@@ -80,11 +83,12 @@ func (s *StoreCommand) Execute(args []string) error {
 			}
 		} else {
 			WriteCellHeaders(w)
-			for _, dashboard := range dashboards {
-				dashboardID := cloudhub.DashboardID(s.ID)
+			id := cloudhub.DashboardID(s.ID)
 
-				if dashboardID == dashboard.ID {
+			for _, dashboard := range dashboards {
+				if id == dashboard.ID {
 					WriteCell(w, &dashboard)
+					break
 				}
 			}
 		}
@@ -132,9 +136,12 @@ func (s *StoreCommand) Execute(args []string) error {
 			}
 		} else {
 			WriteColumnEncodingHeaders(w)
+			id := strconv.Itoa(s.ID)
+
 			for _, organizationConfig := range organizationConfigs {
-				if strconv.Itoa(s.ID) == organizationConfig.OrganizationID {
+				if id == organizationConfig.OrganizationID {
 					WriteColumnEncoding(w, &organizationConfig)
+					break
 				}
 			}
 		}
