@@ -1,11 +1,14 @@
 import React, {Component} from 'react'
-import PropTypes from 'prop-types'
+import PropTypes, {bool} from 'prop-types'
 
 import {showDatabases, showRetentionPolicies} from 'shared/apis/metaQuery'
 import showDatabasesParser from 'shared/parsing/showDatabases'
 import showRetentionPoliciesParser from 'shared/parsing/showRetentionPolicies'
 import MultiSelectDropdown from 'shared/components/MultiSelectDropdown'
 import {ErrorHandling} from 'src/shared/decorators/errors'
+import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
+
+import _ from 'lodash'
 
 class MultiSelectDBDropdown extends Component {
   constructor(props) {
@@ -41,7 +44,8 @@ class MultiSelectDBDropdown extends Component {
         links: {proxy},
       },
     } = this.context
-    const {onErrorThrown} = this.props
+    const {onErrorThrown, me, isUsingAuth} = this.props
+    const currentOrganization = _.get(me, 'currentOrganization.name')
 
     try {
       const {data} = await showDatabases(proxy)
@@ -51,7 +55,7 @@ class MultiSelectDBDropdown extends Component {
       }
 
       const response = await showRetentionPolicies(proxy, databases)
-      const dbrps = response.data.results.reduce((acc, result, i) => {
+      let dbrps = response.data.results.reduce((acc, result, i) => {
         const {retentionPolicies} = showRetentionPoliciesParser(result)
         const db = databases[i]
 
@@ -63,6 +67,10 @@ class MultiSelectDBDropdown extends Component {
 
         return [...acc, ...rps]
       }, [])
+
+      if (!isUserAuthorized(me.role, SUPERADMIN_ROLE) && isUsingAuth) {
+        dbrps = _.filter(dbrps, dbrp => dbrp.db === currentOrganization)
+      }
 
       this.setState({dbrps})
     } catch (error) {
@@ -86,6 +94,12 @@ MultiSelectDBDropdown.propTypes = {
   onErrorThrown: func,
   onApply: func.isRequired,
   selectedItems: arrayOf(shape()),
+  isUsingAuth: bool,
+  me: shape({
+    currentOrganization: shape({
+      name: string,
+    }),
+  }),
 }
 
 export default ErrorHandling(MultiSelectDBDropdown)

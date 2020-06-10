@@ -6,7 +6,7 @@ import TickscriptID, {
   TickscriptStaticID,
 } from 'src/kapacitor/components/TickscriptID'
 
-import {Task} from 'src/types'
+import {Task, Me} from 'src/types'
 import {DBRP} from 'src/types/kapacitor'
 
 interface DBRPDropdownItem extends DBRP {
@@ -19,17 +19,21 @@ interface Props {
   onChangeType: (type: string) => void
   onChangeID: (e: ChangeEvent<HTMLInputElement>) => void
   task: Task
+  me: Me
+  isUsingAuth: boolean
 }
 
 class TickscriptEditorControls extends Component<Props> {
   public render() {
-    const {onSelectDbrps, onChangeType, task} = this.props
+    const {onSelectDbrps, onChangeType, task, me, isUsingAuth} = this.props
     return (
       <div className="tickscript-controls">
         {this.tickscriptID}
         <div className="tickscript-controls--right">
           <TickscriptType type={task.type} onChangeType={onChangeType} />
           <MultiSelectDBDropdown
+            me={me}
+            isUsingAuth={isUsingAuth}
             selectedItems={this.addName(task.dbrps)}
             onApply={onSelectDbrps}
           />
