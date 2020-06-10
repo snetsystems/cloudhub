@@ -11,6 +11,7 @@ import {getLogStreamByRuleID, pingKapacitorVersion} from 'src/kapacitor/apis'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 import {
+  Me,
   Source,
   Kapacitor,
   Task,
@@ -57,11 +58,17 @@ interface KapacitorActions {
   getRule: (kapacitor: Kapacitor, ruleID: string) => void
 }
 
+interface Auth {
+  me: Me
+  isUsingAuth: boolean
+}
+
 interface Params {
   ruleID: string
 }
 
 interface Props {
+  auth: Auth
   source: Source
   errorActions: ErrorActions
   kapacitorActions: KapacitorActions
@@ -159,8 +166,12 @@ export class TickscriptPage extends PureComponent<Props, State> {
       consoleMessage,
     } = this.state
 
+    const {auth} = this.props
+
     return (
       <Tickscript
+        me={auth.me}
+        isUsingAuth={auth.isUsingAuth}
         task={task}
         logs={logs}
         onSave={this.handleSave}

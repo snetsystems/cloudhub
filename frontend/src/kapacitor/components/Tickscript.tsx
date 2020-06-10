@@ -9,10 +9,12 @@ import {Page} from 'src/reusable_ui'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-import {Task} from 'src/types'
+import {Task, Me} from 'src/types'
 import {LogItem, DBRP} from 'src/types/kapacitor'
 
 interface Props {
+  me: Me
+  isUsingAuth: boolean
   logs: LogItem[]
   onSave: () => void
   onExit: () => void
@@ -46,6 +48,8 @@ class Tickscript extends PureComponent<Props> {
       areLogsVisible,
       areLogsEnabled,
       onToggleLogsVisibility,
+      me,
+      isUsingAuth,
     } = this.props
     return (
       <Page>
@@ -62,6 +66,8 @@ class Tickscript extends PureComponent<Props> {
         <div className="page-contents--split">
           <div className="tickscript" style={this.style}>
             <TickscriptEditorControls
+              me={me}
+              isUsingAuth={isUsingAuth}
               isNewTickscript={isNewTickscript}
               onSelectDbrps={onSelectDbrps}
               onChangeType={onChangeType}
