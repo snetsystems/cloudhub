@@ -2,12 +2,16 @@ package main
 
 import (
 	"context"
+	"strconv"
+
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 // StoreCommand Flags
 type StoreCommand struct {
 	BoltPath string `short:"b" long:"bolt-path" description:"Full path to boltDB file (e.g. './cloudhub-v1.db')" required:"true"`
 	StoreType string `short:"s" long:"store-type" description:"Type of boltDB store (e.g. User, Build, Servers, Layouts, Dashboards, Organizations, Config, Mappings, OrganizationConfig)" required:"true"`
+	ID int `short:"i" long:"id" description:"Details of the instance in the store. (e.g. 1, 2)"`
 }
 
 var storeCommand StoreCommand
@@ -50,9 +54,18 @@ func (s *StoreCommand) Execute(args []string) error {
 			return err
 		}
 
-		WriteLayoutsHeaders(w)
-		for _, layout := range layouts {
-			WriteLayout(w, &layout)
+		if s.ID == 0 {
+			WriteLayoutsHeaders(w)
+			for _, layout := range layouts {
+				WriteLayout(w, &layout)
+			}
+		} else {
+			WriteCellHeaders(w)
+			for _, layout := range layouts {
+				if strconv.Itoa(s.ID) == layout.ID {
+					WriteLalyoutCell(w, &layout)
+				}
+			}
 		}
 	case "Dashboards":
 		dashboards, err := c.DashboardsStore.All(ctx)
@@ -60,9 +73,20 @@ func (s *StoreCommand) Execute(args []string) error {
 			return err
 		}
 
-		WriteDashboardsHeaders(w)
-		for _, dashboard := range dashboards {
-			WriteDashboard(w, &dashboard)
+		if s.ID == 0 {
+			WriteDashboardsHeaders(w)
+			for _, dashboard := range dashboards {
+				WriteDashboard(w, &dashboard)
+			}
+		} else {
+			WriteCellHeaders(w)
+			for _, dashboard := range dashboards {
+				dashboardID := cloudhub.DashboardID(s.ID)
+
+				if dashboardID == dashboard.ID {
+					WriteCell(w, &dashboard)
+				}
+			}
 		}
 	case "Organizations":
 		organizations, err := c.OrganizationsStore.All(ctx)
@@ -101,9 +125,18 @@ func (s *StoreCommand) Execute(args []string) error {
 			return err
 		}
 
-		WriteOrganizationConfigHeaders(w)
-		for _, organizationConfig := range organizationConfigs {
-			WriteOrganizationConfig(w, &organizationConfig)
+		if s.ID == 0 {
+			WriteOrganizationConfigHeaders(w)
+			for _, organizationConfig := range organizationConfigs {
+				WriteOrganizationConfig(w, &organizationConfig)
+			}
+		} else {
+			WriteColumnEncodingHeaders(w)
+			for _, organizationConfig := range organizationConfigs {
+				if strconv.Itoa(s.ID) == organizationConfig.OrganizationID {
+					WriteColumnEncoding(w, &organizationConfig)
+				}
+			}
 		}
 	default:
 		return nil

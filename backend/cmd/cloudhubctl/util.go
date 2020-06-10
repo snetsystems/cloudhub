@@ -54,6 +54,11 @@ func WriteDashboardsHeaders(w io.Writer) {
 	fmt.Fprintln(w, "ID\tName\tOrganization\tTemplates\tCells")
 }
 
+// WriteCellHeaders stores-info cell in Dashboards headers
+func WriteCellHeaders(w io.Writer) {
+	fmt.Fprintln(w, "ID\tName\tX\tY\tW\tH\tQuery")
+}
+
 // WriteOrganizationsHeaders stores-info headers
 func WriteOrganizationsHeaders(w io.Writer) {
 	fmt.Fprintln(w, "ID\tName\tDefaultRole")
@@ -72,6 +77,11 @@ func WriteMappingsHeaders(w io.Writer) {
 // WriteOrganizationConfigHeaders stores-info headers
 func WriteOrganizationConfigHeaders(w io.Writer) {
 	fmt.Fprintln(w, "OrganizationID\tLogViewer")
+}
+
+// WriteColumnEncodingHeaders stores-info columnEncoding in OrganizationConfig headers
+func WriteColumnEncodingHeaders(w io.Writer) {
+	fmt.Fprintln(w, "Type\tValue\tName")
 }
 
 // WriteHeaders store headers
@@ -113,6 +123,19 @@ func WriteLayout(w io.Writer, layout *cloudhub.Layout) {
 	fmt.Fprintf(w, "%s\t%s\t%s\t%t\t%s\n", layout.ID, layout.Application, layout.Measurement, layout.Autoflow, strings.Join(cells, ","))
 }
 
+// WriteLalyoutCell stores-info Layouts
+func WriteLalyoutCell(w io.Writer, layout *cloudhub.Layout) {
+	queries := []string{}
+
+	for _, cell := range layout.Cells {
+		for _, querie := range cell.Queries {
+			queries = append(queries, fmt.Sprintf("%s.%s|%s", querie.DB, querie.RP, querie.Command))	
+		}
+
+		fmt.Fprintf(w, "%s\t%s\t%d\t%d\t%d\t%d\t%s\n", cell.I, cell.Name, cell.X, cell.Y, cell.W, cell.H, strings.Join(queries, ","))
+	}
+}
+
 // WriteDashboard stores-info Dashboards
 func WriteDashboard(w io.Writer, dashboard *cloudhub.Dashboard) {
 	cells := []string{}
@@ -126,6 +149,19 @@ func WriteDashboard(w io.Writer, dashboard *cloudhub.Dashboard) {
 	}
 
 	fmt.Fprintf(w, "%d\t%s\t%s\t%s\t%s\n", dashboard.ID, dashboard.Name, dashboard.Organization, strings.Join(templates, ","), strings.Join(cells, ","))
+}
+
+// WriteCell stores-info Dashboards
+func WriteCell(w io.Writer, dashboard *cloudhub.Dashboard) {
+	queries := []string{}
+
+	for _, dashboardCell := range dashboard.Cells {
+		for _, dashboardQuery := range dashboardCell.Queries {
+			queries = append(queries, fmt.Sprintf("%s", dashboardQuery.Command))	
+		}
+
+		fmt.Fprintf(w, "%s\t%s\t%d\t%d\t%d\t%d\t%s\n", dashboardCell.ID, dashboardCell.Name, dashboardCell.X, dashboardCell.Y, dashboardCell.W, dashboardCell.H, strings.Join(queries, ","))
+	}
 }
 
 // WriteOrganization stores-info Organizations
@@ -145,7 +181,7 @@ func WriteMappings(w io.Writer, mapping *cloudhub.Mapping) {
 	fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", mapping.ID, mapping.Organization, mapping.Provider, mapping.Scheme, mapping.ProviderOrganization)
 }
 
-// WriteOrganizationConfig stores-info Mappings
+// WriteOrganizationConfig stores-info OrganizationConfig
 func WriteOrganizationConfig(w io.Writer, organizationConfig *cloudhub.OrganizationConfig) {
 	logViewerColumns := []string{}
 	for _, logViewerColumn := range organizationConfig.LogViewer.Columns {
@@ -153,4 +189,16 @@ func WriteOrganizationConfig(w io.Writer, organizationConfig *cloudhub.Organizat
 	}
 
 	fmt.Fprintf(w, "%s\t%s\n", organizationConfig.OrganizationID, strings.Join(logViewerColumns, ","))
+}
+
+// WriteColumnEncoding stores-info OrganizationConfig
+func WriteColumnEncoding(w io.Writer, organizationConfig *cloudhub.OrganizationConfig) {
+	encodings := []string{}	
+	for _, logViewerColumn := range organizationConfig.LogViewer.Columns {
+		for _, encoding := range logViewerColumn.Encodings {
+			encodings = append(encodings, fmt.Sprintf("%s|%s|%s", encoding.Type, encoding.Value, encoding.Name))	
+		}
+
+		fmt.Fprintf(w, "%s\t%d\t%s\n", logViewerColumn.Name, logViewerColumn.Position, strings.Join(encodings, ","))	
+	}
 }
