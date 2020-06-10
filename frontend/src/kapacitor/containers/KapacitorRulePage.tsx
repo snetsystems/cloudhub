@@ -36,6 +36,7 @@ import {
 
 interface Auth {
   me: Me
+  isUsingAuth: boolean
 }
 
 interface Params {
@@ -116,6 +117,7 @@ class KapacitorRulePage extends Component<Props, State> {
     return (
       <KapacitorRule
         me={auth.me}
+        isUsingAuth={auth.isUsingAuth}
         source={source}
         rule={rule}
         query={query}
