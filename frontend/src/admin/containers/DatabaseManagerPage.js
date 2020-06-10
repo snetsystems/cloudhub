@@ -15,6 +15,7 @@ import {
   notifyDatabaseNameAlreadyExists,
   notifyDatabaseNameInvalid,
 } from 'shared/copy/notifications'
+import {eachRoleDatabases} from 'src/admin/utils/eachRoleWorker'
 
 class DatabaseManagerPage extends Component {
   constructor(props) {
@@ -108,11 +109,12 @@ class DatabaseManagerPage extends Component {
 
   render() {
     const {source, databases, actions, notify, auth, organizations} = this.props
+    const checkOrganizations = eachRoleDatabases(organizations, auth)
 
     return (
       <DatabaseManager
         auth={auth}
-        organizations={organizations}
+        organizations={checkOrganizations}
         notify={notify}
         databases={databases}
         isRFDisplayed={!!source.metaUrl}
