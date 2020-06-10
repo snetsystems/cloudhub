@@ -344,7 +344,7 @@ class LogsPage extends Component<Props, State> {
   }
 
   private startLogsTailFetchingInterval = () => {
-    if (this.isMount && !this.interval) {
+    if (this.isMount) {
       this.flushTailBuffer()
       this.clearTailInterval()
 
