@@ -88,7 +88,7 @@ for f in CONFIGURATION_FILES:
 
 targets = {
     'cloudhub': './cmd/cloudhub',
-    # 'cloudhubctl': './cmd/cloudhubctl',
+    'cloudhubctl': './cmd/cloudhubctl',
 }
 
 supported_builds = {

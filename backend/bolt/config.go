@@ -73,3 +73,31 @@ func (s *ConfigStore) Update(ctx context.Context, cfg *cloudhub.Config) error {
 		return nil
 	})
 }
+
+// All returns all known config
+func (s *ConfigStore) All(ctx context.Context) ([]cloudhub.Config, error) {
+	var orgs []cloudhub.Config
+	err := s.each(ctx, func(o *cloudhub.Config) {
+		orgs = append(orgs, *o)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return orgs, nil
+}
+
+func (s *ConfigStore) each(ctx context.Context, fn func(*cloudhub.Config)) error {
+	return s.client.db.View(func(tx *bolt.Tx) error {
+		return tx.Bucket(ConfigBucket).ForEach(func(k, v []byte) error {
+			var cfg cloudhub.Config
+			if err := internal.UnmarshalConfig(v, &cfg); err != nil {
+				return err
+			}
+			fn(&cfg)
+			return nil
+		})
+	})
+}
+

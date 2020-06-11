@@ -9,7 +9,7 @@ frontend/coverage
 
 # Binaries
 backend/cmd/cloudhub/cloudhub
-backend/cmd/cloudhub/cloudhubctl
+backend/cmd/cloudhubctl/cloudhubctl
 backend/cmd/cloudhub/*debug*
 
 # Dotfiles
