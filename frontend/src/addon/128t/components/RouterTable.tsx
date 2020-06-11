@@ -265,12 +265,16 @@ class RouterTable extends PureComponent<Props, State> {
           className={sortableClasses({sortKey, sortDirection, key: 'nodeName'})}
           style={{width: CHECKBOX}}
         >
-          <input
-            type="checkbox"
-            checked={isRoutersAllCheck}
-            onClick={handleRoutersAllCheck}
-            readOnly
-          />
+          <div className="dark-checkbox">
+            <input
+              id={'router-table--all-check'}
+              type="checkbox"
+              checked={isRoutersAllCheck}
+              onClick={handleRoutersAllCheck}
+              readOnly
+            />
+            <label htmlFor={'router-table--all-check'} />
+          </div>
         </div>
         <div
           onClick={this.updateSort('nodeName')}

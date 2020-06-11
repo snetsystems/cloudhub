@@ -5,7 +5,7 @@ import {getDeep} from 'src/utils/wrappers'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import SlackConfig from 'src/kapacitor/components/config/SlackConfig'
 import {SlackProperties} from 'src/types/kapacitor'
-import {Me} from 'src/types'
+import {Me, Organization} from 'src/types'
 
 interface Config {
   options: {
@@ -30,6 +30,7 @@ interface Props {
   onEnabled: (specificConfig: string) => boolean
   isMultipleConfigsSupported: boolean
   me: Me
+  organizations: Organization[]
 }
 
 interface State {
@@ -54,7 +55,7 @@ class SlackConfigs extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {onSave, onTest, onEnabled, me} = this.props
+    const {onSave, onTest, onEnabled, me, organizations} = this.props
 
     return (
       <div>
@@ -77,6 +78,7 @@ class SlackConfigs extends PureComponent<Props, State> {
               isDefaultConfig={isDefaultConfig}
               workspaceID={workspaceID}
               me={me}
+              organizations={organizations}
             />
           )
         })}

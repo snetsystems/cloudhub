@@ -166,7 +166,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     })
 
     const addon = getLocalStorage('addon')
-    const oncueAutoRefresh: number = _.get(addon, 'T128.oncueAutoRefresh')
+    const oncueAutoRefresh: number = _.get(addon, 'T128.oncueAutoRefresh', 0)
 
     const {addons} = this.props
     const oncue = _.find(addons, addon => addon.name === 'oncue')

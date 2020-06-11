@@ -112,7 +112,7 @@ class KeysTemplateBuilder extends PureComponent<Props, State> {
   }
 
   private async loadDatabases(): Promise<void> {
-    const {source, me} = this.props
+    const {source, me, isUsingAuth} = this.props
 
     this.setState({databasesStatus: RemoteDataState.Loading})
 
@@ -122,9 +122,8 @@ class KeysTemplateBuilder extends PureComponent<Props, State> {
       const {selectedDatabase} = this.state
 
       let roleDatabases: string[]
-
       if (databases && databases.length > 0) {
-        if (isUserAuthorized(me.role, SUPERADMIN_ROLE)) {
+        if (isUserAuthorized(me.role, SUPERADMIN_ROLE) || !isUsingAuth) {
           roleDatabases = databases
         } else {
           roleDatabases = _.filter(

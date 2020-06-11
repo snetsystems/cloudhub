@@ -33,7 +33,6 @@ import {
   SearchStatus,
 } from 'src/types/logs'
 
-export const INITIAL_LIMIT = 1000
 import {
   DEFAULT_OLDER_CHUNK_DURATION_MS,
   DEFAULT_NEWER_CHUNK_DURATION_MS,
@@ -41,11 +40,16 @@ import {
   defaultTableData,
 } from 'src/logs/constants'
 
+import {notify} from 'src/shared/actions/notifications'
+import {notifyHttpErrorRespose} from 'src/shared/copy/notifications'
+
 interface State {
   logs: LogsState
 }
 
 type GetState = () => State
+
+export const INITIAL_LIMIT = 1000
 
 export enum ActionTypes {
   SetSource = 'LOGS_SET_SOURCE',
@@ -1019,6 +1023,7 @@ export const updateLogConfigAsync = (url: string, config: LogConfig) => async (
     await updateLogConfigAJAX(url, configForServer)
     dispatch(setConfig(config))
   } catch (error) {
+    dispatch(notify(notifyHttpErrorRespose(error.status, error.statusText)))
     console.error(error)
   }
 }

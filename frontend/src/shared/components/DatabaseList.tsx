@@ -19,6 +19,7 @@ interface DatabaseListProps {
   onChooseNamespace: (namespace: Namespace) => void
   source?: Source
   me?: Me
+  isUsingAuth: boolean
 }
 
 interface DatabaseListState {
@@ -74,10 +75,9 @@ class DatabaseList extends Component<DatabaseListProps, DatabaseListState> {
 
   public async getDbRp() {
     const {source} = this.context
-    const {querySource, me} = this.props
+    const {querySource, me, isUsingAuth} = this.props
     const proxy = _.get(querySource, ['links', 'proxy'], source.links.proxy)
-
-    const currentOrganization = _.get(me, 'currentOrganization')
+    const currentOrganization = _.get(me, 'currentOrganization.name')
 
     try {
       const sorted = await getDatabasesWithRetentionPolicies(proxy)
@@ -85,12 +85,12 @@ class DatabaseList extends Component<DatabaseListProps, DatabaseListState> {
       if (sorted && sorted.length > 0) {
         let roleNamespace: Namespace[]
 
-        if (isUserAuthorized(me.role, SUPERADMIN_ROLE)) {
+        if (isUserAuthorized(me.role, SUPERADMIN_ROLE) || !isUsingAuth) {
           this.setState({namespaces: sorted})
         } else {
           roleNamespace = _.filter(
             sorted,
-            sorted => sorted.database === currentOrganization.name
+            sorted => sorted.database === currentOrganization
           )
 
           this.setState({namespaces: roleNamespace})

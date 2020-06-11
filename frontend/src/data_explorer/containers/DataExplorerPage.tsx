@@ -8,6 +8,7 @@ import {Source, Me} from 'src/types'
 
 interface Auth {
   me: Me
+  isUsingAuth: boolean
 }
 
 interface Props {
@@ -23,12 +24,16 @@ class DataExplorerPage extends PureComponent<Props> {
 
   public render() {
     const {
-      auth: {me},
+      auth: {me, isUsingAuth},
     } = this.props
 
     return (
       <div className="page">
-        <DataExplorer source={this.props.source} me={me} />
+        <DataExplorer
+          source={this.props.source}
+          me={me}
+          isUsingAuth={isUsingAuth}
+        />
       </div>
     )
   }

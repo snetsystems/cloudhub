@@ -87,9 +87,9 @@ class RouterMaps extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    const streets = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+    const streets = L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png', {
       attribution:
-        '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+        '&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors',
     })
 
     const map = L.map('map', {

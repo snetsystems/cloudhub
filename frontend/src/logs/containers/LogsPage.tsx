@@ -100,6 +100,7 @@ import {RemoteDataState} from 'src/types'
 
 interface Props {
   sources: Source[]
+  source: Source | null
   currentSource: Source | null
   currentNamespaces: Namespace[]
   currentNamespace: Namespace
@@ -153,6 +154,7 @@ interface Props {
   clearSearchData: (searchStatus: SearchStatus) => void
   setSearchStatus: (SearchStatus: SearchStatus) => void
   me: Me
+  isUsingAuth: boolean
 }
 
 interface State {
@@ -166,6 +168,7 @@ interface State {
 }
 
 class LogsPage extends Component<Props, State> {
+  private isMount = false
   public static getDerivedStateFromProps(props: Props) {
     const severityLevelColors: SeverityLevelColor[] = _.get(
       props.logConfig,
@@ -221,11 +224,10 @@ class LogsPage extends Component<Props, State> {
   }
 
   public async componentDidMount() {
+    this.isMount = true
     await this.getSources()
 
     await this.setCurrentSource()
-
-    await this.changeCurrentNamespace()
 
     await this.props.getConfig(this.logConfigLink)
 
@@ -240,6 +242,7 @@ class LogsPage extends Component<Props, State> {
   }
 
   public componentWillUnmount() {
+    this.isMount = false
     this.clearTailInterval()
     this.cancelChunks()
   }
@@ -333,14 +336,7 @@ class LogsPage extends Component<Props, State> {
   }
 
   private setCurrentSource = async () => {
-    if (this.props.sources.length > 0) {
-      const source =
-        this.props.sources.find(src => {
-          return src.default
-        }) || this.props.sources[0]
-
-      return await this.props.getSourceAndPopulateNamespaces(source.id)
-    }
+    await this.props.getSourceAndPopulateNamespaces(this.props.source.id)
   }
 
   private handleExpandMessage = () => {
@@ -348,18 +344,20 @@ class LogsPage extends Component<Props, State> {
   }
 
   private startLogsTailFetchingInterval = () => {
-    this.flushTailBuffer()
-    this.clearTailInterval()
+    if (this.isMount) {
+      this.flushTailBuffer()
+      this.clearTailInterval()
 
-    this.props.setNextTailLowerBound(Date.now())
+      this.props.setNextTailLowerBound(Date.now())
 
-    this.interval = window.setInterval(
-      this.handleTailFetchingInterval,
+      this.interval = window.setInterval(
+        this.handleTailFetchingInterval,
 
-      DEFAULT_TAIL_CHUNK_DURATION_MS
-    )
+        DEFAULT_TAIL_CHUNK_DURATION_MS
+      )
 
-    this.setState({liveUpdating: true})
+      this.setState({liveUpdating: true})
+    }
   }
 
   private handleTailFetchingInterval = async () => {
@@ -762,6 +760,7 @@ class LogsPage extends Component<Props, State> {
       currentNamespaces,
       currentNamespace,
       me,
+      isUsingAuth,
     } = this.props
 
     return (
@@ -776,6 +775,7 @@ class LogsPage extends Component<Props, State> {
         onChangeLiveUpdatingStatus={this.handleChangeLiveUpdatingStatus}
         onShowOptionsOverlay={this.handleToggleOverlay}
         me={me}
+        isUsingAuth={isUsingAuth}
       />
     )
   }
@@ -1055,22 +1055,6 @@ class LogsPage extends Component<Props, State> {
     return this.props.searchStatus !== SearchStatus.MeasurementMissing
   }
 
-  private async changeCurrentNamespace() {
-    const {currentNamespace, currentNamespaces, me} = this.props
-    const currentOrganization = _.get(me, 'currentOrganization')
-
-    if (currentNamespace.database !== currentOrganization.name) {
-      const currentNamespace = currentNamespaces.find(
-        db => db.database === currentOrganization.name
-      )
-
-      await this.handleChooseNamespace({
-        database: currentNamespace.database,
-        retentionPolicy: currentNamespace.retentionPolicy,
-      })
-    }
-  }
-
   private updateQueryCount() {
     this.setState({queryCount: this.countCurrentQueries()})
   }
@@ -1107,7 +1091,7 @@ const mapStateToProps = ({
     nextTailLowerBound,
     searchStatus,
   },
-  auth: {me},
+  auth: {me, isUsingAuth},
 }) => ({
   sources,
   currentSource,
@@ -1129,6 +1113,7 @@ const mapStateToProps = ({
   nextTailLowerBound,
   searchStatus,
   me,
+  isUsingAuth,
 })
 
 const mapDispatchToProps = {

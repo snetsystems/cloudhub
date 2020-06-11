@@ -4,6 +4,8 @@ import PropTypes from 'prop-types'
 import DatabaseTable from 'src/admin/components/DatabaseTable'
 
 const DatabaseManager = ({
+  organizations,
+  auth,
   databases,
   isRFDisplayed,
   isAddDBDisabled,
@@ -24,6 +26,12 @@ const DatabaseManager = ({
   onRemoveRetentionPolicy,
   onDeleteRetentionPolicy,
 }) => {
+  let name = ''
+  if (auth.isUsingAuth) {
+    name = auth.me.currentOrganization.name
+  } else {
+    name = organizations[0].name
+  }
   return (
     <div className="panel panel-solid">
       <div className="panel-heading">
@@ -35,7 +43,7 @@ const DatabaseManager = ({
         <button
           className="btn btn-sm btn-primary"
           disabled={isAddDBDisabled}
-          onClick={addDatabase}
+          onClick={() => addDatabase(name)}
         >
           <span className="icon plus" /> Create Database
         </button>
@@ -44,6 +52,8 @@ const DatabaseManager = ({
         {databases.map(db => (
           <DatabaseTable
             key={db.links.self}
+            auth={auth}
+            organizations={organizations}
             database={db}
             isRFDisplayed={isRFDisplayed}
             onEditDatabase={onEditDatabase}
@@ -71,6 +81,8 @@ const DatabaseManager = ({
 const {arrayOf, bool, func, shape} = PropTypes
 
 DatabaseManager.propTypes = {
+  auth: shape(),
+  organizations: arrayOf(shape()),
   databases: arrayOf(shape()),
   addDatabase: func,
   isRFDisplayed: bool,

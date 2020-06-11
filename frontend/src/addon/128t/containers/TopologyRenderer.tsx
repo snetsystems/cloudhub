@@ -90,7 +90,7 @@ class TopologyRenderer extends PureComponent<Props, State> {
     node: {
       color: '#f58220',
       fontColor: '#fff',
-      size: 2000,
+      size: 10,
       fontSize: 16,
       fontWeight: 'normal',
       highlightFontSize: 16,
@@ -302,12 +302,17 @@ class TopologyRenderer extends PureComponent<Props, State> {
     })
     const {nodes, links} = genNode
 
-    this.setState({
-      nodeData: {
-        nodes,
-        links,
+    this.setState(
+      {
+        nodeData: {
+          nodes,
+          links,
+        },
       },
-    })
+      () => {
+        this.customNodeStyle()
+      }
+    )
   }
 
   public componentDidUpdate(prevProps: Props) {
@@ -326,6 +331,46 @@ class TopologyRenderer extends PureComponent<Props, State> {
         },
       })
     }
+  }
+
+  public customNodeStyle = () => {
+    this.modifyNodesStyle('.group-node', 200, 30)
+    this.modifyNodesStyle('.router-node', 200, 90)
+    this.modifyNodesStyle('.machine-node', 200, 90)
+  }
+
+  public modifyNodesStyle = (
+    nodeClassname: string,
+    width: number,
+    height: number
+  ) => {
+    const selectNodes: NodeListOf<Element> = this.useRef.current.querySelectorAll(
+      nodeClassname
+    )
+
+    selectNodes.forEach((selectNode: Element) => {
+      let currentParent: Element | any = selectNode.parentNode
+
+      while (currentParent) {
+        if (
+          currentParent.tagName === 'g' &&
+          currentParent.classList.contains('node')
+        ) {
+          break
+        } else {
+          currentParent = currentParent.parentNode
+        }
+      }
+
+      const svg = currentParent.querySelector('svg')
+      const section = currentParent.querySelector('section')
+
+      svg.setAttribute('width', width)
+      svg.setAttribute('height', height)
+      svg.setAttribute('style', 'overflow: visible')
+
+      section.setAttribute('style', `width:${width}px; height:${height}px`)
+    })
   }
 
   public render() {
@@ -463,7 +508,6 @@ class TopologyRenderer extends PureComponent<Props, State> {
                           label: routerNode.nodeName,
                           role: this.TOPOLOGY_ROLE.ROUTER,
                           routerNode: routerNode,
-                          size: 2000,
                         },
                       ],
                       links: [
@@ -515,7 +559,6 @@ class TopologyRenderer extends PureComponent<Props, State> {
                           label: routerNode.nodeName,
                           role: this.TOPOLOGY_ROLE.ROUTER,
                           routerNode: routerNode,
-                          size: 2000,
                         },
                       ],
                       links: [
@@ -665,10 +708,7 @@ class TopologyRenderer extends PureComponent<Props, State> {
 
   private GenerateGroupNode = ({node}: {node: GraphNode}) => {
     return (
-      <div
-        className={classnames('topology-table-container')}
-        style={{transform: 'translateY(72px)'}}
-      >
+      <div className={classnames('topology-table-container group-node')}>
         <strong className={'hosts-table-title'}>
           <div className={classnames('topology-group-title-container')}>
             {node.id}
@@ -696,7 +736,7 @@ class TopologyRenderer extends PureComponent<Props, State> {
 
     return (
       <div
-        className={classnames('topology-table-container', {
+        className={classnames('topology-table-container router-node', {
           unconnected: cpuUsage === null,
         })}
       >
@@ -769,7 +809,7 @@ class TopologyRenderer extends PureComponent<Props, State> {
 
     return (
       <div
-        className={classnames('topology-table-container', {
+        className={classnames('topology-table-container machine-node', {
           unconnected: node.sound === null,
         })}
       >

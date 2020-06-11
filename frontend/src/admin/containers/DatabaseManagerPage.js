@@ -15,6 +15,7 @@ import {
   notifyDatabaseNameAlreadyExists,
   notifyDatabaseNameInvalid,
 } from 'shared/copy/notifications'
+import {eachRoleDatabases} from 'src/admin/utils/eachRoleWorker'
 
 class DatabaseManagerPage extends Component {
   constructor(props) {
@@ -27,9 +28,10 @@ class DatabaseManagerPage extends Component {
         links: {databases},
       },
       actions,
+      auth,
     } = this.props
 
-    actions.loadDBsAndRPsAsync(databases)
+    actions.loadDBsAndRPsAsync(databases, auth)
   }
 
   handleDeleteRetentionPolicy = (db, rp) => () => {
@@ -41,7 +43,7 @@ class DatabaseManagerPage extends Component {
   }
 
   handleEditDatabase = database => e => {
-    this.props.actions.editDatabase(database, {name: e.target.value})
+    this.props.actions.editDatabase(database, {name: e.text})
   }
 
   handleCreateDatabase = database => {
@@ -106,9 +108,13 @@ class DatabaseManagerPage extends Component {
   }
 
   render() {
-    const {source, databases, actions, notify} = this.props
+    const {source, databases, actions, notify, auth, organizations} = this.props
+    const checkOrganizations = eachRoleDatabases(organizations, auth)
+
     return (
       <DatabaseManager
+        auth={auth}
+        organizations={checkOrganizations}
         notify={notify}
         databases={databases}
         isRFDisplayed={!!source.metaUrl}
@@ -135,6 +141,8 @@ class DatabaseManagerPage extends Component {
 const {arrayOf, bool, func, number, shape, string} = PropTypes
 
 DatabaseManagerPage.propTypes = {
+  auth: shape().isRequired,
+  organizations: arrayOf(shape()),
   source: shape({
     links: shape({
       proxy: string,
@@ -171,9 +179,15 @@ DatabaseManagerPage.propTypes = {
   notify: func.isRequired,
 }
 
-const mapStateToProps = ({adminInfluxDB: {databases, retentionPolicies}}) => ({
+const mapStateToProps = ({
+  adminInfluxDB: {databases, retentionPolicies},
+  auth,
+  adminCloudHub: {organizations},
+}) => ({
   databases,
   retentionPolicies,
+  auth,
+  organizations,
 })
 
 const mapDispatchToProps = dispatch => ({

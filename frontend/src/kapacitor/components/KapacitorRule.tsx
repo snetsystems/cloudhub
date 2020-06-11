@@ -45,6 +45,7 @@ import {
 
 interface Props {
   me: Me
+  isUsingAuth: boolean
   source: Source
   rule: AlertRule
   query: QueryConfig
@@ -89,6 +90,7 @@ class KapacitorRule extends Component<Props, State> {
       handlersFromConfig,
       queryConfigActions,
       me,
+      isUsingAuth,
     } = this.props
     const {chooseTrigger, updateRuleValues} = ruleActions
     const {timeRange} = this.state
@@ -128,6 +130,7 @@ class KapacitorRule extends Component<Props, State> {
               onRuleTypeDropdownChange={this.handleRuleTypeDropdownChange}
               onChooseTimeRange={this.handleChooseTimeRange}
               me={me}
+              isUsingAuth={isUsingAuth}
             />
             <RuleHandlers
               me={me}
