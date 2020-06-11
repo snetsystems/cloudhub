@@ -11,7 +11,7 @@ import (
 type StoreCommand struct {
 	BoltPath string `short:"b" long:"bolt-path" description:"Full path to boltDB file (e.g. './cloudhub-v1.db')" required:"true"`
 	StoreType string `short:"s" long:"store-type" description:"Type of boltDB store (e.g. User, Build, Servers, Layouts, Dashboards, Organizations, Config, Mappings, OrganizationConfig)" required:"true"`
-	ID int `short:"i" long:"id" description:"Details of the instance in the store. (e.g. 1, 2)"`
+	ID int `short:"i" long:"id" description:"Details of the instance in the store(Layouts, Dashboards, OrganizationConfig). (e.g. 1, 2)"`
 }
 
 var storeCommand StoreCommand
