@@ -24,7 +24,7 @@ gobuild: .godep ${BINARY}
 
 ${BINARY}: $(SOURCES) .bindata .jsdep .godep
 	cd backend && GO111MODULE=on go build -o ./cmd/cloudhub/${BINARY} ${LDFLAGS} ./cmd/cloudhub/main.go
-	# cd backend && GO111MODULE=on go build -o ./cmd/cloudhub/{CTLBINARY} ${LDFLAGS} ./cmd/cloudhubctl
+	cd backend && GO111MODULE=on go build -o ./cmd/cloudhubctl/${CTLBINARY} ${LDFLAGS} ./cmd/cloudhubctl
 
 assets: .jssrc .bindata
 
@@ -96,6 +96,7 @@ run-dev: ${BINARY}
 
 clean:
 	if [ -f backend/cmd/cloudhub/${BINARY} ] ; then rm backend/cmd/cloudhub/${BINARY} ; fi
+	if [ -f backend/cmd/cloudhubctl/${CTLBINARY} ] ; then rm backend/cmd/cloudhubctl/${CTLBINARY} ; fi
 	cd frontend && yarn run clean
 	cd frontend && rm -rf node_modules
 	rm -f backend/dist/dist_gen.go backend/canned/bin_gen.go backend/protoboards/bin_gen.go backend/server/swagger_gen.go

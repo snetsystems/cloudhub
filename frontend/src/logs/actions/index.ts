@@ -1023,7 +1023,9 @@ export const updateLogConfigAsync = (url: string, config: LogConfig) => async (
     await updateLogConfigAJAX(url, configForServer)
     dispatch(setConfig(config))
   } catch (error) {
-    dispatch(notify(notifyHttpErrorRespose(error.status, error.statusText)))
+    dispatch(
+      notify(notifyHttpErrorRespose(error.data.code, error.data.message))
+    )
     console.error(error)
   }
 }
