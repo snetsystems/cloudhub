@@ -106,7 +106,7 @@ export const getMinionKeyListAllAdmin = async (
   const osList = info1[1].data.return[0]
 
   for (const k of _.values(minions).map(m => m.host)) {
-    if (osList[k] !== undefined) {
+    if (osList[k]) {
       minions[k] = {
         ...minions[k],
         ip: ipList[k],
