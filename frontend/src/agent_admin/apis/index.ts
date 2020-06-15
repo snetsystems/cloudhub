@@ -105,14 +105,23 @@ export const getMinionKeyListAllAdmin = async (
   const ipList = info1[0].data.return[0]
   const osList = info1[1].data.return[0]
 
-  for (const k of _.values(minions).map(m => m.host))
-    minions[k] = {
-      ...minions[k],
-      ip: ipList[k],
-      os: osList[k].os,
-      osVersion: osList[k].osrelease,
-      isSaltRuning: typeof osList[k] !== 'object' ? false : true,
+  for (const k of _.values(minions).map(m => m.host)) {
+    if (osList[k] !== undefined) {
+      minions[k] = {
+        ...minions[k],
+        ip: ipList[k],
+        os: osList[k].os,
+        osVersion: osList[k].osrelease,
+        isSaltRuning: typeof osList[k] !== 'object' ? false : true,
+      }
+    } else {
+      minions[k] = {
+        ...minions[k],
+        ip: ipList[k],
+        isSaltRuning: false,
+      }
     }
+  }
 
   const paramSaltRuningKeyList = _.values(minions)
     .filter(f => f.isSaltRuning !== false)
