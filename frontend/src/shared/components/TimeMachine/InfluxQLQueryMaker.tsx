@@ -53,6 +53,7 @@ interface PassedProps {
 
 interface Auth {
   me: Me
+  isUsingAuth: boolean
 }
 
 type Props = ConnectedProps & PassedProps & Auth
@@ -81,6 +82,7 @@ const QueryMaker: SFC<Props> = ({
   onApplyFuncsToField,
   onToggleTagAcceptance,
   me,
+  isUsingAuth,
 }) => {
   if (!activeQuery || !activeQuery.id) {
     return (
@@ -130,6 +132,7 @@ const QueryMaker: SFC<Props> = ({
             onApplyFuncsToField={onApplyFuncsToField}
             onToggleTagAcceptance={onToggleTagAcceptance}
             me={me}
+            isUsingAuth={isUsingAuth}
           />
         </div>
       </div>

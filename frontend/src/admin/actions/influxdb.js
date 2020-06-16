@@ -17,7 +17,7 @@ import {
 } from 'src/admin/apis/influxdb'
 
 import {killQuery as killQueryProxy} from 'shared/apis/metaQuery'
-
+import {eachRoleDatabases} from 'src/admin/utils/eachRoleWorker'
 import {notify} from 'shared/actions/notifications'
 import {errorThrown} from 'shared/actions/errors'
 
@@ -92,8 +92,9 @@ export const addRole = () => ({
   type: 'INFLUXDB_ADD_ROLE',
 })
 
-export const addDatabase = () => ({
+export const addDatabase = name => ({
   type: 'INFLUXDB_ADD_DATABASE',
+  payload: {name},
 })
 
 export const addRetentionPolicy = database => ({
@@ -296,12 +297,17 @@ export const loadPermissionsAsync = url => async dispatch => {
   }
 }
 
-export const loadDBsAndRPsAsync = url => async dispatch => {
+export const loadDBsAndRPsAsync = (url, auth) => async dispatch => {
   try {
     const {
       data: {databases},
     } = await getDbsAndRpsAJAX(url)
-    dispatch(loadDatabases(_.sortBy(databases, ({name}) => name.toLowerCase())))
+
+    const checkDatabases = eachRoleDatabases(databases, auth)
+
+    dispatch(
+      loadDatabases(_.sortBy(checkDatabases, ({name}) => name.toLowerCase()))
+    )
   } catch (error) {
     dispatch(errorThrown(error))
   }

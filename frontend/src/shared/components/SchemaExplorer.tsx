@@ -34,6 +34,7 @@ interface Props {
   onApplyFuncsToField: TimeMachineContainer['handleApplyFuncsToField']
   onToggleTagAcceptance: TimeMachineContainer['handleToggleTagAcceptance']
   me: Me
+  isUsingAuth: boolean
 }
 
 const SchemaExplorer: SFC<Props> = ({
@@ -54,6 +55,7 @@ const SchemaExplorer: SFC<Props> = ({
   onToggleTagAcceptance,
   isQuerySupportedByExplorer = true,
   me,
+  isUsingAuth,
 }) => {
   const {id} = query
 
@@ -64,6 +66,7 @@ const SchemaExplorer: SFC<Props> = ({
         querySource={source}
         onChooseNamespace={actionBinder(id, onChooseNamespace)}
         me={me}
+        isUsingAuth={isUsingAuth}
       />
       <MeasurementList
         query={query}

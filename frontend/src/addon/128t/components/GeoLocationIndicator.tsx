@@ -1,9 +1,9 @@
 import React, {SFC} from 'react'
 import ReactTooltip from 'react-tooltip'
-import {Router} from 'src/addon/128t/types'
+import {RouterNode} from 'src/addon/128t/types'
 
 interface Props {
-  locationCoordinates: Router['locationCoordinates']
+  locationCoordinates: RouterNode['locationCoordinates']
 }
 
 const GeoLocationIndicator: SFC<Props> = locationCoordinates => {

@@ -8,9 +8,10 @@ import DatabaseRow from 'src/admin/components/DatabaseRow'
 import DatabaseTableHeader from 'src/admin/components/DatabaseTableHeader'
 import {DATABASE_TABLE} from 'src/admin/constants/tableSizing'
 
-const {func, shape, bool} = PropTypes
+const {arrayOf, func, shape, bool} = PropTypes
 
 const DatabaseTable = ({
+  organizations,
   database,
   isRFDisplayed,
   onEditDatabase,
@@ -34,6 +35,7 @@ const DatabaseTable = ({
       })}
     >
       <DatabaseTableHeader
+        organizations={organizations}
         database={database}
         onEdit={onEditDatabase}
         onCancel={onCancelDatabase}
@@ -93,6 +95,7 @@ const DatabaseTable = ({
 }
 
 DatabaseTable.propTypes = {
+  organizations: arrayOf(shape()),
   onEditDatabase: func,
   database: shape(),
   isRFDisplayed: bool,

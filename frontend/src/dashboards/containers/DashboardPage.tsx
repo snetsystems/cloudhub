@@ -248,6 +248,7 @@ class DashboardPage extends Component<Props, State> {
             source={source}
             sources={sources}
             me={me}
+            isUsingAuth={isUsingAuth}
             notify={notify}
             fluxLinks={fluxLinks}
             cell={selectedCell}

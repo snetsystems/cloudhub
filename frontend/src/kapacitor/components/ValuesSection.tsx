@@ -40,6 +40,7 @@ interface Props {
   source: Source
   onChooseTimeRange: (timeRange: TimeRange) => void
   me: Me
+  isUsingAuth: boolean
 }
 
 class ValuesSection extends Component<Props> {
@@ -114,6 +115,7 @@ class ValuesSection extends Component<Props> {
       onAddEvery,
       queryConfigActions,
       me,
+      isUsingAuth,
     } = this.props
 
     return (
@@ -125,6 +127,7 @@ class ValuesSection extends Component<Props> {
         onAddEvery={onAddEvery}
         isDeadman={this.isDeadman(rule)}
         me={me}
+        isUsingAuth={isUsingAuth}
       />
     )
   }

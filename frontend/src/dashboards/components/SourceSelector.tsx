@@ -70,7 +70,7 @@ const SourceSelector: SFC<Props> = ({
           active={isFluxSelected}
           disabled={!sourceSupportsFlux}
         >
-          Flux
+          Flux (Beta)
         </Radio.Button>
       </Radio>
       {!sourceSupportsFlux && (

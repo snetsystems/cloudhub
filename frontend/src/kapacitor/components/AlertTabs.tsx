@@ -48,7 +48,7 @@ import {
 import DeprecationWarning from 'src/admin/components/DeprecationWarning'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-import {Source, Kapacitor, Service, Me} from 'src/types'
+import {Source, Kapacitor, Service, Me, Organization} from 'src/types'
 import {Notification} from 'src/types/notifications'
 import {ServiceProperties, SpecificConfigOptions} from 'src/types/kapacitor'
 
@@ -101,6 +101,7 @@ interface Props {
   notify: (message: Notification) => void
   hash: string
   me: Me
+  organizations: Organization[]
 }
 
 interface State {
@@ -232,7 +233,7 @@ class AlertTabs extends PureComponent<Props, State> {
 
   private getConfig(config: string): JSX.Element {
     const {configSections} = this.state
-    const {me} = this.props
+    const {me, organizations} = this.props
 
     switch (config) {
       case AlertTypes.alerta:
@@ -269,6 +270,7 @@ class AlertTabs extends PureComponent<Props, State> {
             isMultipleConfigsSupported={this.isMultipleConfigsSupported}
             onDelete={this.handleDeleteConfig(AlertTypes.kafka)}
             me={me}
+            organizations={organizations}
           />
         )
 
@@ -357,6 +359,7 @@ class AlertTabs extends PureComponent<Props, State> {
             )}
             isMultipleConfigsSupported={this.isMultipleConfigsSupported}
             me={me}
+            organizations={organizations}
           />
         )
 

@@ -40,6 +40,7 @@ class TemplateControl extends PureComponent<Props, State> {
       templates,
       source,
       me,
+      isUsingAuth,
       onCreateTemplate,
       onPickValue,
     } = this.props
@@ -61,6 +62,7 @@ class TemplateControl extends PureComponent<Props, State> {
           <TemplateDropdown
             template={template}
             me={me}
+            isUsingAuth={isUsingAuth}
             onPickValue={onPickValue}
           />
         )}
@@ -82,6 +84,7 @@ class TemplateControl extends PureComponent<Props, State> {
             templates={templates}
             source={source}
             me={me}
+            isUsingAuth={isUsingAuth}
             onCreate={onCreateTemplate}
             onUpdate={this.handleUpdateTemplate}
             onDelete={this.handleDelete}

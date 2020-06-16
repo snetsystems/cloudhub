@@ -1,5 +1,5 @@
 import {
-  Router,
+  RouterNode,
   TopSource,
   TopSession,
   SaltDirFileInfo,
@@ -7,7 +7,7 @@ import {
   SaltDirFile,
   GetSaltDirectoryInfo,
   PeerDetail,
-  GroupRouterData,
+  GroupRouterNodeData,
 } from 'src/addon/128t/types/routers'
 import {GridCell} from 'src/addon/128t/types/grid'
 import {SortDirection} from 'src/addon/128t/types/table'
@@ -20,7 +20,7 @@ import {
 } from 'src/addon/128t/types/oncue'
 
 export {
-  Router,
+  RouterNode,
   TopSource,
   TopSession,
   GridCell,
@@ -35,5 +35,5 @@ export {
   Connection,
   OncueData,
   PeerDetail,
-  GroupRouterData,
+  GroupRouterNodeData,
 }

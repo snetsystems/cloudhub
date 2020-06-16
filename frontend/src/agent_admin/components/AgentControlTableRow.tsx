@@ -57,12 +57,16 @@ class AgentControlTableRow extends PureComponent<Props> {
       <div className={this.focusedClasses()}>
         <TableBodyRowItem
           title={
-            <input
-              type="checkbox"
-              checked={Boolean(isCheck)}
-              onClick={this.getHandleMinionCheck}
-              readOnly
-            />
+            <div className="dark-checkbox">
+              <input
+                id={`agent-control--${host}`}
+                type="checkbox"
+                checked={Boolean(isCheck)}
+                onClick={this.getHandleMinionCheck}
+                readOnly
+              />
+              <label htmlFor={`agent-control--${host}`} />
+            </div>
           }
           width={CheckWidth}
         />

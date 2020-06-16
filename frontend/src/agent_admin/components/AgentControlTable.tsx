@@ -221,7 +221,9 @@ class AgentControlTable extends PureComponent<Props, State> {
             message={
               'There is already run a collector at least one, do you go on?'
             }
-            buttonClassName={'btn btn-inline_block btn-default agent--btn'}
+            buttonClassName={
+              'btn btn-inline_block btn-default agent--btn btn-primary'
+            }
             cancelText={'Cancel'}
             confirmText={'OK'}
             onCancel={() => {}}
@@ -235,7 +237,9 @@ class AgentControlTable extends PureComponent<Props, State> {
             message={
               'There is already stoped a collector at least one, do you go on?'
             }
-            buttonClassName={'btn btn-inline_block btn-default agent--btn'}
+            buttonClassName={
+              'btn btn-inline_block btn-default agent--btn btn-primary'
+            }
             cancelText={'Cancel'}
             confirmText={'Go STOP'}
             onCancel={() => {}}
@@ -252,7 +256,9 @@ class AgentControlTable extends PureComponent<Props, State> {
             message={
               'There is already installed a collector at least one, do you go on?'
             }
-            buttonClassName={'btn btn-inline_block btn-default agent--btn'}
+            buttonClassName={
+              'btn btn-inline_block btn-default agent--btn btn-primary'
+            }
             cancelText={'Cancel'}
             confirmText={'OK'}
             onCancel={() => {}}
@@ -336,13 +342,18 @@ class AgentControlTable extends PureComponent<Props, State> {
       <div className="hosts-table--thead">
         <div className="hosts-table--tr">
           <div style={{width: CheckWidth}} className="hosts-table--th">
-            <input
-              type="checkbox"
-              checked={isAllCheck}
-              onClick={this.getHandleAllCheck}
-              readOnly
-            />
+            <div className="dark-checkbox">
+              <input
+                id={'agent-control--all-check'}
+                type="checkbox"
+                checked={isAllCheck}
+                onClick={this.getHandleAllCheck}
+                readOnly
+              />
+              <label htmlFor={'agent-control--all-check'} />
+            </div>
           </div>
+
           <div
             onClick={this.updateSort('host')}
             className={this.sortableClasses('host')}

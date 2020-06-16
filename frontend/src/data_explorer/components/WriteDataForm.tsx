@@ -24,6 +24,7 @@ interface Props {
   errorThrown: () => void
   writeLineProtocol: (source: Source, database: string, content: string) => void
   me: Me
+  isUsingAuth: boolean
 }
 
 interface State {
@@ -56,7 +57,7 @@ class WriteDataForm extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {onClose, errorThrown, source, me} = this.props
+    const {onClose, errorThrown, source, me, isUsingAuth} = this.props
     const {dragClass} = this.state
 
     return (
@@ -77,6 +78,7 @@ class WriteDataForm extends PureComponent<Props, State> {
             onToggleMode={this.handleToggleMode}
             handleSelectDatabase={this.handleSelectDatabase}
             me={me}
+            isUsingAuth={isUsingAuth}
           />
           <WriteDataBody
             {...this.state}
