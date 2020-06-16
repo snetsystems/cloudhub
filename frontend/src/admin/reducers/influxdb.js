@@ -51,8 +51,11 @@ const adminInfluxDB = (state = initialState, action) => {
     }
 
     case 'INFLUXDB_ADD_DATABASE': {
+      const {name} = action.payload
+
       const newDatabase = {
         ...NEW_DEFAULT_DATABASE,
+        name,
         links: {self: `temp-ID${uuid.v4()}`},
         isEditing: true,
       }

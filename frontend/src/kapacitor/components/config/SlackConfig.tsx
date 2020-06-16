@@ -33,6 +33,7 @@ interface Props {
   workspaceID: string
   isDefaultConfig: boolean
   me: Me
+  organizations: Organization[]
 }
 
 interface State {
@@ -63,8 +64,7 @@ class SlackConfig extends PureComponent<Props, State> {
   public render() {
     const {url, channel} = this.options
     const {testEnabled, enabled, workspace} = this.state
-    const {me} = this.props
-    const {organizations} = me
+    const {me, organizations} = this.props
 
     const dropdownRolesItems = organizations.map(
       organization => organization.name

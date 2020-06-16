@@ -17,23 +17,38 @@ import {Source, Links, Organization} from 'src/types'
 import {HostNames} from 'src/types/hosts'
 
 // Actions
-import {getAllHostsAsync} from 'src/addon/128t/actions'
+import {
+  getAllHostsAsync,
+  getAllHostsAndStatusAsync,
+} from 'src/addon/128t/actions'
 
 // Constants
 import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
+interface HostsObject {
+  [x: string]: Host
+}
+
+export interface Host {
+  name: string
+  deltaUptime?: number
+  winDeltaUptime?: number
+}
+
 interface GroupHosts {
   name: string
-  hosts: HostNames
+  hosts: HostsObject
 }
 
 interface Props {
   page: string
   links: Links
+  isUsingAuth: boolean
   meRole: string
   source: Source
   sources: Source[]
   handleGetAllHosts: (source: Source) => Promise<HostNames>
+  handleGetAllAddonHosts: (source: Source) => Promise<HostsObject>
   organizations: Organization[]
 }
 
@@ -63,15 +78,15 @@ const GraphqlProvider: SFC<Props> = (props: Props) => {
 
   const [groupHosts, setGroupHosts] = useState<GroupHosts[]>([])
 
-  if (!isUserAuthorized(props.meRole, SUPERADMIN_ROLE)) {
+  if (props.isUsingAuth && !isUserAuthorized(props.meRole, SUPERADMIN_ROLE)) {
     useEffect(() => {
       let gHosts: GroupHosts[] = []
       const getAllHost = async () => {
         const pSource: Source = props.source
-        const promiseHostNames = await props.handleGetAllHosts(pSource)
+        const promiseHost = await props.handleGetAllAddonHosts(pSource)
         gHosts.push({
           name: pSource.telegraf,
-          hosts: promiseHostNames,
+          hosts: promiseHost,
         })
         setGroupHosts(gHosts)
       }
@@ -89,12 +104,10 @@ const GraphqlProvider: SFC<Props> = (props: Props) => {
             // telegraf: k.name === 'Default' ? 'telegraf' : k.name,
             telegraf: k.name,
           }
-
-          const promiseHostNames = await props.handleGetAllHosts(pSource)
-
+          const promiseHost = await props.handleGetAllAddonHosts(pSource)
           gHosts.push({
             name: k.name,
-            hosts: promiseHostNames,
+            hosts: promiseHost,
           })
         }
         setGroupHosts(gHosts)
@@ -109,6 +122,7 @@ const GraphqlProvider: SFC<Props> = (props: Props) => {
       <ApolloProvider client={client}>
         <SwanSdplexStatusPage
           addons={props.links.addons}
+          isUsingAuth={props.isUsingAuth}
           meRole={props.meRole}
           groupHosts={groupHosts}
         />
@@ -124,16 +138,17 @@ const GraphqlProvider: SFC<Props> = (props: Props) => {
 }
 
 const mapStateToProps = ({
-  auth: {me},
+  auth: {isUsingAuth, me},
   links,
   adminCloudHub: {organizations},
 }) => {
   const meRole = _.get(me, 'role', null)
-  return {meRole, links, organizations}
+  return {isUsingAuth, meRole, links, organizations}
 }
 
 const mdtp = {
   handleGetAllHosts: getAllHostsAsync,
+  handleGetAllAddonHosts: getAllHostsAndStatusAsync,
 }
 
 export default connect(mapStateToProps, mdtp)(GraphqlProvider)

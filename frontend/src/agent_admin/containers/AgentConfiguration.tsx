@@ -1096,7 +1096,7 @@ export class AgentConfiguration extends PureComponent<
             </div>
             <div>
               <button
-                className="btn btn-inline_block btn-default agent--btn"
+                className="btn btn-inline_block btn-default agent--btn btn-primary"
                 onClick={this.onClickApplyCall}
                 disabled={isApplyBtnDisabled}
               >

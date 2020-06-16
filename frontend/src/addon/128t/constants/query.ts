@@ -2,76 +2,77 @@ import gql from 'graphql-tag'
 
 export const GET_ALLROUTERS_INFO = gql`
   query routers_info($names: [String]) {
-    allRouters(names: $names) {
+    allNodes(names: $names) {
       nodes {
-        name
-        locationCoordinates
-        managementConnected
-        bandwidth_avg: analytic(metric: BANDWIDTH, transform: AVERAGE)
-        session_arrivals: analytic(metric: SESSION_ARRIVAL_RATE, transform: SUM)
-        peers {
-          nodes {
-            name
+        router {
+          name
+          locationCoordinates
+          managementConnected
+          bandwidth_avg: analytic(metric: BANDWIDTH, transform: AVERAGE)
+          session_arrivals: analytic(
+            metric: SESSION_ARRIVAL_RATE
+            transform: SUM
+          )
+          peers {
+            nodes {
+              name
+            }
+          }
+          topSources {
+            ip
+            tenant
+            currentBandwidth
+            totalData
+            sessionCount
+          }
+          topSessions {
+            service
+            tenant
+            value
+            protocol
+            source {
+              address
+              port
+            }
+            destination {
+              address
+              port
+            }
           }
         }
-        nodes {
+        name
+        enabled
+        role
+        cpu {
+          core
+          utilization
+          type
+        }
+        memory {
+          capacity
+          usage
+        }
+        disk {
+          capacity
+          usage
+          partition
+        }
+        state {
+          startTime
+          softwareVersion
+        }
+        deviceInterfaces {
           nodes {
-            assetId
-            enabled
-            role
-            cpu {
-              core
-              utilization
-              type
-            }
-            memory {
-              capacity
-              usage
-            }
-            disk {
-              capacity
-              usage
-              partition
-            }
-            state {
-              startTime
-              softwareVersion
-            }
-            deviceInterfaces {
+            networkInterfaces {
               nodes {
-                networkInterfaces {
+                name
+                addresses {
                   nodes {
-                    name
-                    addresses {
-                      nodes {
-                        ipAddress
-                      }
-                    }
+                    ipAddress
                   }
                 }
               }
             }
-          }
-        }
-        topSources {
-          ip
-          tenant
-          currentBandwidth
-          totalData
-          sessionCount
-        }
-        topSessions {
-          service
-          tenant
-          value
-          protocol
-          source {
-            address
-            port
-          }
-          destination {
-            address
-            port
           }
         }
       }

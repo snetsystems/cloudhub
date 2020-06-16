@@ -2,6 +2,7 @@
 import React, {PureComponent} from 'react'
 
 // Components
+import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import {
   Table,
   TableHeader,
@@ -23,6 +24,9 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
   oncueData: OncueData
+  routerDataPopupAutoRefresh: number
+  onChooseRouterDataPopupAutoRefresh: (milliseconds: number) => void
+  onManualRouterDataPopupRefresh: () => void
 }
 
 @ErrorHandling
@@ -32,13 +36,29 @@ class OncueServiceTable extends PureComponent<Props> {
   }
 
   render() {
-    const {oncueData} = this.props
+    const {
+      oncueData,
+      routerDataPopupAutoRefresh,
+      onChooseRouterDataPopupAutoRefresh,
+      onManualRouterDataPopupRefresh,
+    } = this.props
     return (
       <div className={'data-table-container'}>
-        <strong className="data-table-title">
-          OncueService
-          <span className="data-table-title-sub">{oncueData.router}</span>
-        </strong>
+        <div className={'data-table-heading'}>
+          <div className={'data-table-heading--left'}>
+            <strong className="data-table-title">
+              OncueService
+              <span className="data-table-title-sub">{oncueData.nodeName}</span>
+            </strong>
+          </div>
+          <div className={'data-table-heading--right'}>
+            <AutoRefreshDropdown
+              selected={routerDataPopupAutoRefresh}
+              onChoose={onChooseRouterDataPopupAutoRefresh}
+              onManualRefresh={onManualRouterDataPopupRefresh}
+            />
+          </div>
+        </div>
         <Table>
           <TableHeader>{this.TableHeader}</TableHeader>
           <TableBody>{this.TableBody}</TableBody>

@@ -5,7 +5,7 @@ import TagInput from 'src/shared/components/TagInput'
 import Dropdown from 'src/shared/components/Dropdown'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-import {Notification, NotificationFunc, Me} from 'src/types'
+import {Notification, NotificationFunc, Me, Organization} from 'src/types'
 
 import {KafkaProperties} from 'src/types/kapacitor'
 import {notifyInvalidBatchSizeValue} from 'src/shared/copy/notifications'
@@ -37,6 +37,7 @@ interface Props {
   id: string
   onDelete: (specificConfig: string) => void
   me: Me
+  organizations: Organization[]
 }
 
 interface State {
@@ -78,7 +79,7 @@ class KafkaConfig extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {me, config} = this.props
+    const {me, organizations, config} = this.props
     const {enabled, keyID, id} = this.state
 
     const {options} = config
@@ -91,7 +92,6 @@ class KafkaConfig extends PureComponent<Props, State> {
     const sslKey = options['ssl-key']
     const insecureSkipVerify = options['insecure-skip-verify']
 
-    const {organizations} = me
     const dropdownRolesItems = organizations.map(
       organization => organization.name
     )

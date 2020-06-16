@@ -104,6 +104,7 @@ interface ConnectedProps {
 
 interface Auth {
   me: Me
+  isUsingAuth: boolean
 }
 
 type Props = PassedProps & ConnectedProps & Auth
@@ -170,6 +171,7 @@ export class DataExplorer extends PureComponent<Props, State> {
       updateSourceLink,
       timeRange,
       me,
+      isUsingAuth,
     } = this.props
 
     const {isStaticLegend, isComponentMounted} = this.state
@@ -197,6 +199,7 @@ export class DataExplorer extends PureComponent<Props, State> {
             onResetFocus={this.handleResetFocus}
             onToggleStaticLegend={this.handleToggleStaticLegend}
             me={me}
+            isUsingAuth={isUsingAuth}
           >
             {(activeEditorTab, onSetActiveEditorTab) => (
               <DEHeader
@@ -290,7 +293,13 @@ export class DataExplorer extends PureComponent<Props, State> {
   }
 
   private get writeDataForm(): JSX.Element {
-    const {source, errorThrownAction, writeLineProtocol, me} = this.props
+    const {
+      source,
+      errorThrownAction,
+      writeLineProtocol,
+      me,
+      isUsingAuth,
+    } = this.props
 
     const {isWriteFormVisible} = this.state
     return (
@@ -302,6 +311,7 @@ export class DataExplorer extends PureComponent<Props, State> {
           onClose={this.handleCloseWriteData}
           writeLineProtocol={writeLineProtocol}
           me={me}
+          isUsingAuth={isUsingAuth}
         />
       </OverlayTechnology>
     )

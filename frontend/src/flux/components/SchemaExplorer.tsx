@@ -8,15 +8,21 @@ interface Props {
   source: Source
   notify: NotificationAction
   me: Me
+  isUsingAuth: boolean
 }
 
 class SchemaExplorer extends PureComponent<Props> {
   public render() {
-    const {source, notify, me} = this.props
+    const {source, notify, me, isUsingAuth} = this.props
     return (
       <div className="flux-schema-explorer">
         <FancyScrollbar>
-          <DatabaseList source={source} notify={notify} me={me} />
+          <DatabaseList
+            source={source}
+            notify={notify}
+            me={me}
+            isUsingAuth={isUsingAuth}
+          />
         </FancyScrollbar>
       </div>
     )

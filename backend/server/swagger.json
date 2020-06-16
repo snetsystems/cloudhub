@@ -6225,7 +6225,7 @@
         "addons": [
           {
             "name": "salt",
-            "url": "/cloudhub/v1/salt",
+            "url": "/cloudhub/v1/proxy/salt",
             "token": "58163e8e0f6b3efcd7bbb1ad0e3a2ee53e8fae1248b291312e1bdbfc13b289d2"
           },
           {

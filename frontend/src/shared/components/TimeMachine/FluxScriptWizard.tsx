@@ -48,6 +48,7 @@ interface Props {
   onSetIsWizardActive: (isWizardActive: boolean) => void
   onAddToScript: (script: string) => void
   me: Me
+  isUsingAuth: boolean
 }
 
 interface State {
@@ -307,7 +308,7 @@ class FluxScriptWizard extends PureComponent<Props, State> {
   }
 
   private fetchAndSetDBsToRPs = async () => {
-    const {source} = this.props
+    const {source, isUsingAuth} = this.props
     const me = this.props.me
     const currentOrganization = _.get(me, 'currentOrganization')
 
@@ -330,7 +331,7 @@ class FluxScriptWizard extends PureComponent<Props, State> {
       dbsToRPs = await this.fetchDBsToRPs(source.links.proxy)
 
       if (dbsToRPs) {
-        if (!isUserAuthorized(me.role, SUPERADMIN_ROLE)) {
+        if (!isUserAuthorized(me.role, SUPERADMIN_ROLE) && isUsingAuth) {
           dbsToRPs = _.reduce(
             dbsToRPs,
             (database: DBsToRPs, value, key) =>

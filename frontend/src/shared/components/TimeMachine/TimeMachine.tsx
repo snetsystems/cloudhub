@@ -100,6 +100,7 @@ interface State {
 
 interface Auth {
   me: Me
+  isUsingAuth: boolean
 }
 
 type Props = PassedProps & ConnectedProps & ManualRefreshProps & Auth
@@ -336,6 +337,7 @@ class TimeMachine extends PureComponent<Props, State> {
       onChangeDraftScript,
       onUpdateScriptStatus,
       me,
+      isUsingAuth,
     } = this.props
 
     return (
@@ -350,6 +352,7 @@ class TimeMachine extends PureComponent<Props, State> {
         onChangeDraftScript={onChangeDraftScript}
         onUpdateStatus={onUpdateScriptStatus}
         me={me}
+        isUsingAuth={isUsingAuth}
       />
     )
   }
@@ -357,7 +360,7 @@ class TimeMachine extends PureComponent<Props, State> {
   private get influxQLBuilder(): JSX.Element {
     const {templates} = this.props
     const {activeQueryIndex} = this.state
-    const {me} = this.props
+    const {me, isUsingAuth} = this.props
 
     return (
       <InfluxQLQueryMaker
@@ -371,6 +374,7 @@ class TimeMachine extends PureComponent<Props, State> {
         setActiveQueryIndex={this.handleSetActiveQueryIndex}
         onEditRawText={this.handleEditRawText}
         me={me}
+        isUsingAuth={isUsingAuth}
       />
     )
   }

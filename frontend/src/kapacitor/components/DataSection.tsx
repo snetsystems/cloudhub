@@ -28,11 +28,19 @@ interface Props {
   onAddEvery: (every?: string) => void
   timeRange: TimeRange
   me: Me
+  isUsingAuth: boolean
 }
 
 class DataSection extends PureComponent<Props> {
   public render() {
-    const {query, isDeadman, isKapacitorRule, onAddEvery, me} = this.props
+    const {
+      query,
+      isDeadman,
+      isKapacitorRule,
+      onAddEvery,
+      me,
+      isUsingAuth,
+    } = this.props
 
     return (
       <SourceContext.Consumer>
@@ -43,6 +51,7 @@ class DataSection extends PureComponent<Props> {
                 query={query}
                 onChooseNamespace={this.handleChooseNamespace}
                 me={me}
+                isUsingAuth={isUsingAuth}
               />
               <MeasurementList
                 query={query}

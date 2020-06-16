@@ -18,12 +18,14 @@ import {
   runRejectKeyAsync,
   runDeleteKeyAsync,
 } from 'src/agent_admin/actions'
+import {UserRole, ForceSessionAbortInputRole} from 'src/shared/actions/session'
 
 // Notification
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 // Constants
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
+import {ADMIN_ROLE} from 'src/auth/Authorized'
 
 // Types
 import {RemoteDataState, Notification, NotificationFunc} from 'src/types'
@@ -66,6 +68,10 @@ interface Props {
   }: {
     minionsStatus: RemoteDataState
   }) => void
+  ForceSessionAbortInputRole: (
+    requireRole: UserRole,
+    isNoAuthOuting?: boolean
+  ) => void
 }
 interface State {
   minionsPageStatus: RemoteDataState
@@ -89,6 +95,7 @@ export class AgentMinions extends PureComponent<Props, State> {
   }
 
   public componentWillMount() {
+    this.props.ForceSessionAbortInputRole(ADMIN_ROLE)
     this.setState({minionsPageStatus: this.props.minionsStatus})
   }
 
@@ -238,7 +245,9 @@ export class AgentMinions extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {isUserAuthorized} = this.props
+    const {isUserAuthorized, ForceSessionAbortInputRole} = this.props
+    ForceSessionAbortInputRole(ADMIN_ROLE)
+
     return (
       <>
         {isUserAuthorized ? (
@@ -315,6 +324,7 @@ const mdtp = {
   handleRunAcceptKey: runAcceptKeyAsync,
   handleRunRejectKey: runRejectKeyAsync,
   handleRunDeleteKey: runDeleteKeyAsync,
+  ForceSessionAbortInputRole,
 }
 
 export default connect(null, mdtp, null)(AgentMinions)

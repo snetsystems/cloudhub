@@ -27,7 +27,7 @@ import {ADMIN_ROLE, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
 // type
 import {
-  Router,
+  RouterNode,
   TopSource,
   TopSession,
   SortDirection,
@@ -49,30 +49,33 @@ export interface Props {
   cellBackgroundColor: string
   cellTextColor: string
   isEditable: boolean
-  routers: Router[]
+  routerNodes: RouterNode[]
   isRoutersAllCheck: boolean
-  focusedAssetId: string
+  focusedNodeName: string
   onClickTableRow: (
     topSources: TopSource[],
     topSessions: TopSession[],
-    focusedAssetId: string
+    focusedNodeName: string
   ) => () => void
   handleOnChoose: ({selectItem: string}) => void
-  handleRouterCheck: ({router: Router}) => void
+  handleRouterCheck: ({routerNode: RouterNode}) => void
   handleRoutersAllCheck: () => void
   handleFocusedBtnName: ({buttonName: string}) => void
   firmware: SaltDirFile
   config: SaltDirFile
   isRouterDataPopupVisible: boolean
   routerPopupPosition: {top: number; right: number}
-  handleOnClickRouterName: (data: {
+  handleOnClickNodeName: (data: {
     _event: MouseEvent<HTMLElement>
-    router: Router
+    routerNode: RouterNode
   }) => void
   hanldeOnDismiss: () => void
   handleOnClickProtocolModulesRow: (name: string) => void
   handleOnClickDeviceConnectionsRow: (url: string) => void
   oncueData: OncueData
+  routerDataPopupAutoRefresh: number
+  onChooseRouterDataPopupAutoRefresh: (milliseconds: number) => void
+  onManualRouterDataPopupRefresh: () => void
 }
 
 interface State {
@@ -100,25 +103,25 @@ class RouterTable extends PureComponent<Props, State> {
     this.state = {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
-      sortKey: 'assetId',
+      sortKey: 'nodeName',
       routerCount: 0,
     }
   }
 
   public getSortedRouters = memoize(
     (
-      routers: Router[],
+      routerNode: RouterNode[],
       searchTerm: string,
       sortKey: string,
       sortDirection: SortDirection
-    ) => this.sort(this.filter(routers, searchTerm), sortKey, sortDirection)
+    ) => this.sort(this.filter(routerNode, searchTerm), sortKey, sortDirection)
   )
 
   public componentWillMount() {
-    const {routers} = this.props
+    const {routerNodes} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
-    const sortedRouters: Router[] = this.getSortedRouters(
-      routers,
+    const sortedRouters: RouterNode[] = this.getSortedRouters(
+      routerNodes,
       searchTerm,
       sortKey,
       sortDirection
@@ -170,7 +173,7 @@ class RouterTable extends PureComponent<Props, State> {
       isEditable,
       cellTextColor,
       cellBackgroundColor,
-      routers,
+      routerNodes,
       handleOnChoose,
       firmware,
       config,
@@ -185,7 +188,7 @@ class RouterTable extends PureComponent<Props, State> {
           <CellName
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
-            value={routers}
+            value={routerNodes}
             name={'Routers'}
           />
           <HeadingBar
@@ -238,7 +241,8 @@ class RouterTable extends PureComponent<Props, State> {
 
   private get TableHeader() {
     const {
-      ASSETID,
+      NODENAME,
+      GROUP,
       IPADDRESS,
       LOCATIONCOORDINATES,
       MANAGEMENTCONNECTED,
@@ -258,22 +262,34 @@ class RouterTable extends PureComponent<Props, State> {
     return (
       <>
         <div
-          className={sortableClasses({sortKey, sortDirection, key: 'assetId'})}
+          className={sortableClasses({sortKey, sortDirection, key: 'nodeName'})}
           style={{width: CHECKBOX}}
         >
-          <input
-            type="checkbox"
-            checked={isRoutersAllCheck}
-            onClick={handleRoutersAllCheck}
-            readOnly
-          />
+          <div className="dark-checkbox">
+            <input
+              id={'router-table--all-check'}
+              type="checkbox"
+              checked={isRoutersAllCheck}
+              onClick={handleRoutersAllCheck}
+              readOnly
+            />
+            <label htmlFor={'router-table--all-check'} />
+          </div>
         </div>
         <div
-          onClick={this.updateSort('assetId')}
-          className={sortableClasses({sortKey, sortDirection, key: 'assetId'})}
-          style={{width: ASSETID}}
+          onClick={this.updateSort('nodeName')}
+          className={sortableClasses({sortKey, sortDirection, key: 'nodeName'})}
+          style={{width: NODENAME}}
         >
-          Router
+          Node Name
+          <span className="icon caret-up" />
+        </div>
+        <div
+          onClick={this.updateSort('group')}
+          className={sortableClasses({sortKey, sortDirection, key: 'group'})}
+          style={{width: GROUP}}
+        >
+          Group
           <span className="icon caret-up" />
         </div>
         <div
@@ -416,20 +432,23 @@ class RouterTable extends PureComponent<Props, State> {
 
   private get TableData() {
     const {
-      routers,
-      focusedAssetId,
+      routerNodes,
+      focusedNodeName,
       onClickTableRow,
       handleRouterCheck,
-      handleOnClickRouterName,
+      handleOnClickNodeName,
       isRouterDataPopupVisible,
       hanldeOnDismiss,
       routerPopupPosition,
       oncueData,
+      routerDataPopupAutoRefresh,
+      onChooseRouterDataPopupAutoRefresh,
+      onManualRouterDataPopupRefresh,
     } = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
     const sortedRouters = this.getSortedRouters(
-      routers,
+      routerNodes,
       searchTerm,
       sortKey,
       sortDirection
@@ -437,17 +456,17 @@ class RouterTable extends PureComponent<Props, State> {
 
     return (
       <>
-        {routers.length > 0 ? (
+        {routerNodes.length > 0 ? (
           <>
             <FancyScrollbar
-              children={sortedRouters.map((r: Router, i: number) => (
+              children={sortedRouters.map((r: RouterNode, i: number) => (
                 <RouterTableRow
-                  handleOnClickRouterName={handleOnClickRouterName}
+                  handleOnClickNodeName={handleOnClickNodeName}
                   handleRouterCheck={handleRouterCheck}
                   onClickTableRow={onClickTableRow}
-                  focusedAssetId={focusedAssetId}
+                  focusedNodeName={focusedNodeName}
                   isCheck={r.isCheck}
-                  router={r}
+                  routerNode={r}
                   key={i}
                   oncueData={oncueData}
                 />
@@ -464,6 +483,11 @@ class RouterTable extends PureComponent<Props, State> {
                 handleOnClickDeviceConnectionsRow={
                   this.props.handleOnClickDeviceConnectionsRow
                 }
+                routerDataPopupAutoRefresh={routerDataPopupAutoRefresh}
+                onChooseRouterDataPopupAutoRefresh={
+                  onChooseRouterDataPopupAutoRefresh
+                }
+                onManualRouterDataPopupRefresh={onManualRouterDataPopupRefresh}
               />
             ) : null}
           </>
@@ -474,27 +498,27 @@ class RouterTable extends PureComponent<Props, State> {
     )
   }
 
-  private filter(allrouters: Router[], searchTerm: string) {
+  private filter(allNodes: RouterNode[], searchTerm: string) {
     const filterText = searchTerm.toLowerCase()
-    return allrouters.filter(h => {
-      if (!h.assetId) h.assetId = '-'
-      return h.assetId.toLowerCase().includes(filterText)
+    return allNodes.filter(h => {
+      if (!h.nodeName) h.nodeName = '-'
+      return h.nodeName.toLowerCase().includes(filterText)
     })
   }
 
-  private sort(allrouters: Router[], key: string, direction: SortDirection) {
+  private sort(allNodes: RouterNode[], key: string, direction: SortDirection) {
     switch (direction) {
       case SortDirection.ASC:
-        return _.sortBy(allrouters, e => e[key])
+        return _.sortBy(allNodes, e => e[key])
       case SortDirection.DESC:
         const sortDesc = _.sortBy(
-          allrouters,
+          allNodes,
           [e => e[key] || e[key] === 0 || e[key] === ''],
           ['asc']
         ).reverse()
         return sortDesc
       default:
-        return allrouters
+        return allNodes
     }
   }
 

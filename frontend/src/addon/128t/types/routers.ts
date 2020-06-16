@@ -1,6 +1,6 @@
-export interface Router {
-  name: string
-  assetId?: string
+export interface RouterNode {
+  nodeName: string
+  routerName?: string
   ipAddress?: string
   locationCoordinates?: string
   managementConnected?: boolean
@@ -18,6 +18,8 @@ export interface Router {
   isCheck?: boolean
   peers?: PeerDetail[]
   group?: string
+  deltaUptime?: number
+  winDeltaUptime?: number
 }
 
 export interface TopSource {
@@ -53,8 +55,9 @@ export interface SaltDirFileInfo {
 }
 
 export interface CheckRouter {
-  assetId: string
-  isCheck: boolean
+  group: string
+  nodeName: string
+  isCheck?: boolean
 }
 
 export interface SaltDirFile {
@@ -73,7 +76,7 @@ export interface PeerDetail {
   name: string
 }
 
-export interface GroupRouterData {
+export interface GroupRouterNodeData {
   groupName: string
-  routers: Router[]
+  routerNodes: RouterNode[]
 }

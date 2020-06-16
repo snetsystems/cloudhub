@@ -49,6 +49,7 @@ interface PassedProps {
 
 interface Auth {
   me: Me
+  isUsingAuth: boolean
 }
 
 type Props = ConnectedProps & PassedProps & Auth
@@ -86,6 +87,7 @@ class FluxQueryMaker extends PureComponent<Props, State> {
       fluxProportions,
       onSetFluxProportions,
       me,
+      isUsingAuth,
     } = this.props
     const {suggestions, isWizardActive, draftScriptStatus} = this.state
 
@@ -98,7 +100,12 @@ class FluxQueryMaker extends PureComponent<Props, State> {
         headerButtons: [],
         menuOptions: [],
         render: () => (
-          <SchemaExplorer source={source} notify={notify} me={me} />
+          <SchemaExplorer
+            source={source}
+            notify={notify}
+            me={me}
+            isUsingAuth={isUsingAuth}
+          />
         ),
         headerOrientation: HANDLE_VERTICAL,
       },
@@ -157,6 +164,7 @@ class FluxQueryMaker extends PureComponent<Props, State> {
         onSetIsWizardActive={this.handleSetIsWizardActive}
         onAddToScript={this.handleAddToScript}
         me={me}
+        isUsingAuth={isUsingAuth}
       >
         <Threesizer
           orientation={HANDLE_VERTICAL}

@@ -55,6 +55,7 @@ interface Props {
   templates: Template[]
   source: Source
   me: Me
+  isUsingAuth: boolean
   onCancel: () => void
   onCreate?: (template: Template) => Promise<any>
   onUpdate?: (template: Template) => Promise<any>
@@ -111,7 +112,7 @@ class TemplateVariableEditor extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {source, me, onCancel, notify, templates} = this.props
+    const {source, me, onCancel, notify, templates, isUsingAuth} = this.props
     const {nextTemplate, isNew} = this.state
     const TemplateBuilder = this.templateBuilder
 
@@ -165,6 +166,7 @@ class TemplateVariableEditor extends PureComponent<Props, State> {
               templates={templates}
               source={source}
               me={me}
+              isUsingAuth={isUsingAuth}
               onUpdateTemplate={this.handleUpdateTemplate}
               notify={notify}
               onUpdateDefaultTemplateValue={

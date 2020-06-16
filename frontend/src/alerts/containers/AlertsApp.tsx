@@ -1,4 +1,5 @@
 import React, {PureComponent} from 'react'
+import {connect} from 'react-redux'
 
 import PageSpinner from 'src/shared/components/PageSpinner'
 import AlertsTable from 'src/alerts/components/AlertsTable'
@@ -15,7 +16,7 @@ import moment from 'moment'
 
 import {timeRanges} from 'src/shared/data/timeRanges'
 
-import {Source, TimeRange} from 'src/types'
+import {Source, TimeRange, Me} from 'src/types'
 import {Alert} from '../../types/alerts'
 
 interface Props {
@@ -23,6 +24,7 @@ interface Props {
   timeRange: TimeRange
   isWidget: boolean
   limit: number
+  me: Me
 }
 
 interface State {
@@ -118,7 +120,8 @@ class AlertsApp extends PureComponent<Props, State> {
     getAlerts(
       this.props.source.links.proxy,
       this.state.timeRange,
-      this.state.limit * this.state.limitMultiplier
+      this.state.limit * this.state.limitMultiplier,
+      this.props.source.telegraf
     ).then(resp => {
       const results = []
 
@@ -191,4 +194,5 @@ class AlertsApp extends PureComponent<Props, State> {
   }
 }
 
-export default AlertsApp
+const mapStateToProps = ({auth: {me}}) => ({me})
+export default connect(mapStateToProps, null)(AlertsApp)

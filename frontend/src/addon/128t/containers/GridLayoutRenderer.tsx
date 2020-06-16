@@ -41,9 +41,18 @@ import {
 
 import {SALT_FULL_DIRECTORY, SALT_MIN_DIRECTORY} from 'src/addon/128t/constants'
 
+// Middleware
+import {
+  setLocalStorage,
+  getLocalStorage,
+} from 'src/shared/middleware/localStorage'
+
+// Authorized
+import {ADMIN_ROLE, SUPERADMIN_ROLE} from 'src/auth/Authorized'
+
 //type
 import {
-  Router,
+  RouterNode,
   TopSource,
   TopSession,
   SaltDirFileInfo,
@@ -77,21 +86,21 @@ interface Props {
   auth: Auth
   notify: (message: Notification | NotificationFunc) => void
   layout: cellLayoutInfo[]
-  focusedAssetId: string
-  routersData: Router[]
+  focusedNodeName: string
+  routerNodesData: RouterNode[]
   topSessionsData: TopSession[]
   topSourcesData: TopSource[]
   isSwanSdplexStatus: boolean
   onClickTableRow: (
     topSources: TopSource[],
     topSessions: TopSession[],
-    focusedAssetId: string
+    focusedNodeName: string
   ) => () => void
   onPositionChange: (cellsLayout: cellLayoutInfo[]) => void
   onClickMapMarker: (
     topSources: TopSource[],
     topSessions: TopSession[],
-    focusedAssetId: string
+    focusedNodeName: string
   ) => void
   addons: Addon[]
 }
@@ -109,6 +118,8 @@ interface State {
   sendToDirectory: string
   routerPopupPosition: {top: number; right: number}
   oncueData: OncueData
+  routerDataPopupAutoRefresh: number
+  selectedNodeName: string
 }
 
 @ErrorHandling
@@ -119,6 +130,8 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   private DEFAULT_COLLECTOR_DIRECTORY = '/srv/salt/prod/dmt/'
   private refDataPopup = React.createRef<HTMLDivElement>()
   private routertableRef = React.createRef<HTMLDivElement>()
+
+  private timerOncueData: NodeJS.Timer
 
   constructor(props: Props) {
     super(props)
@@ -137,21 +150,23 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       routerPopupPosition: {top: 0, right: 0},
       oncueData: {
         isOncue: false,
-        router: '',
+        nodeName: '',
         focusedInProtocolModule: '',
         focusedInDeviceConnection: '',
         oncueService: null,
       },
+      routerDataPopupAutoRefresh: 0,
+      selectedNodeName: '',
     }
   }
 
   public componentWillMount() {
-    const checkRoutersData = this.props.routersData.map(router => {
-      return {
-        assetId: router.assetId,
-        isCheck: false,
-      }
+    const checkRoutersData = this.props.routerNodesData.map(router => {
+      return {group: router.group, nodeName: router.nodeName, isCheck: false}
     })
+
+    const addon = getLocalStorage('addon')
+    const oncueAutoRefresh: number = _.get(addon, 'T128.oncueAutoRefresh', 0)
 
     const {addons} = this.props
     const oncue = _.find(addons, addon => addon.name === 'oncue')
@@ -163,6 +178,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
         ...this.state.oncueData,
         isOncue,
       },
+      routerDataPopupAutoRefresh: oncueAutoRefresh,
     })
   }
 
@@ -172,6 +188,36 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     } catch (e) {
       console.error(e)
     }
+  }
+
+  public componentDidUpdate(__: Props, prevState: State) {
+    if (
+      prevState.routerDataPopupAutoRefresh !==
+      this.state.routerDataPopupAutoRefresh
+    ) {
+      const {routerDataPopupAutoRefresh} = this.state
+
+      const addon = getLocalStorage('addon')
+      setLocalStorage('addon', {
+        ...addon,
+        T128: {
+          ...addon.T128,
+          oncueAutoRefresh: routerDataPopupAutoRefresh,
+        },
+      })
+
+      if (routerDataPopupAutoRefresh) {
+        this.timerOncueData = setInterval(async () => {
+          await this.fetchOncueServiceStatus()
+        }, routerDataPopupAutoRefresh)
+      } else {
+        this.cleanIntervalOncueServiceStatus()
+      }
+    }
+  }
+
+  public componentWillUnmount() {
+    this.cleanIntervalOncueServiceStatus()
   }
 
   public getRunnerSaltCmdDirectoryData = async (
@@ -256,35 +302,44 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   }
 
   public getSaltDirectoryItems = async () => {
-    const {addons, notify} = this.props
-    const salt = addons.find(addon => addon.name === 'salt')
+    try {
+      const {auth, addons, notify} = this.props
+      const salt = addons.find(addon => addon.name === 'salt')
+      const meRole = _.get(auth, 'me.role', '')
 
-    const getFirmwareData: SaltDirFile = await this.getRunnerSaltCmdDirectoryData(
-      salt.url,
-      salt.token,
-      SALT_FULL_DIRECTORY.FIRMWARE,
-      SALT_MIN_DIRECTORY.FIRMWARE
-    )
+      if (meRole !== SUPERADMIN_ROLE && meRole !== ADMIN_ROLE) {
+        return
+      }
 
-    const getConfigData: SaltDirFile = await this.getRunnerSaltCmdDirectoryData(
-      salt.url,
-      salt.token,
-      SALT_FULL_DIRECTORY.CONFIG,
-      SALT_MIN_DIRECTORY.CONFIG
-    )
+      const getFirmwareData: SaltDirFile = await this.getRunnerSaltCmdDirectoryData(
+        salt.url,
+        salt.token,
+        SALT_FULL_DIRECTORY.FIRMWARE,
+        SALT_MIN_DIRECTORY.FIRMWARE
+      )
 
-    const isAccess = [getFirmwareData, getConfigData]
-      .map(obj => obj.status === NETWORK_ACCESS.SUCCESS)
-      .includes(true)
+      const getConfigData: SaltDirFile = await this.getRunnerSaltCmdDirectoryData(
+        salt.url,
+        salt.token,
+        SALT_FULL_DIRECTORY.CONFIG,
+        SALT_MIN_DIRECTORY.CONFIG
+      )
 
-    if (!isAccess) {
-      notify(notify_128TGetMasterDirFiles_Failed('All Directory'))
+      const isAccess = [getFirmwareData, getConfigData]
+        .map(obj => obj.status === NETWORK_ACCESS.SUCCESS)
+        .includes(true)
+
+      if (!isAccess) {
+        notify(notify_128TGetMasterDirFiles_Failed('All Directory'))
+      }
+
+      this.setState({
+        firmware: getFirmwareData,
+        config: getConfigData,
+      })
+    } catch (error) {
+      console.error(error)
     }
-
-    this.setState({
-      firmware: getFirmwareData,
-      config: getConfigData,
-    })
   }
 
   public handleRoutersAllCheck = (): void => {
@@ -301,16 +356,21 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
         return checkRouter
       })
     }
+
     this.setState({
       isRoutersAllCheck: !isRoutersAllCheck,
       checkRouters: [...checkRouters],
     })
   }
 
-  public handleRouterCheck = ({router}: {router: Router}): void => {
+  public handleRouterCheck = ({routerNode}: {routerNode: RouterNode}): void => {
     const {checkRouters} = this.state
     const index = checkRouters.indexOf(
-      checkRouters.find(checkRouter => checkRouter.assetId === router.assetId)
+      checkRouters.find(
+        checkRouter =>
+          checkRouter.nodeName === routerNode.nodeName &&
+          checkRouter.group === routerNode.group
+      )
     )
 
     checkRouters[index].isCheck
@@ -336,10 +396,10 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     const {
       auth,
       layout,
-      routersData,
+      routerNodesData,
       isSwanSdplexStatus,
       onClickTableRow,
-      focusedAssetId,
+      focusedNodeName,
       topSourcesData,
       topSessionsData,
       onClickMapMarker,
@@ -354,10 +414,11 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       isRouterDataPopupVisible,
       routerPopupPosition,
       oncueData,
+      routerDataPopupAutoRefresh,
     } = this.state
 
-    const checkRouterData: Router[] = routersData.map(
-      (router, i): Router => {
+    const checkRouterData: RouterNode[] = routerNodesData.map(
+      (router, i): RouterNode => {
         router.isCheck = checkRouters[i].isCheck
         return router
       }
@@ -387,9 +448,9 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
           >
             <RouterTable
               me={auth.me}
-              routers={checkRouterData}
+              routerNodes={checkRouterData}
               onClickTableRow={onClickTableRow}
-              focusedAssetId={focusedAssetId}
+              focusedNodeName={focusedNodeName}
               isEditable={isSwanSdplexStatus}
               cellTextColor={this.cellTextColor}
               cellBackgroundColor={this.cellBackgroundColor}
@@ -401,7 +462,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
               firmware={firmware}
               config={config}
               isRouterDataPopupVisible={isRouterDataPopupVisible}
-              handleOnClickRouterName={this.onClickRouterName}
+              handleOnClickNodeName={this.onClickNodeName}
               hanldeOnDismiss={this.handleDataPopupClose}
               routerPopupPosition={routerPopupPosition}
               oncueData={oncueData}
@@ -409,13 +470,20 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
               handleOnClickDeviceConnectionsRow={
                 this.onClickDeviceConnectionsRow
               }
+              routerDataPopupAutoRefresh={routerDataPopupAutoRefresh}
+              onChooseRouterDataPopupAutoRefresh={
+                this.onChooseRouterDataPopupAutoRefresh
+              }
+              onManualRouterDataPopupRefresh={
+                this.handleOnManualRouterDataPopupRefresh
+              }
             />
           </div>
           <div key="leafletMap" className="dash-graph" style={this.cellStyle}>
             <RouterMaps
               layout={layout}
-              routers={routersData}
-              focusedAssetId={focusedAssetId}
+              routerNodes={routerNodesData}
+              focusedNodeName={focusedNodeName}
               onClickMapMarker={onClickMapMarker}
               isEditable={isSwanSdplexStatus}
               cellTextColor={this.cellTextColor}
@@ -467,6 +535,67 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     )
   }
 
+  private handleOnManualRouterDataPopupRefresh = () => {
+    event.stopPropagation()
+    this.onManualRouterDataPopupRefresh()
+  }
+
+  private cleanIntervalOncueServiceStatus = () => {
+    clearInterval(this.timerOncueData)
+  }
+
+  private fetchOncueServiceStatus = async (nodeName?: string) => {
+    const {addons} = this.props
+    const {selectedNodeName} = this.state
+    const salt = addons.find(addon => addon.name === 'salt')
+    const oncue = addons.find(addon => addon.name === 'oncue')
+    nodeName = nodeName ? nodeName : selectedNodeName
+    const response = await getOncueServiceStatus(
+      salt.url,
+      salt.token,
+      nodeName,
+      oncue.url
+    )
+
+    if (response) {
+      this.setState({
+        oncueData: {
+          ...this.state.oncueData,
+          nodeName: nodeName,
+          oncueService: response,
+          protocolModule: response.protocolModule,
+          deviceConnection: response.protocolModule[0].deviceConnection,
+          connection: response.protocolModule[0].deviceConnection[0].connection,
+          focusedInProtocolModule: response.protocolModule[0].name,
+          focusedInDeviceConnection:
+            response.protocolModule[0].deviceConnection[0].url,
+        },
+      })
+    } else {
+      this.setState({
+        oncueData: {
+          ...this.state.oncueData,
+          nodeName: nodeName,
+          oncueService: null,
+          protocolModule: [],
+          deviceConnection: [],
+          connection: [],
+          focusedInProtocolModule: '',
+          focusedInDeviceConnection: '',
+        },
+      })
+    }
+  }
+
+  private onChooseRouterDataPopupAutoRefresh = (milliseconds: number) => {
+    this.setState({routerDataPopupAutoRefresh: milliseconds})
+  }
+
+  private onManualRouterDataPopupRefresh = _.debounce(
+    this.fetchOncueServiceStatus,
+    1000
+  )
+
   private onClickProtocolModulesRow = (name: string): void => {
     this.setState({
       oncueData: {
@@ -497,71 +626,38 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     })
   }
 
-  private handleOnClickTableRow = (router: Router) => {
-    const {topSources, topSessions, assetId} = router
-    return this.props.onClickTableRow(topSources, topSessions, assetId)()
+  private handleOnClickTableRow = (routerNode: RouterNode) => {
+    const {topSources, topSessions, nodeName} = routerNode
+    return this.props.onClickTableRow(topSources, topSessions, nodeName)()
   }
-  private onClickRouterName = async (data: {
+
+  private onClickNodeName = async (data: {
     _event: MouseEvent<HTMLElement>
-    router: Router
+    routerNode: RouterNode
   }) => {
     if (this.state.oncueData.isOncue === false) {
-      this.handleOnClickTableRow(data.router)
+      this.handleOnClickTableRow(data.routerNode)
       return
     }
 
-    const {_event, router} = data
-    const {assetId} = router
+    const {_event, routerNode} = data
+    const {nodeName} = routerNode
 
-    this[assetId] = _event.target
-    this[assetId].ref = this.refDataPopup
+    this[nodeName] = _event.target
+    this[nodeName].ref = this.refDataPopup
 
-    const routerPosition = this[assetId].getBoundingClientRect()
+    const routerPosition = this[nodeName].getBoundingClientRect()
 
     const {top, right} = routerPosition
-    const {parentTop, parentLeft} = this.getParentPosition(this[assetId])
+    const {parentTop, parentLeft} = this.getParentPosition(this[nodeName])
 
-    const {addons} = this.props
-    const salt = addons.find(addon => addon.name === 'salt')
-    const oncue = addons.find(addon => addon.name === 'oncue')
+    await this.fetchOncueServiceStatus(nodeName)
 
-    const response = await getOncueServiceStatus(
-      salt.url,
-      salt.token,
-      assetId,
-      oncue.url
-    )
+    this.setState({
+      routerPopupPosition: {top: top - parentTop, right: right - parentLeft},
+      selectedNodeName: nodeName,
+    })
 
-    if (response != null) {
-      this.setState({
-        routerPopupPosition: {top: top - parentTop, right: right - parentLeft},
-        oncueData: {
-          ...this.state.oncueData,
-          router: assetId,
-          oncueService: response,
-          protocolModule: response.protocolModule,
-          deviceConnection: response.protocolModule[0].deviceConnection,
-          connection: response.protocolModule[0].deviceConnection[0].connection,
-          focusedInProtocolModule: response.protocolModule[0].name,
-          focusedInDeviceConnection:
-            response.protocolModule[0].deviceConnection[0].url,
-        },
-      })
-    } else {
-      this.setState({
-        routerPopupPosition: {top: top - parentTop, right: right - parentLeft},
-        oncueData: {
-          ...this.state.oncueData,
-          router: assetId,
-          oncueService: null,
-          protocolModule: [],
-          deviceConnection: [],
-          connection: [],
-          focusedInProtocolModule: '',
-          focusedInDeviceConnection: '',
-        },
-      })
-    }
     this.handleDataPopupOpen()
   }
 
@@ -591,11 +687,12 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   }
 
   private handleDataPopupClose = () => {
+    this.cleanIntervalOncueServiceStatus()
     this.setState({
       isRouterDataPopupVisible: false,
       oncueData: {
         ...this.state.oncueData,
-        router: '',
+        nodeName: '',
         oncueService: null,
         protocolModule: [],
         deviceConnection: [],
@@ -657,7 +754,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
                   children={
                     <ol className="list-section--row list-section--row-first list-section--row-last">
                       {checkedList.map(list => (
-                        <li key={list.assetId}>{list.assetId}</li>
+                        <li key={list.nodeName}>{list.nodeName}</li>
                       ))}
                     </ol>
                   }
@@ -703,7 +800,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
 
     const checkedHostName: string = checkRouters
       .filter(router => router.isCheck === true)
-      .map(router => router.assetId)
+      .map(router => router.nodeName)
       .toString()
 
     const chooseMenuInfo: SaltDirFileInfo = this.state[focusedBtn].files.filter(
@@ -792,6 +889,7 @@ const mapStateToProps = ({auth}) => ({
 
 const mdtp = {
   notify: notifyAction,
+  getRunnerSaltCmdDirectory: getRunnerSaltCmdDirectory,
 }
 
 export default connect(mapStateToProps, mdtp)(GridLayoutRenderer)

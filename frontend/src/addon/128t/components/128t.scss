@@ -353,6 +353,25 @@
 .datapopup-table--container {
   display: flex;
   flex-direction: column;
+  .data-table-heading {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 0 10px 0px;
+  }
+
+  .button-sm,
+  .dropdown.dropdown-sm {
+    height: 25px;
+  }
+
+  // .button-sm,
+  .button-sm {
+    font-size: 12px;
+    .button-icon {
+      font-size: 12px;
+      transform: translateY(-20%);
+    }
+  }
 
   .datapopup-table--section {
     display: flex;
@@ -566,7 +585,14 @@ $Roles: conductor, combo;
   color: $g19-ghost;
   border: 2px solid $s-orange;
   border-radius: 5px;
-  transform: translateY(42px);
+  position: relative;
+  z-index: 0;
+
+  &.group-node {
+    .hosts-table-title {
+      padding: 2px 8px;
+    }
+  }
 
   &.unconnected {
     border-color: #f1f1f1;
@@ -659,4 +685,9 @@ $Roles: conductor, combo;
 
 #swan-topology-graph-wrapper {
   height: 100%;
+
+  foreignObject {
+    transform: translate(-50%, -50%);
+    overflow: visible;
+  }
 }

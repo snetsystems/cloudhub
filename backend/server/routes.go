@@ -134,7 +134,7 @@ func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			var emitURL string
 			switch name {
 			case "salt":
-				emitURL = "/cloudhub/v1/salt"
+				emitURL = "/cloudhub/v1/proxy/salt"
 			default:
 				emitURL = url
 			}
