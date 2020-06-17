@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/bouk/httprouter"
-	"github.com/snetsystems/cloudhub/backend/v2"
+	platform "github.com/snetsystems/cloudhub/backend/v2"
 )
 
 type cellV2Links struct {

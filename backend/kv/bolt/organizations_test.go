@@ -7,7 +7,7 @@ import (
 	gocmp "github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
-	"github.com/snetsystems/cloudhub/backend/bolt"
+	"github.com/snetsystems/cloudhub/backend/kv/bolt"
 	"github.com/snetsystems/cloudhub/backend/roles"
 )
 

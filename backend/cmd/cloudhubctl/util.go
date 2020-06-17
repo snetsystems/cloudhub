@@ -10,7 +10,7 @@ import (
 	"text/tabwriter"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
-	"github.com/snetsystems/cloudhub/backend/bolt"
+	"github.com/snetsystems/cloudhub/backend/kv/bolt"
 	"github.com/snetsystems/cloudhub/backend/mocks"
 )
 

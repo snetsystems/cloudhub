@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"sort"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
@@ -42,7 +43,7 @@ func newMeResponse(usr *cloudhub.User, org string) meResponse {
 	name := "me"
 	if usr != nil {
 		base = fmt.Sprintf("/cloudhub/v1/organizations/%s/users", org)
-		name = PathEscape(fmt.Sprintf("%d", usr.ID))
+		name = url.PathEscape(fmt.Sprintf("%d", usr.ID))
 	}
 
 	return meResponse{

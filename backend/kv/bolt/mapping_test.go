@@ -127,7 +127,7 @@ func TestMappingStore_All(t *testing.T) {
 			name: "simple",
 			fields: fields{
 				mappings: []*cloudhub.Mapping{
-					&cloudhub.Mapping{
+					{
 						Organization:         "0",
 						Provider:             "google",
 						Scheme:               "ldap",
@@ -137,13 +137,13 @@ func TestMappingStore_All(t *testing.T) {
 			},
 			wants: wants{
 				mappings: []cloudhub.Mapping{
-					cloudhub.Mapping{
+					{
 						Organization:         "0",
 						Provider:             "google",
 						Scheme:               "ldap",
 						ProviderOrganization: "*",
 					},
-					cloudhub.Mapping{
+					{
 						Organization:         "default",
 						Provider:             "*",
 						Scheme:               "*",
@@ -205,13 +205,13 @@ func TestMappingStore_Delete(t *testing.T) {
 			name: "simple",
 			fields: fields{
 				mappings: []*cloudhub.Mapping{
-					&cloudhub.Mapping{
+					{
 						Organization:         "default",
 						Provider:             "*",
 						Scheme:               "*",
 						ProviderOrganization: "*",
 					},
-					&cloudhub.Mapping{
+					{
 						Organization:         "0",
 						Provider:             "google",
 						Scheme:               "ldap",
@@ -236,13 +236,13 @@ func TestMappingStore_Delete(t *testing.T) {
 			name: "mapping not found",
 			fields: fields{
 				mappings: []*cloudhub.Mapping{
-					&cloudhub.Mapping{
+					{
 						Organization:         "default",
 						Provider:             "*",
 						Scheme:               "*",
 						ProviderOrganization: "*",
 					},
-					&cloudhub.Mapping{
+					{
 						Organization:         "0",
 						Provider:             "google",
 						Scheme:               "ldap",
@@ -312,13 +312,13 @@ func TestMappingStore_Get(t *testing.T) {
 			name: "simple",
 			fields: fields{
 				mappings: []*cloudhub.Mapping{
-					&cloudhub.Mapping{
+					{
 						Organization:         "default",
 						Provider:             "*",
 						Scheme:               "*",
 						ProviderOrganization: "*",
 					},
-					&cloudhub.Mapping{
+					{
 						Organization:         "0",
 						Provider:             "google",
 						Scheme:               "ldap",
@@ -344,13 +344,13 @@ func TestMappingStore_Get(t *testing.T) {
 			name: "mapping not found",
 			fields: fields{
 				mappings: []*cloudhub.Mapping{
-					&cloudhub.Mapping{
+					{
 						Organization:         "default",
 						Provider:             "*",
 						Scheme:               "*",
 						ProviderOrganization: "*",
 					},
-					&cloudhub.Mapping{
+					{
 						Organization:         "0",
 						Provider:             "google",
 						Scheme:               "ldap",
@@ -417,13 +417,13 @@ func TestMappingStore_Update(t *testing.T) {
 			name: "simple",
 			fields: fields{
 				mappings: []*cloudhub.Mapping{
-					&cloudhub.Mapping{
+					{
 						Organization:         "default",
 						Provider:             "*",
 						Scheme:               "*",
 						ProviderOrganization: "*",
 					},
-					&cloudhub.Mapping{
+					{
 						Organization:         "0",
 						Provider:             "google",
 						Scheme:               "ldap",

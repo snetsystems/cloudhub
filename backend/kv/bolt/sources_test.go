@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
-	"github.com/snetsystems/cloudhub/backend/bolt"
+	"github.com/snetsystems/cloudhub/backend/kv/bolt"
 )
 
 // Ensure an SourceStore can store, retrieve, update, and delete sources.
@@ -20,7 +20,7 @@ func TestSourceStore(t *testing.T) {
 	s := c.SourcesStore
 
 	srcs := []cloudhub.Source{
-		cloudhub.Source{
+		{
 			Name:         "Of Truth",
 			Type:         "influx",
 			Username:     "marty",
@@ -30,7 +30,7 @@ func TestSourceStore(t *testing.T) {
 			Organization: "1337",
 			DefaultRP:    "pineapple",
 		},
-		cloudhub.Source{
+		{
 			Name:         "HipToBeSquare",
 			Type:         "influx",
 			Username:     "calvinklein",
@@ -39,7 +39,7 @@ func TestSourceStore(t *testing.T) {
 			Default:      true,
 			Organization: "1337",
 		},
-		cloudhub.Source{
+		{
 			Name:               "HipToBeSquare",
 			Type:               "influx",
 			Username:           "calvinklein",

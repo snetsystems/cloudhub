@@ -19,7 +19,7 @@ func TestServerStore(t *testing.T) {
 	s := c.ServersStore
 
 	srcs := []cloudhub.Server{
-		cloudhub.Server{
+		{
 			Name:               "Of Truth",
 			SrcID:              10,
 			Username:           "marty",
@@ -29,7 +29,7 @@ func TestServerStore(t *testing.T) {
 			Organization:       "133",
 			InsecureSkipVerify: true,
 		},
-		cloudhub.Server{
+		{
 			Name:               "HipToBeSquare",
 			SrcID:              12,
 			Username:           "calvinklein",

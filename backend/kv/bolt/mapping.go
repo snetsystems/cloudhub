@@ -6,7 +6,7 @@ import (
 
 	"github.com/boltdb/bolt"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
-	"github.com/snetsystems/cloudhub/backend/bolt/internal"
+	"github.com/snetsystems/cloudhub/backend/kv/bolt/internal"
 )
 
 // Ensure MappingsStore implements cloudhub.MappingsStore.

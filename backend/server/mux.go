@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"path"
 	"strconv"
 	"strings"
@@ -29,7 +30,7 @@ type MuxOpts struct {
 	Auth          oauth2.Authenticator // Auth is used to authenticate and authorize
 	ProviderFuncs []func(func(oauth2.Provider, oauth2.Mux))
 	StatusFeedURL string            // JSON Feed URL for the client Status page News Feed
-	CustomLinks   map[string]string // Any custom external links for client's User menu
+	CustomLinks   []CustomLink		// Any custom external links for client's User menu
 	PprofEnabled  bool              // Mount pprof routes for profiling
 	DisableGZip   bool              // Optionally disable gzip.
 	AddonURLs     map[string]string // URLs for using in Addon Features, as passed in via CLI/ENV
@@ -387,7 +388,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 		allRoutes.LogoutLink = path.Join(opts.Basepath, "/oauth/logout")
 
 		// Create middleware that redirects to the appropriate provider logout
-		router.GET("/oauth/logout", Logout("/", opts.Basepath, allRoutes.AuthRoutes))
+		router.GET("/oauth/logout", logout("/", opts.Basepath, allRoutes.AuthRoutes))
 		out = Logger(opts.Logger, FlushingHandler(auth))
 	} else {
 		out = Logger(opts.Logger, FlushingHandler(router))
@@ -401,7 +402,7 @@ func AuthAPI(opts MuxOpts, router cloudhub.Router) (http.Handler, AuthRoutes) {
 	routes := AuthRoutes{}
 	for _, pf := range opts.ProviderFuncs {
 		pf(func(p oauth2.Provider, m oauth2.Mux) {
-			urlName := PathEscape(strings.ToLower(p.Name()))
+			urlName := url.PathEscape(strings.ToLower(p.Name()))
 
 			loginPath := path.Join("/oauth", urlName, "login")
 			logoutPath := path.Join("/oauth", urlName, "logout")

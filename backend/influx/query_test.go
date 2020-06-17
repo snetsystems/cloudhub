@@ -24,19 +24,50 @@ func TestConvert(t *testing.T) {
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
 				Fields: []cloudhub.Field{
-					cloudhub.Field{
+					{
 						Value: "usage_idle",
 						Type:  "field",
 					},
-					cloudhub.Field{
+					{
 						Value: "usage_guest_nice",
 						Type:  "field",
 					},
-					cloudhub.Field{
+					{
 						Value: "usage_system",
 						Type:  "field",
 					},
-					cloudhub.Field{
+					{
+						Value: "usage_guest",
+						Type:  "field",
+					},
+				},
+				Tags: map[string][]string{},
+				GroupBy: cloudhub.GroupBy{
+					Tags: []string{},
+				},
+			},
+		},
+		{
+			name:     "Test upperDashboardTime",
+			influxQL: `SELECT "usage_idle", "usage_guest_nice", "usage_system", "usage_guest" FROM "telegraf"."autogen"."cpu" WHERE time > :dashboardTime: AND time < :upperDashboardTime:`,
+			want: cloudhub.QueryConfig{
+				Database:        "telegraf",
+				Measurement:     "cpu",
+				RetentionPolicy: "autogen",
+				Fields: []cloudhub.Field{
+					{
+						Value: "usage_idle",
+						Type:  "field",
+					},
+					{
+						Value: "usage_guest_nice",
+						Type:  "field",
+					},
+					{
+						Value: "usage_system",
+						Type:  "field",
+					},
+					{
 						Value: "usage_guest",
 						Type:  "field",
 					},
@@ -55,7 +86,7 @@ func TestConvert(t *testing.T) {
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
 				Fields: []cloudhub.Field{
-					cloudhub.Field{
+					{
 						Value: "mean",
 						Type:  "func",
 						Args: []cloudhub.Field{
@@ -65,7 +96,7 @@ func TestConvert(t *testing.T) {
 							},
 						},
 					},
-					cloudhub.Field{
+					{
 						Value: "median",
 						Type:  "func",
 						Args: []cloudhub.Field{
@@ -75,7 +106,7 @@ func TestConvert(t *testing.T) {
 							},
 						},
 					},
-					cloudhub.Field{
+					{
 						Value: "count",
 						Type:  "func",
 						Args: []cloudhub.Field{
@@ -85,7 +116,7 @@ func TestConvert(t *testing.T) {
 							},
 						},
 					},
-					cloudhub.Field{
+					{
 						Value: "mean",
 						Type:  "func",
 						Args: []cloudhub.Field{
@@ -134,12 +165,12 @@ func TestConvert(t *testing.T) {
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
 				Fields: []cloudhub.Field{
-					cloudhub.Field{
+					{
 						Value: "usage_user",
 						Type:  "field",
 					},
 				},
-				Tags: map[string][]string{"host": []string{"myhost"}},
+				Tags: map[string][]string{"host": {"myhost"}},
 				GroupBy: cloudhub.GroupBy{
 					Time: "",
 					Tags: []string{},
@@ -170,12 +201,12 @@ func TestConvert(t *testing.T) {
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
 				Fields: []cloudhub.Field{
-					cloudhub.Field{
+					{
 						Value: "usage_user",
 						Type:  "field",
 					},
 				},
-				Tags: map[string][]string{"host": []string{"myhost"}},
+				Tags: map[string][]string{"host": {"myhost"}},
 				GroupBy: cloudhub.GroupBy{
 					Time: "",
 					Tags: []string{},
@@ -195,7 +226,7 @@ func TestConvert(t *testing.T) {
 				RetentionPolicy: "autogen",
 				Tags:            map[string][]string{},
 				Fields: []cloudhub.Field{
-					cloudhub.Field{
+					{
 						Value: "usage_user",
 						Type:  "field",
 					},
@@ -242,7 +273,7 @@ func TestConvert(t *testing.T) {
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
 				Fields: []cloudhub.Field{
-					cloudhub.Field{
+					{
 						Value: "usage_user",
 						Type:  "field",
 					},
@@ -262,12 +293,12 @@ func TestConvert(t *testing.T) {
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
 				Fields: []cloudhub.Field{
-					cloudhub.Field{
+					{
 						Value: "usage_user",
 						Type:  "field",
 					},
 				},
-				Tags: map[string][]string{"host": []string{"myhost"}},
+				Tags: map[string][]string{"host": {"myhost"}},
 				GroupBy: cloudhub.GroupBy{
 					Time: "",
 					Tags: []string{},
@@ -287,16 +318,16 @@ func TestConvert(t *testing.T) {
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
 				Fields: []cloudhub.Field{
-					cloudhub.Field{
+					{
 						Value: "usage_user",
 						Type:  "field",
 					},
 				},
 				Tags: map[string][]string{
-					"host": []string{
+					"host": {
 						"myhost",
 					},
-					"cpu": []string{
+					"cpu": {
 						"cpu-total",
 					},
 				},
@@ -331,14 +362,14 @@ func TestConvert(t *testing.T) {
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
 				Fields: []cloudhub.Field{
-					cloudhub.Field{
+					{
 						Value: "usage_user",
 						Type:  "field",
 					},
 				},
 				Tags: map[string][]string{
-					"host":  []string{"myhost", "yourhost"},
-					"these": []string{"those"},
+					"host":  {"myhost", "yourhost"},
+					"these": {"those"},
 				},
 				GroupBy: cloudhub.GroupBy{
 					Time: "",
@@ -358,31 +389,31 @@ func TestConvert(t *testing.T) {
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
 				Fields: []cloudhub.Field{
-					cloudhub.Field{
+					{
 						Value: "usage_idle",
 						Type:  "field",
 					},
-					cloudhub.Field{
+					{
 						Value: "usage_guest_nice",
 						Type:  "field",
 					},
-					cloudhub.Field{
+					{
 						Value: "usage_system",
 						Type:  "field",
 					},
-					cloudhub.Field{
+					{
 						Value: "usage_guest",
 						Type:  "field",
 					},
 				},
 				Tags: map[string][]string{
-					"host": []string{
+					"host": {
 						"dev-052978d6-us-east-2-meta-0",
 						"dev-052978d6-us-east-2-data-5",
 						"dev-052978d6-us-east-2-data-4",
 						"dev-052978d6-us-east-2-data-3",
 					},
-					"cpu": []string{
+					"cpu": {
 						"cpu-total",
 						"cpu0",
 					},
@@ -405,31 +436,31 @@ func TestConvert(t *testing.T) {
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
 				Fields: []cloudhub.Field{
-					cloudhub.Field{
+					{
 						Value: "usage_idle",
 						Type:  "field",
 					},
-					cloudhub.Field{
+					{
 						Value: "usage_guest_nice",
 						Type:  "field",
 					},
-					cloudhub.Field{
+					{
 						Value: "usage_system",
 						Type:  "field",
 					},
-					cloudhub.Field{
+					{
 						Value: "usage_guest",
 						Type:  "field",
 					},
 				},
 				Tags: map[string][]string{
-					"host": []string{
+					"host": {
 						"dev-052978d6-us-east-2-meta-0",
 						"dev-052978d6-us-east-2-data-5",
 						"dev-052978d6-us-east-2-data-4",
 						"dev-052978d6-us-east-2-data-3",
 					},
-					"cpu": []string{
+					"cpu": {
 						"cpu-total",
 						"cpu0",
 					},
@@ -452,7 +483,7 @@ func TestConvert(t *testing.T) {
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
 				Fields: []cloudhub.Field{
-					cloudhub.Field{
+					{
 						Value: "mean",
 						Type:  "func",
 						Args: []cloudhub.Field{
@@ -483,7 +514,7 @@ func TestConvert(t *testing.T) {
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
 				Fields: []cloudhub.Field{
-					cloudhub.Field{
+					{
 						Value: "mean",
 						Type:  "func",
 						Args: []cloudhub.Field{
@@ -514,7 +545,7 @@ func TestConvert(t *testing.T) {
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
 				Fields: []cloudhub.Field{
-					cloudhub.Field{
+					{
 						Value: "mean",
 						Type:  "func",
 						Alias: "mean_usage_idle",
@@ -546,7 +577,7 @@ func TestConvert(t *testing.T) {
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
 				Fields: []cloudhub.Field{
-					cloudhub.Field{
+					{
 						Value: "percentile",
 						Type:  "func",
 						Alias: "mean_usage_idle",
@@ -555,7 +586,7 @@ func TestConvert(t *testing.T) {
 								Value: "usage_idle",
 								Type:  "field",
 							},
-							cloudhub.Field{
+							{
 								Value: "3.14",
 								Type:  "number",
 							},
@@ -580,7 +611,7 @@ func TestConvert(t *testing.T) {
 			want: cloudhub.QueryConfig{
 				Measurement: "h2o_feet",
 				Fields: []cloudhub.Field{
-					cloudhub.Field{
+					{
 						Value: "top",
 						Type:  "func",
 						Args: []cloudhub.Field{
@@ -588,11 +619,11 @@ func TestConvert(t *testing.T) {
 								Value: "water_level",
 								Type:  "field",
 							},
-							cloudhub.Field{
+							{
 								Value: "location",
 								Type:  "field",
 							},
-							cloudhub.Field{
+							{
 								Value: "2",
 								Type:  "integer",
 							},
@@ -612,7 +643,7 @@ func TestConvert(t *testing.T) {
 			want: cloudhub.QueryConfig{
 				Measurement: "h2o_feet",
 				Fields: []cloudhub.Field{
-					cloudhub.Field{
+					{
 						Value: "count",
 						Type:  "func",
 						Args: []cloudhub.Field{
@@ -636,7 +667,7 @@ func TestConvert(t *testing.T) {
 			want: cloudhub.QueryConfig{
 				Measurement: "h2o_feet",
 				Fields: []cloudhub.Field{
-					cloudhub.Field{
+					{
 						Value: "count",
 						Type:  "func",
 						Alias: "count_water",
@@ -661,7 +692,7 @@ func TestConvert(t *testing.T) {
 			want: cloudhub.QueryConfig{
 				Measurement: "h2o_feet",
 				Fields: []cloudhub.Field{
-					cloudhub.Field{
+					{
 						Value: "count",
 						Type:  "func",
 						Args: []cloudhub.Field{
@@ -687,7 +718,7 @@ func TestConvert(t *testing.T) {
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
 				Fields: []cloudhub.Field{
-					cloudhub.Field{
+					{
 						Value: "mean",
 						Type:  "func",
 						Args: []cloudhub.Field{
@@ -718,7 +749,7 @@ func TestConvert(t *testing.T) {
 				Measurement:     "cpu",
 				RetentionPolicy: "autogen",
 				Fields: []cloudhub.Field{
-					cloudhub.Field{
+					{
 						Value: "mean",
 						Type:  "func",
 						Args: []cloudhub.Field{

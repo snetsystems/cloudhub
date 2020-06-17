@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"os"
 
 	"github.com/jessevdk/go-flags"
@@ -39,12 +39,9 @@ func main() {
 	}
 
 	if srv.ShowVersion {
-		log.Printf("cloudhub %s (git commit: %s)\n", version, commit)
+		fmt.Printf("cloudhub %s (git commit: %s)\n", version, commit)
 		os.Exit(0)
 	}
 
-	ctx := context.Background()
-	if err := srv.Serve(ctx); err != nil {
-		log.Fatalln(err)
-	}
+	srv.Serve(context.Background())
 }
