@@ -35,7 +35,6 @@ func (s *sourcesStore) All(ctx context.Context) ([]cloudhub.Source, error) {
 
 // Add creates a new Source in the SourceStore.
 func (s *sourcesStore) Add(ctx context.Context, src cloudhub.Source) (cloudhub.Source, error) {
-
 	// force first source added to be default
 	if srcs, err := s.All(ctx); err != nil {
 		return cloudhub.Source{}, err
