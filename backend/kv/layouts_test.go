@@ -2,10 +2,12 @@ package kv_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	gocmp "github.com/google/go-cmp/cmp"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/mocks"
 	"github.com/stretchr/testify/require"
 )
 
@@ -45,21 +47,10 @@ func TestLayoutStore_All(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client, err := NewTestClient()
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer client.Close()
-
-			s := client.LayoutsStore()
+			s := mocksLayout(&tt.fields.layouts)
 			ctx := context.Background()
 
-			for _, layout := range tt.fields.layouts {
-				s.Add(ctx, layout)
-			}
-
 			got, err := s.All(ctx)
-
 			if (err != nil) != (tt.wants.err != nil) {
 				t.Errorf("LayoutsStore.All() error = %v, want error %v", err, tt.wants.err)
 				return
@@ -70,137 +61,6 @@ func TestLayoutStore_All(t *testing.T) {
 			if diff := gocmp.Diff(got[0].Application, tt.wants.layouts[0].Application); diff != "" {
 				t.Errorf("LayoutStore.All():\n-got/+want\ndiff %s", diff)
 				return
-			}
-		})
-	}
-}
-
-func TestLayoutStore_Add(t *testing.T) {
-	type args struct {
-		layout cloudhub.Layout
-	}
-	type wants struct {
-		layout cloudhub.Layout
-		err    error
-	}
-	tests := []struct {
-		name  string
-		args  args
-		wants wants
-	}{
-		{
-			name: "simple",
-			args: args{
-				layout: cloudhub.Layout{
-					Application: "test",
-					Measurement: "test",
-				},
-			},
-			wants: wants{
-				layout: cloudhub.Layout{
-					Application: "test",
-					Measurement: "test",
-				},
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			client, err := NewTestClient()
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer client.Close()
-
-			s := client.LayoutsStore()
-			ctx := context.Background()
-
-			l, err := s.Add(ctx, tt.args.layout)
-
-			if (err != nil) != (tt.wants.err != nil) {
-				t.Errorf("LayoutsStore.Add() error = %v, want error %v", err, tt.wants.err)
-				return
-			}
-
-			got, err := s.Get(ctx, l.ID)
-			if err != nil {
-				t.Fatalf("failed to get layout: %v", err)
-				return
-			}
-			if diff := gocmp.Diff(got.Application, tt.wants.layout.Application); diff != "" {
-				t.Errorf("LayoutStore.Add():\n-got/+want\ndiff %s", diff)
-				return
-			}
-		})
-	}
-}
-
-func TestLayoutStore_Delete(t *testing.T) {
-	type fields struct {
-		layouts []cloudhub.Layout
-	}
-	type wants struct {
-		err error
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		wants  wants
-	}{
-		{
-			name: "simple",
-			fields: fields{
-				layouts: []cloudhub.Layout{
-					{
-						Application: "test",
-						Measurement: "test",
-					},
-				},
-			},
-			wants: wants{
-				err: nil,
-			},
-		},
-		{
-			name: "layout not found",
-			fields: fields{
-				layouts: []cloudhub.Layout{
-					{
-						Application: "test",
-						Measurement: "test",
-					},
-				},
-			},
-			wants: wants{
-				err: cloudhub.ErrLayoutNotFound,
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			client, err := NewTestClient()
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer client.Close()
-
-			s := client.LayoutsStore()
-			ctx := context.Background()
-
-			var l cloudhub.Layout
-			for _, layout := range tt.fields.layouts {
-				l, _ = s.Add(ctx, layout)
-			}
-
-			err = s.Delete(ctx, l)
-			if (err != nil) != (tt.wants.err != nil) {
-				err = s.Delete(ctx, l)
-				if (err != nil) != (tt.wants.err != nil) {
-					t.Errorf("LayoutsStore.Delete() error = %v, want error %v", err, tt.wants.err)
-					return
-				}
 			}
 		})
 	}
@@ -224,10 +84,12 @@ func TestLayoutStore_Get(t *testing.T) {
 			fields: fields{
 				layouts: []cloudhub.Layout{
 					{
+						ID:          "A",						
 						Application: "test",
 						Measurement: "test",
 					},
 					{
+						ID:          "B",
 						Application: "test2",
 						Measurement: "test2",
 					},
@@ -235,6 +97,7 @@ func TestLayoutStore_Get(t *testing.T) {
 			},
 			wants: wants{
 				layout: cloudhub.Layout{
+					ID:          "B",
 					Application: "test2",
 					Measurement: "test2",
 				},
@@ -259,25 +122,15 @@ func TestLayoutStore_Get(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client, err := NewTestClient()
-			if err != nil {
-				t.Fatal(err)
-			}
-			defer client.Close()
-
-			s := client.LayoutsStore()
+			s := mocksLayout(&tt.fields.layouts)
 			ctx := context.Background()
 
-			var l cloudhub.Layout
-			for _, layout := range tt.fields.layouts {
-				l, _ = s.Add(ctx, layout)
-			}
-
+			id := tt.fields.layouts[len(tt.fields.layouts)-1].ID
 			if tt.wants.err != nil {
-				s.Delete(ctx, l)
+				tt.fields.layouts = tt.fields.layouts[:len(tt.fields.layouts)-1]
 			}
 
-			got, err := s.Get(ctx, l.ID)
+			got, err := s.Get(ctx, id)
 			if (err != nil) != (tt.wants.err != nil) {
 				t.Errorf("LayoutsStore.Get() error = %v, want error %v", err, tt.wants.err)
 				return
@@ -291,71 +144,18 @@ func TestLayoutStore_Get(t *testing.T) {
 	}
 }
 
-func TestLayoutStore_Update(t *testing.T) {
-	type fields struct {
-		layouts []cloudhub.Layout
-	}
-	type wants struct {
-		layout cloudhub.Layout
-		err    error
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		wants  wants
-	}{
-		{
-			name: "simple",
-			fields: fields{
-				layouts: []cloudhub.Layout{
-					{
-						Application: "test",
-						Measurement: "test",
-					},
-					{
-						Application: "test2",
-						Measurement: "test2",
-					},
-				},
-			},
-			wants: wants{
-				layout: cloudhub.Layout{
-					Application: "test3",
-					Measurement: "test3",
-				},
-				err: nil,
-			},
+func mocksLayout(layouts *[]cloudhub.Layout) mocks.LayoutsStore {
+	return mocks.LayoutsStore{
+		AllF: func(ctx context.Context) ([]cloudhub.Layout, error) {
+			return *layouts, nil
 		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			client, err := NewTestClient()
-			if err != nil {
-				t.Fatal(err)
+		GetF: func(ctx context.Context, id string) (cloudhub.Layout, error) {
+			for _, l := range *layouts {
+				if l.ID == id {
+					return l, nil
+				}
 			}
-			defer client.Close()
-
-			s := client.LayoutsStore()
-			ctx := context.Background()
-
-			var l cloudhub.Layout
-			for _, layout := range tt.fields.layouts {
-				l, _ = s.Add(ctx, layout)
-			}
-
-			l.Application = "test3"
-			l.Measurement = "test3"
-
-			err = s.Update(ctx, l)
-			if (err != nil) != (tt.wants.err != nil) {
-				t.Errorf("LayoutsStore.Update() error = %v, want error %v", err, tt.wants.err)
-				return
-			}
-			if diff := gocmp.Diff(l.Application, tt.wants.layout.Application); diff != "" {
-				t.Errorf("LayoutStore.Update():\n-got/+want\ndiff %s", diff)
-				return
-			}
-		})
+			return cloudhub.Layout{}, errors.New("no layout found")
+		},
 	}
 }
