@@ -347,6 +347,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	router.GET("/cloudhub/v1/env", EnsureViewer(service.Environment))
 
+	// todo(glinton): remove cell/dashboardv2 stuff as these aren't actually integrated anywhere.
 	/// V2 Cells
 	router.GET("/cloudhub/v2/cells", EnsureViewer(service.CellsV2))
 	router.POST("/cloudhub/v2/cells", EnsureEditor(service.NewCellV2))

@@ -22,6 +22,7 @@ import (
 	"github.com/snetsystems/cloudhub/backend/influx"
 	"github.com/snetsystems/cloudhub/backend/kv"
 	"github.com/snetsystems/cloudhub/backend/kv/bolt"
+	"github.com/snetsystems/cloudhub/backend/kv/etcd"
 	clog "github.com/snetsystems/cloudhub/backend/log"
 	"github.com/snetsystems/cloudhub/backend/oauth2"
 	client "github.com/influxdata/usage-client/v1"
@@ -72,9 +73,11 @@ type Server struct {
 	GithubClientSecret string   `short:"s" long:"github-client-secret" description:"Github Client Secret for OAuth 2 support" env:"GH_CLIENT_SECRET"`
 	GithubOrgs         []string `short:"o" long:"github-organization" description:"Github organization user is required to have active membership (env comma separated)" env:"GH_ORGS" env-delim:","`
 
-	// EtcdUsername     string   `short:"i" long:"github-client-id" description:"Github Client ID for OAuth 2 support" env:"GH_CLIENT_ID"`
-	// EtcdPassword string   `short:"s" long:"github-client-secret" description:"Github Client Secret for OAuth 2 support" env:"GH_CLIENT_SECRET"`
-	// EtcdEndpoints         []string `short:"o" long:"github-organization" description:"Github organization user is required to have active membership" env:"GH_ORGS" env-delim:","`
+	EtcdEndpoints      []string      `short:"e" long:"etcd-endpoints" description:"List of etcd endpoints" env:"ETCD_HOSTS" env-delim:","`
+	EtcdUsername       string        `long:"etcd-username" description:"Username to log into etcd." env:"ETCD_USERNAME"`
+	EtcdPassword       string        `long:"etcd-password" description:"Password to log into etcd." env:"ETCD_PASSWORD"`
+	EtcdDialTimeout    time.Duration `long:"etcd-dial-timeout" default:"-1s" description:"Total time to wait before timing out while connecting to etcd endpoints. 0 means no timeout. " env:"ETCD_DIAL_TIMEOUT"`
+	EtcdRequestTimeout time.Duration `long:"etcd-request-timeout" default:"-1s" description:"Total time to wait before timing out the etcd view or update. 0 means no timeout." env:"ETCD_REQUEST_TIMEOUT"`
 
 	GoogleClientID     string   `long:"google-client-id" description:"Google Client ID for OAuth 2 support" env:"GOOGLE_CLIENT_ID"`
 	GoogleClientSecret string   `long:"google-client-secret" description:"Google Client Secret for OAuth 2 support" env:"GOOGLE_CLIENT_SECRET"`
@@ -344,7 +347,33 @@ func (s *Server) Serve(ctx context.Context) {
 		return
 	}
 
-	service := openService(ctx, s.BuildInfo, s.BoltPath, s.newBuilders(logger), logger, s.useAuth(), s.AddonURLs)
+	var db kv.Store
+	if len(s.EtcdEndpoints) == 0 {
+		db, err = bolt.NewClient(ctx,
+			bolt.WithPath(s.BoltPath),
+			bolt.WithLogger(logger),
+			bolt.WithBuildInfo(s.BuildInfo),
+		)
+		if err != nil {
+			logger.Error("Unable to create bolt client", err)
+			os.Exit(1)
+		}
+
+	} else {
+		db, err = etcd.NewClient(ctx,
+			etcd.WithEndpoints(s.EtcdEndpoints),
+			etcd.WithLogin(s.EtcdUsername, s.EtcdPassword),
+			etcd.WithRequestTimeout(s.EtcdRequestTimeout),
+			etcd.WithDialTimeout(s.EtcdDialTimeout),
+			etcd.WithLogger(logger),
+		)
+		if err != nil {
+			logger.Error("Unable to create etcd client", err)
+			os.Exit(1)
+		}
+	}
+	
+	service := openService(ctx, db, s.newBuilders(logger), logger, s.useAuth(), s.AddonURLs)
 	service.SuperAdminProviderGroups = superAdminProviderGroups{
 		auth0: s.Auth0SuperAdminOrg,
 	}
@@ -424,7 +453,7 @@ func (s *Server) Serve(ctx context.Context) {
 
 	logger.
 		WithField("component", "server").
-		Info("Serving chronograf at ", scheme, "://", listener.Addr())
+		Info("Serving cloudhub at ", scheme, "://", listener.Addr())
 
 	if err := httpServer.Serve(listener); err != nil {
 		logger.
@@ -435,22 +464,10 @@ func (s *Server) Serve(ctx context.Context) {
 
 	logger.
 		WithField("component", "server").
-		Info("Stopped serving chronograf at ", scheme, "://", listener.Addr())
+		Info("Stopped serving cloudhub at ", scheme, "://", listener.Addr())
 }
 
-// todo: add etcd connection details as arg.
-// todo: return error. make chronograf error type that has fields and error. .Error() will logger.Error print it.
-func openService(ctx context.Context, buildInfo cloudhub.BuildInfo, boltPath string, builder builders, logger cloudhub.Logger, useAuth bool, addonURLs map[string]string) Service {
-	db, err := bolt.NewClient(ctx,
-		bolt.WithPath(boltPath),
-		bolt.WithLogger(logger),
-		bolt.WithBuildInfo(buildInfo),
-	)
-	if err != nil {
-		logger.Error("Unable to create bolt client", err)
-		os.Exit(1)
-	}
-
+func openService(ctx context.Context, db kv.Store, builder builders, logger cloudhub.Logger, useAuth bool, addonURLs map[string]string) Service {
 	svc, err := kv.NewService(ctx, db, kv.WithLogger(logger))
 	if err != nil {
 		logger.Error("Unable to create kv service", err)
