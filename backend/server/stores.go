@@ -7,7 +7,6 @@ import (
 	"github.com/snetsystems/cloudhub/backend/noop"
 	"github.com/snetsystems/cloudhub/backend/organizations"
 	"github.com/snetsystems/cloudhub/backend/roles"
-	platform "github.com/snetsystems/cloudhub/backend/v2"
 )
 
 // hasOrganizationContext retrieves organization specified on context
@@ -94,8 +93,6 @@ type DataStore interface {
 	Dashboards(ctx context.Context) cloudhub.DashboardsStore
 	Config(ctx context.Context) cloudhub.ConfigStore
 	OrganizationConfig(ctx context.Context) cloudhub.OrganizationConfigStore
-	Cells(ctx context.Context) platform.CellService
-	DashboardsV2(ctx context.Context) platform.DashboardService
 }
 
 // ensure that Store implements a DataStore
@@ -113,8 +110,6 @@ type Store struct {
 	OrganizationsStore      cloudhub.OrganizationsStore
 	ConfigStore             cloudhub.ConfigStore
 	OrganizationConfigStore cloudhub.OrganizationConfigStore
-	CellService             platform.CellService
-	DashboardService        platform.DashboardService
 }
 
 // Sources returns a noop.SourcesStore if the context has no organization specified
@@ -228,14 +223,4 @@ func (s *Store) Mappings(ctx context.Context) cloudhub.MappingsStore {
 		return s.MappingsStore
 	}
 	return &noop.MappingsStore{}
-}
-
-// Cells returns the underlying CellService.
-func (s *Store) Cells(ctx context.Context) platform.CellService {
-	return s.CellService
-}
-
-// DashboardsV2 returns the underlying DashboardsService.
-func (s *Store) DashboardsV2(ctx context.Context) platform.DashboardService {
-	return s.DashboardService
 }

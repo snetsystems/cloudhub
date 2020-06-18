@@ -42,8 +42,6 @@ type getRoutesResponse struct {
 	Environment        string                             `json:"environment"`      // Location of the environement endpoint
 	Dashboards         string                             `json:"dashboards"`       // Location of the dashboards endpoint
 	Config             getConfigLinksResponse             `json:"config"`           // Location of the config endpoint and its various sections
-	Cells              string                             `json:"cells"`            // Location of the v2 cells
-	DashboardsV2       string                             `json:"dashboardsv2"`     // Location of the v2 dashboards
 	Auth               []AuthRoute                        `json:"auth"`             // Location of all auth routes.
 	Logout             *string                            `json:"logout,omitempty"` // Location of the logout route for all auth routes
 	ExternalLinks      getExternalLinksResponse           `json:"external"`         // All external links for the client to use
@@ -88,8 +86,6 @@ func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Environment:   "/cloudhub/v1/env",
 		Mappings:      "/cloudhub/v1/mappings",
 		Dashboards:    "/cloudhub/v1/dashboards",
-		DashboardsV2:  "/cloudhub/v2/dashboards",
-		Cells:         "/cloudhub/v2/cells",
 		Config: getConfigLinksResponse{
 			Self: "/cloudhub/v1/config",
 			Auth: "/cloudhub/v1/config/auth",

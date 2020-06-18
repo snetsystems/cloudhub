@@ -4,7 +4,6 @@ import (
 	"context"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
-	platform "github.com/snetsystems/cloudhub/backend/v2"
 )
 
 // Store is a server.DataStore
@@ -19,8 +18,6 @@ type Store struct {
 	OrganizationsStore      cloudhub.OrganizationsStore
 	ConfigStore             cloudhub.ConfigStore
 	OrganizationConfigStore cloudhub.OrganizationConfigStore
-	CellService             platform.CellService
-	DashboardService        platform.DashboardService
 }
 
 // Sources ...
@@ -71,14 +68,4 @@ func (s *Store) Config(ctx context.Context) cloudhub.ConfigStore {
 // OrganizationConfig ...
 func (s *Store) OrganizationConfig(ctx context.Context) cloudhub.OrganizationConfigStore {
 	return s.OrganizationConfigStore
-}
-
-// Cells ...
-func (s *Store) Cells(ctx context.Context) platform.CellService {
-	return s.CellService
-}
-
-// DashboardsV2 ...
-func (s *Store) DashboardsV2(ctx context.Context) platform.DashboardService {
-	return s.DashboardService
 }

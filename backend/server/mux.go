@@ -347,23 +347,6 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	router.GET("/cloudhub/v1/env", EnsureViewer(service.Environment))
 
-	// todo(glinton): remove cell/dashboardv2 stuff as these aren't actually integrated anywhere.
-	/// V2 Cells
-	router.GET("/cloudhub/v2/cells", EnsureViewer(service.CellsV2))
-	router.POST("/cloudhub/v2/cells", EnsureEditor(service.NewCellV2))
-
-	router.GET("/cloudhub/v2/cells/:id", EnsureViewer(service.CellIDV2))
-	router.DELETE("/cloudhub/v2/cells/:id", EnsureEditor(service.RemoveCellV2))
-	router.PATCH("/cloudhub/v2/cells/:id", EnsureEditor(service.UpdateCellV2))
-
-	// V2 Dashboards
-	router.GET("/cloudhub/v2/dashboards", EnsureViewer(service.DashboardsV2))
-	router.POST("/cloudhub/v2/dashboards", EnsureEditor(service.NewDashboardV2))
-
-	router.GET("/cloudhub/v2/dashboards/:id", EnsureViewer(service.DashboardIDV2))
-	router.DELETE("/cloudhub/v2/dashboards/:id", EnsureEditor(service.RemoveDashboardV2))
-	router.PATCH("/cloudhub/v2/dashboards/:id", EnsureEditor(service.UpdateDashboardV2))
-
 	allRoutes := &AllRoutes{
 		Logger:      opts.Logger,
 		StatusFeed:  opts.StatusFeedURL,
