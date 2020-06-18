@@ -8,6 +8,7 @@ import (
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/kv"
 	"github.com/snetsystems/cloudhub/backend/kv/bolt"
+	"github.com/snetsystems/cloudhub/backend/mocks"
 )
 
 // NewTestClient creates new *bolt.Client with a set time and temp path.
@@ -32,5 +33,5 @@ func NewTestClient() (*kv.Service, error) {
 		return nil, err
 	}
 
-	return kv.NewService(ctx, b)
+	return kv.NewService(ctx, b, kv.WithLogger(mocks.NewLogger()))
 }
