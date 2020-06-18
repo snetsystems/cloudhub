@@ -1,31 +1,27 @@
-package bolt
+package kv
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/boltdb/bolt"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
-	"github.com/snetsystems/cloudhub/backend/kv/bolt/internal"
+	"github.com/snetsystems/cloudhub/backend/kv/internal"
 )
 
-// Ensure UsersStore implements cloudhub.UsersStore.
-var _ cloudhub.UsersStore = &UsersStore{}
+// Ensure usersStore implements cloudhub.UsersStore.
+var _ cloudhub.UsersStore = &usersStore{}
 
-// UsersBucket is used to store users local to cloudhub
-var UsersBucket = []byte("UsersV2")
-
-// UsersStore uses bolt to store and retrieve users
-type UsersStore struct {
-	client *Client
+// usersStore uses bolt to store and retrieve users
+type usersStore struct {
+	client *Service
 }
 
-// get searches the UsersStore for user with id and returns the bolt representation
-func (s *UsersStore) get(ctx context.Context, id uint64) (*cloudhub.User, error) {
+// get searches the usersStore for user with id and returns the bolt representation
+func (s *usersStore) get(ctx context.Context, id uint64) (*cloudhub.User, error) {
 	var u cloudhub.User
-	err := s.client.db.View(func(tx *bolt.Tx) error {
-		v := tx.Bucket(UsersBucket).Get(u64tob(id))
-		if v == nil {
+	err := s.client.kv.View(ctx, func(tx Tx) error {
+		v, err := tx.Bucket(usersBucket).Get(u64tob(id))
+		if v == nil || err != nil {
 			return cloudhub.ErrUserNotFound
 		}
 		return internal.UnmarshalUser(v, &u)
@@ -38,9 +34,9 @@ func (s *UsersStore) get(ctx context.Context, id uint64) (*cloudhub.User, error)
 	return &u, nil
 }
 
-func (s *UsersStore) each(ctx context.Context, fn func(*cloudhub.User)) error {
-	return s.client.db.View(func(tx *bolt.Tx) error {
-		return tx.Bucket(UsersBucket).ForEach(func(k, v []byte) error {
+func (s *usersStore) each(ctx context.Context, fn func(*cloudhub.User)) error {
+	return s.client.kv.View(ctx, func(tx Tx) error {
+		return tx.Bucket(usersBucket).ForEach(func(k, v []byte) error {
 			var user cloudhub.User
 			if err := internal.UnmarshalUser(v, &user); err != nil {
 				return err
@@ -51,12 +47,12 @@ func (s *UsersStore) each(ctx context.Context, fn func(*cloudhub.User)) error {
 	})
 }
 
-// Num returns the number of users in the UsersStore
-func (s *UsersStore) Num(ctx context.Context) (int, error) {
+// Num returns the number of users in the usersStore
+func (s *usersStore) Num(ctx context.Context) (int, error) {
 	count := 0
 
-	err := s.client.db.View(func(tx *bolt.Tx) error {
-		return tx.Bucket(UsersBucket).ForEach(func(k, v []byte) error {
+	err := s.client.kv.View(ctx, func(tx Tx) error {
+		return tx.Bucket(usersBucket).ForEach(func(k, v []byte) error {
 			count++
 			return nil
 		})
@@ -69,8 +65,8 @@ func (s *UsersStore) Num(ctx context.Context) (int, error) {
 	return count, nil
 }
 
-// Get searches the UsersStore for user with name
-func (s *UsersStore) Get(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
+// Get searches the usersStore for user with name
+func (s *usersStore) Get(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
 	if q.ID != nil {
 		return s.get(ctx, *q.ID)
 	}
@@ -100,7 +96,7 @@ func (s *UsersStore) Get(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.U
 	return nil, fmt.Errorf("must specify either ID, or Name, Provider, and Scheme in UserQuery")
 }
 
-func (s *UsersStore) userExists(ctx context.Context, u *cloudhub.User) (bool, error) {
+func (s *usersStore) userExists(ctx context.Context, u *cloudhub.User) (bool, error) {
 	_, err := s.Get(ctx, cloudhub.UserQuery{
 		Name:     &u.Name,
 		Provider: &u.Provider,
@@ -117,8 +113,8 @@ func (s *UsersStore) userExists(ctx context.Context, u *cloudhub.User) (bool, er
 	return true, nil
 }
 
-// Add a new User to the UsersStore.
-func (s *UsersStore) Add(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
+// Add a new User to the usersStore.
+func (s *usersStore) Add(ctx context.Context, u *cloudhub.User) (*cloudhub.User, error) {
 	if u == nil {
 		return nil, fmt.Errorf("user provided is nil")
 	}
@@ -129,8 +125,8 @@ func (s *UsersStore) Add(ctx context.Context, u *cloudhub.User) (*cloudhub.User,
 	if userExists {
 		return nil, cloudhub.ErrUserAlreadyExists
 	}
-	if err := s.client.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket(UsersBucket)
+	if err := s.client.kv.Update(ctx, func(tx Tx) error {
+		b := tx.Bucket(usersBucket)
 		seq, err := b.NextSequence()
 		if err != nil {
 			return err
@@ -149,27 +145,27 @@ func (s *UsersStore) Add(ctx context.Context, u *cloudhub.User) (*cloudhub.User,
 	return u, nil
 }
 
-// Delete a user from the UsersStore
-func (s *UsersStore) Delete(ctx context.Context, u *cloudhub.User) error {
+// Delete a user from the usersStore
+func (s *usersStore) Delete(ctx context.Context, u *cloudhub.User) error {
 	_, err := s.get(ctx, u.ID)
 	if err != nil {
 		return err
 	}
-	return s.client.db.Update(func(tx *bolt.Tx) error {
-		return tx.Bucket(UsersBucket).Delete(u64tob(u.ID))
+	return s.client.kv.Update(ctx, func(tx Tx) error {
+		return tx.Bucket(usersBucket).Delete(u64tob(u.ID))
 	})
 }
 
 // Update a user
-func (s *UsersStore) Update(ctx context.Context, u *cloudhub.User) error {
+func (s *usersStore) Update(ctx context.Context, u *cloudhub.User) error {
 	_, err := s.get(ctx, u.ID)
 	if err != nil {
 		return err
 	}
-	return s.client.db.Update(func(tx *bolt.Tx) error {
+	return s.client.kv.Update(ctx, func(tx Tx) error {
 		if v, err := internal.MarshalUser(u); err != nil {
 			return err
-		} else if err := tx.Bucket(UsersBucket).Put(u64tob(u.ID), v); err != nil {
+		} else if err := tx.Bucket(usersBucket).Put(u64tob(u.ID), v); err != nil {
 			return err
 		}
 		return nil
@@ -177,10 +173,10 @@ func (s *UsersStore) Update(ctx context.Context, u *cloudhub.User) error {
 }
 
 // All returns all users
-func (s *UsersStore) All(ctx context.Context) ([]cloudhub.User, error) {
+func (s *usersStore) All(ctx context.Context) ([]cloudhub.User, error) {
 	var users []cloudhub.User
-	if err := s.client.db.View(func(tx *bolt.Tx) error {
-		return tx.Bucket(UsersBucket).ForEach(func(k, v []byte) error {
+	if err := s.client.kv.View(ctx, func(tx Tx) error {
+		return tx.Bucket(usersBucket).ForEach(func(k, v []byte) error {
 			var user cloudhub.User
 			if err := internal.UnmarshalUser(v, &user); err != nil {
 				return err

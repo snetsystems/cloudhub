@@ -6,7 +6,7 @@ import (
 
 	gocmp "github.com/google/go-cmp/cmp"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
-	"github.com/snetsystems/cloudhub/backend/kv/bolt/internal"
+	"github.com/snetsystems/cloudhub/backend/kv/internal"
 )
 
 func TestMarshalSource(t *testing.T) {

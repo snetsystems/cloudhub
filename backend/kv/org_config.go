@@ -1,57 +1,33 @@
-package bolt
+package kv
 
 import (
 	"context"
 	"fmt"
 
-	"github.com/boltdb/bolt"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
-	"github.com/snetsystems/cloudhub/backend/kv/bolt/internal"
+	"github.com/snetsystems/cloudhub/backend/kv/internal"
 )
 
-// Ensure OrganizationConfigStore implements cloudhub.OrganizationConfigStore.
-var _ cloudhub.OrganizationConfigStore = &OrganizationConfigStore{}
+// Ensure organizationConfigStore implements cloudhub.OrganizationConfigStore.
+var _ cloudhub.OrganizationConfigStore = &organizationConfigStore{}
 
-// OrganizationConfigBucket is used to store cloudhub organization configurations
-var OrganizationConfigBucket = []byte("OrganizationConfigV1")
-
-// OrganizationConfigStore uses bolt to store and retrieve organization configurations
-type OrganizationConfigStore struct {
-	client *Client
+// organizationConfigStore uses a kv to store and retrieve organization configurations.
+type organizationConfigStore struct {
+	client *Service
 }
 
-// Migrate ...
-func (s *OrganizationConfigStore) Migrate(ctx context.Context) error {
-	return nil
-}
-
-// Get retrieves an OrganizationConfig from the store
-func (s *OrganizationConfigStore) Get(ctx context.Context, orgID string) (*cloudhub.OrganizationConfig, error) {
-	var c cloudhub.OrganizationConfig
-
-	err := s.client.db.View(func(tx *bolt.Tx) error {
-		return s.get(ctx, tx, orgID, &c)
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &c, nil
-}
-
-func (s *OrganizationConfigStore) get(ctx context.Context, tx *bolt.Tx, orgID string, c *cloudhub.OrganizationConfig) error {
-	v := tx.Bucket(OrganizationConfigBucket).Get([]byte(orgID))
-	if len(v) == 0 {
+func (s *organizationConfigStore) get(ctx context.Context, tx Tx, orgID string, c *cloudhub.OrganizationConfig) error {
+	v, err := tx.Bucket(organizationConfigBucket).Get([]byte(orgID))
+	if len(v) == 0 || err != nil {
 		return cloudhub.ErrOrganizationConfigNotFound
 	}
 	return internal.UnmarshalOrganizationConfig(v, c)
 }
 
 // FindOrCreate gets an OrganizationConfig from the store or creates one if none exists for this organization
-func (s *OrganizationConfigStore) FindOrCreate(ctx context.Context, orgID string) (*cloudhub.OrganizationConfig, error) {
+func (s *organizationConfigStore) FindOrCreate(ctx context.Context, orgID string) (*cloudhub.OrganizationConfig, error) {
 	var c cloudhub.OrganizationConfig
-	err := s.client.db.Update(func(tx *bolt.Tx) error {
+	err := s.client.kv.Update(ctx, func(tx Tx) error {
 		err := s.get(ctx, tx, orgID, &c)
 		if err == cloudhub.ErrOrganizationConfigNotFound {
 			c = newOrganizationConfig(orgID)
@@ -67,49 +43,22 @@ func (s *OrganizationConfigStore) FindOrCreate(ctx context.Context, orgID string
 }
 
 // Put replaces the OrganizationConfig in the store
-func (s *OrganizationConfigStore) Put(ctx context.Context, c *cloudhub.OrganizationConfig) error {
-	return s.client.db.Update(func(tx *bolt.Tx) error {
+func (s *organizationConfigStore) Put(ctx context.Context, c *cloudhub.OrganizationConfig) error {
+	return s.client.kv.Update(ctx, func(tx Tx) error {
 		return s.put(ctx, tx, c)
 	})
 }
 
-func (s *OrganizationConfigStore) put(ctx context.Context, tx *bolt.Tx, c *cloudhub.OrganizationConfig) error {
+func (s *organizationConfigStore) put(ctx context.Context, tx Tx, c *cloudhub.OrganizationConfig) error {
 	if c == nil {
 		return fmt.Errorf("config provided was nil")
 	}
 	if v, err := internal.MarshalOrganizationConfig(c); err != nil {
 		return err
-	} else if err := tx.Bucket(OrganizationConfigBucket).Put([]byte(c.OrganizationID), v); err != nil {
+	} else if err := tx.Bucket(organizationConfigBucket).Put([]byte(c.OrganizationID), v); err != nil {
 		return err
 	}
 	return nil
-}
-
-// All returns all known OrganizationConfig
-func (s *OrganizationConfigStore) All(ctx context.Context) ([]cloudhub.OrganizationConfig, error) {
-	var orgs []cloudhub.OrganizationConfig
-	err := s.each(ctx, func(o *cloudhub.OrganizationConfig) {
-		orgs = append(orgs, *o)
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return orgs, nil
-}
-
-func (s *OrganizationConfigStore) each(ctx context.Context, fn func(*cloudhub.OrganizationConfig)) error {
-	return s.client.db.View(func(tx *bolt.Tx) error {
-		return tx.Bucket(OrganizationConfigBucket).ForEach(func(k, v []byte) error {
-			var orgCfg cloudhub.OrganizationConfig
-			if err := internal.UnmarshalOrganizationConfig(v, &orgCfg); err != nil {
-				return err
-			}
-			fn(&orgCfg)
-			return nil
-		})
-	})
 }
 
 func newOrganizationConfig(orgID string) cloudhub.OrganizationConfig {
@@ -272,3 +221,31 @@ func newOrganizationConfig(orgID string) cloudhub.OrganizationConfig {
 		},
 	}
 }
+
+// All returns all known organizationConfigs
+func (s *organizationConfigStore) All(ctx context.Context) ([]cloudhub.OrganizationConfig, error) {
+	var orgCfgs []cloudhub.OrganizationConfig
+	err := s.each(ctx, func(o *cloudhub.OrganizationConfig) {
+		orgCfgs = append(orgCfgs, *o)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return orgCfgs, nil
+}
+
+func (s *organizationConfigStore) each(ctx context.Context, fn func(*cloudhub.OrganizationConfig)) error {
+	return s.client.kv.View(ctx, func(tx Tx) error {
+		return tx.Bucket(organizationConfigBucket).ForEach(func(k, v []byte) error {
+			var orgCfg cloudhub.OrganizationConfig
+			if err := internal.UnmarshalOrganizationConfig(v, &orgCfg); err != nil {
+				return err
+			}
+			fn(&orgCfg)
+			return nil
+		})
+	})
+}
+

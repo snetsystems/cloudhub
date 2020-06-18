@@ -9,9 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/snetsystems/cloudhub/backend/id"
-
 	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/id"
 )
 
 const (

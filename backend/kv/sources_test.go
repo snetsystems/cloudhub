@@ -1,4 +1,4 @@
-package bolt_test
+package kv_test
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
-	"github.com/snetsystems/cloudhub/backend/kv/bolt"
 )
 
 // Ensure an SourceStore can store, retrieve, update, and delete sources.
@@ -17,7 +16,7 @@ func TestSourceStore(t *testing.T) {
 	}
 	defer c.Close()
 
-	s := c.SourcesStore
+	s := c.SourcesStore()
 
 	srcs := []cloudhub.Source{
 		{
@@ -179,14 +178,14 @@ func TestSourceStore(t *testing.T) {
 	}
 }
 
-func mustUpdateSource(t *testing.T, s *bolt.SourcesStore, src cloudhub.Source) {
+func mustUpdateSource(t *testing.T, s cloudhub.SourcesStore, src cloudhub.Source) {
 	ctx := context.Background()
 	if err := s.Update(ctx, src); err != nil {
 		t.Fatal(err)
 	}
 }
 
-func mustAddSource(t *testing.T, s *bolt.SourcesStore, src cloudhub.Source) cloudhub.Source {
+func mustAddSource(t *testing.T, s cloudhub.SourcesStore, src cloudhub.Source) cloudhub.Source {
 	ctx := context.Background()
 	if src, err := s.Add(ctx, src); err != nil {
 		t.Fatal(err)

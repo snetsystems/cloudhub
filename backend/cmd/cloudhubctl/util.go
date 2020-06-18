@@ -10,23 +10,20 @@ import (
 	"text/tabwriter"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/kv"
 	"github.com/snetsystems/cloudhub/backend/kv/bolt"
-	"github.com/snetsystems/cloudhub/backend/mocks"
 )
 
 // NewBoltClient DBConnect
-func NewBoltClient(path string) (*bolt.Client, error) {
-	c := bolt.NewClient()
-	c.Path = path
+func NewBoltClient(path string) (kv.Store, error) {
+	return bolt.NewClient(context.TODO(),
+		bolt.WithPath(path),
+	)
+}
 
-	ctx := context.Background()
-	logger := mocks.NewLogger()
-	var bi cloudhub.BuildInfo
-	if err := c.Open(ctx, logger, bi); err != nil {
-		return nil, err
-	}
-
-	return c, nil
+// NewService
+func NewService(s kv.Store) (*kv.Service, error) {
+	return kv.NewService(context.TODO(), s)
 }
 
 // NewTabWriter stores-info tab

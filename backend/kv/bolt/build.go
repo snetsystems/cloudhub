@@ -5,44 +5,64 @@ import (
 
 	"github.com/boltdb/bolt"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
-	"github.com/snetsystems/cloudhub/backend/kv/bolt/internal"
+	"github.com/snetsystems/cloudhub/backend/kv/internal"
 )
 
-// Ensure BuildStore struct implements cloudhub.BuildStore interface
-var _ cloudhub.BuildStore = &BuildStore{}
+// Ensure buildStore struct implements cloudhub.BuildStore interface.
+var _ cloudhub.BuildStore = &buildStore{}
 
-// BuildBucket is the bolt bucket used to store CloudHub build information
-var BuildBucket = []byte("Build")
+// buildBucket is the bolt bucket used to store Chronograf build information
+var buildBucket = []byte("Build")
 
-// BuildKey is the constant key used in the bolt bucket
-var BuildKey = []byte("build")
+// buildKey is the constant key used in the bolt bucket
+var buildKey = []byte("build")
 
-// BuildStore is a bolt implementation to store CloudHub build information
-type BuildStore struct {
-	client *Client
+var defaultBuildInfo = cloudhub.BuildInfo{
+	Version: "",
+	Commit:  "",
 }
 
-// Get retrieves CloudHub build information from the database
-func (s *BuildStore) Get(ctx context.Context) (cloudhub.BuildInfo, error) {
+// buildStore is a bolt implementation to store Chronograf build information
+type buildStore struct {
+	client *client
+}
+
+// Get retrieves Chronograf build information from the database
+func (s *buildStore) Get(ctx context.Context) (cloudhub.BuildInfo, error) {
 	var build cloudhub.BuildInfo
 	if err := s.client.db.View(func(tx *bolt.Tx) error {
 		var err error
-		build, err = s.get(ctx, tx)
+		build, err = getBuildInfo(ctx, tx)
 		if err != nil {
 			return err
 		}
 		return nil
 	}); err != nil {
-		return cloudhub.BuildInfo{}, err
+		return build, err
 	}
 
 	return build, nil
 }
 
-// Update overwrites the current CloudHub build information in the database
-func (s *BuildStore) Update(ctx context.Context, build cloudhub.BuildInfo) error {
+// getBuildInfo retrieves the current build, falling back to a default when missing
+func getBuildInfo(ctx context.Context, tx *bolt.Tx) (cloudhub.BuildInfo, error) {
+	var build cloudhub.BuildInfo
+
+	if bucket := tx.Bucket(buildBucket); bucket == nil {
+		return defaultBuildInfo, nil
+	} else if v := bucket.Get(buildKey); v == nil {
+		return defaultBuildInfo, nil
+	} else if err := internal.UnmarshalBuild(v, &build); err != nil {
+		return build, err
+	}
+
+	return build, nil
+}
+
+// Update overwrites the current Chronograf build information in the database
+func (s *buildStore) Update(ctx context.Context, build cloudhub.BuildInfo) error {
 	if err := s.client.db.Update(func(tx *bolt.Tx) error {
-		return s.update(ctx, build, tx)
+		return updateBuildInfo(ctx, build, tx)
 	}); err != nil {
 		return err
 	}
@@ -50,33 +70,10 @@ func (s *BuildStore) Update(ctx context.Context, build cloudhub.BuildInfo) error
 	return nil
 }
 
-// Migrate simply stores the current version in the database
-func (s *BuildStore) Migrate(ctx context.Context, build cloudhub.BuildInfo) error {
-	return s.Update(ctx, build)
-}
-
-// get retrieves the current build, falling back to a default when missing
-func (s *BuildStore) get(ctx context.Context, tx *bolt.Tx) (cloudhub.BuildInfo, error) {
-	var build cloudhub.BuildInfo
-	defaultBuild := cloudhub.BuildInfo{
-		Version: "pre-1.4.0.0",
-		Commit:  "",
-	}
-
-	if bucket := tx.Bucket(BuildBucket); bucket == nil {
-		return defaultBuild, nil
-	} else if v := bucket.Get(BuildKey); v == nil {
-		return defaultBuild, nil
-	} else if err := internal.UnmarshalBuild(v, &build); err != nil {
-		return build, err
-	}
-	return build, nil
-}
-
-func (s *BuildStore) update(ctx context.Context, build cloudhub.BuildInfo, tx *bolt.Tx) error {
+func updateBuildInfo(ctx context.Context, build cloudhub.BuildInfo, tx *bolt.Tx) error {
 	if v, err := internal.MarshalBuild(build); err != nil {
 		return err
-	} else if err := tx.Bucket(BuildBucket).Put(BuildKey, v); err != nil {
+	} else if err := tx.Bucket(buildBucket).Put(buildKey, v); err != nil {
 		return err
 	}
 	return nil

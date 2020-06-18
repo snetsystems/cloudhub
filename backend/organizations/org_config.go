@@ -37,7 +37,6 @@ func (s *OrganizationConfigStore) FindOrCreate(ctx context.Context, orgID string
 	}
 
 	return oc, nil
-
 }
 
 // Put the OrganizationConfig in OrganizationConfigStore.
@@ -48,4 +47,30 @@ func (s *OrganizationConfigStore) Put(ctx context.Context, c *cloudhub.Organizat
 	}
 
 	return s.store.Put(ctx, c)
+}
+
+// All the OrganizationConfig in OrganizationConfigStore.
+func (s *OrganizationConfigStore) All(ctx context.Context) ([]cloudhub.OrganizationConfig, error) {
+	err := validOrganization(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	ds, err := s.store.All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	orgCfgs := ds[:0]
+	for _, d := range ds {
+		id := d.OrganizationID
+		switch id {
+		case s.organization:
+			orgCfgs = append(orgCfgs, d)
+		default:
+			continue
+		}
+	}
+
+	return orgCfgs, nil
 }

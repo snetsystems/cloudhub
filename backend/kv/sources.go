@@ -1,56 +1,24 @@
-package bolt
+package kv
 
 import (
 	"context"
 
-	"github.com/boltdb/bolt"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
-	"github.com/snetsystems/cloudhub/backend/kv/bolt/internal"
-	"github.com/snetsystems/cloudhub/backend/roles"
+	"github.com/snetsystems/cloudhub/backend/kv/internal"
 )
 
-// Ensure SourcesStore implements cloudhub.SourcesStore.
-var _ cloudhub.SourcesStore = &SourcesStore{}
+// Ensure sourcesStore implements cloudhub.SourcesStore.
+var _ cloudhub.SourcesStore = &sourcesStore{}
 
-// SourcesBucket is the bolt bucket used to store source information
-var SourcesBucket = []byte("Sources")
-
-// SourcesStore is a bolt implementation to store time-series source information.
-type SourcesStore struct {
-	client *Client
-}
-
-// Migrate ...
-func (s *SourcesStore) Migrate(ctx context.Context) error {
-	sources, err := s.All(ctx)
-	if err != nil {
-		return err
-	}
-
-	defaultOrg, err := s.client.OrganizationsStore.DefaultOrganization(ctx)
-	if err != nil {
-		return err
-	}
-
-	for _, source := range sources {
-		if source.Organization == "" {
-			source.Organization = defaultOrg.ID
-		}
-		if source.Role == "" {
-			source.Role = roles.ViewerRoleName
-		}
-		if err := s.Update(ctx, source); err != nil {
-			return nil
-		}
-	}
-
-	return nil
+// sourcesStore is a bolt implementation to store time-series source information.
+type sourcesStore struct {
+	client *Service
 }
 
 // All returns all known sources
-func (s *SourcesStore) All(ctx context.Context) ([]cloudhub.Source, error) {
+func (s *sourcesStore) All(ctx context.Context) ([]cloudhub.Source, error) {
 	var srcs []cloudhub.Source
-	if err := s.client.db.View(func(tx *bolt.Tx) error {
+	if err := s.client.kv.View(ctx, func(tx Tx) error {
 		var err error
 		srcs, err = s.all(ctx, tx)
 		if err != nil {
@@ -66,7 +34,7 @@ func (s *SourcesStore) All(ctx context.Context) ([]cloudhub.Source, error) {
 }
 
 // Add creates a new Source in the SourceStore.
-func (s *SourcesStore) Add(ctx context.Context, src cloudhub.Source) (cloudhub.Source, error) {
+func (s *sourcesStore) Add(ctx context.Context, src cloudhub.Source) (cloudhub.Source, error) {
 
 	// force first source added to be default
 	if srcs, err := s.All(ctx); err != nil {
@@ -75,7 +43,7 @@ func (s *SourcesStore) Add(ctx context.Context, src cloudhub.Source) (cloudhub.S
 		src.Default = true
 	}
 
-	if err := s.client.db.Update(func(tx *bolt.Tx) error {
+	if err := s.client.kv.Update(ctx, func(tx Tx) error {
 		return s.add(ctx, &src, tx)
 	}); err != nil {
 		return cloudhub.Source{}, err
@@ -84,9 +52,9 @@ func (s *SourcesStore) Add(ctx context.Context, src cloudhub.Source) (cloudhub.S
 	return src, nil
 }
 
-// Delete removes the Source from the SourcesStore
-func (s *SourcesStore) Delete(ctx context.Context, src cloudhub.Source) error {
-	if err := s.client.db.Update(func(tx *bolt.Tx) error {
+// Delete removes the Source from the sourcesStore
+func (s *sourcesStore) Delete(ctx context.Context, src cloudhub.Source) error {
+	if err := s.client.kv.Update(ctx, func(tx Tx) error {
 		if err := s.setRandomDefault(ctx, src, tx); err != nil {
 			return err
 		}
@@ -99,9 +67,9 @@ func (s *SourcesStore) Delete(ctx context.Context, src cloudhub.Source) error {
 }
 
 // Get returns a Source if the id exists.
-func (s *SourcesStore) Get(ctx context.Context, id int) (cloudhub.Source, error) {
+func (s *sourcesStore) Get(ctx context.Context, id int) (cloudhub.Source, error) {
 	var src cloudhub.Source
-	if err := s.client.db.View(func(tx *bolt.Tx) error {
+	if err := s.client.kv.View(ctx, func(tx Tx) error {
 		var err error
 		src, err = s.get(ctx, id, tx)
 		if err != nil {
@@ -116,8 +84,8 @@ func (s *SourcesStore) Get(ctx context.Context, id int) (cloudhub.Source, error)
 }
 
 // Update a Source
-func (s *SourcesStore) Update(ctx context.Context, src cloudhub.Source) error {
-	if err := s.client.db.Update(func(tx *bolt.Tx) error {
+func (s *sourcesStore) Update(ctx context.Context, src cloudhub.Source) error {
+	if err := s.client.kv.Update(ctx, func(tx Tx) error {
 		return s.update(ctx, src, tx)
 	}); err != nil {
 		return err
@@ -126,9 +94,9 @@ func (s *SourcesStore) Update(ctx context.Context, src cloudhub.Source) error {
 	return nil
 }
 
-func (s *SourcesStore) all(ctx context.Context, tx *bolt.Tx) ([]cloudhub.Source, error) {
+func (s *sourcesStore) all(ctx context.Context, tx Tx) ([]cloudhub.Source, error) {
 	var srcs []cloudhub.Source
-	if err := tx.Bucket(SourcesBucket).ForEach(func(k, v []byte) error {
+	if err := tx.Bucket(sourcesBucket).ForEach(func(k, v []byte) error {
 		var src cloudhub.Source
 		if err := internal.UnmarshalSource(v, &src); err != nil {
 			return err
@@ -141,8 +109,8 @@ func (s *SourcesStore) all(ctx context.Context, tx *bolt.Tx) ([]cloudhub.Source,
 	return srcs, nil
 }
 
-func (s *SourcesStore) add(ctx context.Context, src *cloudhub.Source, tx *bolt.Tx) error {
-	b := tx.Bucket(SourcesBucket)
+func (s *sourcesStore) add(ctx context.Context, src *cloudhub.Source, tx Tx) error {
+	b := tx.Bucket(sourcesBucket)
 	seq, err := b.NextSequence()
 	if err != nil {
 		return err
@@ -163,16 +131,16 @@ func (s *SourcesStore) add(ctx context.Context, src *cloudhub.Source, tx *bolt.T
 	return nil
 }
 
-func (s *SourcesStore) delete(ctx context.Context, src cloudhub.Source, tx *bolt.Tx) error {
-	if err := tx.Bucket(SourcesBucket).Delete(itob(src.ID)); err != nil {
+func (s *sourcesStore) delete(ctx context.Context, src cloudhub.Source, tx Tx) error {
+	if err := tx.Bucket(sourcesBucket).Delete(itob(src.ID)); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *SourcesStore) get(ctx context.Context, id int, tx *bolt.Tx) (cloudhub.Source, error) {
+func (s *sourcesStore) get(ctx context.Context, id int, tx Tx) (cloudhub.Source, error) {
 	var src cloudhub.Source
-	if v := tx.Bucket(SourcesBucket).Get(itob(id)); v == nil {
+	if v, err := tx.Bucket(sourcesBucket).Get(itob(id)); v == nil || err != nil {
 		return src, cloudhub.ErrSourceNotFound
 	} else if err := internal.UnmarshalSource(v, &src); err != nil {
 		return src, err
@@ -180,10 +148,10 @@ func (s *SourcesStore) get(ctx context.Context, id int, tx *bolt.Tx) (cloudhub.S
 	return src, nil
 }
 
-func (s *SourcesStore) update(ctx context.Context, src cloudhub.Source, tx *bolt.Tx) error {
+func (s *sourcesStore) update(ctx context.Context, src cloudhub.Source, tx Tx) error {
 	// Get an existing soource with the same ID.
-	b := tx.Bucket(SourcesBucket)
-	if v := b.Get(itob(src.ID)); v == nil {
+	b := tx.Bucket(sourcesBucket)
+	if v, err := b.Get(itob(src.ID)); v == nil || err != nil {
 		return cloudhub.ErrSourceNotFound
 	}
 
@@ -202,8 +170,8 @@ func (s *SourcesStore) update(ctx context.Context, src cloudhub.Source, tx *bolt
 }
 
 // resetDefaultSource unsets the Default flag on all sources
-func (s *SourcesStore) resetDefaultSource(ctx context.Context, tx *bolt.Tx) error {
-	b := tx.Bucket(SourcesBucket)
+func (s *sourcesStore) resetDefaultSource(ctx context.Context, tx Tx) error {
+	b := tx.Bucket(sourcesBucket)
 	srcs, err := s.all(ctx, tx)
 	if err != nil {
 		return err
@@ -226,7 +194,7 @@ func (s *SourcesStore) resetDefaultSource(ctx context.Context, tx *bolt.Tx) erro
 // cloudhub.Source and set it as the default source. If no other sources are
 // available, the provided source will be set to the default source if is not
 // already. It assumes that the provided cloudhub.Source has been persisted.
-func (s *SourcesStore) setRandomDefault(ctx context.Context, src cloudhub.Source, tx *bolt.Tx) error {
+func (s *sourcesStore) setRandomDefault(ctx context.Context, src cloudhub.Source, tx Tx) error {
 	// Check if requested source is the current default
 	if target, err := s.get(ctx, src.ID, tx); err != nil {
 		return err
