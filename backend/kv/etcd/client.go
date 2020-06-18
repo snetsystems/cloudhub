@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"math/rand"
 	"sort"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/kv"
 	"github.com/snetsystems/cloudhub/backend/mocks"
+	"github.com/snetsystems/cloudhub/backend/snowflake"
 )
 
 const (
@@ -26,6 +28,12 @@ const (
 )
 
 var _ kv.Store = (*client)(nil)
+
+var generator *snowflake.Generator
+
+func init() {
+	generator = snowflake.New(rand.Intn(1023))
+}
 
 // client is a client for the boltDB data store.
 type client struct {
@@ -292,10 +300,8 @@ func (b *Bucket) ForEach(fn func(k, v []byte) error) error {
 }
 
 // NextSequence generates a universally unique uint64.
-//
-// todo: create thing that returns a universally unique uint64.
 func (b *Bucket) NextSequence() (uint64, error) {
-	return 0, nil
+	return generator.Next(), nil
 }
 
 func (b *Bucket) getAll(prefix string) ([]Pair, error) {
