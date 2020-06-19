@@ -43,7 +43,10 @@ func (d *dashboardsStore) All(ctx context.Context) ([]cloudhub.Dashboard, error)
 func (d *dashboardsStore) Add(ctx context.Context, src cloudhub.Dashboard) (cloudhub.Dashboard, error) {
 	if err := d.client.kv.Update(ctx, func(tx Tx) error {
 		b := tx.Bucket(dashboardsBucket)
-		id, _ := b.NextSequence()
+		id, err := b.NextSequence()
+		if err != nil {
+			return err
+		}
 
 		src.ID = cloudhub.DashboardID(id)
 		// TODO: use FormatInt
