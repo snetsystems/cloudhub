@@ -3,6 +3,9 @@ package server
 import (
 	"net/http"
 	"time"
+	"bufio"
+	"net"
+	"errors"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
@@ -11,7 +14,7 @@ import (
 // and is a flusher
 type statusWriter struct {
 	http.ResponseWriter
-	Flusher http.Flusher
+	// Flusher http.Flusher // jack: unecessary field, if need to use it should be activated.
 	status  int
 }
 
@@ -26,9 +29,19 @@ func (w *statusWriter) Status() int { return w.status }
 // to implement http.Flusher.  Without it data is silently buffered.  This
 // was discovered when proxying kapacitor chunked logs.
 func (w *statusWriter) Flush() {
-	if w.Flusher != nil {
-		w.Flusher.Flush()
+	// if w.Flusher != nil {
+	// 	w.Flusher.Flush()
+	// }
+	if flusher, ok := w.ResponseWriter.(http.Flusher); ok {
+		flusher.Flush()
 	}
+}
+
+func (w *statusWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if hijacker, ok := w.ResponseWriter.(http.Hijacker); ok {
+		return hijacker.Hijack()
+	}
+	return nil, nil, errors.New("I'm not a Hijacker")
 }
 
 // Logger is middleware that logs the request
@@ -44,9 +57,9 @@ func Logger(logger cloudhub.Logger, next http.Handler) http.Handler {
 		sw := &statusWriter{
 			ResponseWriter: w,
 		}
-		if f, ok := w.(http.Flusher); ok {
-			sw.Flusher = f
-		}
+		// if f, ok := w.(http.Flusher); ok {
+		// 	sw.Flusher = f
+		// }
 		next.ServeHTTP(sw, r)
 		later := time.Now()
 		elapsed := later.Sub(now)
