@@ -16,6 +16,33 @@ type organizationConfigStore struct {
 	client *Service
 }
 
+// All returns all known organization configurations.
+func (s *organizationConfigStore) All(ctx context.Context) ([]cloudhub.OrganizationConfig, error) {
+	var orgCfgs []cloudhub.OrganizationConfig
+	err := s.each(ctx, func(o *cloudhub.OrganizationConfig) {
+		orgCfgs = append(orgCfgs, *o)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return orgCfgs, nil
+}
+
+func (s *organizationConfigStore) each(ctx context.Context, fn func(*cloudhub.OrganizationConfig)) error {
+	return s.client.kv.View(ctx, func(tx Tx) error {
+		return tx.Bucket(organizationConfigBucket).ForEach(func(k, v []byte) error {
+			var orgCfg cloudhub.OrganizationConfig
+			if err := internal.UnmarshalOrganizationConfig(v, &orgCfg); err != nil {
+				return err
+			}
+			fn(&orgCfg)
+			return nil
+		})
+	})
+}
+
 func (s *organizationConfigStore) get(ctx context.Context, tx Tx, orgID string, c *cloudhub.OrganizationConfig) error {
 	v, err := tx.Bucket(organizationConfigBucket).Get([]byte(orgID))
 	if len(v) == 0 || err != nil {
@@ -221,31 +248,3 @@ func newOrganizationConfig(orgID string) cloudhub.OrganizationConfig {
 		},
 	}
 }
-
-// All returns all known organizationConfigs
-func (s *organizationConfigStore) All(ctx context.Context) ([]cloudhub.OrganizationConfig, error) {
-	var orgCfgs []cloudhub.OrganizationConfig
-	err := s.each(ctx, func(o *cloudhub.OrganizationConfig) {
-		orgCfgs = append(orgCfgs, *o)
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return orgCfgs, nil
-}
-
-func (s *organizationConfigStore) each(ctx context.Context, fn func(*cloudhub.OrganizationConfig)) error {
-	return s.client.kv.View(ctx, func(tx Tx) error {
-		return tx.Bucket(organizationConfigBucket).ForEach(func(k, v []byte) error {
-			var orgCfg cloudhub.OrganizationConfig
-			if err := internal.UnmarshalOrganizationConfig(v, &orgCfg); err != nil {
-				return err
-			}
-			fn(&orgCfg)
-			return nil
-		})
-	})
-}
-
