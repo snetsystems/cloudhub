@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"strconv"
+	"fmt"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
@@ -54,27 +55,28 @@ func (s *StoreCommand) Execute(args []string) error {
 			WriteServer(w, &server)
 		}
 	case "Layouts":
-		layouts, err := svc.LayoutsStore().All(ctx)
-		if err != nil {
-			return err
-		}
+		fmt.Println("Layouts are no longer supported.")
+		// layouts, err := svc.LayoutsStore().All(ctx)
+		// if err != nil {
+		// 	return err
+		// }
 
-		if s.ID == 0 {
-			WriteLayoutsHeaders(w)
-			for _, layout := range layouts {
-				WriteLayout(w, &layout)
-			}
-		} else {
-			WriteCellHeaders(w)
-			id := strconv.Itoa(s.ID)
+		// if s.ID == 0 {
+		// 	WriteLayoutsHeaders(w)
+		// 	for _, layout := range layouts {
+		// 		WriteLayout(w, &layout)
+		// 	}
+		// } else {
+		// 	WriteCellHeaders(w)
+		// 	id := strconv.Itoa(s.ID)
 
-			for _, layout := range layouts {
-				if id == layout.ID {
-					WriteLalyoutCell(w, &layout)
-					break
-				}
-			}
-		}
+		// 	for _, layout := range layouts {
+		// 		if id == layout.ID {
+		// 			WriteLalyoutCell(w, &layout)
+		// 			break
+		// 		}
+		// 	}
+		// }
 	case "Dashboards":
 		dashboards, err := svc.DashboardsStore().All(ctx)
 		if err != nil {
