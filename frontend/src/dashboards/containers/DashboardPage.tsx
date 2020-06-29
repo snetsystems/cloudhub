@@ -28,7 +28,6 @@ import * as errorActions from 'src/shared/actions/errors'
 import * as notifyActions from 'src/shared/actions/notifications'
 
 // Utils
-import idNormalizer, {TYPE_ID} from 'src/normalizers/id'
 import {getDeep} from 'src/utils/wrappers'
 import {updateDashboardLinks} from 'src/dashboards/utils/dashboardSwitcherLinks'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
@@ -70,7 +69,7 @@ interface Props extends ManualRefreshProps, WithRouterProps {
     dashboardID: string
   }
   location: Location
-  dashboardID: number
+  dashboardID: string
   dashboard: DashboardsModels.Dashboard
   dashboards: DashboardsModels.Dashboard[]
   handleChooseAutoRefresh: AppActions.SetAutoRefreshActionCreator
@@ -531,9 +530,7 @@ const mstp = (state, {params: {dashboardID}}) => {
 
   const timeRange = getTimeRange(state, dashboardID)
 
-  const dashboard = dashboards.find(
-    d => d.id === idNormalizer(TYPE_ID, dashboardID)
-  )
+  const dashboard = dashboards.find(d => d.id === dashboardID)
 
   const selectedCell = cell
 
@@ -542,7 +539,7 @@ const mstp = (state, {params: {dashboardID}}) => {
     me,
     dashboard,
     fluxLinks: links.flux,
-    dashboardID: Number(dashboardID),
+    dashboardID: dashboardID,
     timeRange,
     zoomedTimeRange,
     autoRefresh,

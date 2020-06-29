@@ -2,7 +2,7 @@ package kv
 
 import (
 	"context"
-	"fmt"
+	"strconv"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/kv/internal"
@@ -24,7 +24,7 @@ func (s *mappingsStore) Add(ctx context.Context, o *cloudhub.Mapping) (*cloudhub
 		if err != nil {
 			return err
 		}
-		o.ID = fmt.Sprintf("%d", seq)
+		o.ID = strconv.FormatUint(seq, 10)
 
 		v, err := internal.MarshalMapping(o)
 		if err != nil {
