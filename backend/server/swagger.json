@@ -5632,7 +5632,7 @@
         }
       },
       "example": {
-        "id": 4,
+        "id": "4",
         "cells": [
           {
             "x": 0,
@@ -5697,8 +5697,7 @@
       "properties": {
         "id": {
           "description": "the unique dashboard id",
-          "type": "integer",
-          "format": "int64"
+          "type": "string"
         },
         "cells": {
           "type": "array",
