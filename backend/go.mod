@@ -11,6 +11,7 @@ require (
 	github.com/gogo/protobuf v1.2.1
 	github.com/google/go-cmp v0.2.0
 	github.com/google/go-github v17.0.0+incompatible
+	github.com/gorilla/websocket v1.4.2
 	github.com/influxdata/flux v0.25.0
 	github.com/influxdata/influxdb v1.1.5
 	github.com/influxdata/kapacitor v1.5.0

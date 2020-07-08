@@ -4,6 +4,7 @@ import React, {Component} from 'react'
 // Components
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import {Page} from 'src/reusable_ui'
+import ShellModal from 'src/status/components/ShellModal'
 
 // Constants
 import {STATUS_PAGE_TIME_RANGE} from 'src/shared/data/timeRanges'
@@ -26,6 +27,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface State {
   cells: Cell[]
+  shellModalVisible: boolean
 }
 
 interface Props {
@@ -41,7 +43,16 @@ class StatusPage extends Component<Props, State> {
 
     this.state = {
       cells: fixtureStatusPageCells,
+      shellModalVisible: false,
     }
+  }
+
+  private onClickShellModalOpen = () => {
+    this.setState({shellModalVisible: true})
+  }
+
+  private onClickShellModalClose = () => {
+    this.setState({shellModalVisible: false})
   }
 
   public render() {
@@ -54,10 +65,22 @@ class StatusPage extends Component<Props, State> {
           <Page.Header.Left>
             <Page.Title title="Status" />
           </Page.Header.Left>
-          <Page.Header.Right showSourceIndicator={true} />
+          <Page.Header.Right showSourceIndicator={true}>
+            <button
+              className="btn btn-sm btn-primary"
+              onClick={this.onClickShellModalOpen}
+            >
+              open SSH
+            </button>
+          </Page.Header.Right>
         </Page.Header>
         <Page.Contents fullWidth={true}>
           <div className="dashboard container-fluid full-width">
+            <ShellModal
+              visible={this.state.shellModalVisible}
+              headingTitle={'Terminal'}
+              onCancel={this.onClickShellModalClose}
+            />
             {cells.length ? (
               <LayoutRenderer
                 host=""
