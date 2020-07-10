@@ -23,16 +23,12 @@ class ShellModal extends PureComponent<Props> {
   render() {
     const {visible, headingTitle, onCancel} = this.props
     return (
-      <>
-        <OverlayTechnology visible={visible}>
-          <OverlayContainer>
-            <OverlayHeading title={headingTitle} onDismiss={onCancel} />
-            <OverlayBody>
-              <Shell />
-            </OverlayBody>
-          </OverlayContainer>
-        </OverlayTechnology>
-      </>
+      <OverlayTechnology visible={visible}>
+        <OverlayContainer maxWidth={840}>
+          <OverlayHeading title={headingTitle} onDismiss={onCancel} />
+          <OverlayBody>{visible ? <Shell /> : null}</OverlayBody>
+        </OverlayContainer>
+      </OverlayTechnology>
     )
   }
 }

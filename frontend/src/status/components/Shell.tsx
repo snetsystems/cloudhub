@@ -61,6 +61,18 @@ const Shell = () => {
     }
   })
 
+  useEffect(() => {
+    return () => {
+      if (socket) {
+        socket.close()
+      }
+
+      if (term) {
+        term.dispose()
+      }
+    }
+  }, [])
+
   return (
     <div id="terminalContainer">
       <div id="terminal" ref={termRef}></div>
