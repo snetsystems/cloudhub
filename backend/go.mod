@@ -17,6 +17,7 @@ require (
 	github.com/influxdata/kapacitor v1.5.0
 	github.com/influxdata/usage-client v0.0.0-20160829180054-6d3895376368
 	github.com/jessevdk/go-flags v1.4.0
+	github.com/kr/pty v1.1.1
 	github.com/microcosm-cc/bluemonday v1.0.1
 	github.com/satori/go.uuid v1.2.0
 	github.com/sergi/go-diff v1.0.0

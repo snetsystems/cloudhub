@@ -1,98 +1,71 @@
-import React, {PureComponent, createRef} from 'react'
+import React, {useRef, useEffect} from 'react'
 import {Terminal} from 'xterm'
 import {FitAddon} from 'xterm-addon-fit'
-import {AttachAddon} from 'xterm-addon-attach'
-// import * as attach from 'xterm/lib/addons/attach/attach'
 import 'xterm/css/xterm.css'
 
-interface Props {}
-interface State {
-  isConnect: boolean
-}
+const Shell = () => {
+  let termRef = useRef<HTMLDivElement>()
+  let term: Terminal = null
+  let socket: WebSocket = null
+  const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://'
+  const socketURL =
+    protocol + window.location.hostname + '/cloudhub/v1/websocketHandler'
+  useEffect(() => {
+    socket = new WebSocket(socketURL)
+    socket.binaryType = 'arraybuffer'
 
-class Shell extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props)
-
-    this.state = {
-      isConnect: false,
-    }
-  }
-
-  private term: Terminal = null
-  private socket: WebSocket = null
-
-  private termRef = createRef<HTMLDivElement>()
-
-  private initTerminal = () => {
-    const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://'
-    let socketURL =
-      protocol + window.location.hostname + '/cloudhub/v1/websocketHandler'
-
-    this.socket = new WebSocket(socketURL)
-
-    const attachAddon = new AttachAddon(this.socket)
     const fitAddon = new FitAddon()
+    socket.binaryType = 'arraybuffer'
 
-    this.term = new Terminal({
-      fontSize: 14,
-      fontFamily: 'Consolas, "Courier New", monospace',
-      bellStyle: 'sound',
-      cursorBlink: true,
-    })
-
-    this.socket.onopen = (event: Event) => {
-      this.setState({isConnect: true})
-      console.log('socket open', event)
-      this.handleSend()
+    function ab2str(buf) {
+      return String.fromCharCode.apply(null, new Uint8Array(buf))
     }
 
-    this.socket.onmessage = event => {
-      console.log('socket onmessage', event)
+    socket.onopen = function() {
+      term = new Terminal({
+        screenReaderMode: true,
+        cursorBlink: true,
+      })
+
+      term.onData(data => socket.send(new TextEncoder().encode('\x00' + data)))
+
+      term.onResize(evt =>
+        socket.send(
+          new TextEncoder().encode(
+            '\x01' + JSON.stringify({cols: evt.cols, rows: evt.rows})
+          )
+        )
+      )
+
+      term.open(termRef.current)
+      term.loadAddon(fitAddon)
+
+      socket.onmessage = function(evt) {
+        if (evt.data instanceof ArrayBuffer) {
+          term.write(ab2str(evt.data))
+        } else {
+          alert(evt.data)
+        }
+      }
+
+      socket.onclose = function() {
+        term.write('Session terminated')
+        term.dispose()
+      }
+
+      socket.onerror = function(error) {
+        if (typeof console.log == 'function') {
+          console.error(error)
+        }
+      }
     }
+  })
 
-    this.socket.onclose = event => {
-      console.log('socket onclose', event)
-    }
-
-    this.socket.onerror = event => {
-      console.log('socket onerror', event)
-    }
-
-    fitAddon.fit()
-
-    this.term.loadAddon(attachAddon)
-    this.term.loadAddon(fitAddon)
-
-    console.log(this.termRef.current)
-    this.term.open(this.termRef.current)
-  }
-
-  public componentDidMount() {
-    if (!this.term) {
-      this.initTerminal()
-    }
-  }
-
-  public componentWillUnmount() {
-    console.log('componentWillUnmount')
-    if (this.term) {
-      this.term.dispose()
-      // this.socket.close(2, '')
-      this.term = null
-    }
-  }
-
-  private handleSend() {
-    if (!this.state.isConnect) return
-
-    const sendData = {event: 'req', data: {comment: 'Hello World!'}}
-    this.socket.send(JSON.stringify(sendData))
-  }
-
-  render() {
-    return <div id="terminal" ref={this.termRef}></div>
-  }
+  return (
+    <div id="terminalContainer">
+      <div id="terminal" ref={termRef}></div>
+    </div>
+  )
 }
 
 export default Shell

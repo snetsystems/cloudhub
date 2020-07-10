@@ -1,108 +1,124 @@
 package server
 
 import (
-	"log"
+   "encoding/json"
+	"io"
 	"net/http"
-	"encoding/json"
 	"os"
-	// "path/filepath"
-
-	"github.com/gorilla/websocket"
+	"os/exec"
+	"syscall"
+   "unsafe"
+   
+   "github.com/Sirupsen/logrus"
+   "github.com/gorilla/websocket"
+   "github.com/kr/pty"
 )
+
+type windowSize struct {
+	Rows uint16 `json:"rows"`
+	Cols uint16 `json:"cols"`
+	X    uint16
+	Y    uint16
+}
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 }
 
-var assetsDir = "public"
-
 // WebsocketHandler socket Handler
 func (s *Service) WebsocketHandler (w http.ResponseWriter, r *http.Request){
-	c, err := upgrader.Upgrade(w, r, nil)
-   if err != nil {
-      log.Print("upgrade:", err)
-      return
-   }
-   defer c.Close()
-   acceptLanguage := os.Getenv("ACCEPT_LANGUAGE")
+	l := logrus.WithField("remoteaddr", r.RemoteAddr)
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		l.WithError(err).Error("Unable to upgrade connection")
+		return
+	}
 
-   log.Print("acceptLanguage:", acceptLanguage)
-   for {
-      mt, message, err := c.ReadMessage()
-      if err != nil {
-         log.Println("read:", err)
-         break
-      }
-      var objmap map[string]interface{}
-      _ = json.Unmarshal(message, &objmap)
-      event := objmap["event"].(string)
-      sendData := map[string]interface{}{
-         "event": "res",
-         "data":  nil,
-      }
-      switch event {
-      case "open":
-         log.Printf("Received: %s\n", event)
-      case "req":
-         sendData["data"] = objmap["data"]
-         log.Printf("Received: %s\n", event)
-      }
-      refineSendData, err := json.Marshal(sendData)
-      err = c.WriteMessage(mt, refineSendData)
-      if err != nil {
-         log.Println("write:", err)
-         break
-      }
+	cmd := exec.Command("/bin/bash", "-l")
+	cmd.Env = append(os.Environ(), "TERM=xterm")
+
+   tty, err := pty.Start(cmd)
+   
+	if err != nil {
+		l.WithError(err).Error("Unable to start pty/cmd")
+		conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
+		return
    }
+   
+	defer func() {
+		cmd.Process.Kill()
+		cmd.Process.Wait()
+		tty.Close()
+		conn.Close()
+	}()
+
+	go func() {
+		for {
+			buf := make([]byte, 1024)
+         read, err := tty.Read(buf)
+			if err != nil {
+				conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
+				l.WithError(err).Error("Unable to read from pty/cmd")
+				return
+			}
+			conn.WriteMessage(websocket.BinaryMessage, buf[:read])
+		}
+	}()
+
+	for {
+		messageType, reader, err := conn.NextReader()
+		if err != nil {
+			l.WithError(err).Error("Unable to grab next reader")
+			return
+		}
+
+		if messageType == websocket.TextMessage {
+         l.Warn("Unexpected text message")
+			conn.WriteMessage(websocket.TextMessage, []byte("Unexpected text message"))
+			continue
+		}
+
+		dataTypeBuf := make([]byte, 1)
+		read, err := reader.Read(dataTypeBuf)
+		if err != nil {
+			l.WithError(err).Error("Unable to read message type from reader")
+			conn.WriteMessage(websocket.TextMessage, []byte("Unable to read message type from reader"))
+			return
+		}
+
+		if read != 1 {
+			l.WithField("bytes", read).Error("Unexpected number of bytes read")
+			return
+		}
+
+		switch dataTypeBuf[0] {
+		case 0:
+			copied, err := io.Copy(tty, reader)
+			if err != nil {
+				l.WithError(err).Errorf("Error after copying %d bytes", copied)
+			}
+		case 1:
+			decoder := json.NewDecoder(reader)
+			resizeMessage := windowSize{}
+			err := decoder.Decode(&resizeMessage)
+			if err != nil {
+				conn.WriteMessage(websocket.TextMessage, []byte("Error decoding resize message: "+err.Error()))
+				continue
+			}
+			logrus.WithField("resizeMessage", resizeMessage).Info("Resizing terminal")
+			_, _, errno := syscall.Syscall(
+				syscall.SYS_IOCTL,
+				tty.Fd(),
+				syscall.TIOCSWINSZ,
+				uintptr(unsafe.Pointer(&resizeMessage)),
+			)
+			if errno != 0 {
+				l.WithError(syscall.Errno(errno)).Error("Unable to resize terminal")
+			}
+		default:
+			l.WithField("dataType", dataTypeBuf[0]).Error("Unknown data type")
+		}
+	}
 }
-
-// func getAssetsDir() string {
-// 	path, err := os.Executable()
-// 	if err != nil {
-// 		log.Fatalf("Error determining path to executable: %#v", err) 
-// 	}
-//    path, err = filepath.EvalSymlinks(path)
-
-//    if err != nil {
-// 	log.Fatalf("Error evaluating symlinks for path '%s': %#v", path, err)
-// 	}
-
-// 	return filepath.Join(filepath.Dir(path), assetsDir)
-// }
-
-// func getLocaleDir(locale string) string {
-// 	localeDir := ""
-// 	assetsDir := getAssetsDir()
-// 	tags, _, _ := language.ParseAcceptLanguage(locale)
-// 	localeMap := handler.getLocaleMap()
-
-// 	for _, tag := range tags {
-// 		if _, exists := localeMap[tag.String()]; exists {
-// 			localeDir = filepath.Join(assetsDir, tag.String())
-// 			break
-// 		}
-// 	}
-
-// 	if handler.dirExists(localeDir) {
-// 		return localeDir
-// 	}
-
-// 	return filepath.Join(assetsDir, defaultLocaleDir)
-// }
-
-// func determineLocalizedDir(locale string) string {
-// 	// TODO(floreks): Remove that once new locale codes are supported by the browsers.
-// 	// For backward compatibility only.
-// 	localeMap := strings.NewReplacer(
-// 		"zh-CN", "zh-Hans",
-// 		"zh-cn", "zh-Hans",
-// 		"zh-TW", "zh-Hant",
-// 		"zh-tw", "zh-Hant",
-// 		"zh-hk", "zh-Hant-HK",
-// 		"zh-HK", "zh-Hant-HK",
-// 	)
-
-// 	return handler.getLocaleDir(localeMap.Replace(locale))
-// }
 
