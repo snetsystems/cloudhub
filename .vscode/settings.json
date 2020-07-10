@@ -8,9 +8,14 @@
   "editor.renderWhitespace": "none",
   "editor.wordWrap": "on",
   "files.eol": "\n",
-  "go.formatTool": "goimports",
   "go.lintOnSave": "package",
+  "go.lintTool": "golint",
   "go.autocompleteUnimportedPackages": true,
+  "go.formatTool": "goimports",
+  "go.enableCodeLens": {
+    "references": false,
+    "runtest": true
+  },
   "prettier.singleQuote": true,
   "prettier.bracketSpacing": false,
   "prettier.semi": false,

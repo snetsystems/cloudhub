@@ -40,8 +40,12 @@ class StatusPage extends Component<Props, State> {
     super(props)
 
     this.state = {
-      cells: fixtureStatusPageCells,
+      cells: [],
     }
+  }
+
+  public componentDidMount() {
+    this.setState({cells: fixtureStatusPageCells(this.props.source)})
   }
 
   public render() {
