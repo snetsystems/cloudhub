@@ -9,7 +9,7 @@ const Shell = () => {
   let socket: WebSocket = null
   const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://'
   const socketURL =
-    protocol + window.location.hostname + '/cloudhub/v1/websocketHandler'
+    protocol + window.location.hostname + '/cloudhub/v1/WebTerminalHandler'
   useEffect(() => {
     socket = new WebSocket(socketURL)
     socket.binaryType = 'arraybuffer'

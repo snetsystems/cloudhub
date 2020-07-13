@@ -1,124 +1,198 @@
 package server
 
 import (
-   "encoding/json"
-	"io"
+	"log"
+	"net"
 	"net/http"
-	"os"
-	"os/exec"
-	"syscall"
-   "unsafe"
-   
-   "github.com/Sirupsen/logrus"
-   "github.com/gorilla/websocket"
-   "github.com/kr/pty"
+	"strconv"
+	"time"
+
+	"github.com/gorilla/websocket"
+	gossh "golang.org/x/crypto/ssh"
 )
 
-type windowSize struct {
-	Rows uint16 `json:"rows"`
-	Cols uint16 `json:"cols"`
-	X    uint16
-	Y    uint16
-}
-
 var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
+    ReadBufferSize:  1024,
+    WriteBufferSize: 1024,
 }
 
-// WebsocketHandler socket Handler
-func (s *Service) WebsocketHandler (w http.ResponseWriter, r *http.Request){
-	l := logrus.WithField("remoteaddr", r.RemoteAddr)
-	conn, err := upgrader.Upgrade(w, r, nil)
+const (
+	term = "xterm-256color"
+    protocol = "tcp"
+    sshEcho = 1
+    sshTtyOpIspeed = 14400
+    sshTtyOpOspeed = 14400
+)
+
+type ssh struct {
+	user    string
+	pwd     string
+	addr    string
+	port    int
+	client  *gossh.Client
+	session *gossh.Session
+}
+
+// connect to the ssh.
+func (s *ssh) Connect() (*ssh, error) {
+	auth := []gossh.AuthMethod{
+		gossh.Password(s.pwd),
+	}
+
+	config := &gossh.ClientConfig{
+		User:    s.user,
+        Auth:    auth,
+        Timeout: 30 * time.Second,
+        HostKeyCallback: func(hostname string, remote net.Addr, key gossh.PublicKey) error { return nil },
+	}
+
+	// connect to ths ssh.
+	client, err := gossh.Dial(protocol, s.addr+":"+strconv.Itoa(s.port), config)
+	if nil != err {
+		return nil, err
+	}
+
+	// create session.
+	session, err := client.NewSession()
+	if nil != err {
+		return nil, err
+	}
+	s.client = client
+	s.session = session
+	return s, nil
+}
+
+// close ssh session
+func (s *ssh) Close() {
+    if s.session != nil {
+        _ = s.session.Close()
+    }
+
+    if s.session != nil {
+        _ = s.session.Close()
+    }
+}
+
+// config the terminal modes.
+func (s *ssh) Config(cols, rows int) error {
+    modes := gossh.TerminalModes{
+        gossh.ECHO:          sshEcho,     // enable echoing
+        gossh.TTY_OP_ISPEED: sshTtyOpIspeed, // input speed = 14.4 kbaud
+        gossh.TTY_OP_OSPEED: sshTtyOpOspeed, // output speed = 14.4 kbaud
+    }
+
+    // request pseudo terminal.
+    err := s.session.RequestPty(term, 30, 80, modes)
+
+    return err
+}
+
+// WebTerminalHandler connects websocket and remote ssh
+func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
+	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		l.WithError(err).Error("Unable to upgrade connection")
+		log.Println("Websocket upgrade:", err)
+		return
+	}
+	defer ws.Close()
+
+	sh := &ssh{
+		user: "root",
+		pwd:  "root",
+		addr: "192.168.56.103",
+		port: 22,
+	}
+	
+	sh, err = sh.Connect()
+	if nil != err {
+		log.Println("ssh connect:", err)
 		return
 	}
 
-	cmd := exec.Command("/bin/bash", "-l")
-	cmd.Env = append(os.Environ(), "TERM=xterm")
+	err = sh.Config(80, 30)
+    if err != nil {
+        log.Println("ssh config: ", err)
+    }
 
-   tty, err := pty.Start(cmd)
-   
-	if err != nil {
-		l.WithError(err).Error("Unable to start pty/cmd")
-		conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
-		return
-   }
-   
-	defer func() {
-		cmd.Process.Kill()
-		cmd.Process.Wait()
-		tty.Close()
-		conn.Close()
-	}()
+    sshReader, err := sh.session.StdoutPipe()
+    if err != nil {
+        log.Println("session stdout pipe: ", err)
+    }
 
-	go func() {
+    sshWriter, err := sh.session.StdinPipe()
+    if err != nil {
+        log.Println("session stdin pipe: ", err)
+	}
+
+	// read from terminal and write to frontend.
+    go func() {
+        defer func() {
+            _ = ws.Close()
+            sh.Close()
+		}()
+		
 		for {
-			buf := make([]byte, 1024)
-         read, err := tty.Read(buf)
+			buf := make([]byte, 4096)
+			n, err := sshReader.Read(buf)
 			if err != nil {
-				conn.WriteMessage(websocket.TextMessage, []byte(err.Error()))
-				l.WithError(err).Error("Unable to read from pty/cmd")
+				log.Println(err)
 				return
 			}
-			conn.WriteMessage(websocket.BinaryMessage, buf[:read])
+			err = ws.WriteMessage(websocket.BinaryMessage, buf[:n])
+			if err != nil {
+				log.Println(err)
+				return
+			}
 		}
 	}()
-
-	for {
-		messageType, reader, err := conn.NextReader()
-		if err != nil {
-			l.WithError(err).Error("Unable to grab next reader")
-			return
-		}
-
-		if messageType == websocket.TextMessage {
-         l.Warn("Unexpected text message")
-			conn.WriteMessage(websocket.TextMessage, []byte("Unexpected text message"))
-			continue
-		}
-
-		dataTypeBuf := make([]byte, 1)
-		read, err := reader.Read(dataTypeBuf)
-		if err != nil {
-			l.WithError(err).Error("Unable to read message type from reader")
-			conn.WriteMessage(websocket.TextMessage, []byte("Unable to read message type from reader"))
-			return
-		}
-
-		if read != 1 {
-			l.WithField("bytes", read).Error("Unexpected number of bytes read")
-			return
-		}
-
-		switch dataTypeBuf[0] {
-		case 0:
-			copied, err := io.Copy(tty, reader)
+	
+	// read from frontend and write to terminal.
+    go func() {
+        defer func() {
+            _ = ws.Close()
+            sh.Close()
+		}()
+		
+		for {
+			// set up io.Reader of websocket
+			_, reader, err := ws.NextReader()
 			if err != nil {
-				l.WithError(err).Errorf("Error after copying %d bytes", copied)
+				log.Println(err)
+				return
 			}
-		case 1:
-			decoder := json.NewDecoder(reader)
-			resizeMessage := windowSize{}
-			err := decoder.Decode(&resizeMessage)
+			// read first byte to determine whether to pass data or resize terminal
+			dataTypeBuf := make([]byte, 1)
+			_, err = reader.Read(dataTypeBuf)
 			if err != nil {
-				conn.WriteMessage(websocket.TextMessage, []byte("Error decoding resize message: "+err.Error()))
-				continue
+				log.Println(err)
+				return
 			}
-			logrus.WithField("resizeMessage", resizeMessage).Info("Resizing terminal")
-			_, _, errno := syscall.Syscall(
-				syscall.SYS_IOCTL,
-				tty.Fd(),
-				syscall.TIOCSWINSZ,
-				uintptr(unsafe.Pointer(&resizeMessage)),
-			)
-			if errno != 0 {
-				l.WithError(syscall.Errno(errno)).Error("Unable to resize terminal")
+
+			buf := make([]byte, 1024)
+			n, err := reader.Read(buf)
+			if err != nil {
+				log.Println(err)
+				return
 			}
-		default:
-			l.WithField("dataType", dataTypeBuf[0]).Error("Unknown data type")
+			_, err = sshWriter.Write(buf[:n])
+			if err != nil {
+				log.Println(err)
+				ws.WriteMessage(websocket.BinaryMessage, []byte(err.Error()))
+				return
+			}
+
 		}
-	}
+	}()
+	
+	// start remote shell.
+    err = sh.session.Shell()
+    if err != nil {
+        log.Println("ssh session shell: ", err)
+    }
+
+	// Wait for session to finish
+    err = sh.session.Wait()
+    if err != nil {
+        log.Println("ssh session wait: ", err)
+    }
 }
-
