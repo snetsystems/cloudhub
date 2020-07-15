@@ -4,11 +4,8 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"strconv"
 	"time"
 	"net/url"
-	// "encoding/json"
-	// "github.com/gorilla/Schema"
 
 	"github.com/gorilla/websocket"
 	gossh "golang.org/x/crypto/ssh"
@@ -31,16 +28,9 @@ type ssh struct {
 	user    string
 	pwd     string
 	addr    string
-	port    int
+	port    string
 	client  *gossh.Client
 	session *gossh.Session
-}
-
-type urlParams struct {
-    User	string	`json:"user"`
-	Pwd		string	`json:"pwd"`
-	addr	string	`json:"addr"`
-	// port	string
 }
 
 // connect to the ssh.
@@ -57,7 +47,7 @@ func (s *ssh) Connect() (*ssh, error) {
 	}
 
 	// connect to ths ssh.
-	client, err := gossh.Dial(protocol, s.addr+":"+strconv.Itoa(s.port), config)
+	client, err := gossh.Dial(protocol, s.addr+":"+s.port, config)
 	if nil != err {
 		return nil, err
 	}
@@ -101,52 +91,52 @@ func (s *ssh) Config(cols, rows int) error {
 func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println("Websocket upgrade:", err)
+		log.Fatalln("Websocket upgrade:", err)
 		return
 	}
 	defer ws.Close()
 
-	
-	params, _ := url.ParseQuery(r.URL.RawQuery)
-	url, err := url.QueryUnescape(r.URL.RawQuery)
-	// temp, _ := url.ParseRequestURI(url)
-	// u, err1 := url.ParseRequestURI("http://golang.org/index.html?#page1")
-	// log.Printf("hi/there?: err=%+v url=%+v\n", err1, u)
-	
-	log.Println("params", params)
-	log.Println("url", url)
-	// log.Println("temp", temp)
-	paramUser := r.FormValue("user") 
-	paramPwd := r.FormValue("pwd")
-	paramAddr := r.FormValue("addr")
-	paramPort, _ := strconv.Atoi(r.FormValue("port"))
+
+	// Parse to the original query string
+	qs, err := url.QueryUnescape(r.URL.RawQuery)
+	if err != nil {
+		log.Fatalln("error: ", err)
+		return
+	}
+
+	// query string convert to map
+	params, err := url.ParseQuery(qs)
+	if err != nil {
+		log.Fatalln("error: ", err)
+		return
+	}
 
 	sh := &ssh{
-		user: paramUser,
-		pwd:  paramPwd,
-		addr: paramAddr,
-		port: paramPort,
+		user: params["user"][0],
+		pwd:  params["pwd"][0],
+		addr: params["addr"][0],
+		port: params["port"][0],
 	}
 	
 	sh, err = sh.Connect()
 	if nil != err {
-		log.Println("ssh connect:", err)
+		log.Fatalln("ssh connect:", err)
 		return
 	}
 
 	err = sh.Config(80, 30)
     if err != nil {
-        log.Println("ssh config: ", err)
+        log.Fatalln("ssh config: ", err)
     }
 
     sshReader, err := sh.session.StdoutPipe()
     if err != nil {
-        log.Println("session stdout pipe: ", err)
+        log.Fatalln("session stdout pipe: ", err)
     }
 
     sshWriter, err := sh.session.StdinPipe()
     if err != nil {
-        log.Println("session stdin pipe: ", err)
+        log.Fatalln("session stdin pipe: ", err)
 	}
 
 	// read from terminal and write to frontend.
@@ -160,12 +150,12 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 			buf := make([]byte, 4096)
 			n, err := sshReader.Read(buf)
 			if err != nil {
-				log.Println(err)
+				log.Fatalln(err)
 				return
 			}
 			err = ws.WriteMessage(websocket.BinaryMessage, buf[:n])
 			if err != nil {
-				log.Println(err)
+				log.Fatalln(err)
 				return
 			}
 		}
@@ -182,26 +172,26 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 			// set up io.Reader of websocket
 			_, reader, err := ws.NextReader()
 			if err != nil {
-				log.Println(err)
+				log.Fatalln(err)
 				return
 			}
 			// read first byte to determine whether to pass data or resize terminal
 			dataTypeBuf := make([]byte, 1)
 			_, err = reader.Read(dataTypeBuf)
 			if err != nil {
-				log.Println(err)
+				log.Fatalln(err)
 				return
 			}
 
 			buf := make([]byte, 1024)
 			n, err := reader.Read(buf)
 			if err != nil {
-				log.Println(err)
+				log.Fatalln(err)
 				return
 			}
 			_, err = sshWriter.Write(buf[:n])
 			if err != nil {
-				log.Println(err)
+				log.Fatalln(err)
 				ws.WriteMessage(websocket.BinaryMessage, []byte(err.Error()))
 				return
 			}
@@ -212,12 +202,12 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 	// start remote shell.
     err = sh.session.Shell()
     if err != nil {
-        log.Println("ssh session shell: ", err)
+        log.Fatalln("ssh session shell: ", err)
     }
 
 	// Wait for session to finish
     err = sh.session.Wait()
     if err != nil {
-        log.Println("ssh session wait: ", err)
+        log.Fatalln("ssh session wait: ", err)
     }
 }
