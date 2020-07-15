@@ -6,6 +6,9 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+	"net/url"
+	// "encoding/json"
+	// "github.com/gorilla/Schema"
 
 	"github.com/gorilla/websocket"
 	gossh "golang.org/x/crypto/ssh"
@@ -31,6 +34,13 @@ type ssh struct {
 	port    int
 	client  *gossh.Client
 	session *gossh.Session
+}
+
+type urlParams struct {
+    User	string	`json:"user"`
+	Pwd		string	`json:"pwd"`
+	addr	string	`json:"addr"`
+	// port	string
 }
 
 // connect to the ssh.
@@ -96,11 +106,26 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer ws.Close()
 
+	
+	params, _ := url.ParseQuery(r.URL.RawQuery)
+	url, err := url.QueryUnescape(r.URL.RawQuery)
+	// temp, _ := url.ParseRequestURI(url)
+	// u, err1 := url.ParseRequestURI("http://golang.org/index.html?#page1")
+	// log.Printf("hi/there?: err=%+v url=%+v\n", err1, u)
+	
+	log.Println("params", params)
+	log.Println("url", url)
+	// log.Println("temp", temp)
+	paramUser := r.FormValue("user") 
+	paramPwd := r.FormValue("pwd")
+	paramAddr := r.FormValue("addr")
+	paramPort, _ := strconv.Atoi(r.FormValue("port"))
+
 	sh := &ssh{
-		user: "root",
-		pwd:  "root",
-		addr: "192.168.56.103",
-		port: 22,
+		user: paramUser,
+		pwd:  paramPwd,
+		addr: paramAddr,
+		port: paramPort,
 	}
 	
 	sh, err = sh.Connect()

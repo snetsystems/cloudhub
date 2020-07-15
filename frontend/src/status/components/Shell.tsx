@@ -8,8 +8,17 @@ const Shell = () => {
   let term: Terminal = null
   let socket: WebSocket = null
   const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://'
+  const user = 'root'
+  const pwd = 'root'
+  const addr = '192.168.56.103'
+  const port = 22
+  const urlParam =
+    'user=' + user + '&pwd=' + pwd + '&addr=' + addr + '&port=' + port
   const socketURL =
-    protocol + window.location.hostname + '/cloudhub/v1/WebTerminalHandler'
+    protocol +
+    window.location.hostname +
+    '/cloudhub/v1/WebTerminalHandler?' +
+    encodeURIComponent(urlParam)
   useEffect(() => {
     socket = new WebSocket(socketURL)
     socket.binaryType = 'arraybuffer'
@@ -48,7 +57,7 @@ const Shell = () => {
         }
       }
 
-      socket.onclose = function() {
+      socket.onclose = function(e) {
         term.write('Session terminated')
         term.dispose()
       }
