@@ -3,6 +3,9 @@ package server
 import (
 	"net/http"
 	"path"
+	"bufio"
+	"net"
+	"errors"
 )
 
 func location(w http.ResponseWriter, self string) {
@@ -60,6 +63,13 @@ func (f *flushingResponseWriter) Flush() {
 	if flusher, ok := f.ResponseWriter.(http.Flusher); ok {
 		flusher.Flush()
 	}
+}
+
+func (f *flushingResponseWriter) Hijack() (net.Conn, *bufio.ReadWriter, error) {
+	if hijacker, ok := f.ResponseWriter.(http.Hijacker); ok {
+		return hijacker.Hijack()
+	}
+	return nil, nil, errors.New("I'm not a Hijacker")
 }
 
 // FlushingHandler may not actually do anything, but it was ostensibly

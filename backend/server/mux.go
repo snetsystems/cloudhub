@@ -87,6 +87,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 		)
 	}
 	_ = EnsureMember
+	
 	EnsureViewer := func(next http.HandlerFunc) http.HandlerFunc {
 		return AuthorizedUser(
 			service.Store,
@@ -96,7 +97,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 			next,
 		)
 	}
-	_ = EnsureViewer
+
 	EnsureEditor := func(next http.HandlerFunc) http.HandlerFunc {
 		return AuthorizedUser(
 			service.Store,
@@ -106,7 +107,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 			next,
 		)
 	}
-	_ = EnsureEditor
+
 	EnsureAdmin := func(next http.HandlerFunc) http.HandlerFunc {
 		return AuthorizedUser(
 			service.Store,
@@ -116,7 +117,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 			next,
 		)
 	}
-	_ = EnsureAdmin
+
 	EnsureSuperAdmin := func(next http.HandlerFunc) http.HandlerFunc {
 		return AuthorizedUser(
 			service.Store,
@@ -126,11 +127,11 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 			next,
 		)
 	}
-	_ = EnsureSuperAdmin
+
 	rawStoreAccess := func(next http.HandlerFunc) http.HandlerFunc {
 		return RawStoreAccess(opts.Logger, next)
 	}
-	_ = rawStoreAccess
+
 	ensureOrgMatches := func(next http.HandlerFunc) http.HandlerFunc {
 		return RouteMatchesPrincipal(
 			service.Store,
@@ -139,7 +140,6 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 			next,
 		)
 	}
-	_ = ensureOrgMatches
 
 	if opts.PprofEnabled {
 		// add profiling routes
