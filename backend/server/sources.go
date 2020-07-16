@@ -213,6 +213,10 @@ func (s *Service) tsdbType(ctx context.Context, src *cloudhub.Source) (string, e
 	if err := cli.Connect(ctx, src); err != nil {
 		return "", err
 	}
+
+	ctx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+
 	return cli.Type(ctx)
 }
 
@@ -223,29 +227,32 @@ type getSourcesResponse struct {
 // Sources returns all sources from the store.
 func (s *Service) Sources(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+
+	res := getSourcesResponse{
+		Sources: make([]sourceResponse, 0),
+	}
+
 	srcs, err := s.Store.Sources(ctx).All(ctx)
 	if err != nil {
 		Error(w, http.StatusInternalServerError, "Error loading sources", s.Logger)
 		return
 	}
 
-	res := getSourcesResponse{
-		Sources: make([]sourceResponse, len(srcs)),
-	}
-
-	sources := make([]sourceResponse, 0)
+	sourceCh := make(chan sourceResponse, len(srcs))
 	for _, src := range srcs {
-		dbVersion, err := s.tsdbVersion(ctx, &src)
-		if err != nil {
-			dbVersion = "Unknown"
-			s.Logger.WithField("error", err.Error()).Info("Failed to retrieve database version")
-		}
-		src.Version = dbVersion
-
-		sources = append(sources, newSourceResponse(ctx, src))
+		go func(src cloudhub.Source) {
+			dbVersion, err := s.tsdbVersion(ctx, &src)
+			if err != nil {
+				dbVersion = "Unknown"
+				s.Logger.WithField("error", err.Error()).Info("Failed to retrieve database version")
+			}
+			src.Version = dbVersion
+			sourceCh <- newSourceResponse(ctx, src)
+		}(src)
 	}
-
-	res.Sources = sources
+	for i := 0; i < len(srcs); i++ {
+		res.Sources = append(res.Sources, <-sourceCh)
+	}
 
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
