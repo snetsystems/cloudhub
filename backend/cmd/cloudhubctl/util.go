@@ -21,7 +21,7 @@ func NewBoltClient(path string) (kv.Store, error) {
 	)
 }
 
-// NewService
+// NewService ...
 func NewService(s kv.Store) (*kv.Service, error) {
 	return kv.NewService(context.TODO(), s)
 }
