@@ -123,9 +123,10 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 		port: port,
 	}
 
-	_, _ = sh.Connect()
+	sh, err = sh.Connect()
 	if nil != err {
 		log.Println("ssh connect:", err)
+		_ = ws.Close()
 		return
 	}
 
