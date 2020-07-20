@@ -55,7 +55,7 @@ import * as QueriesModels from 'src/types/queries'
 import * as SourcesModels from 'src/types/sources'
 import * as TempVarsModels from 'src/types/tempVars'
 import {NewDefaultCell} from 'src/types/dashboards'
-import {NotificationAction, Me} from 'src/types'
+import {NotificationAction, Me, TimeZones} from 'src/types'
 import {AnnotationsDisplaySetting} from 'src/types/annotations'
 import {Links} from 'src/types/flux'
 import {createTimeRangeTemplates} from 'src/shared/utils/templates'
@@ -68,6 +68,8 @@ interface Props extends ManualRefreshProps, WithRouterProps {
     sourceID: string
     dashboardID: string
   }
+  timeZone: TimeZones
+  setTimeZone: typeof appActions.setTimeZone
   location: Location
   dashboardID: string
   dashboard: DashboardsModels.Dashboard
@@ -203,6 +205,8 @@ class DashboardPage extends Component<Props, State> {
       source,
       sources,
       timeRange,
+      timeZone,
+      setTimeZone,
       zoomedTimeRange,
       dashboard,
       dashboardID,
@@ -264,6 +268,8 @@ class DashboardPage extends Component<Props, State> {
         <DashboardHeader
           dashboard={dashboard}
           timeRange={timeRange}
+          timeZone={timeZone}
+          onSetTimeZone={setTimeZone}
           autoRefresh={autoRefresh}
           isHidden={inPresentationMode}
           onAddCell={this.handleAddCell}
@@ -519,7 +525,7 @@ const mstp = (state, {params: {dashboardID}}) => {
   const {
     app: {
       ephemeral: {inPresentationMode},
-      persisted: {autoRefresh, showTemplateVariableControlBar},
+      persisted: {autoRefresh, showTemplateVariableControlBar, timeZone},
     },
     links,
     annotations: {displaySetting},
@@ -538,6 +544,7 @@ const mstp = (state, {params: {dashboardID}}) => {
   return {
     sources,
     me,
+    timeZone,
     dashboard,
     fluxLinks: links.flux,
     dashboardID,
@@ -581,9 +588,10 @@ const mdtp = {
   handleClearCEO: cellEditorOverlayActions.clearCEO,
   onGetAnnotationsAsync: getAnnotationsAsync,
   handleDismissEditingAnnotation: dismissEditingAnnotation,
+  setTimeZone: appActions.setTimeZone,
 }
 
 export default connect(
   mstp,
   mdtp
-)(ManualRefresh<Props>(withRouter<Props>(DashboardPage)))
+)(ManualRefresh<Props>(withRouter<Props, any>(DashboardPage)))
