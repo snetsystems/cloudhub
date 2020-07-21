@@ -9,6 +9,7 @@ import SubSections from 'src/shared/components/SubSections'
 import AgentMinions from 'src/agent_admin/containers/AgentMinions'
 import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
 import AgentControl from 'src/agent_admin/containers/AgentControl'
+import ShellModal from 'src/agent_admin/components/ShellModal'
 
 // Actions
 import {getMinionKeyListAllAdminAsync} from 'src/agent_admin/actions'
@@ -55,6 +56,8 @@ interface State {
   minionsObject: MinionsObject
   saltMasterUrl: string
   saltMasterToken: string
+  shellModalVisible: boolean
+  shellAddr: string
 }
 
 export interface LoginEvent extends MouseEvent<KeyboardEvent> {
@@ -73,6 +76,8 @@ class AgentAdminPage extends PureComponent<Props, State> {
       minionsObject: {},
       saltMasterUrl: '',
       saltMasterToken: '',
+      shellModalVisible: false,
+      shellAddr: '',
     }
   }
 
@@ -146,6 +151,8 @@ class AgentAdminPage extends PureComponent<Props, State> {
             minionsStatus={minionsStatus}
             handleGetMinionKeyListAll={this.getMinionKeyListAll}
             handleSetMinionStatus={this.setMinionStatus}
+            handleShellModalOpen={this.onClickShellModalOpen}
+            handleShellModalClose={this.onClickShellModalClose}
           />
         ),
       },
@@ -220,10 +227,25 @@ class AgentAdminPage extends PureComponent<Props, State> {
               parentUrl="agent-admin"
               sourceID={source.id}
             />
+            <ShellModal
+              visible={this.state.shellModalVisible}
+              headingTitle={'Terminal'}
+              onCancel={this.onClickShellModalClose}
+              addr={this.state.shellAddr}
+            />
           </div>
         </Page.Contents>
       </Page>
     )
+  }
+
+  private onClickShellModalOpen = ({addr}) => {
+    this.setState({shellModalVisible: true, shellAddr: addr})
+  }
+
+  private onClickShellModalClose = () => {
+    event.preventDefault()
+    this.setState({shellModalVisible: false})
   }
 }
 

@@ -6,7 +6,7 @@ import {AGENT_MINION_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
 import {AgentMinions} from 'src/agent_admin/containers/AgentMinions'
 import {OSIndicator} from 'src/agent_admin/components/AgentIndicator'
 import {TableBodyRowItem} from 'src/agent_admin/reusable/'
-
+import {ShellProps} from 'src/agent_admin/components/Shell'
 // Types
 import {Minion} from 'src/agent_admin/type'
 
@@ -20,6 +20,8 @@ interface Props {
   onClickTableRow: AgentMinions['onClickTableRowCall']
   onClickModal: ({}) => object
   handleWheelKeyCommand: (host: string, cmdstatus: string) => void
+  handleShellModalOpen?: (props: ShellProps) => void
+  handleShellModalClose?: () => void
 }
 
 @ErrorHandling
@@ -57,7 +59,13 @@ class AgentMinionsTableRow extends PureComponent<Props> {
   }
 
   private get TableRowEachPage() {
-    const {idx, minions, onClickModal, handleWheelKeyCommand} = this.props
+    const {
+      idx,
+      minions,
+      onClickModal,
+      handleWheelKeyCommand,
+      handleShellModalOpen,
+    } = this.props
     const {osVersion, os, ip, host, status} = minions
     const {
       HostWidth,
@@ -95,6 +103,22 @@ class AgentMinionsTableRow extends PureComponent<Props> {
                 handleWheelKeyCommand,
                 idx,
               })}
+            </div>
+          }
+          width={OperationWidth}
+        />
+        <TableBodyRowItem
+          title={
+            <div id={`table-row--select${idx}`}>
+              <button
+                className="btn btn-sm btn-primary"
+                onClick={e => {
+                  e.stopPropagation()
+                  handleShellModalOpen({addr: ip})
+                }}
+              >
+                open SSH
+              </button>
             </div>
           }
           width={OperationWidth}

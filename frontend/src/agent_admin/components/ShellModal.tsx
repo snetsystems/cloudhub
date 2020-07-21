@@ -7,11 +7,12 @@ import {
   OverlayBody,
 } from 'src/reusable_ui'
 
-import Shell from 'src/status/components/Shell'
+import Shell from 'src/agent_admin/components/Shell'
 
 interface Props {
   visible: boolean
   headingTitle: string
+  addr: string
   onCancel: () => void
 }
 
@@ -21,12 +22,12 @@ class ShellModal extends PureComponent<Props> {
   }
 
   render() {
-    const {visible, headingTitle, onCancel} = this.props
+    const {visible, headingTitle, onCancel, addr} = this.props
     return (
       <OverlayTechnology visible={visible}>
         <OverlayContainer maxWidth={840}>
           <OverlayHeading title={headingTitle} onDismiss={onCancel} />
-          <OverlayBody>{visible ? <Shell /> : null}</OverlayBody>
+          <OverlayBody>{visible ? <Shell addr={addr} /> : null}</OverlayBody>
         </OverlayContainer>
       </OverlayTechnology>
     )

@@ -9,6 +9,7 @@ import {AgentMinions} from 'src/agent_admin/containers/AgentMinions'
 import AgentMinionsTableRow from 'src/agent_admin/components/AgentMinionsTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import PageSpinner from 'src/shared/components/PageSpinner'
+import {ShellProps} from 'src/agent_admin/components/Shell'
 
 // Constants
 import {AGENT_MINION_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
@@ -27,6 +28,8 @@ export interface Props {
   onClickModal: ({}) => object
   onClickTableRow: AgentMinions['onClickTableRowCall']
   handleWheelKeyCommand: (host: string, cmdstatus: string) => void
+  handleShellModalOpen?: (props: ShellProps) => void
+  handleShellModalClose: () => void
 }
 
 interface State {
@@ -275,6 +278,12 @@ class AgentMinionsTable extends PureComponent<Props, State> {
           >
             Operation
           </div>
+          <div
+            className="hosts-table--th list-type"
+            style={{width: OperationWidth}}
+          >
+            SSH
+          </div>
         </div>
       </div>
     )
@@ -287,6 +296,8 @@ class AgentMinionsTable extends PureComponent<Props, State> {
       onClickModal,
       handleWheelKeyCommand,
       focusedHost,
+      handleShellModalOpen,
+      handleShellModalClose,
     } = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
@@ -312,6 +323,8 @@ class AgentMinionsTable extends PureComponent<Props, State> {
                   onClickModal={onClickModal}
                   handleWheelKeyCommand={handleWheelKeyCommand}
                   focusedHost={focusedHost}
+                  handleShellModalOpen={handleShellModalOpen}
+                  handleShellModalClose={handleShellModalClose}
                 />
               ))}
               className="hosts-table--tbody"
