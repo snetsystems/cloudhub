@@ -5,6 +5,12 @@ import 'xterm/css/xterm.css'
 
 import ShellForm from 'src/agent_admin/components/ShellForm'
 
+import {Notification} from 'src/types/notifications'
+// import {notify} from 'src/shared/actions/notifications'
+
+// Constants
+import {notifyConnectShellFailed} from 'src/shared/copy/notifications'
+
 export interface ShellProps {
   addr?: string
   user?: string
@@ -12,8 +18,11 @@ export interface ShellProps {
   port?: string
   isConn?: boolean
 }
+interface DefaultProps {
+  notify?: (message: Notification) => void
+}
 
-type Props = ShellProps
+type Props = DefaultProps & ShellProps
 
 const Shell = (props: Props) => {
   let termRef = useRef<HTMLDivElement>()
@@ -96,7 +105,10 @@ const Shell = (props: Props) => {
         }
       }
 
-      socket.onclose = function() {
+      socket.onclose = function(e) {
+        if (e.code === 4999) {
+          props.notify(notifyConnectShellFailed(e))
+        }
         setIsConn(false)
         term.write('Session terminated')
         term.dispose()

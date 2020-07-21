@@ -1032,3 +1032,11 @@ export const notifyAgentDeleteFailed = (error: Error): Notification => ({
   ...defaultErrorNotification,
   message: `Agent Delete Failed, ${error}`,
 })
+
+//  CloudHub Shell Sources Notifications
+//  ----------------------------------------------------------------------------
+
+export const notifyConnectShellFailed = (close: CloseEvent): Notification => ({
+  ...defaultErrorNotification,
+  message: `CODE: ${close.code}, REASON: ${close.reason}`,
+})

@@ -34,6 +34,9 @@ import {AddonType} from 'src/shared/constants'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {MinionsObject} from 'src/agent_admin/type'
 
+// Constants
+import {fluxNotUpdated} from 'src/shared/copy/notifications'
+
 interface Props {
   source: Source
   notify: (message: Notification | NotificationFunc) => void
@@ -82,6 +85,7 @@ class AgentAdminPage extends PureComponent<Props, State> {
   }
 
   componentWillMount() {
+    // this.props.notify(fluxNotUpdated('hello'))
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
     })
@@ -202,6 +206,7 @@ class AgentAdminPage extends PureComponent<Props, State> {
       meRole,
       source,
       params: {tab},
+      notify,
     } = this.props
 
     return (
@@ -230,6 +235,7 @@ class AgentAdminPage extends PureComponent<Props, State> {
             <ShellModal
               visible={this.state.shellModalVisible}
               headingTitle={'Terminal'}
+              notify={notify}
               onCancel={this.onClickShellModalClose}
               addr={this.state.shellAddr}
             />
