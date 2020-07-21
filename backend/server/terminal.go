@@ -1,7 +1,6 @@
 package server
 
 import (
-	"log"
 	"net"
 	"net/http"
 	"time"
@@ -92,7 +91,7 @@ func (s *ssh) Config(cols, rows int) error {
 func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		log.Println("Websocket upgrade:", err)
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
 	defer ws.Close()
@@ -100,20 +99,21 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse to the original query string
 	qs, err := url.QueryUnescape(r.URL.RawQuery)
 	if err != nil {
-		log.Println("error: ", err)
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
 
 	// query string convert to map
 	params, err := url.ParseQuery(qs)
 	if err != nil {
-		log.Println("error: ", err)
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
 
 	port, err := strconv.Atoi(params["port"][0])
 	if err != nil {
-		log.Println("port input error: ", err)
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
 	}
 
 	sh := &ssh{
@@ -125,24 +125,27 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 
 	sh, err = sh.Connect()
 	if nil != err {
-		log.Println("ssh connect:", err)
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		_ = ws.Close()
 		return
 	}
 
 	err = sh.Config(80, 30)
     if err != nil {
-        log.Println("ssh config: ", err)
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
     }
 
     sshReader, err := sh.session.StdoutPipe()
     if err != nil {
-        log.Println("session stdout pipe: ", err)
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
     }
 
     sshWriter, err := sh.session.StdinPipe()
     if err != nil {
-        log.Println("session stdin pipe: ", err)
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
 	}
 
 	// read from terminal and write to frontend.
@@ -156,12 +159,12 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 			buf := make([]byte, 4096)
 			n, err := sshReader.Read(buf)
 			if err != nil {
-				log.Println(err)
+				Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 				return
 			}
 			err = ws.WriteMessage(websocket.BinaryMessage, buf[:n])
 			if err != nil {
-				log.Println(err)
+				Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 				return
 			}
 		}
@@ -178,14 +181,14 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 			// set up io.Reader of websocket
 			_, reader, err := ws.NextReader()
 			if err != nil {
-				log.Println(err)
+				Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 				return
 			}
 			// read first byte to determine whether to pass data or resize terminal
 			dataTypeBuf := make([]byte, 1)
 			_, err = reader.Read(dataTypeBuf)
 			if err != nil {
-				log.Println(err)
+				Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 				return
 			}
 
@@ -193,8 +196,8 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 			n, _ := reader.Read(buf)
 			_, err = sshWriter.Write(buf[:n])
 			if err != nil {
-				log.Println(err)
 				ws.WriteMessage(websocket.BinaryMessage, []byte(err.Error()))
+				Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 				return
 			}
 
@@ -204,12 +207,12 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 	// start remote shell.
     err = sh.session.Shell()
     if err != nil {
-        log.Println("ssh session shell: ", err)
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
     }
 
 	// Wait for session to finish
     err = sh.session.Wait()
     if err != nil {
-        log.Println("ssh session wait: ", err)
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
     }
 }
