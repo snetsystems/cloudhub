@@ -24,11 +24,7 @@ const Shell = () => {
     socket.binaryType = 'arraybuffer'
 
     const fitAddon = new FitAddon()
-    socket.binaryType = 'arraybuffer'
-
-    function ab2str(buf) {
-      return String.fromCharCode.apply(null, new Uint8Array(buf))
-    }
+    const decoder = new TextDecoder('utf-8')
 
     socket.onopen = function() {
       term = new Terminal({
@@ -46,18 +42,26 @@ const Shell = () => {
         )
       )
 
+      term.attachCustomKeyEventHandler(function(e) {
+        // Text Block + Ctrl + C
+        if (term.getSelection() && e.ctrlKey && e.keyCode == 67) {
+          document.execCommand('copy')
+          return false
+        }
+      })
+
       term.open(termRef.current)
       term.loadAddon(fitAddon)
 
       socket.onmessage = function(evt) {
         if (evt.data instanceof ArrayBuffer) {
-          term.write(ab2str(evt.data))
+          term.write(decoder.decode(evt.data))
         } else {
           alert(evt.data)
         }
       }
 
-      socket.onclose = function(e) {
+      socket.onclose = function() {
         term.write('Session terminated')
         term.dispose()
       }
