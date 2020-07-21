@@ -195,7 +195,10 @@ describe('buildInfluxQLQuery', () => {
         database: 'db1',
         retentionPolicy: 'rp1',
         measurement: 'm0',
-        fields: [{value: 'f0', type: 'field'}, {value: 'f1', type: 'field'}],
+        fields: [
+          {value: 'f0', type: 'field'},
+          {value: 'f1', type: 'field'},
+        ],
       })
       timeBounds = {upper: "'2015-02-24T00:00:00Z'"}
     })
@@ -348,6 +351,50 @@ describe('buildInfluxQLQuery', () => {
       const actual = buildQuery(TYPE_QUERY_CONFIG, timeRange, config)
 
       expect(actual).toBe(expected)
+    })
+  })
+
+  describe('encapsulating boolean logic for tag keys and values', () => {
+    const qc = {
+      database: 'NOAA_water_database',
+      measurement: 'h2o_quality',
+      retentionPolicy: 'autogen',
+      fields: [
+        {
+          value: 'index',
+          type: 'field',
+          args: [],
+        },
+      ],
+      tags: {
+        location: ['coyote_creek', 'santa_monica'],
+        randtag: ['2', '3', '1'],
+      },
+      groupBy: {time: '60s', tags: ['randtag', 'location']},
+      areTagsAccepted: true,
+      fill: 'null',
+      rawText: null,
+      range: {upper: '', lower: 'now() - 15m'},
+      shifts: [],
+    }
+
+    // imagine a dataset with three locations: coyote_creek, santa_monica, and the_north_pole
+    describe('the areTagsAccepted field', () => {
+      it('joins all instances of a tag with OR when areTagsAccepted is true', () => {
+        // return all points for 'coyote_creek' or 'santa_monica" (excludes the_north_pole)
+        const expected = `SELECT "index" FROM "NOAA_water_database"."autogen"."h2o_quality" WHERE time > now() - 15m AND ("location"='coyote_creek' OR "location"='santa_monica') AND ("randtag"='2' OR "randtag"='3' OR "randtag"='1') GROUP BY time(60s), "randtag", "location" FILL(null)`
+        config = mergeConfig(qc)
+        timeBounds = {upper: null, lower: 'now() - 15m'}
+        expect(buildInfluxQLQuery(timeBounds, config)).toBe(expected)
+      })
+
+      it('joins all instances of a tag with AND when areTagsAccepted is false', () => {
+        // return all points for the_north_pole (excluding coyote_creek and santa_monica)
+        const expected = `SELECT "index" FROM "NOAA_water_database"."autogen"."h2o_quality" WHERE time > now() - 15m AND ("location"!='coyote_creek' AND "location"!='santa_monica') AND ("randtag"!='2' AND "randtag"!='3' AND "randtag"!='1') GROUP BY time(60s), "randtag", "location" FILL(null)`
+        config = mergeConfig({...qc, areTagsAccepted: false})
+        timeBounds = {upper: null, lower: 'now() - 15m'}
+        expect(buildInfluxQLQuery(timeBounds, config)).toBe(expected)
+      })
     })
   })
 })
