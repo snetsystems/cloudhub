@@ -190,11 +190,7 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			buf := make([]byte, 1024)
-			n, err := reader.Read(buf)
-			if err != nil {
-				log.Println(err)
-				return
-			}
+			n, _ := reader.Read(buf)
 			_, err = sshWriter.Write(buf[:n])
 			if err != nil {
 				log.Println(err)
