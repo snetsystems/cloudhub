@@ -123,9 +123,10 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 		port: port,
 	}
 
-	_, _ = sh.Connect()
+	sh, err = sh.Connect()
 	if nil != err {
 		log.Println("ssh connect:", err)
+		_ = ws.Close()
 		return
 	}
 
@@ -189,11 +190,7 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 			}
 
 			buf := make([]byte, 1024)
-			n, err := reader.Read(buf)
-			if err != nil {
-				log.Println(err)
-				return
-			}
+			n, _ := reader.Read(buf)
 			_, err = sshWriter.Write(buf[:n])
 			if err != nil {
 				log.Println(err)
