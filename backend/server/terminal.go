@@ -163,12 +163,16 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 			buf := make([]byte, 4096)
 			n, err := sshReader.Read(buf)
 			if err != nil {
-				Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+				s.Logger.
+					WithField("component", "terminal").
+					Error(err.Error())
 				return
 			}
 			err = ws.WriteMessage(websocket.BinaryMessage, buf[:n])
 			if err != nil {
-				Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+				s.Logger.
+					WithField("component", "terminal").
+					Error(err.Error())
 				return
 			}
 		}
@@ -185,14 +189,18 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 			// set up io.Reader of websocket
 			_, reader, err := ws.NextReader()
 			if err != nil {
-				Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+				s.Logger.
+					WithField("component", "terminal").
+					Error(err.Error())
 				return
 			}
 			// read first byte to determine whether to pass data or resize terminal
 			dataTypeBuf := make([]byte, 1)
 			_, err = reader.Read(dataTypeBuf)
 			if err != nil {
-				Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+				s.Logger.
+					WithField("component", "terminal").
+					Error(err.Error())
 				return
 			}
 
@@ -201,7 +209,9 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 			_, err = sshWriter.Write(buf[:n])
 			if err != nil {
 				ws.WriteMessage(websocket.BinaryMessage, []byte(err.Error()))
-				Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+				s.Logger.
+					WithField("component", "terminal").
+					Error(err.Error())
 				return
 			}
 
@@ -209,16 +219,8 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 	}()
 	
 	// start remote shell.
-    err = sh.session.Shell()
-    if err != nil {
-		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
-		return
-    }
-
+	sh.session.Shell()
+	
 	// Wait for session to finish
-    err = sh.session.Wait()
-    if err != nil {
-		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
-		return
-    }
+    sh.session.Wait()
 }
