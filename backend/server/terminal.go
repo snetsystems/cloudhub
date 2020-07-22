@@ -21,7 +21,8 @@ const (
     protocol = "tcp"
     sshEcho = 1
     sshTtyOpIspeed = 14400
-    sshTtyOpOspeed = 14400
+	sshTtyOpOspeed = 14400
+	sshConnfailCloseMessage = "Connection failed to establish because the connected host did not respond. Please check the connection information again"
 )
 
 type ssh struct {
@@ -64,10 +65,6 @@ func (s *ssh) Connect() (*ssh, error) {
 
 // close ssh session
 func (s *ssh) Close() {
-    if s.session != nil {
-        _ = s.session.Close()
-    }
-
     if s.session != nil {
         _ = s.session.Close()
     }
@@ -126,6 +123,13 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 	sh, err = sh.Connect()
 	if nil != err {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		
+		msg := websocket.FormatCloseMessage(4501, err.Error())
+		err = ws.WriteMessage(websocket.CloseMessage, msg)
+		if err != nil {
+			msg = websocket.FormatCloseMessage(4501, sshConnfailCloseMessage)
+			ws.WriteMessage(websocket.CloseMessage, msg)
+		}
 		_ = ws.Close()
 		return
 	}
@@ -208,11 +212,13 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
     err = sh.session.Shell()
     if err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
     }
 
 	// Wait for session to finish
     err = sh.session.Wait()
     if err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
     }
 }
