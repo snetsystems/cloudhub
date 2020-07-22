@@ -24,10 +24,10 @@ interface DefaultProps {
 
 type Props = DefaultProps & ShellProps
 
+var socket: WebSocket = null
 const Shell = (props: Props) => {
   let termRef = useRef<HTMLDivElement>()
   let term: Terminal = null
-  let socket: WebSocket = null
 
   const [addr, setAddr] = useState(props.addr ? props.addr : '')
   const [user, setUser] = useState(props.user ? props.user : '')
@@ -112,7 +112,6 @@ const Shell = (props: Props) => {
           props.notify(notifyConnectShellFailed(e))
         }
         setIsConn(false)
-        term.write('Session terminated')
         term.dispose()
       }
 
@@ -126,16 +125,14 @@ const Shell = (props: Props) => {
 
   useEffect(() => {
     return () => {
-      if (isConn) {
-        setIsConn(false)
+      setIsConn(false)
+      if (socket) {
+        socket.close()
+        socket = null
+      }
 
-        if (socket) {
-          socket.close()
-        }
-
-        if (term) {
-          term.dispose()
-        }
+      if (term) {
+        term.dispose()
       }
     }
   }, [])
