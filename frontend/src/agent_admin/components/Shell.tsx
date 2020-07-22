@@ -76,6 +76,8 @@ const Shell = (props: Props) => {
         cursorBlink: true,
       })
 
+      term.writeln('Connecting ...')
+
       term.onData(data => socket.send(new TextEncoder().encode('\x00' + data)))
 
       term.onResize(evt =>
@@ -106,7 +108,7 @@ const Shell = (props: Props) => {
       }
 
       socket.onclose = function(e) {
-        if (e.code === 4999) {
+        if (e.code === 4501) {
           props.notify(notifyConnectShellFailed(e))
         }
         setIsConn(false)
