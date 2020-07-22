@@ -53,6 +53,7 @@ import {
   TemplateValue,
   TemplateType,
   Status,
+  RefreshRate,
 } from 'src/types'
 import {NewDefaultCell} from 'src/types/dashboards'
 
@@ -74,7 +75,9 @@ export enum ActionType {
   SetHoverTime = 'SET_HOVER_TIME',
   SetActiveCell = 'SET_ACTIVE_CELL',
   SetDashboardTimeV1 = 'SET_DASHBOARD_TIME_V1',
+  SetDashboardRefresh = 'SET_DASHBOARD_REFRESH',
   RetainRangesDashboardTimeV1 = 'RETAIN_RANGES_DASHBOARD_TIME_V1',
+  RetainDashboardRefresh = 'RETAIN_DASHBOARD_REFRESH',
 }
 
 interface LoadDashboardsAction {
@@ -94,6 +97,13 @@ interface LoadDashboardAction {
 
 interface RetainRangesDashTimeV1Action {
   type: ActionType.RetainRangesDashboardTimeV1
+  payload: {
+    dashboardIDs: number[]
+  }
+}
+
+interface RetainDashRefreshAction {
+  type: ActionType.RetainDashboardRefresh
   payload: {
     dashboardIDs: number[]
   }
@@ -211,10 +221,19 @@ interface SetDashTimeV1Action {
   }
 }
 
+interface SetDashRefreshAction {
+  type: ActionType.SetDashboardRefresh
+  payload: {
+    dashboardID: string
+    refreshRate: RefreshRate
+  }
+}
+
 export type Action =
   | LoadDashboardsAction
   | LoadDashboardAction
   | RetainRangesDashTimeV1Action
+  | RetainDashRefreshAction
   | SetTimeRangeAction
   | SetZoomedTimeRangeAction
   | UpdateDashboardAction
@@ -230,6 +249,7 @@ export type Action =
   | SetHoverTimeAction
   | SetActiveCellAction
   | SetDashTimeV1Action
+  | SetDashRefreshAction
 
 export const loadDashboards = (
   dashboards: Dashboard[],
@@ -255,10 +275,25 @@ export const setDashTimeV1 = (
   payload: {dashboardID, timeRange},
 })
 
+export const setDashRefresh = (
+  dashboardID: string,
+  refreshRate: RefreshRate
+): SetDashRefreshAction => ({
+  type: ActionType.SetDashboardRefresh,
+  payload: {dashboardID, refreshRate},
+})
+
 export const retainRangesDashTimeV1 = (
   dashboardIDs: number[]
 ): RetainRangesDashTimeV1Action => ({
   type: ActionType.RetainRangesDashboardTimeV1,
+  payload: {dashboardIDs},
+})
+
+export const retainDashRefresh = (
+  dashboardIDs: number[]
+): RetainDashRefreshAction => ({
+  type: ActionType.RetainDashboardRefresh,
   payload: {dashboardIDs},
 })
 

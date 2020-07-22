@@ -178,6 +178,7 @@ export class DataExplorer extends PureComponent<Props, State> {
       onSetTimeZone,
       me,
       isUsingAuth,
+      autoRefresh,
     } = this.props
 
     const {isStaticLegend, isComponentMounted} = this.state
@@ -206,6 +207,7 @@ export class DataExplorer extends PureComponent<Props, State> {
             onToggleStaticLegend={this.handleToggleStaticLegend}
             me={me}
             isUsingAuth={isUsingAuth}
+            refresh={autoRefresh}
           >
             {(activeEditorTab, onSetActiveEditorTab) => (
               <DEHeader

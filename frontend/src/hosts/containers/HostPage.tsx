@@ -39,7 +39,7 @@ interface Props {
   autoRefresh: number
   manualRefresh: number
   onManualRefresh: () => void
-  handleChooseAutoRefresh: typeof setAutoRefresh
+  handleChooseTimeRange: typeof setAutoRefresh
   handleClickPresentationButton: typeof delayEnablePresentationMode
 }
 
@@ -58,6 +58,7 @@ class HostPage extends PureComponent<Props, State> {
       hostLinks: EMPTY_LINKS,
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
     }
+    this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
   }
 
   public async componentDidMount() {
@@ -84,8 +85,8 @@ class HostPage extends PureComponent<Props, State> {
         return x.measurement < y.measurement
           ? -1
           : x.measurement > y.measurement
-            ? 1
-            : 0
+          ? 1
+          : 0
       })
 
     const hostLinks = await this.getHostLinks()
@@ -107,6 +108,12 @@ class HostPage extends PureComponent<Props, State> {
     GlobalAutoRefresher.stopPolling()
   }
 
+  public handleChooseAutoRefresh(option) {
+    const {handleChooseTimeRange} = this.props
+    const {milliseconds} = option
+    handleChooseTimeRange(milliseconds)
+  }
+
   public render() {
     const {
       autoRefresh,
@@ -114,7 +121,6 @@ class HostPage extends PureComponent<Props, State> {
       onManualRefresh,
       params: {hostID},
       inPresentationMode,
-      handleChooseAutoRefresh,
       handleClickPresentationButton,
       source,
     } = this.props
@@ -131,7 +137,7 @@ class HostPage extends PureComponent<Props, State> {
           autoRefresh={autoRefresh}
           isHidden={inPresentationMode}
           onManualRefresh={onManualRefresh}
-          handleChooseAutoRefresh={handleChooseAutoRefresh}
+          handleChooseAutoRefresh={this.handleChooseAutoRefresh}
           handleChooseTimeRange={this.handleChooseTimeRange}
           handleClickPresentationButton={handleClickPresentationButton}
           dashboardLinks={hostLinks}
@@ -213,7 +219,7 @@ const mstp = ({
 })
 
 const mdtp = {
-  handleChooseAutoRefresh: setAutoRefresh,
+  handleChooseTimeRange: setAutoRefresh,
   handleClickPresentationButton: delayEnablePresentationMode,
 }
 

@@ -31,7 +31,7 @@ import * as notifyActions from 'src/shared/actions/notifications'
 import {getDeep} from 'src/utils/wrappers'
 import {updateDashboardLinks} from 'src/dashboards/utils/dashboardSwitcherLinks'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
-import {getTimeRange} from 'src/dashboards/selectors'
+import {getTimeRange, getRefreshRate} from 'src/dashboards/selectors'
 import {annotationsError} from 'src/shared/copy/notifications'
 
 // APIs
@@ -42,6 +42,9 @@ import {interval, DASHBOARD_LAYOUT_ROW_HEIGHT} from 'src/shared/constants'
 import {FORMAT_INFLUXQL} from 'src/shared/data/timeRanges'
 import {EMPTY_LINKS} from 'src/dashboards/constants/dashboardHeader'
 import {getNewDashboardCell} from 'src/dashboards/utils/cellGetters'
+import autoRefreshOptions, {
+  AutoRefreshOption,
+} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
 
 // Types
 import {WithRouterProps} from 'react-router'
@@ -55,7 +58,7 @@ import * as QueriesModels from 'src/types/queries'
 import * as SourcesModels from 'src/types/sources'
 import * as TempVarsModels from 'src/types/tempVars'
 import {NewDefaultCell} from 'src/types/dashboards'
-import {NotificationAction, Me, TimeZones} from 'src/types'
+import {NotificationAction, Me, TimeZones, RefreshRate} from 'src/types'
 import {AnnotationsDisplaySetting} from 'src/types/annotations'
 import {Links} from 'src/types/flux'
 import {createTimeRangeTemplates} from 'src/shared/utils/templates'
@@ -74,8 +77,8 @@ interface Props extends ManualRefreshProps, WithRouterProps {
   dashboardID: string
   dashboard: DashboardsModels.Dashboard
   dashboards: DashboardsModels.Dashboard[]
-  handleChooseAutoRefresh: AppActions.SetAutoRefreshActionCreator
   autoRefresh: number
+  refreshRate: RefreshRate
   timeRange: QueriesModels.TimeRange
   zoomedTimeRange: QueriesModels.TimeRange
   inPresentationMode: boolean
@@ -94,6 +97,7 @@ interface Props extends ManualRefreshProps, WithRouterProps {
   handleDismissEditingAnnotation: typeof dismissEditingAnnotation
   editorTimeRange: QueriesModels.TimeRange
   setDashTimeV1: typeof dashboardActions.setDashTimeV1
+  setDashRefresh: typeof dashboardActions.setDashRefresh
   setZoomedTimeRange: typeof dashboardActions.setZoomedTimeRange
   updateDashboard: typeof dashboardActions.updateDashboard
   putDashboard: typeof dashboardActions.putDashboard
@@ -137,9 +141,37 @@ class DashboardPage extends Component<Props, State> {
   }
 
   public async componentDidMount() {
-    const {autoRefresh} = this.props
+    const {refreshRate, updateQueryParams} = this.props
+    const compareOptionToRefreshRate = (r: AutoRefreshOption) =>
+      r.milliseconds === refreshRate
+    const {location: {search = ''} = {}} = window
+    const urlSelectedRefresh = search.match(/refresh=([^&#]*)/i)
+    let pollRefreshRate = refreshRate
+    let localStorageRefresh
 
-    GlobalAutoRefresher.poll(autoRefresh)
+    if (urlSelectedRefresh) {
+      const option = autoRefreshOptions.find(
+        r => r.label.toLowerCase() === urlSelectedRefresh[1].toLowerCase()
+      )
+      if (option) {
+        this.handleChooseAutoRefresh(option)
+        pollRefreshRate = option.milliseconds
+      } else {
+        localStorageRefresh = autoRefreshOptions.find(
+          compareOptionToRefreshRate
+        )
+      }
+    } else {
+      localStorageRefresh = autoRefreshOptions.find(compareOptionToRefreshRate)
+    }
+
+    if (localStorageRefresh) {
+      updateQueryParams({
+        refresh: localStorageRefresh.label,
+      })
+    }
+
+    GlobalAutoRefresher.poll(pollRefreshRate)
     GlobalAutoRefresher.subscribe(this.fetchAnnotations)
 
     window.addEventListener('resize', this.handleWindowResize, true)
@@ -161,10 +193,18 @@ class DashboardPage extends Component<Props, State> {
   }
 
   public componentDidUpdate(prevProps: Props) {
-    const {dashboard, autoRefresh, annotationsDisplaySetting} = this.props
+    const {
+      dashboard,
+      refreshRate,
+      updateQueryParams,
+      annotationsDisplaySetting,
+    } = this.props
 
     const prevPath = getDeep(prevProps.location, 'pathname', null)
     const thisPath = getDeep(this.props.location, 'pathname', null)
+    const localStorageRefresh = autoRefreshOptions.find(
+      r => r.milliseconds === refreshRate
+    )
 
     const templates = this.parseTempVar(dashboard)
     const prevTemplates = this.parseTempVar(prevProps.dashboard)
@@ -174,10 +214,15 @@ class DashboardPage extends Component<Props, State> {
 
     if ((prevPath && thisPath && prevPath !== thisPath) || isTemplateDeleted) {
       this.getDashboard()
+      if (localStorageRefresh) {
+        updateQueryParams({
+          refresh: localStorageRefresh.label,
+        })
+      }
     }
 
-    if (autoRefresh !== prevProps.autoRefresh) {
-      GlobalAutoRefresher.poll(autoRefresh)
+    if (refreshRate !== prevProps.refreshRate) {
+      GlobalAutoRefresher.poll(refreshRate)
     }
 
     if (
@@ -210,13 +255,12 @@ class DashboardPage extends Component<Props, State> {
       zoomedTimeRange,
       dashboard,
       dashboardID,
-      autoRefresh,
+      refreshRate,
       manualRefresh,
       onManualRefresh,
       cellQueryStatus,
       inPresentationMode,
       showTemplateVariableControlBar,
-      handleChooseAutoRefresh,
       handleClickPresentationButton,
       toggleTemplateVariableControlBar,
     } = this.props
@@ -263,6 +307,7 @@ class DashboardPage extends Component<Props, State> {
             dashboardTemplates={_.get(dashboard, 'templates', [])}
             editQueryStatus={this.props.editCellQueryStatus}
             dashboardTimeRange={timeRange}
+            dashboardRefresh={refreshRate}
           />
         </OverlayTechnology>
         <DashboardHeader
@@ -270,7 +315,7 @@ class DashboardPage extends Component<Props, State> {
           timeRange={timeRange}
           timeZone={timeZone}
           onSetTimeZone={setTimeZone}
-          autoRefresh={autoRefresh}
+          autoRefresh={refreshRate}
           isHidden={inPresentationMode}
           onAddCell={this.handleAddCell}
           onManualRefresh={onManualRefresh}
@@ -280,7 +325,7 @@ class DashboardPage extends Component<Props, State> {
           activeDashboard={dashboard ? dashboard.name : ''}
           showAnnotationControls={showAnnotationControls}
           showTempVarControls={showTemplateVariableControlBar}
-          handleChooseAutoRefresh={handleChooseAutoRefresh}
+          handleChooseAutoRefresh={this.handleChooseAutoRefresh}
           handleChooseTimeRange={this.handleChooseTimeRange}
           onToggleShowTempVarControls={toggleTemplateVariableControlBar}
           onToggleShowAnnotationControls={this.toggleAnnotationControls}
@@ -397,6 +442,19 @@ class DashboardPage extends Component<Props, State> {
     window.setTimeout(() => {
       handleClearCEO()
     }, WAIT_FOR_ANIMATION)
+  }
+
+  private handleChooseAutoRefresh = (
+    autoRefreshOption: AutoRefreshOption
+  ): void => {
+    const {dashboardID, setDashRefresh, updateQueryParams} = this.props
+    const {label, milliseconds} = autoRefreshOption
+
+    updateQueryParams({
+      refresh: label,
+    })
+
+    setDashRefresh(dashboardID, milliseconds)
   }
 
   private handleChooseTimeRange = (
@@ -536,6 +594,7 @@ const mstp = (state, {params: {dashboardID}}) => {
   } = state
 
   const timeRange = getTimeRange(state, dashboardID)
+  const refreshRate = getRefreshRate(state, dashboardID)
 
   const dashboard = dashboards.find(d => d.id === dashboardID)
 
@@ -549,6 +608,7 @@ const mstp = (state, {params: {dashboardID}}) => {
     fluxLinks: links.flux,
     dashboardID,
     timeRange,
+    refreshRate,
     zoomedTimeRange,
     autoRefresh,
     isUsingAuth,
@@ -563,6 +623,7 @@ const mstp = (state, {params: {dashboardID}}) => {
 
 const mdtp = {
   setDashTimeV1: dashboardActions.setDashTimeV1,
+  setDashRefresh: dashboardActions.setDashRefresh,
   setZoomedTimeRange: dashboardActions.setZoomedTimeRange,
   updateDashboard: dashboardActions.updateDashboard,
   putDashboard: dashboardActions.putDashboard,
@@ -581,7 +642,6 @@ const mdtp = {
   updateTemplateQueryParams: dashboardActions.updateTemplateQueryParams,
   updateQueryParams: dashboardActions.updateQueryParams,
   updateTimeRangeQueryParams: dashboardActions.updateTimeRangeQueryParams,
-  handleChooseAutoRefresh: appActions.setAutoRefresh,
   handleClickPresentationButton: appActions.delayEnablePresentationMode,
   errorThrown: errorActions.errorThrown,
   notify: notifyActions.notify,
