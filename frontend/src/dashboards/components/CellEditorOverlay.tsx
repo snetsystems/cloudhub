@@ -197,8 +197,6 @@ class CellEditorOverlay extends Component<Props, State> {
       ceoTimeRange
     )
     return [...dashboardTemplates, dashboardTime, upperDashboardTime]
-
-    return dashboardTemplates
   }
 
   private get isSaveable(): boolean {
