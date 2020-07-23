@@ -22,6 +22,7 @@ import {isUserAuthorized, ADMIN_ROLE} from 'src/auth/Authorized'
 
 // Types
 import {
+  Links,
   Source,
   RemoteDataState,
   Notification,
@@ -38,6 +39,7 @@ import {MinionsObject} from 'src/agent_admin/type'
 import {fluxNotUpdated} from 'src/shared/copy/notifications'
 
 interface Props {
+  links: Links
   source: Source
   notify: (message: Notification | NotificationFunc) => void
   handleGetMinionKeyListAll: (
@@ -61,6 +63,7 @@ interface State {
   saltMasterToken: string
   shellModalVisible: boolean
   shellAddr: string
+  nodename: string
 }
 
 export interface LoginEvent extends MouseEvent<KeyboardEvent> {
@@ -81,6 +84,7 @@ class AgentAdminPage extends PureComponent<Props, State> {
       saltMasterToken: '',
       shellModalVisible: false,
       shellAddr: '',
+      nodename: '',
     }
   }
 
@@ -203,6 +207,7 @@ class AgentAdminPage extends PureComponent<Props, State> {
 
   render() {
     const {
+      links,
       meRole,
       source,
       params: {tab},
@@ -236,8 +241,10 @@ class AgentAdminPage extends PureComponent<Props, State> {
               visible={this.state.shellModalVisible}
               headingTitle={'Terminal'}
               notify={notify}
+              links={links}
               onCancel={this.onClickShellModalClose}
               addr={this.state.shellAddr}
+              nodename={this.state.nodename}
             />
           </div>
         </Page.Contents>
@@ -245,8 +252,12 @@ class AgentAdminPage extends PureComponent<Props, State> {
     )
   }
 
-  private onClickShellModalOpen = ({addr}) => {
-    this.setState({shellModalVisible: true, shellAddr: addr})
+  private onClickShellModalOpen = ({addr, nodename}) => {
+    this.setState({
+      shellModalVisible: true,
+      shellAddr: addr,
+      nodename: nodename,
+    })
   }
 
   private onClickShellModalClose = () => {

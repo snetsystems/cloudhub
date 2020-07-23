@@ -1,25 +1,58 @@
 import React, {useState, useRef, useEffect, ChangeEvent} from 'react'
+import {useQuery} from '@apollo/react-hooks'
 import {Terminal} from 'xterm'
 import {FitAddon} from 'xterm-addon-fit'
 import 'xterm/css/xterm.css'
+import _ from 'lodash'
 
 import ShellForm from 'src/agent_admin/components/ShellForm'
 
 import {Notification} from 'src/types/notifications'
-// import {notify} from 'src/shared/actions/notifications'
 
 // Constants
+import {GET_ROUTER_DEVICEINTERFACES_INFO} from 'src/addon/128t/constants'
 import {notifyConnectShellFailed} from 'src/shared/copy/notifications'
 
 export interface ShellProps {
+  nodename?: string
   addr?: string
   user?: string
   pwd?: string
   port?: string
   isConn?: boolean
 }
+
+interface Node {
+  name: string
+  enabled: boolean
+  deviceInterfaces: {
+    nodes: NetworkInterfaces[]
+  }
+}
+
+interface NetworkInterfaces {
+  networkInterfaces: {
+    nodes: Addresses[]
+  }
+}
+
+interface Addresses {
+  name: string
+  addresses: {
+    nodes: IpAddress[]
+  }
+}
+
+interface IpAddress {
+  ipAddress: string
+}
+
 interface DefaultProps {
   notify?: (message: Notification) => void
+}
+
+interface Variables {
+  name: string
 }
 
 type Props = DefaultProps & ShellProps
@@ -34,6 +67,17 @@ const Shell = (props: Props) => {
   const [pwd, setPwd] = useState(props.pwd ? props.pwd : '')
   const [port, setPort] = useState(props.port ? props.port : '22')
   const [isConn, setIsConn] = useState(props.isConn ? props.isConn : false)
+
+  const {data} = useQuery<Response, Variables>(
+    GET_ROUTER_DEVICEINTERFACES_INFO,
+    {
+      variables: {
+        name: props.nodename ? props.nodename : '',
+      },
+      errorPolicy: 'all',
+      pollInterval: 10000,
+    }
+  )
 
   const handleChangeAddress = (e: ChangeEvent<HTMLInputElement>): void => {
     setAddr(e.target.value)
@@ -78,7 +122,9 @@ const Shell = (props: Props) => {
 
       term.writeln('Connecting ...')
 
-      term.onData(data => socket.send(new TextEncoder().encode('\x00' + data)))
+      term.onData(ondata =>
+        socket.send(new TextEncoder().encode('\x00' + ondata))
+      )
 
       term.onResize(evt =>
         socket.send(
@@ -122,6 +168,58 @@ const Shell = (props: Props) => {
       }
     }
   }
+
+  // Set 128T minion internet protocol
+  useEffect(() => {
+    if (data) {
+      const nodes: Node[] = _.get(data, 'allNodes.nodes')
+      if (nodes) {
+        const node = nodes[0]
+        const networkInterfaces: NetworkInterfaces[] = _.get(
+          node,
+          'deviceInterfaces.nodes'
+        )
+
+        const addresses: Addresses[] = _.reduce(
+          networkInterfaces,
+          (addresses: Addresses[], networkInterface: NetworkInterfaces) => {
+            const addressesNode: Addresses[] = _.reduce(
+              _.get(networkInterface, 'networkInterfaces.nodes'),
+              (addresses: Addresses[], value) => {
+                addresses = [...addresses, value]
+                return addresses
+              },
+              []
+            )
+            addressesNode.map((m: Addresses) => addresses.push(m))
+            return addresses
+          },
+          []
+        )
+
+        const ipAddress: IpAddress[] = _.reduce(
+          addresses.filter(f => f.name.toLowerCase().indexOf('wan') > -1),
+          (ipAddress: IpAddress[], address: Addresses) => {
+            const ipAddresses: IpAddress[] = _.reduce(
+              _.get(address, 'addresses.nodes'),
+              (ipAddress: IpAddress[], value) => {
+                ipAddress = [...ipAddress, value]
+                return ipAddress
+              },
+              []
+            )
+            ipAddresses.map((m: IpAddress) => ipAddress.push(m))
+            return ipAddress
+          },
+          []
+        )
+
+        if (ipAddress.length > 0 && ipAddress[0].ipAddress) {
+          setAddr(ipAddress[0].ipAddress)
+        }
+      }
+    }
+  }, [data])
 
   useEffect(() => {
     return () => {
