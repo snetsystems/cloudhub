@@ -25,9 +25,9 @@
   font-weight: 500;
   color: $g12-forge;
   border: 1px solid $g5-pepper;
-  overflow: hidden;
-  white-space: nowrap;
+  white-space: pre-line;
   text-overflow: ellipsis;
+  overflow-y: scroll;
 
   &__highlight-row {
     background-color: rgba(255, 255, 255, 0.2);
@@ -59,8 +59,8 @@
     padding-right: 17px;
 
     &:before {
-      font-family: "icomoon";
-      content: "\e902";
+      font-family: 'icomoon';
+      content: '\e902';
       font-size: 17px;
       position: absolute;
       top: 50%;
