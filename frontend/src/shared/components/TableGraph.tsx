@@ -87,7 +87,6 @@ interface State {
 
 @ErrorHandling
 class TableGraph extends PureComponent<Props, State> {
-  private gridContainer: HTMLDivElement
   private multiGrid?: MultiGrid
 
   constructor(props: Props) {
@@ -116,7 +115,6 @@ class TableGraph extends PureComponent<Props, State> {
     return (
       <div
         className={this.tableContainerClassName}
-        ref={gridContainer => (this.gridContainer = gridContainer)}
         onMouseLeave={this.handleMouseLeave}
       >
         {rowCount > 0 && (
