@@ -8,22 +8,8 @@ import SplashPage from 'shared/components/SplashPage'
 
 const VERSION = process.env.npm_package_version
 
-const Login = props => {
-  const {
-    authData: {
-      auth: {links, isAuthLoading},
-    },
-  } = props
-
-  if (isAuthLoading) {
-    return <PageSpinner />
-  }
-
-  const redirectTo = links && links.length === 1 && links[0].login
-
-  if (redirectTo) {
-    window.location.href = redirectTo
-
+const Login = ({authData: {auth}}) => {
+  if (auth.isAuthLoading) {
     return <PageSpinner />
   }
 
@@ -40,8 +26,8 @@ const Login = props => {
         <p>
           <b>{VERSION}</b> / Real-Time Applications Monitoring
         </p>
-        {links &&
-          links.map(({name, login, label}) => (
+        {auth.links &&
+          auth.links.map(({name, login, label}) => (
             <a key={name} className="btn btn-primary" href={login}>
               <span className={`icon ${name}`} />
               Log in with {label}
