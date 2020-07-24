@@ -378,7 +378,7 @@ export const FUNCTIONS: FluxToolbarFunction[] = [
     package: '',
     desc: 'Tests whether a value is a member of a set.',
     example: 'contains(value: 1, set: [1,2,3])',
-    category: 'Tests',
+    category: 'Test',
     link:
       'https://docs.influxdata.com/flux/latest/stdlib/built-in/tests/contains/',
   },
@@ -4803,7 +4803,7 @@ export const FUNCTIONS: FluxToolbarFunction[] = [
     package: 'testing',
     desc: 'Tests if an input stream is empty.',
     example: 'testing.assertEmpty()',
-    category: 'Tests',
+    category: 'Test',
     link: 'https://docs.influxdata.com/flux/latest/stdlib/testing/assertempty/',
   },
   {
@@ -4828,7 +4828,7 @@ export const FUNCTIONS: FluxToolbarFunction[] = [
     package: 'testing',
     desc: 'Tests whether two streams have identical data.',
     example: 'testing.assertEquals(got: got, want: want)',
-    category: 'Tests',
+    category: 'Test',
     link:
       'https://docs.influxdata.com/flux/latest/stdlib/testing/assertequals/',
   },
@@ -4849,7 +4849,7 @@ export const FUNCTIONS: FluxToolbarFunction[] = [
     package: 'testing',
     desc: 'Produces a diff between two streams.',
     example: 'testing.assertEquals(got: got, want: want)',
-    category: 'Tests',
+    category: 'Test',
     link: 'https://docs.influxdata.com/flux/latest/stdlib/testing/diff/',
   },
   {
