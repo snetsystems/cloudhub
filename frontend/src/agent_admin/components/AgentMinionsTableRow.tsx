@@ -114,7 +114,7 @@ class AgentMinionsTableRow extends PureComponent<Props> {
                 className="btn btn-sm btn-primary"
                 onClick={e => {
                   e.stopPropagation()
-                  handleShellModalOpen({addr: ip})
+                  handleShellModalOpen({addr: ip, nodename: host})
                 }}
               >
                 open SSH

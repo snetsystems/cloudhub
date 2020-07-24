@@ -79,3 +79,28 @@ export const GET_ALLROUTERS_INFO = gql`
     }
   }
 `
+
+export const GET_ROUTER_DEVICEINTERFACES_INFO = gql`
+  query router_deviceinterfaces_info($name: String) {
+    allNodes(name: $name) {
+      nodes {
+        name
+        enabled
+        deviceInterfaces {
+          nodes {
+            networkInterfaces {
+              nodes {
+                name
+                addresses {
+                  nodes {
+                    ipAddress
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`
