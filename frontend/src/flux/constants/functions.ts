@@ -484,7 +484,7 @@ export const FUNCTIONS: FluxToolbarFunction[] = [
     link: 'https://docs.influxdata.com/flux/latest/stdlib/csv/from/',
   },
   {
-    name: 'csv.from(url)',
+    name: 'csv.from',
     args: [
       {
         name: 'url',
