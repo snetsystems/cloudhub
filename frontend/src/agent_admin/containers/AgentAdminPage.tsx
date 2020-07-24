@@ -35,9 +35,6 @@ import {AddonType} from 'src/shared/constants'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {MinionsObject} from 'src/agent_admin/type'
 
-// Constants
-import {fluxNotUpdated} from 'src/shared/copy/notifications'
-
 interface Props {
   links: Links
   source: Source
@@ -89,7 +86,6 @@ class AgentAdminPage extends PureComponent<Props, State> {
   }
 
   componentWillMount() {
-    // this.props.notify(fluxNotUpdated('hello'))
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
     })
