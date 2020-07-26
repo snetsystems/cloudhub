@@ -72,9 +72,10 @@ $s-sidebar--width: 45px;
     background-repeat: no-repeat;
     background-size: contain;
     background-position: center;
-    height: 45px;
-    bottom: 0;
-    position: absolute;
+  }
+
+  &.align-bottom {
+    margin-top: auto;
   }
 }
 .sidebar--square {
