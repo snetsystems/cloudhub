@@ -19,8 +19,8 @@ func TestNewClient(t *testing.T) {
 
 	c, err := NewClient(context.TODO(),
 		WithBuildInfo(cloudhub.BuildInfo{
-			Version: "1.8.0-test",
-			Commit:  "testing",
+			Version: "",
+			Commit:  "",
 		}),
 		WithPath(f.Name()),
 		WithLogger(mocks.NewLogger()),
@@ -41,25 +41,4 @@ func NewService(t *testing.T) (cloudhub.KVClient, func()) {
 		c.Close()
 		s.Close()
 	}
-}
-
-func TestEtcd(t *testing.T) {
-	s, closeFn := NewService(t)
-	defer closeFn()
-
-	ctx := context.TODO()
-
-	src, err := s.SourcesStore().Add(ctx, cloudhub.Source{
-		Name: "test",
-		URL:  "localhost:8086",
-	})
-	require.NoError(t, err)
-	require.Equal(t, "test", src.Name)
-
-	srcs, err := s.SourcesStore().All(ctx)
-	require.NoError(t, err)
-	require.Equal(t, 1, len(srcs))
-	require.Equal(t, "test", srcs[0].Name)
-
-	require.NoError(t, s.SourcesStore().Delete(ctx, src))
 }
