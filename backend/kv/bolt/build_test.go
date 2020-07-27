@@ -57,7 +57,7 @@ func TestBuildStore_Get(t *testing.T) {
 			name: "When the build info is missing",
 			wants: wants{
 				build: cloudhub.BuildInfo{
-					Version: "1.8.0",
+					Version: "",
 					Commit:  "",
 				},
 			},

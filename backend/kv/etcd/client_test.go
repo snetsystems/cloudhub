@@ -22,7 +22,7 @@ func TestNewClient(t *testing.T) {
 		WithLogger(mocks.NewLogger()),
 		WithLogin("user", "pass"),
 	)
-	require.Error(t, err)
+	require.NoError(t, err)
 }
 
 func NewService(t *testing.T) (cloudhub.KVClient, func()) {
