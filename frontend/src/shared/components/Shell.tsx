@@ -5,7 +5,7 @@ import {FitAddon} from 'xterm-addon-fit'
 import 'xterm/css/xterm.css'
 import _ from 'lodash'
 
-import ShellForm from 'src/agent_admin/components/ShellForm'
+import ShellForm from 'src/shared/components/ShellForm'
 
 import {Notification} from 'src/types/notifications'
 
