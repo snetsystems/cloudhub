@@ -1,7 +1,7 @@
 import _ from 'lodash'
 
 import {Action, ActionTypes} from 'src/shared/actions/shell'
-import {Shells} from 'src/types'
+import {Shells, ShellInfo} from 'src/types'
 
 export const initialState: Shells = {
   isVisible: false,
@@ -42,6 +42,16 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
       return {
         ...state,
         isVisible: false,
+      }
+    }
+
+    // remove logic test
+    case ActionTypes.ShellRemove: {
+      const {payload} = action
+
+      return {
+        ...state,
+        isVisible: true,
       }
     }
 

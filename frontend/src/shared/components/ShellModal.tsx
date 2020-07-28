@@ -11,7 +11,7 @@ import {Rnd} from 'react-rnd'
 import 'react-tabs/style/react-tabs.css'
 
 import {AddonType} from 'src/shared/constants'
-import {closeShell} from 'src/shared/actions/shell'
+import {closeShell, removeShell} from 'src/shared/actions/shell'
 
 import Shell from 'src/shared/components/Shell'
 import {Notification} from 'src/types/notifications'
@@ -23,6 +23,7 @@ interface Props {
   headingTitle: string
   links: Links
   closeShell: () => void
+  removeShell: (nodeName: string) => void
   notify?: (message: Notification) => void
 }
 
@@ -90,7 +91,23 @@ class ShellModal extends PureComponent<Props> {
             <Tabs forceRenderTabPanel={true}>
               <TabList>
                 {shells.map((shell, index) => {
-                  return <Tab key={index}>{shell.nodename}</Tab>
+                  return (
+                    <Tab key={index}>
+                      <span
+                        className="text-ellipsis"
+                        style={{marginRight: '10px'}}
+                      >
+                        {shell.nodename}
+                      </span>
+                      <button
+                        onClick={e => {
+                          e.stopPropagation()
+                          this.props.removeShell(shell.nodename)
+                        }}
+                        className={`button button-default react-tabs__tab--remove icon remove`}
+                      />
+                    </Tab>
+                  )
                 })}
               </TabList>
 
@@ -132,6 +149,7 @@ const mapStateToProps = ({
 
 const mapDispatchToProps = {
   closeShell: closeShell,
+  removeShell: removeShell,
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(ShellModal)

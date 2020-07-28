@@ -40,4 +40,10 @@ $overlay-min-height: 150px;
   .react-tabs__tab--selected {
     border-radius: unset;
   }
+
+  .react-tabs__tab--remove {
+    color: #999dab;
+    background-color: unset;
+    border-color: transparent;
+  }
 }

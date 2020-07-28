@@ -1,6 +1,6 @@
-import {ShellLoad} from 'src/types'
+import {ShellLoad, ShellInfo} from 'src/types'
 
-export type Action = ShellOpenAction | ShellCloseAction
+export type Action = ShellOpenAction | ShellCloseAction | ShellRemoveAction
 
 export enum ActionTypes {
   ShellOpen = 'SHELL_OPEN',
@@ -58,10 +58,12 @@ export const addShell = (): ShellAddAction => ({
 
 interface ShellRemoveAction {
   type: ActionTypes.ShellRemove
-  payload: ShellLoad
+  payload: ShellInfo['nodename']
 }
 
-export const removeShell = (): ShellRemoveAction => ({
+export const removeShell = (
+  nodename: ShellInfo['nodename']
+): ShellRemoveAction => ({
   type: ActionTypes.ShellRemove,
-  payload: {},
+  payload: nodename,
 })
