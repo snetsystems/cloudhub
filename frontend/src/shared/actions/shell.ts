@@ -1,60 +1,47 @@
-import {ShellLoad, ShellInfo} from 'src/types'
+import {ShellInfo} from 'src/types'
 
-export type Action = ShellOpenAction | ShellCloseAction | ShellRemoveAction
+export type Action =
+  | ShellOpenAction
+  | ShellCloseAction
+  | ShellAddAction
+  | ShellRemoveAction
+  | ShellUpdateAction
 
 export enum ActionTypes {
   ShellOpen = 'SHELL_OPEN',
   ShellClose = 'SHELL_CLOSE',
   ShellAdd = 'SHELL_ADD',
   ShellRemove = 'SHELL_REMOVE',
+  ShellUpdate = 'SHELL_UPDATE',
 }
 
 interface ShellOpenAction {
   type: ActionTypes.ShellOpen
-  payload: ShellLoad
 }
 
-export const openShell = (
-  address?: string,
-  nodename?: string,
-  key?: string
-): ShellOpenAction => {
-  return {
-    type: ActionTypes.ShellOpen,
-    payload: {
-      isVisible: true,
-      shell: {
-        key,
-        address,
-        nodename,
-      },
-    },
-  }
-}
+export const openShell = (): ShellOpenAction => ({
+  type: ActionTypes.ShellOpen,
+})
 
 interface ShellCloseAction {
   type: ActionTypes.ShellClose
-  payload: ShellLoad
 }
 
 export const closeShell = (): ShellCloseAction => ({
   type: ActionTypes.ShellClose,
-  payload: {
-    isVisible: false,
-  },
 })
 
 interface ShellAddAction {
   type: ActionTypes.ShellAdd
-  payload: ShellLoad
+  payload: ShellInfo
 }
 
-export const addShell = (): ShellAddAction => ({
-  type: ActionTypes.ShellAdd,
-  payload: {
-    // isNewEdit:
-  },
-})
+export const addShell = (shell: ShellInfo): ShellAddAction => {
+  return {
+    type: ActionTypes.ShellAdd,
+    payload: shell,
+  }
+}
 
 interface ShellRemoveAction {
   type: ActionTypes.ShellRemove
@@ -67,3 +54,16 @@ export const removeShell = (
   type: ActionTypes.ShellRemove,
   payload: nodename,
 })
+
+interface ShellUpdateAction {
+  type: ActionTypes.ShellUpdate
+  payload: ShellInfo
+}
+
+export const updateShell = (shell: ShellInfo): ShellUpdateAction => {
+  console.log('updateShell: ', shell)
+  return {
+    type: ActionTypes.ShellUpdate,
+    payload: {...shell},
+  }
+}

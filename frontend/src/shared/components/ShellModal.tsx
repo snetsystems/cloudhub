@@ -11,7 +11,12 @@ import {Rnd} from 'react-rnd'
 import 'react-tabs/style/react-tabs.css'
 
 import {AddonType} from 'src/shared/constants'
-import {closeShell, removeShell} from 'src/shared/actions/shell'
+import {
+  closeShell,
+  removeShell,
+  addShell,
+  updateShell,
+} from 'src/shared/actions/shell'
 
 import Shell from 'src/shared/components/Shell'
 import {Notification} from 'src/types/notifications'
@@ -24,6 +29,8 @@ interface Props {
   links: Links
   closeShell: () => void
   removeShell: (nodeName: string) => void
+  addShell: (shell: ShellInfo) => void
+  updateShell: (shell: ShellInfo) => void
   notify?: (message: Notification) => void
 }
 
@@ -109,6 +116,17 @@ class ShellModal extends PureComponent<Props> {
                     </Tab>
                   )
                 })}
+                <li
+                  className={`react-tabs__tab`}
+                  onClick={() => {
+                    this.props.addShell({
+                      isNewEditor: true,
+                      nodename: 'New',
+                    })
+                  }}
+                >
+                  <span className={`icon plus`} />
+                </li>
               </TabList>
 
               {shells.map((shell, index) => {
@@ -116,8 +134,10 @@ class ShellModal extends PureComponent<Props> {
                   <TabPanel key={index}>
                     <ApolloProvider client={this.client}>
                       <Shell
-                        addr={shell.address}
+                        isNewEditor={shell.isNewEditor}
+                        handleShellUpdate={this.props.updateShell}
                         nodename={shell.nodename}
+                        addr={shell.address}
                         notify={notify}
                       />
                     </ApolloProvider>
@@ -148,8 +168,10 @@ const mapStateToProps = ({
 })
 
 const mapDispatchToProps = {
+  addShell: addShell,
   closeShell: closeShell,
   removeShell: removeShell,
+  updateShell: updateShell,
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(ShellModal)

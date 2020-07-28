@@ -2,13 +2,19 @@ import React, {ChangeEvent, KeyboardEvent} from 'react'
 
 // Components
 import {Form, Button, ComponentColor, Input, InputType} from 'src/reusable_ui'
+import {ComponentStatus} from 'src/reusable_ui/types'
+
+import {ShellInfo} from 'src/types'
 
 interface Props {
+  host: string
   addr: string
   user: string
   pwd: string
   port: string
-
+  isNewEditor: boolean
+  handleShellUpdate: (shell: ShellInfo) => void
+  handleChangeHost: (e: ChangeEvent<HTMLInputElement>) => void
   handleChangeAddress: (e: ChangeEvent<HTMLInputElement>) => void
   handleChangeID: (e: ChangeEvent<HTMLInputElement>) => void
   handleChangePassword: (e: ChangeEvent<HTMLInputElement>) => void
@@ -17,11 +23,14 @@ interface Props {
 }
 const ShellForm = (props: Props) => {
   const {
+    host,
     addr,
     user,
     pwd,
     port,
+    isNewEditor,
     handleOpenTerminal,
+    handleChangeHost,
     handleChangeAddress,
     handleChangeID,
     handleChangePassword,
@@ -37,13 +46,25 @@ const ShellForm = (props: Props) => {
       event.charCode === enterKeyCode ||
       event.key === enterKey
     ) {
-      if (addr && user && pwd && port) {
+      if (!props.isNewEditor && host && addr && user && pwd && port) {
         handleOpenTerminal()
       }
     }
   }
   return (
     <Form>
+      <Form.Element label="Host">
+        <Input
+          value={host}
+          onChange={handleChangeHost}
+          onKeyPress={onKeyPressEnter}
+          placeholder={'Connect Host'}
+          type={InputType.Text}
+          status={
+            isNewEditor ? ComponentStatus.Default : ComponentStatus.Disabled
+          }
+        />
+      </Form.Element>
       <Form.Element label="Address">
         <Input
           value={addr}
@@ -82,10 +103,27 @@ const ShellForm = (props: Props) => {
       </Form.Element>
       <Form.Footer>
         <Button
-          color={ComponentColor.Success}
-          text={`Connect`}
-          onClick={handleOpenTerminal}
+          color={ComponentColor.Default}
+          text={`Remove`}
+          onClick={() => {
+            console.log('remove')
+          }}
         />
+        {isNewEditor ? (
+          <Button
+            color={ComponentColor.Primary}
+            text={`Add Config`}
+            onClick={() => {
+              props.handleShellUpdate({isNewEditor, nodename: host})
+            }}
+          />
+        ) : (
+          <Button
+            color={ComponentColor.Success}
+            text={`Connect`}
+            onClick={handleOpenTerminal}
+          />
+        )}
       </Form.Footer>
     </Form>
   )

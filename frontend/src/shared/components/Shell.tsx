@@ -12,14 +12,18 @@ import {Notification} from 'src/types/notifications'
 // Constants
 import {GET_ROUTER_DEVICEINTERFACES_INFO} from 'src/addon/128t/constants'
 import {notifyConnectShellFailed} from 'src/shared/copy/notifications'
+import {ShellInfo} from 'src/types'
 
 export interface ShellProps {
   nodename?: string
+  host?: string
   addr?: string
   user?: string
   pwd?: string
   port?: string
   isConn?: boolean
+  isNewEditor?: boolean
+  handleShellUpdate: (shell: ShellInfo) => void
 }
 
 interface Node {
@@ -62,6 +66,7 @@ const Shell = (props: Props) => {
   let termRef = useRef<HTMLDivElement>()
   let term: Terminal = null
 
+  const [host, setHost] = useState(props.nodename ? props.nodename : '')
   const [addr, setAddr] = useState(props.addr ? props.addr : '')
   const [user, setUser] = useState(props.user ? props.user : '')
   const [pwd, setPwd] = useState(props.pwd ? props.pwd : '')
@@ -78,6 +83,10 @@ const Shell = (props: Props) => {
       pollInterval: 10000,
     }
   )
+
+  const handleChangeHost = (e: ChangeEvent<HTMLInputElement>): void => {
+    setHost(e.target.value)
+  }
 
   const handleChangeAddress = (e: ChangeEvent<HTMLInputElement>): void => {
     setAddr(e.target.value)
@@ -242,15 +251,19 @@ const Shell = (props: Props) => {
       ) : (
         <div>
           <ShellForm
+            host={host}
             addr={addr}
             user={user}
             pwd={pwd}
             port={port}
+            isNewEditor={props.isNewEditor}
             handleOpenTerminal={handleOpenTerminal}
+            handleChangeHost={handleChangeHost}
             handleChangeAddress={handleChangeAddress}
             handleChangeID={handleChangeID}
             handleChangePassword={handleChangePassword}
             handleChangePort={handleChangePort}
+            handleShellUpdate={props.handleShellUpdate}
           />
         </div>
       )}
