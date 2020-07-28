@@ -23,17 +23,31 @@ $overlay-min-height: 150px;
     }
   }
   .react-tabs__tab-list {
-    border-bottom: 1px solid #383846;
+    border-bottom: 1px solid $g5-pepper;
   }
 
   .react-tabs__tab {
-    border: 1px solid #383846;
+    border: 1px solid $g5-pepper;
     background-color: #202028;
     color: #999dab;
     margin-bottom: 0px;
     &.react-tabs__tab--selected {
-      background-color: #383846;
+      background-color: $g5-pepper;
       color: #f6f6f8;
+    }
+
+    &.react-tabs__tab:focus {
+      box-shadow: unset;
+    }
+
+    &.react-tabs__tab:focus:after {
+      content: '';
+      position: unset;
+      height: unset;
+      left: unset;
+      right: unset;
+      bottom: unset;
+      background: unset;
     }
   }
 
