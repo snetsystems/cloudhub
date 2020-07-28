@@ -1,0 +1,43 @@
+$overlay-min-height: 150px;
+
+.shell-container {
+  .overlay--body {
+    padding: unset;
+    border-radius: 0 0 $radius $radius;
+    min-height: $overlay-min-height;
+    @include gradient-v($g2-kevlar, $g0-obsidian);
+    overflow: hidden;
+    border: 1px solid #ddd;
+    z-index: 9;
+  }
+
+  .container-fluid {
+    margin: 0 auto;
+    padding: ($s-cloudhub-page-header-height / 2) $s-page-wrapper-padding;
+    max-width: $s-page-wrapper-max-width;
+    &.full-height {
+      height: 100%;
+    }
+    &.full-width {
+      max-width: 100%;
+    }
+  }
+  .react-tabs__tab-list {
+    border-bottom: 1px solid #383846;
+  }
+
+  .react-tabs__tab {
+    border: 1px solid #383846;
+    background-color: #202028;
+    color: #999dab;
+    margin-bottom: 0px;
+    &.react-tabs__tab--selected {
+      background-color: #383846;
+      color: #f6f6f8;
+    }
+  }
+
+  .react-tabs__tab--selected {
+    border-radius: unset;
+  }
+}

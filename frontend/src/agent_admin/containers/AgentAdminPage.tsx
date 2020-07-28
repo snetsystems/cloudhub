@@ -9,7 +9,7 @@ import SubSections from 'src/shared/components/SubSections'
 import AgentMinions from 'src/agent_admin/containers/AgentMinions'
 import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
 import AgentControl from 'src/agent_admin/containers/AgentControl'
-import ShellModal from 'src/agent_admin/components/ShellModal'
+import {openShell} from 'src/shared/actions/shell'
 
 // Actions
 import {getMinionKeyListAllAdminAsync} from 'src/agent_admin/actions'
@@ -49,6 +49,7 @@ interface Props {
   params: {tab: string}
   handleKeyDown: () => void
   addons: Addon[]
+  openShell: (address: string, nodename: string) => void
 }
 
 interface State {
@@ -203,11 +204,9 @@ class AgentAdminPage extends PureComponent<Props, State> {
 
   render() {
     const {
-      links,
       meRole,
       source,
       params: {tab},
-      notify,
     } = this.props
 
     return (
@@ -233,15 +232,6 @@ class AgentAdminPage extends PureComponent<Props, State> {
               parentUrl="agent-admin"
               sourceID={source.id}
             />
-            <ShellModal
-              visible={this.state.shellModalVisible}
-              headingTitle={'Terminal'}
-              notify={notify}
-              links={links}
-              onCancel={this.onClickShellModalClose}
-              addr={this.state.shellAddr}
-              nodename={this.state.nodename}
-            />
           </div>
         </Page.Contents>
       </Page>
@@ -249,11 +239,7 @@ class AgentAdminPage extends PureComponent<Props, State> {
   }
 
   private onClickShellModalOpen = ({addr, nodename}) => {
-    this.setState({
-      shellModalVisible: true,
-      shellAddr: addr,
-      nodename: nodename,
-    })
+    this.props.openShell(addr, nodename)
   }
 
   private onClickShellModalClose = () => {
@@ -273,6 +259,7 @@ const mapStateToProps = ({auth: {me}, links: {addons}}) => {
 const mapDispatchToProps = {
   notify: notifyAction,
   handleGetMinionKeyListAll: getMinionKeyListAllAdminAsync,
+  openShell: openShell,
 }
 
 export default connect(

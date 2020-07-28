@@ -9,7 +9,7 @@ import {AgentMinions} from 'src/agent_admin/containers/AgentMinions'
 import AgentMinionsTableRow from 'src/agent_admin/components/AgentMinionsTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import PageSpinner from 'src/shared/components/PageSpinner'
-import {ShellProps} from 'src/agent_admin/components/Shell'
+import {ShellProps} from 'src/shared/components/Shell'
 
 // Constants
 import {AGENT_MINION_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'

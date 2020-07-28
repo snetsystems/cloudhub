@@ -6,7 +6,7 @@ import {AGENT_MINION_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
 import {AgentMinions} from 'src/agent_admin/containers/AgentMinions'
 import {OSIndicator} from 'src/agent_admin/components/AgentIndicator'
 import {TableBodyRowItem} from 'src/agent_admin/reusable/'
-import {ShellProps} from 'src/agent_admin/components/Shell'
+import {ShellProps} from 'src/shared/components/Shell'
 // Types
 import {Minion} from 'src/agent_admin/type'
 

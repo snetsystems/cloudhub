@@ -10,7 +10,7 @@ import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import AgentMinionsTable from 'src/agent_admin/components/AgentMinionsTable'
 import AgentMinionsConsole from 'src/agent_admin/components/AgentMinionsConsole'
 import AgentMinionsModal from 'src/agent_admin/components/AgentMinionsModal'
-import {ShellProps} from 'src/agent_admin/components/Shell'
+import {ShellProps} from 'src/shared/components/Shell'
 
 // Actions
 import {

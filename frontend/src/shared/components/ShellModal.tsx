@@ -5,27 +5,22 @@ import ApolloClient from 'apollo-client'
 import {InMemoryCache} from 'apollo-cache-inmemory'
 import {createHttpLink} from 'apollo-link-http'
 import {setContext} from 'apollo-link-context'
+import {Tab, Tabs, TabList, TabPanel} from 'react-tabs'
+import {Rnd} from 'react-rnd'
 
-import {
-  OverlayTechnology,
-  OverlayContainer,
-  OverlayHeading,
-  OverlayBody,
-} from 'src/reusable_ui'
+import 'react-tabs/style/react-tabs.css'
 
 import {AddonType} from 'src/shared/constants'
 import {closeShell} from 'src/shared/actions/shell'
 
 import Shell from 'src/shared/components/Shell'
 import {Notification} from 'src/types/notifications'
-import {Links} from 'src/types'
+import {Links, ShellInfo} from 'src/types'
 
 interface Props {
   isVisible: boolean
-  address: string
+  shells: ShellInfo[]
   headingTitle: string
-  addr: string
-  nodename: string
   links: Links
   closeShell: () => void
   notify?: (message: Notification) => void
@@ -63,43 +58,76 @@ class ShellModal extends PureComponent<Props> {
   }
 
   render() {
-    const {
-      isVisible,
-      address,
-      headingTitle,
-      closeShell,
-
-      nodename,
-      notify,
-    } = this.props
+    const {isVisible, shells, notify} = this.props
     return (
-      <OverlayTechnology visible={isVisible}>
-        <OverlayContainer maxWidth={840}>
-          <OverlayHeading title={headingTitle} onDismiss={closeShell} />
-          <OverlayBody>
-            {isVisible ? (
-              <ApolloProvider client={this.client}>
-                <Shell addr={address} nodename={nodename} notify={notify} />
-              </ApolloProvider>
-            ) : null}
-          </OverlayBody>
-        </OverlayContainer>
-      </OverlayTechnology>
+      <div
+        className={`shell-container`}
+        style={{display: isVisible ? 'block' : 'none'}}
+      >
+        <Rnd
+          className={`overlay--body`}
+          default={{
+            x: 25,
+            y: 25,
+            width: 800,
+            height: 600,
+          }}
+        >
+          <div className={`page-header`}>
+            <div className={`page-header--container`}>
+              <div className={`page-header--left`}>
+                <div className={`page-header--title`}>Terminal</div>
+              </div>
+              <div className={`page-header--right`}>
+                <button
+                  className={`button button-sm button-default button-square icon remove`}
+                  onClick={this.props.closeShell}
+                />
+              </div>
+            </div>
+          </div>
+          <div className={`container-fluid`}>
+            <Tabs forceRenderTabPanel={true}>
+              <TabList>
+                {shells.map((shell, index) => {
+                  return <Tab key={index}>{shell.nodename}</Tab>
+                })}
+              </TabList>
+
+              {shells.map((shell, index) => {
+                return (
+                  <TabPanel key={index}>
+                    <ApolloProvider client={this.client}>
+                      <Shell
+                        addr={shell.address}
+                        nodename={shell.nodename}
+                        notify={notify}
+                      />
+                    </ApolloProvider>
+                  </TabPanel>
+                )
+              })}
+            </Tabs>
+          </div>
+        </Rnd>
+      </div>
     )
   }
 }
 
 const mapStateToProps = ({
-  shell: {isVisible, address},
+  shell: {isVisible, shells},
   sources,
   auth,
   links,
+  notify,
 }) => ({
   isVisible,
-  address,
+  shells,
   sources,
   auth,
   links,
+  notify,
 })
 
 const mapDispatchToProps = {

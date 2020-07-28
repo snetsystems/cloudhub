@@ -1,23 +1,44 @@
-import {Action, ActionTypes} from 'src/shared/actions/shell'
-import {Shell} from 'src/types'
+import _ from 'lodash'
 
-export const initialState: Shell = {
+import {Action, ActionTypes} from 'src/shared/actions/shell'
+import {Shells} from 'src/types'
+
+export const initialState: Shells = {
   isVisible: false,
-  address: '',
+  shells: [],
 }
 
-const shell = (state: Shell = initialState, action: Action): Shell => {
+const shell = (state: Shells = initialState, action: Action): Shells => {
   switch (action.type) {
     case ActionTypes.ShellOpen: {
-      console.log('shell open')
-      return {
-        ...state,
-        isVisible: true,
-        address: action.payload.address,
+      const {shell} = action.payload
+      console.log(shell)
+      if (state.shells.length > 1) {
+        const isEqualNodeName = _.find(
+          state.shells,
+          s => s.nodename === shell.nodename
+        )
+        if (isEqualNodeName) {
+          return {
+            ...state,
+            isVisible: true,
+          }
+        } else {
+          return {
+            ...state,
+            isVisible: true,
+            shells: [...state.shells, shell],
+          }
+        }
+      } else {
+        return {
+          ...state,
+          isVisible: true,
+          shells: [...state.shells, shell],
+        }
       }
     }
     case ActionTypes.ShellClose: {
-      console.log('shell close')
       return {
         ...state,
         isVisible: false,
