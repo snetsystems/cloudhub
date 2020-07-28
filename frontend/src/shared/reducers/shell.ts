@@ -78,7 +78,14 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
     // updatel log
     case ActionTypes.ShellUpdate: {
       const {payload} = action
-      if (payload.isNewEditor && payload.nodename !== 'New') {
+      const isCheckNodeName =
+        _.findIndex(state.shells, s => s.nodename === payload.nodename) < 0
+
+      if (
+        payload.isNewEditor &&
+        payload.nodename !== 'New' &&
+        isCheckNodeName
+      ) {
         const index = _.findIndex(state.shells, s => s.isNewEditor === true)
         Object.assign(state.shells[index], {...payload, isNewEditor: false})
 
@@ -94,10 +101,11 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
     // remove logic test
     case ActionTypes.ShellRemove: {
       const {payload} = action
-
+      const index = _.findIndex(state.shells, s => s.nodename === payload)
+      state.shells.splice(index, 1)
       return {
         ...state,
-        isVisible: true,
+        shells: [...state.shells],
       }
     }
 
