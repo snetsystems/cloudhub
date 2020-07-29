@@ -14,12 +14,12 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
     case ActionTypes.ShellOpen: {
       const {payload} = action
 
-      const isCheckNodeName = _.findIndex(
-        state.shells,
-        (s: ShellLoad['shell']) => s.nodename === payload.nodename
-      )
-
       if (payload) {
+        const isCheckNodeName = _.findIndex(
+          state.shells,
+          (s: ShellLoad['shell']) => s.nodename === payload.nodename
+        )
+
         if (isCheckNodeName < 0) {
           return {
             ...state,
