@@ -27,6 +27,7 @@ import {
   RemoteDataState,
   Notification,
   NotificationFunc,
+  ShellInfo,
 } from 'src/types'
 import {Addon} from 'src/types/auth'
 import {AddonType} from 'src/shared/constants'
@@ -49,7 +50,7 @@ interface Props {
   params: {tab: string}
   handleKeyDown: () => void
   addons: Addon[]
-  openShell: (address: string, nodename: string) => void
+  openShell: (shell: ShellInfo) => void
 }
 
 interface State {
@@ -238,8 +239,8 @@ class AgentAdminPage extends PureComponent<Props, State> {
     )
   }
 
-  private onClickShellModalOpen = ({addr, nodename}) => {
-    this.props.openShell(addr, nodename)
+  private onClickShellModalOpen = (shell: ShellInfo) => {
+    this.props.openShell(shell)
   }
 
   private onClickShellModalClose = () => {

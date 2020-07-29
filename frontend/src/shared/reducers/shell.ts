@@ -12,9 +12,31 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
   switch (action.type) {
     // open
     case ActionTypes.ShellOpen: {
-      return {
-        ...state,
-        isVisible: true,
+      const {payload} = action
+
+      const isCheckNodeName = _.findIndex(
+        state.shells,
+        (s: ShellLoad['shell']) => s.nodename === payload.nodename
+      )
+
+      if (payload) {
+        if (isCheckNodeName < 0) {
+          return {
+            ...state,
+            isVisible: true,
+            shells: [...state.shells, payload],
+          }
+        } else {
+          return {
+            ...state,
+            isVisible: true,
+          }
+        }
+      } else {
+        return {
+          ...state,
+          isVisible: true,
+        }
       }
     }
 
@@ -35,7 +57,6 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
       )
 
       console.log(isNewEditor && !isCheckNodeName, {isCheckNodeName})
-      // console.log({shell})
 
       if (isNewEditor && isCheckNodeName < 0) {
         return {
@@ -43,32 +64,7 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
           shells: [...state.shells, {isNewEditor: true, nodename}],
         }
       }
-      // console.log(shell.isNewEditor)
 
-      // if (state.shells.length > 1) {
-      //   const isEqualNodeName = _.find(
-      //     state.shells,
-      //     s => s.nodename === shell.nodename
-      //   )
-      //   if (isEqualNodeName) {
-      //     return {
-      //       ...state,
-      //       isVisible: true,
-      //     }
-      //   } else {
-      //     return {
-      //       ...state,
-      //       isVisible: true,
-      //       shells: [...state.shells, shell],
-      //     }
-      //   }
-      // } else {
-      //   return {
-      //     ...state,
-      //     isVisible: true,
-      //     shells: [...state.shells, shell],
-      //   }
-      // }
       return {
         ...state,
         isVisible: true,
@@ -94,6 +90,12 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
           shells: [...state.shells],
         }
       } else {
+        if (payload.nodename !== 'New' && isCheckNodeName) {
+          return {
+            ...state,
+            shells: [...state.shells],
+          }
+        }
         return state
       }
     }

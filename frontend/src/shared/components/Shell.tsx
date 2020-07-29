@@ -61,10 +61,10 @@ interface Variables {
 
 type Props = DefaultProps & ShellProps
 
-var socket: WebSocket = null
 const Shell = (props: Props) => {
-  let termRef = useRef<HTMLDivElement>()
+  let socket: WebSocket = null
   let term: Terminal = null
+  let termRef = useRef<HTMLDivElement>()
 
   const [host, setHost] = useState(props.nodename ? props.nodename : '')
   const [addr, setAddr] = useState(props.addr ? props.addr : '')
@@ -83,6 +83,8 @@ const Shell = (props: Props) => {
       pollInterval: 10000,
     }
   )
+
+  console.log({...props})
 
   const handleChangeHost = (e: ChangeEvent<HTMLInputElement>): void => {
     setHost(e.target.value)
@@ -233,10 +235,10 @@ const Shell = (props: Props) => {
   useEffect(() => {
     return () => {
       setIsConn(false)
-      if (socket) {
-        socket.close()
-        socket = null
-      }
+      // if (socket) {
+      //   socket.close()
+      //   socket = null
+      // }
 
       if (term) {
         term.dispose()

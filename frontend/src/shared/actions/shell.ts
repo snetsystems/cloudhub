@@ -17,10 +17,12 @@ export enum ActionTypes {
 
 interface ShellOpenAction {
   type: ActionTypes.ShellOpen
+  payload?: ShellInfo
 }
 
-export const openShell = (): ShellOpenAction => ({
+export const openShell = (shell?: ShellInfo): ShellOpenAction => ({
   type: ActionTypes.ShellOpen,
+  payload: shell,
 })
 
 interface ShellCloseAction {
@@ -36,12 +38,10 @@ interface ShellAddAction {
   payload: ShellInfo
 }
 
-export const addShell = (shell: ShellInfo): ShellAddAction => {
-  return {
-    type: ActionTypes.ShellAdd,
-    payload: shell,
-  }
-}
+export const addShell = (shell: ShellInfo): ShellAddAction => ({
+  type: ActionTypes.ShellAdd,
+  payload: shell,
+})
 
 interface ShellRemoveAction {
   type: ActionTypes.ShellRemove
@@ -60,10 +60,7 @@ interface ShellUpdateAction {
   payload: ShellInfo
 }
 
-export const updateShell = (shell: ShellInfo): ShellUpdateAction => {
-  console.log('updateShell: ', shell)
-  return {
-    type: ActionTypes.ShellUpdate,
-    payload: {...shell},
-  }
-}
+export const updateShell = (shell: ShellInfo): ShellUpdateAction => ({
+  type: ActionTypes.ShellUpdate,
+  payload: shell,
+})
