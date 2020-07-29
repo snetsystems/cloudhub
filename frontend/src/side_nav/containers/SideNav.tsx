@@ -52,6 +52,11 @@ class SideNav extends PureComponent<Props> {
       : false
   }
 
+  private toggleShellVisible = () => {
+    const {shell, closeShell, openShell} = this.props
+    return shell.isVisible ? closeShell() : openShell()
+  }
+
   public render() {
     const {
       params: {sourceID},
@@ -261,11 +266,7 @@ class SideNav extends PureComponent<Props> {
           className={`sidebar--item align-bottom ${
             this.props.shell.isVisible ? 'active' : ''
           }`}
-          onClick={() => {
-            this.props.shell.isVisible
-              ? this.props.closeShell()
-              : this.props.openShell()
-          }}
+          onClick={this.toggleShellVisible}
         >
           <div className="sidebar--square">
             <span className="sidebar--icon icon bash"></span>
