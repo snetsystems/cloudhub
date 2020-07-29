@@ -20,6 +20,8 @@ import {
 
 import Shell from 'src/shared/components/Shell'
 import {Notification} from 'src/types/notifications'
+import {notify as notifyAction} from 'src/shared/actions/notifications'
+
 import {Links, ShellInfo} from 'src/types'
 
 interface Props {
@@ -169,17 +171,11 @@ class ShellModaless extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps = ({
-  shell: {isVisible, shells},
-  sources,
-  links,
-  notify,
-}) => ({
+const mapStateToProps = ({shell: {isVisible, shells}, sources, links}) => ({
   isVisible,
   shells,
   sources,
   links,
-  notify,
 })
 
 const mapDispatchToProps = {
@@ -187,6 +183,7 @@ const mapDispatchToProps = {
   closeShell: closeShell,
   removeShell: removeShell,
   updateShell: updateShell,
+  notify: notifyAction,
 }
 
 export default connect(mapStateToProps, mapDispatchToProps)(ShellModaless)
