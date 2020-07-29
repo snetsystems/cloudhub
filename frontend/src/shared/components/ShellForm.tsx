@@ -1,5 +1,5 @@
 import React, {ChangeEvent, KeyboardEvent} from 'react'
-
+import _ from 'lodash'
 // Components
 import {Form, Button, ComponentColor, Input, InputType} from 'src/reusable_ui'
 import {ComponentStatus} from 'src/reusable_ui/types'
@@ -7,6 +7,7 @@ import {ComponentStatus} from 'src/reusable_ui/types'
 import {ShellInfo} from 'src/types'
 
 interface Props {
+  shells: ShellInfo[]
   host: string
   addr: string
   user: string
@@ -24,6 +25,7 @@ interface Props {
 }
 const ShellForm = (props: Props) => {
   const {
+    shells,
     host,
     addr,
     user,
@@ -52,19 +54,45 @@ const ShellForm = (props: Props) => {
       }
     }
   }
+
+  const nodenameChecker = (shells: ShellInfo[], nodename: string) => {
+    const isNodeNameOverlap =
+      _.findIndex(shells, shell => shell.nodename === nodename) < 0
+
+    return isNodeNameOverlap
+  }
+
+  const btnControl = () => {
+    const check = isNewEditor && !nodenameChecker(shells, host)
+
+    if (!host || check) {
+      return ComponentStatus.Disabled
+    } else {
+      return ComponentStatus.Default
+    }
+  }
+
   return (
     <Form>
       <Form.Element label="Host">
-        <Input
-          value={host}
-          onChange={handleChangeHost}
-          onKeyPress={onKeyPressEnter}
-          placeholder={'Connect Host'}
-          type={InputType.Text}
-          status={
-            isNewEditor ? ComponentStatus.Default : ComponentStatus.Disabled
-          }
-        />
+        <>
+          <Input
+            value={host}
+            onChange={handleChangeHost}
+            onKeyPress={onKeyPressEnter}
+            placeholder={'Connect Host'}
+            type={InputType.Text}
+            status={
+              isNewEditor ? ComponentStatus.Default : ComponentStatus.Disabled
+            }
+          />
+          {isNewEditor && !nodenameChecker(shells, host) ? (
+            <div className="alert alert-error">
+              <span className="icon alerts" />
+              <div className="alert-message">Change the Host name.</div>
+            </div>
+          ) : null}
+        </>
       </Form.Element>
       <Form.Element label="Address">
         <Input
@@ -118,6 +146,7 @@ const ShellForm = (props: Props) => {
             onClick={() => {
               props.handleShellUpdate({isNewEditor, nodename: host})
             }}
+            status={btnControl()}
           />
         ) : (
           <Button

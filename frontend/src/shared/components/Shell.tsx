@@ -15,6 +15,7 @@ import {notifyConnectShellFailed} from 'src/shared/copy/notifications'
 import {ShellInfo} from 'src/types'
 
 export interface ShellProps {
+  shells?: ShellInfo[]
   nodename?: string
   host?: string
   addr?: string
@@ -256,6 +257,7 @@ const Shell = (props: Props) => {
       ) : (
         <div>
           <ShellForm
+            shells={props.shells}
             host={host}
             addr={addr}
             user={user}

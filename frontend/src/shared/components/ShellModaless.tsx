@@ -138,6 +138,7 @@ class ShellModaless extends PureComponent<Props> {
                           isNewEditor={shell.isNewEditor}
                           handleShellUpdate={this.props.updateShell}
                           handleShellRemove={this.props.removeShell}
+                          shells={shells}
                           nodename={shell.nodename}
                           addr={shell.addr}
                           notify={notify}
