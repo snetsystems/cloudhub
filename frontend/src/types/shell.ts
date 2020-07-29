@@ -1,6 +1,6 @@
 export interface ShellInfo {
   isNewEditor?: boolean
-  address?: string
+  addr?: string
   nodename?: string
 }
 
