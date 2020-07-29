@@ -151,6 +151,10 @@ const Shell = (props: Props) => {
           document.execCommand('copy')
           return false
         }
+
+        if (e.ctrlKey && e.keyCode == 68) {
+          return false
+        }
       })
 
       term.open(termRef.current)
