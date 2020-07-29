@@ -172,14 +172,12 @@ class ShellModaless extends PureComponent<Props> {
 const mapStateToProps = ({
   shell: {isVisible, shells},
   sources,
-  auth,
   links,
   notify,
 }) => ({
   isVisible,
   shells,
   sources,
-  auth,
   links,
   notify,
 })
