@@ -34,7 +34,7 @@ interface Props {
   notify?: (message: Notification) => void
 }
 
-class ShellModal extends PureComponent<Props> {
+class ShellModaless extends PureComponent<Props> {
   constructor(props: Props) {
     super(props)
   }
@@ -81,70 +81,72 @@ class ShellModal extends PureComponent<Props> {
             height: 600,
           }}
         >
-          <div className={`page-header`}>
-            <div className={`page-header--container`}>
-              <div className={`page-header--left`}>
-                <div className={`page-header--title`}>Terminal</div>
-              </div>
-              <div className={`page-header--right`}>
-                <button
-                  className={`button button-sm button-default button-square icon remove`}
-                  onClick={this.props.closeShell}
-                />
+          <div className={`shell-container`}>
+            <div className={`page-header`}>
+              <div className={`page-header--container`}>
+                <div className={`page-header--left`}>
+                  <div className={`page-header--title`}>Terminal</div>
+                </div>
+                <div className={`page-header--right`}>
+                  <button
+                    className={`button button-sm button-default button-square icon remove`}
+                    onClick={this.props.closeShell}
+                  />
+                </div>
               </div>
             </div>
-          </div>
-          <div className={`container-fluid`}>
-            <Tabs forceRenderTabPanel={true}>
-              <TabList>
+            <div className={`container-fluid`}>
+              <Tabs forceRenderTabPanel={true}>
+                <TabList>
+                  {shells.map((shell, index) => {
+                    return (
+                      <Tab key={index}>
+                        <span
+                          className="text-ellipsis"
+                          style={{marginRight: '10px'}}
+                        >
+                          {shell.nodename}
+                        </span>
+                        <button
+                          onClick={e => {
+                            e.stopPropagation()
+                            this.props.removeShell(shell.nodename)
+                          }}
+                          className={`button button-default react-tabs__tab--remove icon remove`}
+                        />
+                      </Tab>
+                    )
+                  })}
+                  <li
+                    className={`react-tabs__tab`}
+                    onClick={() => {
+                      this.props.addShell({
+                        isNewEditor: true,
+                        nodename: 'New',
+                      })
+                    }}
+                  >
+                    <span className={`icon plus`} />
+                  </li>
+                </TabList>
+
                 {shells.map((shell, index) => {
                   return (
-                    <Tab key={index}>
-                      <span
-                        className="text-ellipsis"
-                        style={{marginRight: '10px'}}
-                      >
-                        {shell.nodename}
-                      </span>
-                      <button
-                        onClick={e => {
-                          e.stopPropagation()
-                          this.props.removeShell(shell.nodename)
-                        }}
-                        className={`button button-default react-tabs__tab--remove icon remove`}
-                      />
-                    </Tab>
+                    <TabPanel key={index}>
+                      <ApolloProvider client={this.client}>
+                        <Shell
+                          isNewEditor={shell.isNewEditor}
+                          handleShellUpdate={this.props.updateShell}
+                          nodename={shell.nodename}
+                          addr={shell.addr}
+                          notify={notify}
+                        />
+                      </ApolloProvider>
+                    </TabPanel>
                   )
                 })}
-                <li
-                  className={`react-tabs__tab`}
-                  onClick={() => {
-                    this.props.addShell({
-                      isNewEditor: true,
-                      nodename: 'New',
-                    })
-                  }}
-                >
-                  <span className={`icon plus`} />
-                </li>
-              </TabList>
-
-              {shells.map((shell, index) => {
-                return (
-                  <TabPanel key={index}>
-                    <ApolloProvider client={this.client}>
-                      <Shell
-                        isNewEditor={shell.isNewEditor}
-                        handleShellUpdate={this.props.updateShell}
-                        nodename={shell.nodename}
-                        addr={shell.address}
-                        notify={notify}
-                      />
-                    </ApolloProvider>
-                  </TabPanel>
-                )
-              })}
-            </Tabs>
+              </Tabs>
+            </div>
           </div>
         </Rnd>
       </div>
@@ -174,4 +176,4 @@ const mapDispatchToProps = {
   updateShell: updateShell,
 }
 
-export default connect(mapStateToProps, mapDispatchToProps)(ShellModal)
+export default connect(mapStateToProps, mapDispatchToProps)(ShellModaless)
