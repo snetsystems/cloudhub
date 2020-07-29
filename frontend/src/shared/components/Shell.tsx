@@ -237,6 +237,10 @@ const Shell = (props: Props) => {
   }, [data])
 
   useEffect(() => {
+    setHost(props.nodename)
+  }, [props.nodename])
+
+  useEffect(() => {
     return () => {
       setIsConn(false)
       if (socket) {

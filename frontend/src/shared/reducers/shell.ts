@@ -95,12 +95,12 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
 
     // remove logic test
     case ActionTypes.ShellRemove: {
-      const {payload} = action
-      const index = _.findIndex(state.shells, s => s.nodename === payload)
-      state.shells.splice(index, 1)
+      const copyCells = Object.values(Object.assign({}, state.shells))
+      _.remove(copyCells, cell => cell.nodename === action.payload)
+
       return {
         ...state,
-        shells: [...state.shells],
+        shells: [...copyCells],
       }
     }
 
