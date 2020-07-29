@@ -1,6 +1,7 @@
 package server
 
 import (
+	"io"
 	"net"
 	"net/http"
 	"time"
@@ -22,6 +23,7 @@ const (
     sshEcho = 1
     sshTtyOpIspeed = 14400
 	sshTtyOpOspeed = 14400
+	wsTimeout = 30 * time.Minute
 	sshConnfailCloseMessage = "Connection failed to establish because the connected host did not respond. Please check the connection information again"
 )
 
@@ -33,6 +35,7 @@ type ssh struct {
 	client  *gossh.Client
 	session *gossh.Session
 }
+
 
 // connect to the ssh.
 func (s *ssh) Connect() (*ssh, error) {
@@ -63,12 +66,16 @@ func (s *ssh) Connect() (*ssh, error) {
 	return s, nil
 }
 
+
 // close ssh session
 func (s *ssh) Close() {
     if s.session != nil {
-        _ = s.session.Close()
-    }
+		s.session.Close()
+		s.client.Close()
+	}
+	
 }
+
 
 // config the terminal modes.
 func (s *ssh) Config(cols, rows int) error {
@@ -84,32 +91,121 @@ func (s *ssh) Config(cols, rows int) error {
     return err
 }
 
+
+func setQuit(ch chan bool) {
+	ch <- true
+}
+
+
+// FromWsClientToSSH Send websocket client message to ssh
+func FromWsClientToSSH(sh *ssh, ws *websocket.Conn, s *Service, sshWriter io.WriteCloser, exitCh chan bool) {
+	for {
+		// set up io.Reader of websocket
+		_, reader, err := ws.NextReader()
+		if err != nil {
+			setQuit(exitCh)
+			s.Logger.
+				WithField("component", "terminal > FromWsClientToSSH").
+				Info("Close ssh terminal")
+			return
+		}
+
+		// read first byte to determine whether to pass data or resize terminal
+		dataTypeBuf := make([]byte, 1)
+		_, err = reader.Read(dataTypeBuf)
+		if err != nil {
+			s.Logger.
+				WithField("component", "terminal > FromWsClientToSSH > reader.Read").
+				Error(err.Error())
+			return
+		}
+
+		buf := make([]byte, 1024)
+		n, _ := reader.Read(buf)
+		_, err = sshWriter.Write(buf[:n])
+		if err != nil {
+			ws.WriteMessage(websocket.BinaryMessage, []byte(err.Error()))
+			s.Logger.
+				WithField("component", "terminal > FromWsClientToSSH > sshWriter.Write").
+				Error(err.Error())
+			return
+		}
+	}
+}
+
+
+// FromSSHtoWsClient Send ssh messages to websocket client
+func FromSSHtoWsClient(sh *ssh, ws *websocket.Conn, s *Service, sshReader io.Reader, exitCh chan bool) {
+	for {
+		buf := make([]byte, 4096)
+		n, err := sshReader.Read(buf)
+		if err != nil {
+			setQuit(exitCh)
+			s.Logger.
+				WithField("component", "terminal > FromSSHtoWsClient").
+				Info("Close ssh terminal")
+			return
+		}
+		err = ws.WriteMessage(websocket.BinaryMessage, buf[:n])
+		if err != nil {
+			s.Logger.
+				WithField("component", "terminal > FromSSHtoWsClient > ws.WriteMessage").
+				Error(err.Error())
+			return
+		}
+
+		ws.SetReadDeadline(time.Now().Add(wsTimeout))
+	}
+}
+
+
+// SessionWait Wait for session to finish
+func (s *ssh) SessionWait(sv *Service, exitCh chan bool) {
+	if err := s.session.Wait(); err != nil {
+		setQuit(exitCh)
+		sv.Logger.
+			WithField("component", "terminal > ws.SessionWait").
+			Error(err.Error())
+	}
+}
+
+
 // WebTerminalHandler connects websocket and remote ssh
 func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		s.Logger.
+			WithField("component", "terminal > WebTerminalHandler > upgrader.Upgrade").
+			Error(err.Error())
 		return
 	}
 	defer ws.Close()
 
+	ws.SetReadDeadline(time.Now().Add(wsTimeout))
+
 	// Parse to the original query string
 	qs, err := url.QueryUnescape(r.URL.RawQuery)
 	if err != nil {
-		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		s.Logger.
+			WithField("component", "terminal > WebTerminalHandler > url.QueryUnescape").
+			Error(err.Error())
 		return
 	}
 
 	// query string convert to map
 	params, err := url.ParseQuery(qs)
 	if err != nil {
-		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		s.Logger.
+			WithField("component", "terminal > WebTerminalHandler > url.ParseQuery").
+			Error(err.Error())
 		return
 	}
 
 	port, err := strconv.Atoi(params["port"][0])
 	if err != nil {
-		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		s.Logger.
+			WithField("component", "terminal > WebTerminalHandler > strconv.Atoi").
+			Error(err.Error())
 		return
 	}
 
@@ -122,7 +218,9 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 
 	sh, err = sh.Connect()
 	if nil != err {
-		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		s.Logger.
+			WithField("component", "terminal > WebTerminalHandler > sh.Connect").
+			Error(err.Error())
 		
 		msg := websocket.FormatCloseMessage(4501, err.Error())
 		err = ws.WriteMessage(websocket.CloseMessage, msg)
@@ -133,94 +231,45 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 		_ = ws.Close()
 		return
 	}
+	defer sh.Close()
 
 	err = sh.Config(80, 30)
     if err != nil {
-		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		s.Logger.
+			WithField("component", "terminal > WebTerminalHandler > sh.Config").
+			Error(err.Error())
 		return
-    }
+	}
 
     sshReader, err := sh.session.StdoutPipe()
     if err != nil {
-		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		s.Logger.
+			WithField("component", "terminal > WebTerminalHandler > sh.session.StdoutPipe").
+			Error(err.Error())
 		return
     }
 
     sshWriter, err := sh.session.StdinPipe()
     if err != nil {
-		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		s.Logger.
+			WithField("component", "terminal > WebTerminalHandler > sh.session.StdinPipe").
+			Error(err.Error())
 		return
 	}
 
-	// read from terminal and write to frontend.
-    go func() {
-        defer func() {
-            _ = ws.Close()
-            sh.Close()
-		}()
-		
-		for {
-			buf := make([]byte, 4096)
-			n, err := sshReader.Read(buf)
-			if err != nil {
-				s.Logger.
-					WithField("component", "terminal").
-					Error(err.Error())
-				return
-			}
-			err = ws.WriteMessage(websocket.BinaryMessage, buf[:n])
-			if err != nil {
-				s.Logger.
-					WithField("component", "terminal").
-					Error(err.Error())
-				return
-			}
-		}
-	}()
-	
-	// read from frontend and write to terminal.
-    go func() {
-        defer func() {
-            _ = ws.Close()
-            sh.Close()
-		}()
-		
-		for {
-			// set up io.Reader of websocket
-			_, reader, err := ws.NextReader()
-			if err != nil {
-				s.Logger.
-					WithField("component", "terminal").
-					Error(err.Error())
-				return
-			}
-			// read first byte to determine whether to pass data or resize terminal
-			dataTypeBuf := make([]byte, 1)
-			_, err = reader.Read(dataTypeBuf)
-			if err != nil {
-				s.Logger.
-					WithField("component", "terminal").
-					Error(err.Error())
-				return
-			}
-
-			buf := make([]byte, 1024)
-			n, _ := reader.Read(buf)
-			_, err = sshWriter.Write(buf[:n])
-			if err != nil {
-				ws.WriteMessage(websocket.BinaryMessage, []byte(err.Error()))
-				s.Logger.
-					WithField("component", "terminal").
-					Error(err.Error())
-				return
-			}
-
-		}
-	}()
-	
 	// start remote shell.
-	sh.session.Shell()
-	
-	// Wait for session to finish
-    sh.session.Wait()
+	err = sh.session.Shell()
+	if err != nil {
+		s.Logger.
+			WithField("component", "terminal > WebTerminalHandler > sh.session.Shell").
+			Error(err.Error())
+		return
+	}
+
+	quitChan := make(chan bool, 3)
+	go FromWsClientToSSH(sh, ws, s, sshWriter, quitChan)
+	go FromSSHtoWsClient(sh, ws, s, sshReader, quitChan)
+	go sh.SessionWait(s, quitChan)
+
+	<-quitChan
 }
