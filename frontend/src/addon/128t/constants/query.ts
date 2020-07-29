@@ -88,7 +88,7 @@ export const GET_ROUTER_DEVICEINTERFACES_INFO = gql`
         enabled
         deviceInterfaces {
           nodes {
-            networkInterfaces {
+            networkInterfaces(names: ["wan"]) {
               nodes {
                 name
                 addresses {

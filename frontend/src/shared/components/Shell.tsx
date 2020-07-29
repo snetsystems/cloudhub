@@ -28,14 +28,6 @@ export interface ShellProps {
   handleShellRemove: (nodename: ShellInfo['nodename']) => void
 }
 
-interface Node {
-  name: string
-  enabled: boolean
-  deviceInterfaces: {
-    nodes: NetworkInterfaces[]
-  }
-}
-
 interface NetworkInterfaces {
   networkInterfaces: {
     nodes: Addresses[]
@@ -188,14 +180,11 @@ const Shell = (props: Props) => {
   // Set 128T minion internet protocol
   useEffect(() => {
     if (data) {
-      const nodes: Node[] = _.get(data, 'allNodes.nodes')
-      if (nodes) {
-        const node = nodes[0]
-        const networkInterfaces: NetworkInterfaces[] = _.get(
-          node,
-          'deviceInterfaces.nodes'
-        )
-
+      const networkInterfaces: NetworkInterfaces[] = _.get(
+        data,
+        'allNodes.nodes[0].deviceInterfaces.nodes'
+      )
+      if (networkInterfaces) {
         const addresses: Addresses[] = _.reduce(
           networkInterfaces,
           (addresses: Addresses[], networkInterface: NetworkInterfaces) => {
@@ -212,9 +201,8 @@ const Shell = (props: Props) => {
           },
           []
         )
-
         const ipAddress: IpAddress[] = _.reduce(
-          addresses.filter(f => f.name.toLowerCase().indexOf('wan') > -1),
+          addresses,
           (ipAddress: IpAddress[], address: Addresses) => {
             const ipAddresses: IpAddress[] = _.reduce(
               _.get(address, 'addresses.nodes'),
@@ -229,7 +217,6 @@ const Shell = (props: Props) => {
           },
           []
         )
-
         if (ipAddress.length > 0 && ipAddress[0].ipAddress) {
           setAddr(ipAddress[0].ipAddress)
           setGetIP(ipAddress[0].ipAddress)
