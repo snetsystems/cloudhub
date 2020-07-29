@@ -168,11 +168,11 @@ func TestService_Organizations(t *testing.T) {
 				OrganizationsStore: &mocks.OrganizationsStore{
 					AllF: func(ctx context.Context) ([]cloudhub.Organization, error) {
 						return []cloudhub.Organization{
-							cloudhub.Organization{
+							{
 								ID:   "1337",
 								Name: "The Good Place",
 							},
-							cloudhub.Organization{
+							{
 								ID:   "100",
 								Name: "The Bad Place",
 							},

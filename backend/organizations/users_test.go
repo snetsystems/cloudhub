@@ -496,7 +496,7 @@ func TestUsersStore_Add(t *testing.T) {
 					Provider: "github",
 					Scheme:   "oauth2",
 					Roles: []cloudhub.Role{
-						cloudhub.Role{},
+						{},
 					},
 				},
 				orgID: "1337",

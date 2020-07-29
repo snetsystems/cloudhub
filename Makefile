@@ -67,8 +67,8 @@ endif
 
 gen: internal.pb.go
 
-internal.pb.go: backend/bolt/internal/internal.proto
-	cd backend && GO111MODULE=on go generate -x ./bolt/internal
+internal.pb.go: backend/kv/internal/internal.proto
+	cd backend && GO111MODULE=on go generate -x ./kv/internal
 
 test: jstest gotest gotestrace lint-ci
 

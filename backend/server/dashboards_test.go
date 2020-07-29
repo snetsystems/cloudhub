@@ -240,10 +240,10 @@ func Test_newDashboardResponse(t *testing.T) {
 							},
 						},
 						Axes: map[string]cloudhub.Axis{
-							"x": cloudhub.Axis{
+							"x": {
 								Bounds: []string{"0", "100"},
 							},
-							"y": cloudhub.Axis{
+							"y": {
 								Bounds: []string{"2", "95"},
 								Label:  "foo",
 							},
@@ -267,7 +267,7 @@ func Test_newDashboardResponse(t *testing.T) {
 				Organization: "0",
 				Templates:    []templateResponse{},
 				Cells: []dashboardCellResponse{
-					dashboardCellResponse{
+					{
 						Links: dashboardCellLinks{
 							Self: "/cloudhub/v1/dashboards/0/cells/a",
 						},
@@ -300,21 +300,21 @@ func Test_newDashboardResponse(t *testing.T) {
 							},
 							CellColors: []cloudhub.CellColor{},
 							Axes: map[string]cloudhub.Axis{
-								"x": cloudhub.Axis{
+								"x": {
 									Bounds: []string{"0", "100"},
 								},
-								"y": cloudhub.Axis{
+								"y": {
 									Bounds: []string{"2", "95"},
 									Label:  "foo",
 								},
-								"y2": cloudhub.Axis{
+								"y2": {
 									Bounds: []string{"", ""},
 								},
 							},
 							NoteVisibility: "default",
 						},
 					},
-					dashboardCellResponse{
+					{
 						Links: dashboardCellLinks{
 							Self: "/cloudhub/v1/dashboards/0/cells/b",
 						},
@@ -323,13 +323,13 @@ func Test_newDashboardResponse(t *testing.T) {
 							W:  4,
 							H:  4,
 							Axes: map[string]cloudhub.Axis{
-								"x": cloudhub.Axis{
+								"x": {
 									Bounds: []string{"", ""},
 								},
-								"y": cloudhub.Axis{
+								"y": {
 									Bounds: []string{"", ""},
 								},
-								"y2": cloudhub.Axis{
+								"y2": {
 									Bounds: []string{"", ""},
 								},
 							},

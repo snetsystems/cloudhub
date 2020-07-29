@@ -2,7 +2,6 @@ package multistore
 
 import (
 	"context"
-	"fmt"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
@@ -54,19 +53,4 @@ func (s *Protoboards) Get(ctx context.Context, ID string) (cloudhub.Protoboard, 
 		}
 	}
 	return cloudhub.Protoboard{}, err
-}
-
-// Add creates a new protoboard in the protoboardsStore.
-func (s *Protoboards) Add(ctx context.Context, protoboard cloudhub.Protoboard) (cloudhub.Protoboard, error) {
-	return cloudhub.Protoboard{}, fmt.Errorf("Add to multistore/protoboards not supported")
-}
-
-// Delete the protoboard from the store.
-func (s *Protoboards) Delete(ctx context.Context, protoboard cloudhub.Protoboard) error {
-	return fmt.Errorf("Delete to multistore/protoboards not supported")
-}
-
-// Update the protoboard in the store.
-func (s *Protoboards) Update(ctx context.Context, protoboard cloudhub.Protoboard) error {
-	return fmt.Errorf("Update to multistore/protoboards not supported")
 }

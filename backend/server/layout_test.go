@@ -37,7 +37,7 @@ func Test_Layouts(t *testing.T) {
 				Measurement: "influxdb",
 			},
 			[]cloudhub.Layout{
-				cloudhub.Layout{
+				{
 					ID:          "d20a21c8-69f1-4780-90fe-e69f5e4d138c",
 					Application: "influxdb",
 					Measurement: "influxdb",
@@ -54,12 +54,12 @@ func Test_Layouts(t *testing.T) {
 				Measurement: "influxdb",
 			},
 			[]cloudhub.Layout{
-				cloudhub.Layout{
+				{
 					ID:          "d20a21c8-69f1-4780-90fe-e69f5e4d138c",
 					Application: "influxdb",
 					Measurement: "influxdb",
 				},
-				cloudhub.Layout{
+				{
 					ID:          "b020101b-ea6b-4c8c-9f0e-db0ba501f4ef",
 					Application: "cloudhub",
 					Measurement: "cloudhub",
@@ -84,13 +84,13 @@ func Test_Layouts(t *testing.T) {
 						Name:       "A Graph",
 						CellColors: []cloudhub.CellColor{},
 						Axes: map[string]cloudhub.Axis{
-							"x": cloudhub.Axis{
+							"x": {
 								Bounds: []string{},
 							},
-							"y": cloudhub.Axis{
+							"y": {
 								Bounds: []string{},
 							},
-							"y2": cloudhub.Axis{
+							"y2": {
 								Bounds: []string{},
 							},
 						},
@@ -98,7 +98,7 @@ func Test_Layouts(t *testing.T) {
 				},
 			},
 			[]cloudhub.Layout{
-				cloudhub.Layout{
+				{
 					ID:          "d20a21c8-69f1-4780-90fe-e69f5e4d138c",
 					Application: "influxdb",
 					Measurement: "influxdb",

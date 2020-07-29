@@ -26,3 +26,8 @@ func (c ConfigStore) Update(ctx context.Context, config *cloudhub.Config) error 
 	c.Config = config
 	return nil
 }
+
+// All ...
+func (c ConfigStore) All(ctx context.Context) ([]cloudhub.Config, error) {
+	return c.All(ctx)
+}

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"path"
 	"strconv"
 	"strings"
@@ -29,7 +30,7 @@ type MuxOpts struct {
 	Auth          oauth2.Authenticator // Auth is used to authenticate and authorize
 	ProviderFuncs []func(func(oauth2.Provider, oauth2.Mux))
 	StatusFeedURL string            // JSON Feed URL for the client Status page News Feed
-	CustomLinks   map[string]string // Any custom external links for client's User menu
+	CustomLinks   []CustomLink		// Any custom external links for client's User menu
 	PprofEnabled  bool              // Mount pprof routes for profiling
 	DisableGZip   bool              // Optionally disable gzip.
 	AddonURLs     map[string]string // URLs for using in Addon Features, as passed in via CLI/ENV
@@ -148,6 +149,9 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	/* Documentation */
 	router.GET("/swagger.json", Spec())
 	router.GET("/docs", Redoc("/swagger.json"))
+
+	/* Health */
+	router.GET("/ping", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
 
 	/* API */
 	// Organizations
@@ -346,22 +350,6 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	router.GET("/cloudhub/v1/env", EnsureViewer(service.Environment))
 
-	/// V2 Cells
-	router.GET("/cloudhub/v2/cells", EnsureViewer(service.CellsV2))
-	router.POST("/cloudhub/v2/cells", EnsureEditor(service.NewCellV2))
-
-	router.GET("/cloudhub/v2/cells/:id", EnsureViewer(service.CellIDV2))
-	router.DELETE("/cloudhub/v2/cells/:id", EnsureEditor(service.RemoveCellV2))
-	router.PATCH("/cloudhub/v2/cells/:id", EnsureEditor(service.UpdateCellV2))
-
-	// V2 Dashboards
-	router.GET("/cloudhub/v2/dashboards", EnsureViewer(service.DashboardsV2))
-	router.POST("/cloudhub/v2/dashboards", EnsureEditor(service.NewDashboardV2))
-
-	router.GET("/cloudhub/v2/dashboards/:id", EnsureViewer(service.DashboardIDV2))
-	router.DELETE("/cloudhub/v2/dashboards/:id", EnsureEditor(service.RemoveDashboardV2))
-	router.PATCH("/cloudhub/v2/dashboards/:id", EnsureEditor(service.UpdateDashboardV2))
-
 	allRoutes := &AllRoutes{
 		Logger:      opts.Logger,
 		StatusFeed:  opts.StatusFeedURL,
@@ -387,7 +375,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 		allRoutes.LogoutLink = path.Join(opts.Basepath, "/oauth/logout")
 
 		// Create middleware that redirects to the appropriate provider logout
-		router.GET("/oauth/logout", Logout("/", opts.Basepath, allRoutes.AuthRoutes))
+		router.GET("/oauth/logout", logout("/", opts.Basepath, allRoutes.AuthRoutes))
 		out = Logger(opts.Logger, FlushingHandler(auth))
 	} else {
 		out = Logger(opts.Logger, FlushingHandler(router))
@@ -401,7 +389,7 @@ func AuthAPI(opts MuxOpts, router cloudhub.Router) (http.Handler, AuthRoutes) {
 	routes := AuthRoutes{}
 	for _, pf := range opts.ProviderFuncs {
 		pf(func(p oauth2.Provider, m oauth2.Mux) {
-			urlName := PathEscape(strings.ToLower(p.Name()))
+			urlName := url.PathEscape(strings.ToLower(p.Name()))
 
 			loginPath := path.Join("/oauth", urlName, "login")
 			logoutPath := path.Join("/oauth", urlName, "logout")
