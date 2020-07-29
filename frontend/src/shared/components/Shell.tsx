@@ -74,6 +74,7 @@ const Shell = (props: Props) => {
   const [pwd, setPwd] = useState(props.pwd ? props.pwd : '')
   const [port, setPort] = useState(props.port ? props.port : '22')
   const [isConn, setIsConn] = useState(props.isConn ? props.isConn : false)
+  const [getIP, setGetIP] = useState(null)
 
   const {data} = useQuery<Response, Variables>(
     GET_ROUTER_DEVICEINTERFACES_INFO,
@@ -231,6 +232,7 @@ const Shell = (props: Props) => {
 
         if (ipAddress.length > 0 && ipAddress[0].ipAddress) {
           setAddr(ipAddress[0].ipAddress)
+          setGetIP(ipAddress[0].ipAddress)
         }
       }
     }
@@ -267,6 +269,7 @@ const Shell = (props: Props) => {
             user={user}
             pwd={pwd}
             port={port}
+            getIP={getIP}
             isNewEditor={props.isNewEditor}
             handleOpenTerminal={handleOpenTerminal}
             handleChangeHost={handleChangeHost}

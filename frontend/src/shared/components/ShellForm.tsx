@@ -13,6 +13,7 @@ interface Props {
   user: string
   pwd: string
   port: string
+  getIP: string
   isNewEditor: boolean
   handleShellRemove: (nodename: ShellInfo['nodename']) => void
   handleShellUpdate: (shell: ShellInfo) => void
@@ -31,6 +32,7 @@ const ShellForm = (props: Props) => {
     user,
     pwd,
     port,
+    getIP,
     isNewEditor,
     handleOpenTerminal,
     handleChangeHost,
@@ -95,13 +97,28 @@ const ShellForm = (props: Props) => {
         </>
       </Form.Element>
       <Form.Element label="Address">
-        <Input
-          value={addr}
-          onChange={handleChangeAddress}
-          onKeyPress={onKeyPressEnter}
-          placeholder={'Connect Address'}
-          type={InputType.Text}
-        />
+        <>
+          <Input
+            value={addr}
+            onChange={handleChangeAddress}
+            onKeyPress={onKeyPressEnter}
+            placeholder={'Connect Address'}
+            type={InputType.Text}
+          />
+          {getIP ? (
+            <div className="alert alert-success">
+              <span className="icon checkmark" />
+              <div className="alert-message">
+                {((shells, host, ip): string => {
+                  const shell = _.find(shells, shell => shell.nodename === host)
+                  return `auto change IP Address ${
+                    shell ? shell.addr : ''
+                  } to ${ip} by Query`
+                })(shells, host, getIP)}
+              </div>
+            </div>
+          ) : null}
+        </>
       </Form.Element>
       <Form.Element label="ID">
         <Input
