@@ -2,7 +2,7 @@ import React, {SFC, ReactChildren} from 'react'
 
 import SideNav from 'src/side_nav'
 import Notifications from 'src/shared/components/Notifications'
-import ShellModal from 'src/shared/components/ShellModal'
+import ShellModaless from 'src/shared/components/ShellModaless'
 
 interface Props {
   children: ReactChildren
@@ -11,7 +11,7 @@ interface Props {
 const App: SFC<Props> = ({children}) => (
   <div className="cloudhub-root">
     <Notifications />
-    <ShellModal />
+    <ShellModaless />
     <SideNav />
     {children}
   </div>
