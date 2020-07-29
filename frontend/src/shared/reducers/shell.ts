@@ -1,26 +1,28 @@
 import _ from 'lodash'
 
 import {Action, ActionTypes} from 'src/shared/actions/shell'
-import {Shells, ShellInfo, ShellLoad} from 'src/types'
+import {Shells} from 'src/types'
 
 export const initialState: Shells = {
   isVisible: false,
   shells: [],
 }
 
+const nodenameChecker = (state: Shells, nodename: string) => {
+  const isNodeNameOverlap =
+    _.findIndex(state.shells, s => s.nodename === nodename) < 0
+
+  return isNodeNameOverlap
+}
+
 const shell = (state: Shells = initialState, action: Action): Shells => {
   switch (action.type) {
-    // open
     case ActionTypes.ShellOpen: {
       const {payload} = action
-
       if (payload) {
-        const isCheckNodeName = _.findIndex(
-          state.shells,
-          (s: ShellLoad['shell']) => s.nodename === payload.nodename
-        )
+        const isCheckNodeName = nodenameChecker(state, payload.nodename)
 
-        if (isCheckNodeName < 0) {
+        if (isCheckNodeName) {
           return {
             ...state,
             isVisible: true,
@@ -32,33 +34,26 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
             isVisible: true,
           }
         }
-      } else {
-        return {
-          ...state,
-          isVisible: true,
-        }
+      }
+
+      return {
+        ...state,
+        isVisible: true,
       }
     }
 
-    // close
     case ActionTypes.ShellClose: {
       return {
         ...state,
         isVisible: false,
       }
     }
-    // add logic
+
     case ActionTypes.ShellAdd: {
-      const {isNewEditor, nodename}: ShellInfo = action.payload
+      const {isNewEditor, nodename} = action.payload
+      const isCheckNodeName = nodenameChecker(state, nodename)
 
-      const isCheckNodeName = _.findIndex(
-        state.shells,
-        (s: ShellLoad['shell']) => s.nodename === nodename
-      )
-
-      console.log(isNewEditor && !isCheckNodeName, {isCheckNodeName})
-
-      if (isNewEditor && isCheckNodeName < 0) {
+      if (isNewEditor && isCheckNodeName) {
         return {
           ...state,
           shells: [...state.shells, {isNewEditor: true, nodename}],
@@ -73,24 +68,22 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
 
     // updatel log
     case ActionTypes.ShellUpdate: {
-      const {payload} = action
-      const isCheckNodeName =
-        _.findIndex(state.shells, s => s.nodename === payload.nodename) < 0
+      const {isNewEditor, nodename} = action.payload
+      const isCheckNodeName = nodenameChecker(state, nodename)
 
-      if (
-        payload.isNewEditor &&
-        payload.nodename !== 'New' &&
-        isCheckNodeName
-      ) {
+      if (isNewEditor && nodename !== 'New' && isCheckNodeName) {
         const index = _.findIndex(state.shells, s => s.isNewEditor === true)
-        Object.assign(state.shells[index], {...payload, isNewEditor: false})
+        Object.assign(state.shells[index], {
+          ...action.payload,
+          isNewEditor: false,
+        })
 
         return {
           ...state,
           shells: [...state.shells],
         }
       } else {
-        if (payload.nodename !== 'New' && isCheckNodeName) {
+        if (nodename !== 'New' && isCheckNodeName) {
           return {
             ...state,
             shells: [...state.shells],
