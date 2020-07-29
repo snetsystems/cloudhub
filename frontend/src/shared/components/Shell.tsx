@@ -24,6 +24,7 @@ export interface ShellProps {
   port?: string
   isConn?: boolean
   isNewEditor?: boolean
+  isExistInLinks?: boolean
   handleShellUpdate: (shell: ShellInfo) => void
   handleShellRemove: (nodename: ShellInfo['nodename']) => void
 }
@@ -68,16 +69,24 @@ const Shell = (props: Props) => {
   const [isConn, setIsConn] = useState(props.isConn ? props.isConn : false)
   const [getIP, setGetIP] = useState(null)
 
-  const {data} = useQuery<Response, Variables>(
-    GET_ROUTER_DEVICEINTERFACES_INFO,
-    {
-      variables: {
-        name: props.nodename ? props.nodename : '',
-      },
-      errorPolicy: 'all',
-      pollInterval: 10000,
+  const isUsing128T = props.isExistInLinks
+  const getData = (isUsing128T: boolean) => {
+    if (isUsing128T) {
+      const {data} = useQuery<Response, Variables>(
+        GET_ROUTER_DEVICEINTERFACES_INFO,
+        {
+          variables: {
+            name: props.nodename ? props.nodename : '',
+          },
+          errorPolicy: 'all',
+          pollInterval: 10000,
+        }
+      )
+
+      return data
     }
-  )
+  }
+  let data = getData(isUsing128T)
 
   const handleChangeHost = (e: ChangeEvent<HTMLInputElement>): void => {
     setHost(e.target.value)

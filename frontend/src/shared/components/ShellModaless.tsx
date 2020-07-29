@@ -39,6 +39,16 @@ class ShellModaless extends PureComponent<Props> {
     super(props)
   }
 
+  private isExistInLinks = (name: string): boolean => {
+    const {links} = this.props
+    return links.addons &&
+      links.addons.findIndex(item => {
+        return item.name === name
+      }) !== -1
+      ? true
+      : false
+  }
+
   private get client() {
     const addon = this.props.links.addons.find(addon => {
       return addon.name === AddonType.router128T
@@ -135,6 +145,9 @@ class ShellModaless extends PureComponent<Props> {
                     <TabPanel key={index}>
                       <ApolloProvider client={this.client}>
                         <Shell
+                          isExistInLinks={this.isExistInLinks(
+                            AddonType.router128T
+                          )}
                           isNewEditor={shell.isNewEditor}
                           handleShellUpdate={this.props.updateShell}
                           handleShellRemove={this.props.removeShell}
