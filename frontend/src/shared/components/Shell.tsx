@@ -24,6 +24,7 @@ export interface ShellProps {
   isConn?: boolean
   isNewEditor?: boolean
   handleShellUpdate: (shell: ShellInfo) => void
+  handleShellRemove: (nodename: ShellInfo['nodename']) => void
 }
 
 interface Node {
@@ -83,8 +84,6 @@ const Shell = (props: Props) => {
       pollInterval: 10000,
     }
   )
-
-  console.log({...props})
 
   const handleChangeHost = (e: ChangeEvent<HTMLInputElement>): void => {
     setHost(e.target.value)
@@ -239,10 +238,10 @@ const Shell = (props: Props) => {
   useEffect(() => {
     return () => {
       setIsConn(false)
-      // if (socket) {
-      //   socket.close()
-      //   socket = null
-      // }
+      if (socket) {
+        socket.close()
+        socket = null
+      }
 
       if (term) {
         term.dispose()
@@ -270,6 +269,7 @@ const Shell = (props: Props) => {
             handleChangePassword={handleChangePassword}
             handleChangePort={handleChangePort}
             handleShellUpdate={props.handleShellUpdate}
+            handleShellRemove={props.handleShellRemove}
           />
         </div>
       )}

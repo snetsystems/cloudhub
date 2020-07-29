@@ -13,6 +13,7 @@ interface Props {
   pwd: string
   port: string
   isNewEditor: boolean
+  handleShellRemove: (nodename: ShellInfo['nodename']) => void
   handleShellUpdate: (shell: ShellInfo) => void
   handleChangeHost: (e: ChangeEvent<HTMLInputElement>) => void
   handleChangeAddress: (e: ChangeEvent<HTMLInputElement>) => void
@@ -105,8 +106,9 @@ const ShellForm = (props: Props) => {
         <Button
           color={ComponentColor.Default}
           text={`Remove`}
-          onClick={() => {
-            console.log('remove')
+          onClick={e => {
+            e.stopPropagation()
+            props.handleShellRemove(host)
           }}
         />
         {isNewEditor ? (
