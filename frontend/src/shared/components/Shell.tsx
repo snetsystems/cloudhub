@@ -128,6 +128,14 @@ const Shell = (props: Props) => {
     socket.onopen = function() {
       setIsConn(true)
 
+      const shellInfo: ShellInfo = {
+        addr: addr,
+        nodename: host,
+        socket: this,
+        termRef: termRef,
+      }
+      props.handleShellUpdate(shellInfo)
+
       term = new Terminal({
         screenReaderMode: true,
         cursorBlink: true,
