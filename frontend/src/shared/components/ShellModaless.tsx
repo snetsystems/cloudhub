@@ -143,26 +143,25 @@ class ShellModaless extends PureComponent<Props> {
                   </li>
                 </TabList>
 
-                {shells.map((shell, index) => {
-                  return (
-                    <TabPanel key={index}>
-                      <ApolloProvider client={this.client}>
-                        <Shell
-                          isExistInLinks={this.isExistInLinks(
-                            AddonType.router128T
-                          )}
-                          isNewEditor={shell.isNewEditor}
-                          handleShellUpdate={this.props.updateShell}
-                          handleShellRemove={this.props.removeShell}
-                          shells={shells}
-                          nodename={shell.nodename}
-                          addr={shell.addr}
-                          notify={notify}
-                        />
-                      </ApolloProvider>
-                    </TabPanel>
-                  )
-                })}
+                {shells.map((shell, index) => (
+                  <TabPanel key={shell.nodename}>
+                    <ApolloProvider client={this.client}>
+                      <Shell
+                        key={index}
+                        isExistInLinks={this.isExistInLinks(
+                          AddonType.router128T
+                        )}
+                        isNewEditor={shell.isNewEditor}
+                        handleShellUpdate={this.props.updateShell}
+                        handleShellRemove={this.props.removeShell}
+                        shells={shells}
+                        nodename={shell.nodename}
+                        addr={shell.addr}
+                        notify={notify}
+                      />
+                    </ApolloProvider>
+                  </TabPanel>
+                ))}
               </Tabs>
             </div>
           </div>

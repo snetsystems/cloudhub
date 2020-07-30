@@ -19,9 +19,6 @@ export interface ShellProps {
   nodename?: string
   host?: string
   addr?: string
-  user?: string
-  pwd?: string
-  port?: string
   isConn?: boolean
   isNewEditor?: boolean
   isExistInLinks?: boolean
@@ -56,16 +53,16 @@ interface Variables {
 
 type Props = DefaultProps & ShellProps
 
-const Shell = (props: Props) => {
+function Shell(props: Props) {
   let socket: WebSocket = null
   let term: Terminal = null
   let termRef = useRef<HTMLDivElement>()
 
   const [host, setHost] = useState(props.nodename ? props.nodename : '')
   const [addr, setAddr] = useState(props.addr ? props.addr : '')
-  const [user, setUser] = useState(props.user ? props.user : '')
-  const [pwd, setPwd] = useState(props.pwd ? props.pwd : '')
-  const [port, setPort] = useState(props.port ? props.port : '22')
+  const [user, setUser] = useState('')
+  const [pwd, setPwd] = useState('')
+  const [port, setPort] = useState('22')
   const [isConn, setIsConn] = useState(props.isConn ? props.isConn : false)
   const [getIP, setGetIP] = useState(null)
 
@@ -261,7 +258,7 @@ const Shell = (props: Props) => {
   }, [])
 
   return (
-    <div id="terminalContainer">
+    <div className={`terminal-container`}>
       {isConn ? (
         <div id="terminal" ref={termRef}></div>
       ) : (
