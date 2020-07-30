@@ -58,7 +58,7 @@ const GraphqlProvider: SFC<Props> = (props: Props) => {
   })
 
   const httpLink = createHttpLink({
-    uri: addon.url,
+    uri: addon ? addon.url : '',
   })
 
   const authLink = setContext((_, {headers}) => {
