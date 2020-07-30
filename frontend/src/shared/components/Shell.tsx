@@ -53,7 +53,7 @@ interface Variables {
 
 type Props = DefaultProps & ShellProps
 
-function Shell(props: Props) {
+const Shell = (props: Props) => {
   let socket: WebSocket = null
   let term: Terminal = null
   let termRef = useRef<HTMLDivElement>()

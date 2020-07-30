@@ -111,9 +111,9 @@ class ShellModaless extends PureComponent<Props> {
             <div className={`container-fluid`}>
               <Tabs forceRenderTabPanel={true}>
                 <TabList>
-                  {shells.map((shell, index) => {
+                  {shells.map(shell => {
                     return (
-                      <Tab key={index}>
+                      <Tab key={shell.nodename}>
                         <span
                           className="text-ellipsis"
                           style={{marginRight: '10px'}}
@@ -143,11 +143,10 @@ class ShellModaless extends PureComponent<Props> {
                   </li>
                 </TabList>
 
-                {shells.map((shell, index) => (
+                {shells.map(shell => (
                   <TabPanel key={shell.nodename}>
                     <ApolloProvider client={this.client}>
                       <Shell
-                        key={index}
                         isExistInLinks={this.isExistInLinks(
                           AddonType.router128T
                         )}
