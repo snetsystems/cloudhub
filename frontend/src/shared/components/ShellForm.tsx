@@ -109,12 +109,7 @@ const ShellForm = (props: Props) => {
             <div className="alert alert-success">
               <span className="icon checkmark" />
               <div className="alert-message">
-                {((shells, host, ip): string => {
-                  const shell = _.find(shells, shell => shell.nodename === host)
-                  return `auto change IP Address ${
-                    shell ? shell.addr : ''
-                  } to ${ip} by Query`
-                })(shells, host, getIP)}
+                Auto changed to the WAN IP used
               </div>
             </div>
           ) : null}
