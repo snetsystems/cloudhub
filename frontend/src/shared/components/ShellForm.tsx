@@ -76,7 +76,7 @@ const ShellForm = (props: Props) => {
 
   return (
     <Form>
-      <Form.Element label="Host">
+      <Form.Element label="SESSION NAME">
         <>
           <Input
             value={host}
@@ -96,7 +96,7 @@ const ShellForm = (props: Props) => {
           ) : null}
         </>
       </Form.Element>
-      <Form.Element label="Address">
+      <Form.Element label="ADDRESS">
         <>
           <Input
             value={addr}
