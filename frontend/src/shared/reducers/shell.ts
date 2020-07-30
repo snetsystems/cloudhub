@@ -89,12 +89,28 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
             shells: [...state.shells],
           }
         }
+
+        const index = _.findIndex(state.shells, s => s.nodename === nodename)
+        Object.assign(state.shells[index], {
+          ...action.payload,
+          isNewEditor: false,
+        })
+
         return state
       }
     }
 
     // remove logic test
     case ActionTypes.ShellRemove: {
+      const index = _.findIndex(
+        state.shells,
+        s => s.nodename === action.payload
+      )
+      const currentSocket = state.shells[index].socket
+      if (currentSocket) {
+        currentSocket.close()
+      }
+
       const copyCells = Object.values(Object.assign({}, state.shells))
       _.remove(copyCells, cell => cell.nodename === action.payload)
 

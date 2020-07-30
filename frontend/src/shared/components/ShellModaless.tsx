@@ -53,8 +53,9 @@ class ShellModaless extends PureComponent<Props> {
     const addon = this.props.links.addons.find(addon => {
       return addon.name === AddonType.router128T
     })
+
     const httpLink = createHttpLink({
-      uri: addon.url,
+      uri: addon ? addon.url : '',
     })
 
     const authLink = setContext((_, {headers}) => {

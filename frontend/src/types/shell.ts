@@ -2,6 +2,8 @@ export interface ShellInfo {
   isNewEditor?: boolean
   addr?: string
   nodename?: string
+  socket?: any
+  termRef?: object
 }
 
 export interface ShellLoad {
