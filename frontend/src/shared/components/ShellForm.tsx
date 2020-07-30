@@ -1,4 +1,4 @@
-import React, {ChangeEvent, KeyboardEvent} from 'react'
+import React, {ChangeEvent, KeyboardEvent, MouseEvent} from 'react'
 import _ from 'lodash'
 // Components
 import {Form, Button, ComponentColor, Input, InputType} from 'src/reusable_ui'
@@ -74,6 +74,10 @@ const ShellForm = (props: Props) => {
     }
   }
 
+  const handleMouseDown = (e: MouseEvent<HTMLInputElement>): void => {
+    e.stopPropagation()
+  }
+
   return (
     <Form>
       <Form.Element label="SESSION NAME">
@@ -87,6 +91,7 @@ const ShellForm = (props: Props) => {
             status={
               isNewEditor ? ComponentStatus.Default : ComponentStatus.Disabled
             }
+            onMouseDown={handleMouseDown}
           />
           {isNewEditor && !nodenameChecker(shells, host) ? (
             <div className="alert alert-error">
@@ -104,6 +109,7 @@ const ShellForm = (props: Props) => {
             onKeyPress={onKeyPressEnter}
             placeholder={'Connect Address'}
             type={InputType.Text}
+            onMouseDown={handleMouseDown}
           />
           {getIP ? (
             <div className="alert alert-success">
@@ -122,6 +128,7 @@ const ShellForm = (props: Props) => {
           onKeyPress={onKeyPressEnter}
           placeholder={'Connect ID'}
           type={InputType.Text}
+          onMouseDown={handleMouseDown}
         />
       </Form.Element>
       <Form.Element label="PASSWORD">
@@ -131,6 +138,7 @@ const ShellForm = (props: Props) => {
           onKeyPress={onKeyPressEnter}
           placeholder={'Connect Password'}
           type={InputType.Password}
+          onMouseDown={handleMouseDown}
         />
       </Form.Element>
       <Form.Element label="PORT">
@@ -140,6 +148,7 @@ const ShellForm = (props: Props) => {
           onKeyPress={onKeyPressEnter}
           placeholder={'Connect Port'}
           type={InputType.Text}
+          onMouseDown={handleMouseDown}
         />
       </Form.Element>
       <Form.Footer>
