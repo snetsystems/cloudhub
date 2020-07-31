@@ -105,7 +105,14 @@ const ShellForm = (props: Props) => {
         <>
           <Input
             value={addr}
-            onChange={handleChangeAddress}
+            onChange={
+              isNewEditor
+                ? e => {
+                    handleChangeAddress(e)
+                    handleChangeHost(e)
+                  }
+                : handleChangeAddress
+            }
             onKeyPress={onKeyPressEnter}
             placeholder={'Connect Address'}
             type={InputType.Text}
@@ -165,7 +172,7 @@ const ShellForm = (props: Props) => {
             color={ComponentColor.Primary}
             text={`Add Config`}
             onClick={() => {
-              props.handleShellUpdate({isNewEditor, nodename: host})
+              props.handleShellUpdate({isNewEditor, nodename: host, addr: addr})
             }}
             status={btnControl()}
           />
