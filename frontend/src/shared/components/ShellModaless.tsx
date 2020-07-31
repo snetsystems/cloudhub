@@ -105,7 +105,7 @@ class ShellModaless extends PureComponent<Props> {
                 </div>
                 <div className={`page-header--right`}>
                   <button
-                    className={`button button-sm button-default button-square icon remove`}
+                    className={`button button-sm button-default button-square icon minimize`}
                     onClick={this.props.closeShell}
                   />
                 </div>
