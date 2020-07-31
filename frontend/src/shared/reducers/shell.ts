@@ -93,7 +93,7 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
           }
         }
 
-        const index = _.findIndex(state.shells, s => s.nodename === nodename)
+        const index = nodenameIndex(state, nodename)
         Object.assign(state.shells[index], {
           ...action.payload,
           isNewEditor: false,
@@ -105,10 +105,7 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
 
     // remove logic test
     case ActionTypes.ShellRemove: {
-      const index = _.findIndex(
-        state.shells,
-        s => s.nodename === action.payload
-      )
+      const index = nodenameIndex(state, action.payload)
       const currentSocket = state.shells[index].socket
       if (currentSocket) {
         currentSocket.close()
