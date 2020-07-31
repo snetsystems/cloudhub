@@ -1,4 +1,10 @@
-import React, {useState, useRef, useEffect, ChangeEvent} from 'react'
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  ChangeEvent,
+  MouseEvent,
+} from 'react'
 import {useQuery} from '@apollo/react-hooks'
 import {Terminal} from 'xterm'
 import {FitAddon} from 'xterm-addon-fit'
@@ -260,7 +266,11 @@ const Shell = (props: Props) => {
   return (
     <div className={`terminal-container`}>
       {isConn ? (
-        <div id="terminal" ref={termRef}></div>
+        <div
+          id={`terminal-${host}`}
+          ref={termRef}
+          onMouseDown={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
+        ></div>
       ) : (
         <div>
           <ShellForm
