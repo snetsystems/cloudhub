@@ -337,4 +337,8 @@
   &.bash:before {
     content: '\e963';
   }
+
+  &.minimize:before {
+    content: '\e964';
+  }
 }
