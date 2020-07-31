@@ -16,6 +16,7 @@ import {
   removeShell,
   addShell,
   updateShell,
+  indexShell,
 } from 'src/shared/actions/shell'
 
 import Shell from 'src/shared/components/Shell'
@@ -27,12 +28,14 @@ import {Links, ShellInfo} from 'src/types'
 interface Props {
   isVisible: boolean
   shells: ShellInfo[]
+  tabIndex: number
   headingTitle: string
   links: Links
   closeShell: () => void
   removeShell: (nodeName: string) => void
   addShell: (shell: ShellInfo) => void
   updateShell: (shell: ShellInfo) => void
+  indexShell: (tabIndex: number) => void
   notify?: (message: Notification) => void
 }
 
@@ -79,7 +82,7 @@ class ShellModaless extends PureComponent<Props> {
   }
 
   render() {
-    const {isVisible, shells, notify} = this.props
+    const {isVisible, shells, notify, tabIndex, indexShell} = this.props
     return (
       <div
         className={`shell-container`}
@@ -109,7 +112,11 @@ class ShellModaless extends PureComponent<Props> {
               </div>
             </div>
             <div className={`container-fluid`}>
-              <Tabs forceRenderTabPanel={true}>
+              <Tabs
+                forceRenderTabPanel={true}
+                onSelect={(tabIndex: number) => indexShell(tabIndex)}
+                selectedIndex={tabIndex}
+              >
                 <TabList>
                   {shells.map(shell => {
                     return (
@@ -142,7 +149,6 @@ class ShellModaless extends PureComponent<Props> {
                     <span className={`icon plus`} />
                   </li>
                 </TabList>
-
                 {shells.map(shell => (
                   <TabPanel key={shell.nodename}>
                     <ApolloProvider client={this.client}>
@@ -170,9 +176,14 @@ class ShellModaless extends PureComponent<Props> {
   }
 }
 
-const mapStateToProps = ({shell: {isVisible, shells}, sources, links}) => ({
+const mapStateToProps = ({
+  shell: {isVisible, tabIndex, shells},
+  sources,
+  links,
+}) => ({
   isVisible,
   shells,
+  tabIndex,
   sources,
   links,
 })
@@ -182,6 +193,7 @@ const mapDispatchToProps = {
   closeShell: closeShell,
   removeShell: removeShell,
   updateShell: updateShell,
+  indexShell: indexShell,
   notify: notifyAction,
 }
 
