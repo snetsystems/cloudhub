@@ -69,7 +69,6 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
       }
     }
 
-    // updatel log
     case ActionTypes.ShellUpdate: {
       const {isNewEditor, nodename} = action.payload
       const isCheckNodeName = nodenameChecker(state, nodename)
@@ -103,7 +102,6 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
       }
     }
 
-    // remove logic test
     case ActionTypes.ShellRemove: {
       const index = nodenameIndex(state, action.payload)
       const currentSocket = state.shells[index].socket
@@ -111,12 +109,15 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
         currentSocket.close()
       }
 
+      const dummyShellIndex = state.shells.length - 2
+      const nodeIndex = dummyShellIndex > index ? index : dummyShellIndex
+
       const copyCells = Object.values(Object.assign({}, state.shells))
       _.remove(copyCells, cell => cell.nodename === action.payload)
 
       return {
         ...state,
-        tabIndex: index > 0 ? index - 1 : 0,
+        tabIndex: nodeIndex,
         shells: [...copyCells],
       }
     }
