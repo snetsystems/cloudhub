@@ -15,6 +15,9 @@ const nodenameIndex = (state: Shells, nodename: string): number =>
 const nodenameChecker = (state: Shells, nodename: string) =>
   nodenameIndex(state, nodename) < 0
 
+const getTabkey = (min: number, max: number) =>
+  Math.floor(Math.random() * (max - min)) + min
+
 const shell = (state: Shells = initialState, action: Action): Shells => {
   switch (action.type) {
     case ActionTypes.ShellOpen: {
@@ -23,11 +26,12 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
         const isCheckNodeName = nodenameChecker(state, payload.nodename)
 
         if (isCheckNodeName) {
+          const tabkey = getTabkey(1, 99999)
           return {
             ...state,
             tabIndex: state.shells.length,
             isVisible: true,
-            shells: [...state.shells, payload],
+            shells: [...state.shells, Object.assign(payload, {tabkey})],
           }
         } else {
           return {
@@ -56,10 +60,11 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
       const isCheckNodeName = nodenameChecker(state, nodename)
 
       if (isNewEditor && isCheckNodeName) {
+        const tabkey = getTabkey(1, 99999)
         return {
           ...state,
           tabIndex: state.shells.length,
-          shells: [...state.shells, {isNewEditor: true, nodename}],
+          shells: [...state.shells, {isNewEditor: true, nodename, tabkey}],
         }
       }
 
@@ -70,36 +75,20 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
     }
 
     case ActionTypes.ShellUpdate: {
-      const {isNewEditor, nodename} = action.payload
+      const payload = action.payload
+      let nodename = payload.nodename
       const isCheckNodeName = nodenameChecker(state, nodename)
 
-      if (isNewEditor && nodename !== 'New' && isCheckNodeName) {
-        const index = _.findIndex(state.shells, s => s.isNewEditor === true)
-        Object.assign(state.shells[index], {
-          ...action.payload,
-          isNewEditor: false,
-        })
-
-        return {
-          ...state,
-          shells: [...state.shells],
-        }
-      } else {
-        if (nodename !== 'New' && isCheckNodeName) {
-          return {
-            ...state,
-            shells: [...state.shells],
-          }
-        }
-
-        const index = nodenameIndex(state, nodename)
-        Object.assign(state.shells[index], {
-          ...action.payload,
-          isNewEditor: false,
-        })
-
-        return state
+      if (isCheckNodeName) {
+        nodename = action.payload.preNodename
       }
+      const index = nodenameIndex(state, nodename)
+      Object.assign(state.shells[index], {
+        ...action.payload,
+        isNewEditor: true,
+      })
+
+      return state
     }
 
     case ActionTypes.ShellRemove: {

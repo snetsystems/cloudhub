@@ -22,8 +22,10 @@ export interface ShellProps {
   isConn?: boolean
   isNewEditor?: boolean
   isExistInLinks?: boolean
+  tabkey?: number
   handleShellUpdate: (shell: ShellInfo) => void
   handleShellRemove: (nodename: ShellInfo['nodename']) => void
+  onTabNameRefresh: () => void
 }
 
 interface NetworkInterfaces {
@@ -58,6 +60,7 @@ const Shell = (props: Props) => {
   let term: Terminal = null
   let termRef = useRef<HTMLDivElement>()
 
+  const [preHost, setPreHost] = useState(props.nodename ? props.nodename : '')
   const [host, setHost] = useState(props.nodename ? props.nodename : '')
   const [addr, setAddr] = useState(props.addr ? props.addr : '')
   const [user, setUser] = useState('')
@@ -86,6 +89,9 @@ const Shell = (props: Props) => {
   let data = getData(isUsing128T)
 
   const handleChangeHost = (e: ChangeEvent<HTMLInputElement>): void => {
+    if (!preHost) {
+      setPreHost(host)
+    }
     setHost(e.target.value)
   }
 
@@ -105,7 +111,7 @@ const Shell = (props: Props) => {
     setPort(e.target.value)
   }
 
-  const handleOpenTerminal = () => {
+  const handleOpenTerminal = newTabshell => {
     const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://'
 
     const urlParam =
@@ -124,14 +130,6 @@ const Shell = (props: Props) => {
 
     socket.onopen = function() {
       setIsConn(true)
-
-      const shellInfo: ShellInfo = {
-        addr: addr,
-        nodename: host,
-        socket: this,
-        termRef: termRef,
-      }
-      props.handleShellUpdate(shellInfo)
 
       term = new Terminal({
         screenReaderMode: true,
@@ -166,6 +164,23 @@ const Shell = (props: Props) => {
 
       term.open(termRef.current)
       term.loadAddon(fitAddon)
+
+      let shellInfo: ShellInfo
+      if (newTabshell) {
+        shellInfo = Object.assign(newTabshell, {
+          socket: this,
+          preNodename: preHost,
+        })
+      } else {
+        shellInfo = {
+          addr: addr,
+          nodename: host,
+          preNodename: preHost,
+          socket: this,
+        }
+      }
+      props.handleShellUpdate(shellInfo)
+      props.onTabNameRefresh()
 
       socket.onmessage = function(evt) {
         if (evt.data instanceof ArrayBuffer) {
@@ -271,6 +286,7 @@ const Shell = (props: Props) => {
             pwd={pwd}
             port={port}
             getIP={getIP}
+            tabkey={props.tabkey}
             isNewEditor={props.isNewEditor}
             handleOpenTerminal={handleOpenTerminal}
             handleChangeHost={handleChangeHost}
