@@ -13,5 +13,6 @@ export interface ShellLoad {
 
 export interface Shells {
   isVisible?: boolean
+  tabIndex?: number
   shells: ShellInfo[]
 }

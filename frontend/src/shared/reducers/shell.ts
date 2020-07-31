@@ -5,15 +5,15 @@ import {Shells} from 'src/types'
 
 export const initialState: Shells = {
   isVisible: false,
+  tabIndex: 0,
   shells: [],
 }
 
-const nodenameChecker = (state: Shells, nodename: string) => {
-  const isNodeNameOverlap =
-    _.findIndex(state.shells, s => s.nodename === nodename) < 0
+const nodenameIndex = (state: Shells, nodename: string): number =>
+  _.findIndex(state.shells, s => s.nodename === nodename)
 
-  return isNodeNameOverlap
-}
+const nodenameChecker = (state: Shells, nodename: string) =>
+  nodenameIndex(state, nodename) < 0
 
 const shell = (state: Shells = initialState, action: Action): Shells => {
   switch (action.type) {
@@ -25,12 +25,14 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
         if (isCheckNodeName) {
           return {
             ...state,
+            tabIndex: state.shells.length,
             isVisible: true,
             shells: [...state.shells, payload],
           }
         } else {
           return {
             ...state,
+            tabIndex: nodenameIndex(state, payload.nodename),
             isVisible: true,
           }
         }
@@ -56,6 +58,7 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
       if (isNewEditor && isCheckNodeName) {
         return {
           ...state,
+          tabIndex: state.shells.length,
           shells: [...state.shells, {isNewEditor: true, nodename}],
         }
       }
@@ -116,7 +119,15 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
 
       return {
         ...state,
+        tabIndex: index > 0 ? index - 1 : 0,
         shells: [...copyCells],
+      }
+    }
+
+    case ActionTypes.ShellIndex: {
+      return {
+        ...state,
+        tabIndex: action.payload,
       }
     }
 

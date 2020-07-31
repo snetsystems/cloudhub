@@ -1,4 +1,4 @@
-import {ShellInfo} from 'src/types'
+import {Shells, ShellInfo} from 'src/types'
 
 export type Action =
   | ShellOpenAction
@@ -6,6 +6,7 @@ export type Action =
   | ShellAddAction
   | ShellRemoveAction
   | ShellUpdateAction
+  | ShellIndexAction
 
 export enum ActionTypes {
   ShellOpen = 'SHELL_OPEN',
@@ -13,6 +14,7 @@ export enum ActionTypes {
   ShellAdd = 'SHELL_ADD',
   ShellRemove = 'SHELL_REMOVE',
   ShellUpdate = 'SHELL_UPDATE',
+  ShellIndex = 'SHELL_INDEX',
 }
 
 interface ShellOpenAction {
@@ -63,4 +65,14 @@ interface ShellUpdateAction {
 export const updateShell = (shell: ShellInfo): ShellUpdateAction => ({
   type: ActionTypes.ShellUpdate,
   payload: shell,
+})
+
+interface ShellIndexAction {
+  type: ActionTypes.ShellIndex
+  payload: Shells['tabIndex']
+}
+
+export const indexShell = (tabIndex: Shells['tabIndex']): ShellIndexAction => ({
+  type: ActionTypes.ShellIndex,
+  payload: tabIndex,
 })
