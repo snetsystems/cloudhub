@@ -39,9 +39,21 @@ interface Props {
   notify?: (message: Notification) => void
 }
 
-class ShellModaless extends PureComponent<Props> {
+interface State {
+  tabCount: number
+  onTabNameRefreshFlag: boolean
+}
+
+var _self
+class ShellModaless extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
+
+    this.state = {
+      tabCount: 0,
+      onTabNameRefreshFlag: false,
+    }
+    _self = this
   }
 
   private isExistInLinks = (name: string): boolean => {
@@ -52,6 +64,21 @@ class ShellModaless extends PureComponent<Props> {
       }) !== -1
       ? true
       : false
+  }
+
+  private onAddTabClick() {
+    const {tabCount} = this.state
+    this.props.addShell({
+      isNewEditor: true,
+      nodename: 'UnTitle_' + tabCount,
+    })
+    this.setState(prevState => ({tabCount: prevState.tabCount + 1}))
+  }
+
+  private onTabNameRefresh() {
+    _self.setState(prevState => ({
+      onTabNameRefreshFlag: !prevState.onTabNameRefreshFlag,
+    }))
   }
 
   private get client() {
@@ -120,7 +147,7 @@ class ShellModaless extends PureComponent<Props> {
                 <TabList>
                   {shells.map(shell => {
                     return (
-                      <Tab key={shell.nodename}>
+                      <Tab key={shell.tabkey}>
                         <span
                           className="text-ellipsis"
                           style={{marginRight: '10px'}}
@@ -139,18 +166,13 @@ class ShellModaless extends PureComponent<Props> {
                   })}
                   <li
                     className={`react-tabs__tab`}
-                    onClick={() => {
-                      this.props.addShell({
-                        isNewEditor: true,
-                        nodename: 'New',
-                      })
-                    }}
+                    onClick={() => this.onAddTabClick()}
                   >
                     <span className={`icon plus`} />
                   </li>
                 </TabList>
                 {shells.map(shell => (
-                  <TabPanel key={shell.nodename}>
+                  <TabPanel key={shell.tabkey}>
                     <ApolloProvider client={this.client}>
                       <Shell
                         isExistInLinks={this.isExistInLinks(
@@ -159,9 +181,11 @@ class ShellModaless extends PureComponent<Props> {
                         isNewEditor={shell.isNewEditor}
                         handleShellUpdate={this.props.updateShell}
                         handleShellRemove={this.props.removeShell}
+                        onTabNameRefresh={this.onTabNameRefresh}
                         shells={shells}
                         nodename={shell.nodename}
                         addr={shell.addr}
+                        tabkey={shell.tabkey}
                         notify={notify}
                       />
                     </ApolloProvider>

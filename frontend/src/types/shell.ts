@@ -1,9 +1,11 @@
 export interface ShellInfo {
   isNewEditor?: boolean
+  isConn?: boolean
   addr?: string
   nodename?: string
+  preNodename?: string
+  tabkey?: number
   socket?: any
-  termRef?: object
 }
 
 export interface ShellLoad {

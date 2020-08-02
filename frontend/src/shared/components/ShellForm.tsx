@@ -14,6 +14,7 @@ interface Props {
   pwd: string
   port: string
   getIP: string
+  tabkey: number
   isNewEditor: boolean
   handleShellRemove: (nodename: ShellInfo['nodename']) => void
   handleShellUpdate: (shell: ShellInfo) => void
@@ -22,7 +23,7 @@ interface Props {
   handleChangeID: (e: ChangeEvent<HTMLInputElement>) => void
   handleChangePassword: (e: ChangeEvent<HTMLInputElement>) => void
   handleChangePort: (e: ChangeEvent<HTMLInputElement>) => void
-  handleOpenTerminal: () => void
+  handleOpenTerminal: (shell: any) => void
 }
 const ShellForm = (props: Props) => {
   const {
@@ -33,6 +34,7 @@ const ShellForm = (props: Props) => {
     pwd,
     port,
     getIP,
+    tabkey,
     isNewEditor,
     handleOpenTerminal,
     handleChangeHost,
@@ -52,26 +54,23 @@ const ShellForm = (props: Props) => {
       event.key === enterKey
     ) {
       if (!props.isNewEditor && host && addr && user && pwd && port) {
-        handleOpenTerminal()
+        handleOpenTerminal(null)
       }
     }
   }
 
-  const nodenameChecker = (shells: ShellInfo[], nodename: string) => {
+  const nodenameChecker = (
+    shells: ShellInfo[],
+    nodename: string,
+    tabkey: number
+  ) => {
     const isNodeNameOverlap =
-      _.findIndex(shells, shell => shell.nodename === nodename) < 0
+      _.findIndex(
+        shells,
+        shell => shell.nodename === nodename && shell.tabkey !== tabkey
+      ) < 0
 
     return isNodeNameOverlap
-  }
-
-  const btnControl = () => {
-    const check = isNewEditor && !nodenameChecker(shells, host)
-
-    if (!host || check) {
-      return ComponentStatus.Disabled
-    } else {
-      return ComponentStatus.Default
-    }
   }
 
   const handleMouseDown = (e: MouseEvent<HTMLInputElement>): void => {
@@ -80,27 +79,6 @@ const ShellForm = (props: Props) => {
 
   return (
     <Form>
-      <Form.Element label="SESSION NAME">
-        <>
-          <Input
-            value={host}
-            onChange={handleChangeHost}
-            onKeyPress={onKeyPressEnter}
-            placeholder={'Connect Host'}
-            type={InputType.Text}
-            status={
-              isNewEditor ? ComponentStatus.Default : ComponentStatus.Disabled
-            }
-            onMouseDown={handleMouseDown}
-          />
-          {isNewEditor && !nodenameChecker(shells, host) ? (
-            <div className="alert alert-error">
-              <span className="icon alerts" />
-              <div className="alert-message">Change the Host name.</div>
-            </div>
-          ) : null}
-        </>
-      </Form.Element>
       <Form.Element label="ADDRESS">
         <>
           <Input
@@ -124,6 +102,27 @@ const ShellForm = (props: Props) => {
               <div className="alert-message">
                 Auto changed to the WAN IP used
               </div>
+            </div>
+          ) : null}
+        </>
+      </Form.Element>
+      <Form.Element label="SESSION NAME">
+        <>
+          <Input
+            value={host}
+            onChange={handleChangeHost}
+            onKeyPress={onKeyPressEnter}
+            placeholder={'Connect Host'}
+            type={InputType.Text}
+            status={
+              isNewEditor ? ComponentStatus.Default : ComponentStatus.Disabled
+            }
+            onMouseDown={handleMouseDown}
+          />
+          {isNewEditor && !nodenameChecker(shells, host, tabkey) ? (
+            <div className="alert alert-error">
+              <span className="icon alerts" />
+              <div className="alert-message">Change the Host name.</div>
             </div>
           ) : null}
         </>
@@ -169,18 +168,21 @@ const ShellForm = (props: Props) => {
         />
         {isNewEditor ? (
           <Button
-            color={ComponentColor.Primary}
-            text={`Add Config`}
+            color={ComponentColor.Success}
+            text={`Connect`}
             onClick={() => {
-              props.handleShellUpdate({isNewEditor, nodename: host, addr: addr})
+              props.handleOpenTerminal({
+                isNewEditor,
+                nodename: host,
+                addr: addr,
+              })
             }}
-            status={btnControl()}
           />
         ) : (
           <Button
             color={ComponentColor.Success}
             text={`Connect`}
-            onClick={handleOpenTerminal}
+            onClick={() => props.handleOpenTerminal(null)}
           />
         )}
       </Form.Footer>
