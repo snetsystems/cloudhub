@@ -8,6 +8,7 @@ import React, {
 import {useQuery} from '@apollo/react-hooks'
 import {Terminal} from 'xterm'
 import {FitAddon} from 'xterm-addon-fit'
+import ReactObserver from 'react-resize-observer'
 import 'xterm/css/xterm.css'
 import _ from 'lodash'
 
@@ -62,9 +63,8 @@ interface Variables {
 type Props = DefaultProps & ShellProps
 
 const Shell = (props: Props) => {
-  let socket: WebSocket = null
-  let term: Terminal = null
   let termRef = useRef<HTMLDivElement>()
+  let newTabshell = null
 
   const [preHost, setPreHost] = useState(props.nodename ? props.nodename : '')
   const [host, setHost] = useState(props.nodename ? props.nodename : '')
@@ -72,9 +72,10 @@ const Shell = (props: Props) => {
   const [user, setUser] = useState('')
   const [pwd, setPwd] = useState('')
   const [port, setPort] = useState('22')
-  const [isConn, setIsConn] = useState(props.isConn ? props.isConn : false)
   const [getIP, setGetIP] = useState(null)
-
+  const [socket, setSocket] = useState(null)
+  const [term, setTerm] = useState(null)
+  const fitAddon = new FitAddon()
   const isUsing128T = props.isExistInLinks
   const getData = (isUsing128T: boolean) => {
     if (isUsing128T) {
@@ -128,32 +129,19 @@ const Shell = (props: Props) => {
       '/cloudhub/v1/WebTerminalHandler?' +
       encodeURIComponent(urlParam)
 
-    socket = new WebSocket(socketURL)
-    socket.binaryType = 'arraybuffer'
+    let _socket = new WebSocket(socketURL)
+    _socket.binaryType = 'arraybuffer'
+    newTabshell = newTabshell
+    setSocket(_socket)
+  }
 
-    const fitAddon = new FitAddon()
-    const decoder = new TextDecoder('utf-8')
-
-    socket.onopen = function() {
-      setIsConn(true)
-
-      term = new Terminal({
-        screenReaderMode: true,
-        cursorBlink: true,
-      })
-
+  useEffect(() => {
+    if (term) {
+      const decoder = new TextDecoder('utf-8')
       term.writeln('Connecting ...')
 
       term.onData(ondata =>
         socket.send(new TextEncoder().encode('\x00' + ondata))
-      )
-
-      term.onResize(evt =>
-        socket.send(
-          new TextEncoder().encode(
-            '\x01' + JSON.stringify({cols: evt.cols, rows: evt.rows})
-          )
-        )
       )
 
       term.attachCustomKeyEventHandler(function(e) {
@@ -170,6 +158,7 @@ const Shell = (props: Props) => {
 
       term.open(termRef.current)
       term.loadAddon(fitAddon)
+      fitAddon.fit()
 
       let shellInfo: ShellInfo
       if (newTabshell) {
@@ -200,8 +189,9 @@ const Shell = (props: Props) => {
         if (e.code === 4501) {
           props.notify(notifyConnectShellFailed(e))
         }
-        setIsConn(false)
+
         term.dispose()
+        setTerm(null)
       }
 
       socket.onerror = function(error) {
@@ -210,7 +200,24 @@ const Shell = (props: Props) => {
         }
       }
     }
-  }
+  }, [term])
+
+  // set socket After
+  useEffect(() => {
+    if (socket) {
+      socket.onopen = function() {
+        setTerm(
+          new Terminal({
+            // screenReaderMode: true,
+            // cursorBlink: true,
+            // convertEol: true,
+            rendererType: 'canvas',
+            windowsMode: true,
+          })
+        )
+      }
+    }
+  }, [socket])
 
   // Set 128T minion internet protocol
   useEffect(() => {
@@ -266,26 +273,39 @@ const Shell = (props: Props) => {
 
   useEffect(() => {
     return () => {
-      setIsConn(false)
       if (socket) {
         socket.close()
-        socket = null
+        setSocket(null)
       }
 
       if (term) {
         term.dispose()
+        setTerm(null)
       }
     }
   }, [])
 
   return (
     <div className={`terminal-container`}>
-      {isConn ? (
-        <div
-          id={`terminal-${host}`}
-          ref={termRef}
-          onMouseDown={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
-        ></div>
+      {term ? (
+        <div className={`terminal-wrap`}>
+          <div
+            id={`terminal-${host}`}
+            ref={termRef}
+            onMouseDown={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
+          />
+          <ReactObserver
+            onResize={rect => {
+              if (term) {
+                const cols = Math.trunc(rect.width / 9.475)
+                const rows = Math.trunc(rect.height / 17)
+                term.resize(cols, rows)
+                term.loadAddon(fitAddon)
+                fitAddon.fit()
+              }
+            }}
+          />
+        </div>
       ) : (
         <div>
           <ShellForm

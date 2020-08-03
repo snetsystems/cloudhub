@@ -138,7 +138,7 @@ class ShellModaless extends PureComponent<Props, State> {
                 </div>
               </div>
             </div>
-            <div className={`container-fluid`}>
+            <div className={`container-fluid full-height`}>
               <Tabs
                 forceRenderTabPanel={true}
                 onSelect={(tabIndex: number) => indexShell(tabIndex)}
