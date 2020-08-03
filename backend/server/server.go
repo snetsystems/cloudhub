@@ -663,9 +663,10 @@ func (s *Server) Serve(ctx context.Context) {
 	}
 	httpServer.SetKeepAlivesEnabled(true)
 
-	if !s.ReportingDisabled {
-		go reportUsageStats(s.BuildInfo, logger)
-	}
+	// Not in cloudhub
+	// if !s.ReportingDisabled {
+	// 	go reportUsageStats(s.BuildInfo, logger)
+	// }
 	scheme := "http"
 	if s.useTLS() {
 		scheme = "https"
