@@ -70,7 +70,7 @@ class ShellModaless extends PureComponent<Props, State> {
     const {tabCount} = this.state
     this.props.addShell({
       isNewEditor: true,
-      nodename: 'UnTitle_' + tabCount,
+      nodename: 'Untitled_' + tabCount,
     })
     this.setState(prevState => ({tabCount: prevState.tabCount + 1}))
   }
