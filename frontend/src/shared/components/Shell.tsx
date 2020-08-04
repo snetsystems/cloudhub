@@ -64,8 +64,7 @@ type Props = DefaultProps & ShellProps
 
 const Shell = (props: Props) => {
   let termRef = useRef<HTMLDivElement>()
-  let newTabshell = null
-
+  let newTabshell: ShellInfo = null
   const [preHost, setPreHost] = useState(props.nodename ? props.nodename : '')
   const [host, setHost] = useState(props.nodename ? props.nodename : '')
   const [addr, setAddr] = useState(props.addr ? props.addr : '')
@@ -75,9 +74,11 @@ const Shell = (props: Props) => {
   const [getIP, setGetIP] = useState(null)
   const [socket, setSocket] = useState<WebSocket>(null)
   const [term, setTerm] = useState<Terminal>(null)
+
   const fitAddon = new FitAddon()
-  const isUsing128T = props.isExistInLinks
-  const getData = (isUsing128T: boolean) => {
+  const decoder = new TextDecoder('utf-8')
+
+  const data = ((isUsing128T: boolean): Response => {
     if (isUsing128T) {
       const {data} = useQuery<Response, Variables>(
         GET_ROUTER_DEVICEINTERFACES_INFO,
@@ -89,11 +90,9 @@ const Shell = (props: Props) => {
           pollInterval: 10000,
         }
       )
-
       return data
     }
-  }
-  let data = getData(isUsing128T)
+  })(props.isExistInLinks)
 
   const handleChangeHost = (e: ChangeEvent<HTMLInputElement>): void => {
     if (!preHost) {
@@ -118,11 +117,12 @@ const Shell = (props: Props) => {
     setPort(e.target.value)
   }
 
-  const handleOpenTerminal = newTabshell => {
+  const handleOpenTerminal = (newTabshell: ShellInfo): void => {
     const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://'
 
     const urlParam =
       'user=' + user + '&pwd=' + pwd + '&addr=' + addr + '&port=' + port
+
     const socketURL =
       protocol +
       window.location.hostname +
@@ -135,87 +135,146 @@ const Shell = (props: Props) => {
     setSocket(_socket)
   }
 
-  useEffect(() => {
-    if (term) {
-      const decoder = new TextDecoder('utf-8')
-      term.writeln('Connecting ...')
+  // debouncefit
+  const debouncedFit = _.debounce((width?: number, height?: number) => {
+    const cols = Math.trunc(width / 9.475)
+    const rows = Math.trunc(height / 17)
 
-      term.onData(ondata =>
-        socket.send(new TextEncoder().encode('\x00' + ondata))
+    if (cols && rows) {
+      term.resize(cols, rows)
+    }
+
+    fitAddon.fit()
+  }, 100)
+
+  // terminal resize info send to target
+  const onTerminalResize = () => {
+    socket.send(
+      new TextEncoder().encode(
+        '\x00' +
+          JSON.stringify({Flag: 'resize', Cols: term.cols, Rows: term.rows})
       )
+    )
+  }
 
-      term.attachCustomKeyEventHandler(function(e) {
-        // Text Block + Ctrl + C
-        if (term.getSelection() && e.ctrlKey && e.keyCode == 67) {
-          document.execCommand('copy')
-          return false
-        }
+  // input string send to target
+  const onTerminalSendString = (str: string) => {
+    socket.send(
+      new TextEncoder().encode(
+        '\x00' +
+          JSON.stringify({
+            Flag: 'stdin',
+            Data: str,
+            Cols: term.cols,
+            Rows: term.rows,
+          })
+      )
+    )
+  }
 
-        if (e.ctrlKey && e.keyCode == 86) {
-          document.execCommand('paste')
-          return false
-        }
+  // terminal init
+  const initTerm = () => {
+    if (!term) return
+    term.writeln('Connecting ...')
+    term.loadAddon(fitAddon)
+    term.open(termRef.current)
+    debouncedFit()
 
-        if (e.ctrlKey && e.keyCode == 68) {
-          return false
-        }
+    term.onData((data: string) => onTerminalSendString(data))
+    term.onResize(() => onTerminalResize())
+
+    // custom key event handler
+    term.attachCustomKeyEventHandler(function(e) {
+      if (term.getSelection() && e.ctrlKey && e.keyCode == 67) {
+        document.execCommand('copy')
+        return false
+      }
+
+      if (e.ctrlKey && e.keyCode == 86) {
+        document.execCommand('paste')
+        return false
+      }
+
+      if (e.ctrlKey && e.keyCode == 68) {
+        return false
+      }
+    })
+
+    let shellInfo: ShellInfo
+    if (newTabshell) {
+      shellInfo = Object.assign(newTabshell, {
+        preNodename: preHost,
       })
+    } else {
+      shellInfo = {
+        addr: addr,
+        nodename: host,
+        preNodename: preHost,
+      }
+    }
 
-      term.loadAddon(fitAddon)
-      term.open(termRef.current)
-      fitAddon.fit()
+    props.handleShellUpdate(shellInfo)
+    props.onTabNameRefresh()
 
-      let shellInfo: ShellInfo
-      if (newTabshell) {
-        shellInfo = Object.assign(newTabshell, {
-          socket: this,
-          preNodename: preHost,
-        })
+    socket.onmessage = function(evt) {
+      if (evt.data instanceof ArrayBuffer) {
+        term.write(decoder.decode(evt.data))
       } else {
-        shellInfo = {
-          addr: addr,
-          nodename: host,
-          preNodename: preHost,
-          socket: this,
-        }
+        alert(evt.data)
       }
-      props.handleShellUpdate(shellInfo)
-      props.onTabNameRefresh()
+    }
 
-      socket.onmessage = function(evt) {
-        if (evt.data instanceof ArrayBuffer) {
-          term.write(decoder.decode(evt.data))
-        } else {
-          alert(evt.data)
-        }
+    socket.onclose = function(e) {
+      if (e.code === 4501) {
+        props.notify(notifyConnectShellFailed(e))
       }
 
-      socket.onclose = function(e) {
-        if (e.code === 4501) {
-          props.notify(notifyConnectShellFailed(e))
-        }
+      if (socket) {
+        socket.close()
+        setSocket(null)
+      }
 
+      if (term) {
         term.dispose()
         setTerm(null)
       }
+    }
 
-      socket.onerror = function(error) {
-        if (typeof console.log == 'function') {
-          console.error(error)
-        }
+    socket.onerror = function(error) {
+      if (typeof console.log == 'function') {
+        console.error(error)
       }
     }
+  }
+
+  useEffect(() => {
+    initTerm()
   }, [term])
 
   // set socket After
   useEffect(() => {
     if (socket) {
       socket.onopen = function() {
+        if (term) {
+          term.dispose()
+        }
+
         setTerm(
           new Terminal({
             convertEol: true,
           })
         )
+      }
+    }
+    return () => {
+      if (socket) {
+        socket.close()
+        setSocket(null)
+      }
+
+      if (term) {
+        term.dispose()
+        setTerm(null)
       }
     }
   }, [socket])
@@ -272,20 +331,6 @@ const Shell = (props: Props) => {
     setHost(props.nodename)
   }, [props.nodename])
 
-  useEffect(() => {
-    return () => {
-      if (socket) {
-        socket.close()
-        setSocket(null)
-      }
-
-      if (term) {
-        term.dispose()
-        setTerm(null)
-      }
-    }
-  }, [])
-
   return (
     <div className={`terminal-container`}>
       {term ? (
@@ -298,14 +343,7 @@ const Shell = (props: Props) => {
           <ReactObserver
             onResize={rect => {
               if (term) {
-                const cols = Math.trunc(rect.width / 9.475)
-                const rows = Math.trunc(rect.height / 17)
-                if (cols < 50 && rows < 30) {
-                  return
-                }
-                term.resize(cols, rows)
-                // term.loadAddon(fitAddon)
-                fitAddon.fit()
+                debouncedFit(rect.width, rect.height)
               }
             }}
           />

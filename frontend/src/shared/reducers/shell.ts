@@ -93,10 +93,6 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
 
     case ActionTypes.ShellRemove: {
       const index = nodenameIndex(state, action.payload)
-      const currentSocket = state.shells[index].socket
-      if (currentSocket) {
-        currentSocket.close()
-      }
 
       const dummyShellIndex = state.shells.length - 2
       const nodeIndex = dummyShellIndex > index ? index : dummyShellIndex
