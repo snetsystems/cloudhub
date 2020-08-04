@@ -73,8 +73,8 @@ const Shell = (props: Props) => {
   const [pwd, setPwd] = useState('')
   const [port, setPort] = useState('22')
   const [getIP, setGetIP] = useState(null)
-  const [socket, setSocket] = useState(null)
-  const [term, setTerm] = useState(null)
+  const [socket, setSocket] = useState<WebSocket>(null)
+  const [term, setTerm] = useState<Terminal>(null)
   const fitAddon = new FitAddon()
   const isUsing128T = props.isExistInLinks
   const getData = (isUsing128T: boolean) => {
@@ -304,7 +304,7 @@ const Shell = (props: Props) => {
                   return
                 }
                 term.resize(cols, rows)
-                term.loadAddon(fitAddon)
+                // term.loadAddon(fitAddon)
                 fitAddon.fit()
               }
             }}
