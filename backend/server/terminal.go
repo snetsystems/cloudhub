@@ -86,7 +86,7 @@ func (s *ssh) Config(cols, rows int) error {
     }
 
     // request pseudo terminal.
-    err := s.session.RequestPty(term, 30, 80, modes)
+    err := s.session.RequestPty(term, 50, 150, modes)
 
     return err
 }

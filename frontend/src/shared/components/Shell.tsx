@@ -151,13 +151,18 @@ const Shell = (props: Props) => {
           return false
         }
 
+        if (e.ctrlKey && e.keyCode == 86) {
+          document.execCommand('paste')
+          return false
+        }
+
         if (e.ctrlKey && e.keyCode == 68) {
           return false
         }
       })
 
-      term.open(termRef.current)
       term.loadAddon(fitAddon)
+      term.open(termRef.current)
       fitAddon.fit()
 
       let shellInfo: ShellInfo
@@ -208,11 +213,7 @@ const Shell = (props: Props) => {
       socket.onopen = function() {
         setTerm(
           new Terminal({
-            // screenReaderMode: true,
-            // cursorBlink: true,
-            // convertEol: true,
-            rendererType: 'canvas',
-            windowsMode: true,
+            convertEol: true,
           })
         )
       }
@@ -299,6 +300,9 @@ const Shell = (props: Props) => {
               if (term) {
                 const cols = Math.trunc(rect.width / 9.475)
                 const rows = Math.trunc(rect.height / 17)
+                if (cols < 50 && rows < 30) {
+                  return
+                }
                 term.resize(cols, rows)
                 term.loadAddon(fitAddon)
                 fitAddon.fit()
