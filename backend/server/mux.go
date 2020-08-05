@@ -149,6 +149,9 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.GET("/swagger.json", Spec())
 	router.GET("/docs", Redoc("/swagger.json"))
 
+	// websocket
+	router.GET("/cloudhub/v1/WebTerminalHandler", EnsureAdmin(service.WebTerminalHandler))
+
 	/* API */
 	// Organizations
 	router.GET("/cloudhub/v1/organizations", EnsureViewer(service.Organizations))

@@ -10,6 +10,7 @@ import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import AgentMinionsTable from 'src/agent_admin/components/AgentMinionsTable'
 import AgentMinionsConsole from 'src/agent_admin/components/AgentMinionsConsole'
 import AgentMinionsModal from 'src/agent_admin/components/AgentMinionsModal'
+import {ShellProps} from 'src/shared/components/Shell'
 
 // Actions
 import {
@@ -72,6 +73,9 @@ interface Props {
     requireRole: UserRole,
     isNoAuthOuting?: boolean
   ) => void
+
+  handleShellModalOpen?: (props: ShellProps) => void
+  handleShellModalClose: () => void
 }
 interface State {
   minionsPageStatus: RemoteDataState
@@ -273,7 +277,11 @@ export class AgentMinions extends PureComponent<Props, State> {
 
   private renderAgentPageTop = () => {
     const {focusedHost, minionsPageStatus} = this.state
-    const {minionsObject} = this.props
+    const {
+      minionsObject,
+      handleShellModalOpen,
+      handleShellModalClose,
+    } = this.props
     return (
       <AgentMinionsTable
         minions={_.values(minionsObject)}
@@ -282,6 +290,8 @@ export class AgentMinions extends PureComponent<Props, State> {
         onClickModal={this.onClickModalCall}
         handleWheelKeyCommand={this.handleWheelKeyCommand}
         focusedHost={focusedHost}
+        handleShellModalOpen={handleShellModalOpen}
+        handleShellModalClose={handleShellModalClose}
       />
     )
   }

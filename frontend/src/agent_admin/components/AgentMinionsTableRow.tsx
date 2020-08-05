@@ -20,6 +20,16 @@ interface Props {
   onClickTableRow: AgentMinions['onClickTableRowCall']
   onClickModal: ({}) => object
   handleWheelKeyCommand: (host: string, cmdstatus: string) => void
+  handleShellModalOpen?: ({
+    isNewEditor,
+    addr,
+    nodename,
+  }: {
+    isNewEditor: boolean
+    addr: string
+    nodename: string
+  }) => void
+  handleShellModalClose?: () => void
 }
 
 @ErrorHandling
@@ -57,7 +67,13 @@ class AgentMinionsTableRow extends PureComponent<Props> {
   }
 
   private get TableRowEachPage() {
-    const {idx, minions, onClickModal, handleWheelKeyCommand} = this.props
+    const {
+      idx,
+      minions,
+      onClickModal,
+      handleWheelKeyCommand,
+      handleShellModalOpen,
+    } = this.props
     const {osVersion, os, ip, host, status} = minions
     const {
       HostWidth,
@@ -95,6 +111,26 @@ class AgentMinionsTableRow extends PureComponent<Props> {
                 handleWheelKeyCommand,
                 idx,
               })}
+            </div>
+          }
+          width={OperationWidth}
+        />
+        <TableBodyRowItem
+          title={
+            <div id={`table-row--select${idx}`}>
+              <button
+                className="btn btn-sm btn-primary"
+                onClick={e => {
+                  e.stopPropagation()
+                  handleShellModalOpen({
+                    isNewEditor: false,
+                    addr: ip,
+                    nodename: host,
+                  })
+                }}
+              >
+                open SSH
+              </button>
             </div>
           }
           width={OperationWidth}

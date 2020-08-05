@@ -6,6 +6,7 @@ import links from './links'
 import {notifications} from './notifications'
 import sources from './sources'
 import annotations from './annotations'
+import shell from './shell'
 
 export default {
   app,
@@ -16,4 +17,5 @@ export default {
   sources,
   annotations,
   notifications,
+  shell,
 }

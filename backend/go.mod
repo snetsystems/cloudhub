@@ -11,11 +11,13 @@ require (
 	github.com/gogo/protobuf v1.2.1
 	github.com/google/go-cmp v0.2.0
 	github.com/google/go-github v17.0.0+incompatible
+	github.com/gorilla/websocket v1.4.2
 	github.com/influxdata/flux v0.25.0
 	github.com/influxdata/influxdb v1.1.5
 	github.com/influxdata/kapacitor v1.5.0
 	github.com/influxdata/usage-client v0.0.0-20160829180054-6d3895376368
 	github.com/jessevdk/go-flags v1.4.0
+	github.com/kr/pty v1.1.1
 	github.com/microcosm-cc/bluemonday v1.0.1
 	github.com/satori/go.uuid v1.2.0
 	github.com/sergi/go-diff v1.0.0
