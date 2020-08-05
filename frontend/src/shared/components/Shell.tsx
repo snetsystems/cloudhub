@@ -147,29 +147,32 @@ const Shell = (props: Props) => {
     fitAddon.fit()
   }, 100)
 
+  // resize call
   // terminal resize info send to target
-  const onTerminalResize = () => {
-    socket.send(
-      new TextEncoder().encode(
-        '\x00' +
-          JSON.stringify({Flag: 'resize', Cols: term.cols, Rows: term.rows})
-      )
-    )
-  }
+  // const onTerminalResize = () => {
+  //   socket.send(
+  //     new TextEncoder().encode(
+  //       '\x00' +
+  //         JSON.stringify({Flag: 'resize', Cols: term.cols, Rows: term.rows})
+  //     )
+  //   )
+  // }
 
   // input string send to target
   const onTerminalSendString = (str: string) => {
-    socket.send(
-      new TextEncoder().encode(
-        '\x00' +
-          JSON.stringify({
-            Flag: 'stdin',
-            Data: str,
-            Cols: term.cols,
-            Rows: term.rows,
-          })
-      )
-    )
+    socket.send(new TextEncoder().encode('\x00' + str))
+    // resize call
+    // socket.send(
+    //   new TextEncoder().encode(
+    //     '\x00' +
+    //       JSON.stringify({
+    //         Flag: 'stdin',
+    //         Data: str,
+    //         Cols: term.cols,
+    //         Rows: term.rows,
+    //       })
+    //   )
+    // )
   }
 
   // terminal init
@@ -178,10 +181,12 @@ const Shell = (props: Props) => {
     term.writeln('Connecting ...')
     term.loadAddon(fitAddon)
     term.open(termRef.current)
+
     debouncedFit()
 
     term.onData((data: string) => onTerminalSendString(data))
-    term.onResize(() => onTerminalResize())
+    // resize call
+    // term.onResize(() => onTerminalResize())
 
     // custom key event handler
     term.attachCustomKeyEventHandler(function(e) {
@@ -343,7 +348,10 @@ const Shell = (props: Props) => {
           <ReactObserver
             onResize={rect => {
               if (term) {
-                debouncedFit(rect.width, rect.height)
+                // term.cols controll
+                if (rect.width > 500) {
+                  debouncedFit(rect.width, rect.height)
+                }
               }
             }}
           />
