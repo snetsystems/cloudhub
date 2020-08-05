@@ -53,8 +53,16 @@ const ShellForm = (props: Props) => {
       event.charCode === enterKeyCode ||
       event.key === enterKey
     ) {
-      if (!props.isNewEditor && host && addr && user && pwd && port) {
-        handleOpenTerminal(null)
+      if (host && addr && user && pwd && port) {
+        if (props.isNewEditor) {
+          handleOpenTerminal({
+            isNewEditor,
+            nodename: host,
+            addr: addr,
+          })
+        } else {
+          handleOpenTerminal(null)
+        }
       }
     }
   }
