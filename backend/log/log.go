@@ -4,8 +4,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/Sirupsen/logrus"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/sirupsen/logrus"	
 )
 
 // Level type

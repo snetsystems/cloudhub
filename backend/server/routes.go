@@ -42,8 +42,6 @@ type getRoutesResponse struct {
 	Environment        string                             `json:"environment"`      // Location of the environement endpoint
 	Dashboards         string                             `json:"dashboards"`       // Location of the dashboards endpoint
 	Config             getConfigLinksResponse             `json:"config"`           // Location of the config endpoint and its various sections
-	Cells              string                             `json:"cells"`            // Location of the v2 cells
-	DashboardsV2       string                             `json:"dashboardsv2"`     // Location of the v2 dashboards
 	Auth               []AuthRoute                        `json:"auth"`             // Location of all auth routes.
 	Logout             *string                            `json:"logout,omitempty"` // Location of the logout route for all auth routes
 	ExternalLinks      getExternalLinksResponse           `json:"external"`         // All external links for the client to use
@@ -60,7 +58,7 @@ type AllRoutes struct {
 	AuthRoutes   []AuthRoute                            // Location of all auth routes. If no auth, this can be empty.
 	LogoutLink   string                                 // Location of the logout route for all auth routes. If no auth, this can be empty.
 	StatusFeed   string                                 // External link to the JSON Feed for the News Feed on the client's Status Page
-	CustomLinks  map[string]string                      // Custom external links for client's User menu, as passed in via CLI/ENV
+	CustomLinks  []CustomLink                           // Custom external links for client's User menu, as passed in via CLI/ENV
 	AddonURLs    map[string]string                      // URLs for using in Addon Features, as passed in via CLI/ENV
 	AddonTokens  map[string]string                      // Tokens to access to Addon Features API, as passed in via CLI/ENV
 	Logger       cloudhub.Logger
@@ -68,12 +66,6 @@ type AllRoutes struct {
 
 // serveHTTP returns all top level routes and external links within cloudhub
 func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	customLinks, err := NewCustomLinks(a.CustomLinks)
-	if err != nil {
-		Error(w, http.StatusInternalServerError, err.Error(), a.Logger)
-		return
-	}
-
 	org := "default"
 	if a.GetPrincipal != nil {
 		// If there is a principal, use the organization to populate the users routes
@@ -94,8 +86,6 @@ func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Environment:   "/cloudhub/v1/env",
 		Mappings:      "/cloudhub/v1/mappings",
 		Dashboards:    "/cloudhub/v1/dashboards",
-		DashboardsV2:  "/cloudhub/v2/dashboards",
-		Cells:         "/cloudhub/v2/cells",
 		Config: getConfigLinksResponse{
 			Self: "/cloudhub/v1/config",
 			Auth: "/cloudhub/v1/config/auth",
@@ -107,7 +97,7 @@ func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		Auth: make([]AuthRoute, len(a.AuthRoutes)), // We want to return at least an empty array, rather than null
 		ExternalLinks: getExternalLinksResponse{
 			StatusFeed:  &a.StatusFeed,
-			CustomLinks: customLinks,
+			CustomLinks: a.CustomLinks,
 		},
 		Flux: getFluxLinksResponse{
 			Self:        "/cloudhub/v1/flux",

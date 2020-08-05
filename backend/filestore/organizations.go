@@ -2,7 +2,7 @@ package filestore
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"io/ioutil"
 	"os"
 	"path"
@@ -13,7 +13,8 @@ import (
 // OrgExt is the the file extension searched for in the directory for org files
 const OrgExt = ".org"
 
-var _ cloudhub.OrganizationsStore = &Organizations{}
+// Verify organizations implements organizationsStore interface.
+var _ cloudhub.OrganizationsStore = (*Organizations)(nil)
 
 // Organizations are JSON orgs stored in the filesystem
 type Organizations struct {
@@ -31,11 +32,6 @@ func NewOrganizations(dir string, logger cloudhub.Logger) cloudhub.Organizations
 		ReadDir: ioutil.ReadDir,
 		Logger:  logger,
 	}
-}
-
-func orgFile(dir string, org cloudhub.Organization) string {
-	base := fmt.Sprintf("%s%s", org.Name, OrgExt)
-	return path.Join(dir, base)
 }
 
 // All returns all orgs from the directory
@@ -66,31 +62,6 @@ func (o *Organizations) Get(ctx context.Context, query cloudhub.OrganizationQuer
 	return org, err
 }
 
-// Add is not allowed for the filesystem organization store
-func (o *Organizations) Add(ctx context.Context, org *cloudhub.Organization) (*cloudhub.Organization, error) {
-	return nil, fmt.Errorf("unable to add organizations to the filesystem")
-}
-
-// Delete is not allowed for the filesystem organization store
-func (o *Organizations) Delete(ctx context.Context, org *cloudhub.Organization) error {
-	return fmt.Errorf("unable to delete an organization from the filesystem")
-}
-
-// Update is not allowed for the filesystem organization store
-func (o *Organizations) Update(ctx context.Context, org *cloudhub.Organization) error {
-	return fmt.Errorf("unable to update organizations on the filesystem")
-}
-
-// CreateDefault is not allowed for the filesystem organization store
-func (o *Organizations) CreateDefault(ctx context.Context) error {
-	return fmt.Errorf("unable to create default organizations on the filesystem")
-}
-
-// DefaultOrganization is not allowed for the filesystem organization store
-func (o *Organizations) DefaultOrganization(ctx context.Context) (*cloudhub.Organization, error) {
-	return nil, fmt.Errorf("unable to get default organizations from the filestore")
-}
-
 // findOrg takes an OrganizationQuery and finds the associated filename
 func (o *Organizations) findOrg(query cloudhub.OrganizationQuery) (*cloudhub.Organization, string, error) {
 	// Because the entire org information is not known at this point, we need
@@ -119,4 +90,29 @@ func (o *Organizations) findOrg(query cloudhub.OrganizationQuery) (*cloudhub.Org
 	}
 
 	return nil, "", cloudhub.ErrOrganizationNotFound
+}
+
+// Add is not allowed for the filesystem organization store
+func (o *Organizations) Add(ctx context.Context, org *cloudhub.Organization) (*cloudhub.Organization, error) {
+	return nil, errors.New("unable to add organizations to the filesystem")
+}
+
+// Delete is not allowed for the filesystem organization store
+func (o *Organizations) Delete(ctx context.Context, org *cloudhub.Organization) error {
+	return errors.New("unable to delete an organization from the filesystem")
+}
+
+// Update is not allowed for the filesystem organization store
+func (o *Organizations) Update(ctx context.Context, org *cloudhub.Organization) error {
+	return errors.New("unable to update organizations on the filesystem")
+}
+
+// CreateDefault is not allowed for the filesystem organization store
+func (o *Organizations) CreateDefault(ctx context.Context) error {
+	return errors.New("unable to create default organizations on the filesystem")
+}
+
+// DefaultOrganization is not allowed for the filesystem organization store
+func (o *Organizations) DefaultOrganization(ctx context.Context) (*cloudhub.Organization, error) {
+	return nil, errors.New("unable to get default organizations from the filestore")
 }

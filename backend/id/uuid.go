@@ -1,7 +1,7 @@
 package id
 
 import (
-	uuid "github.com/satori/go.uuid"
+	"github.com/google/uuid"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
@@ -12,5 +12,5 @@ type UUID struct{}
 
 // Generate creates a UUID v4 string
 func (i *UUID) Generate() (string, error) {
-	return uuid.NewV4().String(), nil
+	return uuid.New().String(), nil
 }

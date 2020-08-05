@@ -2,9 +2,11 @@ package cloudhub
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -591,6 +593,48 @@ type Dashboard struct {
 	Organization string          `json:"organization"` // Organization is the organization ID that resource belongs to
 }
 
+// UnmarshalJSON unmarshals a string ID into a DashboardID (int).
+func (d *Dashboard) UnmarshalJSON(data []byte) error {
+	type Alias Dashboard
+
+	aux := &struct {
+		ID interface{} `json:"id,omitempty"`
+		*Alias
+	}{
+		Alias: (*Alias)(d),
+	}
+
+	if err := json.Unmarshal(data, &aux); err != nil {
+		return err
+	}
+
+	if aux.ID != nil {
+		// Allows backwards compatibility with filestore `.dashboard` files.
+		switch id := aux.ID.(type) {
+		case int:
+			d.ID = DashboardID(id)
+		case int32:
+			d.ID = DashboardID(id)
+		case int64:
+			d.ID = DashboardID(id)
+		case float32:
+			d.ID = DashboardID(id)
+		case float64:
+			d.ID = DashboardID(id)
+		case string:
+			ID, err := strconv.ParseInt(id, 10, 64)
+			if err != nil {
+				return err
+			}
+			d.ID = DashboardID(ID)
+		default:
+			return fmt.Errorf("invalid id type %T", id)
+		}
+	}
+
+	return nil
+}
+
 // Axis represents the visible extents of a visualization
 type Axis struct {
 	Bounds       []string `json:"bounds"` // bounds are an arbitrary list of client-defined strings that specify the viewport for a cell
@@ -700,14 +744,8 @@ type Layout struct {
 type LayoutsStore interface {
 	// All returns all dashboards in the store
 	All(context.Context) ([]Layout, error)
-	// Add creates a new dashboard in the LayoutsStore
-	Add(context.Context, Layout) (Layout, error)
-	// Delete the dashboard from the store
-	Delete(context.Context, Layout) error
 	// Get retrieves Layout if `ID` exists
 	Get(ctx context.Context, ID string) (Layout, error)
-	// Update the dashboard in the store.
-	Update(context.Context, Layout) error
 }
 
 // ProtoboardMeta is the metadata of a Protoboard
@@ -861,8 +899,8 @@ type AuthConfig struct {
 
 // ConfigStore is the storage and retrieval of global application Config
 type ConfigStore interface {
-	// Initialize creates the initial configuration
-	Initialize(context.Context) error
+	// All lists all Configs in the ConfigStore
+	All(context.Context) ([]Config, error)
 	// Get retrieves the whole Config from the ConfigStore
 	Get(context.Context) (*Config, error)
 	// Update updates the whole Config in the ConfigStore
@@ -897,6 +935,8 @@ type ColumnEncoding struct {
 
 // OrganizationConfigStore is the storage and retrieval of organization Configs
 type OrganizationConfigStore interface {
+	// All lists all org configs in the OrganizationConfigStore
+	All(context.Context) ([]OrganizationConfig, error)
 	// FindOrCreate gets an existing OrganizationConfig and creates one if none exists
 	FindOrCreate(ctx context.Context, orgID string) (*OrganizationConfig, error)
 	// Put replaces the whole organization config in the OrganizationConfigStore
@@ -919,4 +959,24 @@ type BuildStore interface {
 // that were set on the server
 type Environment struct {
 	TelegrafSystemInterval time.Duration `json:"telegrafSystemInterval"`
+}
+
+// KVClient defines what each kv store should be capable of.
+type KVClient interface {
+	// ConfigStore returns the kv's ConfigStore type.
+	ConfigStore() ConfigStore
+	// DashboardsStore returns the kv's DashboardsStore type.
+	DashboardsStore() DashboardsStore
+	// MappingsStore returns the kv's MappingsStore type.
+	MappingsStore() MappingsStore
+	// OrganizationConfigStore returns the kv's OrganizationConfigStore type.
+	OrganizationConfigStore() OrganizationConfigStore
+	// OrganizationsStore returns the kv's OrganizationsStore type.
+	OrganizationsStore() OrganizationsStore
+	// ServersStore returns the kv's ServersStore type.
+	ServersStore() ServersStore
+	// SourcesStore returns the kv's SourcesStore type.
+	SourcesStore() SourcesStore
+	// UsersStore returns the kv's UsersStore type.
+	UsersStore() UsersStore
 }
