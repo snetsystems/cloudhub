@@ -18,7 +18,7 @@ $overlay-min-height: 150px;
     padding: ($s-cloudhub-page-header-height / 2) $s-page-wrapper-padding;
     max-width: $s-page-wrapper-max-width;
     &.full-height {
-      height: 100%;
+      height: calc(100% - 45px);
     }
     &.full-width {
       max-width: 100%;
@@ -37,7 +37,7 @@ $overlay-min-height: 150px;
     height: 100%;
 
     .react-tabs__tab-panel {
-      height: calc(100% - 100px);
+      height: calc(100% - 45px);
     }
 
     .react-tabs__tab-list {
