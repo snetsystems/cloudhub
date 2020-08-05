@@ -121,7 +121,7 @@ class ShellModaless extends PureComponent<Props, State> {
             x: 25,
             y: 25,
             width: 800,
-            height: 600,
+            height: 550,
           }}
         >
           <div className={`shell-container`}>
