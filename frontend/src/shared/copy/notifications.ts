@@ -464,7 +464,7 @@ export const notifyTempVarAlreadyExists = (
   message: `Variable '${tempVarName}' already exists. Please enter a new value.`,
 })
 
-export const notifyDashboardNotFound = (dashboardID: number): Notification => ({
+export const notifyDashboardNotFound = (dashboardID: string): Notification => ({
   ...defaultErrorNotification,
   icon: 'dash-h',
   message: `Dashboard ${dashboardID} could not be found`,
@@ -1031,4 +1031,12 @@ export const notifyAgentRejectFailed = (error: Error): Notification => ({
 export const notifyAgentDeleteFailed = (error: Error): Notification => ({
   ...defaultErrorNotification,
   message: `Agent Delete Failed, ${error}`,
+})
+
+//  CloudHub Shell Sources Notifications
+//  ----------------------------------------------------------------------------
+
+export const notifyConnectShellFailed = (close: CloseEvent): Notification => ({
+  ...defaultErrorNotification,
+  message: `CODE: ${close.code}, REASON: ${close.reason}`,
 })

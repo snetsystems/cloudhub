@@ -27,3 +27,8 @@ func (s *ConfigStore) Get(context.Context) (*cloudhub.Config, error) {
 func (s *ConfigStore) Update(context.Context, *cloudhub.Config) error {
 	return fmt.Errorf("cannot update conifg")
 }
+
+// All ...
+func (s *ConfigStore) All(context.Context) ([]cloudhub.Config, error) {
+	return nil, fmt.Errorf("no configs found")
+}

@@ -5,23 +5,28 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
 	"regexp"
+	"runtime"
 	"strconv"
 	"time"
 
-	flags "github.com/jessevdk/go-flags"
+	
 	cloudhub "github.com/snetsystems/cloudhub/backend"
-	"github.com/snetsystems/cloudhub/backend/bolt"
 	idgen "github.com/snetsystems/cloudhub/backend/id"
 	"github.com/snetsystems/cloudhub/backend/influx"
+	"github.com/snetsystems/cloudhub/backend/kv"
+	"github.com/snetsystems/cloudhub/backend/kv/bolt"
+	"github.com/snetsystems/cloudhub/backend/kv/etcd"
 	clog "github.com/snetsystems/cloudhub/backend/log"
 	"github.com/snetsystems/cloudhub/backend/oauth2"
-	"github.com/tylerb/graceful"
+	client "github.com/influxdata/usage-client/v1"
+	flags "github.com/jessevdk/go-flags"
 )
 
 var (
@@ -51,8 +56,6 @@ type Server struct {
 	KapacitorUsername string `long:"kapacitor-username" description:"Username of your Kapacitor instance" env:"KAPACITOR_USERNAME"`
 	KapacitorPassword string `long:"kapacitor-password" description:"Password of your Kapacitor instance" env:"KAPACITOR_PASSWORD"`
 
-	NewSources string `long:"new-sources" description:"Config for adding a new InfluxDB source and Kapacitor server, in JSON as an array of objects, and surrounded by single quotes. E.g. --new-sources='[{\"influxdb\":{\"name\":\"Influx 1\",\"username\":\"user1\",\"password\":\"pass1\",\"url\":\"http://localhost:8086\",\"metaUrl\":\"http://metaurl.com\",\"type\":\"influx-enterprise\",\"insecureSkipVerify\":false,\"default\":true,\"telegraf\":\"telegraf\",\"sharedSecret\":\"cubeapples\"},\"kapacitor\":{\"name\":\"Kapa 1\",\"url\":\"http://localhost:9092\",\"active\":true}}]'" env:"NEW_SOURCES" hidden:"true"`
-
 	AddonURLs   map[string]string `short:"u" long:"addon-url" description:"Support addon is [salt, swan, oncue]. API URLs to be used to the client for a request to addon API servers. Multiple URL can be added by using multiple of the same flag with different 'name:url' values, or as an environment variable with comma-separated 'name:url' values. E.g. via flags: '--addon-url=salt:{url} --addon-url=swan:{url}'. E.g. via environment variable: 'export ADDON_URL=salt:{url},swan:{url}'" env:"ADDON_URL" env-delim:","`
 	AddonTokens map[string]string `short:"k" long:"addon-tokens" description:"Support addon is [salt, swan]. API tokens to be used to the client for a request to addon API servers. Multiple tokens can be added by using multiple of the same flag with different 'name:token' values, or as an environment variable with comma-separated 'name:token' values. E.g. via flags: '--addon-tokens=salt:{token} --addon-tokens=swan:{token}'. E.g. via environment variable: 'export ADDON_TOKENS=salt:{token},swan:{token}'" env:"ADDON_TOKENS" env-delim:","`
 
@@ -69,6 +72,12 @@ type Server struct {
 	GithubClientID     string   `short:"i" long:"github-client-id" description:"Github Client ID for OAuth 2 support" env:"GH_CLIENT_ID"`
 	GithubClientSecret string   `short:"s" long:"github-client-secret" description:"Github Client Secret for OAuth 2 support" env:"GH_CLIENT_SECRET"`
 	GithubOrgs         []string `short:"o" long:"github-organization" description:"Github organization user is required to have active membership (env comma separated)" env:"GH_ORGS" env-delim:","`
+
+	EtcdEndpoints      []string      `short:"e" long:"etcd-endpoints" description:"List of etcd endpoints" env:"ETCD_ENDPOINTS" env-delim:","`
+	EtcdUsername       string        `long:"etcd-username" description:"Username to log into etcd." env:"ETCD_USERNAME"`
+	EtcdPassword       string        `long:"etcd-password" description:"Password to log into etcd." env:"ETCD_PASSWORD"`
+	EtcdDialTimeout    time.Duration `long:"etcd-dial-timeout" default:"-1s" description:"Total time to wait before timing out while connecting to etcd endpoints. 0 means no timeout. " env:"ETCD_DIAL_TIMEOUT"`
+	EtcdRequestTimeout time.Duration `long:"etcd-request-timeout" default:"-1s" description:"Total time to wait before timing out the etcd view or update. 0 means no timeout." env:"ETCD_REQUEST_TIMEOUT"`
 
 	GoogleClientID     string   `long:"google-client-id" description:"Google Client ID for OAuth 2 support" env:"GOOGLE_CLIENT_ID"`
 	GoogleClientSecret string   `long:"google-client-secret" description:"Google Client Secret for OAuth 2 support" env:"GOOGLE_CLIENT_SECRET"`
@@ -99,12 +108,11 @@ type Server struct {
 	CustomLinks            map[string]string `long:"custom-link" description:"Custom link to be added to the client User menu. Multiple links can be added by using multiple of the same flag with different 'name:url' values, or as an environment variable with comma-separated 'name:url' values. E.g. via flags: '--custom-link=snetsystems:https://www.snetsystems.com --custom-link=CloudHub:https://github.com/snetsystems/cloudhub'. E.g. via environment variable: 'export CUSTOM_LINKS=snetsystems:https://www.snetsystems.com,CloudHub:https://github.com/snetsystems/cloudhub'" env:"CUSTOM_LINKS" env-delim:","`
 	TelegrafSystemInterval time.Duration     `long:"telegraf-system-interval" default:"1m" description:"Duration used in the GROUP BY time interval for the hosts list" env:"TELEGRAF_SYSTEM_INTERVAL"`
 
+	ReportingDisabled bool   `short:"r" long:"reporting-disabled" description:"Disable reporting of usage stats (os,arch,version,cluster_id,uptime) once every 24hr" env:"REPORTING_DISABLED"`
 	LogLevel    string `short:"l" long:"log-level" value-name:"choice" choice:"debug" choice:"info" choice:"error" default:"info" description:"Set the logging level" env:"LOG_LEVEL"`
 	Basepath    string `short:"p" long:"basepath" description:"A URL path prefix under which all CloudHub routes will be mounted. (Note: PREFIX_ROUTES has been deprecated. Now, if basepath is set, all routes will be prefixed with it.)" env:"BASE_PATH"`
 	ShowVersion bool   `short:"v" long:"version" description:"Show CloudHub version info"`
 	BuildInfo   cloudhub.BuildInfo
-	Listener    net.Listener
-	handler     http.Handler
 }
 
 func provide(p oauth2.Provider, m oauth2.Mux, ok func() bool) func(func(oauth2.Provider, oauth2.Mux)) {
@@ -247,7 +255,7 @@ func (s *Server) useTLS() bool {
 	return s.Cert != ""
 }
 
-// NewListener will an http or https listener depending useTLS()
+// NewListener will return an http or https listener depending useTLS().
 func (s *Server) NewListener() (net.Listener, error) {
 	addr := net.JoinHostPort(s.Host, strconv.Itoa(s.Port))
 	if !s.useTLS() {
@@ -271,111 +279,11 @@ func (s *Server) NewListener() (net.Listener, error) {
 	listener, err := tls.Listen("tcp", addr, &tls.Config{
 		Certificates: []tls.Certificate{cert},
 	})
-
 	if err != nil {
 		return nil, err
 	}
+
 	return listener, nil
-}
-
-// Serve starts and runs the CloudHub server
-func (s *Server) Serve(ctx context.Context) error {
-	logger := clog.New(clog.ParseLevel(s.LogLevel))
-	_, err := NewCustomLinks(s.CustomLinks)
-	if err != nil {
-		logger.
-			WithField("component", "server").
-			WithField("CustomLink", "invalid").
-			Error(err)
-		return err
-	}
-	service := openService(ctx, s.BuildInfo, s.BoltPath, s.newBuilders(logger), s.ProtoboardsPath, logger, s.useAuth(), s.Auth0SuperAdminOrg, s.TelegrafSystemInterval, s.AddonURLs)
-
-	if !validBasepath(s.Basepath) {
-		err := fmt.Errorf("Invalid basepath, must follow format \"/mybasepath\"")
-		logger.
-			WithField("component", "server").
-			WithField("basepath", "invalid").
-			Error(err)
-		return err
-	}
-
-	providerFuncs := []func(func(oauth2.Provider, oauth2.Mux)){}
-
-	auth := oauth2.NewCookieJWT(s.TokenSecret, s.AuthDuration)
-	providerFuncs = append(providerFuncs, provide(s.githubOAuth(logger, auth)))
-	providerFuncs = append(providerFuncs, provide(s.googleOAuth(logger, auth)))
-	providerFuncs = append(providerFuncs, provide(s.herokuOAuth(logger, auth)))
-	providerFuncs = append(providerFuncs, provide(s.genericOAuth(logger, auth)))
-	providerFuncs = append(providerFuncs, provide(s.auth0OAuth(logger, auth)))
-
-	s.handler = NewMux(MuxOpts{
-		Develop:       s.Develop,
-		Auth:          auth,
-		Logger:        logger,
-		UseAuth:       s.useAuth(),
-		ProviderFuncs: providerFuncs,
-		Basepath:      s.Basepath,
-		StatusFeedURL: s.StatusFeedURL,
-		CustomLinks:   s.CustomLinks,
-		PprofEnabled:  s.PprofEnabled,
-		DisableGZip:   s.DisableGZip,
-		AddonURLs:     s.AddonURLs,
-		AddonTokens:   s.AddonTokens,
-	}, service)
-
-	// Add CloudHub's version header to all requests
-	s.handler = Version(s.BuildInfo.Version, s.handler)
-
-	if s.useTLS() {
-		// Add HSTS to instruct all browsers to change from http to https
-		s.handler = HSTS(s.handler)
-	}
-
-	listener, err := s.NewListener()
-	if err != nil {
-		logger.
-			WithField("component", "server").
-			Error(err)
-		return err
-	}
-	s.Listener = listener
-
-	// Using a log writer for http server logging
-	w := logger.Writer()
-	defer w.Close()
-	stdLog := log.New(w, "", 0)
-
-	httpServer := &graceful.Server{
-		Server: &http.Server{
-			ErrorLog: stdLog,
-			Handler:  s.handler,
-		},
-		Logger:       stdLog,
-		TCPKeepAlive: 5 * time.Second,
-	}
-	httpServer.SetKeepAlivesEnabled(true)
-
-	scheme := "http"
-	if s.useTLS() {
-		scheme = "https"
-	}
-	logger.
-		WithField("component", "server").
-		Info("Serving CloudHub at ", scheme, "://", s.Listener.Addr())
-
-	if err := httpServer.Serve(s.Listener); err != nil {
-		logger.
-			WithField("component", "server").
-			Error(err)
-		return err
-	}
-
-	logger.
-		WithField("component", "server").
-		Info("Stopped serving CloudHub at ", scheme, "://", s.Listener.Addr())
-
-	return nil
 }
 
 type builders struct {
@@ -427,50 +335,154 @@ func (s *Server) newBuilders(logger cloudhub.Logger) builders {
 	}
 }
 
-func openService(ctx context.Context, buildInfo cloudhub.BuildInfo, boltPath string, builder builders, protoboardsPath string, logger cloudhub.Logger, useAuth bool, auth0SuperAdminOrg string, telegrafSystemInterval time.Duration, addonURLs map[string]string) Service {
-
-	db := bolt.NewClient()
-	db.Path = boltPath
-
-	if err := db.Open(ctx, logger, buildInfo, bolt.WithBackup()); err != nil {
+// Serve starts and runs the CloudHub server
+func (s *Server) Serve(ctx context.Context) {
+	logger := clog.New(clog.ParseLevel(s.LogLevel))
+	customLinks, err := NewCustomLinks(s.CustomLinks)
+	if err != nil {
 		logger.
-			WithField("component", "boltstore").
+			WithField("component", "server").
+			WithField("CustomLink", "invalid").
 			Error(err)
+		return
+	}
+
+	var db kv.Store
+	if len(s.EtcdEndpoints) == 0 {
+		db, err = bolt.NewClient(ctx,
+			bolt.WithPath(s.BoltPath),
+			bolt.WithLogger(logger),
+			bolt.WithBuildInfo(s.BuildInfo),
+		)
+		if err != nil {
+			logger.Error("Unable to create bolt client", err)
+			os.Exit(1)
+		}
+
+	} else {
+		db, err = etcd.NewClient(ctx,
+			etcd.WithEndpoints(s.EtcdEndpoints),
+			etcd.WithLogin(s.EtcdUsername, s.EtcdPassword),
+			etcd.WithRequestTimeout(s.EtcdRequestTimeout),
+			etcd.WithDialTimeout(s.EtcdDialTimeout),
+			etcd.WithLogger(logger),
+		)
+		if err != nil {
+			logger.Error("Unable to create etcd client", err)
+			os.Exit(1)
+		}
+	}
+	
+	service := openService(ctx, db, s.newBuilders(logger), logger, s.useAuth(), s.AddonURLs)
+	service.SuperAdminProviderGroups = superAdminProviderGroups{
+		auth0: s.Auth0SuperAdminOrg,
+	}
+	service.Env = cloudhub.Environment{
+		TelegrafSystemInterval: s.TelegrafSystemInterval,
+	}
+
+	if !validBasepath(s.Basepath) {
+		err := fmt.Errorf("Invalid basepath, must follow format \"/mybasepath\"")
+		logger.
+			WithField("component", "server").
+			WithField("basepath", "invalid").
+			Error(err)
+		return
+	}
+
+	auth := oauth2.NewCookieJWT(s.TokenSecret, s.AuthDuration)
+	providerFuncs := []func(func(oauth2.Provider, oauth2.Mux)){
+		provide(s.githubOAuth(logger, auth)),
+		provide(s.googleOAuth(logger, auth)),
+		provide(s.herokuOAuth(logger, auth)),
+		provide(s.genericOAuth(logger, auth)),
+		provide(s.auth0OAuth(logger, auth)),
+	}
+
+	handler := NewMux(MuxOpts{
+		Develop:       s.Develop,
+		Auth:          auth,
+		Logger:        logger,
+		UseAuth:       s.useAuth(),
+		ProviderFuncs: providerFuncs,
+		Basepath:      s.Basepath,
+		StatusFeedURL: s.StatusFeedURL,
+		CustomLinks:   customLinks,
+		PprofEnabled:  s.PprofEnabled,
+		DisableGZip:   s.DisableGZip,
+		AddonURLs:     s.AddonURLs,
+		AddonTokens:   s.AddonTokens,
+	}, service)
+
+	// Add CloudHub's version header to all requests
+	handler = version(s.BuildInfo.Version, handler)
+
+	if s.useTLS() {
+		// Add HSTS to instruct all browsers to change from http to https
+		handler = hsts(handler)
+	}
+
+	// Using a log writer for http server logging
+	w := logger.Writer()
+	defer w.Close()
+	stdLog := log.New(w, "", 0)
+
+	httpServer := &http.Server{
+		ErrorLog:    stdLog,
+		Handler:     handler,
+		IdleTimeout: 5 * time.Second,
+	}
+	httpServer.SetKeepAlivesEnabled(true)
+
+	if !s.ReportingDisabled {
+		go reportUsageStats(s.BuildInfo, logger)
+	}
+	scheme := "http"
+	if s.useTLS() {
+		scheme = "https"
+	}
+
+	listener, err := s.NewListener()
+	if err != nil {
+		logger.
+			WithField("component", "server").
+			Error(err)
+		return
+	}
+	defer listener.Close()
+
+	logger.
+		WithField("component", "server").
+		Info("Serving cloudhub at ", scheme, "://", listener.Addr())
+
+	if err := httpServer.Serve(listener); err != nil {
+		logger.
+			WithField("component", "server").
+			Error(err)
+		return
+	}
+
+	logger.
+		WithField("component", "server").
+		Info("Stopped serving cloudhub at ", scheme, "://", listener.Addr())
+}
+
+func openService(ctx context.Context, db kv.Store, builder builders, logger cloudhub.Logger, useAuth bool, addonURLs map[string]string) Service {
+	svc, err := kv.NewService(ctx, db, kv.WithLogger(logger))
+	if err != nil {
+		logger.Error("Unable to create kv service", err)
 		os.Exit(1)
 	}
 
-	layouts, err := builder.Layouts.Build(db.LayoutsStore)
+	dashboards, err := builder.Dashboards.Build(svc.DashboardsStore())
 	if err != nil {
 		logger.
-			WithField("component", "LayoutsStore").
-			Error("Unable to construct a MultiLayoutsStore", err)
-		os.Exit(1)
-	}
-
-	dashboards, err := builder.Dashboards.Build(db.DashboardsStore)
-	if err != nil {
-		logger.
-			WithField("component", "DashboardsStorauth0SuperAdminOrge").
+			WithField("component", "DashboardsStore").
 			Error("Unable to construct a MultiDashboardsStore", err)
 		os.Exit(1)
 	}
-	sources, err := builder.Sources.Build(db.SourcesStore)
-	if err != nil {
-		logger.
-			WithField("component", "SourcesStore").
-			Error("Unable to construct a MultiSourcesStore", err)
-		os.Exit(1)
-	}
 
-	kapacitors, err := builder.Kapacitors.Build(db.ServersStore)
-	if err != nil {
-		logger.
-			WithField("component", "KapacitorStore").
-			Error("Unable to construct a MultiKapacitorStore", err)
-		os.Exit(1)
-	}
-
-	organizations, err := builder.Organizations.Build(db.OrganizationsStore)
+	organizations, err := builder.Organizations.Build(svc.OrganizationsStore())
 	if err != nil {
 		logger.
 			WithField("component", "OrganizationsStore").
@@ -478,7 +490,31 @@ func openService(ctx context.Context, buildInfo cloudhub.BuildInfo, boltPath str
 		os.Exit(1)
 	}
 
+	kapacitors, err := builder.Kapacitors.Build(svc.ServersStore())
+	if err != nil {
+		logger.
+			WithField("component", "KapacitorStore").
+			Error("Unable to construct a MultiKapacitorStore", err)
+		os.Exit(1)
+	}
+
+	sources, err := builder.Sources.Build(svc.SourcesStore())
+	if err != nil {
+		logger.
+			WithField("component", "SourcesStore").
+			Error("Unable to construct a MultiSourcesStore", err)
+		os.Exit(1)
+	}
+
 	protoboards, err := builder.Protoboards.Build()
+	if err != nil {
+		logger.
+			WithField("component", "Protoboards").
+			Error("Unable to construct a MultiLayoutsStore", err)
+		os.Exit(1)
+	}
+
+	layouts, err := builder.Layouts.Build()
 	if err != nil {
 		logger.
 			WithField("component", "LayoutsStore").
@@ -495,22 +531,60 @@ func openService(ctx context.Context, buildInfo cloudhub.BuildInfo, boltPath str
 			ServersStore:            kapacitors,
 			OrganizationsStore:      organizations,
 			ProtoboardsStore:        protoboards,
-			UsersStore:              db.UsersStore,
-			ConfigStore:             db.ConfigStore,
-			MappingsStore:           db.MappingsStore,
-			OrganizationConfigStore: db.OrganizationConfigStore,
-			CellService:             db,
+			UsersStore:              svc.UsersStore(),
+			ConfigStore:             svc.ConfigStore(),
+			MappingsStore:           svc.MappingsStore(),
+			OrganizationConfigStore: svc.OrganizationConfigStore(),
 		},
 		Logger:                   logger,
 		UseAuth:                  useAuth,
 		Databases:                &influx.Client{Logger: logger},
-		SuperAdminProviderGroups: superAdminProviderGroups{auth0: auth0SuperAdminOrg},
-		Env:                      cloudhub.Environment{TelegrafSystemInterval: telegrafSystemInterval},
 		AddonURLs:                addonURLs,
 	}
 }
 
+// reportUsageStats starts periodic server reporting.
+func reportUsageStats(bi cloudhub.BuildInfo, logger cloudhub.Logger) {
+	rand.Seed(time.Now().UTC().UnixNano())
+	serverID := strconv.FormatUint(uint64(rand.Int63()), 10)
+	reporter := client.New("")
+	values := client.Values{
+		"os":         runtime.GOOS,
+		"arch":       runtime.GOARCH,
+		"version":    bi.Version,
+		"cluster_id": serverID,
+		"uptime":     time.Since(startTime).Seconds(),
+	}
+	l := logger.WithField("component", "usage").
+		WithField("reporting_addr", reporter.URL).
+		WithField("freq", "24h").
+		WithField("stats", "os,arch,version,cluster_id,uptime")
+	l.Info("Reporting usage stats")
+	reporter.Save(clientUsage(values))
+
+	ticker := time.NewTicker(24 * time.Hour)
+	defer ticker.Stop()
+	for {
+		<-ticker.C
+		values["uptime"] = time.Since(startTime).Seconds()
+		l.Debug("Reporting usage stats")
+		go reporter.Save(clientUsage(values))
+	}
+}
+
+func clientUsage(values client.Values) *client.Usage {
+	return &client.Usage{
+		Product: "cloudhub-ng",
+		Data: []client.UsageData{
+			{
+				Values: values,
+			},
+		},
+	}
+}
+
+var re = regexp.MustCompile(`(\/{1}[\w-]+)+`)
+
 func validBasepath(basepath string) bool {
-	re := regexp.MustCompile(`(\/{1}[\w-]+)+`)
 	return re.ReplaceAllLiteralString(basepath, "") == ""
 }

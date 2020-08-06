@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"strconv"
+	"fmt"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
@@ -24,12 +25,17 @@ func (s *StoreCommand) Execute(args []string) error {
 	}
 	defer c.Close()
 
+	svc, err := NewService(c)
+	if err != nil {
+		return err
+	}
+
 	ctx := context.Background()
 	w := NewTabWriter()
 	
 	switch s.StoreType {
 	case "User":
-		users, err := c.UsersStore.All(ctx)
+		users, err := svc.UsersStore().All(ctx)
 		if err != nil {
 			return err
 		}
@@ -39,7 +45,7 @@ func (s *StoreCommand) Execute(args []string) error {
 			WriteUser(w, &user)
 		}
 	case "Servers":
-		servers, err := c.ServersStore.All(ctx)
+		servers, err := svc.ServersStore().All(ctx)
 		if err != nil {
 			return err
 		}
@@ -49,29 +55,30 @@ func (s *StoreCommand) Execute(args []string) error {
 			WriteServer(w, &server)
 		}
 	case "Layouts":
-		layouts, err := c.LayoutsStore.All(ctx)
-		if err != nil {
-			return err
-		}
+		fmt.Println("Layouts are no longer supported.")
+		// layouts, err := svc.LayoutsStore().All(ctx)
+		// if err != nil {
+		// 	return err
+		// }
 
-		if s.ID == 0 {
-			WriteLayoutsHeaders(w)
-			for _, layout := range layouts {
-				WriteLayout(w, &layout)
-			}
-		} else {
-			WriteCellHeaders(w)
-			id := strconv.Itoa(s.ID)
+		// if s.ID == 0 {
+		// 	WriteLayoutsHeaders(w)
+		// 	for _, layout := range layouts {
+		// 		WriteLayout(w, &layout)
+		// 	}
+		// } else {
+		// 	WriteCellHeaders(w)
+		// 	id := strconv.Itoa(s.ID)
 
-			for _, layout := range layouts {
-				if id == layout.ID {
-					WriteLalyoutCell(w, &layout)
-					break
-				}
-			}
-		}
+		// 	for _, layout := range layouts {
+		// 		if id == layout.ID {
+		// 			WriteLalyoutCell(w, &layout)
+		// 			break
+		// 		}
+		// 	}
+		// }
 	case "Dashboards":
-		dashboards, err := c.DashboardsStore.All(ctx)
+		dashboards, err := svc.DashboardsStore().All(ctx)
 		if err != nil {
 			return err
 		}
@@ -93,7 +100,7 @@ func (s *StoreCommand) Execute(args []string) error {
 			}
 		}
 	case "Organizations":
-		organizations, err := c.OrganizationsStore.All(ctx)
+		organizations, err := svc.OrganizationsStore().All(ctx)
 		if err != nil {
 			return err
 		}
@@ -104,7 +111,7 @@ func (s *StoreCommand) Execute(args []string) error {
 		}
 		
 	case "Config":
-		configs, err := c.ConfigStore.All(ctx)
+		configs, err := svc.ConfigStore().All(ctx)
 		if err != nil {
 			return err
 		}
@@ -114,7 +121,7 @@ func (s *StoreCommand) Execute(args []string) error {
 			WriteConfig(w, &config)
 		}
 	case "Mappings":
-		mappings, err := c.MappingsStore.All(ctx)
+		mappings, err := svc.MappingsStore().All(ctx)
 		if err != nil {
 			return err
 		}
@@ -124,7 +131,7 @@ func (s *StoreCommand) Execute(args []string) error {
 			WriteMappings(w, &mapping)
 		}
 	case "OrganizationConfig":
-		organizationConfigs, err := c.OrganizationConfigStore.All(ctx)
+		organizationConfigs, err := svc.OrganizationConfigStore().All(ctx)
 		if err != nil {
 			return err
 		}

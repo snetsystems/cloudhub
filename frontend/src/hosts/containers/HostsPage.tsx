@@ -373,8 +373,8 @@ export class HostsPage extends PureComponent<Props, State> {
         return x.measurement < y.measurement
           ? -1
           : x.measurement > y.measurement
-            ? 1
-            : 0
+          ? 1
+          : 0
       })
 
     return {filteredLayouts}

@@ -22,7 +22,7 @@ export interface DashTimeV1 {
 }
 
 interface DashboardTimeRange {
-  dashboardID: number
+  dashboardID: string
   defaultGroupBy: string
   format: string
   inputValue: string

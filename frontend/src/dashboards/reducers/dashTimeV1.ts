@@ -4,7 +4,7 @@ import {TimeRange} from 'src/types'
 import {Action, ActionType} from 'src/dashboards/actions'
 
 interface Range extends TimeRange {
-  dashboardID: number
+  dashboardID: string
 }
 
 export interface State {
@@ -26,9 +26,14 @@ export default (state: State = initialState, action: Action) => {
 
     case ActionType.RetainRangesDashboardTimeV1: {
       const {dashboardIDs} = action.payload
-      const ranges = state.ranges.filter(r =>
-        dashboardIDs.includes(r.dashboardID)
-      )
+      let dashboardIDsHash = {}
+      if (Array.isArray(dashboardIDs)) {
+        dashboardIDsHash = dashboardIDs.reduce((accum, id) => {
+          accum[id] = true
+          return accum
+        }, dashboardIDsHash)
+      }
+      const ranges = state.ranges.filter(r => dashboardIDsHash[r.dashboardID])
       return {...state, ranges}
     }
 

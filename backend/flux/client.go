@@ -3,7 +3,7 @@ package flux
 import (
 	"context"
 	"crypto/tls"
-	"fmt"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -62,8 +62,9 @@ func (c *Client) FluxEnabled() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-
-	hc := &http.Client{}
+	hc := &http.Client{
+		Timeout: c.Timeout,
+	}
 	if c.InsecureSkipVerify {
 		hc.Transport = skipVerifyTransport
 	} else {
@@ -108,8 +109,7 @@ func (c *Client) ping(u *url.URL) error {
 	}
 
 	if resp.StatusCode != http.StatusNoContent {
-		var err = fmt.Errorf(string(body))
-		return err
+		return errors.New(string(body))
 	}
 
 	return nil

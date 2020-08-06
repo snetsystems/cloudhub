@@ -4,6 +4,7 @@ import React, {
   CSSProperties,
   ChangeEvent,
   KeyboardEvent,
+  MouseEvent,
 } from 'react'
 import classnames from 'classnames'
 
@@ -26,6 +27,7 @@ interface Props {
   onKeyPress?: (e: KeyboardEvent<HTMLInputElement>) => void
   onKeyUp?: (e: KeyboardEvent<HTMLInputElement>) => void
   onKeyDown?: (e: KeyboardEvent<HTMLInputElement>) => void
+  onMouseDown?: (e: MouseEvent<HTMLInputElement>) => void
   size?: ComponentSize
   icon?: IconFont
   status?: ComponentStatus
@@ -65,6 +67,7 @@ class Input extends Component<Props> {
       onKeyPress,
       onKeyUp,
       onKeyDown,
+      onMouseDown,
     } = this.props
 
     return (
@@ -82,6 +85,7 @@ class Input extends Component<Props> {
           onKeyPress={onKeyPress}
           onKeyUp={onKeyUp}
           onKeyDown={onKeyDown}
+          onMouseDown={onMouseDown}
           className="input-field"
           disabled={status === ComponentStatus.Disabled}
         />

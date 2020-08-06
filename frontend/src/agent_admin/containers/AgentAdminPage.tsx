@@ -9,6 +9,7 @@ import SubSections from 'src/shared/components/SubSections'
 import AgentMinions from 'src/agent_admin/containers/AgentMinions'
 import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
 import AgentControl from 'src/agent_admin/containers/AgentControl'
+import {openShell} from 'src/shared/actions/shell'
 
 // Actions
 import {getMinionKeyListAllAdminAsync} from 'src/agent_admin/actions'
@@ -21,10 +22,12 @@ import {isUserAuthorized, ADMIN_ROLE} from 'src/auth/Authorized'
 
 // Types
 import {
+  Links,
   Source,
   RemoteDataState,
   Notification,
   NotificationFunc,
+  ShellInfo,
 } from 'src/types'
 import {Addon} from 'src/types/auth'
 import {AddonType} from 'src/shared/constants'
@@ -34,6 +37,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import {MinionsObject} from 'src/agent_admin/type'
 
 interface Props {
+  links: Links
   source: Source
   notify: (message: Notification | NotificationFunc) => void
   handleGetMinionKeyListAll: (
@@ -46,6 +50,7 @@ interface Props {
   params: {tab: string}
   handleKeyDown: () => void
   addons: Addon[]
+  openShell: (shell: ShellInfo) => void
 }
 
 interface State {
@@ -55,6 +60,9 @@ interface State {
   minionsObject: MinionsObject
   saltMasterUrl: string
   saltMasterToken: string
+  shellModalVisible: boolean
+  shellAddr: string
+  nodename: string
 }
 
 export interface LoginEvent extends MouseEvent<KeyboardEvent> {
@@ -73,6 +81,9 @@ class AgentAdminPage extends PureComponent<Props, State> {
       minionsObject: {},
       saltMasterUrl: '',
       saltMasterToken: '',
+      shellModalVisible: false,
+      shellAddr: '',
+      nodename: '',
     }
   }
 
@@ -146,6 +157,8 @@ class AgentAdminPage extends PureComponent<Props, State> {
             minionsStatus={minionsStatus}
             handleGetMinionKeyListAll={this.getMinionKeyListAll}
             handleSetMinionStatus={this.setMinionStatus}
+            handleShellModalOpen={this.onClickShellModalOpen}
+            handleShellModalClose={this.onClickShellModalClose}
           />
         ),
       },
@@ -225,6 +238,15 @@ class AgentAdminPage extends PureComponent<Props, State> {
       </Page>
     )
   }
+
+  private onClickShellModalOpen = (shell: ShellInfo) => {
+    this.props.openShell(shell)
+  }
+
+  private onClickShellModalClose = () => {
+    event.preventDefault()
+    this.setState({shellModalVisible: false})
+  }
 }
 
 const mapStateToProps = ({auth: {me}, links: {addons}}) => {
@@ -238,6 +260,7 @@ const mapStateToProps = ({auth: {me}, links: {addons}}) => {
 const mapDispatchToProps = {
   notify: notifyAction,
   handleGetMinionKeyListAll: getMinionKeyListAllAdminAsync,
+  openShell: openShell,
 }
 
 export default connect(

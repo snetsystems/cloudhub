@@ -134,8 +134,11 @@
     "react-onclickoutside": "^5.2.0",
     "react-redux": "^4.4.0",
     "react-resize-detector": "^2.3.0",
+    "react-resize-observer": "^1.1.1",
+    "react-rnd": "^10.2.1",
     "react-router": "^3.0.2",
     "react-router-redux": "^4.0.8",
+    "react-tabs": "^3.1.1",
     "react-tooltip": "^3.2.1",
     "react-virtualized": "^9.18.5",
     "redux": "^3.3.1",
@@ -145,6 +148,8 @@
     "rome": "^2.1.22",
     "src": "^1.1.2",
     "unstated": "^2.1.1",
-    "uuid": "^3.2.1"
+    "uuid": "^3.2.1",
+    "xterm": "^4.7.0",
+    "xterm-addon-fit": "^0.4.0"
   }
 }
