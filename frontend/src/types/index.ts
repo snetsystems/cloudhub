@@ -67,6 +67,7 @@ import {Annotation} from './annotations'
 import {WriteDataMode, QueryUpdateState} from './dataExplorer'
 import {Host, Layout} from './hosts'
 import {Env} from './env'
+import {Shells, ShellInfo, ShellLoad} from './shell'
 
 export {
   Me,
@@ -138,4 +139,7 @@ export {
   Layout,
   QueryType,
   QueryUpdateState,
+  Shells,
+  ShellInfo,
+  ShellLoad,
 }

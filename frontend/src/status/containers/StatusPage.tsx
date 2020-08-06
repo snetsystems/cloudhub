@@ -31,6 +31,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface OwnProps {
   source: Source
+  shellModalVisible: boolean
 }
 
 interface StateProps {
@@ -44,6 +45,13 @@ type Props = StateProps & OwnProps
 
 @ErrorHandling
 class StatusPage extends Component<Props> {
+  constructor(props: Props) {
+    super(props)
+
+    this.state = {
+      shellModalVisible: false,
+    }
+  }
   public render() {
     const {source, onSetTimeZone, timeZone} = this.props
     const cells = fixtureStatusPageCells(source)
