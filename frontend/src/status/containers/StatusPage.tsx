@@ -26,6 +26,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface State {
   cells: Cell[]
+  shellModalVisible: boolean
 }
 
 interface Props {
@@ -41,6 +42,7 @@ class StatusPage extends Component<Props, State> {
 
     this.state = {
       cells: [],
+      shellModalVisible: false,
     }
   }
 
@@ -58,7 +60,7 @@ class StatusPage extends Component<Props, State> {
           <Page.Header.Left>
             <Page.Title title="Status" />
           </Page.Header.Left>
-          <Page.Header.Right showSourceIndicator={true} />
+          <Page.Header.Right showSourceIndicator={true}></Page.Header.Right>
         </Page.Header>
         <Page.Contents fullWidth={true}>
           <div className="dashboard container-fluid full-width">

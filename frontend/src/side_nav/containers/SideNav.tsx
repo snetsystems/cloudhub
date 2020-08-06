@@ -17,7 +17,9 @@ import {DEFAULT_HOME_PAGE, AddonType} from 'src/shared/constants'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import {Params, Location, Me} from 'src/types/sideNav'
-import {Source, Links} from 'src/types'
+import {Source, Links, Shells} from 'src/types'
+
+import {openShell, closeShell} from 'src/shared/actions/shell'
 
 interface Props {
   sources: Source[]
@@ -28,6 +30,9 @@ interface Props {
   logoutLink?: string
   links?: Links
   me: Me
+  shell: Shells
+  openShell: (address?: string) => Shells
+  closeShell: () => Shells
 }
 
 @ErrorHandling
@@ -45,6 +50,11 @@ class SideNav extends PureComponent<Props> {
       }) !== -1
       ? true
       : false
+  }
+
+  private toggleShellVisible = () => {
+    const {shell, closeShell, openShell} = this.props
+    return shell.isVisible ? closeShell() : openShell()
   }
 
   public render() {
@@ -252,6 +262,17 @@ class SideNav extends PureComponent<Props> {
             </NavListItem> */}
           </NavBlock>
         ) : null}
+        <div
+          className={`sidebar--item align-bottom ${
+            this.props.shell.isVisible ? 'active' : ''
+          }`}
+          onClick={this.toggleShellVisible}
+        >
+          <div className="sidebar--square">
+            <span className="sidebar--icon icon bash"></span>
+          </div>
+        </div>
+
         <div className="sidebar--item cursor-default symbol-company" />
       </nav>
     )
@@ -265,6 +286,7 @@ const mapStateToProps = ({
     ephemeral: {inPresentationMode},
   },
   links,
+  shell,
 }) => ({
   sources,
   isHidden: inPresentationMode,
@@ -272,6 +294,12 @@ const mapStateToProps = ({
   logoutLink,
   links,
   me,
+  shell,
 })
 
-export default connect(mapStateToProps)(withRouter(SideNav))
+const mapDispatchToProps = {
+  openShell: openShell,
+  closeShell: closeShell,
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(withRouter(SideNav))
