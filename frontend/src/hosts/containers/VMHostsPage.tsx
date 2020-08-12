@@ -177,6 +177,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     name: '',
   })
   const [layout, setLayout] = useState([])
+  const [vCenters, setVCenters] = useState({})
 
   const handleChangeTarget = (e: {text: string}): void => {
     setTarget(e.text)
@@ -432,55 +433,101 @@ const VMHostsPage = (props: Props): JSX.Element => {
     // }
   }
 
-  const vCenterData = require('./dummy.json')
-  let vcMinion: any[] = Object.values(vCenterData.return[0])
-  let vcIpAddress = vcMinion[0].vcenter
-  let vcCpuUsage = []
-  let vcMemoryUsage = []
-  let vcStorgeUsage = []
-  let vcClustersCount = []
-  let vcHostCount = []
-  let vcVmCount = []
-  let appHostData = [vCenterData].reduce(
-    acc => {
-      const datacenters = vcMinion[0].datacenters
-      datacenters.reduce((acc, datacenter, i) => {
-        vcCpuUsage.push(datacenter.cpu_usage)
-        vcMemoryUsage.push(datacenter.memory_usage)
-        vcStorgeUsage.push(datacenter.storage_usage)
-        vcClustersCount.push(datacenter.cluster_count)
-        vcHostCount.push(datacenter.host_count)
-        vcVmCount.push(datacenter.vm_count)
-        const datacenterName = datacenter.name
-        acc[vcIpAddress]['nodes'][datacenterName] = {
-          label: datacenterName,
-          index: i,
-          level: 1,
-          type: 'datacenter',
-          nodes: {},
-          ...datacenter,
-        }
-        const clusters = datacenter.clusters
-        if (clusters && clusters.length > 0) {
-          clusters.reduce((acc, cluster, i) => {
-            const clusterName = cluster.name
-            acc[vcIpAddress]['nodes'][datacenterName]['nodes'][clusterName] = {
-              label: clusterName,
-              index: i,
-              level: 2,
-              type: 'cluster',
-              nodes: {},
-              ...cluster,
-            }
-            const hosts = cluster.hosts
+  const getVCenterInfo = minionId => {
+    let vCenterData
+    if (minionId === 'minion06') {
+      vCenterData = require('./dummy.json')
+    } else if (minionId === 'minion03') {
+      vCenterData = require('./dummy2.json')
+    }
+
+    let vcMinion: any[] = Object.values(vCenterData.return[0])
+    let vcIpAddress = vcMinion[0].vcenter
+    let vcCpuUsage = []
+    let vcMemoryUsage = []
+    let vcStorgeUsage = []
+    let vcClustersCount = []
+    let vcHostCount = []
+    let vcVmCount = []
+    let vcenter = [vCenterData].reduce(
+      acc => {
+        const datacenters = vcMinion[0].datacenters
+        datacenters.reduce((acc, datacenter, i) => {
+          vcCpuUsage.push(datacenter.cpu_usage)
+          vcMemoryUsage.push(datacenter.memory_usage)
+          vcStorgeUsage.push(datacenter.storage_usage)
+          vcClustersCount.push(datacenter.cluster_count)
+          vcHostCount.push(datacenter.host_count)
+          vcVmCount.push(datacenter.vm_count)
+
+          const datacenterName = datacenter.name
+          acc[vcIpAddress]['nodes'][datacenterName] = {
+            label: datacenterName,
+            index: i,
+            level: 1,
+            type: 'datacenter',
+            nodes: {},
+            ...datacenter,
+          }
+
+          const clusters = datacenter.clusters
+          if (clusters && clusters.length > 0) {
+            clusters.reduce((acc, cluster, i) => {
+              const clusterName = cluster.name
+              acc[vcIpAddress]['nodes'][datacenterName]['nodes'][
+                clusterName
+              ] = {
+                label: clusterName,
+                index: i,
+                level: 2,
+                type: 'cluster',
+                nodes: {},
+                ...cluster,
+              }
+
+              const hosts = cluster.hosts
+              hosts.reduce((acc, host, i) => {
+                const hostName = host.name
+                acc[vcIpAddress]['nodes'][datacenterName]['nodes'][clusterName][
+                  'nodes'
+                ][hostName] = {
+                  label: hostName,
+                  index: i,
+                  level: 3,
+                  type: 'host',
+                  nodes: {},
+                  ...host,
+                }
+
+                const vms = host.vms
+                vms.reduce((acc, vm, i) => {
+                  const vmName = vm.name
+                  acc[vcIpAddress]['nodes'][datacenterName]['nodes'][
+                    clusterName
+                  ]['nodes'][hostName]['nodes'][vmName] = {
+                    label: vmName,
+                    index: i,
+                    level: 4,
+                    type: 'vm',
+                    ...vm,
+                  }
+
+                  return acc
+                }, acc)
+
+                return acc
+              }, acc)
+
+              return acc
+            }, acc)
+          } else {
+            const hosts = datacenter.hosts
             hosts.reduce((acc, host, i) => {
               const hostName = host.name
-              acc[vcIpAddress]['nodes'][datacenterName]['nodes'][clusterName][
-                'nodes'
-              ][hostName] = {
+              acc[vcIpAddress]['nodes'][datacenterName]['nodes'][hostName] = {
                 label: hostName,
                 index: i,
-                level: 3,
+                level: 2,
                 type: 'host',
                 nodes: {},
                 ...host,
@@ -488,75 +535,51 @@ const VMHostsPage = (props: Props): JSX.Element => {
               const vms = host.vms
               vms.reduce((acc, vm, i) => {
                 const vmName = vm.name
-                acc[vcIpAddress]['nodes'][datacenterName]['nodes'][clusterName][
+                acc[vcIpAddress]['nodes'][datacenterName]['nodes'][hostName][
                   'nodes'
-                ][hostName]['nodes'][vmName] = {
+                ][vmName] = {
                   label: vmName,
                   index: i,
-                  level: 4,
+                  level: 3,
                   type: 'vm',
                   ...vm,
                 }
+
                 return acc
               }, acc)
-              return acc
-            }, acc)
-            return acc
-          }, acc)
-        } else {
-          const hosts = datacenter.hosts
-          hosts.reduce((acc, host, i) => {
-            const hostName = host.name
-            acc[vcIpAddress]['nodes'][datacenterName]['nodes'][hostName] = {
-              label: hostName,
-              index: i,
-              level: 2,
-              type: 'host',
-              nodes: {},
-              ...host,
-            }
-            const vms = host.vms
-            vms.reduce((acc, vm, i) => {
-              const vmName = vm.name
-              acc[vcIpAddress]['nodes'][datacenterName]['nodes'][hostName][
-                'nodes'
-              ][vmName] = {
-                label: vmName,
-                index: i,
-                level: 3,
-                type: 'vm',
-                ...vm,
-              }
-              return acc
-            }, acc)
-            return acc
-          }, acc)
-        }
-        return acc
-      }, acc)
-      return acc
-    },
-    {
-      [vcIpAddress]: {
-        label: vcIpAddress,
-        index: 0,
-        level: 0,
-        type: 'vcenter',
-        nodes: {},
-      },
-    }
-  )
-  appHostData[vcIpAddress] = {
-    ...appHostData[vcIpAddress],
-    cpu_usage: vcCpuUsage.reduce((sum, c) => sum + c),
-    memory_usage: vcMemoryUsage.reduce((sum, c) => sum + c),
-    storage_usage: vcStorgeUsage.reduce((sum, c) => sum + c),
-    cluster_count: vcClustersCount.reduce((sum, c) => sum + c),
-    host_count: vcHostCount.reduce((sum, c) => sum + c),
-    vm_count: vcVmCount.reduce((sum, c) => sum + c),
-  }
 
-  console.log({appHostData})
+              return acc
+            }, acc)
+          }
+
+          return acc
+        }, acc)
+
+        return acc
+      },
+      {
+        [vcIpAddress]: {
+          label: vcIpAddress,
+          index: 0,
+          level: 0,
+          type: 'vcenter',
+          nodes: {},
+        },
+      }
+    )
+
+    vcenter[vcIpAddress] = {
+      ...vcenter[vcIpAddress],
+      cpu_usage: vcCpuUsage.reduce((sum, c) => sum + c),
+      memory_usage: vcMemoryUsage.reduce((sum, c) => sum + c),
+      storage_usage: vcStorgeUsage.reduce((sum, c) => sum + c),
+      cluster_count: vcClustersCount.reduce((sum, c) => sum + c),
+      host_count: vcHostCount.reduce((sum, c) => sum + c),
+      vm_count: vcVmCount.reduce((sum, c) => sum + c),
+    }
+
+    return vcenter
+  }
 
   const CellTable = ({cell}): JSX.Element => {
     switch (cell.i) {
@@ -661,7 +684,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
         render: () => (
           <FancyScrollbar>
             <TreeMenu
-              data={appHostData}
+              data={vCenters}
               onClickItem={onSelectHost}
               // initialActiveKey={}
               // initialOpenNodes={}
@@ -708,6 +731,19 @@ const VMHostsPage = (props: Props): JSX.Element => {
       },
     ]
   }
+
+  useEffect(() => {
+    /////////////// getMinion Api Call ///////////////////
+    const getMinions = ['minion03', 'minion06']
+    /////////////// getMinion Api Call ///////////////////
+    let vcenter = getMinions.reduce((vc, minion) => {
+      const vCenterInfo = getVCenterInfo(minion)
+      Object.assign(vc, vCenterInfo)
+      return vc
+    }, {})
+
+    setVCenters(vcenter)
+  }, [])
 
   return (
     <div className="vm-status-page__container">
