@@ -17,6 +17,8 @@ import {Button, ButtonShape, IconFont, Page} from 'src/reusable_ui'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import GraphTips from 'src/shared/components/GraphTips'
+import VMHostPage from 'src/hosts/containers/VMHostsPage'
+import {Tab, Tabs, TabList, TabPanel} from 'react-tabs'
 
 // APIs
 import {
@@ -262,11 +264,22 @@ export class HostsPage extends PureComponent<Props, State> {
           </Page.Header.Right>
         </Page.Header>
         <Page.Contents scrollable={true}>
-          <Threesizer
-            orientation={HANDLE_HORIZONTAL}
-            divisions={this.horizontalDivisions}
-            onResize={this.handleResize}
-          />
+          <Tabs defaultIndex={1}>
+            <TabList>
+              <Tab key={'Host'}>Host</Tab>
+              <Tab key={'VMware'}>VMware</Tab>
+            </TabList>
+            <TabPanel key={'Host'}>
+              <Threesizer
+                orientation={HANDLE_HORIZONTAL}
+                divisions={this.horizontalDivisions}
+                onResize={this.handleResize}
+              />
+            </TabPanel>
+            <TabPanel key={'VMware'}>
+              <VMHostPage />
+            </TabPanel>
+          </Tabs>
         </Page.Contents>
       </Page>
     )

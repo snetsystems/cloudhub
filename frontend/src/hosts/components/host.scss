@@ -1,0 +1,16 @@
+.vm-status-page__container {
+  height: 100%;
+
+  .dash-graph--heading {
+    width: 100%;
+  }
+
+  .panel {
+    .panel-heading {
+      padding: 5px 5px 0 5px;
+    }
+    .panel-body {
+      padding: 5px;
+    }
+  }
+}
