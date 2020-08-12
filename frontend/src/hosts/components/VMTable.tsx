@@ -18,7 +18,7 @@ interface Props {
   cellBackgroundColor: string
 }
 
-const VMHostsTable = (props: Props): JSX.Element => {
+const VMTable = (props: Props): JSX.Element => {
   const {isEditable, cellTextColor, cellBackgroundColor} = props
   const Header = (): JSX.Element => {
     return (
@@ -144,7 +144,7 @@ const VMHostsTable = (props: Props): JSX.Element => {
           cellTextColor={cellTextColor}
           cellBackgroundColor={cellBackgroundColor}
           value={[]}
-          name={'Host(EXSi)'}
+          name={'Virtual Machine'}
           sizeVisible={false}
         />
         <HeadingBar
@@ -166,4 +166,4 @@ const VMHostsTable = (props: Props): JSX.Element => {
   )
 }
 
-export default VMHostsTable
+export default VMTable

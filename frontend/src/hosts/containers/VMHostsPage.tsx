@@ -1,5 +1,5 @@
 // Library
-import React, {useState, ChangeEvent} from 'react'
+import React, {useState, useEffect, ChangeEvent} from 'react'
 import {connect} from 'react-redux'
 import _ from 'lodash'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
@@ -8,7 +8,6 @@ import {ComponentStatus} from 'src/reusable_ui/types'
 
 // Component
 import {Button, ComponentSize, Form, Input, InputType} from 'src/reusable_ui'
-const GridLayout = WidthProvider(ReactGridLayout)
 
 import {cellLayoutInfo} from 'src/addon/128t/containers/SwanSdplexStatusPage'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
@@ -22,9 +21,12 @@ import DatacentersTable from 'src/hosts/components/DatacentersTable'
 import DatacenterTable from 'src/hosts/components/DatacenterTable'
 import DatastoresTable from 'src/hosts/components/DatastoresTable'
 import ClustersTable from 'src/hosts/components/ClustersTable'
+import VMHostsTable from 'src/hosts/components/VMHostsTable'
+import VMTable from 'src/hosts/components/VMTable'
 
 // Type
 import {TimeRange, Cell, Template, Source} from 'src/types'
+import {Item} from 'src/reusable_ui/components/treemenu/TreeMenu/walk'
 
 // Constants
 import {
@@ -42,6 +44,8 @@ import {
 
 // ErrorHandler
 // import {ErrorHandling} from 'src/shared/decorators/errors'
+
+const GridLayout = WidthProvider(ReactGridLayout)
 
 interface ConnectionFormProps {
   target: string
@@ -146,6 +150,10 @@ const ConnectForm = ({
 }
 interface Props {}
 
+interface VM extends Item {
+  type?: string
+}
+
 const VMHostsPage = (props: Props): JSX.Element => {
   const {} = props
   const intervalItems = ['30s', '1m', '5m']
@@ -160,6 +168,15 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const [password, setPassword] = useState('')
   const [protocol, setProtocol] = useState('https')
   const [interval, setInterval] = useState('1m')
+  const [focusedHost, setFocusedHost] = useState<VM>({
+    hasNodes: false,
+    isOpen: false,
+    level: 0,
+    key: '',
+    label: '',
+    name: '',
+  })
+  const [layout, setLayout] = useState([])
 
   const handleChangeTarget = (e: {text: string}): void => {
     setTarget(e.text)
@@ -201,52 +218,160 @@ const VMHostsPage = (props: Props): JSX.Element => {
     console.log(target, address, user, password, port, protocol, interval)
   }
 
-  const initCellsLayout: cellLayoutInfo[] = [
-    {
-      i: 'vCenter',
-      x: 0,
-      y: 0,
-      w: 12,
-      h: 2,
-    },
-    {
-      i: 'Charts',
-      x: 0,
-      y: 1,
-      w: 12,
-      h: 4,
-    },
-    {
-      i: 'Datacenters',
-      x: 0,
-      y: 6,
-      w: 12,
-      h: 2,
-    },
-
-    {
-      i: 'Datacenter',
-      x: 0,
-      y: 6,
-      w: 12,
-      h: 2,
-    },
-    {
-      i: 'Datastores',
-      x: 0,
-      y: 6,
-      w: 12,
-      h: 2,
-    },
-
-    {
-      i: 'Clusters',
-      x: 0,
-      y: 6,
-      w: 12,
-      h: 2,
-    },
-  ]
+  useEffect(() => {
+    console.log(focusedHost.type)
+    switch (focusedHost.type) {
+      case 'vcenter': {
+        return setLayout([
+          {
+            i: 'vcenter',
+            x: 0,
+            y: 0,
+            w: 12,
+            h: 3,
+          },
+          {
+            i: 'charts',
+            x: 0,
+            y: 0,
+            w: 12,
+            h: 3,
+          },
+          {
+            i: 'datacenters',
+            x: 0,
+            y: 0,
+            w: 12,
+            h: 3,
+          },
+        ])
+      }
+      case 'datacenter': {
+        return setLayout([
+          {
+            i: 'datacenters',
+            x: 0,
+            y: 0,
+            w: 12,
+            h: 3,
+          },
+          {
+            i: 'charts',
+            x: 0,
+            y: 0,
+            w: 12,
+            h: 3,
+          },
+          {
+            i: 'clusters',
+            x: 0,
+            y: 0,
+            w: 12,
+            h: 3,
+          },
+          {
+            i: 'vmhost',
+            x: 0,
+            y: 0,
+            w: 12,
+            h: 3,
+          },
+          {
+            i: 'datastores',
+            x: 0,
+            y: 0,
+            w: 12,
+            h: 3,
+          },
+        ])
+      }
+      case 'cluster': {
+        return setLayout([
+          {
+            i: 'clusters',
+            x: 0,
+            y: 0,
+            w: 12,
+            h: 3,
+          },
+          {
+            i: 'vmhost',
+            x: 0,
+            y: 0,
+            w: 12,
+            h: 3,
+          },
+          {
+            i: 'datastores',
+            x: 0,
+            y: 0,
+            w: 12,
+            h: 3,
+          },
+        ])
+      }
+      case 'host': {
+        return setLayout([
+          {
+            i: 'datacenters',
+            x: 0,
+            y: 0,
+            w: 12,
+            h: 3,
+          },
+          {
+            i: 'charts',
+            x: 0,
+            y: 0,
+            w: 12,
+            h: 3,
+          },
+          {
+            i: 'clusters',
+            x: 0,
+            y: 0,
+            w: 12,
+            h: 3,
+          },
+          {
+            i: 'vmhost',
+            x: 0,
+            y: 0,
+            w: 12,
+            h: 3,
+          },
+          {
+            i: 'datastores',
+            x: 0,
+            y: 0,
+            w: 12,
+            h: 3,
+          },
+        ])
+      }
+      case 'vm': {
+        return setLayout([
+          {
+            i: 'vm',
+            x: 0,
+            y: 0,
+            w: 12,
+            h: 3,
+          },
+          {
+            i: 'charts',
+            x: 0,
+            y: 0,
+            w: 12,
+            h: 3,
+          },
+        ])
+      }
+      default: {
+        return
+      }
+    }
+  }, [focusedHost])
 
   const cellBackgroundColor: string = DEFAULT_CELL_BG_COLOR
   const cellTextColor: string = DEFAULT_CELL_TEXT_COLOR
@@ -435,7 +560,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
   const CellTable = ({cell}): JSX.Element => {
     switch (cell.i) {
-      case 'vCenter': {
+      case 'vcenter': {
         return (
           <VcenterTable
             isEditable={true}
@@ -444,7 +569,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
           />
         )
       }
-      case 'Charts': {
+      case 'charts': {
         return (
           <>
             <h2 className={`dash-graph--name grid-layout--draggable`}>
@@ -453,7 +578,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
           </>
         )
       }
-      case 'Datacenters': {
+      case 'datacenters': {
         return (
           <DatacentersTable
             isEditable={true}
@@ -462,7 +587,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
           />
         )
       }
-      case 'Datacenter': {
+      case 'datacenter': {
         return (
           <DatacenterTable
             isEditable={true}
@@ -471,7 +596,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
           />
         )
       }
-      case 'Datastores': {
+      case 'datastores': {
         return (
           <DatastoresTable
             isEditable={true}
@@ -480,9 +605,27 @@ const VMHostsPage = (props: Props): JSX.Element => {
           />
         )
       }
-      case 'Clusters': {
+      case 'clusters': {
         return (
           <ClustersTable
+            isEditable={true}
+            cellTextColor={cellTextColor}
+            cellBackgroundColor={cellBackgroundColor}
+          />
+        )
+      }
+      case 'vmhost': {
+        return (
+          <VMHostsTable
+            isEditable={true}
+            cellTextColor={cellTextColor}
+            cellBackgroundColor={cellBackgroundColor}
+          />
+        )
+      }
+      case 'vm': {
+        return (
+          <VMTable
             isEditable={true}
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
@@ -493,6 +636,10 @@ const VMHostsPage = (props: Props): JSX.Element => {
         return null
       }
     }
+  }
+
+  const onSelectHost = (props): void => {
+    setFocusedHost(props)
   }
 
   const threesizerDivisions = () => {
@@ -512,12 +659,14 @@ const VMHostsPage = (props: Props): JSX.Element => {
         menuOptions: [],
         size: leftSize,
         render: () => (
-          <TreeMenu
-            data={appHostData}
-            // onClickItem={}
-            // initialActiveKey={}
-            // initialOpenNodes={}
-          />
+          <FancyScrollbar>
+            <TreeMenu
+              data={appHostData}
+              onClickItem={onSelectHost}
+              // initialActiveKey={}
+              // initialOpenNodes={}
+            />
+          </FancyScrollbar>
         ),
       },
       {
@@ -528,7 +677,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
         render: () => (
           <FancyScrollbar autoHide={false}>
             <GridLayout
-              layout={initCellsLayout}
+              layout={layout}
               cols={12}
               rowHeight={calculateRowHeight()}
               margin={[LAYOUT_MARGIN, LAYOUT_MARGIN]}
@@ -539,18 +688,20 @@ const VMHostsPage = (props: Props): JSX.Element => {
               isDraggable={true}
               isResizable={true}
             >
-              {_.map(
-                initCellsLayout,
-                (cell): JSX.Element => (
-                  <div
-                    key={cell.i}
-                    className="dash-graph grid-item--routers"
-                    style={cellstyle}
-                  >
-                    <CellTable cell={cell} />
-                  </div>
-                )
-              )}
+              {layout
+                ? _.map(
+                    layout,
+                    (cell): JSX.Element => (
+                      <div
+                        key={cell.i}
+                        className="dash-graph grid-item--routers"
+                        style={cellstyle}
+                      >
+                        <CellTable cell={cell} />
+                      </div>
+                    )
+                  )
+                : null}
             </GridLayout>
           </FancyScrollbar>
         ),
