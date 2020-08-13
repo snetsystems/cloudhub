@@ -11,15 +11,17 @@ import {
   TableBodyRowItem,
 } from 'src/addon/128t/reusable/layout'
 import {ProgressDisplay} from 'src/shared/components/ProgressDisplay'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 interface Props {
   isEditable: boolean
   cellTextColor: string
   cellBackgroundColor: string
+  item: any
 }
 
 const ClustersTable = (props: Props): JSX.Element => {
-  const {isEditable, cellTextColor, cellBackgroundColor} = props
+  const {isEditable, cellTextColor, cellBackgroundColor, item} = props
   const Header = (): JSX.Element => {
     return (
       <>
@@ -47,17 +49,18 @@ const ClustersTable = (props: Props): JSX.Element => {
         >
           Storage
         </div>
+
         <div
           className={'hosts-table--th sortable-header'}
-          style={{width: '6.6%'}}
+          style={{width: '10%'}}
         >
           Host(ESXi)
         </div>
         <div
           className={'hosts-table--th sortable-header'}
-          style={{width: '6.6%'}}
+          style={{width: '10%'}}
         >
-          VM
+          Virtual Machine
         </div>
       </>
     )
@@ -65,59 +68,74 @@ const ClustersTable = (props: Props): JSX.Element => {
 
   const Body = (): JSX.Element => {
     return (
-      <div className="hosts-table--tr">
-        <TableBodyRowItem
-          title={
-            <div
-              onClick={() => {
-                console.log('cluster click')
-              }}
-            >
-              Cluster
-            </div>
-          }
-          width={'20%'}
-          className={'align--center'}
-        />
-        <TableBodyRowItem
-          title={
-            <ProgressDisplay
-              unit={'CPU'}
-              use={80}
-              available={800}
-              total={880}
-            />
-          }
-          width={'20%'}
-          className={'align--center'}
-        />
-        <TableBodyRowItem
-          title={
-            <ProgressDisplay
-              unit={'Memory'}
-              use={12000}
-              available={12000}
-              total={24000}
-            />
-          }
-          width={'20%'}
-          className={'align--center'}
-        />
-        <TableBodyRowItem
-          title={
-            <ProgressDisplay
-              unit={'Storage'}
-              use={78000}
-              available={10000}
-              total={88000}
-            />
-          }
-          width={'20%'}
-          className={'align--center'}
-        />
-        <TableBodyRowItem title={'3'} width={'6.6%'} className={'align--end'} />
-        <TableBodyRowItem title={'9'} width={'6.6%'} className={'align--end'} />
-      </div>
+      <FancyScrollbar>
+        {item
+          ? item.map(i => (
+              <div className="hosts-table--tr" key={i.name}>
+                <TableBodyRowItem
+                  title={
+                    <div
+                      onClick={() => {
+                        console.log('cluster click')
+                      }}
+                    >
+                      {i.name}
+                    </div>
+                  }
+                  width={'20%'}
+                  className={'align--center'}
+                />
+                <TableBodyRowItem
+                  title={
+                    <ProgressDisplay
+                      unit={'CPU'}
+                      use={i.cpu_usage}
+                      available={i.cpu_space}
+                      total={i.cpu_capacity}
+                    />
+                  }
+                  width={'20%'}
+                  className={'align--center'}
+                />
+                <TableBodyRowItem
+                  title={
+                    <ProgressDisplay
+                      unit={'Memory'}
+                      use={i.memory_usage}
+                      available={i.memory_space}
+                      total={i.memory_capacity}
+                    />
+                  }
+                  width={'20%'}
+                  className={'align--center'}
+                />
+                <TableBodyRowItem
+                  title={
+                    <ProgressDisplay
+                      unit={'Storage'}
+                      use={i.storage_usage}
+                      available={i.storage_space}
+                      total={i.storage_capacity}
+                    />
+                  }
+                  width={'20%'}
+                  className={'align--center'}
+                />
+
+                <TableBodyRowItem
+                  title={i.host_count}
+                  width={'10%'}
+                  className={'align--end'}
+                />
+                <TableBodyRowItem
+                  title={i.vm_count}
+                  width={'10%'}
+                  className={'align--end'}
+                />
+              </div>
+            ))
+          : null}
+      </FancyScrollbar>
     )
   }
 

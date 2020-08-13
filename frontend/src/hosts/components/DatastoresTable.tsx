@@ -16,10 +16,12 @@ interface Props {
   isEditable: boolean
   cellTextColor: string
   cellBackgroundColor: string
+  item: any
 }
 
 const DatastoresTable = (props: Props): JSX.Element => {
-  const {isEditable, cellTextColor, cellBackgroundColor} = props
+  const {isEditable, cellTextColor, cellBackgroundColor, item} = props
+
   const Header = (): JSX.Element => {
     return (
       <>
@@ -60,33 +62,37 @@ const DatastoresTable = (props: Props): JSX.Element => {
   const Body = (): JSX.Element => {
     return (
       <FancyScrollbar>
-        <div className="hosts-table--tr">
-          <TableBodyRowItem
-            title={'datastore'}
-            width={'20%'}
-            className={'align--start'}
-          />
-          <TableBodyRowItem
-            title={'status'}
-            width={'20%'}
-            className={'align--center'}
-          />
-          <TableBodyRowItem
-            title={'type'}
-            width={'20%'}
-            className={'align--center'}
-          />
-          <TableBodyRowItem
-            title={'space'}
-            width={'20%'}
-            className={'align--center'}
-          />
-          <TableBodyRowItem
-            title={'freeSpace'}
-            width={'20%'}
-            className={'align--center'}
-          />
-        </div>
+        {item
+          ? item.map(i => (
+              <div className="hosts-table--tr" key={i.name}>
+                <TableBodyRowItem
+                  title={i.name}
+                  width={'20%'}
+                  className={'align--start'}
+                />
+                <TableBodyRowItem
+                  title={i.mode}
+                  width={'20%'}
+                  className={'align--center'}
+                />
+                <TableBodyRowItem
+                  title={i.type}
+                  width={'20%'}
+                  className={'align--center'}
+                />
+                <TableBodyRowItem
+                  title={i.capacity}
+                  width={'20%'}
+                  className={'align--center'}
+                />
+                <TableBodyRowItem
+                  title={i.space}
+                  width={'20%'}
+                  className={'align--center'}
+                />
+              </div>
+            ))
+          : null}
       </FancyScrollbar>
     )
   }

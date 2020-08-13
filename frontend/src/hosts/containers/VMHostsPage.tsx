@@ -661,6 +661,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             isEditable={true}
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
+            item={focusedHost.datastores}
           />
         )
       }
@@ -670,6 +671,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             isEditable={true}
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
+            item={focusedHost.clusters}
           />
         )
       }
@@ -816,7 +818,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   return (
     <div className="vm-status-page__container">
       <div className="panel">
-        <div className="panel-heading">
+        <div className="panel-heading" style={{display: 'none'}}>
           <h2 className="panel-title">VMware</h2>
         </div>
         <div
