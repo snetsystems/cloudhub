@@ -9,9 +9,13 @@ import {
   linksFromHosts,
   updateActiveHostLink,
 } from 'src/hosts/utils/hostsSwitcherLinks'
+// Types
 import {Template, Layout, Source, Host} from 'src/types'
 import {HostNames, HostName} from 'src/types/hosts'
 import {DashboardSwitcherLinks} from '../../types/dashboards'
+
+// APIs
+import {getWheelKeyAcceptedList} from 'src/shared/apis/saltStack'
 
 interface HostsObject {
   [x: string]: Host
@@ -355,4 +359,14 @@ const isEmpty = (resp): boolean => {
 
 const hasError = (resp): boolean => {
   return !!resp.results[0].error
+}
+
+export const getMinionKeyAcceptedList = async (
+  pUrl: string,
+  pToken: string
+): Promise<String[]> => {
+  const info = await Promise.all([getWheelKeyAcceptedList(pUrl, pToken)])
+  const minions = _.get(info[0], 'data.return[0].data.return.minions', [])
+
+  return minions
 }

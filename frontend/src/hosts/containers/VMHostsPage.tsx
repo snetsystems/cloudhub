@@ -27,6 +27,11 @@ import VMTable from 'src/hosts/components/VMTable'
 // Type
 import {TimeRange, Cell, Template, Source} from 'src/types'
 import {Item} from 'src/reusable_ui/components/treemenu/TreeMenu/walk'
+import {AddonType} from 'src/shared/constants'
+import {Addon} from 'src/types/auth'
+
+// Actions
+import {getMinionKeyAcceptedListAsync} from 'src/hosts/actions'
 
 // Constants
 import {
@@ -46,6 +51,7 @@ import {
 // import {ErrorHandling} from 'src/shared/decorators/errors'
 
 const GridLayout = WidthProvider(ReactGridLayout)
+const MINION_LIST_EMPTY = '<< Empty >>'
 
 interface ConnectionFormProps {
   target: string
@@ -148,20 +154,25 @@ const ConnectForm = ({
     </Form>
   )
 }
-interface Props {}
+interface Props {
+  addons: Addon[]
+  handleGetMinionKeyAcceptedList: (
+    saltMasterUrl: string,
+    saltMasterToken: string
+  ) => Promise<String[]>
+}
 
 interface VM extends Item {
   type?: string
 }
 
 const VMHostsPage = (props: Props): JSX.Element => {
-  const {} = props
+  const {addons, handleGetMinionKeyAcceptedList} = props
   const intervalItems = ['30s', '1m', '5m']
-  const targetItems = ['minion06', 'minion03', 'minion01']
 
   const [proportions, setProportions] = useState([0.25, 0.75])
   const [isModalVisible, setIsModalVisible] = useState(false)
-  const [target, setTarget] = useState(targetItems[0])
+  const [target, setTarget] = useState(MINION_LIST_EMPTY)
   const [address, setAddress] = useState('')
   const [port, setPort] = useState('443')
   const [user, setUser] = useState('')
@@ -178,6 +189,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   })
   const [layout, setLayout] = useState([])
   const [vCenters, setVCenters] = useState({})
+  const [acceptedMinionList, setAcceptedMinionList] = useState([])
 
   const handleChangeTarget = (e: {text: string}): void => {
     setTarget(e.text)
@@ -211,7 +223,23 @@ const VMHostsPage = (props: Props): JSX.Element => {
     setIsModalVisible(false)
   }
 
-  const handleOpen = (): void => {
+  const handleOpen = async (): Promise<void> => {
+    const addon = addons.find(addon => {
+      return addon.name === AddonType.salt
+    })
+
+    const saltMasterUrl = addon.url
+    const saltMasterToken = addon.token
+
+    const minionList: any = await handleGetMinionKeyAcceptedList(
+      saltMasterUrl,
+      saltMasterToken
+    )
+
+    if (minionList.length > 0) {
+      setTarget(minionList[0])
+    }
+    setAcceptedMinionList(minionList)
     setIsModalVisible(true)
   }
 
@@ -774,7 +802,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
                 password={password}
                 protocol={protocol}
                 interval={interval}
-                targetItems={targetItems}
+                targetItems={acceptedMinionList}
                 intervalItems={intervalItems}
                 handleChangeTarget={handleChangeTarget}
                 handleChangeAddress={handleChangeAddress}
@@ -787,7 +815,12 @@ const VMHostsPage = (props: Props): JSX.Element => {
             }
             confirmText={'Add vCenter'}
             confirmButtonStatus={
-              address && port && user && password && protocol
+              address &&
+              port &&
+              user &&
+              password &&
+              protocol &&
+              target !== MINION_LIST_EMPTY
                 ? ComponentStatus.Default
                 : ComponentStatus.Disabled
             }
@@ -798,4 +831,14 @@ const VMHostsPage = (props: Props): JSX.Element => {
   )
 }
 
-export default connect(null, null)(VMHostsPage)
+const mapStateToProps = ({links: {addons}}) => {
+  return {
+    addons,
+  }
+}
+
+const mapDispatchToProps = {
+  handleGetMinionKeyAcceptedList: getMinionKeyAcceptedListAsync,
+}
+
+export default connect(mapStateToProps, mapDispatchToProps, null)(VMHostsPage)
