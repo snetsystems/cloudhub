@@ -174,6 +174,21 @@ export async function getWheelKeyListAll(pUrl: string, pToken: string) {
   }
 }
 
+export async function getWheelKeyAcceptedList(pUrl: string, pToken: string) {
+  try {
+    const params = {
+      eauth: 'pam',
+      client: 'wheel',
+      fun: 'key.list',
+      match: 'accepted',
+    }
+    return await apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 export async function getRunnerManageAllowed(pUrl: string, pToken: string) {
   try {
     const params = {
