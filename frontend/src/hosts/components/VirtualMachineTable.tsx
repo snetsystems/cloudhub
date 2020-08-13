@@ -10,7 +10,6 @@ import {
   TableBody,
   TableBodyRowItem,
 } from 'src/addon/128t/reusable/layout'
-import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {ProgressDisplay} from 'src/shared/components/ProgressDisplay'
 
 interface Props {
@@ -20,20 +19,16 @@ interface Props {
   item: any
 }
 
-const VcenterTable = (props: Props): JSX.Element => {
+const VirtualMachineTable = (props: Props): JSX.Element => {
   const {isEditable, cellTextColor, cellBackgroundColor, item} = props
-
   const {
+    name,
     cpu_usage,
-    cpu_space,
-    host_count,
-    datacenters,
     memory_usage,
-    memory_space,
+    os,
     storage_usage,
-    storage_space,
-    storage_capacity,
-    vm_count,
+    power_state,
+    ip_address,
   } = item
   const Header = (): JSX.Element => {
     return (
@@ -60,19 +55,20 @@ const VcenterTable = (props: Props): JSX.Element => {
           className={'hosts-table--th sortable-header'}
           style={{width: '16.6%'}}
         >
-          Datacenter
+          IP
         </div>
         <div
           className={'hosts-table--th sortable-header'}
           style={{width: '16.6%'}}
         >
-          Host(ESXi)
+          OS
         </div>
+
         <div
           className={'hosts-table--th sortable-header'}
           style={{width: '16.6%'}}
         >
-          Virtaul Machine
+          Power Status
         </div>
       </>
     )
@@ -80,61 +76,35 @@ const VcenterTable = (props: Props): JSX.Element => {
 
   const Body = (): JSX.Element => {
     return (
-      <FancyScrollbar>
-        <div className="hosts-table--tr">
-          <TableBodyRowItem
-            title={
-              <ProgressDisplay
-                unit={'CPU'}
-                use={cpu_usage}
-                available={cpu_space}
-                total={cpu_usage + cpu_space}
-              />
-            }
-            width={'16.6%'}
-            className={'align--center'}
-          />
-          <TableBodyRowItem
-            title={
-              <ProgressDisplay
-                unit={'Memory'}
-                use={memory_usage}
-                available={memory_space}
-                total={memory_usage + memory_space}
-              />
-            }
-            width={'16.6%'}
-            className={'align--center'}
-          />
-          <TableBodyRowItem
-            title={
-              <ProgressDisplay
-                unit={'Storage'}
-                use={storage_usage}
-                available={storage_space}
-                total={storage_capacity}
-              />
-            }
-            width={'16.6%'}
-            className={'align--center'}
-          />
-          <TableBodyRowItem
-            title={datacenters ? datacenters.length : '-'}
-            width={'16.6%'}
-            className={'align--end'}
-          />
-          <TableBodyRowItem
-            title={host_count}
-            width={'16.6%'}
-            className={'align--end'}
-          />
-          <TableBodyRowItem
-            title={vm_count}
-            width={'16.6%'}
-            className={'align--end'}
-          />
-        </div>
-      </FancyScrollbar>
+      <div className="hosts-table--tr">
+        <TableBodyRowItem
+          title={cpu_usage}
+          width={'16.6%'}
+          className={'align--center'}
+        />
+        <TableBodyRowItem
+          title={memory_usage}
+          width={'16.6%'}
+          className={'align--center'}
+        />
+        <TableBodyRowItem
+          title={storage_usage}
+          width={'16.6%'}
+          className={'align--center'}
+        />
+        <TableBodyRowItem
+          title={ip_address}
+          width={'16.6%'}
+          className={'align--center'}
+        />
+        <TableBodyRowItem title={os} width={'16.6%'} className={'align--end'} />
+
+        <TableBodyRowItem
+          title={power_state}
+          width={'16.6%'}
+          className={'align--end'}
+        />
+      </div>
     )
   }
 
@@ -145,7 +115,7 @@ const VcenterTable = (props: Props): JSX.Element => {
           cellTextColor={cellTextColor}
           cellBackgroundColor={cellBackgroundColor}
           value={[]}
-          name={'vCenter'}
+          name={`Virtual Machine (${name})`}
           sizeVisible={false}
         />
         <HeadingBar
@@ -167,4 +137,4 @@ const VcenterTable = (props: Props): JSX.Element => {
   )
 }
 
-export default VcenterTable
+export default VirtualMachineTable

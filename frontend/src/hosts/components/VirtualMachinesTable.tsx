@@ -10,7 +10,6 @@ import {
   TableBody,
   TableBodyRowItem,
 } from 'src/addon/128t/reusable/layout'
-import {ProgressDisplay} from 'src/shared/components/ProgressDisplay'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 interface Props {
@@ -20,9 +19,9 @@ interface Props {
   item: any
 }
 
-const VMHostsTable = (props: Props): JSX.Element => {
+const VirtualMachinesTable = (props: Props): JSX.Element => {
   const {isEditable, cellTextColor, cellBackgroundColor, item} = props
-
+  console.log(item)
   const Header = (): JSX.Element => {
     return (
       <>
@@ -30,7 +29,7 @@ const VMHostsTable = (props: Props): JSX.Element => {
           className={'hosts-table--th sortable-header'}
           style={{width: '20%'}}
         >
-          Host
+          VM
         </div>
         <div
           className={'hosts-table--th sortable-header'}
@@ -52,94 +51,71 @@ const VMHostsTable = (props: Props): JSX.Element => {
         </div>
         <div
           className={'hosts-table--th sortable-header'}
+          style={{width: '20%'}}
+        >
+          IP
+        </div>
+        <div
+          className={'hosts-table--th sortable-header'}
           style={{width: '6.6%'}}
         >
-          VM
+          OS
         </div>
 
         <div
           className={'hosts-table--th sortable-header'}
           style={{width: '6.6%'}}
         >
-          Model
-        </div>
-        <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '6.6%'}}
-        >
-          Processor
+          Power Status
         </div>
       </>
     )
   }
 
-  const Body = () => {
+  const Body = (): JSX.Element => {
     return (
       <FancyScrollbar>
         {item
           ? item.map(i => (
               <div className="hosts-table--tr" key={i.name}>
                 <TableBodyRowItem
-                  title={
-                    <div
-                      onClick={() => {
-                        console.log('host click')
-                      }}
-                    >
-                      {i.name}
-                    </div>
-                  }
+                  title={i.name}
                   width={'20%'}
                   className={'align--center'}
                 />
                 <TableBodyRowItem
-                  title={
-                    <ProgressDisplay
-                      unit={'CPU'}
-                      use={i.cpu_usage}
-                      available={i.cpu_space}
-                      total={i.cpu_capacity}
-                    />
-                  }
+                  title={i.cpu_usage}
                   width={'20%'}
                   className={'align--center'}
                 />
                 <TableBodyRowItem
-                  title={
-                    <ProgressDisplay
-                      unit={'Memory'}
-                      use={i.memory_usage}
-                      available={i.memory_space}
-                      total={i.memory_capacity}
-                    />
-                  }
+                  title={i.memory_usage}
+                  width={'20%'}
+                  className={'align--center'}
+                />
+
+                <TableBodyRowItem
+                  title={i.storage_usage}
                   width={'20%'}
                   className={'align--center'}
                 />
                 <TableBodyRowItem
-                  title={
-                    <ProgressDisplay
-                      unit={'Storage'}
-                      use={i.storage_usage}
-                      available={i.storage_space}
-                      total={i.storage_capacity}
-                    />
-                  }
+                  title={'IP'}
                   width={'20%'}
                   className={'align--center'}
                 />
                 <TableBodyRowItem
-                  title={i.vm_count}
+                  title={'ip'}
                   width={'6.6%'}
                   className={'align--end'}
                 />
                 <TableBodyRowItem
-                  title={i.model}
+                  title={i.os}
                   width={'6.6%'}
                   className={'align--end'}
                 />
                 <TableBodyRowItem
-                  title={i.cpu_name}
+                  title={i.power_state}
                   width={'6.6%'}
                   className={'align--end'}
                 />
@@ -157,7 +133,7 @@ const VMHostsTable = (props: Props): JSX.Element => {
           cellTextColor={cellTextColor}
           cellBackgroundColor={cellBackgroundColor}
           value={[]}
-          name={'Host(EXSi)'}
+          name={`Virtual Machine `}
           sizeVisible={false}
         />
         <HeadingBar
@@ -179,4 +155,4 @@ const VMHostsTable = (props: Props): JSX.Element => {
   )
 }
 
-export default VMHostsTable
+export default VirtualMachinesTable

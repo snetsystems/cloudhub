@@ -16,10 +16,12 @@ interface Props {
   isEditable: boolean
   cellTextColor: string
   cellBackgroundColor: string
+  item: any
 }
 
-const VMTable = (props: Props): JSX.Element => {
-  const {isEditable, cellTextColor, cellBackgroundColor} = props
+const VMHostTable = (props: Props): JSX.Element => {
+  const {isEditable, cellTextColor, cellBackgroundColor, item} = props
+
   const Header = (): JSX.Element => {
     return (
       <>
@@ -80,7 +82,7 @@ const VMTable = (props: Props): JSX.Element => {
                 console.log('host click')
               }}
             >
-              192.168.34.26
+              {item.name}
             </div>
           }
           width={'20%'}
@@ -90,9 +92,9 @@ const VMTable = (props: Props): JSX.Element => {
           title={
             <ProgressDisplay
               unit={'CPU'}
-              use={80}
-              available={800}
-              total={880}
+              use={item.cpu_usage}
+              available={item.cpu_space}
+              total={item.cpu_capacity}
             />
           }
           width={'20%'}
@@ -102,9 +104,9 @@ const VMTable = (props: Props): JSX.Element => {
           title={
             <ProgressDisplay
               unit={'Memory'}
-              use={12000}
-              available={12000}
-              total={24000}
+              use={item.memory_usage}
+              available={item.memory_space}
+              total={item.memory_capacity}
             />
           }
           width={'20%'}
@@ -114,9 +116,9 @@ const VMTable = (props: Props): JSX.Element => {
           title={
             <ProgressDisplay
               unit={'Storage'}
-              use={78000}
-              available={10000}
-              total={88000}
+              use={item.storage_usage}
+              available={item.storage_space}
+              total={item.storage_capacity}
             />
           }
           width={'20%'}
@@ -124,12 +126,12 @@ const VMTable = (props: Props): JSX.Element => {
         />
         <TableBodyRowItem title={'5'} width={'6.6%'} className={'align--end'} />
         <TableBodyRowItem
-          title={'Dell inc. PowerEdge R710'}
+          title={item.model}
           width={'6.6%'}
           className={'align--end'}
         />
         <TableBodyRowItem
-          title={'intel(R) Xenon(R) CPU E5749 @ 2.53 GHz'}
+          title={item.cpu_name}
           width={'6.6%'}
           className={'align--end'}
         />
@@ -144,7 +146,7 @@ const VMTable = (props: Props): JSX.Element => {
           cellTextColor={cellTextColor}
           cellBackgroundColor={cellBackgroundColor}
           value={[]}
-          name={'Virtual Machine'}
+          name={'Host(EXSi)'}
           sizeVisible={false}
         />
         <HeadingBar
@@ -166,4 +168,4 @@ const VMTable = (props: Props): JSX.Element => {
   )
 }
 
-export default VMTable
+export default VMHostTable

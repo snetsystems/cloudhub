@@ -21,8 +21,11 @@ import DatacentersTable from 'src/hosts/components/DatacentersTable'
 import DatacenterTable from 'src/hosts/components/DatacenterTable'
 import DatastoresTable from 'src/hosts/components/DatastoresTable'
 import ClustersTable from 'src/hosts/components/ClustersTable'
+import ClusterTable from 'src/hosts/components/ClusterTable'
 import VMHostsTable from 'src/hosts/components/VMHostsTable'
-import VMTable from 'src/hosts/components/VMTable'
+import VMHostTable from 'src/hosts/components/VMHostTable'
+import VirtualMachinesTable from 'src/hosts/components/VirtualMachinesTable'
+import VirtualMachineTable from 'src/hosts/components/VirtualMachineTable'
 
 // Type
 import {TimeRange, Cell, Template, Source} from 'src/types'
@@ -220,6 +223,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   useEffect(() => {
+    console.log(focusedHost)
     console.log(focusedHost.type)
     switch (focusedHost.type) {
       case 'vcenter': {
@@ -250,7 +254,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
       case 'datacenter': {
         return setLayout([
           {
-            i: 'datacenters',
+            i: 'datacenter',
             x: 0,
             y: 0,
             w: 12,
@@ -271,7 +275,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             h: 3,
           },
           {
-            i: 'vmhost',
+            i: 'vmhosts',
             x: 0,
             y: 0,
             w: 12,
@@ -289,14 +293,14 @@ const VMHostsPage = (props: Props): JSX.Element => {
       case 'cluster': {
         return setLayout([
           {
-            i: 'clusters',
+            i: 'cluster',
             x: 0,
             y: 0,
             w: 12,
             h: 3,
           },
           {
-            i: 'vmhost',
+            i: 'vmhosts',
             x: 0,
             y: 0,
             w: 12,
@@ -314,7 +318,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
       case 'host': {
         return setLayout([
           {
-            i: 'datacenters',
+            i: 'vmhost',
             x: 0,
             y: 0,
             w: 12,
@@ -328,21 +332,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             h: 3,
           },
           {
-            i: 'clusters',
-            x: 0,
-            y: 0,
-            w: 12,
-            h: 3,
-          },
-          {
-            i: 'vmhost',
-            x: 0,
-            y: 0,
-            w: 12,
-            h: 3,
-          },
-          {
-            i: 'datastores',
+            i: 'vms',
             x: 0,
             y: 0,
             w: 12,
@@ -357,7 +347,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             x: 0,
             y: 0,
             w: 12,
-            h: 3,
+            h: 2,
           },
           {
             i: 'charts',
@@ -444,18 +434,28 @@ const VMHostsPage = (props: Props): JSX.Element => {
     let vcMinion: any[] = Object.values(vCenterData.return[0])
     let vcIpAddress = vcMinion[0].vcenter
     let vcCpuUsage = []
+    let vcCpuSpace = []
     let vcMemoryUsage = []
+    let vcMemorySpace = []
     let vcStorgeUsage = []
+    let vcStorgeSpace = []
+    let vcStorgeCapacity = []
     let vcClustersCount = []
     let vcHostCount = []
     let vcVmCount = []
+    let vcDatacenters = []
     let vcenter = [vCenterData].reduce(
       acc => {
         const datacenters = vcMinion[0].datacenters
         datacenters.reduce((acc, datacenter, i) => {
+          vcDatacenters.push(datacenter)
           vcCpuUsage.push(datacenter.cpu_usage)
+          vcCpuSpace.push(datacenter.cpu_space)
           vcMemoryUsage.push(datacenter.memory_usage)
+          vcMemorySpace.push(datacenter.memory_space)
           vcStorgeUsage.push(datacenter.storage_usage)
+          vcStorgeSpace.push(datacenter.storage_space)
+          vcStorgeCapacity.push(datacenter.storage_capacity)
           vcClustersCount.push(datacenter.cluster_count)
           vcHostCount.push(datacenter.host_count)
           vcVmCount.push(datacenter.vm_count)
@@ -570,9 +570,14 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
     vcenter[vcIpAddress] = {
       ...vcenter[vcIpAddress],
+      datacenters: vcDatacenters,
       cpu_usage: vcCpuUsage.reduce((sum, c) => sum + c),
+      cpu_space: vcCpuSpace.reduce((sum, c) => sum + c),
       memory_usage: vcMemoryUsage.reduce((sum, c) => sum + c),
+      memory_space: vcMemorySpace.reduce((sum, c) => sum + c),
       storage_usage: vcStorgeUsage.reduce((sum, c) => sum + c),
+      storage_space: vcStorgeSpace.reduce((sum, c) => sum + c),
+      storage_capacity: vcStorgeCapacity.reduce((sum, c) => sum + c),
       cluster_count: vcClustersCount.reduce((sum, c) => sum + c),
       host_count: vcHostCount.reduce((sum, c) => sum + c),
       vm_count: vcVmCount.reduce((sum, c) => sum + c),
@@ -589,6 +594,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             isEditable={true}
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
+            item={focusedHost}
           />
         )
       }
@@ -607,6 +613,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             isEditable={true}
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
+            item={focusedHost.datacenters}
           />
         )
       }
@@ -616,6 +623,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             isEditable={true}
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
+            item={focusedHost}
           />
         )
       }
@@ -637,21 +645,53 @@ const VMHostsPage = (props: Props): JSX.Element => {
           />
         )
       }
-      case 'vmhost': {
+      case 'cluster': {
+        return (
+          <ClusterTable
+            isEditable={true}
+            cellTextColor={cellTextColor}
+            cellBackgroundColor={cellBackgroundColor}
+            item={focusedHost}
+          />
+        )
+      }
+      case 'vmhosts': {
         return (
           <VMHostsTable
             isEditable={true}
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
+            item={focusedHost.hosts}
+          />
+        )
+      }
+      case 'vmhost': {
+        return (
+          <VMHostTable
+            isEditable={true}
+            cellTextColor={cellTextColor}
+            cellBackgroundColor={cellBackgroundColor}
+            item={focusedHost}
+          />
+        )
+      }
+      case 'vms': {
+        return (
+          <VirtualMachinesTable
+            isEditable={true}
+            cellTextColor={cellTextColor}
+            cellBackgroundColor={cellBackgroundColor}
+            item={focusedHost.vms}
           />
         )
       }
       case 'vm': {
         return (
-          <VMTable
+          <VirtualMachineTable
             isEditable={true}
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
+            item={focusedHost}
           />
         )
       }
@@ -744,7 +784,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
     setVCenters(vcenter)
   }, [])
-
+  // console.log(vCenters)
   return (
     <div className="vm-status-page__container">
       <div className="panel">
