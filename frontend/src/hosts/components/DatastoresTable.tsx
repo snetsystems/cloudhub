@@ -1,4 +1,6 @@
 import React from 'react'
+import uuid from 'uuid'
+
 import {
   CellName,
   HeadingBar,
@@ -11,6 +13,7 @@ import {
   TableBodyRowItem,
 } from 'src/addon/128t/reusable/layout'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import {convertUnit} from 'src/shared/components/ProgressDisplay'
 
 interface Props {
   isEditable: boolean
@@ -64,7 +67,7 @@ const DatastoresTable = (props: Props): JSX.Element => {
       <FancyScrollbar>
         {item
           ? item.map(i => (
-              <div className="hosts-table--tr" key={i.name}>
+              <div className="hosts-table--tr" key={uuid.v4()}>
                 <TableBodyRowItem
                   title={i.name}
                   width={'20%'}
@@ -81,12 +84,12 @@ const DatastoresTable = (props: Props): JSX.Element => {
                   className={'align--center'}
                 />
                 <TableBodyRowItem
-                  title={i.capacity}
+                  title={convertUnit('Storage', i.capacity)}
                   width={'20%'}
                   className={'align--center'}
                 />
                 <TableBodyRowItem
-                  title={i.space}
+                  title={convertUnit('Storage', i.space)}
                   width={'20%'}
                   className={'align--center'}
                 />

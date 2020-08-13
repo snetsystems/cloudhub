@@ -22,6 +22,7 @@ interface Props {
 
 const ClustersTable = (props: Props): JSX.Element => {
   const {isEditable, cellTextColor, cellBackgroundColor, item} = props
+  console.log(item)
   const Header = (): JSX.Element => {
     return (
       <>
@@ -90,7 +91,7 @@ const ClustersTable = (props: Props): JSX.Element => {
                     <ProgressDisplay
                       unit={'CPU'}
                       use={i.cpu_usage}
-                      available={i.cpu_space}
+                      available={i.cpu_capacity - i.cpu_usage}
                       total={i.cpu_capacity}
                     />
                   }
@@ -102,7 +103,7 @@ const ClustersTable = (props: Props): JSX.Element => {
                     <ProgressDisplay
                       unit={'Memory'}
                       use={i.memory_usage}
-                      available={i.memory_space}
+                      available={i.memory_capacity - i.memory_usage}
                       total={i.memory_capacity}
                     />
                   }

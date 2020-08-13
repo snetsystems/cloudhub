@@ -668,6 +668,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
         )
       }
       case 'clusters': {
+        console.log('focusedHost.clusters: ', focusedHost.clusters)
         return (
           <ClustersTable
             isEditable={true}
@@ -693,7 +694,11 @@ const VMHostsPage = (props: Props): JSX.Element => {
             isEditable={true}
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
-            item={focusedHost.hosts}
+            item={
+              focusedHost.type === 'datacenter'
+                ? focusedHost.datacenter_hosts
+                : focusedHost.hosts
+            }
           />
         )
       }
@@ -820,7 +825,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   return (
     <div className="vm-status-page__container">
       <div className="panel">
-        <div className="panel-heading" style={{display: 'none'}}>
+        <div className="panel-heading">
           <h2 className="panel-title">VMware</h2>
         </div>
         <div

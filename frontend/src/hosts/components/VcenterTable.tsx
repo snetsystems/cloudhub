@@ -119,7 +119,7 @@ const VcenterTable = (props: Props): JSX.Element => {
             className={'align--center'}
           />
           <TableBodyRowItem
-            title={datacenters ? datacenters.length : '-'}
+            title={datacenters ? datacenters.length : null}
             width={'16.6%'}
             className={'align--end'}
           />

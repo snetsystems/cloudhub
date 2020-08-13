@@ -52,20 +52,20 @@ const VMHostsTable = (props: Props): JSX.Element => {
         </div>
         <div
           className={'hosts-table--th sortable-header'}
-          style={{width: '6.6%'}}
+          style={{width: '10%'}}
         >
           VM
         </div>
 
         <div
           className={'hosts-table--th sortable-header'}
-          style={{width: '6.6%'}}
+          style={{width: '10%'}}
         >
           Model
         </div>
         <div
           className={'hosts-table--th sortable-header'}
-          style={{width: '6.6%'}}
+          style={{width: '10%'}}
         >
           Processor
         </div>
@@ -130,17 +130,17 @@ const VMHostsTable = (props: Props): JSX.Element => {
                 />
                 <TableBodyRowItem
                   title={i.vm_count}
-                  width={'6.6%'}
+                  width={'10%'}
                   className={'align--end'}
                 />
                 <TableBodyRowItem
                   title={i.model}
-                  width={'6.6%'}
+                  width={'10%'}
                   className={'align--end'}
                 />
                 <TableBodyRowItem
                   title={i.cpu_name}
-                  width={'6.6%'}
+                  width={'10%'}
                   className={'align--end'}
                 />
               </div>

@@ -1,4 +1,5 @@
 import React from 'react'
+
 import {
   CellName,
   HeadingBar,
@@ -10,8 +11,7 @@ import {
   TableBody,
   TableBodyRowItem,
 } from 'src/addon/128t/reusable/layout'
-import {ProgressDisplay} from 'src/shared/components/ProgressDisplay'
-
+import {convertUnit} from 'src/shared/components/ProgressDisplay'
 interface Props {
   isEditable: boolean
   cellTextColor: string
@@ -30,6 +30,8 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
     power_state,
     ip_address,
   } = item
+
+  console.log({item})
   const Header = (): JSX.Element => {
     return (
       <>
@@ -78,17 +80,17 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
     return (
       <div className="hosts-table--tr">
         <TableBodyRowItem
-          title={cpu_usage}
+          title={convertUnit('CPU', cpu_usage)}
           width={'16.6%'}
           className={'align--center'}
         />
         <TableBodyRowItem
-          title={memory_usage}
+          title={convertUnit('Memory', memory_usage)}
           width={'16.6%'}
           className={'align--center'}
         />
         <TableBodyRowItem
-          title={storage_usage}
+          title={convertUnit('Storage', storage_usage)}
           width={'16.6%'}
           className={'align--center'}
         />

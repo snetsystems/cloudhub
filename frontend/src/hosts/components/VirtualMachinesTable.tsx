@@ -1,4 +1,6 @@
 import React from 'react'
+import uuid from 'uuid'
+
 import {
   CellName,
   HeadingBar,
@@ -11,6 +13,7 @@ import {
   TableBodyRowItem,
 } from 'src/addon/128t/reusable/layout'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import {convertUnit} from 'src/shared/components/ProgressDisplay'
 
 interface Props {
   isEditable: boolean
@@ -77,37 +80,32 @@ const VirtualMachinesTable = (props: Props): JSX.Element => {
       <FancyScrollbar>
         {item
           ? item.map(i => (
-              <div className="hosts-table--tr" key={i.name}>
+              <div className="hosts-table--tr" key={uuid.v4()}>
                 <TableBodyRowItem
                   title={i.name}
                   width={'20%'}
                   className={'align--center'}
                 />
                 <TableBodyRowItem
-                  title={i.cpu_usage}
+                  title={convertUnit('CPU', i.cpu_usage)}
                   width={'20%'}
                   className={'align--center'}
                 />
                 <TableBodyRowItem
-                  title={i.memory_usage}
+                  title={convertUnit('Memory', i.memory_usage)}
                   width={'20%'}
                   className={'align--center'}
                 />
 
                 <TableBodyRowItem
-                  title={i.storage_usage}
+                  title={convertUnit('Storage', i.storage_usage)}
                   width={'20%'}
                   className={'align--center'}
                 />
                 <TableBodyRowItem
-                  title={'IP'}
+                  title={i.ip_address}
                   width={'20%'}
                   className={'align--center'}
-                />
-                <TableBodyRowItem
-                  title={'ip'}
-                  width={'6.6%'}
-                  className={'align--end'}
                 />
                 <TableBodyRowItem
                   title={i.os}

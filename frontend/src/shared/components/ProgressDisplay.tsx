@@ -1,8 +1,34 @@
 import React from 'react'
+import convert from 'convert-units'
 import {Line} from 'rc-progress'
 import 'rc-progress/assets/index.css'
 
+export const convertUnit = (unit, value) => {
+  console.log(unit)
+  console.log(value)
+  if (unit && value) {
+    if (unit === 'CPU') {
+      const {val, unit} = convert(value)
+        .from('Hz')
+        .toBest()
+      console.log('progress: ', val)
+      return `${val.toFixed(2)} ${unit}`
+    } else {
+      const {val, unit} = convert(value)
+        .from('B')
+        .toBest()
+      console.log('progress: ', val)
+      return `${val.toFixed(2)} ${unit}`
+    }
+  } else {
+    return null
+  }
+}
+
 export const ProgressDisplay = ({unit, use, available, total}) => {
+  console.log(unit)
+  console.log({use, available, total})
+
   return (
     <div
       style={{
@@ -14,7 +40,7 @@ export const ProgressDisplay = ({unit, use, available, total}) => {
     >
       <div style={{display: 'flex', justifyContent: 'space-between'}}>
         <div>{unit}</div>
-        <div>available: {available}</div>
+        <div>available: {convertUnit(unit, available)}</div>
       </div>
       <div style={{width: '100%'}}>
         <Line
@@ -25,8 +51,8 @@ export const ProgressDisplay = ({unit, use, available, total}) => {
         />
       </div>
       <div style={{display: 'flex', justifyContent: 'space-between'}}>
-        <div>use: {use}</div>
-        <div>total: {total}</div>
+        <div>use: {convertUnit(unit, use)}</div>
+        <div>total: {convertUnit(unit, total)}</div>
       </div>
     </div>
   )
