@@ -488,6 +488,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
           vcHostCount.push(datacenter.host_count)
           vcVmCount.push(datacenter.vm_count)
 
+          let datacenterHosts = []
           const datacenterName = datacenter.name
           acc[vcIpAddress]['nodes'][datacenterName] = {
             label: datacenterName,
@@ -495,80 +496,45 @@ const VMHostsPage = (props: Props): JSX.Element => {
             level: 1,
             type: 'datacenter',
             nodes: {},
+            datacenter_hosts: datacenterHosts,
             ...datacenter,
           }
 
           const clusters = datacenter.clusters
-          if (clusters && clusters.length > 0) {
-            clusters.reduce((acc, cluster, i) => {
-              const clusterName = cluster.name
-              acc[vcIpAddress]['nodes'][datacenterName]['nodes'][
-                clusterName
-              ] = {
-                label: clusterName,
-                index: i,
-                level: 2,
-                type: 'cluster',
-                nodes: {},
-                ...cluster,
-              }
+          clusters.reduce((acc, cluster, i) => {
+            const clusterName = cluster.name
+            acc[vcIpAddress]['nodes'][datacenterName]['nodes'][clusterName] = {
+              label: clusterName,
+              index: i,
+              level: 2,
+              type: 'cluster',
+              nodes: {},
+              ...cluster,
+            }
 
-              const hosts = cluster.hosts
-              hosts.reduce((acc, host, i) => {
-                const hostName = host.name
-                acc[vcIpAddress]['nodes'][datacenterName]['nodes'][clusterName][
-                  'nodes'
-                ][hostName] = {
-                  label: hostName,
-                  index: i,
-                  level: 3,
-                  type: 'host',
-                  nodes: {},
-                  ...host,
-                }
-
-                const vms = host.vms
-                vms.reduce((acc, vm, i) => {
-                  const vmName = vm.name
-                  acc[vcIpAddress]['nodes'][datacenterName]['nodes'][
-                    clusterName
-                  ]['nodes'][hostName]['nodes'][vmName] = {
-                    label: vmName,
-                    index: i,
-                    level: 4,
-                    type: 'vm',
-                    ...vm,
-                  }
-
-                  return acc
-                }, acc)
-
-                return acc
-              }, acc)
-
-              return acc
-            }, acc)
-          } else {
-            const hosts = datacenter.hosts
+            const hosts = cluster.hosts
             hosts.reduce((acc, host, i) => {
               const hostName = host.name
-              acc[vcIpAddress]['nodes'][datacenterName]['nodes'][hostName] = {
+              acc[vcIpAddress]['nodes'][datacenterName]['nodes'][clusterName][
+                'nodes'
+              ][hostName] = {
                 label: hostName,
                 index: i,
-                level: 2,
+                level: 3,
                 type: 'host',
                 nodes: {},
                 ...host,
               }
+
               const vms = host.vms
               vms.reduce((acc, vm, i) => {
                 const vmName = vm.name
-                acc[vcIpAddress]['nodes'][datacenterName]['nodes'][hostName][
+                acc[vcIpAddress]['nodes'][datacenterName]['nodes'][clusterName][
                   'nodes'
-                ][vmName] = {
+                ][hostName]['nodes'][vmName] = {
                   label: vmName,
                   index: i,
-                  level: 3,
+                  level: 4,
                   type: 'vm',
                   ...vm,
                 }
@@ -576,9 +542,45 @@ const VMHostsPage = (props: Props): JSX.Element => {
                 return acc
               }, acc)
 
+              datacenterHosts.push(host)
+
               return acc
             }, acc)
-          }
+
+            return acc
+          }, acc)
+
+          const hosts = datacenter.hosts
+          hosts.reduce((acc, host, i) => {
+            const hostName = host.name
+            acc[vcIpAddress]['nodes'][datacenterName]['nodes'][hostName] = {
+              label: hostName,
+              index: i,
+              level: 2,
+              type: 'host',
+              nodes: {},
+              ...host,
+            }
+            const vms = host.vms
+            vms.reduce((acc, vm, i) => {
+              const vmName = vm.name
+              acc[vcIpAddress]['nodes'][datacenterName]['nodes'][hostName][
+                'nodes'
+              ][vmName] = {
+                label: vmName,
+                index: i,
+                level: 3,
+                type: 'vm',
+                ...vm,
+              }
+
+              return acc
+            }, acc)
+
+            datacenterHosts.push(host)
+
+            return acc
+          }, acc)
 
           return acc
         }, acc)
