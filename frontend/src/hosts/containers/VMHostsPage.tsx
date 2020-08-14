@@ -248,11 +248,11 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
   const handleConnection = (): void => {
     console.log(target, address, user, password, port, protocol, interval)
+    AddVCenter([target])
+    handleClose()
   }
 
   useEffect(() => {
-    console.log(focusedHost)
-    console.log(focusedHost.type)
     switch (focusedHost.type) {
       case 'vcenter': {
         return setLayout([
@@ -427,7 +427,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   const handleLayoutChange = (cellsLayout: cellLayoutInfo[]): void => {
-    console.log({cellsLayout})
     // if (!this.props.onPositionChange) return
     // let changed = false
     // const newCellsLayout = this.props.layout.map(lo => {
@@ -457,6 +456,13 @@ const VMHostsPage = (props: Props): JSX.Element => {
       vCenterData = require('./dummy.json')
     } else if (minionId === 'minion03') {
       vCenterData = require('./dummy2.json')
+    }
+    // else {
+    //   vCenterData = require('./dummy3.json')
+    // }
+
+    if (!vCenterData) {
+      return
     }
 
     let vcMinion: any[] = Object.values(vCenterData.return[0])
@@ -561,6 +567,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
               nodes: {},
               ...host,
             }
+
             const vms = host.vms
             vms.reduce((acc, vm, i) => {
               const vmName = vm.name
@@ -600,17 +607,39 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
     vcenter[vcIpAddress] = {
       ...vcenter[vcIpAddress],
-      datacenters: vcDatacenters,
-      cpu_usage: vcCpuUsage.reduce((sum, c) => sum + c),
-      cpu_space: vcCpuSpace.reduce((sum, c) => sum + c),
-      memory_usage: vcMemoryUsage.reduce((sum, c) => sum + c),
-      memory_space: vcMemorySpace.reduce((sum, c) => sum + c),
-      storage_usage: vcStorgeUsage.reduce((sum, c) => sum + c),
-      storage_space: vcStorgeSpace.reduce((sum, c) => sum + c),
-      storage_capacity: vcStorgeCapacity.reduce((sum, c) => sum + c),
-      cluster_count: vcClustersCount.reduce((sum, c) => sum + c),
-      host_count: vcHostCount.reduce((sum, c) => sum + c),
-      vm_count: vcVmCount.reduce((sum, c) => sum + c),
+      datacenters: vcDatacenters.length > 0 ? vcDatacenters : [],
+      cpu_usage:
+        vcCpuUsage.length > 0 ? vcCpuUsage.reduce((sum, c) => sum + c) : [],
+      cpu_space:
+        vcCpuSpace.length > 0 ? vcCpuSpace.reduce((sum, c) => sum + c) : [],
+      memory_usage:
+        vcMemoryUsage.length > 0
+          ? vcMemoryUsage.reduce((sum, c) => sum + c)
+          : [],
+      memory_space:
+        vcMemorySpace.length > 0
+          ? vcMemorySpace.reduce((sum, c) => sum + c)
+          : [],
+      storage_usage:
+        vcStorgeUsage.length > 0
+          ? vcStorgeUsage.reduce((sum, c) => sum + c)
+          : [],
+      storage_space:
+        vcStorgeSpace.length > 0
+          ? vcStorgeSpace.reduce((sum, c) => sum + c)
+          : [],
+      storage_capacity:
+        vcStorgeCapacity.length > 0
+          ? vcStorgeCapacity.reduce((sum, c) => sum + c)
+          : [],
+      cluster_count:
+        vcClustersCount.length > 0
+          ? vcClustersCount.reduce((sum, c) => sum + c)
+          : [],
+      host_count:
+        vcHostCount.length > 0 ? vcHostCount.reduce((sum, c) => sum + c) : [],
+      vm_count:
+        vcVmCount.length > 0 ? vcVmCount.reduce((sum, c) => sum + c) : [],
     }
 
     return vcenter
@@ -668,7 +697,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
         )
       }
       case 'clusters': {
-        console.log('focusedHost.clusters: ', focusedHost.clusters)
         return (
           <ClustersTable
             isEditable={true}
@@ -809,19 +837,23 @@ const VMHostsPage = (props: Props): JSX.Element => {
     ]
   }
 
+  const AddVCenter = minions => {
+    let vcenter = minions.reduce((vc, minion) => {
+      const vCenterInfo = getVCenterInfo(minion)
+      vc = {...vc, ...vCenterInfo}
+      return vc
+    }, {})
+
+    setVCenters({...vCenters, ...vcenter})
+  }
+
   useEffect(() => {
     /////////////// getMinion Api Call ///////////////////
     const getMinions = ['minion03', 'minion06']
     /////////////// getMinion Api Call ///////////////////
-    let vcenter = getMinions.reduce((vc, minion) => {
-      const vCenterInfo = getVCenterInfo(minion)
-      Object.assign(vc, vCenterInfo)
-      return vc
-    }, {})
-
-    setVCenters(vcenter)
+    AddVCenter(getMinions)
   }, [])
-  // console.log(vCenters)
+
   return (
     <div className="vm-status-page__container">
       <div className="panel">
