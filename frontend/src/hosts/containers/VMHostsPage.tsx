@@ -465,8 +465,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
       return
     }
 
-    let vcMinion: any[] = Object.values(vCenterData.return[0])
-    let vcIpAddress = vcMinion[0].vcenter
     let vcCpuUsage = []
     let vcCpuSpace = []
     let vcMemoryUsage = []
@@ -478,9 +476,13 @@ const VMHostsPage = (props: Props): JSX.Element => {
     let vcHostCount = []
     let vcVmCount = []
     let vcDatacenters = []
+    let minionName = Object.keys(vCenterData.return[0])
+    let vcMinionValue: any[] = Object.values(vCenterData.return[0])
+    let vcIpAddress = vcMinionValue[0].vcenter
+
     let vcenter = [vCenterData].reduce(
       acc => {
-        const datacenters = vcMinion[0].datacenters
+        const datacenters = vcMinionValue[0].datacenters
         datacenters.reduce((acc, datacenter, i) => {
           vcDatacenters.push(datacenter)
           vcCpuUsage.push(datacenter.cpu_usage)
@@ -501,6 +503,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             index: i,
             level: 1,
             type: 'datacenter',
+            minion: minionName[0],
             nodes: {},
             datacenter_hosts: datacenterHosts,
             ...datacenter,
@@ -514,6 +517,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
               index: i,
               level: 2,
               type: 'cluster',
+              minion: minionName[0],
               nodes: {},
               ...cluster,
             }
@@ -528,6 +532,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
                 index: i,
                 level: 3,
                 type: 'host',
+                minion: minionName[0],
                 nodes: {},
                 ...host,
               }
@@ -542,6 +547,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
                   index: i,
                   level: 4,
                   type: 'vm',
+                  minion: minionName[0],
                   ...vm,
                 }
 
@@ -564,6 +570,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
               index: i,
               level: 2,
               type: 'host',
+              minion: minionName[0],
               nodes: {},
               ...host,
             }
@@ -578,6 +585,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
                 index: i,
                 level: 3,
                 type: 'vm',
+                minion: minionName[0],
                 ...vm,
               }
 
@@ -600,6 +608,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
           index: 0,
           level: 0,
           type: 'vcenter',
+          minion: minionName[0],
           nodes: {},
         },
       }
