@@ -1,24 +1,16 @@
 import React from 'react'
-import convert from 'convert-units'
 import {Line} from 'rc-progress'
 import 'rc-progress/assets/index.css'
+import {transFormatBytes, transFormatFrequency} from 'src/shared/utils/units'
 
 export const convertUnit = (unit, value) => {
   console.log(unit)
   console.log(value)
   if (unit && value) {
     if (unit === 'CPU') {
-      const {val, unit} = convert(value)
-        .from('Hz')
-        .toBest()
-      console.log('progress: ', val)
-      return `${val.toFixed(2)} ${unit}`
+      return transFormatFrequency(value, 2)
     } else {
-      const {val, unit} = convert(value)
-        .from('B')
-        .toBest()
-      console.log('progress: ', val)
-      return `${val.toFixed(2)} ${unit}`
+      return transFormatBytes(value, 2)
     }
   } else {
     return null
