@@ -3,9 +3,7 @@ import {Line} from 'rc-progress'
 import 'rc-progress/assets/index.css'
 import {transFormatBytes, transFormatFrequency} from 'src/shared/utils/units'
 
-export const convertUnit = (unit, value) => {
-  console.log(unit)
-  console.log(value)
+export const convertUnit = (unit: string, value: number) => {
   if (unit && value) {
     if (unit === 'CPU') {
       return transFormatFrequency(value, 2)
@@ -18,9 +16,6 @@ export const convertUnit = (unit, value) => {
 }
 
 export const ProgressDisplay = ({unit, use, available, total}) => {
-  console.log(unit)
-  console.log({use, available, total})
-
   return (
     <div
       style={{
@@ -36,7 +31,6 @@ export const ProgressDisplay = ({unit, use, available, total}) => {
       </div>
       <div style={{width: '100%'}}>
         <Line
-          // strokeLinecap={'square'}
           percent={Math.trunc((use / total) * 100)}
           strokeWidth={3}
           trailWidth={3}

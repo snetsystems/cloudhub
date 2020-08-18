@@ -7,9 +7,13 @@ import walk, {
   TreeNodeInArray,
   LocaleFunction,
   MatchSearchFunction,
-} from './walk'
-import {defaultChildren, TreeMenuChildren, TreeMenuItem} from './renderProps'
-import KeyDown from '../KeyDown'
+} from 'src/reusable_ui/components/treemenu/TreeMenu/walk'
+import {
+  defaultChildren,
+  TreeMenuChildren,
+  TreeMenuItem,
+} from 'src/reusable_ui/components/treemenu/TreeMenu/renderProps'
+import KeyDown from 'src/reusable_ui/components/treemenu/KeyDown'
 
 export type TreeMenuProps = {
   data: {[name: string]: TreeNode} | TreeNodeInArray[]
@@ -36,7 +40,7 @@ type TreeMenuState = {
 
 const defaultOnClick = (props: Item) => console.log(props) // eslint-disable-line no-console
 
-class TreeMenu extends React.Component<TreeMenuProps, TreeMenuState> {
+class VMTreeMenu extends React.Component<TreeMenuProps, TreeMenuState> {
   static defaultProps: TreeMenuProps = {
     data: {},
     onClickItem: defaultOnClick,
@@ -178,4 +182,4 @@ class TreeMenu extends React.Component<TreeMenuProps, TreeMenuState> {
   }
 }
 
-export default TreeMenu
+export default VMTreeMenu

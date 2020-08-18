@@ -31,7 +31,6 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
     ip_address,
   } = item
 
-  console.log({item})
   const Header = (): JSX.Element => {
     return (
       <>

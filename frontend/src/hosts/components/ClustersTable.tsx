@@ -22,7 +22,7 @@ interface Props {
 
 const ClustersTable = (props: Props): JSX.Element => {
   const {isEditable, cellTextColor, cellBackgroundColor, item} = props
-  console.log(item)
+
   const Header = (): JSX.Element => {
     return (
       <>

@@ -8,14 +8,12 @@ import {ComponentStatus} from 'src/reusable_ui/types'
 
 // Component
 import {Button, ComponentSize, Form, Input, InputType} from 'src/reusable_ui'
-
 import {cellLayoutInfo} from 'src/addon/128t/containers/SwanSdplexStatusPage'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
-import TreeMenu from 'src/reusable_ui/components/treemenu'
-import ChartsLayoutRenderer from 'src/hosts/components/ChartsLayoutRenderer'
-import HostModal from 'src/hosts/components/HostModal'
 import Dropdown from 'src/shared/components/Dropdown'
 
+import HostModal from 'src/hosts/components/HostModal'
+import VMTreeMenu from 'src/hosts/components/VMTreeMenu'
 import VcenterTable from 'src/hosts/components/VcenterTable'
 import DatacentersTable from 'src/hosts/components/DatacentersTable'
 import DatacenterTable from 'src/hosts/components/DatacenterTable'
@@ -26,6 +24,7 @@ import VMHostsTable from 'src/hosts/components/VMHostsTable'
 import VMHostTable from 'src/hosts/components/VMHostTable'
 import VirtualMachinesTable from 'src/hosts/components/VirtualMachinesTable'
 import VirtualMachineTable from 'src/hosts/components/VirtualMachineTable'
+import ChartsLayoutRenderer from 'src/hosts/components/ChartsLayoutRenderer'
 
 // Type
 import {TimeRange, Cell, Template, Source} from 'src/types'
@@ -49,6 +48,9 @@ import {
   DEFAULT_CELL_BG_COLOR,
   DEFAULT_CELL_TEXT_COLOR,
 } from 'src/dashboards/constants'
+
+// Util
+import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 
 // ErrorHandler
 // import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -239,15 +241,19 @@ const VMHostsPage = (props: Props): JSX.Element => {
       saltMasterToken
     )
 
+    // send notify
+
+    // send notify end
+
     if (minionList.length > 0) {
       setTarget(minionList[0])
     }
+
     setAcceptedMinionList(minionList)
     setIsModalVisible(true)
   }
 
   const handleConnection = (): void => {
-    console.log(target, address, user, password, port, protocol, interval)
     AddVCenter([target])
     handleClose()
   }
@@ -411,12 +417,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
     )
   }
 
-  const WindowResizeEventTrigger = function() {
-    const event = document.createEvent('HTMLEvents')
-    event.initEvent('resize', true, false)
-    window.dispatchEvent(event)
-  }
-
   const debouncedFit = _.debounce(() => {
     WindowResizeEventTrigger()
   }, 250)
@@ -484,7 +484,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
       acc => {
         const datacenters = vcMinionValue[0].datacenters
         datacenters.reduce((acc, datacenter, i) => {
-          vcDatacenters.push(datacenter)
+          // vcDatacenters.push(datacenter)
           vcCpuUsage.push(datacenter.cpu_usage)
           vcCpuSpace.push(datacenter.cpu_space)
           vcMemoryUsage.push(datacenter.memory_usage)
@@ -503,11 +503,14 @@ const VMHostsPage = (props: Props): JSX.Element => {
             index: i,
             level: 1,
             type: 'datacenter',
+            parent_name: vcIpAddress,
             minion: minionName[0],
             nodes: {},
             datacenter_hosts: datacenterHosts,
             ...datacenter,
           }
+
+          vcDatacenters.push(acc[vcIpAddress]['nodes'][datacenterName])
 
           const clusters = datacenter.clusters
           clusters.reduce((acc, cluster, i) => {
@@ -517,6 +520,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
               index: i,
               level: 2,
               type: 'cluster',
+              parent_name: `${vcIpAddress}/${datacenterName}`,
               minion: minionName[0],
               nodes: {},
               ...cluster,
@@ -532,6 +536,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
                 index: i,
                 level: 3,
                 type: 'host',
+                parent_name: `${vcIpAddress}/${datacenterName}/${clusterName}`,
                 minion: minionName[0],
                 nodes: {},
                 ...host,
@@ -547,6 +552,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
                   index: i,
                   level: 4,
                   type: 'vm',
+                  parent_name: `${vcIpAddress}/${datacenterName}/${clusterName}/${hostName}`,
                   minion: minionName[0],
                   ...vm,
                 }
@@ -570,6 +576,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
               index: i,
               level: 2,
               type: 'host',
+              parent_name: `${vcIpAddress}/${datacenterName}/${hostName}`,
               minion: minionName[0],
               nodes: {},
               ...host,
@@ -585,6 +592,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
                 index: i,
                 level: 3,
                 type: 'vm',
+                parent_name: `${vcIpAddress}/${datacenterName}/${hostName}`,
                 minion: minionName[0],
                 ...vm,
               }
@@ -681,6 +689,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             isEditable={true}
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
+            handleSelectHost={handleSelectHost}
             item={focusedHost.datacenters}
           />
         )
@@ -775,7 +784,15 @@ const VMHostsPage = (props: Props): JSX.Element => {
     }
   }
 
+  const handleSelectHost = (props: any[]) => {
+    console.log('props.name: ', props)
+    console.log('vCenters: ', vCenters)
+    console.log('focusedHos: ', focusedHost)
+    // setFocusedHost(newItem)
+  }
+
   const onSelectHost = (props): void => {
+    console.log('onSelectHost: ', props)
     setFocusedHost(props)
   }
 
@@ -797,10 +814,10 @@ const VMHostsPage = (props: Props): JSX.Element => {
         size: leftSize,
         render: () => (
           <FancyScrollbar>
-            <TreeMenu
+            <VMTreeMenu
               data={vCenters}
               onClickItem={onSelectHost}
-              // initialActiveKey={}
+              initialActiveKey={focusedHost.key}
               // initialOpenNodes={}
             />
           </FancyScrollbar>

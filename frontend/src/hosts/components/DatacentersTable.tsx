@@ -18,12 +18,19 @@ interface Props {
   isEditable: boolean
   cellTextColor: string
   cellBackgroundColor: string
+  handleSelectHost: (props) => void
   item: any
 }
 
 const DatacentersTable = (props: Props): JSX.Element => {
-  const {isEditable, cellTextColor, cellBackgroundColor, item} = props
-  console.log({item})
+  const {
+    isEditable,
+    cellTextColor,
+    cellBackgroundColor,
+    item,
+    handleSelectHost,
+  } = props
+
   const Header = (): JSX.Element => {
     return (
       <>
@@ -85,6 +92,7 @@ const DatacentersTable = (props: Props): JSX.Element => {
     clusterCount,
     hostCount,
     vmCount,
+    handleSelectHost,
   }: {
     name: string
     cpuSpace: number
@@ -98,11 +106,12 @@ const DatacentersTable = (props: Props): JSX.Element => {
     clusterCount: number
     hostCount: number
     vmCount: number
+    handleSelectHost: (props: string) => void
   }): JSX.Element => {
     return (
       <div className="hosts-table--tr">
         <TableBodyRowItem
-          title={name}
+          title={<div onClick={handleSelectHost}>{name}</div>}
           width={'20%'}
           className={'align--center'}
         />
@@ -198,6 +207,9 @@ const DatacentersTable = (props: Props): JSX.Element => {
                       clusterCount={i.cluster_count}
                       hostCount={i.host_count}
                       vmCount={i.vm_count}
+                      handleSelectHost={() => {
+                        handleSelectHost(item)
+                      }}
                     />
                   ))
                 : null}

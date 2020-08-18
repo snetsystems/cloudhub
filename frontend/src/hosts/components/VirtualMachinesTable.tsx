@@ -24,7 +24,7 @@ interface Props {
 
 const VirtualMachinesTable = (props: Props): JSX.Element => {
   const {isEditable, cellTextColor, cellBackgroundColor, item} = props
-  console.log(item)
+
   const Header = (): JSX.Element => {
     return (
       <>
