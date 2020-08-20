@@ -126,7 +126,10 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   public async componentDidMount() {
-    const {focusedHost} = getLocalStorage('hostsTableState')
+    const hostsTableState = getLocalStorage('hostsTableState')
+    const {focusedHost} = hostsTableState.focusedHost
+      ? hostsTableState.focusedHost
+      : ''
 
     const getItem = getLocalStorage('hostsTableStateProportions')
     const {proportions} = getItem || this.state
@@ -233,6 +236,7 @@ export class HostsPage extends PureComponent<Props, State> {
       onChooseAutoRefresh,
       onManualRefresh,
       inPresentationMode,
+      source,
     } = this.props
 
     const {selected} = this.state
@@ -277,7 +281,11 @@ export class HostsPage extends PureComponent<Props, State> {
               />
             </TabPanel>
             <TabPanel key={'VMware'}>
-              <VMHostPage />
+              <VMHostPage
+                source={source}
+                manualRefresh={this.props.manualRefresh}
+                timeRange={this.state.timeRange}
+              />
             </TabPanel>
           </Tabs>
         </Page.Contents>

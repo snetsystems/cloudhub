@@ -5,6 +5,7 @@ import _ from 'lodash'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {ComponentStatus} from 'src/reusable_ui/types'
+import {getDeep} from 'src/utils/wrappers'
 
 // Component
 import {Button, ComponentSize, Form, Input, InputType} from 'src/reusable_ui'
@@ -27,7 +28,7 @@ import VirtualMachineTable from 'src/hosts/components/VirtualMachineTable'
 import ChartsLayoutRenderer from 'src/hosts/components/ChartsLayoutRenderer'
 
 // Type
-import {TimeRange, Cell, Template, Source} from 'src/types'
+import {TimeRange, Cell, Template, Source, Layout} from 'src/types'
 import {Item} from 'src/reusable_ui/components/treemenu/TreeMenu/walk'
 import {AddonType} from 'src/shared/constants'
 import {Addon} from 'src/types/auth'
@@ -51,9 +52,20 @@ import {
 
 // Util
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
+import {generateForHosts} from 'src/utils/tempVars'
+import {getCells} from 'src/hosts/utils/getCells'
+
+// APIs
+import {
+  getLayouts,
+  getAppsForHost,
+  getMeasurementsForHost,
+} from 'src/hosts/apis'
 
 // ErrorHandler
 // import {ErrorHandling} from 'src/shared/decorators/errors'
+import {Minion} from '../../agent_admin/type/minion'
+import {layout} from '../../../test/resources'
 
 const GridLayout = WidthProvider(ReactGridLayout)
 const MINION_LIST_EMPTY = '<< Empty >>'
@@ -161,6 +173,9 @@ const ConnectForm = ({
 }
 interface Props {
   addons: Addon[]
+  manualRefresh: number
+  timeRange: TimeRange
+  source: Source
   handleGetMinionKeyAcceptedList: (
     saltMasterUrl: string,
     saltMasterToken: string
@@ -172,7 +187,13 @@ interface VM extends Item {
 }
 
 const VMHostsPage = (props: Props): JSX.Element => {
-  const {addons, handleGetMinionKeyAcceptedList} = props
+  const {
+    addons,
+    manualRefresh,
+    timeRange,
+    source,
+    handleGetMinionKeyAcceptedList,
+  } = props
   const intervalItems = ['30s', '1m', '5m']
 
   // treemenu state
@@ -206,6 +227,10 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const [layout, setLayout] = useState([])
   const [vCenters, setVCenters] = useState({})
   const [acceptedMinionList, setAcceptedMinionList] = useState([])
+  const [layoutCells, setLayoutCells] = useState<Cell[]>([])
+  const [tempVars, setTempVars] = useState<Template[]>([])
+  const [layouts, setLayouts] = useState<Layout[]>([])
+  const [vmParam, setVmParam] = useState({})
 
   const handleChangeTarget = (e: {text: string}): void => {
     setTarget(e.text)
@@ -268,6 +293,30 @@ const VMHostsPage = (props: Props): JSX.Element => {
     AddVCenter([target])
     handleClose()
   }
+
+  const AddVCenter = minions => {
+    let vcenter = minions.reduce((vc, minion) => {
+      const vCenterInfo = getVCenterInfo(minion)
+      vc = {...vc, ...vCenterInfo}
+      return vc
+    }, {})
+
+    setVCenters({...vCenters, ...vcenter})
+  }
+
+  useEffect(() => {
+    /////////////// getMinion Api Call ///////////////////
+    const getMinions = ['minion03', 'minion06']
+    /////////////// getMinion Api Call ///////////////////
+    AddVCenter(getMinions)
+
+    const layoutResultsFn = async (): Promise<void> => {
+      const layoutRst = await getLayouts()
+      const init_layouts = getDeep<Layout[]>(layoutRst, 'data.layouts', [])
+      setLayouts(init_layouts)
+    }
+    layoutResultsFn()
+  }, [])
 
   useEffect(() => {
     switch (focusedHost.type) {
@@ -677,6 +726,59 @@ const VMHostsPage = (props: Props): JSX.Element => {
     return vcenter
   }
 
+  const fetchHostsAndMeasurements = async (
+    layouts: Layout[],
+    hostID: string
+  ) => {
+    const fetchMeasurements = getMeasurementsForHost(source, hostID)
+    const fetchHosts = getAppsForHost(
+      source.links.proxy,
+      hostID,
+      layouts,
+      source.telegraf
+    )
+
+    const [host, measurements] = await Promise.all([
+      fetchHosts,
+      fetchMeasurements,
+    ])
+
+    return {host, measurements}
+  }
+
+  const getLayoutsforHostApp = async (
+    layouts: Layout[],
+    hostID: string,
+    appID: string
+  ) => {
+    const {host, measurements} = await fetchHostsAndMeasurements(
+      layouts,
+      hostID
+    )
+
+    const layoutsWithinHost = layouts.filter(layout => {
+      return (
+        host.apps &&
+        host.apps.includes(layout.app) &&
+        measurements.includes(layout.measurement)
+      )
+    })
+
+    const filteredLayouts = layoutsWithinHost
+      .filter(layout => {
+        return layout.app === appID
+      })
+      .sort((x, y) => {
+        return x.measurement < y.measurement
+          ? -1
+          : x.measurement > y.measurement
+          ? 1
+          : 0
+      })
+
+    return {filteredLayouts}
+  }
+
   const CellTable = ({cell}): JSX.Element => {
     switch (cell.i) {
       case 'vcenter': {
@@ -691,11 +793,16 @@ const VMHostsPage = (props: Props): JSX.Element => {
       }
       case 'charts': {
         return (
-          <>
-            <h2 className={`dash-graph--name grid-layout--draggable`}>
-              {cell.i}
-            </h2>
-          </>
+          <ChartsLayoutRenderer
+            source={source}
+            layoutCells={layoutCells}
+            tempVars={tempVars}
+            timeRange={timeRange}
+            manualRefresh={manualRefresh}
+            hostID={focusedHost.minion}
+            isVMware={true}
+            vmParam={vmParam}
+          />
         )
       }
       case 'datacenters': {
@@ -891,9 +998,50 @@ const VMHostsPage = (props: Props): JSX.Element => {
     setopenNodes(newOpenNodes)
   }
 
-  const onSelectHost = (props): void => {
+  const onSelectHost = async (props): Promise<void> => {
+    const focusedApp = 'vsphere'
+    const {filteredLayouts} = await getLayoutsforHostApp(
+      layouts,
+      props.minion,
+      focusedApp
+    )
+
+    const layoutCells = getCells(filteredLayouts, source)
+    const tempVars = generateForHosts(source)
+
+    let vmParam
+    if (props.type === 'vcenter') {
+      vmParam = {
+        vmField: 'vcenter',
+        vmVal: props.label,
+      }
+    } else if (props.type === 'datacenter') {
+      vmParam = {
+        vmField: 'dcname',
+        vmVal: props.name,
+      }
+    } else if (props.type === 'cluster') {
+      vmParam = {
+        vmField: 'clustername',
+        vmVal: props.name,
+      }
+    } else if (props.type === 'host') {
+      vmParam = {
+        vmField: 'esxhostname',
+        vmVal: props.name,
+      }
+    } else if (props.type === 'vm') {
+      vmParam = {
+        vmField: 'vmname',
+        vmVal: props.name,
+      }
+    }
+
     setActiveKey(props.key)
     setFocusedHost(props)
+    setLayoutCells(layoutCells)
+    setTempVars(tempVars)
+    setVmParam(vmParam)
   }
 
   const threesizerDivisions = () => {
@@ -966,23 +1114,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
       },
     ]
   }
-
-  const AddVCenter = minions => {
-    let vcenter = minions.reduce((vc, minion) => {
-      const vCenterInfo = getVCenterInfo(minion)
-      vc = {...vc, ...vCenterInfo}
-      return vc
-    }, {})
-
-    setVCenters({...vCenters, ...vcenter})
-  }
-
-  useEffect(() => {
-    /////////////// getMinion Api Call ///////////////////
-    const getMinions = ['minion03', 'minion06']
-    /////////////// getMinion Api Call ///////////////////
-    AddVCenter(getMinions)
-  }, [])
 
   return (
     <div className="vm-status-page__container">

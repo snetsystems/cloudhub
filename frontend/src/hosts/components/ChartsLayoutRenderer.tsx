@@ -2,7 +2,7 @@ import React from 'react'
 import classnames from 'classnames'
 
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-import LayoutRenderer from 'src/shared/components/LayoutRenderer'
+import LayoutVMRenderer from 'src/shared/components/LayoutVMRenderer'
 
 const ChartsLayoutRenderer = ({
   source,
@@ -11,6 +11,8 @@ const ChartsLayoutRenderer = ({
   timeRange,
   manualRefresh,
   hostID,
+  isVMware,
+  vmParam,
 }) => {
   return (
     <FancyScrollbar
@@ -20,7 +22,7 @@ const ChartsLayoutRenderer = ({
       })}
     >
       <div className="container-fluid full-width dashboard">
-        <LayoutRenderer
+        <LayoutVMRenderer
           source={source}
           sources={[source]}
           isStatusPage={false}
@@ -31,6 +33,8 @@ const ChartsLayoutRenderer = ({
           timeRange={timeRange}
           manualRefresh={manualRefresh}
           host={hostID}
+          isVMware={isVMware}
+          vmParam={vmParam}
         />
       </div>
     </FancyScrollbar>
