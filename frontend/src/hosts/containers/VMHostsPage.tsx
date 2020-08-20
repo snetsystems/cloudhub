@@ -1,7 +1,7 @@
 // Library
 import React, {useState, useEffect, ChangeEvent} from 'react'
 import {connect} from 'react-redux'
-import _ from 'lodash'
+import _, {initial, keyBy} from 'lodash'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {ComponentStatus} from 'src/reusable_ui/types'
@@ -175,8 +175,17 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const {addons, handleGetMinionKeyAcceptedList} = props
   const intervalItems = ['30s', '1m', '5m']
 
+  // treemenu state
+  const [activeKey, setActiveKey] = useState('')
+  const [openNodes, setopenNodes] = useState([])
+  const [initialActiveKey, setInitialActiveKey] = useState('') // load localstorage
+  const [initialOpenNodes, setInitialOpenNodes] = useState([]) // load localstorage
+
+  // three sizer state
   const [proportions, setProportions] = useState([0.25, 0.75])
   const [isModalVisible, setIsModalVisible] = useState(false)
+
+  // form state
   const [target, setTarget] = useState(MINION_LIST_EMPTY)
   const [address, setAddress] = useState('')
   const [port, setPort] = useState('443')
@@ -184,6 +193,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const [password, setPassword] = useState('')
   const [protocol, setProtocol] = useState('https')
   const [interval, setInterval] = useState('1m')
+
+  // host state
   const [focusedHost, setFocusedHost] = useState<VM>({
     hasNodes: false,
     isOpen: false,
@@ -426,6 +437,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     debouncedFit()
   }
 
+  // set localstorage
   const handleLayoutChange = (cellsLayout: cellLayoutInfo[]): void => {
     // if (!this.props.onPositionChange) return
     // let changed = false
@@ -475,7 +487,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
     let vcClustersCount = []
     let vcHostCount = []
     let vcVmCount = []
-    let vcDatacenters = []
     let minionName = Object.keys(vCenterData.return[0])
     let vcMinionValue: any[] = Object.values(vCenterData.return[0])
     let vcIpAddress = vcMinionValue[0].vcenter
@@ -484,7 +495,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
       acc => {
         const datacenters = vcMinionValue[0].datacenters
         datacenters.reduce((acc, datacenter, i) => {
-          // vcDatacenters.push(datacenter)
           vcCpuUsage.push(datacenter.cpu_usage)
           vcCpuSpace.push(datacenter.cpu_space)
           vcMemoryUsage.push(datacenter.memory_usage)
@@ -509,8 +519,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
             datacenter_hosts: datacenterHosts,
             ...datacenter,
           }
-
-          vcDatacenters.push(acc[vcIpAddress]['nodes'][datacenterName])
 
           const clusters = datacenter.clusters
           clusters.reduce((acc, cluster, i) => {
@@ -560,7 +568,11 @@ const VMHostsPage = (props: Props): JSX.Element => {
                 return acc
               }, acc)
 
-              datacenterHosts.push(host)
+              datacenterHosts.push(
+                acc[vcIpAddress]['nodes'][datacenterName]['nodes'][clusterName][
+                  'nodes'
+                ][hostName]
+              )
 
               return acc
             }, acc)
@@ -600,7 +612,9 @@ const VMHostsPage = (props: Props): JSX.Element => {
               return acc
             }, acc)
 
-            datacenterHosts.push(host)
+            datacenterHosts.push(
+              acc[vcIpAddress]['nodes'][datacenterName]['nodes'][hostName]
+            )
 
             return acc
           }, acc)
@@ -624,7 +638,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
     vcenter[vcIpAddress] = {
       ...vcenter[vcIpAddress],
-      datacenters: vcDatacenters.length > 0 ? vcDatacenters : [],
       cpu_usage:
         vcCpuUsage.length > 0 ? vcCpuUsage.reduce((sum, c) => sum + c) : [],
       cpu_space:
@@ -684,13 +697,20 @@ const VMHostsPage = (props: Props): JSX.Element => {
         )
       }
       case 'datacenters': {
+        let item = null
+        if (focusedHost.type === 'vcenter') {
+          item = _.map(
+            _.keys(vCenters[activeKey.split('/')[0]].nodes),
+            k => vCenters[activeKey.split('/')[0]].nodes[k]
+          )
+        }
         return (
           <DatacentersTable
             isEditable={true}
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
             handleSelectHost={handleSelectHost}
-            item={focusedHost.datacenters}
+            item={item}
           />
         )
       }
@@ -705,22 +725,45 @@ const VMHostsPage = (props: Props): JSX.Element => {
         )
       }
       case 'datastores': {
+        let item = null
+
+        if (focusedHost.type === 'datacenter') {
+          item =
+            vCenters[activeKey.split('/')[0]].nodes[focusedHost.name].datastores
+        } else if (focusedHost.type === 'cluster') {
+          item =
+            vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
+              .nodes[focusedHost.name].datastores
+        }
         return (
           <DatastoresTable
             isEditable={true}
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
-            item={focusedHost.datastores}
+            item={item}
           />
         )
       }
       case 'clusters': {
+        let item = null
+        if (focusedHost.type === 'datacenter') {
+          item = _.map(
+            _.keys(
+              vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
+                .nodes
+            ),
+            k =>
+              vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
+                .nodes[k]
+          )
+        }
         return (
           <ClustersTable
             isEditable={true}
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
-            item={focusedHost.clusters}
+            handleSelectHost={handleSelectHost}
+            item={item}
           />
         )
       }
@@ -735,16 +778,30 @@ const VMHostsPage = (props: Props): JSX.Element => {
         )
       }
       case 'vmhosts': {
+        let item = null
+        if (focusedHost.type === 'cluster') {
+          item = _.map(
+            _.keys(
+              vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
+                .nodes[focusedHost.name].nodes
+            ),
+            k =>
+              vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
+                .nodes[focusedHost.name].nodes[k]
+          )
+        } else if (focusedHost.type === 'datacenter') {
+          item =
+            vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
+              .datacenter_hosts
+        }
+
         return (
           <VMHostsTable
             isEditable={true}
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
-            item={
-              focusedHost.type === 'datacenter'
-                ? focusedHost.datacenter_hosts
-                : focusedHost.hosts
-            }
+            handleSelectHost={handleSelectHost}
+            item={item}
           />
         )
       }
@@ -759,12 +816,25 @@ const VMHostsPage = (props: Props): JSX.Element => {
         )
       }
       case 'vms': {
+        let item = null
+        if (focusedHost.type === 'host') {
+          item = _.map(
+            _.keys(
+              vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
+                .nodes[activeKey.split('/')[2]].nodes[focusedHost.name].nodes
+            ),
+            k =>
+              vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
+                .nodes[activeKey.split('/')[2]].nodes[focusedHost.name].nodes[k]
+          )
+        }
         return (
           <VirtualMachinesTable
             isEditable={true}
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
-            item={focusedHost.vms}
+            handleSelectHost={handleSelectHost}
+            item={item}
           />
         )
       }
@@ -785,19 +855,45 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   const handleSelectHost = (props: any[]) => {
-    console.log('props.name: ', props)
-    console.log('vCenters: ', vCenters)
-    console.log('focusedHos: ', focusedHost)
-    // setFocusedHost(newItem)
+    const p = Array.isArray(props) ? props : [props]
+    const path: string[] = p[0].parent_name.split('/')
+    const newPath: string[] = []
+
+    if (path.length <= 1) {
+      newPath.push(path[0])
+    } else {
+      path.reduce((acc: string, current: string, index: number) => {
+        if (index === 1) {
+          newPath.push(acc)
+        }
+
+        const value = `${acc}/${current}`
+        newPath.push(value)
+        return value
+      })
+    }
+
+    setActiveKey(p[0].parent_name + '/' + p[0].name)
+    setopenNodes([...openNodes, ...newPath])
+    setFocusedHost(p[0])
+  }
+
+  const onClickToggle = (node): void => {
+    const newOpenNodes = openNodes.includes(node)
+      ? openNodes.filter(openNode => openNode !== node)
+      : [...openNodes, node]
+
+    setopenNodes(newOpenNodes)
   }
 
   const onSelectHost = (props): void => {
-    console.log('onSelectHost: ', props)
+    setActiveKey(props.key)
     setFocusedHost(props)
   }
 
   const threesizerDivisions = () => {
     const [leftSize, rightSize] = proportions
+
     return [
       {
         name: 'VMware Inventory',
@@ -817,8 +913,11 @@ const VMHostsPage = (props: Props): JSX.Element => {
             <VMTreeMenu
               data={vCenters}
               onClickItem={onSelectHost}
-              initialActiveKey={focusedHost.key}
-              // initialOpenNodes={}
+              onClickToggle={onClickToggle}
+              initialActiveKey={initialActiveKey}
+              initialOpenNodes={initialOpenNodes}
+              activeKey={activeKey}
+              openNodes={openNodes}
             />
           </FancyScrollbar>
         ),
