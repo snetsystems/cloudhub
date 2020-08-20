@@ -89,6 +89,7 @@ const DatacentersTable = (props: Props): JSX.Element => {
                 <TableBodyRowItem
                   title={
                     <div
+                      className={`hosts-table-item`}
                       onClick={() => {
                         handleSelectHost(i)
                       }}

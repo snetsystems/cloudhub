@@ -12,6 +12,7 @@ import {Button, ComponentSize, Form, Input, InputType} from 'src/reusable_ui'
 import {cellLayoutInfo} from 'src/addon/128t/containers/SwanSdplexStatusPage'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import Dropdown from 'src/shared/components/Dropdown'
+import ConfirmButton from 'src/shared/components/ConfirmButton'
 
 import HostModal from 'src/hosts/components/HostModal'
 import VMTreeMenu from 'src/hosts/components/VMTreeMenu'
@@ -319,6 +320,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }, [])
 
   useEffect(() => {
+    console.log({focusedHost})
+    console.log({vCenters})
     switch (focusedHost.type) {
       case 'vcenter': {
         return setLayout([
@@ -687,8 +690,41 @@ const VMHostsPage = (props: Props): JSX.Element => {
       }
     )
 
+    const updateBtn = (ipAddress: number) => (): JSX.Element => {
+      return (
+        <button className={`btn btn-default btn-xs btn-square`}>
+          <span
+            className={`icon pencil`}
+            onClick={e => {
+              e.stopPropagation()
+              console.log('updateBtn: ', ipAddress)
+            }}
+          />
+        </button>
+      )
+    }
+
+    const removeBtn = (ipAddress: number) => (): JSX.Element => {
+      return (
+        <ConfirmButton
+          text="Delete"
+          type="btn-danger"
+          size="btn-xs"
+          icon={'trash'}
+          confirmAction={() => {
+            console.log('removeBtn: ', ipAddress)
+          }}
+          isEventStopPropagation={true}
+          isButtonLeaveHide={true}
+          isHideText={true}
+          square={true}
+        />
+      )
+    }
+
     vcenter[vcIpAddress] = {
       ...vcenter[vcIpAddress],
+      buttons: [updateBtn(vcIpAddress), removeBtn(vcIpAddress)],
       cpu_usage:
         vcCpuUsage.length > 0 ? vcCpuUsage.reduce((sum, c) => sum + c) : [],
       cpu_space:

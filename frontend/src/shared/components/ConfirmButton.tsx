@@ -16,6 +16,9 @@ interface Props {
   disabled?: boolean
   customClass?: string
   position?: Position
+  isEventStopPropagation?: boolean
+  isButtonLeaveHide?: boolean
+  isHideText?: boolean
 }
 
 interface State {
@@ -43,18 +46,20 @@ class ConfirmButton extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {text, confirmText, icon} = this.props
+    const {text, confirmText, icon, isHideText} = this.props
 
     return (
       <ClickOutside onClickOutside={this.handleClickOutside}>
         <div
           className={this.className}
-          onClick={this.handleButtonClick}
+          onClick={e => {
+            this.handleButtonClick(e)
+          }}
           ref={r => (this.buttonDiv = r)}
           title={confirmText}
         >
           {icon && <span className={`icon ${icon}`} />}
-          {text && text}
+          {!isHideText && text && text}
           <div className={this.tooltipClassName}>
             <div
               className="confirm-button--confirmation"
@@ -69,10 +74,18 @@ class ConfirmButton extends PureComponent<Props, State> {
     )
   }
 
-  private handleButtonClick = () => {
+  private handleButtonClick = (
+    e: React.MouseEvent<HTMLDivElement, MouseEvent>
+  ) => {
+    if (this.props.isEventStopPropagation) {
+      e.stopPropagation()
+    }
+
     if (this.props.disabled) {
+      this.setState({expanded: false})
       return
     }
+
     this.setState({expanded: !this.state.expanded})
   }
 
@@ -110,6 +123,13 @@ class ConfirmButton extends PureComponent<Props, State> {
 
     const windowWidth = window.innerWidth
     const buttonRect = this.buttonDiv.getBoundingClientRect()
+
+    this.props.isButtonLeaveHide
+      ? (this.buttonDiv.onmouseleave = () => {
+          this.setState({expanded: false})
+        })
+      : null
+
     const tooltipRect = this.tooltipDiv.getBoundingClientRect()
 
     const rightGap = windowWidth - buttonRect.right

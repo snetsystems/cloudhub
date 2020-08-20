@@ -1,7 +1,9 @@
 import React from 'react'
 import classNames from 'classnames'
+import _ from 'lodash'
 
 import {Item} from './walk'
+import uuid from 'uuid'
 
 const DEFAULT_PADDING = 0.75
 const ICON_SIZE = 2
@@ -18,17 +20,16 @@ export interface TreeMenuItem extends Item {
   toggleNode?: () => void
 }
 
-export type TreeMenuChildren = (
-  props: {
-    search?: (term: string) => void
-    searchTerm?: string
-    items: TreeMenuItem[]
-    reset?: (openNodes?: string[]) => void
-  }
-) => JSX.Element
+export type TreeMenuChildren = (props: {
+  search?: (term: string) => void
+  searchTerm?: string
+  items: TreeMenuItem[]
+  reset?: (openNodes?: string[]) => void
+}) => JSX.Element
 
 export const ItemComponent: React.FunctionComponent<TreeMenuItem> = ({
   hasNodes = false,
+  buttons = [],
   isOpen = false,
   level = 0,
   onClick,
@@ -50,6 +51,9 @@ export const ItemComponent: React.FunctionComponent<TreeMenuItem> = ({
       paddingLeft: `${DEFAULT_PADDING +
         ICON_SIZE * (hasNodes ? 0 : 1) +
         level * LEVEL_SPACE}rem`,
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
       ...style,
     }}
     role="button"
@@ -68,7 +72,16 @@ export const ItemComponent: React.FunctionComponent<TreeMenuItem> = ({
         <ToggleIcon on={isOpen} />
       </div>
     )}
-    {label}
+    <div style={{width: '100%'}}>{label}</div>
+    {buttons.length > 0 && (
+      <div className={`tree-item-buttons`}>
+        {_.map(buttons, item => (
+          <span key={uuid.v4()} style={{marginLeft: '3px'}}>
+            {item()}
+          </span>
+        ))}
+      </div>
+    )}
   </li>
 )
 
@@ -89,7 +102,9 @@ export const defaultChildren: TreeMenuChildren = ({search, items}) => {
         />
       )}
       <ul className="tree-item-group">
-        {items.map(props => <ItemComponent {...props} />)}
+        {items.map(props => (
+          <ItemComponent {...props} />
+        ))}
       </ul>
     </>
   )
