@@ -22,7 +22,7 @@ interface Props {
 
 const VcenterTable = (props: Props): JSX.Element => {
   const {isEditable, cellTextColor, cellBackgroundColor, item} = props
-  console.log('VcenterTable: ', item)
+
   const {
     cpu_usage,
     cpu_space,

@@ -66,12 +66,12 @@ const DatastoresTable = (props: Props): JSX.Element => {
     return (
       <FancyScrollbar>
         {item
-          ? item.map(i => (
-              <div className="hosts-table--tr" key={uuid.v4()}>
+          ? item.map((i, index) => (
+              <div className="hosts-table--tr" key={`${i.name}-${index}`}>
                 <TableBodyRowItem
                   title={i.name}
                   width={'20%'}
-                  className={'align--start'}
+                  className={'align--center'}
                 />
                 <TableBodyRowItem
                   title={i.mode}

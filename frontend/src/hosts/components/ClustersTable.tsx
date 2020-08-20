@@ -18,6 +18,7 @@ interface Props {
   cellTextColor: string
   cellBackgroundColor: string
   item: any
+  handleSelectHost: (i: any) => void
 }
 
 const ClustersTable = (props: Props): JSX.Element => {
@@ -67,7 +68,7 @@ const ClustersTable = (props: Props): JSX.Element => {
     )
   }
 
-  const Body = (): JSX.Element => {
+  const Body = ({handleSelectHost}): JSX.Element => {
     return (
       <FancyScrollbar>
         {item
@@ -77,7 +78,7 @@ const ClustersTable = (props: Props): JSX.Element => {
                   title={
                     <div
                       onClick={() => {
-                        console.log('cluster click')
+                        handleSelectHost(i)
                       }}
                     >
                       {i.name}
@@ -161,7 +162,7 @@ const ClustersTable = (props: Props): JSX.Element => {
             <Header />
           </TableHeader>
           <TableBody>
-            <Body />
+            <Body handleSelectHost={props.handleSelectHost} />
           </TableBody>
         </Table>
       </PanelBody>

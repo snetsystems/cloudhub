@@ -81,15 +81,7 @@ const ClusterTable = (props: Props): JSX.Element => {
     return (
       <div className="hosts-table--tr">
         <TableBodyRowItem
-          title={
-            <div
-              onClick={() => {
-                console.log('cluster click')
-              }}
-            >
-              {name}
-            </div>
-          }
+          title={name}
           width={'20%'}
           className={'align--center'}
         />

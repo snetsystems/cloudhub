@@ -17,11 +17,18 @@ interface Props {
   isEditable: boolean
   cellTextColor: string
   cellBackgroundColor: string
+  handleSelectHost: (item: any) => void
   item: any
 }
 
 const VMHostsTable = (props: Props): JSX.Element => {
-  const {isEditable, cellTextColor, cellBackgroundColor, item} = props
+  const {
+    isEditable,
+    cellTextColor,
+    cellBackgroundColor,
+    item,
+    handleSelectHost,
+  } = props
 
   const Header = (): JSX.Element => {
     return (
@@ -83,7 +90,7 @@ const VMHostsTable = (props: Props): JSX.Element => {
                   title={
                     <div
                       onClick={() => {
-                        console.log('host click')
+                        handleSelectHost(i)
                       }}
                     >
                       {i.name}

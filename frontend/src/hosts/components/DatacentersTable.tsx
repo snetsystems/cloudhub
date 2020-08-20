@@ -80,93 +80,80 @@ const DatacentersTable = (props: Props): JSX.Element => {
     )
   }
 
-  const Body = ({
-    name,
-    cpuSpace,
-    cpuUsage,
-    memorySpace,
-    memoryUsage,
-    storageCapacity,
-    storageSpace,
-    storageUsage,
-    clusterCount,
-    hostCount,
-    vmCount,
-    handleSelectHost,
-  }: {
-    name: string
-    cpuSpace: number
-    cpuUsage: number
-    memorySpace: number
-    memoryUsage: number
-    storageCapacity: number
-    storageSpace: number
-    storageUsage: number
-    storage: number
-    clusterCount: number
-    hostCount: number
-    vmCount: number
-    handleSelectHost: (props: string) => void
-  }): JSX.Element => {
+  const Body = (): JSX.Element => {
     return (
-      <div className="hosts-table--tr">
-        <TableBodyRowItem
-          title={<div onClick={handleSelectHost}>{name}</div>}
-          width={'20%'}
-          className={'align--center'}
-        />
-        <TableBodyRowItem
-          title={
-            <ProgressDisplay
-              unit={'CPU'}
-              use={cpuUsage}
-              available={cpuSpace}
-              total={cpuUsage + cpuSpace}
-            />
-          }
-          width={'20%'}
-          className={'align--center'}
-        />
-        <TableBodyRowItem
-          title={
-            <ProgressDisplay
-              unit={'Memory'}
-              use={memoryUsage}
-              available={memorySpace}
-              total={memoryUsage + memorySpace}
-            />
-          }
-          width={'20%'}
-          className={'align--center'}
-        />
-        <TableBodyRowItem
-          title={
-            <ProgressDisplay
-              unit={'Storage'}
-              use={storageUsage}
-              available={storageSpace}
-              total={storageCapacity}
-            />
-          }
-          width={'20%'}
-          className={'align--center'}
-        />
-        <TableBodyRowItem
-          title={clusterCount}
-          width={'6.6%'}
-          className={'align--end'}
-        />
-        <TableBodyRowItem
-          title={hostCount}
-          width={'6.6%'}
-          className={'align--end'}
-        />
-        <TableBodyRowItem
-          title={vmCount}
-          width={'6.6%'}
-          className={'align--end'}
-        />
-      </div>
+      <FancyScrollbar>
+        {item
+          ? item.map(i => (
+              <div className="hosts-table--tr" key={i.name}>
+                <TableBodyRowItem
+                  title={
+                    <div
+                      onClick={() => {
+                        handleSelectHost(i)
+                      }}
+                    >
+                      {i.name}
+                    </div>
+                  }
+                  width={'20%'}
+                  className={'align--center'}
+                />
+                <TableBodyRowItem
+                  title={
+                    <ProgressDisplay
+                      unit={'CPU'}
+                      use={i.cpuUsage}
+                      available={i.cpuSpace}
+                      total={i.cpuUsage + i.cpuSpace}
+                    />
+                  }
+                  width={'20%'}
+                  className={'align--center'}
+                />
+                <TableBodyRowItem
+                  title={
+                    <ProgressDisplay
+                      unit={'Memory'}
+                      use={i.memoryUsage}
+                      available={i.memorySpace}
+                      total={i.memoryUsage + i.memorySpace}
+                    />
+                  }
+                  width={'20%'}
+                  className={'align--center'}
+                />
+                <TableBodyRowItem
+                  title={
+                    <ProgressDisplay
+                      unit={'Storage'}
+                      use={i.storageUsage}
+                      available={i.storageSpace}
+                      total={i.storageCapacity}
+                    />
+                  }
+                  width={'20%'}
+                  className={'align--center'}
+                />
+                <TableBodyRowItem
+                  title={i.clusterCount}
+                  width={'6.6%'}
+                  className={'align--end'}
+                />
+                <TableBodyRowItem
+                  title={i.hostCount}
+                  width={'6.6%'}
+                  className={'align--end'}
+                />
+                <TableBodyRowItem
+                  title={i.vmCount}
+                  width={'6.6%'}
+                  className={'align--end'}
+                />
+              </div>
+            ))
+          : null}
+      </FancyScrollbar>
     )
   }
 
@@ -191,29 +178,7 @@ const DatacentersTable = (props: Props): JSX.Element => {
             <Header />
           </TableHeader>
           <TableBody>
-            <FancyScrollbar>
-              {item
-                ? item.map(i => (
-                    <Body
-                      key={i.name}
-                      name={i.name}
-                      cpuSpace={i.cpu_space}
-                      cpuUsage={i.cpu_usage}
-                      memorySpace={i.memory_space}
-                      memoryUsage={i.memory_usage}
-                      storageCapacity={i.storage_capacity}
-                      storageSpace={i.storage_space}
-                      storageUsage={i.storage_usage}
-                      clusterCount={i.cluster_count}
-                      hostCount={i.host_count}
-                      vmCount={i.vm_count}
-                      handleSelectHost={() => {
-                        handleSelectHost(item)
-                      }}
-                    />
-                  ))
-                : null}
-            </FancyScrollbar>
+            <Body />
           </TableBody>
         </Table>
       </PanelBody>

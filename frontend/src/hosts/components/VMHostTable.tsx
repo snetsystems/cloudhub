@@ -76,15 +76,7 @@ const VMHostTable = (props: Props): JSX.Element => {
     return (
       <div className="hosts-table--tr">
         <TableBodyRowItem
-          title={
-            <div
-              onClick={() => {
-                console.log('host click')
-              }}
-            >
-              {item.name}
-            </div>
-          }
+          title={item.name}
           width={'20%'}
           className={'align--center'}
         />

@@ -19,11 +19,18 @@ interface Props {
   isEditable: boolean
   cellTextColor: string
   cellBackgroundColor: string
+  handleSelectHost: (item: any) => void
   item: any
 }
 
 const VirtualMachinesTable = (props: Props): JSX.Element => {
-  const {isEditable, cellTextColor, cellBackgroundColor, item} = props
+  const {
+    isEditable,
+    cellTextColor,
+    cellBackgroundColor,
+    item,
+    handleSelectHost,
+  } = props
 
   const Header = (): JSX.Element => {
     return (
@@ -82,7 +89,15 @@ const VirtualMachinesTable = (props: Props): JSX.Element => {
           ? item.map(i => (
               <div className="hosts-table--tr" key={uuid.v4()}>
                 <TableBodyRowItem
-                  title={i.name}
+                  title={
+                    <div
+                      onClick={() => {
+                        handleSelectHost(i)
+                      }}
+                    >
+                      {i.name}
+                    </div>
+                  }
                   width={'20%'}
                   className={'align--center'}
                 />
