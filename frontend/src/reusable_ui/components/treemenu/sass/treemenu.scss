@@ -50,7 +50,6 @@ $FONT_COLOR_NORMAL: #bec2cc;
   }
 
   &--active {
-    overflow: hidden;
     background-color: $g6-smoke;
   }
 
@@ -71,6 +70,16 @@ $FONT_COLOR_NORMAL: #bec2cc;
     // background: linear-gradient(to right, #22adf6 0%, #9394ff 100%);
     // filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='$startColor', endColorstr='$endColor',GradientType=1 );
     transition: opacity 0.25s ease;
+  }
+  &:hover {
+    .tree-item-buttons {
+      display: inline-flex;
+    }
+  }
+
+  .tree-item-buttons {
+    display: none;
+    margin-right: 10px;
   }
 }
 
