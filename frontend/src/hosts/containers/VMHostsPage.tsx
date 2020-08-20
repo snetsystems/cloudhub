@@ -1,7 +1,7 @@
 // Library
 import React, {useState, useEffect, ChangeEvent} from 'react'
 import {connect} from 'react-redux'
-import _, {initial, keyBy} from 'lodash'
+import _ from 'lodash'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {ComponentStatus} from 'src/reusable_ui/types'
@@ -544,6 +544,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
                 index: i,
                 level: 3,
                 type: 'host',
+                parent_type: 'cluster',
                 parent_name: `${vcIpAddress}/${datacenterName}/${clusterName}`,
                 minion: minionName[0],
                 nodes: {},
@@ -588,7 +589,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
               index: i,
               level: 2,
               type: 'host',
-              parent_name: `${vcIpAddress}/${datacenterName}/${hostName}`,
+              parent_type: 'datacenter',
+              parent_name: `${vcIpAddress}/${datacenterName}`,
               minion: minionName[0],
               nodes: {},
               ...host,
@@ -699,9 +701,9 @@ const VMHostsPage = (props: Props): JSX.Element => {
       case 'datacenters': {
         let item = null
         if (focusedHost.type === 'vcenter') {
-          item = _.map(
-            _.keys(vCenters[activeKey.split('/')[0]].nodes),
-            k => vCenters[activeKey.split('/')[0]].nodes[k]
+          item = _.filter(
+            vCenters[activeKey.split('/')[0]].nodes,
+            k => k.type === 'datacenter'
           )
         }
         return (
@@ -747,16 +749,13 @@ const VMHostsPage = (props: Props): JSX.Element => {
       case 'clusters': {
         let item = null
         if (focusedHost.type === 'datacenter') {
-          item = _.map(
-            _.keys(
-              vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
-                .nodes
-            ),
-            k =>
-              vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
-                .nodes[k]
+          const splitedActiveKey = activeKey.split('/')
+          item = _.filter(
+            vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes,
+            k => k.type === 'cluster'
           )
         }
+
         return (
           <ClustersTable
             isEditable={true}
@@ -779,19 +778,17 @@ const VMHostsPage = (props: Props): JSX.Element => {
       }
       case 'vmhosts': {
         let item = null
+        const splitedActiveKey = activeKey.split('/')
         if (focusedHost.type === 'cluster') {
-          item = _.map(
-            _.keys(
-              vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
-                .nodes[focusedHost.name].nodes
-            ),
-            k =>
-              vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
-                .nodes[focusedHost.name].nodes[k]
+          item = _.filter(
+            vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
+              focusedHost.name
+            ].nodes,
+            k => k.type === 'host'
           )
         } else if (focusedHost.type === 'datacenter') {
           item =
-            vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
+            vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]]
               .datacenter_hosts
         }
 
@@ -817,15 +814,23 @@ const VMHostsPage = (props: Props): JSX.Element => {
       }
       case 'vms': {
         let item = null
-        if (focusedHost.type === 'host') {
-          item = _.map(
-            _.keys(
-              vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
-                .nodes[activeKey.split('/')[2]].nodes[focusedHost.name].nodes
-            ),
-            k =>
-              vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
-                .nodes[activeKey.split('/')[2]].nodes[focusedHost.name].nodes[k]
+        if (
+          focusedHost.parent_type === 'cluster' &&
+          focusedHost.type === 'host'
+        ) {
+          item = _.filter(
+            vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
+              .nodes[activeKey.split('/')[2]].nodes[focusedHost.name].nodes,
+            k => k.type === 'vm'
+          )
+        } else if (
+          focusedHost.parent_type === 'datacenter' &&
+          focusedHost.type === 'host'
+        ) {
+          item = _.filter(
+            vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
+              .nodes[focusedHost.name].nodes,
+            k => k.type === 'vm'
           )
         }
         return (
