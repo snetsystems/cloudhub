@@ -25,6 +25,7 @@ export type TreeMenuProps = {
   openNodes?: string[]
   hasSearch?: boolean
   onClickItem?: (props: Item) => void
+  onClickToggle?: (node: string) => void
   debounceTime?: number
   children?: TreeMenuChildren
   locale?: LocaleFunction
@@ -39,31 +40,37 @@ type TreeMenuState = {
 }
 
 const defaultOnClick = (props: Item) => console.log(props) // eslint-disable-line no-console
+const defaultOnClickToggle = (node: string) => console.log(node) // eslint-disable-line no-console
 
-class VMTreeMenu extends React.Component<TreeMenuProps, TreeMenuState> {
+class VMTreeMenu extends React.PureComponent<TreeMenuProps, TreeMenuState> {
+  constructor(props) {
+    super(props)
+
+    this.state = {
+      openNodes: this.props.initialOpenNodes || [],
+      searchTerm: '',
+      activeKey: this.props.initialActiveKey || '',
+      focusKey: this.props.initialFocusKey || '',
+    }
+  }
+
   static defaultProps: TreeMenuProps = {
     data: {},
     onClickItem: defaultOnClick,
+    onClickToggle: defaultOnClickToggle,
     debounceTime: 125,
     children: defaultChildren,
     hasSearch: true,
   }
 
-  state: TreeMenuState = {
-    openNodes: this.props.initialOpenNodes || [],
-    searchTerm: '',
-    activeKey: this.props.initialActiveKey || '',
-    focusKey: this.props.initialFocusKey || '',
-  }
-
-  reset = (newOpenNodes?: string[]) => {
+  public reset = (newOpenNodes?: string[]) => {
     const {initialOpenNodes} = this.props
     const openNodes =
       (Array.isArray(newOpenNodes) && newOpenNodes) || initialOpenNodes || []
     this.setState({openNodes, searchTerm: ''})
   }
 
-  search = (value: string) => {
+  public search = (value: string) => {
     const {debounceTime} = this.props
     const search = debounce(
       (searchTerm: string) => this.setState({searchTerm}),
@@ -72,17 +79,21 @@ class VMTreeMenu extends React.Component<TreeMenuProps, TreeMenuState> {
     search(value)
   }
 
-  toggleNode = (node: string) => {
+  public toggleNode = (node: string) => {
     if (!this.props.openNodes) {
       const {openNodes} = this.state
       const newOpenNodes = openNodes.includes(node)
         ? openNodes.filter(openNode => openNode !== node)
         : [...openNodes, node]
       this.setState({openNodes: newOpenNodes})
+    } else {
+      if (this.props.onClickToggle) {
+        this.props.onClickToggle(node)
+      }
     }
   }
 
-  generateItems = (): TreeMenuItem[] => {
+  public generateItems = (): TreeMenuItem[] => {
     const {data, onClickItem, locale, matchSearch} = this.props
     const {searchTerm} = this.state
     const openNodes = this.props.openNodes || this.state.openNodes
@@ -112,7 +123,7 @@ class VMTreeMenu extends React.Component<TreeMenuProps, TreeMenuState> {
     })
   }
 
-  getKeyDownProps = (items: TreeMenuItem[]) => {
+  public getKeyDownProps = (items: TreeMenuItem[]) => {
     const {onClickItem} = this.props
     const {focusKey, activeKey} = this.state
     const focusIndex = items.findIndex(
@@ -162,7 +173,7 @@ class VMTreeMenu extends React.Component<TreeMenuProps, TreeMenuState> {
     }
   }
 
-  render() {
+  public render() {
     const {children, hasSearch} = this.props
     const {searchTerm} = this.state
 
