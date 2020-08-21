@@ -320,8 +320,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }, [])
 
   useEffect(() => {
-    console.log({focusedHost})
-    console.log({vCenters})
     switch (focusedHost.type) {
       case 'vcenter': {
         return setLayout([

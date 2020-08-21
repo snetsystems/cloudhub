@@ -148,7 +148,6 @@ const VcenterTable = (props: Props): JSX.Element => {
     )
   }
 
-  console.log(item)
   return (
     <Panel>
       <PanelHeader isEditable={isEditable}>
