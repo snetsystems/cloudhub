@@ -16,7 +16,7 @@ export const convertUnit = (unit: string, value: number) => {
 }
 
 export const ProgressDisplay = ({unit, use, available, total}) => {
-  return (
+  return unit && use && available && total ? (
     <div
       style={{
         width: '100%',
@@ -46,5 +46,7 @@ export const ProgressDisplay = ({unit, use, available, total}) => {
         <div>{convertUnit(unit, available)}</div>
       </div>
     </div>
+  ) : (
+    <>-</>
   )
 }
