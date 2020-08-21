@@ -24,6 +24,7 @@ interface Props {
 const DatacenterTable = (props: Props): JSX.Element => {
   const {isEditable, cellTextColor, cellBackgroundColor, item} = props
   const {
+    name,
     cpu_usage,
     cpu_space,
     memory_usage,
@@ -154,7 +155,7 @@ const DatacenterTable = (props: Props): JSX.Element => {
           cellTextColor={cellTextColor}
           cellBackgroundColor={cellBackgroundColor}
           value={[]}
-          name={'Datacenter'}
+          name={`Datacenter - ${name}`}
           sizeVisible={false}
         />
         <HeadingBar

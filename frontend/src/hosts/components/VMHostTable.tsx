@@ -139,7 +139,7 @@ const VMHostTable = (props: Props): JSX.Element => {
           cellTextColor={cellTextColor}
           cellBackgroundColor={cellBackgroundColor}
           value={[]}
-          name={'Host(EXSi)'}
+          name={`Host(EXSi) - ${item.name}`}
           sizeVisible={false}
         />
         <HeadingBar

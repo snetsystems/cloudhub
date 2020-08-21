@@ -148,6 +148,7 @@ const VcenterTable = (props: Props): JSX.Element => {
     )
   }
 
+  console.log(item)
   return (
     <Panel>
       <PanelHeader isEditable={isEditable}>
@@ -155,7 +156,7 @@ const VcenterTable = (props: Props): JSX.Element => {
           cellTextColor={cellTextColor}
           cellBackgroundColor={cellBackgroundColor}
           value={[]}
-          name={'vCenter'}
+          name={`vCenter - ${item.label}`}
           sizeVisible={false}
         />
         <HeadingBar

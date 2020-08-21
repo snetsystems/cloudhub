@@ -132,7 +132,7 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
           cellTextColor={cellTextColor}
           cellBackgroundColor={cellBackgroundColor}
           value={[]}
-          name={`Virtual Machine (${name})`}
+          name={`Virtual Machine - ${name}`}
           sizeVisible={false}
         />
         <HeadingBar
