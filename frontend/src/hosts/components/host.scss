@@ -32,3 +32,21 @@
     color: $s-orange;
   }
 }
+
+.hosts-table--th {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.align--start {
+  justify-content: flex-start;
+}
+
+.align--center {
+  justify-content: center;
+}
+
+.align--end {
+  justify-content: flex-end;
+}

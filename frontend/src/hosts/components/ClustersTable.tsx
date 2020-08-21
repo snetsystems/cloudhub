@@ -12,6 +12,7 @@ import {
 } from 'src/addon/128t/reusable/layout'
 import {ProgressDisplay} from 'src/shared/components/ProgressDisplay'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import {VCENTER_CLUSTERS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 
 interface Props {
   isEditable: boolean
@@ -23,44 +24,52 @@ interface Props {
 
 const ClustersTable = (props: Props): JSX.Element => {
   const {isEditable, cellTextColor, cellBackgroundColor, item} = props
+  const {
+    ClusterWidth,
+    CPUWidth,
+    MemoryWidth,
+    StorageWidth,
+    VMHostWidth,
+    VMWidth,
+  } = VCENTER_CLUSTERS_TABLE_SIZING
 
   const Header = (): JSX.Element => {
     return (
       <>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: ClusterWidth}}
         >
           Cluster
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: CPUWidth}}
         >
           CPU
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: MemoryWidth}}
         >
           Memory
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: StorageWidth}}
         >
           Storage
         </div>
 
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '10%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: VMHostWidth}}
         >
           Host(ESXi)
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '10%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: VMWidth}}
         >
           Virtual Machine
         </div>
@@ -84,8 +93,8 @@ const ClustersTable = (props: Props): JSX.Element => {
                       {i.name}
                     </div>
                   }
-                  width={'20%'}
-                  className={'align--center'}
+                  width={ClusterWidth}
+                  className={'align--start'}
                 />
                 <TableBodyRowItem
                   title={
@@ -96,7 +105,7 @@ const ClustersTable = (props: Props): JSX.Element => {
                       total={i.cpu_capacity}
                     />
                   }
-                  width={'20%'}
+                  width={CPUWidth}
                   className={'align--center'}
                 />
                 <TableBodyRowItem
@@ -108,7 +117,7 @@ const ClustersTable = (props: Props): JSX.Element => {
                       total={i.memory_capacity}
                     />
                   }
-                  width={'20%'}
+                  width={MemoryWidth}
                   className={'align--center'}
                 />
                 <TableBodyRowItem
@@ -120,18 +129,18 @@ const ClustersTable = (props: Props): JSX.Element => {
                       total={i.storage_capacity}
                     />
                   }
-                  width={'20%'}
+                  width={StorageWidth}
                   className={'align--center'}
                 />
 
                 <TableBodyRowItem
                   title={i.host_count}
-                  width={'10%'}
+                  width={VMHostWidth}
                   className={'align--end'}
                 />
                 <TableBodyRowItem
                   title={i.vm_count}
-                  width={'10%'}
+                  width={VMWidth}
                   className={'align--end'}
                 />
               </div>
