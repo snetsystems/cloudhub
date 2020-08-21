@@ -25,6 +25,7 @@
 .hosts-table-item {
   transition: color 0.25s ease;
   color: $s-brown;
+  cursor: pointer;
 
   &.focused,
   &:hover,
