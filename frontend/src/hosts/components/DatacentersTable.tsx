@@ -104,9 +104,9 @@ const DatacentersTable = (props: Props): JSX.Element => {
                   title={
                     <ProgressDisplay
                       unit={'CPU'}
-                      use={i.cpuUsage}
-                      available={i.cpuSpace}
-                      total={i.cpuUsage + i.cpuSpace}
+                      use={i.cpu_usage}
+                      available={i.cpu_space}
+                      total={i.cpu_usage + i.cpu_space}
                     />
                   }
                   width={'20%'}
@@ -116,9 +116,9 @@ const DatacentersTable = (props: Props): JSX.Element => {
                   title={
                     <ProgressDisplay
                       unit={'Memory'}
-                      use={i.memoryUsage}
-                      available={i.memorySpace}
-                      total={i.memoryUsage + i.memorySpace}
+                      use={i.memory_usage}
+                      available={i.memory_space}
+                      total={i.memory_usage + i.memory_space}
                     />
                   }
                   width={'20%'}
@@ -128,26 +128,26 @@ const DatacentersTable = (props: Props): JSX.Element => {
                   title={
                     <ProgressDisplay
                       unit={'Storage'}
-                      use={i.storageUsage}
-                      available={i.storageSpace}
-                      total={i.storageCapacity}
+                      use={i.storage_usage}
+                      available={i.storage_space}
+                      total={i.storage_capacity}
                     />
                   }
                   width={'20%'}
                   className={'align--center'}
                 />
                 <TableBodyRowItem
-                  title={i.clusterCount}
+                  title={i.cluster_count}
                   width={'6.6%'}
                   className={'align--end'}
                 />
                 <TableBodyRowItem
-                  title={i.hostCount}
+                  title={i.host_count}
                   width={'6.6%'}
                   className={'align--end'}
                 />
                 <TableBodyRowItem
-                  title={i.vmCount}
+                  title={i.vm_count}
                   width={'6.6%'}
                   className={'align--end'}
                 />
