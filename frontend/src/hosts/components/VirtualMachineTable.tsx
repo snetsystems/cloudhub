@@ -12,6 +12,9 @@ import {
   TableBodyRowItem,
 } from 'src/addon/128t/reusable/layout'
 import {convertUnit} from 'src/shared/components/ProgressDisplay'
+import {responseIndicator} from 'src/shared/components/Indicator'
+import {VCENTER_VM_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
+
 interface Props {
   isEditable: boolean
   cellTextColor: string
@@ -31,43 +34,52 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
     ip_address,
   } = item
 
+  const {
+    CPUWidth,
+    MemoryWidth,
+    StorageWidth,
+    IPWidth,
+    OSWidth,
+    StatusWidth,
+  } = VCENTER_VM_TABLE_SIZING
+
   const Header = (): JSX.Element => {
     return (
       <>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '16.6%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: CPUWidth}}
         >
           CPU
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '16.6%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: MemoryWidth}}
         >
           Memory
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '16.6%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: StorageWidth}}
         >
           Storage
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '16.6%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: IPWidth}}
         >
           IP
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '16.6%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: OSWidth}}
         >
           OS
         </div>
 
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '16.6%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: StatusWidth}}
         >
           Power Status
         </div>
@@ -80,30 +92,34 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
       <div className="hosts-table--tr">
         <TableBodyRowItem
           title={convertUnit('CPU', cpu_usage)}
-          width={'16.6%'}
-          className={'align--center'}
+          width={CPUWidth}
+          className={'align--end'}
         />
         <TableBodyRowItem
           title={convertUnit('Memory', memory_usage)}
-          width={'16.6%'}
-          className={'align--center'}
+          width={MemoryWidth}
+          className={'align--end'}
         />
         <TableBodyRowItem
           title={convertUnit('Storage', storage_usage)}
-          width={'16.6%'}
-          className={'align--center'}
+          width={StorageWidth}
+          className={'align--end'}
         />
         <TableBodyRowItem
           title={ip_address}
-          width={'16.6%'}
-          className={'align--center'}
+          width={IPWidth}
+          className={'align--start'}
         />
-        <TableBodyRowItem title={os} width={'16.6%'} className={'align--end'} />
+        <TableBodyRowItem
+          title={os}
+          width={OSWidth}
+          className={'align--start'}
+        />
 
         <TableBodyRowItem
-          title={power_state}
-          width={'16.6%'}
-          className={'align--end'}
+          title={responseIndicator(power_state === 'poweredOn')}
+          width={StatusWidth}
+          className={'align--center'}
         />
       </div>
     )
@@ -116,7 +132,7 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
           cellTextColor={cellTextColor}
           cellBackgroundColor={cellBackgroundColor}
           value={[]}
-          name={`Virtual Machine (${name})`}
+          name={`Virtual Machine - ${name}`}
           sizeVisible={false}
         />
         <HeadingBar

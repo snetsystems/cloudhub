@@ -516,6 +516,38 @@ const VMHostsPage = (props: Props): JSX.Element => {
     // }
   }
 
+  const updateBtn = (ipAddress: number) => (): JSX.Element => {
+    return (
+      <button className={`btn btn-default btn-xs btn-square`}>
+        <span
+          className={`icon pencil`}
+          onClick={e => {
+            e.stopPropagation()
+            console.log('updateBtn: ', ipAddress)
+          }}
+        />
+      </button>
+    )
+  }
+
+  const removeBtn = (ipAddress: number) => (): JSX.Element => {
+    return (
+      <ConfirmButton
+        text="Delete"
+        type="btn-danger"
+        size="btn-xs"
+        icon={'trash'}
+        confirmAction={() => {
+          console.log('removeBtn: ', ipAddress)
+        }}
+        isEventStopPropagation={true}
+        isButtonLeaveHide={true}
+        isHideText={true}
+        square={true}
+      />
+    )
+  }
+
   const getVCenterInfo = minionId => {
     let vCenterData
     if (minionId === 'minion06') {
@@ -697,38 +729,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
         },
       }
     )
-
-    const updateBtn = (ipAddress: number) => (): JSX.Element => {
-      return (
-        <button className={`btn btn-default btn-xs btn-square`}>
-          <span
-            className={`icon pencil`}
-            onClick={e => {
-              e.stopPropagation()
-              console.log('updateBtn: ', ipAddress)
-            }}
-          />
-        </button>
-      )
-    }
-
-    const removeBtn = (ipAddress: number) => (): JSX.Element => {
-      return (
-        <ConfirmButton
-          text="Delete"
-          type="btn-danger"
-          size="btn-xs"
-          icon={'trash'}
-          confirmAction={() => {
-            console.log('removeBtn: ', ipAddress)
-          }}
-          isEventStopPropagation={true}
-          isButtonLeaveHide={true}
-          isHideText={true}
-          square={true}
-        />
-      )
-    }
 
     vcenter[vcIpAddress] = {
       ...vcenter[vcIpAddress],

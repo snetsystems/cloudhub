@@ -12,6 +12,7 @@ import {
 } from 'src/addon/128t/reusable/layout'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {ProgressDisplay} from 'src/shared/components/ProgressDisplay'
+import {VCENTER_DATACENTER_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 
 interface Props {
   isEditable: boolean
@@ -23,6 +24,7 @@ interface Props {
 const DatacenterTable = (props: Props): JSX.Element => {
   const {isEditable, cellTextColor, cellBackgroundColor, item} = props
   const {
+    name,
     cpu_usage,
     cpu_space,
     memory_usage,
@@ -34,42 +36,51 @@ const DatacenterTable = (props: Props): JSX.Element => {
     host_count,
     vm_count,
   } = item
+
+  const {
+    CPUWidth,
+    MemoryWidth,
+    StorageWidth,
+    ClusterWidth,
+    VMHostWidth,
+    VMWidth,
+  } = VCENTER_DATACENTER_TABLE_SIZING
   const Header = (): JSX.Element => {
     return (
       <>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: CPUWidth}}
         >
           CPU
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: MemoryWidth}}
         >
           Memory
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: StorageWidth}}
         >
           Storage
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '16.3%'}}
+          className={'hosts-table--th sortable-heade align--center'}
+          style={{width: ClusterWidth}}
         >
           Cluster
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '16.3%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: VMHostWidth}}
         >
           Host(ESXi)
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '16.3%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: VMWidth}}
         >
           VM
         </div>
@@ -90,7 +101,7 @@ const DatacenterTable = (props: Props): JSX.Element => {
                 total={cpu_usage + cpu_space}
               />
             }
-            width={'20%'}
+            width={CPUWidth}
             className={'align--center'}
           />
           <TableBodyRowItem
@@ -102,7 +113,7 @@ const DatacenterTable = (props: Props): JSX.Element => {
                 total={memory_usage + memory_space}
               />
             }
-            width={'20%'}
+            width={MemoryWidth}
             className={'align--center'}
           />
           <TableBodyRowItem
@@ -114,22 +125,22 @@ const DatacenterTable = (props: Props): JSX.Element => {
                 total={storage_capacity}
               />
             }
-            width={'20%'}
+            width={StorageWidth}
             className={'align--center'}
           />
           <TableBodyRowItem
             title={cluster_count}
-            width={'16.3%'}
+            width={ClusterWidth}
             className={'align--end'}
           />
           <TableBodyRowItem
             title={host_count}
-            width={'16.3%'}
+            width={VMHostWidth}
             className={'align--end'}
           />
           <TableBodyRowItem
             title={vm_count}
-            width={'16.3%'}
+            width={VMWidth}
             className={'align--end'}
           />
         </div>
@@ -144,7 +155,7 @@ const DatacenterTable = (props: Props): JSX.Element => {
           cellTextColor={cellTextColor}
           cellBackgroundColor={cellBackgroundColor}
           value={[]}
-          name={'Datacenter'}
+          name={`Datacenter - ${name}`}
           sizeVisible={false}
         />
         <HeadingBar

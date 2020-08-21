@@ -1,5 +1,4 @@
 import React from 'react'
-import uuid from 'uuid'
 
 import {
   CellName,
@@ -14,6 +13,7 @@ import {
 } from 'src/addon/128t/reusable/layout'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {convertUnit} from 'src/shared/components/ProgressDisplay'
+import {VCENTER_DATASTORES_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 
 interface Props {
   isEditable: boolean
@@ -24,37 +24,43 @@ interface Props {
 
 const DatastoresTable = (props: Props): JSX.Element => {
   const {isEditable, cellTextColor, cellBackgroundColor, item} = props
-
+  const {
+    DatastoreWidth,
+    StatusWidth,
+    TypeWidth,
+    SpaceWidth,
+    FreeSpaceWidth,
+  } = VCENTER_DATASTORES_TABLE_SIZING
   const Header = (): JSX.Element => {
     return (
       <>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: DatastoreWidth}}
         >
           Datastore
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: StatusWidth}}
         >
           Run Status
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: TypeWidth}}
         >
           Type
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: SpaceWidth}}
         >
           Space
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '6.6%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: FreeSpaceWidth}}
         >
           Free Space
         </div>
@@ -70,28 +76,28 @@ const DatastoresTable = (props: Props): JSX.Element => {
               <div className="hosts-table--tr" key={`${i.name}-${index}`}>
                 <TableBodyRowItem
                   title={i.name}
-                  width={'20%'}
-                  className={'align--center'}
+                  width={DatastoreWidth}
+                  className={'align--start'}
                 />
                 <TableBodyRowItem
                   title={i.mode}
-                  width={'20%'}
+                  width={StatusWidth}
                   className={'align--center'}
                 />
                 <TableBodyRowItem
                   title={i.type}
-                  width={'20%'}
+                  width={TypeWidth}
                   className={'align--center'}
                 />
                 <TableBodyRowItem
                   title={convertUnit('Storage', i.capacity)}
-                  width={'20%'}
-                  className={'align--center'}
+                  width={SpaceWidth}
+                  className={'align--end'}
                 />
                 <TableBodyRowItem
                   title={convertUnit('Storage', i.space)}
-                  width={'20%'}
-                  className={'align--center'}
+                  width={FreeSpaceWidth}
+                  className={'align--end'}
                 />
               </div>
             ))

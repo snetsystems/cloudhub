@@ -11,6 +11,7 @@ import {
   TableBodyRowItem,
 } from 'src/addon/128t/reusable/layout'
 import {ProgressDisplay} from 'src/shared/components/ProgressDisplay'
+import {VCENTER_VMHOST_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 
 interface Props {
   isEditable: boolean
@@ -21,50 +22,51 @@ interface Props {
 
 const VMHostTable = (props: Props): JSX.Element => {
   const {isEditable, cellTextColor, cellBackgroundColor, item} = props
-
+  const {
+    CPUWidth,
+    MemoryWidth,
+    StorageWidth,
+    VMWidth,
+    VMModelWidth,
+    VMProcessorWidth,
+  } = VCENTER_VMHOST_TABLE_SIZING
   const Header = (): JSX.Element => {
     return (
       <>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
-        >
-          Host
-        </div>
-        <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: CPUWidth}}
         >
           CPU
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: MemoryWidth}}
         >
           Memory
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: StorageWidth}}
         >
           Storage
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '6.6%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: VMWidth}}
         >
           VM
         </div>
 
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '6.6%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: VMModelWidth}}
         >
           Model
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '6.6%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: VMProcessorWidth}}
         >
           Processor
         </div>
@@ -76,11 +78,6 @@ const VMHostTable = (props: Props): JSX.Element => {
     return (
       <div className="hosts-table--tr">
         <TableBodyRowItem
-          title={item.name}
-          width={'20%'}
-          className={'align--center'}
-        />
-        <TableBodyRowItem
           title={
             <ProgressDisplay
               unit={'CPU'}
@@ -89,8 +86,8 @@ const VMHostTable = (props: Props): JSX.Element => {
               total={item.cpu_capacity}
             />
           }
-          width={'20%'}
-          className={'align--center'}
+          width={CPUWidth}
+          className={'align--start'}
         />
         <TableBodyRowItem
           title={
@@ -101,7 +98,7 @@ const VMHostTable = (props: Props): JSX.Element => {
               total={item.memory_capacity}
             />
           }
-          width={'20%'}
+          width={MemoryWidth}
           className={'align--center'}
         />
         <TableBodyRowItem
@@ -113,18 +110,22 @@ const VMHostTable = (props: Props): JSX.Element => {
               total={item.storage_capacity}
             />
           }
-          width={'20%'}
+          width={StorageWidth}
           className={'align--center'}
         />
-        <TableBodyRowItem title={'5'} width={'6.6%'} className={'align--end'} />
         <TableBodyRowItem
-          title={item.model}
-          width={'6.6%'}
+          title={item.vm_count}
+          width={VMWidth}
           className={'align--end'}
         />
         <TableBodyRowItem
+          title={item.model}
+          width={VMModelWidth}
+          className={'align--start'}
+        />
+        <TableBodyRowItem
           title={item.cpu_name}
-          width={'6.6%'}
+          width={VMProcessorWidth}
           className={'align--end'}
         />
       </div>
@@ -138,7 +139,7 @@ const VMHostTable = (props: Props): JSX.Element => {
           cellTextColor={cellTextColor}
           cellBackgroundColor={cellBackgroundColor}
           value={[]}
-          name={'Host(EXSi)'}
+          name={`Host(EXSi) - ${item.name}`}
           sizeVisible={false}
         />
         <HeadingBar

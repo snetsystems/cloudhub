@@ -14,6 +14,8 @@ import {
 } from 'src/addon/128t/reusable/layout'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {convertUnit} from 'src/shared/components/ProgressDisplay'
+import {responseIndicator} from 'src/shared/components/Indicator'
+import {VCENTER_VMS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 
 interface Props {
   isEditable: boolean
@@ -32,49 +34,59 @@ const VirtualMachinesTable = (props: Props): JSX.Element => {
     handleSelectHost,
   } = props
 
+  const {
+    VMWidth,
+    CPUWidth,
+    MemoryWidth,
+    StorageWidth,
+    IPWidth,
+    OSWidth,
+    StatusWidth,
+  } = VCENTER_VMS_TABLE_SIZING
+
   const Header = (): JSX.Element => {
     return (
       <>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: VMWidth}}
         >
           VM
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: CPUWidth}}
         >
           CPU
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: MemoryWidth}}
         >
           Memory
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: StorageWidth}}
         >
           Storage
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: IPWidth}}
         >
           IP
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '6.6%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: OSWidth}}
         >
           OS
         </div>
 
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '6.6%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: StatusWidth}}
         >
           Power Status
         </div>
@@ -98,39 +110,39 @@ const VirtualMachinesTable = (props: Props): JSX.Element => {
                       {i.name}
                     </div>
                   }
-                  width={'20%'}
-                  className={'align--center'}
+                  width={VMWidth}
+                  className={'align--start'}
                 />
                 <TableBodyRowItem
                   title={convertUnit('CPU', i.cpu_usage)}
-                  width={'20%'}
-                  className={'align--center'}
+                  width={CPUWidth}
+                  className={'align--end'}
                 />
                 <TableBodyRowItem
                   title={convertUnit('Memory', i.memory_usage)}
-                  width={'20%'}
-                  className={'align--center'}
+                  width={MemoryWidth}
+                  className={'align--end'}
                 />
 
                 <TableBodyRowItem
                   title={convertUnit('Storage', i.storage_usage)}
-                  width={'20%'}
-                  className={'align--center'}
+                  width={StorageWidth}
+                  className={'align--end'}
                 />
                 <TableBodyRowItem
                   title={i.ip_address}
-                  width={'20%'}
-                  className={'align--center'}
+                  width={IPWidth}
+                  className={'align--start'}
                 />
                 <TableBodyRowItem
                   title={i.os}
-                  width={'6.6%'}
-                  className={'align--end'}
+                  width={OSWidth}
+                  className={'align--start'}
                 />
                 <TableBodyRowItem
-                  title={i.power_state}
-                  width={'6.6%'}
-                  className={'align--end'}
+                  title={responseIndicator(i.power_state === 'poweredOn')}
+                  width={StatusWidth}
+                  className={'align--center'}
                 />
               </div>
             ))

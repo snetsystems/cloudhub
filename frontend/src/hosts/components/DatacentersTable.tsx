@@ -13,6 +13,7 @@ import {
 } from 'src/addon/128t/reusable/layout'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {ProgressDisplay} from 'src/shared/components/ProgressDisplay'
+import {VCENTER_DATACENTERS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 
 interface Props {
   isEditable: boolean
@@ -31,48 +32,57 @@ const DatacentersTable = (props: Props): JSX.Element => {
     handleSelectHost,
   } = props
 
+  const {
+    DatacenterWidth,
+    CPUWidth,
+    MemoryWidth,
+    StorageWidth,
+    ClusterWidth,
+    VMHostWidth,
+    VMWidth,
+  } = VCENTER_DATACENTERS_TABLE_SIZING
   const Header = (): JSX.Element => {
     return (
       <>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: DatacenterWidth}}
         >
           Datacenter
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: CPUWidth}}
         >
           CPU
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: MemoryWidth}}
         >
           Memory
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '20%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: StorageWidth}}
         >
           Storage
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '6.6%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: ClusterWidth}}
         >
           Cluster
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '6.6%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: VMHostWidth}}
         >
           Host(ESXi)
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '6.6%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: VMWidth}}
         >
           VM
         </div>
@@ -97,8 +107,8 @@ const DatacentersTable = (props: Props): JSX.Element => {
                       {i.name}
                     </div>
                   }
-                  width={'20%'}
-                  className={'align--center'}
+                  width={DatacenterWidth}
+                  className={'align--start'}
                 />
                 <TableBodyRowItem
                   title={
@@ -109,7 +119,7 @@ const DatacentersTable = (props: Props): JSX.Element => {
                       total={i.cpu_usage + i.cpu_space}
                     />
                   }
-                  width={'20%'}
+                  width={CPUWidth}
                   className={'align--center'}
                 />
                 <TableBodyRowItem
@@ -121,7 +131,7 @@ const DatacentersTable = (props: Props): JSX.Element => {
                       total={i.memory_usage + i.memory_space}
                     />
                   }
-                  width={'20%'}
+                  width={MemoryWidth}
                   className={'align--center'}
                 />
                 <TableBodyRowItem
@@ -133,22 +143,22 @@ const DatacentersTable = (props: Props): JSX.Element => {
                       total={i.storage_capacity}
                     />
                   }
-                  width={'20%'}
+                  width={StorageWidth}
                   className={'align--center'}
                 />
                 <TableBodyRowItem
                   title={i.cluster_count}
-                  width={'6.6%'}
+                  width={ClusterWidth}
                   className={'align--end'}
                 />
                 <TableBodyRowItem
                   title={i.host_count}
-                  width={'6.6%'}
+                  width={VMHostWidth}
                   className={'align--end'}
                 />
                 <TableBodyRowItem
                   title={i.vm_count}
-                  width={'6.6%'}
+                  width={VMWidth}
                   className={'align--end'}
                 />
               </div>

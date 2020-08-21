@@ -25,20 +25,25 @@ export const ProgressDisplay = ({unit, use, available, total}) => {
         fontSize: '9px',
       }}
     >
-      <div style={{display: 'flex', justifyContent: 'space-between'}}>
-        <div>{unit}</div>
-        <div>available: {convertUnit(unit, available)}</div>
+      <div style={{display: 'flex', justifyContent: 'flex-end'}}>
+        <div>{convertUnit(unit, total)}</div>
       </div>
-      <div style={{width: '100%'}}>
+      <div
+        style={{
+          display: 'flex',
+          padding: '3px 0 5px',
+        }}
+      >
         <Line
           percent={Math.trunc((use / total) * 100)}
           strokeWidth={3}
           trailWidth={3}
+          style={{height: '3px', width: '100%'}}
         />
       </div>
       <div style={{display: 'flex', justifyContent: 'space-between'}}>
-        <div>use: {convertUnit(unit, use)}</div>
-        <div>total: {convertUnit(unit, total)}</div>
+        <div>{convertUnit(unit, use)}</div>
+        <div>{convertUnit(unit, available)}</div>
       </div>
     </div>
   )

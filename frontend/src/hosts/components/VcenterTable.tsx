@@ -11,6 +11,7 @@ import {
   TableBodyRowItem,
 } from 'src/addon/128t/reusable/layout'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import {VCENTER_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 import {ProgressDisplay} from 'src/shared/components/ProgressDisplay'
 
 interface Props {
@@ -27,7 +28,7 @@ const VcenterTable = (props: Props): JSX.Element => {
     cpu_usage,
     cpu_space,
     host_count,
-    datacenters,
+    nodes,
     memory_usage,
     memory_space,
     storage_usage,
@@ -35,44 +36,53 @@ const VcenterTable = (props: Props): JSX.Element => {
     storage_capacity,
     vm_count,
   } = item
+
+  const {
+    CPUWidth,
+    MemoryWidth,
+    StorageWidth,
+    DatacenterWidth,
+    VMHostWidth,
+    VMWidth,
+  } = VCENTER_TABLE_SIZING
   const Header = (): JSX.Element => {
     return (
       <>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '16.6%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: CPUWidth}}
         >
           CPU
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '16.6%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: MemoryWidth}}
         >
           Memory
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '16.6%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: StorageWidth}}
         >
           Storage
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '16.6%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: DatacenterWidth}}
         >
           Datacenter
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '16.6%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: VMHostWidth}}
         >
           Host(ESXi)
         </div>
         <div
-          className={'hosts-table--th sortable-header'}
-          style={{width: '16.6%'}}
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: VMWidth}}
         >
-          Virtaul Machine
+          VM
         </div>
       </>
     )
@@ -91,7 +101,7 @@ const VcenterTable = (props: Props): JSX.Element => {
                 total={cpu_usage + cpu_space}
               />
             }
-            width={'16.6%'}
+            width={CPUWidth}
             className={'align--center'}
           />
           <TableBodyRowItem
@@ -103,7 +113,7 @@ const VcenterTable = (props: Props): JSX.Element => {
                 total={memory_usage + memory_space}
               />
             }
-            width={'16.6%'}
+            width={MemoryWidth}
             className={'align--center'}
           />
           <TableBodyRowItem
@@ -115,22 +125,22 @@ const VcenterTable = (props: Props): JSX.Element => {
                 total={storage_capacity}
               />
             }
-            width={'16.6%'}
+            width={StorageWidth}
             className={'align--center'}
           />
           <TableBodyRowItem
-            title={datacenters ? datacenters.length : null}
-            width={'16.6%'}
+            title={nodes ? nodes.length : null}
+            width={DatacenterWidth}
             className={'align--end'}
           />
           <TableBodyRowItem
             title={host_count}
-            width={'16.6%'}
+            width={VMHostWidth}
             className={'align--end'}
           />
           <TableBodyRowItem
             title={vm_count}
-            width={'16.6%'}
+            width={VMWidth}
             className={'align--end'}
           />
         </div>
@@ -138,6 +148,7 @@ const VcenterTable = (props: Props): JSX.Element => {
     )
   }
 
+  console.log(item)
   return (
     <Panel>
       <PanelHeader isEditable={isEditable}>
@@ -145,7 +156,7 @@ const VcenterTable = (props: Props): JSX.Element => {
           cellTextColor={cellTextColor}
           cellBackgroundColor={cellBackgroundColor}
           value={[]}
-          name={'vCenter'}
+          name={`vCenter - ${item.label}`}
           sizeVisible={false}
         />
         <HeadingBar
