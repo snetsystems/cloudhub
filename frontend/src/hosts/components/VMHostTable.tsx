@@ -114,7 +114,7 @@ const VMHostTable = (props: Props): JSX.Element => {
           className={'align--center'}
         />
         <TableBodyRowItem
-          title={'5'}
+          title={item.vm_count}
           width={VMWidth}
           className={'align--end'}
         />
