@@ -50,3 +50,14 @@
 .align--end {
   justify-content: flex-end;
 }
+
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  background: $c-topaz;
+  border-radius: 100%;
+
+  &.status-indicator--enabled {
+    background: $c-rainforest;
+  }
+}
