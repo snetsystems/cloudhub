@@ -13,6 +13,8 @@ const ChartsLayoutRenderer = ({
   hostID,
   isVMware,
   vmParam,
+  vmParentChartField,
+  vmParentName,
 }) => {
   return (
     <FancyScrollbar
@@ -35,6 +37,8 @@ const ChartsLayoutRenderer = ({
           host={hostID}
           isVMware={isVMware}
           vmParam={vmParam}
+          vmParentChartField={vmParentChartField}
+          vmParentName={vmParentName}
         />
       </div>
     </FancyScrollbar>

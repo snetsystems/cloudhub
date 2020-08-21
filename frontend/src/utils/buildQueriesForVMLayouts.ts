@@ -19,7 +19,9 @@ const buildCannedVMDashboardQuery = (
   query: LayoutQuery | CellQuery,
   {lower, upper}: TimeRange,
   host: string,
-  vmParam: vmParam
+  vmParam: vmParam,
+  vmParentChartField: string,
+  vmParentName: string
 ): string => {
   const {defaultGroupBy} = timeRanges.find(range => range.lower === lower) || {
     defaultGroupBy: '5m',
@@ -37,6 +39,15 @@ const buildCannedVMDashboardQuery = (
 
   if (host) {
     text += ` and \"host\" = '${host}'`
+  }
+
+  if (vmParentChartField && vmParentName) {
+    const _vmParentChartFields: string[] = vmParentChartField.split('/')
+    const _vmParentNames: string[] = vmParentName.split('/')
+
+    for (var i = 0; i < _vmParentChartFields.length; i++) {
+      text += ` and \"${_vmParentChartFields[i]}\" = '${_vmParentNames[i]}'`
+    }
   }
 
   if (vmParam.vmField && vmParam.vmVal) {
@@ -96,7 +107,9 @@ export const buildQueriesForVMLayouts = (
   cell: Cell,
   timeRange: TimeRange,
   host: string,
-  vmParam: vmParam
+  vmParam: vmParam,
+  vmParentChartField: string,
+  vmParentName: string
 ): CellQuery[] => {
   return cell.queries.map(query => {
     let queryText: string
@@ -124,7 +137,14 @@ export const buildQueriesForVMLayouts = (
         queryText = `${queryText};${shiftedQueries.join(';')}`
       }
     } else {
-      queryText = buildCannedVMDashboardQuery(query, timeRange, host, vmParam)
+      queryText = buildCannedVMDashboardQuery(
+        query,
+        timeRange,
+        host,
+        vmParam,
+        vmParentChartField,
+        vmParentName
+      )
     }
 
     return {...query, text: queryText}
