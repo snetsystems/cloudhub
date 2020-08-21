@@ -12,6 +12,7 @@ import {
   TableBodyRowItem,
 } from 'src/addon/128t/reusable/layout'
 import {convertUnit} from 'src/shared/components/ProgressDisplay'
+import {responseIndicator} from 'src/shared/components/Indicator'
 import {VCENTER_VM_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 
 interface Props {
@@ -116,7 +117,7 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
         />
 
         <TableBodyRowItem
-          title={power_state}
+          title={responseIndicator(power_state === 'poweredOn')}
           width={StatusWidth}
           className={'align--center'}
         />

@@ -14,6 +14,7 @@ import {
 } from 'src/addon/128t/reusable/layout'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {convertUnit} from 'src/shared/components/ProgressDisplay'
+import {responseIndicator} from 'src/shared/components/Indicator'
 import {VCENTER_VMS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 
 interface Props {
@@ -139,7 +140,7 @@ const VirtualMachinesTable = (props: Props): JSX.Element => {
                   className={'align--start'}
                 />
                 <TableBodyRowItem
-                  title={i.power_state}
+                  title={responseIndicator(i.power_state === 'poweredOn')}
                   width={StatusWidth}
                   className={'align--center'}
                 />
