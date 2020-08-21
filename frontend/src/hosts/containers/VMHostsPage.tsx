@@ -1035,6 +1035,9 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   const onSelectHost = async (props): Promise<void> => {
+    setActiveKey(props.key)
+    setFocusedHost(props)
+
     const focusedApp = 'vsphere'
     const {filteredLayouts} = await getLayoutsforHostApp(
       layouts,
@@ -1073,8 +1076,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
       }
     }
 
-    setActiveKey(props.key)
-    setFocusedHost(props)
     setLayoutCells(layoutCells)
     setTempVars(tempVars)
     setVmParam(vmParam)
