@@ -49,6 +49,8 @@ interface Props {
   onPositionChange?: (cells: Cell[]) => void
   isVMware: boolean
   vmParam: vmParam
+  vmParentChartField: string
+  vmParentName: string
 }
 
 interface State {
@@ -81,6 +83,8 @@ class LayoutVMRenderer extends Component<Props, State> {
       onSummonOverlayTechnologies,
       isVMware,
       vmParam,
+      vmParentChartField,
+      vmParentName,
     } = this.props
 
     const {rowHeight} = this.state
@@ -130,6 +134,8 @@ class LayoutVMRenderer extends Component<Props, State> {
                   manualRefresh={manualRefresh}
                   isVMware={isVMware}
                   vmParam={vmParam}
+                  vmParentChartField={vmParentChartField}
+                  vmParentName={vmParentName}
                   onSummonOverlayTechnologies={onSummonOverlayTechnologies}
                 />
               </Authorized>

@@ -42,6 +42,8 @@ interface Props {
   onSummonOverlayTechnologies: () => void
   isVMware: boolean
   vmParam: vmParam
+  vmParentChartField: string
+  vmParentName: string
 }
 
 interface State {
@@ -147,6 +149,8 @@ class LayoutVm extends Component<Props, State> {
       templates,
       isVMware,
       vmParam,
+      vmParentChartField,
+      vmParentName,
     } = this.props
 
     if (cell.isWidget) {
@@ -172,7 +176,14 @@ class LayoutVm extends Component<Props, State> {
         grabDataForDownload={this.grabDataForDownload}
         queries={
           isVMware
-            ? buildQueriesForVMLayouts(cell, timeRange, host, vmParam)
+            ? buildQueriesForVMLayouts(
+                cell,
+                timeRange,
+                host,
+                vmParam,
+                vmParentChartField,
+                vmParentName
+              )
             : buildQueriesForLayouts(cell, timeRange, host)
         }
         source={this.getSource(cell, source, sources, source)}

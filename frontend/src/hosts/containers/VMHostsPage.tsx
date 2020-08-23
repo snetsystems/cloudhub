@@ -70,6 +70,8 @@ import {layout} from '../../../test/resources'
 
 const GridLayout = WidthProvider(ReactGridLayout)
 const MINION_LIST_EMPTY = '<< Empty >>'
+const VSPHERE_HOST = 'vsphere_host'
+const VSPHERE_VM = 'vsphere_vm'
 
 interface ConnectionFormProps {
   target: string
@@ -232,6 +234,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const [tempVars, setTempVars] = useState<Template[]>([])
   const [layouts, setLayouts] = useState<Layout[]>([])
   const [vmParam, setVmParam] = useState({})
+  const [vmParentChartField, setVmParentChartField] = useState('')
+  const [vmParentName, setVmParentName] = useState('')
 
   const handleChangeTarget = (e: {text: string}): void => {
     setTarget(e.text)
@@ -596,6 +600,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             level: 1,
             type: 'datacenter',
             parent_name: vcIpAddress,
+            parent_chart_field: 'vcenter',
             minion: minionName[0],
             nodes: {},
             datacenter_hosts: datacenterHosts,
@@ -611,6 +616,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
               level: 2,
               type: 'cluster',
               parent_name: `${vcIpAddress}/${datacenterName}`,
+              parent_chart_field: 'vcenter/dcname',
               minion: minionName[0],
               nodes: {},
               ...cluster,
@@ -628,6 +634,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
                 type: 'host',
                 parent_type: 'cluster',
                 parent_name: `${vcIpAddress}/${datacenterName}/${clusterName}`,
+                parent_chart_field: 'vcenter/dcname/clustername',
                 minion: minionName[0],
                 nodes: {},
                 ...host,
@@ -644,6 +651,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
                   level: 4,
                   type: 'vm',
                   parent_name: `${vcIpAddress}/${datacenterName}/${clusterName}/${hostName}`,
+                  parent_chart_field: 'vcenter/dcname/clustername/esxhostname',
                   minion: minionName[0],
                   ...vm,
                 }
@@ -673,6 +681,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
               type: 'host',
               parent_type: 'datacenter',
               parent_name: `${vcIpAddress}/${datacenterName}`,
+              parent_chart_field: 'vcenter/dcname',
               minion: minionName[0],
               nodes: {},
               ...host,
@@ -689,6 +698,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
                 level: 3,
                 type: 'vm',
                 parent_name: `${vcIpAddress}/${datacenterName}/${hostName}`,
+                parent_chart_field: 'vcenter/dcname/esxhostname',
                 minion: minionName[0],
                 ...vm,
               }
@@ -783,7 +793,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const getLayoutsforHostApp = async (
     layouts: Layout[],
     hostID: string,
-    appID: string
+    _measurement: string
   ) => {
     const {host, measurements} = await fetchHostsAndMeasurements(
       layouts,
@@ -800,7 +810,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
     const filteredLayouts = layoutsWithinHost
       .filter(layout => {
-        return layout.app === appID
+        return layout.measurement.indexOf(_measurement) !== -1
       })
       .sort((x, y) => {
         return x.measurement < y.measurement
@@ -836,6 +846,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
             hostID={focusedHost.minion}
             isVMware={true}
             vmParam={vmParam}
+            vmParentChartField={vmParentChartField}
+            vmParentName={vmParentName}
           />
         )
       }
@@ -1036,42 +1048,54 @@ const VMHostsPage = (props: Props): JSX.Element => {
     setActiveKey(props.key)
     setFocusedHost(props)
 
-    const focusedApp = 'vsphere'
+    let measurement: string
+    let vType: string = props.type
+    if (vType === 'vm') {
+      measurement = VSPHERE_VM
+    } else {
+      measurement = VSPHERE_HOST
+    }
+
     const {filteredLayouts} = await getLayoutsforHostApp(
       layouts,
       props.minion,
-      focusedApp
+      measurement
     )
 
     const layoutCells = getCells(filteredLayouts, source)
     const tempVars = generateForHosts(source)
 
     let vmParam
-    if (props.type === 'vcenter') {
+    if (vType === 'vcenter') {
       vmParam = {
         vmField: 'vcenter',
         vmVal: props.label,
       }
-    } else if (props.type === 'datacenter') {
+    } else if (vType === 'datacenter') {
       vmParam = {
         vmField: 'dcname',
         vmVal: props.name,
       }
-    } else if (props.type === 'cluster') {
+    } else if (vType === 'cluster') {
       vmParam = {
         vmField: 'clustername',
         vmVal: props.name,
       }
-    } else if (props.type === 'host') {
+    } else if (vType === 'host') {
       vmParam = {
         vmField: 'esxhostname',
         vmVal: props.name,
       }
-    } else if (props.type === 'vm') {
+    } else if (vType === 'vm') {
       vmParam = {
         vmField: 'vmname',
         vmVal: props.name,
       }
+    }
+
+    if (props.parent_chart_field) {
+      setVmParentChartField(props.parent_chart_field)
+      setVmParentName(props.parent_name)
     }
 
     setLayoutCells(layoutCells)
