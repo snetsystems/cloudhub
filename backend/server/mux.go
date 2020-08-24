@@ -353,13 +353,20 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	router.GET("/cloudhub/v1/env", EnsureViewer(service.Environment))
 
+	// vspheres
+	router.GET("/cloudhub/v1/vspheres", EnsureViewer(service.Vspheres))
+	router.GET("/cloudhub/v1/vspheres/:id", EnsureViewer(service.VsphereID))
+	router.POST("/cloudhub/v1/vspheres", EnsureAdmin(service.NewVsphere))
+	router.DELETE("/cloudhub/v1/vspheres/:id", EnsureAdmin(service.RemoveVsphere))
+	router.PATCH("/cloudhub/v1/vspheres/:id", EnsureAdmin(service.UpdateVsphere))
+
 	allRoutes := &AllRoutes{
 		Logger:      opts.Logger,
 		StatusFeed:  opts.StatusFeedURL,
 		CustomLinks: opts.CustomLinks,
 		AddonURLs:   opts.AddonURLs,
 		AddonTokens: opts.AddonTokens,
-	}
+	}	
 
 	getPrincipal := func(r *http.Request) oauth2.Principal {
 		p, _ := HasAuthorizedToken(opts.Auth, r)

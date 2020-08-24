@@ -8,7 +8,7 @@ import (
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-//go:generate protoc --gogo_out=. internal.proto
+//go:generate protoc --gofast_out=. internal.proto
 
 // MarshalBuild encodes a build to binary protobuf format.
 func MarshalBuild(b cloudhub.BuildInfo) ([]byte, error) {
@@ -901,4 +901,40 @@ func UnmarshalMapping(data []byte, m *cloudhub.Mapping) error {
 // UnmarshalMappingPB decodes a mapping from binary protobuf data.
 func UnmarshalMappingPB(data []byte, m *Mapping) error {
 	return proto.Unmarshal(data, m)
+}
+
+// MarshalVsphere encodes a vsphere to binary protobuf format.
+// We are ignoring the password for now.
+func MarshalVsphere(v cloudhub.Vsphere) ([]byte, error) {
+	return proto.Marshal(&Vsphere{
+		ID:         v.ID,
+		Host:       v.Host,
+		UserName:   v.UserName,
+		Password:   v.Password,
+		Protocol:   v.Protocol,
+		Port:       int64(v.Port),
+		Interval:   int64(v.Interval),
+		Minion:     v.Minion,
+		Organization: v.Organization,
+	})
+}
+
+// UnmarshalVsphere decodes a vsphere from binary protobuf data.
+func UnmarshalVsphere(data []byte, v *cloudhub.Vsphere) error {
+	var pb Vsphere
+	if err := proto.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+
+	v.ID = pb.ID
+	v.Host = pb.Host
+	v.UserName = pb.UserName
+	v.Password = pb.Password
+	v.Protocol = pb.Protocol
+	v.Port = int(pb.Port)
+	v.Interval = int(pb.Interval)
+	v.Minion = pb.Minion
+	v.Organization = pb.Organization
+
+	return nil
 }

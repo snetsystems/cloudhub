@@ -489,3 +489,26 @@ func Test_MarshalDashboard_WithEmptyCellType(t *testing.T) {
 		t.Fatalf("Dashboard protobuf copy error: diff follows:\n%s", gocmp.Diff(expected, actual))
 	}
 }
+
+func TestMarshalVsphere(t *testing.T) {
+	v := cloudhub.Vsphere{
+		ID:                 "12",
+		Host:               "1.1.1.1",
+		UserName:           "testtt",
+		Password:           "ummmmmm",
+		Protocol:           "http",
+		Port:               2542,
+		Interval:           10,
+		Minion:             "minion01",
+		Organization:       "8373476",
+	}
+
+	var vv cloudhub.Vsphere
+	if buf, err := internal.MarshalVsphere(v); err != nil {
+		t.Fatal(err)
+	} else if err := internal.UnmarshalVsphere(buf, &vv); err != nil {
+		t.Fatal(err)
+	} else if !reflect.DeepEqual(v, vv) {
+		t.Fatalf("source protobuf copy error: got %#v, expected %#v", vv, v)
+	}
+}
