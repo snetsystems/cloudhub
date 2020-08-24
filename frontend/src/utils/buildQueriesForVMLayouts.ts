@@ -44,7 +44,6 @@ const buildCannedVMDashboardQuery = (
   if (vmParentChartField && vmParentName) {
     const _vmParentChartFields: string[] = vmParentChartField.split('/')
     const _vmParentNames: string[] = vmParentName.split('/')
-
     for (var i = 0; i < _vmParentChartFields.length; i++) {
       text += ` and \"${_vmParentChartFields[i]}\" = '${_vmParentNames[i]}'`
     }

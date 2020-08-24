@@ -15,7 +15,10 @@ import {HostNames, HostName} from 'src/types/hosts'
 import {DashboardSwitcherLinks} from '../../types/dashboards'
 
 // APIs
-import {getWheelKeyAcceptedList} from 'src/shared/apis/saltStack'
+import {
+  getWheelKeyAcceptedList,
+  getLocalVSphereInfoAll,
+} from 'src/shared/apis/saltStack'
 
 interface HostsObject {
   [x: string]: Host
@@ -369,4 +372,20 @@ export const getMinionKeyAcceptedList = async (
   const minions = _.get(info[0], 'data.return[0].data.return.minions', [])
 
   return minions
+}
+
+export const getVSphereInfoSaltApi = async (
+  pUrl: string,
+  pToken: string,
+  tgt: string,
+  address: string,
+  user: string,
+  password: string
+): Promise<String[]> => {
+  const info = await Promise.all([
+    getLocalVSphereInfoAll(pUrl, pToken, tgt, address, user, password),
+  ])
+
+  const vSphere = _.get(info[0], 'data', [])
+  return vSphere
 }
