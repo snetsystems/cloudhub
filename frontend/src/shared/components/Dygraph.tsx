@@ -46,6 +46,7 @@ import {
   DygraphData,
   DygraphClass,
   DygraphSeries,
+  TimeZones,
 } from 'src/types'
 import {LineColor} from 'src/types/colors'
 
@@ -85,6 +86,7 @@ interface Props {
   onZoom?: (timeRange: TimeRange) => void
   mode?: string
   underlayCallback?: () => void
+  timeZone: TimeZones
 }
 
 interface State {
@@ -403,6 +405,7 @@ class Dygraph extends Component<Props, State> {
       type,
       underlayCallback,
       isGraphFilled,
+      timeZone,
     } = this.props
 
     const {
@@ -434,6 +437,7 @@ class Dygraph extends Component<Props, State> {
           valueRange: this.getYRange(timeSeries),
         },
       },
+      labelsUTC: timeZone === TimeZones.UTC,
       ...this.props.options,
     }
 
@@ -455,8 +459,12 @@ class Dygraph extends Component<Props, State> {
   }
 
   private getLabel = (axis: string): string => {
-    const {axes, queries} = this.props
-    const label = getDeep<string>(axes, `${axis}.label`, '')
+    const {axes, labels, queries} = this.props
+
+    // if label comes back as '', use the y axis label from props.labels, if it exists
+    // see https://github.com/influxdata/chronograf/issues/5314
+    const fallbackLabel = labels[1] || ''
+    const label = getDeep<string>(axes, `${axis}.label`, '') || fallbackLabel
     const queryConfig = getDeep(queries, '0.queryConfig', false)
 
     if (label || !queryConfig) {
@@ -493,8 +501,9 @@ class Dygraph extends Component<Props, State> {
   }
 }
 
-const mapStateToProps = ({annotations: {mode}}) => ({
+const mstp = ({annotations: {mode}, app}) => ({
   mode,
+  timeZone: app.persisted.timeZone,
 })
 
-export default connect(mapStateToProps, null)(Dygraph)
+export default connect(mstp, null)(Dygraph)

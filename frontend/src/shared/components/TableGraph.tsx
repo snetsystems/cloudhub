@@ -38,7 +38,7 @@ import {
   DecimalPlaces,
   Sort,
 } from 'src/types/dashboards'
-import {QueryUpdateState} from 'src/types'
+import {QueryUpdateState, TimeZones} from 'src/types'
 
 import {FormattedTableData} from 'src/shared/components/TableGraphFormat'
 
@@ -66,6 +66,7 @@ interface Props {
   dataType: DataType
   tableOptions: TableOptions
   timeFormat: string
+  timeZone: TimeZones
   decimalPlaces: DecimalPlaces
   fieldOptions: FieldOption[]
   hoverTime: string
@@ -76,7 +77,6 @@ interface Props {
 }
 
 interface State {
-  sortedTimeVals: TimeSeriesValue[]
   sortedLabels: Label[]
   hoveredColumnIndex: number
   hoveredRowIndex: number
@@ -87,7 +87,6 @@ interface State {
 
 @ErrorHandling
 class TableGraph extends PureComponent<Props, State> {
-  private gridContainer: HTMLDivElement
   private multiGrid?: MultiGrid
 
   constructor(props: Props) {
@@ -95,7 +94,6 @@ class TableGraph extends PureComponent<Props, State> {
 
     this.state = {
       shouldResize: false,
-      sortedTimeVals: [],
       sortedLabels: [],
       hoveredColumnIndex: NULL_ARRAY_INDEX,
       hoveredRowIndex: NULL_ARRAY_INDEX,
@@ -117,7 +115,6 @@ class TableGraph extends PureComponent<Props, State> {
     return (
       <div
         className={this.tableContainerClassName}
-        ref={gridContainer => (this.gridContainer = gridContainer)}
         onMouseLeave={this.handleMouseLeave}
       >
         {rowCount > 0 && (
@@ -134,21 +131,24 @@ class TableGraph extends PureComponent<Props, State> {
                   registerChild,
                 }: SizedColumnProps) => (
                   <MultiGrid
-                    onMount={this.handleMultiGridMount}
+                    height={height}
+                    fixedRowCount={1}
                     ref={registerChild}
+                    rowCount={rowCount}
+                    width={adjustedWidth}
+                    rowHeight={ROW_HEIGHT}
                     columnCount={columnCount}
-                    columnWidth={this.calculateColumnWidth(columnWidth)}
                     scrollToRow={scrollToRow}
                     scrollToColumn={scrollToColumn}
-                    rowCount={rowCount}
-                    rowHeight={ROW_HEIGHT}
-                    height={height}
-                    width={adjustedWidth}
-                    fixedColumnCount={fixedColumnCount}
-                    fixedRowCount={1}
-                    cellRenderer={this.cellRenderer}
-                    classNameBottomRightGrid="table-graph--scroll-window"
                     externalScroll={externalScroll}
+                    cellRenderer={this.cellRenderer}
+                    onMount={this.handleMultiGridMount}
+                    fixedColumnCount={fixedColumnCount}
+                    classNameBottomRightGrid="table-graph--scroll-window"
+                    columnWidth={this.calculateColumnWidth(
+                      columnWidth,
+                      adjustedWidth
+                    )}
                   />
                 )}
               </ColumnSizer>
@@ -178,10 +178,7 @@ class TableGraph extends PureComponent<Props, State> {
   }
 
   public async componentDidMount() {
-    const {
-      data: {sortedTimeVals},
-      fieldOptions,
-    } = this.props
+    const {fieldOptions} = this.props
 
     window.addEventListener('resize', this.handleResize)
 
@@ -191,7 +188,6 @@ class TableGraph extends PureComponent<Props, State> {
 
     this.setState(
       {
-        sortedTimeVals,
         hoveredColumnIndex: NULL_ARRAY_INDEX,
         hoveredRowIndex: NULL_ARRAY_INDEX,
         isTimeVisible,
@@ -292,16 +288,6 @@ class TableGraph extends PureComponent<Props, State> {
     return this.columnCount
   }
 
-  private get tableWidth(): number {
-    let tableWidth = 0
-
-    if (this.gridContainer && this.gridContainer.clientWidth) {
-      tableWidth = this.gridContainer.clientWidth
-    }
-
-    return tableWidth
-  }
-
   private handleUpdateFieldOptions = (fieldOptions: FieldOption[]): void => {
     const {onUpdateFieldOptions} = this.props
 
@@ -322,7 +308,10 @@ class TableGraph extends PureComponent<Props, State> {
     scrollToColumn: number | null
     externalScroll: boolean
   } {
-    const {sortedTimeVals, hoveredColumnIndex, isTimeVisible} = this.state
+    const {
+      data: {sortedTimeVals},
+    } = this.props
+    const {hoveredColumnIndex, isTimeVisible} = this.state
     const {hoverTime} = this.props
     const hoveringThisTable = hoveredColumnIndex !== NULL_ARRAY_INDEX
     const notHovering = hoverTime === NULL_HOVER_TIME
@@ -373,7 +362,10 @@ class TableGraph extends PureComponent<Props, State> {
   private handleHover = (e: React.MouseEvent<HTMLElement>) => {
     const {dataset} = e.target as HTMLElement
     const {handleSetHoverTime} = this.props
-    const {sortedTimeVals, isTimeVisible} = this.state
+    const {
+      data: {sortedTimeVals},
+    } = this.props
+    const {isTimeVisible} = this.state
     if (this.isVerticalTimeAxis && +dataset.rowIndex === 0) {
       return
     }
@@ -405,9 +397,12 @@ class TableGraph extends PureComponent<Props, State> {
     this.props.onSort(clickedFieldName)
   }
 
-  private calculateColumnWidth = (columnSizerWidth: number) => (column: {
-    index: number
-  }): number => {
+  // adjustedWidth is the size of the table
+  // columnSizerWidth is the size of the table / the amount of columns
+  private calculateColumnWidth = (
+    columnSizerWidth: number,
+    adjustedWidth: number
+  ) => (column: {index: number}): number => {
     const {index} = column
 
     const {
@@ -421,11 +416,17 @@ class TableGraph extends PureComponent<Props, State> {
 
     const original = columnWidths[columnLabel]
 
+    if (original > adjustedWidth) {
+      // if the original calculated size of the column is greater than the table size
+      // use the table size - half the average column size to determine the size of the column
+      return adjustedWidth - columnSizerWidth / 2
+    }
+
     if (this.fixFirstColumn && index === 0) {
       return original
     }
 
-    if (this.tableWidth <= totalColumnWidths) {
+    if (adjustedWidth <= totalColumnWidths) {
       return original
     }
 
@@ -433,7 +434,7 @@ class TableGraph extends PureComponent<Props, State> {
       return columnSizerWidth
     }
 
-    const difference = this.tableWidth - totalColumnWidths
+    const difference = adjustedWidth - totalColumnWidths
     const increment = difference / this.computedColumnCount
 
     return original + increment
@@ -445,9 +446,15 @@ class TableGraph extends PureComponent<Props, State> {
     isTimeData: boolean,
     isFieldName: boolean
   ): string => {
-    const {timeFormat, decimalPlaces} = this.props
+    const {timeFormat, timeZone, decimalPlaces} = this.props
 
     if (isTimeData) {
+      if (timeZone === TimeZones.UTC) {
+        return moment(cellData)
+          .utc()
+          .format(timeFormat)
+      }
+
       return moment(cellData).format(timeFormat)
     }
 
@@ -588,8 +595,9 @@ class TableGraph extends PureComponent<Props, State> {
   }
 }
 
-const mstp = ({dashboardUI}) => ({
+const mstp = ({dashboardUI, app}) => ({
   hoverTime: dashboardUI.hoverTime,
+  timeZone: app.persisted.timeZone,
 })
 
 export default connect(mstp)(TableGraph)
