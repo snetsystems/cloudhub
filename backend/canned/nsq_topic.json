@@ -14,9 +14,7 @@
       "queries": [
         {
           "query": "SELECT mean(\"depth\") AS \"depth\" FROM \":db:\".\":rp:\".\"nsq_topic\"",
-          "groupbys": [
-            "\"topic\""
-          ],
+          "groupbys": ["\"topic\""],
           "wheres": []
         }
       ]
@@ -31,9 +29,7 @@
       "queries": [
         {
           "query": "SELECT mean(\"backend_depth\") AS \"backend_depth\" FROM \":db:\".\":rp:\".\"nsq_topic\"",
-          "groupbys": [
-            "\"topic\""
-          ],
+          "groupbys": ["\"topic\""],
           "wheres": []
         }
       ]
@@ -47,11 +43,8 @@
       "name": "NSQ - Topic Ingress",
       "queries": [
         {
-          "query": "SELECT non_negative_derivative(max(\"message_count\")) AS \"messages_per_second\" FROM \":db:\".\":rp:\".\"nsq_topic\"",
-          "groupbys": [
-            "\"topic\"",
-            "\"host\""
-          ],
+          "query": "SELECT non_negative_derivative(max(\"message_count\"), 1s) AS \"messages_per_second\" FROM \":db:\".\":rp:\".\"nsq_topic\"",
+          "groupbys": ["\"topic\"", "\"host\""],
           "wheres": []
         }
       ]
@@ -66,10 +59,7 @@
       "queries": [
         {
           "query": "SELECT non_negative_derivative(max(\"message_count\")) - non_negative_derivative(max(\"depth\")) AS \"messages_per_second\" FROM \":db:\".\":rp:\".\"nsq_topic\"",
-          "groupbys": [
-            "\"topic\"",
-            "\"host\""
-          ],
+          "groupbys": ["\"topic\"", "\"host\""],
           "wheres": []
         }
       ]

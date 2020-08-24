@@ -58,9 +58,15 @@
   font-size: 12px;
   font-family: $code-font;
 
-  span.icon {
+  span.icon,
+  .loading-spinner--container {
     margin-right: 5px;
   }
+
+  .loading-spinner--container {
+    top: 2px;
+  }
+
   /* Error State */
   &.query-status-output--error {
     color: $query-editor--status-error;

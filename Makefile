@@ -1,6 +1,11 @@
 VERSION = 1.0.2
+ifeq ($(OS), Windows_NT)
+	GOBINDATA := $(shell go-bindata.exe --version 2>nil)
+else
+	GOBINDATA := $(shell which go-bindata 2> /dev/null)
+endif
+
 COMMIT ?= $(shell git rev-parse --short=8 HEAD)
-GOBINDATA := $(shell go list -f {{.Root}}  github.com/kevinburke/go-bindata 2> /dev/null)
 YARN := $(shell command -v yarn 2> /dev/null)
 
 SOURCES := $(shell find backend -name "*.go" ! -name "*_gen.go" -not -path "./vendor/*" )
@@ -12,9 +17,9 @@ BINARY=cloudhub
 CTLBINARY=cloudhubctl
 GO111MODULE=on
 
-.PHONY: all build gobuild assets dep clean test gotest gotestrace jstest run run-dev ctags
-
 .DEFAULT_GOAL := all
+
+.PHONY: all build gobuild assets dep clean test gotest gotestrace jstest run run-dev ctags
 
 all: dep build
 

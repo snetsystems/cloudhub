@@ -1,23 +1,23 @@
 // Libraries
-import React, { PureComponent, createRef } from 'react'
+import React, {PureComponent, createRef} from 'react'
 
 // Component
 import FunctionTooltip from 'src/flux/components/flux_functions_toolbar/FunctionTooltip'
 
 // Types
-import { FluxToolbarFunction } from 'src/types/flux'
+import {FluxToolbarFunction} from 'src/types/flux'
 
 // Decorators
-import { ErrorHandling } from 'src/shared/decorators/errors'
+import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
   func: FluxToolbarFunction
-  onClickFunction: (funcName: string, funcExample: string) => void
+  onClickFunction: (func: FluxToolbarFunction) => void
 }
 
 interface State {
   isActive: boolean
-  hoverPosition: { top: number; right: number }
+  hoverPosition: {top: number; right: number}
 }
 
 @ErrorHandling
@@ -27,10 +27,10 @@ class ToolbarFunction extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
 
-    this.state = { isActive: false, hoverPosition: undefined }
+    this.state = {isActive: false, hoverPosition: undefined}
   }
   public render() {
-    const { func } = this.props
+    const {func} = this.props
     return (
       <div
         className="flux-functions-toolbar--function"
@@ -67,19 +67,19 @@ class ToolbarFunction extends PureComponent<Props, State> {
   }
 
   private handleHover = () => {
-    const { top, left } = this.functionRef.current.getBoundingClientRect()
+    const {top, left} = this.functionRef.current.getBoundingClientRect()
     const right = window.innerWidth - left
-    this.setState({ isActive: true, hoverPosition: { top, right } })
+    this.setState({isActive: true, hoverPosition: {top, right}})
   }
 
   private handleStopHover = () => {
-    this.setState({ isActive: false })
+    this.setState({isActive: false})
   }
 
   private handleClickFunction = () => {
-    const { func, onClickFunction } = this.props
+    const {func, onClickFunction} = this.props
 
-    onClickFunction(func.name, func.example)
+    onClickFunction(func)
   }
 }
 
