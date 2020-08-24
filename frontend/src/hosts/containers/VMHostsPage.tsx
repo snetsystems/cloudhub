@@ -8,10 +8,9 @@ import {ComponentStatus} from 'src/reusable_ui/types'
 import {getDeep} from 'src/utils/wrappers'
 
 // Component
-import {Button, ComponentSize, Form, Input, InputType} from 'src/reusable_ui'
+import {Button, ComponentSize} from 'src/reusable_ui'
 import {cellLayoutInfo} from 'src/addon/128t/containers/SwanSdplexStatusPage'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
-import Dropdown from 'src/shared/components/Dropdown'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
 
 import HostModal from 'src/hosts/components/HostModal'
@@ -27,6 +26,7 @@ import VMHostTable from 'src/hosts/components/VMHostTable'
 import VirtualMachinesTable from 'src/hosts/components/VirtualMachinesTable'
 import VirtualMachineTable from 'src/hosts/components/VirtualMachineTable'
 import ChartsLayoutRenderer from 'src/hosts/components/ChartsLayoutRenderer'
+import VMConnectForm from 'src/hosts/components/VMConnectForm'
 
 // Type
 import {TimeRange, Cell, Template, Source, Layout} from 'src/types'
@@ -73,107 +73,6 @@ const MINION_LIST_EMPTY = '<< Empty >>'
 const VSPHERE_HOST = 'vsphere_host'
 const VSPHERE_VM = 'vsphere_vm'
 
-interface ConnectionFormProps {
-  target: string
-  address: string
-  port: string
-  user: string
-  password: string
-  protocol: string
-  interval: string
-  targetItems: string[]
-  intervalItems: string[]
-  handleChangeTarget: (e) => void
-  handleChangeAddress: (e) => void
-  handleChangePort: (e) => void
-  handleChangeUser: (e) => void
-  handleChangePassword: (e) => void
-  handleChangeProtocol: (e) => void
-  handleChangeInterval: (e) => void
-}
-const ConnectForm = ({
-  target,
-  address,
-  port,
-  user,
-  password,
-  protocol,
-  interval,
-  targetItems,
-  intervalItems,
-  handleChangeTarget,
-  handleChangeAddress,
-  handleChangePort,
-  handleChangeUser,
-  handleChangePassword,
-  handleChangeProtocol,
-  handleChangeInterval,
-}: ConnectionFormProps) => {
-  return (
-    <Form>
-      <Form.Element label="Using Minion" colsXS={12}>
-        <Dropdown
-          value={'minionasd'}
-          items={targetItems}
-          onChoose={handleChangeTarget}
-          selected={target}
-          className="dropdown-stretch"
-          disabled={false}
-        />
-      </Form.Element>
-      <Form.Element label="Connection vCenter" colsXS={8}>
-        <Input
-          value={address}
-          onChange={handleChangeAddress}
-          placeholder={'Connect Address'}
-          type={InputType.Text}
-        />
-      </Form.Element>
-      <Form.Element label="Port" colsXS={4}>
-        <Input
-          value={port}
-          onChange={handleChangePort}
-          placeholder={'Connect Port'}
-          type={InputType.Text}
-        />
-      </Form.Element>
-
-      <Form.Element label="ID" colsXS={6}>
-        <Input
-          value={user}
-          onChange={handleChangeUser}
-          placeholder={'Connect ID'}
-          type={InputType.Text}
-        />
-      </Form.Element>
-      <Form.Element label="Password" colsXS={6}>
-        <Input
-          value={password}
-          onChange={handleChangePassword}
-          placeholder={'Connect Password'}
-          type={InputType.Password}
-        />
-      </Form.Element>
-      <Form.Element label="Protocol" colsXS={6}>
-        <Input
-          value={protocol}
-          onChange={handleChangeProtocol}
-          placeholder={'Default https'}
-          type={InputType.Text}
-        />
-      </Form.Element>
-      <Form.Element label="Interval" colsXS={6}>
-        <Dropdown
-          items={intervalItems}
-          onChoose={handleChangeInterval}
-          selected={interval}
-          className="dropdown-stretch"
-          disabled={false}
-        />
-      </Form.Element>
-    </Form>
-  )
-}
 interface Props {
   addons: Addon[]
   manualRefresh: number
@@ -1195,7 +1094,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             onCancel={handleClose}
             onConfirm={handleConnection}
             message={
-              <ConnectForm
+              <VMConnectForm
                 target={target}
                 address={address}
                 port={port}
