@@ -482,7 +482,7 @@ export const authLinks = {
   dashboards: '/cloudhub/v1/dashboards',
   environment: '/cloudhub/v1/env',
   external: {
-    statusFeed: 'https://www.influxdata.com/feed/json',
+    statusFeed: 'https://influxdata.com/feed/json',
   },
   layouts: '/cloudhub/v1/layouts',
   logout: '/oauth/logout',

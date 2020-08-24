@@ -66,6 +66,7 @@ import {
   Host,
   Layout,
   TimeRange,
+  RefreshRate,
 } from 'src/types'
 import {timeRanges} from 'src/shared/data/timeRanges'
 import * as QueriesModels from 'src/types/queries'
@@ -75,7 +76,7 @@ interface Props extends ManualRefreshProps {
   source: Source
   links: Links
   autoRefresh: number
-  onChooseAutoRefresh: () => void
+  onChooseAutoRefresh: (milliseconds: RefreshRate) => void
   notify: NotificationAction
 }
 
@@ -119,6 +120,7 @@ export class HostsPage extends PureComponent<Props, State> {
       proportions: [0.43, 0.57],
       selected: {lower: '', upper: ''},
     }
+    this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
   }
 
   public componentWillMount() {
@@ -230,15 +232,19 @@ export class HostsPage extends PureComponent<Props, State> {
     GlobalAutoRefresher.stopPolling()
   }
 
+  public handleChooseAutoRefresh(option) {
+    const {onChooseAutoRefresh} = this.props
+    const {milliseconds} = option
+    onChooseAutoRefresh(milliseconds)
+  }
+
   public render() {
     const {
       autoRefresh,
-      onChooseAutoRefresh,
       onManualRefresh,
       inPresentationMode,
       source,
     } = this.props
-
     const {selected} = this.state
     return (
       <Page className="hosts-list-page">
@@ -250,7 +256,7 @@ export class HostsPage extends PureComponent<Props, State> {
             <GraphTips />
             <AutoRefreshDropdown
               selected={autoRefresh}
-              onChoose={onChooseAutoRefresh}
+              onChoose={this.handleChooseAutoRefresh}
               onManualRefresh={onManualRefresh}
             />
             <TimeRangeDropdown

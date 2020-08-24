@@ -3,7 +3,6 @@ package canned
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
@@ -43,16 +42,6 @@ func (s *BinLayoutsStore) All(ctx context.Context) ([]cloudhub.Layout, error) {
 	return layouts, nil
 }
 
-// Add is not support by BinLayoutsStore
-func (s *BinLayoutsStore) Add(ctx context.Context, layout cloudhub.Layout) (cloudhub.Layout, error) {
-	return cloudhub.Layout{}, fmt.Errorf("Add to BinLayoutsStore not supported")
-}
-
-// Delete is not support by BinLayoutsStore
-func (s *BinLayoutsStore) Delete(ctx context.Context, layout cloudhub.Layout) error {
-	return fmt.Errorf("Delete to BinLayoutsStore not supported")
-}
-
 // Get retrieves Layout if `ID` exists.
 func (s *BinLayoutsStore) Get(ctx context.Context, ID string) (cloudhub.Layout, error) {
 	layouts, err := s.All(ctx)
@@ -75,9 +64,4 @@ func (s *BinLayoutsStore) Get(ctx context.Context, ID string) (cloudhub.Layout, 
 		WithField("name", ID).
 		Error("Layout not found")
 	return cloudhub.Layout{}, cloudhub.ErrLayoutNotFound
-}
-
-// Update not supported
-func (s *BinLayoutsStore) Update(ctx context.Context, layout cloudhub.Layout) error {
-	return fmt.Errorf("Update to BinLayoutsStore not supported")
 }

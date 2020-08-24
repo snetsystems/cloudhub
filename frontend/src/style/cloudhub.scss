@@ -120,9 +120,9 @@
 @import '../reusable_ui/components/form_layout/Form.scss';
 @import '../reusable_ui/components/page_layout/Page.scss';
 @import '../reusable_ui/components/treemenu/sass/treemenu.scss';
+@import '../reusable_ui/components/spinners/loadingSpinner.scss';
 
 // Pages
-@import 'pages/config-endpoints';
 @import 'pages/auth-page';
 @import 'pages/kapacitor';
 @import 'pages/dashboards';
@@ -132,8 +132,9 @@
 @import 'pages/time-machine';
 @import 'pages/manage-providers';
 @import 'pages/logs-viewer';
+@import 'pages/config-endpoints.scss';
 
-// TODO
+// Unsorted
 @import 'unsorted';
 
 // Custom

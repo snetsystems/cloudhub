@@ -1,5 +1,6 @@
 import app from './app'
 import auth from './auth'
+import env from './env'
 import config from './config'
 import errors from './errors'
 import links from './links'
@@ -11,6 +12,7 @@ import shell from './shell'
 export default {
   app,
   auth,
+  env,
   links,
   config,
   errors,

@@ -17,7 +17,7 @@ import {DEFAULT_HOME_PAGE, AddonType} from 'src/shared/constants'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import {Params, Location, Me} from 'src/types/sideNav'
-import {Source, Links, Shells} from 'src/types'
+import {Source, Links, Shells, Env} from 'src/types'
 
 import {openShell, closeShell} from 'src/shared/actions/shell'
 
@@ -30,6 +30,7 @@ interface Props {
   logoutLink?: string
   links?: Links
   me: Me
+  env: Env
   shell: Shells
   openShell: (address?: string) => Shells
   closeShell: () => Shells
@@ -66,6 +67,7 @@ class SideNav extends PureComponent<Props> {
       logoutLink,
       links,
       me,
+      env,
       sources = [],
     } = this.props
 
@@ -235,15 +237,15 @@ class SideNav extends PureComponent<Props> {
             ) : null}
           </NavBlock>
         </Authorized>
-        {isUsingAuth ? (
+        {isUsingAuth && (
           <UserNavBlock
             logoutLink={logoutLink}
             links={links}
             me={me}
             sourcePrefix={sourcePrefix}
           />
-        ) : null}
-        {isUsing128T ? (
+        )}
+        {isUsing128T && (
           <NavBlock
             highlightWhen={['swan-status', 'swan-setting']}
             icon="cube"
@@ -261,7 +263,7 @@ class SideNav extends PureComponent<Props> {
               Setting
             </NavListItem> */}
           </NavBlock>
-        ) : null}
+        )}
         <div
           className={`sidebar--item align-bottom ${
             this.props.shell.isVisible ? 'active' : ''
@@ -272,7 +274,6 @@ class SideNav extends PureComponent<Props> {
             <span className="sidebar--icon icon bash"></span>
           </div>
         </div>
-
         <div className="sidebar--item cursor-default symbol-company" />
       </nav>
     )
@@ -286,6 +287,7 @@ const mapStateToProps = ({
     ephemeral: {inPresentationMode},
   },
   links,
+  env,
   shell,
 }) => ({
   sources,
@@ -293,6 +295,7 @@ const mapStateToProps = ({
   isUsingAuth,
   logoutLink,
   links,
+  env,
   me,
   shell,
 })
