@@ -24,7 +24,13 @@ import {STATIC_LEGEND} from 'src/dashboards/constants/cellEditor'
 // Types
 import * as QueriesModels from 'src/types/queries'
 import * as SourcesModels from 'src/types/sources'
-import {NotificationAction, TimeRange, CellType, Me} from 'src/types'
+import {
+  NotificationAction,
+  TimeRange,
+  RefreshRate,
+  CellType,
+  Me,
+} from 'src/types'
 import {Template} from 'src/types/tempVars'
 import {
   Cell,
@@ -78,6 +84,7 @@ interface PassedProps {
   dashboardTemplates: Template[]
   cell: Cell | NewDefaultCell
   dashboardTimeRange: TimeRange
+  dashboardRefresh: RefreshRate
 }
 
 interface Auth {
@@ -110,11 +117,17 @@ class CellEditorOverlay extends Component<Props, State> {
   }
 
   public componentDidMount() {
-    const {cell, dashboardTimeRange, onResetTimeMachine} = this.props
+    const {
+      cell,
+      dashboardRefresh,
+      dashboardTimeRange,
+      onResetTimeMachine,
+    } = this.props
 
     const initialState = {
       ...initialStateFromCell(cell),
       timeRange: dashboardTimeRange,
+      refresh: dashboardRefresh,
     }
 
     onResetTimeMachine(initialState)
@@ -133,6 +146,7 @@ class CellEditorOverlay extends Component<Props, State> {
       queryStatus,
       me,
       isUsingAuth,
+      dashboardRefresh,
     } = this.props
 
     const {isStaticLegend} = this.state
@@ -159,6 +173,7 @@ class CellEditorOverlay extends Component<Props, State> {
           onUpdateScriptStatus={this.handleUpdateScriptStatus}
           me={me}
           isUsingAuth={isUsingAuth}
+          refresh={dashboardRefresh}
         >
           {(activeEditorTab, onSetActiveEditorTab) => (
             <CEOHeader
@@ -182,8 +197,6 @@ class CellEditorOverlay extends Component<Props, State> {
       ceoTimeRange
     )
     return [...dashboardTemplates, dashboardTime, upperDashboardTime]
-
-    return dashboardTemplates
   }
 
   private get isSaveable(): boolean {

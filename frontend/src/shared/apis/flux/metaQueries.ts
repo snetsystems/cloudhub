@@ -135,16 +135,6 @@ export const tagsFromMeasurement = async (
   return proxy(source, script)
 }
 
-const tagsetFilter = (filter: SchemaFilter[]): string => {
-  if (!filter.length) {
-    return ''
-  }
-
-  const predicates = filter.map(({key, value}) => `r.${key} == "${value}"`)
-
-  return `|> filter(fn: (r) => ${predicates.join(' and ')} )`
-}
-
 export const proxy = async (source: Source, script: string) => {
   const mark = encodeURIComponent('?')
   const garbage = script.replace(/\s/g, '') // server cannot handle whitespace

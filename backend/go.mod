@@ -13,6 +13,7 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/google/go-cmp v0.4.0
 	github.com/google/go-github v17.0.0+incompatible
+	github.com/google/go-querystring v1.0.0 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/goreleaser/goreleaser v0.97.0 // indirect
 	github.com/gorilla/websocket v1.4.2
@@ -25,7 +26,6 @@ require (
 	github.com/influxdata/usage-client v0.0.0-20160829180054-6d3895376368
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/lestrrat-go/jwx v0.9.0
-	github.com/mattn/go-zglob v0.0.1 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.2
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
 	github.com/sergi/go-diff v1.1.0

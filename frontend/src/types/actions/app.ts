@@ -1,4 +1,5 @@
 import {Dispatch} from 'redux'
+import {TimeZones} from 'src/types'
 
 export enum ActionTypes {
   EnablePresentationMode = 'ENABLE_PRESENTATION_MODE',
@@ -6,6 +7,8 @@ export enum ActionTypes {
   SetAutoRefresh = 'SET_AUTOREFRESH',
   ToggleTemplateVariableControlBar = 'TOGGLE_TEMPLATE_VARIABLE_CONTROL_BAR',
   Noop = 'NOOP',
+  SetTimeZone = 'SET_TIME_ZONE',
+  SetTelegrafSystemInterval = 'SET_TELEGRAF_SYSTEM_INTERVAL',
 }
 
 export type Action =
@@ -13,6 +16,8 @@ export type Action =
   | DisablePresentationModeAction
   | SetAutoRefreshAction
   | ToggleTemplateVariableControlBarAction
+  | SetTelegrafSystemIntervalAction
+  | SetTimeZoneAction
 
 export type EnablePresentationModeActionCreator = () => EnablePresentationModeAction
 
@@ -42,5 +47,19 @@ export interface SetAutoRefreshAction {
   type: ActionTypes.SetAutoRefresh
   payload: {
     milliseconds: number
+  }
+}
+
+export interface SetTimeZoneAction {
+  type: ActionTypes.SetTimeZone
+  payload: {
+    timeZone: TimeZones
+  }
+}
+
+export interface SetTelegrafSystemIntervalAction {
+  type: ActionTypes.SetTelegrafSystemInterval
+  payload: {
+    telegrafSystemInterval: string
   }
 }

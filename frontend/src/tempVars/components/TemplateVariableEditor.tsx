@@ -1,3 +1,4 @@
+// Libraries
 import React, {
   PureComponent,
   ComponentClass,
@@ -5,23 +6,26 @@ import React, {
   KeyboardEvent,
 } from 'react'
 import {connect} from 'react-redux'
-import _ from 'lodash'
+import {isEmpty} from 'lodash'
 
+// Utils
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import OverlayContainer from 'src/reusable_ui/components/overlays/OverlayContainer'
-import OverlayHeading from 'src/reusable_ui/components/overlays/OverlayHeading'
-import OverlayBody from 'src/reusable_ui/components/overlays/OverlayBody'
-import Dropdown from 'src/shared/components/Dropdown'
-import ConfirmButton from 'src/shared/components/ConfirmButton'
 import {getDeep} from 'src/utils/wrappers'
-import {notify as notifyActionCreator} from 'src/shared/actions/notifications'
-
 import {formatTempVar} from 'src/tempVars/utils'
 import {
   reconcileSelectedAndLocalSelectedValues,
   pickSelected,
 } from 'src/dashboards/utils/tempVars'
 
+// Actions
+import {notify as notifyActionCreator} from 'src/shared/actions/notifications'
+
+// Components
+import ConfirmButton from 'src/shared/components/ConfirmButton'
+import OverlayContainer from 'src/reusable_ui/components/overlays/OverlayContainer'
+import OverlayHeading from 'src/reusable_ui/components/overlays/OverlayHeading'
+import OverlayBody from 'src/reusable_ui/components/overlays/OverlayBody'
+import Dropdown from 'src/shared/components/Dropdown'
 import DatabasesTemplateBuilder from 'src/tempVars/components/DatabasesTemplateBuilder'
 import CSVTemplateBuilder from 'src/tempVars/components/CSVTemplateBuilder'
 import MapTemplateBuilder from 'src/tempVars/components/MapTemplateBuilder'
@@ -32,6 +36,7 @@ import TagValuesTemplateBuilder from 'src/tempVars/components/TagValuesTemplateB
 import MetaQueryTemplateBuilder from 'src/tempVars/components/MetaQueryTemplateBuilder'
 import TextTemplateBuilder from 'src/tempVars/components/TextTemplateBuilder'
 
+// Types
 import {
   Template,
   TemplateType,
@@ -42,6 +47,8 @@ import {
   Notification,
   Me,
 } from 'src/types'
+
+// Constants
 import {
   TEMPLATE_TYPES_LIST,
   DEFAULT_TEMPLATES,
@@ -336,7 +343,7 @@ class TemplateVariableEditor extends PureComponent<Props, State> {
     } = this.state
 
     let canSaveValues = true
-    if (type === TemplateType.CSV && _.isEmpty(values)) {
+    if (type === TemplateType.CSV && isEmpty(values)) {
       canSaveValues = false
     }
 
