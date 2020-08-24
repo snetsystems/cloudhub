@@ -49,6 +49,7 @@ type getRoutesResponse struct {
 	Flux               getFluxLinksResponse               `json:"flux"`
 	Addons             []getAddonLinksResponse            `json:"addons"`
 	Vspheres           string                             `json:"vspheres"`       // Location of the vspheres endpoint
+	ValidTextTemplates string                             `json:"validateTextTemplates"` // Location of the valid text templates endpoint
 }
 
 // AllRoutes is a handler that returns all links to resources in CloudHub server, as well as
@@ -107,6 +108,7 @@ func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		},
 		Addons: make([]getAddonLinksResponse, len(a.AddonURLs)),
 		Vspheres:    "/cloudhub/v1/vspheres",
+		ValidTextTemplates: "/cloudhub/v1/validate_text_templates",
 	}
 
 	// The JSON response will have no field present for the LogoutLink if there is no logout link.

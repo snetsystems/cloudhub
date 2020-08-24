@@ -1,6 +1,7 @@
 package oauth2
 
 import (
+	"context"
 	"net/http"
 	"path"
 	"time"
@@ -16,8 +17,8 @@ var _ Mux = &AuthMux{}
 const TenMinutes = 10 * time.Minute
 
 // NewAuthMux constructs a Mux handler that checks a cookie against the authenticator
-func NewAuthMux(p Provider, a Authenticator, t Tokenizer, basepath string, l cloudhub.Logger, UseIDToken bool) *AuthMux {
-	return &AuthMux{
+func NewAuthMux(p Provider, a Authenticator, t Tokenizer, basepath string, l cloudhub.Logger, UseIDToken bool, LoginHint string, client *http.Client) *AuthMux {
+	mux := &AuthMux{
 		Provider:   p,
 		Auth:       a,
 		Tokens:     t,
@@ -26,7 +27,14 @@ func NewAuthMux(p Provider, a Authenticator, t Tokenizer, basepath string, l clo
 		Now:        DefaultNowTime,
 		Logger:     l,
 		UseIDToken: UseIDToken,
+		LoginHint:  LoginHint,
 	}
+
+	if client != nil {
+		mux.client = client
+	}
+
+	return mux
 }
 
 // AuthMux services an Oauth2 interaction with a provider and browser and
@@ -43,6 +51,8 @@ type AuthMux struct {
 	FailureURL string           // FailureURL is redirect location after authorization failure
 	Now        func() time.Time // Now returns the current time (for testing)
 	UseIDToken bool             // UseIDToken enables OpenID id_token support
+	LoginHint  string            // LoginHint will be included as a parameter during authentication if non-nil
+	client     *http.Client      // client is the http client used in oauth exchange.
 }
 
 // Login uses a Cookie with a random string as the state validation method.  JWTs are
@@ -79,7 +89,13 @@ func (j *AuthMux) Login() http.Handler {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		url := conf.AuthCodeURL(string(token), oauth2.AccessTypeOnline)
+
+		urlOpts := []oauth2.AuthCodeOption{oauth2.AccessTypeOnline}
+		if j.LoginHint != "" {
+			urlOpts = append(urlOpts, oauth2.SetAuthURLParam("login_hint", j.LoginHint))
+		}
+		url := conf.AuthCodeURL(string(token), urlOpts...)
+
 		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 	})
 }
@@ -111,7 +127,14 @@ func (j *AuthMux) Callback() http.Handler {
 		// Exchange the code back with the provider to the the token
 		conf := j.Provider.Config()
 		code := r.FormValue("code")
-		token, err := conf.Exchange(r.Context(), code)
+		
+		// Use http client with transport options.
+		ctx := r.Context()
+		if j.client != nil {
+			ctx = context.WithValue(r.Context(), oauth2.HTTPClient, j.client)
+		}
+
+		token, err := conf.Exchange(ctx, code)
 		if err != nil {
 			log.Error("Unable to exchange code for token ", err.Error())
 			http.Redirect(w, r, j.FailureURL, http.StatusTemporaryRedirect)
@@ -180,8 +203,7 @@ func (j *AuthMux) Callback() http.Handler {
 			Issuer:  j.Provider.Name(),
 			Group:   group,
 		}
-		ctx := r.Context()
-		err = j.Auth.Authorize(ctx, w, p)
+		err = j.Auth.Authorize(r.Context(), w, p)
 		if err != nil {
 			log.Error("Unable to get add session to response ", err.Error())
 			http.Redirect(w, r, j.FailureURL, http.StatusTemporaryRedirect)

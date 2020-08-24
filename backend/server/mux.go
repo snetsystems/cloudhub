@@ -360,6 +360,9 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.DELETE("/cloudhub/v1/vspheres/:id", EnsureAdmin(service.RemoveVsphere))
 	router.PATCH("/cloudhub/v1/vspheres/:id", EnsureAdmin(service.UpdateVsphere))
 
+	// Validates go templates for the js client
+	router.POST("/cloudhub/v1/validate_text_templates", EnsureViewer(service.ValidateTextTemplate))
+	
 	allRoutes := &AllRoutes{
 		Logger:      opts.Logger,
 		StatusFeed:  opts.StatusFeedURL,

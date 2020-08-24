@@ -20,8 +20,14 @@ import {
 import * as AppActions from 'src/types/actions/app'
 import * as DashboardsModels from 'src/types/dashboards'
 import * as QueriesModels from 'src/types/queries'
+import {TimeZones} from 'src/types'
+import {setTimeZone} from 'src/shared/actions/app'
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
+import TimeZoneToggle from 'src/shared/components/time_zones/TimeZoneToggle'
+
+// Constants
+import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
 
 interface State {
   selected: QueriesModels.TimeRange
@@ -31,9 +37,11 @@ interface Props {
   activeDashboard: string
   dashboard: DashboardsModels.Dashboard
   timeRange: QueriesModels.TimeRange
+  timeZone: TimeZones
+  onSetTimeZone: typeof setTimeZone
   autoRefresh: number
   handleChooseTimeRange: (timeRange: QueriesModels.TimeRange) => void
-  handleChooseAutoRefresh: AppActions.SetAutoRefreshActionCreator
+  handleChooseAutoRefresh: (autoRefreshOption: AutoRefreshOption) => void
   onManualRefresh: () => void
   handleClickPresentationButton: AppActions.DelayEnablePresentationModeDispatcher
   onAddCell: () => void
@@ -91,9 +99,11 @@ class DashboardHeader extends Component<Props, State> {
   public render() {
     const {
       isHidden,
-      handleChooseAutoRefresh,
-      onManualRefresh,
+      timeZone,
       autoRefresh,
+      onSetTimeZone,
+      onManualRefresh,
+      handleChooseAutoRefresh,
     } = this.props
     const {selected} = this.state
 
@@ -105,6 +115,7 @@ class DashboardHeader extends Component<Props, State> {
         </Page.Header.Left>
         <Page.Header.Right showSourceIndicator={true}>
           <GraphTips />
+          <TimeZoneToggle timeZone={timeZone} onSetTimeZone={onSetTimeZone} />
           {this.addCellButton}
           {this.toolButtons}
           <AutoRefreshDropdown

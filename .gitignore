@@ -21,6 +21,7 @@ backend/cmd/cloudhub/*debug*
 .dev-jssrc
 .bindata
 .eslintcache
+nil
 
 # Files
 go.sum
