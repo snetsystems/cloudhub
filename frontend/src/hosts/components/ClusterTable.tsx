@@ -11,29 +11,23 @@ import {
   TableBodyRowItem,
 } from 'src/addon/128t/reusable/layout'
 import {ProgressDisplay} from 'src/shared/components/ProgressDisplay'
+import {NoHostsState} from 'src/agent_admin/reusable'
+
+// constants
 import {VCENTER_CLUSTER_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
+
+// types
+import {VMCluster} from 'src/hosts/types'
 
 interface Props {
   isEditable: boolean
   cellTextColor: string
   cellBackgroundColor: string
-  item: any
+  item: VMCluster
 }
 
 const ClusterTable = (props: Props): JSX.Element => {
   const {isEditable, cellTextColor, cellBackgroundColor, item} = props
-  const {
-    name,
-    cpu_usage,
-    cpu_capacity,
-    memory_usage,
-    memory_capacity,
-    storage_usage,
-    storage_space,
-    storage_capacity,
-    host_count,
-    vm_count,
-  } = item
 
   const {
     CPUWidth,
@@ -87,9 +81,9 @@ const ClusterTable = (props: Props): JSX.Element => {
           title={
             <ProgressDisplay
               unit={'CPU'}
-              use={cpu_usage}
-              available={cpu_capacity - cpu_usage}
-              total={cpu_capacity}
+              use={item.cpu_usage}
+              available={item.cpu_capacity - item.cpu_usage}
+              total={item.cpu_capacity}
             />
           }
           width={CPUWidth}
@@ -99,9 +93,9 @@ const ClusterTable = (props: Props): JSX.Element => {
           title={
             <ProgressDisplay
               unit={'Memory'}
-              use={memory_usage}
-              available={memory_capacity - memory_usage}
-              total={memory_capacity}
+              use={item.memory_usage}
+              available={item.memory_capacity - item.memory_usage}
+              total={item.memory_capacity}
             />
           }
           width={MemoryWidth}
@@ -111,21 +105,21 @@ const ClusterTable = (props: Props): JSX.Element => {
           title={
             <ProgressDisplay
               unit={'Storage'}
-              use={storage_usage}
-              available={storage_space}
-              total={storage_capacity}
+              use={item.storage_usage}
+              available={item.storage_space}
+              total={item.storage_capacity}
             />
           }
           width={StorageWidth}
           className={'align--center'}
         />
         <TableBodyRowItem
-          title={host_count}
+          title={item.host_count}
           width={VMHostWidth}
           className={'align--end'}
         />
         <TableBodyRowItem
-          title={vm_count}
+          title={item.vm_count}
           width={VMWidth}
           className={'align--end'}
         />
@@ -140,7 +134,7 @@ const ClusterTable = (props: Props): JSX.Element => {
           cellTextColor={cellTextColor}
           cellBackgroundColor={cellBackgroundColor}
           value={[]}
-          name={`Cluster - ${name}`}
+          name={item ? `Cluster - ${item.name}` : ''}
           sizeVisible={false}
         />
         <HeadingBar
@@ -153,9 +147,7 @@ const ClusterTable = (props: Props): JSX.Element => {
           <TableHeader>
             <Header />
           </TableHeader>
-          <TableBody>
-            <Body />
-          </TableBody>
+          <TableBody>{item ? <Body /> : <NoHostsState />}</TableBody>
         </Table>
       </PanelBody>
     </Panel>

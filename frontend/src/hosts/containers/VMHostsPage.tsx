@@ -33,6 +33,16 @@ import {TimeRange, Cell, Template, Source, Layout} from 'src/types'
 import {Item} from 'src/reusable_ui/components/treemenu/TreeMenu/walk'
 import {AddonType} from 'src/shared/constants'
 import {Addon} from 'src/types/auth'
+import {
+  // VCenter,
+  VMDatacenter,
+  VMCluster,
+  VMHost,
+  VM,
+  VMDatastore,
+  LayoutCell,
+  VCenter,
+} from 'src/hosts/types'
 
 // Actions
 import {getMinionKeyAcceptedListAsync} from 'src/hosts/actions'
@@ -65,8 +75,9 @@ import {
 
 // ErrorHandler
 // import {ErrorHandling} from 'src/shared/decorators/errors'
-import {Minion} from '../../agent_admin/type/minion'
-import {layout} from '../../../test/resources'
+
+// import {Minion} from '../../agent_admin/type/minion'
+// import {layout} from '../../../test/resources'
 
 const GridLayout = WidthProvider(ReactGridLayout)
 const MINION_LIST_EMPTY = '<< Empty >>'
@@ -84,10 +95,6 @@ interface Props {
   ) => Promise<String[]>
 }
 
-interface VM extends Item {
-  type?: string
-}
-
 const VMHostsPage = (props: Props): JSX.Element => {
   const {
     addons,
@@ -97,6 +104,14 @@ const VMHostsPage = (props: Props): JSX.Element => {
     handleGetMinionKeyAcceptedList,
   } = props
   const intervalItems = ['30s', '1m', '5m']
+  const initialFocusedHost: Item = {
+    hasNodes: false,
+    isOpen: false,
+    level: 0,
+    key: '',
+    label: '',
+    name: '',
+  }
 
   // treemenu state
   const [activeKey, setActiveKey] = useState('')
@@ -118,15 +133,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const [interval, setInterval] = useState('1m')
 
   // host state
-  const [focusedHost, setFocusedHost] = useState<VM>({
-    hasNodes: false,
-    isOpen: false,
-    level: 0,
-    key: '',
-    label: '',
-    name: '',
-  })
-  const [layout, setLayout] = useState([])
+  const [focusedHost, setFocusedHost] = useState<Item>(initialFocusedHost)
+  const [layout, setLayout] = useState<LayoutCell[]>([])
   const [vCenters, setVCenters] = useState({})
   const [acceptedMinionList, setAcceptedMinionList] = useState([])
   const [layoutCells, setLayoutCells] = useState<Cell[]>([])
@@ -722,15 +730,17 @@ const VMHostsPage = (props: Props): JSX.Element => {
     return {filteredLayouts}
   }
 
-  const CellTable = ({cell}): JSX.Element => {
+  const CellTable = ({cell}: {cell: LayoutCell}): JSX.Element => {
     switch (cell.i) {
       case 'vcenter': {
+        let item: VCenter = vCenters[activeKey] || null
+
         return (
           <VcenterTable
             isEditable={true}
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
-            item={focusedHost}
+            item={item}
           />
         )
       }
@@ -751,9 +761,9 @@ const VMHostsPage = (props: Props): JSX.Element => {
         )
       }
       case 'datacenters': {
-        let item = null
+        let items: VMDatacenter[] = []
         if (focusedHost.type === 'vcenter') {
-          item = _.filter(
+          items = _.filter(
             vCenters[activeKey.split('/')[0]].nodes,
             k => k.type === 'datacenter'
           )
@@ -764,28 +774,35 @@ const VMHostsPage = (props: Props): JSX.Element => {
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
             handleSelectHost={handleSelectHost}
-            item={item}
+            items={items}
           />
         )
       }
       case 'datacenter': {
+        let item: VMDatacenter = null
+
+        if (focusedHost.type === 'datacenter') {
+          item =
+            vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
+        }
+
         return (
           <DatacenterTable
             isEditable={true}
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
-            item={focusedHost}
+            item={item}
           />
         )
       }
       case 'datastores': {
-        let item = null
+        let items: VMDatastore[] = []
 
         if (focusedHost.type === 'datacenter') {
-          item =
+          items =
             vCenters[activeKey.split('/')[0]].nodes[focusedHost.name].datastores
         } else if (focusedHost.type === 'cluster') {
-          item =
+          items =
             vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
               .nodes[focusedHost.name].datastores
         }
@@ -794,15 +811,15 @@ const VMHostsPage = (props: Props): JSX.Element => {
             isEditable={true}
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
-            item={item}
+            items={items}
           />
         )
       }
       case 'clusters': {
-        let item = null
+        let items: VMCluster[] = []
         if (focusedHost.type === 'datacenter') {
           const splitedActiveKey = activeKey.split('/')
-          item = _.filter(
+          items = _.filter(
             vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes,
             k => k.type === 'cluster'
           )
@@ -814,32 +831,42 @@ const VMHostsPage = (props: Props): JSX.Element => {
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
             handleSelectHost={handleSelectHost}
-            item={item}
+            items={items}
           />
         )
       }
       case 'cluster': {
+        let item: VMCluster = null
+
+        if (focusedHost.type === 'cluster') {
+          const splitedActiveKey = activeKey.split('/')
+          item =
+            vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
+              splitedActiveKey[2]
+            ]
+        }
+
         return (
           <ClusterTable
             isEditable={true}
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
-            item={focusedHost}
+            item={item}
           />
         )
       }
       case 'vmhosts': {
-        let item = null
+        let items: VMHost[] = []
         const splitedActiveKey = activeKey.split('/')
         if (focusedHost.type === 'cluster') {
-          item = _.filter(
+          items = _.filter(
             vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
               focusedHost.name
             ].nodes,
             k => k.type === 'host'
           )
         } else if (focusedHost.type === 'datacenter') {
-          item =
+          items =
             vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]]
               .datacenter_hosts
         }
@@ -850,38 +877,56 @@ const VMHostsPage = (props: Props): JSX.Element => {
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
             handleSelectHost={handleSelectHost}
-            item={item}
+            items={items}
           />
         )
       }
       case 'vmhost': {
+        let item: VMHost = null
+
+        const splitedActiveKey = activeKey.split('/')
+        if (focusedHost.parent_type === 'cluster') {
+          item =
+            vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
+              splitedActiveKey[2]
+            ].nodes[splitedActiveKey[3]]
+        } else if (focusedHost.parent_type === 'datacenter') {
+          item =
+            vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
+              splitedActiveKey[2]
+            ]
+        }
+
         return (
           <VMHostTable
             isEditable={true}
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
-            item={focusedHost}
+            item={item}
           />
         )
       }
       case 'vms': {
-        let item = null
+        let items: VM[] = []
+        const splitedActiveKey = activeKey.split('/')
         if (
           focusedHost.parent_type === 'cluster' &&
           focusedHost.type === 'host'
         ) {
-          item = _.filter(
-            vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
-              .nodes[activeKey.split('/')[2]].nodes[focusedHost.name].nodes,
+          items = _.filter(
+            vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
+              splitedActiveKey[2]
+            ].nodes[splitedActiveKey[3]].nodes,
             k => k.type === 'vm'
           )
         } else if (
           focusedHost.parent_type === 'datacenter' &&
           focusedHost.type === 'host'
         ) {
-          item = _.filter(
-            vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
-              .nodes[focusedHost.name].nodes,
+          items = _.filter(
+            vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
+              splitedActiveKey[2]
+            ].nodes,
             k => k.type === 'vm'
           )
         }
@@ -891,17 +936,32 @@ const VMHostsPage = (props: Props): JSX.Element => {
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
             handleSelectHost={handleSelectHost}
-            item={item}
+            items={items}
           />
         )
       }
       case 'vm': {
+        let item: VM = null
+        const splitedActiveKey = activeKey.split('/')
+
+        if (splitedActiveKey.length === 5) {
+          item =
+            vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
+              splitedActiveKey[2]
+            ].nodes[splitedActiveKey[3]].nodes[splitedActiveKey[4]]
+        } else if (splitedActiveKey.length === 4) {
+          item =
+            vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
+              splitedActiveKey[2]
+            ].nodes[splitedActiveKey[3]]
+        }
+
         return (
           <VirtualMachineTable
             isEditable={true}
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
-            item={focusedHost}
+            item={item}
           />
         )
       }
@@ -911,7 +971,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     }
   }
 
-  const handleSelectHost = (props: any[]) => {
+  const handleSelectHost = (props: any) => {
     const p = Array.isArray(props) ? props : [props]
     const path: string[] = p[0].parent_name.split('/')
     const newPath: string[] = []
@@ -1055,7 +1115,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
               {layout
                 ? _.map(
                     layout,
-                    (cell): JSX.Element => (
+                    (cell: LayoutCell): JSX.Element => (
                       <div
                         key={cell.i}
                         className="dash-graph grid-item--routers"

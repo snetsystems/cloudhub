@@ -13,26 +13,22 @@ import {
 } from 'src/addon/128t/reusable/layout'
 import {convertUnit} from 'src/shared/components/ProgressDisplay'
 import {responseIndicator} from 'src/shared/components/Indicator'
+import {NoHostsState} from 'src/agent_admin/reusable'
+
+// constants
 import {VCENTER_VM_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 
+// types
+import {VM} from 'src/hosts/types'
 interface Props {
   isEditable: boolean
   cellTextColor: string
   cellBackgroundColor: string
-  item: any
+  item: VM
 }
 
 const VirtualMachineTable = (props: Props): JSX.Element => {
   const {isEditable, cellTextColor, cellBackgroundColor, item} = props
-  const {
-    name,
-    cpu_usage,
-    memory_usage,
-    os,
-    storage_usage,
-    power_state,
-    ip_address,
-  } = item
 
   const {
     CPUWidth,
@@ -88,6 +84,15 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
   }
 
   const Body = (): JSX.Element => {
+    const {
+      cpu_usage,
+      memory_usage,
+      os,
+      storage_usage,
+      power_state,
+      ip_address,
+    } = item
+
     return (
       <div className="hosts-table--tr">
         <TableBodyRowItem
@@ -132,7 +137,7 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
           cellTextColor={cellTextColor}
           cellBackgroundColor={cellBackgroundColor}
           value={[]}
-          name={`Virtual Machine - ${name}`}
+          name={`Virtual Machine - ${item ? item.name : ''}`}
           sizeVisible={false}
         />
         <HeadingBar
@@ -145,9 +150,7 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
           <TableHeader>
             <Header />
           </TableHeader>
-          <TableBody>
-            <Body />
-          </TableBody>
+          <TableBody>{item ? <Body /> : <NoHostsState />}</TableBody>
         </Table>
       </PanelBody>
     </Panel>

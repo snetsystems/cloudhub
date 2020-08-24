@@ -13,14 +13,20 @@ import {
 } from 'src/addon/128t/reusable/layout'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {ProgressDisplay} from 'src/shared/components/ProgressDisplay'
+import {NoHostsState} from 'src/agent_admin/reusable'
+
+//constants
 import {VCENTER_DATACENTERS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
+
+// types
+import {VMDatacenter} from 'src/hosts/types'
 
 interface Props {
   isEditable: boolean
   cellTextColor: string
   cellBackgroundColor: string
   handleSelectHost: (props) => void
-  item: any
+  items: VMDatacenter[]
 }
 
 const DatacentersTable = (props: Props): JSX.Element => {
@@ -28,7 +34,7 @@ const DatacentersTable = (props: Props): JSX.Element => {
     isEditable,
     cellTextColor,
     cellBackgroundColor,
-    item,
+    items,
     handleSelectHost,
   } = props
 
@@ -93,77 +99,75 @@ const DatacentersTable = (props: Props): JSX.Element => {
   const Body = (): JSX.Element => {
     return (
       <FancyScrollbar>
-        {item
-          ? item.map(i => (
-              <div className="hosts-table--tr" key={i.name}>
-                <TableBodyRowItem
-                  title={
-                    <div
-                      className={`hosts-table-item`}
-                      onClick={() => {
-                        handleSelectHost(i)
-                      }}
-                    >
-                      {i.name}
-                    </div>
-                  }
-                  width={DatacenterWidth}
-                  className={'align--start'}
+        {items.map(item => (
+          <div className="hosts-table--tr" key={item.name}>
+            <TableBodyRowItem
+              title={
+                <div
+                  className={`hosts-table-item`}
+                  onClick={() => {
+                    handleSelectHost(item)
+                  }}
+                >
+                  {item.name}
+                </div>
+              }
+              width={DatacenterWidth}
+              className={'align--start'}
+            />
+            <TableBodyRowItem
+              title={
+                <ProgressDisplay
+                  unit={'CPU'}
+                  use={item.cpu_usage}
+                  available={item.cpu_space}
+                  total={item.cpu_usage + item.cpu_space}
                 />
-                <TableBodyRowItem
-                  title={
-                    <ProgressDisplay
-                      unit={'CPU'}
-                      use={i.cpu_usage}
-                      available={i.cpu_space}
-                      total={i.cpu_usage + i.cpu_space}
-                    />
-                  }
-                  width={CPUWidth}
-                  className={'align--center'}
+              }
+              width={CPUWidth}
+              className={'align--center'}
+            />
+            <TableBodyRowItem
+              title={
+                <ProgressDisplay
+                  unit={'Memory'}
+                  use={item.memory_usage}
+                  available={item.memory_space}
+                  total={item.memory_usage + item.memory_space}
                 />
-                <TableBodyRowItem
-                  title={
-                    <ProgressDisplay
-                      unit={'Memory'}
-                      use={i.memory_usage}
-                      available={i.memory_space}
-                      total={i.memory_usage + i.memory_space}
-                    />
-                  }
-                  width={MemoryWidth}
-                  className={'align--center'}
+              }
+              width={MemoryWidth}
+              className={'align--center'}
+            />
+            <TableBodyRowItem
+              title={
+                <ProgressDisplay
+                  unit={'Storage'}
+                  use={item.storage_usage}
+                  available={item.storage_space}
+                  total={item.storage_capacity}
                 />
-                <TableBodyRowItem
-                  title={
-                    <ProgressDisplay
-                      unit={'Storage'}
-                      use={i.storage_usage}
-                      available={i.storage_space}
-                      total={i.storage_capacity}
-                    />
-                  }
-                  width={StorageWidth}
-                  className={'align--center'}
-                />
-                <TableBodyRowItem
-                  title={i.cluster_count}
-                  width={ClusterWidth}
-                  className={'align--end'}
-                />
-                <TableBodyRowItem
-                  title={i.host_count}
-                  width={VMHostWidth}
-                  className={'align--end'}
-                />
-                <TableBodyRowItem
-                  title={i.vm_count}
-                  width={VMWidth}
-                  className={'align--end'}
-                />
-              </div>
-            ))
-          : null}
+              }
+              width={StorageWidth}
+              className={'align--center'}
+            />
+            <TableBodyRowItem
+              title={item.cluster_count}
+              width={ClusterWidth}
+              className={'align--end'}
+            />
+            <TableBodyRowItem
+              title={item.host_count}
+              width={VMHostWidth}
+              className={'align--end'}
+            />
+            <TableBodyRowItem
+              title={item.vm_count}
+              width={VMWidth}
+              className={'align--end'}
+            />
+          </div>
+        ))}
       </FancyScrollbar>
     )
   }
@@ -188,9 +192,7 @@ const DatacentersTable = (props: Props): JSX.Element => {
           <TableHeader>
             <Header />
           </TableHeader>
-          <TableBody>
-            <Body />
-          </TableBody>
+          <TableBody>{items ? <Body /> : <NoHostsState />}</TableBody>
         </Table>
       </PanelBody>
     </Panel>

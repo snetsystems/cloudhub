@@ -11,13 +11,19 @@ import {
   TableBodyRowItem,
 } from 'src/addon/128t/reusable/layout'
 import {ProgressDisplay} from 'src/shared/components/ProgressDisplay'
+import {NoHostsState} from 'src/agent_admin/reusable'
+
+// contants
 import {VCENTER_VMHOST_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
+
+// types
+import {VMHost} from 'src/hosts/types'
 
 interface Props {
   isEditable: boolean
   cellTextColor: string
   cellBackgroundColor: string
-  item: any
+  item: VMHost
 }
 
 const VMHostTable = (props: Props): JSX.Element => {
@@ -139,7 +145,7 @@ const VMHostTable = (props: Props): JSX.Element => {
           cellTextColor={cellTextColor}
           cellBackgroundColor={cellBackgroundColor}
           value={[]}
-          name={`Host(EXSi) - ${item.name}`}
+          name={`Host(EXSi) - ${item ? item.name : ''}`}
           sizeVisible={false}
         />
         <HeadingBar
@@ -152,9 +158,7 @@ const VMHostTable = (props: Props): JSX.Element => {
           <TableHeader>
             <Header />
           </TableHeader>
-          <TableBody>
-            <Body />
-          </TableBody>
+          <TableBody>{item ? <Body /> : <NoHostsState />}</TableBody>
         </Table>
       </PanelBody>
     </Panel>

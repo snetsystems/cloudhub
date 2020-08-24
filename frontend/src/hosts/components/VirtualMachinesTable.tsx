@@ -15,14 +15,20 @@ import {
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {convertUnit} from 'src/shared/components/ProgressDisplay'
 import {responseIndicator} from 'src/shared/components/Indicator'
+import {NoHostsState} from 'src/agent_admin/reusable'
+
+//contants
 import {VCENTER_VMS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
+
+//types
+import {VM} from 'src/hosts/types'
 
 interface Props {
   isEditable: boolean
   cellTextColor: string
   cellBackgroundColor: string
-  handleSelectHost: (item: any) => void
-  item: any
+  handleSelectHost: (item: VM) => void
+  items: VM[]
 }
 
 const VirtualMachinesTable = (props: Props): JSX.Element => {
@@ -30,7 +36,7 @@ const VirtualMachinesTable = (props: Props): JSX.Element => {
     isEditable,
     cellTextColor,
     cellBackgroundColor,
-    item,
+    items,
     handleSelectHost,
   } = props
 
@@ -97,57 +103,55 @@ const VirtualMachinesTable = (props: Props): JSX.Element => {
   const Body = (): JSX.Element => {
     return (
       <FancyScrollbar>
-        {item
-          ? item.map(i => (
-              <div className="hosts-table--tr" key={uuid.v4()}>
-                <TableBodyRowItem
-                  title={
-                    <div
-                      className={`hosts-table-item`}
-                      onClick={() => {
-                        handleSelectHost(i)
-                      }}
-                    >
-                      {i.name}
-                    </div>
-                  }
-                  width={VMWidth}
-                  className={'align--start'}
-                />
-                <TableBodyRowItem
-                  title={convertUnit('CPU', i.cpu_usage)}
-                  width={CPUWidth}
-                  className={'align--end'}
-                />
-                <TableBodyRowItem
-                  title={convertUnit('Memory', i.memory_usage)}
-                  width={MemoryWidth}
-                  className={'align--end'}
-                />
+        {items.map(item => (
+          <div className="hosts-table--tr" key={uuid.v4()}>
+            <TableBodyRowItem
+              title={
+                <div
+                  className={`hosts-table-item`}
+                  onClick={() => {
+                    handleSelectHost(item)
+                  }}
+                >
+                  {item.name}
+                </div>
+              }
+              width={VMWidth}
+              className={'align--start'}
+            />
+            <TableBodyRowItem
+              title={convertUnit('CPU', item.cpu_usage)}
+              width={CPUWidth}
+              className={'align--end'}
+            />
+            <TableBodyRowItem
+              title={convertUnit('Memory', item.memory_usage)}
+              width={MemoryWidth}
+              className={'align--end'}
+            />
 
-                <TableBodyRowItem
-                  title={convertUnit('Storage', i.storage_usage)}
-                  width={StorageWidth}
-                  className={'align--end'}
-                />
-                <TableBodyRowItem
-                  title={i.ip_address}
-                  width={IPWidth}
-                  className={'align--start'}
-                />
-                <TableBodyRowItem
-                  title={i.os}
-                  width={OSWidth}
-                  className={'align--start'}
-                />
-                <TableBodyRowItem
-                  title={responseIndicator(i.power_state === 'poweredOn')}
-                  width={StatusWidth}
-                  className={'align--center'}
-                />
-              </div>
-            ))
-          : null}
+            <TableBodyRowItem
+              title={convertUnit('Storage', item.storage_usage)}
+              width={StorageWidth}
+              className={'align--end'}
+            />
+            <TableBodyRowItem
+              title={item.ip_address}
+              width={IPWidth}
+              className={'align--start'}
+            />
+            <TableBodyRowItem
+              title={item.os}
+              width={OSWidth}
+              className={'align--start'}
+            />
+            <TableBodyRowItem
+              title={responseIndicator(item.power_state === 'poweredOn')}
+              width={StatusWidth}
+              className={'align--center'}
+            />
+          </div>
+        ))}
       </FancyScrollbar>
     )
   }
@@ -172,9 +176,7 @@ const VirtualMachinesTable = (props: Props): JSX.Element => {
           <TableHeader>
             <Header />
           </TableHeader>
-          <TableBody>
-            <Body />
-          </TableBody>
+          <TableBody>{items.length ? <Body /> : <NoHostsState />}</TableBody>
         </Table>
       </PanelBody>
     </Panel>

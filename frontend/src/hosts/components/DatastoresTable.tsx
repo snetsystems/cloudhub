@@ -14,16 +14,18 @@ import {
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {convertUnit} from 'src/shared/components/ProgressDisplay'
 import {VCENTER_DATASTORES_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
+import {VMDatastore} from 'src/hosts/types'
+import {NoHostsState} from 'src/agent_admin/reusable'
 
 interface Props {
   isEditable: boolean
   cellTextColor: string
   cellBackgroundColor: string
-  item: any
+  items: VMDatastore[]
 }
 
 const DatastoresTable = (props: Props): JSX.Element => {
-  const {isEditable, cellTextColor, cellBackgroundColor, item} = props
+  const {isEditable, cellTextColor, cellBackgroundColor, items} = props
   const {
     DatastoreWidth,
     StatusWidth,
@@ -71,37 +73,35 @@ const DatastoresTable = (props: Props): JSX.Element => {
   const Body = (): JSX.Element => {
     return (
       <FancyScrollbar>
-        {item
-          ? item.map((i, index) => (
-              <div className="hosts-table--tr" key={`${i.name}-${index}`}>
-                <TableBodyRowItem
-                  title={i.name}
-                  width={DatastoreWidth}
-                  className={'align--start'}
-                />
-                <TableBodyRowItem
-                  title={i.mode}
-                  width={StatusWidth}
-                  className={'align--center'}
-                />
-                <TableBodyRowItem
-                  title={i.type}
-                  width={TypeWidth}
-                  className={'align--center'}
-                />
-                <TableBodyRowItem
-                  title={convertUnit('Storage', i.capacity)}
-                  width={SpaceWidth}
-                  className={'align--end'}
-                />
-                <TableBodyRowItem
-                  title={convertUnit('Storage', i.space)}
-                  width={FreeSpaceWidth}
-                  className={'align--end'}
-                />
-              </div>
-            ))
-          : null}
+        {items.map((item, index) => (
+          <div className="hosts-table--tr" key={`${item.name}-${index}`}>
+            <TableBodyRowItem
+              title={item.name}
+              width={DatastoreWidth}
+              className={'align--start'}
+            />
+            <TableBodyRowItem
+              title={item.mode}
+              width={StatusWidth}
+              className={'align--center'}
+            />
+            <TableBodyRowItem
+              title={item.type}
+              width={TypeWidth}
+              className={'align--center'}
+            />
+            <TableBodyRowItem
+              title={convertUnit('Storage', item.capacity)}
+              width={SpaceWidth}
+              className={'align--end'}
+            />
+            <TableBodyRowItem
+              title={convertUnit('Storage', item.space)}
+              width={FreeSpaceWidth}
+              className={'align--end'}
+            />
+          </div>
+        ))}
       </FancyScrollbar>
     )
   }
@@ -126,9 +126,7 @@ const DatastoresTable = (props: Props): JSX.Element => {
           <TableHeader>
             <Header />
           </TableHeader>
-          <TableBody>
-            <Body />
-          </TableBody>
+          <TableBody>{items.length ? <Body /> : <NoHostsState />}</TableBody>
         </Table>
       </PanelBody>
     </Panel>

@@ -1,4 +1,6 @@
 import React from 'react'
+import _ from 'lodash'
+
 import {
   CellName,
   HeadingBar,
@@ -11,7 +13,12 @@ import {
   TableBodyRowItem,
 } from 'src/addon/128t/reusable/layout'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import {NoHostsState} from 'src/agent_admin/reusable'
+
+// constants
 import {VCENTER_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
+
+// types
 import {ProgressDisplay} from 'src/shared/components/ProgressDisplay'
 
 interface Props {
@@ -23,20 +30,6 @@ interface Props {
 
 const VcenterTable = (props: Props): JSX.Element => {
   const {isEditable, cellTextColor, cellBackgroundColor, item} = props
-
-  const {
-    cpu_usage,
-    cpu_space,
-    host_count,
-    nodes,
-    memory_usage,
-    memory_space,
-    storage_usage,
-    storage_space,
-    storage_capacity,
-    vm_count,
-  } = item
-
   const {
     CPUWidth,
     MemoryWidth,
@@ -89,6 +82,18 @@ const VcenterTable = (props: Props): JSX.Element => {
   }
 
   const Body = (): JSX.Element => {
+    const {
+      cpu_usage,
+      cpu_space,
+      host_count,
+      nodes,
+      memory_usage,
+      memory_space,
+      storage_usage,
+      storage_space,
+      storage_capacity,
+      vm_count,
+    } = item
     return (
       <FancyScrollbar>
         <div className="hosts-table--tr">
@@ -129,7 +134,7 @@ const VcenterTable = (props: Props): JSX.Element => {
             className={'align--center'}
           />
           <TableBodyRowItem
-            title={nodes ? nodes.length : null}
+            title={nodes ? _.keys(nodes).length : ''}
             width={DatacenterWidth}
             className={'align--end'}
           />
@@ -155,7 +160,7 @@ const VcenterTable = (props: Props): JSX.Element => {
           cellTextColor={cellTextColor}
           cellBackgroundColor={cellBackgroundColor}
           value={[]}
-          name={`vCenter - ${item.label}`}
+          name={`vCenter - ${item ? item.label : ''}`}
           sizeVisible={false}
         />
         <HeadingBar
@@ -168,9 +173,7 @@ const VcenterTable = (props: Props): JSX.Element => {
           <TableHeader>
             <Header />
           </TableHeader>
-          <TableBody>
-            <Body />
-          </TableBody>
+          <TableBody>{item ? <Body /> : <NoHostsState />}</TableBody>
         </Table>
       </PanelBody>
     </Panel>

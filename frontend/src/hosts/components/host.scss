@@ -62,3 +62,9 @@
     background: $c-rainforest;
   }
 }
+
+.generic-empty-state {
+  display: flex;
+  height: 100%;
+  align-content: center;
+}

@@ -12,30 +12,23 @@ import {
 } from 'src/addon/128t/reusable/layout'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {ProgressDisplay} from 'src/shared/components/ProgressDisplay'
+import {NoHostsState} from 'src/agent_admin/reusable'
+
+// contants
 import {VCENTER_DATACENTER_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
+
+//types
+import {VMDatacenter} from 'src/hosts/types'
 
 interface Props {
   isEditable: boolean
   cellTextColor: string
   cellBackgroundColor: string
-  item: any
+  item: VMDatacenter
 }
 
 const DatacenterTable = (props: Props): JSX.Element => {
   const {isEditable, cellTextColor, cellBackgroundColor, item} = props
-  const {
-    name,
-    cpu_usage,
-    cpu_space,
-    memory_usage,
-    memory_space,
-    storage_usage,
-    storage_space,
-    storage_capacity,
-    cluster_count,
-    host_count,
-    vm_count,
-  } = item
 
   const {
     CPUWidth,
@@ -89,6 +82,19 @@ const DatacenterTable = (props: Props): JSX.Element => {
   }
 
   const Body = (): JSX.Element => {
+    const {
+      cpu_usage,
+      cpu_space,
+      memory_usage,
+      memory_space,
+      storage_usage,
+      storage_space,
+      storage_capacity,
+      cluster_count,
+      host_count,
+      vm_count,
+    } = item
+
     return (
       <FancyScrollbar>
         <div className="hosts-table--tr">
@@ -155,7 +161,7 @@ const DatacenterTable = (props: Props): JSX.Element => {
           cellTextColor={cellTextColor}
           cellBackgroundColor={cellBackgroundColor}
           value={[]}
-          name={`Datacenter - ${name}`}
+          name={`Datacenter - ${item ? item.name : ''}`}
           sizeVisible={false}
         />
         <HeadingBar
@@ -168,9 +174,7 @@ const DatacenterTable = (props: Props): JSX.Element => {
           <TableHeader>
             <Header />
           </TableHeader>
-          <TableBody>
-            <Body />
-          </TableBody>
+          <TableBody>{item ? <Body /> : <NoHostsState />}</TableBody>
         </Table>
       </PanelBody>
     </Panel>

@@ -12,18 +12,31 @@ import {
 } from 'src/addon/128t/reusable/layout'
 import {ProgressDisplay} from 'src/shared/components/ProgressDisplay'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import {NoHostsState} from 'src/agent_admin/reusable'
+
+//contants
 import {VCENTER_CLUSTERS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
+
+// types
+import {VMCluster} from 'src/hosts/types'
 
 interface Props {
   isEditable: boolean
   cellTextColor: string
   cellBackgroundColor: string
-  item: any
-  handleSelectHost: (i: any) => void
+  items: VMCluster[]
+  handleSelectHost: (item: VMCluster) => void
 }
 
 const ClustersTable = (props: Props): JSX.Element => {
-  const {isEditable, cellTextColor, cellBackgroundColor, item} = props
+  const {
+    isEditable,
+    cellTextColor,
+    cellBackgroundColor,
+    handleSelectHost,
+    items,
+  } = props
+
   const {
     ClusterWidth,
     CPUWidth,
@@ -77,76 +90,74 @@ const ClustersTable = (props: Props): JSX.Element => {
     )
   }
 
-  const Body = ({handleSelectHost}): JSX.Element => {
+  const Body = (): JSX.Element => {
     return (
       <FancyScrollbar>
-        {item
-          ? item.map(i => (
-              <div className="hosts-table--tr" key={i.name}>
-                <TableBodyRowItem
-                  title={
-                    <div
-                      className={`hosts-table-item`}
-                      onClick={() => {
-                        handleSelectHost(i)
-                      }}
-                    >
-                      {i.name}
-                    </div>
-                  }
-                  width={ClusterWidth}
-                  className={'align--start'}
+        {items.map(item => (
+          <div className="hosts-table--tr" key={item.name}>
+            <TableBodyRowItem
+              title={
+                <div
+                  className={`hosts-table-item`}
+                  onClick={() => {
+                    handleSelectHost(item)
+                  }}
+                >
+                  {item.name}
+                </div>
+              }
+              width={ClusterWidth}
+              className={'align--start'}
+            />
+            <TableBodyRowItem
+              title={
+                <ProgressDisplay
+                  unit={'CPU'}
+                  use={item.cpu_usage}
+                  available={item.cpu_capacity - item.cpu_usage}
+                  total={item.cpu_capacity}
                 />
-                <TableBodyRowItem
-                  title={
-                    <ProgressDisplay
-                      unit={'CPU'}
-                      use={i.cpu_usage}
-                      available={i.cpu_capacity - i.cpu_usage}
-                      total={i.cpu_capacity}
-                    />
-                  }
-                  width={CPUWidth}
-                  className={'align--center'}
+              }
+              width={CPUWidth}
+              className={'align--center'}
+            />
+            <TableBodyRowItem
+              title={
+                <ProgressDisplay
+                  unit={'Memory'}
+                  use={item.memory_usage}
+                  available={item.memory_capacity - item.memory_usage}
+                  total={item.memory_capacity}
                 />
-                <TableBodyRowItem
-                  title={
-                    <ProgressDisplay
-                      unit={'Memory'}
-                      use={i.memory_usage}
-                      available={i.memory_capacity - i.memory_usage}
-                      total={i.memory_capacity}
-                    />
-                  }
-                  width={MemoryWidth}
-                  className={'align--center'}
+              }
+              width={MemoryWidth}
+              className={'align--center'}
+            />
+            <TableBodyRowItem
+              title={
+                <ProgressDisplay
+                  unit={'Storage'}
+                  use={item.storage_usage}
+                  available={item.storage_space}
+                  total={item.storage_capacity}
                 />
-                <TableBodyRowItem
-                  title={
-                    <ProgressDisplay
-                      unit={'Storage'}
-                      use={i.storage_usage}
-                      available={i.storage_space}
-                      total={i.storage_capacity}
-                    />
-                  }
-                  width={StorageWidth}
-                  className={'align--center'}
-                />
+              }
+              width={StorageWidth}
+              className={'align--center'}
+            />
 
-                <TableBodyRowItem
-                  title={i.host_count}
-                  width={VMHostWidth}
-                  className={'align--end'}
-                />
-                <TableBodyRowItem
-                  title={i.vm_count}
-                  width={VMWidth}
-                  className={'align--end'}
-                />
-              </div>
-            ))
-          : null}
+            <TableBodyRowItem
+              title={item.host_count}
+              width={VMHostWidth}
+              className={'align--end'}
+            />
+            <TableBodyRowItem
+              title={item.vm_count}
+              width={VMWidth}
+              className={'align--end'}
+            />
+          </div>
+        ))}
       </FancyScrollbar>
     )
   }
@@ -171,9 +182,7 @@ const ClustersTable = (props: Props): JSX.Element => {
           <TableHeader>
             <Header />
           </TableHeader>
-          <TableBody>
-            <Body handleSelectHost={props.handleSelectHost} />
-          </TableBody>
+          <TableBody>{items.length ? <Body /> : <NoHostsState />}</TableBody>
         </Table>
       </PanelBody>
     </Panel>
