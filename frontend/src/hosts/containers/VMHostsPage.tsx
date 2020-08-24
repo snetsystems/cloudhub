@@ -45,7 +45,10 @@ import {
 } from 'src/hosts/types'
 
 // Actions
-import {getMinionKeyAcceptedListAsync} from 'src/hosts/actions'
+import {
+  getMinionKeyAcceptedListAsync,
+  getVSphereInfoSaltApiAsync,
+} from 'src/hosts/actions'
 
 // Constants
 import {
@@ -93,6 +96,14 @@ interface Props {
     saltMasterUrl: string,
     saltMasterToken: string
   ) => Promise<String[]>
+  handleGetVSphereInfoSaltApi: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    minionId: string,
+    address: string,
+    user: string,
+    password: string
+  ) => Promise<String[]>
 }
 
 const VMHostsPage = (props: Props): JSX.Element => {
@@ -102,6 +113,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     timeRange,
     source,
     handleGetMinionKeyAcceptedList,
+    handleGetVSphereInfoSaltApi,
   } = props
   const intervalItems = ['30s', '1m', '5m']
   const initialFocusedHost: Item = {
@@ -177,10 +189,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   const handleOpen = async (): Promise<void> => {
-    const addon = addons.find(addon => {
-      return addon.name === AddonType.salt
-    })
-
+    const addon: Addon = getSaltAddon()
     const saltMasterUrl = addon.url
     const saltMasterToken = addon.token
 
@@ -202,25 +211,34 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   const handleConnection = (): void => {
-    AddVCenter([target])
+    AddVCenter(target)
     handleClose()
   }
 
-  const AddVCenter = minions => {
-    let vcenter = minions.reduce((vc, minion) => {
-      const vCenterInfo = getVCenterInfo(minion)
-      vc = {...vc, ...vCenterInfo}
-      return vc
-    }, {})
+  const getSaltAddon = (): Addon => {
+    const addon = addons.find(addon => {
+      return addon.name === AddonType.salt
+    })
 
+    return addon
+  }
+
+  const AddVCenter = async minion => {
+    // paramiter minion으로? vcenter로? etcd 연동 후 변경
+    let vcenter = await getVCenterInfo(minion)
     setVCenters({...vCenters, ...vcenter})
   }
 
   useEffect(() => {
-    /////////////// getMinion Api Call ///////////////////
-    const getMinions = ['minion03', 'minion06']
-    /////////////// getMinion Api Call ///////////////////
-    AddVCenter(getMinions)
+    // 임시 코드 수정 필요  //
+    const getMinion = 'minion03'
+    ////////////////////////
+
+    const addVCenterFn = async (): Promise<void> => {
+      // 추 후 for문 추가
+      await AddVCenter(getMinion)
+    }
+    addVCenterFn()
 
     const layoutResultsFn = async (): Promise<void> => {
       const layoutRst = await getLayouts()
@@ -423,7 +441,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     // }
   }
 
-  const updateBtn = (ipAddress: number) => (): JSX.Element => {
+  const updateBtn = (ipAddress: string) => (): JSX.Element => {
     return (
       <button className={`btn btn-default btn-xs btn-square`}>
         <span
@@ -437,7 +455,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     )
   }
 
-  const removeBtn = (ipAddress: number) => (): JSX.Element => {
+  const removeBtn = (ipAddress: string) => (): JSX.Element => {
     return (
       <ConfirmButton
         text="Delete"
@@ -455,18 +473,28 @@ const VMHostsPage = (props: Props): JSX.Element => {
     )
   }
 
-  const getVCenterInfo = minionId => {
-    let vCenterData
-    if (minionId === 'minion06') {
-      vCenterData = require('./dummy.json')
-    } else if (minionId === 'minion03') {
-      vCenterData = require('./dummy2.json')
-    }
-    // else {
-    //   vCenterData = require('./dummy3.json')
-    // }
+  const getVSphereSaltApi = async minionId => {
+    const addon: Addon = getSaltAddon()
+    const saltMasterUrl = addon.url
+    const saltMasterToken = addon.token
 
-    if (!vCenterData) {
+    const vSphereInfo: any = await handleGetVSphereInfoSaltApi(
+      saltMasterUrl,
+      saltMasterToken,
+      minionId,
+      address,
+      user,
+      password
+    )
+
+    return vSphereInfo
+  }
+
+  const getVCenterInfo = async minionId => {
+    let vCenterData
+    vCenterData = await getVSphereSaltApi(minionId)
+    if (_.isEmpty(vCenterData.return[0])) {
+      // etcd로 가져 오는 로직 추가
       return
     }
 
@@ -482,7 +510,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     let vcVmCount = []
     let minionName = Object.keys(vCenterData.return[0])
     let vcMinionValue: any[] = Object.values(vCenterData.return[0])
-    let vcIpAddress = vcMinionValue[0].vcenter
+    let vcIpAddress = address
 
     let vcenter = [vCenterData].reduce(
       acc => {
@@ -1199,6 +1227,7 @@ const mapStateToProps = ({links: {addons}}) => {
 
 const mapDispatchToProps = {
   handleGetMinionKeyAcceptedList: getMinionKeyAcceptedListAsync,
+  handleGetVSphereInfoSaltApi: getVSphereInfoSaltApiAsync,
 }
 
 export default connect(mapStateToProps, mapDispatchToProps, null)(VMHostsPage)
