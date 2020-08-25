@@ -18,6 +18,7 @@ import {DashboardSwitcherLinks} from '../../types/dashboards'
 import {
   getWheelKeyAcceptedList,
   getLocalVSphereInfoAll,
+  getTicketRemoteConsole,
 } from 'src/shared/apis/saltStack'
 
 interface HostsObject {
@@ -384,6 +385,22 @@ export const getVSphereInfoSaltApi = async (
 ): Promise<String[]> => {
   const info = await Promise.all([
     getLocalVSphereInfoAll(pUrl, pToken, tgt, address, user, password),
+  ])
+
+  const vSphere = _.get(info[0], 'data', [])
+  return vSphere
+}
+
+export const getTicketRemoteConsoleApi = async (
+  pUrl: string,
+  pToken: string,
+  tgt: string,
+  address: string,
+  user: string,
+  password: string
+): Promise<String[]> => {
+  const info = await Promise.all([
+    getTicketRemoteConsole(pUrl, pToken, tgt, address, user, password),
   ])
 
   const vSphere = _.get(info[0], 'data', [])

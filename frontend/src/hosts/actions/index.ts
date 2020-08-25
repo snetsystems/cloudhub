@@ -2,7 +2,11 @@ import {Dispatch} from 'redux'
 import {errorThrown} from 'src/shared/actions/errors'
 
 // APIs
-import {getMinionKeyAcceptedList, getVSphereInfoSaltApi} from 'src/hosts/apis'
+import {
+  getMinionKeyAcceptedList,
+  getVSphereInfoSaltApi,
+  getTicketRemoteConsoleApi,
+} from 'src/hosts/apis'
 
 export enum ActionType {
   MinionKeyAcceptedList = 'GET_MINION_KEY_ACCEPTED_LIST',
@@ -43,6 +47,32 @@ export const getVSphereInfoSaltApiAsync = (
 ) => async (dispatch: Dispatch<Action>): Promise<String[]> => {
   try {
     const vSphereInfo = await getVSphereInfoSaltApi(
+      pUrl,
+      pToken,
+      tgt,
+      address,
+      user,
+      password
+    )
+
+    dispatch(loadMinionKeyAcceptedList())
+    return vSphereInfo
+  } catch (error) {
+    console.error(error)
+    dispatch(errorThrown(error))
+  }
+}
+
+export const getTicketRemoteConsoleAsync = (
+  pUrl: string,
+  pToken: string,
+  tgt: string,
+  address: string,
+  user: string,
+  password: string
+) => async (dispatch: Dispatch<Action>): Promise<String[]> => {
+  try {
+    const vSphereInfo = await getTicketRemoteConsoleApi(
       pUrl,
       pToken,
       tgt,

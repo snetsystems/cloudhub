@@ -48,6 +48,7 @@ import {
 import {
   getMinionKeyAcceptedListAsync,
   getVSphereInfoSaltApiAsync,
+  getTicketRemoteConsoleAsync,
 } from 'src/hosts/actions'
 
 // Constants
@@ -79,7 +80,7 @@ import {
 // ErrorHandler
 // import {ErrorHandling} from 'src/shared/decorators/errors'
 
-// import {Minion} from '../../agent_admin/type/minion'
+// import { Minion } from '../../agent_admin/type/minion';
 // import {layout} from '../../../test/resources'
 
 const GridLayout = WidthProvider(ReactGridLayout)
@@ -104,6 +105,14 @@ interface Props {
     user: string,
     password: string
   ) => Promise<String[]>
+  handleGetTicketRemoteConsoleAsync: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    minionId: string,
+    address: string,
+    user: string,
+    password: string
+  ) => Promise<String[]>
 }
 
 const VMHostsPage = (props: Props): JSX.Element => {
@@ -114,6 +123,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     source,
     handleGetMinionKeyAcceptedList,
     handleGetVSphereInfoSaltApi,
+    handleGetTicketRemoteConsoleAsync,
   } = props
   const intervalItems = ['30s', '1m', '5m']
   const initialFocusedHost: Item = {
@@ -155,6 +165,9 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const [vmParam, setVmParam] = useState({})
   const [vmParentChartField, setVmParentChartField] = useState('')
   const [vmParentName, setVmParentName] = useState('')
+  const [selectMinion, setSelectMinion] = useState('')
+  const [saltMasterUrl, setSaltMasterUrl] = useState('')
+  const [saltMasterToken, setSaltMasterToken] = useState('')
 
   const handleChangeTarget = (e: {text: string}): void => {
     setTarget(e.text)
@@ -189,10 +202,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   const handleOpen = async (): Promise<void> => {
-    const addon: Addon = getSaltAddon()
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-
     const minionList: any = await handleGetMinionKeyAcceptedList(
       saltMasterUrl,
       saltMasterToken
@@ -230,15 +239,15 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   useEffect(() => {
-    // 임시 코드 수정 필요  //
-    const getMinion = 'minion03'
+    // 임시 코드 수정 필요 etcd에 저장된 전체 정보 api 호출 //
+    // const getMinion = 'minion03'
     ////////////////////////
 
-    const addVCenterFn = async (): Promise<void> => {
-      // 추 후 for문 추가
-      await AddVCenter(getMinion)
-    }
-    addVCenterFn()
+    // const addVCenterFn = async (): Promise<void> => {
+    //   // 추 후 for문 추가
+    //   await AddVCenter(getMinion)
+    // }
+    // addVCenterFn()
 
     const layoutResultsFn = async (): Promise<void> => {
       const layoutRst = await getLayouts()
@@ -246,6 +255,12 @@ const VMHostsPage = (props: Props): JSX.Element => {
       setLayouts(init_layouts)
     }
     layoutResultsFn()
+
+    const addon: Addon = getSaltAddon()
+    const saltMasterUrl = addon.url
+    const saltMasterToken = addon.token
+    setSaltMasterUrl(saltMasterUrl)
+    setSaltMasterToken(saltMasterToken)
   }, [])
 
   useEffect(() => {
@@ -474,10 +489,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   const getVSphereSaltApi = async minionId => {
-    const addon: Addon = getSaltAddon()
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-
     const vSphereInfo: any = await handleGetVSphereInfoSaltApi(
       saltMasterUrl,
       saltMasterToken,
@@ -990,6 +1001,12 @@ const VMHostsPage = (props: Props): JSX.Element => {
             cellTextColor={cellTextColor}
             cellBackgroundColor={cellBackgroundColor}
             item={item}
+            selectMinion={selectMinion}
+            handleGetTicketRemoteConsoleAsync={
+              handleGetTicketRemoteConsoleAsync
+            }
+            saltMasterUrl={saltMasterUrl}
+            saltMasterToken={saltMasterToken}
           />
         )
       }
@@ -1018,6 +1035,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
       })
     }
 
+    setSelectMinion(p[0].minion)
     setActiveKey(p[0].parent_name + '/' + p[0].name)
     setopenNodes([...openNodes, ...newPath])
     setFocusedHost(p[0])
@@ -1032,6 +1050,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   const onSelectHost = async (props): Promise<void> => {
+    setSelectMinion(props.minion)
     setActiveKey(props.key)
     setFocusedHost(props)
 
@@ -1228,6 +1247,7 @@ const mapStateToProps = ({links: {addons}}) => {
 const mapDispatchToProps = {
   handleGetMinionKeyAcceptedList: getMinionKeyAcceptedListAsync,
   handleGetVSphereInfoSaltApi: getVSphereInfoSaltApiAsync,
+  handleGetTicketRemoteConsoleAsync: getTicketRemoteConsoleAsync,
 }
 
 export default connect(mapStateToProps, mapDispatchToProps, null)(VMHostsPage)

@@ -217,6 +217,34 @@ export async function getLocalVSphereInfoAll(
   }
 }
 
+export async function getTicketRemoteConsole(
+  pUrl: string,
+  pToken: string,
+  tgt: string,
+  address: string,
+  user: string,
+  password: string
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'vsphere.get_ticket',
+      tgt: tgt,
+      kwarg: {
+        host: address,
+        username: user,
+        password: password,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 export async function getRunnerManageAllowed(pUrl: string, pToken: string) {
   try {
     const params = {
