@@ -15,6 +15,13 @@ export const transFormatBytes = (
   decimals: number = 0,
   isBinary: boolean = true
 ) => {
+  // Temporary defense code. To be deleted
+  // start
+  if (typeof bytes === 'string') {
+    return bytes
+  }
+  // end
+
   const unit = isBinary ? 1024 : 1000
   const yota = isBinary ? Math.pow(2, 80) : Math.pow(1000, 8)
 
@@ -43,6 +50,13 @@ export const transFormatFrequency = (
   hertz: number,
   decimals: number = 0
 ): string => {
+  // Temporary defense code. To be deleted
+  // start
+  if (typeof hertz === 'string') {
+    return hertz
+  }
+  // end
+
   const yota = Math.pow(10, 24)
   if (hertz >= yota) {
     return `${(hertz / yota).toFixed(decimals)} YHz`
