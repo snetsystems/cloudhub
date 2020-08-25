@@ -64,6 +64,14 @@ import {
   DEFAULT_CELL_TEXT_COLOR,
 } from 'src/dashboards/constants'
 
+import {
+  vcenterCells,
+  datacenterCells,
+  clusterCells,
+  hostCells,
+  vmCells,
+} from 'src/hosts/constants/layout'
+
 // Util
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 import {generateForHosts} from 'src/utils/tempVars'
@@ -251,136 +259,19 @@ const VMHostsPage = (props: Props): JSX.Element => {
   useEffect(() => {
     switch (focusedHost.type) {
       case 'vcenter': {
-        return setLayout([
-          {
-            i: 'vcenter',
-            x: 0,
-            y: 0,
-            w: 12,
-            h: 3,
-          },
-          {
-            i: 'charts',
-            x: 0,
-            y: 0,
-            w: 12,
-            h: 3,
-          },
-          {
-            i: 'datacenters',
-            x: 0,
-            y: 0,
-            w: 12,
-            h: 3,
-          },
-        ])
+        return setLayout(vcenterCells)
       }
       case 'datacenter': {
-        return setLayout([
-          {
-            i: 'datacenter',
-            x: 0,
-            y: 0,
-            w: 12,
-            h: 3,
-          },
-          {
-            i: 'charts',
-            x: 0,
-            y: 0,
-            w: 12,
-            h: 3,
-          },
-          {
-            i: 'clusters',
-            x: 0,
-            y: 0,
-            w: 12,
-            h: 3,
-          },
-          {
-            i: 'vmhosts',
-            x: 0,
-            y: 0,
-            w: 12,
-            h: 3,
-          },
-          {
-            i: 'datastores',
-            x: 0,
-            y: 0,
-            w: 12,
-            h: 3,
-          },
-        ])
+        return setLayout(datacenterCells)
       }
       case 'cluster': {
-        return setLayout([
-          {
-            i: 'cluster',
-            x: 0,
-            y: 0,
-            w: 12,
-            h: 3,
-          },
-          {
-            i: 'vmhosts',
-            x: 0,
-            y: 0,
-            w: 12,
-            h: 3,
-          },
-          {
-            i: 'datastores',
-            x: 0,
-            y: 0,
-            w: 12,
-            h: 3,
-          },
-        ])
+        return setLayout(clusterCells)
       }
       case 'host': {
-        return setLayout([
-          {
-            i: 'vmhost',
-            x: 0,
-            y: 0,
-            w: 12,
-            h: 3,
-          },
-          {
-            i: 'charts',
-            x: 0,
-            y: 0,
-            w: 12,
-            h: 3,
-          },
-          {
-            i: 'vms',
-            x: 0,
-            y: 0,
-            w: 12,
-            h: 3,
-          },
-        ])
+        return setLayout(hostCells)
       }
       case 'vm': {
-        return setLayout([
-          {
-            i: 'vm',
-            x: 0,
-            y: 0,
-            w: 12,
-            h: 2,
-          },
-          {
-            i: 'charts',
-            x: 0,
-            y: 0,
-            w: 12,
-            h: 3,
-          },
-        ])
+        return setLayout(vmCells)
       }
       default: {
         return
