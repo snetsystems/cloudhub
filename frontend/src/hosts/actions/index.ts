@@ -1,8 +1,13 @@
-import {Dispatch} from 'redux'
+import {Dispatch, bindActionCreators} from 'redux'
 import {errorThrown} from 'src/shared/actions/errors'
+import _ from 'lodash'
 
 // APIs
 import {getMinionKeyAcceptedList, getVSphereInfoSaltApi} from 'src/hosts/apis'
+
+// Notification Action
+import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {notifyConnectVCenterFailed} from 'src/shared/copy/notifications'
 
 export enum ActionType {
   MinionKeyAcceptedList = 'GET_MINION_KEY_ACCEPTED_LIST',
@@ -40,7 +45,7 @@ export const getVSphereInfoSaltApiAsync = (
   address: string,
   user: string,
   password: string
-) => async (dispatch: Dispatch<Action>): Promise<String[]> => {
+) => async (dispatch: Dispatch<Action>): Promise<any> => {
   try {
     const vSphereInfo = await getVSphereInfoSaltApi(
       pUrl,
@@ -50,6 +55,13 @@ export const getVSphereInfoSaltApiAsync = (
       user,
       password
     )
+
+    if (typeof _.values(vSphereInfo.return[0])[0] === 'string') {
+      let error = Error(_.values(vSphereInfo.return[0])[0])
+      const notify = bindActionCreators(notifyAction, dispatch)
+      notify(notifyConnectVCenterFailed(error))
+      return
+    }
 
     dispatch(loadMinionKeyAcceptedList())
     return vSphereInfo
