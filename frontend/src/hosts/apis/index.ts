@@ -381,7 +381,7 @@ export const getVSphereInfoSaltApi = async (
   address: string,
   user: string,
   password: string
-): Promise<String[]> => {
+): Promise<any> => {
   const info = await Promise.all([
     getLocalVSphereInfoAll(pUrl, pToken, tgt, address, user, password),
   ])
