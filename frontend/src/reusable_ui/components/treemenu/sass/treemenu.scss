@@ -41,11 +41,15 @@ $FONT_COLOR_NORMAL: #bec2cc;
     color: $FONT_COLOR_NORMAL;
   }
 
-  &-level-2 {
+  &-level-2,
+  &-level-3,
+  &-level-4 {
     color: $ix-link-default;
   }
 
-  &-level-2:hover {
+  &-level-2:hover,
+  &-level-3:hover,
+  &-level-4:hover {
     color: $ix-link-default-hover;
   }
 
@@ -61,7 +65,9 @@ $FONT_COLOR_NORMAL: #bec2cc;
     color: #fff;
   }
 
-  &--active.tree-item-level-2 {
+  &--active.tree-item-level-2,
+  &--active.tree-item-level-3,
+  &--active.tree-item-level-4 {
     color: #fff;
     @include gradient-h($sidebar-menu--bg, $s-deepOrange2);
     // background: #22adf6;
