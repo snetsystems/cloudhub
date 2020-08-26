@@ -95,6 +95,11 @@ const MINION_LIST_EMPTY = '<< Empty >>'
 const VSPHERE_HOST = 'vsphere_host'
 const VSPHERE_VM = 'vsphere_vm'
 
+export interface vmParam {
+  vmField: string
+  vmVal: string
+}
+
 interface Props {
   addons: Addon[]
   manualRefresh: number
@@ -160,7 +165,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const [layoutCells, setLayoutCells] = useState<Cell[]>([])
   const [tempVars, setTempVars] = useState<Template[]>([])
   const [layouts, setLayouts] = useState<Layout[]>([])
-  const [vmParam, setVmParam] = useState({})
+  const [vmParam, setVmParam] = useState<vmParam>({vmField: '', vmVal: ''})
   const [vmParentChartField, setVmParentChartField] = useState('')
   const [vmParentName, setVmParentName] = useState('')
 
@@ -671,6 +676,9 @@ const VMHostsPage = (props: Props): JSX.Element => {
             vmParam={vmParam}
             vmParentChartField={vmParentChartField}
             vmParentName={vmParentName}
+            isEditable={true}
+            cellTextColor={cellTextColor}
+            cellBackgroundColor={cellBackgroundColor}
           />
         )
       }
@@ -938,7 +946,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     const layoutCells = getCells(filteredLayouts, source)
     const tempVars = generateForHosts(source)
 
-    let vmParam
+    let vmParam: vmParam
     if (vType === 'vcenter') {
       vmParam = {
         vmField: 'vcenter',
