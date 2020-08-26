@@ -49,7 +49,7 @@ const VMConnectForm = ({
           onChoose={handleChangeTarget}
           selected={target}
           className="dropdown-stretch"
-          disabled={false}
+          disabled={target === '<< Empty >>'}
         />
       </Form.Element>
       <Form.Element label="Connection vCenter" colsXS={8}>
