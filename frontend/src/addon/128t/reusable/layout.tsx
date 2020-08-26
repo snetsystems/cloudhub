@@ -8,7 +8,7 @@ import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
 
 // Type
 import {
-  Router,
+  RouterNode,
   TopSource,
   TopSession,
   SortDirection,
@@ -90,7 +90,7 @@ export const CellName = ({
 }: {
   cellTextColor: string
   cellBackgroundColor: string
-  value: Router[] | TopSource[] | TopSession[] | []
+  value: RouterNode[] | TopSource[] | TopSession[] | []
   name: string
   sizeVisible?: boolean
 }): JSX.Element | null => {
