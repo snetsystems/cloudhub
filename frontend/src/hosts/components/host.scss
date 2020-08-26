@@ -68,3 +68,16 @@
   height: 100%;
   align-content: center;
 }
+
+.charts-body {
+  position: relative;
+  height: 100%;
+  @include gradient-v($g2-kevlar, $g0-obsidian);
+
+  .panel {
+    .panel-body {
+      padding: 7px;
+      background-color: transparent;
+    }
+  }
+}
