@@ -34,7 +34,6 @@ import {Item} from 'src/reusable_ui/components/treemenu/TreeMenu/walk'
 import {AddonType} from 'src/shared/constants'
 import {Addon} from 'src/types/auth'
 import {
-  // VCenter,
   VMDatacenter,
   VMCluster,
   VMHost,
@@ -76,6 +75,12 @@ import {
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 import {generateForHosts} from 'src/utils/tempVars'
 import {getCells} from 'src/hosts/utils/getCells'
+
+import {
+  setLocalStorage,
+  getLocalStorage,
+  verifyLocalStorage,
+} from 'src/shared/middleware/localStorage'
 
 // APIs
 import {
@@ -136,11 +141,12 @@ const VMHostsPage = (props: Props): JSX.Element => {
     key: '',
     label: '',
     name: '',
+    type: '',
   }
 
   // treemenu state
   const [activeKey, setActiveKey] = useState('')
-  const [openNodes, setopenNodes] = useState([])
+  const [openNodes, setOpenNodes] = useState([])
   const [initialActiveKey, setInitialActiveKey] = useState('') // load localstorage
   const [initialOpenNodes, setInitialOpenNodes] = useState([]) // load localstorage
 
@@ -258,26 +264,115 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }, [])
 
   useEffect(() => {
-    switch (focusedHost.type) {
-      case 'vcenter': {
-        return setLayout(vcenterCells)
+    // get localstorage
+    verifyLocalStorage(getLocalStorage, setLocalStorage, 'VMHostsPage', {
+      proportions: [0.25, 0.75],
+      focusedHost: initialFocusedHost,
+      activeKey: '',
+      openNodes: [],
+    })
+
+    const getLocal = getLocalStorage('VMHostsPage')
+    const {
+      proportions: getProportions,
+      focusedHost: getFocusedHost,
+      activeKey: getActiveKey,
+      openNodes: getOpenNodes,
+    } = getLocal
+
+    setActiveKey(getActiveKey)
+    setOpenNodes(getOpenNodes)
+    setProportions(getProportions)
+    setFocusedHost(getFocusedHost)
+  }, [vCenters])
+
+  useEffect(() => {
+    const getLocal = getLocalStorage('VMHostsPage')
+    setLocalStorage('VMHostsPage', {
+      ...getLocal,
+      openNodes: _.uniq(openNodes),
+      activeKey,
+    })
+  }, [openNodes, activeKey])
+
+  const requestCharts = async (props: any) => {
+    if (props.key === '' || props.type === '') return
+
+    let measurement: string
+    let vType: string = props.type
+    if (vType === 'vm') {
+      measurement = VSPHERE_VM
+    } else {
+      measurement = VSPHERE_HOST
+    }
+
+    const {filteredLayouts} = await getLayoutsforHostApp(
+      layouts,
+      props.minion,
+      measurement
+    )
+
+    const layoutCells = getCells(filteredLayouts, source)
+    const tempVars = generateForHosts(source)
+
+    let vmParam: vmParam
+    if (vType === 'vcenter') {
+      vmParam = {
+        vmField: 'vcenter',
+        vmVal: props.label,
       }
-      case 'datacenter': {
-        return setLayout(datacenterCells)
+    } else if (vType === 'datacenter') {
+      vmParam = {
+        vmField: 'dcname',
+        vmVal: props.name,
       }
-      case 'cluster': {
-        return setLayout(clusterCells)
+    } else if (vType === 'cluster') {
+      vmParam = {
+        vmField: 'clustername',
+        vmVal: props.name,
       }
-      case 'host': {
-        return setLayout(hostCells)
+    } else if (vType === 'host') {
+      vmParam = {
+        vmField: 'esxhostname',
+        vmVal: props.name,
       }
-      case 'vm': {
-        return setLayout(vmCells)
+    } else if (vType === 'vm') {
+      vmParam = {
+        vmField: 'vmname',
+        vmVal: props.name,
       }
-      default: {
-        return
+    } else {
+      return
+    }
+
+    if (props.parent_chart_field) {
+      setVmParentChartField(props.parent_chart_field)
+      setVmParentName(props.parent_name)
+    }
+
+    setLayoutCells(layoutCells)
+    setTempVars(tempVars)
+    setVmParam(vmParam)
+  }
+
+  useEffect(() => {
+    if (focusedHost?.type) {
+      if (focusedHost.type === 'vcenter') {
+        setLayout(vcenterCells)
+      } else if (focusedHost.type === 'datacenter') {
+        setLayout(datacenterCells)
+      } else if (focusedHost.type === 'cluster') {
+        setLayout(clusterCells)
+      } else if (focusedHost.type === 'host') {
+        setLayout(hostCells)
+      } else if (focusedHost.type === 'vm') {
+        setLayout(vmCells)
       }
     }
+
+    const getLocal = getLocalStorage('VMHostsPage')
+    setLocalStorage('VMHostsPage', {...getLocal, focusedHost})
+    requestCharts(focusedHost)
   }, [focusedHost])
 
   const cellBackgroundColor: string = DEFAULT_CELL_BG_COLOR
@@ -303,7 +398,17 @@ const VMHostsPage = (props: Props): JSX.Element => {
     WindowResizeEventTrigger()
   }, 250)
 
+  const debouncedProportionsHOC = (proportions: number[]) => {
+    const debouncedProportions = _.debounce(() => {
+      const getLocal = getLocalStorage('VMHostsPage')
+      setLocalStorage('VMHostsPage', {...getLocal, proportions})
+    }, 250)
+
+    return debouncedProportions()
+  }
+
   const handleResize = (proportions: number[]) => {
+    debouncedProportionsHOC(proportions)
     setProportions(proportions)
     debouncedFit()
   }
@@ -311,25 +416,42 @@ const VMHostsPage = (props: Props): JSX.Element => {
   // set localstorage
   const handleLayoutChange = (cellsLayout: cellLayoutInfo[]): void => {
     // if (!this.props.onPositionChange) return
+    /* localstorage에 들어갈 자료구죠
+    { 
+      VMHostsPage: {
+        layouts: {
+          ip: {
+            vcenter: [],
+            datacenter: [],
+            cluster: [],
+            host: [],
+            vm: []
+          }
+        },
+        focusedHost: ''
+        openNodes: []
+      }
+    }
+   */
     // let changed = false
-    // const newCellsLayout = this.props.layout.map(lo => {
+    // const newCellsLayout = layout.map(lo => {
     //   const l = cellsLayout.find(cellLayout => cellLayout.i === lo.i)
-    //   if (lo.x !== l.x || lo.y !== l.y || lo.h !== l.h || lo.w !== l.w) {
-    //     changed = true
-    //   }
-    //   const newLayout = {
-    //     x: l.x,
-    //     y: l.y,
-    //     h: l.h,
-    //     w: l.w,
-    //   }
+    //   // if (lo.x !== l.x || lo.y !== l.y || lo.h !== l.h || lo.w !== l.w) {
+    //   //   changed = true
+    //   // }
+    //   // const newLayout = {
+    //   //   x: l.x,
+    //   //   y: l.y,
+    //   //   h: l.h,
+    //   //   w: l.w,
+    //   // }
     //   return {
-    //     ...lo,
-    //     ...newLayout,
+    //     // ...lo,
+    //     // ...newLayout,
     //   }
     // })
     // if (changed) {
-    //   this.props.onPositionChange(newCellsLayout)
+    //   // setLayout(newCellsLayout)
     // }
   }
 
@@ -893,7 +1015,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     }
   }
 
-  const handleSelectHost = (props: any) => {
+  const handleSelectHost = async (props: any) => {
     const p = Array.isArray(props) ? props : [props]
     const path: string[] = p[0].parent_name.split('/')
     const newPath: string[] = []
@@ -913,75 +1035,21 @@ const VMHostsPage = (props: Props): JSX.Element => {
     }
 
     setActiveKey(p[0].parent_name + '/' + p[0].name)
-    setopenNodes([...openNodes, ...newPath])
+    setOpenNodes([...openNodes, ...newPath])
     setFocusedHost(p[0])
   }
 
-  const onClickToggle = (node): void => {
+  const onClickToggle = (node: string): void => {
     const newOpenNodes = openNodes.includes(node)
       ? openNodes.filter(openNode => openNode !== node)
       : [...openNodes, node]
 
-    setopenNodes(newOpenNodes)
+    setOpenNodes(newOpenNodes)
   }
 
-  const onSelectHost = async (props): Promise<void> => {
+  const onSelectHost = (props: Item) => {
     setActiveKey(props.key)
     setFocusedHost(props)
-
-    let measurement: string
-    let vType: string = props.type
-    if (vType === 'vm') {
-      measurement = VSPHERE_VM
-    } else {
-      measurement = VSPHERE_HOST
-    }
-
-    const {filteredLayouts} = await getLayoutsforHostApp(
-      layouts,
-      props.minion,
-      measurement
-    )
-
-    const layoutCells = getCells(filteredLayouts, source)
-    const tempVars = generateForHosts(source)
-
-    let vmParam: vmParam
-    if (vType === 'vcenter') {
-      vmParam = {
-        vmField: 'vcenter',
-        vmVal: props.label,
-      }
-    } else if (vType === 'datacenter') {
-      vmParam = {
-        vmField: 'dcname',
-        vmVal: props.name,
-      }
-    } else if (vType === 'cluster') {
-      vmParam = {
-        vmField: 'clustername',
-        vmVal: props.name,
-      }
-    } else if (vType === 'host') {
-      vmParam = {
-        vmField: 'esxhostname',
-        vmVal: props.name,
-      }
-    } else if (vType === 'vm') {
-      vmParam = {
-        vmField: 'vmname',
-        vmVal: props.name,
-      }
-    }
-
-    if (props.parent_chart_field) {
-      setVmParentChartField(props.parent_chart_field)
-      setVmParentName(props.parent_name)
-    }
-
-    setLayoutCells(layoutCells)
-    setTempVars(tempVars)
-    setVmParam(vmParam)
   }
 
   const threesizerDivisions = () => {
@@ -1020,37 +1088,40 @@ const VMHostsPage = (props: Props): JSX.Element => {
         headerButtons: [],
         menuOptions: [],
         size: rightSize,
-        render: () => (
-          <FancyScrollbar autoHide={false}>
-            <GridLayout
-              layout={layout}
-              cols={12}
-              rowHeight={calculateRowHeight()}
-              margin={[LAYOUT_MARGIN, LAYOUT_MARGIN]}
-              containerPadding={[15, 15]}
-              useCSSTransforms={true}
-              onLayoutChange={handleLayoutChange}
-              draggableHandle={'.grid-layout--draggable'}
-              isDraggable={true}
-              isResizable={true}
-            >
-              {layout
-                ? _.map(
-                    layout,
-                    (cell: LayoutCell): JSX.Element => (
-                      <div
-                        key={cell.i}
-                        className="dash-graph grid-item--routers"
-                        style={cellstyle}
-                      >
-                        <CellTable cell={cell} />
-                      </div>
+        render: () => {
+          const isVCenters = _.keys(vCenters).length
+          return isVCenters ? (
+            <FancyScrollbar autoHide={false}>
+              <GridLayout
+                layout={layout}
+                cols={12}
+                rowHeight={calculateRowHeight()}
+                margin={[LAYOUT_MARGIN, LAYOUT_MARGIN]}
+                containerPadding={[15, 15]}
+                useCSSTransforms={true}
+                onLayoutChange={handleLayoutChange}
+                draggableHandle={'.grid-layout--draggable'}
+                isDraggable={true}
+                isResizable={true}
+              >
+                {layout
+                  ? _.map(
+                      layout,
+                      (cell: LayoutCell): JSX.Element => (
+                        <div
+                          key={cell.i}
+                          className="dash-graph grid-item--routers"
+                          style={cellstyle}
+                        >
+                          <CellTable cell={cell} />
+                        </div>
+                      )
                     )
-                  )
-                : null}
-            </GridLayout>
-          </FancyScrollbar>
-        ),
+                  : null}
+              </GridLayout>
+            </FancyScrollbar>
+          ) : null
+        },
       },
     ]
   }
