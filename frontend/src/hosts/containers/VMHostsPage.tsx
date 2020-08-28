@@ -105,6 +105,14 @@ export interface vmParam {
   vmVal: string
 }
 
+interface VMHostsPageLocalStorage {
+  layout: {[name: string]: {[name: string]: LayoutCell[]}}
+  focusedHost: Item
+  activeKey: string
+  openNodes: string[]
+  proportions: number[]
+}
+
 interface Props {
   addons: Addon[]
   manualRefresh: number
@@ -147,8 +155,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
   // treemenu state
   const [activeKey, setActiveKey] = useState('')
   const [openNodes, setOpenNodes] = useState([])
-  const [initialActiveKey, setInitialActiveKey] = useState('') // load localstorage
-  const [initialOpenNodes, setInitialOpenNodes] = useState([]) // load localstorage
 
   // three sizer state
   const [proportions, setProportions] = useState([0.25, 0.75])
@@ -168,6 +174,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const [layout, setLayout] = useState<LayoutCell[]>([])
   const [vCenters, setVCenters] = useState({})
   const [acceptedMinionList, setAcceptedMinionList] = useState([])
+
+  // graph state in charts
   const [layoutCells, setLayoutCells] = useState<Cell[]>([])
   const [tempVars, setTempVars] = useState<Template[]>([])
   const [layouts, setLayouts] = useState<Layout[]>([])
@@ -270,9 +278,10 @@ const VMHostsPage = (props: Props): JSX.Element => {
       focusedHost: initialFocusedHost,
       activeKey: '',
       openNodes: [],
+      layout: {},
     })
 
-    const getLocal = getLocalStorage('VMHostsPage')
+    const getLocal: VMHostsPageLocalStorage = getLocalStorage('VMHostsPage')
     const {
       proportions: getProportions,
       focusedHost: getFocusedHost,
@@ -287,7 +296,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }, [vCenters])
 
   useEffect(() => {
-    const getLocal = getLocalStorage('VMHostsPage')
+    const getLocal: VMHostsPageLocalStorage = getLocalStorage('VMHostsPage')
     setLocalStorage('VMHostsPage', {
       ...getLocal,
       openNodes: _.uniq(openNodes),
@@ -356,23 +365,63 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   useEffect(() => {
+    const getLocal: VMHostsPageLocalStorage = getLocalStorage('VMHostsPage')
+    const {layout: getLayout} = getLocal
+    const getLayoutItem = getLayout[focusedHost.key.split('/')[0]]
+
     if (focusedHost?.type) {
-      if (focusedHost.type === 'vcenter') {
-        setLayout(vcenterCells)
-      } else if (focusedHost.type === 'datacenter') {
-        setLayout(datacenterCells)
-      } else if (focusedHost.type === 'cluster') {
-        setLayout(clusterCells)
-      } else if (focusedHost.type === 'host') {
-        setLayout(hostCells)
-      } else if (focusedHost.type === 'vm') {
-        setLayout(vmCells)
+      const {type} = focusedHost
+      if (type === 'vcenter') {
+        if (
+          getLayoutItem &&
+          getLayoutItem?.vcenter &&
+          getLayoutItem.vcenter.length > 0
+        ) {
+          setLayout(getLayoutItem.vcenter)
+        } else {
+          setLayout(vcenterCells)
+        }
+      } else if (type === 'datacenter') {
+        if (
+          getLayoutItem &&
+          getLayoutItem?.datacenter &&
+          getLayoutItem.datacenter.length > 0
+        ) {
+          setLayout(getLayoutItem.datacenter)
+        } else {
+          setLayout(datacenterCells)
+        }
+      } else if (type === 'cluster') {
+        if (
+          getLayoutItem &&
+          getLayoutItem?.cluster &&
+          getLayoutItem.cluster.length > 0
+        ) {
+          setLayout(getLayoutItem.cluster)
+        } else {
+          setLayout(clusterCells)
+        }
+      } else if (type === 'host') {
+        if (
+          getLayoutItem &&
+          getLayoutItem?.host &&
+          getLayoutItem.host.length > 0
+        ) {
+          setLayout(getLayoutItem.host)
+        } else {
+          setLayout(hostCells)
+        }
+      } else if (type === 'vm') {
+        if (getLayoutItem && getLayoutItem?.vm && getLayoutItem.vm.length > 0) {
+          setLayout(getLayoutItem.vm)
+        } else {
+          setLayout(vmCells)
+        }
       }
     }
 
-    const getLocal = getLocalStorage('VMHostsPage')
-    setLocalStorage('VMHostsPage', {...getLocal, focusedHost})
     requestCharts(focusedHost)
+    setLocalStorage('VMHostsPage', {...getLocal, focusedHost})
   }, [focusedHost])
 
   const cellBackgroundColor: string = DEFAULT_CELL_BG_COLOR
@@ -400,7 +449,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
   const debouncedProportionsHOC = (proportions: number[]) => {
     const debouncedProportions = _.debounce(() => {
-      const getLocal = getLocalStorage('VMHostsPage')
+      const getLocal: VMHostsPageLocalStorage = getLocalStorage('VMHostsPage')
       setLocalStorage('VMHostsPage', {...getLocal, proportions})
     }, 250)
 
@@ -415,44 +464,37 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
   // set localstorage
   const handleLayoutChange = (cellsLayout: cellLayoutInfo[]): void => {
-    // if (!this.props.onPositionChange) return
-    /* localstorage에 들어갈 자료구죠
-    { 
-      VMHostsPage: {
-        layouts: {
-          ip: {
-            vcenter: [],
-            datacenter: [],
-            cluster: [],
-            host: [],
-            vm: []
-          }
-        },
-        focusedHost: ''
-        openNodes: []
+    const getLocal: VMHostsPageLocalStorage = getLocalStorage('VMHostsPage')
+    let {layout} = getLocal
+
+    if (focusedHost.type === 'vcenter') {
+      layout[activeKey.split('/')[0]] = {
+        ...layout[activeKey.split('/')[0]],
+        vcenter: cellsLayout,
+      }
+    } else if (focusedHost.type === 'datacenter') {
+      layout[activeKey.split('/')[0]] = {
+        ...layout[activeKey.split('/')[0]],
+        datacenter: cellsLayout,
+      }
+    } else if (focusedHost.type === 'cluster') {
+      layout[activeKey.split('/')[0]] = {
+        ...layout[activeKey.split('/')[0]],
+        cluster: cellsLayout,
+      }
+    } else if (focusedHost.type === 'host') {
+      layout[activeKey.split('/')[0]] = {
+        ...layout[activeKey.split('/')[0]],
+        host: cellsLayout,
+      }
+    } else if (focusedHost.type === 'vm') {
+      layout[activeKey.split('/')[0]] = {
+        ...layout[activeKey.split('/')[0]],
+        vm: cellsLayout,
       }
     }
-   */
-    // let changed = false
-    // const newCellsLayout = layout.map(lo => {
-    //   const l = cellsLayout.find(cellLayout => cellLayout.i === lo.i)
-    //   // if (lo.x !== l.x || lo.y !== l.y || lo.h !== l.h || lo.w !== l.w) {
-    //   //   changed = true
-    //   // }
-    //   // const newLayout = {
-    //   //   x: l.x,
-    //   //   y: l.y,
-    //   //   h: l.h,
-    //   //   w: l.w,
-    //   // }
-    //   return {
-    //     // ...lo,
-    //     // ...newLayout,
-    //   }
-    // })
-    // if (changed) {
-    //   // setLayout(newCellsLayout)
-    // }
+
+    setLocalStorage('VMHostsPage', {...getLocal, layout})
   }
 
   const updateBtn = (ipAddress: string) => (): JSX.Element => {
@@ -1075,8 +1117,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
               data={vCenters}
               onClickItem={onSelectHost}
               onClickToggle={onClickToggle}
-              initialActiveKey={initialActiveKey}
-              initialOpenNodes={initialOpenNodes}
               activeKey={activeKey}
               openNodes={openNodes}
             />
