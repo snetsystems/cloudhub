@@ -3,11 +3,10 @@ import React, {useState, useEffect, ChangeEvent} from 'react'
 import {connect} from 'react-redux'
 import _ from 'lodash'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
-import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-import {ComponentStatus} from 'src/reusable_ui/types'
-import {getDeep} from 'src/utils/wrappers'
+import classnames from 'classnames'
 
 // Component
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {Button, ComponentSize} from 'src/reusable_ui'
 import {cellLayoutInfo} from 'src/addon/128t/containers/SwanSdplexStatusPage'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
@@ -42,6 +41,7 @@ import {
   LayoutCell,
   VCenter,
 } from 'src/hosts/types'
+import {ComponentStatus} from 'src/reusable_ui/types'
 
 // Actions
 import {
@@ -75,6 +75,7 @@ import {
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 import {generateForHosts} from 'src/utils/tempVars'
 import {getCells} from 'src/hosts/utils/getCells'
+import {getDeep} from 'src/utils/wrappers'
 
 import {
   setLocalStorage,
@@ -1150,7 +1151,10 @@ const VMHostsPage = (props: Props): JSX.Element => {
                       (cell: LayoutCell): JSX.Element => (
                         <div
                           key={cell.i}
-                          className="dash-graph grid-item--routers"
+                          className={classnames(
+                            'dash-graph grid-item--routers',
+                            {'grid-item--charts': cell.i === 'charts'}
+                          )}
                           style={cellstyle}
                         >
                           <CellTable cell={cell} />
