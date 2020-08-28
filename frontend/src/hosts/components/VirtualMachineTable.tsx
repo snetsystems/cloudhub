@@ -20,15 +20,38 @@ import {VCENTER_VM_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 
 // types
 import {VM} from 'src/hosts/types'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import Fragment from 'react'
+import download from 'src/external/download'
 interface Props {
   isEditable: boolean
   cellTextColor: string
   cellBackgroundColor: string
   item: VM
+  selectMinion: string
+  saltMasterUrl: string
+  saltMasterToken: string
+  handleGetTicketRemoteConsoleAsync: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    minionId: string,
+    address: string,
+    user: string,
+    password: string
+  ) => Promise<String[]>
 }
 
 const VirtualMachineTable = (props: Props): JSX.Element => {
-  const {isEditable, cellTextColor, cellBackgroundColor, item} = props
+  const {
+    isEditable,
+    cellTextColor,
+    cellBackgroundColor,
+    item,
+    selectMinion,
+    handleGetTicketRemoteConsoleAsync,
+    saltMasterUrl,
+    saltMasterToken,
+  } = props
 
   const {
     CPUWidth,
@@ -38,6 +61,23 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
     OSWidth,
     StatusWidth,
   } = VCENTER_VM_TABLE_SIZING
+
+  const remoteConsoleRun = async () => {
+    // minion값으로 해당 접속정보 가져와서 address, user, password 셋팅 부분 필요
+    const address = ''
+    const user = ''
+    const password = ''
+    ////////////////////////////////////
+
+    const ticket = await handleGetTicketRemoteConsoleAsync(
+      saltMasterUrl,
+      saltMasterToken,
+      selectMinion,
+      address,
+      user,
+      password
+    )
+  }
 
   const Header = (): JSX.Element => {
     return (
@@ -131,29 +171,37 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
   }
 
   return (
-    <Panel>
-      <PanelHeader isEditable={isEditable}>
-        <CellName
-          cellTextColor={cellTextColor}
-          cellBackgroundColor={cellBackgroundColor}
-          value={[]}
-          name={`Virtual Machine - ${item ? item.name : ''}`}
-          sizeVisible={false}
-        />
-        <HeadingBar
-          isEditable={isEditable}
-          cellBackgroundColor={cellBackgroundColor}
-        />
-      </PanelHeader>
-      <PanelBody>
-        <Table>
-          <TableHeader>
-            <Header />
-          </TableHeader>
-          <TableBody>{item ? <Body /> : <NoHostsState />}</TableBody>
-        </Table>
-      </PanelBody>
-    </Panel>
+    <FancyScrollbar className="getting-started--container">
+      <Panel>
+        <PanelHeader isEditable={isEditable}>
+          <CellName
+            cellTextColor={cellTextColor}
+            cellBackgroundColor={cellBackgroundColor}
+            value={[]}
+            name={`Virtual Machine - ${item ? item.name : ''}`}
+            sizeVisible={false}
+          />
+          <HeadingBar
+            isEditable={isEditable}
+            cellBackgroundColor={cellBackgroundColor}
+          />
+        </PanelHeader>
+        <PanelBody>
+          <>
+            <Table>
+              <TableHeader>
+                <Header />
+              </TableHeader>
+              <TableBody>{item ? <Body /> : <NoHostsState />}</TableBody>
+              <div className={`hosts-table-item`} onClick={remoteConsoleRun}>
+                Remote Console Run
+              </div>
+              <div className={`hosts-table-item`}>Remote Console download</div>
+            </Table>
+          </>
+        </PanelBody>
+      </Panel>
+    </FancyScrollbar>
   )
 }
 

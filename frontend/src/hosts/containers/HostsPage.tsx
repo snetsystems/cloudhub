@@ -129,9 +129,10 @@ export class HostsPage extends PureComponent<Props, State> {
 
   public async componentDidMount() {
     const hostsTableState = getLocalStorage('hostsTableState')
-    const {focusedHost} = hostsTableState.focusedHost
-      ? hostsTableState.focusedHost
-      : ''
+    const {focusedHost} =
+      hostsTableState && hostsTableState.focusedHost
+        ? hostsTableState.focusedHost
+        : ''
 
     const getItem = getLocalStorage('hostsTableStateProportions')
     const {proportions} = getItem || this.state
