@@ -387,7 +387,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   useEffect(() => {
     const getLocal: VMHostsPageLocalStorage = getLocalStorage('VMHostsPage')
     const {layout: getLayout} = getLocal
-    const getLayoutItem = getLayout[focusedHost.key.split('/')[0]]
+    const getLayoutItem = getLayout[activeKey.split('/')[0]]
 
     if (focusedHost?.type) {
       const {type} = focusedHost
