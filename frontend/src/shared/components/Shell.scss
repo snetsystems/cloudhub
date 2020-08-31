@@ -2,6 +2,7 @@ $overlay-min-height: 150px;
 
 .shell-container {
   height: 100%;
+  z-index: 300;
 
   .overlay--body {
     padding: unset;
