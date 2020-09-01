@@ -93,6 +93,7 @@ type DataStore interface {
 	Dashboards(ctx context.Context) cloudhub.DashboardsStore
 	Config(ctx context.Context) cloudhub.ConfigStore
 	OrganizationConfig(ctx context.Context) cloudhub.OrganizationConfigStore
+	Vspheres(ctx context.Context) cloudhub.VspheresStore
 }
 
 // ensure that Store implements a DataStore
@@ -110,6 +111,7 @@ type Store struct {
 	OrganizationsStore      cloudhub.OrganizationsStore
 	ConfigStore             cloudhub.ConfigStore
 	OrganizationConfigStore cloudhub.OrganizationConfigStore
+	VspheresStore           cloudhub.VspheresStore
 }
 
 // Sources returns a noop.SourcesStore if the context has no organization specified
@@ -223,4 +225,17 @@ func (s *Store) Mappings(ctx context.Context) cloudhub.MappingsStore {
 		return s.MappingsStore
 	}
 	return &noop.MappingsStore{}
+}
+
+// Vspheres returns a noop.VspheresStore if the context has no organization specified
+// and an organization.VspheresStore otherwise.
+func (s *Store) Vspheres(ctx context.Context) cloudhub.VspheresStore {
+	if isServer := hasServerContext(ctx); isServer {
+		return s.VspheresStore
+	}
+	if org, ok := hasOrganizationContext(ctx); ok {
+		return organizations.NewVspheresStore(s.VspheresStore, org)
+	}
+
+	return &noop.VspheresStore{}
 }
