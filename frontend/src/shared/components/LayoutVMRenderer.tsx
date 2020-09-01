@@ -37,7 +37,6 @@ interface Props {
   timeRange: TimeRange
   templates: Template[]
   sources: Source[]
-  host: string
   manualRefresh: number
   isStatusPage: boolean
   isStaticPage: boolean
@@ -47,7 +46,6 @@ interface Props {
   onDeleteCell?: () => void
   onSummonOverlayTechnologies?: () => void
   onPositionChange?: (cells: Cell[]) => void
-  isVMware: boolean
   vmParam: vmParam
   vmParentChartField: string
   vmParentName: string
@@ -69,7 +67,6 @@ class LayoutVMRenderer extends Component<Props, State> {
 
   public render() {
     const {
-      host,
       cells,
       source,
       sources,
@@ -81,7 +78,6 @@ class LayoutVMRenderer extends Component<Props, State> {
       onDeleteCell,
       onCloneCell,
       onSummonOverlayTechnologies,
-      isVMware,
       vmParam,
       vmParentChartField,
       vmParentName,
@@ -122,7 +118,6 @@ class LayoutVMRenderer extends Component<Props, State> {
                 <LayoutVm
                   key={cell.i}
                   cell={cell}
-                  host={host}
                   source={source}
                   onZoom={onZoom}
                   sources={sources}
@@ -132,7 +127,6 @@ class LayoutVMRenderer extends Component<Props, State> {
                   onDeleteCell={onDeleteCell}
                   onCloneCell={onCloneCell}
                   manualRefresh={manualRefresh}
-                  isVMware={isVMware}
                   vmParam={vmParam}
                   vmParentChartField={vmParentChartField}
                   vmParentName={vmParentName}

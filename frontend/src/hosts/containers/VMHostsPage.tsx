@@ -590,6 +590,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
     let vcenter = [vCenterData].reduce(
       acc => {
         const datacenters: VMDatacenter[] = vcMinionValue[0].datacenters
+        if (!datacenters) return
+
         datacenters.reduce((acc, datacenter, i) => {
           vcCpuUsage.push(datacenter.cpu_usage)
           vcCpuSpace.push(datacenter.cpu_space)
@@ -740,6 +742,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
       }
     )
 
+    if (!vcenter) return
     vcenter[vcIpAddress] = {
       ...vcenter[vcIpAddress],
       buttons: [updateBtn(vcIpAddress), removeBtn(vcIpAddress)],
@@ -855,8 +858,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
             tempVars={tempVars}
             timeRange={timeRange}
             manualRefresh={manualRefresh}
-            hostID={focusedHost.minion}
-            isVMware={true}
             vmParam={vmParam}
             vmParentChartField={vmParentChartField}
             vmParentName={vmParentName}

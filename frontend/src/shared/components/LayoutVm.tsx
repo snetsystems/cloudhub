@@ -8,7 +8,6 @@ import LayoutCell from 'src/shared/components/LayoutCell'
 import RefreshingGraph from 'src/shared/components/RefreshingGraph'
 
 // Utils
-import {buildQueriesForLayouts} from 'src/utils/buildQueriesForLayouts'
 import {buildQueriesForVMLayouts} from 'src/utils/buildQueriesForVMLayouts'
 import {getDeep} from 'src/utils/wrappers'
 
@@ -33,14 +32,12 @@ interface Props {
   templates: Template[]
   source: Source
   sources: Source[]
-  host: string
   isEditable: boolean
   manualRefresh: number
   onZoom: () => void
   onDeleteCell: () => void
   onCloneCell: () => void
   onSummonOverlayTechnologies: () => void
-  isVMware: boolean
   vmParam: vmParam
   vmParentChartField: string
   vmParentName: string
@@ -140,14 +137,12 @@ class LayoutVm extends Component<Props, State> {
   private get influxQLVis(): JSX.Element {
     const {
       cell,
-      host,
       source,
       sources,
       onZoom,
       timeRange,
       manualRefresh,
       templates,
-      isVMware,
       vmParam,
       vmParentChartField,
       vmParentName,
@@ -174,18 +169,13 @@ class LayoutVm extends Component<Props, State> {
         manualRefresh={manualRefresh}
         staticLegend={IS_STATIC_LEGEND(cell.legend)}
         grabDataForDownload={this.grabDataForDownload}
-        queries={
-          isVMware
-            ? buildQueriesForVMLayouts(
-                cell,
-                timeRange,
-                host,
-                vmParam,
-                vmParentChartField,
-                vmParentName
-              )
-            : buildQueriesForLayouts(cell, timeRange, host)
-        }
+        queries={buildQueriesForVMLayouts(
+          cell,
+          timeRange,
+          vmParam,
+          vmParentChartField,
+          vmParentName
+        )}
         source={this.getSource(cell, source, sources, source)}
         cellNote={cell.note}
         cellNoteVisibility={cell.noteVisibility}

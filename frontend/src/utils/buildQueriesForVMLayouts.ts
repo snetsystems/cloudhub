@@ -18,7 +18,6 @@ interface vmParam {
 const buildCannedVMDashboardQuery = (
   query: LayoutQuery | CellQuery,
   {lower, upper}: TimeRange,
-  host: string,
   vmParam: vmParam,
   vmParentChartField: string,
   vmParentName: string
@@ -35,10 +34,6 @@ const buildCannedVMDashboardQuery = (
     text += ` where time > '${lower}' AND time < '${upper}'`
   } else {
     text += ` where time > ${lower}`
-  }
-
-  if (host) {
-    text += ` and \"host\" = '${host}'`
   }
 
   if (vmParentChartField && vmParentName) {
@@ -105,7 +100,6 @@ const addTimeBoundsToRawText = (rawText: string): string => {
 export const buildQueriesForVMLayouts = (
   cell: Cell,
   timeRange: TimeRange,
-  host: string,
   vmParam: vmParam,
   vmParentChartField: string,
   vmParentName: string
@@ -139,7 +133,6 @@ export const buildQueriesForVMLayouts = (
       queryText = buildCannedVMDashboardQuery(
         query,
         timeRange,
-        host,
         vmParam,
         vmParentChartField,
         vmParentName
