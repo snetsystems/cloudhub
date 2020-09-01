@@ -31,12 +31,12 @@ func (r *vsphereRequest) ValidCreate() error {
 	if r.Password == "" {
 		return fmt.Errorf("Password required vsphere request body")
 	}
-	if r.Protocol == "" {
-		return fmt.Errorf("Protocol required vsphere request body")
-	}
-	if r.Port == 0 {
-		return fmt.Errorf("Port required vsphere request body")
-	}
+	// if r.Protocol == "" {
+	// 	return fmt.Errorf("Protocol required vsphere request body")
+	// }
+	// if r.Port == 0 {
+	// 	return fmt.Errorf("Port required vsphere request body")
+	// }
 	if r.Interval == 0 {
 		return fmt.Errorf("Interval required vsphere request body")
 	}
