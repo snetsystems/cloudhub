@@ -13,18 +13,67 @@ import {
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {notifyConnectVCenterFailed} from 'src/shared/copy/notifications'
 
-export enum ActionType {
+export enum ActionTypes {
   MinionKeyAcceptedList = 'GET_MINION_KEY_ACCEPTED_LIST',
+  LoadVcenters = 'LOAD_VCENTERS',
+  AddVcenter = 'ADD_VCENTER',
+  RemoveVcenter = 'REMOVE_VCENTER',
+  UpdateVcenter = 'UPDATE_VCENTER',
 }
+
+export type Action =
+  | MinionKeyAcceptedListAction
+  | LoadVcentersAction
+  | AddVcenterAction
+  | RemoveVcenterAction
+  | UpdateVcenterAction
 
 interface MinionKeyAcceptedListAction {
-  type: ActionType.MinionKeyAcceptedList
+  type: ActionTypes.MinionKeyAcceptedList
 }
 
-export type Action = MinionKeyAcceptedListAction
-
 export const loadMinionKeyAcceptedList = (): MinionKeyAcceptedListAction => ({
-  type: ActionType.MinionKeyAcceptedList,
+  type: ActionTypes.MinionKeyAcceptedList,
+})
+
+interface LoadVcentersAction {
+  type: ActionTypes.LoadVcenters
+  payload: any
+}
+
+export const loadVcentersList = (): LoadVcentersAction => ({
+  type: ActionTypes.LoadVcenters,
+  payload: {},
+})
+
+interface AddVcenterAction {
+  type: ActionTypes.AddVcenter
+  payload: any
+}
+
+export const addVcenter = (): AddVcenterAction => ({
+  type: ActionTypes.AddVcenter,
+  payload: {},
+})
+
+interface RemoveVcenterAction {
+  type: ActionTypes.RemoveVcenter
+  payload: any
+}
+
+export const removeVcenter = (): RemoveVcenterAction => ({
+  type: ActionTypes.RemoveVcenter,
+  payload: {},
+})
+
+interface UpdateVcenterAction {
+  type: ActionTypes.UpdateVcenter
+  payload: any
+}
+
+export const updateVcenter = (): UpdateVcenterAction => ({
+  type: ActionTypes.UpdateVcenter,
+  payload: {},
 })
 
 export const getMinionKeyAcceptedListAsync = (

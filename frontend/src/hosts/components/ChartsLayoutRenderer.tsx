@@ -26,8 +26,6 @@ interface ChartsProps {
   tempVars: Template[]
   timeRange: TimeRange
   manualRefresh: number
-  hostID: string
-  isVMware: boolean
   vmParam: vmParam
   vmParentChartField: string
   vmParentName: string
@@ -47,8 +45,6 @@ const ChartsLayoutRenderer = ({
   tempVars,
   timeRange,
   manualRefresh,
-  hostID,
-  isVMware,
   vmParam,
   vmParentChartField,
   vmParentName,
@@ -94,8 +90,6 @@ const ChartsLayoutRenderer = ({
                 templates={tempVars}
                 timeRange={timeRange}
                 manualRefresh={manualRefresh}
-                host={hostID}
-                isVMware={isVMware}
                 vmParam={vmParam}
                 vmParentChartField={vmParentChartField}
                 vmParentName={vmParentName}
