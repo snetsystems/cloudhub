@@ -51,6 +51,8 @@ import {disablePresentationMode} from 'src/shared/actions/app'
 import {errorThrown} from 'src/shared/actions/errors'
 import {notify} from 'src/shared/actions/notifications'
 
+import {loadVcentersList, addVcenter} from 'src/hosts/actions'
+
 import 'src/style/cloudhub.scss'
 
 import {HEARTBEAT_INTERVAL} from 'src/shared/constants'

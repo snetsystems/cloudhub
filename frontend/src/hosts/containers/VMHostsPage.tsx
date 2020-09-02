@@ -48,6 +48,9 @@ import {
   getMinionKeyAcceptedListAsync,
   getVSphereInfoSaltApiAsync,
   getTicketRemoteConsoleAsync,
+  addVcenter,
+  removeVcenter,
+  updateVcenter,
 } from 'src/hosts/actions'
 
 // Constants
@@ -140,6 +143,9 @@ interface Props {
     user: string,
     password: string
   ) => Promise<String[]>
+  handleAddVcenter: () => Promise<any>
+  handleRemoveVcenter: () => Promise<any>
+  handleUpdateVcenter: () => Promise<any>
 }
 
 const VMHostsPage = (props: Props): JSX.Element => {
@@ -151,6 +157,9 @@ const VMHostsPage = (props: Props): JSX.Element => {
     handleGetMinionKeyAcceptedList,
     handleGetVSphereInfoSaltApi,
     handleGetTicketRemoteConsoleAsync,
+    handleAddVcenter,
+    handleRemoveVcenter,
+    handleUpdateVcenter,
   } = props
   const intervalItems = ['30s', '1m', '5m']
   const initialFocusedHost: Item = {
@@ -1265,6 +1274,9 @@ const mapDispatchToProps = {
   handleGetMinionKeyAcceptedList: getMinionKeyAcceptedListAsync,
   handleGetVSphereInfoSaltApi: getVSphereInfoSaltApiAsync,
   handleGetTicketRemoteConsoleAsync: getTicketRemoteConsoleAsync,
+  handleAddVcenter: addVcenter,
+  handleRemoveVcenter: removeVcenter,
+  handleUpdateVcenter: updateVcenter,
 }
 
 export default connect(mapStateToProps, mapDispatchToProps, null)(VMHostsPage)
