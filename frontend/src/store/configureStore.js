@@ -18,6 +18,7 @@ import dashTimeV1 from 'src/dashboards/reducers/dashTimeV1'
 import persistStateEnhancer from './persistStateEnhancer'
 import servicesReducer from 'src/shared/reducers/services'
 import envReducer from 'src/shared/reducers/env'
+import {vspheres} from 'src/hosts/reducers'
 
 const rootReducer = combineReducers({
   ...statusReducers,
@@ -32,6 +33,7 @@ const rootReducer = combineReducers({
   logs: logsReducer,
   routing: routerReducer,
   services: servicesReducer,
+  vspheres,
 })
 
 const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose

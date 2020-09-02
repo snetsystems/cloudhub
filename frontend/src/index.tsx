@@ -46,12 +46,11 @@ import PageSpinner from 'src/shared/components/PageSpinner'
 
 import {getLinksAsync} from 'src/shared/actions/links'
 import {getMeAsync} from 'src/shared/actions/auth'
+import {getVSpheresAsync} from 'src/hosts/actions'
 
 import {disablePresentationMode} from 'src/shared/actions/app'
 import {errorThrown} from 'src/shared/actions/errors'
 import {notify} from 'src/shared/actions/notifications'
-
-import {loadVcentersList, addVcenter} from 'src/hosts/actions'
 
 import 'src/style/cloudhub.scss'
 
@@ -102,6 +101,7 @@ interface State {
 class Root extends PureComponent<{}, State> {
   private getLinks = bindActionCreators(getLinksAsync, dispatch)
   private getMe = bindActionCreators(getMeAsync, dispatch)
+  private getVSpheres = bindActionCreators(getVSpheresAsync, dispatch)
   private heartbeatTimer: number
 
   constructor(props) {
@@ -117,6 +117,7 @@ class Root extends PureComponent<{}, State> {
     try {
       await this.getLinks()
       await this.checkAuth()
+      await this.checkVSpheres()
       this.setState({ready: true})
     } catch (error) {
       dispatch(errorThrown(error))
@@ -242,6 +243,15 @@ class Root extends PureComponent<{}, State> {
   private async checkAuth() {
     try {
       await this.performHeartbeat({shouldResetMe: true})
+    } catch (error) {
+      dispatch(errorThrown(error))
+    }
+  }
+
+  private async checkVSpheres() {
+    try {
+      const vSphere = await this.getVSpheres()
+      console.log({vSphere})
     } catch (error) {
       dispatch(errorThrown(error))
     }

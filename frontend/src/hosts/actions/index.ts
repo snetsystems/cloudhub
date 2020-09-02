@@ -7,6 +7,11 @@ import {
   getMinionKeyAcceptedList,
   getVSphereInfoSaltApi,
   getTicketRemoteConsoleApi,
+  getVSpheresApi,
+  getVSphereApi,
+  addVSphereApi,
+  updateVSphereApi,
+  deleteVSphereApi,
 } from 'src/hosts/apis'
 
 // Notification Action
@@ -40,10 +45,20 @@ interface LoadVcentersAction {
   type: ActionTypes.LoadVcenters
   payload: any
 }
+interface vSphere {
+  id: number
+  tgt: string
+  address: string
+  user: string
+  password: string
+  port: string
+  protocol: string
+  interval: string
+}
 
-export const loadVcentersList = (): LoadVcentersAction => ({
+export const loadVcentersList = (vSpheres: vSphere[]): LoadVcentersAction => ({
   type: ActionTypes.LoadVcenters,
-  payload: {},
+  payload: vSpheres,
 })
 
 interface AddVcenterAction {
@@ -58,12 +73,16 @@ export const addVcenter = (): AddVcenterAction => ({
 
 interface RemoveVcenterAction {
   type: ActionTypes.RemoveVcenter
-  payload: any
+  payload: {
+    id: number
+  }
 }
 
-export const removeVcenter = (): RemoveVcenterAction => ({
+export const removeVcenter = (id: number): RemoveVcenterAction => ({
   type: ActionTypes.RemoveVcenter,
-  payload: {},
+  payload: {
+    id,
+  },
 })
 
 interface UpdateVcenterAction {
@@ -97,7 +116,10 @@ export const getVSphereInfoSaltApiAsync = (
   tgt: string,
   address: string,
   user: string,
-  password: string
+  password: string,
+  port: string,
+  protocol: string,
+  interval: string
 ) => async (dispatch: Dispatch<Action>): Promise<any> => {
   try {
     const vSphereInfo = await getVSphereInfoSaltApi(
@@ -106,7 +128,9 @@ export const getVSphereInfoSaltApiAsync = (
       tgt,
       address,
       user,
-      password
+      password,
+      port,
+      protocol
     )
 
     if (typeof _.values(vSphereInfo.return[0])[0] === 'string') {
@@ -146,6 +170,107 @@ export const getTicketRemoteConsoleAsync = (
     return vSphereInfo
   } catch (error) {
     console.error(error)
+    dispatch(errorThrown(error))
+  }
+}
+
+export const getVSpheresAsync = () => async (dispatch: Dispatch<Action>) => {
+  try {
+    const vSpheres = await getVSpheresApi()
+
+    dispatch(loadVcentersList(vSpheres))
+    return vSpheres
+  } catch (error) {
+    console.log(error)
+    dispatch(errorThrown(error))
+  }
+}
+
+export const getVSphereAsync = (id: number) => async (
+  dispatch: Dispatch<Action>
+) => {
+  try {
+    const vSpheres = await getVSphereApi(id)
+    return vSpheres
+  } catch (error) {
+    console.log(error)
+    dispatch(errorThrown(error))
+  }
+}
+
+export const addVCenterAsync = (
+  tgt: string,
+  address: string,
+  user: string,
+  password: string,
+  port: string,
+  protocol: string,
+  interval: string
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const vSpheres = await addVSphereApi(
+      tgt,
+      address,
+      user,
+      password,
+      port,
+      protocol,
+      interval
+    )
+    return vSpheres
+  } catch (error) {
+    console.log(error)
+    dispatch(errorThrown(error))
+  }
+}
+
+interface updateParams {
+  id: number
+  tgt?: string
+  address?: string
+  user?: string
+  password?: string
+  port?: string
+  protocol?: string
+  interval?: string
+}
+
+export const updateVSphereAsync = ({
+  id,
+  tgt,
+  address,
+  user,
+  password,
+  port,
+  protocol,
+  interval,
+}: updateParams) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const vSpheres = await updateVSphereApi({
+      id,
+      tgt,
+      address,
+      user,
+      password,
+      port,
+      protocol,
+      interval,
+    })
+    return vSpheres
+  } catch (error) {
+    console.log(error)
+    dispatch(errorThrown(error))
+  }
+}
+
+export const deleteVSphereAsync = (id: number) => async (
+  dispatch: Dispatch<Action>
+) => {
+  try {
+    const vSpheres = await deleteVSphereApi(id)
+    return vSpheres
+  } catch (error) {
+    console.log(error)
     dispatch(errorThrown(error))
   }
 }

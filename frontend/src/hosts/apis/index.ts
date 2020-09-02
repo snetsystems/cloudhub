@@ -381,10 +381,21 @@ export const getVSphereInfoSaltApi = async (
   tgt: string,
   address: string,
   user: string,
-  password: string
+  password: string,
+  port: string,
+  protocol: string
 ): Promise<any> => {
   const info = await Promise.all([
-    getLocalVSphereInfoAll(pUrl, pToken, tgt, address, user, password),
+    getLocalVSphereInfoAll(
+      pUrl,
+      pToken,
+      tgt,
+      address,
+      user,
+      password,
+      port,
+      protocol
+    ),
   ])
 
   const vSphere = _.get(info[0], 'data', [])
@@ -405,4 +416,124 @@ export const getTicketRemoteConsoleApi = async (
 
   const vSphere = _.get(info[0], 'data', [])
   return vSphere
+}
+
+const calcInterval = (interval: string) => {
+  if (interval.indexOf('s') > -1) {
+    return parseInt(interval) * 1000
+  }
+  if (interval.indexOf('m') > -1) {
+    return parseInt(interval) * (1000 * 60)
+  }
+}
+
+export const getVSpheresApi = async () => {
+  let data
+  try {
+    const {
+      data: {vspheres},
+    }: AxiosResponse<any> = await AJAX({
+      url: '/cloudhub/v1/vspheres',
+      method: 'GET',
+    })
+
+    data = {...vspheres}
+    return data
+  } catch (error) {}
+  return
+}
+
+export const getVSphereApi = async (id: number) => {
+  return await AJAX({
+    url: `/cloudhub/v1/vspheres/${id}`,
+    method: 'GET',
+  })
+}
+
+export const addVSphereApi = async (
+  tgt: string,
+  address: string,
+  user: string,
+  password: string,
+  port: string,
+  protocol: string,
+  interval: string
+) => {
+  return await AJAX({
+    url: '/cloudhub/v1/vspheres',
+    method: 'POST',
+    data: {
+      host: address,
+      username: user,
+      password,
+      protocol,
+      port: parseInt(port),
+      interval: calcInterval(interval),
+      minion: tgt,
+    },
+  })
+}
+
+export const updateVSphereApi = async ({
+  id,
+  tgt,
+  address,
+  user,
+  password,
+  port,
+  protocol,
+  interval,
+}: {
+  id: number
+  tgt: string
+  address: string
+  user: string
+  password: string
+  port: string
+  protocol: string
+  interval: string
+}) => {
+  let data = {}
+  if (tgt) {
+    data = {...data, minion: tgt}
+  }
+
+  if (address) {
+    data = {...data, host: address}
+  }
+
+  if (user) {
+    data = {...data, username: user}
+  }
+
+  if (password) {
+    data = {...data, password}
+  }
+
+  if (port) {
+    data = {...data, port: parseInt(port)}
+  }
+
+  if (protocol) {
+    data = {...data, protocol}
+  }
+
+  if (interval) {
+    data = {...data, interval: calcInterval(interval)}
+  }
+
+  console.log({data})
+
+  await AJAX({
+    url: `/cloudhub/v1/vspheres/${id}`,
+    method: 'PATCH',
+    data,
+  })
+}
+
+export const deleteVSphereApi = async (id: number) => {
+  await AJAX({
+    url: `/cloudhub/v1/vspheres/${id}`,
+    method: 'DELETE',
+  })
 }

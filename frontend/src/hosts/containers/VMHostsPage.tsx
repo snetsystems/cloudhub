@@ -133,7 +133,10 @@ interface Props {
     minionId: string,
     address: string,
     user: string,
-    password: string
+    password: string,
+    port: string,
+    protocol: string,
+    interval: string
   ) => Promise<any>
   handleGetTicketRemoteConsoleAsync: (
     saltMasterUrl: string,
@@ -146,6 +149,7 @@ interface Props {
   handleAddVcenter: () => Promise<any>
   handleRemoveVcenter: () => Promise<any>
   handleUpdateVcenter: () => Promise<any>
+  vspheres: any
 }
 
 const VMHostsPage = (props: Props): JSX.Element => {
@@ -160,6 +164,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     handleAddVcenter,
     handleRemoveVcenter,
     handleUpdateVcenter,
+    vspheres,
   } = props
   const intervalItems = ['30s', '1m', '5m']
   const initialFocusedHost: Item = {
@@ -568,7 +573,10 @@ const VMHostsPage = (props: Props): JSX.Element => {
       minionId,
       address,
       user,
-      password
+      password,
+      port,
+      protocol,
+      interval
     )
 
     return vSphereInfo
@@ -1249,7 +1257,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
             confirmText={'Add vCenter'}
             confirmButtonStatus={
               address &&
-              port &&
               user &&
               password &&
               protocol &&
@@ -1264,9 +1271,10 @@ const VMHostsPage = (props: Props): JSX.Element => {
   )
 }
 
-const mapStateToProps = ({links: {addons}}) => {
+const mapStateToProps = ({links: {addons}, vspheres}) => {
   return {
     addons,
+    vspheres,
   }
 }
 

@@ -195,7 +195,9 @@ export async function getLocalVSphereInfoAll(
   tgt: string,
   address: string,
   user: string,
-  password: string
+  password: string,
+  port: string,
+  protocol: string
 ) {
   try {
     const params = {
@@ -207,7 +209,9 @@ export async function getLocalVSphereInfoAll(
       kwarg: {
         host: address,
         username: user,
-        password: password,
+        password,
+        port,
+        protocol,
       },
     }
     return await apiRequest(pUrl, pToken, params)
