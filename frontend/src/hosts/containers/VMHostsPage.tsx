@@ -51,6 +51,7 @@ import {
   addVcenter,
   removeVcenter,
   updateVcenter,
+  getVSphereAsync,
 } from 'src/hosts/actions'
 
 // Constants
@@ -146,6 +147,7 @@ interface Props {
     user: string,
     password: string
   ) => Promise<String[]>
+  handleGetVSphereAsync: (id: string) => Promise<any>
   handleAddVcenter: () => Promise<any>
   handleRemoveVcenter: () => Promise<any>
   handleUpdateVcenter: () => Promise<any>
@@ -161,6 +163,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     handleGetMinionKeyAcceptedList,
     handleGetVSphereInfoSaltApi,
     handleGetTicketRemoteConsoleAsync,
+    handleGetVSphereAsync,
     handleAddVcenter,
     handleRemoveVcenter,
     handleUpdateVcenter,
@@ -323,6 +326,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
       openNodes: getOpenNodes,
     } = getLocal
 
+    setSelectMinion(getFocusedHost.minion)
     setActiveKey(getActiveKey)
     setOpenNodes(getOpenNodes)
     setProportions(getProportions)
@@ -1090,6 +1094,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             handleGetTicketRemoteConsoleAsync={
               handleGetTicketRemoteConsoleAsync
             }
+            handleGetVSphereAsync={handleGetVSphereAsync}
             saltMasterUrl={saltMasterUrl}
             saltMasterToken={saltMasterToken}
           />
@@ -1135,6 +1140,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   const onSelectHost = (props: Item) => {
+    setSelectMinion(props.minion)
     setActiveKey(props.key)
     setFocusedHost(props)
   }
@@ -1282,6 +1288,7 @@ const mapDispatchToProps = {
   handleGetMinionKeyAcceptedList: getMinionKeyAcceptedListAsync,
   handleGetVSphereInfoSaltApi: getVSphereInfoSaltApiAsync,
   handleGetTicketRemoteConsoleAsync: getTicketRemoteConsoleAsync,
+  handleGetVSphereAsync: getVSphereAsync,
   handleAddVcenter: addVcenter,
   handleRemoveVcenter: removeVcenter,
   handleUpdateVcenter: updateVcenter,

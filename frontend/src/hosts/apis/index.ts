@@ -444,10 +444,12 @@ export const getVSpheresApi = async () => {
 }
 
 export const getVSphereApi = async (id: number) => {
-  return await AJAX({
-    url: `/cloudhub/v1/vspheres/${id}`,
+  let info = await AJAX({
+    url: `/cloudhub/v1/vspheres?id=${id}`,
     method: 'GET',
   })
+  const vSphere = _.get(info, 'data.vspheres', [])
+  return vSphere
 }
 
 export const addVSphereApi = async (
@@ -525,7 +527,7 @@ export const updateVSphereApi = async ({
   console.log({data})
 
   await AJAX({
-    url: `/cloudhub/v1/vspheres/${id}`,
+    url: `/cloudhub/v1/vspheres?id=${id}`,
     method: 'PATCH',
     data,
   })
@@ -533,7 +535,7 @@ export const updateVSphereApi = async ({
 
 export const deleteVSphereApi = async (id: number) => {
   await AJAX({
-    url: `/cloudhub/v1/vspheres/${id}`,
+    url: `/cloudhub/v1/vspheres?id=${id}`,
     method: 'DELETE',
   })
 }
