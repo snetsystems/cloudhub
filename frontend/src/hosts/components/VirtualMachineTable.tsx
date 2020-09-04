@@ -22,9 +22,6 @@ import {VCENTER_VM_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 // types
 import {VM} from 'src/hosts/types'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-import Fragment from 'react'
-import download from 'src/external/download'
-import vspheres from 'src/hosts/reducers/vspheres'
 interface Props {
   isEditable: boolean
   cellTextColor: string
@@ -79,12 +76,11 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
       _.get(vsphereInfo, 'password', '')
     )
 
-    if (_.isEmpty(ticket)) {
+    if (!ticket) {
       return
     }
 
-    const remoteConsoleUrl = _.get(ticket, `return[0].${selectMinion}`, '')
-    let url = 'vmrc://clone:' + remoteConsoleUrl + '/?moid=' + item.moid
+    let url = 'vmrc://clone:' + ticket + '/?moid=' + item.moid
     window.open(
       url,
       'Remote Console',
