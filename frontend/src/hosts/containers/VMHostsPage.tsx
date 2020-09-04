@@ -323,7 +323,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
     if (vsphereKeys.length > 0) {
       vsphereKeys.forEach(key => {
         if (vspheres[key]?.nodes) {
-          console.log(vsphereKeys, key, vspheres, vspheres[key])
           let vcenter = makeTreeMenuVCenterInfo(vspheres[key])
           setVCenters({...vCenters, ...vcenter})
         }
@@ -874,7 +873,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   const CellTable = ({cell}: {cell: LayoutCell}): JSX.Element => {
-    console.log('CellTable: ', cell)
     switch (cell.i) {
       case 'vcenter': {
         let item: VCenter = vCenters[activeKey] || null
