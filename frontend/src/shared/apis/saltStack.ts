@@ -32,13 +32,18 @@ interface Params {
   token_expire?: number
 }
 
-const apiRequest = async (pUrl: string, pToken: string, pParams: Params) => {
+const apiRequest = async (
+  pUrl: string,
+  pToken: string,
+  pParams: Params,
+  pAccept?: string
+) => {
   try {
     const dParams = {token: pToken, eauth: 'pam'}
     const saltMasterUrl = pUrl
     const url = saltMasterUrl + '/'
     const headers = {
-      Accept: 'application/json',
+      Accept: pAccept ? pAccept : 'application/json',
       'Content-type': 'application/json',
     }
 
@@ -182,7 +187,7 @@ export async function getWheelKeyAcceptedList(pUrl: string, pToken: string) {
       fun: 'key.list',
       match: 'accepted',
     }
-    return await apiRequest(pUrl, pToken, params)
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
   } catch (error) {
     console.error(error)
     throw error
@@ -214,7 +219,7 @@ export async function getLocalVSphereInfoAll(
         protocol,
       },
     }
-    return await apiRequest(pUrl, pToken, params)
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
   } catch (error) {
     console.error(error)
     throw error
@@ -242,7 +247,7 @@ export async function getTicketRemoteConsole(
         password: password,
       },
     }
-    return await apiRequest(pUrl, pToken, params)
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
   } catch (error) {
     console.error(error)
     throw error
