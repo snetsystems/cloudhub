@@ -64,9 +64,7 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
   } = VCENTER_VM_TABLE_SIZING
 
   const remoteConsoleRun = async () => {
-    // etcd db id값 셋팅 필요
-    const id = 'temp'
-    const vsphereInfo = await handleGetVSphereAsync(id)
+    const vsphereInfo = await handleGetVSphereAsync(item.id)
     const ticket = await handleGetTicketRemoteConsoleAsync(
       saltMasterUrl,
       saltMasterToken,
@@ -81,11 +79,7 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
     }
 
     let url = 'vmrc://clone:' + ticket + '/?moid=' + item.moid
-    window.open(
-      url,
-      'Remote Console',
-      'width=500, height=600, left=500, top=400'
-    )
+    window.location.href = url
   }
 
   const Header = (): JSX.Element => {
