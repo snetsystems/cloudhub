@@ -1,4 +1,5 @@
 import React from 'react'
+import _ from 'lodash'
 
 import {
   CellName,
@@ -21,8 +22,6 @@ import {VCENTER_VM_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 // types
 import {VM} from 'src/hosts/types'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-import Fragment from 'react'
-import download from 'src/external/download'
 interface Props {
   isEditable: boolean
   cellTextColor: string
@@ -39,6 +38,7 @@ interface Props {
     user: string,
     password: string
   ) => Promise<String[]>
+  handleGetVSphereAsync: (id: string) => Promise<any>
 }
 
 const VirtualMachineTable = (props: Props): JSX.Element => {
@@ -49,6 +49,7 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
     item,
     selectMinion,
     handleGetTicketRemoteConsoleAsync,
+    handleGetVSphereAsync,
     saltMasterUrl,
     saltMasterToken,
   } = props
@@ -63,19 +64,27 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
   } = VCENTER_VM_TABLE_SIZING
 
   const remoteConsoleRun = async () => {
-    // minion값으로 해당 접속정보 가져와서 address, user, password 셋팅 부분 필요
-    const address = ''
-    const user = ''
-    const password = ''
-    ////////////////////////////////////
-
+    // etcd db id값 셋팅 필요
+    const id = 'temp'
+    const vsphereInfo = await handleGetVSphereAsync(id)
     const ticket = await handleGetTicketRemoteConsoleAsync(
       saltMasterUrl,
       saltMasterToken,
       selectMinion,
-      address,
-      user,
-      password
+      _.get(vsphereInfo, 'host', ''),
+      _.get(vsphereInfo, 'username', ''),
+      _.get(vsphereInfo, 'password', '')
+    )
+
+    if (!ticket) {
+      return
+    }
+
+    let url = 'vmrc://clone:' + ticket + '/?moid=' + item.moid
+    window.open(
+      url,
+      'Remote Console',
+      'width=500, height=600, left=500, top=400'
     )
   }
 

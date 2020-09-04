@@ -1047,3 +1047,12 @@ export const notifyConnectVCenterFailed = (error: Error): Notification => ({
   ...defaultErrorNotification,
   message: `VCenter Cunnection Failed, ${error}`,
 })
+
+//  CloudHub infrastructure VM Host Remote Console Notifications
+//  ----------------------------------------------------------------------------
+export const notifyConnectRemoteConsoleFailed = (
+  error: Error
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `Remote Console Run Failed, ${error}`,
+})

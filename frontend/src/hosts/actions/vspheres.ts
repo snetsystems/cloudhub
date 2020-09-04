@@ -16,7 +16,10 @@ import {
 
 // Notification Action
 import {notify as notifyAction} from 'src/shared/actions/notifications'
-import {notifyConnectVCenterFailed} from 'src/shared/copy/notifications'
+import {
+  notifyConnectVCenterFailed,
+  notifyConnectRemoteConsoleFailed,
+} from 'src/shared/copy/notifications'
 
 export enum ActionTypes {
   MinionKeyAcceptedList = 'GET_MINION_KEY_ACCEPTED_LIST',
@@ -171,8 +174,21 @@ export const getTicketRemoteConsoleAsync = (
       password
     )
 
+    if (_.isEmpty(vSphereInfo)) {
+      return
+    }
+
+    const remoteConsoleUrl = _.get(vSphereInfo, `return[0].${tgt}`, '')
+    const isError = remoteConsoleUrl.indexOf('ERROR:')
+    if (isError > -1) {
+      const error = Error(remoteConsoleUrl)
+      const notify = bindActionCreators(notifyAction, dispatch)
+      notify(notifyConnectRemoteConsoleFailed(error))
+      return
+    }
+
     dispatch(loadMinionKeyAcceptedList())
-    return vSphereInfo
+    return remoteConsoleUrl
   } catch (error) {
     console.error(error)
     dispatch(errorThrown(error))

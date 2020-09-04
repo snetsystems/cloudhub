@@ -53,6 +53,7 @@ import {
   removeVcenter,
   updateVcenter,
   deleteVSphereAsync,
+  getVSphereAsync,
 } from 'src/hosts/actions'
 
 // Constants
@@ -151,6 +152,7 @@ interface Props {
     protocol: string,
     interval: string
   ) => any
+  handleGetVSphereAsync: (id: string) => Promise<any>
   handleAddVcenterAction: (props: any) => Promise<any>
   handleRemoveVcenter: () => Promise<any>
   handleUpdateVcenter: () => Promise<any>
@@ -175,6 +177,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     handleDeleteVSphere,
     vspheres,
     handleClearTimeout,
+    handleGetVSphereAsync,
   } = props
   const intervalItems = ['30s', '1m', '5m']
   const initialFocusedHost: Item = {
@@ -349,6 +352,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
       openNodes: getOpenNodes,
     } = getLocal
 
+    setSelectMinion(getFocusedHost.minion)
     setActiveKey(getActiveKey)
     setOpenNodes(getOpenNodes)
     setProportions(getProportions)
@@ -1109,6 +1113,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             handleGetTicketRemoteConsoleAsync={
               handleGetTicketRemoteConsoleAsync
             }
+            handleGetVSphereAsync={handleGetVSphereAsync}
             saltMasterUrl={saltMasterUrl}
             saltMasterToken={saltMasterToken}
           />
@@ -1154,6 +1159,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   const onSelectHost = (props: Item) => {
+    setSelectMinion(props.minion)
     setActiveKey(props.key)
     setFocusedHost(props)
   }
