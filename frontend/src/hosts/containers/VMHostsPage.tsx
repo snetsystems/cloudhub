@@ -1312,6 +1312,7 @@ const mapDispatchToProps = {
   handleRemoveVcenter: removeVcenter,
   handleUpdateVcenter: updateVcenter,
   handleDeleteVSphere: deleteVSphereAsync,
+  handleGetVSphereAsync: getVSphereAsync,
 }
 
 export default connect(mapStateToProps, mapDispatchToProps, null)(VMHostsPage)
