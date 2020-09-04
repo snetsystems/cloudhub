@@ -15,22 +15,18 @@ const vspheres = (state = initialState, action: Action) => {
     }
 
     case ActionTypes.AddVcenter: {
-      const {payload} = action
-      if (payload) {
-      }
-
       return {
         ...state,
+        ...action.payload,
       }
     }
 
     case ActionTypes.RemoveVcenter: {
-      const {payload} = action
-      if (payload) {
-      }
+      let removeState = {...state}
+      delete removeState[action.payload.host]
 
       return {
-        ...state,
+        ...removeState,
       }
     }
 
@@ -39,9 +35,13 @@ const vspheres = (state = initialState, action: Action) => {
       if (payload) {
       }
 
-      return {
-        ...state,
+      let updateState = {...state}
+      updateState[payload.host] = {
+        ...updateState[payload.host],
+        ...payload,
       }
+
+      return updateState
     }
 
     default: {

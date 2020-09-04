@@ -8,6 +8,7 @@ import {Router, Route, useRouterHistory} from 'react-router'
 import {createHistory} from 'history'
 import {syncHistoryWithStore} from 'react-router-redux'
 import {bindActionCreators} from 'redux'
+import _ from 'lodash'
 
 import configureStore from 'src/store/configureStore'
 import {loadLocalStorage} from 'src/localStorage'
@@ -46,17 +47,22 @@ import PageSpinner from 'src/shared/components/PageSpinner'
 
 import {getLinksAsync} from 'src/shared/actions/links'
 import {getMeAsync} from 'src/shared/actions/auth'
-import {getVSpheresAsync} from 'src/hosts/actions'
+import {getVSpheresAsync, updateVcenter} from 'src/hosts/actions'
 
+// Actions
 import {disablePresentationMode} from 'src/shared/actions/app'
 import {errorThrown} from 'src/shared/actions/errors'
 import {notify} from 'src/shared/actions/notifications'
+import {getVSphereInfoSaltApiAsync} from 'src/hosts/actions'
 
 import 'src/style/cloudhub.scss'
 
 import {HEARTBEAT_INTERVAL} from 'src/shared/constants'
 
 import * as ErrorsModels from 'src/types/errors'
+
+import {AddonType} from 'src/shared/constants'
+import {Addon} from 'src/types/auth'
 
 const errorsQueue = []
 
@@ -102,7 +108,16 @@ class Root extends PureComponent<{}, State> {
   private getLinks = bindActionCreators(getLinksAsync, dispatch)
   private getMe = bindActionCreators(getMeAsync, dispatch)
   private getVSpheres = bindActionCreators(getVSpheresAsync, dispatch)
+  private handleUpdateVcenter = bindActionCreators(updateVcenter, dispatch)
+  private handleGetVSphereInfoSaltApi = bindActionCreators(
+    getVSphereInfoSaltApiAsync,
+    dispatch
+  )
   private heartbeatTimer: number
+  private timeout: any = {}
+  private handleClearTimeout = (key: string) => {
+    window.clearTimeout(this.timeout[key])
+  }
 
   constructor(props) {
     super(props)
@@ -118,6 +133,7 @@ class Root extends PureComponent<{}, State> {
       await this.getLinks()
       await this.checkAuth()
       await this.checkVSpheres()
+
       this.setState({ready: true})
     } catch (error) {
       dispatch(errorThrown(error))
@@ -126,6 +142,9 @@ class Root extends PureComponent<{}, State> {
 
   public componentWillUnmount() {
     clearTimeout(this.heartbeatTimer)
+    _.forEach(_.keys(this.timeout), key => {
+      clearInterval(this.timeout[key])
+    })
   }
 
   public render() {
@@ -155,7 +174,15 @@ class Root extends PureComponent<{}, State> {
                   path="dashboards/:dashboardID"
                   component={DashboardPage}
                 />
-                <Route path="infrastructure" component={HostsPage} />
+                <Route
+                  path="infrastructure"
+                  component={props => (
+                    <HostsPage
+                      {...props}
+                      handleClearTimeout={this.handleClearTimeout}
+                    />
+                  )}
+                />
                 <Route path="infrastructure/:hostID" component={HostPage} />
                 <Route path="applications" component={Applications} />
                 <Route path="alerts" component={AlertsApp} />
@@ -222,6 +249,61 @@ class Root extends PureComponent<{}, State> {
     }, HEARTBEAT_INTERVAL)
   }
 
+  // request VSPHERE
+  private async requestVSphere(key: string, salt: any, vsphere: any) {
+    const {url, token} = salt
+    const {minion, host, username, password, port, protocol, interval} = vsphere
+
+    const getVsphere = await this.handleGetVSphereInfoSaltApi(
+      url,
+      token,
+      minion,
+      host,
+      username,
+      password,
+      port,
+      protocol
+    )
+
+    await this.handleUpdateVcenter({host: key, nodes: getVsphere})
+
+    this.timeout[key] = window.setTimeout(() => {
+      if (store.getState().vspheres[key] !== null) {
+        this.requestVSphere(key, salt, vsphere)
+      }
+    }, interval)
+  }
+
+  private checkVSpheres = async () => {
+    const getSaltAddon = (addons: Addon[]): Addon => {
+      const addon = addons.find(addon => {
+        return addon.name === AddonType.salt
+      })
+
+      return addon
+    }
+
+    try {
+      const vSpheres = await this.getVSpheres()
+      if (vSpheres && _.keys(vSpheres).length < 0) return
+
+      const {
+        links: {addons},
+      } = store.getState()
+
+      const salt = getSaltAddon(addons)
+
+      //  각 vsphere이 가지고 있는 interval을 주기로 요청하여 REDUX 의 vspheres를 갱신한다.
+
+      _.keys(vSpheres).forEach(async (key: string) => {
+        const vSphere = vSpheres[key]
+        await this.requestVSphere(key, salt, vSphere)
+      })
+    } catch (error) {
+      dispatch(errorThrown(error))
+    }
+  }
+
   private flushErrorsQueue() {
     if (errorsQueue.length) {
       errorsQueue.forEach(error => {
@@ -243,15 +325,6 @@ class Root extends PureComponent<{}, State> {
   private async checkAuth() {
     try {
       await this.performHeartbeat({shouldResetMe: true})
-    } catch (error) {
-      dispatch(errorThrown(error))
-    }
-  }
-
-  private async checkVSpheres() {
-    try {
-      const vSphere = await this.getVSpheres()
-      console.log({vSphere})
     } catch (error) {
       dispatch(errorThrown(error))
     }

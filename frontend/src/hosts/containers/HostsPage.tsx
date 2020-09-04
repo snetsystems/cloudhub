@@ -77,6 +77,7 @@ interface Props extends ManualRefreshProps {
   links: Links
   autoRefresh: number
   onChooseAutoRefresh: (milliseconds: RefreshRate) => void
+  handleClearTimeout: (key: string) => void
   notify: NotificationAction
 }
 
@@ -292,6 +293,7 @@ export class HostsPage extends PureComponent<Props, State> {
                 source={source}
                 manualRefresh={this.props.manualRefresh}
                 timeRange={this.state.timeRange}
+                handleClearTimeout={this.props.handleClearTimeout}
               />
             </TabPanel>
           </Tabs>

@@ -522,9 +522,7 @@ export const updateVSphereApi = async ({
     data = {...data, interval: calcInterval(interval)}
   }
 
-  console.log({data})
-
-  await AJAX({
+  return await AJAX({
     url: `/cloudhub/v1/vspheres/${id}`,
     method: 'PATCH',
     data,
@@ -532,7 +530,7 @@ export const updateVSphereApi = async ({
 }
 
 export const deleteVSphereApi = async (id: number) => {
-  await AJAX({
+  return await AJAX({
     url: `/cloudhub/v1/vspheres/${id}`,
     method: 'DELETE',
   })

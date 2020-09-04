@@ -48,9 +48,11 @@ import {
   getMinionKeyAcceptedListAsync,
   getVSphereInfoSaltApiAsync,
   getTicketRemoteConsoleAsync,
-  addVcenter,
+  addVCenterAsync,
+  addVcenterAction,
   removeVcenter,
   updateVcenter,
+  deleteVSphereAsync,
 } from 'src/hosts/actions'
 
 // Constants
@@ -93,12 +95,6 @@ import {
   getAppsForHost,
   getMeasurementsForHost,
 } from 'src/hosts/apis'
-
-// ErrorHandler
-// import {ErrorHandling} from 'src/shared/decorators/errors'
-
-// import { Minion } from '../../agent_admin/type/minion';
-// import {layout} from '../../../test/resources'
 
 const GridLayout = WidthProvider(ReactGridLayout)
 const MINION_LIST_EMPTY = '<< Empty >>'
@@ -146,10 +142,21 @@ interface Props {
     user: string,
     password: string
   ) => Promise<String[]>
-  handleAddVcenter: () => Promise<any>
+  handleAddVCenterAsync: (
+    target: string,
+    address: string,
+    user: string,
+    password: string,
+    port: string,
+    protocol: string,
+    interval: string
+  ) => any
+  handleAddVcenterAction: (props: any) => Promise<any>
   handleRemoveVcenter: () => Promise<any>
   handleUpdateVcenter: () => Promise<any>
+  handleDeleteVSphere: (id: number, host: string) => Promise<any>
   vspheres: any
+  handleClearTimeout: (key: string) => void
 }
 
 const VMHostsPage = (props: Props): JSX.Element => {
@@ -161,10 +168,13 @@ const VMHostsPage = (props: Props): JSX.Element => {
     handleGetMinionKeyAcceptedList,
     handleGetVSphereInfoSaltApi,
     handleGetTicketRemoteConsoleAsync,
-    handleAddVcenter,
+    handleAddVCenterAsync,
+    handleAddVcenterAction,
     handleRemoveVcenter,
     handleUpdateVcenter,
+    handleDeleteVSphere,
     vspheres,
+    handleClearTimeout,
   } = props
   const intervalItems = ['30s', '1m', '5m']
   const initialFocusedHost: Item = {
@@ -187,10 +197,10 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
   // form state
   const [target, setTarget] = useState(MINION_LIST_EMPTY)
-  const [address, setAddress] = useState('')
+  const [address, setAddress] = useState('61.250.122.234')
   const [port, setPort] = useState('443')
-  const [user, setUser] = useState('')
-  const [password, setPassword] = useState('')
+  const [user, setUser] = useState('administrator@vsphere.local')
+  const [password, setPassword] = useState('!234Qwer')
   const [protocol, setProtocol] = useState('https')
   const [interval, setInterval] = useState('1m')
 
@@ -261,9 +271,42 @@ const VMHostsPage = (props: Props): JSX.Element => {
     setIsModalVisible(true)
   }
 
-  const handleConnection = (): void => {
-    AddVCenter(target)
+  const handleConnection = async () => {
     handleClose()
+
+    const vSphereInfo = await handleGetVSphereInfoSaltApi(
+      saltMasterUrl,
+      saltMasterToken,
+      target,
+      address,
+      user,
+      password,
+      port,
+      protocol,
+      interval
+    )
+
+    const resultAddVCenterAsync = await handleAddVCenterAsync(
+      target,
+      address,
+      user,
+      password,
+      port,
+      protocol,
+      interval
+    )
+
+    if (vSphereInfo && resultAddVCenterAsync) {
+      let dump = {}
+      dump[address] = {
+        ...resultAddVCenterAsync.data,
+        nodes: {
+          ...vSphereInfo,
+        },
+      }
+
+      handleAddVcenterAction({...dump})
+    }
   }
 
   const getSaltAddon = (): Addon => {
@@ -274,39 +317,23 @@ const VMHostsPage = (props: Props): JSX.Element => {
     return addon
   }
 
-  const AddVCenter = async (minion: string) => {
-    // paramiter minion으로? vcenter로? etcd 연동 후 변경
-    let vcenter = await getVCenterInfo(minion)
-    setVCenters({...vCenters, ...vcenter})
-  }
-
   useEffect(() => {
-    // 임시 코드 수정 필요 etcd에 저장된 전체 정보 api 호출 //
-    // const getMinion = 'minion03'
-    ////////////////////////
-
-    // const addVCenterFn = async (): Promise<void> => {
-    //   // 추 후 for문 추가
-    //   await AddVCenter(getMinion)
-    // }
-    // addVCenterFn()
-
-    const layoutResultsFn = async (): Promise<void> => {
-      const layoutRst = await getLayouts()
-      const init_layouts = getDeep<Layout[]>(layoutRst, 'data.layouts', [])
-      setLayouts(init_layouts)
+    // create Treemenu Object
+    const vsphereKeys = _.keys(vspheres)
+    if (vsphereKeys.length > 0) {
+      vsphereKeys.forEach(key => {
+        if (vspheres[key]?.nodes) {
+          console.log(vsphereKeys, key, vspheres, vspheres[key])
+          let vcenter = makeTreeMenuVCenterInfo(vspheres[key])
+          setVCenters({...vCenters, ...vcenter})
+        }
+      })
+    } else {
+      setVCenters({})
     }
-    layoutResultsFn()
-
-    const addon: Addon = getSaltAddon()
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    setSaltMasterUrl(saltMasterUrl)
-    setSaltMasterToken(saltMasterToken)
-  }, [])
+  }, [vspheres])
 
   useEffect(() => {
-    // get localstorage
     verifyLocalStorage(getLocalStorage, setLocalStorage, 'VMHostsPage', {
       proportions: [0.25, 0.75],
       focusedHost: initialFocusedHost,
@@ -327,7 +354,20 @@ const VMHostsPage = (props: Props): JSX.Element => {
     setOpenNodes(getOpenNodes)
     setProportions(getProportions)
     setFocusedHost(getFocusedHost)
-  }, [vCenters])
+
+    const layoutResultsFn = async (): Promise<void> => {
+      const layoutRst = await getLayouts()
+      const init_layouts = getDeep<Layout[]>(layoutRst, 'data.layouts', [])
+      setLayouts(init_layouts)
+    }
+    layoutResultsFn()
+
+    const addon: Addon = getSaltAddon()
+    const saltMasterUrl = addon.url
+    const saltMasterToken = addon.token
+    setSaltMasterUrl(saltMasterUrl)
+    setSaltMasterToken(saltMasterToken)
+  }, [])
 
   useEffect(() => {
     const getLocal: VMHostsPageLocalStorage = getLocalStorage('VMHostsPage')
@@ -401,6 +441,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   useEffect(() => {
     const getLocal: VMHostsPageLocalStorage = getLocalStorage('VMHostsPage')
     const {layout: getLayout} = getLocal
+    if (activeKey === '') return
     const getLayoutItem = getLayout[activeKey.split('/')[0]]
 
     if (focusedHost?.type) {
@@ -545,7 +586,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     )
   }
 
-  const removeBtn = (ipAddress: string) => (): JSX.Element => {
+  const removeBtn = (id: number, host: 'string') => (): JSX.Element => {
     return (
       <ConfirmButton
         text="Delete"
@@ -553,7 +594,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
         size="btn-xs"
         icon={'trash'}
         confirmAction={() => {
-          console.log('removeBtn: ', ipAddress)
+          handleDeleteVSphere(id, host)
+          handleClearTimeout(host)
         }}
         isEventStopPropagation={true}
         isButtonLeaveHide={true}
@@ -563,32 +605,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
     )
   }
 
-  const getVSphereSaltApi = async (minionId: string) => {
-    const addon: Addon = getSaltAddon()
-    const saltMasterUrl = addon.url
-    const saltMasterToken = addon.token
-    const vSphereInfo = await handleGetVSphereInfoSaltApi(
-      saltMasterUrl,
-      saltMasterToken,
-      minionId,
-      address,
-      user,
-      password,
-      port,
-      protocol,
-      interval
-    )
-
-    return vSphereInfo
-  }
-
-  const getVCenterInfo = async (minionId: string) => {
-    const vCenterData = await getVSphereSaltApi(minionId)
-
-    if (_.isEmpty(vCenterData.return[0])) {
-      // etcd로 가져 오는 로직 추가
-      return
-    }
+  const makeTreeMenuVCenterInfo = props => {
+    const vCenterData = props.nodes
 
     let vcCpuUsage = []
     let vcCpuSpace = []
@@ -602,7 +620,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
     let vcVmCount = []
     let minionName = Object.keys(vCenterData.return[0])
     let vcMinionValue: any[] = Object.values(vCenterData.return[0])
-    let vcIpAddress = address
+    let vcIpAddress = props.host
+    // let vcIpAddress = address
 
     let vcenter = [vCenterData].reduce(
       acc => {
@@ -762,7 +781,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
     if (!vcenter) return
     vcenter[vcIpAddress] = {
       ...vcenter[vcIpAddress],
-      buttons: [updateBtn(vcIpAddress), removeBtn(vcIpAddress)],
+
+      buttons: [updateBtn(vcIpAddress), removeBtn(props.id, props.host)],
       cpu_usage:
         vcCpuUsage.length > 0 ? vcCpuUsage.reduce((sum, c) => sum + c) : [],
       cpu_space:
@@ -854,6 +874,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   const CellTable = ({cell}: {cell: LayoutCell}): JSX.Element => {
+    console.log('CellTable: ', cell)
     switch (cell.i) {
       case 'vcenter': {
         let item: VCenter = vCenters[activeKey] || null
@@ -1282,9 +1303,11 @@ const mapDispatchToProps = {
   handleGetMinionKeyAcceptedList: getMinionKeyAcceptedListAsync,
   handleGetVSphereInfoSaltApi: getVSphereInfoSaltApiAsync,
   handleGetTicketRemoteConsoleAsync: getTicketRemoteConsoleAsync,
-  handleAddVcenter: addVcenter,
+  handleAddVCenterAsync: addVCenterAsync,
+  handleAddVcenterAction: addVcenterAction,
   handleRemoveVcenter: removeVcenter,
   handleUpdateVcenter: updateVcenter,
+  handleDeleteVSphere: deleteVSphereAsync,
 }
 
 export default connect(mapStateToProps, mapDispatchToProps, null)(VMHostsPage)
