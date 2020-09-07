@@ -78,8 +78,12 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
       return
     }
 
-    let url = 'vmrc://clone:' + ticket + '/?moid=' + item.moid
+    let url = 'vmrc://clone:' + ticket + '@<vcenter-host>/?moid=' + item.moid
     window.location.href = url
+  }
+
+  const remoteConsoleDownloadOpen = () => {
+    window.open('https://vmware.com/go/download-vmrc', '_blank')
   }
 
   const Header = (): JSX.Element => {
@@ -199,7 +203,12 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
               <div className={`hosts-table-item`} onClick={remoteConsoleRun}>
                 Remote Console Run
               </div>
-              <div className={`hosts-table-item`}>Remote Console download</div>
+              <div
+                className={`hosts-table-item`}
+                onClick={remoteConsoleDownloadOpen}
+              >
+                Remote Console download
+              </div>
             </Table>
           </>
         </PanelBody>
