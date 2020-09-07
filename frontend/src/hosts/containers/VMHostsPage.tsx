@@ -323,11 +323,20 @@ const VMHostsPage = (props: Props): JSX.Element => {
   useEffect(() => {
     // create Treemenu Object
     const vsphereKeys = _.keys(vspheres)
+    const diff = _.difference(_.keys(vCenters), vsphereKeys)
     if (vsphereKeys.length > 0) {
       vsphereKeys.forEach(key => {
         if (vspheres[key]?.nodes) {
           let vcenter = makeTreeMenuVCenterInfo(vspheres[key])
-          setVCenters({...vCenters, ...vcenter})
+
+          if (diff.length > 0) {
+            let diffVcenters = {...vCenters}
+            delete diffVcenters[diff[0]]
+
+            setVCenters({...diffVcenters, ...vcenter})
+          } else {
+            setVCenters({...vCenters, ...vcenter})
+          }
         }
       })
     } else {
