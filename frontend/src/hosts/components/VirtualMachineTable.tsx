@@ -64,9 +64,7 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
   } = VCENTER_VM_TABLE_SIZING
 
   const remoteConsoleRun = async () => {
-    // etcd db id값 셋팅 필요
-    const id = 'temp'
-    const vsphereInfo = await handleGetVSphereAsync(id)
+    const vsphereInfo = await handleGetVSphereAsync(item.id)
     const ticket = await handleGetTicketRemoteConsoleAsync(
       saltMasterUrl,
       saltMasterToken,
@@ -80,12 +78,12 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
       return
     }
 
-    let url = 'vmrc://clone:' + ticket + '/?moid=' + item.moid
-    window.open(
-      url,
-      'Remote Console',
-      'width=500, height=600, left=500, top=400'
-    )
+    let url = 'vmrc://clone:' + ticket + '@<vcenter-host>/?moid=' + item.moid
+    window.location.href = url
+  }
+
+  const remoteConsoleDownloadOpen = () => {
+    window.open('https://vmware.com/go/download-vmrc', '_blank')
   }
 
   const Header = (): JSX.Element => {
@@ -205,7 +203,12 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
               <div className={`hosts-table-item`} onClick={remoteConsoleRun}>
                 Remote Console Run
               </div>
-              <div className={`hosts-table-item`}>Remote Console download</div>
+              <div
+                className={`hosts-table-item`}
+                onClick={remoteConsoleDownloadOpen}
+              >
+                Remote Console download
+              </div>
             </Table>
           </>
         </PanelBody>

@@ -200,10 +200,10 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
   // form state
   const [target, setTarget] = useState(MINION_LIST_EMPTY)
-  const [address, setAddress] = useState('61.250.122.234')
+  const [address, setAddress] = useState('')
   const [port, setPort] = useState('443')
-  const [user, setUser] = useState('administrator@vsphere.local')
-  const [password, setPassword] = useState('!234Qwer')
+  const [user, setUser] = useState('')
+  const [password, setPassword] = useState('')
   const [protocol, setProtocol] = useState('https')
   const [interval, setInterval] = useState('1m')
 
@@ -713,6 +713,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
                   parent_name: `${vcIpAddress}/${datacenterName}/${clusterName}/${hostName}`,
                   parent_chart_field: 'vcenter/dcname/clustername/esxhostname',
                   minion: minionName[0],
+                  id: props.id,
                   ...vm,
                 }
 
@@ -757,6 +758,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
                 index: i,
                 level: 3,
                 type: 'vm',
+                id: props.id,
                 parent_name: `${vcIpAddress}/${datacenterName}/${hostName}`,
                 parent_chart_field: 'vcenter/dcname/esxhostname',
                 minion: minionName[0],
@@ -794,7 +796,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     vcenter[vcIpAddress] = {
       ...vcenter[vcIpAddress],
 
-      buttons: [updateBtn(vcIpAddress), removeBtn(props.id, props.host)],
+      buttons: [updateBtn(props.id), removeBtn(props.id, props.host)],
       cpu_usage:
         vcCpuUsage.length > 0 ? vcCpuUsage.reduce((sum, c) => sum + c) : [],
       cpu_space:

@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import {AxiosResponse} from 'axios'
+import yaml from 'js-yaml'
 import {getDeep} from 'src/utils/wrappers'
 
 import {proxy} from 'src/utils/queryUrlGenerator'
@@ -370,7 +371,11 @@ export const getMinionKeyAcceptedList = async (
   pToken: string
 ): Promise<String[]> => {
   const info = await Promise.all([getWheelKeyAcceptedList(pUrl, pToken)])
-  const minions = _.get(info[0], 'data.return[0].data.return.minions', [])
+  const minions = _.get(
+    yaml.safeLoad(info[0].data),
+    'return[0].data.return.minions',
+    []
+  )
 
   return minions
 }
@@ -398,7 +403,7 @@ export const getVSphereInfoSaltApi = async (
     ),
   ])
 
-  const vSphere = _.get(info[0], 'data', [])
+  const vSphere = yaml.safeLoad(info[0].data)
   return vSphere
 }
 
@@ -413,9 +418,8 @@ export const getTicketRemoteConsoleApi = async (
   const info = await Promise.all([
     getTicketRemoteConsole(pUrl, pToken, tgt, address, user, password),
   ])
-
-  const vSphere = _.get(info[0], 'data', [])
-  return vSphere
+  const ticket = yaml.safeLoad(info[0].data)
+  return ticket
 }
 
 const calcInterval = (interval: string) => {
@@ -448,7 +452,7 @@ export const getVSphereApi = async (id: number) => {
     url: `/cloudhub/v1/vspheres/${id}`,
     method: 'GET',
   })
-  const vSphere = _.get(info, 'data.vspheres', [])
+  const vSphere = _.get(info, 'data', [])
   return vSphere
 }
 
