@@ -250,16 +250,9 @@ func (s *Service) UpdateVsphere(w http.ResponseWriter, r *http.Request) {
 		orig.Minion = req.Minion
 	}
 
-	defaultOrg, err := s.Store.Organizations(ctx).DefaultOrganization(ctx)
-	if err != nil {
-		unknownErrorWithMessage(w, err, s.Logger)
-		return
-	}
-	orig.Organization = defaultOrg.ID
-
 	if req.Host != "" {
 		// validate that the vsphere host exists
-		if s.vspheresExists(ctx, req.Host, defaultOrg.ID) {
+		if s.vspheresExists(ctx, req.Host, orig.Organization) {
 			invalidData(w, fmt.Errorf("vsphere host does exist in organization"), s.Logger)
 			return
 		}
