@@ -44,6 +44,25 @@ const vspheres = (state = initialState, action: Action) => {
       return updateState
     }
 
+    case ActionTypes.UpdateVcenters: {
+      const {payload} = action
+      const updateState = {...state}
+
+      payload.forEach((p: any) => {
+        if (
+          p.host === updateState[p.host].host &&
+          p.minion === updateState[p.host].minion
+        ) {
+          updateState[p.host] = {
+            ...updateState[p.host],
+            nodes: p.nodes,
+          }
+        }
+      })
+
+      return updateState
+    }
+
     default: {
       return state
     }

@@ -381,28 +381,47 @@ const VMHostsPage = (props: Props): JSX.Element => {
   useEffect(() => {
     // create Treemenu Object
     const vsphereKeys = _.keys(vspheres)
-    const diff = _.difference(_.keys(vCenters), vsphereKeys)
+
     if (vsphereKeys.length > 0) {
-      vsphereKeys.forEach(key => {
-        if (vspheres[key]?.nodes) {
-          let vcenter = makeTreeMenuVCenterInfo(vspheres[key])
-
-          if (diff.length > 0) {
-            let diffVcenters = {...vCenters}
-            delete diffVcenters[diff[0]]
-
-            setVCenters({...diffVcenters, ...vcenter})
-          } else {
-            setVCenters({...vCenters, ...vcenter})
+      let makeTreemenus
+      _.forEach(_.keys(vspheres), key => {
+        const vsphere = vspheres[key]
+        if (vsphere.nodes) {
+          makeTreemenus = {
+            ...makeTreemenus,
+            ...makeTreeMenuVCenterInfo(vsphere),
           }
         }
       })
+
+      if (makeTreemenus) {
+        setVCenters(makeTreemenus)
+      }
     } else {
       setVCenters({})
     }
   }, [vspheres])
 
   useEffect(() => {
+    const vsphereKeys = _.keys(props.vspheres)
+
+    if (vsphereKeys.length > 0) {
+      let makeTreemenus
+      _.forEach(_.keys(vspheres), key => {
+        const vsphere = vspheres[key]
+        if (vsphere.nodes) {
+          makeTreemenus = {
+            ...makeTreemenus,
+            ...makeTreeMenuVCenterInfo(vsphere),
+          }
+        }
+      })
+
+      if (makeTreemenus) {
+        setVCenters(makeTreemenus)
+      }
+    }
+
     verifyLocalStorage(getLocalStorage, setLocalStorage, 'VMHostsPage', {
       proportions: [0.25, 0.75],
       focusedHost: initialFocusedHost,

@@ -27,6 +27,7 @@ export enum ActionTypes {
   AddVcenter = 'ADD_VCENTER',
   RemoveVcenter = 'REMOVE_VCENTER',
   UpdateVcenter = 'UPDATE_VCENTER',
+  UpdateVcenters = 'UPDATE_VCENTERS',
 }
 
 export type Action =
@@ -35,6 +36,7 @@ export type Action =
   | AddVcenterAction
   | RemoveVcenterAction
   | UpdateVcenterAction
+  | UpdateVcentersAction
 
 interface MinionKeyAcceptedListAction {
   type: ActionTypes.MinionKeyAcceptedList
@@ -100,6 +102,18 @@ interface UpdateVcenterAction {
 export const updateVcenter = (payload: any): UpdateVcenterAction => {
   return {
     type: ActionTypes.UpdateVcenter,
+    payload,
+  }
+}
+
+interface UpdateVcentersAction {
+  type: ActionTypes.UpdateVcenters
+  payload: any
+}
+
+export const updateVcentersAction = (payload: any): UpdateVcentersAction => {
+  return {
+    type: ActionTypes.UpdateVcenters,
     payload,
   }
 }
