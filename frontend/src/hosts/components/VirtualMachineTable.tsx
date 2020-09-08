@@ -38,7 +38,7 @@ interface Props {
     user: string,
     password: string
   ) => Promise<String[]>
-  handleGetVSphereAsync: (id: string) => Promise<any>
+  handleGetVSphereAsync: (id: number) => Promise<any>
 }
 
 const VirtualMachineTable = (props: Props): JSX.Element => {

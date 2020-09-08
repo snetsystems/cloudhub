@@ -161,7 +161,7 @@ interface Props {
     protocol: string,
     interval: string
   ) => any
-  handleGetVSphereAsync: (id: string) => Promise<any>
+  handleGetVSphereAsync: (id: number) => Promise<any>
   handleAddVcenterAction: (props: any) => Promise<any>
   handleRemoveVcenter: () => Promise<any>
   handleUpdateVcenter: () => Promise<any>
@@ -313,7 +313,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const calcInterval = (interval: string) => {
     const interv = parseInt(interval) / 1000
     let result = '1m'
-    if (interv === 30000) {
+    if (interv === 30) {
       result = '30s'
     } else {
       result = interv / 60 + 'm'
@@ -322,15 +322,18 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   const vSphereUpdateInfo = async () => {
+    const vsphereInfo = await handleGetVSphereAsync(vSphereId)
     const resultUpdateVCenterAsync = await handleUpdateVSphereAsync(
       vSphereId,
       target,
-      address,
-      user,
-      password,
-      port,
-      protocol,
-      interval
+      address !== _.get(vsphereInfo, 'host', '') ? address : null,
+      user !== _.get(vsphereInfo, 'username', '') ? user : null,
+      password !== _.get(vsphereInfo, 'password', '') ? password : null,
+      port !== _.get(vsphereInfo, 'port', '') ? port : null,
+      protocol !== _.get(vsphereInfo, 'protocol', '') ? protocol : null,
+      interval !== calcInterval(_.get(vsphereInfo, 'interval', 0))
+        ? interval
+        : null
     )
   }
 

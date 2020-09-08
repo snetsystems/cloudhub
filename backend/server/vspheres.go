@@ -31,12 +31,12 @@ func (r *vsphereRequest) ValidCreate() error {
 	if r.Password == "" {
 		return fmt.Errorf("Password required vsphere request body")
 	}
-	if r.Protocol == "" {
-		return fmt.Errorf("Protocol required vsphere request body")
-	}
-	if r.Port == 0 {
-		return fmt.Errorf("Port required vsphere request body")
-	}
+	// if r.Protocol == "" {
+	// 	return fmt.Errorf("Protocol required vsphere request body")
+	// }
+	// if r.Port == 0 {
+	// 	return fmt.Errorf("Port required vsphere request body")
+	// }
 	if r.Interval == 0 {
 		return fmt.Errorf("Interval required vsphere request body")
 	}
@@ -250,16 +250,9 @@ func (s *Service) UpdateVsphere(w http.ResponseWriter, r *http.Request) {
 		orig.Minion = req.Minion
 	}
 
-	defaultOrg, err := s.Store.Organizations(ctx).DefaultOrganization(ctx)
-	if err != nil {
-		unknownErrorWithMessage(w, err, s.Logger)
-		return
-	}
-	orig.Organization = defaultOrg.ID
-
 	if req.Host != "" {
 		// validate that the vsphere host exists
-		if s.vspheresExists(ctx, req.Host, defaultOrg.ID) {
+		if s.vspheresExists(ctx, req.Host, orig.Organization) {
 			invalidData(w, fmt.Errorf("vsphere host does exist in organization"), s.Logger)
 			return
 		}

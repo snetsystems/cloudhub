@@ -3690,9 +3690,8 @@
           {
             "name": "host",
             "in": "body",
-            "description": "vsphere host ip",
             "schema": {
-              "$ref": "#/definitions/Vsphere"
+              "$ref": "#/definitions/VsphereReq"
             }
           },
           {
@@ -3700,7 +3699,7 @@
             "in": "body",
             "description": "vsphere access id",
             "schema": {
-              "$ref": "#/definitions/Vsphere"
+              "$ref": "#/definitions/VsphereReq"
             }
           },
           {
@@ -3708,7 +3707,7 @@
             "in": "body",
             "description": "vsphere access password",
             "schema": {
-              "$ref": "#/definitions/Vsphere"
+              "$ref": "#/definitions/VsphereReq"
             }
           },
           {
@@ -3716,7 +3715,7 @@
             "in": "body",
             "description": "vsphere access protocol",
             "schema": {
-              "$ref": "#/definitions/Vsphere"
+              "$ref": "#/definitions/VsphereReq"
             }
           },
           {
@@ -3724,7 +3723,7 @@
             "in": "body",
             "description": "vsphere access port",
             "schema": {
-              "$ref": "#/definitions/Vsphere"
+              "$ref": "#/definitions/VsphereReq"
             }
           },
           {
@@ -3732,7 +3731,7 @@
             "in": "body",
             "description": "vsphere access interval",
             "schema": {
-              "$ref": "#/definitions/Vsphere"
+              "$ref": "#/definitions/VsphereReq"
             }
           },
           {
@@ -3740,7 +3739,7 @@
             "in": "body",
             "description": "vsphere access minion",
             "schema": {
-              "$ref": "#/definitions/Vsphere"
+              "$ref": "#/definitions/VsphereReq"
             }
           }
         ],
@@ -3755,7 +3754,7 @@
               }
             },
             "schema": {
-              "$ref": "#/definitions/Vspheres"
+              "$ref": "#/definitions/VsphereRes"
             }
           },
           "400": {
@@ -3771,7 +3770,7 @@
             }
           },
           "422": {
-            "description": "Invalid data schema provided to server for organization",
+            "description": "vsphere host does exist in organization",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -3803,7 +3802,7 @@
           "200": {
             "description": "An vsphere object",
             "schema": {
-              "$ref": "#/definitions/Vsphere"
+              "$ref": "#/definitions/VsphereRes"
             }
           },
           "400": {
@@ -3843,7 +3842,7 @@
             "in": "body",
             "description": "Updated vsphere host ip",
             "schema": {
-              "$ref": "#/definitions/Vsphere"
+              "$ref": "#/definitions/VsphereReq"
             },
             "required": true
           },
@@ -3852,7 +3851,7 @@
             "in": "body",
             "description": "Updated vsphere access id",
             "schema": {
-              "$ref": "#/definitions/Vsphere"
+              "$ref": "#/definitions/VsphereReq"
             },
             "required": true
           },
@@ -3861,7 +3860,7 @@
             "in": "body",
             "description": "Updated vsphere access password",
             "schema": {
-              "$ref": "#/definitions/Vsphere"
+              "$ref": "#/definitions/VsphereReq"
             },
             "required": true
           },
@@ -3870,7 +3869,7 @@
             "in": "body",
             "description": "Updated vsphere access protocol",
             "schema": {
-              "$ref": "#/definitions/Vsphere"
+              "$ref": "#/definitions/VsphereReq"
             },
             "required": true
           },
@@ -3879,7 +3878,7 @@
             "in": "body",
             "description": "Updated vsphere access port",
             "schema": {
-              "$ref": "#/definitions/Vsphere"
+              "$ref": "#/definitions/VsphereReq"
             },
             "required": true
           },
@@ -3888,7 +3887,7 @@
             "in": "body",
             "description": "Updated vsphere access interval",
             "schema": {
-              "$ref": "#/definitions/Vsphere"
+              "$ref": "#/definitions/VsphereReq"
             },
             "required": true
           },
@@ -3897,7 +3896,7 @@
             "in": "body",
             "description": "Updated vsphere access minion",
             "schema": {
-              "$ref": "#/definitions/Vsphere"
+              "$ref": "#/definitions/VsphereReq"
             },
             "required": true
           }
@@ -3913,7 +3912,7 @@
               }
             },
             "schema": {
-              "$ref": "#/definitions/Vsphere"
+              "$ref": "#/definitions/VsphereRes"
             }
           },
           "400": {
@@ -6623,6 +6622,10 @@
           {
             "name": "oncue",
             "url": "8900"
+          },
+          {
+            "name": "vsphere",
+            "url": "on"
           }
         ]
       }
@@ -6811,8 +6814,51 @@
         ]
       }
     },
-
-    "Vsphere": {
+    "VsphereReq": {
+      "type": "object",
+      "description": "vsphere access information",
+      "properties": {
+        "host": {
+          "type": "string",
+          "description": "vsphere access host ip"
+        },
+        "username": {
+          "type": "string",
+          "description": "vsphere access username"
+        },
+        "password": {
+          "type": "string",
+          "description": "vsphere access password"
+        },
+        "protocol": {
+          "type": "string",
+          "description": "vsphere access protocol"
+        },
+        "port": {
+          "type": "integer",
+          "description": "vsphere access port"
+        },
+        "interval": {
+          "type": "integer",
+          "description": "vsphere access interval"
+        },
+        "minion": {
+          "type": "string",
+          "description": "vsphere access minion"
+        }
+      },
+      "required": ["host", "username", "password", "interval", "minion"],
+      "example": {
+        "host": "1.1.1.1",
+        "username": "admin@vmware.com",
+        "password": "dkeidj@!@",
+        "protocol": "https",
+        "port": 433,
+        "intermal": 1,
+        "minion": "minion01"
+      }
+    },
+    "VsphereRes": {
       "type": "object",
       "description": "vsphere access information",
       "properties": {
@@ -6862,18 +6908,10 @@
         },
         "organization": {
           "type": "string",
-          "description": "vsphere organization"
+          "description": "cloudhub organization"
         }
       },
-      "required": [
-        "host",
-        "username",
-        "password",
-        "protocol",
-        "port",
-        "interval",
-        "minion"
-      ],
+      "required": ["host", "username", "password", "interval", "minion"],
       "example": {
         "id": "1",
         "host": "1.1.1.1",
@@ -6885,7 +6923,8 @@
         "protocol": "https",
         "port": 433,
         "intermal": 1,
-        "minion": "minion01"
+        "minion": "minion01",
+        "organization": "123"
       }
     },
     "Vspheres": {
@@ -6906,7 +6945,7 @@
         "vspheres": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/Vsphere"
+            "$ref": "#/definitions/VsphereRes"
           }
         }
       }

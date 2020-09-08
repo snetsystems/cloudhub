@@ -958,14 +958,14 @@ type BuildStore interface {
 // Vsphere represents an vsphere.
 type Vsphere struct {
 	ID            string   `json:"id,string,omitempty"`
-	Host          string   `json:"host,string,omitempty"`
-	UserName      string   `json:"username,string,omitempty"`
-	Password      string   `json:"password,omitempty"`
+	Host          string   `json:"host,string"`
+	UserName      string   `json:"username,string"`
+	Password      string   `json:"password"`
 	Protocol      string   `json:"protocol,omitempty"`
 	Port          int      `json:"port,omitempty"`
-	Interval      int      `json:"interval,omitempty"`
-	Minion        string   `json:"minion,omitempty"`
-	Organization  string   `json:"organization,omitempty"`
+	Interval      int      `json:"interval"`
+	Minion        string   `json:"minion"`
+	Organization  string   `json:"organization"`
 }
 
 // VspheresStore is the Storage and retrieval of information

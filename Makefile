@@ -21,7 +21,7 @@ GO111MODULE=on
 
 .PHONY: all build gobuild assets dep clean test gotest gotestrace jstest run run-dev ctags
 
-all: dep build
+all: dep gen build
 
 build: assets ${BINARY}
 
@@ -73,7 +73,9 @@ endif
 gen: internal.pb.go
 
 internal.pb.go: backend/kv/internal/internal.proto
-	cd backend && GO111MODULE=on go generate -x ./kv/internal
+	@echo "Installing go-protoc"
+	go get -u github.com/gogo/protobuf/protoc-gen-gofast
+	go generate -x ./backend/kv/internal
 
 test: jstest gotest gotestrace lint-ci
 
