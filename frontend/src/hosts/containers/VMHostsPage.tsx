@@ -50,8 +50,7 @@ import {
   getTicketRemoteConsoleAsync,
   addVCenterAsync,
   addVcenterAction,
-  removeVcenter,
-  updateVcenter,
+  updateVSphereAsync,
   deleteVSphereAsync,
   getVSphereAsync,
 } from 'src/hosts/actions'
@@ -152,6 +151,16 @@ interface Props {
     protocol: string,
     interval: string
   ) => any
+  handleUpdateVSphereAsync: (
+    id: number,
+    target: string,
+    address: string,
+    user: string,
+    password: string,
+    port: string,
+    protocol: string,
+    interval: string
+  ) => any
   handleGetVSphereAsync: (id: string) => Promise<any>
   handleAddVcenterAction: (props: any) => Promise<any>
   handleRemoveVcenter: () => Promise<any>
@@ -171,9 +180,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
     handleGetVSphereInfoSaltApi,
     handleGetTicketRemoteConsoleAsync,
     handleAddVCenterAsync,
+    handleUpdateVSphereAsync,
     handleAddVcenterAction,
-    handleRemoveVcenter,
-    handleUpdateVcenter,
     handleDeleteVSphere,
     vspheres,
     handleClearTimeout,
@@ -206,6 +214,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const [password, setPassword] = useState('')
   const [protocol, setProtocol] = useState('https')
   const [interval, setInterval] = useState('1m')
+  const [vSphereId, setVSphereId] = useState(0)
 
   // host state
   const [focusedHost, setFocusedHost] = useState<Item>(initialFocusedHost)
@@ -223,6 +232,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const [selectMinion, setSelectMinion] = useState('')
   const [saltMasterUrl, setSaltMasterUrl] = useState('')
   const [saltMasterToken, setSaltMasterToken] = useState('')
+  const [isUpdate, setIsUpdate] = useState(false)
 
   const handleChangeTarget = (e: {text: string}): void => {
     setTarget(e.text)
@@ -272,11 +282,59 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
     setAcceptedMinionList(minionList)
     setIsModalVisible(true)
+    setIsUpdate(false)
+  }
+
+  const handleUpdateOpen = async (id): Promise<void> => {
+    const vsphereInfo = await handleGetVSphereAsync(id)
+
+    setAddress(_.get(vsphereInfo, 'host', ''))
+    setPort(_.get(vsphereInfo, 'port', '443'))
+    setUser(_.get(vsphereInfo, 'username', ''))
+    setPassword(_.get(vsphereInfo, 'password', ''))
+    setProtocol(_.get(vsphereInfo, 'protocol', 'https'))
+    setInterval(calcInterval(_.get(vsphereInfo, 'interval', '60000')))
+    setTarget(_.get(vsphereInfo, 'minion', MINION_LIST_EMPTY))
+    setAcceptedMinionList([_.get(vsphereInfo, 'minion', MINION_LIST_EMPTY)])
+    setIsModalVisible(true)
+    setIsUpdate(true)
+    setVSphereId(id)
   }
 
   const handleConnection = async () => {
     handleClose()
+    if (isUpdate) {
+      vSphereUpdateInfo()
+    } else {
+      vSphereNewConnection()
+    }
+  }
 
+  const calcInterval = (interval: string) => {
+    const interv = parseInt(interval) / 1000
+    let result = '1m'
+    if (interv === 30000) {
+      result = '30s'
+    } else {
+      result = interv / 60 + 'm'
+    }
+    return result
+  }
+
+  const vSphereUpdateInfo = async () => {
+    const resultUpdateVCenterAsync = await handleUpdateVSphereAsync(
+      vSphereId,
+      target,
+      address,
+      user,
+      password,
+      port,
+      protocol,
+      interval
+    )
+  }
+
+  const vSphereNewConnection = async () => {
     const vSphereInfo = await handleGetVSphereInfoSaltApi(
       saltMasterUrl,
       saltMasterToken,
@@ -584,16 +642,10 @@ const VMHostsPage = (props: Props): JSX.Element => {
     setLocalStorage('VMHostsPage', {...getLocal, layout})
   }
 
-  const updateBtn = (ipAddress: string) => (): JSX.Element => {
+  const updateBtn = (id: number, host: 'string') => (): JSX.Element => {
     return (
       <button className={`btn btn-default btn-xs btn-square`}>
-        <span
-          className={`icon pencil`}
-          onClick={e => {
-            e.stopPropagation()
-            console.log('updateBtn: ', ipAddress)
-          }}
-        />
+        <span className={`icon pencil`} onClick={e => handleUpdateOpen(id)} />
       </button>
     )
   }
@@ -796,7 +848,10 @@ const VMHostsPage = (props: Props): JSX.Element => {
     vcenter[vcIpAddress] = {
       ...vcenter[vcIpAddress],
 
-      buttons: [updateBtn(props.id), removeBtn(props.id, props.host)],
+      buttons: [
+        updateBtn(props.id, props.host),
+        removeBtn(props.id, props.host),
+      ],
       cpu_usage:
         vcCpuUsage.length > 0 ? vcCpuUsage.reduce((sum, c) => sum + c) : [],
       cpu_space:
@@ -1290,7 +1345,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
                 handleChangeInterval={handleChangeInterval}
               />
             }
-            confirmText={'Add vCenter'}
+            confirmText={isUpdate ? 'Update vCenter' : 'Add vCenter'}
             confirmButtonStatus={
               address &&
               user &&
@@ -1319,9 +1374,8 @@ const mapDispatchToProps = {
   handleGetVSphereInfoSaltApi: getVSphereInfoSaltApiAsync,
   handleGetTicketRemoteConsoleAsync: getTicketRemoteConsoleAsync,
   handleAddVCenterAsync: addVCenterAsync,
+  handleUpdateVSphereAsync: updateVSphereAsync,
   handleAddVcenterAction: addVcenterAction,
-  handleRemoveVcenter: removeVcenter,
-  handleUpdateVcenter: updateVcenter,
   handleDeleteVSphere: deleteVSphereAsync,
   handleGetVSphereAsync: getVSphereAsync,
 }

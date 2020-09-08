@@ -254,27 +254,16 @@ export const addVCenterAsync = (
   }
 }
 
-interface updateParams {
-  id: number
-  tgt?: string
-  address?: string
-  user?: string
-  password?: string
-  port?: string
-  protocol?: string
-  interval?: string
-}
-
-export const updateVSphereAsync = ({
-  id,
-  tgt,
-  address,
-  user,
-  password,
-  port,
-  protocol,
-  interval,
-}: updateParams) => async (dispatch: Dispatch<Action>) => {
+export const updateVSphereAsync = (
+  id: number,
+  tgt: string,
+  address: string,
+  user: string,
+  password: string,
+  port: string,
+  protocol: string,
+  interval: string
+) => async (dispatch: Dispatch<Action>) => {
   try {
     const vSpheres = await updateVSphereApi({
       id,
