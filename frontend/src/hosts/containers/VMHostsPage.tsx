@@ -1322,7 +1322,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
           />
           <HostModal
             isVisible={isModalVisible}
-            headingTitle={'Connection vCenter'}
+            headingTitle={isUpdate ? 'Update vCenter' : 'Connection vCenter'}
             onCancel={handleClose}
             onConfirm={handleConnection}
             message={
