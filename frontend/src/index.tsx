@@ -114,7 +114,7 @@ class Root extends PureComponent<{}, State> {
     dispatch
   )
   private heartbeatTimer: number
-  private timeout: any = {}
+  private timeout: {[name: string]: number} = {}
   private handleClearTimeout = (key: string) => {
     window.clearTimeout(this.timeout[key])
   }
