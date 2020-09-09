@@ -155,7 +155,10 @@ export const getVSphereInfoSaltApiAsync = (
       protocol
     )
 
-    if (typeof _.values(vSphereInfo.return[0])[0] === 'string') {
+    if (
+      typeof _.values(vSphereInfo.return[0])[0] === 'string' ||
+      typeof _.values(vSphereInfo.return[0])[0] === 'boolean'
+    ) {
       let error = Error(_.values(vSphereInfo.return[0])[0])
       const notify = bindActionCreators(notifyAction, dispatch)
       notify(notifyConnectVCenterFailed(error))
