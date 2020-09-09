@@ -328,10 +328,12 @@ class Root extends PureComponent<{}, State> {
 
       result
         .then(async data => {
-          const succesData = _.filter(data, d => d.status === 'fulfilled')
+          const succesData = _.filter(
+            data,
+            d => d.status === 'fulfilled' && d.value
+          )
           if (succesData.length === 0) return
           const values = _.map(succesData, (s: any) => s.value)
-
           const updateVcenters = _.map(values, value => {
             const minion = _.keys(value.return[0])[0]
             const host = value.return[0][minion]['vcenter']
@@ -341,14 +343,26 @@ class Root extends PureComponent<{}, State> {
               nodes: value,
             }
           })
+
           await this.handleUpdateVcenters(updateVcenters)
-          return
+          return updateVcenters
         })
-        .then(() => {
-          _.keys(vSpheres).forEach(async (key: string) => {
+        .then(updateVcenters => {
+          const vSpheresKeys = _.keys(vSpheres)
+          const getKeys = _.filter(vSpheresKeys, k => {
+            const filtered = _.filter(updateVcenters, v => {
+              return k === v.host
+            })
+            return filtered
+          })
+
+          getKeys.forEach(async (key: string) => {
             const vSphere = vSpheres[key]
             await this.requestVSphere(key, salt, vSphere)
           })
+        })
+        .catch(err => {
+          console.error('err: ', err)
         })
     } catch (error) {
       dispatch(errorThrown(error))
