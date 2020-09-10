@@ -102,4 +102,4 @@ const ChartsLayoutRenderer = ({
   )
 }
 
-export default ChartsLayoutRenderer
+export default React.memo(ChartsLayoutRenderer)

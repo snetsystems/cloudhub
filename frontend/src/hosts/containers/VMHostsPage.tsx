@@ -462,14 +462,20 @@ const VMHostsPage = (props: Props): JSX.Element => {
       measurement = VSPHERE_HOST
     }
 
+    let init_layouts: Layout[] = []
+    if (layouts.length == 0) {
+      const layoutRst = await getLayouts()
+      init_layouts = getDeep<Layout[]>(layoutRst, 'data.layouts', [])
+    }
+
     const {filteredLayouts} = await getLayoutsforHostApp(
-      layouts,
+      layouts.length > 0 ? layouts : init_layouts,
       props.minion,
       measurement
     )
 
-    const layoutCells = getCells(filteredLayouts, source)
-    const tempVars = generateForHosts(source)
+    const getLayoutCells = getCells(filteredLayouts, source)
+    const getTempVars = generateForHosts(source)
 
     let vmParam: vmParam
     if (vType === 'vcenter') {
@@ -506,8 +512,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
       setVmParentName(props.parent_name)
     }
 
-    setLayoutCells(layoutCells)
-    setTempVars(tempVars)
+    setLayoutCells(getLayoutCells)
+    setTempVars(getTempVars)
     setVmParam(vmParam)
   }
 
