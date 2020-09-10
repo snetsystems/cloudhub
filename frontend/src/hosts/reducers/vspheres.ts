@@ -32,13 +32,16 @@ const vspheres = (state = initialState, action: Action) => {
 
     case ActionTypes.UpdateVcenter: {
       const {payload} = action
-      if (payload) {
-      }
-
       let updateState = {...state}
-      updateState[payload.host] = {
-        ...updateState[payload.host],
-        ...payload,
+      if (payload?.id) {
+        _.forEach(_.keys(updateState), key => {
+          if (updateState[key].id === payload.id) {
+            delete updateState[key]
+            updateState[payload.host] = {
+              ...payload,
+            }
+          }
+        })
       }
 
       return updateState
@@ -48,14 +51,14 @@ const vspheres = (state = initialState, action: Action) => {
       const {payload} = action
       const updateState = {...state}
 
-      payload.forEach((p: any) => {
+      _.forEach(payload, (p: any) => {
         if (
           p.host === updateState[p.host].host &&
           p.minion === updateState[p.host].minion
         ) {
           updateState[p.host] = {
             ...updateState[p.host],
-            nodes: p.nodes,
+            ...p,
           }
         }
       })

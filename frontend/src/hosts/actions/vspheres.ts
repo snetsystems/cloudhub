@@ -99,7 +99,7 @@ interface UpdateVcenterAction {
   payload: any
 }
 
-export const updateVcenter = (payload: any): UpdateVcenterAction => {
+export const updateVcenterAction = (payload: any): UpdateVcenterAction => {
   return {
     type: ActionTypes.UpdateVcenter,
     payload,
@@ -108,7 +108,21 @@ export const updateVcenter = (payload: any): UpdateVcenterAction => {
 
 interface UpdateVcentersAction {
   type: ActionTypes.UpdateVcenters
-  payload: any
+  payload: {
+    id?: number
+    host?: string
+    username?: string
+    password?: string
+    protocol?: string
+    port?: number
+    interval?: number
+    organization?: string
+    minion?: string
+    links?: {
+      self: string
+    }
+    nodes?: any
+  }
 }
 
 export const updateVcentersAction = (payload: any): UpdateVcentersAction => {
@@ -311,6 +325,7 @@ export const deleteVSphereAsync = (id: number, host: string) => async (
 
     if (status === 204 && statusText === 'No Content') {
       dispatch(removeVcenter(host))
+      return 'DELETE_SUCCESS'
     }
   } catch (error) {
     console.error(error)

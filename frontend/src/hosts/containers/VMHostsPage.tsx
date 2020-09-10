@@ -51,6 +51,7 @@ import {
   addVCenterAsync,
   addVcenterAction,
   updateVSphereAsync,
+  updateVcenterAction,
   deleteVSphereAsync,
   getVSphereAsync,
 } from 'src/hosts/actions'
@@ -131,8 +132,7 @@ interface Props {
     user: string,
     password: string,
     port: string,
-    protocol: string,
-    interval: string
+    protocol: string
   ) => Promise<any>
   handleGetTicketRemoteConsoleAsync: (
     saltMasterUrl: string,
@@ -168,6 +168,7 @@ interface Props {
   handleDeleteVSphere: (id: number, host: string) => Promise<any>
   vspheres: any
   handleClearTimeout: (key: string) => void
+  handleUpdateVcenterAction: (any) => void
 }
 
 const VMHostsPage = (props: Props): JSX.Element => {
@@ -186,6 +187,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     vspheres,
     handleClearTimeout,
     handleGetVSphereAsync,
+    handleUpdateVcenterAction,
   } = props
   const intervalItems = ['30s', '1m', '5m']
   const initialFocusedHost: Item = {
@@ -215,7 +217,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const [protocol, setProtocol] = useState('https')
   const [interval, setInterval] = useState('1m')
   const [vSphereId, setVSphereId] = useState(0)
-
   // host state
   const [focusedHost, setFocusedHost] = useState<Item>(initialFocusedHost)
   const [layout, setLayout] = useState<LayoutCell[]>([])
@@ -323,18 +324,37 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
   const vSphereUpdateInfo = async () => {
     const vsphereInfo = await handleGetVSphereAsync(vSphereId)
-    const resultUpdateVCenterAsync = await handleUpdateVSphereAsync(
-      vSphereId,
+
+    handleGetVSphereInfoSaltApi(
+      saltMasterUrl,
+      saltMasterToken,
       target,
-      address !== _.get(vsphereInfo, 'host', '') ? address : null,
-      user !== _.get(vsphereInfo, 'username', '') ? user : null,
-      password !== _.get(vsphereInfo, 'password', '') ? password : null,
-      port !== _.get(vsphereInfo, 'port', '') ? port : null,
-      protocol !== _.get(vsphereInfo, 'protocol', '') ? protocol : null,
-      interval !== calcInterval(_.get(vsphereInfo, 'interval', 0))
-        ? interval
-        : null
+      address,
+      user,
+      password,
+      port,
+      protocol
     )
+      .then(result => {
+        if (!result) return
+        handleUpdateVSphereAsync(
+          vSphereId,
+          target,
+          address !== _.get(vsphereInfo, 'host', '') ? address : null,
+          user !== _.get(vsphereInfo, 'username', '') ? user : null,
+          password !== _.get(vsphereInfo, 'password', '') ? password : null,
+          port !== _.get(vsphereInfo, 'port', '') ? port : null,
+          protocol !== _.get(vsphereInfo, 'protocol', '') ? protocol : null,
+          interval !== calcInterval(_.get(vsphereInfo, 'interval', 0))
+            ? interval
+            : null
+        ).then(async ({data}) => {
+          handleUpdateVcenterAction({...data, nodes: result})
+        })
+      })
+      .catch(err => {
+        console.error('err: ', err)
+      })
   }
 
   const vSphereNewConnection = async () => {
@@ -346,8 +366,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
       user,
       password,
       port,
-      protocol,
-      interval
+      protocol
     ).then(async vSphereInfo => {
       if (!vSphereInfo) return
 
@@ -666,15 +685,21 @@ const VMHostsPage = (props: Props): JSX.Element => {
     setLocalStorage('VMHostsPage', {...getLocal, layout})
   }
 
-  const updateBtn = (id: number, host: 'string') => (): JSX.Element => {
+  const updateBtn = (id: number) => (): JSX.Element => {
     return (
       <button className={`btn btn-default btn-xs btn-square`}>
-        <span className={`icon pencil`} onClick={e => handleUpdateOpen(id)} />
+        <span
+          className={`icon pencil`}
+          onClick={e => {
+            e.stopPropagation()
+            handleUpdateOpen(id)
+          }}
+        />
       </button>
     )
   }
 
-  const removeBtn = (id: number, host: 'string') => (): JSX.Element => {
+  const removeBtn = (id: number, host: string) => (): JSX.Element => {
     return (
       <ConfirmButton
         text="Delete"
@@ -682,8 +707,11 @@ const VMHostsPage = (props: Props): JSX.Element => {
         size="btn-xs"
         icon={'trash'}
         confirmAction={() => {
-          handleDeleteVSphere(id, host)
-          handleClearTimeout(host)
+          handleDeleteVSphere(id, host).then(data => {
+            if (data === 'DELETE_SUCCESS') {
+              handleClearTimeout(host)
+            }
+          })
         }}
         isEventStopPropagation={true}
         isButtonLeaveHide={true}
@@ -872,10 +900,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     vcenter[vcIpAddress] = {
       ...vcenter[vcIpAddress],
 
-      buttons: [
-        updateBtn(props.id, props.host),
-        removeBtn(props.id, props.host),
-      ],
+      buttons: [updateBtn(props.id), removeBtn(props.id, props.host)],
       cpu_usage:
         vcCpuUsage.length > 0 ? vcCpuUsage.reduce((sum, c) => sum + c) : [],
       cpu_space:
@@ -1448,6 +1473,7 @@ const mapDispatchToProps = {
   handleAddVcenterAction: addVcenterAction,
   handleDeleteVSphere: deleteVSphereAsync,
   handleGetVSphereAsync: getVSphereAsync,
+  handleUpdateVcenterAction: updateVcenterAction,
 }
 
 export default connect(mapStateToProps, mapDispatchToProps, null)(VMHostsPage)
