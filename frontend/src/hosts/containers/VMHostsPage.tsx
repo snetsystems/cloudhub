@@ -1325,6 +1325,18 @@ const VMHostsPage = (props: Props): JSX.Element => {
     setFocusedHost(props)
   }
 
+  const compareRedux = () => {
+    let isCheck = true
+
+    if (props.vspheres?.[address]) {
+      if (props.vspheres[address]?.minion === target) {
+        isCheck = false
+      }
+    }
+
+    return isCheck
+  }
+
   const threesizerDivisions = () => {
     const [leftSize, rightSize] = proportions
 
@@ -1446,7 +1458,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
               user &&
               password &&
               protocol &&
-              target !== MINION_LIST_EMPTY
+              target !== MINION_LIST_EMPTY &&
+              compareRedux()
                 ? ComponentStatus.Default
                 : ComponentStatus.Disabled
             }
