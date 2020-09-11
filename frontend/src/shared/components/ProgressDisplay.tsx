@@ -1,6 +1,5 @@
 import React from 'react'
 import {Line} from 'rc-progress'
-import 'rc-progress/assets/index.css'
 import {transFormatBytes, transFormatFrequency} from 'src/shared/utils/units'
 
 export const convertUnit = (unit: string, value: number) => {

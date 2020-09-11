@@ -27,6 +27,7 @@ export enum ActionTypes {
   AddVcenter = 'ADD_VCENTER',
   RemoveVcenter = 'REMOVE_VCENTER',
   UpdateVcenter = 'UPDATE_VCENTER',
+  UpdateVcenters = 'UPDATE_VCENTERS',
 }
 
 export type Action =
@@ -35,6 +36,7 @@ export type Action =
   | AddVcenterAction
   | RemoveVcenterAction
   | UpdateVcenterAction
+  | UpdateVcentersAction
 
 interface MinionKeyAcceptedListAction {
   type: ActionTypes.MinionKeyAcceptedList
@@ -97,9 +99,35 @@ interface UpdateVcenterAction {
   payload: any
 }
 
-export const updateVcenter = (payload: any): UpdateVcenterAction => {
+export const updateVcenterAction = (payload: any): UpdateVcenterAction => {
   return {
     type: ActionTypes.UpdateVcenter,
+    payload,
+  }
+}
+
+interface UpdateVcentersAction {
+  type: ActionTypes.UpdateVcenters
+  payload: {
+    id?: number
+    host?: string
+    username?: string
+    password?: string
+    protocol?: string
+    port?: number
+    interval?: number
+    organization?: string
+    minion?: string
+    links?: {
+      self: string
+    }
+    nodes?: any
+  }
+}
+
+export const updateVcentersAction = (payload: any): UpdateVcentersAction => {
+  return {
+    type: ActionTypes.UpdateVcenters,
     payload,
   }
 }
@@ -141,7 +169,10 @@ export const getVSphereInfoSaltApiAsync = (
       protocol
     )
 
-    if (typeof _.values(vSphereInfo.return[0])[0] === 'string') {
+    if (
+      typeof _.values(vSphereInfo.return[0])[0] === 'string' ||
+      typeof _.values(vSphereInfo.return[0])[0] === 'boolean'
+    ) {
       let error = Error(_.values(vSphereInfo.return[0])[0])
       const notify = bindActionCreators(notifyAction, dispatch)
       notify(notifyConnectVCenterFailed(error))
@@ -294,6 +325,7 @@ export const deleteVSphereAsync = (id: number, host: string) => async (
 
     if (status === 204 && statusText === 'No Content') {
       dispatch(removeVcenter(host))
+      return 'DELETE_SUCCESS'
     }
   } catch (error) {
     console.error(error)

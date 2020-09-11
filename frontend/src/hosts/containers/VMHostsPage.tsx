@@ -51,6 +51,7 @@ import {
   addVCenterAsync,
   addVcenterAction,
   updateVSphereAsync,
+  updateVcenterAction,
   deleteVSphereAsync,
   getVSphereAsync,
 } from 'src/hosts/actions'
@@ -131,8 +132,7 @@ interface Props {
     user: string,
     password: string,
     port: string,
-    protocol: string,
-    interval: string
+    protocol: string
   ) => Promise<any>
   handleGetTicketRemoteConsoleAsync: (
     saltMasterUrl: string,
@@ -168,6 +168,7 @@ interface Props {
   handleDeleteVSphere: (id: number, host: string) => Promise<any>
   vspheres: any
   handleClearTimeout: (key: string) => void
+  handleUpdateVcenterAction: (any) => void
 }
 
 const VMHostsPage = (props: Props): JSX.Element => {
@@ -186,6 +187,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     vspheres,
     handleClearTimeout,
     handleGetVSphereAsync,
+    handleUpdateVcenterAction,
   } = props
   const intervalItems = ['30s', '1m', '5m']
   const initialFocusedHost: Item = {
@@ -215,7 +217,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const [protocol, setProtocol] = useState('https')
   const [interval, setInterval] = useState('1m')
   const [vSphereId, setVSphereId] = useState(0)
-
   // host state
   const [focusedHost, setFocusedHost] = useState<Item>(initialFocusedHost)
   const [layout, setLayout] = useState<LayoutCell[]>([])
@@ -323,22 +324,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
   const vSphereUpdateInfo = async () => {
     const vsphereInfo = await handleGetVSphereAsync(vSphereId)
-    const resultUpdateVCenterAsync = await handleUpdateVSphereAsync(
-      vSphereId,
-      target,
-      address !== _.get(vsphereInfo, 'host', '') ? address : null,
-      user !== _.get(vsphereInfo, 'username', '') ? user : null,
-      password !== _.get(vsphereInfo, 'password', '') ? password : null,
-      port !== _.get(vsphereInfo, 'port', '') ? port : null,
-      protocol !== _.get(vsphereInfo, 'protocol', '') ? protocol : null,
-      interval !== calcInterval(_.get(vsphereInfo, 'interval', 0))
-        ? interval
-        : null
-    )
-  }
 
-  const vSphereNewConnection = async () => {
-    const vSphereInfo = await handleGetVSphereInfoSaltApi(
+    handleGetVSphereInfoSaltApi(
       saltMasterUrl,
       saltMasterToken,
       target,
@@ -346,31 +333,65 @@ const VMHostsPage = (props: Props): JSX.Element => {
       user,
       password,
       port,
-      protocol,
-      interval
+      protocol
     )
+      .then(result => {
+        if (!result) return
+        handleUpdateVSphereAsync(
+          vSphereId,
+          target,
+          address !== _.get(vsphereInfo, 'host', '') ? address : null,
+          user !== _.get(vsphereInfo, 'username', '') ? user : null,
+          password !== _.get(vsphereInfo, 'password', '') ? password : null,
+          port !== _.get(vsphereInfo, 'port', '') ? port : null,
+          protocol !== _.get(vsphereInfo, 'protocol', '') ? protocol : null,
+          interval !== calcInterval(_.get(vsphereInfo, 'interval', 0))
+            ? interval
+            : null
+        ).then(async ({data}) => {
+          handleUpdateVcenterAction({...data, nodes: result})
+        })
+      })
+      .catch(err => {
+        console.error('err: ', err)
+      })
+  }
 
-    const resultAddVCenterAsync = await handleAddVCenterAsync(
+  const vSphereNewConnection = async () => {
+    handleGetVSphereInfoSaltApi(
+      saltMasterUrl,
+      saltMasterToken,
       target,
       address,
       user,
       password,
       port,
-      protocol,
-      interval
-    )
+      protocol
+    ).then(async vSphereInfo => {
+      if (!vSphereInfo) return
 
-    if (vSphereInfo && resultAddVCenterAsync) {
-      let dump = {}
-      dump[address] = {
-        ...resultAddVCenterAsync.data,
-        nodes: {
-          ...vSphereInfo,
-        },
+      const resultAddVCenterAsync = await handleAddVCenterAsync(
+        target,
+        address,
+        user,
+        password,
+        port,
+        protocol,
+        interval
+      )
+
+      if (vSphereInfo && resultAddVCenterAsync) {
+        let dump = {}
+        dump[address] = {
+          ...resultAddVCenterAsync.data,
+          nodes: {
+            ...vSphereInfo,
+          },
+        }
+
+        handleAddVcenterAction({...dump})
       }
-
-      handleAddVcenterAction({...dump})
-    }
+    })
   }
 
   const getSaltAddon = (): Addon => {
@@ -384,28 +405,47 @@ const VMHostsPage = (props: Props): JSX.Element => {
   useEffect(() => {
     // create Treemenu Object
     const vsphereKeys = _.keys(vspheres)
-    const diff = _.difference(_.keys(vCenters), vsphereKeys)
+
     if (vsphereKeys.length > 0) {
-      vsphereKeys.forEach(key => {
-        if (vspheres[key]?.nodes) {
-          let vcenter = makeTreeMenuVCenterInfo(vspheres[key])
-
-          if (diff.length > 0) {
-            let diffVcenters = {...vCenters}
-            delete diffVcenters[diff[0]]
-
-            setVCenters({...diffVcenters, ...vcenter})
-          } else {
-            setVCenters({...vCenters, ...vcenter})
+      let makeTreemenus
+      _.forEach(_.keys(vspheres), key => {
+        const vsphere = vspheres[key]
+        if (vsphere.nodes) {
+          makeTreemenus = {
+            ...makeTreemenus,
+            ...makeTreeMenuVCenterInfo(vsphere),
           }
         }
       })
+
+      if (makeTreemenus) {
+        setVCenters(makeTreemenus)
+      }
     } else {
       setVCenters({})
     }
   }, [vspheres])
 
   useEffect(() => {
+    const vsphereKeys = _.keys(props.vspheres)
+
+    if (vsphereKeys.length > 0) {
+      let makeTreemenus
+      _.forEach(_.keys(vspheres), key => {
+        const vsphere = vspheres[key]
+        if (vsphere.nodes) {
+          makeTreemenus = {
+            ...makeTreemenus,
+            ...makeTreeMenuVCenterInfo(vsphere),
+          }
+        }
+      })
+
+      if (makeTreemenus) {
+        setVCenters(makeTreemenus)
+      }
+    }
+
     verifyLocalStorage(getLocalStorage, setLocalStorage, 'VMHostsPage', {
       proportions: [0.25, 0.75],
       focusedHost: initialFocusedHost,
@@ -651,15 +691,21 @@ const VMHostsPage = (props: Props): JSX.Element => {
     setLocalStorage('VMHostsPage', {...getLocal, layout})
   }
 
-  const updateBtn = (id: number, host: 'string') => (): JSX.Element => {
+  const updateBtn = (id: number) => (): JSX.Element => {
     return (
       <button className={`btn btn-default btn-xs btn-square`}>
-        <span className={`icon pencil`} onClick={e => handleUpdateOpen(id)} />
+        <span
+          className={`icon pencil`}
+          onClick={e => {
+            e.stopPropagation()
+            handleUpdateOpen(id)
+          }}
+        />
       </button>
     )
   }
 
-  const removeBtn = (id: number, host: 'string') => (): JSX.Element => {
+  const removeBtn = (id: number, host: string) => (): JSX.Element => {
     return (
       <ConfirmButton
         text="Delete"
@@ -667,8 +713,11 @@ const VMHostsPage = (props: Props): JSX.Element => {
         size="btn-xs"
         icon={'trash'}
         confirmAction={() => {
-          handleDeleteVSphere(id, host)
-          handleClearTimeout(host)
+          handleDeleteVSphere(id, host).then(data => {
+            if (data === 'DELETE_SUCCESS') {
+              handleClearTimeout(host)
+            }
+          })
         }}
         isEventStopPropagation={true}
         isButtonLeaveHide={true}
@@ -857,10 +906,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     vcenter[vcIpAddress] = {
       ...vcenter[vcIpAddress],
 
-      buttons: [
-        updateBtn(props.id, props.host),
-        removeBtn(props.id, props.host),
-      ],
+      buttons: [updateBtn(props.id), removeBtn(props.id, props.host)],
       cpu_usage:
         vcCpuUsage.length > 0 ? vcCpuUsage.reduce((sum, c) => sum + c) : [],
       cpu_space:
@@ -954,245 +1000,291 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const CellTable = ({cell}: {cell: LayoutCell}): JSX.Element => {
     switch (cell.i) {
       case 'vcenter': {
-        let item: VCenter = vCenters[activeKey] || null
+        try {
+          let item: VCenter = vCenters[activeKey] || null
 
-        return (
-          <VcenterTable
-            isEditable={true}
-            cellTextColor={cellTextColor}
-            cellBackgroundColor={cellBackgroundColor}
-            item={item}
-          />
-        )
+          return (
+            <VcenterTable
+              isEditable={true}
+              cellTextColor={cellTextColor}
+              cellBackgroundColor={cellBackgroundColor}
+              item={item}
+            />
+          )
+        } catch (error) {
+          console.error(error)
+        }
       }
       case 'charts': {
-        return (
-          <ChartsLayoutRenderer
-            source={source}
-            layoutCells={layoutCells}
-            tempVars={tempVars}
-            timeRange={timeRange}
-            manualRefresh={manualRefresh}
-            vmParam={vmParam}
-            vmParentChartField={vmParentChartField}
-            vmParentName={vmParentName}
-            isEditable={true}
-            cellTextColor={cellTextColor}
-            cellBackgroundColor={cellBackgroundColor}
-          />
-        )
-      }
-      case 'datacenters': {
-        let items: VMDatacenter[] = []
-        if (focusedHost.type === 'vcenter') {
-          items = _.filter(
-            vCenters[activeKey.split('/')[0]].nodes,
-            k => k.type === 'datacenter'
+        try {
+          return (
+            <ChartsLayoutRenderer
+              source={source}
+              layoutCells={layoutCells}
+              tempVars={tempVars}
+              timeRange={timeRange}
+              manualRefresh={manualRefresh}
+              vmParam={vmParam}
+              vmParentChartField={vmParentChartField}
+              vmParentName={vmParentName}
+              isEditable={true}
+              cellTextColor={cellTextColor}
+              cellBackgroundColor={cellBackgroundColor}
+            />
           )
+        } catch (error) {
+          console.error(error)
         }
-        return (
-          <DatacentersTable
-            isEditable={true}
-            cellTextColor={cellTextColor}
-            cellBackgroundColor={cellBackgroundColor}
-            handleSelectHost={handleSelectHost}
-            items={items}
-          />
-        )
+      }
+
+      case 'datacenters': {
+        try {
+          let items: VMDatacenter[] = []
+          if (focusedHost.type === 'vcenter') {
+            items = _.filter(
+              vCenters[activeKey.split('/')[0]].nodes,
+              k => k.type === 'datacenter'
+            )
+          }
+          return (
+            <DatacentersTable
+              isEditable={true}
+              cellTextColor={cellTextColor}
+              cellBackgroundColor={cellBackgroundColor}
+              handleSelectHost={handleSelectHost}
+              items={items}
+            />
+          )
+        } catch (error) {
+          console.error(error)
+        }
       }
       case 'datacenter': {
-        let item: VMDatacenter = null
+        try {
+          let item: VMDatacenter = null
 
-        if (focusedHost.type === 'datacenter') {
-          item =
-            vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
+          if (focusedHost.type === 'datacenter') {
+            item =
+              vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
+          }
+
+          return (
+            <DatacenterTable
+              isEditable={true}
+              cellTextColor={cellTextColor}
+              cellBackgroundColor={cellBackgroundColor}
+              item={item}
+            />
+          )
+        } catch (error) {
+          console.error(error)
         }
-
-        return (
-          <DatacenterTable
-            isEditable={true}
-            cellTextColor={cellTextColor}
-            cellBackgroundColor={cellBackgroundColor}
-            item={item}
-          />
-        )
       }
       case 'datastores': {
-        let items: VMDatastore[] = []
+        try {
+          let items: VMDatastore[] = []
 
-        if (focusedHost.type === 'datacenter') {
-          items =
-            vCenters[activeKey.split('/')[0]].nodes[focusedHost.name].datastores
-        } else if (focusedHost.type === 'cluster') {
-          items =
-            vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
-              .nodes[focusedHost.name].datastores
+          if (focusedHost.type === 'datacenter') {
+            items =
+              vCenters[activeKey.split('/')[0]].nodes[focusedHost.name]
+                .datastores
+          } else if (focusedHost.type === 'cluster') {
+            items =
+              vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
+                .nodes[focusedHost.name].datastores
+          }
+          return (
+            <DatastoresTable
+              isEditable={true}
+              cellTextColor={cellTextColor}
+              cellBackgroundColor={cellBackgroundColor}
+              items={items}
+            />
+          )
+        } catch (error) {
+          console.error(error)
         }
-        return (
-          <DatastoresTable
-            isEditable={true}
-            cellTextColor={cellTextColor}
-            cellBackgroundColor={cellBackgroundColor}
-            items={items}
-          />
-        )
       }
       case 'clusters': {
-        let items: VMCluster[] = []
-        if (focusedHost.type === 'datacenter') {
-          const splitedActiveKey = activeKey.split('/')
-          items = _.filter(
-            vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes,
-            (k: VMCluster | VMHost) => k.type === 'cluster'
-          )
-        }
+        try {
+          let items: VMCluster[] = []
+          if (focusedHost.type === 'datacenter') {
+            const splitedActiveKey = activeKey.split('/')
+            items = _.filter(
+              vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes,
+              (k: VMCluster | VMHost) => k.type === 'cluster'
+            )
+          }
 
-        return (
-          <ClustersTable
-            isEditable={true}
-            cellTextColor={cellTextColor}
-            cellBackgroundColor={cellBackgroundColor}
-            handleSelectHost={handleSelectHost}
-            items={items}
-          />
-        )
+          return (
+            <ClustersTable
+              isEditable={true}
+              cellTextColor={cellTextColor}
+              cellBackgroundColor={cellBackgroundColor}
+              handleSelectHost={handleSelectHost}
+              items={items}
+            />
+          )
+        } catch (error) {
+          console.error(error)
+        }
       }
       case 'cluster': {
-        let item: VMCluster = null
+        try {
+          let item: VMCluster = null
 
-        if (focusedHost.type === 'cluster') {
-          const splitedActiveKey = activeKey.split('/')
-          item =
-            vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
-              splitedActiveKey[2]
-            ]
+          if (focusedHost.type === 'cluster') {
+            const splitedActiveKey = activeKey.split('/')
+            item =
+              vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
+                splitedActiveKey[2]
+              ]
+          }
+
+          return (
+            <ClusterTable
+              isEditable={true}
+              cellTextColor={cellTextColor}
+              cellBackgroundColor={cellBackgroundColor}
+              item={item}
+            />
+          )
+        } catch (error) {
+          console.error(error)
         }
-
-        return (
-          <ClusterTable
-            isEditable={true}
-            cellTextColor={cellTextColor}
-            cellBackgroundColor={cellBackgroundColor}
-            item={item}
-          />
-        )
       }
       case 'vmhosts': {
-        let items: VMHost[] = []
-        const splitedActiveKey = activeKey.split('/')
-        if (focusedHost.type === 'cluster') {
-          items = _.filter(
-            vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
-              focusedHost.name
-            ].nodes,
-            (k: VMHost) => k.type === 'host'
-          )
-        } else if (focusedHost.type === 'datacenter') {
-          items =
-            vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]]
-              .datacenter_hosts
-        }
+        try {
+          let items: VMHost[] = []
+          const splitedActiveKey = activeKey.split('/')
+          if (focusedHost.type === 'cluster') {
+            items = _.filter(
+              vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
+                focusedHost.name
+              ].nodes,
+              (k: VMHost) => k.type === 'host'
+            )
+          } else if (focusedHost.type === 'datacenter') {
+            items =
+              vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]]
+                .datacenter_hosts
+          }
 
-        return (
-          <VMHostsTable
-            isEditable={true}
-            cellTextColor={cellTextColor}
-            cellBackgroundColor={cellBackgroundColor}
-            handleSelectHost={handleSelectHost}
-            items={items}
-          />
-        )
+          return (
+            <VMHostsTable
+              isEditable={true}
+              cellTextColor={cellTextColor}
+              cellBackgroundColor={cellBackgroundColor}
+              handleSelectHost={handleSelectHost}
+              items={items}
+            />
+          )
+        } catch (error) {
+          console.error(error)
+        }
       }
       case 'vmhost': {
-        let item: VMHost = null
+        try {
+          let item: VMHost = null
 
-        const splitedActiveKey = activeKey.split('/')
-        if (focusedHost.parent_type === 'cluster') {
-          item =
-            vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
-              splitedActiveKey[2]
-            ].nodes[splitedActiveKey[3]]
-        } else if (focusedHost.parent_type === 'datacenter') {
-          item =
-            vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
-              splitedActiveKey[2]
-            ]
+          const splitedActiveKey = activeKey.split('/')
+          if (focusedHost.parent_type === 'cluster') {
+            item =
+              vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
+                splitedActiveKey[2]
+              ].nodes[splitedActiveKey[3]]
+          } else if (focusedHost.parent_type === 'datacenter') {
+            item =
+              vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
+                splitedActiveKey[2]
+              ]
+          }
+
+          return (
+            <VMHostTable
+              isEditable={true}
+              cellTextColor={cellTextColor}
+              cellBackgroundColor={cellBackgroundColor}
+              item={item}
+            />
+          )
+        } catch (error) {
+          console.error(error)
         }
-
-        return (
-          <VMHostTable
-            isEditable={true}
-            cellTextColor={cellTextColor}
-            cellBackgroundColor={cellBackgroundColor}
-            item={item}
-          />
-        )
       }
       case 'vms': {
-        let items: VM[] = []
-        const splitedActiveKey = activeKey.split('/')
-        if (
-          focusedHost.parent_type === 'cluster' &&
-          focusedHost.type === 'host'
-        ) {
-          items = _.filter(
-            vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
-              splitedActiveKey[2]
-            ].nodes[splitedActiveKey[3]].nodes,
-            k => k.type === 'vm'
+        try {
+          let items: VM[] = []
+          const splitedActiveKey = activeKey.split('/')
+          if (
+            focusedHost.parent_type === 'cluster' &&
+            focusedHost.type === 'host'
+          ) {
+            items = _.filter(
+              vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
+                splitedActiveKey[2]
+              ].nodes[splitedActiveKey[3]].nodes,
+              k => k.type === 'vm'
+            )
+          } else if (
+            focusedHost.parent_type === 'datacenter' &&
+            focusedHost.type === 'host'
+          ) {
+            items = _.filter(
+              vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
+                splitedActiveKey[2]
+              ].nodes,
+              (k: VM) => k.type === 'vm'
+            )
+          }
+          return (
+            <VirtualMachinesTable
+              isEditable={true}
+              cellTextColor={cellTextColor}
+              cellBackgroundColor={cellBackgroundColor}
+              handleSelectHost={handleSelectHost}
+              items={items}
+            />
           )
-        } else if (
-          focusedHost.parent_type === 'datacenter' &&
-          focusedHost.type === 'host'
-        ) {
-          items = _.filter(
-            vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
-              splitedActiveKey[2]
-            ].nodes,
-            (k: VM) => k.type === 'vm'
-          )
+        } catch (error) {
+          console.error(error)
         }
-        return (
-          <VirtualMachinesTable
-            isEditable={true}
-            cellTextColor={cellTextColor}
-            cellBackgroundColor={cellBackgroundColor}
-            handleSelectHost={handleSelectHost}
-            items={items}
-          />
-        )
       }
       case 'vm': {
-        let item: VM = null
-        const splitedActiveKey = activeKey.split('/')
+        try {
+          let item: VM = null
+          const splitedActiveKey = activeKey.split('/')
 
-        if (splitedActiveKey.length === 5) {
-          item =
-            vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
-              splitedActiveKey[2]
-            ].nodes[splitedActiveKey[3]].nodes[splitedActiveKey[4]]
-        } else if (splitedActiveKey.length === 4) {
-          item =
-            vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
-              splitedActiveKey[2]
-            ].nodes[splitedActiveKey[3]]
+          if (splitedActiveKey.length === 5) {
+            item =
+              vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
+                splitedActiveKey[2]
+              ].nodes[splitedActiveKey[3]].nodes[splitedActiveKey[4]]
+          } else if (splitedActiveKey.length === 4) {
+            item =
+              vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
+                splitedActiveKey[2]
+              ].nodes[splitedActiveKey[3]]
+          }
+
+          return (
+            <VirtualMachineTable
+              isEditable={true}
+              cellTextColor={cellTextColor}
+              cellBackgroundColor={cellBackgroundColor}
+              item={item}
+              selectMinion={selectMinion}
+              handleGetTicketRemoteConsoleAsync={
+                handleGetTicketRemoteConsoleAsync
+              }
+              handleGetVSphereAsync={handleGetVSphereAsync}
+              saltMasterUrl={saltMasterUrl}
+              saltMasterToken={saltMasterToken}
+            />
+          )
+        } catch (error) {
+          console.error(error)
         }
-
-        return (
-          <VirtualMachineTable
-            isEditable={true}
-            cellTextColor={cellTextColor}
-            cellBackgroundColor={cellBackgroundColor}
-            item={item}
-            selectMinion={selectMinion}
-            handleGetTicketRemoteConsoleAsync={
-              handleGetTicketRemoteConsoleAsync
-            }
-            handleGetVSphereAsync={handleGetVSphereAsync}
-            saltMasterUrl={saltMasterUrl}
-            saltMasterToken={saltMasterToken}
-          />
-        )
       }
       default: {
         return null
@@ -1331,7 +1423,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
           />
           <HostModal
             isVisible={isModalVisible}
-            headingTitle={'Connection vCenter'}
+            headingTitle={isUpdate ? 'Update vCenter' : 'Connection vCenter'}
             onCancel={handleClose}
             onConfirm={handleConnection}
             message={
@@ -1387,6 +1479,7 @@ const mapDispatchToProps = {
   handleAddVcenterAction: addVcenterAction,
   handleDeleteVSphere: deleteVSphereAsync,
   handleGetVSphereAsync: getVSphereAsync,
+  handleUpdateVcenterAction: updateVcenterAction,
 }
 
 export default connect(mapStateToProps, mapDispatchToProps, null)(VMHostsPage)
