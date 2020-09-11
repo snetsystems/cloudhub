@@ -264,84 +264,128 @@ class Root extends PureComponent<{}, State> {
     }, HEARTBEAT_INTERVAL)
   }
 
-  private unsubscribe = store.subscribe(() => {
-    // vsphere check && multi-tenant check
-    if (true && true) {
-      const lastAction = store.getState().lastAction
-
-      if (lastAction.type === vmHostActionType.AddVcenter) {
-        const {id, host, interval} = lastAction.payload[
-          _.keys(lastAction.payload)[0]
-        ]
-        if (!this.timeout?.[host]) {
-          this.handleSetTimeout(host, interval, id)
-        }
-      }
-
-      if (lastAction.type === vmHostActionType.UpdateVcenter) {
-        const {host, interval, id} = lastAction.payload
-        _.forEach(_.keys(this.timeout), key => {
-          if (this.timeout[key].id === id) {
-            this.handleClearTimeout(key)
-            this.handleSetTimeout(host, interval, id)
-          }
-        })
-      }
-    }
-  })
-
-  private handleClearTimeout = (key: string) => {
-    window.clearTimeout(this.timeout[key].timeout)
-    delete this.timeout[key]
-  }
-
-  private handleSetTimeout = (key: string, timer: number, id: number) => {
-    const getSaltAddon = (addons: Addon[]): Addon => {
-      const addon = addons.find(addon => {
-        return addon.name === AddonType.salt
-      })
-      return addon
-    }
-
+  private getSaltAddon = (): Addon => {
     const {
       links: {addons},
     } = store.getState()
 
-    const salt = getSaltAddon(addons)
+    const addon = addons.find((addon: Addon) => {
+      return addon.name === AddonType.salt
+    })
 
-    this.timeout[key] = {
-      id,
-      host: key,
-      timer,
-      timeout: window.setTimeout(async () => {
-        if (store.getState().vspheres[key] !== null) {
-          const {url, token} = salt
+    return addon
+  }
 
-          const {
-            minion,
-            host,
-            username,
-            password,
-            port,
-            protocol,
-          } = store.getState().vspheres[key]
+  private promiseGenerator = async (salt, vsphere) => {
+    const {url, token} = salt
+    const {minion, host, username, password, port, protocol} = vsphere
 
-          const getVsphere = await this.handleGetVSphereInfoSaltApi(
-            url,
-            token,
-            minion,
-            host,
-            username,
-            password,
-            port,
-            protocol
-          )
+    return await this.handleGetVSphereInfoSaltApi(
+      url,
+      token,
+      minion,
+      host,
+      username,
+      password,
+      port,
+      protocol
+    )
+  }
 
-          await this.handleUpdateVcenter({host: key, nodes: getVsphere})
-          this.requestVSphere(key, salt, store.getState().vspheres[key])
+  private unsubscribe = store.subscribe(() => {
+    // must change -> vsphere use check && multi-tenant check
+    if (true && true) {
+      const lastAction = store.getState().lastAction
+
+      if (lastAction.type === vmHostActionType.LoadVcenters) {
+        const vSpheres = lastAction.payload
+
+        if (vSpheres && _.keys(vSpheres).length < 0) return
+
+        const salt = this.getSaltAddon()
+
+        const promises: Promise<any>[] = _.map(
+          _.keys(vSpheres),
+          async (key: string) => {
+            return await this.promiseGenerator(salt, vSpheres[key])
+          }
+        )
+
+        try {
+          Promise.allSettled(promises)
+            .then(async data => {
+              const succesData = _.filter(
+                data,
+                d => d.status === 'fulfilled' && d.value
+              )
+              if (succesData.length === 0) return
+              const values = _.map(succesData, (s: any) => s.value)
+              const updateVcenters = _.map(values, value => {
+                const minion = _.keys(value.return[0])[0]
+                const host = value.return[0][minion]['vcenter']
+                return {
+                  minion,
+                  host,
+                  nodes: value,
+                }
+              })
+
+              await this.handleUpdateVcenters(updateVcenters)
+            })
+            .catch(err => {
+              console.error('err: ', err)
+            })
+        } catch (error) {
+          console.error(error)
+          dispatch(errorThrown(error))
         }
-      }, timer),
+      }
+
+      if (lastAction.type === vmHostActionType.AddVcenter) {
+        const {id, host} = lastAction.payload[_.keys(lastAction.payload)[0]]
+        this.checkTimeout(id, host)
+      }
+
+      if (lastAction.type === vmHostActionType.UpdateVcenters) {
+        this.checkTimeout()
+      }
+
+      if (lastAction.type === vmHostActionType.UpdateVcenter) {
+        const {id, host} = lastAction.payload
+        this.checkTimeout(id, host)
+      }
     }
+  })
+
+  private checkTimeout = (id?: number, host?: string) => {
+    const {vspheres} = store.getState()
+    const vSpheresKeys = _.keys(vspheres)
+    const salt = this.getSaltAddon()
+
+    if (host && id > -1) {
+      vSpheresKeys.forEach(async key => {
+        if (this.timeout[key]) {
+          if (this.timeout[key].id === id) {
+            this.handleClearTimeout(key)
+            await this.requestVSphere(host, salt, vspheres[host])
+          }
+        } else {
+          await this.requestVSphere(host, salt, vspheres[host])
+        }
+      })
+    } else {
+      vSpheresKeys.forEach(async (key: string) => {
+        const vSphere = vspheres[key]
+        if (!this.timeout[key]) {
+          await this.requestVSphere(key, salt, vSphere)
+        }
+      })
+    }
+  }
+
+  private handleClearTimeout = (key: string) => {
+    window.clearTimeout(this.timeout[key].timeout)
+    delete this.timeout[key]
   }
 
   private async requestVSphere(key: string, salt: any, vsphere: any) {
@@ -375,87 +419,9 @@ class Root extends PureComponent<{}, State> {
   }
 
   private checkVSpheres = async () => {
-    const getSaltAddon = (addons: Addon[]): Addon => {
-      const addon = addons.find(addon => {
-        return addon.name === AddonType.salt
-      })
-
-      return addon
-    }
-
+    // must change -> vsphere use check && multi-tenant check
     try {
-      const vSpheres = await this.getVSpheres()
-      if (vSpheres && _.keys(vSpheres).length < 0) return
-
-      const {
-        links: {addons},
-      } = store.getState()
-
-      const salt = getSaltAddon(addons)
-
-      const promiseGenerator = async (salt, vsphere) => {
-        const {url, token} = salt
-        const {minion, host, username, password, port, protocol} = vsphere
-
-        return await this.handleGetVSphereInfoSaltApi(
-          url,
-          token,
-          minion,
-          host,
-          username,
-          password,
-          port,
-          protocol
-        )
-      }
-
-      const promises: Promise<any>[] = _.map(
-        _.keys(vSpheres),
-        async (key: string) => {
-          return await promiseGenerator(salt, vSpheres[key])
-        }
-      )
-
-      const result = Promise.allSettled(promises)
-
-      result
-        .then(async data => {
-          const succesData = _.filter(
-            data,
-            d => d.status === 'fulfilled' && d.value
-          )
-          if (succesData.length === 0) return
-          const values = _.map(succesData, (s: any) => s.value)
-          const updateVcenters = _.map(values, value => {
-            const minion = _.keys(value.return[0])[0]
-            const host = value.return[0][minion]['vcenter']
-            return {
-              minion,
-              host,
-              nodes: value,
-            }
-          })
-
-          await this.handleUpdateVcenters(updateVcenters)
-          return updateVcenters
-        })
-        .then(updateVcenters => {
-          const vSpheresKeys = _.keys(vSpheres)
-          const getKeys = _.filter(vSpheresKeys, k => {
-            const filtered = _.filter(updateVcenters, v => {
-              return k === v.host
-            })
-            return filtered
-          })
-
-          getKeys.forEach(async (key: string) => {
-            const vSphere = vSpheres[key]
-            await this.requestVSphere(key, salt, vSphere)
-          })
-        })
-        .catch(err => {
-          console.error('err: ', err)
-        })
+      await this.getVSpheres()
     } catch (error) {
       dispatch(errorThrown(error))
     }
