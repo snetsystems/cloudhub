@@ -11,6 +11,7 @@ import {Button, ComponentSize} from 'src/reusable_ui'
 import {cellLayoutInfo} from 'src/addon/128t/containers/SwanSdplexStatusPage'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
+import PageSpinner from 'src/shared/components/PageSpinner'
 
 import HostModal from 'src/hosts/components/HostModal'
 import VMTreeMenu from 'src/hosts/components/VMTreeMenu'
@@ -40,6 +41,7 @@ import {
   VMDatastore,
   LayoutCell,
   VCenter,
+  VcenterStatus,
 } from 'src/hosts/types'
 import {ComponentStatus} from 'src/reusable_ui/types'
 
@@ -54,6 +56,8 @@ import {
   updateVcenterAction,
   deleteVSphereAsync,
   getVSphereAsync,
+  RequestVcenterAction,
+  ResponseVcenterAction,
 } from 'src/hosts/actions'
 
 // Constants
@@ -169,6 +173,8 @@ interface Props {
   vspheres: any
   handleClearTimeout: (key: string) => void
   handleUpdateVcenterAction: (any) => void
+  handleRequestAction: () => void
+  handleResponseAction: () => void
 }
 
 const VMHostsPage = (props: Props): JSX.Element => {
@@ -188,6 +194,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
     handleClearTimeout,
     handleGetVSphereAsync,
     handleUpdateVcenterAction,
+    handleRequestAction,
+    handleResponseAction,
   } = props
   const intervalItems = ['30s', '1m', '5m']
   const initialFocusedHost: Item = {
@@ -358,6 +366,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   const vSphereNewConnection = async () => {
+    handleRequestAction()
     handleGetVSphereInfoSaltApi(
       saltMasterUrl,
       saltMasterToken,
@@ -388,7 +397,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             ...vSphereInfo,
           },
         }
-
+        handleResponseAction()
         handleAddVcenterAction({...dump})
       }
     })
@@ -404,12 +413,13 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
   useEffect(() => {
     // create Treemenu Object
-    const vsphereKeys = _.keys(vspheres)
+    const {vspheres: getVSpheres} = vspheres
+    const vsphereKeys = _.keys(getVSpheres)
 
     if (vsphereKeys.length > 0) {
       let makeTreemenus
-      _.forEach(_.keys(vspheres), key => {
-        const vsphere = vspheres[key]
+      _.forEach(_.keys(getVSpheres), key => {
+        const vsphere = getVSpheres[key]
         if (vsphere.nodes) {
           makeTreemenus = {
             ...makeTreemenus,
@@ -427,7 +437,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }, [vspheres])
 
   useEffect(() => {
-    const vsphereKeys = _.keys(props.vspheres)
+    const {vspheres} = props.vspheres
+    const vsphereKeys = _.keys(vspheres)
 
     if (vsphereKeys.length > 0) {
       let makeTreemenus
@@ -1465,6 +1476,12 @@ const VMHostsPage = (props: Props): JSX.Element => {
             }
           />
         </div>
+        {vspheres.status === VcenterStatus.Request && (
+          <div className={`vm-page-spinner-container`}>
+            <PageSpinner />
+            <div className={`vm-page-spinner-overay`} />
+          </div>
+        )}
       </div>
     </div>
   )
@@ -1487,6 +1504,8 @@ const mapDispatchToProps = {
   handleDeleteVSphere: deleteVSphereAsync,
   handleGetVSphereAsync: getVSphereAsync,
   handleUpdateVcenterAction: updateVcenterAction,
+  handleRequestAction: RequestVcenterAction,
+  handleResponseAction: ResponseVcenterAction,
 }
 
 export default connect(mapStateToProps, mapDispatchToProps, null)(VMHostsPage)

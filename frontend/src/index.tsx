@@ -51,6 +51,8 @@ import {
   getVSpheresAsync,
   updateVcenterAction,
   updateVcentersAction,
+  RequestVcenterAction,
+  ResponseVcenterAction,
 } from 'src/hosts/actions'
 
 // Actions
@@ -123,8 +125,18 @@ class Root extends PureComponent<{}, State> {
     updateVcentersAction,
     dispatch
   )
+
   private handleGetVSphereInfoSaltApi = bindActionCreators(
     getVSphereInfoSaltApiAsync,
+    dispatch
+  )
+
+  private handleRequestVcenter = bindActionCreators(
+    RequestVcenterAction,
+    dispatch
+  )
+  private handleResponseVcenter = bindActionCreators(
+    ResponseVcenterAction,
     dispatch
   )
   private heartbeatTimer: number
@@ -312,6 +324,7 @@ class Root extends PureComponent<{}, State> {
         )
 
         try {
+          this.handleRequestVcenter()
           Promise.allSettled(promises)
             .then(async data => {
               const succesData = _.filter(
@@ -330,6 +343,7 @@ class Root extends PureComponent<{}, State> {
                 }
               })
 
+              this.handleResponseVcenter()
               await this.handleUpdateVcenters(updateVcenters)
             })
             .catch(err => {
@@ -337,7 +351,7 @@ class Root extends PureComponent<{}, State> {
             })
         } catch (error) {
           console.error(error)
-          dispatch(errorThrown(error))
+          // dispatch(errorThrown(error))
         }
       }
 
@@ -358,7 +372,9 @@ class Root extends PureComponent<{}, State> {
   })
 
   private checkTimeout = (id?: number, host?: string) => {
-    const {vspheres} = store.getState()
+    const {
+      vspheres: {vspheres},
+    } = store.getState()
     const vSpheresKeys = _.keys(vspheres)
     const salt = this.getSaltAddon()
 

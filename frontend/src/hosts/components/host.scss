@@ -85,3 +85,28 @@
 .grid-item--charts {
   z-index: 100;
 }
+
+.vm-status-page__container {
+  position: relative;
+}
+
+.vm-page-spinner-container {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  z-index: 100;
+}
+
+.vm-page-spinner-overay {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  z-index: -1;
+  background: linear-gradient(
+    to bottom,
+    rgba(32, 32, 40, 0.15) 0%,
+    rgba(15, 14, 21, 1) 100%
+  );
+}

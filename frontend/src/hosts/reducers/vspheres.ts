@@ -1,29 +1,46 @@
 import _ from 'lodash'
 
 import {Action, ActionTypes} from 'src/hosts/actions/index'
+import {VcenterStatus} from 'src/hosts/types'
 
-export const initialState = {}
+export const initialState = {
+  vspheres: {},
+  status: VcenterStatus.Request,
+}
 
 const vspheres = (state = initialState, action: Action) => {
   switch (action.type) {
     case ActionTypes.LoadVcenters: {
-      state = {
-        ...state,
-        ...action.payload,
+      let loadVcenters = {...state}
+
+      loadVcenters = {
+        ...loadVcenters,
+        vspheres: {
+          ...loadVcenters.vspheres,
+          ...action.payload,
+        },
       }
-      return state
+
+      return loadVcenters
     }
 
     case ActionTypes.AddVcenter: {
-      return {
-        ...state,
-        ...action.payload,
+      let addVcenter = {...state}
+
+      addVcenter = {
+        ...addVcenter,
+        vspheres: {
+          ...addVcenter.vspheres,
+          ...action.payload,
+        },
       }
+
+      return addVcenter
     }
 
     case ActionTypes.RemoveVcenter: {
       let removeState = {...state}
-      delete removeState[action.payload.host]
+      delete removeState.vspheres[action.payload.host]
 
       return {
         ...removeState,
@@ -35,9 +52,9 @@ const vspheres = (state = initialState, action: Action) => {
       let updateState = {...state}
       if (payload?.id) {
         _.forEach(_.keys(updateState), key => {
-          if (updateState[key].id === payload.id) {
-            delete updateState[key]
-            updateState[payload.host] = {
+          if (updateState.vspheres[key].id === payload.id) {
+            delete updateState.vspheres[key]
+            updateState.vspheres[payload.host] = {
               ...payload,
             }
           }
@@ -53,17 +70,31 @@ const vspheres = (state = initialState, action: Action) => {
 
       _.forEach(payload, (p: any) => {
         if (
-          p.host === updateState[p.host].host &&
-          p.minion === updateState[p.host].minion
+          p.host === updateState.vspheres[p.host].host &&
+          p.minion === updateState.vspheres[p.host].minion
         ) {
-          updateState[p.host] = {
-            ...updateState[p.host],
+          updateState.vspheres[p.host] = {
+            ...updateState.vspheres[p.host],
             ...p,
           }
         }
       })
 
       return updateState
+    }
+
+    case ActionTypes.RequestVcenter: {
+      return {
+        ...state,
+        status: VcenterStatus.Request,
+      }
+    }
+
+    case ActionTypes.ResponseVcenter: {
+      return {
+        ...state,
+        status: VcenterStatus.Response,
+      }
     }
 
     default: {

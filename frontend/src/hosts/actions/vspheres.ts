@@ -28,6 +28,8 @@ export enum ActionTypes {
   RemoveVcenter = 'REMOVE_VCENTER',
   UpdateVcenter = 'UPDATE_VCENTER',
   UpdateVcenters = 'UPDATE_VCENTERS',
+  RequestVcenter = 'REQUEST_VCENTER',
+  ResponseVcenter = 'RESPONE_VCENTER',
 }
 
 export type Action =
@@ -37,6 +39,8 @@ export type Action =
   | RemoveVcenterAction
   | UpdateVcenterAction
   | UpdateVcentersAction
+  | RequestVcenterAction
+  | ResponseVcenterAction
 
 interface MinionKeyAcceptedListAction {
   type: ActionTypes.MinionKeyAcceptedList
@@ -131,6 +135,22 @@ export const updateVcentersAction = (payload: any): UpdateVcentersAction => {
     payload,
   }
 }
+
+interface RequestVcenterAction {
+  type: ActionTypes.RequestVcenter
+}
+
+export const RequestVcenterAction = (): RequestVcenterAction => ({
+  type: ActionTypes.RequestVcenter,
+})
+
+interface ResponseVcenterAction {
+  type: ActionTypes.ResponseVcenter
+}
+
+export const ResponseVcenterAction = (): ResponseVcenterAction => ({
+  type: ActionTypes.ResponseVcenter,
+})
 
 export const getMinionKeyAcceptedListAsync = (
   pUrl: string,
