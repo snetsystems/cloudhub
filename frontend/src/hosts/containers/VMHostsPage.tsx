@@ -332,7 +332,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
   const vSphereUpdateInfo = async () => {
     const vsphereInfo = await handleGetVSphereAsync(vSphereId)
-
+    handleRequestAction()
     handleGetVSphereInfoSaltApi(
       saltMasterUrl,
       saltMasterToken,
@@ -363,6 +363,9 @@ const VMHostsPage = (props: Props): JSX.Element => {
       .catch(err => {
         console.error('err: ', err)
       })
+      .finally(() => {
+        handleResponseAction()
+      })
   }
 
   const vSphereNewConnection = async () => {
@@ -376,31 +379,35 @@ const VMHostsPage = (props: Props): JSX.Element => {
       password,
       port,
       protocol
-    ).then(async vSphereInfo => {
-      if (!vSphereInfo) return
+    )
+      .then(async vSphereInfo => {
+        if (!vSphereInfo) return
 
-      const resultAddVCenterAsync = await handleAddVCenterAsync(
-        target,
-        address,
-        user,
-        password,
-        port,
-        protocol,
-        interval
-      )
+        const resultAddVCenterAsync = await handleAddVCenterAsync(
+          target,
+          address,
+          user,
+          password,
+          port,
+          protocol,
+          interval
+        )
 
-      if (vSphereInfo && resultAddVCenterAsync) {
-        let dump = {}
-        dump[address] = {
-          ...resultAddVCenterAsync.data,
-          nodes: {
-            ...vSphereInfo,
-          },
+        if (vSphereInfo && resultAddVCenterAsync) {
+          let dump = {}
+          dump[address] = {
+            ...resultAddVCenterAsync.data,
+            nodes: {
+              ...vSphereInfo,
+            },
+          }
+
+          handleAddVcenterAction({...dump})
         }
+      })
+      .finally(() => {
         handleResponseAction()
-        handleAddVcenterAction({...dump})
-      }
-    })
+      })
   }
 
   const getSaltAddon = (): Addon => {

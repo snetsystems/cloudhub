@@ -342,16 +342,17 @@ class Root extends PureComponent<{}, State> {
                   nodes: value,
                 }
               })
-
-              this.handleResponseVcenter()
               await this.handleUpdateVcenters(updateVcenters)
             })
             .catch(err => {
-              console.error('err: ', err)
+              throw err
+            })
+            .finally(() => {
+              this.handleResponseVcenter()
             })
         } catch (error) {
           console.error(error)
-          // dispatch(errorThrown(error))
+          dispatch(errorThrown(error))
         }
       }
 

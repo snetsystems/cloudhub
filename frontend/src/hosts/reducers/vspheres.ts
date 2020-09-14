@@ -51,7 +51,7 @@ const vspheres = (state = initialState, action: Action) => {
       const {payload} = action
       let updateState = {...state}
       if (payload?.id) {
-        _.forEach(_.keys(updateState), key => {
+        _.forEach(_.keys(updateState.vspheres), key => {
           if (updateState.vspheres[key].id === payload.id) {
             delete updateState.vspheres[key]
             updateState.vspheres[payload.host] = {
