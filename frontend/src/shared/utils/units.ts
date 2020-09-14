@@ -15,6 +15,7 @@ export const transFormatBytes = (
   decimals: number = 0,
   isBinary: boolean = true
 ) => {
+  if (bytes === undefined || bytes === null) return
   // Temporary defense code. To be deleted
   // start
   if (typeof bytes === 'string') {
