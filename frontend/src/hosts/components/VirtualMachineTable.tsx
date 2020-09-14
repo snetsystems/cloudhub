@@ -78,7 +78,14 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
       return
     }
 
-    let url = 'vmrc://clone:' + ticket + '@<vcenter-host>/?moid=' + item.moid
+    let url =
+      'vmrc://clone:' +
+      ticket +
+      '@' +
+      _.get(vsphereInfo, 'host', '') +
+      '/?moid=' +
+      item.moid
+
     window.location.href = url
   }
 
