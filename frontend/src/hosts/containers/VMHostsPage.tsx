@@ -1,5 +1,5 @@
 // Library
-import React, {useState, useEffect, ChangeEvent} from 'react'
+import React, {useState, useEffect, useCallback, ChangeEvent} from 'react'
 import {connect} from 'react-redux'
 import _ from 'lodash'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
@@ -28,7 +28,7 @@ import ChartsLayoutRenderer from 'src/hosts/components/ChartsLayoutRenderer'
 import VMConnectForm from 'src/hosts/components/VMConnectForm'
 
 // Type
-import {TimeRange, Cell, Template, Source, Layout} from 'src/types'
+import {TimeRange, Source, Layout} from 'src/types'
 import {Item} from 'src/reusable_ui/components/treemenu/TreeMenu/walk'
 import {AddonType} from 'src/shared/constants'
 import {Addon} from 'src/types/auth'
@@ -201,7 +201,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   // treemenu state
-  const [activeKey, setActiveKey] = useState('')
   const [openNodes, setOpenNodes] = useState([])
 
   // three sizer state
@@ -224,12 +223,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const [acceptedMinionList, setAcceptedMinionList] = useState([])
 
   // graph state in charts
-  const [layoutCells, setLayoutCells] = useState<Cell[]>([])
-  const [tempVars, setTempVars] = useState<Template[]>([])
   const [layouts, setLayouts] = useState<Layout[]>([])
-  const [vmParam, setVmParam] = useState<vmParam>({vmField: '', vmVal: ''})
-  const [vmParentChartField, setVmParentChartField] = useState('')
-  const [vmParentName, setVmParentName] = useState('')
   const [selectMinion, setSelectMinion] = useState('')
   const [saltMasterUrl, setSaltMasterUrl] = useState('')
   const [saltMasterToken, setSaltMasterToken] = useState('')
@@ -458,15 +452,17 @@ const VMHostsPage = (props: Props): JSX.Element => {
     const {
       proportions: getProportions,
       focusedHost: getFocusedHost,
-      activeKey: getActiveKey,
       openNodes: getOpenNodes,
     } = getLocal
 
     setSelectMinion(getFocusedHost.minion)
-    setActiveKey(getActiveKey)
     setOpenNodes(getOpenNodes)
     setProportions(getProportions)
-    setFocusedHost(getFocusedHost)
+    const addChartsInfoFocusedHostFn = async (): Promise<void> => {
+      const addChartsInfoFocusedHost = await requestCharts(getFocusedHost)
+      setFocusedHost(addChartsInfoFocusedHost)
+    }
+    addChartsInfoFocusedHostFn()
 
     const layoutResultsFn = async (): Promise<void> => {
       const layoutRst = await getLayouts()
@@ -487,9 +483,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
     setLocalStorage('VMHostsPage', {
       ...getLocal,
       openNodes: _.uniq(openNodes),
-      activeKey,
     })
-  }, [openNodes, activeKey])
+  }, [openNodes])
 
   const requestCharts = async (props: any) => {
     if (props.key === '' || props.type === '') return
@@ -547,21 +542,18 @@ const VMHostsPage = (props: Props): JSX.Element => {
       return
     }
 
-    if (props.parent_chart_field) {
-      setVmParentChartField(props.parent_chart_field)
-      setVmParentName(props.parent_name)
-    }
+    props['vmParam'] = vmParam
+    props['layoutCells'] = getLayoutCells
+    props['tempVars'] = getTempVars
 
-    setLayoutCells(getLayoutCells)
-    setTempVars(getTempVars)
-    setVmParam(vmParam)
+    return props
   }
 
   useEffect(() => {
     const getLocal: VMHostsPageLocalStorage = getLocalStorage('VMHostsPage')
     const {layout: getLayout} = getLocal
-    if (activeKey === '') return
-    const getLayoutItem = getLayout[activeKey.split('/')[0]]
+    if (!_.get(focusedHost, 'key')) return
+    const getLayoutItem = getLayout[focusedHost.key.split('/')[0]]
 
     if (focusedHost?.type) {
       const {type} = focusedHost
@@ -614,7 +606,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
       }
     }
 
-    requestCharts(focusedHost)
     setLocalStorage('VMHostsPage', {...getLocal, focusedHost})
   }, [focusedHost])
 
@@ -660,30 +651,31 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const handleLayoutChange = (cellsLayout: cellLayoutInfo[]): void => {
     const getLocal: VMHostsPageLocalStorage = getLocalStorage('VMHostsPage')
     let {layout} = getLocal
+    const getActiveKey: string = _.get(focusedHost, 'key', '')
 
     if (focusedHost.type === 'vcenter') {
-      layout[activeKey.split('/')[0]] = {
-        ...layout[activeKey.split('/')[0]],
+      layout[getActiveKey.split('/')[0]] = {
+        ...layout[getActiveKey.split('/')[0]],
         vcenter: cellsLayout,
       }
     } else if (focusedHost.type === 'datacenter') {
-      layout[activeKey.split('/')[0]] = {
-        ...layout[activeKey.split('/')[0]],
+      layout[getActiveKey.split('/')[0]] = {
+        ...layout[getActiveKey.split('/')[0]],
         datacenter: cellsLayout,
       }
     } else if (focusedHost.type === 'cluster') {
-      layout[activeKey.split('/')[0]] = {
-        ...layout[activeKey.split('/')[0]],
+      layout[getActiveKey.split('/')[0]] = {
+        ...layout[getActiveKey.split('/')[0]],
         cluster: cellsLayout,
       }
     } else if (focusedHost.type === 'host') {
-      layout[activeKey.split('/')[0]] = {
-        ...layout[activeKey.split('/')[0]],
+      layout[getActiveKey.split('/')[0]] = {
+        ...layout[getActiveKey.split('/')[0]],
         host: cellsLayout,
       }
     } else if (focusedHost.type === 'vm') {
-      layout[activeKey.split('/')[0]] = {
-        ...layout[activeKey.split('/')[0]],
+      layout[getActiveKey.split('/')[0]] = {
+        ...layout[getActiveKey.split('/')[0]],
         vm: cellsLayout,
       }
     }
@@ -1001,7 +993,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     switch (cell.i) {
       case 'vcenter': {
         try {
-          let item: VCenter = vCenters[activeKey] || null
+          let item: VCenter = vCenters[focusedHost.key] || null
 
           return (
             <VcenterTable
@@ -1020,16 +1012,12 @@ const VMHostsPage = (props: Props): JSX.Element => {
           return (
             <ChartsLayoutRenderer
               source={source}
-              layoutCells={layoutCells}
-              tempVars={tempVars}
               timeRange={timeRange}
               manualRefresh={manualRefresh}
-              vmParam={vmParam}
-              vmParentChartField={vmParentChartField}
-              vmParentName={vmParentName}
               isEditable={true}
               cellTextColor={cellTextColor}
               cellBackgroundColor={cellBackgroundColor}
+              focusedHost={focusedHost}
             />
           )
         } catch (error) {
@@ -1042,7 +1030,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
           let items: VMDatacenter[] = []
           if (focusedHost.type === 'vcenter') {
             items = _.filter(
-              vCenters[activeKey.split('/')[0]].nodes,
+              vCenters[focusedHost.key.split('/')[0]].nodes,
               k => k.type === 'datacenter'
             )
           }
@@ -1065,7 +1053,9 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
           if (focusedHost.type === 'datacenter') {
             item =
-              vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
+              vCenters[focusedHost.key.split('/')[0]].nodes[
+                focusedHost.key.split('/')[1]
+              ]
           }
 
           return (
@@ -1086,12 +1076,13 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
           if (focusedHost.type === 'datacenter') {
             items =
-              vCenters[activeKey.split('/')[0]].nodes[focusedHost.name]
+              vCenters[focusedHost.key.split('/')[0]].nodes[focusedHost.name]
                 .datastores
           } else if (focusedHost.type === 'cluster') {
             items =
-              vCenters[activeKey.split('/')[0]].nodes[activeKey.split('/')[1]]
-                .nodes[focusedHost.name].datastores
+              vCenters[focusedHost.key.split('/')[0]].nodes[
+                focusedHost.key.split('/')[1]
+              ].nodes[focusedHost.name].datastores
           }
           return (
             <DatastoresTable
@@ -1109,7 +1100,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
         try {
           let items: VMCluster[] = []
           if (focusedHost.type === 'datacenter') {
-            const splitedActiveKey = activeKey.split('/')
+            const splitedActiveKey = focusedHost.key.split('/')
             items = _.filter(
               vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes,
               (k: VMCluster | VMHost) => k.type === 'cluster'
@@ -1134,7 +1125,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
           let item: VMCluster = null
 
           if (focusedHost.type === 'cluster') {
-            const splitedActiveKey = activeKey.split('/')
+            const splitedActiveKey = focusedHost.key.split('/')
             item =
               vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
                 splitedActiveKey[2]
@@ -1156,7 +1147,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
       case 'vmhosts': {
         try {
           let items: VMHost[] = []
-          const splitedActiveKey = activeKey.split('/')
+          const splitedActiveKey = focusedHost.key.split('/')
           if (focusedHost.type === 'cluster') {
             items = _.filter(
               vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
@@ -1187,7 +1178,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
         try {
           let item: VMHost = null
 
-          const splitedActiveKey = activeKey.split('/')
+          const splitedActiveKey = focusedHost.key.split('/')
           if (focusedHost.parent_type === 'cluster') {
             item =
               vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
@@ -1215,7 +1206,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
       case 'vms': {
         try {
           let items: VM[] = []
-          const splitedActiveKey = activeKey.split('/')
+          const splitedActiveKey = focusedHost.key.split('/')
           if (
             focusedHost.parent_type === 'cluster' &&
             focusedHost.type === 'host'
@@ -1253,7 +1244,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
       case 'vm': {
         try {
           let item: VM = null
-          const splitedActiveKey = activeKey.split('/')
+          const splitedActiveKey = focusedHost.key.split('/')
 
           if (splitedActiveKey.length === 5) {
             item =
@@ -1293,7 +1284,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   const handleSelectHost = async (props: any) => {
-    const p = Array.isArray(props) ? props : [props]
+    let p = Array.isArray(props) ? props : [props]
     const path: string[] = p[0].parent_name.split('/')
     const newPath: string[] = []
 
@@ -1311,10 +1302,12 @@ const VMHostsPage = (props: Props): JSX.Element => {
       })
     }
 
+    p[0]['key'] = p[0].parent_name + '/' + p[0].name
+
     setSelectMinion(p[0].minion)
-    setActiveKey(p[0].parent_name + '/' + p[0].name)
+    const addChartsInfoFocusedHost = await requestCharts(p[0])
+    setFocusedHost(addChartsInfoFocusedHost)
     setOpenNodes([...openNodes, ...newPath])
-    setFocusedHost(p[0])
   }
 
   const onClickToggle = (node: string): void => {
@@ -1325,13 +1318,13 @@ const VMHostsPage = (props: Props): JSX.Element => {
     setOpenNodes(newOpenNodes)
   }
 
-  const onSelectHost = (props: Item) => {
+  const onSelectHost = async (props: Item) => {
     setSelectMinion(props.minion)
-    setActiveKey(props.key)
-    setFocusedHost(props)
+    const addChartsInfoFocusedHost = await requestCharts(props)
+    setFocusedHost(addChartsInfoFocusedHost)
   }
 
-  const threesizerDivisions = () => {
+  const threesizerDivisions = useCallback(() => {
     const [leftSize, rightSize] = proportions
 
     return [
@@ -1354,7 +1347,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
               data={vCenters}
               onClickItem={onSelectHost}
               onClickToggle={onClickToggle}
-              activeKey={activeKey}
+              activeKey={_.get(focusedHost, 'key', '')}
               openNodes={openNodes}
             />
           </FancyScrollbar>
@@ -1404,7 +1397,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
         },
       },
     ]
-  }
+  }, [vCenters, openNodes, layout, proportions, focusedHost])
 
   return (
     <div className="vm-status-page__container">
@@ -1482,4 +1475,8 @@ const mapDispatchToProps = {
   handleUpdateVcenterAction: updateVcenterAction,
 }
 
-export default connect(mapStateToProps, mapDispatchToProps, null)(VMHostsPage)
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+  null
+)(React.memo(VMHostsPage))

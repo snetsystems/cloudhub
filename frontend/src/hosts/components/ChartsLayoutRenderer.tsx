@@ -17,18 +17,14 @@ import LayoutVMRenderer from 'src/shared/components/LayoutVMRenderer'
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 
 // Types
-import {TimeRange, Cell, Template, Source} from 'src/types'
-import {vmParam} from 'src/hosts/containers/VMHostsPage'
+import {TimeRange, Source} from 'src/types'
+import {Item} from 'src/reusable_ui/components/treemenu/TreeMenu/walk'
 
 interface ChartsProps {
   source: Source
-  layoutCells: Cell[]
-  tempVars: Template[]
   timeRange: TimeRange
   manualRefresh: number
-  vmParam: vmParam
-  vmParentChartField: string
-  vmParentName: string
+  focusedHost: Item
 }
 
 interface DefaultProps {
@@ -41,16 +37,12 @@ type Props = DefaultProps & ChartsProps
 
 const ChartsLayoutRenderer = ({
   source,
-  layoutCells,
-  tempVars,
   timeRange,
   manualRefresh,
-  vmParam,
-  vmParentChartField,
-  vmParentName,
   isEditable,
   cellTextColor,
   cellBackgroundColor,
+  focusedHost,
 }: Props) => {
   const debouncedFit = _.debounce(() => {
     WindowResizeEventTrigger()
@@ -86,13 +78,13 @@ const ChartsLayoutRenderer = ({
                 isStatusPage={false}
                 isStaticPage={true}
                 isEditable={false}
-                cells={layoutCells}
-                templates={tempVars}
+                cells={focusedHost.layoutCells}
+                templates={focusedHost.tempVars}
                 timeRange={timeRange}
                 manualRefresh={manualRefresh}
-                vmParam={vmParam}
-                vmParentChartField={vmParentChartField}
-                vmParentName={vmParentName}
+                vmParam={focusedHost.vmParam}
+                vmParentChartField={focusedHost.parent_chart_field}
+                vmParentName={focusedHost.parent_name}
               />
             </FancyScrollbar>
           </div>
