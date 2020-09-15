@@ -274,6 +274,9 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   const handleClose = (): void => {
+    setAddress('')
+    setUser('')
+    setPassword('')
     setIsModalVisible(false)
   }
 
@@ -313,7 +316,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   const handleConnection = async () => {
-    handleClose()
     if (isUpdate) {
       vSphereUpdateInfo()
     } else {
@@ -360,6 +362,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             : null
         ).then(async ({data}) => {
           handleUpdateVcenterAction({...data, nodes: result})
+          handleClose()
         })
       })
       .catch(err => {
@@ -405,6 +408,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
           }
 
           handleAddVcenterAction({...dump})
+          handleClose()
         }
       })
       .finally(() => {
@@ -421,7 +425,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   useEffect(() => {
-    // create Treemenu Object
     const {vspheres: getVSpheres} = vspheres
     const vsphereKeys = _.keys(getVSpheres)
 
@@ -672,7 +675,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
     debouncedFit()
   }
 
-  // set localstorage
   const handleLayoutChange = (cellsLayout: cellLayoutInfo[]): void => {
     const getLocal: VMHostsPageLocalStorage = getLocalStorage('VMHostsPage')
     let {layout} = getLocal
@@ -768,7 +770,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
     let minionName = Object.keys(vCenterData.return[0])
     let vcMinionValue: any[] = Object.values(vCenterData.return[0])
     let vcIpAddress = props.host
-    // let vcIpAddress = address
 
     let vcenter = [vCenterData].reduce(
       acc => {
@@ -1481,6 +1482,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
                 interval={interval}
                 targetItems={acceptedMinionList}
                 intervalItems={intervalItems}
+                isDisabled={vspheres.status === VcenterStatus.Request}
                 handleChangeTarget={handleChangeTarget}
                 handleChangeAddress={handleChangeAddress}
                 handleChangePort={handleChangePort}
@@ -1492,18 +1494,20 @@ const VMHostsPage = (props: Props): JSX.Element => {
             }
             confirmText={isUpdate ? 'Update vCenter' : 'Add vCenter'}
             confirmButtonStatus={
-              address &&
-              user &&
-              password &&
-              protocol &&
-              target !== MINION_LIST_EMPTY &&
-              compareRedux()
+              vspheres.status === VcenterStatus.Request
+                ? ComponentStatus.Loading
+                : address &&
+                  user &&
+                  password &&
+                  protocol &&
+                  target !== MINION_LIST_EMPTY &&
+                  compareRedux()
                 ? ComponentStatus.Default
                 : ComponentStatus.Disabled
             }
           />
         </div>
-        {vspheres.status === VcenterStatus.Request && (
+        {vspheres.status === VcenterStatus.Request && !isModalVisible && (
           <div className={`vm-page-spinner-container`}>
             <PageSpinner />
             <div className={`vm-page-spinner-overay`} />

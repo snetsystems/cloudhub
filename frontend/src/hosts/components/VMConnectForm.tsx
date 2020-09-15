@@ -1,7 +1,7 @@
 // Library
 import React, {ChangeEvent} from 'react'
 
-import {Form, Input, InputType} from 'src/reusable_ui'
+import {Form, Input, InputType, ComponentStatus} from 'src/reusable_ui'
 import Dropdown from 'src/shared/components/Dropdown'
 
 interface Props {
@@ -14,6 +14,7 @@ interface Props {
   interval: string
   targetItems: string[]
   intervalItems: string[]
+  isDisabled: boolean
   handleChangeTarget: (e: {text: string}) => void
   handleChangeAddress: (e: ChangeEvent<HTMLInputElement>) => void
   handleChangePort: (e: ChangeEvent<HTMLInputElement>) => void
@@ -32,6 +33,7 @@ const VMConnectForm = ({
   interval,
   targetItems,
   intervalItems,
+  isDisabled = false,
   handleChangeTarget,
   handleChangeAddress,
   handleChangePort,
@@ -49,7 +51,7 @@ const VMConnectForm = ({
           onChoose={handleChangeTarget}
           selected={target}
           className="dropdown-stretch"
-          disabled={target === '<< Empty >>'}
+          disabled={target === '<< Empty >>' || isDisabled}
         />
       </Form.Element>
       <Form.Element label="Connection vCenter" colsXS={8}>
@@ -58,6 +60,7 @@ const VMConnectForm = ({
           onChange={handleChangeAddress}
           placeholder={'Connect Address'}
           type={InputType.Text}
+          status={isDisabled && ComponentStatus.Disabled}
         />
       </Form.Element>
       <Form.Element label="Port" colsXS={4}>
@@ -66,6 +69,7 @@ const VMConnectForm = ({
           onChange={handleChangePort}
           placeholder={'Connect Port'}
           type={InputType.Text}
+          status={isDisabled && ComponentStatus.Disabled}
         />
       </Form.Element>
 
@@ -75,6 +79,7 @@ const VMConnectForm = ({
           onChange={handleChangeUser}
           placeholder={'Connect ID'}
           type={InputType.Text}
+          status={isDisabled && ComponentStatus.Disabled}
         />
       </Form.Element>
       <Form.Element label="Password" colsXS={6}>
@@ -83,6 +88,7 @@ const VMConnectForm = ({
           onChange={handleChangePassword}
           placeholder={'Connect Password'}
           type={InputType.Password}
+          status={isDisabled && ComponentStatus.Disabled}
         />
       </Form.Element>
       <Form.Element label="Protocol" colsXS={6}>
@@ -91,6 +97,7 @@ const VMConnectForm = ({
           onChange={handleChangeProtocol}
           placeholder={'Default https'}
           type={InputType.Text}
+          status={isDisabled && ComponentStatus.Disabled}
         />
       </Form.Element>
       <Form.Element label="Interval" colsXS={6}>
@@ -99,7 +106,7 @@ const VMConnectForm = ({
           onChoose={handleChangeInterval}
           selected={interval}
           className="dropdown-stretch"
-          disabled={false}
+          disabled={isDisabled}
         />
       </Form.Element>
     </Form>
