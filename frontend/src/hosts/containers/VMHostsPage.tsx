@@ -461,7 +461,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
     verifyLocalStorage(getLocalStorage, setLocalStorage, 'VMHostsPage', {
       proportions: [0.25, 0.75],
       focusedHost: initialFocusedHost,
-      activeKey: '',
       openNodes: [],
       layout: {},
     })
@@ -1412,7 +1411,9 @@ const VMHostsPage = (props: Props): JSX.Element => {
                           key={cell.i}
                           className={classnames(
                             'dash-graph grid-item--routers',
-                            {'grid-item--charts': cell.i === 'charts'}
+                            {
+                              'grid-item--charts': cell.i === 'charts',
+                            }
                           )}
                           style={cellstyle}
                         >
