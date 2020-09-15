@@ -169,9 +169,7 @@ class Root extends PureComponent<{}, State> {
   public componentWillUnmount() {
     this.unsubscribe()
     clearTimeout(this.heartbeatTimer)
-    _.forEach(_.keys(this.timeout), key => {
-      clearInterval(this.timeout[key].timeout)
-    })
+    this.handleClearAllTimeout()
   }
 
   public render() {
@@ -403,6 +401,14 @@ class Root extends PureComponent<{}, State> {
   private handleClearTimeout = (key: string) => {
     window.clearTimeout(this.timeout[key].timeout)
     delete this.timeout[key]
+  }
+
+  private handleClearAllTimeout = () => {
+    const timeoutKeys = _.keys(this.timeout)
+    if (timeoutKeys.length > 0) return
+    _.forEach(timeoutKeys, key => {
+      clearInterval(this.timeout[key].timeout)
+    })
   }
 
   private async requestVSphere(key: string, salt: any, vsphere: any) {
