@@ -98,6 +98,7 @@ interface State {
   timeRange: TimeRange
   proportions: number[]
   selected: QueriesModels.TimeRange
+  isVsphere: boolean
 }
 
 @ErrorHandling
@@ -120,6 +121,7 @@ export class HostsPage extends PureComponent<Props, State> {
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       proportions: [0.43, 0.57],
       selected: {lower: '', upper: ''},
+      isVsphere: false,
     }
     this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
   }
@@ -247,7 +249,8 @@ export class HostsPage extends PureComponent<Props, State> {
       inPresentationMode,
       source,
     } = this.props
-    const {selected} = this.state
+    const {selected, isVsphere} = this.state
+
     return (
       <Page className="hosts-list-page">
         <Page.Header inPresentationMode={inPresentationMode}>
@@ -276,10 +279,10 @@ export class HostsPage extends PureComponent<Props, State> {
           </Page.Header.Right>
         </Page.Header>
         <Page.Contents scrollable={true}>
-          <Tabs defaultIndex={1}>
+          <Tabs defaultIndex={0}>
             <TabList>
               <Tab key={'Host'}>Host</Tab>
-              <Tab key={'VMware'}>VMware</Tab>
+              {isVsphere && <Tab key={'VMware'}>VMware</Tab>}
             </TabList>
             <TabPanel key={'Host'}>
               <Threesizer
@@ -288,14 +291,16 @@ export class HostsPage extends PureComponent<Props, State> {
                 onResize={this.handleResize}
               />
             </TabPanel>
-            <TabPanel key={'VMware'}>
-              <VMHostPage
-                source={source}
-                manualRefresh={this.props.manualRefresh}
-                timeRange={this.state.timeRange}
-                handleClearTimeout={this.props.handleClearTimeout}
-              />
-            </TabPanel>
+            {isVsphere && (
+              <TabPanel key={'VMware'}>
+                <VMHostPage
+                  source={source}
+                  manualRefresh={this.props.manualRefresh}
+                  timeRange={this.state.timeRange}
+                  handleClearTimeout={this.props.handleClearTimeout}
+                />
+              </TabPanel>
+            )}
           </Tabs>
         </Page.Contents>
       </Page>
@@ -412,6 +417,7 @@ export class HostsPage extends PureComponent<Props, State> {
 
   private async fetchHostsData(layouts: Layout[]): Promise<void> {
     const {source, links, notify} = this.props
+    const {addons} = links
 
     const envVars = await getEnv(links.environment)
     const telegrafSystemInterval = getDeep<string>(
@@ -439,7 +445,18 @@ export class HostsPage extends PureComponent<Props, State> {
         source.telegraf
       )
 
+      const isUsingVshpere = Boolean(
+        _.find(addons, addon => {
+          return addon.name === 'vsphere' && addon.url === 'on'
+        }) &&
+          _.find(hostsObject, v => {
+            return _.includes(v.apps, 'vsphere')
+          })
+      )
+
+      console.log({isUsingVshpere})
       this.setState({
+        isVsphere: isUsingVshpere,
         hostsObject: newHosts,
         hostsPageStatus: RemoteDataState.Done,
       })
@@ -447,6 +464,7 @@ export class HostsPage extends PureComponent<Props, State> {
       console.error(error)
       notify(notifyUnableToGetHosts())
       this.setState({
+        isVsphere: false,
         hostsPageStatus: RemoteDataState.Error,
       })
     }
