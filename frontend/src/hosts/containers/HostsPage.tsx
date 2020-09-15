@@ -454,7 +454,6 @@ export class HostsPage extends PureComponent<Props, State> {
           })
       )
 
-      console.log({isUsingVshpere})
       this.setState({
         isVsphere: isUsingVshpere,
         hostsObject: newHosts,
