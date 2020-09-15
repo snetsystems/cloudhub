@@ -158,7 +158,6 @@ class Root extends PureComponent<{}, State> {
     try {
       await this.getLinks()
       await this.checkAuth()
-      await this.checkVSpheres()
 
       this.setState({ready: true})
     } catch (error) {
@@ -302,71 +301,73 @@ class Root extends PureComponent<{}, State> {
     )
   }
 
-  private unsubscribe = store.subscribe(() => {
-    // must change -> vsphere use check && multi-tenant check
-    if (true && true) {
-      const lastAction = store.getState().lastAction
+  private unsubscribe = store.subscribe(async () => {
+    const {lastAction} = store.getState()
 
-      if (lastAction.type === vmHostActionType.LoadVcenters) {
-        const vSpheres = lastAction.payload
+    if (lastAction.type === 'LOAD_SOURCES') {
+      this.handleClearAllTimeout()
+      await this.checkVSpheres()
+    }
 
-        if (vSpheres && _.keys(vSpheres).length < 0) return
+    if (lastAction.type === vmHostActionType.LoadVcenters) {
+      const vSpheres = lastAction.payload
 
-        const salt = this.getSaltAddon()
+      if (vSpheres && _.keys(vSpheres).length < 0) return
 
-        const promises: Promise<any>[] = _.map(
-          _.keys(vSpheres),
-          async (key: string) => {
-            return await this.promiseGenerator(salt, vSpheres[key])
-          }
-        )
+      const salt = this.getSaltAddon()
 
-        try {
-          this.handleRequestVcenter()
-          Promise.allSettled(promises)
-            .then(async data => {
-              const succesData = _.filter(
-                data,
-                d => d.status === 'fulfilled' && d.value
-              )
-              if (succesData.length === 0) return
-              const values = _.map(succesData, (s: any) => s.value)
-              const updateVcenters = _.map(values, value => {
-                const minion = _.keys(value.return[0])[0]
-                const host = value.return[0][minion]['vcenter']
-                return {
-                  minion,
-                  host,
-                  nodes: value,
-                }
-              })
-              await this.handleUpdateVcenters(updateVcenters)
-            })
-            .catch(err => {
-              throw err
-            })
-            .finally(() => {
-              this.handleResponseVcenter()
-            })
-        } catch (error) {
-          console.error(error)
-          dispatch(errorThrown(error))
+      const promises: Promise<any>[] = _.map(
+        _.keys(vSpheres),
+        async (key: string) => {
+          return await this.promiseGenerator(salt, vSpheres[key])
         }
-      }
+      )
 
-      if (lastAction.type === vmHostActionType.AddVcenter) {
-        const {id, host} = lastAction.payload[_.keys(lastAction.payload)[0]]
-        this.checkTimeout(id, host)
+      try {
+        this.handleRequestVcenter()
+        Promise.allSettled(promises)
+          .then(async data => {
+            const succesData = _.filter(
+              data,
+              d => d.status === 'fulfilled' && d.value
+            )
+            if (succesData.length === 0) return
+            const values = _.map(succesData, (s: any) => s.value)
+            const updateVcenters = _.map(values, value => {
+              const minion = _.keys(value.return[0])[0]
+              const host = value.return[0][minion]['vcenter']
+              return {
+                minion,
+                host,
+                nodes: value,
+              }
+            })
+            await this.handleUpdateVcenters(updateVcenters)
+          })
+          .catch(err => {
+            throw err
+          })
+          .finally(() => {
+            this.handleResponseVcenter()
+          })
+      } catch (error) {
+        console.error(error)
+        dispatch(errorThrown(error))
       }
+    }
 
-      if (lastAction.type === vmHostActionType.UpdateVcenters) {
-        this.checkTimeout()
-      }
+    if (lastAction.type === vmHostActionType.AddVcenter) {
+      const {id, host} = lastAction.payload[_.keys(lastAction.payload)[0]]
+      this.checkTimeout(id, host)
+    }
 
-      if (lastAction.type === vmHostActionType.UpdateVcenter) {
-        const {id, host} = lastAction.payload
-        this.checkTimeout(id, host)
-      }
+    if (lastAction.type === vmHostActionType.UpdateVcenters) {
+      this.checkTimeout()
+    }
+
+    if (lastAction.type === vmHostActionType.UpdateVcenter) {
+      const {id, host} = lastAction.payload
+      this.checkTimeout(id, host)
     }
   })
 
@@ -442,7 +443,6 @@ class Root extends PureComponent<{}, State> {
   }
 
   private checkVSpheres = async () => {
-    // must change -> vsphere use check && multi-tenant check
     try {
       await this.getVSpheres()
     } catch (error) {
