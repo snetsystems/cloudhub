@@ -29,7 +29,7 @@ import ChartsLayoutRenderer from 'src/hosts/components/ChartsLayoutRenderer'
 import VMConnectForm from 'src/hosts/components/VMConnectForm'
 
 // Type
-import {TimeRange, Source, Layout} from 'src/types'
+import {TimeRange, Source, Layout, Me} from 'src/types'
 import {Item} from 'src/reusable_ui/components/treemenu/TreeMenu/walk'
 import {AddonType} from 'src/shared/constants'
 import {Addon} from 'src/types/auth'
@@ -101,6 +101,9 @@ import {
   getMeasurementsForHost,
 } from 'src/hosts/apis'
 
+// Constants
+import {isUserAuthorized, EDITOR_ROLE} from 'src/auth/Authorized'
+
 const GridLayout = WidthProvider(ReactGridLayout)
 const MINION_LIST_EMPTY = '<< Empty >>'
 const VSPHERE_HOST = 'vsphere_host'
@@ -118,8 +121,13 @@ interface VMHostsPageLocalStorage {
   openNodes: string[]
   proportions: number[]
 }
+interface Auth {
+  me: Me
+  isUsingAuth: boolean
+}
 
 interface Props {
+  auth: Auth
   addons: Addon[]
   manualRefresh: number
   timeRange: TimeRange
@@ -701,7 +709,11 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   const updateBtn = (id: number) => (): JSX.Element => {
-    return (
+    const {
+      auth: {me, isUsingAuth},
+    } = props
+
+    return !isUsingAuth || isUserAuthorized(me.role, EDITOR_ROLE) ? (
       <button className={`btn btn-default btn-xs btn-square`}>
         <span
           className={`icon pencil`}
@@ -711,11 +723,15 @@ const VMHostsPage = (props: Props): JSX.Element => {
           }}
         />
       </button>
-    )
+    ) : null
   }
 
   const removeBtn = (id: number, host: string) => (): JSX.Element => {
-    return (
+    const {
+      auth: {me, isUsingAuth},
+    } = props
+
+    return !isUsingAuth || isUserAuthorized(me.role, EDITOR_ROLE) ? (
       <ConfirmButton
         text="Delete"
         type="btn-danger"
@@ -733,7 +749,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
         isHideText={true}
         square={true}
       />
-    )
+    ) : null
   }
 
   const makeTreeMenuVCenterInfo = props => {
@@ -1355,18 +1371,22 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
   const threesizerDivisions = useCallback(() => {
     const [leftSize, rightSize] = proportions
-
+    const {
+      auth: {me, isUsingAuth},
+    } = props
     return [
       {
         name: 'VMware Inventory',
         headerOrientation: HANDLE_VERTICAL,
         headerButtons: [
-          <Button
-            key={0}
-            text={'+ Add vCenter'}
-            onClick={handleOpen}
-            size={ComponentSize.ExtraSmall}
-          />,
+          !isUsingAuth || isUserAuthorized(me.role, EDITOR_ROLE) ? (
+            <Button
+              key={0}
+              text={'+ Add vCenter'}
+              onClick={handleOpen}
+              size={ComponentSize.ExtraSmall}
+            />
+          ) : null,
         ],
         menuOptions: [],
         size: leftSize,
@@ -1494,8 +1514,9 @@ const VMHostsPage = (props: Props): JSX.Element => {
   )
 }
 
-const mapStateToProps = ({links: {addons}, vspheres}) => {
+const mapStateToProps = ({auth, links: {addons}, vspheres}) => {
   return {
+    auth,
     addons,
     vspheres,
   }
