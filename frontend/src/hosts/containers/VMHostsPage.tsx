@@ -431,27 +431,28 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
     if (vsphereKeys.length > 0) {
       let makeTreemenus
-      _.forEach(vsphereKeys, (key, index) => {
+      _.forEach(vsphereKeys, key => {
         const vsphere = getVSpheres[key]
         if (vsphere.nodes) {
           makeTreemenus = {
             ...makeTreemenus,
             ...makeTreeMenuVCenterInfo(vsphere),
           }
-
-          const focusedHostKey = _.get(focusedHost, 'key', '')
-          const makeTreemenusKey = _.get(makeTreemenus[key], 'key', '')
-          if (index == 0 && focusedHostKey.indexOf(makeTreemenusKey) == -1) {
-            const addChartsInfoFocusedHostFn = async (): Promise<void> => {
-              const addChartsInfoFocusedHost = await requestCharts(
-                makeTreemenus[key]
-              )
-              setFocusedHost(addChartsInfoFocusedHost)
-            }
-            addChartsInfoFocusedHostFn()
-          }
         }
       })
+
+      const vCentersKeys = _.keys(vCenters)
+      const makeTreemenusKey = _.keys(makeTreemenus)
+      if (vCentersKeys.length > makeTreemenusKey.length || !focusedHost) {
+        // remove vCenter
+        const addChartsInfoFocusedHostFn = async (): Promise<void> => {
+          const addChartsInfoFocusedHost = await requestCharts(
+            makeTreemenus[makeTreemenusKey[0]]
+          )
+          setFocusedHost(addChartsInfoFocusedHost)
+        }
+        addChartsInfoFocusedHostFn()
+      }
 
       if (makeTreemenus) {
         setVCenters(makeTreemenus)
