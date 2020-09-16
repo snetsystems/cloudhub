@@ -425,17 +425,30 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   useEffect(() => {
+    // create Treemenu Object
     const {vspheres: getVSpheres} = vspheres
     const vsphereKeys = _.keys(getVSpheres)
 
     if (vsphereKeys.length > 0) {
       let makeTreemenus
-      _.forEach(_.keys(getVSpheres), key => {
+      _.forEach(vsphereKeys, (key, index) => {
         const vsphere = getVSpheres[key]
         if (vsphere.nodes) {
           makeTreemenus = {
             ...makeTreemenus,
             ...makeTreeMenuVCenterInfo(vsphere),
+          }
+
+          const focusedHostKey = _.get(focusedHost, 'key', '')
+          const makeTreemenusKey = _.get(makeTreemenus[key], 'key', '')
+          if (index == 0 && focusedHostKey.indexOf(makeTreemenusKey) == -1) {
+            const addChartsInfoFocusedHostFn = async (): Promise<void> => {
+              const addChartsInfoFocusedHost = await requestCharts(
+                makeTreemenus[key]
+              )
+              setFocusedHost(addChartsInfoFocusedHost)
+            }
+            addChartsInfoFocusedHostFn()
           }
         }
       })
@@ -743,6 +756,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
           handleDeleteVSphere(id, host).then(data => {
             if (data === 'DELETE_SUCCESS') {
               handleClearTimeout(host)
+              localStorageHostRemove(host)
             }
           })
         }}
@@ -752,6 +766,26 @@ const VMHostsPage = (props: Props): JSX.Element => {
         square={true}
       />
     ) : null
+  }
+
+  const localStorageHostRemove = host => {
+    const getLocal: VMHostsPageLocalStorage = getLocalStorage('VMHostsPage')
+    const getOpenNodes = _.get(getLocal, 'openNodes', [])
+    let setOpenNodes = []
+    _.forEach(getOpenNodes, openNode => {
+      if (openNode.indexOf(host) == -1) {
+        setOpenNodes.push(openNode)
+      }
+    })
+
+    let getLayout = _.get(getLocal, 'layout', {})
+    delete getLayout[host]
+    setLocalStorage('VMHostsPage', {
+      ...getLocal,
+      layout: getLayout,
+      focusedHost: {},
+      openNodes: setOpenNodes,
+    })
   }
 
   const makeTreeMenuVCenterInfo = props => {
@@ -919,6 +953,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
       {
         [vcIpAddress]: {
           label: vcIpAddress,
+          key: vcIpAddress,
           index: 0,
           level: 0,
           type: 'vcenter',
@@ -1038,7 +1073,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             />
           )
         } catch (error) {
-          console.error(error)
+          console.log(error)
         }
       }
       case 'charts': {
@@ -1055,7 +1090,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             />
           )
         } catch (error) {
-          console.error(error)
+          console.log(error)
         }
       }
 
@@ -1078,7 +1113,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             />
           )
         } catch (error) {
-          console.error(error)
+          console.log(error)
         }
       }
       case 'datacenter': {
@@ -1101,7 +1136,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             />
           )
         } catch (error) {
-          console.error(error)
+          console.log(error)
         }
       }
       case 'datastores': {
@@ -1127,7 +1162,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             />
           )
         } catch (error) {
-          console.error(error)
+          console.log(error)
         }
       }
       case 'clusters': {
@@ -1151,7 +1186,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             />
           )
         } catch (error) {
-          console.error(error)
+          console.log(error)
         }
       }
       case 'cluster': {
@@ -1175,7 +1210,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             />
           )
         } catch (error) {
-          console.error(error)
+          console.log(error)
         }
       }
       case 'vmhosts': {
@@ -1205,7 +1240,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             />
           )
         } catch (error) {
-          console.error(error)
+          console.log(error)
         }
       }
       case 'vmhost': {
@@ -1234,7 +1269,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             />
           )
         } catch (error) {
-          console.error(error)
+          console.log(error)
         }
       }
       case 'vms': {
@@ -1272,7 +1307,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             />
           )
         } catch (error) {
-          console.error(error)
+          console.log(error)
         }
       }
       case 'vm': {
@@ -1308,7 +1343,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             />
           )
         } catch (error) {
-          console.error(error)
+          console.log(error)
         }
       }
       default: {
