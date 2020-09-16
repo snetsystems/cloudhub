@@ -756,7 +756,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
           handleDeleteVSphere(id, host).then(data => {
             if (data === 'DELETE_SUCCESS') {
               handleClearTimeout(host)
-              localStorageHostRemove(host)
+              removeOpenNodes(host)
             }
           })
         }}
@@ -768,24 +768,9 @@ const VMHostsPage = (props: Props): JSX.Element => {
     ) : null
   }
 
-  const localStorageHostRemove = host => {
-    const getLocal: VMHostsPageLocalStorage = getLocalStorage('VMHostsPage')
-    const getOpenNodes = _.get(getLocal, 'openNodes', [])
-    let setOpenNodes = []
-    _.forEach(getOpenNodes, openNode => {
-      if (openNode.indexOf(host) == -1) {
-        setOpenNodes.push(openNode)
-      }
-    })
-
-    let getLayout = _.get(getLocal, 'layout', {})
-    delete getLayout[host]
-    setLocalStorage('VMHostsPage', {
-      ...getLocal,
-      layout: getLayout,
-      focusedHost: {},
-      openNodes: setOpenNodes,
-    })
+  const removeOpenNodes = (host: string) => {
+    const remove = _.filter(openNodes, openNode => !_.includes(openNode, host))
+    setOpenNodes(remove)
   }
 
   const makeTreeMenuVCenterInfo = props => {
