@@ -1431,7 +1431,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
         size: rightSize,
         render: () => {
           const isVCenters = _.keys(vCenters).length
-          return isVCenters ? (
+          return isVCenters && vCenters[focusedHost.key.split('/')[0]] ? (
             <FancyScrollbar autoHide={false}>
               <GridLayout
                 layout={layout}
