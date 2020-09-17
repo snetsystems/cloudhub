@@ -48,6 +48,7 @@ import {
   VcenterStatus,
   reducerVSphere,
   VMRole,
+  VMHostsPageLocalStorage,
 } from 'src/hosts/types'
 import {ComponentStatus} from 'src/reusable_ui/types'
 
@@ -120,13 +121,6 @@ export interface vmParam {
   vmVal: string
 }
 
-interface VMHostsPageLocalStorage {
-  layout: {[name: string]: {[name: string]: LayoutCell[]}}
-  focusedHost: Item
-  activeKey: string
-  openNodes: string[]
-  proportions: number[]
-}
 interface Auth {
   me: Me
   isUsingAuth: boolean
