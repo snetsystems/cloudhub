@@ -1,4 +1,4 @@
-import {Item} from 'src/reusable_ui/components/treemenu/TreeMenu/walk'
+import {TreeNode} from 'src/reusable_ui/components/treemenu/TreeMenu/walk'
 
 export enum VMRole {
   vcenter = 'vcenter',
@@ -8,7 +8,7 @@ export enum VMRole {
   host = 'host',
   vm = 'vm',
 }
-export interface VM extends Item {
+export interface VM extends TreeNode {
   moid: string
   name: string
   storage_usage: number
@@ -27,7 +27,7 @@ export interface VM extends Item {
   vmPathName: string
 }
 
-export interface VMDatastore extends Item {
+export interface VMDatastore extends TreeNode {
   name: string
   capacity: number
   space: number
@@ -35,7 +35,7 @@ export interface VMDatastore extends Item {
   mode: string
 }
 
-export interface VMHost extends Item {
+export interface VMHost extends TreeNode {
   cpu_capacity: number
   cpu_core: number
   cpu_name: string
@@ -51,7 +51,6 @@ export interface VMHost extends Item {
   minion: string
   model: string
   name: string
-  nodes: {[key: string]: VM[]}
   parent_chart_field: string
   parent_name: string
   parent_type: string
@@ -65,7 +64,7 @@ export interface VMHost extends Item {
   vms: VM[]
 }
 
-export interface VMCluster extends Item {
+export interface VMCluster extends TreeNode {
   cpu_capacity: number
   cpu_core: number
   cpu_usage: number
@@ -79,7 +78,6 @@ export interface VMCluster extends Item {
   memory_usage: number
   minion: string
   name: string
-  nodes: {[key: string]: VMHost}
   parent_chart_field: string
   parent_name: string
   storage_capacity: number
@@ -89,7 +87,7 @@ export interface VMCluster extends Item {
   vm_count: number
 }
 
-export interface VMDatacenter extends Item {
+export interface VMDatacenter extends TreeNode {
   cluster_count: number
   clusters: VMCluster[]
   cpu_space: number
@@ -105,7 +103,6 @@ export interface VMDatacenter extends Item {
   memory_usage: number
   minion: string
   name: string
-  nodes: {[key: string]: VMCluster | VMHost}
   parent_chart_field: string
   parent_name: string
   storage_capacity: number
@@ -115,22 +112,21 @@ export interface VMDatacenter extends Item {
   vm_count: number
 }
 
-export interface VCenter extends Item {
-  buttons?: () => void[]
-  cluster_count: number
-  cpu_space: number
-  cpu_usage: number
-  host_count: number
+export interface VCenter extends TreeNode {
+  buttons?: (() => JSX.Element)[]
+  cluster_count?: number
+  cpu_space?: number
+  cpu_usage?: number
+  host_count?: number
   index: number
   label: string
   level: number
-  memory_space: number
-  memory_usage: number
-  minion: string
-  nodes: VMDatacenter[]
-  storage_capacity: number
-  storage_space: number
-  storage_usage: number
-  type: VMRole.vcenter
-  vm_count: number
+  memory_space?: number
+  memory_usage?: number
+  minion?: string
+  storage_capacity?: number
+  storage_space?: number
+  storage_usage?: number
+  type?: VMRole.vcenter
+  vm_count?: number
 }

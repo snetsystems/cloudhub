@@ -30,7 +30,12 @@ import VMConnectForm from 'src/hosts/components/VMConnectForm'
 
 // Type
 import {TimeRange, Source, Layout, Me} from 'src/types'
-import {Item} from 'src/reusable_ui/components/treemenu/TreeMenu/walk'
+import {
+  Item,
+  TreeNode,
+  TreeNodeInArray,
+} from 'src/reusable_ui/components/treemenu/TreeMenu/walk'
+
 import {AddonType} from 'src/shared/constants'
 import {Addon} from 'src/types/auth'
 import {
@@ -236,7 +241,10 @@ const VMHostsPage = (props: Props): JSX.Element => {
   // host state
   const [focusedHost, setFocusedHost] = useState<Item>(initialFocusedHost)
   const [layout, setLayout] = useState<LayoutCell[]>([])
-  const [vCenters, setVCenters] = useState({})
+  const [vCenters, setVCenters] = useState<
+    {[name: string]: TreeNode} | TreeNodeInArray[]
+  >({})
+
   const [acceptedMinionList, setAcceptedMinionList] = useState([])
 
   // graph state in charts
