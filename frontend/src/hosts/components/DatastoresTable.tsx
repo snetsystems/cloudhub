@@ -14,14 +14,14 @@ import {
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {convertUnit} from 'src/shared/components/ProgressDisplay'
 import {VCENTER_DATASTORES_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
-import {VMDatastore} from 'src/hosts/types'
 import {NoHostsState} from 'src/agent_admin/reusable'
+import {Item} from 'src/reusable_ui/components/treemenu'
 
 interface Props {
   isEditable: boolean
   cellTextColor: string
   cellBackgroundColor: string
-  items: VMDatastore[]
+  items: Item[]
 }
 
 const DatastoresTable = (props: Props): JSX.Element => {

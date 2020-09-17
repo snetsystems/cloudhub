@@ -38,11 +38,11 @@ import {
   VMCluster,
   VMHost,
   VM,
-  VMDatastore,
   LayoutCell,
   VCenter,
   VcenterStatus,
   reducerVSphere,
+  VMRole,
 } from 'src/hosts/types'
 import {ComponentStatus} from 'src/reusable_ui/types'
 
@@ -165,7 +165,7 @@ interface Props {
     interval: string
   ) => any
   handleUpdateVSphereAsync: (
-    id: number,
+    id: string,
     target: string,
     address: string,
     user: string,
@@ -174,11 +174,11 @@ interface Props {
     protocol: string,
     interval: string
   ) => any
-  handleGetVSphereAsync: (id: number) => Promise<any>
+  handleGetVSphereAsync: (id: string) => Promise<any>
   handleAddVcenterAction: (props: any) => Promise<any>
   handleRemoveVcenter: () => Promise<any>
   handleUpdateVcenter: () => Promise<any>
-  handleDeleteVSphere: (id: number, host: string) => Promise<any>
+  handleDeleteVSphere: (id: string, host: string) => Promise<any>
   vspheres: reducerVSphere
   handleClearTimeout: (key: string) => void
   handleUpdateVcenterAction: (any) => void
@@ -232,7 +232,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const [password, setPassword] = useState('')
   const [protocol, setProtocol] = useState('https')
   const [interval, setInterval] = useState('1m')
-  const [vSphereId, setVSphereId] = useState(0)
+  const [vSphereId, setVSphereId] = useState('0')
   // host state
   const [focusedHost, setFocusedHost] = useState<Item>(initialFocusedHost)
   const [layout, setLayout] = useState<LayoutCell[]>([])
@@ -300,7 +300,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     setIsUpdate(false)
   }
 
-  const handleUpdateOpen = async (id): Promise<void> => {
+  const handleUpdateOpen = async (id: string): Promise<void> => {
     const vsphereInfo = await handleGetVSphereAsync(id)
 
     setAddress(_.get(vsphereInfo, 'host', ''))
@@ -534,7 +534,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
     let measurement: string
     let vType: string = props.type
-    if (vType === 'vm') {
+    if (vType === VMRole.vm) {
       measurement = VSPHERE_VM
     } else {
       measurement = VSPHERE_HOST
@@ -556,27 +556,27 @@ const VMHostsPage = (props: Props): JSX.Element => {
     const getTempVars = generateForHosts(source)
 
     let vmParam: vmParam
-    if (vType === 'vcenter') {
+    if (vType === VMRole.vcenter) {
       vmParam = {
         vmField: 'vcenter',
         vmVal: props.label,
       }
-    } else if (vType === 'datacenter') {
+    } else if (vType === VMRole.datacenter) {
       vmParam = {
         vmField: 'dcname',
         vmVal: props.name,
       }
-    } else if (vType === 'cluster') {
+    } else if (vType === VMRole.cluster) {
       vmParam = {
         vmField: 'clustername',
         vmVal: props.name,
       }
-    } else if (vType === 'host') {
+    } else if (vType === VMRole.host) {
       vmParam = {
         vmField: 'esxhostname',
         vmVal: props.name,
       }
-    } else if (vType === 'vm') {
+    } else if (vType === VMRole.vm) {
       vmParam = {
         vmField: 'vmname',
         vmVal: props.name,
@@ -600,7 +600,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
     if (focusedHost?.type) {
       const {type} = focusedHost
-      if (type === 'vcenter') {
+      if (type === VMRole.vcenter) {
         if (
           getLayoutItem &&
           getLayoutItem?.vcenter &&
@@ -610,7 +610,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
         } else {
           setLayout(vcenterCells)
         }
-      } else if (type === 'datacenter') {
+      } else if (type === VMRole.datacenter) {
         if (
           getLayoutItem &&
           getLayoutItem?.datacenter &&
@@ -620,7 +620,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
         } else {
           setLayout(datacenterCells)
         }
-      } else if (type === 'cluster') {
+      } else if (type === VMRole.cluster) {
         if (
           getLayoutItem &&
           getLayoutItem?.cluster &&
@@ -630,7 +630,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
         } else {
           setLayout(clusterCells)
         }
-      } else if (type === 'host') {
+      } else if (type === VMRole.host) {
         if (
           getLayoutItem &&
           getLayoutItem?.host &&
@@ -640,7 +640,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
         } else {
           setLayout(hostCells)
         }
-      } else if (type === 'vm') {
+      } else if (type === VMRole.vm) {
         if (getLayoutItem && getLayoutItem?.vm && getLayoutItem.vm.length > 0) {
           setLayout(getLayoutItem.vm)
         } else {
@@ -695,27 +695,27 @@ const VMHostsPage = (props: Props): JSX.Element => {
     let {layout} = getLocal
     const getActiveKey: string = _.get(focusedHost, 'key', '')
 
-    if (focusedHost.type === 'vcenter') {
+    if (focusedHost.type === VMRole.vcenter) {
       layout[getActiveKey.split('/')[0]] = {
         ...layout[getActiveKey.split('/')[0]],
         vcenter: cellsLayout,
       }
-    } else if (focusedHost.type === 'datacenter') {
+    } else if (focusedHost.type === VMRole.datacenter) {
       layout[getActiveKey.split('/')[0]] = {
         ...layout[getActiveKey.split('/')[0]],
         datacenter: cellsLayout,
       }
-    } else if (focusedHost.type === 'cluster') {
+    } else if (focusedHost.type === VMRole.cluster) {
       layout[getActiveKey.split('/')[0]] = {
         ...layout[getActiveKey.split('/')[0]],
         cluster: cellsLayout,
       }
-    } else if (focusedHost.type === 'host') {
+    } else if (focusedHost.type === VMRole.host) {
       layout[getActiveKey.split('/')[0]] = {
         ...layout[getActiveKey.split('/')[0]],
         host: cellsLayout,
       }
-    } else if (focusedHost.type === 'vm') {
+    } else if (focusedHost.type === VMRole.vm) {
       layout[getActiveKey.split('/')[0]] = {
         ...layout[getActiveKey.split('/')[0]],
         vm: cellsLayout,
@@ -725,7 +725,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     setLocalStorage('VMHostsPage', {...getLocal, layout})
   }
 
-  const updateBtn = (id: number) => (): JSX.Element => {
+  const updateBtn = (id: string) => (): JSX.Element => {
     const {
       auth: {me, isUsingAuth},
     } = props
@@ -743,7 +743,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     ) : null
   }
 
-  const removeBtn = (id: number, host: string) => (): JSX.Element => {
+  const removeBtn = (id: string, host: string) => (): JSX.Element => {
     const {
       auth: {me, isUsingAuth},
     } = props
@@ -775,7 +775,9 @@ const VMHostsPage = (props: Props): JSX.Element => {
     setOpenNodes(remove)
   }
 
-  const makeTreeMenuVCenterInfo = props => {
+  const makeTreeMenuVCenterInfo = (
+    props: reducerVSphere['vspheres']['host']
+  ) => {
     const vCenterData = props.nodes
 
     let vcCpuUsage = []
@@ -792,7 +794,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     let vcMinionValue: any[] = Object.values(vCenterData.return[0])
     let vcIpAddress = props.host
 
-    let vcenter = [vCenterData].reduce(
+    let vcenter: {[x: string]: VCenter} = [vCenterData].reduce(
       acc => {
         const datacenters: VMDatacenter[] = vcMinionValue[0].datacenters
         if (!datacenters) return
@@ -815,9 +817,9 @@ const VMHostsPage = (props: Props): JSX.Element => {
             label: datacenterName,
             index: i,
             level: 1,
-            type: 'datacenter',
+            type: VMRole.datacenter,
             parent_name: vcIpAddress,
-            parent_chart_field: 'vcenter',
+            parent_chart_field: VMRole.vcenter,
             minion: minionName[0],
             nodes: {},
             datacenter_hosts: datacenterHosts,
@@ -831,7 +833,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
               label: clusterName,
               index: i,
               level: 2,
-              type: 'cluster',
+              type: VMRole.cluster,
               parent_name: `${vcIpAddress}/${datacenterName}`,
               parent_chart_field: 'vcenter/dcname',
               minion: minionName[0],
@@ -848,8 +850,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
                 label: hostName,
                 index: i,
                 level: 3,
-                type: 'host',
-                parent_type: 'cluster',
+                type: VMRole.host,
+                parent_type: VMRole.cluster,
                 parent_name: `${vcIpAddress}/${datacenterName}/${clusterName}`,
                 parent_chart_field: 'vcenter/dcname/clustername',
                 minion: minionName[0],
@@ -866,7 +868,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
                   label: vmName,
                   index: i,
                   level: 4,
-                  type: 'vm',
+                  type: VMRole.vm,
                   parent_name: `${vcIpAddress}/${datacenterName}/${clusterName}/${hostName}`,
                   parent_chart_field: 'vcenter/dcname/clustername/esxhostname',
                   minion: minionName[0],
@@ -896,8 +898,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
               label: hostName,
               index: i,
               level: 2,
-              type: 'host',
-              parent_type: 'datacenter',
+              type: VMRole.host,
+              parent_type: VMRole.datacenter,
               parent_name: `${vcIpAddress}/${datacenterName}`,
               parent_chart_field: 'vcenter/dcname',
               minion: minionName[0],
@@ -914,7 +916,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
                 label: vmName,
                 index: i,
                 level: 3,
-                type: 'vm',
+                type: VMRole.vm,
                 id: props.id,
                 parent_name: `${vcIpAddress}/${datacenterName}/${hostName}`,
                 parent_chart_field: 'vcenter/dcname/esxhostname',
@@ -943,7 +945,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
           key: vcIpAddress,
           index: 0,
           level: 0,
-          type: 'vcenter',
+          type: VMRole.vcenter,
           minion: minionName[0],
           nodes: {},
         },
@@ -953,7 +955,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
     if (!vcenter) return
     vcenter[vcIpAddress] = {
       ...vcenter[vcIpAddress],
-
       buttons: [updateBtn(props.id), removeBtn(props.id, props.host)],
       cpu_usage:
         vcCpuUsage.length > 0 ? vcCpuUsage.reduce((sum, c) => sum + c) : [],
@@ -1047,7 +1048,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
   const CellTable = ({cell}: {cell: LayoutCell}): JSX.Element => {
     switch (cell.i) {
-      case 'vcenter': {
+      case VMRole.vcenter: {
         try {
           let item: VCenter = vCenters[focusedHost.key] || null
 
@@ -1084,10 +1085,10 @@ const VMHostsPage = (props: Props): JSX.Element => {
       case 'datacenters': {
         try {
           let items: VMDatacenter[] = []
-          if (focusedHost.type === 'vcenter') {
+          if (focusedHost.type === VMRole.vcenter) {
             items = _.filter(
               vCenters[focusedHost.key.split('/')[0]].nodes,
-              k => k.type === 'datacenter'
+              k => k.type === VMRole.datacenter
             )
           }
           return (
@@ -1103,11 +1104,11 @@ const VMHostsPage = (props: Props): JSX.Element => {
           console.log(error)
         }
       }
-      case 'datacenter': {
+      case VMRole.datacenter: {
         try {
           let item: VMDatacenter = null
 
-          if (focusedHost.type === 'datacenter') {
+          if (focusedHost.type === VMRole.datacenter) {
             item =
               vCenters[focusedHost.key.split('/')[0]].nodes[
                 focusedHost.key.split('/')[1]
@@ -1128,13 +1129,13 @@ const VMHostsPage = (props: Props): JSX.Element => {
       }
       case 'datastores': {
         try {
-          let items: VMDatastore[] = []
+          let items: Item[] = []
 
-          if (focusedHost.type === 'datacenter') {
+          if (focusedHost.type === VMRole.datacenter) {
             items =
               vCenters[focusedHost.key.split('/')[0]].nodes[focusedHost.name]
                 .datastores
-          } else if (focusedHost.type === 'cluster') {
+          } else if (focusedHost.type === VMRole.cluster) {
             items =
               vCenters[focusedHost.key.split('/')[0]].nodes[
                 focusedHost.key.split('/')[1]
@@ -1154,12 +1155,12 @@ const VMHostsPage = (props: Props): JSX.Element => {
       }
       case 'clusters': {
         try {
-          let items: VMCluster[] = []
-          if (focusedHost.type === 'datacenter') {
+          let items: Item[] = []
+          if (focusedHost.type === VMRole.datacenter) {
             const splitedActiveKey = focusedHost.key.split('/')
             items = _.filter(
               vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes,
-              (k: VMCluster | VMHost) => k.type === 'cluster'
+              (k: VMCluster | VMHost) => k.type === VMRole.cluster
             )
           }
 
@@ -1176,11 +1177,11 @@ const VMHostsPage = (props: Props): JSX.Element => {
           console.log(error)
         }
       }
-      case 'cluster': {
+      case VMRole.cluster: {
         try {
           let item: VMCluster = null
 
-          if (focusedHost.type === 'cluster') {
+          if (focusedHost.type === VMRole.cluster) {
             const splitedActiveKey = focusedHost.key.split('/')
             item =
               vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
@@ -1202,16 +1203,16 @@ const VMHostsPage = (props: Props): JSX.Element => {
       }
       case 'vmhosts': {
         try {
-          let items: VMHost[] = []
+          let items: Item[] = []
           const splitedActiveKey = focusedHost.key.split('/')
-          if (focusedHost.type === 'cluster') {
+          if (focusedHost.type === VMRole.cluster) {
             items = _.filter(
               vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
                 focusedHost.name
               ].nodes,
-              (k: VMHost) => k.type === 'host'
+              (k: VMHost) => k.type === VMRole.host
             )
-          } else if (focusedHost.type === 'datacenter') {
+          } else if (focusedHost.type === VMRole.datacenter) {
             items =
               vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]]
                 .datacenter_hosts
@@ -1235,12 +1236,12 @@ const VMHostsPage = (props: Props): JSX.Element => {
           let item: VMHost = null
 
           const splitedActiveKey = focusedHost.key.split('/')
-          if (focusedHost.parent_type === 'cluster') {
+          if (focusedHost.parent_type === VMRole.cluster) {
             item =
               vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
                 splitedActiveKey[2]
               ].nodes[splitedActiveKey[3]]
-          } else if (focusedHost.parent_type === 'datacenter') {
+          } else if (focusedHost.parent_type === VMRole.datacenter) {
             item =
               vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
                 splitedActiveKey[2]
@@ -1261,27 +1262,27 @@ const VMHostsPage = (props: Props): JSX.Element => {
       }
       case 'vms': {
         try {
-          let items: VM[] = []
+          let items: Item[] = []
           const splitedActiveKey = focusedHost.key.split('/')
           if (
-            focusedHost.parent_type === 'cluster' &&
-            focusedHost.type === 'host'
+            focusedHost.parent_type === VMRole.cluster &&
+            focusedHost.type === VMRole.host
           ) {
             items = _.filter(
               vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
                 splitedActiveKey[2]
               ].nodes[splitedActiveKey[3]].nodes,
-              k => k.type === 'vm'
+              k => k.type === VMRole.vm
             )
           } else if (
-            focusedHost.parent_type === 'datacenter' &&
-            focusedHost.type === 'host'
+            focusedHost.parent_type === VMRole.datacenter &&
+            focusedHost.type === VMRole.host
           ) {
             items = _.filter(
               vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
                 splitedActiveKey[2]
               ].nodes,
-              (k: VM) => k.type === 'vm'
+              (k: VM) => k.type === VMRole.vm
             )
           }
           return (
@@ -1297,7 +1298,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
           console.log(error)
         }
       }
-      case 'vm': {
+      case VMRole.vm: {
         try {
           let item: VM = null
           const splitedActiveKey = focusedHost.key.split('/')

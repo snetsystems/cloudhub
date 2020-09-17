@@ -21,14 +21,14 @@ import {NoHostsState} from 'src/agent_admin/reusable'
 import {VCENTER_VMS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 
 //types
-import {VM} from 'src/hosts/types'
+import {Item} from 'src/reusable_ui/components/treemenu'
 
 interface Props {
   isEditable: boolean
   cellTextColor: string
   cellBackgroundColor: string
-  handleSelectHost: (item: VM) => void
-  items: VM[]
+  handleSelectHost: (item: Item) => void
+  items: Item[]
 }
 
 const VirtualMachinesTable = (props: Props): JSX.Element => {

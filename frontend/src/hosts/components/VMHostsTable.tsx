@@ -18,14 +18,14 @@ import {NoHostsState} from 'src/agent_admin/reusable'
 import {VCENTER_VMHOSTS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 
 // types
-import {VMHost} from 'src/hosts/types'
+import {Item} from 'src/reusable_ui/components/treemenu'
 
 interface Props {
   isEditable: boolean
   cellTextColor: string
   cellBackgroundColor: string
-  handleSelectHost: (item: VMHost) => void
-  items: VMHost[]
+  handleSelectHost: (item: Item) => void
+  items: Item[]
 }
 
 const VMHostsTable = (props: Props): JSX.Element => {

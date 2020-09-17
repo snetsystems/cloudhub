@@ -18,14 +18,14 @@ import {NoHostsState} from 'src/agent_admin/reusable'
 import {VCENTER_CLUSTERS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 
 // types
-import {VMCluster} from 'src/hosts/types'
+import {Item} from 'src/reusable_ui/components/treemenu'
 
 interface Props {
   isEditable: boolean
   cellTextColor: string
   cellBackgroundColor: string
-  items: VMCluster[]
-  handleSelectHost: (item: VMCluster) => void
+  items: Item[]
+  handleSelectHost: (item: Item) => void
 }
 
 const ClustersTable = (props: Props): JSX.Element => {
