@@ -1,14 +1,14 @@
 import _ from 'lodash'
 
 import {Action, ActionTypes} from 'src/hosts/actions/index'
-import {VcenterStatus} from 'src/hosts/types'
+import {VcenterStatus, reducerVSphere} from 'src/hosts/types'
 
 export const initialState = {
   vspheres: {},
   status: VcenterStatus.Request,
 }
 
-const vspheres = (state = initialState, action: Action) => {
+const vspheres = (state: reducerVSphere = initialState, action: Action) => {
   switch (action.type) {
     case ActionTypes.LoadVcenters: {
       let loadVcenters = {...state}

@@ -5,11 +5,25 @@ import {
   VMHost,
   VM,
   VMDatastore,
+  VMRole,
 } from 'src/hosts/types/virtualmachine'
 import {LayoutCell} from 'src/hosts/types/layout'
-import {VcenterStatus} from 'src/hosts/types/type'
+import {
+  reducerVSphere,
+  VcenterStatus,
+  VMHostsPageLocalStorage,
+  ResponseCluster,
+  ResponseVSphere,
+  ResponseDatacenter,
+  ResponseDatastore,
+  ResponseHost,
+  ResponseVMS,
+  handleSelectHostProps,
+  vmParam,
+} from 'src/hosts/types/type'
 
 export {
+  VMRole,
   VCenter,
   VMDatacenter,
   VMCluster,
@@ -18,4 +32,14 @@ export {
   VMDatastore,
   LayoutCell,
   VcenterStatus,
+  VMHostsPageLocalStorage,
+  ResponseCluster,
+  ResponseVSphere,
+  ResponseDatacenter,
+  ResponseDatastore,
+  ResponseHost,
+  ResponseVMS,
+  handleSelectHostProps,
+  vmParam,
+  reducerVSphere,
 }

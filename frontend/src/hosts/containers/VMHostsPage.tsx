@@ -42,6 +42,7 @@ import {
   LayoutCell,
   VCenter,
   VcenterStatus,
+  reducerVSphere,
 } from 'src/hosts/types'
 import {ComponentStatus} from 'src/reusable_ui/types'
 
@@ -178,7 +179,7 @@ interface Props {
   handleRemoveVcenter: () => Promise<any>
   handleUpdateVcenter: () => Promise<any>
   handleDeleteVSphere: (id: number, host: string) => Promise<any>
-  vspheres: any
+  vspheres: reducerVSphere
   handleClearTimeout: (key: string) => void
   handleUpdateVcenterAction: (any) => void
   handleRequestAction: () => void
@@ -528,7 +529,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     })
   }, [openNodes])
 
-  const requestCharts = async (props: any) => {
+  const requestCharts = async (props: Item) => {
     if (props.key === '' || props.type === '') return
 
     let measurement: string
@@ -540,7 +541,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     }
 
     let init_layouts: Layout[] = []
-    if (layouts.length == 0) {
+    if (layouts.length === 0) {
       const layoutRst = await getLayouts()
       init_layouts = getDeep<Layout[]>(layoutRst, 'data.layouts', [])
     }
@@ -1338,7 +1339,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     }
   }
 
-  const handleSelectHost = async (props: any) => {
+  const handleSelectHost = async (props: Item) => {
     let p = Array.isArray(props) ? props : [props]
     const path: string[] = p[0].parent_name.split('/')
     const newPath: string[] = []

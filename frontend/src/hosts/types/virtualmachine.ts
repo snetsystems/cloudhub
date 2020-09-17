@@ -1,5 +1,13 @@
 import {Item} from 'src/reusable_ui/components/treemenu/TreeMenu/walk'
 
+export enum VMRole {
+  vcenter = 'vcenter',
+  datacenter = 'datacenter',
+  datastore = 'datastore',
+  cluster = 'cluster',
+  host = 'host',
+  vm = 'vm',
+}
 export interface VM extends Item {
   moid: string
   name: string
@@ -15,7 +23,7 @@ export interface VM extends Item {
   parent_chart_field: string
   parent_name: string
   power_state: string
-  type: string
+  type: VMRole.vm
   vmPathName: string
 }
 
@@ -23,7 +31,7 @@ export interface VMDatastore extends Item {
   name: string
   capacity: number
   space: number
-  type: string
+  type: VMRole.datastore
   mode: string
 }
 
@@ -51,7 +59,7 @@ export interface VMHost extends Item {
   storage_capacity: number
   storage_space: number
   storage_usage: number
-  type: string
+  type: VMRole.host
   vender: string
   vm_count: number
   vms: VM[]
@@ -77,7 +85,7 @@ export interface VMCluster extends Item {
   storage_capacity: number
   storage_space: number
   storage_usage: number
-  type: string
+  type: VMRole.cluster
   vm_count: number
 }
 
@@ -103,7 +111,7 @@ export interface VMDatacenter extends Item {
   storage_capacity: number
   storage_space: number
   storage_usage: number
-  type: string
+  type: VMRole.datacenter
   vm_count: number
 }
 
@@ -123,6 +131,6 @@ export interface VCenter extends Item {
   storage_capacity: number
   storage_space: number
   storage_usage: number
-  type: string
+  type: VMRole.vcenter
   vm_count: number
 }
