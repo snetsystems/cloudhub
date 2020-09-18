@@ -31,6 +31,7 @@ func (r *vsphereRequest) ValidCreate() error {
 	if r.Password == "" {
 		return fmt.Errorf("Password required vsphere request body")
 	}
+	// jack: the followings are not mandatory fields.
 	// if r.Protocol == "" {
 	// 	return fmt.Errorf("Protocol required vsphere request body")
 	// }

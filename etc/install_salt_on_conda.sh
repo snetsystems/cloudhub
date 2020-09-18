@@ -46,7 +46,6 @@ conda_install() {
         daily
         missingok
         dateext
-        copytruncate
         notifempty
         compress
     }" > /etc/logrotate.d/snet-salt
