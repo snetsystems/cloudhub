@@ -72,6 +72,7 @@ import * as ErrorsModels from 'src/types/errors'
 
 import {AddonType} from 'src/shared/constants'
 import {Addon} from 'src/types/auth'
+import {reducerVSphere, ResponseVSphere} from './hosts/types'
 
 const errorsQueue = []
 
@@ -142,7 +143,7 @@ class Root extends PureComponent<{}, State> {
   private heartbeatTimer: number
 
   private timeout: {
-    [name: string]: {id: number; host: string; timer: number; timeout: number}
+    [name: string]: {id: string; host: string; timer: number; timeout: number}
   } = {}
 
   constructor(props) {
@@ -285,11 +286,14 @@ class Root extends PureComponent<{}, State> {
     return addon
   }
 
-  private promiseGenerator = async (salt, vsphere) => {
+  private promiseGenerator = (
+    salt: {url: string; token: string},
+    vsphere: reducerVSphere['vspheres']['host']
+  ) => {
     const {url, token} = salt
     const {minion, host, username, password, port, protocol} = vsphere
 
-    return await this.handleGetVSphereInfoSaltApi(
+    return this.handleGetVSphereInfoSaltApi(
       url,
       token,
       minion,
@@ -316,17 +320,14 @@ class Root extends PureComponent<{}, State> {
 
       const salt = this.getSaltAddon()
 
-      const promises: Promise<any>[] = _.map(
-        _.keys(vSpheres),
-        async (key: string) => {
-          return await this.promiseGenerator(salt, vSpheres[key])
-        }
-      )
+      const promises = _.map(_.keys(vSpheres), (key: string) => {
+        return this.promiseGenerator(salt, vSpheres[key])
+      })
 
       try {
         this.handleRequestVcenter()
         Promise.allSettled(promises)
-          .then(async data => {
+          .then(data => {
             const succesData = _.filter(
               data,
               d => d.status === 'fulfilled' && d.value
@@ -342,7 +343,7 @@ class Root extends PureComponent<{}, State> {
                 nodes: value,
               }
             })
-            await this.handleUpdateVcenters(updateVcenters)
+            this.handleUpdateVcenters(updateVcenters)
           })
           .catch(err => {
             throw err
@@ -371,14 +372,14 @@ class Root extends PureComponent<{}, State> {
     }
   })
 
-  private checkTimeout = (id?: number, host?: string) => {
+  private checkTimeout = (id?: string, host?: string) => {
     const {
       vspheres: {vspheres},
-    } = store.getState()
+    }: {vspheres: reducerVSphere} = store.getState()
     const vSpheresKeys = _.keys(vspheres)
     const salt = this.getSaltAddon()
 
-    if (host && id > -1) {
+    if (host && Number(id) > -1) {
       vSpheresKeys.forEach(async key => {
         if (this.timeout[key]) {
           if (this.timeout[key].id === id) {
@@ -412,7 +413,11 @@ class Root extends PureComponent<{}, State> {
     })
   }
 
-  private async requestVSphere(key: string, salt: any, vsphere: any) {
+  private async requestVSphere(
+    key: string,
+    salt: {url: string; token: string},
+    vsphere: reducerVSphere['vspheres']['host']
+  ) {
     const {interval, id} = vsphere
 
     this.timeout[key] = {
@@ -424,7 +429,7 @@ class Root extends PureComponent<{}, State> {
           const {url, token} = salt
           const {minion, host, username, password, port, protocol} = vsphere
 
-          const getVsphere = await this.handleGetVSphereInfoSaltApi(
+          const getVsphere: ResponseVSphere = (await this.handleGetVSphereInfoSaltApi(
             url,
             token,
             minion,
@@ -433,9 +438,9 @@ class Root extends PureComponent<{}, State> {
             password,
             port,
             protocol
-          )
+          )) as any
 
-          await this.handleUpdateVcenter({host: key, nodes: getVsphere})
+          this.handleUpdateVcenter({host: key, nodes: getVsphere})
           this.requestVSphere(key, salt, vsphere)
         }
       }, interval),

@@ -20,12 +20,13 @@ import {VCENTER_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 
 // types
 import {ProgressDisplay} from 'src/shared/components/ProgressDisplay'
+import {Item} from 'src/reusable_ui/components/treemenu'
 
 interface Props {
   isEditable: boolean
   cellTextColor: string
   cellBackgroundColor: string
-  item: any
+  item: Item
 }
 
 const VcenterTable = (props: Props): JSX.Element => {

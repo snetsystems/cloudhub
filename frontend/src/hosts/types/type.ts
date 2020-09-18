@@ -34,6 +34,7 @@ export interface ResponseHost {
   storage_usage: number
   vender: string
   vm_count: number
+  vms: ResponseVMS[]
 }
 
 export interface ResponseCluster {
@@ -134,16 +135,16 @@ export interface reducerVSphere {
   vspheres: {
     [host: string]: {
       host: string
-      id: string
-      interval: number
-      links: {self: string}
+      id?: string
+      interval?: number
+      links?: {self: string}
       minion?: string
       nodes?: ResponseVSphere
-      organization: string
-      password: string
-      port: number
-      protocol: string
-      username: string
+      organization?: string
+      password?: string
+      port?: string
+      protocol?: string
+      username?: string
     }
   }
   status: VcenterStatus

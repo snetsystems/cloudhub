@@ -49,6 +49,8 @@ import {
   reducerVSphere,
   VMRole,
   VMHostsPageLocalStorage,
+  ResponseVSphere,
+  ResponseDatacenter,
 } from 'src/hosts/types'
 import {ComponentStatus} from 'src/reusable_ui/types'
 
@@ -172,7 +174,7 @@ interface Props {
     port: string,
     protocol: string,
     interval: string
-  ) => any
+  ) => Promise<any>
   handleGetVSphereAsync: (id: string) => Promise<any>
   handleAddVcenterAction: (props: any) => Promise<any>
   handleRemoveVcenter: () => Promise<any>
@@ -180,7 +182,19 @@ interface Props {
   handleDeleteVSphere: (id: string, host: string) => Promise<any>
   vspheres: reducerVSphere
   handleClearTimeout: (key: string) => void
-  handleUpdateVcenterAction: (any) => void
+  handleUpdateVcenterAction: ({
+    host,
+    id,
+    interval,
+    links,
+    minion,
+    nodes,
+    organization,
+    password,
+    port,
+    protocol,
+    username,
+  }: reducerVSphere['vspheres']['host']) => void
   handleRequestAction: () => void
   handleResponseAction: () => void
 }
@@ -350,7 +364,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
       port,
       protocol
     )
-      .then(result => {
+      .then((result: ResponseVSphere) => {
         if (!result) return
         handleUpdateVSphereAsync(
           vSphereId,
@@ -793,12 +807,15 @@ const VMHostsPage = (props: Props): JSX.Element => {
     let vcHostCount = []
     let vcVmCount = []
     let minionName = Object.keys(vCenterData.return[0])
-    let vcMinionValue: any[] = Object.values(vCenterData.return[0])
+    let vcMinionValue: {
+      datacenters: ResponseDatacenter[]
+      vcenter: string
+    }[] = Object.values(vCenterData.return[0])
     let vcIpAddress = props.host
 
     let vcenter: {[x: string]: VCenter} = [vCenterData].reduce(
       acc => {
-        const datacenters: VMDatacenter[] = vcMinionValue[0].datacenters
+        const datacenters: ResponseDatacenter[] = vcMinionValue[0].datacenters
         if (!datacenters) return
 
         datacenters.reduce((acc, datacenter, i) => {
@@ -1052,7 +1069,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     switch (cell.i) {
       case VMRole.vcenter: {
         try {
-          let item: VCenter = vCenters[focusedHost.key] || null
+          let item: Item = vCenters[focusedHost.key] || null
 
           return (
             <VcenterTable

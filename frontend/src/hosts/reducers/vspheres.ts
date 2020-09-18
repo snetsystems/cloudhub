@@ -68,7 +68,7 @@ const vspheres = (state: reducerVSphere = initialState, action: Action) => {
       const {payload} = action
       const updateState = {...state}
 
-      _.forEach(payload, (p: any) => {
+      _.forEach(payload, p => {
         if (
           p.host === updateState.vspheres[p.host].host &&
           p.minion === updateState.vspheres[p.host].minion

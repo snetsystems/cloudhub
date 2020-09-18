@@ -2,6 +2,9 @@ import {Dispatch, bindActionCreators} from 'redux'
 import {errorThrown} from 'src/shared/actions/errors'
 import _ from 'lodash'
 
+// Types
+import {ResponseVSphere, reducerVSphere} from 'src/hosts/types'
+
 // APIs
 import {
   getMinionKeyAcceptedList,
@@ -52,34 +55,24 @@ export const loadMinionKeyAcceptedList = (): MinionKeyAcceptedListAction => ({
 
 interface LoadVcentersAction {
   type: ActionTypes.LoadVcenters
-  payload: any
-}
-interface vSphere {
-  id: number
-  tgt: string
-  address: string
-  user: string
-  password: string
-  port: string
-  protocol: string
-  interval: string
+  payload: reducerVSphere['vspheres']
 }
 
-interface vSpheres {
-  [name: string]: vSphere
-}
-
-export const loadVcentersList = (vSpheres: vSpheres): LoadVcentersAction => ({
+export const loadVcentersList = (
+  payload: LoadVcentersAction['payload']
+): LoadVcentersAction => ({
   type: ActionTypes.LoadVcenters,
-  payload: vSpheres,
+  payload,
 })
 
 interface AddVcenterAction {
   type: ActionTypes.AddVcenter
-  payload: any
+  payload: reducerVSphere['vspheres']
 }
 
-export const addVcenterAction = (props): AddVcenterAction => ({
+export const addVcenterAction = (
+  props: AddVcenterAction['payload']
+): AddVcenterAction => ({
   type: ActionTypes.AddVcenter,
   payload: props,
 })
@@ -100,36 +93,42 @@ export const removeVcenter = (host: string): RemoveVcenterAction => ({
 
 interface UpdateVcenterAction {
   type: ActionTypes.UpdateVcenter
-  payload: any
+  payload: reducerVSphere['vspheres']['host']
 }
 
-export const updateVcenterAction = (payload: any): UpdateVcenterAction => {
+export const updateVcenterAction = (
+  payload: UpdateVcenterAction['payload']
+): UpdateVcenterAction => {
   return {
     type: ActionTypes.UpdateVcenter,
     payload,
   }
 }
 
+// interface UpdateVcentersActionPayload {
+//   id?: string
+//   host?: string
+//   username?: string
+//   password?: string
+//   protocol?: string
+//   port?: string
+//   interval?: number
+//   organization?: string
+//   minion?: string
+//   links?: {
+//     self: string
+//   }
+//   nodes?: ResponseVSphere
+// }
+
 interface UpdateVcentersAction {
   type: ActionTypes.UpdateVcenters
-  payload: {
-    id?: number
-    host?: string
-    username?: string
-    password?: string
-    protocol?: string
-    port?: number
-    interval?: number
-    organization?: string
-    minion?: string
-    links?: {
-      self: string
-    }
-    nodes?: any
-  }
+  payload: reducerVSphere['vspheres']['host'][]
 }
 
-export const updateVcentersAction = (payload: any): UpdateVcentersAction => {
+export const updateVcentersAction = (
+  payload: reducerVSphere['vspheres']['host'][]
+): UpdateVcentersAction => {
   return {
     type: ActionTypes.UpdateVcenters,
     payload,
@@ -176,9 +175,9 @@ export const getVSphereInfoSaltApiAsync = (
   password: string,
   port: string,
   protocol: string
-) => async (dispatch: Dispatch<Action>): Promise<any> => {
+) => async (dispatch: Dispatch<Action>) => {
   try {
-    const vSphereInfo = await getVSphereInfoSaltApi(
+    const vSphereInfo: ResponseVSphere = await getVSphereInfoSaltApi(
       pUrl,
       pToken,
       tgt,
@@ -193,7 +192,7 @@ export const getVSphereInfoSaltApiAsync = (
       typeof _.values(vSphereInfo.return[0])[0] === 'string' ||
       typeof _.values(vSphereInfo.return[0])[0] === 'boolean'
     ) {
-      let error = Error(_.values(vSphereInfo.return[0])[0])
+      let error = Error(JSON.stringify(_.values(vSphereInfo.return[0])[0]))
       const notify = bindActionCreators(notifyAction, dispatch)
       notify(notifyConnectVCenterFailed(error))
       return
@@ -327,9 +326,6 @@ export const updateVSphereAsync = (
       interval,
     })
 
-    // DB UPDATE 성공시
-    // REDUX도 DISPATCH
-    // dispatch()
     return vSpheres
   } catch (error) {
     console.error(error)
