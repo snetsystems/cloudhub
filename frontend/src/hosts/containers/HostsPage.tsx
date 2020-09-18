@@ -13,12 +13,11 @@ import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/Aut
 import ManualRefresh, {
   ManualRefreshProps,
 } from 'src/shared/components/ManualRefresh'
-import {Button, ButtonShape, IconFont, Page} from 'src/reusable_ui'
+import {Button, ButtonShape, IconFont, Page, Radio} from 'src/reusable_ui'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import GraphTips from 'src/shared/components/GraphTips'
 import VMHostPage from 'src/hosts/containers/VMHostsPage'
-import {Tab, Tabs, TabList, TabPanel} from 'react-tabs'
 
 // APIs
 import {
@@ -99,6 +98,7 @@ interface State {
   proportions: number[]
   selected: QueriesModels.TimeRange
   isVsphere: boolean
+  activeEditorTab: string
 }
 
 @ErrorHandling
@@ -122,8 +122,10 @@ export class HostsPage extends PureComponent<Props, State> {
       proportions: [0.43, 0.57],
       selected: {lower: '', upper: ''},
       isVsphere: false,
+      activeEditorTab: 'Host',
     }
     this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
+    this.onSetActiveEditorTab = this.onSetActiveEditorTab.bind(this)
   }
 
   public componentWillMount() {
@@ -242,6 +244,12 @@ export class HostsPage extends PureComponent<Props, State> {
     onChooseAutoRefresh(milliseconds)
   }
 
+  private onSetActiveEditorTab(activeEditorTab: string): void {
+    this.setState({
+      activeEditorTab,
+    })
+  }
+
   public render() {
     const {
       autoRefresh,
@@ -249,7 +257,7 @@ export class HostsPage extends PureComponent<Props, State> {
       inPresentationMode,
       source,
     } = this.props
-    const {selected, isVsphere} = this.state
+    const {selected, isVsphere, activeEditorTab} = this.state
 
     return (
       <Page className="hosts-list-page">
@@ -257,6 +265,30 @@ export class HostsPage extends PureComponent<Props, State> {
           <Page.Header.Left>
             <Page.Title title="Infrastructure" />
           </Page.Header.Left>
+          <Page.Header.Center widthPixels={220}>
+            {isVsphere && (
+              <div className="radio-buttons radio-buttons--default radio-buttons--sm radio-buttons--stretch">
+                <Radio.Button
+                  id="hostspage-tab-Host"
+                  titleText="Host"
+                  value="Host"
+                  active={activeEditorTab === 'Host'}
+                  onClick={this.onSetActiveEditorTab}
+                >
+                  Host
+                </Radio.Button>
+                <Radio.Button
+                  id="hostspage-tab-VMware"
+                  titleText="VMware"
+                  value="VMware"
+                  active={activeEditorTab === 'VMware'}
+                  onClick={this.onSetActiveEditorTab}
+                >
+                  VMware
+                </Radio.Button>
+              </div>
+            )}
+          </Page.Header.Center>
           <Page.Header.Right showSourceIndicator={true}>
             <GraphTips />
             <AutoRefreshDropdown
@@ -279,29 +311,20 @@ export class HostsPage extends PureComponent<Props, State> {
           </Page.Header.Right>
         </Page.Header>
         <Page.Contents scrollable={true}>
-          <Tabs defaultIndex={0}>
-            <TabList>
-              <Tab key={'Host'}>Host</Tab>
-              {isVsphere && <Tab key={'VMware'}>VMware</Tab>}
-            </TabList>
-            <TabPanel key={'Host'}>
-              <Threesizer
-                orientation={HANDLE_HORIZONTAL}
-                divisions={this.horizontalDivisions}
-                onResize={this.handleResize}
-              />
-            </TabPanel>
-            {isVsphere && (
-              <TabPanel key={'VMware'}>
-                <VMHostPage
-                  source={source}
-                  manualRefresh={this.props.manualRefresh}
-                  timeRange={this.state.timeRange}
-                  handleClearTimeout={this.props.handleClearTimeout}
-                />
-              </TabPanel>
-            )}
-          </Tabs>
+          {activeEditorTab === 'Host' ? (
+            <Threesizer
+              orientation={HANDLE_HORIZONTAL}
+              divisions={this.horizontalDivisions}
+              onResize={this.handleResize}
+            />
+          ) : (
+            <VMHostPage
+              source={source}
+              manualRefresh={this.props.manualRefresh}
+              timeRange={this.state.timeRange}
+              handleClearTimeout={this.props.handleClearTimeout}
+            />
+          )}
         </Page.Contents>
       </Page>
     )
