@@ -3624,7 +3624,7 @@
         }
       }
     },
-    "/salt": {
+    "/proxy/salt": {
       "post": {
         "tags": ["proxy", "salt proxy"],
         "description": "POST body directly to Salt backend. The response and status code from Salt is directly returned.",
