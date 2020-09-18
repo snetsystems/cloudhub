@@ -244,6 +244,18 @@ message BuildInfo {
 	string Commit           = 2; // Commit is an abbreviated SHA
 }
 
+message Vsphere {
+	string ID               = 1; // ID is the unique ID of this vsphere
+	string Host             = 2; // Host is the vsphere ip
+	string UserName         = 3; // UserName is the vsphere user
+	string Password         = 4; // Password is the vsphere password
+	string Protocol         = 5; // Protocol is the vsphere connect protocol
+	int64 Port              = 6; // Port is the vsphere connect port
+	int64 Interval          = 7; // Interval is the vsphere connect interval
+	string Minion           = 8; // Minion is the vsphere connect salt minion
+	string Organization     = 9; // Organization is the organization ID that resource belongs to
+}
+
 // The following is a vim modeline, it autoconfigures vim to have the
 // appropriate tabbing and whitespace management to edit this file
 //
