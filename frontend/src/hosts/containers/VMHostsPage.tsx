@@ -1498,9 +1498,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
   return (
     <div className="vm-status-page__container">
       <div className="panel">
-        <div className="panel-heading">
-          <h2 className="panel-title">VMware</h2>
-        </div>
         <div
           className="panel-body"
           style={{background: 'transparent', padding: '0'}}
