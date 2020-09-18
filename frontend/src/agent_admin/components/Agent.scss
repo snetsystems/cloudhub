@@ -1,6 +1,10 @@
 // agent.scss
 /***** layout start *****/
 .agent-page {
+  .flux-functions-toolbar--tooltip {
+    z-index: 200;
+  }
+
   .agent-input--container {
     width: 780px;
 
