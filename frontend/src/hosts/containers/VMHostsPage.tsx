@@ -1497,64 +1497,57 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
   return (
     <div className="vm-status-page__container">
-      <div className="panel">
-        <div
-          className="panel-body"
-          style={{background: 'transparent', padding: '0'}}
-        >
-          <Threesizer
-            orientation={HANDLE_VERTICAL}
-            divisions={threesizerDivisions()}
-            onResize={handleResize}
+      <Threesizer
+        orientation={HANDLE_VERTICAL}
+        divisions={threesizerDivisions()}
+        onResize={handleResize}
+      />
+      <HostModal
+        isVisible={isModalVisible}
+        headingTitle={isUpdate ? 'Update vCenter' : 'Connection vCenter'}
+        onCancel={handleClose}
+        onConfirm={handleConnection}
+        message={
+          <VMConnectForm
+            target={target}
+            address={address}
+            port={port}
+            user={user}
+            password={password}
+            protocol={protocol}
+            interval={interval}
+            targetItems={acceptedMinionList}
+            intervalItems={intervalItems}
+            isDisabled={vspheres.status === VcenterStatus.Request}
+            handleChangeTarget={handleChangeTarget}
+            handleChangeAddress={handleChangeAddress}
+            handleChangePort={handleChangePort}
+            handleChangeUser={handleChangeUser}
+            handleChangePassword={handleChangePassword}
+            handleChangeProtocol={handleChangeProtocol}
+            handleChangeInterval={handleChangeInterval}
           />
-          <HostModal
-            isVisible={isModalVisible}
-            headingTitle={isUpdate ? 'Update vCenter' : 'Connection vCenter'}
-            onCancel={handleClose}
-            onConfirm={handleConnection}
-            message={
-              <VMConnectForm
-                target={target}
-                address={address}
-                port={port}
-                user={user}
-                password={password}
-                protocol={protocol}
-                interval={interval}
-                targetItems={acceptedMinionList}
-                intervalItems={intervalItems}
-                isDisabled={vspheres.status === VcenterStatus.Request}
-                handleChangeTarget={handleChangeTarget}
-                handleChangeAddress={handleChangeAddress}
-                handleChangePort={handleChangePort}
-                handleChangeUser={handleChangeUser}
-                handleChangePassword={handleChangePassword}
-                handleChangeProtocol={handleChangeProtocol}
-                handleChangeInterval={handleChangeInterval}
-              />
-            }
-            confirmText={isUpdate ? 'Update vCenter' : 'Add vCenter'}
-            confirmButtonStatus={
-              vspheres.status === VcenterStatus.Request
-                ? ComponentStatus.Loading
-                : address &&
-                  user &&
-                  password &&
-                  protocol &&
-                  target !== MINION_LIST_EMPTY &&
-                  compareRedux()
-                ? ComponentStatus.Default
-                : ComponentStatus.Disabled
-            }
-          />
+        }
+        confirmText={isUpdate ? 'Update vCenter' : 'Add vCenter'}
+        confirmButtonStatus={
+          vspheres.status === VcenterStatus.Request
+            ? ComponentStatus.Loading
+            : address &&
+              user &&
+              password &&
+              protocol &&
+              target !== MINION_LIST_EMPTY &&
+              compareRedux()
+            ? ComponentStatus.Default
+            : ComponentStatus.Disabled
+        }
+      />
+      {vspheres.status === VcenterStatus.Request && !isModalVisible && (
+        <div className={`vm-page-spinner-container`}>
+          <PageSpinner />
+          <div className={`vm-page-spinner-overay`} />
         </div>
-        {vspheres.status === VcenterStatus.Request && !isModalVisible && (
-          <div className={`vm-page-spinner-container`}>
-            <PageSpinner />
-            <div className={`vm-page-spinner-overay`} />
-          </div>
-        )}
-      </div>
+      )}
     </div>
   )
 }
