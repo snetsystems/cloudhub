@@ -135,6 +135,12 @@ export const ErrorState = (): JSX.Element => (
   </div>
 )
 
+export const NoState = ({message}: {message: string}): JSX.Element => (
+  <div className="generic-empty-state">
+    <h4 style={{margin: '90px 0'}}>{message}</h4>
+  </div>
+)
+
 export const NoHostsState = (): JSX.Element => (
   <div className="generic-empty-state">
     <h4 style={{margin: '90px 0'}}>No Data. </h4>
