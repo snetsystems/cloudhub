@@ -12,7 +12,7 @@ import {
 } from 'src/addon/128t/reusable/layout'
 import {ProgressDisplay} from 'src/shared/components/ProgressDisplay'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-import {NoHostsState} from 'src/agent_admin/reusable'
+import {NoState} from 'src/agent_admin/reusable'
 
 // contants
 import {VCENTER_VMHOSTS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
@@ -193,7 +193,9 @@ const VMHostsTable = (props: Props): JSX.Element => {
           <TableHeader>
             <Header />
           </TableHeader>
-          <TableBody>{items.length ? <Body /> : <NoHostsState />}</TableBody>
+          <TableBody>
+            {items.length ? <Body /> : <NoState message={`There is no Host`} />}
+          </TableBody>
         </Table>
       </PanelBody>
     </Panel>

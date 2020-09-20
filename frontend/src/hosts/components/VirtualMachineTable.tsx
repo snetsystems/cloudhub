@@ -14,7 +14,7 @@ import {
 } from 'src/addon/128t/reusable/layout'
 import {convertUnit} from 'src/shared/components/ProgressDisplay'
 import {responseIndicator} from 'src/shared/components/Indicator'
-import {NoHostsState} from 'src/agent_admin/reusable'
+import {NoState} from 'src/agent_admin/reusable'
 
 // constants
 import {VCENTER_VM_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
@@ -206,7 +206,13 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
               <TableHeader>
                 <Header />
               </TableHeader>
-              <TableBody>{item ? <Body /> : <NoHostsState />}</TableBody>
+              <TableBody>
+                {item ? (
+                  <Body />
+                ) : (
+                  <NoState message={`There is no Virtual Machine`} />
+                )}
+              </TableBody>
               <div className={`hosts-table-item`} onClick={remoteConsoleRun}>
                 Remote Console Run
               </div>
