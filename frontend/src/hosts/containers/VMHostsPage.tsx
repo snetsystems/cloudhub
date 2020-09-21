@@ -836,6 +836,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             label: datacenterName,
             index: i,
             level: 1,
+            setIcon: 'icon-margin-right-03 vsphere-icon-datacenter',
             type: VMRole.datacenter,
             parent_name: vcIpAddress,
             parent_chart_field: VMRole.vcenter,
@@ -852,6 +853,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
               label: clusterName,
               index: i,
               level: 2,
+              setIcon: 'icon-margin-right-03 vsphere-icon-cluster',
               type: VMRole.cluster,
               parent_name: `${vcIpAddress}/${datacenterName}`,
               parent_chart_field: 'vcenter/dcname',
@@ -869,6 +871,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
                 label: hostName,
                 index: i,
                 level: 3,
+                setIcon: 'icon-margin-right-03 vsphere-icon-host',
                 type: VMRole.host,
                 parent_type: VMRole.cluster,
                 parent_name: `${vcIpAddress}/${datacenterName}/${clusterName}`,
@@ -887,6 +890,10 @@ const VMHostsPage = (props: Props): JSX.Element => {
                   label: vmName,
                   index: i,
                   level: 4,
+                  setIcon: classnames('icon-margin-right-03', {
+                    'vsphere-icon-vm': vm.power_state === 'poweredOff',
+                    'vsphere-icon-vm-on': vm.power_state === 'poweredOn',
+                  }),
                   type: VMRole.vm,
                   parent_name: `${vcIpAddress}/${datacenterName}/${clusterName}/${hostName}`,
                   parent_chart_field: 'vcenter/dcname/clustername/esxhostname',
@@ -917,6 +924,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
               label: hostName,
               index: i,
               level: 2,
+              setIcon: 'icon-margin-right-03 vsphere-icon-host',
               type: VMRole.host,
               parent_type: VMRole.datacenter,
               parent_name: `${vcIpAddress}/${datacenterName}`,
@@ -935,6 +943,10 @@ const VMHostsPage = (props: Props): JSX.Element => {
                 label: vmName,
                 index: i,
                 level: 3,
+                setIcon: classnames('icon-margin-right-03', {
+                  'vsphere-icon-vm': vm.power_state === 'poweredOff',
+                  'vsphere-icon-vm-on': vm.power_state === 'poweredOn',
+                }),
                 type: VMRole.vm,
                 id: props.id,
                 parent_name: `${vcIpAddress}/${datacenterName}/${hostName}`,
@@ -974,6 +986,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     if (!vcenter) return
     vcenter[vcIpAddress] = {
       ...vcenter[vcIpAddress],
+      setIcon: 'icon-margin-right-03 vsphere-icon-vcenter',
       buttons: [updateBtn(props.id), removeBtn(props.id, props.host)],
       cpu_usage:
         vcCpuUsage.length > 0 ? vcCpuUsage.reduce((sum, c) => sum + c) : [],

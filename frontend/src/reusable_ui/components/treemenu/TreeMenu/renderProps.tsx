@@ -29,6 +29,7 @@ export type TreeMenuChildren = (props: {
 
 export const ItemComponent: React.FunctionComponent<TreeMenuItem> = ({
   hasNodes = false,
+  setIcon = '',
   buttons = [],
   isOpen = false,
   level = 0,
@@ -72,16 +73,20 @@ export const ItemComponent: React.FunctionComponent<TreeMenuItem> = ({
         <ToggleIcon on={isOpen} />
       </div>
     )}
-    <div style={{width: '100%'}}>{label}</div>
-    {buttons.length > 0 && (
-      <div className={`tree-item-buttons`}>
-        {_.map(buttons, item => (
-          <span key={uuid.v4()} style={{marginLeft: '3px'}}>
-            {item()}
-          </span>
-        ))}
-      </div>
-    )}
+
+    <div style={{width: '100%', display: 'flex', alignItems: 'center'}}>
+      {setIcon && <span className={setIcon}></span>}
+      <div style={{width: '100%'}}>{label}</div>
+      {buttons && (
+        <div className={`tree-item-buttons`}>
+          {_.map(buttons, item => (
+            <span key={uuid.v4()} style={{marginLeft: '3px'}}>
+              {item()}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
   </li>
 )
 
