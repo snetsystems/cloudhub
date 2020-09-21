@@ -1,5 +1,5 @@
 import React from 'react'
-import {Line} from 'rc-progress'
+import {usageIndacator} from 'src/addon/128t/reusable/layout'
 import {transFormatBytes, transFormatFrequency} from 'src/shared/utils/units'
 
 export const convertUnit = (unit: string, value: number) => {
@@ -33,12 +33,7 @@ export const ProgressDisplay = ({unit, use, available, total}) => {
           padding: '3px 0 5px',
         }}
       >
-        <Line
-          percent={Math.trunc((use / total) * 100)}
-          strokeWidth={3}
-          trailWidth={3}
-          style={{height: '3px', width: '100%'}}
-        />
+        {usageIndacator({value: Math.trunc((use / total) * 100) + ' %'})}
       </div>
       <div style={{display: 'flex', justifyContent: 'space-between'}}>
         <div>{convertUnit(unit, use)}</div>
