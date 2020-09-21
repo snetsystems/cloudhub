@@ -90,6 +90,7 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
   }
 
   const remoteConsoleDownloadOpen = () => {
+    console.log('remoteConsoleDownloadOpen')
     window.open('https://vmware.com/go/download-vmrc', '_blank')
   }
 
@@ -199,6 +200,53 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
             isEditable={isEditable}
             cellBackgroundColor={cellBackgroundColor}
           />
+          <div
+            className={`heading--button-box`}
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignContent: 'center',
+              marginRight: '10px',
+            }}
+          >
+            <button
+              className={`button button-sm button-default button-square`}
+              style={{
+                width: ' 25px',
+                height: '25px',
+                marginRight: '5px',
+              }}
+              onClick={remoteConsoleRun}
+            >
+              <span
+                className={`icon-vmrc`}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignContent: 'center',
+                }}
+              ></span>
+            </button>
+            <button
+              className={`button button-sm button-default button-square`}
+              style={{
+                width: ' 25px',
+                height: '25px',
+              }}
+              onClick={remoteConsoleDownloadOpen}
+            >
+              <span
+                className={`button-icon icon download`}
+                style={{
+                  fontSize: '12px',
+                  lineHeight: '0px',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignContent: 'center',
+                }}
+              ></span>
+            </button>
+          </div>
         </PanelHeader>
         <PanelBody>
           <>
@@ -213,15 +261,6 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
                   <NoState message={`There is no Virtual Machine`} />
                 )}
               </TableBody>
-              <div className={`hosts-table-item`} onClick={remoteConsoleRun}>
-                Remote Console Run
-              </div>
-              <div
-                className={`hosts-table-item`}
-                onClick={remoteConsoleDownloadOpen}
-              >
-                Remote Console download
-              </div>
             </Table>
           </>
         </PanelBody>
