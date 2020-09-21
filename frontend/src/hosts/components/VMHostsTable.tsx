@@ -182,6 +182,7 @@ const VMHostsTable = (props: Props): JSX.Element => {
           value={[]}
           name={'Host(EXSi)'}
           sizeVisible={false}
+          setIcon={`icon-margin-right-03 vsphere-icon-host`}
         />
         <HeadingBar
           isEditable={isEditable}

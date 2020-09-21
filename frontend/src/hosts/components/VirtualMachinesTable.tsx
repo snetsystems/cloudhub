@@ -165,6 +165,7 @@ const VirtualMachinesTable = (props: Props): JSX.Element => {
           value={[]}
           name={`Virtual Machine `}
           sizeVisible={false}
+          setIcon={`icon-margin-right-03 vsphere-icon-vm`}
         />
         <HeadingBar
           isEditable={isEditable}

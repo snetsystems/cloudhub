@@ -115,6 +115,7 @@ const DatastoresTable = (props: Props): JSX.Element => {
           value={[]}
           name={'Datastores'}
           sizeVisible={false}
+          setIcon={`icon-margin-right-03 vsphere-icon-datastore`}
         />
         <HeadingBar
           isEditable={isEditable}

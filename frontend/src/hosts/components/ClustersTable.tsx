@@ -171,6 +171,7 @@ const ClustersTable = (props: Props): JSX.Element => {
           value={[]}
           name={'Clusters'}
           sizeVisible={false}
+          setIcon={`icon-margin-right-03  vsphere-icon-cluster`}
         />
         <HeadingBar
           isEditable={isEditable}

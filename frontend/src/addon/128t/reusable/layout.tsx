@@ -86,12 +86,14 @@ export const CellName = ({
   cellBackgroundColor,
   value,
   name,
+  setIcon = '',
   sizeVisible = true,
 }: {
   cellTextColor: string
   cellBackgroundColor: string
   value: RouterNode[] | TopSource[] | TopSession[] | []
   name: string
+  setIcon?: string
   sizeVisible?: boolean
 }): JSX.Element | null => {
   let nameStyle = {}
@@ -104,6 +106,7 @@ export const CellName = ({
 
   return (
     <h2 className={`dash-graph--name grid-layout--draggable`} style={nameStyle}>
+      {setIcon && <span className={setIcon} />}{' '}
       {sizeVisible ? value.length : null} {name}
     </h2>
   )

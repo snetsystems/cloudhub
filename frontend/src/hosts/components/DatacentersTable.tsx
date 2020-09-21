@@ -181,6 +181,7 @@ const DatacentersTable = (props: Props): JSX.Element => {
           value={[]}
           name={'Datacenters'}
           sizeVisible={false}
+          setIcon={`icon-margin-right-03 vsphere-icon-datacenter`}
         />
         <HeadingBar
           isEditable={isEditable}

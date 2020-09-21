@@ -163,6 +163,7 @@ const VcenterTable = (props: Props): JSX.Element => {
           value={[]}
           name={`vCenter - ${item ? item.label : ''}`}
           sizeVisible={false}
+          setIcon={`icon-margin-right-03 vsphere-icon-vcenter`}
         />
         <HeadingBar
           isEditable={isEditable}
