@@ -15,6 +15,7 @@ import {
 import {convertUnit} from 'src/shared/components/ProgressDisplay'
 import {responseIndicator} from 'src/shared/components/Indicator'
 import {NoState} from 'src/agent_admin/reusable'
+import Tooltip from 'src/shared/components/Tooltip'
 
 // constants
 import {VCENTER_VM_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
@@ -209,43 +210,53 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
               marginRight: '10px',
             }}
           >
-            <button
-              className={`button button-sm button-default button-square`}
-              style={{
-                width: ' 25px',
-                height: '25px',
-                marginRight: '5px',
-              }}
-              onClick={remoteConsoleRun}
-            >
-              <span
-                className={`icon-vmrc`}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignContent: 'center',
-                }}
-              ></span>
-            </button>
-            <button
-              className={`button button-sm button-default button-square`}
-              style={{
-                width: ' 25px',
-                height: '25px',
-              }}
-              onClick={remoteConsoleDownloadOpen}
-            >
-              <span
-                className={`button-icon icon download`}
-                style={{
-                  fontSize: '12px',
-                  lineHeight: '0px',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignContent: 'center',
-                }}
-              ></span>
-            </button>
+            <Tooltip
+              tip={'Open Console'}
+              children={
+                <button
+                  className={`button button-sm button-default button-square`}
+                  style={{
+                    width: '25px',
+                    height: '25px',
+                    marginRight: '5px',
+                  }}
+                  onClick={remoteConsoleRun}
+                >
+                  <span
+                    className={`icon-vmrc`}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignContent: 'center',
+                    }}
+                  ></span>
+                </button>
+              }
+            />
+            <Tooltip
+              tip={'Download console'}
+              children={
+                <button
+                  className={`button button-sm button-default button-square`}
+                  style={{
+                    width: ' 25px',
+                    height: '25px',
+                  }}
+                  onClick={remoteConsoleDownloadOpen}
+                >
+                  <span
+                    className={`button-icon icon download`}
+                    style={{
+                      fontSize: '12px',
+                      lineHeight: '0px',
+                      display: 'flex',
+                      justifyContent: 'center',
+                      alignContent: 'center',
+                    }}
+                  ></span>
+                </button>
+              }
+            />
           </div>
         </PanelHeader>
         <PanelBody>
