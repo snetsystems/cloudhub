@@ -59,8 +59,11 @@ import {
 import {disablePresentationMode} from 'src/shared/actions/app'
 import {errorThrown} from 'src/shared/actions/errors'
 import {notify} from 'src/shared/actions/notifications'
+import {notifyUpdateVCenterFailed} from 'src/shared/copy/notifications'
+
 import {
   getVSphereInfoSaltApiAsync,
+  removeVcenter,
   ActionTypes as vmHostActionType,
 } from 'src/hosts/actions'
 
@@ -126,6 +129,8 @@ class Root extends PureComponent<{}, State> {
     updateVcentersAction,
     dispatch
   )
+
+  private handleRemoveVcenter = bindActionCreators(removeVcenter, dispatch)
 
   private handleGetVSphereInfoSaltApi = bindActionCreators(
     getVSphereInfoSaltApiAsync,
@@ -379,7 +384,7 @@ class Root extends PureComponent<{}, State> {
     const vSpheresKeys = _.keys(vspheres)
     const salt = this.getSaltAddon()
 
-    if (host && Number(id) > -1) {
+    if (host && parseInt(id) > -1) {
       vSpheresKeys.forEach(async key => {
         if (this.timeout[key]) {
           if (this.timeout[key].id === id) {
@@ -429,19 +434,30 @@ class Root extends PureComponent<{}, State> {
           const {url, token} = salt
           const {minion, host, username, password, port, protocol} = vsphere
 
-          const getVsphere: ResponseVSphere = (await this.handleGetVSphereInfoSaltApi(
-            url,
-            token,
-            minion,
-            host,
-            username,
-            password,
-            port,
-            protocol
-          )) as any
+          let getVsphere: ResponseVSphere
+          try {
+            getVsphere = (await this.handleGetVSphereInfoSaltApi(
+              url,
+              token,
+              minion,
+              host,
+              username,
+              password,
+              port,
+              protocol
+            )) as any
 
-          this.handleUpdateVcenter({host: key, nodes: getVsphere})
-          this.requestVSphere(key, salt, vsphere)
+            if (getVsphere) {
+              this.handleUpdateVcenter({...vsphere, nodes: getVsphere})
+              this.requestVSphere(key, salt, vsphere)
+            } else {
+              this.handleClearTimeout(key)
+              this.handleRemoveVcenter(key)
+              dispatch(notify(notifyUpdateVCenterFailed(key)))
+            }
+          } catch (error) {
+            console.error(error)
+          }
         }
       }, interval),
     }
