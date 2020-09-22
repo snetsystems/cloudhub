@@ -468,7 +468,8 @@ export class HostsPage extends PureComponent<Props, State> {
         source.links.proxy,
         hostsObject,
         layouts,
-        source.telegraf
+        source.telegraf,
+        tempVars
       )
 
       const isUsingVshpere = Boolean(
