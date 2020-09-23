@@ -1,0 +1,24 @@
+{
+  "id": "a63f50b9-4249-40db-95ab-374c9286e4ee",
+  "measurement": "vsphere_vm_net",
+  "app": "vsphere",
+  "autoflow": true,
+  "cells": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "2c822bd9-bdd1-4e6a-8231-f2ad57d3b377",
+      "name": "Network Usage (VM)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"usage_average\") AS \"mean_usage_average\" FROM \":db:\".\":rp:\".\"vsphere_vm_net\"",
+          "label": "",
+          "groupbys": ["interface"],
+          "wheres": []
+        }
+      ]
+    }
+  ]
+}
