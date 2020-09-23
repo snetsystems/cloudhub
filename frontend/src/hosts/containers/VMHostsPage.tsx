@@ -67,6 +67,8 @@ import {
   getVSphereAsync,
   RequestVcenterAction,
   ResponseVcenterAction,
+  RequestPauseVcenterAction,
+  RequestRunVcenterAction,
 } from 'src/hosts/actions'
 
 // Constants
@@ -197,6 +199,8 @@ interface Props {
   }: reducerVSphere['vspheres']['host']) => void
   handleRequestAction: () => void
   handleResponseAction: () => void
+  handleRequestPauseVcenterAction: (host: string, id: string) => void
+  handleRequestRunVcenterAction: (host: string, id: string) => void
 }
 
 const VMHostsPage = (props: Props): JSX.Element => {
@@ -218,6 +222,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
     handleUpdateVcenterAction,
     handleRequestAction,
     handleResponseAction,
+    handleRequestPauseVcenterAction,
+    handleRequestRunVcenterAction,
   } = props
   const intervalItems = ['30s', '1m', '5m']
   const initialFocusedHost: Item = {
@@ -759,6 +765,26 @@ const VMHostsPage = (props: Props): JSX.Element => {
     ) : null
   }
 
+  const intervalCallOnOffBtn = (
+    isPause: boolean,
+    id: string,
+    host: string
+  ) => (): JSX.Element => {
+    return (
+      <button
+        className={`btn btn-default btn-xs btn-square`}
+        onClick={e => {
+          e.stopPropagation()
+          isPause
+            ? handleRequestRunVcenterAction(host, id)
+            : handleRequestPauseVcenterAction(host, id)
+        }}
+      >
+        {isPause ? '▶' : '■'}
+      </button>
+    )
+  }
+
   const removeBtn = (id: string, host: string) => (): JSX.Element => {
     const {
       auth: {me, isUsingAuth},
@@ -815,7 +841,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
     let vcenter: {[x: string]: VCenter} = [vCenterData].reduce(
       acc => {
-        const datacenters: ResponseDatacenter[] = vcMinionValue[0].datacenters
+        const datacenters: ResponseDatacenter[] = vcMinionValue[0]?.datacenters
         if (!datacenters) return
 
         datacenters.reduce((acc, datacenter, i) => {
@@ -986,8 +1012,13 @@ const VMHostsPage = (props: Props): JSX.Element => {
     if (!vcenter) return
     vcenter[vcIpAddress] = {
       ...vcenter[vcIpAddress],
+      isPause: props.isPause,
       setIcon: 'icon-margin-right-03 vsphere-icon-vcenter',
-      buttons: [updateBtn(props.id), removeBtn(props.id, props.host)],
+      buttons: [
+        updateBtn(props.id),
+        removeBtn(props.id, props.host),
+        intervalCallOnOffBtn(props.isPause, props.id, props.host),
+      ],
       cpu_usage:
         vcCpuUsage.length > 0 ? vcCpuUsage.reduce((sum, c) => sum + c) : [],
       cpu_space:
@@ -1585,6 +1616,8 @@ const mapDispatchToProps = {
   handleUpdateVcenterAction: updateVcenterAction,
   handleRequestAction: RequestVcenterAction,
   handleResponseAction: ResponseVcenterAction,
+  handleRequestPauseVcenterAction: RequestPauseVcenterAction,
+  handleRequestRunVcenterAction: RequestRunVcenterAction,
 }
 
 export default connect(

@@ -59,11 +59,9 @@ import {
 import {disablePresentationMode} from 'src/shared/actions/app'
 import {errorThrown} from 'src/shared/actions/errors'
 import {notify} from 'src/shared/actions/notifications'
-import {notifyUpdateVCenterFailed} from 'src/shared/copy/notifications'
 
 import {
   getVSphereInfoSaltApiAsync,
-  removeVcenter,
   ActionTypes as vmHostActionType,
 } from 'src/hosts/actions'
 
@@ -130,8 +128,6 @@ class Root extends PureComponent<{}, State> {
     dispatch
   )
 
-  private handleRemoveVcenter = bindActionCreators(removeVcenter, dispatch)
-
   private handleGetVSphereInfoSaltApi = bindActionCreators(
     getVSphereInfoSaltApiAsync,
     dispatch
@@ -148,7 +144,13 @@ class Root extends PureComponent<{}, State> {
   private heartbeatTimer: number
 
   private timeout: {
-    [name: string]: {id: string; host: string; timer: number; timeout: number}
+    [name: string]: {
+      id: string
+      host: string
+      isPause: boolean
+      timer: number
+      timeout: number
+    }
   } = {}
 
   constructor(props) {
@@ -313,6 +315,21 @@ class Root extends PureComponent<{}, State> {
   private unsubscribe = store.subscribe(async () => {
     const {lastAction} = store.getState()
 
+    if (lastAction.type === vmHostActionType.RequestPauseVcenter) {
+      const {host, isPause} = lastAction.payload
+      window.clearTimeout(this.timeout[host].timeout)
+
+      this.timeout[host] = {
+        ...this.timeout[host],
+        isPause,
+      }
+    }
+
+    if (lastAction.type === vmHostActionType.RequestRunVcenter) {
+      const {host, id} = lastAction.payload
+      this.checkTimeout(id, host)
+    }
+
     if (lastAction.type === 'LOAD_SOURCES') {
       this.handleClearAllTimeout()
       await this.checkVSpheres()
@@ -335,7 +352,10 @@ class Root extends PureComponent<{}, State> {
           .then(data => {
             const succesData = _.filter(
               data,
-              d => d.status === 'fulfilled' && d.value
+              d =>
+                d.status === 'fulfilled' &&
+                d?.value &&
+                _.keys(d.value['return'][0]).length
             )
             if (succesData.length === 0) return
             const values = _.map(succesData, (s: any) => s.value)
@@ -346,6 +366,7 @@ class Root extends PureComponent<{}, State> {
                 minion,
                 host,
                 nodes: value,
+                isPause: false,
               }
             })
             this.handleUpdateVcenters(updateVcenters)
@@ -407,7 +428,7 @@ class Root extends PureComponent<{}, State> {
 
   private handleClearTimeout = (key: string) => {
     window.clearTimeout(this.timeout[key].timeout)
-    delete this.timeout[key]
+    // delete this.timeout[key]
   }
 
   private handleClearAllTimeout = () => {
@@ -423,43 +444,44 @@ class Root extends PureComponent<{}, State> {
     salt: {url: string; token: string},
     vsphere: reducerVSphere['vspheres']['host']
   ) {
-    const {interval, id} = vsphere
-
+    const {interval, id, isPause} = vsphere
     this.timeout[key] = {
       id,
       host: key,
       timer: interval,
-      timeout: window.setTimeout(async () => {
-        if (store.getState().vspheres[key] !== null) {
-          const {url, token} = salt
-          const {minion, host, username, password, port, protocol} = vsphere
-
-          let getVsphere: ResponseVSphere
-          try {
-            getVsphere = (await this.handleGetVSphereInfoSaltApi(
-              url,
-              token,
-              minion,
-              host,
-              username,
-              password,
-              port,
-              protocol
-            )) as any
-
-            if (getVsphere) {
-              this.handleUpdateVcenter({...vsphere, nodes: getVsphere})
-              this.requestVSphere(key, salt, vsphere)
-            } else {
-              this.handleClearTimeout(key)
-              this.handleRemoveVcenter(key)
-              dispatch(notify(notifyUpdateVCenterFailed(key)))
+      isPause,
+      timeout: isPause
+        ? null
+        : window.setTimeout(async () => {
+            if (store.getState().vspheres[key] !== null) {
+              const {url, token} = salt
+              const {minion, host, username, password, port, protocol} = vsphere
+              let getVsphere: ResponseVSphere
+              try {
+                getVsphere = (await this.handleGetVSphereInfoSaltApi(
+                  url,
+                  token,
+                  minion,
+                  host,
+                  username,
+                  password,
+                  port,
+                  protocol
+                )) as any
+                const {
+                  vspheres: {vspheres},
+                } = store.getState()
+                if (getVsphere && !vspheres[host].isPause) {
+                  this.handleUpdateVcenter({...vsphere, nodes: getVsphere})
+                  this.requestVSphere(key, salt, vsphere)
+                } else {
+                  this.handleClearTimeout(key)
+                }
+              } catch (error) {
+                console.error(error)
+              }
             }
-          } catch (error) {
-            console.error(error)
-          }
-        }
-      }, interval),
+          }, interval),
     }
   }
 

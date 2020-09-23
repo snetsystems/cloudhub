@@ -33,6 +33,8 @@ export enum ActionTypes {
   UpdateVcenters = 'UPDATE_VCENTERS',
   RequestVcenter = 'REQUEST_VCENTER',
   ResponseVcenter = 'RESPONE_VCENTER',
+  RequestPauseVcenter = 'Request_PAUSE_VCENTER',
+  RequestRunVcenter = 'Request_RUN_VCENTER',
 }
 
 export type Action =
@@ -44,6 +46,54 @@ export type Action =
   | UpdateVcentersAction
   | RequestVcenterAction
   | ResponseVcenterAction
+  | RequestPauseVcenterAction
+  | RequestRunVcenterAction
+
+interface RequestPauseVcenterAction {
+  type: ActionTypes.RequestPauseVcenter
+  payload: {
+    host: string
+    id: string
+    isPause: boolean
+  }
+}
+
+export const RequestPauseVcenterAction = (
+  host: string,
+  id: string
+): RequestPauseVcenterAction => {
+  return {
+    type: ActionTypes.RequestPauseVcenter,
+    payload: {
+      host,
+      id,
+      isPause: true,
+    },
+  }
+}
+
+interface RequestRunVcenterAction {
+  type: ActionTypes.RequestRunVcenter
+  payload: {
+    host: string
+    id: string
+    isPause: boolean
+  }
+}
+
+export const RequestRunVcenterAction = (
+  host: string,
+  id: string
+): RequestRunVcenterAction => {
+  return {
+    type: ActionTypes.RequestRunVcenter,
+    payload: {
+      host,
+      id,
+      isPause: false,
+    },
+  }
+}
 
 interface MinionKeyAcceptedListAction {
   type: ActionTypes.MinionKeyAcceptedList
@@ -254,6 +304,7 @@ export const getVSpheresAsync = () => async (dispatch: Dispatch<Action>) => {
     _.values(data).forEach(v => {
       vSpheres[v.host] = {
         ...v,
+        isPause: true,
       }
     })
 

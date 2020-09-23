@@ -17,6 +17,8 @@ import {
   deleteVSphereAsync,
   RequestVcenterAction,
   ResponseVcenterAction,
+  RequestPauseVcenterAction,
+  RequestRunVcenterAction,
 } from 'src/hosts/actions/vspheres'
 
 export {
@@ -38,4 +40,6 @@ export {
   deleteVSphereAsync,
   RequestVcenterAction,
   ResponseVcenterAction,
+  RequestPauseVcenterAction,
+  RequestRunVcenterAction,
 }

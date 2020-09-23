@@ -97,6 +97,33 @@ const vspheres = (state: reducerVSphere = initialState, action: Action) => {
       }
     }
 
+    case ActionTypes.RequestPauseVcenter: {
+      const {host, isPause} = action.payload
+      const pauseVcenter = {...state.vspheres}
+      pauseVcenter[host] = {
+        ...pauseVcenter[host],
+        isPause,
+      }
+
+      return {
+        ...state,
+        vspheres: pauseVcenter,
+      }
+    }
+
+    case ActionTypes.RequestRunVcenter: {
+      const {host, isPause} = action.payload
+      const runVcenter = {...state.vspheres}
+      runVcenter[host] = {
+        ...runVcenter[host],
+        isPause,
+      }
+      return {
+        ...state,
+        vspheres: runVcenter,
+      }
+    }
+
     default: {
       return state
     }
