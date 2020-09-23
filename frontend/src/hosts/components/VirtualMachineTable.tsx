@@ -92,7 +92,6 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
   }
 
   const remoteConsoleDownloadOpen = () => {
-    console.log('remoteConsoleDownloadOpen')
     window.open('https://vmware.com/go/download-vmrc', '_blank')
   }
 
