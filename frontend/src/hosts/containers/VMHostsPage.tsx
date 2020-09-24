@@ -466,11 +466,24 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
       const vCentersKeys = _.keys(vCenters)
       const makeTreemenusKey = _.keys(makeTreemenus)
+
       if (vCentersKeys.length > makeTreemenusKey.length || !focusedHost) {
         const addChartsInfoFocusedHostFn = async (): Promise<void> => {
           const addChartsInfoFocusedHost = await requestCharts(
             makeTreemenus[makeTreemenusKey[0]]
           )
+
+          const getLocal: VMHostsPageLocalStorage = getLocalStorage(
+            'VMHostsPage'
+          )
+          const {layout: getLayout} = getLocal
+          const {vcenter} = getLayout[addChartsInfoFocusedHost.key]
+          if (vcenter) {
+            setLayout(vcenter)
+          } else {
+            setLayout(vcenterCells)
+          }
+
           setFocusedHost(addChartsInfoFocusedHost)
         }
         addChartsInfoFocusedHostFn()
