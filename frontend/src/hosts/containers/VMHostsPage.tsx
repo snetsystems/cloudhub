@@ -857,7 +857,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
           key: props.host,
           index: 0,
           level: 0,
-          type: VMRole.vcenter,
+          disabled: true,
           minion: props.minion,
           nodes: {},
         },

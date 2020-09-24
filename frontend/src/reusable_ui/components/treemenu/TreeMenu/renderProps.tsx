@@ -32,6 +32,7 @@ export const ItemComponent: React.FunctionComponent<TreeMenuItem> = ({
   setIcon = '',
   buttons = [],
   isOpen = false,
+  disabled = false,
   level = 0,
   onClick,
   toggleNode,
@@ -46,7 +47,8 @@ export const ItemComponent: React.FunctionComponent<TreeMenuItem> = ({
       'tree-item',
       {'tree-item--active': active},
       {'tree-item--focused': focused},
-      `${'tree-item-level-' + level}`
+      `${'tree-item-level-' + level}`,
+      {disabled: disabled}
     )}
     style={{
       paddingLeft: `${DEFAULT_PADDING +
@@ -60,7 +62,7 @@ export const ItemComponent: React.FunctionComponent<TreeMenuItem> = ({
     role="button"
     aria-pressed={active}
     data-key={parent.trim() + '/' + label}
-    onClick={onClick}
+    onClick={disabled ? null : onClick}
   >
     {hasNodes && (
       <div
