@@ -46,21 +46,21 @@ import NotFound from 'src/shared/components/NotFound'
 import PageSpinner from 'src/shared/components/PageSpinner'
 
 import {getLinksAsync} from 'src/shared/actions/links'
-import {getMeAsync} from 'src/shared/actions/auth'
-import {
-  getVSpheresAsync,
-  updateVcenterAction,
-  updateVcentersAction,
-  RequestVcenterAction,
-  ResponseVcenterAction,
-} from 'src/hosts/actions'
 
 // Actions
 import {disablePresentationMode} from 'src/shared/actions/app'
 import {errorThrown} from 'src/shared/actions/errors'
 import {notify} from 'src/shared/actions/notifications'
 
+import {getMeAsync} from 'src/shared/actions/auth'
+
 import {
+  getVSpheresAsync,
+  updateVcenterAction,
+  updateVcentersAction,
+  RequestVcenterAction,
+  ResponseVcenterAction,
+  RequestPauseVcenterAction,
   getVSphereInfoSaltApiAsync,
   ActionTypes as vmHostActionType,
 } from 'src/hosts/actions'
@@ -137,10 +137,17 @@ class Root extends PureComponent<{}, State> {
     RequestVcenterAction,
     dispatch
   )
+
   private handleResponseVcenter = bindActionCreators(
     ResponseVcenterAction,
     dispatch
   )
+
+  private handleRequestPauseVcenter = bindActionCreators(
+    RequestPauseVcenterAction,
+    dispatch
+  )
+
   private heartbeatTimer: number
 
   private timeout: {
@@ -316,13 +323,8 @@ class Root extends PureComponent<{}, State> {
     const {lastAction} = store.getState()
 
     if (lastAction.type === vmHostActionType.RequestPauseVcenter) {
-      const {host, isPause} = lastAction.payload
-      window.clearTimeout(this.timeout[host].timeout)
-
-      this.timeout[host] = {
-        ...this.timeout[host],
-        isPause,
-      }
+      const {host} = lastAction.payload
+      this.handleClearTimeout(host)
     }
 
     if (lastAction.type === vmHostActionType.RequestRunVcenter) {
@@ -455,7 +457,15 @@ class Root extends PureComponent<{}, State> {
         : window.setTimeout(async () => {
             if (store.getState().vspheres[key] !== null) {
               const {url, token} = salt
-              const {minion, host, username, password, port, protocol} = vsphere
+              const {
+                minion,
+                host,
+                id,
+                username,
+                password,
+                port,
+                protocol,
+              } = vsphere
               let getVsphere: ResponseVSphere
               try {
                 getVsphere = (await this.handleGetVSphereInfoSaltApi(
@@ -475,7 +485,7 @@ class Root extends PureComponent<{}, State> {
                   this.handleUpdateVcenter({...vsphere, nodes: getVsphere})
                   this.requestVSphere(key, salt, vsphere)
                 } else {
-                  this.handleClearTimeout(key)
+                  this.handleRequestPauseVcenter(host, id)
                 }
               } catch (error) {
                 console.error(error)
