@@ -813,6 +813,12 @@ const VMHostsPage = (props: Props): JSX.Element => {
             if (data === 'DELETE_SUCCESS') {
               handleClearTimeout(host)
               removeOpenNodes(host)
+              const getLocal: VMHostsPageLocalStorage = getLocalStorage(
+                'VMHostsPage'
+              )
+              const {layout: getLayout} = getLocal
+              delete getLayout[host]
+              setLocalStorage('VMHostsPage', {...getLocal, layout: getLayout})
             }
           })
         }}
