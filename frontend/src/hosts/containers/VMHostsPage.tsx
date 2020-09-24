@@ -478,7 +478,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
       const vCentersKeys = _.keys(vCenters)
       const makeTreemenusKey = _.keys(makeTreemenus)
       if (vCentersKeys.length > makeTreemenusKey.length || !focusedHost) {
-        // remove vCenter
         const addChartsInfoFocusedHostFn = async (): Promise<void> => {
           const addChartsInfoFocusedHost = await requestCharts(
             makeTreemenus[makeTreemenusKey[0]]
@@ -681,7 +680,21 @@ const VMHostsPage = (props: Props): JSX.Element => {
       }
     }
 
-    setLocalStorage('VMHostsPage', {...getLocal, focusedHost})
+    const filterdFocusedHost = {
+      key: focusedHost.key,
+      label: focusedHost.label,
+      layoutCells: focusedHost.layoutCells,
+      minion: focusedHost.minion,
+      openNodes: focusedHost.openNodes,
+      tempVars: focusedHost.tempVars,
+      type: focusedHost.type,
+      vmParam: focusedHost.vmParam,
+    }
+
+    setLocalStorage('VMHostsPage', {
+      ...getLocal,
+      focusedHost: filterdFocusedHost,
+    })
   }, [focusedHost])
 
   const cellBackgroundColor: string = DEFAULT_CELL_BG_COLOR
