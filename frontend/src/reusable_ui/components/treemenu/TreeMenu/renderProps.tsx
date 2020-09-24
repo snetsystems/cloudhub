@@ -74,7 +74,14 @@ export const ItemComponent: React.FunctionComponent<TreeMenuItem> = ({
       </div>
     )}
 
-    <div style={{width: '100%', display: 'flex', alignItems: 'center'}}>
+    <div
+      style={{
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        minHeight: '22px',
+      }}
+    >
       {setIcon && <span className={setIcon}></span>}
       <div style={{width: '100%'}}>{label}</div>
       {buttons && (
