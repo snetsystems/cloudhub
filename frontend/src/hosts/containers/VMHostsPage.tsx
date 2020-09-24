@@ -446,8 +446,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
             handleClose()
           })
       })
-      .catch((err: Error) => {
-        console.error(err)
+      .catch(() => {
+        handleResponseAction()
       })
   }
 
