@@ -384,7 +384,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             ? interval
             : null
         ).then(async ({data}) => {
-          handleUpdateVcenterAction({...data, nodes: result})
+          handleUpdateVcenterAction({...data, isPause: false, nodes: result})
           handleClose()
         })
       })

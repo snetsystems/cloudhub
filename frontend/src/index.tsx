@@ -369,6 +369,7 @@ class Root extends PureComponent<{}, State> {
                 isPause: false,
               }
             })
+
             this.handleUpdateVcenters(updateVcenters)
           })
           .catch(err => {
@@ -381,11 +382,6 @@ class Root extends PureComponent<{}, State> {
         console.error(error)
         dispatch(errorThrown(error))
       }
-    }
-
-    if (lastAction.type === vmHostActionType.AddVcenter) {
-      const {id, host} = lastAction.payload[_.keys(lastAction.payload)[0]]
-      this.checkTimeout(id, host)
     }
 
     if (lastAction.type === vmHostActionType.UpdateVcenters) {
@@ -409,7 +405,6 @@ class Root extends PureComponent<{}, State> {
       vSpheresKeys.forEach(async key => {
         if (this.timeout[key]) {
           if (this.timeout[key].id === id) {
-            this.handleClearTimeout(key)
             await this.requestVSphere(host, salt, vspheres[host])
           }
         } else {
@@ -427,8 +422,12 @@ class Root extends PureComponent<{}, State> {
   }
 
   private handleClearTimeout = (key: string) => {
-    window.clearTimeout(this.timeout[key].timeout)
-    // delete this.timeout[key]
+    _.forEach(_.keys(this.timeout), k => {
+      if (this.timeout[k].host === key) {
+        window.clearTimeout(this.timeout[k].timeout)
+        delete this.timeout[k]
+      }
+    })
   }
 
   private handleClearAllTimeout = () => {
@@ -445,6 +444,7 @@ class Root extends PureComponent<{}, State> {
     vsphere: reducerVSphere['vspheres']['host']
   ) {
     const {interval, id, isPause} = vsphere
+    this.handleClearTimeout(key)
     this.timeout[key] = {
       id,
       host: key,
