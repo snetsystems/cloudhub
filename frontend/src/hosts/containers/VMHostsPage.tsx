@@ -398,44 +398,56 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
   const vSphereNewConnection = async () => {
     handleRequestAction()
-    handleGetVSphereInfoSaltApi(
-      saltMasterUrl,
-      saltMasterToken,
+    handleAddVCenterAsync(
       target,
       address,
       user,
       password,
       port,
-      protocol
+      protocol,
+      interval
     )
-      .then(async vSphereInfo => {
-        if (!vSphereInfo) return
+      .then(({data}) => {
+        const {minion, host, username, password, port, protocol} = data
+        let result: reducerVSphere['vspheres'] = {
+          [host]: {
+            ...data,
+            isPause: true,
+          },
+        }
+        handleAddVcenterAction({...result})
 
-        const resultAddVCenterAsync = await handleAddVCenterAsync(
-          target,
-          address,
-          user,
+        handleGetVSphereInfoSaltApi(
+          saltMasterUrl,
+          saltMasterToken,
+          minion,
+          host,
+          username,
           password,
           port,
-          protocol,
-          interval
+          protocol
         )
+          .then(vSphereInfo => {
+            if (!vSphereInfo) return
 
-        if (vSphereInfo && resultAddVCenterAsync) {
-          let dump = {}
-          dump[address] = {
-            ...resultAddVCenterAsync.data,
-            nodes: {
-              ...vSphereInfo,
-            },
-          }
+            result[host] = {
+              ...result[host],
+              nodes: vSphereInfo,
+              isPause: false,
+            }
 
-          handleAddVcenterAction({...dump})
-          handleClose()
-        }
+            handleUpdateVcenterAction({...result[host]})
+          })
+          .catch(err => {
+            console.error(err)
+          })
+          .finally(() => {
+            handleResponseAction()
+            handleClose()
+          })
       })
-      .finally(() => {
-        handleResponseAction()
+      .catch((err: Error) => {
+        console.error(err)
       })
   }
 
@@ -456,11 +468,10 @@ const VMHostsPage = (props: Props): JSX.Element => {
       let makeTreemenus
       _.forEach(vsphereKeys, key => {
         const vsphere = getVSpheres[key]
-        if (vsphere.nodes) {
-          makeTreemenus = {
-            ...makeTreemenus,
-            ...makeTreeMenuVCenterInfo(vsphere),
-          }
+
+        makeTreemenus = {
+          ...makeTreemenus,
+          ...makeTreeMenuVCenterInfo(vsphere),
         }
       })
 
@@ -493,11 +504,10 @@ const VMHostsPage = (props: Props): JSX.Element => {
       let makeTreemenus
       _.forEach(_.keys(vspheres), key => {
         const vsphere = vspheres[key]
-        if (vsphere.nodes) {
-          makeTreemenus = {
-            ...makeTreemenus,
-            ...makeTreeMenuVCenterInfo(vsphere),
-          }
+
+        makeTreemenus = {
+          ...makeTreemenus,
+          ...makeTreeMenuVCenterInfo(vsphere),
         }
       })
 
@@ -820,6 +830,27 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const makeTreeMenuVCenterInfo = (
     props: reducerVSphere['vspheres']['host']
   ) => {
+    if (!props.nodes) {
+      return {
+        [props.host]: {
+          isPause: props.isPause,
+          setIcon: 'icon-margin-right-03 vsphere-icon-vcenter',
+          buttons: [
+            updateBtn(props.id),
+            removeBtn(props.id, props.host),
+            intervalCallOnOffBtn(props.isPause, props.id, props.host),
+          ],
+          label: props.host,
+          key: props.host,
+          index: 0,
+          level: 0,
+          type: VMRole.vcenter,
+          minion: props.minion,
+          nodes: {},
+        },
+      }
+    }
+
     const vCenterData = props.nodes
 
     let vcCpuUsage = []
