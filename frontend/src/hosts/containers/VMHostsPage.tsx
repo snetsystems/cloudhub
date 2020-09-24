@@ -398,59 +398,48 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
   const vSphereNewConnection = async () => {
     handleRequestAction()
-    handleAddVCenterAsync(
+    handleGetVSphereInfoSaltApi(
+      saltMasterUrl,
+      saltMasterToken,
       target,
       address,
       user,
       password,
       port,
-      protocol,
-      interval
+      protocol
     )
-      .then(({data}) => {
-        const {minion, host, username, password, port, protocol} = data
-        let result: reducerVSphere['vspheres'] = {
-          [host]: {
-            ...data,
-            isPause: true,
-          },
-        }
-        handleAddVcenterAction({...result})
+      .then(async vSphereInfo => {
+        if (!vSphereInfo) return
 
-        handleGetVSphereInfoSaltApi(
-          saltMasterUrl,
-          saltMasterToken,
-          minion,
-          host,
-          username,
+        const resultAddVCenterAsync = await handleAddVCenterAsync(
+          target,
+          address,
+          user,
           password,
           port,
-          protocol
+          protocol,
+          interval
         )
-          .then(vSphereInfo => {
-            if (!vSphereInfo) return
 
-            result[host] = {
-              ...result[host],
-              nodes: vSphereInfo,
-              isPause: false,
-            }
+        if (vSphereInfo && resultAddVCenterAsync) {
+          const dump = {
+            [address]: {
+              ...resultAddVCenterAsync.data,
+              nodes: {
+                ...vSphereInfo,
+                isPause: false,
+              },
+            },
+          }
 
-            handleUpdateVcenterAction({...result[host]})
-          })
-          .catch(err => {
-            console.error(err)
-          })
-          .finally(() => {
-            handleResponseAction()
-            handleClose()
-          })
+          handleAddVcenterAction({...dump})
+          handleClose()
+        }
       })
-      .catch(() => {
+      .finally(() => {
         handleResponseAction()
       })
   }
-
   const getSaltAddon = (): Addon => {
     const addon = addons.find(addon => {
       return addon.name === AddonType.salt
