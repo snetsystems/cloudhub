@@ -14,7 +14,7 @@ import {
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {convertUnit} from 'src/shared/components/ProgressDisplay'
 import {VCENTER_DATASTORES_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
-import {NoHostsState} from 'src/agent_admin/reusable'
+import {NoState} from 'src/agent_admin/reusable'
 import {Item} from 'src/reusable_ui/components/treemenu'
 
 interface Props {
@@ -115,6 +115,7 @@ const DatastoresTable = (props: Props): JSX.Element => {
           value={[]}
           name={'Datastores'}
           sizeVisible={false}
+          setIcon={`icon-margin-right-03 vsphere-icon-datastore`}
         />
         <HeadingBar
           isEditable={isEditable}
@@ -126,7 +127,13 @@ const DatastoresTable = (props: Props): JSX.Element => {
           <TableHeader>
             <Header />
           </TableHeader>
-          <TableBody>{items.length ? <Body /> : <NoHostsState />}</TableBody>
+          <TableBody>
+            {items.length ? (
+              <Body />
+            ) : (
+              <NoState message={'There is no Datastore'} />
+            )}
+          </TableBody>
         </Table>
       </PanelBody>
     </Panel>

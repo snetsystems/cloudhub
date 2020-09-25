@@ -13,7 +13,7 @@ import {
   TableBodyRowItem,
 } from 'src/addon/128t/reusable/layout'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-import {NoHostsState} from 'src/agent_admin/reusable'
+import {NoState} from 'src/agent_admin/reusable'
 
 // constants
 import {VCENTER_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
@@ -163,6 +163,7 @@ const VcenterTable = (props: Props): JSX.Element => {
           value={[]}
           name={`vCenter - ${item ? item.label : ''}`}
           sizeVisible={false}
+          setIcon={`icon-margin-right-03 vsphere-icon-vcenter`}
         />
         <HeadingBar
           isEditable={isEditable}
@@ -174,7 +175,9 @@ const VcenterTable = (props: Props): JSX.Element => {
           <TableHeader>
             <Header />
           </TableHeader>
-          <TableBody>{item ? <Body /> : <NoHostsState />}</TableBody>
+          <TableBody>
+            {item ? <Body /> : <NoState message={'There is no vCenter'} />}
+          </TableBody>
         </Table>
       </PanelBody>
     </Panel>

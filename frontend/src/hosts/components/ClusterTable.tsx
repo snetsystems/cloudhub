@@ -11,7 +11,7 @@ import {
   TableBodyRowItem,
 } from 'src/addon/128t/reusable/layout'
 import {ProgressDisplay} from 'src/shared/components/ProgressDisplay'
-import {NoHostsState} from 'src/agent_admin/reusable'
+import {NoState} from 'src/agent_admin/reusable'
 
 // constants
 import {VCENTER_CLUSTER_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
@@ -147,7 +147,9 @@ const ClusterTable = (props: Props): JSX.Element => {
           <TableHeader>
             <Header />
           </TableHeader>
-          <TableBody>{item ? <Body /> : <NoHostsState />}</TableBody>
+          <TableBody>
+            {item ? <Body /> : <NoState message={'There is no Cluster'} />}
+          </TableBody>
         </Table>
       </PanelBody>
     </Panel>

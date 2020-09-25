@@ -29,8 +29,10 @@ export type TreeMenuChildren = (props: {
 
 export const ItemComponent: React.FunctionComponent<TreeMenuItem> = ({
   hasNodes = false,
+  setIcon = '',
   buttons = [],
   isOpen = false,
+  disabled = false,
   level = 0,
   onClick,
   toggleNode,
@@ -45,7 +47,8 @@ export const ItemComponent: React.FunctionComponent<TreeMenuItem> = ({
       'tree-item',
       {'tree-item--active': active},
       {'tree-item--focused': focused},
-      `${'tree-item-level-' + level}`
+      `${'tree-item-level-' + level}`,
+      {disabled: disabled}
     )}
     style={{
       paddingLeft: `${DEFAULT_PADDING +
@@ -59,7 +62,7 @@ export const ItemComponent: React.FunctionComponent<TreeMenuItem> = ({
     role="button"
     aria-pressed={active}
     data-key={parent.trim() + '/' + label}
-    onClick={onClick}
+    onClick={disabled ? null : onClick}
   >
     {hasNodes && (
       <div
@@ -72,16 +75,27 @@ export const ItemComponent: React.FunctionComponent<TreeMenuItem> = ({
         <ToggleIcon on={isOpen} />
       </div>
     )}
-    <div style={{width: '100%'}}>{label}</div>
-    {buttons.length > 0 && (
-      <div className={`tree-item-buttons`}>
-        {_.map(buttons, item => (
-          <span key={uuid.v4()} style={{marginLeft: '3px'}}>
-            {item()}
-          </span>
-        ))}
-      </div>
-    )}
+
+    <div
+      style={{
+        width: '100%',
+        display: 'flex',
+        alignItems: 'center',
+        minHeight: '22px',
+      }}
+    >
+      {setIcon && <span className={setIcon}></span>}
+      <div style={{width: '100%'}}>{label}</div>
+      {buttons && (
+        <div className={`tree-item-buttons`}>
+          {_.map(buttons, item => (
+            <span key={uuid.v4()} style={{marginLeft: '3px'}}>
+              {item()}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
   </li>
 )
 

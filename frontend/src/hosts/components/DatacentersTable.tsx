@@ -13,7 +13,7 @@ import {
 } from 'src/addon/128t/reusable/layout'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {ProgressDisplay} from 'src/shared/components/ProgressDisplay'
-import {NoHostsState} from 'src/agent_admin/reusable'
+import {NoState} from 'src/agent_admin/reusable'
 
 //constants
 import {VCENTER_DATACENTERS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
@@ -181,6 +181,7 @@ const DatacentersTable = (props: Props): JSX.Element => {
           value={[]}
           name={'Datacenters'}
           sizeVisible={false}
+          setIcon={`icon-margin-right-03 vsphere-icon-datacenter`}
         />
         <HeadingBar
           isEditable={isEditable}
@@ -192,7 +193,9 @@ const DatacentersTable = (props: Props): JSX.Element => {
           <TableHeader>
             <Header />
           </TableHeader>
-          <TableBody>{items ? <Body /> : <NoHostsState />}</TableBody>
+          <TableBody>
+            {items ? <Body /> : <NoState message={'There is no Datacenter'} />}
+          </TableBody>
         </Table>
       </PanelBody>
     </Panel>

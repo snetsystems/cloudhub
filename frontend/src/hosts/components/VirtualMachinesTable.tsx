@@ -15,7 +15,7 @@ import {
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {convertUnit} from 'src/shared/components/ProgressDisplay'
 import {responseIndicator} from 'src/shared/components/Indicator'
-import {NoHostsState} from 'src/agent_admin/reusable'
+import {NoState} from 'src/agent_admin/reusable'
 
 //contants
 import {VCENTER_VMS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
@@ -165,6 +165,7 @@ const VirtualMachinesTable = (props: Props): JSX.Element => {
           value={[]}
           name={`Virtual Machine `}
           sizeVisible={false}
+          setIcon={`icon-margin-right-03 vsphere-icon-vm`}
         />
         <HeadingBar
           isEditable={isEditable}
@@ -176,7 +177,13 @@ const VirtualMachinesTable = (props: Props): JSX.Element => {
           <TableHeader>
             <Header />
           </TableHeader>
-          <TableBody>{items.length ? <Body /> : <NoHostsState />}</TableBody>
+          <TableBody>
+            {items.length ? (
+              <Body />
+            ) : (
+              <NoState message={`There is no Virtual Machine`} />
+            )}
+          </TableBody>
         </Table>
       </PanelBody>
     </Panel>

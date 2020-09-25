@@ -1,0 +1,24 @@
+{
+  "id": "547e56a8-4dd2-41cb-b604-cadf9b2274e0",
+  "measurement": "vsphere_host_mem",
+  "app": "vsphere",
+  "autoflow": true,
+  "cells": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "6459c528-ceb7-48b8-8ca4-dfcb99f23891",
+      "name": "Memory Usage",
+      "queries": [
+        {
+          "query": "SELECT mean(\"active_average\") / 1048576 AS \"mean_active_average\", mean(\"usage_average\") AS \"mean_usage_average\" FROM \":db:\".\":rp:\".\"vsphere_host_mem\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    }
+  ]
+}

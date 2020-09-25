@@ -67,6 +67,8 @@ import {
   getVSphereAsync,
   RequestVcenterAction,
   ResponseVcenterAction,
+  RequestPauseVcenterAction,
+  RequestRunVcenterAction,
 } from 'src/hosts/actions'
 
 // Constants
@@ -197,6 +199,8 @@ interface Props {
   }: reducerVSphere['vspheres']['host']) => void
   handleRequestAction: () => void
   handleResponseAction: () => void
+  handleRequestPauseVcenterAction: (host: string, id: string) => void
+  handleRequestRunVcenterAction: (host: string, id: string) => void
 }
 
 const VMHostsPage = (props: Props): JSX.Element => {
@@ -218,6 +222,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
     handleUpdateVcenterAction,
     handleRequestAction,
     handleResponseAction,
+    handleRequestPauseVcenterAction,
+    handleRequestRunVcenterAction,
   } = props
   const intervalItems = ['30s', '1m', '5m']
   const initialFocusedHost: Item = {
@@ -378,7 +384,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             ? interval
             : null
         ).then(async ({data}) => {
-          handleUpdateVcenterAction({...data, nodes: result})
+          handleUpdateVcenterAction({...data, isPause: false, nodes: result})
           handleClose()
         })
       })
@@ -416,11 +422,13 @@ const VMHostsPage = (props: Props): JSX.Element => {
         )
 
         if (vSphereInfo && resultAddVCenterAsync) {
-          let dump = {}
-          dump[address] = {
-            ...resultAddVCenterAsync.data,
-            nodes: {
-              ...vSphereInfo,
+          const dump = {
+            [address]: {
+              ...resultAddVCenterAsync.data,
+              nodes: {
+                ...vSphereInfo,
+                isPause: false,
+              },
             },
           }
 
@@ -432,7 +440,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
         handleResponseAction()
       })
   }
-
   const getSaltAddon = (): Addon => {
     const addon = addons.find(addon => {
       return addon.name === AddonType.salt
@@ -450,29 +457,47 @@ const VMHostsPage = (props: Props): JSX.Element => {
       let makeTreemenus
       _.forEach(vsphereKeys, key => {
         const vsphere = getVSpheres[key]
-        if (vsphere.nodes) {
-          makeTreemenus = {
-            ...makeTreemenus,
-            ...makeTreeMenuVCenterInfo(vsphere),
-          }
+
+        makeTreemenus = {
+          ...makeTreemenus,
+          ...makeTreeMenuVCenterInfo(vsphere),
         }
       })
 
       const vCentersKeys = _.keys(vCenters)
       const makeTreemenusKey = _.keys(makeTreemenus)
+
       if (vCentersKeys.length > makeTreemenusKey.length || !focusedHost) {
-        // remove vCenter
         const addChartsInfoFocusedHostFn = async (): Promise<void> => {
           const addChartsInfoFocusedHost = await requestCharts(
             makeTreemenus[makeTreemenusKey[0]]
           )
+
+          const getLocal: VMHostsPageLocalStorage = getLocalStorage(
+            'VMHostsPage'
+          )
+          const {layout: getLayout} = getLocal
+          const {vcenter} = getLayout[addChartsInfoFocusedHost.key]
+          if (vcenter) {
+            setLayout(vcenter)
+          } else {
+            setLayout(vcenterCells)
+          }
+
           setFocusedHost(addChartsInfoFocusedHost)
         }
         addChartsInfoFocusedHostFn()
       }
 
       if (makeTreemenus) {
-        setVCenters(makeTreemenus)
+        let sortTreemenus = {}
+        _.forEach(_.keys(makeTreemenus).sort(), key => {
+          sortTreemenus[key] = {
+            ...makeTreemenus[key],
+          }
+        })
+
+        setVCenters(sortTreemenus)
       }
     } else {
       setVCenters({})
@@ -487,16 +512,22 @@ const VMHostsPage = (props: Props): JSX.Element => {
       let makeTreemenus
       _.forEach(_.keys(vspheres), key => {
         const vsphere = vspheres[key]
-        if (vsphere.nodes) {
-          makeTreemenus = {
-            ...makeTreemenus,
-            ...makeTreeMenuVCenterInfo(vsphere),
-          }
+
+        makeTreemenus = {
+          ...makeTreemenus,
+          ...makeTreeMenuVCenterInfo(vsphere),
         }
       })
 
       if (makeTreemenus) {
-        setVCenters(makeTreemenus)
+        let sortTreemenus = {}
+        _.forEach(_.keys(makeTreemenus).sort(), key => {
+          sortTreemenus[key] = {
+            ...makeTreemenus[key],
+          }
+        })
+
+        setVCenters(sortTreemenus)
       }
     }
 
@@ -665,7 +696,28 @@ const VMHostsPage = (props: Props): JSX.Element => {
       }
     }
 
-    setLocalStorage('VMHostsPage', {...getLocal, focusedHost})
+    const filteredFocusedHost = {
+      key: focusedHost.key,
+      label: focusedHost.label,
+      layoutCells: focusedHost.layoutCells,
+      minion: focusedHost.minion,
+      openNodes: focusedHost.openNodes,
+      tempVars: focusedHost.tempVars,
+      type: focusedHost.type,
+      vmParam: focusedHost.vmParam,
+      index: focusedHost.index,
+      isOpen: focusedHost.isOpen,
+      level: focusedHost.level,
+      parent: focusedHost.parent,
+      parent_chart_field: focusedHost.parent_chart_field,
+      parent_name: focusedHost.parent_name,
+      parent_type: focusedHost.parent_type,
+    }
+
+    setLocalStorage('VMHostsPage', {
+      ...getLocal,
+      focusedHost: filteredFocusedHost,
+    })
   }, [focusedHost])
 
   const cellBackgroundColor: string = DEFAULT_CELL_BG_COLOR
@@ -759,6 +811,26 @@ const VMHostsPage = (props: Props): JSX.Element => {
     ) : null
   }
 
+  const intervalCallOnOffBtn = (
+    isPause: boolean,
+    id: string,
+    host: string
+  ) => (): JSX.Element => {
+    return (
+      <button
+        className={`btn btn-default btn-xs btn-square`}
+        onClick={e => {
+          e.stopPropagation()
+          isPause
+            ? handleRequestRunVcenterAction(host, id)
+            : handleRequestPauseVcenterAction(host, id)
+        }}
+      >
+        {isPause ? '▶' : '■'}
+      </button>
+    )
+  }
+
   const removeBtn = (id: string, host: string) => (): JSX.Element => {
     const {
       auth: {me, isUsingAuth},
@@ -775,6 +847,12 @@ const VMHostsPage = (props: Props): JSX.Element => {
             if (data === 'DELETE_SUCCESS') {
               handleClearTimeout(host)
               removeOpenNodes(host)
+              const getLocal: VMHostsPageLocalStorage = getLocalStorage(
+                'VMHostsPage'
+              )
+              const {layout: getLayout} = getLocal
+              delete getLayout[host]
+              setLocalStorage('VMHostsPage', {...getLocal, layout: getLayout})
             }
           })
         }}
@@ -794,6 +872,27 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const makeTreeMenuVCenterInfo = (
     props: reducerVSphere['vspheres']['host']
   ) => {
+    if (!props.nodes) {
+      return {
+        [props.host]: {
+          isPause: props.isPause,
+          setIcon: 'icon-margin-right-03 vsphere-icon-vcenter',
+          buttons: [
+            updateBtn(props.id),
+            removeBtn(props.id, props.host),
+            intervalCallOnOffBtn(props.isPause, props.id, props.host),
+          ],
+          label: props.host,
+          key: props.host,
+          index: 0,
+          level: 0,
+          disabled: true,
+          minion: props.minion,
+          nodes: {},
+        },
+      }
+    }
+
     const vCenterData = props.nodes
 
     let vcCpuUsage = []
@@ -815,7 +914,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
     let vcenter: {[x: string]: VCenter} = [vCenterData].reduce(
       acc => {
-        const datacenters: ResponseDatacenter[] = vcMinionValue[0].datacenters
+        const datacenters: ResponseDatacenter[] = vcMinionValue[0]?.datacenters
         if (!datacenters) return
 
         datacenters.reduce((acc, datacenter, i) => {
@@ -836,6 +935,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             label: datacenterName,
             index: i,
             level: 1,
+            setIcon: 'icon-margin-right-03 vsphere-icon-datacenter',
             type: VMRole.datacenter,
             parent_name: vcIpAddress,
             parent_chart_field: VMRole.vcenter,
@@ -852,6 +952,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
               label: clusterName,
               index: i,
               level: 2,
+              setIcon: 'icon-margin-right-03 vsphere-icon-cluster',
               type: VMRole.cluster,
               parent_name: `${vcIpAddress}/${datacenterName}`,
               parent_chart_field: 'vcenter/dcname',
@@ -869,6 +970,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
                 label: hostName,
                 index: i,
                 level: 3,
+                setIcon: 'icon-margin-right-03 vsphere-icon-host',
                 type: VMRole.host,
                 parent_type: VMRole.cluster,
                 parent_name: `${vcIpAddress}/${datacenterName}/${clusterName}`,
@@ -887,6 +989,10 @@ const VMHostsPage = (props: Props): JSX.Element => {
                   label: vmName,
                   index: i,
                   level: 4,
+                  setIcon: classnames('icon-margin-right-03', {
+                    'vsphere-icon-vm': vm.power_state === 'poweredOff',
+                    'vsphere-icon-vm-on': vm.power_state === 'poweredOn',
+                  }),
                   type: VMRole.vm,
                   parent_name: `${vcIpAddress}/${datacenterName}/${clusterName}/${hostName}`,
                   parent_chart_field: 'vcenter/dcname/clustername/esxhostname',
@@ -917,6 +1023,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
               label: hostName,
               index: i,
               level: 2,
+              setIcon: 'icon-margin-right-03 vsphere-icon-host',
               type: VMRole.host,
               parent_type: VMRole.datacenter,
               parent_name: `${vcIpAddress}/${datacenterName}`,
@@ -935,6 +1042,10 @@ const VMHostsPage = (props: Props): JSX.Element => {
                 label: vmName,
                 index: i,
                 level: 3,
+                setIcon: classnames('icon-margin-right-03', {
+                  'vsphere-icon-vm': vm.power_state === 'poweredOff',
+                  'vsphere-icon-vm-on': vm.power_state === 'poweredOn',
+                }),
                 type: VMRole.vm,
                 id: props.id,
                 parent_name: `${vcIpAddress}/${datacenterName}/${hostName}`,
@@ -974,7 +1085,13 @@ const VMHostsPage = (props: Props): JSX.Element => {
     if (!vcenter) return
     vcenter[vcIpAddress] = {
       ...vcenter[vcIpAddress],
-      buttons: [updateBtn(props.id), removeBtn(props.id, props.host)],
+      isPause: props.isPause,
+      setIcon: 'icon-margin-right-03 vsphere-icon-vcenter',
+      buttons: [
+        updateBtn(props.id),
+        removeBtn(props.id, props.host),
+        intervalCallOnOffBtn(props.isPause, props.id, props.host),
+      ],
       cpu_usage:
         vcCpuUsage.length > 0 ? vcCpuUsage.reduce((sum, c) => sum + c) : [],
       cpu_space:
@@ -1454,7 +1571,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
           const isVCenters = _.keys(vCenters).length
           return isVCenters &&
             !_.isEmpty(focusedHost) &&
-            vCenters[focusedHost.key.split('/')[0]] ? (
+            vCenters[focusedHost.key.split('/')[0]] &&
+            _.keys(vCenters[focusedHost.key.split('/')[0]].nodes).length ? (
             <FancyScrollbar autoHide={false}>
               <GridLayout
                 layout={layout}
@@ -1497,64 +1615,57 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
   return (
     <div className="vm-status-page__container">
-      <div className="panel">
-        <div
-          className="panel-body"
-          style={{background: 'transparent', padding: '0'}}
-        >
-          <Threesizer
-            orientation={HANDLE_VERTICAL}
-            divisions={threesizerDivisions()}
-            onResize={handleResize}
+      <Threesizer
+        orientation={HANDLE_VERTICAL}
+        divisions={threesizerDivisions()}
+        onResize={handleResize}
+      />
+      <HostModal
+        isVisible={isModalVisible}
+        headingTitle={isUpdate ? 'Update vCenter' : 'Connection vCenter'}
+        onCancel={handleClose}
+        onConfirm={handleConnection}
+        message={
+          <VMConnectForm
+            target={target}
+            address={address}
+            port={port}
+            user={user}
+            password={password}
+            protocol={protocol}
+            interval={interval}
+            targetItems={acceptedMinionList}
+            intervalItems={intervalItems}
+            isDisabled={vspheres.status === VcenterStatus.Request}
+            handleChangeTarget={handleChangeTarget}
+            handleChangeAddress={handleChangeAddress}
+            handleChangePort={handleChangePort}
+            handleChangeUser={handleChangeUser}
+            handleChangePassword={handleChangePassword}
+            handleChangeProtocol={handleChangeProtocol}
+            handleChangeInterval={handleChangeInterval}
           />
-          <HostModal
-            isVisible={isModalVisible}
-            headingTitle={isUpdate ? 'Update vCenter' : 'Connection vCenter'}
-            onCancel={handleClose}
-            onConfirm={handleConnection}
-            message={
-              <VMConnectForm
-                target={target}
-                address={address}
-                port={port}
-                user={user}
-                password={password}
-                protocol={protocol}
-                interval={interval}
-                targetItems={acceptedMinionList}
-                intervalItems={intervalItems}
-                isDisabled={vspheres.status === VcenterStatus.Request}
-                handleChangeTarget={handleChangeTarget}
-                handleChangeAddress={handleChangeAddress}
-                handleChangePort={handleChangePort}
-                handleChangeUser={handleChangeUser}
-                handleChangePassword={handleChangePassword}
-                handleChangeProtocol={handleChangeProtocol}
-                handleChangeInterval={handleChangeInterval}
-              />
-            }
-            confirmText={isUpdate ? 'Update vCenter' : 'Add vCenter'}
-            confirmButtonStatus={
-              vspheres.status === VcenterStatus.Request
-                ? ComponentStatus.Loading
-                : address &&
-                  user &&
-                  password &&
-                  protocol &&
-                  target !== MINION_LIST_EMPTY &&
-                  compareRedux()
-                ? ComponentStatus.Default
-                : ComponentStatus.Disabled
-            }
-          />
+        }
+        confirmText={isUpdate ? 'Update vCenter' : 'Add vCenter'}
+        confirmButtonStatus={
+          vspheres.status === VcenterStatus.Request
+            ? ComponentStatus.Loading
+            : address &&
+              user &&
+              password &&
+              protocol &&
+              target !== MINION_LIST_EMPTY &&
+              compareRedux()
+            ? ComponentStatus.Default
+            : ComponentStatus.Disabled
+        }
+      />
+      {vspheres.status === VcenterStatus.Request && !isModalVisible && (
+        <div className={`vm-page-spinner-container`}>
+          <PageSpinner />
+          <div className={`vm-page-spinner-overay`} />
         </div>
-        {vspheres.status === VcenterStatus.Request && !isModalVisible && (
-          <div className={`vm-page-spinner-container`}>
-            <PageSpinner />
-            <div className={`vm-page-spinner-overay`} />
-          </div>
-        )}
-      </div>
+      )}
     </div>
   )
 }
@@ -1579,6 +1690,8 @@ const mapDispatchToProps = {
   handleUpdateVcenterAction: updateVcenterAction,
   handleRequestAction: RequestVcenterAction,
   handleResponseAction: ResponseVcenterAction,
+  handleRequestPauseVcenterAction: RequestPauseVcenterAction,
+  handleRequestRunVcenterAction: RequestRunVcenterAction,
 }
 
 export default connect(

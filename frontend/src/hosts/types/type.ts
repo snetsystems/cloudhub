@@ -145,6 +145,7 @@ export interface reducerVSphere {
       port?: string
       protocol?: string
       username?: string
+      isPause?: boolean
     }
   }
   status: VcenterStatus

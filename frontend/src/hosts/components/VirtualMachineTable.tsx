@@ -1,5 +1,6 @@
 import React from 'react'
 import _ from 'lodash'
+import classnames from 'classnames'
 
 import {
   CellName,
@@ -14,7 +15,8 @@ import {
 } from 'src/addon/128t/reusable/layout'
 import {convertUnit} from 'src/shared/components/ProgressDisplay'
 import {responseIndicator} from 'src/shared/components/Indicator'
-import {NoHostsState} from 'src/agent_admin/reusable'
+import {NoState} from 'src/agent_admin/reusable'
+import Tooltip from 'src/shared/components/Tooltip'
 
 // constants
 import {VCENTER_VM_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
@@ -148,79 +150,137 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
     } = item
 
     return (
-      <div className="hosts-table--tr">
-        <TableBodyRowItem
-          title={convertUnit('CPU', cpu_usage)}
-          width={CPUWidth}
-          className={'align--end'}
-        />
-        <TableBodyRowItem
-          title={convertUnit('Memory', memory_usage)}
-          width={MemoryWidth}
-          className={'align--end'}
-        />
-        <TableBodyRowItem
-          title={convertUnit('Storage', storage_usage)}
-          width={StorageWidth}
-          className={'align--end'}
-        />
-        <TableBodyRowItem
-          title={ip_address}
-          width={IPWidth}
-          className={'align--start'}
-        />
-        <TableBodyRowItem
-          title={os}
-          width={OSWidth}
-          className={'align--start'}
-        />
+      <FancyScrollbar className="getting-started--container">
+        <div className="hosts-table--tr">
+          <TableBodyRowItem
+            title={convertUnit('CPU', cpu_usage)}
+            width={CPUWidth}
+            className={'align--end'}
+          />
+          <TableBodyRowItem
+            title={convertUnit('Memory', memory_usage)}
+            width={MemoryWidth}
+            className={'align--end'}
+          />
+          <TableBodyRowItem
+            title={convertUnit('Storage', storage_usage)}
+            width={StorageWidth}
+            className={'align--end'}
+          />
+          <TableBodyRowItem
+            title={ip_address}
+            width={IPWidth}
+            className={'align--start'}
+          />
+          <TableBodyRowItem
+            title={os}
+            width={OSWidth}
+            className={'align--start'}
+          />
 
-        <TableBodyRowItem
-          title={responseIndicator(power_state === 'poweredOn')}
-          width={StatusWidth}
-          className={'align--center'}
-        />
-      </div>
+          <TableBodyRowItem
+            title={responseIndicator(power_state === 'poweredOn')}
+            width={StatusWidth}
+            className={'align--center'}
+          />
+        </div>
+      </FancyScrollbar>
     )
   }
 
   return (
-    <FancyScrollbar className="getting-started--container">
-      <Panel>
-        <PanelHeader isEditable={isEditable}>
-          <CellName
-            cellTextColor={cellTextColor}
-            cellBackgroundColor={cellBackgroundColor}
-            value={[]}
-            name={`Virtual Machine - ${item ? item.name : ''}`}
-            sizeVisible={false}
+    <Panel>
+      <PanelHeader isEditable={isEditable}>
+        <CellName
+          cellTextColor={cellTextColor}
+          cellBackgroundColor={cellBackgroundColor}
+          value={[]}
+          name={`Virtual Machine - ${item ? item.name : ''}`}
+          sizeVisible={false}
+          setIcon={classnames('icon-margin-right-03', {
+            'vsphere-icon-vm': item?.power_state === 'poweredOff',
+            'vsphere-icon-vm-on': item?.power_state === 'poweredOn',
+          })}
+        />
+        <HeadingBar
+          isEditable={isEditable}
+          cellBackgroundColor={cellBackgroundColor}
+        />
+        <div
+          className={`heading--button-box`}
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignContent: 'center',
+            marginRight: '10px',
+          }}
+        >
+          <Tooltip
+            tip={'Open Console'}
+            children={
+              <button
+                className={`button button-sm button-default button-square`}
+                style={{
+                  width: '25px',
+                  height: '25px',
+                  marginRight: '5px',
+                }}
+                onClick={remoteConsoleRun}
+              >
+                <span
+                  className={`icon-vmrc`}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignContent: 'center',
+                  }}
+                ></span>
+              </button>
+            }
           />
-          <HeadingBar
-            isEditable={isEditable}
-            cellBackgroundColor={cellBackgroundColor}
-          />
-        </PanelHeader>
-        <PanelBody>
-          <>
-            <Table>
-              <TableHeader>
-                <Header />
-              </TableHeader>
-              <TableBody>{item ? <Body /> : <NoHostsState />}</TableBody>
-              <div className={`hosts-table-item`} onClick={remoteConsoleRun}>
-                Remote Console Run
-              </div>
-              <div
-                className={`hosts-table-item`}
+          <Tooltip
+            tip={'Download console'}
+            children={
+              <button
+                className={`button button-sm button-default button-square`}
+                style={{
+                  width: ' 25px',
+                  height: '25px',
+                }}
                 onClick={remoteConsoleDownloadOpen}
               >
-                Remote Console download
-              </div>
-            </Table>
-          </>
-        </PanelBody>
-      </Panel>
-    </FancyScrollbar>
+                <span
+                  className={`button-icon icon download`}
+                  style={{
+                    fontSize: '12px',
+                    lineHeight: '0px',
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignContent: 'center',
+                  }}
+                ></span>
+              </button>
+            }
+          />
+        </div>
+      </PanelHeader>
+      <PanelBody>
+        <>
+          <Table>
+            <TableHeader>
+              <Header />
+            </TableHeader>
+            <TableBody>
+              {item ? (
+                <Body />
+              ) : (
+                <NoState message={`There is no Virtual Machine`} />
+              )}
+            </TableBody>
+          </Table>
+        </>
+      </PanelBody>
+    </Panel>
   )
 }
 

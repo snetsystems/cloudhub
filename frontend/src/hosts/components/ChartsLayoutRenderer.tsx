@@ -62,6 +62,7 @@ const ChartsLayoutRenderer = ({
             value={[]}
             name={`Charts`}
             sizeVisible={false}
+            setIcon={`icon-margin-right-03 icon bar-chart`}
           />
           <HeadingBar
             isEditable={isEditable}

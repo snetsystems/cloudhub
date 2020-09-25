@@ -241,44 +241,43 @@ export const getAppsForHosts = async (
   proxyLink: string,
   hosts: HostsObject,
   appLayouts: Layout[],
-  telegrafDB: string
+  telegrafDB: string,
+  tempVars: Template[]
 ): Promise<HostsObject> => {
-  const measurements = appLayouts.map(m => `^${m.measurement}$`).join('|')
+  const measurements = appLayouts
+    .map(m => `\":db:\".\":rp:\".\"${m.measurement}\"`)
+    .join(',')
   const measurementsToApps = _.zipObject(
     appLayouts.map(m => m.measurement),
     appLayouts.map(({app}) => app)
   )
-
   const {data} = await proxy({
     source: proxyLink,
-    query: `show series from /${measurements}/ where time > now() - 10m`,
+    query: replaceTemplate(
+      `show series from ${measurements} where time > now() - 10m`,
+      tempVars
+    ),
     db: telegrafDB,
   })
-
   const newHosts = {...hosts}
   const allSeries = getDeep<string[][]>(
     data,
     'results.[0].series.[0].values',
     []
   )
-
   allSeries.forEach(series => {
     const seriesObj = parseSeries(series[0])
     const measurement = seriesObj.measurement
     const host = getDeep<string>(seriesObj, 'tags.host', '')
-
     if (!newHosts[host]) {
       return
     }
-
     if (!newHosts[host].apps) {
       newHosts[host].apps = []
     }
-
     if (!newHosts[host].tags) {
       newHosts[host].tags = {}
     }
-
     newHosts[host].apps = _.uniq(
       newHosts[host].apps.concat(measurementsToApps[measurement])
     )

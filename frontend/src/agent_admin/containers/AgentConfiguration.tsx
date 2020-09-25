@@ -36,7 +36,6 @@ import {
   getLocalFileReadAsync,
   getLocalFileWriteAsync,
   runLocalServiceReStartTelegrafAsync,
-  getLocalServiceGetRunningAsync,
   getRunnerSaltCmdTelegrafAsync,
 } from 'src/agent_admin/actions'
 
@@ -112,11 +111,6 @@ interface Props {
     saltMasterToken: string,
     minion: string
   ) => Promise<AxiosResponse>
-  getLocalServiceGetRunning: (
-    saltMasterUrl: string,
-    saltMasterToken: string,
-    minion: string
-  ) => Promise<AxiosResponse>
   getRunnerSaltCmdTelegraf: (
     saltMasterUrl: string,
     saltMasterToken: string,
@@ -128,10 +122,6 @@ interface State {
   configPageStatus: RemoteDataState
   measurementsStatus: RemoteDataState
   collectorConfigStatus: RemoteDataState
-  serviceMeasurements: {
-    name: string
-    isActivity: boolean
-  }[]
   defaultMeasurements: {
     name: string
     isActivity: boolean
@@ -143,7 +133,6 @@ interface State {
   focusedMeasurePosition: {top: number; left: number}
   configScript: string
   responseMessage: string
-  defaultService: string[]
   focusedHost: string
   focusedHostIp: string
   isInitEditor: boolean
@@ -162,34 +151,8 @@ interface LocalStorageAgentConfig {
   isApplyBtnDisabled?: boolean
 }
 
-interface measureMatch {
-  measureMatch: [
-    {mysql: string[]},
-    {mssql: string[]},
-    {influxdb: string[]},
-    {postgresql: string[]},
-    {oracle: string[]},
-    {activemq: string[]},
-    {rabbitmq: string[]},
-    {kafka: string[]},
-    {zookeeper: string[]},
-    {tomcat: string[]},
-    {apache: string[]},
-    {nginx: string[]},
-    {iis: string[]},
-    {system: string[]},
-    {win_system: string[]},
-    {docker: string[]},
-    string
-  ]
-}
-
 @ErrorHandling
-export class AgentConfiguration extends PureComponent<
-  Props,
-  State,
-  measureMatch
-> {
+export class AgentConfiguration extends PureComponent<Props, State> {
   private DEFAULT_DROPDOWN_TEXT = 'Select Database(= Group)'
 
   private defaultMeasurementsData = [
@@ -200,47 +163,33 @@ export class AgentConfiguration extends PureComponent<
     'mem',
     'net',
     'netstat',
+    'nstat',
     'ping',
     'processes',
     'system',
     'swap',
     'temp',
+    'mysql',
+    'mssql',
+    'influxdb',
+    'mongodb',
+    'postgresql',
+    'redis',
+    'oracle',
+    'activemq',
+    'rabbitmq',
+    'kafka',
+    'zookeeper',
+    'tomcat',
+    'apache',
+    'nginx',
+    'iis',
+    'win_system',
+    'docker',
+    'vsphere',
+    'kube_inventory',
+    'kubernetes',
   ]
-
-  private measureMatch = [
-    {mysql: ['mysql', 'mysqld']},
-    {mssql: ['mssql', 'MSSQLSERVER']},
-    {influxdb: ['influxdb']},
-    {mongodb: ['mongodb']},
-    {postgresql: ['postgresql']},
-    {redis: ['redis']},
-    {oracle: ['oracle']},
-    {activemq: ['activemq']},
-    {rabbitmq: ['rabbitmq']},
-    {kafka: ['kafka']},
-    {zookeeper: ['zookeeper']},
-    {tomcat: ['tomcat']},
-    {apache: ['apache', 'apache2', 'httpd']},
-    {nginx: ['nginx']},
-    {iis: ['Iisadmin', 'Msftpsvc', 'Nntpsvc', 'Smtpsvc', 'W3svc']},
-    {system: ['system']},
-    {win_system: ['win_system']},
-    {docker: ['docker']},
-  ]
-
-  private serviceMeasure = _.uniq(
-    _.flattenDeep(
-      _.concat(
-        [],
-        Object.keys(this.measureMatch).map(k =>
-          Object.keys(this.measureMatch[k])
-        ),
-        Object.keys(this.measureMatch).map(k =>
-          Object.values(this.measureMatch[k])
-        )
-      )
-    )
-  )
 
   constructor(props: Props) {
     super(props)
@@ -248,7 +197,6 @@ export class AgentConfiguration extends PureComponent<
       configPageStatus: RemoteDataState.NotStarted,
       measurementsStatus: RemoteDataState.NotStarted,
       collectorConfigStatus: RemoteDataState.NotStarted,
-      serviceMeasurements: [],
       defaultMeasurements: [],
       horizontalProportions: [0.43, 0.57],
       verticalProportions: [0.43, 0.57],
@@ -259,7 +207,6 @@ export class AgentConfiguration extends PureComponent<
       responseMessage: '',
       focusedHost: '',
       focusedHostIp: '',
-      defaultService: this.serviceMeasure,
       isInitEditor: true,
       isApplyBtnDisabled: true,
       isGetLocalStorage: false,
@@ -357,7 +304,6 @@ export class AgentConfiguration extends PureComponent<
       saltMasterUrl,
       saltMasterToken,
       getLocalFileRead,
-      getLocalServiceGetRunning,
     } = this.props
 
     this.setState({
@@ -407,38 +353,15 @@ export class AgentConfiguration extends PureComponent<
         console.error(error)
       })
 
-    const getLocalServiceGetRunningPromise = getLocalServiceGetRunning(
-      saltMasterUrl,
-      saltMasterToken,
-      host
-    )
+    const getDefaultMeasure = this.defaultMeasurementsData.map(dMeasure => ({
+      name: dMeasure,
+      isActivity: false,
+    }))
 
-    getLocalServiceGetRunningPromise
-      .then(({data}) => {
-        const {defaultService} = this.state
-        const getServiceRunning = defaultService
-          .filter(m => data.return[0][host].includes(m))
-          .map(sMeasure => ({
-            name: sMeasure,
-            isActivity: false,
-          }))
-
-        const getDefaultMeasure = this.defaultMeasurementsData.map(
-          dMeasure => ({
-            name: dMeasure,
-            isActivity: false,
-          })
-        )
-
-        this.setState({
-          serviceMeasurements: getServiceRunning,
-          defaultMeasurements: getDefaultMeasure,
-          measurementsStatus: RemoteDataState.Done,
-        })
-      })
-      .catch(error => {
-        console.error(error)
-      })
+    this.setState({
+      defaultMeasurements: getDefaultMeasure,
+      measurementsStatus: RemoteDataState.Done,
+    })
   }
 
   public onClickActionCall = async (host: string, isRunning: boolean) => {
@@ -578,12 +501,6 @@ export class AgentConfiguration extends PureComponent<
 
   public getConfigInfo = (answer: boolean) => {
     const {
-      saltMasterUrl,
-      saltMasterToken,
-      getLocalServiceGetRunning,
-    } = this.props
-
-    const {
       configScript,
       focusedHost,
       focusedHostIp,
@@ -600,34 +517,16 @@ export class AgentConfiguration extends PureComponent<
         measurementsStatus: RemoteDataState.Loading,
       })
 
-      const getLocalServiceGetRunningPromise = getLocalServiceGetRunning(
-        saltMasterUrl,
-        saltMasterToken,
-        focusedHost
-      )
+      let getDefaultMeasure = this.defaultMeasurementsData.map(dMeasure => {
+        return {
+          name: dMeasure,
+          isActivity: false,
+        }
+      })
 
-      getLocalServiceGetRunningPromise.then(({data}) => {
-        let getServiceRunning = this.state.defaultService
-          .filter(m => data.return[0][focusedHost].includes(m))
-          .map(sMeasure => {
-            return {
-              name: sMeasure,
-              isActivity: false,
-            }
-          })
-
-        let getDefaultMeasure = this.defaultMeasurementsData.map(dMeasure => {
-          return {
-            name: dMeasure,
-            isActivity: false,
-          }
-        })
-
-        this.setState({
-          serviceMeasurements: getServiceRunning,
-          defaultMeasurements: getDefaultMeasure,
-          measurementsStatus: RemoteDataState.Done,
-        })
+      this.setState({
+        defaultMeasurements: getDefaultMeasure,
+        measurementsStatus: RemoteDataState.Done,
       })
     } else {
       setLocalStorage('AgentConfigPage', {
@@ -773,62 +672,6 @@ export class AgentConfiguration extends PureComponent<
     )
   }
 
-  private handleFocusedServiceMeasure = async ({
-    clickPosition,
-    _thisProps,
-  }: {
-    clickPosition: {top: number; left: number}
-    _thisProps: {name: string; idx: number}
-  }) => {
-    const {
-      saltMasterUrl,
-      saltMasterToken,
-      getRunnerSaltCmdTelegraf,
-    } = this.props
-    const {serviceMeasurements, defaultMeasurements} = this.state
-    const {name, idx} = _thisProps
-
-    const filterdMeasureName = Object.keys(this.measureMatch).filter(k =>
-      _.includes(_.values(this.measureMatch[Number(k)])[0], name)
-    )
-
-    const measureName =
-      filterdMeasureName.length === 0
-        ? name
-        : Object.keys(this.measureMatch[Number(filterdMeasureName)])[0]
-
-    const mapServiceMeasurements = serviceMeasurements.map(m => {
-      m.isActivity = false
-      return m
-    })
-
-    const mapDefaultMeasurements = defaultMeasurements.map(m => {
-      m.isActivity = false
-      return m
-    })
-
-    serviceMeasurements[idx].isActivity === false
-      ? (serviceMeasurements[idx].isActivity = true)
-      : (serviceMeasurements[idx].isActivity = false)
-
-    try {
-      const {data} = await getRunnerSaltCmdTelegraf(
-        saltMasterUrl,
-        saltMasterToken,
-        measureName
-      )
-      this.setState({
-        serviceMeasurements: [...mapServiceMeasurements],
-        defaultMeasurements: [...mapDefaultMeasurements],
-        focusedMeasure: measureName,
-        focusedMeasurePosition: clickPosition,
-        description: data.return[0],
-      })
-    } catch (error) {
-      console.error(error)
-    }
-  }
-
   private handleFocusedDefaultMeasure = async ({
     clickPosition,
     _thisProps,
@@ -841,15 +684,10 @@ export class AgentConfiguration extends PureComponent<
       saltMasterToken,
       getRunnerSaltCmdTelegraf,
     } = this.props
-    const {defaultMeasurements, serviceMeasurements} = this.state
+    const {defaultMeasurements} = this.state
     const {idx, name} = _thisProps
 
     const mapDefaultMeasurements = defaultMeasurements.map(m => {
-      m.isActivity = false
-      return m
-    })
-
-    const mapServiceMeasurements = serviceMeasurements.map(m => {
       m.isActivity = false
       return m
     })
@@ -861,7 +699,6 @@ export class AgentConfiguration extends PureComponent<
     if (name === 'global setting') {
       this.setState({
         defaultMeasurements: [...mapDefaultMeasurements],
-        serviceMeasurements: [...mapServiceMeasurements],
         focusedMeasure: name,
         focusedMeasurePosition: clickPosition,
         description: globalSetting,
@@ -875,7 +712,6 @@ export class AgentConfiguration extends PureComponent<
         )
         this.setState({
           defaultMeasurements: [...mapDefaultMeasurements],
-          serviceMeasurements: [...mapServiceMeasurements],
           focusedMeasure: name,
           focusedMeasurePosition: clickPosition,
           description: data.return[0],
@@ -884,21 +720,6 @@ export class AgentConfiguration extends PureComponent<
         console.error(error)
       }
     }
-  }
-
-  private handleServiceClose = (): void => {
-    const {serviceMeasurements} = this.state
-
-    const mapServiceMeasurements = serviceMeasurements.map(m => {
-      m.isActivity = false
-      return m
-    })
-
-    this.setState({
-      serviceMeasurements: [...mapServiceMeasurements],
-      focusedMeasure: '',
-      focusedMeasurePosition: {top: null, left: null},
-    })
   }
 
   private handleDefaultClose = (): void => {
@@ -1007,7 +828,6 @@ export class AgentConfiguration extends PureComponent<
 
   private get MeasurementsContentBody() {
     const {
-      serviceMeasurements,
       defaultMeasurements,
       description,
       focusedMeasure,
@@ -1022,25 +842,7 @@ export class AgentConfiguration extends PureComponent<
             ? `${focusedHost} - ${focusedHostIp}`
             : null}
         </div>
-        <div className="default-measurements">(Service)</div>
-        <div className="query-builder--list">
-          {serviceMeasurements.map(
-            (v: {name: string; isActivity: boolean}, idx): JSX.Element => (
-              <AgentToolbarFunction
-                key={idx}
-                name={v.name}
-                isActivity={v.isActivity}
-                idx={idx}
-                handleFocusedMeasure={this.handleFocusedServiceMeasure}
-                handleClose={this.handleServiceClose}
-                description={description}
-                focusedMeasure={focusedMeasure}
-                focusedPosition={focusedMeasurePosition}
-              />
-            )
-          )}
-        </div>
-        <div className={'default-measurements'}> (Default measurements)</div>
+        <div className={'default-measurements'}> (Plugin Name)</div>
         <div className="query-builder--list">
           {defaultMeasurements.map((v, i) => {
             return (
@@ -1233,7 +1035,6 @@ const mdtp = {
   getLocalFileRead: getLocalFileReadAsync,
   getLocalFileWrite: getLocalFileWriteAsync,
   runLocalServiceReStartTelegraf: runLocalServiceReStartTelegrafAsync,
-  getLocalServiceGetRunning: getLocalServiceGetRunningAsync,
   getRunnerSaltCmdTelegraf: getRunnerSaltCmdTelegrafAsync,
 }
 

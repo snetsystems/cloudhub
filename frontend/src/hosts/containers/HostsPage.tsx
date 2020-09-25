@@ -310,7 +310,10 @@ export class HostsPage extends PureComponent<Props, State> {
             />
           </Page.Header.Right>
         </Page.Header>
-        <Page.Contents scrollable={true}>
+        <Page.Contents
+          scrollable={true}
+          fullWidth={activeEditorTab === 'VMware'}
+        >
           {activeEditorTab === 'Host' ? (
             <Threesizer
               orientation={HANDLE_HORIZONTAL}
@@ -465,7 +468,8 @@ export class HostsPage extends PureComponent<Props, State> {
         source.links.proxy,
         hostsObject,
         layouts,
-        source.telegraf
+        source.telegraf,
+        tempVars
       )
 
       const isUsingVshpere = Boolean(
