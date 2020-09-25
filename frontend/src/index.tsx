@@ -422,7 +422,7 @@ class Root extends PureComponent<{}, State> {
       vSpheresKeys.forEach(async (key: string) => {
         const vSphere = vspheres[key]
         if (!this.timeout[key]) {
-          await this.requestVSphere(key, salt, vSphere)
+          await this.requestVSphere(key, salt, vSphere, false, 'ADD')
         }
       })
     }
@@ -448,10 +448,15 @@ class Root extends PureComponent<{}, State> {
   private async requestVSphere(
     key: string,
     salt: {url: string; token: string},
-    vsphere: reducerVSphere['vspheres']['host']
+    vsphere: reducerVSphere['vspheres']['host'],
+    isOnetime: boolean = false,
+    type: string = ''
   ) {
+    if (isOnetime) return
+
     const {interval, id, isPause} = vsphere
     this.handleClearTimeout(key)
+
     this.timeout[key] = {
       id,
       host: key,
@@ -460,7 +465,7 @@ class Root extends PureComponent<{}, State> {
       timeout: isPause
         ? null
         : window.setTimeout(async () => {
-            if (store.getState().vspheres[key] !== null) {
+            if (store.getState().vspheres.vspheres[key]) {
               const {url, token} = salt
               const {
                 minion,
@@ -483,12 +488,16 @@ class Root extends PureComponent<{}, State> {
                   port,
                   protocol
                 )) as any
+
                 const {
                   vspheres: {vspheres},
                 } = store.getState()
+
                 if (getVsphere && !vspheres[host].isPause) {
                   this.handleUpdateVcenter({...vsphere, nodes: getVsphere})
-                  this.requestVSphere(key, salt, vsphere)
+                  if (type === 'ADD') {
+                    this.requestVSphere(key, salt, vsphere, true)
+                  }
                 } else {
                   this.handleRequestPauseVcenter(host, id)
                 }
