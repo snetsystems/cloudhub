@@ -386,6 +386,11 @@ class Root extends PureComponent<{}, State> {
       }
     }
 
+    if (lastAction.type === vmHostActionType.AddVcenter) {
+      const {id, host} = lastAction.payload
+      this.checkTimeout(id, host)
+    }
+
     if (lastAction.type === vmHostActionType.UpdateVcenters) {
       this.checkTimeout()
     }
