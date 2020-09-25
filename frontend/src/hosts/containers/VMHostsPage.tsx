@@ -490,7 +490,14 @@ const VMHostsPage = (props: Props): JSX.Element => {
       }
 
       if (makeTreemenus) {
-        setVCenters(makeTreemenus)
+        let sortTreemenus = {}
+        _.forEach(_.keys(makeTreemenus).sort(), key => {
+          sortTreemenus[key] = {
+            ...makeTreemenus[key],
+          }
+        })
+
+        setVCenters(sortTreemenus)
       }
     } else {
       setVCenters({})
@@ -513,7 +520,14 @@ const VMHostsPage = (props: Props): JSX.Element => {
       })
 
       if (makeTreemenus) {
-        setVCenters(makeTreemenus)
+        let sortTreemenus = {}
+        _.forEach(_.keys(makeTreemenus).sort(), key => {
+          sortTreemenus[key] = {
+            ...makeTreemenus[key],
+          }
+        })
+
+        setVCenters(sortTreemenus)
       }
     }
 
