@@ -682,7 +682,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
       }
     }
 
-    const filterdFocusedHost = {
+    const filteredFocusedHost = {
       key: focusedHost.key,
       label: focusedHost.label,
       layoutCells: focusedHost.layoutCells,
@@ -691,11 +691,18 @@ const VMHostsPage = (props: Props): JSX.Element => {
       tempVars: focusedHost.tempVars,
       type: focusedHost.type,
       vmParam: focusedHost.vmParam,
+      index: focusedHost.index,
+      isOpen: focusedHost.isOpen,
+      level: focusedHost.level,
+      parent: focusedHost.parent,
+      parent_chart_field: focusedHost.parent_chart_field,
+      parent_name: focusedHost.parent_name,
+      parent_type: focusedHost.parent_type,
     }
 
     setLocalStorage('VMHostsPage', {
       ...getLocal,
-      focusedHost: filterdFocusedHost,
+      focusedHost: filteredFocusedHost,
     })
   }, [focusedHost])
 
