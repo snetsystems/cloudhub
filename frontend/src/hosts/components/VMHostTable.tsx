@@ -145,7 +145,7 @@ const VMHostTable = (props: Props): JSX.Element => {
           cellTextColor={cellTextColor}
           cellBackgroundColor={cellBackgroundColor}
           value={[]}
-          name={`Host(EXSi) - ${item ? item.name : ''}`}
+          name={`Host(ESXi) - ${item ? item.name : ''}`}
           sizeVisible={false}
           setIcon={`icon-margin-right-03 vsphere-icon-host`}
         />
