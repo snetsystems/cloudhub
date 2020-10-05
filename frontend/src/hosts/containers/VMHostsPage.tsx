@@ -1266,16 +1266,15 @@ const VMHostsPage = (props: Props): JSX.Element => {
       case 'datastores': {
         try {
           let items: Item[] = []
-
           if (focusedHost.type === VMRole.datacenter) {
             items =
-              vCenters[focusedHost.key.split('/')[0]].nodes[focusedHost.name]
+              vCenters[focusedHost.key.split('/')[0]].nodes[focusedHost.label]
                 .datastores
           } else if (focusedHost.type === VMRole.cluster) {
             items =
               vCenters[focusedHost.key.split('/')[0]].nodes[
                 focusedHost.key.split('/')[1]
-              ].nodes[focusedHost.name].datastores
+              ].nodes[focusedHost.label].datastores
           }
           return (
             <DatastoresTable
@@ -1344,7 +1343,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
           if (focusedHost.type === VMRole.cluster) {
             items = _.filter(
               vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
-                focusedHost.name
+                focusedHost.label
               ].nodes,
               (k: VMHost) => k.type === VMRole.host
             )
