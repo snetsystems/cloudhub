@@ -25,7 +25,7 @@ export const ProgressDisplay = ({unit, use, available, total}) => {
       }}
     >
       <div style={{display: 'flex', justifyContent: 'flex-end'}}>
-        <div>{convertUnit(unit, total)}</div>
+        <div>{convertUnit(unit, available)}</div>
       </div>
       <div
         style={{
@@ -37,7 +37,7 @@ export const ProgressDisplay = ({unit, use, available, total}) => {
       </div>
       <div style={{display: 'flex', justifyContent: 'space-between'}}>
         <div>{convertUnit(unit, use)}</div>
-        <div>{convertUnit(unit, available)}</div>
+        <div>{convertUnit(unit, total)}</div>
       </div>
     </div>
   ) : (

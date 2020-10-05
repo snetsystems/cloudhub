@@ -324,6 +324,21 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
   const handleUpdateOpen = async (id: string): Promise<void> => {
     const vsphereInfo = await handleGetVSphereAsync(id)
+    const addon: Addon = getSaltAddon()
+    const saltMasterUrl = addon.url
+    const saltMasterToken = addon.token
+
+    const minionList: string[] = await handleGetMinionKeyAcceptedList(
+      saltMasterUrl,
+      saltMasterToken
+    )
+
+    if (minionList && minionList.length > 0) {
+      setTarget(_.get(vsphereInfo, 'minion', MINION_LIST_EMPTY))
+      setAcceptedMinionList(minionList)
+    } else {
+      setTarget(MINION_LIST_EMPTY)
+    }
 
     setAddress(_.get(vsphereInfo, 'host', ''))
     setPort(_.get(vsphereInfo, 'port', '443'))
@@ -331,8 +346,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
     setPassword(_.get(vsphereInfo, 'password', ''))
     setProtocol(_.get(vsphereInfo, 'protocol', 'https'))
     setInterval(calcInterval(_.get(vsphereInfo, 'interval', '60000')))
-    setTarget(_.get(vsphereInfo, 'minion', MINION_LIST_EMPTY))
-    setAcceptedMinionList([_.get(vsphereInfo, 'minion', MINION_LIST_EMPTY)])
     setIsModalVisible(true)
     setIsUpdate(true)
     setVSphereId(id)
