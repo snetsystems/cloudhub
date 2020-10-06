@@ -1623,7 +1623,15 @@ const VMHostsPage = (props: Props): JSX.Element => {
         },
       },
     ]
-  }, [vCenters, openNodes, layout, proportions, focusedHost])
+  }, [
+    vCenters,
+    openNodes,
+    layout,
+    proportions,
+    focusedHost,
+    timeRange,
+    manualRefresh,
+  ])
 
   return (
     <div className="vm-status-page__container">
