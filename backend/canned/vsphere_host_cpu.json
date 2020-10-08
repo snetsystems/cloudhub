@@ -14,9 +14,9 @@
       "queries": [
         {
           "query": "SELECT mean(\"usagemhz_average\") AS \"mean_usagemhz_average\" FROM \":db:\".\":rp:\".\"vsphere_host_cpu\"",
-          "label": "% CPU time",
+          "label": "",
           "groupbys": [],
-          "wheres": ["\"vcenter\"='61.250.122.234'"]
+          "wheres": []
         }
       ]
     }
