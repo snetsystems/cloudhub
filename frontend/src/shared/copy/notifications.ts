@@ -1045,7 +1045,7 @@ export const notifyConnectShellFailed = (close: CloseEvent): Notification => ({
 //  ----------------------------------------------------------------------------
 export const notifyConnectVCenterFailed = (error: Error): Notification => ({
   ...defaultErrorNotification,
-  message: `VCenter Cunnection Failed, ${error}`,
+  message: `VCenter Connection Failed, ${error}`,
 })
 
 export const notifyUpdateVCenterFailed = (host: string): Notification => ({
