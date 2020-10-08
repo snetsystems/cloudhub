@@ -27,7 +27,7 @@
   .disabled {
     font-style: italic;
     color: #a1a1a1;
-    cursor: none;
+    cursor: auto;
 
     &.tree-item--active {
       text-shadow: none;
