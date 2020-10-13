@@ -1612,7 +1612,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
                           )}
                           style={cellstyle}
                         >
-                          <CellTable cell={cell} />
+                          {CellTable({cell})}
                         </div>
                       )
                     )
