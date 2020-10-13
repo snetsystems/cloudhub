@@ -26,6 +26,7 @@ import {
 
 export enum ActionTypes {
   MinionKeyAcceptedList = 'GET_MINION_KEY_ACCEPTED_LIST',
+  RequestLoadVcenters = 'REQUEST_LOAD_VCENTERS',
   LoadVcenters = 'LOAD_VCENTERS',
   AddVcenter = 'ADD_VCENTER',
   RemoveVcenter = 'REMOVE_VCENTER',
@@ -39,6 +40,7 @@ export enum ActionTypes {
 
 export type Action =
   | MinionKeyAcceptedListAction
+  | RequestLoadVcentersAction
   | LoadVcentersAction
   | AddVcenterAction
   | RemoveVcenterAction
@@ -113,6 +115,14 @@ export const loadVcentersList = (
 ): LoadVcentersAction => ({
   type: ActionTypes.LoadVcenters,
   payload,
+})
+
+interface RequestLoadVcentersAction {
+  type: ActionTypes.RequestLoadVcenters
+}
+
+export const requestVcenterList = () => ({
+  type: ActionTypes.RequestLoadVcenters,
 })
 
 interface AddVcenterAction {
@@ -296,11 +306,18 @@ export const getTicketRemoteConsoleAsync = (
 }
 
 // CH DB VSHPERE API
-export const getVSpheresAsync = () => async (dispatch: Dispatch<Action>) => {
+export const getVSpheresAsync = ({shouldResetVSphere = false} = {}) => async (
+  dispatch: Dispatch<Action>
+) => {
+  let vSpheres = {}
+
+  if (shouldResetVSphere) {
+    dispatch(requestVcenterList())
+  }
+
   try {
     const data = await getVSpheresApi()
 
-    let vSpheres = {}
     _.values(data).forEach(v => {
       vSpheres[v.host] = {
         ...v,

@@ -10,6 +10,10 @@ export const initialState = {
 
 const vspheres = (state: reducerVSphere = initialState, action: Action) => {
   switch (action.type) {
+    case ActionTypes.RequestLoadVcenters: {
+      return {...state, ...initialState}
+    }
+
     case ActionTypes.LoadVcenters: {
       let loadVcenters = {...state}
 

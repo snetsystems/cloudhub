@@ -511,7 +511,7 @@ class Root extends PureComponent<{}, State> {
 
   private checkVSpheres = async () => {
     try {
-      await this.getVSpheres()
+      await this.getVSpheres({shouldResetVSphere: true})
     } catch (error) {
       dispatch(errorThrown(error))
     }
