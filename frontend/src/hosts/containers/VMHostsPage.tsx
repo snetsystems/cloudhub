@@ -397,6 +397,16 @@ const VMHostsPage = (props: Props): JSX.Element => {
             ? interval
             : null
         ).then(async ({data}) => {
+          const oldHost = _.get(vsphereInfo, 'host', '')
+          const getLocal: VMHostsPageLocalStorage = getLocalStorage(
+            'VMHostsPage'
+          )
+
+          const {layout: getLayout} = getLocal
+          delete getLayout[oldHost]
+
+          setLocalStorage('VMHostsPage', {...getLocal, layout: getLayout})
+          removeOpenNodes(oldHost)
           handleUpdateVcenterAction({...data, isPause: false, nodes: result})
           handleClose()
         })
@@ -465,6 +475,19 @@ const VMHostsPage = (props: Props): JSX.Element => {
     // create Treemenu Object
     const {vspheres: getVSpheres} = vspheres
     const vsphereKeys = _.keys(getVSpheres)
+    const getLocal: VMHostsPageLocalStorage = getLocalStorage('VMHostsPage')
+    let getLayout: {
+        [name: string]: {
+          [name: string]: LayoutCell[]
+        }
+      },
+      getFocusedHost: Item
+
+    if (getLocal) {
+      const {layout, focusedHost} = getLocal
+      getLayout = layout
+      getFocusedHost = focusedHost
+    }
 
     if (vsphereKeys.length > 0) {
       let makeTreemenus
@@ -480,26 +503,56 @@ const VMHostsPage = (props: Props): JSX.Element => {
       const vCentersKeys = _.keys(vCenters)
       const makeTreemenusKey = _.keys(makeTreemenus)
 
-      if (vCentersKeys.length > makeTreemenusKey.length || !focusedHost) {
-        const addChartsInfoFocusedHostFn = async (): Promise<void> => {
-          const addChartsInfoFocusedHost = await requestCharts(
-            makeTreemenus[makeTreemenusKey[0]]
-          )
-
-          const getLocal: VMHostsPageLocalStorage = getLocalStorage(
-            'VMHostsPage'
-          )
-          const {layout: getLayout} = getLocal
-          const {vcenter} = getLayout[addChartsInfoFocusedHost.key]
-          if (vcenter) {
-            setLayout(vcenter)
-          } else {
-            setLayout(vcenterCells)
-          }
-
-          setFocusedHost(addChartsInfoFocusedHost)
+      const addChartsInfoFocusedHostFn = async (): Promise<void> => {
+        const addChartsInfoFocusedHost = await requestCharts(
+          makeTreemenus[makeTreemenusKey[0]]
+        )
+        setFocusedHost(addChartsInfoFocusedHost)
+        const vcenter = getLayout[addChartsInfoFocusedHost?.key]?.vcenter
+        if (vcenter) {
+          setLayout(vcenter)
+        } else {
+          setLayout(vcenterCells)
         }
+      }
+
+      // deleting "vsphere"
+      if (vCentersKeys.length > makeTreemenusKey.length) {
+        // Local focus and localstorage focus were the same
+        if (
+          focusedHost?.key.split('/')[0] === getFocusedHost.key.split('/')[0]
+        ) {
+          if (!_.includes(makeTreemenusKey, focusedHost.key.split('/')[0])) {
+            // Local focus and localstorage focus were the same,
+            // but after deleting "vsphere" they are not the same.
+            addChartsInfoFocusedHostFn()
+          }
+        } else {
+          // Local focus and localstorage focus were not the same.
+          addChartsInfoFocusedHostFn()
+        }
+      } else if (!getFocusedHost?.key) {
+        // There is no "key" for "focusedHost" in localstorage.
         addChartsInfoFocusedHostFn()
+      } else {
+        // Normal situation.
+        if (focusedHost?.key) {
+          // Normal situation when there is a "key" for "focusedHost" in the "state"
+          if (
+            focusedHost?.key.split('/')[0] === getFocusedHost.key.split('/')[0]
+          ) {
+            if (!_.includes(makeTreemenusKey, focusedHost.key.split('/')[0])) {
+              // Normal situation when there is a "key" for "focused Host" in the "state".
+              // and Local focus and localstorage focus were the same.
+              // However, that "key" is not included in the tree menu.
+              addChartsInfoFocusedHostFn()
+            }
+          } else {
+            // Normal situation when there is a "key" for "focusedHost" in the "state".
+            // but Local focus and localstorage focus were not the same.
+            addChartsInfoFocusedHostFn()
+          }
+        }
       }
 
       if (makeTreemenus) {
@@ -710,21 +763,21 @@ const VMHostsPage = (props: Props): JSX.Element => {
     }
 
     const filteredFocusedHost = {
-      key: focusedHost.key,
-      label: focusedHost.label,
-      layoutCells: focusedHost.layoutCells,
-      minion: focusedHost.minion,
-      openNodes: focusedHost.openNodes,
-      tempVars: focusedHost.tempVars,
-      type: focusedHost.type,
-      vmParam: focusedHost.vmParam,
-      index: focusedHost.index,
-      isOpen: focusedHost.isOpen,
-      level: focusedHost.level,
-      parent: focusedHost.parent,
-      parent_chart_field: focusedHost.parent_chart_field,
-      parent_name: focusedHost.parent_name,
-      parent_type: focusedHost.parent_type,
+      key: focusedHost?.key,
+      label: focusedHost?.label,
+      layoutCells: focusedHost?.layoutCells,
+      minion: focusedHost?.minion,
+      openNodes: focusedHost?.openNodes,
+      tempVars: focusedHost?.tempVars,
+      type: focusedHost?.type,
+      vmParam: focusedHost?.vmParam,
+      index: focusedHost?.index,
+      isOpen: focusedHost?.isOpen,
+      level: focusedHost?.level,
+      parent: focusedHost?.parent,
+      parent_chart_field: focusedHost?.parent_chart_field,
+      parent_name: focusedHost?.parent_name,
+      parent_type: focusedHost?.parent_type,
     }
 
     setLocalStorage('VMHostsPage', {
@@ -775,7 +828,6 @@ const VMHostsPage = (props: Props): JSX.Element => {
     const getLocal: VMHostsPageLocalStorage = getLocalStorage('VMHostsPage')
     let {layout} = getLocal
     const getActiveKey: string = _.get(focusedHost, 'key', '')
-
     if (focusedHost.type === VMRole.vcenter) {
       layout[getActiveKey.split('/')[0]] = {
         ...layout[getActiveKey.split('/')[0]],
@@ -815,8 +867,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
       <button className={`btn btn-default btn-xs btn-square`}>
         <span
           className={`icon pencil`}
-          onClick={e => {
-            e.stopPropagation()
+          onClick={() => {
             handleUpdateOpen(id)
           }}
         />
@@ -863,9 +914,20 @@ const VMHostsPage = (props: Props): JSX.Element => {
               const getLocal: VMHostsPageLocalStorage = getLocalStorage(
                 'VMHostsPage'
               )
-              const {layout: getLayout} = getLocal
+
+              const {layout: getLayout, focusedHost: getFocusedHost} = getLocal
               delete getLayout[host]
-              setLocalStorage('VMHostsPage', {...getLocal, layout: getLayout})
+
+              if (getFocusedHost.key.split('/')[0] === host) {
+                setFocusedHost(initialFocusedHost)
+                setLocalStorage('VMHostsPage', {
+                  ...getLocal,
+                  layout: getLayout,
+                  focusedHost: initialFocusedHost,
+                })
+              } else {
+                setLocalStorage('VMHostsPage', {...getLocal, layout: getLayout})
+              }
             }
           })
         }}
@@ -878,7 +940,14 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   const removeOpenNodes = (host: string) => {
-    const remove = _.filter(openNodes, openNode => !_.includes(openNode, host))
+    const getLocal: VMHostsPageLocalStorage = getLocalStorage('VMHostsPage')
+    const {openNodes: getOpenNodes} = getLocal
+
+    const remove = _.filter(
+      getOpenNodes,
+      openNode => openNode?.split('/')[0] !== host
+    )
+
     setOpenNodes(remove)
   }
 
