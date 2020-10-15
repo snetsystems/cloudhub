@@ -471,6 +471,17 @@ const VMHostsPage = (props: Props): JSX.Element => {
     return addon
   }
 
+  const modifiedCellID = (cells: LayoutCell[]) => {
+    const modifiedID = _.map(cells, cell => {
+      const c = {
+        ...cell,
+        i: focusedHost.key.split('/')[0] + '-' + cell.i,
+      }
+      return c
+    })
+    return modifiedID
+  }
+
   useEffect(() => {
     // create Treemenu Object
     const {vspheres: getVSpheres} = vspheres
@@ -508,11 +519,11 @@ const VMHostsPage = (props: Props): JSX.Element => {
           makeTreemenus[makeTreemenusKey[0]]
         )
         setFocusedHost(addChartsInfoFocusedHost)
-        const vcenter = getLayout[addChartsInfoFocusedHost?.key]?.vcenter
+        const vcenter = getLayout?.[addChartsInfoFocusedHost?.key]?.vcenter
         if (vcenter) {
           setLayout(vcenter)
-        } else {
-          setLayout(vcenterCells)
+        } else if (focusedHost?.key && addChartsInfoFocusedHost?.key) {
+          setLayout(modifiedCellID(vcenterCells))
         }
       }
 
@@ -721,7 +732,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
         ) {
           setLayout(getLayoutItem.vcenter)
         } else {
-          setLayout(vcenterCells)
+          setLayout(modifiedCellID(vcenterCells))
         }
       } else if (type === VMRole.datacenter) {
         if (
@@ -731,7 +742,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
         ) {
           setLayout(getLayoutItem.datacenter)
         } else {
-          setLayout(datacenterCells)
+          setLayout(modifiedCellID(datacenterCells))
         }
       } else if (type === VMRole.cluster) {
         if (
@@ -741,7 +752,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
         ) {
           setLayout(getLayoutItem.cluster)
         } else {
-          setLayout(clusterCells)
+          setLayout(modifiedCellID(clusterCells))
         }
       } else if (type === VMRole.host) {
         if (
@@ -751,13 +762,13 @@ const VMHostsPage = (props: Props): JSX.Element => {
         ) {
           setLayout(getLayoutItem.host)
         } else {
-          setLayout(hostCells)
+          setLayout(modifiedCellID(hostCells))
         }
       } else if (type === VMRole.vm) {
         if (getLayoutItem && getLayoutItem?.vm && getLayoutItem.vm.length > 0) {
           setLayout(getLayoutItem.vm)
         } else {
-          setLayout(vmCells)
+          setLayout(modifiedCellID(vmCells))
         }
       }
     }
@@ -1265,7 +1276,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   const CellTable = ({cell}: {cell: LayoutCell}): JSX.Element => {
-    switch (cell.i) {
+    const cellName = cell.i.split('-')[1]
+    switch (cellName) {
       case VMRole.vcenter: {
         try {
           let item: Item = vCenters[focusedHost.key] || null
