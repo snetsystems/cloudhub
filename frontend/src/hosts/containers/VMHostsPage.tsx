@@ -621,9 +621,19 @@ const VMHostsPage = (props: Props): JSX.Element => {
       focusedHost: getFocusedHost,
       openNodes: getOpenNodes,
     } = getLocal
+    let mountOpenNodes = []
+
+    _.reduce(getFocusedHost.key.split('/'), (acc, current, index) => {
+      if (index === 1) {
+        mountOpenNodes = [...mountOpenNodes, acc]
+      }
+      const addSlash = `${acc}/${current}`
+      mountOpenNodes = [...mountOpenNodes, addSlash]
+      return addSlash
+    })
 
     setSelectMinion(getFocusedHost.minion)
-    setOpenNodes(getOpenNodes)
+    setOpenNodes([...getOpenNodes, ...mountOpenNodes])
     setProportions(getProportions)
     const addChartsInfoFocusedHostFn = async (): Promise<void> => {
       const addChartsInfoFocusedHost = await requestCharts(getFocusedHost)
