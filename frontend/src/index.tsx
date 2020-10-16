@@ -300,6 +300,18 @@ class Root extends PureComponent<{}, State> {
     return addon
   }
 
+  private isUsingVshpere = () => {
+    const {
+      links: {addons},
+    } = store.getState()
+
+    const isUsingVshpere = _.find(addons, addon => {
+      return addon.name === 'vsphere' && addon.url === 'on'
+    })
+
+    return isUsingVshpere
+  }
+
   private promiseGenerator = (
     salt: {url: string; token: string},
     vsphere: reducerVSphere['vspheres']['host']
@@ -334,7 +346,11 @@ class Root extends PureComponent<{}, State> {
 
     if (lastAction.type === 'LOAD_SOURCES') {
       this.handleClearAllTimeout()
-      await this.checkVSpheres()
+      const isUsingVshpere = this.isUsingVshpere()
+
+      if (isUsingVshpere) {
+        await this.checkVSpheres()
+      }
     }
 
     if (lastAction.type === vmHostActionType.LoadVcenters) {
