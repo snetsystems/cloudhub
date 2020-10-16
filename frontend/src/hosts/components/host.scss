@@ -108,8 +108,14 @@
   }
 }
 
-.grid-item--charts {
-  z-index: 100;
+.react-grid-item {
+  &.grid-item--charts {
+    z-index: 100;
+  }
+
+  &.react-draggable-dragging {
+    z-index: 299;
+  }
 }
 
 .vm-status-page__container {
