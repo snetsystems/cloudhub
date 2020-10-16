@@ -1704,6 +1704,12 @@ const VMHostsPage = (props: Props): JSX.Element => {
                           style={cellstyle}
                         >
                           {CellTable({cell})}
+                          <div className="dash-graph--gradient-border">
+                            <div className="dash-graph--gradient-top-left" />
+                            <div className="dash-graph--gradient-top-right" />
+                            <div className="dash-graph--gradient-bottom-left" />
+                            <div className="dash-graph--gradient-bottom-right" />
+                          </div>
                         </div>
                       )
                     )
