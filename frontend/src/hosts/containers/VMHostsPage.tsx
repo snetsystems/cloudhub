@@ -1698,7 +1698,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
                           className={classnames(
                             'dash-graph grid-item--routers',
                             {
-                              'grid-item--charts': cell.i === 'charts',
+                              'grid-item--charts': _.includes(cell.i, 'charts'),
                             }
                           )}
                           style={cellstyle}
