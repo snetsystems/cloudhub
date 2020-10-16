@@ -87,19 +87,22 @@ export const VCENTER_VMHOST_TABLE_SIZING = {
   VMProcessorWidth: '20%',
 }
 export const VCENTER_VMS_TABLE_SIZING = {
-  VMWidth: '20%',
-  CPUWidth: '15%',
-  MemoryWidth: '15%',
-  StorageWidth: '15%',
+  VMWidth: '16%',
+  CPUWidth: '14%',
+  COREWidth: '9%',
+  MemoryWidth: '14%',
+  StorageWidth: '14%',
   IPWidth: '10%',
-  OSWidth: '15%',
-  StatusWidth: '10%',
+  OSWidth: '14%',
+  StatusWidth: '9%',
 }
+
 export const VCENTER_VM_TABLE_SIZING = {
-  CPUWidth: '20%',
-  MemoryWidth: '20%',
-  StorageWidth: '20%',
+  CPUWidth: '18%',
+  COREWidth: '10%',
+  MemoryWidth: '18%',
+  StorageWidth: '18%',
   IPWidth: '10%',
-  OSWidth: '20%',
-  StatusWidth: '10%',
+  OSWidth: '18%',
+  StatusWidth: '18%',
 }

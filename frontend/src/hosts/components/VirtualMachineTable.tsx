@@ -13,7 +13,7 @@ import {
   TableBody,
   TableBodyRowItem,
 } from 'src/addon/128t/reusable/layout'
-import {convertUnit} from 'src/shared/components/ProgressDisplay'
+import {convertUnit, eaUnit} from 'src/shared/components/ProgressDisplay'
 import {responseIndicator} from 'src/shared/components/Indicator'
 import {NoState} from 'src/agent_admin/reusable'
 import Tooltip from 'src/shared/components/Tooltip'
@@ -58,6 +58,7 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
 
   const {
     CPUWidth,
+    COREWidth,
     MemoryWidth,
     StorageWidth,
     IPWidth,
@@ -106,6 +107,12 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
         </div>
         <div
           className={'hosts-table--th sortable-header align--center'}
+          style={{width: COREWidth}}
+        >
+          CPU core
+        </div>
+        <div
+          className={'hosts-table--th sortable-header align--center'}
           style={{width: MemoryWidth}}
         >
           Memory
@@ -144,6 +151,7 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
       cpu_usage,
       memory_usage,
       os,
+      numCPU,
       storage_usage,
       power_state,
       ip_address,
@@ -155,6 +163,11 @@ const VirtualMachineTable = (props: Props): JSX.Element => {
           <TableBodyRowItem
             title={convertUnit('CPU', cpu_usage)}
             width={CPUWidth}
+            className={'align--end'}
+          />
+          <TableBodyRowItem
+            title={eaUnit(numCPU)}
+            width={COREWidth}
             className={'align--end'}
           />
           <TableBodyRowItem

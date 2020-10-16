@@ -2,6 +2,23 @@ import React from 'react'
 import {usageIndacator} from 'src/addon/128t/reusable/layout'
 import {transFormatBytes, transFormatFrequency} from 'src/shared/utils/units'
 
+export const eaUnit = (number: any): string => {
+  if (
+    number === undefined ||
+    number === null ||
+    number === 'undefined' ||
+    number === 'null'
+  ) {
+    return '-'
+  }
+  const parseNum = parseInt(number)
+  if (parseNum > -1) {
+    return `${parseNum} EA`
+  }
+
+  return '-'
+}
+
 export const convertUnit = (unit: string, value: number) => {
   if (unit && value) {
     if (unit === 'CPU') {

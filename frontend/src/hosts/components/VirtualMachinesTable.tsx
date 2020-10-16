@@ -13,7 +13,7 @@ import {
   TableBodyRowItem,
 } from 'src/addon/128t/reusable/layout'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-import {convertUnit} from 'src/shared/components/ProgressDisplay'
+import {convertUnit, eaUnit} from 'src/shared/components/ProgressDisplay'
 import {responseIndicator} from 'src/shared/components/Indicator'
 import {NoState} from 'src/agent_admin/reusable'
 
@@ -43,6 +43,7 @@ const VirtualMachinesTable = (props: Props): JSX.Element => {
   const {
     VMWidth,
     CPUWidth,
+    COREWidth,
     MemoryWidth,
     StorageWidth,
     IPWidth,
@@ -64,6 +65,12 @@ const VirtualMachinesTable = (props: Props): JSX.Element => {
           style={{width: CPUWidth}}
         >
           CPU
+        </div>
+        <div
+          className={'hosts-table--th sortable-header align--center'}
+          style={{width: COREWidth}}
+        >
+          CPU core
         </div>
         <div
           className={'hosts-table--th sortable-header align--center'}
@@ -124,6 +131,13 @@ const VirtualMachinesTable = (props: Props): JSX.Element => {
               width={CPUWidth}
               className={'align--end'}
             />
+
+            <TableBodyRowItem
+              title={eaUnit(item.numCPU)}
+              width={COREWidth}
+              className={'align--end'}
+            />
+
             <TableBodyRowItem
               title={convertUnit('Memory', item.memory_usage)}
               width={MemoryWidth}
