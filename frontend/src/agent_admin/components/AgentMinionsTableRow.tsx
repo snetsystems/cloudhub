@@ -119,7 +119,7 @@ class AgentMinionsTableRow extends PureComponent<Props> {
           title={
             <div id={`table-row--select${idx}`}>
               <button
-                className="btn btn-sm btn-primary icon bash"
+                className="btn btn-sm btn-default icon bash"
                 onClick={e => {
                   e.stopPropagation()
                   handleShellModalOpen({
