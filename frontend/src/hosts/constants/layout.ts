@@ -11,7 +11,7 @@ export const vcenterCells = [
     x: 0,
     y: 0,
     w: 12,
-    h: 3,
+    h: 5,
   },
   {
     i: 'datacenters',
@@ -35,7 +35,7 @@ export const datacenterCells = [
     x: 0,
     y: 0,
     w: 12,
-    h: 3,
+    h: 5,
   },
   {
     i: 'clusters',
@@ -97,7 +97,7 @@ export const hostCells = [
     x: 0,
     y: 0,
     w: 12,
-    h: 3,
+    h: 5,
   },
   {
     i: 'vms',
@@ -121,6 +121,6 @@ export const vmCells = [
     x: 0,
     y: 0,
     w: 12,
-    h: 3,
+    h: 5,
   },
 ]
