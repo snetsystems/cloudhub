@@ -8,7 +8,7 @@ import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
 
 // Type
 import {
-  Router,
+  RouterNode,
   TopSource,
   TopSession,
   SortDirection,
@@ -86,12 +86,14 @@ export const CellName = ({
   cellBackgroundColor,
   value,
   name,
+  setIcon = '',
   sizeVisible = true,
 }: {
   cellTextColor: string
   cellBackgroundColor: string
-  value: Router[] | TopSource[] | TopSession[] | []
+  value: RouterNode[] | TopSource[] | TopSession[] | []
   name: string
+  setIcon?: string
   sizeVisible?: boolean
 }): JSX.Element | null => {
   let nameStyle = {}
@@ -104,6 +106,7 @@ export const CellName = ({
 
   return (
     <h2 className={`dash-graph--name grid-layout--draggable`} style={nameStyle}>
+      {setIcon && <span className={setIcon} />}{' '}
       {sizeVisible ? value.length : null} {name}
     </h2>
   )

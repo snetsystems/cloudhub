@@ -21,7 +21,7 @@ GO111MODULE=on
 
 .PHONY: all build gobuild assets dep clean test gotest gotestrace jstest run run-dev ctags
 
-all: dep gen build
+all: dep build
 
 build: assets ${BINARY}
 
@@ -33,7 +33,7 @@ ${BINARY}: $(SOURCES) .bindata .jsdep .godep
 
 assets: .jssrc .bindata
 
-.bindata: backend/canned/bin_gen.go backend/protoboards/bin_gen.go backend/dist/dist_gen.go backend/server/swagger_gen.go
+.bindata: backend/canned/bin_gen.go backend/protoboards/bin_gen.go backend/dist/dist_gen.go backend/server/swagger_gen.go backend/kv/internal/internal.pb.go
 	@touch .bindata
 
 backend/dist/dist_gen.go: $(UISOURCES)
@@ -48,6 +48,9 @@ backend/protoboards/bin_gen.go: backend/protoboards/*.json
 backend/server/swagger_gen.go: backend/server/swagger.json
 	go generate -x ./backend/server
 
+backend/kv/internal/internal.pb.go: backend/kv/internal/internal.proto
+	go generate -x ./backend/kv/internal
+
 .jssrc: $(UISOURCES)
 	cd frontend && yarn run clean && yarn run build
 	@touch .jssrc
@@ -58,6 +61,8 @@ dep: .jsdep .godep
 ifndef GOBINDATA
 	@echo "Installing go-bindata"
 	go get -u github.com/kevinburke/go-bindata/go-bindata
+	@echo "Installing go-protoc"
+	go get -u github.com/gogo/protobuf/protoc-gen-gofast
 	GO111MODULE=on go get
 endif
 	@touch .godep
@@ -69,13 +74,6 @@ else
 	cd frontend && yarn --no-progress --no-emoji
 	@touch .jsdep
 endif
-
-gen: internal.pb.go
-
-internal.pb.go: backend/kv/internal/internal.proto
-	@echo "Installing go-protoc"
-	go get -u github.com/gogo/protobuf/protoc-gen-gofast
-	go generate -x ./backend/kv/internal
 
 test: jstest gotest gotestrace lint-ci
 

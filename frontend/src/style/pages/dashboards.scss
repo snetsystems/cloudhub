@@ -249,6 +249,8 @@ $dash-graph--heading-name-z: $dash-graph--heading-dragger-z + 1;
 }
 
 .dash-graph--name {
+  display: flex;
+  align-items: center;
   border-radius: $radius;
   overflow: hidden;
   text-overflow: ellipsis;

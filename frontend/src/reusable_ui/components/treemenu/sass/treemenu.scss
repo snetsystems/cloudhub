@@ -41,16 +41,19 @@ $FONT_COLOR_NORMAL: #bec2cc;
     color: $FONT_COLOR_NORMAL;
   }
 
-  &-level-2 {
+  &-level-2,
+  &-level-3,
+  &-level-4 {
     color: $ix-link-default;
   }
 
-  &-level-2:hover {
+  &-level-2:hover,
+  &-level-3:hover,
+  &-level-4:hover {
     color: $ix-link-default-hover;
   }
 
   &--active {
-    overflow: hidden;
     background-color: $g6-smoke;
   }
 
@@ -62,7 +65,9 @@ $FONT_COLOR_NORMAL: #bec2cc;
     color: #fff;
   }
 
-  &--active.tree-item-level-2 {
+  &--active.tree-item-level-2,
+  &--active.tree-item-level-3,
+  &--active.tree-item-level-4 {
     color: #fff;
     @include gradient-h($sidebar-menu--bg, $s-deepOrange2);
     // background: #22adf6;
@@ -71,6 +76,16 @@ $FONT_COLOR_NORMAL: #bec2cc;
     // background: linear-gradient(to right, #22adf6 0%, #9394ff 100%);
     // filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='$startColor', endColorstr='$endColor',GradientType=1 );
     transition: opacity 0.25s ease;
+  }
+  &:hover {
+    .tree-item-buttons {
+      display: inline-flex;
+    }
+  }
+
+  .tree-item-buttons {
+    display: none;
+    margin-right: 10px;
   }
 }
 

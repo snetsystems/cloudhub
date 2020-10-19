@@ -391,6 +391,7 @@ $deceo-spacing: 20px;
   height: 100%;
   overflow: hidden;
   border-radius: 0 0 $radius $radius;
+  z-index: 0;
 }
 
 .deceo {

@@ -1,0 +1,24 @@
+{
+  "id": "4a23c75f-7c4d-45a4-b5ad-cce2fae13c56",
+  "measurement": "vsphere_host_cpu",
+  "app": "vsphere",
+  "autoflow": true,
+  "cells": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "c234a27e-6907-4177-a343-7f27a69d6f51",
+      "name": "CPU Usage (MHz)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"usagemhz_average\") AS \"mean_usagemhz_average\" FROM \":db:\".\":rp:\".\"vsphere_host_cpu\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    }
+  ]
+}

@@ -42,6 +42,7 @@ $s-sidebar--width: 45px;
   display: flex;
   flex-direction: column;
   width: $s-sidebar--width;
+  z-index: 200;
   @include gradient-v($sidebar--gradient-start, $sidebar--gradient-end);
 }
 .sidebar--bottom {

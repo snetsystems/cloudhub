@@ -119,7 +119,7 @@ class AgentMinionsTableRow extends PureComponent<Props> {
           title={
             <div id={`table-row--select${idx}`}>
               <button
-                className="btn btn-sm btn-primary"
+                className="btn btn-sm btn-default icon bash"
                 onClick={e => {
                   e.stopPropagation()
                   handleShellModalOpen({
@@ -128,9 +128,8 @@ class AgentMinionsTableRow extends PureComponent<Props> {
                     nodename: host,
                   })
                 }}
-              >
-                open SSH
-              </button>
+                title={'open SSH(Beta)'}
+              ></button>
             </div>
           }
           width={OperationWidth}
