@@ -475,7 +475,10 @@ export class HostsPage extends PureComponent<Props, State> {
       const isUsingVshpere = Boolean(
         _.find(addons, addon => {
           return addon.name === 'vsphere' && addon.url === 'on'
-        })
+        }) &&
+          _.find(hostsObject, v => {
+            return _.includes(v.apps, 'vsphere')
+          })
       )
 
       this.setState({
