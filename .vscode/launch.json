@@ -10,7 +10,7 @@
       "type": "go",
       "request": "launch",
       "mode": "debug",
-      "buildFlags": "-ldflags='-X main.version=1.0.1'",
+      "buildFlags": "-ldflags='-X main.version=1.1.0'",
       "program": "${workspaceFolder}/backend/cmd/cloudhub",
       "env": {},
       "args": [
@@ -23,6 +23,7 @@
         "-u=swan:https://<ip>/api/v1/graphql",
         "-k=swan:<token key>",
         "-u=oncue:<port>",
+        "-u=vsphere:on",
         "-c=./cloudhub-canned/",
         "--protoboards-path=./cloudhub-protoboards/",
         "--auth-duration=24h", //default:"720h(30d)", 0 means authentication expires on browser close
@@ -35,7 +36,7 @@
         "--auth0-domain=https://cloudhub.auth0.com",
         "--auth0-client-id=<token key>",
         "--auth0-client-secret=<token key>",
-        "--custom-link=SWAN Condutor:https://211.189.153.40"
+        "--custom-link=SWAN Condutor:https://xxx.xxx.xxx.xxx"
       ],
       "showLog": true
       // "logOutput": "debugger"
