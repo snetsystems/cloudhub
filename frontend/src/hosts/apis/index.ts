@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import {AxiosResponse} from 'axios'
+import yaml from 'js-yaml'
 import {getDeep} from 'src/utils/wrappers'
 
 import {proxy} from 'src/utils/queryUrlGenerator'
@@ -9,9 +10,17 @@ import {
   linksFromHosts,
   updateActiveHostLink,
 } from 'src/hosts/utils/hostsSwitcherLinks'
+// Types
 import {Template, Layout, Source, Host} from 'src/types'
 import {HostNames, HostName} from 'src/types/hosts'
 import {DashboardSwitcherLinks} from '../../types/dashboards'
+
+// APIs
+import {
+  getWheelKeyAcceptedList,
+  getLocalVSphereInfoAll,
+  getTicketRemoteConsole,
+} from 'src/shared/apis/saltStack'
 
 interface HostsObject {
   [x: string]: Host
@@ -232,44 +241,43 @@ export const getAppsForHosts = async (
   proxyLink: string,
   hosts: HostsObject,
   appLayouts: Layout[],
-  telegrafDB: string
+  telegrafDB: string,
+  tempVars: Template[]
 ): Promise<HostsObject> => {
-  const measurements = appLayouts.map(m => `^${m.measurement}$`).join('|')
+  const measurements = appLayouts
+    .map(m => `\":db:\".\":rp:\".\"${m.measurement}\"`)
+    .join(',')
   const measurementsToApps = _.zipObject(
     appLayouts.map(m => m.measurement),
     appLayouts.map(({app}) => app)
   )
-
   const {data} = await proxy({
     source: proxyLink,
-    query: `show series from /${measurements}/ where time > now() - 10m`,
+    query: replaceTemplate(
+      `show series from ${measurements} where time > now() - 10m`,
+      tempVars
+    ),
     db: telegrafDB,
   })
-
   const newHosts = {...hosts}
   const allSeries = getDeep<string[][]>(
     data,
     'results.[0].series.[0].values',
     []
   )
-
   allSeries.forEach(series => {
     const seriesObj = parseSeries(series[0])
     const measurement = seriesObj.measurement
     const host = getDeep<string>(seriesObj, 'tags.host', '')
-
     if (!newHosts[host]) {
       return
     }
-
     if (!newHosts[host].apps) {
       newHosts[host].apps = []
     }
-
     if (!newHosts[host].tags) {
       newHosts[host].tags = {}
     }
-
     newHosts[host].apps = _.uniq(
       newHosts[host].apps.concat(measurementsToApps[measurement])
     )
@@ -355,4 +363,180 @@ const isEmpty = (resp): boolean => {
 
 const hasError = (resp): boolean => {
   return !!resp.results[0].error
+}
+
+export const getMinionKeyAcceptedList = async (
+  pUrl: string,
+  pToken: string
+): Promise<String[]> => {
+  const info = await Promise.all([getWheelKeyAcceptedList(pUrl, pToken)])
+  const minions = _.get(
+    yaml.safeLoad(info[0].data),
+    'return[0].data.return.minions',
+    []
+  )
+
+  return minions
+}
+
+export const getVSphereInfoSaltApi = async (
+  pUrl: string,
+  pToken: string,
+  tgt: string,
+  address: string,
+  user: string,
+  password: string,
+  port: string,
+  protocol: string
+): Promise<any> => {
+  const info = await Promise.all([
+    getLocalVSphereInfoAll(
+      pUrl,
+      pToken,
+      tgt,
+      address,
+      user,
+      password,
+      port,
+      protocol
+    ),
+  ])
+
+  const vSphere = yaml.safeLoad(info[0].data)
+  return vSphere
+}
+
+export const getTicketRemoteConsoleApi = async (
+  pUrl: string,
+  pToken: string,
+  tgt: string,
+  address: string,
+  user: string,
+  password: string
+): Promise<String[]> => {
+  const info = await Promise.all([
+    getTicketRemoteConsole(pUrl, pToken, tgt, address, user, password),
+  ])
+  const ticket = yaml.safeLoad(info[0].data)
+  return ticket
+}
+
+const calcInterval = (interval: string) => {
+  if (interval.indexOf('s') > -1) {
+    return parseInt(interval) * 1000
+  }
+  if (interval.indexOf('m') > -1) {
+    return parseInt(interval) * (1000 * 60)
+  }
+}
+
+export const getVSpheresApi = async () => {
+  let data
+  try {
+    const {
+      data: {vspheres},
+    }: AxiosResponse<any> = await AJAX({
+      url: '/cloudhub/v1/vspheres',
+      method: 'GET',
+    })
+
+    data = {...vspheres}
+    return data
+  } catch (error) {}
+  return
+}
+
+export const getVSphereApi = async (id: number) => {
+  let info = await AJAX({
+    url: `/cloudhub/v1/vspheres/${id}`,
+    method: 'GET',
+  })
+  const vSphere = _.get(info, 'data', [])
+  return vSphere
+}
+
+export const addVSphereApi = async (
+  tgt: string,
+  address: string,
+  user: string,
+  password: string,
+  port: string,
+  protocol: string,
+  interval: string
+) => {
+  return await AJAX({
+    url: '/cloudhub/v1/vspheres',
+    method: 'POST',
+    data: {
+      host: address,
+      username: user,
+      password,
+      protocol,
+      port: parseInt(port),
+      interval: calcInterval(interval),
+      minion: tgt,
+    },
+  })
+}
+
+export const updateVSphereApi = async ({
+  id,
+  tgt,
+  address,
+  user,
+  password,
+  port,
+  protocol,
+  interval,
+}: {
+  id: number
+  tgt: string
+  address: string
+  user: string
+  password: string
+  port: string
+  protocol: string
+  interval: string
+}) => {
+  let data = {}
+  if (tgt) {
+    data = {...data, minion: tgt}
+  }
+
+  if (address) {
+    data = {...data, host: address}
+  }
+
+  if (user) {
+    data = {...data, username: user}
+  }
+
+  if (password) {
+    data = {...data, password}
+  }
+
+  if (port) {
+    data = {...data, port: parseInt(port)}
+  }
+
+  if (protocol) {
+    data = {...data, protocol}
+  }
+
+  if (interval) {
+    data = {...data, interval: calcInterval(interval)}
+  }
+
+  return await AJAX({
+    url: `/cloudhub/v1/vspheres/${id}`,
+    method: 'PATCH',
+    data,
+  })
+}
+
+export const deleteVSphereApi = async (id: number) => {
+  return await AJAX({
+    url: `/cloudhub/v1/vspheres/${id}`,
+    method: 'DELETE',
+  })
 }

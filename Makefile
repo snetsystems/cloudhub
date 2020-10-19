@@ -1,6 +1,11 @@
-VERSION = 1.0.2
+VERSION = 1.1.0
+ifeq ($(OS), Windows_NT)
+	GOBINDATA := $(shell go-bindata.exe --version 2>nil)
+else
+	GOBINDATA := $(shell which go-bindata 2> /dev/null)
+endif
+
 COMMIT ?= $(shell git rev-parse --short=8 HEAD)
-GOBINDATA := $(shell go list -f {{.Root}}  github.com/kevinburke/go-bindata 2> /dev/null)
 YARN := $(shell command -v yarn 2> /dev/null)
 
 SOURCES := $(shell find backend -name "*.go" ! -name "*_gen.go" -not -path "./vendor/*" )
@@ -12,9 +17,9 @@ BINARY=cloudhub
 CTLBINARY=cloudhubctl
 GO111MODULE=on
 
-.PHONY: all build gobuild assets dep clean test gotest gotestrace jstest run run-dev ctags
-
 .DEFAULT_GOAL := all
+
+.PHONY: all build gobuild assets dep clean test gotest gotestrace jstest run run-dev ctags
 
 all: dep build
 
@@ -28,7 +33,7 @@ ${BINARY}: $(SOURCES) .bindata .jsdep .godep
 
 assets: .jssrc .bindata
 
-.bindata: backend/canned/bin_gen.go backend/protoboards/bin_gen.go backend/dist/dist_gen.go backend/server/swagger_gen.go
+.bindata: backend/canned/bin_gen.go backend/protoboards/bin_gen.go backend/dist/dist_gen.go backend/server/swagger_gen.go backend/kv/internal/internal.pb.go
 	@touch .bindata
 
 backend/dist/dist_gen.go: $(UISOURCES)
@@ -43,6 +48,9 @@ backend/protoboards/bin_gen.go: backend/protoboards/*.json
 backend/server/swagger_gen.go: backend/server/swagger.json
 	go generate -x ./backend/server
 
+backend/kv/internal/internal.pb.go: backend/kv/internal/internal.proto
+	go generate -x ./backend/kv/internal
+
 .jssrc: $(UISOURCES)
 	cd frontend && yarn run clean && yarn run build
 	@touch .jssrc
@@ -53,6 +61,8 @@ dep: .jsdep .godep
 ifndef GOBINDATA
 	@echo "Installing go-bindata"
 	go get -u github.com/kevinburke/go-bindata/go-bindata
+	@echo "Installing go-protoc"
+	go get -u github.com/gogo/protobuf/protoc-gen-gofast
 	GO111MODULE=on go get
 endif
 	@touch .godep
@@ -64,11 +74,6 @@ else
 	cd frontend && yarn --no-progress --no-emoji
 	@touch .jsdep
 endif
-
-gen: internal.pb.go
-
-internal.pb.go: backend/kv/internal/internal.proto
-	cd backend && GO111MODULE=on go generate -x ./kv/internal
 
 test: jstest gotest gotestrace lint-ci
 

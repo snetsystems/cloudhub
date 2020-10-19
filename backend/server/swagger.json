@@ -3,7 +3,7 @@
   "info": {
     "title": "CloudHub",
     "description": "API endpoints for CloudHub",
-    "version": "1.0.2"
+    "version": "1.1.0"
   },
   "schemes": ["http"],
   "basePath": "/cloudhub/v1",
@@ -2547,7 +2547,7 @@
             "in": "body",
             "description": "Configuration options for new dashboard",
             "schema": {
-              "$ref": "#/definitions/Dashboard"
+              "$ref": "#/definitions/DashboardCreate"
             }
           }
         ],
@@ -3624,7 +3624,7 @@
         }
       }
     },
-    "/salt": {
+    "/proxy/salt": {
       "post": {
         "tags": ["proxy", "salt proxy"],
         "description": "POST body directly to Salt backend. The response and status code from Salt is directly returned.",
@@ -3648,8 +3648,345 @@
           }
         }
       }
+    },
+
+    "/vspheres": {
+      "get": {
+        "tags": ["vspheres"],
+        "summary": "Retrieve all vspheres",
+        "description": "Returns all vspheres from the store",
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved all vspheres from the store",
+            "schema": {
+              "$ref": "#/definitions/Vspheres"
+            }
+          },
+          "400": {
+            "description": "Failed to retrieve vspheres from store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden to access this route",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["vspheres"],
+        "summary": "Create new vsphere",
+        "description": "Creates a vsphere in the store",
+        "parameters": [
+          {
+            "name": "host",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/VsphereReq"
+            }
+          },
+          {
+            "name": "username",
+            "in": "body",
+            "description": "vsphere access id",
+            "schema": {
+              "$ref": "#/definitions/VsphereReq"
+            }
+          },
+          {
+            "name": "password",
+            "in": "body",
+            "description": "vsphere access password",
+            "schema": {
+              "$ref": "#/definitions/VsphereReq"
+            }
+          },
+          {
+            "name": "protocol",
+            "in": "body",
+            "description": "vsphere access protocol",
+            "schema": {
+              "$ref": "#/definitions/VsphereReq"
+            }
+          },
+          {
+            "name": "port",
+            "in": "body",
+            "description": "vsphere access port",
+            "schema": {
+              "$ref": "#/definitions/VsphereReq"
+            }
+          },
+          {
+            "name": "interval",
+            "in": "body",
+            "description": "vsphere access interval",
+            "schema": {
+              "$ref": "#/definitions/VsphereReq"
+            }
+          },
+          {
+            "name": "minion",
+            "in": "body",
+            "description": "vsphere access minion",
+            "schema": {
+              "$ref": "#/definitions/VsphereReq"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Vsphere successfully created",
+            "headers": {
+              "Location": {
+                "type": "string",
+                "format": "url",
+                "description": "Location of the newly created vsphere resource"
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/VsphereRes"
+            }
+          },
+          "400": {
+            "description": "Invalid JSON – unable to encode or decode; or failed to perform operation in data store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden to access this route",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "vsphere host does exist in organization",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/vspheres/{id}": {
+      "get": {
+        "tags": ["vspheres"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "description": "ID of the vsphere",
+            "required": true
+          }
+        ],
+        "summary": "Retrieve a specific vsphere",
+        "description": "Returns a specific vsphere from the store",
+        "responses": {
+          "200": {
+            "description": "An vsphere object",
+            "schema": {
+              "$ref": "#/definitions/VsphereRes"
+            }
+          },
+          "400": {
+            "description": "Failed to load vsphere from store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden to access this route",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["vspheres"],
+        "summary": "Update existing vsphere",
+        "description": "Updates a vsphere in the store",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "description": "ID of the vsphere",
+            "required": true
+          },
+          {
+            "name": "host",
+            "in": "body",
+            "description": "Updated vsphere host ip",
+            "schema": {
+              "$ref": "#/definitions/VsphereReq"
+            },
+            "required": true
+          },
+          {
+            "name": "username",
+            "in": "body",
+            "description": "Updated vsphere access id",
+            "schema": {
+              "$ref": "#/definitions/VsphereReq"
+            },
+            "required": true
+          },
+          {
+            "name": "password",
+            "in": "body",
+            "description": "Updated vsphere access password",
+            "schema": {
+              "$ref": "#/definitions/VsphereReq"
+            },
+            "required": true
+          },
+          {
+            "name": "protocol",
+            "in": "body",
+            "description": "Updated vsphere access protocol",
+            "schema": {
+              "$ref": "#/definitions/VsphereReq"
+            },
+            "required": true
+          },
+          {
+            "name": "port",
+            "in": "body",
+            "description": "Updated vsphere access port",
+            "schema": {
+              "$ref": "#/definitions/VsphereReq"
+            },
+            "required": true
+          },
+          {
+            "name": "interval",
+            "in": "body",
+            "description": "Updated vsphere access interval",
+            "schema": {
+              "$ref": "#/definitions/VsphereReq"
+            },
+            "required": true
+          },
+          {
+            "name": "minion",
+            "in": "body",
+            "description": "Updated vsphere access minion",
+            "schema": {
+              "$ref": "#/definitions/VsphereReq"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Vsphere successfully updated",
+            "headers": {
+              "Location": {
+                "type": "string",
+                "format": "url",
+                "description": "Location of the updated vsphere resource"
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/VsphereRes"
+            }
+          },
+          "400": {
+            "description": "Invalid JSON – unable to encode or decode; or failed to perform operation in data store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden to access this route",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "Invalid data schema provided to server for vsphere",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["vspheres"],
+        "summary": "Delete vsphere",
+        "description": "Deletes a vsphere in the store",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "description": "ID of the vsphere",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "vsphere successfully deleted"
+          },
+          "400": {
+            "description": "Failed to perform operation in data store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden to access this route",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "vsphere not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
     }
   },
+
   "definitions": {
     "Organization": {
       "type": "object",
@@ -5692,6 +6029,56 @@
         }
       }
     },
+    "DashboardCreate": {
+      "type": "object",
+      "properties": {
+        "cells": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Cell"
+          }
+        },
+        "name": {
+          "description": "the user-facing name of the dashboard",
+          "type": "string"
+        }
+      },
+      "example": {
+        "cells": [
+          {
+            "x": 5,
+            "y": 5,
+            "w": 4,
+            "h": 4,
+            "name": "usage_user",
+            "queries": [
+              {
+                "query": "SELECT mean(\"usage_user\") AS \"usage_user\" FROM \"cpu\"",
+                "db": "telegraf",
+                "label": "%"
+              }
+            ],
+            "type": "line"
+          },
+          {
+            "x": 0,
+            "y": 0,
+            "w": 4,
+            "h": 4,
+            "name": "usage_system",
+            "queries": [
+              {
+                "query": "SELECT mean(\"usage_system\") AS \"usage_system\" FROM \"cpu\"",
+                "db": "telegraf",
+                "label": "%"
+              }
+            ],
+            "type": "line"
+          }
+        ],
+        "name": "lalalalala"
+      }
+    },
     "Dashboard": {
       "type": "object",
       "properties": {
@@ -6235,6 +6622,10 @@
           {
             "name": "oncue",
             "url": "8900"
+          },
+          {
+            "name": "vsphere",
+            "url": "on"
           }
         ]
       }
@@ -6421,6 +6812,142 @@
             "down": []
           }
         ]
+      }
+    },
+    "VsphereReq": {
+      "type": "object",
+      "description": "vsphere access information",
+      "properties": {
+        "host": {
+          "type": "string",
+          "description": "vsphere access host ip"
+        },
+        "username": {
+          "type": "string",
+          "description": "vsphere access username"
+        },
+        "password": {
+          "type": "string",
+          "description": "vsphere access password"
+        },
+        "protocol": {
+          "type": "string",
+          "description": "vsphere access protocol"
+        },
+        "port": {
+          "type": "integer",
+          "description": "vsphere access port"
+        },
+        "interval": {
+          "type": "integer",
+          "description": "vsphere access interval"
+        },
+        "minion": {
+          "type": "string",
+          "description": "vsphere access minion"
+        }
+      },
+      "required": ["host", "username", "password", "interval", "minion"],
+      "example": {
+        "host": "1.1.1.1",
+        "username": "admin@vmware.com",
+        "password": "dkeidj@!@",
+        "protocol": "https",
+        "port": 433,
+        "intermal": 1,
+        "minion": "minion01"
+      }
+    },
+    "VsphereRes": {
+      "type": "object",
+      "description": "vsphere access information",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ID of the vsphere",
+          "readOnly": true
+        },
+        "links": {
+          "type": "object",
+          "properties": {
+            "self": {
+              "type": "string",
+              "description": "Self link mapping to this resource",
+              "format": "url"
+            }
+          },
+          "readOnly": true
+        },
+        "host": {
+          "type": "string",
+          "description": "vsphere access host ip"
+        },
+        "username": {
+          "type": "string",
+          "description": "vsphere access username"
+        },
+        "password": {
+          "type": "string",
+          "description": "vsphere access password"
+        },
+        "protocol": {
+          "type": "string",
+          "description": "vsphere access protocol"
+        },
+        "port": {
+          "type": "integer",
+          "description": "vsphere access port"
+        },
+        "interval": {
+          "type": "integer",
+          "description": "vsphere access interval"
+        },
+        "minion": {
+          "type": "string",
+          "description": "vsphere access minion"
+        },
+        "organization": {
+          "type": "string",
+          "description": "cloudhub organization"
+        }
+      },
+      "required": ["host", "username", "password", "interval", "minion"],
+      "example": {
+        "id": "1",
+        "host": "1.1.1.1",
+        "links": {
+          "self": "/cloudhub/v1/vspheres/1"
+        },
+        "username": "admin@vmware.com",
+        "password": "dkeidj@!@",
+        "protocol": "https",
+        "port": 433,
+        "intermal": 1,
+        "minion": "minion01",
+        "organization": "123"
+      }
+    },
+    "Vspheres": {
+      "type": "object",
+      "required": ["vspheres"],
+      "properties": {
+        "links": {
+          "type": "object",
+          "properties": {
+            "self": {
+              "type": "string",
+              "description": "Self link mapping to this resource",
+              "format": "url"
+            }
+          },
+          "readOnly": true
+        },
+        "vspheres": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/VsphereRes"
+          }
+        }
       }
     }
   }

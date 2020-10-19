@@ -1,3 +1,72 @@
+const formatBytes = (
+  value: number,
+  divisor: number,
+  decimals: number,
+  [currentLabel, ...otherLabels]: string[]
+): string => {
+  if (value < divisor) {
+    return `${value.toFixed(decimals)} ${currentLabel}`
+  }
+  return formatBytes(value / divisor, divisor, decimals, otherLabels)
+}
+
+export const transFormatBytes = (
+  bytes: number,
+  decimals: number = 0,
+  isBinary: boolean = true
+) => {
+  if (bytes === undefined || bytes === null) return
+  // Temporary defense code. To be deleted
+  // start
+  if (typeof bytes === 'string') {
+    return bytes
+  }
+  // end
+
+  const unit = isBinary ? 1024 : 1000
+  const yota = isBinary ? Math.pow(2, 80) : Math.pow(1000, 8)
+
+  if (bytes >= yota) {
+    return `${(bytes / yota).toFixed(decimals)} ${unit ? 'YiB' : 'YB'}`
+  }
+  const format = isBinary
+    ? ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB']
+    : ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB']
+
+  return formatBytes(bytes, unit, decimals, format)
+}
+
+const formatFrequency = (
+  value: number,
+  decimals: number,
+  [currentLabel, ...otherLabels]: string[]
+): string => {
+  if (value < 1000) {
+    return `${value.toFixed(decimals)} ${currentLabel}`
+  }
+  return formatFrequency(value / 1000, decimals, otherLabels)
+}
+
+export const transFormatFrequency = (
+  hertz: number,
+  decimals: number = 0
+): string => {
+  // Temporary defense code. To be deleted
+  // start
+  if (typeof hertz === 'string') {
+    return hertz
+  }
+  // end
+
+  const yota = Math.pow(10, 24)
+  if (hertz >= yota) {
+    return `${(hertz / yota).toFixed(decimals)} YHz`
+  }
+  const format = ['Hz', 'kHz', 'MHz', 'GHz', 'THz', 'PHz', 'EHz', 'ZHz']
+
+  return formatFrequency(hertz, decimals, format)
+}
+
 export const transBytes = (
   fileSize: number,
   fractionDigits?: number

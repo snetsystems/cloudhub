@@ -283,6 +283,15 @@ class AgentMinionsTable extends PureComponent<Props, State> {
             style={{width: OperationWidth}}
           >
             SSH
+            <span
+              style={{
+                color: '#d83f3f',
+                opacity: '0.8',
+                fontStyle: 'italic',
+              }}
+            >
+              (Beta)
+            </span>
           </div>
         </div>
       </div>

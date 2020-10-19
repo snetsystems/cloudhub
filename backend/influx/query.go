@@ -62,6 +62,7 @@ func ParseTime(influxQL string, now time.Time) (time.Duration, error) {
 // Convert changes an InfluxQL query to a QueryConfig
 func Convert(influxQL string) (cloudhub.QueryConfig, error) {
 	itsDashboardTime := false
+	itsUpperDashboardTime := false
 	intervalTime := false
 
 	if strings.Contains(influxQL, ":interval:") {
@@ -74,6 +75,11 @@ func Convert(influxQL string) (cloudhub.QueryConfig, error) {
 		itsDashboardTime = true
 	}
 
+	if strings.Contains(influxQL, ":upperDashboardTime:") {
+		influxQL = strings.Replace(influxQL, ":upperDashboardTime:", "now() - 1m", 1)
+		itsUpperDashboardTime = true
+	}
+
 	query, err := influxql.ParseQuery(influxQL)
 	if err != nil {
 		return cloudhub.QueryConfig{}, err
@@ -81,6 +87,10 @@ func Convert(influxQL string) (cloudhub.QueryConfig, error) {
 
 	if itsDashboardTime {
 		influxQL = strings.Replace(influxQL, "now() - 15m", ":dashboardTime:", 1)
+	}
+
+	if itsUpperDashboardTime {
+		influxQL = strings.Replace(influxQL, "now() - 1m", ":upperDashboardTime:", 1)
 	}
 
 	if intervalTime {

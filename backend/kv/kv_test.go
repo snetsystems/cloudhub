@@ -20,8 +20,8 @@ func NewTestClient() (*kv.Service, error) {
 	f.Close()
 
 	build := cloudhub.BuildInfo{
-		Version: "version",
-		Commit:  "commit",
+		Version: "",
+		Commit:  "",
 	}
 
 	ctx := context.TODO()

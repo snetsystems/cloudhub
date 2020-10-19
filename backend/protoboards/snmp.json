@@ -1,7 +1,7 @@
 {
   "id": "b694af55-8dbc-4327-9f71-5496103bf0ef",
   "meta": {
-    "name": "SNMP",
+    "name": "SNMP-Port[10101]",
     "measurements": ["snmp"],
     "version": "1.0",
     "dashboardVersion": "1.x",
@@ -21,7 +21,7 @@
         "name": "In/Out Error (pps) - interface=10101",
         "queries": [
           {
-            "query": "SELECT derivative(mean(\"ifInErrors\"), 1s) AS \"ifInErrors\", derivative(mean(\"ifOutErrors\"), 1s) AS \"ifOutErrors\" FROM \"telegraf\".\"autogen\".\"snmp-ifTable\" WHERE time > :dashboardTime: GROUP BY time(:interval:), \"agent_host\", \"index\" FILL(null)",
+            "query": "SELECT derivative(mean(\"ifInErrors\"), 1s) AS \"ifInErrors\", derivative(mean(\"ifOutErrors\"), 1s) AS \"ifOutErrors\" FROM \":db:\".\":rp:\".\"snmp-ifTable\" WHERE time > :dashboardTime: AND \"index\" = '10101' GROUP BY time(:interval:), \"agent_host\", \"index\" FILL(null)",
             "queryConfig": {
               "database": "",
               "measurement": "",
@@ -33,7 +33,7 @@
                 "tags": []
               },
               "areTagsAccepted": false,
-              "rawText": "SELECT derivative(mean(\"ifInErrors\"), 1s) AS \"ifInErrors\", derivative(mean(\"ifOutErrors\"), 1s) AS \"ifOutErrors\" FROM \"telegraf\".\"autogen\".\"snmp-ifTable\" WHERE time > :dashboardTime: GROUP BY time(:interval:), \"agent_host\", \"index\" FILL(null)",
+              "rawText": "SELECT derivative(mean(\"ifInErrors\"), 1s) AS \"ifInErrors\", derivative(mean(\"ifOutErrors\"), 1s) AS \"ifOutErrors\" FROM \":db:\".\":rp:\".\"snmp-ifTable\" WHERE time > :dashboardTime: AND \"index\" = '10101' GROUP BY time(:interval:), \"agent_host\", \"index\" FILL(null)",
               "range": null,
               "shifts": null
             },
@@ -125,7 +125,7 @@
         "name": "Rx/Tx (BPS) - interface=10101",
         "queries": [
           {
-            "query": "SELECT derivative(mean(\"ifHCOutOctets\"), 1s) * 8 AS \"Tx\", derivative(mean(\"ifHCInOctets\"), 1s) * 8 AS \"Rx\" FROM \"telegraf\".\"autogen\".\"snmp-ifXTable\" WHERE time > :dashboardTime: GROUP BY time(:interval:), \"agent_host\", \"index\" FILL(null)",
+            "query": "SELECT derivative(mean(\"ifHCOutOctets\"), 1s) * 8 AS \"Tx\", derivative(mean(\"ifHCInOctets\"), 1s) * 8 AS \"Rx\" FROM \":db:\".\":rp:\".\"snmp-ifXTable\" WHERE time > :dashboardTime: AND \"index\" = '10101' GROUP BY time(:interval:), \"agent_host\", \"index\" FILL(null)",
             "queryConfig": {
               "database": "",
               "measurement": "",
@@ -137,7 +137,7 @@
                 "tags": []
               },
               "areTagsAccepted": false,
-              "rawText": "SELECT derivative(mean(\"ifHCOutOctets\"), 1s) * 8 AS \"Tx\", derivative(mean(\"ifHCInOctets\"), 1s) * 8 AS \"Rx\" FROM \"telegraf\".\"autogen\".\"snmp-ifXTable\" WHERE time > :dashboardTime: GROUP BY time(:interval:), \"agent_host\", \"index\" FILL(null)",
+              "rawText": "SELECT derivative(mean(\"ifHCOutOctets\"), 1s) * 8 AS \"Tx\", derivative(mean(\"ifHCInOctets\"), 1s) * 8 AS \"Rx\" FROM \":db:\".\":rp:\".\"snmp-ifXTable\" WHERE time > :dashboardTime: AND \"index\" = '10101' GROUP BY time(:interval:), \"agent_host\", \"index\" FILL(null)",
               "range": null,
               "shifts": null
             },
@@ -229,7 +229,7 @@
         "name": "Memory Utilization (%)",
         "queries": [
           {
-            "query": "SELECT mean(\"mem_utilization\") AS \"mean_mem_utilization\" FROM \"telegraf\".\"autogen\".\"snmp\" WHERE time > :dashboardTime: GROUP BY time(:interval:), \"agent_host\" FILL(null)",
+            "query": "SELECT mean(\"mem_utilization\") AS \"mean_mem_utilization\" FROM \":db:\".\":rp:\".\"snmp\" WHERE time > :dashboardTime: GROUP BY time(:interval:), \"agent_host\" FILL(null)",
             "queryConfig": {
               "database": "telegraf",
               "measurement": "snmp",
@@ -357,7 +357,7 @@
         "name": "CPU utilizaion (%)",
         "queries": [
           {
-            "query": "SELECT max(\"cpu_utilization\") AS \"cpu_utilization\" FROM \"telegraf\".\"autogen\".\"snmp\" WHERE time > :dashboardTime: GROUP BY time(:interval:), \"agent_host\" FILL(null)",
+            "query": "SELECT max(\"cpu_utilization\") AS \"cpu_utilization\" FROM \":db:\".\":rp:\".\"snmp\" WHERE time > :dashboardTime: GROUP BY time(:interval:), \"agent_host\" FILL(null)",
             "queryConfig": {
               "database": "telegraf",
               "measurement": "snmp",

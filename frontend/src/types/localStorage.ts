@@ -1,4 +1,4 @@
-import {TimeRange} from 'src/types'
+import {TimeRange, TimeZones, RefreshRate} from 'src/types'
 import {LogsState} from 'src/types/logs'
 
 export interface LocalStorage {
@@ -8,6 +8,7 @@ export interface LocalStorage {
   timeRange: TimeRange
   script: string
   logs: LogsState
+  telegrafSystemInterval: string
 }
 
 export type VERSION = string
@@ -19,6 +20,12 @@ export interface App {
 
 export interface DashTimeV1 {
   ranges: DashboardTimeRange[]
+  refreshes: Refresh[]
+}
+
+export interface Refresh {
+  dashboardID: string
+  refreshRate: RefreshRate
 }
 
 interface DashboardTimeRange {
@@ -34,4 +41,5 @@ interface DashboardTimeRange {
 
 interface Persisted {
   autoRefresh: number
+  timeZones: TimeZones
 }

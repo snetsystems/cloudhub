@@ -1040,3 +1040,24 @@ export const notifyConnectShellFailed = (close: CloseEvent): Notification => ({
   ...defaultErrorNotification,
   message: `CODE: ${close.code}, REASON: ${close.reason}`,
 })
+
+//  CloudHub infrastructure VM Host Notifications
+//  ----------------------------------------------------------------------------
+export const notifyConnectVCenterFailed = (error: Error): Notification => ({
+  ...defaultErrorNotification,
+  message: `VCenter Connection Failed, ${error}`,
+})
+
+export const notifyUpdateVCenterFailed = (host: string): Notification => ({
+  ...defaultErrorNotification,
+  message: `VCenter ${host} Update Failed. remove this inventory`,
+})
+
+//  CloudHub infrastructure VM Host Remote Console Notifications
+//  ----------------------------------------------------------------------------
+export const notifyConnectRemoteConsoleFailed = (
+  error: Error
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `Remote Console Run Failed, ${error}`,
+})

@@ -1,5 +1,6 @@
 import _ from 'lodash'
-import normalizer from 'src/normalizers/dashboardTime'
+import dashBoardTimeNormalizer from 'src/normalizers/dashboardTime'
+import dashBoardRefreshNormalizer from 'src/normalizers/dashboardRefresh'
 import {
   notifyNewVersion,
   notifyLoadLocalSettingsFailed,
@@ -42,15 +43,17 @@ export const loadLocalStorage = (errorsQueue: any[]): LocalStorage | {} => {
 }
 
 export const saveToLocalStorage = ({
-  app: {persisted},
+  app,
   timeRange,
-  dashTimeV1: {ranges},
+  dashTimeV1: {ranges, refreshes},
   logs,
   script,
 }: LocalStorage): void => {
   try {
-    const appPersisted = {app: {persisted}}
-    const dashTimeV1 = {ranges: normalizer(ranges)}
+    const dashTimeV1 = {
+      ranges: dashBoardTimeNormalizer(ranges),
+      refreshes: dashBoardRefreshNormalizer(refreshes),
+    }
 
     const minimalLogs = _.omit(logs, [
       'tableData',
@@ -74,7 +77,10 @@ export const saveToLocalStorage = ({
     window.localStorage.setItem(
       'state',
       JSON.stringify({
-        ...appPersisted,
+        app: {
+          ...app,
+          persisted: app.persisted,
+        },
         VERSION,
         GIT_SHA,
         timeRange,

@@ -45,6 +45,7 @@ const (
 	ErrInvalidCellOptionsColumns       = Error("cell options columns cannot be empty'")
 	ErrOrganizationConfigNotFound      = Error("could not find organization config")
 	ErrInvalidCellQueryType            = Error("invalid cell query type: must be 'flux' or 'influxql'")
+	ErrVsphereNotFound                 = Error("vsphere not found")
 )
 
 // Error is a domain error encountered while processing CloudHub requests
@@ -948,11 +949,37 @@ type BuildInfo struct {
 	Version string
 	Commit  string
 }
-
 // BuildStore is the storage and retrieval of CloudHub build information
 type BuildStore interface {
 	Get(context.Context) (BuildInfo, error)
 	Update(context.Context, BuildInfo) error
+}
+
+// Vsphere represents an vsphere.
+type Vsphere struct {
+	ID            string   `json:"id,string,omitempty"`
+	Host          string   `json:"host,string"`
+	UserName      string   `json:"username,string"`
+	Password      string   `json:"password"`
+	Protocol      string   `json:"protocol,omitempty"`
+	Port          int      `json:"port,omitempty"`
+	Interval      int      `json:"interval"`
+	Minion        string   `json:"minion"`
+	Organization  string   `json:"organization"`
+}
+
+// VspheresStore is the Storage and retrieval of information
+type VspheresStore interface {
+	// All lists all vSpheres from the VspheresStore
+	All(context.Context) ([]Vsphere, error)
+	// Create a new vSphere in the VspheresStore
+	Add(context.Context, Vsphere) (Vsphere, error)
+	// Delete the Vsphere from the VspheresStore
+	Delete(context.Context, Vsphere) error
+	// Get retrieves a vSphere if `ID` exists.
+	Get(context.Context, string) (Vsphere, error)
+	// Update replaces the vSphere information
+	Update(context.Context, Vsphere) error
 }
 
 // Environment is the set of front-end exposed environment variables
@@ -979,4 +1006,6 @@ type KVClient interface {
 	SourcesStore() SourcesStore
 	// UsersStore returns the kv's UsersStore type.
 	UsersStore() UsersStore
+	// VspheresStore returns the kv's VspheresStore type.
+	VspheresStore() VspheresStore
 }

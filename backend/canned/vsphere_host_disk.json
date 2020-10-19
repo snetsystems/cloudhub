@@ -1,0 +1,40 @@
+{
+  "id": "3ff7ed57-4904-41c2-b364-c3a9b3c17358",
+  "measurement": "vsphere_host_disk",
+  "app": "vsphere",
+  "autoflow": true,
+  "cells": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "db3c4f3a-47ca-4407-b005-dd637e67ce25",
+      "name": "Disk Usage",
+      "queries": [
+        {
+          "query": "SELECT mean(\"usage_average\") AS \"mean_usage_average\" FROM \":db:\".\":rp:\".\"vsphere_host_disk\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "8ac447bf-d605-4816-9211-5390f21b3634",
+      "name": "Disk Latency",
+      "queries": [
+        {
+          "query": "SELECT mean(\"deviceLatency_average\") AS \"mean_deviceLatency_average\", mean(\"deviceReadLatency_average\") AS \"mean_deviceReadLatency_average\", mean(\"deviceWriteLatency_average\") AS \"mean_deviceWriteLatency_average\" FROM \":db:\".\":rp:\".\"vsphere_host_disk\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    }
+  ]
+}

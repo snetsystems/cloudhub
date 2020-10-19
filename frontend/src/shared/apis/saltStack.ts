@@ -32,13 +32,18 @@ interface Params {
   token_expire?: number
 }
 
-const apiRequest = async (pUrl: string, pToken: string, pParams: Params) => {
+const apiRequest = async (
+  pUrl: string,
+  pToken: string,
+  pParams: Params,
+  pAccept?: string
+) => {
   try {
     const dParams = {token: pToken, eauth: 'pam'}
     const saltMasterUrl = pUrl
     const url = saltMasterUrl + '/'
     const headers = {
-      Accept: 'application/json',
+      Accept: pAccept ? pAccept : 'application/json',
       'Content-type': 'application/json',
     }
 
@@ -168,6 +173,81 @@ export async function getWheelKeyListAll(pUrl: string, pToken: string) {
       fun: 'key.list_all',
     }
     return await apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getWheelKeyAcceptedList(pUrl: string, pToken: string) {
+  try {
+    const params = {
+      eauth: 'pam',
+      client: 'wheel',
+      fun: 'key.list',
+      match: 'accepted',
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalVSphereInfoAll(
+  pUrl: string,
+  pToken: string,
+  tgt: string,
+  address: string,
+  user: string,
+  password: string,
+  port: string,
+  protocol: string
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'vsphere.vsphere_info_all',
+      tgt: tgt,
+      kwarg: {
+        host: address,
+        username: user,
+        password,
+        port,
+        protocol,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getTicketRemoteConsole(
+  pUrl: string,
+  pToken: string,
+  tgt: string,
+  address: string,
+  user: string,
+  password: string
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'vsphere.get_ticket',
+      tgt: tgt,
+      kwarg: {
+        host: address,
+        username: user,
+        password: password,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
   } catch (error) {
     console.error(error)
     throw error

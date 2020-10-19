@@ -3,7 +3,11 @@ package server
 import (
 	"context"
 	"crypto/tls"
+	"crypto/x509"
+	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net"
@@ -14,6 +18,7 @@ import (
 	"regexp"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	
@@ -31,6 +36,7 @@ import (
 
 var (
 	startTime time.Time
+	errNoAuth = errors.New("no auth configured")
 )
 
 func init() {
@@ -67,6 +73,7 @@ type Server struct {
 	TokenSecret     string        `short:"t" long:"token-secret" description:"Secret to sign tokens" env:"TOKEN_SECRET"`
 	JwksURL         string        `long:"jwks-url" description:"URL that returns OpenID Key Discovery JWKS document." env:"JWKS_URL"`
 	UseIDToken      bool          `long:"use-id-token" description:"Enable id_token processing." env:"USE_ID_TOKEN"`
+	LoginHint       string        `long:"login-hint" description:"OpenID login_hint paramter to passed to authorization server during authentication" env:"LOGIN_HINT"`
 	AuthDuration    time.Duration `long:"auth-duration" default:"720h" description:"Total duration of cookie life for authentication (in hours). 0 means authentication expires on browser close." env:"AUTH_DURATION"`
 
 	GithubClientID     string   `short:"i" long:"github-client-id" description:"Github Client ID for OAuth 2 support" env:"GH_CLIENT_ID"`
@@ -97,6 +104,8 @@ type Server struct {
 	GenericTokenURL     string   `long:"generic-token-url" description:"OAuth 2.0 provider's token endpoint URL" env:"GENERIC_TOKEN_URL"`
 	GenericAPIURL       string   `long:"generic-api-url" description:"URL that returns OpenID UserInfo compatible information." env:"GENERIC_API_URL"`
 	GenericAPIKey       string   `long:"generic-api-key" description:"JSON lookup key into OpenID UserInfo. (Azure should be userPrincipalName)" default:"email" env:"GENERIC_API_KEY"`
+	GenericInsecure     bool           `long:"generic-insecure" description:"Whether or not to verify auth-url's tls certificates." env:"GENERIC_INSECURE"`
+	GenericRootCA       flags.Filename `long:"generic-root-ca" description:"File location of root ca cert for generic oauth tls verification." env:"GENERIC_ROOT_CA"`
 
 	Auth0Domain        string   `long:"auth0-domain" description:"Subdomain of auth0.com used for Auth0 OAuth2 authentication" env:"AUTH0_DOMAIN"`
 	Auth0ClientID      string   `long:"auth0-client-id" description:"Auth0 Client ID for OAuth2 support" env:"AUTH0_CLIENT_ID"`
@@ -113,44 +122,192 @@ type Server struct {
 	Basepath    string `short:"p" long:"basepath" description:"A URL path prefix under which all CloudHub routes will be mounted. (Note: PREFIX_ROUTES has been deprecated. Now, if basepath is set, all routes will be prefixed with it.)" env:"BASE_PATH"`
 	ShowVersion bool   `short:"v" long:"version" description:"Show CloudHub version info"`
 	BuildInfo   cloudhub.BuildInfo
+	
+	oauthClient http.Client
 }
 
-func provide(p oauth2.Provider, m oauth2.Mux, ok func() bool) func(func(oauth2.Provider, oauth2.Mux)) {
+func provide(p oauth2.Provider, m oauth2.Mux, ok func() error) func(func(oauth2.Provider, oauth2.Mux)) {
 	return func(configure func(oauth2.Provider, oauth2.Mux)) {
-		if ok() {
+		if err := ok(); err == nil {
 			configure(p, m)
 		}
 	}
 }
 
 // UseGithub validates the CLI parameters to enable github oauth support
-func (s *Server) UseGithub() bool {
-	return s.TokenSecret != "" && s.GithubClientID != "" && s.GithubClientSecret != ""
+func (s *Server) UseGithub() error {
+	errMsg := []string{}
+
+	if s.TokenSecret != "" && s.GithubClientID != "" && s.GithubClientSecret != "" {
+		return nil
+	} else if s.GithubClientID == "" && s.GithubClientSecret == "" {
+		return errNoAuth
+	}
+
+	if s.TokenSecret == "" {
+		errMsg = append(errMsg, "token secret")
+	}
+	if s.GithubClientID == "" {
+		errMsg = append(errMsg, "client id")
+	}
+	if s.GithubClientSecret == "" {
+		errMsg = append(errMsg, "client secret")
+	}
+	if errMsg != nil {
+		return fmt.Errorf("missing Github oauth setting[s]: %s", strings.Join(errMsg, ", "))
+	}
+
+	return nil
 }
 
 // UseGoogle validates the CLI parameters to enable google oauth support
-func (s *Server) UseGoogle() bool {
-	return s.TokenSecret != "" && s.GoogleClientID != "" && s.GoogleClientSecret != "" && s.PublicURL != ""
+func (s *Server) UseGoogle() error {
+	errMsg := []string{}
+
+	if s.TokenSecret != "" && s.GoogleClientID != "" && s.GoogleClientSecret != "" && s.PublicURL != "" {
+		return nil
+	} else if s.GoogleClientID == "" && s.GoogleClientSecret == "" && s.PublicURL == "" {
+		return errNoAuth
+	}
+
+	if s.TokenSecret == "" {
+		errMsg = append(errMsg, "token secret")
+	}
+	if s.GoogleClientID == "" {
+		errMsg = append(errMsg, "client id")
+	}
+	if s.GoogleClientSecret == "" {
+		errMsg = append(errMsg, "client secret")
+	}
+	if s.PublicURL == "" {
+		errMsg = append(errMsg, "public url")
+	}
+	if errMsg != nil {
+		return fmt.Errorf("missing Google oauth setting[s]: %s", strings.Join(errMsg, ", "))
+	}
+
+	return nil
 }
 
 // UseHeroku validates the CLI parameters to enable heroku oauth support
-func (s *Server) UseHeroku() bool {
-	return s.TokenSecret != "" && s.HerokuClientID != "" && s.HerokuSecret != ""
+func (s *Server) UseHeroku() error {
+	errMsg := []string{}
+
+	if s.TokenSecret != "" && s.HerokuClientID != "" && s.HerokuSecret != "" {
+		return nil
+	} else if s.HerokuClientID == "" && s.HerokuSecret == "" {
+		return errNoAuth
+	}
+
+	if s.TokenSecret == "" {
+		errMsg = append(errMsg, "token secret")
+	}
+	if s.HerokuClientID == "" {
+		errMsg = append(errMsg, "client id")
+	}
+	if s.HerokuSecret == "" {
+		errMsg = append(errMsg, "client secret")
+	}
+	if errMsg != nil {
+		return fmt.Errorf("missing Heroku oauth setting[s]: %s", strings.Join(errMsg, ", "))
+	}
+
+	return nil
 }
 
 // UseAuth0 validates the CLI parameters to enable Auth0 oauth support
-func (s *Server) UseAuth0() bool {
-	return s.Auth0ClientID != "" && s.Auth0ClientSecret != ""
+func (s *Server) UseAuth0() error {
+	errMsg := []string{}
+
+	if s.Auth0ClientID != "" && s.Auth0ClientSecret != "" {
+		return nil
+	} else if s.Auth0ClientID == "" && s.Auth0ClientSecret == "" {
+		return errNoAuth
+	}
+
+	if s.Auth0ClientID == "" {
+		errMsg = append(errMsg, "client id")
+	}
+	if s.Auth0ClientSecret == "" {
+		errMsg = append(errMsg, "client secret")
+	}
+	if errMsg != nil {
+		return fmt.Errorf("missing Auth0 oauth setting[s]: %s", strings.Join(errMsg, ", "))
+	}
+
+	return nil
 }
 
 // UseGenericOAuth2 validates the CLI parameters to enable generic oauth support
-func (s *Server) UseGenericOAuth2() bool {
-	return s.TokenSecret != "" && s.GenericClientID != "" &&
+func (s *Server) UseGenericOAuth2() error {
+	errMsg := []string{}
+
+	if s.TokenSecret != "" && s.GenericClientID != "" &&
 		s.GenericClientSecret != "" && s.GenericAuthURL != "" &&
-		s.GenericTokenURL != ""
+		s.GenericTokenURL != "" {
+		return nil
+	} else if s.GenericClientID == "" && s.GenericClientSecret == "" &&
+		s.GenericAuthURL == "" && s.GenericTokenURL == "" {
+		return errNoAuth
+	}
+
+	if s.TokenSecret == "" {
+		errMsg = append(errMsg, "token secret")
+	}
+	if s.GenericClientID == "" {
+		errMsg = append(errMsg, "client id")
+	}
+	if s.GenericClientSecret == "" {
+		errMsg = append(errMsg, "client secret")
+	}
+	if s.GenericAuthURL == "" {
+		errMsg = append(errMsg, "auth url")
+	}
+	if s.GenericTokenURL == "" {
+		errMsg = append(errMsg, "token url")
+	}
+	if errMsg != nil {
+		return fmt.Errorf("missing Generic oauth setting[s]: %s", strings.Join(errMsg, ", "))
+	}
+
+	return nil
 }
 
-func (s *Server) githubOAuth(logger cloudhub.Logger, auth oauth2.Authenticator) (oauth2.Provider, oauth2.Mux, func() bool) {
+// getCerts gets the read certs from rootPath to the systemCerts.
+func getCerts(rootPath string) (*x509.CertPool, error) {
+	if rootPath == "" {
+		return nil, nil
+	}
+
+	f, err := os.Open(rootPath)
+	if err != nil {
+		return nil, err
+	}
+
+	defer f.Close()
+	return processCerts(f)
+}
+
+func processCerts(rootReader io.Reader) (*x509.CertPool, error) {
+	certPool, err := x509.SystemCertPool()
+	if err != nil {
+		return nil, fmt.Errorf("error using system cert pool: %s", err.Error())
+	}
+
+	certs, err := ioutil.ReadAll(rootReader)
+	if err != nil {
+		return nil, fmt.Errorf("error reading generic root ca: %s", err.Error())
+	}
+
+	ok := certPool.AppendCertsFromPEM(certs)
+	if !ok {
+		return nil, errors.New("error appending cert from root ca")
+	}
+
+	return certPool, nil
+}
+
+func (s *Server) githubOAuth(logger cloudhub.Logger, auth oauth2.Authenticator) (oauth2.Provider, oauth2.Mux, func() error) {
 	gh := oauth2.Github{
 		ClientID:     s.GithubClientID,
 		ClientSecret: s.GithubClientSecret,
@@ -158,11 +315,11 @@ func (s *Server) githubOAuth(logger cloudhub.Logger, auth oauth2.Authenticator) 
 		Logger:       logger,
 	}
 	jwt := oauth2.NewJWT(s.TokenSecret, s.JwksURL)
-	ghMux := oauth2.NewAuthMux(&gh, auth, jwt, s.Basepath, logger, s.UseIDToken)
+	ghMux := oauth2.NewAuthMux(&gh, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient)
 	return &gh, ghMux, s.UseGithub
 }
 
-func (s *Server) googleOAuth(logger cloudhub.Logger, auth oauth2.Authenticator) (oauth2.Provider, oauth2.Mux, func() bool) {
+func (s *Server) googleOAuth(logger cloudhub.Logger, auth oauth2.Authenticator) (oauth2.Provider, oauth2.Mux, func() error) {
 	redirectURL := s.PublicURL + s.Basepath + "/oauth/google/callback"
 	google := oauth2.Google{
 		ClientID:     s.GoogleClientID,
@@ -172,11 +329,11 @@ func (s *Server) googleOAuth(logger cloudhub.Logger, auth oauth2.Authenticator) 
 		Logger:       logger,
 	}
 	jwt := oauth2.NewJWT(s.TokenSecret, s.JwksURL)
-	goMux := oauth2.NewAuthMux(&google, auth, jwt, s.Basepath, logger, s.UseIDToken)
+	goMux := oauth2.NewAuthMux(&google, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient)
 	return &google, goMux, s.UseGoogle
 }
 
-func (s *Server) herokuOAuth(logger cloudhub.Logger, auth oauth2.Authenticator) (oauth2.Provider, oauth2.Mux, func() bool) {
+func (s *Server) herokuOAuth(logger cloudhub.Logger, auth oauth2.Authenticator) (oauth2.Provider, oauth2.Mux, func() error) {
 	heroku := oauth2.Heroku{
 		ClientID:      s.HerokuClientID,
 		ClientSecret:  s.HerokuSecret,
@@ -184,11 +341,11 @@ func (s *Server) herokuOAuth(logger cloudhub.Logger, auth oauth2.Authenticator) 
 		Logger:        logger,
 	}
 	jwt := oauth2.NewJWT(s.TokenSecret, s.JwksURL)
-	hMux := oauth2.NewAuthMux(&heroku, auth, jwt, s.Basepath, logger, s.UseIDToken)
+	hMux := oauth2.NewAuthMux(&heroku, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient)
 	return &heroku, hMux, s.UseHeroku
 }
 
-func (s *Server) genericOAuth(logger cloudhub.Logger, auth oauth2.Authenticator) (oauth2.Provider, oauth2.Mux, func() bool) {
+func (s *Server) genericOAuth(logger cloudhub.Logger, auth oauth2.Authenticator) (oauth2.Provider, oauth2.Mux, func() error) {
 	gen := oauth2.Generic{
 		PageName:       s.GenericName,
 		ClientID:       s.GenericClientID,
@@ -203,27 +360,27 @@ func (s *Server) genericOAuth(logger cloudhub.Logger, auth oauth2.Authenticator)
 		Logger:         logger,
 	}
 	jwt := oauth2.NewJWT(s.TokenSecret, s.JwksURL)
-	genMux := oauth2.NewAuthMux(&gen, auth, jwt, s.Basepath, logger, s.UseIDToken)
+	genMux := oauth2.NewAuthMux(&gen, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient)
 	return &gen, genMux, s.UseGenericOAuth2
 }
 
-func (s *Server) auth0OAuth(logger cloudhub.Logger, auth oauth2.Authenticator) (oauth2.Provider, oauth2.Mux, func() bool) {
+func (s *Server) auth0OAuth(logger cloudhub.Logger, auth oauth2.Authenticator) (oauth2.Provider, oauth2.Mux, func() error) {
 	redirectPath := path.Join(s.Basepath, "oauth", "auth0", "callback")
 	redirectURL, err := url.Parse(s.PublicURL)
 	if err != nil {
 		logger.Error("Error parsing public URL: err:", err)
-		return &oauth2.Auth0{}, &oauth2.AuthMux{}, func() bool { return false }
+		return &oauth2.Auth0{}, &oauth2.AuthMux{}, func() error { return fmt.Errorf("failed to parse public URL: %s", err.Error()) }
 	}
 	redirectURL.Path = redirectPath
 
 	auth0, err := oauth2.NewAuth0(s.Auth0Domain, s.Auth0ClientID, s.Auth0ClientSecret, redirectURL.String(), s.Auth0Organizations, logger)
 
 	jwt := oauth2.NewJWT(s.TokenSecret, s.JwksURL)
-	genMux := oauth2.NewAuthMux(&auth0, auth, jwt, s.Basepath, logger, s.UseIDToken)
+	genMux := oauth2.NewAuthMux(&auth0, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient)
 
 	if err != nil {
 		logger.Error("Error parsing Auth0 domain: err:", err)
-		return &auth0, genMux, func() bool { return false }
+		return &auth0, genMux, func() error { return fmt.Errorf("failed to parse Auth0 domain: %s", err.Error()) }
 	}
 	return &auth0, genMux, s.UseAuth0
 }
@@ -248,7 +405,56 @@ func (s *Server) genericRedirectURL() string {
 }
 
 func (s *Server) useAuth() bool {
-	return s.UseGithub() || s.UseGoogle() || s.UseHeroku() || s.UseGenericOAuth2() || s.UseAuth0()
+	useAuths := []func() error{
+		s.UseGithub,
+		s.UseGoogle,
+		s.UseHeroku,
+		s.UseGenericOAuth2,
+		s.UseAuth0,
+	}
+
+	var err error
+	for i := range useAuths {
+		switch err = useAuths[i](); err {
+		case nil:
+			return true
+		case errNoAuth:
+			continue
+		default:
+			// If there was an attempt to configure authentication,
+			// chronograf should not disable authentication.
+			return true
+		}
+	}
+
+	return false
+}
+
+func (s *Server) validateAuth() error {
+	useAuths := []func() error{
+		s.UseGithub,
+		s.UseGoogle,
+		s.UseHeroku,
+		s.UseGenericOAuth2,
+		s.UseAuth0,
+	}
+
+	var errs []string
+	for i := range useAuths {
+		if err := useAuths[i](); err != nil && err != errNoAuth {
+			errs = append(errs, err.Error())
+		}
+	}
+
+	if !s.useAuth() && s.TokenSecret != "" {
+		errs = append(errs, "token secret without oauth config is invalid")
+	}
+
+	if len(errs) == 0 {
+		return nil
+	}
+
+	return errors.New(strings.Join(errs, "; "))
 }
 
 func (s *Server) useTLS() bool {
@@ -390,6 +596,29 @@ func (s *Server) Serve(ctx context.Context) {
 		return
 	}
 
+	if err = s.validateAuth(); err != nil {
+		logger.
+			WithField("component", "server").
+			WithField("basepath", "invalid").
+			Error(fmt.Errorf("Failed to validate Oauth settings: %s", err))
+		return
+	}
+
+	certs, err := getCerts(string(s.GenericRootCA))
+	if err != nil {
+		logger.Error(err)
+		return
+	}
+
+	s.oauthClient = http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: s.GenericInsecure,
+				RootCAs:            certs,
+			},
+		},
+	}
+
 	auth := oauth2.NewCookieJWT(s.TokenSecret, s.AuthDuration)
 	providerFuncs := []func(func(oauth2.Provider, oauth2.Mux)){
 		provide(s.githubOAuth(logger, auth)),
@@ -434,9 +663,10 @@ func (s *Server) Serve(ctx context.Context) {
 	}
 	httpServer.SetKeepAlivesEnabled(true)
 
-	if !s.ReportingDisabled {
-		go reportUsageStats(s.BuildInfo, logger)
-	}
+	// Not in cloudhub
+	// if !s.ReportingDisabled {
+	// 	go reportUsageStats(s.BuildInfo, logger)
+	// }
 	scheme := "http"
 	if s.useTLS() {
 		scheme = "https"
@@ -535,6 +765,7 @@ func openService(ctx context.Context, db kv.Store, builder builders, logger clou
 			ConfigStore:             svc.ConfigStore(),
 			MappingsStore:           svc.MappingsStore(),
 			OrganizationConfigStore: svc.OrganizationConfigStore(),
+			VspheresStore:           svc.VspheresStore(),
 		},
 		Logger:                   logger,
 		UseAuth:                  useAuth,

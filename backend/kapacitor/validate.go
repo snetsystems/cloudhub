@@ -38,9 +38,13 @@ func validateTick(script cloudhub.TICKScript) error {
 	return err
 }
 
+func isBatchTask(script string) bool {
+	return strings.Contains(script, "batch ") || strings.Contains(script, "batch|") || strings.Contains(script, "batch\n")
+}
+
 func newPipeline(script cloudhub.TICKScript) (*pipeline.Pipeline, error) {
 	edge := pipeline.StreamEdge
-	if strings.Contains(string(script), "batch") {
+	if isBatchTask(string(script)) {
 		edge = pipeline.BatchEdge
 	}
 

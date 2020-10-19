@@ -13,10 +13,11 @@ import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/Aut
 import ManualRefresh, {
   ManualRefreshProps,
 } from 'src/shared/components/ManualRefresh'
-import {Button, ButtonShape, IconFont, Page} from 'src/reusable_ui'
+import {Button, ButtonShape, IconFont, Page, Radio} from 'src/reusable_ui'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import GraphTips from 'src/shared/components/GraphTips'
+import VMHostPage from 'src/hosts/containers/VMHostsPage'
 
 // APIs
 import {
@@ -64,6 +65,7 @@ import {
   Host,
   Layout,
   TimeRange,
+  RefreshRate,
 } from 'src/types'
 import {timeRanges} from 'src/shared/data/timeRanges'
 import * as QueriesModels from 'src/types/queries'
@@ -73,7 +75,8 @@ interface Props extends ManualRefreshProps {
   source: Source
   links: Links
   autoRefresh: number
-  onChooseAutoRefresh: () => void
+  onChooseAutoRefresh: (milliseconds: RefreshRate) => void
+  handleClearTimeout: (key: string) => void
   notify: NotificationAction
 }
 
@@ -94,6 +97,8 @@ interface State {
   timeRange: TimeRange
   proportions: number[]
   selected: QueriesModels.TimeRange
+  isVsphere: boolean
+  activeEditorTab: string
 }
 
 @ErrorHandling
@@ -116,7 +121,11 @@ export class HostsPage extends PureComponent<Props, State> {
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       proportions: [0.43, 0.57],
       selected: {lower: '', upper: ''},
+      isVsphere: false,
+      activeEditorTab: 'Host',
     }
+    this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
+    this.onSetActiveEditorTab = this.onSetActiveEditorTab.bind(this)
   }
 
   public componentWillMount() {
@@ -124,7 +133,11 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   public async componentDidMount() {
-    const {focusedHost} = getLocalStorage('hostsTableState')
+    const hostsTableState = getLocalStorage('hostsTableState')
+    const {focusedHost} =
+      hostsTableState && hostsTableState.focusedHost
+        ? hostsTableState.focusedHost
+        : ''
 
     const getItem = getLocalStorage('hostsTableStateProportions')
     const {proportions} = getItem || this.state
@@ -225,26 +238,62 @@ export class HostsPage extends PureComponent<Props, State> {
     GlobalAutoRefresher.stopPolling()
   }
 
+  public handleChooseAutoRefresh(option) {
+    const {onChooseAutoRefresh} = this.props
+    const {milliseconds} = option
+    onChooseAutoRefresh(milliseconds)
+  }
+
+  private onSetActiveEditorTab(activeEditorTab: string): void {
+    this.setState({
+      activeEditorTab,
+    })
+  }
+
   public render() {
     const {
       autoRefresh,
-      onChooseAutoRefresh,
       onManualRefresh,
       inPresentationMode,
+      source,
     } = this.props
+    const {selected, isVsphere, activeEditorTab} = this.state
 
-    const {selected} = this.state
     return (
       <Page className="hosts-list-page">
         <Page.Header inPresentationMode={inPresentationMode}>
           <Page.Header.Left>
             <Page.Title title="Infrastructure" />
           </Page.Header.Left>
+          <Page.Header.Center widthPixels={220}>
+            {isVsphere && (
+              <div className="radio-buttons radio-buttons--default radio-buttons--sm radio-buttons--stretch">
+                <Radio.Button
+                  id="hostspage-tab-Host"
+                  titleText="Host"
+                  value="Host"
+                  active={activeEditorTab === 'Host'}
+                  onClick={this.onSetActiveEditorTab}
+                >
+                  Host
+                </Radio.Button>
+                <Radio.Button
+                  id="hostspage-tab-VMware"
+                  titleText="VMware"
+                  value="VMware"
+                  active={activeEditorTab === 'VMware'}
+                  onClick={this.onSetActiveEditorTab}
+                >
+                  VMware
+                </Radio.Button>
+              </div>
+            )}
+          </Page.Header.Center>
           <Page.Header.Right showSourceIndicator={true}>
             <GraphTips />
             <AutoRefreshDropdown
               selected={autoRefresh}
-              onChoose={onChooseAutoRefresh}
+              onChoose={this.handleChooseAutoRefresh}
               onManualRefresh={onManualRefresh}
             />
             <TimeRangeDropdown
@@ -261,12 +310,24 @@ export class HostsPage extends PureComponent<Props, State> {
             />
           </Page.Header.Right>
         </Page.Header>
-        <Page.Contents scrollable={true}>
-          <Threesizer
-            orientation={HANDLE_HORIZONTAL}
-            divisions={this.horizontalDivisions}
-            onResize={this.handleResize}
-          />
+        <Page.Contents
+          scrollable={true}
+          fullWidth={activeEditorTab === 'VMware'}
+        >
+          {activeEditorTab === 'Host' ? (
+            <Threesizer
+              orientation={HANDLE_HORIZONTAL}
+              divisions={this.horizontalDivisions}
+              onResize={this.handleResize}
+            />
+          ) : (
+            <VMHostPage
+              source={source}
+              manualRefresh={this.props.manualRefresh}
+              timeRange={this.state.timeRange}
+              handleClearTimeout={this.props.handleClearTimeout}
+            />
+          )}
         </Page.Contents>
       </Page>
     )
@@ -382,6 +443,7 @@ export class HostsPage extends PureComponent<Props, State> {
 
   private async fetchHostsData(layouts: Layout[]): Promise<void> {
     const {source, links, notify} = this.props
+    const {addons} = links
 
     const envVars = await getEnv(links.environment)
     const telegrafSystemInterval = getDeep<string>(
@@ -406,10 +468,18 @@ export class HostsPage extends PureComponent<Props, State> {
         source.links.proxy,
         hostsObject,
         layouts,
-        source.telegraf
+        source.telegraf,
+        tempVars
+      )
+
+      const isUsingVshpere = Boolean(
+        _.find(addons, addon => {
+          return addon.name === 'vsphere' && addon.url === 'on'
+        })
       )
 
       this.setState({
+        isVsphere: isUsingVshpere,
         hostsObject: newHosts,
         hostsPageStatus: RemoteDataState.Done,
       })
@@ -417,6 +487,7 @@ export class HostsPage extends PureComponent<Props, State> {
       console.error(error)
       notify(notifyUnableToGetHosts())
       this.setState({
+        isVsphere: false,
         hostsPageStatus: RemoteDataState.Error,
       })
     }

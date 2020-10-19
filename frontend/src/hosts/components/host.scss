@@ -1,0 +1,167 @@
+.vm-status-page__container {
+  height: 100%;
+
+  .dash-graph--heading {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .panel {
+    .panel-heading {
+      padding: 5px 5px 0 5px;
+    }
+    .panel-body {
+      padding: 5px;
+      overflow: hidden;
+    }
+  }
+
+  .hosts-table--tr {
+    border-bottom: 1px solid #353535;
+  }
+  .hosts-table--td {
+    font-size: 12px;
+  }
+}
+.tree-item-group {
+  .disabled {
+    font-style: italic;
+    color: #a1a1a1;
+    cursor: auto;
+
+    &.tree-item--active {
+      text-shadow: none;
+    }
+    &:hover {
+      text-shadow: none;
+    }
+    &:before {
+      content: '';
+      display: block;
+      background: rgba(0, 0, 0, 0.55);
+      border-bottom: 1px solid #222;
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      left: 0;
+    }
+  }
+}
+
+.hosts-table-item {
+  transition: color 0.25s ease;
+  color: $s-brown;
+  cursor: pointer;
+
+  &.focused,
+  &:hover,
+  &:active {
+    color: $s-orange;
+  }
+}
+
+.hosts-table--th {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+}
+
+.align--start {
+  justify-content: flex-start;
+}
+
+.align--center {
+  justify-content: center;
+}
+
+.align--end {
+  justify-content: flex-end;
+}
+
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  background: $c-topaz;
+  border-radius: 100%;
+
+  &.status-indicator--enabled {
+    background: $c-rainforest;
+  }
+}
+
+.generic-empty-state {
+  display: flex;
+  height: 100%;
+  align-content: center;
+}
+
+.charts-body {
+  position: relative;
+  height: 100%;
+  @include gradient-v($g2-kevlar, $g0-obsidian);
+
+  .panel {
+    .panel-body {
+      padding: 7px;
+      background-color: transparent;
+    }
+  }
+}
+
+.react-grid-item {
+  &.grid-item--charts {
+    z-index: 100;
+  }
+
+  &.react-draggable-dragging {
+    z-index: 299;
+  }
+}
+
+.vm-status-page__container {
+  position: relative;
+}
+
+.vm-page-spinner-container {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  z-index: 100;
+}
+
+.vm-page-spinner-overay {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  z-index: -1;
+  background: linear-gradient(
+    to bottom,
+    rgba(32, 32, 40, 0.15) 0%,
+    rgba(15, 14, 21, 1) 100%
+  );
+}
+
+.heading--button-box {
+  position: relative;
+  z-index: 3;
+  margin-right: 5px;
+  &:last-child {
+    margin-right: 0;
+  }
+}
+
+.icon-vmrc {
+  width: 100%;
+  height: 100%;
+  background-image: url('../../assets/images/vmrc.png');
+  background-size: auto 70%;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+.icon-margin-right-03 {
+  flex: 0 0 18px;
+  margin-right: 3px;
+}

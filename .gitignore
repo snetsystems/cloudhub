@@ -21,13 +21,16 @@ backend/cmd/cloudhub/*debug*
 .dev-jssrc
 .bindata
 .eslintcache
+nil
 
 # Files
 go.sum
 cloudhub*.db*
 *_gen.go
+internal.pb.go
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 package-lock.json
 desktop.ini
+debug.log

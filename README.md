@@ -32,13 +32,16 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
 - Telegraf daemon management and configuration editing and deploying remotely via SaltStack.
 - Tenant by a group for influxdb data sources, Kapacitor alerts, etc.
 - Optionable Addon features
+  - **_VMWare_ Infrastructure** Viewer.
+  - K8s Infrastructure Diagram & Viewer. (In progress of development)
   - SWAN Router & SDPlex(Oncue) Features.
-    <p align="center">
-      <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/infrastructure.png"/>
-      <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/applications.png"/>
-      <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/agent_configure.png"/>
-      <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/swan.png"/>
-    </p>
+  <p align="center">
+    <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/infrastructure.png"/>
+    <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/VMWare.png"/>
+    <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/applications.png"/>
+    <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/agent_configure.png"/>
+    <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/swan.png"/>
+  </p>
 
 ## Change log
 

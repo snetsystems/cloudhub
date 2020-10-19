@@ -68,7 +68,7 @@ export const barPlotter = e => {
 
   // calculate bar width using some graphics math while
   // ensuring a bar is never smaller than one px, so it is always rendered
-  const barWidth = Math.max(Math.floor(2.0 / 3.0 * minSep), 1.0)
+  const barWidth = Math.max(Math.floor((2.0 / 3.0) * minSep), 1.0)
 
   const fillColors = []
   const strokeColors = g.getColors()
@@ -127,6 +127,28 @@ export const makeLegendStyles = (
   const graphRect = graphDiv.getBoundingClientRect()
   const legendRect = legendDiv.getBoundingClientRect()
 
+  const getParentPosition = (target: HTMLElement) => {
+    let currentParent = target
+    while (currentParent) {
+      if (
+        window.getComputedStyle(currentParent).getPropertyValue('transform') !==
+        'none'
+      ) {
+        break
+      }
+      currentParent = currentParent.parentElement
+    }
+
+    const parentTop =
+      (currentParent && currentParent.getBoundingClientRect().top) || 0
+
+    const parentLeft =
+      (currentParent && currentParent.getBoundingClientRect().left) || 0
+
+    return {parentTop, parentLeft}
+  }
+  const {parentTop, parentLeft} = getParentPosition(graphDiv)
+
   const normalizedLegendMouseX = legendMouseX > 0 ? legendMouseX : 0
   const mouseX = normalizedLegendMouseX + graphRect.left
   const halfLegendWidth = legendRect.width / 2
@@ -166,7 +188,8 @@ export const makeLegendStyles = (
   }
 
   return {
-    transform: `translate(${translateX}px, ${translateY}px)`,
+    transform: `translate(${translateX - parentLeft}px, ${translateY -
+      parentTop}px)`,
   }
 }
 
