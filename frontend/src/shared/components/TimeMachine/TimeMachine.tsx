@@ -46,6 +46,7 @@ import {
   QueryType,
   QueryUpdateState,
   Me,
+  TimeZones,
 } from 'src/types'
 import {SourceOption} from 'src/types/sources'
 import {Links, ScriptStatus} from 'src/types/flux'
@@ -90,6 +91,7 @@ interface PassedProps {
   queryStatus: QueryStatus
   onUpdateScriptStatus?: (status: ScriptStatus) => void
   refresh: RefreshRate
+  timeZone: TimeZones
 }
 
 interface State {
@@ -146,6 +148,7 @@ class TimeMachine extends PureComponent<Props, State> {
     const {
       script,
       timeRange,
+      timeZone,
       templates,
       onManualRefresh,
       timeMachineProportions,
@@ -183,6 +186,7 @@ class TimeMachine extends PureComponent<Props, State> {
           source={this.source}
           templates={templates}
           timeRange={timeRange}
+          timeZone={timeZone}
           sources={this.formattedSources}
           toggleFlux={this.toggleFlux}
           onManualRefresh={onManualRefresh}
@@ -596,6 +600,7 @@ const ConnectedTimeMachine = (
             onSetTimeMachineProportions={
               container.handleSetTimeMachineProportions
             }
+            timeZone={props.timeZone}
           />
         )
       }}

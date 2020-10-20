@@ -9,12 +9,13 @@ import {executeQuery as executeFluxQuery} from 'src/shared/apis/flux/query'
 import {renderTemplatesInScript} from 'src/flux/helpers/templates'
 
 // Types
-import {Query, Template, Source, TimeRange} from 'src/types'
+import {Query, Template, Source, TimeRange, TimeZones} from 'src/types'
 import {TimeSeriesResponse} from 'src/types/series'
 
 export const downloadInfluxQLCSV = async (
   queries: Query[],
-  templates: Template[]
+  templates: Template[],
+  timeZone: TimeZones
 ): Promise<void> => {
   const responses = await Promise.all(
     queries.map(query =>
@@ -22,7 +23,7 @@ export const downloadInfluxQLCSV = async (
     )
   )
 
-  const csv = await timeseriesToCSV(responses)
+  const csv = await timeseriesToCSV(responses, timeZone)
 
   downloadCSV(csv, csvName())
 }
@@ -50,7 +51,8 @@ export const downloadFluxCSV = async (
 }
 
 const timeseriesToCSV = async (
-  responses: TimeSeriesResponse[]
+  responses: TimeSeriesResponse[],
+  timeZone: TimeZones
 ): Promise<string> => {
   const wrapped = responses.map(response => ({response}))
   const tableResponse = await timeSeriesToTableGraph(wrapped)
@@ -68,7 +70,15 @@ const timeseriesToCSV = async (
   if (timeIndex > -1) {
     for (let i = 0; i < tableData.length; i++) {
       // Convert times to a (somewhat) human readable ISO8601 string
-      tableData[i][timeIndex] = new Date(tableData[i][timeIndex]).toISOString()
+      if (timeZone === 'utc') {
+        tableData[i][timeIndex] = moment(tableData[i][timeIndex])
+          .utc()
+          .format('YYYY-MM-DDTHH:mm:ssZ')
+      } else {
+        tableData[i][timeIndex] = moment(tableData[i][timeIndex]).format(
+          'YYYY-MM-DDTHH:mm:ssZ'
+        )
+      }
     }
   }
 
