@@ -14,7 +14,7 @@ import buildQueries from 'src/utils/buildQueriesForGraphs'
 // Types
 import * as QueriesModels from 'src/types/queries'
 import * as SourcesModels from 'src/types/sources'
-import {Template, QueryType} from 'src/types'
+import {Template, TimeZones, QueryType} from 'src/types'
 
 // Constants
 import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
@@ -34,6 +34,7 @@ interface Props {
   sourceSupportsFlux: boolean
   onSelectDynamicSource: () => void
   timeRange: QueriesModels.TimeRange
+  timeZone: TimeZones
   updateEditorTimeRange: (timeRange: QueriesModels.TimeRange) => void
   toggleFlux: (queryType: QueryType) => void
   toggleIsViewingRawData: () => void
@@ -47,6 +48,7 @@ const TimeMachineControls: SFC<Props> = ({
   queries,
   templates,
   timeRange,
+  timeZone,
   toggleFlux,
   isFluxSelected,
   isViewingRawData,
@@ -86,6 +88,7 @@ const TimeMachineControls: SFC<Props> = ({
       <CSVExporter
         script={script}
         source={source}
+        timeZone={timeZone}
         isFluxSelected={isFluxSelected}
         queries={buildQueries(queries, timeRange)}
         templates={templates}

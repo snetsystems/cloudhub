@@ -74,7 +74,7 @@ const SourceSelector: SFC<Props> = ({
         >
           <>
             Flux
-            <span className={`flux-source--sub`}>(Beta)</span>
+            <span className={`flux-source--sub`}>(Alpha)</span>
           </>
         </Radio.Button>
       </Radio>
