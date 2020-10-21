@@ -208,6 +208,7 @@ export class DataExplorer extends PureComponent<Props, State> {
             me={me}
             isUsingAuth={isUsingAuth}
             refresh={autoRefresh}
+            timeZone={timeZone}
           >
             {(activeEditorTab, onSetActiveEditorTab) => (
               <DEHeader
