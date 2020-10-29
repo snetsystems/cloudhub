@@ -341,4 +341,8 @@
   &.minimize:before {
     content: '\e964';
   }
+
+  &.filter:before {
+    content: '\e965';
+  }
 }
