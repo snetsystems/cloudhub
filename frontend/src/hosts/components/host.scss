@@ -165,3 +165,62 @@
   flex: 0 0 18px;
   margin-right: 3px;
 }
+
+.pod-name {
+  cursor: pointer;
+  color: #ce9178;
+
+  &:hover {
+    color: #e35833;
+  }
+}
+
+.kubernetes-header--bar {
+  display: flex;
+  align-items: center;
+  justify-self: auto;
+  padding: 5px 20px;
+  background-color: $g3-castle;
+
+  .kubernetes-header--bar-item {
+    margin-right: 5px;
+
+    &:last-child {
+      margin-right: 0px;
+      margin-left: auto;
+    }
+  }
+}
+
+.kubernetes-detail-display {
+  min-width: 300px;
+  padding: 10px 20px;
+  height: 100%;
+}
+
+.kubernetes-radio-btn--container {
+  margin: 10px 0px;
+}
+
+.kubernetes-editor--field {
+  background-color: $g2-kevlar;
+  padding: $ix-marg-b;
+  height: calc(100% - 90px);
+  border: $ix-border solid $g5-pepper;
+  border-radius: $radius;
+  &.focus {
+    border-color: $c-pool;
+    box-shadow: 0 0 6px 0 $c-pool;
+  }
+}
+
+.devider--bar {
+  background-color: $g2-kevlar;
+  color: white;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  margin: 20px 0 0;
+  font-weight: bold;
+}

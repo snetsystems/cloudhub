@@ -18,6 +18,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import GraphTips from 'src/shared/components/GraphTips'
 import VMHostPage from 'src/hosts/containers/VMHostsPage'
+import KubernetesPage from 'src/hosts/containers/KubernetesPage'
 
 // APIs
 import {
@@ -122,7 +123,7 @@ export class HostsPage extends PureComponent<Props, State> {
       proportions: [0.43, 0.57],
       selected: {lower: '', upper: ''},
       isVsphere: false,
-      activeEditorTab: 'Host',
+      activeEditorTab: 'Kubernetes',
     }
     this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
     this.onSetActiveEditorTab = this.onSetActiveEditorTab.bind(this)
@@ -265,9 +266,9 @@ export class HostsPage extends PureComponent<Props, State> {
           <Page.Header.Left>
             <Page.Title title="Infrastructure" />
           </Page.Header.Left>
-          <Page.Header.Center widthPixels={220}>
+          <Page.Header.Center widthPixels={320}>
             {isVsphere && (
-              <div className="radio-buttons radio-buttons--default radio-buttons--sm radio-buttons--stretch">
+              <Radio shape={ButtonShape.StretchToFit}>
                 <Radio.Button
                   id="hostspage-tab-Host"
                   titleText="Host"
@@ -286,7 +287,16 @@ export class HostsPage extends PureComponent<Props, State> {
                 >
                   VMware
                 </Radio.Button>
-              </div>
+                <Radio.Button
+                  id="hostspage-tab-Kubernetes"
+                  titleText="Kubernetes"
+                  value="Kubernetes"
+                  active={activeEditorTab === 'Kubernetes'}
+                  onClick={this.onSetActiveEditorTab}
+                >
+                  Kubernetes
+                </Radio.Button>
+              </Radio>
             )}
           </Page.Header.Center>
           <Page.Header.Right showSourceIndicator={true}>
@@ -311,8 +321,9 @@ export class HostsPage extends PureComponent<Props, State> {
           </Page.Header.Right>
         </Page.Header>
         <Page.Contents
+          className={`${activeEditorTab.toLowerCase()}-page`}
           scrollable={true}
-          fullWidth={activeEditorTab === 'VMware'}
+          fullWidth={activeEditorTab !== 'Host'}
         >
           {activeEditorTab === 'Host' ? (
             <Threesizer
@@ -320,14 +331,16 @@ export class HostsPage extends PureComponent<Props, State> {
               divisions={this.horizontalDivisions}
               onResize={this.handleResize}
             />
-          ) : (
+          ) : activeEditorTab === 'VMware' ? (
             <VMHostPage
               source={source}
               manualRefresh={this.props.manualRefresh}
               timeRange={this.state.timeRange}
               handleClearTimeout={this.props.handleClearTimeout}
             />
-          )}
+          ) : activeEditorTab === 'Kubernetes' ? (
+            <KubernetesPage />
+          ) : null}
         </Page.Contents>
       </Page>
     )

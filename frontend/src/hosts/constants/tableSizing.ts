@@ -106,3 +106,8 @@ export const VCENTER_VM_TABLE_SIZING = {
   OSWidth: '18%',
   StatusWidth: '18%',
 }
+
+export const KUBERNETES_BASICS_TABLE_SIZE = {
+  HeaderWidth: '40%',
+  DataWidth: '60%',
+}
