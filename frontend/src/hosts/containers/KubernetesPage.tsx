@@ -7,6 +7,9 @@ import _ from 'lodash'
 import KubernetesHeader from 'src/hosts/components/KubernetesHeader'
 import KubernetesContents from 'src/hosts/components/KubernetesContents'
 
+// Error
+import {ErrorHandling} from 'src/shared/decorators/errors'
+
 interface Props {}
 interface State {
   proportions: number[]
@@ -22,6 +25,7 @@ interface State {
   limits: string[]
 }
 
+@ErrorHandling
 class KubernetesPage extends PureComponent<Props, State> {
   private height = 40
 
