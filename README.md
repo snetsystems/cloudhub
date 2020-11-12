@@ -4,7 +4,7 @@
 
 **CloudHub** is **another branch** of an open-source web application derived from Influxdata's **_Chronograf_** written in Go and React.js that provides the tools to visualize your monitoring data and easily create alerting and automation rules.
 
-Therefore, CloudHub will be enhanced by adding our direction, such as automation of configuration management and monitoring the systems or applications over several Clouds.
+Therefore, CloudHub will be enhanced by adding our direction, such as automation of configuration management(via **_SaltStack_ Rest API**) and monitoring the systems or applications over several Clouds.
 
 CloudHub has been started with _Chronograf_ version **1.7.11**.
 
@@ -22,18 +22,19 @@ This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
 
 ## Key Differences against _Chronograf_ at this point(version).
 
-- Compose of directories.
-  - Divide as backend and frontend.
-- Easier debugging environment support without a proxy server by node.js.
-- For more Dev. Env., provide **Visual Studio Code** Env. including the setting.json and launch.json.
-- Window build & run Env. support.
+- Add **multi-tenant** feature across Users-Roles-Groups-DataSources.
 - Hosts to Infrastructures and basic charts added.
 - Visualization added by criteria of Applications.
-- Telegraf daemon management and configuration editing and deploying remotely via SaltStack.
-- Tenant by a group for influxdb data sources, Kapacitor alerts, etc.
-- Optionable Addon features
+- Integration a backend with **_SaltStack_**.
+  - Avoid CORS Problem: `Web UI > CloudHub Salt Proxy > Salt API Server > Salt Master > Salt Minions.`
+  - Telegraf agent management and configuration editing and deploying remotely via **_SaltStack_ Rest API**.
+- Web SSH Terminal feature.(beta)
+  - Connection to hosts using ssh protocol via CloudHub WebSocket Proxy.
+- Optionable Addon features.
   - **_VMWare_ Infrastructure** Viewer.
-  - K8s Infrastructure Diagram & Viewer. (In progress of development)
+    - via **_VSphere_** API and **_Salt_**
+  - **_K8s Infrastructure_** Diagram & Viewer. (In progress of implementation)
+    - via customized **_Salt's Kuberetes_** Module.
   - SWAN Router & SDPlex(Oncue) Features.
   <p align="center">
     <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/infrastructure.png"/>
