@@ -25,9 +25,14 @@ interface Props {
   height: number
 }
 
+interface State {
+  toolipIsActive: boolean
+  toolipPosition: {top: number; right: number}
+}
+
 const dummyData = require('src/hosts/containers/flare-2.json')
 
-class KubernetesContents extends PureComponent<Props> {
+class KubernetesContents extends PureComponent<Props, State> {
   private myRef = createRef<HTMLDivElement>()
 
   private containerStyles = {
@@ -38,14 +43,20 @@ class KubernetesContents extends PureComponent<Props> {
 
   constructor(props: Props) {
     super(props)
+    this.state = {
+      toolipIsActive: false,
+      toolipPosition: undefined,
+    }
   }
 
   public componentDidMount() {
     this.drawChart()
   }
 
-  public drawChart() {
-    const dimensions = this.myRef.current.getBoundingClientRect()
+  public drawChart = () => {
+    const _this = this
+    const dimensions = _this.myRef.current.getBoundingClientRect()
+
     const data = d3
       .pack()
       .size([dimensions.width, dimensions.height])
@@ -82,6 +93,7 @@ class KubernetesContents extends PureComponent<Props> {
       .outerRadius(d => d)
       .startAngle(-Math.PI)
       .endAngle(Math.PI)
+
     const svg = d3
       .create('svg')
       .attr('width', '100%')
@@ -89,6 +101,7 @@ class KubernetesContents extends PureComponent<Props> {
       .style('font', '10px sans-serif')
       .style('overflow', 'visible')
       .attr('text-anchor', 'middle')
+
     const node = svg
       .append('g')
       .attr('pointer-events', 'all')
@@ -96,6 +109,7 @@ class KubernetesContents extends PureComponent<Props> {
       .data(data.descendants().slice(1))
       .join('g')
       .attr('transform', d => `translate(${d.x},${d.y})`)
+
     node
       .append('path')
       .attr('id', d => d.data.name)
@@ -117,18 +131,25 @@ class KubernetesContents extends PureComponent<Props> {
       })
     node
       .filter(d => d.height === 0)
+      .on('mouseleave', function() {
+        const path = this.children[1]
+
+        d3.select(path).attr('fill', 'white')
+      })
       .append('path')
       .attr('class', 'hexagon')
       .attr('d', d => generateHexagon(d.r + 8))
       .attr('stroke', 'black')
       .attr('fill', d => (d.children ? 'none' : 'white'))
+      .attr('data-cpu', '6%')
+      .attr('data-name', d => d.data.name)
       .on('click', function() {
-        d3.select(this).attr('fill', 'red')
+        d3.selectAll('path').classed('focuse', false)
+        d3.select(this).classed('focuse', true)
+        console.log(this)
+        _this.onClickNode(this)
       })
-      .on('mouseout', function() {
-        console.log('node mouseout')
-        d3.select(this).attr('fill', 'white')
-      })
+
     node
       .filter(d => d.height !== 0)
       .append('text')
@@ -137,15 +158,121 @@ class KubernetesContents extends PureComponent<Props> {
       .attr('xlink:href', d => '#' + d.data.name)
       .attr('startOffset', '50%')
       .attr('font-size', d => (d.height == 2 ? '15px' : '12px'))
+      .attr('data-name', d => d.data.name)
       .text(d => d.data.name)
-    //document.querySelector('.hexagon').
+
     const autoBox = () => {
       this.myRef.current.appendChild(svg.node())
       const {x, y, width, height} = svg.node().getBBox()
       this.myRef.current.removeChild(svg.node())
       return [x, y, width, height]
     }
+
     return this.myRef.current.append(svg.attr('viewBox', `${autoBox()}`).node())
+  }
+
+  private getParent = target => {
+    let currentParent = target.parentNode
+
+    while (currentParent) {
+      if (currentParent.parentNode.tagName === 'svg') {
+        break
+      } else {
+        currentParent = currentParent.parentNode
+      }
+    }
+
+    return currentParent.parentNode
+  }
+
+  private onClickNode = (target: HTMLElement) => {
+    const targetPosition = target.parentElement
+      .getAttribute('transform')
+      .match(/(\d+\.\d+|\d+)/g)
+    const [tagetPositionX, targetPositionY] = targetPosition
+
+    d3.select(target).attr('fill', 'red')
+    const containerG = this.getParent(target)
+
+    d3.select(containerG)
+      .select('foreignObject')
+      .remove()
+    d3
+      .select(containerG)
+      .append('foreignObject')
+      .attr('x', function() {
+        let x = parseFloat(tagetPositionX)
+
+        return x + 16
+      })
+      .attr('y', function() {
+        var y = parseInt(targetPositionY)
+
+        return y - 18.5
+      })
+      .attr('width', 200)
+      .attr('height', 120)
+      .attr('overflow', 'visible').html(`
+        <div class="flux-functions-toolbar--tooltip" style="transform: translateY(0px); width: 100%;">
+          <div class="flux-functions-toolbar--tooltip-contents" style="flex-direction: column; align-items: unset; padding: 5px">
+            <button class="flux-functions-toolbar--tooltip-dismiss tooltip-dismiss"></button>
+            <div>
+              <button class="button button-sm button-default button-square tooltip-pin" title="Pin" tabindex="0" style="height: 20px; width: 20px; line-height: 16px;">
+                <span class="button-icon icon pin" style="font-size: 10px;"></span>
+              </button>
+            </div>
+            <div class="hosts-table--tbody">
+              <div class="hosts-table--tr">
+                <div class="hosts-table--th align--start" style="width: 40%; font-size: 10px; padding: 4px 2px">CPU</div>
+                <div class="hosts-table--td align--start" style="width: 60%; white-space: unset; padding: 0 0; font-size: 10px;">
+                  <div class="UsageIndacator-container">
+                    <div class="UsageIndacator-value">6 %</div>
+                  <div class="UsageIndacator"></div>
+                </div>
+                </div>
+              </div>
+              <div class="hosts-table--tr">
+                <div class="hosts-table--th align--start" style="width: 40%; font-size: 10px; padding: 4px 2px" >MEMORY</div>
+                <div class="hosts-table--td align--start" style="width: 60%; white-space: unset; padding: 0 0; font-size: 10px;">
+                <div class="UsageIndacator-container">
+                  <div class="UsageIndacator-value UsageIndacator--caution UsageIndacator--warning UsageIndacator--danger">94 %</div>
+                  <div class="UsageIndacator UsageIndacator--caution UsageIndacator--warning UsageIndacator--danger"></div>
+                </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+    `)
+
+    d3.select('.tooltip-dismiss').on('click', function() {
+      d3.select('foreignObject').remove()
+      d3.select('path.focuse:not(.pin)').classed('focuse', false)
+      this.onDismissTooltip()
+    })
+
+    d3.select('.tooltip-pin').on('click', function(event) {
+      console.log('pin event', event)
+      console.dir('pin this', this)
+      // d3.select('foreignObject')
+      this.onPinToolip()
+    })
+  }
+
+  private onMouseoutNode = () => {
+    this.onDismissTooltip()
+  }
+
+  private onOpenTooltip = () => {
+    this.setState({toolipIsActive: true})
+  }
+
+  private onDismissTooltip = () => {
+    console.log('dismiss tooltip')
+  }
+
+  private onPinToolip = () => {
+    console.log('pin tooltip')
   }
 
   public render() {
