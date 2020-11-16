@@ -15,13 +15,13 @@ class KubernetesRawData extends PureComponent<Props> {
     const {script} = this.props
     const options = {
       tabIndex: 1,
-      mode: 'flux',
       readonly: false,
       lineNumbers: true,
       autoRefresh: true,
-      theme: 'flux',
       completeSingle: false,
       lineWrapping: true,
+      mode: 'yaml',
+      theme: 'yaml',
     }
 
     return (

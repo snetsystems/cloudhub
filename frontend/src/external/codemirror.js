@@ -5,6 +5,7 @@ import {
   modeInfluxQLReadOnly,
   modeMarkdown,
   modeAgentConf,
+  modeYaml,
   modeLogger,
 } from 'src/shared/constants/codeMirrorModes'
 import 'codemirror/addon/hint/show-hint'
@@ -389,3 +390,4 @@ CodeMirror.defineSimpleMode('influxQLReadOnly', modeInfluxQLReadOnly)
 CodeMirror.defineSimpleMode('markdown', modeMarkdown)
 CodeMirror.defineSimpleMode('agentConf', modeAgentConf)
 CodeMirror.defineSimpleMode('logger', modeLogger)
+CodeMirror.defineSimpleMode('yaml', modeYaml)

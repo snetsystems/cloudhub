@@ -454,6 +454,68 @@ export const modeAgentConf = {
   ],
 }
 
+export const modeYaml = {
+  // The start state contains the rules that are intially used
+  start: [
+    {
+      regex: /\>\-\n\s*/,
+      token: 'literal-block',
+    },
+    {
+      regex: /^\s*[\$A-Za-z0-9_-]+\:/,
+      token: 'key',
+    },
+    {
+      regex: /^\s-\s*[\$A-Za-z0-9_-]+\:/,
+      token: 'array',
+    },
+    {
+      regex: /(\{|\})/,
+      token: 'object-bracelet',
+    },
+    {
+      regex: /[\:\s](\d+$)/,
+      token: 'number',
+    },
+    {
+      regex: /[^:\s]\d+\.\d+\.\d+\.\d+$/,
+      token: 'ip',
+    },
+    {
+      regex: / (y|yes|n|no|true|false|on|off|'true'|'false'|'True'|'False'|'TRUE'|'FALSE')$/,
+      token: 'boolean',
+    },
+    {
+      regex: /\[" "\]" ":\s+[|>]" "^\s*- /,
+      token: 'array',
+    },
+    {
+      regex: /(^| )!!(binary|bool|float|int|map|null|omap|seq|set|str) /,
+      token: 'reserved',
+    },
+    {
+      regex: /#.*$/,
+      token: 'comment',
+    },
+    {
+      regex: /['\"][^['\"]]*$/,
+      token: 'none-closed-quote',
+    },
+    {
+      regex: /['\"].*['\"]/,
+      token: 'closed-quote',
+    },
+    {
+      regex: /:( |$)/,
+      token: 'equal-sign',
+    },
+    {
+      regex: /[\:\s](null|undifined)/,
+      token: 'null',
+    },
+  ],
+}
+
 export const modeLogger = {
   // The start state contains the rules that are intially used
   start: [
