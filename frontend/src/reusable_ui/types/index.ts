@@ -139,6 +139,7 @@ export enum IconFont {
   Stop = 'stop',
   Zap = 'zap',
   Filter = 'filter',
+  Pin = 'pin',
 }
 
 export enum Columns {
