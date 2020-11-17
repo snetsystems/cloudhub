@@ -106,6 +106,24 @@ class KubernetesContents extends PureComponent<Props, State> {
       .style('overflow', 'visible')
       .attr('text-anchor', 'middle')
 
+    const glow = svg
+      .append('defs')
+      .append('filter')
+      .attr('id', 'glow')
+      .attr('width', '200%')
+      .attr('height', '200%')
+      .attr('x', '-50%')
+      .attr('y', '-50%')
+
+    glow
+      .append('feGaussianBlur')
+      .attr('stdDeviation', '10')
+      .attr('result', 'coloredBlur')
+
+    const glowMerge = glow.append('feMerge')
+    glowMerge.append('feMergeNode').attr('in', 'coloredBlur')
+    glowMerge.append('feMergeNode').attr('in', 'SourceGraphic')
+
     const node = svg
       .append('g')
       .attr('pointer-events', 'all')
@@ -209,6 +227,11 @@ class KubernetesContents extends PureComponent<Props, State> {
     const [tagetPositionX, targetPositionY] = targetPosition
     const containerG = this.getParent(target)
 
+    d3.select('svg')
+      .selectAll('path')
+      .style('filter', null)
+
+    d3.select(target).style('filter', 'url("#glow")')
     d3.select(containerG)
       .select('foreignObject')
       .remove()
@@ -270,14 +293,12 @@ class KubernetesContents extends PureComponent<Props, State> {
 
     d3.select('.tooltip-dismiss').on('click', function() {
       d3.select('foreignObject').remove()
+      d3.select(target).style('filter', null)
       d3.select('path.focuse:not(.pin)').classed('focuse', false)
       _this.onDismissTooltip()
     })
 
-    d3.select('.tooltip-pin').on('click', function(event) {
-      console.log('pin event', event)
-      console.dir('pin this', this)
-      // d3.select('foreignObject')
+    d3.select('.tooltip-pin').on('click', function() {
       _this.onPinToolip()
     })
   }
