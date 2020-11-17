@@ -14,6 +14,7 @@ import KubernetesRawData from 'src/hosts/components/KubernetesRawData'
 // Constants
 import {HANDLE_VERTICAL} from 'src/shared/constants'
 import {KUBERNETES_BASICS_TABLE_SIZE} from 'src/hosts/constants/tableSizing'
+import chroma from 'chroma-js'
 
 interface Props {
   handleOnSetActiveEditorTab: (tab: string) => void
@@ -31,15 +32,17 @@ interface State {
 }
 
 const dummyData = require('src/hosts/containers/flare-2.json')
-
 class KubernetesContents extends PureComponent<Props, State> {
   private myRef = createRef<HTMLDivElement>()
-
   private containerStyles = {
     width: '100%',
     height: '100%',
     backgroundColor: '#292933',
   }
+
+  private customChroma = chroma
+    .scale(['#30e7f1', '#00cc2c', '#ff9e00', '#ff0000'])
+    .mode('lrgb')
 
   constructor(props: Props) {
     super(props)
@@ -87,6 +90,7 @@ class KubernetesContents extends PureComponent<Props, State> {
         'z'
       return hexagonPath
     }
+
     const circle = d3
       .arc()
       .innerRadius(0)
@@ -133,20 +137,32 @@ class KubernetesContents extends PureComponent<Props, State> {
       .filter(d => d.height === 0)
       .on('mouseleave', function() {
         const path = this.children[1]
+        const target = d3.select(path)
+        const cpu = target.attr('data-testCPU')
+        const memory = target.attr('data-testMemory')
+        const pick = cpu > memory ? cpu : memory
 
-        d3.select(path).attr('fill', 'white')
+        target.attr('fill', _this.customChroma(pick / 100))
       })
       .append('path')
       .attr('class', 'hexagon')
       .attr('d', d => generateHexagon(d.r + 8))
       .attr('stroke', 'black')
-      .attr('fill', d => (d.children ? 'none' : 'white'))
-      .attr('data-cpu', '6%')
+      .attr('fill', d =>
+        d.children
+          ? 'none'
+          : (() => {
+              const cpu = d.data.testCPU
+              const memory = d.data.testMemory
+              const pick = cpu > memory ? cpu : memory
+
+              return _this.customChroma(pick / 100)
+            })()
+      )
+      .attr('data-testCPU', d => d.data.testCPU)
+      .attr('data-testMemory', d => d.data.testMemory)
       .attr('data-name', d => d.data.name)
       .on('click', function() {
-        d3.selectAll('path').classed('focuse', false)
-        d3.select(this).classed('focuse', true)
-        console.log(this)
         _this.onClickNode(this)
       })
 
@@ -186,12 +202,11 @@ class KubernetesContents extends PureComponent<Props, State> {
   }
 
   private onClickNode = (target: HTMLElement) => {
+    const _this = this
     const targetPosition = target.parentElement
       .getAttribute('transform')
       .match(/(\d+\.\d+|\d+)/g)
     const [tagetPositionX, targetPositionY] = targetPosition
-
-    d3.select(target).attr('fill', 'red')
     const containerG = this.getParent(target)
 
     d3.select(containerG)
@@ -210,8 +225,8 @@ class KubernetesContents extends PureComponent<Props, State> {
 
         return y - 18.5
       })
-      .attr('width', 200)
-      .attr('height', 120)
+      .attr('width', 235)
+      .attr('height', 76)
       .attr('overflow', 'visible').html(`
         <div class="flux-functions-toolbar--tooltip" style="transform: translateY(0px); width: 100%;">
           <div class="flux-functions-toolbar--tooltip-contents" style="flex-direction: column; align-items: unset; padding: 5px">
@@ -226,8 +241,12 @@ class KubernetesContents extends PureComponent<Props, State> {
                 <div class="hosts-table--th align--start" style="width: 40%; font-size: 10px; padding: 4px 2px">CPU</div>
                 <div class="hosts-table--td align--start" style="width: 60%; white-space: unset; padding: 0 0; font-size: 10px;">
                   <div class="UsageIndacator-container">
-                    <div class="UsageIndacator-value">6 %</div>
-                  <div class="UsageIndacator"></div>
+                    <div class="UsageIndacator-value" >${d3
+                      .select(target)
+                      .attr('data-testCPU')} %</div>
+                  <div class="UsageIndacator" style="background: ${_this.customChroma(
+                    d3.select(target).attr('data-testCPU') / 100
+                  )}"></div>
                 </div>
                 </div>
               </div>
@@ -235,8 +254,12 @@ class KubernetesContents extends PureComponent<Props, State> {
                 <div class="hosts-table--th align--start" style="width: 40%; font-size: 10px; padding: 4px 2px" >MEMORY</div>
                 <div class="hosts-table--td align--start" style="width: 60%; white-space: unset; padding: 0 0; font-size: 10px;">
                 <div class="UsageIndacator-container">
-                  <div class="UsageIndacator-value UsageIndacator--caution UsageIndacator--warning UsageIndacator--danger">94 %</div>
-                  <div class="UsageIndacator UsageIndacator--caution UsageIndacator--warning UsageIndacator--danger"></div>
+                  <div class="UsageIndacator-value">${d3
+                    .select(target)
+                    .attr('data-testMemory')} %</div>
+                  <div class="UsageIndacator" style="background: ${_this.customChroma(
+                    d3.select(target).attr('data-testMemory') / 100
+                  )}"></div>
                 </div>
                 </div>
               </div>
@@ -248,24 +271,24 @@ class KubernetesContents extends PureComponent<Props, State> {
     d3.select('.tooltip-dismiss').on('click', function() {
       d3.select('foreignObject').remove()
       d3.select('path.focuse:not(.pin)').classed('focuse', false)
-      this.onDismissTooltip()
+      _this.onDismissTooltip()
     })
 
     d3.select('.tooltip-pin').on('click', function(event) {
       console.log('pin event', event)
       console.dir('pin this', this)
       // d3.select('foreignObject')
-      this.onPinToolip()
+      _this.onPinToolip()
     })
   }
 
-  private onMouseoutNode = () => {
-    this.onDismissTooltip()
-  }
+  // private onMouseoutNode = () => {
+  //   this.onDismissTooltip()
+  // }
 
-  private onOpenTooltip = () => {
-    this.setState({toolipIsActive: true})
-  }
+  // private onOpenTooltip = () => {
+  //   this.setState({toolipIsActive: true})
+  // }
 
   private onDismissTooltip = () => {
     console.log('dismiss tooltip')
