@@ -147,32 +147,9 @@ const Shell = (props: Props) => {
     fitAddon.fit()
   }, 100)
 
-  // resize call
-  // terminal resize info send to target
-  // const onTerminalResize = () => {
-  //   socket.send(
-  //     new TextEncoder().encode(
-  //       '\x00' +
-  //         JSON.stringify({Flag: 'resize', Cols: term.cols, Rows: term.rows})
-  //     )
-  //   )
-  // }
-
   // input string send to target
   const onTerminalSendString = (str: string) => {
     socket.send(new TextEncoder().encode('\x00' + str))
-    // resize call
-    // socket.send(
-    //   new TextEncoder().encode(
-    //     '\x00' +
-    //       JSON.stringify({
-    //         Flag: 'stdin',
-    //         Data: str,
-    //         Cols: term.cols,
-    //         Rows: term.rows,
-    //       })
-    //   )
-    // )
   }
 
   // terminal init
@@ -186,7 +163,17 @@ const Shell = (props: Props) => {
 
     term.onData((data: string) => onTerminalSendString(data))
     // resize call
-    // term.onResize(() => onTerminalResize())
+    term.onResize(evt => {
+      socket.send(
+        new TextEncoder().encode(
+          '\x01' +
+            JSON.stringify({
+              cols: evt.cols,
+              rows: evt.rows,
+            })
+        )
+      )
+    })
 
     // custom key event handler
     term.attachCustomKeyEventHandler(function(e) {
@@ -230,7 +217,7 @@ const Shell = (props: Props) => {
     }
 
     socket.onclose = function(e) {
-      if (e.code === 4501) {
+      if (e.code === 1007) {
         props.notify(notifyConnectShellFailed(e))
       }
 
