@@ -1,5 +1,6 @@
 // Library
 import React, {PureComponent, createRef} from 'react'
+import _ from 'lodash'
 import * as d3 from 'd3'
 
 // Component
@@ -121,24 +122,6 @@ class KubernetesContents extends PureComponent<Props, State> {
       .style('overflow', 'visible')
       .attr('text-anchor', 'middle')
 
-    const glow = svg
-      .append('defs')
-      .append('filter')
-      .attr('id', 'glow')
-      .attr('width', '200%')
-      .attr('height', '200%')
-      .attr('x', '-50%')
-      .attr('y', '-50%')
-
-    glow
-      .append('feGaussianBlur')
-      .attr('stdDeviation', '10')
-      .attr('result', 'coloredBlur')
-
-    const glowMerge = glow.append('feMerge')
-    glowMerge.append('feMergeNode').attr('in', 'coloredBlur')
-    glowMerge.append('feMergeNode').attr('in', 'SourceGraphic')
-
     const node = svg
       .append('g')
       .attr('pointer-events', 'all')
@@ -212,8 +195,19 @@ class KubernetesContents extends PureComponent<Props, State> {
       .attr('data-testCPU', d => d.data.testCPU)
       .attr('data-testMemory', d => d.data.testMemory)
       .attr('data-name', d => d.data.name)
+      .attr('id', d => 'Node' + d.data.name)
+      .attr('data-relation', d => d.data?.relationNodes)
       .on('click', function() {
+        d3.selectAll('.relation-focuse').classed('relation-focuse', false)
+
         _this.onClickNode(this)
+        d3.select(this).classed('relation-focuse', true)
+
+        let relation = d3.select(this).attr('data-relation')
+
+        _.map(relation.split(','), node => {
+          d3.select(`#Node${node}`).classed('relation-focuse', true)
+        })
       })
 
     node
@@ -258,12 +252,10 @@ class KubernetesContents extends PureComponent<Props, State> {
       .match(/(\d+\.\d+|\d+)/g)
     const [tagetPositionX, targetPositionY] = targetPosition
     const containerG = this.getParent(target)
-
     d3.select('svg')
       .selectAll('path')
       .style('filter', null)
 
-    d3.select(target).style('filter', 'url("#glow")')
     d3.select(containerG)
       .select('foreignObject')
       .remove()
@@ -325,8 +317,10 @@ class KubernetesContents extends PureComponent<Props, State> {
 
     d3.select('.tooltip-dismiss').on('click', function() {
       d3.select('foreignObject').remove()
-      d3.select(target).style('filter', null)
-      d3.select('path.focuse:not(.pin)').classed('focuse', false)
+      d3.selectAll('path.relation-focuse:not(.pin)').classed(
+        'relation-focuse',
+        false
+      )
       _this.onDismissTooltip()
     })
 
