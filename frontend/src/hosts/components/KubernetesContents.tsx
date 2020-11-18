@@ -44,6 +44,21 @@ class KubernetesContents extends PureComponent<Props, State> {
     .scale(['#30e7f1', '#00cc2c', '#ff9e00', '#ff0000'])
     .mode('lrgb')
 
+  private clusterTypeColorset = {
+    namespace: '#7f7f7f',
+    job: '#fed2d2',
+    cronJob: '#fed2d2',
+    node: '#2e75b6',
+    replicaSet: '#e2f0d9',
+    replicaControll: '#9dc3e6',
+    statefullSet: '#a27bb3',
+    deployment: '#ffd966',
+    daemonSet: '#74b8ba',
+    statusDead: '#7f7f7f',
+    service: '#0033cc',
+    ingress: '#0033cc',
+  }
+
   constructor(props: Props) {
     super(props)
     this.state = {
@@ -137,19 +152,36 @@ class KubernetesContents extends PureComponent<Props, State> {
       .attr('id', d => d.data.name)
       .attr('d', d => circle(d.r + 4))
       .attr('display', 'none')
+
     node
       .filter(d => d.height !== 0)
       .append('circle')
       .attr('class', 'nodeWrapper')
       .attr('r', d => d.r)
-      .attr('stroke', 'black')
-      .attr('fill', d => (d.children ? 'white' : 'black'))
+      .attr('fill', d => _this.clusterTypeColorset[d.data.type])
+      .attr('data-type', d => d.data.type)
       .attr('pointer-events', d => (d.children ? 'all' : 'none'))
       .on('click', function() {
-        d3.select(this).attr('fill', 'red')
+        d3.select(this).attr(
+          'stroke',
+          chroma(
+            _this.clusterTypeColorset[d3.select(this).attr('data-type')]
+          ).darken(3)
+        )
+        d3.select(this).attr('stroke-width', '3px')
+        d3.select(this).attr(
+          'fill',
+          chroma(
+            _this.clusterTypeColorset[d3.select(this).attr('data-type')]
+          ).darken()
+        )
       })
       .on('mouseout', function() {
-        d3.select(this).attr('fill', 'white')
+        d3.select(this).attr('stroke', null)
+        d3.select(this).attr(
+          'fill',
+          _this.clusterTypeColorset[d3.select(this).attr('data-type')]
+        )
       })
     node
       .filter(d => d.height === 0)
