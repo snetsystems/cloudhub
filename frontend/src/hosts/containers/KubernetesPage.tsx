@@ -23,6 +23,7 @@ interface State {
   namespaces: string[]
   nodes: string[]
   limits: string[]
+  focuseNode: string
 }
 
 @ErrorHandling
@@ -43,7 +44,8 @@ class KubernetesPage extends PureComponent<Props, State> {
       labelValue: '',
       namespaces: ['ns1', 'ns2', 'ns3'],
       nodes: ['n1', 'n2', 'n3'],
-      limits: ['l1', 'l2', 'l3'],
+      limits: ['Unlimited', '20', '50', '100'],
+      focuseNode: '',
     }
   }
 
@@ -60,6 +62,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       proportions,
       activeEditorTab,
       script,
+      focuseNode,
     } = this.state
 
     return (
@@ -86,7 +89,9 @@ class KubernetesPage extends PureComponent<Props, State> {
           activeTab={activeEditorTab}
           handleOnSetActiveEditorTab={this.onSetActiveEditorTab}
           handleOnClickPodName={this.onClickPodName}
+          handleOnClickVisualizePod={this.onClickVisualizePod}
           handleResize={this.handleResize}
+          focuseNode={focuseNode}
           script={script}
           height={this.height}
         />
@@ -126,6 +131,10 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   private onClickPodName = (): void => {
     console.log('onClick Pod Name')
+  }
+
+  private onClickVisualizePod = (focuseNode: string): void => {
+    this.setState({focuseNode})
   }
 
   private handleResize = (proportions: number[]) => {

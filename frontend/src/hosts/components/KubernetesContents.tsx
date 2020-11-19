@@ -20,11 +20,13 @@ import chroma from 'chroma-js'
 interface Props {
   handleOnSetActiveEditorTab: (tab: string) => void
   handleOnClickPodName: () => void
+  handleOnClickVisualizePod: (target: string) => void
   handleResize: (proportions: number[]) => void
   proportions: number[]
   activeTab: string
   script: string
   height: number
+  focuseNode: string
 }
 
 interface State {
@@ -232,9 +234,11 @@ class KubernetesContents extends PureComponent<Props, State> {
           })
         }
       })
+      .on('click', function() {
+        _this.props.handleOnClickVisualizePod(d3.select(this).attr('data-name'))
+      })
       .on('dblclick', function() {
         _this.tooglePinedTooltip(this)
-        console.log('dbclick')
       })
 
     node
@@ -427,6 +431,7 @@ class KubernetesContents extends PureComponent<Props, State> {
       handleOnClickPodName,
       activeTab,
       script,
+      focuseNode,
     } = this.props
     const {HeaderWidth, DataWidth} = KUBERNETES_BASICS_TABLE_SIZE
 
@@ -444,7 +449,7 @@ class KubernetesContents extends PureComponent<Props, State> {
               <TableBodyRowItem
                 title={
                   <div className="pod-name" onClick={handleOnClickPodName}>
-                    {`kubernetes-dashboard-78fcd5ddd-4j4s4`}
+                    {focuseNode}
                   </div>
                 }
                 width={DataWidth}
