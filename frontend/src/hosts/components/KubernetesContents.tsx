@@ -197,17 +197,44 @@ class KubernetesContents extends PureComponent<Props, State> {
       .attr('data-name', d => d.data.name)
       .attr('id', d => 'Node' + d.data.name)
       .attr('data-relation', d => d.data?.relationNodes)
-      .on('click', function() {
-        d3.selectAll('.relation-focuse').classed('relation-focuse', false)
+      .on('mouseover', function() {
+        _this.onOpenTooltip(this)
+        d3.selectAll('.relation-focuse:not(.pined)').classed(
+          'relation-focuse',
+          false
+        )
 
-        _this.onClickNode(this)
         d3.select(this).classed('relation-focuse', true)
 
         let relation = d3.select(this).attr('data-relation')
+        if (relation) {
+          _.map(relation.split(','), node => {
+            d3.select(`#Node${node}`).classed('relation-focuse', true)
+          })
+        }
+      })
+      .on('mouseleave', function() {
+        _this.onCloseTooltip()
+        const target = d3.select(this)
 
-        _.map(relation.split(','), node => {
-          d3.select(`#Node${node}`).classed('relation-focuse', true)
-        })
+        const isPined = target.attr('class').match(/pined/g)
+
+        if (isPined) {
+          return
+        }
+        target.classed('relation-focuse', false)
+
+        const relation = target.attr('data-relation')
+        if (relation) {
+          _.forEach(relation.split(','), node => {
+            d3.select(`#Node${node}`).classed('relation-focuse', false)
+            d3.select(`#Node${node}`).classed('pined', false)
+          })
+        }
+      })
+      .on('dblclick', function() {
+        _this.tooglePinedTooltip(this)
+        console.log('dbclick')
       })
 
     node
@@ -231,11 +258,11 @@ class KubernetesContents extends PureComponent<Props, State> {
     return this.myRef.current.append(svg.attr('viewBox', `${autoBox()}`).node())
   }
 
-  private getParent = target => {
+  private getParent = target => tagname => {
     let currentParent = target.parentNode
 
     while (currentParent) {
-      if (currentParent.parentNode.tagName === 'svg') {
+      if (currentParent.parentNode.tagName === tagname) {
         break
       } else {
         currentParent = currentParent.parentNode
@@ -245,23 +272,19 @@ class KubernetesContents extends PureComponent<Props, State> {
     return currentParent.parentNode
   }
 
-  private onClickNode = (target: HTMLElement) => {
+  private onOpenTooltip = (target: HTMLElement) => {
     const _this = this
+
     const targetPosition = target.parentElement
       .getAttribute('transform')
       .match(/(\d+\.\d+|\d+)/g)
     const [tagetPositionX, targetPositionY] = targetPosition
-    const containerG = this.getParent(target)
-    d3.select('svg')
-      .selectAll('path')
-      .style('filter', null)
+    const containerG = this.getParent(target)('svg')
 
-    d3.select(containerG)
-      .select('foreignObject')
-      .remove()
     d3
       .select(containerG)
       .append('foreignObject')
+      .attr('data-for', d3.select(target).attr('id'))
       .attr('x', function() {
         let x = parseFloat(tagetPositionX)
 
@@ -275,15 +298,16 @@ class KubernetesContents extends PureComponent<Props, State> {
       .attr('width', 235)
       .attr('height', 76)
       .attr('overflow', 'visible').html(`
-        <div class="flux-functions-toolbar--tooltip" style="transform: translateY(0px); width: 100%;">
-          <div class="flux-functions-toolbar--tooltip-contents" style="flex-direction: column; align-items: unset; padding: 5px">
-            <button class="flux-functions-toolbar--tooltip-dismiss tooltip-dismiss"></button>
-            <div>
-              <button class="button button-sm button-default button-square tooltip-pin" title="Pin" tabindex="0" style="height: 20px; width: 20px; line-height: 16px;">
-                <span class="button-icon icon pin" style="font-size: 10px;"></span>
-              </button>
-            </div>
+        <div class="kubernetes-toolbar--tooltip">
+          <div class="kubernetes-toolbar--tooltip-contents">
             <div class="hosts-table--tbody">
+            <div class="hosts-table--tr">
+                <div class="hosts-table--th align--start" style="width: 40%; font-size: 10px; padding: 4px 2px">Name</div>
+                <div class="hosts-table--td align--start" style="width: 60%; white-space: unset; padding: 0 0; font-size: 10px;">
+                  <strong>${d3.select(target).attr('data-name')}</strong>
+                </div>
+                </div>
+              </div>
               <div class="hosts-table--tr">
                 <div class="hosts-table--th align--start" style="width: 40%; font-size: 10px; padding: 4px 2px">CPU</div>
                 <div class="hosts-table--td align--start" style="width: 60%; white-space: unset; padding: 0 0; font-size: 10px;">
@@ -298,7 +322,7 @@ class KubernetesContents extends PureComponent<Props, State> {
                 </div>
               </div>
               <div class="hosts-table--tr">
-                <div class="hosts-table--th align--start" style="width: 40%; font-size: 10px; padding: 4px 2px" >MEMORY</div>
+                <div class="hosts-table--th align--start" style="width: 40%; font-size: 10px; padding: 4px 2px" >Memory</div>
                 <div class="hosts-table--td align--start" style="width: 60%; white-space: unset; padding: 0 0; font-size: 10px;">
                 <div class="UsageIndacator-container">
                   <div class="UsageIndacator-value">${d3
@@ -314,35 +338,41 @@ class KubernetesContents extends PureComponent<Props, State> {
           </div>
         </div>
     `)
-
-    d3.select('.tooltip-dismiss').on('click', function() {
-      d3.select('foreignObject').remove()
-      d3.selectAll('path.relation-focuse:not(.pin)').classed(
-        'relation-focuse',
-        false
-      )
-      _this.onDismissTooltip()
-    })
-
-    d3.select('.tooltip-pin').on('click', function() {
-      _this.onPinToolip()
-    })
   }
 
-  // private onMouseoutNode = () => {
-  //   this.onDismissTooltip()
-  // }
-
-  // private onOpenTooltip = () => {
-  //   this.setState({toolipIsActive: true})
-  // }
-
-  private onDismissTooltip = () => {
-    console.log('dismiss tooltip')
+  private onCloseTooltip = () => {
+    d3.select('foreignObject:not(.pined)').remove()
   }
 
-  private onPinToolip = () => {
-    console.log('pin tooltip')
+  private tooglePinedTooltip = target => {
+    const pinTarget = d3.select(target)
+    const beforePinTarget = d3.select('.pined')
+    const isPined = !pinTarget.attr('class').match(/pined/g)
+    const isBeforePined = !beforePinTarget.empty()
+
+    if (isBeforePined) {
+      beforePinTarget.classed('pined', false)
+      beforePinTarget.classed('relation-focuse', false)
+
+      const beforeRelation = beforePinTarget.attr('data-relation')
+      if (beforeRelation) {
+        _.forEach(beforeRelation.split(','), node => {
+          d3.select(`#Node${node}`).classed('relation-focuse', false)
+          d3.select(`#Node${node}`).classed('pined', false)
+        })
+      }
+    }
+
+    pinTarget.classed('pined', isPined)
+    pinTarget.classed('relation-focuse', isPined)
+
+    const relation = pinTarget.attr('data-relation')
+    if (relation) {
+      _.forEach(relation.split(','), node => {
+        d3.select(`#Node${node}`).classed('relation-focuse', isPined)
+        d3.select(`#Node${node}`).classed('pined', isPined)
+      })
+    }
   }
 
   public render() {
