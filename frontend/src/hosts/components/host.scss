@@ -312,3 +312,25 @@
   stroke-linecap: round;
   stroke-width: 3px;
 }
+
+.tooltip-pin.active {
+  text-shadow: 0 0 5px #f58220, 0 0 5px #f58220, 0 0 5px #f58220,
+    0 0 5px #f58220, 0 0 9px #fff;
+}
+
+.kubernetes-toolbar--tooltip {
+  width: 100%;
+  position: fixed;
+  z-index: 30;
+}
+
+.kubernetes-toolbar--tooltip-contents {
+  border: 2px solid $s-orange;
+  border-radius: 4px;
+  width: 100%;
+  max-width: 600px;
+  display: inline-flex;
+  flex-direction: column;
+  background-color: $g1-raven;
+  padding: 5px;
+}
