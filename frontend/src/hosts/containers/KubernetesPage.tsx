@@ -7,6 +7,13 @@ import _ from 'lodash'
 import KubernetesHeader from 'src/hosts/components/KubernetesHeader'
 import KubernetesContents from 'src/hosts/components/KubernetesContents'
 
+//Middleware
+import {
+  getLocalStorage,
+  setLocalStorage,
+  verifyLocalStorage,
+} from 'src/shared/middleware/localStorage'
+
 // Error
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
@@ -37,7 +44,7 @@ class KubernetesPage extends PureComponent<Props, State> {
     super(props)
 
     this.state = {
-      proportions: [0.7, 0.3],
+      proportions: [0.75, 0.25],
       activeEditorTab: 'Basic',
       script: '',
       selectedNamespace: 'All namespaces',
@@ -61,6 +68,16 @@ class KubernetesPage extends PureComponent<Props, State> {
         memory: null,
       },
     }
+  }
+
+  public componentDidMount() {
+    verifyLocalStorage(getLocalStorage, setLocalStorage, 'KubernetesState', {
+      proportions: [0.75, 0.25],
+    })
+    const getLocal = getLocalStorage('KubernetesState')
+    const {proportions} = getLocal
+
+    this.setState({proportions})
   }
 
   public render() {
@@ -161,6 +178,9 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   private handleResize = (proportions: number[]) => {
     this.setState({proportions})
+    setLocalStorage('KubernetesState', {
+      proportions,
+    })
   }
 
   private handleOpenTooltip = (target: HTMLElement) => {
