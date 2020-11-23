@@ -11,6 +11,7 @@ import {TableBody, TableBodyRowItem} from 'src/addon/128t/reusable/layout'
 
 import KubernetesBasicsTable from 'src/hosts/components/KubernetesBasicsTable'
 import KubernetesRawData from 'src/hosts/components/KubernetesRawData'
+import KubernetesTooltip from 'src/hosts/components/KubernetesTooltip'
 
 // Constants
 import {HANDLE_VERTICAL} from 'src/shared/constants'
@@ -22,17 +23,19 @@ interface Props {
   handleOnClickPodName: () => void
   handleOnClickVisualizePod: (target: string) => void
   handleResize: (proportions: number[]) => void
+  handleOpenTooltip: (target: any) => void
+  handleCloseTooltip: () => void
   proportions: number[]
   activeTab: string
   script: string
   height: number
-  focuseNode: string
+  focuseNode: {}
+  isToolipActive: boolean
+  toolipPosition: {top: number; right: number; left: number}
+  tooltipNode: {name: string; cpu: number; memory: number}
 }
 
-interface State {
-  toolipIsActive: boolean
-  toolipPosition: {top: number; right: number}
-}
+interface State {}
 
 const dummyData = require('src/hosts/containers/flare-2.json')
 class KubernetesContents extends PureComponent<Props, State> {
@@ -43,7 +46,7 @@ class KubernetesContents extends PureComponent<Props, State> {
     backgroundColor: '#292933',
   }
 
-  private customChroma = chroma
+  private kubernetesStatusColor = chroma
     .scale(['#30e7f1', '#00cc2c', '#ff9e00', '#ff0000'])
     .mode('lrgb')
 
@@ -65,7 +68,6 @@ class KubernetesContents extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = {
-      toolipIsActive: false,
       toolipPosition: undefined,
     }
   }
@@ -177,7 +179,7 @@ class KubernetesContents extends PureComponent<Props, State> {
         const memory = target.attr('data-testMemory')
         const pick = cpu > memory ? cpu : memory
 
-        target.attr('fill', _this.customChroma(pick / 100))
+        target.attr('fill', _this.kubernetesStatusColor(pick / 100))
       })
       .append('path')
       .attr('class', 'hexagon')
@@ -191,7 +193,7 @@ class KubernetesContents extends PureComponent<Props, State> {
               const memory = d.data.testMemory
               const pick = cpu > memory ? cpu : memory
 
-              return _this.customChroma(pick / 100)
+              return _this.kubernetesStatusColor(pick / 100)
             })()
       )
       .attr('data-testCPU', d => d.data.testCPU)
@@ -200,7 +202,8 @@ class KubernetesContents extends PureComponent<Props, State> {
       .attr('id', d => 'Node' + d.data.name)
       .attr('data-relation', d => d.data?.relationNodes)
       .on('mouseover', function() {
-        _this.onOpenTooltip(this)
+        _this.props.handleOpenTooltip(this)
+
         d3.selectAll('.relation-focuse:not(.pined)').classed(
           'relation-focuse',
           false
@@ -216,7 +219,7 @@ class KubernetesContents extends PureComponent<Props, State> {
         }
       })
       .on('mouseleave', function() {
-        _this.onCloseTooltip()
+        _this.props.handleCloseTooltip()
         const target = d3.select(this)
 
         const isPined = target.attr('class').match(/pined/g)
@@ -260,92 +263,6 @@ class KubernetesContents extends PureComponent<Props, State> {
     }
 
     return this.myRef.current.append(svg.attr('viewBox', `${autoBox()}`).node())
-  }
-
-  private getParent = target => tagname => {
-    let currentParent = target.parentNode
-
-    while (currentParent) {
-      if (currentParent.parentNode.tagName === tagname) {
-        break
-      } else {
-        currentParent = currentParent.parentNode
-      }
-    }
-
-    return currentParent.parentNode
-  }
-
-  private onOpenTooltip = (target: HTMLElement) => {
-    const _this = this
-
-    const targetPosition = target.parentElement
-      .getAttribute('transform')
-      .match(/(\d+\.\d+|\d+)/g)
-    const [tagetPositionX, targetPositionY] = targetPosition
-    const containerG = this.getParent(target)('svg')
-
-    d3
-      .select(containerG)
-      .append('foreignObject')
-      .attr('data-for', d3.select(target).attr('id'))
-      .attr('x', function() {
-        let x = parseFloat(tagetPositionX)
-
-        return x + 16
-      })
-      .attr('y', function() {
-        var y = parseInt(targetPositionY)
-
-        return y - 18.5
-      })
-      .attr('width', 235)
-      .attr('height', 76)
-      .attr('overflow', 'visible').html(`
-        <div class="kubernetes-toolbar--tooltip">
-          <div class="kubernetes-toolbar--tooltip-contents">
-            <div class="hosts-table--tbody">
-            <div class="hosts-table--tr">
-                <div class="hosts-table--th align--start" style="width: 40%; font-size: 10px; padding: 4px 2px">Name</div>
-                <div class="hosts-table--td align--start" style="width: 60%; white-space: unset; padding: 0 0; font-size: 10px;">
-                  <strong>${d3.select(target).attr('data-name')}</strong>
-                </div>
-                </div>
-              </div>
-              <div class="hosts-table--tr">
-                <div class="hosts-table--th align--start" style="width: 40%; font-size: 10px; padding: 4px 2px">CPU</div>
-                <div class="hosts-table--td align--start" style="width: 60%; white-space: unset; padding: 0 0; font-size: 10px;">
-                  <div class="UsageIndacator-container">
-                    <div class="UsageIndacator-value" >${d3
-                      .select(target)
-                      .attr('data-testCPU')} %</div>
-                  <div class="UsageIndacator" style="background: ${_this.customChroma(
-                    d3.select(target).attr('data-testCPU') / 100
-                  )}"></div>
-                </div>
-                </div>
-              </div>
-              <div class="hosts-table--tr">
-                <div class="hosts-table--th align--start" style="width: 40%; font-size: 10px; padding: 4px 2px" >Memory</div>
-                <div class="hosts-table--td align--start" style="width: 60%; white-space: unset; padding: 0 0; font-size: 10px;">
-                <div class="UsageIndacator-container">
-                  <div class="UsageIndacator-value">${d3
-                    .select(target)
-                    .attr('data-testMemory')} %</div>
-                  <div class="UsageIndacator" style="background: ${_this.customChroma(
-                    d3.select(target).attr('data-testMemory') / 100
-                  )}"></div>
-                </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-    `)
-  }
-
-  private onCloseTooltip = () => {
-    d3.select('foreignObject:not(.pined)').remove()
   }
 
   private tooglePinedTooltip = target => {
@@ -419,10 +336,23 @@ class KubernetesContents extends PureComponent<Props, State> {
       <FancyScrollbar>
         <div style={{width: '100%', height: '100%'}}>
           <div style={this.containerStyles} ref={this.myRef}></div>
+          {this.tooltip}
         </div>
         <div> Charts Layout </div>
       </FancyScrollbar>
     )
+  }
+
+  private get tooltip() {
+    if (this.props.isToolipActive) {
+      return (
+        <KubernetesTooltip
+          tipPosition={this.props.toolipPosition}
+          tooltipNode={this.props.tooltipNode}
+          statusColor={this.kubernetesStatusColor}
+        />
+      )
+    }
   }
 
   private KubernetesInformation = () => {

@@ -319,7 +319,6 @@
 }
 
 .kubernetes-toolbar--tooltip {
-  width: 100%;
   position: fixed;
   z-index: 30;
 }
@@ -327,8 +326,6 @@
 .kubernetes-toolbar--tooltip-contents {
   border: 2px solid $s-orange;
   border-radius: 4px;
-  width: 100%;
-  max-width: 600px;
   display: inline-flex;
   flex-direction: column;
   background-color: $g1-raven;

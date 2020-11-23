@@ -24,6 +24,9 @@ interface State {
   nodes: string[]
   limits: string[]
   focuseNode: string
+  isToolipActive: boolean
+  tooltipPosition: {top: number; right: number; left: number}
+  tooltipNode: {name: string; cpu: number; memory: number}
 }
 
 @ErrorHandling
@@ -45,7 +48,18 @@ class KubernetesPage extends PureComponent<Props, State> {
       namespaces: ['ns1', 'ns2', 'ns3'],
       nodes: ['n1', 'n2', 'n3'],
       limits: ['Unlimited', '20', '50', '100'],
-      focuseNode: '',
+      focuseNode: 'no select',
+      isToolipActive: false,
+      tooltipPosition: {
+        top: null,
+        right: null,
+        left: null,
+      },
+      tooltipNode: {
+        name: null,
+        cpu: null,
+        memory: null,
+      },
     }
   }
 
@@ -63,6 +77,9 @@ class KubernetesPage extends PureComponent<Props, State> {
       activeEditorTab,
       script,
       focuseNode,
+      isToolipActive,
+      tooltipPosition,
+      tooltipNode,
     } = this.state
 
     return (
@@ -94,6 +111,11 @@ class KubernetesPage extends PureComponent<Props, State> {
           focuseNode={focuseNode}
           script={script}
           height={this.height}
+          isToolipActive={isToolipActive}
+          toolipPosition={tooltipPosition}
+          tooltipNode={tooltipNode}
+          handleOpenTooltip={this.handleOpenTooltip}
+          handleCloseTooltip={this.handleCloseTooltip}
         />
       </>
     )
@@ -139,6 +161,27 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   private handleResize = (proportions: number[]) => {
     this.setState({proportions})
+  }
+
+  private handleOpenTooltip = (target: HTMLElement) => {
+    const {top, right, left} = target.getBoundingClientRect()
+
+    this.setState({
+      isToolipActive: true,
+      tooltipPosition: {top, right, left},
+      tooltipNode: {
+        name: target.getAttribute('data-name'),
+        cpu: parseInt(target.getAttribute('data-testCPU')),
+        memory: parseInt(target.getAttribute('data-testMemory')),
+      },
+    })
+  }
+
+  private handleCloseTooltip = () => {
+    this.setState({
+      isToolipActive: false,
+      tooltipPosition: {top: null, right: null, left: null},
+    })
   }
 }
 
