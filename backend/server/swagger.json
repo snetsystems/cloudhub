@@ -3692,7 +3692,8 @@
             "in": "body",
             "schema": {
               "$ref": "#/definitions/VsphereReq"
-            }
+            },
+            "required": true
           },
           {
             "name": "username",
@@ -3700,7 +3701,8 @@
             "description": "vsphere access id",
             "schema": {
               "$ref": "#/definitions/VsphereReq"
-            }
+            },
+            "required": true
           },
           {
             "name": "password",
@@ -3708,7 +3710,8 @@
             "description": "vsphere access password",
             "schema": {
               "$ref": "#/definitions/VsphereReq"
-            }
+            },
+            "required": true
           },
           {
             "name": "protocol",
@@ -3716,7 +3719,8 @@
             "description": "vsphere access protocol",
             "schema": {
               "$ref": "#/definitions/VsphereReq"
-            }
+            },
+            "required": true
           },
           {
             "name": "port",
@@ -3724,7 +3728,8 @@
             "description": "vsphere access port",
             "schema": {
               "$ref": "#/definitions/VsphereReq"
-            }
+            },
+            "required": true
           },
           {
             "name": "interval",
@@ -3732,7 +3737,8 @@
             "description": "vsphere access interval",
             "schema": {
               "$ref": "#/definitions/VsphereReq"
-            }
+            },
+            "required": true
           },
           {
             "name": "minion",
@@ -3740,7 +3746,17 @@
             "description": "vsphere access minion",
             "schema": {
               "$ref": "#/definitions/VsphereReq"
-            }
+            },
+            "required": true
+          },
+          {
+            "name": "datasource",
+            "in": "body",
+            "description": "cloudhub datasource",
+            "schema": {
+              "$ref": "#/definitions/VsphereReq"
+            },
+            "required": true
           }
         ],
         "responses": {
@@ -3899,18 +3915,20 @@
               "$ref": "#/definitions/VsphereReq"
             },
             "required": true
+          },
+          {
+            "name": "datasource",
+            "in": "body",
+            "description": "Updated cloudhub cloudhub",
+            "schema": {
+              "$ref": "#/definitions/VsphereReq"
+            },
+            "required": true
           }
         ],
         "responses": {
           "201": {
             "description": "Vsphere successfully updated",
-            "headers": {
-              "Location": {
-                "type": "string",
-                "format": "url",
-                "description": "Location of the updated vsphere resource"
-              }
-            },
             "schema": {
               "$ref": "#/definitions/VsphereRes"
             }
@@ -6845,9 +6863,20 @@
         "minion": {
           "type": "string",
           "description": "vsphere access minion"
+        },
+        "datasource": {
+          "type": "string",
+          "description": "cloudhub datasource"
         }
       },
-      "required": ["host", "username", "password", "interval", "minion"],
+      "required": [
+        "host",
+        "username",
+        "password",
+        "interval",
+        "minion",
+        "datasource"
+      ],
       "example": {
         "host": "1.1.1.1",
         "username": "admin@vmware.com",
@@ -6855,7 +6884,8 @@
         "protocol": "https",
         "port": 433,
         "intermal": 1,
-        "minion": "minion01"
+        "minion": "minion01",
+        "datasource": "837"
       }
     },
     "VsphereRes": {
@@ -6909,9 +6939,21 @@
         "organization": {
           "type": "string",
           "description": "cloudhub organization"
+        },
+        "datasource": {
+          "type": "string",
+          "description": "cloudhub datasource"
         }
       },
-      "required": ["host", "username", "password", "interval", "minion"],
+      "required": [
+        "host",
+        "username",
+        "password",
+        "interval",
+        "minion",
+        "organization",
+        "datasource"
+      ],
       "example": {
         "id": "1",
         "host": "1.1.1.1",
@@ -6924,7 +6966,8 @@
         "port": 433,
         "intermal": 1,
         "minion": "minion01",
-        "organization": "123"
+        "organization": "123",
+        "datasource": "87"
       }
     },
     "Vspheres": {
