@@ -257,6 +257,7 @@ export class HostsPage extends PureComponent<Props, State> {
       onManualRefresh,
       inPresentationMode,
       source,
+      notify,
     } = this.props
     const {selected, isVsphere, activeEditorTab} = this.state
 
@@ -339,7 +340,7 @@ export class HostsPage extends PureComponent<Props, State> {
               handleClearTimeout={this.props.handleClearTimeout}
             />
           ) : activeEditorTab === 'Kubernetes' ? (
-            <KubernetesPage />
+            <KubernetesPage notify={notify} />
           ) : null}
         </Page.Contents>
       </Page>

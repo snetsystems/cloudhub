@@ -6,8 +6,10 @@ import _ from 'lodash'
 // Component
 import KubernetesHeader from 'src/hosts/components/KubernetesHeader'
 import KubernetesContents from 'src/hosts/components/KubernetesContents'
-import {getKubernetesAllNodes} from 'src/shared/apis/saltStack'
 import {ComponentStatus} from 'src/reusable_ui'
+
+// Actions
+import {getKubernetesAllNodesAsync} from 'src/hosts/actions'
 
 //Middleware
 import {
@@ -23,7 +25,9 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Addon} from 'src/types/auth'
 
 interface Props {
+  getKubernetesAllNodes: (url: string, token: string) => Promise<string[]>
   addons: Addon[]
+  notify: NotificationAction
 }
 
 interface State {
@@ -92,10 +96,12 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   public handleOnClick = async () => {
     const {isOpenMinions, selectMinion} = this.state
+    const {getKubernetesAllNodes} = this.props
 
     if (!isOpenMinions) {
       this.setState({isDisabledMinions: true})
-      const minions = await this.requestKubernetesAllNodes()
+      const salt = _.find(this.props.addons, addon => addon.name === 'salt')
+      const minions = await getKubernetesAllNodes(salt.url, salt.token)
 
       if (_.indexOf(minions, selectMinion) === -1) {
         this.setState({selectMinion: this.EMPTY})
@@ -124,23 +130,6 @@ class KubernetesPage extends PureComponent<Props, State> {
     const {proportions} = getLocal
 
     this.setState({proportions})
-  }
-
-  private requestKubernetesAllNodes = async () => {
-    const salt = _.find(this.props.addons, addon => addon.name === 'salt')
-    const minions = []
-    try {
-      const {data} = await getKubernetesAllNodes(salt.url, salt.token)
-
-      _.forEach(_.keys(data.return[0]), k => {
-        if (Array.isArray(data.return[0][k]) && data.return[0][k]?.length) {
-          minions.push(...data.return[0][k])
-        }
-      })
-    } catch (error) {
-      console.error(error)
-    }
-    return minions
   }
 
   public render() {
@@ -301,6 +290,8 @@ const mstp = ({links}) => {
   return {addons: links.addons}
 }
 
-const mdtp = {}
+const mdtp = {
+  getKubernetesAllNodes: getKubernetesAllNodesAsync,
+}
 
 export default connect(mstp, mdtp)(KubernetesPage)
