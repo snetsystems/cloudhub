@@ -21,6 +21,12 @@ import {
   RequestRunVcenterAction,
 } from 'src/hosts/actions/vspheres'
 
+import {
+  KubernetesAction,
+  KubernetesActionTypes,
+  getKubernetesAllNodesAsync,
+} from 'src/hosts/actions/kubernetes'
+
 export {
   Action,
   ActionTypes,
@@ -42,4 +48,7 @@ export {
   ResponseVcenterAction,
   RequestPauseVcenterAction,
   RequestRunVcenterAction,
+  KubernetesAction,
+  KubernetesActionTypes,
+  getKubernetesAllNodesAsync,
 }
