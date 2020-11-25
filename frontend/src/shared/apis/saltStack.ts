@@ -25,6 +25,7 @@ interface Params {
     args?: string[] | string
     url?: string
     method?: string
+    detail?: boolean
   }
   username?: string
   password?: string
@@ -720,6 +721,25 @@ export async function getLocalHttpQuery(
     } else {
       params.tgt_type = 'glob'
       params.tgt = '*'
+    }
+
+    return await apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getKubernetesAllNodes(pUrl: string, pToken: string) {
+  try {
+    const params = {
+      eauth: 'pam',
+      client: 'local',
+      fun: 'kubernetes.nodes',
+      tgt: '*',
+      kwarg: {
+        detail: false,
+      },
     }
 
     return await apiRequest(pUrl, pToken, params)
