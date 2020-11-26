@@ -18,6 +18,7 @@ interface Props {
   onChoose: (autoRefreshOption: AutoRefreshOption) => void
   showManualRefresh?: boolean
   onManualRefresh?: () => void
+  userAutoRefreshOptions?: AutoRefreshOption[]
 }
 
 @ErrorHandling
@@ -35,6 +36,7 @@ class AutoRefreshDropdown extends Component<Props> {
   }
 
   public render() {
+    const options = this.props.userAutoRefreshOptions || autoRefreshOptions
     return (
       <div className={this.className}>
         <Dropdown
@@ -43,7 +45,7 @@ class AutoRefreshDropdown extends Component<Props> {
           onChange={this.handleDropdownChange}
           selectedID={this.selectedID}
         >
-          {autoRefreshOptions.map(option => {
+          {options.map(option => {
             if (option.type === AutoRefreshOptionType.Header) {
               return (
                 <Dropdown.Divider
@@ -100,8 +102,9 @@ class AutoRefreshDropdown extends Component<Props> {
   }
 
   private get selectedID(): string {
-    const {selected} = this.props
-    const selectedOption = autoRefreshOptions.find(
+    const {selected, userAutoRefreshOptions} = this.props
+    const options = userAutoRefreshOptions || autoRefreshOptions
+    const selectedOption = options.find(
       option => option.milliseconds === selected
     )
 
