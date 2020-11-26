@@ -12,12 +12,12 @@ import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/aut
 import {autoRefreshOptions} from 'src/hosts/constants/autoRefresh'
 
 interface Props {
-  handleOnChooseNamespace: (select: {text: string}) => void
-  handleOnChooseNode: (select: {text: string}) => void
-  handleOnChooseLimit: (select: {text: string}) => void
-  handleOnChangeLabelkey: (e: ChangeEvent<HTMLInputElement>) => void
-  handleOnChangeLabelValue: (e: ChangeEvent<HTMLInputElement>) => void
-  handleOnClickFilter: () => void
+  handleChooseNamespace: (select: {text: string}) => void
+  handleChooseNode: (select: {text: string}) => void
+  handleChooseLimit: (select: {text: string}) => void
+  handleChangeLabelkey: (e: ChangeEvent<HTMLInputElement>) => void
+  handleChangeLabelValue: (e: ChangeEvent<HTMLInputElement>) => void
+  handleClickFilter: () => void
   selectedNamespace: string
   selectedNode: string
   selectedLimit: string
@@ -29,12 +29,12 @@ interface Props {
   height: number
   minions: string[]
   selectMinion: string
-  handleOnChoosMinion: (select: {text: string}) => void
+  handleChoosMinion: (select: {text: string}) => void
   isOpenMinions: boolean
   isDisabledMinions: boolean
   minionsStatus: ComponentStatus
-  handleOnClose: () => void
-  handleOnClick: () => void
+  handleCloseMinionsDropdown: () => void
+  onClickMinionsDropdown: () => void
   selectedAutoRefresh: number
   handleChooseKubernetesAutoRefresh: (options: AutoRefreshOption) => void
   handleKubernetesRefresh: () => void
@@ -46,12 +46,12 @@ class KubernetesHeader extends PureComponent<Props> {
 
   public render() {
     const {
-      handleOnChooseNamespace,
-      handleOnChooseNode,
-      handleOnChooseLimit,
-      handleOnChangeLabelkey,
-      handleOnChangeLabelValue,
-      handleOnClickFilter,
+      handleChooseNamespace,
+      handleChooseNode,
+      handleChooseLimit,
+      handleChangeLabelkey,
+      handleChangeLabelValue,
+      handleClickFilter,
       selectedNamespace,
       selectedNode,
       selectedLimit,
@@ -63,11 +63,11 @@ class KubernetesHeader extends PureComponent<Props> {
       height,
       minions,
       selectMinion,
-      handleOnChoosMinion,
+      handleChoosMinion,
       isOpenMinions,
       isDisabledMinions,
-      handleOnClose,
-      handleOnClick,
+      handleCloseMinionsDropdown,
+      onClickMinionsDropdown,
       minionsStatus,
       handleChooseKubernetesAutoRefresh,
       handleKubernetesRefresh,
@@ -82,7 +82,7 @@ class KubernetesHeader extends PureComponent<Props> {
           <div className={'kubernetes-header--bar-item'}>
             <Dropdown
               items={namespaces}
-              onChoose={handleOnChooseNamespace}
+              onChoose={handleChooseNamespace}
               selected={selectedNamespace}
               className="dropdown-menu"
               disabled={false}
@@ -91,7 +91,7 @@ class KubernetesHeader extends PureComponent<Props> {
           <div className={'kubernetes-header--bar-item'}>
             <Dropdown
               items={nodes}
-              onChoose={handleOnChooseNode}
+              onChoose={handleChooseNode}
               selected={selectedNode}
               className="dropdown-menu"
               disabled={false}
@@ -102,7 +102,7 @@ class KubernetesHeader extends PureComponent<Props> {
               type="text"
               className="form-control input-sm"
               placeholder="Label key..."
-              onChange={handleOnChangeLabelkey}
+              onChange={handleChangeLabelkey}
               value={labelKey}
             />
           </div>
@@ -112,14 +112,14 @@ class KubernetesHeader extends PureComponent<Props> {
               type="text"
               className="form-control input-sm"
               placeholder="Label value..."
-              onChange={handleOnChangeLabelValue}
+              onChange={handleChangeLabelValue}
               value={labelValue}
             />
           </div>
           <div className={'kubernetes-header--bar-item'}>
             <Dropdown
               items={limits}
-              onChoose={handleOnChooseLimit}
+              onChoose={handleChooseLimit}
               selected={selectedLimit}
               className="dropdown-menu"
               disabled={false}
@@ -128,7 +128,7 @@ class KubernetesHeader extends PureComponent<Props> {
           <div className={'kubernetes-header--bar-item'}>
             <Button
               icon={IconFont.Filter}
-              onClick={handleOnClickFilter}
+              onClick={handleClickFilter}
               shape={ButtonShape.Square}
               titleText="Filter alert text"
             />
@@ -138,11 +138,11 @@ class KubernetesHeader extends PureComponent<Props> {
           <div className={'kubernetes-header--bar-item'}>
             <KubernetesDropdown
               items={minions}
-              onChoose={handleOnChoosMinion}
-              onClick={handleOnClick}
+              onChoose={handleChoosMinion}
+              onClick={onClickMinionsDropdown}
               isOpen={isOpenMinions}
               selected={selectMinion}
-              onClose={handleOnClose}
+              onClose={handleCloseMinionsDropdown}
               className="dropdown-menu"
               disabled={isDisabledMinions}
               status={minionsStatus}

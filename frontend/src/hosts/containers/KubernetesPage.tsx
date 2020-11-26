@@ -146,12 +146,12 @@ class KubernetesPage extends PureComponent<Props, State> {
     return (
       <>
         <KubernetesHeader
-          handleOnChooseNamespace={this.onChooseNamespace}
-          handleOnChooseNode={this.onChooseNodes}
-          handleOnChooseLimit={this.onChooseLimit}
-          handleOnChangeLabelkey={this.onChangeLabelKey}
-          handleOnChangeLabelValue={this.onChangeLabelValue}
-          handleOnClickFilter={this.onClickFilter}
+          handleChooseNamespace={this.onChooseNamespace}
+          handleChooseNode={this.onChooseNodes}
+          handleChooseLimit={this.onChooseLimit}
+          handleChangeLabelkey={this.onChangeLabelKey}
+          handleChangeLabelValue={this.onChangeLabelValue}
+          handleClickFilter={this.onClickFilter}
           selectedNamespace={selectedNamespace}
           selectedNode={selectedNode}
           selectedLimit={selectedLimit}
@@ -163,7 +163,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           height={this.height}
           minions={minions}
           selectMinion={selectMinion}
-          handleOnChoosMinion={this.onChooseMinion}
+          handleChoosMinion={this.onChooseMinion}
           isOpenMinions={isOpenMinions}
           isDisabledMinions={isDisabledMinions}
           minionsStatus={
@@ -171,8 +171,8 @@ class KubernetesPage extends PureComponent<Props, State> {
               ? ComponentStatus.Loading
               : ComponentStatus.Default
           }
-          handleOnClose={this.handleOnClose}
-          handleOnClick={this.handleOnClick}
+          handleCloseMinionsDropdown={this.handleCloseMinionsDropdown}
+          onClickMinionsDropdown={this.onClickMinionsDropdown}
           handleChooseKubernetesAutoRefresh={
             this.handleChooseKubernetesAutoRefresh
           }
@@ -244,7 +244,7 @@ class KubernetesPage extends PureComponent<Props, State> {
     this.setState({selectedAutoRefresh: milliseconds})
   }
 
-  private handleOnClick = async () => {
+  private onClickMinionsDropdown = async () => {
     const {isOpenMinions, selectMinion} = this.state
     const {getKubernetesAllNodes} = this.props
 
@@ -257,18 +257,18 @@ class KubernetesPage extends PureComponent<Props, State> {
         this.setState({selectMinion: this.EMPTY})
       }
 
-      this.handleOnOpen()
+      this.handleOpenMinionsDropdown()
       this.setState({minions, isDisabledMinions: false})
     } else {
-      this.handleOnClose()
+      this.handleCloseMinionsDropdown()
     }
   }
 
-  private handleOnOpen = () => {
+  private handleOpenMinionsDropdown = () => {
     this.setState({isOpenMinions: true})
   }
 
-  private handleOnClose = () => {
+  private handleCloseMinionsDropdown = () => {
     this.setState({isOpenMinions: false})
   }
 
