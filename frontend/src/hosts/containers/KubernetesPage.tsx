@@ -251,8 +251,7 @@ class KubernetesPage extends PureComponent<Props, State> {
     if (!isOpenMinions) {
       this.setState({isDisabledMinions: true})
       const salt = _.find(this.props.addons, addon => addon.name === 'salt')
-      const minions = await getKubernetesAllNodes(salt.url, salt.token)
-
+      const minions = _.uniq(await getKubernetesAllNodes(salt.url, salt.token))
       if (_.indexOf(minions, selectMinion) === -1) {
         this.setState({selectMinion: this.EMPTY})
       }
