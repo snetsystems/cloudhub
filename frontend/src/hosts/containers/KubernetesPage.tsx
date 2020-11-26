@@ -7,6 +7,7 @@ import _ from 'lodash'
 import KubernetesHeader from 'src/hosts/components/KubernetesHeader'
 import KubernetesContents from 'src/hosts/components/KubernetesContents'
 import {ComponentStatus} from 'src/reusable_ui'
+import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
 
 // Actions
 import {getKubernetesAllNodesAsync} from 'src/hosts/actions'
@@ -48,8 +49,7 @@ interface State {
   tooltipNode: {name: string; cpu: number; memory: number}
   minions: string[]
   selectMinion: string
-  intervalTime: string[]
-  selectIntervalTime: string
+  selectedAutoRefresh: AutoRefreshOption['milliseconds']
   isOpenMinions: boolean
   isDisabledMinions: boolean
 }
@@ -58,6 +58,8 @@ interface State {
 class KubernetesPage extends PureComponent<Props, State> {
   private height = 40
   private EMPTY = 'no select'
+  private interval: NodeJS.Timer = null
+
   constructor(props: Props) {
     super(props)
 
@@ -87,39 +89,10 @@ class KubernetesPage extends PureComponent<Props, State> {
       },
       minions: [],
       selectMinion: this.EMPTY,
-      intervalTime: ['30s', '1m', '5m'],
-      selectIntervalTime: '1m',
+      selectedAutoRefresh: 0,
       isOpenMinions: false,
       isDisabledMinions: false,
     }
-  }
-
-  public handleOnClick = async () => {
-    const {isOpenMinions, selectMinion} = this.state
-    const {getKubernetesAllNodes} = this.props
-
-    if (!isOpenMinions) {
-      this.setState({isDisabledMinions: true})
-      const salt = _.find(this.props.addons, addon => addon.name === 'salt')
-      const minions = await getKubernetesAllNodes(salt.url, salt.token)
-
-      if (_.indexOf(minions, selectMinion) === -1) {
-        this.setState({selectMinion: this.EMPTY})
-      }
-
-      this.handleOnOpen()
-      this.setState({minions, isDisabledMinions: false})
-    } else {
-      this.handleOnClose()
-    }
-  }
-
-  public handleOnOpen = () => {
-    this.setState({isOpenMinions: true})
-  }
-
-  public handleOnClose = () => {
-    this.setState({isOpenMinions: false})
   }
 
   public componentDidMount() {
@@ -130,6 +103,20 @@ class KubernetesPage extends PureComponent<Props, State> {
     const {proportions} = getLocal
 
     this.setState({proportions})
+  }
+
+  public componentDidUpdate(_: Props, prevState: State) {
+    const {selectedAutoRefresh, selectMinion} = this.state
+    if (
+      prevState.selectedAutoRefresh !== selectedAutoRefresh ||
+      prevState.selectMinion !== selectMinion
+    ) {
+      this.handleKubernetesAutoRefresh()
+    }
+  }
+
+  public componentWillUnmount() {
+    this.clearInterval()
   }
 
   public render() {
@@ -151,10 +138,9 @@ class KubernetesPage extends PureComponent<Props, State> {
       tooltipNode,
       minions,
       selectMinion,
-      intervalTime,
-      selectIntervalTime,
       isOpenMinions,
       isDisabledMinions,
+      selectedAutoRefresh,
     } = this.state
 
     return (
@@ -177,10 +163,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           height={this.height}
           minions={minions}
           selectMinion={selectMinion}
-          intervalTime={intervalTime}
-          selectIntervalTime={selectIntervalTime}
           handleOnChoosMinion={this.onChooseMinion}
-          handleOnChoosInterval={this.onChooseInterval}
           isOpenMinions={isOpenMinions}
           isDisabledMinions={isDisabledMinions}
           minionsStatus={
@@ -190,6 +173,11 @@ class KubernetesPage extends PureComponent<Props, State> {
           }
           handleOnClose={this.handleOnClose}
           handleOnClick={this.handleOnClick}
+          handleChooseKubernetesAutoRefresh={
+            this.handleChooseKubernetesAutoRefresh
+          }
+          handleKubernetesRefresh={this.handleKubernetesRefresh}
+          selectedAutoRefresh={selectedAutoRefresh}
         />
         <KubernetesContents
           proportions={proportions}
@@ -209,6 +197,79 @@ class KubernetesPage extends PureComponent<Props, State> {
         />
       </>
     )
+  }
+
+  private clearInterval = () => {
+    window.clearTimeout(this.interval)
+    this.interval = null
+  }
+
+  private fetchKubernetesData = async (
+    url: string,
+    token: string,
+    minion: string
+  ) => {
+    console.log('--- fetch start---')
+    console.table({url, token, minion})
+    console.log('--- fetch end ---')
+  }
+
+  private handleKubernetesRefresh = () => {
+    const {addons} = this.props
+    const {selectMinion} = this.state
+    const salt = _.find(addons, addon => addon.name === 'salt')
+    this.fetchKubernetesData(salt.url, salt.token, selectMinion)
+  }
+
+  private handleKubernetesAutoRefresh = () => {
+    const {selectMinion, selectedAutoRefresh} = this.state
+
+    this.clearInterval()
+    if (selectMinion === this.EMPTY || selectedAutoRefresh === 0) return
+
+    const {addons} = this.props
+    const salt = _.find(addons, addon => addon.name === 'salt')
+
+    this.fetchKubernetesData(salt.url, salt.token, selectMinion)
+    this.interval = setTimeout(() => {
+      this.handleKubernetesAutoRefresh()
+    }, selectedAutoRefresh)
+  }
+
+  private handleChooseKubernetesAutoRefresh = ({
+    milliseconds,
+  }: {
+    milliseconds: AutoRefreshOption['milliseconds']
+  }) => {
+    this.setState({selectedAutoRefresh: milliseconds})
+  }
+
+  private handleOnClick = async () => {
+    const {isOpenMinions, selectMinion} = this.state
+    const {getKubernetesAllNodes} = this.props
+
+    if (!isOpenMinions) {
+      this.setState({isDisabledMinions: true})
+      const salt = _.find(this.props.addons, addon => addon.name === 'salt')
+      const minions = await getKubernetesAllNodes(salt.url, salt.token)
+
+      if (_.indexOf(minions, selectMinion) === -1) {
+        this.setState({selectMinion: this.EMPTY})
+      }
+
+      this.handleOnOpen()
+      this.setState({minions, isDisabledMinions: false})
+    } else {
+      this.handleOnClose()
+    }
+  }
+
+  private handleOnOpen = () => {
+    this.setState({isOpenMinions: true})
+  }
+
+  private handleOnClose = () => {
+    this.setState({isOpenMinions: false})
   }
 
   private onChooseNamespace = (namespace: {text: string}) => {
@@ -279,10 +340,6 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   private onChooseMinion = (minion: {text: string}) => {
     this.setState({selectMinion: minion.text})
-  }
-
-  private onChooseInterval = (interval: {text: string}) => {
-    this.setState({selectIntervalTime: interval.text})
   }
 }
 

@@ -1,13 +1,15 @@
+// Library
 import React, {PureComponent, ChangeEvent} from 'react'
-import {
-  Button,
-  ButtonShape,
-  IconFont,
-  ComponentColor,
-  ComponentStatus,
-} from 'src/reusable_ui'
+
+// Component
+import {Button, ButtonShape, IconFont, ComponentStatus} from 'src/reusable_ui'
 import Dropdown from 'src/shared/components/Dropdown'
 import KubernetesDropdown from 'src/hosts/components/KubernetesDropdown'
+import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
+import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
+
+// Contants
+import {autoRefreshOptions} from 'src/hosts/constants/autoRefresh'
 
 interface Props {
   handleOnChooseNamespace: (select: {text: string}) => void
@@ -27,15 +29,15 @@ interface Props {
   height: number
   minions: string[]
   selectMinion: string
-  intervalTime: string[]
-  selectIntervalTime: string
   handleOnChoosMinion: (select: {text: string}) => void
-  handleOnChoosInterval: (select: {text: string}) => void
   isOpenMinions: boolean
   isDisabledMinions: boolean
   minionsStatus: ComponentStatus
   handleOnClose: () => void
   handleOnClick: () => void
+  selectedAutoRefresh: number
+  handleChooseKubernetesAutoRefresh: (options: AutoRefreshOption) => void
+  handleKubernetesRefresh: () => void
 }
 class KubernetesHeader extends PureComponent<Props> {
   constructor(props: Props) {
@@ -61,15 +63,15 @@ class KubernetesHeader extends PureComponent<Props> {
       height,
       minions,
       selectMinion,
-      intervalTime,
-      selectIntervalTime,
       handleOnChoosMinion,
-      handleOnChoosInterval,
       isOpenMinions,
       isDisabledMinions,
       handleOnClose,
       handleOnClick,
       minionsStatus,
+      handleChooseKubernetesAutoRefresh,
+      handleKubernetesRefresh,
+      selectedAutoRefresh,
     } = this.props
     return (
       <div
@@ -147,23 +149,11 @@ class KubernetesHeader extends PureComponent<Props> {
             />
           </div>
           <div className={'kubernetes-header--bar-item'}>
-            <Dropdown
-              items={intervalTime}
-              onChoose={handleOnChoosInterval}
-              selected={selectIntervalTime}
-              className="dropdown-menu"
-              disabled={false}
-            />
-          </div>
-          <div className={'kubernetes-header--bar-item'}>
-            <Button
-              icon={IconFont.Checkmark}
-              onClick={() => {
-                console.log('click')
-              }}
-              shape={ButtonShape.Square}
-              color={ComponentColor.Primary}
-              titleText="Filter alert text"
+            <AutoRefreshDropdown
+              selected={selectedAutoRefresh}
+              onChoose={handleChooseKubernetesAutoRefresh}
+              onManualRefresh={handleKubernetesRefresh}
+              userAutoRefreshOptions={autoRefreshOptions}
             />
           </div>
         </div>
