@@ -99,6 +99,7 @@ interface State {
   proportions: number[]
   selected: QueriesModels.TimeRange
   isVsphere: boolean
+  isKubernetes: boolean
   activeEditorTab: string
 }
 
@@ -123,7 +124,8 @@ export class HostsPage extends PureComponent<Props, State> {
       proportions: [0.43, 0.57],
       selected: {lower: '', upper: ''},
       isVsphere: false,
-      activeEditorTab: 'Kubernetes',
+      isKubernetes: false,
+      activeEditorTab: 'Host',
     }
     this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
     this.onSetActiveEditorTab = this.onSetActiveEditorTab.bind(this)
@@ -259,7 +261,10 @@ export class HostsPage extends PureComponent<Props, State> {
       source,
       notify,
     } = this.props
-    const {selected, isVsphere, activeEditorTab} = this.state
+    const {selected, isVsphere, isKubernetes, activeEditorTab} = this.state
+    const buttons = ['Host']
+    isVsphere ? buttons.push('VMware') : null
+    isKubernetes ? buttons.push('Kubernetes') : null
 
     return (
       <Page className="hosts-list-page">
@@ -268,35 +273,21 @@ export class HostsPage extends PureComponent<Props, State> {
             <Page.Title title="Infrastructure" />
           </Page.Header.Left>
           <Page.Header.Center widthPixels={320}>
-            {isVsphere && (
+            {(isVsphere || isKubernetes) && (
               <Radio shape={ButtonShape.StretchToFit}>
-                <Radio.Button
-                  id="hostspage-tab-Host"
-                  titleText="Host"
-                  value="Host"
-                  active={activeEditorTab === 'Host'}
-                  onClick={this.onSetActiveEditorTab}
-                >
-                  Host
-                </Radio.Button>
-                <Radio.Button
-                  id="hostspage-tab-VMware"
-                  titleText="VMware"
-                  value="VMware"
-                  active={activeEditorTab === 'VMware'}
-                  onClick={this.onSetActiveEditorTab}
-                >
-                  VMware
-                </Radio.Button>
-                <Radio.Button
-                  id="hostspage-tab-Kubernetes"
-                  titleText="Kubernetes"
-                  value="Kubernetes"
-                  active={activeEditorTab === 'Kubernetes'}
-                  onClick={this.onSetActiveEditorTab}
-                >
-                  Kubernetes
-                </Radio.Button>
+                {_.map(buttons, button => {
+                  return (
+                    <Radio.Button
+                      id={`hostspage-tab-${button}`}
+                      titleText={button}
+                      value={button}
+                      active={activeEditorTab === button}
+                      onClick={this.onSetActiveEditorTab}
+                    >
+                      {button}
+                    </Radio.Button>
+                  )
+                })}
               </Radio>
             )}
           </Page.Header.Center>
@@ -495,8 +486,18 @@ export class HostsPage extends PureComponent<Props, State> {
           })
       )
 
+      const isUsingKubernetes = Boolean(
+        _.find(addons, addon => {
+          return addon.name === 'kubernetes' && addon.url === 'on'
+        }) &&
+          _.find(hostsObject, v => {
+            return _.includes(v.apps, 'kubernetes')
+          })
+      )
+
       this.setState({
         isVsphere: isUsingVshpere,
+        isKubernetes: isUsingKubernetes,
         hostsObject: newHosts,
         hostsPageStatus: RemoteDataState.Done,
       })
