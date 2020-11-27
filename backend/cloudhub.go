@@ -966,6 +966,7 @@ type Vsphere struct {
 	Interval      int      `json:"interval"`
 	Minion        string   `json:"minion"`
 	Organization  string   `json:"organization"`
+	DataSource    string   `json:"datasource"`
 }
 
 // VspheresStore is the Storage and retrieval of information

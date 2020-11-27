@@ -501,6 +501,7 @@ func TestMarshalVsphere(t *testing.T) {
 		Interval:           10,
 		Minion:             "minion01",
 		Organization:       "8373476",
+		DataSource:			"2562",
 	}
 
 	var vv cloudhub.Vsphere
