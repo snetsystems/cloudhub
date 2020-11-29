@@ -260,6 +260,7 @@ export class HostsPage extends PureComponent<Props, State> {
       inPresentationMode,
       source,
       notify,
+      links: {addons},
     } = this.props
     const {selected, isVsphere, isKubernetes, activeEditorTab} = this.state
     const buttons = ['Host']
@@ -279,6 +280,7 @@ export class HostsPage extends PureComponent<Props, State> {
                   return (
                     <Radio.Button
                       id={`hostspage-tab-${button}`}
+                      key={`${button}`}
                       titleText={button}
                       value={button}
                       active={activeEditorTab === button}
@@ -331,7 +333,13 @@ export class HostsPage extends PureComponent<Props, State> {
               handleClearTimeout={this.props.handleClearTimeout}
             />
           ) : activeEditorTab === 'Kubernetes' ? (
-            <KubernetesPage notify={notify} />
+            <KubernetesPage
+              source={source}
+              manualRefresh={this.props.manualRefresh}
+              timeRange={this.state.timeRange}
+              notify={notify}
+              addons={addons}
+            />
           ) : null}
         </Page.Contents>
       </Page>
