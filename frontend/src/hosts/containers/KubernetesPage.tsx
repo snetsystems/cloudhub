@@ -26,6 +26,17 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Addon} from 'src/types/auth'
 import {Source} from 'src/types'
 
+export interface KubernetesItem {
+  name: string
+  label: string
+  type: string
+  value?: number
+  cpu?: number
+  memory?: number
+  children?: KubernetesItem[]
+  owner?: string
+}
+
 interface Props {
   source: Source
   getKubernetesAllNodes: (url: string, token: string) => Promise<string[]>
@@ -54,6 +65,8 @@ interface State {
   selectedAutoRefresh: AutoRefreshOption['milliseconds']
   isOpenMinions: boolean
   isDisabledMinions: boolean
+  kubernetesItem: KubernetesItem
+  kubernetesRelationItem: string[]
 }
 
 @ErrorHandling
@@ -94,6 +107,8 @@ class KubernetesPage extends PureComponent<Props, State> {
       selectedAutoRefresh: 0,
       isOpenMinions: false,
       isDisabledMinions: false,
+      kubernetesItem: null,
+      kubernetesRelationItem: null,
     }
   }
 
@@ -103,8 +118,19 @@ class KubernetesPage extends PureComponent<Props, State> {
     })
     const getLocal = getLocalStorage('KubernetesState')
     const {proportions} = getLocal
-
-    this.setState({proportions})
+    const dummyData = JSON.parse(
+      JSON.stringify(require('src/hosts/containers/d3node.json'), function(
+        key,
+        value
+      ) {
+        if (key === 'cpu' || key === 'memory') {
+          const test = Math.floor(Math.random() * 100)
+          return test
+        }
+        return value
+      })
+    )
+    this.setState({proportions, kubernetesItem: dummyData})
   }
 
   public componentDidUpdate(_: Props, prevState: State) {
@@ -199,6 +225,8 @@ class KubernetesPage extends PureComponent<Props, State> {
           tooltipNode={tooltipNode}
           handleOpenTooltip={this.handleOpenTooltip}
           handleCloseTooltip={this.handleCloseTooltip}
+          kubernetesItem={this.state.kubernetesItem}
+          kubernetesRelationItem={this.state.kubernetesRelationItem}
         />
       </>
     )
@@ -340,8 +368,8 @@ class KubernetesPage extends PureComponent<Props, State> {
       tooltipPosition: {top, right, left},
       tooltipNode: {
         name: target.getAttribute('data-name'),
-        cpu: parseInt(target.getAttribute('data-testCPU')),
-        memory: parseInt(target.getAttribute('data-testMemory')),
+        cpu: parseInt(target.getAttribute('data-cpu')),
+        memory: parseInt(target.getAttribute('data-memory')),
       },
     })
   }
