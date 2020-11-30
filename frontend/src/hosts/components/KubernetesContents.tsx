@@ -210,7 +210,7 @@ class KubernetesContents extends PureComponent<Props, State> {
       })
       .append('path')
       .attr('class', 'hexagon')
-      .attr('d', d => generateHexagon(d.r + 8))
+      .attr('d', d => generateHexagon(d.r + 5))
       .attr('stroke', 'black')
       .attr('fill', d =>
         d.children
