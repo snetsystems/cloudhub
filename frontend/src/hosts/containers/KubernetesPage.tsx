@@ -24,8 +24,10 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 
 // Types
 import {Addon} from 'src/types/auth'
+import {Source} from 'src/types'
 
 interface Props {
+  source: Source
   getKubernetesAllNodes: (url: string, token: string) => Promise<string[]>
   addons: Addon[]
   notify: NotificationAction
@@ -106,12 +108,15 @@ class KubernetesPage extends PureComponent<Props, State> {
   }
 
   public componentDidUpdate(_: Props, prevState: State) {
-    const {selectedAutoRefresh, selectMinion} = this.state
+    const {selectedAutoRefresh, selectMinion, focuseNode} = this.state
     if (
       prevState.selectedAutoRefresh !== selectedAutoRefresh ||
       prevState.selectMinion !== selectMinion
     ) {
       this.handleKubernetesAutoRefresh()
+    }
+    if (prevState.focuseNode !== focuseNode && focuseNode !== this.EMPTY) {
+      this.debounceFetchPodData()
     }
   }
 
@@ -176,7 +181,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           handleChooseKubernetesAutoRefresh={
             this.handleChooseKubernetesAutoRefresh
           }
-          handleKubernetesRefresh={this.handleKubernetesRefresh}
+          handleKubernetesRefresh={this.debouncedHandleKubernetesRefresh}
           selectedAutoRefresh={selectedAutoRefresh}
         />
         <KubernetesContents
@@ -220,6 +225,11 @@ class KubernetesPage extends PureComponent<Props, State> {
     const salt = _.find(addons, addon => addon.name === 'salt')
     this.fetchKubernetesData(salt.url, salt.token, selectMinion)
   }
+
+  private debouncedHandleKubernetesRefresh = _.debounce(
+    this.handleKubernetesRefresh,
+    500
+  )
 
   private handleKubernetesAutoRefresh = () => {
     const {selectMinion, selectedAutoRefresh} = this.state
@@ -309,6 +319,12 @@ class KubernetesPage extends PureComponent<Props, State> {
     this.setState({focuseNode})
   }
 
+  private fetchPodData = async () => {
+    console.log('hello')
+  }
+
+  private debounceFetchPodData = _.debounce(this.fetchPodData, 500)
+
   private handleResize = (proportions: number[]) => {
     this.setState({proportions})
     setLocalStorage('KubernetesState', {
@@ -342,9 +358,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   }
 }
 
-const mstp = ({links}) => {
-  return {addons: links.addons}
-}
+const mstp = state => ({})
 
 const mdtp = {
   getKubernetesAllNodes: getKubernetesAllNodesAsync,
