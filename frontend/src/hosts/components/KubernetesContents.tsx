@@ -9,6 +9,7 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {ButtonShape, Radio} from 'src/reusable_ui'
 import {TableBody, TableBodyRowItem} from 'src/addon/128t/reusable/layout'
 
+import {KubernetesItem} from 'src/hosts/containers/KubernetesPage'
 import KubernetesBasicsTable from 'src/hosts/components/KubernetesBasicsTable'
 import KubernetesRawData from 'src/hosts/components/KubernetesRawData'
 import KubernetesTooltip from 'src/hosts/components/KubernetesTooltip'
@@ -33,11 +34,12 @@ interface Props {
   isToolipActive: boolean
   toolipPosition: {top: number; right: number; left: number}
   tooltipNode: {name: string; cpu: number; memory: number}
+  kubernetesItem: KubernetesItem
+  kubernetesRelationItem: string[]
 }
 
 interface State {}
 
-const dummyData = require('src/hosts/containers/flare-2.json')
 class KubernetesContents extends PureComponent<Props, State> {
   private myRef = createRef<HTMLDivElement>()
   private containerStyles = {
@@ -51,18 +53,38 @@ class KubernetesContents extends PureComponent<Props, State> {
     .mode('lrgb')
 
   private clusterTypeColorset = {
-    namespace: '#7f7f7f',
-    job: '#fed2d2',
-    cronJob: '#fed2d2',
-    node: '#2e75b6',
-    replicaSet: '#e2f0d9',
-    replicaControll: '#9dc3e6',
-    statefullSet: '#a27bb3',
-    deployment: '#ffd966',
-    daemonSet: '#74b8ba',
-    statusDead: '#7f7f7f',
-    service: '#0033cc',
-    ingress: '#0033cc',
+    ClusterRoles: '#0033cc',
+    CR: '#0033cc',
+    ClusterRoleBindings: '#0033cc',
+    CRB: '#0033cc',
+    Namespace: '#7f7f7f',
+    Service: '#0033cc',
+    SVC: '#0033cc',
+    Secrets: '#ffd966',
+    SR: '#ffd966',
+    ServiceAccounts: '#0033cc',
+    SA: '#0033cc',
+    ReplicaSet: '#e2f0d9',
+    RS: '#e2f0d9',
+    Deployment: '#ffd966',
+    DP: '#ffd966',
+    Node: '#2e75b6',
+    Pod: '#2e75b6',
+    Job: '#fed2d2',
+    CronJob: '#fed2d2',
+    CJ: '#0033cc',
+    Ingress: '#0033cc',
+    IGS: '#0033cc',
+    ReplicationController: '#9dc3e6',
+    RC: '#9dc3e6',
+    Configmaps: '#0033cc',
+    CM: '#0033cc',
+    Roles: '#a27bb3',
+    RL: '#a27bb3',
+    RoleBindings: '#a27bb3',
+    RB: '#a27bb3',
+    DaemonSet: '#74b8ba',
+    DS: '#74b8ba',
   }
 
   constructor(props: Props) {
@@ -72,8 +94,13 @@ class KubernetesContents extends PureComponent<Props, State> {
     }
   }
 
-  public componentDidMount() {
-    this.drawChart()
+  public componentDidUpdate(prevProps: Props) {
+    if (
+      this.props.kubernetesItem &&
+      prevProps.kubernetesItem !== this.props.kubernetesItem
+    ) {
+      this.drawChart()
+    }
   }
 
   public drawChart = () => {
@@ -85,7 +112,7 @@ class KubernetesContents extends PureComponent<Props, State> {
       .size([dimensions.width, dimensions.height])
       .padding(30)(
       d3
-        .hierarchy(dummyData)
+        .hierarchy(this.props.kubernetesItem)
         .sum(d => d.value)
         .sort((a, b) => b.value - a.value)
     )
@@ -175,8 +202,8 @@ class KubernetesContents extends PureComponent<Props, State> {
       .on('mouseleave', function() {
         const path = this.children[1]
         const target = d3.select(path)
-        const cpu = target.attr('data-testCPU')
-        const memory = target.attr('data-testMemory')
+        const cpu = target.attr('data-cpu')
+        const memory = target.attr('data-memory')
         const pick = cpu > memory ? cpu : memory
 
         target.attr('fill', _this.kubernetesStatusColor(pick / 100))
@@ -189,15 +216,15 @@ class KubernetesContents extends PureComponent<Props, State> {
         d.children
           ? 'none'
           : (() => {
-              const cpu = d.data.testCPU
-              const memory = d.data.testMemory
+              const cpu = d.data.cpu
+              const memory = d.data.memory
               const pick = cpu > memory ? cpu : memory
 
               return _this.kubernetesStatusColor(pick / 100)
             })()
       )
-      .attr('data-testCPU', d => d.data.testCPU)
-      .attr('data-testMemory', d => d.data.testMemory)
+      .attr('data-cpu', d => d.data.cpu)
+      .attr('data-memory', d => d.data.memory)
       .attr('data-name', d => d.data.name)
       .attr('id', d => 'Node' + d.data.name)
       .attr('data-relation', d => d.data?.relationNodes)
