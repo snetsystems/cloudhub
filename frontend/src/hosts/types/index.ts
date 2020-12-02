@@ -22,6 +22,13 @@ import {
   vmParam,
 } from 'src/hosts/types/type'
 
+import {
+  KubernetesItem,
+  TooltipNode,
+  TooltipPosition,
+  FocuseNode,
+} from 'src/hosts/types/kubernetes'
+
 export {
   VMRole,
   VCenter,
@@ -42,4 +49,8 @@ export {
   handleSelectHostProps,
   vmParam,
   reducerVSphere,
+  KubernetesItem,
+  TooltipNode,
+  TooltipPosition,
+  FocuseNode,
 }
