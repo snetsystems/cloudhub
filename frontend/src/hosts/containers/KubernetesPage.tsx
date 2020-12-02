@@ -2,6 +2,7 @@
 import React, {PureComponent, ChangeEvent} from 'react'
 import {connect} from 'react-redux'
 import _ from 'lodash'
+import * as d3 from 'd3'
 
 // Component
 import KubernetesHeader from 'src/hosts/components/KubernetesHeader'
@@ -25,17 +26,12 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 // Types
 import {Addon} from 'src/types/auth'
 import {Source} from 'src/types'
-
-export interface KubernetesItem {
-  name: string
-  label: string
-  type: string
-  value?: number
-  cpu?: number
-  memory?: number
-  children?: KubernetesItem[]
-  owner?: string
-}
+import {
+  KubernetesItem,
+  TooltipNode,
+  TooltipPosition,
+  FocuseNode,
+} from 'src/hosts/types'
 
 interface Props {
   source: Source
@@ -56,10 +52,10 @@ interface State {
   namespaces: string[]
   nodes: string[]
   limits: string[]
-  focuseNode: string
+  focuseNode: FocuseNode
   isToolipActive: boolean
-  tooltipPosition: {top: number; right: number; left: number}
-  tooltipNode: {name: string; cpu: number; memory: number}
+  tooltipPosition: TooltipPosition
+  tooltipNode: TooltipNode
   minions: string[]
   selectMinion: string
   selectedAutoRefresh: AutoRefreshOption['milliseconds']
@@ -90,7 +86,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       namespaces: ['ns1', 'ns2', 'ns3'],
       nodes: ['n1', 'n2', 'n3'],
       limits: ['Unlimited', '20', '50', '100'],
-      focuseNode: this.EMPTY,
+      focuseNode: {name: this.EMPTY, label: this.EMPTY},
       isToolipActive: false,
       tooltipPosition: {
         top: null,
@@ -141,7 +137,7 @@ class KubernetesPage extends PureComponent<Props, State> {
     ) {
       this.handleKubernetesAutoRefresh()
     }
-    if (prevState.focuseNode !== focuseNode && focuseNode !== this.EMPTY) {
+    if (prevState.focuseNode !== focuseNode && focuseNode.name !== this.EMPTY) {
       this.debounceFetchPodData()
     }
   }
@@ -343,15 +339,18 @@ class KubernetesPage extends PureComponent<Props, State> {
     console.log('onClick Pod Name')
   }
 
-  private onClickVisualizePod = (focuseNode: string): void => {
-    this.setState({focuseNode})
+  private onClickVisualizePod = (target: SVGSVGElement): void => {
+    const focuseNodeName = d3.select(target).attr('data-name')
+    const focuseNodeLabel = d3.select(target).attr('data-label')
+    console.log({focuseNodeName, focuseNodeLabel})
+    this.setState({focuseNode: {name: focuseNodeName, label: focuseNodeLabel}})
   }
 
   private fetchPodData = async () => {
     console.log('hello')
   }
 
-  private debounceFetchPodData = _.debounce(this.fetchPodData, 500)
+  private debounceFetchPodData = _.debounce(this.fetchPodData, 100)
 
   private handleResize = (proportions: number[]) => {
     this.setState({proportions})
@@ -362,12 +361,11 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   private handleOpenTooltip = (target: HTMLElement) => {
     const {top, right, left} = target.getBoundingClientRect()
-
     this.setState({
       isToolipActive: true,
       tooltipPosition: {top, right, left},
       tooltipNode: {
-        name: target.getAttribute('data-name'),
+        name: target.getAttribute('data-label'),
         cpu: parseInt(target.getAttribute('data-cpu')),
         memory: parseInt(target.getAttribute('data-memory')),
       },

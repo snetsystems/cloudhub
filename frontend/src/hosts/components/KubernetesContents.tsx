@@ -8,7 +8,6 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {ButtonShape, Radio} from 'src/reusable_ui'
 import {TableBody, TableBodyRowItem} from 'src/addon/128t/reusable/layout'
 
-import {KubernetesItem} from 'src/hosts/containers/KubernetesPage'
 import KubernetesBasicsTable from 'src/hosts/components/KubernetesBasicsTable'
 import KubernetesRawData from 'src/hosts/components/KubernetesRawData'
 import KubernetesTooltip from 'src/hosts/components/KubernetesTooltip'
@@ -18,10 +17,19 @@ import KubernetesHexagon from 'src/hosts/components/KubernetesHexagon'
 import {HANDLE_VERTICAL} from 'src/shared/constants'
 import {KUBERNETES_BASICS_TABLE_SIZE} from 'src/hosts/constants/tableSizing'
 import {kubernetesStatusColor} from 'src/hosts/constants/color'
+
+// Types
+import {
+  KubernetesItem,
+  TooltipNode,
+  TooltipPosition,
+  FocuseNode,
+} from 'src/hosts/types'
+
 interface Props {
   handleOnSetActiveEditorTab: (tab: string) => void
   handleOnClickPodName: () => void
-  handleOnClickVisualizePod: (target: string) => void
+  handleOnClickVisualizePod: (target: SVGSVGElement) => void
   handleResize: (proportions: number[]) => void
   handleOpenTooltip: (target: any) => void
   handleCloseTooltip: () => void
@@ -29,10 +37,10 @@ interface Props {
   activeTab: string
   script: string
   height: number
-  focuseNode: string
+  focuseNode: FocuseNode
   isToolipActive: boolean
-  toolipPosition: {top: number; right: number; left: number}
-  tooltipNode: {name: string; cpu: number; memory: number}
+  toolipPosition: TooltipPosition
+  tooltipNode: TooltipNode
   kubernetesItem: KubernetesItem
   kubernetesRelationItem: string[]
 }
@@ -139,7 +147,7 @@ class KubernetesContents extends PureComponent<Props, State> {
               <TableBodyRowItem
                 title={
                   <div className="pod-name" onClick={handleOnClickPodName}>
-                    {focuseNode}
+                    {focuseNode.label}
                   </div>
                 }
                 width={DataWidth}

@@ -11,15 +11,18 @@ import {
   clusterTypeColorset,
 } from 'src/hosts/constants/color'
 
+// Types
+import {KubernetesItem, FocuseNode} from 'src/hosts/types'
+
 interface Props {
   handleOnSetActiveEditorTab: (tab: string) => void
   handleOnClickPodName: () => void
-  handleOnClickVisualizePod: (target: string) => void
+  handleOnClickVisualizePod: (target: SVGSVGElement) => void
   handleResize: (proportions: number[]) => void
   handleOpenTooltip: (target: any) => void
   handleCloseTooltip: () => void
-  data: any
-  focuseNode: string
+  data: KubernetesItem
+  focuseNode: FocuseNode
 }
 
 interface State {}
@@ -55,6 +58,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
   private drawChart = () => {
     const _this = this
     const {onMouseClick, onMouseDBClick, onMouseOver, onMouseLeave} = _this
+    const {focuseNode} = _this.props
     const {width, height} = _this.ref.current.getBoundingClientRect()
 
     const data = d3
@@ -127,6 +131,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       .attr('r', d => d.r)
       .attr('fill', d => clusterTypeColorset[d.data.type])
       .attr('data-type', d => d.data.type)
+      .attr('data-label', d => d.data.label)
       .attr('pointer-events', d => (d.children ? 'all' : 'none'))
       .on('mouseover', function() {
         onMouseOver(this)
@@ -148,6 +153,10 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       })
       .append('path')
       .attr('class', 'hexagon')
+      .classed('relation-focuse', d => {
+        const {name, label} = focuseNode
+        return d.data.name === name && d.data.label === label
+      })
       .attr('d', d => generateHexagon(d.r + 5))
       .attr('stroke', 'black')
       .attr('fill', d =>
@@ -203,7 +212,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
 
   private onMouseClick = (target: SVGSVGElement) => {
     // focuseNode 설정
-    this.props.handleOnClickVisualizePod(d3.select(target).attr('data-label'))
+    this.props.handleOnClickVisualizePod(target)
   }
 
   private onMouseDBClick = (target: SVGSVGElement) => {
