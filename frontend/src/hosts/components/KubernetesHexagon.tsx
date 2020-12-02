@@ -164,6 +164,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       .attr('data-cpu', d => d.data.cpu)
       .attr('data-memory', d => d.data.memory)
       .attr('data-name', d => d.data.name)
+      .attr('data-label', d => d.data.label)
       .attr('id', d => 'Node' + d.data.name)
       .on('mouseover', function() {
         onMouseOver(this)
@@ -187,7 +188,8 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       .attr('startOffset', '50%')
       .attr('font-size', d => (d.height == 2 ? '15px' : '12px'))
       .attr('data-name', d => d.data.name)
-      .text(d => d.data.name)
+      .attr('data-label', d => d.data.label)
+      .text(d => d.data.label)
 
     const autoBox = () => {
       this.ref.current.appendChild(svg.node())
@@ -201,7 +203,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
 
   private onMouseClick = (target: SVGSVGElement) => {
     // focuseNode 설정
-    this.props.handleOnClickVisualizePod(d3.select(target).attr('data-name'))
+    this.props.handleOnClickVisualizePod(d3.select(target).attr('data-label'))
   }
 
   private onMouseDBClick = (target: SVGSVGElement) => {
