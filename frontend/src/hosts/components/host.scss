@@ -306,13 +306,6 @@
     }
   }
 }
-
-.relation-focuse {
-  stroke: black;
-  stroke-linecap: round;
-  stroke-width: 3px;
-}
-
 .tooltip-pin.active {
   text-shadow: 0 0 5px #f58220, 0 0 5px #f58220, 0 0 5px #f58220,
     0 0 5px #f58220, 0 0 9px #fff;
@@ -357,4 +350,19 @@
 
 .dropdown.open {
   z-index: 99;
+}
+
+.kubernetes-hover {
+  stroke: black;
+  stroke-width: 3px;
+}
+
+.kubernetes-focuse {
+  stroke: #545454;
+  stroke-width: 3px;
+}
+
+.kubernetes-pin {
+  stroke: #ffff00;
+  stroke-width: 3px;
 }
