@@ -3,13 +3,16 @@ import React, {PureComponent, CSSProperties, createRef} from 'react'
 import chroma from 'chroma-js'
 import _ from 'lodash'
 
+// Types
+import {TooltipNode, TooltipPosition} from 'src/hosts/types'
+
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
   onDismiss?: () => void
-  tipPosition: {top: number; right: number; left: number}
-  tooltipNode: {name: string; cpu: number; memory: number}
+  tipPosition: TooltipPosition
+  tooltipNode: TooltipNode
   statusColor: chroma.Scale<chroma.Color>
 }
 
