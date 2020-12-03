@@ -1,6 +1,7 @@
 // Libraries
 import React, {PureComponent, CSSProperties, createRef} from 'react'
 import chroma from 'chroma-js'
+import _ from 'lodash'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -80,53 +81,59 @@ class KubernetesTooltip extends PureComponent<Props, State> {
       >
         <div className="kubernetes-toolbar--tooltip-contents">
           <div className={'hosts-table--tbody'}>
-            <div className={'hosts-table--tr'}>
-              <div className={'hosts-table--td align--start'}>{name}</div>
-            </div>
-            <div className={'hosts-table--tr'}>
-              <div
-                className={'hosts-table--th align--start'}
-                style={{width: this.tableSize.header}}
-              >
-                CPU
+            {name ? (
+              <div className={'hosts-table--tr'}>
+                <div className={'hosts-table--td align--start'}>{name}</div>
               </div>
-              <div
-                className={'hosts-table--td align--start'}
-                style={{width: this.tableSize.body}}
-              >
-                <div className={'UsageIndacator-container'}>
-                  <div className={'UsageIndacator-value'}>{cpu} %</div>
-                  <div
-                    className={'UsageIndacator'}
-                    style={{
-                      background: `${statusColor(cpu / 100)}`,
-                    }}
-                  ></div>
+            ) : null}
+            {!_.isNaN(cpu) && _.isNumber(cpu) ? (
+              <div className={'hosts-table--tr'}>
+                <div
+                  className={'hosts-table--th align--start'}
+                  style={{width: this.tableSize.header}}
+                >
+                  CPU
+                </div>
+                <div
+                  className={'hosts-table--td align--start'}
+                  style={{width: this.tableSize.body}}
+                >
+                  <div className={'UsageIndacator-container'}>
+                    <div className={'UsageIndacator-value'}>{cpu} %</div>
+                    <div
+                      className={'UsageIndacator'}
+                      style={{
+                        background: `${statusColor(cpu / 100)}`,
+                      }}
+                    ></div>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className={'hosts-table--tr'}>
-              <div
-                className={'hosts-table--th align--start'}
-                style={{width: this.tableSize.header}}
-              >
-                Memory
-              </div>
-              <div
-                className={'hosts-table--td align--start'}
-                style={{width: this.tableSize.body}}
-              >
-                <div className={'UsageIndacator-container'}>
-                  <div className={'UsageIndacator-value'}>{memory} %</div>
-                  <div
-                    className={'UsageIndacator'}
-                    style={{
-                      background: `${statusColor(memory / 100)}`,
-                    }}
-                  ></div>
+            ) : null}
+            {!_.isNaN(memory) && _.isNumber(memory) ? (
+              <div className={'hosts-table--tr'}>
+                <div
+                  className={'hosts-table--th align--start'}
+                  style={{width: this.tableSize.header}}
+                >
+                  Memory
+                </div>
+                <div
+                  className={'hosts-table--td align--start'}
+                  style={{width: this.tableSize.body}}
+                >
+                  <div className={'UsageIndacator-container'}>
+                    <div className={'UsageIndacator-value'}>{memory} %</div>
+                    <div
+                      className={'UsageIndacator'}
+                      style={{
+                        background: `${statusColor(memory / 100)}`,
+                      }}
+                    ></div>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : null}
           </div>
         </div>
       </div>
