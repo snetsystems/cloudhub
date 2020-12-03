@@ -53,6 +53,7 @@ interface State {
   nodes: string[]
   limits: string[]
   focuseNode: FocuseNode
+  pinNode: FocuseNode[]
   isToolipActive: boolean
   tooltipPosition: TooltipPosition
   tooltipNode: TooltipNode
@@ -87,6 +88,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       nodes: ['n1', 'n2', 'n3'],
       limits: ['Unlimited', '20', '50', '100'],
       focuseNode: {name: this.EMPTY, label: this.EMPTY},
+      pinNode: [],
       isToolipActive: false,
       tooltipPosition: {
         top: null,
@@ -160,6 +162,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       activeEditorTab,
       script,
       focuseNode,
+      pinNode,
       isToolipActive,
       tooltipPosition,
       tooltipNode,
@@ -214,6 +217,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           handleOnClickVisualizePod={this.onClickVisualizePod}
           handleResize={this.handleResize}
           focuseNode={focuseNode}
+          pinNode={pinNode}
           script={script}
           height={this.height}
           isToolipActive={isToolipActive}
@@ -223,6 +227,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           handleCloseTooltip={this.handleCloseTooltip}
           kubernetesItem={this.state.kubernetesItem}
           kubernetesRelationItem={this.state.kubernetesRelationItem}
+          handleDBClick={this.onDBClick}
         />
       </>
     )
@@ -344,6 +349,33 @@ class KubernetesPage extends PureComponent<Props, State> {
     const focuseNodeLabel = d3.select(target).attr('data-label')
     console.log({focuseNodeName, focuseNodeLabel})
     this.setState({focuseNode: {name: focuseNodeName, label: focuseNodeLabel}})
+  }
+
+  private onDBClick = (target: SVGSVGElement) => {
+    this.handlePinNode(target)
+  }
+
+  private handlePinNode = (target: SVGSVGElement) => {
+    const pinName = d3.select(target).attr('data-name')
+    const pinLabel = d3.select(target).attr('data-label')
+
+    this.setState({
+      pinNode: [
+        {
+          name: pinName,
+          label: pinLabel,
+        },
+        {
+          name:
+            'Namespace_ingress-nginx_Configmaps_ingress-controller-leader-nginx',
+          label: 'ingress-controller-leader-nginx',
+        },
+        {
+          name: 'Namespace_kube-public_Configmaps_cluster-info',
+          label: 'cluster-info',
+        },
+      ],
+    })
   }
 
   private fetchPodData = async () => {

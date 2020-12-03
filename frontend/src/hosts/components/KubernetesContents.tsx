@@ -30,6 +30,7 @@ interface Props {
   handleOnSetActiveEditorTab: (tab: string) => void
   handleOnClickPodName: () => void
   handleOnClickVisualizePod: (target: SVGSVGElement) => void
+  handleDBClick: (target: SVGSVGElement) => void
   handleResize: (proportions: number[]) => void
   handleOpenTooltip: (target: any) => void
   handleCloseTooltip: () => void
@@ -38,6 +39,7 @@ interface Props {
   script: string
   height: number
   focuseNode: FocuseNode
+  pinNode: FocuseNode[]
   isToolipActive: boolean
   toolipPosition: TooltipPosition
   tooltipNode: TooltipNode
@@ -95,7 +97,8 @@ class KubernetesContents extends PureComponent<Props, State> {
           <KubernetesHexagon
             data={this.props.kubernetesItem}
             focuseNode={this.props.focuseNode}
-            handleOnSetActiveEditorTab={this.props.handleOnSetActiveEditorTab}
+            pinNode={this.props.pinNode}
+            handleDBClick={this.props.handleDBClick}
             handleOnClickPodName={this.props.handleOnClickPodName}
             handleOnClickVisualizePod={this.props.handleOnClickVisualizePod}
             handleResize={this.props.handleResize}
@@ -112,7 +115,6 @@ class KubernetesContents extends PureComponent<Props, State> {
 
   private get tooltip() {
     if (this.props.isToolipActive) {
-      console.log(this.props.tooltipNode)
       return (
         <KubernetesTooltip
           tipPosition={this.props.toolipPosition}
