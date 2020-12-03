@@ -1,6 +1,7 @@
 // Libraries
 import React, {PureComponent, createRef} from 'react'
 import * as d3 from 'd3'
+import _ from 'lodash'
 
 // Components
 import PageSpinner from 'src/shared/components/PageSpinner'
@@ -15,14 +16,15 @@ import {
 import {KubernetesItem, FocuseNode} from 'src/hosts/types'
 
 interface Props {
-  handleOnSetActiveEditorTab: (tab: string) => void
   handleOnClickPodName: () => void
   handleOnClickVisualizePod: (target: SVGSVGElement) => void
+  handleDBClick: (target: SVGSVGElement) => void
   handleResize: (proportions: number[]) => void
   handleOpenTooltip: (target: any) => void
   handleCloseTooltip: () => void
   data: KubernetesItem
   focuseNode: FocuseNode
+  pinNode: FocuseNode[]
 }
 
 interface State {}
@@ -35,6 +37,10 @@ class KubernetesHexagon extends PureComponent<Props, State> {
   }
 
   private ref = createRef<HTMLDivElement>()
+
+  private clickedOnce = false
+  private timeout = null
+  private timer = 200
 
   constructor(props: Props) {
     super(props)
@@ -57,8 +63,8 @@ class KubernetesHexagon extends PureComponent<Props, State> {
 
   private drawChart = () => {
     const _this = this
-    const {onMouseClick, onMouseDBClick, onMouseOver, onMouseLeave} = _this
-    const {focuseNode} = _this.props
+    const {onMouseClick, onMouseOver, onMouseLeave} = _this
+    const {focuseNode, pinNode} = _this.props
     const {width, height} = _this.ref.current.getBoundingClientRect()
 
     const data = d3
@@ -139,6 +145,9 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       .on('mouseleave', function() {
         onMouseLeave(this)
       })
+      .on('mousedown', function() {
+        d3.event.preventDefault()
+      })
 
     node
       .filter(d => d.height === 0)
@@ -153,10 +162,18 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       })
       .append('path')
       .attr('class', 'hexagon')
-      .classed('relation-focuse', d => {
+      .classed('kubernetes-focuse', d => {
         const {name, label} = focuseNode
         return d.data.name === name && d.data.label === label
       })
+      .classed(
+        'kubernetes-pin',
+        d =>
+          _.filter(
+            pinNode,
+            pin => d.data.name === pin.name && d.data.label === pin.label
+          ).length > 0
+      )
       .attr('d', d => generateHexagon(d.r + 5))
       .attr('stroke', 'black')
       .attr('fill', d =>
@@ -184,8 +201,8 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       .on('click', function() {
         onMouseClick(this)
       })
-      .on('dblclick', function() {
-        onMouseDBClick(this)
+      .on('mousedown', function() {
+        d3.event.preventDefault()
       })
 
     node
@@ -210,24 +227,41 @@ class KubernetesHexagon extends PureComponent<Props, State> {
     this.ref.current.append(svg.attr('viewBox', `${autoBox()}`).node())
   }
 
-  private onMouseClick = (target: SVGSVGElement) => {
-    // focuseNode 설정
+  private runOnSingleClick = (target: SVGSVGElement) => {
     this.props.handleOnClickVisualizePod(target)
+    this.clickedOnce = false
+  }
+
+  private runOnDBClick = (target: SVGSVGElement) => {
+    this.clickedOnce = false
+    clearTimeout(this.timeout)
+    this.onMouseDBClick(target)
+  }
+
+  private onMouseClick = (target: SVGSVGElement) => {
+    if (this.clickedOnce) {
+      this.runOnDBClick(target)
+    } else {
+      this.timeout = setTimeout(() => {
+        this.runOnSingleClick(target)
+      }, this.timer)
+      this.clickedOnce = true
+    }
   }
 
   private onMouseDBClick = (target: SVGSVGElement) => {
-    // 고정
-    console.log('dbclick')
+    this.props.handleDBClick(target)
+    this.props.handleOnClickVisualizePod(target)
   }
 
   private onMouseOver = (target: SVGSVGElement) => {
-    // 툴팁 열기
     this.props.handleOpenTooltip(target)
+    d3.select(target).classed('kubernetes-hover', true)
   }
 
   private onMouseLeave = (target: SVGSVGElement) => {
-    // 툴팁 닫기
     this.props.handleCloseTooltip()
+    d3.select(target).classed('kubernetes-hover', false)
   }
 }
 
