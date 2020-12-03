@@ -12,6 +12,7 @@ import KubernetesBasicsTable from 'src/hosts/components/KubernetesBasicsTable'
 import KubernetesRawData from 'src/hosts/components/KubernetesRawData'
 import KubernetesTooltip from 'src/hosts/components/KubernetesTooltip'
 import KubernetesHexagon from 'src/hosts/components/KubernetesHexagon'
+import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 
 // Constants
 import {HANDLE_VERTICAL} from 'src/shared/constants'
@@ -25,6 +26,7 @@ import {
   TooltipPosition,
   FocuseNode,
 } from 'src/hosts/types'
+import {Source, TimeRange, Cell, Template} from 'src/types'
 
 interface Props {
   handleOnSetActiveEditorTab: (tab: string) => void
@@ -45,6 +47,14 @@ interface Props {
   tooltipNode: TooltipNode
   kubernetesItem: KubernetesItem
   kubernetesRelationItem: string[]
+  source: Source
+  sources: Source[]
+  // layouts: Layout[]
+  templates: Template[]
+  timeRange: TimeRange
+  cells: Cell[]
+  manualRefresh: number
+  host: string
 }
 
 interface State {}
@@ -91,6 +101,15 @@ class KubernetesContents extends PureComponent<Props, State> {
     ]
   }
   private KubernetesVisualize = () => {
+    const {
+      source,
+      sources,
+      cells,
+      templates,
+      timeRange,
+      manualRefresh,
+      host,
+    } = this.props
     return (
       <FancyScrollbar>
         <div style={{width: '100%', height: '100%'}}>
@@ -108,7 +127,20 @@ class KubernetesContents extends PureComponent<Props, State> {
 
           {this.tooltip}
         </div>
-        <div> Charts Layout </div>
+        <div className="kubernetes-dashboard">
+          <LayoutRenderer
+            source={source}
+            sources={sources}
+            isStatusPage={false}
+            isStaticPage={true}
+            isEditable={false}
+            cells={cells}
+            templates={templates}
+            timeRange={timeRange}
+            manualRefresh={manualRefresh}
+            host={host}
+          />
+        </div>
       </FancyScrollbar>
     )
   }

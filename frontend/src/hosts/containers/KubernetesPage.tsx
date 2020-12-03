@@ -23,21 +23,37 @@ import {
 // Error
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
+// API
+import {getCells} from 'src/hosts/utils/getCells'
+import {EMPTY_LINKS} from 'src/dashboards/constants/dashboardHeader'
+import {generateForHosts} from 'src/utils/tempVars'
+// APIs
+import {
+  getCpuAndLoadForHosts,
+  getLayouts,
+  getAppsForHosts,
+  getAppsForHost,
+  getMeasurementsForHost,
+} from 'src/hosts/apis'
+
 // Types
 import {Addon} from 'src/types/auth'
-import {Source} from 'src/types'
+import {Source, Layout, TimeRange} from 'src/types'
+import {DashboardSwitcherLinks} from 'src/types/dashboards'
 import {
   KubernetesItem,
   TooltipNode,
   TooltipPosition,
   FocuseNode,
 } from 'src/hosts/types'
+import {timeRanges} from 'src/shared/data/timeRanges'
 
 interface Props {
   source: Source
   getKubernetesAllNodes: (url: string, token: string) => Promise<string[]>
   addons: Addon[]
   notify: NotificationAction
+  manualRefresh: number
 }
 
 interface State {
@@ -64,6 +80,9 @@ interface State {
   isDisabledMinions: boolean
   kubernetesItem: KubernetesItem
   kubernetesRelationItem: string[]
+  layouts: Layout[]
+  hostLinks: DashboardSwitcherLinks
+  timeRange: TimeRange
 }
 
 @ErrorHandling
@@ -107,10 +126,13 @@ class KubernetesPage extends PureComponent<Props, State> {
       isDisabledMinions: false,
       kubernetesItem: null,
       kubernetesRelationItem: null,
+      layouts: [],
+      hostLinks: EMPTY_LINKS,
+      timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
     }
   }
 
-  public componentDidMount() {
+  public async componentDidMount() {
     verifyLocalStorage(getLocalStorage, setLocalStorage, 'KubernetesState', {
       proportions: [0.75, 0.25],
     })
@@ -128,7 +150,56 @@ class KubernetesPage extends PureComponent<Props, State> {
         return value
       })
     )
-    this.setState({proportions, kubernetesItem: dummyData})
+
+    const {
+      data: {layouts},
+    } = await getLayouts()
+
+    const {host, measurements} = await this.fetchHostsAndMeasurements(layouts)
+    const focusedApp = 'kubernetes'
+    const filteredLayouts = layouts
+      .filter(layout => {
+        return focusedApp
+          ? layout.app === focusedApp
+          : host.apps &&
+              host.apps.includes(layout.app) &&
+              measurements.includes(layout.measurement)
+      })
+      .sort((x, y) => {
+        return x.measurement < y.measurement
+          ? -1
+          : x.measurement > y.measurement
+          ? 1
+          : 0
+      })
+    console.log(layouts)
+    this.setState({
+      proportions,
+      kubernetesItem: dummyData,
+      layouts: filteredLayouts,
+    })
+  }
+
+  private async fetchHostsAndMeasurements(layouts: Layout[]) {
+    const {source} = this.props
+    const params = {
+      hostID: 'k8s-master01',
+    }
+    console.log(params)
+    const fetchMeasurements = getMeasurementsForHost(source, params.hostID)
+    const fetchHosts = getAppsForHost(
+      source.links.proxy,
+      params.hostID,
+      layouts,
+      source.telegraf
+    )
+
+    const [host, measurements] = await Promise.all([
+      fetchHosts,
+      fetchMeasurements,
+    ])
+
+    return {host, measurements}
   }
 
   public componentDidUpdate(_: Props, prevState: State) {
@@ -149,6 +220,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   }
 
   public render() {
+    const {source, manualRefresh} = this.props
     const {
       selectedNamespace,
       selectedNode,
@@ -171,7 +243,14 @@ class KubernetesPage extends PureComponent<Props, State> {
       isOpenMinions,
       isDisabledMinions,
       selectedAutoRefresh,
+      timeRange,
+      layouts,
     } = this.state
+
+    const layoutCells = getCells(layouts, source)
+    console.log({layouts, source})
+    console.log({layoutCells})
+    const tempVars = generateForHosts(source)
 
     return (
       <>
@@ -228,6 +307,13 @@ class KubernetesPage extends PureComponent<Props, State> {
           kubernetesItem={this.state.kubernetesItem}
           kubernetesRelationItem={this.state.kubernetesRelationItem}
           handleDBClick={this.onDBClick}
+          source={source}
+          sources={[source]}
+          cells={layoutCells}
+          templates={tempVars}
+          timeRange={timeRange}
+          manualRefresh={manualRefresh}
+          host={'k8s-master01'}
         />
       </>
     )
