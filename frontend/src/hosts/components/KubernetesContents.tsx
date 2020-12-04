@@ -147,7 +147,7 @@ class KubernetesContents extends PureComponent<Props, State> {
             />
           </div>
         ) : (
-          <NoHostsState style={{height: '200px'}} />
+          <NoHostsState style={{height: '50px'}} />
         )}
       </FancyScrollbar>
     )
