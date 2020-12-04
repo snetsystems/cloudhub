@@ -1,5 +1,5 @@
 // Libraries
-import React from 'react'
+import React, {CSSProperties} from 'react'
 import classnames from 'classnames'
 import chroma from 'chroma-js'
 
@@ -143,8 +143,8 @@ export const ErrorState = (): JSX.Element => (
   </div>
 )
 
-export const NoHostsState = (): JSX.Element => (
-  <div className="generic-empty-state">
+export const NoHostsState = ({style}: {style?: CSSProperties}): JSX.Element => (
+  <div className="generic-empty-state" style={style}>
     <h4>No Data.</h4>
   </div>
 )
