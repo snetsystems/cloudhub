@@ -48,6 +48,9 @@ import {
 } from 'src/hosts/types'
 import {timeRanges} from 'src/shared/data/timeRanges'
 
+// Utils
+import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
+
 interface Props {
   source: Source
   getKubernetesAllNodes: (url: string, token: string) => Promise<string[]>
@@ -173,6 +176,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           : 0
       })
     console.log(layouts)
+
     this.setState({
       proportions,
       kubernetesItem: dummyData,
@@ -314,6 +318,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           timeRange={timeRange}
           manualRefresh={manualRefresh}
           host={'k8s-master01'}
+          selectMinion={selectMinion}
         />
       </>
     )
@@ -470,11 +475,16 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   private debounceFetchPodData = _.debounce(this.fetchPodData, 100)
 
+  private debouncedResizeTrigger = _.debounce(() => {
+    WindowResizeEventTrigger()
+  }, 250)
+
   private handleResize = (proportions: number[]) => {
     this.setState({proportions})
     setLocalStorage('KubernetesState', {
       proportions,
     })
+    this.debouncedResizeTrigger()
   }
 
   private handleOpenTooltip = (target: HTMLElement) => {
