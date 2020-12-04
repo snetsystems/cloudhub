@@ -13,6 +13,7 @@ import KubernetesRawData from 'src/hosts/components/KubernetesRawData'
 import KubernetesTooltip from 'src/hosts/components/KubernetesTooltip'
 import KubernetesHexagon from 'src/hosts/components/KubernetesHexagon'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
+import {NoHostsState} from 'src/addon/128t/reusable'
 
 // Constants
 import {HANDLE_VERTICAL} from 'src/shared/constants'
@@ -49,12 +50,12 @@ interface Props {
   kubernetesRelationItem: string[]
   source: Source
   sources: Source[]
-  // layouts: Layout[]
   templates: Template[]
   timeRange: TimeRange
   cells: Cell[]
   manualRefresh: number
   host: string
+  selectMinion: string
 }
 
 interface State {}
@@ -100,6 +101,7 @@ class KubernetesContents extends PureComponent<Props, State> {
       },
     ]
   }
+
   private KubernetesVisualize = () => {
     const {
       source,
@@ -109,10 +111,12 @@ class KubernetesContents extends PureComponent<Props, State> {
       timeRange,
       manualRefresh,
       host,
+      focuseNode,
     } = this.props
+
     return (
       <FancyScrollbar>
-        <div style={{width: '100%', height: '100%'}}>
+        <div style={{width: '100%', height: 'calc(100% - 50px)'}}>
           <KubernetesHexagon
             data={this.props.kubernetesItem}
             focuseNode={this.props.focuseNode}
@@ -127,20 +131,24 @@ class KubernetesContents extends PureComponent<Props, State> {
 
           {this.tooltip}
         </div>
-        <div className="kubernetes-dashboard">
-          <LayoutRenderer
-            source={source}
-            sources={sources}
-            isStatusPage={false}
-            isStaticPage={true}
-            isEditable={false}
-            cells={cells}
-            templates={templates}
-            timeRange={timeRange}
-            manualRefresh={manualRefresh}
-            host={host}
-          />
-        </div>
+        {focuseNode.name !== 'no select' && cells.length > 0 ? (
+          <div className="kubernetes-dashboard">
+            <LayoutRenderer
+              source={source}
+              sources={sources}
+              isStatusPage={false}
+              isStaticPage={true}
+              isEditable={false}
+              cells={cells}
+              templates={templates}
+              timeRange={timeRange}
+              manualRefresh={manualRefresh}
+              host={host}
+            />
+          </div>
+        ) : (
+          <NoHostsState style={{height: '200px'}} />
+        )}
       </FancyScrollbar>
     )
   }
