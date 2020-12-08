@@ -152,59 +152,13 @@ class KubernetesPage extends PureComponent<Props, State> {
         return value
       })
     )
-
-    const {
-      data: {layouts},
-    } = await getLayouts()
-
-    const {host, measurements} = await this.fetchHostsAndMeasurements(layouts)
-    const focusedApp = 'kubernetes'
-    const filteredLayouts = layouts
-      .filter(layout => {
-        return focusedApp
-          ? layout.app === focusedApp
-          : host.apps &&
-              host.apps.includes(layout.app) &&
-              measurements.includes(layout.measurement)
-      })
-      .sort((x, y) => {
-        return x.measurement < y.measurement
-          ? -1
-          : x.measurement > y.measurement
-          ? 1
-          : 0
-      })
-
     this.setState({
       proportions,
       kubernetesItem: dummyData,
-      layouts: filteredLayouts,
     })
   }
 
-  private async fetchHostsAndMeasurements(layouts: Layout[]) {
-    const {source} = this.props
-    const params = {
-      hostID: 'k8s-master01',
-    }
-
-    const fetchMeasurements = getMeasurementsForHost(source, params.hostID)
-    const fetchHosts = getAppsForHost(
-      source.links.proxy,
-      params.hostID,
-      layouts,
-      source.telegraf
-    )
-
-    const [host, measurements] = await Promise.all([
-      fetchHosts,
-      fetchMeasurements,
-    ])
-
-    return {host, measurements}
-  }
-
-  public componentDidUpdate(_: Props, prevState: State) {
+  public async componentDidUpdate(_: Props, prevState: State) {
     const {selectedAutoRefresh, selectMinion, focuseNode} = this.state
     if (
       prevState.selectedAutoRefresh !== selectedAutoRefresh ||
@@ -212,13 +166,73 @@ class KubernetesPage extends PureComponent<Props, State> {
     ) {
       this.handleKubernetesAutoRefresh()
     }
-    if (prevState.focuseNode !== focuseNode && focuseNode.name !== null) {
-      this.debounceFetchPodData()
+
+    if (prevState.focuseNode.name !== focuseNode.name) {
+      const layouts = await this.fillteredLayouts()
+      this.setState({
+        layouts,
+      })
     }
   }
 
   public componentWillUnmount() {
     this.clearInterval()
+  }
+
+  private fillteredLayouts = async () => {
+    const {focuseNode} = this.state
+    const {
+      data: {layouts},
+    } = await getLayouts()
+    const {host, measurements} = await this.fetchHostsAndMeasurements(layouts)
+
+    let findMeasurement = []
+    if (focuseNode.type === 'Node') {
+      findMeasurement = [`kubernetes_node`]
+    } else if (focuseNode.type === 'Pod') {
+      findMeasurement = [`kubernetes_pod`]
+    }
+
+    const focusedApp = 'kubernetes'
+
+    let filteredLayouts = _.filter(layouts, layout => {
+      return focusedApp
+        ? layout.app === focusedApp &&
+            _.filter(findMeasurement, m => _.includes(layout.measurement, m))
+              .length > 0
+        : host.apps &&
+            _.includes(host.apps, layout.app) &&
+            _.includes(measurements, layout.measurement)
+    }).sort((x, y) => {
+      return x.measurement < y.measurement
+        ? -1
+        : x.measurement > y.measurement
+        ? 1
+        : 0
+    })
+
+    const makeWhere = (where: string) => {
+      _.forEach(filteredLayouts, layout => {
+        _.forEach(layout.cells, cell => {
+          _.forEach(cell.queries, query => {
+            if (query['wheres']) {
+              query['wheres'].push(`"${where}"='${focuseNode.label}'`)
+            } else {
+              query['wheres'] = []
+              query['wheres'].push(`"${where}"='${focuseNode.label}'`)
+            }
+          })
+        })
+      })
+    }
+
+    if (focuseNode.type === 'Node') {
+      makeWhere('node_name')
+    } else if (focuseNode.type === 'Pod') {
+      makeWhere('pod_name')
+    }
+
+    return filteredLayouts
   }
 
   public render() {
@@ -313,11 +327,29 @@ class KubernetesPage extends PureComponent<Props, State> {
           templates={tempVars}
           timeRange={timeRange}
           manualRefresh={manualRefresh}
-          host={'k8s-master01'}
+          host={''}
           selectMinion={selectMinion}
         />
       </>
     )
+  }
+
+  private async fetchHostsAndMeasurements(layouts: Layout[]) {
+    const {source} = this.props
+    const fetchMeasurements = getMeasurementsForHost(source, '')
+    const fetchHosts = getAppsForHost(
+      source.links.proxy,
+      '',
+      layouts,
+      source.telegraf
+    )
+
+    const [host, measurements] = await Promise.all([
+      fetchHosts,
+      fetchMeasurements,
+    ])
+
+    return {host, measurements}
   }
 
   private clearInterval = () => {
