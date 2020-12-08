@@ -137,6 +137,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       .attr('r', d => d.r)
       .attr('fill', d => clusterTypeColorset[d.data.type])
       .attr('data-type', d => d.data.type)
+      .attr('data-name', d => d.data.name)
       .attr('data-label', d => d.data.label)
       .attr('pointer-events', d => (d.children ? 'all' : 'none'))
       .on('mouseover', function() {
