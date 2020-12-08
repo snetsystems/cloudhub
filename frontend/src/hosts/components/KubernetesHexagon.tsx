@@ -148,6 +148,9 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       .on('mousedown', function() {
         d3.event.preventDefault()
       })
+      .on('click', function() {
+        onMouseClick(this)
+      })
 
     node
       .filter(d => d.height === 0)
@@ -162,6 +165,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       })
       .append('path')
       .attr('class', 'hexagon')
+      .attr('data-type', d => d.data.type)
       .classed('kubernetes-focuse', d => {
         const {name, label} = focuseNode
         return d.data.name === name && d.data.label === label
