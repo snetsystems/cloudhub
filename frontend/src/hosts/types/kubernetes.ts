@@ -12,6 +12,7 @@ export interface KubernetesItem {
 export interface FocuseNode {
   name: string
   label: string
+  type: string
 }
 
 export interface TooltipPosition {

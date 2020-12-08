@@ -91,7 +91,6 @@ interface State {
 @ErrorHandling
 class KubernetesPage extends PureComponent<Props, State> {
   private height = 40
-  private EMPTY = 'no select'
   private interval: NodeJS.Timer = null
 
   constructor(props: Props) {
@@ -109,7 +108,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       namespaces: ['ns1', 'ns2', 'ns3'],
       nodes: ['n1', 'n2', 'n3'],
       limits: ['Unlimited', '20', '50', '100'],
-      focuseNode: {name: this.EMPTY, label: this.EMPTY},
+      focuseNode: {name: null, label: null, type: null},
       pinNode: [],
       isToolipActive: false,
       tooltipPosition: {
@@ -123,7 +122,7 @@ class KubernetesPage extends PureComponent<Props, State> {
         memory: null,
       },
       minions: [],
-      selectMinion: this.EMPTY,
+      selectMinion: null,
       selectedAutoRefresh: 0,
       isOpenMinions: false,
       isDisabledMinions: false,
@@ -175,7 +174,6 @@ class KubernetesPage extends PureComponent<Props, State> {
           ? 1
           : 0
       })
-    console.log(layouts)
 
     this.setState({
       proportions,
@@ -189,7 +187,7 @@ class KubernetesPage extends PureComponent<Props, State> {
     const params = {
       hostID: 'k8s-master01',
     }
-    console.log(params)
+
     const fetchMeasurements = getMeasurementsForHost(source, params.hostID)
     const fetchHosts = getAppsForHost(
       source.links.proxy,
@@ -214,7 +212,7 @@ class KubernetesPage extends PureComponent<Props, State> {
     ) {
       this.handleKubernetesAutoRefresh()
     }
-    if (prevState.focuseNode !== focuseNode && focuseNode.name !== this.EMPTY) {
+    if (prevState.focuseNode !== focuseNode && focuseNode.name !== null) {
       this.debounceFetchPodData()
     }
   }
@@ -252,8 +250,6 @@ class KubernetesPage extends PureComponent<Props, State> {
     } = this.state
 
     const layoutCells = getCells(layouts, source)
-    console.log({layouts, source})
-    console.log({layoutCells})
     const tempVars = generateForHosts(source)
 
     return (
@@ -355,7 +351,7 @@ class KubernetesPage extends PureComponent<Props, State> {
     const {selectMinion, selectedAutoRefresh} = this.state
 
     this.clearInterval()
-    if (selectMinion === this.EMPTY || selectedAutoRefresh === 0) return
+    if (selectMinion === null || selectedAutoRefresh === 0) return
 
     const {addons} = this.props
     const salt = _.find(addons, addon => addon.name === 'salt')
@@ -383,7 +379,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       const salt = _.find(this.props.addons, addon => addon.name === 'salt')
       const minions = _.uniq(await getKubernetesAllNodes(salt.url, salt.token))
       if (_.indexOf(minions, selectMinion) === -1) {
-        this.setState({selectMinion: this.EMPTY})
+        this.setState({selectMinion: null})
       }
 
       this.handleOpenMinionsDropdown()
@@ -438,8 +434,15 @@ class KubernetesPage extends PureComponent<Props, State> {
   private onClickVisualizePod = (target: SVGSVGElement): void => {
     const focuseNodeName = d3.select(target).attr('data-name')
     const focuseNodeLabel = d3.select(target).attr('data-label')
-    console.log({focuseNodeName, focuseNodeLabel})
-    this.setState({focuseNode: {name: focuseNodeName, label: focuseNodeLabel}})
+    const focuseNodeType = d3.select(target).attr('data-type')
+
+    this.setState({
+      focuseNode: {
+        name: focuseNodeName,
+        label: focuseNodeLabel,
+        type: focuseNodeType,
+      },
+    })
   }
 
   private onDBClick = (target: SVGSVGElement) => {
@@ -449,21 +452,25 @@ class KubernetesPage extends PureComponent<Props, State> {
   private handlePinNode = (target: SVGSVGElement) => {
     const pinName = d3.select(target).attr('data-name')
     const pinLabel = d3.select(target).attr('data-label')
+    const pinType = d3.select(target).attr('data-type')
 
     this.setState({
       pinNode: [
         {
           name: pinName,
           label: pinLabel,
+          type: pinType,
         },
         {
           name:
             'Namespace_ingress-nginx_Configmaps_ingress-controller-leader-nginx',
           label: 'ingress-controller-leader-nginx',
+          type: 'Pod',
         },
         {
           name: 'Namespace_kube-public_Configmaps_cluster-info',
           label: 'cluster-info',
+          type: 'Pod',
         },
       ],
     })
