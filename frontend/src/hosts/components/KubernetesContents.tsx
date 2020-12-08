@@ -131,7 +131,7 @@ class KubernetesContents extends PureComponent<Props, State> {
 
           {this.tooltip}
         </div>
-        {focuseNode.name !== 'no select' && cells.length > 0 ? (
+        {focuseNode.name !== null && cells.length > 0 ? (
           <div className="kubernetes-dashboard">
             <LayoutRenderer
               source={source}
@@ -179,23 +179,42 @@ class KubernetesContents extends PureComponent<Props, State> {
       <FancyScrollbar>
         <div className="kubernetes-detail-display">
           <TableBody>
-            <div className="hosts-table--tr">
-              <div
-                className={'hosts-table--th align--start'}
-                style={{width: HeaderWidth}}
-              >
-                Pod
+            <>
+              <div className="hosts-table--tr">
+                <div
+                  className={'hosts-table--th align--start'}
+                  style={{width: HeaderWidth}}
+                >
+                  Kind
+                </div>
+                <TableBodyRowItem
+                  title={
+                    <div className="pod-name" onClick={handleOnClickPodName}>
+                      {focuseNode.type}
+                    </div>
+                  }
+                  width={DataWidth}
+                  className={'align--start'}
+                />
               </div>
-              <TableBodyRowItem
-                title={
-                  <div className="pod-name" onClick={handleOnClickPodName}>
-                    {focuseNode.label}
-                  </div>
-                }
-                width={DataWidth}
-                className={'align--start'}
-              />
-            </div>
+              <div className="hosts-table--tr">
+                <div
+                  className={'hosts-table--th align--start'}
+                  style={{width: HeaderWidth}}
+                >
+                  Label
+                </div>
+                <TableBodyRowItem
+                  title={
+                    <div className="pod-name" onClick={handleOnClickPodName}>
+                      {focuseNode.label}
+                    </div>
+                  }
+                  width={DataWidth}
+                  className={'align--start'}
+                />
+              </div>
+            </>
           </TableBody>
           <div className={'kubernetes-radio-btn--container'}>
             <Radio shape={ButtonShape.StretchToFit}>
