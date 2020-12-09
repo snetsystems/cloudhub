@@ -1,42 +1,10 @@
 import AJAX from 'src/utils/ajax'
-
-interface Params {
-  client?: string
-  fun?: string
-  arg?: string[] | string
-  tgt_type?: string
-  tgt?: string[] | string
-  match?: string
-  include_rejected?: string
-  include_denied?: string
-  include_accepted?: string
-  show_ip?: string
-  kwarg?: {
-    username?: string
-    password?: string
-    eauth?: string
-    name?: string
-    path?: string
-    dest?: string
-    makedirs?: string
-    fun?: string
-    cmd?: string
-    sources?: string
-    args?: string[] | string
-    url?: string
-    method?: string
-    detail?: boolean
-  }
-  username?: string
-  password?: string
-  eauth?: string
-  token_expire?: number
-}
+import {SaltStack} from 'src/types/saltstack'
 
 const apiRequest = async (
   pUrl: string,
   pToken: string,
-  pParams: Params,
+  pParams: SaltStack,
   pAccept?: string
 ) => {
   try {
@@ -180,81 +148,6 @@ export async function getWheelKeyListAll(pUrl: string, pToken: string) {
   }
 }
 
-export async function getWheelKeyAcceptedList(pUrl: string, pToken: string) {
-  try {
-    const params = {
-      eauth: 'pam',
-      client: 'wheel',
-      fun: 'key.list',
-      match: 'accepted',
-    }
-    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
-  } catch (error) {
-    console.error(error)
-    throw error
-  }
-}
-
-export async function getLocalVSphereInfoAll(
-  pUrl: string,
-  pToken: string,
-  tgt: string,
-  address: string,
-  user: string,
-  password: string,
-  port: string,
-  protocol: string
-) {
-  try {
-    const params = {
-      token: pToken,
-      eauth: 'pam',
-      client: 'local',
-      fun: 'vsphere.vsphere_info_all',
-      tgt: tgt,
-      kwarg: {
-        host: address,
-        username: user,
-        password,
-        port,
-        protocol,
-      },
-    }
-    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
-  } catch (error) {
-    console.error(error)
-    throw error
-  }
-}
-
-export async function getTicketRemoteConsole(
-  pUrl: string,
-  pToken: string,
-  tgt: string,
-  address: string,
-  user: string,
-  password: string
-) {
-  try {
-    const params = {
-      token: pToken,
-      eauth: 'pam',
-      client: 'local',
-      fun: 'vsphere.get_ticket',
-      tgt: tgt,
-      kwarg: {
-        host: address,
-        username: user,
-        password: password,
-      },
-    }
-    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
-  } catch (error) {
-    console.error(error)
-    throw error
-  }
-}
-
 export async function getRunnerManageAllowed(pUrl: string, pToken: string) {
   try {
     const params = {
@@ -276,7 +169,7 @@ export async function getLocalServiceEnabledTelegraf(
   pMinionId: string
 ) {
   try {
-    const params: Params = {
+    const params: SaltStack = {
       client: 'local',
       fun: 'service.enabled',
       arg: 'telegraf',
@@ -303,7 +196,7 @@ export async function getLocalServiceStatusTelegraf(
   pMinionId: string
 ) {
   try {
-    const params: Params = {
+    const params: SaltStack = {
       client: 'local',
       fun: 'service.status',
       arg: 'telegraf',
@@ -330,7 +223,7 @@ export async function runLocalServiceStartTelegraf(
   pMinionId: string
 ) {
   try {
-    const params: Params = {
+    const params: SaltStack = {
       client: 'local',
       fun: 'service.start',
       arg: 'telegraf',
@@ -357,7 +250,7 @@ export async function runLocalServiceStopTelegraf(
   pMinionId: string
 ) {
   try {
-    const params: Params = {
+    const params: SaltStack = {
       client: 'local',
       fun: 'service.stop',
       arg: 'telegraf',
@@ -384,7 +277,7 @@ export async function runLocalServiceReStartTelegraf(
   pMinionId: string
 ) {
   try {
-    const params: Params = {
+    const params: SaltStack = {
       client: 'local',
       fun: 'service.restart',
       arg: 'telegraf',
@@ -411,7 +304,7 @@ export async function runLocalCpGetDirTelegraf(
   pMinionId: string
 ) {
   try {
-    const params: Params = {
+    const params: SaltStack = {
       client: 'local',
       fun: 'cp.get_dir',
       kwarg: {
@@ -443,7 +336,7 @@ export async function runLocalPkgInstallTelegraf(
   pSelectCollector: string
 ) {
   try {
-    const params: Params = {
+    const params: SaltStack = {
       client: 'local',
       fun: 'pkg.install',
       kwarg: {
@@ -474,7 +367,7 @@ export async function getLocalGrainsItems(
   pMinionId: string
 ) {
   try {
-    const params: Params = {
+    const params: SaltStack = {
       client: 'local',
       fun: 'grains.items',
       tgt_type: '',
@@ -502,7 +395,7 @@ export async function getLocalFileRead(
   pMinionId: string
 ) {
   try {
-    const params: Params = {
+    const params: SaltStack = {
       client: 'local',
       fun: 'file.read',
       tgt_type: '',
@@ -534,7 +427,7 @@ export async function getLocalFileWrite(
   pScript: string
 ) {
   try {
-    const params: Params = {
+    const params: SaltStack = {
       client: 'local',
       fun: 'file.write',
       tgt_type: '',
@@ -566,7 +459,7 @@ export async function getLocalServiceGetRunning(
   pMinionId: string
 ) {
   try {
-    const params: Params = {
+    const params: SaltStack = {
       client: 'local',
       fun: 'service.get_running',
       tgt_type: '',
@@ -616,7 +509,7 @@ export async function runLocalGroupAdduser(
   pMinionId: string
 ) {
   try {
-    const params: Params = {
+    const params: SaltStack = {
       client: 'local',
       fun: 'group.adduser',
       tgt_type: '',
@@ -730,19 +623,743 @@ export async function getLocalHttpQuery(
   }
 }
 
-export async function getKubernetesAllNodes(pUrl: string, pToken: string) {
+export async function getWheelKeyAcceptedList(pUrl: string, pToken: string) {
   try {
     const params = {
       eauth: 'pam',
+      client: 'wheel',
+      fun: 'key.list',
+      match: 'accepted',
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalVSphereInfoAll(
+  pUrl: string,
+  pToken: string,
+  tgt: string,
+  address: string,
+  user: string,
+  password: string,
+  port: string,
+  protocol: string
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
       client: 'local',
-      fun: 'kubernetes.nodes',
-      tgt: '*',
+      fun: 'vsphere.vsphere_info_all',
+      tgt: tgt,
       kwarg: {
-        detail: false,
+        host: address,
+        username: user,
+        password,
+        port,
+        protocol,
       },
     }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
 
-    return await apiRequest(pUrl, pToken, params)
+export async function getTicketRemoteConsole(
+  pUrl: string,
+  pToken: string,
+  tgt: string,
+  address: string,
+  user: string,
+  password: string
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'vsphere.get_ticket',
+      tgt: tgt,
+      kwarg: {
+        host: address,
+        username: user,
+        password: password,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalK8sNamespaces(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pParam: SaltStack
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'kubernetes.namespaces',
+      tgt: pMinionId,
+      kwarg: {
+        detail: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('detail')
+            ? pParam.kwarg.detail
+            : false
+          : false,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalK8sNodes(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pParam: SaltStack
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'kubernetes.nodes',
+      tgt: pMinionId,
+      kwarg: {
+        detail: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('detail')
+            ? pParam.kwarg.detail
+            : false
+          : false,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalK8sPods(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pParam: SaltStack
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'kubernetes.pods',
+      tgt: pMinionId,
+      kwarg: {
+        namespace: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('namespace')
+            ? pParam.kwarg.namespace
+            : ''
+          : '',
+        fieldselector: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('fieldselector')
+            ? pParam.kwarg.fieldselector
+            : ''
+          : '',
+        detail: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('detail')
+            ? pParam.kwarg.detail
+            : false
+          : false,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalK8sDeployments(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pParam: SaltStack
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'kubernetes.deployments',
+      tgt: pMinionId,
+      kwarg: {
+        namespace: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('namespace')
+            ? pParam.kwarg.namespace
+            : ''
+          : '',
+        detail: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('detail')
+            ? pParam.kwarg.detail
+            : false
+          : false,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalK8sReplicaSets(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pParam: SaltStack
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'kubernetes.replica_sets',
+      tgt: pMinionId,
+      kwarg: {
+        namespace: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('namespace')
+            ? pParam.kwarg.namespace
+            : ''
+          : '',
+        detail: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('detail')
+            ? pParam.kwarg.detail
+            : false
+          : false,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalK8sReplicationControllers(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pParam: SaltStack
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'kubernetes.replication_controllers',
+      tgt: pMinionId,
+      kwarg: {
+        namespace: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('namespace')
+            ? pParam.kwarg.namespace
+            : ''
+          : '',
+        detail: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('detail')
+            ? pParam.kwarg.detail
+            : false
+          : false,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalK8sDaemonSets(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pParam: SaltStack
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'kubernetes.daemon_sets',
+      tgt: pMinionId,
+      kwarg: {
+        namespace: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('namespace')
+            ? pParam.kwarg.namespace
+            : ''
+          : '',
+        detail: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('detail')
+            ? pParam.kwarg.detail
+            : false
+          : false,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalK8sStatefulSets(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pParam: SaltStack
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'kubernetes.stateful_sets',
+      tgt: pMinionId,
+      kwarg: {
+        namespace: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('namespace')
+            ? pParam.kwarg.namespace
+            : ''
+          : '',
+        detail: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('detail')
+            ? pParam.kwarg.detail
+            : false
+          : false,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalK8sJobs(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pParam: SaltStack
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'kubernetes.jobs',
+      tgt: pMinionId,
+      kwarg: {
+        namespace: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('namespace')
+            ? pParam.kwarg.namespace
+            : ''
+          : '',
+        detail: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('detail')
+            ? pParam.kwarg.detail
+            : false
+          : false,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalK8sCronJobs(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pParam: SaltStack
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'kubernetes.cron_jobs',
+      tgt: pMinionId,
+      kwarg: {
+        namespace: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('namespace')
+            ? pParam.kwarg.namespace
+            : ''
+          : '',
+        detail: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('detail')
+            ? pParam.kwarg.detail
+            : false
+          : false,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalK8sServices(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pParam: SaltStack
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'kubernetes.services',
+      tgt: pMinionId,
+      kwarg: {
+        namespace: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('namespace')
+            ? pParam.kwarg.namespace
+            : ''
+          : '',
+        detail: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('detail')
+            ? pParam.kwarg.detail
+            : false
+          : false,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalK8sIngresses(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pParam: SaltStack
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'kubernetes.ingresses',
+      tgt: pMinionId,
+      kwarg: {
+        namespace: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('namespace')
+            ? pParam.kwarg.namespace
+            : ''
+          : '',
+        detail: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('detail')
+            ? pParam.kwarg.detail
+            : false
+          : false,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalK8sConfigmaps(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pParam: SaltStack
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'kubernetes.configmaps',
+      tgt: pMinionId,
+      kwarg: {
+        namespace: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('namespace')
+            ? pParam.kwarg.namespace
+            : ''
+          : '',
+        detail: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('detail')
+            ? pParam.kwarg.detail
+            : false
+          : false,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalK8sSecrets(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pParam: SaltStack
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'kubernetes.secrets',
+      tgt: pMinionId,
+      kwarg: {
+        namespace: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('namespace')
+            ? pParam.kwarg.namespace
+            : ''
+          : '',
+        detail: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('detail')
+            ? pParam.kwarg.detail
+            : false
+          : false,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalK8sServiceAccounts(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pParam: SaltStack
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'kubernetes.service_accounts',
+      tgt: pMinionId,
+      kwarg: {
+        namespace: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('namespace')
+            ? pParam.kwarg.namespace
+            : ''
+          : '',
+        detail: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('detail')
+            ? pParam.kwarg.detail
+            : false
+          : false,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalK8sClusterRoles(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pParam: SaltStack
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'kubernetes.cluster_roles',
+      tgt: pMinionId,
+      kwarg: {
+        detail: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('detail')
+            ? pParam.kwarg.detail
+            : false
+          : false,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalK8sClusterRoleBindings(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pParam: SaltStack
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'kubernetes.cluster_role_bindings',
+      tgt: pMinionId,
+      kwarg: {
+        detail: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('detail')
+            ? pParam.kwarg.detail
+            : false
+          : false,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalK8sRoles(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pParam: SaltStack
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'kubernetes.roles',
+      tgt: pMinionId,
+      kwarg: {
+        namespace: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('namespace')
+            ? pParam.kwarg.namespace
+            : ''
+          : '',
+        detail: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('detail')
+            ? pParam.kwarg.detail
+            : false
+          : false,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalK8sRoleBindings(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pParam: SaltStack
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'kubernetes.role_bindings',
+      tgt: pMinionId,
+      kwarg: {
+        namespace: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('namespace')
+            ? pParam.kwarg.namespace
+            : ''
+          : '',
+        detail: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('detail')
+            ? pParam.kwarg.detail
+            : false
+          : false,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalK8sPersistentVolumes(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pParam: SaltStack
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'kubernetes.persistent_volumes',
+      tgt: pMinionId,
+      kwarg: {
+        detail: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('detail')
+            ? pParam.kwarg.detail
+            : false
+          : false,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalK8sPersistentVolumeClaims(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pParam: SaltStack
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'kubernetes.persistent_volume_claims',
+      tgt: pMinionId,
+      kwarg: {
+        detail: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('detail')
+            ? pParam.kwarg.detail
+            : false
+          : false,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
   } catch (error) {
     console.error(error)
     throw error
