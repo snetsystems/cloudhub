@@ -27,6 +27,11 @@ import {
   TooltipNode,
   TooltipPosition,
   FocuseNode,
+  KubernetesProps,
+  D3K8sData,
+  D3DataDepth1,
+  D3DataDepth2,
+  D3DataDepth3,
 } from 'src/hosts/types/kubernetes'
 
 export {
@@ -53,4 +58,9 @@ export {
   TooltipNode,
   TooltipPosition,
   FocuseNode,
+  KubernetesProps,
+  D3K8sData,
+  D3DataDepth1,
+  D3DataDepth2,
+  D3DataDepth3,
 }
