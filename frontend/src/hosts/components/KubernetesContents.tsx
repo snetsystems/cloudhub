@@ -131,7 +131,7 @@ class KubernetesContents extends PureComponent<Props, State> {
 
           {this.tooltip}
         </div>
-        {focuseNode.name !== null && cells.length > 0 ? (
+        {focuseNode.name && cells.length > 0 ? (
           <div className="kubernetes-dashboard">
             <LayoutRenderer
               source={source}
