@@ -21,8 +21,10 @@ import {
   getLocalVSphereInfoAll,
   getTicketRemoteConsole,
 } from 'src/shared/apis/saltStack'
+import {getCpuAndLoadForK8s} from 'src/hosts/apis/kubernetes'
 
-interface HostsObject {
+export {getCpuAndLoadForK8s}
+export interface HostsObject {
   [x: string]: Host
 }
 
