@@ -20,18 +20,12 @@ import {
   verifyLocalStorage,
 } from 'src/shared/middleware/localStorage'
 
-// Error
-import {ErrorHandling} from 'src/shared/decorators/errors'
+// Constatns
+import {EMPTY_LINKS} from 'src/dashboards/constants/dashboardHeader'
 
 // API
-import {getCells} from 'src/hosts/utils/getCells'
-import {EMPTY_LINKS} from 'src/dashboards/constants/dashboardHeader'
-import {generateForHosts} from 'src/utils/tempVars'
-// APIs
 import {
-  getCpuAndLoadForHosts,
   getLayouts,
-  getAppsForHosts,
   getAppsForHost,
   getMeasurementsForHost,
 } from 'src/hosts/apis'
@@ -50,6 +44,11 @@ import {timeRanges} from 'src/shared/data/timeRanges'
 
 // Utils
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
+import {generateForHosts} from 'src/utils/tempVars'
+import {getCells} from 'src/hosts/utils/getCells'
+
+// Error
+import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
   source: Source
@@ -57,6 +56,7 @@ interface Props {
   addons: Addon[]
   notify: NotificationAction
   manualRefresh: number
+  timeRange: TimeRange
 }
 
 interface State {
@@ -85,14 +85,13 @@ interface State {
   kubernetesRelationItem: string[]
   layouts: Layout[]
   hostLinks: DashboardSwitcherLinks
-  timeRange: TimeRange
 }
 
 @ErrorHandling
 class KubernetesPage extends PureComponent<Props, State> {
   private height = 40
   private interval: NodeJS.Timer = null
-
+  private dummyData = require('src/hosts/containers/d3node.json')
   constructor(props: Props) {
     super(props)
 
@@ -122,7 +121,7 @@ class KubernetesPage extends PureComponent<Props, State> {
         memory: null,
       },
       minions: [],
-      selectMinion: null,
+      selectMinion: 'no select',
       selectedAutoRefresh: 0,
       isOpenMinions: false,
       isDisabledMinions: false,
@@ -130,7 +129,6 @@ class KubernetesPage extends PureComponent<Props, State> {
       kubernetesRelationItem: null,
       layouts: [],
       hostLinks: EMPTY_LINKS,
-      timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
     }
   }
 
@@ -138,23 +136,12 @@ class KubernetesPage extends PureComponent<Props, State> {
     verifyLocalStorage(getLocalStorage, setLocalStorage, 'KubernetesState', {
       proportions: [0.75, 0.25],
     })
+
     const getLocal = getLocalStorage('KubernetesState')
     const {proportions} = getLocal
-    const dummyData = JSON.parse(
-      JSON.stringify(require('src/hosts/containers/d3node.json'), function(
-        key,
-        value
-      ) {
-        if (key === 'cpu' || key === 'memory') {
-          const test = Math.floor(Math.random() * 100)
-          return test
-        }
-        return value
-      })
-    )
+    this.onClickMinionsDropdown()
     this.setState({
       proportions,
-      kubernetesItem: dummyData,
     })
   }
 
@@ -236,7 +223,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {source, manualRefresh} = this.props
+    const {source, manualRefresh, timeRange} = this.props
     const {
       selectedNamespace,
       selectedNode,
@@ -259,7 +246,6 @@ class KubernetesPage extends PureComponent<Props, State> {
       isOpenMinions,
       isDisabledMinions,
       selectedAutoRefresh,
-      timeRange,
       layouts,
     } = this.state
 
@@ -364,6 +350,11 @@ class KubernetesPage extends PureComponent<Props, State> {
   ) => {
     console.log('--- fetch start---')
     console.table({url, token, minion})
+
+    this.setState({
+      kubernetesItem: this.dummyData,
+    })
+
     console.log('--- fetch end ---')
   }
 
@@ -481,17 +472,20 @@ class KubernetesPage extends PureComponent<Props, State> {
     this.handlePinNode(target)
   }
 
-  private handlePinNode = (target: SVGSVGElement) => {
-    const pinName = d3.select(target).attr('data-name')
-    const pinLabel = d3.select(target).attr('data-label')
-    const pinType = d3.select(target).attr('data-type')
-
-    this.setState({
-      pinNode: [
+  private handlePinNode = async (target: SVGSVGElement) => {
+    const targetName = d3.select(target).attr('data-name')
+    const targetLabel = d3.select(target).attr('data-label')
+    const targetType = d3.select(target).attr('data-type')
+    console.log('targetName: ', targetName)
+    console.log('targetLabel: ', targetLabel)
+    console.log('targetType: ', targetType)
+    // const getRelationNode = await
+    // return
+    /*
         {
-          name: pinName,
-          label: pinLabel,
-          type: pinType,
+          name: targetName,
+          label: targetLabel,
+          type: targetType,
         },
         {
           name:
@@ -504,8 +498,10 @@ class KubernetesPage extends PureComponent<Props, State> {
           label: 'cluster-info',
           type: 'Pod',
         },
-      ],
-    })
+    */
+    // this.setState({
+    //   pinNode: [],
+    // })
   }
 
   private fetchPodData = async () => {
