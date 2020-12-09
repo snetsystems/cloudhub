@@ -339,6 +339,7 @@ export class HostsPage extends PureComponent<Props, State> {
               timeRange={this.state.timeRange}
               notify={notify}
               addons={addons}
+              autoRefresh={this.props.autoRefresh}
             />
           ) : null}
         </Page.Contents>
