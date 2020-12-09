@@ -47,35 +47,43 @@ class KubernetesHexagon extends PureComponent<Props, State> {
   }
 
   public componentDidUpdate() {
-    const removeGroup = d3.select('svg.kubernetes-svg').data(this.props.data)
-    removeGroup.exit().remove()
+    d3.select('svg.kubernetes-svg')
+      .selectAll('g')
+      .remove()
 
     this.drawChart()
   }
 
   public render() {
-    return this.props.data ? (
-      <div ref={this.ref} style={this.containerStyles} />
-    ) : (
-      <PageSpinner />
+    return (
+      <div ref={this.ref} style={this.containerStyles}>
+        {!this.props.data ? (
+          <PageSpinner />
+        ) : (
+          <svg className={'kubernetes-svg'}></svg>
+        )}
+      </div>
     )
   }
 
   private drawChart = () => {
     const _this = this
     const {onMouseClick, onMouseOver, onMouseLeave} = _this
-    const {focuseNode, pinNode} = _this.props
+    const {focuseNode, pinNode, data: propsData} = _this.props
     const {width, height} = _this.ref.current.getBoundingClientRect()
+
+    console.log({})
 
     const data = d3
       .pack()
       .size([width, height])
-      .padding(30)(
+      .padding(40)(
       d3
-        .hierarchy(this.props.data)
+        .hierarchy(propsData)
         .sum(d => d.value)
         .sort((a, b) => b.value - a.value)
     )
+
     const SQRT3 = Math.sqrt(3)
     const hexagonPoly = [
       [0, -1],
@@ -89,11 +97,9 @@ class KubernetesHexagon extends PureComponent<Props, State> {
     const generateHexagon = hexRadius => {
       const hexagonPath =
         'm' +
-        hexagonPoly
-          .map(function(p) {
-            return [p[0] * hexRadius, p[1] * hexRadius].join(',')
-          })
-          .join('l') +
+        _.map(hexagonPoly, function(p) {
+          return [p[0] * hexRadius, p[1] * hexRadius].join(',')
+        }).join('l') +
         'z'
       return hexagonPath
     }
@@ -106,13 +112,12 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       .endAngle(Math.PI)
 
     const svg = d3
-      .create('svg')
+      .select('svg')
       .attr('width', '100%')
       .attr('height', '100%')
       .style('font', '10px sans-serif')
       .style('overflow', 'visible')
       .attr('text-anchor', 'middle')
-      .classed('kubernetes-svg', true)
 
     const node = svg
       .append('g')
@@ -226,7 +231,13 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       this.ref.current.appendChild(svg.node())
       const {x, y, width, height} = svg.node().getBBox()
       this.ref.current.removeChild(svg.node())
-      return [x, y, width, height]
+      console.log('autoBox: ', x, y, width, height)
+      return [
+        227.0439910888672,
+        6.97705078125,
+        676.3652954101562,
+        779.7303466796875,
+      ]
     }
 
     this.ref.current.append(svg.attr('viewBox', `${autoBox()}`).node())
