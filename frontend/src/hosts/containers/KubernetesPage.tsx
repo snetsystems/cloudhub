@@ -185,15 +185,13 @@ class KubernetesPage extends PureComponent<Props, State> {
 
     const target =
       !selectMinion || selectMinion === this.noSelect ? '*' : selectMinion
-    console.log('target: ', target)
+
     const nodes = await this.props.handleGetNodes(
       saltMasterUrl,
       saltMasterToken,
       target,
       pParam
     )
-
-    console.log('nodes: ', nodes.data)
 
     const resultJson = JSON.parse(
       JSON.stringify(
@@ -2454,6 +2452,14 @@ class KubernetesPage extends PureComponent<Props, State> {
       selectedAutoRefresh,
       selectMinion,
     } = this.state
+
+    if (
+      prevState.selectMinion !== selectMinion &&
+      selectedAutoRefresh === 0 &&
+      selectMinion !== this.noSelect
+    ) {
+      this.debouncedHandleKubernetesRefresh()
+    }
 
     if (prevProps.manualRefresh !== manualRefresh) {
       this.handleKubernetesResourceRefresh()
