@@ -29,15 +29,15 @@ export interface D3DataDepth3 {
   value: number
   owner?: string
 }
-export interface KubernetesItem {
+
+export interface Kubernetes {
   name: string
-  label: string
   type: string
-  value?: number
-  cpu?: number
-  memory?: number
-  children?: KubernetesItem[]
-  owner?: string
+  cpu: string
+  memory: string
+}
+export interface KubernetesObject {
+  [key: string]: Kubernetes
 }
 
 export interface FocuseNode {

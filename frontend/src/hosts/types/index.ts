@@ -23,7 +23,8 @@ import {
 } from 'src/hosts/types/type'
 
 import {
-  KubernetesItem,
+  Kubernetes,
+  KubernetesObject,
   TooltipNode,
   TooltipPosition,
   FocuseNode,
@@ -54,7 +55,6 @@ export {
   handleSelectHostProps,
   vmParam,
   reducerVSphere,
-  KubernetesItem,
   TooltipNode,
   TooltipPosition,
   FocuseNode,
@@ -63,4 +63,6 @@ export {
   D3DataDepth1,
   D3DataDepth2,
   D3DataDepth3,
+  Kubernetes,
+  KubernetesObject,
 }
