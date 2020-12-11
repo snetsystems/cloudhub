@@ -373,3 +373,16 @@
   padding: 22.5px 20px;
   height: auto;
 }
+
+.hexagon-alert {
+  animation: alert 0.25s infinite;
+}
+
+@keyframes alert {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.5;
+  }
+}
