@@ -130,7 +130,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   private height = 40
   private getKubernetesObjectInterval: NodeJS.Timer = null
   private getKubernetesResourceInterval: NodeJS.Timer = null
-
+  private noSelect: string = 'no select'
   constructor(props: Props) {
     super(props)
 
@@ -160,7 +160,7 @@ class KubernetesPage extends PureComponent<Props, State> {
         memory: null,
       },
       minions: [],
-      selectMinion: 'k8s-master01',
+      selectMinion: null,
       selectedAutoRefresh: 0,
       isOpenMinions: false,
       isDisabledMinions: false,
@@ -183,12 +183,17 @@ class KubernetesPage extends PureComponent<Props, State> {
     const saltMasterToken = addon.token
     const pParam: SaltStack = {kwarg: {detail}}
 
+    const target =
+      !selectMinion || selectMinion === this.noSelect ? '*' : selectMinion
+    console.log('target: ', target)
     const nodes = await this.props.handleGetNodes(
       saltMasterUrl,
       saltMasterToken,
-      selectMinion,
+      target,
       pParam
     )
+
+    console.log('nodes: ', nodes.data)
 
     const resultJson = JSON.parse(
       JSON.stringify(
@@ -2418,27 +2423,27 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
   }
 
-  public async componentDidMount() {
+  public componentDidMount() {
     verifyLocalStorage(getLocalStorage, setLocalStorage, 'KubernetesState', {
       proportions: [0.75, 0.25],
-      selectMinion: 'no select',
+      selectMinion: this.noSelect,
       selectedAutoRefresh: 0,
     })
 
     const getLocal = getLocalStorage('KubernetesState')
     const {proportions, selectMinion, selectedAutoRefresh} = getLocal
 
-    if (selectedAutoRefresh === 0 && selectMinion !== 'no select') {
+    if (selectedAutoRefresh === 0 && selectMinion !== this.noSelect) {
       this.debouncedHandleKubernetesRefresh()
     }
+
+    this.handleKubernetesResourceAutoRefresh()
 
     this.setState({
       proportions,
       selectMinion,
       selectedAutoRefresh,
     })
-
-    this.handleKubernetesResourceAutoRefresh()
   }
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
@@ -2749,6 +2754,7 @@ class KubernetesPage extends PureComponent<Props, State> {
     if (!isOpenMinions) {
       this.setState({isDisabledMinions: true})
       const minions: string[] = _.uniq(await this.getNodes(false))
+      // const minions: string[] = _.uniq(await )
       if (_.indexOf(minions, selectMinion) === -1) {
         this.setState({selectMinion: null})
       }
