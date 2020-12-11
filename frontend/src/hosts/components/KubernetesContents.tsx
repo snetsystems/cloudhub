@@ -22,10 +22,11 @@ import {kubernetesStatusColor} from 'src/hosts/constants/color'
 
 // Types
 import {
-  KubernetesItem,
   TooltipNode,
   TooltipPosition,
   FocuseNode,
+  D3K8sData,
+  KubernetesObject,
 } from 'src/hosts/types'
 import {Source, TimeRange, Cell, Template} from 'src/types'
 
@@ -33,7 +34,7 @@ interface Props {
   handleOnSetActiveEditorTab: (tab: string) => void
   handleOnClickPodName: () => void
   handleOnClickVisualizePod: (target: SVGSVGElement) => void
-  handleDBClick: (target: SVGSVGElement) => void
+  handleDBClick: (data: any) => void
   handleResize: (proportions: number[]) => void
   handleOpenTooltip: (target: any) => void
   handleCloseTooltip: () => void
@@ -42,12 +43,12 @@ interface Props {
   script: string
   height: number
   focuseNode: FocuseNode
-  pinNode: FocuseNode[]
+  pinNode: string[]
   isToolipActive: boolean
   toolipPosition: TooltipPosition
   tooltipNode: TooltipNode
-  kubernetesItem: KubernetesItem
-  kubernetesRelationItem: string[]
+  kubernetesObject: KubernetesObject
+  kubernetesD3Data: D3K8sData
   source: Source
   sources: Source[]
   templates: Template[]
@@ -67,12 +68,13 @@ class KubernetesContents extends PureComponent<Props, State> {
   }
 
   public render() {
+    const {height, handleResize} = this.props
     return (
-      <div style={{height: `calc(100% - ${this.props.height}px)`}}>
+      <div style={{height: `calc(100% - ${height}px)`}}>
         <Threesizer
           orientation={HANDLE_VERTICAL}
           divisions={this.virticalDivisions}
-          onResize={this.props.handleResize}
+          onResize={handleResize}
         />
       </div>
     )
@@ -112,21 +114,31 @@ class KubernetesContents extends PureComponent<Props, State> {
       manualRefresh,
       host,
       focuseNode,
+      pinNode,
+      kubernetesObject,
+      kubernetesD3Data,
+      handleDBClick,
+      handleOnClickPodName,
+      handleOnClickVisualizePod,
+      handleResize,
+      handleOpenTooltip,
+      handleCloseTooltip,
     } = this.props
 
     return (
       <FancyScrollbar>
         <div style={{width: '100%', height: 'calc(100% - 50px)'}}>
           <KubernetesHexagon
-            data={this.props.kubernetesItem}
-            focuseNode={this.props.focuseNode}
-            pinNode={this.props.pinNode}
-            handleDBClick={this.props.handleDBClick}
-            handleOnClickPodName={this.props.handleOnClickPodName}
-            handleOnClickVisualizePod={this.props.handleOnClickVisualizePod}
-            handleResize={this.props.handleResize}
-            handleOpenTooltip={this.props.handleOpenTooltip}
-            handleCloseTooltip={this.props.handleCloseTooltip}
+            kubernetesObject={kubernetesObject}
+            kubernetesD3Data={kubernetesD3Data}
+            focuseNode={focuseNode}
+            pinNode={pinNode}
+            handleDBClick={handleDBClick}
+            handleOnClickPodName={handleOnClickPodName}
+            handleOnClickVisualizePod={handleOnClickVisualizePod}
+            handleResize={handleResize}
+            handleOpenTooltip={handleOpenTooltip}
+            handleCloseTooltip={handleCloseTooltip}
           />
 
           {this.tooltip}
@@ -154,11 +166,12 @@ class KubernetesContents extends PureComponent<Props, State> {
   }
 
   private get tooltip() {
-    if (this.props.isToolipActive) {
+    const {isToolipActive, toolipPosition, tooltipNode} = this.props
+    if (isToolipActive) {
       return (
         <KubernetesTooltip
-          tipPosition={this.props.toolipPosition}
-          tooltipNode={this.props.tooltipNode}
+          tipPosition={toolipPosition}
+          tooltipNode={tooltipNode}
           statusColor={kubernetesStatusColor}
         />
       )
