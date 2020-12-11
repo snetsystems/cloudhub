@@ -1,3 +1,6 @@
+// Libraries
+import _ from 'lodash'
+
 // Utils
 import {getDeep} from 'src/utils/wrappers'
 import replaceTemplate from 'src/tempVars/utils/replace'
@@ -5,7 +8,7 @@ import {proxy} from 'src/utils/queryUrlGenerator'
 
 // Types
 import {Template} from 'src/types'
-import {HostsObject} from 'src/hosts/apis'
+import {KubernetesObject} from 'src/hosts/types'
 
 interface K8sNodeSeries {
   name: string
@@ -35,8 +38,7 @@ export const getCpuAndLoadForK8s = async (
   proxyLink: string,
   telegrafDB: string,
   tempVars: Template[]
-): Promise<HostsObject> => {
-  console.log('getCpuAndLoadForK8s')
+): Promise<KubernetesObject> => {
   const query = replaceTemplate(
     `SELECT last("cpu_usage_nanocores") / 1000000 FROM \":db:\".\":rp:\".\"kubernetes_node\" WHERE time > now() - 10m GROUP BY node_name;
       SELECT last("memory_rss_bytes"), last("memory_working_set_bytes") FROM \":db:\".\":rp:\".\"kubernetes_node\" WHERE time > now() - 10m GROUP BY node_name;
@@ -44,13 +46,13 @@ export const getCpuAndLoadForK8s = async (
       SELECT last("memory_rss_bytes"), last("memory_working_set_bytes") FROM \":db:\".\":rp:\".\"kubernetes_pod_container\" WHERE time > now() - 10m GROUP BY pod_name;`,
     tempVars
   )
-  console.log(query)
+
   const {data} = await proxy({
     source: proxyLink,
     query,
     db: telegrafDB,
   })
-  console.log(data)
+
   const k8sObject = {}
   const nodeCpuSeries = getDeep<K8sNodeSeries[]>(data, 'results.[0].series', [])
   const nodeMemorySeries = getDeep<K8sNodeSeries[]>(
@@ -64,8 +66,9 @@ export const getCpuAndLoadForK8s = async (
     'results.[3].series',
     []
   )
-  nodeCpuSeries.forEach(s => {
-    const lastIndex = s.columns.findIndex(col => col === 'last')
+
+  _.forEach(nodeCpuSeries, s => {
+    const lastIndex = _.findIndex(s.columns, col => col === 'last')
     k8sObject[s.tags.node_name] = {
       ...EmptyK8s,
       name: s.tags.node_name,
@@ -73,16 +76,18 @@ export const getCpuAndLoadForK8s = async (
       cpu: Number(s.values[0][lastIndex]),
     }
   })
-  nodeMemorySeries.forEach(s => {
-    const rssIndex = s.columns.findIndex(col => col === 'last')
-    const workingIndex = s.columns.findIndex(col => col === 'last_1')
+
+  _.forEach(nodeMemorySeries, s => {
+    const rssIndex = _.findIndex(s.columns, col => col === 'last')
+    const workingIndex = _.findIndex(s.columns, col => col === 'last_1')
     k8sObject[s.tags.node_name].memory = Math.max(
       Number(s.values[0][rssIndex]),
       Number(s.values[0][workingIndex])
     )
   })
-  podCpuSeries.forEach(s => {
-    const lastIndex = s.columns.findIndex(col => col === 'last')
+
+  _.forEach(podCpuSeries, s => {
+    const lastIndex = _.findIndex(s.columns, col => col === 'last')
     k8sObject[s.tags.pod_name] = {
       ...EmptyK8s,
       name: s.tags.pod_name,
@@ -90,9 +95,10 @@ export const getCpuAndLoadForK8s = async (
       cpu: Number(s.values[0][lastIndex]),
     }
   })
-  podMemorySeries.forEach(s => {
-    const rssIndex = s.columns.findIndex(col => col === 'last')
-    const workingIndex = s.columns.findIndex(col => col === 'last_1')
+
+  _.forEach(podMemorySeries, s => {
+    const rssIndex = _.findIndex(s.columns, col => col === 'last')
+    const workingIndex = _.findIndex(s.columns, col => col === 'last_1')
     k8sObject[s.tags.pod_name].memory = k8sObject[
       s.tags.pod_name
     ].memory = Math.max(
@@ -100,6 +106,6 @@ export const getCpuAndLoadForK8s = async (
       Number(s.values[0][workingIndex])
     )
   })
-  console.log(k8sObject)
+
   return k8sObject
 }
