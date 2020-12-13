@@ -64,7 +64,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
   public render() {
     return (
       <div ref={this.ref} style={this.containerStyles}>
-        {!this.props.kubernetesD3Data ? (
+        {!this.props.kubernetesD3Data.name ? (
           <PageSpinner />
         ) : (
           <svg
