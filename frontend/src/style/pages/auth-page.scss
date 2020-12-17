@@ -51,7 +51,7 @@
     @include no-user-select();
   }
 
-  >.btn {
+  > .btn {
     margin-top: 6px;
     margin-bottom: 6px;
 
@@ -63,7 +63,7 @@
       margin-bottom: $sidebar--width;
     }
 
-    >.icon {
+    > .icon {
       font-size: 20px;
       margin-right: 8px;
     }
@@ -115,11 +115,11 @@
   align-items: center;
   justify-content: center;
 
-  >h3 {
+  > h3 {
     white-space: nowrap;
   }
 
-  >p {
+  > p {
     text-align: center;
   }
 
@@ -168,8 +168,8 @@
   margin: 2px -10px;
   padding: 0 30px;
 
-  >.auth--list-info>.auth--list-org,
-  >.auth--list-info>.auth--list-role {
+  > .auth--list-info > .auth--list-org,
+  > .auth--list-info > .auth--list-role {
     color: $g20-white;
   }
 }
@@ -184,4 +184,80 @@
 
 .btn.auth--logout {
   margin-top: 30px;
+}
+
+/*** auth login ***/
+.auth-area {
+  display: flex;
+  flex-direction: column;
+  width: 300px;
+
+  .auth-radio {
+    margin-bottom: 5px;
+  }
+
+  .auth-login {
+    width: 300px;
+    margin-bottom: 7px;
+    &:last-child {
+      margin-bottom: unset;
+    }
+  }
+
+  .auth-button-bar {
+    display: inline-flex;
+    flex-shrink: 0;
+    margin: 8px auto 16px auto;
+    position: relative;
+    min-width: 100%;
+    justify-content: center;
+    align-items: center;
+    height: auto;
+    flex-wrap: nowrap;
+
+    .btn {
+      position: relative;
+      white-space: nowrap;
+      margin-right: 2px;
+
+      &:last-child {
+        margin-right: 0px;
+        margin-left: 2px;
+      }
+    }
+  }
+
+  .hr-label {
+    margin-top: 0px;
+    margin-bottom: 20px;
+    clear: both;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &::before,
+    &::after {
+      content: '';
+      position: relative;
+      width: 50%;
+      background-color: rgba(255, 255, 255, 0.2);
+      display: inline-block;
+      height: 1px;
+      vertical-align: middle;
+    }
+
+    .hr-label__text {
+      display: inline-flex;
+      width: 50px;
+      text-align: center;
+      justify-content: center;
+    }
+  }
+}
+
+.auth-box {
+  top: calc(40% - 240px);
+  left: calc(50% - 240px);
+  transform: unset;
 }
