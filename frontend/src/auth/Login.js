@@ -135,16 +135,24 @@ const Login = ({authData: {auth}}) => {
               </button>
             )}
           </div>
-          <div className="hr-label">
-            <span className="hr-label__text">OR</span>
-          </div>
-          {auth.links &&
-            auth.links.map(({name, login, label}) => (
-              <a key={name} className="btn btn-primary auth-login" href={login}>
-                <span className={`icon ${name}`} />
-                Log in with {label}
-              </a>
-            ))}
+          {isSign ? null : (
+            <>
+              <div className="hr-label">
+                <span className="hr-label__text">OR</span>
+              </div>
+              {auth.links &&
+                auth.links.map(({name, login, label}) => (
+                  <a
+                    key={name}
+                    className="btn btn-primary auth-login"
+                    href={login}
+                  >
+                    <span className={`icon ${name}`} />
+                    Log in with {label}
+                  </a>
+                ))}
+            </>
+          )}
         </div>
       </SplashPage>
     </div>
