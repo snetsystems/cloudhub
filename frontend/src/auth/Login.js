@@ -1,5 +1,6 @@
 import React, {useState, useEffect} from 'react'
 import PropTypes from 'prop-types'
+import {Link} from 'react-router'
 
 import {Radio, ButtonShape} from 'src/reusable_ui'
 import Notifications from 'src/shared/components/Notifications'
@@ -8,7 +9,7 @@ import SplashPage from 'src/shared/components/SplashPage'
 
 const VERSION = process.env.npm_package_version
 
-const Login = ({authData: {auth}}) => {
+const Login = ({authData: {auth, regexp}}) => {
   if (auth.isAuthLoading) {
     return <PageSpinner />
   }
@@ -48,6 +49,9 @@ const Login = ({authData: {auth}}) => {
     setPasswordConfirm('')
   }, [activeEditorTab])
 
+  const reg = new RegExp(regexp.url, 'ig')
+  const isValidPassword = password.length > 0 && reg.test(password)
+  const isValidPasswordConfirm = password === passwordConfirm
   const isSign = activeEditorTab === 'SignUp'
   return (
     <div>
@@ -84,7 +88,7 @@ const Login = ({authData: {auth}}) => {
             </Radio.Button>
           </Radio>
 
-          <div className="form-group auth-login">
+          <div className="form-group auth-form">
             <input
               className="form-control"
               id="user-email"
@@ -92,9 +96,15 @@ const Login = ({authData: {auth}}) => {
               placeholder={'yours@example.com'}
               value={email}
               onChange={onChangeEmail}
+              spellCheck={false}
             />
+            {isSign ? (
+              <div>
+                <strong>You can use letters, numbers &#38; periods </strong>
+              </div>
+            ) : null}
           </div>
-          <div className="form-group auth-login">
+          <div className="form-group auth-form">
             <input
               className="form-control"
               id="user-password"
@@ -102,10 +112,14 @@ const Login = ({authData: {auth}}) => {
               placeholder={'password'}
               value={password}
               onChange={onChangePassword}
+              spellCheck={false}
             />
+            {isSign && !isValidPassword ? (
+              <div>password policy message</div>
+            ) : null}
           </div>
           {isSign ? (
-            <div className="form-group auth-login">
+            <div className="form-group auth-form">
               <input
                 className="form-control"
                 id="user-password-confirm"
@@ -113,15 +127,26 @@ const Login = ({authData: {auth}}) => {
                 placeholder={'password confirm'}
                 value={passwordConfirm}
                 onChange={onChangePasswordConfirm}
+                spellCheck={false}
               />
+              {passwordConfirm.length > 0 && !isValidPasswordConfirm ? (
+                <div>Your password and confirmation password do not match.</div>
+              ) : null}
             </div>
           ) : (
-            <span>Forgot your password?</span>
+            <Link to="/password-reset">
+              <span>Forgot your password?</span>
+            </Link>
           )}
           <div className={'auth-button-bar'}>
             {isSign ? (
               <button
                 className="btn btn-primary btn-sm col-md-12"
+                disabled={
+                  email.length === 0 ||
+                  isValidPassword === false ||
+                  isValidPasswordConfirm === false
+                }
                 onClick={onClickSignUp}
               >
                 Sign Up
@@ -144,7 +169,7 @@ const Login = ({authData: {auth}}) => {
                 auth.links.map(({name, login, label}) => (
                   <a
                     key={name}
-                    className="btn btn-primary auth-login"
+                    className="btn btn-primary auth-form"
                     href={login}
                   >
                     <span className={`icon ${name}`} />
