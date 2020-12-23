@@ -381,20 +381,23 @@ span.icon.sidebar--icon.sidebar--icon__superadmin {
     .sidebar-menu--item__logout {
       order: 3;
     }
-    .sidebar-menu--section__switch-orgs {
+    .sidebar-menu--item__change-password {
       order: 4;
     }
-    .sidebar-menu--scrollbar {
+    .sidebar-menu--section__switch-orgs {
       order: 5;
     }
-    .sidebar-menu--section__custom-links {
+    .sidebar-menu--scrollbar {
       order: 6;
     }
-    .sidebar-menu--item__link-name {
+    .sidebar-menu--section__custom-links {
       order: 7;
     }
-    .sidebar-menu--triangle {
+    .sidebar-menu--item__link-name {
       order: 8;
+    }
+    .sidebar-menu--triangle {
+      order: 9;
     }
     .sidebar-menu--section__custom-links:after {
       display: initial;
