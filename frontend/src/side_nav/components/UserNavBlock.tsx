@@ -1,6 +1,7 @@
 // Libraries
 import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
+import {Link} from 'react-router'
 
 // Components
 import OrgLink from 'src/side_nav/components/OrgLink'
@@ -33,6 +34,7 @@ interface Props {
 class UserNavBlock extends PureComponent<Props> {
   public render() {
     const {logoutLink, me, links, meChangeOrg} = this.props
+    // const {provider, scheme} = me
 
     return (
       <div className="sidebar--item">
@@ -92,6 +94,23 @@ class UserNavBlock extends PureComponent<Props> {
           >
             Log out
           </a>
+          {/* cloudhub login */}
+          {/* {provider === 'cloudhub' && scheme === 'basic' ? (
+            <Link
+              className="sidebar-menu--item sidebar-menu--item__change-password"
+              to={'/password-change'}
+            >
+              Change password
+            </Link>
+          ) : null} */}
+
+          {/* test */}
+          <Link
+            className="sidebar-menu--item sidebar-menu--item__change-password"
+            to={'/password-change'}
+          >
+            Change password
+          </Link>
           <div className="sidebar-menu--heading sidebar--no-hover">
             {me.name}
           </div>
