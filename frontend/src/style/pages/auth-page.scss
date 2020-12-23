@@ -190,14 +190,14 @@
 .auth-area {
   display: flex;
   flex-direction: column;
-  width: 300px;
+  width: 350px;
 
   .auth-radio {
     margin-bottom: 5px;
   }
 
-  .auth-login {
-    width: 300px;
+  .auth-form {
+    width: 100%;
     margin-bottom: 7px;
     &:last-child {
       margin-bottom: unset;
