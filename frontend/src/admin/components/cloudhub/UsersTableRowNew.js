@@ -1,4 +1,4 @@
-import React, {Component} from 'react'
+import React, {PureComponent} from 'react'
 import PropTypes from 'prop-types'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
@@ -12,7 +12,7 @@ import {notifyCloudHubUserMissingNameAndProvider} from 'src/shared/copy/notifica
 import {USERS_TABLE} from 'src/admin/constants/cloudhubTableSizing'
 import {USER_ROLES} from 'src/admin/constants/cloudhubAdmin'
 
-class UsersTableRowNew extends Component {
+class UsersTableRowNew extends PureComponent {
   constructor(props) {
     super(props)
 
@@ -21,6 +21,17 @@ class UsersTableRowNew extends Component {
       provider: '',
       scheme: 'oauth2',
       role: this.props.organization.defaultRole,
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    const {provider} = this.state
+    if (prevState.provider !== provider) {
+      if (provider === 'cloudhub') {
+        this.setState({scheme: 'basic'})
+      } else {
+        this.setState({scheme: 'oauth2'})
+      }
     }
   }
 
