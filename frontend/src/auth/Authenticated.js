@@ -1,9 +1,13 @@
 import {replace} from 'react-router-redux'
 import {UserAuthWrapper} from 'redux-auth-wrapper'
+import _ from 'lodash'
 import PageSpinner from 'src/shared/components/PageSpinner'
 
 export const UserIsAuthenticated = UserAuthWrapper({
-  authSelector: ({auth}) => ({auth}),
+  authSelector: ({auth, links}) => {
+    const regexp = _.find(links.addons, addon => addon.name === 'regexp')
+    return {auth, regexp}
+  },
   authenticatingSelector: ({auth: {isMeLoading}}) => isMeLoading,
   LoadingComponent: PageSpinner,
   redirectAction: replace,
@@ -12,7 +16,10 @@ export const UserIsAuthenticated = UserAuthWrapper({
 })
 
 export const UserIsNotAuthenticated = UserAuthWrapper({
-  authSelector: ({auth}) => ({auth}),
+  authSelector: ({auth, links}) => {
+    const regexp = _.find(links.addons, addon => addon.name === 'regexp')
+    return {auth, regexp}
+  },
   authenticatingSelector: ({auth: {isMeLoading}}) => isMeLoading,
   LoadingComponent: PageSpinner,
   redirectAction: replace,
