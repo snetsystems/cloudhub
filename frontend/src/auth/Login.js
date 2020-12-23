@@ -188,9 +188,12 @@ const {array, bool, shape, string} = PropTypes
 
 Login.propTypes = {
   authData: shape({
-    me: shape(),
-    links: array,
-    isLoading: bool,
+    auth: shape({
+      me: shape(),
+      links: array,
+      isLoading: bool,
+    }),
+    regexp: shape(),
   }),
   location: shape({
     pathname: string,

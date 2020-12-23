@@ -1,4 +1,5 @@
 import React, {useState, useEffect} from 'react'
+import PropTypes from 'prop-types'
 import {InjectedRouter} from 'react-router'
 
 import Notifications from 'src/shared/components/Notifications'
@@ -113,6 +114,20 @@ const PasswordChange = ({router, authData: {auth, regexp}}) => {
       </SplashPage>
     </div>
   )
+}
+
+const {array, bool, shape, string} = PropTypes
+
+PasswordChange.prototype = {
+  router: shape(),
+  authData: shape({
+    auth: shape({
+      me: shape(),
+      links: array,
+      isLoading: bool,
+    }),
+    regexp: shape(),
+  }),
 }
 
 export default PasswordChange
