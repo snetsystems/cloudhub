@@ -22,6 +22,8 @@ import {
   UserIsAuthenticated,
   UserIsNotAuthenticated,
   Purgatory,
+  PasswordReset,
+  PasswordChange,
 } from 'src/auth'
 import CheckSources from 'src/CheckSources'
 import {StatusPage} from 'src/status'
@@ -193,6 +195,14 @@ class Root extends PureComponent<{}, State> {
           <Router history={history}>
             <Route path="/" component={UserIsAuthenticated(CheckSources)} />
             <Route path="/login" component={UserIsNotAuthenticated(Login)} />
+            <Route
+              path="/password-reset"
+              component={UserIsNotAuthenticated(PasswordReset)}
+            />
+            <Route
+              path="/password-change"
+              component={UserIsAuthenticated(PasswordChange)}
+            />
             <Route
               path="/purgatory"
               component={UserIsAuthenticated(Purgatory)}
