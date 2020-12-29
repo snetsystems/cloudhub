@@ -6,6 +6,7 @@ import {Radio, ButtonShape} from 'src/reusable_ui'
 import Notifications from 'src/shared/components/Notifications'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import SplashPage from 'src/shared/components/SplashPage'
+import {login, createUser} from 'src/auth/apis'
 
 const VERSION = process.env.npm_package_version
 
@@ -32,11 +33,11 @@ const Login = ({authData: {auth, passwordPolicy, passwordPolicyMessage}}) => {
   }
 
   const onClickLogin = () => {
-    console.log('try log in')
+    login('url', email, password)
   }
 
   const onClickSignUp = () => {
-    console.log('try sign up')
+    createUser('url', email, password)
   }
 
   const onSetActiveEditorTab = tab => {
