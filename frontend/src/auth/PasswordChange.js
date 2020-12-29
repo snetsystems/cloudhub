@@ -5,7 +5,10 @@ import {InjectedRouter} from 'react-router'
 import Notifications from 'src/shared/components/Notifications'
 import SplashPage from 'src/shared/components/SplashPage'
 
-const PasswordChange = ({router, authData: {auth, regexp}}) => {
+const PasswordChange = ({
+  router,
+  authData: {auth, regexp, passwordPolicyMessage},
+}) => {
   const [email] = useState(auth.me.name)
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
@@ -74,7 +77,7 @@ const PasswordChange = ({router, authData: {auth, regexp}}) => {
                     value={password}
                     onChange={onChangePassword}
                   />
-                  {!isValidPassword ? <div>password policy message</div> : null}
+                  {!isValidPassword ? passwordPolicyMessage.url : null}
                 </div>
                 <div className="auth-form">
                   <input
@@ -127,6 +130,7 @@ PasswordChange.prototype = {
       isLoading: bool,
     }),
     regexp: shape(),
+    passwordPolicyMessage: shape(),
   }),
 }
 

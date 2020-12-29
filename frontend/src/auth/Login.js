@@ -9,7 +9,7 @@ import SplashPage from 'src/shared/components/SplashPage'
 
 const VERSION = process.env.npm_package_version
 
-const Login = ({authData: {auth, regexp}}) => {
+const Login = ({authData: {auth, regexp, passwordPolicyMessage}}) => {
   if (auth.isAuthLoading) {
     return <PageSpinner />
   }
@@ -114,9 +114,7 @@ const Login = ({authData: {auth, regexp}}) => {
               onChange={onChangePassword}
               spellCheck={false}
             />
-            {isSign && !isValidPassword ? (
-              <div>password policy message</div>
-            ) : null}
+            {isSign && !isValidPassword ? passwordPolicyMessage.url : null}
           </div>
           {isSign ? (
             <div className="form-group auth-form">
@@ -194,6 +192,7 @@ Login.propTypes = {
       isLoading: bool,
     }),
     regexp: shape(),
+    passwordPolicyMessage: shape(),
   }),
   location: shape({
     pathname: string,
