@@ -5,12 +5,15 @@ import PageSpinner from 'src/shared/components/PageSpinner'
 
 export const UserIsAuthenticated = UserAuthWrapper({
   authSelector: ({auth, links}) => {
-    const regexp = _.find(links.addons, addon => addon.name === 'regexp')
+    const passwordPolicy = _.find(
+      links.addons,
+      addon => addon.name === 'password-policy'
+    )
     const passwordPolicyMessage = _.find(
       links.addons,
       addon => addon.name === 'password-policy-message'
     )
-    return {auth, regexp, passwordPolicyMessage}
+    return {auth, passwordPolicy, passwordPolicyMessage}
   },
   authenticatingSelector: ({auth: {isMeLoading}}) => isMeLoading,
   LoadingComponent: PageSpinner,
@@ -21,13 +24,16 @@ export const UserIsAuthenticated = UserAuthWrapper({
 
 export const UserIsNotAuthenticated = UserAuthWrapper({
   authSelector: ({auth, links}) => {
-    const regexp = _.find(links.addons, addon => addon.name === 'regexp')
+    const passwordPolicy = _.find(
+      links.addons,
+      addon => addon.name === 'password-policy'
+    )
     const passwordPolicyMessage = _.find(
       links.addons,
       addon => addon.name === 'password-policy-message'
     )
 
-    return {auth, regexp, passwordPolicyMessage}
+    return {auth, passwordPolicy, passwordPolicyMessage}
   },
   authenticatingSelector: ({auth: {isMeLoading}}) => isMeLoading,
   LoadingComponent: PageSpinner,

@@ -9,7 +9,7 @@ import SplashPage from 'src/shared/components/SplashPage'
 
 const VERSION = process.env.npm_package_version
 
-const Login = ({authData: {auth, regexp, passwordPolicyMessage}}) => {
+const Login = ({authData: {auth, passwordPolicy, passwordPolicyMessage}}) => {
   if (auth.isAuthLoading) {
     return <PageSpinner />
   }
@@ -49,7 +49,7 @@ const Login = ({authData: {auth, regexp, passwordPolicyMessage}}) => {
     setPasswordConfirm('')
   }, [activeEditorTab])
 
-  const reg = new RegExp(regexp.url, 'ig')
+  const reg = new RegExp(passwordPolicy.url, 'ig')
   const isValidPassword = password.length > 0 && reg.test(password)
   const isValidPasswordConfirm = password === passwordConfirm
   const isSign = activeEditorTab === 'SignUp'
@@ -191,7 +191,7 @@ Login.propTypes = {
       links: array,
       isLoading: bool,
     }),
-    regexp: shape(),
+    passwordPolicy: shape(),
     passwordPolicyMessage: shape(),
   }),
   location: shape({

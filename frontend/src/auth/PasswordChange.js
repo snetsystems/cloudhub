@@ -7,7 +7,7 @@ import SplashPage from 'src/shared/components/SplashPage'
 
 const PasswordChange = ({
   router,
-  authData: {auth, regexp, passwordPolicyMessage},
+  authData: {auth, passwordPolicy, passwordPolicyMessage},
 }) => {
   const [email] = useState(auth.me.name)
   const [password, setPassword] = useState('')
@@ -30,7 +30,7 @@ const PasswordChange = ({
     // failed notification
   }
 
-  const reg = new RegExp(regexp.url, 'ig')
+  const reg = new RegExp(passwordPolicy.url, 'ig')
   const isValidPassword = password.length > 0 && reg.test(password)
   const isValidPasswordConfirm = password === passwordConfirm
 
@@ -129,7 +129,7 @@ PasswordChange.prototype = {
       links: array,
       isLoading: bool,
     }),
-    regexp: shape(),
+    passwordPolicy: shape(),
     passwordPolicyMessage: shape(),
   }),
 }
