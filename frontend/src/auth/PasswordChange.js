@@ -1,13 +1,17 @@
 import React, {useState, useEffect} from 'react'
+import {connect} from 'react-redux'
 import PropTypes from 'prop-types'
 import {InjectedRouter} from 'react-router'
 
 import Notifications from 'src/shared/components/Notifications'
 import SplashPage from 'src/shared/components/SplashPage'
 
+import {passwordChangeAsync} from 'src/auth/actions'
+
 const PasswordChange = ({
   router,
   authData: {auth, passwordPolicy, passwordPolicyMessage},
+  handlePasswordChange,
 }) => {
   const [email] = useState(auth.me.name)
   const [password, setPassword] = useState('')
@@ -22,12 +26,7 @@ const PasswordChange = ({
   }
 
   const onClickPasswordChange = e => {
-    console.log('onClickPasswordChange')
-    // success  or failed
-    // success
-    // success notification and router.goBack()
-    // failed
-    // failed notification
+    handlePasswordChange({url: '', user: {id: email, password}})
   }
 
   const reg = new RegExp(passwordPolicy.url, 'ig')
@@ -119,7 +118,11 @@ const PasswordChange = ({
   )
 }
 
-const {array, bool, shape, string} = PropTypes
+const mapDispatchToProps = {
+  handlePasswordChange: passwordChangeAsync,
+}
+
+const {array, bool, shape, string, func} = PropTypes
 
 PasswordChange.prototype = {
   router: shape(),
@@ -132,6 +135,7 @@ PasswordChange.prototype = {
     passwordPolicy: shape(),
     passwordPolicyMessage: shape(),
   }),
+  handlePasswordChange: func,
 }
 
-export default PasswordChange
+export default connect(null, mapDispatchToProps)(PasswordChange)

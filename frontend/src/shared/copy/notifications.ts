@@ -1061,3 +1061,40 @@ export const notifyConnectRemoteConsoleFailed = (
   ...defaultErrorNotification,
   message: `Remote Console Run Failed, ${error}`,
 })
+
+//  CloudHub User Auth Notifications
+//  ----------------------------------------------------------------------------
+export const notifyLoginFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Login Failed`,
+})
+
+export const notifyUserAddCompleted = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Signup Completed`,
+})
+
+export const notifyUserAddFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Signup Failed`,
+})
+
+export const notifyUserPasswordResetCompleted = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Password Reset Completed`,
+})
+
+export const notifyUserPasswordResetFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Password Reset Failed`,
+})
+
+export const notifyUserPasswordUpdateCompleted = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Password Update Completed`,
+})
+
+export const notifyUserPasswordUpdateFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Password Update Failed`,
+})

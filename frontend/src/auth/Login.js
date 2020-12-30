@@ -1,4 +1,5 @@
 import React, {useState, useEffect} from 'react'
+import {connect} from 'react-redux'
 import PropTypes from 'prop-types'
 import {Link} from 'react-router'
 
@@ -6,11 +7,16 @@ import {Radio, ButtonShape} from 'src/reusable_ui'
 import Notifications from 'src/shared/components/Notifications'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import SplashPage from 'src/shared/components/SplashPage'
-import {login, createUser} from 'src/auth/apis'
+
+import {loginAsync, createUserAsync} from 'src/auth/actions'
 
 const VERSION = process.env.npm_package_version
 
-const Login = ({authData: {auth, passwordPolicy, passwordPolicyMessage}}) => {
+const Login = ({
+  authData: {auth, passwordPolicy, passwordPolicyMessage},
+  handleLogin,
+  handleCreateUser,
+}) => {
   if (auth.isAuthLoading) {
     return <PageSpinner />
   }
@@ -33,11 +39,11 @@ const Login = ({authData: {auth, passwordPolicy, passwordPolicyMessage}}) => {
   }
 
   const onClickLogin = () => {
-    login('url', email, password)
+    handleLogin({url: 'url', user: {id: email, password}})
   }
 
   const onClickSignUp = () => {
-    createUser('url', email, password)
+    handleCreateUser({url: 'url', user: {id: email, password}})
   }
 
   const onSetActiveEditorTab = tab => {
@@ -183,7 +189,12 @@ const Login = ({authData: {auth, passwordPolicy, passwordPolicyMessage}}) => {
   )
 }
 
-const {array, bool, shape, string} = PropTypes
+const mapDispatchToProps = {
+  handleLogin: loginAsync,
+  handleCreateUser: createUserAsync,
+}
+
+const {array, bool, shape, string, func} = PropTypes
 
 Login.propTypes = {
   authData: shape({
@@ -198,6 +209,8 @@ Login.propTypes = {
   location: shape({
     pathname: string,
   }),
+  handleLogin: func,
+  handleCreateUser: func,
 }
 
-export default Login
+export default connect(null, mapDispatchToProps)(Login)

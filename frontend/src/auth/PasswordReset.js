@@ -1,9 +1,13 @@
 import React, {useState} from 'react'
+import {connect} from 'react-redux'
+import PropTypes from 'prop-types'
 
 import Notifications from 'src/shared/components/Notifications'
 import SplashPage from 'src/shared/components/SplashPage'
 
-const PasswordReset = () => {
+import {passwordResetAsync} from 'src/auth/actions'
+
+const PasswordReset = ({handlePasswordReset}) => {
   const [email, setEmail] = useState('')
 
   const onChangeEmail = e => {
@@ -11,12 +15,7 @@ const PasswordReset = () => {
   }
 
   const onClickPasswordReset = () => {
-    console.log('onClickPasswordReset')
-    // success  or failed
-    // success
-    // success notification and router.goBack()
-    // failed
-    // failed notification
+    handlePasswordReset({url: '', user: {id: email}})
   }
 
   return (
@@ -72,4 +71,14 @@ const PasswordReset = () => {
   )
 }
 
-export default PasswordReset
+const mapDispatchToProps = {
+  handlePasswordReset: passwordResetAsync,
+}
+
+const {func} = PropTypes
+
+PasswordReset.propTypes = {
+  handlePasswordReset: func,
+}
+
+export default connect(null, mapDispatchToProps)(PasswordReset)
