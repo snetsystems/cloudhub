@@ -261,3 +261,9 @@
   left: calc(50% - 240px);
   transform: unset;
 }
+
+.auth-logo {
+  &.go-home {
+    cursor: pointer;
+  }
+}

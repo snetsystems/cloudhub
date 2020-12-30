@@ -13,6 +13,7 @@ import {loginAsync, createUserAsync} from 'src/auth/actions'
 const VERSION = process.env.npm_package_version
 
 const Login = ({
+  router,
   authData: {auth, passwordPolicy, passwordPolicyMessage},
   handleLogin,
   handleCreateUser,
@@ -63,7 +64,7 @@ const Login = ({
   return (
     <div>
       <Notifications />
-      <SplashPage>
+      <SplashPage router={router}>
         <h1
           className="auth-text-logo"
           style={{position: 'absolute', top: '-9999px', left: '-9999px'}}

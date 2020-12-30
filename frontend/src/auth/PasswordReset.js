@@ -7,7 +7,7 @@ import SplashPage from 'src/shared/components/SplashPage'
 
 import {passwordResetAsync} from 'src/auth/actions'
 
-const PasswordReset = ({handlePasswordReset}) => {
+const PasswordReset = ({router, handlePasswordReset}) => {
   const [email, setEmail] = useState('')
 
   const onChangeEmail = e => {
@@ -21,7 +21,7 @@ const PasswordReset = ({handlePasswordReset}) => {
   return (
     <div>
       <Notifications />
-      <SplashPage>
+      <SplashPage router={router}>
         <h1
           className="auth-text-logo"
           style={{position: 'absolute', top: '-9999px', left: '-9999px'}}

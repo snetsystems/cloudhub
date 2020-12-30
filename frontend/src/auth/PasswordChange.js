@@ -36,7 +36,7 @@ const PasswordChange = ({
   return (
     <div>
       <Notifications />
-      <SplashPage>
+      <SplashPage router={router}>
         <h1
           className="auth-text-logo"
           style={{position: 'absolute', top: '-9999px', left: '-9999px'}}
