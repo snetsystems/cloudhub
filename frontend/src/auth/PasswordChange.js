@@ -100,7 +100,15 @@ const PasswordChange = ({
               </div> */}
               <div className={'auth-button-bar'}>
                 <button
-                  className="btn btn-primary btn-sm col-md-12"
+                  className="btn btn-primary btn-sm col-md-4"
+                  onClick={() => {
+                    router.goBack()
+                  }}
+                >
+                  Go Back
+                </button>
+                <button
+                  className="btn btn-primary btn-sm col-md-8"
                   disabled={
                     isValidPassword === false ||
                     isValidPasswordConfirm === false
