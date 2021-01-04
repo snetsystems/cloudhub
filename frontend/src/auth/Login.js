@@ -81,7 +81,7 @@ const Login = ({
           <b>{VERSION}</b> / Real-Time Applications Monitoring
         </p>
         <div className={'auth-area'}>
-          {reg ? (
+          {reg && (
             <>
               <Radio
                 shape={ButtonShape.StretchToFit}
@@ -117,11 +117,11 @@ const Login = ({
                   onChange={onChangeEmail}
                   spellCheck={false}
                 />
-                {isSign ? (
+                {isSign && (
                   <div>
                     <strong>You can use letters, numbers &#38; periods </strong>
                   </div>
-                ) : null}
+                )}
               </div>
               <div className="form-group auth-form">
                 <input
@@ -133,7 +133,7 @@ const Login = ({
                   onChange={onChangePassword}
                   spellCheck={false}
                 />
-                {isSign && !isValidPassword ? passwordPolicyMessage.url : null}
+                {isSign && !isValidPassword && passwordPolicyMessage?.url}
               </div>
               {isSign ? (
                 <div className="form-group auth-form">
@@ -146,11 +146,11 @@ const Login = ({
                     onChange={onChangePasswordConfirm}
                     spellCheck={false}
                   />
-                  {passwordConfirm.length > 0 && !isValidPasswordConfirm ? (
+                  {passwordConfirm.length > 0 && !isValidPasswordConfirm && (
                     <div>
                       Your password and confirmation password do not match.
                     </div>
-                  ) : null}
+                  )}
                 </div>
               ) : (
                 <Link to="/password-reset">
@@ -182,9 +182,9 @@ const Login = ({
                 )}
               </div>
             </>
-          ) : null}
+          )}
 
-          {isSign ? null : (
+          {!isSign && (
             <>
               {reg ? (
                 <div className="hr-label">

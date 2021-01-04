@@ -14,6 +14,7 @@ const PasswordChange = ({
   handlePasswordChange,
 }) => {
   useEffect(() => {
+    console.log('passwordPolicy: ', passwordPolicy)
     if (!passwordPolicy) {
       router.push('/')
     }
@@ -34,7 +35,7 @@ const PasswordChange = ({
     handlePasswordChange({url: '', user: {id: email, password}})
   }
 
-  const reg = new RegExp(passwordPolicy.url, 'ig')
+  const reg = new RegExp(passwordPolicy?.url, 'ig')
   const isValidPassword = password.length > 0 && reg.test(password)
   const isValidPasswordConfirm = password === passwordConfirm
 
@@ -81,7 +82,7 @@ const PasswordChange = ({
                     value={password}
                     onChange={onChangePassword}
                   />
-                  {!isValidPassword ? passwordPolicyMessage.url : null}
+                  {!isValidPassword && passwordPolicyMessage?.url}
                 </div>
                 <div className="auth-form">
                   <input
@@ -92,11 +93,11 @@ const PasswordChange = ({
                     value={passwordConfirm}
                     onChange={onChangePasswordConfirm}
                   />
-                  {!isValidPasswordConfirm ? (
+                  {!isValidPasswordConfirm && (
                     <div>
                       Your password and confirmation password do not match.
                     </div>
-                  ) : null}
+                  )}
                 </div>
               </div>
               <div className={'auth-button-bar'}>
