@@ -57,9 +57,15 @@ const Login = ({
     setPasswordConfirm('')
   }, [activeEditorTab])
 
-  const reg = new RegExp(passwordPolicy.url, 'ig')
-  const isValidPassword = password.length > 0 && reg.test(password)
-  const isValidPasswordConfirm = password === passwordConfirm
+  useEffect(() => {}, [passwordPolicy])
+
+  let reg = null
+  if (passwordPolicy) {
+    reg = new RegExp(passwordPolicy && passwordPolicy.url, 'ig')
+  }
+
+  const isValidPassword = reg && password.length > 0 && reg.test(password)
+  const isValidPasswordConfirm = reg && password === passwordConfirm
   const isSign = activeEditorTab === 'SignUp'
   return (
     <div>
@@ -75,102 +81,116 @@ const Login = ({
           <b>{VERSION}</b> / Real-Time Applications Monitoring
         </p>
         <div className={'auth-area'}>
-          <Radio shape={ButtonShape.StretchToFit} customClass={'auth-radio'}>
-            <Radio.Button
-              id="auth-log-in"
-              titleText="Login"
-              value="Login"
-              active={activeEditorTab === 'Login'}
-              onClick={onSetActiveEditorTab}
-            >
-              Login
-            </Radio.Button>
-            <Radio.Button
-              id="auth-sign-up"
-              titleText="SignUp"
-              value="SignUp"
-              active={activeEditorTab === 'SignUp'}
-              onClick={onSetActiveEditorTab}
-            >
-              Sign up
-            </Radio.Button>
-          </Radio>
+          {reg ? (
+            <>
+              <Radio
+                shape={ButtonShape.StretchToFit}
+                customClass={'auth-radio'}
+              >
+                <Radio.Button
+                  id="auth-log-in"
+                  titleText="Login"
+                  value="Login"
+                  active={activeEditorTab === 'Login'}
+                  onClick={onSetActiveEditorTab}
+                >
+                  Login
+                </Radio.Button>
+                <Radio.Button
+                  id="auth-sign-up"
+                  titleText="SignUp"
+                  value="SignUp"
+                  active={activeEditorTab === 'SignUp'}
+                  onClick={onSetActiveEditorTab}
+                >
+                  Sign up
+                </Radio.Button>
+              </Radio>
 
-          <div className="form-group auth-form">
-            <input
-              className="form-control"
-              id="user-email"
-              type="text"
-              placeholder={'yours@example.com'}
-              value={email}
-              onChange={onChangeEmail}
-              spellCheck={false}
-            />
-            {isSign ? (
-              <div>
-                <strong>You can use letters, numbers &#38; periods </strong>
+              <div className="form-group auth-form">
+                <input
+                  className="form-control"
+                  id="user-email"
+                  type="text"
+                  placeholder={'yours@example.com'}
+                  value={email}
+                  onChange={onChangeEmail}
+                  spellCheck={false}
+                />
+                {isSign ? (
+                  <div>
+                    <strong>You can use letters, numbers &#38; periods </strong>
+                  </div>
+                ) : null}
               </div>
-            ) : null}
-          </div>
-          <div className="form-group auth-form">
-            <input
-              className="form-control"
-              id="user-password"
-              type="password"
-              placeholder={'password'}
-              value={password}
-              onChange={onChangePassword}
-              spellCheck={false}
-            />
-            {isSign && !isValidPassword ? passwordPolicyMessage.url : null}
-          </div>
-          {isSign ? (
-            <div className="form-group auth-form">
-              <input
-                className="form-control"
-                id="user-password-confirm"
-                type="password"
-                placeholder={'password confirm'}
-                value={passwordConfirm}
-                onChange={onChangePasswordConfirm}
-                spellCheck={false}
-              />
-              {passwordConfirm.length > 0 && !isValidPasswordConfirm ? (
-                <div>Your password and confirmation password do not match.</div>
-              ) : null}
-            </div>
-          ) : (
-            <Link to="/password-reset">
-              <span>Forgot your password?</span>
-            </Link>
-          )}
-          <div className={'auth-button-bar'}>
-            {isSign ? (
-              <button
-                className="btn btn-primary btn-sm col-md-12"
-                disabled={
-                  email.length === 0 ||
-                  isValidPassword === false ||
-                  isValidPasswordConfirm === false
-                }
-                onClick={onClickSignUp}
-              >
-                Sign Up
-              </button>
-            ) : (
-              <button
-                className="btn btn-primary btn-sm col-md-12"
-                onClick={onClickLogin}
-              >
-                Login
-              </button>
-            )}
-          </div>
+              <div className="form-group auth-form">
+                <input
+                  className="form-control"
+                  id="user-password"
+                  type="password"
+                  placeholder={'password'}
+                  value={password}
+                  onChange={onChangePassword}
+                  spellCheck={false}
+                />
+                {isSign && !isValidPassword ? passwordPolicyMessage.url : null}
+              </div>
+              {isSign ? (
+                <div className="form-group auth-form">
+                  <input
+                    className="form-control"
+                    id="user-password-confirm"
+                    type="password"
+                    placeholder={'password confirm'}
+                    value={passwordConfirm}
+                    onChange={onChangePasswordConfirm}
+                    spellCheck={false}
+                  />
+                  {passwordConfirm.length > 0 && !isValidPasswordConfirm ? (
+                    <div>
+                      Your password and confirmation password do not match.
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <Link to="/password-reset">
+                  <span>Forgot your password?</span>
+                </Link>
+              )}
+              <div className={'auth-button-bar'}>
+                {isSign ? (
+                  <button
+                    className="btn btn-primary btn-sm col-md-12"
+                    disabled={
+                      !reg ||
+                      !passwordPolicyMessage ||
+                      email.length === 0 ||
+                      isValidPassword === false ||
+                      isValidPasswordConfirm === false
+                    }
+                    onClick={onClickSignUp}
+                  >
+                    Sign Up
+                  </button>
+                ) : (
+                  <button
+                    className="btn btn-primary btn-sm col-md-12"
+                    onClick={onClickLogin}
+                  >
+                    Login
+                  </button>
+                )}
+              </div>
+            </>
+          ) : null}
+
           {isSign ? null : (
             <>
-              <div className="hr-label">
-                <span className="hr-label__text">OR</span>
-              </div>
+              {reg ? (
+                <div className="hr-label">
+                  <span className="hr-label__text">OR</span>
+                </div>
+              ) : null}
               {auth.links &&
                 auth.links.map(({name, login, label}) => (
                   <a
