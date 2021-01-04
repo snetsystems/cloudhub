@@ -94,23 +94,15 @@ class UserNavBlock extends PureComponent<Props> {
           >
             Log out
           </a>
-          {/* cloudhub login */}
-          {/* {provider === 'cloudhub' && scheme === 'basic' ? (
+
+          {me.provider === 'cloudhub' && me.scheme === 'basic' && (
             <Link
               className="sidebar-menu--item sidebar-menu--item__change-password"
               to={'/password-change'}
             >
               Change password
             </Link>
-          ) : null} */}
-
-          {/* test */}
-          <Link
-            className="sidebar-menu--item sidebar-menu--item__change-password"
-            to={'/password-change'}
-          >
-            Change password
-          </Link>
+          )}
           <div className="sidebar-menu--heading sidebar--no-hover">
             {me.name}
           </div>
