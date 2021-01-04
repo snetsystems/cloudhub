@@ -13,6 +13,11 @@ const PasswordChange = ({
   authData: {auth, passwordPolicy, passwordPolicyMessage},
   handlePasswordChange,
 }) => {
+  useEffect(() => {
+    if (!passwordPolicy) {
+      router.push('/')
+    }
+  }, [passwordPolicy])
   const [email] = useState(auth.me.name)
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
@@ -94,10 +99,6 @@ const PasswordChange = ({
                   ) : null}
                 </div>
               </div>
-              {/* <div style={{paddingBottom: '15px'}}>
-                Use 8 &#38; or more characters with a mix of letters. member
-                &#38; symbols
-              </div> */}
               <div className={'auth-button-bar'}>
                 <button
                   className="btn btn-primary btn-sm col-md-4"

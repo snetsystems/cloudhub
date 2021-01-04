@@ -1,4 +1,4 @@
-import React, {useState} from 'react'
+import React, {useState, useEffect} from 'react'
 import {connect} from 'react-redux'
 import PropTypes from 'prop-types'
 
@@ -7,7 +7,17 @@ import SplashPage from 'src/shared/components/SplashPage'
 
 import {passwordResetAsync} from 'src/auth/actions'
 
-const PasswordReset = ({router, handlePasswordReset}) => {
+const PasswordReset = ({
+  router,
+  authData: {passwordPolicy},
+  handlePasswordReset,
+}) => {
+  useEffect(() => {
+    if (!passwordPolicy) {
+      router.push('/')
+    }
+  }, [passwordPolicy])
+
   const [email, setEmail] = useState('')
 
   const onChangeEmail = e => {
@@ -75,10 +85,11 @@ const mapDispatchToProps = {
   handlePasswordReset: passwordResetAsync,
 }
 
-const {func} = PropTypes
+const {func, shape} = PropTypes
 
 PasswordReset.propTypes = {
   handlePasswordReset: func,
+  passwordPolicy: shape(),
 }
 
 export default connect(null, mapDispatchToProps)(PasswordReset)
