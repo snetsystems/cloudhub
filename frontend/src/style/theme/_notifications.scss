@@ -24,7 +24,7 @@ $notification-margin: 12px;
   border-radius: $ix-radius;
   position: relative;
   padding: 12px 40px;
-  @extend %no-user-select;
+  // @extend %no-user-select;
   transform: translateX(105%);
   transition: transform 0.25s ease 0.25s, opacity 0.25s ease;
 
