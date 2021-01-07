@@ -22,10 +22,15 @@ const Login = ({
     return <PageSpinner />
   }
 
+  const [id, setId] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
   const [activeEditorTab, setActiveEditorTab] = useState('Login')
+
+  const onChangeId = e => {
+    setId(e.target.value)
+  }
 
   const onChangeEmail = e => {
     setEmail(e.target.value)
@@ -40,11 +45,11 @@ const Login = ({
   }
 
   const onClickLogin = () => {
-    handleLogin({url: 'url', user: {id: email, password}})
+    handleLogin({url: 'url', user: {id, password}})
   }
 
   const onClickSignUp = () => {
-    handleCreateUser({url: 'url', user: {id: email, password}})
+    handleCreateUser({url: 'url', user: {email, id, password}})
   }
 
   const onSetActiveEditorTab = tab => {
@@ -52,12 +57,11 @@ const Login = ({
   }
 
   useEffect(() => {
+    setId('')
     setEmail('')
     setPassword('')
     setPasswordConfirm('')
   }, [activeEditorTab])
-
-  useEffect(() => {}, [passwordPolicy])
 
   let reg = null
   if (passwordPolicy) {
@@ -110,19 +114,28 @@ const Login = ({
               <div className="form-group auth-form">
                 <input
                   className="form-control"
-                  id="user-email"
+                  id="user-id"
                   type="text"
-                  placeholder={'yours@example.com'}
-                  value={email}
-                  onChange={onChangeEmail}
+                  placeholder={'id'}
+                  value={id}
+                  onChange={onChangeId}
                   spellCheck={false}
                 />
-                {isSign && (
-                  <div>
-                    <strong>You can use letters, numbers &#38; periods </strong>
-                  </div>
-                )}
               </div>
+              {isSign && (
+                <div className="form-group auth-form">
+                  <input
+                    className="form-control"
+                    id="user-email"
+                    type="text"
+                    placeholder={'yours@example.com'}
+                    value={email}
+                    onChange={onChangeEmail}
+                    spellCheck={false}
+                  />
+                  It is used for OTP delivery when initializing password.
+                </div>
+              )}
               <div className="form-group auth-form">
                 <input
                   className="form-control"
