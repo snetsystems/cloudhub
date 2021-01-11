@@ -8,6 +8,7 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import UsersTable from 'src/admin/components/cloudhub/UsersTable'
+import {passwordResetAsync} from 'src/auth/actions'
 
 class UsersPage extends PureComponent {
   constructor(props) {
@@ -71,6 +72,7 @@ class UsersPage extends PureComponent {
       meID,
       users,
       notify,
+      handlePasswordReset,
     } = this.props
     const {isLoading} = this.state
 
@@ -88,6 +90,7 @@ class UsersPage extends PureComponent {
         onDeleteUser={this.handleDeleteUser}
         notify={notify}
         isLoading={isLoading}
+        handlePasswordReset={handlePasswordReset}
       />
     )
   }
@@ -125,6 +128,7 @@ const mapStateToProps = ({links, adminCloudHub: {organizations, users}}) => ({
 const mapDispatchToProps = dispatch => ({
   actions: bindActionCreators(adminCloudHubActionCreators, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
+  handlePasswordReset: bindActionCreators(passwordResetAsync, dispatch),
 })
 
 export default connect(

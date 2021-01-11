@@ -118,7 +118,7 @@ class UsersTableRowNew extends PureComponent {
           <input
             className="form-control input-xs"
             type="text"
-            placeholder="OAuth Provider..."
+            placeholder="cloudhub or OAuth"
             value={provider}
             onChange={this.handleInputChange('provider')}
             onKeyDown={this.handleKeyDown}

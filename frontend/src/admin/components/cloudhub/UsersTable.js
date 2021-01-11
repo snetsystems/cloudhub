@@ -44,7 +44,14 @@ class UsersTable extends Component {
   }
 
   render() {
-    const {organization, users, onCreateUser, meID, isLoading} = this.props
+    const {
+      organization,
+      users,
+      onCreateUser,
+      meID,
+      isLoading,
+      handlePasswordReset,
+    } = this.props
 
     const {isCreatingUser} = this.state
     const {colRole, colProvider, colScheme, colActions} = USERS_TABLE
@@ -96,6 +103,7 @@ class UsersTable extends Component {
                     onChangeUserRole={this.handleChangeUserRole}
                     onDelete={this.handleDeleteUser}
                     meID={meID}
+                    handlePasswordReset={handlePasswordReset}
                   />
                 ))
               ) : (

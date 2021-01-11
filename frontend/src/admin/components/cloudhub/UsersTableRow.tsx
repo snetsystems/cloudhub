@@ -24,6 +24,15 @@ interface Props {
   onChangeUserRole: (User, Role) => void
   onDelete: (User) => void
   meID: string
+  handlePasswordReset: ({
+    url,
+    userId,
+    passwordReturn,
+  }: {
+    url: string
+    userId: string
+    passwordReturn: boolean
+  }) => void
 }
 
 @ErrorHandling
@@ -59,14 +68,26 @@ class UsersTableRow extends PureComponent<Props> {
         <td style={{width: colProvider}}>{user.provider}</td>
         <td style={{width: colScheme}}>{user.scheme}</td>
         <td className="text-right">
-          <ConfirmButton
-            confirmText={this.confirmationText}
-            confirmAction={this.handleDelete}
-            size="btn-xs"
-            type="btn-danger"
-            text="Remove"
-            customClass="table--show-on-row-hover"
-          />
+          <div style={{display: 'flex', justifyContent: 'flex-end'}}>
+            <ConfirmButton
+              confirmText={this.confirmationText}
+              confirmAction={this.handleDelete}
+              size="btn-xs"
+              type="btn-danger"
+              text="Remove"
+              customClass="table--show-on-row-hover"
+            />
+            {user.provider === 'github' && (
+              <ConfirmButton
+                confirmText={this.confirmationPasswordResetText}
+                confirmAction={this.handlePasswordReset}
+                size="btn-xs"
+                type="btn-danger"
+                text="Reset"
+                customClass="table--show-on-row-hover"
+              />
+            )}
+          </div>
         </td>
       </tr>
     )
@@ -76,6 +97,15 @@ class UsersTableRow extends PureComponent<Props> {
     const {user, onDelete} = this.props
 
     onDelete(user)
+  }
+
+  private handlePasswordReset = (): void => {
+    const {user, handlePasswordReset: onPasswordReset} = this.props
+    onPasswordReset({
+      url: '/cloudhub/v1/users/password/initialize',
+      userId: user.name,
+      passwordReturn: true,
+    })
   }
 
   private get rolesDropdownItems(): DropdownRole[] {
@@ -99,6 +129,10 @@ class UsersTableRow extends PureComponent<Props> {
 
   private get confirmationText(): string {
     return 'Remove this user\nfrom Current Org?'
+  }
+
+  private get confirmationPasswordResetText(): string {
+    return 'Reset this user password\nfrom Current Org?'
   }
 }
 
