@@ -28,13 +28,13 @@ interface Props {
   links: Links
   logoutLink: string
   meChangeOrg: (meLink: string, orgID: OrgID) => void
+  sourcePrefix: string
 }
 
 @ErrorHandling
 class UserNavBlock extends PureComponent<Props> {
   public render() {
-    const {logoutLink, me, links, meChangeOrg} = this.props
-    // const {provider, scheme} = me
+    const {logoutLink, me, links, meChangeOrg, sourcePrefix} = this.props
 
     return (
       <div className="sidebar--item">
@@ -95,10 +95,10 @@ class UserNavBlock extends PureComponent<Props> {
             Log out
           </a>
 
-          {me.provider === 'cloudhub' && me.scheme === 'basic' && (
+          {me.provider === 'github' && me.scheme === 'oauth2' && (
             <Link
               className="sidebar-menu--item sidebar-menu--item__change-password"
-              to={'/password-change'}
+              to={`${sourcePrefix}/password-change`}
             >
               Change password
             </Link>
