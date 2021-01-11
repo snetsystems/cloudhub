@@ -1079,6 +1079,15 @@ export const notifyUserAddFailed = (): Notification => ({
   message: `Signup Failed`,
 })
 
+export const notifyUserDeleteCompleted = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `User Deleted`,
+})
+
+export const notifyUserDeleteFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `User Delete Failed`,
+})
 export const notifyUserPasswordResetCompleted = (): Notification => ({
   ...defaultSuccessNotification,
   message: `Password Reset Completed`,

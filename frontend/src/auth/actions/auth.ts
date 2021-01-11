@@ -7,6 +7,8 @@ import {
   notifyLoginFailed,
   notifyUserAddCompleted,
   notifyUserAddFailed,
+  notifyUserDeleteCompleted,
+  notifyUserDeleteFailed,
   notifyUserPasswordResetCompleted,
   notifyUserPasswordResetFailed,
   notifyUserPasswordUpdateCompleted,
@@ -22,6 +24,9 @@ export enum ActionTypes {
   UserAddRequested = 'USER_ADD_REQUESTED',
   UserAddCompleted = 'USER_ADD_COMPLETED',
   UserAddFailed = 'USER_ADD_FAILED',
+  UserDeleteRequested = 'USER_DELETE_REQUESTED',
+  UserDeleteCompleted = 'USER_DELETE_COMPLETED',
+  UserDeleteFailed = 'USER_DELETE_FAILED',
   UserPasswordUpdateReqeusted = 'USER_PASSWORD_UPDATE_REQUESTED',
   UserPasswordUpdateCompleted = 'USER_PASSWORD_UPDATE_COMPLETED',
   UserPasswordUpdateFailed = 'USER_PASSWORD_UPDATE_FAILED',
@@ -36,6 +41,9 @@ export type Action =
   | UserAddRequestedAction
   | UserAddCompletedAction
   | UserAddFailedAction
+  | UserDeleteRequestedAction
+  | UserDeleteCompletedAction
+  | UserDeleteFailedAction
   | UserPasswordUpdateReqeustedAction
   | UserPasswordUpdateCompletedAction
   | UserPasswordUpdateFailedAction
@@ -72,6 +80,26 @@ export interface UserAddFailedAction {
 }
 
 export const userAddFailed = () => ({type: ActionTypes.UserAddFailed})
+
+export interface UserDeleteRequestedAction {
+  type: ActionTypes.UserDeleteRequested
+}
+
+export const userDeleteRequested = () => ({
+  type: ActionTypes.UserDeleteRequested,
+})
+export interface UserDeleteCompletedAction {
+  type: ActionTypes.UserDeleteCompleted
+}
+
+export const userDeleteCompleted = () => ({
+  type: ActionTypes.UserDeleteCompleted,
+})
+export interface UserDeleteFailedAction {
+  type: ActionTypes.UserDeleteFailed
+}
+
+export const userDeleteFailed = () => ({type: ActionTypes.UserDeleteFailed})
 
 export interface UserPasswordUpdateReqeustedAction {
   type: ActionTypes.UserPasswordUpdateReqeusted
@@ -121,7 +149,18 @@ export const userPasswordResetFailed = () => ({
   type: ActionTypes.UserPasswordResetFailed,
 })
 
-export const loginAsync = ({url, user}) => async (
+export interface AuthUser {
+  id: string
+  password: string
+  email?: string
+}
+
+export interface LoginParams {
+  url: string
+  user: AuthUser
+}
+
+export const loginAsync = ({url, user}: LoginParams) => async (
   dispatch: Dispatch<Action>
 ) => {
   dispatch(userLoginRequested())
@@ -133,7 +172,12 @@ export const loginAsync = ({url, user}) => async (
   }
 }
 
-export const createUserAsync = ({url, user}) => async (
+export interface SignupParams {
+  url: string
+  user: AuthUser
+}
+
+export const createUserAsync = ({url, user}: SignupParams) => async (
   dispatch: Dispatch<Action>
 ) => {
   dispatch(userAddRequested())
@@ -148,7 +192,27 @@ export const createUserAsync = ({url, user}) => async (
   }
 }
 
-export const passwordChangeAsync = ({url, user}) => async (
+export const deleteUserAsync = ({url, user}: SignupParams) => async (
+  dispatch: Dispatch<Action>
+) => {
+  dispatch(userDeleteRequested())
+
+  try {
+    await createUser({url, user})
+    dispatch(userDeleteCompleted())
+    dispatch(notify(notifyUserDeleteCompleted()))
+  } catch (error) {
+    dispatch(userDeleteFailed())
+    dispatch(notify(notifyUserDeleteFailed()))
+  }
+}
+
+export interface PasswordChangeAsync {
+  url: string
+  user: AuthUser
+}
+
+export const passwordChangeAsync = ({url, user}: PasswordChangeAsync) => async (
   dispatch: Dispatch<Action>
 ) => {
   dispatch(userPasswordUpdateReqeusted())
@@ -162,12 +226,20 @@ export const passwordChangeAsync = ({url, user}) => async (
   }
 }
 
-export const passwordResetAsync = ({url, user}) => async (
-  dispatch: Dispatch<Action>
-) => {
+export interface PasswordResetParams {
+  url: string
+  userId: string
+  passwordReturn: boolean
+}
+
+export const passwordResetAsync = ({
+  url,
+  userId,
+  passwordReturn,
+}: PasswordResetParams) => async (dispatch: Dispatch<Action>) => {
   dispatch(userPasswordResetReqeusted())
   try {
-    await passwordReset({url, user})
+    await passwordReset({url, userId, passwordReturn})
     dispatch(userPasswordResetCompleted())
     dispatch(notify(notifyUserPasswordResetCompleted()))
   } catch (error) {

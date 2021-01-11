@@ -23,6 +23,7 @@ import {
   userPasswordResetFailed,
   loginAsync,
   createUserAsync,
+  deleteUserAsync,
   passwordChangeAsync,
   passwordResetAsync,
 } from 'src/auth/actions/auth'
@@ -52,6 +53,7 @@ export {
   userPasswordResetFailed,
   loginAsync,
   createUserAsync,
+  deleteUserAsync,
   passwordChangeAsync,
   passwordResetAsync,
 }

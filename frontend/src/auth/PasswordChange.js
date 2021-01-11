@@ -58,10 +58,9 @@ const PasswordChange = ({router, auth, links, handlePasswordChange}) => {
       user = {
         ...user,
         password,
+        currentOrganization: auth.me.currentOrganization.id,
       }
     }
-
-    console.log(user)
     handlePasswordChange({url: `/cloudhub/v1/users/:id`, user})
   }
   return (
