@@ -24,6 +24,7 @@ import {
   Purgatory,
   PasswordReset,
   PasswordChange,
+  PasswordOTP,
 } from 'src/auth'
 import CheckSources from 'src/CheckSources'
 import {StatusPage} from 'src/status'
@@ -200,8 +201,8 @@ class Root extends PureComponent<{}, State> {
               component={UserIsNotAuthenticated(PasswordReset)}
             />
             <Route
-              path="/password-change"
-              component={UserIsAuthenticated(PasswordChange)}
+              path="/password-otp"
+              component={UserIsNotAuthenticated(PasswordOTP)}
             />
             <Route
               path="/purgatory"
@@ -277,6 +278,7 @@ class Root extends PureComponent<{}, State> {
                     return <GraphqlProvider page={'SwanSdplexSettingPage'} />
                   }}
                 />
+                <Route path="password-change" component={PasswordChange} />
               </Route>
             </Route>
             <Route path="*" component={NotFound} />
