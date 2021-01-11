@@ -18,14 +18,14 @@ const PasswordReset = ({
     }
   }, [passwordPolicy])
 
-  const [email, setEmail] = useState('')
+  const [id, setId] = useState('')
 
-  const onChangeEmail = e => {
-    setEmail(e.target.value)
+  const onChangeId = e => {
+    setId(e.target.value)
   }
 
   const onClickPasswordReset = () => {
-    handlePasswordReset({url: '', user: {id: email}})
+    handlePasswordReset({url: '/basic/password/initialize', userId: id})
   }
 
   return (
@@ -59,10 +59,10 @@ const PasswordReset = ({
                   className="form-control"
                   id="password-reset-email"
                   type="text"
-                  placeholder={'yours@example.com'}
+                  placeholder={'ID'}
                   spellCheck={false}
-                  value={email}
-                  onChange={onChangeEmail}
+                  value={id}
+                  onChange={onChangeId}
                 />
               </div>
               <div className={'auth-button-bar'}>

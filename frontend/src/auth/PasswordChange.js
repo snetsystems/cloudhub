@@ -1,4 +1,5 @@
 import React, {useState, useEffect} from 'react'
+import _ from 'lodash'
 import {connect} from 'react-redux'
 import PropTypes from 'prop-types'
 import {InjectedRouter} from 'react-router'
@@ -8,20 +9,22 @@ import SplashPage from 'src/shared/components/SplashPage'
 
 import {passwordChangeAsync} from 'src/auth/actions'
 
-const PasswordChange = ({
-  router,
-  authData: {auth, passwordPolicy, passwordPolicyMessage},
-  handlePasswordChange,
-}) => {
-  useEffect(() => {
-    console.log('passwordPolicy: ', passwordPolicy)
-    if (!passwordPolicy) {
-      router.push('/')
-    }
-  }, [passwordPolicy])
-  const [email] = useState(auth.me.name)
+const PasswordChange = ({router, auth, links, handlePasswordChange}) => {
+  // console.log(props)
+  // useEffect(() => {
+  //   console.log('passwordPolicy: ', passwordPolicy)
+  //   if (!passwordPolicy) {
+  //     router.push('/')
+  //   }
+  // }, [passwordPolicy])
+  const [id] = useState(auth.me.name)
+  const [email, setEmail] = useState(auth.me.name)
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
+
+  const onChangeEmail = e => {
+    setEmail(e.target.value)
+  }
 
   const onChangePassword = e => {
     setPassword(e.target.value)
@@ -31,17 +34,38 @@ const PasswordChange = ({
     setPasswordConfirm(e.target.value)
   }
 
-  const onClickPasswordChange = e => {
-    handlePasswordChange({url: '', user: {id: email, password}})
-  }
+  const passwordPolicy = _.find(
+    links.addons,
+    addon => addon.name === 'password-policy'
+  )
+
+  const passwordPolicyMessage = _.find(
+    links.addons,
+    addon => addon.name === 'password-policy-message'
+  )
 
   const reg = new RegExp(passwordPolicy?.url, 'ig')
   const isValidPassword = password.length > 0 && reg.test(password)
   const isValidPasswordConfirm = password === passwordConfirm
 
+  const onClickPasswordChange = e => {
+    let user = {
+      id,
+      email,
+    }
+
+    if (isValidPassword && isValidPasswordConfirm) {
+      user = {
+        ...user,
+        password,
+      }
+    }
+
+    console.log(user)
+    handlePasswordChange({url: `/cloudhub/v1/users/:id`, user})
+  }
   return (
     <div>
-      <Notifications />
       <SplashPage router={router}>
         <h1
           className="auth-text-logo"
@@ -58,7 +82,7 @@ const PasswordChange = ({
               className="panel-heading"
               style={{justifyContent: 'center', padding: '0 0 15px 0'}}
             >
-              <h2 className="panel-title">Change Password</h2>
+              <h2 className="panel-title">Modify Member Information</h2>
             </div>
             <div className="panel-body" style={{padding: '0px'}}>
               <div className="form-group">
@@ -67,7 +91,7 @@ const PasswordChange = ({
                     className="form-control"
                     type="text"
                     spellCheck={false}
-                    value={email}
+                    value={id}
                     disabled={true}
                   />
                 </div>
@@ -82,7 +106,15 @@ const PasswordChange = ({
                     value={password}
                     onChange={onChangePassword}
                   />
-                  {!isValidPassword && passwordPolicyMessage?.url}
+
+                  {!isValidPassword && (
+                    <div className="form-message fm--danger">
+                      {passwordPolicyMessage?.url}
+                    </div>
+                  )}
+                  {isValidPassword && (
+                    <span className="form-input-checkmark icon checkmark" />
+                  )}
                 </div>
                 <div className="auth-form">
                   <input
@@ -93,11 +125,24 @@ const PasswordChange = ({
                     value={passwordConfirm}
                     onChange={onChangePasswordConfirm}
                   />
-                  {!isValidPasswordConfirm && (
-                    <div>
+                  {passwordConfirm.length > 0 && !isValidPasswordConfirm && (
+                    <div className={`form-message fm--danger`}>
                       Your password and confirmation password do not match.
                     </div>
                   )}
+                  {isValidPassword && isValidPasswordConfirm && (
+                    <span className="form-input-checkmark icon checkmark" />
+                  )}
+                </div>
+                <div className="auth-form">
+                  <input
+                    className="form-control"
+                    type="text"
+                    placeholder={'yours@email.com'}
+                    spellCheck={false}
+                    value={email}
+                    onChange={onChangeEmail}
+                  />
                 </div>
               </div>
               <div className={'auth-button-bar'}>
@@ -112,8 +157,10 @@ const PasswordChange = ({
                 <button
                   className="btn btn-primary btn-sm col-md-8"
                   disabled={
-                    isValidPassword === false ||
-                    isValidPasswordConfirm === false
+                    false
+                    // isValidPassword === false ||
+                    // isValidPasswordConfirm === false ||
+                    // !email
                   }
                   onClick={onClickPasswordChange}
                 >

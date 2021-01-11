@@ -45,11 +45,11 @@ const Login = ({
   }
 
   const onClickLogin = () => {
-    handleLogin({url: 'url', user: {id, password}})
+    handleLogin({url: '/basic/login', user: {id, password}})
   }
 
   const onClickSignUp = () => {
-    handleCreateUser({url: 'url', user: {email, id, password}})
+    handleCreateUser({url: '/cloudhub/v1/users', user: {email, id, password}})
   }
 
   const onSetActiveEditorTab = tab => {
@@ -111,64 +111,92 @@ const Login = ({
                 </Radio.Button>
               </Radio>
 
-              <div className="form-group auth-form">
-                <input
-                  className="form-control"
-                  id="user-id"
-                  type="text"
-                  placeholder={'id'}
-                  value={id}
-                  onChange={onChangeId}
-                  spellCheck={false}
-                />
-              </div>
-              {isSign && (
-                <div className="form-group auth-form">
+              <div className="form-group">
+                {isSign && <label>User ID</label>}
+                <div className="auth-form">
                   <input
                     className="form-control"
-                    id="user-email"
                     type="text"
-                    placeholder={'yours@example.com'}
-                    value={email}
-                    onChange={onChangeEmail}
+                    placeholder={'id'}
+                    value={id}
+                    onChange={onChangeId}
                     spellCheck={false}
                   />
-                  It is used for OTP delivery when initializing password.
                 </div>
-              )}
-              <div className="form-group auth-form">
-                <input
-                  className="form-control"
-                  id="user-password"
-                  type="password"
-                  placeholder={'password'}
-                  value={password}
-                  onChange={onChangePassword}
-                  spellCheck={false}
-                />
-                {isSign && !isValidPassword && passwordPolicyMessage?.url}
               </div>
-              {isSign ? (
-                <div className="form-group auth-form">
+
+              <div className="form-group">
+                {isSign && <label>Password</label>}
+                <div className="auth-form">
                   <input
                     className="form-control"
-                    id="user-password-confirm"
                     type="password"
-                    placeholder={'password confirm'}
-                    value={passwordConfirm}
-                    onChange={onChangePasswordConfirm}
+                    placeholder={'password'}
+                    value={password}
+                    onChange={onChangePassword}
                     spellCheck={false}
                   />
-                  {passwordConfirm.length > 0 && !isValidPasswordConfirm && (
-                    <div>
-                      Your password and confirmation password do not match.
+                  {isSign && !isValidPassword && (
+                    <div className="form-message fm--danger">
+                      {passwordPolicyMessage?.url}
                     </div>
                   )}
+                  {isSign && isValidPassword && (
+                    <span className="form-input-checkmark icon checkmark" />
+                  )}
                 </div>
+              </div>
+              {isSign ? (
+                <>
+                  <div className="form-group">
+                    <div className="auth-form">
+                      <input
+                        className="form-control"
+                        type="password"
+                        placeholder={'password confirm'}
+                        value={passwordConfirm}
+                        onChange={onChangePasswordConfirm}
+                        spellCheck={false}
+                      />
+
+                      {passwordConfirm.length > 0 &&
+                        !isValidPasswordConfirm && (
+                          <div className={`form-message fm--danger`}>
+                            Your password and confirmation password do not
+                            match.
+                          </div>
+                        )}
+                      {isValidPassword && isValidPasswordConfirm && (
+                        <span className="form-input-checkmark icon checkmark" />
+                      )}
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>Email</label>
+                    <div className="auth-form">
+                      <input
+                        className="form-control"
+                        type="text"
+                        placeholder={'yours@example.com'}
+                        value={email}
+                        onChange={onChangeEmail}
+                        spellCheck={false}
+                      />
+                      <div className="form-message fm--info">
+                        It is used for OTP delivery when initializing password.
+                      </div>
+                    </div>
+                  </div>
+                </>
               ) : (
-                <Link to="/password-reset">
-                  <span>Forgot your password?</span>
-                </Link>
+                <>
+                  <Link to="/password-reset">
+                    <span>Forgot your password?</span>
+                  </Link>
+                  <Link to="/password-otp">
+                    <span>Change Password?</span>
+                  </Link>
+                </>
               )}
               <div className={'auth-button-bar'}>
                 {isSign ? (
@@ -177,7 +205,6 @@ const Login = ({
                     disabled={
                       !reg ||
                       !passwordPolicyMessage ||
-                      email.length === 0 ||
                       isValidPassword === false ||
                       isValidPasswordConfirm === false
                     }
