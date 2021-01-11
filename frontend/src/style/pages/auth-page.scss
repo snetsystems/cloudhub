@@ -199,8 +199,19 @@
   .auth-form {
     width: 100%;
     margin-bottom: 7px;
+    position: relative;
+
     &:last-child {
       margin-bottom: unset;
+    }
+
+    .form-input-checkmark {
+      color: $s-orange;
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 20px;
     }
   }
 
@@ -259,5 +270,25 @@
 .auth-logo {
   &.go-home {
     cursor: pointer;
+  }
+}
+
+.form-message {
+  border-width: 2px;
+  border-style: solid;
+  border-radius: 4px;
+  color: $g15-platinum;
+  padding: 7px;
+  margin: 3px 0;
+  font-size: 12px;
+
+  &.fm--danger {
+    border-color: rgba(255, 0, 0, 0.2);
+    background-color: rgba(255, 0, 0, 0.2);
+  }
+
+  &.fm--info {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.1);
   }
 }
