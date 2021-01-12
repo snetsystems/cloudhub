@@ -85,6 +85,7 @@ const PasswordChange = ({router, auth, links, handlePasswordChange}) => {
             </div>
             <div className="panel-body" style={{padding: '0px'}}>
               <div className="form-group">
+                <label>User ID</label>
                 <div className="auth-form">
                   <input
                     className="form-control"
@@ -96,6 +97,7 @@ const PasswordChange = ({router, auth, links, handlePasswordChange}) => {
                 </div>
               </div>
               <div className="form-group">
+                <label>Password</label>
                 <div className="auth-form">
                   <input
                     className="form-control"
@@ -115,11 +117,13 @@ const PasswordChange = ({router, auth, links, handlePasswordChange}) => {
                     <span className="form-input-checkmark icon checkmark" />
                   )}
                 </div>
+              </div>
+              <div className="form-group">
                 <div className="auth-form">
                   <input
                     className="form-control"
                     type="password"
-                    placeholder={'password Confirm'}
+                    placeholder={'password confirm'}
                     spellCheck={false}
                     value={passwordConfirm}
                     onChange={onChangePasswordConfirm}
@@ -133,6 +137,9 @@ const PasswordChange = ({router, auth, links, handlePasswordChange}) => {
                     <span className="form-input-checkmark icon checkmark" />
                   )}
                 </div>
+              </div>
+              <div className="form-group">
+                <label>Email</label>
                 <div className="auth-form">
                   <input
                     className="form-control"
@@ -142,24 +149,17 @@ const PasswordChange = ({router, auth, links, handlePasswordChange}) => {
                     value={email}
                     onChange={onChangeEmail}
                   />
+                  <div className="form-message fm--info">
+                    It is used for OTP delivery when initializing password.
+                  </div>
                 </div>
               </div>
               <div className={'auth-button-bar'}>
                 <button
-                  className="btn btn-primary btn-sm col-md-4"
-                  onClick={() => {
-                    router.goBack()
-                  }}
-                >
-                  Go Back
-                </button>
-                <button
                   className="btn btn-primary btn-sm col-md-8"
                   disabled={
-                    false
-                    // isValidPassword === false ||
-                    // isValidPasswordConfirm === false ||
-                    // !email
+                    !isValidPassword || !isValidPasswordConfirm
+                    // 기존 메일과 다르면 활성화 시킬 것
                   }
                   onClick={onClickPasswordChange}
                 >
