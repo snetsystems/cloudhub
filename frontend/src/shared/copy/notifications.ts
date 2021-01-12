@@ -1098,12 +1098,22 @@ export const notifyUserPasswordResetFailed = (): Notification => ({
   message: `Password Reset Failed`,
 })
 
-export const notifyUserPasswordUpdateCompleted = (): Notification => ({
+export const notifyUserUpdateCompleted = (): Notification => ({
   ...defaultSuccessNotification,
   message: `Password Update Completed`,
 })
 
-export const notifyUserPasswordUpdateFailed = (): Notification => ({
+export const notifyUserUpdateFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Password Update Failed`,
+})
+
+export const notifyUserOTPChangeCompleted = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Password Update Completed`,
+})
+
+export const notifyUserOTPChangeFailed = (): Notification => ({
   ...defaultErrorNotification,
   message: `Password Update Failed`,
 })

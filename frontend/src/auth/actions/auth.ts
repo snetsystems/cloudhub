@@ -11,17 +11,21 @@ import {
   notifyUserDeleteFailed,
   notifyUserPasswordResetCompleted,
   notifyUserPasswordResetFailed,
-  notifyUserPasswordUpdateCompleted,
-  notifyUserPasswordUpdateFailed,
+  notifyUserUpdateCompleted,
+  notifyUserUpdateFailed,
+  notifyUserOTPChangeCompleted,
+  notifyUserOTPChangeFailed,
 } from 'src/shared/copy/notifications'
 
 // API
 import {
   login,
   createUser,
+  getUser,
   deleteUser,
-  passwordChange,
+  updateUser,
   passwordReset,
+  otpChange,
 } from 'src/auth/apis'
 
 export enum ActionTypes {
@@ -30,15 +34,21 @@ export enum ActionTypes {
   UserAddRequested = 'USER_ADD_REQUESTED',
   UserAddCompleted = 'USER_ADD_COMPLETED',
   UserAddFailed = 'USER_ADD_FAILED',
+  UserGetRequested = 'USER_GET_REQUESTED',
+  UserGetCompleted = 'USER_GET_COMPLETED',
+  UserGetFailed = 'USER_GET_FAILED',
   UserDeleteRequested = 'USER_DELETE_REQUESTED',
   UserDeleteCompleted = 'USER_DELETE_COMPLETED',
   UserDeleteFailed = 'USER_DELETE_FAILED',
-  UserPasswordUpdateReqeusted = 'USER_PASSWORD_UPDATE_REQUESTED',
-  UserPasswordUpdateCompleted = 'USER_PASSWORD_UPDATE_COMPLETED',
-  UserPasswordUpdateFailed = 'USER_PASSWORD_UPDATE_FAILED',
+  UserUpdateReqeusted = 'USER_UPDATE_REQUESTED',
+  UserUpdateCompleted = 'USER_UPDATE_COMPLETED',
+  UserUpdateFailed = 'USER_UPDATE_FAILED',
   UserPasswordResetReqeusted = 'USER_PASSWORD_RESET_REQUESTED',
   UserPasswordResetCompleted = 'USER_PASSWORD_RESET_COMPLETED',
   UserPasswordResetFailed = 'USER_PASSWORD_RESET_FAILED',
+  UserOTPChangeRequested = 'USER_OTP_CHANGE_REQUESTED',
+  UserOTPChangeCompleted = 'USER_OTP_CHANGE_COMPLETED',
+  UserOTPChangeFailed = 'USER_OTP_CHANGE_FAILED',
 }
 
 export type Action =
@@ -50,13 +60,18 @@ export type Action =
   | UserDeleteRequestedAction
   | UserDeleteCompletedAction
   | UserDeleteFailedAction
-  | UserPasswordUpdateReqeustedAction
-  | UserPasswordUpdateCompletedAction
-  | UserPasswordUpdateFailedAction
+  | UserUpdateReqeustedAction
+  | UserUpdateCompletedAction
+  | UserUpdateFailedAction
   | UserPasswordResetReqeustedAction
   | UserPasswordResetCompletedAction
   | UserPasswordResetFailedAction
-
+  | UserOTPChangeRequestedAction
+  | UserOTPChangeCompletedAction
+  | UserOTPChangeFailedAction
+  | UserGetRequestedAction
+  | UserGetCompletedAction
+  | UserGetFailedAction
 export interface UserLoginRequestedAction {
   type: ActionTypes.UserLoginRequested
 }
@@ -91,6 +106,23 @@ export interface UserDeleteRequestedAction {
   type: ActionTypes.UserDeleteRequested
 }
 
+export interface UserGetRequestedAction {
+  type: ActionTypes.UserGetRequested
+}
+export const userGetRequested = () => ({
+  type: ActionTypes.UserGetRequested,
+})
+export interface UserGetCompletedAction {
+  type: ActionTypes.UserGetCompleted
+}
+export const userGetCompleted = () => ({
+  type: ActionTypes.UserGetCompleted,
+})
+export interface UserGetFailedAction {
+  type: ActionTypes.UserGetFailed
+}
+export const userGetFailed = () => ({type: ActionTypes.UserGetFailed})
+
 export const userDeleteRequested = () => ({
   type: ActionTypes.UserDeleteRequested,
 })
@@ -107,28 +139,28 @@ export interface UserDeleteFailedAction {
 
 export const userDeleteFailed = () => ({type: ActionTypes.UserDeleteFailed})
 
-export interface UserPasswordUpdateReqeustedAction {
-  type: ActionTypes.UserPasswordUpdateReqeusted
+export interface UserUpdateReqeustedAction {
+  type: ActionTypes.UserUpdateReqeusted
 }
 
-export const userPasswordUpdateReqeusted = () => ({
-  type: ActionTypes.UserPasswordUpdateReqeusted,
+export const userUpdateReqeusted = () => ({
+  type: ActionTypes.UserUpdateReqeusted,
 })
 
-export interface UserPasswordUpdateCompletedAction {
-  type: ActionTypes.UserPasswordUpdateCompleted
+export interface UserUpdateCompletedAction {
+  type: ActionTypes.UserUpdateCompleted
 }
 
-export const userPasswordUpdateCompleted = () => ({
-  type: ActionTypes.UserPasswordUpdateCompleted,
+export const userUpdateCompleted = () => ({
+  type: ActionTypes.UserUpdateCompleted,
 })
 
-export interface UserPasswordUpdateFailedAction {
-  type: ActionTypes.UserPasswordUpdateFailed
+export interface UserUpdateFailedAction {
+  type: ActionTypes.UserUpdateFailed
 }
 
-export const userPasswordUpdateFailed = () => ({
-  type: ActionTypes.UserPasswordUpdateFailed,
+export const userUpdateFailed = () => ({
+  type: ActionTypes.UserUpdateFailed,
 })
 
 export interface UserPasswordResetReqeustedAction {
@@ -153,6 +185,26 @@ export interface UserPasswordResetFailedAction {
 
 export const userPasswordResetFailed = () => ({
   type: ActionTypes.UserPasswordResetFailed,
+})
+
+export interface UserOTPChangeRequestedAction {
+  type: ActionTypes.UserOTPChangeRequested
+}
+
+export const userOTPChangeRequested = () => ({
+  type: ActionTypes.UserOTPChangeRequested,
+})
+export interface UserOTPChangeCompletedAction {
+  type: ActionTypes.UserOTPChangeCompleted
+}
+export const userOTPChangeCompleted = () => ({
+  type: ActionTypes.UserOTPChangeCompleted,
+})
+export interface UserOTPChangeFailedAction {
+  type: ActionTypes.UserOTPChangeFailed
+}
+export const userOTPChangeFailed = () => ({
+  type: ActionTypes.UserOTPChangeFailed,
 })
 
 export interface AuthUser {
@@ -202,6 +254,24 @@ export const createUserAsync = ({url, user}: SignupParams) => async (
   }
 }
 
+export interface GetUserParams {
+  url: string
+}
+
+export const getUserAsync = ({url}: GetUserParams) => async (
+  dispatch: Dispatch<Action>
+) => {
+  dispatch(userGetRequested())
+
+  try {
+    const res = await getUser({url})
+    dispatch(userGetCompleted())
+    return res
+  } catch (error) {
+    dispatch(userGetFailed())
+  }
+}
+
 export const deleteUserAsync = ({url, user}: SignupParams) => async (
   dispatch: Dispatch<Action>
 ) => {
@@ -218,23 +288,23 @@ export const deleteUserAsync = ({url, user}: SignupParams) => async (
   }
 }
 
-export interface PasswordChangeAsync {
+export interface UpdateUserAsync {
   url: string
   user: AuthUser
 }
 
-export const passwordChangeAsync = ({url, user}: PasswordChangeAsync) => async (
+export const updateUserAsync = ({url, user}: UpdateUserAsync) => async (
   dispatch: Dispatch<Action>
 ) => {
-  dispatch(userPasswordUpdateReqeusted())
+  dispatch(userUpdateReqeusted())
   try {
-    const res = await passwordChange({url, user})
-    dispatch(userPasswordUpdateCompleted())
-    dispatch(notify(notifyUserPasswordUpdateCompleted()))
+    const res = await updateUser({url, user})
+    dispatch(userUpdateCompleted())
+    dispatch(notify(notifyUserUpdateCompleted()))
     return res
   } catch (error) {
-    dispatch(userPasswordUpdateFailed())
-    dispatch(notify(notifyUserPasswordUpdateFailed()))
+    dispatch(userUpdateFailed())
+    dispatch(notify(notifyUserUpdateFailed()))
   }
 }
 
@@ -258,5 +328,27 @@ export const passwordResetAsync = ({
   } catch (error) {
     dispatch(userPasswordResetFailed())
     dispatch(notify(notifyUserPasswordResetFailed()))
+  }
+}
+export interface OTPChangeParams {
+  url: string
+  user: {
+    id: string
+    password: string
+  }
+}
+
+export const otpChangeAsync = ({url, user}: OTPChangeParams) => async (
+  dispatch: Dispatch<Action>
+) => {
+  dispatch(userOTPChangeRequested())
+  try {
+    const res = await otpChange({url, user})
+    dispatch(userOTPChangeCompleted())
+    dispatch(notify(notifyUserOTPChangeCompleted()))
+    return res
+  } catch (error) {
+    dispatch(userPasswordResetFailed())
+    dispatch(notify(notifyUserOTPChangeFailed()))
   }
 }
