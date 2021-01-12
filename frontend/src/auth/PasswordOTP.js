@@ -7,7 +7,7 @@ import {InjectedRouter} from 'react-router'
 import Notifications from 'src/shared/components/Notifications'
 import SplashPage from 'src/shared/components/SplashPage'
 
-import {passwordChangeAsync} from 'src/auth/actions'
+import {otpChangeAsync} from 'src/auth/actions'
 
 const PasswordOTP = props => {
   const passwordPolicy = props.authData.passwordPolicy
@@ -26,10 +26,9 @@ const PasswordOTP = props => {
     setPasswordConfirm(e.target.value)
   }
 
-  const onClickPasswordChange = () => {
+  const onClickOTPChange = () => {
     let user = {
-      id,
-      email,
+      name: id,
     }
 
     if (isValidPassword && isValidPasswordConfirm) {
@@ -39,8 +38,7 @@ const PasswordOTP = props => {
       }
     }
 
-    console.log(user)
-    props.handlePasswordChange({url: '/basic/password', user})
+    props.handleOTPChange({url: '/basic/password', user})
   }
 
   let reg = null
@@ -116,7 +114,7 @@ const PasswordOTP = props => {
               <button
                 className="btn btn-primary btn-sm col-md-12"
                 disabled={!isValidPassword || !isValidPasswordConfirm}
-                onClick={onClickPasswordChange}
+                onClick={onClickOTPChange}
               >
                 Change Password
               </button>
@@ -129,7 +127,7 @@ const PasswordOTP = props => {
 }
 
 const mapDispatchToProps = {
-  handlePasswordChange: passwordChangeAsync,
+  handleOTPChange: otpChangeAsync,
 }
 
 const {array, bool, shape, string, func} = PropTypes
@@ -145,7 +143,7 @@ PasswordOTP.prototype = {
     passwordPolicy: shape(),
     passwordPolicyMessage: shape(),
   }),
-  handlePasswordChange: func,
+  handleOTPChange: func,
 }
 
 export default connect(null, mapDispatchToProps)(PasswordOTP)
