@@ -16,7 +16,13 @@ import {
 } from 'src/shared/copy/notifications'
 
 // API
-import {login, createUser, passwordChange, passwordReset} from 'src/auth/apis'
+import {
+  login,
+  createUser,
+  deleteUser,
+  passwordChange,
+  passwordReset,
+} from 'src/auth/apis'
 
 export enum ActionTypes {
   UserLoginRequested = 'USER_LOGIN_REQUESTED',
@@ -165,7 +171,9 @@ export const loginAsync = ({url, user}: LoginParams) => async (
 ) => {
   dispatch(userLoginRequested())
   try {
-    await login({url, user})
+    const res = await login({url, user})
+
+    return res
   } catch (error) {
     dispatch(userLoginFailed())
     dispatch(notify(notifyLoginFailed()))
@@ -183,9 +191,11 @@ export const createUserAsync = ({url, user}: SignupParams) => async (
   dispatch(userAddRequested())
 
   try {
-    await createUser({url, user})
+    const res = await createUser({url, user})
+
     dispatch(userAddCompleted())
     dispatch(notify(notifyUserAddCompleted()))
+    return res
   } catch (error) {
     dispatch(userAddFailed())
     dispatch(notify(notifyUserAddFailed()))
@@ -198,9 +208,10 @@ export const deleteUserAsync = ({url, user}: SignupParams) => async (
   dispatch(userDeleteRequested())
 
   try {
-    await createUser({url, user})
+    const res = await deleteUser({url, user})
     dispatch(userDeleteCompleted())
     dispatch(notify(notifyUserDeleteCompleted()))
+    return res
   } catch (error) {
     dispatch(userDeleteFailed())
     dispatch(notify(notifyUserDeleteFailed()))
@@ -217,9 +228,10 @@ export const passwordChangeAsync = ({url, user}: PasswordChangeAsync) => async (
 ) => {
   dispatch(userPasswordUpdateReqeusted())
   try {
-    await passwordChange({url, user})
+    const res = await passwordChange({url, user})
     dispatch(userPasswordUpdateCompleted())
     dispatch(notify(notifyUserPasswordUpdateCompleted()))
+    return res
   } catch (error) {
     dispatch(userPasswordUpdateFailed())
     dispatch(notify(notifyUserPasswordUpdateFailed()))
@@ -239,9 +251,10 @@ export const passwordResetAsync = ({
 }: PasswordResetParams) => async (dispatch: Dispatch<Action>) => {
   dispatch(userPasswordResetReqeusted())
   try {
-    await passwordReset({url, userId, passwordReturn})
+    const res = await passwordReset({url, userId, passwordReturn})
     dispatch(userPasswordResetCompleted())
     dispatch(notify(notifyUserPasswordResetCompleted()))
+    return res
   } catch (error) {
     dispatch(userPasswordResetFailed())
     dispatch(notify(notifyUserPasswordResetFailed()))
