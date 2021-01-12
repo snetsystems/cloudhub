@@ -7,9 +7,9 @@ import {InjectedRouter} from 'react-router'
 import Notifications from 'src/shared/components/Notifications'
 import SplashPage from 'src/shared/components/SplashPage'
 
-import {passwordChangeAsync} from 'src/auth/actions'
+import {updateUserAsync} from 'src/auth/actions'
 
-const PasswordChange = ({router, auth, links, handlePasswordChange}) => {
+const UpdateUser = ({router, auth, links, handleUpdateUser}) => {
   // console.log(props)
   // useEffect(() => {
   //   console.log('passwordPolicy: ', passwordPolicy)
@@ -48,7 +48,7 @@ const PasswordChange = ({router, auth, links, handlePasswordChange}) => {
   const isValidPassword = password.length > 0 && reg.test(password)
   const isValidPasswordConfirm = password === passwordConfirm
 
-  const onClickPasswordChange = e => {
+  const onClickUpdateUser = e => {
     let user = {
       id,
       email,
@@ -61,7 +61,7 @@ const PasswordChange = ({router, auth, links, handlePasswordChange}) => {
         currentOrganization: auth.me.currentOrganization.id,
       }
     }
-    handlePasswordChange({url: `/cloudhub/v1/users/:id`, user})
+    handleUpdateUser({url: `/cloudhub/v1/users/:id`, user})
   }
   return (
     <div>
@@ -161,7 +161,7 @@ const PasswordChange = ({router, auth, links, handlePasswordChange}) => {
                     !isValidPassword || !isValidPasswordConfirm
                     // 기존 메일과 다르면 활성화 시킬 것
                   }
-                  onClick={onClickPasswordChange}
+                  onClick={onClickUpdateUser}
                 >
                   Change Password
                 </button>
@@ -175,12 +175,12 @@ const PasswordChange = ({router, auth, links, handlePasswordChange}) => {
 }
 
 const mapDispatchToProps = {
-  handlePasswordChange: passwordChangeAsync,
+  handleUpdateUser: updateUserAsync,
 }
 
 const {array, bool, shape, string, func} = PropTypes
 
-PasswordChange.prototype = {
+UpdateUser.prototype = {
   router: shape(),
   authData: shape({
     auth: shape({
@@ -194,4 +194,4 @@ PasswordChange.prototype = {
   handlePasswordChange: func,
 }
 
-export default connect(null, mapDispatchToProps)(PasswordChange)
+export default connect(null, mapDispatchToProps)(UpdateUser)
