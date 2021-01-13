@@ -2,7 +2,9 @@ import React, {useState, useEffect} from 'react'
 import {connect} from 'react-redux'
 import PropTypes from 'prop-types'
 import {Link} from 'react-router'
+import {Subscribe} from 'unstated'
 
+import {AuthContainer} from 'src/auth/AuthContainer'
 import {Radio, ButtonShape} from 'src/reusable_ui'
 import Notifications from 'src/shared/components/Notifications'
 import PageSpinner from 'src/shared/components/PageSpinner'
@@ -44,8 +46,20 @@ const Login = ({
     setPasswordConfirm(e.target.value)
   }
 
-  const onClickLogin = () => {
-    handleLogin({url: '/basic/login', user: {id, password}})
+  const onClickLogin = handleUpdateUserID => () => {
+    handleUpdateUserID(id)
+    // handleLogin({url: '/basic/login', user: {id, password}}).then(() => {
+    // console.log('log')
+    // return (
+    // <Subscribe to={[AuthContainer]}>
+    //   {container => {
+    //     container.handleUpdateUserID(id)
+    //     console.log('onClickLogin id: ', id)
+    //     return <></>
+    //   }}
+    // </Subscribe>
+    // )
+    // })
   }
 
   const onClickSignUp = () => {
@@ -213,12 +227,18 @@ const Login = ({
                     Sign Up
                   </button>
                 ) : (
-                  <button
-                    className="btn btn-primary btn-sm col-md-12"
-                    onClick={onClickLogin}
-                  >
-                    Login
-                  </button>
+                  <Subscribe to={[AuthContainer]}>
+                    {container => {
+                      return (
+                        <button
+                          className="btn btn-primary btn-sm col-md-12"
+                          onClick={onClickLogin(container.handleUpdateUserID)}
+                        >
+                          Login
+                        </button>
+                      )
+                    }}
+                  </Subscribe>
                 )}
               </div>
             </>

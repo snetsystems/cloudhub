@@ -3,7 +3,9 @@ import _ from 'lodash'
 import {connect} from 'react-redux'
 import PropTypes from 'prop-types'
 import {InjectedRouter} from 'react-router'
+import {Subscribe} from 'unstated'
 
+import {AuthContainer} from 'src/auth/AuthContainer'
 import Notifications from 'src/shared/components/Notifications'
 import SplashPage from 'src/shared/components/SplashPage'
 
@@ -13,8 +15,6 @@ const PasswordOTP = props => {
   const passwordPolicy = props.authData.passwordPolicy
   const passwordPolicyMessage = props.authData.passwordPolicyMessage
 
-  const [id] = useState('daiboom')
-  const [email] = useState('chleoqja0125@nate.com')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
 
@@ -26,9 +26,9 @@ const PasswordOTP = props => {
     setPasswordConfirm(e.target.value)
   }
 
-  const onClickOTPChange = () => {
+  const onClickOTPChange = userID => () => {
     let user = {
-      name: id,
+      name: userID,
     }
 
     if (isValidPassword && isValidPasswordConfirm) {
@@ -111,13 +111,17 @@ const PasswordOTP = props => {
                   )}
                 </div>
               </div>
-              <button
-                className="btn btn-primary btn-sm col-md-12"
-                disabled={!isValidPassword || !isValidPasswordConfirm}
-                onClick={onClickOTPChange}
-              >
-                Change Password
-              </button>
+              <Subscribe to={[AuthContainer]}>
+                {container => (
+                  <button
+                    className="btn btn-primary btn-sm col-md-12"
+                    disabled={!isValidPassword || !isValidPasswordConfirm}
+                    onClick={onClickOTPChange(container.state.userID)}
+                  >
+                    Change Password
+                  </button>
+                )}
+              </Subscribe>
             </div>
           </div>
         </div>
