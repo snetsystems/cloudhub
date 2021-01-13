@@ -202,7 +202,7 @@ class Root extends PureComponent<{}, State> {
             />
             <Route
               path="/password-otp"
-              component={UserIsNotAuthenticated(PasswordOTP)}
+              component={UserIsAuthenticated(PasswordOTP)}
             />
             <Route
               path="/purgatory"
