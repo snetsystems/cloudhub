@@ -47,23 +47,26 @@ const Login = ({
   }
 
   const onClickLogin = handleUpdateUserID => () => {
-    handleUpdateUserID(id)
-    // handleLogin({url: '/basic/login', user: {id, password}}).then(() => {
-    // console.log('log')
-    // return (
-    // <Subscribe to={[AuthContainer]}>
-    //   {container => {
-    //     container.handleUpdateUserID(id)
-    //     console.log('onClickLogin id: ', id)
-    //     return <></>
-    //   }}
-    // </Subscribe>
-    // )
-    // })
+    // handleUpdateUserID(id)
+    handleLogin({
+      url: '/basic/login',
+      user: {id, password},
+    }).then(({data}) => {
+      // console.log(res)
+      console.log('logged')
+      console.log('data: ', data)
+      return router.push('/password-otp')
+      // window.location.href = '/'
+      if (true) {
+        //
+      } else {
+        //
+      }
+    })
   }
 
   const onClickSignUp = () => {
-    handleCreateUser({url: '/cloudhub/v1/users', user: {email, id, password}})
+    handleCreateUser({url: '/basic/users', user: {email, id, password}})
   }
 
   const onSetActiveEditorTab = tab => {
@@ -79,7 +82,7 @@ const Login = ({
 
   let reg = null
   if (passwordPolicy) {
-    reg = new RegExp(passwordPolicy && passwordPolicy.url, 'ig')
+    reg = new RegExp(passwordPolicy, 'ig')
   }
 
   const isValidPassword = reg && password.length > 0 && reg.test(password)
@@ -152,7 +155,7 @@ const Login = ({
                   />
                   {isSign && !isValidPassword && (
                     <div className="form-message fm--danger">
-                      {passwordPolicyMessage?.url}
+                      {passwordPolicyMessage}
                     </div>
                   )}
                   {isSign && isValidPassword && (
