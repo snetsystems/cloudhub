@@ -113,6 +113,9 @@ type Server struct {
 	Auth0Organizations []string `long:"auth0-organizations" description:"Auth0 organizations permitted to access CloudHub (env comma separated)" env:"AUTH0_ORGS" env-delim:","`
 	Auth0SuperAdminOrg string   `long:"auth0-superadmin-org" description:"Auth0 organization from which users are automatically granted SuperAdmin status" env:"AUTH0_SUPERADMIN_ORG"`
 
+	PasswordPolicy        string   `long:"password-policy" description:"Password validity rules" env:"PASSWORD_POLICY"`
+	PasswordPolicyMessage string   `long:"password-policy-message" description:"Password validity rule description" env:"PASSWORD_POLICY_MESSAGE"`
+
 	StatusFeedURL          string            `long:"status-feed-url" description:"URL of a JSON Feed to display as a News Feed on the client Status page." default:"https://www.snetgroup.info/" env:"STATUS_FEED_URL"`
 	CustomLinks            map[string]string `long:"custom-link" description:"Custom link to be added to the client User menu. Multiple links can be added by using multiple of the same flag with different 'name:url' values, or as an environment variable with comma-separated 'name:url' values. E.g. via flags: '--custom-link=snetsystems:https://www.snetsystems.com --custom-link=CloudHub:https://github.com/snetsystems/cloudhub'. E.g. via environment variable: 'export CUSTOM_LINKS=snetsystems:https://www.snetsystems.com,CloudHub:https://github.com/snetsystems/cloudhub'" env:"CUSTOM_LINKS" env-delim:","`
 	TelegrafSystemInterval time.Duration     `long:"telegraf-system-interval" default:"1m" description:"Duration used in the GROUP BY time interval for the hosts list" env:"TELEGRAF_SYSTEM_INTERVAL"`
@@ -641,6 +644,8 @@ func (s *Server) Serve(ctx context.Context) {
 		DisableGZip:   s.DisableGZip,
 		AddonURLs:     s.AddonURLs,
 		AddonTokens:   s.AddonTokens,
+		PasswordPolicy: s.PasswordPolicy,
+		PasswordPolicyMessage: s.PasswordPolicyMessage,
 	}, service)
 
 	// Add CloudHub's version header to all requests
