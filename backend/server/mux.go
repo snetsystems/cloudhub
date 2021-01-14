@@ -35,6 +35,8 @@ type MuxOpts struct {
 	DisableGZip   bool              // Optionally disable gzip.
 	AddonURLs     map[string]string // URLs for using in Addon Features, as passed in via CLI/ENV
 	AddonTokens   map[string]string // Tokens to access to Addon Features API, as passed in via CLI/ENV
+	PasswordPolicy        string    // Password validity rules
+	PasswordPolicyMessage string    // Password validity rule description
 }
 
 // NewMux attaches all the route handlers; handler returned servers cloudhub.
@@ -155,6 +157,13 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	/* Health */
 	router.GET("/ping", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
+
+	// Login,Logout (Provider=cloudhub, Scheme=basic)
+	router.GET("/basic/login", service.Login(opts.Auth, opts.Basepath))
+	router.GET("/basic/logout", service.Logout(opts.Auth, opts.Basepath))
+	
+	// User sign up (Provider=cloudhub, Scheme=basic)
+	router.POST("/basic/users", service.NewBasicUser)	
 
 	/* API */
 	// Organizations
@@ -369,7 +378,14 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 		CustomLinks: opts.CustomLinks,
 		AddonURLs:   opts.AddonURLs,
 		AddonTokens: opts.AddonTokens,
-	}	
+		PasswordPolicy: opts.PasswordPolicy,
+		PasswordPolicyMessage: opts.PasswordPolicyMessage,
+		BasicRoute:  BasicAuthRoute{
+			Name: "cloudhub",
+			Login: "/basic/login",
+			Logout: "/basic/logout",
+		},
+	}
 
 	getPrincipal := func(r *http.Request) oauth2.Principal {
 		p, _ := HasAuthorizedToken(opts.Auth, r)
@@ -439,6 +455,19 @@ func AuthAPI(opts MuxOpts, router cloudhub.Router) (http.Handler, AuthRoutes) {
 		router.ServeHTTP(w, r)
 	}), routes
 }
+
+// BasicAuthWrapper returns http handlers that wraps the supplied handler with basic login authentication
+//  func BasicAuthWrapper(opts MuxOpts, service Service, router cloudhub.Router) http.Handler {
+
+// 	router.GET("/basic/login", service.Login)
+// 	router.GET("/basic/logout", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
+
+// 	basicTokenMiddleware := AuthorizedToken(opts.Auth, opts.Logger, router)
+
+//  	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+// 			basicTokenMiddleware.ServeHTTP(w, r)
+//  	})
+//  }
 
 func encodeJSON(w http.ResponseWriter, status int, v interface{}, logger cloudhub.Logger) {
 	w.Header().Set("Content-Type", "application/json")

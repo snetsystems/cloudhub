@@ -46,12 +46,16 @@ func TestUsersStore_GetWithID(t *testing.T) {
 					Name:     "billietta",
 					Provider: "google",
 					Scheme:   "oauth2",
+					Passwd:   "dmddudu*(&",
+					PasswordResetFlag: "N",
 				},
 			},
 			want: &cloudhub.User{
 				Name:     "billietta",
 				Provider: "google",
 				Scheme:   "oauth2",
+				Passwd:   "dmddudu*(&",
+				PasswordResetFlag: "N",
 			},
 			addFirst: true,
 		},
@@ -103,6 +107,8 @@ func TestUsersStore_GetWithNameProviderScheme(t *testing.T) {
 					Name:     "billietta",
 					Provider: "google",
 					Scheme:   "oauth2",
+					Passwd:   "dmddudu*(&",
+					PasswordResetFlag: "N",
 				},
 			},
 			wantErr: true,
@@ -115,12 +121,16 @@ func TestUsersStore_GetWithNameProviderScheme(t *testing.T) {
 					Name:     "billietta",
 					Provider: "google",
 					Scheme:   "oauth2",
+					Passwd:   "dmddudu*(&",
+					PasswordResetFlag: "N",
 				},
 			},
 			want: &cloudhub.User{
 				Name:     "billietta",
 				Provider: "google",
 				Scheme:   "oauth2",
+				Passwd:   "dmddudu*(&",
+				PasswordResetFlag: "N",
 			},
 			addFirst: true,
 		},
@@ -195,6 +205,9 @@ func TestUsersStore_Add(t *testing.T) {
 							Name: "editor",
 						},
 					},
+					Passwd:   "dmddudu*(&",
+					PasswordRestFlag: "N",
+					Email: "abc@def.com",
 				},
 			},
 			want: &cloudhub.User{
@@ -206,6 +219,9 @@ func TestUsersStore_Add(t *testing.T) {
 						Name: "editor",
 					},
 				},
+				Passwd:   "dmddudu*(&",
+				PasswordResetFlag: "N",
+				Email: "abc@def.com",
 			},
 		},
 		{
@@ -222,6 +238,9 @@ func TestUsersStore_Add(t *testing.T) {
 							Name: "editor",
 						},
 					},
+					Passwd:   "dmddudu*(&",
+					PasswordResetFlag: "N",
+					Email: "abc@def.com",
 				},
 			},
 			wantErr: true,
@@ -316,6 +335,8 @@ func TestUsersStore_Update(t *testing.T) {
 		provider string
 		scheme   string
 		name     string
+		email    string
+		password string
 	}
 	tests := []struct {
 		name     string
@@ -347,12 +368,17 @@ func TestUsersStore_Update(t *testing.T) {
 							Name: "viewer",
 						},
 					},
+					Passwd:   "dmddudu*(&",
+					PasswordResetFlag: "N",
+					Email: "abc@def.com",
 				},
 				roles: []cloudhub.Role{
 					{
 						Name: "editor",
 					},
 				},
+				email: "eidjwjhw@cowow.com",
+				password: "eie^ksdkds652",
 			},
 			want: &cloudhub.User{
 				Name:     "bobetta",
@@ -363,6 +389,9 @@ func TestUsersStore_Update(t *testing.T) {
 						Name: "editor",
 					},
 				},
+				Passwd:   "eie^ksdkds652",
+				PasswordResetFlag: "N",
+				Email: "eidjwjhw@cowow.com",
 			},
 			addFirst: true,
 		},
@@ -375,14 +404,14 @@ func TestUsersStore_Update(t *testing.T) {
 					Provider: "github",
 					Scheme:   "oauth2",
 				},
-				provider: "google",
-				scheme:   "oauth2",
+				provider: "cloudhub",
+				scheme:   "basic",
 				name:     "billietta",
 			},
 			want: &cloudhub.User{
 				Name:     "billietta",
-				Provider: "google",
-				Scheme:   "oauth2",
+				Provider: "cloudhub",
+				Scheme:   "basic",
 			},
 			addFirst: true,
 		},
@@ -417,6 +446,14 @@ func TestUsersStore_Update(t *testing.T) {
 
 		if tt.args.name != "" {
 			tt.args.usr.Name = tt.args.name
+		}
+
+		if tt.args.email != "" {
+			tt.args.usr.Email = tt.args.email
+		}
+
+		if tt.args.password != "" {
+			tt.args.usr.Passwd = tt.args.password
 		}
 
 		if err := s.Update(tt.args.ctx, tt.args.usr); (err != nil) != tt.wantErr {
@@ -461,16 +498,22 @@ func TestUsersStore_All(t *testing.T) {
 							Name: "viewer",
 						},
 					},
+					Passwd:   "eie^ksdkds652",
+					PasswordResetFlag: "N",
+					Email: "eidjwjhw@cowow.com",
 				},
 				{
 					Name:     "doody",
-					Provider: "github",
-					Scheme:   "oauth2",
+					Provider: "cloudhub",
+					Scheme:   "basic",
 					Roles: []cloudhub.Role{
 						{
 							Name: "editor",
 						},
 					},
+					Passwd:   "zlciej#$",
+					PasswordResetFlag: "N",
+					Email: "swocyy@woeiu.com",
 				},
 			},
 			addFirst: true,
@@ -528,16 +571,22 @@ func TestUsersStore_Num(t *testing.T) {
 							Name: "viewer",
 						},
 					},
+					Passwd:   "eie^ksdkds652",
+					PasswordResetFlag: "N",
+					Email: "eidjwjhw@cowow.com",
 				},
 				{
 					Name:     "doody",
-					Provider: "github",
-					Scheme:   "oauth2",
+					Provider: "cloudhub",
+					Scheme:   "basic",
 					Roles: []cloudhub.Role{
 						{
 							Name: "editor",
 						},
 					},
+					Passwd:   "llkise@#",
+					PasswordResetFlag: "Y",
+					Email: "lwodj@wumx.com",
 				},
 			},
 		},
