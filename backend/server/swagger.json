@@ -3001,7 +3001,7 @@
             "in": "body",
             "description": "User to create",
             "schema": {
-              "$ref": "#/definitions/User"
+              "$ref": "#/definitions/UserReq"
             }
           }
         ],
@@ -3016,7 +3016,7 @@
               }
             },
             "schema": {
-              "$ref": "#/definitions/User"
+              "$ref": "#/definitions/UserRes"
             }
           },
           "400": {
@@ -3070,7 +3070,7 @@
           "200": {
             "description": "An User object",
             "schema": {
-              "$ref": "#/definitions/User"
+              "$ref": "#/definitions/UserRes"
             }
           },
           "400": {
@@ -3110,7 +3110,7 @@
             "in": "body",
             "description": "Updated user",
             "schema": {
-              "$ref": "#/definitions/User"
+              "$ref": "#/definitions/UserReq"
             },
             "required": true
           }
@@ -3126,7 +3126,7 @@
               }
             },
             "schema": {
-              "$ref": "#/definitions/User"
+              "$ref": "#/definitions/UserRes"
             }
           },
           "400": {
@@ -4051,7 +4051,59 @@
         }
       }
     },
-    "User": {
+    "UserReq": {
+      "type": "object",
+      "description": "A CloudHub user with role-based access-control to an organization's resources.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Username (as taken from principal given by auth provider)",
+          "readOnly": true
+        },
+        "provider": {
+          "type": "string",
+          "description": "OAuth provider used to authenticate",
+          "readOnly": true
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Role"
+          }
+        },
+        "scheme": {
+          "type": "string",
+          "description": "Scheme used to authenticate (only OAuth2 currently supported)",
+          "readOnly": true
+        },
+        "superAdmin": {
+          "type": "boolean",
+          "description": "If user has the ability to perform CRUD operations on Organizations, across Organizations, and on other SuperAdmin users"
+        },
+        "password": {
+          "type": "string",
+          "description": "Password (only scheme=basic currently supported)"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email (only scheme=basic currently supported)"
+        }
+      },
+      "required": ["name", "provider", "roles", "scheme"],
+      "example": {
+        "name": "pineapple@cubeoctohedron.flux",
+        "provider": "github",
+        "roles": {
+          "name": "editor",
+          "organization": "SpaceTeam"
+        },
+        "scheme": "oauth2",
+        "superAdmin": false,
+        "password": "dkeidj@!@",
+        "email": "pineapple@cubeoctohedron.flux"
+      }
+    },
+    "UserRes": {
       "type": "object",
       "description": "A CloudHub user with role-based access-control to an organization's resources.",
       "properties": {
@@ -4095,6 +4147,19 @@
         "superAdmin": {
           "type": "boolean",
           "description": "If user has the ability to perform CRUD operations on Organizations, across Organizations, and on other SuperAdmin users"
+        },
+        "passwordUpdateDate": {
+          "type": "string",
+          "description": "password change date (only scheme=basic currently supported)",
+          "readOnly": true
+        },
+        "passwordResetFlag": {
+          "type": "string",
+          "description": "Whether password reset (only scheme=basic currently supported)"
+        },
+        "email": {
+          "type": "string",
+          "description": "send email (only scheme=basic currently supported)"
         }
       },
       "required": ["id", "name", "provider", "roles", "scheme"],
@@ -4110,7 +4175,10 @@
           "organization": "SpaceTeam"
         },
         "scheme": "oauth2",
-        "superAdmin": false
+        "superAdmin": false,
+        "passwordUpdateDate": "2020-12-30_09:10:34",
+        "passwordResetFlag": "Y",
+        "email": "pineapple@cubeoctohedron.flux"
       }
     },
     "Users": {
@@ -4130,7 +4198,7 @@
         "users": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/User"
+            "$ref": "#/definitions/UserRes"
           }
         }
       }
