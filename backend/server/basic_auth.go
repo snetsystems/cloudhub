@@ -18,7 +18,7 @@ type loginResponse struct {
 }
 
 // Login provider=cloudhub
-func (s *Service) Login(auth oauth2.Authenticator, basePath string) func(http.ResponseWriter, *http.Request) {
+func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := serverContext(r.Context())
 
@@ -96,7 +96,7 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) func(http.Re
 }
 
 // Logout provider=cloudhub
-func (s *Service) Logout(auth oauth2.Authenticator, basePath string) func(http.ResponseWriter, *http.Request) {
+func (s *Service) Logout(auth oauth2.Authenticator, basePath string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		auth.Expire(w)
 		http.Redirect(w, r, path.Join(basePath, "/"), http.StatusTemporaryRedirect)
