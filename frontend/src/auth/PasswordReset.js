@@ -25,7 +25,7 @@ const PasswordReset = ({
   }
 
   const onClickPasswordReset = () => {
-    handlePasswordReset({url: '/basic/password/initialize', userId: id})
+    handlePasswordReset({url: '/basic/password/reset', userId: id})
   }
 
   return (

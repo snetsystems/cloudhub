@@ -102,7 +102,7 @@ class UsersTableRow extends PureComponent<Props> {
   private handlePasswordReset = (): void => {
     const {user, handlePasswordReset: onPasswordReset} = this.props
     onPasswordReset({
-      url: '/cloudhub/v1/users/password/initialize',
+      url: '/cloudhub/v1/users/password/reset',
       userId: user.name,
       passwordReturn: true,
     })
