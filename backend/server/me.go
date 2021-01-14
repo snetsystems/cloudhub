@@ -58,6 +58,12 @@ func newMeResponse(usr *cloudhub.User, org string) meResponse {
 // support OAuth2. This hard-coding should be removed whenever we add
 // support for other authentication schemes.
 func getScheme(ctx context.Context) (string, error) {
+	principal, _ := getPrincipal(ctx)
+	
+	if principal.Issuer == "cloudhub" {
+		return "basic", nil
+	} 
+	
 	return "oauth2", nil
 }
 
