@@ -190,7 +190,7 @@ const Login = ({
                     <div className="auth-form">
                       <input
                         className="form-control"
-                        type="text"
+                        type="email"
                         placeholder={'yours@example.com'}
                         value={email}
                         onChange={onChangeEmail}

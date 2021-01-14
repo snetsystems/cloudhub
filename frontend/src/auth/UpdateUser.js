@@ -143,7 +143,7 @@ const UpdateUser = ({router, auth, links, handleUpdateUser}) => {
                 <div className="auth-form">
                   <input
                     className="form-control"
-                    type="text"
+                    type="email"
                     placeholder={'yours@email.com'}
                     spellCheck={false}
                     value={email}
