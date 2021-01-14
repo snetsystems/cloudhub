@@ -4082,7 +4082,11 @@
         },
         "password": {
           "type": "string",
-          "description": "Password (only basic currently supported)"
+          "description": "Password (only scheme=basic currently supported)"
+        },
+        "email": {
+          "type": "string",
+          "description": "Email (only scheme=basic currently supported)"
         }
       },
       "required": ["name", "provider", "roles", "scheme"],
@@ -4095,7 +4099,8 @@
         },
         "scheme": "oauth2",
         "superAdmin": false,
-        "password": "dkeidj@!@"
+        "password": "dkeidj@!@",
+        "email": "pineapple@cubeoctohedron.flux"
       }
     },
     "UserRes": {
@@ -4145,12 +4150,16 @@
         },
         "passwordUpdateDate": {
           "type": "string",
-          "description": "password change date (only basic currently supported)",
+          "description": "password change date (only scheme=basic currently supported)",
           "readOnly": true
         },
-        "passwordInitFlag": {
+        "passwordResetFlag": {
           "type": "string",
-          "description": "Whether password initialization (only basic currently supported)"
+          "description": "Whether password reset (only scheme=basic currently supported)"
+        },
+        "email": {
+          "type": "string",
+          "description": "send email (only scheme=basic currently supported)"
         }
       },
       "required": ["id", "name", "provider", "roles", "scheme"],
@@ -4168,7 +4177,8 @@
         "scheme": "oauth2",
         "superAdmin": false,
         "passwordUpdateDate": "2020-12-30_09:10:34",
-        "passwordInitFlag": false
+        "passwordResetFlag": "Y",
+        "email": "pineapple@cubeoctohedron.flux"
       }
     },
     "Users": {
