@@ -4,17 +4,11 @@ import _ from 'lodash'
 import PageSpinner from 'src/shared/components/PageSpinner'
 
 export const UserIsAuthenticated = UserAuthWrapper({
-  authSelector: ({auth, links}) => {
-    const passwordPolicy = _.find(
-      links.addons,
-      addon => addon.name === 'password-policy'
-    )
-    const passwordPolicyMessage = _.find(
-      links.addons,
-      addon => addon.name === 'password-policy-message'
-    )
-    return {auth, passwordPolicy, passwordPolicyMessage}
-  },
+  authSelector: ({auth, links: {passwordPolicy, passwordPolicyMessage}}) => ({
+    auth,
+    passwordPolicy,
+    passwordPolicyMessage,
+  }),
   authenticatingSelector: ({auth: {isMeLoading}}) => isMeLoading,
   LoadingComponent: PageSpinner,
   redirectAction: replace,
@@ -23,18 +17,11 @@ export const UserIsAuthenticated = UserAuthWrapper({
 })
 
 export const UserIsNotAuthenticated = UserAuthWrapper({
-  authSelector: ({auth, links}) => {
-    const passwordPolicy = _.find(
-      links.addons,
-      addon => addon.name === 'password-policy'
-    )
-    const passwordPolicyMessage = _.find(
-      links.addons,
-      addon => addon.name === 'password-policy-message'
-    )
-
-    return {auth, passwordPolicy, passwordPolicyMessage}
-  },
+  authSelector: ({auth, links: {passwordPolicy, passwordPolicyMessage}}) => ({
+    auth,
+    passwordPolicy,
+    passwordPolicyMessage,
+  }),
   authenticatingSelector: ({auth: {isMeLoading}}) => isMeLoading,
   LoadingComponent: PageSpinner,
   redirectAction: replace,

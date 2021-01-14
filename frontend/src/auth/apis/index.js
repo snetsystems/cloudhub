@@ -6,7 +6,7 @@ export const login = async ({url, user}) => {
   try {
     return await AJAX({
       method: 'GET',
-      url,
+      url: makeURL,
     })
   } catch (error) {
     console.error(error)
@@ -47,10 +47,12 @@ export const createUser = async ({url, user}) => {
   const basicUser = {
     name: user.id,
     provider: 'cloudhub',
-    roles: {
-      name: 'editor',
-      organization: 'default',
-    },
+    roles: [
+      {
+        name: 'member',
+        organization: 'default',
+      },
+    ],
     scheme: 'basic',
     superAdmin: false,
     password: user.password,

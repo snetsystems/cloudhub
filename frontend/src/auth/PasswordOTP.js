@@ -43,7 +43,7 @@ const PasswordOTP = props => {
 
   let reg = null
   if (passwordPolicy) {
-    reg = new RegExp(passwordPolicy && passwordPolicy.url, 'ig')
+    reg = new RegExp(passwordPolicy && passwordPolicy, 'ig')
   }
 
   const isValidPassword = reg && password.length > 0 && reg.test(password)
@@ -83,7 +83,7 @@ const PasswordOTP = props => {
                   />
                   {!isValidPassword && (
                     <div className="form-message fm--danger">
-                      {passwordPolicyMessage?.url}
+                      {passwordPolicyMessage}
                     </div>
                   )}
                   {isValidPassword && (

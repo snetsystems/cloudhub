@@ -44,7 +44,7 @@ const UpdateUser = ({router, auth, links, handleUpdateUser}) => {
     addon => addon.name === 'password-policy-message'
   )
 
-  const reg = new RegExp(passwordPolicy?.url, 'ig')
+  const reg = new RegExp(passwordPolicy, 'ig')
   const isValidPassword = password.length > 0 && reg.test(password)
   const isValidPasswordConfirm = password === passwordConfirm
 
@@ -110,7 +110,7 @@ const UpdateUser = ({router, auth, links, handleUpdateUser}) => {
 
                   {!isValidPassword && (
                     <div className="form-message fm--danger">
-                      {passwordPolicyMessage?.url}
+                      {passwordPolicyMessage}
                     </div>
                   )}
                   {isValidPassword && (
