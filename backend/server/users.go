@@ -29,6 +29,11 @@ type userRequest struct {
 	Email                 string          `json:"email,omitempty"`
 }
 
+type userPwdResetRequest struct {
+	Name                  string          `json:"name"`
+	Password              string          `json:"password"`
+}
+
 func (r *userRequest) ValidCreate() error {
 	if r.Name == "" {
 		return fmt.Errorf("Name required on CloudHub User request body")
@@ -44,6 +49,17 @@ func (r *userRequest) ValidCreate() error {
 		r.Scheme = "oauth2"
 	}
 	return r.ValidRoles()
+}
+
+func (r *userPwdResetRequest) ValidCreate() error {
+	if r.Name == "" {
+		return fmt.Errorf("Name required on CloudHub User request body")
+	}
+	if r.Password == "" {
+		return fmt.Errorf("Password required on CloudHub User request body")
+	}
+
+	return nil
 }
 
 func (r *userRequest) ValidUpdate() error {
@@ -92,7 +108,6 @@ type userResponse struct {
 	PasswordUpdateDate string `json:"passwordUpdateDate,omitempty"`
 	PasswordResetFlag  string `json:"passwordResetFlag,omitempty"`
 	Email              string `json:"email,omitempty"`
-	Password           string `json:"password,omitempty"`
 }
 
 func newUserResponse(u *cloudhub.User, org string) *userResponse {
@@ -121,7 +136,6 @@ func newUserResponse(u *cloudhub.User, org string) *userResponse {
 		PasswordUpdateDate: u.PasswordUpdateDate,
 		PasswordResetFlag: u.PasswordResetFlag,
 		Email: u.Email,
-		Password: u.Passwd,
 	}
 }
 
@@ -243,13 +257,7 @@ func (s *Service) NewBasicUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-
 	serverCtx := serverContext(ctx)
-	cfg, err := s.Store.Config(serverCtx).Get(serverCtx)
-	if err != nil {
-		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
-		return
-	}
 
 	if req.Roles == nil {
 		invalidData(w, fmt.Errorf("No Roles"), s.Logger)
@@ -258,6 +266,22 @@ func (s *Service) NewBasicUser(w http.ResponseWriter, r *http.Request) {
 
 	if err := s.validRoles(serverCtx, req.Roles); err != nil {
 		invalidData(w, err, s.Logger)
+		return
+	}
+
+	usr, err := s.Store.Users(serverCtx).Get(serverCtx, cloudhub.UserQuery{
+		Name:     &req.Name,
+		Provider: &req.Provider,
+		Scheme:   &req.Scheme,
+	})
+	if err != nil && err != cloudhub.ErrUserNotFound {
+		unknownErrorWithMessage(w, err, s.Logger)
+		return
+	}
+
+	// user exists
+	if usr != nil {
+		invalidData(w, fmt.Errorf("user existed"), s.Logger)
 		return
 	}
 
@@ -281,12 +305,9 @@ func (s *Service) NewBasicUser(w http.ResponseWriter, r *http.Request) {
 		PasswordResetFlag: pwdResetFlag,
 		PasswordUpdateDate: pwdUpdateDate,
 		Email:    req.Email,
+		SuperAdmin: s.newUsersAreSuperAdmin(),
 	}
 	
-	if cfg.Auth.SuperAdminNewUsers {
-		req.SuperAdmin = true
-	}
-
 	ctx = context.WithValue(ctx, organizations.ContextKey, req.Roles[0].Organization)
 
 	res, err := s.Store.Users(serverCtx).Add(serverCtx, user)
@@ -299,6 +320,50 @@ func (s *Service) NewBasicUser(w http.ResponseWriter, r *http.Request) {
 	cu := newUserResponse(res, orgID)
 	location(w, cu.Links.Self)
 	encodeJSON(w, http.StatusCreated, cu, s.Logger)
+}
+
+// UserPwdReset User password reset
+func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
+	var req userPwdResetRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		invalidJSON(w, s.Logger)
+		return
+	}
+
+	if err := req.ValidCreate(); err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+
+	ctx := serverContext(r.Context())
+
+	provider := "cloudhub"
+	scheme := "basic"
+
+	user, err := s.Store.Users(ctx).Get(ctx, cloudhub.UserQuery{
+		Name:     &req.Name,
+		Provider: &provider,
+		Scheme:   &scheme,
+	})
+
+	if user == nil || err != nil {
+		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+		return
+	}
+
+	secretKey := "cloudhub"
+
+	user.Passwd = getPasswordToSHA512(req.Password, secretKey)
+	user.PasswordUpdateDate = getNowDate()
+	user.PasswordResetFlag = "N"
+	
+	err = s.Store.Users(ctx).Update(ctx, user)
+	if err != nil {
+		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 // RemoveUser deletes a CloudHub user from store
