@@ -35,7 +35,7 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 			Scheme:   &scheme,
 		})
 
-		if err != nil {
+		if user == nil || err != nil {
 			Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 			return
 		}
@@ -53,8 +53,8 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 
 		// valid password - sha512
 		if !validPassword([]byte(password), strTohex, []byte(provider)) {
-			//Error(w, http.StatusUnauthorized, fmt.Sprintf("The requested password and the saved password are different."), s.Logger)
-			http.Redirect(w, r, path.Join(basePath, "/login"), http.StatusUnauthorized)
+			Error(w, http.StatusUnauthorized, fmt.Sprintf("The requested password and the saved password are different."), s.Logger)
+			//http.Redirect(w, r, path.Join(basePath, "/login"), http.StatusUnauthorized)
 			return
 		}
 
@@ -72,26 +72,33 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 		}
 
 		// password reset response 
-		if user.PasswordResetFlag == "Y" {
-			res := &loginResponse{
-				PasswordResetFlag: user.PasswordResetFlag,
-			}
-			encodeJSON(w, http.StatusOK, res, s.Logger)
-			return
-		}
+		// if user.PasswordResetFlag == "Y" {
+		// 	res := &loginResponse{
+		// 		PasswordResetFlag: user.PasswordResetFlag,
+		// 	}
+		// 	encodeJSON(w, http.StatusOK, res, s.Logger)
+		// 	return
+		// }
 
 		if err := auth.Authorize(ctx, w, principal); err != nil {
 			s.Logger.Error(fmt.Sprintf("Failed auth.Authorize: %v, %v", err, principal))
 			// FailureURL
-			http.Redirect(w, r, path.Join(basePath, "/login"), http.StatusInternalServerError)
+			//http.Redirect(w, r, path.Join(basePath, "/login"), http.StatusInternalServerError)
+			Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 			return
 		}
 		
 		s.Logger.Info("User ", id, " is authenticated")
 		ctx = context.WithValue(ctx, oauth2.PrincipalKey, principal)
+		r.WithContext(ctx)
 
 		// SuccessURL
-		http.Redirect(w, r.WithContext(ctx), path.Join(basePath, "/"), http.StatusTemporaryRedirect)
+		//http.Redirect(w, r.WithContext(ctx), path.Join(basePath, "/"), http.StatusTemporaryRedirect)
+		res := &loginResponse{
+			PasswordResetFlag: user.PasswordResetFlag,
+		}
+		encodeJSON(w, http.StatusOK, res, s.Logger)
+		return
 	}
 }
 
