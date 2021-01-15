@@ -6,6 +6,7 @@ import (
 	"crypto/sha512"
 	"crypto/hmac"
 	"encoding/hex"
+	"encoding/json"
 	"path"
 	"fmt"
 
@@ -17,20 +18,47 @@ type loginResponse struct {
 	PasswordResetFlag   string `json:"passwordResetFlag"`
 }
 
+type loginRequest struct {
+	Name       string   `json:"id"`
+	Password   string   `json:"password"`
+}
+
+func (r *loginRequest) ValidCreate() error {
+	if r.Name == "" {
+		return fmt.Errorf("Name required on CloudHub User request body")
+	}
+	if r.Password == "" {
+		return fmt.Errorf("Password required on CloudHub User request body")
+	}
+
+	return nil
+}
+
 // Login provider=cloudhub
 func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := serverContext(r.Context())
 
-		params := r.URL.Query()
-		id := params.Get("id")
-		password := params.Get("password")
+		var req loginRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			invalidJSON(w, s.Logger)
+			return
+		}
+
+		if err := req.ValidCreate(); err != nil {
+			invalidData(w, err, s.Logger)
+			return
+		}
+		
+		// params := r.URL.Query()
+		// id := params.Get("id")
+		// password := params.Get("password")
 
 		provider := "cloudhub"
 		scheme := "basic"
 
 		user, err := s.Store.Users(ctx).Get(ctx, cloudhub.UserQuery{
-			Name:     &id,
+			Name:     &req.Name,
 			Provider: &provider,
 			Scheme:   &scheme,
 		})
@@ -52,7 +80,7 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 		}
 
 		// valid password - sha512
-		if !validPassword([]byte(password), strTohex, []byte(provider)) {
+		if !validPassword([]byte(req.Password), strTohex, []byte(provider)) {
 			Error(w, http.StatusUnauthorized, fmt.Sprintf("The requested password and the saved password are different."), s.Logger)
 			//http.Redirect(w, r, path.Join(basePath, "/login"), http.StatusUnauthorized)
 			return
@@ -88,7 +116,7 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 			return
 		}
 		
-		s.Logger.Info("User ", id, " is authenticated")
+		s.Logger.Info("User ", req.Name, " is authenticated")
 		ctx = context.WithValue(ctx, oauth2.PrincipalKey, principal)
 		r.WithContext(ctx)
 

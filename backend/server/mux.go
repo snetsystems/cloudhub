@@ -159,7 +159,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.GET("/ping", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
 
 	// Login,Logout (Provider=cloudhub, Scheme=basic)
-	router.GET("/basic/login", service.Login(opts.Auth, opts.Basepath))
+	router.POST("/basic/login", service.Login(opts.Auth, opts.Basepath))
 	router.GET("/basic/logout", service.Logout(opts.Auth, opts.Basepath))
 	
 	// User sign up (Provider=cloudhub, Scheme=basic)

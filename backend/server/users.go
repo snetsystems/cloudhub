@@ -29,7 +29,7 @@ type userRequest struct {
 	Email                 string          `json:"email,omitempty"`
 }
 
-type userPwdRestRequest struct {
+type userPwdResetRequest struct {
 	Name                  string          `json:"name"`
 	Password              string          `json:"password"`
 }
@@ -51,7 +51,7 @@ func (r *userRequest) ValidCreate() error {
 	return r.ValidRoles()
 }
 
-func (r *userPwdRestRequest) ValidCreate() error {
+func (r *userPwdResetRequest) ValidCreate() error {
 	if r.Name == "" {
 		return fmt.Errorf("Name required on CloudHub User request body")
 	}
@@ -324,7 +324,7 @@ func (s *Service) NewBasicUser(w http.ResponseWriter, r *http.Request) {
 
 // UserPwdReset User password reset
 func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
-	var req userPwdRestRequest
+	var req userPwdResetRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		invalidJSON(w, s.Logger)
 		return
