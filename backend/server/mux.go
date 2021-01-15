@@ -163,7 +163,10 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.GET("/basic/logout", service.Logout(opts.Auth, opts.Basepath))
 	
 	// User sign up (Provider=cloudhub, Scheme=basic)
-	router.POST("/basic/users", service.NewBasicUser)	
+	router.POST("/basic/users", service.NewBasicUser)
+
+	// User password reset (Provider=cloudhub, Scheme=basic)
+	router.PATCH("/basic/password", service.UserPwdReset)
 
 	/* API */
 	// Organizations
@@ -385,6 +388,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 			Login: "/basic/login",
 			Logout: "/basic/logout",
 		},
+		BasicLogoutLink: "/basic/logout",
 	}
 
 	getPrincipal := func(r *http.Request) oauth2.Principal {
