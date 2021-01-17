@@ -52,6 +52,7 @@ type getRoutesResponse struct {
 	Auth               []AuthRoute                        `json:"auth"`             // Location of all auth routes.
 	BasicAuth          BasicAuthRoute                     `json:"basicauth"`        // Location of basic auth routes.
 	Logout             *string                            `json:"logout,omitempty"` // Location of the logout route for all auth routes
+	BasicLogout        *string                            `json:"basicLogout,omitempty"` // Location of the logout route for basic auth routes
 	ExternalLinks      getExternalLinksResponse           `json:"external"`         // All external links for the client to use
 	OrganizationConfig getOrganizationConfigLinksResponse `json:"orgConfig"`        // Location of the organization config endpoint
 	Flux               getFluxLinksResponse               `json:"flux"`
@@ -69,7 +70,8 @@ type AllRoutes struct {
 	GetPrincipal func(r *http.Request) oauth2.Principal // GetPrincipal is used to retrieve the principal on http request.
 	AuthRoutes   []AuthRoute                            // Location of all auth routes. If no auth, this can be empty.
 	BasicRoute   BasicAuthRoute                         // Location of basic auth routes. If no auth, this can be empty.
-	LogoutLink   string                                 // Location of the logout route for all auth routes. If no auth, this can be empty.
+	LogoutLink        string                            // Location of the logout route for all auth routes. If no auth, this can be empty.
+	BasicLogoutLink   string                            // Location of the logout route for basic auth routes. If no auth, this can be empty.
 	StatusFeed   string                                 // External link to the JSON Feed for the News Feed on the client's Status Page
 	CustomLinks  []CustomLink                           // Custom external links for client's User menu, as passed in via CLI/ENV
 	AddonURLs    map[string]string                      // URLs for using in Addon Features, as passed in via CLI/ENV
@@ -130,6 +132,9 @@ func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// The JSON response will have no field present for the LogoutLink if there is no logout link.
 	if a.LogoutLink != "" {
 		routes.Logout = &a.LogoutLink
+	}
+	if a.BasicLogoutLink != "" {
+		routes.BasicLogout = &a.BasicLogoutLink
 	}
 
 	for i, route := range a.AuthRoutes {

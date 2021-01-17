@@ -23,7 +23,7 @@ const Login = ({
   if (auth.isAuthLoading) {
     return <PageSpinner />
   }
-
+  console.log('router: ', router)
   const [id, setId] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -47,20 +47,16 @@ const Login = ({
   }
 
   const onClickLogin = handleUpdateUserID => () => {
-    // handleUpdateUserID(id)
     handleLogin({
       url: '/basic/login',
       user: {id, password},
     }).then(({data}) => {
-      // console.log(res)
-      console.log('logged')
-      console.log('data: ', data)
-      return router.push('/password-otp')
-      // window.location.href = '/'
-      if (true) {
-        //
+      let {passwordResetFlag} = data
+
+      if (passwordResetFlag === 'N') {
+        router.go('/')
       } else {
-        //
+        router.push('/password-otp')
       }
     })
   }

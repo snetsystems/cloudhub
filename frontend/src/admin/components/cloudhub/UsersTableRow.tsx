@@ -77,7 +77,7 @@ class UsersTableRow extends PureComponent<Props> {
               text="Remove"
               customClass="table--show-on-row-hover"
             />
-            {user.provider === 'github' && (
+            {user.provider === 'cloudhub' && (
               <ConfirmButton
                 confirmText={this.confirmationPasswordResetText}
                 confirmAction={this.handlePasswordReset}

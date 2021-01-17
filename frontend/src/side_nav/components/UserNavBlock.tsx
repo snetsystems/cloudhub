@@ -95,7 +95,7 @@ class UserNavBlock extends PureComponent<Props> {
             Log out
           </a>
 
-          {me.provider === 'github' && me.scheme === 'oauth2' && (
+          {me.provider === 'cloudhub' && (
             <Link
               className="sidebar-menu--item sidebar-menu--item__change-password"
               to={`${sourcePrefix}/password-change`}

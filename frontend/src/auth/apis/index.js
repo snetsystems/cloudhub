@@ -1,12 +1,11 @@
 import AJAX from 'src/utils/ajax'
 
 export const login = async ({url, user}) => {
-  const makeURL = `${url}?id=${user.id}&password=${user.password}`
-  console.log(`logint GET@${makeURL}`)
   try {
     return await AJAX({
-      method: 'GET',
-      url: makeURL,
+      method: 'POST',
+      url: url,
+      data: user,
     })
   } catch (error) {
     console.error(error)
