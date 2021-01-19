@@ -3,18 +3,22 @@ import _ from 'lodash'
 import {connect} from 'react-redux'
 import PropTypes from 'prop-types'
 import {InjectedRouter} from 'react-router'
-import {Subscribe} from 'unstated'
 
-import {AuthContainer} from 'src/auth/AuthContainer'
 import Notifications from 'src/shared/components/Notifications'
 import SplashPage from 'src/shared/components/SplashPage'
 
 import {otpChangeAsync} from 'src/auth/actions'
 
 const PasswordOTP = props => {
-  const passwordPolicy = props.authData.passwordPolicy
-  const passwordPolicyMessage = props.authData.passwordPolicyMessage
+  const {
+    authData: {passwordPolicy, passwordPolicyMessage},
+    handleOTPChange,
+    router,
+    location,
+  } = props
+  const otpChangeURL = '/basic/password'
 
+  const [id] = useState(location.state?.id)
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
 
@@ -26,9 +30,9 @@ const PasswordOTP = props => {
     setPasswordConfirm(e.target.value)
   }
 
-  const onClickOTPChange = userID => () => {
+  const onClickOTPChange = () => {
     let user = {
-      name: userID,
+      name: id,
     }
 
     if (isValidPassword && isValidPasswordConfirm) {
@@ -38,8 +42,10 @@ const PasswordOTP = props => {
       }
     }
 
-    props.handleOTPChange({url: '/basic/password', user}).then(res => {
+    handleOTPChange({url: otpChangeURL, user}).then(res => {
       console.log('res:', res)
+
+      // run router.go('/') when is the otp change successfuly
     })
   }
 
@@ -51,98 +57,89 @@ const PasswordOTP = props => {
   const isValidPassword = reg && password.length > 0 && reg.test(password)
   const isValidPasswordConfirm = reg && password === passwordConfirm
 
+  useEffect(() => {
+    if (_.isEmpty(id)) {
+      router.push('/')
+    }
+  }, [])
+
   return (
     <div>
-      <Subscribe to={[AuthContainer]}>
-        {container => {
-          if (!container.state.userID) {
-            props.router.push('/login')
-            return <></>
-          }
-
-          return (
-            <>
-              <Notifications />
-              <SplashPage router={props.router}>
-                <h1
-                  className="auth-text-logo"
-                  style={{
-                    position: 'absolute',
-                    top: '-9999px',
-                    left: '-9999px',
-                  }}
-                >
-                  CloudHub
-                </h1>
-                <div
-                  className={'auth-area'}
-                  style={{backgroundColor: '#292933', padding: '20px'}}
-                >
-                  <div className="panel" style={{marginBottom: '0px'}}>
-                    <div
-                      className="panel-heading"
-                      style={{justifyContent: 'center', padding: '0 0 15px 0'}}
-                    >
-                      <h2 className="panel-title">Password Change</h2>
+      <Notifications />
+      <SplashPage router={router}>
+        <h1
+          className="auth-text-logo"
+          style={{
+            position: 'absolute',
+            top: '-9999px',
+            left: '-9999px',
+          }}
+        >
+          CloudHub
+        </h1>
+        <div
+          className={'auth-area'}
+          style={{backgroundColor: '#292933', padding: '20px'}}
+        >
+          <div className="panel" style={{marginBottom: '0px'}}>
+            <div
+              className="panel-heading"
+              style={{justifyContent: 'center', padding: '0 0 15px 0'}}
+            >
+              <h2 className="panel-title">Password Change</h2>
+            </div>
+            <div className="panel-body" style={{padding: '0px'}}>
+              <div className="form-group">
+                <div className="auth-form">
+                  <input
+                    className="form-control"
+                    type="password"
+                    placeholder={'New password'}
+                    value={password}
+                    onChange={onChangePassword}
+                    spellCheck={false}
+                  />
+                  {!isValidPassword && (
+                    <div className="form-message fm--danger">
+                      {passwordPolicyMessage}
                     </div>
-                    <div className="panel-body" style={{padding: '0px'}}>
-                      <div className="form-group">
-                        <div className="auth-form">
-                          <input
-                            className="form-control"
-                            type="password"
-                            placeholder={'New password'}
-                            value={password}
-                            onChange={onChangePassword}
-                            spellCheck={false}
-                          />
-                          {!isValidPassword && (
-                            <div className="form-message fm--danger">
-                              {passwordPolicyMessage}
-                            </div>
-                          )}
-                          {isValidPassword && (
-                            <span className="form-input-checkmark icon checkmark" />
-                          )}
-                        </div>
-                      </div>
-                      <div className="form-group">
-                        <div className="auth-form">
-                          <input
-                            className="form-control"
-                            type="password"
-                            placeholder={'New password confirm'}
-                            value={passwordConfirm}
-                            onChange={onChangePasswordConfirm}
-                            spellCheck={false}
-                          />
-                          {passwordConfirm.length > 0 &&
-                            !isValidPasswordConfirm && (
-                              <div className={`form-message fm--danger`}>
-                                Your password and confirmation password do not
-                                match.
-                              </div>
-                            )}
-                          {isValidPassword && isValidPasswordConfirm && (
-                            <span className="form-input-checkmark icon checkmark" />
-                          )}
-                        </div>
-                      </div>
-                      <button
-                        className="btn btn-primary btn-sm col-md-12"
-                        disabled={!isValidPassword || !isValidPasswordConfirm}
-                        onClick={onClickOTPChange(container.state.userID)}
-                      >
-                        Change Password
-                      </button>
-                    </div>
-                  </div>
+                  )}
+                  {isValidPassword && (
+                    <span className="form-input-checkmark icon checkmark" />
+                  )}
                 </div>
-              </SplashPage>
-            </>
-          )
-        }}
-      </Subscribe>
+              </div>
+              <div className="form-group">
+                <div className="auth-form">
+                  <input
+                    className="form-control"
+                    type="password"
+                    placeholder={'New password confirm'}
+                    value={passwordConfirm}
+                    onChange={onChangePasswordConfirm}
+                    spellCheck={false}
+                  />
+                  {passwordConfirm.length > 0 && !isValidPasswordConfirm && (
+                    <div className={`form-message fm--danger`}>
+                      Your password and confirmation password do not match.
+                    </div>
+                  )}
+                  {isValidPassword && isValidPasswordConfirm && (
+                    <span className="form-input-checkmark icon checkmark" />
+                  )}
+                </div>
+              </div>
+              <button
+                className="btn btn-primary btn-sm col-md-12"
+                disabled={!isValidPassword || !isValidPasswordConfirm}
+                onClick={onClickOTPChange}
+              >
+                Change Password
+              </button>
+            </div>
+          </div>
+        </div>
+      </SplashPage>
     </div>
   )
 }
