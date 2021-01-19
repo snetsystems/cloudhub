@@ -1104,12 +1104,17 @@ export const notifyUserPasswordResetFailed = (): Notification => ({
 
 export const notifyUserUpdateCompleted = (): Notification => ({
   ...defaultSuccessNotification,
-  message: `Password Update Completed`,
+  message: `User Update Completed`,
 })
 
 export const notifyUserUpdateFailed = (): Notification => ({
   ...defaultErrorNotification,
-  message: `Password Update Failed`,
+  message: `User Update Failed`,
+})
+
+export const notifyUserPasswordInputError = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Please check your password`,
 })
 
 export const notifyUserOTPChangeCompleted = (): Notification => ({

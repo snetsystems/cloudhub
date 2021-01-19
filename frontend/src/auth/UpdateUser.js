@@ -8,17 +8,18 @@ import Notifications from 'src/shared/components/Notifications'
 import SplashPage from 'src/shared/components/SplashPage'
 
 import {updateUserAsync} from 'src/auth/actions'
+import {notify} from 'src/shared/actions/notifications'
+import {notifyUserPasswordInputError} from 'src/shared/copy/notifications'
 
-const UpdateUser = ({router, auth, links, handleUpdateUser}) => {
-  // console.log(props)
-  // useEffect(() => {
-  //   console.log('passwordPolicy: ', passwordPolicy)
-  //   if (!passwordPolicy) {
-  //     router.push('/')
-  //   }
-  // }, [passwordPolicy])
+const UpdateUser = ({
+  router,
+  auth,
+  links: {passwordPolicy, passwordPolicyMessage},
+  handleUpdateUser,
+  notify,
+}) => {
   const [id] = useState(auth.me.name)
-  const [email, setEmail] = useState(auth.me.name)
+  const [email, setEmail] = useState(auth.me?.email ? auth.me.email : '')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
 
@@ -34,35 +35,45 @@ const UpdateUser = ({router, auth, links, handleUpdateUser}) => {
     setPasswordConfirm(e.target.value)
   }
 
-  const passwordPolicy = _.find(
-    links.addons,
-    addon => addon.name === 'password-policy'
-  )
-
-  const passwordPolicyMessage = _.find(
-    links.addons,
-    addon => addon.name === 'password-policy-message'
-  )
-
   const reg = new RegExp(passwordPolicy, 'ig')
   const isValidPassword = password.length > 0 && reg.test(password)
   const isValidPasswordConfirm = password === passwordConfirm
 
   const onClickUpdateUser = e => {
+    if (password.length > 0) {
+      if (!isValidPassword) {
+        notify(notifyUserPasswordInputError())
+        return
+      }
+
+      if (!isValidPasswordConfirm) {
+        notify(notifyUserPasswordInputError())
+        return
+      }
+    }
+
     let user = {
-      id,
       email,
+      roles: auth.me?.roles ? auth.me.roles : [],
+      superAdmin: auth.me?.superAdmin ? auth.me.superAdmin : false,
     }
 
     if (isValidPassword && isValidPasswordConfirm) {
       user = {
         ...user,
         password,
-        currentOrganization: auth.me.currentOrganization.id,
       }
     }
-    handleUpdateUser({url: `/cloudhub/v1/users/:id`, user})
+
+    handleUpdateUser({url: `/cloudhub/v1/users/${auth.me.id}`, user})
   }
+
+  useEffect(() => {
+    if (auth.me.provider !== 'cloudhub' || !passwordPolicy) {
+      router.path('/')
+    }
+  }, [])
+
   return (
     <div>
       <SplashPage router={router}>
@@ -81,7 +92,7 @@ const UpdateUser = ({router, auth, links, handleUpdateUser}) => {
               className="panel-heading"
               style={{justifyContent: 'center', padding: '0 0 15px 0'}}
             >
-              <h2 className="panel-title">Modify Member Information</h2>
+              <h2 className="panel-title">Change Account</h2>
             </div>
             <div className="panel-body" style={{padding: '0px'}}>
               <div className="form-group">
@@ -108,7 +119,7 @@ const UpdateUser = ({router, auth, links, handleUpdateUser}) => {
                     onChange={onChangePassword}
                   />
 
-                  {!isValidPassword && (
+                  {password && !isValidPassword && (
                     <div className="form-message fm--danger">
                       {passwordPolicyMessage}
                     </div>
@@ -128,7 +139,7 @@ const UpdateUser = ({router, auth, links, handleUpdateUser}) => {
                     value={passwordConfirm}
                     onChange={onChangePasswordConfirm}
                   />
-                  {passwordConfirm.length > 0 && !isValidPasswordConfirm && (
+                  {passwordConfirm && !isValidPasswordConfirm && (
                     <div className={`form-message fm--danger`}>
                       Your password and confirmation password do not match.
                     </div>
@@ -157,13 +168,9 @@ const UpdateUser = ({router, auth, links, handleUpdateUser}) => {
               <div className={'auth-button-bar'}>
                 <button
                   className="btn btn-primary btn-sm col-md-8"
-                  disabled={
-                    !isValidPassword || !isValidPasswordConfirm
-                    // 기존 메일과 다르면 활성화 시킬 것
-                  }
                   onClick={onClickUpdateUser}
                 >
-                  Change Password
+                  Change
                 </button>
               </div>
             </div>
@@ -176,6 +183,7 @@ const UpdateUser = ({router, auth, links, handleUpdateUser}) => {
 
 const mapDispatchToProps = {
   handleUpdateUser: updateUserAsync,
+  notify,
 }
 
 const {array, bool, shape, string, func} = PropTypes
@@ -188,10 +196,11 @@ UpdateUser.prototype = {
       links: array,
       isLoading: bool,
     }),
-    passwordPolicy: shape(),
-    passwordPolicyMessage: shape(),
+    passwordPolicy: string,
+    passwordPolicyMessage: string,
   }),
   handlePasswordChange: func,
+  notify: func,
 }
 
 export default connect(null, mapDispatchToProps)(UpdateUser)

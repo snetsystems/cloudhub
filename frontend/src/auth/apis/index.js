@@ -80,20 +80,11 @@ export const getUser = async ({url}) => {
 }
 
 export const updateUser = async ({url, user}) => {
-  const basicUser = {
-    roles: {
-      name: user.id,
-      organization: user.currentOrganiztion,
-    },
-    password: user.password,
-    email: user.email,
-  }
-
   try {
     return await AJAX({
       method: 'PATCH',
       url,
-      data: basicUser,
+      data: user,
     })
   } catch (error) {
     console.error(error)
