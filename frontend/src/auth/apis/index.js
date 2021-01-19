@@ -15,7 +15,6 @@ export const login = async ({url, user}) => {
 
 export const passwordReset = async ({url, userId, passwordReturn = false}) => {
   const makeURL = `${url}?path=${''}&name=${userId}&pwrtn=${passwordReturn}`
-  console.log(`Password Reset GET@${makeURL}`)
   try {
     return await AJAX({
       method: 'GET',
@@ -28,8 +27,6 @@ export const passwordReset = async ({url, userId, passwordReturn = false}) => {
 }
 
 export const otpChange = async ({url, user}) => {
-  console.log(`OTP Change PATCH@${url}, user:${JSON.stringify(user)}`)
-
   try {
     return await AJAX({
       method: 'PATCH',
@@ -58,7 +55,6 @@ export const createUser = async ({url, user}) => {
     email: user.email,
   }
 
-  console.log(`createUser POST@${url}, ${JSON.stringify(basicUser)}`)
   try {
     return await AJAX({
       method: 'POST',
@@ -72,8 +68,6 @@ export const createUser = async ({url, user}) => {
 }
 
 export const getUser = async ({url}) => {
-  console.log(`get user GET@${url}`)
-
   try {
     return await AJAX({
       method: 'GET',
@@ -95,7 +89,6 @@ export const updateUser = async ({url, user}) => {
     email: user.email,
   }
 
-  console.log(`updateUser PATCH@${url} user:${JSON.stringify(basicUser)}`)
   try {
     return await AJAX({
       method: 'PATCH',
@@ -111,7 +104,6 @@ export const updateUser = async ({url, user}) => {
 export const deleteUser = async ({url, user}) => {
   const makeURL = `${url}${user}`
 
-  console.log(`deleteUser DELETE@${makeURL}`)
   try {
     return await AJAX({
       method: 'DELETE',

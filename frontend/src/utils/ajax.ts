@@ -116,12 +116,6 @@ async function AJAX<T = any>(
     // TODO: Just return the unadulterated response without grafting auth, me,
     // and logoutLink onto this object, once those are retrieved via their own
     // AJAX request and action creator.
-    console.log({links})
-    console.log({response})
-    console.log(
-      'generateResponseWithLinks: ',
-      generateResponseWithLinks(response, links)
-    )
     return links ? generateResponseWithLinks(response, links) : response
   } catch (error) {
     const {response} = error
