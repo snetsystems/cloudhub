@@ -88,21 +88,21 @@ class UserNavBlock extends PureComponent<Props> {
               {me.scheme} / {me.provider}
             </div>
           </div>
+
+          {me.provider === 'cloudhub' && (
+            <Link
+              className="sidebar-menu--item sidebar-menu--item__account-change"
+              to={`${sourcePrefix}/account-change`}
+            >
+              Change Account
+            </Link>
+          )}
           <a
             className="sidebar-menu--item sidebar-menu--item__logout"
             href={logoutLink}
           >
             Log out
           </a>
-
-          {me.provider === 'cloudhub' && (
-            <Link
-              className="sidebar-menu--item sidebar-menu--item__change-password"
-              to={`${sourcePrefix}/password-change`}
-            >
-              Change password
-            </Link>
-          )}
           <div className="sidebar-menu--heading sidebar--no-hover">
             {me.name}
           </div>

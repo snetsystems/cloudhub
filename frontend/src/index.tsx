@@ -278,7 +278,7 @@ class Root extends PureComponent<{}, State> {
                     return <GraphqlProvider page={'SwanSdplexSettingPage'} />
                   }}
                 />
-                <Route path="password-change" component={UpdateUser} />
+                <Route path="account-change" component={UpdateUser} />
               </Route>
             </Route>
             <Route path="*" component={NotFound} />
