@@ -1,7 +1,7 @@
 import {Dispatch} from 'redux'
 import _ from 'lodash'
 
-// Notification Action
+// Action
 import {notify} from 'src/shared/actions/notifications'
 import {
   notifyLoginFailed,
@@ -16,6 +16,7 @@ import {
   notifyUserOTPChangeCompleted,
   notifyUserOTPChangeFailed,
 } from 'src/shared/copy/notifications'
+import {errorThrown} from 'src/shared/actions/errors'
 
 // API
 import {
@@ -224,11 +225,11 @@ export const loginAsync = ({url, user}: LoginParams) => async (
   dispatch(userLoginRequested())
   try {
     const res = await login({url, user})
-
     return res
   } catch (error) {
     dispatch(userLoginFailed())
-    dispatch(notify(notifyLoginFailed()))
+    dispatch(errorThrown(error, notifyLoginFailed(error.data.message)))
+    throw error
   }
 }
 
