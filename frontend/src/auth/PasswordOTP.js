@@ -7,14 +7,15 @@ import {InjectedRouter} from 'react-router'
 import Notifications from 'src/shared/components/Notifications'
 import SplashPage from 'src/shared/components/SplashPage'
 
-import {otpChangeAsync} from 'src/auth/actions'
+import {loginAsync, otpChangeAsync} from 'src/auth/actions'
 
 const PasswordOTP = props => {
   const {
-    authData: {passwordPolicy, passwordPolicyMessage},
+    authData: {basicauth, passwordPolicy, passwordPolicyMessage},
     handleOTPChange,
     router,
     location,
+    handleLogin,
   } = props
   const otpChangeURL = '/basic/password'
 
@@ -43,9 +44,11 @@ const PasswordOTP = props => {
     }
 
     handleOTPChange({url: otpChangeURL, user}).then(res => {
-      console.log('res:', res)
-
-      // run router.go('/') when is the otp change successfuly
+      if (res.status === 200) {
+        handleLogin({url: basicauth.login, user: {id, password}}).then(res => {
+          router.go('/')
+        })
+      }
     })
   }
 
@@ -145,6 +148,7 @@ const PasswordOTP = props => {
 }
 
 const mapDispatchToProps = {
+  handleLogin: loginAsync,
   handleOTPChange: otpChangeAsync,
 }
 
