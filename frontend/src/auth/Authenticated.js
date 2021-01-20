@@ -17,11 +17,10 @@ export const UserIsAuthenticated = UserAuthWrapper({
 })
 
 export const UserIsNotAuthenticated = UserAuthWrapper({
-  authSelector: ({auth, links: {passwordPolicy, passwordPolicyMessage}}) => ({
+  authSelector: ({
     auth,
-    passwordPolicy,
-    passwordPolicyMessage,
-  }),
+    links: {basicauth, passwordPolicy, passwordPolicyMessage},
+  }) => ({auth, basicauth, passwordPolicy, passwordPolicyMessage}),
   authenticatingSelector: ({auth: {isMeLoading}}) => isMeLoading,
   LoadingComponent: PageSpinner,
   redirectAction: replace,
