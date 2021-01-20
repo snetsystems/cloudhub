@@ -12,5 +12,5 @@ export const ALL_USERS_TABLE = {
   colSuperAdmin: 90,
   colProvider: 150,
   colScheme: 90,
-  colActions: 50,
+  colActions: 100,
 }

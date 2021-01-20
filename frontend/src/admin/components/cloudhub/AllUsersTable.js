@@ -95,6 +95,7 @@ class AllUsersTable extends Component {
       meID,
       onDeleteUser,
       isLoading,
+      onResetPassword,
     } = this.props
 
     const {isCreatingUser} = this.state
@@ -147,6 +148,7 @@ class AllUsersTable extends Component {
                     onRemoveFromOrganization={this.handleRemoveFromOrganization}
                     onChangeSuperAdmin={this.handleChangeSuperAdmin}
                     onDelete={onDeleteUser}
+                    onResetPassword={onResetPassword}
                     meID={meID}
                   />
                 ))
@@ -217,6 +219,7 @@ AllUsersTable.propTypes = {
   }),
   meID: string.isRequired,
   isLoading: bool.isRequired,
+  onResetPassword: func,
 }
 
 export default ErrorHandling(AllUsersTable)

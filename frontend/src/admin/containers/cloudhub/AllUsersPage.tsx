@@ -5,6 +5,7 @@ import {bindActionCreators} from 'redux'
 import * as adminCloudHubActionCreators from 'src/admin/actions/cloudhub'
 import * as configActionCreators from 'src/shared/actions/config'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {passwordResetAsync, PasswordResetParams} from 'src/auth/actions'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import AllUsersTable from 'src/admin/components/cloudhub/AllUsersTable'
@@ -40,6 +41,12 @@ interface Props {
   authConfig: {
     superAdminNewUsers: boolean
   }
+  handlePasswordReset: ({
+    url,
+    path,
+    userId,
+    passwordReturn,
+  }: PasswordResetParams) => void
 }
 
 interface State {
@@ -144,8 +151,18 @@ export class AllUsersPage extends PureComponent<Props, State> {
         onCreateUser={this.handleCreateUser}
         onUpdateUserRoles={this.handleUpdateUserRoles}
         onUpdateUserSuperAdmin={this.handleUpdateUserSuperAdmin}
+        onResetPassword={this.onResetPassword}
       />
     )
+  }
+
+  private onResetPassword = (name: string) => {
+    this.props.handlePasswordReset({
+      url: '/cloudhub/v1/password/reset',
+      path: '/kapacitor/v1/service-tests/smtp',
+      userId: name,
+      passwordReturn: true,
+    })
   }
 }
 
@@ -164,6 +181,7 @@ const mapDispatchToProps = dispatch => ({
   actionsAdmin: bindActionCreators(adminCloudHubActionCreators, dispatch),
   actionsConfig: bindActionCreators(configActionCreators, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
+  handlePasswordReset: bindActionCreators(passwordResetAsync, dispatch),
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(AllUsersPage)
