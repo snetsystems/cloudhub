@@ -322,8 +322,8 @@ func (s *Service) NewBasicUser(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusCreated, cu, s.Logger)
 }
 
-// UserPwdReset User password reset
-func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
+// UserPassword User password change
+func (s *Service) UserPassword(w http.ResponseWriter, r *http.Request) {
 	var req userPwdResetRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		invalidJSON(w, s.Logger)
@@ -450,9 +450,7 @@ func (s *Service) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// provider = cloudhub
-	if req.Email != "" {
-		u.Email = req.Email
-	}
+	u.Email = req.Email
 	if req.Password != "" {
 		secretKey := "cloudhub"
 		u.Passwd = getPasswordToSHA512(req.Password, secretKey)
