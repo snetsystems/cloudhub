@@ -88,8 +88,10 @@ class Login extends PureComponent {
     const {id, password, email} = this.state
 
     handleCreateUser({url: '/basic/users', user: {id, password, email}}).then(
-      () => {
-        this.onClickActiveEditorTab('Login')
+      ({status}) => {
+        if (status === 201) {
+          this.onClickActiveEditorTab('Login')
+        }
       }
     )
   }
