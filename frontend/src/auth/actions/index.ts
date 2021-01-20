@@ -33,6 +33,7 @@ import {
   updateUserAsync,
   passwordResetAsync,
   otpChangeAsync,
+  getUserAsync,
 } from 'src/auth/actions/auth'
 
 export {
@@ -70,4 +71,5 @@ export {
   updateUserAsync,
   passwordResetAsync,
   otpChangeAsync,
+  getUserAsync,
 }

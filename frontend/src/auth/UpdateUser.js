@@ -7,19 +7,20 @@ import {InjectedRouter} from 'react-router'
 import Notifications from 'src/shared/components/Notifications'
 import SplashPage from 'src/shared/components/SplashPage'
 
-import {updateUserAsync} from 'src/auth/actions'
+import {getUserAsync, updateUserAsync} from 'src/auth/actions'
 import {notify} from 'src/shared/actions/notifications'
 import {notifyUserPasswordInputError} from 'src/shared/copy/notifications'
 
 const UpdateUser = ({
   router,
-  auth,
+  auth: {me},
   links: {passwordPolicy, passwordPolicyMessage},
+  handleGetUser,
   handleUpdateUser,
   notify,
 }) => {
-  const [id] = useState(auth.me.name)
-  const [email, setEmail] = useState(auth.me?.email ? auth.me.email : '')
+  const [id] = useState(me.name)
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [passwordConfirm, setPasswordConfirm] = useState('')
 
@@ -33,6 +34,10 @@ const UpdateUser = ({
 
   const onChangePasswordConfirm = e => {
     setPasswordConfirm(e.target.value)
+  }
+
+  const getUser = () => {
+    return handleGetUser({url: `/cloudhub/v1/users/${me.id}`})
   }
 
   const reg = new RegExp(passwordPolicy, 'ig')
@@ -52,26 +57,42 @@ const UpdateUser = ({
       }
     }
 
-    let user = {
-      email,
-      roles: auth.me?.roles ? auth.me.roles : [],
-      superAdmin: auth.me?.superAdmin ? auth.me.superAdmin : false,
-    }
-
-    if (isValidPassword && isValidPasswordConfirm) {
-      user = {
-        ...user,
-        password,
+    getUser().then(({data}) => {
+      let user = {
+        email,
+        roles: data.roles,
+        superAdmin: data.superAdmin,
       }
-    }
 
-    handleUpdateUser({url: `/cloudhub/v1/users/${auth.me.id}`, user})
+      if (isValidPassword && isValidPasswordConfirm) {
+        user = {
+          ...user,
+          password,
+        }
+      }
+
+      handleUpdateUser({url: `/cloudhub/v1/users/${me.id}`, user}).then(
+        ({data}) => {
+          if (data?.email) {
+            setEmail(data.email)
+          } else {
+            setEmail('')
+          }
+        }
+      )
+    })
   }
 
   useEffect(() => {
-    if (auth.me.provider !== 'cloudhub' || !passwordPolicy) {
+    if (me.provider !== 'cloudhub' || !passwordPolicy) {
       router.path('/')
     }
+
+    getUser().then(({data}) => {
+      if (data?.email) {
+        setEmail(data.email)
+      }
+    })
   }, [])
 
   return (
@@ -183,6 +204,7 @@ const UpdateUser = ({
 
 const mapDispatchToProps = {
   handleUpdateUser: updateUserAsync,
+  handleGetUser: getUserAsync,
   notify,
 }
 
@@ -200,6 +222,7 @@ UpdateUser.prototype = {
     passwordPolicyMessage: string,
   }),
   handlePasswordChange: func,
+  handleGetUser: func,
   notify: func,
 }
 
