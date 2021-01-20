@@ -90,6 +90,17 @@ class AllUsersTableRowNew extends Component {
     }
   }
 
+  componentDidUpdate = (_, prevState) => {
+    const {provider} = this.state
+    if (prevState.provider !== provider) {
+      if (provider === 'cloudhub') {
+        this.setState({scheme: 'basic'})
+      } else {
+        this.setState({scheme: 'oauth2'})
+      }
+    }
+  }
+
   render() {
     const {organizations, onBlur} = this.props
     const {name, provider, scheme, role} = this.state
@@ -113,7 +124,7 @@ class AllUsersTableRowNew extends Component {
           <input
             className="form-control input-xs"
             type="text"
-            placeholder="OAuth Username..."
+            placeholder="Username..."
             autoFocus={true}
             value={name}
             onChange={this.handleInputChange('name')}
@@ -134,7 +145,7 @@ class AllUsersTableRowNew extends Component {
           <input
             className="form-control input-xs"
             type="text"
-            placeholder="OAuth Provider..."
+            placeholder="cloudhub or OAuth"
             value={provider}
             onChange={this.handleInputChange('provider')}
             onKeyDown={this.handleKeyDown}

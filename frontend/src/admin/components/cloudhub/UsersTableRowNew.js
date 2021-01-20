@@ -97,7 +97,7 @@ class UsersTableRowNew extends PureComponent {
           <input
             className="form-control input-xs"
             type="text"
-            placeholder="OAuth Username..."
+            placeholder="Username..."
             autoFocus={true}
             value={name}
             onChange={this.handleInputChange('name')}
