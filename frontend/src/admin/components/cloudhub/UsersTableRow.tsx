@@ -26,10 +26,12 @@ interface Props {
   meID: string
   handlePasswordReset: ({
     url,
+    path,
     userId,
     passwordReturn,
   }: {
     url: string
+    path: string
     userId: string
     passwordReturn: boolean
   }) => void
@@ -101,8 +103,10 @@ class UsersTableRow extends PureComponent<Props> {
 
   private handlePasswordReset = (): void => {
     const {user, handlePasswordReset: onPasswordReset} = this.props
+
     onPasswordReset({
-      url: '/cloudhub/v1/users/password/reset',
+      url: '/cloudhub/v1/password/reset',
+      path: '/kapacitor/v1/service-tests/smtp',
       userId: user.name,
       passwordReturn: true,
     })

@@ -25,7 +25,11 @@ const PasswordReset = ({
   }
 
   const onClickPasswordReset = () => {
-    handlePasswordReset({url: '/basic/password/reset', userId: id})
+    handlePasswordReset({
+      url: '/basic/password/reset',
+      path: '/kapacitor/v1/service-tests/smtp',
+      userId: id,
+    })
   }
 
   return (

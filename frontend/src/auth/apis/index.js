@@ -13,8 +13,13 @@ export const login = async ({url, user}) => {
   }
 }
 
-export const passwordReset = async ({url, userId, passwordReturn = false}) => {
-  const makeURL = `${url}?path=${''}&name=${userId}&pwrtn=${passwordReturn}`
+export const passwordReset = async ({
+  url,
+  path,
+  userId,
+  passwordReturn = false,
+}) => {
+  const makeURL = `${url}?path=${path}&name=${userId}&pwrtn=${passwordReturn}`
   try {
     return await AJAX({
       method: 'GET',
