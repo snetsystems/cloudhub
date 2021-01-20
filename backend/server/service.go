@@ -17,6 +17,8 @@ type Service struct {
 	Env                      cloudhub.Environment
 	Databases                cloudhub.Databases
 	AddonURLs                map[string]string
+	MailSubject              string
+	MailBody                 string
 }
 
 type superAdminProviderGroups struct {
