@@ -252,6 +252,7 @@ export const createUserAsync = ({url, user}: SignupParams) => async (
   } catch (error) {
     dispatch(userAddFailed())
     dispatch(notify(notifyUserAddFailed()))
+    throw error
   }
 }
 
@@ -270,6 +271,7 @@ export const getUserAsync = ({url}: GetUserParams) => async (
     return res
   } catch (error) {
     dispatch(userGetFailed())
+    throw error
   }
 }
 
@@ -286,6 +288,7 @@ export const deleteUserAsync = ({url, user}: SignupParams) => async (
   } catch (error) {
     dispatch(userDeleteFailed())
     dispatch(notify(notifyUserDeleteFailed()))
+    throw error
   }
 }
 
@@ -306,29 +309,33 @@ export const updateUserAsync = ({url, user}: UpdateUserAsync) => async (
   } catch (error) {
     dispatch(userUpdateFailed())
     dispatch(notify(notifyUserUpdateFailed()))
+    throw error
   }
 }
 
 export interface PasswordResetParams {
   url: string
+  path: string
   userId: string
   passwordReturn: boolean
 }
 
 export const passwordResetAsync = ({
   url,
+  path,
   userId,
   passwordReturn,
 }: PasswordResetParams) => async (dispatch: Dispatch<Action>) => {
   dispatch(userPasswordResetReqeusted())
   try {
-    const res = await passwordReset({url, userId, passwordReturn})
+    const res = await passwordReset({url, path, userId, passwordReturn})
     dispatch(userPasswordResetCompleted())
     dispatch(notify(notifyUserPasswordResetCompleted()))
     return res
   } catch (error) {
     dispatch(userPasswordResetFailed())
     dispatch(notify(notifyUserPasswordResetFailed()))
+    throw error
   }
 }
 export interface OTPChangeParams {
@@ -351,5 +358,6 @@ export const otpChangeAsync = ({url, user}: OTPChangeParams) => async (
   } catch (error) {
     dispatch(userPasswordResetFailed())
     dispatch(notify(notifyUserOTPChangeFailed()))
+    throw error
   }
 }
