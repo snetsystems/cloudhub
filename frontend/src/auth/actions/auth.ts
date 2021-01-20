@@ -317,7 +317,7 @@ export interface PasswordResetParams {
   url: string
   path: string
   userId: string
-  passwordReturn: boolean
+  passwordReturn?: boolean
 }
 
 export const passwordResetAsync = ({

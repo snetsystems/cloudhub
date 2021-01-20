@@ -34,6 +34,11 @@ import {
   passwordResetAsync,
   otpChangeAsync,
   getUserAsync,
+  PasswordResetParams,
+  GetUserParams,
+  LoginParams,
+  OTPChangeParams,
+  SignupParams,
 } from 'src/auth/actions/auth'
 
 export {
@@ -72,4 +77,9 @@ export {
   passwordResetAsync,
   otpChangeAsync,
   getUserAsync,
+  PasswordResetParams,
+  GetUserParams,
+  LoginParams,
+  OTPChangeParams,
+  SignupParams,
 }
