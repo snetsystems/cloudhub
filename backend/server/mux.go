@@ -161,12 +161,13 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	// Login,Logout (Provider=cloudhub, Scheme=basic)
 	router.POST("/basic/login", service.Login(opts.Auth, opts.Basepath))
 	router.GET("/basic/logout", service.Logout(opts.Auth, opts.Basepath))
-	
 	// User sign up (Provider=cloudhub, Scheme=basic)
 	router.POST("/basic/users", service.NewBasicUser)
-
+	// User password change (Provider=cloudhub, Scheme=basic)
+	router.PATCH("/basic/password", service.UserPassword)
 	// User password reset (Provider=cloudhub, Scheme=basic)
-	router.PATCH("/basic/password", service.UserPwdReset)
+	router.GET("/basic/password/reset", service.UserPwdReset)
+	router.GET("/cloudhub/v1/password/reset", EnsureSuperAdmin(service.UserPwdAdminReset))
 
 	/* API */
 	// Organizations
