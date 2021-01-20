@@ -24,17 +24,7 @@ interface Props {
   onChangeUserRole: (User, Role) => void
   onDelete: (User) => void
   meID: string
-  handlePasswordReset: ({
-    url,
-    path,
-    userId,
-    passwordReturn,
-  }: {
-    url: string
-    path: string
-    userId: string
-    passwordReturn: boolean
-  }) => void
+  onResetUserPassword: (name: string) => void
 }
 
 @ErrorHandling
@@ -71,6 +61,16 @@ class UsersTableRow extends PureComponent<Props> {
         <td style={{width: colScheme}}>{user.scheme}</td>
         <td className="text-right">
           <div style={{display: 'flex', justifyContent: 'flex-end'}}>
+            {user.provider === 'cloudhub' && (
+              <ConfirmButton
+                confirmText={this.confirmationPasswordResetText}
+                confirmAction={this.handleResetPassword}
+                size="btn-xs"
+                type="btn-danger"
+                text="Reset"
+                customClass="table--show-on-row-hover"
+              />
+            )}
             <ConfirmButton
               confirmText={this.confirmationText}
               confirmAction={this.handleDelete}
@@ -79,16 +79,6 @@ class UsersTableRow extends PureComponent<Props> {
               text="Remove"
               customClass="table--show-on-row-hover"
             />
-            {user.provider === 'cloudhub' && (
-              <ConfirmButton
-                confirmText={this.confirmationPasswordResetText}
-                confirmAction={this.handlePasswordReset}
-                size="btn-xs"
-                type="btn-danger"
-                text="Reset"
-                customClass="table--show-on-row-hover"
-              />
-            )}
           </div>
         </td>
       </tr>
@@ -101,15 +91,10 @@ class UsersTableRow extends PureComponent<Props> {
     onDelete(user)
   }
 
-  private handlePasswordReset = (): void => {
-    const {user, handlePasswordReset: onPasswordReset} = this.props
+  private handleResetPassword = (): void => {
+    const {user, onResetUserPassword} = this.props
 
-    onPasswordReset({
-      url: '/cloudhub/v1/password/reset',
-      path: '/kapacitor/v1/service-tests/smtp',
-      userId: user.name,
-      passwordReturn: true,
-    })
+    onResetUserPassword(user.name)
   }
 
   private get rolesDropdownItems(): DropdownRole[] {

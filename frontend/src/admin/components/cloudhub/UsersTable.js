@@ -50,7 +50,7 @@ class UsersTable extends Component {
       onCreateUser,
       meID,
       isLoading,
-      handlePasswordReset,
+      onResetUserPassword,
     } = this.props
 
     const {isCreatingUser} = this.state
@@ -103,7 +103,7 @@ class UsersTable extends Component {
                     onChangeUserRole={this.handleChangeUserRole}
                     onDelete={this.handleDeleteUser}
                     meID={meID}
-                    handlePasswordReset={handlePasswordReset}
+                    onResetUserPassword={onResetUserPassword}
                   />
                 ))
               ) : (
@@ -148,6 +148,7 @@ UsersTable.propTypes = {
   onCreateUser: func.isRequired,
   onUpdateUserRole: func.isRequired,
   onDeleteUser: func.isRequired,
+  onResetUserPassword: func,
   meID: string.isRequired,
   isLoading: bool.isRequired,
 }

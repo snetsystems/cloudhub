@@ -49,6 +49,17 @@ class UsersPage extends PureComponent {
     deleteUserAsync(user, {isAbsoluteDelete: false})
   }
 
+  handleResetUserPassword = name => {
+    const {handleResetPassword} = this.props
+
+    handleResetPassword({
+      url: '/cloudhub/v1/password/reset',
+      path: '/kapacitor/v1/service-tests/smtp',
+      userId: name,
+      passwordReturn: true,
+    })
+  }
+
   async componentWillMount() {
     const {
       links,
@@ -88,9 +99,10 @@ class UsersPage extends PureComponent {
         onCreateUser={this.handleCreateUser}
         onUpdateUserRole={this.handleUpdateUserRole}
         onDeleteUser={this.handleDeleteUser}
+        onResetPassword={this.handlePasswordReset}
         notify={notify}
         isLoading={isLoading}
-        handlePasswordReset={handlePasswordReset}
+        onResetUserPassword={this.handleResetUserPassword}
       />
     )
   }
@@ -117,6 +129,7 @@ UsersPage.propTypes = {
     deleteUserAsync: func.isRequired,
   }),
   notify: func.isRequired,
+  handleResetPassword: func,
 }
 
 const mapStateToProps = ({links, adminCloudHub: {organizations, users}}) => ({
@@ -128,7 +141,7 @@ const mapStateToProps = ({links, adminCloudHub: {organizations, users}}) => ({
 const mapDispatchToProps = dispatch => ({
   actions: bindActionCreators(adminCloudHubActionCreators, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
-  handlePasswordReset: bindActionCreators(passwordResetAsync, dispatch),
+  handleResetPassword: bindActionCreators(passwordResetAsync, dispatch),
 })
 
 export default connect(
