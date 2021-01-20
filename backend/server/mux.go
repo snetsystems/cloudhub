@@ -311,7 +311,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	router.GET("/cloudhub/v1/users/:id", EnsureSuperAdmin(rawStoreAccess(service.UserID)))
 	router.DELETE("/cloudhub/v1/users/:id", EnsureSuperAdmin(rawStoreAccess(service.RemoveUser)))
-	router.PATCH("/cloudhub/v1/users/:id", EnsureSuperAdmin(rawStoreAccess(service.UpdateUser)))
+	router.PATCH("/cloudhub/v1/users/:id", EnsureViewer(service.UpdateUser))
 
 	// Dashboards
 	router.GET("/cloudhub/v1/dashboards", EnsureViewer(service.Dashboards))
