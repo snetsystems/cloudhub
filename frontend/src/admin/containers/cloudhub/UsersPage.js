@@ -9,6 +9,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import UsersTable from 'src/admin/components/cloudhub/UsersTable'
 import {passwordResetAsync} from 'src/auth/actions'
+import {AlertTypes} from 'src/kapacitor/constants'
 
 class UsersPage extends PureComponent {
   constructor(props) {
@@ -50,11 +51,14 @@ class UsersPage extends PureComponent {
   }
 
   handleResetUserPassword = name => {
-    const {handleResetPassword} = this.props
+    const {
+      handleResetPassword,
+      links: {basicPasswordAdminReset},
+    } = this.props
 
     handleResetPassword({
-      url: '/cloudhub/v1/password/reset',
-      path: '/kapacitor/v1/service-tests/smtp',
+      url: basicPasswordAdminReset,
+      path: `/kapacitor/v1/service-tests/${AlertTypes.smtp}`,
       userId: name,
       passwordReturn: true,
     })

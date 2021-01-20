@@ -94,6 +94,12 @@ export interface Links {
   sources: string
   users: string
   addons: Addon[]
+  basicLogout?: string
+  basicPasswordReset?: string
+  basicPasswordAdminReset?: string
+  basicPassword?: string
+  passwordPolicy?: string
+  passwordPolicyMessage?: string
 }
 
 export interface ExternalLink {

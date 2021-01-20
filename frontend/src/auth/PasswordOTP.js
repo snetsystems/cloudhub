@@ -11,13 +11,12 @@ import {loginAsync, otpChangeAsync} from 'src/auth/actions'
 
 const PasswordOTP = props => {
   const {
-    authData: {basicauth, passwordPolicy, passwordPolicyMessage},
+    authData: {basicauth, basicPassword, passwordPolicy, passwordPolicyMessage},
     handleOTPChange,
     router,
     location,
     handleLogin,
   } = props
-  const otpChangeURL = '/basic/password'
 
   const [id] = useState(location.state?.id)
   const [password, setPassword] = useState('')
@@ -43,7 +42,7 @@ const PasswordOTP = props => {
       }
     }
 
-    handleOTPChange({url: otpChangeURL, user}).then(res => {
+    handleOTPChange({url: basicPassword, user}).then(res => {
       if (res.status === 200) {
         handleLogin({url: basicauth.login, user: {id, password}}).then(res => {
           router.go('/')

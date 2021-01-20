@@ -6,10 +6,11 @@ import Notifications from 'src/shared/components/Notifications'
 import SplashPage from 'src/shared/components/SplashPage'
 
 import {passwordResetAsync} from 'src/auth/actions'
+import {AlertTypes} from 'src/kapacitor/constants'
 
 const PasswordReset = ({
   router,
-  authData: {passwordPolicy},
+  authData: {basicPasswordReset, passwordPolicy},
   handlePasswordReset,
 }) => {
   useEffect(() => {
@@ -26,8 +27,8 @@ const PasswordReset = ({
 
   const onClickPasswordReset = () => {
     handlePasswordReset({
-      url: '/basic/password/reset',
-      path: '/kapacitor/v1/service-tests/smtp',
+      url: basicPasswordReset,
+      path: `/kapacitor/v1/service-tests/${AlertTypes.smtp}`,
       userId: id,
     })
   }

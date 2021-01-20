@@ -17,6 +17,7 @@ import {
   Notification,
   NotificationFunc,
 } from 'src/types'
+import {AlertTypes} from 'src/kapacitor/constants'
 
 interface Props {
   notify: (message: Notification | NotificationFunc) => void
@@ -157,9 +158,14 @@ export class AllUsersPage extends PureComponent<Props, State> {
   }
 
   private onResetPassword = (name: string) => {
-    this.props.handlePasswordReset({
-      url: '/cloudhub/v1/password/reset',
-      path: '/kapacitor/v1/service-tests/smtp',
+    const {
+      handlePasswordReset,
+      links: {basicPasswordAdminReset},
+    } = this.props
+
+    handlePasswordReset({
+      url: basicPasswordAdminReset,
+      path: `/kapacitor/v1/service-tests/${AlertTypes.smtp}`,
       userId: name,
       passwordReturn: true,
     })

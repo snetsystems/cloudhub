@@ -19,8 +19,22 @@ export const UserIsAuthenticated = UserAuthWrapper({
 export const UserIsNotAuthenticated = UserAuthWrapper({
   authSelector: ({
     auth,
-    links: {basicauth, passwordPolicy, passwordPolicyMessage},
-  }) => ({auth, basicauth, passwordPolicy, passwordPolicyMessage}),
+    links: {
+      basicauth,
+      basicPassword,
+      basicPasswordReset,
+
+      passwordPolicy,
+      passwordPolicyMessage,
+    },
+  }) => ({
+    auth,
+    basicauth,
+    basicPassword,
+    basicPasswordReset,
+    passwordPolicy,
+    passwordPolicyMessage,
+  }),
   authenticatingSelector: ({auth: {isMeLoading}}) => isMeLoading,
   LoadingComponent: PageSpinner,
   redirectAction: replace,
