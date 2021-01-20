@@ -97,7 +97,7 @@ const UpdateUser = ({
 
   return (
     <div>
-      <SplashPage router={router}>
+      <SplashPage isShowCopy={false} isShowLogo={false} router={router}>
         <h1
           className="auth-text-logo"
           style={{position: 'absolute', top: '-9999px', left: '-9999px'}}
@@ -129,12 +129,12 @@ const UpdateUser = ({
                 </div>
               </div>
               <div className="form-group">
-                <label>Password</label>
+                <label>New Password</label>
                 <div className="auth-form">
                   <input
                     className="form-control"
                     type="password"
-                    placeholder={'password'}
+                    placeholder={'new password'}
                     spellCheck={false}
                     value={password}
                     onChange={onChangePassword}
@@ -155,7 +155,7 @@ const UpdateUser = ({
                   <input
                     className="form-control"
                     type="password"
-                    placeholder={'password confirm'}
+                    placeholder={'new password confirm'}
                     spellCheck={false}
                     value={passwordConfirm}
                     onChange={onChangePasswordConfirm}
