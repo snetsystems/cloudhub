@@ -41,17 +41,20 @@ type userPwdResetRequest struct {
 
 func (r *userRequest) ValidCreate() error {
 	if r.Name == "" {
-		return fmt.Errorf("Name required on CloudHub User request body")
+		return fmt.Errorf("name required on CloudHub basicUser request body")
 	}
 	if r.Provider == "" {
-		return fmt.Errorf("Provider required on CloudHub User request body")
+		return fmt.Errorf("provider required on CloudHub basicUser request body")
 	}
 	if r.Scheme == "" {
-		return fmt.Errorf("Scheme required on CloudHub User request body")
+		return fmt.Errorf("scheme required on CloudHub basicUser request body")
 	}
 
 	if r.Scheme != "basic" {
 		r.Scheme = "oauth2"
+	}
+	if r.Scheme == "basic" && r.Provider != "cloudhub" {
+		return fmt.Errorf("When scheme is basic, provider should be cloudhub")
 	}
 	return r.ValidRoles()
 }
@@ -240,6 +243,7 @@ func (s *Service) NewUser(w http.ResponseWriter, r *http.Request) {
 
 		user.Passwd = hashPassword
 		user.PasswordResetFlag = "Y"
+		user.PasswordUpdateDate = getNowDate()
 	}
 
 	if err := setSuperAdmin(ctx, req, user); err != nil {
@@ -259,7 +263,7 @@ func (s *Service) NewUser(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusCreated, cu, s.Logger)
 }
 
-// NewBasicUser adds a new CloudHub user to store
+// NewBasicUser adds a new CloudHub basic user to store
 func (s *Service) NewBasicUser(w http.ResponseWriter, r *http.Request) {
 	var req userRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -304,10 +308,12 @@ func (s *Service) NewBasicUser(w http.ResponseWriter, r *http.Request) {
 	secretKey := "cloudhub"
 	hashPassword := ""
 	pwdResetFlag := ""
+	pwdUpdateDate := ""
 
 	if req.Password != "" {
 		hashPassword = getPasswordToSHA512(req.Password, secretKey)
 		pwdResetFlag = "N"
+		pwdUpdateDate = getNowDate()
 	}
 
 	user := &cloudhub.User{
@@ -317,6 +323,7 @@ func (s *Service) NewBasicUser(w http.ResponseWriter, r *http.Request) {
 		Roles:    req.Roles,
 		Passwd:   hashPassword,
 		PasswordResetFlag: pwdResetFlag,
+		PasswordUpdateDate: pwdUpdateDate,
 		Email:    req.Email,
 		SuperAdmin: s.newUsersAreSuperAdmin(),
 	}
