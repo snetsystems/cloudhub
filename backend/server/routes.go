@@ -53,6 +53,9 @@ type getRoutesResponse struct {
 	BasicAuth          BasicAuthRoute                     `json:"basicauth"`        // Location of basic auth routes.
 	Logout             *string                            `json:"logout,omitempty"` // Location of the logout route for all auth routes
 	BasicLogout        *string                            `json:"basicLogout,omitempty"` // Location of the logout route for basic auth routes
+	BasicPasswordReset        string                      `json:"basicPasswordReset"`      // Location of basic password reset.
+	BasicPasswordAdminReset   string                      `json:"basicPasswordAdminReset"` // Location of basic password admin reset.
+	BasicPassword      string                             `json:"basicPassword"`    // Location of basic password change.
 	ExternalLinks      getExternalLinksResponse           `json:"external"`         // All external links for the client to use
 	OrganizationConfig getOrganizationConfigLinksResponse `json:"orgConfig"`        // Location of the organization config endpoint
 	Flux               getFluxLinksResponse               `json:"flux"`
@@ -113,6 +116,9 @@ func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		},
 		Auth: make([]AuthRoute, len(a.AuthRoutes)), // We want to return at least an empty array, rather than null
 		BasicAuth: a.BasicRoute,
+		BasicPasswordReset: "/basic/password/reset",
+		BasicPasswordAdminReset: "/cloudhub/v1/password/reset",
+		BasicPassword: "/basic/password",
 		ExternalLinks: getExternalLinksResponse{
 			StatusFeed:  &a.StatusFeed,
 			CustomLinks: a.CustomLinks,
