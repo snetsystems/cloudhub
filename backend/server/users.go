@@ -304,12 +304,10 @@ func (s *Service) NewBasicUser(w http.ResponseWriter, r *http.Request) {
 	secretKey := "cloudhub"
 	hashPassword := ""
 	pwdResetFlag := ""
-	pwdUpdateDate := ""
 
 	if req.Password != "" {
 		hashPassword = getPasswordToSHA512(req.Password, secretKey)
 		pwdResetFlag = "N"
-		pwdUpdateDate = getNowDate()
 	}
 
 	user := &cloudhub.User{
@@ -319,7 +317,6 @@ func (s *Service) NewBasicUser(w http.ResponseWriter, r *http.Request) {
 		Roles:    req.Roles,
 		Passwd:   hashPassword,
 		PasswordResetFlag: pwdResetFlag,
-		PasswordUpdateDate: pwdUpdateDate,
 		Email:    req.Email,
 		SuperAdmin: s.newUsersAreSuperAdmin(),
 	}
@@ -470,6 +467,7 @@ func (s *Service) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	u.Email = req.Email
 	if req.Password != "" {
 		u.Passwd = getPasswordToSHA512(req.Password, SecretKey)
+		u.PasswordUpdateDate = getNowDate()
 	}
 
 	// Don't allow SuperAdmins to modify their own SuperAdmin status.
