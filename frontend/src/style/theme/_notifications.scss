@@ -183,3 +183,14 @@ $notification-margin: 12px;
     $ix-link-default-hover
   );
 }
+
+// Custom
+// Used only when isHasHTML is true.
+// ----------------------------------------------------------------------------
+hr.notification-line {
+  margin: 3px 0;
+  background-color: white;
+  height: 1px;
+  border-width: 1px;
+  opacity: 0.5;
+}

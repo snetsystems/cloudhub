@@ -14,18 +14,21 @@ export const defaultErrorNotification: NotificationExcludingMessage = {
   type: 'error',
   icon: 'alert-triangle',
   duration: TEN_SECONDS,
+  isHasHTML: false,
 }
 
 export const defaultSuccessNotification: NotificationExcludingMessage = {
   type: 'success',
   icon: 'checkmark',
   duration: FIVE_SECONDS,
+  isHasHTML: false,
 }
 
 export const defaultDeletionNotification: NotificationExcludingMessage = {
   type: 'primary',
   icon: 'trash',
   duration: FIVE_SECONDS,
+  isHasHTML: false,
 }
 
 //  Misc Notifications
@@ -1092,10 +1095,29 @@ export const notifyUserDeleteFailed = (): Notification => ({
   ...defaultErrorNotification,
   message: `User Delete Failed`,
 })
-export const notifyUserPasswordResetCompleted = (): Notification => ({
-  ...defaultSuccessNotification,
-  message: `Password Reset Completed`,
-})
+export const notifyUserPasswordResetCompleted = ({
+  name,
+  password,
+}: {
+  name: string
+  password: string
+}): Notification => {
+  let message = `
+    <div>Reset User Password Success.</div>
+    <hr class="notification-line">
+    <div>user name: ${name}</div>
+  `
+  if (password) {
+    message += `<div>password: ${password}</div>`
+  }
+
+  return {
+    ...defaultSuccessNotification,
+    duration: INFINITE,
+    isHasHTML: true,
+    message,
+  }
+}
 
 export const notifyUserPasswordResetFailed = (): Notification => ({
   ...defaultErrorNotification,
