@@ -167,7 +167,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.PATCH("/basic/password", service.UserPassword)
 	// User password reset (Provider=cloudhub, Scheme=basic)
 	router.GET("/basic/password/reset", service.UserPwdReset)
-	router.GET("/cloudhub/v1/password/reset", EnsureSuperAdmin(service.UserPwdAdminReset))
+	router.GET("/cloudhub/v1/password/reset", EnsureAdmin(service.UserPwdAdminReset))
 
 	/* API */
 	// Organizations
