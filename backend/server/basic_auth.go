@@ -1,7 +1,7 @@
 package server
 
 import (
-	//"bytes"
+	"bytes"
 	"strconv"
 	"context"
 	"net/http"
@@ -36,8 +36,8 @@ var (
 
 type statusRecorder struct {
 	http.ResponseWriter
-	status int
-	body []byte
+	Status int
+	buf *bytes.Buffer
 }
 
 type loginResponse struct {
@@ -78,21 +78,17 @@ func (r *loginRequest) ValidCreate() error {
 
 // UserPwdAdminReset User password admin reset
 func (s *Service) UserPwdAdminReset(w http.ResponseWriter, r *http.Request) {
-	//ctx := r.Context()
-	//s.UserPwdReset(w, r.WithContext(ctx))
 	s.UserPwdReset(w, r)
 }
 
 // WriteHeader response status
 func (rec *statusRecorder) WriteHeader(code int) {
-	rec.status = code
-	rec.ResponseWriter.WriteHeader(code)
+	rec.Status = code
 }
 
-// Write response body
-func (rec *statusRecorder) Write(body []byte) (int, error) {
-	rec.body = body
-	return rec.ResponseWriter.Write(body)
+//Write response body
+func (rec *statusRecorder) Write(data []byte) (int, error) {
+	return rec.buf.Write(data)
 }
 
 // UserPwdReset User password reset
@@ -251,21 +247,60 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		// 			Value: mailBody,
 		// 		},
 		// 	}))
-		
-		var kaWriter http.ResponseWriter
-		kaWriter = w
-		
-		//rec := statusRecorder{w, 400, nil}
-		kaResponse := statusRecorder{kaWriter, 200, nil}
 
-		s.KapacitorProxyPost(&kaResponse, kapacitorReq)
-		//s.KapacitorProxyPost(&res, w)
+		//rec := statusRecorder{w, 200, nil}
 
-		if kaResponse.status != 200 {
+		//var kaResponseWriter http.ResponseWriter
+		//kaResponseWriter = w
+
+		recorder := &statusRecorder{
+			ResponseWriter: w,
+			Status:         400,
+			buf:            &bytes.Buffer{},
+		}
+
+		s.KapacitorProxyPost(recorder, kapacitorReq)
+
+		if recorder.Status != 200 {
+			w.Header().Del("Content-Length")
+			w.Header().Del("Content-Encoding")
 			// kapacitor rturn error code relay
-			Error(w, http.StatusUnprocessableEntity, fmt.Sprintf("kapacitor response status : %d", kaResponse.status), s.Logger)
+			Error(w, http.StatusUnprocessableEntity, fmt.Sprintf("kapacitor response status : %d", recorder.Status), s.Logger)
 			return
 		}
+
+
+
+		//var kaResponse kapacitorResponse
+		//json.NewDecoder(bufrw.Reader).Decode(&kaResponse)
+
+
+		// if err := json.NewDecoder(bufrw.Reader).Decode(&kaResponse); err != nil {
+		// 	Error(w, http.StatusUnprocessableEntity, fmt.Sprintf("fail kapacitor response json.Unmarshal : %s", err.Error()), s.Logger)
+		// 	return
+		// }
+
+
+
+		
+
+
+
+		// s.Logger.Debug(recorder.Buffer.String())
+	
+		// var kaResponse kapacitorResponse
+		// json.Unmarshal(recorder.Buffer.Bytes(), &kaResponse)
+
+		// s.Logger.Debug(kaResponse)
+
+		// newRes := bytes.NewReader(recorder.Buffer.Bytes())
+		// json.NewDecoder(newRes).Decode(&kaResponse)
+
+		// s.Logger.Debug(kaResponse)
+		
+		
+		
+		
 
 		//kaResponse := kapacitorResponse{}
 	/*	var kaResponse kapacitorResponse
@@ -292,6 +327,8 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 */
+
+
 		user.PasswordResetFlag = "Y"
 		user.Passwd = getPasswordToSHA512(resetPassword, BasicProvider)
 		err = s.Store.Users(ctx).Update(ctx, user)
@@ -302,7 +339,6 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 
 		res := &resetResponse{
 			Name:     name,
-			Password: resetPassword,
 			Provider: BasicProvider,
 			Scheme:   BasicScheme,
 			Pwrtn:    pwrtn,
@@ -314,6 +350,55 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		if pwrtnBool {			
 			res.Password = resetPassword
 		}
+
+		/*
+		data, _ := json.Marshal(res)
+		recorder.buf.Write(data)
+
+		//w.Header().Del("Content-Length")
+		w.Header().Set("Content-Length", strconv.Itoa(len(string(data))))
+
+		if _, err := io.Copy(w, recorder.buf); err != nil {
+			Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+			return
+		}
+		
+
+		*/
+
+		//data, _ := json.Marshal(res)
+		//newRes := bytes.NewReader(data)
+		//recorder.buf.Write(data)
+
+		//rsp := io.MultiWriter(w, recorder.buf)
+
+		//w.Header().Set("Content-Length", strconv.Itoa(len(string(data))))
+		//w.Header().Set("Content-Type", "application/json")
+		w.Header().Del("Content-Length")
+		//w.Header().Del("Date")
+		w.Header().Del("Content-Encoding")
+		//w.Header().Del("Request-Id")
+		//w.Header().Del("X-Kapacitor-Version")
+
+		//w.WriteHeader(http.StatusOK)
+		//w.Write(data)
+
+		
+
+
+
+		// if _, err := io.Copy(w, newRes); err != nil {
+		// 	Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		// 	return
+		// }
+
+		//w.Header().Del("Content-Length")
+		
+		
+
+		// if err := json.NewEncoder(w).Encode(res); err != nil {
+		// 	unknownErrorWithMessage(w, err, s.Logger)
+		// }
 
 		encodeJSON(w, http.StatusOK, res, s.Logger)
 		return

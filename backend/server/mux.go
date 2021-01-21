@@ -167,7 +167,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.PATCH("/basic/password", service.UserPassword)
 	// User password reset (Provider=cloudhub, Scheme=basic)
 	router.GET("/basic/password/reset", service.UserPwdReset)
-	router.GET("/cloudhub/v1/password/reset", EnsureSuperAdmin(service.UserPwdAdminReset))
+	router.GET("/cloudhub/v1/password/reset", EnsureAdmin(service.UserPwdAdminReset))
 
 	/* API */
 	// Organizations
@@ -310,7 +310,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.POST("/cloudhub/v1/users", EnsureSuperAdmin(rawStoreAccess(service.NewUser)))
 
 	router.GET("/cloudhub/v1/users/:id", EnsureViewer(service.UserID))
-	router.DELETE("/cloudhub/v1/users/:id", EnsureViewer(rawStoreAccess(service.RemoveUser)))
+	router.DELETE("/cloudhub/v1/users/:id", EnsureSuperAdmin(rawStoreAccess(service.RemoveUser)))
 	router.PATCH("/cloudhub/v1/users/:id", EnsureViewer(service.UpdateUser))
 
 	// Dashboards

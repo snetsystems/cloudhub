@@ -18,6 +18,11 @@ import (
 	"github.com/snetsystems/cloudhub/backend/organizations"
 )
 
+var (
+	// SecretKey is the name of password hash key
+	SecretKey = "cloudhub"
+)
+
 type userRequest struct {
 	ID                    uint64          `json:"id,string"`
 	Name                  string          `json:"name"`
@@ -36,17 +41,20 @@ type userPwdResetRequest struct {
 
 func (r *userRequest) ValidCreate() error {
 	if r.Name == "" {
-		return fmt.Errorf("Name required on CloudHub User request body")
+		return fmt.Errorf("name required on CloudHub basicUser request body")
 	}
 	if r.Provider == "" {
-		return fmt.Errorf("Provider required on CloudHub User request body")
+		return fmt.Errorf("provider required on CloudHub basicUser request body")
 	}
 	if r.Scheme == "" {
-		return fmt.Errorf("Scheme required on CloudHub User request body")
+		return fmt.Errorf("scheme required on CloudHub basicUser request body")
 	}
 
 	if r.Scheme != "basic" {
 		r.Scheme = "oauth2"
+	}
+	if r.Scheme == "basic" && r.Provider != "cloudhub" {
+		return fmt.Errorf("When scheme is basic, provider should be cloudhub")
 	}
 	return r.ValidRoles()
 }
@@ -108,9 +116,10 @@ type userResponse struct {
 	PasswordUpdateDate string `json:"passwordUpdateDate,omitempty"`
 	PasswordResetFlag  string `json:"passwordResetFlag,omitempty"`
 	Email              string `json:"email,omitempty"`
+	Password   string         `json:"password,omitempty"`
 }
 
-func newUserResponse(u *cloudhub.User, org string) *userResponse {
+func newUserResponse(u *cloudhub.User, org string, password string) *userResponse {
 	// This ensures that any user response with no roles returns an empty array instead of
 	// null when marshaled into JSON. That way, JavaScript doesn't need any guard on the
 	// key existing and it can simply be iterated over.
@@ -123,6 +132,7 @@ func newUserResponse(u *cloudhub.User, org string) *userResponse {
 	} else {
 		selfLink = fmt.Sprintf("/cloudhub/v1/users/%d", u.ID)
 	}
+
 	return &userResponse{
 		ID:         u.ID,
 		Name:       u.Name,
@@ -136,6 +146,7 @@ func newUserResponse(u *cloudhub.User, org string) *userResponse {
 		PasswordUpdateDate: u.PasswordUpdateDate,
 		PasswordResetFlag: u.PasswordResetFlag,
 		Email: u.Email,
+		Password: password,
 	}
 }
 
@@ -147,7 +158,7 @@ type usersResponse struct {
 func newUsersResponse(users []cloudhub.User, org string) *usersResponse {
 	usersResp := make([]*userResponse, len(users))
 	for i, user := range users {
-		usersResp[i] = newUserResponse(&user, org)
+		usersResp[i] = newUserResponse(&user, org, "")
 	}
 	sort.Slice(usersResp, func(i, j int) bool {
 		return usersResp[i].ID < usersResp[j].ID
@@ -177,14 +188,16 @@ func (s *Service) UserID(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusBadRequest, fmt.Sprintf("invalid user id: %s", err.Error()), s.Logger)
 		return
 	}
-	user, err := s.Store.Users(ctx).Get(ctx, cloudhub.UserQuery{ID: &id})
+
+	serverCtx := serverContext(ctx)
+	user, err := s.Store.Users(serverCtx).Get(serverCtx, cloudhub.UserQuery{ID: &id})
 	if err != nil {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
 
 	orgID := httprouter.GetParamFromContext(ctx, "oid")
-	res := newUserResponse(user, orgID)
+	res := newUserResponse(user, orgID, "")
 	location(w, res.Links.Self)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
@@ -226,6 +239,15 @@ func (s *Service) NewUser(w http.ResponseWriter, r *http.Request) {
 		req.SuperAdmin = true
 	}
 
+	resetPassword := randResetPassword()
+	if req.Provider == "cloudhub" && (hasAuthorizedRole(user, roles.AdminRoleName) || hasSuperAdminContext(ctx)) {
+		hashPassword := getPasswordToSHA512(resetPassword, SecretKey)
+
+		user.Passwd = hashPassword
+		user.PasswordResetFlag = "Y"
+		user.PasswordUpdateDate = getNowDate()
+	}
+
 	if err := setSuperAdmin(ctx, req, user); err != nil {
 		Error(w, http.StatusUnauthorized, err.Error(), s.Logger)
 		return
@@ -238,12 +260,12 @@ func (s *Service) NewUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	orgID := httprouter.GetParamFromContext(ctx, "oid")
-	cu := newUserResponse(res, orgID)
+	cu := newUserResponse(res, orgID, resetPassword)
 	location(w, cu.Links.Self)
 	encodeJSON(w, http.StatusCreated, cu, s.Logger)
 }
 
-// NewBasicUser adds a new CloudHub user to store
+// NewBasicUser adds a new CloudHub basic user to store
 func (s *Service) NewBasicUser(w http.ResponseWriter, r *http.Request) {
 	var req userRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -307,6 +329,10 @@ func (s *Service) NewBasicUser(w http.ResponseWriter, r *http.Request) {
 		Email:    req.Email,
 		SuperAdmin: s.newUsersAreSuperAdmin(),
 	}
+
+	if !user.SuperAdmin {
+		user.SuperAdmin = req.SuperAdmin
+	}
 	
 	ctx = context.WithValue(ctx, organizations.ContextKey, req.Roles[0].Organization)
 
@@ -317,7 +343,7 @@ func (s *Service) NewBasicUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	orgID := httprouter.GetParamFromContext(ctx, "oid")
-	cu := newUserResponse(res, orgID)
+	cu := newUserResponse(res, orgID, "")
 	location(w, cu.Links.Self)
 	encodeJSON(w, http.StatusCreated, cu, s.Logger)
 }
@@ -351,9 +377,7 @@ func (s *Service) UserPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	secretKey := "cloudhub"
-
-	user.Passwd = getPasswordToSHA512(req.Password, secretKey)
+	user.Passwd = getPasswordToSHA512(req.Password, SecretKey)
 	user.PasswordUpdateDate = getNowDate()
 	user.PasswordResetFlag = "N"
 	
@@ -397,7 +421,7 @@ func (s *Service) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := r.Context()
+	ctx := serverContext(r.Context())
 	idStr := httprouter.GetParamFromContext(ctx, "id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
@@ -416,8 +440,7 @@ func (s *Service) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serverCtx := serverContext(ctx)
-	if err := s.validRoles(serverCtx, req.Roles); err != nil {
+	if err := s.validRoles(ctx, req.Roles); err != nil {
 		invalidData(w, err, s.Logger)
 		return
 	}
@@ -452,8 +475,8 @@ func (s *Service) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	// provider = cloudhub
 	u.Email = req.Email
 	if req.Password != "" {
-		secretKey := "cloudhub"
-		u.Passwd = getPasswordToSHA512(req.Password, secretKey)
+		u.Passwd = getPasswordToSHA512(req.Password, SecretKey)
+		u.PasswordUpdateDate = getNowDate()
 	}
 
 	// Don't allow SuperAdmins to modify their own SuperAdmin status.
@@ -478,7 +501,7 @@ func (s *Service) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	orgID := httprouter.GetParamFromContext(ctx, "oid")
-	cu := newUserResponse(u, orgID)
+	cu := newUserResponse(u, orgID, "")
 	location(w, cu.Links.Self)
 	encodeJSON(w, http.StatusOK, cu, s.Logger)
 }
