@@ -188,7 +188,9 @@ func (s *Service) UserID(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusBadRequest, fmt.Sprintf("invalid user id: %s", err.Error()), s.Logger)
 		return
 	}
-	user, err := s.Store.Users(ctx).Get(ctx, cloudhub.UserQuery{ID: &id})
+
+	serverCtx := serverContext(ctx)
+	user, err := s.Store.Users(serverCtx).Get(serverCtx, cloudhub.UserQuery{ID: &id})
 	if err != nil {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
