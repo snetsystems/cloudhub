@@ -15,6 +15,8 @@ import (
 	"strings"
 	"time"
 	"io/ioutil"
+	"io"
+	"compress/gzip"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/oauth2"
@@ -61,7 +63,7 @@ type resetResponse struct {
 }
 
 type kapacitorResponse struct {
-	Success   string `json:"success"`
+	Success   bool `json:"success"`
 	Message   string `json:"message"`
 }
 
@@ -81,14 +83,27 @@ func (s *Service) UserPwdAdminReset(w http.ResponseWriter, r *http.Request) {
 	s.UserPwdReset(w, r)
 }
 
-// WriteHeader response status
+// WriteHeader wrapping response status
 func (rec *statusRecorder) WriteHeader(code int) {
 	rec.Status = code
 }
 
-//Write response body
+//Write wrapping response body
 func (rec *statusRecorder) Write(data []byte) (int, error) {
 	return rec.buf.Write(data)
+}
+
+// kapacitor response gzip decompress
+func gunzipWrite(w io.Writer, data []byte) error {
+	// Write gzipped data to the client
+	gr, err := gzip.NewReader(bytes.NewBuffer(data))
+	defer gr.Close()
+	data, err = ioutil.ReadAll(gr)
+	if err != nil {
+		return err
+	}
+	w.Write(data)
+	return nil
 }
 
 // UserPwdReset User password reset
@@ -142,15 +157,17 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		
 		resetPassword := randResetPassword()
 		
-		params.Set("path", "") // salt에 path는 무엇이 들어가야 하나...
-		params.Add("password", resetPassword)  // salt에 pass를 어떻게 전달해야........
-		r.URL.RawQuery = params.Encode()
+		//params.Set("path", "") // salt에 path는 무엇이 들어가야 하나...
+		//params.Add("password", resetPassword)  // salt에 pass를 어떻게 전달해야........
+		//r.URL.RawQuery = params.Encode()
 
 		// salt exec
-		s.SaltProxyPost(w, r)
+		//s.SaltProxyPost(w, r)
+
+		// python call
 
 		user.PasswordResetFlag = "Y"
-		user.Passwd = getPasswordToSHA512(resetPassword, BasicProvider) 
+		user.Passwd = getPasswordToSHA512(resetPassword, BasicProvider)
 		err = s.Store.Users(ctx).Update(ctx, user)
 		if err != nil {
 			Error(w, http.StatusBadRequest, err.Error(), s.Logger)
@@ -162,10 +179,14 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 			Provider: BasicProvider,
 			Scheme:   BasicScheme,
 			Pwrtn:    pwrtn,
-			Email:    user.Email,
-			SendKind: "salt",
+			SendKind: "python",
 			PasswordResetFlag: user.PasswordResetFlag,
 		}
+
+		if pwrtnBool {			
+			res.Password = resetPassword
+		}
+
 		encodeJSON(w, http.StatusOK, res, s.Logger)
 		return
 	} 
@@ -205,53 +226,8 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		kapacitorReq := r.Clone(ctx)
 		*kapacitorReq = *r
 		kapacitorReq.Method = "POST"
-
-		//s.Logger.Debug("before="+string(jsonBody))
-
 		kapacitorReq.Body = ioutil.NopCloser(strings.NewReader(string(jsonBody)))
 		kapacitorReq.ContentLength = int64(len(string(jsonBody)))
-
-		// len := r.ContentLength
-		// body := make([]byte, len)
-		// r.Body.Read(body)
-		// s.Logger.Debug("after="+string(body))
-		
-		// json.NewEncoder(r).Encode(httprouter.Params{
-		// 	{
-		// 		Key:   "to",
-		// 		Value: user.Email,
-		// 	},
-		// 	{
-		// 		Key:   "subject",
-		// 		Value: mailSubjct,
-		// 	},
-		// 	{
-		// 		Key:   "body",
-		// 		Value: mailBody,
-		// 	},
-		// })
-
-		// r = r.WithContext(httprouter.WithParams(
-		// 	ctx,
-		// 	httprouter.Params{
-		// 		{
-		// 			Key:   "to",
-		// 			Value: user.Email,
-		// 		},
-		// 		{
-		// 			Key:   "subject",
-		// 			Value: mailSubjct,
-		// 		},
-		// 		{
-		// 			Key:   "body",
-		// 			Value: mailBody,
-		// 		},
-		// 	}))
-
-		//rec := statusRecorder{w, 200, nil}
-
-		//var kaResponseWriter http.ResponseWriter
-		//kaResponseWriter = w
 
 		recorder := &statusRecorder{
 			ResponseWriter: w,
@@ -269,65 +245,23 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
+		var resBody bytes.Buffer
+		err := gunzipWrite(&resBody, recorder.buf.Bytes())
+		if err != nil {
+			Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+			return
+		}
 
-
-		//var kaResponse kapacitorResponse
-		//json.NewDecoder(bufrw.Reader).Decode(&kaResponse)
-
-
-		// if err := json.NewDecoder(bufrw.Reader).Decode(&kaResponse); err != nil {
-		// 	Error(w, http.StatusUnprocessableEntity, fmt.Sprintf("fail kapacitor response json.Unmarshal : %s", err.Error()), s.Logger)
-		// 	return
-		// }
-
-
-
-		
-
-
-
-		// s.Logger.Debug(recorder.Buffer.String())
-	
-		// var kaResponse kapacitorResponse
-		// json.Unmarshal(recorder.Buffer.Bytes(), &kaResponse)
-
-		// s.Logger.Debug(kaResponse)
-
-		// newRes := bytes.NewReader(recorder.Buffer.Bytes())
-		// json.NewDecoder(newRes).Decode(&kaResponse)
-
-		// s.Logger.Debug(kaResponse)
-		
-		
-		
-		
-
-		//kaResponse := kapacitorResponse{}
-	/*	var kaResponse kapacitorResponse
-		newRes := bytes.NewReader(rec.body)
-		if err := json.NewDecoder(newRes).Decode(&kaResponse); err != nil {
+		var kaResponse kapacitorResponse
+		if err := json.Unmarshal(resBody.Bytes(), &kaResponse); err != nil {
 			Error(w, http.StatusUnprocessableEntity, fmt.Sprintf("fail kapacitor response json.Unmarshal : %s", err.Error()), s.Logger)
 			return
 		}
-
-
-		// if err := json.Unmarshal(rec.body, &kaResponse); err != nil {
-		// 	Error(w, http.StatusUnprocessableEntity, fmt.Sprintf("fail kapacitor response json.Unmarshal : %s", err.Error()), s.Logger)
-		// 	return
-		// }
 		
-		kaSuccess, err := strconv.ParseBool(kaResponse.Success);
-		if err != nil {
-			Error(w, http.StatusBadRequest, fmt.Sprintf("fail kaResponse.Success : %t, %s", kaSuccess, err.Error()), s.Logger)
-			return
-		}
-
-		if !kaSuccess {
+		if !kaResponse.Success {
 			Error(w, http.StatusBadRequest, fmt.Sprintf("fail kapacitor send mail"), s.Logger)
 			return
 		}
-*/
-
 
 		user.PasswordResetFlag = "Y"
 		user.Passwd = getPasswordToSHA512(resetPassword, BasicProvider)
@@ -421,13 +355,6 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 			return
 		}
 		
-		// params := r.URL.Query()
-		// id := params.Get("id")
-		// password := params.Get("password")
-
-		// provider := "cloudhub"
-		// scheme := "basic"
-
 		user, err := s.Store.Users(ctx).Get(ctx, cloudhub.UserQuery{
 			Name:     &req.Name,
 			Provider: &BasicProvider,
