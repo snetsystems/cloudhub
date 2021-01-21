@@ -320,6 +320,16 @@ export interface PasswordResetParams {
   passwordReturn?: boolean
 }
 
+export interface ResetResponse {
+  name: string
+  password?: string
+  passwordResetFlag: string
+  provider: string
+  pwrtn: string
+  scheme: string
+  send_kind: string
+}
+
 export const passwordResetAsync = ({
   url,
   path,
@@ -328,10 +338,16 @@ export const passwordResetAsync = ({
 }: PasswordResetParams) => async (dispatch: Dispatch<Action>) => {
   dispatch(userPasswordResetReqeusted())
   try {
-    const res = await passwordReset({url, path, userId, passwordReturn})
+    const {data} = await passwordReset({
+      url,
+      path,
+      userId,
+      passwordReturn,
+    })
+    const {name, password} = data
     dispatch(userPasswordResetCompleted())
-    dispatch(notify(notifyUserPasswordResetCompleted()))
-    return res
+    dispatch(notify(notifyUserPasswordResetCompleted({name, password})))
+    return data
   } catch (error) {
     dispatch(userPasswordResetFailed())
     dispatch(notify(notifyUserPasswordResetFailed()))
