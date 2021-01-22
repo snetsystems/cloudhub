@@ -242,8 +242,7 @@ class Root extends PureComponent<{}, State> {
                   component={KapacitorRulePage}
                 />
                 <Route path="alert-rules/new" component={KapacitorRulePage} />
-                <Route path="logs/system-logs" component={LogsPage} />
-                <Route path="logs/active-logs" component={LogsPage} />
+                <Route path="logs" component={LogsPage} />
                 <Route path="tickscript/new" component={TickscriptPage} />
                 <Route path="tickscript/:ruleID" component={TickscriptPage} />
                 <Route path="kapacitors/new" component={KapacitorPage} />
