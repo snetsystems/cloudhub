@@ -9,7 +9,7 @@ import SplashPage from 'src/shared/components/SplashPage'
 
 import {loginAsync, otpChangeAsync} from 'src/auth/actions'
 
-const PasswordOTP = props => {
+const OTPLoginPage = props => {
   const {
     authData: {basicauth, basicPassword, passwordPolicy, passwordPolicyMessage},
     handleOTPChange,
@@ -44,9 +44,13 @@ const PasswordOTP = props => {
 
     handleOTPChange({url: basicPassword, user}).then(res => {
       if (res.status === 200) {
-        handleLogin({url: basicauth.login, user: {id, password}}).then(res => {
-          router.go('/')
-        })
+        setTimeout(() => {
+          handleLogin({url: basicauth.login, user: {id, password}}).then(
+            res => {
+              router.go('/')
+            }
+          )
+        }, 1000)
       }
     })
   }
@@ -153,7 +157,7 @@ const mapDispatchToProps = {
 
 const {array, bool, shape, string, func} = PropTypes
 
-PasswordOTP.prototype = {
+OTPLoginPage.prototype = {
   router: shape(),
   authData: shape({
     auth: shape({
@@ -167,4 +171,4 @@ PasswordOTP.prototype = {
   handleOTPChange: func,
 }
 
-export default connect(null, mapDispatchToProps)(PasswordOTP)
+export default connect(null, mapDispatchToProps)(OTPLoginPage)

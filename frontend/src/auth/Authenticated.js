@@ -23,7 +23,6 @@ export const UserIsNotAuthenticated = UserAuthWrapper({
       basicauth,
       basicPassword,
       basicPasswordReset,
-
       passwordPolicy,
       passwordPolicyMessage,
     },

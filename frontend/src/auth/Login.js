@@ -76,7 +76,7 @@ class Login extends PureComponent {
         router.go('/')
       } else {
         router.push({
-          pathname: '/password-otp',
+          pathname: '/otp-login',
           state: {id},
         })
       }

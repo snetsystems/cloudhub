@@ -24,7 +24,7 @@ import {
   Purgatory,
   PasswordReset,
   UpdateUser,
-  PasswordOTP,
+  OTPLoginPage,
 } from 'src/auth'
 import CheckSources from 'src/CheckSources'
 import {StatusPage} from 'src/status'
@@ -201,8 +201,8 @@ class Root extends PureComponent<{}, State> {
               component={UserIsNotAuthenticated(PasswordReset)}
             />
             <Route
-              path="/password-otp"
-              component={UserIsNotAuthenticated(PasswordOTP)}
+              path="/otp-login"
+              component={UserIsNotAuthenticated(OTPLoginPage)}
             />
             <Route
               path="/purgatory"
@@ -242,7 +242,8 @@ class Root extends PureComponent<{}, State> {
                   component={KapacitorRulePage}
                 />
                 <Route path="alert-rules/new" component={KapacitorRulePage} />
-                <Route path="logs" component={LogsPage} />
+                <Route path="logs/system-logs" component={LogsPage} />
+                <Route path="logs/active-logs" component={LogsPage} />
                 <Route path="tickscript/new" component={TickscriptPage} />
                 <Route path="tickscript/:ruleID" component={TickscriptPage} />
                 <Route path="kapacitors/new" component={KapacitorPage} />
