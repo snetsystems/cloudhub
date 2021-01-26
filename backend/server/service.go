@@ -19,6 +19,8 @@ type Service struct {
 	AddonURLs                map[string]string
 	MailSubject              string
 	MailBody                 string
+	ProgramPath              string
+	ExecuteFile              string
 }
 
 type superAdminProviderGroups struct {

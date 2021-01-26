@@ -118,6 +118,9 @@ type Server struct {
 
 	MailSubject           string   `long:"mail-subject" description:"Mail subject" env:"MAIL_SUBJECT"`
 	MailBodyMessage       string   `long:"mail-body-message" description:"Mail body message" env:"MAIL_BODY_MESSAGE"`
+	
+	ProgramPath           string   `long:"program-path" description:"Program path." env:"PROGRAM_PATH"`
+    ExecuteFile           string   `long:"execute-file" description:"Execute file." env:"EXECUTE_FILE"`
 
 	StatusFeedURL          string            `long:"status-feed-url" description:"URL of a JSON Feed to display as a News Feed on the client Status page." default:"https://www.snetgroup.info/" env:"STATUS_FEED_URL"`
 	CustomLinks            map[string]string `long:"custom-link" description:"Custom link to be added to the client User menu. Multiple links can be added by using multiple of the same flag with different 'name:url' values, or as an environment variable with comma-separated 'name:url' values. E.g. via flags: '--custom-link=snetsystems:https://www.snetsystems.com --custom-link=CloudHub:https://github.com/snetsystems/cloudhub'. E.g. via environment variable: 'export CUSTOM_LINKS=snetsystems:https://www.snetsystems.com,CloudHub:https://github.com/snetsystems/cloudhub'" env:"CUSTOM_LINKS" env-delim:","`
@@ -585,7 +588,7 @@ func (s *Server) Serve(ctx context.Context) {
 		}
 	}
 	
-	service := openService(ctx, db, s.newBuilders(logger), logger, s.useAuth(), s.AddonURLs, s.MailSubject, s.MailBodyMessage)
+	service := openService(ctx, db, s.newBuilders(logger), logger, s.useAuth(), s.AddonURLs, s.MailSubject, s.MailBodyMessage, s.ProgramPath, s.ExecuteFile)
 	service.SuperAdminProviderGroups = superAdminProviderGroups{
 		auth0: s.Auth0SuperAdminOrg,
 	}
@@ -705,7 +708,7 @@ func (s *Server) Serve(ctx context.Context) {
 		Info("Stopped serving cloudhub at ", scheme, "://", listener.Addr())
 }
 
-func openService(ctx context.Context, db kv.Store, builder builders, logger cloudhub.Logger, useAuth bool, addonURLs map[string]string, mailSubject string, mailBody string) Service {
+func openService(ctx context.Context, db kv.Store, builder builders, logger cloudhub.Logger, useAuth bool, addonURLs map[string]string, mailSubject, mailBody, programPath, executeFile string) Service {
 	svc, err := kv.NewService(ctx, db, kv.WithLogger(logger))
 	if err != nil {
 		logger.Error("Unable to create kv service", err)
@@ -781,6 +784,8 @@ func openService(ctx context.Context, db kv.Store, builder builders, logger clou
 		AddonURLs:                addonURLs,
 		MailSubject:              mailSubject,
 		MailBody:                 mailBody,
+		ProgramPath:              programPath,
+		ExecuteFile:              executeFile,
 	}
 }
 

@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"context"
 	"net/http"
+	"net/url"
 	"crypto/sha512"
 	"crypto/hmac"
 	"encoding/hex"
@@ -20,6 +21,7 @@ import (
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/oauth2"
+	"github.com/snetsystems/cloudhub/backend/influx"
 )
 
 type emailKey string
@@ -47,7 +49,7 @@ type loginResponse struct {
 }
 
 type loginRequest struct {
-	Name       string   `json:"id"`
+	Name       string   `json:"name"`
 	Password   string   `json:"password"`
 }
 
@@ -148,23 +150,22 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 	// The id of kapacitor set as server option is 0
 	id := 0
 	serverKapacitor, err := s.Store.Servers(ctx).Get(ctx, id)
+	if err != nil {
+		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+		return
+	}
+	
 	// not set kapacitor server option or user.email empty
-	if err != nil || user.Email == "" {
-		if err != cloudhub.ErrServerNotFound {
-			Error(w, http.StatusUnprocessableEntity, err.Error(), s.Logger)
-			return
-		}
-		
+	if serverKapacitor.URL == "" && user.Email == "" {
 		resetPassword := randResetPassword()
 		
-		//params.Set("path", "") // salt에 path는 무엇이 들어가야 하나...
-		//params.Add("password", resetPassword)  // salt에 pass를 어떻게 전달해야........
-		//r.URL.RawQuery = params.Encode()
-
-		// salt exec
-		//s.SaltProxyPost(w, r)
-
-		// python call
+		// external program
+		// test imsi
+		args := []string{s.ExecuteFile, name, resetPassword}
+		if !programExec(s.ProgramPath, args, s.Logger) {
+			//Error(w, http.StatusBadRequest, fmt.Sprintf("fail external program : %s, %s, %s", s.ProgramPath, s.ExecuteFile, args), s.Logger)
+			//return
+		}
 
 		user.PasswordResetFlag = "Y"
 		user.Passwd = getPasswordToSHA512(resetPassword, BasicProvider)
@@ -179,8 +180,9 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 			Provider: BasicProvider,
 			Scheme:   BasicScheme,
 			Pwrtn:    pwrtn,
-			SendKind: "python",
+			SendKind: "external",
 			PasswordResetFlag: user.PasswordResetFlag,
+			Password: resetPassword,	// 최종본에서는 삭제
 		}
 
 		if pwrtnBool {			
@@ -198,19 +200,11 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		params.Add("email", user.Email)
 		r.URL.RawQuery = params.Encode()
 
-		//s.Logger.Debug(r.URL.RawQuery)
-
 		resetPassword := randResetPassword()
 
 		mailSubjct := strings.Replace(s.MailSubject, "$user_id", user.Name, -1)
 		mailBody := strings.Replace(s.MailBody, "$user_id", user.Name, -1)
 		mailBody = strings.Replace(mailBody, "$user_pw", resetPassword, -1)
-
-		//var jsonBody = []byte(`{"to":}`)
-		//var jsonBody = []byte("{\"to\":[\"" + user.Email + "\"],\"password\":\"" + password + "\"}")
-		
-		//var jsonBody = `{"to":["`+ user.Email +`"],"subject":"`+ mailSubjct +`","body":"`+ mailBody +`"}`
-		//s.Logger.Debug("before="+jsonBody)
 
 		jsonBody, _ := json.Marshal(struct{
 			To []string     `json:"to"`
@@ -240,7 +234,7 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		if recorder.Status != 200 {
 			w.Header().Del("Content-Length")
 			w.Header().Del("Content-Encoding")
-			// kapacitor rturn error code relay
+			// kapacitor return error code relay
 			Error(w, http.StatusUnprocessableEntity, fmt.Sprintf("kapacitor response status : %d", recorder.Status), s.Logger)
 			return
 		}
@@ -285,58 +279,15 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 			res.Password = resetPassword
 		}
 
-		/*
-		data, _ := json.Marshal(res)
-		recorder.buf.Write(data)
-
-		//w.Header().Del("Content-Length")
-		w.Header().Set("Content-Length", strconv.Itoa(len(string(data))))
-
-		if _, err := io.Copy(w, recorder.buf); err != nil {
-			Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
-			return
-		}
-		
-
-		*/
-
-		//data, _ := json.Marshal(res)
-		//newRes := bytes.NewReader(data)
-		//recorder.buf.Write(data)
-
-		//rsp := io.MultiWriter(w, recorder.buf)
-
-		//w.Header().Set("Content-Length", strconv.Itoa(len(string(data))))
-		//w.Header().Set("Content-Type", "application/json")
 		w.Header().Del("Content-Length")
-		//w.Header().Del("Date")
 		w.Header().Del("Content-Encoding")
-		//w.Header().Del("Request-Id")
-		//w.Header().Del("X-Kapacitor-Version")
-
-		//w.WriteHeader(http.StatusOK)
-		//w.Write(data)
-
-		
-
-
-
-		// if _, err := io.Copy(w, newRes); err != nil {
-		// 	Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
-		// 	return
-		// }
-
-		//w.Header().Del("Content-Length")
-		
-		
-
-		// if err := json.NewEncoder(w).Encode(res); err != nil {
-		// 	unknownErrorWithMessage(w, err, s.Logger)
-		// }
 
 		encodeJSON(w, http.StatusOK, res, s.Logger)
 		return
 	}
+
+	Error(w, http.StatusBadRequest, fmt.Sprintf("fail password reset"), s.Logger)
+	return
 }
 
 // Login provider=cloudhub
@@ -366,7 +317,14 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 			return
 		}
 
+		orgID := "default"
+		for _, role := range user.Roles {
+			orgID = role.Organization
+			break
+		}
+
 		if user.Passwd == "" {
+			LogRegistration(r, s.Store, s.Logger, orgID, "login", user.Name, "Fail Login - empty user table password", user.SuperAdmin)
 			Error(w, http.StatusBadRequest, fmt.Sprintf("empty user table password"), s.Logger)
 			return
 		}
@@ -379,15 +337,9 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 
 		// valid password - sha512
 		if !validPassword([]byte(req.Password), strTohex, []byte(BasicProvider)) {
-			Error(w, http.StatusUnauthorized, fmt.Sprintf("The requested password and the saved password are different."), s.Logger)
-			//http.Redirect(w, r, path.Join(basePath, "/login"), http.StatusUnauthorized)
+			LogRegistration(r, s.Store, s.Logger, orgID, "login", user.Name, "Fail Login - requested password and the saved password are different.", user.SuperAdmin)
+			Error(w, http.StatusUnauthorized, fmt.Sprintf("requested password and the saved password are different."), s.Logger)
 			return
-		}
-
-		orgID := "default"
-		for _, role := range user.Roles {
-			orgID = role.Organization
-			break
 		}
 
 		principal := oauth2.Principal{
@@ -397,20 +349,8 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 			Group: "",
 		}
 
-		// password reset response 
-		// if user.PasswordResetFlag == "Y" {
-		// 	res := &loginResponse{
-		// 		PasswordResetFlag: user.PasswordResetFlag,
-		// 	}
-		// 	encodeJSON(w, http.StatusOK, res, s.Logger)
-		// 	return
-		// }
-
 		if err := auth.Authorize(ctx, w, principal); err != nil {
-			s.Logger.Error(fmt.Sprintf("Failed auth.Authorize: %v, %v", err, principal))
-			// FailureURL
-			//http.Redirect(w, r, path.Join(basePath, "/login"), http.StatusInternalServerError)
-			Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+			Error(w, http.StatusInternalServerError, fmt.Sprintf("Failed auth.Authorize: %v, %v", err, principal), s.Logger)
 			return
 		}
 		
@@ -418,8 +358,10 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 		ctx = context.WithValue(ctx, oauth2.PrincipalKey, principal)
 		r = r.WithContext(ctx)
 
+		// log registration
+		LogRegistration(r, s.Store, s.Logger, orgID, "login", user.Name, "Success Login", user.SuperAdmin)
+
 		// SuccessURL
-		//http.Redirect(w, r.WithContext(ctx), path.Join(basePath, "/"), http.StatusTemporaryRedirect)
 		res := &loginResponse{
 			PasswordResetFlag: user.PasswordResetFlag,
 		}
@@ -431,6 +373,28 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 // Logout provider=cloudhub
 func (s *Service) Logout(auth oauth2.Authenticator, basePath string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := serverContext(r.Context())
+		p, err := getValidPrincipal(ctx)
+		if err == nil {
+			user, err := s.Store.Users(ctx).Get(ctx, cloudhub.UserQuery{
+				Name:     &p.Subject,
+				Provider: &BasicProvider,
+				Scheme:   &BasicScheme,
+			})
+
+			if user == nil || err != nil {
+				s.Logger.Error(err.Error())
+			} else {
+				orgID := "default"
+				for _, role := range user.Roles {
+					orgID = role.Organization
+					break
+				}
+
+				LogRegistration(r, s.Store, s.Logger, orgID, "logout", user.Name, "Success Logout", user.SuperAdmin)
+			}
+		}
+
 		auth.Expire(w)
 		http.Redirect(w, r, path.Join(basePath, "/"), http.StatusTemporaryRedirect)
 	}
@@ -456,4 +420,71 @@ func randResetPassword() string {
 	}
 
 	return b.String()
+}
+
+// LogRegistration log db insert
+func LogRegistration(r *http.Request, store DataStore, logger cloudhub.Logger, orgID, facility, name, message string, isSuperAdmin bool) {
+	ctx := r.Context()
+	
+	logs := logger.
+		WithField("component", "log_insert").
+		WithField("remote_addr", r.RemoteAddr).
+		WithField("method", r.Method).
+		WithField("url", r.URL)
+
+	serverCtx := serverContext(ctx)
+
+	// // The id of influxdb set as server option is 0
+	id := 0
+	src, err := store.Sources(serverCtx).Get(serverCtx, id)
+	if err != nil {
+		return
+	}
+
+	u, err := url.Parse(src.URL)
+	if err != nil {
+		msg := fmt.Sprintf("Error parsing source url: %v", err)
+		logs.Error(msg)
+		return
+	}
+
+	org, err := store.Organizations(serverCtx).Get(serverCtx, cloudhub.OrganizationQuery{ID: &orgID})
+	if err != nil {
+		msg := fmt.Sprintf("Error parsing source url: %v", err)
+		logs.Error(msg)
+		return
+	}
+
+	dbname := org.Name
+	if isSuperAdmin {
+		org.Name = "_internal"
+	}
+
+	nanos := time.Now().UnixNano()
+	data := cloudhub.Point{
+		Database:        dbname,
+		Measurement:     "connectLog",
+		Time:            nanos,
+		Tags: map[string]string{
+			"severity": "info",
+			"facility": facility,
+			"name": name,
+		},
+		Fields: map[string]interface{}{
+			"timestamp": nanos,
+			"message": message,
+		},
+	}
+
+	client := &influx.Client{
+		URL:                u,
+		Authorizer:         influx.DefaultAuthorization(&src),
+		InsecureSkipVerify: src.InsecureSkipVerify,
+		Logger:             logger,
+	}
+
+	if err := client.Write(ctx, []cloudhub.Point{data}); err != nil {
+		logs.Error("Error influxdb log insert. ", err)
+		return
+	}
 }
