@@ -156,7 +156,7 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	// not set kapacitor server option or user.email empty
-	if serverKapacitor.URL == "" && user.Email == "" {
+	if (serverKapacitor.URL != "" && user.Email == "") || (serverKapacitor.URL == "") {
 		resetPassword := randResetPassword()
 		
 		// external program
@@ -423,7 +423,7 @@ func randResetPassword() string {
 }
 
 // LogRegistration log db insert
-func LogRegistration(r *http.Request, store DataStore, logger cloudhub.Logger, orgID, facility, name, message string, isSuperAdmin bool) {
+func LogRegistration(r *http.Request, store DataStore, logger cloudhub.Logger, orgID, action, name, message string, isSuperAdmin bool) {
 	ctx := r.Context()
 	
 	logs := logger.
@@ -467,8 +467,8 @@ func LogRegistration(r *http.Request, store DataStore, logger cloudhub.Logger, o
 		Time:            nanos,
 		Tags: map[string]string{
 			"severity": "info",
-			"facility": facility,
-			"name": name,
+			"action": action,
+			"user": name,
 		},
 		Fields: map[string]interface{}{
 			"timestamp": nanos,
