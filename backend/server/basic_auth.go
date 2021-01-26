@@ -374,10 +374,10 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 func (s *Service) Logout(auth oauth2.Authenticator, basePath string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := serverContext(r.Context())
-		p, err := getValidPrincipal(ctx)
+		principal, err := auth.Validate(ctx, r)
 		if err == nil {
 			user, err := s.Store.Users(ctx).Get(ctx, cloudhub.UserQuery{
-				Name:     &p.Subject,
+				Name:     &principal.Subject,
 				Provider: &BasicProvider,
 				Scheme:   &BasicScheme,
 			})
@@ -385,7 +385,7 @@ func (s *Service) Logout(auth oauth2.Authenticator, basePath string) http.Handle
 			if user == nil || err != nil {
 				s.Logger.Error(err.Error())
 			} else {
-				orgID := "default"
+				var orgID string
 				for _, role := range user.Roles {
 					orgID = role.Organization
 					break
