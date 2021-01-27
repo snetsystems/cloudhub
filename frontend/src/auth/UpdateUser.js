@@ -1,6 +1,7 @@
 import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
 import PropTypes from 'prop-types'
+import _ from 'lodash'
 
 import SplashPage from 'src/shared/components/SplashPage'
 
@@ -28,65 +29,71 @@ class UpdateUser extends PureComponent {
     return handleGetUser({url: `/cloudhub/v1/users/${me.id}`})
   }
 
-  onChangeEmail = e => {
-    this.setState({email: e.target.value})
+  handleInputChange = fieldName => e => {
+    this.setState({[fieldName]: e.target.value.trim()})
   }
 
-  onChangePassword = e => {
-    this.setState({password: e.target.value})
-  }
-
-  onChangePasswordConfirm = e => {
-    this.setState({passwordConfirm: e.target.value})
-  }
-
-  onClickUpdateUser = (isValidPassword, isValidPasswordConfirm) => {
-    const {
-      auth: {me},
-      notify,
-      handleUpdateUser,
-    } = this.props
-    const {password, email} = this.state
-
-    if (password.length > 0) {
-      if (!isValidPassword) {
-        notify(notifyUserPasswordInputError())
-        return
-      }
-
-      if (!isValidPasswordConfirm) {
-        notify(notifyUserPasswordInputError())
-        return
+  handleKeyPressSubmit = (isValidPassword, isValidPasswordConfirm) => {
+    return e => {
+      if (e.key === 'Enter') {
+        this.handleUpdateUserSubmit(isValidPassword, isValidPasswordConfirm)
       }
     }
-
-    this.getUser().then(({data}) => {
-      let user = {
-        email,
-        roles: data.roles,
-        superAdmin: data.superAdmin,
-      }
-
-      if (isValidPassword && isValidPasswordConfirm) {
-        user = {
-          ...user,
-          password,
-        }
-      }
-
-      handleUpdateUser({url: `/cloudhub/v1/users/${me.id}`, user}).then(res => {
-        if (res.data?.email) {
-          this.setState({
-            email: res.data.email,
-            password: '',
-            passwordConfirm: '',
-          })
-        } else {
-          this.setState({email: ''})
-        }
-      })
-    })
   }
+
+  handleClickSubmit = (isValidPassword, isValidPasswordConfirm) => {
+    this.handleUpdateUserSubmit(isValidPassword, isValidPasswordConfirm)
+  }
+
+  handleUpdateUserSubmit = _.debounce(
+    (isValidPassword, isValidPasswordConfirm) => {
+      const {
+        auth: {me},
+        notify,
+        handleUpdateUser,
+      } = this.props
+      const {password, email} = this.state
+
+      if (password.length > 0) {
+        if (!isValidPassword) {
+          notify(notifyUserPasswordInputError())
+          return
+        }
+
+        if (!isValidPasswordConfirm) {
+          notify(notifyUserPasswordInputError())
+          return
+        }
+      }
+
+      this.getUser().then(({data}) => {
+        let user = {
+          email,
+          roles: data.roles,
+          superAdmin: data.superAdmin,
+        }
+
+        if (isValidPassword && isValidPasswordConfirm) {
+          user = {
+            ...user,
+            password,
+          }
+        }
+
+        handleUpdateUser({url: `/cloudhub/v1/users/${me.id}`, user}).then(
+          res => {
+            this.setState({email: '', password: '', passwordConfirm: ''})
+            if (res.data?.email) {
+              this.setState({
+                email: res.data.email,
+              })
+            }
+          }
+        )
+      })
+    },
+    250
+  )
 
   componentDidMount = () => {
     const {
@@ -159,7 +166,7 @@ class UpdateUser extends PureComponent {
                       placeholder={'new password'}
                       spellCheck={false}
                       value={password}
-                      onChange={this.onChangePassword}
+                      onChange={this.handleInputChange('password')}
                     />
 
                     {password && !isValidPassword && (
@@ -180,7 +187,11 @@ class UpdateUser extends PureComponent {
                       placeholder={'new password confirm'}
                       spellCheck={false}
                       value={passwordConfirm}
-                      onChange={this.onChangePasswordConfirm}
+                      onChange={this.handleInputChange('passwordConfirm')}
+                      onKeyPress={this.handleKeyPressSubmit(
+                        isValidPassword,
+                        isValidPasswordConfirm
+                      )}
                     />
                     {passwordConfirm && !isValidPasswordConfirm && (
                       <div className={`form-message fm--danger`}>
@@ -201,7 +212,11 @@ class UpdateUser extends PureComponent {
                       placeholder={'yours@email.com'}
                       spellCheck={false}
                       value={email}
-                      onChange={this.onChangeEmail}
+                      onKeyPress={this.handleKeyPressSubmit(
+                        isValidPassword,
+                        isValidPasswordConfirm
+                      )}
+                      onChange={this.handleInputChange('email')}
                     />
                     <div className="form-message fm--info">
                       It is used for OTP delivery when initializing password.
@@ -212,7 +227,7 @@ class UpdateUser extends PureComponent {
                   <button
                     className="btn btn-primary btn-sm col-md-8"
                     onClick={() => {
-                      this.onClickUpdateUser(
+                      this.handleClickSubmit(
                         isValidPassword,
                         isValidPasswordConfirm
                       )

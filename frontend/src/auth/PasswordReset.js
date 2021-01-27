@@ -1,6 +1,7 @@
 import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
 import PropTypes from 'prop-types'
+import _ from 'lodash'
 
 import Notifications from 'src/shared/components/Notifications'
 import SplashPage from 'src/shared/components/SplashPage'
@@ -16,11 +17,11 @@ class PasswordReset extends PureComponent {
     }
   }
 
-  onChangeName = e => {
-    this.setState({name: e.target.value})
+  handleInputChange = fieldName => e => {
+    this.setState({[fieldName]: e.target.value.trim()})
   }
 
-  onClickPasswordReset = () => {
+  handlePasswordResetSubmit = _.debounce(() => {
     const {
       handlePasswordReset,
       authData: {basicPasswordReset},
@@ -33,6 +34,16 @@ class PasswordReset extends PureComponent {
       path: `/kapacitor/v1/service-tests/${AlertTypes.smtp}`,
       name,
     })
+  }, 250)
+
+  handleKeyPressSubmit = e => {
+    if (!_.isEmpty(this.state.name) && e.key === 'Enter') {
+      this.handlePasswordResetSubmit()
+    }
+  }
+
+  handleOnClickPasswordResetSubmit = () => {
+    this.handlePasswordResetSubmit()
   }
 
   componentDidMount = () => {
@@ -83,13 +94,15 @@ class PasswordReset extends PureComponent {
                     placeholder={'ID'}
                     spellCheck={false}
                     value={name}
-                    onChange={this.onChangeName}
+                    onChange={this.handleInputChange('name')}
+                    onKeyPress={this.handleKeyPressSubmit}
                   />
                 </div>
                 <div className={'auth-button-bar'}>
                   <button
                     className="btn btn-primary btn-sm col-md-12"
-                    onClick={this.onClickPasswordReset}
+                    disabled={_.isEmpty(name)}
+                    onClick={this.handleOnClickPasswordResetSubmit}
                   >
                     Send Email
                   </button>

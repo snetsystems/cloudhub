@@ -1,5 +1,4 @@
 import {Dispatch} from 'redux'
-import _ from 'lodash'
 
 // Action
 import {notify} from 'src/shared/actions/notifications'

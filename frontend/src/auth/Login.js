@@ -28,33 +28,11 @@ class Login extends PureComponent {
     }
   }
 
-  onChangeId = e => {
-    this.setState({name: e.target.value})
+  handleInputChange = fieldName => e => {
+    this.setState({[fieldName]: e.target.value.trim()})
   }
 
-  onChangePassword = e => {
-    this.setState({password: e.target.value})
-  }
-
-  onChangePasswordConfirm = e => {
-    this.setState({passwordConfirm: e.target.value})
-  }
-
-  onChangeEmail = e => {
-    this.setState({email: e.target.value})
-  }
-
-  onClickActiveEditorTab = tab => {
-    this.setState({
-      name: '',
-      password: '',
-      passwordConfirm: '',
-      email: '',
-      activeEditorTab: tab,
-    })
-  }
-
-  onClickLogin = _.debounce(() => {
+  handleLoginSubmit = _.debounce(() => {
     const {
       router,
       authData: {basicauth},
@@ -83,7 +61,7 @@ class Login extends PureComponent {
     })
   }, 250)
 
-  onClickSignUp = () => {
+  handleSignupSubmit = _.debounce(() => {
     const {handleCreateUser} = this.props
     const {name, password, email} = this.state
 
@@ -94,6 +72,23 @@ class Login extends PureComponent {
         }
       }
     )
+  }, 250)
+
+  onClickLoginSubmit = () => {
+    this.handleLoginSubmit()
+  }
+  onClickSignUpSubmit = () => {
+    this.handleSignupSubmit()
+  }
+
+  onClickActiveEditorTab = tab => {
+    this.setState({
+      name: '',
+      password: '',
+      passwordConfirm: '',
+      email: '',
+      activeEditorTab: tab,
+    })
   }
 
   render() {
@@ -170,7 +165,7 @@ class Login extends PureComponent {
                         type="text"
                         placeholder={'id'}
                         value={name}
-                        onChange={this.onChangeId}
+                        onChange={this.handleInputChange('name')}
                         spellCheck={false}
                       />
                     </div>
@@ -184,13 +179,13 @@ class Login extends PureComponent {
                         type="password"
                         placeholder={'password'}
                         value={password}
-                        onChange={this.onChangePassword}
-                        onKeyDown={
+                        onChange={this.handleInputChange('password')}
+                        onKeyPress={
                           isSign
                             ? null
                             : e => {
                                 if (e.key === 'Enter') {
-                                  this.onClickLogin()
+                                  this.handleLoginSubmit()
                                 }
                               }
                         }
@@ -215,7 +210,16 @@ class Login extends PureComponent {
                             type="password"
                             placeholder={'password confirm'}
                             value={passwordConfirm}
-                            onChange={this.onChangePasswordConfirm}
+                            onChange={this.handleInputChange('passwordConfirm')}
+                            onKeyPress={
+                              isSign
+                                ? e => {
+                                    if (e.key === 'Enter') {
+                                      this.handleSignupSubmit()
+                                    }
+                                  }
+                                : null
+                            }
                             spellCheck={false}
                           />
 
@@ -242,7 +246,16 @@ class Login extends PureComponent {
                             type="email"
                             placeholder={'yours@example.com'}
                             value={email}
-                            onChange={this.onChangeEmail}
+                            onChange={this.handleInputChange('email')}
+                            onKeyPress={
+                              isSign
+                                ? e => {
+                                    if (e.key === 'Enter') {
+                                      this.handleSignupSubmit()
+                                    }
+                                  }
+                                : null
+                            }
                             spellCheck={false}
                           />
                           <div className="form-message fm--info">
@@ -270,14 +283,14 @@ class Login extends PureComponent {
                         isValidPassword === false ||
                         isValidPasswordConfirm === false
                       }
-                      onClick={this.onClickSignUp}
+                      onClick={this.onClickSignUpSubmit}
                     >
                       Sign Up
                     </button>
                   ) : (
                     <button
                       className="btn btn-primary btn-sm col-md-12"
-                      onClick={this.onClickLogin}
+                      onClick={this.onClickLoginSubmit}
                     >
                       Login
                     </button>

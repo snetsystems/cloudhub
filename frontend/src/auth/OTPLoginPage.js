@@ -18,41 +18,57 @@ class OTPLoginPage extends PureComponent {
     }
   }
 
+  handleOTPChangeSubmit = _.debounce(
+    (isValidPassword, isValidPasswordConfirm) => {
+      const {
+        router,
+        authData: {basicauth, basicPassword},
+        handleOTPChange,
+        handleLogin,
+      } = this.props
+      const {name, password} = this.state
+
+      let user = {
+        name,
+      }
+
+      if (isValidPassword && isValidPasswordConfirm) {
+        user = {
+          ...user,
+          password,
+        }
+      }
+
+      handleOTPChange({url: basicPassword, user}).then(res => {
+        if (res.status === 200) {
+          setTimeout(() => {
+            handleLogin({url: basicauth.login, user}).then(() => {
+              router.go('/')
+            })
+          }, 1000)
+        }
+      })
+    },
+    250
+  )
+
   handleInputChange = fieldName => e => {
     this.setState({[fieldName]: e.target.value.trim()})
   }
 
-  onClickOTPChange = (isValidPassword, isValidPasswordConfirm) => {
-    const {
-      router,
-      authData: {basicauth, basicPassword},
-      handleOTPChange,
-      handleLogin,
-    } = this.props
-    const {name, password} = this.state
+  handleOnClickPasswordResetSubmit = (
+    isValidPassword,
+    isValidPasswordConfirm
+  ) => {
+    this.handleOTPChangeSubmit(isValidPassword, isValidPasswordConfirm)
+  }
 
-    let user = {
-      name,
-    }
-
-    if (isValidPassword && isValidPasswordConfirm) {
-      user = {
-        ...user,
-        password,
+  handleKeyPressSubmit = (isValidPassword, isValidPasswordConfirm) => {
+    return e => {
+      if (e.key === 'Enter') {
+        this.handleOTPChangeSubmit(isValidPassword, isValidPasswordConfirm)
       }
     }
-
-    handleOTPChange({url: basicPassword, user}).then(res => {
-      if (res.status === 200) {
-        setTimeout(() => {
-          handleLogin({url: basicauth.login, user: {name, password}}).then(
-            () => {
-              router.go('/')
-            }
-          )
-        }, 1000)
-      }
-    })
   }
 
   componentDidMount = () => {
@@ -137,6 +153,10 @@ class OTPLoginPage extends PureComponent {
                       placeholder={'New password confirm'}
                       value={passwordConfirm}
                       onChange={this.handleInputChange('passwordConfirm')}
+                      onKeyPress={this.handleKeyPressSubmit(
+                        isValidPassword,
+                        isValidPasswordConfirm
+                      )}
                       spellCheck={false}
                     />
                     {passwordConfirm.length > 0 && !isValidPasswordConfirm && (
@@ -153,7 +173,7 @@ class OTPLoginPage extends PureComponent {
                   className="btn btn-primary btn-sm col-md-12"
                   disabled={!isValidPassword || !isValidPasswordConfirm}
                   onClick={() => {
-                    this.onClickOTPChange(
+                    this.handleOnClickPasswordResetSubmit(
                       isValidPassword,
                       isValidPasswordConfirm
                     )
