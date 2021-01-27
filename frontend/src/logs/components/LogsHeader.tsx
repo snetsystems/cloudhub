@@ -18,6 +18,7 @@ interface SourceItem {
 }
 
 interface Props {
+  currentMeasurement: string
   currentNamespace: Namespace
   availableSources: Source[]
   currentSource: Source | null
@@ -37,6 +38,7 @@ class LogsHeader extends PureComponent<Props> {
       liveUpdating,
       onChangeLiveUpdatingStatus,
       onShowOptionsOverlay,
+      currentMeasurement,
     } = this.props
 
     return (
@@ -46,7 +48,13 @@ class LogsHeader extends PureComponent<Props> {
             onChangeLiveUpdatingStatus={onChangeLiveUpdatingStatus}
             liveUpdating={liveUpdating}
           />
-          <Page.Title title="Log Viewer" />
+          <Page.Title
+            title={
+              currentMeasurement === 'syslog'
+                ? 'Log Viewer'
+                : 'Activity Log Viewer'
+            }
+          />
         </Page.Header.Left>
         <Page.Header.Right>
           <Dropdown
@@ -62,14 +70,16 @@ class LogsHeader extends PureComponent<Props> {
             selected={this.selectedNamespace}
             onChoose={this.handleChooseNamespace}
           />
-          <Authorized requiredRole={EDITOR_ROLE}>
-            <button
-              className="btn btn-sm btn-square btn-default"
-              onClick={onShowOptionsOverlay}
-            >
-              <span className="icon cog-thick" />
-            </button>
-          </Authorized>
+          {currentMeasurement === 'syslog' && (
+            <Authorized requiredRole={EDITOR_ROLE}>
+              <button
+                className="btn btn-sm btn-square btn-default"
+                onClick={onShowOptionsOverlay}
+              >
+                <span className="icon cog-thick" />
+              </button>
+            </Authorized>
+          )}
         </Page.Header.Right>
       </Page.Header>
     )

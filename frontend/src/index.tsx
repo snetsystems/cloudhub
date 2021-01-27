@@ -33,6 +33,7 @@ import {DashboardsPage, DashboardPage} from 'src/dashboards'
 import {HostsPage, HostPage} from 'src/hosts'
 import {Applications} from 'src/applications'
 import {LogsPage} from 'src/logs'
+import {ActivityLogsPage} from 'src/activitylogs'
 import AlertsApp from 'src/alerts'
 import {
   KapacitorPage,
@@ -242,6 +243,7 @@ class Root extends PureComponent<{}, State> {
                   component={KapacitorRulePage}
                 />
                 <Route path="alert-rules/new" component={KapacitorRulePage} />
+                <Route path="activity-logs" component={ActivityLogsPage} />
                 <Route path="logs" component={LogsPage} />
                 <Route path="tickscript/new" component={TickscriptPage} />
                 <Route path="tickscript/:ruleID" component={TickscriptPage} />

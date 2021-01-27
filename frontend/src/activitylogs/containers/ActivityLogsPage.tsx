@@ -61,7 +61,7 @@ import {
   clearSearchData,
   setSearchStatus,
   executeHistogramQueryAsync,
-} from 'src/logs/actions'
+} from 'src/activitylogs/actions'
 import {getSourcesAsync} from 'src/shared/actions/sources'
 
 // Constants
@@ -76,7 +76,7 @@ import {SeverityFormatOptions, SEVERITY_SORTING_ORDER} from 'src/logs/constants'
 
 // Types
 import {Greys} from 'src/reusable_ui/types'
-import {Source, NotificationAction, Me, Namespace, QueryConfig} from 'src/types'
+import {Source, NotificationAction, Me, Namespace} from 'src/types'
 import {
   HistogramData,
   HistogramColor,
@@ -155,7 +155,6 @@ interface Props {
   setSearchStatus: (SearchStatus: SearchStatus) => void
   me: Me
   isUsingAuth: boolean
-  tableQueryConfig: QueryConfig | null
 }
 
 interface State {
@@ -168,7 +167,7 @@ interface State {
   queryCount: number
 }
 
-class LogsPage extends Component<Props, State> {
+class ActivityLogsPage extends Component<Props, State> {
   private isMount = false
   public static getDerivedStateFromProps(props: Props) {
     const severityLevelColors: SeverityLevelColor[] = _.get(
@@ -290,7 +289,7 @@ class LogsPage extends Component<Props, State> {
               isTruncated={this.isTruncated}
             />
             <LogsTable
-              currentMeasurement={'syslog'}
+              currentMeasurement={'activitylog'}
               queryCount={this.state.queryCount}
               count={this.histogramTotal}
               data={this.tableData}
@@ -767,7 +766,7 @@ class LogsPage extends Component<Props, State> {
 
     return (
       <LogsHeader
-        currentMeasurement={'syslog'}
+        currentMeasurement={'activitylog'}
         liveUpdating={this.isLiveUpdating}
         availableSources={sources}
         onChooseSource={this.handleChooseSource}
@@ -1075,7 +1074,7 @@ const mapStateToProps = ({
   links: {
     orgConfig: {logViewer},
   },
-  logs: {
+  activitylogs: {
     newRowsAdded,
     currentSource,
     currentNamespaces,
@@ -1152,5 +1151,5 @@ const mapDispatchToProps = {
 }
 
 export default withRouter(
-  connect(mapStateToProps, mapDispatchToProps)(LogsPage)
+  connect(mapStateToProps, mapDispatchToProps)(ActivityLogsPage)
 )

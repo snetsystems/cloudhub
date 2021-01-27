@@ -150,6 +150,10 @@ class SideNav extends PureComponent<Props> {
           location={location}
         >
           <NavHeader link={`${sourcePrefix}/logs`} title="Log Viewer" />
+          <NavListItem link={`${sourcePrefix}/logs`}>System Logs</NavListItem>
+          <NavListItem link={`${sourcePrefix}/activity-logs`}>
+            Activity Logs
+          </NavListItem>
         </NavBlock>
 
         <Authorized
