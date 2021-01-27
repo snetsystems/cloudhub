@@ -387,6 +387,15 @@ func (s *Service) UserPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var orgID string
+	for _, role := range user.Roles {
+		orgID = role.Organization
+		break
+	}
+
+	// log registration
+	LogRegistration(r, s.Store, s.Logger, orgID, "password", user.Name, "Change Password", user.SuperAdmin)
+
 	w.WriteHeader(http.StatusOK)
 }
 

@@ -158,14 +158,18 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	/* Health */
 	router.GET("/ping", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
 
-	// Login,Logout (Provider=cloudhub, Scheme=basic)
+	/* API (Provider=cloudhub, Scheme=basic)  */
+	// Login, Logout
 	router.POST("/basic/login", service.Login(opts.Auth, opts.Basepath))
 	router.GET("/basic/logout", service.Logout(opts.Auth, opts.Basepath))
-	// User sign up (Provider=cloudhub, Scheme=basic)
+
+	// User sign up
 	router.POST("/basic/users", service.NewBasicUser)
-	// User password change (Provider=cloudhub, Scheme=basic)
+
+	// User password change
 	router.PATCH("/basic/password", service.UserPassword)
-	// User password reset (Provider=cloudhub, Scheme=basic)
+
+	// User password reset
 	router.GET("/basic/password/reset", service.UserPwdReset)
 	router.GET("/cloudhub/v1/password/reset", EnsureAdmin(service.UserPwdAdminReset))
 
@@ -460,19 +464,6 @@ func AuthAPI(opts MuxOpts, router cloudhub.Router) (http.Handler, AuthRoutes) {
 		router.ServeHTTP(w, r)
 	}), routes
 }
-
-// BasicAuthWrapper returns http handlers that wraps the supplied handler with basic login authentication
-//  func BasicAuthWrapper(opts MuxOpts, service Service, router cloudhub.Router) http.Handler {
-
-// 	router.GET("/basic/login", service.Login)
-// 	router.GET("/basic/logout", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
-
-// 	basicTokenMiddleware := AuthorizedToken(opts.Auth, opts.Logger, router)
-
-//  	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-// 			basicTokenMiddleware.ServeHTTP(w, r)
-//  	})
-//  }
 
 func encodeJSON(w http.ResponseWriter, status int, v interface{}, logger cloudhub.Logger) {
 	w.Header().Set("Content-Type", "application/json")
