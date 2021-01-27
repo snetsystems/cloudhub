@@ -59,7 +59,7 @@ function generateResponseWithLinks<T extends {[key: string]: any}>(
 
   const linksObj = {
     auth: {links: auth},
-    logoutLink: response.data.provider === 'cloudhub' ? basicLogout : logout,
+    logoutLink: response?.data.provider === 'cloudhub' ? basicLogout : logout,
     external,
     users,
     allUsers,
