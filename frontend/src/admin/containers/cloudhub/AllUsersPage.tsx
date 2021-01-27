@@ -45,7 +45,7 @@ interface Props {
   handlePasswordReset: ({
     url,
     path,
-    userId,
+    name,
     passwordReturn,
   }: PasswordResetParams) => void
 }
@@ -166,7 +166,7 @@ export class AllUsersPage extends PureComponent<Props, State> {
     handlePasswordReset({
       url: basicPasswordAdminReset,
       path: `/kapacitor/v1/service-tests/${AlertTypes.smtp}`,
-      userId: name,
+      name,
       passwordReturn: true,
     })
   }

@@ -7,8 +7,6 @@ import {
   notifyLoginFailed,
   notifyUserAddCompleted,
   notifyUserAddFailed,
-  notifyUserDeleteCompleted,
-  notifyUserDeleteFailed,
   notifyUserPasswordResetCompleted,
   notifyUserPasswordResetFailed,
   notifyUserUpdateCompleted,
@@ -23,7 +21,6 @@ import {
   login,
   createUser,
   getUser,
-  deleteUser,
   updateUser,
   passwordReset,
   otpChange,
@@ -208,15 +205,15 @@ export const userOTPChangeFailed = () => ({
   type: ActionTypes.UserOTPChangeFailed,
 })
 
-export interface AuthUser {
-  id: string
+export interface BasicAuth {
+  name: string
   password: string
   email?: string
 }
 
 export interface LoginParams {
   url: string
-  user: AuthUser
+  user: BasicAuth
 }
 
 export const loginAsync = ({url, user}: LoginParams) => async (
@@ -235,7 +232,7 @@ export const loginAsync = ({url, user}: LoginParams) => async (
 
 export interface SignupParams {
   url: string
-  user: AuthUser
+  user: BasicAuth
 }
 
 export const createUserAsync = ({url, user}: SignupParams) => async (
@@ -275,26 +272,9 @@ export const getUserAsync = ({url}: GetUserParams) => async (
   }
 }
 
-export const deleteUserAsync = ({url, user}: SignupParams) => async (
-  dispatch: Dispatch<Action>
-) => {
-  dispatch(userDeleteRequested())
-
-  try {
-    const res = await deleteUser({url, user})
-    dispatch(userDeleteCompleted())
-    dispatch(notify(notifyUserDeleteCompleted()))
-    return res
-  } catch (error) {
-    dispatch(userDeleteFailed())
-    dispatch(notify(notifyUserDeleteFailed()))
-    throw error
-  }
-}
-
 export interface UpdateUserAsync {
   url: string
-  user: AuthUser
+  user: BasicAuth
 }
 
 export const updateUserAsync = ({url, user}: UpdateUserAsync) => async (
@@ -316,7 +296,7 @@ export const updateUserAsync = ({url, user}: UpdateUserAsync) => async (
 export interface PasswordResetParams {
   url: string
   path: string
-  userId: string
+  name: string
   passwordReturn?: boolean
 }
 
@@ -333,7 +313,7 @@ export interface ResetResponse {
 export const passwordResetAsync = ({
   url,
   path,
-  userId,
+  name,
   passwordReturn,
 }: PasswordResetParams) => async (dispatch: Dispatch<Action>) => {
   dispatch(userPasswordResetReqeusted())
@@ -341,12 +321,19 @@ export const passwordResetAsync = ({
     const {data} = await passwordReset({
       url,
       path,
-      userId,
+      name,
       passwordReturn,
     })
-    const {name, password} = data
+
     dispatch(userPasswordResetCompleted())
-    dispatch(notify(notifyUserPasswordResetCompleted({name, password})))
+    dispatch(
+      notify(
+        notifyUserPasswordResetCompleted({
+          name: data.name,
+          password: data.password,
+        })
+      )
+    )
     return data
   } catch (error) {
     dispatch(userPasswordResetFailed())
@@ -356,10 +343,7 @@ export const passwordResetAsync = ({
 }
 export interface OTPChangeParams {
   url: string
-  user: {
-    id: string
-    password: string
-  }
+  user: BasicAuth
 }
 
 export const otpChangeAsync = ({url, user}: OTPChangeParams) => async (

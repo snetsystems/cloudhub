@@ -52,14 +52,14 @@ class UsersPage extends PureComponent {
 
   handleResetUserPassword = name => {
     const {
-      handleResetPassword,
+      handlePasswordReset,
       links: {basicPasswordAdminReset},
     } = this.props
 
-    handleResetPassword({
+    handlePasswordReset({
       url: basicPasswordAdminReset,
       path: `/kapacitor/v1/service-tests/${AlertTypes.smtp}`,
-      userId: name,
+      name,
       passwordReturn: true,
     })
   }
@@ -87,7 +87,6 @@ class UsersPage extends PureComponent {
       meID,
       users,
       notify,
-      handlePasswordReset,
     } = this.props
     const {isLoading} = this.state
 
@@ -103,10 +102,9 @@ class UsersPage extends PureComponent {
         onCreateUser={this.handleCreateUser}
         onUpdateUserRole={this.handleUpdateUserRole}
         onDeleteUser={this.handleDeleteUser}
-        onResetPassword={this.handlePasswordReset}
+        onResetUserPassword={this.handleResetUserPassword}
         notify={notify}
         isLoading={isLoading}
-        onResetUserPassword={this.handleResetUserPassword}
       />
     )
   }
@@ -133,7 +131,7 @@ UsersPage.propTypes = {
     deleteUserAsync: func.isRequired,
   }),
   notify: func.isRequired,
-  handleResetPassword: func,
+  handlePasswordReset: func,
 }
 
 const mapStateToProps = ({links, adminCloudHub: {organizations, users}}) => ({
@@ -145,7 +143,7 @@ const mapStateToProps = ({links, adminCloudHub: {organizations, users}}) => ({
 const mapDispatchToProps = dispatch => ({
   actions: bindActionCreators(adminCloudHubActionCreators, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
-  handleResetPassword: bindActionCreators(passwordResetAsync, dispatch),
+  handlePasswordReset: bindActionCreators(passwordResetAsync, dispatch),
 })
 
 export default connect(

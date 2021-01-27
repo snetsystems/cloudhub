@@ -9,7 +9,7 @@ import Notifications from 'src/shared/components/Notifications'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import SplashPage from 'src/shared/components/SplashPage'
 
-import {notify} from 'src/shared/actions/notifications'
+import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {loginAsync, createUserAsync} from 'src/auth/actions'
 
 import {notifyLoginCheck} from 'src/shared/copy/notifications'
@@ -20,7 +20,7 @@ class Login extends PureComponent {
     super(props)
 
     this.state = {
-      id: '',
+      name: '',
       password: '',
       passwordConfirm: '',
       email: '',
@@ -29,7 +29,7 @@ class Login extends PureComponent {
   }
 
   onChangeId = e => {
-    this.setState({id: e.target.value})
+    this.setState({name: e.target.value})
   }
 
   onChangePassword = e => {
@@ -46,7 +46,7 @@ class Login extends PureComponent {
 
   onClickActiveEditorTab = tab => {
     this.setState({
-      id: '',
+      name: '',
       password: '',
       passwordConfirm: '',
       email: '',
@@ -61,23 +61,23 @@ class Login extends PureComponent {
       handleLogin,
       notify,
     } = this.props
-    const {id, password} = this.state
+    const {name, password} = this.state
 
-    if (_.isEmpty(id) || _.isEmpty(password)) {
+    if (_.isEmpty(name) || _.isEmpty(password)) {
       notify(notifyLoginCheck())
       return
     }
 
     handleLogin({
       url: basicauth.login,
-      user: {id, password},
+      user: {name, password},
     }).then(({data}) => {
       if (data?.passwordResetFlag === 'N') {
         router.go('/')
       } else {
         router.push({
           pathname: '/otp-login',
-          state: {id},
+          state: {name},
         })
       }
     })
@@ -85,9 +85,9 @@ class Login extends PureComponent {
 
   onClickSignUp = () => {
     const {handleCreateUser} = this.props
-    const {id, password, email} = this.state
+    const {name, password, email} = this.state
 
-    handleCreateUser({url: '/basic/users', user: {id, password, email}}).then(
+    handleCreateUser({url: '/basic/users', user: {name, password, email}}).then(
       ({status}) => {
         if (status === 201) {
           this.onClickActiveEditorTab('Login')
@@ -99,12 +99,10 @@ class Login extends PureComponent {
   render() {
     const {
       router,
-      authData: {auth, basicauth, passwordPolicy, passwordPolicyMessage, links},
-      handleLogin,
-      handleCreateUser,
+      authData: {auth, passwordPolicy, passwordPolicyMessage},
     } = this.props
 
-    const {id, password, passwordConfirm, email, activeEditorTab} = this.state
+    const {name, password, passwordConfirm, email, activeEditorTab} = this.state
 
     const isSign = activeEditorTab === 'SignUp'
     let reg = null
@@ -171,7 +169,7 @@ class Login extends PureComponent {
                         className="form-control"
                         type="text"
                         placeholder={'id'}
-                        value={id}
+                        value={name}
                         onChange={this.onChangeId}
                         spellCheck={false}
                       />
@@ -191,7 +189,9 @@ class Login extends PureComponent {
                           isSign
                             ? null
                             : e => {
-                                e.key === 'Enter' && this.onClickLogin()
+                                if (e.key === 'Enter') {
+                                  this.onClickLogin()
+                                }
                               }
                         }
                         spellCheck={false}
@@ -292,14 +292,14 @@ class Login extends PureComponent {
             )}
             {!isSign &&
               auth.links &&
-              _.map(auth.links, ({name, login, label}) => (
+              _.map(auth.links, link => (
                 <a
-                  key={name}
+                  key={link.name}
                   className="btn btn-primary auth-form"
-                  href={login}
+                  href={link.login}
                 >
                   <span className={`icon ${name}`} />
-                  Log in with {label}
+                  Log in with {link.label}
                 </a>
               ))}
           </div>
@@ -312,26 +312,29 @@ class Login extends PureComponent {
 const mapDispatchToProps = {
   handleLogin: loginAsync,
   handleCreateUser: createUserAsync,
-  notify,
+  notify: notifyAction,
 }
 
 const {array, bool, shape, string, func} = PropTypes
 
 Login.propTypes = {
+  router: shape().isRequired,
   authData: shape({
     auth: shape({
       me: shape(),
       links: array,
       isLoading: bool,
     }),
+    basicauth: shape(),
+    links: shape(),
     passwordPolicy: string,
     passwordPolicyMessage: string,
   }),
   location: shape({
     pathname: string,
   }),
-  handleLogin: func,
-  handleCreateUser: func,
+  handleLogin: func.isRequired,
+  handleCreateUser: func.isRequired,
   notify: func.isRequired,
 }
 

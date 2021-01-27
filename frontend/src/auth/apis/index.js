@@ -4,7 +4,7 @@ export const login = async ({url, user}) => {
   try {
     return await AJAX({
       method: 'POST',
-      url: url,
+      url,
       data: user,
     })
   } catch (error) {
@@ -16,10 +16,10 @@ export const login = async ({url, user}) => {
 export const passwordReset = async ({
   url,
   path,
-  userId,
+  name,
   passwordReturn = false,
 }) => {
-  const makeURL = `${url}?path=${path}&name=${userId}&pwrtn=${passwordReturn}`
+  const makeURL = `${url}?path=${path}&name=${name}&pwrtn=${passwordReturn}`
   try {
     return await AJAX({
       method: 'GET',
@@ -35,7 +35,7 @@ export const otpChange = async ({url, user}) => {
   try {
     return await AJAX({
       method: 'PATCH',
-      url: url,
+      url,
       data: user,
     })
   } catch (error) {
@@ -46,7 +46,7 @@ export const otpChange = async ({url, user}) => {
 
 export const createUser = async ({url, user}) => {
   const basicUser = {
-    name: user.id,
+    ...user,
     provider: 'cloudhub',
     roles: [
       {
@@ -56,8 +56,6 @@ export const createUser = async ({url, user}) => {
     ],
     scheme: 'basic',
     superAdmin: false,
-    password: user.password,
-    email: user.email,
   }
 
   try {
@@ -90,20 +88,6 @@ export const updateUser = async ({url, user}) => {
       method: 'PATCH',
       url,
       data: user,
-    })
-  } catch (error) {
-    console.error(error)
-    throw error
-  }
-}
-
-export const deleteUser = async ({url, user}) => {
-  const makeURL = `${url}${user}`
-
-  try {
-    return await AJAX({
-      method: 'DELETE',
-      url,
     })
   } catch (error) {
     console.error(error)
