@@ -36,6 +36,14 @@ class AllUsersTableRowNew extends Component {
 
   handleInputChange = fieldName => e => {
     this.setState({[fieldName]: e.target.value.trim()})
+
+    if (fieldName === 'provider') {
+      if (e.target.value === 'cloudhub') {
+        this.setState({scheme: 'basic'})
+      } else {
+        this.setState({scheme: 'oauth2'})
+      }
+    }
   }
 
   handleConfirmCreateUser = () => {
@@ -87,17 +95,6 @@ class AllUsersTableRowNew extends Component {
         return this.props.notify(notifyCloudHubUserMissingNameAndProvider())
       }
       this.handleConfirmCreateUser()
-    }
-  }
-
-  componentDidUpdate = (_, prevState) => {
-    const {provider} = this.state
-    if (prevState.provider !== provider) {
-      if (provider === 'cloudhub') {
-        this.setState({scheme: 'basic'})
-      } else {
-        this.setState({scheme: 'oauth2'})
-      }
     }
   }
 

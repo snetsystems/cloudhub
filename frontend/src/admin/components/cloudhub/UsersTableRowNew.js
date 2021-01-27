@@ -24,19 +24,16 @@ class UsersTableRowNew extends PureComponent {
     }
   }
 
-  componentDidUpdate(prevProps, prevState) {
-    const {provider} = this.state
-    if (prevState.provider !== provider) {
-      if (provider === 'cloudhub') {
+  handleInputChange = fieldName => e => {
+    this.setState({[fieldName]: e.target.value.trim()})
+
+    if (fieldName === 'provider') {
+      if (e.target.value === 'cloudhub') {
         this.setState({scheme: 'basic'})
       } else {
         this.setState({scheme: 'oauth2'})
       }
     }
-  }
-
-  handleInputChange = fieldName => e => {
-    this.setState({[fieldName]: e.target.value.trim()})
   }
 
   handleConfirmCreateUser = () => {
