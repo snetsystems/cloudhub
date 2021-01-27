@@ -1068,8 +1068,14 @@ export const notifyConnectRemoteConsoleFailed = (
 //  CloudHub User Auth Notifications
 //  ----------------------------------------------------------------------------
 
-export const notifyLoginFailed = (errorMessage: string): string =>
-  `Failed to login. ${errorMessage}`
+export const notifyLoginFailed = (error: {
+  code: number
+  message: string
+}): Notification => ({
+  ...defaultErrorNotification,
+  isHasHTML: true,
+  message: `Login Failed.<br/>CODE: ${error.code}<br/>REASON: ${error.message}`,
+})
 
 export const notifyLoginCheck = (): Notification => ({
   ...defaultErrorNotification,
@@ -1081,9 +1087,13 @@ export const notifyUserAddCompleted = (): Notification => ({
   message: `Signup Completed`,
 })
 
-export const notifyUserAddFailed = (): Notification => ({
+export const notifyUserAddFailed = (error: {
+  code: number
+  message: string
+}): Notification => ({
   ...defaultErrorNotification,
-  message: `Signup Failed`,
+  isHasHTML: true,
+  message: `Signup Failed.<br/>CODE: ${error.code}<br/>REASON: ${error.message}`,
 })
 
 export const notifyUserPasswordResetCompleted = ({

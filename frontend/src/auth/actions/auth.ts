@@ -1,4 +1,5 @@
 import {Dispatch} from 'redux'
+import _ from 'lodash'
 
 // Action
 import {notify} from 'src/shared/actions/notifications'
@@ -13,7 +14,6 @@ import {
   notifyUserOTPChangeCompleted,
   notifyUserOTPChangeFailed,
 } from 'src/shared/copy/notifications'
-import {errorThrown} from 'src/shared/actions/errors'
 
 // API
 import {
@@ -224,7 +224,8 @@ export const loginAsync = ({url, user}: LoginParams) => async (
     return res
   } catch (error) {
     dispatch(userLoginFailed())
-    dispatch(errorThrown(error, notifyLoginFailed(error.data.message)))
+    dispatch(notify(notifyLoginFailed(error.data)))
+
     throw error
   }
 }
@@ -247,7 +248,8 @@ export const createUserAsync = ({url, user}: SignupParams) => async (
     return res
   } catch (error) {
     dispatch(userAddFailed())
-    dispatch(notify(notifyUserAddFailed()))
+    dispatch(notify(notifyUserAddFailed(error.data)))
+
     throw error
   }
 }
