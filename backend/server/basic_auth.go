@@ -348,15 +348,16 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 			Organization: orgID,
 			Group: "",
 		}
-
-		if err := auth.Authorize(ctx, w, principal); err != nil {
-			Error(w, http.StatusInternalServerError, fmt.Sprintf("Failed auth.Authorize: %v, %v", err, principal), s.Logger)
-			return
-		}
 		
-		s.Logger.Info("User ", req.Name, " is authenticated")
-		ctx = context.WithValue(ctx, oauth2.PrincipalKey, principal)
-		r = r.WithContext(ctx)
+		if user.PasswordResetFlag == "N" {
+			if err := auth.Authorize(ctx, w, principal); err != nil {
+				Error(w, http.StatusInternalServerError, fmt.Sprintf("Failed auth.Authorize: %v, %v", err, principal), s.Logger)
+				return
+			}
+			s.Logger.Info("User ", req.Name, " is authenticated")
+			ctx = context.WithValue(ctx, oauth2.PrincipalKey, principal)
+			r = r.WithContext(ctx)
+		}
 
 		// log registration
 		LogRegistration(r, s.Store, s.Logger, orgID, "login", user.Name, "Success Login", user.SuperAdmin)
