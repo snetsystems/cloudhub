@@ -1,38 +1,38 @@
-import React, {useState, useEffect} from 'react'
+import React, {PureComponent} from 'react'
 import _ from 'lodash'
 import {connect} from 'react-redux'
 import PropTypes from 'prop-types'
-import {InjectedRouter} from 'react-router'
 
 import Notifications from 'src/shared/components/Notifications'
 import SplashPage from 'src/shared/components/SplashPage'
 
 import {loginAsync, otpChangeAsync} from 'src/auth/actions'
 
-const OTPLoginPage = props => {
-  const {
-    authData: {basicauth, basicPassword, passwordPolicy, passwordPolicyMessage},
-    handleOTPChange,
-    router,
-    location,
-    handleLogin,
-  } = props
-
-  const [id] = useState(location.state?.id)
-  const [password, setPassword] = useState('')
-  const [passwordConfirm, setPasswordConfirm] = useState('')
-
-  const onChangePassword = e => {
-    setPassword(e.target.value)
+class OTPLoginPage extends PureComponent {
+  constructor(props) {
+    super(props)
+    this.state = {
+      name: '',
+      password: '',
+      passwordConfirm: '',
+    }
   }
 
-  const onChangePasswordConfirm = e => {
-    setPasswordConfirm(e.target.value)
+  handleInputChange = fieldName => e => {
+    this.setState({[fieldName]: e.target.value.trim()})
   }
 
-  const onClickOTPChange = () => {
+  onClickOTPChange = (isValidPassword, isValidPasswordConfirm) => {
+    const {
+      router,
+      authData: {basicauth, basicPassword},
+      handleOTPChange,
+      handleLogin,
+    } = this.props
+    const {name, password} = this.state
+
     let user = {
-      name: id,
+      name,
     }
 
     if (isValidPassword && isValidPasswordConfirm) {
@@ -45,8 +45,8 @@ const OTPLoginPage = props => {
     handleOTPChange({url: basicPassword, user}).then(res => {
       if (res.status === 200) {
         setTimeout(() => {
-          handleLogin({url: basicauth.login, user: {id, password}}).then(
-            res => {
+          handleLogin({url: basicauth.login, user: {name, password}}).then(
+            () => {
               router.go('/')
             }
           )
@@ -55,99 +55,119 @@ const OTPLoginPage = props => {
     })
   }
 
-  let reg = null
-  if (passwordPolicy) {
-    reg = new RegExp(passwordPolicy && passwordPolicy, 'ig')
-  }
+  componentDidMount = () => {
+    const {name} = this.props.location.state
 
-  const isValidPassword = reg && password.length > 0 && reg.test(password)
-  const isValidPasswordConfirm = reg && password === passwordConfirm
-
-  useEffect(() => {
-    if (_.isEmpty(id)) {
+    if (_.isEmpty(name)) {
       router.push('/')
     }
-  }, [])
 
-  return (
-    <div>
-      <Notifications />
-      <SplashPage router={router}>
-        <h1
-          className="auth-text-logo"
-          style={{
-            position: 'absolute',
-            top: '-9999px',
-            left: '-9999px',
-          }}
-        >
-          CloudHub
-        </h1>
-        <div
-          className={'auth-area'}
-          style={{backgroundColor: '#292933', padding: '20px'}}
-        >
-          <div className="panel" style={{marginBottom: '0px'}}>
-            <div
-              className="panel-heading"
-              style={{justifyContent: 'center', padding: '0 0 15px 0'}}
-            >
-              <h2 className="panel-title">Password Change</h2>
-            </div>
-            <div className="panel-body" style={{padding: '0px'}}>
-              <div className="form-group">
-                <div className="auth-form">
-                  <input
-                    className="form-control"
-                    type="password"
-                    placeholder={'New password'}
-                    value={password}
-                    onChange={onChangePassword}
-                    spellCheck={false}
-                  />
-                  {!isValidPassword && (
-                    <div className="form-message fm--danger">
-                      {passwordPolicyMessage}
-                    </div>
-                  )}
-                  {isValidPassword && (
-                    <span className="form-input-checkmark icon checkmark" />
-                  )}
-                </div>
-              </div>
-              <div className="form-group">
-                <div className="auth-form">
-                  <input
-                    className="form-control"
-                    type="password"
-                    placeholder={'New password confirm'}
-                    value={passwordConfirm}
-                    onChange={onChangePasswordConfirm}
-                    spellCheck={false}
-                  />
-                  {passwordConfirm.length > 0 && !isValidPasswordConfirm && (
-                    <div className={`form-message fm--danger`}>
-                      Your password and confirmation password do not match.
-                    </div>
-                  )}
-                  {isValidPassword && isValidPasswordConfirm && (
-                    <span className="form-input-checkmark icon checkmark" />
-                  )}
-                </div>
-              </div>
-              <button
-                className="btn btn-primary btn-sm col-md-12"
-                disabled={!isValidPassword || !isValidPasswordConfirm}
-                onClick={onClickOTPChange}
+    this.setState({name})
+  }
+
+  render() {
+    const {
+      router,
+      authData: {
+        basicauth,
+        basicPassword,
+        passwordPolicy,
+        passwordPolicyMessage,
+      },
+    } = this.props
+    const {name, password, passwordConfirm} = this.state
+
+    let reg = null
+    if (passwordPolicy) {
+      reg = new RegExp(passwordPolicy && passwordPolicy, 'ig')
+    }
+    const isValidPassword = reg && password.length > 0 && reg.test(password)
+    const isValidPasswordConfirm = reg && password === passwordConfirm
+    return (
+      <div>
+        <Notifications />
+        <SplashPage router={router}>
+          <h1
+            className="auth-text-logo"
+            style={{
+              position: 'absolute',
+              top: '-9999px',
+              left: '-9999px',
+            }}
+          >
+            CloudHub
+          </h1>
+          <div
+            className={'auth-area'}
+            style={{backgroundColor: '#292933', padding: '20px'}}
+          >
+            <div className="panel" style={{marginBottom: '0px'}}>
+              <div
+                className="panel-heading"
+                style={{justifyContent: 'center', padding: '0 0 15px 0'}}
               >
-                Change Password
-              </button>
+                <h2 className="panel-title">Password Change</h2>
+              </div>
+              <div className="panel-body" style={{padding: '0px'}}>
+                <div className="form-group">
+                  <div className="auth-form">
+                    <input
+                      className="form-control"
+                      type="password"
+                      placeholder={'New password'}
+                      value={password}
+                      onChange={this.handleInputChange('password')}
+                      spellCheck={false}
+                    />
+                    {!isValidPassword && (
+                      <div className="form-message fm--danger">
+                        {passwordPolicyMessage}
+                      </div>
+                    )}
+                    {isValidPassword && (
+                      <span className="form-input-checkmark icon checkmark" />
+                    )}
+                  </div>
+                </div>
+                <div className="form-group">
+                  <div className="auth-form">
+                    <input
+                      className="form-control"
+                      type="password"
+                      placeholder={'New password confirm'}
+                      value={passwordConfirm}
+                      onChange={this.handleInputChange('passwordConfirm')}
+                      spellCheck={false}
+                    />
+                    {passwordConfirm.length > 0 && !isValidPasswordConfirm && (
+                      <div className={`form-message fm--danger`}>
+                        Your password and confirmation password do not match.
+                      </div>
+                    )}
+                    {isValidPassword && isValidPasswordConfirm && (
+                      <span className="form-input-checkmark icon checkmark" />
+                    )}
+                  </div>
+                </div>
+                <button
+                  className="btn btn-primary btn-sm col-md-12"
+                  disabled={!isValidPassword || !isValidPasswordConfirm}
+                  onClick={() => {
+                    this.onClickOTPChange(
+                      isValidPassword,
+                      isValidPasswordConfirm
+                    )
+                  }}
+                >
+                  Change Password
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </SplashPage>
-    </div>
-  )
+        </SplashPage>
+      </div>
+    )
+  }
 }
 
 const mapDispatchToProps = {
@@ -155,20 +175,18 @@ const mapDispatchToProps = {
   handleOTPChange: otpChangeAsync,
 }
 
-const {array, bool, shape, string, func} = PropTypes
+const {shape, string, func} = PropTypes
 
-OTPLoginPage.prototype = {
-  router: shape(),
+OTPLoginPage.propTypes = {
+  router: shape().isRequired,
   authData: shape({
-    auth: shape({
-      me: shape(),
-      links: array,
-      isLoading: bool,
-    }),
-    passwordPolicy: shape(),
-    passwordPolicyMessage: shape(),
-  }),
-  handleOTPChange: func,
+    basicauth: shape().isRequired,
+    passwordPolicy: string.isRequired,
+    passwordPolicyMessage: string.isRequired,
+  }).isRequired,
+  handleOTPChange: func.isRequired,
+  location: shape().isRequired,
+  handleLogin: func.isRequired,
 }
 
 export default connect(null, mapDispatchToProps)(OTPLoginPage)
