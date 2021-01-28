@@ -18,6 +18,7 @@ import LogsTable from 'src/logs/components/LogsTable'
 import OverlayTechnology from 'src/reusable_ui/components/overlays/OverlayTechnology'
 import HistogramResults from 'src/logs/components/HistogramResults'
 import PageSpinner from 'src/shared/components/PageSpinner'
+import {isUserAuthorized, ADMIN_ROLE} from 'src/auth/Authorized'
 
 // Utils
 import {getDeep} from 'src/utils/wrappers'
@@ -165,11 +166,19 @@ interface State {
   hasScrolled: boolean
   isLoadingNewer: boolean
   queryCount: number
+  isRouting: boolean
 }
 
 class ActivityLogsPage extends Component<Props, State> {
   private isMount = false
   public static getDerivedStateFromProps(props: Props) {
+    const {isUsingAuth, me, router} = props
+    if (!isUsingAuth || !isUserAuthorized(me.role, ADMIN_ROLE)) {
+      router.push('/')
+      const isRouting = true
+      return {isRouting}
+    }
+
     const severityLevelColors: SeverityLevelColor[] = _.get(
       props.logConfig,
       'severityLevelColors',
@@ -199,6 +208,7 @@ class ActivityLogsPage extends Component<Props, State> {
       histogramColors: [],
       hasScrolled: false,
       queryCount: 0,
+      isRouting: false,
     }
   }
 
@@ -224,6 +234,9 @@ class ActivityLogsPage extends Component<Props, State> {
   }
 
   public async componentDidMount() {
+    if (this.state.isRouting) {
+      return
+    }
     this.isMount = true
     await this.getSources()
 

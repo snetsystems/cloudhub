@@ -143,18 +143,42 @@ class SideNav extends PureComponent<Props> {
           </NavListItem>
         </NavBlock>
 
-        <NavBlock
-          highlightWhen={['logs']}
-          icon="eye"
-          link={`${sourcePrefix}/logs`}
-          location={location}
+        <Authorized
+          requiredRole={ADMIN_ROLE}
+          replaceWithIfNotAuthorized={
+            <NavBlock
+              highlightWhen={['logs']}
+              icon="eye"
+              link={`${sourcePrefix}/logs`}
+              location={location}
+            >
+              <NavHeader link={`${sourcePrefix}/logs`} title="Log Viewer" />
+            </NavBlock>
+          }
+          replaceWithIfNotUsingAuth={
+            <NavBlock
+              highlightWhen={['logs']}
+              icon="eye"
+              link={`${sourcePrefix}/logs`}
+              location={location}
+            >
+              <NavHeader link={`${sourcePrefix}/logs`} title="Log Viewer" />
+            </NavBlock>
+          }
         >
-          <NavHeader link={`${sourcePrefix}/logs`} title="Log Viewer" />
-          <NavListItem link={`${sourcePrefix}/logs`}>System Logs</NavListItem>
-          <NavListItem link={`${sourcePrefix}/activity-logs`}>
-            Activity Logs
-          </NavListItem>
-        </NavBlock>
+          <NavBlock
+            highlightWhen={['logs']}
+            icon="eye"
+            link={`${sourcePrefix}/logs`}
+            location={location}
+          >
+            <NavHeader link={`${sourcePrefix}/logs`} title="Log Viewer" />
+            <NavListItem link={`${sourcePrefix}/logs`}>System Logs</NavListItem>
+            <NavListItem link={`${sourcePrefix}/activity-logs`}>
+              Activity Logs
+            </NavListItem>
+          </NavBlock>
+        </Authorized>
 
         <Authorized
           requiredRole={ADMIN_ROLE}
