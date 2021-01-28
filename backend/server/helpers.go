@@ -7,6 +7,7 @@ import (
 	"net"
 	"errors"
 	"os/exec"
+	"unsafe"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
@@ -97,5 +98,21 @@ func programExec(program string, args []string, logger cloudhub.Logger) bool {
 	}
 	
 	logger.WithField("component", program).Info(string(out))
-	return true
+
+	httpStatusCode := ByteArrayToInt(out)
+
+	if httpStatusCode == http.StatusOK || httpStatusCode == http.StatusCreated || httpStatusCode == http.StatusAccepted {
+		return true
+	}
+	return false
+}
+
+// ByteArrayToInt byte array to int
+func ByteArrayToInt(arr []byte) int64 {
+    val := int64(0)
+    size := len(arr)
+    for i := 0 ; i < size ; i++ {
+        *(*uint8)(unsafe.Pointer(uintptr(unsafe.Pointer(&val)) + uintptr(i))) = arr[i]
+    }
+    return val
 }
