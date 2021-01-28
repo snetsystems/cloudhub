@@ -265,6 +265,24 @@ export const notifyCloudHubUserUpdated = (message: string): Notification => ({
   message,
 })
 
+export const notifyCloudHubBasicUserAdd = (
+  name: string,
+  password: string
+): Notification => {
+  let message = `
+    <div>Reset User Password Success.</div>
+    <hr class="notification-line">
+    <div>user name: ${name}</div>
+    <div>password: ${password}</div>
+  `
+  return {
+    ...defaultSuccessNotification,
+    duration: INFINITE,
+    isHasHTML: true,
+    message,
+  }
+}
+
 export const notifyCloudHubOrgDeleted = (orgName: string): Notification => ({
   ...defaultSuccessNotification,
   message: `Organization ${orgName} deleted successfully.`,
