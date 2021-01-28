@@ -259,7 +259,7 @@ class LogsTable extends Component<Props, State> {
                     style={{
                       height: this.calculateTotalHeight(),
                       width: Math.max(this.minTableWidth, width),
-                      overflow: 'hidden',
+                      // overflowY: 'hidden',
                     }}
                   />
                 </FancyScrollbar>
