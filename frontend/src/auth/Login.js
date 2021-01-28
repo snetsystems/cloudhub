@@ -311,7 +311,7 @@ class Login extends PureComponent {
                   className="btn btn-primary auth-form"
                   href={link.login}
                 >
-                  <span className={`icon ${name}`} />
+                  <span className={`icon ${link.name}`} />
                   Log in with {link.label}
                 </a>
               ))}
