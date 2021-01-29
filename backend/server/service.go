@@ -21,7 +21,7 @@ type Service struct {
 	MailBody                 string
 	ProgramPath              string
 	ExecuteFile              string
-	BasicAuth                bool
+	LoginAuthType            string
 }
 
 type superAdminProviderGroups struct {
