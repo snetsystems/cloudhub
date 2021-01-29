@@ -1,4 +1,4 @@
-export const BASIC_AUTH_TYPE = {
+export const LOGIN_AUTH_TYPE = {
   MIX: 'mix',
   BASIC: 'basic',
   OAUTH: 'oauth',
