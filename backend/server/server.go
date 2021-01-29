@@ -113,6 +113,8 @@ type Server struct {
 	Auth0Organizations []string `long:"auth0-organizations" description:"Auth0 organizations permitted to access CloudHub (env comma separated)" env:"AUTH0_ORGS" env-delim:","`
 	Auth0SuperAdminOrg string   `long:"auth0-superadmin-org" description:"Auth0 organization from which users are automatically granted SuperAdmin status" env:"AUTH0_SUPERADMIN_ORG"`
 
+	BasicAuthEnabled      bool     `long:"basic-auth-enabled" description:"Enable Basic login" env:"BASIC_AUTH_ENABLED"`
+
 	PasswordPolicy        string   `long:"password-policy" description:"Password validity rules" env:"PASSWORD_POLICY"`
 	PasswordPolicyMessage string   `long:"password-policy-message" description:"Password validity rule description" env:"PASSWORD_POLICY_MESSAGE"`
 
@@ -588,7 +590,7 @@ func (s *Server) Serve(ctx context.Context) {
 		}
 	}
 	
-	service := openService(ctx, db, s.newBuilders(logger), logger, s.useAuth(), s.AddonURLs, s.MailSubject, s.MailBodyMessage, s.ProgramPath, s.ExecuteFile)
+	service := openService(ctx, db, s.newBuilders(logger), logger, s.useAuth(), s.AddonURLs, s.MailSubject, s.MailBodyMessage, s.ProgramPath, s.ExecuteFile, s.BasicAuthEnabled)
 	service.SuperAdminProviderGroups = superAdminProviderGroups{
 		auth0: s.Auth0SuperAdminOrg,
 	}
@@ -708,7 +710,7 @@ func (s *Server) Serve(ctx context.Context) {
 		Info("Stopped serving cloudhub at ", scheme, "://", listener.Addr())
 }
 
-func openService(ctx context.Context, db kv.Store, builder builders, logger cloudhub.Logger, useAuth bool, addonURLs map[string]string, mailSubject, mailBody, programPath, executeFile string) Service {
+func openService(ctx context.Context, db kv.Store, builder builders, logger cloudhub.Logger, useAuth bool, addonURLs map[string]string, mailSubject, mailBody, programPath, executeFile string, basicAuth bool) Service {
 	svc, err := kv.NewService(ctx, db, kv.WithLogger(logger))
 	if err != nil {
 		logger.Error("Unable to create kv service", err)
@@ -786,6 +788,7 @@ func openService(ctx context.Context, db kv.Store, builder builders, logger clou
 		MailBody:                 mailBody,
 		ProgramPath:              programPath,
 		ExecuteFile:              executeFile,
+		BasicAuth:                basicAuth,
 	}
 }
 

@@ -344,7 +344,7 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 
 		principal := oauth2.Principal{
 			Subject:      user.Name,
-			Issuer:       BasicProvider,	// cloudhub
+			Issuer:       BasicProvider,
 			Organization: orgID,
 			Group: "",
 		}
@@ -362,7 +362,6 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 		// log registration
 		LogRegistration(r, s.Store, s.Logger, orgID, "login", user.Name, "Success Login", user.SuperAdmin)
 
-		// SuccessURL
 		res := &loginResponse{
 			PasswordResetFlag: user.PasswordResetFlag,
 		}
@@ -410,7 +409,7 @@ func validPassword(reqPassword, hashPassword, key []byte) bool {
 }
 
 func randResetPassword() string {
-	chars := []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")
+	chars := []rune("ABCDEFGHJKMNOPQRSTUVWXYZabcdefghjkmnopqrstuvwxyz0123456789")
 	length := 8
 
 	rand.Seed(time.Now().UnixNano())

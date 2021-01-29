@@ -7,6 +7,8 @@ import (
 	"net"
 	"errors"
 	"os/exec"
+	"bytes"
+	"strconv"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
@@ -97,5 +99,12 @@ func programExec(program string, args []string, logger cloudhub.Logger) bool {
 	}
 	
 	logger.WithField("component", program).Info(string(out))
-	return true
+
+	resStatusCode := bytes.NewBuffer(out).String()
+	httpStatusCode, _ := strconv.Atoi(resStatusCode)
+
+	if httpStatusCode == http.StatusOK || httpStatusCode == http.StatusCreated || httpStatusCode == http.StatusAccepted {
+		return true
+	}
+	return false
 }
