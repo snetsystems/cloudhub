@@ -4,6 +4,7 @@ import PropTypes from 'prop-types'
 import _ from 'lodash'
 
 import SplashPage from 'src/shared/components/SplashPage'
+import PageSpinner from 'src/shared/components/PageSpinner'
 
 import {getUserAsync, updateUserAsync} from 'src/auth/actions'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -17,6 +18,7 @@ class UpdateUser extends PureComponent {
       email: '',
       password: '',
       passwordConfirm: '',
+      isFetching: false,
     }
   }
 
@@ -33,15 +35,15 @@ class UpdateUser extends PureComponent {
     this.setState({[fieldName]: e.target.value.trim()})
   }
 
-  handleKeyPressSubmit = (isValidPassword, isValidPasswordConfirm) => {
-    return e => {
-      if (e.key === 'Enter') {
-        this.handleUpdateUserSubmit(isValidPassword, isValidPasswordConfirm)
-      }
+  handleKeyPressSubmit = (isValidPassword, isValidPasswordConfirm) => e => {
+    if (e.key === 'Enter') {
+      e.target.blur()
+      this.handleUpdateUserSubmit(isValidPassword, isValidPasswordConfirm)
     }
   }
 
-  handleClickSubmit = (isValidPassword, isValidPasswordConfirm) => {
+  handleClickSubmit = (isValidPassword, isValidPasswordConfirm) => e => {
+    e.target.blur()
     this.handleUpdateUserSubmit(isValidPassword, isValidPasswordConfirm)
   }
 
@@ -65,32 +67,37 @@ class UpdateUser extends PureComponent {
           return
         }
       }
+      this.setState({isFetching: true})
 
-      this.getUser().then(({data}) => {
-        let user = {
-          email,
-          roles: data.roles,
-          superAdmin: data.superAdmin,
-        }
-
-        if (isValidPassword && isValidPasswordConfirm) {
-          user = {
-            ...user,
-            password,
+      this.getUser()
+        .then(({data}) => {
+          let user = {
+            email,
+            roles: data.roles,
+            superAdmin: data.superAdmin,
           }
-        }
 
-        handleUpdateUser({url: `/cloudhub/v1/users/${me.id}`, user}).then(
-          res => {
-            this.setState({email: '', password: '', passwordConfirm: ''})
-            if (res.data?.email) {
-              this.setState({
-                email: res.data.email,
-              })
+          if (isValidPassword && isValidPasswordConfirm) {
+            user = {
+              ...user,
+              password,
             }
           }
-        )
-      })
+
+          handleUpdateUser({url: `/cloudhub/v1/users/${me.id}`, user}).then(
+            res => {
+              this.setState({email: '', password: '', passwordConfirm: ''})
+              if (res.data?.email) {
+                this.setState({
+                  email: res.data.email,
+                })
+              }
+            }
+          )
+        })
+        .finally(() => {
+          this.setState({isFetching: false})
+        })
     },
     250
   )
@@ -120,13 +127,41 @@ class UpdateUser extends PureComponent {
       links: {passwordPolicy, passwordPolicyMessage},
       auth: {me},
     } = this.props
-    const {password, passwordConfirm, email} = this.state
+    const {password, passwordConfirm, email, isFetching} = this.state
+
     const reg = new RegExp(passwordPolicy, 'ig')
     const isValidPassword = password.length > 0 && reg.test(password)
     const isValidPasswordConfirm = password === passwordConfirm
     return (
       <div>
         <SplashPage isShowCopy={false} isShowLogo={false} router={router}>
+          {isFetching && (
+            <div
+              style={{
+                width: '100%',
+              }}
+            >
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  position: 'absolute',
+                  zIndex: '2',
+                }}
+              >
+                <PageSpinner />
+              </div>
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  position: 'absolute',
+                  zIndex: '1',
+                  background: 'rgba(0,0,0,0.6)',
+                }}
+              />
+            </div>
+          )}
           <h1
             className="auth-text-logo"
             style={{position: 'absolute', top: '-9999px', left: '-9999px'}}
@@ -226,12 +261,10 @@ class UpdateUser extends PureComponent {
                 <div className={'auth-button-bar'}>
                   <button
                     className="btn btn-primary btn-sm col-md-8"
-                    onClick={() => {
-                      this.handleClickSubmit(
-                        isValidPassword,
-                        isValidPasswordConfirm
-                      )
-                    }}
+                    onClick={this.handleClickSubmit(
+                      isValidPassword,
+                      isValidPasswordConfirm
+                    )}
                   >
                     Change
                   </button>
@@ -240,6 +273,17 @@ class UpdateUser extends PureComponent {
             </div>
           </div>
         </SplashPage>
+        {isFetching && (
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              position: 'absolute',
+              zIndex: '45',
+              background: 'rgba(0,0,0,0.3)',
+            }}
+          />
+        )}
       </div>
     )
   }
