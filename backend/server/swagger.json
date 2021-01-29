@@ -31,6 +31,223 @@
         }
       }
     },
+    "/basic/login": {
+      "post": {
+        "tags": ["login"],
+        "summary": "Login Cloudhub potal",
+        "description": "Login Cloudhub potal (not oauth2)",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "body",
+            "description": "access user name",
+            "schema": {
+              "$ref": "#/definitions/LoginReq"
+            }
+          },
+          {
+            "name": "password",
+            "in": "body",
+            "description": "access user password",
+            "schema": {
+              "$ref": "#/definitions/LoginReq"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Login successfully",
+            "schema": {
+              "$ref": "#/definitions/LoginRes"
+            }
+          },
+          "400": {
+            "description": "Invalid JSON – unable to encode or decode; or failed to perform operation in data store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/basic/logout": {
+      "get": {
+        "tags": ["logout"],
+        "summary": "Logout Cloudhub potal",
+        "description": "Logout Cloudhub potal (not oauth2)",
+        "responses": {
+          "200": {
+            "description": "Logout successfully"
+          },
+          "403": {
+            "description": "Forbidden to access this route",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/basic/password/reset": {
+      "get": {
+        "tags": ["passwd reset(user)"],
+        "summary": "Password reset",
+        "description": "password reset (Before Login)",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "description": "password send api",
+            "type": "string",
+            "required": true,
+            "example": "path=/kapacitor/v1/service-tests/smtp"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "description": "target user name",
+            "type": "string",
+            "required": true,
+            "example": "name=test"
+          },
+          {
+            "name": "pwrtn",
+            "in": "query",
+            "description": "whether to return password",
+            "type": "string",
+            "required": true,
+            "example": "pwrtn=false"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Password reset successfully",
+            "schema": {
+              "$ref": "#/definitions/PasswdResetRes"
+            }
+          },
+          "422": {
+            "description": "Invalid param value in path; or invalid limit or offset param value in query.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/password/reset": {
+      "get": {
+        "tags": ["passwd reset(admin)"],
+        "summary": "Password reset",
+        "description": "password reset (Admin)",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "query",
+            "description": "password send api",
+            "type": "string",
+            "required": true,
+            "example": "path=/kapacitor/v1/service-tests/smtp"
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "description": "target user name",
+            "type": "string",
+            "required": true,
+            "example": "name=test"
+          },
+          {
+            "name": "pwrtn",
+            "in": "query",
+            "description": "whether to return password",
+            "type": "string",
+            "required": true,
+            "example": "pwrtn=true"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Password reset successfully",
+            "schema": {
+              "$ref": "#/definitions/PasswdResetRes"
+            }
+          },
+          "422": {
+            "description": "Invalid param value in path; or invalid limit or offset param value in query.",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/basic/password": {
+      "patch": {
+        "tags": ["passwd change"],
+        "summary": "Password change",
+        "description": "Password change (by basic)",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "body",
+            "description": "target user name",
+            "schema": {
+              "$ref": "#/definitions/Password"
+            }
+          },
+          {
+            "name": "password",
+            "in": "body",
+            "description": "new password",
+            "schema": {
+              "$ref": "#/definitions/Password"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Password change successfully"
+          },
+          "400": {
+            "description": "Invalid JSON – unable to encode or decode; or failed to perform operation in data store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
     "/sources": {
       "get": {
         "tags": ["sources"],
@@ -2993,7 +3210,69 @@
       },
       "post": {
         "tags": ["organizations", "users"],
-        "summary": "Create new user",
+        "summary": "Create new user (by admin)",
+        "description": "Creates a CloudHub user in the store",
+        "parameters": [
+          {
+            "name": "user",
+            "in": "body",
+            "description": "User to create",
+            "schema": {
+              "$ref": "#/definitions/UserReq"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "User successfully created",
+            "headers": {
+              "Location": {
+                "type": "string",
+                "format": "url",
+                "description": "Location of the newly created user resource"
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/UserRes"
+            }
+          },
+          "400": {
+            "description": "Invalid JSON – unable to encode or decode; or failed to perform operation in data store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "401": {
+            "description": "Unauthorized to perform this operation",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden to access this route",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "Invalid data schema provided to server for user",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/basic/users": {
+      "post": {
+        "tags": ["organizations", "users"],
+        "summary": "Create new user (by sign up)",
         "description": "Creates a CloudHub user in the store",
         "parameters": [
           {
@@ -7016,6 +7295,87 @@
             "$ref": "#/definitions/VsphereRes"
           }
         }
+      }
+    },
+    "LoginReq": {
+      "type": "object",
+      "description": "login information (by basic)",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "user name"
+        },
+        "password": {
+          "type": "string",
+          "description": "user password"
+        }
+      },
+      "required": ["name", "password"],
+      "example": {
+        "name": "test",
+        "password": "dkeidj@!@"
+      }
+    },
+    "LoginRes": {
+      "type": "object",
+      "description": "login information (by basic)",
+      "properties": {
+        "passwordResetFlag": {
+          "type": "string",
+          "description": "password reset flag (Y/N)"
+        }
+      },
+      "required": ["passwordResetFlag"],
+      "example": {
+        "passwordResetFlag": "N"
+      }
+    },
+    "PasswdResetRes": {
+      "type": "object",
+      "description": "password reset (by basic)",
+      "properties": {
+        "passwordResetFlag": {
+          "type": "string",
+          "description": "password reset flag (Y/N)"
+        },
+        "user_name": {
+          "type": "string",
+          "description": "target user name"
+        },
+        "send_kind": {
+          "type": "string",
+          "description": "password send kind"
+        },
+        "password": {
+          "type": "string",
+          "description": "temporary password"
+        }
+      },
+      "required": ["passwordResetFlag", "user_name", "send_kind"],
+      "example": {
+        "passwordResetFlag": "N",
+        "password": "dkdu@#(632",
+        "user_name": "eieyu@lxxco.com",
+        "send_kind": "email"
+      }
+    },
+    "Password": {
+      "type": "object",
+      "description": "password change (by basic)",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "user name"
+        },
+        "password": {
+          "type": "string",
+          "description": "user password"
+        }
+      },
+      "required": ["name", "password"],
+      "example": {
+        "name": "test",
+        "password": "dkeidj@!@"
       }
     }
   }

@@ -163,8 +163,8 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		// test imsi
 		args := []string{s.ExecuteFile, name, resetPassword}
 		if !programExec(s.ProgramPath, args, s.Logger) {
-			//Error(w, http.StatusBadRequest, fmt.Sprintf("fail external program : %s, %s, %s", s.ProgramPath, s.ExecuteFile, args), s.Logger)
-			//return
+			Error(w, http.StatusBadRequest, fmt.Sprintf("fail external program : %s, %s, %s", s.ProgramPath, s.ExecuteFile, args), s.Logger)
+			return
 		}
 
 		user.PasswordResetFlag = "Y"
@@ -182,7 +182,6 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 			Pwrtn:    pwrtn,
 			SendKind: "external",
 			PasswordResetFlag: user.PasswordResetFlag,
-			Password: resetPassword,	// 최종본에서는 삭제
 		}
 
 		if pwrtnBool {			
