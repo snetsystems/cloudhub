@@ -198,15 +198,20 @@ func (s *Service) UpdateMe(auth oauth2.Authenticator) func(http.ResponseWriter, 
 // Me does a findOrCreate based on the username in the context
 func (s *Service) Me(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	
 	if !s.UseAuth {
 		if s.BasicAuth {
-			w.WriteHeader(http.StatusForbidden)
+			_, err := getValidPrincipal(ctx)
+			if err != nil {
+				w.WriteHeader(http.StatusForbidden)
+				return
+			}
+		} else {
+			// If there's no authentication, return an empty user
+			res := newNoAuthMeResponse()
+			encodeJSON(w, http.StatusOK, res, s.Logger)
 			return
 		}
-		// If there's no authentication, return an empty user
-		res := newNoAuthMeResponse()
-		encodeJSON(w, http.StatusOK, res, s.Logger)
-		return
 	}
 
 	p, err := getValidPrincipal(ctx)
