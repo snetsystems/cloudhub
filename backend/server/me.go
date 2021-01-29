@@ -28,14 +28,10 @@ type noAuthMeResponse struct {
 	Links meLinks `json:"links"`
 }
 
-func newNoAuthMeResponse(basicAuth bool) noAuthMeResponse {
-	var meLink string
-	if !basicAuth {
-		meLink = "/cloudhub/v1/me"
-	}
+func newNoAuthMeResponse() noAuthMeResponse {
 	return noAuthMeResponse{
 		Links: meLinks{
-			Self: meLink,
+			Self: "/cloudhub/v1/me",
 		},
 	}
 }
@@ -203,8 +199,12 @@ func (s *Service) UpdateMe(auth oauth2.Authenticator) func(http.ResponseWriter, 
 func (s *Service) Me(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if !s.UseAuth {
+		if s.BasicAuth {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
 		// If there's no authentication, return an empty user
-		res := newNoAuthMeResponse(s.BasicAuth)
+		res := newNoAuthMeResponse()
 		encodeJSON(w, http.StatusOK, res, s.Logger)
 		return
 	}
