@@ -64,7 +64,7 @@ type getRoutesResponse struct {
 	ValidTextTemplates string                             `json:"validateTextTemplates"` // Location of the valid text templates endpoint
 	PasswordPolicy        string                          `json:"passwordPolicy"`
 	PasswordPolicyMessage string                          `json:"passwordPolicyMessage"`
-	LoginAuthType         string                          `json:"basicAuthType"`
+	LoginAuthType         string                          `json:"loginAuthType"`
 }
 
 // AllRoutes is a handler that returns all links to resources in CloudHub server, as well as
