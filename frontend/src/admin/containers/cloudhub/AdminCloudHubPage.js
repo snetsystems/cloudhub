@@ -1,6 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import {connect} from 'react-redux'
+import _ from 'lodash'
 
 import {Page} from 'src/reusable_ui'
 import SubSections from 'src/shared/components/SubSections'
@@ -15,21 +16,26 @@ import {
   ADMIN_ROLE,
   SUPERADMIN_ROLE,
 } from 'src/auth/Authorized'
+import {LOGIN_AUTH_TYPE} from 'src/auth/constants'
 
-const sections = me => [
+const sections = (me, providers) => [
   {
     url: 'current-organization',
     name: 'Current Org',
     enabled: isUserAuthorized(me.role, ADMIN_ROLE),
     component: (
-      <UsersPage meID={me.id} meCurrentOrganization={me.currentOrganization} />
+      <UsersPage
+        meID={me.id}
+        meCurrentOrganization={me.currentOrganization}
+        providers={providers}
+      />
     ),
   },
   {
     url: 'all-users',
     name: 'All Users',
     enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
-    component: <AllUsersPage meID={me.id} />,
+    component: <AllUsersPage meID={me.id} providers={providers} />,
   },
   {
     url: 'all-organizations',
@@ -47,26 +53,47 @@ const sections = me => [
   },
 ]
 
-const AdminCloudHubPage = ({me, source, params: {tab}}) => (
-  <Page>
-    <Page.Header>
-      <Page.Header.Left>
-        <Page.Title title="CloudHub Admin" />
-      </Page.Header.Left>
-      <Page.Header.Right />
-    </Page.Header>
-    <Page.Contents fullWidth={true}>
-      <div className="container-fluid">
-        <SubSections
-          sections={sections(me)}
-          activeSection={tab}
-          parentUrl="admin-cloudhub"
-          sourceID={source.id}
-        />
-      </div>
-    </Page.Contents>
-  </Page>
-)
+const AdminCloudHubPage = props => {
+  const {
+    me,
+    source,
+    params: {tab},
+    links: {auth, loginAuthType},
+  } = props
+
+  let providers = []
+
+  if (loginAuthType !== LOGIN_AUTH_TYPE.OAUTH) {
+    providers.push('cloudhub')
+  }
+
+  if (loginAuthType !== LOGIN_AUTH_TYPE.BASIC) {
+    _.forEach(auth, authObj => {
+      providers.push(authObj.name)
+    })
+  }
+
+  return (
+    <Page>
+      <Page.Header>
+        <Page.Header.Left>
+          <Page.Title title="CloudHub Admin" />
+        </Page.Header.Left>
+        <Page.Header.Right />
+      </Page.Header>
+      <Page.Contents fullWidth={true}>
+        <div className="container-fluid">
+          <SubSections
+            sections={sections(me, providers)}
+            activeSection={tab}
+            parentUrl="admin-cloudhub"
+            sourceID={source.id}
+          />
+        </div>
+      </Page.Contents>
+    </Page>
+  )
+}
 
 const {shape, string} = PropTypes
 

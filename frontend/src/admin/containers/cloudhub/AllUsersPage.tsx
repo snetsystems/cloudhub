@@ -20,6 +20,7 @@ import {
 import {AlertTypes} from 'src/kapacitor/constants'
 
 interface Props {
+  providers: string[]
   notify: (message: Notification | NotificationFunc) => void
   links: Links
   meID: string
@@ -136,6 +137,7 @@ export class AllUsersPage extends PureComponent<Props, State> {
       authConfig,
       actionsConfig,
       organizations,
+      providers,
     } = this.props
 
     return (
@@ -147,6 +149,7 @@ export class AllUsersPage extends PureComponent<Props, State> {
         authConfig={authConfig}
         actionsConfig={actionsConfig}
         organizations={organizations}
+        providers={providers}
         isLoading={this.state.isLoading}
         onDeleteUser={this.handleDeleteUser}
         onCreateUser={this.handleCreateUser}

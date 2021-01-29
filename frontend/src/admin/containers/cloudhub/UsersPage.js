@@ -87,6 +87,7 @@ class UsersPage extends PureComponent {
       meID,
       users,
       notify,
+      providers,
     } = this.props
     const {isLoading} = this.state
 
@@ -99,6 +100,7 @@ class UsersPage extends PureComponent {
         meID={meID}
         users={users}
         organization={organization}
+        providers={providers}
         onCreateUser={this.handleCreateUser}
         onUpdateUserRole={this.handleUpdateUserRole}
         onDeleteUser={this.handleDeleteUser}
@@ -131,7 +133,8 @@ UsersPage.propTypes = {
     deleteUserAsync: func.isRequired,
   }),
   notify: func.isRequired,
-  handlePasswordReset: func,
+  handlePasswordReset: func.isRequired,
+  providers: arrayOf(string).isRequired,
 }
 
 const mapStateToProps = ({links, adminCloudHub: {organizations, users}}) => ({

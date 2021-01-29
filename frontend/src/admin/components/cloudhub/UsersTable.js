@@ -46,6 +46,7 @@ class UsersTable extends Component {
   render() {
     const {
       organization,
+      providers,
       users,
       onCreateUser,
       meID,
@@ -89,6 +90,7 @@ class UsersTable extends Component {
             <tbody>
               {isCreatingUser ? (
                 <UsersTableRowNew
+                  providers={providers}
                   organization={organization}
                   onBlur={this.handleBlurCreateUserRow}
                   onCreateUser={onCreateUser}
@@ -151,6 +153,7 @@ UsersTable.propTypes = {
   onResetUserPassword: func,
   meID: string.isRequired,
   isLoading: bool.isRequired,
+  providers: arrayOf(string).isRequired,
 }
 
 export default ErrorHandling(UsersTable)

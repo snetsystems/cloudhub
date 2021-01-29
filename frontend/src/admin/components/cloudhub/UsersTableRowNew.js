@@ -60,6 +60,11 @@ class UsersTableRowNew extends PureComponent {
     e.target.select()
   }
 
+  handleSelectProvider = newProvider => {
+    const {text: provider} = newProvider
+    this.setState({provider})
+  }
+
   handleSelectRole = newRole => {
     this.setState({role: newRole.text})
   }
@@ -80,9 +85,27 @@ class UsersTableRowNew extends PureComponent {
     }
   }
 
+  componentDidUpdate = (_, prevState) => {
+    const {provider} = this.state
+    if (prevState.provider !== provider) {
+      if (provider === 'cloudhub') {
+        this.setState({scheme: 'basic'})
+      } else {
+        this.setState({scheme: 'oauth2'})
+      }
+    }
+  }
+
+  componentDidMount = () => {
+    const {providers} = this.props
+    if (providers.length > 0) {
+      this.setState({provider: providers[0]})
+    }
+  }
+
   render() {
     const {colRole, colProvider, colScheme, colActions} = USERS_TABLE
-    const {onBlur} = this.props
+    const {onBlur, providers} = this.props
     const {name, provider, scheme, role} = this.state
 
     const dropdownRolesItems = USER_ROLES.map(r => ({...r, text: r.name}))
@@ -112,14 +135,22 @@ class UsersTableRowNew extends PureComponent {
           />
         </td>
         <td style={{width: colProvider}}>
-          <input
+          <Dropdown
+            items={providers}
+            selected={provider}
+            onChoose={this.handleSelectProvider}
+            buttonColor="btn-primary"
+            buttonSize="btn-xs"
+            className="dropdown-stretch"
+          />
+          {/* <input
             className="form-control input-xs"
             type="text"
             placeholder="cloudhub or OAuth"
             value={provider}
             onChange={this.handleInputChange('provider')}
             onKeyDown={this.handleKeyDown}
-          />
+          /> */}
         </td>
         <td style={{width: colScheme}}>
           <input
@@ -147,7 +178,7 @@ class UsersTableRowNew extends PureComponent {
   }
 }
 
-const {func, shape, string} = PropTypes
+const {func, shape, string, arrayOf} = PropTypes
 
 UsersTableRowNew.propTypes = {
   organization: shape({
@@ -157,6 +188,7 @@ UsersTableRowNew.propTypes = {
   onBlur: func.isRequired,
   onCreateUser: func.isRequired,
   notify: func.isRequired,
+  providers: arrayOf(string).isRequired,
 }
 
 const mapDispatchToProps = dispatch => ({
