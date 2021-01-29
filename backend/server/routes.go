@@ -64,6 +64,7 @@ type getRoutesResponse struct {
 	ValidTextTemplates string                             `json:"validateTextTemplates"` // Location of the valid text templates endpoint
 	PasswordPolicy        string                          `json:"passwordPolicy"`
 	PasswordPolicyMessage string                          `json:"passwordPolicyMessage"`
+	BasicAuthEnabled      bool                            `json:"basicAuthEnabled"`
 }
 
 // AllRoutes is a handler that returns all links to resources in CloudHub server, as well as
@@ -82,6 +83,7 @@ type AllRoutes struct {
 	Logger       cloudhub.Logger
 	PasswordPolicy        string                        // Password validity rules
 	PasswordPolicyMessage string                        // Password validity rule description
+	BasicAuth             bool                          // Used Basic auth 
 }
 
 // serveHTTP returns all top level routes and external links within cloudhub
@@ -133,6 +135,7 @@ func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ValidTextTemplates: "/cloudhub/v1/validate_text_templates",
 		PasswordPolicy: a.PasswordPolicy,
 		PasswordPolicyMessage: a.PasswordPolicyMessage,
+		BasicAuthEnabled: a.BasicAuth,
 	}
 
 	// The JSON response will have no field present for the LogoutLink if there is no logout link.
