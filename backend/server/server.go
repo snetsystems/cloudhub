@@ -113,7 +113,7 @@ type Server struct {
 	Auth0Organizations []string `long:"auth0-organizations" description:"Auth0 organizations permitted to access CloudHub (env comma separated)" env:"AUTH0_ORGS" env-delim:","`
 	Auth0SuperAdminOrg string   `long:"auth0-superadmin-org" description:"Auth0 organization from which users are automatically granted SuperAdmin status" env:"AUTH0_SUPERADMIN_ORG"`
 
-	LoginAuthType         string   `long:"login-auth-type" description:"Login auth type (mix, oauth, basic)" env:"LOGIN_AUTH_TYPE"`
+	LoginAuthType         string   `long:"login-auth-type" description:"Login auth type (mix, oauth, basic)" env:"LOGIN_AUTH_TYPE" default:"oauth"`
 
 	PasswordPolicy        string   `long:"password-policy" description:"Password validity rules" env:"PASSWORD_POLICY"`
 	PasswordPolicyMessage string   `long:"password-policy-message" description:"Password validity rule description" env:"PASSWORD_POLICY_MESSAGE"`
@@ -124,7 +124,7 @@ type Server struct {
 	ProgramPath           string   `long:"program-path" description:"Program path." env:"PROGRAM_PATH"`
     ExecuteFile           string   `long:"execute-file" description:"Execute file." env:"EXECUTE_FILE"`
 
-	StatusFeedURL          string            `long:"status-feed-url" description:"URL of a JSON Feed to display as a News Feed on the client Status page." default:"https://www.snetgroup.info/" env:"STATUS_FEED_URL"`
+	StatusFeedURL          string  `long:"status-feed-url" description:"URL of a JSON Feed to display as a News Feed on the client Status page." default:"https://www.snetgroup.info/" env:"STATUS_FEED_URL"`
 	CustomLinks            map[string]string `long:"custom-link" description:"Custom link to be added to the client User menu. Multiple links can be added by using multiple of the same flag with different 'name:url' values, or as an environment variable with comma-separated 'name:url' values. E.g. via flags: '--custom-link=snetsystems:https://www.snetsystems.com --custom-link=CloudHub:https://github.com/snetsystems/cloudhub'. E.g. via environment variable: 'export CUSTOM_LINKS=snetsystems:https://www.snetsystems.com,CloudHub:https://github.com/snetsystems/cloudhub'" env:"CUSTOM_LINKS" env-delim:","`
 	TelegrafSystemInterval time.Duration     `long:"telegraf-system-interval" default:"1m" description:"Duration used in the GROUP BY time interval for the hosts list" env:"TELEGRAF_SYSTEM_INTERVAL"`
 
@@ -588,6 +588,11 @@ func (s *Server) Serve(ctx context.Context) {
 			logger.Error("Unable to create etcd client", err)
 			os.Exit(1)
 		}
+	}
+
+	// no auth
+	if !s.useAuth() {
+		s.LoginAuthType = ""
 	}
 	
 	service := openService(ctx, db, s.newBuilders(logger), logger, s.useAuth(), s.AddonURLs, s.MailSubject, s.MailBodyMessage, s.ProgramPath, s.ExecuteFile, s.LoginAuthType)
