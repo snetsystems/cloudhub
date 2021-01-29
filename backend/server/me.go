@@ -200,7 +200,7 @@ func (s *Service) Me(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	if !s.UseAuth {
 		if s.BasicAuth {
-			w.WriteHeader(http.StatusOK)
+			w.WriteHeader(http.StatusForbidden)
 			return
 		}
 		// If there's no authentication, return an empty user
