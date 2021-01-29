@@ -182,7 +182,6 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 			Pwrtn:    pwrtn,
 			SendKind: "external",
 			PasswordResetFlag: user.PasswordResetFlag,
-			Password: resetPassword,	// 최종본에서는 삭제
 		}
 
 		if pwrtnBool {			
