@@ -13,6 +13,7 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {loginAsync, createUserAsync} from 'src/auth/actions'
 
 import {notifyLoginCheck} from 'src/shared/copy/notifications'
+import {LOGIN_AUTH_TYPE} from 'src/auth/constants'
 
 const VERSION = process.env.npm_package_version
 class Login extends PureComponent {
@@ -94,7 +95,7 @@ class Login extends PureComponent {
   render() {
     const {
       router,
-      authData: {auth, passwordPolicy, passwordPolicyMessage},
+      authData: {auth, passwordPolicy, passwordPolicyMessage, loginAuthType},
     } = this.props
 
     const {name, password, passwordConfirm, email, activeEditorTab} = this.state
@@ -131,7 +132,7 @@ class Login extends PureComponent {
             <b>{VERSION}</b> / Real-Time Applications Monitoring
           </p>
           <div className={'auth-area'}>
-            {reg && (
+            {loginAuthType !== LOGIN_AUTH_TYPE.OAUTH && reg && (
               <>
                 <Radio
                   shape={ButtonShape.StretchToFit}
@@ -298,12 +299,16 @@ class Login extends PureComponent {
                 </div>
               </>
             )}
-            {!isSign && auth.links && reg && (
-              <div className="hr-label">
-                <span className="hr-label__text">OR</span>
-              </div>
-            )}
-            {!isSign &&
+            {loginAuthType === LOGIN_AUTH_TYPE.MIX &&
+              !isSign &&
+              auth.links.length > 0 &&
+              reg && (
+                <div className="hr-label">
+                  <span className="hr-label__text">OR</span>
+                </div>
+              )}
+            {loginAuthType !== LOGIN_AUTH_TYPE.BASIC &&
+              !isSign &&
               auth.links &&
               _.map(auth.links, link => (
                 <a
