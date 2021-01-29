@@ -132,8 +132,8 @@ func newUserResponse(u *cloudhub.User, org string, password string) *userRespons
 	} else {
 		selfLink = fmt.Sprintf("/cloudhub/v1/users/%d", u.ID)
 	}
-
-	return &userResponse{
+	
+	resData := &userResponse{
 		ID:         u.ID,
 		Name:       u.Name,
 		Provider:   u.Provider,
@@ -146,8 +146,13 @@ func newUserResponse(u *cloudhub.User, org string, password string) *userRespons
 		PasswordUpdateDate: u.PasswordUpdateDate,
 		PasswordResetFlag: u.PasswordResetFlag,
 		Email: u.Email,
-		Password: password,
 	}
+
+	if password != "" {
+		resData.Password = password
+	}
+
+	return resData
 }
 
 type usersResponse struct {
@@ -238,9 +243,10 @@ func (s *Service) NewUser(w http.ResponseWriter, r *http.Request) {
 	if cfg.Auth.SuperAdminNewUsers {
 		req.SuperAdmin = true
 	}
-
-	resetPassword := randResetPassword()
+	
+	var resetPassword string
 	if req.Provider == "cloudhub" && (hasAuthorizedRole(user, roles.AdminRoleName) || hasSuperAdminContext(ctx)) {
+		resetPassword = randResetPassword()
 		hashPassword := getPasswordToSHA512(resetPassword, SecretKey)
 
 		user.Passwd = hashPassword
