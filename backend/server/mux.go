@@ -415,10 +415,11 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 		// Create middleware that redirects to the appropriate provider logout
 		router.GET("/oauth/logout", logout("/", opts.Basepath, allRoutes.AuthRoutes))
-		out = Logger(opts.Logger, FlushingHandler(auth))
+		out = auth
 	} else {
-		out = Logger(opts.Logger, FlushingHandler(router))
+		out = BasicAuthAPI(opts, router)
 	}
+	out = Logger(opts.Logger, FlushingHandler(out))
 
 	return out
 }
@@ -464,6 +465,22 @@ func AuthAPI(opts MuxOpts, router cloudhub.Router) (http.Handler, AuthRoutes) {
 		}
 		router.ServeHTTP(w, r)
 	}), routes
+}
+
+// BasicAuthAPI adds the Basic routes if auth is enabled.
+func BasicAuthAPI(opts MuxOpts, router cloudhub.Router) (http.Handler) {
+	rootPath := path.Join(opts.Basepath, "/cloudhub/v1")
+
+	tokenMiddleware := AuthorizedToken(opts.Auth, opts.Logger, router)
+	// Wrap the API with token validation middleware.
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cleanPath := path.Clean(r.URL.Path) // compare ignoring path garbage, trailing slashes, etc.
+		if (strings.HasPrefix(cleanPath, rootPath) && len(cleanPath) > len(rootPath)) {
+			tokenMiddleware.ServeHTTP(w, r)
+			return
+		}
+		router.ServeHTTP(w, r)
+	})
 }
 
 func encodeJSON(w http.ResponseWriter, status int, v interface{}, logger cloudhub.Logger) {
