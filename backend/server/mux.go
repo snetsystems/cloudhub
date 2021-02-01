@@ -405,11 +405,11 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.Handler("GET", "/cloudhub/v1/", allRoutes)
 
 	var out http.Handler
-	var auth http.Handler
 
 	/* Authentication */
 	if opts.UseAuth {
 		// Encapsulate the router with OAuth2
+		var auth http.Handler
 		auth, allRoutes.AuthRoutes = AuthAPI(opts, router)
 		allRoutes.LogoutLink = path.Join(opts.Basepath, "/oauth/logout")
 
