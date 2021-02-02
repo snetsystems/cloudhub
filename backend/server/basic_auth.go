@@ -154,17 +154,46 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
+
+	// not set kapacitor server option and not set program path and pwrtn == true (admin call)
+	if (serverKapacitor.URL == "" && s.ProgramPath == "") && pwrtnBool {
+		resetPassword := randResetPassword()
+
+		user.PasswordResetFlag = "Y"
+		user.Passwd = getPasswordToSHA512(resetPassword, BasicProvider)
+		err = s.Store.Users(ctx).Update(ctx, user)
+		if err != nil {
+			Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+			return
+		}
+
+		res := &resetResponse{
+			Name:     name,
+			Provider: BasicProvider,
+			Scheme:   BasicScheme,
+			Pwrtn:    pwrtn,
+			SendKind: "",
+			PasswordResetFlag: user.PasswordResetFlag,
+			Password: resetPassword,
+		}
+
+		encodeJSON(w, http.StatusOK, res, s.Logger)
+		return
+	}
 	
 	// not set kapacitor server option (user call)
-	if (serverKapacitor.URL == "" && user.Email == "" && !pwrtnBool) || 
-	(serverKapacitor.URL == "" && user.Email != "") {
+	if serverKapacitor.URL == "" && s.ProgramPath != "" && s.ExecuteFile != "" {
 		resetPassword := randResetPassword()
+		sendKind := "external"
 		
 		// external program
 		args := []string{s.ExecuteFile, name, resetPassword}
 		if !programExec(s.ProgramPath, args, s.Logger) {
-			Error(w, http.StatusBadRequest, fmt.Sprintf("fail external program : %s, %s, %s", s.ProgramPath, s.ExecuteFile, args), s.Logger)
-			return
+			sendKind = "error"
+			if !pwrtnBool {
+				Error(w, http.StatusBadRequest, fmt.Sprintf("fail external program : %s, %s, %s", s.ProgramPath, s.ExecuteFile, args), s.Logger)
+				return
+			}
 		}
 
 		user.PasswordResetFlag = "Y"
@@ -180,7 +209,7 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 			Provider: BasicProvider,
 			Scheme:   BasicScheme,
 			Pwrtn:    pwrtn,
-			SendKind: "external",
+			SendKind: sendKind,
 			PasswordResetFlag: user.PasswordResetFlag,
 		}
 
@@ -191,6 +220,7 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		encodeJSON(w, http.StatusOK, res, s.Logger)
 		return
 	} 
+	
 
 	// set kapacitor server option and set user.email
 	if serverKapacitor.URL != "" && user.Email != "" {
@@ -229,31 +259,44 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		}
 
 		s.KapacitorProxyPost(recorder, kapacitorReq)
+		sendKind := "email"
 
 		if recorder.Status != 200 {
-			w.Header().Del("Content-Length")
-			w.Header().Del("Content-Encoding")
-			// kapacitor return error code relay
-			Error(w, http.StatusUnprocessableEntity, fmt.Sprintf("kapacitor response status : %d", recorder.Status), s.Logger)
-			return
-		}
-
-		var resBody bytes.Buffer
-		err := gunzipWrite(&resBody, recorder.buf.Bytes())
-		if err != nil {
-			Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
-			return
-		}
-
-		var kaResponse kapacitorResponse
-		if err := json.Unmarshal(resBody.Bytes(), &kaResponse); err != nil {
-			Error(w, http.StatusUnprocessableEntity, fmt.Sprintf("fail kapacitor response json.Unmarshal : %s", err.Error()), s.Logger)
-			return
-		}
-		
-		if !kaResponse.Success {
-			Error(w, http.StatusBadRequest, fmt.Sprintf("fail kapacitor send mail"), s.Logger)
-			return
+			sendKind = "error"
+			if !pwrtnBool {
+				w.Header().Del("Content-Length")
+				w.Header().Del("Content-Encoding")
+				// kapacitor return error code relay
+				Error(w, http.StatusUnprocessableEntity, fmt.Sprintf("kapacitor response status : %d", recorder.Status), s.Logger)
+				return
+			}
+		} else {
+			var resBody bytes.Buffer
+			err := gunzipWrite(&resBody, recorder.buf.Bytes())
+			if err != nil {
+				sendKind = "error"
+				if !pwrtnBool {
+					Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+					return
+				}
+			} else {
+				var kaResponse kapacitorResponse
+				if err := json.Unmarshal(resBody.Bytes(), &kaResponse); err != nil {
+					sendKind = "error"
+					if !pwrtnBool {
+						Error(w, http.StatusUnprocessableEntity, fmt.Sprintf("fail kapacitor response json.Unmarshal : %s", err.Error()), s.Logger)
+						return
+					}
+				} else {
+					if !kaResponse.Success {
+						sendKind = "error"
+						if !pwrtnBool {
+							Error(w, http.StatusBadRequest, fmt.Sprintf("fail kapacitor send mail"), s.Logger)
+							return
+						}
+					}
+				}
+			}
 		}
 
 		user.PasswordResetFlag = "Y"
@@ -270,7 +313,7 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 			Scheme:   BasicScheme,
 			Pwrtn:    pwrtn,
 			Email:    user.Email,
-			SendKind: "email",
+			SendKind: sendKind,
 			PasswordResetFlag: user.PasswordResetFlag,
 		}
 
@@ -280,32 +323,6 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Del("Content-Length")
 		w.Header().Del("Content-Encoding")
-
-		encodeJSON(w, http.StatusOK, res, s.Logger)
-		return
-	}
-	
-	// not set kapacitor server option and not set user.email and pwrtn == true (admin call)
-	if (serverKapacitor.URL == "" && user.Email == "") && pwrtnBool {
-		resetPassword := randResetPassword()
-
-		user.PasswordResetFlag = "Y"
-		user.Passwd = getPasswordToSHA512(resetPassword, BasicProvider)
-		err = s.Store.Users(ctx).Update(ctx, user)
-		if err != nil {
-			Error(w, http.StatusBadRequest, err.Error(), s.Logger)
-			return
-		}
-
-		res := &resetResponse{
-			Name:     name,
-			Provider: BasicProvider,
-			Scheme:   BasicScheme,
-			Pwrtn:    pwrtn,
-			SendKind: "",
-			PasswordResetFlag: user.PasswordResetFlag,
-			Password: resetPassword,
-		}
 
 		encodeJSON(w, http.StatusOK, res, s.Logger)
 		return
