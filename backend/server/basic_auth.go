@@ -222,81 +222,86 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 	} 
 	
 
-	// set kapacitor server option and set user.email
-	if serverKapacitor.URL != "" && user.Email != "" {
-		// Forward kapacitor id and email to proxy
-		params.Add("kid", "0")
-		params.Add("email", user.Email)
-		r.URL.RawQuery = params.Encode()
-
+	// set kapacitor server option
+	if serverKapacitor.URL != "" {
 		resetPassword := randResetPassword()
-
-		mailSubjct := strings.Replace(s.MailSubject, "$user_id", user.Name, -1)
-		mailBody := strings.Replace(s.MailBody, "$user_id", user.Name, -1)
-		mailBody = strings.Replace(mailBody, "$user_pw", resetPassword, -1)
-
-		jsonBody, _ := json.Marshal(struct{
-			To []string     `json:"to"`
-			Subject string  `json:"subject"`
-			Body string     `json:"body"`
-		}{
-			To: []string{user.Email},
-			Subject: mailSubjct,
-			Body: mailBody,
-		})
-
-		// Clone GET -> POST
-		kapacitorReq := r.Clone(ctx)
-		*kapacitorReq = *r
-		kapacitorReq.Method = "POST"
-		kapacitorReq.Body = ioutil.NopCloser(strings.NewReader(string(jsonBody)))
-		kapacitorReq.ContentLength = int64(len(string(jsonBody)))
-
-		recorder := &statusRecorder{
-			ResponseWriter: w,
-			Status:         400,
-			buf:            &bytes.Buffer{},
-		}
-
-		s.KapacitorProxyPost(recorder, kapacitorReq)
 		sendKind := "email"
 
-		if recorder.Status != 200 {
-			sendKind = "error"
-			if !pwrtnBool {
-				w.Header().Del("Content-Length")
-				w.Header().Del("Content-Encoding")
-				// kapacitor return error code relay
-				Error(w, http.StatusUnprocessableEntity, fmt.Sprintf("kapacitor response status : %d", recorder.Status), s.Logger)
-				return
+		if user.Email != "" {
+			// Forward kapacitor id and email to proxy
+			params.Add("kid", "0")
+			params.Add("email", user.Email)
+			r.URL.RawQuery = params.Encode()
+
+			mailSubjct := strings.Replace(s.MailSubject, "$user_id", user.Name, -1)
+			mailBody := strings.Replace(s.MailBody, "$user_id", user.Name, -1)
+			mailBody = strings.Replace(mailBody, "$user_pw", resetPassword, -1)
+
+			jsonBody, _ := json.Marshal(struct{
+				To []string     `json:"to"`
+				Subject string  `json:"subject"`
+				Body string     `json:"body"`
+			}{
+				To: []string{user.Email},
+				Subject: mailSubjct,
+				Body: mailBody,
+			})
+
+			// Clone GET -> POST
+			kapacitorReq := r.Clone(ctx)
+			*kapacitorReq = *r
+			kapacitorReq.Method = "POST"
+			kapacitorReq.Body = ioutil.NopCloser(strings.NewReader(string(jsonBody)))
+			kapacitorReq.ContentLength = int64(len(string(jsonBody)))
+
+			recorder := &statusRecorder{
+				ResponseWriter: w,
+				Status:         400,
+				buf:            &bytes.Buffer{},
 			}
-		} else {
-			var resBody bytes.Buffer
-			err := gunzipWrite(&resBody, recorder.buf.Bytes())
-			if err != nil {
+
+			s.KapacitorProxyPost(recorder, kapacitorReq)
+			
+
+			if recorder.Status != 200 {
 				sendKind = "error"
 				if !pwrtnBool {
-					Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+					w.Header().Del("Content-Length")
+					w.Header().Del("Content-Encoding")
+					// kapacitor return error code relay
+					Error(w, http.StatusUnprocessableEntity, fmt.Sprintf("kapacitor response status : %d", recorder.Status), s.Logger)
 					return
 				}
 			} else {
-				var kaResponse kapacitorResponse
-				if err := json.Unmarshal(resBody.Bytes(), &kaResponse); err != nil {
+				var resBody bytes.Buffer
+				err := gunzipWrite(&resBody, recorder.buf.Bytes())
+				if err != nil {
 					sendKind = "error"
 					if !pwrtnBool {
-						Error(w, http.StatusUnprocessableEntity, fmt.Sprintf("fail kapacitor response json.Unmarshal : %s", err.Error()), s.Logger)
+						Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 						return
 					}
 				} else {
-					if !kaResponse.Success {
+					var kaResponse kapacitorResponse
+					if err := json.Unmarshal(resBody.Bytes(), &kaResponse); err != nil {
 						sendKind = "error"
 						if !pwrtnBool {
-							Error(w, http.StatusBadRequest, fmt.Sprintf("fail kapacitor send mail"), s.Logger)
+							Error(w, http.StatusUnprocessableEntity, fmt.Sprintf("fail kapacitor response json.Unmarshal : %s", err.Error()), s.Logger)
 							return
+						}
+					} else {
+						if !kaResponse.Success {
+							sendKind = "error"
+							if !pwrtnBool {
+								Error(w, http.StatusBadRequest, fmt.Sprintf("fail kapacitor send mail"), s.Logger)
+								return
+							}
 						}
 					}
 				}
 			}
+		} else {
+			sendKind = "error"
 		}
 
 		user.PasswordResetFlag = "Y"
