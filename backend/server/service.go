@@ -22,6 +22,7 @@ type Service struct {
 	ProgramPath              string
 	ExecuteFile              string
 	LoginAuthType            string
+	BasicPasswordResetType   string
 }
 
 type superAdminProviderGroups struct {
