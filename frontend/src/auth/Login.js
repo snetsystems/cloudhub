@@ -13,7 +13,7 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {loginAsync, createUserAsync} from 'src/auth/actions'
 
 import {notifyLoginCheck} from 'src/shared/copy/notifications'
-import {LOGIN_AUTH_TYPE} from 'src/auth/constants'
+import {LOGIN_AUTH_TYPE, BASIC_PASSWORD_RESET_TYPE} from 'src/auth/constants'
 
 const VERSION = process.env.npm_package_version
 class Login extends PureComponent {
@@ -95,7 +95,13 @@ class Login extends PureComponent {
   render() {
     const {
       router,
-      authData: {auth, passwordPolicy, passwordPolicyMessage, loginAuthType},
+      authData: {
+        auth,
+        passwordPolicy,
+        passwordPolicyMessage,
+        loginAuthType,
+        basicPasswordResetType,
+      },
     } = this.props
 
     const {name, password, passwordConfirm, email, activeEditorTab} = this.state
@@ -267,11 +273,13 @@ class Login extends PureComponent {
                       </div>
                     </>
                   )}
-                  {!isSign && (
-                    <Link to="/password-reset">
-                      <span>Forgot your password?</span>
-                    </Link>
-                  )}
+                  {!isSign &&
+                    basicPasswordResetType !==
+                      BASIC_PASSWORD_RESET_TYPE.ADMIN && (
+                      <Link to="/password-reset">
+                        <span>Forgot your password?</span>
+                      </Link>
+                    )}
                 </>
 
                 <div className={'auth-button-bar'}>

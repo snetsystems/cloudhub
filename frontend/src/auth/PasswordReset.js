@@ -8,7 +8,7 @@ import SplashPage from 'src/shared/components/SplashPage'
 
 import {passwordResetAsync} from 'src/auth/actions'
 import {AlertTypes} from 'src/kapacitor/constants'
-
+import {BASIC_PASSWORD_RESET_TYPE} from 'src/auth/constants'
 class PasswordReset extends PureComponent {
   constructor(props) {
     super(props)
@@ -49,9 +49,12 @@ class PasswordReset extends PureComponent {
   componentDidMount = () => {
     const {
       router,
-      authData: {passwordPolicy},
+      authData: {passwordPolicy, basicPasswordResetType},
     } = this.props
-    if (!passwordPolicy) {
+    if (
+      !passwordPolicy ||
+      basicPasswordResetType === BASIC_PASSWORD_RESET_TYPE.ADMIN
+    ) {
       router.push('/')
     }
   }

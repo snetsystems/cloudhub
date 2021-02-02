@@ -3,3 +3,8 @@ export const LOGIN_AUTH_TYPE = {
   BASIC: 'basic',
   OAUTH: 'oauth',
 }
+
+export const BASIC_PASSWORD_RESET_TYPE = {
+  ADMIN: 'admin',
+  ALL: 'all',
+}
