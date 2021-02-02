@@ -272,8 +272,8 @@ export const notifyCloudHubBasicUserAdd = (
   let message = `
     <div>Reset User Password Success.</div>
     <hr class="notification-line">
-    <div>user name: ${name}</div>
-    <div>password: ${password}</div>
+    <div>User name: ${name}</div>
+    <div>Password: ${password}</div>
   `
   return {
     ...defaultSuccessNotification,
@@ -1117,17 +1117,27 @@ export const notifyUserAddFailed = (error: {
 export const notifyUserPasswordResetCompleted = ({
   name,
   password,
+  sendKind,
 }: {
   name: string
   password: string
+  sendKind: string
 }): Notification => {
   let message = `
     <div>Reset User Password Success.</div>
     <hr class="notification-line">
-    <div>user name: ${name}</div>
+    <div>User name: ${name}</div>
   `
   if (password) {
-    message += `<div>password: ${password}</div>`
+    message += `<div>Password: ${password}</div>`
+  }
+
+  if (sendKind) {
+    if (sendKind === 'error') {
+      message += `<div>Send:[Error] Sending of password did not succeed</div>`
+    } else {
+      message += `<div>Send: ${sendKind}</div>`
+    }
   }
 
   return {

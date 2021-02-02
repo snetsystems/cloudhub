@@ -332,6 +332,7 @@ export const passwordResetAsync = ({
         notifyUserPasswordResetCompleted({
           name: data.name,
           password: data.password,
+          sendKind: data.send_kind,
         })
       )
     )
