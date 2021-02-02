@@ -492,6 +492,7 @@ func (s *Service) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if req.Password != "" {
 		u.Passwd = getPasswordToSHA512(req.Password, SecretKey)
 		u.PasswordUpdateDate = getNowDate()
+		u.PasswordResetFlag = "N"
 	}
 
 	// Don't allow SuperAdmins to modify their own SuperAdmin status.
