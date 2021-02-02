@@ -155,12 +155,11 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	// not set kapacitor server option or user.email empty
-	if (serverKapacitor.URL != "" && user.Email == "") || (serverKapacitor.URL == "") {
+	// not set kapacitor server option and user.email empty
+	if (serverKapacitor.URL == "" && user.Email == "") && !pwrtnBool {
 		resetPassword := randResetPassword()
 		
 		// external program
-		// test imsi
 		args := []string{s.ExecuteFile, name, resetPassword}
 		if !programExec(s.ProgramPath, args, s.Logger) {
 			Error(w, http.StatusBadRequest, fmt.Sprintf("fail external program : %s, %s, %s", s.ProgramPath, s.ExecuteFile, args), s.Logger)
@@ -192,7 +191,7 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		return
 	} 
 
-	// set kapacitor server option 
+	// set kapacitor server option and set user.email
 	if serverKapacitor.URL != "" && user.Email != "" {
 		// Forward kapacitor id and email to proxy
 		params.Add("kid", "0")
@@ -280,6 +279,32 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Del("Content-Length")
 		w.Header().Del("Content-Encoding")
+
+		encodeJSON(w, http.StatusOK, res, s.Logger)
+		return
+	}
+	
+	// not set kapacitor server option and not set user.email and pwrtn == true (admin call)
+	if (serverKapacitor.URL == "" && user.Email == "") && pwrtnBool {
+		resetPassword := randResetPassword()
+
+		user.PasswordResetFlag = "Y"
+		user.Passwd = getPasswordToSHA512(resetPassword, BasicProvider)
+		err = s.Store.Users(ctx).Update(ctx, user)
+		if err != nil {
+			Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+			return
+		}
+
+		res := &resetResponse{
+			Name:     name,
+			Provider: BasicProvider,
+			Scheme:   BasicScheme,
+			Pwrtn:    pwrtn,
+			SendKind: "",
+			PasswordResetFlag: user.PasswordResetFlag,
+			Password: resetPassword,
+		}
 
 		encodeJSON(w, http.StatusOK, res, s.Logger)
 		return
