@@ -212,9 +212,7 @@ export const createUserAsync = (url, user) => async dispatch => {
   try {
     const {data} = await createUserAJAX(url, user)
     dispatch(syncUser(userWithTempID, data))
-    if (data.provider === 'cloudhub') {
-      dispatch(notify(notifyCloudHubBasicUserAdd(data.name, data.password)))
-    }
+    dispatch(notify(notifyCloudHubBasicUserAdd(data.name, data.password)))
   } catch (error) {
     const message = `${_.upperFirst(_.toLower(error.data.message))}: ${
       user.scheme
