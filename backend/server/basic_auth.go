@@ -155,8 +155,9 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	// not set kapacitor server option and user.email empty
-	if (serverKapacitor.URL == "" && user.Email == "") && !pwrtnBool {
+	// not set kapacitor server option (user call)
+	if (serverKapacitor.URL == "" && user.Email == "" && !pwrtnBool) || 
+	(serverKapacitor.URL == "" && user.Email != "") {
 		resetPassword := randResetPassword()
 		
 		// external program
