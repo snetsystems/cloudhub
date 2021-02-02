@@ -594,8 +594,16 @@ func (s *Server) Serve(ctx context.Context) {
 	if !s.useAuth() {
 		s.LoginAuthType = ""
 	}
+
+	// no kapacitor and no program path
+	var basicPasswordResetType string
+	if s.KapacitorURL == "" && s.ProgramPath == "" {
+		basicPasswordResetType = "admin"
+	} else {
+		basicPasswordResetType = "all"
+	}
 	
-	service := openService(ctx, db, s.newBuilders(logger), logger, s.useAuth(), s.AddonURLs, s.MailSubject, s.MailBodyMessage, s.ProgramPath, s.ExecuteFile, s.LoginAuthType)
+	service := openService(ctx, db, s.newBuilders(logger), logger, s.useAuth(), s.AddonURLs, s.MailSubject, s.MailBodyMessage, s.ProgramPath, s.ExecuteFile, s.LoginAuthType, basicPasswordResetType)
 	service.SuperAdminProviderGroups = superAdminProviderGroups{
 		auth0: s.Auth0SuperAdminOrg,
 	}
@@ -715,7 +723,7 @@ func (s *Server) Serve(ctx context.Context) {
 		Info("Stopped serving cloudhub at ", scheme, "://", listener.Addr())
 }
 
-func openService(ctx context.Context, db kv.Store, builder builders, logger cloudhub.Logger, useAuth bool, addonURLs map[string]string, mailSubject, mailBody, programPath, executeFile string, loginAuthType string) Service {
+func openService(ctx context.Context, db kv.Store, builder builders, logger cloudhub.Logger, useAuth bool, addonURLs map[string]string, mailSubject, mailBody, programPath, executeFile string, loginAuthType string, basicPasswordResetType string) Service {
 	svc, err := kv.NewService(ctx, db, kv.WithLogger(logger))
 	if err != nil {
 		logger.Error("Unable to create kv service", err)
@@ -794,6 +802,7 @@ func openService(ctx context.Context, db kv.Store, builder builders, logger clou
 		ProgramPath:              programPath,
 		ExecuteFile:              executeFile,
 		LoginAuthType:            loginAuthType,
+		BasicPasswordResetType:   basicPasswordResetType,
 	}
 }
 

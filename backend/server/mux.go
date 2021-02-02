@@ -395,6 +395,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 		},
 		BasicLogoutLink: "/basic/logout",
 		LoginAuthType: service.LoginAuthType,
+		BasicPasswordResetType: service.BasicPasswordResetType,
 	}
 
 	getPrincipal := func(r *http.Request) oauth2.Principal {
