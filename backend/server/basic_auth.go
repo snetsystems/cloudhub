@@ -317,11 +317,14 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 			Provider: BasicProvider,
 			Scheme:   BasicScheme,
 			Pwrtn:    pwrtn,
-			Email:    user.Email,
 			SendKind: sendKind,
 			PasswordResetFlag: user.PasswordResetFlag,
 		}
-
+		
+		if user.Email != "" {
+			res.Email = user.Email 
+		}
+ 
 		if pwrtnBool {			
 			res.Password = resetPassword
 		}
