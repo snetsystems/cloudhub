@@ -19,8 +19,8 @@ type Service struct {
 	AddonURLs                map[string]string
 	MailSubject              string
 	MailBody                 string
-	ProgramPath              string
-	ExecuteFile              string
+	ExternalExec             string
+	ExternalExecArgs         string
 	LoginAuthType            string
 	BasicPasswordResetType   string
 }

@@ -156,7 +156,7 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// not set kapacitor server option and not set program path and pwrtn == true (admin call)
-	if (serverKapacitor.URL == "" && s.ProgramPath == "") && pwrtnBool {
+	if (serverKapacitor.URL == "" && s.ExternalExec == "") && pwrtnBool {
 		resetPassword := randResetPassword()
 
 		user.PasswordResetFlag = "Y"
@@ -182,16 +182,22 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	// not set kapacitor server option (user call)
-	if serverKapacitor.URL == "" && s.ProgramPath != "" && s.ExecuteFile != "" {
+	if serverKapacitor.URL == "" && s.ExternalExec != "" {
 		resetPassword := randResetPassword()
 		sendKind := "external"
 		
-		// external program
-		args := []string{s.ExecuteFile, name, resetPassword}
-		if !programExec(s.ProgramPath, args, s.Logger) {
+		// external program, arguments
+		var args []string
+		if s.ExternalExecArgs != "" {
+			args = []string{s.ExternalExecArgs, name, resetPassword}
+		} else {
+			args = []string{name, resetPassword}
+		}
+		
+		if !programExec(s.ExternalExec, args, s.Logger) {
 			sendKind = "error"
 			if !pwrtnBool {
-				Error(w, http.StatusBadRequest, fmt.Sprintf("fail external program : %s, %s, %s", s.ProgramPath, s.ExecuteFile, args), s.Logger)
+				Error(w, http.StatusBadRequest, fmt.Sprintf("fail external program : %s, %s, %s", s.ExternalExec, s.ExternalExecArgs, args), s.Logger)
 				return
 			}
 		}

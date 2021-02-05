@@ -469,6 +469,7 @@ func AuthAPI(opts MuxOpts, router cloudhub.Router) (http.Handler, AuthRoutes) {
 }
 
 // BasicAuthAPI adds the Basic routes if auth is enabled. 
+// Copy session information to context when oauth is not used
 // not using it now.
 func BasicAuthAPI(opts MuxOpts, router cloudhub.Router) (http.Handler) {
 	rootPath := path.Join(opts.Basepath, "/cloudhub/v1")
