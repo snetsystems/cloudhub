@@ -273,7 +273,7 @@ export const notifyCloudHubBasicUserAdd = (
     <div>Adding user is successful.</div>
     <hr class="notification-line">
     <div>User name: ${name}</div>
-    <div>Password: ${password}</div>
+    <div>Password(OTP): ${password}</div>
   `
   return {
     ...defaultSuccessNotification,
@@ -1129,7 +1129,7 @@ export const notifyUserPasswordResetCompleted = ({
     <div>User name: ${name}</div>
   `
   if (password) {
-    message += `<div>Password: ${password}</div>`
+    message += `<div>Password(OTP): ${password}</div>`
   }
 
   if (sendKind) {
