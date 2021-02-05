@@ -63,22 +63,24 @@ class LogsHeader extends PureComponent<Props> {
             selected={this.selectedSource}
             onChoose={this.handleChooseSource}
           />
-          <Dropdown
-            className="dropdown-180"
-            iconName="disks"
-            items={this.namespaceDropDownItems}
-            selected={this.selectedNamespace}
-            onChoose={this.handleChooseNamespace}
-          />
           {currentMeasurement === 'syslog' && (
-            <Authorized requiredRole={EDITOR_ROLE}>
-              <button
-                className="btn btn-sm btn-square btn-default"
-                onClick={onShowOptionsOverlay}
-              >
-                <span className="icon cog-thick" />
-              </button>
-            </Authorized>
+            <>
+              <Dropdown
+                className="dropdown-180"
+                iconName="disks"
+                items={this.namespaceDropDownItems}
+                selected={this.selectedNamespace}
+                onChoose={this.handleChooseNamespace}
+              />
+              <Authorized requiredRole={EDITOR_ROLE}>
+                <button
+                  className="btn btn-sm btn-square btn-default"
+                  onClick={onShowOptionsOverlay}
+                >
+                  <span className="icon cog-thick" />
+                </button>
+              </Authorized>
+            </>
           )}
         </Page.Header.Right>
       </Page.Header>

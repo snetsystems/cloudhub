@@ -988,7 +988,7 @@ export const populateNamespacesAsync = (
       )
     }
 
-    const namespace = defaultNamespace || namespaces[0]
+    const namespace = {database: '_internal', retentionPolicy: 'monitor'}
 
     await Promise.all([
       dispatch(setNamespaceAsync(namespace)),
