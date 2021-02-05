@@ -270,7 +270,7 @@ export const notifyCloudHubBasicUserAdd = (
   password: string
 ): Notification => {
   let message = `
-    <div>Reset User Password Success.</div>
+    <div>User Add Success.</div>
     <hr class="notification-line">
     <div>User name: ${name}</div>
     <div>Password: ${password}</div>
