@@ -351,6 +351,9 @@ func (s *Service) NewBasicUser(w http.ResponseWriter, r *http.Request) {
 	orgID := httprouter.GetParamFromContext(ctx, "oid")
 	cu := newUserResponse(res, orgID, "")
 	location(w, cu.Links.Self)
+
+	LogRegistration(r, s.Store, s.Logger, orgID, "Sign up", user.Name, "Sign up success", user.SuperAdmin)
+
 	encodeJSON(w, http.StatusCreated, cu, s.Logger)
 }
 
@@ -400,7 +403,7 @@ func (s *Service) UserPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// log registration
-	LogRegistration(r, s.Store, s.Logger, orgID, "password", user.Name, "Change Password", user.SuperAdmin)
+	LogRegistration(r, s.Store, s.Logger, orgID, "password", user.Name, "Password change", user.SuperAdmin)
 
 	w.WriteHeader(http.StatusOK)
 }
