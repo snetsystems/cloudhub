@@ -577,7 +577,7 @@ func (s *Service) validRoles(ctx context.Context, rs []cloudhub.Role) error {
 }
 
 func getNowDate() string {
-	sDate := time.Now().Format("2006-01-02 15:04:05")
+	sDate := time.Now().UTC().Format("2006-01-02 15:04:05")
 	return sDate
 }
 
