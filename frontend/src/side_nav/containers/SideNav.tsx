@@ -3,7 +3,7 @@ import React, {PureComponent} from 'react'
 import {withRouter, Link} from 'react-router'
 import {connect} from 'react-redux'
 
-import Authorized, {ADMIN_ROLE} from 'src/auth/Authorized'
+import Authorized, {ADMIN_ROLE, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
 import UserNavBlock from 'src/side_nav/components/UserNavBlock'
 
@@ -144,7 +144,7 @@ class SideNav extends PureComponent<Props> {
         </NavBlock>
 
         <Authorized
-          requiredRole={ADMIN_ROLE}
+          requiredRole={SUPERADMIN_ROLE}
           replaceWithIfNotAuthorized={
             <NavBlock
               highlightWhen={['logs']}

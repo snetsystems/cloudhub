@@ -18,7 +18,7 @@ import LogsTable from 'src/logs/components/LogsTable'
 import OverlayTechnology from 'src/reusable_ui/components/overlays/OverlayTechnology'
 import HistogramResults from 'src/logs/components/HistogramResults'
 import PageSpinner from 'src/shared/components/PageSpinner'
-import {isUserAuthorized, ADMIN_ROLE} from 'src/auth/Authorized'
+import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
 // Utils
 import {getDeep} from 'src/utils/wrappers'
@@ -173,7 +173,7 @@ class ActivityLogsPage extends Component<Props, State> {
   private isMount = false
   public static getDerivedStateFromProps(props: Props) {
     const {isUsingAuth, me, router} = props
-    if (!isUsingAuth || !isUserAuthorized(me.role, ADMIN_ROLE)) {
+    if (!isUsingAuth || !isUserAuthorized(me.role, SUPERADMIN_ROLE)) {
       router.push('/')
       const isRouting = true
       return {isRouting}
