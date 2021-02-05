@@ -230,7 +230,7 @@ class UpdateUser extends PureComponent {
                     />
                     {passwordConfirm && !isValidPasswordConfirm && (
                       <div className={`form-message fm--danger`}>
-                        Your password and confirmation password do not match.
+                        Password confirmation doesn't match password.
                       </div>
                     )}
                     {isValidPassword && isValidPasswordConfirm && (
@@ -254,7 +254,7 @@ class UpdateUser extends PureComponent {
                       onChange={this.handleInputChange('email')}
                     />
                     <div className="form-message fm--info">
-                      It is used for OTP delivery when initializing password.
+                      Email will be used for OTP delivery when a password reset.
                     </div>
                   </div>
                 </div>

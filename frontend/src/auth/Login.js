@@ -234,8 +234,7 @@ class Login extends PureComponent {
                             passwordConfirm.length > 0 &&
                             !isValidPasswordConfirm && (
                               <div className={`form-message fm--danger`}>
-                                Your password and confirmation password do not
-                                match.
+                                Password confirmation doesn't match password.
                               </div>
                             )}
                           {isSign &&

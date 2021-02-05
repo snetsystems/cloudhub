@@ -270,7 +270,7 @@ export const notifyCloudHubBasicUserAdd = (
   password: string
 ): Notification => {
   let message = `
-    <div>User Add Success.</div>
+    <div>Adding user is successful.</div>
     <hr class="notification-line">
     <div>User name: ${name}</div>
     <div>Password: ${password}</div>
@@ -1092,17 +1092,17 @@ export const notifyLoginFailed = (error: {
 }): Notification => ({
   ...defaultErrorNotification,
   isHasHTML: true,
-  message: `Login Failed.<br/>CODE: ${error.code}<br/>REASON: ${error.message}`,
+  message: `Login is failed.<br/>CODE: ${error.code}<br/>REASON: ${error.message}`,
 })
 
 export const notifyLoginCheck = (): Notification => ({
   ...defaultErrorNotification,
-  message: `Please enter your ID and password`,
+  message: `Check out your ID or password , please.`,
 })
 
 export const notifyUserAddCompleted = (): Notification => ({
   ...defaultSuccessNotification,
-  message: `Signup Completed`,
+  message: `Sign up is successful.`,
 })
 
 export const notifyUserAddFailed = (error: {
@@ -1111,7 +1111,7 @@ export const notifyUserAddFailed = (error: {
 }): Notification => ({
   ...defaultErrorNotification,
   isHasHTML: true,
-  message: `Signup Failed.<br/>CODE: ${error.code}<br/>REASON: ${error.message}`,
+  message: `Sign up is failed.<br/>CODE: ${error.code}<br/>REASON: ${error.message}`,
 })
 
 export const notifyUserPasswordResetCompleted = ({
@@ -1124,7 +1124,7 @@ export const notifyUserPasswordResetCompleted = ({
   sendKind: string
 }): Notification => {
   let message = `
-    <div>Reset User Password Success.</div>
+    <div>Reset the password is successful.</div>
     <hr class="notification-line">
     <div>User name: ${name}</div>
   `
@@ -1134,7 +1134,7 @@ export const notifyUserPasswordResetCompleted = ({
 
   if (sendKind) {
     if (sendKind === 'error') {
-      message += `<div>Send:[Error] Sending of password did not succeed</div>`
+      message += `<div>Send:[Error] Sending an OTP did not succeed.</div>`
     } else {
       message += `<div>Send: ${sendKind}</div>`
     }
@@ -1150,30 +1150,30 @@ export const notifyUserPasswordResetCompleted = ({
 
 export const notifyUserPasswordResetFailed = (): Notification => ({
   ...defaultErrorNotification,
-  message: `Password Reset Failed`,
+  message: `Reset the password is failed.`,
 })
 
 export const notifyUserUpdateCompleted = (): Notification => ({
   ...defaultSuccessNotification,
-  message: `User Update Completed`,
+  message: `Updating user information is successful.`,
 })
 
 export const notifyUserUpdateFailed = (): Notification => ({
   ...defaultErrorNotification,
-  message: `User Update Failed`,
+  message: `Updating user information is failed.`,
 })
 
 export const notifyUserPasswordInputError = (): Notification => ({
   ...defaultErrorNotification,
-  message: `Please check your password`,
+  message: `Check out your password, please.`,
 })
 
 export const notifyUserOTPChangeCompleted = (): Notification => ({
   ...defaultSuccessNotification,
-  message: `Password Update Completed`,
+  message: `Updating your password is successful.`,
 })
 
 export const notifyUserOTPChangeFailed = (): Notification => ({
   ...defaultErrorNotification,
-  message: `Password Update Failed`,
+  message: `Updating your password is failed.`,
 })
