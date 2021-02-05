@@ -156,7 +156,7 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// not set kapacitor server option and not set program path and pwrtn == true (admin call)
-	if (serverKapacitor.URL == "" && s.ProgramPath == "") && pwrtnBool {
+	if (serverKapacitor.URL == "" && s.ExternalExec == "") && pwrtnBool {
 		resetPassword := randResetPassword()
 
 		user.PasswordResetFlag = "Y"
@@ -182,16 +182,22 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 	}
 	
 	// not set kapacitor server option (user call)
-	if serverKapacitor.URL == "" && s.ProgramPath != "" && s.ExecuteFile != "" {
+	if serverKapacitor.URL == "" && s.ExternalExec != "" {
 		resetPassword := randResetPassword()
 		sendKind := "external"
 		
-		// external program
-		args := []string{s.ExecuteFile, name, resetPassword}
-		if !programExec(s.ProgramPath, args, s.Logger) {
+		// external program, arguments
+		var args []string
+		if s.ExternalExecArgs != "" {
+			args = []string{s.ExternalExecArgs, name, resetPassword}
+		} else {
+			args = []string{name, resetPassword}
+		}
+		
+		if !programExec(s.ExternalExec, args, s.Logger) {
 			sendKind = "error"
 			if !pwrtnBool {
-				Error(w, http.StatusBadRequest, fmt.Sprintf("fail external program : %s, %s, %s", s.ProgramPath, s.ExecuteFile, args), s.Logger)
+				Error(w, http.StatusBadRequest, fmt.Sprintf("fail external program : %s, %s, %s", s.ExternalExec, s.ExternalExecArgs, args), s.Logger)
 				return
 			}
 		}
@@ -374,7 +380,7 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 		}
 
 		if user.Passwd == "" {
-			LogRegistration(r, s.Store, s.Logger, orgID, "login", user.Name, "Fail Login - empty user table password", user.SuperAdmin)
+			LogRegistration(r, s.Store, s.Logger, orgID, "login", user.Name, "Login Fail - empty user table password", user.SuperAdmin)
 			Error(w, http.StatusBadRequest, fmt.Sprintf("empty user table password"), s.Logger)
 			return
 		}
@@ -387,7 +393,7 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 
 		// valid password - sha512
 		if !validPassword([]byte(req.Password), strTohex, []byte(BasicProvider)) {
-			LogRegistration(r, s.Store, s.Logger, orgID, "login", user.Name, "Fail Login - requested password and the saved password are different.", user.SuperAdmin)
+			LogRegistration(r, s.Store, s.Logger, orgID, "login", user.Name, "Login Fail - requested password and the saved password are different.", user.SuperAdmin)
 			Error(w, http.StatusUnauthorized, fmt.Sprintf("requested password and the saved password are different."), s.Logger)
 			return
 		}
@@ -410,7 +416,7 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 		}
 
 		// log registration
-		LogRegistration(r, s.Store, s.Logger, orgID, "login", user.Name, "Success Login", user.SuperAdmin)
+		LogRegistration(r, s.Store, s.Logger, orgID, "login", user.Name, "Login Success", user.SuperAdmin)
 
 		res := &loginResponse{
 			PasswordResetFlag: user.PasswordResetFlag,
@@ -441,7 +447,7 @@ func (s *Service) Logout(auth oauth2.Authenticator, basePath string) http.Handle
 					break
 				}
 
-				LogRegistration(r, s.Store, s.Logger, orgID, "logout", user.Name, "Success Logout", user.SuperAdmin)
+				LogRegistration(r, s.Store, s.Logger, orgID, "logout", user.Name, "Logout Success", user.SuperAdmin)
 			}
 		}
 
@@ -498,22 +504,15 @@ func LogRegistration(r *http.Request, store DataStore, logger cloudhub.Logger, o
 		return
 	}
 
-	org, err := store.Organizations(serverCtx).Get(serverCtx, cloudhub.OrganizationQuery{ID: &orgID})
-	if err != nil {
-		msg := fmt.Sprintf("Error parsing source url: %v", err)
-		logs.Error(msg)
-		return
-	}
-
-	dbname := org.Name
-	if isSuperAdmin {
-		org.Name = "_internal"
-	}
+	var rp, dbname string
+	dbname = "_internal"
+	rp = "monitor"
 
 	nanos := time.Now().UnixNano()
 	data := cloudhub.Point{
 		Database:        dbname,
-		Measurement:     "connectLog",
+		RetentionPolicy: rp,
+		Measurement:     "activity_logging",
 		Time:            nanos,
 		Tags: map[string]string{
 			"severity": "info",

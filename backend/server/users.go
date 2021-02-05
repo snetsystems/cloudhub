@@ -351,6 +351,9 @@ func (s *Service) NewBasicUser(w http.ResponseWriter, r *http.Request) {
 	orgID := httprouter.GetParamFromContext(ctx, "oid")
 	cu := newUserResponse(res, orgID, "")
 	location(w, cu.Links.Self)
+
+	LogRegistration(r, s.Store, s.Logger, orgID, "Sign up", user.Name, "Sign up success", user.SuperAdmin)
+
 	encodeJSON(w, http.StatusCreated, cu, s.Logger)
 }
 
@@ -400,7 +403,7 @@ func (s *Service) UserPassword(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// log registration
-	LogRegistration(r, s.Store, s.Logger, orgID, "password", user.Name, "Change Password", user.SuperAdmin)
+	LogRegistration(r, s.Store, s.Logger, orgID, "password", user.Name, "Password change", user.SuperAdmin)
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -577,7 +580,7 @@ func (s *Service) validRoles(ctx context.Context, rs []cloudhub.Role) error {
 }
 
 func getNowDate() string {
-	sDate := time.Now().Format("2006-01-02 15:04:05")
+	sDate := time.Now().UTC().Format("2006-01-02 15:04:05")
 	return sDate
 }
 
