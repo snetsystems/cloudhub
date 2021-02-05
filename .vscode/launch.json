@@ -43,7 +43,7 @@
         "--external-exec=",
         "--external-exec-args=",
         "--influxdb-url=http://<influxDB>:<port>",
-        "--login-auth-type=basic", // Select the login type from mix, oauth, basic ... default: oauth"
+        "--login-auth-type=basic", // Select the login type from mix, oauth, basic ... default: oauth
         "--password-policy=(?=.*[0-9]{1,50})(?=.*[~`!@#$%\\^&*()-+=]{1,50})(?=.*[a-zA-Z]{2,50}).{8,50}$",
         "--password-policy-message=Enter at least 8 characters, including at least 1 digit and 1 special characters and 2 characters.eg, cloud!hub2"
       ],
