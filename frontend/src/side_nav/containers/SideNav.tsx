@@ -167,7 +167,7 @@ class SideNav extends PureComponent<Props> {
           }
         >
           <NavBlock
-            highlightWhen={['logs']}
+            highlightWhen={['logs', 'activity-logs']}
             icon="eye"
             link={`${sourcePrefix}/logs`}
             location={location}
