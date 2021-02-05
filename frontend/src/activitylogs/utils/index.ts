@@ -65,7 +65,7 @@ const tableFields = [
 const defaultQueryConfig = {
   areTagsAccepted: false,
   fill: '0',
-  measurement: 'connectLog',
+  measurement: 'activity_logging',
   rawText: null,
   shifts: [],
   tags: {},
