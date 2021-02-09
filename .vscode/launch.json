@@ -52,14 +52,14 @@
     },
     {
       "name": "Launch Chrome",
-      "type": "chrome",
+      "type": "pwa-chrome",
       "request": "launch",
       "url": "https://localhost/",
       "webRoot": "${workspaceFolder}/frontend/src"
     },
     {
       "name": "Launch Chrome via Proxy",
-      "type": "chrome",
+      "type": "pwa-chrome",
       "request": "launch",
       "url": "http://localhost:8080/",
       "webRoot": "${workspaceFolder}/frontend/src"
