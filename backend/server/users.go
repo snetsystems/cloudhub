@@ -2,20 +2,20 @@ package server
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha512"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"sort"
 	"strconv"
 	"time"
-	"crypto/sha512"
-	"crypto/hmac"
-	"encoding/hex"
 
 	"github.com/bouk/httprouter"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
-	"github.com/snetsystems/cloudhub/backend/roles"
 	"github.com/snetsystems/cloudhub/backend/organizations"
+	"github.com/snetsystems/cloudhub/backend/roles"
 )
 
 var (
@@ -41,13 +41,13 @@ type userPwdResetRequest struct {
 
 func (r *userRequest) ValidCreate() error {
 	if r.Name == "" {
-		return fmt.Errorf("name required on CloudHub basicUser request body")
+		return fmt.Errorf("name required on CloudHub basic User request body")
 	}
 	if r.Provider == "" {
-		return fmt.Errorf("provider required on CloudHub basicUser request body")
+		return fmt.Errorf("provider required on CloudHub basic User request body")
 	}
 	if r.Scheme == "" {
-		return fmt.Errorf("scheme required on CloudHub basicUser request body")
+		return fmt.Errorf("scheme required on CloudHub basic User request body")
 	}
 
 	if r.Scheme != "basic" {

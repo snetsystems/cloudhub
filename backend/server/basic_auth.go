@@ -2,26 +2,26 @@ package server
 
 import (
 	"bytes"
-	"strconv"
+	"compress/gzip"
 	"context"
-	"net/http"
-	"net/url"
-	"crypto/sha512"
 	"crypto/hmac"
+	"crypto/sha512"
 	"encoding/hex"
 	"encoding/json"
-	"path"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"math/rand"
+	"net/http"
+	"net/url"
+	"path"
+	"strconv"
 	"strings"
 	"time"
-	"io/ioutil"
-	"io"
-	"compress/gzip"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
-	"github.com/snetsystems/cloudhub/backend/oauth2"
 	"github.com/snetsystems/cloudhub/backend/influx"
+	"github.com/snetsystems/cloudhub/backend/oauth2"
 )
 
 type emailKey string
@@ -479,6 +479,7 @@ func randResetPassword() string {
 }
 
 // LogRegistration log db insert
+// isSuperAdmin is not used currently inside the function. This is for the future.
 func LogRegistration(r *http.Request, store DataStore, logger cloudhub.Logger, orgID, action, name, message string, isSuperAdmin bool) {
 	ctx := r.Context()
 	
