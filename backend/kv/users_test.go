@@ -206,7 +206,7 @@ func TestUsersStore_Add(t *testing.T) {
 						},
 					},
 					Passwd:   "dmddudu*(&",
-					PasswordRestFlag: "N",
+					PasswordResetFlag: "N",
 					Email: "abc@def.com",
 				},
 			},
