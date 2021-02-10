@@ -2,20 +2,20 @@ package server
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha512"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"sort"
 	"strconv"
 	"time"
-	"crypto/sha512"
-	"crypto/hmac"
-	"encoding/hex"
 
 	"github.com/bouk/httprouter"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
-	"github.com/snetsystems/cloudhub/backend/roles"
 	"github.com/snetsystems/cloudhub/backend/organizations"
+	"github.com/snetsystems/cloudhub/backend/roles"
 )
 
 var (
