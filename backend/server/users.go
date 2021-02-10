@@ -513,6 +513,11 @@ func (s *Service) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := setSuperAdmin(ctx, req, u); err != nil {
+		Error(w, http.StatusUnauthorized, err.Error(), s.Logger)
+		return
+	}
+
 	err = s.Store.Users(ctx).Update(ctx, u)
 	if err != nil {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
