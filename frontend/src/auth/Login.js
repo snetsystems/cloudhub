@@ -265,8 +265,8 @@ class Login extends PureComponent {
                             spellCheck={false}
                           />
                           <div className="form-message fm--info">
-                            It is used for OTP delivery when initializing
-                            password.
+                            Email will be used for OTP delivery when a password
+                            reset.
                           </div>
                         </div>
                       </div>
