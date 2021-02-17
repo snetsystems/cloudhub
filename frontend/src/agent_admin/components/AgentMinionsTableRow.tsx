@@ -128,7 +128,7 @@ class AgentMinionsTableRow extends PureComponent<Props> {
                     nodename: host,
                   })
                 }}
-                title={'open SSH(Beta)'}
+                title={'Open SSH Terminal'}
               ></button>
             </div>
           }

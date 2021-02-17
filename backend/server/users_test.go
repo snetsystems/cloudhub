@@ -81,6 +81,7 @@ func TestService_UserID(t *testing.T) {
 								Roles: []cloudhub.Role{
 									ViewerRole,
 								},
+								Email: "sliew@naver.com",
 							}, nil
 						default:
 							return nil, fmt.Errorf("User with ID %d not found", *q.ID)
@@ -91,7 +92,7 @@ func TestService_UserID(t *testing.T) {
 			id:              "1337",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1337","superAdmin":false,"name":"billysteve","provider":"google","scheme":"oauth2","links":{"self":"/cloudhub/v1/users/1337"},"roles":[{"name":"viewer"}]}`,
+			wantBody:        `{"id":"1337","superAdmin":false,"name":"billysteve","provider":"google","scheme":"oauth2","links":{"self":"/cloudhub/v1/users/1337"},"roles":[{"name":"viewer"}],"email":"sliew@naver.com"}`,
 		},
 	}
 
@@ -166,6 +167,8 @@ func TestService_NewUser(t *testing.T) {
 					Name:     "bob",
 					Provider: "github",
 					Scheme:   "oauth2",
+					Password: "epocokc%%^(",
+					Email: "zooiue@xowu.com",
 				},
 			},
 			fields: fields{
@@ -185,13 +188,14 @@ func TestService_NewUser(t *testing.T) {
 							Provider: "github",
 							Scheme:   "oauth2",
 							Roles:    []cloudhub.Role{},
+							Email:    "zooiue@xowu.com",
 						}, nil
 					},
 				},
 			},
 			wantStatus:      http.StatusCreated,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1338","superAdmin":false,"name":"bob","provider":"github","scheme":"oauth2","roles":[],"links":{"self":"/cloudhub/v1/users/1338"}}`,
+			wantBody:        `{"id":"1338","superAdmin":false,"name":"bob","provider":"github","scheme":"oauth2","roles":[],"links":{"self":"/cloudhub/v1/users/1338"},"email":"zooiue@xowu.com"}`,
 		},
 		{
 			name: "Create a new CloudHub User with multiple roles",
@@ -376,7 +380,7 @@ func TestService_NewUser(t *testing.T) {
 			},
 			wantStatus:      http.StatusUnauthorized,
 			wantContentType: "application/json",
-			wantBody:        `{"code":401,"message":"User does not have authorization required to set SuperAdmin status. See https://github.com/influxdata/cloudhub/issues/2601 for more information."}`,
+			wantBody:        `{"code":401,"message":"User does not have authorization required to set SuperAdmin status'.'"}`,
 		},
 		{
 			name: "Create a new SuperAdmin User - as superadmin",
@@ -841,6 +845,7 @@ func TestService_UpdateUser(t *testing.T) {
 										Organization: "1",
 									},
 								},
+								Email: "lxoci@sowo.com",
 							}, nil
 						default:
 							return nil, fmt.Errorf("User with ID %d not found", *q.ID)
@@ -870,12 +875,13 @@ func TestService_UpdateUser(t *testing.T) {
 							Organization: "1",
 						},
 					},
+					Email: "xpw.wm@woeiemk.com",
 				},
 			},
 			id:              "1336",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1336","superAdmin":false,"name":"bobbetta","provider":"github","scheme":"oauth2","links":{"self":"/cloudhub/v1/users/1336"},"roles":[{"name":"admin","organization":"1"}]}`,
+			wantBody:        `{"id":"1336","superAdmin":false,"name":"bobbetta","provider":"github","scheme":"oauth2","links":{"self":"/cloudhub/v1/users/1336"},"roles":[{"name":"admin","organization":"1"}],"email":"xpw.wm@woeiemk.com"}`,
 		},
 		{
 			name: "Update a CloudHub user roles different orgs",
@@ -1286,7 +1292,7 @@ func TestService_UpdateUser(t *testing.T) {
 			id:              "1336",
 			wantStatus:      http.StatusUnauthorized,
 			wantContentType: "application/json",
-			wantBody:        `{"code":401,"message":"User does not have authorization required to set SuperAdmin status. See https://github.com/influxdata/cloudhub/issues/2601 for more information."}`,
+			wantBody:        `{"code":401,"message":"User does not have authorization required to set SuperAdmin status'.'"}`,
 		},
 		{
 			name: "Update a CloudHub user to super admin - with super admin context",
@@ -1443,6 +1449,12 @@ func TestService_Users(t *testing.T) {
 								Provider: "auth0",
 								Scheme:   "oauth2",
 							},
+							{
+								ID:       1339,
+								Name:     "ppxiewoeuie",
+								Provider: "cloudhub",
+								Scheme:   "basic",
+							},
 						}, nil
 					},
 				},
@@ -1457,7 +1469,7 @@ func TestService_Users(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"users":[{"id":"1337","superAdmin":false,"name":"billysteve","provider":"google","scheme":"oauth2","roles":[{"name":"editor"}],"links":{"self":"/cloudhub/v1/users/1337"}},{"id":"1338","superAdmin":false,"name":"bobbettastuhvetta","provider":"auth0","scheme":"oauth2","roles":[],"links":{"self":"/cloudhub/v1/users/1338"}}],"links":{"self":"/cloudhub/v1/users"}}`,
+			wantBody:        `{"users":[{"id":"1337","superAdmin":false,"name":"billysteve","provider":"google","scheme":"oauth2","roles":[{"name":"editor"}],"links":{"self":"/cloudhub/v1/users/1337"}},{"id":"1338","superAdmin":false,"name":"bobbettastuhvetta","provider":"auth0","scheme":"oauth2","roles":[],"links":{"self":"/cloudhub/v1/users/1338"}},{"id":"1339","superAdmin":false,"name":"ppxiewoeuie","provider":"cloudhub","scheme":"basic","roles":[],"links":{"self":"/cloudhub/v1/users/1339"}}],"links":{"self":"/cloudhub/v1/users"}}`,
 		},
 		{
 			name: "Get all CloudHub users, ensuring order of users in response",
@@ -1481,6 +1493,12 @@ func TestService_Users(t *testing.T) {
 									EditorRole,
 								},
 							},
+							{
+								ID:       1336,
+								Name:     "ppxiewoeuie",
+								Provider: "cloudhub",
+								Scheme:   "basic",								
+							},
 						}, nil
 					},
 				},
@@ -1495,7 +1513,7 @@ func TestService_Users(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"users":[{"id":"1337","superAdmin":false,"name":"billysteve","provider":"google","scheme":"oauth2","roles":[{"name":"editor"}],"links":{"self":"/cloudhub/v1/users/1337"}},{"id":"1338","superAdmin":false,"name":"bobbettastuhvetta","provider":"auth0","scheme":"oauth2","roles":[],"links":{"self":"/cloudhub/v1/users/1338"}}],"links":{"self":"/cloudhub/v1/users"}}`,
+			wantBody:        `{"users":[{"id":"1336","superAdmin":false,"name":"ppxiewoeuie","provider":"cloudhub","scheme":"basic","links":{"self":"/cloudhub/v1/users/1336"},"roles":[]},{"id":"1337","superAdmin":false,"name":"billysteve","provider":"google","scheme":"oauth2","roles":[{"name":"editor"}],"links":{"self":"/cloudhub/v1/users/1337"}},{"id":"1338","superAdmin":false,"name":"bobbettastuhvetta","provider":"auth0","scheme":"oauth2","roles":[],"links":{"self":"/cloudhub/v1/users/1338"}}],"links":{"self":"/cloudhub/v1/users"}}`,
 		},
 	}
 
@@ -1697,11 +1715,14 @@ func TestUserRequest_ValidUpdate(t *testing.T) {
 			args: args{
 				u: &userRequest{},
 			},
-			wantErr: true,
+			wantErr: false,
 			err:     fmt.Errorf("No Roles to update"),
 		},
 		{
 			name: "Invalid - bad role name",
+
+
+			
 			args: args{
 				u: &userRequest{
 					ID:       1337,

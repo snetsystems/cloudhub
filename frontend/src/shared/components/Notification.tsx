@@ -4,6 +4,7 @@ import {bindActionCreators} from 'redux'
 import {Notification as NotificationType} from 'src/types/notifications'
 
 import classnames from 'classnames'
+import ReactHtmlParser from 'react-html-parser'
 
 import {dismissNotification as dismissNotificationAction} from 'src/shared/actions/notifications'
 
@@ -57,7 +58,7 @@ class Notification extends Component<Props, State> {
 
   public render() {
     const {
-      notification: {message, icon},
+      notification: {icon},
     } = this.props
 
     return (
@@ -67,9 +68,21 @@ class Notification extends Component<Props, State> {
           ref={this.handleNotificationRef}
         >
           <span className={`icon ${icon}`} />
-          <div className="notification-message">{message}</div>
+          {this.notificationMessage}
           <button className="notification-close" onClick={this.handleDismiss} />
         </div>
+      </div>
+    )
+  }
+
+  private get notificationMessage(): JSX.Element {
+    const {
+      notification: {message, isHasHTML},
+    } = this.props
+
+    return (
+      <div className="notification-message">
+        {isHasHTML ? ReactHtmlParser(message) : message}
       </div>
     )
   }

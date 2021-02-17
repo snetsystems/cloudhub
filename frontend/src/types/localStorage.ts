@@ -8,6 +8,7 @@ export interface LocalStorage {
   timeRange: TimeRange
   script: string
   logs: LogsState
+  activitylogs: LogsState
   telegrafSystemInterval: string
 }
 

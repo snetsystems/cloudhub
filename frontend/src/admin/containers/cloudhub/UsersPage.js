@@ -8,6 +8,8 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import UsersTable from 'src/admin/components/cloudhub/UsersTable'
+import {passwordResetAsync} from 'src/auth/actions'
+import {AlertTypes} from 'src/kapacitor/constants'
 
 class UsersPage extends PureComponent {
   constructor(props) {
@@ -48,6 +50,20 @@ class UsersPage extends PureComponent {
     deleteUserAsync(user, {isAbsoluteDelete: false})
   }
 
+  handleResetUserPassword = name => {
+    const {
+      handlePasswordReset,
+      links: {basicPasswordAdminReset},
+    } = this.props
+
+    handlePasswordReset({
+      url: basicPasswordAdminReset,
+      path: `/kapacitor/v1/service-tests/${AlertTypes.smtp}`,
+      name,
+      passwordReturn: true,
+    })
+  }
+
   async componentWillMount() {
     const {
       links,
@@ -71,6 +87,7 @@ class UsersPage extends PureComponent {
       meID,
       users,
       notify,
+      providers,
     } = this.props
     const {isLoading} = this.state
 
@@ -83,9 +100,11 @@ class UsersPage extends PureComponent {
         meID={meID}
         users={users}
         organization={organization}
+        providers={providers}
         onCreateUser={this.handleCreateUser}
         onUpdateUserRole={this.handleUpdateUserRole}
         onDeleteUser={this.handleDeleteUser}
+        onResetUserPassword={this.handleResetUserPassword}
         notify={notify}
         isLoading={isLoading}
       />
@@ -114,6 +133,8 @@ UsersPage.propTypes = {
     deleteUserAsync: func.isRequired,
   }),
   notify: func.isRequired,
+  handlePasswordReset: func.isRequired,
+  providers: arrayOf(string).isRequired,
 }
 
 const mapStateToProps = ({links, adminCloudHub: {organizations, users}}) => ({
@@ -125,6 +146,7 @@ const mapStateToProps = ({links, adminCloudHub: {organizations, users}}) => ({
 const mapDispatchToProps = dispatch => ({
   actions: bindActionCreators(adminCloudHubActionCreators, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
+  handlePasswordReset: bindActionCreators(passwordResetAsync, dispatch),
 })
 
 export default connect(

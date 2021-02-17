@@ -1,4 +1,4 @@
-import React, {Component} from 'react'
+import React, {PureComponent} from 'react'
 import PropTypes from 'prop-types'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
@@ -12,7 +12,7 @@ import {notifyCloudHubUserMissingNameAndProvider} from 'src/shared/copy/notifica
 import {USERS_TABLE} from 'src/admin/constants/cloudhubTableSizing'
 import {USER_ROLES} from 'src/admin/constants/cloudhubAdmin'
 
-class UsersTableRowNew extends Component {
+class UsersTableRowNew extends PureComponent {
   constructor(props) {
     super(props)
 
@@ -26,6 +26,14 @@ class UsersTableRowNew extends Component {
 
   handleInputChange = fieldName => e => {
     this.setState({[fieldName]: e.target.value.trim()})
+
+    if (fieldName === 'provider') {
+      if (e.target.value === 'cloudhub') {
+        this.setState({scheme: 'basic'})
+      } else {
+        this.setState({scheme: 'oauth2'})
+      }
+    }
   }
 
   handleConfirmCreateUser = () => {
@@ -52,6 +60,11 @@ class UsersTableRowNew extends Component {
     e.target.select()
   }
 
+  handleSelectProvider = newProvider => {
+    const {text: provider} = newProvider
+    this.setState({provider})
+  }
+
   handleSelectRole = newRole => {
     this.setState({role: newRole.text})
   }
@@ -72,9 +85,29 @@ class UsersTableRowNew extends Component {
     }
   }
 
+  componentDidUpdate = (_, prevState) => {
+    const {provider} = this.state
+    if (prevState.provider !== provider) {
+      if (provider === 'cloudhub') {
+        // eslint-disable-next-line react/no-did-update-set-state
+        this.setState({scheme: 'basic'})
+      } else {
+        // eslint-disable-next-line react/no-did-update-set-state
+        this.setState({scheme: 'oauth2'})
+      }
+    }
+  }
+
+  componentDidMount = () => {
+    const {providers} = this.props
+    if (providers.length > 0) {
+      this.setState({provider: providers[0]})
+    }
+  }
+
   render() {
     const {colRole, colProvider, colScheme, colActions} = USERS_TABLE
-    const {onBlur} = this.props
+    const {onBlur, providers} = this.props
     const {name, provider, scheme, role} = this.state
 
     const dropdownRolesItems = USER_ROLES.map(r => ({...r, text: r.name}))
@@ -86,7 +119,7 @@ class UsersTableRowNew extends Component {
           <input
             className="form-control input-xs"
             type="text"
-            placeholder="OAuth Username..."
+            placeholder="Username..."
             autoFocus={true}
             value={name}
             onChange={this.handleInputChange('name')}
@@ -104,14 +137,22 @@ class UsersTableRowNew extends Component {
           />
         </td>
         <td style={{width: colProvider}}>
-          <input
+          <Dropdown
+            items={providers}
+            selected={provider}
+            onChoose={this.handleSelectProvider}
+            buttonColor="btn-primary"
+            buttonSize="btn-xs"
+            className="dropdown-stretch"
+          />
+          {/* <input
             className="form-control input-xs"
             type="text"
-            placeholder="OAuth Provider..."
+            placeholder="cloudhub or OAuth"
             value={provider}
             onChange={this.handleInputChange('provider')}
             onKeyDown={this.handleKeyDown}
-          />
+          /> */}
         </td>
         <td style={{width: colScheme}}>
           <input
@@ -139,7 +180,7 @@ class UsersTableRowNew extends Component {
   }
 }
 
-const {func, shape, string} = PropTypes
+const {func, shape, string, arrayOf} = PropTypes
 
 UsersTableRowNew.propTypes = {
   organization: shape({
@@ -149,6 +190,7 @@ UsersTableRowNew.propTypes = {
   onBlur: func.isRequired,
   onCreateUser: func.isRequired,
   notify: func.isRequired,
+  providers: arrayOf(string).isRequired,
 }
 
 const mapDispatchToProps = dispatch => ({

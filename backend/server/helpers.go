@@ -6,6 +6,11 @@ import (
 	"bufio"
 	"net"
 	"errors"
+	"os/exec"
+	"bytes"
+	"strconv"
+
+	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
 func location(w http.ResponseWriter, self string) {
@@ -82,4 +87,24 @@ func FlushingHandler(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(iw, r)
 	})
+}
+
+func programExec(program string, args []string, logger cloudhub.Logger) bool {
+    cmd := exec.Command(program, args...)
+	out, err := cmd.CombinedOutput()
+
+    if err != nil { 
+		logger.WithField("component", program).Error("Error message ", err.Error())
+		return false
+	}
+	
+	logger.WithField("component", program).Info(string(out))
+
+	resStatusCode := bytes.NewBuffer(out).String()
+	httpStatusCode, _ := strconv.Atoi(resStatusCode)
+
+	if httpStatusCode == http.StatusOK || httpStatusCode == http.StatusCreated || httpStatusCode == http.StatusAccepted {
+		return true
+	}
+	return false
 }

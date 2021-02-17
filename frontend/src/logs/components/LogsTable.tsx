@@ -77,6 +77,7 @@ interface Props {
   searchStatus: SearchStatus
   upper: number | undefined
   lower: number | undefined
+  currentMeasurement: string
 }
 
 interface State {
@@ -258,7 +259,7 @@ class LogsTable extends Component<Props, State> {
                     style={{
                       height: this.calculateTotalHeight(),
                       width: Math.max(this.minTableWidth, width),
-                      overflow: 'hidden',
+                      // overflowY: 'hidden',
                     }}
                   />
                 </FancyScrollbar>
@@ -625,6 +626,7 @@ class LogsTable extends Component<Props, State> {
         status={this.props.searchStatus}
         lower={this.props.lower}
         upper={this.props.upper}
+        currentMeasurement={this.props.currentMeasurement}
       />
     )
   }

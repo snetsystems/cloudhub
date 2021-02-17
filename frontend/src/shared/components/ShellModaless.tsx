@@ -128,18 +128,7 @@ class ShellModaless extends PureComponent<Props, State> {
             <div className={`page-header`}>
               <div className={`page-header--container`}>
                 <div className={`page-header--left`}>
-                  <div className={`page-header--title`}>
-                    Terminal
-                    <span
-                      style={{
-                        color: '#d83f3f',
-                        opacity: '0.8',
-                        fontStyle: 'italic',
-                      }}
-                    >
-                      (Beta)
-                    </span>
-                  </div>
+                  <div className={`page-header--title`}>Terminal</div>
                 </div>
                 <div className={`page-header--right`}>
                   <button
