@@ -189,6 +189,10 @@ message User {
 	string Scheme           = 4; // Scheme is the scheme used to perform this user's authentication, e.g. OAuth2 or LDAP
 	repeated Role Roles     = 5; // Roles is set of roles a user has
 	bool SuperAdmin         = 6; // SuperAdmin is bool that specifies whether a user is a super admin
+	string Password         = 7; // Save when the scheme is basic
+	string PasswordResetFlag = 8; // Save when the scheme is basic. Whether to reset password
+	string PasswordUpdateDate = 9; // Password change date
+	string Email            = 10; // Email is for sending the user's password.
 }
 
 message Role {

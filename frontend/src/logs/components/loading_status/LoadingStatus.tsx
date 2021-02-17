@@ -7,6 +7,7 @@ interface Props {
   status: SearchStatus
   lower: number
   upper: number
+  currentMeasurement: string
 }
 
 class LoadingStatus extends PureComponent<Props> {
@@ -109,8 +110,9 @@ class LoadingStatus extends PureComponent<Props> {
       case SearchStatus.MeasurementMissing:
         return (
           <>
-            The selected database does not have a <strong>syslog</strong>{' '}
-            measurement...<br />
+            The selected database does not have a{' '}
+            <strong>{this.props.currentMeasurement}</strong> measurement...
+            <br />
           </>
         )
       case SearchStatus.Loading:

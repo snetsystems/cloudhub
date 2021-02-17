@@ -24,6 +24,7 @@ interface Props {
   onChangeUserRole: (User, Role) => void
   onDelete: (User) => void
   meID: string
+  onResetUserPassword: (name: string) => void
 }
 
 @ErrorHandling
@@ -59,14 +60,26 @@ class UsersTableRow extends PureComponent<Props> {
         <td style={{width: colProvider}}>{user.provider}</td>
         <td style={{width: colScheme}}>{user.scheme}</td>
         <td className="text-right">
-          <ConfirmButton
-            confirmText={this.confirmationText}
-            confirmAction={this.handleDelete}
-            size="btn-xs"
-            type="btn-danger"
-            text="Remove"
-            customClass="table--show-on-row-hover"
-          />
+          <div style={{display: 'flex', justifyContent: 'flex-end'}}>
+            {user.provider === 'cloudhub' && (
+              <ConfirmButton
+                confirmText={this.confirmationPasswordResetText}
+                confirmAction={this.handleResetPassword}
+                size="btn-xs"
+                type="btn-danger"
+                text="Reset"
+                customClass="table--show-on-row-hover"
+              />
+            )}
+            <ConfirmButton
+              confirmText={this.confirmationText}
+              confirmAction={this.handleDelete}
+              size="btn-xs"
+              type="btn-danger"
+              text="Remove"
+              customClass="table--show-on-row-hover"
+            />
+          </div>
         </td>
       </tr>
     )
@@ -76,6 +89,12 @@ class UsersTableRow extends PureComponent<Props> {
     const {user, onDelete} = this.props
 
     onDelete(user)
+  }
+
+  private handleResetPassword = (): void => {
+    const {user, onResetUserPassword} = this.props
+
+    onResetUserPassword(user.name)
   }
 
   private get rolesDropdownItems(): DropdownRole[] {
@@ -99,6 +118,10 @@ class UsersTableRow extends PureComponent<Props> {
 
   private get confirmationText(): string {
     return 'Remove this user\nfrom Current Org?'
+  }
+
+  private get confirmationPasswordResetText(): string {
+    return 'Reset this user password\nfrom Current Org?'
   }
 }
 

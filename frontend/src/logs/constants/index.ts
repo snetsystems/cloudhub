@@ -245,3 +245,8 @@ export const defaultTableData: TableData = {
   ],
   values: [],
 }
+
+export const defaultActivityTableData: TableData = {
+  columns: ['time', 'severity', 'timestamp', 'message', 'user', 'action'],
+  values: [],
+}

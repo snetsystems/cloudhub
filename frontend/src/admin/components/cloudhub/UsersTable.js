@@ -44,7 +44,15 @@ class UsersTable extends Component {
   }
 
   render() {
-    const {organization, users, onCreateUser, meID, isLoading} = this.props
+    const {
+      organization,
+      providers,
+      users,
+      onCreateUser,
+      meID,
+      isLoading,
+      onResetUserPassword,
+    } = this.props
 
     const {isCreatingUser} = this.state
     const {colRole, colProvider, colScheme, colActions} = USERS_TABLE
@@ -82,6 +90,7 @@ class UsersTable extends Component {
             <tbody>
               {isCreatingUser ? (
                 <UsersTableRowNew
+                  providers={providers}
                   organization={organization}
                   onBlur={this.handleBlurCreateUserRow}
                   onCreateUser={onCreateUser}
@@ -96,6 +105,7 @@ class UsersTable extends Component {
                     onChangeUserRole={this.handleChangeUserRole}
                     onDelete={this.handleDeleteUser}
                     meID={meID}
+                    onResetUserPassword={onResetUserPassword}
                   />
                 ))
               ) : (
@@ -140,8 +150,10 @@ UsersTable.propTypes = {
   onCreateUser: func.isRequired,
   onUpdateUserRole: func.isRequired,
   onDeleteUser: func.isRequired,
+  onResetUserPassword: func,
   meID: string.isRequired,
   isLoading: bool.isRequired,
+  providers: arrayOf(string).isRequired,
 }
 
 export default ErrorHandling(UsersTable)

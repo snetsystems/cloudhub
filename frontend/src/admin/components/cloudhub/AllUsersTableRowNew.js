@@ -59,6 +59,11 @@ class AllUsersTableRowNew extends Component {
     e.target.select()
   }
 
+  handleSelectProvider = newProvider => {
+    const {text: provider} = newProvider
+    this.setState({provider})
+  }
+
   handleSelectOrganization = newOrganization => {
     // if "None" was selected for organization, create a "null role" from the predefined null role
     // else create a new role with the organization as the newOrganization's id
@@ -90,8 +95,26 @@ class AllUsersTableRowNew extends Component {
     }
   }
 
+  componentDidUpdate = (_, prevState) => {
+    const {provider} = this.state
+    if (prevState.provider !== provider) {
+      if (provider === 'cloudhub') {
+        this.setState({scheme: 'basic'})
+      } else {
+        this.setState({scheme: 'oauth2'})
+      }
+    }
+  }
+
+  componentDidMount = () => {
+    const {providers} = this.props
+    if (providers.length > 0) {
+      this.setState({provider: providers[0]})
+    }
+  }
+
   render() {
-    const {organizations, onBlur} = this.props
+    const {organizations, onBlur, providers} = this.props
     const {name, provider, scheme, role} = this.state
 
     const dropdownOrganizationsItems = [
@@ -113,7 +136,7 @@ class AllUsersTableRowNew extends Component {
           <input
             className="form-control input-xs"
             type="text"
-            placeholder="OAuth Username..."
+            placeholder="Username..."
             autoFocus={true}
             value={name}
             onChange={this.handleInputChange('name')}
@@ -131,13 +154,13 @@ class AllUsersTableRowNew extends Component {
           />
         </td>
         <td style={{width: colProvider}}>
-          <input
-            className="form-control input-xs"
-            type="text"
-            placeholder="OAuth Provider..."
-            value={provider}
-            onChange={this.handleInputChange('provider')}
-            onKeyDown={this.handleKeyDown}
+          <Dropdown
+            items={providers}
+            selected={provider}
+            onChoose={this.handleSelectProvider}
+            buttonColor="btn-primary"
+            buttonSize="btn-xs"
+            className="dropdown-stretch"
           />
         </td>
         <td style={{width: colScheme}}>
@@ -181,6 +204,7 @@ AllUsersTableRowNew.propTypes = {
   onBlur: func.isRequired,
   onCreateUser: func.isRequired,
   notify: func.isRequired,
+  providers: arrayOf(string).isRequired,
 }
 
 const mapDispatchToProps = dispatch => ({

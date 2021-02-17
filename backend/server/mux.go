@@ -35,6 +35,8 @@ type MuxOpts struct {
 	DisableGZip   bool              // Optionally disable gzip.
 	AddonURLs     map[string]string // URLs for using in Addon Features, as passed in via CLI/ENV
 	AddonTokens   map[string]string // Tokens to access to Addon Features API, as passed in via CLI/ENV
+	PasswordPolicy        string    // Password validity rules
+	PasswordPolicyMessage string    // Password validity rule description
 }
 
 // NewMux attaches all the route handlers; handler returned servers cloudhub.
@@ -155,6 +157,21 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	/* Health */
 	router.GET("/ping", func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) })
+
+	/* API (Provider=cloudhub, Scheme=basic)  */
+	// Login, Logout
+	router.POST("/basic/login", service.Login(opts.Auth, opts.Basepath))
+	router.GET("/basic/logout", service.Logout(opts.Auth, opts.Basepath))
+
+	// User sign up
+	router.POST("/basic/users", service.NewBasicUser)
+
+	// User password change
+	router.PATCH("/basic/password", service.UserPassword)
+
+	// User password reset
+	router.GET("/basic/password/reset", service.UserPwdReset)
+	router.GET("/cloudhub/v1/password/reset", EnsureAdmin(service.UserPwdAdminReset))
 
 	/* API */
 	// Organizations
@@ -296,9 +313,9 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.GET("/cloudhub/v1/users", EnsureSuperAdmin(rawStoreAccess(service.Users)))
 	router.POST("/cloudhub/v1/users", EnsureSuperAdmin(rawStoreAccess(service.NewUser)))
 
-	router.GET("/cloudhub/v1/users/:id", EnsureSuperAdmin(rawStoreAccess(service.UserID)))
+	router.GET("/cloudhub/v1/users/:id", EnsureViewer(service.UserID))
 	router.DELETE("/cloudhub/v1/users/:id", EnsureSuperAdmin(rawStoreAccess(service.RemoveUser)))
-	router.PATCH("/cloudhub/v1/users/:id", EnsureSuperAdmin(rawStoreAccess(service.UpdateUser)))
+	router.PATCH("/cloudhub/v1/users/:id", EnsureViewer(service.UpdateUser))
 
 	// Dashboards
 	router.GET("/cloudhub/v1/dashboards", EnsureViewer(service.Dashboards))
@@ -369,7 +386,17 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 		CustomLinks: opts.CustomLinks,
 		AddonURLs:   opts.AddonURLs,
 		AddonTokens: opts.AddonTokens,
-	}	
+		PasswordPolicy: opts.PasswordPolicy,
+		PasswordPolicyMessage: opts.PasswordPolicyMessage,
+		BasicRoute:  BasicAuthRoute{
+			Name: "cloudhub",
+			Login: "/basic/login",
+			Logout: "/basic/logout",
+		},
+		BasicLogoutLink: "/basic/logout",
+		LoginAuthType: service.LoginAuthType,
+		BasicPasswordResetType: service.BasicPasswordResetType,
+	}
 
 	getPrincipal := func(r *http.Request) oauth2.Principal {
 		p, _ := HasAuthorizedToken(opts.Auth, r)
@@ -389,10 +416,11 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 		// Create middleware that redirects to the appropriate provider logout
 		router.GET("/oauth/logout", logout("/", opts.Basepath, allRoutes.AuthRoutes))
-		out = Logger(opts.Logger, FlushingHandler(auth))
+		out = auth
 	} else {
-		out = Logger(opts.Logger, FlushingHandler(router))
+		out = router
 	}
+	out = Logger(opts.Logger, FlushingHandler(out))
 
 	return out
 }
@@ -438,6 +466,24 @@ func AuthAPI(opts MuxOpts, router cloudhub.Router) (http.Handler, AuthRoutes) {
 		}
 		router.ServeHTTP(w, r)
 	}), routes
+}
+
+// BasicAuthAPI adds the Basic routes if auth is enabled. 
+// Copy session information to context when oauth is not used
+// not using it now.
+func BasicAuthAPI(opts MuxOpts, router cloudhub.Router) (http.Handler) {
+	rootPath := path.Join(opts.Basepath, "/cloudhub/v1")
+
+	tokenMiddleware := AuthorizedToken(opts.Auth, opts.Logger, router)
+	// Wrap the API with token validation middleware.
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cleanPath := path.Clean(r.URL.Path) // compare ignoring path garbage, trailing slashes, etc.
+		if (strings.HasPrefix(cleanPath, rootPath) && len(cleanPath) > len(rootPath)) {
+			tokenMiddleware.ServeHTTP(w, r)
+			return
+		}
+		router.ServeHTTP(w, r)
+	})
 }
 
 func encodeJSON(w http.ResponseWriter, status int, v interface{}, logger cloudhub.Logger) {
