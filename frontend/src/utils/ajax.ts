@@ -28,6 +28,7 @@ interface Links {
 interface LinksInputs {
   auth: object
   logout: object
+  basicLogout: object
   external: object
   users: object
   allUsers: object
@@ -38,7 +39,7 @@ interface LinksInputs {
   flux: object
 }
 
-function generateResponseWithLinks<T extends object>(
+function generateResponseWithLinks<T extends {[key: string]: any}>(
   response: T,
   newLinks: LinksInputs
 ): T & Links {
@@ -53,11 +54,12 @@ function generateResponseWithLinks<T extends object>(
     config,
     environment,
     flux,
+    basicLogout,
   } = newLinks
 
   const linksObj = {
     auth: {links: auth},
-    logoutLink: logout,
+    logoutLink: response?.data.provider === 'cloudhub' ? basicLogout : logout,
     external,
     users,
     allUsers,
@@ -93,7 +95,7 @@ async function AJAX<T = any>(
     headers = {},
   }: RequestParams,
   excludeBasepath = false
-): Promise<(T | T & {links: object}) | AxiosResponse<T>> {
+): Promise<(T | (T & {links: object})) | AxiosResponse<T>> {
   try {
     url = addBasepath(url, excludeBasepath)
 

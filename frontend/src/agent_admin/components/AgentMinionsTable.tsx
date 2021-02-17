@@ -282,16 +282,7 @@ class AgentMinionsTable extends PureComponent<Props, State> {
             className="hosts-table--th list-type"
             style={{width: OperationWidth}}
           >
-            SSH
-            <span
-              style={{
-                color: '#d83f3f',
-                opacity: '0.8',
-                fontStyle: 'italic',
-              }}
-            >
-              (Beta)
-            </span>
+            Console
           </div>
         </div>
       </div>

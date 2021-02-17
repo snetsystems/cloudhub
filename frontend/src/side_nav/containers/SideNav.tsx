@@ -3,7 +3,7 @@ import React, {PureComponent} from 'react'
 import {withRouter, Link} from 'react-router'
 import {connect} from 'react-redux'
 
-import Authorized, {ADMIN_ROLE} from 'src/auth/Authorized'
+import Authorized, {ADMIN_ROLE, SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
 import UserNavBlock from 'src/side_nav/components/UserNavBlock'
 
@@ -143,14 +143,42 @@ class SideNav extends PureComponent<Props> {
           </NavListItem>
         </NavBlock>
 
-        <NavBlock
-          highlightWhen={['logs']}
-          icon="eye"
-          link={`${sourcePrefix}/logs`}
-          location={location}
+        <Authorized
+          requiredRole={SUPERADMIN_ROLE}
+          replaceWithIfNotAuthorized={
+            <NavBlock
+              highlightWhen={['logs']}
+              icon="eye"
+              link={`${sourcePrefix}/logs`}
+              location={location}
+            >
+              <NavHeader link={`${sourcePrefix}/logs`} title="Log Viewer" />
+            </NavBlock>
+          }
+          replaceWithIfNotUsingAuth={
+            <NavBlock
+              highlightWhen={['logs']}
+              icon="eye"
+              link={`${sourcePrefix}/logs`}
+              location={location}
+            >
+              <NavHeader link={`${sourcePrefix}/logs`} title="Log Viewer" />
+            </NavBlock>
+          }
         >
-          <NavHeader link={`${sourcePrefix}/logs`} title="Log Viewer" />
-        </NavBlock>
+          <NavBlock
+            highlightWhen={['logs', 'activity-logs']}
+            icon="eye"
+            link={`${sourcePrefix}/logs`}
+            location={location}
+          >
+            <NavHeader link={`${sourcePrefix}/logs`} title="Log Viewer" />
+            <NavListItem link={`${sourcePrefix}/logs`}>System Logs</NavListItem>
+            <NavListItem link={`${sourcePrefix}/activity-logs`}>
+              Activity Logs
+            </NavListItem>
+          </NavBlock>
+        </Authorized>
 
         <Authorized
           requiredRole={ADMIN_ROLE}

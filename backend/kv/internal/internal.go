@@ -617,12 +617,16 @@ func MarshalUser(u *cloudhub.User) ([]byte, error) {
 		}
 	}
 	return MarshalUserPB(&User{
-		ID:         u.ID,
-		Name:       u.Name,
-		Provider:   u.Provider,
-		Scheme:     u.Scheme,
-		Roles:      roles,
-		SuperAdmin: u.SuperAdmin,
+		ID:                 u.ID,
+		Name:               u.Name,
+		Provider:           u.Provider,
+		Scheme:             u.Scheme,
+		Roles:              roles,
+		SuperAdmin:         u.SuperAdmin,
+		Password:           u.Passwd,
+		PasswordResetFlag:   u.PasswordResetFlag,
+		PasswordUpdateDate: u.PasswordUpdateDate,
+		Email: u.Email,
 	})
 }
 
@@ -652,6 +656,10 @@ func UnmarshalUser(data []byte, u *cloudhub.User) error {
 	u.Scheme = pb.Scheme
 	u.SuperAdmin = pb.SuperAdmin
 	u.Roles = roles
+	u.Passwd = pb.Password
+	u.PasswordResetFlag = pb.PasswordResetFlag
+	u.PasswordUpdateDate = pb.PasswordUpdateDate
+	u.Email = pb.Email
 
 	return nil
 }

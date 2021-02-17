@@ -17,6 +17,7 @@ const actionsAllowedDuringBlackout = [
   'AUTH_',
   'ME_',
   'PUBLISH_NOTIFICATION',
+  'DISMISS_NOTIFICATION',
   'ERROR_',
   'LINKS_',
 ]

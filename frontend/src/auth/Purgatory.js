@@ -63,7 +63,7 @@ class Purgatory extends Component {
     return (
       <div>
         <Notifications />
-        <SplashPage>
+        <SplashPage router={router}>
           <div className="auth--purgatory">
             <h3>{name}</h3>
             <h6>

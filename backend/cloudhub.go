@@ -428,14 +428,17 @@ type Scope string
 
 // User represents an authenticated user.
 type User struct {
-	ID          uint64      `json:"id,string,omitempty"`
-	Name        string      `json:"name"`
-	Passwd      string      `json:"password,omitempty"`
-	Permissions Permissions `json:"permissions,omitempty"`
-	Roles       []Role      `json:"roles"`
-	Provider    string      `json:"provider,omitempty"`
-	Scheme      string      `json:"scheme,omitempty"`
-	SuperAdmin  bool        `json:"superAdmin,omitempty"`
+	ID                    uint64      `json:"id,string,omitempty"`
+	Name                  string      `json:"name"`
+	Passwd                string      `json:"password,omitempty"`
+	Permissions           Permissions `json:"permissions,omitempty"`
+	Roles                 []Role      `json:"roles"`
+	Provider              string      `json:"provider,omitempty"`
+	Scheme                string      `json:"scheme,omitempty"`
+	SuperAdmin            bool        `json:"superAdmin,omitempty"`
+	PasswordUpdateDate    string      `json:"passwordUpdateDate,omitempty"`
+	PasswordResetFlag     string      `json:"passwordResetFlag,omitempty"`
+	Email                 string      `json:"email,omitempty"`
 }
 
 // UserQuery represents the attributes that a user may be retrieved by.

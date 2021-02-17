@@ -6,7 +6,7 @@ import {
   notifyLoadLocalSettingsFailed,
 } from 'src/shared/copy/notifications'
 
-import {defaultTableData} from 'src/logs/constants'
+import {defaultTableData, defaultActivityTableData} from 'src/logs/constants'
 import {VERSION, GIT_SHA} from 'src/shared/constants'
 
 import {LocalStorage} from 'src/types/localStorage'
@@ -47,6 +47,7 @@ export const saveToLocalStorage = ({
   timeRange,
   dashTimeV1: {ranges, refreshes},
   logs,
+  activitylogs,
   script,
 }: LocalStorage): void => {
   try {
@@ -56,6 +57,25 @@ export const saveToLocalStorage = ({
     }
 
     const minimalLogs = _.omit(logs, [
+      'tableData',
+      'histogramData',
+      'queryCount',
+      'tableInfiniteData',
+      'newRowsAdded',
+      'searchStatus',
+      'queryCount',
+      'nextOlderUpperBound',
+      'nextOlderLowerBound',
+      'nextNewerUpperBound',
+      'nextNewerLowerBound',
+      'currentTailUpperBound',
+      'nextTailLowerBound',
+      'tailChunkDurationMs',
+      'olderChunkDurationMs',
+      'newerChunkDurationMs',
+    ])
+
+    const minimalActivityLogs = _.omit(activitylogs, [
       'tableData',
       'histogramData',
       'queryCount',
@@ -96,6 +116,17 @@ export const saveToLocalStorage = ({
             backward: defaultTableData,
           },
           tableTime: minimalLogs.tableTime || {},
+        },
+        activitylogs: {
+          ...minimalActivityLogs,
+          histogramData: [],
+          tableData: {},
+          queryCount: 0,
+          tableInfiniteData: {
+            forward: defaultActivityTableData,
+            backward: defaultActivityTableData,
+          },
+          tableTime: minimalActivityLogs.tableTime || {},
         },
       })
     )

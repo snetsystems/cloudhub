@@ -10,7 +10,7 @@ export const USERS_TABLE = {
 export const ALL_USERS_TABLE = {
   colOrganizations: 320,
   colSuperAdmin: 90,
-  colProvider: 100,
+  colProvider: 150,
   colScheme: 90,
-  colActions: 50,
+  colActions: 100,
 }

@@ -14,18 +14,21 @@ export const defaultErrorNotification: NotificationExcludingMessage = {
   type: 'error',
   icon: 'alert-triangle',
   duration: TEN_SECONDS,
+  isHasHTML: false,
 }
 
 export const defaultSuccessNotification: NotificationExcludingMessage = {
   type: 'success',
   icon: 'checkmark',
   duration: FIVE_SECONDS,
+  isHasHTML: false,
 }
 
 export const defaultDeletionNotification: NotificationExcludingMessage = {
   type: 'primary',
   icon: 'trash',
   duration: FIVE_SECONDS,
+  isHasHTML: false,
 }
 
 //  Misc Notifications
@@ -261,6 +264,24 @@ export const notifyCloudHubUserUpdated = (message: string): Notification => ({
   ...defaultSuccessNotification,
   message,
 })
+
+export const notifyCloudHubBasicUserAdd = (
+  name: string,
+  password: string
+): Notification => {
+  let message = `
+    <div>Adding user is successful.</div>
+    <hr class="notification-line">
+    <div>User name: ${name}</div>
+    <div>Password(OTP): ${password}</div>
+  `
+  return {
+    ...defaultSuccessNotification,
+    duration: INFINITE,
+    isHasHTML: true,
+    message,
+  }
+}
 
 export const notifyCloudHubOrgDeleted = (orgName: string): Notification => ({
   ...defaultSuccessNotification,
@@ -1060,4 +1081,99 @@ export const notifyConnectRemoteConsoleFailed = (
 ): Notification => ({
   ...defaultErrorNotification,
   message: `Remote Console Run Failed, ${error}`,
+})
+
+//  CloudHub User Auth Notifications
+//  ----------------------------------------------------------------------------
+
+export const notifyLoginFailed = (error: {
+  code: number
+  message: string
+}): Notification => ({
+  ...defaultErrorNotification,
+  isHasHTML: true,
+  message: `Login is failed.<br/>CODE: ${error.code}<br/>REASON: ${error.message}`,
+})
+
+export const notifyLoginCheck = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Check out your ID or password , please.`,
+})
+
+export const notifyUserAddCompleted = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Sign up is successful.`,
+})
+
+export const notifyUserAddFailed = (error: {
+  code: number
+  message: string
+}): Notification => ({
+  ...defaultErrorNotification,
+  isHasHTML: true,
+  message: `Sign up is failed.<br/>CODE: ${error.code}<br/>REASON: ${error.message}`,
+})
+
+export const notifyUserPasswordResetCompleted = ({
+  name,
+  password,
+  sendKind,
+}: {
+  name: string
+  password: string
+  sendKind: string
+}): Notification => {
+  let message = `
+    <div>Reset the password is successful.</div>
+    <hr class="notification-line">
+    <div>User name: ${name}</div>
+  `
+  if (password) {
+    message += `<div>Password(OTP): ${password}</div>`
+  }
+
+  if (sendKind) {
+    if (sendKind === 'error') {
+      message += `<div>Send:[Error] Sending an OTP did not succeed.</div>`
+    } else {
+      message += `<div>Send: ${sendKind}</div>`
+    }
+  }
+
+  return {
+    ...defaultSuccessNotification,
+    duration: INFINITE,
+    isHasHTML: true,
+    message,
+  }
+}
+
+export const notifyUserPasswordResetFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Reset the password is failed.`,
+})
+
+export const notifyUserUpdateCompleted = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Updating user information is successful.`,
+})
+
+export const notifyUserUpdateFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Updating user information is failed.`,
+})
+
+export const notifyUserPasswordInputError = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Check out your password, please.`,
+})
+
+export const notifyUserOTPChangeCompleted = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Updating your password is successful.`,
+})
+
+export const notifyUserOTPChangeFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Updating your password is failed.`,
 })

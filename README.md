@@ -30,18 +30,20 @@ For the agent management or vsphere, k8s inventory viewer test, you prepare to S
 
 ## Key Differences against _Chronograf_ at this point(version).
 
+- Add a Basic(id/pw) authentication and management feature.
+  - Regarding to above, an activity log is added.
 - Add **multi-tenant** feature across Users-Roles-Groups-DataSources.
 - Hosts to Infrastructures and basic charts added.
 - Visualization added by criteria of Applications.
 - Integration a backend with **_SaltStack_**.
   - Avoid CORS Problem: `Web UI > CloudHub Salt Proxy > Salt API Server > Salt Master > Salt Minions.`
   - Telegraf agent management and configuration editing and deploying remotely via **_SaltStack_ Rest API**.
-- Web SSH Terminal feature.(beta)
+- Web SSH Terminal feature.
   - Connection to hosts using ssh protocol via CloudHub WebSocket Proxy.
 - Optionable Addon features.
   - **_VMWare_ Infrastructure** Viewer.
     - via **_VSphere_** API and **_Salt_**
-  - **_K8s Infrastructure_** Diagram & Viewer. (In progress of implementation)
+  - **_K8s Infrastructure_** Diagram & Viewer. (Pending in dev-1.1.0 branch)
     - via customized **_Salt's Kuberetes_** Module.
   - SWAN Router & SDPlex(Oncue) Features.
   <p align="center">
