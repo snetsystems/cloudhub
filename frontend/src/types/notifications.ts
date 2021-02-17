@@ -4,6 +4,7 @@ export interface Notification {
   icon: string
   duration: number
   message: string
+  isHasHTML?: boolean
 }
 
 export type NotificationFunc = (message: string) => Notification

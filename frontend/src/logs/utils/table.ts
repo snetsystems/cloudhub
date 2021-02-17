@@ -29,7 +29,16 @@ export const getColumnFromData = (data: TableData, index: number): string =>
 
 export const isClickable = (column: string): boolean =>
   _.includes(
-    ['appname', 'facility', 'host', 'hostname', 'severity', 'procid'],
+    [
+      'appname',
+      'facility',
+      'host',
+      'hostname',
+      'severity',
+      'procid',
+      'user',
+      'action',
+    ],
     column
   )
 
@@ -45,6 +54,8 @@ export const formatColumnValue = (
     case 'host':
     case 'hostname':
     case 'appname':
+    case 'user':
+    case 'action':
       return truncateText(value, column)
     case 'message':
       value = (value || 'No Message Provided').replace('\\n', '')
@@ -84,6 +95,8 @@ export const getColumnWidth = (column: string): number => {
       severity_text: 120,
       severity_dotText: 120,
       host: 300,
+      user: 120,
+      action: 120,
     },
     column,
     DEFAULT_COLUMN_WIDTH

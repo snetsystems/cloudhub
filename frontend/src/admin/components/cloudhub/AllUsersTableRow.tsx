@@ -44,6 +44,7 @@ interface Props {
   onDelete: (user: User) => void
   meID: string
   organizations: Organization[]
+  onResetPassword: (name: string) => void
 }
 
 @ErrorHandling
@@ -89,14 +90,28 @@ export default class AllUsersTableRow extends Component<Props> {
           />
         </td>
         <td style={{textAlign: 'right', width: colActions}}>
-          <ConfirmButton
-            confirmText={this.removeWarning}
-            confirmAction={this.handleDelete}
-            size="btn-xs"
-            type="btn-danger"
-            text="Delete"
-            customClass="table--show-on-row-hover"
-          />
+          <div style={{display: 'flex', justifyContent: 'flex-end'}}>
+            {user.provider === 'cloudhub' && (
+              <div style={{marginRight: '4px'}}>
+                <ConfirmButton
+                  confirmText={this.confirmationPasswordResetText}
+                  confirmAction={this.handleReset}
+                  size="btn-xs"
+                  type="btn-danger"
+                  text="Reset"
+                  customClass="table--show-on-row-hover"
+                />
+              </div>
+            )}
+            <ConfirmButton
+              confirmText={this.removeWarning}
+              confirmAction={this.handleDelete}
+              size="btn-xs"
+              type="btn-danger"
+              text="Delete"
+              customClass="table--show-on-row-hover"
+            />
+          </div>
         </td>
       </tr>
     )
@@ -157,6 +172,10 @@ export default class AllUsersTableRow extends Component<Props> {
     return user.id === meID
   }
 
+  private get confirmationPasswordResetText(): string {
+    return 'Reset your user password\nand send to stored email?'
+  }
+
   private get dropdownOrganizationsItems() {
     return this.userOrganizations.map(o => ({...o, text: o.name}))
   }
@@ -180,5 +199,10 @@ export default class AllUsersTableRow extends Component<Props> {
   private handleDelete = () => {
     const {onDelete, user} = this.props
     onDelete(user)
+  }
+
+  private handleReset = (): void => {
+    const {onResetPassword, user} = this.props
+    onResetPassword(user.name)
   }
 }

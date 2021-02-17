@@ -1,6 +1,7 @@
 // Libraries
 import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
+import {Link} from 'react-router'
 
 // Components
 import OrgLink from 'src/side_nav/components/OrgLink'
@@ -27,12 +28,13 @@ interface Props {
   links: Links
   logoutLink: string
   meChangeOrg: (meLink: string, orgID: OrgID) => void
+  sourcePrefix: string
 }
 
 @ErrorHandling
 class UserNavBlock extends PureComponent<Props> {
   public render() {
-    const {logoutLink, me, links, meChangeOrg} = this.props
+    const {logoutLink, me, links, meChangeOrg, sourcePrefix} = this.props
 
     return (
       <div className="sidebar--item">
@@ -86,6 +88,15 @@ class UserNavBlock extends PureComponent<Props> {
               {me.scheme} / {me.provider}
             </div>
           </div>
+
+          {me.provider === 'cloudhub' && (
+            <Link
+              className="sidebar-menu--item sidebar-menu--item__account-change"
+              to={`${sourcePrefix}/account-change`}
+            >
+              Edit Account
+            </Link>
+          )}
           <a
             className="sidebar-menu--item sidebar-menu--item__logout"
             href={logoutLink}

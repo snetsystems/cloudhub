@@ -2,9 +2,9 @@
 
 ## Intro
 
-**CloudHub** is **another branch** of an open-source web application derived from Influxdata's **_Chronograf_** written in Go and React.js that provides the tools to visualize your monitoring data and easily create alerting and automation rules.
+**CloudHub** is a totally designed system that lets you monitor and manage the availability of something like servers, applications, virtual machines, Kubernetes, and so on. And this is **another branch** of an open-source web application derived from Influxdata's **_Chronograf_** written in Go and React.js that provides the tools to visualize your monitoring data and easily create alerting and automation rules.
 
-Therefore, CloudHub will be enhanced by adding our direction, such as automation of configuration management and monitoring the systems or applications over several Clouds.
+Therefore, CloudHub has been enhanced by adding our direction, such as automation of configuration management(via **_SaltStack_ Rest API**) and monitoring the systems or applications over several Clouds.
 
 CloudHub has been started with _Chronograf_ version **1.7.11**.
 
@@ -12,28 +12,39 @@ CloudHub has been started with _Chronograf_ version **1.7.11**.
 
 As we follow on using guides like the way of _TICK_ Script or _Flux_ queries, for more informations of the basic common features between _Chronograf_ 1.7.11 and CloudHub refer to the following link.<br>
 [Github for **_chronograf_**](https://github.com/influxdata/chronograf/blob/master/README.md)<br>
-[Documents for **_TICK Stack_**](https://docs.influxdata.com/)
+[Documentation for **_TICK Stack_**](https://docs.influxdata.com/)
 
 ### Test Environment
 
 For running this project, maybe, you should get the environment for test data and composition like telegraf, kapacity and influxdb (but not need chronograf).
-This **_Sandbox_** provided by _Influxdata_ will help to do.<br>
-[Download **_Sandbox_**](https://github.com/influxdata/sandbox)
+This **_Sandbox_** provided by _sysnetsystems_ will help to do.<br>
+[Download **snetsystems/sandbox**](https://github.com/snetsystems/sandbox)
+
+For the agent management or vsphere, k8s inventory viewer test, you prepare to Salt master, api, minion.<br>
+[Installation SaltStack](https://repo.saltstack.com/)<br>
+[Documentation for **_SaltStack_** ](https://docs.saltstack.com/en/latest/contents.html)
+
+## How to use Cloudhub
+
+[Documentation for **CloudHub** Guide (Korean)](https://seversky.atlassian.net/wiki/spaces/CSHD/overview)
 
 ## Key Differences against _Chronograf_ at this point(version).
 
-- Compose of directories.
-  - Divide as backend and frontend.
-- Easier debugging environment support without a proxy server by node.js.
-- For more Dev. Env., provide **Visual Studio Code** Env. including the setting.json and launch.json.
-- Window build & run Env. support.
+- Add a Basic(id/pw) authentication and management feature.
+  - Regarding to above, an activity log is added.
+- Add **multi-tenant** feature across Users-Roles-Groups-DataSources.
 - Hosts to Infrastructures and basic charts added.
 - Visualization added by criteria of Applications.
-- Telegraf daemon management and configuration editing and deploying remotely via SaltStack.
-- Tenant by a group for influxdb data sources, Kapacitor alerts, etc.
-- Optionable Addon features
+- Integration a backend with **_SaltStack_**.
+  - Avoid CORS Problem: `Web UI > CloudHub Salt Proxy > Salt API Server > Salt Master > Salt Minions.`
+  - Telegraf agent management and configuration editing and deploying remotely via **_SaltStack_ Rest API**.
+- Web SSH Terminal feature.
+  - Connection to hosts using ssh protocol via CloudHub WebSocket Proxy.
+- Optionable Addon features.
   - **_VMWare_ Infrastructure** Viewer.
-  - K8s Infrastructure Diagram & Viewer. (In progress of development)
+    - via **_VSphere_** API and **_Salt_**
+  - **_K8s Infrastructure_** Diagram & Viewer. (Pending in dev-1.1.0 branch)
+    - via customized **_Salt's Kuberetes_** Module.
   - SWAN Router & SDPlex(Oncue) Features.
   <p align="center">
     <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/infrastructure.png"/>

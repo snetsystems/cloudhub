@@ -8,6 +8,7 @@ import {resizeLayout} from 'src/shared/middleware/resizeLayout'
 import {queryStringConfig} from 'src/shared/middleware/queryStringConfig'
 import statusReducers from 'src/status/reducers'
 import logsReducer from 'src/logs/reducers'
+import activitylogsReducer from 'src/activitylogs/reducers'
 import sharedReducers from 'src/shared/reducers'
 import dataExplorerReducers from 'src/data_explorer/reducers'
 import adminReducers from 'src/admin/reducers'
@@ -36,6 +37,7 @@ const rootReducer = combineReducers({
   dashTimeV1,
   envReducer,
   logs: logsReducer,
+  activitylogs: activitylogsReducer,
   routing: routerReducer,
   services: servicesReducer,
   vspheres,

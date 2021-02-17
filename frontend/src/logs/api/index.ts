@@ -57,5 +57,15 @@ export const getSyslogMeasurement = async (
   namespace: Namespace
 ): Promise<TimeSeriesResponse> => {
   const query = buildFindMeasurementQuery(namespace, 'syslog')
+
+  return executeQueryAsync(proxyLink, namespace, query)
+}
+
+export const getActivitylogMeasurement = async (
+  proxyLink: string,
+  namespace: Namespace
+): Promise<TimeSeriesResponse> => {
+  const query = buildFindMeasurementQuery(namespace, 'connectLog')
+
   return executeQueryAsync(proxyLink, namespace, query)
 }

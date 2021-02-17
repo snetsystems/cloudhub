@@ -113,7 +113,18 @@ type Server struct {
 	Auth0Organizations []string `long:"auth0-organizations" description:"Auth0 organizations permitted to access CloudHub (env comma separated)" env:"AUTH0_ORGS" env-delim:","`
 	Auth0SuperAdminOrg string   `long:"auth0-superadmin-org" description:"Auth0 organization from which users are automatically granted SuperAdmin status" env:"AUTH0_SUPERADMIN_ORG"`
 
-	StatusFeedURL          string            `long:"status-feed-url" description:"URL of a JSON Feed to display as a News Feed on the client Status page." default:"https://www.snetgroup.info/" env:"STATUS_FEED_URL"`
+	LoginAuthType         string   `long:"login-auth-type" description:"Login auth type (mix, oauth, basic)" env:"LOGIN_AUTH_TYPE" default:"oauth"`
+
+	PasswordPolicy        string   `long:"password-policy" description:"Password validity rules" env:"PASSWORD_POLICY"`
+	PasswordPolicyMessage string   `long:"password-policy-message" description:"Password validity rule description" env:"PASSWORD_POLICY_MESSAGE"`
+
+	MailSubject           string   `long:"mail-subject" description:"Mail subject" env:"MAIL_SUBJECT"`
+	MailBodyMessage       string   `long:"mail-body-message" description:"Mail body message" env:"MAIL_BODY_MESSAGE"`
+	
+	ExternaExec           string   `long:"external-exec" description:"External program path" env:"EXTERNAL_EXEC"`
+    ExternaExecArgs       string   `long:"external-exec-args" description:"Arguments of external program" env:"EXTERNAL_EXEC_ARGS"`
+
+	StatusFeedURL          string  `long:"status-feed-url" description:"URL of a JSON Feed to display as a News Feed on the client Status page." default:"https://www.snetgroup.info/" env:"STATUS_FEED_URL"`
 	CustomLinks            map[string]string `long:"custom-link" description:"Custom link to be added to the client User menu. Multiple links can be added by using multiple of the same flag with different 'name:url' values, or as an environment variable with comma-separated 'name:url' values. E.g. via flags: '--custom-link=snetsystems:https://www.snetsystems.com --custom-link=CloudHub:https://github.com/snetsystems/cloudhub'. E.g. via environment variable: 'export CUSTOM_LINKS=snetsystems:https://www.snetsystems.com,CloudHub:https://github.com/snetsystems/cloudhub'" env:"CUSTOM_LINKS" env-delim:","`
 	TelegrafSystemInterval time.Duration     `long:"telegraf-system-interval" default:"1m" description:"Duration used in the GROUP BY time interval for the hosts list" env:"TELEGRAF_SYSTEM_INTERVAL"`
 
@@ -578,8 +589,21 @@ func (s *Server) Serve(ctx context.Context) {
 			os.Exit(1)
 		}
 	}
+
+	// no auth
+	if !s.useAuth() {
+		s.LoginAuthType = ""
+	}
+
+	// no kapacitor and no program path
+	var basicPasswordResetType string
+	if s.KapacitorURL == "" && s.ExternaExec == "" {
+		basicPasswordResetType = "admin"
+	} else {
+		basicPasswordResetType = "all"
+	}
 	
-	service := openService(ctx, db, s.newBuilders(logger), logger, s.useAuth(), s.AddonURLs)
+	service := openService(ctx, db, s.newBuilders(logger), logger, s.useAuth(), s.AddonURLs, s.MailSubject, s.MailBodyMessage, s.ExternaExec, s.ExternaExecArgs, s.LoginAuthType, basicPasswordResetType)
 	service.SuperAdminProviderGroups = superAdminProviderGroups{
 		auth0: s.Auth0SuperAdminOrg,
 	}
@@ -641,6 +665,8 @@ func (s *Server) Serve(ctx context.Context) {
 		DisableGZip:   s.DisableGZip,
 		AddonURLs:     s.AddonURLs,
 		AddonTokens:   s.AddonTokens,
+		PasswordPolicy: s.PasswordPolicy,
+		PasswordPolicyMessage: s.PasswordPolicyMessage,
 	}, service)
 
 	// Add CloudHub's version header to all requests
@@ -697,7 +723,7 @@ func (s *Server) Serve(ctx context.Context) {
 		Info("Stopped serving cloudhub at ", scheme, "://", listener.Addr())
 }
 
-func openService(ctx context.Context, db kv.Store, builder builders, logger cloudhub.Logger, useAuth bool, addonURLs map[string]string) Service {
+func openService(ctx context.Context, db kv.Store, builder builders, logger cloudhub.Logger, useAuth bool, addonURLs map[string]string, mailSubject, mailBody, externalExec, externalExecArgs string, loginAuthType string, basicPasswordResetType string) Service {
 	svc, err := kv.NewService(ctx, db, kv.WithLogger(logger))
 	if err != nil {
 		logger.Error("Unable to create kv service", err)
@@ -771,6 +797,12 @@ func openService(ctx context.Context, db kv.Store, builder builders, logger clou
 		UseAuth:                  useAuth,
 		Databases:                &influx.Client{Logger: logger},
 		AddonURLs:                addonURLs,
+		MailSubject:              mailSubject,
+		MailBody:                 mailBody,
+		ExternalExec:             externalExec,
+		ExternalExecArgs:         externalExecArgs,
+		LoginAuthType:            loginAuthType,
+		BasicPasswordResetType:   basicPasswordResetType,
 	}
 }
 

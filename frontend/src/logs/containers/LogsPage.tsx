@@ -76,7 +76,7 @@ import {SeverityFormatOptions, SEVERITY_SORTING_ORDER} from 'src/logs/constants'
 
 // Types
 import {Greys} from 'src/reusable_ui/types'
-import {Source, NotificationAction, Me, Namespace} from 'src/types'
+import {Source, NotificationAction, Me, Namespace, QueryConfig} from 'src/types'
 import {
   HistogramData,
   HistogramColor,
@@ -155,6 +155,7 @@ interface Props {
   setSearchStatus: (SearchStatus: SearchStatus) => void
   me: Me
   isUsingAuth: boolean
+  tableQueryConfig: QueryConfig | null
 }
 
 interface State {
@@ -289,6 +290,7 @@ class LogsPage extends Component<Props, State> {
               isTruncated={this.isTruncated}
             />
             <LogsTable
+              currentMeasurement={'syslog'}
               queryCount={this.state.queryCount}
               count={this.histogramTotal}
               data={this.tableData}
@@ -765,6 +767,7 @@ class LogsPage extends Component<Props, State> {
 
     return (
       <LogsHeader
+        currentMeasurement={'syslog'}
         liveUpdating={this.isLiveUpdating}
         availableSources={sources}
         onChooseSource={this.handleChooseSource}
@@ -1090,6 +1093,7 @@ const mapStateToProps = ({
     currentTailUpperBound,
     nextTailLowerBound,
     searchStatus,
+    tableQueryConfig,
   },
   auth: {me, isUsingAuth},
 }) => ({
@@ -1114,6 +1118,7 @@ const mapStateToProps = ({
   searchStatus,
   me,
   isUsingAuth,
+  tableQueryConfig,
 })
 
 const mapDispatchToProps = {

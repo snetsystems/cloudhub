@@ -23,6 +23,7 @@ import {
   notifyCloudHubOrgDeleted,
   notifyCloudHubUserUpdated,
   notifyCloudHubUserDeleted,
+  notifyCloudHubBasicUserAdd,
 } from 'src/shared/copy/notifications'
 
 import {REVERT_STATE_DELAY} from 'src/shared/constants'
@@ -211,6 +212,7 @@ export const createUserAsync = (url, user) => async dispatch => {
   try {
     const {data} = await createUserAJAX(url, user)
     dispatch(syncUser(userWithTempID, data))
+    dispatch(notify(notifyCloudHubBasicUserAdd(data.name, data.password)))
   } catch (error) {
     const message = `${_.upperFirst(_.toLower(error.data.message))}: ${
       user.scheme

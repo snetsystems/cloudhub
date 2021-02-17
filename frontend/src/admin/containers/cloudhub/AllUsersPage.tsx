@@ -5,6 +5,7 @@ import {bindActionCreators} from 'redux'
 import * as adminCloudHubActionCreators from 'src/admin/actions/cloudhub'
 import * as configActionCreators from 'src/shared/actions/config'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {passwordResetAsync, PasswordResetParams} from 'src/auth/actions'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import AllUsersTable from 'src/admin/components/cloudhub/AllUsersTable'
@@ -16,8 +17,10 @@ import {
   Notification,
   NotificationFunc,
 } from 'src/types'
+import {AlertTypes} from 'src/kapacitor/constants'
 
 interface Props {
+  providers: string[]
   notify: (message: Notification | NotificationFunc) => void
   links: Links
   meID: string
@@ -40,6 +43,12 @@ interface Props {
   authConfig: {
     superAdminNewUsers: boolean
   }
+  handlePasswordReset: ({
+    url,
+    path,
+    name,
+    passwordReturn,
+  }: PasswordResetParams) => void
 }
 
 interface State {
@@ -128,6 +137,7 @@ export class AllUsersPage extends PureComponent<Props, State> {
       authConfig,
       actionsConfig,
       organizations,
+      providers,
     } = this.props
 
     return (
@@ -139,13 +149,29 @@ export class AllUsersPage extends PureComponent<Props, State> {
         authConfig={authConfig}
         actionsConfig={actionsConfig}
         organizations={organizations}
+        providers={providers}
         isLoading={this.state.isLoading}
         onDeleteUser={this.handleDeleteUser}
         onCreateUser={this.handleCreateUser}
         onUpdateUserRoles={this.handleUpdateUserRoles}
         onUpdateUserSuperAdmin={this.handleUpdateUserSuperAdmin}
+        onResetPassword={this.onResetPassword}
       />
     )
+  }
+
+  private onResetPassword = (name: string) => {
+    const {
+      handlePasswordReset,
+      links: {basicPasswordAdminReset},
+    } = this.props
+
+    handlePasswordReset({
+      url: basicPasswordAdminReset,
+      path: `/kapacitor/v1/service-tests/${AlertTypes.smtp}`,
+      name,
+      passwordReturn: true,
+    })
   }
 }
 
@@ -164,6 +190,7 @@ const mapDispatchToProps = dispatch => ({
   actionsAdmin: bindActionCreators(adminCloudHubActionCreators, dispatch),
   actionsConfig: bindActionCreators(configActionCreators, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
+  handlePasswordReset: bindActionCreators(passwordResetAsync, dispatch),
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(AllUsersPage)

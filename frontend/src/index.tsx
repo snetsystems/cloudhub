@@ -22,6 +22,9 @@ import {
   UserIsAuthenticated,
   UserIsNotAuthenticated,
   Purgatory,
+  PasswordReset,
+  UpdateUser,
+  OTPLoginPage,
 } from 'src/auth'
 import CheckSources from 'src/CheckSources'
 import {StatusPage} from 'src/status'
@@ -30,6 +33,7 @@ import {DashboardsPage, DashboardPage} from 'src/dashboards'
 import {HostsPage, HostPage} from 'src/hosts'
 import {Applications} from 'src/applications'
 import {LogsPage} from 'src/logs'
+import {ActivityLogsPage} from 'src/activitylogs'
 import AlertsApp from 'src/alerts'
 import {
   KapacitorPage,
@@ -194,6 +198,14 @@ class Root extends PureComponent<{}, State> {
             <Route path="/" component={UserIsAuthenticated(CheckSources)} />
             <Route path="/login" component={UserIsNotAuthenticated(Login)} />
             <Route
+              path="/password-reset"
+              component={UserIsNotAuthenticated(PasswordReset)}
+            />
+            <Route
+              path="/otp-login"
+              component={UserIsNotAuthenticated(OTPLoginPage)}
+            />
+            <Route
               path="/purgatory"
               component={UserIsAuthenticated(Purgatory)}
             />
@@ -231,6 +243,7 @@ class Root extends PureComponent<{}, State> {
                   component={KapacitorRulePage}
                 />
                 <Route path="alert-rules/new" component={KapacitorRulePage} />
+                <Route path="activity-logs" component={ActivityLogsPage} />
                 <Route path="logs" component={LogsPage} />
                 <Route path="tickscript/new" component={TickscriptPage} />
                 <Route path="tickscript/:ruleID" component={TickscriptPage} />
@@ -267,6 +280,7 @@ class Root extends PureComponent<{}, State> {
                     return <GraphqlProvider page={'SwanSdplexSettingPage'} />
                   }}
                 />
+                <Route path="account-change" component={UpdateUser} />
               </Route>
             </Route>
             <Route path="*" component={NotFound} />

@@ -95,6 +95,8 @@ class AllUsersTable extends Component {
       meID,
       onDeleteUser,
       isLoading,
+      onResetPassword,
+      providers,
     } = this.props
 
     const {isCreatingUser} = this.state
@@ -147,6 +149,7 @@ class AllUsersTable extends Component {
                     onRemoveFromOrganization={this.handleRemoveFromOrganization}
                     onChangeSuperAdmin={this.handleChangeSuperAdmin}
                     onDelete={onDeleteUser}
+                    onResetPassword={onResetPassword}
                     meID={meID}
                   />
                 ))
@@ -159,6 +162,7 @@ class AllUsersTable extends Component {
               )}
               {isCreatingUser ? (
                 <AllUsersTableRowNew
+                  providers={providers}
                   organizations={organizations}
                   onBlur={this.handleBlurCreateUserRow}
                   onCreateUser={onCreateUser}
@@ -217,6 +221,8 @@ AllUsersTable.propTypes = {
   }),
   meID: string.isRequired,
   isLoading: bool.isRequired,
+  onResetPassword: func.isRequired,
+  providers: arrayOf(string).isRequired,
 }
 
 export default ErrorHandling(AllUsersTable)
