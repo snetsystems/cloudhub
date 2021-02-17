@@ -94,7 +94,7 @@ class UserNavBlock extends PureComponent<Props> {
               className="sidebar-menu--item sidebar-menu--item__account-change"
               to={`${sourcePrefix}/account-change`}
             >
-              Change Account
+              Edit Account
             </Link>
           )}
           <a

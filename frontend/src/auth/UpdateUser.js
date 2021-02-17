@@ -177,7 +177,7 @@ class UpdateUser extends PureComponent {
                 className="panel-heading"
                 style={{justifyContent: 'center', padding: '0 0 15px 0'}}
               >
-                <h2 className="panel-title">Change Account</h2>
+                <h2 className="panel-title">Edit Account</h2>
               </div>
               <div className="panel-body" style={{padding: '0px'}}>
                 <div className="form-group">

@@ -89,8 +89,10 @@ class UsersTableRowNew extends PureComponent {
     const {provider} = this.state
     if (prevState.provider !== provider) {
       if (provider === 'cloudhub') {
+        // eslint-disable-next-line react/no-did-update-set-state
         this.setState({scheme: 'basic'})
       } else {
+        // eslint-disable-next-line react/no-did-update-set-state
         this.setState({scheme: 'oauth2'})
       }
     }

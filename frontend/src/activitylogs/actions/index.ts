@@ -972,22 +972,12 @@ export const setTimeRangeAsync = () => async (dispatch): Promise<void> => {
 
 export const populateNamespacesAsync = (
   proxyLink: string,
-  source: Source = null
+  _: Source = null
 ) => async (dispatch): Promise<void> => {
   const namespaces = await getDatabasesWithRetentionPolicies(proxyLink)
 
   if (namespaces && namespaces.length > 0) {
     dispatch(setNamespaces(namespaces))
-
-    let defaultNamespace: Namespace
-
-    if (source && source.telegraf) {
-      defaultNamespace = _.find(
-        namespaces,
-        ns => ns.database === source.telegraf
-      )
-    }
-
     const namespace = {database: '_internal', retentionPolicy: 'monitor'}
 
     await Promise.all([
