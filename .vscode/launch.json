@@ -11,6 +11,7 @@
       "request": "launch",
       "mode": "debug",
       "program": "${workspaceFolder}/backend/cmd/cloudhub",
+      "output": "cloudhub.debug",
       "env": {},
       "args": [
         "-l=debug",
