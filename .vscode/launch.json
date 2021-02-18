@@ -48,7 +48,6 @@
         "--kapacitor-url=http://<kapacitor>:<port>"
       ],
       "showLog": true
-      // "logOutput": "debugger"
     },
     {
       "name": "Launch Chrome",
