@@ -1150,7 +1150,8 @@ export const notifyUserPasswordResetCompleted = ({
 
 export const notifyUserPasswordResetFailed = (): Notification => ({
   ...defaultErrorNotification,
-  message: `Reset the password is failed.`,
+  isHasHTML: true,
+  message: `The password reset is failed. <br/>Check out your ID or email address.`,
 })
 
 export const notifyUserUpdateCompleted = (): Notification => ({
