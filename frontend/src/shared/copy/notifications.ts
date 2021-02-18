@@ -1118,10 +1118,12 @@ export const notifyUserPasswordResetCompleted = ({
   name,
   password,
   sendKind,
+  passwordReturn = false,
 }: {
   name: string
   password: string
   sendKind: string
+  passwordReturn?: boolean
 }): Notification => {
   let message = `
     <div>Reset the password is successful.</div>
@@ -1142,7 +1144,7 @@ export const notifyUserPasswordResetCompleted = ({
 
   return {
     ...defaultSuccessNotification,
-    duration: INFINITE,
+    duration: passwordReturn ? INFINITE : TEN_SECONDS,
     isHasHTML: true,
     message,
   }

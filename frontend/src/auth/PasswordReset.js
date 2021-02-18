@@ -24,6 +24,7 @@ class PasswordReset extends PureComponent {
   handlePasswordResetSubmit = _.debounce(() => {
     const {
       handlePasswordReset,
+      router,
       authData: {basicPasswordReset},
     } = this.props
 
@@ -33,6 +34,8 @@ class PasswordReset extends PureComponent {
       url: basicPasswordReset,
       path: `/kapacitor/v1/service-tests/${AlertTypes.smtp}`,
       name,
+    }).then(res => {
+      router.push('/')
     })
   }, 250)
 

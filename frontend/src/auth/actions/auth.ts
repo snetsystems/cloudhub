@@ -315,7 +315,7 @@ export const passwordResetAsync = ({
   url,
   path,
   name,
-  passwordReturn,
+  passwordReturn = false,
 }: PasswordResetParams) => async (dispatch: Dispatch<Action>) => {
   dispatch(userPasswordResetReqeusted())
   try {
@@ -333,9 +333,11 @@ export const passwordResetAsync = ({
           name: data.name,
           password: data.password,
           sendKind: data.send_kind,
+          passwordReturn,
         })
       )
     )
+
     return data
   } catch (error) {
     dispatch(userPasswordResetFailed())
