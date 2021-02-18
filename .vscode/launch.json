@@ -10,8 +10,8 @@
       "type": "go",
       "request": "launch",
       "mode": "debug",
-      "buildFlags": "-ldflags='-X main.version=1.0.9'",
       "program": "${workspaceFolder}/backend/cmd/cloudhub",
+      "output": "cloudhub.debug",
       "env": {},
       "args": [
         "-l=debug",
@@ -48,7 +48,6 @@
         "--kapacitor-url=http://<kapacitor>:<port>"
       ],
       "showLog": true
-      // "logOutput": "debugger"
     },
     {
       "name": "Launch Chrome",
