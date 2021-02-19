@@ -155,7 +155,7 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// not set kapacitor server option and not set program path and pwrtn == true (admin call)
+	// not setting kapacitor server option and not setting external program and pwrtn == true (admin call)
 	if (serverKapacitor.URL == "" && s.ExternalExec == "") && pwrtnBool {
 		resetPassword := randResetPassword()
 
@@ -181,8 +181,8 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	// not set kapacitor server option (user call)
-	if serverKapacitor.URL == "" && s.ExternalExec != "" {
+	// setting external program server option (user call)
+	if s.ExternalExec != "" {
 		resetPassword := randResetPassword()
 		sendKind := "external"
 		
@@ -228,7 +228,7 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 	} 
 	
 
-	// set kapacitor server option
+	// setting kapacitor server option
 	if serverKapacitor.URL != "" {
 		resetPassword := randResetPassword()
 		sendKind := "email"
@@ -509,6 +509,7 @@ func LogRegistration(r *http.Request, store DataStore, logger cloudhub.Logger, o
 	dbname = "_internal"
 	rp = "monitor"
 
+	// UTC time
 	nanos := time.Now().UnixNano()
 	data := cloudhub.Point{
 		Database:        dbname,
@@ -519,6 +520,7 @@ func LogRegistration(r *http.Request, store DataStore, logger cloudhub.Logger, o
 			"severity": "info",
 			"action": action,
 			"user": name,
+			"db": "",
 		},
 		Fields: map[string]interface{}{
 			"timestamp": nanos,
