@@ -21,7 +21,7 @@
         "name": "Tomcat - Tx (BPS)",
         "queries": [
           {
-            "query": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"bytes_sent\"), 1s) AS \"bytes_sent\" FROM \"telegraf\".\"autogen\".\"tomcat_connector\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
+            "query": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"bytes_sent\"), 1s) AS \"bytes_sent\" FROM \":db:\".\":rp:\".\"tomcat_connector\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
             "queryConfig": {
               "database": "",
               "measurement": "",
@@ -33,11 +33,11 @@
                 "tags": []
               },
               "areTagsAccepted": false,
-              "rawText": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"bytes_sent\"), 1s) AS \"bytes_sent\" FROM \"telegraf\".\"autogen\".\"tomcat_connector\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
+              "rawText": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"bytes_sent\"), 1s) AS \"bytes_sent\" FROM \":db:\".\":rp:\".\"tomcat_connector\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
               "range": null,
               "shifts": null
             },
-            "source": "/cloudhub/v1/sources/2",
+            "source": "",
             "type": "influxql"
           }
         ],
@@ -125,7 +125,7 @@
         "name": "Tomcat - JVM Memory",
         "queries": [
           {
-            "query": "SELECT mean(\"free\") AS \"free\", mean(\"total\") AS \"total\" FROM \"telegraf\".\"autogen\".\"tomcat_jvm_memory\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
+            "query": "SELECT mean(\"free\") AS \"free\", mean(\"total\") AS \"total\" FROM \":db:\".\":rp:\".\"tomcat_jvm_memory\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
             "queryConfig": {
               "database": "",
               "measurement": "",
@@ -137,11 +137,11 @@
                 "tags": []
               },
               "areTagsAccepted": false,
-              "rawText": "SELECT mean(\"free\") AS \"free\", mean(\"total\") AS \"total\" FROM \"telegraf\".\"autogen\".\"tomcat_jvm_memory\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
+              "rawText": "SELECT mean(\"free\") AS \"free\", mean(\"total\") AS \"total\" FROM \":db:\".\":rp:\".\"tomcat_jvm_memory\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
               "range": null,
               "shifts": null
             },
-            "source": "/cloudhub/v1/sources/2",
+            "source": "",
             "type": "influxql"
           }
         ],
@@ -229,7 +229,7 @@
         "name": "Tomcat - Requests Count",
         "queries": [
           {
-            "query": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"request_count\"), 1s) AS \"request_count\" FROM \"telegraf\".\"autogen\".\"tomcat_connector\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
+            "query": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"request_count\"), 1s) AS \"request_count\" FROM \":db:\".\":rp:\".\"tomcat_connector\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
             "queryConfig": {
               "database": "",
               "measurement": "",
@@ -241,11 +241,11 @@
                 "tags": []
               },
               "areTagsAccepted": false,
-              "rawText": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"request_count\"), 1s) AS \"request_count\" FROM \"telegraf\".\"autogen\".\"tomcat_connector\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
+              "rawText": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"request_count\"), 1s) AS \"request_count\" FROM \":db:\".\":rp:\".\"tomcat_connector\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
               "range": null,
               "shifts": null
             },
-            "source": "/cloudhub/v1/sources/2",
+            "source": "",
             "type": "influxql"
           }
         ],
@@ -333,7 +333,7 @@
         "name": "Tomcat - Rx (BPS)",
         "queries": [
           {
-            "query": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"bytes_received\"), 1s) AS \"bytes_received\" FROM \"telegraf\".\"autogen\".\"tomcat_connector\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
+            "query": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"bytes_received\"), 1s) AS \"bytes_received\" FROM \":db:\".\":rp:\".\"tomcat_connector\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
             "queryConfig": {
               "database": "",
               "measurement": "",
@@ -345,11 +345,11 @@
                 "tags": []
               },
               "areTagsAccepted": false,
-              "rawText": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"bytes_received\"), 1s) AS \"bytes_received\" FROM \"telegraf\".\"autogen\".\"tomcat_connector\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
+              "rawText": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"bytes_received\"), 1s) AS \"bytes_received\" FROM \":db:\".\":rp:\".\"tomcat_connector\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
               "range": null,
               "shifts": null
             },
-            "source": "/cloudhub/v1/sources/2",
+            "source": "",
             "type": "influxql"
           }
         ],
