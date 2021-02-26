@@ -163,6 +163,9 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
   }
 
+  //
+  private draggable = () => {}
+
   //Creates the textfield for the given property.
   private createTextField = (
     graph: mxGraph,
@@ -275,7 +278,6 @@ class InventoryTopology extends PureComponent<Props, State> {
       if (cell != null) {
         const form = new this.mx.mxForm('inventory-topology--mxform')
         const attrs = cell.value.attributes
-        console.log('attrs: ', attrs)
         if (attrs) {
           for (let i = 0; i < attrs.length; i++) {
             this.createTextField(graph, form, cell, attrs[i])
@@ -390,9 +392,10 @@ class InventoryTopology extends PureComponent<Props, State> {
       if (cell) {
         const form = new this.mx.mxForm('inventory-topology--mxform')
         const attrs = cell.value.attributes
-
-        for (let i = 0; i < attrs.length; i++) {
-          this.createTextField(graph, form, cell, attrs[i])
+        if (attrs) {
+          for (let i = 0; i < attrs.length; i++) {
+            this.createTextField(graph, form, cell, attrs[i])
+          }
         }
 
         this.properties.appendChild(form.getTable())
