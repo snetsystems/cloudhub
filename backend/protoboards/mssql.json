@@ -21,7 +21,7 @@
         "name": "Used Memory",
         "queries": [
           {
-            "query": "SELECT mean(\"value\") * 1024 AS \"used_memory\" FROM \"telegraf\".\"autogen\".\"sqlserver_performance\" WHERE time > :dashboardTime: AND \"counter\"='Used memory (KB)' GROUP BY time(:interval:) FILL(null)",
+            "query": "SELECT mean(\"value\") * 1024 AS \"used_memory\" FROM \":db:\".\":rp:\".\"sqlserver_performance\" WHERE time > :dashboardTime: AND \"counter\"='Used memory (KB)' GROUP BY time(:interval:) FILL(null)",
             "queryConfig": {
               "database": "",
               "measurement": "",
@@ -33,7 +33,7 @@
                 "tags": []
               },
               "areTagsAccepted": false,
-              "rawText": "SELECT mean(\"value\") * 1024 AS \"used_memory\" FROM \"telegraf\".\"autogen\".\"sqlserver_performance\" WHERE time > :dashboardTime: AND \"counter\"='Used memory (KB)' GROUP BY time(:interval:) FILL(null)",
+              "rawText": "SELECT mean(\"value\") * 1024 AS \"used_memory\" FROM \":db:\".\":rp:\".\"sqlserver_performance\" WHERE time > :dashboardTime: AND \"counter\"='Used memory (KB)' GROUP BY time(:interval:) FILL(null)",
               "range": null,
               "shifts": null
             },
@@ -128,7 +128,7 @@
         "name": "Reads/Writes (Count/sec)",
         "queries": [
           {
-            "query": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"reads\"), 1s) AS \"reads\", NON_NEGATIVE_DERIVATIVE(mean(\"writes\"), 1s) AS \"writes\" FROM \"telegraf\".\"autogen\".\"sqlserver_database_io\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
+            "query": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"reads\"), 1s) AS \"reads\", NON_NEGATIVE_DERIVATIVE(mean(\"writes\"), 1s) AS \"writes\" FROM \":db:\".\":rp:\".\"sqlserver_database_io\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
             "queryConfig": {
               "database": "",
               "measurement": "",
@@ -140,7 +140,7 @@
                 "tags": []
               },
               "areTagsAccepted": false,
-              "rawText": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"reads\"), 1s) AS \"reads\", NON_NEGATIVE_DERIVATIVE(mean(\"writes\"), 1s) AS \"writes\" FROM \"telegraf\".\"autogen\".\"sqlserver_database_io\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
+              "rawText": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"reads\"), 1s) AS \"reads\", NON_NEGATIVE_DERIVATIVE(mean(\"writes\"), 1s) AS \"writes\" FROM \":db:\".\":rp:\".\"sqlserver_database_io\" WHERE time > :dashboardTime: AND \"host\"=:host: GROUP BY time(:interval:) FILL(null)",
               "range": null,
               "shifts": null
             },
@@ -235,7 +235,7 @@
         "name": "Read/Write bytes (BPS)",
         "queries": [
           {
-            "query": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"read_bytes\"), 1s) AS \"read_bytes\", NON_NEGATIVE_DERIVATIVE(mean(\"write_bytes\"),1s) AS \"write_bytes\" FROM \"telegraf\".\"autogen\".\"sqlserver_database_io\" WHERE time > :dashboardTime: GROUP BY time(:interval:) FILL(null)",
+            "query": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"read_bytes\"), 1s) AS \"read_bytes\", NON_NEGATIVE_DERIVATIVE(mean(\"write_bytes\"),1s) AS \"write_bytes\" FROM \":db:\".\":rp:\".\"sqlserver_database_io\" WHERE time > :dashboardTime: GROUP BY time(:interval:) FILL(null)",
             "queryConfig": {
               "database": "",
               "measurement": "",
@@ -247,7 +247,7 @@
                 "tags": []
               },
               "areTagsAccepted": false,
-              "rawText": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"read_bytes\"), 1s) AS \"read_bytes\", NON_NEGATIVE_DERIVATIVE(mean(\"write_bytes\"),1s) AS \"write_bytes\" FROM \"telegraf\".\"autogen\".\"sqlserver_database_io\" WHERE time > :dashboardTime: GROUP BY time(:interval:) FILL(null)",
+              "rawText": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"read_bytes\"), 1s) AS \"read_bytes\", NON_NEGATIVE_DERIVATIVE(mean(\"write_bytes\"),1s) AS \"write_bytes\" FROM \":db:\".\":rp:\".\"sqlserver_database_io\" WHERE time > :dashboardTime: GROUP BY time(:interval:) FILL(null)",
               "range": null,
               "shifts": null
             },
@@ -342,7 +342,7 @@
         "name": "Read/Write Latency(Millisecond)",
         "queries": [
           {
-            "query": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"read_latency_ms\"), 1s) AS \"mean_read_latency_ms\", NON_NEGATIVE_DERIVATIVE(mean(\"write_latency_ms\"), 1s) AS \"mean_write_latency_ms\" FROM \"telegraf\".\"autogen\".\"sqlserver_database_io\" WHERE time > :dashboardTime: AND \"host\"='server01-vm02' GROUP BY time(:interval:) FILL(null)",
+            "query": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"read_latency_ms\"), 1s) AS \"mean_read_latency_ms\", NON_NEGATIVE_DERIVATIVE(mean(\"write_latency_ms\"), 1s) AS \"mean_write_latency_ms\" FROM \":db:\".\":rp:\".\"sqlserver_database_io\" WHERE time > :dashboardTime: AND \"host\"='server01-vm02' GROUP BY time(:interval:) FILL(null)",
             "queryConfig": {
               "database": "",
               "measurement": "",
@@ -354,7 +354,7 @@
                 "tags": []
               },
               "areTagsAccepted": false,
-              "rawText": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"read_latency_ms\"), 1s) AS \"mean_read_latency_ms\", NON_NEGATIVE_DERIVATIVE(mean(\"write_latency_ms\"), 1s) AS \"mean_write_latency_ms\" FROM \"telegraf\".\"autogen\".\"sqlserver_database_io\" WHERE time > :dashboardTime: AND \"host\"='server01-vm02' GROUP BY time(:interval:) FILL(null)",
+              "rawText": "SELECT NON_NEGATIVE_DERIVATIVE(mean(\"read_latency_ms\"), 1s) AS \"mean_read_latency_ms\", NON_NEGATIVE_DERIVATIVE(mean(\"write_latency_ms\"), 1s) AS \"mean_write_latency_ms\" FROM \":db:\".\":rp:\".\"sqlserver_database_io\" WHERE time > :dashboardTime: AND \"host\"='server01-vm02' GROUP BY time(:interval:) FILL(null)",
               "range": null,
               "shifts": null
             },
@@ -449,7 +449,7 @@
         "name": "CPU usage(%)",
         "queries": [
           {
-            "query": "SELECT mean(\"value\") AS \"cpu_usage\" FROM \"telegraf\".\"autogen\".\"sqlserver_performance\" WHERE time > :dashboardTime: AND \"counter\"='CPU usage %' GROUP BY time(:interval:) FILL(null)",
+            "query": "SELECT mean(\"value\") AS \"cpu_usage\" FROM \":db:\".\":rp:\".\"sqlserver_performance\" WHERE time > :dashboardTime: AND \"counter\"='CPU usage %' GROUP BY time(:interval:) FILL(null)",
             "queryConfig": {
               "database": "telegraf",
               "measurement": "sqlserver_performance",
@@ -481,7 +481,7 @@
               "range": null,
               "shifts": null
             },
-            "source": "/cloudhub/v1/sources/2",
+            "source": "",
             "type": "influxql"
           }
         ],
