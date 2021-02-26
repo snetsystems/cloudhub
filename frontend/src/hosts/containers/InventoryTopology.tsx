@@ -22,6 +22,8 @@ import _ from 'lodash'
 // component
 // import {Button, ButtonShape, IconFont} from 'src/reusable_ui'
 import HostList from 'src/hosts/components/HostList'
+import {TableBody, TableBodyRowItem} from 'src/addon/128t/reusable/layout'
+import uuid from 'uuid'
 // import Tools from 'src/hosts/components/Tools'
 // import Properties from 'src/hosts/components/Properties'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
@@ -33,6 +35,7 @@ import {
   HANDLE_HORIZONTAL,
   HANDLE_VERTICAL,
 } from 'src/shared/constants/'
+import {toolbarCommandObject} from 'src/hosts/constants/tools'
 
 // Types
 import {Host} from 'src/types'
@@ -77,14 +80,18 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   private containerRef = createRef<HTMLDivElement>()
   private outlineRef = createRef<HTMLDivElement>()
+  private toolbarRef = createRef<HTMLDivElement>()
+
+  private hostsRef = createRef<HTMLDivElement>()
   private sidebarRef = createRef<HTMLDivElement>()
   private propertiesRef = createRef<HTMLDivElement>()
-  private toolbarRef = createRef<HTMLDivElement>()
 
   private container: HTMLDivElement = null
   private outline: HTMLDivElement = null
-  private sidebar: HTMLDivElement = null
   private toolbar: HTMLDivElement = null
+
+  private hosts: HTMLDivElement = null
+  private sidebar: HTMLDivElement = null
   private properties: HTMLDivElement = null
 
   constructor(props: Props) {
@@ -304,106 +311,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private addToolbarButton = () => {
-    const toolbarIcons = [
-      {
-        actionName: 'groupOrUngroup',
-        label: '(Un)group',
-        imgSrc: 'images/group.png',
-      },
-      {
-        actionName: 'delete',
-        label: 'Delete',
-        imgSrc: 'images/delete2.png',
-      },
-      {
-        actionName: 'cut',
-        label: 'Cut',
-        imgSrc: 'images/cut.png',
-      },
-      {
-        actionName: 'copy',
-        label: 'Copy',
-        imgSrc: 'images/copy.png',
-      },
-      {
-        actionName: 'paste',
-        label: 'Paste',
-        imgSrc: 'images/paste.png',
-      },
-      {
-        actionName: 'undo',
-        label: 'Undo',
-        imgSrc: 'images/undo.png',
-      },
-      {
-        actionName: 'redo',
-        label: 'Redo',
-        imgSrc: 'images/redo.png',
-      },
-      {
-        actionName: 'show',
-        label: 'Show',
-        imgSrc: 'images/camera.png',
-      },
-      {
-        actionName: 'print',
-        label: 'Print',
-        imgSrc: 'images/printer.png',
-      },
-      {
-        actionName: 'export',
-        label: 'Export',
-        imgSrc: 'images/export1.png',
-      },
-      {
-        actionName: 'collapseAll',
-        label: 'Collapse All',
-        imgSrc: 'images/navigate_minus.png',
-        isTransparent: true,
-      },
-      {
-        actionName: 'expandAll',
-        label: 'Expand All',
-        imgSrc: 'images/navigate_plus.png',
-        isTransparent: true,
-      },
-      {
-        actionName: 'enterGroup',
-        label: 'Enter',
-        imgSrc: 'images/view_next.png',
-        isTransparent: true,
-      },
-      {
-        actionName: 'exitGroup',
-        label: 'Exit',
-        imgSrc: 'images/view_previous.png',
-        isTransparent: true,
-      },
-      {
-        actionName: 'zoomIn',
-        label: 'Zoon in',
-        imgSrc: 'images/zoom_in.png',
-        isTransparent: true,
-      },
-      {
-        actionName: 'zoomOut',
-        label: 'Zoom out',
-        imgSrc: 'images/zoom_out.png',
-        isTransparent: true,
-      },
-      {
-        actionName: 'actualSize',
-        label: 'Actual size',
-        imgSrc: 'images/view_1_1.png',
-        isTransparent: true,
-      },
-      {
-        actionName: 'fit',
-        label: 'Fit',
-        imgSrc: 'images/fit_to_size.png',
-        isTransparent: true,
-      },
-    ]
+    const toolbarIcons = toolbarCommandObject
 
     _.forEach(toolbarIcons, icon => {
       const {actionName, label, imgSrc, isTransparent} = icon
@@ -474,8 +382,6 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   private topologyEditor = () => {
     const graph = this.graph
-    // console.log('mxCellAttributeChange: ', this.mx.mxGraphModel.mxCellAttributeChange)
-
     this.addSidebarButton()
     this.addToolbarButton()
 
@@ -498,7 +404,13 @@ class InventoryTopology extends PureComponent<Props, State> {
         headerButtons: [],
         menuOptions: [],
         size: topSize,
-        render: () => <HostList hostList={hostList} />,
+        render: () => (
+          <>
+            <FancyScrollbar>
+              <TableBody>{<div ref={this.hostsRef}></div>}</TableBody>
+            </FancyScrollbar>
+          </>
+        ),
       },
       {
         name: 'Tools',
@@ -603,6 +515,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.container = this.containerRef.current
     this.outline = this.outlineRef.current
+    this.hosts = this.hostsRef.current
     this.sidebar = this.sidebarRef.current
     this.properties = this.propertiesRef.current
     this.toolbar = this.toolbarRef.current
@@ -718,8 +631,8 @@ class InventoryTopology extends PureComponent<Props, State> {
     const _this = this
     // Overrides method to store a cell label in the model
     const cellLabelChanged = this.graph.cellLabelChanged
+    // @ts-ignore
     this.graph.cellLabelChanged = function(cell, newValue, autoSize) {
-      // @ts-ignore
       if (
         _this.mx.mxUtils.isNode(cell.value, 'Node') &&
         cell.value.nodeName.toLowerCase() == 'node'
@@ -780,10 +693,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       textarea.style.height = '400px'
 
       const enc = new this.mx.mxCodec(this.mxUtils.createXmlDocument())
-      console.log('enc:', enc)
       const node = enc.encode(editor.graph.getModel())
-      console.log('get Model: ', editor.graph.getModel())
-      console.log('node: ', node)
 
       // @ts-ignore
       textarea.value = this.mxUtils.getPrettyXml(node)
