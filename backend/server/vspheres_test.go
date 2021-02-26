@@ -520,7 +520,7 @@ func TestRemoveVsphere(t *testing.T) {
 		wantStatus int
 	}{
 		{
-			name: "Update Vsphere host",
+			name: "Remove Vsphere",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(

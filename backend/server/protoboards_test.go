@@ -58,7 +58,7 @@ func Test_Protoboards(t *testing.T) {
 						License:          "Apache-2.0",
 						URL:              "http://example.com",
 					},
-					Data: cloudhub.ProtoboardData{Cells: []cloudhub.ProtoboardCell{{}}, Templates: []cloudhub.Template{cloudhub.Template{}}}},
+					Data: cloudhub.ProtoboardData{Cells: []cloudhub.ProtoboardCell{{}}, Templates: []cloudhub.Template{{}}}},
 				{
 					ID:   "2",
 					Meta: cloudhub.ProtoboardMeta{Name: "protodashboard 2", Measurements: []string{"m1", "m2"}, Icon: "http://example.com/icon.png", Version: "1.2.3", DashboardVersion: "1.7.0", Description: "this is great", Author: "Chronogiraffe", License: "Apache-2.0", URL: "http://example.com"},
