@@ -512,3 +512,20 @@ func TestMarshalVsphere(t *testing.T) {
 		t.Fatalf("source protobuf copy error: got %#v, expected %#v", vv, v)
 	}
 }
+
+func TestMarshalTopology(t *testing.T) {
+	v := cloudhub.Topology{
+		ID:           "12",
+		Organization: "8373476",
+		Diagram:      "<mxGraphModel><root></root></mxGraphModel>",
+	}
+
+	var vv cloudhub.Topology
+	if buf, err := internal.MarshalTopology(&v); err != nil {
+		t.Fatal(err)
+	} else if err := internal.UnmarshalTopology(buf, &vv); err != nil {
+		t.Fatal(err)
+	} else if !reflect.DeepEqual(v, vv) {
+		t.Fatalf("source protobuf copy error: got %#v, expected %#v", vv, v)
+	}
+}

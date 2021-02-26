@@ -260,6 +260,12 @@ message Vsphere {
 	string Organization     = 9; // Organization is the organization ID that resource belongs to
 }
 
+message Topology {
+	string ID               = 1; // ID is the unique ID of this topology
+	string Organization     = 2; // Organization is the organization ID that resource belongs to
+	string Diagram          = 3; // diagram xml
+}
+
 // The following is a vim modeline, it autoconfigures vim to have the
 // appropriate tabbing and whitespace management to edit this file
 //
