@@ -628,48 +628,51 @@ class InventoryTopology extends PureComponent<Props, State> {
       this.graph.refresh()
       return ''
     }
-    const _this = this
-    // Overrides method to store a cell label in the model
-    const cellLabelChanged = this.graph.cellLabelChanged
-    // @ts-ignore
-    this.graph.cellLabelChanged = function(cell, newValue, autoSize) {
-      if (
-        _this.mx.mxUtils.isNode(cell.value, 'Node') &&
-        cell.value.nodeName.toLowerCase() == 'node'
-      ) {
-        var pos = newValue.indexOf(' ')
+    // **********************************************
+    // comment : cell label change logic ...
+    // **********************************************
+    // const _this = this
+    // // Overrides method to store a cell label in the model
+    // const cellLabelChanged = this.graph.cellLabelChanged
+    // // @ts-ignore
+    // this.graph.cellLabelChanged = function(cell, newValue, autoSize) {
+    //   if (
+    //     _this.mx.mxUtils.isNode(cell.value, 'Node') &&
+    //     cell.value.nodeName.toLowerCase() == 'node'
+    //   ) {
+    //     var pos = newValue.indexOf(' ')
 
-        var firstName = pos > 0 ? newValue.substring(0, pos) : newValue
-        var lastName =
-          pos > 0 ? newValue.substring(pos + 1, newValue.length) : ''
+    //     var firstName = pos > 0 ? newValue.substring(0, pos) : newValue
+    //     var lastName =
+    //       pos > 0 ? newValue.substring(pos + 1, newValue.length) : ''
 
-        // Clones the value for correct undo/redo
-        var elt = cell.value.cloneNode(true)
+    //     // Clones the value for correct undo/redo
+    //     var elt = cell.value.cloneNode(true)
 
-        elt.setAttribute('edge', firstName)
-        elt.setAttribute('type', lastName)
+    //     elt.setAttribute('edge', firstName)
+    //     elt.setAttribute('type', lastName)
 
-        newValue = elt
-        autoSize = true
-      }
-      _this.graph.refresh()
-      cellLabelChanged.apply(this, arguments)
-    }
-    // @ts-ignore. Overrides method to create the editing value
-    const _getEditingValue = this.graph.getEditingValue
-    this.graph.getEditingValue = function(cell) {
-      if (
-        _this.mx.mxUtils.isNode(cell.value, 'Node') &&
-        cell.value.nodeName.toLowerCase() == 'node'
-      ) {
-        var firstName = cell.getAttribute('type', '')
-        var lastName = cell.getAttribute('edge', '')
+    //     newValue = elt
+    //     autoSize = true
+    //   }
+    //   _this.graph.refresh()
+    //   cellLabelChanged.apply(this, arguments)
+    // }
 
-        return firstName + ' ' + lastName
-      }
+    // // @ts-ignore. Overrides method to create the editing value
+    // const _getEditingValue = this.graph.getEditingValue
+    // this.graph.getEditingValue = function(cell) {
+    //   if (
+    //     _this.mx.mxUtils.isNode(cell.value, 'Node') &&
+    //     cell.value.nodeName.toLowerCase() == 'node'
+    //   ) {
+    //     var firstName = cell.getAttribute('type', '')
+    //     var lastName = cell.getAttribute('edge', '')
 
-      _this.graph.refresh()
-    }
+    //     return firstName + ' ' + lastName
+    //   }
+
+    // }
   }
 
   private addEditorAction = (editor: mxEditor, graph?: mxGraph) => {
