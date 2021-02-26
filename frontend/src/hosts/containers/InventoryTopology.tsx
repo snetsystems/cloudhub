@@ -13,12 +13,9 @@ import {
   mxClient,
   mxDivResizer,
   mxConstants,
-  // mxGraphModel,
+  mxForm,
+  mxGraphModel,
 } from 'mxgraph'
-
-interface customMxUtils {
-  getPrettyXml: typeof mxUtils.getPrettyXML
-}
 
 import _ from 'lodash'
 
@@ -27,7 +24,7 @@ import _ from 'lodash'
 import HostList from 'src/hosts/components/HostList'
 // import Tools from 'src/hosts/components/Tools'
 // import Properties from 'src/hosts/components/Properties'
-
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 
 // constants
@@ -46,13 +43,6 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 // css
 import 'mxgraph/javascript/src/css/common.css'
 
-export interface ITNodeInfo {
-  id?: string
-  name?: string
-  label?: string
-  href?: string
-}
-
 interface Props {
   hostsObject: {[x: string]: Host}
   autoRefresh: number
@@ -67,7 +57,7 @@ interface State {
 }
 
 @ErrorHandling
-class InventoryTopology extends PureComponent<Props, State, customMxUtils> {
+class InventoryTopology extends PureComponent<Props, State> {
   // Creates a wrapper editor with a graph inside the given container.
   // The editor is used to create certain functionality for the
   // graph, such as the rubberband selection, but most parts
@@ -83,17 +73,19 @@ class InventoryTopology extends PureComponent<Props, State, customMxUtils> {
   private mxClient: typeof mxClient = null
   private mxDivResizer: typeof mxDivResizer = null
   private graph: mxGraph = null
-  // private model: mxGraphModel = null
+  private model: mxGraphModel = null
 
   private containerRef = createRef<HTMLDivElement>()
   private outlineRef = createRef<HTMLDivElement>()
   private sidebarRef = createRef<HTMLDivElement>()
+  private propertiesRef = createRef<HTMLDivElement>()
   private toolbarRef = createRef<HTMLDivElement>()
 
   private container: HTMLDivElement = null
   private outline: HTMLDivElement = null
   private sidebar: HTMLDivElement = null
   private toolbar: HTMLDivElement = null
+  private properties: HTMLDivElement = null
 
   constructor(props: Props) {
     super(props)
@@ -154,10 +146,72 @@ class InventoryTopology extends PureComponent<Props, State, customMxUtils> {
     )
   }
 
+  private graphUpdate = () => {
+    this.graph.getModel().beginUpdate()
+    try {
+    } finally {
+      this.graph.getModel().endUpdate()
+      this.graph.refresh()
+    }
+  }
+
+  //Creates the textfield for the given property.
+  private createTextField = (
+    graph: mxGraph,
+    form: mxForm,
+    cell: mxCell,
+    attribute: any
+  ) => {
+    const input = form.addText(
+      attribute.nodeName + ':',
+      attribute.nodeValue,
+      'text'
+    )
+
+    const applyHandler = () => {
+      const newValue = input.value || ''
+      const oldValue = cell.getAttribute(attribute.nodeName, '')
+
+      if (newValue != oldValue) {
+        graph.getModel().beginUpdate()
+
+        try {
+          cell.setAttribute(attribute.nodeName, newValue)
+        } finally {
+          graph.getModel().endUpdate()
+          this.graphUpdate()
+        }
+      }
+    }
+
+    this.mxEvent.addListener(
+      input,
+      'keypress',
+      (event: KeyboardEvent & MouseEvent) => {
+        // Needs to take shift into account for textareas
+        if (event.key === 'Enter' && !this.mxEvent.isShiftDown(event)) {
+          input.blur()
+        }
+      }
+    )
+
+    if (this.mxClient.IS_IE) {
+      this.mxEvent.addListener(input, 'focusout', applyHandler)
+    } else {
+      // Note: Known problem is the blurring of fields in
+      // Firefox by changing the selection, in which case
+      // no event is fired in FF and the change is lost.
+      // As a workaround you should use a local variable
+      // that stores the focused field and invoke blur
+      // explicitely where we do the graph.focus above.
+      this.mxEvent.addListener(input, 'blur', applyHandler)
+    }
+  }
+
   private addSidebarIcon(
     graph: mxGraph,
     sidebar: HTMLDivElement,
-    label: string,
+    node: any,
     image: string
   ) {
     // Function that is executed when the image is dropped on
@@ -171,80 +225,55 @@ class InventoryTopology extends PureComponent<Props, State, customMxUtils> {
     ) => {
       // the mousepointer if there is one.
       const parent = graph.getDefaultParent()
-      const model = graph.getModel()
-
+      const model = this.model
       let v1 = null
-
       model.beginUpdate()
       try {
         // NOTE: For non-HTML labels the image must be displayed via the style
         // rather than the label markup, so use 'image=' + image for the style.
         // as follows: v1 = graph.insertVertex(parent, null, label,
         // pt.x, pt.y, 120, 120, 'image=' + image);
-        v1 = graph.insertVertex(parent, null, label, x, y, 120, 120)
+        const doc = this.mxUtils.createXmlDocument()
+        const userCell = doc.createElement('Node')
+        _.forEach(_.keys(node), n => {
+          userCell.setAttribute(n, node[n])
+        })
+
+        v1 = graph.insertVertex(parent, null, userCell, x, y, 120, 120)
         v1.setConnectable(true)
 
         // Presets the collapsed size
         v1.geometry.alternateBounds = new this.mx.mxRectangle(0, 0, 120, 40)
-
-        // Adds the ports at various relative locations
-        let port = graph.insertVertex(
-          v1,
-          null,
-          'Trigger',
-          0,
-          0.25,
-          16,
-          16,
-          'port;image=editors/images/overlays/flash.png;align=right;imageAlign=right;spacingRight=18',
-          true
-        )
-        port.geometry.offset = new this.mx.mxPoint(-6, -8)
-
-        port = graph.insertVertex(
-          v1,
-          null,
-          'Input',
-          0,
-          0.75,
-          16,
-          16,
-          'port;image=editors/images/overlays/check.png;align=right;imageAlign=right;spacingRight=18',
-          true
-        )
-        port.geometry.offset = new this.mx.mxPoint(-6, -4)
-
-        port = graph.insertVertex(
-          v1,
-          null,
-          'Error',
-          1,
-          0.25,
-          16,
-          16,
-          'port;image=editors/images/overlays/error.png;spacingLeft=18',
-          true
-        )
-        port.geometry.offset = new this.mx.mxPoint(-8, -8)
-
-        port = graph.insertVertex(
-          v1,
-          null,
-          'Result',
-          1,
-          0.75,
-          16,
-          16,
-          'port;image=editors/images/overlays/information.png;spacingLeft=18',
-          true
-        )
-        port.geometry.offset = new this.mx.mxPoint(-8, -4)
       } finally {
-        this.setState({}, () => {})
         model.endUpdate()
       }
 
       graph.setSelectionCell(v1)
+    }
+
+    // Implements a properties panel that uses
+    // mxCellAttributeChange to change properties
+    graph
+      .getSelectionModel() // @ts-ignore
+      .addListener(this.mxEvent.CHANGE, (sender, evt) => {
+        selectionChanged(graph)
+      })
+
+    const selectionChanged = (graph: mxGraph) => {
+      const cell = graph.getSelectionCell()
+      this.properties.innerHTML = ''
+
+      if (cell) {
+        const form = new this.mx.mxForm('inventory-topology--mxform')
+        const attrs = cell.value.attributes
+
+        for (let i = 0; i < attrs.length; i++) {
+          this.createTextField(graph, form, cell, attrs[i])
+        }
+
+        this.properties.appendChild(form.getTable())
+        // this.mxUtils.br(this.properties, 0)
+      }
     }
 
     // Creates the image which is used as the sidebar icon (drag source)
@@ -273,6 +302,7 @@ class InventoryTopology extends PureComponent<Props, State, customMxUtils> {
     )
     ds.setGuidesEnabled(true)
   }
+
   private addToolbarButton = () => {
     const toolbarIcons = [
       {
@@ -427,23 +457,25 @@ class InventoryTopology extends PureComponent<Props, State, customMxUtils> {
   private addSidebarButton = () => {
     const tools = [
       {
-        htmlString:
-          '<h1 style="margin:0px;">Website</h1><br>' +
-          `<img src='./' width="48" height="48">` +
-          '<br>' +
-          '<a href="http://www.jgraph.com" target="_blank">Browse</a>',
+        node: {
+          id: '0',
+          type: 'Storage',
+          edge: 'edge',
+        },
         imgSrc: './*.png',
       },
     ]
 
     _.forEach(tools, tool => {
-      const {htmlString, imgSrc} = tool
-      this.addSidebarIcon(this.graph, this.sidebar, htmlString, imgSrc)
+      const {node, imgSrc} = tool
+      this.addSidebarIcon(this.graph, this.sidebar, node, imgSrc)
     })
   }
 
   private topologyEditor = () => {
     const graph = this.graph
+    // console.log('mxCellAttributeChange: ', this.mx.mxGraphModel.mxCellAttributeChange)
+
     this.addSidebarButton()
     this.addToolbarButton()
 
@@ -474,11 +506,7 @@ class InventoryTopology extends PureComponent<Props, State, customMxUtils> {
         headerButtons: [],
         menuOptions: [],
         size: middleSize,
-        render: () => (
-          <div ref={this.sidebarRef}>
-            <img src="./" />
-          </div>
-        ),
+        render: () => <div ref={this.sidebarRef}></div>,
       },
       {
         name: 'Properties',
@@ -487,7 +515,13 @@ class InventoryTopology extends PureComponent<Props, State, customMxUtils> {
         menuOptions: [],
         size: bottomSize,
         render: () => {
-          return <>this is Properties area</>
+          return (
+            <>
+              <FancyScrollbar>
+                {<div ref={this.propertiesRef}></div>}
+              </FancyScrollbar>
+            </>
+          )
           // return <Properties />
         },
       },
@@ -563,13 +597,14 @@ class InventoryTopology extends PureComponent<Props, State, customMxUtils> {
     this.mxDivResizer = mxDivResizer
 
     this.graph = this.editor.graph
-    // this.model = this.graph.getModel()
+    this.model = this.graph.getModel()
 
     this.addEditorAction(this.editor, this.graph)
 
     this.container = this.containerRef.current
     this.outline = this.outlineRef.current
     this.sidebar = this.sidebarRef.current
+    this.properties = this.propertiesRef.current
     this.toolbar = this.toolbarRef.current
 
     // Assigns some global constants for general behaviour, eg. minimum
@@ -654,6 +689,74 @@ class InventoryTopology extends PureComponent<Props, State, customMxUtils> {
 
     // Enables new connections
     this.graph.setConnectable(true)
+
+    // Overrides method to provide a cell label in the display
+    this.graph.convertValueToString = cell => {
+      if (this.mx.mxUtils.isNode(cell.value, 'Node')) {
+        if (cell.value.nodeName.toLowerCase() == 'node') {
+          var firstName = cell.getAttribute('edge', '')
+          var lastName = cell.getAttribute('type', '')
+
+          if (lastName != null && lastName.length > 0) {
+            return lastName + ', ' + firstName
+          }
+
+          return firstName
+        } else if (cell.value.nodeName.toLowerCase() == 'knows') {
+          return (
+            cell.value.nodeName +
+            ' (Since ' +
+            cell.getAttribute('since', '') +
+            ')'
+          )
+        }
+      }
+
+      this.graph.refresh()
+      return ''
+    }
+    const _this = this
+    // Overrides method to store a cell label in the model
+    const cellLabelChanged = this.graph.cellLabelChanged
+    this.graph.cellLabelChanged = function(cell, newValue, autoSize) {
+      // @ts-ignore
+      if (
+        _this.mx.mxUtils.isNode(cell.value, 'Node') &&
+        cell.value.nodeName.toLowerCase() == 'node'
+      ) {
+        var pos = newValue.indexOf(' ')
+
+        var firstName = pos > 0 ? newValue.substring(0, pos) : newValue
+        var lastName =
+          pos > 0 ? newValue.substring(pos + 1, newValue.length) : ''
+
+        // Clones the value for correct undo/redo
+        var elt = cell.value.cloneNode(true)
+
+        elt.setAttribute('edge', firstName)
+        elt.setAttribute('type', lastName)
+
+        newValue = elt
+        autoSize = true
+      }
+      _this.graph.refresh()
+      cellLabelChanged.apply(this, arguments)
+    }
+    // @ts-ignore. Overrides method to create the editing value
+    const _getEditingValue = this.graph.getEditingValue
+    this.graph.getEditingValue = function(cell) {
+      if (
+        _this.mx.mxUtils.isNode(cell.value, 'Node') &&
+        cell.value.nodeName.toLowerCase() == 'node'
+      ) {
+        var firstName = cell.getAttribute('type', '')
+        var lastName = cell.getAttribute('edge', '')
+
+        return firstName + ' ' + lastName
+      }
+
+      _this.graph.refresh()
+    }
   }
 
   private addEditorAction = (editor: mxEditor, graph?: mxGraph) => {
