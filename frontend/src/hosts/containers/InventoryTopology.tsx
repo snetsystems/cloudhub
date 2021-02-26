@@ -122,8 +122,9 @@ class InventoryTopology extends PureComponent<Props, State> {
   public componentDidUpdate(prevProps: Props) {
     const {hostsObject} = this.props
     if (prevProps.hostsObject !== hostsObject) {
-      const hostList = _.keys(hostsObject)
-      this.setState({hostList})
+      // this.addHostButton()
+      // const hostList = _.keys(hostsObject)
+      // this.setState({hostList})
     }
 
     // SVG내부에서 update를 감지하여 DB로 저장(갱신)
@@ -215,6 +216,122 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
   }
 
+  private addHostIcon(
+    graph: mxGraph,
+    hostsContainer: HTMLDivElement,
+    host: any,
+    image: string
+  ) {
+    // Function that is executed when the image is dropped on
+    // the graph. The cell argument points to the cell under
+    const funct = (
+      graph: mxGraph,
+      _event: Event,
+      _cell: mxCell,
+      x: number,
+      y: number
+    ) => {
+      // the mousepointer if there is one.
+      const parent = graph.getDefaultParent()
+      const model = this.model
+      let v1 = null
+      model.beginUpdate()
+      try {
+        // NOTE: For non-HTML labels the image must be displayed via the style
+        // rather than the label markup, so use 'image=' + image for the style.
+        // as follows: v1 = graph.insertVertex(parent, null, label,
+        // pt.x, pt.y, 120, 120, 'image=' + image);
+        const doc = this.mxUtils.createXmlDocument()
+        const userCell = doc.createElement('Node')
+        userCell.setAttribute('name', host)
+        // _.forEach(_.keys(host), n => {
+        //   userCell.setAttribute(n, host[n])
+        // })
+
+        v1 = graph.insertVertex(parent, null, userCell, x, y, 120, 120)
+        v1.setConnectable(true)
+
+        // Presets the collapsed size
+        v1.geometry.alternateBounds = new this.mx.mxRectangle(0, 0, 120, 40)
+      } finally {
+        model.endUpdate()
+      }
+
+      graph.setSelectionCell(v1)
+    }
+
+    // Implements a properties panel that uses
+    // mxCellAttributeChange to change properties
+    graph
+      .getSelectionModel() // @ts-ignore
+      .addListener(this.mxEvent.CHANGE, (sender, evt) => {
+        selectionChanged(graph)
+      })
+
+    const selectionChanged = (graph: mxGraph) => {
+      const cell = graph.getSelectionCell()
+      this.properties.innerHTML = ''
+
+      if (cell != null) {
+        const form = new this.mx.mxForm('inventory-topology--mxform')
+        const attrs = cell.value.attributes
+        console.log('attrs: ', attrs)
+        if (attrs) {
+          for (let i = 0; i < attrs.length; i++) {
+            this.createTextField(graph, form, cell, attrs[i])
+          }
+        }
+
+        this.properties.appendChild(form.getTable())
+        // this.mxUtils.br(this.properties, 0)
+      }
+    }
+
+    // create div
+
+    const hostElement = document.createElement('div')
+    hostElement.classList.add()
+    // Creates the image which is used as the hostsContainer icon (drag source)
+    const img = document.createElement('img')
+    img.setAttribute('src', image)
+    img.style.width = '16px'
+    img.style.height = '16px'
+    img.title = 'Drag this to the diagram to create a new vertex'
+
+    const span = document.createElement('span')
+    span.textContent = host
+    span.style.fontSize = '14px'
+
+    hostElement.appendChild(img)
+    hostElement.appendChild(span)
+    hostsContainer.appendChild(hostElement)
+
+    const dragElt = document.createElement('div')
+    dragElt.style.border = 'dashed black 1px'
+    dragElt.style.width = '120px'
+    dragElt.style.height = '120px'
+
+    // Creates the image which is used as the drag icon (preview)
+    const ds = this.mxUtils.makeDraggable(
+      hostElement,
+      graph,
+      funct,
+      dragElt,
+      0,
+      0,
+      true,
+      true
+    )
+    ds.setGuidesEnabled(true)
+  }
+
+  private addHostButton() {
+    const hosts = ['a', 'b', 'c', 'd', 'e']
+    _.forEach(hosts, host => {
+      this.addHostIcon(this.graph, this.hosts, host, './')
+    })
+  }
+
   private addSidebarIcon(
     graph: mxGraph,
     sidebar: HTMLDivElement,
@@ -279,7 +396,6 @@ class InventoryTopology extends PureComponent<Props, State> {
         }
 
         this.properties.appendChild(form.getTable())
-        // this.mxUtils.br(this.properties, 0)
       }
     }
 
@@ -382,6 +498,8 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   private topologyEditor = () => {
     const graph = this.graph
+
+    this.addHostButton()
     this.addSidebarButton()
     this.addToolbarButton()
 
@@ -625,7 +743,6 @@ class InventoryTopology extends PureComponent<Props, State> {
         }
       }
 
-      this.graph.refresh()
       return ''
     }
     // **********************************************
@@ -671,7 +788,6 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     //     return firstName + ' ' + lastName
     //   }
-
     // }
   }
 
