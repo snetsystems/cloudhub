@@ -1,100 +1,73 @@
-export const toolbarCommandObject = [
+interface toolbarCommandObject {
+  actionName: string
+  label: string
+  icon: string
+  isTransparent?: boolean
+}
+export const toolbarCommandObject: toolbarCommandObject[] = [
   {
     actionName: 'groupOrUngroup',
     label: '(Un)group',
-    imgSrc: 'images/group.png',
+    icon: 'object-group',
   },
   {
     actionName: 'delete',
     label: 'Delete',
-    imgSrc: 'images/delete2.png',
+    icon: 'trash',
   },
   {
     actionName: 'cut',
     label: 'Cut',
-    imgSrc: 'images/cut.png',
+    icon: 'scissors',
   },
   {
     actionName: 'copy',
     label: 'Copy',
-    imgSrc: 'images/copy.png',
+    icon: 'copy',
   },
   {
     actionName: 'paste',
     label: 'Paste',
-    imgSrc: 'images/paste.png',
+    icon: 'paste',
   },
   {
     actionName: 'undo',
     label: 'Undo',
-    imgSrc: 'images/undo.png',
+    icon: 'undo',
   },
   {
     actionName: 'redo',
     label: 'Redo',
-    imgSrc: 'images/redo.png',
-  },
-  {
-    actionName: 'show',
-    label: 'Show',
-    imgSrc: 'images/camera.png',
-  },
-  {
-    actionName: 'print',
-    label: 'Print',
-    imgSrc: 'images/printer.png',
-  },
-  {
-    actionName: 'export',
-    label: 'Export',
-    imgSrc: 'images/export1.png',
+    icon: 'redo',
   },
   {
     actionName: 'collapseAll',
     label: 'Collapse All',
-    imgSrc: 'images/navigate_minus.png',
-    isTransparent: true,
+    icon: 'callapse-plus',
   },
   {
     actionName: 'expandAll',
     label: 'Expand All',
-    imgSrc: 'images/navigate_plus.png',
-    isTransparent: true,
-  },
-  {
-    actionName: 'enterGroup',
-    label: 'Enter',
-    imgSrc: 'images/view_next.png',
-    isTransparent: true,
-  },
-  {
-    actionName: 'exitGroup',
-    label: 'Exit',
-    imgSrc: 'images/view_previous.png',
-    isTransparent: true,
+    icon: 'callapse-minus',
   },
   {
     actionName: 'zoomIn',
     label: 'Zoon in',
-    imgSrc: 'images/zoom_in.png',
-    isTransparent: true,
+    icon: 'zoom-in',
   },
   {
     actionName: 'zoomOut',
     label: 'Zoom out',
-    imgSrc: 'images/zoom_out.png',
-    isTransparent: true,
-  },
-  {
-    actionName: 'actualSize',
-    label: 'Actual size',
-    imgSrc: 'images/view_1_1.png',
-    isTransparent: true,
+    icon: 'zoom-out',
   },
   {
     actionName: 'fit',
     label: 'Fit',
-    imgSrc: 'images/fit_to_size.png',
-    isTransparent: true,
+    icon: 'fit',
+  },
+  {
+    actionName: 'export',
+    label: 'Export',
+    icon: 'export',
   },
 ]

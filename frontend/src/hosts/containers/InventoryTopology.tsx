@@ -136,6 +136,8 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.editor.destroy()
     this.editor = null
+
+    this.mx.mxEvent.DESTROY
   }
 
   render() {
@@ -431,52 +433,58 @@ class InventoryTopology extends PureComponent<Props, State> {
   private addToolbarButton = () => {
     const toolbarIcons = toolbarCommandObject
 
-    _.forEach(toolbarIcons, icon => {
-      const {actionName, label, imgSrc, isTransparent} = icon
-      this.addToolbarIcon(
-        this.editor,
-        this.toolbar,
-        actionName,
+    _.forEach(toolbarIcons, item => {
+      const {actionName, label, icon, isTransparent} = item
+      this.addToolbarIcon({
+        editor: this.editor,
+        toolbar: this.toolbar,
+        action: actionName,
         label,
-        imgSrc,
-        isTransparent
-      )
+        icon,
+        isTransparent,
+      })
     })
   }
 
-  private addToolbarIcon = (
-    editor: mxEditor,
-    toolbar: HTMLElement,
-    action: string,
-    label: string,
-    imageSrc: string,
+  private addToolbarIcon = ({
+    editor,
+    toolbar,
+    action,
+    label,
+    icon,
+    isTransparent = false,
+  }: {
+    editor: mxEditor
+    toolbar: HTMLElement
+    action: string
+    label: string
+    icon: string
     isTransparent?: boolean
-  ) => {
+  }) => {
     const button = document.createElement('button')
     button.style.fontSize = '10'
     button.classList.add('button')
+    button.classList.add('button-sm')
     button.classList.add('button-default')
     button.classList.add('button-square')
-
-    if (imageSrc != null) {
-      const img = document.createElement('img')
-      img.setAttribute('src', imageSrc)
-      img.style.width = '16px'
-      img.style.height = '16px'
-      img.style.verticalAlign = 'middle'
-      img.style.marginRight = '2px'
-      // button.appendChild(img)
+    button.title = label
+    if (icon != null) {
+      const span = document.createElement('span')
+      span.classList.add('button-icon')
+      span.classList.add('icon')
+      span.classList.add(icon)
+      button.appendChild(span)
     }
     if (isTransparent) {
       button.style.background = 'transparent'
       button.style.color = '#FFFFFF'
       button.style.border = 'none'
     }
+
     this.mxEvent.addListener(button, 'click', function() {
       editor.execute(action)
     })
 
-    this.mxUtils.write(button, label)
     toolbar.appendChild(button)
   }
 

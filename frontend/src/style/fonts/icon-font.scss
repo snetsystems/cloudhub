@@ -341,4 +341,52 @@
   &.minimize:before {
     content: '\e964';
   }
+
+  &.copy:before {
+    content: '\e934';
+  }
+
+  &.paste:before {
+    content: '\e935';
+  }
+
+  &.undo:before {
+    content: '\e967';
+  }
+
+  &.redo:before {
+    content: '\e968';
+  }
+
+  &.zoom-in:before {
+    content: '\e987';
+  }
+
+  &.zoom-out:before {
+    content: '\e988';
+  }
+
+  &.callapse-plus:before {
+    content: '\ea0a';
+  }
+
+  &.callapse-minus:before {
+    content: '\ea0b';
+  }
+
+  &.object-group:before {
+    content: '\ea58';
+  }
+
+  &.object-ungroup:before {
+    content: '\ea59';
+  }
+
+  &.scissors:before {
+    content: '\ea5a';
+  }
+
+  &.fit:before {
+    content: '\ea5b';
+  }
 }
