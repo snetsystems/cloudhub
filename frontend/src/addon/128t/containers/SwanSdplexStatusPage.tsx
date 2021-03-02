@@ -21,7 +21,7 @@ import {
   PeerDetail,
   GroupRouterNodeData,
 } from 'src/addon/128t/types'
-import {Addon} from 'src/types/auth'
+import {Links} from 'src/types/auth'
 
 // Middleware
 import {
@@ -139,12 +139,12 @@ interface GroupHosts {
 }
 
 const SwanSdplexStatusPage = ({
-  addons,
+  links,
   isUsingAuth,
   meRole,
   groupHosts,
 }: {
-  addons: Addon[]
+  links: Links
   isUsingAuth: boolean
   meRole: string
   groupHosts: GroupHosts[]
@@ -249,16 +249,19 @@ const SwanSdplexStatusPage = ({
 
   const [activeEditorTab, setActiveEditorTab] = useState<string>('Data')
 
-  const {loading, data} = useQuery<Response, Variables>(GET_ALLROUTERS_INFO, {
-    variables: {
-      names:
-        isUsingAuth && !isUserAuthorized(meRole, SUPERADMIN_ROLE)
-          ? gHosts.map(m => m.hostName)
-          : [],
-    },
-    errorPolicy: 'all',
-    pollInterval: 10000,
-  })
+  const {loading, error, data} = useQuery<Response, Variables>(
+    GET_ALLROUTERS_INFO,
+    {
+      variables: {
+        names:
+          isUsingAuth && !isUserAuthorized(meRole, SUPERADMIN_ROLE)
+            ? gHosts.map(m => m.hostName)
+            : [],
+      },
+      errorPolicy: 'all',
+      pollInterval: 10000,
+    }
+  )
 
   const groupRouter: GroupRouterNodeData[] = _.values(groupHosts).map(g => {
     const nodeName = _.values(g.hosts).map(h => {
@@ -651,7 +654,7 @@ const SwanSdplexStatusPage = ({
           </Radio>
         </Page.Header.Center>
         <Page.Header.Right>
-          <RouterSourceIndicator addons={addons} />
+          <RouterSourceIndicator addons={links.addons} />
           {activeEditorTab === 'Data' ? (
             <button
               onClick={() => setCellsLayoutInfo(initCellsLayout)}
@@ -665,29 +668,66 @@ const SwanSdplexStatusPage = ({
         </Page.Header.Right>
       </Page.Header>
       <Page.Contents scrollable={true}>
-        {loading || _.isEmpty(emitData.routerNodes) ? (
+        {(loading || _.isEmpty(emitData.routerNodes)) && !error ? (
           <PageSpinner />
-        ) : activeEditorTab === 'Data' ? (
-          <div className={'swan-sdpldex-status-page__container'}>
-            <GridLayoutRenderer
-              focusedNodeName={focusedNodeName}
-              isSwanSdplexStatus={true}
-              onClickTableRow={handleClickTableRow}
-              routerNodesData={emitData.routerNodes}
-              topSessionsData={topSessions}
-              topSourcesData={topSources}
-              onPositionChange={handleUpdatePosition}
-              layout={cellsLayoutInfo}
-              onClickMapMarker={handleClickMapMarker}
-              addons={addons}
+        ) : !error ? (
+          activeEditorTab === 'Data' ? (
+            <div className={'swan-sdpldex-status-page__container'}>
+              <GridLayoutRenderer
+                focusedNodeName={focusedNodeName}
+                isSwanSdplexStatus={true}
+                onClickTableRow={handleClickTableRow}
+                routerNodesData={emitData.routerNodes}
+                topSessionsData={topSessions}
+                topSourcesData={topSources}
+                onPositionChange={handleUpdatePosition}
+                layout={cellsLayoutInfo}
+                onClickMapMarker={handleClickMapMarker}
+                addons={links.addons}
+              />
+            </div>
+          ) : (
+            <TopologyRenderer
+              isUsingAuth={isUsingAuth}
+              meRole={meRole}
+              groupRouterNodesData={groupRouterNodesData}
             />
-          </div>
+          )
+        ) : !!links.external.custom &&
+          !!links.external.custom.find(
+            link => link.name === 'SWAN Conductor'
+          ) ? (
+          links.external.custom.map((link, i) => {
+            if (link.name === 'SWAN Conductor')
+              return (
+                <p key={i} className="unexpected-error">
+                  <span>
+                    The request from CloudHub cannot be reached to SWAN/Oncue
+                    Conductor.
+                    <br />
+                    This may be SSL Certification issue.
+                    <br />
+                    Please, check out this linked site -&nbsp;
+                    <a href={link.url} target="_blank">
+                      {link.name}
+                    </a>
+                    , it could help you to resolve this issue.
+                  </span>
+                </p>
+              )
+          })
         ) : (
-          <TopologyRenderer
-            isUsingAuth={isUsingAuth}
-            meRole={meRole}
-            groupRouterNodesData={groupRouterNodesData}
-          />
+          <p className="unexpected-error">
+            <span>
+              The request from CloudHub cannot be reached to SWAN/Oncue
+              Conductor.
+              <br />
+              This may be SSL Certification issue.
+              <br />
+              Please, check out SWAN Conductor URL, it could help you to resolve
+              this issue.
+            </span>
+          </p>
         )}
       </Page.Contents>
     </Page>

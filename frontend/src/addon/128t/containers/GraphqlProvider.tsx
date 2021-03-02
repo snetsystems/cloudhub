@@ -121,7 +121,7 @@ const GraphqlProvider: SFC<Props> = (props: Props) => {
     return (
       <ApolloProvider client={client}>
         <SwanSdplexStatusPage
-          addons={props.links.addons}
+          links={props.links}
           isUsingAuth={props.isUsingAuth}
           meRole={props.meRole}
           groupHosts={groupHosts}
