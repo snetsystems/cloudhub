@@ -248,9 +248,6 @@ class InventoryTopology extends PureComponent<Props, State> {
         const doc = this.mxUtils.createXmlDocument()
         const userCell = doc.createElement('Node')
         userCell.setAttribute('name', host)
-        // _.forEach(_.keys(host), n => {
-        //   userCell.setAttribute(n, host[n])
-        // })
 
         v1 = graph.insertVertex(parent, null, userCell, x, y, 120, 120)
         v1.setConnectable(true)
@@ -292,22 +289,19 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     // create div
 
-    const hostElement = document.createElement('div')
-    hostElement.classList.add()
-    // Creates the image which is used as the hostsContainer icon (drag source)
-    const img = document.createElement('img')
-    img.setAttribute('src', image)
-    img.style.width = '16px'
-    img.style.height = '16px'
-    img.title = 'Drag this to the diagram to create a new vertex'
+    const rowElement = document.createElement('div')
+    rowElement.classList.add('hosts-table--tr')
 
+    const hostElement = document.createElement('div')
+    hostElement.classList.add('hosts-table--td')
+
+    // Creates the image which is used as the hostsContainer icon (drag source)
     const span = document.createElement('span')
     span.textContent = host
     span.style.fontSize = '14px'
-
-    hostElement.appendChild(img)
-    hostElement.appendChild(span)
-    hostsContainer.appendChild(hostElement)
+    rowElement.appendChild(hostElement)
+    rowElement.appendChild(span)
+    hostsContainer.appendChild(rowElement)
 
     const dragElt = document.createElement('div')
     dragElt.style.border = 'dashed black 1px'
@@ -316,7 +310,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     // Creates the image which is used as the drag icon (preview)
     const ds = this.mxUtils.makeDraggable(
-      hostElement,
+      rowElement,
       graph,
       funct,
       dragElt,
