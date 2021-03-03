@@ -46,6 +46,7 @@ const (
 	ErrOrganizationConfigNotFound      = Error("could not find organization config")
 	ErrInvalidCellQueryType            = Error("invalid cell query type: must be 'flux' or 'influxql'")
 	ErrVsphereNotFound                 = Error("vsphere not found")
+	ErrTopologyNotFound                = Error("topology not found")
 )
 
 // Error is a domain error encountered while processing CloudHub requests
@@ -991,6 +992,37 @@ type Environment struct {
 	TelegrafSystemInterval time.Duration `json:"telegrafSystemInterval"`
 }
 
+// Topology represents represents an vsphere.
+type Topology struct {
+	ID            string   `json:"id,string,omitempty"`
+	Organization  string   `json:"organization,omitempty"` // Organization is the organization ID that resource belongs to
+	Diagram       string   `json:"diagram,string,omitempty"` // diagram xml 
+}
+
+// TopologyQuery represents the attributes that a topology may be retrieved by.
+// It is predominantly used in the TopologysStore.Get method.
+//
+// It is expected that only one of ID or Organization will be
+// specified, but all are provided TopologysStore should prefer ID.
+type TopologyQuery struct {
+	ID               *string
+	Organization     *string
+}
+
+// TopologysStore is the Storage and retrieval of information
+type TopologysStore interface {
+	// All lists all topologys from the TopologysStore
+	All(context.Context) ([]Topology, error)
+	// Create a new topology in the TopologysStore
+	Add(context.Context, *Topology) (*Topology, error)
+	// Delete the topology from the TopologysStore
+	Delete(context.Context, *Topology) error
+	// Get retrieves a topology if `ID` exists.
+	Get(ctx context.Context, q TopologyQuery) (*Topology, error)
+	// Update replaces the topology information
+	Update(context.Context, *Topology) error
+}
+
 // KVClient defines what each kv store should be capable of.
 type KVClient interface {
 	// ConfigStore returns the kv's ConfigStore type.
@@ -1011,4 +1043,6 @@ type KVClient interface {
 	UsersStore() UsersStore
 	// VspheresStore returns the kv's VspheresStore type.
 	VspheresStore() VspheresStore
+	// TopologysStore returns the kv's TopologysStore type.
+	TopologysStore() TopologysStore
 }

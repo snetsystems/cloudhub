@@ -377,6 +377,12 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.DELETE("/cloudhub/v1/vspheres/:id", EnsureAdmin(service.RemoveVsphere))
 	router.PATCH("/cloudhub/v1/vspheres/:id", EnsureAdmin(service.UpdateVsphere))
 
+	// topologys
+	router.GET("/cloudhub/v1/topologys", EnsureAdmin(service.Topology))
+	router.POST("/cloudhub/v1/topologys", EnsureAdmin(service.NewTopology))
+	router.DELETE("/cloudhub/v1/topologys/:id", EnsureAdmin(service.RemoveTopology))
+	router.PATCH("/cloudhub/v1/topologys/:id", EnsureAdmin(service.UpdateTopology))
+
 	// Validates go templates for the js client
 	router.POST("/cloudhub/v1/validate_text_templates", EnsureViewer(service.ValidateTextTemplate))
 	
@@ -521,6 +527,10 @@ func invalidData(w http.ResponseWriter, err error, logger cloudhub.Logger) {
 
 func invalidJSON(w http.ResponseWriter, logger cloudhub.Logger) {
 	Error(w, http.StatusBadRequest, "Unparsable JSON", logger)
+}
+
+func invalidXML(w http.ResponseWriter, logger cloudhub.Logger) {
+	Error(w, http.StatusBadRequest, "Unparsable XML", logger)
 }
 
 func unknownErrorWithMessage(w http.ResponseWriter, err error, logger cloudhub.Logger) {
