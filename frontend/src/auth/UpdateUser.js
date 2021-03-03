@@ -73,7 +73,6 @@ class UpdateUser extends PureComponent {
         .then(({data}) => {
           let user = {
             email,
-            roles: data.roles,
             superAdmin: data.superAdmin,
           }
 

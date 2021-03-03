@@ -1,0 +1,93 @@
+#containerWrapper {
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  height: 100%;
+
+  #contentBodySection {
+    display: flex;
+    position: relative;
+    height: calc(100% - 45px);
+  }
+
+  #toolbarContainer {
+    // position: absolute;
+    white-space: nowrap;
+    overflow: hidden;
+    background-color: $g3-castle;
+    // top: 0px;
+    // left: 0px;
+    // max-height: 24px;
+    // height: 36px;
+    // right: 0px;
+    padding: 6px;
+    //   background-image: url('images/toolbar_bg.gif');
+  }
+
+  #sidebarContainer {
+    // display: flex;
+    // flex-direction: row;
+    // position: absolute;
+    overflow: hidden;
+    // top: 36px;
+    // left: 0px;
+    // bottom: 36px;
+    // max-width: 52px;
+    // width: 56px;
+    // padding-top: 10px;
+    // padding-left: 4px;
+    //   background-image: url('images/sidebar_bg.gif');
+  }
+
+  #graphContainer {
+    position: relative;
+    touch-action: none;
+    height: 100%;
+    width: 100%;
+
+    // position: absolute;
+    overflow: hidden;
+    // top: 36px;
+    // left: 60px;
+    // bottom: 36px;
+    // right: 0px;
+    // background-image: url('editors/images/grid.gif');
+    // cursor: default;
+    // height: 800px;
+  }
+
+  #outlineContainer {
+    position: fixed;
+    top: 98px;
+    right: 10px;
+    width: 200px;
+    height: 140px;
+    overflow: hidden;
+    background: transparent;
+    border: 2px solid black;
+  }
+
+  #statusContainer {
+    // text-align: right;
+    // position: absolute;
+    overflow: hidden;
+    // bottom: 0px;
+    // left: 0px;
+    // max-height: 24px;
+    // height: 36px;
+    // right: 0px;
+    color: white;
+    padding: 6px;
+    //   background-image: url('images/toolbar_bg.gif');
+  }
+
+  #statusContainer-innerWrapper {
+    font-size: 10pt;
+    float: left;
+  }
+}
+
+.properties-table--name {
+  flex: 1 0 0;
+  overflow: hidden;
+}

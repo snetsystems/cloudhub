@@ -18,6 +18,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import GraphTips from 'src/shared/components/GraphTips'
 import VMHostPage from 'src/hosts/containers/VMHostsPage'
+import InventoryTopology from 'src/hosts/containers/InventoryTopology'
 
 // APIs
 import {
@@ -122,7 +123,8 @@ export class HostsPage extends PureComponent<Props, State> {
       proportions: [0.43, 0.57],
       selected: {lower: '', upper: ''},
       isVsphere: false,
-      activeEditorTab: 'Host',
+      activeEditorTab: 'InventoryTopology',
+      // activeEditorTab: 'Host',
     }
     this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
     this.onSetActiveEditorTab = this.onSetActiveEditorTab.bind(this)
@@ -263,7 +265,7 @@ export class HostsPage extends PureComponent<Props, State> {
       <Page className="hosts-list-page">
         <Page.Header inPresentationMode={inPresentationMode}>
           <Page.Header.Left>
-            <Page.Title title="Infrastructure" />
+            <Page.Title title={this.getTitle} />
           </Page.Header.Left>
           <Page.Header.Center widthPixels={220}>
             {isVsphere && (
@@ -289,6 +291,7 @@ export class HostsPage extends PureComponent<Props, State> {
               </div>
             )}
           </Page.Header.Center>
+
           <Page.Header.Right showSourceIndicator={true}>
             <GraphTips />
             <AutoRefreshDropdown
@@ -296,12 +299,14 @@ export class HostsPage extends PureComponent<Props, State> {
               onChoose={this.handleChooseAutoRefresh}
               onManualRefresh={onManualRefresh}
             />
-            <TimeRangeDropdown
-              onChooseTimeRange={this.handleChooseTimeRange.bind(
-                this.state.selected
-              )}
-              selected={selected}
-            />
+            {activeEditorTab !== 'InventoryTopology' && (
+              <TimeRangeDropdown
+                onChooseTimeRange={this.handleChooseTimeRange.bind(
+                  this.state.selected
+                )}
+                selected={selected}
+              />
+            )}
             <Button
               icon={IconFont.ExpandA}
               onClick={this.handleClickPresentationButton}
@@ -310,27 +315,41 @@ export class HostsPage extends PureComponent<Props, State> {
             />
           </Page.Header.Right>
         </Page.Header>
-        <Page.Contents
-          scrollable={true}
-          fullWidth={activeEditorTab === 'VMware'}
-        >
-          {activeEditorTab === 'Host' ? (
-            <Threesizer
-              orientation={HANDLE_HORIZONTAL}
-              divisions={this.horizontalDivisions}
-              onResize={this.handleResize}
-            />
-          ) : (
-            <VMHostPage
-              source={source}
-              manualRefresh={this.props.manualRefresh}
-              timeRange={this.state.timeRange}
-              handleClearTimeout={this.props.handleClearTimeout}
-            />
-          )}
+        <Page.Contents scrollable={true} fullWidth={activeEditorTab !== 'Host'}>
+          <>
+            {activeEditorTab === 'Host' && (
+              <Threesizer
+                orientation={HANDLE_HORIZONTAL}
+                divisions={this.horizontalDivisions}
+                onResize={this.handleResize}
+              />
+            )}
+            {activeEditorTab === 'VMware' && (
+              <VMHostPage
+                source={source}
+                manualRefresh={this.props.manualRefresh}
+                timeRange={this.state.timeRange}
+                handleClearTimeout={this.props.handleClearTimeout}
+              />
+            )}
+            {activeEditorTab === 'InventoryTopology' && (
+              <InventoryTopology hostsObject={this.state.hostsObject} />
+            )}
+          </>
         </Page.Contents>
       </Page>
     )
+  }
+
+  private get getTitle(): string {
+    const {activeEditorTab} = this.state
+
+    switch (activeEditorTab) {
+      case 'InventoryTopology':
+        return 'InventoryTopology'
+      default:
+        return 'Infrastructure'
+    }
   }
 
   private handleChooseTimeRange = ({lower, upper}) => {

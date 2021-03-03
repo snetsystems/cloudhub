@@ -997,6 +997,11 @@
   resolved "https://registry.yarnpkg.com/@react-dnd/shallowequal/-/shallowequal-2.0.0.tgz#a3031eb54129f2c66b2753f8404266ec7bf67f0a"
   integrity sha512-Pc/AFTdwZwEKJxFJvlxrSmGe/di+aAOBn60sremrpLo6VI/6cmiUYNNwlI5KNYttg7uypzA3ILPMPgxB2GYZEg==
 
+"@typed-mxgraph/typed-mxgraph@^1.0.0-2":
+  version "1.0.0-2"
+  resolved "https://registry.yarnpkg.com/@typed-mxgraph/typed-mxgraph/-/typed-mxgraph-1.0.0-2.tgz#6e6b2b9b72afc20092f5bebec62f8f4872097a36"
+  integrity sha512-NK8UBQlHkJUpUhj82HX0mRYDrXAxnBEgDm8Mol37Ggk1fvPo+F8eMLxcihMQNyJ+PiU3CeweAq5mVMkx2PoiQg==
+
 "@types/cheerio@*":
   version "0.22.18"
   resolved "https://registry.yarnpkg.com/@types/cheerio/-/cheerio-0.22.18.tgz#19018dceae691509901e339d63edf1e935978fe6"
@@ -6972,6 +6977,11 @@ mute-stream@0.0.7:
   version "0.0.7"
   resolved "https://registry.yarnpkg.com/mute-stream/-/mute-stream-0.0.7.tgz#3075ce93bc21b8fab43e1bc4da7e8115ed1e7bab"
   integrity sha1-MHXOk7whuPq0PhvE2n6BFe0ee6s=
+
+mxgraph@^4.2.2:
+  version "4.2.2"
+  resolved "https://registry.yarnpkg.com/mxgraph/-/mxgraph-4.2.2.tgz#52336443f10ab1039be79cc3fdd2eb8c00c91ba2"
+  integrity sha512-FrJc5AxzXSqiQNF+8CyJk6VxuKO4UVPgw32FZuFZ3X9W+JqOAQBTokZhh0ZkEqGpEOyp3z778ssmBTvdrTAdqw==
 
 nan@^2.12.1, nan@^2.13.2:
   version "2.14.1"
