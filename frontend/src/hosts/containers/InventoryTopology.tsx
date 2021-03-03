@@ -213,7 +213,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     host: any,
     image: string
   ) {
-    const {mxUtils, mxEvent, mxForm} = this.mx
+    const {mxUtils, mxEvent, mxForm, mxRectangle} = this.mx
 
     // Function that is executed when the image is dropped on
     // the graph. The cell argument points to the cell under
@@ -242,7 +242,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         v1.setConnectable(true)
 
         // Presets the collapsed size
-        v1.geometry.alternateBounds = new this.mx.mxRectangle(0, 0, 120, 40)
+        v1.geometry.alternateBounds = new mxRectangle(0, 0, 120, 40)
       } finally {
         model.endUpdate()
       }
@@ -611,6 +611,8 @@ class InventoryTopology extends PureComponent<Props, State> {
       mxUtils,
       mxClient,
       mxImage,
+      mxCell,
+      mxGeometry,
     } = this.mx
 
     this.editor = new mxEditor()
@@ -676,7 +678,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     // is supposed to be a cell which is cloned for new cells.
     // The groupBorderSize is used to define the spacing between
     // the children of a group and the group bounds.
-    const group = new this.mx.mxCell('Group', new this.mx.mxGeometry(), 'group')
+    const group = new mxCell('Group', new mxGeometry(), 'group')
     group.setVertex(true)
     group.setConnectable(false)
     this.editor.defaultGroup = group
@@ -873,7 +875,14 @@ class InventoryTopology extends PureComponent<Props, State> {
     width: number,
     height: number
   ) => {
-    const {mxUtils, mxClient, mxDivResizer} = this.mx
+    const {
+      mxUtils,
+      mxClient,
+      mxDivResizer,
+      mxWindow,
+      mxEffects,
+      mxEvent,
+    } = this.mx
 
     const background = document.createElement('div')
     background.style.position = 'absolute'
@@ -896,22 +905,13 @@ class InventoryTopology extends PureComponent<Props, State> {
         2 -
         (height * 2) / 3
     )
-    const wnd = new this.mx.mxWindow(
-      title,
-      content,
-      x,
-      y,
-      width,
-      height,
-      false,
-      true
-    )
+    const wnd = new mxWindow(title, content, x, y, width, height, false, true)
     wnd.setClosable(true)
 
     // Fades the background out after after the window has been closed
-    wnd.addListener(this.mx.mxEvent.DESTROY, () => {
+    wnd.addListener(mxEvent.DESTROY, () => {
       graph.setEnabled(true)
-      this.mx.mxEffects.fadeOut(background, 50, true, 10, 30, true)
+      mxEffects.fadeOut(background, 50, true, 10, 30, true)
     })
 
     graph.setEnabled(false)
