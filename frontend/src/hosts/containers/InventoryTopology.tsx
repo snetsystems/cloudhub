@@ -46,6 +46,9 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 // css
 import 'mxgraph/javascript/src/css/common.css'
 
+// Config
+const keyhandlerCommons = require('src/hosts/config/keyhandler-commons.xml')
+
 interface Props {
   hostsObject: {[x: string]: Host}
   autoRefresh: number
@@ -67,16 +70,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   // of the UI are custom in this example.
   private mx = mx()
   private editor: mxEditor = null
-  private mxUtils: typeof mxUtils = null
-  private mxConstants: typeof mxConstants = null
-  private mxGraphHandler: typeof mxGraphHandler = null
-  private mxGuide: typeof mxGuide = null
-  private mxEvent: typeof mxEvent = null
-  private mxEdgeHandler: typeof mxEdgeHandler = null
-  private mxClient: typeof mxClient = null
-  private mxDivResizer: typeof mxDivResizer = null
   private graph: mxGraph = null
-  private model: mxGraphModel = null
 
   private containerRef = createRef<HTMLDivElement>()
   private outlineRef = createRef<HTMLDivElement>()
@@ -130,15 +124,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     // SVG내부에서 update를 감지하여 DB로 저장(갱신)
   }
 
-  public componentWillUnmount() {
-    this.graph.destroy()
-    this.graph = null
-
-    this.editor.destroy()
-    this.editor = null
-
-    this.mx.mxEvent.DESTROY
-  }
+  public componentWillUnmount() {}
 
   render() {
     return (
@@ -174,6 +160,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     cell: mxCell,
     attribute: any
   ) => {
+    const {mxEvent, mxClient} = this.mx
     const input = form.addText(
       attribute.nodeName + ':',
       attribute.nodeValue,
@@ -196,19 +183,19 @@ class InventoryTopology extends PureComponent<Props, State> {
       }
     }
 
-    this.mxEvent.addListener(
+    mxEvent.addListener(
       input,
       'keypress',
       (event: KeyboardEvent & MouseEvent) => {
         // Needs to take shift into account for textareas
-        if (event.key === 'Enter' && !this.mxEvent.isShiftDown(event)) {
+        if (event.key === 'Enter' && !mxEvent.isShiftDown(event)) {
           input.blur()
         }
       }
     )
 
-    if (this.mxClient.IS_IE) {
-      this.mxEvent.addListener(input, 'focusout', applyHandler)
+    if (mxClient.IS_IE) {
+      mxEvent.addListener(input, 'focusout', applyHandler)
     } else {
       // Note: Known problem is the blurring of fields in
       // Firefox by changing the selection, in which case
@@ -216,7 +203,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       // As a workaround you should use a local variable
       // that stores the focused field and invoke blur
       // explicitely where we do the graph.focus above.
-      this.mxEvent.addListener(input, 'blur', applyHandler)
+      mxEvent.addListener(input, 'blur', applyHandler)
     }
   }
 
@@ -226,6 +213,8 @@ class InventoryTopology extends PureComponent<Props, State> {
     host: any,
     image: string
   ) {
+    const {mxUtils, mxEvent, mxForm} = this.mx
+
     // Function that is executed when the image is dropped on
     // the graph. The cell argument points to the cell under
     const funct = (
@@ -237,7 +226,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     ) => {
       // the mousepointer if there is one.
       const parent = graph.getDefaultParent()
-      const model = this.model
+      const model = graph.getModel()
       let v1 = null
       model.beginUpdate()
       try {
@@ -245,7 +234,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         // rather than the label markup, so use 'image=' + image for the style.
         // as follows: v1 = graph.insertVertex(parent, null, label,
         // pt.x, pt.y, 120, 120, 'image=' + image);
-        const doc = this.mxUtils.createXmlDocument()
+        const doc = mxUtils.createXmlDocument()
         const userCell = doc.createElement('Node')
         userCell.setAttribute('name', host)
 
@@ -265,7 +254,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     // mxCellAttributeChange to change properties
     graph
       .getSelectionModel() // @ts-ignore
-      .addListener(this.mxEvent.CHANGE, (sender, evt) => {
+      .addListener(mxEvent.CHANGE, (sender, evt) => {
         selectionChanged(graph)
       })
 
@@ -274,7 +263,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       this.properties.innerHTML = ''
 
       if (cell != null) {
-        const form = new this.mx.mxForm('inventory-topology--mxform')
+        const form = new mxForm('inventory-topology--mxform')
         const attrs = cell.value.attributes
         if (attrs) {
           for (let i = 0; i < attrs.length; i++) {
@@ -309,7 +298,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     dragElt.style.height = '120px'
 
     // Creates the image which is used as the drag icon (preview)
-    const ds = this.mxUtils.makeDraggable(
+    const ds = mxUtils.makeDraggable(
       rowElement,
       graph,
       funct,
@@ -330,6 +319,8 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private addSidebarIcon(graph: mxGraph, sidebar: HTMLDivElement, node: any) {
+    const {mxUtils, mxRectangle, mxForm, mxEvent} = this.mx
+
     // Function that is executed when the image is dropped on
     // the graph. The cell argument points to the cell under
     const funct = (
@@ -341,15 +332,16 @@ class InventoryTopology extends PureComponent<Props, State> {
     ) => {
       // the mousepointer if there is one.
       const parent = graph.getDefaultParent()
-      const model = this.model
+      const model = graph.getModel()
       let v1 = null
+
       model.beginUpdate()
       try {
         // NOTE: For non-HTML labels the image must be displayed via the style
         // rather than the label markup, so use 'image=' + image for the style.
         // as follows: v1 = graph.insertVertex(parent, null, label,
         // pt.x, pt.y, 120, 120, 'image=' + image);
-        const doc = this.mxUtils.createXmlDocument()
+        const doc = mxUtils.createXmlDocument()
         const userCell = doc.createElement(node.type)
 
         _.forEach(_.keys(node), n => {
@@ -360,7 +352,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         v1.setConnectable(true)
 
         // Presets the collapsed size
-        v1.geometry.alternateBounds = new this.mx.mxRectangle(0, 0, 120, 40)
+        v1.geometry.alternateBounds = new mxRectangle(0, 0, 120, 40)
       } finally {
         model.endUpdate()
       }
@@ -372,7 +364,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     // mxCellAttributeChange to change properties
     graph
       .getSelectionModel() // @ts-ignore
-      .addListener(this.mxEvent.CHANGE, (sender, evt) => {
+      .addListener(mxEvent.CHANGE, (sender, evt) => {
         selectionChanged(graph)
       })
 
@@ -381,7 +373,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       this.properties.innerHTML = ''
 
       if (cell) {
-        const form = new this.mx.mxForm('inventory-topology--mxform')
+        const form = new mxForm('inventory-topology--mxform')
         const attrs = cell.value.attributes
         if (attrs) {
           for (let i = 0; i < attrs.length; i++) {
@@ -407,7 +399,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     dragElt.style.height = '120px'
 
     // Creates the image which is used as the drag icon (preview)
-    const ds = this.mxUtils.makeDraggable(
+    const ds = mxUtils.makeDraggable(
       div,
       graph,
       funct,
@@ -451,6 +443,8 @@ class InventoryTopology extends PureComponent<Props, State> {
     icon: string
     isTransparent?: boolean
   }) => {
+    const {mxEvent} = this.mx
+
     const button = document.createElement('button')
     button.style.fontSize = '10'
     button.classList.add('button')
@@ -471,7 +465,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       button.style.border = 'none'
     }
 
-    this.mxEvent.addListener(button, 'click', function() {
+    mxEvent.addListener(button, 'click', function() {
       editor.execute(action)
     })
 
@@ -495,13 +489,17 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   private topologyEditor = () => {
     const graph = this.graph
+
+    const {mxOutline} = this.mx
+
+    this.addEditorAction()
     this.configureStylesheet()
     this.addHostButton()
     this.addSidebarButton()
     this.addToolbarButton()
 
     // To show the images in the outline, uncomment the following code
-    const outln = new this.mx.mxOutline(graph, this.outline)
+    const outln = new mxOutline(graph, this.outline)
 
     // To show the images in the outline, uncomment the following code
     outln.outline.labelsVisible = true
@@ -600,6 +598,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     ]
   }
 
+  // Initialize
   private setting = () => {
     const {
       mxEditor,
@@ -611,22 +610,12 @@ class InventoryTopology extends PureComponent<Props, State> {
       mxConstants,
       mxUtils,
       mxClient,
+      mxImage,
     } = this.mx
 
     this.editor = new mxEditor()
-    this.mxUtils = mxUtils
-    this.mxConstants = mxConstants
-    this.mxGraphHandler = mxGraphHandler
-    this.mxGuide = mxGuide
-    this.mxEvent = mxEvent
-    this.mxEdgeHandler = mxEdgeHandler
-    this.mxClient = mxClient
-    this.mxDivResizer = mxDivResizer
 
     this.graph = this.editor.graph
-    this.model = this.graph.getModel()
-
-    this.addEditorAction(this.editor, this.graph)
 
     this.container = this.containerRef.current
     this.outline = this.outlineRef.current
@@ -640,28 +629,27 @@ class InventoryTopology extends PureComponent<Props, State> {
     // new connections, the portion (100%) of the cell area to be used
     // for triggering new connections, as well as some fading options for
     // windows and the rubberband selection.
-    this.mxConstants.MIN_HOTSPOT_SIZE = 16
-    this.mxConstants.DEFAULT_HOTSPOT = 1
+    mxConstants.MIN_HOTSPOT_SIZE = 16
+    mxConstants.DEFAULT_HOTSPOT = 1
 
     // Enables guides
-    this.mxGraphHandler.prototype.guidesEnabled = true
+    mxGraphHandler.prototype.guidesEnabled = true
 
     // Alt disables guides
-    this.mxGuide.prototype.isEnabledForEvent = (evt: MouseEvent) => {
-      return !this.mxEvent.isAltDown(evt)
+    mxGuide.prototype.isEnabledForEvent = (evt: MouseEvent) => {
+      return !mxEvent.isAltDown(evt)
     }
 
     // Enables snapping waypoints to terminals
-    this.mxEdgeHandler.prototype.snapToTerminals = true
+    mxEdgeHandler.prototype.snapToTerminals = true
 
     // Workaround for Internet Explorer ignoring certain CSS directives
-    if (this.mxClient.IS_QUIRKS) {
+    if (mxClient.IS_QUIRKS) {
       document.body.style.overflow = 'hidden'
-      new this.mxDivResizer(this.container)
-      new this.mxDivResizer(this.outline)
-      // new this.mxDivResizer(toolbar)
-      new this.mxDivResizer(this.sidebar)
-      // new this.mxDivResizer(status)
+      new mxDivResizer(this.container)
+      new mxDivResizer(this.outline)
+      new mxDivResizer(this.toolbar)
+      new mxDivResizer(this.sidebar)
     }
 
     // Disable highlight of cells when dragging from toolbar
@@ -669,11 +657,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     // Uses the port icon while connections are previewed
     this.graph.connectionHandler.getConnectImage = state => {
-      return new this.mx.mxImage(
-        state.style[this.mxConstants.STYLE_IMAGE],
-        16,
-        16
-      )
+      return new mxImage(state.style[mxConstants.STYLE_IMAGE], 16, 16)
     }
 
     // Centers the port icon on the target port
@@ -684,10 +668,8 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     // Sets the graph container and configures the editor
     this.editor.setGraphContainer(this.container)
-    // const config = this.mxUtils
-    //   .load('/config/keyhandler-commons.xml')
-    //   .getDocumentElement()
-    // this.editor.configure(config)
+    const config = mxUtils.load(keyhandlerCommons).getDocumentElement()
+    this.editor.configure(config)
 
     // Defines the default group to be used for grouping. The
     // default group is a field in the mxEditor instance that
@@ -756,7 +738,6 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     // Overrides method to provide a cell label in the display
     this.graph.convertValueToString = cell => {
-      console.log('cell: ', cell)
       if (cell) {
         const type: string = cell.getAttribute('type', '')
         if (type) {
@@ -772,10 +753,12 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
   }
   private configureStylesheet = () => {
+    const {mxConstants, mxPerimeter, mxEdgeStyle} = this.mx
+    const graph = this.graph
+
     let style = new Object()
-    const mxConstants = this.mxConstants
     style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE
-    style[mxConstants.STYLE_PERIMETER] = this.mx.mxPerimeter.RectanglePerimeter
+    style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter
     style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER
     style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE
     style[mxConstants.STYLE_GRADIENTCOLOR] = '#41B9F5'
@@ -788,7 +771,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     style[mxConstants.STYLE_FONTSTYLE] = 0
     style[mxConstants.STYLE_IMAGE_WIDTH] = '48'
     style[mxConstants.STYLE_IMAGE_HEIGHT] = '48'
-    this.graph.getStylesheet().putDefaultVertexStyle(style)
+    graph.getStylesheet().putDefaultVertexStyle(style)
 
     // NOTE: Alternative vertex style for non-HTML labels should be as
     // follows. This repaces the above style for HTML labels.
@@ -815,7 +798,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     style = new Object()
     style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_SWIMLANE
-    style[mxConstants.STYLE_PERIMETER] = this.mx.mxPerimeter.RectanglePerimeter
+    style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter
     style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER
     style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_TOP
     style[mxConstants.STYLE_FILLCOLOR] = '#FF9103'
@@ -827,12 +810,12 @@ class InventoryTopology extends PureComponent<Props, State> {
     style[mxConstants.STYLE_STARTSIZE] = '30'
     style[mxConstants.STYLE_FONTSIZE] = '16'
     style[mxConstants.STYLE_FONTSTYLE] = 1
-    this.graph.getStylesheet().putCellStyle('group', style)
+    graph.getStylesheet().putCellStyle('group', style)
 
     style = new Object()
     style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_IMAGE
     style[mxConstants.STYLE_FONTCOLOR] = '#774400'
-    style[mxConstants.STYLE_PERIMETER] = this.mx.mxPerimeter.RectanglePerimeter
+    style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter
     style[mxConstants.STYLE_PERIMETER_SPACING] = '6'
     style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_LEFT
     style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE
@@ -840,16 +823,21 @@ class InventoryTopology extends PureComponent<Props, State> {
     style[mxConstants.STYLE_FONTSTYLE] = 2
     style[mxConstants.STYLE_IMAGE_WIDTH] = '16'
     style[mxConstants.STYLE_IMAGE_HEIGHT] = '16'
-    this.graph.getStylesheet().putCellStyle('port', style)
+    graph.getStylesheet().putCellStyle('port', style)
 
-    style = this.graph.getStylesheet().getDefaultEdgeStyle()
+    style = graph.getStylesheet().getDefaultEdgeStyle()
     style[mxConstants.STYLE_LABEL_BACKGROUNDCOLOR] = '#FFFFFF'
     style[mxConstants.STYLE_STROKEWIDTH] = '2'
     style[mxConstants.STYLE_ROUNDED] = true
-    style[mxConstants.STYLE_EDGE] = this.mx.mxEdgeStyle.EntityRelation
+    style[mxConstants.STYLE_EDGE] = mxEdgeStyle.EntityRelation
   }
 
-  private addEditorAction = (editor: mxEditor, graph?: mxGraph) => {
+  // Add Editor Action
+  private addEditorAction = () => {
+    const editor = this.editor
+    const graph = this.graph
+    const {mxCodec, mxUtils} = this.mx
+
     // Defines a new action for deleting or ungrouping
     editor.addAction('groupOrUngroup', function(
       editor: mxEditor,
@@ -869,11 +857,11 @@ class InventoryTopology extends PureComponent<Props, State> {
       textarea.style.width = '400px'
       textarea.style.height = '400px'
 
-      const enc = new this.mx.mxCodec(this.mxUtils.createXmlDocument())
+      const enc = new mxCodec(mxUtils.createXmlDocument())
       const node = enc.encode(editor.graph.getModel())
 
       // @ts-ignore
-      textarea.value = this.mxUtils.getPrettyXml(node)
+      textarea.value = mxUtils.getPrettyXml(node)
       this.showModalWindow(graph, 'XML', textarea, 410, 440)
     })
   }
@@ -885,6 +873,8 @@ class InventoryTopology extends PureComponent<Props, State> {
     width: number,
     height: number
   ) => {
+    const {mxUtils, mxClient, mxDivResizer} = this.mx
+
     const background = document.createElement('div')
     background.style.position = 'absolute'
     background.style.left = '0px'
@@ -892,11 +882,11 @@ class InventoryTopology extends PureComponent<Props, State> {
     background.style.right = '0px'
     background.style.bottom = '0px'
     background.style.background = 'black'
-    this.mxUtils.setOpacity(background, 50)
+    mxUtils.setOpacity(background, 50)
     this.container.appendChild(background)
 
-    if (this.mxClient.IS_IE) {
-      new this.mxDivResizer(background)
+    if (mxClient.IS_IE) {
+      new mxDivResizer(background)
     }
 
     const x = Math.max(0, document.body.scrollWidth / 2 - width / 2)
