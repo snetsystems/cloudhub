@@ -329,12 +329,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     })
   }
 
-  private addSidebarIcon(
-    graph: mxGraph,
-    sidebar: HTMLDivElement,
-    node: any,
-    image: string
-  ) {
+  private addSidebarIcon(graph: mxGraph, sidebar: HTMLDivElement, node: any) {
     // Function that is executed when the image is dropped on
     // the graph. The cell argument points to the cell under
     const funct = (
@@ -355,7 +350,8 @@ class InventoryTopology extends PureComponent<Props, State> {
         // as follows: v1 = graph.insertVertex(parent, null, label,
         // pt.x, pt.y, 120, 120, 'image=' + image);
         const doc = this.mxUtils.createXmlDocument()
-        const userCell = doc.createElement('Node')
+        const userCell = doc.createElement(node.type)
+
         _.forEach(_.keys(node), n => {
           userCell.setAttribute(n, node[n])
         })
@@ -398,12 +394,12 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
 
     // Creates the image which is used as the sidebar icon (drag source)
-    const img = document.createElement('img')
-    img.setAttribute('src', image)
-    img.style.width = '48px'
-    img.style.height = '48px'
-    img.title = 'Drag this to the diagram to create a new vertex'
-    sidebar.appendChild(img)
+
+    const div = document.createElement('div')
+    div.classList.add('tool-instance')
+    div.classList.add(`mxgraph--icon-${node.type.toLowerCase()}`)
+
+    sidebar.appendChild(div)
 
     const dragElt = document.createElement('div')
     dragElt.style.border = 'dashed black 1px'
@@ -412,7 +408,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     // Creates the image which is used as the drag icon (preview)
     const ds = this.mxUtils.makeDraggable(
-      img,
+      div,
       graph,
       funct,
       dragElt,
@@ -486,17 +482,14 @@ class InventoryTopology extends PureComponent<Props, State> {
     const tools = [
       {
         node: {
-          id: '0',
-          type: 'Storage',
-          edge: 'edge',
+          type: 'Server',
         },
-        imgSrc: './*.png',
       },
     ]
 
     _.forEach(tools, tool => {
-      const {node, imgSrc} = tool
-      this.addSidebarIcon(this.graph, this.sidebar, node, imgSrc)
+      const {node} = tool
+      this.addSidebarIcon(this.graph, this.sidebar, node)
     })
   }
 
@@ -725,74 +718,58 @@ class InventoryTopology extends PureComponent<Props, State> {
     // Enables new connections
     this.graph.setConnectable(true)
 
+    // Returns a shorter label if the cell is collapsed and no
+    // label for expanded groups
+    const _this = this
+    this.graph.getLabel = function(cell) {
+      var tmp = _this.mx.mxGraph.prototype.getLabel.apply(this, arguments) // "supercall"
+
+      if (this.isCellLocked(cell)) {
+        // Returns an empty label but makes sure an HTML
+        // element is created for the label (for event
+        // processing wrt the parent label)
+        return ''
+      } else if (this.isCellCollapsed(cell)) {
+        var index = tmp.indexOf('</h1>')
+
+        if (index > 0) {
+          tmp = tmp.substring(0, index + 5)
+        }
+      }
+
+      return tmp
+    }
+
+    // Disables HTML labels for swimlanes to avoid conflict
+    // for the event processing on the child cells. HTML
+    // labels consume events before underlying cells get the
+    // chance to process those events.
+    //
+    // NOTE: Use of HTML labels is only recommended if the specific
+    // features of such labels are required, such as special label
+    // styles or interactive form fields. Otherwise non-HTML labels
+    // should be used by not overidding the following function.
+    // See also: configureStylesheet.
+    this.graph.isHtmlLabel = function(cell) {
+      return !this.isSwimlane(cell)
+    }
+
     // Overrides method to provide a cell label in the display
     this.graph.convertValueToString = cell => {
-      if (this.mx.mxUtils.isNode(cell.value, 'Node')) {
-        if (cell.value.nodeName.toLowerCase() == 'node') {
-          var firstName = cell.getAttribute('edge', '')
-          var lastName = cell.getAttribute('type', '')
+      console.log('cell: ', cell)
+      if (cell) {
+        const type: string = cell.getAttribute('type', '')
+        if (type) {
+          const htmlDiv = document.createElement('div')
+          htmlDiv.classList.add('graph-instance')
+          htmlDiv.classList.add(`mxgraph--icon-${type.toLowerCase()}`)
 
-          if (lastName != null && lastName.length > 0) {
-            return lastName + ', ' + firstName
-          }
-
-          return firstName
-        } else if (cell.value.nodeName.toLowerCase() == 'knows') {
-          return (
-            cell.value.nodeName +
-            ' (Since ' +
-            cell.getAttribute('since', '') +
-            ')'
-          )
+          return htmlDiv.outerHTML
         }
       }
 
       return ''
     }
-    // **********************************************
-    // comment : cell label change logic ...
-    // **********************************************
-    // const _this = this
-    // // Overrides method to store a cell label in the model
-    // const cellLabelChanged = this.graph.cellLabelChanged
-    // // @ts-ignore
-    // this.graph.cellLabelChanged = function(cell, newValue, autoSize) {
-    //   if (
-    //     _this.mx.mxUtils.isNode(cell.value, 'Node') &&
-    //     cell.value.nodeName.toLowerCase() == 'node'
-    //   ) {
-    //     var pos = newValue.indexOf(' ')
-
-    //     var firstName = pos > 0 ? newValue.substring(0, pos) : newValue
-    //     var lastName =
-    //       pos > 0 ? newValue.substring(pos + 1, newValue.length) : ''
-
-    //     // Clones the value for correct undo/redo
-    //     var elt = cell.value.cloneNode(true)
-
-    //     elt.setAttribute('edge', firstName)
-    //     elt.setAttribute('type', lastName)
-
-    //     newValue = elt
-    //     autoSize = true
-    //   }
-    //   _this.graph.refresh()
-    //   cellLabelChanged.apply(this, arguments)
-    // }
-
-    // // @ts-ignore. Overrides method to create the editing value
-    // const _getEditingValue = this.graph.getEditingValue
-    // this.graph.getEditingValue = function(cell) {
-    //   if (
-    //     _this.mx.mxUtils.isNode(cell.value, 'Node') &&
-    //     cell.value.nodeName.toLowerCase() == 'node'
-    //   ) {
-    //     var firstName = cell.getAttribute('type', '')
-    //     var lastName = cell.getAttribute('edge', '')
-
-    //     return firstName + ' ' + lastName
-    //   }
-    // }
   }
   private configureStylesheet = () => {
     let style = new Object()
