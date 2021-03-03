@@ -249,16 +249,19 @@ const SwanSdplexStatusPage = ({
 
   const [activeEditorTab, setActiveEditorTab] = useState<string>('Data')
 
-  const {loading, data} = useQuery<Response, Variables>(GET_ALLROUTERS_INFO, {
-    variables: {
-      names:
-        isUsingAuth && !isUserAuthorized(meRole, SUPERADMIN_ROLE)
-          ? gHosts.map(m => m.hostName)
-          : [],
-    },
-    errorPolicy: 'all',
-    pollInterval: 10000,
-  })
+  const {loading, error, data} = useQuery<Response, Variables>(
+    GET_ALLROUTERS_INFO,
+    {
+      variables: {
+        names:
+          isUsingAuth && !isUserAuthorized(meRole, SUPERADMIN_ROLE)
+            ? gHosts.map(m => m.hostName)
+            : [],
+      },
+      errorPolicy: 'all',
+      pollInterval: 10000,
+    }
+  )
 
   const groupRouter: GroupRouterNodeData[] = _.values(groupHosts).map(g => {
     const nodeName = _.values(g.hosts).map(h => {
@@ -665,29 +668,55 @@ const SwanSdplexStatusPage = ({
         </Page.Header.Right>
       </Page.Header>
       <Page.Contents scrollable={true}>
-        {loading || _.isEmpty(emitData.routerNodes) ? (
+        {(loading || _.isEmpty(emitData.routerNodes)) && !error ? (
           <PageSpinner />
-        ) : activeEditorTab === 'Data' ? (
-          <div className={'swan-sdpldex-status-page__container'}>
-            <GridLayoutRenderer
-              focusedNodeName={focusedNodeName}
-              isSwanSdplexStatus={true}
-              onClickTableRow={handleClickTableRow}
-              routerNodesData={emitData.routerNodes}
-              topSessionsData={topSessions}
-              topSourcesData={topSources}
-              onPositionChange={handleUpdatePosition}
-              layout={cellsLayoutInfo}
-              onClickMapMarker={handleClickMapMarker}
-              addons={addons}
+        ) : !error ? (
+          activeEditorTab === 'Data' ? (
+            <div className={'swan-sdpldex-status-page__container'}>
+              <GridLayoutRenderer
+                focusedNodeName={focusedNodeName}
+                isSwanSdplexStatus={true}
+                onClickTableRow={handleClickTableRow}
+                routerNodesData={emitData.routerNodes}
+                topSessionsData={topSessions}
+                topSourcesData={topSources}
+                onPositionChange={handleUpdatePosition}
+                layout={cellsLayoutInfo}
+                onClickMapMarker={handleClickMapMarker}
+                addons={addons}
+              />
+            </div>
+          ) : (
+            <TopologyRenderer
+              isUsingAuth={isUsingAuth}
+              meRole={meRole}
+              groupRouterNodesData={groupRouterNodesData}
             />
-          </div>
+          )
         ) : (
-          <TopologyRenderer
-            isUsingAuth={isUsingAuth}
-            meRole={meRole}
-            groupRouterNodesData={groupRouterNodesData}
-          />
+          !!addons && (
+            <p className="unexpected-error">
+              <span>
+                The request from CloudHub cannot be reached to SWAN/Oncue
+                Conductor.
+                <br />
+                This may be SSL Certification issue.
+                <br />
+                Please, check out this linked site -&nbsp;
+                <a
+                  href={
+                    addons.find(addon => {
+                      return addon.name === 'swan'
+                    }).url
+                  }
+                  target="_blank"
+                >
+                  SWAN Conductor
+                </a>
+                , it could help you to resolve this issue.
+              </span>
+            </p>
+          )
         )}
       </Page.Contents>
     </Page>

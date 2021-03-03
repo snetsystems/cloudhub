@@ -113,10 +113,10 @@ type userResponse struct {
 	Scheme     string          `json:"scheme"`
 	SuperAdmin bool            `json:"superAdmin"`
 	Roles      []cloudhub.Role `json:"roles"`
-	PasswordUpdateDate string `json:"passwordUpdateDate,omitempty"`
-	PasswordResetFlag  string `json:"passwordResetFlag,omitempty"`
-	Email              string `json:"email,omitempty"`
-	Password   string         `json:"password,omitempty"`
+	PasswordUpdateDate string  `json:"passwordUpdateDate,omitempty"`
+	PasswordResetFlag  string  `json:"passwordResetFlag,omitempty"`
+	Email              string  `json:"email,omitempty"`
+	Password           string  `json:"password,omitempty"`
 }
 
 func newUserResponse(u *cloudhub.User, org string, password string) *userResponse {
@@ -134,18 +134,16 @@ func newUserResponse(u *cloudhub.User, org string, password string) *userRespons
 	}
 	
 	resData := &userResponse{
-		ID:         u.ID,
-		Name:       u.Name,
-		Provider:   u.Provider,
-		Scheme:     u.Scheme,
-		Roles:      u.Roles,
-		SuperAdmin: u.SuperAdmin,
-		Links: selfLinks{
-			Self: selfLink,
-		},
+		Links:              selfLinks{Self: selfLink},
+		ID:                 u.ID,
+		Name:               u.Name,
+		Provider:           u.Provider,
+		Scheme:             u.Scheme,
+		SuperAdmin:         u.SuperAdmin,
+		Roles:              u.Roles,
 		PasswordUpdateDate: u.PasswordUpdateDate,
-		PasswordResetFlag: u.PasswordResetFlag,
-		Email: u.Email,
+		PasswordResetFlag:  u.PasswordResetFlag,
+		Email:              u.Email,
 	}
 
 	if password != "" {
