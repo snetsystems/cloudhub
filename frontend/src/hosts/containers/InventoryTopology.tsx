@@ -724,6 +724,24 @@ class InventoryTopology extends PureComponent<Props, State> {
       return tmp
     }
 
+    // Connect Preview
+    this.graph.connectionHandler.createEdgeState = function() {
+      var edge = this.graph.createEdge(
+        null,
+        null,
+        null,
+        null,
+        null,
+        'edgeStyle=orthogonalEdgeStyle'
+      )
+
+      return new _this.mx.mxCellState(
+        this.graph.view,
+        edge,
+        this.graph.getCellStyle(edge)
+      )
+    }
+
     // Disables HTML labels for swimlanes to avoid conflict
     // for the event processing on the child cells. HTML
     // labels consume events before underlying cells get the
@@ -831,7 +849,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     style[mxConstants.STYLE_LABEL_BACKGROUNDCOLOR] = '#FFFFFF'
     style[mxConstants.STYLE_STROKEWIDTH] = '2'
     style[mxConstants.STYLE_ROUNDED] = true
-    style[mxConstants.STYLE_EDGE] = mxEdgeStyle.EntityRelation
+    style[mxConstants.STYLE_EDGE] = mxEdgeStyle.OrthConnector
   }
 
   // Add Editor Action
