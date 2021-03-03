@@ -1943,7 +1943,7 @@ func TestService_SourceRoles(t *testing.T) {
 						return &mocks.RolesStore{
 							AllF: func(ctx context.Context) ([]cloudhub.Role, error) {
 								return []cloudhub.Role{
-									cloudhub.Role{
+									{
 										Name: "biffsgang",
 										Permissions: cloudhub.Permissions{
 											{

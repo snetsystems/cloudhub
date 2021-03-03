@@ -21,7 +21,8 @@ import (
 	"strings"
 	"time"
 
-	
+	client "github.com/influxdata/usage-client/v1"
+	flags "github.com/jessevdk/go-flags"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	idgen "github.com/snetsystems/cloudhub/backend/id"
 	"github.com/snetsystems/cloudhub/backend/influx"
@@ -30,8 +31,6 @@ import (
 	"github.com/snetsystems/cloudhub/backend/kv/etcd"
 	clog "github.com/snetsystems/cloudhub/backend/log"
 	"github.com/snetsystems/cloudhub/backend/oauth2"
-	client "github.com/influxdata/usage-client/v1"
-	flags "github.com/jessevdk/go-flags"
 )
 
 var (
@@ -792,6 +791,7 @@ func openService(ctx context.Context, db kv.Store, builder builders, logger clou
 			MappingsStore:           svc.MappingsStore(),
 			OrganizationConfigStore: svc.OrganizationConfigStore(),
 			VspheresStore:           svc.VspheresStore(),
+			TopologysStore:          svc.TopologysStore(),
 		},
 		Logger:                   logger,
 		UseAuth:                  useAuth,

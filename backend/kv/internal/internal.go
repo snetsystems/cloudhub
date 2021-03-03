@@ -946,3 +946,26 @@ func UnmarshalVsphere(data []byte, v *cloudhub.Vsphere) error {
 
 	return nil
 }
+
+// MarshalTopology encodes a mapping to binary protobuf format.
+func MarshalTopology(t *cloudhub.Topology) ([]byte, error) {
+	return proto.Marshal(&Topology{
+		ID:           t.ID,
+		Organization: t.Organization,
+		Diagram:      t.Diagram,
+	})
+}
+
+// UnmarshalTopology decodes a mapping from binary protobuf data.
+func UnmarshalTopology(data []byte, t *cloudhub.Topology) error {
+	var pb Topology
+	if err := proto.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+
+	t.ID = pb.ID
+	t.Organization = pb.Organization
+	t.Diagram = pb.Diagram
+
+	return nil
+}
