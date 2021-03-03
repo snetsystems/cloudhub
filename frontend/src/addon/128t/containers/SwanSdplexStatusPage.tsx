@@ -21,7 +21,7 @@ import {
   PeerDetail,
   GroupRouterNodeData,
 } from 'src/addon/128t/types'
-import {Links} from 'src/types/auth'
+import {Addon} from 'src/types/auth'
 
 // Middleware
 import {
@@ -139,12 +139,12 @@ interface GroupHosts {
 }
 
 const SwanSdplexStatusPage = ({
-  links,
+  addons,
   isUsingAuth,
   meRole,
   groupHosts,
 }: {
-  links: Links
+  addons: Addon[]
   isUsingAuth: boolean
   meRole: string
   groupHosts: GroupHosts[]
@@ -654,7 +654,7 @@ const SwanSdplexStatusPage = ({
           </Radio>
         </Page.Header.Center>
         <Page.Header.Right>
-          <RouterSourceIndicator addons={links.addons} />
+          <RouterSourceIndicator addons={addons} />
           {activeEditorTab === 'Data' ? (
             <button
               onClick={() => setCellsLayoutInfo(initCellsLayout)}
@@ -683,7 +683,7 @@ const SwanSdplexStatusPage = ({
                 onPositionChange={handleUpdatePosition}
                 layout={cellsLayoutInfo}
                 onClickMapMarker={handleClickMapMarker}
-                addons={links.addons}
+                addons={addons}
               />
             </div>
           ) : (
@@ -693,41 +693,30 @@ const SwanSdplexStatusPage = ({
               groupRouterNodesData={groupRouterNodesData}
             />
           )
-        ) : !!links.external.custom &&
-          !!links.external.custom.find(
-            link => link.name === 'SWAN Conductor'
-          ) ? (
-          links.external.custom.map((link, i) => {
-            if (link.name === 'SWAN Conductor')
-              return (
-                <p key={i} className="unexpected-error">
-                  <span>
-                    The request from CloudHub cannot be reached to SWAN/Oncue
-                    Conductor.
-                    <br />
-                    This may be SSL Certification issue.
-                    <br />
-                    Please, check out this linked site -&nbsp;
-                    <a href={link.url} target="_blank">
-                      {link.name}
-                    </a>
-                    , it could help you to resolve this issue.
-                  </span>
-                </p>
-              )
-          })
         ) : (
-          <p className="unexpected-error">
-            <span>
-              The request from CloudHub cannot be reached to SWAN/Oncue
-              Conductor.
-              <br />
-              This may be SSL Certification issue.
-              <br />
-              Please, check out SWAN Conductor URL, it could help you to resolve
-              this issue.
-            </span>
-          </p>
+          !!addons && (
+            <p className="unexpected-error">
+              <span>
+                The request from CloudHub cannot be reached to SWAN/Oncue
+                Conductor.
+                <br />
+                This may be SSL Certification issue.
+                <br />
+                Please, check out this linked site -&nbsp;
+                <a
+                  href={
+                    addons.find(addon => {
+                      return addon.name === 'swan'
+                    }).url
+                  }
+                  target="_blank"
+                >
+                  SWAN Conductor
+                </a>
+                , it could help you to resolve this issue.
+              </span>
+            </p>
+          )
         )}
       </Page.Contents>
     </Page>
