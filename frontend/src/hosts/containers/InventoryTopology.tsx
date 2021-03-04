@@ -44,7 +44,7 @@ import {Host} from 'src/types'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 // css
-import 'mxgraph/javascript/src/css/common.css'
+// import 'mxgraph/javascript/src/css/common.css'
 
 // Config
 const keyhandlerCommons = require('src/hosts/config/keyhandler-commons.xml')
@@ -61,7 +61,6 @@ interface State {
   sidebarProportions: number[]
   hostList: string[]
 }
-
 @ErrorHandling
 class InventoryTopology extends PureComponent<Props, State> {
   // Creates a wrapper editor with a graph inside the given container.
@@ -92,7 +91,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     super(props)
 
     this.state = {
-      screenProportions: [0.1, 0.9],
+      screenProportions: [0.3, 0.7],
       sidebarProportions: [0.333, 0.333, 0.333],
       hostList: null,
     }
@@ -120,8 +119,6 @@ class InventoryTopology extends PureComponent<Props, State> {
       // const hostList = _.keys(hostsObject)
       // this.setState({hostList})
     }
-
-    // SVG내부에서 update를 감지하여 DB로 저장(갱신)
   }
 
   public componentWillUnmount() {}
@@ -150,8 +147,6 @@ class InventoryTopology extends PureComponent<Props, State> {
       this.graph.refresh()
     }
   }
-
-  private draggable = () => {}
 
   //Creates the textfield for the given property.
   private createTextField = (
@@ -389,6 +384,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     const div = document.createElement('div')
     div.classList.add('tool-instance')
+    div.classList.add(`mxgraph--icon`)
     div.classList.add(`mxgraph--icon-${node.type.toLowerCase()}`)
 
     sidebar.appendChild(div)
@@ -479,6 +475,36 @@ class InventoryTopology extends PureComponent<Props, State> {
           type: 'Server',
         },
       },
+      {
+        node: {
+          type: 'Internet',
+        },
+      },
+      {
+        node: {
+          type: 'Workstation',
+        },
+      },
+      {
+        node: {
+          type: 'Email',
+        },
+      },
+      {
+        node: {
+          type: 'Firewall',
+        },
+      },
+      {
+        node: {
+          type: 'Router',
+        },
+      },
+      {
+        node: {
+          type: 'WirelessRouter',
+        },
+      },
     ]
 
     _.forEach(tools, tool => {
@@ -520,7 +546,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         render: () => (
           <>
             <FancyScrollbar>
-              <TableBody>{<div ref={this.hostsRef}></div>}</TableBody>
+              <TableBody>{<div ref={this.hostsRef} />}</TableBody>
             </FancyScrollbar>
           </>
         ),
@@ -531,7 +557,11 @@ class InventoryTopology extends PureComponent<Props, State> {
         headerButtons: [],
         menuOptions: [],
         size: middleSize,
-        render: () => <div ref={this.sidebarRef}></div>,
+        render: () => (
+          <FancyScrollbar>
+            <div ref={this.sidebarRef} className={'tool-box'} />
+          </FancyScrollbar>
+        ),
       },
       {
         name: 'Properties',
@@ -543,11 +573,10 @@ class InventoryTopology extends PureComponent<Props, State> {
           return (
             <>
               <FancyScrollbar>
-                {<div ref={this.propertiesRef}></div>}
+                {<div ref={this.propertiesRef} />}
               </FancyScrollbar>
             </>
           )
-          // return <Properties />
         },
       },
     ]
@@ -556,8 +585,6 @@ class InventoryTopology extends PureComponent<Props, State> {
   private get threesizerDivisions() {
     const {screenProportions} = this.state
     const [leftSize, rightSize] = screenProportions
-
-    // 함수가 실행될 곳
 
     return [
       {
@@ -616,7 +643,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     } = this.mx
 
     this.editor = new mxEditor()
-
     this.graph = this.editor.graph
 
     this.container = this.containerRef.current
@@ -625,6 +651,8 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.sidebar = this.sidebarRef.current
     this.properties = this.propertiesRef.current
     this.toolbar = this.toolbarRef.current
+
+    const _this = this
 
     // Assigns some global constants for general behaviour, eg. minimum
     // size (in pixels) of the active region for triggering creation of
@@ -704,7 +732,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     // Returns a shorter label if the cell is collapsed and no
     // label for expanded groups
-    const _this = this
+
     this.graph.getLabel = function(cell) {
       var tmp = _this.mx.mxGraph.prototype.getLabel.apply(this, arguments) // "supercall"
 
@@ -763,6 +791,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         if (type) {
           const htmlDiv = document.createElement('div')
           htmlDiv.classList.add('graph-instance')
+          htmlDiv.classList.add('mxgraph--icon')
           htmlDiv.classList.add(`mxgraph--icon-${type.toLowerCase()}`)
 
           return htmlDiv.outerHTML
@@ -781,12 +810,12 @@ class InventoryTopology extends PureComponent<Props, State> {
     style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter
     style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER
     style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE
-    style[mxConstants.STYLE_GRADIENTCOLOR] = '#41B9F5'
-    style[mxConstants.STYLE_FILLCOLOR] = '#8CCDF5'
-    style[mxConstants.STYLE_STROKECOLOR] = '#1B78C8'
+    style[mxConstants.STYLE_GRADIENTCOLOR] = '#e7e8eb'
+    style[mxConstants.STYLE_FILLCOLOR] = '#f6f6f8'
+    style[mxConstants.STYLE_STROKECOLOR] = '#ffffff'
     style[mxConstants.STYLE_FONTCOLOR] = '#000000'
     style[mxConstants.STYLE_ROUNDED] = true
-    style[mxConstants.STYLE_OPACITY] = '80'
+    style[mxConstants.STYLE_OPACITY] = '100'
     style[mxConstants.STYLE_FONTSIZE] = '12'
     style[mxConstants.STYLE_FONTSTYLE] = 0
     style[mxConstants.STYLE_IMAGE_WIDTH] = '48'
@@ -821,8 +850,8 @@ class InventoryTopology extends PureComponent<Props, State> {
     style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter
     style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER
     style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_TOP
-    style[mxConstants.STYLE_FILLCOLOR] = '#FF9103'
-    style[mxConstants.STYLE_GRADIENTCOLOR] = '#F8C48B'
+    // style[mxConstants.STYLE_FILLCOLOR] = '#FF9103'
+    // style[mxConstants.STYLE_GRADIENTCOLOR] = '#F8C48B'
     style[mxConstants.STYLE_STROKECOLOR] = '#E86A00'
     style[mxConstants.STYLE_FONTCOLOR] = '#000000'
     style[mxConstants.STYLE_ROUNDED] = true
