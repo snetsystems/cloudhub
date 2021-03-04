@@ -477,12 +477,22 @@ class InventoryTopology extends PureComponent<Props, State> {
       },
       {
         node: {
+          type: 'Database',
+        },
+      },
+      {
+        node: {
           type: 'Internet',
         },
       },
       {
         node: {
           type: 'Workstation',
+        },
+      },
+      {
+        node: {
+          type: 'VirtualMachine',
         },
       },
       {
