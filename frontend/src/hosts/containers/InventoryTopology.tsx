@@ -205,8 +205,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   private addHostIcon(
     graph: mxGraph,
     hostsContainer: HTMLDivElement,
-    host: any,
-    image: string
+    host: any
   ) {
     const {mxUtils, mxEvent, mxForm, mxRectangle} = this.mx
 
@@ -232,6 +231,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         const doc = mxUtils.createXmlDocument()
         const userCell = doc.createElement('Node')
         userCell.setAttribute('name', host)
+        userCell.setAttribute('type', 'server')
 
         v1 = graph.insertVertex(parent, null, userCell, x, y, 120, 120)
         v1.setConnectable(true)
@@ -309,7 +309,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   private addHostButton() {
     const hosts = ['a', 'b', 'c', 'd', 'e']
     _.forEach(hosts, host => {
-      this.addHostIcon(this.graph, this.hosts, host, './')
+      this.addHostIcon(this.graph, this.hosts, host)
     })
   }
 
@@ -811,6 +811,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       return ''
     }
   }
+
   private configureStylesheet = () => {
     const {mxConstants, mxPerimeter, mxEdgeStyle} = this.mx
     const graph = this.graph
