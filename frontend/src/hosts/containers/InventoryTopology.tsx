@@ -44,7 +44,7 @@ import {Host} from 'src/types'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 // css
-// import 'mxgraph/javascript/src/css/common.css'
+import 'mxgraph/javascript/src/css/common.css'
 
 // Config
 const keyhandlerCommons = require('src/hosts/config/keyhandler-commons.xml')
@@ -231,6 +231,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         const doc = mxUtils.createXmlDocument()
         const userCell = doc.createElement('Node')
         userCell.setAttribute('name', host)
+        userCell.setAttribute('label', host)
         userCell.setAttribute('type', 'server')
 
         v1 = graph.insertVertex(parent, null, userCell, x, y, 120, 120)
@@ -328,7 +329,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       // the mousepointer if there is one.
       const parent = graph.getDefaultParent()
       const model = graph.getModel()
-      let v1 = null
+      let v1: mxCell = null
 
       model.beginUpdate()
       try {
@@ -345,7 +346,6 @@ class InventoryTopology extends PureComponent<Props, State> {
 
         v1 = graph.insertVertex(parent, null, userCell, x, y, 120, 120)
         v1.setConnectable(true)
-
         // Presets the collapsed size
         v1.geometry.alternateBounds = new mxRectangle(0, 0, 120, 40)
       } finally {
@@ -384,8 +384,8 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     const div = document.createElement('div')
     div.classList.add('tool-instance')
-    div.classList.add(`mxgraph--icon`)
-    div.classList.add(`mxgraph--icon-${node.type.toLowerCase()}`)
+    div.classList.add(`mxgraph-cell--icon`)
+    div.classList.add(`mxgraph-cell--icon-${node.type.toLowerCase()}`)
 
     sidebar.appendChild(div)
 
@@ -473,46 +473,73 @@ class InventoryTopology extends PureComponent<Props, State> {
       {
         node: {
           type: 'Server',
+          name: '',
+          label: '',
+          href: '',
         },
       },
       {
         node: {
           type: 'Database',
+          name: '',
+          label: '',
+          href: '',
         },
       },
       {
         node: {
           type: 'Internet',
+          name: '',
+          label: '',
+          href: '',
         },
       },
       {
         node: {
           type: 'Workstation',
+          name: '',
+          label: '',
+          href: '',
         },
       },
       {
         node: {
           type: 'VirtualMachine',
+          name: '',
+          label: '',
+          href: '',
         },
       },
       {
         node: {
           type: 'Email',
+          name: '',
+          label: '',
+          href: '',
         },
       },
       {
         node: {
           type: 'Firewall',
+          name: '',
+          label: '',
+          href: '',
         },
       },
       {
         node: {
           type: 'Router',
+          name: '',
+          label: '',
+          href: '',
         },
       },
       {
         node: {
           type: 'WirelessRouter',
+          name: '',
+          label: '',
+          href: 'asdasd',
         },
       },
     ]
@@ -797,15 +824,33 @@ class InventoryTopology extends PureComponent<Props, State> {
     // Overrides method to provide a cell label in the display
     this.graph.convertValueToString = cell => {
       if (cell) {
+        const label: string = cell.getAttribute('label', '')
         const type: string = cell.getAttribute('type', '')
-        if (type) {
-          const htmlDiv = document.createElement('div')
-          htmlDiv.classList.add('graph-instance')
-          htmlDiv.classList.add('mxgraph--icon')
-          htmlDiv.classList.add(`mxgraph--icon-${type.toLowerCase()}`)
+        const wrapper = document.createElement('div')
+        wrapper.classList.add('mxgraph-cell--wrapper')
 
-          return htmlDiv.outerHTML
+        if (label) {
+          const labelBox = document.createElement('div')
+          const labelText = document.createElement('strong')
+
+          labelText.textContent = label
+          labelText.classList.add('mxgraph-cell--title')
+
+          labelBox.appendChild(labelText)
+          wrapper.appendChild(labelBox)
         }
+
+        if (type) {
+          const iconBox = document.createElement('div')
+
+          iconBox.classList.add('mxgraph-cell--icon-box')
+          iconBox.classList.add('mxgraph-cell--icon')
+          iconBox.classList.add(`mxgraph-cell--icon-${type.toLowerCase()}`)
+
+          wrapper.appendChild(iconBox)
+        }
+
+        return wrapper.outerHTML
       }
 
       return ''
