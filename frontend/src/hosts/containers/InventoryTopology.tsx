@@ -1,21 +1,6 @@
 import React, {createRef, PureComponent} from 'react'
 import {connect} from 'react-redux'
-import {
-  default as mx,
-  mxGraph,
-  mxEditor,
-  mxCell,
-  mxUtils,
-  mxGraphHandler,
-  mxGuide,
-  mxEvent,
-  mxEdgeHandler,
-  mxClient,
-  mxDivResizer,
-  mxConstants,
-  mxForm,
-  mxGraphModel,
-} from 'mxgraph'
+import {default as mx, mxGraph, mxEditor, mxCell, mxForm} from 'mxgraph'
 
 import _ from 'lodash'
 
@@ -217,6 +202,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     const group = new mxCell('Group', new mxGeometry(), 'group')
     group.setVertex(true)
     group.setConnectable(false)
+
     editor.defaultGroup = group
     editor.groupBorderSize = 20
 
@@ -240,9 +226,8 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     // Returns a shorter label if the cell is collapsed and no
     // label for expanded groups
-
     graph.getLabel = function(cell) {
-      var tmp = _this.mx.mxGraph.prototype.getLabel.apply(this, arguments) // "supercall"
+      let tmp = _this.mx.mxGraph.prototype.getLabel.apply(this, arguments) // "supercall"
 
       if (this.isCellLocked(cell)) {
         // Returns an empty label but makes sure an HTML
@@ -250,19 +235,17 @@ class InventoryTopology extends PureComponent<Props, State> {
         // processing wrt the parent label)
         return ''
       } else if (this.isCellCollapsed(cell)) {
-        var index = tmp.indexOf('</h1>')
-
+        const index = tmp.indexOf('</div>')
         if (index > 0) {
           tmp = tmp.substring(0, index + 5)
         }
       }
-
       return tmp
     }
 
     // Connect Preview
     graph.connectionHandler.createEdgeState = () => {
-      var edge = graph.createEdge(
+      const edge = graph.createEdge(
         null,
         null,
         null,
@@ -289,39 +272,39 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
 
     // Overrides method to provide a cell label in the display
-    graph.convertValueToString = cell => {
-      if (cell) {
-        const label: string = cell.getAttribute('label', '')
-        const type: string = cell.getAttribute('type', '')
-        const wrapper = document.createElement('div')
-        wrapper.classList.add('mxgraph-cell--wrapper')
+    // graph.convertValueToString = cell => {
+    //   if (cell) {
+    //     const label: string = cell.getAttribute('label', '')
+    //     const type: string = cell.getAttribute('type', '')
+    //     const wrapper = document.createElement('div')
+    //     wrapper.classList.add('mxgraph-cell--wrapper')
 
-        if (label) {
-          const labelBox = document.createElement('div')
-          const labelText = document.createElement('strong')
+    //     if (label) {
+    //       const labelBox = document.createElement('div')
+    //       const labelText = document.createElement('strong')
 
-          labelText.textContent = label
-          labelText.classList.add('mxgraph-cell--title')
+    //       labelText.textContent = label
+    //       labelText.classList.add('mxgraph-cell--title')
 
-          labelBox.appendChild(labelText)
-          wrapper.appendChild(labelBox)
-        }
+    //       labelBox.appendChild(labelText)
+    //       wrapper.appendChild(labelBox)
+    //     }
 
-        if (type) {
-          const iconBox = document.createElement('div')
+    //     if (type) {
+    //       const iconBox = document.createElement('div')
 
-          iconBox.classList.add('mxgraph-cell--icon-box')
-          iconBox.classList.add('mxgraph-cell--icon')
-          iconBox.classList.add(`mxgraph-cell--icon-${type.toLowerCase()}`)
+    //       iconBox.classList.add('mxgraph-cell--icon-box')
+    //       iconBox.classList.add('mxgraph-cell--icon')
+    //       iconBox.classList.add(`mxgraph-cell--icon-${type.toLowerCase()}`)
 
-          wrapper.appendChild(iconBox)
-        }
+    //       wrapper.appendChild(iconBox)
+    //     }
 
-        return wrapper.outerHTML
-      }
+    //     return wrapper.outerHTML
+    //   }
 
-      return ''
-    }
+    //   return ''
+    // }
   }
 
   // Register an action in the editor
@@ -381,7 +364,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     // NOTE: Alternative vertex style for non-HTML labels should be as
     // follows. This repaces the above style for HTML labels.
-    /*var style = new Object();
+    /*let style = new Object();
 			style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_LABEL;
 			style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter;
 			style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_TOP;
@@ -545,7 +528,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     x: number,
     y: number
   ) => {
-    const {mxUtils, mxRectangle} = this.mx
+    const {mxUtils, mxRectangle, mxPoint} = this.mx
 
     const parent = graph.getDefaultParent()
     const model = graph.getModel()
@@ -573,6 +556,19 @@ class InventoryTopology extends PureComponent<Props, State> {
         CELL_SIZE_WIDTH,
         CELL_SIZE_HEIGHT
       )
+      // Adds the ports at various relative locations
+      var port = graph.insertVertex(
+        v1,
+        null,
+        'Trigger',
+        0,
+        0.25,
+        16,
+        16,
+        'port;image=editors/images/overlays/flash.png;align=right;imageAlign=right;spacingRight=18',
+        true
+      )
+      port.geometry.offset = new mxPoint(1, 0)
 
       v1.setConnectable(true)
 
@@ -703,6 +699,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     try {
     } finally {
       this.graph.getModel().endUpdate()
+      console.log('refresh')
       this.graph.refresh()
     }
   }
@@ -727,7 +724,8 @@ class InventoryTopology extends PureComponent<Props, State> {
 
       if (newValue != oldValue) {
         graph.getModel().beginUpdate()
-
+        console.log('node Name: ', attribute.nodeName)
+        console.log('node newValue: ', newValue)
         try {
           cell.setAttribute(attribute.nodeName, newValue)
         } finally {
