@@ -45,7 +45,16 @@ func (s *Service) Topology(w http.ResponseWriter, r *http.Request) {
 
 	topology, err := s.Store.Topologys(ctx).Get(ctx, cloudhub.TopologyQuery{Organization: &defaultOrg.ID})
 	if err != nil {
-		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+		if err != cloudhub.ErrTopologyNotFound {
+			Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+			return
+		} 
+		res := &topologyResponse{
+			ID:           "",
+			Organization: "",
+			Links:        selfLinks{Self: ""},
+		}
+		encodeJSON(w, http.StatusOK, res, s.Logger)
 		return
 	}
 
