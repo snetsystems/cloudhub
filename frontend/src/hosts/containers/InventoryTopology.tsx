@@ -513,45 +513,45 @@ class InventoryTopology extends PureComponent<Props, State> {
     const {mxConstants, mxPerimeter, mxEdgeStyle} = this.mx
     const graph = this.graph
 
-    // let style = new Object()
-    // style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE
-    // style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter
-    // style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER
-    // style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE
-    // style[mxConstants.STYLE_GRADIENTCOLOR] = '#e7e8eb'
-    // style[mxConstants.STYLE_FILLCOLOR] = '#f6f6f8'
-    // style[mxConstants.STYLE_STROKECOLOR] = '#ffffff'
-    // style[mxConstants.STYLE_FONTCOLOR] = '#000000'
-    // style[mxConstants.STYLE_ROUNDED] = true
-    // style[mxConstants.STYLE_OPACITY] = '100'
-    // style[mxConstants.STYLE_FONTSIZE] = '12'
-    // style[mxConstants.STYLE_FONTSTYLE] = 0
-    // style[mxConstants.STYLE_IMAGE_WIDTH] = '48'
-    // style[mxConstants.STYLE_IMAGE_HEIGHT] = '48'
-    // graph.getStylesheet().putDefaultVertexStyle(style)
-
-    // NOTE: Alternative vertex style for non-HTML labels should be as
-    // follows. This repaces the above style for HTML labels.
     let style = new Object()
-    style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_LABEL
+    style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE
     style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter
-    style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_TOP
     style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER
-    style[mxConstants.STYLE_IMAGE_ALIGN] = mxConstants.ALIGN_CENTER
-    style[mxConstants.STYLE_IMAGE_VERTICAL_ALIGN] = mxConstants.ALIGN_TOP
-    style[mxConstants.STYLE_SPACING_TOP] = '56'
-    style[mxConstants.STYLE_GRADIENTCOLOR] = '#7d85df'
-    style[mxConstants.STYLE_STROKECOLOR] = '#5d65df'
-    style[mxConstants.STYLE_FILLCOLOR] = '#adc5ff'
-    style[mxConstants.STYLE_FONTCOLOR] = '#1d258f'
-    style[mxConstants.STYLE_FONTFAMILY] = 'Verdana'
+    style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE
+    style[mxConstants.STYLE_GRADIENTCOLOR] = '#e7e8eb'
+    style[mxConstants.STYLE_FILLCOLOR] = '#f6f6f8'
+    style[mxConstants.STYLE_STROKECOLOR] = '#ffffff'
+    style[mxConstants.STYLE_FONTCOLOR] = '#000000'
+    style[mxConstants.STYLE_ROUNDED] = true
+    style[mxConstants.STYLE_OPACITY] = '100'
     style[mxConstants.STYLE_FONTSIZE] = '12'
-    style[mxConstants.STYLE_FONTSTYLE] = '1'
-    style[mxConstants.STYLE_ROUNDED] = '1'
+    style[mxConstants.STYLE_FONTSTYLE] = 0
     style[mxConstants.STYLE_IMAGE_WIDTH] = '48'
     style[mxConstants.STYLE_IMAGE_HEIGHT] = '48'
-    style[mxConstants.STYLE_OPACITY] = '80'
     graph.getStylesheet().putDefaultVertexStyle(style)
+
+    // // NOTE: Alternative vertex style for non-HTML labels should be as
+    // // follows. This repaces the above style for HTML labels.
+    // let style = new Object()
+    // style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_LABEL
+    // style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter
+    // style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_TOP
+    // style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER
+    // style[mxConstants.STYLE_IMAGE_ALIGN] = mxConstants.ALIGN_CENTER
+    // style[mxConstants.STYLE_IMAGE_VERTICAL_ALIGN] = mxConstants.ALIGN_TOP
+    // style[mxConstants.STYLE_SPACING_TOP] = '56'
+    // style[mxConstants.STYLE_GRADIENTCOLOR] = '#7d85df'
+    // style[mxConstants.STYLE_STROKECOLOR] = '#5d65df'
+    // style[mxConstants.STYLE_FILLCOLOR] = '#adc5ff'
+    // style[mxConstants.STYLE_FONTCOLOR] = '#1d258f'
+    // style[mxConstants.STYLE_FONTFAMILY] = 'Verdana'
+    // style[mxConstants.STYLE_FONTSIZE] = '12'
+    // style[mxConstants.STYLE_FONTSTYLE] = '1'
+    // style[mxConstants.STYLE_ROUNDED] = '1'
+    // style[mxConstants.STYLE_IMAGE_WIDTH] = '48'
+    // style[mxConstants.STYLE_IMAGE_HEIGHT] = '48'
+    // style[mxConstants.STYLE_OPACITY] = '80'
+    // graph.getStylesheet().putDefaultVertexStyle(style)
 
     style = new Object()
     style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_SWIMLANE
