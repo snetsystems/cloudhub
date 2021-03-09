@@ -1,6 +1,14 @@
 import React, {createRef, PureComponent} from 'react'
 import {connect} from 'react-redux'
-import {default as mx, mxGraph, mxEditor, mxCell, mxForm} from 'mxgraph'
+import {
+  default as mx,
+  mxGraph,
+  mxEditor,
+  mxCell,
+  mxForm,
+  mxMouseEvent,
+  mxGraphModel,
+} from 'mxgraph'
 
 import _ from 'lodash'
 
@@ -127,6 +135,51 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.toolbar = this.toolbarRef.current
   }
 
+  // Implements a global current style for edges and vertices that is applied to new cells
+  private insertHandler = (
+    cells: mxCell[],
+    asText?: string,
+    model?: mxGraphModel
+  ) => {
+    const {mxEvent, mxForm, mxUtils} = this.mx
+    const graph = this.graph
+    model = model ? model : graph.getModel()
+
+    model.beginUpdate()
+    try {
+      for (let i = 0; i < cells.length; i++) {
+        var cell = cells[i]
+
+        // Applies the current style to the cell
+        const isEdge = model.isEdge(cell)
+        if (isEdge) {
+          const doc = mxUtils.createXmlDocument()
+          const edge = doc.createElement('Edge')
+
+          edge.setAttribute('label', 'edge')
+          cell.setValue(edge)
+          // graph.
+        }
+
+        // for (var j = 0; j < appliedStyles.length; j++) {
+        //   var key = appliedStyles[j]
+        //   var styleValue = current[key]
+
+        //   if (styleValue != null && (key != 'shape' || edge)) {
+        //     // Special case: Connect styles are not applied here but in the connection handler
+        //     if (!edge || mxUtils.indexOf(connectStyles, key) < 0) {
+        //       newStyle = mxUtils.setStyle(newStyle, key, styleValue)
+        //     }
+        //   }
+        // }
+
+        // model.setStyle(cell, newStyle)
+      }
+    } finally {
+      model.endUpdate()
+    }
+  }
+
   private configureEditor = () => {
     const {
       mxGuide,
@@ -141,11 +194,16 @@ class InventoryTopology extends PureComponent<Props, State> {
       mxCell,
       mxGeometry,
       mxCellState,
+      mxRubberband,
+      mxForm,
     } = this.mx
 
     const editor = this.editor
     const graph = this.graph
     const _this = this
+
+    // Enables rubberband selection
+    new mxRubberband(graph)
 
     // Assigns some global constants for general behaviour, eg. minimum
     // size (in pixels) of the active region for triggering creation of
@@ -165,6 +223,28 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     // Enables snapping waypoints to terminals
     mxEdgeHandler.prototype.snapToTerminals = true
+
+    // connect handler
+    graph.connectionHandler.addListener(mxEvent.CONNECT, (_sender, evt) => {
+      var cells = [evt.getProperty('cell')]
+
+      if (evt.getProperty('terminalInserted')) {
+        cells.push(evt.getProperty('terminal'))
+      }
+      console.log('cells:', cells)
+      this.insertHandler(cells)
+    })
+
+    // Enables connect preview for the default edge style
+    graph.connectionHandler.createEdgeState = function() {
+      var edge = graph.createEdge(null, null, 'nice', null, null)
+
+      return new mxCellState(
+        this.graph.view,
+        edge,
+        this.graph.getCellStyle(edge)
+      )
+    }
 
     // Workaround for Internet Explorer ignoring certain CSS directives
     if (mxClient.IS_QUIRKS) {
@@ -243,19 +323,8 @@ class InventoryTopology extends PureComponent<Props, State> {
       return tmp
     }
 
-    // Connect Preview
-    graph.connectionHandler.createEdgeState = () => {
-      const edge = graph.createEdge(
-        null,
-        null,
-        null,
-        null,
-        null,
-        'edgeStyle=orthogonalEdgeStyle'
-      )
-
-      return new mxCellState(graph.view, edge, graph.getCellStyle(edge))
-    }
+    //   return new mxCellState(graph.view, edge, graph.getCellStyle(edge))
+    // }
 
     // Disables HTML labels for swimlanes to avoid conflict
     // for the event processing on the child cells. HTML
@@ -272,39 +341,37 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
 
     // Overrides method to provide a cell label in the display
-    // graph.convertValueToString = cell => {
-    //   if (cell) {
-    //     const label: string = cell.getAttribute('label', '')
-    //     const type: string = cell.getAttribute('type', '')
-    //     const wrapper = document.createElement('div')
-    //     wrapper.classList.add('mxgraph-cell--wrapper')
+    graph.convertValueToString = cell => {
+      if (cell) {
+        const labelValue = cell.getAttribute('label', 'edge')
+        return labelValue
+      }
 
-    //     if (label) {
-    //       const labelBox = document.createElement('div')
-    //       const labelText = document.createElement('strong')
+      return ''
+    }
 
-    //       labelText.textContent = label
-    //       labelText.classList.add('mxgraph-cell--title')
+    // Implements a properties panel that uses
+    // mxCellAttributeChange to change properties
+    graph.getSelectionModel().addListener(mxEvent.CHANGE, () => {
+      this.selectionChanged(graph)
+    })
+  }
 
-    //       labelBox.appendChild(labelText)
-    //       wrapper.appendChild(labelBox)
-    //     }
+  private selectionChanged = (graph: mxGraph) => {
+    const {mxForm} = this.mx
+    const cell = graph.getSelectionCell()
+    const form = new mxForm('inventory-topology--mxform')
+    const attrs = cell.value?.attributes
 
-    //     if (type) {
-    //       const iconBox = document.createElement('div')
+    this.properties.innerHTML = ''
 
-    //       iconBox.classList.add('mxgraph-cell--icon-box')
-    //       iconBox.classList.add('mxgraph-cell--icon')
-    //       iconBox.classList.add(`mxgraph-cell--icon-${type.toLowerCase()}`)
+    if (attrs) {
+      for (let i = 0; i < attrs.length; i++) {
+        this.createTextField(graph, form, cell, attrs[i])
+      }
+    }
 
-    //       wrapper.appendChild(iconBox)
-    //     }
-
-    //     return wrapper.outerHTML
-    //   }
-
-    //   return ''
-    // }
+    this.properties.appendChild(form.getTable())
   }
 
   // Register an action in the editor
@@ -472,30 +539,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     node: any,
     icon: HTMLDivElement
   ) {
-    const {mxUtils, mxForm, mxEvent} = this.mx
-
-    // Implements a properties panel that uses
-    // mxCellAttributeChange to change properties
-    graph.getSelectionModel().addListener(mxEvent.CHANGE, () => {
-      selectionChanged(graph)
-    })
-
-    const selectionChanged = (graph: mxGraph) => {
-      const cell = graph.getSelectionCell()
-      this.properties.innerHTML = ''
-
-      if (cell) {
-        const form = new mxForm('inventory-topology--mxform')
-        const attrs = cell.value.attributes
-        if (attrs) {
-          for (let i = 0; i < attrs.length; i++) {
-            this.createTextField(graph, form, cell, attrs[i])
-          }
-        }
-
-        this.properties.appendChild(form.getTable())
-      }
-    }
+    const {mxUtils} = this.mx
 
     sideBarArea.appendChild(icon)
 
@@ -556,19 +600,19 @@ class InventoryTopology extends PureComponent<Props, State> {
         CELL_SIZE_WIDTH,
         CELL_SIZE_HEIGHT
       )
-      // Adds the ports at various relative locations
-      var port = graph.insertVertex(
-        v1,
-        null,
-        'Trigger',
-        0,
-        0.25,
-        16,
-        16,
-        'port;image=editors/images/overlays/flash.png;align=right;imageAlign=right;spacingRight=18',
-        true
-      )
-      port.geometry.offset = new mxPoint(1, 0)
+      // // Adds the ports at various relative locations
+      // var port = graph.insertVertex(
+      //   v1,
+      //   null,
+      //   'Trigger',
+      //   0,
+      //   0.25,
+      //   16,
+      //   16,
+      //   'port;image=editors/images/overlays/flash.png;align=right;imageAlign=right;spacingRight=18',
+      //   true
+      // )
+      // port.geometry.offset = new mxPoint(1, 0)
 
       v1.setConnectable(true)
 
@@ -699,7 +743,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     try {
     } finally {
       this.graph.getModel().endUpdate()
-      console.log('refresh')
       this.graph.refresh()
     }
   }
@@ -712,6 +755,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     attribute: any
   ) => {
     const {mxEvent, mxClient} = this.mx
+
     const input = form.addText(
       attribute.nodeName + ':',
       attribute.nodeValue,
@@ -724,8 +768,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
       if (newValue != oldValue) {
         graph.getModel().beginUpdate()
-        console.log('node Name: ', attribute.nodeName)
-        console.log('node newValue: ', newValue)
+
         try {
           cell.setAttribute(attribute.nodeName, newValue)
         } finally {
