@@ -217,13 +217,13 @@ class InventoryTopology extends PureComponent<Props, State> {
       if (evt.getProperty('terminalInserted')) {
         cells.push(evt.getProperty('terminal'))
       }
-      console.log('cells:', cells)
+
       this.insertHandler(cells)
     })
 
     // Enables connect preview for the default edge style
     graph.connectionHandler.createEdgeState = function() {
-      const edge = graph.createEdge(null, null, 'nice', null, null)
+      const edge = graph.createEdge(null, null, null, null, null)
 
       return new mxCellState(
         this.graph.view,
@@ -384,7 +384,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     const form = new mxForm('inventory-topology--mxform')
 
     if (cell) {
-      console.log('selectionChanged cell: ', cell)
       const attrs = cell.value?.attributes
 
       this.properties.innerHTML = ''
@@ -421,7 +420,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     // console.log('graph:', graph)
     // Group
     editor.addAction('group', () => {
-      console.log('action group')
       if (graph.isEnabled()) {
         let cells = mxUtils.sortCells(graph.getSelectionCells(), true)
 
@@ -430,11 +428,10 @@ class InventoryTopology extends PureComponent<Props, State> {
           !graph.isTable(cells[0]) && // @ts-ignore
           !graph.isTableRow(cells[0])
         ) {
-          console.log('group true')
           graph.setCellStyles('group', '1')
         } else {
           cells = graph.getCellsForGroup(cells)
-          console.log('group false')
+
           if (cells.length > 1) {
             graph.setSelectionCell(graph.groupCells(null, 30, cells))
             graph.setCellStyles('group', '1')
