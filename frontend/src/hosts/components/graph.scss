@@ -4,6 +4,14 @@
   flex-direction: column;
   height: 100%;
 
+  .button {
+    margin: 0 0 0 4px;
+  }
+
+  .button:nth-child(1) {
+    margin: 0;
+  }
+
   #contentBodySection {
     display: flex;
     position: relative;
@@ -11,32 +19,23 @@
   }
 
   #toolbarContainer {
-    // position: absolute;
+    display: flex;
     white-space: nowrap;
     overflow: hidden;
     background-color: $g3-castle;
-    // top: 0px;
-    // left: 0px;
-    // max-height: 24px;
-    // height: 36px;
-    // right: 0px;
-    padding: 6px;
-    //   background-image: url('images/toolbar_bg.gif');
+    padding: 5px 20px;
+
+    .toolbar--left {
+      flex: 4;
+    }
+    .toolbar--right {
+      flex: 1;
+      display: flex;
+    }
   }
 
   #sidebarContainer {
-    // display: flex;
-    // flex-direction: row;
-    // position: absolute;
     overflow: hidden;
-    // top: 36px;
-    // left: 0px;
-    // bottom: 36px;
-    // max-width: 52px;
-    // width: 56px;
-    // padding-top: 10px;
-    // padding-left: 4px;
-    //   background-image: url('images/sidebar_bg.gif');
   }
 
   #graphContainer {
@@ -44,16 +43,7 @@
     touch-action: none;
     height: 100%;
     width: 100%;
-
-    // position: absolute;
     overflow: hidden;
-    // top: 36px;
-    // left: 60px;
-    // bottom: 36px;
-    // right: 0px;
-    // background-image: url('editors/images/grid.gif');
-    // cursor: default;
-    // height: 800px;
   }
 
   #outlineContainer {
@@ -67,23 +57,65 @@
     border: 2px solid black;
   }
 
-  #statusContainer {
-    // text-align: right;
-    // position: absolute;
-    overflow: hidden;
-    // bottom: 0px;
-    // left: 0px;
-    // max-height: 24px;
-    // height: 36px;
-    // right: 0px;
-    color: white;
-    padding: 6px;
-    //   background-image: url('images/toolbar_bg.gif');
+  .tool-box {
+    display: flex;
+    flex-wrap: wrap;
+    min-width: 100px;
   }
 
-  #statusContainer-innerWrapper {
-    font-size: 10pt;
-    float: left;
+  .tool-instance {
+    width: 48px;
+    height: 48px;
+    margin: 2px;
+    border: 2px solid #fff;
+    border-radius: 5px;
+    background-color: #fff;
+  }
+
+  .graph-instance {
+    width: 100px;
+    height: 100px;
+  }
+
+  .mxgraph--icon {
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+
+    &-server {
+      background-image: url(../../assets/images/stencils/clipart/Server_Tower_128x128.png);
+    }
+
+    &-internet {
+      background-image: url(../../assets/images/stencils/clipart/Earth_globe_128x128.png);
+    }
+
+    &-workstation {
+      background-image: url(../../assets/images/stencils/clipart/Monitor_Tower_128x128.png);
+    }
+
+    &-email {
+      background-image: url(../../assets/images/stencils/clipart/Email_128x128.png);
+    }
+
+    &-firewall {
+      background-image: url(../../assets/images/stencils/clipart/Firewall_02_128x128.png);
+    }
+
+    &-router {
+      background-image: url(../../assets/images/stencils/clipart/Router_Icon_128x128.png);
+    }
+
+    &-wirelessrouter {
+      background-image: url(../../assets/images/stencils/clipart/Wireless_Router_N_128x128.png);
+    }
+
+    &-database {
+      background-image: url(../../assets/images/stencils/clipart/Database_128x128.png);
+    }
+    &-virtualmachine {
+      background-image: url(../../assets/images/stencils/clipart/Virtual_Machine_128x128.png);
+    }
   }
 }
 

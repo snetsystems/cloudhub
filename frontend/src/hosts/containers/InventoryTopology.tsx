@@ -5,29 +5,21 @@ import {
   mxGraph,
   mxEditor,
   mxCell,
-  mxUtils,
-  mxGraphHandler,
-  mxGuide,
-  mxEvent,
-  mxEdgeHandler,
-  mxClient,
-  mxDivResizer,
-  mxConstants,
-  // mxGraphModel,
+  mxForm,
+  mxMouseEvent,
+  mxGraphModel,
 } from 'mxgraph'
-
-interface customMxUtils {
-  getPrettyXml: typeof mxUtils.getPrettyXML
-}
 
 import _ from 'lodash'
 
 // component
 // import {Button, ButtonShape, IconFont} from 'src/reusable_ui'
-import HostList from 'src/hosts/components/HostList'
+// import HostList from 'src/hosts/components/HostList'
+import {TableBody, TableBodyRowItem} from 'src/addon/128t/reusable/layout'
+// import uuid from 'uuid'
 // import Tools from 'src/hosts/components/Tools'
 // import Properties from 'src/hosts/components/Properties'
-
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 
 // constants
@@ -36,6 +28,12 @@ import {
   HANDLE_HORIZONTAL,
   HANDLE_VERTICAL,
 } from 'src/shared/constants/'
+import {
+  toolbarMenu,
+  toolsMenu,
+  hostsMenu,
+  Node,
+} from 'src/hosts/constants/tools'
 
 // Types
 import {Host} from 'src/types'
@@ -46,12 +44,11 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 // css
 import 'mxgraph/javascript/src/css/common.css'
 
-export interface ITNodeInfo {
-  id?: string
-  name?: string
-  label?: string
-  href?: string
-}
+// Config
+const keyhandlerCommons = require('src/hosts/config/keyhandler-commons.xml')
+
+const CELL_SIZE_WIDTH = 120
+const CELL_SIZE_HEIGHT = 120
 
 interface Props {
   hostsObject: {[x: string]: Host}
@@ -67,54 +64,47 @@ interface State {
 }
 
 @ErrorHandling
-class InventoryTopology extends PureComponent<Props, State, customMxUtils> {
+class InventoryTopology extends PureComponent<Props, State> {
+  constructor(props: Props) {
+    super(props)
+
+    this.state = {
+      screenProportions: [0.3, 0.7],
+      sidebarProportions: [0.333, 0.333, 0.333],
+      hostList: null,
+    }
+  }
+
   // Creates a wrapper editor with a graph inside the given container.
   // The editor is used to create certain functionality for the
   // graph, such as the rubberband selection, but most parts
   // of the UI are custom in this example.
   private mx = mx()
   private editor: mxEditor = null
-  private mxUtils: typeof mxUtils = null
-  private mxConstants: typeof mxConstants = null
-  private mxGraphHandler: typeof mxGraphHandler = null
-  private mxGuide: typeof mxGuide = null
-  private mxEvent: typeof mxEvent = null
-  private mxEdgeHandler: typeof mxEdgeHandler = null
-  private mxClient: typeof mxClient = null
-  private mxDivResizer: typeof mxDivResizer = null
   private graph: mxGraph = null
-  // private model: mxGraphModel = null
 
   private containerRef = createRef<HTMLDivElement>()
   private outlineRef = createRef<HTMLDivElement>()
-  private sidebarRef = createRef<HTMLDivElement>()
   private toolbarRef = createRef<HTMLDivElement>()
+  private sidebarHostsRef = createRef<HTMLDivElement>()
+  private sidebarToolsRef = createRef<HTMLDivElement>()
+  private sidebarPropertiesRef = createRef<HTMLDivElement>()
 
   private container: HTMLDivElement = null
   private outline: HTMLDivElement = null
-  private sidebar: HTMLDivElement = null
   private toolbar: HTMLDivElement = null
-
-  constructor(props: Props) {
-    super(props)
-
-    this.state = {
-      screenProportions: [0.1, 0.9],
-      sidebarProportions: [0.333, 0.333, 0.333],
-      hostList: null,
-    }
-  }
-
-  public handleResize = (fieldName: string) => (proportions: number[]) => {
-    this.setState((prevState: State) => ({
-      ...prevState,
-      [fieldName]: proportions,
-    }))
-  }
+  private hosts: HTMLDivElement = null
+  private tools: HTMLDivElement = null
+  private properties: HTMLDivElement = null
 
   public componentDidMount() {
-    this.setting()
-    this.topologyEditor()
+    this.createEditor()
+    this.configureEditor()
+    this.setActionInEditor()
+    this.configureStylesheet()
+    this.setOutline()
+    this.setSidebar()
+    this.setToolbar()
 
     const hostList = _.keys(this.props.hostsObject)
     this.setState({hostList})
@@ -123,382 +113,785 @@ class InventoryTopology extends PureComponent<Props, State, customMxUtils> {
   public componentDidUpdate(prevProps: Props) {
     const {hostsObject} = this.props
     if (prevProps.hostsObject !== hostsObject) {
-      const hostList = _.keys(hostsObject)
-      this.setState({hostList})
+      // this.addHostButton()
+      // const hostList = _.keys(hostsObject)
+      // this.setState({hostList})
+    }
+  }
+
+  public componentWillUnmount() {}
+
+  private createEditor = () => {
+    const {mxEditor, mxGraph} = this.mx
+
+    this.editor = new mxEditor()
+    this.graph = this.editor.graph
+
+    this.container = this.containerRef.current
+    this.outline = this.outlineRef.current
+    this.hosts = this.sidebarHostsRef.current
+    this.tools = this.sidebarToolsRef.current
+    this.properties = this.sidebarPropertiesRef.current
+    this.toolbar = this.toolbarRef.current
+  }
+
+  // Implements a global current style for edges and vertices that is applied to new cells
+  private insertHandler = (
+    cells: mxCell[],
+    asText?: string,
+    model?: mxGraphModel
+  ) => {
+    const {mxUtils} = this.mx
+    const graph = this.graph
+    model = model ? model : graph.getModel()
+
+    model.beginUpdate()
+    try {
+      for (let i = 0; i < cells.length; i++) {
+        const cell = cells[i]
+
+        // Applies the current style to the cell
+        const isEdge = model.isEdge(cell)
+        if (isEdge) {
+          const doc = mxUtils.createXmlDocument()
+          const edge = doc.createElement('Edge')
+
+          edge.setAttribute('label', 'edge')
+          cell.setValue(edge)
+        }
+      }
+    } finally {
+      model.endUpdate()
+    }
+  }
+
+  private configureEditor = () => {
+    const {
+      mxGuide,
+      mxDivResizer,
+      mxEdgeHandler,
+      mxEvent,
+      mxGraphHandler,
+      mxConstants,
+      mxUtils,
+      mxClient,
+      mxImage,
+      mxCell,
+      mxGeometry,
+      mxCellState,
+      mxRubberband,
+      mxForm,
+      mxGraph,
+    } = this.mx
+
+    const editor = this.editor
+    const graph = this.graph
+    const _this = this
+
+    // Enables rubberband selection
+    new mxRubberband(graph)
+
+    // Assigns some global constants for general behaviour, eg. minimum
+    // size (in pixels) of the active region for triggering creation of
+    // new connections, the portion (100%) of the cell area to be used
+    // for triggering new connections, as well as some fading options for
+    // windows and the rubberband selection.
+    mxConstants.MIN_HOTSPOT_SIZE = 16
+    mxConstants.DEFAULT_HOTSPOT = 1
+
+    // Enables guides
+    mxGraphHandler.prototype.guidesEnabled = true
+
+    // Alt disables guides
+    mxGuide.prototype.isEnabledForEvent = (evt: MouseEvent) => {
+      return !mxEvent.isAltDown(evt)
     }
 
-    // SVG내부에서 update를 감지하여 DB로 저장(갱신)
-  }
+    // Enables snapping waypoints to terminals
+    mxEdgeHandler.prototype.snapToTerminals = true
 
-  public componentWillUnmount() {
-    this.graph.destroy()
-    this.graph = null
+    // connect handler
+    graph.connectionHandler.addListener(mxEvent.CONNECT, (_sender, evt) => {
+      const cells = [evt.getProperty('cell')]
 
-    this.editor.destroy()
-    this.editor = null
-  }
-
-  render() {
-    return (
-      <div id="containerWrapper">
-        {!this.mx.mxClient.isBrowserSupported() ? (
-          <>this Browser Not Supported</>
-        ) : (
-          <Threesizer
-            orientation={HANDLE_VERTICAL}
-            divisions={this.threesizerDivisions}
-            onResize={this.handleResize('screenProportions')}
-          />
-        )}
-      </div>
-    )
-  }
-
-  private addSidebarIcon(
-    graph: mxGraph,
-    sidebar: HTMLDivElement,
-    label: string,
-    image: string
-  ) {
-    // Function that is executed when the image is dropped on
-    // the graph. The cell argument points to the cell under
-    const funct = (
-      graph: mxGraph,
-      _event: Event,
-      _cell: mxCell,
-      x: number,
-      y: number
-    ) => {
-      // the mousepointer if there is one.
-      const parent = graph.getDefaultParent()
-      const model = graph.getModel()
-
-      let v1 = null
-
-      model.beginUpdate()
-      try {
-        // NOTE: For non-HTML labels the image must be displayed via the style
-        // rather than the label markup, so use 'image=' + image for the style.
-        // as follows: v1 = graph.insertVertex(parent, null, label,
-        // pt.x, pt.y, 120, 120, 'image=' + image);
-        v1 = graph.insertVertex(parent, null, label, x, y, 120, 120)
-        v1.setConnectable(true)
-
-        // Presets the collapsed size
-        v1.geometry.alternateBounds = new this.mx.mxRectangle(0, 0, 120, 40)
-
-        // Adds the ports at various relative locations
-        let port = graph.insertVertex(
-          v1,
-          null,
-          'Trigger',
-          0,
-          0.25,
-          16,
-          16,
-          'port;image=editors/images/overlays/flash.png;align=right;imageAlign=right;spacingRight=18',
-          true
-        )
-        port.geometry.offset = new this.mx.mxPoint(-6, -8)
-
-        port = graph.insertVertex(
-          v1,
-          null,
-          'Input',
-          0,
-          0.75,
-          16,
-          16,
-          'port;image=editors/images/overlays/check.png;align=right;imageAlign=right;spacingRight=18',
-          true
-        )
-        port.geometry.offset = new this.mx.mxPoint(-6, -4)
-
-        port = graph.insertVertex(
-          v1,
-          null,
-          'Error',
-          1,
-          0.25,
-          16,
-          16,
-          'port;image=editors/images/overlays/error.png;spacingLeft=18',
-          true
-        )
-        port.geometry.offset = new this.mx.mxPoint(-8, -8)
-
-        port = graph.insertVertex(
-          v1,
-          null,
-          'Result',
-          1,
-          0.75,
-          16,
-          16,
-          'port;image=editors/images/overlays/information.png;spacingLeft=18',
-          true
-        )
-        port.geometry.offset = new this.mx.mxPoint(-8, -4)
-      } finally {
-        this.setState({}, () => {})
-        model.endUpdate()
+      if (evt.getProperty('terminalInserted')) {
+        cells.push(evt.getProperty('terminal'))
       }
 
-      graph.setSelectionCell(v1)
+      this.insertHandler(cells)
+    })
+
+    // Enables connect preview for the default edge style
+    graph.connectionHandler.createEdgeState = function() {
+      const edge = graph.createEdge(null, null, null, null, null)
+
+      return new mxCellState(
+        this.graph.view,
+        edge,
+        this.graph.getCellStyle(edge)
+      )
     }
 
-    // Creates the image which is used as the sidebar icon (drag source)
-    const img = document.createElement('img')
-    img.setAttribute('src', image)
-    img.style.width = '48px'
-    img.style.height = '48px'
-    img.title = 'Drag this to the diagram to create a new vertex'
-    sidebar.appendChild(img)
+    // Workaround for Internet Explorer ignoring certain CSS directives
+    if (mxClient.IS_QUIRKS) {
+      document.body.style.overflow = 'hidden'
+      new mxDivResizer(this.container)
+      new mxDivResizer(this.outline)
+      new mxDivResizer(this.toolbar)
+      new mxDivResizer(this.tools)
+    }
+
+    // Disable highlight of cells when dragging from toolbar
+    graph.setDropEnabled(false)
+
+    // Uses the port icon while connections are previewed
+    graph.connectionHandler.getConnectImage = state => {
+      return new mxImage(state.style[mxConstants.STYLE_IMAGE], 16, 16)
+    }
+
+    // Centers the port icon on the target port
+    graph.connectionHandler.targetConnectImage = true
+
+    // Does not allow dangling edges
+    graph.setAllowDanglingEdges(false)
+
+    // Sets the graph container and configures the editor
+    editor.setGraphContainer(this.container)
+    const config = mxUtils.load(keyhandlerCommons).getDocumentElement()
+    editor.configure(config)
+
+    // Defines the default group to be used for grouping. The
+    // default group is a field in the mxEditor instance that
+    // is supposed to be a cell which is cloned for new cells.
+    // The groupBorderSize is used to define the spacing between
+    // the children of a group and the group bounds.
+    const doc = mxUtils.createXmlDocument()
+    const groupCell = doc.createElement('Group')
+
+    groupCell.setAttribute('label', 'Group')
+
+    const group = new mxCell(groupCell, new mxGeometry(), 'group')
+    group.setVertex(true)
+    group.setConnectable(false)
+
+    editor.defaultGroup = group
+    editor.groupBorderSize = 20
+
+    /**
+     * Returns true if the given cell is a table.
+     */
+    // @ts-ignore
+    graph.isTable = function(cell: mxCell) {
+      const style = this.getCellStyle(cell)
+
+      return style != null && style['childLayout'] == 'tableLayout'
+    }
+
+    /**
+     * Returns true if the given cell is a table cell.
+     */
+    // @ts-ignore
+    graph.isTableCell = function(cell: mxCell) {
+      return (
+        this.model.isVertex(cell) && this.isTableRow(this.model.getParent(cell))
+      )
+    }
+
+    /**
+     * Returns true if the given cell is a table row.
+     */
+    // @ts-ignore
+    graph.isTableRow = function(cell: mxCell) {
+      return (
+        this.model.isVertex(cell) && this.isTable(this.model.getParent(cell))
+      )
+    }
+
+    // Disables drag-and-drop into non-swimlanes.
+    graph.isValidDropTarget = function(cell) {
+      return this.isSwimlane(cell)
+    }
+
+    // Disables drilling into non-swimlanes.
+    graph.isValidRoot = function(cell) {
+      return this.isValidDropTarget(cell)
+    }
+
+    // Does not allow selection of locked cells
+    graph.isCellSelectable = function(cell) {
+      return !this.isCellLocked(cell)
+    }
+
+    // Enables new connections
+    graph.setConnectable(true)
+
+    // Returns a shorter label if the cell is collapsed and no
+    // label for expanded groups
+    graph.getLabel = function(cell) {
+      let tmp = _this.mx.mxGraph.prototype.getLabel.apply(this, arguments) // "supercall"
+
+      if (this.isCellLocked(cell)) {
+        // Returns an empty label but makes sure an HTML
+        // element is created for the label (for event
+        // processing wrt the parent label)
+        return ''
+      } else if (this.isCellCollapsed(cell)) {
+        const index = tmp.indexOf('</div>')
+        if (index > 0) {
+          tmp = tmp.substring(0, index + 5)
+        }
+      }
+      return tmp
+    }
+
+    //   return new mxCellState(graph.view, edge, graph.getCellStyle(edge))
+    // }
+
+    // Disables HTML labels for swimlanes to avoid conflict
+    // for the event processing on the child cells. HTML
+    // labels consume events before underlying cells get the
+    // chance to process those events.
+    //
+    // NOTE: Use of HTML labels is only recommended if the specific
+    // features of such labels are required, such as special label
+    // styles or interactive form fields. Otherwise non-HTML labels
+    // should be used by not overidding the following function.
+    // See also: configureStylesheet.
+    graph.isHtmlLabel = function(cell) {
+      return !this.isSwimlane(cell)
+    }
+
+    // Overrides method to provide a cell label in the display
+    graph.convertValueToString = cell => {
+      if (cell) {
+        const labelValue = cell.getAttribute('label', '')
+        return labelValue
+      }
+
+      return ''
+    }
+
+    // Implements a properties panel that uses
+    // mxCellAttributeChange to change properties
+    graph.getSelectionModel().addListener(mxEvent.CHANGE, () => {
+      this.selectionChanged(graph)
+    })
+  }
+
+  private selectionChanged = (graph: mxGraph) => {
+    const {mxForm} = this.mx
+    const cell = graph.getSelectionCell()
+    const form = new mxForm('inventory-topology--mxform')
+
+    if (cell) {
+      const attrs = cell.value?.attributes
+
+      this.properties.innerHTML = ''
+
+      if (attrs) {
+        for (let i = 0; i < attrs.length; i++) {
+          this.createTextField(graph, form, cell, attrs[i])
+        }
+      }
+
+      this.properties.appendChild(form.getTable())
+    }
+  }
+
+  // Register an action in the editor
+  private setActionInEditor = () => {
+    const {mxCodec, mxUtils} = this.mx
+    const editor = this.editor
+    const graph = this.graph
+
+    // // Defines a new action for deleting or ungrouping
+    // editor.addAction('groupOrUngroup', function(
+    //   editor: mxEditor,
+    //   cell: mxCell
+    // ) {
+    //   cell = cell || editor.graph.getSelectionCell()
+    //   if (cell != null && editor.graph.isSwimlane(cell)) {
+    //     editor.execute('ungroup', cell)
+    //   } else {
+    //     editor.execute('group')
+    //   }
+    // })
+
+    // console.log('graph:', graph)
+    // Group
+    editor.addAction('group', () => {
+      if (graph.isEnabled()) {
+        let cells = mxUtils.sortCells(graph.getSelectionCells(), true)
+
+        if (
+          cells.length == 1 && // @ts-ignore
+          !graph.isTable(cells[0]) && // @ts-ignore
+          !graph.isTableRow(cells[0])
+        ) {
+          graph.setCellStyles('group', '1')
+        } else {
+          cells = graph.getCellsForGroup(cells)
+
+          if (cells.length > 1) {
+            graph.setSelectionCell(graph.groupCells(null, 30, cells))
+            graph.setCellStyles('group', '1')
+          }
+        }
+      }
+    })
+
+    // Ungroup
+    editor.addAction('ungroup', function() {
+      if (graph.isEnabled()) {
+        const cells = graph.getSelectionCells()
+
+        graph.model.beginUpdate()
+        try {
+          const temp = graph.ungroupCells(cells)
+
+          // Clears container flag for remaining cells
+          if (cells != null) {
+            for (let i = 0; i < cells.length; i++) {
+              if (graph.model.contains(cells[i])) {
+                if (
+                  graph.model.getChildCount(cells[i]) == 0 &&
+                  graph.model.isVertex(cells[i])
+                ) {
+                  graph.setCellStyles('container', '0', [cells[i]])
+                }
+
+                temp.push(cells[i])
+              }
+            }
+          }
+
+          graph.setSelectionCells(temp)
+        } finally {
+          graph.model.endUpdate()
+        }
+      }
+    })
+
+    // Defines a new export action
+    editor.addAction('export', (editor: mxEditor) => {
+      const textarea = document.createElement('textarea')
+      textarea.style.width = '400px'
+      textarea.style.height = '400px'
+
+      const enc = new mxCodec(mxUtils.createXmlDocument())
+      const node = enc.encode(editor.graph.getModel())
+
+      // @ts-ignore
+      textarea.value = mxUtils.getPrettyXml(node)
+      this.showModalWindow(graph, 'XML', textarea, 410, 440)
+    })
+  }
+
+  private configureStylesheet = () => {
+    const {mxConstants, mxPerimeter, mxEdgeStyle} = this.mx
+    const graph = this.graph
+
+    let style = new Object()
+    style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE
+    style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter
+    style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER
+    style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE
+    style[mxConstants.STYLE_GRADIENTCOLOR] = '#e7e8eb'
+    style[mxConstants.STYLE_FILLCOLOR] = '#f6f6f8'
+    style[mxConstants.STYLE_STROKECOLOR] = '#ffffff'
+    style[mxConstants.STYLE_FONTCOLOR] = '#000000'
+    style[mxConstants.STYLE_ROUNDED] = true
+    style[mxConstants.STYLE_OPACITY] = '100'
+    style[mxConstants.STYLE_FONTSIZE] = '12'
+    style[mxConstants.STYLE_FONTSTYLE] = 0
+    style[mxConstants.STYLE_IMAGE_WIDTH] = '48'
+    style[mxConstants.STYLE_IMAGE_HEIGHT] = '48'
+    graph.getStylesheet().putDefaultVertexStyle(style)
+
+    // NOTE: Alternative vertex style for non-HTML labels should be as
+    // follows. This repaces the above style for HTML labels.
+    /*let style = new Object();
+			style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_LABEL;
+			style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter;
+			style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_TOP;
+			style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER;
+			style[mxConstants.STYLE_IMAGE_ALIGN] = mxConstants.ALIGN_CENTER;
+			style[mxConstants.STYLE_IMAGE_VERTICAL_ALIGN] = mxConstants.ALIGN_TOP;
+			style[mxConstants.STYLE_SPACING_TOP] = '56';
+			style[mxConstants.STYLE_GRADIENTCOLOR] = '#7d85df';
+			style[mxConstants.STYLE_STROKECOLOR] = '#5d65df';
+			style[mxConstants.STYLE_FILLCOLOR] = '#adc5ff';
+			style[mxConstants.STYLE_FONTCOLOR] = '#1d258f';
+			style[mxConstants.STYLE_FONTFAMILY] = 'Verdana';
+			style[mxConstants.STYLE_FONTSIZE] = '12';
+			style[mxConstants.STYLE_FONTSTYLE] = '1';
+			style[mxConstants.STYLE_ROUNDED] = '1';
+			style[mxConstants.STYLE_IMAGE_WIDTH] = '48';
+			style[mxConstants.STYLE_IMAGE_HEIGHT] = '48';
+			style[mxConstants.STYLE_OPACITY] = '80';
+			graph.getStylesheet().putDefaultVertexStyle(style);*/
+
+    style = new Object()
+    style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_SWIMLANE
+    style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter
+    style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER
+    style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_TOP
+    style[mxConstants.STYLE_FILLCOLOR] = '#FF9103'
+    style[mxConstants.STYLE_GRADIENTCOLOR] = '#F8C48B'
+    style[mxConstants.STYLE_STROKECOLOR] = '#E86A00'
+    style[mxConstants.STYLE_FONTCOLOR] = '#000000'
+    style[mxConstants.STYLE_ROUNDED] = true
+    style[mxConstants.STYLE_OPACITY] = '80'
+    style[mxConstants.STYLE_STARTSIZE] = '30'
+    style[mxConstants.STYLE_FONTSIZE] = '16'
+    style[mxConstants.STYLE_FONTSTYLE] = 1
+    graph.getStylesheet().putCellStyle('group', style)
+
+    style = new Object()
+    style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_IMAGE
+    style[mxConstants.STYLE_FONTCOLOR] = '#774400'
+    style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter
+    style[mxConstants.STYLE_PERIMETER_SPACING] = '6'
+    style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_LEFT
+    style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE
+    style[mxConstants.STYLE_FONTSIZE] = '10'
+    style[mxConstants.STYLE_FONTSTYLE] = 2
+    style[mxConstants.STYLE_IMAGE_WIDTH] = '16'
+    style[mxConstants.STYLE_IMAGE_HEIGHT] = '16'
+    graph.getStylesheet().putCellStyle('port', style)
+
+    style = graph.getStylesheet().getDefaultEdgeStyle()
+    style[mxConstants.STYLE_LABEL_BACKGROUNDCOLOR] = '#FFFFFF'
+    style[mxConstants.STYLE_STROKEWIDTH] = '2'
+    style[mxConstants.STYLE_ROUNDED] = true
+    style[mxConstants.STYLE_EDGE] = mxEdgeStyle.OrthConnector
+  }
+
+  private setOutline = () => {
+    const {mxOutline} = this.mx
+
+    const outln = new mxOutline(this.graph, this.outline)
+    outln.outline.labelsVisible = true
+    outln.outline.setHtmlLabels(true)
+  }
+
+  private setSidebar = () => {
+    this.addHostsButton()
+    this.addToolsButton()
+  }
+
+  private addHostsButton = () => {
+    _.forEach(hostsMenu, menu => {
+      // Creates the image which is used as the hostsContainer icon (drag source)
+      const rowElement = document.createElement('div')
+      rowElement.classList.add('hosts-table--tr')
+
+      const hostElement = document.createElement('div')
+      hostElement.classList.add('hosts-table--td')
+
+      const span = document.createElement('span')
+      span.style.fontSize = '14px'
+      span.textContent = menu.name
+
+      hostElement.appendChild(span)
+      rowElement.appendChild(hostElement)
+
+      this.addSidebarButton(this.graph, this.hosts, menu, rowElement)
+    })
+  }
+
+  private addToolsButton = () => {
+    _.forEach(toolsMenu, menu => {
+      // Creates the image which is used as the sidebar icon (drag source)
+      const icon = document.createElement('div')
+      icon.classList.add('tool-instance')
+      icon.classList.add(`mxgraph-cell--icon`)
+      icon.classList.add(`mxgraph-cell--icon-${menu.type.toLowerCase()}`)
+
+      this.addSidebarButton(this.graph, this.tools, menu, icon)
+    })
+  }
+
+  private addSidebarButton(
+    graph: mxGraph,
+    sideBarArea: HTMLDivElement,
+    node: any,
+    icon: HTMLDivElement
+  ) {
+    const {mxUtils} = this.mx
+
+    sideBarArea.appendChild(icon)
 
     const dragElt = document.createElement('div')
-    dragElt.style.border = 'dashed black 1px'
-    dragElt.style.width = '120px'
-    dragElt.style.height = '120px'
+    dragElt.style.border = 'dashed white 1px'
+    dragElt.style.width = `${CELL_SIZE_WIDTH}px`
+    dragElt.style.height = `${CELL_SIZE_HEIGHT}px`
 
     // Creates the image which is used as the drag icon (preview)
-    const ds = this.mxUtils.makeDraggable(
-      img,
+    const ds = mxUtils.makeDraggable(
+      icon,
       graph,
-      funct,
+      this.dragCell(node),
       dragElt,
       0,
       0,
       true,
       true
     )
+
     ds.setGuidesEnabled(true)
   }
-  private addToolbarButton = () => {
-    const toolbarIcons = [
-      {
-        actionName: 'groupOrUngroup',
-        label: '(Un)group',
-        imgSrc: 'images/group.png',
-      },
-      {
-        actionName: 'delete',
-        label: 'Delete',
-        imgSrc: 'images/delete2.png',
-      },
-      {
-        actionName: 'cut',
-        label: 'Cut',
-        imgSrc: 'images/cut.png',
-      },
-      {
-        actionName: 'copy',
-        label: 'Copy',
-        imgSrc: 'images/copy.png',
-      },
-      {
-        actionName: 'paste',
-        label: 'Paste',
-        imgSrc: 'images/paste.png',
-      },
-      {
-        actionName: 'undo',
-        label: 'Undo',
-        imgSrc: 'images/undo.png',
-      },
-      {
-        actionName: 'redo',
-        label: 'Redo',
-        imgSrc: 'images/redo.png',
-      },
-      {
-        actionName: 'show',
-        label: 'Show',
-        imgSrc: 'images/camera.png',
-      },
-      {
-        actionName: 'print',
-        label: 'Print',
-        imgSrc: 'images/printer.png',
-      },
-      {
-        actionName: 'export',
-        label: 'Export',
-        imgSrc: 'images/export1.png',
-      },
-      {
-        actionName: 'collapseAll',
-        label: 'Collapse All',
-        imgSrc: 'images/navigate_minus.png',
-        isTransparent: true,
-      },
-      {
-        actionName: 'expandAll',
-        label: 'Expand All',
-        imgSrc: 'images/navigate_plus.png',
-        isTransparent: true,
-      },
-      {
-        actionName: 'enterGroup',
-        label: 'Enter',
-        imgSrc: 'images/view_next.png',
-        isTransparent: true,
-      },
-      {
-        actionName: 'exitGroup',
-        label: 'Exit',
-        imgSrc: 'images/view_previous.png',
-        isTransparent: true,
-      },
-      {
-        actionName: 'zoomIn',
-        label: 'Zoon in',
-        imgSrc: 'images/zoom_in.png',
-        isTransparent: true,
-      },
-      {
-        actionName: 'zoomOut',
-        label: 'Zoom out',
-        imgSrc: 'images/zoom_out.png',
-        isTransparent: true,
-      },
-      {
-        actionName: 'actualSize',
-        label: 'Actual size',
-        imgSrc: 'images/view_1_1.png',
-        isTransparent: true,
-      },
-      {
-        actionName: 'fit',
-        label: 'Fit',
-        imgSrc: 'images/fit_to_size.png',
-        isTransparent: true,
-      },
-    ]
 
-    _.forEach(toolbarIcons, icon => {
-      const {actionName, label, imgSrc, isTransparent} = icon
-      this.addToolbarIcon(
-        this.editor,
-        this.toolbar,
-        actionName,
-        label,
-        imgSrc,
-        isTransparent
+  // Function that is executed when the image is dropped on
+  // the graph. The cell argument points to the cell under
+  private dragCell = (node: Node) => (
+    graph: mxGraph,
+    _event: Event,
+    _cell: mxCell,
+    x: number,
+    y: number
+  ) => {
+    const {mxUtils, mxRectangle, mxPoint} = this.mx
+
+    const parent = graph.getDefaultParent()
+    const model = graph.getModel()
+    let v1 = null
+
+    model.beginUpdate()
+    try {
+      // NOTE: For non-HTML labels the image must be displayed via the style
+      // rather than the label markup, so use 'image=' + image for the style.
+      // as follows: v1 = graph.insertVertex(parent, null, label,
+      // pt.x, pt.y, 120, 120, 'image=' + image);
+      const doc = mxUtils.createXmlDocument()
+      const userCell = doc.createElement(node.type)
+
+      userCell.setAttribute('name', node.name)
+      userCell.setAttribute('label', node.label)
+      userCell.setAttribute('type', node.type)
+
+      v1 = graph.insertVertex(
+        parent,
+        null,
+        userCell,
+        x,
+        y,
+        CELL_SIZE_WIDTH,
+        CELL_SIZE_HEIGHT
       )
+      // // Adds the ports at various relative locations
+      // var port = graph.insertVertex(
+      //   v1,
+      //   null,
+      //   'Trigger',
+      //   0,
+      //   0.25,
+      //   16,
+      //   16,
+      //   'port;image=editors/images/overlays/flash.png;align=right;imageAlign=right;spacingRight=18',
+      //   true
+      // )
+      // port.geometry.offset = new mxPoint(1, 0)
+
+      v1.setConnectable(true)
+
+      // Presets the collapsed size
+      v1.geometry.alternateBounds = new mxRectangle(0, 0, CELL_SIZE_WIDTH, 40)
+    } finally {
+      model.endUpdate()
+    }
+
+    graph.setSelectionCell(v1)
+  }
+
+  private setToolbar = () => {
+    _.forEach(toolbarMenu, menu => {
+      const {actionName, label, icon, isTransparent} = menu
+      this.addToolbarButton({
+        editor: this.editor,
+        toolbar: this.toolbar,
+        action: actionName,
+        label,
+        icon,
+        isTransparent,
+      })
     })
   }
 
-  private addToolbarIcon = (
-    editor: mxEditor,
-    toolbar: HTMLElement,
-    action: string,
-    label: string,
-    imageSrc: string,
+  private addToolbarButton = ({
+    editor,
+    toolbar,
+    action,
+    label,
+    icon,
+    isTransparent = false,
+  }: {
+    editor: mxEditor
+    toolbar: HTMLElement
+    action: string
+    label: string
+    icon: string
     isTransparent?: boolean
-  ) => {
+  }) => {
+    const {mxEvent} = this.mx
+
     const button = document.createElement('button')
     button.style.fontSize = '10'
     button.classList.add('button')
+    button.classList.add('button-sm')
     button.classList.add('button-default')
     button.classList.add('button-square')
 
-    if (imageSrc != null) {
-      const img = document.createElement('img')
-      img.setAttribute('src', imageSrc)
-      img.style.width = '16px'
-      img.style.height = '16px'
-      img.style.verticalAlign = 'middle'
-      img.style.marginRight = '2px'
-      // button.appendChild(img)
+    button.title = label
+
+    if (icon != null) {
+      const span = document.createElement('span')
+      span.classList.add('button-icon')
+      span.classList.add('icon')
+      span.classList.add(icon)
+      button.appendChild(span)
     }
+
     if (isTransparent) {
       button.style.background = 'transparent'
       button.style.color = '#FFFFFF'
       button.style.border = 'none'
     }
-    this.mxEvent.addListener(button, 'click', function() {
+
+    mxEvent.addListener(button, 'click', function() {
       editor.execute(action)
     })
 
-    this.mxUtils.write(button, label)
     toolbar.appendChild(button)
   }
 
-  private addSidebarButton = () => {
-    const tools = [
-      {
-        htmlString:
-          '<h1 style="margin:0px;">Website</h1><br>' +
-          `<img src='./' width="48" height="48">` +
-          '<br>' +
-          '<a href="http://www.jgraph.com" target="_blank">Browse</a>',
-        imgSrc: './*.png',
-      },
-    ]
+  private showModalWindow = (
+    graph: mxGraph,
+    title: string,
+    content: HTMLTextAreaElement,
+    width: number,
+    height: number
+  ) => {
+    const {
+      mxUtils,
+      mxClient,
+      mxDivResizer,
+      mxWindow,
+      mxEffects,
+      mxEvent,
+    } = this.mx
 
-    _.forEach(tools, tool => {
-      const {htmlString, imgSrc} = tool
-      this.addSidebarIcon(this.graph, this.sidebar, htmlString, imgSrc)
+    const background = document.createElement('div')
+    background.style.position = 'absolute'
+    background.style.left = '0px'
+    background.style.top = '0px'
+    background.style.right = '0px'
+    background.style.bottom = '0px'
+    background.style.background = 'black'
+    mxUtils.setOpacity(background, 50)
+    this.container.appendChild(background)
+
+    if (mxClient.IS_IE) {
+      new mxDivResizer(background)
+    }
+
+    const x = Math.max(0, document.body.scrollWidth / 2 - width / 2)
+    const y = Math.max(
+      10,
+      (document.body.scrollHeight || document.documentElement.scrollHeight) /
+        2 -
+        (height * 2) / 3
+    )
+    const wnd = new mxWindow(title, content, x, y, width, height, false, true)
+    wnd.setClosable(true)
+
+    // Fades the background out after after the window has been closed
+    wnd.addListener(mxEvent.DESTROY, () => {
+      graph.setEnabled(true)
+      mxEffects.fadeOut(background, 50, true, 10, 30, true)
     })
+
+    graph.setEnabled(false)
+    graph.tooltipHandler.hide()
+    wnd.setVisible(true)
   }
 
-  private topologyEditor = () => {
-    const graph = this.graph
-    this.addSidebarButton()
-    this.addToolbarButton()
-
-    // To show the images in the outline, uncomment the following code
-    const outln = new this.mx.mxOutline(graph, this.outline)
-
-    // To show the images in the outline, uncomment the following code
-    outln.outline.labelsVisible = true
-    outln.outline.setHtmlLabels(true)
+  // Trigger graph refresh when mxgraph's model update
+  private graphUpdate = () => {
+    this.graph.getModel().beginUpdate()
+    try {
+    } finally {
+      this.graph.getModel().endUpdate()
+      this.graph.refresh()
+    }
   }
 
-  private get sidebarDivisions() {
-    const {sidebarProportions, hostList} = this.state
-    const [topSize, middleSize, bottomSize] = sidebarProportions
+  // Creates the textfield for the given property.
+  private createTextField = (
+    graph: mxGraph,
+    form: mxForm,
+    cell: mxCell,
+    attribute: any
+  ) => {
+    const {mxEvent, mxClient} = this.mx
 
-    return [
-      {
-        name: 'Host',
-        headerOrientation: HANDLE_HORIZONTAL,
-        headerButtons: [],
-        menuOptions: [],
-        size: topSize,
-        render: () => <HostList hostList={hostList} />,
-      },
-      {
-        name: 'Tools',
-        headerOrientation: HANDLE_HORIZONTAL,
-        headerButtons: [],
-        menuOptions: [],
-        size: middleSize,
-        render: () => (
-          <div ref={this.sidebarRef}>
-            <img src="./" />
-          </div>
-        ),
-      },
-      {
-        name: 'Properties',
-        headerOrientation: HANDLE_HORIZONTAL,
-        headerButtons: [],
-        menuOptions: [],
-        size: bottomSize,
-        render: () => {
-          return <>this is Properties area</>
-          // return <Properties />
-        },
-      },
-    ]
+    const input = form.addText(
+      attribute.nodeName + ':',
+      attribute.nodeValue,
+      'text'
+    )
+
+    const applyHandler = () => {
+      const newValue = input.value || ''
+      const oldValue = cell.getAttribute(attribute.nodeName, '')
+
+      if (newValue != oldValue) {
+        graph.getModel().beginUpdate()
+
+        try {
+          cell.setAttribute(attribute.nodeName, newValue)
+        } finally {
+          graph.getModel().endUpdate()
+          this.graphUpdate()
+        }
+      }
+    }
+
+    mxEvent.addListener(
+      input,
+      'keypress',
+      (event: KeyboardEvent & MouseEvent) => {
+        // Needs to take shift into account for textareas
+        if (event.key === 'Enter' && !mxEvent.isShiftDown(event)) {
+          input.blur()
+        }
+      }
+    )
+
+    if (mxClient.IS_IE) {
+      mxEvent.addListener(input, 'focusout', applyHandler)
+    } else {
+      // Note: Known problem is the blurring of fields in
+      // Firefox by changing the selection, in which case
+      // no event is fired in FF and the change is lost.
+      // As a workaround you should use a local variable
+      // that stores the focused field and invoke blur
+      // explicitely where we do the graph.focus above.
+      mxEvent.addListener(input, 'blur', applyHandler)
+    }
+  }
+
+  // ThreeSizer's divide handler
+  private handleResize = (fieldName: string) => (proportions: number[]) => {
+    this.setState((prevState: State) => ({
+      ...prevState,
+      [fieldName]: proportions,
+    }))
   }
 
   private get threesizerDivisions() {
     const {screenProportions} = this.state
     const [leftSize, rightSize] = screenProportions
-
-    // 함수가 실행될 곳
 
     return [
       {
@@ -539,204 +932,70 @@ class InventoryTopology extends PureComponent<Props, State, customMxUtils> {
     ]
   }
 
-  private setting = () => {
-    const {
-      mxEditor,
-      mxGuide,
-      mxDivResizer,
-      mxEdgeHandler,
-      mxEvent,
-      mxGraphHandler,
-      mxConstants,
-      mxUtils,
-      mxClient,
-    } = this.mx
+  private get sidebarDivisions() {
+    const {sidebarProportions, hostList} = this.state
+    const [topSize, middleSize, bottomSize] = sidebarProportions
 
-    this.editor = new mxEditor()
-    this.mxUtils = mxUtils
-    this.mxConstants = mxConstants
-    this.mxGraphHandler = mxGraphHandler
-    this.mxGuide = mxGuide
-    this.mxEvent = mxEvent
-    this.mxEdgeHandler = mxEdgeHandler
-    this.mxClient = mxClient
-    this.mxDivResizer = mxDivResizer
-
-    this.graph = this.editor.graph
-    // this.model = this.graph.getModel()
-
-    this.addEditorAction(this.editor, this.graph)
-
-    this.container = this.containerRef.current
-    this.outline = this.outlineRef.current
-    this.sidebar = this.sidebarRef.current
-    this.toolbar = this.toolbarRef.current
-
-    // Assigns some global constants for general behaviour, eg. minimum
-    // size (in pixels) of the active region for triggering creation of
-    // new connections, the portion (100%) of the cell area to be used
-    // for triggering new connections, as well as some fading options for
-    // windows and the rubberband selection.
-    this.mxConstants.MIN_HOTSPOT_SIZE = 16
-    this.mxConstants.DEFAULT_HOTSPOT = 1
-
-    // Enables guides
-    this.mxGraphHandler.prototype.guidesEnabled = true
-
-    // Alt disables guides
-    this.mxGuide.prototype.isEnabledForEvent = (evt: MouseEvent) => {
-      return !this.mxEvent.isAltDown(evt)
-    }
-
-    // Enables snapping waypoints to terminals
-    this.mxEdgeHandler.prototype.snapToTerminals = true
-
-    // Workaround for Internet Explorer ignoring certain CSS directives
-    if (this.mxClient.IS_QUIRKS) {
-      document.body.style.overflow = 'hidden'
-      new this.mxDivResizer(this.container)
-      new this.mxDivResizer(this.outline)
-      // new this.mxDivResizer(toolbar)
-      new this.mxDivResizer(this.sidebar)
-      // new this.mxDivResizer(status)
-    }
-
-    // Disable highlight of cells when dragging from toolbar
-    this.graph.setDropEnabled(false)
-
-    // Uses the port icon while connections are previewed
-    this.graph.connectionHandler.getConnectImage = state => {
-      return new this.mx.mxImage(
-        state.style[this.mxConstants.STYLE_IMAGE],
-        16,
-        16
-      )
-    }
-
-    // Centers the port icon on the target port
-    this.graph.connectionHandler.targetConnectImage = true
-
-    // Does not allow dangling edges
-    this.graph.setAllowDanglingEdges(false)
-
-    // Sets the graph container and configures the editor
-    this.editor.setGraphContainer(this.container)
-    // const config = this.mxUtils
-    //   .load('/config/keyhandler-commons.xml')
-    //   .getDocumentElement()
-    // this.editor.configure(config)
-
-    // Defines the default group to be used for grouping. The
-    // default group is a field in the mxEditor instance that
-    // is supposed to be a cell which is cloned for new cells.
-    // The groupBorderSize is used to define the spacing between
-    // the children of a group and the group bounds.
-    const group = new this.mx.mxCell('Group', new this.mx.mxGeometry(), 'group')
-    group.setVertex(true)
-    group.setConnectable(false)
-    this.editor.defaultGroup = group
-    this.editor.groupBorderSize = 20
-
-    // Disables drag-and-drop into non-swimlanes.
-    this.graph.isValidDropTarget = function(cell) {
-      return this.isSwimlane(cell)
-    }
-
-    // Disables drilling into non-swimlanes.
-    this.graph.isValidRoot = function(cell) {
-      return this.isValidDropTarget(cell)
-    }
-
-    // Does not allow selection of locked cells
-    this.graph.isCellSelectable = function(cell) {
-      return !this.isCellLocked(cell)
-    }
-
-    // Enables new connections
-    this.graph.setConnectable(true)
+    return [
+      {
+        name: 'Host',
+        headerOrientation: HANDLE_HORIZONTAL,
+        headerButtons: [],
+        menuOptions: [],
+        size: topSize,
+        render: () => (
+          <>
+            <FancyScrollbar>
+              <TableBody>{<div ref={this.sidebarHostsRef} />}</TableBody>
+            </FancyScrollbar>
+          </>
+        ),
+      },
+      {
+        name: 'Tools',
+        headerOrientation: HANDLE_HORIZONTAL,
+        headerButtons: [],
+        menuOptions: [],
+        size: middleSize,
+        render: () => (
+          <FancyScrollbar>
+            <div ref={this.sidebarToolsRef} className={'tool-box'} />
+          </FancyScrollbar>
+        ),
+      },
+      {
+        name: 'Properties',
+        headerOrientation: HANDLE_HORIZONTAL,
+        headerButtons: [],
+        menuOptions: [],
+        size: bottomSize,
+        render: () => {
+          return (
+            <>
+              <FancyScrollbar>
+                {<div ref={this.sidebarPropertiesRef} />}
+              </FancyScrollbar>
+            </>
+          )
+        },
+      },
+    ]
   }
 
-  private addEditorAction = (editor: mxEditor, graph?: mxGraph) => {
-    // Defines a new action for deleting or ungrouping
-    editor.addAction('groupOrUngroup', function(
-      editor: mxEditor,
-      cell: mxCell
-    ) {
-      cell = cell || editor.graph.getSelectionCell()
-      if (cell != null && editor.graph.isSwimlane(cell)) {
-        editor.execute('ungroup', cell)
-      } else {
-        editor.execute('group')
-      }
-    })
-
-    // Defines a new export action
-    editor.addAction('export', (editor: mxEditor) => {
-      const textarea = document.createElement('textarea')
-      textarea.style.width = '400px'
-      textarea.style.height = '400px'
-
-      const enc = new this.mx.mxCodec(this.mxUtils.createXmlDocument())
-      console.log('enc:', enc)
-      const node = enc.encode(editor.graph.getModel())
-      console.log('get Model: ', editor.graph.getModel())
-      console.log('node: ', node)
-
-      // @ts-ignore
-      textarea.value = this.mxUtils.getPrettyXml(node)
-      this.showModalWindow(graph, 'XML', textarea, 410, 440)
-    })
-  }
-
-  private showModalWindow = (
-    graph: mxGraph,
-    title: string,
-    content: HTMLTextAreaElement,
-    width: number,
-    height: number
-  ) => {
-    const background = document.createElement('div')
-    background.style.position = 'absolute'
-    background.style.left = '0px'
-    background.style.top = '0px'
-    background.style.right = '0px'
-    background.style.bottom = '0px'
-    background.style.background = 'black'
-    this.mxUtils.setOpacity(background, 50)
-    this.container.appendChild(background)
-
-    if (this.mxClient.IS_IE) {
-      new this.mxDivResizer(background)
-    }
-
-    const x = Math.max(0, document.body.scrollWidth / 2 - width / 2)
-    const y = Math.max(
-      10,
-      (document.body.scrollHeight || document.documentElement.scrollHeight) /
-        2 -
-        (height * 2) / 3
+  public render() {
+    return (
+      <div id="containerWrapper">
+        {!this.mx.mxClient.isBrowserSupported() ? (
+          <>this Browser Not Supported</>
+        ) : (
+          <Threesizer
+            orientation={HANDLE_VERTICAL}
+            divisions={this.threesizerDivisions}
+            onResize={this.handleResize('screenProportions')}
+          />
+        )}
+      </div>
     )
-    const wnd = new this.mx.mxWindow(
-      title,
-      content,
-      x,
-      y,
-      width,
-      height,
-      false,
-      true
-    )
-    wnd.setClosable(true)
-
-    // Fades the background out after after the window has been closed
-    wnd.addListener(this.mx.mxEvent.DESTROY, () => {
-      graph.setEnabled(true)
-      this.mx.mxEffects.fadeOut(background, 50, true, 10, 30, true)
-    })
-
-    graph.setEnabled(false)
-    graph.tooltipHandler.hide()
-    wnd.setVisible(true)
   }
 }
 
