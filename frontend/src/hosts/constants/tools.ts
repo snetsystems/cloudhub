@@ -7,8 +7,15 @@ interface ToolbarMenu {
 
 export const toolbarMenu: ToolbarMenu[] = [
   {
-    actionName: 'groupOrUngroup',
-    label: '(Un)group',
+    actionName: 'group',
+    // actionName: 'groupOrUngroup',
+    label: 'group',
+    icon: 'object-group',
+  },
+  {
+    actionName: 'ungroup',
+    // actionName: 'groupOrUngroup',
+    label: 'Ungroup',
     icon: 'object-group',
   },
   {

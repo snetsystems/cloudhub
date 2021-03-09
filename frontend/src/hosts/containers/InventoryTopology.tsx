@@ -122,7 +122,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   public componentWillUnmount() {}
 
   private createEditor = () => {
-    const {mxEditor} = this.mx
+    const {mxEditor, mxGraph} = this.mx
 
     this.editor = new mxEditor()
     this.graph = this.editor.graph
@@ -141,14 +141,14 @@ class InventoryTopology extends PureComponent<Props, State> {
     asText?: string,
     model?: mxGraphModel
   ) => {
-    const {mxEvent, mxForm, mxUtils} = this.mx
+    const {mxUtils} = this.mx
     const graph = this.graph
     model = model ? model : graph.getModel()
 
     model.beginUpdate()
     try {
       for (let i = 0; i < cells.length; i++) {
-        var cell = cells[i]
+        const cell = cells[i]
 
         // Applies the current style to the cell
         const isEdge = model.isEdge(cell)
@@ -158,22 +158,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
           edge.setAttribute('label', 'edge')
           cell.setValue(edge)
-          // graph.
         }
-
-        // for (var j = 0; j < appliedStyles.length; j++) {
-        //   var key = appliedStyles[j]
-        //   var styleValue = current[key]
-
-        //   if (styleValue != null && (key != 'shape' || edge)) {
-        //     // Special case: Connect styles are not applied here but in the connection handler
-        //     if (!edge || mxUtils.indexOf(connectStyles, key) < 0) {
-        //       newStyle = mxUtils.setStyle(newStyle, key, styleValue)
-        //     }
-        //   }
-        // }
-
-        // model.setStyle(cell, newStyle)
       }
     } finally {
       model.endUpdate()
@@ -196,6 +181,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       mxCellState,
       mxRubberband,
       mxForm,
+      mxGraph,
     } = this.mx
 
     const editor = this.editor
@@ -226,7 +212,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     // connect handler
     graph.connectionHandler.addListener(mxEvent.CONNECT, (_sender, evt) => {
-      var cells = [evt.getProperty('cell')]
+      const cells = [evt.getProperty('cell')]
 
       if (evt.getProperty('terminalInserted')) {
         cells.push(evt.getProperty('terminal'))
@@ -237,7 +223,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     // Enables connect preview for the default edge style
     graph.connectionHandler.createEdgeState = function() {
-      var edge = graph.createEdge(null, null, 'nice', null, null)
+      const edge = graph.createEdge(null, null, 'nice', null, null)
 
       return new mxCellState(
         this.graph.view,
@@ -279,12 +265,47 @@ class InventoryTopology extends PureComponent<Props, State> {
     // is supposed to be a cell which is cloned for new cells.
     // The groupBorderSize is used to define the spacing between
     // the children of a group and the group bounds.
-    const group = new mxCell('Group', new mxGeometry(), 'group')
+    const doc = mxUtils.createXmlDocument()
+    const groupCell = doc.createElement('Group')
+
+    groupCell.setAttribute('label', 'Group')
+
+    const group = new mxCell(groupCell, new mxGeometry(), 'group')
     group.setVertex(true)
     group.setConnectable(false)
 
     editor.defaultGroup = group
     editor.groupBorderSize = 20
+
+    /**
+     * Returns true if the given cell is a table.
+     */
+    // @ts-ignore
+    graph.isTable = function(cell: mxCell) {
+      const style = this.getCellStyle(cell)
+
+      return style != null && style['childLayout'] == 'tableLayout'
+    }
+
+    /**
+     * Returns true if the given cell is a table cell.
+     */
+    // @ts-ignore
+    graph.isTableCell = function(cell: mxCell) {
+      return (
+        this.model.isVertex(cell) && this.isTableRow(this.model.getParent(cell))
+      )
+    }
+
+    /**
+     * Returns true if the given cell is a table row.
+     */
+    // @ts-ignore
+    graph.isTableRow = function(cell: mxCell) {
+      return (
+        this.model.isVertex(cell) && this.isTable(this.model.getParent(cell))
+      )
+    }
 
     // Disables drag-and-drop into non-swimlanes.
     graph.isValidDropTarget = function(cell) {
@@ -343,7 +364,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     // Overrides method to provide a cell label in the display
     graph.convertValueToString = cell => {
       if (cell) {
-        const labelValue = cell.getAttribute('label', 'edge')
+        const labelValue = cell.getAttribute('label', '')
         return labelValue
       }
 
@@ -361,17 +382,21 @@ class InventoryTopology extends PureComponent<Props, State> {
     const {mxForm} = this.mx
     const cell = graph.getSelectionCell()
     const form = new mxForm('inventory-topology--mxform')
-    const attrs = cell.value?.attributes
 
-    this.properties.innerHTML = ''
+    if (cell) {
+      console.log('selectionChanged cell: ', cell)
+      const attrs = cell.value?.attributes
 
-    if (attrs) {
-      for (let i = 0; i < attrs.length; i++) {
-        this.createTextField(graph, form, cell, attrs[i])
+      this.properties.innerHTML = ''
+
+      if (attrs) {
+        for (let i = 0; i < attrs.length; i++) {
+          this.createTextField(graph, form, cell, attrs[i])
+        }
       }
-    }
 
-    this.properties.appendChild(form.getTable())
+      this.properties.appendChild(form.getTable())
+    }
   }
 
   // Register an action in the editor
@@ -380,16 +405,73 @@ class InventoryTopology extends PureComponent<Props, State> {
     const editor = this.editor
     const graph = this.graph
 
-    // Defines a new action for deleting or ungrouping
-    editor.addAction('groupOrUngroup', function(
-      editor: mxEditor,
-      cell: mxCell
-    ) {
-      cell = cell || editor.graph.getSelectionCell()
-      if (cell != null && editor.graph.isSwimlane(cell)) {
-        editor.execute('ungroup', cell)
-      } else {
-        editor.execute('group')
+    // // Defines a new action for deleting or ungrouping
+    // editor.addAction('groupOrUngroup', function(
+    //   editor: mxEditor,
+    //   cell: mxCell
+    // ) {
+    //   cell = cell || editor.graph.getSelectionCell()
+    //   if (cell != null && editor.graph.isSwimlane(cell)) {
+    //     editor.execute('ungroup', cell)
+    //   } else {
+    //     editor.execute('group')
+    //   }
+    // })
+
+    // console.log('graph:', graph)
+    // Group
+    editor.addAction('group', () => {
+      console.log('action group')
+      if (graph.isEnabled()) {
+        let cells = mxUtils.sortCells(graph.getSelectionCells(), true)
+
+        if (
+          cells.length == 1 && // @ts-ignore
+          !graph.isTable(cells[0]) && // @ts-ignore
+          !graph.isTableRow(cells[0])
+        ) {
+          console.log('group true')
+          graph.setCellStyles('group', '1')
+        } else {
+          cells = graph.getCellsForGroup(cells)
+          console.log('group false')
+          if (cells.length > 1) {
+            graph.setSelectionCell(graph.groupCells(null, 30, cells))
+            graph.setCellStyles('group', '1')
+          }
+        }
+      }
+    })
+
+    // Ungroup
+    editor.addAction('ungroup', function() {
+      if (graph.isEnabled()) {
+        const cells = graph.getSelectionCells()
+
+        graph.model.beginUpdate()
+        try {
+          const temp = graph.ungroupCells(cells)
+
+          // Clears container flag for remaining cells
+          if (cells != null) {
+            for (let i = 0; i < cells.length; i++) {
+              if (graph.model.contains(cells[i])) {
+                if (
+                  graph.model.getChildCount(cells[i]) == 0 &&
+                  graph.model.isVertex(cells[i])
+                ) {
+                  graph.setCellStyles('container', '0', [cells[i]])
+                }
+
+                temp.push(cells[i])
+              }
+            }
+          }
+
+          graph.setSelectionCells(temp)
+        } finally {
+          graph.model.endUpdate()
+        }
       }
     })
 
