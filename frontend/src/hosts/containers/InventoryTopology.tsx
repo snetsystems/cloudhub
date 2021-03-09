@@ -260,22 +260,46 @@ class InventoryTopology extends PureComponent<Props, State> {
     const config = mxUtils.load(keyhandlerCommons).getDocumentElement()
     editor.configure(config)
 
-    // Defines the default group to be used for grouping. The
-    // default group is a field in the mxEditor instance that
-    // is supposed to be a cell which is cloned for new cells.
-    // The groupBorderSize is used to define the spacing between
-    // the children of a group and the group bounds.
-    const doc = mxUtils.createXmlDocument()
-    const groupCell = doc.createElement('Group')
+    /**
+     * Disables drill-down for non-swimlanes.
+     */
+    // @ts-ignore
+    graph.isContainer = function(cell: mxCell) {
+      const style = this.getCurrentCellStyle(cell)
+      console.log('isContainer style: ', style)
+      if (this.isSwimlane(cell)) {
+        return style['container'] != '0'
+      } else {
+        return style['container'] == '1'
+      }
+    }
 
-    groupCell.setAttribute('label', 'Group')
+    /**
+     * Overrides createGroupCell to set the group style for new groups to 'group'.
+     */
+    graph.createGroupCell = function() {
+      const group = mxGraph.prototype.createGroupCell.apply(this, arguments)
 
-    const group = new mxCell(groupCell, new mxGeometry(), 'group')
-    group.setVertex(true)
-    group.setConnectable(false)
+      // Defines the default group to be used for grouping. The
+      // default group is a field in the mxEditor instance that
+      // is supposed to be a cell which is cloned for new cells.
+      // The groupBorderSize is used to define the spacing between
+      // the children of a group and the group bounds.
+      const doc = mxUtils.createXmlDocument()
+      const groupCell = doc.createElement('Group')
 
-    editor.defaultGroup = group
-    editor.groupBorderSize = 20
+      groupCell.setAttribute('label', 'Group')
+      console.log('add group label')
+      // const group = new mxCell(groupCell, new mxGeometry(), 'group')
+
+      group.setValue(groupCell)
+      group.setVertex(true)
+      group.setConnectable(false)
+
+      group.setStyle('group')
+
+      return group
+    }
 
     /**
      * Returns true if the given cell is a table.
@@ -428,13 +452,11 @@ class InventoryTopology extends PureComponent<Props, State> {
           !graph.isTable(cells[0]) && // @ts-ignore
           !graph.isTableRow(cells[0])
         ) {
-          graph.setCellStyles('group', '1')
+          graph.setCellStyles('container', '1')
         } else {
           cells = graph.getCellsForGroup(cells)
-
           if (cells.length > 1) {
             graph.setSelectionCell(graph.groupCells(null, 30, cells))
-            graph.setCellStyles('group', '1')
           }
         }
       }
@@ -491,55 +513,55 @@ class InventoryTopology extends PureComponent<Props, State> {
     const {mxConstants, mxPerimeter, mxEdgeStyle} = this.mx
     const graph = this.graph
 
-    let style = new Object()
-    style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE
-    style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter
-    style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER
-    style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE
-    style[mxConstants.STYLE_GRADIENTCOLOR] = '#e7e8eb'
-    style[mxConstants.STYLE_FILLCOLOR] = '#f6f6f8'
-    style[mxConstants.STYLE_STROKECOLOR] = '#ffffff'
-    style[mxConstants.STYLE_FONTCOLOR] = '#000000'
-    style[mxConstants.STYLE_ROUNDED] = true
-    style[mxConstants.STYLE_OPACITY] = '100'
-    style[mxConstants.STYLE_FONTSIZE] = '12'
-    style[mxConstants.STYLE_FONTSTYLE] = 0
-    style[mxConstants.STYLE_IMAGE_WIDTH] = '48'
-    style[mxConstants.STYLE_IMAGE_HEIGHT] = '48'
-    graph.getStylesheet().putDefaultVertexStyle(style)
+    // let style = new Object()
+    // style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE
+    // style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter
+    // style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER
+    // style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE
+    // style[mxConstants.STYLE_GRADIENTCOLOR] = '#e7e8eb'
+    // style[mxConstants.STYLE_FILLCOLOR] = '#f6f6f8'
+    // style[mxConstants.STYLE_STROKECOLOR] = '#ffffff'
+    // style[mxConstants.STYLE_FONTCOLOR] = '#000000'
+    // style[mxConstants.STYLE_ROUNDED] = true
+    // style[mxConstants.STYLE_OPACITY] = '100'
+    // style[mxConstants.STYLE_FONTSIZE] = '12'
+    // style[mxConstants.STYLE_FONTSTYLE] = 0
+    // style[mxConstants.STYLE_IMAGE_WIDTH] = '48'
+    // style[mxConstants.STYLE_IMAGE_HEIGHT] = '48'
+    // graph.getStylesheet().putDefaultVertexStyle(style)
 
     // NOTE: Alternative vertex style for non-HTML labels should be as
     // follows. This repaces the above style for HTML labels.
-    /*let style = new Object();
-			style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_LABEL;
-			style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter;
-			style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_TOP;
-			style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER;
-			style[mxConstants.STYLE_IMAGE_ALIGN] = mxConstants.ALIGN_CENTER;
-			style[mxConstants.STYLE_IMAGE_VERTICAL_ALIGN] = mxConstants.ALIGN_TOP;
-			style[mxConstants.STYLE_SPACING_TOP] = '56';
-			style[mxConstants.STYLE_GRADIENTCOLOR] = '#7d85df';
-			style[mxConstants.STYLE_STROKECOLOR] = '#5d65df';
-			style[mxConstants.STYLE_FILLCOLOR] = '#adc5ff';
-			style[mxConstants.STYLE_FONTCOLOR] = '#1d258f';
-			style[mxConstants.STYLE_FONTFAMILY] = 'Verdana';
-			style[mxConstants.STYLE_FONTSIZE] = '12';
-			style[mxConstants.STYLE_FONTSTYLE] = '1';
-			style[mxConstants.STYLE_ROUNDED] = '1';
-			style[mxConstants.STYLE_IMAGE_WIDTH] = '48';
-			style[mxConstants.STYLE_IMAGE_HEIGHT] = '48';
-			style[mxConstants.STYLE_OPACITY] = '80';
-			graph.getStylesheet().putDefaultVertexStyle(style);*/
+    let style = new Object()
+    style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_LABEL
+    style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter
+    style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_TOP
+    style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER
+    style[mxConstants.STYLE_IMAGE_ALIGN] = mxConstants.ALIGN_CENTER
+    style[mxConstants.STYLE_IMAGE_VERTICAL_ALIGN] = mxConstants.ALIGN_TOP
+    style[mxConstants.STYLE_SPACING_TOP] = '56'
+    style[mxConstants.STYLE_GRADIENTCOLOR] = '#7d85df'
+    style[mxConstants.STYLE_STROKECOLOR] = '#5d65df'
+    style[mxConstants.STYLE_FILLCOLOR] = '#adc5ff'
+    style[mxConstants.STYLE_FONTCOLOR] = '#1d258f'
+    style[mxConstants.STYLE_FONTFAMILY] = 'Verdana'
+    style[mxConstants.STYLE_FONTSIZE] = '12'
+    style[mxConstants.STYLE_FONTSTYLE] = '1'
+    style[mxConstants.STYLE_ROUNDED] = '1'
+    style[mxConstants.STYLE_IMAGE_WIDTH] = '48'
+    style[mxConstants.STYLE_IMAGE_HEIGHT] = '48'
+    style[mxConstants.STYLE_OPACITY] = '80'
+    graph.getStylesheet().putDefaultVertexStyle(style)
 
     style = new Object()
     style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_SWIMLANE
     style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter
     style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER
     style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_TOP
-    style[mxConstants.STYLE_FILLCOLOR] = '#FF9103'
-    style[mxConstants.STYLE_GRADIENTCOLOR] = '#F8C48B'
+    style[mxConstants.STYLE_FILLCOLOR] = '#E86A00'
+    style[mxConstants.STYLE_GRADIENTCOLOR] = '#E86A00'
     style[mxConstants.STYLE_STROKECOLOR] = '#E86A00'
-    style[mxConstants.STYLE_FONTCOLOR] = '#000000'
+    style[mxConstants.STYLE_FONTCOLOR] = '#ffffff'
     style[mxConstants.STYLE_ROUNDED] = true
     style[mxConstants.STYLE_OPACITY] = '80'
     style[mxConstants.STYLE_STARTSIZE] = '30'
