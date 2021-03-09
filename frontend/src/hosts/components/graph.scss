@@ -77,21 +77,21 @@
     height: 100px;
   }
 
-  .mxgraph--icon {
+  .mxgraph-cell--icon {
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
 
     &-server {
-      background-image: url(../../assets/images/stencils/clipart/Server_Tower_128x128.png);
+      background-image: url('../../assets/images/stencils/clipart/Server_Tower_128x128.png');
     }
 
     &-internet {
-      background-image: url(../../assets/images/stencils/clipart/Earth_globe_128x128.png);
+      background-image: url('../../assets/images/stencils/clipart/Earth_globe_128x128.png');
     }
 
     &-workstation {
-      background-image: url(../../assets/images/stencils/clipart/Monitor_Tower_128x128.png);
+      background-image: url('../../assets/images/stencils/clipart/Monitor_Tower_128x128.png');
     }
 
     &-email {
