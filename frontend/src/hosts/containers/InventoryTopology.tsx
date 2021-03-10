@@ -290,7 +290,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     // @ts-ignore
     graph.isContainer = function(cell: mxCell) {
       const style = this.getCurrentCellStyle(cell)
-      console.log('isContainer style: ', style)
+
       if (this.isSwimlane(cell)) {
         return style['container'] != '0'
       } else {
@@ -313,7 +313,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       const groupCell = doc.createElement('Group')
 
       groupCell.setAttribute('label', 'Group')
-      console.log('add group label')
+
       // const group = new mxCell(groupCell, new mxGeometry(), 'group')
 
       group.setValue(groupCell)
@@ -452,20 +452,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     const editor = this.editor
     const graph = this.graph
 
-    // // Defines a new action for deleting or ungrouping
-    // editor.addAction('groupOrUngroup', function(
-    //   editor: mxEditor,
-    //   cell: mxCell
-    // ) {
-    //   cell = cell || editor.graph.getSelectionCell()
-    //   if (cell != null && editor.graph.isSwimlane(cell)) {
-    //     editor.execute('ungroup', cell)
-    //   } else {
-    //     editor.execute('group')
-    //   }
-    // })
-
-    // console.log('graph:', graph)
     // Group
     editor.addAction('group', () => {
       if (graph.isEnabled()) {
