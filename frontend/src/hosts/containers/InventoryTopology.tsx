@@ -260,6 +260,30 @@ class InventoryTopology extends PureComponent<Props, State> {
     const config = mxUtils.load(keyhandlerCommons).getDocumentElement()
     editor.configure(config)
 
+    // Overrides method to store a cell label in the model
+    const cellLabelChanged = graph.cellLabelChanged
+    graph.cellLabelChanged = (cell, newValue, autoSize) => {
+      if (mxUtils.isNode(cell.value, cell.value.nodeName)) {
+        // Clones the value for correct undo/redo
+        const elt = cell.value.cloneNode(true)
+        elt.setAttribute('label', newValue)
+
+        newValue = elt
+
+        cellLabelChanged.apply(graph, [cell, newValue, autoSize])
+      }
+    }
+
+    // @ts-ignore Overrides method to create the editing value
+    const getEditingValue = graph.getEditingValue
+    graph.getEditingValue = cell => {
+      if (mxUtils.isNode(cell.value, cell.value.nodeName)) {
+        const label = cell.getAttribute('label', '')
+
+        return label
+      }
+    }
+
     /**
      * Disables drill-down for non-swimlanes.
      */
