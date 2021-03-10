@@ -1,13 +1,32 @@
 import React, {createRef, PureComponent} from 'react'
 import {connect} from 'react-redux'
 import {
-  default as mx,
-  mxGraph,
-  mxEditor,
-  mxCell,
-  mxForm,
-  mxMouseEvent,
-  mxGraphModel,
+  default as mxgraph,
+  mxEditor as mxEditorType,
+  // mxGuide as mxGuideType,
+  // mxDivResizer as mxDivResizerType,
+  // mxEdgeHandler as mxEdgeHandlerType,
+  // mxEvent as mxEventType,
+  // mxGraphHandler as mxGraphHandlerType,
+  // mxConstants as mxConstantsType,
+  // mxUtils as mxUtilsType,
+  // mxClient as mxClientType,
+  // mxImage as mxImageType,
+  mxCell as mxCellType,
+  // mxGeometry as mxGeometryType,
+  mxCellState as mxCellStateType,
+  // mxRubberband as mxRubberbandType,
+  mxForm as mxFormType,
+  mxGraph as mxGraphType,
+  // mxCodec as mxCodecType,
+  // mxPerimeter as mxPerimeterType,
+  // mxEdgeStyle as mxEdgeStyleType,
+  // mxOutline as mxOutlineType,
+  // mxRectangle as mxRectangleType,
+  // mxPoint as mxPointType,
+  // mxWindow as mxWindowType,
+  // mxEffects as mxEffectsType,
+  mxGraphModel as mxGraphModelType,
 } from 'mxgraph'
 
 import _ from 'lodash'
@@ -50,6 +69,42 @@ const keyhandlerCommons = require('src/hosts/config/keyhandler-commons.xml')
 const CELL_SIZE_WIDTH = 120
 const CELL_SIZE_HEIGHT = 120
 
+const mx = mxgraph({})
+
+const {
+  mxEditor,
+  mxGuide,
+  mxDivResizer,
+  mxEdgeHandler,
+  mxEvent,
+  mxGraphHandler,
+  mxConstants,
+  mxUtils,
+  mxClient,
+  mxImage,
+  // mxCell,
+  // mxGeometry,
+  mxCellState,
+  mxRubberband,
+  mxForm,
+  mxGraph,
+  mxCodec,
+  mxPerimeter,
+  mxEdgeStyle,
+  mxOutline,
+  mxRectangle,
+  // mxPoint,
+  mxWindow,
+  mxEffects,
+} = mx
+
+// Creates a wrapper editor with a graph inside the given container.
+// The editor is used to create certain functionality for the
+// graph, such as the rubberband selection, but most parts
+// of the UI are custom in this example.
+const editor = new mxEditor()
+const graph = editor.graph
+
 interface Props {
   hostsObject: {[x: string]: Host}
   autoRefresh: number
@@ -74,14 +129,6 @@ class InventoryTopology extends PureComponent<Props, State> {
       hostList: null,
     }
   }
-
-  // Creates a wrapper editor with a graph inside the given container.
-  // The editor is used to create certain functionality for the
-  // graph, such as the rubberband selection, but most parts
-  // of the UI are custom in this example.
-  private mx = mx()
-  private editor: mxEditor = null
-  private graph: mxGraph = null
 
   private containerRef = createRef<HTMLDivElement>()
   private outlineRef = createRef<HTMLDivElement>()
@@ -122,11 +169,6 @@ class InventoryTopology extends PureComponent<Props, State> {
   public componentWillUnmount() {}
 
   private createEditor = () => {
-    const {mxEditor, mxGraph} = this.mx
-
-    this.editor = new mxEditor()
-    this.graph = this.editor.graph
-
     this.container = this.containerRef.current
     this.outline = this.outlineRef.current
     this.hosts = this.sidebarHostsRef.current
@@ -137,12 +179,10 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   // Implements a global current style for edges and vertices that is applied to new cells
   private insertHandler = (
-    cells: mxCell[],
-    asText?: string,
-    model?: mxGraphModel
+    cells: mxCellType[],
+    _asText?: string,
+    model?: mxGraphModelType
   ) => {
-    const {mxUtils} = this.mx
-    const graph = this.graph
     model = model ? model : graph.getModel()
 
     model.beginUpdate()
@@ -166,28 +206,6 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private configureEditor = () => {
-    const {
-      mxGuide,
-      mxDivResizer,
-      mxEdgeHandler,
-      mxEvent,
-      mxGraphHandler,
-      mxConstants,
-      mxUtils,
-      mxClient,
-      mxImage,
-      mxCell,
-      mxGeometry,
-      mxCellState,
-      mxRubberband,
-      mxForm,
-      mxGraph,
-    } = this.mx
-
-    const editor = this.editor
-    const graph = this.graph
-    const _this = this
-
     // Enables rubberband selection
     new mxRubberband(graph)
 
@@ -245,7 +263,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     graph.setDropEnabled(false)
 
     // Uses the port icon while connections are previewed
-    graph.connectionHandler.getConnectImage = state => {
+    graph.connectionHandler.getConnectImage = (state: mxCellStateType) => {
       return new mxImage(state.style[mxConstants.STYLE_IMAGE], 16, 16)
     }
 
@@ -262,7 +280,11 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     // Overrides method to store a cell label in the model
     const cellLabelChanged = graph.cellLabelChanged
-    graph.cellLabelChanged = (cell, newValue, autoSize) => {
+    graph.cellLabelChanged = (
+      cell: mxCellType,
+      newValue: any,
+      autoSize: boolean
+    ) => {
       if (mxUtils.isNode(cell.value, cell.value.nodeName)) {
         // Clones the value for correct undo/redo
         const elt = cell.value.cloneNode(true)
@@ -313,9 +335,6 @@ class InventoryTopology extends PureComponent<Props, State> {
       const groupCell = doc.createElement('Group')
 
       groupCell.setAttribute('label', 'Group')
-
-      // const group = new mxCell(groupCell, new mxGeometry(), 'group')
-
       group.setValue(groupCell)
       group.setVertex(true)
       group.setConnectable(false)
@@ -349,24 +368,24 @@ class InventoryTopology extends PureComponent<Props, State> {
      * Returns true if the given cell is a table row.
      */
     // @ts-ignore
-    graph.isTableRow = function(cell: mxCell) {
+    graph.isTableRow = function(cell: mxCellType) {
       return (
         this.model.isVertex(cell) && this.isTable(this.model.getParent(cell))
       )
     }
 
     // Disables drag-and-drop into non-swimlanes.
-    graph.isValidDropTarget = function(cell) {
+    graph.isValidDropTarget = function(cell: mxCellType) {
       return this.isSwimlane(cell)
     }
 
     // Disables drilling into non-swimlanes.
-    graph.isValidRoot = function(cell) {
+    graph.isValidRoot = function(cell: mxCellType) {
       return this.isValidDropTarget(cell)
     }
 
     // Does not allow selection of locked cells
-    graph.isCellSelectable = function(cell) {
+    graph.isCellSelectable = function(cell: mxCellType) {
       return !this.isCellLocked(cell)
     }
 
@@ -376,7 +395,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     // Returns a shorter label if the cell is collapsed and no
     // label for expanded groups
     graph.getLabel = function(cell) {
-      let tmp = _this.mx.mxGraph.prototype.getLabel.apply(this, arguments) // "supercall"
+      let tmp = mxGraph.prototype.getLabel.apply(this, arguments) // "supercall"
 
       if (this.isCellLocked(cell)) {
         // Returns an empty label but makes sure an HTML
@@ -426,8 +445,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     })
   }
 
-  private selectionChanged = (graph: mxGraph) => {
-    const {mxForm} = this.mx
+  private selectionChanged = (graph: mxGraphType) => {
     const cell = graph.getSelectionCell()
     const form = new mxForm('inventory-topology--mxform')
 
@@ -448,10 +466,6 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   // Register an action in the editor
   private setActionInEditor = () => {
-    const {mxCodec, mxUtils} = this.mx
-    const editor = this.editor
-    const graph = this.graph
-
     // Group
     editor.addAction('group', () => {
       if (graph.isEnabled()) {
@@ -505,7 +519,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     })
 
     // Defines a new export action
-    editor.addAction('export', (editor: mxEditor) => {
+    editor.addAction('export', editor => {
       const textarea = document.createElement('textarea')
       textarea.style.width = '400px'
       textarea.style.height = '400px'
@@ -520,8 +534,8 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private configureStylesheet = () => {
-    const {mxConstants, mxPerimeter, mxEdgeStyle} = this.mx
-    const graph = this.graph
+    // const {mxConstants, mxPerimeter, mxEdgeStyle} = this.mx
+    // const graph = this.graph
 
     let style = new Object()
     style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE
@@ -588,9 +602,9 @@ class InventoryTopology extends PureComponent<Props, State> {
     style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE
     style[mxConstants.STYLE_FONTSIZE] = '10'
     style[mxConstants.STYLE_FONTSTYLE] = 2
-    style[mxConstants.STYLE_IMAGE_WIDTH] = '16'
-    style[mxConstants.STYLE_IMAGE_HEIGHT] = '16'
-    graph.getStylesheet().putCellStyle('port', style)
+    style[mxConstants.STYLE_IMAGE_WIDTH] = '48'
+    style[mxConstants.STYLE_IMAGE_HEIGHT] = '48'
+    graph.getStylesheet().putCellStyle('href', style)
 
     style = graph.getStylesheet().getDefaultEdgeStyle()
     style[mxConstants.STYLE_LABEL_BACKGROUNDCOLOR] = '#FFFFFF'
@@ -600,9 +614,9 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private setOutline = () => {
-    const {mxOutline} = this.mx
+    // const {mxOutline} = this.mx
 
-    const outln = new mxOutline(this.graph, this.outline)
+    const outln = new mxOutline(graph, this.outline)
     outln.outline.labelsVisible = true
     outln.outline.setHtmlLabels(true)
   }
@@ -628,7 +642,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       hostElement.appendChild(span)
       rowElement.appendChild(hostElement)
 
-      this.addSidebarButton(this.graph, this.hosts, menu, rowElement)
+      this.addSidebarButton(graph, this.hosts, menu, rowElement)
     })
   }
 
@@ -640,18 +654,11 @@ class InventoryTopology extends PureComponent<Props, State> {
       icon.classList.add(`mxgraph-cell--icon`)
       icon.classList.add(`mxgraph-cell--icon-${menu.type.toLowerCase()}`)
 
-      this.addSidebarButton(this.graph, this.tools, menu, icon)
+      this.addSidebarButton(graph, this.tools, menu, icon)
     })
   }
 
-  private addSidebarButton(
-    graph: mxGraph,
-    sideBarArea: HTMLDivElement,
-    node: any,
-    icon: HTMLDivElement
-  ) {
-    const {mxUtils} = this.mx
-
+  private addSidebarButton(graph, sideBarArea, node, icon) {
     sideBarArea.appendChild(icon)
 
     const dragElt = document.createElement('div')
@@ -676,14 +683,8 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   // Function that is executed when the image is dropped on
   // the graph. The cell argument points to the cell under
-  private dragCell = (node: Node) => (
-    graph: mxGraph,
-    _event: Event,
-    _cell: mxCell,
-    x: number,
-    y: number
-  ) => {
-    const {mxUtils, mxRectangle, mxPoint} = this.mx
+  private dragCell = (node: Node) => (graph, _event, _cell, x, y) => {
+    // const {mxUtils, mxRectangle, mxPoint} = this.mx
 
     const parent = graph.getDefaultParent()
     const model = graph.getModel()
@@ -711,19 +712,6 @@ class InventoryTopology extends PureComponent<Props, State> {
         CELL_SIZE_WIDTH,
         CELL_SIZE_HEIGHT
       )
-      // // Adds the ports at various relative locations
-      // var port = graph.insertVertex(
-      //   v1,
-      //   null,
-      //   'Trigger',
-      //   0,
-      //   0.25,
-      //   16,
-      //   16,
-      //   'port;image=editors/images/overlays/flash.png;align=right;imageAlign=right;spacingRight=18',
-      //   true
-      // )
-      // port.geometry.offset = new mxPoint(1, 0)
 
       v1.setConnectable(true)
 
@@ -740,7 +728,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     _.forEach(toolbarMenu, menu => {
       const {actionName, label, icon, isTransparent} = menu
       this.addToolbarButton({
-        editor: this.editor,
+        editor: editor,
         toolbar: this.toolbar,
         action: actionName,
         label,
@@ -758,15 +746,13 @@ class InventoryTopology extends PureComponent<Props, State> {
     icon,
     isTransparent = false,
   }: {
-    editor: mxEditor
+    editor: mxEditorType
     toolbar: HTMLElement
     action: string
     label: string
     icon: string
     isTransparent?: boolean
   }) => {
-    const {mxEvent} = this.mx
-
     const button = document.createElement('button')
     button.style.fontSize = '10'
     button.classList.add('button')
@@ -798,21 +784,12 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private showModalWindow = (
-    graph: mxGraph,
+    graph: mxGraphType,
     title: string,
     content: HTMLTextAreaElement,
     width: number,
     height: number
   ) => {
-    const {
-      mxUtils,
-      mxClient,
-      mxDivResizer,
-      mxWindow,
-      mxEffects,
-      mxEvent,
-    } = this.mx
-
     const background = document.createElement('div')
     background.style.position = 'absolute'
     background.style.left = '0px'
@@ -820,6 +797,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     background.style.right = '0px'
     background.style.bottom = '0px'
     background.style.background = 'black'
+
     mxUtils.setOpacity(background, 50)
     this.container.appendChild(background)
 
@@ -850,23 +828,21 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   // Trigger graph refresh when mxgraph's model update
   private graphUpdate = () => {
-    this.graph.getModel().beginUpdate()
+    graph.getModel().beginUpdate()
     try {
     } finally {
-      this.graph.getModel().endUpdate()
-      this.graph.refresh()
+      graph.getModel().endUpdate()
+      graph.refresh()
     }
   }
 
   // Creates the textfield for the given property.
   private createTextField = (
-    graph: mxGraph,
-    form: mxForm,
-    cell: mxCell,
+    graph: mxGraphType,
+    form: mxFormType,
+    cell: mxCellType,
     attribute: any
   ) => {
-    const {mxEvent, mxClient} = this.mx
-
     const input = form.addText(
       attribute.nodeName + ':',
       attribute.nodeValue,
@@ -1017,7 +993,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   public render() {
     return (
       <div id="containerWrapper">
-        {!this.mx.mxClient.isBrowserSupported() ? (
+        {!mxClient.isBrowserSupported() ? (
           <>this Browser Not Supported</>
         ) : (
           <Threesizer
