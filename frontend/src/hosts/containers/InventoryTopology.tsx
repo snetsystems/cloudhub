@@ -965,6 +965,8 @@ class InventoryTopology extends PureComponent<Props, State> {
           const strong = vertex.querySelector('strong')
           if (strong && attribute.nodeName === 'data-label') {
             strong.textContent = newValue
+            cell.setValue(vertex.outerHTML)
+            return
           }
 
           if (attribute.nodeName === 'data-href') {
@@ -990,9 +992,7 @@ class InventoryTopology extends PureComponent<Props, State> {
                 return
               }
             }
-          } else {
           }
-          // cell.setValue(vertex.outerHTML)
         } finally {
           graph.getModel().endUpdate()
           this.graphUpdate()
