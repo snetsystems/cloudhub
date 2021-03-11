@@ -29,7 +29,7 @@ import {
   mxGraphModel as mxGraphModelType,
 } from 'mxgraph'
 
-import _ from 'lodash'
+import _, {values} from 'lodash'
 
 // component
 // import {Button, ButtonShape, IconFont} from 'src/reusable_ui'
@@ -97,6 +97,8 @@ const {
   mxWindow,
   mxEffects,
 } = mx
+
+const imgExpanded = require('../../../assets/images/stencils/expanded.gif')
 
 // Creates a wrapper editor with a graph inside the given container.
 // The editor is used to create certain functionality for the
@@ -278,33 +280,33 @@ class InventoryTopology extends PureComponent<Props, State> {
     const config = mxUtils.load(keyhandlerCommons).getDocumentElement()
     editor.configure(config)
 
-    // Overrides method to store a cell label in the model
-    const cellLabelChanged = graph.cellLabelChanged
-    graph.cellLabelChanged = (
-      cell: mxCellType,
-      newValue: any,
-      autoSize: boolean
-    ) => {
-      if (mxUtils.isNode(cell.value, cell.value.nodeName)) {
-        // Clones the value for correct undo/redo
-        const elt = cell.value.cloneNode(true)
-        elt.setAttribute('label', newValue)
+    // // Overrides method to store a cell label in the model
+    // const cellLabelChanged = graph.cellLabelChanged
+    // graph.cellLabelChanged = (
+    //   cell: mxCellType,
+    //   newValue: any,
+    //   autoSize: boolean
+    // ) => {
+    //   if (mxUtils.isNode(cell.value, cell.value.nodeName)) {
+    //     // Clones the value for correct undo/redo
+    //     const elt = cell.value.cloneNode(true)
+    //     elt.setAttribute('label', newValue)
 
-        newValue = elt
+    //     newValue = elt
 
-        cellLabelChanged.apply(graph, [cell, newValue, autoSize])
-      }
-    }
+    //     cellLabelChanged.apply(graph, [cell, newValue, autoSize])
+    //   }
+    // }
 
-    // @ts-ignore Overrides method to create the editing value
-    const getEditingValue = graph.getEditingValue
-    graph.getEditingValue = cell => {
-      if (mxUtils.isNode(cell.value, cell.value.nodeName)) {
-        const label = cell.getAttribute('label', '')
-
-        return label
-      }
-    }
+    // // @ts-ignore Overrides method to create the editing value
+    // const getEditingValue = graph.getEditingValue
+    // graph.getEditingValue = cell => {
+    //   if (mxUtils.isNode(cell.value, cell.value.nodeName)) {
+    //     const label = cell.getAttribute('label', '')
+    //     console.log('getEditingValue: ', label)
+    //     return label
+    //   }
+    // }
 
     /**
      * Disables drill-down for non-swimlanes.
@@ -392,24 +394,24 @@ class InventoryTopology extends PureComponent<Props, State> {
     // Enables new connections
     graph.setConnectable(true)
 
-    // Returns a shorter label if the cell is collapsed and no
-    // label for expanded groups
-    graph.getLabel = function(cell) {
-      let tmp = mxGraph.prototype.getLabel.apply(this, arguments) // "supercall"
+    // // Returns a shorter label if the cell is collapsed and no
+    // // label for expanded groups
+    // graph.getLabel = function(cell) {
+    //   let tmp = mxGraph.prototype.getLabel.apply(this, arguments) // "supercall"
 
-      if (this.isCellLocked(cell)) {
-        // Returns an empty label but makes sure an HTML
-        // element is created for the label (for event
-        // processing wrt the parent label)
-        return ''
-      } else if (this.isCellCollapsed(cell)) {
-        const index = tmp.indexOf('</div>')
-        if (index > 0) {
-          tmp = tmp.substring(0, index + 5)
-        }
-      }
-      return tmp
-    }
+    //   if (this.isCellLocked(cell)) {
+    //     // Returns an empty label but makes sure an HTML
+    //     // element is created for the label (for event
+    //     // processing wrt the parent label)
+    //     return ''
+    //   } else if (this.isCellCollapsed(cell)) {
+    //     const index = tmp.indexOf('</div>')
+    //     if (index > 0) {
+    //       tmp = tmp.substring(0, index + 5)
+    //     }
+    //   }
+    //   return tmp
+    // }
 
     //   return new mxCellState(graph.view, edge, graph.getCellStyle(edge))
     // }
@@ -429,30 +431,55 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
 
     // Overrides method to provide a cell label in the display
-    graph.convertValueToString = cell => {
-      if (cell) {
-        const labelValue = cell.getAttribute('label', '')
-        return labelValue
-      }
+    // graph.convertValueToString = cell => {
+    //   if (cell) {
+    //     // console.log('convertValueToString', cell.value)
+    //     // const parser = new DOMParser()
+    //     // const doc = parser.parseFromString(cell.value, 'text/html')
+    //     // const vertex = doc.querySelector('.vertex')
+    //     // const label = vertex.getAttribute('data-label')
+    //     // console.log('convertValueToString: ', label)
+    //     return cell.value
+    //   }
 
-      return ''
-    }
+    //   return ''
+    // }
+    // content.innerHTML = graph.convertValueToString(cell)
 
     // Implements a properties panel that uses
     // mxCellAttributeChange to change properties
     graph.getSelectionModel().addListener(mxEvent.CHANGE, () => {
       this.selectionChanged(graph)
     })
+
+    graph.dblClick = function(evt) {
+      // Disables any default behaviour for the double click
+      mxEvent.consume(evt)
+    }
   }
 
   private selectionChanged = (graph: mxGraphType) => {
+    console.log('selectionChanged')
+    const properties = this.properties
+
+    // Forces focusout in IE
+    graph.container.focus()
+
+    // Clears the DIV the non-DOM way
+    properties.innerHTML = ''
+
+    // Gets the selection cell
     const cell = graph.getSelectionCell()
-    const form = new mxForm('inventory-topology--mxform')
+    console.log('selectionChanged cell: ', cell)
 
     if (cell) {
-      const attrs = cell.value?.attributes
+      // Creates the form from the attributes of the user object
+      const form = new mxForm('inventory-topology--mxform')
 
-      this.properties.innerHTML = ''
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(cell.value, 'text/html')
+      const vertex = doc.querySelector('.vertex')
+      const attrs = vertex.attributes
 
       if (attrs) {
         for (let i = 0; i < attrs.length; i++) {
@@ -460,7 +487,9 @@ class InventoryTopology extends PureComponent<Props, State> {
         }
       }
 
-      this.properties.appendChild(form.getTable())
+      properties.appendChild(form.getTable())
+    } else {
+      mxUtils.writeln(properties, 'Nothing selected.')
     }
   }
 
@@ -614,8 +643,6 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private setOutline = () => {
-    // const {mxOutline} = this.mx
-
     const outln = new mxOutline(graph, this.outline)
     outln.outline.labelsVisible = true
     outln.outline.setHtmlLabels(true)
@@ -696,17 +723,47 @@ class InventoryTopology extends PureComponent<Props, State> {
       // rather than the label markup, so use 'image=' + image for the style.
       // as follows: v1 = graph.insertVertex(parent, null, label,
       // pt.x, pt.y, 120, 120, 'image=' + image);
-      const doc = mxUtils.createXmlDocument()
-      const userCell = doc.createElement(node.type)
 
-      userCell.setAttribute('name', node.name)
-      userCell.setAttribute('label', node.label)
-      userCell.setAttribute('type', node.type)
+      // const doc = mxUtils.createXmlDocument()
+      // const userCell = doc.createElement(node.type)
+
+      // userCell.setAttribute('name', node.name)
+      // userCell.setAttribute('label', node.label)
+      // userCell.setAttribute('type', node.type)
+
+      const vertex = document.createElement('div')
+      vertex.classList.add('vertex')
+      vertex.setAttribute('data-name', node.name)
+      vertex.setAttribute('data-label', node.label)
+      vertex.setAttribute('data-href', node.href)
+      vertex.setAttribute('data-type', node.type)
+
+      const vertexLabel = document.createElement('strong')
+      vertexLabel.textContent = node.label
+
+      const vertexHref = document.createElement('a')
+      vertexHref.href = node.href
+      vertexHref.textContent = 'link'
+
+      const vertexIconBox = document.createElement('div')
+      const vertexIcon = document.createElement('img')
+      // vertexIcon.classList.add('mxgraph-cell--icon-workstation')
+      // vertexIcon.classList.add('mxgraph-cell--icon')
+      vertexIcon.classList.add('mxgraph-cell--icon-box')
+      vertexIcon.setAttribute('src', imgExpanded)
+      vertexIconBox.appendChild(vertexIcon)
+      console.log(vertexIcon)
+
+      vertex.appendChild(vertexLabel)
+      vertex.appendChild(vertexIconBox)
+      vertex.appendChild(vertexHref)
+
+      console.log('vertex: ', vertex)
 
       v1 = graph.insertVertex(
         parent,
         null,
-        userCell,
+        vertex.outerHTML,
         x,
         y,
         CELL_SIZE_WIDTH,
@@ -850,14 +907,34 @@ class InventoryTopology extends PureComponent<Props, State> {
     )
 
     const applyHandler = () => {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(cell.value, 'text/html')
+      const vertex = doc.querySelector('.vertex')
+
+      console.log('doc: ', doc)
+      console.log('vertex: ', vertex)
+
       const newValue = input.value || ''
-      const oldValue = cell.getAttribute(attribute.nodeName, '')
+      const oldValue = vertex.getAttribute(attribute.nodeName) || ''
 
       if (newValue != oldValue) {
+        console.log('applyHandler newValue: ', newValue)
         graph.getModel().beginUpdate()
 
         try {
-          cell.setAttribute(attribute.nodeName, newValue)
+          // const vertex = document.createElement('div')
+          // vertex.textContent = newValue
+          vertex.setAttribute(attribute.nodeName, newValue)
+
+          if (attribute.nodeName === 'data-label') {
+            vertex.querySelector('strong').textContent = newValue
+          }
+
+          if (attribute.href === 'data-href') {
+            vertex.querySelector('a').href = newValue
+          }
+
+          cell.setValue(vertex.outerHTML)
         } finally {
           graph.getModel().endUpdate()
           this.graphUpdate()
