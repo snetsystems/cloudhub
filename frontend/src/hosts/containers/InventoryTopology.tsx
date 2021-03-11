@@ -195,11 +195,21 @@ class InventoryTopology extends PureComponent<Props, State> {
         // Applies the current style to the cell
         const isEdge = model.isEdge(cell)
         if (isEdge) {
-          const doc = mxUtils.createXmlDocument()
-          const edge = doc.createElement('Edge')
+          // const doc = mxUtils.createXmlDocument()
+          // const edge = doc.createElement('Edge')
 
-          edge.setAttribute('label', 'edge')
-          cell.setValue(edge)
+          // edge.setAttribute('label', 'edge')
+
+          const edge = document.createElement('div')
+
+          edge.classList.add('vertex')
+          edge.setAttribute('data-name', 'Edge')
+          edge.setAttribute('data-label', 'Edge')
+          edge.setAttribute('data-type', 'Edge')
+          cell.setValue(edge.outerHTML)
+          cell.setStyle('edge')
+
+          // cell.setValue(edge)
         }
       }
     } finally {
@@ -328,16 +338,45 @@ class InventoryTopology extends PureComponent<Props, State> {
     graph.createGroupCell = function() {
       const group = mxGraph.prototype.createGroupCell.apply(this, arguments)
 
-      // Defines the default group to be used for grouping. The
-      // default group is a field in the mxEditor instance that
-      // is supposed to be a cell which is cloned for new cells.
-      // The groupBorderSize is used to define the spacing between
-      // the children of a group and the group bounds.
-      const doc = mxUtils.createXmlDocument()
-      const groupCell = doc.createElement('Group')
+      // const vertexLabel = document.createElement('strong')
+      // vertexLabel.textContent = node.label
 
-      groupCell.setAttribute('label', 'Group')
-      group.setValue(groupCell)
+      // const vertexHref = document.createElement('a')
+      // vertexHref.href = node.href
+      // vertexHref.textContent = 'link'
+
+      // const vertexIconBox = document.createElement('div')
+      // const vertexIcon = document.createElement('img')
+      // // vertexIcon.classList.add('mxgraph-cell--icon-workstation')
+      // // vertexIcon.classList.add('mxgraph-cell--icon')
+      // vertexIcon.classList.add('mxgraph-cell--icon-box')
+      // vertexIcon.setAttribute('src', imgExpanded)
+      // vertexIconBox.appendChild(vertexIcon)
+      // console.log(vertexIcon)
+
+      // vertex.appendChild(vertexLabel)
+      // vertex.appendChild(vertexIconBox)
+      // vertex.appendChild(vertexHref)
+
+      // console.log('vertex: ', vertex)
+
+      // // Defines the default group to be used for grouping. The
+      // // default group is a field in the mxEditor instance that
+      // // is supposed to be a cell which is cloned for new cells.
+      // // The groupBorderSize is used to define the spacing between
+      // // the children of a group and the group bounds.
+      // const doc = mxUtils.createXmlDocument()
+      // const groupCell = doc.createElement('Group')
+
+      const groupCell = document.createElement('div')
+
+      groupCell.classList.add('vertex')
+      groupCell.setAttribute('data-name', 'Group')
+      groupCell.setAttribute('data-label', 'Group')
+      groupCell.setAttribute('data-type', 'Group')
+
+      // groupCell.setAttribute('label', 'Group')
+      group.setValue(groupCell.outerHTML)
       group.setVertex(true)
       group.setConnectable(false)
 
@@ -394,8 +433,8 @@ class InventoryTopology extends PureComponent<Props, State> {
     // Enables new connections
     graph.setConnectable(true)
 
-    // // Returns a shorter label if the cell is collapsed and no
-    // // label for expanded groups
+    // Returns a shorter label if the cell is collapsed and no
+    // label for expanded groups
     // graph.getLabel = function(cell) {
     //   let tmp = mxGraph.prototype.getLabel.apply(this, arguments) // "supercall"
 
@@ -431,19 +470,31 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
 
     // Overrides method to provide a cell label in the display
-    // graph.convertValueToString = cell => {
-    //   if (cell) {
-    //     // console.log('convertValueToString', cell.value)
-    //     // const parser = new DOMParser()
-    //     // const doc = parser.parseFromString(cell.value, 'text/html')
-    //     // const vertex = doc.querySelector('.vertex')
-    //     // const label = vertex.getAttribute('data-label')
-    //     // console.log('convertValueToString: ', label)
-    //     return cell.value
-    //   }
+    graph.convertValueToString = cell => {
+      if (cell) {
+        console.log('convertValueToString cell: ', cell)
+        if (cell.style === 'group') {
+          const parser = new DOMParser()
+          const doc = parser.parseFromString(cell.value, 'text/html')
+          const vertex = doc.querySelector('.vertex')
+          const label = vertex.getAttribute('data-label')
 
-    //   return ''
-    // }
+          return label
+        }
+        if (cell.style === 'edge') {
+          const parser = new DOMParser()
+          const doc = parser.parseFromString(cell.value, 'text/html')
+          const vertex = doc.querySelector('.vertex')
+          const label = vertex.getAttribute('data-label')
+
+          return label
+        } else {
+          return cell.value
+        }
+      }
+
+      return ''
+    }
     // content.innerHTML = graph.convertValueToString(cell)
 
     // Implements a properties panel that uses
@@ -922,16 +973,15 @@ class InventoryTopology extends PureComponent<Props, State> {
         graph.getModel().beginUpdate()
 
         try {
-          // const vertex = document.createElement('div')
-          // vertex.textContent = newValue
           vertex.setAttribute(attribute.nodeName, newValue)
-
-          if (attribute.nodeName === 'data-label') {
-            vertex.querySelector('strong').textContent = newValue
+          const strong = vertex.querySelector('strong')
+          if (strong && attribute.nodeName === 'data-label') {
+            strong.textContent = newValue
           }
 
-          if (attribute.href === 'data-href') {
-            vertex.querySelector('a').href = newValue
+          const link = vertex.querySelector('a')
+          if (link && attribute.href === 'data-href') {
+            link.href = newValue
           }
 
           cell.setValue(vertex.outerHTML)
