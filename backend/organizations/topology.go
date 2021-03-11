@@ -78,6 +78,13 @@ func (s *TopologysStore) Add(ctx context.Context, t *cloudhub.Topology) (*cloudh
 	}
 
 	t.Organization = s.organization
+
+	// validate that the topology exists
+	_, err = s.store.Get(ctx, cloudhub.TopologyQuery{Organization: &t.Organization})
+	if err == nil {
+		return nil, cloudhub.ErrTopologyAlreadyExists
+	}
+
 	return s.store.Add(ctx, t)
 }
 
