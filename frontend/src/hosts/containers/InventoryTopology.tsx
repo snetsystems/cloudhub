@@ -969,10 +969,15 @@ class InventoryTopology extends PureComponent<Props, State> {
         graph.getModel().beginUpdate()
 
         try {
-          vertex.setAttribute(attribute.nodeName, newValue)
           const strong = vertex.querySelector('strong')
           if (strong && attribute.nodeName === 'data-label') {
             strong.textContent = newValue
+            cell.setValue(vertex.outerHTML)
+            return
+          }
+
+          if (attribute.nodeName === 'data-name') {
+            vertex.setAttribute(attribute.nodeName, newValue)
             cell.setValue(vertex.outerHTML)
             return
           }
