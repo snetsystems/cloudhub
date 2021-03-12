@@ -29,7 +29,7 @@ import {
   mxGraphModel as mxGraphModelType,
 } from 'mxgraph'
 
-import _, {values} from 'lodash'
+import _ from 'lodash'
 
 // component
 // import {Button, ButtonShape, IconFont} from 'src/reusable_ui'
@@ -503,7 +503,17 @@ class InventoryTopology extends PureComponent<Props, State> {
       const parser = new DOMParser()
       const doc = parser.parseFromString(cell.value, 'text/html')
       const vertex = doc.querySelector('.vertex')
-      const attrs = vertex.attributes
+      const attrNames = ['data-label', 'data-href', 'data-name']
+      const attrs = _.filter(vertex.attributes, attr => {
+        let isSame = false
+        _.forEach(attrNames, attrName => {
+          if (attr.nodeName === attrName) {
+            isSame = true
+            return
+          }
+        })
+        return isSame
+      })
 
       if (attrs) {
         for (let i = 0; i < attrs.length; i++) {
@@ -702,11 +712,23 @@ class InventoryTopology extends PureComponent<Props, State> {
       icon.classList.add(`mxgraph-cell--icon`)
       icon.classList.add(`mxgraph-cell--icon-${menu.type.toLowerCase()}`)
 
-      this.addSidebarButton(graph, this.tools, menu, icon)
+      this.addSidebarButton(
+        graph,
+        this.tools,
+        menu,
+        icon,
+        `mxgraph-cell--icon-${menu.type.toLowerCase()}`
+      )
     })
   }
 
-  private addSidebarButton(graph, sideBarArea, node, icon) {
+  private addSidebarButton(
+    graph: mxGraphType,
+    sideBarArea: HTMLElement,
+    node: Node,
+    icon: HTMLDivElement,
+    iconClassName = 'mxgraph-cell--icon-server'
+  ) {
     sideBarArea.appendChild(icon)
 
     const dragElt = document.createElement('div')
@@ -718,7 +740,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     const ds = mxUtils.makeDraggable(
       icon,
       graph,
-      this.dragCell(node),
+      this.dragCell(node, iconClassName),
       dragElt,
       0,
       0,
@@ -731,7 +753,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   // Function that is executed when the image is dropped on
   // the graph. The cell argument points to the cell under
-  private dragCell = (node: Node) => (
+  private dragCell = (node: Node, iconClassName: string) => (
     graph: mxGraphType,
     _event: any,
     _cell: mxCellType,
@@ -755,16 +777,23 @@ class InventoryTopology extends PureComponent<Props, State> {
       vertex.setAttribute('data-href', node.href)
       vertex.setAttribute('data-type', node.type)
 
+      const vertexLabelBox = document.createElement('div')
+      vertexLabelBox.classList.add('mxgraph-cell--title')
+
       const vertexLabel = document.createElement('strong')
       vertexLabel.textContent = node.label
 
+      vertexLabelBox.appendChild(vertexLabel)
+
       const vertexIconBox = document.createElement('div')
-      const vertexIcon = document.createElement('img')
+      const vertexIcon = document.createElement('div')
+      vertexIcon.classList.add('mxgraph-cell--icon')
       vertexIcon.classList.add('mxgraph-cell--icon-box')
-      vertexIcon.setAttribute('src', imgExpanded)
+      vertexIcon.classList.add(iconClassName)
+
       vertexIconBox.appendChild(vertexIcon)
 
-      vertex.appendChild(vertexLabel)
+      vertex.appendChild(vertexLabelBox)
       vertex.appendChild(vertexIconBox)
 
       v1 = graph.insertVertex(
@@ -943,11 +972,9 @@ class InventoryTopology extends PureComponent<Props, State> {
     cell: mxCellType,
     attribute: any
   ) => {
-    const input = form.addText(
-      attribute.nodeName + ':',
-      attribute.nodeValue,
-      'text'
-    )
+    const nodeName = _.upperFirst(attribute.nodeName.replace('data-', ''))
+
+    const input = form.addText(nodeName + ':', attribute.nodeValue, 'text')
 
     const applyHandler = () => {
       const parser = new DOMParser()
@@ -961,10 +988,17 @@ class InventoryTopology extends PureComponent<Props, State> {
         graph.getModel().beginUpdate()
 
         try {
-          vertex.setAttribute(attribute.nodeName, newValue)
           const strong = vertex.querySelector('strong')
           if (strong && attribute.nodeName === 'data-label') {
             strong.textContent = newValue
+            cell.setValue(vertex.outerHTML)
+            return
+          }
+
+          if (attribute.nodeName === 'data-name') {
+            vertex.setAttribute(attribute.nodeName, newValue)
+            cell.setValue(vertex.outerHTML)
+            return
           }
 
           if (attribute.nodeName === 'data-href') {
@@ -990,9 +1024,7 @@ class InventoryTopology extends PureComponent<Props, State> {
                 return
               }
             }
-          } else {
           }
-          // cell.setValue(vertex.outerHTML)
         } finally {
           graph.getModel().endUpdate()
           this.graphUpdate()

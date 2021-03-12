@@ -63,6 +63,13 @@
     min-width: 100px;
   }
 
+  .mxgraph-cell--title {
+    width: 120px;
+    padding: 5px;
+    white-space: break-spaces;
+    word-break: break-all;
+  }
+
   .tool-instance {
     width: 48px;
     height: 48px;
