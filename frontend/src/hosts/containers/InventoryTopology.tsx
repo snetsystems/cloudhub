@@ -515,8 +515,6 @@ class InventoryTopology extends PureComponent<Props, State> {
         return isSame
       })
 
-      console.log({attrs})
-
       if (attrs) {
         for (let i = 0; i < attrs.length; i++) {
           this.createTextField(graph, form, cell, attrs[i])
