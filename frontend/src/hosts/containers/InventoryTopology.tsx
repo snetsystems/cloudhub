@@ -712,11 +712,23 @@ class InventoryTopology extends PureComponent<Props, State> {
       icon.classList.add(`mxgraph-cell--icon`)
       icon.classList.add(`mxgraph-cell--icon-${menu.type.toLowerCase()}`)
 
-      this.addSidebarButton(graph, this.tools, menu, icon)
+      this.addSidebarButton(
+        graph,
+        this.tools,
+        menu,
+        icon,
+        `mxgraph-cell--icon-${menu.type.toLowerCase()}`
+      )
     })
   }
 
-  private addSidebarButton(graph, sideBarArea, node, icon) {
+  private addSidebarButton(
+    graph: mxGraphType,
+    sideBarArea: HTMLElement,
+    node: Node,
+    icon: HTMLDivElement,
+    iconClassName = 'mxgraph-cell--icon-server'
+  ) {
     sideBarArea.appendChild(icon)
 
     const dragElt = document.createElement('div')
@@ -728,7 +740,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     const ds = mxUtils.makeDraggable(
       icon,
       graph,
-      this.dragCell(node),
+      this.dragCell(node, iconClassName),
       dragElt,
       0,
       0,
@@ -741,7 +753,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   // Function that is executed when the image is dropped on
   // the graph. The cell argument points to the cell under
-  private dragCell = (node: Node) => (
+  private dragCell = (node: Node, iconClassName: string) => (
     graph: mxGraphType,
     _event: any,
     _cell: mxCellType,
@@ -765,16 +777,23 @@ class InventoryTopology extends PureComponent<Props, State> {
       vertex.setAttribute('data-href', node.href)
       vertex.setAttribute('data-type', node.type)
 
+      const vertexLabelBox = document.createElement('div')
+      vertexLabelBox.classList.add('mxgraph-cell--title')
+
       const vertexLabel = document.createElement('strong')
       vertexLabel.textContent = node.label
 
+      vertexLabelBox.appendChild(vertexLabel)
+
       const vertexIconBox = document.createElement('div')
-      const vertexIcon = document.createElement('img')
+      const vertexIcon = document.createElement('div')
+      vertexIcon.classList.add('mxgraph-cell--icon')
       vertexIcon.classList.add('mxgraph-cell--icon-box')
-      vertexIcon.setAttribute('src', imgExpanded)
+      vertexIcon.classList.add(iconClassName)
+
       vertexIconBox.appendChild(vertexIcon)
 
-      vertex.appendChild(vertexLabel)
+      vertex.appendChild(vertexLabelBox)
       vertex.appendChild(vertexIconBox)
 
       v1 = graph.insertVertex(
