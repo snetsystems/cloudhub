@@ -29,7 +29,7 @@ import {
   mxGraphModel as mxGraphModelType,
 } from 'mxgraph'
 
-import _, {values} from 'lodash'
+import _ from 'lodash'
 
 // component
 // import {Button, ButtonShape, IconFont} from 'src/reusable_ui'
@@ -503,7 +503,19 @@ class InventoryTopology extends PureComponent<Props, State> {
       const parser = new DOMParser()
       const doc = parser.parseFromString(cell.value, 'text/html')
       const vertex = doc.querySelector('.vertex')
-      const attrs = vertex.attributes
+      const attrNames = ['data-label', 'data-href', 'data-name']
+      const attrs = _.filter(vertex.attributes, attr => {
+        let isSame = false
+        _.forEach(attrNames, attrName => {
+          if (attr.nodeName === attrName) {
+            isSame = true
+            return
+          }
+        })
+        return isSame
+      })
+
+      console.log({attrs})
 
       if (attrs) {
         for (let i = 0; i < attrs.length; i++) {
@@ -943,11 +955,9 @@ class InventoryTopology extends PureComponent<Props, State> {
     cell: mxCellType,
     attribute: any
   ) => {
-    const input = form.addText(
-      attribute.nodeName + ':',
-      attribute.nodeValue,
-      'text'
-    )
+    const nodeName = _.upperFirst(attribute.nodeName.replace('data-', ''))
+
+    const input = form.addText(nodeName + ':', attribute.nodeValue, 'text')
 
     const applyHandler = () => {
       const parser = new DOMParser()
