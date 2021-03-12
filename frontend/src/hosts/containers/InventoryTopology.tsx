@@ -1,4 +1,4 @@
-import React, {Children, createRef, PureComponent} from 'react'
+import React, {createRef, PureComponent} from 'react'
 import {connect} from 'react-redux'
 import {
   default as mxgraph,
@@ -34,7 +34,7 @@ import _ from 'lodash'
 // component
 // import {Button, ButtonShape, IconFont} from 'src/reusable_ui'
 // import HostList from 'src/hosts/components/HostList'
-import {TableBody, TableBodyRowItem} from 'src/addon/128t/reusable/layout'
+import {TableBody} from 'src/addon/128t/reusable/layout'
 // import uuid from 'uuid'
 // import Tools from 'src/hosts/components/Tools'
 // import Properties from 'src/hosts/components/Properties'
@@ -105,8 +105,6 @@ const expandedImg = require('../../../assets/images/stencils/expanded.gif')
 const linkImg = require('../../../assets/images/stencils/link.png')
 mxGraph.prototype.collapsedImage = new mxImage(collapsedImg, 9, 9)
 mxGraph.prototype.expandedImage = new mxImage(expandedImg, 9, 9)
-
-const imgExpanded = require('../../../assets/images/stencils/expanded.gif')
 
 // Creates a wrapper editor with a graph inside the given container.
 // The editor is used to create certain functionality for the
