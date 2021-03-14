@@ -202,11 +202,15 @@ class InventoryTopology extends PureComponent<Props, State> {
         const isEdge = model.isEdge(cell)
         if (isEdge) {
           const edge = document.createElement('div')
-
           edge.classList.add('vertex')
           edge.setAttribute('data-name', 'Edge')
           edge.setAttribute('data-label', 'Edge')
           edge.setAttribute('data-type', 'Edge')
+
+          const edgeTitle = document.createElement('strong')
+          edgeTitle.textContent = 'Edge'
+
+          edge.appendChild(edgeTitle)
           cell.setValue(edge.outerHTML)
           cell.setStyle('edge')
         }
@@ -987,6 +991,12 @@ class InventoryTopology extends PureComponent<Props, State> {
 
         try {
           const strong = vertex.querySelector('strong')
+          console.log(
+            `attribute.nodeName === 'data-label'`,
+            attribute.nodeName === 'data-label',
+            attribute.nodeName,
+            'data-label'
+          )
           if (strong && attribute.nodeName === 'data-label') {
             strong.textContent = newValue
             cell.setValue(vertex.outerHTML)
