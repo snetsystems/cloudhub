@@ -80,14 +80,14 @@ export const toolbarMenu: ToolbarMenu[] = [
   },
 ]
 
-export interface Node {
+export interface Menu {
   type: string
   name: string
   label: string
   href?: string
 }
 
-export const toolsMenu: Node[] = [
+export const toolsMenu: Menu[] = [
   {
     type: 'Server',
     name: 'server',
@@ -144,35 +144,9 @@ export const toolsMenu: Node[] = [
   },
 ]
 
-export const hostsMenu: Node[] = [
-  {
-    type: 'Server',
-    name: 'a',
-    label: 'A',
-    href: '',
-  },
-  {
-    type: 'Server',
-    name: 'b',
-    label: 'B',
-    href: '',
-  },
-  {
-    type: 'Server',
-    name: 'c',
-    label: 'C',
-    href: '',
-  },
-  {
-    type: 'Server',
-    name: 'd',
-    label: 'D',
-    href: '',
-  },
-  {
-    type: 'Server',
-    name: 'e',
-    label: 'E',
-    href: '',
-  },
-]
+export const hostMenu: Menu = {
+  type: 'Server',
+  name: '',
+  label: '',
+  href: '',
+}
