@@ -261,7 +261,6 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     // @ts-ignore
     graph.isTableRow = (cell: mxCellType) => {
-      console.log('isTableRow: ', this)
       return (
         // @ts-ignore
         graph.model.isVertex(cell) && graph.isTable(graph.model.getParent(cell))
@@ -270,7 +269,6 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     // @ts-ignore
     graph.isTableCell = (cell: mxCell) => {
-      console.log('isTableCell: ', this)
       return (
         graph.model.isVertex(cell) && // @ts-ignore
         graph.isTableRow(graph.model.getParent(cell))
