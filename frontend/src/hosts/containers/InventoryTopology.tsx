@@ -101,6 +101,13 @@ const linkImg = require('../../../assets/images/stencils/link.png')
 mxGraph.prototype.collapsedImage = new mxImage(collapsedImg, 9, 9)
 mxGraph.prototype.expandedImage = new mxImage(expandedImg, 9, 9)
 
+// folding option
+// @ts-ignore save...
+const getFoldingImage = mxGraph.prototype.getFoldingImage
+mxGraph.prototype.getFoldingImage = function() {
+  return null
+}
+
 // Creates a wrapper editor with a graph inside the given container.
 // The editor is used to create certain functionality for the
 // graph, such as the rubberband selection, but most parts
@@ -843,7 +850,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       v1.setConnectable(true)
 
       // Presets the collapsed size
-      v1.geometry.alternateBounds = new mxRectangle(0, 0, CELL_SIZE_WIDTH, 40)
+      // v1.geometry.alternateBounds = new mxRectangle(0, 0, CELL_SIZE_WIDTH, 40)
 
       // Adds the ports at various relative locations
       const linkBox = document.createElement('div')
