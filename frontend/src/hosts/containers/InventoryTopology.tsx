@@ -374,6 +374,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     editor.addAction('group', () => {
       if (graph.isEnabled()) {
         let cells = mxUtils.sortCells(graph.getSelectionCells(), true)
+        cells = _.filter(cells, cell => cell.style !== 'edge')
 
         if (
           cells.length === 1 && // @ts-ignore
