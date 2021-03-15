@@ -484,6 +484,8 @@ class InventoryTopology extends PureComponent<Props, State> {
     // Gets the selection cell
     const cell = graph.getSelectionCell()
 
+    console.log('cell: ', cell)
+
     if (cell) {
       // Creates the form from the attributes of the user object
       const form = new mxForm('inventory-topology--mxform')
@@ -526,11 +528,12 @@ class InventoryTopology extends PureComponent<Props, State> {
         let cells = mxUtils.sortCells(graph.getSelectionCells(), true)
 
         if (
-          cells.length == 1 && // @ts-ignore
+          cells.length === 1 && // @ts-ignore
           !graph.isTable(cells[0]) && // @ts-ignore
-          !graph.isTableRow(cells[0])
+          !graph.isTableRow(cells[0]) &&
+          graph.isSwimlane(cells[0])
         ) {
-          graph.setCellStyles('container', '1')
+          return
         } else {
           cells = graph.getCellsForGroup(cells)
           if (cells.length > 1) {
@@ -544,11 +547,11 @@ class InventoryTopology extends PureComponent<Props, State> {
     editor.addAction('ungroup', function() {
       if (graph.isEnabled()) {
         const cells = graph.getSelectionCells()
+        const groupCells = _.filter(cells, cell => graph.isSwimlane(cell))
 
         graph.model.beginUpdate()
         try {
-          const temp = graph.ungroupCells(cells)
-
+          const temp = graph.ungroupCells(groupCells)
           // Clears container flag for remaining cells
           if (cells != null) {
             for (let i = 0; i < cells.length; i++) {
@@ -557,9 +560,8 @@ class InventoryTopology extends PureComponent<Props, State> {
                   graph.model.getChildCount(cells[i]) == 0 &&
                   graph.model.isVertex(cells[i])
                 ) {
-                  graph.setCellStyles('container', '0', [cells[i]])
+                  graph.setCellStyles('group', '0', [cells[i]])
                 }
-
                 temp.push(cells[i])
               }
             }
@@ -834,7 +836,8 @@ class InventoryTopology extends PureComponent<Props, State> {
         x,
         y,
         CELL_SIZE_WIDTH,
-        CELL_SIZE_HEIGHT
+        CELL_SIZE_HEIGHT,
+        'node'
       )
 
       v1.setConnectable(true)
@@ -875,6 +878,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         `href`,
         true
       )
+
       href.geometry.offset = new mxPoint(-16, -8)
       href.setConnectable(false)
     } finally {
