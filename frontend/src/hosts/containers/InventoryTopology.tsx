@@ -671,6 +671,8 @@ class InventoryTopology extends PureComponent<Props, State> {
     style[mxConstants.STYLE_STROKEWIDTH] = '2'
     style[mxConstants.STYLE_ROUNDED] = true
     style[mxConstants.STYLE_EDGE] = mxEdgeStyle.OrthConnector
+    style[mxConstants.STYLE_ENDARROW] = null
+    style[mxConstants.STYLE_STARTARROW] = null
   }
 
   private setOutline = () => {
