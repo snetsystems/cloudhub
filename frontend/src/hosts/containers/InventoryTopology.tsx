@@ -75,12 +75,6 @@ const {
 
 const linkImg = require('../../../assets/images/stencils/link.png')
 
-// @ts-ignore
-const getFoldingImage = mxGraph.prototype.getFoldingImage
-mxGraph.prototype.getFoldingImage = function() {
-  return null
-}
-
 const editor = new mxEditor()
 const graph = editor.graph
 
@@ -202,14 +196,10 @@ class InventoryTopology extends PureComponent<Props, State> {
       this.insertHandler(cells)
     })
 
-    graph.connectionHandler.createEdgeState = function() {
+    graph.connectionHandler.createEdgeState = () => {
       const edge = graph.createEdge(null, null, null, null, null)
 
-      return new mxCellState(
-        this.graph.view,
-        edge,
-        this.graph.getCellStyle(edge)
-      )
+      return new mxCellState(graph.view, edge, graph.getCellStyle(edge))
     }
 
     if (mxClient.IS_QUIRKS) {
@@ -235,18 +225,13 @@ class InventoryTopology extends PureComponent<Props, State> {
     editor.configure(config)
 
     // @ts-ignore
-    graph.isContainer = function(cell: mxCell) {
-      const style = this.getCurrentCellStyle(cell)
-
-      if (this.isSwimlane(cell)) {
-        return style['container'] != '0'
-      } else {
-        return style['container'] == '1'
-      }
+    const getFoldingImage = mxGraph.prototype.getFoldingImage
+    graph.getFoldingImage = () => {
+      return null
     }
 
-    graph.createGroupCell = function() {
-      const group = mxGraph.prototype.createGroupCell.apply(this, arguments)
+    graph.createGroupCell = (cells: mxCellType[]) => {
+      const group = mxGraph.prototype.createGroupCell.apply(graph, cells)
       const groupCell = document.createElement('div')
 
       groupCell.classList.add('vertex')
@@ -268,48 +253,41 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
 
     // @ts-ignore
-    graph.isTable = function(cell: mxCell) {
-      const style = this.getCellStyle(cell)
+    graph.isTable = (cell: mxCell) => {
+      const style = graph.getCellStyle(cell)
 
       return style != null && style['childLayout'] == 'tableLayout'
     }
 
     // @ts-ignore
-    graph.isTableCell = function(cell: mxCell) {
+    graph.isTableRow = (cell: mxCellType) => {
+      console.log('isTableRow: ', this)
       return (
-        this.model.isVertex(cell) && this.isTableRow(this.model.getParent(cell))
+        // @ts-ignore
+        graph.model.isVertex(cell) && graph.isTable(graph.model.getParent(cell))
       )
     }
 
     // @ts-ignore
-    graph.isTableRow = function(cell: mxCellType) {
+    graph.isTableCell = (cell: mxCell) => {
+      console.log('isTableCell: ', this)
       return (
-        this.model.isVertex(cell) && this.isTable(this.model.getParent(cell))
+        graph.model.isVertex(cell) && // @ts-ignore
+        graph.isTableRow(graph.model.getParent(cell))
       )
     }
 
-    graph.isValidDropTarget = function(cell: mxCellType) {
-      return this.isSwimlane(cell)
-    }
-
-    graph.isValidRoot = function(cell: mxCellType) {
-      return this.isValidDropTarget(cell)
-    }
-
-    graph.isCellSelectable = function(cell: mxCellType) {
-      return !this.isCellLocked(cell)
+    graph.isCellSelectable = (cell: mxCellType) => {
+      return !graph.isCellLocked(cell)
     }
 
     graph.setConnectable(true)
 
-    graph.getLabel = function(cell) {
-      let tmp = mxGraph.prototype.getLabel.apply(this, arguments)
+    graph.getLabel = cell => {
+      let tmp = mxGraph.prototype.getLabel.apply(graph, [cell])
 
-      const isCellCollapsed = this.isCellCollapsed(cell)
-      if (cell.style === 'group') {
-        if (isCellCollapsed) {
-        }
-      } else {
+      const isCellCollapsed = graph.isCellCollapsed(cell)
+      if (cell.style !== 'group') {
         if (isCellCollapsed) {
           const parser = new DOMParser()
           const doc = parser.parseFromString(tmp, 'text/html')
@@ -323,21 +301,13 @@ class InventoryTopology extends PureComponent<Props, State> {
       return tmp
     }
 
-    graph.isHtmlLabel = function(cell) {
-      return !this.isSwimlane(cell)
+    graph.isHtmlLabel = (cell: mxCellType) => {
+      return !graph.isSwimlane(cell)
     }
 
-    graph.convertValueToString = cell => {
+    graph.convertValueToString = (cell: mxCellType) => {
       if (cell) {
-        if (cell.style === 'group') {
-          const parser = new DOMParser()
-          const doc = parser.parseFromString(cell.value, 'text/html')
-          const vertex = doc.querySelector('.vertex')
-          const label = vertex.getAttribute('data-label')
-
-          return label
-        }
-        if (cell.style === 'edge') {
+        if (cell.style === 'group' || cell.style === 'edge') {
           const parser = new DOMParser()
           const doc = parser.parseFromString(cell.value, 'text/html')
           const vertex = doc.querySelector('.vertex')
@@ -356,7 +326,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       this.selectionChanged(graph)
     })
 
-    graph.dblClick = function(evt) {
+    graph.dblClick = evt => {
       mxEvent.consume(evt)
     }
   }
@@ -423,7 +393,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       }
     })
 
-    editor.addAction('ungroup', function() {
+    editor.addAction('ungroup', () => {
       if (graph.isEnabled()) {
         const cells = graph.getSelectionCells()
         const groupCells = _.filter(cells, cell => graph.isSwimlane(cell))
@@ -782,7 +752,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       button.style.border = 'none'
     }
 
-    mxEvent.addListener(button, 'click', function() {
+    mxEvent.addListener(button, 'click', () => {
       editor.execute(action)
     })
 
