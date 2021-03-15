@@ -1027,12 +1027,16 @@ class InventoryTopology extends PureComponent<Props, State> {
           const strong = vertex.querySelector('strong')
           if (strong && attribute.nodeName === 'data-label') {
             strong.textContent = newValue
+            // attribute.nodeValue = newValue
+            vertex.setAttribute(attribute.nodeName, newValue)
+
             cell.setValue(vertex.outerHTML)
             return
           }
 
           if (attribute.nodeName === 'data-name') {
             vertex.setAttribute(attribute.nodeName, newValue)
+
             cell.setValue(vertex.outerHTML)
             return
           }
