@@ -47,12 +47,7 @@ import {
   HANDLE_HORIZONTAL,
   HANDLE_VERTICAL,
 } from 'src/shared/constants/'
-import {
-  toolbarMenu,
-  toolsMenu,
-  hostsMenu,
-  Node,
-} from 'src/hosts/constants/tools'
+import {toolbarMenu, toolsMenu, hostMenu, Menu} from 'src/hosts/constants/tools'
 
 // Types
 import {Host} from 'src/types'
@@ -163,15 +158,6 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     const hostList = _.keys(this.props.hostsObject)
     this.setState({hostList})
-  }
-
-  public componentDidUpdate(prevProps: Props) {
-    const {hostsObject} = this.props
-    if (prevProps.hostsObject !== hostsObject) {
-      // this.addHostButton()
-      // const hostList = _.keys(hostsObject)
-      // this.setState({hostList})
-    }
   }
 
   public componentWillUnmount() {}
@@ -517,9 +503,12 @@ class InventoryTopology extends PureComponent<Props, State> {
         return isSame
       })
 
+      const isDisableName =
+        vertex.attributes['data-name--disabled']?.nodeValue === 'true'
+
       if (attrs) {
         for (let i = 0; i < attrs.length; i++) {
-          this.createTextField(graph, form, cell, attrs[i])
+          this.createTextField(graph, form, cell, attrs[i], isDisableName)
         }
       }
 
@@ -687,7 +676,26 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private addHostsButton = () => {
-    _.forEach(hostsMenu, menu => {
+    const {hostsObject} = this.props
+    const hostList = _.keys(hostsObject)
+    let menus = []
+
+    _.reduce(
+      hostList,
+      (_acc, cur) => {
+        const host = {
+          ...hostMenu,
+          name: cur,
+          label: cur,
+        }
+        menus.push(host)
+
+        return cur
+      },
+      {}
+    )
+
+    _.forEach(menus, menu => {
       // Creates the image which is used as the hostsContainer icon (drag source)
       const rowElement = document.createElement('div')
       rowElement.classList.add('hosts-table--tr')
@@ -697,12 +705,20 @@ class InventoryTopology extends PureComponent<Props, State> {
 
       const span = document.createElement('span')
       span.style.fontSize = '14px'
-      span.textContent = menu.name
+      span.textContent = menu.label
 
       hostElement.appendChild(span)
       rowElement.appendChild(hostElement)
 
-      this.addSidebarButton(graph, this.hosts, menu, rowElement)
+      // this.addSidebarButton(graph, this.hosts, menu, rowElement)
+
+      this.addSidebarButton({
+        graph,
+        sideBarArea: this.hosts,
+        node: menu,
+        icon: rowElement,
+        isDisableName: true,
+      })
     })
   }
 
@@ -714,23 +730,31 @@ class InventoryTopology extends PureComponent<Props, State> {
       icon.classList.add(`mxgraph-cell--icon`)
       icon.classList.add(`mxgraph-cell--icon-${menu.type.toLowerCase()}`)
 
-      this.addSidebarButton(
+      this.addSidebarButton({
         graph,
-        this.tools,
-        menu,
+        sideBarArea: this.tools,
+        node: menu,
         icon,
-        `mxgraph-cell--icon-${menu.type.toLowerCase()}`
-      )
+        iconClassName: `mxgraph-cell--icon-${menu.type.toLowerCase()}`,
+      })
     })
   }
 
-  private addSidebarButton(
-    graph: mxGraphType,
-    sideBarArea: HTMLElement,
-    node: Node,
-    icon: HTMLDivElement,
-    iconClassName = 'mxgraph-cell--icon-server'
-  ) {
+  private addSidebarButton({
+    graph,
+    sideBarArea,
+    node,
+    icon,
+    iconClassName = 'mxgraph-cell--icon-server',
+    isDisableName = false,
+  }: {
+    graph: mxGraphType
+    sideBarArea: HTMLElement
+    node: Menu
+    icon: HTMLDivElement
+    iconClassName?: string
+    isDisableName?: boolean
+  }) {
     sideBarArea.appendChild(icon)
 
     const dragElt = document.createElement('div')
@@ -742,7 +766,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     const ds = mxUtils.makeDraggable(
       icon,
       graph,
-      this.dragCell(node, iconClassName),
+      this.dragCell(node, iconClassName, isDisableName),
       dragElt,
       0,
       0,
@@ -755,7 +779,11 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   // Function that is executed when the image is dropped on
   // the graph. The cell argument points to the cell under
-  private dragCell = (node: Node, iconClassName: string) => (
+  private dragCell = (
+    node: Menu,
+    iconClassName: string,
+    isDisableName: boolean
+  ) => (
     graph: mxGraphType,
     _event: any,
     _cell: mxCellType,
@@ -775,6 +803,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       const vertex = document.createElement('div')
       vertex.classList.add('vertex')
       vertex.setAttribute('data-name', node.name)
+      vertex.setAttribute('data-name--disabled', isDisableName.toString())
       vertex.setAttribute('data-label', node.label)
       vertex.setAttribute('data-href', node.href)
       vertex.setAttribute('data-type', node.type)
@@ -972,11 +1001,16 @@ class InventoryTopology extends PureComponent<Props, State> {
     graph: mxGraphType,
     form: mxFormType,
     cell: mxCellType,
-    attribute: any
+    attribute: any,
+    isDisableName = false
   ) => {
     const nodeName = _.upperFirst(attribute.nodeName.replace('data-', ''))
 
     const input = form.addText(nodeName + ':', attribute.nodeValue, 'text')
+
+    if (attribute.nodeName === 'data-name') {
+      input.disabled = isDisableName
+    }
 
     const applyHandler = () => {
       const parser = new DOMParser()
@@ -991,12 +1025,6 @@ class InventoryTopology extends PureComponent<Props, State> {
 
         try {
           const strong = vertex.querySelector('strong')
-          console.log(
-            `attribute.nodeName === 'data-label'`,
-            attribute.nodeName === 'data-label',
-            attribute.nodeName,
-            'data-label'
-          )
           if (strong && attribute.nodeName === 'data-label') {
             strong.textContent = newValue
             cell.setValue(vertex.outerHTML)
@@ -1116,7 +1144,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private get sidebarDivisions() {
-    const {sidebarProportions, hostList} = this.state
+    const {sidebarProportions} = this.state
     const [topSize, middleSize, bottomSize] = sidebarProportions
 
     return [
