@@ -89,7 +89,6 @@ const {
   mxPerimeter,
   mxEdgeStyle,
   mxOutline,
-  mxRectangle,
   mxPoint,
   mxWindow,
   mxEffects,
@@ -347,6 +346,10 @@ class InventoryTopology extends PureComponent<Props, State> {
       groupCell.setAttribute('data-label', 'Group')
       groupCell.setAttribute('data-type', 'Group')
 
+      const groupTitle = document.createElement('strong')
+      groupTitle.textContent = 'Group'
+
+      groupCell.appendChild(groupTitle)
       group.setValue(groupCell.outerHTML)
       group.setVertex(true)
       group.setConnectable(false)
