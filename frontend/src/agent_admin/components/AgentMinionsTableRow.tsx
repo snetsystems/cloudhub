@@ -104,7 +104,7 @@ class AgentMinionsTableRow extends PureComponent<Props> {
           title={
             <div id={`table-row--select${idx}`}>
               {onClickModal({
-                name: '=',
+                name: '፧',
                 host,
                 status,
                 _this: this,
@@ -118,18 +118,34 @@ class AgentMinionsTableRow extends PureComponent<Props> {
         <TableBodyRowItem
           title={
             <div id={`table-row--select${idx}`}>
-              <button
-                className="btn btn-sm btn-default icon bash"
-                onClick={e => {
-                  e.stopPropagation()
-                  handleShellModalOpen({
-                    isNewEditor: false,
-                    addr: ip,
-                    nodename: host,
-                  })
-                }}
-                title={'Open SSH Terminal'}
-              ></button>
+              {os && os.toLocaleLowerCase() === 'windows' ? (
+                <button
+                  className="btn btn-sm btn-default icon icon-vmrc"
+                  title={'Open Remote Desktop'}
+                  onClick={e => {
+                    e.stopPropagation()
+                    if (ip) {
+                      window.location.href =
+                        'rdp://' + ip + '/?admin=&span=&w=1280&h=800'
+                    } else {
+                      // Pop up the edit box for entering an ip addr.
+                    }
+                  }}
+                ></button>
+              ) : (
+                <button
+                  className="btn btn-sm btn-default icon bash"
+                  title={'Open SSH Terminal'}
+                  onClick={e => {
+                    e.stopPropagation()
+                    handleShellModalOpen({
+                      isNewEditor: false,
+                      addr: ip,
+                      nodename: host,
+                    })
+                  }}
+                ></button>
+              )}
             </div>
           }
           width={OperationWidth}

@@ -29,15 +29,9 @@ class AgentMinionsModal extends PureComponent<Props, State> {
       showModal: false,
       target: {top: null, left: null},
     }
-
-    this.handleOpenModal = this.handleOpenModal.bind(this)
-    this.handleCloseModal = this.handleCloseModal.bind(this)
-    this.onClickAccept = this.onClickAccept.bind(this)
-    this.onClickReject = this.onClickReject.bind(this)
-    this.onClickDelete = this.onClickDelete.bind(this)
   }
 
-  public handleOpenModal(event) {
+  public handleOpenModal = event => {
     event.stopPropagation()
     const {name} = this.props
     event.target.innerText === name
@@ -48,30 +42,30 @@ class AgentMinionsModal extends PureComponent<Props, State> {
       : this.setState({showModal: true})
   }
 
-  public handleCloseModal(): void {
+  public handleCloseModal = () => {
     this.setState({showModal: false})
   }
 
-  public componentDidMount(): void {
+  public componentDidMount = () => {
     const {idx} = this.props
     ReactModal.setAppElement(`#table-row--select${idx}`)
   }
 
-  public onClickAccept(event: MouseEvent<HTMLElement>): void {
+  public onClickAccept = (event: MouseEvent<HTMLElement>) => {
     const {handleWheelKeyCommand, host} = this.props
     handleWheelKeyCommand(host, 'Accept')
     event.stopPropagation()
     this.handleCloseModal()
   }
 
-  public onClickReject(event: MouseEvent<HTMLElement>): void {
+  public onClickReject = (event: MouseEvent<HTMLElement>) => {
     const {handleWheelKeyCommand, host} = this.props
     handleWheelKeyCommand(host, 'Reject')
     event.stopPropagation()
     this.handleCloseModal()
   }
 
-  public onClickDelete(event: MouseEvent<HTMLElement>): void {
+  public onClickDelete = (event: MouseEvent<HTMLElement>) => {
     const {handleWheelKeyCommand, host} = this.props
     handleWheelKeyCommand(host, 'Delete')
     event.stopPropagation()
