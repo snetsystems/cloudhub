@@ -4265,7 +4265,7 @@
       }
     },
 
-    "/topologys": {
+    "/topologies": {
       "get": {
         "tags": ["topologys"],
         "summary": "Search organization's inventory topology",
@@ -4357,7 +4357,7 @@
         }
       }
     },
-    "/topologys/{id}": {
+    "/topologies/{id}": {
       "patch": {
         "tags": ["topologys"],
         "summary": "Update organization's inventory topology",
