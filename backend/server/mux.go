@@ -370,18 +370,18 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	router.GET("/cloudhub/v1/env", EnsureViewer(service.Environment))
 
-	// vspheres
+	// vSpheres
 	router.GET("/cloudhub/v1/vspheres", EnsureViewer(service.Vspheres))
 	router.GET("/cloudhub/v1/vspheres/:id", EnsureViewer(service.VsphereID))
 	router.POST("/cloudhub/v1/vspheres", EnsureAdmin(service.NewVsphere))
 	router.DELETE("/cloudhub/v1/vspheres/:id", EnsureAdmin(service.RemoveVsphere))
 	router.PATCH("/cloudhub/v1/vspheres/:id", EnsureAdmin(service.UpdateVsphere))
 
-	// topologys
-	router.GET("/cloudhub/v1/topologys", EnsureAdmin(service.Topology))
-	router.POST("/cloudhub/v1/topologys", EnsureAdmin(service.NewTopology))
-	router.DELETE("/cloudhub/v1/topologys/:id", EnsureAdmin(service.RemoveTopology))
-	router.PATCH("/cloudhub/v1/topologys/:id", EnsureAdmin(service.UpdateTopology))
+	// Topologys
+	router.GET("/cloudhub/v1/topologies", EnsureAdmin(service.Topology))
+	router.POST("/cloudhub/v1/topologies", EnsureAdmin(service.NewTopology))
+	router.DELETE("/cloudhub/v1/topologies/:id", EnsureAdmin(service.RemoveTopology))
+	router.PATCH("/cloudhub/v1/topologies/:id", EnsureAdmin(service.UpdateTopology))
 
 	// Validates go templates for the js client
 	router.POST("/cloudhub/v1/validate_text_templates", EnsureViewer(service.ValidateTextTemplate))
