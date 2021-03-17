@@ -60,7 +60,6 @@ class AgentConnect extends PureComponent<Props, State> {
     if (ip) {
       const rdp = 'rdp://' + ip + '/?admin=&span=&w=1280&h=800'
       window.location.href = rdp
-      console.log(rdp)
     }
   }
 
