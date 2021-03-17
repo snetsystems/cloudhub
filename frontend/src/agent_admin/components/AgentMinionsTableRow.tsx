@@ -125,7 +125,7 @@ class AgentMinionsTableRow extends PureComponent<Props> {
               {os && os.toLocaleLowerCase() === 'windows' ? (
                 ip ? (
                   <button
-                    className="btn btn-sm btn-default icon icon-vmrc"
+                    className="btn btn-sm btn-default icon computer-desktop"
                     title={'Open Remote Desktop'}
                     onClick={e => {
                       e.stopPropagation()
@@ -135,7 +135,7 @@ class AgentMinionsTableRow extends PureComponent<Props> {
                   ></button>
                 ) : (
                   <TooltipButton
-                    icon="icon-vmrc"
+                    icon="computer-desktop"
                     isEventStopPropagation={true}
                     isButtonLeaveHide={true}
                   >
