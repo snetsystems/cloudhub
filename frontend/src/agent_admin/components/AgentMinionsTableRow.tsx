@@ -1,6 +1,10 @@
 // Libraries
 import React, {PureComponent} from 'react'
 
+// Components
+import TooltipButton from 'src/shared/components/TooltipButton'
+import AgentConnect from 'src/agent_admin/components/AgentConnect'
+
 // Constants
 import {AGENT_MINION_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
 import {AgentMinions} from 'src/agent_admin/containers/AgentMinions'
@@ -119,19 +123,25 @@ class AgentMinionsTableRow extends PureComponent<Props> {
           title={
             <div id={`table-row--select${idx}`}>
               {os && os.toLocaleLowerCase() === 'windows' ? (
-                <button
-                  className="btn btn-sm btn-default icon icon-vmrc"
-                  title={'Open Remote Desktop'}
-                  onClick={e => {
-                    e.stopPropagation()
-                    if (ip) {
+                ip ? (
+                  <button
+                    className="btn btn-sm btn-default icon icon-vmrc"
+                    title={'Open Remote Desktop'}
+                    onClick={e => {
+                      e.stopPropagation()
                       window.location.href =
                         'rdp://' + ip + '/?admin=&span=&w=1280&h=800'
-                    } else {
-                      // Pop up the edit box for entering an ip addr.
-                    }
-                  }}
-                ></button>
+                    }}
+                  ></button>
+                ) : (
+                  <TooltipButton
+                    icon="icon-vmrc"
+                    isEventStopPropagation={true}
+                    isButtonLeaveHide={true}
+                  >
+                    <AgentConnect />
+                  </TooltipButton>
+                )
               ) : (
                 <button
                   className="btn btn-sm btn-default icon bash"
