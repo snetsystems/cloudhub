@@ -68,10 +68,6 @@ class TooltipButton extends PureComponent<Props, State> {
               this.setState({expanded: false})
             }}
           />
-          <span
-            className={this.classNamesHeader}
-            style={{display: 'inline-block'}}
-          ></span>
           {!isHideText && text}
           <div
             className={this.tooltipClassName}
@@ -86,15 +82,6 @@ class TooltipButton extends PureComponent<Props, State> {
         </div>
       </ClickOutside>
     )
-  }
-
-  private get classNamesHeader(): string {
-    const {icon} = this.props
-    const headerStyle = classnames('icon', {
-      [icon]: icon,
-    })
-
-    return headerStyle
   }
 
   private handleButtonClick = (e: MouseEvent) => {
@@ -143,13 +130,15 @@ class TooltipButton extends PureComponent<Props, State> {
   }
 
   private get className(): string {
-    const {type, size, square, disabled, customClass} = this.props
+    const {type, size, square, disabled, customClass, icon} = this.props
     const {expanded} = this.state
 
     return classnames(`tooltip-button btn ${type} ${size}`, {
       [customClass]: customClass,
       'btn-square': square,
       active: expanded,
+      icon: icon,
+      [icon]: icon,
       disabled,
     })
   }
