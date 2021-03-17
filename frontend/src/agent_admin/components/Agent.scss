@@ -268,3 +268,17 @@
     }
   }
 }
+
+.agent-connect-container {
+  width: 200px;
+  display: flex;
+  height: 36px;
+  justify-content: center;
+  align-items: center;
+
+  .form-control.input-sm.connect-input {
+    height: 24px;
+    font-size: 12px;
+    margin-right: 4px;
+  }
+}
