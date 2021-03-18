@@ -85,6 +85,7 @@ export interface Menu {
   name: string
   label: string
   href?: string
+  idrac?: string
 }
 
 export const toolsMenu: Menu[] = [
@@ -93,6 +94,7 @@ export const toolsMenu: Menu[] = [
     name: 'server',
     label: 'Server',
     href: '',
+    idrac: '',
   },
   {
     type: 'Database',
@@ -149,4 +151,5 @@ export const hostMenu: Menu = {
   name: '',
   label: '',
   href: '',
+  idrac: '',
 }

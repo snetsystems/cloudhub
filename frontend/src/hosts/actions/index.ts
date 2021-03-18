@@ -21,6 +21,12 @@ import {
   RequestRunVcenterAction,
 } from 'src/hosts/actions/vspheres'
 
+import {
+  loadInventoryTopologyAsync,
+  createInventoryTopologyAsync,
+  updateInventoryTopologyAsync,
+} from 'src/hosts/actions/inventoryTopology'
+
 export {
   Action,
   ActionTypes,
@@ -42,4 +48,7 @@ export {
   ResponseVcenterAction,
   RequestPauseVcenterAction,
   RequestRunVcenterAction,
+  loadInventoryTopologyAsync,
+  createInventoryTopologyAsync,
+  updateInventoryTopologyAsync,
 }
