@@ -125,7 +125,7 @@ class AgentMinionsTableRow extends PureComponent<Props> {
               {os && os.toLocaleLowerCase() === 'windows' ? (
                 ip ? (
                   <button
-                    className="btn btn-sm btn-default icon computer-desktop"
+                    className="btn btn-sm btn-default icon computer-desktop agent-row--button-sm"
                     title={'Open Remote Desktop'}
                     onClick={e => {
                       e.stopPropagation()
@@ -138,13 +138,15 @@ class AgentMinionsTableRow extends PureComponent<Props> {
                     icon="computer-desktop"
                     isEventStopPropagation={true}
                     isButtonLeaveHide={true}
+                    customClass={'agent-row--button-sm'}
+                    title={'Open Remote Desktop'}
                   >
                     <AgentConnect />
                   </TooltipButton>
                 )
               ) : (
                 <button
-                  className="btn btn-sm btn-default icon bash"
+                  className="btn btn-sm btn-default icon bash agent-row--button-sm"
                   title={'Open SSH Terminal'}
                   onClick={e => {
                     e.stopPropagation()

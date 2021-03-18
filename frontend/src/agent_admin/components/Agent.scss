@@ -282,3 +282,12 @@
     margin-right: 4px;
   }
 }
+
+.agent-row {
+  &--button {
+    &-sm {
+      width: 35px;
+      font-size: 14px;
+    }
+  }
+}
