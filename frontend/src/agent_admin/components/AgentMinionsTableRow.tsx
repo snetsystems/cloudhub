@@ -13,6 +13,7 @@ import {TableBodyRowItem} from 'src/agent_admin/reusable/'
 
 // Types
 import {Minion} from 'src/agent_admin/type'
+import {ShellInfo} from 'src/types'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -24,15 +25,7 @@ interface Props {
   onClickTableRow: AgentMinions['onClickTableRowCall']
   onClickModal: ({}) => object
   handleWheelKeyCommand: (host: string, cmdstatus: string) => void
-  handleShellModalOpen?: ({
-    isNewEditor,
-    addr,
-    nodename,
-  }: {
-    isNewEditor: boolean
-    addr: string
-    nodename: string
-  }) => void
+  handleShellModalOpen?: (shell: ShellInfo) => void
   handleShellModalClose?: () => void
 }
 
@@ -150,6 +143,13 @@ class AgentMinionsTableRow extends PureComponent<Props> {
                   title={'Open SSH Terminal'}
                   onClick={e => {
                     e.stopPropagation()
+                    // this.pr
+
+                    // {
+                    //   isNewEditor: false,
+                    //   addr: ip,
+                    //   nodename: host,
+                    // }
                     handleShellModalOpen({
                       isNewEditor: false,
                       addr: ip,

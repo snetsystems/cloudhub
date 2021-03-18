@@ -9,13 +9,12 @@ import {AgentMinions} from 'src/agent_admin/containers/AgentMinions'
 import AgentMinionsTableRow from 'src/agent_admin/components/AgentMinionsTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import PageSpinner from 'src/shared/components/PageSpinner'
-import {ShellProps} from 'src/shared/components/Shell'
 
 // Constants
 import {AGENT_MINION_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
 
 // Types
-import {RemoteDataState} from 'src/types'
+import {RemoteDataState, ShellInfo} from 'src/types'
 import {Minion, SortDirection} from 'src/agent_admin/type'
 
 // Decorators
@@ -28,7 +27,7 @@ export interface Props {
   onClickModal: ({}) => object
   onClickTableRow: AgentMinions['onClickTableRowCall']
   handleWheelKeyCommand: (host: string, cmdstatus: string) => void
-  handleShellModalOpen?: (props: ShellProps) => void
+  handleShellModalOpen?: (shell: ShellInfo) => void
   handleShellModalClose: () => void
 }
 
