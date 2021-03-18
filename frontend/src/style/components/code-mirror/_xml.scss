@@ -1,0 +1,95 @@
+/*
+  CodeMirror "XML" Theme
+  ------------------------------------------------------------------------------
+  Intended for use with the XML CodeMirror Mode
+*/
+
+.cm-s-xml {
+  .cm-keyword {
+    color: $c-comet;
+  }
+
+  .cm-operator {
+    color: $c-dreamsicle;
+  }
+
+  .cm-variable-2 {
+    color: #80cbc4;
+  }
+
+  .cm-variable-3,
+  .cm-type {
+    color: $s-deepOrange2;
+  }
+
+  .cm-builtin {
+    color: #decb6b;
+  }
+
+  .cm-atom {
+    color: $c-viridian;
+  }
+
+  .cm-number {
+    color: $c-daisy;
+  }
+
+  .cm-def {
+    color: rgba(233, 237, 237, 1);
+  }
+
+  .cm-string {
+    color: #ce9178;
+  }
+
+  .cm-string-2 {
+    color: #80cbc4;
+  }
+
+  .cm-comment {
+    color: $g10-wolf;
+  }
+
+  .cm-variable {
+    color: $c-laser;
+  }
+
+  .cm-tag {
+    color: #80cbc4;
+  }
+
+  .cm-meta {
+    color: #80cbc4;
+  }
+
+  .cm-attribute {
+    color: #9cdcfe;
+  }
+
+  .cm-property {
+    color: #80cbae;
+  }
+
+  .cm-qualifier {
+    color: #decb6b;
+  }
+
+  .cm-variable-3,
+  .cm-type {
+    color: #decb6b;
+  }
+
+  .cm-tag {
+    color: #569cd6;
+  }
+
+  .cm-error {
+    color: rgba(255, 255, 255, 1);
+    background-color: #ec5f67;
+  }
+
+  .CodeMirror-matchingbracket {
+    text-decoration: underline;
+    color: white !important;
+  }
+}
