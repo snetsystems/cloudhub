@@ -341,6 +341,9 @@
   &.minimize:before {
     content: '\e964';
   }
+  &.filter:before {
+    content: '\e965';
+  }
 
   &.copy:before {
     content: '\e934';
@@ -388,5 +391,9 @@
 
   &.fit:before {
     content: '\ea5b';
+  }
+
+  &.computer-desktop:before {
+    content: '\ea5c';
   }
 }
