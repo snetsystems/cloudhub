@@ -57,6 +57,19 @@
     border: 2px solid black;
   }
 
+  .mxgraph-cell--link-btn {
+    font-size: 15px;
+    color: #bec2cc;
+    display: inline-block;
+    margin-bottom: 5px;
+
+    &:hover {
+      color: #fff;
+      text-shadow: 0 0 5px #f58220, 0 0 10px #f58220, 0 0 25px #fff;
+      transition: text-shadow 0.3s ease;
+    }
+  }
+
   .tool-box {
     display: flex;
     flex-wrap: wrap;
