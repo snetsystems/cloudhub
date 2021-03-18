@@ -191,6 +191,15 @@ class AgentMinionsTable extends PureComponent<Props, State> {
           : null}
         <div className="panel-heading">
           <h2 className="panel-title">{this.AgentTitle}</h2>
+          <span>
+            If "RDP Launcher" has not been installed, download HERE [
+            <a href="https://github.com/richard-green/MstscLauncher/releases/download/1.1.0/MstscLauncher.exe">
+              <span className="icon download" />
+            </a>
+            ] and save it your safe path, <br />
+            Then run it <span className="emphasis-word">JUST ONCE</span> as an{' '}
+            <span className="caution-word">administrator</span> mode.
+          </span>
           <SearchBar
             placeholder="Filter by Host..."
             onSearch={this.updateSearchTerm}

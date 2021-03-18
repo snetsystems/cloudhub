@@ -207,6 +207,10 @@ class AgentControlTable extends PureComponent<Props, State> {
           : null}
         <div className="panel-heading">
           <h2 className="panel-title">{this.AgentTitle}</h2>
+          <span>
+            This feature is{' '}
+            <span className="caution-word">not supported yet</span> for Windows.
+          </span>
           <SearchBar
             placeholder="Filter by Host..."
             onSearch={this.updateSearchTerm}
@@ -421,16 +425,17 @@ class AgentControlTable extends PureComponent<Props, State> {
         {sortedHosts.length > 0 ? (
           <FancyScrollbar
             children={sortedHosts.map(
-              (m: Minion, i: number): JSX.Element => (
-                <AgentControlTableRow
-                  key={i}
-                  minions={m}
-                  isCheck={m.isCheck}
-                  isAllCheck={isAllCheck}
-                  onClickAction={onClickAction}
-                  handleMinionCheck={handleMinionCheck}
-                />
-              )
+              (m: Minion, i: number): JSX.Element =>
+                m.os && m.os.toLocaleLowerCase() !== 'windows' ? (
+                  <AgentControlTableRow
+                    key={i}
+                    minions={m}
+                    isCheck={m.isCheck}
+                    isAllCheck={isAllCheck}
+                    onClickAction={onClickAction}
+                    handleMinionCheck={handleMinionCheck}
+                  />
+                ) : null
             )}
             className="hosts-table--tbody"
           />
