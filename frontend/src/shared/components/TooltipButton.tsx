@@ -1,4 +1,4 @@
-import React, {PureComponent, MouseEvent} from 'react'
+import React, {PureComponent, MouseEvent, CSSProperties} from 'react'
 import classnames from 'classnames'
 import {ClickOutside} from 'src/shared/components/ClickOutside'
 import ReactObserver from 'react-resize-observer'
@@ -16,6 +16,7 @@ interface Props {
   isEventStopPropagation?: boolean
   isButtonLeaveHide?: boolean
   isHideText?: boolean
+  buttonStyle?: CSSProperties
 }
 
 interface State {
@@ -51,7 +52,7 @@ class TooltipButton extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {text, title, isHideText, children} = this.props
+    const {text, title, isHideText, children, buttonStyle} = this.props
 
     return (
       <ClickOutside onClickOutside={this.handleClickOutside}>
@@ -62,6 +63,7 @@ class TooltipButton extends PureComponent<Props, State> {
           }}
           ref={r => (this.buttonDiv = r)}
           title={title}
+          style={buttonStyle}
         >
           <ReactObserver
             onPosition={() => {
