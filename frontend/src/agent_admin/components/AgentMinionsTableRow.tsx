@@ -130,7 +130,6 @@ class AgentMinionsTableRow extends PureComponent<Props> {
                   <TooltipButton
                     icon="computer-desktop"
                     isEventStopPropagation={true}
-                    isButtonLeaveHide={true}
                     customClass={'agent-row--button-sm'}
                     title={'Open Remote Desktop'}
                   >
