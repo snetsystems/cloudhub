@@ -9,13 +9,12 @@ import {AgentMinions} from 'src/agent_admin/containers/AgentMinions'
 import AgentMinionsTableRow from 'src/agent_admin/components/AgentMinionsTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import PageSpinner from 'src/shared/components/PageSpinner'
-import {ShellProps} from 'src/shared/components/Shell'
 
 // Constants
 import {AGENT_MINION_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
 
 // Types
-import {RemoteDataState} from 'src/types'
+import {RemoteDataState, ShellInfo} from 'src/types'
 import {Minion, SortDirection} from 'src/agent_admin/type'
 
 // Decorators
@@ -28,7 +27,7 @@ export interface Props {
   onClickModal: ({}) => object
   onClickTableRow: AgentMinions['onClickTableRowCall']
   handleWheelKeyCommand: (host: string, cmdstatus: string) => void
-  handleShellModalOpen?: (props: ShellProps) => void
+  handleShellModalOpen?: (shell: ShellInfo) => void
   handleShellModalClose: () => void
 }
 
@@ -192,6 +191,15 @@ class AgentMinionsTable extends PureComponent<Props, State> {
           : null}
         <div className="panel-heading">
           <h2 className="panel-title">{this.AgentTitle}</h2>
+          <span>
+            If "RDP Launcher" has not been installed, download HERE [
+            <a href="https://github.com/richard-green/MstscLauncher/releases/download/1.1.0/MstscLauncher.exe">
+              <span className="icon download" />
+            </a>
+            ] and save it your safe path, <br />
+            Then run it <span className="emphasis-word">JUST ONCE</span> as an{' '}
+            <span className="caution-word">administrator</span> mode.
+          </span>
           <SearchBar
             placeholder="Filter by Host..."
             onSearch={this.updateSearchTerm}
