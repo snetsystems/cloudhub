@@ -142,13 +142,6 @@ class AgentMinionsTableRow extends PureComponent<Props> {
                   title={'Open SSH Terminal'}
                   onClick={e => {
                     e.stopPropagation()
-                    // this.pr
-
-                    // {
-                    //   isNewEditor: false,
-                    //   addr: ip,
-                    //   nodename: host,
-                    // }
                     handleShellModalOpen({
                       isNewEditor: false,
                       addr: ip,
