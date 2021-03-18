@@ -130,7 +130,7 @@ export const toolsMenu: Menu[] = [
     type: 'WirelessRouter',
     name: 'wireless-router',
     label: 'WirelessRouter',
-    href: 'asdasd',
+    href: '',
   },
 ]
 
