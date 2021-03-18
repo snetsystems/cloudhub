@@ -104,12 +104,12 @@ window['mxEffects'] = mxEffects
 window['mxOutline'] = mxOutline
 window['mxPoint'] = mxPoint
 
-const linkImg = require('../../../assets/images/stencils/link.png')
 const warningImage = new mxImage(
   require('mxgraph/javascript/src/images/warning.png'),
   16,
   16
 )
+
 interface Props {
   hostsObject: {[x: string]: Host}
   autoRefresh: number
@@ -571,15 +571,10 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     style = new Object()
     style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE
-
     style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter
-    style[mxConstants.STYLE_PERIMETER_SPACING] = '6'
     style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_LEFT
     style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE
-    style[mxConstants.STYLE_FONTSIZE] = '10'
-    style[mxConstants.STYLE_FONTSTYLE] = 2
-    style[mxConstants.STYLE_STROKECOLOR] = '#000000'
-
+    style[mxConstants.STYLE_STROKECOLOR] = '#F58220'
     this.graph.getStylesheet().putCellStyle('href', style)
 
     style = this.graph.getStylesheet().getDefaultEdgeStyle()
@@ -761,20 +756,20 @@ class InventoryTopology extends PureComponent<Props, State> {
       linkBox.style.display = 'flex'
       linkBox.style.alignItems = 'center'
       linkBox.style.justifyContent = 'center'
-      linkBox.style.width = '24px'
-      linkBox.style.height = '24px'
+      linkBox.style.width = '25px'
+      linkBox.style.height = '25px'
       linkBox.style.marginLeft = '-2px'
 
       const link = document.createElement('a')
       link.setAttribute('href', '')
       link.setAttribute('target', '_blank')
 
-      const img = document.createElement('img')
-      img.setAttribute('src', linkImg)
-      img.style.width = '16px'
-      img.style.height = '16px'
+      const linkIcon = document.createElement('span')
+      linkIcon.classList.add('mxgraph-cell--link-btn')
+      linkIcon.classList.add('icon')
+      linkIcon.classList.add('dash-j')
 
-      link.appendChild(img)
+      link.appendChild(linkIcon)
       linkBox.appendChild(link)
 
       const href = graph.insertVertex(
@@ -789,7 +784,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         true
       )
 
-      href.geometry.offset = new mxPoint(-16, -8)
+      href.geometry.offset = new mxPoint(-18, -12)
       href.setConnectable(false)
       href.setVisible(false)
     } finally {
