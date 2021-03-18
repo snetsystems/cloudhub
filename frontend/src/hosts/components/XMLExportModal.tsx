@@ -1,11 +1,6 @@
 import React from 'react'
 
-import {
-  OverlayContainer,
-  OverlayHeading,
-  OverlayBody,
-  Form,
-} from 'src/reusable_ui'
+import {OverlayContainer, OverlayHeading, OverlayBody} from 'src/reusable_ui'
 import OverlayTechnology from 'src/reusable_ui/components/overlays/OverlayTechnology'
 
 interface Props {
@@ -23,20 +18,9 @@ const XMLExportModel = (props: Props): JSX.Element => {
       <OverlayContainer>
         <OverlayHeading title={headingTitle} onDismiss={onCancel} />
         <OverlayBody>
-          <Form>
-            <Form.Element>
-              <div className="message-zone">{message}</div>
-            </Form.Element>
-            <Form.Footer>
-              {/* <Button
-                color={ComponentColor.Success}
-                text={confirmText}
-                onClick={onConfirm}
-                status={confirmButtonStatus}
-                customClass={customClass}
-              /> */}
-            </Form.Footer>
-          </Form>
+          <div className="message-zone" style={{height: '500px'}}>
+            {message}
+          </div>
         </OverlayBody>
       </OverlayContainer>
     </OverlayTechnology>
