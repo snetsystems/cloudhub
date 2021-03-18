@@ -1,6 +1,10 @@
 // Libraries
 import React, {PureComponent} from 'react'
 
+// Components
+import TooltipButton from 'src/shared/components/TooltipButton'
+import AgentConnect from 'src/agent_admin/components/AgentConnect'
+
 // Constants
 import {AGENT_MINION_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
 import {AgentMinions} from 'src/agent_admin/containers/AgentMinions'
@@ -9,6 +13,7 @@ import {TableBodyRowItem} from 'src/agent_admin/reusable/'
 
 // Types
 import {Minion} from 'src/agent_admin/type'
+import {ShellInfo} from 'src/types'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -20,15 +25,7 @@ interface Props {
   onClickTableRow: AgentMinions['onClickTableRowCall']
   onClickModal: ({}) => object
   handleWheelKeyCommand: (host: string, cmdstatus: string) => void
-  handleShellModalOpen?: ({
-    isNewEditor,
-    addr,
-    nodename,
-  }: {
-    isNewEditor: boolean
-    addr: string
-    nodename: string
-  }) => void
+  handleShellModalOpen?: (shell: ShellInfo) => void
   handleShellModalClose?: () => void
 }
 
@@ -104,7 +101,7 @@ class AgentMinionsTableRow extends PureComponent<Props> {
           title={
             <div id={`table-row--select${idx}`}>
               {onClickModal({
-                name: '=',
+                name: '፧',
                 host,
                 status,
                 _this: this,
@@ -118,18 +115,41 @@ class AgentMinionsTableRow extends PureComponent<Props> {
         <TableBodyRowItem
           title={
             <div id={`table-row--select${idx}`}>
-              <button
-                className="btn btn-sm btn-default icon bash"
-                onClick={e => {
-                  e.stopPropagation()
-                  handleShellModalOpen({
-                    isNewEditor: false,
-                    addr: ip,
-                    nodename: host,
-                  })
-                }}
-                title={'Open SSH Terminal'}
-              ></button>
+              {os && os.toLocaleLowerCase() === 'windows' ? (
+                ip ? (
+                  <button
+                    className="btn btn-sm btn-default icon computer-desktop agent-row--button-sm"
+                    title={'Open Remote Desktop'}
+                    onClick={e => {
+                      e.stopPropagation()
+                      window.location.href =
+                        'rdp://' + ip + '/?admin=&span=&w=1280&h=800'
+                    }}
+                  ></button>
+                ) : (
+                  <TooltipButton
+                    icon="computer-desktop"
+                    isEventStopPropagation={true}
+                    customClass={'agent-row--button-sm'}
+                    title={'Open Remote Desktop'}
+                  >
+                    <AgentConnect />
+                  </TooltipButton>
+                )
+              ) : (
+                <button
+                  className="btn btn-sm btn-default icon bash agent-row--button-sm"
+                  title={'Open SSH Terminal'}
+                  onClick={e => {
+                    e.stopPropagation()
+                    handleShellModalOpen({
+                      isNewEditor: false,
+                      addr: ip,
+                      nodename: host,
+                    })
+                  }}
+                ></button>
+              )}
             </div>
           }
           width={OperationWidth}

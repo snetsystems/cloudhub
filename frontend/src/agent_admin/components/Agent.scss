@@ -268,3 +268,34 @@
     }
   }
 }
+
+.agent-connect-container {
+  width: 200px;
+  display: flex;
+  height: 36px;
+  justify-content: center;
+  align-items: center;
+
+  .form-control.input-sm.connect-input {
+    height: 24px;
+    font-size: 12px;
+    margin-right: 4px;
+  }
+}
+
+.agent-row {
+  &--button {
+    &-sm {
+      width: 35px;
+      font-size: 14px;
+    }
+  }
+}
+
+.caution-word {
+  color: $s-grapefruit;
+}
+
+.emphasis-word {
+  font-weight: 600;
+}

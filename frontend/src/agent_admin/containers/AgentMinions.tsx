@@ -10,7 +10,6 @@ import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import AgentMinionsTable from 'src/agent_admin/components/AgentMinionsTable'
 import AgentMinionsConsole from 'src/agent_admin/components/AgentMinionsConsole'
 import AgentMinionsModal from 'src/agent_admin/components/AgentMinionsModal'
-import {ShellProps} from 'src/shared/components/Shell'
 
 // Actions
 import {
@@ -29,7 +28,12 @@ import {HANDLE_HORIZONTAL} from 'src/shared/constants'
 import {ADMIN_ROLE} from 'src/auth/Authorized'
 
 // Types
-import {RemoteDataState, Notification, NotificationFunc} from 'src/types'
+import {
+  RemoteDataState,
+  Notification,
+  NotificationFunc,
+  ShellInfo,
+} from 'src/types'
 import {MinionsObject} from 'src/agent_admin/type'
 
 // Decorators
@@ -74,7 +78,7 @@ interface Props {
     isNoAuthOuting?: boolean
   ) => void
 
-  handleShellModalOpen?: (props: ShellProps) => void
+  handleShellModalOpen?: (shell: ShellInfo) => void
   handleShellModalClose: () => void
 }
 interface State {
