@@ -8,13 +8,11 @@ interface ToolbarMenu {
 export const toolbarMenu: ToolbarMenu[] = [
   {
     actionName: 'group',
-    // actionName: 'groupOrUngroup',
     label: 'group',
     icon: 'object-group',
   },
   {
     actionName: 'ungroup',
-    // actionName: 'groupOrUngroup',
     label: 'Ungroup',
     icon: 'object-group',
   },
@@ -47,16 +45,6 @@ export const toolbarMenu: ToolbarMenu[] = [
     actionName: 'redo',
     label: 'Redo',
     icon: 'redo',
-  },
-  {
-    actionName: 'collapseAll',
-    label: 'Collapse All',
-    icon: 'callapse-plus',
-  },
-  {
-    actionName: 'expandAll',
-    label: 'Expand All',
-    icon: 'callapse-minus',
   },
   {
     actionName: 'zoomIn',
