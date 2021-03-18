@@ -42,6 +42,8 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 // css
 import 'mxgraph/javascript/src/css/common.css'
 
+import {Controlled as ReactCodeMirror} from 'react-codemirror2'
+
 // Config
 const keyhandlerCommons = require('src/hosts/config/keyhandler-commons.xml')
 
@@ -1120,6 +1122,17 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   public render() {
+    const options = {
+      tabIndex: 1,
+      readonly: true,
+      indentUnit: 2,
+      smartIndent: true,
+      electricChars: true,
+      completeSingle: false,
+      lineWrapping: true,
+      mode: 'xml',
+      theme: 'xml',
+    }
     return (
       <div id="containerWrapper">
         {!mxClient.isBrowserSupported() ? (
@@ -1135,7 +1148,18 @@ class InventoryTopology extends PureComponent<Props, State> {
               isVisible={this.state.isModalVisible}
               headingTitle={'XML Export'}
               onCancel={this.handleClose}
-              message={this.state.topology}
+              message={
+                <FancyScrollbar>
+                  <ReactCodeMirror
+                    autoFocus={true}
+                    autoCursor={true}
+                    value={this.state.topology}
+                    options={options}
+                    onBeforeChange={(): void => {}}
+                    onTouchStart={(): void => {}}
+                  />
+                </FancyScrollbar>
+              }
             />
           </>
         )}
