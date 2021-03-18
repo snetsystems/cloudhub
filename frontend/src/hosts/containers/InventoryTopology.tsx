@@ -546,6 +546,8 @@ class InventoryTopology extends PureComponent<Props, State> {
     style[mxConstants.STYLE_STROKECOLOR] = '#f58220'
     style[mxConstants.STYLE_FONTCOLOR] = '#bec2cc'
     style[mxConstants.STYLE_ROUNDED] = true
+    style[mxConstants.STYLE_ABSOLUTE_ARCSIZE] = true
+    style[mxConstants.STYLE_ARCSIZE] = '10'
     style[mxConstants.STYLE_OPACITY] = '100'
     style[mxConstants.STYLE_FONTSIZE] = '12'
     style[mxConstants.STYLE_FONTSTYLE] = 0
