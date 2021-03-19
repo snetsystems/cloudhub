@@ -439,7 +439,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     const cell = graph.getSelectionCell()
 
     if (cell) {
-      const form = new mxForm('inventory-topology--mxform')
+      const form = new mxForm('properties-table')
 
       const parser = new DOMParser()
       const doc = parser.parseFromString(cell.value, 'text/html')
