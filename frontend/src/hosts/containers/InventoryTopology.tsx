@@ -519,17 +519,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     })
 
     this.editor.addAction('export', () => {
-      // const textarea = document.createElement('textarea')
-      // textarea.style.width = '400px'
-      // textarea.style.height = '400px'
-
-      // const enc = new mxCodec(mxUtils.createXmlDocument())
-      // const node = enc.encode(editor.graph.getModel())
-
-      // // @ts-ignore
-      // textarea.value = mxUtils.getPrettyXml(node)
-      // this.showModalWindow(this.graph, 'XML', textarea, 410, 440)
-
       const xmlString = this.xmlExport(this.graph.getModel())
 
       this.setState({topology: xmlString, isModalVisible: true})
