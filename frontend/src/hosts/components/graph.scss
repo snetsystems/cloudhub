@@ -3,28 +3,23 @@
   position: relative;
   flex-direction: column;
   height: 100%;
-
   .button {
     margin: 0 0 0 4px;
   }
-
   .button:nth-child(1) {
     margin: 0;
   }
-
   #contentBodySection {
     display: flex;
     position: relative;
     height: calc(100% - 45px);
   }
-
   #toolbarContainer {
     display: flex;
     white-space: nowrap;
     overflow: hidden;
     background-color: $g3-castle;
     padding: 5px 20px;
-
     .toolbar--left {
       flex: 4;
     }
@@ -33,11 +28,9 @@
       display: flex;
     }
   }
-
   #sidebarContainer {
     overflow: hidden;
   }
-
   #graphContainer {
     position: relative;
     touch-action: none;
@@ -45,7 +38,6 @@
     width: 100%;
     overflow: hidden;
   }
-
   #outlineContainer {
     position: fixed;
     top: 98px;
@@ -56,10 +48,8 @@
     background: rgba(0, 0, 0, 0.7);
     border: 2px solid black;
   }
-
   .properties-table {
     width: 100%;
-
     td {
       font-size: 14px;
       font-weight: 600;
@@ -67,31 +57,26 @@
       padding: 0 5px;
     }
   }
-
   .mxgraph-cell--link-btn {
     font-size: 16px;
     color: #bec2cc;
-
     &:hover {
       color: #fff;
       text-shadow: 0 0 5px #f58220, 0 0 10px #f58220, 0 0 25px #fff;
       transition: text-shadow 0.3s ease;
     }
   }
-
   .tool-box {
     display: flex;
     flex-wrap: wrap;
     min-width: 100px;
   }
-
   .mxgraph-cell--title {
     width: 120px;
     padding: 5px;
     white-space: break-spaces;
     word-break: break-all;
   }
-
   .tool-instance {
     width: 48px;
     height: 48px;
@@ -100,53 +85,44 @@
     border-radius: 5px;
     background-color: #383846;
     padding: 5px;
+    .mxgraph-cell--icon {
+      height: 100%;
+    }
   }
-
   .graph-instance {
     width: 100px;
     height: 100px;
   }
-
   .mxgraph-cell--icon-box {
     width: 48px;
     height: 48px;
     margin: 0 auto;
   }
-
   .mxgraph-cell--icon {
-    height: 100%;
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
-
     &-server {
       background-image: url('../../assets/images/stencils/clipart/Server_Tower_128x128.png');
     }
-
     &-internet {
       background-image: url('../../assets/images/stencils/clipart/Earth_globe_128x128.png');
     }
-
     &-workstation {
       background-image: url('../../assets/images/stencils/clipart/Monitor_Tower_128x128.png');
     }
-
     &-email {
       background-image: url(../../assets/images/stencils/clipart/Email_128x128.png);
     }
-
     &-firewall {
       background-image: url(../../assets/images/stencils/clipart/Firewall_02_128x128.png);
     }
-
     &-router {
       background-image: url(../../assets/images/stencils/clipart/Router_Icon_128x128.png);
     }
-
     &-wirelessrouter {
       background-image: url(../../assets/images/stencils/clipart/Wireless_Router_N_128x128.png);
     }
-
     &-database {
       background-image: url(../../assets/images/stencils/clipart/Database_128x128.png);
     }
@@ -155,7 +131,6 @@
     }
   }
 }
-
 .properties-table--name {
   flex: 1 0 0;
   overflow: hidden;

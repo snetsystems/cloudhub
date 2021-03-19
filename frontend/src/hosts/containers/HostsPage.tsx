@@ -268,17 +268,26 @@ export class HostsPage extends PureComponent<Props, State> {
             <Page.Title title={this.getTitle} />
           </Page.Header.Left>
           <Page.Header.Center widthPixels={220}>
-            {isVsphere && (
-              <div className="radio-buttons radio-buttons--default radio-buttons--sm radio-buttons--stretch">
-                <Radio.Button
-                  id="hostspage-tab-Host"
-                  titleText="Host"
-                  value="Host"
-                  active={activeEditorTab === 'Host'}
-                  onClick={this.onSetActiveEditorTab}
-                >
-                  Host
-                </Radio.Button>
+            <div className="radio-buttons radio-buttons--default radio-buttons--sm radio-buttons--stretch">
+              <Radio.Button
+                id="hostspage-tab-InventoryTopology"
+                titleText="InventoryTopology"
+                value="InventoryTopology"
+                active={activeEditorTab === 'InventoryTopology'}
+                onClick={this.onSetActiveEditorTab}
+              >
+                Topology
+              </Radio.Button>
+              <Radio.Button
+                id="hostspage-tab-Host"
+                titleText="Host"
+                value="Host"
+                active={activeEditorTab === 'Host'}
+                onClick={this.onSetActiveEditorTab}
+              >
+                Host
+              </Radio.Button>
+              {isVsphere && (
                 <Radio.Button
                   id="hostspage-tab-VMware"
                   titleText="VMware"
@@ -288,8 +297,8 @@ export class HostsPage extends PureComponent<Props, State> {
                 >
                   VMware
                 </Radio.Button>
-              </div>
-            )}
+              )}
+            </div>
           </Page.Header.Center>
 
           <Page.Header.Right showSourceIndicator={true}>
@@ -333,7 +342,11 @@ export class HostsPage extends PureComponent<Props, State> {
               />
             )}
             {activeEditorTab === 'InventoryTopology' && (
-              <InventoryTopology hostsObject={this.state.hostsObject} />
+              <InventoryTopology
+                source={source}
+                manualRefresh={this.props.manualRefresh}
+                autoRefresh={autoRefresh}
+              />
             )}
           </>
         </Page.Contents>
