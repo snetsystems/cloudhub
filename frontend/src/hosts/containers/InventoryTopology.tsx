@@ -1149,7 +1149,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     return [
       {
-        name: 'Host',
+        name: 'Detected Hosts',
         headerOrientation: HANDLE_HORIZONTAL,
         headerButtons: [],
         menuOptions: [],
