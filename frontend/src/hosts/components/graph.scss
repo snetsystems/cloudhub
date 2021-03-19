@@ -53,15 +53,13 @@
     width: 200px;
     height: 140px;
     overflow: hidden;
-    background: transparent;
+    background: rgba(0, 0, 0, 0.7);
     border: 2px solid black;
   }
 
   .mxgraph-cell--link-btn {
-    font-size: 15px;
+    font-size: 16px;
     color: #bec2cc;
-    display: inline-block;
-    margin-bottom: 5px;
 
     &:hover {
       color: #fff;
