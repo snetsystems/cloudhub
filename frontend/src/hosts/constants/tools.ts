@@ -14,7 +14,7 @@ export const toolbarMenu: ToolbarMenu[] = [
   {
     actionName: 'ungroup',
     label: 'Ungroup',
-    icon: 'object-group',
+    icon: 'object-ungroup',
   },
   {
     actionName: 'delete',
