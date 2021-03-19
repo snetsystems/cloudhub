@@ -287,6 +287,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     mxConstants.MIN_HOTSPOT_SIZE = 16
     mxConstants.DEFAULT_HOTSPOT = 1
+    mxGraphHandler.prototype.previewColor = '#f58220'
 
     mxGraphHandler.prototype.guidesEnabled = true
 
@@ -675,7 +676,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     sideBarArea.appendChild(icon)
 
     const dragElt = document.createElement('div')
-    dragElt.style.border = 'dashed white 1px'
+    dragElt.style.border = 'dashed #f58220 1px'
     dragElt.style.width = `${CELL_SIZE_WIDTH}px`
     dragElt.style.height = `${CELL_SIZE_HEIGHT}px`
 
@@ -844,7 +845,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     if (isTransparent) {
       button.style.background = 'transparent'
-      button.style.color = '#FFFFFF'
+      button.style.color = '#f58220'
       button.style.border = 'none'
     }
 
