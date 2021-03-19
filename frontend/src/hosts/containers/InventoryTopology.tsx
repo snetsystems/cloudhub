@@ -684,6 +684,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     _.forEach(menus, menu => {
       const rowElement = document.createElement('div')
       rowElement.classList.add('hosts-table--tr')
+      rowElement.classList.add('topology-hosts-row')
 
       const hostElement = document.createElement('div')
       hostElement.classList.add('hosts-table--td')
