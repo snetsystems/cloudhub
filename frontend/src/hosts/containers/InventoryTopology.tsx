@@ -1,5 +1,8 @@
 import React, {createRef, PureComponent} from 'react'
 import {connect} from 'react-redux'
+import _ from 'lodash'
+import {getDeep} from 'src/utils/wrappers'
+
 import {
   default as mxgraph,
   mxEditor as mxEditorType,
@@ -10,13 +13,12 @@ import {
   mxGraphModel as mxGraphModelType,
 } from 'mxgraph'
 
-import _ from 'lodash'
-
 // component
 import {TableBody} from 'src/addon/128t/reusable/layout'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import XMLExportModal from 'src/hosts/components/XMLExportModal'
+import PageSpinner from 'src/shared/components/PageSpinner'
 
 // constants
 import {
@@ -27,7 +29,7 @@ import {
 import {toolbarMenu, toolsMenu, hostMenu, Menu} from 'src/hosts/constants/tools'
 
 // Types
-import {Host} from 'src/types'
+import {Source, Links, Host, RemoteDataState} from 'src/types'
 
 // Actions
 import {
@@ -35,6 +37,15 @@ import {
   createInventoryTopologyAsync,
   updateInventoryTopologyAsync,
 } from 'src/hosts/actions'
+
+// APIs
+import {getCpuAndLoadForHosts} from 'src/hosts/apis'
+
+import {getEnv} from 'src/shared/apis/env'
+
+// Utils
+import {generateForHosts} from 'src/utils/tempVars'
+import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 
 // error
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -111,7 +122,8 @@ const warningImage = new mxImage(
 )
 
 interface Props {
-  hostsObject: {[x: string]: Host}
+  source: Source
+  links: Links
   autoRefresh: number
   manualRefresh: number
   onManualRefresh: () => void
@@ -126,10 +138,11 @@ interface Props {
 interface State {
   screenProportions: number[]
   sidebarProportions: number[]
-  hostList: string[]
+  hostsObject: {[x: string]: Host}
   topology: string
   topologyId: string
   isModalVisible: boolean
+  topologyStatus: RemoteDataState
 }
 
 @ErrorHandling
@@ -140,12 +153,15 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.state = {
       screenProportions: [0.3, 0.7],
       sidebarProportions: [0.333, 0.333, 0.333],
-      hostList: null,
+      hostsObject: {},
       topology: null,
       topologyId: null,
       isModalVisible: false,
+      topologyStatus: RemoteDataState.Loading,
     }
   }
+
+  public intervalID: number
 
   private containerRef = createRef<HTMLDivElement>()
   private outlineRef = createRef<HTMLDivElement>()
@@ -173,7 +189,18 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setSidebar()
     this.setToolbar()
 
-    const hostList = _.keys(this.props.hostsObject)
+    await this.getHostData()
+
+    if (this.props.autoRefresh) {
+      this.intervalID = window.setInterval(
+        () => this.getHostData(),
+        this.props.autoRefresh
+      )
+    }
+    GlobalAutoRefresher.poll(this.props.autoRefresh)
+
+    const hostList = _.keys(this.state.hostsObject)
+
     const topology = await this.props.handleGetInventoryTopology()
 
     if (_.get(topology, 'diagram')) {
@@ -191,13 +218,13 @@ class InventoryTopology extends PureComponent<Props, State> {
       this.setCellsWarning(hostList)
 
       this.setState({
-        hostList,
         topology: _.get(topology, 'diagram'),
         topologyId: _.get(topology, 'id'),
+        topologyStatus: RemoteDataState.Done,
       })
     } else {
       this.setState({
-        hostList,
+        topologyStatus: RemoteDataState.Done,
       })
     }
 
@@ -205,13 +232,13 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
-    const {topologyId, topology} = this.state
-    const {hostsObject} = this.props
-    if (prevProps.hostsObject !== hostsObject) {
-      // this.addHostButton()
-      // const hostList = _.keys(hostsObject)
-      // this.setState({hostList})
+    const {topologyId, topology, hostsObject} = this.state
+    if (
+      JSON.stringify(_.keys(prevState.hostsObject)) !==
+      JSON.stringify(_.keys(hostsObject))
+    ) {
       this.setCellsWarning(_.keys(hostsObject))
+      this.addHostsButton()
     }
 
     if (_.isEmpty(topologyId) && !_.isEmpty(topology)) {
@@ -226,18 +253,60 @@ class InventoryTopology extends PureComponent<Props, State> {
     ) {
       await this.props.handleUpdateInventoryTopology(topologyId, topology)
     }
+
+    if (this.props.autoRefresh !== prevProps.autoRefresh) {
+      clearInterval(this.intervalID)
+      GlobalAutoRefresher.poll(this.props.autoRefresh)
+
+      if (this.props.autoRefresh) {
+        this.intervalID = window.setInterval(() => {
+          this.getHostData()
+        }, this.props.autoRefresh)
+      }
+    }
+
+    if (this.props.manualRefresh !== prevProps.manualRefresh) {
+      this.getHostData()
+    }
   }
 
   public componentWillUnmount() {
-    // if (this.graph != null) {
-    //   this.graph.destroy()
-    //   this.graph = null
-    // }
+    if (this.graph != null) {
+      this.graph.destroy()
+      this.graph = null
+    }
     // if (this.editor != null) {
     //   this.editor.destroy()
-    //   this.graph = null
+    //   this.editor = null
     // }
   }
+
+  private async getHostData() {
+    const {source, links} = this.props
+
+    const envVars = await getEnv(links.environment)
+    const telegrafSystemInterval = getDeep<string>(
+      envVars,
+      'telegrafSystemInterval',
+      ''
+    )
+    const tempVars = generateForHosts(source)
+
+    const hostsObject = await getCpuAndLoadForHosts(
+      source.links.proxy,
+      source.telegraf,
+      telegrafSystemInterval,
+      tempVars
+    )
+
+    this.setState({
+      hostsObject,
+    })
+  }
+
+  // private get LoadingState(): JSX.Element {
+  //   return <PageSpinner />
+  // }
 
   private createEditor = () => {
     this.editor = new mxEditor()
@@ -591,9 +660,11 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private addHostsButton = () => {
-    const {hostsObject} = this.props
+    const {hostsObject} = this.state
     const hostList = _.keys(hostsObject)
     let menus = []
+
+    this.hosts.innerHTML = ''
 
     _.reduce(
       hostList,
@@ -1053,6 +1124,9 @@ class InventoryTopology extends PureComponent<Props, State> {
               </div>
               <div id="contentBodySection">
                 <div id="graphContainer" ref={this.containerRef}>
+                  {this.state.topologyStatus === RemoteDataState.Loading && (
+                    <PageSpinner />
+                  )}
                   <div id="outlineContainer" ref={this.outlineRef}></div>
                 </div>
               </div>
@@ -1160,10 +1234,20 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 }
 
+const mapStateToProps = ({links}) => {
+  return {
+    links,
+  }
+}
+
 const mapDispatchToProps = {
   handleGetInventoryTopology: loadInventoryTopologyAsync,
   handleCreateInventoryTopology: createInventoryTopologyAsync,
   handleUpdateInventoryTopology: updateInventoryTopologyAsync,
 }
 
-export default connect(null, mapDispatchToProps, null)(InventoryTopology)
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+  null
+)(InventoryTopology)
