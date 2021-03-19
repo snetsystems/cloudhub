@@ -515,7 +515,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       const vertex = doc.querySelector('.vertex')
       const attrNames = [
         'data-label',
-        'data-href',
+        'data-link',
         //'data-name',
         'data-idrac',
       ]
@@ -786,7 +786,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       vertex.setAttribute('data-name', node.name)
       vertex.setAttribute('data-name--disabled', isDisableName.toString())
       vertex.setAttribute('data-label', node.label)
-      vertex.setAttribute('data-href', node.href)
+      vertex.setAttribute('data-link', node.link)
       vertex.setAttribute('data-type', node.type)
       if (_.has(node, 'idrac')) {
         vertex.setAttribute('data-idrac', node.idrac)
@@ -988,7 +988,7 @@ class InventoryTopology extends PureComponent<Props, State> {
             return
           }
 
-          if (attribute.nodeName === 'data-href') {
+          if (attribute.nodeName === 'data-link') {
             if (cell.children) {
               const childrenCell = cell.getChildAt(0)
               if (childrenCell.style === 'href') {
@@ -1000,7 +1000,7 @@ class InventoryTopology extends PureComponent<Props, State> {
                 )
 
                 const cellVertex = cellDoc.querySelector('.vertex')
-                cellVertex.setAttribute('data-href', newValue)
+                cellVertex.setAttribute('data-link', newValue)
                 cell.setValue(cellVertex.outerHTML)
 
                 const childrenVertex = childrenDoc.querySelector('.vertex')

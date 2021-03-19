@@ -72,7 +72,7 @@ export interface Menu {
   type: string
   name: string
   label: string
-  href?: string
+  link?: string
   idrac?: string
 }
 
@@ -81,68 +81,68 @@ export const toolsMenu: Menu[] = [
     type: 'Server',
     name: 'server',
     label: 'Server',
-    href: '',
+    link: '',
     idrac: '',
   },
   {
     type: 'Database',
     name: 'database',
     label: 'Database',
-    href: '',
+    link: '',
   },
   {
     type: 'Internet',
     name: 'internet',
     label: 'Internet',
-    href: '',
+    link: '',
   },
   {
     type: 'Workstation',
     name: 'workstation',
     label: 'Workstation',
-    href: '',
+    link: '',
   },
   {
     type: 'VirtualMachine',
     name: 'virtual-machine',
     label: 'VirtualMachine',
-    href: '',
+    link: '',
   },
   {
     type: 'Email',
     name: 'email',
     label: 'Email',
-    href: '',
+    link: '',
   },
   {
     type: 'Firewall',
     name: 'firewall',
     label: 'Firewall',
-    href: '',
+    link: '',
   },
   {
     type: 'Router',
     name: 'router',
     label: 'Router',
-    href: '',
+    link: '',
   },
   {
     type: 'WirelessRouter',
     name: 'wireless-router',
     label: 'WirelessRouter',
-    href: '',
+    link: '',
   },
   {
     type: 'Switch',
     name: 'switch',
     label: 'Switch',
-    href: '',
+    link: '',
   },
   {
     type: 'Cloud',
     name: 'cloud',
     label: 'Cloud',
-    href: '',
+    link: '',
   },
 ]
 
@@ -150,6 +150,6 @@ export const hostMenu: Menu = {
   type: 'Server',
   name: '',
   label: '',
-  href: '',
+  link: '',
   idrac: '',
 }
