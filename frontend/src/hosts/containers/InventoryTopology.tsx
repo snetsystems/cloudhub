@@ -635,15 +635,19 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   private addToolsButton = () => {
     _.forEach(toolsMenu, menu => {
+      const iconBox = document.createElement('div')
+      iconBox.classList.add('tool-instance')
+
       const icon = document.createElement('div')
-      icon.classList.add('tool-instance')
       icon.classList.add(`mxgraph-cell--icon`)
       icon.classList.add(`mxgraph-cell--icon-${menu.type.toLowerCase()}`)
+
+      iconBox.appendChild(icon)
 
       this.addSidebarButton({
         sideBarArea: this.tools,
         node: menu,
-        icon,
+        icon: iconBox,
         iconClassName: `mxgraph-cell--icon-${menu.type.toLowerCase()}`,
       })
     })
