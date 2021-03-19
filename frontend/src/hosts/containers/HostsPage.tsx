@@ -302,7 +302,7 @@ export class HostsPage extends PureComponent<Props, State> {
           </Page.Header.Center>
 
           <Page.Header.Right showSourceIndicator={true}>
-            <GraphTips />
+            {activeEditorTab !== 'InventoryTopology' && <GraphTips />}
             <AutoRefreshDropdown
               selected={autoRefresh}
               onChoose={this.handleChooseAutoRefresh}
