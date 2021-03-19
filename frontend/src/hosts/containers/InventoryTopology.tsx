@@ -867,8 +867,9 @@ class InventoryTopology extends PureComponent<Props, State> {
     isDisableName = false
   ) => {
     const nodeName = _.upperFirst(attribute.nodeName.replace('data-', ''))
-
-    const input = form.addText(nodeName + ':', attribute.nodeValue, 'text')
+    const input = form.addText(nodeName, attribute.nodeValue, 'text')
+    input.classList.add('input-sm')
+    input.classList.add('form-control')
 
     if (attribute.nodeName === 'data-name') {
       input.disabled = isDisableName
