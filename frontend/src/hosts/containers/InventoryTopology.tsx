@@ -513,7 +513,12 @@ class InventoryTopology extends PureComponent<Props, State> {
       const parser = new DOMParser()
       const doc = parser.parseFromString(cell.value, 'text/html')
       const vertex = doc.querySelector('.vertex')
-      const attrNames = ['data-label', 'data-href', 'data-name', 'data-idrac']
+      const attrNames = [
+        'data-label',
+        'data-href',
+        //'data-name',
+        'data-idrac',
+      ]
       const attrs = _.filter(vertex.attributes, attr => {
         let isSame = false
         _.forEach(attrNames, attrName => {
