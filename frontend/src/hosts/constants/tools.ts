@@ -132,6 +132,18 @@ export const toolsMenu: Menu[] = [
     label: 'WirelessRouter',
     href: '',
   },
+  {
+    type: 'Switch',
+    name: 'switch',
+    label: 'Switch',
+    href: '',
+  },
+  {
+    type: 'Cloud',
+    name: 'cloud',
+    label: 'Cloud',
+    href: '',
+  },
 ]
 
 export const hostMenu: Menu = {
