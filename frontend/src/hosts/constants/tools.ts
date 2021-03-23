@@ -74,6 +74,7 @@ export interface Menu {
   label: string
   link?: string
   idrac?: string
+  [key: string]: any
 }
 
 export const toolsMenu: Menu[] = [
@@ -146,10 +147,17 @@ export const toolsMenu: Menu[] = [
   },
 ]
 
-export const hostMenu: Menu = {
-  type: 'Server',
+export const tmpMenu: Menu = {
+  type: '',
   name: '',
   label: '',
   link: '',
+  isDisableName: false,
+}
+
+export const hostMenu: Menu = {
+  ...tmpMenu,
+  type: 'Server',
+  isDisableName: true,
   idrac: '',
 }
