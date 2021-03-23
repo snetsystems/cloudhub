@@ -1081,9 +1081,9 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private handleGraphModel = (sender: mxGraphModelType) => {
-    const totpolgy = this.xmlExport(sender)
+    const topology = this.xmlExport(sender)
 
-    this.setState({topology: totpolgy})
+    this.setState({topology})
   }
 
   private handleClose = () => {
