@@ -26,7 +26,13 @@ import {
   HANDLE_HORIZONTAL,
   HANDLE_VERTICAL,
 } from 'src/shared/constants/'
-import {toolbarMenu, toolsMenu, hostMenu, Menu} from 'src/hosts/constants/tools'
+import {
+  toolbarMenu,
+  toolsMenu,
+  tmpMenu,
+  hostMenu,
+  Menu,
+} from 'src/hosts/constants/tools'
 
 // Types
 import {Source, Links, Host, RemoteDataState} from 'src/types'
@@ -183,7 +189,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   private OUTPUT_INPUT_FIELD = [
     'data-label',
     'data-link',
-    //'data-name',
+    // 'data-name',
     'data-idrac',
   ]
 
@@ -327,24 +333,21 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     model.beginUpdate()
     try {
-      for (let i = 0; i < cells.length; i++) {
-        const cell = cells[i]
-        const isEdge = model.isEdge(cell)
-        if (isEdge) {
-          const edge = document.createElement('div')
-          edge.classList.add('vertex')
-          edge.setAttribute('data-name', 'Edge')
-          edge.setAttribute('data-label', 'Edge')
-          edge.setAttribute('data-type', 'Edge')
+      _.forEach(cells, cell => {
+        if (model.isEdge(cell)) {
+          const edgeObj = {
+            ...tmpMenu,
+            name: 'Edge',
+            label: 'Edge',
+            type: 'Edge',
+          }
 
-          const edgeTitle = document.createElement('strong')
-          edgeTitle.textContent = 'Edge'
+          const edge = this.createHTMLValue(edgeObj)
 
-          edge.appendChild(edgeTitle)
           cell.setValue(edge.outerHTML)
           cell.setStyle('edge')
         }
-      }
+      })
     } finally {
       model.endUpdate()
     }
@@ -418,17 +421,14 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.graph.createGroupCell = (cells: mxCellType[]) => {
       const group = mxGraph.prototype.createGroupCell.apply(this.graph, cells)
-      const groupCell = document.createElement('div')
+      const groupObj = {
+        ...tmpMenu,
+        name: 'Group',
+        label: 'Group',
+        type: 'Group',
+      }
 
-      groupCell.classList.add('vertex')
-      groupCell.setAttribute('data-name', 'Group')
-      groupCell.setAttribute('data-label', 'Group')
-      groupCell.setAttribute('data-type', 'Group')
-
-      const groupTitle = document.createElement('strong')
-      groupTitle.textContent = 'Group'
-
-      groupCell.appendChild(groupTitle)
+      const groupCell = this.createHTMLValue(groupObj)
       group.setValue(groupCell.outerHTML)
       group.setVertex(true)
       group.setConnectable(true)
@@ -519,19 +519,26 @@ class InventoryTopology extends PureComponent<Props, State> {
         return isSame
       })
 
-      const isDisableName =
-        vertex.attributes['data-name--disabled']?.nodeValue === 'true'
+      const isDisableName = this.getIsDisableName(vertex)
 
-      if (attrs) {
-        for (let i = 0; i < attrs.length; i++) {
-          this.createTextField(graph, form, cell, attrs[i], isDisableName)
-        }
-      }
-
+      _.forEach(attrs, attr => {
+        this.createTextField(graph, form, cell, attr, isDisableName)
+      })
       properties.appendChild(form.getTable())
     } else {
       mxUtils.writeln(properties, 'Nothing selected.')
     }
+  }
+
+  private getIsDisableName = (containerElement: Element): boolean => {
+    let isDisableName = false
+
+    if (containerElement) {
+      isDisableName =
+        containerElement.getAttribute('data-isdisablename') === 'true'
+    }
+
+    return isDisableName
   }
 
   private setActionInEditor = () => {
@@ -561,17 +568,17 @@ class InventoryTopology extends PureComponent<Props, State> {
           const temp = this.graph.ungroupCells(groupCells)
 
           if (cells != null) {
-            for (let i = 0; i < cells.length; i++) {
-              if (this.graph.model.contains(cells[i])) {
+            _.forEach(cells, cell => {
+              if (this.graph.model.contains(cell)) {
                 if (
-                  this.graph.model.getChildCount(cells[i]) == 0 &&
-                  this.graph.model.isVertex(cells[i])
+                  this.graph.model.getChildCount(cell) == 0 &&
+                  this.graph.model.isVertex(cell)
                 ) {
-                  this.graph.setCellStyles('group', '0', [cells[i]])
+                  this.graph.setCellStyles('group', '0', [cell])
                 }
-                temp.push(cells[i])
+                temp.push(cell)
               }
-            }
+            })
           }
 
           this.graph.setSelectionCells(temp)
@@ -693,8 +700,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       this.addSidebarButton({
         sideBarArea: this.hosts,
         node: menu,
-        icon: rowElement,
-        isDisableName: true,
+        element: rowElement,
       })
     })
   }
@@ -713,8 +719,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       this.addSidebarButton({
         sideBarArea: this.tools,
         node: menu,
-        icon: iconBox,
-        iconClassName: `mxgraph-cell--icon-${menu.type.toLowerCase()}`,
+        element: iconBox,
       })
     })
   }
@@ -722,17 +727,14 @@ class InventoryTopology extends PureComponent<Props, State> {
   private addSidebarButton({
     sideBarArea,
     node,
-    icon,
-    iconClassName = 'mxgraph-cell--icon-server',
-    isDisableName = false,
+    element,
   }: {
     sideBarArea: HTMLElement
     node: Menu
-    icon: HTMLDivElement
+    element: HTMLDivElement
     iconClassName?: string
-    isDisableName?: boolean
   }) {
-    sideBarArea.appendChild(icon)
+    sideBarArea.appendChild(element)
 
     const dragElt = document.createElement('div')
     dragElt.style.border = 'dashed #f58220 1px'
@@ -740,9 +742,9 @@ class InventoryTopology extends PureComponent<Props, State> {
     dragElt.style.height = `${CELL_SIZE_HEIGHT}px`
 
     const ds = mxUtils.makeDraggable(
-      icon,
+      element,
       this.graph,
-      this.dragCell(node, iconClassName, isDisableName),
+      this.dragCell(node),
       dragElt,
       0,
       0,
@@ -753,11 +755,36 @@ class InventoryTopology extends PureComponent<Props, State> {
     ds.setGuidesEnabled(true)
   }
 
-  private dragCell = (
-    node: Menu,
-    iconClassName: string,
-    isDisableName: boolean
-  ) => (
+  private createHTMLValue = (node: Menu) => {
+    const cell = document.createElement('div')
+    cell.classList.add('vertex')
+
+    const cellTitle = document.createElement('strong')
+    cellTitle.textContent = node.label
+
+    _.forEach(_.keys(node), attr => {
+      console.log(node[attr])
+      cell.setAttribute(`data-${attr}`, node[attr])
+    })
+
+    cell.appendChild(cellTitle)
+
+    if (node.type !== 'Group' && node.type !== 'Edge') {
+      const cellIconBox = document.createElement('div')
+      const cellIcon = document.createElement('div')
+
+      cellIcon.classList.add('mxgraph-cell--icon')
+      cellIcon.classList.add('mxgraph-cell--icon-box')
+      cellIcon.classList.add(`mxgraph-cell--icon-${_.toLower(node.type)}`)
+      cellIconBox.appendChild(cellIcon)
+
+      cell.appendChild(cellIconBox)
+    }
+
+    return cell
+  }
+
+  private dragCell = (node: Menu) => (
     graph: mxGraphType,
     _event: any,
     _cell: mxCellType,
@@ -770,40 +797,12 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     model.beginUpdate()
     try {
-      const vertex = document.createElement('div')
-      vertex.classList.add('vertex')
-      vertex.setAttribute('data-name', node.name)
-      vertex.setAttribute('data-name--disabled', isDisableName.toString())
-      vertex.setAttribute('data-label', node.label)
-      vertex.setAttribute('data-link', node.link)
-      vertex.setAttribute('data-type', node.type)
-      if (_.has(node, 'idrac')) {
-        vertex.setAttribute('data-idrac', node.idrac)
-      }
-
-      const vertexLabelBox = document.createElement('div')
-      vertexLabelBox.classList.add('mxgraph-cell--title')
-
-      const vertexLabel = document.createElement('strong')
-      vertexLabel.textContent = node.label
-
-      vertexLabelBox.appendChild(vertexLabel)
-
-      const vertexIconBox = document.createElement('div')
-      const vertexIcon = document.createElement('div')
-      vertexIcon.classList.add('mxgraph-cell--icon')
-      vertexIcon.classList.add('mxgraph-cell--icon-box')
-      vertexIcon.classList.add(iconClassName)
-
-      vertexIconBox.appendChild(vertexIcon)
-
-      vertex.appendChild(vertexLabelBox)
-      vertex.appendChild(vertexIconBox)
+      const cell = this.createHTMLValue(node)
 
       v1 = graph.insertVertex(
         parent,
         null,
-        vertex.outerHTML,
+        cell.outerHTML,
         x,
         y,
         CELL_SIZE_WIDTH,
@@ -1041,15 +1040,15 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     graph.removeSelectionCells(cells)
 
-    _.map(cells, cell => {
+    _.forEach(cells, cell => {
       if (cell.getStyle() === 'node') {
         const parser = new DOMParser()
         const doc = parser.parseFromString(cell.value, 'text/html')
         const vertex = doc.querySelector('.vertex')
-        const boolHost = vertex.getAttribute('data-name--disabled')
+        const isDisableName = this.getIsDisableName(vertex)
         const name = vertex.getAttribute('data-name')
 
-        if (boolHost === 'true') {
+        if (isDisableName) {
           graph.removeCellOverlays(cell)
           if (!_.find(hostList, host => host === name)) {
             graph.setCellWarning(cell, 'Warning', warningImage)
