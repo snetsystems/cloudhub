@@ -275,10 +275,6 @@ class InventoryTopology extends PureComponent<Props, State> {
       this.graph.destroy()
       this.graph = null
     }
-    // if (this.editor != null) {
-    //   this.editor.destroy()
-    //   this.editor = null
-    // }
   }
 
   private async getHostData() {
@@ -303,10 +299,6 @@ class InventoryTopology extends PureComponent<Props, State> {
       hostsObject,
     })
   }
-
-  // private get LoadingState(): JSX.Element {
-  //   return <PageSpinner />
-  // }
 
   private createEditor = () => {
     this.editor = new mxEditor()
@@ -493,10 +485,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
 
     this.graph.constrainChildren = false
-
-    // mxVertexHandler.prototype.constrainGroupByChildren = true
-
-    // this.graph.getModel().addListener(mxEvent.CHANGE, this.changeTopology)
   }
 
   private selectionChanged = (graph: mxGraphType) => {
