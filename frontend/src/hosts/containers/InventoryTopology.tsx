@@ -180,6 +180,13 @@ class InventoryTopology extends PureComponent<Props, State> {
   private editor: mxEditorType = null
   private graph: mxGraphType = null
 
+  private OUTPUT_INPUT_FIELD = [
+    'data-label',
+    'data-link',
+    //'data-name',
+    'data-idrac',
+  ]
+
   public async componentDidMount() {
     this.createEditor()
     this.configureEditor()
@@ -501,16 +508,10 @@ class InventoryTopology extends PureComponent<Props, State> {
       const parser = new DOMParser()
       const doc = parser.parseFromString(cell.value, 'text/html')
       const vertex = doc.querySelector('.vertex')
-      const attrNames = [
-        'data-label',
-        'data-link',
-        //'data-name',
-        'data-idrac',
-      ]
       const attrs = _.filter(vertex.attributes, attr => {
         let isSame = false
-        _.forEach(attrNames, attrName => {
-          if (attr.nodeName === attrName) {
+        _.forEach(this.OUTPUT_INPUT_FIELD, INPUT_FIELD => {
+          if (attr.nodeName === INPUT_FIELD) {
             isSame = true
             return
           }
