@@ -304,11 +304,11 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	// TODO: what to do about admin's being able to set superadmin
 	router.GET("/cloudhub/v1/organizations/:oid/users", EnsureAdmin(ensureOrgMatches(service.Users)))
-	router.POST("/cloudhub/v1/organizations/:oid/users", EnsureAdmin(ensureOrgMatches(service.NewUser)))
+	router.POST("/cloudhub/v1/organizations/:oid/users", EnsureAdmin(ensureOrgMatches(service.OrganizationNewUser)))
 
 	router.GET("/cloudhub/v1/organizations/:oid/users/:id", EnsureAdmin(ensureOrgMatches(service.UserID)))
-	router.DELETE("/cloudhub/v1/organizations/:oid/users/:id", EnsureAdmin(ensureOrgMatches(service.RemoveUser)))
-	router.PATCH("/cloudhub/v1/organizations/:oid/users/:id", EnsureAdmin(ensureOrgMatches(service.UpdateUser)))
+	router.DELETE("/cloudhub/v1/organizations/:oid/users/:id", EnsureAdmin(ensureOrgMatches(service.OrganizationRemoveUser)))
+	router.PATCH("/cloudhub/v1/organizations/:oid/users/:id", EnsureAdmin(ensureOrgMatches(service.OrganizationUpdateUser)))
 
 	router.GET("/cloudhub/v1/users", EnsureSuperAdmin(rawStoreAccess(service.Users)))
 	router.POST("/cloudhub/v1/users", EnsureSuperAdmin(rawStoreAccess(service.NewUser)))
@@ -382,6 +382,9 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.POST("/cloudhub/v1/topologies", EnsureAdmin(service.NewTopology))
 	router.DELETE("/cloudhub/v1/topologies/:id", EnsureAdmin(service.RemoveTopology))
 	router.PATCH("/cloudhub/v1/topologies/:id", EnsureAdmin(service.UpdateTopology))
+
+	// Proxy logging
+	router.POST("/cloudhub/v1/logging", EnsureViewer(service.ProxyLogging))
 
 	// Validates go templates for the js client
 	router.POST("/cloudhub/v1/validate_text_templates", EnsureViewer(service.ValidateTextTemplate))

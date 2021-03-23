@@ -13,14 +13,12 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http"
-	"net/url"
 	"path"
 	"strconv"
 	"strings"
 	"time"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
-	"github.com/snetsystems/cloudhub/backend/influx"
 	"github.com/snetsystems/cloudhub/backend/oauth2"
 )
 
@@ -380,7 +378,7 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 		}
 
 		if user.Passwd == "" {
-			LogRegistration(r, s.Store, s.Logger, orgID, "login", user.Name, "Login Fail - empty user table password", user.SuperAdmin)
+			s.logRegistration(ctx, "Login", "Login Fail - empty user table password", user.Name)
 			Error(w, http.StatusBadRequest, fmt.Sprintf("empty user table password"), s.Logger)
 			return
 		}
@@ -393,7 +391,7 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 
 		// valid password - sha512
 		if !validPassword([]byte(req.Password), strTohex, []byte(BasicProvider)) {
-			LogRegistration(r, s.Store, s.Logger, orgID, "login", user.Name, "Login Fail - requested password and the saved password are different.", user.SuperAdmin)
+			s.logRegistration(ctx, "Login", "Login Fail - requested password and the saved password are different.", user.Name)
 			Error(w, http.StatusUnauthorized, fmt.Sprintf("requested password and the saved password are different."), s.Logger)
 			return
 		}
@@ -416,7 +414,7 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 		}
 
 		// log registration
-		LogRegistration(r, s.Store, s.Logger, orgID, "login", user.Name, "Login Success", user.SuperAdmin)
+		s.logRegistration(ctx, "Login", "Login Success", user.Name)
 
 		res := &loginResponse{
 			PasswordResetFlag: user.PasswordResetFlag,
@@ -441,13 +439,7 @@ func (s *Service) Logout(auth oauth2.Authenticator, basePath string) http.Handle
 			if user == nil || err != nil {
 				s.Logger.Error(err.Error())
 			} else {
-				var orgID string
-				for _, role := range user.Roles {
-					orgID = role.Organization
-					break
-				}
-
-				LogRegistration(r, s.Store, s.Logger, orgID, "logout", user.Name, "Logout Success", user.SuperAdmin)
+				s.logRegistration(ctx, "Logout", "Logout Success", user.Name)
 			}
 		}
 
@@ -476,67 +468,4 @@ func randResetPassword() string {
 	}
 
 	return b.String()
-}
-
-// LogRegistration log db insert
-// isSuperAdmin is not used currently inside the function. This is for the future.
-func LogRegistration(r *http.Request, store DataStore, logger cloudhub.Logger, orgID, action, name, message string, isSuperAdmin bool) {
-	ctx := r.Context()
-	
-	logs := logger.
-		WithField("component", "log_insert").
-		WithField("remote_addr", r.RemoteAddr).
-		WithField("method", r.Method).
-		WithField("url", r.URL)
-
-	serverCtx := serverContext(ctx)
-
-	// // The id of influxdb set as server option is 0
-	id := 0
-	src, err := store.Sources(serverCtx).Get(serverCtx, id)
-	if err != nil {
-		return
-	}
-
-	u, err := url.Parse(src.URL)
-	if err != nil {
-		msg := fmt.Sprintf("Error parsing source url: %v", err)
-		logs.Error(msg)
-		return
-	}
-
-	var rp, dbname string
-	dbname = "_internal"
-	rp = "monitor"
-
-	// UTC time
-	nanos := time.Now().UnixNano()
-	data := cloudhub.Point{
-		Database:        dbname,
-		RetentionPolicy: rp,
-		Measurement:     "activity_logging",
-		Time:            nanos,
-		Tags: map[string]string{
-			"severity": "info",
-			"action": action,
-			"user": name,
-			"db": "",
-		},
-		Fields: map[string]interface{}{
-			"timestamp": nanos,
-			"message": message,
-		},
-	}
-
-	client := &influx.Client{
-		URL:                u,
-		Authorizer:         influx.DefaultAuthorization(&src),
-		InsecureSkipVerify: src.InsecureSkipVerify,
-		Logger:             logger,
-	}
-
-	if err := client.Write(ctx, []cloudhub.Point{data}); err != nil {
-		logs.Error("Error influxdb log insert. ", err)
-		return
-	}
 }

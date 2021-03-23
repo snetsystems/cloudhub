@@ -22,5 +22,6 @@
   "prettier.trailingComma": "es5",
   "prettier.arrowParens": "avoid",
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "diffEditor.ignoreTrimWhitespace": false
+  "diffEditor.ignoreTrimWhitespace": false,
+  "go.alternateTools": {}
 }

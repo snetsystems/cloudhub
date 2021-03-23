@@ -112,6 +112,10 @@ func (s *Service) NewDashboard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// log registrationte
+	msg := fmt.Sprintf(MsgDashboardCreated.String(), dashboard.Name)
+	s.logRegistration(ctx, "Dashboards", msg)
+
 	res := newDashboardResponse(dashboard)
 	location(w, res.Links.Self)
 	encodeJSON(w, http.StatusCreated, res, s.Logger)
@@ -126,16 +130,21 @@ func (s *Service) RemoveDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	e, err := s.Store.Dashboards(ctx).Get(ctx, cloudhub.DashboardID(id))
+	dashboard, err := s.Store.Dashboards(ctx).Get(ctx, cloudhub.DashboardID(id))
 	if err != nil {
 		notFound(w, id, s.Logger)
 		return
 	}
 
-	if err := s.Store.Dashboards(ctx).Delete(ctx, e); err != nil {
+	if err := s.Store.Dashboards(ctx).Delete(ctx, dashboard); err != nil {
 		unknownErrorWithMessage(w, err, s.Logger)
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgDashboardDeleted.String(), dashboard.Name)
+	s.logRegistration(ctx, "Dashboards", msg)
+
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -149,7 +158,7 @@ func (s *Service) ReplaceDashboard(w http.ResponseWriter, r *http.Request) {
 	}
 	id := cloudhub.DashboardID(idParam)
 
-	_, err = s.Store.Dashboards(ctx).Get(ctx, id)
+	dashboard, err := s.Store.Dashboards(ctx).Get(ctx, id)
 	if err != nil {
 		Error(w, http.StatusNotFound, fmt.Sprintf("ID %d not found", id), s.Logger)
 		return
@@ -178,6 +187,10 @@ func (s *Service) ReplaceDashboard(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, msg, s.Logger)
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgDashboardModified.String(), dashboard.Name)
+	s.logRegistration(ctx, "Dashboards", msg)
 
 	res := newDashboardResponse(req)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
@@ -230,6 +243,10 @@ func (s *Service) UpdateDashboard(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, msg, s.Logger)
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgDashboardModified.String(), orig.Name)
+	s.logRegistration(ctx, "Dashboards", msg)
 
 	res := newDashboardResponse(orig)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
