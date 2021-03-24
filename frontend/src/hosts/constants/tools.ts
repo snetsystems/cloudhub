@@ -151,7 +151,6 @@ export const tmpMenu: Menu = {
   type: '',
   name: '',
   label: '',
-  link: '',
   isDisableName: false,
 }
 
@@ -159,5 +158,6 @@ export const hostMenu: Menu = {
   ...tmpMenu,
   type: 'Server',
   isDisableName: true,
+  link: '',
   idrac: '',
 }
