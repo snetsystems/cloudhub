@@ -378,7 +378,8 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 		}
 
 		if user.Passwd == "" {
-			s.logRegistration(ctx, "Login", "Login Fail - empty user table password", user.Name)
+			msg := fmt.Sprintf(MsgEmptyPassword.String())
+			s.logRegistration(ctx, "Login", msg, user.Name)
 			Error(w, http.StatusBadRequest, fmt.Sprintf("empty user table password"), s.Logger)
 			return
 		}
@@ -391,7 +392,8 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 
 		// valid password - sha512
 		if !validPassword([]byte(req.Password), strTohex, []byte(BasicProvider)) {
-			s.logRegistration(ctx, "Login", "Login Fail - requested password and the saved password are different.", user.Name)
+			msg := fmt.Sprintf(MsgDifferentPassword.String())
+			s.logRegistration(ctx, "Login", msg, user.Name)
 			Error(w, http.StatusUnauthorized, fmt.Sprintf("requested password and the saved password are different."), s.Logger)
 			return
 		}
@@ -414,7 +416,8 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 		}
 
 		// log registration
-		s.logRegistration(ctx, "Login", "Login Success", user.Name)
+		msg := fmt.Sprintf(MsgBasicLogin.String())
+		s.logRegistration(ctx, "Login", msg, user.Name)
 
 		res := &loginResponse{
 			PasswordResetFlag: user.PasswordResetFlag,
@@ -439,7 +442,8 @@ func (s *Service) Logout(auth oauth2.Authenticator, basePath string) http.Handle
 			if user == nil || err != nil {
 				s.Logger.Error(err.Error())
 			} else {
-				s.logRegistration(ctx, "Logout", "Logout Success", user.Name)
+				msg := fmt.Sprintf(MsgBasicLogout.String())
+				s.logRegistration(ctx, "Logout", msg, user.Name)
 			}
 		}
 

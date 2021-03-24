@@ -14,6 +14,12 @@ import (
 
 // General Acitivity Logging
 const (
+	// Basic Login
+	MsgBasicLogin = logMessage("Login Success")
+	MsgBasicLogout = logMessage("Logout Success")
+	MsgDifferentPassword = logMessage("Requested password and the saved password are different")
+	MsgEmptyPassword = logMessage("Empty user table password")
+
 	// Organizations
 	MsgOrganizationCreated = logMessage("%s has been created.")
 	MsgOrganizationModified = logMessage("%s has been modified.")
@@ -113,7 +119,7 @@ func (r *proxyLogRequest) ValidCreate() error {
 	if r.Action == ""  {
 		return fmt.Errorf("Action required request body")
 	}
-	
+
 	if r.Message == "" {
 		return fmt.Errorf("Message required request body")
 	}
