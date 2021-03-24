@@ -11,6 +11,7 @@ import {
   mxForm as mxFormType,
   mxGraph as mxGraphType,
   mxGraphModel as mxGraphModelType,
+  mxRectangle as mxRectangleType,
 } from 'mxgraph'
 
 // component
@@ -488,6 +489,26 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
 
     this.graph.constrainChildren = false
+
+    this.graph.resizeCell = (
+      cell: mxCellType,
+      bounds: mxRectangleType,
+      recurse?: boolean
+    ) => {
+      if (cell.getStyle() === 'node') {
+        const containerElement = this.getContainerElement(cell.value)
+        const title = containerElement.querySelector('.mxgraph-cell--title')
+        title.setAttribute('style', `width: ${bounds.width}px;`)
+
+        cell.setValue(containerElement.outerHTML)
+      }
+
+      return mxGraph.prototype.resizeCell.apply(this.graph, [
+        cell,
+        bounds,
+        recurse,
+      ])
+    }
   }
 
   private selectionChanged = (graph: mxGraphType) => {
@@ -765,14 +786,20 @@ class InventoryTopology extends PureComponent<Props, State> {
     const cell = document.createElement('div')
     cell.classList.add('vertex')
 
+    const cellTitleBox = document.createElement('div')
+    cellTitleBox.classList.add('mxgraph-cell--title')
+    cellTitleBox.setAttribute('style', 'width: 90px;')
+
     const cellTitle = document.createElement('strong')
     cellTitle.textContent = node.label
+
+    cellTitleBox.appendChild(cellTitle)
 
     _.forEach(_.keys(node), attr => {
       cell.setAttribute(`data-${attr}`, node[attr])
     })
 
-    cell.appendChild(cellTitle)
+    cell.appendChild(cellTitleBox)
 
     if (style === 'node') {
       const cellIconBox = document.createElement('div')
