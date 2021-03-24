@@ -769,7 +769,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     cellTitle.textContent = node.label
 
     _.forEach(_.keys(node), attr => {
-      console.log(node[attr])
       cell.setAttribute(`data-${attr}`, node[attr])
     })
 
