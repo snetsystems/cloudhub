@@ -450,10 +450,8 @@ class InventoryTopology extends PureComponent<Props, State> {
       const isCellCollapsed = this.graph.isCellCollapsed(cell)
       if (cell.style !== 'group') {
         if (isCellCollapsed) {
-          const parser = new DOMParser()
-          const doc = parser.parseFromString(tmp, 'text/html')
-          const vertex = doc.querySelector('.vertex')
-          const strong = vertex.querySelector('strong')
+          const containerElement = this.getContainerElement(tmp)
+          const strong = containerElement.querySelector('strong')
 
           tmp = strong.outerHTML
         }
@@ -469,10 +467,8 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.graph.convertValueToString = (cell: mxCellType) => {
       if (cell) {
         if (cell.style === 'group' || cell.style === 'edge') {
-          const parser = new DOMParser()
-          const doc = parser.parseFromString(cell.value, 'text/html')
-          const vertex = doc.querySelector('.vertex')
-          const label = vertex.getAttribute('data-label')
+          const constainerElement = this.getContainerElement(cell.value)
+          const label = constainerElement.getAttribute('data-label')
 
           return label
         } else {
@@ -505,10 +501,8 @@ class InventoryTopology extends PureComponent<Props, State> {
     if (cell) {
       const form = new mxForm('properties-table')
 
-      const parser = new DOMParser()
-      const doc = parser.parseFromString(cell.value, 'text/html')
-      const vertex = doc.querySelector('.vertex')
-      const attrs = _.filter(vertex.attributes, attr => {
+      const containerElement = this.getContainerElement(cell.value)
+      const attrs = _.filter(containerElement.attributes, attr => {
         let isSame = false
         _.forEach(this.OUTPUT_INPUT_FIELD, INPUT_FIELD => {
           if (attr.nodeName === INPUT_FIELD) {
@@ -519,7 +513,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         return isSame
       })
 
-      const isDisableName = this.getIsDisableName(vertex)
+      const isDisableName = this.getIsDisableName(containerElement)
 
       _.forEach(attrs, attr => {
         this.createTextField(graph, form, cell, attr, isDisableName)
@@ -528,6 +522,23 @@ class InventoryTopology extends PureComponent<Props, State> {
     } else {
       mxUtils.writeln(properties, 'Nothing selected.')
     }
+  }
+
+  private getParseHTML = (
+    targer: string,
+    type: DOMParserSupportedType = 'text/html'
+  ) => {
+    const parser = new DOMParser()
+    const parseHTML = parser.parseFromString(targer, type)
+
+    return parseHTML
+  }
+
+  private getContainerElement = (target: string): Element => {
+    const doc = this.getParseHTML(target)
+    const containerElement = doc.querySelector('.vertex')
+
+    return containerElement
   }
 
   private getIsDisableName = (containerElement: Element): boolean => {
@@ -663,24 +674,19 @@ class InventoryTopology extends PureComponent<Props, State> {
   private addHostsButton = () => {
     const {hostsObject} = this.state
     const hostList = _.keys(hostsObject)
-    let menus = []
+    let menus: Menu[] = []
 
     this.hosts.innerHTML = ''
 
-    _.reduce(
-      hostList,
-      (_acc, cur) => {
-        const host = {
-          ...hostMenu,
-          name: cur,
-          label: cur,
-        }
-        menus.push(host)
+    _.forEach(hostList, host => {
+      const hostObj = {
+        ...hostMenu,
+        name: host,
+        label: host,
+      }
 
-        return cur
-      },
-      {}
-    )
+      menus.push(hostObj)
+    })
 
     _.forEach(menus, menu => {
       const rowElement = document.createElement('div')
@@ -941,38 +947,36 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
 
     const applyHandler = () => {
-      const parser = new DOMParser()
-      const doc = parser.parseFromString(cell.value, 'text/html')
-      const vertex = doc.querySelector('.vertex')
+      const constainerElement = this.getContainerElement(cell.value)
 
       const newValue = input.value || ''
-      const oldValue = vertex.getAttribute(attribute.nodeName) || ''
+      const oldValue = constainerElement.getAttribute(attribute.nodeName) || ''
 
       if (newValue != oldValue) {
         graph.getModel().beginUpdate()
 
         try {
-          const strong = vertex.querySelector('strong')
+          const strong = constainerElement.querySelector('strong')
           if (strong && attribute.nodeName === 'data-label') {
             strong.textContent = newValue
 
-            vertex.setAttribute(attribute.nodeName, newValue)
+            constainerElement.setAttribute(attribute.nodeName, newValue)
 
-            cell.setValue(vertex.outerHTML)
+            cell.setValue(constainerElement.outerHTML)
             return
           }
 
           if (attribute.nodeName === 'data-name') {
-            vertex.setAttribute(attribute.nodeName, newValue)
+            constainerElement.setAttribute(attribute.nodeName, newValue)
 
-            cell.setValue(vertex.outerHTML)
+            cell.setValue(constainerElement.outerHTML)
             return
           }
 
           if (attribute.nodeName === 'data-idrac') {
-            vertex.setAttribute(attribute.nodeName, newValue)
+            constainerElement.setAttribute(attribute.nodeName, newValue)
 
-            cell.setValue(vertex.outerHTML)
+            cell.setValue(constainerElement.outerHTML)
             return
           }
 
@@ -980,22 +984,17 @@ class InventoryTopology extends PureComponent<Props, State> {
             if (cell.children) {
               const childrenCell = cell.getChildAt(0)
               if (childrenCell.style === 'href') {
-                const parser = new DOMParser()
-                const cellDoc = parser.parseFromString(cell.value, 'text/html')
-                const childrenDoc = parser.parseFromString(
-                  childrenCell.value,
-                  'text/html'
+                const containerElement = this.getContainerElement(cell.value)
+                containerElement.setAttribute('data-link', newValue)
+                cell.setValue(containerElement.outerHTML)
+
+                const childrenContainerElement = this.getContainerElement(
+                  childrenCell.value
                 )
 
-                const cellVertex = cellDoc.querySelector('.vertex')
-                cellVertex.setAttribute('data-link', newValue)
-                cell.setValue(cellVertex.outerHTML)
-
-                const childrenVertex = childrenDoc.querySelector('.vertex')
-                const childrenlink = childrenVertex.querySelector('a')
-
+                const childrenlink = childrenContainerElement.querySelector('a')
                 childrenlink.setAttribute('href', newValue)
-                childrenCell.setValue(childrenVertex.outerHTML)
+                childrenCell.setValue(childrenContainerElement.outerHTML)
 
                 if (newValue) {
                   childrenCell.setVisible(true)
@@ -1042,11 +1041,9 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     _.forEach(cells, cell => {
       if (cell.getStyle() === 'node') {
-        const parser = new DOMParser()
-        const doc = parser.parseFromString(cell.value, 'text/html')
-        const vertex = doc.querySelector('.vertex')
-        const isDisableName = this.getIsDisableName(vertex)
-        const name = vertex.getAttribute('data-name')
+        const containerElement = this.getContainerElement(cell.value)
+        const isDisableName = this.getIsDisableName(containerElement)
+        const name = containerElement.getAttribute('data-name')
 
         if (isDisableName) {
           graph.removeCellOverlays(cell)
