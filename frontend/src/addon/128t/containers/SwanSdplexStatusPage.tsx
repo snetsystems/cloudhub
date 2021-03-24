@@ -668,9 +668,10 @@ const SwanSdplexStatusPage = ({
         </Page.Header.Right>
       </Page.Header>
       <Page.Contents scrollable={true}>
-        {(loading || _.isEmpty(emitData.routerNodes)) && !error ? (
+        {(loading || _.isEmpty(emitData.routerNodes)) &&
+        _.get(error, 'message') !== 'Network error: Failed to fetch' ? (
           <PageSpinner />
-        ) : !error ? (
+        ) : _.get(error, 'message') !== 'Network error: Failed to fetch' ? (
           activeEditorTab === 'Data' ? (
             <div className={'swan-sdpldex-status-page__container'}>
               <GridLayoutRenderer
