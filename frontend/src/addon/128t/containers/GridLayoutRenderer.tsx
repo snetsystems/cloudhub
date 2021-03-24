@@ -419,7 +419,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
 
     const checkRouterData: RouterNode[] = routerNodesData.map(
       (router, i): RouterNode => {
-        router.isCheck = checkRouters[i].isCheck
+        router.isCheck = _.get(checkRouters[i], 'isCheck')
         return router
       }
     )
