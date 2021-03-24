@@ -342,7 +342,7 @@ class InventoryTopology extends PureComponent<Props, State> {
             type: 'Edge',
           }
 
-          const edge = this.createHTMLValue(edgeObj)
+          const edge = this.createHTMLValue(edgeObj, 'edge')
 
           cell.setValue(edge.outerHTML)
           cell.setStyle('edge')
@@ -428,7 +428,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         type: 'Group',
       }
 
-      const groupCell = this.createHTMLValue(groupObj)
+      const groupCell = this.createHTMLValue(groupObj, 'group')
       group.setValue(groupCell.outerHTML)
       group.setVertex(true)
       group.setConnectable(true)
@@ -761,7 +761,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     ds.setGuidesEnabled(true)
   }
 
-  private createHTMLValue = (node: Menu) => {
+  private createHTMLValue = (node: Menu, style: string) => {
     const cell = document.createElement('div')
     cell.classList.add('vertex')
 
@@ -775,7 +775,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     cell.appendChild(cellTitle)
 
-    if (node.type !== 'Group' && node.type !== 'Edge') {
+    if (style === 'node') {
       const cellIconBox = document.createElement('div')
       const cellIcon = document.createElement('div')
 
@@ -803,7 +803,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     model.beginUpdate()
     try {
-      const cell = this.createHTMLValue(node)
+      const cell = this.createHTMLValue(node, 'node')
 
       v1 = graph.insertVertex(
         parent,
