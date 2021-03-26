@@ -173,7 +173,7 @@ export default class AllUsersTableRow extends Component<Props> {
   }
 
   private get confirmationPasswordResetText(): string {
-    return 'Reset your user password\nand send to stored email?'
+    return 'Reset your user password?'
   }
 
   private get dropdownOrganizationsItems() {
