@@ -12,6 +12,7 @@ import {
   mxGraph as mxGraphType,
   mxGraphModel as mxGraphModelType,
   mxRectangle as mxRectangleType,
+  mxHierarchicalLayout as mxHierarchicalLayoutType,
 } from 'mxgraph'
 
 // component
@@ -420,6 +421,9 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.graph.setAllowDanglingEdges(false)
     this.graph.createGroupCell = (cells: mxCellType[]) => {
       const group = mxGraph.prototype.createGroupCell.apply(this.graph, cells)
+      // console.log('createGroupCell graph: ', this.graph)
+      // console.log('createGroupCell cells: ', cells)
+
       const groupObj = {
         ...tmpMenu,
         name: 'Group',
@@ -429,11 +433,12 @@ class InventoryTopology extends PureComponent<Props, State> {
 
       const groupCell = this.createHTMLValue(groupObj, 'group')
       group.setValue(groupCell.outerHTML)
-      group.setVertex(true)
-      group.setConnectable(true)
+      // group.setVertex(true)
+      group.setConnectable(false)
 
       group.setStyle('group')
 
+      // console.log('createGroupCell group: ', group)
       return group
     }
 
@@ -596,12 +601,46 @@ class InventoryTopology extends PureComponent<Props, State> {
         let cells = mxUtils.sortCells(this.graph.getSelectionCells(), true)
         cells = _.filter(cells, cell => cell.style !== 'edge')
 
-        if (cells.length === 1 && this.graph.isSwimlane(cells[0])) {
+        console.log('group action cells: ', cells)
+        let addEdgeCells = [...cells]
+        _.forEach(cells, cell => {
+          if (cell?.edges) {
+            const {edges} = cell
+            _.forEach(edges, edge => {
+              if (
+                _.includes(cells, edge.target) &&
+                _.includes(cells, edge.source)
+              ) {
+                if (!_.includes(addEdgeCells, edge)) {
+                  addEdgeCells.push(edge)
+                }
+              }
+            })
+          }
+        })
+
+        let edgeCount = 0
+
+        _.forEach(addEdgeCells, cell => {
+          if (cell.isEdge()) {
+            edgeCount++
+          }
+        })
+
+        if (addEdgeCells.length === edgeCount) return
+
+        if (
+          addEdgeCells.length === 1 &&
+          this.graph.isSwimlane(addEdgeCells[0])
+        ) {
           return
         } else {
-          cells = this.graph.getCellsForGroup(cells)
-          if (cells.length > 1) {
-            this.graph.setSelectionCell(this.graph.groupCells(null, 30, cells))
+          addEdgeCells = this.graph.getCellsForGroup(addEdgeCells)
+
+          if (addEdgeCells.length > 1) {
+            this.graph.setSelectionCell(
+              this.graph.groupCells(null, 30, addEdgeCells)
+            )
           }
         }
       }
