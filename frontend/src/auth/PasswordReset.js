@@ -86,8 +86,11 @@ class PasswordReset extends PureComponent {
               </div>
               <div className="panel-body" style={{padding: '0px'}}>
                 <div style={{paddingBottom: '15px'}}>
-                  Please enter your email address. We will send you an email to
-                  reset your password.
+                  Please enter your ID.
+                  <br />
+                  We will send to you an email or other way
+                  <br />
+                  to reset your password.
                 </div>
                 <div className="form-group auth-form">
                   <input
