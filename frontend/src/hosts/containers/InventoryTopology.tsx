@@ -599,18 +599,44 @@ class InventoryTopology extends PureComponent<Props, State> {
 
         let addEdgeCells = [...cells]
         _.forEach(cells, cell => {
-          if (cell?.edges) {
-            const {edges} = cell
-            _.forEach(edges, edge => {
-              if (
-                _.includes(cells, edge.target) &&
-                _.includes(cells, edge.source)
-              ) {
-                if (!_.includes(addEdgeCells, edge)) {
-                  addEdgeCells.push(edge)
-                }
+          if (this.graph.getChildCells(cell).length > 0) {
+            this.graph.selectAll(cell, true)
+
+            const childCells = this.graph.getSelectionCells()
+
+            this.graph.removeSelectionCells(childCells)
+
+            _.forEach(childCells, childCell => {
+              if (childCell?.edges) {
+                const {edges} = childCell
+                _.forEach(edges, edge => {
+                  if (
+                    (_.includes(cells, edge.target) ||
+                      _.includes(cells, edge.source)) &&
+                    (_.includes(childCells, edge.target) ||
+                      _.includes(childCells, edge.source))
+                  ) {
+                    if (!_.includes(addEdgeCells, edge)) {
+                      addEdgeCells.push(edge)
+                    }
+                  }
+                })
               }
             })
+          } else {
+            if (cell?.edges) {
+              const {edges} = cell
+              _.forEach(edges, edge => {
+                if (
+                  _.includes(cells, edge.target) &&
+                  _.includes(cells, edge.source)
+                ) {
+                  if (!_.includes(addEdgeCells, edge)) {
+                    addEdgeCells.push(edge)
+                  }
+                }
+              })
+            }
           }
         })
 
