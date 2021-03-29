@@ -601,7 +601,6 @@ class InventoryTopology extends PureComponent<Props, State> {
         let cells = mxUtils.sortCells(this.graph.getSelectionCells(), true)
         cells = _.filter(cells, cell => cell.style !== 'edge')
 
-        console.log('group action cells: ', cells)
         let addEdgeCells = [...cells]
         _.forEach(cells, cell => {
           if (cell?.edges) {
@@ -619,15 +618,15 @@ class InventoryTopology extends PureComponent<Props, State> {
           }
         })
 
-        let edgeCount = 0
+        // let edgeCount = 0
 
-        _.forEach(addEdgeCells, cell => {
-          if (cell.isEdge()) {
-            edgeCount++
-          }
-        })
+        // _.forEach(addEdgeCells, cell => {
+        //   if (cell.isEdge()) {
+        //     edgeCount++
+        //   }
+        // })
 
-        if (addEdgeCells.length === edgeCount) return
+        // if (addEdgeCells.length === edgeCount) return
 
         if (
           addEdgeCells.length === 1 &&
@@ -637,10 +636,18 @@ class InventoryTopology extends PureComponent<Props, State> {
         } else {
           addEdgeCells = this.graph.getCellsForGroup(addEdgeCells)
 
+          console.log('getCellsForGroup', addEdgeCells)
+
           if (addEdgeCells.length > 1) {
-            this.graph.setSelectionCell(
-              this.graph.groupCells(null, 30, addEdgeCells)
-            )
+            if (
+              this.graph.getChildCells(
+                this.graph.getModel().getParent(addEdgeCells[0])
+              ).length !== addEdgeCells.length
+            ) {
+              this.graph.setSelectionCell(
+                this.graph.groupCells(null, 30, addEdgeCells)
+              )
+            }
           }
         }
       }
@@ -655,6 +662,20 @@ class InventoryTopology extends PureComponent<Props, State> {
         try {
           const temp = this.graph.ungroupCells(groupCells)
 
+          const ungroupCells = _.map(temp, cell => {
+            if (!this.graph.model.isVertex(cell)) {
+              let geo = this.graph.getCellGeometry(cell)
+
+              geo = geo.clone()
+              geo.x = null
+              geo.y = null
+              geo.relative = true
+
+              this.graph.getModel().setGeometry(cell, geo)
+            }
+            return cell
+          })
+
           if (cells !== null) {
             _.forEach(cells, cell => {
               if (this.graph.model.contains(cell)) {
@@ -664,12 +685,12 @@ class InventoryTopology extends PureComponent<Props, State> {
                 ) {
                   this.graph.setCellStyles('group', '0', [cell])
                 }
-                temp.push(cell)
+                ungroupCells.push(cell)
               }
             })
           }
 
-          this.graph.setSelectionCells(temp)
+          this.graph.setSelectionCells(ungroupCells)
         } finally {
           this.graph.model.endUpdate()
         }
