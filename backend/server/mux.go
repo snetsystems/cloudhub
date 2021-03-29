@@ -378,10 +378,10 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.PATCH("/cloudhub/v1/vspheres/:id", EnsureAdmin(service.UpdateVsphere))
 
 	// topologys
-	router.GET("/cloudhub/v1/topologys", EnsureAdmin(service.Topology))
-	router.POST("/cloudhub/v1/topologys", EnsureAdmin(service.NewTopology))
-	router.DELETE("/cloudhub/v1/topologys/:id", EnsureAdmin(service.RemoveTopology))
-	router.PATCH("/cloudhub/v1/topologys/:id", EnsureAdmin(service.UpdateTopology))
+	router.GET("/cloudhub/v1/topologys", EnsureViewer(service.Topology))
+	router.POST("/cloudhub/v1/topologys", EnsureViewer(service.NewTopology))
+	router.DELETE("/cloudhub/v1/topologys/:id", EnsureViewer(service.RemoveTopology))
+	router.PATCH("/cloudhub/v1/topologys/:id", EnsureViewer(service.UpdateTopology))
 
 	// Validates go templates for the js client
 	router.POST("/cloudhub/v1/validate_text_templates", EnsureViewer(service.ValidateTextTemplate))
