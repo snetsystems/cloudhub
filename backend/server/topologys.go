@@ -45,7 +45,16 @@ func (s *Service) Topology(w http.ResponseWriter, r *http.Request) {
 
 	topology, err := s.Store.Topologys(ctx).Get(ctx, cloudhub.TopologyQuery{Organization: &defaultOrg.ID})
 	if err != nil {
-		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+		if err != cloudhub.ErrTopologyNotFound {
+			Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+			return
+		} 
+		res := &topologyResponse{
+			ID:           "",
+			Organization: "",
+			Links:        selfLinks{Self: ""},
+		}
+		encodeJSON(w, http.StatusOK, res, s.Logger)
 		return
 	}
 
@@ -74,12 +83,6 @@ func (s *Service) NewTopology(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// validate that the topology exists
-	if s.topologyExists(ctx, defaultOrg.ID) {
-		invalidData(w, fmt.Errorf("organization's inventory topology does exist"), s.Logger)
-		return
-	}
-
 	topology := &cloudhub.Topology{
 		Diagram: byteSlice2String(body),
 		Organization:  defaultOrg.ID,
@@ -92,9 +95,14 @@ func (s *Service) NewTopology(w http.ResponseWriter, r *http.Request) {
 
 	res, err := s.Store.Topologys(ctx).Add(ctx, topology)
 	if err != nil {
-		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+		invalidData(w, err, s.Logger)
 		return
 	}
+
+	// log registrationte
+	org, _ := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &res.Organization})
+	msg := fmt.Sprintf(MsgTopologyCreated.String(), org.Name)
+	s.logRegistration(ctx, "Topologys", msg)
 
 	tp := newTopologyResponse(res, false)
 	location(w, tp.Links.Self)
@@ -120,6 +128,12 @@ func (s *Service) RemoveTopology(w http.ResponseWriter, r *http.Request) {
 		unknownErrorWithMessage(w, err, s.Logger)
 		return
 	}
+
+	// log registrationte
+	org, _ := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &topology.Organization})
+	msg := fmt.Sprintf(MsgTopologyDeleted.String(), org.Name)
+	s.logRegistration(ctx, "Topologys", msg)
+
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -157,6 +171,11 @@ func (s *Service) UpdateTopology(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, msg, s.Logger)
 		return
 	}
+
+	// log registrationte
+	org, _ := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &topology.Organization})
+	msg := fmt.Sprintf(MsgTopologyModified.String(), org.Name)
+	s.logRegistration(ctx, "Topologys", msg)
 
 	res := newTopologyResponse(topology, false)
 	encodeJSON(w, http.StatusOK, res, s.Logger)

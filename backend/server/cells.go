@@ -295,6 +295,10 @@ func (s *Service) NewDashboardCell(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// log registrationte
+	msg := fmt.Sprintf(MsgDashboardCellCreated.String(), cell.Name, dash.Name)
+	s.logRegistration(ctx, "Dashboards Cells", msg)
+
 	boards := newDashboardResponse(dash)
 	for _, cell := range boards.Cells {
 		if cell.ID == cid {
@@ -347,9 +351,11 @@ func (s *Service) RemoveDashboardCell(w http.ResponseWriter, r *http.Request) {
 
 	cid := httprouter.GetParamFromContext(ctx, "cid")
 	cellid := -1
+	var dashCell cloudhub.DashboardCell
 	for i, cell := range dash.Cells {
 		if cell.ID == cid {
 			cellid = i
+			dashCell = cell
 			break
 		}
 	}
@@ -364,6 +370,11 @@ func (s *Service) RemoveDashboardCell(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, msg, s.Logger)
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgDashboardCellDeleted.String(), dashCell.Name, dash.Name)
+	s.logRegistration(ctx, "Dashboards Cells", msg)
+
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -384,9 +395,11 @@ func (s *Service) ReplaceDashboardCell(w http.ResponseWriter, r *http.Request) {
 
 	cid := httprouter.GetParamFromContext(ctx, "cid")
 	cellid := -1
+	var dashCell cloudhub.DashboardCell
 	for i, cell := range dash.Cells {
 		if cell.ID == cid {
 			cellid = i
+			dashCell = cell
 			break
 		}
 	}
@@ -420,6 +433,10 @@ func (s *Service) ReplaceDashboardCell(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, msg, s.Logger)
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgDashboardCellModified.String(), dashCell.Name, dash.Name)
+	s.logRegistration(ctx, "Dashboards Cells", msg)
 
 	res := newCellResponse(dash.ID, cell)
 	encodeJSON(w, http.StatusOK, res, s.Logger)

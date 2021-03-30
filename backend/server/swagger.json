@@ -4265,7 +4265,44 @@
       }
     },
 
-    "/topologys": {
+    "/topologies": {
+      "get": {
+        "tags": ["topologys"],
+        "summary": "Search organization's inventory topology",
+        "description": "Returns a inventory topology from the store",
+        "responses": {
+          "200": {
+            "description": "An inventory topology object",
+            "schema": {
+              "$ref": "#/definitions/InventoryTopologyRes"
+            }
+          },
+          "400": {
+            "description": "Failed to load inventory topology from store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden to access this route",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "inventory topology not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
       "post": {
         "tags": ["topologys"],
         "summary": "Create organization's new inventory topology",
@@ -4320,53 +4357,7 @@
         }
       }
     },
-    "/topologys/{id}": {
-      "get": {
-        "tags": ["topologys"],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "type": "string",
-            "description": "ID of the topology",
-            "required": true
-          }
-        ],
-        "summary": "Search organization's inventory topology",
-        "description": "Returns a inventory topology from the store",
-        "responses": {
-          "200": {
-            "description": "An inventory topology object",
-            "schema": {
-              "$ref": "#/definitions/InventoryTopologyRes"
-            }
-          },
-          "400": {
-            "description": "Failed to load inventory topology from store",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "403": {
-            "description": "Forbidden to access this route",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "404": {
-            "description": "inventory topology not found",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          },
-          "default": {
-            "description": "Internal server error",
-            "schema": {
-              "$ref": "#/definitions/Error"
-            }
-          }
-        }
-      },
+    "/topologies/{id}": {
       "patch": {
         "tags": ["topologys"],
         "summary": "Update organization's inventory topology",
@@ -7615,13 +7606,17 @@
         "diagram": {
           "type": "string",
           "description": "diagram xml content"
-        }
+        },
+        "links": {"type": "string", "description": "self url"}
       },
-      "required": ["id", "organization", "diagram"],
+      "required": ["id", "organization", "diagram", "links"],
       "example": {
         "id": "1",
         "organization": "2",
-        "diagram": "content"
+        "diagram": "content",
+        "links": {
+          "self": "/cloudhub/v1/topologys/1"
+        }
       }
     }
   }

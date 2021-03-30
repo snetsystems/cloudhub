@@ -109,6 +109,10 @@ func (s *Service) NewKapacitor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// log registrationte
+	msg := fmt.Sprintf(MsgKapacitorCreated.String(), srv.Name)
+	s.logRegistration(ctx, "Kapacitors", msg)
+
 	res := newKapacitor(srv)
 	location(w, res.Links.Self)
 	encodeJSON(w, http.StatusCreated, res, s.Logger)
@@ -217,6 +221,10 @@ func (s *Service) RemoveKapacitor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// log registrationte
+	msg := fmt.Sprintf(MsgKapacitorDeleted.String(), srv.Name)
+	s.logRegistration(ctx, "Kapacitors", msg)
+
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -299,6 +307,10 @@ func (s *Service) UpdateKapacitor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// log registrationte
+	msg := fmt.Sprintf(MsgKapacitorModified.String(), srv.Name)
+	s.logRegistration(ctx, "Kapacitors", msg)
+
 	res := newKapacitor(srv)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
@@ -349,6 +361,11 @@ func (s *Service) KapacitorRulesPost(w http.ResponseWriter, r *http.Request) {
 		invalidData(w, err, s.Logger)
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgKapacitorRuleCreated.String(), task.Rule.Name, srv.Name)
+	s.logRegistration(ctx, "Kapacitors Rules", msg)
+
 	res := newAlertResponse(task, srv.SrcID, srv.ID)
 	location(w, res.Links.Self)
 	encodeJSON(w, http.StatusCreated, res, s.Logger)
@@ -599,6 +616,11 @@ func (s *Service) KapacitorRulesPut(w http.ResponseWriter, r *http.Request) {
 		invalidData(w, err, s.Logger)
 		return
 	}
+	
+	// log registrationte
+	msg := fmt.Sprintf(MsgKapacitorRuleModified.String(), task.Rule.Name, srv.Name)
+	s.logRegistration(ctx, "Kapacitors Rules", msg)
+
 	res := newAlertResponse(task, srv.SrcID, srv.ID)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
@@ -662,16 +684,24 @@ func (s *Service) KapacitorRulesStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var task *kapa.Task
+	var ruleStatus string
 	if req.Status == "enabled" {
 		task, err = c.Enable(ctx, c.Href(tid))
+		ruleStatus = "activated"
 	} else {
 		task, err = c.Disable(ctx, c.Href(tid))
+		ruleStatus = "deactivated"
 	}
 
 	if err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgKapacitorRuleStatus.String(), task.Rule.Name, ruleStatus, srv.Name)
+	s.logRegistration(ctx, "Kapacitors Rules", msg)
 
 	res := newAlertResponse(task, srv.SrcID, srv.ID)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
@@ -783,7 +813,8 @@ func (s *Service) KapacitorRulesDelete(w http.ResponseWriter, r *http.Request) {
 
 	tid := httprouter.GetParamFromContext(ctx, "tid")
 	// Check if the rule is linked to this server and kapacitor
-	if _, err := c.Get(ctx, tid); err != nil {
+	task, err := c.Get(ctx, tid);
+	if err != nil {
 		if err == cloudhub.ErrAlertNotFound {
 			notFound(w, id, s.Logger)
 			return
@@ -795,6 +826,10 @@ func (s *Service) KapacitorRulesDelete(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgKapacitorRuleDeleted.String(), task.Rule.Name, srv.Name)
+	s.logRegistration(ctx, "Kapacitors Rules", msg)
 
 	w.WriteHeader(http.StatusNoContent)
 }

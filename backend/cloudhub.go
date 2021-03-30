@@ -47,6 +47,7 @@ const (
 	ErrInvalidCellQueryType            = Error("invalid cell query type: must be 'flux' or 'influxql'")
 	ErrVsphereNotFound                 = Error("vsphere not found")
 	ErrTopologyNotFound                = Error("topology not found")
+	ErrTopologyAlreadyExists           = Error("topology already exists")
 )
 
 // Error is a domain error encountered while processing CloudHub requests

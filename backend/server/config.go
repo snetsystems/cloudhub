@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
@@ -106,6 +107,10 @@ func (s *Service) ReplaceAuthConfig(w http.ResponseWriter, r *http.Request) {
 		unknownErrorWithMessage(w, err, s.Logger)
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgSuperAdminNewUserModified.String())
+	s.logRegistration(ctx, "SuperAdminNewUsers", msg)
 
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
