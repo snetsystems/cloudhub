@@ -8,6 +8,7 @@ import {
   modeLogger,
 } from 'src/shared/constants/codeMirrorModes'
 import 'codemirror/addon/hint/show-hint'
+import modeXML from 'codemirror/mode/xml/xml'
 
 /* eslint-disable */
 const CodeMirror = require('codemirror')
@@ -389,3 +390,4 @@ CodeMirror.defineSimpleMode('influxQLReadOnly', modeInfluxQLReadOnly)
 CodeMirror.defineSimpleMode('markdown', modeMarkdown)
 CodeMirror.defineSimpleMode('agentConf', modeAgentConf)
 CodeMirror.defineSimpleMode('logger', modeLogger)
+CodeMirror.defineMode(('xml', modeXML))

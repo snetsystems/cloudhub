@@ -24,6 +24,7 @@ class PasswordReset extends PureComponent {
   handlePasswordResetSubmit = _.debounce(() => {
     const {
       handlePasswordReset,
+      router,
       authData: {basicPasswordReset},
     } = this.props
 
@@ -33,6 +34,8 @@ class PasswordReset extends PureComponent {
       url: basicPasswordReset,
       path: `/kapacitor/v1/service-tests/${AlertTypes.smtp}`,
       name,
+    }).then(res => {
+      router.push('/')
     })
   }, 250)
 
@@ -86,11 +89,8 @@ class PasswordReset extends PureComponent {
               </div>
               <div className="panel-body" style={{padding: '0px'}}>
                 <div style={{paddingBottom: '15px'}}>
-                  Please enter your ID.
-                  <br />
-                  We will send to you an email or other way
-                  <br />
-                  to reset your password.
+                  Please, enter your ID, then we will send your reset password
+                  to your email or an external community in a while.
                 </div>
                 <div className="form-group auth-form">
                   <input

@@ -4264,7 +4264,6 @@
         }
       }
     },
-
     "/topologies": {
       "get": {
         "tags": ["topologys"],
@@ -4357,6 +4356,7 @@
         }
       }
     },
+    "/topologys/{id}": {
     "/topologies/{id}": {
       "patch": {
         "tags": ["topologys"],
