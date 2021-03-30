@@ -11,20 +11,20 @@ const initialState = {
 
 const adminCloudHub = (state = initialState, action) => {
   switch (action.type) {
-    case 'CloudHub_LOAD_USERS': {
+    case 'CLOUDHUB_LOAD_USERS': {
       return {...state, ...action.payload}
     }
 
-    case 'CloudHub_LOAD_ORGANIZATIONS': {
+    case 'CLOUDHUB_LOAD_ORGANIZATIONS': {
       return {...state, ...action.payload}
     }
 
-    case 'CloudHub_ADD_USER': {
+    case 'CLOUDHUB_ADD_USER': {
       const {user} = action.payload
       return {...state, users: [...state.users, user]}
     }
 
-    case 'CloudHub_UPDATE_USER': {
+    case 'CLOUDHUB_UPDATE_USER': {
       const {user, updatedUser} = action.payload
       return {
         ...state,
@@ -33,7 +33,7 @@ const adminCloudHub = (state = initialState, action) => {
         ),
       }
     }
-    case 'CloudHub_SYNC_USER': {
+    case 'CLOUDHUB_SYNC_USER': {
       const {staleUser, syncedUser} = action.payload
       return {
         ...state,
@@ -44,7 +44,7 @@ const adminCloudHub = (state = initialState, action) => {
       }
     }
 
-    case 'CloudHub_REMOVE_USER': {
+    case 'CLOUDHUB_REMOVE_USER': {
       const {user} = action.payload
       return {
         ...state,
@@ -57,7 +57,7 @@ const adminCloudHub = (state = initialState, action) => {
       }
     }
 
-    case 'CloudHub_ADD_ORGANIZATION': {
+    case 'CLOUDHUB_ADD_ORGANIZATION': {
       const {organization} = action.payload
       return {
         ...state,
@@ -65,7 +65,7 @@ const adminCloudHub = (state = initialState, action) => {
       }
     }
 
-    case 'CloudHub_RENAME_ORGANIZATION': {
+    case 'CLOUDHUB_RENAME_ORGANIZATION': {
       const {organization, newName} = action.payload
       return {
         ...state,
@@ -75,7 +75,7 @@ const adminCloudHub = (state = initialState, action) => {
       }
     }
 
-    case 'CloudHub_SYNC_ORGANIZATION': {
+    case 'CLOUDHUB_SYNC_ORGANIZATION': {
       const {staleOrganization, syncedOrganization} = action.payload
       return {
         ...state,
@@ -85,7 +85,7 @@ const adminCloudHub = (state = initialState, action) => {
       }
     }
 
-    case 'CloudHub_REMOVE_ORGANIZATION': {
+    case 'CLOUDHUB_REMOVE_ORGANIZATION': {
       const {organization} = action.payload
       return {
         ...state,
@@ -97,7 +97,7 @@ const adminCloudHub = (state = initialState, action) => {
       }
     }
 
-    case 'CloudHub_LOAD_MAPPINGS': {
+    case 'CLOUDHUB_LOAD_MAPPINGS': {
       const {mappings} = action.payload
       return {
         ...state,
@@ -105,7 +105,7 @@ const adminCloudHub = (state = initialState, action) => {
       }
     }
 
-    case 'CloudHub_UPDATE_MAPPING': {
+    case 'CLOUDHUB_UPDATE_MAPPING': {
       const {staleMapping, updatedMapping} = action.payload
       return {
         ...state,
@@ -115,7 +115,7 @@ const adminCloudHub = (state = initialState, action) => {
       }
     }
 
-    case 'CloudHub_ADD_MAPPING': {
+    case 'CLOUDHUB_ADD_MAPPING': {
       const {mapping} = action.payload
       return {
         ...state,
@@ -123,7 +123,7 @@ const adminCloudHub = (state = initialState, action) => {
       }
     }
 
-    case 'CloudHub_REMOVE_MAPPING': {
+    case 'CLOUDHUB_REMOVE_MAPPING': {
       const {mapping} = action.payload
       return {
         ...state,

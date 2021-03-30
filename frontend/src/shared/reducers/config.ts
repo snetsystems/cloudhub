@@ -5,9 +5,9 @@ const initialState = {
 
 const config = (state = initialState, action) => {
   switch (action.type) {
-    case 'CloudHub_GET_AUTH_CONFIG_COMPLETED':
-    case 'CloudHub_UPDATE_AUTH_CONFIG_REQUESTED':
-    case 'CloudHub_UPDATE_AUTH_CONFIG_FAILED': {
+    case 'CLOUDHUB_GET_AUTH_CONFIG_COMPLETED':
+    case 'CLOUDHUB_UPDATE_AUTH_CONFIG_REQUESTED':
+    case 'CLOUDHUB_UPDATE_AUTH_CONFIG_FAILED': {
       const {authConfig: auth} = action.payload
       return {
         ...state,
