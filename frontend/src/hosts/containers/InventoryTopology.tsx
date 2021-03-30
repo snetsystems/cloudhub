@@ -141,7 +141,7 @@ interface State {
   topology: string
   topologyId: string
   isModalVisible: boolean
-  TopologiesStatus: RemoteDataState
+  topologyStatus: RemoteDataState
 }
 
 @ErrorHandling
@@ -156,7 +156,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       topology: null,
       topologyId: null,
       isModalVisible: false,
-      TopologiesStatus: RemoteDataState.Loading,
+      topologyStatus: RemoteDataState.Loading,
     }
   }
 
@@ -229,11 +229,11 @@ class InventoryTopology extends PureComponent<Props, State> {
       this.setState({
         topology: _.get(topology, 'diagram'),
         topologyId: _.get(topology, 'id'),
-        TopologiesStatus: RemoteDataState.Done,
+        topologyStatus: RemoteDataState.Done,
       })
     } else {
       this.setState({
-        TopologiesStatus: RemoteDataState.Done,
+        topologyStatus: RemoteDataState.Done,
       })
     }
 
@@ -1218,7 +1218,7 @@ class InventoryTopology extends PureComponent<Props, State> {
               </div>
               <div id="contentBodySection">
                 <div id="graphContainer" ref={this.containerRef}>
-                  {this.state.TopologiesStatus === RemoteDataState.Loading && (
+                  {this.state.topologyStatus === RemoteDataState.Loading && (
                     <PageSpinner />
                   )}
                   <div id="outlineContainer" ref={this.outlineRef}></div>
