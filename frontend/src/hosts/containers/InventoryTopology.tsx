@@ -153,7 +153,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     super(props)
 
     this.state = {
-      screenProportions: [0.3, 0.7],
+      screenProportions: [0.15, 0.85],
       sidebarProportions: [0.333, 0.333, 0.333],
       hostsObject: {},
       topology: null,
