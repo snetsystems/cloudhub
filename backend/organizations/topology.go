@@ -9,7 +9,7 @@ import (
 // ensure that TopologysStore implements cloudhub.TopologysStore
 var _ cloudhub.TopologysStore = &TopologysStore{}
 
-// TopologysStore facade on a TopologysStore that filters topologys
+// TopologysStore facade on a TopologysStore that filters topologies
 // by organization.
 type TopologysStore struct {
 	store        cloudhub.TopologysStore
@@ -25,7 +25,7 @@ func NewTopologysStore(s cloudhub.TopologysStore, org string) *TopologysStore {
 	}
 }
 
-// All retrieves all topologys from the underlying TopologysStore and filters them
+// All retrieves all topologies from the underlying TopologysStore and filters them
 // by organization.
 func (s *TopologysStore) All(ctx context.Context) ([]cloudhub.Topology, error) {
 	err := validOrganization(ctx)
@@ -38,14 +38,14 @@ func (s *TopologysStore) All(ctx context.Context) ([]cloudhub.Topology, error) {
 		return nil, err
 	}
 
-	topologys := tp[:0]
+	topologies := tp[:0]
 	for _, d := range tp {
 		if d.Organization == s.organization {
-			topologys = append(topologys, d)
+			topologies = append(topologies, d)
 		}
 	}
 
-	return topologys, nil
+	return topologies, nil
 }
 
 // Get returns a Topology if the id exists and belongs to the organization that is set.

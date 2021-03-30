@@ -22,7 +22,7 @@ var (
 	sourcesBucket            = []byte("Sources")
 	usersBucket              = []byte("UsersV2")
 	vSpheresBucket           = []byte("vSpheres")
-	topologyBucket           = []byte("Topologys")
+	topologyBucket           = []byte("Topologies")
 )
 
 // Store is an interface for a generic key value store. It is modeled after

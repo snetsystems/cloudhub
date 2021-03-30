@@ -1012,7 +1012,7 @@ type TopologyQuery struct {
 
 // TopologysStore is the Storage and retrieval of information
 type TopologysStore interface {
-	// All lists all topologys from the TopologysStore
+	// All lists all topologies from the TopologysStore
 	All(context.Context) ([]Topology, error)
 	// Create a new topology in the TopologysStore
 	Add(context.Context, *Topology) (*Topology, error)

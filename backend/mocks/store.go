@@ -77,7 +77,7 @@ func (s *Store) Vspheres(ctx context.Context) cloudhub.VspheresStore {
 	return s.VspheresStore
 }
 
-// Topologys ...
-func (s *Store) Topologys(ctx context.Context) cloudhub.TopologysStore {
+// Topologies ...
+func (s *Store) Topologies(ctx context.Context) cloudhub.TopologysStore {
 	return s.TopologysStore
 }

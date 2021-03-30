@@ -98,7 +98,7 @@ const (
 	MsgvSpheresModified = logMessage("%s has been modified.")
 	MsgvSpheresDeleted = logMessage("%s has been deleted.")
 
-	// Topologys
+	// Topologies
 	MsgTopologyCreated = logMessage("%s Topology has been created.")
 	MsgTopologyModified = logMessage("%s Topology has been modified.")
 	MsgTopologyDeleted = logMessage("%s Topology has been deleted.")

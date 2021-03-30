@@ -12,12 +12,12 @@ import (
 // Ensure topologysStore implements cloudhub.TopologysStore.
 var _ cloudhub.TopologysStore = &topologysStore{}
 
-// topologysStore is the bolt implementation of storing topologys
+// topologysStore is the bolt implementation of storing topologies
 type topologysStore struct {
 	client *Service
 }
 
-// All returns all known topologys
+// All returns all known topologies
 func (s *topologysStore) All(ctx context.Context) ([]cloudhub.Topology, error) {
 	var srcs []cloudhub.Topology
 	if err := s.client.kv.View(ctx, func(tx Tx) error {

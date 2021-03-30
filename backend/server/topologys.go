@@ -18,7 +18,7 @@ type topologyResponse struct {
 }
 
 func newTopologyResponse(t *cloudhub.Topology, resDiagram bool) *topologyResponse {
-	selfLink := fmt.Sprintf("/cloudhub/v1/topologys/%s", t.ID)
+	selfLink := fmt.Sprintf("/cloudhub/v1/topologies/%s", t.ID)
 
 
 	resData := &topologyResponse{
@@ -43,7 +43,7 @@ func (s *Service) Topology(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	topology, err := s.Store.Topologys(ctx).Get(ctx, cloudhub.TopologyQuery{Organization: &defaultOrg.ID})
+	topology, err := s.Store.Topologies(ctx).Get(ctx, cloudhub.TopologyQuery{Organization: &defaultOrg.ID})
 	if err != nil {
 		if err != cloudhub.ErrTopologyNotFound {
 			Error(w, http.StatusBadRequest, err.Error(), s.Logger)
@@ -93,7 +93,7 @@ func (s *Service) NewTopology(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res, err := s.Store.Topologys(ctx).Add(ctx, topology)
+	res, err := s.Store.Topologies(ctx).Add(ctx, topology)
 	if err != nil {
 		invalidData(w, err, s.Logger)
 		return
@@ -102,7 +102,7 @@ func (s *Service) NewTopology(w http.ResponseWriter, r *http.Request) {
 	// log registrationte
 	org, _ := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &res.Organization})
 	msg := fmt.Sprintf(MsgTopologyCreated.String(), org.Name)
-	s.logRegistration(ctx, "Topologys", msg)
+	s.logRegistration(ctx, "Topologies", msg)
 
 	tp := newTopologyResponse(res, false)
 	location(w, tp.Links.Self)
@@ -118,13 +118,13 @@ func (s *Service) RemoveTopology(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	topology, err := s.Store.Topologys(ctx).Get(ctx, cloudhub.TopologyQuery{ID: &id})
+	topology, err := s.Store.Topologies(ctx).Get(ctx, cloudhub.TopologyQuery{ID: &id})
 	if err != nil {
 		notFound(w, id, s.Logger)
 		return
 	}
 
-	if err := s.Store.Topologys(ctx).Delete(ctx, topology); err != nil {
+	if err := s.Store.Topologies(ctx).Delete(ctx, topology); err != nil {
 		unknownErrorWithMessage(w, err, s.Logger)
 		return
 	}
@@ -132,7 +132,7 @@ func (s *Service) RemoveTopology(w http.ResponseWriter, r *http.Request) {
 	// log registrationte
 	org, _ := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &topology.Organization})
 	msg := fmt.Sprintf(MsgTopologyDeleted.String(), org.Name)
-	s.logRegistration(ctx, "Topologys", msg)
+	s.logRegistration(ctx, "Topologies", msg)
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -158,7 +158,7 @@ func (s *Service) UpdateTopology(w http.ResponseWriter, r *http.Request) {
 	 	return
 	}
 
-	topology, err := s.Store.Topologys(ctx).Get(ctx, cloudhub.TopologyQuery{ID: &id})
+	topology, err := s.Store.Topologies(ctx).Get(ctx, cloudhub.TopologyQuery{ID: &id})
 	if err != nil {
 		notFound(w, id, s.Logger)
 		return
@@ -166,7 +166,7 @@ func (s *Service) UpdateTopology(w http.ResponseWriter, r *http.Request) {
 
 	topology.Diagram = byteSlice2String(body)
 
-	if err := s.Store.Topologys(ctx).Update(ctx, topology); err != nil {
+	if err := s.Store.Topologies(ctx).Update(ctx, topology); err != nil {
 		msg := fmt.Sprintf("Error updating topology ID %s: %v", id, err)
 		Error(w, http.StatusInternalServerError, msg, s.Logger)
 		return
@@ -175,7 +175,7 @@ func (s *Service) UpdateTopology(w http.ResponseWriter, r *http.Request) {
 	// log registrationte
 	org, _ := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &topology.Organization})
 	msg := fmt.Sprintf(MsgTopologyModified.String(), org.Name)
-	s.logRegistration(ctx, "Topologys", msg)
+	s.logRegistration(ctx, "Topologies", msg)
 
 	res := newTopologyResponse(topology, false)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
@@ -190,7 +190,7 @@ func ValidTopologRequest(t *cloudhub.Topology, defaultOrgID string) error {
 }
 
 func (s *Service) topologyExists(ctx context.Context, orgID string) bool {
-	if _, err := s.Store.Topologys(ctx).Get(ctx, cloudhub.TopologyQuery{Organization: &orgID}); err == nil {
+	if _, err := s.Store.Topologies(ctx).Get(ctx, cloudhub.TopologyQuery{Organization: &orgID}); err == nil {
 		return true
 	}
 

@@ -377,11 +377,11 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.DELETE("/cloudhub/v1/vspheres/:id", EnsureAdmin(service.RemoveVsphere))
 	router.PATCH("/cloudhub/v1/vspheres/:id", EnsureAdmin(service.UpdateVsphere))
 
-	// topologys
-	router.GET("/cloudhub/v1/topologys", EnsureViewer(service.Topology))
-	router.POST("/cloudhub/v1/topologys", EnsureViewer(service.NewTopology))
-	router.DELETE("/cloudhub/v1/topologys/:id", EnsureViewer(service.RemoveTopology))
-	router.PATCH("/cloudhub/v1/topologys/:id", EnsureViewer(service.UpdateTopology))
+	// topologies
+	router.GET("/cloudhub/v1/topologies", EnsureViewer(service.Topology))
+	router.POST("/cloudhub/v1/topologies", EnsureViewer(service.NewTopology))
+	router.DELETE("/cloudhub/v1/topologies/:id", EnsureViewer(service.RemoveTopology))
+	router.PATCH("/cloudhub/v1/topologies/:id", EnsureViewer(service.UpdateTopology))
 
 	// Proxy logging
 	router.POST("/cloudhub/v1/logging", EnsureViewer(service.ProxyLogging))

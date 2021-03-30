@@ -66,7 +66,7 @@ type getRoutesResponse struct {
 	PasswordPolicyMessage string                          `json:"passwordPolicyMessage"`
 	LoginAuthType         string                          `json:"loginAuthType"`
 	BasicPasswordResetType  string                        `json:"basicPasswordResetType"`
-	Topologys               string                        `json:"topologys"`
+	Topologies               string                        `json:"topologies"`
 }
 
 // AllRoutes is a handler that returns all links to resources in CloudHub server, as well as
@@ -140,7 +140,7 @@ func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		PasswordPolicyMessage: a.PasswordPolicyMessage,
 		LoginAuthType: a.LoginAuthType,
 		BasicPasswordResetType: a.BasicPasswordResetType,
-		Topologys:    "/cloudhub/v1/topologies",
+		Topologies:    "/cloudhub/v1/topologies",
 	}
 
 	// The JSON response will have no field present for the LogoutLink if there is no logout link.

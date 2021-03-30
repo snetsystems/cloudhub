@@ -15,7 +15,7 @@ type TopologysStore struct{}
 
 // All ...
 func (s *TopologysStore) All(context.Context) ([]cloudhub.Topology, error) {
-	return nil, fmt.Errorf("no topologys found")
+	return nil, fmt.Errorf("no topologies found")
 }
 
 // Add ...

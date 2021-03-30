@@ -94,7 +94,7 @@ type DataStore interface {
 	Config(ctx context.Context) cloudhub.ConfigStore
 	OrganizationConfig(ctx context.Context) cloudhub.OrganizationConfigStore
 	Vspheres(ctx context.Context) cloudhub.VspheresStore
-	Topologys(ctx context.Context) cloudhub.TopologysStore
+	Topologies(ctx context.Context) cloudhub.TopologysStore
 }
 
 // ensure that Store implements a DataStore
@@ -242,9 +242,9 @@ func (s *Store) Vspheres(ctx context.Context) cloudhub.VspheresStore {
 	return &noop.VspheresStore{}
 }
 
-// Topologys returns a noop.TopologysStore if the context has no organization specified
+// Topologies returns a noop.TopologysStore if the context has no organization specified
 // and an organization.TopologysStore otherwise.
-func (s *Store) Topologys(ctx context.Context) cloudhub.TopologysStore {
+func (s *Store) Topologies(ctx context.Context) cloudhub.TopologysStore {
 	if isServer := hasServerContext(ctx); isServer {
 		return s.TopologysStore
 	}
