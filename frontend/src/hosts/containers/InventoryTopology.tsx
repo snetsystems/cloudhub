@@ -595,11 +595,14 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.editor.addAction('group', () => {
       if (this.graph.isEnabled()) {
         let cells = mxUtils.sortCells(this.graph.getSelectionCells(), true)
-        cells = _.filter(cells, cell => cell.style !== 'edge')
+        cells = _.filter(cells, cell => !cell.isEdge())
 
         let addEdgeCells = [...cells]
+
         _.forEach(cells, cell => {
-          if (this.graph.getChildCells(cell).length > 0) {
+          const childCell = this.graph.getChildCells(cell)
+
+          if (childCell.length > 0) {
             this.graph.selectAll(cell, true)
 
             const childCells = this.graph.getSelectionCells()
@@ -609,18 +612,17 @@ class InventoryTopology extends PureComponent<Props, State> {
             _.forEach(childCells, childCell => {
               if (childCell?.edges) {
                 const {edges} = childCell
+
                 _.forEach(edges, edge => {
-                  if (
-                    _.includes(
-                      _.filter(cells, f => f !== cell),
-                      edge.target
-                    ) ||
-                    _.includes(
-                      _.filter(cells, f => f !== cell),
-                      edge.source
-                    )
-                  ) {
-                    if (!_.includes(addEdgeCells, edge)) {
+                  const excludeOwnEdge = _.filter(cells, c => c !== cell)
+
+                  const isHasOwnEdge =
+                    _.includes(excludeOwnEdge, edge.target) ||
+                    _.includes(excludeOwnEdge, edge.source)
+
+                  if (isHasOwnEdge) {
+                    const isHasEdge = !_.includes(addEdgeCells, edge)
+                    if (isHasEdge) {
                       addEdgeCells.push(edge)
                     }
                   }
@@ -631,11 +633,14 @@ class InventoryTopology extends PureComponent<Props, State> {
             if (cell?.edges) {
               const {edges} = cell
               _.forEach(edges, edge => {
-                if (
+                const isHasConnectionEdge =
                   _.includes(cells, edge.target) &&
                   _.includes(cells, edge.source)
-                ) {
-                  if (!_.includes(addEdgeCells, edge)) {
+
+                if (isHasConnectionEdge) {
+                  const isHasEdge = !_.includes(addEdgeCells, edge)
+
+                  if (isHasEdge) {
                     addEdgeCells.push(edge)
                   }
                 }
@@ -656,23 +661,22 @@ class InventoryTopology extends PureComponent<Props, State> {
             cellsForGroup.length > 1 &&
             cellsForGroup.length === addEdgeCells.length
           ) {
-            if (
-              !this.graph.isSwimlane(
-                this.graph.getModel().getParent(cellsForGroup[0])
-              )
-            ) {
-              this.graph.setSelectionCell(
-                this.graph.groupCells(null, 30, cellsForGroup)
-              )
+            const model = this.graph.getModel()
+            const getParent = model.getParent(cellsForGroup[0])
+            const isVertexSwimlane = this.graph.isSwimlane(getParent)
+
+            if (!isVertexSwimlane) {
+              const groupCell = this.graph.groupCells(null, 30, cellsForGroup)
+              this.graph.setSelectionCell(groupCell)
             } else {
-              if (
-                this.graph.getChildCells(
-                  this.graph.getModel().getParent(cellsForGroup[0])
-                ).length !== cellsForGroup.length
-              ) {
-                this.graph.setSelectionCell(
-                  this.graph.groupCells(null, 30, cellsForGroup)
-                )
+              const model = this.graph.getModel()
+              const getParent = model.getParent(cellsForGroup[0])
+              const getChildCells = this.graph.getChildCells(getParent)
+              const isSameLength = getChildCells.length !== cellsForGroup.length
+
+              if (isSameLength) {
+                const groupCell = this.graph.groupCells(null, 30, cellsForGroup)
+                this.graph.setSelectionCell(groupCell)
               }
             }
           }
