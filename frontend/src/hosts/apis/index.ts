@@ -544,7 +544,7 @@ export const deleteVSphereApi = async (id: number) => {
 export const loadInventoryTopology = async () => {
   try {
     const info = await AJAX({
-      url: `/cloudhub/v1/topologys`,
+      url: `/cloudhub/v1/topologies`,
       method: 'GET',
     })
 
@@ -559,7 +559,7 @@ export const loadInventoryTopology = async () => {
 
 export const createInventoryTopology = async (cells: string) => {
   return await AJAX({
-    url: `/cloudhub/v1/topologys`,
+    url: `/cloudhub/v1/topologies`,
     method: 'POST',
     data: cells,
     headers: {'Content-Type': 'text/xml'},
@@ -571,7 +571,7 @@ export const updateInventoryTopology = async (
   cells: string
 ) => {
   return await AJAX({
-    url: `/cloudhub/v1/topologys/${cellsId}`,
+    url: `/cloudhub/v1/topologies/${cellsId}`,
     method: 'PATCH',
     data: cells,
     headers: {'Content-Type': 'text/xml'},

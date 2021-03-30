@@ -62,9 +62,6 @@ import 'mxgraph/javascript/src/css/common.css'
 
 import {Controlled as ReactCodeMirror} from 'react-codemirror2'
 
-// Config
-const keyhandlerCommons = require('src/hosts/config/keyhandler-commons.xml')
-
 const mx = mxgraph()
 
 const {
@@ -144,7 +141,7 @@ interface State {
   topology: string
   topologyId: string
   isModalVisible: boolean
-  topologyStatus: RemoteDataState
+  TopologiesStatus: RemoteDataState
 }
 
 @ErrorHandling
@@ -159,7 +156,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       topology: null,
       topologyId: null,
       isModalVisible: false,
-      topologyStatus: RemoteDataState.Loading,
+      TopologiesStatus: RemoteDataState.Loading,
     }
   }
 
@@ -232,11 +229,11 @@ class InventoryTopology extends PureComponent<Props, State> {
       this.setState({
         topology: _.get(topology, 'diagram'),
         topologyId: _.get(topology, 'id'),
-        topologyStatus: RemoteDataState.Done,
+        TopologiesStatus: RemoteDataState.Done,
       })
     } else {
       this.setState({
-        topologyStatus: RemoteDataState.Done,
+        TopologiesStatus: RemoteDataState.Done,
       })
     }
 
@@ -510,8 +507,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
 
     this.editor.setGraphContainer(this.container)
-    const config = mxUtils.load(keyhandlerCommons).getDocumentElement()
-    this.editor.configure(config)
 
     // @ts-ignore
     const getFoldingImage = mxGraph.prototype.getFoldingImage
@@ -1223,7 +1218,7 @@ class InventoryTopology extends PureComponent<Props, State> {
               </div>
               <div id="contentBodySection">
                 <div id="graphContainer" ref={this.containerRef}>
-                  {this.state.topologyStatus === RemoteDataState.Loading && (
+                  {this.state.TopologiesStatus === RemoteDataState.Loading && (
                     <PageSpinner />
                   )}
                   <div id="outlineContainer" ref={this.outlineRef}></div>

@@ -193,6 +193,11 @@ func (s *Service) NewDatabase(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgDatabaseCreated.String(), database.Name)
+	s.logRegistration(ctx, "Databases", msg)
+
 	res := newDBResponse(srcID, database.Name, rps)
 	encodeJSON(w, http.StatusCreated, res, s.Logger)
 }
@@ -228,6 +233,10 @@ func (s *Service) DropDatabase(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusBadRequest, dropErr.Error(), s.Logger)
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgDatabaseDeleted.String(), db)
+	s.logRegistration(ctx, "Databases", msg)
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -325,6 +334,11 @@ func (s *Service) NewRetentionPolicy(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgRetentionPoliciesCreated.String(), rp.Name, db)
+	s.logRegistration(ctx, "Retention Policies", msg)
+
 	res := rpResponse{
 		Name:          rp.Name,
 		Duration:      rp.Duration,
@@ -378,6 +392,10 @@ func (s *Service) UpdateRetentionPolicy(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// log registrationte
+	msg := fmt.Sprintf(MsgRetentionPoliciesModified.String(), rp, db)
+	s.logRegistration(ctx, "Retention Policies", msg)
+
 	res := rpResponse{
 		Name:          p.Name,
 		Duration:      p.Duration,
@@ -419,6 +437,10 @@ func (s *Service) DropRetentionPolicy(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusBadRequest, dropErr.Error(), s.Logger)
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgRetentionPoliciesDeleted.String(), rp, db)
+	s.logRegistration(ctx, "Retention Policies", msg)
 
 	w.WriteHeader(http.StatusNoContent)
 }

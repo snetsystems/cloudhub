@@ -9,16 +9,16 @@ import (
 	"github.com/snetsystems/cloudhub/backend/kv/internal"
 )
 
-// Ensure topologysStore implements cloudhub.TopologysStore.
-var _ cloudhub.TopologysStore = &topologysStore{}
+// Ensure topologiesStore implements cloudhub.TopologiesStore.
+var _ cloudhub.TopologiesStore = &topologiesStore{}
 
-// topologysStore is the bolt implementation of storing topologys
-type topologysStore struct {
+// topologiesStore is the bolt implementation of storing topologies
+type topologiesStore struct {
 	client *Service
 }
 
-// All returns all known topologys
-func (s *topologysStore) All(ctx context.Context) ([]cloudhub.Topology, error) {
+// All returns all known topologies
+func (s *topologiesStore) All(ctx context.Context) ([]cloudhub.Topology, error) {
 	var srcs []cloudhub.Topology
 	if err := s.client.kv.View(ctx, func(tx Tx) error {
 		if err := tx.Bucket(topologyBucket).ForEach(func(k, v []byte) error {
@@ -39,8 +39,8 @@ func (s *topologysStore) All(ctx context.Context) ([]cloudhub.Topology, error) {
 	return srcs, nil
 }
 
-// Add creates a new topology in the topologysStore
-func (s *topologysStore) Add(ctx context.Context, tp *cloudhub.Topology) (*cloudhub.Topology, error) {
+// Add creates a new topology in the topologiesStore
+func (s *topologiesStore) Add(ctx context.Context, tp *cloudhub.Topology) (*cloudhub.Topology, error) {
 	if err := s.client.kv.Update(ctx, func(tx Tx) error {
 		b := tx.Bucket(topologyBucket)
 		seq, err := b.NextSequence()
@@ -63,7 +63,7 @@ func (s *topologysStore) Add(ctx context.Context, tp *cloudhub.Topology) (*cloud
 }
 
 // Get returns a topology if the id exists.
-func (s *topologysStore) Get(ctx context.Context, q cloudhub.TopologyQuery) (*cloudhub.Topology, error) {
+func (s *topologiesStore) Get(ctx context.Context, q cloudhub.TopologyQuery) (*cloudhub.Topology, error) {
 	if q.ID != nil {
 		return s.get(ctx, *q.ID)
 	}
@@ -93,8 +93,8 @@ func (s *topologysStore) Get(ctx context.Context, q cloudhub.TopologyQuery) (*cl
 	return nil, fmt.Errorf("must specify either Organization in TopologyQuery")
 }
 
-// Delete the topology from topologysStore
-func (s *topologysStore) Delete(ctx context.Context, tp *cloudhub.Topology) error {
+// Delete the topology from topologiesStore
+func (s *topologiesStore) Delete(ctx context.Context, tp *cloudhub.Topology) error {
 	if err := s.client.kv.Update(ctx, func(tx Tx) error {
 		_, err := s.get(ctx, tp.ID)
 		if err != nil {
@@ -112,8 +112,8 @@ func (s *topologysStore) Delete(ctx context.Context, tp *cloudhub.Topology) erro
 	return nil
 }
 
-// Update the topology in topologysStore
-func (s *topologysStore) Update(ctx context.Context, tp *cloudhub.Topology) error {
+// Update the topology in topologiesStore
+func (s *topologiesStore) Update(ctx context.Context, tp *cloudhub.Topology) error {
 	if err := s.client.kv.Update(ctx, func(tx Tx) error {
 		// Get an existing topology with the same ID.
 		_, err := s.get(ctx, tp.ID)
@@ -134,8 +134,8 @@ func (s *topologysStore) Update(ctx context.Context, tp *cloudhub.Topology) erro
 	return nil
 }
 
-// get searches the topologysStore for topology with id and returns the bolt representation
-func (s *topologysStore) get(ctx context.Context, id string) (*cloudhub.Topology, error) {
+// get searches the topologiesStore for topology with id and returns the bolt representation
+func (s *topologiesStore) get(ctx context.Context, id string) (*cloudhub.Topology, error) {
 	var tp cloudhub.Topology
 	err := s.client.kv.View(ctx, func(tx Tx) error {
 		v, err := tx.Bucket(topologyBucket).Get([]byte(id))
@@ -152,7 +152,7 @@ func (s *topologysStore) get(ctx context.Context, id string) (*cloudhub.Topology
 	return &tp, nil
 }
 
-func (s *topologysStore) each(ctx context.Context, fn func(*cloudhub.Topology)) error {
+func (s *topologiesStore) each(ctx context.Context, fn func(*cloudhub.Topology)) error {
 	return s.client.kv.View(ctx, func(tx Tx) error {
 		return tx.Bucket(topologyBucket).ForEach(func(k, v []byte) error {
 			var tp cloudhub.Topology

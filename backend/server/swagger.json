@@ -4264,10 +4264,9 @@
         }
       }
     },
-
-    "/topologys": {
+    "/topologies": {
       "get": {
-        "tags": ["topologys"],
+        "tags": ["topologies"],
         "summary": "Search organization's inventory topology",
         "description": "Returns a inventory topology from the store",
         "responses": {
@@ -4304,7 +4303,7 @@
         }
       },
       "post": {
-        "tags": ["topologys"],
+        "tags": ["topologies"],
         "summary": "Create organization's new inventory topology",
         "description": "Creates a inventory topology in the store",
         "parameters": [
@@ -4357,9 +4356,10 @@
         }
       }
     },
-    "/topologys/{id}": {
+    "/topologies/{id}": {
+    "/topologies/{id}": {
       "patch": {
-        "tags": ["topologys"],
+        "tags": ["topologies"],
         "summary": "Update organization's inventory topology",
         "description": "Updates a inventory topology in the store",
         "parameters": [
@@ -4427,7 +4427,7 @@
         }
       },
       "delete": {
-        "tags": ["topologys"],
+        "tags": ["topologies"],
         "summary": "Delete organization's inventory topology",
         "description": "Deletes a inventory topology in the store",
         "parameters": [
@@ -7615,7 +7615,7 @@
         "organization": "2",
         "diagram": "content",
         "links": {
-          "self": "/cloudhub/v1/topologys/1"
+          "self": "/cloudhub/v1/topologies/1"
         }
       }
     }

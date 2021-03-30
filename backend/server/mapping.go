@@ -185,6 +185,11 @@ func (s *Service) NewMapping(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// log registrationte
+	org, _ := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &req.Organization});
+	msg := fmt.Sprintf(MsgMappingCreated.String(), org.Name)
+	s.logRegistration(ctx, "Mappings", msg)
+
 	cu := newMappingResponse(*m)
 	location(w, cu.Links.Self)
 	encodeJSON(w, http.StatusCreated, cu, s.Logger)
@@ -225,6 +230,11 @@ func (s *Service) UpdateMapping(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// log registrationte
+	org, _ := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &mapping.Organization});
+	msg := fmt.Sprintf(MsgMappingModified.String(), org.Name)
+	s.logRegistration(ctx, "Mappings", msg)
+	
 	cu := newMappingResponse(*mapping)
 	location(w, cu.Links.Self)
 	encodeJSON(w, http.StatusOK, cu, s.Logger)
@@ -235,7 +245,7 @@ func (s *Service) RemoveMapping(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := httprouter.GetParamFromContext(ctx, "id")
 
-	m, err := s.Store.Mappings(ctx).Get(ctx, id)
+	mapping, err := s.Store.Mappings(ctx).Get(ctx, id)
 	if err == cloudhub.ErrMappingNotFound {
 		Error(w, http.StatusNotFound, err.Error(), s.Logger)
 		return
@@ -246,10 +256,15 @@ func (s *Service) RemoveMapping(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.Store.Mappings(ctx).Delete(ctx, m); err != nil {
+	if err := s.Store.Mappings(ctx).Delete(ctx, mapping); err != nil {
 		Error(w, http.StatusInternalServerError, "failed to remove mapping from database", s.Logger)
 		return
 	}
+
+	// log registrationte
+	org, _ := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &mapping.Organization});
+	msg := fmt.Sprintf(MsgMappingDeleted.String(), org.Name)
+	s.logRegistration(ctx, "Mappings", msg)
 
 	w.WriteHeader(http.StatusNoContent)
 }
