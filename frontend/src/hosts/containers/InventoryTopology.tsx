@@ -611,10 +611,14 @@ class InventoryTopology extends PureComponent<Props, State> {
                 const {edges} = childCell
                 _.forEach(edges, edge => {
                   if (
-                    (_.includes(cells, edge.target) ||
-                      _.includes(cells, edge.source)) &&
-                    (_.includes(childCells, edge.target) ||
-                      _.includes(childCells, edge.source))
+                    _.includes(
+                      _.filter(cells, f => f !== cell),
+                      edge.target
+                    ) ||
+                    _.includes(
+                      _.filter(cells, f => f !== cell),
+                      edge.source
+                    )
                   ) {
                     if (!_.includes(addEdgeCells, edge)) {
                       addEdgeCells.push(edge)
