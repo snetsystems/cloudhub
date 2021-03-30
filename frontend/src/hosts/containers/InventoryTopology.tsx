@@ -62,9 +62,6 @@ import 'mxgraph/javascript/src/css/common.css'
 
 import {Controlled as ReactCodeMirror} from 'react-codemirror2'
 
-// Config
-const keyhandlerCommons = require('src/hosts/config/keyhandler-commons.xml')
-
 const mx = mxgraph()
 
 const {
@@ -510,8 +507,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
 
     this.editor.setGraphContainer(this.container)
-    const config = mxUtils.load(keyhandlerCommons).getDocumentElement()
-    this.editor.configure(config)
 
     // @ts-ignore
     const getFoldingImage = mxGraph.prototype.getFoldingImage
