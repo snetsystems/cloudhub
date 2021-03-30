@@ -11,7 +11,7 @@ import (
 
 	"github.com/snetsystems/cloudhub/backend/enterprise"
 	"github.com/snetsystems/cloudhub/backend/flux"
-	
+
 	"github.com/bouk/httprouter"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/influx"
@@ -186,6 +186,10 @@ func (s *Service) NewSource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// log registrationte
+	msg := fmt.Sprintf(MsgSourcesCreated.String(), src.Name)
+	s.logRegistration(ctx, "Sources", msg)
+
 	res := newSourceResponse(ctx, src)
 	location(w, res.Links.Self)
 	encodeJSON(w, http.StatusCreated, res, s.Logger)
@@ -292,8 +296,13 @@ func (s *Service) RemoveSource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	src := cloudhub.Source{ID: id}
 	ctx := r.Context()
+	src, err := s.Store.Sources(ctx).Get(ctx, id)
+	if err != nil {
+		notFound(w, id, s.Logger)
+		return
+	}
+
 	if err = s.Store.Sources(ctx).Delete(ctx, src); err != nil {
 		if err == cloudhub.ErrSourceNotFound {
 			notFound(w, id, s.Logger)
@@ -308,6 +317,10 @@ func (s *Service) RemoveSource(w http.ResponseWriter, r *http.Request) {
 		unknownErrorWithMessage(w, err, s.Logger)
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgSourcesDeleted.String(), src.Name)
+	s.logRegistration(ctx, "Sources", msg)
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -452,7 +465,14 @@ func (s *Service) UpdateSource(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, msg, s.Logger)
 		return
 	}
-	encodeJSON(w, http.StatusOK, newSourceResponse(context.Background(), src), s.Logger)
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgSourcesModified.String(), src.Name)
+	s.logRegistration(ctx, "Sources", msg)
+
+	res := newSourceResponse(ctx, src)
+	encodeJSON(w, http.StatusOK, res, s.Logger)
+	//encodeJSON(w, http.StatusOK, newSourceResponse(context.Background(), src), s.Logger)
 }
 
 // ValidSourceRequest checks if name, url, type, and role are valid
@@ -519,10 +539,10 @@ func (s *Service) NewSourceUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err != nil {
-		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
-		return
-	}
+	// log registrationte
+	src, _ := s.Store.Sources(ctx).Get(ctx, srcID)
+	msg := fmt.Sprintf(MsgSourceUserCreated.String(), res.Name, src.Name)
+	s.logRegistration(ctx, "Sources Users", msg)
 
 	su := newSourceUserResponse(srcID, res.Name).WithPermissions(res.Permissions)
 	if _, hasRoles := s.hasRoles(ctx, ts); hasRoles {
@@ -593,7 +613,7 @@ func (s *Service) RemoveSourceUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	uid := httprouter.GetParamFromContext(ctx, "uid")
 
-	_, store, err := s.sourceUsersStore(ctx, w, r)
+	srcID, store, err := s.sourceUsersStore(ctx, w, r)
 	if err != nil {
 		return
 	}
@@ -602,6 +622,11 @@ func (s *Service) RemoveSourceUser(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
+
+	// log registrationte
+	src, _ := s.Store.Sources(ctx).Get(ctx, srcID)
+	msg := fmt.Sprintf(MsgSourceUserDeleted.String(), uid, src.Name)
+	s.logRegistration(ctx, "Sources Users", msg)
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -643,6 +668,11 @@ func (s *Service) UpdateSourceUser(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
+
+	// log registrationte
+	src, _ := s.Store.Sources(ctx).Get(ctx, srcID)
+	msg := fmt.Sprintf(MsgSourceUserModified.String(), uid, src.Name)
+	s.logRegistration(ctx, "Sources Users", msg)
 
 	res := newSourceUserResponse(srcID, u.Name).WithPermissions(u.Permissions)
 	if _, hasRoles := s.hasRoles(ctx, ts); hasRoles {
@@ -828,6 +858,11 @@ func (s *Service) NewSourceRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// log registrationte
+	src, _ := s.Store.Sources(ctx).Get(ctx, srcID)
+	msg := fmt.Sprintf(MsgSourceRoleCreated.String(), res.Name, src.Name)
+	s.logRegistration(ctx, "Sources Roles", msg)
+
 	rr := newSourceRoleResponse(srcID, res)
 	location(w, rr.Links.Self)
 	encodeJSON(w, http.StatusCreated, rr, s.Logger)
@@ -870,6 +905,12 @@ func (s *Service) UpdateSourceRole(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
+
+	// log registrationte
+	src, _ := s.Store.Sources(ctx).Get(ctx, srcID)
+	msg := fmt.Sprintf(MsgSourceRoleModified.String(), role.Name, src.Name)
+	s.logRegistration(ctx, "Sources Roles", msg)
+
 	rr := newSourceRoleResponse(srcID, role)
 	location(w, rr.Links.Self)
 	encodeJSON(w, http.StatusOK, rr, s.Logger)
@@ -945,10 +986,17 @@ func (s *Service) RemoveSourceRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rid := httprouter.GetParamFromContext(ctx, "rid")
+	role, _ := roles.Get(ctx, rid)
 	if err := roles.Delete(ctx, &cloudhub.Role{Name: rid}); err != nil {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
+
+	// log registrationte
+	src, _ := s.Store.Sources(ctx).Get(ctx, srcID)
+	msg := fmt.Sprintf(MsgSourceRoleDeleted.String(), role.Name, src.Name)
+	s.logRegistration(ctx, "Sources Roles", msg)
+
 	w.WriteHeader(http.StatusNoContent)
 }
 

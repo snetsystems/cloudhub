@@ -174,6 +174,10 @@ func (s *Service) NewVsphere(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// log registrationte
+	msg := fmt.Sprintf(MsgvSpheresCreated.String(), vs.Host)
+	s.logRegistration(ctx, "vSpheres", msg)
+
 	resVs := newVsphereResponse(res)
 	location(w, resVs.Links.Self)
 	encodeJSON(w, http.StatusCreated, resVs, s.Logger)
@@ -198,6 +202,10 @@ func (s *Service) RemoveVsphere(w http.ResponseWriter, r *http.Request) {
 		unknownErrorWithMessage(w, err, s.Logger)
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgvSpheresDeleted.String(), vs.Host)
+	s.logRegistration(ctx, "vSpheres", msg)
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -265,6 +273,10 @@ func (s *Service) UpdateVsphere(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, msg, s.Logger)
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgvSpheresModified.String(), orig.Host)
+	s.logRegistration(ctx, "vSpheres", msg)
 
 	res := newVsphereResponse(orig)
 	location(w, res.Links.Self)

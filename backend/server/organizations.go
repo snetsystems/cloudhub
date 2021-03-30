@@ -151,6 +151,10 @@ func (s *Service) NewOrganization(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// log registrationte
+	msg := fmt.Sprintf(MsgOrganizationCreated.String(), res.Name)
+	s.logRegistration(ctx, "Organizations", msg)
+
 	co := newOrganizationResponse(res)
 	location(w, co.Links.Self)
 	encodeJSON(w, http.StatusCreated, co, s.Logger)
@@ -208,6 +212,10 @@ func (s *Service) UpdateOrganization(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// log registrationte
+	msg := fmt.Sprintf(MsgOrganizationModified.String(), org.Name)
+	s.logRegistration(ctx, "Organizations", msg)
+
 	res := newOrganizationResponse(org)
 	location(w, res.Links.Self)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
@@ -228,5 +236,10 @@ func (s *Service) RemoveOrganization(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgOrganizationDeleted.String(), org.Name)
+	s.logRegistration(ctx, "Organizations", msg)
+
 	w.WriteHeader(http.StatusNoContent)
 }

@@ -99,6 +99,11 @@ func (s *Service) NewTopology(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// log registrationte
+	org, _ := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &res.Organization})
+	msg := fmt.Sprintf(MsgTopologyCreated.String(), org.Name)
+	s.logRegistration(ctx, "Topologys", msg)
+
 	tp := newTopologyResponse(res, false)
 	location(w, tp.Links.Self)
 	encodeJSON(w, http.StatusCreated, tp, s.Logger)
@@ -123,6 +128,12 @@ func (s *Service) RemoveTopology(w http.ResponseWriter, r *http.Request) {
 		unknownErrorWithMessage(w, err, s.Logger)
 		return
 	}
+
+	// log registrationte
+	org, _ := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &topology.Organization})
+	msg := fmt.Sprintf(MsgTopologyDeleted.String(), org.Name)
+	s.logRegistration(ctx, "Topologys", msg)
+
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -160,6 +171,11 @@ func (s *Service) UpdateTopology(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, msg, s.Logger)
 		return
 	}
+
+	// log registrationte
+	org, _ := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &topology.Organization})
+	msg := fmt.Sprintf(MsgTopologyModified.String(), org.Name)
+	s.logRegistration(ctx, "Topologys", msg)
 
 	res := newTopologyResponse(topology, false)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
