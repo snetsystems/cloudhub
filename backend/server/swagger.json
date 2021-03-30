@@ -4357,7 +4357,6 @@
       }
     },
     "/topologies/{id}": {
-    "/topologies/{id}": {
       "patch": {
         "tags": ["topologies"],
         "summary": "Update organization's inventory topology",
