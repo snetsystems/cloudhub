@@ -6,10 +6,10 @@ import (
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-var _ cloudhub.TopologysStore = &TopologysStore{}
+var _ cloudhub.TopologiesStore = &TopologiesStore{}
 
-// TopologysStore mock allows all functions to be set for testing
-type TopologysStore struct {
+// TopologiesStore mock allows all functions to be set for testing
+type TopologiesStore struct {
 	AllF    func(context.Context) ([]cloudhub.Topology, error)
 	AddF    func(context.Context, *cloudhub.Topology) (*cloudhub.Topology, error)
 	DeleteF func(context.Context, *cloudhub.Topology) error
@@ -18,26 +18,26 @@ type TopologysStore struct {
 }
 
 // All ...
-func (s *TopologysStore) All(ctx context.Context) ([]cloudhub.Topology, error) {
+func (s *TopologiesStore) All(ctx context.Context) ([]cloudhub.Topology, error) {
 	return s.AllF(ctx)
 }
 
 // Add ...
-func (s *TopologysStore) Add(ctx context.Context, tp *cloudhub.Topology) (*cloudhub.Topology, error) {
+func (s *TopologiesStore) Add(ctx context.Context, tp *cloudhub.Topology) (*cloudhub.Topology, error) {
 	return s.AddF(ctx, tp)
 }
 
 // Delete ...
-func (s *TopologysStore) Delete(ctx context.Context, tp *cloudhub.Topology) error {
+func (s *TopologiesStore) Delete(ctx context.Context, tp *cloudhub.Topology) error {
 	return s.DeleteF(ctx, tp)
 }
 
 // Get ...
-func (s *TopologysStore) Get(ctx context.Context, q cloudhub.TopologyQuery) (*cloudhub.Topology, error) {
+func (s *TopologiesStore) Get(ctx context.Context, q cloudhub.TopologyQuery) (*cloudhub.Topology, error) {
 	return s.GetF(ctx, q)
 }
 
 // Update ...
-func (s *TopologysStore) Update(ctx context.Context, tp *cloudhub.Topology) error {
+func (s *TopologiesStore) Update(ctx context.Context, tp *cloudhub.Topology) error {
 	return s.UpdateF(ctx, tp)
 }

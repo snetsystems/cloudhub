@@ -792,7 +792,7 @@ func openService(ctx context.Context, db kv.Store, builder builders, logger clou
 			MappingsStore:           svc.MappingsStore(),
 			OrganizationConfigStore: svc.OrganizationConfigStore(),
 			VspheresStore:           svc.VspheresStore(),
-			TopologysStore:          svc.TopologysStore(),
+			TopologiesStore:          svc.TopologiesStore(),
 		},
 		Logger:                   logger,
 		UseAuth:                  useAuth,

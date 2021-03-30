@@ -19,7 +19,7 @@ type Store struct {
 	ConfigStore             cloudhub.ConfigStore
 	OrganizationConfigStore cloudhub.OrganizationConfigStore
 	VspheresStore           cloudhub.VspheresStore
-	TopologysStore          cloudhub.TopologysStore
+	TopologiesStore          cloudhub.TopologiesStore
 }
 
 // Sources ...
@@ -78,6 +78,6 @@ func (s *Store) Vspheres(ctx context.Context) cloudhub.VspheresStore {
 }
 
 // Topologies ...
-func (s *Store) Topologies(ctx context.Context) cloudhub.TopologysStore {
-	return s.TopologysStore
+func (s *Store) Topologies(ctx context.Context) cloudhub.TopologiesStore {
+	return s.TopologiesStore
 }

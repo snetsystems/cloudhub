@@ -9,15 +9,15 @@ import (
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-// Ensure an TopologysStore can store, retrieve, update, and delete topology.
-func TestTopologysStore(t *testing.T) {
+// Ensure an TopologiesStore can store, retrieve, update, and delete topology.
+func TestTopologiesStore(t *testing.T) {
 	c, err := NewTestClient()
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer c.Close()
 
-	s := c.TopologysStore()
+	s := c.TopologiesStore()
 
 	tss := []cloudhub.Topology{
 		{

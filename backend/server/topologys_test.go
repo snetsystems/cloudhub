@@ -18,7 +18,7 @@ import (
 func TestTopology(t *testing.T) {
 	type fields struct {
 		OrganizationsStore  cloudhub.OrganizationsStore
-		TopologysStore      cloudhub.TopologysStore
+		TopologiesStore      cloudhub.TopologiesStore
 		Logger              cloudhub.Logger
 	}
 	type args struct {
@@ -45,7 +45,7 @@ func TestTopology(t *testing.T) {
 			},
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
-				TopologysStore: &mocks.TopologysStore{
+				TopologiesStore: &mocks.TopologiesStore{
 					GetF: func(ctx context.Context, q cloudhub.TopologyQuery) (*cloudhub.Topology, error) {
 						return &cloudhub.Topology{
 							ID:           "1",
@@ -74,7 +74,7 @@ func TestTopology(t *testing.T) {
 			s := &Service{
 				Store: &mocks.Store{
 					OrganizationsStore:    tt.fields.OrganizationsStore,
-					TopologysStore: tt.fields.TopologysStore,
+					TopologiesStore: tt.fields.TopologiesStore,
 				},
 				Logger: tt.fields.Logger,
 			}
@@ -100,7 +100,7 @@ func TestTopology(t *testing.T) {
 
 func TestUpdateTopology(t *testing.T) {
 	type fields struct {
-		TopologysStore     cloudhub.TopologysStore
+		TopologiesStore     cloudhub.TopologiesStore
 		Logger             cloudhub.Logger
 	}
 	type args struct {
@@ -130,7 +130,7 @@ func TestUpdateTopology(t *testing.T) {
 			},
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
-				TopologysStore: &mocks.TopologysStore{
+				TopologiesStore: &mocks.TopologiesStore{
 					UpdateF: func(ctx context.Context, tp *cloudhub.Topology) error {
 						return nil
 					},
@@ -154,7 +154,7 @@ func TestUpdateTopology(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Service{
 				Store: &mocks.Store{
-					TopologysStore:      tt.fields.TopologysStore,
+					TopologiesStore:      tt.fields.TopologiesStore,
 				},
 				Logger: tt.fields.Logger,
 			}
@@ -192,7 +192,7 @@ func TestUpdateTopology(t *testing.T) {
 
 func TestRemoveTopology(t *testing.T) {
 	type fields struct {
-		TopologysStore     cloudhub.TopologysStore
+		TopologiesStore     cloudhub.TopologiesStore
 		Logger             cloudhub.Logger
 	}
 	type args struct {
@@ -218,7 +218,7 @@ func TestRemoveTopology(t *testing.T) {
 			},
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
-				TopologysStore: &mocks.TopologysStore{
+				TopologiesStore: &mocks.TopologiesStore{
 					DeleteF: func(ctx context.Context, tp *cloudhub.Topology) error {
 						return nil
 					},
@@ -245,7 +245,7 @@ func TestRemoveTopology(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Service{
 				Store: &mocks.Store{
-					TopologysStore: tt.fields.TopologysStore,
+					TopologiesStore: tt.fields.TopologiesStore,
 				},
 				Logger: tt.fields.Logger,
 			}
@@ -273,7 +273,7 @@ func TestRemoveTopology(t *testing.T) {
 func TestNewTopology(t *testing.T) {
 	type fields struct {
 		OrganizationsStore  cloudhub.OrganizationsStore
-		TopologysStore      cloudhub.TopologysStore
+		TopologiesStore      cloudhub.TopologiesStore
 		Logger              cloudhub.Logger
 	}
 	type args struct {
@@ -303,7 +303,7 @@ func TestNewTopology(t *testing.T) {
 			},
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
-				TopologysStore: &mocks.TopologysStore{
+				TopologiesStore: &mocks.TopologiesStore{
 					AddF: func(context.Context, *cloudhub.Topology) (*cloudhub.Topology, error) {
 						return &cloudhub.Topology{
 							ID: "1",
@@ -357,7 +357,7 @@ func TestNewTopology(t *testing.T) {
 			},
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
-				TopologysStore: &mocks.TopologysStore{
+				TopologiesStore: &mocks.TopologiesStore{
 					AddF: func(context.Context, *cloudhub.Topology) (*cloudhub.Topology, error) {
 						return &cloudhub.Topology{
 							ID: "1",
@@ -409,7 +409,7 @@ func TestNewTopology(t *testing.T) {
 			s := &Service{
 				Store: &mocks.Store{
 					OrganizationsStore:    tt.fields.OrganizationsStore,
-					TopologysStore:        tt.fields.TopologysStore,
+					TopologiesStore:        tt.fields.TopologiesStore,
 				},
 				Logger: tt.fields.Logger,
 			}

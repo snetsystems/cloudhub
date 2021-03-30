@@ -1001,22 +1001,22 @@ type Topology struct {
 }
 
 // TopologyQuery represents the attributes that a topology may be retrieved by.
-// It is predominantly used in the TopologysStore.Get method.
+// It is predominantly used in the TopologiesStore.Get method.
 //
 // It is expected that only one of ID or Organization will be
-// specified, but all are provided TopologysStore should prefer ID.
+// specified, but all are provided TopologiesStore should prefer ID.
 type TopologyQuery struct {
 	ID               *string
 	Organization     *string
 }
 
-// TopologysStore is the Storage and retrieval of information
-type TopologysStore interface {
-	// All lists all topologies from the TopologysStore
+// TopologiesStore is the Storage and retrieval of information
+type TopologiesStore interface {
+	// All lists all topologies from the TopologiesStore
 	All(context.Context) ([]Topology, error)
-	// Create a new topology in the TopologysStore
+	// Create a new topology in the TopologiesStore
 	Add(context.Context, *Topology) (*Topology, error)
-	// Delete the topology from the TopologysStore
+	// Delete the topology from the TopologiesStore
 	Delete(context.Context, *Topology) error
 	// Get retrieves a topology if `ID` exists.
 	Get(ctx context.Context, q TopologyQuery) (*Topology, error)
@@ -1044,6 +1044,6 @@ type KVClient interface {
 	UsersStore() UsersStore
 	// VspheresStore returns the kv's VspheresStore type.
 	VspheresStore() VspheresStore
-	// TopologysStore returns the kv's TopologysStore type.
-	TopologysStore() TopologysStore
+	// TopologiesStore returns the kv's TopologiesStore type.
+	TopologiesStore() TopologiesStore
 }

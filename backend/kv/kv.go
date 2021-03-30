@@ -192,7 +192,7 @@ func (s *Service) VspheresStore() cloudhub.VspheresStore {
 	return &vspheresStore{client: s}
 }
 
-// TopologyStore returns a cloudhub.TopologyStore.
-func (s *Service) TopologysStore() cloudhub.TopologysStore {
-	return &topologysStore{client: s}
+// TopologiesStore returns a cloudhub.TopologiesStore.
+func (s *Service) TopologiesStore() cloudhub.TopologiesStore {
+	return &topologiesStore{client: s}
 }

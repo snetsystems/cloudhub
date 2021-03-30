@@ -7,33 +7,33 @@ import (
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-// ensure TopologysStore implements cloudhub.TopologysStore
-var _ cloudhub.TopologysStore = &TopologysStore{}
+// ensure TopologiesStore implements cloudhub.TopologiesStore
+var _ cloudhub.TopologiesStore = &TopologiesStore{}
 
-// TopologysStore ...
-type TopologysStore struct{}
+// TopologiesStore ...
+type TopologiesStore struct{}
 
 // All ...
-func (s *TopologysStore) All(context.Context) ([]cloudhub.Topology, error) {
+func (s *TopologiesStore) All(context.Context) ([]cloudhub.Topology, error) {
 	return nil, fmt.Errorf("no topologies found")
 }
 
 // Add ...
-func (s *TopologysStore) Add(context.Context, *cloudhub.Topology) (*cloudhub.Topology, error) {
+func (s *TopologiesStore) Add(context.Context, *cloudhub.Topology) (*cloudhub.Topology, error) {
 	return nil, fmt.Errorf("failed to add topology")
 }
 
 // Delete ...
-func (s *TopologysStore) Delete(context.Context, *cloudhub.Topology) error {
+func (s *TopologiesStore) Delete(context.Context, *cloudhub.Topology) error {
 	return fmt.Errorf("failed to delete topology")
 }
 
 // Get ...
-func (s *TopologysStore) Get(ctx context.Context, q cloudhub.TopologyQuery) (*cloudhub.Topology, error) {
+func (s *TopologiesStore) Get(ctx context.Context, q cloudhub.TopologyQuery) (*cloudhub.Topology, error) {
 	return nil, cloudhub.ErrTopologyNotFound
 }
 
 // Update ...
-func (s *TopologysStore) Update(context.Context, *cloudhub.Topology) error {
+func (s *TopologiesStore) Update(context.Context, *cloudhub.Topology) error {
 	return fmt.Errorf("failed to update topology")
 }
