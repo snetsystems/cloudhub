@@ -1,6 +1,9 @@
 import {Dispatch} from 'redux'
 import _ from 'lodash'
 
+// Types
+import {BasicUser} from 'src/types'
+
 // Action
 import {notify} from 'src/shared/actions/notifications'
 import {
@@ -13,6 +16,8 @@ import {
   notifyUserUpdateFailed,
   notifyUserOTPChangeCompleted,
   notifyUserOTPChangeFailed,
+  notifyUserLockChangeSuccess,
+  notifyeUserLockChangFailed,
 } from 'src/shared/copy/notifications'
 
 // API
@@ -23,6 +28,7 @@ import {
   updateUser,
   passwordReset,
   otpChange,
+  changeUserLock,
 } from 'src/auth/apis'
 
 export enum ActionTypes {
@@ -46,6 +52,9 @@ export enum ActionTypes {
   UserOTPChangeRequested = 'USER_OTP_CHANGE_REQUESTED',
   UserOTPChangeCompleted = 'USER_OTP_CHANGE_COMPLETED',
   UserOTPChangeFailed = 'USER_OTP_CHANGE_FAILED',
+  UserLockChangeRequested = 'USER_LOCK_CHANGE_REQUESTED',
+  UserLockChangeCompleted = 'USER_LOCK_CHANGE_COMPLETED',
+  UserLockChangeFailed = 'USER_LOCK_CHANGE_FAILED',
 }
 
 export type Action =
@@ -191,17 +200,45 @@ export interface UserOTPChangeRequestedAction {
 export const userOTPChangeRequested = () => ({
   type: ActionTypes.UserOTPChangeRequested,
 })
+
 export interface UserOTPChangeCompletedAction {
   type: ActionTypes.UserOTPChangeCompleted
 }
+
 export const userOTPChangeCompleted = () => ({
   type: ActionTypes.UserOTPChangeCompleted,
 })
+
 export interface UserOTPChangeFailedAction {
   type: ActionTypes.UserOTPChangeFailed
 }
+
 export const userOTPChangeFailed = () => ({
   type: ActionTypes.UserOTPChangeFailed,
+})
+
+export interface UserLockChangeRequestedAction {
+  type: ActionTypes.UserLockChangeRequested
+}
+
+export const userLockChangeRequested = () => ({
+  type: ActionTypes.UserLockChangeRequested,
+})
+
+export interface UserLockChangeCompletedAction {
+  type: ActionTypes.UserLockChangeCompleted
+}
+
+export const userLockChangeCompleted = () => ({
+  type: ActionTypes.UserLockChangeCompleted,
+})
+
+export interface UserLockChangeFailedAction {
+  type: ActionTypes.UserLockChangeFailed
+}
+
+export const userLockChangeFailed = () => ({
+  type: ActionTypes.UserLockChangeFailed,
 })
 
 export interface BasicAuth {
@@ -362,6 +399,31 @@ export const otpChangeAsync = ({url, user}: OTPChangeParams) => async (
   } catch (error) {
     dispatch(userPasswordResetFailed())
     dispatch(notify(notifyUserOTPChangeFailed()))
+    throw error
+  }
+}
+
+export interface UserLockParams {
+  url: string
+  user: {
+    name: string
+    locked: boolean
+  }
+}
+
+export const changeUserLockAsync = ({url, user}: UserLockParams) => async (
+  dispatch: Dispatch<Action>
+) => {
+  dispatch(userLockChangeRequested())
+  try {
+    console.log('changeUserLockAsync: ', url, user)
+    const res = await changeUserLock({url, user})
+    dispatch(userLockChangeCompleted())
+    dispatch(notify(notifyUserLockChangeSuccess()))
+    return res
+  } catch (error) {
+    dispatch(userLockChangeFailed())
+    dispatch(notify(notifyeUserLockChangFailed()))
     throw error
   }
 }

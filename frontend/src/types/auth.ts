@@ -66,6 +66,15 @@ export interface User {
   superAdmin: boolean
 }
 
+export interface BasicUser extends User {
+  email?: string
+  passwordResetFlag: string
+  passwordUpdateDate: string
+  retryCount: number
+  lockedTime: string
+  locked: boolean
+}
+
 export interface AuthLink {
   callback: string
   label: string

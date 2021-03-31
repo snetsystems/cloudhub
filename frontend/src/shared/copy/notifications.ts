@@ -1180,3 +1180,13 @@ export const notifyUserOTPChangeFailed = (): Notification => ({
   ...defaultErrorNotification,
   message: `Updating your password is failed.`,
 })
+
+export const notifyUserLockChangeSuccess = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `change user lock successfuly`,
+})
+
+export const notifyeUserLockChangFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `change user lock failed.`,
+})

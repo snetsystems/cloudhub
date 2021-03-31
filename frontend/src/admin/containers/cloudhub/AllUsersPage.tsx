@@ -1,11 +1,16 @@
-import React, {PureComponent} from 'react'
+import React, {Dispatch, PureComponent} from 'react'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 
 import * as adminCloudHubActionCreators from 'src/admin/actions/cloudhub'
 import * as configActionCreators from 'src/shared/actions/config'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
-import {passwordResetAsync, PasswordResetParams} from 'src/auth/actions'
+import {
+  passwordResetAsync,
+  PasswordResetParams,
+  changeUserLockAsync,
+  UserLockParams,
+} from 'src/auth/actions'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import AllUsersTable from 'src/admin/components/cloudhub/AllUsersTable'
@@ -49,6 +54,8 @@ interface Props {
     name,
     passwordReturn,
   }: PasswordResetParams) => void
+
+  handleChangeUserLock: ({url, user}: UserLockParams) => void
 }
 
 interface State {
@@ -156,6 +163,7 @@ export class AllUsersPage extends PureComponent<Props, State> {
         onUpdateUserRoles={this.handleUpdateUserRoles}
         onUpdateUserSuperAdmin={this.handleUpdateUserSuperAdmin}
         onResetPassword={this.onResetPassword}
+        onChangeUserLock={this.onChangeUserLock}
       />
     )
   }
@@ -171,6 +179,18 @@ export class AllUsersPage extends PureComponent<Props, State> {
       path: `/kapacitor/v1/service-tests/${AlertTypes.smtp}`,
       name,
       passwordReturn: true,
+    })
+  }
+
+  private onChangeUserLock = (name: string, locked: boolean) => {
+    const {
+      handleChangeUserLock,
+      // links: {basicPasswordAdminReset},
+    } = this.props
+
+    handleChangeUserLock({
+      url: '/cloudhub/v1/users/locked',
+      user: {name, locked},
     })
   }
 }
@@ -191,6 +211,7 @@ const mapDispatchToProps = dispatch => ({
   actionsConfig: bindActionCreators(configActionCreators, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
   handlePasswordReset: bindActionCreators(passwordResetAsync, dispatch),
+  handleChangeUserLock: bindActionCreators(changeUserLockAsync, dispatch),
 })
 
 export default connect(mapStateToProps, mapDispatchToProps)(AllUsersPage)

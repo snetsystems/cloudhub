@@ -44,6 +44,19 @@ export const otpChange = async ({url, user}) => {
   }
 }
 
+export const changeUserLock = async ({url, user}) => {
+  try {
+    return await AJAX({
+      method: 'PATCH',
+      url,
+      data: user,
+    })
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 export const createUser = async ({url, user}) => {
   const basicUser = {
     ...user,

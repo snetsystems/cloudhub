@@ -2,7 +2,15 @@ export * from './app'
 export * from 'src/types/kapacitor'
 import {LayoutCell, LayoutQuery} from './layouts'
 import {Service, NewService, ServiceLinks} from './services'
-import {Links, Organization, Role, Permission, User, Me} from './auth'
+import {
+  Links,
+  Organization,
+  Role,
+  Permission,
+  User,
+  BasicUser,
+  Me,
+} from './auth'
 import {
   PBCell,
   Cell,
@@ -75,6 +83,7 @@ export {
   Links,
   Role,
   User,
+  BasicUser,
   Organization,
   Permission,
   Template,

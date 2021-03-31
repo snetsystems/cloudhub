@@ -272,6 +272,7 @@ class Login extends PureComponent {
                       </div>
                     </>
                   )}
+
                   {!isSign &&
                     basicPasswordResetType !==
                       BASIC_PASSWORD_RESET_TYPE.ADMIN && (
