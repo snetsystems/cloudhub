@@ -479,3 +479,19 @@ export const deleteService = async (service: Service): Promise<void> => {
     throw error
   }
 }
+
+export const createActivityLog = async (
+  action: string,
+  message: string
+): Promise<void> => {
+  try {
+    await AJAX({
+      url: `/cloudhub/v1/logging`,
+      method: 'POST',
+      data: {action, message},
+    })
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}

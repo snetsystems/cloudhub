@@ -1,4 +1,4 @@
-import {Dispatch, bindActionCreators} from 'redux'
+import {Dispatch} from 'redux'
 import {errorThrown} from 'src/shared/actions/errors'
 import _ from 'lodash'
 
@@ -8,6 +8,9 @@ import {
   createInventoryTopology,
   updateInventoryTopology,
 } from 'src/hosts/apis'
+
+// Types
+import {Links} from 'src/types'
 
 export enum ActionTypes {
   LoadInventoryTopology = 'LOAD_INVENTORY_TOPOLOGY',
@@ -44,11 +47,11 @@ export const updateInventoryTopologyAction = (): UpdateInventoryTopologyAction =
   type: ActionTypes.UpdateInventoryTopology,
 })
 
-export const loadInventoryTopologyAsync = () => async (
+export const loadInventoryTopologyAsync = (links: Links) => async (
   dispatch: Dispatch<Action>
 ) => {
   try {
-    const resultLoadInventoryTopology = await loadInventoryTopology()
+    const resultLoadInventoryTopology = await loadInventoryTopology(links)
 
     return resultLoadInventoryTopology
   } catch (error) {
@@ -57,11 +60,15 @@ export const loadInventoryTopologyAsync = () => async (
   }
 }
 
-export const createInventoryTopologyAsync = (cells: string) => async (
-  dispatch: Dispatch<Action>
-) => {
+export const createInventoryTopologyAsync = (
+  links: Links,
+  cells: string
+) => async (dispatch: Dispatch<Action>) => {
   try {
-    const resultCreateInventoryTopology = await createInventoryTopology(cells)
+    const resultCreateInventoryTopology = await createInventoryTopology(
+      links,
+      cells
+    )
 
     return resultCreateInventoryTopology
   } catch (error) {
@@ -71,11 +78,13 @@ export const createInventoryTopologyAsync = (cells: string) => async (
 }
 
 export const updateInventoryTopologyAsync = (
+  links: Links,
   cellsId: string,
   cells: string
 ) => async (dispatch: Dispatch<Action>) => {
   try {
     const resultUpdateInventoryTopology = await updateInventoryTopology(
+      links,
       cellsId,
       cells
     )
