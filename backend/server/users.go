@@ -39,6 +39,11 @@ type userPwdResetRequest struct {
 	Password              string          `json:"password"`
 }
 
+type userLockedRequest struct {
+	Name                  string          `json:"name"`
+	Locked                bool            `json:"locked"`
+}
+
 func (r *userRequest) ValidCreate() error {
 	if r.Name == "" {
 		return fmt.Errorf("name required on CloudHub basic User request body")
@@ -65,6 +70,14 @@ func (r *userPwdResetRequest) ValidCreate() error {
 	}
 	if r.Password == "" {
 		return fmt.Errorf("Password required on CloudHub User request body")
+	}
+
+	return nil
+}
+
+func (r *userLockedRequest) ValidCreate() error {
+	if r.Name == "" {
+		return fmt.Errorf("Name required on CloudHub User request body")
 	}
 
 	return nil
@@ -461,9 +474,11 @@ func (s *Service) UserPassword(w http.ResponseWriter, r *http.Request) {
 	user.Passwd = getPasswordToSHA512(req.Password, SecretKey)
 	user.PasswordUpdateDate = getNowDate()
 	user.PasswordResetFlag = "N"
+	user.RetryCount = 0
+	user.Locked = false
+	user.LockedTime = ""	
 	
-	err = s.Store.Users(ctx).Update(ctx, user)
-	if err != nil {
+	if err := s.Store.Users(ctx).Update(ctx, user); err != nil {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
@@ -751,6 +766,49 @@ func (s *Service) Users(w http.ResponseWriter, r *http.Request) {
 	orgID := httprouter.GetParamFromContext(ctx, "oid")
 	res := newUsersResponse(users, orgID)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
+}
+
+// LockedUser locked a CloudHub user from store
+func (s *Service) LockedUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	var req userLockedRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		invalidJSON(w, s.Logger)
+		return
+	}
+
+	if err := req.ValidCreate(); err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+
+	user, err := s.Store.Users(ctx).Get(ctx, cloudhub.UserQuery{Name: &req.Name})
+	if err != nil {
+		Error(w, http.StatusNotFound, err.Error(), s.Logger)
+		return
+	}
+
+	var msg string
+	if req.Locked {
+		user.Locked = true
+		user.LockedTime = getNowDate()
+		msg = fmt.Sprintf(MsgLocked.String(), user.Name)
+	} else {
+		user.RetryCount = 0
+		user.Locked = false
+		user.LockedTime = ""
+		msg = fmt.Sprintf(MsgUnlocked.String(), user.Name)
+	}
+	
+	if err := s.Store.Users(ctx).Update(ctx, user); err != nil {
+		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+		return
+	}
+
+	// log registrationte
+	s.logRegistration(ctx, "Users", msg)
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func setSuperAdmin(ctx context.Context, req userRequest, user *cloudhub.User) error {

@@ -441,6 +441,9 @@ type User struct {
 	PasswordUpdateDate    string      `json:"passwordUpdateDate,omitempty"`
 	PasswordResetFlag     string      `json:"passwordResetFlag,omitempty"`
 	Email                 string      `json:"email,omitempty"`
+	RetryCount            int32       `json:"retryCount,omitempty"`
+	LockedTime            string      `json:"lockedTime,omitempty"`
+	Locked                bool        `json:"locked,omitempty"`
 }
 
 // UserQuery represents the attributes that a user may be retrieved by.

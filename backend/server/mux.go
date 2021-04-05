@@ -383,8 +383,11 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.DELETE("/cloudhub/v1/topologies/:id", EnsureViewer(service.RemoveTopology))
 	router.PATCH("/cloudhub/v1/topologies/:id", EnsureViewer(service.UpdateTopology))
 
-	// Proxy logging
-	router.POST("/cloudhub/v1/logging", EnsureViewer(service.ProxyLogging))
+	// http logging
+	router.POST("/cloudhub/v1/logging", EnsureViewer(service.HTTPLogging))
+
+	// login locked
+	router.PATCH("/cloudhub/v1/login/locked", EnsureAdmin(service.LockedUser))
 
 	// Validates go templates for the js client
 	router.POST("/cloudhub/v1/validate_text_templates", EnsureViewer(service.ValidateTextTemplate))
@@ -405,6 +408,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 		BasicLogoutLink: "/basic/logout",
 		LoginAuthType: service.LoginAuthType,
 		BasicPasswordResetType: service.BasicPasswordResetType,
+		RetryPolicys: service.RetryPolicy,
 	}
 
 	getPrincipal := func(r *http.Request) oauth2.Principal {
@@ -523,6 +527,40 @@ func Error(w http.ResponseWriter, code int, msg string, logger cloudhub.Logger) 
 	w.WriteHeader(code)
 	_, _ = w.Write(b)
 }
+
+
+
+
+// ErrorBasic writes an JSON message by basic login
+func ErrorBasic(w http.ResponseWriter, code int, msg string, retryCnt int32, lockedTime string, locked bool, logger cloudhub.Logger) {
+	e := ErrorMessageBasic{
+		Code:       code,
+		Message:    msg,
+		RetryCount: retryCnt,
+		LockedTime: lockedTime,
+		Locked:     locked,
+	}
+	b, err := json.Marshal(e)
+	if err != nil {
+		code = http.StatusInternalServerError
+		b = []byte(`{"code": 500, "message":"server_error"}`)
+	}
+
+	logger.
+		WithField("component", "server").
+		WithField("http_status ", code).
+		WithField("retry_count=", retryCnt).
+		WithField("locked_time=", lockedTime).
+		WithField("locked=", locked).
+		Error("Error message ", msg)
+	w.Header().Set("Content-Type", JSONType)
+	w.WriteHeader(code)
+	_, _ = w.Write(b)
+}
+
+
+
+
 
 func invalidData(w http.ResponseWriter, err error, logger cloudhub.Logger) {
 	Error(w, http.StatusUnprocessableEntity, fmt.Sprintf("%v", err), logger)
