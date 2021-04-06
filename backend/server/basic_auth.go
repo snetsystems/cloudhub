@@ -447,6 +447,7 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 
 			retryCnt, err := strconv.Atoi(s.RetryPolicy["count"])
 			httpCode := http.StatusUnauthorized
+			errMsg := "requested password and the saved password are different."
 
 			if err == nil {
 				user.RetryCount++
@@ -454,6 +455,7 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 					user.Locked = true
 					user.LockedTime = getNowDate()
 					httpCode = http.StatusLocked
+					errMsg += "Login is locked."
 				}
 
 				err := s.Store.Users(ctx).Update(ctx, user)
@@ -463,7 +465,7 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 				}
 			}			
 			
-			ErrorBasic(w, httpCode, fmt.Sprintf("requested password and the saved password are different."), user.RetryCount, user.LockedTime, user.Locked, s.Logger)
+			ErrorBasic(w, httpCode, errMsg, user.RetryCount, user.LockedTime, user.Locked, s.Logger)
 			return
 		}
 
