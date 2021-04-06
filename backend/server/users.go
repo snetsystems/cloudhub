@@ -130,6 +130,9 @@ type userResponse struct {
 	PasswordResetFlag  string  `json:"passwordResetFlag,omitempty"`
 	Email              string  `json:"email,omitempty"`
 	Password           string  `json:"password,omitempty"`
+	RetryCount         int32   `json:"retryCount"`
+	LockedTime         string  `json:"lockedTime"`
+	Locked             bool    `json:"locked"`
 }
 
 func newUserResponse(u *cloudhub.User, org string, password string) *userResponse {
@@ -157,6 +160,9 @@ func newUserResponse(u *cloudhub.User, org string, password string) *userRespons
 		PasswordUpdateDate: u.PasswordUpdateDate,
 		PasswordResetFlag:  u.PasswordResetFlag,
 		Email:              u.Email,
+		RetryCount:         u.RetryCount,
+		LockedTime:         u.LockedTime,
+		Locked:             u.Locked,
 	}
 
 	if password != "" {
