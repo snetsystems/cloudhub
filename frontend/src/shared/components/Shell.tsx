@@ -159,7 +159,12 @@ const Shell = (props: Props) => {
     term.loadAddon(fitAddon)
     term.open(termRef.current)
 
-    debouncedFit()
+    const {
+      width,
+      height,
+    } = termRef.current.parentElement.getBoundingClientRect()
+
+    debouncedFit(width, height)
 
     term.onData((data: string) => onTerminalSendString(data))
     // resize call
@@ -334,12 +339,7 @@ const Shell = (props: Props) => {
           />
           <ReactObserver
             onResize={rect => {
-              if (term) {
-                // term.cols controll
-                if (rect.width > 500) {
-                  debouncedFit(rect.width, rect.height)
-                }
-              }
+              debouncedFit(rect.width, rect.height)
             }}
           />
         </div>
