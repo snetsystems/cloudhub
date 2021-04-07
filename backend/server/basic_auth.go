@@ -387,7 +387,7 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 
 		if user.Locked {
 			if user.RetryCount == 0 {
-				msg := fmt.Sprintf(MsgSuperLocked.String(), user.Name)
+				msg := fmt.Sprintf(MsgSuperLocked.String())
 				s.logRegistration(ctx, "Retry", msg, user.Name)
 				
 				ErrorBasic(w, http.StatusLocked, msg, user.RetryCount, user.LockedTime, user.Locked, s.Logger)
