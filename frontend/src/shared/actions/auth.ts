@@ -13,6 +13,7 @@ import {errorThrown} from 'src/shared/actions/errors'
 import {notifyUserSwitchedOrgs} from 'src/shared/copy/notifications'
 
 import {Me, Organization} from 'src/types'
+import {Auth} from 'src/types/reducers/auth'
 
 export type Action =
   | AuthExpiredAction
@@ -114,6 +115,13 @@ export const meChangeOrganizationFailed = (): MeChangeOrganizationFailedAction =
 // which currently causes the app to show a loading spinner until me is
 // re-hydrated. if `getMeAsync` is only being used to refresh me after creating
 // an organization, this is undesirable behavior
+
+interface UserError extends Error {
+  status?: string
+  statusText?: string
+  auth?: Auth
+}
+
 export const getMeAsync = ({shouldResetMe = false} = {}) => async (
   dispatch: Dispatch<Action>
 ): Promise<void> => {
@@ -123,15 +131,37 @@ export const getMeAsync = ({shouldResetMe = false} = {}) => async (
   }
   try {
     // These non-me objects are added to every response by some AJAX trickery
-    const {data: me, auth, logoutLink} = await getMeAJAX()
+    const {
+      data: me,
+      auth,
+      logoutLink,
+    }: {
+      data: Me
+      auth: Auth
+      logoutLink: string
+    } = await getMeAJAX()
     // TODO: eventually, get the links for auth and logout out of here and into linksGetCompleted
-    dispatch(
-      meGetCompleted({
-        me,
+
+    if (me.locked === true) {
+      let error: UserError = new Error()
+      error = {
+        ...error,
+        message: 'locked',
+        status: `${me.name} is Locked`,
+        statusText: 'User Locked',
         auth,
-        logoutLink,
-      })
-    )
+      }
+
+      throw error
+    } else {
+      dispatch(
+        meGetCompleted({
+          me,
+          auth,
+          logoutLink,
+        })
+      )
+    }
   } catch (error) {
     dispatch(meGetFailed())
     dispatch(errorThrown(error))

@@ -37,6 +37,10 @@ const errorsMiddleware = store => next => action => {
       alertType = 'info',
     } = action
 
+    if (error.message === 'locked') {
+      store.dispatch(authExpired(auth))
+    }
+
     if (status === HTTP_FORBIDDEN) {
       const message = _.get(error, 'data.message', '')
 
