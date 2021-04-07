@@ -453,7 +453,6 @@ export const changeUserLockAsync = ({
     }
 
     const res = await changeUserLock({url, user})
-    console.log('oldUser:', oldUser)
 
     dispatch(userLockChangeCompleted())
     dispatch(userLockChange(newUser))
