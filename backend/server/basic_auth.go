@@ -386,7 +386,13 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 		retryType := s.RetryPolicy["type"]
 
 		if user.Locked {
-			if retryType != "" && retryType == "lock" {			
+			if user.RetryCount == 0 {
+				msg := fmt.Sprintf(MsgSuperLocked.String())
+				s.logRegistration(ctx, "Retry", msg, user.Name)
+				
+				ErrorBasic(w, http.StatusLocked, msg, user.RetryCount, user.LockedTime, user.Locked, s.Logger)
+				return
+			} else if retryType != "" && retryType == "lock" {
 				msg := fmt.Sprintf(MsgRetryLoginLocked.String(), user.Name)
 				s.logRegistration(ctx, "Retry", msg, user.Name)
 				

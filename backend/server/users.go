@@ -796,6 +796,7 @@ func (s *Service) LockedUser(w http.ResponseWriter, r *http.Request) {
 
 	var msg string
 	if req.Locked {
+		user.RetryCount = 0
 		user.Locked = true
 		user.LockedTime = getNowDate()
 		msg = fmt.Sprintf(MsgLocked.String(), user.Name)
