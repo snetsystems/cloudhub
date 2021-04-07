@@ -37,7 +37,7 @@ interface Props {
   meID: string
   organizations: Organization[]
   onResetPassword: (name: string) => void
-  onChangeUserLock: (name: string, locked: boolean) => void
+  onChangeUserLock: (user: User) => void
 }
 
 @ErrorHandling
@@ -116,7 +116,7 @@ export default class AllUsersTableRow extends Component<Props> {
             size="btn-xs"
             type="btn-danger"
             text={`${user.locked ? 'Unlock' : 'Lock'}`}
-            customClass="table--show-on-row-hover"
+            customClass="table--show-on-row-hover  width-50px"
           />
         </div>
         <div style={{marginRight: '4px'}}>
@@ -126,7 +126,7 @@ export default class AllUsersTableRow extends Component<Props> {
             size="btn-xs"
             type="btn-danger"
             text="Reset"
-            customClass="table--show-on-row-hover"
+            customClass="table--show-on-row-hover  width-50px"
           />
         </div>
       </>
@@ -232,6 +232,6 @@ export default class AllUsersTableRow extends Component<Props> {
 
   private handleChangeUserLock = (user: BasicUser) => {
     const {onChangeUserLock} = this.props
-    onChangeUserLock(user.name, !user.locked)
+    onChangeUserLock(user)
   }
 }

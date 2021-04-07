@@ -1,4 +1,4 @@
-import React, {Dispatch, PureComponent} from 'react'
+import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 
@@ -21,6 +21,7 @@ import {
   User,
   Notification,
   NotificationFunc,
+  BasicUser,
 } from 'src/types'
 import {AlertTypes} from 'src/kapacitor/constants'
 
@@ -182,15 +183,15 @@ export class AllUsersPage extends PureComponent<Props, State> {
     })
   }
 
-  private onChangeUserLock = (name: string, locked: boolean) => {
+  private onChangeUserLock = (user: BasicUser) => {
     const {
       handleChangeUserLock,
-      // links: {basicPasswordAdminReset},
+      links: {loginLocked},
     } = this.props
 
     handleChangeUserLock({
-      url: '/cloudhub/v1/users/locked',
-      user: {name, locked},
+      url: loginLocked,
+      user,
     })
   }
 }

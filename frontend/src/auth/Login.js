@@ -36,7 +36,7 @@ class Login extends PureComponent {
   handleLoginSubmit = _.debounce(() => {
     const {
       router,
-      authData: {basicauth},
+      authData: {basicauth, retryPolicys},
       handleLogin,
       notify,
     } = this.props
@@ -50,6 +50,7 @@ class Login extends PureComponent {
     handleLogin({
       url: basicauth.login,
       user: {name, password},
+      retryPolicys,
     }).then(({data}) => {
       if (data?.passwordResetFlag === 'N') {
         router.go('/')
@@ -362,6 +363,7 @@ Login.propTypes = {
   handleLogin: func.isRequired,
   handleCreateUser: func.isRequired,
   notify: func.isRequired,
+  retryPolicys: array,
 }
 
 export default connect(null, mapDispatchToProps)(withRouter(Login))

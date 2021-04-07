@@ -20,14 +20,14 @@ interface Props {
   onDelete: (User) => void
   meID: string
   onResetUserPassword: (name: string) => void
-  onChangeUserLock: (name: string, locked: boolean) => void
+  onChangeUserLock: (user: BasicUser) => void
 }
 
 @ErrorHandling
 class UsersTableRow extends PureComponent<Props> {
   public render() {
     const {user, onChangeUserRole} = this.props
-    const {colRole, colProvider, colScheme} = USERS_TABLE
+    const {colRole, colProvider, colScheme, colActions} = USERS_TABLE
 
     return (
       <tr className={'cloudhub-admin-table--user'}>
@@ -55,7 +55,7 @@ class UsersTableRow extends PureComponent<Props> {
         </td>
         <td style={{width: colProvider}}>{user.provider}</td>
         <td style={{width: colScheme}}>{user.scheme}</td>
-        <td className="text-right">
+        <td style={{width: colActions}}>
           <div style={{display: 'flex', justifyContent: 'flex-end'}}>
             {user.provider === 'cloudhub' &&
               this.basicAuthButtons(user as BasicUser)}
@@ -89,7 +89,7 @@ class UsersTableRow extends PureComponent<Props> {
             size="btn-xs"
             type="btn-danger"
             text={`${user.locked ? 'Unlock' : 'Lock'}`}
-            customClass="table--show-on-row-hover"
+            customClass="table--show-on-row-hover width-50px"
           />
         </div>
         <div style={{marginRight: '4px'}}>
@@ -120,7 +120,8 @@ class UsersTableRow extends PureComponent<Props> {
 
   private handleChangeUserLock = (user: BasicUser): void => {
     const {onChangeUserLock} = this.props
-    onChangeUserLock(user.name, !user.locked)
+
+    onChangeUserLock(user)
   }
 
   private get rolesDropdownItems(): DropdownRole[] {

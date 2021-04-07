@@ -109,6 +109,7 @@ export interface Links {
   basicPassword?: string
   passwordPolicy?: string
   passwordPolicyMessage?: string
+  loginLocked: string
 }
 
 export interface ExternalLink {

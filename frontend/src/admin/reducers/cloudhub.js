@@ -1,3 +1,5 @@
+import _ from 'lodash'
+
 import {isSameUser} from 'shared/reducers/helpers/auth'
 
 const initialState = {
@@ -129,6 +131,17 @@ const adminCloudHub = (state = initialState, action) => {
         ...state,
         mappings: state.mappings.filter(m =>
           mapping._tempID ? m._tempID !== mapping._tempID : m.id !== mapping.id
+        ),
+      }
+    }
+
+    case 'CLOUDHUB_LOCK_CHANGE_USER': {
+      const {name, locked} = action.payload
+
+      return {
+        ...state,
+        users: _.map(state.users, user =>
+          user.name === name ? {...user, locked} : user
         ),
       }
     }

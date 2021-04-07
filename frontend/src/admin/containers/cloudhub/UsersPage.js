@@ -64,12 +64,15 @@ class UsersPage extends PureComponent {
     })
   }
 
-  handleOnChangeUserLock = (name, locked) => {
-    const {handleChangeUserLock} = this.props
+  handleOnChangeUserLockAsync = user => {
+    const {
+      handleChangeUserLock,
+      links: {loginLocked},
+    } = this.props
 
     handleChangeUserLock({
-      url: '/cloudhub/v1/users/locked',
-      user: {name, locked},
+      url: loginLocked,
+      user,
     })
   }
 
@@ -114,7 +117,7 @@ class UsersPage extends PureComponent {
         onUpdateUserRole={this.handleUpdateUserRole}
         onDeleteUser={this.handleDeleteUser}
         onResetUserPassword={this.handleResetUserPassword}
-        onChangeUserLock={this.handleChangeUserLock}
+        onChangeUserLock={this.handleOnChangeUserLockAsync}
         notify={notify}
         isLoading={isLoading}
       />
@@ -144,7 +147,7 @@ UsersPage.propTypes = {
   }),
   notify: func.isRequired,
   handlePasswordReset: func.isRequired,
-  handleChangeUserLockAsync: func.isRequired,
+  handleChangeUserLock: func.isRequired,
   providers: arrayOf(string).isRequired,
 }
 
@@ -158,7 +161,7 @@ const mapDispatchToProps = dispatch => ({
   actions: bindActionCreators(adminCloudHubActionCreators, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
   handlePasswordReset: bindActionCreators(passwordResetAsync, dispatch),
-  handleChangeUserLockAsync: bindActionCreators(changeUserLockAsync, dispatch),
+  handleChangeUserLock: bindActionCreators(changeUserLockAsync, dispatch),
 })
 
 export default connect(

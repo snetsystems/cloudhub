@@ -55,6 +55,7 @@ export enum ActionTypes {
   UserLockChangeRequested = 'USER_LOCK_CHANGE_REQUESTED',
   UserLockChangeCompleted = 'USER_LOCK_CHANGE_COMPLETED',
   UserLockChangeFailed = 'USER_LOCK_CHANGE_FAILED',
+  UserLockChange = 'CLOUDHUB_LOCK_CHANGE_USER',
 }
 
 export type Action =
@@ -78,6 +79,7 @@ export type Action =
   | UserGetRequestedAction
   | UserGetCompletedAction
   | UserGetFailedAction
+  | UserLockChangeAction
 export interface UserLoginRequestedAction {
   type: ActionTypes.UserLoginRequested
 }
@@ -241,18 +243,34 @@ export const userLockChangeFailed = () => ({
   type: ActionTypes.UserLockChangeFailed,
 })
 
+export interface UserLockChangeAction {
+  type: ActionTypes.UserLockChange
+  payload: BasicUser
+}
+
+export const userLockChange = (user: BasicUser) => ({
+  type: ActionTypes.UserLockChange,
+  payload: user,
+})
+
 export interface BasicAuth {
   name: string
   password: string
   email?: string
 }
 
+export interface RetryPolicy {
+  name: string
+  policy: string
+}
+
 export interface LoginParams {
   url: string
   user: BasicAuth
+  retryPolicys: RetryPolicy[]
 }
 
-export const loginAsync = ({url, user}: LoginParams) => async (
+export const loginAsync = ({url, user, retryPolicys}: LoginParams) => async (
   dispatch: Dispatch<Action>
 ) => {
   dispatch(userLoginRequested())
@@ -260,8 +278,17 @@ export const loginAsync = ({url, user}: LoginParams) => async (
     const res = await login({url, user})
     return res
   } catch (error) {
+    let retryPolicysObj = {}
+
+    _.forEach(retryPolicys, r => {
+      retryPolicysObj = {
+        ...retryPolicysObj,
+        [r.name]: r.policy,
+      }
+    })
+
     dispatch(userLoginFailed())
-    dispatch(notify(notifyLoginFailed(error.data)))
+    dispatch(notify(notifyLoginFailed(error.data, retryPolicysObj)))
 
     throw error
   }
@@ -405,20 +432,32 @@ export const otpChangeAsync = ({url, user}: OTPChangeParams) => async (
 
 export interface UserLockParams {
   url: string
-  user: {
-    name: string
-    locked: boolean
-  }
+  user: BasicUser
 }
 
-export const changeUserLockAsync = ({url, user}: UserLockParams) => async (
-  dispatch: Dispatch<Action>
-) => {
+export const changeUserLockAsync = ({
+  url,
+  user: oldUser,
+}: UserLockParams) => async (dispatch: Dispatch<Action>) => {
   dispatch(userLockChangeRequested())
   try {
-    console.log('changeUserLockAsync: ', url, user)
+    const {name, locked} = oldUser
+    const user = {
+      name,
+      locked: !locked,
+    }
+
+    const newUser: BasicUser = {
+      ...oldUser,
+      ...user,
+    }
+
     const res = await changeUserLock({url, user})
+    console.log('oldUser:', oldUser)
+
     dispatch(userLockChangeCompleted())
+    dispatch(userLockChange(newUser))
+
     dispatch(notify(notifyUserLockChangeSuccess()))
     return res
   } catch (error) {
