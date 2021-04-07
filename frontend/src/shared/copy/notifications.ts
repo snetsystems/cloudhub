@@ -1086,14 +1086,39 @@ export const notifyConnectRemoteConsoleFailed = (
 //  CloudHub User Auth Notifications
 //  ----------------------------------------------------------------------------
 
-export const notifyLoginFailed = (error: {
-  code: number
-  message: string
-}): Notification => ({
-  ...defaultErrorNotification,
-  isHasHTML: true,
-  message: `Login is failed.<br/>CODE: ${error.code}<br/>REASON: ${error.message}`,
-})
+export const notifyLoginFailed = (
+  error: {
+    code: number
+    message: string
+    retryCount: number
+    locked: boolean
+    lockedTime: string
+  },
+  retryPolicysObj: {[k: string]: any}
+): Notification => {
+  const {message, retryCount, locked} = error
+  const {count, delaytime} = retryPolicysObj
+  let temp = `Login is failed.
+  <hr class="notification-line">
+  <div>${message}.</div>
+  `
+
+  if (locked) {
+    temp += `<hr class="notification-line">
+    <div>Please try again in ${delaytime} minutes.</div>
+    `
+  } else {
+    temp += `<hr class="notification-line">
+    <div>${count - retryCount} login attempts lefttime.</div>
+      `
+  }
+
+  return {
+    ...defaultErrorNotification,
+    isHasHTML: true,
+    message: temp,
+  }
+}
 
 export const notifyLoginCheck = (): Notification => ({
   ...defaultErrorNotification,
