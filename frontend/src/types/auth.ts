@@ -16,6 +16,12 @@ export interface Me {
   name: string
   roles: Role[]
   organizations: Organization[]
+  email?: string
+  passwordResetFlag?: string
+  passwordUpdateDate?: string
+  retryCount?: number
+  lockedTime?: string
+  locked?: boolean
 }
 
 export enum InfluxDBPermissions {
