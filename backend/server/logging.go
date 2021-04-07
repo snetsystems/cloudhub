@@ -111,6 +111,7 @@ const (
 	// Locked
 	MsgLocked = logMessage("administrator has locked %s.")
 	MsgUnlocked = logMessage("%s has been unlocked by an administrator.")
+	MsgSuperLocked = logMessage("Locked by administrator. Please contact the administrator.")
 )
 
 type proxyLogRequest struct {
