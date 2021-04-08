@@ -124,6 +124,8 @@ type Server struct {
 	ExternaExec           string   `long:"external-exec" description:"External program path" env:"EXTERNAL_EXEC"`
     ExternaExecArgs       string   `long:"external-exec-args" description:"Arguments of external program" env:"EXTERNAL_EXEC_ARGS"`
 
+	RetryPolicy           map[string]string `long:"retry-policy" description:"Login Retry policy. 'count' is the number of login failures. 'delaytime' is the time when login is blocked. 'type' is how to block login. E.g. via flags: '--retry-policy=count:{count} --retry-policy=delaytime:{minute} --retry-policy=type:{lock or delay}'. E.g. via environment variable: 'export RETRY_POLICY=count:{count},delaytime:{minute},type:{lock or delay}'" env:"RETRY_POLICY" env-delim:","`
+
 	StatusFeedURL          string  `long:"status-feed-url" description:"URL of a JSON Feed to display as a News Feed on the client Status page." default:"https://www.snetgroup.info/" env:"STATUS_FEED_URL"`
 	CustomLinks            map[string]string `long:"custom-link" description:"Custom link to be added to the client User menu. Multiple links can be added by using multiple of the same flag with different 'name:url' values, or as an environment variable with comma-separated 'name:url' values. E.g. via flags: '--custom-link=snetsystems:https://www.snetsystems.com --custom-link=CloudHub:https://github.com/snetsystems/cloudhub'. E.g. via environment variable: 'export CUSTOM_LINKS=snetsystems:https://www.snetsystems.com,CloudHub:https://github.com/snetsystems/cloudhub'" env:"CUSTOM_LINKS" env-delim:","`
 	TelegrafSystemInterval time.Duration     `long:"telegraf-system-interval" default:"1m" description:"Duration used in the GROUP BY time interval for the hosts list" env:"TELEGRAF_SYSTEM_INTERVAL"`
@@ -603,7 +605,7 @@ func (s *Server) Serve(ctx context.Context) {
 		basicPasswordResetType = "all"
 	}
 	
-	service := openService(ctx, db, s.newBuilders(logger), logger, s.useAuth(), s.AddonURLs, s.MailSubject, s.MailBodyMessage, s.ExternaExec, s.ExternaExecArgs, s.LoginAuthType, basicPasswordResetType)
+	service := openService(ctx, db, s.newBuilders(logger), logger, s.useAuth(), s.AddonURLs, s.MailSubject, s.MailBodyMessage, s.ExternaExec, s.ExternaExecArgs, s.LoginAuthType, basicPasswordResetType, s.RetryPolicy)
 	service.SuperAdminProviderGroups = superAdminProviderGroups{
 		auth0: s.Auth0SuperAdminOrg,
 	}
@@ -723,7 +725,7 @@ func (s *Server) Serve(ctx context.Context) {
 		Info("Stopped serving cloudhub at ", scheme, "://", listener.Addr())
 }
 
-func openService(ctx context.Context, db kv.Store, builder builders, logger cloudhub.Logger, useAuth bool, addonURLs map[string]string, mailSubject, mailBody, externalExec, externalExecArgs string, loginAuthType string, basicPasswordResetType string) Service {
+func openService(ctx context.Context, db kv.Store, builder builders, logger cloudhub.Logger, useAuth bool, addonURLs map[string]string, mailSubject, mailBody, externalExec, externalExecArgs string, loginAuthType string, basicPasswordResetType string, retryPolicy map[string]string) Service {
 	svc, err := kv.NewService(ctx, db, kv.WithLogger(logger))
 	if err != nil {
 		logger.Error("Unable to create kv service", err)
@@ -804,6 +806,7 @@ func openService(ctx context.Context, db kv.Store, builder builders, logger clou
 		ExternalExecArgs:         externalExecArgs,
 		LoginAuthType:            loginAuthType,
 		BasicPasswordResetType:   basicPasswordResetType,
+		RetryPolicy:              retryPolicy,
 	}
 }
 

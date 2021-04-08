@@ -63,7 +63,7 @@ type resetResponse struct {
 }
 
 type kapacitorResponse struct {
-	Success   bool `json:"success"`
+	Success   bool   `json:"success"`
 	Message   string `json:"message"`
 }
 
@@ -159,8 +159,11 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 
 		user.PasswordResetFlag = "Y"
 		user.Passwd = getPasswordToSHA512(resetPassword, BasicProvider)
-		err = s.Store.Users(ctx).Update(ctx, user)
-		if err != nil {
+		user.RetryCount = 0
+		user.Locked = false
+		user.LockedTime = ""
+
+		if err := s.Store.Users(ctx).Update(ctx, user); err != nil {
 			Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 			return
 		}
@@ -202,8 +205,11 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 
 		user.PasswordResetFlag = "Y"
 		user.Passwd = getPasswordToSHA512(resetPassword, BasicProvider)
-		err = s.Store.Users(ctx).Update(ctx, user)
-		if err != nil {
+		user.RetryCount = 0
+		user.Locked = false
+		user.LockedTime = ""
+
+		if err := s.Store.Users(ctx).Update(ctx, user); err != nil {
 			Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 			return
 		}
@@ -264,8 +270,7 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 				buf:            &bytes.Buffer{},
 			}
 
-			s.KapacitorProxyPost(recorder, kapacitorReq)
-			
+			s.KapacitorProxyPost(recorder, kapacitorReq)			
 
 			if recorder.Status != 200 {
 				sendKind = "error"
@@ -310,8 +315,11 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 
 		user.PasswordResetFlag = "Y"
 		user.Passwd = getPasswordToSHA512(resetPassword, BasicProvider)
-		err = s.Store.Users(ctx).Update(ctx, user)
-		if err != nil {
+		user.RetryCount = 0
+		user.Locked = false
+		user.LockedTime = ""
+
+		if err := s.Store.Users(ctx).Update(ctx, user); err != nil {
 			Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 			return
 		}
@@ -371,6 +379,54 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 			return
 		}
 
+
+
+
+		delayTime := s.RetryPolicy["delaytime"]
+		retryType := s.RetryPolicy["type"]
+
+		if user.Locked {
+			if user.RetryCount == 0 {
+				msg := fmt.Sprintf(MsgSuperLocked.String())
+				s.logRegistration(ctx, "Retry", msg, user.Name)
+				
+				ErrorBasic(w, http.StatusLocked, msg, user.RetryCount, user.LockedTime, user.Locked, s.Logger)
+				return
+			} else if retryType != "" && retryType == "lock" {
+				msg := fmt.Sprintf(MsgRetryLoginLocked.String(), user.Name)
+				s.logRegistration(ctx, "Retry", msg, user.Name)
+				
+				ErrorBasic(w, http.StatusLocked, msg, user.RetryCount, user.LockedTime, user.Locked, s.Logger)
+				return
+			} else if retryType != "" && retryType == "delay" && delayTime != "" {
+				lockedTime, _ := time.ParseInLocation("2006-01-02 15:04:05", user.LockedTime, time.UTC)
+				nowTime := time.Now().UTC()
+				delayMin, err := strconv.Atoi(delayTime)
+
+				if err == nil {
+					delayMinute, _ := time.ParseDuration(fmt.Sprintf("%dm", delayMin))
+					diffTime := nowTime.Sub(lockedTime)
+					
+					if diffTime.Minutes() < delayMinute.Minutes() {
+						msg := fmt.Sprintf(MsgRetryDelayTimeAfter.String())
+						s.logRegistration(ctx, "Retry", msg, user.Name)
+						
+						ErrorBasic(w, http.StatusLocked, msg, user.RetryCount, user.LockedTime, user.Locked, s.Logger)
+						return	
+					}
+					// init retry data
+					user.RetryCount = 0
+					user.Locked = false
+					user.LockedTime = ""
+					s.Store.Users(ctx).Update(ctx, user)
+				}
+			}
+		}
+		
+
+
+
+
 		orgID := "default"
 		for _, role := range user.Roles {
 			orgID = role.Organization
@@ -382,19 +438,40 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 			s.logRegistration(ctx, "Login", msg, user.Name)
 			Error(w, http.StatusBadRequest, fmt.Sprintf("empty user table password"), s.Logger)
 			return
-		}
+		}		
 
 		strTohex, err := hex.DecodeString(user.Passwd)
 		if err != nil {
 			Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 			return
 		}
-
+		
 		// valid password - sha512
 		if !validPassword([]byte(req.Password), strTohex, []byte(BasicProvider)) {
 			msg := fmt.Sprintf(MsgDifferentPassword.String())
 			s.logRegistration(ctx, "Login", msg, user.Name)
-			Error(w, http.StatusUnauthorized, fmt.Sprintf("requested password and the saved password are different."), s.Logger)
+
+			retryCnt, err := strconv.Atoi(s.RetryPolicy["count"])
+			httpCode := http.StatusUnauthorized
+			errMsg := "requested password and the saved password are different."
+
+			if err == nil {
+				user.RetryCount++
+				if user.RetryCount > int32(retryCnt)  {
+					user.Locked = true
+					user.LockedTime = getNowDate()
+					httpCode = http.StatusLocked
+					errMsg += "Login is locked."
+				}
+
+				err := s.Store.Users(ctx).Update(ctx, user)
+				if err == nil && user.Locked {
+					msg := fmt.Sprintf(MsgRetryCountOver.String(), user.Name)
+					s.logRegistration(ctx, "Retry", msg, user.Name)	
+				}
+			}			
+			
+			ErrorBasic(w, httpCode, errMsg, user.RetryCount, user.LockedTime, user.Locked, s.Logger)
 			return
 		}
 
@@ -418,6 +495,13 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 		// log registration
 		msg := fmt.Sprintf(MsgBasicLogin.String())
 		s.logRegistration(ctx, "Login", msg, user.Name)
+
+		if user.RetryCount != 0 {
+			user.RetryCount = 0
+			user.Locked = false
+			user.LockedTime = ""
+			s.Store.Users(ctx).Update(ctx, user)
+		}
 
 		res := &loginResponse{
 			PasswordResetFlag: user.PasswordResetFlag,

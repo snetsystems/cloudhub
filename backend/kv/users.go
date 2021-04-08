@@ -93,6 +93,28 @@ func (s *usersStore) Get(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.U
 		return user, nil
 	}
 
+	if q.Name != nil && q.Provider == nil && q.Scheme == nil {
+		var user *cloudhub.User
+		err := s.each(ctx, func(u *cloudhub.User) {
+			if user != nil {
+				return
+			}
+			if u.Name == *q.Name {
+				user = u
+			}
+		})
+
+		if err != nil {
+			return nil, err
+		}
+
+		if user == nil {
+			return nil, cloudhub.ErrUserNotFound
+		}
+
+		return user, nil
+	}
+
 	return nil, fmt.Errorf("must specify either ID, or Name, Provider, and Scheme in UserQuery")
 }
 

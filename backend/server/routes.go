@@ -27,6 +27,15 @@ type BasicAuthRoute struct {
 	Logout   string `json:"logout"`   // Logout is the route to the logout redirect path
 }
 
+// RetryPolicy retry policy server option
+type RetryPolicy struct {
+	Name     string `json:"name"`
+	Policy   string `json:"policy"`
+}
+
+// RetryPolicys all retry oplicy
+type RetryPolicys []RetryPolicy
+
 // Lookup searches all the routes for a specific provider
 func (r *AuthRoutes) Lookup(provider string) (AuthRoute, bool) {
 	for _, route := range *r {
@@ -65,8 +74,10 @@ type getRoutesResponse struct {
 	PasswordPolicy        string                          `json:"passwordPolicy"`
 	PasswordPolicyMessage string                          `json:"passwordPolicyMessage"`
 	LoginAuthType         string                          `json:"loginAuthType"`
-	BasicPasswordResetType  string                        `json:"basicPasswordResetType"`
-	Topologies               string                        `json:"topologies"`
+	BasicPasswordResetType string                         `json:"basicPasswordResetType"`
+	Topologies             string                         `json:"topologies"`
+	RetryPolicys           []RetryPolicy                  `json:"retryPolicys"`
+	LoginLocked            string                         `json:"loginLocked"`
 }
 
 // AllRoutes is a handler that returns all links to resources in CloudHub server, as well as
@@ -87,6 +98,7 @@ type AllRoutes struct {
 	PasswordPolicyMessage string                        // Password validity rule description
 	LoginAuthType         string                        // Login auth type (mix, oauth, basic)
 	BasicPasswordResetType     string
+	RetryPolicys               map[string]string
 }
 
 // serveHTTP returns all top level routes and external links within cloudhub
@@ -141,6 +153,8 @@ func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		LoginAuthType: a.LoginAuthType,
 		BasicPasswordResetType: a.BasicPasswordResetType,
 		Topologies:    "/cloudhub/v1/topologies",
+		RetryPolicys: make([]RetryPolicy, len(a.RetryPolicys)),
+		LoginLocked: "/cloudhub/v1/login/locked",
 	}
 
 	// The JSON response will have no field present for the LogoutLink if there is no logout link.
@@ -172,6 +186,17 @@ func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				Name:  name,
 				URL:   emitURL,
 				Token: token,
+			}
+			i++
+		}
+	}
+
+	if len(routes.RetryPolicys) > 0 {
+		i := 0
+		for name, policy := range a.RetryPolicys {
+			routes.RetryPolicys[i] = RetryPolicy{
+				Name:   name,
+				Policy: policy,
 			}
 			i++
 		}

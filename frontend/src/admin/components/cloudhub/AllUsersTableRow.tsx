@@ -8,6 +8,7 @@ import ConfirmButton from 'src/shared/components/ConfirmButton'
 import {ALL_USERS_TABLE} from 'src/admin/constants/cloudhubTableSizing'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {ComponentColor, ComponentSize} from 'src/reusable_ui/types'
+import {User, BasicUser} from 'src/types'
 
 const {
   colOrganizations,
@@ -26,15 +27,6 @@ interface Role {
   organization: string
 }
 
-interface User {
-  id: string
-  name: string
-  roles: Role[]
-  superAdmin: boolean
-  scheme: string
-  provider: string
-}
-
 interface Props {
   user: User
   organization: Organization
@@ -45,6 +37,7 @@ interface Props {
   meID: string
   organizations: Organization[]
   onResetPassword: (name: string) => void
+  onChangeUserLock: (user: User) => void
 }
 
 @ErrorHandling
@@ -91,18 +84,8 @@ export default class AllUsersTableRow extends Component<Props> {
         </td>
         <td style={{textAlign: 'right', width: colActions}}>
           <div style={{display: 'flex', justifyContent: 'flex-end'}}>
-            {user.provider === 'cloudhub' && (
-              <div style={{marginRight: '4px'}}>
-                <ConfirmButton
-                  confirmText={this.confirmationPasswordResetText}
-                  confirmAction={this.handleReset}
-                  size="btn-xs"
-                  type="btn-danger"
-                  text="Reset"
-                  customClass="table--show-on-row-hover"
-                />
-              </div>
-            )}
+            {user.provider === 'cloudhub' &&
+              this.basicAuthButtons(user as BasicUser)}
             <ConfirmButton
               confirmText={this.removeWarning}
               confirmAction={this.handleDelete}
@@ -114,6 +97,39 @@ export default class AllUsersTableRow extends Component<Props> {
           </div>
         </td>
       </tr>
+    )
+  }
+
+  private basicAuthButtons = (user: BasicUser): JSX.Element => {
+    return (
+      <>
+        <div style={{marginRight: '4px'}}>
+          <ConfirmButton
+            confirmText={
+              user?.locked
+                ? this.confirmationUserUnlockText
+                : this.confirmationUserLockText
+            }
+            confirmAction={() => {
+              this.handleChangeUserLock(user)
+            }}
+            size="btn-xs"
+            type="btn-danger"
+            text={`${user.locked ? 'Unlock' : 'Lock'}`}
+            customClass="table--show-on-row-hover  width-50px"
+          />
+        </div>
+        <div style={{marginRight: '4px'}}>
+          <ConfirmButton
+            confirmText={this.confirmationPasswordResetText}
+            confirmAction={this.handleReset}
+            size="btn-xs"
+            type="btn-danger"
+            text="Reset"
+            customClass="table--show-on-row-hover  width-50px"
+          />
+        </div>
+      </>
     )
   }
 
@@ -172,6 +188,14 @@ export default class AllUsersTableRow extends Component<Props> {
     return user.id === meID
   }
 
+  private get confirmationUserUnlockText(): string {
+    return 'Would you like to unlock the user?'
+  }
+
+  private get confirmationUserLockText(): string {
+    return 'Do you want to lock the user?'
+  }
+
   private get confirmationPasswordResetText(): string {
     return 'Reset your user password\nand send to stored email?'
   }
@@ -204,5 +228,10 @@ export default class AllUsersTableRow extends Component<Props> {
   private handleReset = (): void => {
     const {onResetPassword, user} = this.props
     onResetPassword(user.name)
+  }
+
+  private handleChangeUserLock = (user: BasicUser) => {
+    const {onChangeUserLock} = this.props
+    onChangeUserLock(user)
   }
 }

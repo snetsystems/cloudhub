@@ -624,9 +624,12 @@ func MarshalUser(u *cloudhub.User) ([]byte, error) {
 		Roles:              roles,
 		SuperAdmin:         u.SuperAdmin,
 		Password:           u.Passwd,
-		PasswordResetFlag:   u.PasswordResetFlag,
+		PasswordResetFlag:  u.PasswordResetFlag,
 		PasswordUpdateDate: u.PasswordUpdateDate,
-		Email: u.Email,
+		Email:              u.Email,
+		RetryCount:         u.RetryCount,
+		LockedTime:         u.LockedTime,
+		Locked:             u.Locked,
 	})
 }
 
@@ -660,6 +663,9 @@ func UnmarshalUser(data []byte, u *cloudhub.User) error {
 	u.PasswordResetFlag = pb.PasswordResetFlag
 	u.PasswordUpdateDate = pb.PasswordUpdateDate
 	u.Email = pb.Email
+	u.RetryCount = pb.RetryCount
+	u.LockedTime = pb.LockedTime
+	u.Locked = pb.Locked
 
 	return nil
 }
