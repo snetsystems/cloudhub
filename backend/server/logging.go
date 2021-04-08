@@ -17,7 +17,7 @@ const (
 	// Basic Login
 	MsgBasicLogin = logMessage("Login Success")
 	MsgBasicLogout = logMessage("Logout Success")
-	MsgDifferentPassword = logMessage("Requested password and the saved password are different")
+	MsgDifferentPassword = logMessage("Passwords do not match.")
 	MsgEmptyPassword = logMessage("Empty user table password")
 
 	// Organizations

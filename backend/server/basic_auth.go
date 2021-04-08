@@ -453,11 +453,11 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 
 			retryCnt, err := strconv.Atoi(s.RetryPolicy["count"])
 			httpCode := http.StatusUnauthorized
-			errMsg := "requested password and the saved password are different."
+			errMsg := "Passwords do not match."
 
 			if err == nil {
 				user.RetryCount++
-				if user.RetryCount > int32(retryCnt)  {
+				if user.RetryCount >= int32(retryCnt)  {
 					user.Locked = true
 					user.LockedTime = getNowDate()
 					httpCode = http.StatusLocked
