@@ -788,7 +788,11 @@ func (s *Service) LockedUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := s.Store.Users(ctx).Get(ctx, cloudhub.UserQuery{Name: &req.Name})
+	user, err := s.Store.Users(ctx).Get(ctx, cloudhub.UserQuery{
+		Name:     &req.Name,
+		Provider: &BasicProvider,
+		Scheme:   &BasicScheme,
+	})
 	if err != nil {
 		Error(w, http.StatusNotFound, err.Error(), s.Logger)
 		return
