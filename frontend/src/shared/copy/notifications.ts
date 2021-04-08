@@ -1100,7 +1100,7 @@ export const notifyLoginFailed = (
   const {count, delaytime} = retryPolicysObj
   let temp = `Login is failed.
   <hr class="notification-line">
-  <div>${message}.</div>
+  <div>${message}</div>
   `
 
   if (retryCount !== 0) {
