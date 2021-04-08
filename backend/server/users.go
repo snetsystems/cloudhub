@@ -776,7 +776,7 @@ func (s *Service) Users(w http.ResponseWriter, r *http.Request) {
 
 // LockedUser locked a CloudHub user from store
 func (s *Service) LockedUser(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx := serverContext(r.Context())
 	var req userLockedRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		invalidJSON(w, s.Logger)
