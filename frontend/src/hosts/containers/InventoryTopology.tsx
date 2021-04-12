@@ -187,7 +187,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     'data-label',
     'data-link',
     // 'data-name',
-    'data-idrac',
+    // 'data-idrac',
   ]
 
   private CELL_SIZE_WIDTH = 90
