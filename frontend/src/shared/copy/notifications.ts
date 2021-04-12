@@ -1110,7 +1110,7 @@ export const notifyLoginFailed = (
     `
     } else {
       temp += `<hr class="notification-line">
-    <div>${count - retryCount} login attempts lefttime.</div>
+    <div>${count - retryCount} time[s] left.</div>
       `
     }
   }
