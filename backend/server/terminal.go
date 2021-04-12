@@ -137,23 +137,7 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 	port, err := strconv.Atoi(params["port"][0])
 	if err != nil {
 		s.Logger.
-			WithField("component", "terminal > WebTerminalHandler > strconv.Atoi.port").
-			Error(err.Error())
-		return
-	}
-
-	cols, err := strconv.Atoi(params["cols"][0])
-	if err != nil {
-		s.Logger.
-			WithField("component", "terminal > WebTerminalHandler > strconv.Atoi.cols").
-			Error(err.Error())
-		return
-	}
-
-	rows, err := strconv.Atoi(params["rows"][0])
-	if err != nil {
-		s.Logger.
-			WithField("component", "terminal > WebTerminalHandler > strconv.Atoi.rows").
+			WithField("component", "terminal > WebTerminalHandler > strconv.Atoi").
 			Error(err.Error())
 		return
 	}
@@ -183,7 +167,7 @@ func (s *Service) WebTerminalHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer sh.Close()
 
-	err = sh.Config(cols, rows)
+	err = sh.Config(82, 24) // 80, 30
     if err != nil {
 		s.Logger.
 			WithField("component", "terminal > WebTerminalHandler > sh.Config").
