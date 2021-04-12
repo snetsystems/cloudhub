@@ -28,6 +28,7 @@ class UsersTableRow extends PureComponent<Props> {
   public render() {
     const {user, onChangeUserRole} = this.props
     const {colRole, colProvider, colScheme, colActions} = USERS_TABLE
+    const isUserLock = user?.['locked']
 
     return (
       <tr className={'cloudhub-admin-table--user'}>
@@ -38,7 +39,10 @@ class UsersTableRow extends PureComponent<Props> {
               {user.name}
             </strong>
           ) : (
-            <strong>{user.name}</strong>
+            <strong className={isUserLock ? 'cloudhub-user--lock' : null}>
+              {isUserLock ? <span className="icon lock" /> : null}
+              {user.name}
+            </strong>
           )}
         </td>
         <td style={{width: colRole}}>
