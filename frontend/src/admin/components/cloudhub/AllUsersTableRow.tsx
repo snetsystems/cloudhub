@@ -147,7 +147,7 @@ export default class AllUsersTableRow extends Component<Props> {
 
   private get userNameTableCell(): JSX.Element {
     const {user} = this.props
-
+    const isUserLock = user?.['locked']
     return (
       <td>
         {this.userIsMe ? (
@@ -156,7 +156,10 @@ export default class AllUsersTableRow extends Component<Props> {
             {user.name}
           </strong>
         ) : (
-          <strong>{user.name}</strong>
+          <strong className={isUserLock ? 'cloudhub-user--lock' : null}>
+            {isUserLock ? <span className="icon lock" /> : null}
+            {user.name}
+          </strong>
         )}
       </td>
     )

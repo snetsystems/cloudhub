@@ -142,6 +142,15 @@ table.table.cloudhub-admin-table tbody tr.cloudhub-admin-table--new-user {
   }
 }
 
+.cloudhub-user--lock {
+  white-space: nowrap;
+
+  > span.icon {
+    display: inline-block;
+    margin-right: 4px;
+  }
+}
+
 .width-10px {
   width: 10px;
 }
