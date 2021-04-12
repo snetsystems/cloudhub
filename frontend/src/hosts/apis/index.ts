@@ -11,7 +11,7 @@ import {
   updateActiveHostLink,
 } from 'src/hosts/utils/hostsSwitcherLinks'
 // Types
-import {Template, Layout, Source, Host} from 'src/types'
+import {Template, Layout, Source, Host, Links} from 'src/types'
 import {HostNames, HostName} from 'src/types/hosts'
 import {DashboardSwitcherLinks} from '../../types/dashboards'
 
@@ -541,10 +541,10 @@ export const deleteVSphereApi = async (id: number) => {
   })
 }
 
-export const loadInventoryTopology = async () => {
+export const loadInventoryTopology = async (links: Links) => {
   try {
     const info = await AJAX({
-      url: `/cloudhub/v1/topologies`,
+      url: `${_.get(links, 'topologies')}`,
       method: 'GET',
     })
 
@@ -557,9 +557,9 @@ export const loadInventoryTopology = async () => {
   }
 }
 
-export const createInventoryTopology = async (cells: string) => {
+export const createInventoryTopology = async (links: Links, cells: string) => {
   return await AJAX({
-    url: `/cloudhub/v1/topologies`,
+    url: `${_.get(links, 'topologies')}`,
     method: 'POST',
     data: cells,
     headers: {'Content-Type': 'text/xml'},
@@ -567,11 +567,12 @@ export const createInventoryTopology = async (cells: string) => {
 }
 
 export const updateInventoryTopology = async (
+  links: Links,
   cellsId: string,
   cells: string
 ) => {
   return await AJAX({
-    url: `/cloudhub/v1/topologies/${cellsId}`,
+    url: `${_.get(links, 'topologies')}/${cellsId}`,
     method: 'PATCH',
     data: cells,
     headers: {'Content-Type': 'text/xml'},

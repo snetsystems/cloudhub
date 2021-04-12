@@ -27,6 +27,7 @@ export const UserIsNotAuthenticated = UserAuthWrapper({
       passwordPolicyMessage,
       loginAuthType,
       basicPasswordResetType,
+      retryPolicys,
     },
   }) => ({
     auth,
@@ -37,6 +38,7 @@ export const UserIsNotAuthenticated = UserAuthWrapper({
     passwordPolicyMessage,
     loginAuthType,
     basicPasswordResetType,
+    retryPolicys,
   }),
   authenticatingSelector: ({auth: {isMeLoading}}) => isMeLoading,
   LoadingComponent: PageSpinner,

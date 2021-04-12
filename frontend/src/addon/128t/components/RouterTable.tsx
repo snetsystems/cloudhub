@@ -36,7 +36,7 @@ import {
   OncueData,
 } from 'src/addon/128t/types'
 
-import {Me} from 'src/types'
+import {Me, ShellInfo} from 'src/types'
 
 // constants
 import {ROUTER_TABLE_SIZING} from 'src/addon/128t/constants'
@@ -72,6 +72,7 @@ export interface Props {
   hanldeOnDismiss: () => void
   handleOnClickProtocolModulesRow: (name: string) => void
   handleOnClickDeviceConnectionsRow: (url: string) => void
+  handleOnClickShellModalOpen: (shell: ShellInfo) => void
   oncueData: OncueData
   routerDataPopupAutoRefresh: number
   onChooseRouterDataPopupAutoRefresh: (milliseconds: number) => void
@@ -437,6 +438,7 @@ class RouterTable extends PureComponent<Props, State> {
       onClickTableRow,
       handleRouterCheck,
       handleOnClickNodeName,
+      handleOnClickShellModalOpen,
       isRouterDataPopupVisible,
       hanldeOnDismiss,
       routerPopupPosition,
@@ -463,6 +465,7 @@ class RouterTable extends PureComponent<Props, State> {
                 <RouterTableRow
                   handleOnClickNodeName={handleOnClickNodeName}
                   handleRouterCheck={handleRouterCheck}
+                  handleOnClickShellModalOpen={handleOnClickShellModalOpen}
                   onClickTableRow={onClickTableRow}
                   focusedNodeName={focusedNodeName}
                   isCheck={r.isCheck}

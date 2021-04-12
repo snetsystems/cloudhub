@@ -6,12 +6,7 @@ import ConfirmButton from 'src/shared/components/ConfirmButton'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {USER_ROLES} from 'src/admin/constants/cloudhubAdmin'
 import {USERS_TABLE} from 'src/admin/constants/cloudhubTableSizing'
-import {User, Role} from 'src/types'
-
-interface Organization {
-  name: string
-  id: string
-}
+import {User, BasicUser, Role, Organization} from 'src/types'
 
 interface DropdownRole {
   text: string
@@ -25,13 +20,15 @@ interface Props {
   onDelete: (User) => void
   meID: string
   onResetUserPassword: (name: string) => void
+  onChangeUserLock: (user: BasicUser) => void
 }
 
 @ErrorHandling
 class UsersTableRow extends PureComponent<Props> {
   public render() {
     const {user, onChangeUserRole} = this.props
-    const {colRole, colProvider, colScheme} = USERS_TABLE
+    const {colRole, colProvider, colScheme, colActions} = USERS_TABLE
+    const isUserLock = user?.['locked']
 
     return (
       <tr className={'cloudhub-admin-table--user'}>
@@ -42,7 +39,10 @@ class UsersTableRow extends PureComponent<Props> {
               {user.name}
             </strong>
           ) : (
-            <strong>{user.name}</strong>
+            <strong className={isUserLock ? 'cloudhub-user--lock' : null}>
+              {isUserLock ? <span className="icon lock" /> : null}
+              {user.name}
+            </strong>
           )}
         </td>
         <td style={{width: colRole}}>
@@ -59,18 +59,10 @@ class UsersTableRow extends PureComponent<Props> {
         </td>
         <td style={{width: colProvider}}>{user.provider}</td>
         <td style={{width: colScheme}}>{user.scheme}</td>
-        <td className="text-right">
+        <td style={{width: colActions}}>
           <div style={{display: 'flex', justifyContent: 'flex-end'}}>
-            {user.provider === 'cloudhub' && (
-              <ConfirmButton
-                confirmText={this.confirmationPasswordResetText}
-                confirmAction={this.handleResetPassword}
-                size="btn-xs"
-                type="btn-danger"
-                text="Reset"
-                customClass="table--show-on-row-hover"
-              />
-            )}
+            {user.provider === 'cloudhub' &&
+              this.basicAuthButtons(user as BasicUser)}
             <ConfirmButton
               confirmText={this.confirmationText}
               confirmAction={this.handleDelete}
@@ -85,6 +77,39 @@ class UsersTableRow extends PureComponent<Props> {
     )
   }
 
+  private basicAuthButtons = (user: BasicUser): JSX.Element => {
+    return (
+      <>
+        <div style={{marginRight: '4px'}}>
+          <ConfirmButton
+            confirmText={
+              user?.locked
+                ? this.confirmationUserUnlockText
+                : this.confirmationUserLockText
+            }
+            confirmAction={() => {
+              this.handleChangeUserLock(user)
+            }}
+            size="btn-xs"
+            type="btn-danger"
+            text={`${user.locked ? 'Unlock' : 'Lock'}`}
+            customClass="table--show-on-row-hover width-50px"
+          />
+        </div>
+        <div style={{marginRight: '4px'}}>
+          <ConfirmButton
+            confirmText={this.confirmationPasswordResetText}
+            confirmAction={this.handleResetPassword}
+            size="btn-xs"
+            type="btn-danger"
+            text="Reset"
+            customClass="table--show-on-row-hover"
+          />
+        </div>
+      </>
+    )
+  }
+
   private handleDelete = (): void => {
     const {user, onDelete} = this.props
 
@@ -95,6 +120,12 @@ class UsersTableRow extends PureComponent<Props> {
     const {user, onResetUserPassword} = this.props
 
     onResetUserPassword(user.name)
+  }
+
+  private handleChangeUserLock = (user: BasicUser): void => {
+    const {onChangeUserLock} = this.props
+
+    onChangeUserLock(user)
   }
 
   private get rolesDropdownItems(): DropdownRole[] {
@@ -122,6 +153,14 @@ class UsersTableRow extends PureComponent<Props> {
 
   private get confirmationPasswordResetText(): string {
     return 'Reset this user password\nfrom Current Org?'
+  }
+
+  private get confirmationUserUnlockText(): string {
+    return 'Would you like to unlock the user?'
+  }
+
+  private get confirmationUserLockText(): string {
+    return 'Do you want to lock the user?'
   }
 }
 

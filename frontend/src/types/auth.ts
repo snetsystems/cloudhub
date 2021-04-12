@@ -16,6 +16,12 @@ export interface Me {
   name: string
   roles: Role[]
   organizations: Organization[]
+  email?: string
+  passwordResetFlag?: string
+  passwordUpdateDate?: string
+  retryCount?: number
+  lockedTime?: string
+  locked?: boolean
 }
 
 export enum InfluxDBPermissions {
@@ -66,6 +72,15 @@ export interface User {
   superAdmin: boolean
 }
 
+export interface BasicUser extends User {
+  email?: string
+  passwordResetFlag: string
+  passwordUpdateDate: string
+  retryCount: number
+  lockedTime: string
+  locked: boolean
+}
+
 export interface AuthLink {
   callback: string
   label: string
@@ -100,6 +115,7 @@ export interface Links {
   basicPassword?: string
   passwordPolicy?: string
   passwordPolicyMessage?: string
+  loginLocked: string
 }
 
 export interface ExternalLink {

@@ -96,6 +96,7 @@ class AllUsersTable extends Component {
       onDeleteUser,
       isLoading,
       onResetPassword,
+      onChangeUserLock,
       providers,
     } = this.props
 
@@ -150,6 +151,7 @@ class AllUsersTable extends Component {
                     onChangeSuperAdmin={this.handleChangeSuperAdmin}
                     onDelete={onDeleteUser}
                     onResetPassword={onResetPassword}
+                    onChangeUserLock={onChangeUserLock}
                     meID={meID}
                   />
                 ))
@@ -222,6 +224,7 @@ AllUsersTable.propTypes = {
   meID: string.isRequired,
   isLoading: bool.isRequired,
   onResetPassword: func.isRequired,
+  onChangeUserLock: func.isRequired,
   providers: arrayOf(string).isRequired,
 }
 

@@ -8,7 +8,7 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 import UsersTable from 'src/admin/components/cloudhub/UsersTable'
-import {passwordResetAsync} from 'src/auth/actions'
+import {passwordResetAsync, changeUserLockAsync} from 'src/auth/actions'
 import {AlertTypes} from 'src/kapacitor/constants'
 
 class UsersPage extends PureComponent {
@@ -64,6 +64,18 @@ class UsersPage extends PureComponent {
     })
   }
 
+  handleOnChangeUserLockAsync = user => {
+    const {
+      handleChangeUserLock,
+      links: {loginLocked},
+    } = this.props
+
+    handleChangeUserLock({
+      url: loginLocked,
+      user,
+    })
+  }
+
   async componentWillMount() {
     const {
       links,
@@ -105,6 +117,7 @@ class UsersPage extends PureComponent {
         onUpdateUserRole={this.handleUpdateUserRole}
         onDeleteUser={this.handleDeleteUser}
         onResetUserPassword={this.handleResetUserPassword}
+        onChangeUserLock={this.handleOnChangeUserLockAsync}
         notify={notify}
         isLoading={isLoading}
       />
@@ -134,6 +147,7 @@ UsersPage.propTypes = {
   }),
   notify: func.isRequired,
   handlePasswordReset: func.isRequired,
+  handleChangeUserLock: func.isRequired,
   providers: arrayOf(string).isRequired,
 }
 
@@ -147,6 +161,7 @@ const mapDispatchToProps = dispatch => ({
   actions: bindActionCreators(adminCloudHubActionCreators, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
   handlePasswordReset: bindActionCreators(passwordResetAsync, dispatch),
+  handleChangeUserLock: bindActionCreators(changeUserLockAsync, dispatch),
 })
 
 export default connect(

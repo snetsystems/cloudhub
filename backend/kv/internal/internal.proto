@@ -193,6 +193,9 @@ message User {
 	string PasswordResetFlag = 8; // Save when the scheme is basic. Whether to reset password
 	string PasswordUpdateDate = 9; // Password change date
 	string Email            = 10; // Email is for sending the user's password.
+	int32 RetryCount        = 11; // login retry count
+	string LockedTime       = 12; // login locked time
+	bool Locked             = 13; // locked or not
 }
 
 message Role {

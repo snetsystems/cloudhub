@@ -17,7 +17,7 @@ const (
 	// Basic Login
 	MsgBasicLogin = logMessage("Login Success")
 	MsgBasicLogout = logMessage("Logout Success")
-	MsgDifferentPassword = logMessage("Requested password and the saved password are different")
+	MsgDifferentPassword = logMessage("Password does not match.")
 	MsgEmptyPassword = logMessage("Empty user table password")
 
 	// Organizations
@@ -102,6 +102,16 @@ const (
 	MsgTopologyCreated = logMessage("%s Topology has been created.")
 	MsgTopologyModified = logMessage("%s Topology has been modified.")
 	MsgTopologyDeleted = logMessage("%s Topology has been deleted.")
+
+	// Retry
+	MsgRetryCountOver = logMessage("%s was locked due to exceeding retry counts.")
+	MsgRetryLoginLocked = logMessage("%s login request has been locked.")
+	MsgRetryDelayTimeAfter = logMessage("Login unlocking time has not passed yet.")
+
+	// Locked
+	MsgLocked = logMessage("administrator has locked %s.")
+	MsgUnlocked = logMessage("%s has been unlocked by an administrator.")
+	MsgSuperLocked = logMessage("Locked by administrator. Please contact the administrator.")
 )
 
 type proxyLogRequest struct {
@@ -127,8 +137,8 @@ func (r *proxyLogRequest) ValidCreate() error {
 	return nil
 }
 
-// ProxyLogging proxy log insert
-func (s *Service) ProxyLogging(w http.ResponseWriter, r *http.Request) {
+// HTTPLogging log insert
+func (s *Service) HTTPLogging(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	var req proxyLogRequest

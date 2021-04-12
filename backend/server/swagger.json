@@ -3928,7 +3928,6 @@
         }
       }
     },
-
     "/vspheres": {
       "get": {
         "tags": ["vspheres"],
@@ -4468,6 +4467,89 @@
           }
         }
       }
+    },
+    "/login/locked": {
+      "patch": {
+        "tags": ["login", "users"],
+        "summary": "Locked user",
+        "description": "Block user login",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "body",
+            "description": "target user name",
+            "schema": {
+              "$ref": "#/definitions/Locked"
+            }
+          },
+          {
+            "name": "locked",
+            "in": "body",
+            "description": "locked choice",
+            "schema": {
+              "$ref": "#/definitions/Locked"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Locked user successfully"
+          },
+          "400": {
+            "description": "Invalid JSON – unable to encode or decode; or failed to perform operation in data store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/logging": {
+      "post": {
+        "tags": ["logging"],
+        "description": "web general acitivity logging",
+        "parameters": [
+          {
+            "name": "action",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Logging"
+            },
+            "required": true
+          },
+          {
+            "name": "message",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Logging"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "logging successfully"
+          },
+          "400": {
+            "description": "Invalid JSON – unable to encode or decode; or failed to perform operation in data store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
     }
   },
 
@@ -4644,6 +4726,19 @@
         "email": {
           "type": "string",
           "description": "send email (only scheme=basic currently supported)"
+        },
+        "retryCount": {
+          "type": "integer",
+          "format": "int32",
+          "description": "login retry count (only scheme=basic currently supported)"
+        },
+        "lockedTime": {
+          "type": "string",
+          "description": "user locked time"
+        },
+        "locked": {
+          "type": "boolean",
+          "description": "user locked"
         }
       },
       "required": ["id", "name", "provider", "roles", "scheme"],
@@ -4662,7 +4757,10 @@
         "superAdmin": false,
         "passwordUpdateDate": "2020-12-30_09:10:34",
         "passwordResetFlag": "Y",
-        "email": "pineapple@cubeoctohedron.flux"
+        "email": "pineapple@cubeoctohedron.flux",
+        "retryCount": 0,
+        "lockedTime": "2021-03-29_13:43:54",
+        "locked": true
       }
     },
     "Users": {
@@ -4685,6 +4783,25 @@
             "$ref": "#/definitions/UserRes"
           }
         }
+      }
+    },
+    "Locked": {
+      "type": "object",
+      "description": "Locked user request",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "user name"
+        },
+        "locked": {
+          "type": "boolean",
+          "description": "locked"
+        }
+      },
+      "required": ["name", "locked"],
+      "example": {
+        "name": "test",
+        "locked": true
       }
     },
     "Role": {
@@ -7616,6 +7733,25 @@
         "links": {
           "self": "/cloudhub/v1/topologies/1"
         }
+      }
+    },
+    "Logging": {
+      "type": "object",
+      "description": "Logging request",
+      "properties": {
+        "action": {
+          "type": "string",
+          "description": "action tag"
+        },
+        "message": {
+          "type": "string",
+          "description": "log message"
+        }
+      },
+      "required": ["action", "message"],
+      "example": {
+        "action": "test",
+        "message": "test message"
       }
     }
   }

@@ -126,9 +126,13 @@ interface Props {
   autoRefresh: number
   manualRefresh: number
   onManualRefresh: () => void
-  handleGetInventoryTopology: () => Promise<any>
-  handleCreateInventoryTopology: (topology: string) => Promise<any>
+  handleGetInventoryTopology: (links: Links) => Promise<any>
+  handleCreateInventoryTopology: (
+    links: Links,
+    topology: string
+  ) => Promise<any>
   handleUpdateInventoryTopology: (
+    links: Links,
     topologyId: string,
     topology: string
   ) => Promise<any>
@@ -183,7 +187,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     'data-label',
     'data-link',
     // 'data-name',
-    'data-idrac',
+    // 'data-idrac',
   ]
 
   private CELL_SIZE_WIDTH = 90
@@ -210,7 +214,9 @@ class InventoryTopology extends PureComponent<Props, State> {
     GlobalAutoRefresher.poll(this.props.autoRefresh)
 
     const hostList = _.keys(this.state.hostsObject)
-    const topology = await this.props.handleGetInventoryTopology()
+    const topology = await this.props.handleGetInventoryTopology(
+      this.props.links
+    )
 
     if (_.get(topology, 'diagram')) {
       const graph = this.graph
@@ -251,6 +257,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     if (_.isEmpty(this.state.topologyId) && !_.isEmpty(this.state.topology)) {
       const response = await this.props.handleCreateInventoryTopology(
+        this.props.links,
         this.state.topology
       )
 
@@ -263,6 +270,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       prevState.topology !== this.state.topology
     ) {
       await this.props.handleUpdateInventoryTopology(
+        this.props.links,
         this.state.topologyId,
         this.state.topology
       )

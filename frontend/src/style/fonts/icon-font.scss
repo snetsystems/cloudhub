@@ -396,4 +396,12 @@
   &.computer-desktop:before {
     content: '\ea5c';
   }
+
+  &.lock:before {
+    content: '\ea5d';
+  }
+
+  &.unlock:before {
+    content: '\ea5e';
+  }
 }
