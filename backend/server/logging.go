@@ -17,7 +17,7 @@ const (
 	// Basic Login
 	MsgBasicLogin = logMessage("Login Success")
 	MsgBasicLogout = logMessage("Logout Success")
-	MsgDifferentPassword = logMessage("Passwords do not match.")
+	MsgDifferentPassword = logMessage("Password does not match.")
 	MsgEmptyPassword = logMessage("Empty user table password")
 
 	// Organizations
@@ -104,9 +104,9 @@ const (
 	MsgTopologyDeleted = logMessage("%s Topology has been deleted.")
 
 	// Retry
-	MsgRetryCountOver = logMessage("%s was locked due to exceeding retry count.")
+	MsgRetryCountOver = logMessage("%s was locked due to exceeding retry counts.")
 	MsgRetryLoginLocked = logMessage("%s login request has been locked.")
-	MsgRetryDelayTimeAfter = logMessage("Login unlocking time has not passed.")
+	MsgRetryDelayTimeAfter = logMessage("Login unlocking time has not passed yet.")
 
 	// Locked
 	MsgLocked = logMessage("administrator has locked %s.")

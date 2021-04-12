@@ -379,9 +379,6 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 			return
 		}
 
-
-
-
 		delayTime := s.RetryPolicy["delaytime"]
 		retryType := s.RetryPolicy["type"]
 
@@ -422,10 +419,6 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 				}
 			}
 		}
-		
-
-
-
 
 		orgID := "default"
 		for _, role := range user.Roles {

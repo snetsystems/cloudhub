@@ -528,9 +528,6 @@ func Error(w http.ResponseWriter, code int, msg string, logger cloudhub.Logger) 
 	_, _ = w.Write(b)
 }
 
-
-
-
 // ErrorBasic writes an JSON message by basic login
 func ErrorBasic(w http.ResponseWriter, code int, msg string, retryCnt int32, lockedTime string, locked bool, logger cloudhub.Logger) {
 	e := ErrorMessageBasic{
@@ -557,10 +554,6 @@ func ErrorBasic(w http.ResponseWriter, code int, msg string, retryCnt int32, loc
 	w.WriteHeader(code)
 	_, _ = w.Write(b)
 }
-
-
-
-
 
 func invalidData(w http.ResponseWriter, err error, logger cloudhub.Logger) {
 	Error(w, http.StatusUnprocessableEntity, fmt.Sprintf("%v", err), logger)
