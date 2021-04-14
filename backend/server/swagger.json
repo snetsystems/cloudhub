@@ -7171,6 +7171,21 @@
           "type": "string",
           "format": "url"
         },
+        "vspheres": {
+          "description": "location of the vspheres endpoint",
+          "type": "string",
+          "format": "url"
+        },
+        "topologies": {
+          "description": "location of the topologies endpoint",
+          "type": "string",
+          "format": "url"
+        },
+        "loginLocked": {
+          "description": "location of the loginLocked endpoint",
+          "type": "string",
+          "format": "url"
+        },
         "config": {
           "type": "object",
           "properties": {
@@ -7230,6 +7245,34 @@
               }
             }
           }
+        },
+        "retryPolicys": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "description": "'count', 'delaytime', 'type' = lock or delay ",
+                "type": "string"
+              },
+              "policy": {
+                "description": "retry policy",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "passwordPolicy": {
+          "description": "password regular expression",
+          "type": "string"
+        },
+        "passwordPolicyMessage": {
+          "description": "password regular expression message",
+          "type": "string"
+        },
+        "loginAuthType": {
+          "description": "'mix', 'oauth', 'basic'",
+          "type": "string"
         }
       },
       "example": {
@@ -7296,7 +7339,27 @@
             "name": "vsphere",
             "url": "on"
           }
-        ]
+        ],
+        "vspheres": "/cloudhub/v1/vspheres",
+        "topologies": "/cloudhub/v1/topologies",
+        "loginLocked": "/cloudhub/v1/login/locked",
+        "retryPolicys": [
+          {
+            "name": "count",
+            "policy": "3"
+          },
+          {
+            "name": "delaytime",
+            "policy": "5"
+          },
+          {
+            "name": "type",
+            "policy": "delay"
+          }
+        ],
+        "passwordPolicy": "(?=.*[0-9]{1,50})(?=.*[~`!@#$%\\^&*()-+=]{1,50})(?=.*[a-zA-Z]{2,50}).{8,50}$",
+        "passwordPolicyMessage": "Enter at least 8 characters, including at least 1 digit and 1 special characters and 2 characters.eg, cloud!hub2.",
+        "loginAuthType": "mix"
       }
     },
     "Link": {
