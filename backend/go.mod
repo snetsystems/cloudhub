@@ -2,6 +2,7 @@ module github.com/snetsystems/cloudhub/backend
 
 require (
 	github.com/NYTimes/gziphandler v1.1.1
+	github.com/abbot/go-http-auth v0.4.0
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/boltdb/bolt v1.3.1
