@@ -65,16 +65,17 @@ type Server struct {
 	AddonURLs   map[string]string `short:"u" long:"addon-url" description:"Support addon is [salt, swan, oncue]. API URLs to be used to the client for a request to addon API servers. Multiple URL can be added by using multiple of the same flag with different 'name:url' values, or as an environment variable with comma-separated 'name:url' values. E.g. via flags: '--addon-url=salt:{url} --addon-url=swan:{url}'. E.g. via environment variable: 'export ADDON_URL=salt:{url},swan:{url}'" env:"ADDON_URL" env-delim:","`
 	AddonTokens map[string]string `short:"k" long:"addon-tokens" description:"Support addon is [salt, swan]. API tokens to be used to the client for a request to addon API servers. Multiple tokens can be added by using multiple of the same flag with different 'name:token' values, or as an environment variable with comma-separated 'name:token' values. E.g. via flags: '--addon-tokens=salt:{token} --addon-tokens=swan:{token}'. E.g. via environment variable: 'export ADDON_TOKENS=salt:{token},swan:{token}'" env:"ADDON_TOKENS" env-delim:","`
 
-	Develop         bool          `short:"d" long:"develop" description:"Run server in develop mode."`
-	BoltPath        string        `short:"b" long:"bolt-path" description:"Full path to boltDB file (e.g. './cloudhub-v1.db')" env:"BOLT_PATH" default:"cloudhub-v1.db"`
-	CannedPath      string        `short:"c" long:"canned-path" description:"Path to directory of pre-canned application layouts (/usr/share/cloudhub/canned)" env:"CANNED_PATH" default:"canned"`
-	ProtoboardsPath string        `long:"protoboards-path" description:"Path to directory of protoboards (/usr/share/cloudhub/protoboards)" env:"PROTOBOARDS_PATH" default:"protoboards"`
-	ResourcesPath   string        `long:"resources-path" description:"Path to directory of pre-canned dashboards, sources, kapacitors, and organizations (/usr/share/cloudhub/resources)" env:"RESOURCES_PATH" default:"canned"`
-	TokenSecret     string        `short:"t" long:"token-secret" description:"Secret to sign tokens" env:"TOKEN_SECRET"`
-	JwksURL         string        `long:"jwks-url" description:"URL that returns OpenID Key Discovery JWKS document." env:"JWKS_URL"`
-	UseIDToken      bool          `long:"use-id-token" description:"Enable id_token processing." env:"USE_ID_TOKEN"`
-	LoginHint       string        `long:"login-hint" description:"OpenID login_hint paramter to passed to authorization server during authentication" env:"LOGIN_HINT"`
-	AuthDuration    time.Duration `long:"auth-duration" default:"720h" description:"Total duration of cookie life for authentication (in hours). 0 means authentication expires on browser close." env:"AUTH_DURATION"`
+	Develop            bool          `short:"d" long:"develop" description:"Run server in develop mode."`
+	BoltPath           string        `short:"b" long:"bolt-path" description:"Full path to boltDB file (e.g. './cloudhub-v1.db')" env:"BOLT_PATH" default:"cloudhub-v1.db"`
+	CannedPath         string        `short:"c" long:"canned-path" description:"Path to directory of pre-canned application layouts (/usr/share/cloudhub/canned)" env:"CANNED_PATH" default:"canned"`
+	ProtoboardsPath    string        `long:"protoboards-path" description:"Path to directory of protoboards (/usr/share/cloudhub/protoboards)" env:"PROTOBOARDS_PATH" default:"protoboards"`
+	ResourcesPath      string        `long:"resources-path" description:"Path to directory of pre-canned dashboards, sources, kapacitors, and organizations (/usr/share/cloudhub/resources)" env:"RESOURCES_PATH" default:"canned"`
+	TokenSecret        string        `short:"t" long:"token-secret" description:"Secret to sign tokens" env:"TOKEN_SECRET"`
+	JwksURL            string        `long:"jwks-url" description:"URL that returns OpenID Key Discovery JWKS document." env:"JWKS_URL"`
+	UseIDToken         bool          `long:"use-id-token" description:"Enable id_token processing." env:"USE_ID_TOKEN"`
+	LoginHint          string        `long:"login-hint" description:"OpenID login_hint paramter to passed to authorization server during authentication" env:"LOGIN_HINT"`
+	AuthDuration       time.Duration `long:"auth-duration" default:"720h" description:"Total duration of cookie life for authentication (in hours). 0 means authentication expires on browser close." env:"AUTH_DURATION"`
+	InactivityDuration time.Duration `long:"inactivity-duration" default:"5m" description:"Duration for which a token is valid without any new activity." env:"INACTIVITY_DURATION"`
 
 	GithubClientID     string   `short:"i" long:"github-client-id" description:"Github Client ID for OAuth 2 support" env:"GH_CLIENT_ID"`
 	GithubClientSecret string   `short:"s" long:"github-client-secret" description:"Github Client Secret for OAuth 2 support" env:"GH_CLIENT_SECRET"`
@@ -649,7 +650,7 @@ func (s *Server) Serve(ctx context.Context) {
 		},
 	}
 
-	auth := oauth2.NewCookieJWT(s.TokenSecret, s.AuthDuration)
+	auth := oauth2.NewCookieJWT(s.TokenSecret, s.AuthDuration, s.InactivityDuration)
 	providerFuncs := []func(func(oauth2.Provider, oauth2.Mux)){
 		provide(s.githubOAuth(logger, auth)),
 		provide(s.googleOAuth(logger, auth)),
