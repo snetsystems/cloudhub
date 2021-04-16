@@ -11,7 +11,7 @@ $rename-dash-title-padding: 7px;
   max-width: 40vw;
 }
 .dashboard-switcher + .rename-dashboard {
-  width: calc(100% - 38px);
+  width: calc(100% - 37px);
 }
 
 .rename-dashboard--title {
@@ -26,17 +26,15 @@ $rename-dash-title-padding: 7px;
   border-radius: $radius;
   @include no-user-select();
   color: $g17-whisper;
-  transition:
-  color 0.25s ease,
-  background-color 0.25s ease,
-  border-color 0.25s ease;
+  transition: color 0.25s ease, background-color 0.25s ease,
+    border-color 0.25s ease;
   text-transform: none;
   letter-spacing: 0;
   line-height: $form-sm-height - $ix-border;
   margin: 0;
   font-size: $page-header-size;
   font-weight: $page-header-weight;
-  
+
   .icon {
     position: absolute;
     font-size: 15px;
