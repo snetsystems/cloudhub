@@ -263,10 +263,10 @@ class FieldList extends PureComponent<Props, State> {
         value: f,
         type: 'field',
         desc: _.get(FIELD_DESCRIPTIONS, `${measurement}.${f}`),
-      }))
+      })) as Field[]
 
       this.setState({
-        fields: newFields,
+        fields: _.uniqBy(newFields, 'value'), // do not duplicate items
       })
     })
   }
