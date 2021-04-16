@@ -23,7 +23,7 @@ interface Props {
   script: string
   source: Source
   timeRange: TimeRange
-  timeZone: TimeZones
+  timeZone?: TimeZones
   fluxASTLink: string
 
   isFluxSelected: boolean
@@ -99,6 +99,7 @@ class CSVExporter extends PureComponent<Props, State> {
 
 const mstp = state => ({
   fluxASTLink: state.links.flux.ast,
+  timeZone: state.app.persisted.timeZone,
 })
 
 const mdtp = {

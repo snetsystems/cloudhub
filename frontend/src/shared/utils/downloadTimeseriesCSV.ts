@@ -15,7 +15,7 @@ import {TimeSeriesResponse} from 'src/types/series'
 export const downloadInfluxQLCSV = async (
   queries: Query[],
   templates: Template[],
-  timeZone: TimeZones
+  timeZone: TimeZones = TimeZones.UTC
 ): Promise<void> => {
   const responses = await Promise.all(
     queries.map(query =>
@@ -66,19 +66,14 @@ const timeseriesToCSV = async (
   const tableData = table.slice(1)
 
   const timeIndex = tableHeader.indexOf('time')
+  const isLocal = timeZone === TimeZones.Local
 
   if (timeIndex > -1) {
     for (let i = 0; i < tableData.length; i++) {
       // Convert times to a (somewhat) human readable ISO8601 string
-      if (timeZone === 'utc') {
-        tableData[i][timeIndex] = moment(tableData[i][timeIndex])
-          .utc()
-          .format('YYYY-MM-DDTHH:mm:ssZ')
-      } else {
-        tableData[i][timeIndex] = moment(tableData[i][timeIndex]).format(
-          'YYYY-MM-DDTHH:mm:ssZ'
-        )
-      }
+      tableData[i][timeIndex] = moment(
+        new Date(tableData[i][timeIndex])
+      ).toISOString(isLocal)
     }
   }
 
