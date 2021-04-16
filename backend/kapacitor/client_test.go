@@ -109,6 +109,45 @@ func TestClient_All(t *testing.T) {
 			want:             map[string]*Task{},
 		},
 		{
+			name: "return a non-reversible named task",
+			fields: fields{
+				kapaClient: func(url, username, password string, insecureSkipVerify bool) (KapaClient, error) {
+					return kapa, nil
+				},
+			},
+			listTasksOptions: &client.ListTasksOptions{},
+			resTasks: []client.Task{
+				{
+					ID:     "howdy",
+					Status: client.Enabled,
+					TICKscript: `var whereFilter = lambda: TRUE
+
+var name = 'rule 1'
+
+var idVar = name + '-{{.Group}}'`,
+				},
+			},
+			want: map[string]*Task{
+				"howdy": {
+					ID: "howdy",
+
+					HrefOutput: "/kapacitor/v1/tasks/howdy/output",
+					Rule: cloudhub.AlertRule{
+						ID:   "howdy",
+						Name: "rule 1",
+						TICKScript: `var whereFilter = lambda: TRUE
+
+var name = 'rule 1'
+
+var idVar = name + '-{{.Group}}'`,
+						Type:   "invalid",
+						Status: "enabled",
+						DBRPs:  []cloudhub.DBRP{},
+					},
+				},
+			},
+		},
+		{
 			name: "return a non-reversible task",
 			fields: fields{
 				kapaClient: func(url, username, password string, insecureSkipVerify bool) (KapaClient, error) {
