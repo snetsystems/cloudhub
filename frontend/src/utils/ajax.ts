@@ -119,7 +119,11 @@ async function AJAX<T = any>(
     return links ? generateResponseWithLinks(response, links) : response
   } catch (error) {
     const {response} = error
-    throw links ? generateResponseWithLinks(response, links) : response // eslint-disable-line no-throw-literal
+    if (response) {
+      throw links ? generateResponseWithLinks(response, links) : response // eslint-disable-line no-throw-literal
+    } else {
+      throw error
+    }
   }
 }
 
