@@ -1,4 +1,4 @@
-import React, {SFC} from 'react'
+import React, {FunctionComponent} from 'react'
 import ReactTooltip from 'react-tooltip'
 import {Addon} from 'src/types/auth'
 
@@ -6,7 +6,9 @@ interface Props {
   addons: Addon[]
 }
 
-const RouterSourceIndicator: SFC<Props> = ({addons}): JSX.Element => {
+const RouterSourceIndicator: FunctionComponent<Props> = ({
+  addons,
+}): JSX.Element => {
   let routerConnectTipsText = ''
 
   if (addons) {

@@ -1,9 +1,9 @@
-import React, {SFC} from 'react'
+import React, {FunctionComponent} from 'react'
 import ReactTooltip from 'react-tooltip'
 
 const resetLayoutTipsText = '<p>To apply the default layout.</p>'
 
-const ResetLayoutTips: SFC = () => (
+const ResetLayoutTips: FunctionComponent = () => (
   <div
     className="reset-layout-tips"
     data-for="reset-layout-tips-tooltip"

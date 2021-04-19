@@ -1,5 +1,5 @@
 // Libraries
-import React, {SFC} from 'react'
+import React, {FunctionComponent} from 'react'
 import _ from 'lodash'
 import {Subscribe} from 'unstated'
 
@@ -58,7 +58,7 @@ interface Auth {
 
 type Props = ConnectedProps & PassedProps & Auth
 
-const QueryMaker: SFC<Props> = ({
+const QueryMaker: FunctionComponent<Props> = ({
   source,
   queries,
   timeRange,
