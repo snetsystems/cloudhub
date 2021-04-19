@@ -451,6 +451,7 @@ export const DEFAULT_SOURCE = {
   telegraf: 'Default',
   insecureSkipVerify: false,
   metaUrl: 'http://influxdb:8091',
+  version: '1.x',
 }
 
 export const DEFAULT_KAPACITOR = {
