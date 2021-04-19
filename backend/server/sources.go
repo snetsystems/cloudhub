@@ -80,6 +80,12 @@ var (
 )
 
 func hasFlux(ctx context.Context, src cloudhub.Source) (bool, error) {
+	// flux is always available in v2 version, but it requires v2 Token authentication (distinguished by Type)
+	// and a non-empty Organization (stored in Username)
+	if src.Version == "" || strings.HasPrefix(src.Version, "2.") {
+		return src.Type == cloudhub.InfluxDBv2 && src.Username != "", nil
+	}
+
 	url, err := url.ParseRequestURI(src.URL)
 	if err != nil {
 		return false, err
@@ -220,6 +226,9 @@ func (s *Service) tsdbVersion(ctx context.Context, src *cloudhub.Source) (string
 }
 
 func (s *Service) tsdbType(ctx context.Context, src *cloudhub.Source) (string, error) {
+	if src.Type == cloudhub.InfluxDBv2 {
+		return cloudhub.InfluxDBv2, nil // v2 selected by the user
+	}
 	cli := &influx.Client{
 		Logger: s.Logger,
 	}
@@ -480,7 +489,7 @@ func ValidSourceRequest(s *cloudhub.Source, defaultOrgID string) error {
 	}
 	// Type must be influx or influx-enterprise
 	if s.Type != "" {
-		if s.Type != cloudhub.InfluxDB && s.Type != cloudhub.InfluxEnterprise && s.Type != cloudhub.InfluxRelay {
+		if s.Type != cloudhub.InfluxDB && s.Type != cloudhub.InfluxDBv2 && s.Type != cloudhub.InfluxEnterprise && s.Type != cloudhub.InfluxRelay {
 			return fmt.Errorf("invalid source type %s", s.Type)
 		}
 	}
