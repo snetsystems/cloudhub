@@ -182,11 +182,19 @@ class SourceStep extends PureComponent<Props, State> {
         )}
         {!onBoarding && (
           <WizardCheckbox
+            halfWidth={true}
             isChecked={source.default}
-            text={'Make this the default connection'}
+            text={'Default connection'}
             onChange={this.onChangeInput('default')}
           />
         )}
+        <WizardCheckbox
+          halfWidth={!onBoarding}
+          isChecked={sourceIsV2}
+          text={'InfluxDB v2'}
+          onChange={this.changeVersion}
+        />
+
         {this.isHTTPS && (
           <WizardCheckbox
             isChecked={source.insecureSkipVerify}
@@ -255,6 +263,12 @@ class SourceStep extends PureComponent<Props, State> {
     const {setError} = this.props
     this.setState({source: {...source, [key]: value}})
     setError(false)
+  }
+  private changeVersion = (v2: boolean) => {
+    const {source} = this.state
+    this.setState({
+      source: {...source, version: v2 ? '2.x' : '1.x'},
+    })
   }
 
   private get sourceIsEdited(): boolean {
