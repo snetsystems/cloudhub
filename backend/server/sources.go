@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/snetsystems/cloudhub/backend/enterprise"
@@ -166,12 +167,7 @@ func (s *Service) NewSource(w http.ResponseWriter, r *http.Request) {
 		src.Telegraf = "telegraf"
 	}
 
-	dbVersion, err := s.tsdbVersion(ctx, &src)
-	if err != nil {
-		dbVersion = "Unknown"
-		s.Logger.WithField("error", err.Error()).Info("Failed to retrieve database version")
-	}
-	src.Version = dbVersion
+	src.Version = s.sourceVersion(ctx, &src)
 
 	dbType, err := s.tsdbType(ctx, &src)
 	if err != nil {
@@ -193,6 +189,19 @@ func (s *Service) NewSource(w http.ResponseWriter, r *http.Request) {
 	res := newSourceResponse(ctx, src)
 	location(w, res.Links.Self)
 	encodeJSON(w, http.StatusCreated, res, s.Logger)
+}
+
+func (s *Service) sourceVersion(ctx context.Context, src *cloudhub.Source) string {
+	retVal, err := s.tsdbVersion(ctx, src)
+	if err == nil {
+		return retVal
+	}
+	s.Logger.WithField("error", err.Error()).Info("Failed to retrieve database version")
+	if strings.HasPrefix(src.Version, "1.") || strings.HasPrefix(src.Version, "2.") {
+		// keep the client version unchanged
+		return src.Version
+	}
+	return "Unknown"
 }
 
 func (s *Service) tsdbVersion(ctx context.Context, src *cloudhub.Source) (string, error) {
@@ -246,12 +255,7 @@ func (s *Service) Sources(w http.ResponseWriter, r *http.Request) {
 	sourceCh := make(chan sourceResponse, len(srcs))
 	for _, src := range srcs {
 		go func(src cloudhub.Source) {
-			dbVersion, err := s.tsdbVersion(ctx, &src)
-			if err != nil {
-				dbVersion = "Unknown"
-				s.Logger.WithField("error", err.Error()).Info("Failed to retrieve database version")
-			}
-			src.Version = dbVersion
+			src.Version = s.sourceVersion(ctx, &src)
 			sourceCh <- newSourceResponse(ctx, src)
 		}(src)
 	}
@@ -277,12 +281,7 @@ func (s *Service) SourcesID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dbVersion, err := s.tsdbVersion(ctx, &src)
-	if err != nil {
-		dbVersion = "Unknown"
-		s.Logger.WithField("error", err.Error()).Info("Failed to retrieve database version")
-	}
-	src.Version = dbVersion
+	src.Version = s.sourceVersion(ctx, &src)
 
 	res := newSourceResponse(ctx, src)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
@@ -446,12 +445,7 @@ func (s *Service) UpdateSource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dbVersion, err := s.tsdbVersion(ctx, &src)
-	if err != nil {
-		dbVersion = "Unknown"
-		s.Logger.WithField("error", err.Error()).Info("Failed to retrieve database version")
-	}
-	src.Version = dbVersion
+	src.Version = s.sourceVersion(ctx, &src)
 
 	dbType, err := s.tsdbType(ctx, &src)
 	if err != nil {
