@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/coreos/etcd/embed"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/kv"
 	"github.com/snetsystems/cloudhub/backend/mocks"
 	"github.com/stretchr/testify/require"
+	"go.etcd.io/etcd/embed"
 )
 
 func TestNewClient(t *testing.T) {

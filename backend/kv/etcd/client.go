@@ -8,12 +8,12 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/clientv3/concurrency"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/kv"
 	"github.com/snetsystems/cloudhub/backend/mocks"
 	"github.com/snetsystems/cloudhub/backend/snowflake"
+	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/clientv3/concurrency"
 )
 
 const (
