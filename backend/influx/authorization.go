@@ -23,7 +23,7 @@ func (n *NoAuthorization) Set(req *http.Request) error { return nil }
 
 // DefaultAuthorization creates either a shared JWT builder, basic auth or Noop or Token authentication
 func DefaultAuthorization(src *cloudhub.Source) Authorizer {
-	// Token authentication for InfluxDB-v2
+	// Use Token authentication for InfluxDB v2
 	if src.Type == cloudhub.InfluxDBv2 {
 		return &TokenAuth{
 			Token: src.Password,

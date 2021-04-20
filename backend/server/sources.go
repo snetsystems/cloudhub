@@ -487,9 +487,12 @@ func ValidSourceRequest(s *cloudhub.Source, defaultOrgID string) error {
 	if s.URL == "" {
 		return fmt.Errorf("url required")
 	}
-	// Type must be influx or influx-enterprise
+	// Validate Type
 	if s.Type != "" {
-		if s.Type != cloudhub.InfluxDB && s.Type != cloudhub.InfluxDBv2 && s.Type != cloudhub.InfluxEnterprise && s.Type != cloudhub.InfluxRelay {
+		if s.Type != cloudhub.InfluxDB &&
+			s.Type != cloudhub.InfluxDBv2 &&
+			s.Type != cloudhub.InfluxEnterprise &&
+			s.Type != cloudhub.InfluxRelay {
 			return fmt.Errorf("invalid source type %s", s.Type)
 		}
 	}
