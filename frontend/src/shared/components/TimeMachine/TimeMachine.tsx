@@ -29,7 +29,10 @@ import {updateSourceLink as updateSourceLinkAction} from 'src/data_explorer/acti
 // Constants
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
 import {CEOTabs} from 'src/dashboards/constants'
-import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
+import {
+  AutoRefreshOption,
+  autoRefreshOptionPaused,
+} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
 
 // Types
 import {
@@ -382,6 +385,7 @@ class TimeMachine extends PureComponent<Props, State> {
         onEditRawText={this.handleEditRawText}
         me={me}
         isUsingAuth={isUsingAuth}
+        onMetaQuerySelected={this.handleChangeAutoRefreshDuration}
       />
     )
   }
@@ -543,7 +547,7 @@ class TimeMachine extends PureComponent<Props, State> {
   }
 
   private handleChangeAutoRefreshDuration = (
-    autoRefreshOption: AutoRefreshOption
+    autoRefreshOption: AutoRefreshOption = autoRefreshOptionPaused
   ): void => {
     const {milliseconds} = autoRefreshOption
     this.setState({autoRefreshDuration: milliseconds})
