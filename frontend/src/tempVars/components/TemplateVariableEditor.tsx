@@ -6,6 +6,7 @@ import React, {
   KeyboardEvent,
 } from 'react'
 import {connect} from 'react-redux'
+import {withRouter} from 'react-router'
 import {isEmpty} from 'lodash'
 
 // Utils
@@ -396,6 +397,19 @@ class TemplateVariableEditor extends PureComponent<Props, State> {
   }
 }
 
-const mapDispatchToProps = {notify: notifyActionCreator}
+const mapDispatchToProps = {
+  notify: notifyActionCreator,
+}
 
-export default connect(null, mapDispatchToProps)(TemplateVariableEditor)
+const mapStateToProps = state => {
+  const {sources} = state
+
+  return {
+    sources,
+  }
+}
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(withRouter(TemplateVariableEditor))
