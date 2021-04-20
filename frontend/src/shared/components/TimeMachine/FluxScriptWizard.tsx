@@ -383,6 +383,10 @@ class FluxScriptWizard extends PureComponent<Props, State> {
       fieldsStatus: RemoteDataState.NotStarted,
       selectedFields: [],
     })
+    if (!selectedDB) {
+      // no database selected
+      return
+    }
 
     let measurements
 
