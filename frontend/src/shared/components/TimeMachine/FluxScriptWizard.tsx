@@ -89,10 +89,6 @@ class FluxScriptWizard extends PureComponent<Props, State> {
   private fetchMeasurements = restartable(fetchMeasurements)
   private fetchFields = restartable(fetchFields)
 
-  public componentDidMount() {
-    this.fetchAndSetDBsToRPs()
-  }
-
   public render() {
     const {children, isWizardActive} = this.props
 
@@ -104,12 +100,17 @@ class FluxScriptWizard extends PureComponent<Props, State> {
       )
     }
     const {
+      dbsToRPsStatus,
       measurements,
       fields,
       selectedMeasurement,
       selectedFields,
       selectedAggFunction,
     } = this.state
+
+    if (dbsToRPsStatus === RemoteDataState.NotStarted) {
+      this.fetchAndSetDBsToRPs()
+    }
 
     return (
       <div className="flux-script-wizard">
