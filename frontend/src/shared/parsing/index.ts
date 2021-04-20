@@ -40,10 +40,8 @@ export const extractQueryWarningMessage = (
   }
 
   if (!series) {
-    return 'Your query is syntactically correct but returned no results'
+    return 'Your query or command is syntactically correct but returned no results'
   }
-
-  return null
 }
 
 export const extractQueryErrorMessage = (errorMessage: string): string => {
