@@ -1,6 +1,7 @@
 // Libraries
 import React, {PureComponent} from 'react'
 import {flatten, isEmpty} from 'lodash'
+import _ from 'lodash'
 
 // Components
 import {
@@ -34,7 +35,10 @@ import {
 // Types
 import {RemoteDataState, Source, Me} from 'src/types'
 import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
-import _ from 'lodash'
+import {getBuckets} from 'src/flux/components/DatabaseList'
+import {fetchFluxMeasurements} from 'src/flux/components/FetchMeasurements'
+import {fieldsByMeasurement} from 'src/shared/apis/flux/metaQueries'
+import {parseFieldsByMeasurements} from 'src/shared/parsing/flux/values'
 
 // These constants are selected so that the dropdown menus will not overflow
 // out of the `.flux-script-wizard--wizard` window
@@ -49,6 +53,7 @@ interface Props {
   onAddToScript: (script: string) => void
   me: Me
   isUsingAuth: boolean
+  v2?: boolean
 }
 
 interface State {
@@ -90,13 +95,6 @@ class FluxScriptWizard extends PureComponent<Props, State> {
 
   public render() {
     const {children, isWizardActive} = this.props
-    const {
-      measurements,
-      fields,
-      selectedMeasurement,
-      selectedFields,
-      selectedAggFunction,
-    } = this.state
 
     if (!isWizardActive) {
       return (
@@ -105,6 +103,13 @@ class FluxScriptWizard extends PureComponent<Props, State> {
         </div>
       )
     }
+    const {
+      measurements,
+      fields,
+      selectedMeasurement,
+      selectedFields,
+      selectedAggFunction,
+    } = this.state
 
     return (
       <div className="flux-script-wizard">
@@ -253,11 +258,9 @@ class FluxScriptWizard extends PureComponent<Props, State> {
   }
 
   private get buttonStatus(): ComponentStatus {
-    const {selectedDB, selectedRP, selectedMeasurement} = this.state
+    const {selectedDB, selectedMeasurement} = this.state
 
-    const needsSelection = [selectedDB, selectedRP, selectedMeasurement].some(
-      isEmpty
-    )
+    const needsSelection = [selectedDB, selectedMeasurement].some(isEmpty)
 
     const buttonStatus = needsSelection
       ? ComponentStatus.Disabled
@@ -308,7 +311,7 @@ class FluxScriptWizard extends PureComponent<Props, State> {
   }
 
   private fetchAndSetDBsToRPs = async () => {
-    const {source, isUsingAuth} = this.props
+    const {source, isUsingAuth, v2} = this.props
     const me = this.props.me
     const currentOrganization = _.get(me, 'currentOrganization')
 
@@ -328,7 +331,15 @@ class FluxScriptWizard extends PureComponent<Props, State> {
     let dbsToRPs
 
     try {
-      dbsToRPs = await this.fetchDBsToRPs(source.links.proxy)
+      if (v2) {
+        const buckets = await getBuckets(source)
+        dbsToRPs = buckets.reduce((acc, db) => {
+          acc[db] = ['']
+          return acc
+        }, {})
+      } else {
+        dbsToRPs = await this.fetchDBsToRPs(source.links.proxy)
+      }
 
       if (dbsToRPs) {
         if (!isUserAuthorized(me.role, SUPERADMIN_ROLE) && isUsingAuth) {
@@ -361,7 +372,7 @@ class FluxScriptWizard extends PureComponent<Props, State> {
   }
 
   private fetchAndSetMeasurements = async () => {
-    const {source} = this.props
+    const {source, v2} = this.props
     const {selectedDB} = this.state
 
     this.setState({
@@ -376,10 +387,14 @@ class FluxScriptWizard extends PureComponent<Props, State> {
     let measurements
 
     try {
-      measurements = await this.fetchMeasurements(
-        source.links.proxy,
-        selectedDB
-      )
+      if (v2) {
+        measurements = await fetchFluxMeasurements(source, selectedDB)
+      } else {
+        measurements = await this.fetchMeasurements(
+          source.links.proxy,
+          selectedDB
+        )
+      }
     } catch {
       this.setState({
         measurements: [],
@@ -401,7 +416,7 @@ class FluxScriptWizard extends PureComponent<Props, State> {
   }
 
   private fetchAndSetFields = async () => {
-    const {source} = this.props
+    const {source, v2} = this.props
     const {selectedDB, selectedMeasurement} = this.state
 
     this.setState({
@@ -413,11 +428,17 @@ class FluxScriptWizard extends PureComponent<Props, State> {
     let fields
 
     try {
-      fields = await this.fetchFields(
-        source.links.proxy,
-        selectedDB,
-        selectedMeasurement
-      )
+      if (v2) {
+        const fieldsResults = await fieldsByMeasurement(source, selectedDB)
+        const {fieldsByMeasurements} = parseFieldsByMeasurements(fieldsResults)
+        fields = fieldsByMeasurements[selectedMeasurement] || []
+      } else {
+        fields = await this.fetchFields(
+          source.links.proxy,
+          selectedDB,
+          selectedMeasurement
+        )
+      }
     } catch {
       this.setState({
         fields: [],
