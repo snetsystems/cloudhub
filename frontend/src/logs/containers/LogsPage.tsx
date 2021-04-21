@@ -363,19 +363,7 @@ class LogsPage extends Component<Props, State> {
   }
 
   private setCurrentSource = async () => {
-    if (!this.props.currentSource && this.props.sources.length > 0) {
-      const source =
-        this.props.sources.find(src => {
-          return src.default
-        }) || this.props.sources[0]
-
-      return this.props.getSourceAndPopulateNamespaces(source.id)
-    } else if (this.props.currentNamespace) {
-      return this.props.populateNamespacesAsync(
-        this.props.currentSource,
-        this.props.currentNamespace
-      )
-    }
+    await this.props.getSourceAndPopulateNamespaces(this.props.source.id)
   }
 
   private handleExpandMessage = () => {
