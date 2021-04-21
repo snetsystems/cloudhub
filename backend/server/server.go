@@ -32,6 +32,7 @@ import (
 	"github.com/snetsystems/cloudhub/backend/kv/etcd"
 	clog "github.com/snetsystems/cloudhub/backend/log"
 	"github.com/snetsystems/cloudhub/backend/oauth2"
+	"github.com/snetsystems/cloudhub/backend/server/config"
 )
 
 var (
@@ -496,7 +497,7 @@ func (s *Server) NewListener() (net.Listener, error) {
 		return listener, nil
 	}
 
-	tlsConfig, err := CreateTLSConfig(TLSOptions{
+	tlsConfig, err := config.CreateTLSConfig(config.TLSOptions{
 		Cert:       string(s.Cert),
 		Key:        string(s.Key),
 		Ciphers:    strings.Split(s.TLSCiphers, ","),
@@ -591,7 +592,7 @@ func (s *Server) Serve(ctx context.Context) {
 	} else {
 		var tlsConfig *tls.Config
 		if s.EtcdCert != "" {
-			tlsConfig, err = CreateTLSConfig(TLSOptions{
+			tlsConfig, err = config.CreateTLSConfig(config.TLSOptions{
 				Cert: string(s.EtcdCert),
 				Key:  string(s.EtcdKey),
 			})
