@@ -93,6 +93,8 @@ interface State {
 
 @ErrorHandling
 export class TickscriptPage extends PureComponent<Props, State> {
+  private abortController: AbortController
+
   constructor(props) {
     super(props)
     this.state = {
@@ -160,6 +162,9 @@ export class TickscriptPage extends PureComponent<Props, State> {
     this.setState({
       areLogsEnabled: false,
     })
+    if (this.abortController) {
+      this.abortController.abort()
+    }
   }
 
   public render() {
@@ -330,7 +335,18 @@ export class TickscriptPage extends PureComponent<Props, State> {
         })
       }
 
-      const response = await getLogStreamByRuleID(kapacitor, ruleID)
+      const abortController = new AbortController()
+      this.abortController = abortController
+      const response = await getLogStreamByRuleID(
+        kapacitor,
+        ruleID,
+        abortController.signal
+      )
+      if (!this.state.areLogsEnabled) {
+        // applies when component destroyment happens sooner than response
+        abortController.abort()
+        return
+      }
 
       const reader = await response.body.getReader()
       const decoder = new TextDecoder()
@@ -376,9 +392,12 @@ export class TickscriptPage extends PureComponent<Props, State> {
         }
       }
     } catch (error) {
-      console.error(error)
-      notify(notifyTickscriptLoggingError())
-      throw error
+      // do not log error if it was programatically aborted
+      if (!error.name || error.name !== 'AbortError') {
+        console.error(error)
+        notify(notifyTickscriptLoggingError())
+        throw error
+      }
     }
   }
 }
