@@ -166,6 +166,7 @@ interface State {
   hasScrolled: boolean
   isLoadingNewer: boolean
   queryCount: number
+  isHistogramHidden: boolean
 }
 
 class LogsPage extends Component<Props, State> {
@@ -192,6 +193,11 @@ class LogsPage extends Component<Props, State> {
 
   constructor(props: Props) {
     super(props)
+    const {
+      location: {
+        query: {table},
+      },
+    } = props
 
     this.state = {
       isLoadingNewer: false,
@@ -201,6 +207,7 @@ class LogsPage extends Component<Props, State> {
       histogramColors: [],
       hasScrolled: false,
       queryCount: 0,
+      isHistogramHidden: table !== undefined,
     }
   }
 
@@ -264,16 +271,12 @@ class LogsPage extends Component<Props, State> {
       currentTailUpperBound,
       searchStatus,
       tableTime,
-      location: {
-        query: {table},
-      },
     } = this.props
+    const {isHistogramHidden} = this.state
 
     if (this.isLoadingSourcesStatus) {
       return <PageSpinner />
     }
-
-    const hideGraph = table !== undefined
 
     return (
       <>
@@ -281,10 +284,10 @@ class LogsPage extends Component<Props, State> {
           {this.header}
           <div
             className={`page-contents logs-viewer ${
-              hideGraph ? 'logs-viewer--table-only' : ''
+              isHistogramHidden ? 'logs-viewer--table-only' : ''
             }`}
           >
-            {hideGraph ? (
+            {isHistogramHidden ? (
               undefined
             ) : (
               <LogsGraphContainer>
@@ -306,6 +309,8 @@ class LogsPage extends Component<Props, State> {
               onClearFilters={this.handleClearFilters}
               onUpdateTruncation={this.handleUpdateTruncation}
               isTruncated={this.isTruncated}
+              isHistogramHidden={isHistogramHidden}
+              onShowHistogram={this.handleShowHistogram}
             />
             <LogsTable
               currentMeasurement={'syslog'}
@@ -865,10 +870,19 @@ class LogsPage extends Component<Props, State> {
           searchStatus={searchStatus}
           selectedTimeWindow={timeRange}
         />
-        <TimeWindowDropdown
-          selectedTimeWindow={timeRange}
-          onSetTimeWindow={this.handleSetTimeWindow}
-        />
+        <div className="page-header--right">
+          <button
+            className="btn btn-sm btn-square btn-default"
+            onClick={this.handleHideHistogram}
+            title="Hide Histogram"
+          >
+            <span className="icon eye-closed" />
+          </button>
+          <TimeWindowDropdown
+            selectedTimeWindow={timeRange}
+            onSetTimeWindow={this.handleSetTimeWindow}
+          />
+        </div>
       </div>
     )
   }
@@ -998,6 +1012,12 @@ class LogsPage extends Component<Props, State> {
   private handleToggleOverlay = (): void => {
     this.setState({isOverlayVisible: !this.state.isOverlayVisible})
   }
+  private handleShowHistogram = (): void => {
+    this.setState({isHistogramHidden: false, isOverlayVisible: false})
+  }
+  private handleHideHistogram = (): void => {
+    this.setState({isHistogramHidden: true})
+  }
 
   private renderImportOverlay = (): JSX.Element => {
     const {isOverlayVisible} = this.state
@@ -1006,34 +1026,26 @@ class LogsPage extends Component<Props, State> {
       <OverlayTechnology visible={isOverlayVisible}>
         <OptionsOverlay
           severityLevelColors={this.severityLevelColors}
-          onUpdateSeverityLevels={this.handleUpdateSeverityLevels}
+          onUpdate={this.handleUpdateOptions}
           onDismissOverlay={this.handleToggleOverlay}
           columns={this.tableColumns}
-          onUpdateColumns={this.handleUpdateColumns}
-          onUpdateSeverityFormat={this.handleUpdateSeverityFormat}
           severityFormat={this.severityFormat}
         />
       </OverlayTechnology>
     )
   }
 
-  private handleUpdateSeverityLevels = async (
-    severityLevelColors: SeverityLevelColor[]
+  private handleUpdateOptions = async (
+    severityLevelColors: SeverityLevelColor[],
+    severityFormat: SeverityFormat,
+    tableColumns: LogsTableColumn[]
   ): Promise<void> => {
     const {logConfig} = this.props
     await this.props.updateConfig(this.logConfigLink, {
       ...logConfig,
       severityLevelColors,
-    })
-  }
-
-  private handleUpdateSeverityFormat = async (
-    format: SeverityFormat
-  ): Promise<void> => {
-    const {logConfig} = this.props
-    await this.props.updateConfig(this.logConfigLink, {
-      ...logConfig,
-      severityFormat: format,
+      severityFormat,
+      tableColumns,
     })
   }
 
@@ -1045,16 +1057,6 @@ class LogsPage extends Component<Props, State> {
       SeverityFormatOptions.dotText
     )
     return severityFormat
-  }
-
-  private handleUpdateColumns = async (
-    tableColumns: LogsTableColumn[]
-  ): Promise<void> => {
-    const {logConfig} = this.props
-    await this.props.updateConfig(this.logConfigLink, {
-      ...logConfig,
-      tableColumns,
-    })
   }
 
   private handleUpdateTruncation = async (
