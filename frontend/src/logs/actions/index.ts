@@ -955,9 +955,10 @@ export const setTimeRangeAsync = () => async (dispatch): Promise<void> => {
 }
 
 export const populateNamespacesAsync = (
-  proxyLink: string,
-  source: Source = null
+  source: Source,
+  currentNamespace: Namespace = undefined
 ) => async (dispatch): Promise<void> => {
+  const proxyLink = getDeep<string | null>(source, 'links.proxy', null)
   const namespaces = await getDatabasesWithRetentionPolicies(proxyLink)
 
   if (namespaces && namespaces.length > 0) {
@@ -965,11 +966,21 @@ export const populateNamespacesAsync = (
 
     let defaultNamespace: Namespace
 
-    if (source && source.telegraf) {
-      defaultNamespace = _.find(
-        namespaces,
-        ns => ns.database === source.telegraf
-      )
+    if (source) {
+      if (currentNamespace) {
+        defaultNamespace = _.find(
+          namespaces,
+          ns =>
+            ns.database === currentNamespace.database &&
+            ns.retentionPolicy === currentNamespace.retentionPolicy
+        )
+      }
+      if (!defaultNamespace && source.telegraf) {
+        defaultNamespace = _.find(
+          namespaces,
+          ns => ns.database === source.telegraf
+        )
+      }
     }
 
     const namespace = defaultNamespace || namespaces[0]
@@ -990,7 +1001,7 @@ export const getSourceAndPopulateNamespacesAsync = (sourceID: string) => async (
 
   if (proxyLink) {
     dispatch(setSource(source))
-    await dispatch(populateNamespacesAsync(proxyLink, source))
+    await dispatch(populateNamespacesAsync(source))
   }
 }
 
