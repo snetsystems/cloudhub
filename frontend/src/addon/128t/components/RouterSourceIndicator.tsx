@@ -12,7 +12,7 @@ const RouterSourceIndicator: FunctionComponent<Props> = ({
   let routerConnectTipsText = ''
 
   if (addons) {
-    let swan = addons.find(addon => addon.name.toUpperCase() === 'SWAN')
+    let swan = addons.find((addon) => addon.name.toUpperCase() === 'SWAN')
     if (swan !== undefined) {
       routerConnectTipsText = `<h1>${swan.name.toUpperCase()} URL:</h1><p><code>${
         swan.url

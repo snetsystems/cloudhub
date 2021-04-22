@@ -196,7 +196,7 @@ const RouterTableRow = ({
               <button
                 className="btn btn-sm btn-default btn-square icon bash agent-row--button-sm"
                 title={'Open SSH Terminal'}
-                onClick={e => {
+                onClick={(e) => {
                   e.stopPropagation()
                   handleOnClickShellModalOpen({
                     isNewEditor: false,

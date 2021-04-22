@@ -24,7 +24,7 @@ class OrganizationsPage extends Component {
     loadOrganizationsAsync(links.organizations)
   }
 
-  handleCreateOrganization = async organization => {
+  handleCreateOrganization = async (organization) => {
     const {
       links,
       actionsAdmin: {createOrganizationAsync},
@@ -41,7 +41,7 @@ class OrganizationsPage extends Component {
     this.refreshMe()
   }
 
-  handleDeleteOrganization = organization => {
+  handleDeleteOrganization = (organization) => {
     const {
       actionsAdmin: {deleteOrganizationAsync},
     } = this.props
@@ -72,7 +72,7 @@ class OrganizationsPage extends Component {
     } = this.props
     ForceSessionAbortInputRole(SUPERADMIN_ROLE)
     const organization = organizations.find(
-      o => o.id === meCurrentOrganization.id
+      (o) => o.id === meCurrentOrganization.id
     )
 
     return (
@@ -139,7 +139,7 @@ const mapStateToProps = ({
   isUsingAuth,
 })
 
-const mapDispatchToProps = dispatch => ({
+const mapDispatchToProps = (dispatch) => ({
   actionsAdmin: bindActionCreators(adminCloudHubActionCreators, dispatch),
   getMe: bindActionCreators(getMeAsync, dispatch),
   ForceSessionAbortInputRole: bindActionCreators(

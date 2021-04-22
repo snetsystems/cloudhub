@@ -411,7 +411,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
           handleClose()
         })
       })
-      .catch(err => {
+      .catch((err) => {
         console.error('err: ', err)
       })
       .finally(() => {
@@ -431,7 +431,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
       port,
       protocol
     )
-      .then(async vSphereInfo => {
+      .then(async (vSphereInfo) => {
         if (!vSphereInfo) return
 
         const resultAddVCenterAsync = await handleAddVCenterAsync(
@@ -464,7 +464,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
       })
   }
   const getSaltAddon = (): Addon => {
-    const addon = addons.find(addon => {
+    const addon = addons.find((addon) => {
       return addon.name === AddonType.salt
     })
 
@@ -472,7 +472,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   const modifiedCellID = (cells: LayoutCell[]) => {
-    const modifiedID = _.map(cells, cell => {
+    const modifiedID = _.map(cells, (cell) => {
       const c = {
         ...cell,
         i: focusedHost.key.split('/')[0] + '-' + cell.i,
@@ -502,7 +502,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
     if (vsphereKeys.length > 0) {
       let makeTreemenus
-      _.forEach(vsphereKeys, key => {
+      _.forEach(vsphereKeys, (key) => {
         const vsphere = getVSpheres[key]
 
         makeTreemenus = {
@@ -568,7 +568,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
       if (makeTreemenus) {
         let sortTreemenus = {}
-        _.forEach(_.keys(makeTreemenus).sort(), key => {
+        _.forEach(_.keys(makeTreemenus).sort(), (key) => {
           sortTreemenus[key] = {
             ...makeTreemenus[key],
           }
@@ -587,7 +587,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
     if (vsphereKeys.length > 0) {
       let makeTreemenus
-      _.forEach(_.keys(vspheres), key => {
+      _.forEach(_.keys(vspheres), (key) => {
         const vsphere = vspheres[key]
 
         makeTreemenus = {
@@ -598,7 +598,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
       if (makeTreemenus) {
         let sortTreemenus = {}
-        _.forEach(_.keys(makeTreemenus).sort(), key => {
+        _.forEach(_.keys(makeTreemenus).sort(), (key) => {
           sortTreemenus[key] = {
             ...makeTreemenus[key],
           }
@@ -904,7 +904,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     return (
       <button
         className={`btn btn-default btn-xs btn-square`}
-        onClick={e => {
+        onClick={(e) => {
           e.stopPropagation()
           isPause
             ? handleRequestRunVcenterAction(host, id)
@@ -928,7 +928,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
         size="btn-xs"
         icon={'trash'}
         confirmAction={() => {
-          handleDeleteVSphere(id, host).then(data => {
+          handleDeleteVSphere(id, host).then((data) => {
             if (data === 'DELETE_SUCCESS') {
               handleClearTimeout(host)
               removeOpenNodes(host)
@@ -966,7 +966,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
     const remove = _.filter(
       getOpenNodes,
-      openNode => openNode?.split('/')[0] !== host
+      (openNode) => openNode?.split('/')[0] !== host
     )
 
     setOpenNodes(remove)
@@ -1016,7 +1016,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     let vcIpAddress = props.host
 
     let vcenter: {[x: string]: VCenter} = [vCenterData].reduce(
-      acc => {
+      (acc) => {
         const datacenters: ResponseDatacenter[] = vcMinionValue[0]?.datacenters
         if (!datacenters) return
 
@@ -1262,7 +1262,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
       hostID
     )
 
-    const layoutsWithinHost = layouts.filter(layout => {
+    const layoutsWithinHost = layouts.filter((layout) => {
       return (
         host.apps &&
         host.apps.includes(layout.app) &&
@@ -1271,7 +1271,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     })
 
     const filteredLayouts = layoutsWithinHost
-      .filter(layout => {
+      .filter((layout) => {
         return layout.measurement.indexOf(_measurement) !== -1
       })
       .sort((x, y) => {
@@ -1328,7 +1328,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
           if (focusedHost.type === VMRole.vcenter) {
             items = _.filter(
               vCenters[focusedHost.key.split('/')[0]].nodes,
-              k => k.type === VMRole.datacenter
+              (k) => k.type === VMRole.datacenter
             )
           }
           return (
@@ -1511,7 +1511,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
               vCenters[splitedActiveKey[0]].nodes[splitedActiveKey[1]].nodes[
                 splitedActiveKey[2]
               ].nodes[splitedActiveKey[3]].nodes,
-              k => k.type === VMRole.vm
+              (k) => k.type === VMRole.vm
             )
           } else if (
             focusedHost.parent_type === VMRole.datacenter &&
@@ -1608,7 +1608,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
   const onClickToggle = (node: string): void => {
     const newOpenNodes = openNodes.includes(node)
-      ? openNodes.filter(openNode => openNode !== node)
+      ? openNodes.filter((openNode) => openNode !== node)
       : [...openNodes, node]
 
     setOpenNodes(newOpenNodes)

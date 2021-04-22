@@ -1,6 +1,6 @@
 import AJAX from 'utils/ajax'
 
-const rangeRule = rule => {
+const rangeRule = (rule) => {
   const {value, rangeValue, operator} = rule.values
 
   if (operator === 'inside range' || operator === 'outside range') {
@@ -19,7 +19,7 @@ export const createRule = (kapacitor, rule) => {
   })
 }
 
-export const getRules = kapacitor => {
+export const getRules = (kapacitor) => {
   return AJAX({
     method: 'GET',
     url: kapacitor.links.rules,
@@ -38,7 +38,7 @@ export const getRule = async (kapacitor, ruleID) => {
   }
 }
 
-export const editRule = rule => {
+export const editRule = (rule) => {
   return AJAX({
     method: 'PUT',
     url: rule.links.self,
@@ -46,7 +46,7 @@ export const editRule = rule => {
   })
 }
 
-export const deleteRule = rule => {
+export const deleteRule = (rule) => {
   return AJAX({
     method: 'DELETE',
     url: rule.links.self,
@@ -120,7 +120,7 @@ export const getLogStreamByRuleID = (kapacitor, ruleID, signal) => {
   })
 }
 
-export const pingKapacitorVersion = async kapacitor => {
+export const pingKapacitorVersion = async (kapacitor) => {
   try {
     const result = await AJAX({
       method: 'GET',

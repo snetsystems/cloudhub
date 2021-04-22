@@ -100,7 +100,7 @@ const VMHostsTable = (props: Props): JSX.Element => {
   const Body = () => {
     return (
       <FancyScrollbar>
-        {items.map(item => (
+        {items.map((item) => (
           <div className="hosts-table--tr" key={item.name}>
             <TableBodyRowItem
               title={

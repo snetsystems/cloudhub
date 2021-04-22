@@ -395,10 +395,10 @@ class TopologyRenderer extends PureComponent<Props, State> {
   private modifyRoutersData = (
     groupRouterNodesData: GroupRouterNodeData[]
   ): GroupRouterNodeData[] => {
-    return groupRouterNodesData.map(g => {
+    return groupRouterNodesData.map((g) => {
       return {
         groupName: g.groupName,
-        routerNodes: g.routerNodes.map(r => {
+        routerNodes: g.routerNodes.map((r) => {
           const {nodeName} = r
           return {...r, nodeName: nodeName ? nodeName : '-'}
         }),
@@ -417,12 +417,12 @@ class TopologyRenderer extends PureComponent<Props, State> {
 
     let {swanTopology} = this.addon
 
-    const nodes = nodeData.nodes.map(m => {
+    const nodes = nodeData.nodes.map((m) => {
       if (m.id === nodeId) {
         if (swanTopology) {
-          const filtered = swanTopology.filter(s => s.id === nodeId)
+          const filtered = swanTopology.filter((s) => s.id === nodeId)
           if (filtered.length > 0) {
-            swanTopology = swanTopology.map(swan =>
+            swanTopology = swanTopology.map((swan) =>
               swan.id === nodeId ? {id: nodeId, x, y} : swan
             )
 
@@ -603,7 +603,7 @@ class TopologyRenderer extends PureComponent<Props, State> {
     let gIndex = 0
     let rIndex = 0
 
-    nodes = nodesData.nodes.map(m => {
+    nodes = nodesData.nodes.map((m) => {
       if (m.role === 'root') {
         return {...m, x: dimensions.width / 2, y: this.defaultMargin.top}
       } else if (m.role === 'group') {
@@ -634,23 +634,23 @@ class TopologyRenderer extends PureComponent<Props, State> {
     })
 
     if (
-      this.dummyData.nodes.filter(dummyNode => {
-        const nodes = nodesData.nodes.filter(node => {
+      this.dummyData.nodes.filter((dummyNode) => {
+        const nodes = nodesData.nodes.filter((node) => {
           if (node.id && node.id === dummyNode.id) return dummyNode
         })
         if (nodes.length > 0) return nodes
       }).length <= 0
     ) {
-      const filteredLinks = this.dummyData.links.filter(dummyLink => {
-        const links = nodesData.nodes.filter(node => {
+      const filteredLinks = this.dummyData.links.filter((dummyLink) => {
+        const links = nodesData.nodes.filter((node) => {
           if (node.id && node.id === dummyLink.source) return dummyLink
         })
 
         if (links.length > 0) return links
       })
 
-      const filteredNodes = this.dummyData.nodes.filter(node => {
-        const nodes = filteredLinks.filter(link => {
+      const filteredNodes = this.dummyData.nodes.filter((node) => {
+        const nodes = filteredLinks.filter((link) => {
           if (node.id && node.id === link.target) return node
         })
         if (nodes.length > 0) return nodes
@@ -660,7 +660,7 @@ class TopologyRenderer extends PureComponent<Props, State> {
 
       links = nodesData.links.concat(filteredLinks)
 
-      links = _.remove(links, link => {
+      links = _.remove(links, (link) => {
         return link.target !== '-'
       })
     } else {
@@ -669,8 +669,8 @@ class TopologyRenderer extends PureComponent<Props, State> {
 
     if (isLocalstorage) {
       const {swanTopology} = this.addon
-      nodes = nodes.map(m => {
-        const filtered = swanTopology.filter(s => s.id === m.id)
+      nodes = nodes.map((m) => {
+        const filtered = swanTopology.filter((s) => s.id === m.id)
         if (filtered.length > 0) {
           const {x, y} = filtered[0]
           return {

@@ -234,8 +234,8 @@ const SwanSdplexStatusPage = ({
   )
 
   const gHosts: {group: string; hostName: string}[] = []
-  _.values(groupHosts).map(g =>
-    _.values(g.hosts).map(h => gHosts.push({group: g.name, hostName: h.name}))
+  _.values(groupHosts).map((g) =>
+    _.values(g.hosts).map((h) => gHosts.push({group: g.name, hostName: h.name}))
   )
 
   const [groupRouterNodesData, setGroupRouterNodeData] = useState<
@@ -255,7 +255,7 @@ const SwanSdplexStatusPage = ({
       variables: {
         names:
           isUsingAuth && !isUserAuthorized(meRole, SUPERADMIN_ROLE)
-            ? gHosts.map(m => m.hostName)
+            ? gHosts.map((m) => m.hostName)
             : [],
       },
       errorPolicy: 'all',
@@ -263,8 +263,8 @@ const SwanSdplexStatusPage = ({
     }
   )
 
-  const groupRouter: GroupRouterNodeData[] = _.values(groupHosts).map(g => {
-    const nodeName = _.values(g.hosts).map(h => {
+  const groupRouter: GroupRouterNodeData[] = _.values(groupHosts).map((g) => {
+    const nodeName = _.values(g.hosts).map((h) => {
       return {
         nodeName: h.name,
         deltaUptime: h.deltaUptime,
@@ -296,7 +296,7 @@ const SwanSdplexStatusPage = ({
               groupRouterNodeData.routerNodes,
               (routerNodes: RouterNode[], groupRouterNode: RouterNode) => {
                 const node: Node = nodes.find(
-                  f => f.name === groupRouterNode.nodeName
+                  (f) => f.name === groupRouterNode.nodeName
                 )
                 if (node) {
                   const routerNode: RouterNode = {
@@ -371,7 +371,7 @@ const SwanSdplexStatusPage = ({
 
                       const ipAddress: IpAddress[] = _.reduce(
                         addresses.filter(
-                          f => f.name.toLowerCase().indexOf('wan') > -1
+                          (f) => f.name.toLowerCase().indexOf('wan') > -1
                         ),
                         (ipAddress: IpAddress[], address: Addresses) => {
                           const ipAddresses: IpAddress[] = _.reduce(
@@ -389,8 +389,8 @@ const SwanSdplexStatusPage = ({
                       )
 
                       return ipAddress
-                        .filter(f => f.ipAddress != null)
-                        .map(m => m.ipAddress)[0]
+                        .filter((f) => f.ipAddress != null)
+                        .map((m) => m.ipAddress)[0]
                     })(),
                     locationCoordinates: node.router.locationCoordinates,
                     managementConnected: node.router.managementConnected,
@@ -399,7 +399,7 @@ const SwanSdplexStatusPage = ({
                     topSources: node.router.topSources,
                     peers: node.router.peers.nodes,
                     topSessions: node.router.topSessions
-                      ? node.router.topSessions.map(topSession => ({
+                      ? node.router.topSessions.map((topSession) => ({
                           ...topSession,
                           value: Number(topSession.value),
                         }))
@@ -435,7 +435,7 @@ const SwanSdplexStatusPage = ({
             nodes,
             (routerNodes: RouterNode[], node: Node) => {
               const routeNode = routerNodesData.find(
-                f => f.nodeName === node.name
+                (f) => f.nodeName === node.name
               )
               if (routeNode === undefined) {
                 const routerNode: RouterNode = {
@@ -510,7 +510,7 @@ const SwanSdplexStatusPage = ({
 
                     const ipAddress: IpAddress[] = _.reduce(
                       addresses.filter(
-                        f => f.name.toLowerCase().indexOf('wan') > -1
+                        (f) => f.name.toLowerCase().indexOf('wan') > -1
                       ),
                       (ipAddress: IpAddress[], address: Addresses) => {
                         const ipAddresses: IpAddress[] = _.reduce(
@@ -528,8 +528,8 @@ const SwanSdplexStatusPage = ({
                     )
 
                     return ipAddress
-                      .filter(f => f.ipAddress != null)
-                      .map(m => m.ipAddress)[0]
+                      .filter((f) => f.ipAddress != null)
+                      .map((m) => m.ipAddress)[0]
                   })(),
                   locationCoordinates: node.router.locationCoordinates,
                   managementConnected: node.router.managementConnected,
@@ -538,7 +538,7 @@ const SwanSdplexStatusPage = ({
                   topSources: node.router.topSources,
                   peers: node.router.peers.nodes,
                   topSessions: node.router.topSessions
-                    ? node.router.topSessions.map(topSession => ({
+                    ? node.router.topSessions.map((topSession) => ({
                         ...topSession,
                         value: Number(topSession.value),
                       }))
@@ -567,7 +567,7 @@ const SwanSdplexStatusPage = ({
         setRouterNodesInfo({routerNodes: routerNodesData})
 
         if (focusedNodeName) {
-          const router = routerNodesData.find(node => {
+          const router = routerNodesData.find((node) => {
             return node.nodeName === focusedNodeName
           })
           if (router && router.topSources) setTopSources(router.topSources)
@@ -706,7 +706,7 @@ const SwanSdplexStatusPage = ({
                 Please, check out this linked site -&nbsp;
                 <a
                   href={
-                    addons.find(addon => {
+                    addons.find((addon) => {
                       return addon.name === 'swan'
                     }).url
                   }

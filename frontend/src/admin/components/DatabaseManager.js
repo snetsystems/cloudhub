@@ -49,7 +49,7 @@ const DatabaseManager = ({
         </button>
       </div>
       <div className="panel-body">
-        {databases.map(db => (
+        {databases.map((db) => (
           <DatabaseTable
             key={db.links.self}
             auth={auth}

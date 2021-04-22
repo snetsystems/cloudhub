@@ -77,7 +77,7 @@ export const loadPermissions = ({permissions}) => ({
   },
 })
 
-export const loadDatabases = databases => ({
+export const loadDatabases = (databases) => ({
   type: 'INFLUXDB_LOAD_DATABASES',
   payload: {
     databases,
@@ -92,12 +92,12 @@ export const addRole = () => ({
   type: 'INFLUXDB_ADD_ROLE',
 })
 
-export const addDatabase = name => ({
+export const addDatabase = (name) => ({
   type: 'INFLUXDB_ADD_DATABASE',
   payload: {name},
 })
 
-export const addRetentionPolicy = database => ({
+export const addRetentionPolicy = (database) => ({
   type: 'INFLUXDB_ADD_RETENTION_POLICY',
   payload: {
     database,
@@ -161,21 +161,21 @@ export const editDatabase = (database, updates) => ({
   },
 })
 
-export const killQuery = queryID => ({
+export const killQuery = (queryID) => ({
   type: 'INFLUXDB_KILL_QUERY',
   payload: {
     queryID,
   },
 })
 
-export const setQueryToKill = queryIDToKill => ({
+export const setQueryToKill = (queryIDToKill) => ({
   type: 'INFLUXDB_SET_QUERY_TO_KILL',
   payload: {
     queryIDToKill,
   },
 })
 
-export const loadQueries = queries => ({
+export const loadQueries = (queries) => ({
   type: 'INFLUXDB_LOAD_QUERIES',
   payload: {
     queries,
@@ -183,7 +183,7 @@ export const loadQueries = queries => ({
 })
 
 // TODO: change to 'removeUser'
-export const deleteUser = user => ({
+export const deleteUser = (user) => ({
   type: 'INFLUXDB_DELETE_USER',
   payload: {
     user,
@@ -191,14 +191,14 @@ export const deleteUser = user => ({
 })
 
 // TODO: change to 'removeRole'
-export const deleteRole = role => ({
+export const deleteRole = (role) => ({
   type: 'INFLUXDB_DELETE_ROLE',
   payload: {
     role,
   },
 })
 
-export const removeDatabase = database => ({
+export const removeDatabase = (database) => ({
   type: 'INFLUXDB_REMOVE_DATABASE',
   payload: {
     database,
@@ -213,28 +213,28 @@ export const removeRetentionPolicy = (database, retentionPolicy) => ({
   },
 })
 
-export const filterUsers = text => ({
+export const filterUsers = (text) => ({
   type: 'INFLUXDB_FILTER_USERS',
   payload: {
     text,
   },
 })
 
-export const filterRoles = text => ({
+export const filterRoles = (text) => ({
   type: 'INFLUXDB_FILTER_ROLES',
   payload: {
     text,
   },
 })
 
-export const addDatabaseDeleteCode = database => ({
+export const addDatabaseDeleteCode = (database) => ({
   type: 'INFLUXDB_ADD_DATABASE_DELETE_CODE',
   payload: {
     database,
   },
 })
 
-export const removeDatabaseDeleteCode = database => ({
+export const removeDatabaseDeleteCode = (database) => ({
   type: 'INFLUXDB_REMOVE_DATABASE_DELETE_CODE',
   payload: {
     database,
@@ -270,7 +270,7 @@ export const editRetentionPolicyFailed = (
 })
 
 // async actions
-export const loadUsersAsync = url => async dispatch => {
+export const loadUsersAsync = (url) => async (dispatch) => {
   try {
     const {data} = await getUsersAJAX(url)
     dispatch(loadUsers(data))
@@ -279,7 +279,7 @@ export const loadUsersAsync = url => async dispatch => {
   }
 }
 
-export const loadRolesAsync = url => async dispatch => {
+export const loadRolesAsync = (url) => async (dispatch) => {
   try {
     const {data} = await getRolesAJAX(url)
     dispatch(loadRoles(data))
@@ -288,7 +288,7 @@ export const loadRolesAsync = url => async dispatch => {
   }
 }
 
-export const loadPermissionsAsync = url => async dispatch => {
+export const loadPermissionsAsync = (url) => async (dispatch) => {
   try {
     const {data} = await getPermissionsAJAX(url)
     dispatch(loadPermissions(data))
@@ -297,7 +297,7 @@ export const loadPermissionsAsync = url => async dispatch => {
   }
 }
 
-export const loadDBsAndRPsAsync = (url, auth) => async dispatch => {
+export const loadDBsAndRPsAsync = (url, auth) => async (dispatch) => {
   try {
     const {
       data: {databases},
@@ -313,7 +313,7 @@ export const loadDBsAndRPsAsync = (url, auth) => async dispatch => {
   }
 }
 
-export const createUserAsync = (url, user) => async dispatch => {
+export const createUserAsync = (url, user) => async (dispatch) => {
   try {
     const {data} = await createUserAJAX(url, user)
     dispatch(notify(notifyDBUserCreated()))
@@ -325,7 +325,7 @@ export const createUserAsync = (url, user) => async dispatch => {
   }
 }
 
-export const createRoleAsync = (url, role) => async dispatch => {
+export const createRoleAsync = (url, role) => async (dispatch) => {
   try {
     const {data} = await createRoleAJAX(url, role)
     dispatch(notify(notifyRoleCreated()))
@@ -337,7 +337,7 @@ export const createRoleAsync = (url, role) => async dispatch => {
   }
 }
 
-export const createDatabaseAsync = (url, database) => async dispatch => {
+export const createDatabaseAsync = (url, database) => async (dispatch) => {
   try {
     const {data} = await createDatabaseAJAX(url, database)
     dispatch(syncDatabase(database, data))
@@ -349,10 +349,9 @@ export const createDatabaseAsync = (url, database) => async dispatch => {
   }
 }
 
-export const createRetentionPolicyAsync = (
-  database,
-  retentionPolicy
-) => async dispatch => {
+export const createRetentionPolicyAsync = (database, retentionPolicy) => async (
+  dispatch
+) => {
   try {
     const {data} = await createRetentionPolicyAJAX(
       database.links.retentionPolicies,
@@ -373,11 +372,9 @@ export const createRetentionPolicyAsync = (
   }
 }
 
-export const updateRetentionPolicyAsync = (
-  database,
-  oldRP,
-  newRP
-) => async dispatch => {
+export const updateRetentionPolicyAsync = (database, oldRP, newRP) => async (
+  dispatch
+) => {
   try {
     dispatch(editRetentionPolicyRequested(database, oldRP, newRP))
     const {data} = await updateRetentionPolicyAJAX(oldRP.links.self, newRP)
@@ -391,7 +388,7 @@ export const updateRetentionPolicyAsync = (
   }
 }
 
-export const killQueryAsync = (source, query) => async dispatch => {
+export const killQueryAsync = (source, query) => async (dispatch) => {
   // optimistic update
   dispatch(killQuery(query.id))
   dispatch(setQueryToKill(null))
@@ -404,7 +401,7 @@ export const killQueryAsync = (source, query) => async dispatch => {
   }
 }
 
-export const deleteRoleAsync = role => async dispatch => {
+export const deleteRoleAsync = (role) => async (dispatch) => {
   dispatch(deleteRole(role))
   try {
     await deleteRoleAJAX(role.links.self)
@@ -414,7 +411,7 @@ export const deleteRoleAsync = role => async dispatch => {
   }
 }
 
-export const deleteUserAsync = user => async dispatch => {
+export const deleteUserAsync = (user) => async (dispatch) => {
   dispatch(deleteUser(user))
   try {
     await deleteUserAJAX(user.links.self)
@@ -424,7 +421,7 @@ export const deleteUserAsync = user => async dispatch => {
   }
 }
 
-export const deleteDatabaseAsync = database => async dispatch => {
+export const deleteDatabaseAsync = (database) => async (dispatch) => {
   dispatch(removeDatabase(database))
   try {
     await deleteDatabaseAJAX(database.links.self)
@@ -434,10 +431,9 @@ export const deleteDatabaseAsync = database => async dispatch => {
   }
 }
 
-export const deleteRetentionPolicyAsync = (
-  database,
-  retentionPolicy
-) => async dispatch => {
+export const deleteRetentionPolicyAsync = (database, retentionPolicy) => async (
+  dispatch
+) => {
   dispatch(removeRetentionPolicy(database, retentionPolicy))
   try {
     await deleteRetentionPolicyAJAX(retentionPolicy.links.self)
@@ -449,7 +445,7 @@ export const deleteRetentionPolicyAsync = (
   }
 }
 
-export const updateRoleUsersAsync = (role, users) => async dispatch => {
+export const updateRoleUsersAsync = (role, users) => async (dispatch) => {
   try {
     const {data} = await updateRoleAJAX(
       role.links.self,
@@ -465,10 +461,9 @@ export const updateRoleUsersAsync = (role, users) => async dispatch => {
   }
 }
 
-export const updateRolePermissionsAsync = (
-  role,
-  permissions
-) => async dispatch => {
+export const updateRolePermissionsAsync = (role, permissions) => async (
+  dispatch
+) => {
   try {
     const {data} = await updateRoleAJAX(
       role.links.self,
@@ -484,10 +479,9 @@ export const updateRolePermissionsAsync = (
   }
 }
 
-export const updateUserPermissionsAsync = (
-  user,
-  permissions
-) => async dispatch => {
+export const updateUserPermissionsAsync = (user, permissions) => async (
+  dispatch
+) => {
   try {
     const {data} = await updateUserAJAX(user.links.self, {permissions})
     dispatch(notify(notifyDBUserPermissionsUpdated()))
@@ -502,7 +496,7 @@ export const updateUserPermissionsAsync = (
   }
 }
 
-export const updateUserRolesAsync = (user, roles) => async dispatch => {
+export const updateUserRolesAsync = (user, roles) => async (dispatch) => {
   try {
     const {data} = await updateUserAJAX(user.links.self, {roles})
     dispatch(notify(notifyDBUserRolesUpdated()))
@@ -514,7 +508,7 @@ export const updateUserRolesAsync = (user, roles) => async dispatch => {
   }
 }
 
-export const updateUserPasswordAsync = (user, password) => async dispatch => {
+export const updateUserPasswordAsync = (user, password) => async (dispatch) => {
   try {
     const {data} = await updateUserAJAX(user.links.self, {password})
     dispatch(notify(notifyDBUserPasswordUpdated()))

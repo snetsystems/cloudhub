@@ -348,7 +348,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     model.beginUpdate()
     try {
-      _.forEach(cells, cell => {
+      _.forEach(cells, (cell) => {
         if (model.isEdge(cell)) {
           const edgeObj = {
             ...tmpMenu,
@@ -449,7 +449,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.graph.setConnectable(true)
 
-    this.graph.getLabel = cell => {
+    this.graph.getLabel = (cell) => {
       let tmp = mxGraph.prototype.getLabel.apply(this.graph, [cell])
 
       const isCellCollapsed = this.graph.isCellCollapsed(cell)
@@ -488,7 +488,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       this.selectionChanged(this.graph)
     })
 
-    this.graph.dblClick = evt => {
+    this.graph.dblClick = (evt) => {
       mxEvent.consume(evt)
     }
 
@@ -535,9 +535,9 @@ class InventoryTopology extends PureComponent<Props, State> {
       const form = new mxForm('properties-table')
 
       const containerElement = this.getContainerElement(cell.value)
-      const attrs = _.filter(containerElement.attributes, attr => {
+      const attrs = _.filter(containerElement.attributes, (attr) => {
         let isSame = false
-        _.forEach(this.OUTPUT_INPUT_FIELD, INPUT_FIELD => {
+        _.forEach(this.OUTPUT_INPUT_FIELD, (INPUT_FIELD) => {
           if (attr.nodeName === INPUT_FIELD) {
             isSame = true
             return
@@ -548,7 +548,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
       const isDisableName = this.getIsDisableName(containerElement)
 
-      _.forEach(attrs, attr => {
+      _.forEach(attrs, (attr) => {
         this.createTextField(graph, form, cell, attr, isDisableName)
       })
       properties.appendChild(form.getTable())
@@ -598,11 +598,11 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.editor.addAction('group', () => {
       if (this.graph.isEnabled()) {
         let cells = mxUtils.sortCells(this.graph.getSelectionCells(), true)
-        cells = _.filter(cells, cell => !cell.isEdge())
+        cells = _.filter(cells, (cell) => !cell.isEdge())
 
         let addEdgeCells = [...cells]
 
-        _.forEach(cells, cell => {
+        _.forEach(cells, (cell) => {
           const childCell = this.graph.getChildCells(cell)
 
           if (childCell.length > 0) {
@@ -612,12 +612,12 @@ class InventoryTopology extends PureComponent<Props, State> {
 
             this.graph.removeSelectionCells(childCells)
 
-            _.forEach(childCells, childCell => {
+            _.forEach(childCells, (childCell) => {
               if (childCell?.edges) {
                 const {edges} = childCell
 
-                _.forEach(edges, edge => {
-                  const excludeOwnEdge = _.filter(cells, c => c !== cell)
+                _.forEach(edges, (edge) => {
+                  const excludeOwnEdge = _.filter(cells, (c) => c !== cell)
 
                   const isHasOwnEdge =
                     _.includes(excludeOwnEdge, edge.target) ||
@@ -635,7 +635,7 @@ class InventoryTopology extends PureComponent<Props, State> {
           } else {
             if (cell?.edges) {
               const {edges} = cell
-              _.forEach(edges, edge => {
+              _.forEach(edges, (edge) => {
                 const isHasConnectionEdge =
                   _.includes(cells, edge.target) &&
                   _.includes(cells, edge.source)
@@ -690,13 +690,15 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.editor.addAction('ungroup', () => {
       if (this.graph.isEnabled()) {
         const cells = this.graph.getSelectionCells()
-        const groupCells = _.filter(cells, cell => this.graph.isSwimlane(cell))
+        const groupCells = _.filter(cells, (cell) =>
+          this.graph.isSwimlane(cell)
+        )
 
         this.graph.model.beginUpdate()
         try {
           const temp = this.graph.ungroupCells(groupCells)
 
-          const ungroupCells = _.map(temp, cell => {
+          const ungroupCells = _.map(temp, (cell) => {
             if (!this.graph.model.isVertex(cell)) {
               let geo = this.graph.getCellGeometry(cell)
 
@@ -711,7 +713,7 @@ class InventoryTopology extends PureComponent<Props, State> {
           })
 
           if (cells !== null) {
-            _.forEach(cells, cell => {
+            _.forEach(cells, (cell) => {
               if (this.graph.model.contains(cell)) {
                 if (
                   this.graph.model.getChildCount(cell) == 0 &&
@@ -809,7 +811,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.hosts.innerHTML = ''
 
-    _.forEach(hostList, host => {
+    _.forEach(hostList, (host) => {
       const hostObj = {
         ...hostMenu,
         name: host,
@@ -819,7 +821,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       menus.push(hostObj)
     })
 
-    _.forEach(menus, menu => {
+    _.forEach(menus, (menu) => {
       const rowElement = document.createElement('div')
       rowElement.classList.add('hosts-table--tr')
       rowElement.classList.add('topology-hosts-row')
@@ -843,7 +845,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private addToolsButton = () => {
-    _.forEach(toolsMenu, menu => {
+    _.forEach(toolsMenu, (menu) => {
       const iconBox = document.createElement('div')
       iconBox.classList.add('tool-instance')
 
@@ -905,7 +907,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     cellTitleBox.appendChild(cellTitle)
 
-    _.forEach(_.keys(node), attr => {
+    _.forEach(_.keys(node), (attr) => {
       cell.setAttribute(`data-${attr}`, node[attr])
     })
 
@@ -998,7 +1000,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private setToolbar = () => {
-    _.forEach(toolbarMenu, menu => {
+    _.forEach(toolbarMenu, (menu) => {
       const {actionName, label, icon, isTransparent} = menu
       this.addToolbarButton({
         editor: this.editor,
@@ -1150,7 +1152,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     graph.removeSelectionCells(cells)
 
-    _.forEach(cells, cell => {
+    _.forEach(cells, (cell) => {
       if (cell.getStyle() === 'node') {
         const containerElement = this.getContainerElement(cell.value)
         const isDisableName = this.getIsDisableName(containerElement)
@@ -1158,7 +1160,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
         if (isDisableName) {
           graph.removeCellOverlays(cell)
-          if (!_.find(hostList, host => host === name)) {
+          if (!_.find(hostList, (host) => host === name)) {
             graph.setCellWarning(cell, 'Warning', warningImage)
           }
         }

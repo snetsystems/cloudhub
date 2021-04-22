@@ -34,7 +34,7 @@ class AllUsersTableRowNew extends Component {
     }
   }
 
-  handleInputChange = fieldName => e => {
+  handleInputChange = (fieldName) => (e) => {
     this.setState({[fieldName]: e.target.value.trim()})
   }
 
@@ -55,16 +55,16 @@ class AllUsersTableRowNew extends Component {
     onBlur()
   }
 
-  handleInputFocus = e => {
+  handleInputFocus = (e) => {
     e.target.select()
   }
 
-  handleSelectProvider = newProvider => {
+  handleSelectProvider = (newProvider) => {
     const {text: provider} = newProvider
     this.setState({provider})
   }
 
-  handleSelectOrganization = newOrganization => {
+  handleSelectOrganization = (newOrganization) => {
     // if "None" was selected for organization, create a "null role" from the predefined null role
     // else create a new role with the organization as the newOrganization's id
     const newRole =
@@ -79,7 +79,7 @@ class AllUsersTableRowNew extends Component {
     this.setState({role: newRole})
   }
 
-  handleKeyDown = e => {
+  handleKeyDown = (e) => {
     const {name, provider} = this.state
     const preventCreate = !name || !provider
 
@@ -120,12 +120,12 @@ class AllUsersTableRowNew extends Component {
     const dropdownOrganizationsItems = [
       {...nullOrganization},
       ...organizations,
-    ].map(o => ({
+    ].map((o) => ({
       ...o,
       text: o.name,
     }))
     const selectedRole = dropdownOrganizationsItems.find(
-      o => role.organization === o.id
+      (o) => role.organization === o.id
     )
 
     const preventCreate = !name || !provider
@@ -207,7 +207,7 @@ AllUsersTableRowNew.propTypes = {
   providers: arrayOf(string).isRequired,
 }
 
-const mapDispatchToProps = dispatch => ({
+const mapDispatchToProps = (dispatch) => ({
   notify: bindActionCreators(notifyAction, dispatch),
 })
 

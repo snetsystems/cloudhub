@@ -74,7 +74,7 @@ class InfiniteScroll extends Component {
 
   throttledHandleResize = _.throttle(this.handleResize, 100)
 
-  handleMakeDiv = className => props => {
+  handleMakeDiv = (className) => (props) => {
     if (className === 'view') {
       const customStyle = {...props}
       // eslint-disable-next-line operator-assignment

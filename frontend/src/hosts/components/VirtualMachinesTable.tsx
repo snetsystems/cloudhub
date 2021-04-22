@@ -110,7 +110,7 @@ const VirtualMachinesTable = (props: Props): JSX.Element => {
   const Body = (): JSX.Element => {
     return (
       <FancyScrollbar>
-        {items.map(item => (
+        {items.map((item) => (
           <div className="hosts-table--tr" key={uuid.v4()}>
             <TableBodyRowItem
               title={

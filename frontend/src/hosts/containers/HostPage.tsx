@@ -56,7 +56,7 @@ class HostPage extends PureComponent<Props, State> {
     this.state = {
       layouts: [],
       hostLinks: EMPTY_LINKS,
-      timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
+      timeRange: timeRanges.find((tr) => tr.lower === 'now() - 1h'),
     }
     this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
   }
@@ -74,7 +74,7 @@ class HostPage extends PureComponent<Props, State> {
     const focusedApp = location.query.app
 
     const filteredLayouts = layouts
-      .filter(layout => {
+      .filter((layout) => {
         return focusedApp
           ? layout.app === focusedApp
           : host.apps &&
@@ -171,7 +171,7 @@ class HostPage extends PureComponent<Props, State> {
     if (upper) {
       this.setState({timeRange: {lower, upper}})
     } else {
-      const timeRange = timeRanges.find(range => range.lower === lower)
+      const timeRange = timeRanges.find((range) => range.lower === lower)
       this.setState({timeRange})
     }
   }
