@@ -432,7 +432,7 @@ export type ServiceProperties =
   | TelegramProperties
   | VictorOpsProperties
 
-export type SpecificConfigOptions = Partial<SlackProperties>
+export type SpecificConfigOptions = Partial<SlackProperties & KafkaProperties>
 
 export interface RuleValues {
   value?: string | null

@@ -34,6 +34,7 @@ interface TaskResponse {
 }
 
 interface ErrorActions {
+  // eslint-disable-next-line @typescript-eslint/ban-types
   errorThrown: (notify: string | object) => void
 }
 

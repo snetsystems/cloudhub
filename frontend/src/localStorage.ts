@@ -29,6 +29,7 @@ export const loadLocalStorage = (errorsQueue: any[]): LocalStorage | {} => {
         errorsQueue.push(notifyNewVersion(VERSION))
       }
 
+      // eslint-disable-next-line no-console
       console.debug('Cleared CloudHub localStorage state')
 
       return {}
