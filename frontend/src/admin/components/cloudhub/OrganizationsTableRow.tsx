@@ -39,7 +39,7 @@ interface Props {
 }
 
 @ErrorHandling
-class OrganizationsTableRow extends Component<Props, {}> {
+class OrganizationsTableRow extends Component<Props, Record<string, never>> {
   public shouldComponentUpdate(nextProps: Props) {
     return !_.isEqual(this.props, nextProps)
   }
@@ -96,6 +96,7 @@ class OrganizationsTableRow extends Component<Props, {}> {
   public handleChangeCurrentOrganization = async () => {
     const {router, links, meChangeOrganization, organization} = this.props
 
+    // eslint-disable-next-line @typescript-eslint/await-thenable
     await meChangeOrganization(links.me, {organization: organization.id})
     router.push('')
   }
