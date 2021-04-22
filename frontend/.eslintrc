@@ -1,7 +1,7 @@
 {
   "parser": "babel-eslint",
   "plugins": ["react", "react-hooks", "prettier", "babel", "jest"],
-  "extends": ["eslint:recommended", "prettier", "prettier/react"],
+  "extends": ["eslint:recommended", "plugin:prettier/recommended"],
   "env": {
     "browser": true,
     "mocha": true,
