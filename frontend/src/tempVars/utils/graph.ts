@@ -109,7 +109,7 @@ export function graphFromTemplates(templates: Template[]): TemplateGraph {
 
   for (const template of templates) {
     const childNames = getDependencyNames(template)
-    const nodeIsChild = (n) => childNames.includes(n.initialTemplate.tempVar)
+    const nodeIsChild = n => childNames.includes(n.initialTemplate.tempVar)
     const children = nodes.filter(nodeIsChild)
 
     nodesById[template.id].children.push(...children)
@@ -154,7 +154,7 @@ function topologicalSortHelper(
 }
 
 function findLeaves(graph: TemplateGraph): TemplateNode[] {
-  return graph.filter((node) => !node.children.length)
+  return graph.filter(node => !node.children.length)
 }
 
 function isResolved(node: TemplateNode): boolean {
@@ -247,7 +247,7 @@ export async function hydrateTemplates(
   async function resolve(node: TemplateNode) {
     const resolvedTemplates = graph
       .filter(isResolved)
-      .map((t) => t.hydratedTemplate)
+      .map(t => t.hydratedTemplate)
 
     node.status = RemoteDataState.Loading
 
@@ -260,7 +260,7 @@ export async function hydrateTemplates(
     node.status = RemoteDataState.Done
 
     const parents = node.parents
-      .filter((p) => p.children.every(isResolved))
+      .filter(p => p.children.every(isResolved))
       .map(resolve)
 
     return Promise.all(parents)
@@ -268,5 +268,5 @@ export async function hydrateTemplates(
 
   await Promise.all(findLeaves(graph).map(resolve))
 
-  return graph.map((t) => t.hydratedTemplate)
+  return graph.map(t => t.hydratedTemplate)
 }

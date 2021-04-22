@@ -27,12 +27,15 @@ export const isInvalidMetaQuery = (metaQuery: string): boolean =>
   !getMetaQueryPrefix(metaQuery)
 
 const getMetaQueryPrefix = (metaQuery: string): string | null => {
-  const words = metaQuery.trim().toUpperCase().split(' ')
+  const words = metaQuery
+    .trim()
+    .toUpperCase()
+    .split(' ')
   const firstTwoWords = words.slice(0, 2).join(' ')
   const firstThreeWords = words.slice(0, 3).join(' ')
 
   return VALID_META_QUERY_PREFIXES.find(
-    (q) => q === firstTwoWords || q === firstThreeWords
+    q => q === firstTwoWords || q === firstThreeWords
   )
 }
 
@@ -55,14 +58,14 @@ const PARSERS = {
 }
 
 const EXTRACTORS = {
-  'SHOW DATABASES': (parsed) => parsed.databases,
-  'SHOW FIELD KEYS': (parsed) => {
+  'SHOW DATABASES': parsed => parsed.databases,
+  'SHOW FIELD KEYS': parsed => {
     const {fieldSets} = parsed
     const fieldSetsValues = Object.values(fieldSets) as string[]
 
     return fieldSetsValues.reduce((acc, current) => [...acc, ...current], [])
   },
-  'SHOW MEASUREMENTS': (parsed) => {
+  'SHOW MEASUREMENTS': parsed => {
     const {measurementSets} = parsed
 
     return measurementSets.reduce(
@@ -70,12 +73,12 @@ const EXTRACTORS = {
       []
     )
   },
-  'SHOW TAG KEYS': (parsed) => parsed.tagKeys,
-  'SHOW TAG VALUES': (parsed) => {
+  'SHOW TAG KEYS': parsed => parsed.tagKeys,
+  'SHOW TAG VALUES': parsed => {
     const {tags} = parsed
     const tagsValues = Object.values(tags) as string[]
 
     return tagsValues.reduce((acc, current) => [...acc, ...current], [])
   },
-  'SHOW SERIES': (parsed) => parsed.series,
+  'SHOW SERIES': parsed => parsed.series,
 }

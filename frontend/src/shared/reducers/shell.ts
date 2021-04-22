@@ -10,7 +10,7 @@ export const initialState: Shells = {
 }
 
 const nodenameIndex = (state: Shells, nodename: string): number =>
-  _.findIndex(state.shells, (s) => s.nodename === nodename)
+  _.findIndex(state.shells, s => s.nodename === nodename)
 
 const nodenameChecker = (state: Shells, nodename: string) =>
   nodenameIndex(state, nodename) < 0
@@ -98,7 +98,7 @@ const shell = (state: Shells = initialState, action: Action): Shells => {
       const nodeIndex = dummyShellIndex > index ? index : dummyShellIndex
 
       const copyCells = Object.values(Object.assign({}, state.shells))
-      _.remove(copyCells, (cell) => cell.nodename === action.payload)
+      _.remove(copyCells, cell => cell.nodename === action.payload)
 
       return {
         ...state,

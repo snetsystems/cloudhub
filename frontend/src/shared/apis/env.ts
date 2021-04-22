@@ -4,7 +4,7 @@ const DEFAULT_ENVS = {
   telegrafSystemInterval: '1m',
 }
 
-export const getEnv = async (url) => {
+export const getEnv = async url => {
   try {
     const {data} = await AJAX({
       method: 'GET',

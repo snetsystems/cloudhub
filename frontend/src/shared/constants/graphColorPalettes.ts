@@ -200,7 +200,7 @@ export const LINE_COLOR_SCALES = [
   LINE_COLORS_E,
   LINE_COLORS_F,
   LINE_COLORS_G,
-].map((colorScale) => {
+].map(colorScale => {
   const name = colorScale[0].name
   const colors = colorScale
   const id = colorScale[0].id
@@ -218,7 +218,7 @@ export const getLineColors = (
   }
 
   const testColorsTypes =
-    colors.filter((color) => color.type === COLOR_TYPE_SCALE).length ===
+    colors.filter(color => color.type === COLOR_TYPE_SCALE).length ===
     colors.length
 
   return testColorsTypes ? colors : DEFAULT_LINE_COLORS
@@ -229,7 +229,7 @@ export const getLineColorsHexes = (
   numSeries: number
 ): string[] => {
   const validatedColors = getLineColors(colors, numSeries) // ensures safe defaults
-  const colorsHexArray = validatedColors.map((color) => color.hex)
+  const colorsHexArray = validatedColors.map(color => color.hex)
 
   if (numSeries === 1 || numSeries === 0) {
     return [colorsHexArray[0]]
@@ -237,5 +237,8 @@ export const getLineColorsHexes = (
   if (numSeries === 2) {
     return [colorsHexArray[0], colorsHexArray[1]]
   }
-  return chroma.scale(colorsHexArray).mode('lch').colors(numSeries)
+  return chroma
+    .scale(colorsHexArray)
+    .mode('lch')
+    .colors(numSeries)
 }
