@@ -22,7 +22,9 @@ const buildCannedVMDashboardQuery = (
   vmParentChartField: string,
   vmParentName: string
 ): string => {
-  const {defaultGroupBy} = timeRanges.find(range => range.lower === lower) || {
+  const {defaultGroupBy} = timeRanges.find(
+    (range) => range.lower === lower
+  ) || {
     defaultGroupBy: '5m',
   }
 
@@ -53,7 +55,7 @@ const buildCannedVMDashboardQuery = (
   }
 
   if (groupbys) {
-    if (groupbys.find(g => g.includes('time'))) {
+    if (groupbys.find((g) => g.includes('time'))) {
       text += ` group by ${groupbys.join(',')}`
     } else if (groupbys.length > 0) {
       text += ` group by time(${defaultGroupBy}),${groupbys.join(',')}`
@@ -104,7 +106,7 @@ export const buildQueriesForVMLayouts = (
   vmParentChartField: string,
   vmParentName: string
 ): CellQuery[] => {
-  return cell.queries.map(query => {
+  return cell.queries.map((query) => {
     let queryText: string
     // Canned dashboards use an different a schema different from queryConfig.
     if (query.queryConfig) {
@@ -124,8 +126,8 @@ export const buildQueriesForVMLayouts = (
 
       if (shifts && shifts.length && isParsable) {
         const shiftedQueries: string[] = shifts
-          .filter(s => s.unit)
-          .map(s => buildQuery(TYPE_SHIFTED, timeRange, query.queryConfig, s))
+          .filter((s) => s.unit)
+          .map((s) => buildQuery(TYPE_SHIFTED, timeRange, query.queryConfig, s))
 
         queryText = `${queryText};${shiftedQueries.join(';')}`
       }

@@ -1,4 +1,4 @@
-export const WindowResizeEventTrigger = function() {
+export const WindowResizeEventTrigger = function () {
   const event = document.createEvent('HTMLEvents')
   event.initEvent('resize', true, false)
   window.dispatchEvent(event)
