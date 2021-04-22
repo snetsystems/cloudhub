@@ -681,8 +681,8 @@ const updateTimeRangeFromQueryParams = (dashboardID: string) => (
   })
 
   const timeRangeFromQueries = {
-    lower: queryParams.lower,
-    upper: queryParams.upper,
+    lower: queryParams.lower as string | undefined,
+    upper: queryParams.upper as string | undefined,
   }
 
   const zoomedTimeRangeFromQueries = {
