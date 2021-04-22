@@ -42,7 +42,7 @@ interface Params {
 }
 
 interface Props {
-  getSources: () => void
+  getSources: () => Promise<void>
   getOrgAll: (link: string) => void
   links: Links
   sources: Source[]
