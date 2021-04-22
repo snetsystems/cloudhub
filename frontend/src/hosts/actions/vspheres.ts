@@ -318,7 +318,7 @@ export const getVSpheresAsync = ({shouldResetVSphere = false} = {}) => async (
   try {
     const data = await getVSpheresApi()
 
-    _.values(data).forEach((v) => {
+    _.values(data).forEach(v => {
       vSpheres[v.host] = {
         ...v,
         isPause: true,

@@ -64,7 +64,7 @@ class HostsTable extends PureComponent<Props, State> {
 
   public filter(allHosts: Host[], searchTerm: string): Host[] {
     const filterText = searchTerm.toLowerCase()
-    return allHosts.filter((h) => {
+    return allHosts.filter(h => {
       const apps = h.apps ? h.apps.join(', ') : ''
 
       let tagResult = false
@@ -86,9 +86,9 @@ class HostsTable extends PureComponent<Props, State> {
   public sort(hosts: Host[], key: string, direction: SortDirection): Host[] {
     switch (direction) {
       case SortDirection.ASC:
-        return _.sortBy<Host>(hosts, (e) => e[key])
+        return _.sortBy<Host>(hosts, e => e[key])
       case SortDirection.DESC:
-        return _.sortBy<Host>(hosts, (e) => e[key]).reverse()
+        return _.sortBy<Host>(hosts, e => e[key]).reverse()
       default:
         return hosts
     }
@@ -198,7 +198,7 @@ class HostsTable extends PureComponent<Props, State> {
       <div className="hosts-table">
         {this.HostsTableHeader}
         <InfiniteScroll
-          items={sortedHosts.map((h) => (
+          items={sortedHosts.map(h => (
             <HostRow
               key={h.name}
               host={h}

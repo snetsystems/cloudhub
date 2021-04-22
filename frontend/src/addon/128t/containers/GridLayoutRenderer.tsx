@@ -163,7 +163,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   }
 
   public componentWillMount() {
-    const checkRoutersData = this.props.routerNodesData.map((router) => {
+    const checkRoutersData = this.props.routerNodesData.map(router => {
       return {group: router.group, nodeName: router.nodeName, isCheck: false}
     })
 
@@ -171,7 +171,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     const oncueAutoRefresh: number = _.get(addon, 'T128.oncueAutoRefresh', 0)
 
     const {addons} = this.props
-    const oncue = _.find(addons, (addon) => addon.name === 'oncue')
+    const oncue = _.find(addons, addon => addon.name === 'oncue')
     const isOncue = oncue === undefined ? false : true
 
     this.setState({
@@ -265,7 +265,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
           ]
         }
 
-        applications.sort(function (a, b) {
+        applications.sort(function(a, b) {
           return b.updateGetTime - a.updateGetTime
         })
       }
@@ -306,7 +306,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   public getSaltDirectoryItems = async () => {
     try {
       const {auth, addons, notify} = this.props
-      const salt = addons.find((addon) => addon.name === 'salt')
+      const salt = addons.find(addon => addon.name === 'salt')
       const meRole = _.get(auth, 'me.role', '')
 
       if (meRole !== SUPERADMIN_ROLE && meRole !== ADMIN_ROLE) {
@@ -328,7 +328,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       )
 
       const isAccess = [getFirmwareData, getConfigData]
-        .map((obj) => obj.status === NETWORK_ACCESS.SUCCESS)
+        .map(obj => obj.status === NETWORK_ACCESS.SUCCESS)
         .includes(true)
 
       if (!isAccess) {
@@ -348,12 +348,12 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     const {isRoutersAllCheck, checkRouters} = this.state
 
     if (!isRoutersAllCheck) {
-      checkRouters.map((checkRouter) => {
+      checkRouters.map(checkRouter => {
         checkRouter.isCheck = true
         return checkRouter
       })
     } else {
-      checkRouters.map((checkRouter) => {
+      checkRouters.map(checkRouter => {
         checkRouter.isCheck = false
         return checkRouter
       })
@@ -369,7 +369,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
     const {checkRouters} = this.state
     const index = checkRouters.indexOf(
       checkRouters.find(
-        (checkRouter) =>
+        checkRouter =>
           checkRouter.nodeName === routerNode.nodeName &&
           checkRouter.group === routerNode.group
       )
@@ -550,8 +550,8 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   private fetchOncueServiceStatus = async (nodeName?: string) => {
     const {addons} = this.props
     const {selectedNodeName} = this.state
-    const salt = addons.find((addon) => addon.name === 'salt')
-    const oncue = addons.find((addon) => addon.name === 'oncue')
+    const salt = addons.find(addon => addon.name === 'salt')
+    const oncue = addons.find(addon => addon.name === 'oncue')
     nodeName = nodeName ? nodeName : selectedNodeName
     const response = await getOncueServiceStatus(
       salt.url,
@@ -604,15 +604,15 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       oncueData: {
         ...this.state.oncueData,
         deviceConnection: this.state.oncueData.protocolModule
-          .filter((f) => f.name === name)
-          .map((m) => m.deviceConnection)[0],
+          .filter(f => f.name === name)
+          .map(m => m.deviceConnection)[0],
         connection: this.state.oncueData.protocolModule
-          .filter((f) => f.name === name)
-          .map((m) => m.deviceConnection)[0][0].connection,
+          .filter(f => f.name === name)
+          .map(m => m.deviceConnection)[0][0].connection,
         focusedInProtocolModule: name,
         focusedInDeviceConnection: this.state.oncueData.protocolModule
-          .filter((f) => f.name === name)
-          .map((m) => m.deviceConnection)[0][0].url,
+          .filter(f => f.name === name)
+          .map(m => m.deviceConnection)[0][0].url,
       },
     })
   }
@@ -622,8 +622,8 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       oncueData: {
         ...this.state.oncueData,
         connection: this.state.oncueData.deviceConnection
-          .filter((f) => f.url === url)
-          .map((m) => m.connection)[0],
+          .filter(f => f.url === url)
+          .map(m => m.connection)[0],
         focusedInDeviceConnection: url,
       },
     })
@@ -756,7 +756,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
                   autoHide={false}
                   children={
                     <ol className="list-section--row list-section--row-first list-section--row-last">
-                      {checkedList.map((list) => (
+                      {checkedList.map(list => (
                         <li key={list.nodeName}>{list.nodeName}</li>
                       ))}
                     </ol>
@@ -799,11 +799,11 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   private handleModalConfirm = (): void => {
     const {checkRouters, chooseMenu, focusedBtn, sendToDirectory} = this.state
     const {addons, notify} = this.props
-    const salt = addons.find((addon) => addon.name === 'salt')
+    const salt = addons.find(addon => addon.name === 'salt')
 
     const checkedHostName: string = checkRouters
-      .filter((router) => router.isCheck === true)
-      .map((router) => router.nodeName)
+      .filter(router => router.isCheck === true)
+      .map(router => router.nodeName)
       .toString()
 
     const chooseMenuInfo: SaltDirFileInfo = this.state[focusedBtn].files.filter(
@@ -817,7 +817,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       checkedHostName,
       sendToDirectory,
       chooseMenuInfo.pathDirectory + chooseMenuInfo.application
-    ).then((res) => {
+    ).then(res => {
       Object.keys(res.data.return[0]).length > 0
         ? notify(notify_128TSendFilesToCollector_Successed(focusedBtn))
         : notify(notify_128TSendFilesToCollector_Failed(focusedBtn))
@@ -842,8 +842,8 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
   private handleLayoutChange = (cellsLayout: cellLayoutInfo[]): void => {
     if (!this.props.onPositionChange) return
     let changed = false
-    const newCellsLayout = this.props.layout.map((lo) => {
-      const l = cellsLayout.find((cellLayout) => cellLayout.i === lo.i)
+    const newCellsLayout = this.props.layout.map(lo => {
+      const l = cellsLayout.find(cellLayout => cellLayout.i === lo.i)
 
       if (lo.x !== l.x || lo.y !== l.y || lo.h !== l.h || lo.w !== l.w) {
         changed = true

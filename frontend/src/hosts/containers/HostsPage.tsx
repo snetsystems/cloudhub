@@ -119,7 +119,7 @@ export class HostsPage extends PureComponent<Props, State> {
       filteredLayouts: [],
       focusedHost: '',
       HostsTableStateDump: {},
-      timeRange: timeRanges.find((tr) => tr.lower === 'now() - 1h'),
+      timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       proportions: [0.43, 0.57],
       selected: {lower: '', upper: ''},
       isVsphere: false,
@@ -146,7 +146,7 @@ export class HostsPage extends PureComponent<Props, State> {
 
     const convertProportions = Array.isArray(proportions)
       ? proportions
-      : proportions.split(',').map((v) => Number(v))
+      : proportions.split(',').map(v => Number(v))
 
     const {notify, autoRefresh} = this.props
 
@@ -369,7 +369,7 @@ export class HostsPage extends PureComponent<Props, State> {
     if (upper) {
       this.setState({timeRange: {lower, upper}, selected: {lower, upper}})
     } else {
-      const timeRange = timeRanges.find((range) => range.lower === lower)
+      const timeRange = timeRanges.find(range => range.lower === lower)
       this.setState({timeRange, selected: timeRange})
     }
   }
@@ -451,7 +451,7 @@ export class HostsPage extends PureComponent<Props, State> {
       layouts,
       hostID
     )
-    const layoutsWithinHost = layouts.filter((layout) => {
+    const layoutsWithinHost = layouts.filter(layout => {
       return (
         host.apps &&
         host.apps.includes(layout.app) &&
@@ -459,7 +459,7 @@ export class HostsPage extends PureComponent<Props, State> {
       )
     })
     const filteredLayouts = layoutsWithinHost
-      .filter((layout) => {
+      .filter(layout => {
         return layout.app === 'system' || layout.app === 'win_system'
       })
       .sort((x, y) => {
@@ -505,10 +505,10 @@ export class HostsPage extends PureComponent<Props, State> {
       )
 
       const isUsingVshpere = Boolean(
-        _.find(addons, (addon) => {
+        _.find(addons, addon => {
           return addon.name === 'vsphere' && addon.url === 'on'
         }) &&
-          _.find(hostsObject, (v) => {
+          _.find(hostsObject, v => {
             return _.includes(v.apps, 'vsphere')
           })
       )
@@ -560,7 +560,7 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 }
 
-const mstp = (state) => {
+const mstp = state => {
   const {
     app: {
       persisted: {autoRefresh},
@@ -575,7 +575,7 @@ const mstp = (state) => {
   }
 }
 
-const mdtp = (dispatch) => ({
+const mdtp = dispatch => ({
   onChooseAutoRefresh: bindActionCreators(setAutoRefresh, dispatch),
   handleClickPresentationButton: bindActionCreators(
     delayEnablePresentationMode,

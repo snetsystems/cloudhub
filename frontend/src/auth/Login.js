@@ -29,7 +29,7 @@ class Login extends PureComponent {
     }
   }
 
-  handleInputChange = (fieldName) => (e) => {
+  handleInputChange = fieldName => e => {
     this.setState({[fieldName]: e.target.value.trim()})
   }
 
@@ -83,7 +83,7 @@ class Login extends PureComponent {
     this.handleSignupSubmit()
   }
 
-  onClickActiveEditorTab = (tab) => {
+  onClickActiveEditorTab = tab => {
     this.setState({
       name: '',
       password: '',
@@ -191,7 +191,7 @@ class Login extends PureComponent {
                         onKeyPress={
                           isSign
                             ? null
-                            : (e) => {
+                            : e => {
                                 if (e.key === 'Enter') {
                                   this.handleLoginSubmit()
                                 }
@@ -221,7 +221,7 @@ class Login extends PureComponent {
                             onChange={this.handleInputChange('passwordConfirm')}
                             onKeyPress={
                               isSign
-                                ? (e) => {
+                                ? e => {
                                     if (e.key === 'Enter') {
                                       this.handleSignupSubmit()
                                     }
@@ -256,7 +256,7 @@ class Login extends PureComponent {
                             onChange={this.handleInputChange('email')}
                             onKeyPress={
                               isSign
-                                ? (e) => {
+                                ? e => {
                                     if (e.key === 'Enter') {
                                       this.handleSignupSubmit()
                                     }
@@ -319,7 +319,7 @@ class Login extends PureComponent {
             {loginAuthType !== LOGIN_AUTH_TYPE.BASIC &&
               !isSign &&
               auth.links &&
-              _.map(auth.links, (link) => (
+              _.map(auth.links, link => (
                 <a
                   key={link.name}
                   className="btn btn-primary auth-form"

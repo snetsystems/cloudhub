@@ -24,7 +24,7 @@ class UsersTableRowNew extends PureComponent {
     }
   }
 
-  handleInputChange = (fieldName) => (e) => {
+  handleInputChange = fieldName => e => {
     this.setState({[fieldName]: e.target.value.trim()})
 
     if (fieldName === 'provider') {
@@ -56,20 +56,20 @@ class UsersTableRowNew extends PureComponent {
     onBlur()
   }
 
-  handleInputFocus = (e) => {
+  handleInputFocus = e => {
     e.target.select()
   }
 
-  handleSelectProvider = (newProvider) => {
+  handleSelectProvider = newProvider => {
     const {text: provider} = newProvider
     this.setState({provider})
   }
 
-  handleSelectRole = (newRole) => {
+  handleSelectRole = newRole => {
     this.setState({role: newRole.text})
   }
 
-  handleKeyDown = (e) => {
+  handleKeyDown = e => {
     const {name, provider} = this.state
     const preventCreate = !name || !provider
 
@@ -110,7 +110,7 @@ class UsersTableRowNew extends PureComponent {
     const {onBlur, providers} = this.props
     const {name, provider, scheme, role} = this.state
 
-    const dropdownRolesItems = USER_ROLES.map((r) => ({...r, text: r.name}))
+    const dropdownRolesItems = USER_ROLES.map(r => ({...r, text: r.name}))
     const preventCreate = !name || !provider
 
     return (
@@ -193,7 +193,7 @@ UsersTableRowNew.propTypes = {
   providers: arrayOf(string).isRequired,
 }
 
-const mapDispatchToProps = (dispatch) => ({
+const mapDispatchToProps = dispatch => ({
   notify: bindActionCreators(notifyAction, dispatch),
 })
 

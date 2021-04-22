@@ -100,7 +100,7 @@ class RouterMaps extends PureComponent<Props, State> {
 
     const marker = this.props.routerNodes
       .filter((r: RouterNode) => r.locationCoordinates != null)
-      .map((r) =>
+      .map(r =>
         L.marker([
           this.getCoordLatLng(r.locationCoordinates, 'lat'),
           this.getCoordLatLng(r.locationCoordinates, 'lng'),
@@ -118,25 +118,25 @@ class RouterMaps extends PureComponent<Props, State> {
       )
 
     marker
-      .filter((f) => f.getPopup().getContent() === this.props.focusedNodeName)
-      .map((m) => m.openPopup())
+      .filter(f => f.getPopup().getContent() === this.props.focusedNodeName)
+      .map(m => m.openPopup())
 
     const focusedRouter = this.props.routerNodes.filter(
-      (f) => f.nodeName === this.props.focusedNodeName
+      f => f.nodeName === this.props.focusedNodeName
     )
 
     if (focusedRouter.length > 0) {
       if (focusedRouter[0].locationCoordinates !== null) {
         map.setView(
           [
-            focusedRouter.map((m) => {
+            focusedRouter.map(m => {
               if (m.locationCoordinates !== null) {
                 return this.getCoordLatLng(m.locationCoordinates, 'lat')
               } else {
                 return this.defaultCenter[0]
               }
             })[0],
-            focusedRouter.map((m) => {
+            focusedRouter.map(m => {
               if (m.locationCoordinates !== null) {
                 return this.getCoordLatLng(m.locationCoordinates, 'lng')
               } else {
@@ -157,8 +157,8 @@ class RouterMaps extends PureComponent<Props, State> {
 
     if (layout !== nextProps.layout) {
       if (
-        JSON.stringify(layout.filter((f) => f.i === 'leafletMap')) !==
-        JSON.stringify(nextProps.layout.filter((f) => f.i === 'leafletMap'))
+        JSON.stringify(layout.filter(f => f.i === 'leafletMap')) !==
+        JSON.stringify(nextProps.layout.filter(f => f.i === 'leafletMap'))
       ) {
         this.state.map.invalidateSize()
       }
@@ -166,32 +166,30 @@ class RouterMaps extends PureComponent<Props, State> {
 
     if (focusedNodeName !== nextProps.focusedNodeName) {
       const focusedRouter = this.props.routerNodes.find(
-        (r) => r.nodeName === focusedNodeName
+        r => r.nodeName === focusedNodeName
       )
 
       if (focusedRouter.locationCoordinates !== null) {
         this.state.marker
-          .filter(
-            (f) => f.getPopup().getContent() === this.props.focusedNodeName
-          )
-          .map((m) => m.openPopup())
+          .filter(f => f.getPopup().getContent() === this.props.focusedNodeName)
+          .map(m => m.openPopup())
       } else {
-        this.state.marker.map((m) => m.closePopup())
+        this.state.marker.map(m => m.closePopup())
       }
     }
   }
 
-  public onMarkerClick = (event) => {
+  public onMarkerClick = event => {
     const {routerNodes, onClickMapMarker} = this.props
 
     event.target.openPopup()
 
     routerNodes
-      .filter((f) => f.nodeName === event.target.getPopup().getContent())
-      .map((m) => onClickMapMarker(m.topSources, m.topSessions, m.nodeName))
+      .filter(f => f.nodeName === event.target.getPopup().getContent())
+      .map(m => onClickMapMarker(m.topSources, m.topSessions, m.nodeName))
   }
 
-  public onMarkerMouseOver = (event) => {
+  public onMarkerMouseOver = event => {
     this.setPeerPolyLine(
       event.target.getLatLng().lat,
       event.target.getLatLng().lng
@@ -199,7 +197,7 @@ class RouterMaps extends PureComponent<Props, State> {
     event.target.setIcon(routerIconOver)
   }
 
-  public onMarkerMouseOut = (event) => {
+  public onMarkerMouseOut = event => {
     event.target.setIcon(routerIcon)
     this.state.map.removeLayer(this.connectLine)
   }
@@ -207,7 +205,7 @@ class RouterMaps extends PureComponent<Props, State> {
   private setPeerPolyLine = (pLat: number, pLng: number) => {
     const {routerNodes} = this.props
     const selectRouter = routerNodes.filter(
-      (f) =>
+      f =>
         this.getCoordLatLng(f.locationCoordinates, 'lat') === pLat &&
         this.getCoordLatLng(f.locationCoordinates, 'lng') === pLng
     )[0]
@@ -217,12 +215,12 @@ class RouterMaps extends PureComponent<Props, State> {
       lng: this.getCoordLatLng(selectRouter.locationCoordinates, 'lng'),
     }
 
-    const peersLatLng = selectRouter.peers.map((m) => {
+    const peersLatLng = selectRouter.peers.map(m => {
       return [
         sourceLatLng,
         routerNodes
-          .filter((f) => f.nodeName === m.name)
-          .map((rm) => {
+          .filter(f => f.nodeName === m.name)
+          .map(rm => {
             if (rm.locationCoordinates !== null) {
               return {
                 lat: this.getCoordLatLng(rm.locationCoordinates, 'lat'),

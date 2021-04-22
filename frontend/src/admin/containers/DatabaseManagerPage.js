@@ -38,15 +38,15 @@ class DatabaseManagerPage extends Component {
     this.props.actions.deleteRetentionPolicyAsync(db, rp)
   }
 
-  handleStartDeleteDatabase = (database) => () => {
+  handleStartDeleteDatabase = database => () => {
     this.props.actions.addDatabaseDeleteCode(database)
   }
 
-  handleEditDatabase = (database) => (e) => {
+  handleEditDatabase = database => e => {
     this.props.actions.editDatabase(database, {name: e.text})
   }
 
-  handleCreateDatabase = (database) => {
+  handleCreateDatabase = database => {
     const {actions, notify, source, databases} = this.props
     if (!database.name) {
       return notify(notifyDatabaseNameInvalid())
@@ -59,12 +59,12 @@ class DatabaseManagerPage extends Component {
     actions.createDatabaseAsync(source.links.databases, database)
   }
 
-  handleAddRetentionPolicy = (database) => () => {
+  handleAddRetentionPolicy = database => () => {
     const {addRetentionPolicy} = this.props.actions
     addRetentionPolicy(database)
   }
 
-  handleKeyDownDatabase = (database) => (e) => {
+  handleKeyDownDatabase = database => e => {
     const {key} = e
     const {actions, notify, source, databases} = this.props
 
@@ -85,7 +85,7 @@ class DatabaseManagerPage extends Component {
     }
   }
 
-  handleDatabaseDeleteConfirm = (database) => (e) => {
+  handleDatabaseDeleteConfirm = database => e => {
     const {
       key,
       target: {value},
@@ -127,7 +127,7 @@ class DatabaseManagerPage extends Component {
         onAddRetentionPolicy={this.handleAddRetentionPolicy}
         onRemoveDeleteCode={actions.removeDatabaseDeleteCode}
         onStartDeleteDatabase={this.handleStartDeleteDatabase}
-        isAddDBDisabled={!!databases.some((db) => db.isEditing)}
+        isAddDBDisabled={!!databases.some(db => db.isEditing)}
         onRemoveRetentionPolicy={actions.removeRetentionPolicy}
         onDeleteRetentionPolicy={this.handleDeleteRetentionPolicy}
         onDatabaseDeleteConfirm={this.handleDatabaseDeleteConfirm}
@@ -190,7 +190,7 @@ const mapStateToProps = ({
   organizations,
 })
 
-const mapDispatchToProps = (dispatch) => ({
+const mapDispatchToProps = dispatch => ({
   actions: bindActionCreators(adminActionCreators, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
 })

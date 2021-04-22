@@ -232,7 +232,7 @@ class TopSourcesTable extends PureComponent<Props, State> {
 
   private filter(alltopsources: TopSource[], searchTerm: string) {
     const filterText = searchTerm.toLowerCase()
-    return alltopsources.filter((h) => {
+    return alltopsources.filter(h => {
       return h.tenant.toLowerCase().includes(filterText)
     })
   }
@@ -240,9 +240,9 @@ class TopSourcesTable extends PureComponent<Props, State> {
   private sort(alltopsources: TopSource[], key: string, direction: string) {
     switch (direction) {
       case SortDirection.ASC:
-        return _.sortBy(alltopsources, (e) => e[key])
+        return _.sortBy(alltopsources, e => e[key])
       case SortDirection.DESC:
-        return _.sortBy(alltopsources, (e) => e[key]).reverse()
+        return _.sortBy(alltopsources, e => e[key]).reverse()
       default:
         return alltopsources
     }

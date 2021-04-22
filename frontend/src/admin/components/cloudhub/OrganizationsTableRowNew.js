@@ -22,7 +22,7 @@ class OrganizationsTableRowNew extends Component {
     }
   }
 
-  handleKeyDown = (e) => {
+  handleKeyDown = e => {
     const {onCancelCreateOrganization} = this.props
 
     if (e.key === 'Escape') {
@@ -33,7 +33,7 @@ class OrganizationsTableRowNew extends Component {
     }
   }
 
-  handleInputChange = (e) => {
+  handleInputChange = e => {
     const extract = e.target.value.match(/^\w+$/)
     if (e.target.value && !extract) {
       this.props.notify(notifyCloudHubOrgInvalidName())
@@ -42,7 +42,7 @@ class OrganizationsTableRowNew extends Component {
     this.setState({name: e.target.value})
   }
 
-  handleInputFocus = (e) => {
+  handleInputFocus = e => {
     e.target.select()
   }
 
@@ -53,7 +53,7 @@ class OrganizationsTableRowNew extends Component {
     onCreateOrganization({name: name.trim(), defaultRole})
   }
 
-  handleChooseDefaultRole = (role) => {
+  handleChooseDefaultRole = role => {
     this.setState({defaultRole: role.name})
   }
 
@@ -63,7 +63,7 @@ class OrganizationsTableRowNew extends Component {
 
     const isSaveDisabled = name === null || name === ''
 
-    const dropdownRolesItems = USER_ROLES.map((role) => ({
+    const dropdownRolesItems = USER_ROLES.map(role => ({
       ...role,
       text: role.name,
     }))
@@ -81,7 +81,7 @@ class OrganizationsTableRowNew extends Component {
             onFocus={this.handleInputFocus}
             placeholder="Name this Organization..."
             autoFocus={true}
-            ref={(r) => (this.inputRef = r)}
+            ref={r => (this.inputRef = r)}
           />
         </div>
         <div className="fancytable--td orgs-table--default-role creating">
@@ -111,7 +111,7 @@ OrganizationsTableRowNew.propTypes = {
   notify: func.isRequired,
 }
 
-const mapDispatchToProps = (dispatch) => ({
+const mapDispatchToProps = dispatch => ({
   notify: bindActionCreators(notifyAction, dispatch),
 })
 

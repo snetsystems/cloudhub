@@ -53,7 +53,7 @@ interface Props {
 }
 
 const GraphqlProvider: FunctionComponent<Props> = (props: Props) => {
-  const addon = props.links.addons.find((addon) => {
+  const addon = props.links.addons.find(addon => {
     return addon.name === AddonType.router128T
   })
 

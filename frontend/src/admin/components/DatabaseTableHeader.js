@@ -124,7 +124,7 @@ const Header = ({
 }
 
 const EditHeader = ({database, onEdit, onConfirm, onCancel, organizations}) => {
-  organizations = organizations.map((org) => org.name)
+  organizations = organizations.map(org => org.name)
 
   return (
     <div className="db-manager-header db-manager-header--edit">
@@ -183,7 +183,7 @@ EditHeader.propTypes = {
   isRFDisplayed: bool,
 }
 
-const mapDispatchToProps = (dispatch) => ({
+const mapDispatchToProps = dispatch => ({
   notify: bindActionCreators(notifyAction, dispatch),
 })
 

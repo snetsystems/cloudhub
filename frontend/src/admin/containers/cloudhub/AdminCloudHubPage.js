@@ -53,7 +53,7 @@ const sections = (me, providers) => [
   },
 ]
 
-const AdminCloudHubPage = (props) => {
+const AdminCloudHubPage = props => {
   const {
     me,
     source,
@@ -68,7 +68,7 @@ const AdminCloudHubPage = (props) => {
   }
 
   if (loginAuthType !== LOGIN_AUTH_TYPE.BASIC) {
-    _.forEach(auth, (authObj) => {
+    _.forEach(auth, authObj => {
       providers.push(authObj.name)
     })
   }

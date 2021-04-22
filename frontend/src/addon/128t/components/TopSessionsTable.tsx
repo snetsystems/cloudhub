@@ -273,7 +273,7 @@ class TopSessionsTable extends PureComponent<Props, State> {
 
   private filter(allTopSessions: TopSession[], searchTerm: string) {
     const filterText = searchTerm.toLowerCase()
-    return allTopSessions.filter((h) => {
+    return allTopSessions.filter(h => {
       return h.tenant.toLowerCase().includes(filterText)
     })
   }
@@ -283,11 +283,11 @@ class TopSessionsTable extends PureComponent<Props, State> {
       key.indexOf('.') > -1 ? key.split('.') : key
     switch (direction) {
       case SortDirection.ASC:
-        return _.sortBy(allTopSessions, (e) => {
+        return _.sortBy(allTopSessions, e => {
           return Array.isArray(dumpKey) ? e[dumpKey[0]][dumpKey[1]] : e[dumpKey]
         })
       case SortDirection.DESC:
-        return _.sortBy(allTopSessions, (e) => {
+        return _.sortBy(allTopSessions, e => {
           return Array.isArray(dumpKey) ? e[dumpKey[0]][dumpKey[1]] : e[dumpKey]
         }).reverse()
       default:

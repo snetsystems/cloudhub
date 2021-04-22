@@ -6,9 +6,7 @@ interface Props {
   locationCoordinates: RouterNode['locationCoordinates']
 }
 
-const GeoLocationIndicator: FunctionComponent<Props> = (
-  locationCoordinates
-) => {
+const GeoLocationIndicator: FunctionComponent<Props> = locationCoordinates => {
   const locationText = `<p class="test_locationCoordinates">${locationCoordinates.locationCoordinates.replace(
     '/',
     ''

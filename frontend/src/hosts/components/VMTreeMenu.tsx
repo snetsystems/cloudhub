@@ -83,7 +83,7 @@ class VMTreeMenu extends React.PureComponent<TreeMenuProps, TreeMenuState> {
     if (!this.props.openNodes) {
       const {openNodes} = this.state
       const newOpenNodes = openNodes.includes(node)
-        ? openNodes.filter((openNode) => openNode !== node)
+        ? openNodes.filter(openNode => openNode !== node)
         : [...openNodes, node]
       this.setState({openNodes: newOpenNodes})
     } else {
@@ -104,7 +104,7 @@ class VMTreeMenu extends React.PureComponent<TreeMenuProps, TreeMenuState> {
       ? walk({data, openNodes, searchTerm, locale, matchSearch})
       : []
 
-    return items.map((item) => {
+    return items.map(item => {
       const focused = item.key === focusKey
       const active = item.key === activeKey
 
@@ -127,7 +127,7 @@ class VMTreeMenu extends React.PureComponent<TreeMenuProps, TreeMenuState> {
     const {onClickItem} = this.props
     const {focusKey, activeKey} = this.state
     const focusIndex = items.findIndex(
-      (item) => item.key === (focusKey || activeKey)
+      item => item.key === (focusKey || activeKey)
     )
     const getFocusKey = (item: TreeMenuItem) => {
       const keyArray = item.key.split('/')
@@ -154,7 +154,7 @@ class VMTreeMenu extends React.PureComponent<TreeMenuProps, TreeMenuState> {
       left: () => {
         this.setState(({openNodes, ...rest}) => {
           const item = items[focusIndex]
-          const newOpenNodes = openNodes.filter((node) => node !== item.key)
+          const newOpenNodes = openNodes.filter(node => node !== item.key)
 
           return item.isOpen
             ? {...rest, openNodes: newOpenNodes, focusKey: item.key}

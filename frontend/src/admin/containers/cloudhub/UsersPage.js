@@ -20,7 +20,7 @@ class UsersPage extends PureComponent {
     }
   }
 
-  handleCreateUser = (user) => {
+  handleCreateUser = user => {
     const {
       links,
       actions: {createUserAsync},
@@ -33,7 +33,7 @@ class UsersPage extends PureComponent {
       actions: {updateUserAsync},
     } = this.props
     const updatedRole = {...currentRole, name}
-    const newRoles = user.roles.map((r) =>
+    const newRoles = user.roles.map(r =>
       r.organization === currentRole.organization ? updatedRole : r
     )
     updateUserAsync(
@@ -43,14 +43,14 @@ class UsersPage extends PureComponent {
     )
   }
 
-  handleDeleteUser = (user) => {
+  handleDeleteUser = user => {
     const {
       actions: {deleteUserAsync},
     } = this.props
     deleteUserAsync(user, {isAbsoluteDelete: false})
   }
 
-  handleResetUserPassword = (name) => {
+  handleResetUserPassword = name => {
     const {
       handlePasswordReset,
       links: {basicPasswordAdminReset},
@@ -64,7 +64,7 @@ class UsersPage extends PureComponent {
     })
   }
 
-  handleOnChangeUserLockAsync = (user) => {
+  handleOnChangeUserLockAsync = user => {
     const {
       handleChangeUserLock,
       links: {loginLocked},
@@ -104,7 +104,7 @@ class UsersPage extends PureComponent {
     const {isLoading} = this.state
 
     const organization = organizations.find(
-      (o) => o.id === meCurrentOrganization.id
+      o => o.id === meCurrentOrganization.id
     )
 
     return (
@@ -157,7 +157,7 @@ const mapStateToProps = ({links, adminCloudHub: {organizations, users}}) => ({
   users,
 })
 
-const mapDispatchToProps = (dispatch) => ({
+const mapDispatchToProps = dispatch => ({
   actions: bindActionCreators(adminCloudHubActionCreators, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
   handlePasswordReset: bindActionCreators(passwordResetAsync, dispatch),

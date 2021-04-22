@@ -55,7 +55,7 @@ const vspheres = (state: reducerVSphere = initialState, action: Action) => {
       const {payload} = action
       let updateState = {...state}
       if (payload?.id) {
-        _.forEach(_.keys(updateState.vspheres), (key) => {
+        _.forEach(_.keys(updateState.vspheres), key => {
           if (updateState.vspheres[key].id === payload.id) {
             delete updateState.vspheres[key]
             updateState.vspheres[payload.host] = {
@@ -72,7 +72,7 @@ const vspheres = (state: reducerVSphere = initialState, action: Action) => {
       const {payload} = action
       const updateState = {...state}
 
-      _.forEach(payload, (p) => {
+      _.forEach(payload, p => {
         if (
           p.host === updateState.vspheres[p.host].host &&
           p.minion === updateState.vspheres[p.host].minion
