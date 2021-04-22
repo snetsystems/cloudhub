@@ -654,4 +654,4 @@ const mdtp = {
 export default connect(
   mstp,
   mdtp
-)(ManualRefresh<Props>(withRouter<Props, any>(DashboardPage)))
+)(ManualRefresh(withRouter<Props>(DashboardPage)))

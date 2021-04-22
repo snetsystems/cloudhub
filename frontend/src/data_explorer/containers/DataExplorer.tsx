@@ -281,7 +281,7 @@ export class DataExplorer extends PureComponent<Props, State> {
       ignoreQueryPrefix: true,
     })
 
-    return {query, script}
+    return {query: query as string, script: script as string}
   }
 
   private writeQueryParams() {
