@@ -1,6 +1,3 @@
-// libraries
-import _ from 'lodash'
-
 // actions
 import {Action, ActionType} from 'src/dashboards/actions/cellEditorOverlay'
 
@@ -33,6 +30,4 @@ export default (state = initialState, action: Action): CEOInitialState => {
       return {...state, timeRange}
     }
   }
-
-  return state
 }
