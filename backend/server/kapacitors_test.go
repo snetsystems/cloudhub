@@ -129,7 +129,6 @@ func Test_KapacitorRulesGet(t *testing.T) {
 						Sensu:      []*cloudhub.Sensu{},
 						Slack:      []*cloudhub.Slack{},
 						Telegram:   []*cloudhub.Telegram{},
-						HipChat:    []*cloudhub.HipChat{},
 						Alerta:     []*cloudhub.Alerta{},
 						OpsGenie:   []*cloudhub.OpsGenie{},
 						OpsGenie2:  []*cloudhub.OpsGenie{},
