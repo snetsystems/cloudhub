@@ -597,7 +597,10 @@ class AlertTabs extends PureComponent<Props, State> {
     }
   }
 
-  private handleTestConfig = (section: string, options?: object) => async (
+  private handleTestConfig = (
+    section: string,
+    options?: Record<string, unknown>
+  ) => async (
     e: MouseEvent<HTMLButtonElement>,
     specificConfigOptions?: SpecificConfigOptions
   ): Promise<void> => {
