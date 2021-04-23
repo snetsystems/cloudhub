@@ -73,7 +73,7 @@ export const renderTemplatesInScript = async (
     dashboardTime = timeRange.lower
     upperDashboardTime = timeRange.upper
   } else {
-    dashboardTime = timeRange.lowerFlux || '1h'
+    dashboardTime = timeRange.lowerFlux || '-1h'
     upperDashboardTime = new Date().toISOString()
   }
 
