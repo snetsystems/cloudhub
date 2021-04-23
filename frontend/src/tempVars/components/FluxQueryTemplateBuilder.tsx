@@ -14,7 +14,6 @@ interface State {
   fluxScriptInput: string // bound to input
   fluxScript: string // debounced view of fluxScriptInput
   fluxScriptResultsStatus: RemoteDataState
-  fluxScriptWarning?: string
 }
 
 @ErrorHandling
@@ -71,7 +70,7 @@ class FluxQueryTemplateBuilder extends PureComponent<
 
   private renderResults() {
     const {template, onUpdateDefaultTemplateValue, source} = this.props
-    const {fluxScriptResultsStatus, fluxScriptWarning} = this.state
+    const {fluxScriptResultsStatus} = this.state
 
     if (!source.links.flux) {
       return (
@@ -87,7 +86,6 @@ class FluxQueryTemplateBuilder extends PureComponent<
       <TemplateFluxScriptPreview
         items={template.values}
         loadingStatus={fluxScriptResultsStatus}
-        fluxScriptWarning={fluxScriptWarning}
         onUpdateDefaultTemplateValue={onUpdateDefaultTemplateValue}
       />
     )
@@ -115,29 +113,19 @@ class FluxQueryTemplateBuilder extends PureComponent<
         ...template,
         query: {flux: fluxScript},
       }
-      let warning: string | undefined
-      const warnFn = (msg: string) => {
-        if (!warning) {
-          warning = msg
-        }
-      }
+
       const nextTemplate = await hydrateTemplate(templateWithQuery, templates, {
-        source,
-        warnFn,
+        proxyUrl: source.links.flux,
       })
 
-      this.setState({
-        fluxScriptResultsStatus: RemoteDataState.Done,
-        fluxScriptWarning: warning,
-      })
+      this.setState({fluxScriptResultsStatus: RemoteDataState.Done})
 
       if (nextTemplate.values[0]) {
         nextTemplate.values[0].selected = true
       }
 
       onUpdateTemplate(nextTemplate)
-    } catch (e) {
-      console.error(e)
+    } catch {
       this.setState({
         fluxScriptResultsStatus: RemoteDataState.Error,
       })
