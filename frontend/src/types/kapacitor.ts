@@ -84,7 +84,6 @@ interface AlertNodes {
   sensu: Sensu[]
   slack: Slack[]
   telegram: Telegram[]
-  hipChat: HipChat[]
   alerta: Alerta[]
   opsGenie: OpsGenie[]
   opsGenie2?: OpsGenie[]
@@ -146,12 +145,6 @@ interface PagerDuty {
 // PagerDuty2 sends alerts to the pagerduty.com service
 interface PagerDuty2 {
   routingKey: string
-}
-
-// HipChat sends alerts to stride.com
-interface HipChat {
-  room: string
-  token: string
 }
 
 // Sensu sends alerts to sensu or sensuapp.org
@@ -257,7 +250,6 @@ export interface RuleMessage {
 }
 
 export interface KeyMappings {
-  hipchat: string
   opsgenie: string
   opsgenie2: string
   pagerduty: string
@@ -268,7 +260,6 @@ export interface KeyMappings {
 
 export interface FieldsFromConfigAlerts {
   alerta?: string[]
-  hipChat?: string[]
   kafka: string[]
   opsGenie?: string[]
   opsGenie2?: string[]
@@ -323,13 +314,6 @@ export interface AlertaProperties {
   token: string
   'token-prefix': string
   url: string
-  enabled: boolean
-}
-
-export interface HipChatProperties {
-  room: string
-  url: string
-  token: string
   enabled: boolean
 }
 
@@ -421,7 +405,6 @@ export interface VictorOpsProperties {
 
 export type ServiceProperties =
   | AlertaProperties
-  | HipChatProperties
   | KafkaProperties
   | OpsGenieProperties
   | PagerDutyProperties

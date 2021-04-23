@@ -11,7 +11,6 @@ import {
 export enum AlertTypes {
   seperator = '',
   alerta = 'alerta',
-  hipchat = 'hipchat',
   httppost = 'httppost',
   influxdb = 'influxdb',
   kafka = 'kafka',
@@ -36,7 +35,6 @@ export enum AlertTypes {
 
 export enum AlertDisplayText {
   alerta = 'Alerta',
-  hipchat = 'HipChat',
   kafka = 'Kafka',
   opsgenie = 'OpsGenie',
   opsgenie2 = 'OpsGenie2',
@@ -53,7 +51,6 @@ export enum AlertDisplayText {
 
 export const SupportedServices: string[] = [
   // 'alerta',
-  // 'hipchat',
   'kafka',
   // 'opsgenie',
   // 'opsgenie2',
@@ -203,7 +200,6 @@ export const DEFAULT_HANDLERS: Handler[] = [
 ]
 
 export const MAP_KEYS_FROM_CONFIG: KeyMappings = {
-  hipchat: 'hipChat',
   opsgenie: 'opsGenie',
   opsgenie2: 'opsGenie2',
   pagerduty: 'pagerDuty',
@@ -215,7 +211,6 @@ export const MAP_KEYS_FROM_CONFIG: KeyMappings = {
 // ALERTS_FROM_CONFIG the array of fields to accept from Kapacitor Config
 export const ALERTS_FROM_CONFIG: FieldsFromConfigAlerts = {
   // alerta: ['environment', 'origin', 'token'], // token = bool
-  // hipChat: ['url', 'room', 'token'], // token = bool
   kafka: ['id'],
   // opsGenie: ['api-key', 'teams', 'recipients'], // api-key = bool
   // opsGenie2: ['api-key', 'teams', 'recipients'], // api-key = bool
@@ -241,7 +236,6 @@ export const ALERTS_FROM_CONFIG: FieldsFromConfigAlerts = {
 
 export const MAP_FIELD_KEYS_FROM_CONFIG: ConfigKeyMaps = {
   alerta: {},
-  hipChat: {},
   opsGenie: {},
   opsGenie2: {},
   pagerDuty: {'service-key': 'serviceKey'},
@@ -274,7 +268,6 @@ export const HANDLERS_TO_RULE_THEM_ALL: FieldsFromAllAlerts = {
   //   'origin',
   //   'service',
   // ],
-  // hipChat: ['room'],
   kafka: ['id', 'cluster', 'kafka-topic', 'template'],
   // opsGenie: ['teams', 'recipients'],
   // opsGenie2: ['teams', 'recipients'],

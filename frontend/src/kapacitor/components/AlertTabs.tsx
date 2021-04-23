@@ -21,7 +21,6 @@ import {
 
 import {
   AlertaConfig,
-  HipChatConfig,
   OpsGenieConfig,
   PagerDutyConfig,
   PagerDuty2Config,
@@ -76,7 +75,6 @@ interface Section {
 
 interface Sections {
   alerta: Section
-  hipchat: Section
   httppost: Section
   influxdb: Section
   kafka: Section
@@ -235,15 +233,6 @@ class AlertTabs extends PureComponent<Props, State> {
             config={this.getSectionElement(configSections, AlertTypes.alerta)}
             onTest={this.handleTestConfig(AlertTypes.alerta)}
             enabled={this.getConfigEnabled(configSections, AlertTypes.alerta)}
-          />
-        )
-      case AlertTypes.hipchat:
-        return (
-          <HipChatConfig
-            onSave={this.handleSaveConfig(AlertTypes.hipchat)}
-            config={this.getSectionElement(configSections, AlertTypes.hipchat)}
-            onTest={this.handleTestConfig(AlertTypes.hipchat)}
-            enabled={this.getConfigEnabled(configSections, AlertTypes.hipchat)}
           />
         )
       case AlertTypes.kafka:
