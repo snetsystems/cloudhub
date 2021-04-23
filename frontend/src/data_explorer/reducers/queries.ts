@@ -1,6 +1,3 @@
-// Libraries
-import _ from 'lodash'
-
 // Actions
 import {Action, ActionType} from 'src/data_explorer/actions/queries'
 
@@ -26,6 +23,4 @@ export default (state = initialState, action: Action): DEState => {
       return {...state, queryStatus: {queryID, status}}
     }
   }
-
-  return state
 }
