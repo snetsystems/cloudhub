@@ -733,7 +733,8 @@ const updateTimeRangeFromQueryParams = (dashboardID: string) => (
 
 export const getDashboardWithTemplatesAsync = (
   dashboardId: string,
-  source: Source
+  source: Source,
+  sources: Source[]
 ) => async (dispatch): Promise<void> => {
   let dashboard: Dashboard
 
@@ -748,8 +749,8 @@ export const getDashboardWithTemplatesAsync = (
 
   const selections = templateSelectionsFromQueryParams()
 
-  const templates = await hydrateTemplates(dashboard.templates, {
-    proxyUrl: source.links.proxy,
+  const templates = await hydrateTemplates(dashboard.templates, sources, {
+    source,
     selections,
   })
 
@@ -778,12 +779,13 @@ export const getDashboardWithTemplatesAsync = (
 
 export const rehydrateTemplatesAsync = (
   dashboardId: string,
-  source: Source
+  source: Source,
+  sources: Source[]
 ) => async (dispatch, getState): Promise<void> => {
   const dashboard = getDashboard(getState(), dashboardId)
 
-  const templates = await hydrateTemplates(dashboard.templates, {
-    proxyUrl: source.links.proxy,
+  const templates = await hydrateTemplates(dashboard.templates, sources, {
+    source,
   })
 
   dispatch(updateTemplates(templates))
