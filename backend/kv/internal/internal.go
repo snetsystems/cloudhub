@@ -363,6 +363,7 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 		if t.Query != nil {
 			template.Query = &TemplateQuery{
 				Command:     t.Query.Command,
+				Flux:        t.Query.Flux,
 				Db:          t.Query.DB,
 				Rp:          t.Query.RP,
 				Measurement: t.Query.Measurement,
@@ -551,6 +552,7 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 		if t.Query != nil {
 			template.Query = &cloudhub.TemplateQuery{
 				Command:     t.Query.Command,
+				Flux:        t.Query.Flux,
 				DB:          t.Query.Db,
 				RP:          t.Query.Rp,
 				Measurement: t.Query.Measurement,
