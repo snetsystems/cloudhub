@@ -275,4 +275,4 @@ CustomTimeRange.propTypes = {
 const mstp = state => ({
   timeZone: _.get(state, ['app', 'persisted', 'timeZone']),
 })
-export default ErrorHandling(connect(mstp)(CustomTimeRange))
+export default connect(mstp)(ErrorHandling(CustomTimeRange))

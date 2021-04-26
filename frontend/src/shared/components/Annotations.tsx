@@ -1,6 +1,6 @@
 import React, {Component} from 'react'
 import {connect} from 'react-redux'
-import {withRouter} from 'react-router'
+import {withRouter, WithRouterProps} from 'react-router'
 
 import AnnotationComponent from 'src/shared/components/Annotation'
 import NewAnnotation from 'src/shared/components/NewAnnotation'
@@ -29,7 +29,7 @@ interface Props {
 }
 
 @ErrorHandling
-class Annotations extends Component<Props> {
+class Annotations extends Component<Props & WithRouterProps> {
   public render() {
     const {
       mode,
@@ -46,23 +46,22 @@ class Annotations extends Component<Props> {
     } = this.props
     return (
       <div className="annotations-container">
-        {mode === ADDING &&
-          addingAnnotation && (
-            <SourceContext.Consumer>
-              {(source: Source) => (
-                <NewAnnotation
-                  dygraph={dygraph}
-                  source={source}
-                  isTempHovering={isTempHovering}
-                  addingAnnotation={addingAnnotation}
-                  staticLegendHeight={staticLegendHeight}
-                  onAddingAnnotationSuccess={handleAddingAnnotationSuccess}
-                  onMouseEnterTempAnnotation={handleMouseEnterTempAnnotation}
-                  onMouseLeaveTempAnnotation={handleMouseLeaveTempAnnotation}
-                />
-              )}
-            </SourceContext.Consumer>
-          )}
+        {mode === ADDING && addingAnnotation && (
+          <SourceContext.Consumer>
+            {(source: Source) => (
+              <NewAnnotation
+                dygraph={dygraph}
+                source={source}
+                isTempHovering={isTempHovering}
+                addingAnnotation={addingAnnotation}
+                staticLegendHeight={staticLegendHeight}
+                onAddingAnnotationSuccess={handleAddingAnnotationSuccess}
+                onMouseEnterTempAnnotation={handleMouseEnterTempAnnotation}
+                onMouseLeaveTempAnnotation={handleMouseLeaveTempAnnotation}
+              />
+            )}
+          </SourceContext.Consumer>
+        )}
         {annotations.map(a => (
           <AnnotationComponent
             key={a.id}
@@ -95,4 +94,4 @@ const mstp = (state, props) => {
   }
 }
 
-export default withRouter(connect(mstp)(Annotations))
+export default connect(mstp)(withRouter(Annotations))

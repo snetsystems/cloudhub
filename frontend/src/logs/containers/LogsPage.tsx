@@ -1215,6 +1215,7 @@ const mapDispatchToProps = {
   populateNamespacesAsync,
 }
 
-export default withRouter(
-  connect(mapStateToProps, mapDispatchToProps)(LogsPage)
-)
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(withRouter(LogsPage))
