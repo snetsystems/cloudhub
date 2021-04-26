@@ -178,7 +178,7 @@ class Root extends PureComponent<Record<string, never>, State> {
     }
   }
 
-  public async componentWillMount() {
+  public async UNSAFE_componentWillMount() {
     this.flushErrorsQueue()
 
     try {

@@ -204,7 +204,7 @@ export class HostsPage extends PureComponent<Props, State> {
     }
   }
 
-  public async componentWillReceiveProps(nextProps: Props) {
+  public async UNSAFE_componentWillReceiveProps(nextProps: Props) {
     const {layouts, focusedHost} = this.state
 
     if (layouts) {
