@@ -3,7 +3,6 @@ import 'babel-polyfill'
 import React, {PureComponent} from 'react'
 import {render} from 'react-dom'
 import {Provider as ReduxProvider} from 'react-redux'
-import {Provider as UnstatedProvider} from 'unstated'
 import {Router, Route, useRouterHistory} from 'react-router'
 import {createHistory, Pathname} from 'history'
 import {syncHistoryWithStore} from 'react-router-redux'
@@ -68,6 +67,8 @@ import {
   getVSphereInfoSaltApiAsync,
   ActionTypes as vmHostActionType,
 } from 'src/hosts/actions'
+
+import {TimeMachineContextProvider} from 'src/shared/utils/TimeMachineContext'
 
 import 'src/style/cloudhub.scss'
 
@@ -200,7 +201,7 @@ class Root extends PureComponent<Record<string, never>, State> {
   public render() {
     return this.state.ready ? (
       <ReduxProvider store={store}>
-        <UnstatedProvider>
+        <TimeMachineContextProvider>
           <Router history={history}>
             <Route path="/" component={UserIsAuthenticated(CheckSources)} />
             <Route path="/login" component={UserIsNotAuthenticated(Login)} />
@@ -297,7 +298,7 @@ class Root extends PureComponent<Record<string, never>, State> {
             </Route>
             <Route path="*" component={NotFound} />
           </Router>
-        </UnstatedProvider>
+        </TimeMachineContextProvider>
       </ReduxProvider>
     ) : (
       <PageSpinner />
