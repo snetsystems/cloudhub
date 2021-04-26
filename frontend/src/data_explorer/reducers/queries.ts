@@ -22,5 +22,8 @@ export default (state = initialState, action: Action): DEState => {
 
       return {...state, queryStatus: {queryID, status}}
     }
+
+    default:
+      return state
   }
 }

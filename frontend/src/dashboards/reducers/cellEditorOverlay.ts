@@ -29,5 +29,8 @@ export default (state = initialState, action: Action): CEOInitialState => {
 
       return {...state, timeRange}
     }
+
+    default:
+      return state
   }
 }
