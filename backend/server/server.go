@@ -112,6 +112,7 @@ type Server struct {
 	GenericAPIKey       string   `long:"generic-api-key" description:"JSON lookup key into OpenID UserInfo. (Azure should be userPrincipalName)" default:"email" env:"GENERIC_API_KEY"`
 	GenericInsecure     bool           `long:"generic-insecure" description:"Whether or not to verify auth-url's tls certificates." env:"GENERIC_INSECURE"`
 	GenericRootCA       flags.Filename `long:"generic-root-ca" description:"File location of root ca cert for generic oauth tls verification." env:"GENERIC_ROOT_CA"`
+	GenericPKCE         bool           `long:"oauth-pkce" description:"Whether or not also use OAuth PKCE." env:"GENERIC_PKCE"`
 
 	Auth0Domain        string   `long:"auth0-domain" description:"Subdomain of auth0.com used for Auth0 OAuth2 authentication" env:"AUTH0_DOMAIN"`
 	Auth0ClientID      string   `long:"auth0-client-id" description:"Auth0 Client ID for OAuth2 support" env:"AUTH0_CLIENT_ID"`
@@ -341,7 +342,7 @@ func (s *Server) githubOAuth(logger cloudhub.Logger, auth oauth2.Authenticator) 
 		Logger:       logger,
 	}
 	jwt := oauth2.NewJWT(s.TokenSecret, s.JwksURL)
-	ghMux := oauth2.NewAuthMux(&gh, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient)
+	ghMux := oauth2.NewAuthMux(&gh, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient, nil)
 	return &gh, ghMux, s.UseGithub
 }
 
@@ -355,7 +356,7 @@ func (s *Server) googleOAuth(logger cloudhub.Logger, auth oauth2.Authenticator) 
 		Logger:       logger,
 	}
 	jwt := oauth2.NewJWT(s.TokenSecret, s.JwksURL)
-	goMux := oauth2.NewAuthMux(&google, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient)
+	goMux := oauth2.NewAuthMux(&google, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient, nil)
 	return &google, goMux, s.UseGoogle
 }
 
@@ -367,7 +368,7 @@ func (s *Server) herokuOAuth(logger cloudhub.Logger, auth oauth2.Authenticator) 
 		Logger:        logger,
 	}
 	jwt := oauth2.NewJWT(s.TokenSecret, s.JwksURL)
-	hMux := oauth2.NewAuthMux(&heroku, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient)
+	hMux := oauth2.NewAuthMux(&heroku, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient, nil)
 	return &heroku, hMux, s.UseHeroku
 }
 
@@ -386,7 +387,8 @@ func (s *Server) genericOAuth(logger cloudhub.Logger, auth oauth2.Authenticator)
 		Logger:         logger,
 	}
 	jwt := oauth2.NewJWT(s.TokenSecret, s.JwksURL)
-	genMux := oauth2.NewAuthMux(&gen, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient)
+	codeExchange := oauth2.NewCodeExchange(s.GenericPKCE, s.TokenSecret)
+	genMux := oauth2.NewAuthMux(&gen, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient, codeExchange)
 	return &gen, genMux, s.UseGenericOAuth2
 }
 
@@ -402,7 +404,7 @@ func (s *Server) auth0OAuth(logger cloudhub.Logger, auth oauth2.Authenticator) (
 	auth0, err := oauth2.NewAuth0(s.Auth0Domain, s.Auth0ClientID, s.Auth0ClientSecret, redirectURL.String(), s.Auth0Organizations, logger)
 
 	jwt := oauth2.NewJWT(s.TokenSecret, s.JwksURL)
-	genMux := oauth2.NewAuthMux(&auth0, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient)
+	genMux := oauth2.NewAuthMux(&auth0, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient, nil)
 
 	if err != nil {
 		logger.Error("Error parsing Auth0 domain: err:", err)
