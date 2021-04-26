@@ -138,6 +138,7 @@ class SourceStep extends PureComponent<Props, State> {
           label="Connection URL"
           onChange={this.onChangeInput('url')}
           valueModifier={this.URLModifier}
+          onSubmit={this.handleSubmitUrl}
         />
         <WizardTextInput
           value={source.name}
@@ -148,6 +149,7 @@ class SourceStep extends PureComponent<Props, State> {
           value={source.username}
           label={sourceIsV2 ? 'Organization' : 'Username'}
           onChange={this.onChangeInput('username')}
+          onSubmit={this.handleSubmitUsername}
         />
         <WizardTextInput
           value={source.password}
@@ -155,6 +157,7 @@ class SourceStep extends PureComponent<Props, State> {
           placeholder={this.passwordPlaceholder}
           type="password"
           onChange={this.onChangeInput('password')}
+          onSubmit={this.handleSubmitPassword}
         />
         <div className="form-group col-xs-6">
           <label>Database(= Group) Name</label>
@@ -280,6 +283,43 @@ class SourceStep extends PureComponent<Props, State> {
         version: v2 ? '2.x' : '1.x',
       },
     })
+  }
+
+  private handleSubmitUrl = async (url: string) => {
+    return await this.detectServerType({url})
+  }
+  private handleSubmitUsername = async (username: string) => {
+    return await this.detectServerType({username})
+  }
+  private handleSubmitPassword = async (password: string) => {
+    return await this.detectServerType({password})
+  }
+
+  private detectServerType = async (changedField: Partial<Source>) => {
+    const source = {...this.state.source, ...changedField}
+    const metaserviceURL = new URL(source.metaUrl || DEFAULT_SOURCE.metaUrl)
+    const sourceURL = new URL(source.url || DEFAULT_SOURCE.url)
+
+    if (isNewSource(source)) {
+      try {
+        metaserviceURL.hostname = sourceURL.hostname
+        let sourceFromServer = await createSource(source)
+        sourceFromServer = {...sourceFromServer, metaUrl: metaserviceURL.href}
+        this.props.addSource(sourceFromServer)
+        this.setState({
+          source: sourceFromServer,
+        })
+      } catch (err) {}
+    } else {
+      try {
+        let sourceFromServer = await updateSource(source)
+        sourceFromServer = {...sourceFromServer, metaUrl: metaserviceURL.href}
+        this.props.updateSource(sourceFromServer)
+        this.setState({
+          source: sourceFromServer,
+        })
+      } catch (err) {}
+    }
   }
 
   private get sourceIsEdited(): boolean {
