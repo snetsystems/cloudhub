@@ -384,9 +384,14 @@ class DashboardPage extends Component<Props, State> {
   }
 
   private getDashboard = async () => {
-    const {dashboardID, source, getDashboardWithTemplatesAsync} = this.props
+    const {
+      dashboardID,
+      source,
+      sources,
+      getDashboardWithTemplatesAsync,
+    } = this.props
 
-    await getDashboardWithTemplatesAsync(dashboardID, source)
+    await getDashboardWithTemplatesAsync(dashboardID, source, sources)
     this.updateActiveDashboard()
   }
 
@@ -516,12 +521,13 @@ class DashboardPage extends Component<Props, State> {
     const {
       dashboard,
       source,
+      sources,
       templateVariableLocalSelected,
       rehydrateTemplatesAsync,
     } = this.props
 
     templateVariableLocalSelected(dashboard.id, template.id, value)
-    rehydrateTemplatesAsync(dashboard.id, source)
+    rehydrateTemplatesAsync(dashboard.id, source, sources)
   }
 
   private handleSaveTemplateVariables = async (
@@ -651,7 +657,4 @@ const mdtp = {
   setTimeZone: appActions.setTimeZone,
 }
 
-export default connect(
-  mstp,
-  mdtp
-)(ManualRefresh(withRouter<Props>(DashboardPage)))
+export default withRouter(connect(mstp, mdtp)(ManualRefresh(DashboardPage)))
