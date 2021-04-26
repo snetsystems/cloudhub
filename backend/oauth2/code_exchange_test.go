@@ -69,12 +69,12 @@ func Test_CodeExchangeCSRF_AuthCodeURL(t *testing.T) {
 func Test_CodeExchangeCSRF_ExchangeCodeForToken(t *testing.T) {
 	// mock authorization provider
 	const testToken = "fake.token"
-	exchangeUrlValues := url.Values{}
+	exchangeURLValues := url.Values{}
 	authServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set("content-type", "application/json")
 		rw.WriteHeader(http.StatusOK)
 		r.ParseForm()
-		exchangeUrlValues = r.Form
+		exchangeURLValues = r.Form
 
 		body, _ := json.Marshal(mockCallbackResponse{AccessToken: testToken})
 
@@ -110,9 +110,9 @@ func Test_CodeExchangeCSRF_ExchangeCodeForToken(t *testing.T) {
 	require.Equal(t, testToken, token.AccessToken)
 	expectedParams := []string{"code"}
 	for _, key := range expectedParams {
-		foundVal := exchangeUrlValues.Get(key)
+		foundVal := exchangeURLValues.Get(key)
 		if foundVal == "" {
-			t.Errorf("Authorization server did not receive the required %s parameter; values=%v", key, exchangeUrlValues)
+			t.Errorf("Authorization server did not receive the required %s parameter; values=%v", key, exchangeURLValues)
 			continue
 		}
 	}
@@ -185,12 +185,12 @@ func Test_CodeExchangePKCE_EncryptDecrypt(t *testing.T) {
 func Test_CodeExchangePKCE_ExchangeCodeForToken(t *testing.T) {
 	// mock authorization provider
 	const testToken = "fake.token"
-	exchangeUrlValues := url.Values{}
+	exchangeURLValues := url.Values{}
 	authServer := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		rw.Header().Set("content-type", "application/json")
 		rw.WriteHeader(http.StatusOK)
 		r.ParseForm()
-		exchangeUrlValues = r.Form
+		exchangeURLValues = r.Form
 
 		body, _ := json.Marshal(mockCallbackResponse{AccessToken: testToken})
 
@@ -239,9 +239,9 @@ func Test_CodeExchangePKCE_ExchangeCodeForToken(t *testing.T) {
 		t.Errorf("Code verifier must be at least 43 characters long, but it is %d; code_verifier=%s", len(codeVerifier), codeVerifier)
 	}
 	for key, val := range expectedParams {
-		foundVal := exchangeUrlValues.Get(key)
+		foundVal := exchangeURLValues.Get(key)
 		if foundVal == "" {
-			t.Errorf("Authorization server did not receive the required %s parameter; values=%v", key, exchangeUrlValues)
+			t.Errorf("Authorization server did not receive the required %s parameter; values=%v", key, exchangeURLValues)
 			continue
 		}
 		if val != "" && val != foundVal {

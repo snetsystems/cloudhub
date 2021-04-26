@@ -27,6 +27,7 @@ type CodeExchange interface {
 // default implementation
 var simpleTokenExchange CodeExchange = &CodeExchangeCSRF{}
 
+// NewCodeExchange ...
 func NewCodeExchange(withPKCE bool, secret string) CodeExchange {
 	if withPKCE {
 		return &CodeExchangePKCE{Secret: secret}
@@ -76,6 +77,7 @@ func (p *CodeExchangeCSRF) AuthCodeURL(ctx context.Context, j *AuthMux) (string,
 	return url, nil
 }
 
+// ExchangeCodeForToken ...
 func (p *CodeExchangeCSRF) ExchangeCodeForToken(ctx context.Context, state, code string, j *AuthMux) (*oauth2.Token, error) {
 	// Check if the OAuth state token is valid to prevent CSRF
 	// The state variable we set is actually a token.  We'll check
@@ -167,7 +169,7 @@ func (c *CodeExchangePKCE) Decrypt(encrypted string) ([]byte, error) {
 
 // AuthCodeURL generates authorization URL with PKCE
 // challenge parameters and a state that prevents CSRF and.
-func (p *CodeExchangePKCE) AuthCodeURL(ctx context.Context, j *AuthMux) (string, error) {
+func (c *CodeExchangePKCE) AuthCodeURL(ctx context.Context, j *AuthMux) (string, error) {
 	// generate code verifier
 	codeVerifier := make([]byte, 32)
 	if _, err := io.ReadFull(rand.Reader, codeVerifier); err != nil {
@@ -176,7 +178,7 @@ func (p *CodeExchangePKCE) AuthCodeURL(ctx context.Context, j *AuthMux) (string,
 
 	// encrypt code verifier so it can be added to state,
 	// we don't need to remember it on the server side then
-	encryptedCodeVerifier, err := p.Encrypt(codeVerifier)
+	encryptedCodeVerifier, err := c.Encrypt(codeVerifier)
 	if err != nil {
 		return "", err
 	}
@@ -214,13 +216,14 @@ func (p *CodeExchangePKCE) AuthCodeURL(ctx context.Context, j *AuthMux) (string,
 	return url, nil
 }
 
-func (p *CodeExchangePKCE) ExchangeCodeForToken(ctx context.Context, state, code string, j *AuthMux) (*oauth2.Token, error) {
+// ExchangeCodeForToken ...
+func (c *CodeExchangePKCE) ExchangeCodeForToken(ctx context.Context, state, code string, j *AuthMux) (*oauth2.Token, error) {
 	// Check if the OAuth state token is valid.
 	stateData, err := j.Tokens.ValidPrincipal(ctx, Token(state), TenMinutes)
 	if err != nil {
 		return nil, fmt.Errorf("invalid OAuth state received: %v", err.Error())
 	}
-	codeVerifier, err := p.Decrypt(stateData.Subject)
+	codeVerifier, err := c.Decrypt(stateData.Subject)
 	if err != nil {
 		return nil, fmt.Errorf("invalid OAuth state received: %v", err.Error())
 	}
