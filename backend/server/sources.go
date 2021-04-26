@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -71,13 +70,6 @@ func sourceAuthenticationMethod(ctx context.Context, src cloudhub.Source) authen
 
 	return authenticationResponse{ID: src.ID, AuthenticationMethod: "unknown"}
 }
-
-var (
-	skipVerifyTransport = &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	defaultTransport = &http.Transport{}
-)
 
 func hasFlux(ctx context.Context, src cloudhub.Source) (bool, error) {
 	// flux is always available in v2 version, but it requires v2 Token authentication (distinguished by Type)
@@ -187,10 +179,13 @@ func (s *Service) NewSource(w http.ResponseWriter, r *http.Request) {
 	}
 
 	src.Type = dbType
-	if src, err = s.Store.Sources(ctx).Add(ctx, src); err != nil {
-		msg := fmt.Errorf("Error storing source %v: %v", src, err)
-		unknownErrorWithMessage(w, msg, s.Logger)
-		return
+	// persist unless it is a dry-run
+	if _, dryRun := r.URL.Query()["dryRun"]; !dryRun {
+		if src, err = s.Store.Sources(ctx).Add(ctx, src); err != nil {
+			msg := fmt.Errorf("Error storing source %v: %v", src, err)
+			unknownErrorWithMessage(w, msg, s.Logger)
+			return
+		}
 	}
 
 	// log registrationte
@@ -437,12 +432,8 @@ func (s *Service) UpdateSource(w http.ResponseWriter, r *http.Request) {
 	if req.Name != "" {
 		src.Name = req.Name
 	}
-	if req.Password != "" {
-		src.Password = req.Password
-	}
-	if req.Username != "" {
-		src.Username = req.Username
-	}
+	src.Password = req.Password
+	src.Username = req.Username
 	if req.URL != "" {
 		src.URL = req.URL
 	}
@@ -484,10 +475,13 @@ func (s *Service) UpdateSource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.Store.Sources(ctx).Update(ctx, src); err != nil {
-		msg := fmt.Sprintf("Error updating source ID %d", id)
-		Error(w, http.StatusInternalServerError, msg, s.Logger)
-		return
+	// persist unless it is a dry-run
+	if _, dryRun := r.URL.Query()["dryRun"]; !dryRun {
+		if err := s.Store.Sources(ctx).Update(ctx, src); err != nil {
+			msg := fmt.Sprintf("Error updating source ID %d", id)
+			Error(w, http.StatusInternalServerError, msg, s.Logger)
+			return
+		}
 	}
 
 	// log registrationte
@@ -527,7 +521,7 @@ func ValidSourceRequest(s *cloudhub.Source, defaultOrgID string) error {
 		return fmt.Errorf("invalid source URI: %v", err)
 	}
 	if len(url.Scheme) == 0 {
-		return fmt.Errorf("Invalid URL; no URL scheme defined")
+		return fmt.Errorf("invalid URL; no URL scheme defined")
 	}
 
 	return nil
@@ -765,10 +759,10 @@ type sourceUserRequest struct {
 
 func (r *sourceUserRequest) ValidCreate() error {
 	if r.Username == "" {
-		return fmt.Errorf("Username required")
+		return fmt.Errorf("username required")
 	}
 	if r.Password == "" {
-		return fmt.Errorf("Password required")
+		return fmt.Errorf("password required")
 	}
 	return validPermissions(&r.Permissions)
 }
@@ -779,7 +773,7 @@ type sourceUsersResponse struct {
 
 func (r *sourceUserRequest) ValidUpdate() error {
 	if r.Password == "" && r.Permissions == nil && r.Roles == nil {
-		return fmt.Errorf("No fields to update")
+		return fmt.Errorf("no fields to update")
 	}
 	return validPermissions(&r.Permissions)
 }
@@ -1038,7 +1032,7 @@ func (r *sourceRoleRequest) ValidCreate() error {
 	}
 	for _, user := range r.Users {
 		if user.Name == "" {
-			return fmt.Errorf("Username required")
+			return fmt.Errorf("username required")
 		}
 	}
 	return validPermissions(&r.Permissions)
@@ -1046,11 +1040,11 @@ func (r *sourceRoleRequest) ValidCreate() error {
 
 func (r *sourceRoleRequest) ValidUpdate() error {
 	if len(r.Name) > 254 {
-		return fmt.Errorf("Username too long; must be less than 254 characters")
+		return fmt.Errorf("username too long; must be less than 254 characters")
 	}
 	for _, user := range r.Users {
 		if user.Name == "" {
-			return fmt.Errorf("Username required")
+			return fmt.Errorf("username required")
 		}
 	}
 	return validPermissions(&r.Permissions)
