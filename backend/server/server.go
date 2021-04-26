@@ -119,6 +119,7 @@ type Server struct {
 	Auth0ClientSecret  string   `long:"auth0-client-secret" description:"Auth0 Client Secret for OAuth2 support" env:"AUTH0_CLIENT_SECRET"`
 	Auth0Organizations []string `long:"auth0-organizations" description:"Auth0 organizations permitted to access CloudHub (env comma separated)" env:"AUTH0_ORGS" env-delim:","`
 	Auth0SuperAdminOrg string   `long:"auth0-superadmin-org" description:"Auth0 organization from which users are automatically granted SuperAdmin status" env:"AUTH0_SUPERADMIN_ORG"`
+	Auth0NoPKCE        bool     `long:"auth0-no-pkce" description:"Turn off OAuth PKCE" env:"AUTH0_SUPERADMIN_ORG"`
 
 	LoginAuthType         string   `long:"login-auth-type" description:"Login auth type (mix, oauth, basic)" env:"LOGIN_AUTH_TYPE" default:"oauth"`
 
@@ -404,7 +405,8 @@ func (s *Server) auth0OAuth(logger cloudhub.Logger, auth oauth2.Authenticator) (
 	auth0, err := oauth2.NewAuth0(s.Auth0Domain, s.Auth0ClientID, s.Auth0ClientSecret, redirectURL.String(), s.Auth0Organizations, logger)
 
 	jwt := oauth2.NewJWT(s.TokenSecret, s.JwksURL)
-	genMux := oauth2.NewAuthMux(&auth0, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient, nil)
+	codeExchange := oauth2.NewCodeExchange(!s.Auth0NoPKCE, s.TokenSecret)
+	genMux := oauth2.NewAuthMux(&auth0, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient, codeExchange)
 
 	if err != nil {
 		logger.Error("Error parsing Auth0 domain: err:", err)
