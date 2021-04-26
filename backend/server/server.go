@@ -112,14 +112,13 @@ type Server struct {
 	GenericAPIKey       string   `long:"generic-api-key" description:"JSON lookup key into OpenID UserInfo. (Azure should be userPrincipalName)" default:"email" env:"GENERIC_API_KEY"`
 	GenericInsecure     bool           `long:"generic-insecure" description:"Whether or not to verify auth-url's tls certificates." env:"GENERIC_INSECURE"`
 	GenericRootCA       flags.Filename `long:"generic-root-ca" description:"File location of root ca cert for generic oauth tls verification." env:"GENERIC_ROOT_CA"`
-	GenericPKCE         bool           `long:"oauth-pkce" description:"Whether or not also use OAuth PKCE." env:"GENERIC_PKCE"`
+	OAuthNoPKCE         bool           `long:"oauth-no-pkce" description:"Disables OAuth PKCE." env:"OAUTH_NO_PKCE"`
 
 	Auth0Domain        string   `long:"auth0-domain" description:"Subdomain of auth0.com used for Auth0 OAuth2 authentication" env:"AUTH0_DOMAIN"`
 	Auth0ClientID      string   `long:"auth0-client-id" description:"Auth0 Client ID for OAuth2 support" env:"AUTH0_CLIENT_ID"`
 	Auth0ClientSecret  string   `long:"auth0-client-secret" description:"Auth0 Client Secret for OAuth2 support" env:"AUTH0_CLIENT_SECRET"`
 	Auth0Organizations []string `long:"auth0-organizations" description:"Auth0 organizations permitted to access CloudHub (env comma separated)" env:"AUTH0_ORGS" env-delim:","`
 	Auth0SuperAdminOrg string   `long:"auth0-superadmin-org" description:"Auth0 organization from which users are automatically granted SuperAdmin status" env:"AUTH0_SUPERADMIN_ORG"`
-	Auth0NoPKCE        bool     `long:"auth0-no-pkce" description:"Turn off OAuth PKCE" env:"AUTH0_SUPERADMIN_ORG"`
 
 	LoginAuthType         string   `long:"login-auth-type" description:"Login auth type (mix, oauth, basic)" env:"LOGIN_AUTH_TYPE" default:"oauth"`
 
@@ -334,6 +333,9 @@ func processCerts(rootReader io.Reader) (*x509.CertPool, error) {
 
 	return certPool, nil
 }
+func (s *Server) createCodeExchange() oauth2.CodeExchange {
+	return oauth2.NewCodeExchange(!s.OAuthNoPKCE, s.TokenSecret)
+}
 
 func (s *Server) githubOAuth(logger cloudhub.Logger, auth oauth2.Authenticator) (oauth2.Provider, oauth2.Mux, func() error) {
 	gh := oauth2.Github{
@@ -343,7 +345,7 @@ func (s *Server) githubOAuth(logger cloudhub.Logger, auth oauth2.Authenticator) 
 		Logger:       logger,
 	}
 	jwt := oauth2.NewJWT(s.TokenSecret, s.JwksURL)
-	ghMux := oauth2.NewAuthMux(&gh, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient, nil)
+	ghMux := oauth2.NewAuthMux(&gh, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient, s.createCodeExchange())
 	return &gh, ghMux, s.UseGithub
 }
 
@@ -357,7 +359,7 @@ func (s *Server) googleOAuth(logger cloudhub.Logger, auth oauth2.Authenticator) 
 		Logger:       logger,
 	}
 	jwt := oauth2.NewJWT(s.TokenSecret, s.JwksURL)
-	goMux := oauth2.NewAuthMux(&google, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient, nil)
+	goMux := oauth2.NewAuthMux(&google, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient, s.createCodeExchange())
 	return &google, goMux, s.UseGoogle
 }
 
@@ -369,7 +371,7 @@ func (s *Server) herokuOAuth(logger cloudhub.Logger, auth oauth2.Authenticator) 
 		Logger:        logger,
 	}
 	jwt := oauth2.NewJWT(s.TokenSecret, s.JwksURL)
-	hMux := oauth2.NewAuthMux(&heroku, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient, nil)
+	hMux := oauth2.NewAuthMux(&heroku, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient, s.createCodeExchange())
 	return &heroku, hMux, s.UseHeroku
 }
 
@@ -388,8 +390,7 @@ func (s *Server) genericOAuth(logger cloudhub.Logger, auth oauth2.Authenticator)
 		Logger:         logger,
 	}
 	jwt := oauth2.NewJWT(s.TokenSecret, s.JwksURL)
-	codeExchange := oauth2.NewCodeExchange(s.GenericPKCE, s.TokenSecret)
-	genMux := oauth2.NewAuthMux(&gen, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient, codeExchange)
+	genMux := oauth2.NewAuthMux(&gen, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient, s.createCodeExchange())
 	return &gen, genMux, s.UseGenericOAuth2
 }
 
@@ -405,8 +406,7 @@ func (s *Server) auth0OAuth(logger cloudhub.Logger, auth oauth2.Authenticator) (
 	auth0, err := oauth2.NewAuth0(s.Auth0Domain, s.Auth0ClientID, s.Auth0ClientSecret, redirectURL.String(), s.Auth0Organizations, logger)
 
 	jwt := oauth2.NewJWT(s.TokenSecret, s.JwksURL)
-	codeExchange := oauth2.NewCodeExchange(!s.Auth0NoPKCE, s.TokenSecret)
-	genMux := oauth2.NewAuthMux(&auth0, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient, codeExchange)
+	genMux := oauth2.NewAuthMux(&auth0, auth, jwt, s.Basepath, logger, s.UseIDToken, s.LoginHint, &s.oauthClient, s.createCodeExchange())
 
 	if err != nil {
 		logger.Error("Error parsing Auth0 domain: err:", err)
@@ -644,7 +644,7 @@ func (s *Server) Serve(ctx context.Context) {
 	}
 
 	if !validBasepath(s.Basepath) {
-		err := fmt.Errorf("Invalid basepath, must follow format \"/mybasepath\"")
+		err := fmt.Errorf("invalid basepath, must follow format \"/mybasepath\"")
 		logger.
 			WithField("component", "server").
 			WithField("basepath", "invalid").
@@ -656,7 +656,7 @@ func (s *Server) Serve(ctx context.Context) {
 		logger.
 			WithField("component", "server").
 			WithField("basepath", "invalid").
-			Error(fmt.Errorf("Failed to validate Oauth settings: %s", err))
+			Error(fmt.Errorf("failed to validate Oauth settings: %s", err))
 		return
 	}
 
