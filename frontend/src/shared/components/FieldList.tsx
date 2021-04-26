@@ -24,6 +24,7 @@ import {
   numFunctions,
   getFieldsWithName,
   getFuncsByFieldName,
+  getFieldName,
 } from 'src/shared/reducers/helpers/fields'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
@@ -154,7 +155,7 @@ class FieldList extends PureComponent<Props, State> {
                   fieldFunc.value,
                   fields
                 )
-
+                const fieldName = getFieldName(fieldFunc)
                 const fieldFuncs = selectedFields.length
                   ? [this.addDesc(_.head(selectedFields), fieldFunc.desc)]
                   : [fieldFunc]
@@ -165,6 +166,7 @@ class FieldList extends PureComponent<Props, State> {
                     onToggleField={this.handleToggleField}
                     onApplyFuncsToField={this.handleApplyFuncs}
                     isSelected={!!selectedFields.length}
+                    fieldName={fieldName}
                     fieldFuncs={fieldFuncs}
                     funcs={functionNames(funcs)}
                     isKapacitorRule={isKapacitorRule}
