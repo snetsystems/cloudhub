@@ -135,7 +135,7 @@
     "react-html-parser": "^2.0.2",
     "react-markdown": "^3.4.1",
     "react-modal": "^3.11.1",
-    "react-onclickoutside": "^5.2.0",
+    "react-onclickoutside": "^6.10.0",
     "react-redux": "^4.4.0",
     "react-resize-detector": "^2.3.0",
     "react-resize-observer": "^1.1.1",
@@ -151,7 +151,6 @@
     "reselect": "^3.0.1",
     "rome": "^2.1.22",
     "src": "^1.1.2",
-    "unstated": "^2.1.1",
     "uuid": "^3.2.1",
     "xterm": "^4.7.0",
     "xterm-addon-fit": "^0.4.0"
