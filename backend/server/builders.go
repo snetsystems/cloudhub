@@ -138,6 +138,7 @@ func (fs *MultiSourceBuilder) Build(db cloudhub.SourcesStore) (*multistore.Sourc
 				Password: fs.InfluxDBPassword,
 				URL:      fs.InfluxDBURL,
 				Default:  true,
+				Version:  "unknown", // a real version is re-fetched at runtime; use "unknown" version as a fallback, empty version would imply OSS 2.x
 			}}
 		stores = append([]cloudhub.SourcesStore{influxStore}, stores...)
 	}
