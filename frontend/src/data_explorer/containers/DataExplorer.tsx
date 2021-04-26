@@ -6,7 +6,6 @@ import {Location} from 'history'
 import qs from 'qs'
 import uuid from 'uuid'
 import _ from 'lodash'
-import {Subscribe} from 'unstated'
 
 // Utils
 import {stripPrefix} from 'src/utils/basepath'
@@ -14,7 +13,10 @@ import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {getConfig} from 'src/dashboards/utils/cellGetters'
 import {buildRawText} from 'src/utils/influxql'
 import {defaultQueryDraft} from 'src/shared/utils/timeMachine'
-import {TimeMachineContainer} from 'src/shared/utils/TimeMachineContainer'
+import {
+  TimeMachineContainer,
+  TimeMachineContextConsumer,
+} from 'src/shared/utils/TimeMachineContext'
 
 // Components
 import WriteDataForm from 'src/data_explorer/components/WriteDataForm'
@@ -455,7 +457,7 @@ export class DataExplorer extends PureComponent<Props, State> {
 
 const ConnectedDataExplorer = (props: PassedProps & WithRouterProps & Auth) => {
   return (
-    <Subscribe to={[TimeMachineContainer]}>
+    <TimeMachineContextConsumer>
       {(container: TimeMachineContainer) => {
         const {state} = container
         return (
@@ -472,7 +474,7 @@ const ConnectedDataExplorer = (props: PassedProps & WithRouterProps & Auth) => {
           />
         )
       }}
-    </Subscribe>
+    </TimeMachineContextConsumer>
   )
 }
 
