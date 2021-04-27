@@ -70,11 +70,14 @@ import {
 
 import {TimeMachineContextProvider} from 'src/shared/utils/TimeMachineContext'
 
+import {getEnv} from 'src/shared/apis/env'
+
 import 'src/style/cloudhub.scss'
 
 import {HEARTBEAT_INTERVAL} from 'src/shared/constants'
 
 import * as ErrorsModels from 'src/types/errors'
+import {setCustomAutoRefreshOptions} from './shared/components/dropdown_auto_refresh/autoRefreshOptions'
 
 import {AddonType} from 'src/shared/constants'
 import {Addon} from 'src/types/auth'
@@ -122,6 +125,15 @@ window.addEventListener('keyup', event => {
 })
 
 const history = syncHistoryWithStore(browserHistory, store)
+
+const populateEnv = async url => {
+  try {
+    const envVars = await getEnv(url)
+    setCustomAutoRefreshOptions(envVars.customAutoRefresh)
+  } catch (error) {
+    console.error('Error fetching envVars', error)
+  }
+}
 
 interface State {
   ready: boolean
@@ -185,7 +197,7 @@ class Root extends PureComponent<Record<string, never>, State> {
     try {
       await this.getLinks()
       await this.checkAuth()
-
+      await populateEnv(store.getState().links.environment)
       this.setState({ready: true})
     } catch (error) {
       dispatch(errorThrown(error))
