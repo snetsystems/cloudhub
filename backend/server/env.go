@@ -9,6 +9,7 @@ import (
 type envResponse struct {
 	Links                  selfLinks `json:"links"`
 	TelegrafSystemInterval string    `json:"telegrafSystemInterval"`
+	CustomAutoRefresh      string    `json:"customAutoRefresh,omitempty"`
 }
 
 func newEnvResponse(env cloudhub.Environment) *envResponse {
@@ -17,6 +18,7 @@ func newEnvResponse(env cloudhub.Environment) *envResponse {
 			Self: "/cloudhub/v1/env",
 		},
 		TelegrafSystemInterval: env.TelegrafSystemInterval.String(),
+		CustomAutoRefresh:      env.CustomAutoRefresh,
 	}
 }
 

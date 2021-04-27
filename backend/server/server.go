@@ -139,6 +139,7 @@ type Server struct {
 	StatusFeedURL          string  `long:"status-feed-url" description:"URL of a JSON Feed to display as a News Feed on the client Status page." default:"https://www.snetgroup.info/" env:"STATUS_FEED_URL"`
 	CustomLinks            map[string]string `long:"custom-link" description:"Custom link to be added to the client User menu. Multiple links can be added by using multiple of the same flag with different 'name:url' values, or as an environment variable with comma-separated 'name:url' values. E.g. via flags: '--custom-link=snetsystems:https://www.snetsystems.com --custom-link=CloudHub:https://github.com/snetsystems/cloudhub'. E.g. via environment variable: 'export CUSTOM_LINKS=snetsystems:https://www.snetsystems.com,CloudHub:https://github.com/snetsystems/cloudhub'" env:"CUSTOM_LINKS" env-delim:","`
 	TelegrafSystemInterval time.Duration     `long:"telegraf-system-interval" default:"1m" description:"Duration used in the GROUP BY time interval for the hosts list" env:"TELEGRAF_SYSTEM_INTERVAL"`
+	CustomAutoRefresh string `long:"custom-auto-refresh" description:"Adds custom auto refresh options using semicolon separated list of label=milliseconds pairs" env:"CUSTOM_AUTO_REFRESH"`
 
 	ReportingDisabled bool   `short:"r" long:"reporting-disabled" description:"Disable reporting of usage stats (os,arch,version,cluster_id,uptime) once every 24hr" env:"REPORTING_DISABLED"`
 	LogLevel    string `short:"l" long:"log-level" value-name:"choice" choice:"debug" choice:"info" choice:"error" default:"info" description:"Set the logging level" env:"LOG_LEVEL"`
@@ -647,6 +648,7 @@ func (s *Server) Serve(ctx context.Context) {
 	}
 	service.Env = cloudhub.Environment{
 		TelegrafSystemInterval: s.TelegrafSystemInterval,
+		CustomAutoRefresh:      s.CustomAutoRefresh,
 	}
 
 	if !validBasepath(s.Basepath) {

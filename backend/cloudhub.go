@@ -997,6 +997,7 @@ type VspheresStore interface {
 // that were set on the server
 type Environment struct {
 	TelegrafSystemInterval time.Duration `json:"telegrafSystemInterval"`
+	CustomAutoRefresh      string        `json:"customAutoRefresh,omitempty"`
 }
 
 // Topology represents represents an vsphere.
