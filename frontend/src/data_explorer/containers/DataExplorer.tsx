@@ -120,6 +120,7 @@ interface State {
   isSendToDashboardVisible: boolean
   isStaticLegend: boolean
   isComponentMounted: boolean
+  activeQueryIndex: number
 }
 
 @ErrorHandling
@@ -132,6 +133,7 @@ export class DataExplorer extends PureComponent<Props, State> {
       isSendToDashboardVisible: false,
       isStaticLegend: false,
       isComponentMounted: false,
+      activeQueryIndex: 0,
     }
 
     props.onResetTimeMachine()
@@ -207,6 +209,7 @@ export class DataExplorer extends PureComponent<Props, State> {
             updateSourceLink={updateSourceLink}
             onResetFocus={this.handleResetFocus}
             onToggleStaticLegend={this.handleToggleStaticLegend}
+            onActiveQueryIndexChange={this.onActiveQueryIndexChange}
             me={me}
             isUsingAuth={isUsingAuth}
             refresh={autoRefresh}
@@ -427,7 +430,14 @@ export class DataExplorer extends PureComponent<Props, State> {
   private get activeQueryConfig(): QueryConfig {
     const {queryDrafts} = this.props
 
-    return _.get(queryDrafts, '0.queryConfig')
+    if (queryDrafts === undefined || queryDrafts.length === 0) {
+      return undefined
+    }
+    const {activeQueryIndex} = this.state
+    if (activeQueryIndex < queryDrafts.length) {
+      return queryDrafts[activeQueryIndex].queryConfig
+    }
+    return queryDrafts[0].queryConfig
   }
 
   private get rawText(): string {
@@ -448,6 +458,10 @@ export class DataExplorer extends PureComponent<Props, State> {
 
   private handleToggleStaticLegend = (isStaticLegend: boolean): void => {
     this.setState({isStaticLegend})
+  }
+
+  private onActiveQueryIndexChange = (activeQueryIndex: number): void => {
+    this.setState({activeQueryIndex})
   }
 
   private handleResetFocus = () => {

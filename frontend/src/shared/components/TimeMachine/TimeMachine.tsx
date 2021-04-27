@@ -95,6 +95,7 @@ interface PassedProps {
   ) => JSX.Element
   queryStatus: QueryStatus
   onUpdateScriptStatus?: (status: ScriptStatus) => void
+  onActiveQueryIndexChange?: (activeQueryIndex: number) => void
   refresh: RefreshRate
   timeZone?: TimeZones
 }
@@ -557,6 +558,10 @@ class TimeMachine extends PureComponent<Props, State> {
 
   private handleSetActiveQueryIndex = (activeQueryIndex): void => {
     this.setState({activeQueryIndex})
+    const {onActiveQueryIndexChange} = this.props
+    if (onActiveQueryIndexChange) {
+      onActiveQueryIndexChange(activeQueryIndex)
+    }
   }
 
   private handleSetActiveEditorTab = (tabName: CEOTabs): void => {
