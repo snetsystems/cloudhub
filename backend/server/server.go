@@ -147,7 +147,7 @@ type Server struct {
 	ShowVersion bool   `short:"v" long:"version" description:"Show CloudHub version info"`
 	BuildInfo   cloudhub.BuildInfo
 
-	BasicAuthRealm    string         `long:"basic-auth-realm" default:"Chronograf" description:"User visible basic authentication realm" env:"BASICAUTH_REALM"`
+	BasicAuthRealm    string         `long:"basic-auth-realm" default:"Cloudhub" description:"User visible basic authentication realm" env:"BASICAUTH_REALM"`
 	BasicAuthHtpasswd flags.Filename `long:"htpasswd" description:"File location of .htpasswd file, turns on HTTP basic authentication when specified." env:"HTPASSWD"`
 
 	TLSCiphers    string `long:"tls-ciphers" description:"Comma-separated list of cipher suites to use. Use 'help' cipher to print available ciphers." env:"TLS_CIPHERS"`
@@ -457,7 +457,7 @@ func (s *Server) useAuth() bool {
 			continue
 		default:
 			// If there was an attempt to configure authentication,
-			// chronograf should not disable authentication.
+			// cloudhub should not disable authentication.
 			return true
 		}
 	}
