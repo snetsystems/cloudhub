@@ -2,6 +2,7 @@ import AJAX from 'src/utils/ajax'
 
 const DEFAULT_ENVS = {
   telegrafSystemInterval: '1m',
+  customAutoRefresh: undefined,
 }
 
 export const getEnv = async url => {
