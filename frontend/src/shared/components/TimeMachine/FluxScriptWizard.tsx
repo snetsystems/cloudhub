@@ -14,7 +14,9 @@ import {
 } from 'src/reusable_ui'
 
 // Utils
+import {restartable} from 'src/shared/utils/restartable'
 import {
+  fetchDBsToRPs,
   formatDBwithRP,
   toComponentStatus,
   renderScript,
@@ -31,7 +33,6 @@ import {
 // Types
 import {RemoteDataState, Source, Me} from 'src/types'
 import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
-import {getBuckets} from 'src/flux/components/DatabaseList'
 import {fetchFluxMeasurements} from 'src/flux/components/FetchMeasurements'
 import {fieldsByMeasurement} from 'src/shared/apis/flux/metaQueries'
 import {parseFieldsByMeasurements} from 'src/shared/parsing/flux/values'
@@ -79,6 +80,8 @@ class FluxScriptWizard extends PureComponent<Props, State> {
     selectedFields: null,
     selectedAggFunction: DEFAULT_AGG_FUNCTION.value,
   }
+
+  private fetchDBsToRPs = restartable(fetchDBsToRPs)
 
   public render() {
     const {children, isWizardActive} = this.props
@@ -323,11 +326,7 @@ class FluxScriptWizard extends PureComponent<Props, State> {
     let dbsToRPs
 
     try {
-      const buckets = await getBuckets(source)
-      dbsToRPs = buckets.reduce((acc, db) => {
-        acc[db] = ['']
-        return acc
-      }, {})
+      dbsToRPs = await this.fetchDBsToRPs(source.links.proxy)
 
       if (dbsToRPs) {
         if (!isUserAuthorized(me.role, SUPERADMIN_ROLE) && isUsingAuth) {
