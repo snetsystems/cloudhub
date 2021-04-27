@@ -17,6 +17,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import {
   loadQueries as loadQueriesAction,
   setQueryToKill as setQueryToKillAction,
+  setQueriesSort as setQueriesSortAction,
   killQueryAsync,
 } from 'src/admin/actions/influxdb'
 import {eachRoleQueries} from 'src/admin/utils/eachRoleWorker'
@@ -35,9 +36,16 @@ class QueriesPage extends Component {
   }
 
   render() {
-    const {queries} = this.props
+    const {queries, queriesSort, changeSort} = this.props
 
-    return <QueriesTable queries={queries} onKillQuery={this.handleKillQuery} />
+    return (
+      <QueriesTable
+        queries={queries}
+        queriesSort={queriesSort}
+        changeSort={changeSort}
+        onKillQuery={this.handleKillQuery}
+      />
+    )
   }
 
   updateQueries = () => {
@@ -97,15 +105,21 @@ QueriesPage.propTypes = {
     }),
   }),
   queries: arrayOf(shape()),
+  queriesSort: string,
   loadQueries: func,
   queryIDToKill: string,
   setQueryToKill: func,
+  changeSort: func,
   killQuery: func,
   notify: func.isRequired,
 }
 
-const mapStateToProps = ({adminInfluxDB: {queries, queryIDToKill}, auth}) => ({
+const mapStateToProps = ({
+  adminInfluxDB: {queries, queriesSort, queryIDToKill},
+  auth,
+}) => ({
   queries,
+  queriesSort,
   queryIDToKill,
   auth,
 })
@@ -113,6 +127,7 @@ const mapStateToProps = ({adminInfluxDB: {queries, queryIDToKill}, auth}) => ({
 const mapDispatchToProps = dispatch => ({
   loadQueries: bindActionCreators(loadQueriesAction, dispatch),
   setQueryToKill: bindActionCreators(setQueryToKillAction, dispatch),
+  changeSort: bindActionCreators(setQueriesSortAction, dispatch),
   killQuery: bindActionCreators(killQueryAsync, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
 })
