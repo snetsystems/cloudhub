@@ -316,6 +316,15 @@ const adminInfluxDB = (state = initialState, action) => {
       }
     }
 
+    case 'INFLUXDB_SET_QUERIES_SORT': {
+      const queriesSort = action.payload.queriesSort
+      return {
+        ...state,
+        queriesSort,
+        queries: sortQueries(state.queries, queriesSort),
+      }
+    }
+
     case 'INFLUXDB_FILTER_USERS': {
       const {text} = action.payload
       const newState = {
