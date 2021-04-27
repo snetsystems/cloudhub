@@ -17,7 +17,6 @@ interface Props {
   notify: NotificationAction
   me: Me
   isUsingAuth: boolean
-  v2?: boolean
 }
 
 export async function getBuckets(source: Source): Promise<string[]> {
@@ -55,29 +54,28 @@ class DatabaseList extends PureComponent<Props, State> {
   }
 
   public async getDatabases() {
-    const {source, me, isUsingAuth, v2} = this.props
+    const {source, me, isUsingAuth} = this.props
     const currentOrganization = _.get(me, 'currentOrganization.name')
 
     try {
-      if (v2) {
-        const buckets = await getBuckets(source)
-        this.setState({databases: buckets})
+      const {data} = await showDatabases(source.links.proxy)
+      const {databases, errors} = showDatabasesParser(data)
+
+      if (errors.length > 0) {
+        throw errors[0] // only one error can come back from this, but it's returned as an array
+      }
+
+      let roleDatabases: string[]
+
+      if (isUserAuthorized(me.role, SUPERADMIN_ROLE) || !isUsingAuth) {
+        this.setState({databases: databases.sort()})
       } else {
-        const {data} = await showDatabases(source.links.proxy)
-        const {databases} = showDatabasesParser(data)
+        roleDatabases = _.filter(
+          databases,
+          database => database === currentOrganization
+        )
 
-        let roleDatabases: string[]
-
-        if (isUserAuthorized(me.role, SUPERADMIN_ROLE) || !isUsingAuth) {
-          this.setState({databases: databases.sort()})
-        } else {
-          roleDatabases = _.filter(
-            databases,
-            database => database === currentOrganization
-          )
-
-          this.setState({databases: roleDatabases})
-        }
+        this.setState({databases: roleDatabases})
       }
     } catch (err) {
       console.error(err)
