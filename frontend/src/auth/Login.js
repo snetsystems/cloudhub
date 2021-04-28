@@ -3,23 +3,18 @@ import {connect} from 'react-redux'
 import PropTypes from 'prop-types'
 import {Link, withRouter} from 'react-router'
 import _ from 'lodash'
-
 import {Radio, ButtonShape} from 'src/reusable_ui'
 import Notifications from 'src/shared/components/Notifications'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import SplashPage from 'src/shared/components/SplashPage'
-
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {loginAsync, createUserAsync} from 'src/auth/actions'
-
 import {notifyLoginCheck} from 'src/shared/copy/notifications'
 import {LOGIN_AUTH_TYPE, BASIC_PASSWORD_RESET_TYPE} from 'src/auth/constants'
-
 const VERSION = process.env.npm_package_version
 class Login extends PureComponent {
   constructor(props) {
     super(props)
-
     this.state = {
       name: '',
       password: '',
@@ -28,25 +23,16 @@ class Login extends PureComponent {
       activeEditorTab: 'Login',
     }
   }
-
   handleInputChange = fieldName => e => {
     this.setState({[fieldName]: e.target.value.trim()})
   }
-
   handleLoginSubmit = _.debounce(() => {
-    const {
-      router,
-      authData: {basicauth, retryPolicys},
-      handleLogin,
-      notify,
-    } = this.props
+    const {router, basicauth, retryPolicys, handleLogin, notify} = this.props
     const {name, password} = this.state
-
     if (_.isEmpty(name) || _.isEmpty(password)) {
       notify(notifyLoginCheck())
       return
     }
-
     handleLogin({
       url: basicauth.login,
       user: {name, password},
@@ -62,11 +48,9 @@ class Login extends PureComponent {
       }
     })
   }, 250)
-
   handleSignupSubmit = _.debounce(() => {
     const {handleCreateUser} = this.props
     const {name, password, email} = this.state
-
     handleCreateUser({url: '/basic/users', user: {name, password, email}}).then(
       ({status}) => {
         if (status === 201) {
@@ -75,14 +59,12 @@ class Login extends PureComponent {
       }
     )
   }, 250)
-
   onClickLoginSubmit = () => {
     this.handleLoginSubmit()
   }
   onClickSignUpSubmit = () => {
     this.handleSignupSubmit()
   }
-
   onClickActiveEditorTab = tab => {
     this.setState({
       name: '',
@@ -92,37 +74,29 @@ class Login extends PureComponent {
       activeEditorTab: tab,
     })
   }
-
   render() {
     const {
       router,
-      authData: {
-        auth,
-        passwordPolicy,
-        passwordPolicyMessage,
-        loginAuthType,
-        basicPasswordResetType,
-      },
+      auth,
+      passwordPolicy,
+      passwordPolicyMessage,
+      loginAuthType,
+      basicPasswordResetType,
     } = this.props
-
     const {name, password, passwordConfirm, email, activeEditorTab} = this.state
-
     const isSign = activeEditorTab === 'SignUp'
     let reg = null
     let isValidPassword = false
     let isValidPasswordConfirm = false
-
     if (passwordPolicy) {
       reg = new RegExp(passwordPolicy, 'ig')
     }
-
     if (reg) {
       if (password) {
         isValidPassword = reg.test(password)
         isValidPasswordConfirm = password === passwordConfirm
       }
     }
-
     return auth.isAuthLoading ? (
       <PageSpinner />
     ) : (
@@ -178,7 +152,6 @@ class Login extends PureComponent {
                       />
                     </div>
                   </div>
-
                   <div className="form-group">
                     {isSign && <label>Password</label>}
                     <div className="auth-form">
@@ -230,7 +203,6 @@ class Login extends PureComponent {
                             }
                             spellCheck={false}
                           />
-
                           {isSign &&
                             passwordConfirm.length > 0 &&
                             !isValidPasswordConfirm && (
@@ -273,7 +245,6 @@ class Login extends PureComponent {
                       </div>
                     </>
                   )}
-
                   {!isSign &&
                     basicPasswordResetType !==
                       BASIC_PASSWORD_RESET_TYPE.ADMIN && (
@@ -282,7 +253,6 @@ class Login extends PureComponent {
                       </Link>
                     )}
                 </>
-
                 <div className={'auth-button-bar'}>
                   {isSign ? (
                     <button
@@ -335,27 +305,42 @@ class Login extends PureComponent {
     )
   }
 }
-
+const mapStatetoProps = ({
+  auth,
+  links: {
+    basicauth,
+    passwordPolicy,
+    passwordPolicyMessage,
+    loginAuthType,
+    basicPasswordResetType,
+  },
+}) => ({
+  auth,
+  basicauth,
+  passwordPolicy,
+  passwordPolicyMessage,
+  loginAuthType,
+  basicPasswordResetType,
+})
 const mapDispatchToProps = {
   handleLogin: loginAsync,
   handleCreateUser: createUserAsync,
   notify: notifyAction,
 }
-
 const {array, bool, shape, string, func} = PropTypes
-
 Login.propTypes = {
   router: shape().isRequired,
-  authData: shape({
-    auth: shape({
-      me: shape(),
-      links: array,
-      isLoading: bool,
-    }),
+  auth: shape({
+    me: shape(),
+    links: array,
+    isLoading: bool,
+  }),
+  links: shape({
     basicauth: shape(),
-    links: shape(),
+    basicauth: string,
     passwordPolicy: string,
     passwordPolicyMessage: string,
+    retryPolicys: array,
   }),
   location: shape({
     pathname: string,
@@ -363,7 +348,5 @@ Login.propTypes = {
   handleLogin: func.isRequired,
   handleCreateUser: func.isRequired,
   notify: func.isRequired,
-  retryPolicys: array,
 }
-
-export default connect(null, mapDispatchToProps)(withRouter(Login))
+export default connect(mapStatetoProps, mapDispatchToProps)(Login)
