@@ -38,10 +38,10 @@ interface Props {
   setError: (b: boolean) => void
   sources: Source[]
   onBoarding?: boolean
-  kapacitor: Kapacitor
-  deleteKapacitor: sourcesActions.DeleteKapacitor
-  setActiveKapacitor: sourcesActions.SetActiveKapacitor
-  fetchKapacitors: sourcesActions.FetchKapacitorsAsync
+  kapacitor?: Kapacitor
+  deleteKapacitor: (kapacitor: Kapacitor) => Promise<void>
+  setActiveKapacitor: (kapacitor: Kapacitor) => Promise<void>
+  fetchKapacitors: (source: Source) => Promise<void>
   showNewKapacitor?: boolean
   setKapacitorDraft?: (kapacitor: Kapacitor) => void
 }
@@ -226,4 +226,4 @@ const mdtp = {
   fetchKapacitors: sourcesActions.fetchKapacitorsAsyncNoNotify,
 }
 
-export default connect(mstp, mdtp, null, {withRef: true})(KapacitorStep)
+export default connect(mstp, mdtp, null, {forwardRef: true})(KapacitorStep)
