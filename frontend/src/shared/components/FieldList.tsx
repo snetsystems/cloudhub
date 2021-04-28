@@ -153,49 +153,46 @@ class FieldList extends PureComponent<Props, State> {
           </div>
         ) : (
           <div className="query-builder--list">
-            <div>
-              <FancyScrollbar>
-                {this.state.fields.map((fieldFunc, i) => {
-                  const selectedFields = getFieldsWithName(
-                    fieldFunc.value,
-                    fields
-                  )
-                  const fieldName = getFieldName(fieldFunc)
-                  if (
-                    this.state.filterText &&
-                    !selectedFields.length &&
-                    !fieldName
-                      .toLowerCase()
-                      .includes(this.state.filterText.toLowerCase())
-                  ) {
-                    // do not render the item unless it is selected or matches filter
-                    return
-                  }
+            <FancyScrollbar>
+              {this.state.fields.map((fieldFunc, i) => {
+                const selectedFields = getFieldsWithName(
+                  fieldFunc.value,
+                  fields
+                )
+                const fieldName = getFieldName(fieldFunc)
+                if (
+                  this.state.filterText &&
+                  !selectedFields.length &&
+                  !fieldName
+                    .toLowerCase()
+                    .includes(this.state.filterText.toLowerCase())
+                ) {
+                  // do not render the item unless it is selected or matches filter
+                  return
+                }
+                const funcs: FieldFunc[] = getFuncsByFieldName(
+                  fieldFunc.value,
+                  fields
+                )
+                const fieldFuncs = selectedFields.length
+                  ? [this.addDesc(_.head(selectedFields), fieldFunc.desc)]
+                  : [fieldFunc]
 
-                  const funcs: FieldFunc[] = getFuncsByFieldName(
-                    fieldFunc.value,
-                    fields
-                  )
-                  const fieldFuncs = selectedFields.length
-                    ? [this.addDesc(_.head(selectedFields), fieldFunc.desc)]
-                    : [fieldFunc]
-
-                  return (
-                    <FieldListItem
-                      key={i}
-                      onToggleField={this.handleToggleField}
-                      onApplyFuncsToField={this.handleApplyFuncs}
-                      isSelected={!!selectedFields.length}
-                      fieldName={fieldName}
-                      fieldFuncs={fieldFuncs}
-                      funcs={functionNames(funcs)}
-                      isKapacitorRule={isKapacitorRule}
-                      isDisabled={isDisabled}
-                    />
-                  )
-                })}
-              </FancyScrollbar>
-            </div>
+                return (
+                  <FieldListItem
+                    key={i}
+                    onToggleField={this.handleToggleField}
+                    onApplyFuncsToField={this.handleApplyFuncs}
+                    isSelected={!!selectedFields.length}
+                    fieldName={fieldName}
+                    fieldFuncs={fieldFuncs}
+                    funcs={functionNames(funcs)}
+                    isKapacitorRule={isKapacitorRule}
+                    isDisabled={isDisabled}
+                  />
+                )
+              })}
+            </FancyScrollbar>
           </div>
         )}
         {hasAggregates ? (
