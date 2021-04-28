@@ -17,6 +17,8 @@ import {
 import {restartable} from 'src/shared/utils/restartable'
 import {
   fetchDBsToRPs,
+  fetchMeasurements,
+  fetchFields,
   formatDBwithRP,
   toComponentStatus,
   renderScript,
@@ -33,9 +35,6 @@ import {
 // Types
 import {RemoteDataState, Source, Me} from 'src/types'
 import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
-import {fetchFluxMeasurements} from 'src/flux/components/FetchMeasurements'
-import {fieldsByMeasurement} from 'src/shared/apis/flux/metaQueries'
-import {parseFieldsByMeasurements} from 'src/shared/parsing/flux/values'
 
 // These constants are selected so that the dropdown menus will not overflow
 // out of the `.flux-script-wizard--wizard` window
@@ -82,6 +81,8 @@ class FluxScriptWizard extends PureComponent<Props, State> {
   }
 
   private fetchDBsToRPs = restartable(fetchDBsToRPs)
+  private fetchMeasurements = restartable(fetchMeasurements)
+  private fetchFields = restartable(fetchFields)
 
   public render() {
     const {children, isWizardActive} = this.props
@@ -378,7 +379,10 @@ class FluxScriptWizard extends PureComponent<Props, State> {
     let measurements
 
     try {
-      measurements = await fetchFluxMeasurements(source, selectedDB)
+      measurements = await this.fetchMeasurements(
+        source.links.proxy,
+        selectedDB
+      )
     } catch {
       this.setState({
         measurements: [],
@@ -412,9 +416,11 @@ class FluxScriptWizard extends PureComponent<Props, State> {
     let fields
 
     try {
-      const fieldsResults = await fieldsByMeasurement(source, selectedDB)
-      const {fieldsByMeasurements} = parseFieldsByMeasurements(fieldsResults)
-      fields = fieldsByMeasurements[selectedMeasurement] || []
+      fields = await this.fetchFields(
+        source.links.proxy,
+        selectedDB,
+        selectedMeasurement
+      )
     } catch {
       this.setState({
         fields: [],
