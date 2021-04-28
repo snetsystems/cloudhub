@@ -301,8 +301,13 @@ class Root extends PureComponent<Record<string, never>, State> {
                 />
                 <Route
                   path="add-on/swan-setting"
-                  component={() => {
-                    return <GraphqlProvider page={'SwanSdplexSettingPage'} />
+                  component={props => {
+                    return (
+                      <GraphqlProvider
+                        {...props}
+                        page={'SwanSdplexSettingPage'}
+                      />
+                    )
                   }}
                 />
                 <Route path="account-change" component={UpdateUser} />
