@@ -61,7 +61,6 @@ import {
   clearSearchData,
   setSearchStatus,
   executeHistogramQueryAsync,
-  populateNamespacesAsync,
 } from 'src/logs/actions'
 import {getSourcesAsync} from 'src/shared/actions/sources'
 
@@ -142,7 +141,6 @@ interface Props extends WithRouterProps {
   fetchNewerChunkAsync: typeof fetchNewerChunkAsync
   fetchTailAsync: typeof fetchTailAsync
   fetchNamespaceSyslogStatusAsync: typeof fetchNamespaceSyslogStatusAsync
-  populateNamespacesAsync: typeof populateNamespacesAsync
   flushTailBuffer: typeof flushTailBuffer
   clearAllTimeBounds: typeof clearAllTimeBounds
   setNextTailLowerBound: typeof setNextTailLowerBound
@@ -1212,7 +1210,6 @@ const mapDispatchToProps = {
   getConfig: getLogConfigAsync,
   updateConfig: updateLogConfigAsync,
   notify: notifyAction,
-  populateNamespacesAsync,
 }
 
 export default connect(
