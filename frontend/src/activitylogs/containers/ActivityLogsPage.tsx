@@ -955,34 +955,26 @@ class ActivityLogsPage extends Component<Props, State> {
       <OverlayTechnology visible={isOverlayVisible}>
         <OptionsOverlay
           severityLevelColors={this.severityLevelColors}
-          onUpdateSeverityLevels={this.handleUpdateSeverityLevels}
+          onUpdate={this.handleUpdateOptions}
           onDismissOverlay={this.handleToggleOverlay}
           columns={this.tableColumns}
-          onUpdateColumns={this.handleUpdateColumns}
-          onUpdateSeverityFormat={this.handleUpdateSeverityFormat}
           severityFormat={this.severityFormat}
         />
       </OverlayTechnology>
     )
   }
 
-  private handleUpdateSeverityLevels = async (
-    severityLevelColors: SeverityLevelColor[]
+  private handleUpdateOptions = async (
+    severityLevelColors: SeverityLevelColor[],
+    severityFormat: SeverityFormat,
+    tableColumns: LogsTableColumn[]
   ): Promise<void> => {
     const {logConfig} = this.props
     await this.props.updateConfig(this.logConfigLink, {
       ...logConfig,
       severityLevelColors,
-    })
-  }
-
-  private handleUpdateSeverityFormat = async (
-    format: SeverityFormat
-  ): Promise<void> => {
-    const {logConfig} = this.props
-    await this.props.updateConfig(this.logConfigLink, {
-      ...logConfig,
-      severityFormat: format,
+      severityFormat,
+      tableColumns,
     })
   }
 
@@ -994,16 +986,6 @@ class ActivityLogsPage extends Component<Props, State> {
       SeverityFormatOptions.dotText
     )
     return severityFormat
-  }
-
-  private handleUpdateColumns = async (
-    tableColumns: LogsTableColumn[]
-  ): Promise<void> => {
-    const {logConfig} = this.props
-    await this.props.updateConfig(this.logConfigLink, {
-      ...logConfig,
-      tableColumns,
-    })
   }
 
   private handleUpdateTruncation = async (

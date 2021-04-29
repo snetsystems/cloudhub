@@ -10,8 +10,8 @@ interface Props {
   onFilterChange: (id: string, operator: string, value: string) => void
   onUpdateTruncation: (isTruncated: boolean) => Promise<void>
   isTruncated: boolean
-  isHistogramHidden: boolean
-  onShowHistogram: () => void
+  isHistogramHidden?: boolean
+  onShowHistogram?: () => void
 }
 
 class LogsFilters extends PureComponent<Props> {
@@ -59,9 +59,7 @@ class LogsFilters extends PureComponent<Props> {
           >
             <span className="icon bar-chart" />
           </button>
-        ) : (
-          undefined
-        )}
+        ) : undefined}
         <Radio>
           <Radio.Button
             id="logs-truncation--truncate"
