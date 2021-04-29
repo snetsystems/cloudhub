@@ -72,11 +72,13 @@ class UpdateUser extends PureComponent {
       this.getUser()
         .then(({data}) => {
           let user = {
-            email,
+            roles: data.roles,
             superAdmin: data.superAdmin,
+            email,
           }
 
           if (isValidPassword && isValidPasswordConfirm) {
+            console.log('data: ', data)
             user = {
               ...user,
               password,
@@ -85,6 +87,7 @@ class UpdateUser extends PureComponent {
 
           handleUpdateUser({url: `/cloudhub/v1/users/${me.id}`, user}).then(
             res => {
+              console.log('res: ', res)
               this.setState({email: '', password: '', passwordConfirm: ''})
               if (res.data?.email) {
                 this.setState({
@@ -293,6 +296,10 @@ const mapDispatchToProps = {
   handleGetUser: getUserAsync,
   notify: notifyAction,
 }
+const mapStateToProps = ({links: {passwordPolicy, passwordPolicyMessage}}) => ({
+  passwordPolicy,
+  passwordPolicyMessage,
+})
 
 const {array, bool, shape, string, func} = PropTypes
 
@@ -303,13 +310,11 @@ UpdateUser.propTypes = {
     links: array,
     isLoading: bool,
   }),
-  links: shape({
-    passwordPolicy: string,
-    passwordPolicyMessage: string,
-  }).isRequired,
+  passwordPolicy: string,
+  passwordPolicyMessage: string,
   handleGetUser: func.isRequired,
   handleUpdateUser: func.isRequired,
   notify: func.isRequired,
 }
 
-export default connect(null, mapDispatchToProps)(UpdateUser)
+export default connect(mapStateToProps, mapDispatchToProps)(UpdateUser)

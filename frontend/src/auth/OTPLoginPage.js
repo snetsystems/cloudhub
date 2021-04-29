@@ -11,6 +11,7 @@ import {loginAsync, otpChangeAsync} from 'src/auth/actions'
 class OTPLoginPage extends PureComponent {
   constructor(props) {
     super(props)
+    console.log('OTPLogin', props)
     this.state = {
       name: '',
       password: '',
@@ -22,12 +23,13 @@ class OTPLoginPage extends PureComponent {
     (isValidPassword, isValidPasswordConfirm) => {
       const {
         router,
-        authData: {basicauth, basicPassword},
+        basicauth,
+        basicPassword,
         handleOTPChange,
         handleLogin,
       } = this.props
       const {name, password} = this.state
-
+      console.log({basicauth, basicPassword, handleOTPChange, handleLogin})
       let user = {
         name,
       }
@@ -82,14 +84,13 @@ class OTPLoginPage extends PureComponent {
   }
 
   render() {
+    console.log('OTP this.props: ', this.props)
     const {
       router,
-      authData: {
-        basicauth,
-        basicPassword,
-        passwordPolicy,
-        passwordPolicyMessage,
-      },
+      basicauth,
+      basicPassword,
+      passwordPolicy,
+      passwordPolicyMessage,
     } = this.props
     const {name, password, passwordConfirm} = this.state
 
@@ -190,6 +191,10 @@ class OTPLoginPage extends PureComponent {
   }
 }
 
+const mapStateToProps = ({
+  links: {basicauth, passwordPolicy, passwordPolicyMessage, basicPassword},
+}) => ({basicauth, passwordPolicy, passwordPolicyMessage, basicPassword})
+
 const mapDispatchToProps = {
   handleLogin: loginAsync,
   handleOTPChange: otpChangeAsync,
@@ -199,14 +204,12 @@ const {shape, string, func} = PropTypes
 
 OTPLoginPage.propTypes = {
   router: shape().isRequired,
-  authData: shape({
-    basicauth: shape().isRequired,
-    passwordPolicy: string.isRequired,
-    passwordPolicyMessage: string.isRequired,
-  }).isRequired,
+  basicauth: shape().isRequired,
+  passwordPolicy: string.isRequired,
+  passwordPolicyMessage: string.isRequired,
   handleOTPChange: func.isRequired,
   location: shape().isRequired,
   handleLogin: func.isRequired,
 }
 
-export default connect(null, mapDispatchToProps)(OTPLoginPage)
+export default connect(mapStateToProps, mapDispatchToProps)(OTPLoginPage)
