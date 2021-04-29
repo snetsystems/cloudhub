@@ -12,7 +12,7 @@ import {BASIC_PASSWORD_RESET_TYPE} from 'src/auth/constants'
 class PasswordReset extends PureComponent {
   constructor(props) {
     super(props)
-    console.log('PasswordReset: ', props)
+
     this.state = {
       name: '',
     }

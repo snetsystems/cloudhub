@@ -78,7 +78,6 @@ class UpdateUser extends PureComponent {
           }
 
           if (isValidPassword && isValidPasswordConfirm) {
-            console.log('data: ', data)
             user = {
               ...user,
               password,
@@ -87,7 +86,6 @@ class UpdateUser extends PureComponent {
 
           handleUpdateUser({url: `/cloudhub/v1/users/${me.id}`, user}).then(
             res => {
-              console.log('res: ', res)
               this.setState({email: '', password: '', passwordConfirm: ''})
               if (res.data?.email) {
                 this.setState({

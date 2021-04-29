@@ -11,7 +11,7 @@ import {loginAsync, otpChangeAsync} from 'src/auth/actions'
 class OTPLoginPage extends PureComponent {
   constructor(props) {
     super(props)
-    console.log('OTPLogin', props)
+
     this.state = {
       name: '',
       password: '',
@@ -29,7 +29,7 @@ class OTPLoginPage extends PureComponent {
         handleLogin,
       } = this.props
       const {name, password} = this.state
-      console.log({basicauth, basicPassword, handleOTPChange, handleLogin})
+
       let user = {
         name,
       }
@@ -84,7 +84,6 @@ class OTPLoginPage extends PureComponent {
   }
 
   render() {
-    console.log('OTP this.props: ', this.props)
     const {
       router,
       basicauth,
