@@ -170,7 +170,6 @@ interface State {
 }
 
 class LogsPage extends Component<Props, State> {
-  private isMount = false
   public static getDerivedStateFromProps(props: Props) {
     const severityLevelColors: SeverityLevelColor[] = _.get(
       props.logConfig,
@@ -234,9 +233,7 @@ class LogsPage extends Component<Props, State> {
 
   public async componentDidMount() {
     this.isComponentMounted = true
-    this.isMount = true
     await this.getSources()
-
     await this.setCurrentSource()
 
     await this.props.getConfig(this.logConfigLink)
@@ -255,7 +252,6 @@ class LogsPage extends Component<Props, State> {
 
   public componentWillUnmount() {
     this.isComponentMounted = false
-    this.isMount = false
     this.clearTailInterval()
     this.cancelChunks()
   }
@@ -367,23 +363,21 @@ class LogsPage extends Component<Props, State> {
   }
 
   private startLogsTailFetchingInterval = () => {
-    if (this.isMount) {
-      this.flushTailBuffer()
-      this.clearTailInterval()
-      if (!this.isComponentMounted) {
-        return false
-      }
-
-      this.props.setNextTailLowerBound(Date.now())
-
-      this.interval = window.setInterval(
-        this.handleTailFetchingInterval,
-
-        DEFAULT_TAIL_CHUNK_DURATION_MS
-      )
-
-      this.setState({liveUpdating: true})
+    this.flushTailBuffer()
+    this.clearTailInterval()
+    if (!this.isComponentMounted) {
+      return false
     }
+
+    this.props.setNextTailLowerBound(Date.now())
+
+    this.interval = window.setInterval(
+      this.handleTailFetchingInterval,
+
+      DEFAULT_TAIL_CHUNK_DURATION_MS
+    )
+
+    this.setState({liveUpdating: true})
   }
 
   private handleTailFetchingInterval = async () => {
@@ -453,6 +447,9 @@ class LogsPage extends Component<Props, State> {
   }
 
   private handleFetchOlderChunk = async () => {
+    if (!this.isComponentMounted) {
+      return
+    }
     if (this.currentOlderChunksGenerator) {
       return
     }
@@ -1214,5 +1211,6 @@ const mapDispatchToProps = {
 
 export default connect(
   mapStateToProps,
-  mapDispatchToProps
+  mapDispatchToProps,
+  null
 )(withRouter(LogsPage))
