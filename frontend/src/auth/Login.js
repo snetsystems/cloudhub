@@ -11,7 +11,9 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {loginAsync, createUserAsync} from 'src/auth/actions'
 import {notifyLoginCheck} from 'src/shared/copy/notifications'
 import {LOGIN_AUTH_TYPE, BASIC_PASSWORD_RESET_TYPE} from 'src/auth/constants'
+
 const VERSION = process.env.npm_package_version
+
 class Login extends PureComponent {
   constructor(props) {
     super(props)
@@ -23,16 +25,20 @@ class Login extends PureComponent {
       activeEditorTab: 'Login',
     }
   }
+
   handleInputChange = fieldName => e => {
     this.setState({[fieldName]: e.target.value.trim()})
   }
+
   handleLoginSubmit = _.debounce(() => {
     const {router, basicauth, retryPolicys, handleLogin, notify} = this.props
     const {name, password} = this.state
+
     if (_.isEmpty(name) || _.isEmpty(password)) {
       notify(notifyLoginCheck())
       return
     }
+
     handleLogin({
       url: basicauth.login,
       user: {name, password},
@@ -48,23 +54,31 @@ class Login extends PureComponent {
       }
     })
   }, 250)
-  handleSignupSubmit = _.debounce(() => {
+
+  handleSignupSubmit = _.debounce((isValidPassword, isValidPasswordConfirm) => {
     const {handleCreateUser} = this.props
     const {name, password, email} = this.state
-    handleCreateUser({url: '/basic/users', user: {name, password, email}}).then(
-      ({status}) => {
+
+    if (isValidPassword && isValidPasswordConfirm) {
+      handleCreateUser({
+        url: '/basic/users',
+        user: {name, password, email},
+      }).then(({status}) => {
         if (status === 201) {
           this.onClickActiveEditorTab('Login')
         }
-      }
-    )
+      })
+    }
   }, 250)
+
   onClickLoginSubmit = () => {
     this.handleLoginSubmit()
   }
-  onClickSignUpSubmit = () => {
-    this.handleSignupSubmit()
+
+  onClickSignUpSubmit = (isValidPassword, isValidPasswordConfirm) => {
+    this.handleSignupSubmit(isValidPassword, isValidPasswordConfirm)
   }
+
   onClickActiveEditorTab = tab => {
     this.setState({
       name: '',
@@ -74,6 +88,7 @@ class Login extends PureComponent {
       activeEditorTab: tab,
     })
   }
+
   render() {
     const {
       router,
@@ -83,20 +98,24 @@ class Login extends PureComponent {
       loginAuthType,
       basicPasswordResetType,
     } = this.props
+
     const {name, password, passwordConfirm, email, activeEditorTab} = this.state
     const isSign = activeEditorTab === 'SignUp'
     let reg = null
     let isValidPassword = false
     let isValidPasswordConfirm = false
+
     if (passwordPolicy) {
       reg = new RegExp(passwordPolicy, 'ig')
     }
+
     if (reg) {
       if (password) {
         isValidPassword = reg.test(password)
         isValidPasswordConfirm = password === passwordConfirm
       }
     }
+
     return auth.isAuthLoading ? (
       <PageSpinner />
     ) : (
@@ -196,7 +215,10 @@ class Login extends PureComponent {
                               isSign
                                 ? e => {
                                     if (e.key === 'Enter') {
-                                      this.handleSignupSubmit()
+                                      this.handleSignupSubmit(
+                                        isValidPassword,
+                                        isValidPasswordConfirm
+                                      )
                                     }
                                   }
                                 : null
@@ -230,7 +252,10 @@ class Login extends PureComponent {
                               isSign
                                 ? e => {
                                     if (e.key === 'Enter') {
-                                      this.handleSignupSubmit()
+                                      this.handleSignupSubmit(
+                                        isValidPassword,
+                                        isValidPasswordConfirm
+                                      )
                                     }
                                   }
                                 : null
@@ -263,7 +288,12 @@ class Login extends PureComponent {
                         isValidPassword === false ||
                         isValidPasswordConfirm === false
                       }
-                      onClick={this.onClickSignUpSubmit}
+                      onClick={() =>
+                        this.onClickSignUpSubmit(
+                          isValidPassword,
+                          isValidPasswordConfirm
+                        )
+                      }
                     >
                       Sign Up
                     </button>
