@@ -39,17 +39,17 @@ class OTPLoginPage extends PureComponent {
           ...user,
           password,
         }
-      }
 
-      handleOTPChange({url: basicPassword, user}).then(res => {
-        if (res.status === 200) {
-          setTimeout(() => {
-            handleLogin({url: basicauth.login, user}).then(() => {
-              router.go('/')
-            })
-          }, 1000)
-        }
-      })
+        handleOTPChange({url: basicPassword, user}).then(res => {
+          if (res.status === 200) {
+            setTimeout(() => {
+              handleLogin({url: basicauth.login, user}).then(() => {
+                router.go('/')
+              })
+            }, 1000)
+          }
+        })
+      }
     },
     250
   )
@@ -74,13 +74,13 @@ class OTPLoginPage extends PureComponent {
   }
 
   componentDidMount = () => {
-    const {name} = this.props.location.state
-
-    if (_.isEmpty(name)) {
+    const {location, router} = this.props
+    if (location.state?.name) {
+      const {name} = location.state
+      this.setState({name})
+    } else {
       router.push('/')
     }
-
-    this.setState({name})
   }
 
   render() {
