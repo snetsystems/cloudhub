@@ -57,7 +57,7 @@ func (p *CodeExchangeCSRF) AuthCodeURL(ctx context.Context, j *AuthMux) (string,
 
 	now := j.Now()
 
-	// This token will be valid for 10 minutes.  Any chronograf server will
+	// This token will be valid for 10 minutes.  Any cloudhub server will
 	// be able to validate this token.
 	stateData := Principal{
 		Subject:   base64.RawURLEncoding.EncodeToString(csrf),
@@ -184,7 +184,7 @@ func (c *CodeExchangePKCE) AuthCodeURL(ctx context.Context, j *AuthMux) (string,
 	}
 
 	now := j.Now()
-	// This token will be valid for 10 minutes.  Any chronograf server will
+	// This token will be valid for 10 minutes.  Any cloudhub server will
 	// be able to validate this token.
 	stateData := Principal{
 		Subject:   encryptedCodeVerifier,

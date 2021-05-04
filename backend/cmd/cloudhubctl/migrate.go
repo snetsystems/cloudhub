@@ -21,8 +21,8 @@ func init() {
 }
 
 type migrateCommand struct {
-	From string `short:"f" long:"from" description:"Full path to boltDB file or etcd (e.g. 'bolt:///path/to/chronograf-v1.db' or 'etcd://user:pass@localhost:2379')" default:"chronograf-v1.db"`
-	To   string `short:"t" long:"to" description:"Full path to boltDB file or etcd (e.g. 'bolt:///path/to/chronograf-v1.db' or 'etcds://user:pass@localhost:2379?cert=cert_path&key=key_path&ca=path_to_ca_certs')"`
+	From string `short:"f" long:"from" description:"Full path to boltDB file or etcd (e.g. 'bolt:///path/to/cloudhub-v1.db' or 'etcd://user:pass@localhost:2379')" default:"cloudhub-v1.db"`
+	To   string `short:"t" long:"to" description:"Full path to boltDB file or etcd (e.g. 'bolt:///path/to/cloudhub-v1.db' or 'etcds://user:pass@localhost:2379?cert=cert_path&key=key_path&ca=path_to_ca_certs')"`
 }
 
 func (m *migrateCommand) Execute(args []string) error {
