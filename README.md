@@ -117,8 +117,8 @@ You could know the changelog by versions via that.
 ```
 # If you're on Windows, run "Git Bash" and type the followings.
 
-$ go get github.com/snetsystems/cloudhub
-$ cd $GOPATH/src/github.com/snetsystems/cloudhub
+$ git clone https://github.com/snetsystems/cloudhub.git
+$ cd cloudhub
 $ make
 ```
 
@@ -142,27 +142,10 @@ You can see the CloudHub UI via browser: http://localhost:8888
 
 ## How to debug via VSCode for Development.
 
-For your convenience, make "_.code-workspace_" for VSCode in your snetsystems folder.
+Run "_cloudhub.code-workspace_" within cloudhub folder.
 
 ```
-$ cd $GOPATH/src/github.com/snetsystems/
-$ cat snet.code-workspace
-{
-  "folders": [
-    {
-      "path": "cloudhub"
-    }
-  ],
-  "settings": {
-    "files.exclude": {}
-  }
-}
-```
-
-Run VSCode as above workspace.
-
-```
-$ code snet.code-workspace
+$ code cloudhub.code-workspace
 ```
 
 Simply, select **"Launch Server"** and then run.<br>
