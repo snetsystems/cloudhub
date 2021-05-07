@@ -1,10 +1,9 @@
-module github.com/snetsystems/cloudhub/backend
+module github.com/snetsystems/cloudhub
 
 require (
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/abbot/go-http-auth v0.4.0
 	github.com/ajg/form v1.5.1 // indirect
-	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bouk/httprouter v0.0.0-20160817010721-ee8b3818a7f5
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/elazarl/go-bindata-assetfs v1.0.0
@@ -27,17 +26,14 @@ require (
 	github.com/influxdata/kapacitor v1.5.9
 	github.com/influxdata/usage-client v0.0.0-20160829180054-6d3895376368
 	github.com/jessevdk/go-flags v1.4.0
-	github.com/k0kubun/colorstring v0.0.0-20150214042306-9440f1994b88 // indirect
 	github.com/lestrrat-go/jwx v0.9.0
 	github.com/mattn/go-colorable v0.1.6 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.2
 	github.com/moul/http2curl v1.0.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/sclevine/agouti v3.0.0+incompatible // indirect
 	github.com/sergi/go-diff v1.1.0
 	github.com/sirupsen/logrus v1.6.0
-	github.com/smartystreets/goconvey v1.6.4 // indirect
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.7.0
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20200427203606-3cfed13b9966 // indirect
 	github.com/valyala/fasthttp v1.15.1 // indirect
 	github.com/xeipuuv/gojsonschema v1.2.0 // indirect
@@ -60,4 +56,4 @@ replace google.golang.org/grpc => google.golang.org/grpc v1.26.0
 
 replace github.com/prometheus/prometheus => github.com/goller/prometheus v1.6.1-0.20170502220046-58298e738211
 
-go 1.15
+go 1.16

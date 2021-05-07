@@ -106,7 +106,7 @@ You could know the changelog by versions via that.
 
 ### Preparing dependencies
 
-- CloudHub works with go 1.11+, node LTS, and yarn 1.7+.
+- CloudHub works with **go 1.15+**, **node LTS**, and **yarn 1.15+**.
 - In the case of Windows, it cannot be invoked "make" command,<br>So you need to download and install [GNUMake](http://gnuwin32.sourceforge.net/packages/make.htm) for windows.
   - [Direct download](http://gnuwin32.sourceforge.net/downlinks/make.php)
 
