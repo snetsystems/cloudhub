@@ -741,6 +741,7 @@ func TestService_UpdateUser(t *testing.T) {
 		UsersStore         cloudhub.UsersStore
 		OrganizationsStore cloudhub.OrganizationsStore
 		Logger             cloudhub.Logger
+		SourcesStore       cloudhub.SourcesStore
 	}
 	type args struct {
 		w           *httptest.ResponseRecorder
@@ -783,6 +784,11 @@ func TestService_UpdateUser(t *testing.T) {
 						default:
 							return nil, fmt.Errorf("User with ID %d not found", *q.ID)
 						}
+					},
+				},
+				SourcesStore: &mocks.SourcesStore{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{}, fmt.Errorf("Empty source")
 					},
 				},
 			},
@@ -850,6 +856,11 @@ func TestService_UpdateUser(t *testing.T) {
 						default:
 							return nil, fmt.Errorf("User with ID %d not found", *q.ID)
 						}
+					},
+				},
+				SourcesStore: &mocks.SourcesStore{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{}, fmt.Errorf("Empty source")
 					},
 				},
 			},
@@ -927,6 +938,11 @@ func TestService_UpdateUser(t *testing.T) {
 						}
 					},
 				},
+				SourcesStore: &mocks.SourcesStore{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{}, fmt.Errorf("Empty source")
+					},
+				},
 			},
 			args: args{
 				w: httptest.NewRecorder(),
@@ -986,6 +1002,11 @@ func TestService_UpdateUser(t *testing.T) {
 						}
 					},
 				},
+				SourcesStore: &mocks.SourcesStore{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{}, fmt.Errorf("Empty source")
+					},
+				},
 			},
 			args: args{
 				w: httptest.NewRecorder(),
@@ -1012,6 +1033,86 @@ func TestService_UpdateUser(t *testing.T) {
 			wantStatus:      http.StatusUnprocessableEntity,
 			wantContentType: "application/json",
 			wantBody:        `{"code":422,"message":"duplicate organization \"1\" in roles"}`,
+		},
+		{
+			name: "Update cloudhub user roles also removes existing roles that reference unknown organization",
+			fields: fields{
+				Logger: log.New(log.DebugLevel),
+				OrganizationsStore: &mocks.OrganizationsStore{
+					GetF: func(ctx context.Context, q cloudhub.OrganizationQuery) (*cloudhub.Organization, error) {
+						switch *q.ID {
+						case "1":
+							return &cloudhub.Organization{
+								ID:          "1",
+								Name:        "org",
+								DefaultRole: roles.ViewerRoleName,
+							}, nil
+						}
+						return nil, cloudhub.ErrOrganizationNotFound
+					},
+				},
+				UsersStore: &mocks.UsersStore{
+					UpdateF: func(ctx context.Context, user *cloudhub.User) error {
+						return nil
+					},
+					GetF: func(ctx context.Context, q cloudhub.UserQuery) (*cloudhub.User, error) {
+						switch *q.ID {
+						case 1336:
+							return &cloudhub.User{
+								ID:       1336,
+								Name:     "bobbetta",
+								Provider: "github",
+								Scheme:   "oauth2",
+								Roles: []cloudhub.Role{
+									{
+										Organization: "orphan",
+										Name:         EditorRole.Name,
+									},
+								},
+							}, nil
+						default:
+							return nil, fmt.Errorf("User with ID %d not found", *q.ID)
+						}
+					},
+				},
+				SourcesStore: &mocks.SourcesStore{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{}, fmt.Errorf("Empty source")
+					},
+				},
+			},
+			args: args{
+				w: httptest.NewRecorder(),
+				r: httptest.NewRequest(
+					"PATCH",
+					"http://any.url",
+					nil,
+				),
+				userKeyUser: &cloudhub.User{
+					ID:         0,
+					Name:       "coolUser",
+					Provider:   "github",
+					Scheme:     "oauth2",
+					SuperAdmin: false,
+				},
+				user: &userRequest{
+					ID: 1336,
+					Roles: []cloudhub.Role{
+						{
+							Organization: "orphan",
+							Name:         EditorRole.Name,
+						},
+						{
+							Name:         roles.AdminRoleName,
+							Organization: "1",
+						},
+					},
+				},
+			},
+			id:              "1336",
+			wantStatus:      http.StatusOK,
+			wantContentType: "application/json",
+			wantBody:        `{"id":"1336","superAdmin":false,"name":"bobbetta","provider":"github","scheme":"oauth2","links":{"self":"/cloudhub/v1/users/1336"},"roles":[{"name":"admin","organization":"1"}]}`,
 		},
 		{
 			name: "SuperAdmin modifying their own SuperAdmin Status - user missing from context",
@@ -1053,6 +1154,11 @@ func TestService_UpdateUser(t *testing.T) {
 						default:
 							return nil, fmt.Errorf("User with ID %d not found", *q.ID)
 						}
+					},
+				},
+				SourcesStore: &mocks.SourcesStore{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{}, fmt.Errorf("Empty source")
 					},
 				},
 			},
@@ -1119,6 +1225,11 @@ func TestService_UpdateUser(t *testing.T) {
 						default:
 							return nil, fmt.Errorf("User with ID %d not found", *q.ID)
 						}
+					},
+				},
+				SourcesStore: &mocks.SourcesStore{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{}, fmt.Errorf("Empty source")
 					},
 				},
 			},
@@ -1194,6 +1305,11 @@ func TestService_UpdateUser(t *testing.T) {
 						}
 					},
 				},
+				SourcesStore: &mocks.SourcesStore{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{}, fmt.Errorf("Empty source")
+					},
+				},
 			},
 			args: args{
 				w: httptest.NewRecorder(),
@@ -1261,6 +1377,11 @@ func TestService_UpdateUser(t *testing.T) {
 						default:
 							return nil, fmt.Errorf("User with ID %d not found", *q.ID)
 						}
+					},
+				},
+				SourcesStore: &mocks.SourcesStore{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{}, fmt.Errorf("Empty source")
 					},
 				},
 			},
@@ -1332,6 +1453,11 @@ func TestService_UpdateUser(t *testing.T) {
 						}
 					},
 				},
+				SourcesStore: &mocks.SourcesStore{
+					GetF: func(ctx context.Context, ID int) (cloudhub.Source, error) {
+						return cloudhub.Source{}, fmt.Errorf("Empty source")
+					},
+				},
 			},
 			args: args{
 				w: httptest.NewRecorder(),
@@ -1370,6 +1496,7 @@ func TestService_UpdateUser(t *testing.T) {
 				Store: &mocks.Store{
 					UsersStore:         tt.fields.UsersStore,
 					OrganizationsStore: tt.fields.OrganizationsStore,
+					SourcesStore:       tt.fields.SourcesStore,
 				},
 				Logger: tt.fields.Logger,
 			}

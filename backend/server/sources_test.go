@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/bouk/httprouter"
@@ -117,6 +118,39 @@ func Test_ValidSourceRequest(t *testing.T) {
 			},
 		},
 		{
+			name: "support InfluxDBv2 type",
+			args: args{
+				source: &cloudhub.Source{
+					ID:                 1,
+					Name:               "I'm a really great source",
+					Type:               cloudhub.InfluxDBv2,
+					Username:           "organization",
+					Password:           "pwd",
+					SharedSecret:       "supersecret",
+					URL:                "http://www.any.url.com",
+					MetaURL:            "http://www.so.meta.com",
+					InsecureSkipVerify: true,
+					Default:            true,
+					Telegraf:           "telegraf",
+				},
+			},
+			wants: wants{
+				source: &cloudhub.Source{
+					ID:                 1,
+					Name:               "I'm a really great source",
+					Type:               cloudhub.InfluxDBv2,
+					Username:           "organization",
+					Password:           "pwd",
+					SharedSecret:       "supersecret",
+					URL:                "http://www.any.url.com",
+					MetaURL:            "http://www.so.meta.com",
+					InsecureSkipVerify: true,
+					Default:            true,
+					Telegraf:           "telegraf",
+				},
+			},
+		},
+		{
 			name: "bad url",
 			args: args{
 				source: &cloudhub.Source{
@@ -135,7 +169,7 @@ func Test_ValidSourceRequest(t *testing.T) {
 				},
 			},
 			wants: wants{
-				err: fmt.Errorf("invalid source URI: parse im a bad url: invalid URI for request"),
+				err: fmt.Errorf("invalid source URI: parse"), // im a bad url: invalid URI for request
 			},
 		},
 	}
@@ -150,6 +184,12 @@ func Test_ValidSourceRequest(t *testing.T) {
 				return
 			}
 			if err.Error() != tt.wants.err.Error() {
+				if err != nil && tt.wants.err != nil {
+					if strings.HasPrefix(err.Error(), tt.wants.err.Error()) {
+						// error messages vary between go versions, but they have the same prefixes
+						return
+					}
+				}
 				t.Errorf("%q. ValidSourceRequest() = %q, want %q", tt.name, err, tt.wants.err)
 			}
 		})
@@ -369,8 +409,13 @@ func TestService_UpdateSource(t *testing.T) {
 			Logger: tt.fields.Logger,
 		}
 		ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusNoContent)
-			w.Header().Set("X-Influxdb-Build", "ENT")
+			if r.URL.Path == "/query" {
+				w.WriteHeader(http.StatusOK) // credentials
+			} else {
+				w.WriteHeader(http.StatusNoContent)
+				w.Header().Set("X-Influxdb-Build", "ENT")
+			}
+			w.Write(([]byte)("{}"))
 		}))
 		defer ts.Close()
 
@@ -655,7 +700,7 @@ func TestService_NewSourceUser(t *testing.T) {
 			ID:              "BAD",
 			wantStatus:      http.StatusUnprocessableEntity,
 			wantContentType: "application/json",
-			wantBody:        `{"code":422,"message":"Username required"}`,
+			wantBody:        `{"code":422,"message":"username required"}`,
 		},
 		{
 			name: "Bad JSON",
@@ -1288,7 +1333,7 @@ func TestService_UpdateSourceUser(t *testing.T) {
 			UID:             "marty",
 			wantStatus:      http.StatusUnprocessableEntity,
 			wantContentType: "application/json",
-			wantBody:        `{"code":422,"message":"No fields to update"}`,
+			wantBody:        `{"code":422,"message":"no fields to update"}`,
 		},
 	}
 	for _, tt := range tests {

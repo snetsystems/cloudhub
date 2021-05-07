@@ -98,6 +98,8 @@ const (
 	InfluxEnterprise = "influx-enterprise"
 	// InfluxRelay is the basic HA layer over InfluxDB
 	InfluxRelay = "influx-relay"
+	// InfluxDBv2 is Influx DB 2.x with Token authentication
+	InfluxDBv2 = "influx-v2"
 )
 
 // TSDBStatus represents the current status of a time series database
@@ -219,12 +221,13 @@ type DashboardQuery struct {
 
 // TemplateQuery is used to retrieve choices for template replacement
 type TemplateQuery struct {
-	Command     string `json:"influxql"`     // Command is the query itself
-	DB          string `json:"db,omitempty"` // DB is optional and if empty will not be used.
-	RP          string `json:"rp,omitempty"` // RP is a retention policy and optional; if empty will not be used.
-	Measurement string `json:"measurement"`  // Measurement is the optionally selected measurement for the query
-	TagKey      string `json:"tagKey"`       // TagKey is the optionally selected tag key for the query
-	FieldKey    string `json:"fieldKey"`     // FieldKey is the optionally selected field key for the query
+	Command     string `json:"influxql"`       // Command is the query itself
+	Flux        string `json:"flux,omitempty"` // flux is the flux query, if available
+	DB          string `json:"db,omitempty"`   // DB is optional and if empty will not be used.
+	RP          string `json:"rp,omitempty"`   // RP is a retention policy and optional; if empty will not be used.
+	Measurement string `json:"measurement"`    // Measurement is the optionally selected measurement for the query
+	TagKey      string `json:"tagKey"`         // TagKey is the optionally selected tag key for the query
+	FieldKey    string `json:"fieldKey"`       // FieldKey is the optionally selected field key for the query
 }
 
 // Response is the result of a query against a TimeSeries
@@ -994,6 +997,7 @@ type VspheresStore interface {
 // that were set on the server
 type Environment struct {
 	TelegrafSystemInterval time.Duration `json:"telegrafSystemInterval"`
+	CustomAutoRefresh      string        `json:"customAutoRefresh,omitempty"`
 }
 
 // Topology represents represents an vsphere.

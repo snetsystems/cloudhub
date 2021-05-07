@@ -130,14 +130,19 @@ func (s *Service) GetDatabases(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dbs := make([]dbResponse, len(databases))
-	for i, d := range databases {
+	dbs := make([]dbResponse, 0, len(databases))
+	for _, d := range databases {
 		rps, err := s.allRPs(ctx, dbsvc, srcID, d.Name)
 		if err != nil {
-			Error(w, http.StatusBadRequest, err.Error(), s.Logger)
-			return
+			// https://github.com/influxdata/chronograf/issues/5531
+			// ignore the database if it can be shown, but retention policies cannot be listed
+			s.Logger.
+				WithField("component", "server").
+				WithField("db", d.Name).
+				Error("Unable to get retention policies: ", err.Error())
+			continue
 		}
-		dbs[i] = newDBResponse(srcID, d.Name, rps)
+		dbs = append(dbs, newDBResponse(srcID, d.Name, rps))
 	}
 
 	res := dbsResponse{

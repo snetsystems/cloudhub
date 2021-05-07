@@ -1,4 +1,5 @@
-import React, {SFC, ChangeEvent, KeyboardEvent} from 'react'
+import React, {FunctionComponent, ChangeEvent, KeyboardEvent} from 'react'
+import {CSSProperties} from 'react'
 
 const disabledClass = (disabled: boolean) => (disabled ? ' disabled' : '')
 
@@ -9,13 +10,13 @@ interface Props {
   searchTerm: string
   buttonSize: string
   buttonColor: string
-  toggleStyle?: object
+  toggleStyle?: CSSProperties
   disabled?: boolean
   onFilterChange: OnFilterChangeHandler
   onFilterKeyPress: OnFilterKeyPress
 }
 
-const DropdownInput: SFC<Props> = ({
+const DropdownInput: FunctionComponent<Props> = ({
   searchTerm,
   buttonSize,
   buttonColor,

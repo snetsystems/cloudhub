@@ -6,6 +6,7 @@ import React, {
   KeyboardEvent,
 } from 'react'
 import {connect} from 'react-redux'
+import {withRouter} from 'react-router'
 import {isEmpty} from 'lodash'
 
 // Utils
@@ -55,6 +56,7 @@ import {
   RESERVED_TEMPLATE_NAMES,
 } from 'src/tempVars/constants'
 import {FIVE_SECONDS} from 'src/shared/constants/index'
+import FluxQueryTemplateBuilder from './FluxQueryTemplateBuilder'
 
 interface Props {
   // We will assume we are creating a new template if none is passed in
@@ -86,6 +88,7 @@ const TEMPLATE_BUILDERS = {
   [TemplateType.TagKeys]: TagKeysTemplateBuilder,
   [TemplateType.TagValues]: TagValuesTemplateBuilder,
   [TemplateType.MetaQuery]: MetaQueryTemplateBuilder,
+  [TemplateType.FluxQuery]: FluxQueryTemplateBuilder,
   [TemplateType.Text]: TextTemplateBuilder,
 }
 
@@ -241,9 +244,8 @@ class TemplateVariableEditor extends PureComponent<Props, State> {
     const nextValues = values.map(v => {
       if (v.value === selected.value) {
         return {...v, selected: true}
-      } else {
-        return {...v, selected: false}
       }
+      return {...v, selected: false}
     })
 
     this.setState({nextTemplate: {...nextTemplate, values: nextValues}})
@@ -396,6 +398,19 @@ class TemplateVariableEditor extends PureComponent<Props, State> {
   }
 }
 
-const mapDispatchToProps = {notify: notifyActionCreator}
+const mapDispatchToProps = {
+  notify: notifyActionCreator,
+}
 
-export default connect(null, mapDispatchToProps)(TemplateVariableEditor)
+const mapStateToProps = state => {
+  const {sources} = state
+
+  return {
+    sources,
+  }
+}
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(withRouter(TemplateVariableEditor))

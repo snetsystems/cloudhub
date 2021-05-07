@@ -1,4 +1,4 @@
-import React, {SFC} from 'react'
+import React, {FunctionComponent} from 'react'
 
 interface Props {
   filterText: string
@@ -6,7 +6,7 @@ interface Props {
   onFilterText: (e: React.InputHTMLAttributes<HTMLInputElement>) => void
 }
 
-const MeasurementListFilter: SFC<Props> = ({
+const QueryBuilderFilter: FunctionComponent<Props> = ({
   onEscape,
   onFilterText,
   filterText,
@@ -26,4 +26,4 @@ const MeasurementListFilter: SFC<Props> = ({
   </div>
 )
 
-export default MeasurementListFilter
+export default QueryBuilderFilter

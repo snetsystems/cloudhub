@@ -90,7 +90,7 @@ lint:
 	cd frontend && yarn run lint
 
 lint-ci:
-	cd frontend && yarn run eslint && yarn run tslint && yarn run tsc # fail fast for ci process
+	cd frontend && yarn run eslint && yarn run tsc # fail fast for ci process
 
 run: ${BINARY}
 	./backend/cmd/cloudhub/${BINARY}

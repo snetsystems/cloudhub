@@ -3,9 +3,8 @@ import 'babel-polyfill'
 import React, {PureComponent} from 'react'
 import {render} from 'react-dom'
 import {Provider as ReduxProvider} from 'react-redux'
-import {Provider as UnstatedProvider} from 'unstated'
 import {Router, Route, useRouterHistory} from 'react-router'
-import {createHistory} from 'history'
+import {createHistory, Pathname} from 'history'
 import {syncHistoryWithStore} from 'react-router-redux'
 import {bindActionCreators} from 'redux'
 import _ from 'lodash'
@@ -69,11 +68,16 @@ import {
   ActionTypes as vmHostActionType,
 } from 'src/hosts/actions'
 
+import {TimeMachineContextProvider} from 'src/shared/utils/TimeMachineContext'
+
+import {getEnv} from 'src/shared/apis/env'
+
 import 'src/style/cloudhub.scss'
 
 import {HEARTBEAT_INTERVAL} from 'src/shared/constants'
 
 import * as ErrorsModels from 'src/types/errors'
+import {setCustomAutoRefreshOptions} from './shared/components/dropdown_auto_refresh/autoRefreshOptions'
 
 import {AddonType} from 'src/shared/constants'
 import {Addon} from 'src/types/auth'
@@ -101,8 +105,15 @@ const browserHistory = useRouterHistory(createHistory)({
 const store = configureStore(loadLocalStorage(errorsQueue), browserHistory)
 const {dispatch} = store
 
-browserHistory.listen(() => {
-  dispatch(disablePresentationMode())
+// pathname of last location change
+let lastPathname: Pathname
+
+browserHistory.listen(location => {
+  // disable presentation mode only if pathname changes, #5382
+  if (lastPathname !== location.pathname) {
+    dispatch(disablePresentationMode())
+    lastPathname = location.pathname
+  }
 })
 
 window.addEventListener('keyup', event => {
@@ -115,11 +126,20 @@ window.addEventListener('keyup', event => {
 
 const history = syncHistoryWithStore(browserHistory, store)
 
+const populateEnv = async url => {
+  try {
+    const envVars = await getEnv(url)
+    setCustomAutoRefreshOptions(envVars.customAutoRefresh)
+  } catch (error) {
+    console.error('Error fetching envVars', error)
+  }
+}
+
 interface State {
   ready: boolean
 }
 
-class Root extends PureComponent<{}, State> {
+class Root extends PureComponent<Record<string, never>, State> {
   private getLinks = bindActionCreators(getLinksAsync, dispatch)
   private getMe = bindActionCreators(getMeAsync, dispatch)
   private getVSpheres = bindActionCreators(getVSpheresAsync, dispatch)
@@ -171,13 +191,13 @@ class Root extends PureComponent<{}, State> {
     }
   }
 
-  public async componentWillMount() {
+  public async UNSAFE_componentWillMount() {
     this.flushErrorsQueue()
 
     try {
       await this.getLinks()
       await this.checkAuth()
-
+      await populateEnv(store.getState().links.environment)
       this.setState({ready: true})
     } catch (error) {
       dispatch(errorThrown(error))
@@ -193,7 +213,7 @@ class Root extends PureComponent<{}, State> {
   public render() {
     return this.state.ready ? (
       <ReduxProvider store={store}>
-        <UnstatedProvider>
+        <TimeMachineContextProvider>
           <Router history={history}>
             <Route path="/" component={UserIsAuthenticated(CheckSources)} />
             <Route path="/login" component={UserIsNotAuthenticated(Login)} />
@@ -239,14 +259,19 @@ class Root extends PureComponent<{}, State> {
                 <Route path="alerts" component={AlertsApp} />
                 <Route path="alert-rules" component={KapacitorRulesPage} />
                 <Route
+                  path="kapacitors/:kid/alert-rules/:ruleID" // ruleID can be "new"
+                  component={KapacitorRulePage}
+                />
+                <Route
                   path="alert-rules/:ruleID"
                   component={KapacitorRulePage}
                 />
-                <Route path="alert-rules/new" component={KapacitorRulePage} />
                 <Route path="activity-logs" component={ActivityLogsPage} />
                 <Route path="logs" component={LogsPage} />
-                <Route path="tickscript/new" component={TickscriptPage} />
-                <Route path="tickscript/:ruleID" component={TickscriptPage} />
+                <Route
+                  path="kapacitors/:kid/tickscripts/:ruleID" // ruleID can be "new"
+                  component={TickscriptPage}
+                />
                 <Route path="kapacitors/new" component={KapacitorPage} />
                 <Route path="kapacitors/:id/edit" component={KapacitorPage} />
                 <Route
@@ -276,8 +301,13 @@ class Root extends PureComponent<{}, State> {
                 />
                 <Route
                   path="add-on/swan-setting"
-                  component={() => {
-                    return <GraphqlProvider page={'SwanSdplexSettingPage'} />
+                  component={props => {
+                    return (
+                      <GraphqlProvider
+                        {...props}
+                        page={'SwanSdplexSettingPage'}
+                      />
+                    )
                   }}
                 />
                 <Route path="account-change" component={UpdateUser} />
@@ -285,7 +315,7 @@ class Root extends PureComponent<{}, State> {
             </Route>
             <Route path="*" component={NotFound} />
           </Router>
-        </UnstatedProvider>
+        </TimeMachineContextProvider>
       </ReduxProvider>
     ) : (
       <PageSpinner />

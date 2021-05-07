@@ -1,7 +1,6 @@
 // Libraries
 import React, {Component} from 'react'
 import _ from 'lodash'
-import {Subscribe} from 'unstated'
 
 // Components
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -10,7 +9,10 @@ import CEOHeader from 'src/dashboards/components/CEOHeader'
 
 // Utils
 import {getDeep} from 'src/utils/wrappers'
-import {TimeMachineContainer} from 'src/shared/utils/TimeMachineContainer'
+import {
+  TimeMachineContainer,
+  TimeMachineContextConsumer,
+} from 'src/shared/utils/TimeMachineContext'
 import {initialStateFromCell} from 'src/shared/utils/timeMachine'
 
 // Actions
@@ -352,7 +354,7 @@ class CellEditorOverlay extends Component<Props, State> {
 
 const ConnectedCellEditorOverlay = (props: PassedProps & Auth) => {
   return (
-    <Subscribe to={[TimeMachineContainer]}>
+    <TimeMachineContextConsumer>
       {(container: TimeMachineContainer) => {
         const {state} = container
         return (
@@ -380,7 +382,7 @@ const ConnectedCellEditorOverlay = (props: PassedProps & Auth) => {
           />
         )
       }}
-    </Subscribe>
+    </TimeMachineContextConsumer>
   )
 }
 

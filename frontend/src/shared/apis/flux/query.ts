@@ -78,7 +78,11 @@ export const executeQuery = async (
     let bodyError = null
 
     try {
-      bodyError = JSON.parse(xhr.responseText).error
+      const json = JSON.parse(xhr.responseText)
+      bodyError = json.error
+      if (!bodyError && json.code && json.message) {
+        bodyError = json.code + ':\n' + json.message
+      }
     } catch {
       if (xhr.responseText && xhr.responseText.trim() !== '') {
         bodyError = xhr.responseText
@@ -123,7 +127,7 @@ export const executeQuery = async (
   xhr.onerror = reject
 
   const path = encodeURIComponent(`/api/v2/query?organization=defaultorgname`)
-  const url = `${window.basepath}${source.links.flux}?path=${path}`
+  const url = `${window.basepath}${source.links.flux}?version=${source.version}&path=${path}`
   const dialect = {annotations: ['group', 'datatype', 'default']}
   const body = JSON.stringify({query, dialect})
 

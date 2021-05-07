@@ -12,6 +12,7 @@ import {BASIC_PASSWORD_RESET_TYPE} from 'src/auth/constants'
 class PasswordReset extends PureComponent {
   constructor(props) {
     super(props)
+
     this.state = {
       name: '',
     }
@@ -22,11 +23,7 @@ class PasswordReset extends PureComponent {
   }
 
   handlePasswordResetSubmit = _.debounce(() => {
-    const {
-      handlePasswordReset,
-      router,
-      authData: {basicPasswordReset},
-    } = this.props
+    const {handlePasswordReset, router, basicPasswordReset} = this.props
 
     const {name} = this.state
 
@@ -50,10 +47,7 @@ class PasswordReset extends PureComponent {
   }
 
   componentDidMount = () => {
-    const {
-      router,
-      authData: {passwordPolicy, basicPasswordResetType},
-    } = this.props
+    const {router, passwordPolicy, basicPasswordResetType} = this.props
     if (
       !passwordPolicy ||
       basicPasswordResetType === BASIC_PASSWORD_RESET_TYPE.ADMIN
@@ -121,6 +115,9 @@ class PasswordReset extends PureComponent {
     )
   }
 }
+const mapStateToProps = ({
+  links: {passwordPolicy, basicPasswordResetType, basicPasswordReset},
+}) => ({passwordPolicy, basicPasswordResetType, basicPasswordReset})
 
 const mapDispatchToProps = {
   handlePasswordReset: passwordResetAsync,
@@ -131,7 +128,8 @@ const {func, shape, string} = PropTypes
 PasswordReset.propTypes = {
   router: shape(),
   handlePasswordReset: func,
-  authData: shape({basicPasswordReset: string, passwordPolicy: string}),
+  basicPasswordReset: string,
+  passwordPolicy: string,
 }
 
-export default connect(null, mapDispatchToProps)(PasswordReset)
+export default connect(mapStateToProps, mapDispatchToProps)(PasswordReset)

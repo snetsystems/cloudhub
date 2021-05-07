@@ -2,10 +2,7 @@ package oauth2
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/base64"
 	"errors"
-	"io"
 	"net/http"
 	"strings"
 
@@ -25,6 +22,7 @@ type Github struct {
 	ClientSecret string
 	Orgs         []string // Optional github organization checking
 	Logger       cloudhub.Logger
+	BaseURL      string // GitHub Enterprise Base URL
 }
 
 // Name is the name of the provider.
@@ -54,11 +52,20 @@ func (g *Github) Scopes() []string {
 
 // Config is the Github OAuth2 exchange information and endpoints.
 func (g *Github) Config() *oauth2.Config {
+	var endpoint oauth2.Endpoint
+	if g.BaseURL == "" {
+		endpoint = ogh.Endpoint
+	} else {
+		endpoint = oauth2.Endpoint{
+			AuthURL:  g.BaseURL + "/login/oauth/authorize",
+			TokenURL: g.BaseURL + "/login/oauth/access_token",
+		}
+	}
 	return &oauth2.Config{
 		ClientID:     g.ID(),
 		ClientSecret: g.Secret(),
 		Scopes:       g.Scopes(),
-		Endpoint:     ogh.Endpoint,
+		Endpoint:     endpoint,
 	}
 }
 
@@ -104,14 +111,6 @@ func (g *Github) Group(provider *http.Client) (string, error) {
 	}
 
 	return strings.Join(groups, ","), nil
-}
-
-func randomString(length int) string {
-	k := make([]byte, length)
-	if _, err := io.ReadFull(rand.Reader, k); err != nil {
-		return ""
-	}
-	return base64.StdEncoding.EncodeToString(k)
 }
 
 func logResponseError(log cloudhub.Logger, resp *github.Response, err error) {
@@ -182,7 +181,7 @@ func primaryEmail(emails []*github.UserEmail) (string, error) {
 			return *m.Email, nil
 		}
 	}
-	return "", errors.New("No primary email address")
+	return "", errors.New("no primary email address")
 }
 
 func getPrimary(m *github.UserEmail) bool {

@@ -1,7 +1,12 @@
 {
   "parser": "babel-eslint",
   "plugins": ["react", "react-hooks", "prettier", "babel", "jest"],
-  "extends": ["prettier", "prettier/react"],
+  "settings": {
+    "react": {
+      "version": "16.8"
+    }
+  },
+  "extends": ["eslint:recommended", "plugin:prettier/recommended"],
   "env": {
     "browser": true,
     "mocha": true,
@@ -10,7 +15,8 @@
     "es5": true
   },
   "globals": {
-    "expect": true
+    "expect": true,
+    "JSX": true
   },
   "parserOptions": {
     "ecmaFeatures": {
@@ -120,6 +126,7 @@
     "no-unused-expressions": 2,
     "no-useless-call": 2,
     "no-useless-concat": 2,
+    "no-useless-escape": "off",
     "no-void": 2,
     "no-warning-comments": 0,
     "no-with": 2,
@@ -131,7 +138,7 @@
     "no-delete-var": 2,
     "no-label-var": 2,
     "no-shadow-restricted-names": 2,
-    "no-shadow": 2,
+    "no-shadow": 0,
     "no-undef-init": 2,
     "no-undef": 2,
     "no-unused-vars": [

@@ -9,12 +9,30 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Source, NotificationAction, Me} from 'src/types'
 import _ from 'lodash'
 import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
+import {executeQuery} from 'src/shared/apis/flux/query'
+import {parseResponse} from 'src/shared/parsing/flux/response'
 
 interface Props {
   source: Source
   notify: NotificationAction
   me: Me
   isUsingAuth: boolean
+}
+
+export async function getBuckets(source: Source): Promise<string[]> {
+  const {csv} = await executeQuery(source, 'buckets()')
+  const tables = parseResponse(csv)
+  if (tables && tables.length > 0) {
+    const data = tables[0].data
+    if (data.length > 1) {
+      const nameIndex = data[0].indexOf('name')
+      if (nameIndex > 0) {
+        const buckets = data.slice(1).map(arr => arr[nameIndex] as string)
+        return buckets.sort()
+      }
+    }
+  }
+  return []
 }
 
 interface State {

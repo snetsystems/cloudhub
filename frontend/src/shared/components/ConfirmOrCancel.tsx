@@ -1,11 +1,11 @@
-import React, {PureComponent, SFC} from 'react'
+import React, {PureComponent, FunctionComponent} from 'react'
 
 import classnames from 'classnames'
 
 import OnClickOutside from 'src/shared/components/OnClickOutside'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
-type Item = object | string
+type Item = Record<string, unknown> | string
 
 interface ConfirmProps {
   buttonSize: string
@@ -34,7 +34,7 @@ interface ConfirmOrCancelProps {
   cancelTitle?: string
 }
 
-export const Confirm: SFC<ConfirmProps> = ({
+export const Confirm: FunctionComponent<ConfirmProps> = ({
   buttonSize,
   isDisabled,
   onConfirm,
@@ -57,7 +57,7 @@ export const Confirm: SFC<ConfirmProps> = ({
   </button>
 )
 
-export const Cancel: SFC<CancelProps> = ({
+export const Cancel: FunctionComponent<CancelProps> = ({
   buttonSize,
   onCancel,
   icon,
@@ -76,7 +76,10 @@ export const Cancel: SFC<CancelProps> = ({
 )
 
 @ErrorHandling
-class ConfirmOrCancel extends PureComponent<ConfirmOrCancelProps, {}> {
+class ConfirmOrCancel extends PureComponent<
+  ConfirmOrCancelProps,
+  Record<string, never>
+> {
   public static defaultProps: Partial<ConfirmOrCancelProps> = {
     buttonSize: 'btn-sm',
     confirmTitle: 'Save',

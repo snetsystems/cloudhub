@@ -4,7 +4,7 @@ import uuid from 'uuid'
 import _ from 'lodash'
 import {connect} from 'react-redux'
 import {AutoSizer} from 'react-virtualized'
-import {withRouter, InjectedRouter} from 'react-router'
+import {withRouter, InjectedRouter, WithRouterProps} from 'react-router'
 
 // Components
 import LogsHeader from 'src/logs/components/LogsHeader'
@@ -98,7 +98,7 @@ import {
 } from 'src/types/logs'
 import {RemoteDataState} from 'src/types'
 
-interface Props {
+interface Props extends WithRouterProps {
   sources: Source[]
   source: Source | null
   currentSource: Source | null
@@ -166,10 +166,10 @@ interface State {
   hasScrolled: boolean
   isLoadingNewer: boolean
   queryCount: number
+  isHistogramHidden: boolean
 }
 
 class LogsPage extends Component<Props, State> {
-  private isMount = false
   public static getDerivedStateFromProps(props: Props) {
     const severityLevelColors: SeverityLevelColor[] = _.get(
       props.logConfig,
@@ -188,9 +188,15 @@ class LogsPage extends Component<Props, State> {
   private currentOlderChunksGenerator: FetchLoop = null
   private currentNewerChunksGenerator: FetchLoop = null
   private loadingSourcesStatus: RemoteDataState = RemoteDataState.NotStarted
+  private isComponentMounted: boolean = true
 
   constructor(props: Props) {
     super(props)
+    const {
+      location: {
+        query: {table},
+      },
+    } = props
 
     this.state = {
       isLoadingNewer: false,
@@ -200,6 +206,7 @@ class LogsPage extends Component<Props, State> {
       histogramColors: [],
       hasScrolled: false,
       queryCount: 0,
+      isHistogramHidden: table !== undefined,
     }
   }
 
@@ -225,25 +232,26 @@ class LogsPage extends Component<Props, State> {
   }
 
   public async componentDidMount() {
-    this.isMount = true
+    this.isComponentMounted = true
     await this.getSources()
-
     await this.setCurrentSource()
 
     await this.props.getConfig(this.logConfigLink)
 
-    if (this.isMeasurementInNamespace) {
+    if (this.isComponentMounted && this.isMeasurementInNamespace) {
       this.updateTableData(SearchStatus.Loading)
     }
 
     if (getDeep<string>(this.props, 'timeRange.timeOption', '') === 'now') {
       this.startLogsTailFetchingInterval()
     }
-    await this.props.executeHistogramQueryAsync()
+    if (this.isComponentMounted) {
+      await this.props.executeHistogramQueryAsync()
+    }
   }
 
   public componentWillUnmount() {
-    this.isMount = false
+    this.isComponentMounted = false
     this.clearTailInterval()
     this.cancelChunks()
   }
@@ -260,6 +268,7 @@ class LogsPage extends Component<Props, State> {
       searchStatus,
       tableTime,
     } = this.props
+    const {isHistogramHidden} = this.state
 
     if (this.isLoadingSourcesStatus) {
       return <PageSpinner />
@@ -269,11 +278,17 @@ class LogsPage extends Component<Props, State> {
       <>
         <div className="page">
           {this.header}
-          <div className="page-contents logs-viewer">
-            <LogsGraphContainer>
-              {this.chartControlBar}
-              {this.chart}
-            </LogsGraphContainer>
+          <div
+            className={`page-contents logs-viewer ${
+              isHistogramHidden ? 'logs-viewer--table-only' : ''
+            }`}
+          >
+            {isHistogramHidden ? undefined : (
+              <LogsGraphContainer>
+                {this.chartControlBar}
+                {this.chart}
+              </LogsGraphContainer>
+            )}
             <SearchBar
               onSearch={this.handleSubmitSearch}
               customTime={tableTime.custom}
@@ -288,6 +303,8 @@ class LogsPage extends Component<Props, State> {
               onClearFilters={this.handleClearFilters}
               onUpdateTruncation={this.handleUpdateTruncation}
               isTruncated={this.isTruncated}
+              isHistogramHidden={isHistogramHidden}
+              onShowHistogram={this.handleShowHistogram}
             />
             <LogsTable
               currentMeasurement={'syslog'}
@@ -313,8 +330,8 @@ class LogsPage extends Component<Props, State> {
               searchStatus={searchStatus}
               filters={filters}
               upper={
-                nextNewerLowerBound ||
                 currentTailUpperBound ||
+                nextNewerLowerBound ||
                 nextTailLowerBound
               }
               lower={nextOlderUpperBound}
@@ -346,24 +363,25 @@ class LogsPage extends Component<Props, State> {
   }
 
   private startLogsTailFetchingInterval = () => {
-    if (this.isMount) {
-      this.flushTailBuffer()
-      this.clearTailInterval()
-
-      this.props.setNextTailLowerBound(Date.now())
-
-      this.interval = window.setInterval(
-        this.handleTailFetchingInterval,
-
-        DEFAULT_TAIL_CHUNK_DURATION_MS
-      )
-
-      this.setState({liveUpdating: true})
+    this.flushTailBuffer()
+    this.clearTailInterval()
+    if (!this.isComponentMounted) {
+      return false
     }
+
+    this.props.setNextTailLowerBound(Date.now())
+
+    this.interval = window.setInterval(
+      this.handleTailFetchingInterval,
+
+      DEFAULT_TAIL_CHUNK_DURATION_MS
+    )
+
+    this.setState({liveUpdating: true})
   }
 
   private handleTailFetchingInterval = async () => {
-    if (this.isClearing) {
+    if (this.isClearing || !this.isComponentMounted) {
       return
     }
 
@@ -372,10 +390,16 @@ class LogsPage extends Component<Props, State> {
   }
 
   private fetchTail = async () => {
+    if (!this.isComponentMounted) {
+      return
+    }
     await this.props.fetchTailAsync()
   }
 
   private fetchNewerChunk = async (): Promise<void> => {
+    if (!this.isComponentMounted) {
+      return
+    }
     const maxNewerFetchForward = Date.now() + DEFAULT_NEWER_CHUNK_DURATION_MS
 
     if (this.props.nextNewerLowerBound > maxNewerFetchForward) {
@@ -383,6 +407,9 @@ class LogsPage extends Component<Props, State> {
       this.currentNewerChunksGenerator.cancel()
     }
 
+    if (!this.isComponentMounted) {
+      return
+    }
     await this.props.fetchNewerChunkAsync()
   }
 
@@ -413,10 +440,16 @@ class LogsPage extends Component<Props, State> {
   }
 
   private fetchOlderChunk = async () => {
+    if (!this.isComponentMounted) {
+      return
+    }
     await this.props.fetchOlderChunkAsync()
   }
 
   private handleFetchOlderChunk = async () => {
+    if (!this.isComponentMounted) {
+      return
+    }
     if (this.currentOlderChunksGenerator) {
       return
     }
@@ -424,6 +457,9 @@ class LogsPage extends Component<Props, State> {
   }
 
   private handleFetchNewerChunk = async () => {
+    if (!this.isComponentMounted) {
+      return
+    }
     if (this.isLiveUpdating || this.shouldLiveUpdate) {
       return
     }
@@ -432,6 +468,9 @@ class LogsPage extends Component<Props, State> {
   }
 
   private startFetchingNewer = async () => {
+    if (!this.isComponentMounted) {
+      return
+    }
     if (this.currentNewerChunksGenerator) {
       return
     }
@@ -454,6 +493,9 @@ class LogsPage extends Component<Props, State> {
       console.error(error)
     }
 
+    if (!this.isComponentMounted) {
+      return
+    }
     this.setState({isLoadingNewer: false})
     this.currentNewerChunksGenerator = null
     this.updateQueryCount()
@@ -465,11 +507,17 @@ class LogsPage extends Component<Props, State> {
       getCurrentSize: this.totalBackwardValues,
     }
 
+    if (!this.isComponentMounted) {
+      return
+    }
     this.currentOlderChunksGenerator = fetchChunk(
       this.fetchOlderChunk,
       chunkOptions
     )
 
+    if (!this.isComponentMounted) {
+      return
+    }
     this.updateQueryCount()
 
     try {
@@ -479,6 +527,9 @@ class LogsPage extends Component<Props, State> {
     }
 
     this.currentOlderChunksGenerator = null
+    if (!this.isComponentMounted) {
+      return
+    }
     this.updateQueryCount()
   }
 
@@ -502,6 +553,9 @@ class LogsPage extends Component<Props, State> {
 
     this.currentNewerChunksGenerator = null
     this.currentOlderChunksGenerator = null
+    if (!this.isComponentMounted) {
+      return
+    }
     this.setState({queryCount: 0})
   }
 
@@ -525,9 +579,8 @@ class LogsPage extends Component<Props, State> {
 
     if (this.totalForwardValues() > 0) {
       return Math.max(this.totalForwardValues() - 3, 0)
-    } else {
-      return Math.round(this.totalBackwardValues() / 2)
     }
+    return Math.round(this.totalBackwardValues() / 2)
   }
 
   private handleChooseCustomTime = async (time: string) => {
@@ -539,11 +592,17 @@ class LogsPage extends Component<Props, State> {
     const customLowerBound = Date.parse(time)
     this.props.setNextNewerLowerBound(customLowerBound)
 
+    if (!this.isComponentMounted) {
+      return
+    }
     this.setState({
       hasScrolled: false,
       liveUpdating,
     })
 
+    if (!this.isComponentMounted) {
+      return
+    }
     await this.props.setTimeMarker({
       timeOption: time,
     })
@@ -559,6 +618,9 @@ class LogsPage extends Component<Props, State> {
     const relativeLowerBound = Date.now() - time * 1000
     this.props.setNextNewerLowerBound(relativeLowerBound)
 
+    if (!this.isComponentMounted) {
+      return
+    }
     this.setState({hasScrolled: false})
 
     const timeOptionUTC = new Date(Date.now() - time * 1000).toISOString()
@@ -678,68 +740,67 @@ class LogsPage extends Component<Props, State> {
 
                 if (timeOption === 'now') {
                   return null
-                } else {
-                  const lineContainerWidth = 3
-                  const lineWidth = 1
-
-                  return (
-                    <>
-                      <svg
-                        width={lineContainerWidth}
-                        height={height}
-                        style={{
-                          position: 'absolute',
-                          left: `${x}px`,
-                          top: '0px',
-                          transform: 'translateX(-50%)',
-                        }}
-                      >
-                        <line
-                          x1={(lineContainerWidth - lineWidth) / 2}
-                          x2={(lineContainerWidth - lineWidth) / 2}
-                          y1={y1 + markerSize / 2}
-                          y2={y2}
-                          stroke={Greys.White}
-                          strokeWidth={`${lineWidth}`}
-                        />
-                      </svg>
-                      <svg
-                        width={x}
-                        height={textSize + textSize / 2}
-                        style={{
-                          position: 'absolute',
-                          left: `${x - markerSize - labelSize}px`,
-                        }}
-                      >
-                        <text
-                          style={{fontSize: textSize, fontWeight: 600}}
-                          x={0}
-                          y={textSize}
-                          height={textSize}
-                          fill={Greys.Sidewalk}
-                        >
-                          Current Timestamp
-                        </text>
-                        <ellipse
-                          cx={labelSize + markerSize - 0.5}
-                          cy={textSize / 2 + markerSize / 2}
-                          rx={markerSize / 2}
-                          ry={markerSize / 2}
-                          fill={Greys.White}
-                        />
-                        <text
-                          style={{fontSize: textSize, fontWeight: 600}}
-                          x={labelSize + markerSize / 2 + textSize}
-                          y={textSize}
-                          height={textSize}
-                          fill={Greys.Sidewalk}
-                        >
-                          {formatTime(timeOptionValue)}
-                        </text>
-                      </svg>
-                    </>
-                  )
                 }
+                const lineContainerWidth = 3
+                const lineWidth = 1
+
+                return (
+                  <>
+                    <svg
+                      width={lineContainerWidth}
+                      height={height}
+                      style={{
+                        position: 'absolute',
+                        left: `${x}px`,
+                        top: '0px',
+                        transform: 'translateX(-50%)',
+                      }}
+                    >
+                      <line
+                        x1={(lineContainerWidth - lineWidth) / 2}
+                        x2={(lineContainerWidth - lineWidth) / 2}
+                        y1={y1 + markerSize / 2}
+                        y2={y2}
+                        stroke={Greys.White}
+                        strokeWidth={`${lineWidth}`}
+                      />
+                    </svg>
+                    <svg
+                      width={x}
+                      height={textSize + textSize / 2}
+                      style={{
+                        position: 'absolute',
+                        left: `${x - markerSize - labelSize}px`,
+                      }}
+                    >
+                      <text
+                        style={{fontSize: textSize, fontWeight: 600}}
+                        x={0}
+                        y={textSize}
+                        height={textSize}
+                        fill={Greys.Sidewalk}
+                      >
+                        Current Timestamp
+                      </text>
+                      <ellipse
+                        cx={labelSize + markerSize - 0.5}
+                        cy={textSize / 2 + markerSize / 2}
+                        rx={markerSize / 2}
+                        ry={markerSize / 2}
+                        fill={Greys.White}
+                      />
+                      <text
+                        style={{fontSize: textSize, fontWeight: 600}}
+                        x={labelSize + markerSize / 2 + textSize}
+                        y={textSize}
+                        height={textSize}
+                        fill={Greys.Sidewalk}
+                      >
+                        {formatTime(timeOptionValue)}
+                      </text>
+                    </svg>
+                  </>
+                )
               }}
             </HistogramChart>
           )}
@@ -802,10 +863,19 @@ class LogsPage extends Component<Props, State> {
           searchStatus={searchStatus}
           selectedTimeWindow={timeRange}
         />
-        <TimeWindowDropdown
-          selectedTimeWindow={timeRange}
-          onSetTimeWindow={this.handleSetTimeWindow}
-        />
+        <div className="page-header--right">
+          <button
+            className="btn btn-sm btn-square btn-default"
+            onClick={this.handleHideHistogram}
+            title="Hide Histogram"
+          >
+            <span className="icon eye-closed" />
+          </button>
+          <TimeWindowDropdown
+            selectedTimeWindow={timeRange}
+            onSetTimeWindow={this.handleSetTimeWindow}
+          />
+        </div>
       </div>
     )
   }
@@ -935,6 +1005,12 @@ class LogsPage extends Component<Props, State> {
   private handleToggleOverlay = (): void => {
     this.setState({isOverlayVisible: !this.state.isOverlayVisible})
   }
+  private handleShowHistogram = (): void => {
+    this.setState({isHistogramHidden: false, isOverlayVisible: false})
+  }
+  private handleHideHistogram = (): void => {
+    this.setState({isHistogramHidden: true})
+  }
 
   private renderImportOverlay = (): JSX.Element => {
     const {isOverlayVisible} = this.state
@@ -943,34 +1019,26 @@ class LogsPage extends Component<Props, State> {
       <OverlayTechnology visible={isOverlayVisible}>
         <OptionsOverlay
           severityLevelColors={this.severityLevelColors}
-          onUpdateSeverityLevels={this.handleUpdateSeverityLevels}
+          onUpdate={this.handleUpdateOptions}
           onDismissOverlay={this.handleToggleOverlay}
           columns={this.tableColumns}
-          onUpdateColumns={this.handleUpdateColumns}
-          onUpdateSeverityFormat={this.handleUpdateSeverityFormat}
           severityFormat={this.severityFormat}
         />
       </OverlayTechnology>
     )
   }
 
-  private handleUpdateSeverityLevels = async (
-    severityLevelColors: SeverityLevelColor[]
+  private handleUpdateOptions = async (
+    severityLevelColors: SeverityLevelColor[],
+    severityFormat: SeverityFormat,
+    tableColumns: LogsTableColumn[]
   ): Promise<void> => {
     const {logConfig} = this.props
     await this.props.updateConfig(this.logConfigLink, {
       ...logConfig,
       severityLevelColors,
-    })
-  }
-
-  private handleUpdateSeverityFormat = async (
-    format: SeverityFormat
-  ): Promise<void> => {
-    const {logConfig} = this.props
-    await this.props.updateConfig(this.logConfigLink, {
-      ...logConfig,
-      severityFormat: format,
+      severityFormat,
+      tableColumns,
     })
   }
 
@@ -982,16 +1050,6 @@ class LogsPage extends Component<Props, State> {
       SeverityFormatOptions.dotText
     )
     return severityFormat
-  }
-
-  private handleUpdateColumns = async (
-    tableColumns: LogsTableColumn[]
-  ): Promise<void> => {
-    const {logConfig} = this.props
-    await this.props.updateConfig(this.logConfigLink, {
-      ...logConfig,
-      tableColumns,
-    })
   }
 
   private handleUpdateTruncation = async (
@@ -1151,6 +1209,8 @@ const mapDispatchToProps = {
   notify: notifyAction,
 }
 
-export default withRouter(
-  connect(mapStateToProps, mapDispatchToProps)(LogsPage)
-)
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+  null
+)(withRouter(LogsPage))

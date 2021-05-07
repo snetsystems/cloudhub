@@ -21,7 +21,6 @@ import {
 
 import {
   AlertaConfig,
-  HipChatConfig,
   OpsGenieConfig,
   PagerDutyConfig,
   PagerDuty2Config,
@@ -76,7 +75,6 @@ interface Section {
 
 interface Sections {
   alerta: Section
-  hipchat: Section
   httppost: Section
   influxdb: Section
   kafka: Section
@@ -132,7 +130,7 @@ class AlertTabs extends PureComponent<Props, State> {
     }
   }
 
-  public componentWillReceiveProps(nextProps: Props) {
+  public UNSAFE_componentWillReceiveProps(nextProps: Props) {
     if (this.props.kapacitor.url !== nextProps.kapacitor.url) {
       this.refreshKapacitorConfig(nextProps.kapacitor)
     }
@@ -237,15 +235,6 @@ class AlertTabs extends PureComponent<Props, State> {
             enabled={this.getConfigEnabled(configSections, AlertTypes.alerta)}
           />
         )
-      case AlertTypes.hipchat:
-        return (
-          <HipChatConfig
-            onSave={this.handleSaveConfig(AlertTypes.hipchat)}
-            config={this.getSectionElement(configSections, AlertTypes.hipchat)}
-            onTest={this.handleTestConfig(AlertTypes.hipchat)}
-            enabled={this.getConfigEnabled(configSections, AlertTypes.hipchat)}
-          />
-        )
       case AlertTypes.kafka:
         return (
           <KafkaConfigs
@@ -288,6 +277,7 @@ class AlertTabs extends PureComponent<Props, State> {
               configSections,
               AlertTypes.opsgenie2
             )}
+            v2={true}
           />
         )
       case AlertTypes.pagerduty:
@@ -596,7 +586,10 @@ class AlertTabs extends PureComponent<Props, State> {
     }
   }
 
-  private handleTestConfig = (section: string, options?: object) => async (
+  private handleTestConfig = (
+    section: string,
+    options?: Record<string, unknown>
+  ) => async (
     e: MouseEvent<HTMLButtonElement>,
     specificConfigOptions?: SpecificConfigOptions
   ): Promise<void> => {
@@ -661,7 +654,7 @@ class AlertTabs extends PureComponent<Props, State> {
   }
 
   private getInitialIndex = (hash: string): number => {
-    const index = _.indexOf(_.keys(SupportedServices), _.replace(hash, '#', ''))
+    const index = _.indexOf(SupportedServices, _.replace(hash, '#', ''))
     return index >= 0 ? index : 0
   }
 

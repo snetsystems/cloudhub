@@ -1,7 +1,6 @@
 // Libraries
 import React, {PureComponent} from 'react'
 import _ from 'lodash'
-import {Subscribe} from 'unstated'
 
 // Components
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
@@ -20,7 +19,10 @@ import {getConfig} from 'src/dashboards/utils/cellGetters'
 import {getDeep} from 'src/utils/wrappers'
 import {AutoRefresher} from 'src/utils/AutoRefresher'
 import buildQueries from 'src/utils/buildQueriesForGraphs'
-import {TimeMachineContainer} from 'src/shared/utils/TimeMachineContainer'
+import {
+  TimeMachineContainer,
+  TimeMachineContextConsumer,
+} from 'src/shared/utils/TimeMachineContext'
 import {analyzeQueryFailed} from 'src/shared/copy/notifications'
 
 // Actions
@@ -29,7 +31,10 @@ import {updateSourceLink as updateSourceLinkAction} from 'src/data_explorer/acti
 // Constants
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
 import {CEOTabs} from 'src/dashboards/constants'
-import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
+import {
+  AutoRefreshOption,
+  autoRefreshOptionPaused,
+} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
 
 // Types
 import {
@@ -90,8 +95,9 @@ interface PassedProps {
   ) => JSX.Element
   queryStatus: QueryStatus
   onUpdateScriptStatus?: (status: ScriptStatus) => void
+  onActiveQueryIndexChange?: (activeQueryIndex: number) => void
   refresh: RefreshRate
-  timeZone: TimeZones
+  timeZone?: TimeZones
 }
 
 interface State {
@@ -382,6 +388,7 @@ class TimeMachine extends PureComponent<Props, State> {
         onEditRawText={this.handleEditRawText}
         me={me}
         isUsingAuth={isUsingAuth}
+        onMetaQuerySelected={this.handleChangeAutoRefreshDuration}
       />
     )
   }
@@ -543,7 +550,7 @@ class TimeMachine extends PureComponent<Props, State> {
   }
 
   private handleChangeAutoRefreshDuration = (
-    autoRefreshOption: AutoRefreshOption
+    autoRefreshOption: AutoRefreshOption = autoRefreshOptionPaused
   ): void => {
     const {milliseconds} = autoRefreshOption
     this.setState({autoRefreshDuration: milliseconds})
@@ -551,6 +558,10 @@ class TimeMachine extends PureComponent<Props, State> {
 
   private handleSetActiveQueryIndex = (activeQueryIndex): void => {
     this.setState({activeQueryIndex})
+    const {onActiveQueryIndexChange} = this.props
+    if (onActiveQueryIndexChange) {
+      onActiveQueryIndexChange(activeQueryIndex)
+    }
   }
 
   private handleSetActiveEditorTab = (tabName: CEOTabs): void => {
@@ -576,7 +587,7 @@ const ConnectedTimeMachine = (
   props: PassedProps & ManualRefreshProps & Auth
 ) => {
   return (
-    <Subscribe to={[TimeMachineContainer]}>
+    <TimeMachineContextConsumer>
       {(container: TimeMachineContainer) => {
         const {state} = container
 
@@ -604,7 +615,7 @@ const ConnectedTimeMachine = (
           />
         )
       }}
-    </Subscribe>
+    </TimeMachineContextConsumer>
   )
 }
 

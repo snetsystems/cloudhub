@@ -9,7 +9,10 @@ import (
 	"strconv"
 	"strings"
 
+	_ "net/http/pprof" // required for /debug/pprof endpoint
+
 	"github.com/NYTimes/gziphandler"
+	basicAuth "github.com/abbot/go-http-auth"
 	"github.com/bouk/httprouter"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/oauth2"
@@ -33,6 +36,7 @@ type MuxOpts struct {
 	CustomLinks   []CustomLink		// Any custom external links for client's User menu
 	PprofEnabled  bool              // Mount pprof routes for profiling
 	DisableGZip   bool              // Optionally disable gzip.
+	BasicAuth     *basicAuth.BasicAuth // HTTP basic authentication provider
 	AddonURLs     map[string]string // URLs for using in Addon Features, as passed in via CLI/ENV
 	AddonTokens   map[string]string // Tokens to access to Addon Features API, as passed in via CLI/ENV
 	PasswordPolicy        string    // Password validity rules
@@ -430,6 +434,8 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 		// Create middleware that redirects to the appropriate provider logout
 		router.GET("/oauth/logout", logout("/", opts.Basepath, allRoutes.AuthRoutes))
 		out = auth
+	} else if opts.BasicAuth != nil {
+		out = BasicAuthWrapper(router, opts.BasicAuth)
 	} else {
 		out = router
 	}
@@ -479,6 +485,13 @@ func AuthAPI(opts MuxOpts, router cloudhub.Router) (http.Handler, AuthRoutes) {
 		}
 		router.ServeHTTP(w, r)
 	}), routes
+}
+
+// BasicAuthWrapper returns http handlers that wraps the supplied handler with HTTP Basic authentication
+func BasicAuthWrapper(router cloudhub.Router, auth *basicAuth.BasicAuth) http.Handler {
+	return auth.Wrap(func(response http.ResponseWriter, authRequest *basicAuth.AuthenticatedRequest) {
+		router.ServeHTTP(response, &authRequest.Request)
+	})
 }
 
 // BasicAuthAPI adds the Basic routes if auth is enabled. 

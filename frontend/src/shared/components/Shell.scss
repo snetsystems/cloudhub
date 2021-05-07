@@ -87,3 +87,30 @@ $overlay-min-height: 150px;
     border-color: transparent;
   }
 }
+
+.xterm .xterm-viewport {
+  overflow-y: scroll;
+
+  /* width */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  /* Track */
+  &::-webkit-scrollbar-track {
+    background: transparent;
+    // background: #f1f1f1;
+  }
+
+  /* Handle */
+  &::-webkit-scrollbar-thumb {
+    // background: #888;
+    background: linear-gradient(to bottom, #f58220 0%, #d83f3f 100%);
+    border-radius: 3px;
+  }
+
+  /* Handle on hover */
+  // ::-webkit-scrollbar-thumb:hover {
+  //   background: #555;
+  // }
+}

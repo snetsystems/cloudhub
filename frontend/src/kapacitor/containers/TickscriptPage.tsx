@@ -6,7 +6,7 @@ import uuid from 'uuid'
 import Tickscript from 'src/kapacitor/components/Tickscript'
 import * as kapactiorActionCreators from 'src/kapacitor/actions/view'
 import * as errorActionCreators from 'src/shared/actions/errors'
-import {getActiveKapacitor} from 'src/shared/apis'
+import {getActiveKapacitor, getKapacitor} from 'src/shared/apis'
 import {getLogStreamByRuleID, pingKapacitorVersion} from 'src/kapacitor/apis'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
@@ -34,6 +34,7 @@ interface TaskResponse {
 }
 
 interface ErrorActions {
+  // eslint-disable-next-line @typescript-eslint/ban-types
   errorThrown: (notify: string | object) => void
 }
 
@@ -65,6 +66,7 @@ interface Auth {
 
 interface Params {
   ruleID: string
+  kid?: string // kapacitor id
 }
 
 interface Props {
@@ -92,6 +94,8 @@ interface State {
 
 @ErrorHandling
 export class TickscriptPage extends PureComponent<Props, State> {
+  private abortController: AbortController
+
   constructor(props) {
     super(props)
     this.state = {
@@ -128,10 +132,15 @@ export class TickscriptPage extends PureComponent<Props, State> {
       source,
       errorActions,
       kapacitorActions,
-      params: {ruleID},
+      params: {ruleID, kid},
     } = this.props
 
-    const kapacitor = await getActiveKapacitor(source)
+    let kapacitor: Kapacitor
+    if (kid) {
+      kapacitor = await getActiveKapacitor(source)
+    } else {
+      kapacitor = await getKapacitor(source, kid)
+    }
     if (!kapacitor) {
       errorActions.errorThrown(notifyKapacitorNotFound())
     }
@@ -154,6 +163,9 @@ export class TickscriptPage extends PureComponent<Props, State> {
     this.setState({
       areLogsEnabled: false,
     })
+    if (this.abortController) {
+      this.abortController.abort()
+    }
   }
 
   public render() {
@@ -217,9 +229,8 @@ export class TickscriptPage extends PureComponent<Props, State> {
   private async persist(): Promise<TaskResponse> {
     if (this.isEditing) {
       return await this.updateTask()
-    } else {
-      return await this.createTask()
     }
+    return await this.createTask()
   }
 
   private handleSave = async () => {
@@ -227,6 +238,7 @@ export class TickscriptPage extends PureComponent<Props, State> {
       source: {id: sourceID},
       router,
     } = this.props
+    const {kapacitor} = this.state
 
     try {
       const response = await this.persist()
@@ -242,7 +254,10 @@ export class TickscriptPage extends PureComponent<Props, State> {
         this.setState({unsavedChanges: false, consoleMessage: ''})
       }
 
-      router.push(`/sources/${sourceID}/tickscript/${response.id}`)
+      router.push(
+        // prettier-ignore
+        `/sources/${sourceID}/kapacitors/${kapacitor.id}/tickscripts/${response.id}`
+      )
     } catch (error) {
       console.error(error)
       throw error
@@ -320,7 +335,18 @@ export class TickscriptPage extends PureComponent<Props, State> {
         })
       }
 
-      const response = await getLogStreamByRuleID(kapacitor, ruleID)
+      const abortController = new AbortController()
+      this.abortController = abortController
+      const response = await getLogStreamByRuleID(
+        kapacitor,
+        ruleID,
+        abortController.signal
+      )
+      if (!this.state.areLogsEnabled) {
+        // applies when component destroyment happens sooner than response
+        abortController.abort()
+        return
+      }
 
       const reader = await response.body.getReader()
       const decoder = new TextDecoder()
@@ -366,9 +392,12 @@ export class TickscriptPage extends PureComponent<Props, State> {
         }
       }
     } catch (error) {
-      console.error(error)
-      notify(notifyTickscriptLoggingError())
-      throw error
+      // do not log error if it was programatically aborted
+      if (!error.name || error.name !== 'AbortError') {
+        console.error(error)
+        notify(notifyTickscriptLoggingError())
+        throw error
+      }
     }
   }
 }

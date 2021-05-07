@@ -47,7 +47,7 @@ func (s *Service) Flux(w http.ResponseWriter, r *http.Request) {
 	httpAPIFlux := "/cloudhub/v1/flux"
 	res := fluxResponse{
 		Links: fluxLinks{
-			Self:        fmt.Sprintf("%s", httpAPIFlux),
+			Self:        httpAPIFlux,
 			Suggestions: fmt.Sprintf("%s/suggestions", httpAPIFlux),
 		},
 	}
@@ -141,7 +141,8 @@ func (s *Service) ProxyFlux(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	path := r.URL.Query().Get("path")
+	query := r.URL.Query()
+	path := query.Get("path")
 	if path == "" {
 		Error(w, http.StatusUnprocessableEntity, "path query parameter required", s.Logger)
 		return
@@ -152,6 +153,12 @@ func (s *Service) ProxyFlux(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		notFound(w, id, s.Logger)
 		return
+	}
+	version := query.Get("version")
+	if version != "" {
+		// the client knows the actual version of the source, the sources
+		// return from the server always go live to re-fetch their versions
+		src.Version = version
 	}
 
 	fluxEnabled, err := hasFlux(ctx, src)
@@ -180,6 +187,11 @@ func (s *Service) ProxyFlux(w http.ResponseWriter, r *http.Request) {
 	director := func(req *http.Request) {
 		// Set the Host header of the original Flux URL
 		req.Host = u.Host
+		// Add v2-required org parameter
+		query := u.Query()
+		query.Add("org", src.Username) // v2 organization name is stored in username
+		u.RawQuery = query.Encode()
+		// Set URL
 		req.URL = u
 
 		// Use authorization method based on whether it is OSS or Enterprise

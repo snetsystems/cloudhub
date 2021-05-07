@@ -61,6 +61,13 @@ func TestValidTemplateRequest(t *testing.T) {
 			},
 		},
 		{
+			name:    "No query set",
+			wantErr: true,
+			template: &cloudhub.Template{
+				Type: "flux",
+			},
+		},
+		{
 			name: "Valid Map type",
 			template: &cloudhub.Template{
 				Type: "map",

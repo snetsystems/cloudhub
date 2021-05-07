@@ -73,7 +73,7 @@ export class AllUsersPage extends PureComponent<Props, State> {
     }
   }
 
-  public componentDidMount() {
+  public UNSAFE_componentWillMount() {
     const {
       links,
       actionsConfig: {getAuthConfigAsync},

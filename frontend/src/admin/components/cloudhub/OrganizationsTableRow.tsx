@@ -1,7 +1,7 @@
 import React, {Component} from 'react'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
-import {withRouter, InjectedRouter} from 'react-router'
+import {withRouter, InjectedRouter, WithRouterProps} from 'react-router'
 
 import _ from 'lodash'
 
@@ -26,7 +26,7 @@ interface CurrentOrganization {
   id: string
 }
 
-interface Props {
+interface Props extends WithRouterProps {
   organization: Organization
   currentOrganization: CurrentOrganization
   onDelete: (Organization) => void
@@ -39,7 +39,7 @@ interface Props {
 }
 
 @ErrorHandling
-class OrganizationsTableRow extends Component<Props, {}> {
+class OrganizationsTableRow extends Component<Props, Record<string, never>> {
   public shouldComponentUpdate(nextProps: Props) {
     return !_.isEqual(this.props, nextProps)
   }
@@ -96,6 +96,7 @@ class OrganizationsTableRow extends Component<Props, {}> {
   public handleChangeCurrentOrganization = async () => {
     const {router, links, meChangeOrganization, organization} = this.props
 
+    // eslint-disable-next-line @typescript-eslint/await-thenable
     await meChangeOrganization(links.me, {organization: organization.id})
     router.push('')
   }
@@ -131,6 +132,7 @@ const mapDispatchToProps = dispatch => ({
   notify: bindActionCreators(notifyAction, dispatch),
 })
 
-export default withRouter(
-  connect(mapStateToProps, mapDispatchToProps)(OrganizationsTableRow)
-)
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(withRouter(OrganizationsTableRow))

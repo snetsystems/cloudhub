@@ -168,6 +168,11 @@ func (s *Service) logRegistration(ctx context.Context, parameters ...string) {
 	serverCtx := serverContext(ctx)	
 	user, ok := hasUserContext(ctx)
 	if !ok {
+		if len(parameters) < 3 {
+			msg := fmt.Sprintf("Empty user in parameters")
+			logs.Error(msg)
+			return			
+		}
 		user = &cloudhub.User{
 			Name:               parameters[2],
 		}

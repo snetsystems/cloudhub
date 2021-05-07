@@ -251,6 +251,11 @@ class DashboardStep extends Component<Props, State> {
         )
 
         if (suggestedProtoboardsList.length === 0) {
+          if (this.isComponentMounted) {
+            this.setState({
+              fetchingSuggested: RemoteDataState.Done,
+            })
+          }
           return
         }
 
@@ -306,4 +311,4 @@ const mdtp = {
   notify: notifyAction,
 }
 
-export default connect(null, mdtp, null, {withRef: true})(DashboardStep)
+export default connect(null, mdtp, null, {forwardRef: true})(DashboardStep)

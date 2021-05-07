@@ -21,8 +21,8 @@ func init() {
 }
 
 type migrateCommand struct {
-	From string `short:"f" long:"from" description:"Full path to boltDB file or etcd (e.g. 'bolt:///path/to/cloudhub-v1.db' or 'etcd://user:pass@localhost:2379" default:"cloudhub-v1.db"`
-	To   string `short:"t" long:"to" description:"Full path to boltDB file or etcd (e.g. 'bolt:///path/to/cloudhub-v1.db' or 'etcd://user:pass@localhost:2379"`
+	From string `short:"f" long:"from" description:"Full path to boltDB file or etcd (e.g. 'bolt:///path/to/cloudhub-v1.db' or 'etcd://user:pass@localhost:2379')" default:"cloudhub-v1.db"`
+	To   string `short:"t" long:"to" description:"Full path to boltDB file or etcd (e.g. 'bolt:///path/to/cloudhub-v1.db' or 'etcds://user:pass@localhost:2379?cert=cert_path&key=key_path&ca=path_to_ca_certs')"`
 }
 
 func (m *migrateCommand) Execute(args []string) error {
@@ -30,7 +30,7 @@ func (m *migrateCommand) Execute(args []string) error {
 		errExit(errors.New("Cannot migrate to original source"))
 	}
 	if m.From == "" || m.To == "" {
-		errExit(errors.New("Both 'to' and 'from' must be defined in order to migrate"))
+		errExit(errors.New("both 'to' and 'from' must be defined in order to migrate"))
 	}
 
 	ctx := context.TODO()
@@ -69,12 +69,8 @@ func openService(ctx context.Context, u *url.URL) (*kv.Service, error) {
 		if err != nil {
 			return nil, fmt.Errorf("unable to create bolt client: %s", err)
 		}
-	case "etcd":
-		pw, _ := u.User.Password()
-		db, err = etcd.NewClient(ctx,
-			etcd.WithEndpoints([]string{u.Host}),
-			etcd.WithLogin(u.User.Username(), pw),
-		)
+	case "etcd", "etcds":
+		db, err = etcd.NewClient(ctx, etcd.WithURL(u))
 		if err != nil {
 			return nil, fmt.Errorf("unable to create etcd client: %s", err)
 		}
@@ -217,6 +213,14 @@ func saveData(ctx context.Context, toURL *url.URL, datas *datas) error {
 		}
 	}
 	fmt.Printf("  Saved %d sources.\n", len(datas.sources))
+
+	for _, user := range datas.users {
+		_, err = to.UsersStore().Add(ctx, &user)
+		if err != nil {
+			return fmt.Errorf("failed to add to UsersStore: %s", err)
+		}
+	}
+	fmt.Printf("  Saved %d users.\n", len(datas.users))
 
 	return nil
 }
