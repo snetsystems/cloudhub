@@ -55,10 +55,12 @@ func TestVspheres_All(t *testing.T) {
 							{
 								Host:         "1.1.1.1",
 								Organization: "1337",
+								DataSource: "45",
 							},
 							{
 								Host:         "2.2.2.2",
 								Organization: "1338",
+								DataSource: "88",
 							},
 						}, nil
 					},
@@ -72,6 +74,7 @@ func TestVspheres_All(t *testing.T) {
 				{
 					Host:         "1.1.1.1",
 					Organization: "1337",
+					DataSource: "45",
 				},
 			},
 		},
@@ -120,6 +123,7 @@ func TestVspheres_Add(t *testing.T) {
 							ID:           "1229",
 							Host:         "1.1.1.1",
 							Organization: "1337",
+							DataSource: "45",
 						}, nil
 					},
 					AllF: func(ctx context.Context) ([]cloudhub.Vsphere, error) {
@@ -133,11 +137,13 @@ func TestVspheres_Add(t *testing.T) {
 				vsphere: cloudhub.Vsphere{
 					ID:   "1229",
 					Host: "1.1.1.1",
+					DataSource: "45",
 				},
 			},
 			want: cloudhub.Vsphere{
 				Host:         "1.1.1.1",
 				Organization: "1337",
+				DataSource: "45",
 			},
 		},
 	}
@@ -185,6 +191,7 @@ func TestVspheres_Delete(t *testing.T) {
 							ID:           "1229",
 							Host:         "1.1.1.1",
 							Organization: "1337",
+							DataSource: "45",
 						}, nil
 					},
 				},
@@ -196,6 +203,7 @@ func TestVspheres_Delete(t *testing.T) {
 					ID:           "1229",
 					Host:         "1.1.1.1",
 					Organization: "1337",
+					DataSource: "45",
 				},
 			},
 			addFirst: true,
@@ -238,6 +246,7 @@ func TestVspheres_Get(t *testing.T) {
 							ID:           "1229",
 							Host:         "1.1.1.1",
 							Organization: "1337",
+							DataSource: "45",
 						}, nil
 					},
 				},
@@ -249,12 +258,14 @@ func TestVspheres_Get(t *testing.T) {
 					ID:           "1229",
 					Host:         "1.1.1.1",
 					Organization: "1337",
+					DataSource: "45",
 				},
 			},
 			want: cloudhub.Vsphere{
 				ID:           "1229",
 				Host:         "1.1.1.1",
 				Organization: "1337",
+				DataSource: "45",
 			},
 		},
 	}
@@ -281,6 +292,7 @@ func TestVspheres_Update(t *testing.T) {
 		ctx          context.Context
 		vsphere      cloudhub.Vsphere
 		name         string
+		datasource   string
 	}
 	tests := []struct {
 		name     string
@@ -291,7 +303,7 @@ func TestVspheres_Update(t *testing.T) {
 		wantErr  bool
 	}{
 		{
-			name: "Update Vsphere Name",
+			name: "Update Vsphere Name and DataSource",
 			fields: fields{
 				VspheresStore: &mocks.VspheresStore{
 					UpdateF: func(ctx context.Context, s cloudhub.Vsphere) error {
@@ -300,8 +312,10 @@ func TestVspheres_Update(t *testing.T) {
 					GetF: func(ctx context.Context, id string) (cloudhub.Vsphere, error) {
 						return cloudhub.Vsphere{
 							ID:           "1229",
+							UserName:     "test@vmware.com",
 							Host:         "1.1.1.1",
 							Organization: "1337",
+							DataSource: "45",
 						}, nil
 					},
 					AllF: func(ctx context.Context) ([]cloudhub.Vsphere, error) {
@@ -311,17 +325,23 @@ func TestVspheres_Update(t *testing.T) {
 			},
 			args: args{
 				organization: "1337",
+
 				ctx:          context.Background(),
 				vsphere: cloudhub.Vsphere{
 					ID:           "1229",
+					UserName:     "asdfsdfasdf@vmware.com",
 					Host:         "1.1.1.1",
 					Organization: "1337",
+					DataSource: "35",
 				},
 				name: "test@vmware.com",
+				datasource: "45",
 			},
 			want: cloudhub.Vsphere{
+				UserName:     "test@vmware.com",
 				Host:         "1.1.1.1",
 				Organization: "1337",
+				DataSource: "45",
 			},
 			addFirst: true,
 		},
@@ -329,6 +349,7 @@ func TestVspheres_Update(t *testing.T) {
 	for _, tt := range tests {
 		if tt.args.name != "" {
 			tt.args.vsphere.UserName = tt.args.name
+			tt.args.vsphere.DataSource = tt.args.datasource
 		}
 		s := organizations.NewVspheresStore(tt.fields.VspheresStore, tt.args.organization)
 		tt.args.ctx = context.WithValue(tt.args.ctx, organizations.ContextKey, tt.args.organization)

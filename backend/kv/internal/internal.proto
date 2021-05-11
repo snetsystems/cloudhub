@@ -262,6 +262,7 @@ message Vsphere {
 	int64 Interval          = 7; // Interval is the vsphere connect interval
 	string Minion           = 8; // Minion is the vsphere connect salt minion
 	string Organization     = 9; // Organization is the organization ID that resource belongs to
+	string DataSource       = 10; // DataSource is the datasource ID that resource belongs to
 }
 
 message Topology {

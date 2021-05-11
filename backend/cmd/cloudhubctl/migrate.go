@@ -136,6 +136,11 @@ func getData(ctx context.Context, fromURL *url.URL) (*datas, error) {
 		return nil, err
 	}
 
+	vspheres, err := from.VspheresStore().All(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return &datas{
 		config:        *cfg,
 		dashboards:    dashboards,
@@ -145,6 +150,7 @@ func getData(ctx context.Context, fromURL *url.URL) (*datas, error) {
 		servers:       servers,
 		sources:       srcs,
 		users:         users,
+		vspheres:      vspheres,
 	}, nil
 }
 
@@ -221,6 +227,14 @@ func saveData(ctx context.Context, toURL *url.URL, datas *datas) error {
 		}
 	}
 	fmt.Printf("  Saved %d users.\n", len(datas.users))
+	
+	for _, vsphere := range datas.vspheres {
+		_, err = to.VspheresStore().Add(ctx, vsphere)
+		if err != nil {
+			return fmt.Errorf("failed to add to VspheresStore: %s", err)
+		}
+	}
+	fmt.Printf("  Saved %d vspheres.\n", len(datas.vspheres))
 
 	return nil
 }
@@ -234,6 +248,7 @@ type datas struct {
 	servers       []cloudhub.Server
 	sources       []cloudhub.Source
 	users         []cloudhub.User
+	vspheres      []cloudhub.Vsphere
 }
 
 func errExit(err error) {

@@ -932,6 +932,7 @@ func MarshalVsphere(v cloudhub.Vsphere) ([]byte, error) {
 		Interval:   int64(v.Interval),
 		Minion:     v.Minion,
 		Organization: v.Organization,
+		DataSource: v.DataSource,
 	})
 }
 
@@ -951,6 +952,7 @@ func UnmarshalVsphere(data []byte, v *cloudhub.Vsphere) error {
 	v.Interval = int(pb.Interval)
 	v.Minion = pb.Minion
 	v.Organization = pb.Organization
+	v.DataSource = pb.DataSource
 
 	return nil
 }

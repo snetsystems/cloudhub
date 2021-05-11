@@ -1,12 +1,14 @@
 package server
 
 import (
+	"strconv"
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
+	"github.com/snetsystems/cloudhub/backend/organizations"
 )
 
 type vsphereRequest struct {
@@ -19,6 +21,7 @@ type vsphereRequest struct {
 	Interval     int       `json:"interval"`
 	Organization string    `json:"organization"`
 	Minion       string    `json:"minion"`
+	DataSource   string    `json:"datasource"`
 }
 
 func (r *vsphereRequest) ValidCreate() error {
@@ -31,18 +34,14 @@ func (r *vsphereRequest) ValidCreate() error {
 	if r.Password == "" {
 		return fmt.Errorf("Password required vsphere request body")
 	}
-	// jack: the followings are not mandatory fields.
-	// if r.Protocol == "" {
-	// 	return fmt.Errorf("Protocol required vsphere request body")
-	// }
-	// if r.Port == 0 {
-	// 	return fmt.Errorf("Port required vsphere request body")
-	// }
 	if r.Interval == 0 {
 		return fmt.Errorf("Interval required vsphere request body")
 	}
 	if r.Minion == "" {
 		return fmt.Errorf("Minion required vsphere request body")
+	}
+	if r.DataSource == "" {
+		return fmt.Errorf("DataSource required vsphere request body")
 	}
 
 	return nil
@@ -50,7 +49,8 @@ func (r *vsphereRequest) ValidCreate() error {
 
 func (r *vsphereRequest) ValidUpdate() error {
 	if r.Host == "" && r.UserName == "" && r.Password == "" &&
-	 r.Protocol == "" && r.Port == 0 && r.Interval == 0 && r.Minion == "" {
+	 r.Protocol == "" && r.Port == 0 && r.Interval == 0 && r.Minion == "" && 
+	 r.DataSource == "" {
 		return fmt.Errorf("No fields to update")
 	}
 
@@ -67,6 +67,7 @@ type vsphereResponse struct {
 	Interval     int       `json:"interval"`
 	Organization string    `json:"organization"`
 	Minion       string    `json:"minion"`
+	DataSource   string    `json:"datasource"`
 	Links      selfLinks   `json:"links"`
 }
 
@@ -83,6 +84,7 @@ func newVsphereResponse(v cloudhub.Vsphere) *vsphereResponse {
 		Interval:      v.Interval,
 		Minion:        v.Minion,
 		Organization:  v.Organization,
+		DataSource:    v.DataSource,
 		Links: selfLinks{
 			Self: selfLink,
 		},
@@ -121,7 +123,7 @@ func (s *Service) VsphereID(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	vs, err := s.Store.Vspheres(ctx).Get(ctx, id)
 	if err != nil {
-		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+		notFound(w, id, s.Logger)
 		return
 	}
 
@@ -144,15 +146,27 @@ func (s *Service) NewVsphere(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	defaultOrg, err := s.Store.Organizations(ctx).DefaultOrganization(ctx)
+	orgID, ok := sessionOrganization(ctx);
+	if !ok {
+		invalidData(w, fmt.Errorf("no organization information in session"), s.Logger)
+		return
+	}
+
+	currentOrg, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &orgID})
 	if err != nil {
 		unknownErrorWithMessage(w, err, s.Logger)
 		return
 	}
 
 	// validate that the vsphere host exists
-	if s.vspheresExists(ctx, req.Host, defaultOrg.ID) {
-		invalidData(w, fmt.Errorf("vsphere host does exist in organization"), s.Logger)
+	if vspheresExists(ctx, s, req.Host, currentOrg.ID) {
+		invalidData(w, fmt.Errorf("vsphere host does existed in organization"), s.Logger)
+		return
+	}
+
+	// datasource in organization
+	if !hasSourcesOrganization(ctx, s, req.DataSource, currentOrg.ID) {
+		invalidData(w, fmt.Errorf("datasource not does existed in organization"), s.Logger)
 		return
 	}
 
@@ -164,7 +178,8 @@ func (s *Service) NewVsphere(w http.ResponseWriter, r *http.Request) {
 		Port:          req.Port,
 		Interval:      req.Interval,
 		Minion:        req.Minion,
-		Organization:  defaultOrg.ID,
+		Organization:  currentOrg.ID,
+		DataSource:    req.DataSource,
 	}
 
 	res, err := s.Store.Vspheres(ctx).Add(ctx, vs)
@@ -258,11 +273,35 @@ func (s *Service) UpdateVsphere(w http.ResponseWriter, r *http.Request) {
 	if req.Minion != "" {
 		orig.Minion = req.Minion
 	}
+	if req.DataSource != "" {
+		orig.DataSource = req.DataSource
+	}
+
+	orgID, ok := sessionOrganization(ctx);
+	if !ok {
+		invalidData(w, fmt.Errorf("no organization information in session"), s.Logger)
+		return
+	}
+
+	currentOrg, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &orgID})
+	if err != nil {
+		unknownErrorWithMessage(w, err, s.Logger)
+		return
+	}
+
+	orig.Organization = currentOrg.ID
 
 	if req.Host != "" {
 		// validate that the vsphere host exists
-		if s.vspheresExists(ctx, req.Host, orig.Organization) {
-			invalidData(w, fmt.Errorf("vsphere host does exist in organization"), s.Logger)
+		if vspheresExists(ctx, s, req.Host, orig.Organization) {
+			invalidData(w, fmt.Errorf("vsphere host does existed in organization"), s.Logger)
+			return
+		}
+	}
+	
+	if req.DataSource != "" {
+		if !hasSourcesOrganization(ctx, s, req.DataSource, orig.Organization) {
+			invalidData(w, fmt.Errorf("datasource not does existed in organization"), s.Logger)
 			return
 		}
 	}
@@ -297,7 +336,7 @@ func (s *Service) Vspheres(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
 
-func (s *Service) vspheresExists(ctx context.Context, host string, orgID string) bool {
+func vspheresExists(ctx context.Context, s *Service, host string, orgID string) bool {
 	vss, err := s.Store.Vspheres(ctx).All(ctx);
 	if err != nil {
 		return true
@@ -307,6 +346,32 @@ func (s *Service) vspheresExists(ctx context.Context, host string, orgID string)
 		if vs.Host == host && vs.Organization == orgID {
 			return true
 		}
+	}
+
+	return false
+}
+
+func sessionOrganization(ctx context.Context) (string, bool) {
+	orgID, ok := ctx.Value(organizations.ContextKey).(string)
+	// should never happen
+	if !ok {
+		return "", false
+	}
+	if orgID == "" {
+		return "", false
+	}
+	return orgID, true
+}
+
+func hasSourcesOrganization(ctx context.Context, s *Service, sourceID string, orgID string) bool {
+	id, _ := strconv.Atoi(sourceID)
+	src, err := s.Store.Sources(ctx).Get(ctx, id)
+	if err != nil {
+		return false
+	}
+
+	if src.Organization == orgID {
+		return true
 	}
 
 	return false
