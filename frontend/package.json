@@ -112,7 +112,7 @@
     "leaflet": "^1.6.0",
     "level-js": "^3.0.0",
     "levelup": "^3.1.1",
-    "lodash": "^4.17.19",
+    "lodash": "^4.17.21",
     "memoize-one": "^4.0.2",
     "moment": "^2.13.0",
     "mxgraph": "^4.2.2",
