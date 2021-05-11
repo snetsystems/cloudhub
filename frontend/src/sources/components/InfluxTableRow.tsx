@@ -12,6 +12,7 @@ import Button from 'src/reusable_ui/components/Button'
 import {ComponentColor, ComponentSize, ButtonShape} from 'src/reusable_ui/types'
 import {Source, Kapacitor} from 'src/types'
 import {ToggleWizard} from 'src/types/wizard'
+import {connectedSourceAction} from 'src/sources/actions'
 
 interface Props {
   source: Source
@@ -20,6 +21,7 @@ interface Props {
   setActiveKapacitor: (kapacitor: Kapacitor) => void
   deleteKapacitor: actions.DeleteKapacitor
   toggleWizard: ToggleWizard
+  connectedSource: connectedSourceAction
 }
 
 class InfluxTableRow extends PureComponent<Props & WithRouterProps> {
@@ -104,6 +106,7 @@ class InfluxTableRow extends PureComponent<Props & WithRouterProps> {
 
   private routeToSource = () => {
     const {source, router} = this.props
+    this.props.connectedSource(source.id)
     router.push(`/sources/${source.id}/manage-sources`)
   }
 

@@ -165,7 +165,8 @@ interface Props {
     password: string,
     port: string,
     protocol: string,
-    interval: string
+    interval: string,
+    sourceID: string
   ) => any
   handleUpdateVSphereAsync: (
     id: string,
@@ -175,7 +176,8 @@ interface Props {
     password: string,
     port: string,
     protocol: string,
-    interval: string
+    interval: string,
+    sourceID: string
   ) => Promise<any>
   handleGetVSphereAsync: (id: string) => Promise<any>
   handleAddVcenterAction: (props: any) => Promise<any>
@@ -252,6 +254,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const [protocol, setProtocol] = useState('https')
   const [interval, setInterval] = useState('1m')
   const [vSphereId, setVSphereId] = useState('0')
+
   // host state
   const [focusedHost, setFocusedHost] = useState<Item>(initialFocusedHost)
   const [layout, setLayout] = useState<LayoutCell[]>([])
@@ -395,7 +398,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
           protocol !== _.get(vsphereInfo, 'protocol', '') ? protocol : null,
           interval !== calcInterval(_.get(vsphereInfo, 'interval', 0))
             ? interval
-            : null
+            : null,
+          source.id
         ).then(async ({data}) => {
           const oldHost = _.get(vsphereInfo, 'host', '')
           const getLocal: VMHostsPageLocalStorage = getLocalStorage(
@@ -441,7 +445,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
           password,
           port,
           protocol,
-          interval
+          interval,
+          source.id
         )
 
         if (vSphereInfo && resultAddVCenterAsync) {

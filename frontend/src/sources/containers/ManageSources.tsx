@@ -9,6 +9,7 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {Page} from 'src/reusable_ui'
 import InfluxTable from 'src/sources/components/InfluxTable'
 import ConnectionWizard from 'src/sources/components/ConnectionWizard'
+import {connectedSourceAction, connectedSource} from 'src/sources/actions'
 
 import {
   notifySourceDeleted,
@@ -32,10 +33,11 @@ interface Props {
   organizations: Organization[]
   isUsingAuth: boolean
   notify: (n: Notification) => void
-  deleteKapacitor: sourcesActions.DeleteKapacitorAsync
+  deleteKapacitor: sourcesActions.DeleteKapacitor
   fetchKapacitors: sourcesActions.FetchKapacitorsAsync
   removeAndLoadSources: sourcesActions.RemoveAndLoadSources
   setActiveKapacitor: sourcesActions.SetActiveKapacitorAsync
+  connectedSource: connectedSourceAction
 }
 
 const VERSION = process.env.npm_package_version
@@ -70,6 +72,7 @@ class ManageSources extends PureComponent<Props, State> {
       sources,
       source,
       deleteKapacitor,
+      connectedSource,
     } = this.props
     const {
       wizardVisibility,
@@ -93,6 +96,7 @@ class ManageSources extends PureComponent<Props, State> {
             onDeleteSource={this.handleDeleteSource}
             setActiveKapacitor={this.handleSetActiveKapacitor}
             toggleWizard={this.toggleWizard}
+            connectedSource={connectedSource}
           />
           <p className="version-number">CloudHub Version: {VERSION}</p>
         </Page.Contents>
@@ -178,6 +182,7 @@ const mdtp = (dispatch: any) => ({
     sourcesActions.deleteKapacitorAsync,
     dispatch
   ),
+  connectedSource: bindActionCreators(connectedSource, dispatch),
 })
 
-export default connect(mstp, mdtp)(ManageSources)
+export default connect(mstp, mdtp, null)(ManageSources)
