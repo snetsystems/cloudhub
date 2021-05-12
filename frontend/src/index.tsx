@@ -388,7 +388,10 @@ class Root extends PureComponent<Record<string, never>, State> {
       this.checkTimeout(id, host)
     }
 
-    if (lastAction.type === 'LOAD_SOURCES') {
+    if (
+      lastAction.type === 'LOAD_SOURCES' ||
+      lastAction.type === 'CONNECTED_SOURCE'
+    ) {
       this.handleClearAllTimeout()
       const isUsingVshpere = this.isUsingVshpere()
 
@@ -570,8 +573,11 @@ class Root extends PureComponent<Record<string, never>, State> {
   }
 
   private checkVSpheres = async () => {
+    const {
+      source: {sourceID},
+    } = store.getState()
     try {
-      await this.getVSpheres({shouldResetVSphere: true})
+      await this.getVSpheres({shouldResetVSphere: true, sourceID})
     } catch (error) {
       dispatch(errorThrown(error))
     }

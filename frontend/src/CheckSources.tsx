@@ -27,6 +27,7 @@ import {DEFAULT_HOME_PAGE} from 'src/shared/constants'
 import * as copy from 'src/shared/copy/notifications'
 
 import {Source, Me, Links, Notification, NotificationFunc} from 'src/types'
+import {connectedSourceAction, connectedSource} from 'src/sources/actions'
 
 interface Auth {
   isUsingAuth: boolean
@@ -52,6 +53,7 @@ interface Props {
   location: Location
   auth: Auth
   notify: (message: Notification | NotificationFunc) => void
+  connectedSource: connectedSourceAction
 }
 
 export const SourceContext = React.createContext(undefined)
@@ -168,9 +170,11 @@ export class CheckSources extends Component<Props, State> {
 
       if (isUsingAuth && !isUserAuthorized(me.role, EDITOR_ROLE)) {
         if (defaultSource) {
-          return router.push(`/sources/${defaultSource.id}/${restString}`)
+          router.push(`/sources/${defaultSource.id}/${restString}`)
+          return this.props.connectedSource(defaultSource.id)
         } else if (sources[0]) {
-          return router.push(`/sources/${sources[0].id}/${restString}`)
+          router.push(`/sources/${sources[0].id}/${restString}`)
+          return this.props.connectedSource(sources[0].id)
         }
         // if you're a viewer and there are no sources, go to purgatory.
         notify(copy.notifyOrgHasNoSources())
@@ -180,9 +184,11 @@ export class CheckSources extends Component<Props, State> {
       // if you're an editor or not using auth, try for sources or otherwise
       // create one
       if (defaultSource) {
-        return router.push(`/sources/${defaultSource.id}/${restString}`)
+        router.push(`/sources/${defaultSource.id}/${restString}`)
+        return this.props.connectedSource(defaultSource.id)
       } else if (sources[0]) {
-        return router.push(`/sources/${sources[0].id}/${restString}`)
+        router.push(`/sources/${sources[0].id}/${restString}`)
+        return this.props.connectedSource(sources[0].id)
       }
 
       return router.push(`/sources/new?redirectPath=${location.pathname}`)
@@ -232,6 +238,7 @@ const mapDispatchToProps = dispatch => ({
   getSources: bindActionCreators(getSourcesAsync, dispatch),
   getOrgAll: bindActionCreators(loadOrganizationsAsync, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
+  connectedSource: bindActionCreators(connectedSource, dispatch),
 })
 
 export default connect(

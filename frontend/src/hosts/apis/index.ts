@@ -462,7 +462,8 @@ export const addVSphereApi = async (
   password: string,
   port: string,
   protocol: string,
-  interval: string
+  interval: string,
+  sourceID: string
 ) => {
   return await AJAX({
     url: '/cloudhub/v1/vspheres',
@@ -474,6 +475,7 @@ export const addVSphereApi = async (
       protocol,
       port: parseInt(port),
       interval: calcInterval(interval),
+      datasource: sourceID,
       minion: tgt,
     },
   })
@@ -488,6 +490,7 @@ export const updateVSphereApi = async ({
   port,
   protocol,
   interval,
+  sourceID,
 }: {
   id: number
   tgt: string
@@ -497,6 +500,7 @@ export const updateVSphereApi = async ({
   port: string
   protocol: string
   interval: string
+  sourceID: string
 }) => {
   let data = {}
   if (tgt) {
@@ -525,6 +529,10 @@ export const updateVSphereApi = async ({
 
   if (interval) {
     data = {...data, interval: calcInterval(interval)}
+  }
+
+  if (sourceID) {
+    data = {...data, datasource: sourceID}
   }
 
   return await AJAX({
