@@ -9,7 +9,7 @@ import InfluxTableRow from 'src/sources/components/InfluxTableRow'
 
 import {Source, Me, Kapacitor} from 'src/types'
 import {ToggleWizard} from 'src/types/wizard'
-
+import {connectedSourceAction} from 'src/sources/actions'
 interface Props {
   me: Me
   source: Source
@@ -19,6 +19,7 @@ interface Props {
   setActiveKapacitor: (kapacitor: Kapacitor) => void
   onDeleteSource: (source: Source) => void
   toggleWizard: ToggleWizard
+  connectedSource: connectedSourceAction
 }
 
 class InfluxTable extends PureComponent<Props> {
@@ -56,6 +57,7 @@ class InfluxTable extends PureComponent<Props> {
                     deleteKapacitor={deleteKapacitor}
                     setActiveKapacitor={setActiveKapacitor}
                     toggleWizard={toggleWizard}
+                    connectedSource={this.props.connectedSource}
                   />
                 )
               })}

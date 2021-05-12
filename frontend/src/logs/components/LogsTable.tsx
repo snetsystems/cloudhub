@@ -394,7 +394,7 @@ class LogsTable extends Component<Props, State> {
     switch (column) {
       case 'message':
         return currentMessageWidth
-      default:
+      default: {
         let columnKey = column
         if (column === 'severity') {
           columnKey = `${column}_${severityFormat}`
@@ -405,6 +405,7 @@ class LogsTable extends Component<Props, State> {
           return width + inc
         }
         return width
+      }
     }
   }
 
@@ -509,7 +510,13 @@ class LogsTable extends Component<Props, State> {
       return (
         <div
           className="logs-viewer--cell"
-          title={`Jump to '${value}'`}
+          title={
+            typeof value === 'string' && value.length > 9
+              ? `Jump to '${formattedValue}.${value.substring(
+                  value.length - 9
+                )}' (${value})`
+              : `Jump to '${value}'`
+          }
           key={key}
           style={style}
           data-index={rowIndex}

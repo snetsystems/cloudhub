@@ -15,7 +15,8 @@ import {
 
 import {HistogramData} from 'src/types/histogram'
 import {executeQueryAsync} from 'src/logs/api'
-import {DEFAULT_TIME_FORMAT} from 'src/logs/constants'
+import {DEFAULT_TIME_FORMAT, FIELD_TIMESTAMP_NSINMS} from 'src/logs/constants'
+import {TimeSeriesResponse} from 'src/types/series'
 
 const BIN_COUNT = 30
 
@@ -107,9 +108,8 @@ const operatorMapping = (operator: string): string => {
 const valueMapping = (operator: string, value): string => {
   if (operator === '=~' || operator === '!~') {
     return `${new RegExp(value)}`
-  } else {
-    return `'${value}'`
   }
+  return `'${value}'`
 }
 
 export const filtersClause = (filters: Filter[]): string => {
@@ -159,7 +159,7 @@ export function buildInfiniteScrollWhereClause({
   return ` WHERE ${subClauses.join(' AND ')}`
 }
 
-export function buildGeneralLogQuery(
+function buildGeneralLogQuery(
   condition: string,
   config: QueryConfig,
   filters: Filter[],
@@ -229,6 +229,9 @@ export function buildInfiniteScrollLogQuery(
     tags,
     areTagsAccepted,
   })
+  // add extra "_timestamp_ns" field to be able to know precise nanosecond time
+  // with full precision that is lost during JSON deserialization to number
+  config = {...config, fields: [...config.fields, FIELD_TIMESTAMP_NSINMS]}
 
   return buildGeneralLogQuery(condition, config, filters, searchTerm)
 }
@@ -266,9 +269,8 @@ const computeSeconds = (range: TimeRange) => {
     return moment().unix() - moment(lower).unix()
   } else if (upper && lower) {
     return moment(upper).unix() - moment(lower).unix()
-  } else {
-    return 120
   }
+  return 120
 }
 
 const createGroupBy = (range: TimeRange) => {
@@ -317,7 +319,7 @@ export const buildTableQueryConfig = (
 }
 
 export const parseHistogramQueryResponse = (
-  response: object
+  response: TimeSeriesResponse
 ): HistogramData => {
   const series = getDeep<any[]>(response, 'results.0.series', [])
   const data = series.reduce((acc, current) => {
@@ -360,6 +362,4 @@ export const buildFindMeasurementQuery = (
   namespace: Namespace,
   measurement: string
 ) =>
-  `SHOW MEASUREMENTS ON "${
-    namespace.database
-  }" WITH measurement = "${measurement}"`
+  `SHOW MEASUREMENTS ON "${namespace.database}" WITH measurement = "${measurement}"`

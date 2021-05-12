@@ -42,7 +42,7 @@ export interface LogsState {
   currentNamespace: Namespace | null
   timeRange: TimeRange
   histogramQueryConfig: QueryConfig | null
-  histogramData: object[]
+  histogramData: Array<Record<string, unknown>>
   tableQueryConfig: QueryConfig | null
   tableData: TableData
   filters: Filter[]

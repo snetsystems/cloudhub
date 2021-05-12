@@ -1,13 +1,13 @@
 package server
 
 import (
+	"encoding/json"
 	"io"
 	"net"
 	"net/http"
-	"time"
 	"net/url"
 	"strconv"
-	"encoding/json"
+	"time"
 
 	"github.com/gorilla/websocket"
 	gossh "golang.org/x/crypto/ssh"

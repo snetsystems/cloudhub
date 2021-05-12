@@ -60,6 +60,7 @@ func TestVsphereID(t *testing.T) {
 								Interval:     10,
 								Minion:       "minion01",
 								Organization: "225",
+								DataSource:   "23",
 							}, nil
 						default:
 							return cloudhub.Vsphere{}, fmt.Errorf("Vsphere with ID %s not found", id)
@@ -70,7 +71,8 @@ func TestVsphereID(t *testing.T) {
 			id:              "1337",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1337","host":"1.1.1.1","links":{"self":"/cloudhub/v1/vspheres/1337"},"username":"snet","password":"duidud#$","protocol":"http","port":25,"interval":10,"minion":"minion01","organization":"225"}`,
+			wantBody:        `{"id":"1337","host":"1.1.1.1","links":{"self":"/cloudhub/v1/vspheres/1337"},"username":"snet","password":"duidud#$","protocol":"http","port":25,"interval":10,"minion":"minion01","organization":"225",
+			"datasource":"23"}`,
 		},
 	}
 
@@ -153,6 +155,7 @@ func TestVspheres(t *testing.T) {
 								Interval:     10,
 								Minion:       "minion01",
 								Organization: "225",
+								DataSource:   "23",
 							},
 							{
 								ID:           "100",
@@ -164,6 +167,7 @@ func TestVspheres(t *testing.T) {
 								Interval:     10,
 								Minion:       "minion02",
 								Organization: "114",
+								DataSource:   "67",
 							},
 						}, nil
 					},
@@ -171,7 +175,7 @@ func TestVspheres(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"links":{"self":"/cloudhub/v1/vspheres"},"vspheres":[{"id":"1337","host":"1.1.1.1","username":"snet","password":"duidud#$","protocol":"http","port":25,"interval":10,"organization":"225","minion":"minion01","links":{"self":"/cloudhub/v1/vspheres/1337"}},{"id":"100","host":"2.2.2.2","username":"snet2","password":"2827%$djd","protocol":"http","port":2542,"interval":10,"organization":"114","minion":"minion02","links":{"self":"/cloudhub/v1/vspheres/100"}}]}`,
+			wantBody:        `{"links":{"self":"/cloudhub/v1/vspheres"},"vspheres":[{"id":"1337","host":"1.1.1.1","username":"snet","password":"duidud#$","protocol":"http","port":25,"interval":10,"organization":"225","minion":"minion01","datasource":"23","links":{"self":"/cloudhub/v1/vspheres/1337"}},{"id":"100","host":"2.2.2.2","username":"snet2","password":"2827%$djd","protocol":"http","port":2542,"interval":10,"organization":"114","minion":"minion02","datasource":"67","links":{"self":"/cloudhub/v1/vspheres/100"}}]}`,
 		},
 	}
 
@@ -254,6 +258,7 @@ func TestUpdateVsphere(t *testing.T) {
 							Interval:     10,
 							Minion:       "minion01",
 							Organization: "225",
+							DataSource:   "87",
 						}, nil
 					},
 					AllF: func(ctx context.Context) ([]cloudhub.Vsphere, error) {
@@ -267,7 +272,8 @@ func TestUpdateVsphere(t *testing.T) {
 								Port:         25,
 								Interval:     10,
 								Minion:       "minion01",
-								Organization: "114",
+								Organization: "225",
+								DataSource:   "87",
 							},
 							{
 								ID:           "100",
@@ -279,6 +285,7 @@ func TestUpdateVsphere(t *testing.T) {
 								Interval:     10,
 								Minion:       "minion02",
 								Organization: "114",
+								DataSource:   "55",
 							},
 						}, nil
 					},
@@ -295,7 +302,7 @@ func TestUpdateVsphere(t *testing.T) {
 			id:              "1337",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1337","host":"2.2.2.2","links":{"self":"/cloudhub/v1/vspheres/1337"},"username":"snet","password":"duidud#$","protocol":"http","port":25,"interval":10,"minion":"minion01","organization":"225"}`,
+			wantBody:        `{"id":"1337","host":"2.2.2.2","links":{"self":"/cloudhub/v1/vspheres/1337"},"username":"snet","password":"duidud#$","protocol":"http","port":25,"interval":10,"minion":"minion01","organization":"225","datasource":"87"}`,
 		},
 		{
 			name: "Update Vsphere - nothing to update",
@@ -325,6 +332,7 @@ func TestUpdateVsphere(t *testing.T) {
 							Interval:     10,
 							Minion:       "minion01",
 							Organization: "225",
+							DataSource:   "87",
 						}, nil
 					},
 					AllF: func(ctx context.Context) ([]cloudhub.Vsphere, error) {
@@ -338,7 +346,8 @@ func TestUpdateVsphere(t *testing.T) {
 								Port:         25,
 								Interval:     10,
 								Minion:       "minion01",
-								Organization: "114",
+								Organization: "225",
+								DataSource:   "87",
 							},
 							{
 								ID:           "100",
@@ -350,6 +359,7 @@ func TestUpdateVsphere(t *testing.T) {
 								Interval:     10,
 								Minion:       "minion02",
 								Organization: "114",
+								DataSource:   "74",
 							},
 						}, nil
 					},
@@ -390,6 +400,7 @@ func TestUpdateVsphere(t *testing.T) {
 							Interval:     10,
 							Minion:       "minion01",
 							Organization: "225",
+							DataSource:   "96",
 						}, nil
 					},
 					AllF: func(ctx context.Context) ([]cloudhub.Vsphere, error) {
@@ -403,7 +414,8 @@ func TestUpdateVsphere(t *testing.T) {
 								Port:         25,
 								Interval:     10,
 								Minion:       "minion01",
-								Organization: "114",
+								Organization: "225",
+								DataSource:   "96",
 							},
 							{
 								ID:           "100",
@@ -415,6 +427,7 @@ func TestUpdateVsphere(t *testing.T) {
 								Interval:     10,
 								Minion:       "minion02",
 								Organization: "114",
+								DataSource:   "87",
 							},
 						}, nil
 					},
@@ -431,7 +444,7 @@ func TestUpdateVsphere(t *testing.T) {
 			id:              "1337",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1337","host":"1.1.1.1","links":{"self":"/cloudhub/v1/vspheres/1337"},"username":"snet","password":"83447^%%$","protocol":"http","port":25,"interval":10,"minion":"minion01","organization":"225"}`,
+			wantBody:        `{"id":"1337","host":"1.1.1.1","links":{"self":"/cloudhub/v1/vspheres/1337"},"username":"snet","password":"83447^%%$","protocol":"http","port":25,"interval":10,"minion":"minion01","organization":"225","datasource":"96"}`,
 		},
 		{
 			name: "Update Vsphere - invalid update",
@@ -520,7 +533,7 @@ func TestRemoveVsphere(t *testing.T) {
 		wantStatus int
 	}{
 		{
-			name: "Update Vsphere host",
+			name: "Delete Vsphere host",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
@@ -619,6 +632,7 @@ func TestNewVsphere(t *testing.T) {
 					Port:         25,
 					Interval:     10,
 					Minion:       "minion01",
+					DataSource:   "87",
 				},
 			},
 			fields: fields{
@@ -635,6 +649,7 @@ func TestNewVsphere(t *testing.T) {
 							Interval:     10,
 							Minion:       "minion01",
 							Organization: "225",
+							DataSource:   "87",
 						}, nil
 					},
 					AllF: func(ctx context.Context) ([]cloudhub.Vsphere, error) {
@@ -648,7 +663,8 @@ func TestNewVsphere(t *testing.T) {
 								Port:         25,
 								Interval:     10,
 								Minion:       "minion01",
-								Organization: "114",
+								Organization: "123",
+								DataSource:   "98",
 							},
 							{
 								ID:           "100",
@@ -660,6 +676,7 @@ func TestNewVsphere(t *testing.T) {
 								Interval:     10,
 								Minion:       "minion02",
 								Organization: "114",
+								DataSource:   "54",
 							},
 						}, nil
 					},
@@ -675,7 +692,7 @@ func TestNewVsphere(t *testing.T) {
 			},
 			wantStatus:      http.StatusCreated,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1337","host":"1.1.1.1","links":{"self":"/cloudhub/v1/vspheres/1337"},"username":"snet","password":"duidud#$","protocol":"http","port":25,"interval":10,"minion":"minion01","organization":"225"}`,
+			wantBody:        `{"id":"1337","host":"1.1.1.1","links":{"self":"/cloudhub/v1/vspheres/1337"},"username":"snet","password":"duidud#$","protocol":"http","port":25,"interval":10,"minion":"minion01","organization":"225","datasource":"87"}`,
 		},
 		{
 			name: "Fail to create Vsphere - no host",
@@ -702,6 +719,7 @@ func TestNewVsphere(t *testing.T) {
 							Interval:     10,
 							Minion:       "minion01",
 							Organization: "225",
+							DataSource:   "87",
 						}, nil
 					},
 				},
@@ -734,6 +752,7 @@ func TestNewVsphere(t *testing.T) {
 					Port:         25,
 					Interval:     10,
 					Minion:       "minion01",
+					DataSource:   "87",
 				},
 			},
 			fields: fields{
@@ -750,6 +769,7 @@ func TestNewVsphere(t *testing.T) {
 							Interval:     10,
 							Minion:       "minion01",
 							Organization: "225",
+							DataSource:   "87",
 						}, nil
 					},
 				},

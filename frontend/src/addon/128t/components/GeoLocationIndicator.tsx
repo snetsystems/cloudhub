@@ -1,4 +1,4 @@
-import React, {SFC} from 'react'
+import React, {FunctionComponent} from 'react'
 import ReactTooltip from 'react-tooltip'
 import {RouterNode} from 'src/addon/128t/types'
 
@@ -6,7 +6,7 @@ interface Props {
   locationCoordinates: RouterNode['locationCoordinates']
 }
 
-const GeoLocationIndicator: SFC<Props> = locationCoordinates => {
+const GeoLocationIndicator: FunctionComponent<Props> = locationCoordinates => {
   const locationText = `<p class="test_locationCoordinates">${locationCoordinates.locationCoordinates.replace(
     '/',
     ''

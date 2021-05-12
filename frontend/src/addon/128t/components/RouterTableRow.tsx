@@ -12,6 +12,7 @@ import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
 import {transBps} from 'src/shared/utils/units'
 import {TableBodyRowItem} from 'src/addon/128t/reusable/layout'
 import GeoLocationIndicator from 'src/addon/128t/components/GeoLocationIndicator'
+import {ShellInfo} from 'src/types'
 
 interface Props {
   isCheck: boolean
@@ -28,6 +29,7 @@ interface Props {
     routerNode: RouterNode
   }) => void
   oncueData: OncueData
+  handleOnClickShellModalOpen: (shell: ShellInfo) => void
 }
 
 const RouterTableRow = ({
@@ -37,6 +39,7 @@ const RouterTableRow = ({
   routerNode,
   isCheck,
   handleOnClickNodeName,
+  handleOnClickShellModalOpen,
   oncueData,
 }: Props) => {
   const {
@@ -176,8 +179,38 @@ const RouterTableRow = ({
         }
         width={NODENAME}
       />
+
       <TableBodyRowItem title={group !== 'root' ? group : '-'} width={GROUP} />
-      <TableBodyRowItem title={ipAddress} width={IPADDRESS} />
+      <TableBodyRowItem
+        title={
+          ipAddress ? (
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                width: '100%',
+              }}
+            >
+              <div>{ipAddress}</div>
+              <button
+                className="btn btn-sm btn-default btn-square icon bash agent-row--button-sm"
+                title={'Open SSH Terminal'}
+                onClick={e => {
+                  e.stopPropagation()
+                  handleOnClickShellModalOpen({
+                    isNewEditor: false,
+                    addr: ipAddress,
+                    nodename: nodeName,
+                  })
+                }}
+                style={{fontSize: '10px'}}
+              ></button>
+            </div>
+          ) : null
+        }
+        width={IPADDRESS}
+      />
       <TableBodyRowItem title={role} width={ROLE} />
       <TableBodyRowItem
         title={enabledIndicator(routerNode.enabled)}

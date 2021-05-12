@@ -23,6 +23,7 @@ type Service struct {
 	ExternalExecArgs         string
 	LoginAuthType            string
 	BasicPasswordResetType   string
+	RetryPolicy              map[string]string
 }
 
 type superAdminProviderGroups struct {
@@ -39,6 +40,15 @@ type TimeSeriesClient interface {
 type ErrorMessage struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
+}
+
+// ErrorMessageBasic is the error response format for basic login service errors
+type ErrorMessageBasic struct {
+	Code          int    `json:"code"`
+	Message       string `json:"message"`
+	RetryCount    int32  `json:"retryCount"`
+	LockedTime    string `json:"lockedTime"`
+	Locked        bool   `json:"locked"`
 }
 
 // TimeSeries returns a new client connected to a time series database

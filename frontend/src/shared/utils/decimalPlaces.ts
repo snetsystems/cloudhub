@@ -48,7 +48,6 @@ export const toValueInRange = (
     return min
   } else if (value > +max) {
     return max
-  } else {
-    return `${value}`
   }
+  return `${value}`
 }

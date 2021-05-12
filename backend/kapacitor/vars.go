@@ -233,8 +233,10 @@ func field(q *cloudhub.QueryConfig) (string, error) {
 func whereFilter(q *cloudhub.QueryConfig) string {
 	if q != nil {
 		operator := "=="
+		combineOperators := " OR "
 		if !q.AreTagsAccepted {
 			operator = "!="
+			combineOperators = " AND " // negative comparisons are ANDed
 		}
 
 		outer := []string{}
@@ -243,8 +245,23 @@ func whereFilter(q *cloudhub.QueryConfig) string {
 			for _, value := range values {
 				inner = append(inner, fmt.Sprintf(`"%s" %s '%s'`, tag, operator, value))
 			}
-			outer = append(outer, "("+strings.Join(inner, " OR ")+")")
+			outer = append(outer, "("+strings.Join(inner, combineOperators)+")")
 		}
+		
+		// add isPresent filters, see https://github.com/influxdata/chronograf/issues/5566
+		var appendFields func(fields []cloudhub.Field)
+		appendFields = func(fields []cloudhub.Field) {
+			for _, field := range fields {
+				if field.Type == "field" {
+					outer = append(outer, fmt.Sprintf(`isPresent("%v")`, field.Value))
+				} else {
+					// use function arguments
+					appendFields(field.Args)
+				}
+			}
+		}
+		appendFields(q.Fields)
+
 		if len(outer) > 0 {
 			sort.Strings(outer)
 			return "lambda: " + strings.Join(outer, " AND ")

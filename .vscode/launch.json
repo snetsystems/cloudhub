@@ -40,12 +40,15 @@
         "--login-auth-type=basic", // Select the login type from mix, oauth, basic ... default: oauth
         "--password-policy=(?=.*[0-9]{1,50})(?=.*[~`!@#$%\\^&*()-+=]{1,50})(?=.*[a-zA-Z]{2,50}).{8,50}$",
         "--password-policy-message=Enter at least 8 characters, including at least 1 digit and 1 special characters and 2 characters.eg, cloud!hub2",
+        "--retry-policy=count:3",
+        "--retry-policy=delaytime:1",
+        "--retry-policy=type:delay",
+        "--influxdb-url=http://<influxDB>:<port>",
+        "--kapacitor-url=http://<kapacitor>:<port>",
         "--mail-subject=[Notifiy] $user_id Password is initialized",
         "--mail-body-message=Reset OTP for $user_id is '$user_pw'.<br>Do not forget this!<br>This OTP will use just once when login into cloudhub.<br>Then you must set up the new password",
         "--external-exec=",
-        "--external-exec-args=",
-        "--influxdb-url=http://<influxDB>:<port>",
-        "--kapacitor-url=http://<kapacitor>:<port>"
+        "--external-exec-args="
       ],
       "showLog": true
     },

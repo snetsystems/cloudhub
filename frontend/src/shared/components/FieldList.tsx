@@ -24,8 +24,10 @@ import {
   numFunctions,
   getFieldsWithName,
   getFuncsByFieldName,
+  getFieldName,
 } from 'src/shared/reducers/helpers/fields'
 import {ErrorHandling} from 'src/shared/decorators/errors'
+import QueryBuilderFilter from './QueryBuilderFilter'
 
 interface GroupByOption extends GroupBy {
   menuOption: string
@@ -57,6 +59,7 @@ interface Props {
 }
 
 interface State {
+  filterText: string
   fields: Field[]
 }
 
@@ -70,6 +73,7 @@ class FieldList extends PureComponent<Props, State> {
   constructor(props) {
     super(props)
     this.state = {
+      filterText: '',
       fields: [],
     }
   }
@@ -133,7 +137,13 @@ class FieldList extends PureComponent<Props, State> {
               onGroupByTime={this.handleGroupByTime}
               isDisabled={isDisabled}
             />
-          ) : null}
+          ) : (
+            <QueryBuilderFilter
+              filterText={this.state.filterText}
+              onEscape={this.handleEscapeFilter}
+              onFilterText={this.handleFilterText}
+            ></QueryBuilderFilter>
+          )}
         </div>
         {noDBorMeas ? (
           <div className="query-builder--list-empty">
@@ -149,12 +159,21 @@ class FieldList extends PureComponent<Props, State> {
                   fieldFunc.value,
                   fields
                 )
-
+                const fieldName = getFieldName(fieldFunc)
+                if (
+                  this.state.filterText &&
+                  !selectedFields.length &&
+                  !fieldName
+                    .toLowerCase()
+                    .includes(this.state.filterText.toLowerCase())
+                ) {
+                  // do not render the item unless it is selected or matches filter
+                  return
+                }
                 const funcs: FieldFunc[] = getFuncsByFieldName(
                   fieldFunc.value,
                   fields
                 )
-
                 const fieldFuncs = selectedFields.length
                   ? [this.addDesc(_.head(selectedFields), fieldFunc.desc)]
                   : [fieldFunc]
@@ -165,6 +184,7 @@ class FieldList extends PureComponent<Props, State> {
                     onToggleField={this.handleToggleField}
                     onApplyFuncsToField={this.handleApplyFuncs}
                     isSelected={!!selectedFields.length}
+                    fieldName={fieldName}
                     fieldFuncs={fieldFuncs}
                     funcs={functionNames(funcs)}
                     isKapacitorRule={isKapacitorRule}
@@ -175,6 +195,18 @@ class FieldList extends PureComponent<Props, State> {
             </FancyScrollbar>
           </div>
         )}
+        {hasAggregates ? (
+          <div
+            className="query-builder--heading"
+            style={{backgroundColor: 'transparent'}}
+          >
+            <QueryBuilderFilter
+              filterText={this.state.filterText}
+              onEscape={this.handleEscapeFilter}
+              onFilterText={this.handleFilterText}
+            ></QueryBuilderFilter>
+          </div>
+        ) : undefined}
       </div>
     )
   }
@@ -182,6 +214,24 @@ class FieldList extends PureComponent<Props, State> {
   private addDesc = (selectedField: FieldFunc, desc: string) => {
     selectedField.desc = desc
     return selectedField
+  }
+
+  private handleFilterText = (e: React.FormEvent<HTMLInputElement>) => {
+    e.stopPropagation()
+    const filterText = e.currentTarget.value
+    this.setState({
+      filterText,
+    })
+  }
+  private handleEscapeFilter = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Escape') {
+      return
+    }
+
+    e.stopPropagation()
+    this.setState({
+      filterText: '',
+    })
   }
 
   private handleGroupByTime = (groupBy: GroupByOption): void => {
@@ -263,10 +313,10 @@ class FieldList extends PureComponent<Props, State> {
         value: f,
         type: 'field',
         desc: _.get(FIELD_DESCRIPTIONS, `${measurement}.${f}`),
-      }))
+      })) as Field[]
 
       this.setState({
-        fields: newFields,
+        fields: _.uniqBy(newFields, 'value'), // do not duplicate items
       })
     })
   }

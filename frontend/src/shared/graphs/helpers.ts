@@ -188,8 +188,9 @@ export const makeLegendStyles = (
   }
 
   return {
-    transform: `translate(${translateX - parentLeft}px, ${translateY -
-      parentTop}px)`,
+    transform: `translate(${translateX - parentLeft}px, ${
+      translateY - parentTop
+    }px)`,
   }
 }
 
@@ -214,9 +215,8 @@ export const getDataUUID = (
 ): string => {
   if (dataType === DataType.influxQL) {
     return getInfluxQLDataUUID(data as TimeSeriesServerResponse[])
-  } else {
-    return getFluxDataUUID(data as FluxTable[])
   }
+  return getFluxDataUUID(data as FluxTable[])
 }
 
 const getInfluxQLDataUUID = (data: TimeSeriesServerResponse[]): string => {

@@ -1,4 +1,4 @@
-import React, {SFC} from 'react'
+import React, {FunctionComponent} from 'react'
 import {Link} from 'react-router'
 import classnames from 'classnames'
 
@@ -14,7 +14,7 @@ interface Props {
   onClickTableRow: HostsPage['handleClickTableRow']
 }
 
-const HostRow: SFC<Props> = ({
+const HostRow: FunctionComponent<Props> = ({
   host,
   sourceID,
   focusedHost,

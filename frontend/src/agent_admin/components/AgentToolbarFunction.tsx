@@ -16,7 +16,7 @@ interface Props {
   description: string
   focusedMeasure: string
   focusedPosition: {top: number; left: number}
-  handleFocusedMeasure: AgentConfiguration['handleFocusedServiceMeasure']
+  handleFocusedMeasure: AgentConfiguration['handleFocusedDefaultMeasure']
   handleClose: () => void
 }
 

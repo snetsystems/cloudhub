@@ -22,6 +22,7 @@ var (
 	sourcesBucket            = []byte("Sources")
 	usersBucket              = []byte("UsersV2")
 	vSpheresBucket           = []byte("vSpheres")
+	topologyBucket           = []byte("Topologies")
 )
 
 // Store is an interface for a generic key value store. It is modeled after
@@ -120,6 +121,7 @@ func (s *Service) initialize(ctx context.Context, tx Tx) error {
 		sourcesBucket,
 		usersBucket,
 		vSpheresBucket,
+		topologyBucket,
 	}
 
 	for i := range buckets {
@@ -188,4 +190,9 @@ func (s *Service) UsersStore() cloudhub.UsersStore {
 // VspheresStore returns a cloudhub.VspheresStore.
 func (s *Service) VspheresStore() cloudhub.VspheresStore {
 	return &vspheresStore{client: s}
+}
+
+// TopologiesStore returns a cloudhub.TopologiesStore.
+func (s *Service) TopologiesStore() cloudhub.TopologiesStore {
+	return &topologiesStore{client: s}
 }

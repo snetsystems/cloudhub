@@ -73,9 +73,9 @@ interface Props {
   users: User[]
   roles: Role[]
   permissions: Permission[]
-  loadUsers: (url: string) => void
-  loadRoles: (url: string) => void
-  loadPermissions: (url: string) => void
+  loadUsers: (url: string) => Promise<void>
+  loadRoles: (url: string) => Promise<void>
+  loadPermissions: (url: string) => Promise<void>
   addUser: () => void
   addRole: () => void
   removeUser: (user: User) => void
@@ -113,6 +113,10 @@ export class AdminInfluxDBPage extends PureComponent<Props, State> {
   }
   public async componentDidMount() {
     const {source, loadUsers, loadRoles, loadPermissions} = this.props
+    if (!source.version || source.version.startsWith('2')) {
+      // administration is not possible for v2 type
+      return
+    }
 
     this.setState({loading: RemoteDataState.Loading})
 
@@ -160,6 +164,14 @@ export class AdminInfluxDBPage extends PureComponent<Props, State> {
       return <PageSpinner />
     }
 
+    if (!source.version || source.version.startsWith('2')) {
+      return (
+        <div className="container-fluid">
+          These functions are not available for the currently selected InfluxDB
+          Connection.
+        </div>
+      )
+    }
     return (
       <div className="container-fluid">
         <SubSections
@@ -188,6 +200,7 @@ export class AdminInfluxDBPage extends PureComponent<Props, State> {
     this.props.editRole(role, updates)
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   private handleSaveUser = async user => {
     const {notify} = this.props
     if (!isValidUser(user)) {
@@ -201,6 +214,7 @@ export class AdminInfluxDBPage extends PureComponent<Props, State> {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   private handleSaveRole = async role => {
     const {notify} = this.props
     if (!isValidRole(role)) {

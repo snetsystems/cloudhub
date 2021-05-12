@@ -23,7 +23,7 @@ interface Props {
   script: string
   source: Source
   timeRange: TimeRange
-  timeZone: TimeZones
+  timeZone?: TimeZones
   fluxASTLink: string
 
   isFluxSelected: boolean
@@ -80,12 +80,20 @@ class CSVExporter extends PureComponent<Props, State> {
   }
 
   private downloadFluxCSV = async (): Promise<void> => {
-    const {source, script, onNotify, timeRange, fluxASTLink} = this.props
+    const {
+      source,
+      script,
+      onNotify,
+      timeRange,
+      fluxASTLink,
+      templates,
+    } = this.props
 
     const {didTruncate, rowCount} = await downloadFluxCSV(
       source,
       script,
       timeRange,
+      templates,
       fluxASTLink
     )
 
@@ -99,6 +107,7 @@ class CSVExporter extends PureComponent<Props, State> {
 
 const mstp = state => ({
   fluxASTLink: state.links.flux.ast,
+  timeZone: state.app.persisted.timeZone,
 })
 
 const mdtp = {

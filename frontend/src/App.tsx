@@ -1,14 +1,12 @@
-import React, {SFC, ReactChildren} from 'react'
-
+import React, {FunctionComponent, ReactChildren} from 'react'
 import SideNav from 'src/side_nav'
 import Notifications from 'src/shared/components/Notifications'
 import ShellModaless from 'src/shared/components/ShellModaless'
-
-interface Props {
+import {InjectedAuthReduxProps} from 'redux-auth-wrapper/history3/redirect'
+interface Props extends InjectedAuthReduxProps {
   children: ReactChildren
 }
-
-const App: SFC<Props> = ({children}) => (
+const App: FunctionComponent<Props> = ({children}) => (
   <div className="cloudhub-root">
     <Notifications />
     <ShellModaless />
@@ -16,5 +14,4 @@ const App: SFC<Props> = ({children}) => (
     {children}
   </div>
 )
-
 export default App

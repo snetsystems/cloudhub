@@ -11,7 +11,7 @@ import {
   updateActiveHostLink,
 } from 'src/hosts/utils/hostsSwitcherLinks'
 // Types
-import {Template, Layout, Source, Host} from 'src/types'
+import {Template, Layout, Source, Host, Links} from 'src/types'
 import {HostNames, HostName} from 'src/types/hosts'
 import {DashboardSwitcherLinks} from '../../types/dashboards'
 
@@ -462,7 +462,8 @@ export const addVSphereApi = async (
   password: string,
   port: string,
   protocol: string,
-  interval: string
+  interval: string,
+  sourceID: string
 ) => {
   return await AJAX({
     url: '/cloudhub/v1/vspheres',
@@ -474,6 +475,7 @@ export const addVSphereApi = async (
       protocol,
       port: parseInt(port),
       interval: calcInterval(interval),
+      datasource: sourceID,
       minion: tgt,
     },
   })
@@ -488,6 +490,7 @@ export const updateVSphereApi = async ({
   port,
   protocol,
   interval,
+  sourceID,
 }: {
   id: number
   tgt: string
@@ -497,6 +500,7 @@ export const updateVSphereApi = async ({
   port: string
   protocol: string
   interval: string
+  sourceID: string
 }) => {
   let data = {}
   if (tgt) {
@@ -527,6 +531,10 @@ export const updateVSphereApi = async ({
     data = {...data, interval: calcInterval(interval)}
   }
 
+  if (sourceID) {
+    data = {...data, datasource: sourceID}
+  }
+
   return await AJAX({
     url: `/cloudhub/v1/vspheres/${id}`,
     method: 'PATCH',
@@ -538,5 +546,43 @@ export const deleteVSphereApi = async (id: number) => {
   return await AJAX({
     url: `/cloudhub/v1/vspheres/${id}`,
     method: 'DELETE',
+  })
+}
+
+export const loadInventoryTopology = async (links: Links) => {
+  try {
+    const info = await AJAX({
+      url: `${_.get(links, 'topologies')}`,
+      method: 'GET',
+    })
+
+    const result = _.get(info, 'data', [])
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const createInventoryTopology = async (links: Links, cells: string) => {
+  return await AJAX({
+    url: `${_.get(links, 'topologies')}`,
+    method: 'POST',
+    data: cells,
+    headers: {'Content-Type': 'text/xml'},
+  })
+}
+
+export const updateInventoryTopology = async (
+  links: Links,
+  cellsId: string,
+  cells: string
+) => {
+  return await AJAX({
+    url: `${_.get(links, 'topologies')}/${cellsId}`,
+    method: 'PATCH',
+    data: cells,
+    headers: {'Content-Type': 'text/xml'},
   })
 }

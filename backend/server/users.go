@@ -39,6 +39,11 @@ type userPwdResetRequest struct {
 	Password              string          `json:"password"`
 }
 
+type userLockedRequest struct {
+	Name                  string          `json:"name"`
+	Locked                bool            `json:"locked"`
+}
+
 func (r *userRequest) ValidCreate() error {
 	if r.Name == "" {
 		return fmt.Errorf("name required on CloudHub basic User request body")
@@ -65,6 +70,14 @@ func (r *userPwdResetRequest) ValidCreate() error {
 	}
 	if r.Password == "" {
 		return fmt.Errorf("Password required on CloudHub User request body")
+	}
+
+	return nil
+}
+
+func (r *userLockedRequest) ValidCreate() error {
+	if r.Name == "" {
+		return fmt.Errorf("Name required on CloudHub User request body")
 	}
 
 	return nil
@@ -113,10 +126,13 @@ type userResponse struct {
 	Scheme     string          `json:"scheme"`
 	SuperAdmin bool            `json:"superAdmin"`
 	Roles      []cloudhub.Role `json:"roles"`
-	PasswordUpdateDate string `json:"passwordUpdateDate,omitempty"`
-	PasswordResetFlag  string `json:"passwordResetFlag,omitempty"`
-	Email              string `json:"email,omitempty"`
-	Password   string         `json:"password,omitempty"`
+	PasswordUpdateDate string  `json:"passwordUpdateDate,omitempty"`
+	PasswordResetFlag  string  `json:"passwordResetFlag,omitempty"`
+	Email              string  `json:"email,omitempty"`
+	Password           string  `json:"password,omitempty"`
+	RetryCount         int32   `json:"retryCount"`
+	LockedTime         string  `json:"lockedTime"`
+	Locked             bool    `json:"locked"`
 }
 
 func newUserResponse(u *cloudhub.User, org string, password string) *userResponse {
@@ -134,18 +150,19 @@ func newUserResponse(u *cloudhub.User, org string, password string) *userRespons
 	}
 	
 	resData := &userResponse{
-		ID:         u.ID,
-		Name:       u.Name,
-		Provider:   u.Provider,
-		Scheme:     u.Scheme,
-		Roles:      u.Roles,
-		SuperAdmin: u.SuperAdmin,
-		Links: selfLinks{
-			Self: selfLink,
-		},
+		Links:              selfLinks{Self: selfLink},
+		ID:                 u.ID,
+		Name:               u.Name,
+		Provider:           u.Provider,
+		Scheme:             u.Scheme,
+		SuperAdmin:         u.SuperAdmin,
+		Roles:              u.Roles,
 		PasswordUpdateDate: u.PasswordUpdateDate,
-		PasswordResetFlag: u.PasswordResetFlag,
-		Email: u.Email,
+		PasswordResetFlag:  u.PasswordResetFlag,
+		Email:              u.Email,
+		RetryCount:         u.RetryCount,
+		LockedTime:         u.LockedTime,
+		Locked:             u.Locked,
 	}
 
 	if password != "" {
@@ -229,7 +246,8 @@ func (s *Service) NewUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.validRoles(serverCtx, req.Roles); err != nil {
+	vRoles, err := s.validRoles(serverCtx, req.Roles, []cloudhub.Role{})
+	if err != nil {
 		invalidData(w, err, s.Logger)
 		return
 	}
@@ -238,7 +256,7 @@ func (s *Service) NewUser(w http.ResponseWriter, r *http.Request) {
 		Name:     req.Name,
 		Provider: req.Provider,
 		Scheme:   req.Scheme,
-		Roles:    req.Roles,
+		Roles:    vRoles,
 	}
 	if cfg.Auth.SuperAdminNewUsers {
 		req.SuperAdmin = true
@@ -265,7 +283,81 @@ func (s *Service) NewUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID := httprouter.GetParamFromContext(ctx, "oid")
+	// log registrationte
+	msg := fmt.Sprintf(MsgUserCreated.String(), user.Name)
+	s.logRegistration(ctx, "Users", msg)
+
+	cu := newUserResponse(res, "", resetPassword)
+	location(w, cu.Links.Self)
+	encodeJSON(w, http.StatusCreated, cu, s.Logger)
+}
+
+// OrganizationNewUser adds a new CloudHub user to organization
+func (s *Service) OrganizationNewUser(w http.ResponseWriter, r *http.Request) {
+	var req userRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		invalidJSON(w, s.Logger)
+		return
+	}
+
+	if err := req.ValidCreate(); err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+
+	ctx := r.Context()
+
+	serverCtx := serverContext(ctx)
+	cfg, err := s.Store.Config(serverCtx).Get(serverCtx)
+	if err != nil {
+		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+		return
+	}
+
+	vRoles, err := s.validRoles(serverCtx, req.Roles, []cloudhub.Role{})
+	if err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+
+	user := &cloudhub.User{
+		Name:     req.Name,
+		Provider: req.Provider,
+		Scheme:   req.Scheme,
+		Roles:    vRoles,
+	}
+	if cfg.Auth.SuperAdminNewUsers {
+		req.SuperAdmin = true
+	}
+	
+	var resetPassword string
+	if req.Provider == "cloudhub" && (hasAuthorizedRole(user, roles.AdminRoleName) || hasSuperAdminContext(ctx)) {
+		resetPassword = randResetPassword()
+		hashPassword := getPasswordToSHA512(resetPassword, SecretKey)
+
+		user.Passwd = hashPassword
+		user.PasswordResetFlag = "Y"
+		user.PasswordUpdateDate = getNowDate()
+	}
+
+	if err := setSuperAdmin(ctx, req, user); err != nil {
+		Error(w, http.StatusUnauthorized, err.Error(), s.Logger)
+		return
+	}
+
+	res, err := s.Store.Users(ctx).Add(ctx, user)
+	if err != nil {
+		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+		return
+	}
+
+	orgID := httprouter.GetParamFromContext(ctx, "oid")	
+
+	// log registrationte
+	org, _ := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &orgID})
+	msg := fmt.Sprintf(MsgOrganizationUserCreated.String(), user.Name, org.Name)
+	s.logRegistration(ctx, "Organizations Users", msg)
+	
 	cu := newUserResponse(res, orgID, resetPassword)
 	location(w, cu.Links.Self)
 	encodeJSON(w, http.StatusCreated, cu, s.Logger)
@@ -292,7 +384,8 @@ func (s *Service) NewBasicUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.validRoles(serverCtx, req.Roles); err != nil {
+	roles, err := s.validRoles(serverCtx, req.Roles, []cloudhub.Role{})
+	if err != nil {
 		invalidData(w, err, s.Logger)
 		return
 	}
@@ -328,7 +421,7 @@ func (s *Service) NewBasicUser(w http.ResponseWriter, r *http.Request) {
 		Name:     req.Name,
 		Provider: req.Provider,
 		Scheme:   req.Scheme,
-		Roles:    req.Roles,
+		Roles:    roles,
 		Passwd:   hashPassword,
 		PasswordResetFlag: pwdResetFlag,
 		PasswordUpdateDate: pwdUpdateDate,
@@ -352,7 +445,8 @@ func (s *Service) NewBasicUser(w http.ResponseWriter, r *http.Request) {
 	cu := newUserResponse(res, orgID, "")
 	location(w, cu.Links.Self)
 
-	LogRegistration(r, s.Store, s.Logger, orgID, "Sign up", user.Name, "Sign up success", user.SuperAdmin)
+	// log registrationte
+	s.logRegistration(ctx, "Sign up", "Sign up success", user.Name)
 
 	encodeJSON(w, http.StatusCreated, cu, s.Logger)
 }
@@ -389,21 +483,17 @@ func (s *Service) UserPassword(w http.ResponseWriter, r *http.Request) {
 	user.Passwd = getPasswordToSHA512(req.Password, SecretKey)
 	user.PasswordUpdateDate = getNowDate()
 	user.PasswordResetFlag = "N"
+	user.RetryCount = 0
+	user.Locked = false
+	user.LockedTime = ""	
 	
-	err = s.Store.Users(ctx).Update(ctx, user)
-	if err != nil {
+	if err := s.Store.Users(ctx).Update(ctx, user); err != nil {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
 
-	var orgID string
-	for _, role := range user.Roles {
-		orgID = role.Organization
-		break
-	}
-
 	// log registration
-	LogRegistration(r, s.Store, s.Logger, orgID, "password", user.Name, "Password change", user.SuperAdmin)
+	s.logRegistration(ctx, "Password", "Password change", user.Name)
 
 	w.WriteHeader(http.StatusOK)
 }
@@ -427,6 +517,40 @@ func (s *Service) RemoveUser(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgUserDeleted.String(), u.Name)
+	s.logRegistration(ctx, "Users", msg)
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// OrganizationRemoveUser deletes a CloudHub user from organization
+func (s *Service) OrganizationRemoveUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	idStr := httprouter.GetParamFromContext(ctx, "id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		Error(w, http.StatusBadRequest, fmt.Sprintf("invalid user id: %s", err.Error()), s.Logger)
+		return
+	}
+
+	user, err := s.Store.Users(ctx).Get(ctx, cloudhub.UserQuery{ID: &id})
+	if err != nil {
+		Error(w, http.StatusNotFound, err.Error(), s.Logger)
+		return
+	}
+	if err := s.Store.Users(ctx).Delete(ctx, user); err != nil {
+		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+		return
+	}
+
+	orgID := httprouter.GetParamFromContext(ctx, "oid")	
+
+	// log registrationte	
+	org, _ := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &orgID})
+	msg := fmt.Sprintf(MsgOrganizationUserDeleted.String(), user.Name, org.Name)
+	s.logRegistration(ctx, "Organizations Users", msg)	
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -458,15 +582,113 @@ func (s *Service) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := s.validRoles(ctx, req.Roles); err != nil {
+	roles, err := s.validRoles(ctx, req.Roles, u.Roles)
+	if err != nil {
 		invalidData(w, err, s.Logger)
 		return
 	}
 
-	// ValidUpdate should ensure that req.Roles is not nil
-	if req.Roles != nil {
-		u.Roles = req.Roles
+	u.Roles = roles
+
+	// If the request contains a name, it must be the same as the
+	// one on the user. This is particularly useful to the front-end
+	// because they would like to provide the whole user object,
+	// including the name, provider, and scheme in update requests.
+	// But currently, it is not possible to change name, provider, or
+	// scheme via the API.
+	if req.Name != "" && req.Name != u.Name {
+		err := fmt.Errorf("Cannot update Name")
+		invalidData(w, err, s.Logger)
+		return
 	}
+	if req.Provider != "" && req.Provider != u.Provider {
+		err := fmt.Errorf("Cannot update Provider")
+		invalidData(w, err, s.Logger)
+		return
+	}
+	if req.Scheme != "" && req.Scheme != u.Scheme {
+		err := fmt.Errorf("Cannot update Scheme")
+		invalidData(w, err, s.Logger)
+		return
+	}
+
+	// provider = cloudhub
+	u.Email = req.Email
+	if req.Password != "" {
+		u.Passwd = getPasswordToSHA512(req.Password, SecretKey)
+		u.PasswordUpdateDate = getNowDate()
+		u.PasswordResetFlag = "N"
+	}
+
+	// Don't allow SuperAdmins to modify their own SuperAdmin status.
+	// Allowing them to do so could result in an application where there
+	// are no super admins.
+	ctxUser, ok := hasUserContext(ctx)
+	if !ok {
+		Error(w, http.StatusInternalServerError, "failed to retrieve user from context", s.Logger)
+		return
+	}
+	// If the user being updated is the user making the request and they are
+	// changing their SuperAdmin status, return an unauthorized error
+	if ctxUser.ID == u.ID && u.SuperAdmin == true && req.SuperAdmin == false {
+		Error(w, http.StatusUnauthorized, "user cannot modify their own SuperAdmin status", s.Logger)
+		return
+	}
+
+	if err := setSuperAdmin(ctx, req, u); err != nil {
+		Error(w, http.StatusUnauthorized, err.Error(), s.Logger)
+		return
+	}
+
+	err = s.Store.Users(ctx).Update(ctx, u)
+	if err != nil {
+		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+		return
+	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgUserModified.String(), u.Name)
+	s.logRegistration(ctx, "Users", msg)
+
+	cu := newUserResponse(u, "", "")
+	location(w, cu.Links.Self)
+	encodeJSON(w, http.StatusOK, cu, s.Logger)
+}
+
+// OrganizationUpdateUser updates a CloudHub user in organization
+func (s *Service) OrganizationUpdateUser(w http.ResponseWriter, r *http.Request) {
+	var req userRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		invalidJSON(w, s.Logger)
+		return
+	}
+
+	ctx := serverContext(r.Context())
+	idStr := httprouter.GetParamFromContext(ctx, "id")
+	id, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		Error(w, http.StatusBadRequest, fmt.Sprintf("invalid user id: %s", err.Error()), s.Logger)
+		return
+	}
+
+	if err := req.ValidUpdate(); err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+
+	u, err := s.Store.Users(ctx).Get(ctx, cloudhub.UserQuery{ID: &id})
+	if err != nil {
+		Error(w, http.StatusNotFound, err.Error(), s.Logger)
+		return
+	}
+
+	roles, err := s.validRoles(ctx, req.Roles, u.Roles)
+	if err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+
+	u.Roles = roles
 
 	// If the request contains a name, it must be the same as the
 	// one on the user. This is particularly useful to the front-end
@@ -525,6 +747,12 @@ func (s *Service) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	orgID := httprouter.GetParamFromContext(ctx, "oid")
+
+	// log registrationte	
+	org, _ := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &orgID})
+	msg := fmt.Sprintf(MsgOrganizationUserModified.String(), u.Name, org.Name)
+	s.logRegistration(ctx, "Organizations Users", msg)
+
 	cu := newUserResponse(u, orgID, "")
 	location(w, cu.Links.Self)
 	encodeJSON(w, http.StatusOK, cu, s.Logger)
@@ -543,6 +771,54 @@ func (s *Service) Users(w http.ResponseWriter, r *http.Request) {
 	orgID := httprouter.GetParamFromContext(ctx, "oid")
 	res := newUsersResponse(users, orgID)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
+}
+
+// LockedUser locked a CloudHub user from store
+func (s *Service) LockedUser(w http.ResponseWriter, r *http.Request) {
+	ctx := serverContext(r.Context())
+	var req userLockedRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		invalidJSON(w, s.Logger)
+		return
+	}
+
+	if err := req.ValidCreate(); err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+
+	user, err := s.Store.Users(ctx).Get(ctx, cloudhub.UserQuery{
+		Name:     &req.Name,
+		Provider: &BasicProvider,
+		Scheme:   &BasicScheme,
+	})
+	if err != nil {
+		Error(w, http.StatusNotFound, err.Error(), s.Logger)
+		return
+	}
+
+	var msg string
+	if req.Locked {
+		user.RetryCount = 0
+		user.Locked = true
+		user.LockedTime = getNowDate()
+		msg = fmt.Sprintf(MsgLocked.String(), user.Name)
+	} else {
+		user.RetryCount = 0
+		user.Locked = false
+		user.LockedTime = ""
+		msg = fmt.Sprintf(MsgUnlocked.String(), user.Name)
+	}
+	
+	if err := s.Store.Users(ctx).Update(ctx, user); err != nil {
+		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
+		return
+	}
+
+	// log registrationte
+	s.logRegistration(ctx, "Users", msg)
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func setSuperAdmin(ctx context.Context, req userRequest, user *cloudhub.User) error {
@@ -568,20 +844,34 @@ func setSuperAdmin(ctx context.Context, req userRequest, user *cloudhub.User) er
 	return nil
 }
 
-func (s *Service) validRoles(ctx context.Context, rs []cloudhub.Role) error {
+func (s *Service) validRoles(ctx context.Context, rs []cloudhub.Role, existing []cloudhub.Role) ([]cloudhub.Role, error) {
+	// validates that newly added roles reference existing organization
+	// and remove existing roles that reference organization that does not exist
+	// https://github.com/influxdata/chronograf/pull/5722
+	validRoles := make([]cloudhub.Role, 0, len(existing))
+	existingOrgs := make(map[string]struct{})
+	for _, role := range existing {
+		existingOrgs[role.Organization] = struct{}{}
+	}
 	for i, role := range rs {
-		// verify that the organization exists
+		_, orgAlreadyUsed := existingOrgs[role.Organization]
 		org, err := s.Store.Organizations(ctx).Get(ctx, cloudhub.OrganizationQuery{ID: &role.Organization})
-		if err != nil {
-			return err
+		if err != nil && !orgAlreadyUsed {
+			return nil, err
 		}
 		if role.Name == roles.WildcardRoleName {
+			if err != nil {
+				return nil, err
+			}
 			role.Name = org.DefaultRole
 			rs[i] = role
 		}
+		if err != cloudhub.ErrOrganizationNotFound {
+			validRoles = append(validRoles, role)
+		}
 	}
 
-	return nil
+	return validRoles, nil
 }
 
 func getNowDate() string {

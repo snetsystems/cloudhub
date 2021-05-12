@@ -1,5 +1,4 @@
 // Libraries
-import {Container} from 'unstated'
 import _ from 'lodash'
 
 // Utils
@@ -68,6 +67,8 @@ import {
   Axes,
 } from 'src/types/dashboards'
 import {ColorString, ColorNumber} from 'src/types/colors'
+import recordProperty from 'src/flux/helpers/recordProperty'
+import {TIMERANGE_START} from 'src/flux/helpers/templates'
 
 const LOCAL_STORAGE_DELAY_MS = 1000
 
@@ -115,8 +116,11 @@ export interface TimeMachineState {
   timeMachineProportions: number[]
 }
 
-export class TimeMachineContainer extends Container<TimeMachineState> {
+export class TimeMachineContainer {
   public state: TimeMachineState = DEFAULT_STATE()
+  public setState(state: Partial<TimeMachineState>) {
+    this.state = {...this.state, ...state}
+  }
 
   private debouncer: Debouncer = new DefaultDebouncer()
   private localStorageKey?: TMLocalStorageKey
@@ -189,12 +193,12 @@ export class TimeMachineContainer extends Container<TimeMachineState> {
 
     const body = Object.entries(filter)
       .map(([key, value]) => {
-        return `r.${key} == "${value}"`
+        return `${recordProperty(key)} == "${value}"`
       })
       .join(' and ')
 
     if (_.isEmpty(draftScript)) {
-      draftScript = `from(bucket: "${db}")\n  |> range(start: dashboardTime)`
+      draftScript = `from(bucket: "${db}")\n  |> range(start: ${TIMERANGE_START})`
     }
 
     const newDraftScript = `${draftScript}\n  |> filter(fn: (r) => ${body})`
@@ -412,7 +416,8 @@ export class TimeMachineContainer extends Container<TimeMachineState> {
       this.debouncer.call(this.setLocalStorageState, LOCAL_STORAGE_DELAY_MS)
     }
 
-    return this.setState(state)
+    this.setState(state)
+    return Promise.resolve()
   }
 
   private setLocalStorageState = () => {

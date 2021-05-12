@@ -18,6 +18,7 @@ import TopSessionsTable from 'src/addon/128t/components/TopSessionsTable'
 import RouterMaps from 'src/addon/128t/components/RouterMaps'
 import RouterModal from 'src/addon/128t/components/RouterModal'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import {openShell} from 'src/shared/actions/shell'
 
 // Apis
 import {
@@ -65,7 +66,7 @@ import {NETWORK_ACCESS, GET_STATUS} from 'src/agent_admin/constants'
 import {cellLayoutInfo} from 'src/addon/128t/containers/SwanSdplexStatusPage'
 import {ComponentStatus} from 'src/reusable_ui/types'
 import {Addon} from 'src/types/auth'
-import {Notification, NotificationFunc, Me} from 'src/types'
+import {Notification, NotificationFunc, Me, ShellInfo} from 'src/types'
 
 // Notification
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -103,6 +104,7 @@ interface Props {
     focusedNodeName: string
   ) => void
   addons: Addon[]
+  openShell: (shell: ShellInfo) => void
 }
 
 interface State {
@@ -419,7 +421,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
 
     const checkRouterData: RouterNode[] = routerNodesData.map(
       (router, i): RouterNode => {
-        router.isCheck = checkRouters[i].isCheck
+        router.isCheck = _.get(checkRouters[i], 'isCheck')
         return router
       }
     )
@@ -470,6 +472,7 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
               handleOnClickDeviceConnectionsRow={
                 this.onClickDeviceConnectionsRow
               }
+              handleOnClickShellModalOpen={this.onClickShellModalOpen}
               routerDataPopupAutoRefresh={routerDataPopupAutoRefresh}
               onChooseRouterDataPopupAutoRefresh={
                 this.onChooseRouterDataPopupAutoRefresh
@@ -881,6 +884,9 @@ class GridLayoutRenderer extends PureComponent<Props, State> {
       STATUS_PAGE_ROW_COUNT
     )
   }
+  private onClickShellModalOpen = (shell: ShellInfo) => {
+    this.props.openShell(shell)
+  }
 }
 
 const mapStateToProps = ({auth}) => ({
@@ -890,6 +896,7 @@ const mapStateToProps = ({auth}) => ({
 const mdtp = {
   notify: notifyAction,
   getRunnerSaltCmdDirectory: getRunnerSaltCmdDirectory,
+  openShell,
 }
 
 export default connect(mapStateToProps, mdtp)(GridLayoutRenderer)

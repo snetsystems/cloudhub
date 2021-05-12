@@ -8,10 +8,10 @@ import (
 	"path"
 	"time"
 
-	"github.com/boltdb/bolt"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/kv"
 	"github.com/snetsystems/cloudhub/backend/mocks"
+	bolt "go.etcd.io/bbolt"
 )
 
 const (

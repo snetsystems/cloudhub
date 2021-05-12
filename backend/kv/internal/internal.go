@@ -363,6 +363,7 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 		if t.Query != nil {
 			template.Query = &TemplateQuery{
 				Command:     t.Query.Command,
+				Flux:        t.Query.Flux,
 				Db:          t.Query.DB,
 				Rp:          t.Query.RP,
 				Measurement: t.Query.Measurement,
@@ -551,6 +552,7 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 		if t.Query != nil {
 			template.Query = &cloudhub.TemplateQuery{
 				Command:     t.Query.Command,
+				Flux:        t.Query.Flux,
 				DB:          t.Query.Db,
 				RP:          t.Query.Rp,
 				Measurement: t.Query.Measurement,
@@ -624,9 +626,12 @@ func MarshalUser(u *cloudhub.User) ([]byte, error) {
 		Roles:              roles,
 		SuperAdmin:         u.SuperAdmin,
 		Password:           u.Passwd,
-		PasswordResetFlag:   u.PasswordResetFlag,
+		PasswordResetFlag:  u.PasswordResetFlag,
 		PasswordUpdateDate: u.PasswordUpdateDate,
-		Email: u.Email,
+		Email:              u.Email,
+		RetryCount:         u.RetryCount,
+		LockedTime:         u.LockedTime,
+		Locked:             u.Locked,
 	})
 }
 
@@ -660,6 +665,9 @@ func UnmarshalUser(data []byte, u *cloudhub.User) error {
 	u.PasswordResetFlag = pb.PasswordResetFlag
 	u.PasswordUpdateDate = pb.PasswordUpdateDate
 	u.Email = pb.Email
+	u.RetryCount = pb.RetryCount
+	u.LockedTime = pb.LockedTime
+	u.Locked = pb.Locked
 
 	return nil
 }
@@ -924,6 +932,7 @@ func MarshalVsphere(v cloudhub.Vsphere) ([]byte, error) {
 		Interval:   int64(v.Interval),
 		Minion:     v.Minion,
 		Organization: v.Organization,
+		DataSource: v.DataSource,
 	})
 }
 
@@ -943,6 +952,30 @@ func UnmarshalVsphere(data []byte, v *cloudhub.Vsphere) error {
 	v.Interval = int(pb.Interval)
 	v.Minion = pb.Minion
 	v.Organization = pb.Organization
+	v.DataSource = pb.DataSource
+
+	return nil
+}
+
+// MarshalTopology encodes a mapping to binary protobuf format.
+func MarshalTopology(t *cloudhub.Topology) ([]byte, error) {
+	return proto.Marshal(&Topology{
+		ID:           t.ID,
+		Organization: t.Organization,
+		Diagram:      t.Diagram,
+	})
+}
+
+// UnmarshalTopology decodes a mapping from binary protobuf data.
+func UnmarshalTopology(data []byte, t *cloudhub.Topology) error {
+	var pb Topology
+	if err := proto.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+
+	t.ID = pb.ID
+	t.Organization = pb.Organization
+	t.Diagram = pb.Diagram
 
 	return nil
 }

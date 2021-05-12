@@ -1,6 +1,7 @@
 // Libraries
 import React, {PureComponent} from 'react'
 import {flatten, isEmpty} from 'lodash'
+import _ from 'lodash'
 
 // Components
 import {
@@ -34,7 +35,6 @@ import {
 // Types
 import {RemoteDataState, Source, Me} from 'src/types'
 import {isUserAuthorized, SUPERADMIN_ROLE} from 'src/auth/Authorized'
-import _ from 'lodash'
 
 // These constants are selected so that the dropdown menus will not overflow
 // out of the `.flux-script-wizard--wizard` window
@@ -84,19 +84,8 @@ class FluxScriptWizard extends PureComponent<Props, State> {
   private fetchMeasurements = restartable(fetchMeasurements)
   private fetchFields = restartable(fetchFields)
 
-  public componentDidMount() {
-    this.fetchAndSetDBsToRPs()
-  }
-
   public render() {
     const {children, isWizardActive} = this.props
-    const {
-      measurements,
-      fields,
-      selectedMeasurement,
-      selectedFields,
-      selectedAggFunction,
-    } = this.state
 
     if (!isWizardActive) {
       return (
@@ -104,6 +93,18 @@ class FluxScriptWizard extends PureComponent<Props, State> {
           <div className="flux-script-wizard--children">{children}</div>
         </div>
       )
+    }
+    const {
+      dbsToRPsStatus,
+      measurements,
+      fields,
+      selectedMeasurement,
+      selectedFields,
+      selectedAggFunction,
+    } = this.state
+
+    if (dbsToRPsStatus === RemoteDataState.NotStarted) {
+      this.fetchAndSetDBsToRPs()
     }
 
     return (
@@ -253,11 +254,9 @@ class FluxScriptWizard extends PureComponent<Props, State> {
   }
 
   private get buttonStatus(): ComponentStatus {
-    const {selectedDB, selectedRP, selectedMeasurement} = this.state
+    const {selectedDB, selectedMeasurement} = this.state
 
-    const needsSelection = [selectedDB, selectedRP, selectedMeasurement].some(
-      isEmpty
-    )
+    const needsSelection = [selectedDB, selectedMeasurement].some(isEmpty)
 
     const buttonStatus = needsSelection
       ? ComponentStatus.Disabled
@@ -372,6 +371,10 @@ class FluxScriptWizard extends PureComponent<Props, State> {
       fieldsStatus: RemoteDataState.NotStarted,
       selectedFields: [],
     })
+    if (!selectedDB) {
+      // no database selected
+      return
+    }
 
     let measurements
 

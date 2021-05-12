@@ -52,7 +52,7 @@ class Tickscript extends PureComponent<Props> {
       isUsingAuth,
     } = this.props
     return (
-      <Page>
+      <Page className="tickscript-editor-page">
         <TickscriptHeader
           task={task}
           onSave={onSave}

@@ -1,4 +1,5 @@
-import axios, {AxiosResponse} from 'axios'
+/* eslint-disable @typescript-eslint/ban-types */
+import axios, {AxiosResponse, Method} from 'axios'
 
 let links
 export const setAJAXLinks = ({updatedLinks}): void => {
@@ -77,7 +78,7 @@ interface RequestParams {
   url?: string | string[]
   resource?: string
   id?: string
-  method?: string
+  method?: Method
   data?: object | string
   params?: object
   headers?: object
@@ -119,7 +120,11 @@ async function AJAX<T = any>(
     return links ? generateResponseWithLinks(response, links) : response
   } catch (error) {
     const {response} = error
-    throw links ? generateResponseWithLinks(response, links) : response // eslint-disable-line no-throw-literal
+    if (response) {
+      throw links ? generateResponseWithLinks(response, links) : response // eslint-disable-line no-throw-literal
+    } else {
+      throw error
+    }
   }
 }
 

@@ -1,4 +1,7 @@
+import _ from 'lodash'
+
 import AJAX from 'src/utils/ajax'
+import {createActivityLog} from 'src/shared/apis'
 
 interface Params {
   client?: string
@@ -32,12 +35,24 @@ interface Params {
   token_expire?: number
 }
 
+const activityData = [
+  {action: 'key.accept', message: `Execute 'accept'.`},
+  {action: 'key.reject', message: `Execute 'reject'.`},
+  {action: 'key.delete', message: `Execute 'delete'.`},
+  {action: 'service.start', message: `Execute 'telegraf service start'.`},
+  {action: 'service.stop', message: `Execute 'telegraf service stop'.`},
+  {action: 'pkg.install', message: `Execute 'telegraf package install'.`},
+  {action: 'file.write', message: `Execute 'telegraf config apply'.`},
+]
+
 const apiRequest = async (
   pUrl: string,
   pToken: string,
   pParams: Params,
   pAccept?: string
 ) => {
+  const activity = _.find(activityData, f => f.action === _.get(pParams, 'fun'))
+
   try {
     const dParams = {token: pToken, eauth: 'pam'}
     const saltMasterUrl = pUrl
@@ -48,13 +63,24 @@ const apiRequest = async (
     }
 
     const param = JSON.stringify(Object.assign(dParams, pParams))
-    return await AJAX({
+
+    const ajaxResult = await AJAX({
       method: 'POST',
       url: url,
       headers,
       data: param,
     })
+
+    if (!_.isEmpty(activity)) {
+      saltActivityLog(activity, ajaxResult)
+    }
+
+    return ajaxResult
   } catch (error) {
+    if (!_.isEmpty(activity)) {
+      saltActivityLog(activity, error)
+    }
+
     console.error(error)
     throw error
   }
@@ -726,5 +752,24 @@ export async function getLocalHttpQuery(
   } catch (error) {
     console.error(error)
     throw error
+  }
+}
+
+const saltActivityLog = async (
+  activity: object,
+  result: object
+): Promise<void> => {
+  if (_.get(result, 'status') === 200) {
+    createActivityLog(
+      'SaltProxy',
+      `${_.get(activity, 'message')} result:${JSON.stringify(
+        _.get(result, 'data.return')[0]
+      )}`
+    )
+  } else {
+    createActivityLog(
+      'SaltProxy',
+      `Sever ${_.get(result, 'status')} error: ${_.get(result, 'statusText')}.`
+    )
   }
 }

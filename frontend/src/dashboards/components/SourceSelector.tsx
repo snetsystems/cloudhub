@@ -1,5 +1,5 @@
 // Libraries
-import React, {SFC} from 'react'
+import React, {FunctionComponent} from 'react'
 
 // Components
 import SourceDropdown from 'src/flux/components/SourceDropdown'
@@ -23,7 +23,17 @@ interface Props {
   onChangeSource: (source: SourcesModels.Source, type: QueryType) => void
 }
 
-const SourceSelector: SFC<Props> = ({
+function fluxDisabledTooltip(source: SourcesModels.Source): string {
+  // if source is version 2, recommend InfluxDB v2 authentication
+  if (!source.version || source.version.startsWith('2.')) {
+    return 'To enable Flux modify the connection to use InfluxDB v2 Auth with an organization and a token.'
+  }
+  return `The current source does not support Flux.<br>
+  See <a href="https://docs.influxdata.com/influxdb/v1.8/flux/installation/" 
+  target="_blank">https://docs.influxdata.com/influxdb/v1.8/flux/installation/</a>`
+}
+
+const SourceSelector: FunctionComponent<Props> = ({
   source,
   sources = [],
   queries,
@@ -61,6 +71,7 @@ const SourceSelector: SFC<Props> = ({
           onClick={toggleFlux}
           active={!isFluxSelected}
           disabled={!sourceSupportsFlux}
+          disabledTitleText=""
         >
           InfluxQL
         </Radio.Button>
@@ -81,7 +92,7 @@ const SourceSelector: SFC<Props> = ({
       {!sourceSupportsFlux && (
         <QuestionMarkTooltip
           tipID="token"
-          tipContent={`<p>The current source does not support Flux.</p>`}
+          tipContent={`<p>${fluxDisabledTooltip(source)}</p>`}
         />
       )}
     </div>

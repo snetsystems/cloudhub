@@ -21,9 +21,6 @@ const actionsAllowedDuringBlackout = [
   'ERROR_',
   'LINKS_',
 ]
-const notificationsBlackoutDuration = 5000
-let allowNotifications = true // eslint-disable-line
-
 const errorsMiddleware = store => next => action => {
   const {
     auth: {me},
@@ -36,6 +33,10 @@ const errorsMiddleware = store => next => action => {
       altText,
       alertType = 'info',
     } = action
+
+    if (error.message === 'locked') {
+      store.dispatch(authExpired(auth))
+    }
 
     if (status === HTTP_FORBIDDEN) {
       const message = _.get(error, 'data.message', '')
@@ -55,19 +56,9 @@ const errorsMiddleware = store => next => action => {
 
       if (organizationWasRemoved) {
         store.dispatch(notify(notifyCurrentOrgDeleted()))
-
-        allowNotifications = false
-        setTimeout(() => {
-          allowNotifications = true
-        }, notificationsBlackoutDuration)
       } else if (wasSessionTimeout) {
         store.dispatch(notify(notifyHttpErrorRespose(status, statusText)))
         store.dispatch(notify(notifySessionTimedOut()))
-
-        allowNotifications = false
-        setTimeout(() => {
-          allowNotifications = true
-        }, notificationsBlackoutDuration)
       }
     } else if (altText) {
       store.dispatch(notify(notifyErrorWithAltText(alertType, altText)))

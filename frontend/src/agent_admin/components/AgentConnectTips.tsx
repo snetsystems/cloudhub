@@ -1,11 +1,11 @@
-import React, {SFC} from 'react'
+import React, {FunctionComponent} from 'react'
 import ReactTooltip from 'react-tooltip'
 
 interface Props {
   saltMasterUrl: string
 }
 
-const AgentConnectTips: SFC<Props> = ({saltMasterUrl}) => {
+const AgentConnectTips: FunctionComponent<Props> = ({saltMasterUrl}) => {
   const agentConnectTipsText =
     '<h1>Salt URL:</h1><p><code>' + saltMasterUrl + '</code></p>'
 

@@ -396,7 +396,7 @@ export const setActiveCell = (activeCellID: string): SetActiveCellAction => ({
 })
 
 export const updateTimeRangeQueryParams = (
-  updatedQueryParams: object
+  updatedQueryParams: Record<string, unknown>
 ): RouterAction => {
   const {search, pathname} = window.location
   const strippedPathname = stripPrefix(pathname)
@@ -422,7 +422,9 @@ export const updateTimeRangeQueryParams = (
   return push(newLocation)
 }
 
-export const updateQueryParams = (updatedQueryParams: object): RouterAction => {
+export const updateQueryParams = (
+  updatedQueryParams: Record<string, unknown>
+): RouterAction => {
   const {search, pathname} = window.location
   const strippedPathname = stripPrefix(pathname)
 
@@ -658,7 +660,7 @@ export const importDashboardAsync = (dashboard: Dashboard) => async (
 
     dispatch(loadDashboards(dashboards))
 
-    dispatch(notify(notifyDashboardImported(name)))
+    dispatch(notify(notifyDashboardImported()))
   } catch (error) {
     const errorMessage = _.get(
       error,
@@ -681,13 +683,13 @@ const updateTimeRangeFromQueryParams = (dashboardID: string) => (
   })
 
   const timeRangeFromQueries = {
-    lower: queryParams.lower,
-    upper: queryParams.upper,
+    lower: queryParams.lower as string | undefined,
+    upper: queryParams.upper as string | undefined,
   }
 
-  const zoomedTimeRangeFromQueries = {
-    lower: queryParams.zoomedLower,
-    upper: queryParams.zoomedUpper,
+  const zoomedTimeRangeFromQueries: TimeRange = {
+    lower: queryParams.zoomedLower as string | undefined,
+    upper: queryParams.zoomedUpper as string | undefined,
   }
 
   let validatedTimeRange = validTimeRange(timeRangeFromQueries)
@@ -731,7 +733,8 @@ const updateTimeRangeFromQueryParams = (dashboardID: string) => (
 
 export const getDashboardWithTemplatesAsync = (
   dashboardId: string,
-  source: Source
+  source: Source,
+  sources: Source[]
 ) => async (dispatch): Promise<void> => {
   let dashboard: Dashboard
 
@@ -746,8 +749,8 @@ export const getDashboardWithTemplatesAsync = (
 
   const selections = templateSelectionsFromQueryParams()
 
-  const templates = await hydrateTemplates(dashboard.templates, {
-    proxyUrl: source.links.proxy,
+  const templates = await hydrateTemplates(dashboard.templates, sources, {
+    source,
     selections,
   })
 
@@ -776,12 +779,13 @@ export const getDashboardWithTemplatesAsync = (
 
 export const rehydrateTemplatesAsync = (
   dashboardId: string,
-  source: Source
+  source: Source,
+  sources: Source[]
 ) => async (dispatch, getState): Promise<void> => {
   const dashboard = getDashboard(getState(), dashboardId)
 
-  const templates = await hydrateTemplates(dashboard.templates, {
-    proxyUrl: source.links.proxy,
+  const templates = await hydrateTemplates(dashboard.templates, sources, {
+    source,
   })
 
   dispatch(updateTemplates(templates))

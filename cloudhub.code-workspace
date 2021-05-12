@@ -1,0 +1,11 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "terminal.integrated.automationShell.windows": "C:\\Program Files\\Git\\bin\\bash.exe",
+    "git.ignoreLimitWarning": true
+  }
+}

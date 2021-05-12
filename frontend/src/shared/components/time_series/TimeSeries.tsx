@@ -34,6 +34,7 @@ import {
 } from 'src/types'
 import {TimeSeriesServerResponse} from 'src/types/series'
 import {GrabDataForDownloadHandler} from 'src/types/layout'
+import {parseError} from 'src/flux/helpers/scriptBuilder'
 
 export const DEFAULT_TIME_SERIES = [{response: {results: []}}]
 const EXECUTE_QUERIES_DEBOUNCE_MS = 400
@@ -243,7 +244,9 @@ class TimeSeries extends PureComponent<Props, State> {
       loading = RemoteDataState.Done
     } catch (err) {
       loading = RemoteDataState.Error
-      errorMessage = err.toString()
+      errorMessage = parseError(err).text
+      // eslint-disable-next-line no-console
+      console.trace(err, errorMessage)
     }
 
     this.setState({
@@ -265,13 +268,21 @@ class TimeSeries extends PureComponent<Props, State> {
   }
 
   private executeTemplatedFluxQuery = async (latestUUID: string) => {
-    const {queries, onNotify, source, timeRange, fluxASTLink} = this.props
+    const {
+      queries,
+      onNotify,
+      source,
+      timeRange,
+      fluxASTLink,
+      templates,
+    } = this.props
 
     const script: string = _.get(queries, '0.text', '')
 
     const renderedScript = await renderTemplatesInScript(
       script,
       timeRange,
+      templates,
       fluxASTLink
     )
 

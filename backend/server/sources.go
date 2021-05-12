@@ -2,16 +2,16 @@ package server
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/snetsystems/cloudhub/backend/enterprise"
 	"github.com/snetsystems/cloudhub/backend/flux"
-	
+
 	"github.com/bouk/httprouter"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/influx"
@@ -71,14 +71,13 @@ func sourceAuthenticationMethod(ctx context.Context, src cloudhub.Source) authen
 	return authenticationResponse{ID: src.ID, AuthenticationMethod: "unknown"}
 }
 
-var (
-	skipVerifyTransport = &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-	defaultTransport = &http.Transport{}
-)
-
 func hasFlux(ctx context.Context, src cloudhub.Source) (bool, error) {
+	// flux is always available in v2 version, but it requires v2 Token authentication (distinguished by Type)
+	// and a non-empty Organization (stored in Username)
+	if src.Version == "" /* v2 OSS reports no version */ || strings.HasPrefix(src.Version, "2.") {
+		return src.Type == cloudhub.InfluxDBv2 && src.Username != "", nil
+	}
+
 	url, err := url.ParseRequestURI(src.URL)
 	if err != nil {
 		return false, err
@@ -166,12 +165,7 @@ func (s *Service) NewSource(w http.ResponseWriter, r *http.Request) {
 		src.Telegraf = "telegraf"
 	}
 
-	dbVersion, err := s.tsdbVersion(ctx, &src)
-	if err != nil {
-		dbVersion = "Unknown"
-		s.Logger.WithField("error", err.Error()).Info("Failed to retrieve database version")
-	}
-	src.Version = dbVersion
+	src.Version = s.sourceVersion(ctx, &src)
 
 	dbType, err := s.tsdbType(ctx, &src)
 	if err != nil {
@@ -179,16 +173,41 @@ func (s *Service) NewSource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	src.Type = dbType
-	if src, err = s.Store.Sources(ctx).Add(ctx, src); err != nil {
-		msg := fmt.Errorf("Error storing source %v: %v", src, err)
-		unknownErrorWithMessage(w, msg, s.Logger)
+	if err := s.validateCredentials(ctx, &src); err != nil {
+		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
+
+	src.Type = dbType
+	// persist unless it is a dry-run
+	if _, dryRun := r.URL.Query()["dryRun"]; !dryRun {
+		if src, err = s.Store.Sources(ctx).Add(ctx, src); err != nil {
+			msg := fmt.Errorf("Error storing source %v: %v", src, err)
+			unknownErrorWithMessage(w, msg, s.Logger)
+			return
+		}
+	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgSourcesCreated.String(), src.Name)
+	s.logRegistration(ctx, "Sources", msg)
 
 	res := newSourceResponse(ctx, src)
 	location(w, res.Links.Self)
 	encodeJSON(w, http.StatusCreated, res, s.Logger)
+}
+
+func (s *Service) sourceVersion(ctx context.Context, src *cloudhub.Source) string {
+	retVal, err := s.tsdbVersion(ctx, src)
+	if err == nil {
+		return retVal
+	}
+	s.Logger.WithField("error", err.Error()).Info("Failed to retrieve database version")
+	if strings.HasPrefix(src.Version, "1.") || strings.HasPrefix(src.Version, "2.") {
+		// keep the client version unchanged
+		return src.Version
+	}
+	return "Unknown"
 }
 
 func (s *Service) tsdbVersion(ctx context.Context, src *cloudhub.Source) (string, error) {
@@ -207,6 +226,9 @@ func (s *Service) tsdbVersion(ctx context.Context, src *cloudhub.Source) (string
 }
 
 func (s *Service) tsdbType(ctx context.Context, src *cloudhub.Source) (string, error) {
+	if src.Type == cloudhub.InfluxDBv2 {
+		return cloudhub.InfluxDBv2, nil // v2 selected by the user
+	}
 	cli := &influx.Client{
 		Logger: s.Logger,
 	}
@@ -219,6 +241,17 @@ func (s *Service) tsdbType(ctx context.Context, src *cloudhub.Source) (string, e
 	defer cancel()
 
 	return cli.Type(ctx)
+}
+
+func (s *Service) validateCredentials(ctx context.Context, src *cloudhub.Source) error {
+	cli := &influx.Client{
+		Logger: s.Logger,
+	}
+	if err := cli.Connect(ctx, src); err != nil {
+		return err
+	}
+
+	return cli.ValidateAuth(ctx, src)
 }
 
 type getSourcesResponse struct {
@@ -242,12 +275,7 @@ func (s *Service) Sources(w http.ResponseWriter, r *http.Request) {
 	sourceCh := make(chan sourceResponse, len(srcs))
 	for _, src := range srcs {
 		go func(src cloudhub.Source) {
-			dbVersion, err := s.tsdbVersion(ctx, &src)
-			if err != nil {
-				dbVersion = "Unknown"
-				s.Logger.WithField("error", err.Error()).Info("Failed to retrieve database version")
-			}
-			src.Version = dbVersion
+			src.Version = s.sourceVersion(ctx, &src)
 			sourceCh <- newSourceResponse(ctx, src)
 		}(src)
 	}
@@ -273,12 +301,7 @@ func (s *Service) SourcesID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dbVersion, err := s.tsdbVersion(ctx, &src)
-	if err != nil {
-		dbVersion = "Unknown"
-		s.Logger.WithField("error", err.Error()).Info("Failed to retrieve database version")
-	}
-	src.Version = dbVersion
+	src.Version = s.sourceVersion(ctx, &src)
 
 	res := newSourceResponse(ctx, src)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
@@ -292,8 +315,13 @@ func (s *Service) RemoveSource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	src := cloudhub.Source{ID: id}
 	ctx := r.Context()
+	src, err := s.Store.Sources(ctx).Get(ctx, id)
+	if err != nil {
+		notFound(w, id, s.Logger)
+		return
+	}
+
 	if err = s.Store.Sources(ctx).Delete(ctx, src); err != nil {
 		if err == cloudhub.ErrSourceNotFound {
 			notFound(w, id, s.Logger)
@@ -308,6 +336,10 @@ func (s *Service) RemoveSource(w http.ResponseWriter, r *http.Request) {
 		unknownErrorWithMessage(w, err, s.Logger)
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgSourcesDeleted.String(), src.Name)
+	s.logRegistration(ctx, "Sources", msg)
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -400,12 +432,8 @@ func (s *Service) UpdateSource(w http.ResponseWriter, r *http.Request) {
 	if req.Name != "" {
 		src.Name = req.Name
 	}
-	if req.Password != "" {
-		src.Password = req.Password
-	}
-	if req.Username != "" {
-		src.Username = req.Username
-	}
+	src.Password = req.Password
+	src.Username = req.Username
 	if req.URL != "" {
 		src.URL = req.URL
 	}
@@ -433,12 +461,7 @@ func (s *Service) UpdateSource(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dbVersion, err := s.tsdbVersion(ctx, &src)
-	if err != nil {
-		dbVersion = "Unknown"
-		s.Logger.WithField("error", err.Error()).Info("Failed to retrieve database version")
-	}
-	src.Version = dbVersion
+	src.Version = s.sourceVersion(ctx, &src)
 
 	dbType, err := s.tsdbType(ctx, &src)
 	if err != nil {
@@ -447,12 +470,27 @@ func (s *Service) UpdateSource(w http.ResponseWriter, r *http.Request) {
 	}
 	src.Type = dbType
 
-	if err := s.Store.Sources(ctx).Update(ctx, src); err != nil {
-		msg := fmt.Sprintf("Error updating source ID %d", id)
-		Error(w, http.StatusInternalServerError, msg, s.Logger)
+	if err := s.validateCredentials(ctx, &src); err != nil {
+		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
-	encodeJSON(w, http.StatusOK, newSourceResponse(context.Background(), src), s.Logger)
+
+	// persist unless it is a dry-run
+	if _, dryRun := r.URL.Query()["dryRun"]; !dryRun {
+		if err := s.Store.Sources(ctx).Update(ctx, src); err != nil {
+			msg := fmt.Sprintf("Error updating source ID %d", id)
+			Error(w, http.StatusInternalServerError, msg, s.Logger)
+			return
+		}
+	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgSourcesModified.String(), src.Name)
+	s.logRegistration(ctx, "Sources", msg)
+
+	res := newSourceResponse(ctx, src)
+	encodeJSON(w, http.StatusOK, res, s.Logger)
+	//encodeJSON(w, http.StatusOK, newSourceResponse(context.Background(), src), s.Logger)
 }
 
 // ValidSourceRequest checks if name, url, type, and role are valid
@@ -464,9 +502,12 @@ func ValidSourceRequest(s *cloudhub.Source, defaultOrgID string) error {
 	if s.URL == "" {
 		return fmt.Errorf("url required")
 	}
-	// Type must be influx or influx-enterprise
+	// Validate Type
 	if s.Type != "" {
-		if s.Type != cloudhub.InfluxDB && s.Type != cloudhub.InfluxEnterprise && s.Type != cloudhub.InfluxRelay {
+		if s.Type != cloudhub.InfluxDB &&
+			s.Type != cloudhub.InfluxDBv2 &&
+			s.Type != cloudhub.InfluxEnterprise &&
+			s.Type != cloudhub.InfluxRelay {
 			return fmt.Errorf("invalid source type %s", s.Type)
 		}
 	}
@@ -480,7 +521,7 @@ func ValidSourceRequest(s *cloudhub.Source, defaultOrgID string) error {
 		return fmt.Errorf("invalid source URI: %v", err)
 	}
 	if len(url.Scheme) == 0 {
-		return fmt.Errorf("Invalid URL; no URL scheme defined")
+		return fmt.Errorf("invalid URL; no URL scheme defined")
 	}
 
 	return nil
@@ -519,10 +560,10 @@ func (s *Service) NewSourceUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err != nil {
-		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
-		return
-	}
+	// log registrationte
+	src, _ := s.Store.Sources(ctx).Get(ctx, srcID)
+	msg := fmt.Sprintf(MsgSourceUserCreated.String(), res.Name, src.Name)
+	s.logRegistration(ctx, "Sources Users", msg)
 
 	su := newSourceUserResponse(srcID, res.Name).WithPermissions(res.Permissions)
 	if _, hasRoles := s.hasRoles(ctx, ts); hasRoles {
@@ -593,7 +634,7 @@ func (s *Service) RemoveSourceUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	uid := httprouter.GetParamFromContext(ctx, "uid")
 
-	_, store, err := s.sourceUsersStore(ctx, w, r)
+	srcID, store, err := s.sourceUsersStore(ctx, w, r)
 	if err != nil {
 		return
 	}
@@ -602,6 +643,11 @@ func (s *Service) RemoveSourceUser(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
+
+	// log registrationte
+	src, _ := s.Store.Sources(ctx).Get(ctx, srcID)
+	msg := fmt.Sprintf(MsgSourceUserDeleted.String(), uid, src.Name)
+	s.logRegistration(ctx, "Sources Users", msg)
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -643,6 +689,11 @@ func (s *Service) UpdateSourceUser(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
+
+	// log registrationte
+	src, _ := s.Store.Sources(ctx).Get(ctx, srcID)
+	msg := fmt.Sprintf(MsgSourceUserModified.String(), uid, src.Name)
+	s.logRegistration(ctx, "Sources Users", msg)
 
 	res := newSourceUserResponse(srcID, u.Name).WithPermissions(u.Permissions)
 	if _, hasRoles := s.hasRoles(ctx, ts); hasRoles {
@@ -708,10 +759,10 @@ type sourceUserRequest struct {
 
 func (r *sourceUserRequest) ValidCreate() error {
 	if r.Username == "" {
-		return fmt.Errorf("Username required")
+		return fmt.Errorf("username required")
 	}
 	if r.Password == "" {
-		return fmt.Errorf("Password required")
+		return fmt.Errorf("password required")
 	}
 	return validPermissions(&r.Permissions)
 }
@@ -722,7 +773,7 @@ type sourceUsersResponse struct {
 
 func (r *sourceUserRequest) ValidUpdate() error {
 	if r.Password == "" && r.Permissions == nil && r.Roles == nil {
-		return fmt.Errorf("No fields to update")
+		return fmt.Errorf("no fields to update")
 	}
 	return validPermissions(&r.Permissions)
 }
@@ -828,6 +879,11 @@ func (s *Service) NewSourceRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// log registrationte
+	src, _ := s.Store.Sources(ctx).Get(ctx, srcID)
+	msg := fmt.Sprintf(MsgSourceRoleCreated.String(), res.Name, src.Name)
+	s.logRegistration(ctx, "Sources Roles", msg)
+
 	rr := newSourceRoleResponse(srcID, res)
 	location(w, rr.Links.Self)
 	encodeJSON(w, http.StatusCreated, rr, s.Logger)
@@ -870,6 +926,12 @@ func (s *Service) UpdateSourceRole(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
+
+	// log registrationte
+	src, _ := s.Store.Sources(ctx).Get(ctx, srcID)
+	msg := fmt.Sprintf(MsgSourceRoleModified.String(), role.Name, src.Name)
+	s.logRegistration(ctx, "Sources Roles", msg)
+
 	rr := newSourceRoleResponse(srcID, role)
 	location(w, rr.Links.Self)
 	encodeJSON(w, http.StatusOK, rr, s.Logger)
@@ -945,10 +1007,17 @@ func (s *Service) RemoveSourceRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rid := httprouter.GetParamFromContext(ctx, "rid")
+	role, _ := roles.Get(ctx, rid)
 	if err := roles.Delete(ctx, &cloudhub.Role{Name: rid}); err != nil {
 		Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 		return
 	}
+
+	// log registrationte
+	src, _ := s.Store.Sources(ctx).Get(ctx, srcID)
+	msg := fmt.Sprintf(MsgSourceRoleDeleted.String(), role.Name, src.Name)
+	s.logRegistration(ctx, "Sources Roles", msg)
+
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -963,7 +1032,7 @@ func (r *sourceRoleRequest) ValidCreate() error {
 	}
 	for _, user := range r.Users {
 		if user.Name == "" {
-			return fmt.Errorf("Username required")
+			return fmt.Errorf("username required")
 		}
 	}
 	return validPermissions(&r.Permissions)
@@ -971,11 +1040,11 @@ func (r *sourceRoleRequest) ValidCreate() error {
 
 func (r *sourceRoleRequest) ValidUpdate() error {
 	if len(r.Name) > 254 {
-		return fmt.Errorf("Username too long; must be less than 254 characters")
+		return fmt.Errorf("username too long; must be less than 254 characters")
 	}
 	for _, user := range r.Users {
 		if user.Name == "" {
-			return fmt.Errorf("Username required")
+			return fmt.Errorf("username required")
 		}
 	}
 	return validPermissions(&r.Permissions)

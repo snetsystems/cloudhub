@@ -13,14 +13,12 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http"
-	"net/url"
 	"path"
 	"strconv"
 	"strings"
 	"time"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
-	"github.com/snetsystems/cloudhub/backend/influx"
 	"github.com/snetsystems/cloudhub/backend/oauth2"
 )
 
@@ -65,7 +63,7 @@ type resetResponse struct {
 }
 
 type kapacitorResponse struct {
-	Success   bool `json:"success"`
+	Success   bool   `json:"success"`
 	Message   string `json:"message"`
 }
 
@@ -155,14 +153,17 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// not set kapacitor server option and not set program path and pwrtn == true (admin call)
+	// not setting kapacitor server option and not setting external program and pwrtn == true (admin call)
 	if (serverKapacitor.URL == "" && s.ExternalExec == "") && pwrtnBool {
 		resetPassword := randResetPassword()
 
 		user.PasswordResetFlag = "Y"
 		user.Passwd = getPasswordToSHA512(resetPassword, BasicProvider)
-		err = s.Store.Users(ctx).Update(ctx, user)
-		if err != nil {
+		user.RetryCount = 0
+		user.Locked = false
+		user.LockedTime = ""
+
+		if err := s.Store.Users(ctx).Update(ctx, user); err != nil {
 			Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 			return
 		}
@@ -181,8 +182,8 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	// not set kapacitor server option (user call)
-	if serverKapacitor.URL == "" && s.ExternalExec != "" {
+	// setting external program server option (user call)
+	if s.ExternalExec != "" {
 		resetPassword := randResetPassword()
 		sendKind := "external"
 		
@@ -204,8 +205,11 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 
 		user.PasswordResetFlag = "Y"
 		user.Passwd = getPasswordToSHA512(resetPassword, BasicProvider)
-		err = s.Store.Users(ctx).Update(ctx, user)
-		if err != nil {
+		user.RetryCount = 0
+		user.Locked = false
+		user.LockedTime = ""
+
+		if err := s.Store.Users(ctx).Update(ctx, user); err != nil {
 			Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 			return
 		}
@@ -228,7 +232,7 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 	} 
 	
 
-	// set kapacitor server option
+	// setting kapacitor server option
 	if serverKapacitor.URL != "" {
 		resetPassword := randResetPassword()
 		sendKind := "email"
@@ -266,8 +270,7 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 				buf:            &bytes.Buffer{},
 			}
 
-			s.KapacitorProxyPost(recorder, kapacitorReq)
-			
+			s.KapacitorProxyPost(recorder, kapacitorReq)			
 
 			if recorder.Status != 200 {
 				sendKind = "error"
@@ -312,8 +315,11 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 
 		user.PasswordResetFlag = "Y"
 		user.Passwd = getPasswordToSHA512(resetPassword, BasicProvider)
-		err = s.Store.Users(ctx).Update(ctx, user)
-		if err != nil {
+		user.RetryCount = 0
+		user.Locked = false
+		user.LockedTime = ""
+
+		if err := s.Store.Users(ctx).Update(ctx, user); err != nil {
 			Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 			return
 		}
@@ -373,6 +379,47 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 			return
 		}
 
+		delayTime := s.RetryPolicy["delaytime"]
+		retryType := s.RetryPolicy["type"]
+
+		if user.Locked {
+			if user.RetryCount == 0 {
+				msg := fmt.Sprintf(MsgSuperLocked.String())
+				s.logRegistration(ctx, "Retry", msg, user.Name)
+				
+				ErrorBasic(w, http.StatusLocked, msg, user.RetryCount, user.LockedTime, user.Locked, s.Logger)
+				return
+			} else if retryType != "" && retryType == "lock" {
+				msg := fmt.Sprintf(MsgRetryLoginLocked.String(), user.Name)
+				s.logRegistration(ctx, "Retry", msg, user.Name)
+				
+				ErrorBasic(w, http.StatusLocked, msg, user.RetryCount, user.LockedTime, user.Locked, s.Logger)
+				return
+			} else if retryType != "" && retryType == "delay" && delayTime != "" {
+				lockedTime, _ := time.ParseInLocation("2006-01-02 15:04:05", user.LockedTime, time.UTC)
+				nowTime := time.Now().UTC()
+				delayMin, err := strconv.Atoi(delayTime)
+
+				if err == nil {
+					delayMinute, _ := time.ParseDuration(fmt.Sprintf("%dm", delayMin))
+					diffTime := nowTime.Sub(lockedTime)
+					
+					if diffTime.Minutes() < delayMinute.Minutes() {
+						msg := fmt.Sprintf(MsgRetryDelayTimeAfter.String())
+						s.logRegistration(ctx, "Retry", msg, user.Name)
+						
+						ErrorBasic(w, http.StatusLocked, msg, user.RetryCount, user.LockedTime, user.Locked, s.Logger)
+						return	
+					}
+					// init retry data
+					user.RetryCount = 0
+					user.Locked = false
+					user.LockedTime = ""
+					s.Store.Users(ctx).Update(ctx, user)
+				}
+			}
+		}
+
 		orgID := "default"
 		for _, role := range user.Roles {
 			orgID = role.Organization
@@ -380,21 +427,44 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 		}
 
 		if user.Passwd == "" {
-			LogRegistration(r, s.Store, s.Logger, orgID, "login", user.Name, "Login Fail - empty user table password", user.SuperAdmin)
+			msg := fmt.Sprintf(MsgEmptyPassword.String())
+			s.logRegistration(ctx, "Login", msg, user.Name)
 			Error(w, http.StatusBadRequest, fmt.Sprintf("empty user table password"), s.Logger)
 			return
-		}
+		}		
 
 		strTohex, err := hex.DecodeString(user.Passwd)
 		if err != nil {
 			Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 			return
 		}
-
+		
 		// valid password - sha512
 		if !validPassword([]byte(req.Password), strTohex, []byte(BasicProvider)) {
-			LogRegistration(r, s.Store, s.Logger, orgID, "login", user.Name, "Login Fail - requested password and the saved password are different.", user.SuperAdmin)
-			Error(w, http.StatusUnauthorized, fmt.Sprintf("requested password and the saved password are different."), s.Logger)
+			msg := fmt.Sprintf(MsgDifferentPassword.String())
+			s.logRegistration(ctx, "Login", msg, user.Name)
+
+			retryCnt, err := strconv.Atoi(s.RetryPolicy["count"])
+			httpCode := http.StatusUnauthorized
+			errMsg := "Passwords do not match."
+
+			if err == nil {
+				user.RetryCount++
+				if user.RetryCount >= int32(retryCnt)  {
+					user.Locked = true
+					user.LockedTime = getNowDate()
+					httpCode = http.StatusLocked
+					errMsg += "Login is locked."
+				}
+
+				err := s.Store.Users(ctx).Update(ctx, user)
+				if err == nil && user.Locked {
+					msg := fmt.Sprintf(MsgRetryCountOver.String(), user.Name)
+					s.logRegistration(ctx, "Retry", msg, user.Name)	
+				}
+			}			
+			
+			ErrorBasic(w, httpCode, errMsg, user.RetryCount, user.LockedTime, user.Locked, s.Logger)
 			return
 		}
 
@@ -416,7 +486,15 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 		}
 
 		// log registration
-		LogRegistration(r, s.Store, s.Logger, orgID, "login", user.Name, "Login Success", user.SuperAdmin)
+		msg := fmt.Sprintf(MsgBasicLogin.String())
+		s.logRegistration(ctx, "Login", msg, user.Name)
+
+		if user.RetryCount != 0 {
+			user.RetryCount = 0
+			user.Locked = false
+			user.LockedTime = ""
+			s.Store.Users(ctx).Update(ctx, user)
+		}
 
 		res := &loginResponse{
 			PasswordResetFlag: user.PasswordResetFlag,
@@ -441,13 +519,8 @@ func (s *Service) Logout(auth oauth2.Authenticator, basePath string) http.Handle
 			if user == nil || err != nil {
 				s.Logger.Error(err.Error())
 			} else {
-				var orgID string
-				for _, role := range user.Roles {
-					orgID = role.Organization
-					break
-				}
-
-				LogRegistration(r, s.Store, s.Logger, orgID, "logout", user.Name, "Logout Success", user.SuperAdmin)
+				msg := fmt.Sprintf(MsgBasicLogout.String())
+				s.logRegistration(ctx, "Logout", msg, user.Name)
 			}
 		}
 
@@ -476,65 +549,4 @@ func randResetPassword() string {
 	}
 
 	return b.String()
-}
-
-// LogRegistration log db insert
-// isSuperAdmin is not used currently inside the function. This is for the future.
-func LogRegistration(r *http.Request, store DataStore, logger cloudhub.Logger, orgID, action, name, message string, isSuperAdmin bool) {
-	ctx := r.Context()
-	
-	logs := logger.
-		WithField("component", "log_insert").
-		WithField("remote_addr", r.RemoteAddr).
-		WithField("method", r.Method).
-		WithField("url", r.URL)
-
-	serverCtx := serverContext(ctx)
-
-	// // The id of influxdb set as server option is 0
-	id := 0
-	src, err := store.Sources(serverCtx).Get(serverCtx, id)
-	if err != nil {
-		return
-	}
-
-	u, err := url.Parse(src.URL)
-	if err != nil {
-		msg := fmt.Sprintf("Error parsing source url: %v", err)
-		logs.Error(msg)
-		return
-	}
-
-	var rp, dbname string
-	dbname = "_internal"
-	rp = "monitor"
-
-	nanos := time.Now().UnixNano()
-	data := cloudhub.Point{
-		Database:        dbname,
-		RetentionPolicy: rp,
-		Measurement:     "activity_logging",
-		Time:            nanos,
-		Tags: map[string]string{
-			"severity": "info",
-			"action": action,
-			"user": name,
-		},
-		Fields: map[string]interface{}{
-			"timestamp": nanos,
-			"message": message,
-		},
-	}
-
-	client := &influx.Client{
-		URL:                u,
-		Authorizer:         influx.DefaultAuthorization(&src),
-		InsecureSkipVerify: src.InsecureSkipVerify,
-		Logger:             logger,
-	}
-
-	if err := client.Write(ctx, []cloudhub.Point{data}); err != nil {
-		logs.Error("Error influxdb log insert. ", err)
-		return
-	}
 }

@@ -67,7 +67,7 @@ func (s *VspheresStore) Delete(ctx context.Context, d cloudhub.Vsphere) error {
 		return err
 	}
 
-	d, err = s.store.Get(ctx, d.ID)
+	_, err = s.store.Get(ctx, d.ID)
 	if err != nil {
 		return err
 	}

@@ -18,6 +18,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import GraphTips from 'src/shared/components/GraphTips'
 import VMHostPage from 'src/hosts/containers/VMHostsPage'
+import InventoryTopology from 'src/hosts/containers/InventoryTopology'
 
 // APIs
 import {
@@ -122,7 +123,8 @@ export class HostsPage extends PureComponent<Props, State> {
       proportions: [0.43, 0.57],
       selected: {lower: '', upper: ''},
       isVsphere: false,
-      activeEditorTab: 'Host',
+      activeEditorTab: 'InventoryTopology',
+      // activeEditorTab: 'Host',
     }
     this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
     this.onSetActiveEditorTab = this.onSetActiveEditorTab.bind(this)
@@ -202,7 +204,7 @@ export class HostsPage extends PureComponent<Props, State> {
     }
   }
 
-  public async componentWillReceiveProps(nextProps: Props) {
+  public async UNSAFE_componentWillReceiveProps(nextProps: Props) {
     const {layouts, focusedHost} = this.state
 
     if (layouts) {
@@ -263,20 +265,29 @@ export class HostsPage extends PureComponent<Props, State> {
       <Page className="hosts-list-page">
         <Page.Header inPresentationMode={inPresentationMode}>
           <Page.Header.Left>
-            <Page.Title title="Infrastructure" />
+            <Page.Title title={this.getTitle} />
           </Page.Header.Left>
           <Page.Header.Center widthPixels={220}>
-            {isVsphere && (
-              <div className="radio-buttons radio-buttons--default radio-buttons--sm radio-buttons--stretch">
-                <Radio.Button
-                  id="hostspage-tab-Host"
-                  titleText="Host"
-                  value="Host"
-                  active={activeEditorTab === 'Host'}
-                  onClick={this.onSetActiveEditorTab}
-                >
-                  Host
-                </Radio.Button>
+            <div className="radio-buttons radio-buttons--default radio-buttons--sm radio-buttons--stretch">
+              <Radio.Button
+                id="hostspage-tab-InventoryTopology"
+                titleText="InventoryTopology"
+                value="InventoryTopology"
+                active={activeEditorTab === 'InventoryTopology'}
+                onClick={this.onSetActiveEditorTab}
+              >
+                Topology
+              </Radio.Button>
+              <Radio.Button
+                id="hostspage-tab-Host"
+                titleText="Host"
+                value="Host"
+                active={activeEditorTab === 'Host'}
+                onClick={this.onSetActiveEditorTab}
+              >
+                Host
+              </Radio.Button>
+              {isVsphere && (
                 <Radio.Button
                   id="hostspage-tab-VMware"
                   titleText="VMware"
@@ -286,22 +297,25 @@ export class HostsPage extends PureComponent<Props, State> {
                 >
                   VMware
                 </Radio.Button>
-              </div>
-            )}
+              )}
+            </div>
           </Page.Header.Center>
+
           <Page.Header.Right showSourceIndicator={true}>
-            <GraphTips />
+            {activeEditorTab !== 'InventoryTopology' && <GraphTips />}
             <AutoRefreshDropdown
               selected={autoRefresh}
               onChoose={this.handleChooseAutoRefresh}
               onManualRefresh={onManualRefresh}
             />
-            <TimeRangeDropdown
-              onChooseTimeRange={this.handleChooseTimeRange.bind(
-                this.state.selected
-              )}
-              selected={selected}
-            />
+            {activeEditorTab !== 'InventoryTopology' && (
+              <TimeRangeDropdown
+                onChooseTimeRange={this.handleChooseTimeRange.bind(
+                  this.state.selected
+                )}
+                selected={selected}
+              />
+            )}
             <Button
               icon={IconFont.ExpandA}
               onClick={this.handleClickPresentationButton}
@@ -310,27 +324,45 @@ export class HostsPage extends PureComponent<Props, State> {
             />
           </Page.Header.Right>
         </Page.Header>
-        <Page.Contents
-          scrollable={true}
-          fullWidth={activeEditorTab === 'VMware'}
-        >
-          {activeEditorTab === 'Host' ? (
-            <Threesizer
-              orientation={HANDLE_HORIZONTAL}
-              divisions={this.horizontalDivisions}
-              onResize={this.handleResize}
-            />
-          ) : (
-            <VMHostPage
-              source={source}
-              manualRefresh={this.props.manualRefresh}
-              timeRange={this.state.timeRange}
-              handleClearTimeout={this.props.handleClearTimeout}
-            />
-          )}
+        <Page.Contents scrollable={true} fullWidth={activeEditorTab !== 'Host'}>
+          <>
+            {activeEditorTab === 'Host' && (
+              <Threesizer
+                orientation={HANDLE_HORIZONTAL}
+                divisions={this.horizontalDivisions}
+                onResize={this.handleResize}
+              />
+            )}
+            {activeEditorTab === 'VMware' && (
+              <VMHostPage
+                source={source}
+                manualRefresh={this.props.manualRefresh}
+                timeRange={this.state.timeRange}
+                handleClearTimeout={this.props.handleClearTimeout}
+              />
+            )}
+            {activeEditorTab === 'InventoryTopology' && (
+              <InventoryTopology
+                source={source}
+                manualRefresh={this.props.manualRefresh}
+                autoRefresh={autoRefresh}
+              />
+            )}
+          </>
         </Page.Contents>
       </Page>
     )
+  }
+
+  private get getTitle(): string {
+    const {activeEditorTab} = this.state
+
+    switch (activeEditorTab) {
+      case 'InventoryTopology':
+        return 'InventoryTopology'
+      default:
+        return 'Infrastructure'
+    }
   }
 
   private handleChooseTimeRange = ({lower, upper}) => {

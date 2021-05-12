@@ -3,9 +3,9 @@ package bolt
 import (
 	"context"
 
-	"github.com/boltdb/bolt"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/kv/internal"
+	bolt "go.etcd.io/bbolt"
 )
 
 // Ensure buildStore struct implements cloudhub.BuildStore interface.

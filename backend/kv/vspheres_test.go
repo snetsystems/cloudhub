@@ -29,6 +29,7 @@ func TestVsphereStore(t *testing.T) {
 			Port:            45,
 			Organization:    "133",
 			Minion:          "minion01",
+			DataSource:      "23",
 		},
 		{
 			ID:              "456",
@@ -39,6 +40,7 @@ func TestVsphereStore(t *testing.T) {
 			Port:            8476,
 			Organization:    "133",
 			Minion:          "minion02",
+			DataSource:      "23",
 		},
 	}
 
@@ -60,6 +62,7 @@ func TestVsphereStore(t *testing.T) {
 	vss[0].Password = "!@#$uuuuuuuuuuu"
 	vss[1].Port = 4325
 	vss[1].Organization = "1234"
+	vss[1].DataSource = "56"
 	if err := s.Update(ctx, vss[0]); err != nil {
 		t.Fatal(err)
 	} else if err := s.Update(ctx, vss[1]); err != nil {
@@ -74,12 +77,17 @@ func TestVsphereStore(t *testing.T) {
 	} else if vs.Password != "!@#$uuuuuuuuuuu" {
 		t.Fatalf("vsphere 0 update error: got %v, expected %v", vs.Password, "!@#$uuuuuuuuuuu")
 	}
-	if vs, err := s.Get(ctx, vss[1].ID); err != nil {
+
+	vs, err = s.Get(ctx, vss[1].ID);
+	fmt.Println(vs)
+	if  err != nil {
 		t.Fatal(err)
 	} else if vs.Port != 4325 {
 		t.Fatalf("vsphere 1 update error: got %v, expected %d", vs.Port, 4325)
 	} else if vs.Organization != "1234" {
 		t.Fatalf("vsphere 1 update error: got %v, expected %v", vs.Organization, "1234")
+	} else if vs.DataSource != "56" {
+		t.Fatalf("vsphere 1 update error: got %v, expected %v", vs.DataSource, "56")
 	}
 
 	// Delete an vsphere.

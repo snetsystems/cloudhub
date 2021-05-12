@@ -74,6 +74,7 @@ const Shell = (props: Props) => {
   const [getIP, setGetIP] = useState(null)
   const [socket, setSocket] = useState<WebSocket>(null)
   const [term, setTerm] = useState<Terminal>(null)
+  const [fit, setFit] = useState<FitAddon>(null)
 
   const fitAddon = new FitAddon()
   const decoder = new TextDecoder('utf-8')
@@ -134,17 +135,14 @@ const Shell = (props: Props) => {
     newTabshell = newTabshell
     setSocket(_socket)
   }
-
   // debouncefit
-  const debouncedFit = _.debounce((width?: number, height?: number) => {
-    const cols = Math.trunc(width / 9.475)
-    const rows = Math.trunc(height / 17)
+  const onTerminalResize = _.debounce(() => {
+    if (!term || !fit) return
 
-    if (cols && rows) {
-      term.resize(cols, rows)
-    }
+    const dims = fit.proposeDimensions()
+    term.resize(dims.cols, dims.rows)
 
-    fitAddon.fit()
+    fit.fit()
   }, 100)
 
   // input string send to target
@@ -159,9 +157,23 @@ const Shell = (props: Props) => {
     term.loadAddon(fitAddon)
     term.open(termRef.current)
 
-    debouncedFit()
+    setFit(fitAddon)
+    const dims = fitAddon.proposeDimensions()
+
+    socket.send(
+      new TextEncoder().encode(
+        '\x01' +
+          JSON.stringify({
+            cols: dims.cols,
+            rows: dims.rows,
+          })
+      )
+    )
+
+    fitAddon.fit()
 
     term.onData((data: string) => onTerminalSendString(data))
+
     // resize call
     term.onResize(evt => {
       socket.send(
@@ -176,7 +188,7 @@ const Shell = (props: Props) => {
     })
 
     // custom key event handler
-    term.attachCustomKeyEventHandler(function(e) {
+    term.attachCustomKeyEventHandler(function (e) {
       if (term.getSelection() && e.ctrlKey && e.keyCode == 67) {
         document.execCommand('copy')
         return false
@@ -208,7 +220,7 @@ const Shell = (props: Props) => {
     props.handleShellUpdate(shellInfo)
     props.onTabNameRefresh()
 
-    socket.onmessage = function(evt) {
+    socket.onmessage = function (evt) {
       if (evt.data instanceof ArrayBuffer) {
         term.write(decoder.decode(evt.data))
       } else {
@@ -216,7 +228,7 @@ const Shell = (props: Props) => {
       }
     }
 
-    socket.onclose = function(e) {
+    socket.onclose = function (e) {
       if (e.code === 1007) {
         props.notify(notifyConnectShellFailed(e))
       }
@@ -230,9 +242,14 @@ const Shell = (props: Props) => {
         term.dispose()
         setTerm(null)
       }
+
+      if (fit) {
+        fit.dispose()
+        setFit(null)
+      }
     }
 
-    socket.onerror = function(error) {
+    socket.onerror = function (error) {
       if (typeof console.log == 'function') {
         console.error(error)
       }
@@ -246,7 +263,7 @@ const Shell = (props: Props) => {
   // set socket After
   useEffect(() => {
     if (socket) {
-      socket.onopen = function() {
+      socket.onopen = function () {
         if (term) {
           term.dispose()
         }
@@ -331,15 +348,11 @@ const Shell = (props: Props) => {
             id={`terminal-${host}`}
             ref={termRef}
             onMouseDown={(e: MouseEvent<HTMLDivElement>) => e.stopPropagation()}
+            style={{height: '100%'}}
           />
           <ReactObserver
-            onResize={rect => {
-              if (term) {
-                // term.cols controll
-                if (rect.width > 500) {
-                  debouncedFit(rect.width, rect.height)
-                }
-              }
+            onResize={() => {
+              onTerminalResize()
             }}
           />
         </div>
