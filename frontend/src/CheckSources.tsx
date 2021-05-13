@@ -36,6 +36,7 @@ interface Auth {
 
 interface State {
   isFetching: boolean
+  isOnetime: boolean
 }
 
 interface Params {
@@ -82,6 +83,7 @@ export class CheckSources extends Component<Props, State> {
 
     this.state = {
       isFetching: true,
+      isOnetime: false,
     }
   }
 
@@ -195,6 +197,11 @@ export class CheckSources extends Component<Props, State> {
     }
 
     if (!isFetching && !location.pathname.includes('/manage-sources')) {
+      if (!this.state.isOnetime) {
+        const sourceID = location.pathname.match(/(?:\/sources\/(\d+))/)[1]
+        this.props.connectedSource(sourceID)
+        this.setState({isOnetime: true})
+      }
       try {
         await getSourceHealth(source.links.health)
       } catch (error) {

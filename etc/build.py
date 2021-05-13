@@ -544,8 +544,7 @@ def build(version=None,
             arch = "arm64"
         elif "arm" in arch:
             arch = "arm"
-        build_command += "cd backend && GOOS={} GOARCH={} ".format(
-            platform, arch)
+        build_command += "cd backend && GOOS={} GOARCH={} ".format(platform, arch)
 
         if "arm" in fullarch:
             if fullarch == "armel":
@@ -566,8 +565,7 @@ def build(version=None,
                 return False
         if platform == 'windows':
             target = target + '.exe'
-        build_command += "GO111MODULE=on go build -o {} ".format(
-            os.path.join(outdir, target))
+        build_command += "GO111MODULE=on go build -o {} ".format(os.path.join(outdir, target))
         if race:
             build_command += "-race "
         if len(tags) > 0:
@@ -579,11 +577,11 @@ def build(version=None,
             build_command += "-ldflags=\"-X main.version={} -X main.commit={}\" ".format(version,
                                                                                             get_current_commit())
         build_command += build_command_last_options
+        build_command += path
         start_time = datetime.utcnow()
         run(build_command, shell=True, print_output=True)
         end_time = datetime.utcnow()
-        logging.info("Time taken: {}s".format(
-            (end_time - start_time).total_seconds()))
+        logging.info("Time taken: {}s".format((end_time - start_time).total_seconds()))
     return True
 
 
