@@ -576,6 +576,9 @@ class Root extends PureComponent<Record<string, never>, State> {
     const {
       source: {sourceID},
     } = store.getState()
+
+    if (_.isEmpty(sourceID)) return
+
     try {
       await this.getVSpheres({shouldResetVSphere: true, sourceID})
     } catch (error) {
