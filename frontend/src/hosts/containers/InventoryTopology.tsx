@@ -369,6 +369,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private configureEditor = () => {
+    this.graph.setTooltips(false)
     new mxRubberband(this.graph)
 
     mxConstants.MIN_HOTSPOT_SIZE = 16
