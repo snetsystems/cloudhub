@@ -1291,6 +1291,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   public render() {
     const options = {
+      autoFocus: true,
       tabIndex: 1,
       readonly: true,
       indentUnit: 2,
@@ -1320,7 +1321,6 @@ class InventoryTopology extends PureComponent<Props, State> {
               message={
                 <FancyScrollbar>
                   <ReactCodeMirror
-                    autoFocus={true}
                     autoCursor={true}
                     value={this.state.topology}
                     options={options}
