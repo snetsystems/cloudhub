@@ -48,6 +48,18 @@
     background: rgba(0, 0, 0, 0.7);
     border: 2px solid black;
   }
+
+  #statusContainer {
+    position: fixed;
+    top: calc(108px + 140px);
+    right: 10px;
+    width: 200px;
+    height: calc(100% - (140px + 120px));
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.7);
+    border: solid 1px #919191;
+  }
+
   .properties-table {
     width: 100%;
     td {
@@ -154,4 +166,32 @@
     height: 25px;
     margin-left: -2px;
   }
+}
+
+.cloudhub-mxPopupMenu {
+  background: white;
+  position: absolute;
+  border: 0;
+  padding: 3px;
+  margin: 0px;
+}
+.cloudhub-mxPopupMenuItem {
+  color: black;
+  cursor: default;
+  padding: 2px;
+  font-family: Arial;
+  font-size: 11px;
+  &:hover {
+    color: white;
+    cursor: pointer;
+    background-color: $s-orange;
+  }
+}
+
+.cloudhub-mxPopupMenuIcon {
+  background-color: white;
+  padding: 0px;
+}
+.cloudhub-mxPopupMenu hr {
+  border-top: solid 1px #cccccc;
 }

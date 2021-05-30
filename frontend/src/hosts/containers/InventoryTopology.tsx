@@ -88,6 +88,7 @@ const {
   mxEffects,
   mxGraphModel,
   mxGeometry,
+  mxVertexHandler,
 } = mx
 
 window['mxGraph'] = mxGraph
@@ -113,6 +114,8 @@ window['mxWindow'] = mxWindow
 window['mxEffects'] = mxEffects
 window['mxOutline'] = mxOutline
 window['mxPoint'] = mxPoint
+window['mxVertexHandler'] = mxVertexHandler
+window['mxGraphHandler'] = mxGraphHandler
 
 const warningImage = new mxImage(
   require('mxgraph/javascript/src/images/warning.png'),
@@ -367,7 +370,6 @@ class InventoryTopology extends PureComponent<Props, State> {
       model.endUpdate()
     }
   }
-
   private configureEditor = () => {
     this.graph.setTooltips(false)
     new mxRubberband(this.graph)
@@ -505,6 +507,15 @@ class InventoryTopology extends PureComponent<Props, State> {
         const title = containerElement.querySelector('.mxgraph-cell--title')
         title.setAttribute('style', `width: ${bounds.width}px;`)
 
+        const indicatorCell = _.find(
+          cell.children,
+          c => c.style === 'indicator'
+        )
+
+        if (indicatorCell) {
+          indicatorCell.geometry.offset = new mxPoint(-bounds.width, -24)
+        }
+
         cell.setValue(containerElement.outerHTML)
       }
 
@@ -522,7 +533,201 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.graph.getFoldingImage = () => {
       return null
     }
+
+    //----------------------------------------------------------------//
+    // Defines a subclass for mxVertexHandler that adds a set of clickable
+    // icons to every selected vertex.
+    function mxVertexToolHandler(_state: mxCellStateType) {
+      console.log('start!')
+      mxVertexHandler.apply(this, arguments)
+    }
+
+    // @ts-ignore
+    mxVertexToolHandler.prototype = new mxVertexHandler()
+    mxVertexToolHandler.prototype.constructor = mxVertexToolHandler
+    mxVertexToolHandler.prototype['domNode'] = null
+    mxVertexToolHandler.prototype.init = function () {
+      console.log('mxVertexToolHandler start')
+
+      mxVertexHandler.prototype.init.apply(this, arguments)
+
+      // In this example we force the use of DIVs for images in IE. This
+      // handles transparency in PNG images properly in IE and fixes the
+      // problem that IE routes all mouse events for a gesture via the
+      // initial IMG node, which means the target vertices
+      this.domNode = document.createElement('div')
+      this.domNode.classList.add('cloudhub-mxPopupMenu')
+
+      // Workaround for event redirection via image tag in quirks and IE8
+      function createContextMenu(action) {
+        const contextMenu = document.createElement('div')
+        contextMenu.textContent = action
+        contextMenu.classList.add('cloudhub-mxPopupMenuItem')
+
+        return contextMenu
+      }
+
+      let menuItem = createContextMenu('Power Off System')
+      mxEvent.addGestureListeners(
+        menuItem,
+        mxUtils.bind(this, function (evt) {
+          // Disables dragging the image
+          mxEvent.consume(evt)
+        })
+      )
+      mxEvent.addListener(
+        menuItem,
+        'click',
+        mxUtils.bind(this, function (evt) {
+          console.log('power off')
+
+          mxEvent.consume(evt)
+        })
+      )
+      this.domNode.appendChild(menuItem)
+
+      menuItem = createContextMenu('NMI(Non-Masking Interrupt)')
+      mxEvent.addGestureListeners(
+        menuItem,
+        mxUtils.bind(this, function (evt) {
+          // Disables dragging the image
+          mxEvent.consume(evt)
+        })
+      )
+      mxEvent.addListener(
+        menuItem,
+        'click',
+        mxUtils.bind(this, function (evt) {
+          console.log('evt:', evt)
+          mxEvent.consume(evt)
+        })
+      )
+      this.domNode.appendChild(menuItem)
+      menuItem = createContextMenu('Reset System(warm boot)')
+      mxEvent.addGestureListeners(
+        menuItem,
+        mxUtils.bind(this, function (evt) {
+          // Disables dragging the image
+          mxEvent.consume(evt)
+        })
+      )
+      mxEvent.addListener(
+        menuItem,
+        'click',
+        mxUtils.bind(this, function (evt) {
+          console.log('evt:', evt)
+          mxEvent.consume(evt)
+        })
+      )
+      this.domNode.appendChild(menuItem)
+      menuItem = createContextMenu('Power Cycle System(cold boot)')
+
+      mxEvent.addGestureListeners(
+        menuItem,
+        mxUtils.bind(this, function (evt) {
+          // Disables dragging the image
+          mxEvent.consume(evt)
+        })
+      )
+      mxEvent.addListener(
+        menuItem,
+        'click',
+        mxUtils.bind(this, function (evt) {
+          console.log('evt:', evt)
+          mxEvent.consume(evt)
+        })
+      )
+      this.domNode.appendChild(menuItem)
+      console.log('hello')
+      this.graph.container.appendChild(this.domNode)
+      this.redrawTools()
+    }
+
+    mxVertexToolHandler.prototype.redraw = function () {
+      mxVertexHandler.prototype.redraw.apply(this)
+      this.redrawTools()
+    }
+
+    mxVertexToolHandler.prototype['redrawTools'] = function () {
+      console.log('redrawTools: ', this)
+      if (this.state != null && this.domNode != null) {
+        var dy = mxClient.IS_VML && document.compatMode == 'CSS1Compat' ? 20 : 4
+        this.domNode.style.left = this.state.x + 'px'
+        this.domNode.style.top = this.state.y + this.state.height + dy + 'px'
+      }
+    }
+
+    mxVertexToolHandler.prototype['destroy'] = function () {
+      console.log('destroy:', this, arguments)
+
+      mxVertexHandler.prototype.destroy.apply(this, arguments)
+
+      if (this.domNode != null) {
+        this.domNode.parentNode.removeChild(this.domNode)
+        this.domNode = null
+      }
+    }
+
+    // let onClickCellBuffer = null
+
+    // this.graph.addListener(mxEvent.CLICK, async (_sender, event) => {
+    //   onClickCellBuffer = event
+    // })
+    const test = state => {
+      return () => {
+        console.log('clear!')
+        new mxVertexToolHandler(state)
+      }
+    }
+
+    // const _onClickCreateContextMenu = this.onClickCreateContextMenu
+    this.graph.addListener(mxEvent.CLICK, function (_sender, event) {
+      const {
+        properties: {cell},
+      }: {properties: {cell: mxCellType}} = event
+      const state = this.getView().getState(cell?.parent)
+
+      if (state != null && this.model.isVertex(state.cell)) {
+        return new mxVertexToolHandler(state)
+      }
+      console.log('click', this)
+    })
+
+    this.graph.createHandler = function (state) {
+      // this.addListener.bind(state)
+      // console.log({arguments})
+      // if (state != null && this.model.isVertex(state.cell)) {
+      //   dump = test(state)
+      //   // return
+      //   // (() => {
+      //   // return new mxVertexToolHandler(state)
+      //   // })()
+      //   return new mxVertexToolHandler(state)
+      // }
+
+      return mxGraph.prototype.createHandler.apply(this, arguments)
+    }
   }
+
+  // private onClickCreateContextMenu = state => {
+
+  // this.graph.addListener(mxEvent.CLICK, (_sender, evt) => {
+  //   const {
+  //     properties: {cell},
+  //   }: {properties: {cell: mxCellType}} = evt
+  //   const state = this.graph.getView().getState(cell?.parent)
+  //   if (state != null && cell?.style === 'indicator') {
+  //     const model = this.graph.getModel()
+  //     model.beginUpdate()
+  //     try {
+  //       if (state != null && model.isVertex(state.cell)) {
+  //         return new mxVertexToolHandler(state)
+  //       }
+  //     } catch (error) {}
+  //     model.endUpdate()
+  //   }
+  // })
+  // }
 
   private selectionChanged = (graph: mxGraphType) => {
     const properties = this.properties
@@ -531,7 +736,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     graph.container.focus()
 
     const cell = graph.getSelectionCell()
-
+    console.log('selectionChanged: ', cell)
     if (cell) {
       const form = new mxForm('properties-table')
 
@@ -991,6 +1196,33 @@ class InventoryTopology extends PureComponent<Props, State> {
       href.geometry.offset = new mxPoint(-18, -12)
       href.setConnectable(false)
       href.setVisible(false)
+
+      const indicatorBox = document.createElement('div')
+      indicatorBox.classList.add('vertex')
+      indicatorBox.style.display = 'flex'
+      indicatorBox.style.alignItems = 'center'
+      indicatorBox.style.justifyContent = 'center'
+      indicatorBox.style.width = '25px'
+      indicatorBox.style.height = '25px'
+      indicatorBox.style.marginLeft = '-2px'
+
+      indicatorBox.textContent = 'A~'
+      const indicator = graph.insertVertex(
+        v1,
+        null,
+        indicatorBox.outerHTML,
+        1,
+        0,
+        24,
+        24,
+        `indicator`,
+        true
+      )
+
+      indicator.geometry.offset = new mxPoint(-this.CELL_SIZE_WIDTH, -24)
+
+      indicator.setConnectable(false)
+      indicator.setVisible(true)
     } finally {
       model.endUpdate()
     }
