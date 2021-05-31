@@ -12,6 +12,7 @@ import {
   mxGraph as mxGraphType,
   mxGraphModel as mxGraphModelType,
   mxRectangle as mxRectangleType,
+  mxWindow as mxWindowType,
 } from 'mxgraph'
 
 // component
@@ -61,6 +62,12 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import 'mxgraph/javascript/src/css/common.css'
 
 import {Controlled as ReactCodeMirror} from 'react-codemirror2'
+interface Ipmi {
+  name: string
+  host: string
+  user: string
+  pass: string
+}
 
 const mx = mxgraph()
 
@@ -88,7 +95,7 @@ const {
   mxEffects,
   mxGraphModel,
   mxGeometry,
-  mxVertexHandler,
+  mxPopupMenu,
 } = mx
 
 window['mxGraph'] = mxGraph
@@ -114,8 +121,7 @@ window['mxWindow'] = mxWindow
 window['mxEffects'] = mxEffects
 window['mxOutline'] = mxOutline
 window['mxPoint'] = mxPoint
-window['mxVertexHandler'] = mxVertexHandler
-window['mxGraphHandler'] = mxGraphHandler
+window['mxPopupMenu'] = mxPopupMenu
 
 const warningImage = new mxImage(
   require('mxgraph/javascript/src/images/warning.png'),
@@ -145,6 +151,7 @@ interface State {
   screenProportions: number[]
   sidebarProportions: number[]
   hostsObject: {[x: string]: Host}
+  ipmis: Ipmi[]
   topology: string
   topologyId: string
   isModalVisible: boolean
@@ -160,6 +167,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       screenProportions: [0.15, 0.85],
       sidebarProportions: [0.333, 0.333, 0.333],
       hostsObject: {},
+      ipmis: [],
       topology: null,
       topologyId: null,
       isModalVisible: false,
@@ -190,7 +198,9 @@ class InventoryTopology extends PureComponent<Props, State> {
     'data-label',
     'data-link',
     // 'data-name',
-    // 'data-idrac',
+    'data-ipmi_host',
+    'data-ipmi_user',
+    'data-ipmi_pass',
   ]
 
   private CELL_SIZE_WIDTH = 90
@@ -205,11 +215,11 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setSidebar()
     this.setToolbar()
 
-    await this.getHostData()
+    await this.fetchIntervalData()
 
     if (this.props.autoRefresh) {
       this.intervalID = window.setInterval(
-        () => this.getHostData(),
+        () => this.fetchIntervalData(),
         this.props.autoRefresh
       )
     }
@@ -228,10 +238,14 @@ class InventoryTopology extends PureComponent<Props, State> {
       try {
         const doc = mxUtils.parseXml(topology.diagram)
         const codec = new mxCodec(doc)
+
         codec.decode(doc.documentElement, graph.getModel())
       } finally {
         graph.getModel().endUpdate()
       }
+
+      this.getIpmiCells()
+      this.setIpmiCellsStatus(this.state.ipmis)
 
       this.setCellsWarning(hostList)
 
@@ -285,13 +299,13 @@ class InventoryTopology extends PureComponent<Props, State> {
 
       if (this.props.autoRefresh) {
         this.intervalID = window.setInterval(() => {
-          this.getHostData()
+          this.fetchIntervalData()
         }, this.props.autoRefresh)
       }
     }
 
     if (prevProps.manualRefresh !== this.props.manualRefresh) {
-      this.getHostData()
+      this.fetchIntervalData()
     }
   }
 
@@ -305,6 +319,11 @@ class InventoryTopology extends PureComponent<Props, State> {
       clearInterval(this.intervalID)
       this.intervalID = null
     }
+  }
+
+  private async fetchIntervalData() {
+    await this.getHostData()
+    await this.getIpmiStatus()
   }
 
   private async getHostData() {
@@ -327,6 +346,87 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.setState({
       hostsObject,
+    })
+  }
+
+  private async getIpmiStatus() {
+    // console.log('getIpmiStatus')
+  }
+
+  private getIpmiCells() {
+    const graph = this.graph
+    const parent = graph.getDefaultParent()
+
+    graph.selectAll(parent, true)
+
+    const cells = graph.getSelectionCells()
+
+    graph.removeSelectionCells(cells)
+
+    let ipmis: Ipmi[] = []
+
+    _.forEach(cells, cell => {
+      if (cell.getStyle() === 'node') {
+        const containerElement = this.getContainerElement(cell.value)
+        const name = containerElement.getAttribute('data-name')
+        const ipmiHost = containerElement.getAttribute('data-ipmi_host')
+        const ipmiUser = containerElement.getAttribute('data-ipmi_user')
+        const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
+
+        if (
+          !_.isEmpty(ipmiHost) &&
+          !_.isEmpty(ipmiUser) &&
+          !_.isEmpty(ipmiPass)
+        ) {
+          console.log(cell)
+          console.log(name, ipmiHost)
+
+          const ipmi: Ipmi = {
+            name: name,
+            host: ipmiHost,
+            user: ipmiUser,
+            pass: ipmiPass,
+          }
+
+          console.log(ipmi)
+
+          ipmis = [...ipmis, ipmi]
+
+          this.setState({
+            ipmis,
+          })
+        }
+      }
+    })
+  }
+
+  private setIpmiCellsStatus(ipmis: Ipmi[]) {
+    const graph = this.graph
+    const parent = graph.getDefaultParent()
+
+    graph.selectAll(parent, true)
+
+    const cells = graph.getSelectionCells()
+
+    graph.removeSelectionCells(cells)
+
+    _.forEach(cells, cell => {
+      if (cell.getStyle() === 'node') {
+        const containerElement = this.getContainerElement(cell.value)
+        const name = containerElement.getAttribute('data-name')
+        const ipmiHost = containerElement.getAttribute('data-ipmi_host')
+
+        const ipmi = _.find(
+          ipmis,
+          ipmi => ipmi.name === name && ipmi.host === ipmiHost
+        )
+
+        // console.log(ipmi)
+
+        if (ipmi) {
+          console.log(ipmi.pass)
+        }
+      }
     })
   }
 
@@ -370,8 +470,8 @@ class InventoryTopology extends PureComponent<Props, State> {
       model.endUpdate()
     }
   }
+
   private configureEditor = () => {
-    this.graph.setTooltips(false)
     new mxRubberband(this.graph)
 
     mxConstants.MIN_HOTSPOT_SIZE = 16
@@ -491,6 +591,37 @@ class InventoryTopology extends PureComponent<Props, State> {
       this.selectionChanged(this.graph)
     })
 
+    mxPopupMenu.prototype.useLeftButtonForPopup = true
+
+    this.graph.popupMenuHandler.factoryMethod = (menu, cell, evt) => {
+      const cellValue = this.graph.getModel().getValue(cell)
+
+      // @ts-ignore
+      if (cellValue !== null && mxEvent.isLeftMouseButton(evt)) {
+        if (
+          this.getContainerElement(
+            this.graph.getModel().getValue(cell)
+          ).getAttribute('btn-type') === 'ipmi'
+        ) {
+          menu.addItem('Power Off System', null, function () {
+            alert('Power Off System')
+          })
+
+          menu.addItem('NMI(Non-Masking Interrupt)', null, function () {
+            alert('NMI(Non-Masking Interrupt)')
+          })
+
+          menu.addItem('Reset System(warm boot)', null, function () {
+            alert('Reset System(warm boot)')
+          })
+
+          menu.addItem('Power Cycle System(cold boot)', null, function () {
+            alert('Power Cycle System(cold boot)')
+          })
+        }
+      }
+    }
+
     this.graph.dblClick = evt => {
       mxEvent.consume(evt)
     }
@@ -506,15 +637,6 @@ class InventoryTopology extends PureComponent<Props, State> {
         const containerElement = this.getContainerElement(cell.value)
         const title = containerElement.querySelector('.mxgraph-cell--title')
         title.setAttribute('style', `width: ${bounds.width}px;`)
-
-        const indicatorCell = _.find(
-          cell.children,
-          c => c.style === 'indicator'
-        )
-
-        if (indicatorCell) {
-          indicatorCell.geometry.offset = new mxPoint(-bounds.width, -24)
-        }
 
         cell.setValue(containerElement.outerHTML)
       }
@@ -533,201 +655,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.graph.getFoldingImage = () => {
       return null
     }
-
-    //----------------------------------------------------------------//
-    // Defines a subclass for mxVertexHandler that adds a set of clickable
-    // icons to every selected vertex.
-    function mxVertexToolHandler(_state: mxCellStateType) {
-      console.log('start!')
-      mxVertexHandler.apply(this, arguments)
-    }
-
-    // @ts-ignore
-    mxVertexToolHandler.prototype = new mxVertexHandler()
-    mxVertexToolHandler.prototype.constructor = mxVertexToolHandler
-    mxVertexToolHandler.prototype['domNode'] = null
-    mxVertexToolHandler.prototype.init = function () {
-      console.log('mxVertexToolHandler start')
-
-      mxVertexHandler.prototype.init.apply(this, arguments)
-
-      // In this example we force the use of DIVs for images in IE. This
-      // handles transparency in PNG images properly in IE and fixes the
-      // problem that IE routes all mouse events for a gesture via the
-      // initial IMG node, which means the target vertices
-      this.domNode = document.createElement('div')
-      this.domNode.classList.add('cloudhub-mxPopupMenu')
-
-      // Workaround for event redirection via image tag in quirks and IE8
-      function createContextMenu(action) {
-        const contextMenu = document.createElement('div')
-        contextMenu.textContent = action
-        contextMenu.classList.add('cloudhub-mxPopupMenuItem')
-
-        return contextMenu
-      }
-
-      let menuItem = createContextMenu('Power Off System')
-      mxEvent.addGestureListeners(
-        menuItem,
-        mxUtils.bind(this, function (evt) {
-          // Disables dragging the image
-          mxEvent.consume(evt)
-        })
-      )
-      mxEvent.addListener(
-        menuItem,
-        'click',
-        mxUtils.bind(this, function (evt) {
-          console.log('power off')
-
-          mxEvent.consume(evt)
-        })
-      )
-      this.domNode.appendChild(menuItem)
-
-      menuItem = createContextMenu('NMI(Non-Masking Interrupt)')
-      mxEvent.addGestureListeners(
-        menuItem,
-        mxUtils.bind(this, function (evt) {
-          // Disables dragging the image
-          mxEvent.consume(evt)
-        })
-      )
-      mxEvent.addListener(
-        menuItem,
-        'click',
-        mxUtils.bind(this, function (evt) {
-          console.log('evt:', evt)
-          mxEvent.consume(evt)
-        })
-      )
-      this.domNode.appendChild(menuItem)
-      menuItem = createContextMenu('Reset System(warm boot)')
-      mxEvent.addGestureListeners(
-        menuItem,
-        mxUtils.bind(this, function (evt) {
-          // Disables dragging the image
-          mxEvent.consume(evt)
-        })
-      )
-      mxEvent.addListener(
-        menuItem,
-        'click',
-        mxUtils.bind(this, function (evt) {
-          console.log('evt:', evt)
-          mxEvent.consume(evt)
-        })
-      )
-      this.domNode.appendChild(menuItem)
-      menuItem = createContextMenu('Power Cycle System(cold boot)')
-
-      mxEvent.addGestureListeners(
-        menuItem,
-        mxUtils.bind(this, function (evt) {
-          // Disables dragging the image
-          mxEvent.consume(evt)
-        })
-      )
-      mxEvent.addListener(
-        menuItem,
-        'click',
-        mxUtils.bind(this, function (evt) {
-          console.log('evt:', evt)
-          mxEvent.consume(evt)
-        })
-      )
-      this.domNode.appendChild(menuItem)
-      console.log('hello')
-      this.graph.container.appendChild(this.domNode)
-      this.redrawTools()
-    }
-
-    mxVertexToolHandler.prototype.redraw = function () {
-      mxVertexHandler.prototype.redraw.apply(this)
-      this.redrawTools()
-    }
-
-    mxVertexToolHandler.prototype['redrawTools'] = function () {
-      console.log('redrawTools: ', this)
-      if (this.state != null && this.domNode != null) {
-        var dy = mxClient.IS_VML && document.compatMode == 'CSS1Compat' ? 20 : 4
-        this.domNode.style.left = this.state.x + 'px'
-        this.domNode.style.top = this.state.y + this.state.height + dy + 'px'
-      }
-    }
-
-    mxVertexToolHandler.prototype['destroy'] = function () {
-      console.log('destroy:', this, arguments)
-
-      mxVertexHandler.prototype.destroy.apply(this, arguments)
-
-      if (this.domNode != null) {
-        this.domNode.parentNode.removeChild(this.domNode)
-        this.domNode = null
-      }
-    }
-
-    // let onClickCellBuffer = null
-
-    // this.graph.addListener(mxEvent.CLICK, async (_sender, event) => {
-    //   onClickCellBuffer = event
-    // })
-    const test = state => {
-      return () => {
-        console.log('clear!')
-        new mxVertexToolHandler(state)
-      }
-    }
-
-    // const _onClickCreateContextMenu = this.onClickCreateContextMenu
-    this.graph.addListener(mxEvent.CLICK, function (_sender, event) {
-      const {
-        properties: {cell},
-      }: {properties: {cell: mxCellType}} = event
-      const state = this.getView().getState(cell?.parent)
-
-      if (state != null && this.model.isVertex(state.cell)) {
-        return new mxVertexToolHandler(state)
-      }
-      console.log('click', this)
-    })
-
-    this.graph.createHandler = function (state) {
-      // this.addListener.bind(state)
-      // console.log({arguments})
-      // if (state != null && this.model.isVertex(state.cell)) {
-      //   dump = test(state)
-      //   // return
-      //   // (() => {
-      //   // return new mxVertexToolHandler(state)
-      //   // })()
-      //   return new mxVertexToolHandler(state)
-      // }
-
-      return mxGraph.prototype.createHandler.apply(this, arguments)
-    }
   }
-
-  // private onClickCreateContextMenu = state => {
-
-  // this.graph.addListener(mxEvent.CLICK, (_sender, evt) => {
-  //   const {
-  //     properties: {cell},
-  //   }: {properties: {cell: mxCellType}} = evt
-  //   const state = this.graph.getView().getState(cell?.parent)
-  //   if (state != null && cell?.style === 'indicator') {
-  //     const model = this.graph.getModel()
-  //     model.beginUpdate()
-  //     try {
-  //       if (state != null && model.isVertex(state.cell)) {
-  //         return new mxVertexToolHandler(state)
-  //       }
-  //     } catch (error) {}
-  //     model.endUpdate()
-  //   }
-  // })
-  // }
 
   private selectionChanged = (graph: mxGraphType) => {
     const properties = this.properties
@@ -736,7 +664,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     graph.container.focus()
 
     const cell = graph.getSelectionCell()
-    console.log('selectionChanged: ', cell)
+
     if (cell) {
       const form = new mxForm('properties-table')
 
@@ -988,6 +916,14 @@ class InventoryTopology extends PureComponent<Props, State> {
     style[mxConstants.STYLE_STROKECOLOR] = '#F58220'
     this.graph.getStylesheet().putCellStyle('href', style)
 
+    style = new Object()
+    style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE
+    style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter
+    style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_LEFT
+    style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE
+    style[mxConstants.STYLE_STROKECOLOR] = '#f58220'
+    this.graph.getStylesheet().putCellStyle('ipmi', style)
+
     style = this.graph.getStylesheet().getDefaultEdgeStyle()
     style[mxConstants.STYLE_LABEL_BACKGROUNDCOLOR] = '#000000'
     style[mxConstants.STYLE_FONTCOLOR] = '#FFFFFF'
@@ -1160,6 +1096,43 @@ class InventoryTopology extends PureComponent<Props, State> {
 
       v1.setConnectable(true)
 
+      const ipmiBox = document.createElement('div')
+      ipmiBox.classList.add('vertex')
+      ipmiBox.style.display = 'flex'
+      ipmiBox.style.alignItems = 'center'
+      ipmiBox.style.justifyContent = 'center'
+      ipmiBox.style.width = '25px'
+      ipmiBox.style.height = '25px'
+      ipmiBox.style.marginLeft = '-2px'
+
+      // const ipmi = document.createElement('a')
+      // ipmi.setAttribute('href', '')
+      // ipmi.setAttribute('target', '_blank')
+
+      const ipmiIcon = document.createElement('span')
+      ipmiIcon.classList.add('mxgraph-cell--ipmi-btn')
+      ipmiIcon.classList.add('icon')
+      ipmiIcon.classList.add('switch')
+
+      ipmiBox.appendChild(ipmiIcon)
+      ipmiBox.setAttribute('btn-type', 'ipmi')
+
+      const ipmiStatus = graph.insertVertex(
+        v1,
+        null,
+        ipmiBox.outerHTML,
+        0,
+        0,
+        24,
+        24,
+        `ipmi`,
+        true
+      )
+
+      ipmiStatus.geometry.offset = new mxPoint(0, -24)
+      ipmiStatus.setConnectable(false)
+      ipmiStatus.setVisible(false)
+
       const linkBox = document.createElement('div')
       linkBox.classList.add('vertex')
       linkBox.style.display = 'flex'
@@ -1193,36 +1166,9 @@ class InventoryTopology extends PureComponent<Props, State> {
         true
       )
 
-      href.geometry.offset = new mxPoint(-18, -12)
+      href.geometry.offset = new mxPoint(-12, -12)
       href.setConnectable(false)
       href.setVisible(false)
-
-      const indicatorBox = document.createElement('div')
-      indicatorBox.classList.add('vertex')
-      indicatorBox.style.display = 'flex'
-      indicatorBox.style.alignItems = 'center'
-      indicatorBox.style.justifyContent = 'center'
-      indicatorBox.style.width = '25px'
-      indicatorBox.style.height = '25px'
-      indicatorBox.style.marginLeft = '-2px'
-
-      indicatorBox.textContent = 'A~'
-      const indicator = graph.insertVertex(
-        v1,
-        null,
-        indicatorBox.outerHTML,
-        1,
-        0,
-        24,
-        24,
-        `indicator`,
-        true
-      )
-
-      indicator.geometry.offset = new mxPoint(-this.CELL_SIZE_WIDTH, -24)
-
-      indicator.setConnectable(false)
-      indicator.setVisible(true)
     } finally {
       model.endUpdate()
     }
@@ -1306,7 +1252,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     attribute: any,
     isDisableName = false
   ) => {
-    const nodeName = _.upperFirst(attribute.nodeName.replace('data-', ''))
+    const nodeName = _.upperCase(attribute.nodeName.replace('data-', ''))
     const input = form.addText(nodeName, attribute.nodeValue, 'text')
     input.classList.add('input-sm')
     input.classList.add('form-control')
@@ -1332,7 +1278,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
           if (attribute.nodeName === 'data-link') {
             if (cell.children) {
-              const childrenCell = cell.getChildAt(0)
+              const childrenCell = cell.getChildAt(1)
               if (childrenCell.style === 'href') {
                 const childrenContainerElement = this.getContainerElement(
                   childrenCell.value
@@ -1342,6 +1288,35 @@ class InventoryTopology extends PureComponent<Props, State> {
                 childrenLink.setAttribute('href', newValue)
 
                 childrenCell.setValue(childrenContainerElement.outerHTML)
+                childrenCell.setVisible(this.getIsHasString(newValue))
+              }
+            }
+          }
+
+          if (attribute.nodeName === 'data-ipmi_host') {
+            if (cell.children) {
+              const childrenCell = cell.getChildAt(0)
+              console.log(
+                'childrenCell',
+                this.getContainerElement(childrenCell.value).getAttribute(
+                  'btn-type'
+                )
+              )
+
+              if (childrenCell.style === 'ipmi') {
+                const childrenContainerElement = this.getContainerElement(
+                  childrenCell.value
+                )
+
+                console.log(
+                  'childrenContainerElement',
+                  childrenContainerElement
+                )
+
+                graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#F58320', [
+                  cell.getChildAt(0),
+                ])
+
                 childrenCell.setVisible(this.getIsHasString(newValue))
               }
             }
@@ -1524,7 +1499,6 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   public render() {
     const options = {
-      autoFocus: true,
       tabIndex: 1,
       readonly: true,
       indentUnit: 2,
@@ -1534,6 +1508,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       lineWrapping: true,
       mode: 'xml',
       theme: 'xml',
+      autoFocus: true,
     }
 
     return (
