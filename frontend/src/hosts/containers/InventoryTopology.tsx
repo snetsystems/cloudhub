@@ -485,7 +485,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
 
     mxEdgeHandler.prototype.snapToTerminals = true
-
+    this.graph.setTooltips(false)
     this.graph.connectionHandler.addListener(
       mxEvent.CONNECT,
       (_sender, evt) => {
