@@ -1107,10 +1107,6 @@ class InventoryTopology extends PureComponent<Props, State> {
       ipmiBox.style.height = '25px'
       ipmiBox.style.marginLeft = '-2px'
 
-      // const ipmi = document.createElement('a')
-      // ipmi.setAttribute('href', '')
-      // ipmi.setAttribute('target', '_blank')
-
       const ipmiIcon = document.createElement('span')
       ipmiIcon.classList.add('mxgraph-cell--ipmi-btn')
       ipmiIcon.classList.add('icon')
