@@ -604,20 +604,22 @@ class InventoryTopology extends PureComponent<Props, State> {
           ).getAttribute('btn-type') === 'ipmi'
         ) {
           menu.addItem('Power Off System', null, function () {
-            alert('Power Off System')
+            console.log('Power Off System')
           })
 
           menu.addItem('NMI(Non-Masking Interrupt)', null, function () {
-            alert('NMI(Non-Masking Interrupt)')
+            console.log('NMI(Non-Masking Interrupt)')
           })
 
           menu.addItem('Reset System(warm boot)', null, function () {
-            alert('Reset System(warm boot)')
+            console.log('Reset System(warm boot)')
           })
 
           menu.addItem('Power Cycle System(cold boot)', null, function () {
-            alert('Power Cycle System(cold boot)')
+            console.log('Power Cycle System(cold boot)')
           })
+
+          this.graph.setSelectionCell(cell.parent)
         }
       }
     }
