@@ -165,17 +165,6 @@
   }
 }
 
-#statusContainer {
-  position: fixed;
-  top: calc(108px + 140px);
-  right: 10px;
-  width: 200px;
-  height: calc(100% - (140px + 120px));
-  overflow: hidden;
-  background: rgba(0, 0, 0, 0.7);
-  border: solid 1px #919191;
-}
-
 .cloudhub-mxPopupMenu {
   background: white;
   position: absolute;
@@ -256,5 +245,41 @@ div.mxPopupMenu {
   .mxDisabled {
     opacity: 0.2 !important;
     cursor: default !important;
+  }
+}
+
+#statusContainer {
+  display: none;
+  position: fixed;
+  bottom: 10px;
+  right: 0px;
+  width: 200px;
+  overflow: hidden;
+  max-height: 500px;
+  height: 500px;
+
+  &.active {
+    display: block;
+  }
+
+  #statusContainerRef {
+    width: calc(100% - 10px);
+  }
+
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    background-color: #292933;
+
+    th {
+      font-weight: 500;
+    }
+    th,
+    td {
+      border: 1px solid #bec2cc;
+      color: #bec2cc;
+      padding: 5px;
+      font-size: 11px;
+    }
   }
 }
