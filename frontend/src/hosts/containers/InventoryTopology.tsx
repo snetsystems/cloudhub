@@ -1,6 +1,6 @@
 import React, {createRef, PureComponent} from 'react'
 import {connect} from 'react-redux'
-import _, {merge} from 'lodash'
+import _ from 'lodash'
 import {getDeep} from 'src/utils/wrappers'
 
 import {
@@ -12,7 +12,6 @@ import {
   mxGraph as mxGraphType,
   mxGraphModel as mxGraphModelType,
   mxRectangle as mxRectangleType,
-  mxWindow as mxWindowType,
 } from 'mxgraph'
 
 // component
@@ -218,53 +217,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setOutline()
     this.setSidebar()
     this.setToolbar()
-    const statusWindow = document.createElement('div')
-    const statusTable = document.createElement('table')
 
-    const rootItem = _.keys(dummyData)
-
-    rootItem.reduce((__, current) => {
-      const curr: any = dummyData[current]
-      _.forEach(_.keys(curr), c => {
-        const statusTableRow = document.createElement('tr')
-        let statusTableValue = document.createElement('td')
-
-        const kindStatus = curr[c]
-        const isUnavailable = kindStatus.unavailable === 1
-
-        if (!isUnavailable) {
-          const statusTableKind = document.createElement('th')
-          statusTableKind.textContent = c
-
-          const {value, units, states} = kindStatus
-
-          let kindValue = ''
-
-          if (value) {
-            kindValue += value
-            if (units) {
-              kindValue += ' ' + units
-            }
-          } else {
-            if (_.isEmpty(states)) {
-              kindValue += '-'
-            } else {
-              kindValue += states[0]
-            }
-          }
-
-          statusTableValue.textContent = kindValue
-          statusTableRow.appendChild(statusTableKind)
-          statusTableRow.appendChild(statusTableValue)
-          statusTable.appendChild(statusTableRow)
-        }
-      })
-      return current
-    }, {})
-
-    statusWindow.appendChild(statusTable)
-
-    this.statusRef.current.appendChild(statusWindow)
     await this.fetchIntervalData()
 
     if (this.props.autoRefresh) {
@@ -336,6 +289,8 @@ class InventoryTopology extends PureComponent<Props, State> {
       !_.isEmpty(prevState.topology) &&
       prevState.topology !== this.state.topology
     ) {
+      console.log('componentDidUpdate')
+      console.log('this.state.topology:', this.state.topology)
       await this.props.handleUpdateInventoryTopology(
         this.props.links,
         this.state.topologyId,
@@ -448,6 +403,58 @@ class InventoryTopology extends PureComponent<Props, State> {
         }
       }
     })
+  }
+
+  private openSensorData(data) {
+    console.log({data})
+    const statusWindow = document.createElement('div')
+    const statusTable = document.createElement('table')
+
+    const rootItem = _.keys(data)
+
+    rootItem.reduce((__, current) => {
+      const curr: any = data[current]
+      _.forEach(_.keys(curr), c => {
+        const statusTableRow = document.createElement('tr')
+        let statusTableValue = document.createElement('td')
+
+        const kindStatus = curr[c]
+        const isUnavailable = kindStatus.unavailable === 1
+
+        if (!isUnavailable) {
+          const statusTableKind = document.createElement('th')
+          statusTableKind.textContent = c
+
+          const {value, units, states} = kindStatus
+
+          let kindValue = ''
+
+          if (value) {
+            kindValue += value
+            if (units) {
+              kindValue += ' ' + units
+            }
+          } else {
+            if (_.isEmpty(states)) {
+              kindValue += '-'
+            } else {
+              kindValue += states[0]
+            }
+          }
+
+          statusTableValue.textContent = kindValue
+          statusTableRow.appendChild(statusTableKind)
+          statusTableRow.appendChild(statusTableValue)
+          statusTable.appendChild(statusTableRow)
+        }
+      })
+      return current
+    }, {})
+
+    statusWindow.appendChild(statusTable)
+
+    this.statusRef.current.appendChild(statusWindow)
+    document.querySelector('#statusContainer').classList.add('active')
   }
 
   private setIpmiCellsStatus(ipmis: Ipmi[]) {
@@ -639,6 +646,37 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.graph.getSelectionModel().addListener(mxEvent.CHANGE, () => {
       this.selectionChanged(this.graph)
+    })
+
+    this.graph.addListener(mxEvent.CLICK, (_graph, me) => {
+      const {
+        properties: {cell},
+      } = me
+
+      document.querySelector('#statusContainer').classList.remove('active')
+      document.querySelector('#statusContainerRef').innerHTML = null
+
+      if (!_.isEmpty(cell) && cell.style === 'node') {
+        const containerElement = this.getContainerElement(cell.value)
+        const ipmiHost = containerElement.getAttribute('data-ipmi_host')
+        const ipmiUser = containerElement.getAttribute('data-ipmi_user')
+        const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
+
+        if (ipmiHost && ipmiUser && ipmiPass) {
+          new Promise(resolve => {
+            return resolve(dummyData)
+          }).then(result => {
+            this.openSensorData(result)
+          })
+        }
+
+        // click
+        console.log({
+          ipmiHost,
+          ipmiUser,
+          ipmiPass,
+        })
+      }
     })
 
     mxPopupMenu.prototype.useLeftButtonForPopup = true
@@ -1301,7 +1339,13 @@ class InventoryTopology extends PureComponent<Props, State> {
     isDisableName = false
   ) => {
     const nodeName = _.upperCase(attribute.nodeName.replace('data-', ''))
-    const input = form.addText(nodeName, attribute.nodeValue, 'text')
+    const isPassword = _.includes(nodeName, 'PASS')
+
+    const input = form.addText(
+      nodeName,
+      attribute.nodeValue,
+      isPassword ? 'password' : 'text'
+    )
     input.classList.add('input-sm')
     input.classList.add('form-control')
 
@@ -1361,9 +1405,9 @@ class InventoryTopology extends PureComponent<Props, State> {
                   childrenContainerElement
                 )
 
-                graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#F58320', [
-                  cell.getChildAt(0),
-                ])
+                // graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#F58320', [
+                //   cell.getChildAt(0),
+                // ])
 
                 childrenCell.setVisible(this.getIsHasString(newValue))
               }
