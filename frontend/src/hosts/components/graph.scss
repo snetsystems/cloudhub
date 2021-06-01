@@ -205,38 +205,56 @@
 }
 
 div.mxPopupMenu {
-  -webkit-box-shadow: 3px 3px 6px #c0c0c0;
-  -moz-box-shadow: 3px 3px 6px #c0c0c0;
-  box-shadow: 3px 3px 6px #c0c0c0;
-  background: white;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  box-shadow: none;
+  background: #383846;
   position: absolute;
-  border: 3px solid #e7e7e7;
+  border: 2px solid #f58220;
   padding: 3px;
-}
-table.mxPopupMenu {
-  border-collapse: collapse;
-  margin: 0px;
-}
-tr.mxPopupMenuItem {
-  color: black;
-  cursor: default;
-}
-td.mxPopupMenuItem {
-  padding: 6px 60px 6px 30px;
-  font-family: Arial;
-  font-size: 10pt;
-}
-td.mxPopupMenuIcon {
-  background-color: white;
-  padding: 0px;
-}
-tr.mxPopupMenuItemHover {
-  background-color: #eeeeee;
-  color: black;
-}
-table.mxPopupMenu hr {
-  border-top: solid 1px #cccccc;
-}
-table.mxPopupMenu tr {
-  font-size: 4pt;
+  border-radius: 4px;
+
+  table.mxPopupMenu {
+    border-collapse: collapse;
+    margin: 0px;
+
+    tr.mxPopupMenuItem {
+      color: #fafafc;
+      cursor: default;
+    }
+    td.mxPopupMenuItem {
+      padding: 2px 5px 2px;
+      font-family: Arial;
+      font-size: 12px;
+
+      &:last-child {
+        padding: 0px 5px;
+      }
+    }
+    td.mxPopupMenuIcon {
+      background-color: white;
+      padding: 0px;
+    }
+    tr.mxPopupMenuItemHover {
+      background-color: #f58220;
+      border-radius: 2px;
+      color: #fafafc;
+    }
+    table.mxPopupMenu hr {
+      border-top: solid 1px #cccccc;
+    }
+    table.mxPopupMenu tr {
+      font-size: 4pt;
+    }
+  }
+
+  td.mxPopupMenuIcon {
+    background-color: #d0d0d0;
+    padding: 2px 4px 2px 4px;
+  }
+
+  .mxDisabled {
+    opacity: 0.2 !important;
+    cursor: default !important;
+  }
 }
