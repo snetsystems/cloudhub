@@ -1,6 +1,6 @@
 import React, {createRef, PureComponent} from 'react'
 import {connect} from 'react-redux'
-import _ from 'lodash'
+import _, {merge} from 'lodash'
 import {getDeep} from 'src/utils/wrappers'
 
 import {
@@ -62,6 +62,9 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import 'mxgraph/javascript/src/css/common.css'
 
 import {Controlled as ReactCodeMirror} from 'react-codemirror2'
+
+import dummyData from './dummy.json'
+
 interface Ipmi {
   name: string
   host: string
@@ -179,6 +182,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   private containerRef = createRef<HTMLDivElement>()
   private outlineRef = createRef<HTMLDivElement>()
+  private statusRef = createRef<HTMLDivElement>()
   private toolbarRef = createRef<HTMLDivElement>()
   private sidebarHostsRef = createRef<HTMLDivElement>()
   private sidebarToolsRef = createRef<HTMLDivElement>()
@@ -214,7 +218,53 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setOutline()
     this.setSidebar()
     this.setToolbar()
+    const statusWindow = document.createElement('div')
+    const statusTable = document.createElement('table')
 
+    const rootItem = _.keys(dummyData)
+
+    rootItem.reduce((__, current) => {
+      const curr: any = dummyData[current]
+      _.forEach(_.keys(curr), c => {
+        const statusTableRow = document.createElement('tr')
+        let statusTableValue = document.createElement('td')
+
+        const kindStatus = curr[c]
+        const isUnavailable = kindStatus.unavailable === 1
+
+        if (!isUnavailable) {
+          const statusTableKind = document.createElement('th')
+          statusTableKind.textContent = c
+
+          const {value, units, states} = kindStatus
+
+          let kindValue = ''
+
+          if (value) {
+            kindValue += value
+            if (units) {
+              kindValue += ' ' + units
+            }
+          } else {
+            if (_.isEmpty(states)) {
+              kindValue += '-'
+            } else {
+              kindValue += states[0]
+            }
+          }
+
+          statusTableValue.textContent = kindValue
+          statusTableRow.appendChild(statusTableKind)
+          statusTableRow.appendChild(statusTableValue)
+          statusTable.appendChild(statusTableRow)
+        }
+      })
+      return current
+    }, {})
+
+    statusWindow.appendChild(statusTable)
+
+    this.statusRef.current.appendChild(statusWindow)
     await this.fetchIntervalData()
 
     if (this.props.autoRefresh) {
@@ -1436,6 +1486,11 @@ class InventoryTopology extends PureComponent<Props, State> {
                     <PageSpinner />
                   )}
                   <div id="outlineContainer" ref={this.outlineRef}></div>
+                  <div id="statusContainer">
+                    <FancyScrollbar autoHide={false}>
+                      <div id="statusContainerRef" ref={this.statusRef}></div>
+                    </FancyScrollbar>
+                  </div>
                 </div>
               </div>
             </>
