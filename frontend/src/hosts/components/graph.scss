@@ -66,13 +66,47 @@
       transition: text-shadow 0.3s ease;
     }
   }
+
+  .vertex[btn-type='ipmi'] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 25px;
+    height: 25px;
+    margin-left: -2px;
+    cursor: pointer;
+  }
+
   .mxgraph-cell--ipmi-btn {
     font-size: 16px;
     color: #bec2cc;
-    &:hover {
-      color: #fff;
-      text-shadow: 0 0 5px #f58220, 0 0 10px #f58220, 0 0 25px #fff;
-      transition: text-shadow 0.3s ease;
+
+    &.icon {
+      &.switch {
+        &:hover {
+          color: #fff;
+        }
+
+        &.power-on {
+          color: $c-rainforest;
+          &:hover {
+            color: $c-honeydew;
+          }
+          &:active {
+            color: $c-krypton;
+          }
+        }
+
+        &.power-off {
+          color: $s-pinkRed;
+          &:hover {
+            color: $c-dreamsicle;
+          }
+          &:active {
+            color: $c-tungsten;
+          }
+        }
+      }
     }
   }
   .tool-box {

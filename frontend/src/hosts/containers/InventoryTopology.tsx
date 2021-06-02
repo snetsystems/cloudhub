@@ -686,26 +686,36 @@ class InventoryTopology extends PureComponent<Props, State> {
 
       // @ts-ignore
       if (cellValue !== null && mxEvent.isLeftMouseButton(evt)) {
-        if (
-          this.getContainerElement(
-            this.graph.getModel().getValue(cell)
-          ).getAttribute('btn-type') === 'ipmi'
-        ) {
-          menu.addItem('Power Off System', null, function () {
-            console.log('Power Off System')
-          })
+        const containerElement = this.getContainerElement(
+          this.graph.getModel().getValue(cell)
+        )
 
-          menu.addItem('NMI(Non-Masking Interrupt)', null, function () {
-            console.log('NMI(Non-Masking Interrupt)')
-          })
+        if (containerElement.getAttribute('btn-type') === 'ipmi') {
+          const ipmiPowerstate = containerElement.getAttribute(
+            'data-ipmi_powerstate'
+          )
 
-          menu.addItem('Reset System(warm boot)', null, function () {
-            console.log('Reset System(warm boot)')
-          })
+          if (ipmiPowerstate === 'on') {
+            menu.addItem('Power Off System', null, function () {
+              console.log('Power Off System')
+            })
 
-          menu.addItem('Power Cycle System(cold boot)', null, function () {
-            console.log('Power Cycle System(cold boot)')
-          })
+            menu.addItem('NMI(Non-Masking Interrupt)', null, function () {
+              console.log('NMI(Non-Masking Interrupt)')
+            })
+
+            menu.addItem('Reset System(warm boot)', null, function () {
+              console.log('Reset System(warm boot)')
+            })
+
+            menu.addItem('Power Cycle System(cold boot)', null, function () {
+              console.log('Power Cycle System(cold boot)')
+            })
+          } else if (ipmiPowerstate === 'off') {
+            menu.addItem('Power On', null, function () {
+              console.log('Power On')
+            })
+          }
 
           this.graph.setSelectionCell(cell.parent)
         }
@@ -1188,12 +1198,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
       const ipmiBox = document.createElement('div')
       ipmiBox.classList.add('vertex')
-      ipmiBox.style.display = 'flex'
-      ipmiBox.style.alignItems = 'center'
-      ipmiBox.style.justifyContent = 'center'
-      ipmiBox.style.width = '25px'
-      ipmiBox.style.height = '25px'
-      ipmiBox.style.marginLeft = '-2px'
+      ipmiBox.setAttribute('btn-type', 'ipmi')
 
       const ipmiIcon = document.createElement('span')
       ipmiIcon.classList.add('mxgraph-cell--ipmi-btn')
@@ -1201,7 +1206,11 @@ class InventoryTopology extends PureComponent<Props, State> {
       ipmiIcon.classList.add('switch')
 
       ipmiBox.appendChild(ipmiIcon)
-      ipmiBox.setAttribute('btn-type', 'ipmi')
+
+      // testCode. after remove
+      const randomState = Math.random() * 100 > 10
+      ipmiBox.setAttribute('data-ipmi_powerstate', randomState ? 'on' : 'off')
+      ipmiIcon.classList.add(randomState ? 'power-on' : 'power-off')
 
       const ipmiStatus = graph.insertVertex(
         v1,
