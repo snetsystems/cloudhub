@@ -2,6 +2,7 @@ import React, {createRef, PureComponent} from 'react'
 import {connect} from 'react-redux'
 import _ from 'lodash'
 import {getDeep} from 'src/utils/wrappers'
+import CryptoJS from 'crypto-js'
 
 import {
   default as mxgraph,
@@ -663,6 +664,14 @@ class InventoryTopology extends PureComponent<Props, State> {
         const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
 
         if (ipmiHost && ipmiUser && ipmiPass) {
+          const secretKey = this.props.links.addons.find(
+            addon => addon.name === 'secret_key'
+          )
+
+          const decryptedBytes = CryptoJS.AES.decrypt(ipmiPass, secretKey.url)
+          const originalText = decryptedBytes.toString(CryptoJS.enc.Utf8)
+          console.log('originalText: ', originalText)
+
           new Promise(resolve => {
             return resolve(dummyData)
           }).then(result => {
@@ -1365,7 +1374,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     const applyHandler = () => {
       const containerElement = this.getContainerElement(cell.value)
 
-      const newValue = input.value || ''
+      let newValue = input.value || ''
       const oldValue = containerElement.getAttribute(attribute.nodeName) || ''
 
       if (newValue !== oldValue) {
@@ -1397,14 +1406,11 @@ class InventoryTopology extends PureComponent<Props, State> {
           if (attribute.nodeName === 'data-ipmi_host') {
             if (cell.children) {
               const childrenCell = cell.getChildAt(0)
-              console.log(
-                'childrenCell',
-                this.getContainerElement(childrenCell.value).getAttribute(
-                  'btn-type'
-                )
-              )
 
               if (childrenCell.style === 'ipmi') {
+                console.log('attribute.nodeName:', attribute.nodeName)
+                console.log({childrenCell})
+
                 const childrenContainerElement = this.getContainerElement(
                   childrenCell.value
                 )
@@ -1423,9 +1429,18 @@ class InventoryTopology extends PureComponent<Props, State> {
             }
           }
 
+          if (attribute.nodeName === 'data-ipmi_pass') {
+            const secretKey = this.props.links.addons.find(
+              addon => addon.name === 'secret_key'
+            )
+
+            newValue = CryptoJS.AES.encrypt(newValue, secretKey.url).toString()
+          }
+
           containerElement.setAttribute(attribute.nodeName, newValue)
           cell.setValue(containerElement.outerHTML)
         } finally {
+          graph.setSelectionCell(cell)
           graph.getModel().endUpdate()
           this.graphUpdate()
         }
