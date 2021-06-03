@@ -40,12 +40,15 @@ import {
 
 // Types
 import {Source, Links, Host, RemoteDataState} from 'src/types'
+import {AddonType} from 'src/shared/constants'
 
 // Actions
 import {
   loadInventoryTopologyAsync,
   createInventoryTopologyAsync,
   updateInventoryTopologyAsync,
+  getIpmiStatusAsync,
+  getMinionKeyAcceptedListAsync,
 } from 'src/hosts/actions'
 
 // APIs
@@ -68,6 +71,7 @@ import {Controlled as ReactCodeMirror} from 'react-codemirror2'
 import dummyData from './dummy.json'
 
 interface Ipmi {
+  target: string
   name: string
   host: string
   user: string
@@ -150,12 +154,22 @@ interface Props {
     topologyId: string,
     topology: string
   ) => Promise<any>
+  handleGetMinionKeyAcceptedList: (
+    saltMasterUrl: string,
+    saltMasterToken: string
+  ) => Promise<string[]>
+  handleGetIpmiStatus: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    pIpmis: Ipmi
+  ) => Promise<any>
 }
 
 interface State {
   screenProportions: number[]
   sidebarProportions: number[]
   hostsObject: {[x: string]: Host}
+  minionList: string[]
   ipmis: Ipmi[]
   topology: string
   topologyId: string
@@ -172,6 +186,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       screenProportions: [0.15, 0.85],
       sidebarProportions: [0.333, 0.333, 0.333],
       hostsObject: {},
+      minionList: [],
       ipmis: [],
       topology: null,
       topologyId: null,
@@ -204,6 +219,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     'data-label',
     'data-link',
     // 'data-name',
+    'data-ipmi_target',
     'data-ipmi_host',
     'data-ipmi_user',
     'data-ipmi_pass',
@@ -225,18 +241,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setSidebar()
     this.setToolbar()
 
-    await this.fetchIntervalData()
-
-    if (this.props.autoRefresh) {
-      this.intervalID = window.setInterval(
-        () => this.fetchIntervalData(),
-        this.props.autoRefresh
-      )
-    }
-
-    GlobalAutoRefresher.poll(this.props.autoRefresh)
-
-    const hostList = _.keys(this.state.hostsObject)
     const topology = await this.props.handleGetInventoryTopology(
       this.props.links
     )
@@ -254,8 +258,22 @@ class InventoryTopology extends PureComponent<Props, State> {
         graph.getModel().endUpdate()
       }
 
-      this.getIpmiCells()
-      this.setIpmiCellsStatus(this.state.ipmis)
+      await this.fetchIntervalData()
+
+      if (this.props.autoRefresh) {
+        this.intervalID = window.setInterval(
+          () => this.fetchIntervalData(),
+          this.props.autoRefresh
+        )
+      }
+
+      GlobalAutoRefresher.poll(this.props.autoRefresh)
+
+      const hostList = _.keys(this.state.hostsObject)
+
+      // this.getIpmiCells()
+
+      // this.setIpmiCellsStatus(this.state.ipmis)
 
       this.setCellsWarning(hostList)
 
@@ -333,12 +351,13 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
   }
 
-  private async fetchIntervalData() {
+  private fetchIntervalData = async () => {
     await this.getHostData()
     await this.getIpmiStatus()
+    await this.getIpmiTargetList()
   }
 
-  private async getHostData() {
+  private getHostData = async () => {
     const {source, links} = this.props
 
     const envVars = await getEnv(links.environment)
@@ -361,11 +380,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     })
   }
 
-  private async getIpmiStatus() {
-    // console.log('getIpmiStatus')
-  }
-
-  private getIpmiCells() {
+  private getIpmiStatus = async () => {
     const graph = this.graph
     const parent = graph.getDefaultParent()
 
@@ -375,12 +390,11 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     graph.removeSelectionCells(cells)
 
-    let ipmis: Ipmi[] = []
-
-    _.forEach(cells, cell => {
+    _.forEach(cells, async cell => {
       if (cell.getStyle() === 'node') {
         const containerElement = this.getContainerElement(cell.value)
         const name = containerElement.getAttribute('data-name')
+        const ipmiTarget = containerElement.getAttribute('data-ipmi_target')
         const ipmiHost = containerElement.getAttribute('data-ipmi_host')
         const ipmiUser = containerElement.getAttribute('data-ipmi_user')
         const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
@@ -390,23 +404,15 @@ class InventoryTopology extends PureComponent<Props, State> {
           !_.isEmpty(ipmiUser) &&
           !_.isEmpty(ipmiPass)
         ) {
-          console.log(cell)
-          console.log(name, ipmiHost)
-
           const ipmi: Ipmi = {
             name: name,
+            target: ipmiTarget,
             host: ipmiHost,
             user: ipmiUser,
             pass: ipmiPass,
           }
 
-          console.log(ipmi)
-
-          ipmis = [...ipmis, ipmi]
-
-          this.setState({
-            ipmis,
-          })
+          await this.setIpmiStatus(cell, ipmi)
         }
       }
     })
@@ -497,6 +503,95 @@ class InventoryTopology extends PureComponent<Props, State> {
       }
     })
   }
+  private setIpmiStatus = async (cell: mxCellType, ipmi: Ipmi) => {
+    const addon = this.props.links.addons.find(addon => {
+      return addon.name === AddonType.salt
+    })
+
+    const saltUrl = addon.url
+    const saltToken = addon.token
+
+    const ipmiStatus = await this.props.handleGetIpmiStatus(
+      saltUrl,
+      saltToken,
+      ipmi
+    )
+
+    if (!_.isEmpty(ipmiStatus)) {
+      if (ipmiStatus === 'on') {
+        this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'green', [
+          cell.getChildAt(0),
+        ])
+
+        const childrenCell = cell.getChildAt(0)
+        const childrenContainerElement = this.getContainerElement(
+          cell.getChildAt(0).value
+        )
+        childrenContainerElement.setAttribute('ipmi-power-status', 'on')
+        childrenCell.setValue(childrenContainerElement.outerHTML)
+      } else {
+        this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'red', [
+          cell.getChildAt(0),
+        ])
+
+        const childrenCell = cell.getChildAt(0)
+        const childrenContainerElement = this.getContainerElement(
+          cell.getChildAt(0).value
+        )
+        childrenContainerElement.setAttribute('ipmi-power-status', 'off')
+        childrenCell.setValue(childrenContainerElement.outerHTML)
+      }
+    } else {
+      this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [
+        cell.getChildAt(0),
+      ])
+      cell.getChildAt(0).setAttribute('ipmi-power-status', '')
+    }
+  }
+
+  private getIpmiTargetList = async () => {
+    const addon = this.props.links.addons.find(addon => {
+      return addon.name === AddonType.salt
+    })
+
+    const saltUrl = addon.url
+    const saltToken = addon.token
+
+    const minionList: string[] = await this.props.handleGetMinionKeyAcceptedList(
+      saltUrl,
+      saltToken
+    )
+
+    this.setState({minionList})
+  }
+
+  // private setIpmiCellsStatus = (ipmis: Ipmi[]) => {
+  //   const graph = this.graph
+  //   const parent = graph.getDefaultParent()
+
+  //   graph.selectAll(parent, true)
+
+  //   const cells = graph.getSelectionCells()
+
+  //   graph.removeSelectionCells(cells)
+
+  //   _.forEach(cells, cell => {
+  //     if (cell.getStyle() === 'node') {
+  //       const containerElement = this.getContainerElement(cell.value)
+  //       const name = containerElement.getAttribute('data-name')
+  //       const ipmiHost = containerElement.getAttribute('data-ipmi_host')
+
+  //       const ipmi = _.find(
+  //         ipmis,
+  //         ipmi => ipmi.name === name && ipmi.host === ipmiHost
+  //       )
+
+  //       if (ipmi) {
+  //         console.log(ipmi.pass)
+  //       }
+  //     }
+  //   })
+  // }
 
   private createEditor = () => {
     this.editor = new mxEditor()
@@ -712,7 +807,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
         if (containerElement.getAttribute('btn-type') === 'ipmi') {
           const ipmiPowerstate = containerElement.getAttribute(
-            'data-ipmi_powerstate'
+            'data-ipmi-power-status'
           )
 
           const parentContainerElement = this.getContainerElement(
@@ -1330,8 +1425,16 @@ class InventoryTopology extends PureComponent<Props, State> {
 
       // testCode. after remove
       const randomState = Math.random() * 100 > 10
-      ipmiBox.setAttribute('data-ipmi_powerstate', randomState ? 'on' : 'off')
+      ipmiBox.setAttribute('data-ipmi-power-status', randomState ? 'on' : 'off')
       ipmiIcon.classList.add(randomState ? 'power-on' : 'power-off')
+      // ipmiIcon.classList.add('dash-j')
+
+      // ipmi.appendChild(ipmiIcon)
+      // ipmiBox.appendChild(ipmi)
+
+      ipmiBox.appendChild(ipmiIcon)
+      ipmiBox.setAttribute('btn-type', 'ipmi')
+      ipmiBox.setAttribute('ipmi-power-status', '')
 
       const ipmiStatus = graph.insertVertex(
         v1,
@@ -1469,13 +1572,27 @@ class InventoryTopology extends PureComponent<Props, State> {
     isDisableName = false
   ) => {
     const nodeName = _.upperCase(attribute.nodeName.replace('data-', ''))
-    const isPassword = _.includes(nodeName, 'PASS')
+    const ipmiTargets = this.state.minionList
+    let input = null
 
-    const input = form.addText(
-      nodeName,
-      attribute.nodeValue,
-      isPassword ? 'password' : 'text'
-    )
+    if (attribute.nodeName === 'data-ipmi_target') {
+      input = form.addCombo(nodeName, false)
+
+      form.addOption(input, 'NONE', '', false)
+      _.map(ipmiTargets, ipmiTarget => {
+        ipmiTarget === attribute.nodeValue
+          ? form.addOption(input, ipmiTarget, ipmiTarget, true)
+          : form.addOption(input, ipmiTarget, ipmiTarget, false)
+      })
+    } else {
+      const isPassword = _.includes(nodeName, 'PASS')
+      input = form.addText(
+        nodeName,
+        attribute.nodeValue,
+        isPassword ? 'password' : 'text'
+      )
+    }
+
     input.classList.add('input-sm')
     input.classList.add('form-control')
 
@@ -1520,21 +1637,9 @@ class InventoryTopology extends PureComponent<Props, State> {
               const childrenCell = cell.getChildAt(0)
 
               if (childrenCell.style === 'ipmi') {
-                console.log('attribute.nodeName:', attribute.nodeName)
-                console.log({childrenCell})
-
-                const childrenContainerElement = this.getContainerElement(
-                  childrenCell.value
-                )
-
-                console.log(
-                  'childrenContainerElement',
-                  childrenContainerElement
-                )
-
-                // graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#F58320', [
-                //   cell.getChildAt(0),
-                // ])
+                graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [
+                  cell.getChildAt(0),
+                ])
 
                 childrenCell.setVisible(this.getIsHasString(newValue))
               }
@@ -1788,6 +1893,8 @@ const mapDispatchToProps = {
   handleGetInventoryTopology: loadInventoryTopologyAsync,
   handleCreateInventoryTopology: createInventoryTopologyAsync,
   handleUpdateInventoryTopology: updateInventoryTopologyAsync,
+  handleGetMinionKeyAcceptedList: getMinionKeyAcceptedListAsync,
+  handleGetIpmiStatus: getIpmiStatusAsync,
 }
 
 export default connect(

@@ -52,6 +52,7 @@ export interface LayoutQuery {
 
 export interface Ipmi {
   name: string
+  target: string
   host: string
   user: string
   pass: string

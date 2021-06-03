@@ -3,6 +3,9 @@ import _ from 'lodash'
 import AJAX from 'src/utils/ajax'
 import {createActivityLog} from 'src/shared/apis'
 
+// Types
+import {Ipmi} from 'src/types'
+
 interface Params {
   client?: string
   fun?: string
@@ -28,6 +31,9 @@ interface Params {
     args?: string[] | string
     url?: string
     method?: string
+    api_host?: string
+    api_user?: string
+    api_pass?: string
   }
   username?: string
   password?: string
@@ -43,6 +49,7 @@ const activityData = [
   {action: 'service.stop', message: `Execute 'telegraf service stop'.`},
   {action: 'pkg.install', message: `Execute 'telegraf package install'.`},
   {action: 'file.write', message: `Execute 'telegraf config apply'.`},
+  {action: 'ipmi.set_power', message: `Execute 'IPMI power state change'.`},
 ]
 
 const apiRequest = async (
@@ -749,6 +756,89 @@ export async function getLocalHttpQuery(
     }
 
     return await apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getIpmiGetPower(
+  pUrl: string,
+  pToken: string,
+  pIpmi: Ipmi
+) {
+  try {
+    const params = {
+      client: 'local',
+      fun: 'ipmi.get_power',
+      tgt_type: 'glob',
+      tgt: pIpmi.target,
+      kwarg: {
+        api_host: pIpmi.host,
+        api_user: pIpmi.user,
+        api_pass: pIpmi.pass,
+      },
+    }
+
+    const result = await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function setIpmiSetPower(
+  pUrl: string,
+  pToken: string,
+  pIpmi: Ipmi
+) {
+  try {
+    const params = {
+      eauth: 'pam',
+      client: 'local',
+      fun: 'ipmi.set_power',
+      tgt_type: 'glob',
+      tgt: pIpmi.target,
+      kwarg: {
+        api_host: pIpmi.host,
+        api_user: pIpmi.user,
+        api_pass: pIpmi.pass,
+      },
+    }
+
+    const result = await apiRequest(pUrl, pToken, params)
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getIpmiGetSensorData(
+  pUrl: string,
+  pToken: string,
+  pIpmi: Ipmi
+) {
+  try {
+    const params = {
+      eauth: 'pam',
+      client: 'local',
+      fun: 'ipmi.get_sensor_data',
+      tgt_type: 'glob',
+      tgt: pIpmi.target,
+      kwarg: {
+        api_host: pIpmi.host,
+        api_user: pIpmi.user,
+        api_pass: pIpmi.pass,
+      },
+    }
+
+    const result = await apiRequest(pUrl, pToken, params)
+
+    return result
   } catch (error) {
     console.error(error)
     throw error
