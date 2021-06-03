@@ -13,6 +13,8 @@ import {
   mxGraph as mxGraphType,
   mxGraphModel as mxGraphModelType,
   mxRectangle as mxRectangleType,
+  mxGraphSelectionModel as mxGraphSelectionModeltype,
+  mxEventObject as mxEventObjectType,
 } from 'mxgraph'
 
 // component
@@ -210,6 +212,10 @@ class InventoryTopology extends PureComponent<Props, State> {
   private CELL_SIZE_WIDTH = 90
   private CELL_SIZE_HEIGHT = 90
 
+  private secretKey = this.props.links.addons.find(
+    addon => addon.name === 'secret_key'
+  )
+
   public async componentDidMount() {
     this.createEditor()
     this.configureEditor()
@@ -291,7 +297,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       prevState.topology !== this.state.topology
     ) {
       console.log('componentDidUpdate')
-      console.log('this.state.topology:', this.state.topology)
+
       await this.props.handleUpdateInventoryTopology(
         this.props.links,
         this.state.topologyId,
@@ -413,44 +419,48 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     const rootItem = _.keys(data)
 
-    rootItem.reduce((__, current) => {
-      const curr: any = data[current]
-      _.forEach(_.keys(curr), c => {
-        const statusTableRow = document.createElement('tr')
-        let statusTableValue = document.createElement('td')
+    _.reduce(
+      rootItem,
+      (__, current) => {
+        const curr: any = data[current]
+        _.forEach(_.keys(curr), c => {
+          const statusTableRow = document.createElement('tr')
+          let statusTableValue = document.createElement('td')
 
-        const kindStatus = curr[c]
-        const isUnavailable = kindStatus.unavailable === 1
+          const kindStatus = curr[c]
+          const isUnavailable = kindStatus.unavailable === 1
 
-        if (!isUnavailable) {
-          const statusTableKind = document.createElement('th')
-          statusTableKind.textContent = c
+          if (!isUnavailable) {
+            const statusTableKind = document.createElement('th')
+            statusTableKind.textContent = c
 
-          const {value, units, states} = kindStatus
+            const {value, units, states} = kindStatus
 
-          let kindValue = ''
+            let kindValue = ''
 
-          if (value) {
-            kindValue += value
-            if (units) {
-              kindValue += ' ' + units
-            }
-          } else {
-            if (_.isEmpty(states)) {
-              kindValue += '-'
+            if (value) {
+              kindValue += value
+              if (units) {
+                kindValue += ' ' + units
+              }
             } else {
-              kindValue += states[0]
+              if (_.isEmpty(states)) {
+                kindValue += '-'
+              } else {
+                kindValue += states[0]
+              }
             }
-          }
 
-          statusTableValue.textContent = kindValue
-          statusTableRow.appendChild(statusTableKind)
-          statusTableRow.appendChild(statusTableValue)
-          statusTable.appendChild(statusTableRow)
-        }
-      })
-      return current
-    }, {})
+            statusTableValue.textContent = kindValue
+            statusTableRow.appendChild(statusTableKind)
+            statusTableRow.appendChild(statusTableValue)
+            statusTable.appendChild(statusTableRow)
+          }
+        })
+        return current
+      },
+      {}
+    )
 
     statusWindow.appendChild(statusTable)
 
@@ -645,15 +655,25 @@ class InventoryTopology extends PureComponent<Props, State> {
       return ''
     }
 
-    this.graph.getSelectionModel().addListener(mxEvent.CHANGE, () => {
-      this.selectionChanged(this.graph)
-    })
+    this.graph
+      .getSelectionModel()
+      .addListener(
+        mxEvent.CHANGE,
+        (
+          mxGraphSelectionModel: mxGraphSelectionModeltype,
+          mxEventObject: mxEventObjectType
+        ) => {
+          console.log('changed:', {mxGraphSelectionModel, mxEventObject})
+          mxGraphSelectionModel.eventListeners
+          this.selectionChanged(mxGraphSelectionModel.graph)
+        }
+      )
 
     this.graph.addListener(mxEvent.CLICK, (_graph, me) => {
       const {
         properties: {cell},
       } = me
-
+      console.log('mxEvent.CLICK:', cell)
       document.querySelector('#statusContainer').classList.remove('active')
       document.querySelector('#statusContainerRef').innerHTML = null
 
@@ -664,19 +684,10 @@ class InventoryTopology extends PureComponent<Props, State> {
         const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
 
         if (ipmiHost && ipmiUser && ipmiPass) {
-          const secretKey = this.props.links.addons.find(
-            addon => addon.name === 'secret_key'
-          )
+          const containerElement = this.getContainerElement(cell.value)
+          const minion = containerElement.getAttribute('data-label')
 
-          const decryptedBytes = CryptoJS.AES.decrypt(ipmiPass, secretKey.url)
-          const originalText = decryptedBytes.toString(CryptoJS.enc.Utf8)
-          console.log('originalText: ', originalText)
-
-          new Promise(resolve => {
-            return resolve(dummyData)
-          }).then(result => {
-            this.openSensorData(result)
-          })
+          this.saltIpmiGetSensorDataAsync(minion, ipmiHost, ipmiUser, ipmiPass)
         }
 
         // click
@@ -704,28 +715,57 @@ class InventoryTopology extends PureComponent<Props, State> {
             'data-ipmi_powerstate'
           )
 
+          const parentContainerElement = this.getContainerElement(
+            cell.getParent().value
+          )
+
+          const minion = parentContainerElement.getAttribute('data-label')
+          const ipmiHost = parentContainerElement.getAttribute('data-ipmi_host')
+          const ipmiUser = parentContainerElement.getAttribute('data-ipmi_user')
+          const ipmiPass = parentContainerElement.getAttribute('data-ipmi_pass')
+
           if (ipmiPowerstate === 'on') {
-            menu.addItem('Power Off System', null, function () {
-              console.log('Power Off System')
+            menu.addItem('Power Off System', null, () => {
+              this.saltIpmiSetPowerAsync(
+                minion,
+                ipmiHost,
+                ipmiUser,
+                ipmiPass,
+                'power_off'
+              )
             })
 
-            menu.addItem('NMI(Non-Masking Interrupt)', null, function () {
-              console.log('NMI(Non-Masking Interrupt)')
+            menu.addItem('Graceful Shutdown', null, () => {
+              this.saltIpmiSetPowerAsync(
+                minion,
+                ipmiHost,
+                ipmiUser,
+                ipmiPass,
+                'shutdown'
+              )
             })
 
-            menu.addItem('Reset System(warm boot)', null, function () {
-              console.log('Reset System(warm boot)')
-            })
-
-            menu.addItem('Power Cycle System(cold boot)', null, function () {
-              console.log('Power Cycle System(cold boot)')
+            menu.addItem('Force Reset System', null, () => {
+              this.saltIpmiSetPowerAsync(
+                minion,
+                ipmiHost,
+                ipmiUser,
+                ipmiPass,
+                'reset'
+              )
             })
           } else if (ipmiPowerstate === 'off') {
-            menu.addItem('Power On', null, function () {
-              console.log('Power On')
+            menu.addItem('Power On', null, () => {
+              this.saltIpmiSetPowerAsync(
+                minion,
+                ipmiHost,
+                ipmiUser,
+                ipmiPass,
+                'power_on'
+              )
             })
           }
-
+          this.saltIpmiGetSensorDataAsync(minion, ipmiHost, ipmiUser, ipmiPass)
           this.graph.setSelectionCell(cell.parent)
         }
       }
@@ -767,6 +807,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private selectionChanged = (graph: mxGraphType) => {
+    console.log('selectionChanged')
     const properties = this.properties
     properties.innerHTML = ''
 
@@ -799,6 +840,77 @@ class InventoryTopology extends PureComponent<Props, State> {
       mxUtils.writeln(properties, 'Nothing selected.')
     }
   }
+
+  private saltIpmiSetPowerAsync = _.throttle(
+    async (
+      minion: string,
+      apiHost: string,
+      apiUser: string,
+      apiPass: string,
+      state: 'power_on' | 'power_off' | 'shutdown' | 'reset'
+    ) => {
+      const decryptedBytes = CryptoJS.AES.decrypt(apiPass, this.secretKey.url)
+      const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
+
+      console.log(
+        'saltIpmiSetPowerAsync: ',
+        minion,
+        apiHost,
+        apiUser,
+        originalPass,
+        state
+      )
+    },
+    500
+  )
+
+  private saltIpmiGetPowerAsync = _.throttle(
+    async (
+      minion: string,
+      apiHost: string,
+      apiUser: string,
+      apiPass: string
+    ) => {
+      const decryptedBytes = CryptoJS.AES.decrypt(apiPass, this.secretKey.url)
+      const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
+
+      console.log(
+        'saltIpmiGetPowerAsync: ',
+        minion,
+        apiHost,
+        apiUser,
+        originalPass
+      )
+    },
+    500
+  )
+
+  private saltIpmiGetSensorDataAsync = _.throttle(
+    async (
+      minion: string,
+      apiHost: string,
+      apiUser: string,
+      apiPass: string
+    ) => {
+      const decryptedBytes = CryptoJS.AES.decrypt(apiPass, this.secretKey.url)
+      const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
+
+      console.log(
+        'saltIpmiGetSensorDataAsync: ',
+        minion,
+        apiHost,
+        apiUser,
+        originalPass
+      )
+
+      new Promise(resolve => {
+        return resolve(dummyData)
+      }).then(result => {
+        this.openSensorData(result)
+      })
+    },
+    500
+  )
 
   private getParseHTML = (
     targer: string,
