@@ -434,10 +434,9 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private openSensorData(data) {
-    console.log({data})
+    if (!data) return
     const statusWindow = document.createElement('div')
     const statusTable = document.createElement('table')
-
     const rootItem = _.keys(data)
 
     _.reduce(
@@ -738,10 +737,10 @@ class InventoryTopology extends PureComponent<Props, State> {
 
         if (ipmiHost && ipmiUser && ipmiPass) {
           const containerElement = this.getContainerElement(cell.value)
-          const minion = containerElement.getAttribute('data-label')
+          const target = containerElement.getAttribute('data-ipmi_target')
 
           this.saltIpmiGetSensorDataAsync(
-            minion,
+            target,
             ipmiHost,
             ipmiUser,
             ipmiPass,
@@ -958,7 +957,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   private saltIpmiGetSensorDataAsync = _.throttle(
     async (
-      minion: string,
+      target: string,
       apiHost: string,
       apiUser: string,
       apiPass: string,
@@ -975,7 +974,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       const saltToken = addon.token
 
       const pIpmi: Ipmi = {
-        target: minion,
+        target,
         host: apiHost,
         user: apiUser,
         pass: originalPass,
