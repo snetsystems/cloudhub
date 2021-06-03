@@ -70,6 +70,7 @@ const apiRequest = async (
     }
 
     const param = JSON.stringify(Object.assign(dParams, pParams))
+    console.log(param)
 
     const ajaxResult = await AJAX({
       method: 'POST',
@@ -789,10 +790,18 @@ export async function getIpmiGetPower(
   }
 }
 
+export enum IpmiSetPowerStatus {
+  PowerOn = 'power_on',
+  PowerOff = 'power_off',
+  Reset = 'shutdown',
+  Shutdown = 'reset',
+}
+
 export async function setIpmiSetPower(
   pUrl: string,
   pToken: string,
-  pIpmi: Ipmi
+  pIpmi: Ipmi,
+  pState: IpmiSetPowerStatus
 ) {
   try {
     const params = {
@@ -802,13 +811,22 @@ export async function setIpmiSetPower(
       tgt_type: 'glob',
       tgt: pIpmi.target,
       kwarg: {
+        state: pState,
         api_host: pIpmi.host,
         api_user: pIpmi.user,
         api_pass: pIpmi.pass,
       },
     }
 
-    const result = await apiRequest(pUrl, pToken, params)
+    console.log('setIpmiSetPower:', pUrl, pToken, {params})
+
+    const result = {
+      [pIpmi.target]: {
+        powerState: 'on',
+      },
+    }
+
+    // const result = await apiRequest(pUrl, pToken, params, 'application/x-yaml')
 
     return result
   } catch (error) {
@@ -836,7 +854,7 @@ export async function getIpmiGetSensorData(
       },
     }
 
-    const result = await apiRequest(pUrl, pToken, params)
+    const result = await apiRequest(pUrl, pToken, params, 'application/x-yaml')
 
     return result
   } catch (error) {

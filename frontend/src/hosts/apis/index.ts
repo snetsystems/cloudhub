@@ -21,6 +21,9 @@ import {
   getLocalVSphereInfoAll,
   getTicketRemoteConsole,
   getIpmiGetPower,
+  getIpmiGetSensorData,
+  setIpmiSetPower,
+  IpmiSetPowerStatus,
 } from 'src/shared/apis/saltStack'
 
 interface HostsObject {
@@ -594,9 +597,31 @@ export const getIpmiStatusSaltApi = async (
   pIpmi: Ipmi
 ): Promise<any> => {
   const info = await getIpmiGetPower(pUrl, pToken, pIpmi)
-
   const ipmiStatus = yaml.safeLoad(info.data)
 
   console.log('getIpmiStatusSaltApi', ipmiStatus)
   return ipmiStatus
+}
+
+export const getIpmiGetSensorDataApi = async (
+  pUrl: string,
+  pToken: string,
+  pIpmi: Ipmi
+): Promise<any> => {
+  const getSensorData = await getIpmiGetSensorData(pUrl, pToken, pIpmi)
+  const sensorData = yaml.safeLoad(getSensorData.data)
+
+  return sensorData
+}
+
+export const setIpmiSetPowerApi = async (
+  pUrl: string,
+  pToken: string,
+  pIpmi: Ipmi,
+  pState: IpmiSetPowerStatus
+): Promise<any> => {
+  const responseSetPower = await setIpmiSetPower(pUrl, pToken, pIpmi, pState)
+  const setPower = yaml.safeLoad(responseSetPower.data)
+
+  return setPower
 }

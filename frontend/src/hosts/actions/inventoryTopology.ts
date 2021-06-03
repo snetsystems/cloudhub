@@ -8,6 +8,8 @@ import {
   createInventoryTopology,
   updateInventoryTopology,
   getIpmiStatusSaltApi,
+  getIpmiGetSensorDataApi,
+  setIpmiSetPowerApi,
 } from 'src/hosts/apis'
 
 // Types
@@ -16,6 +18,7 @@ import {Links, Ipmi} from 'src/types'
 // Notification Action
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {notifyIpmiConnectionFailed} from 'src/shared/copy/notifications'
+import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 
 export enum ActionTypes {
   LoadInventoryTopology = 'LOAD_INVENTORY_TOPOLOGY',
@@ -134,6 +137,58 @@ export const getIpmiStatusAsync = (
 
     dispatch(getIpmiStatusAction())
     return _.values(ipmiStatusInfo.return[0])[0]
+  } catch (error) {
+    console.error(error)
+    dispatch(errorThrown(error))
+  }
+}
+
+export const setIpmiStatusAsync = (
+  pUrl: string,
+  pToken: string,
+  pIpmis: Ipmi,
+  pState: IpmiSetPowerStatus
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const responseSetPower = await setIpmiSetPowerApi(
+      pUrl,
+      pToken,
+      pIpmis,
+      pState
+    )
+
+    console.log('responseSetPower:', responseSetPower)
+    return responseSetPower
+  } catch (error) {
+    console.error(error)
+    dispatch(errorThrown(error))
+  }
+}
+
+export const getIpmiSensorDataAsync = (
+  pUrl: string,
+  pToken: string,
+  pIpmis: Ipmi
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const responseSensorData = await getIpmiGetSensorDataApi(
+      pUrl,
+      pToken,
+      pIpmis
+    )
+    const sensorData = responseSensorData.return[0]
+    const isSensorData =
+      _.isObject(sensorData[pIpmis.target]) &&
+      !_.isArray(sensorData[pIpmis.target])
+
+    if (!isSensorData) {
+      const errorMessage = 'no sensorData'
+      throw new Error(errorMessage)
+    }
+
+    console.log('responseSensorData.return[0]: ', sensorData)
+
+    return sensorData
   } catch (error) {
     console.error(error)
     dispatch(errorThrown(error))

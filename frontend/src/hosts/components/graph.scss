@@ -286,8 +286,8 @@ div.mxPopupMenu {
   display: none;
   position: fixed;
   bottom: 10px;
-  right: 0px;
-  width: 200px;
+  right: 10px;
+  width: 226px;
   overflow: hidden;
   max-height: 500px;
   height: 500px;
@@ -297,7 +297,7 @@ div.mxPopupMenu {
   }
 
   #statusContainerRef {
-    width: calc(100% - 10px);
+    width: calc(100% - 3px);
   }
 
   table {
