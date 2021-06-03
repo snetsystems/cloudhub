@@ -12,7 +12,7 @@ import {
 } from 'src/hosts/utils/hostsSwitcherLinks'
 // Types
 import {Template, Layout, Source, Host, Links} from 'src/types'
-import {HostNames, HostName} from 'src/types/hosts'
+import {HostNames, HostName, Ipmi} from 'src/types/hosts'
 import {DashboardSwitcherLinks} from '../../types/dashboards'
 
 // APIs
@@ -20,6 +20,7 @@ import {
   getWheelKeyAcceptedList,
   getLocalVSphereInfoAll,
   getTicketRemoteConsole,
+  getIpmiGetPower,
 } from 'src/shared/apis/saltStack'
 
 interface HostsObject {
@@ -585,4 +586,17 @@ export const updateInventoryTopology = async (
     data: cells,
     headers: {'Content-Type': 'text/xml'},
   })
+}
+
+export const getIpmiStatusSaltApi = async (
+  pUrl: string,
+  pToken: string,
+  pIpmi: Ipmi
+): Promise<any> => {
+  const info = await getIpmiGetPower(pUrl, pToken, pIpmi)
+
+  const ipmiStatus = yaml.safeLoad(info.data)
+
+  console.log('getIpmiStatusSaltApi', ipmiStatus)
+  return ipmiStatus
 }

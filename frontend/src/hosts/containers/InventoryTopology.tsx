@@ -36,13 +36,16 @@ import {
 } from 'src/hosts/constants/tools'
 
 // Types
-import {Source, Links, Host, RemoteDataState} from 'src/types'
+import {Source, Links, Host, RemoteDataState, Ipmi} from 'src/types'
+import {AddonType} from 'src/shared/constants'
 
 // Actions
 import {
   loadInventoryTopologyAsync,
   createInventoryTopologyAsync,
   updateInventoryTopologyAsync,
+  getIpmiStatusAsync,
+  getMinionKeyAcceptedListAsync,
 } from 'src/hosts/actions'
 
 // APIs
@@ -88,6 +91,7 @@ const {
   mxEffects,
   mxGraphModel,
   mxGeometry,
+  mxPopupMenu,
 } = mx
 
 window['mxGraph'] = mxGraph
@@ -113,6 +117,7 @@ window['mxWindow'] = mxWindow
 window['mxEffects'] = mxEffects
 window['mxOutline'] = mxOutline
 window['mxPoint'] = mxPoint
+window['mxPopupMenu'] = mxPopupMenu
 
 const warningImage = new mxImage(
   require('mxgraph/javascript/src/images/warning.png'),
@@ -136,12 +141,23 @@ interface Props {
     topologyId: string,
     topology: string
   ) => Promise<any>
+  handleGetMinionKeyAcceptedList: (
+    saltMasterUrl: string,
+    saltMasterToken: string
+  ) => Promise<string[]>
+  handleGetIpmiStatus: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    pIpmis: Ipmi
+  ) => Promise<any>
 }
 
 interface State {
   screenProportions: number[]
   sidebarProportions: number[]
   hostsObject: {[x: string]: Host}
+  minionList: string[]
+  ipmis: Ipmi[]
   topology: string
   topologyId: string
   isModalVisible: boolean
@@ -157,6 +173,8 @@ class InventoryTopology extends PureComponent<Props, State> {
       screenProportions: [0.15, 0.85],
       sidebarProportions: [0.333, 0.333, 0.333],
       hostsObject: {},
+      minionList: [],
+      ipmis: [],
       topology: null,
       topologyId: null,
       isModalVisible: false,
@@ -187,7 +205,10 @@ class InventoryTopology extends PureComponent<Props, State> {
     'data-label',
     'data-link',
     // 'data-name',
-    // 'data-idrac',
+    'data-ipmi_target',
+    'data-ipmi_host',
+    'data-ipmi_user',
+    'data-ipmi_pass',
   ]
 
   private CELL_SIZE_WIDTH = 90
@@ -202,18 +223,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setSidebar()
     this.setToolbar()
 
-    await this.getHostData()
-
-    if (this.props.autoRefresh) {
-      this.intervalID = window.setInterval(
-        () => this.getHostData(),
-        this.props.autoRefresh
-      )
-    }
-
-    GlobalAutoRefresher.poll(this.props.autoRefresh)
-
-    const hostList = _.keys(this.state.hostsObject)
     const topology = await this.props.handleGetInventoryTopology(
       this.props.links
     )
@@ -225,10 +234,28 @@ class InventoryTopology extends PureComponent<Props, State> {
       try {
         const doc = mxUtils.parseXml(topology.diagram)
         const codec = new mxCodec(doc)
+
         codec.decode(doc.documentElement, graph.getModel())
       } finally {
         graph.getModel().endUpdate()
       }
+
+      await this.fetchIntervalData()
+
+      if (this.props.autoRefresh) {
+        this.intervalID = window.setInterval(
+          () => this.fetchIntervalData(),
+          this.props.autoRefresh
+        )
+      }
+
+      GlobalAutoRefresher.poll(this.props.autoRefresh)
+
+      const hostList = _.keys(this.state.hostsObject)
+
+      // this.getIpmiCells()
+
+      // this.setIpmiCellsStatus(this.state.ipmis)
 
       this.setCellsWarning(hostList)
 
@@ -282,13 +309,13 @@ class InventoryTopology extends PureComponent<Props, State> {
 
       if (this.props.autoRefresh) {
         this.intervalID = window.setInterval(() => {
-          this.getHostData()
+          this.fetchIntervalData()
         }, this.props.autoRefresh)
       }
     }
 
     if (prevProps.manualRefresh !== this.props.manualRefresh) {
-      this.getHostData()
+      this.fetchIntervalData()
     }
   }
 
@@ -304,7 +331,13 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
   }
 
-  private async getHostData() {
+  private fetchIntervalData = async () => {
+    await this.getHostData()
+    await this.getIpmiStatus()
+    await this.getIpmiTargetList()
+  }
+
+  private getHostData = async () => {
     const {source, links} = this.props
 
     const envVars = await getEnv(links.environment)
@@ -326,6 +359,134 @@ class InventoryTopology extends PureComponent<Props, State> {
       hostsObject,
     })
   }
+
+  private getIpmiStatus = async () => {
+    const graph = this.graph
+    const parent = graph.getDefaultParent()
+
+    graph.selectAll(parent, true)
+
+    const cells = graph.getSelectionCells()
+
+    graph.removeSelectionCells(cells)
+
+    _.forEach(cells, async cell => {
+      if (cell.getStyle() === 'node') {
+        const containerElement = this.getContainerElement(cell.value)
+        const name = containerElement.getAttribute('data-name')
+        const ipmiTarget = containerElement.getAttribute('data-ipmi_target')
+        const ipmiHost = containerElement.getAttribute('data-ipmi_host')
+        const ipmiUser = containerElement.getAttribute('data-ipmi_user')
+        const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
+
+        if (
+          !_.isEmpty(ipmiHost) &&
+          !_.isEmpty(ipmiUser) &&
+          !_.isEmpty(ipmiPass)
+        ) {
+          const ipmi: Ipmi = {
+            name: name,
+            target: ipmiTarget,
+            host: ipmiHost,
+            user: ipmiUser,
+            pass: ipmiPass,
+          }
+
+          await this.setIpmiStatus(cell, ipmi)
+        }
+      }
+    })
+  }
+
+  private setIpmiStatus = async (cell: mxCellType, ipmi: Ipmi) => {
+    const addon = this.props.links.addons.find(addon => {
+      return addon.name === AddonType.salt
+    })
+
+    const saltUrl = addon.url
+    const saltToken = addon.token
+
+    const ipmiStatus = await this.props.handleGetIpmiStatus(
+      saltUrl,
+      saltToken,
+      ipmi
+    )
+
+    if (!_.isEmpty(ipmiStatus)) {
+      if (ipmiStatus === 'on') {
+        this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'green', [
+          cell.getChildAt(0),
+        ])
+
+        const childrenCell = cell.getChildAt(0)
+        const childrenContainerElement = this.getContainerElement(
+          cell.getChildAt(0).value
+        )
+        childrenContainerElement.setAttribute('ipmi-power-status', 'on')
+        childrenCell.setValue(childrenContainerElement.outerHTML)
+      } else {
+        this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'red', [
+          cell.getChildAt(0),
+        ])
+
+        const childrenCell = cell.getChildAt(0)
+        const childrenContainerElement = this.getContainerElement(
+          cell.getChildAt(0).value
+        )
+        childrenContainerElement.setAttribute('ipmi-power-status', 'off')
+        childrenCell.setValue(childrenContainerElement.outerHTML)
+      }
+    } else {
+      this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [
+        cell.getChildAt(0),
+      ])
+      cell.getChildAt(0).setAttribute('ipmi-power-status', '')
+    }
+  }
+
+  private getIpmiTargetList = async () => {
+    const addon = this.props.links.addons.find(addon => {
+      return addon.name === AddonType.salt
+    })
+
+    const saltUrl = addon.url
+    const saltToken = addon.token
+
+    const minionList: string[] = await this.props.handleGetMinionKeyAcceptedList(
+      saltUrl,
+      saltToken
+    )
+
+    this.setState({minionList})
+  }
+
+  // private setIpmiCellsStatus = (ipmis: Ipmi[]) => {
+  //   const graph = this.graph
+  //   const parent = graph.getDefaultParent()
+
+  //   graph.selectAll(parent, true)
+
+  //   const cells = graph.getSelectionCells()
+
+  //   graph.removeSelectionCells(cells)
+
+  //   _.forEach(cells, cell => {
+  //     if (cell.getStyle() === 'node') {
+  //       const containerElement = this.getContainerElement(cell.value)
+  //       const name = containerElement.getAttribute('data-name')
+  //       const ipmiHost = containerElement.getAttribute('data-ipmi_host')
+
+  //       const ipmi = _.find(
+  //         ipmis,
+  //         ipmi => ipmi.name === name && ipmi.host === ipmiHost
+  //       )
+
+  //       if (ipmi) {
+  //         console.log(ipmi.pass)
+  //       }
+  //     }
+  //   })
+  // }
 
   private createEditor = () => {
     this.editor = new mxEditor()
@@ -487,6 +648,50 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.graph.getSelectionModel().addListener(mxEvent.CHANGE, () => {
       this.selectionChanged(this.graph)
     })
+
+    mxPopupMenu.prototype.useLeftButtonForPopup = true
+
+    this.graph.popupMenuHandler.factoryMethod = (menu, cell, evt) => {
+      const cellValue = this.graph.getModel().getValue(cell)
+
+      // @ts-ignore
+      if (cellValue !== null && mxEvent.isLeftMouseButton(evt)) {
+        if (
+          this.getContainerElement(
+            this.graph.getModel().getValue(cell)
+          ).getAttribute('btn-type') === 'ipmi'
+        ) {
+          if (
+            this.getContainerElement(
+              this.graph.getModel().getValue(cell)
+            ).getAttribute('ipmi-power-status') === 'on'
+          ) {
+            menu.addItem('Power Off System', null, function () {
+              console.log('Power Off System')
+            })
+
+            menu.addItem('Graceful Shutdown', null, function () {
+              console.log('Graceful Shutdown')
+            })
+
+            menu.addItem('Force Reset System', null, function () {
+              console.log('Force Reset System')
+            })
+          } else if (
+            this.getContainerElement(
+              this.graph.getModel().getValue(cell)
+            ).getAttribute('ipmi-power-status') === 'off'
+          ) {
+            menu.addItem('Power On', null, function () {
+              console.log('Power On')
+            })
+          } else {
+          }
+
+          this.graph.setSelectionCell(cell.parent)
+        }
+      }
+    }
 
     this.graph.dblClick = evt => {
       mxEvent.consume(evt)
@@ -782,6 +987,14 @@ class InventoryTopology extends PureComponent<Props, State> {
     style[mxConstants.STYLE_STROKECOLOR] = '#F58220'
     this.graph.getStylesheet().putCellStyle('href', style)
 
+    style = new Object()
+    style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE
+    style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter
+    style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_LEFT
+    style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE
+    style[mxConstants.STYLE_STROKECOLOR] = '#27f520'
+    this.graph.getStylesheet().putCellStyle('ipmi', style)
+
     style = this.graph.getStylesheet().getDefaultEdgeStyle()
     style[mxConstants.STYLE_LABEL_BACKGROUNDCOLOR] = '#000000'
     style[mxConstants.STYLE_FONTCOLOR] = '#FFFFFF'
@@ -954,6 +1167,47 @@ class InventoryTopology extends PureComponent<Props, State> {
 
       v1.setConnectable(true)
 
+      const ipmiBox = document.createElement('div')
+      ipmiBox.classList.add('vertex')
+      ipmiBox.style.display = 'flex'
+      ipmiBox.style.alignItems = 'center'
+      ipmiBox.style.justifyContent = 'center'
+      ipmiBox.style.width = '25px'
+      ipmiBox.style.height = '25px'
+      ipmiBox.style.marginLeft = '-2px'
+
+      // const ipmi = document.createElement('a')
+      // ipmi.setAttribute('href', '')
+      // ipmi.setAttribute('target', '_blank')
+
+      const ipmiIcon = document.createElement('span')
+      ipmiIcon.classList.add('mxgraph-cell--ipmi-btn')
+      ipmiIcon.classList.add('icon')
+      ipmiIcon.classList.add('dash-j')
+
+      // ipmi.appendChild(ipmiIcon)
+      // ipmiBox.appendChild(ipmi)
+
+      ipmiBox.appendChild(ipmiIcon)
+      ipmiBox.setAttribute('btn-type', 'ipmi')
+      ipmiBox.setAttribute('ipmi-power-status', '')
+
+      const ipmiStatus = graph.insertVertex(
+        v1,
+        null,
+        ipmiBox.outerHTML,
+        0,
+        0,
+        24,
+        24,
+        `ipmi`,
+        true
+      )
+
+      ipmiStatus.geometry.offset = new mxPoint(-12, -12)
+      ipmiStatus.setConnectable(false)
+      ipmiStatus.setVisible(false)
+
       const linkBox = document.createElement('div')
       linkBox.classList.add('vertex')
       linkBox.style.display = 'flex'
@@ -987,7 +1241,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         true
       )
 
-      href.geometry.offset = new mxPoint(-18, -12)
+      href.geometry.offset = new mxPoint(-12, -12)
       href.setConnectable(false)
       href.setVisible(false)
     } finally {
@@ -1073,8 +1327,24 @@ class InventoryTopology extends PureComponent<Props, State> {
     attribute: any,
     isDisableName = false
   ) => {
-    const nodeName = _.upperFirst(attribute.nodeName.replace('data-', ''))
-    const input = form.addText(nodeName, attribute.nodeValue, 'text')
+    const nodeName = _.upperCase(attribute.nodeName.replace('data-', ''))
+    let input = null
+
+    const ipmiTargets = this.state.minionList
+
+    if (attribute.nodeName === 'data-ipmi_target') {
+      input = form.addCombo(nodeName, false)
+
+      form.addOption(input, 'NONE', '', false)
+      _.map(ipmiTargets, ipmiTarget => {
+        ipmiTarget === attribute.nodeValue
+          ? form.addOption(input, ipmiTarget, ipmiTarget, true)
+          : form.addOption(input, ipmiTarget, ipmiTarget, false)
+      })
+    } else {
+      input = form.addText(nodeName, attribute.nodeValue, 'text')
+    }
+
     input.classList.add('input-sm')
     input.classList.add('form-control')
 
@@ -1099,7 +1369,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
           if (attribute.nodeName === 'data-link') {
             if (cell.children) {
-              const childrenCell = cell.getChildAt(0)
+              const childrenCell = cell.getChildAt(1)
               if (childrenCell.style === 'href') {
                 const childrenContainerElement = this.getContainerElement(
                   childrenCell.value
@@ -1109,6 +1379,24 @@ class InventoryTopology extends PureComponent<Props, State> {
                 childrenLink.setAttribute('href', newValue)
 
                 childrenCell.setValue(childrenContainerElement.outerHTML)
+                childrenCell.setVisible(this.getIsHasString(newValue))
+              }
+            }
+          }
+
+          if (attribute.nodeName === 'data-ipmi_host') {
+            if (cell.children) {
+              const childrenCell = cell.getChildAt(0)
+
+              if (
+                this.getContainerElement(childrenCell.value).getAttribute(
+                  'btn-type'
+                ) === 'ipmi'
+              ) {
+                graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [
+                  cell.getChildAt(0),
+                ])
+
                 childrenCell.setVisible(this.getIsHasString(newValue))
               }
             }
@@ -1300,6 +1588,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       lineWrapping: true,
       mode: 'xml',
       theme: 'xml',
+      autoFocus: true,
     }
 
     return (
@@ -1320,7 +1609,6 @@ class InventoryTopology extends PureComponent<Props, State> {
               message={
                 <FancyScrollbar>
                   <ReactCodeMirror
-                    autoFocus={true}
                     autoCursor={true}
                     value={this.state.topology}
                     options={options}
@@ -1347,6 +1635,8 @@ const mapDispatchToProps = {
   handleGetInventoryTopology: loadInventoryTopologyAsync,
   handleCreateInventoryTopology: createInventoryTopologyAsync,
   handleUpdateInventoryTopology: updateInventoryTopologyAsync,
+  handleGetMinionKeyAcceptedList: getMinionKeyAcceptedListAsync,
+  handleGetIpmiStatus: getIpmiStatusAsync,
 }
 
 export default connect(

@@ -49,3 +49,11 @@ export interface LayoutQuery {
   label: string
   query: string
 }
+
+export interface Ipmi {
+  name: string
+  target: string
+  host: string
+  user: string
+  pass: string
+}

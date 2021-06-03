@@ -1,4 +1,4 @@
-import {Dispatch} from 'redux'
+import {Dispatch, bindActionCreators} from 'redux'
 import {errorThrown} from 'src/shared/actions/errors'
 import _ from 'lodash'
 
@@ -7,21 +7,28 @@ import {
   loadInventoryTopology,
   createInventoryTopology,
   updateInventoryTopology,
+  getIpmiStatusSaltApi,
 } from 'src/hosts/apis'
 
 // Types
-import {Links} from 'src/types'
+import {Links, Ipmi} from 'src/types'
+
+// Notification Action
+import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {notifyIpmiConnectionFailed} from 'src/shared/copy/notifications'
 
 export enum ActionTypes {
   LoadInventoryTopology = 'LOAD_INVENTORY_TOPOLOGY',
   CreateInventoryTopology = 'CREATE_INVENTORY_TOPOLOGY',
   UpdateInventoryTopology = 'UPDATE_INVENTORY_TOPOLOGY',
+  GetIpmiStatus = 'GET_IPMI_STATUS',
 }
 
 export type Action =
   | LoadInventoryTopologyAction
   | CreateInventoryTopologyAction
   | UpdateInventoryTopologyAction
+  | GetIpmiStatusAction
 
 interface LoadInventoryTopologyAction {
   type: ActionTypes.LoadInventoryTopology
@@ -35,6 +42,10 @@ interface UpdateInventoryTopologyAction {
   type: ActionTypes.UpdateInventoryTopology
 }
 
+interface GetIpmiStatusAction {
+  type: ActionTypes.GetIpmiStatus
+}
+
 export const loadInventoryTopologyAction = (): LoadInventoryTopologyAction => ({
   type: ActionTypes.LoadInventoryTopology,
 })
@@ -45,6 +56,10 @@ export const createInventoryTopologyAction = (): CreateInventoryTopologyAction =
 
 export const updateInventoryTopologyAction = (): UpdateInventoryTopologyAction => ({
   type: ActionTypes.UpdateInventoryTopology,
+})
+
+export const getIpmiStatusAction = (): GetIpmiStatusAction => ({
+  type: ActionTypes.GetIpmiStatus,
 })
 
 export const loadInventoryTopologyAsync = (links: Links) => async (
@@ -90,6 +105,35 @@ export const updateInventoryTopologyAsync = (
     )
 
     return resultUpdateInventoryTopology
+  } catch (error) {
+    console.error(error)
+    dispatch(errorThrown(error))
+  }
+}
+
+export const getIpmiStatusAsync = (
+  pUrl: string,
+  pToken: string,
+  pIpmis: Ipmi
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const ipmiStatusInfo = await getIpmiStatusSaltApi(pUrl, pToken, pIpmis)
+
+    if (
+      _.values(ipmiStatusInfo.return[0])[0] !== 'on' &&
+      _.values(ipmiStatusInfo.return[0])[0] !== 'off'
+    ) {
+      let error = Error(
+        `[${pIpmis.host}] ` +
+          JSON.stringify(_.values(ipmiStatusInfo.return[0])[0])
+      )
+      const notify = bindActionCreators(notifyAction, dispatch)
+      notify(notifyIpmiConnectionFailed(error))
+      return
+    }
+
+    dispatch(getIpmiStatusAction())
+    return _.values(ipmiStatusInfo.return[0])[0]
   } catch (error) {
     console.error(error)
     dispatch(errorThrown(error))

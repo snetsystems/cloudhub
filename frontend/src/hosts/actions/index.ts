@@ -25,6 +25,7 @@ import {
   loadInventoryTopologyAsync,
   createInventoryTopologyAsync,
   updateInventoryTopologyAsync,
+  getIpmiStatusAsync,
 } from 'src/hosts/actions/inventoryTopology'
 
 export {
@@ -51,4 +52,5 @@ export {
   loadInventoryTopologyAsync,
   createInventoryTopologyAsync,
   updateInventoryTopologyAsync,
+  getIpmiStatusAsync,
 }

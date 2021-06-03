@@ -73,7 +73,7 @@ import {
 import {JSONFeedData} from './status'
 import {Annotation} from './annotations'
 import {WriteDataMode, QueryUpdateState} from './dataExplorer'
-import {Host, Layout} from './hosts'
+import {Host, Layout, Ipmi} from './hosts'
 import {Env} from './env'
 import {Shells, ShellInfo, ShellLoad} from './shell'
 
@@ -146,6 +146,7 @@ export {
   QueryStatus,
   Host,
   Layout,
+  Ipmi,
   QueryType,
   QueryUpdateState,
   Shells,

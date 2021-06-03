@@ -66,6 +66,15 @@
       transition: text-shadow 0.3s ease;
     }
   }
+  .mxgraph-cell--ipmi-btn {
+    font-size: 16px;
+    color: #bec2cc;
+    &:hover {
+      color: #fff;
+      text-shadow: 0 0 5px #f58220, 0 0 10px #f58220, 0 0 25px #fff;
+      transition: text-shadow 0.3s ease;
+    }
+  }
   .tool-box {
     display: flex;
     flex-wrap: wrap;
@@ -154,4 +163,80 @@
     height: 25px;
     margin-left: -2px;
   }
+}
+
+#statusContainer {
+  position: fixed;
+  top: calc(108px + 140px);
+  right: 10px;
+  width: 200px;
+  height: calc(100% - (140px + 120px));
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.7);
+  border: solid 1px #919191;
+}
+
+.cloudhub-mxPopupMenu {
+  background: white;
+  position: absolute;
+  border: 0;
+  padding: 3px;
+  margin: 0px;
+}
+.cloudhub-mxPopupMenuItem {
+  color: black;
+  cursor: default;
+  padding: 2px;
+  font-family: Arial;
+  font-size: 11px;
+  &:hover {
+    color: white;
+    cursor: pointer;
+    background-color: $s-orange;
+  }
+}
+
+.cloudhub-mxPopupMenuIcon {
+  background-color: white;
+  padding: 0px;
+}
+.cloudhub-mxPopupMenu hr {
+  border-top: solid 1px #cccccc;
+}
+
+div.mxPopupMenu {
+  -webkit-box-shadow: 3px 3px 6px #c0c0c0;
+  -moz-box-shadow: 3px 3px 6px #c0c0c0;
+  box-shadow: 3px 3px 6px #c0c0c0;
+  background: white;
+  position: absolute;
+  border: 3px solid #e7e7e7;
+  padding: 3px;
+}
+table.mxPopupMenu {
+  border-collapse: collapse;
+  margin: 0px;
+}
+tr.mxPopupMenuItem {
+  color: black;
+  cursor: default;
+}
+td.mxPopupMenuItem {
+  padding: 6px 60px 6px 30px;
+  font-family: Arial;
+  font-size: 10pt;
+}
+td.mxPopupMenuIcon {
+  background-color: white;
+  padding: 0px;
+}
+tr.mxPopupMenuItemHover {
+  background-color: #eeeeee;
+  color: black;
+}
+table.mxPopupMenu hr {
+  border-top: solid 1px #cccccc;
+}
+table.mxPopupMenu tr {
+  font-size: 4pt;
 }
