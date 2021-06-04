@@ -599,7 +599,6 @@ export const getIpmiStatusSaltApi = async (
   const info = await getIpmiGetPower(pUrl, pToken, pIpmi)
   const ipmiStatus = yaml.safeLoad(info.data)
 
-  console.log('getIpmiStatusSaltApi', ipmiStatus)
   return ipmiStatus
 }
 

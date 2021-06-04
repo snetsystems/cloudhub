@@ -70,7 +70,6 @@ const apiRequest = async (
     }
 
     const param = JSON.stringify(Object.assign(dParams, pParams))
-    console.log(param)
 
     const ajaxResult = await AJAX({
       method: 'POST',
@@ -817,8 +816,6 @@ export async function setIpmiSetPower(
         api_pass: pIpmi.pass,
       },
     }
-
-    console.log('setIpmiSetPower:', pUrl, pToken, {params})
 
     const result = {
       [pIpmi.target]: {
