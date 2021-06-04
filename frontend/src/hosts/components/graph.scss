@@ -67,47 +67,56 @@
     }
   }
 
-  .vertex[btn-type='ipmi'] {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 25px;
-    height: 25px;
-    margin-left: -2px;
-    cursor: pointer;
+  .vertex {
+    &[btn-type='ipmi'] {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 25px;
+      height: 25px;
+      margin-left: -2px;
+      cursor: pointer;
+
+      &[ipmi-power-status='disconnected'] {
+        .mxgraph-cell--ipmi-btn.icon.switch {
+          color: $g13-mist;
+          &:hover {
+            cursor: pointer;
+          }
+
+          &:hover {
+            background-color: $g5-pepper;
+            color: $g18-cloud;
+          }
+        }
+      }
+      &[ipmi-power-status='on'] {
+        .mxgraph-cell--ipmi-btn.icon.switch {
+          color: $s-orange;
+          &:hover {
+            color: $s-deepOrange2;
+          }
+        }
+      }
+      &[ipmi-power-status='off'] {
+        .mxgraph-cell--ipmi-btn.icon.switch.switch {
+          color: $g13-mist;
+          &:hover {
+            cursor: pointer;
+          }
+
+          &:hover {
+            background-color: $g5-pepper;
+            color: $g18-cloud;
+          }
+        }
+      }
+    }
   }
 
   .mxgraph-cell--ipmi-btn {
     font-size: 16px;
     color: #bec2cc;
-
-    &.icon {
-      &.switch {
-        &:hover {
-          color: #fff;
-        }
-
-        &.power-on {
-          color: $c-rainforest;
-          &:hover {
-            color: $c-honeydew;
-          }
-          &:active {
-            color: $c-krypton;
-          }
-        }
-
-        &.power-off {
-          color: $s-pinkRed;
-          &:hover {
-            color: $c-dreamsicle;
-          }
-          &:active {
-            color: $c-tungsten;
-          }
-        }
-      }
-    }
   }
   .tool-box {
     display: flex;

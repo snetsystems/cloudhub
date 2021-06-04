@@ -489,14 +489,14 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     if (!_.isEmpty(ipmiStatus)) {
       if (ipmiStatus === 'on') {
-        this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'green', [
+        this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#f58220', [
           childrenCell,
         ])
 
         childrenContainerElement.setAttribute('ipmi-power-status', 'on')
         childrenCell.setValue(childrenContainerElement.outerHTML)
-      } else {
-        this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'red', [
+      } else if (ipmiStatus === 'off') {
+        this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#f58220', [
           childrenCell,
         ])
 
@@ -1362,7 +1362,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       ipmiBox.appendChild(ipmiIcon)
       ipmiBox.appendChild(ipmiIcon)
       ipmiBox.setAttribute('btn-type', 'ipmi')
-      ipmiBox.setAttribute('ipmi-power-status', '')
+      ipmiBox.setAttribute('ipmi-power-status', 'disconnected')
 
       const ipmiStatus = graph.insertVertex(
         v1,
@@ -1505,6 +1505,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     if (attribute.nodeName === 'data-ipmi_target') {
       input = form.addCombo(nodeName, false)
+      input.style.padding = '0 9px'
 
       form.addOption(input, 'NONE', '', false)
       _.map(ipmiTargets, ipmiTarget => {
@@ -1532,6 +1533,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       const containerElement = this.getContainerElement(cell.value)
 
       let newValue = input.value || ''
+      let isInputPassword = false
       const oldValue = containerElement.getAttribute(attribute.nodeName) || ''
 
       if (newValue !== oldValue) {
@@ -1581,13 +1583,16 @@ class InventoryTopology extends PureComponent<Props, State> {
                 this.secretKey.url
               ).toString()
 
-              graph.setSelectionCell(cell)
+              isInputPassword = true
             }
           }
 
           containerElement.setAttribute(attribute.nodeName, newValue)
           cell.setValue(containerElement.outerHTML)
         } finally {
+          if (isInputPassword) {
+            graph.setSelectionCell(cell)
+          }
           graph.getModel().endUpdate()
           this.graphUpdate()
         }
