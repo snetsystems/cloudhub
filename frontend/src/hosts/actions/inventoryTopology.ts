@@ -157,7 +157,6 @@ export const setIpmiStatusAsync = (
       pState
     )
 
-    console.log('responseSetPower:', responseSetPower)
     return responseSetPower
   } catch (error) {
     console.error(error)

@@ -420,7 +420,7 @@ class InventoryTopology extends PureComponent<Props, State> {
           const ipmiHost = containerElement.getAttribute('data-ipmi_host')
           const ipmiUser = containerElement.getAttribute('data-ipmi_user')
           const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
-          console.log({ipmiHost})
+
           if (
             !_.isEmpty(ipmiHost) &&
             !_.isEmpty(ipmiUser) &&
@@ -768,7 +768,9 @@ class InventoryTopology extends PureComponent<Props, State> {
             cell.getParent().value
           )
 
-          const minion = parentContainerElement.getAttribute('data-label')
+          const ipmiTarget = parentContainerElement.getAttribute(
+            'data-ipmi_target'
+          )
           const ipmiHost = parentContainerElement.getAttribute('data-ipmi_host')
           const ipmiUser = parentContainerElement.getAttribute('data-ipmi_user')
           const ipmiPass = parentContainerElement.getAttribute('data-ipmi_pass')
@@ -776,7 +778,7 @@ class InventoryTopology extends PureComponent<Props, State> {
           if (ipmiPowerstate === 'on') {
             menu.addItem('Power Off System', null, () => {
               this.saltIpmiSetPowerAsync(
-                minion,
+                ipmiTarget,
                 ipmiHost,
                 ipmiUser,
                 ipmiPass,
@@ -786,7 +788,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
             menu.addItem('Graceful Shutdown', null, () => {
               this.saltIpmiSetPowerAsync(
-                minion,
+                ipmiTarget,
                 ipmiHost,
                 ipmiUser,
                 ipmiPass,
@@ -796,7 +798,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
             menu.addItem('Force Reset System', null, () => {
               this.saltIpmiSetPowerAsync(
-                minion,
+                ipmiTarget,
                 ipmiHost,
                 ipmiUser,
                 ipmiPass,
@@ -806,7 +808,7 @@ class InventoryTopology extends PureComponent<Props, State> {
           } else if (ipmiPowerstate === 'off') {
             menu.addItem('Power On', null, () => {
               this.saltIpmiSetPowerAsync(
-                minion,
+                ipmiTarget,
                 ipmiHost,
                 ipmiUser,
                 ipmiPass,
@@ -816,7 +818,7 @@ class InventoryTopology extends PureComponent<Props, State> {
           }
           if (ipmiHost && ipmiUser && ipmiPass) {
             this.saltIpmiGetSensorDataAsync(
-              minion,
+              ipmiTarget,
               ipmiHost,
               ipmiUser,
               ipmiPass,
@@ -900,23 +902,30 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   private saltIpmiSetPowerAsync = _.throttle(
     async (
-      minion: string,
-      apiHost: string,
-      apiUser: string,
-      apiPass: string,
+      target: string,
+      ipmiHost: string,
+      ipmiUser: string,
+      ipmiPass: string,
       state: IpmiSetPowerStatus
     ) => {
-      const decryptedBytes = CryptoJS.AES.decrypt(apiPass, this.secretKey.url)
+      const decryptedBytes = CryptoJS.AES.decrypt(ipmiPass, this.secretKey.url)
       const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
 
-      console.log(
-        'saltIpmiSetPowerAsync: ',
-        minion,
-        apiHost,
-        apiUser,
-        originalPass,
+      const ipmi: Ipmi = {
+        target,
+        host: ipmiHost,
+        user: ipmiUser,
+        pass: originalPass,
+      }
+
+      const setPowerStatus = await this.props.handleSetIpmiStatusAsync(
+        this.salt.url,
+        this.salt.token,
+        ipmi,
         state
       )
+
+      return setPowerStatus
     },
     500
   )
@@ -942,17 +951,17 @@ class InventoryTopology extends PureComponent<Props, State> {
   private saltIpmiGetSensorDataAsync = _.throttle(
     async (
       target: string,
-      apiHost: string,
-      apiUser: string,
-      apiPass: string,
+      ipmiHost: string,
+      ipmiUser: string,
+      ipmiPass: string,
       cell: mxCellType
     ) => {
-      const decryptedBytes = CryptoJS.AES.decrypt(apiPass, this.secretKey.url)
+      const decryptedBytes = CryptoJS.AES.decrypt(ipmiPass, this.secretKey.url)
       const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
       const pIpmi: Ipmi = {
         target,
-        host: apiHost,
-        user: apiUser,
+        host: ipmiHost,
+        user: ipmiUser,
         pass: originalPass,
       }
 

@@ -792,8 +792,8 @@ export async function getIpmiGetPower(
 export enum IpmiSetPowerStatus {
   PowerOn = 'power_on',
   PowerOff = 'power_off',
-  Reset = 'shutdown',
-  Shutdown = 'reset',
+  Reset = 'reset',
+  Shutdown = 'shutdown',
 }
 
 export async function setIpmiSetPower(
@@ -816,6 +816,7 @@ export async function setIpmiSetPower(
         api_pass: pIpmi.pass,
       },
     }
+    console.log('ssetIpmiSetPower: ', params)
 
     const result = {
       [pIpmi.target]: {
@@ -823,6 +824,7 @@ export async function setIpmiSetPower(
       },
     }
 
+    // not test
     // const result = await apiRequest(pUrl, pToken, params, 'application/x-yaml')
 
     return result
