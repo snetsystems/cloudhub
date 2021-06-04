@@ -456,41 +456,47 @@ class InventoryTopology extends PureComponent<Props, State> {
       ipmiCells
     )
 
-    _.map(ipmiCellsStatus, ipmiCellStatus => {
-      const childrenCell = ipmiCellStatus.cell.getChildAt(0)
-      const childrenContainerElement = this.getContainerElement(
-        childrenCell.value
-      )
-
-      if (!_.isEmpty(ipmiCellStatus.powerStatus)) {
-        if (ipmiCellStatus.powerStatus === 'on') {
-          this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#f58220', [
-            childrenCell,
-          ])
-
-          childrenContainerElement.setAttribute('ipmi-power-status', 'on')
-          childrenCell.setValue(childrenContainerElement.outerHTML)
-        } else if (ipmiCellStatus.powerStatus === 'off') {
-          this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#f58220', [
-            childrenCell,
-          ])
-
-          childrenContainerElement.setAttribute('ipmi-power-status', 'off')
-          childrenCell.setValue(childrenContainerElement.outerHTML)
-        }
-      } else {
-        childrenContainerElement.setAttribute(
-          'ipmi-power-status',
-          'unconnected'
+    const model = this.graph.getModel()
+    model.beginUpdate()
+    try {
+      _.forEach(ipmiCellsStatus, ipmiCellStatus => {
+        const childrenCell = ipmiCellStatus.cell.getChildAt(0)
+        const childrenContainerElement = this.getContainerElement(
+          childrenCell.value
         )
 
-        this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [
-          childrenCell,
-        ])
+        if (!_.isEmpty(ipmiCellStatus.powerStatus)) {
+          if (ipmiCellStatus.powerStatus === 'on') {
+            this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#f58220', [
+              childrenCell,
+            ])
 
-        childrenCell.setValue(childrenContainerElement.outerHTML)
-      }
-    })
+            childrenContainerElement.setAttribute('ipmi-power-status', 'on')
+            childrenCell.setValue(childrenContainerElement.outerHTML)
+          } else if (ipmiCellStatus.powerStatus === 'off') {
+            this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#f58220', [
+              childrenCell,
+            ])
+
+            childrenContainerElement.setAttribute('ipmi-power-status', 'off')
+            childrenCell.setValue(childrenContainerElement.outerHTML)
+          }
+        } else {
+          childrenContainerElement.setAttribute(
+            'ipmi-power-status',
+            'unconnected'
+          )
+
+          this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#bec2cc', [
+            childrenCell,
+          ])
+
+          childrenCell.setValue(childrenContainerElement.outerHTML)
+        }
+      })
+    } finally {
+      model.endUpdate()
+    }
   }
 
   private openSensorData(data) {
