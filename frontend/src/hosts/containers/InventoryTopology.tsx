@@ -403,6 +403,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   private getIpmiStatus = async () => {
     const graph = this.graph
     const parent = graph.getDefaultParent()
+    const currentSelectionCells = graph.getSelectionCells()
 
     graph.selectAll(parent, true)
 
@@ -439,6 +440,8 @@ class InventoryTopology extends PureComponent<Props, State> {
         }
       }
     })
+
+    graph.setSelectionCells(currentSelectionCells)
   }
 
   private openSensorData(data) {
