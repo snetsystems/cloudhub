@@ -141,6 +141,7 @@ export const getIpmiStatusAsync = (
     if (!_.isEmpty(error)) {
       const notify = bindActionCreators(notifyAction, dispatch)
       notify(notifyIpmiConnectionFailed(Error(error)))
+      console.error(error)
     }
 
     dispatch(getIpmiStatusAction())
