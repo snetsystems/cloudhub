@@ -39,7 +39,14 @@ import {
 } from 'src/hosts/constants/tools'
 
 // Types
-import {Source, Links, Host, RemoteDataState} from 'src/types'
+import {
+  Source,
+  Links,
+  Host,
+  RemoteDataState,
+  Notification,
+  NotificationFunc,
+} from 'src/types'
 import {AddonType} from 'src/shared/constants'
 
 // Actions
@@ -52,6 +59,9 @@ import {
   getIpmiSensorDataAsync,
   getMinionKeyAcceptedListAsync,
 } from 'src/hosts/actions'
+
+import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {notifyIpmiConnectionFailed} from 'src/shared/copy/notifications'
 
 // APIs
 import {getCpuAndLoadForHosts} from 'src/hosts/apis'
@@ -143,6 +153,7 @@ interface Props {
   links: Links
   autoRefresh: number
   manualRefresh: number
+  notify: (message: Notification | NotificationFunc) => void
   onManualRefresh: () => void
   handleGetInventoryTopology: (links: Links) => Promise<any>
   handleCreateInventoryTopology: (
@@ -402,23 +413,29 @@ class InventoryTopology extends PureComponent<Props, State> {
     _.forEach(cells, async cell => {
       if (cell.getStyle() === 'node') {
         const containerElement = this.getContainerElement(cell.value)
-        const ipmiTarget = containerElement.getAttribute('data-ipmi_target')
-        const ipmiHost = containerElement.getAttribute('data-ipmi_host')
-        const ipmiUser = containerElement.getAttribute('data-ipmi_user')
-        const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
 
-        if (
-          !_.isEmpty(ipmiHost) &&
-          !_.isEmpty(ipmiUser) &&
-          !_.isEmpty(ipmiPass)
-        ) {
-          const ipmi: Ipmi = {
-            target: ipmiTarget,
-            host: ipmiHost,
-            user: ipmiUser,
-            pass: ipmiPass,
+        if (containerElement.hasAttribute('data-ipmi_host')) {
+          const ipmiTarget = containerElement.getAttribute('data-ipmi_target')
+          const ipmiHost = containerElement.getAttribute('data-ipmi_host')
+          const ipmiUser = containerElement.getAttribute('data-ipmi_user')
+          const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
+          console.log({ipmiHost})
+          if (
+            !_.isEmpty(ipmiHost) &&
+            !_.isEmpty(ipmiUser) &&
+            !_.isEmpty(ipmiPass)
+          ) {
+            const ipmi: Ipmi = {
+              target: ipmiTarget,
+              host: ipmiHost,
+              user: ipmiUser,
+              pass: ipmiPass,
+            }
+            await this.setIpmiStatus(cell, ipmi)
+          } else {
+            const error = new Error('Check the IPMI connection information.')
+            this.props.notify(notifyIpmiConnectionFailed(error))
           }
-          await this.setIpmiStatus(cell, ipmi)
         }
       }
     })
@@ -703,21 +720,27 @@ class InventoryTopology extends PureComponent<Props, State> {
 
       if (!_.isEmpty(cell) && cell.style === 'node') {
         const containerElement = this.getContainerElement(cell.value)
-        const ipmiHost = containerElement.getAttribute('data-ipmi_host')
-        const ipmiUser = containerElement.getAttribute('data-ipmi_user')
-        const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
 
-        if (ipmiHost && ipmiUser && ipmiPass) {
-          const containerElement = this.getContainerElement(cell.value)
-          const target = containerElement.getAttribute('data-ipmi_target')
+        if (containerElement.hasAttribute('data-ipmi_host')) {
+          const ipmiHost = containerElement.getAttribute('data-ipmi_host')
+          const ipmiUser = containerElement.getAttribute('data-ipmi_user')
+          const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
 
-          this.saltIpmiGetSensorDataAsync(
-            target,
-            ipmiHost,
-            ipmiUser,
-            ipmiPass,
-            cell
-          )
+          if (ipmiHost && ipmiUser && ipmiPass) {
+            const containerElement = this.getContainerElement(cell.value)
+            const target = containerElement.getAttribute('data-ipmi_target')
+
+            this.saltIpmiGetSensorDataAsync(
+              target,
+              ipmiHost,
+              ipmiUser,
+              ipmiPass,
+              cell
+            )
+          } else {
+            const error = new Error('Check the IPMI connection information.')
+            this.props.notify(notifyIpmiConnectionFailed(error))
+          }
         }
       }
     })
@@ -1832,6 +1855,7 @@ const mapDispatchToProps = {
   handleGetIpmiStatus: getIpmiStatusAsync,
   handleSetIpmiStatusAsync: setIpmiStatusAsync,
   handleGetIpmiSensorDataAsync: getIpmiSensorDataAsync,
+  notify: notifyAction,
 }
 
 export default connect(
