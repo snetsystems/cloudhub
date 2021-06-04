@@ -4,7 +4,7 @@ import AJAX from 'src/utils/ajax'
 import {createActivityLog} from 'src/shared/apis'
 
 // Types
-import {Ipmi} from 'src/types'
+import {Ipmi, IpmiCell} from 'src/types'
 
 interface Params {
   client?: string
@@ -88,6 +88,35 @@ const apiRequest = async (
       saltActivityLog(activity, error)
     }
 
+    console.error(error)
+    throw error
+  }
+}
+
+const apiRequestMulti = async (
+  pUrl: string,
+  pParams: Params[],
+  pAccept?: string
+) => {
+  try {
+    const saltMasterUrl = pUrl
+    const url = saltMasterUrl + '/'
+    const headers = {
+      Accept: pAccept ? pAccept : 'application/json',
+      'Content-type': 'application/json',
+    }
+
+    const param = JSON.stringify(pParams)
+
+    const ajaxResult = await AJAX({
+      method: 'POST',
+      url: url,
+      headers,
+      data: param,
+    })
+
+    return ajaxResult
+  } catch (error) {
     console.error(error)
     throw error
   }
@@ -765,22 +794,29 @@ export async function getLocalHttpQuery(
 export async function getIpmiGetPower(
   pUrl: string,
   pToken: string,
-  pIpmi: Ipmi
+  pIpmis: IpmiCell[]
 ) {
   try {
-    const params = {
-      client: 'local',
-      fun: 'ipmi.get_power',
-      tgt_type: 'glob',
-      tgt: pIpmi.target,
-      kwarg: {
-        api_host: pIpmi.host,
-        api_user: pIpmi.user,
-        api_pass: pIpmi.pass,
-      },
-    }
+    let params = []
 
-    const result = await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+    _.map(pIpmis, pIpmi => {
+      const param = {
+        token: pToken,
+        eauth: 'pam',
+        client: 'local',
+        fun: 'ipmi.get_power',
+        tgt_type: 'glob',
+        tgt: pIpmi.target,
+        kwarg: {
+          api_host: pIpmi.host,
+          api_user: pIpmi.user,
+          api_pass: pIpmi.pass,
+        },
+      }
+      params = [...params, param]
+    })
+
+    const result = await apiRequestMulti(pUrl, params, 'application/x-yaml')
 
     return result
   } catch (error) {

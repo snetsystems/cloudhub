@@ -12,7 +12,7 @@ import {
 } from 'src/hosts/utils/hostsSwitcherLinks'
 // Types
 import {Template, Layout, Source, Host, Links} from 'src/types'
-import {HostNames, HostName, Ipmi} from 'src/types/hosts'
+import {HostNames, HostName, Ipmi, IpmiCell} from 'src/types/hosts'
 import {DashboardSwitcherLinks} from '../../types/dashboards'
 
 // APIs
@@ -594,9 +594,9 @@ export const updateInventoryTopology = async (
 export const getIpmiStatusSaltApi = async (
   pUrl: string,
   pToken: string,
-  pIpmi: Ipmi
+  pIpmis: IpmiCell[]
 ): Promise<any> => {
-  const info = await getIpmiGetPower(pUrl, pToken, pIpmi)
+  const info = await getIpmiGetPower(pUrl, pToken, pIpmis)
   const ipmiStatus = yaml.safeLoad(info.data)
 
   return ipmiStatus

@@ -46,6 +46,8 @@ import {
   RemoteDataState,
   Notification,
   NotificationFunc,
+  Ipmi,
+  IpmiCell,
 } from 'src/types'
 import {AddonType} from 'src/shared/constants'
 
@@ -61,7 +63,6 @@ import {
 } from 'src/hosts/actions'
 
 import {notify as notifyAction} from 'src/shared/actions/notifications'
-import {notifyIpmiConnectionFailed} from 'src/shared/copy/notifications'
 
 // APIs
 import {getCpuAndLoadForHosts} from 'src/hosts/apis'
@@ -80,13 +81,6 @@ import 'mxgraph/javascript/src/css/common.css'
 
 import {Controlled as ReactCodeMirror} from 'react-codemirror2'
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
-
-interface Ipmi {
-  target: string
-  host: string
-  user: string
-  pass: string
-}
 
 const mx = mxgraph()
 
@@ -172,7 +166,7 @@ interface Props {
   handleGetIpmiStatus: (
     saltMasterUrl: string,
     saltMasterToken: string,
-    pIpmis: Ipmi
+    pIpmis: IpmiCell[]
   ) => Promise<any>
   handleSetIpmiStatusAsync: (
     saltMasterUrl: string,
@@ -411,7 +405,9 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     graph.removeSelectionCells(cells)
 
-    _.forEach(cells, async cell => {
+    let ipmiCells: IpmiCell[] = []
+
+    _.forEach(cells, cell => {
       if (cell.getStyle() === 'node') {
         const containerElement = this.getContainerElement(cell.value)
 
@@ -422,26 +418,79 @@ class InventoryTopology extends PureComponent<Props, State> {
           const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
 
           if (
+            !_.isEmpty(ipmiTarget) &&
             !_.isEmpty(ipmiHost) &&
             !_.isEmpty(ipmiUser) &&
             !_.isEmpty(ipmiPass)
           ) {
-            const ipmi: Ipmi = {
+            const decryptedBytes = CryptoJS.AES.decrypt(
+              ipmiPass,
+              this.secretKey.url
+            )
+            const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
+
+            const ipmiCell: IpmiCell = {
               target: ipmiTarget,
               host: ipmiHost,
               user: ipmiUser,
-              pass: ipmiPass,
+              pass: originalPass,
+              powerStatus: '',
+              cell: cell,
             }
-            await this.setIpmiStatus(cell, ipmi)
-          } else {
-            const error = new Error('Check the IPMI connection information.')
-            this.props.notify(notifyIpmiConnectionFailed(error))
+
+            ipmiCells = [...ipmiCells, ipmiCell]
           }
         }
       }
     })
 
+    this.setIpmiStatus(ipmiCells)
+
     graph.setSelectionCells(currentSelectionCells)
+  }
+
+  private setIpmiStatus = async (ipmiCells: IpmiCell[]) => {
+    const ipmiCellsStatus: IpmiCell[] = await this.props.handleGetIpmiStatus(
+      this.salt.url,
+      this.salt.token,
+      ipmiCells
+    )
+
+    _.map(ipmiCellsStatus, ipmiCellStatus => {
+      const childrenCell = ipmiCellStatus.cell.getChildAt(0)
+      const childrenContainerElement = this.getContainerElement(
+        childrenCell.value
+      )
+
+      if (!_.isEmpty(ipmiCellStatus.powerStatus)) {
+        if (ipmiCellStatus.powerStatus === 'on') {
+          this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#f58220', [
+            childrenCell,
+          ])
+
+          childrenContainerElement.setAttribute('ipmi-power-status', 'on')
+          childrenCell.setValue(childrenContainerElement.outerHTML)
+        } else if (ipmiCellStatus.powerStatus === 'off') {
+          this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#f58220', [
+            childrenCell,
+          ])
+
+          childrenContainerElement.setAttribute('ipmi-power-status', 'off')
+          childrenCell.setValue(childrenContainerElement.outerHTML)
+        }
+      } else {
+        childrenContainerElement.setAttribute(
+          'ipmi-power-status',
+          'unconnected'
+        )
+
+        this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [
+          childrenCell,
+        ])
+
+        childrenCell.setValue(childrenContainerElement.outerHTML)
+      }
+    })
   }
 
   private openSensorData(data) {
@@ -497,41 +546,6 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.statusRef.current.appendChild(statusWindow)
     document.querySelector('#statusContainer').classList.add('active')
-  }
-
-  private setIpmiStatus = async (cell: mxCellType, ipmi: Ipmi) => {
-    const ipmiStatus = await this.saltIpmiGetPowerAsync(ipmi)
-
-    const childrenCell = cell.getChildAt(0)
-    const childrenContainerElement = this.getContainerElement(
-      childrenCell.value
-    )
-
-    if (!_.isEmpty(ipmiStatus)) {
-      if (ipmiStatus === 'on') {
-        this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#f58220', [
-          childrenCell,
-        ])
-
-        childrenContainerElement.setAttribute('ipmi-power-status', 'on')
-        childrenCell.setValue(childrenContainerElement.outerHTML)
-      } else if (ipmiStatus === 'off') {
-        this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#f58220', [
-          childrenCell,
-        ])
-
-        childrenContainerElement.setAttribute('ipmi-power-status', 'off')
-        childrenCell.setValue(childrenContainerElement.outerHTML)
-      }
-    } else {
-      childrenContainerElement.setAttribute('ipmi-power-status', 'unconnected')
-
-      this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [
-        childrenCell,
-      ])
-
-      childrenCell.setValue(childrenContainerElement.outerHTML)
-    }
   }
 
   private getIpmiTargetList = async () => {
@@ -725,14 +739,12 @@ class InventoryTopology extends PureComponent<Props, State> {
         const containerElement = this.getContainerElement(cell.value)
 
         if (containerElement.hasAttribute('data-ipmi_host')) {
+          const target = containerElement.getAttribute('data-ipmi_target')
           const ipmiHost = containerElement.getAttribute('data-ipmi_host')
           const ipmiUser = containerElement.getAttribute('data-ipmi_user')
           const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
 
-          if (ipmiHost && ipmiUser && ipmiPass) {
-            const containerElement = this.getContainerElement(cell.value)
-            const target = containerElement.getAttribute('data-ipmi_target')
-
+          if (ipmiHost && ipmiUser && ipmiPass && target) {
             this.saltIpmiGetSensorDataAsync(
               target,
               ipmiHost,
@@ -740,9 +752,6 @@ class InventoryTopology extends PureComponent<Props, State> {
               ipmiPass,
               cell
             )
-          } else {
-            const error = new Error('Check the IPMI connection information.')
-            this.props.notify(notifyIpmiConnectionFailed(error))
           }
         }
       }
@@ -930,23 +939,23 @@ class InventoryTopology extends PureComponent<Props, State> {
     500
   )
 
-  private saltIpmiGetPowerAsync = _.throttle(async (ipmi: Ipmi) => {
-    const decryptedBytes = CryptoJS.AES.decrypt(ipmi.pass, this.secretKey.url)
-    const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
+  // private saltIpmiGetPowerAsync = _.throttle(async (ipmi: Ipmi) => {
+  //   const decryptedBytes = CryptoJS.AES.decrypt(ipmi.pass, this.secretKey.url)
+  //   const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
 
-    ipmi = {
-      ...ipmi,
-      pass: originalPass,
-    }
+  //   ipmi = {
+  //     ...ipmi,
+  //     pass: originalPass,
+  //   }
 
-    const getPowerStatus = await this.props.handleGetIpmiStatus(
-      this.salt.url,
-      this.salt.token,
-      ipmi
-    )
+  //   const getPowerStatus = await this.props.handleGetIpmiStatus(
+  //     this.salt.url,
+  //     this.salt.token,
+  //     ipmi
+  //   )
 
-    return getPowerStatus
-  }, 500)
+  //   return getPowerStatus
+  // }, 500)
 
   private saltIpmiGetSensorDataAsync = _.throttle(
     async (

@@ -13,7 +13,7 @@ import {
 } from 'src/hosts/apis'
 
 // Types
-import {Links, Ipmi} from 'src/types'
+import {Links, Ipmi, IpmiCell} from 'src/types'
 
 // Notification Action
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -117,26 +117,34 @@ export const updateInventoryTopologyAsync = (
 export const getIpmiStatusAsync = (
   pUrl: string,
   pToken: string,
-  pIpmis: Ipmi
+  pIpmis: IpmiCell[]
 ) => async (dispatch: Dispatch<Action>) => {
   try {
-    const ipmiStatusInfo = await getIpmiStatusSaltApi(pUrl, pToken, pIpmis)
+    const ipmis = await getIpmiStatusSaltApi(pUrl, pToken, pIpmis)
 
-    if (
-      _.values(ipmiStatusInfo.return[0])[0] !== 'on' &&
-      _.values(ipmiStatusInfo.return[0])[0] !== 'off'
-    ) {
-      let error = Error(
-        `[${pIpmis.host}] ` +
-          JSON.stringify(_.values(ipmiStatusInfo.return[0])[0])
-      )
+    let error = ''
+    let resultIpmis: IpmiCell[] = pIpmis
+
+    _.map(ipmis.return, (ipmi, index) => {
+      if (_.values(ipmi)[0] !== 'on' && _.values(ipmi)[0] !== 'off') {
+        if (error !== null) {
+          error += '\n'
+        }
+        error += `[${pIpmis[index].host}] ` + JSON.stringify(_.values(ipmi)[0])
+
+        resultIpmis[index].powerStatus = ''
+      } else {
+        resultIpmis[index].powerStatus = _.values(ipmi)[0]
+      }
+    })
+
+    if (!_.isEmpty(error)) {
       const notify = bindActionCreators(notifyAction, dispatch)
-      notify(notifyIpmiConnectionFailed(error))
-      return
+      notify(notifyIpmiConnectionFailed(Error(error)))
     }
 
     dispatch(getIpmiStatusAction())
-    return _.values(ipmiStatusInfo.return[0])[0]
+    return resultIpmis
   } catch (error) {
     console.error(error)
     dispatch(errorThrown(error))
