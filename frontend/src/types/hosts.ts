@@ -1,4 +1,5 @@
 import {Axes} from 'src/types'
+import {mxCell as mxCellType} from 'mxgraph'
 
 export interface HostNames {
   [index: string]: HostName
@@ -51,9 +52,16 @@ export interface LayoutQuery {
 }
 
 export interface Ipmi {
-  name: string
   target: string
   host: string
   user: string
   pass: string
+}
+export interface IpmiCell {
+  target: string
+  host: string
+  user: string
+  pass: string
+  powerStatus: string
+  cell: mxCellType
 }
