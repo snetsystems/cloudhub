@@ -245,7 +245,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   private CELL_SIZE_HEIGHT = 90
 
   private secretKey = this.props.links.addons.find(
-    addon => addon.name === 'secret_key'
+    addon => addon.name === 'ipmi-secret-key'
   )
 
   private salt = this.props.links.addons.find(addon => {
