@@ -191,8 +191,7 @@ export const getIpmiSensorDataAsync = (
       _.keys(sensorData[pIpmis.target]).length > 0
 
     if (!isSensorData) {
-      const errorMessage = 'no sensorData'
-      throw new Error(errorMessage)
+      throw new Error(`[${pIpmis.target}]: ${sensorData[pIpmis.target]}`)
     }
 
     return sensorData
