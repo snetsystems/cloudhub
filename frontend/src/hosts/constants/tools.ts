@@ -61,11 +61,11 @@ export const toolbarMenu: ToolbarMenu[] = [
     label: 'Fit',
     icon: 'fit',
   },
-  // {
-  //   actionName: 'export',
-  //   label: 'Export',
-  //   icon: 'export',
-  // },
+  {
+    actionName: 'export',
+    label: 'Export',
+    icon: 'export',
+  },
 ]
 
 export interface Menu {
@@ -73,7 +73,10 @@ export interface Menu {
   name: string
   label: string
   link?: string
-  idrac?: string
+  ipmi_target?: string
+  ipmi_Host?: string
+  ipmi_User?: string
+  ipmi_Pass?: string
   [key: string]: any
 }
 
@@ -83,7 +86,10 @@ export const toolsMenu: Menu[] = [
     name: 'server',
     label: 'Server',
     link: '',
-    idrac: '',
+    ipmi_target: '',
+    ipmi_Host: '',
+    ipmi_User: '',
+    ipmi_Pass: '',
   },
   {
     type: 'Database',
@@ -159,5 +165,8 @@ export const hostMenu: Menu = {
   type: 'Server',
   isDisableName: true,
   link: '',
-  idrac: '',
+  ipmi_target: '',
+  ipmi_host: '',
+  ipmi_user: '',
+  ipmi_pass: '',
 }
