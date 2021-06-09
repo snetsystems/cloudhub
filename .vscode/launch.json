@@ -24,6 +24,7 @@
         "-k=swan:<token key>",
         "-u=oncue:<port>",
         "-u=vsphere:on",
+        "-u=ipmi-secret-key:<Seed key using for the encryption of ipmi password>",
         "-c=./cloudhub-canned/",
         "--protoboards-path=./cloudhub-protoboards/",
         "--auth-duration=24h", //default:"720h(30d)", 0 means authentication expires on browser close

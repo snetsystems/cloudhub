@@ -12,7 +12,7 @@ import {
 } from 'src/hosts/utils/hostsSwitcherLinks'
 // Types
 import {Template, Layout, Source, Host, Links} from 'src/types'
-import {HostNames, HostName} from 'src/types/hosts'
+import {HostNames, HostName, Ipmi, IpmiCell} from 'src/types/hosts'
 import {DashboardSwitcherLinks} from '../../types/dashboards'
 
 // APIs
@@ -20,6 +20,10 @@ import {
   getWheelKeyAcceptedList,
   getLocalVSphereInfoAll,
   getTicketRemoteConsole,
+  getIpmiGetPower,
+  getIpmiGetSensorData,
+  setIpmiSetPower,
+  IpmiSetPowerStatus,
 } from 'src/shared/apis/saltStack'
 
 interface HostsObject {
@@ -585,4 +589,38 @@ export const updateInventoryTopology = async (
     data: cells,
     headers: {'Content-Type': 'text/xml'},
   })
+}
+
+export const getIpmiStatusSaltApi = async (
+  pUrl: string,
+  pToken: string,
+  pIpmis: IpmiCell[]
+): Promise<any> => {
+  const info = await getIpmiGetPower(pUrl, pToken, pIpmis)
+  const ipmiStatus = yaml.safeLoad(info.data)
+
+  return ipmiStatus
+}
+
+export const getIpmiGetSensorDataApi = async (
+  pUrl: string,
+  pToken: string,
+  pIpmi: Ipmi
+): Promise<any> => {
+  const getSensorData = await getIpmiGetSensorData(pUrl, pToken, pIpmi)
+  const sensorData = yaml.safeLoad(getSensorData.data)
+
+  return sensorData
+}
+
+export const setIpmiSetPowerApi = async (
+  pUrl: string,
+  pToken: string,
+  pIpmi: Ipmi,
+  pState: IpmiSetPowerStatus
+): Promise<any> => {
+  const responseSetPower = await setIpmiSetPower(pUrl, pToken, pIpmi, pState)
+  const setPower = yaml.safeLoad(responseSetPower.data)
+
+  return setPower
 }
