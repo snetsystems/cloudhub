@@ -235,7 +235,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     'data-label',
     'data-link',
     // 'data-name',
-    'data-ipmi_target',
+    'data-using_minion',
     'data-ipmi_host',
     'data-ipmi_user',
     'data-ipmi_pass',
@@ -412,7 +412,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         const containerElement = this.getContainerElement(cell.value)
 
         if (containerElement.hasAttribute('data-ipmi_host')) {
-          const ipmiTarget = containerElement.getAttribute('data-ipmi_target')
+          const ipmiTarget = containerElement.getAttribute('data-using_minion')
           const ipmiHost = containerElement.getAttribute('data-ipmi_host')
           const ipmiUser = containerElement.getAttribute('data-ipmi_user')
           const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
@@ -496,6 +496,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       })
     } finally {
       model.endUpdate()
+      this.graphUpdate()
     }
   }
 
@@ -745,7 +746,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         const containerElement = this.getContainerElement(cell.value)
 
         if (containerElement.hasAttribute('data-ipmi_host')) {
-          const target = containerElement.getAttribute('data-ipmi_target')
+          const target = containerElement.getAttribute('data-using_minion')
           const ipmiHost = containerElement.getAttribute('data-ipmi_host')
           const ipmiUser = containerElement.getAttribute('data-ipmi_user')
           const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
@@ -784,7 +785,7 @@ class InventoryTopology extends PureComponent<Props, State> {
           )
 
           const ipmiTarget = parentContainerElement.getAttribute(
-            'data-ipmi_target'
+            'data-using_minion'
           )
           const ipmiHost = parentContainerElement.getAttribute('data-ipmi_host')
           const ipmiUser = parentContainerElement.getAttribute('data-ipmi_user')
@@ -1553,7 +1554,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     const ipmiTargets = this.state.minionList
     let input = null
 
-    if (attribute.nodeName === 'data-ipmi_target') {
+    if (attribute.nodeName === 'data-using_minion') {
       input = form.addCombo(nodeName, false)
       input.style.padding = '0 9px'
 

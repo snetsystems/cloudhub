@@ -34,20 +34,23 @@ For the agent management or vsphere, k8s inventory viewer test, you prepare to S
   - Regarding to above, an activity log is added.
 - Add **multi-tenant** feature across Users-Roles-Groups-DataSources.
 - Hosts to Infrastructures and basic charts added.
+- Infrastructure Topology Map authoring feature by user group.
 - Visualization added by criteria of Applications.
 - Integration a backend with **_SaltStack_**.
   - Avoid CORS Problem: `Web UI > CloudHub Salt Proxy > Salt API Server > Salt Master > Salt Minions.`
   - Telegraf agent management and configuration editing and deploying remotely via **_SaltStack_ Rest API**.
-- Web SSH Terminal feature.
+- Web SSH Terminal Console feature.
   - Connection to hosts using ssh protocol via CloudHub WebSocket Proxy.
 - Optionable Addon features.
   - **_VMWare_ Infrastructure** Viewer.
     - via **_VSphere_** API and **_Salt_**
   - **_K8s Infrastructure_** Diagram & Viewer. (Pending in dev-1.1.0 branch)
-    - via customized **_Salt's Kuberetes_** Module.
+    - via customized `Salt Kuberetes` Module.
   - SWAN Router & SDPlex(Oncue) Features.
+  - Bare-metal Server Remote Management via **IPMI**
   <p align="center">
     <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/infrastructure.png"/>
+    <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/topology_map.png"/>
     <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/VMWare.png"/>
     <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/applications.png"/>
     <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/agent_configure.png"/>
@@ -107,8 +110,11 @@ You could know the changelog by versions via that.
 ### Preparing dependencies
 
 - CloudHub works with **go 1.15+**, **node LTS**, and **yarn 1.15+**.
+- Install **protoc**(protocol buffer compiler)
+  - [Download here](https://github.com/protocolbuffers/protobuf/releases) proper package.
+  - Unzip and then add `bin/protoc` or `bin/protoc.exe` to $PATH env. or simply put into ` $GOPATH/bin` or ` $GOROOT/bin/` diretory.
 - In the case of Windows, it cannot be invoked "make" command,<br>So you need to download and install [GNUMake](http://gnuwin32.sourceforge.net/packages/make.htm) for windows.
-  - [Direct download](http://gnuwin32.sourceforge.net/downlinks/make.php)
+  - [Download here](http://gnuwin32.sourceforge.net/downlinks/make.php)
 
 ### Getting the source code from github.
 
@@ -151,6 +157,8 @@ $ code cloudhub.code-workspace
 Simply, select **"Launch Server"** and then run.<br>
 Also, for UI debugging, select **"Launch Chrome"** and then run debug.<br>
 For continuous debugging, you can use **"Launch Chrome"** after _**yarn start**_<br>
+
+> [Note] On Windows, you have to use **"Launch Chrome"** after _**yarn start**_<br>
 
 > [Note]<br>
 > For continuous debugging, you need to add **_develop mode_** into the running argument.

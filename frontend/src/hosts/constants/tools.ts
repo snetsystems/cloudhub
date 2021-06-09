@@ -73,7 +73,7 @@ export interface Menu {
   name: string
   label: string
   link?: string
-  ipmi_target?: string
+  using_minion?: string
   ipmi_Host?: string
   ipmi_User?: string
   ipmi_Pass?: string
@@ -86,7 +86,7 @@ export const toolsMenu: Menu[] = [
     name: 'server',
     label: 'Server',
     link: '',
-    ipmi_target: '',
+    using_minion: '',
     ipmi_Host: '',
     ipmi_User: '',
     ipmi_Pass: '',
@@ -165,7 +165,7 @@ export const hostMenu: Menu = {
   type: 'Server',
   isDisableName: true,
   link: '',
-  ipmi_target: '',
+  using_minion: '',
   ipmi_host: '',
   ipmi_user: '',
   ipmi_pass: '',

@@ -852,16 +852,8 @@ export async function setIpmiSetPower(
         api_pass: pIpmi.pass,
       },
     }
-    console.log('ssetIpmiSetPower: ', params)
 
-    const result = {
-      [pIpmi.target]: {
-        powerState: 'on',
-      },
-    }
-
-    // not test
-    // const result = await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+    const result = await apiRequest(pUrl, pToken, params, 'application/x-yaml')
 
     return result
   } catch (error) {
