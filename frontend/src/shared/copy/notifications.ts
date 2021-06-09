@@ -1217,3 +1217,10 @@ export const notifyeUserLockChangFailed = (): Notification => ({
   ...defaultErrorNotification,
   message: `change user lock failed.`,
 })
+
+//  CloudHub infrastructure Inventory Topology Notifications
+//  ----------------------------------------------------------------------------
+export const notifyIpmiConnectionFailed = (error: Error): Notification => ({
+  ...defaultErrorNotification,
+  message: `IPMI Connection Failed, ${error}`,
+})
