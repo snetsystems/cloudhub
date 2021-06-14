@@ -262,7 +262,11 @@ class SourceStep extends PureComponent<Props, State> {
   private onChooseDropdown = (key: string) => (org: Organization) => {
     const {source} = this.state
     const {setError} = this.props
-    this.setState({source: {...source, [key]: org.name}})
+
+    this.setState({
+      source: {...source, [key]: org.name, name: `${org.name}-${source.name}`},
+    })
+
     setError(false)
   }
 
