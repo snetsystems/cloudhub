@@ -61,11 +61,11 @@ export const toolbarMenu: ToolbarMenu[] = [
     label: 'Fit',
     icon: 'fit',
   },
-  {
-    actionName: 'export',
-    label: 'Export',
-    icon: 'export',
-  },
+  // {
+  //   actionName: 'export',
+  //   label: 'Export',
+  //   icon: 'export',
+  // },
 ]
 
 export interface Menu {

@@ -265,44 +265,50 @@ class InventoryTopology extends PureComponent<Props, State> {
       this.props.links
     )
 
-    if (_.get(topology, 'diagram')) {
-      const graph = this.graph
-
-      graph.getModel().beginUpdate()
-      try {
-        const doc = mxUtils.parseXml(topology.diagram)
-        const codec = new mxCodec(doc)
-
-        codec.decode(doc.documentElement, graph.getModel())
-      } finally {
-        graph.getModel().endUpdate()
-      }
-
-      await this.fetchIntervalData()
-
-      if (this.props.autoRefresh) {
-        this.intervalID = window.setInterval(
-          () => this.fetchIntervalData(),
-          this.props.autoRefresh
-        )
-      }
-
-      GlobalAutoRefresher.poll(this.props.autoRefresh)
-
-      const hostList = _.keys(this.state.hostsObject)
-
-      this.setCellsWarning(hostList)
-
-      this.setState({
+    this.setState(
+      {
         topology: _.get(topology, 'diagram'),
         topologyId: _.get(topology, 'id'),
-        topologyStatus: RemoteDataState.Done,
-      })
-    } else {
-      this.setState({
-        topologyStatus: RemoteDataState.Done,
-      })
-    }
+      },
+      async () => {
+        if (_.get(topology, 'diagram')) {
+          const graph = this.graph
+
+          graph.getModel().beginUpdate()
+          try {
+            const doc = mxUtils.parseXml(topology.diagram)
+            const codec = new mxCodec(doc)
+
+            codec.decode(doc.documentElement, graph.getModel())
+          } finally {
+            graph.getModel().endUpdate()
+          }
+
+          await this.fetchIntervalData()
+
+          if (this.props.autoRefresh) {
+            this.intervalID = window.setInterval(
+              () => this.fetchIntervalData(),
+              this.props.autoRefresh
+            )
+          }
+
+          GlobalAutoRefresher.poll(this.props.autoRefresh)
+
+          const hostList = _.keys(this.state.hostsObject)
+
+          this.setCellsWarning(hostList)
+
+          this.setState({
+            topologyStatus: RemoteDataState.Done,
+          })
+        } else {
+          this.setState({
+            topologyStatus: RemoteDataState.Done,
+          })
+        }
+      }
+    )
 
     this.graph.getModel().addListener(mxEvent.CHANGE, this.handleGraphModel)
   }
@@ -394,16 +400,24 @@ class InventoryTopology extends PureComponent<Props, State> {
     })
   }
 
+  private getAllCells = (parent: mxCellType, descendants: boolean) => {
+    const cells = descendants
+      ? this.graph.getModel().filterDescendants(
+          mxUtils.bind(this, function (cell) {
+            return cell != parent && this.graph.view.getState(cell) != null
+          }),
+          parent
+        )
+      : this.graph.getModel().getChildren(parent)
+
+    return cells
+  }
+
   private getIpmiStatus = async () => {
     const graph = this.graph
     const parent = graph.getDefaultParent()
-    const currentSelectionCells = graph.getSelectionCells()
 
-    graph.selectAll(parent, true)
-
-    const cells = graph.getSelectionCells()
-
-    graph.removeSelectionCells(cells)
+    const cells = this.getAllCells(parent, true)
 
     let ipmiCells: IpmiCell[] = []
 
@@ -445,8 +459,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     })
 
     this.setIpmiStatus(ipmiCells)
-
-    graph.setSelectionCells(currentSelectionCells)
   }
 
   private setIpmiStatus = async (ipmiCells: IpmiCell[]) => {
@@ -1045,11 +1057,7 @@ class InventoryTopology extends PureComponent<Props, State> {
           const childCell = this.graph.getChildCells(cell)
 
           if (childCell.length > 0) {
-            this.graph.selectAll(cell, true)
-
-            const childCells = this.graph.getSelectionCells()
-
-            this.graph.removeSelectionCells(childCells)
+            const childCells = this.getAllCells(cell, true)
 
             _.forEach(childCells, childCell => {
               if (childCell?.edges) {
@@ -1671,11 +1679,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     const graph = this.graph
     const parent = graph.getDefaultParent()
 
-    graph.selectAll(parent, true)
-
-    const cells = graph.getSelectionCells()
-
-    graph.removeSelectionCells(cells)
+    const cells = this.getAllCells(parent, true)
 
     _.forEach(cells, cell => {
       if (cell.getStyle() === 'node') {
