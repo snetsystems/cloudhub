@@ -1,4 +1,5 @@
 import _ from 'lodash'
+import yaml from 'js-yaml'
 
 import AJAX from 'src/utils/ajax'
 import {createActivityLog} from 'src/shared/apis'
@@ -898,7 +899,9 @@ const saltActivityLog = async (
     createActivityLog(
       'SaltProxy',
       `${_.get(activity, 'message')} result:${JSON.stringify(
-        _.get(result, 'data.return')[0]
+        _.get(result, 'headers.content-type') === 'application/x-yaml'
+          ? _.get(yaml.safeLoad(_.get(result, 'data')), 'return')[0]
+          : _.get(result, 'data.return')[0]
       )}`
     )
   } else {
