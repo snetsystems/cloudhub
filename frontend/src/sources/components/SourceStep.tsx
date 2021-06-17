@@ -264,7 +264,7 @@ class SourceStep extends PureComponent<Props, State> {
     const {setError} = this.props
 
     this.setState({
-      source: {...source, [key]: org.name, name: `${org.name}-${source.name}`},
+      source: {...source, [key]: org.name, name: org.name},
     })
 
     setError(false)
