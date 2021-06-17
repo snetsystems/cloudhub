@@ -3,7 +3,6 @@ import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
 import _ from 'lodash'
 import * as TOML from '@iarna/toml'
-// import {IControlledCodeMirror} from 'react-codemirror2'
 import {EditorChange} from 'codemirror'
 import {AxiosResponse} from 'axios'
 
@@ -329,79 +328,14 @@ export class AgentConfiguration extends PureComponent<Props, State> {
           0,
           hostData.lastIndexOf('\n')
         )
-
         const configObj = TOML.parse(hostLocalFileReadData)
-        const globalTags: any = _.get(configObj, 'global_tags')
-        const inputs: any = _.get(configObj, 'inputs')
-        const outputs: any = _.get(configObj, 'outputs')
         const agent: any = _.get(configObj, 'agent')
 
         let isChanged = false
 
-        if (_.isUndefined(globalTags.dc)) {
-          _.set(globalTags, 'dc', '')
-          isChanged = true
-        }
-
-        if (_.isUndefined(globalTags.user)) {
-          _.set(globalTags, 'user', '')
-          isChanged = true
-        }
-
-        if (_.keys(outputs.influxdb[0]).length === 0) {
-          const values = [
-            {
-              urls: ['http://influxdb_address:port'],
-              database: '',
-              write_consistency: 'any',
-              username: '',
-              password: '',
-            },
-          ]
-
-          _.set(outputs, 'influxdb', values)
-
-          isChanged = true
-        }
-
-        if (_.isUndefined(inputs.procstat)) {
-          const values = [{exe: 'salt'}]
-
-          _.set(inputs, 'procstat', values)
-
-          isChanged = true
-        }
-
-        if (_.isUndefined(inputs.influxdb)) {
-          const values = [
-            {urls: ['http://influxdb_address:port/debug/vars', '']},
-          ]
-
-          _.set(inputs, 'influxdb', values)
-
-          isChanged = true
-        }
-
-        if (_.isUndefined(inputs.kapacitor)) {
-          const values = [
-            {
-              urls: ['http://kapacitor_address:port/debug/vars', ''],
-              timeout: '5s',
-            },
-          ]
-          _.set(inputs, 'kapacitor', values)
-
-          isChanged = true
-        }
-
         if (agent.hostname !== host) {
           notify(notifyAgentConfigHostNameChanged(agent.hostname, host))
           _.set(agent, 'hostname', host)
-          isChanged = true
-        }
-
-        if (_.isEmpty(agent.logfile)) {
-          _.set(agent, 'logfile', '/var/log/telegraf/telegraf.log')
           isChanged = true
         }
 
@@ -1069,7 +1003,6 @@ export class AgentConfiguration extends PureComponent<Props, State> {
     if (_.get(agent, 'hostname') !== focusedHost) {
       _.set(agent, 'hostname', focusedHost)
     }
-    console.log('agent: ', agent)
 
     const checker = _.some(
       _.map(influxdbs, m => m.database === org.name),
