@@ -3,7 +3,6 @@ import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
 import _ from 'lodash'
 import * as TOML from '@iarna/toml'
-import {IInstance} from 'react-codemirror2'
 import {EditorChange} from 'codemirror'
 import {AxiosResponse} from 'axios'
 
@@ -746,7 +745,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
   }
 
   private onBeforeChangeScript = (
-    __: IInstance,
+    __: CodeMirror.Editor,
     ___: EditorChange,
     script: string
   ) => {
@@ -757,7 +756,11 @@ export class AgentConfiguration extends PureComponent<Props, State> {
     })
   }
 
-  private onChangeScript = (_: IInstance, __: EditorChange, ___: string) => {
+  private onChangeScript = (
+    _: CodeMirror.Editor,
+    __: EditorChange,
+    ___: string
+  ) => {
     const {isInitEditor, isGetLocalStorage} = this.state
     if (isInitEditor) {
       if (isGetLocalStorage) {
