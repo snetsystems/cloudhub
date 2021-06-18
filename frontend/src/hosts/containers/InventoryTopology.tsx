@@ -962,24 +962,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     500
   )
 
-  // private saltIpmiGetPowerAsync = _.throttle(async (ipmi: Ipmi) => {
-  //   const decryptedBytes = CryptoJS.AES.decrypt(ipmi.pass, this.secretKey.url)
-  //   const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
-
-  //   ipmi = {
-  //     ...ipmi,
-  //     pass: originalPass,
-  //   }
-
-  //   const getPowerStatus = await this.props.handleGetIpmiStatus(
-  //     this.salt.url,
-  //     this.salt.token,
-  //     ipmi
-  //   )
-
-  //   return getPowerStatus
-  // }, 500)
-
   private saltIpmiGetSensorDataAsync = _.throttle(
     async (
       target: string,
@@ -1011,43 +993,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     },
     500
   )
-
-  // private getParseHTML = (
-  //   targer: string,
-  //   type: DOMParserSupportedType = 'text/html'
-  // ) => {
-  //   const parser = new DOMParser()
-  //   const parseHTML = parser.parseFromString(targer, type)
-
-  //   return parseHTML
-  // }
-
-  // private getContainerElement = (target: string): Element => {
-  //   const doc = this.getParseHTML(target)
-  //   const containerElement = doc.querySelector('.vertex')
-
-  //   return containerElement
-  // }
-
-  // private getContainerTitle = (element: Element) => {
-  //   const title = element.querySelector('.mxgraph-cell--title > strong')
-  //   return title
-  // }
-
-  // private getIsDisableName = (containerElement: Element): boolean => {
-  //   let isDisableName = false
-
-  //   if (containerElement) {
-  //     isDisableName =
-  //       containerElement.getAttribute('data-isdisablename') === 'true'
-  //   }
-
-  //   return isDisableName
-  // }
-
-  // private getIsHasString = (value: string): boolean => {
-  //   return value !== ''
-  // }
 
   private setActionInEditor = () => {
     this.editor.addAction('group', () => {
