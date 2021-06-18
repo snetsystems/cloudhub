@@ -95,7 +95,13 @@ import {Controlled as ReactCodeMirror} from 'react-codemirror2'
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 
 // Topology Configure
-import {configureStylesheet} from 'src/hosts/configurations/topology'
+import {
+  configureStylesheet,
+  convertValueToString,
+  isHtmlLabel,
+  getLabel,
+  dblClick,
+} from 'src/hosts/configurations/topology'
 
 const mx = mxgraph()
 
@@ -749,40 +755,10 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.graph.setConnectable(true)
 
-    this.graph.getLabel = cell => {
-      let tmp = mxGraph.prototype.getLabel.apply(this.graph, [cell])
-
-      const isCellCollapsed = this.graph.isCellCollapsed(cell)
-      if (cell.style !== 'group') {
-        if (isCellCollapsed) {
-          const containerElement = getContainerElement(tmp)
-          const title = getContainerTitle(containerElement)
-
-          tmp = title.outerHTML
-        }
-      }
-
-      return tmp
-    }
-
-    this.graph.isHtmlLabel = (cell: mxCellType) => {
-      return !this.graph.isSwimlane(cell)
-    }
-
-    this.graph.convertValueToString = (cell: mxCellType) => {
-      if (cell) {
-        if (cell.style === 'group' || cell.style === 'edge') {
-          const constainerElement = getContainerElement(cell.value)
-          const label = constainerElement.getAttribute('data-label')
-
-          return label
-        } else {
-          return cell.value
-        }
-      }
-
-      return ''
-    }
+    this.graph.dblClick = dblClick.bind(this)
+    this.graph.getLabel = getLabel.bind(this)
+    this.graph.isHtmlLabel = isHtmlLabel.bind(this)
+    this.graph.convertValueToString = convertValueToString.bind(this)
 
     this.graph
       .getSelectionModel()
@@ -908,10 +884,6 @@ class InventoryTopology extends PureComponent<Props, State> {
           this.graph.setSelectionCell(cell.parent)
         }
       }
-    }
-
-    this.graph.dblClick = evt => {
-      mxEvent.consume(evt)
     }
 
     this.graph.constrainChildren = false

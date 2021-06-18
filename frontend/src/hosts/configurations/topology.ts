@@ -1,4 +1,30 @@
-import {mxGraphExportObject} from 'mxgraph'
+import _ from 'lodash'
+
+import {
+  default as mxgraph,
+  mxEditor as mxEditorType,
+  mxCell as mxCellType,
+  mxCellState as mxCellStateType,
+  mxForm as mxFormType,
+  mxGraph as mxGraphType,
+  mxGraphModel as mxGraphModelType,
+  mxRectangle as mxRectangleType,
+  mxGraphSelectionModel as mxGraphSelectionModeltype,
+  mxEventObject as mxEventObjectType,
+  mxGraphExportObject,
+} from 'mxgraph'
+
+// Utils
+import {
+  getContainerElement,
+  getContainerTitle,
+  getIsDisableName,
+  getIsHasString,
+} from 'src/hosts/utils/topology'
+
+const mx = mxgraph()
+const {mxGraph, mxEvent} = mx
+
 export const configureStylesheet = function (mx: mxGraphExportObject) {
   const {mxConstants, mxPerimeter, mxEdgeStyle} = mx
 
@@ -61,4 +87,46 @@ export const configureStylesheet = function (mx: mxGraphExportObject) {
   style[mxConstants.STYLE_EDGE] = mxEdgeStyle.OrthConnector
   style[mxConstants.STYLE_ENDARROW] = null
   style[mxConstants.STYLE_STARTARROW] = null
+}
+
+export const getLabel = function (cell: mxCellType) {
+  console.log('getLabel: ', this, arguments[0])
+
+  let tmp = mxGraph.prototype.getLabel.apply(this.graph, [cell])
+
+  const isCellCollapsed = this.graph.isCellCollapsed(cell)
+  if (cell.style !== 'group') {
+    if (isCellCollapsed) {
+      const containerElement = getContainerElement(tmp)
+      const title = getContainerTitle(containerElement)
+
+      tmp = title.outerHTML
+    }
+  }
+
+  return tmp
+}
+
+export const isHtmlLabel = function (cell: mxCellType) {
+  return !this.graph.isSwimlane(cell)
+}
+
+export const convertValueToString = function (cell: mxCellType) {
+  console.log('convertValueToString: ', this)
+  if (cell) {
+    if (cell.style === 'group' || cell.style === 'edge') {
+      const constainerElement = getContainerElement(cell.value)
+      const label = constainerElement.getAttribute('data-label')
+
+      return label
+    } else {
+      return cell.value
+    }
+  }
+
+  return ''
+}
+
+export const dblClick = function (evt: Event) {
+  mxEvent.consume(evt)
 }
