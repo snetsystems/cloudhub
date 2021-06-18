@@ -377,6 +377,53 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
   }
 
+  public render() {
+    const options = {
+      tabIndex: 1,
+      readonly: true,
+      indentUnit: 2,
+      smartIndent: true,
+      electricChars: true,
+      completeSingle: false,
+      lineWrapping: true,
+      mode: 'xml',
+      theme: 'xml',
+      autoFocus: true,
+    }
+
+    return (
+      <div id="containerWrapper">
+        {!mxClient.isBrowserSupported() ? (
+          <>this Browser Not Supported</>
+        ) : (
+          <>
+            <Threesizer
+              orientation={HANDLE_VERTICAL}
+              divisions={this.threesizerDivisions}
+              onResize={this.handleResize('screenProportions')}
+            />
+            <XMLExportModal
+              isVisible={this.state.isModalVisible}
+              headingTitle={'XML Export'}
+              onCancel={this.handleClose}
+              message={
+                <FancyScrollbar>
+                  <ReactCodeMirror
+                    autoCursor={true}
+                    value={this.state.topology}
+                    options={options}
+                    onBeforeChange={(): void => {}}
+                    onTouchStart={(): void => {}}
+                  />
+                </FancyScrollbar>
+              }
+            />
+          </>
+        )}
+      </div>
+    )
+  }
+
   private fetchIntervalData = async () => {
     await this.getHostData()
     await this.getIpmiStatus()
@@ -1709,53 +1756,6 @@ class InventoryTopology extends PureComponent<Props, State> {
         },
       },
     ]
-  }
-
-  public render() {
-    const options = {
-      tabIndex: 1,
-      readonly: true,
-      indentUnit: 2,
-      smartIndent: true,
-      electricChars: true,
-      completeSingle: false,
-      lineWrapping: true,
-      mode: 'xml',
-      theme: 'xml',
-      autoFocus: true,
-    }
-
-    return (
-      <div id="containerWrapper">
-        {!mxClient.isBrowserSupported() ? (
-          <>this Browser Not Supported</>
-        ) : (
-          <>
-            <Threesizer
-              orientation={HANDLE_VERTICAL}
-              divisions={this.threesizerDivisions}
-              onResize={this.handleResize('screenProportions')}
-            />
-            <XMLExportModal
-              isVisible={this.state.isModalVisible}
-              headingTitle={'XML Export'}
-              onCancel={this.handleClose}
-              message={
-                <FancyScrollbar>
-                  <ReactCodeMirror
-                    autoCursor={true}
-                    value={this.state.topology}
-                    options={options}
-                    onBeforeChange={(): void => {}}
-                    onTouchStart={(): void => {}}
-                  />
-                </FancyScrollbar>
-              }
-            />
-          </>
-        )}
-      </div>
-    )
   }
 }
 
