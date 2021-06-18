@@ -38,6 +38,12 @@ import {
   Menu,
 } from 'src/hosts/constants/tools'
 
+import {
+  OUTPUT_INPUT_FIELD,
+  CELL_SIZE_WIDTH,
+  CELL_SIZE_HEIGHT,
+} from 'src/hosts/constants/topology'
+
 // Types
 import {
   Source,
@@ -72,6 +78,12 @@ import {getEnv} from 'src/shared/apis/env'
 // Utils
 import {generateForHosts} from 'src/utils/tempVars'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+import {
+  getContainerElement,
+  getContainerTitle,
+  getIsDisableName,
+  getIsHasString,
+} from 'src/hosts/utils/topology'
 
 // error
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -231,26 +243,28 @@ class InventoryTopology extends PureComponent<Props, State> {
   private editor: mxEditorType = null
   private graph: mxGraphType = null
 
-  private OUTPUT_INPUT_FIELD = [
-    'data-label',
-    'data-link',
-    // 'data-name',
-    'data-using_minion',
-    'data-ipmi_host',
-    'data-ipmi_user',
-    'data-ipmi_pass',
-  ]
+  // private OUTPUT_INPUT_FIELD = [
+  //   'data-label',
+  //   'data-link',
+  //   // 'data-name',
+  //   'data-using_minion',
+  //   'data-ipmi_host',
+  //   'data-ipmi_user',
+  //   'data-ipmi_pass',
+  // ]
 
-  private CELL_SIZE_WIDTH = 90
-  private CELL_SIZE_HEIGHT = 90
+  // private CELL_SIZE_WIDTH = 90
+  // private CELL_SIZE_HEIGHT = 90
 
-  private secretKey = this.props.links.addons.find(
-    addon => addon.name === 'ipmi-secret-key'
+  private secretKey = _.find(
+    this.props.links.addons,
+    addon => addon.name === AddonType.ipmiSecretKey
   )
 
-  private salt = this.props.links.addons.find(addon => {
-    return addon.name === AddonType.salt
-  })
+  private salt = _.find(
+    this.props.links.addons,
+    addon => addon.name === AddonType.salt
+  )
 
   public async componentDidMount() {
     this.createEditor()
@@ -423,7 +437,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     _.forEach(cells, cell => {
       if (cell.getStyle() === 'node') {
-        const containerElement = this.getContainerElement(cell.value)
+        const containerElement = getContainerElement(cell.value)
 
         if (containerElement.hasAttribute('data-ipmi_host')) {
           const ipmiTarget = containerElement.getAttribute('data-using_minion')
@@ -473,9 +487,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     try {
       _.forEach(ipmiCellsStatus, ipmiCellStatus => {
         const childrenCell = ipmiCellStatus.cell.getChildAt(0)
-        const childrenContainerElement = this.getContainerElement(
-          childrenCell.value
-        )
+        const childrenContainerElement = getContainerElement(childrenCell.value)
 
         if (!_.isEmpty(ipmiCellStatus.powerStatus)) {
           if (ipmiCellStatus.powerStatus === 'on') {
@@ -704,8 +716,8 @@ class InventoryTopology extends PureComponent<Props, State> {
       const isCellCollapsed = this.graph.isCellCollapsed(cell)
       if (cell.style !== 'group') {
         if (isCellCollapsed) {
-          const containerElement = this.getContainerElement(tmp)
-          const title = this.getContainerTitle(containerElement)
+          const containerElement = getContainerElement(tmp)
+          const title = getContainerTitle(containerElement)
 
           tmp = title.outerHTML
         }
@@ -721,7 +733,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.graph.convertValueToString = (cell: mxCellType) => {
       if (cell) {
         if (cell.style === 'group' || cell.style === 'edge') {
-          const constainerElement = this.getContainerElement(cell.value)
+          const constainerElement = getContainerElement(cell.value)
           const label = constainerElement.getAttribute('data-label')
 
           return label
@@ -755,7 +767,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       document.querySelector('#statusContainerRef').innerHTML = null
 
       if (!_.isEmpty(cell) && cell.style === 'node') {
-        const containerElement = this.getContainerElement(cell.value)
+        const containerElement = getContainerElement(cell.value)
 
         if (containerElement.hasAttribute('data-ipmi_host')) {
           const target = containerElement.getAttribute('data-using_minion')
@@ -783,7 +795,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
       // @ts-ignore
       if (cellValue !== null && mxEvent.isLeftMouseButton(evt)) {
-        const containerElement = this.getContainerElement(
+        const containerElement = getContainerElement(
           this.graph.getModel().getValue(cell)
         )
 
@@ -792,7 +804,7 @@ class InventoryTopology extends PureComponent<Props, State> {
             'ipmi-power-status'
           )
 
-          const parentContainerElement = this.getContainerElement(
+          const parentContainerElement = getContainerElement(
             cell.getParent().value
           )
 
@@ -871,7 +883,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       recurse?: boolean
     ) => {
       if (cell.getStyle() === 'node') {
-        const containerElement = this.getContainerElement(cell.value)
+        const containerElement = getContainerElement(cell.value)
         const title = containerElement.querySelector('.mxgraph-cell--title')
         title.setAttribute('style', `width: ${bounds.width}px;`)
 
@@ -905,10 +917,10 @@ class InventoryTopology extends PureComponent<Props, State> {
     if (cell) {
       const form = new mxForm('properties-table')
 
-      const containerElement = this.getContainerElement(cell.value)
+      const containerElement = getContainerElement(cell.value)
       const attrs = _.filter(containerElement.attributes, attr => {
         let isSame = false
-        _.forEach(this.OUTPUT_INPUT_FIELD, INPUT_FIELD => {
+        _.forEach(OUTPUT_INPUT_FIELD, INPUT_FIELD => {
           if (attr.nodeName === INPUT_FIELD) {
             isSame = true
             return
@@ -917,7 +929,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         return isSame
       })
 
-      const isDisableName = this.getIsDisableName(containerElement)
+      const isDisableName = getIsDisableName(containerElement)
 
       _.forEach(attrs, attr => {
         this.createTextField(graph, form, cell, attr, isDisableName)
@@ -1008,42 +1020,42 @@ class InventoryTopology extends PureComponent<Props, State> {
     500
   )
 
-  private getParseHTML = (
-    targer: string,
-    type: DOMParserSupportedType = 'text/html'
-  ) => {
-    const parser = new DOMParser()
-    const parseHTML = parser.parseFromString(targer, type)
+  // private getParseHTML = (
+  //   targer: string,
+  //   type: DOMParserSupportedType = 'text/html'
+  // ) => {
+  //   const parser = new DOMParser()
+  //   const parseHTML = parser.parseFromString(targer, type)
 
-    return parseHTML
-  }
+  //   return parseHTML
+  // }
 
-  private getContainerElement = (target: string): Element => {
-    const doc = this.getParseHTML(target)
-    const containerElement = doc.querySelector('.vertex')
+  // private getContainerElement = (target: string): Element => {
+  //   const doc = this.getParseHTML(target)
+  //   const containerElement = doc.querySelector('.vertex')
 
-    return containerElement
-  }
+  //   return containerElement
+  // }
 
-  private getContainerTitle = (element: Element) => {
-    const title = element.querySelector('.mxgraph-cell--title > strong')
-    return title
-  }
+  // private getContainerTitle = (element: Element) => {
+  //   const title = element.querySelector('.mxgraph-cell--title > strong')
+  //   return title
+  // }
 
-  private getIsDisableName = (containerElement: Element): boolean => {
-    let isDisableName = false
+  // private getIsDisableName = (containerElement: Element): boolean => {
+  //   let isDisableName = false
 
-    if (containerElement) {
-      isDisableName =
-        containerElement.getAttribute('data-isdisablename') === 'true'
-    }
+  //   if (containerElement) {
+  //     isDisableName =
+  //       containerElement.getAttribute('data-isdisablename') === 'true'
+  //   }
 
-    return isDisableName
-  }
+  //   return isDisableName
+  // }
 
-  private getIsHasString = (value: string): boolean => {
-    return value !== ''
-  }
+  // private getIsHasString = (value: string): boolean => {
+  //   return value !== ''
+  // }
 
   private setActionInEditor = () => {
     this.editor.addAction('group', () => {
@@ -1330,9 +1342,8 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     const dragElt = document.createElement('div')
     dragElt.style.border = 'dashed #f58220 1px'
-    dragElt.style.width = `${this.CELL_SIZE_WIDTH}px`
-    dragElt.style.height = `${this.CELL_SIZE_HEIGHT}px`
-
+    dragElt.style.width = `${CELL_SIZE_WIDTH}px`
+    dragElt.style.height = `${CELL_SIZE_HEIGHT}px`
     const ds = mxUtils.makeDraggable(
       element,
       this.graph,
@@ -1353,7 +1364,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     const cellTitleBox = document.createElement('div')
     cellTitleBox.classList.add('mxgraph-cell--title')
-    cellTitleBox.setAttribute('style', `width: ${this.CELL_SIZE_WIDTH}px;`)
+    cellTitleBox.setAttribute('style', `width: ${CELL_SIZE_WIDTH}px;`)
 
     const cellTitle = document.createElement('strong')
     cellTitle.textContent = node.label
@@ -1402,8 +1413,8 @@ class InventoryTopology extends PureComponent<Props, State> {
         cell.outerHTML,
         x,
         y,
-        this.CELL_SIZE_WIDTH,
-        this.CELL_SIZE_HEIGHT,
+        CELL_SIZE_WIDTH,
+        CELL_SIZE_HEIGHT,
         'node'
       )
 
@@ -1589,7 +1600,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
 
     const applyHandler = () => {
-      const containerElement = this.getContainerElement(cell.value)
+      const containerElement = getContainerElement(cell.value)
 
       let newValue = input.value || ''
       let isInputPassword = false
@@ -1600,7 +1611,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
         try {
           if (attribute.nodeName === 'data-label') {
-            const title = this.getContainerTitle(containerElement)
+            const title = getContainerTitle(containerElement)
             title.textContent = newValue
           }
 
@@ -1608,7 +1619,7 @@ class InventoryTopology extends PureComponent<Props, State> {
             if (cell.children) {
               const childrenCell = cell.getChildAt(1)
               if (childrenCell.style === 'href') {
-                const childrenContainerElement = this.getContainerElement(
+                const childrenContainerElement = getContainerElement(
                   childrenCell.value
                 )
 
@@ -1616,7 +1627,7 @@ class InventoryTopology extends PureComponent<Props, State> {
                 childrenLink.setAttribute('href', newValue)
 
                 childrenCell.setValue(childrenContainerElement.outerHTML)
-                childrenCell.setVisible(this.getIsHasString(newValue))
+                childrenCell.setVisible(getIsHasString(newValue))
               }
             }
           }
@@ -1630,7 +1641,7 @@ class InventoryTopology extends PureComponent<Props, State> {
                   cell.getChildAt(0),
                 ])
 
-                childrenCell.setVisible(this.getIsHasString(newValue))
+                childrenCell.setVisible(getIsHasString(newValue))
               }
             }
           }
@@ -1683,8 +1694,8 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     _.forEach(cells, cell => {
       if (cell.getStyle() === 'node') {
-        const containerElement = this.getContainerElement(cell.value)
-        const isDisableName = this.getIsDisableName(containerElement)
+        const containerElement = getContainerElement(cell.value)
+        const isDisableName = getIsDisableName(containerElement)
         const name = containerElement.getAttribute('data-name')
 
         if (isDisableName) {
