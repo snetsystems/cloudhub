@@ -466,19 +466,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     })
   }
 
-  // private getAllCells = (parent: mxCellType, descendants: boolean) => {
-  //   const cells = descendants
-  //     ? this.graph.getModel().filterDescendants(
-  //         mxUtils.bind(this, function (cell) {
-  //           return cell != parent && this.graph.view.getState(cell) != null
-  //         }),
-  //         parent
-  //       )
-  //     : this.graph.getModel().getChildren(parent)
-
-  //   return cells
-  // }
-
   private getIpmiStatus = async () => {
     const graph = this.graph
     const parent = graph.getDefaultParent()
@@ -730,10 +717,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.graph.setDropEnabled(false)
 
     this.graph.connectionHandler.getConnectImage = getConnectImage
-    // (state: mxCellStateType) => {
-    //   return new mxImage(state.style[mxConstants.STYLE_IMAGE], 16, 16)
-    // }
-
     this.graph.connectionHandler.targetConnectImage = true
 
     this.graph.setAllowDanglingEdges(false)
@@ -758,9 +741,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
 
     this.graph.isCellSelectable = isCellSelectable.bind(this)
-    // (cell: mxCellType) => {
-    //   return !this.graph.isCellLocked(cell)
-    // }
 
     this.graph.setConnectable(true)
 
@@ -927,34 +907,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     properties.innerHTML = ''
     graph.container.focus()
     createForm.bind(this)(graph, properties)
-
-    // const cell = graph.getSelectionCell()
-
-    // if (cell) {
-
-    // const form = new mxForm('properties-table')
-
-    // const containerElement = getContainerElement(cell.value)
-    // const attrs = _.filter(containerElement.attributes, attr => {
-    //   let isSame = false
-    //   _.forEach(OUTPUT_INPUT_FIELD, INPUT_FIELD => {
-    //     if (attr.nodeName === INPUT_FIELD) {
-    //       isSame = true
-    //       return
-    //     }
-    //   })
-    //   return isSame
-    // })
-
-    // const isDisableName = getIsDisableName(containerElement)
-
-    // _.forEach(attrs, attr => {
-    //   this.createTextField(graph, form, cell, attr, isDisableName)
-    // })
-    // properties.appendChild(form.getTable())
-    // } else {
-    //   mxUtils.writeln(properties, 'Nothing selected.')
-    // }
   }
 
   private saltIpmiSetPowerAsync = _.throttle(
@@ -1158,12 +1110,6 @@ class InventoryTopology extends PureComponent<Props, State> {
       this.setState({topology: xmlString, isModalVisible: true})
     })
   }
-
-  // () => {
-  //   const outln = new mxOutline(this.graph, this.outline)
-  //   outln.outline.labelsVisible = true
-  //   outln.outline.setHtmlLabels(true)
-  // }
 
   private setSidebar = () => {
     this.addHostsButton()
