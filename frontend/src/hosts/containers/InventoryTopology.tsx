@@ -1615,8 +1615,6 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     // @ts-ignore
     const xmlString = mxUtils.getPrettyXml(cells)
-    console.log('this.xmlExport:', xmlString)
-    console.log('this.xmlExport:', this)
     return xmlString
   }
 

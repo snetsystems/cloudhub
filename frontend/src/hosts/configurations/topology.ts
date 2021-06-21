@@ -116,8 +116,6 @@ export const configureStylesheet = function (mx: mxGraphExportObject) {
 }
 
 export const getLabel = function (cell: mxCellType) {
-  console.log('getLabel: ', this, arguments[0])
-
   let tmp = mxGraph.prototype.getLabel.apply(this.graph, [cell])
 
   const isCellCollapsed = this.graph.isCellCollapsed(cell)
@@ -138,7 +136,6 @@ export const isHtmlLabel = function (cell: mxCellType) {
 }
 
 export const convertValueToString = function (cell: mxCellType) {
-  console.log('convertValueToString: ', this)
   if (cell) {
     if (cell.style === 'group' || cell.style === 'edge') {
       const constainerElement = getContainerElement(cell.value)
