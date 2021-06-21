@@ -145,3 +145,16 @@ export const setOutline = function () {
   outln.outline.labelsVisible = true
   outln.outline.setHtmlLabels(true)
 }
+
+export const getAllCells = function (parent: mxCellType, descendants: boolean) {
+  const cells = descendants
+    ? this.graph.getModel().filterDescendants(
+        mxUtils.bind(this, function (cell) {
+          return cell != parent && this.graph.view.getState(cell) != null
+        }),
+        parent
+      )
+    : this.graph.getModel().getChildren(parent)
+
+  return cells
+}

@@ -102,6 +102,7 @@ import {
   getLabel,
   dblClick,
   setOutline,
+  getAllCells,
 } from 'src/hosts/configurations/topology'
 
 const mx = mxgraph()
@@ -265,6 +266,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   private configureStylesheet = configureStylesheet
   private setOutline = setOutline
+  private getAllCells = getAllCells
 
   public async componentDidMount() {
     this.createEditor()
@@ -461,18 +463,18 @@ class InventoryTopology extends PureComponent<Props, State> {
     })
   }
 
-  private getAllCells = (parent: mxCellType, descendants: boolean) => {
-    const cells = descendants
-      ? this.graph.getModel().filterDescendants(
-          mxUtils.bind(this, function (cell) {
-            return cell != parent && this.graph.view.getState(cell) != null
-          }),
-          parent
-        )
-      : this.graph.getModel().getChildren(parent)
+  // private getAllCells = (parent: mxCellType, descendants: boolean) => {
+  //   const cells = descendants
+  //     ? this.graph.getModel().filterDescendants(
+  //         mxUtils.bind(this, function (cell) {
+  //           return cell != parent && this.graph.view.getState(cell) != null
+  //         }),
+  //         parent
+  //       )
+  //     : this.graph.getModel().getChildren(parent)
 
-    return cells
-  }
+  //   return cells
+  // }
 
   private getIpmiStatus = async () => {
     const graph = this.graph
