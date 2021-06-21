@@ -1,4 +1,5 @@
 import React, {createRef, PureComponent} from 'react'
+import {Controlled as ReactCodeMirror} from 'react-codemirror2'
 import {connect} from 'react-redux'
 import _ from 'lodash'
 import {getDeep} from 'src/utils/wrappers'
@@ -10,7 +11,6 @@ import {
   mxCell as mxCellType,
   mxGraph as mxGraphType,
   mxGraphModel as mxGraphModelType,
-  mxRectangle as mxRectangleType,
   mxGraphSelectionModel as mxGraphSelectionModeltype,
   mxEventObject as mxEventObjectType,
 } from 'mxgraph'
@@ -29,6 +29,7 @@ import {
   HANDLE_VERTICAL,
 } from 'src/shared/constants/'
 import {tmpMenu} from 'src/hosts/constants/tools'
+import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 
 // Types
 import {
@@ -58,7 +59,6 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 // APIs
 import {getCpuAndLoadForHosts} from 'src/hosts/apis'
-
 import {getEnv} from 'src/shared/apis/env'
 
 // Utils
@@ -71,9 +71,6 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 
 // css
 import 'mxgraph/javascript/src/css/common.css'
-
-import {Controlled as ReactCodeMirror} from 'react-codemirror2'
-import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 
 // Topology Configure
 import {
@@ -98,6 +95,8 @@ import {
   createEdgeState,
   onConnectMxGraph,
   factoryMethod,
+  ipmiPowerIndicator,
+  filteredIpmiPowerStatus,
 } from 'src/hosts/configurations/topology'
 
 const mx = mxgraph()
@@ -314,15 +313,11 @@ class InventoryTopology extends PureComponent<Props, State> {
           const hostList = _.keys(this.state.hostsObject)
 
           this.setCellsWarning(hostList)
-
-          this.setState({
-            topologyStatus: RemoteDataState.Done,
-          })
-        } else {
-          this.setState({
-            topologyStatus: RemoteDataState.Done,
-          })
         }
+
+        this.setState({
+          topologyStatus: RemoteDataState.Done,
+        })
       }
     )
 
@@ -466,47 +461,8 @@ class InventoryTopology extends PureComponent<Props, State> {
   private getIpmiStatus = async () => {
     const graph = this.graph
     const parent = graph.getDefaultParent()
-
     const cells = this.getAllCells(parent, true)
-
-    let ipmiCells: IpmiCell[] = []
-
-    _.forEach(cells, cell => {
-      if (cell.getStyle() === 'node') {
-        const containerElement = getContainerElement(cell.value)
-
-        if (containerElement.hasAttribute('data-ipmi_host')) {
-          const ipmiTarget = containerElement.getAttribute('data-using_minion')
-          const ipmiHost = containerElement.getAttribute('data-ipmi_host')
-          const ipmiUser = containerElement.getAttribute('data-ipmi_user')
-          const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
-
-          if (
-            !_.isEmpty(ipmiTarget) &&
-            !_.isEmpty(ipmiHost) &&
-            !_.isEmpty(ipmiUser) &&
-            !_.isEmpty(ipmiPass)
-          ) {
-            const decryptedBytes = CryptoJS.AES.decrypt(
-              ipmiPass,
-              this.secretKey.url
-            )
-            const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
-
-            const ipmiCell: IpmiCell = {
-              target: ipmiTarget,
-              host: ipmiHost,
-              user: ipmiUser,
-              pass: originalPass,
-              powerStatus: '',
-              cell: cell,
-            }
-
-            ipmiCells = [...ipmiCells, ipmiCell]
-          }
-        }
-      }
-    })
+    let ipmiCells: IpmiCell[] = filteredIpmiPowerStatus.bind(this)(cells)
 
     this.setIpmiStatus(ipmiCells)
   }
@@ -518,46 +474,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       ipmiCells
     )
 
-    const model = this.graph.getModel()
-    model.beginUpdate()
-    try {
-      _.forEach(ipmiCellsStatus, ipmiCellStatus => {
-        const childrenCell = ipmiCellStatus.cell.getChildAt(0)
-        const childrenContainerElement = getContainerElement(childrenCell.value)
-
-        if (!_.isEmpty(ipmiCellStatus.powerStatus)) {
-          if (ipmiCellStatus.powerStatus === 'on') {
-            this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#f58220', [
-              childrenCell,
-            ])
-
-            childrenContainerElement.setAttribute('ipmi-power-status', 'on')
-            childrenCell.setValue(childrenContainerElement.outerHTML)
-          } else if (ipmiCellStatus.powerStatus === 'off') {
-            this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#f58220', [
-              childrenCell,
-            ])
-
-            childrenContainerElement.setAttribute('ipmi-power-status', 'off')
-            childrenCell.setValue(childrenContainerElement.outerHTML)
-          }
-        } else {
-          childrenContainerElement.setAttribute(
-            'ipmi-power-status',
-            'unconnected'
-          )
-
-          this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#bec2cc', [
-            childrenCell,
-          ])
-
-          childrenCell.setValue(childrenContainerElement.outerHTML)
-        }
-      })
-    } finally {
-      model.endUpdate()
-      this.graphUpdate()
-    }
+    ipmiPowerIndicator.bind(this)(ipmiCellsStatus)
   }
 
   private getIpmiTargetList = async () => {
@@ -875,6 +792,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     })
   }
 
+  // @ts-ignore
   private graphUpdate = () => {
     this.graph.getModel().beginUpdate()
     try {
@@ -908,7 +826,6 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private xmlExport = (sender: mxGraphModelType) => {
-    // xmlExport(sender)
     const enc = new mxCodec(mxUtils.createXmlDocument())
     const cells = enc.encode(sender)
 

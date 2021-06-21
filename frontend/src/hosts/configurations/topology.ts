@@ -9,23 +9,13 @@ import {
   mxGraph as mxGraphType,
   mxGraphModel as mxGraphModelType,
   mxRectangle as mxRectangleType,
-  mxGraphSelectionModel as mxGraphSelectionModeltype,
   mxConnectionHandler as mxConnectionHandlerType,
   mxEventObject as mxEventObjectType,
   mxGraphExportObject,
 } from 'mxgraph'
 
 // Types
-import {
-  Source,
-  Links,
-  Host,
-  RemoteDataState,
-  Notification,
-  NotificationFunc,
-  Ipmi,
-  IpmiCell,
-} from 'src/types'
+import {Host, IpmiCell} from 'src/types'
 
 // Utils
 import {
@@ -57,12 +47,9 @@ const {
   mxClient,
   mxGraph,
   mxEvent,
-  mxCodec,
   mxUtils,
   mxOutline,
   mxConstants,
-  mxPerimeter,
-  mxEdgeStyle,
   mxImage,
   mxForm,
   mxPoint,
@@ -895,3 +882,90 @@ export const factoryMethod = (
       }
     }
   }
+
+export const filteredIpmiPowerStatus = function (cells: mxCellType[]) {
+  let ipmiCells: IpmiCell[] = []
+
+  _.forEach(cells, cell => {
+    if (cell.getStyle() === 'node') {
+      const containerElement = getContainerElement(cell.value)
+
+      if (containerElement.hasAttribute('data-ipmi_host')) {
+        const ipmiTarget = containerElement.getAttribute('data-using_minion')
+        const ipmiHost = containerElement.getAttribute('data-ipmi_host')
+        const ipmiUser = containerElement.getAttribute('data-ipmi_user')
+        const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
+
+        if (
+          !_.isEmpty(ipmiTarget) &&
+          !_.isEmpty(ipmiHost) &&
+          !_.isEmpty(ipmiUser) &&
+          !_.isEmpty(ipmiPass)
+        ) {
+          const decryptedBytes = CryptoJS.AES.decrypt(
+            ipmiPass,
+            this.secretKey.url
+          )
+          const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
+
+          const ipmiCell: IpmiCell = {
+            target: ipmiTarget,
+            host: ipmiHost,
+            user: ipmiUser,
+            pass: originalPass,
+            powerStatus: '',
+            cell: cell,
+          }
+
+          ipmiCells = [...ipmiCells, ipmiCell]
+        }
+      }
+    }
+  })
+
+  return ipmiCells
+}
+
+export const ipmiPowerIndicator = function (ipmiCellsStatus: IpmiCell[]) {
+  const model = this.graph.getModel()
+
+  model.beginUpdate()
+  try {
+    _.forEach(ipmiCellsStatus, ipmiCellStatus => {
+      const childrenCell = ipmiCellStatus.cell.getChildAt(0)
+      const childrenContainerElement = getContainerElement(childrenCell.value)
+
+      if (!_.isEmpty(ipmiCellStatus.powerStatus)) {
+        if (ipmiCellStatus.powerStatus === 'on') {
+          this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#f58220', [
+            childrenCell,
+          ])
+
+          childrenContainerElement.setAttribute('ipmi-power-status', 'on')
+          childrenCell.setValue(childrenContainerElement.outerHTML)
+        } else if (ipmiCellStatus.powerStatus === 'off') {
+          this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#f58220', [
+            childrenCell,
+          ])
+
+          childrenContainerElement.setAttribute('ipmi-power-status', 'off')
+          childrenCell.setValue(childrenContainerElement.outerHTML)
+        }
+      } else {
+        childrenContainerElement.setAttribute(
+          'ipmi-power-status',
+          'unconnected'
+        )
+
+        this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#bec2cc', [
+          childrenCell,
+        ])
+
+        childrenCell.setValue(childrenContainerElement.outerHTML)
+      }
+    })
+  } finally {
+    model.endUpdate()
+    this.graphUpdate()
+  }
+}
