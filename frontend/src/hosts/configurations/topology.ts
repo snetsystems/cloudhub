@@ -22,6 +22,15 @@ import {
   getIsHasString,
 } from 'src/hosts/utils/topology'
 
+// Constants
+import {
+  toolbarMenu,
+  toolsMenu,
+  tmpMenu,
+  hostMenu,
+  Menu,
+} from 'src/hosts/constants/tools'
+
 const mx = mxgraph()
 const {
   mxGraph,
@@ -162,4 +171,8 @@ export const getAllCells = function (parent: mxCellType, descendants: boolean) {
 
 export const getConnectImage = function (state: mxCellStateType) {
   return new mxImage(state.style[mxConstants.STYLE_IMAGE], 16, 16)
+}
+
+export const isCellSelectable = function (cell: mxCellType) {
+  return !this.graph.isCellLocked(cell)
 }

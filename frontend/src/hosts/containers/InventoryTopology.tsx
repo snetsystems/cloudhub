@@ -104,6 +104,7 @@ import {
   setOutline,
   getAllCells,
   getConnectImage,
+  isCellSelectable,
 } from 'src/hosts/configurations/topology'
 
 const mx = mxgraph()
@@ -755,9 +756,10 @@ class InventoryTopology extends PureComponent<Props, State> {
       return group
     }
 
-    this.graph.isCellSelectable = (cell: mxCellType) => {
-      return !this.graph.isCellLocked(cell)
-    }
+    this.graph.isCellSelectable = isCellSelectable.bind(this)
+    // (cell: mxCellType) => {
+    //   return !this.graph.isCellLocked(cell)
+    // }
 
     this.graph.setConnectable(true)
 
