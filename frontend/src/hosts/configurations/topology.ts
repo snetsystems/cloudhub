@@ -368,3 +368,53 @@ export const createHTMLValue = function (node: Menu, style: string) {
 
   return cell
 }
+
+export const openSensorData = function (data: Promise<any>) {
+  if (!data) return
+  const statusWindow = document.createElement('div')
+  const statusTable = document.createElement('table')
+  const rootItem = _.keys(data)
+
+  _.forEach(rootItem, key => {
+    const current: any = data[key]
+    _.forEach(_.keys(current), c => {
+      const statusTableRow = document.createElement('tr')
+      let statusTableValue = document.createElement('td')
+
+      const kindStatus = current[c]
+      const isUnavailable = kindStatus?.unavailable === 1
+
+      if (!isUnavailable) {
+        const statusTableKind = document.createElement('th')
+        statusTableKind.textContent = c
+
+        const {value, units, states} = kindStatus
+
+        let kindValue = ''
+
+        if (_.isNumber(value) || _.isString(value)) {
+          kindValue += value
+          if (units) {
+            kindValue += ' ' + units
+          }
+        } else {
+          if (_.isEmpty(states)) {
+            kindValue += '-'
+          } else {
+            kindValue += states[0]
+          }
+        }
+
+        statusTableValue.textContent = kindValue
+        statusTableRow.appendChild(statusTableKind)
+        statusTableRow.appendChild(statusTableValue)
+        statusTable.appendChild(statusTableRow)
+      }
+    })
+  })
+
+  statusWindow.appendChild(statusTable)
+
+  this.statusRef.current.appendChild(statusWindow)
+  document.querySelector('#statusContainer').classList.add('active')
+}
