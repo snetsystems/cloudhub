@@ -106,6 +106,7 @@ import {
   getConnectImage,
   isCellSelectable,
   createForm,
+  createHTMLValue,
 } from 'src/hosts/configurations/topology'
 
 const mx = mxgraph()
@@ -652,7 +653,7 @@ class InventoryTopology extends PureComponent<Props, State> {
             type: 'Edge',
           }
 
-          const edge = this.createHTMLValue(edgeObj, 'edge')
+          const edge = createHTMLValue(edgeObj, 'edge')
 
           cell.setValue(edge.outerHTML)
           cell.setStyle('edge')
@@ -725,7 +726,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         type: 'Group',
       }
 
-      const groupCell = this.createHTMLValue(groupObj, 'group')
+      const groupCell = createHTMLValue(groupObj, 'group')
       group.setValue(groupCell.outerHTML)
       group.setVertex(true)
       group.setConnectable(true)
@@ -1199,40 +1200,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     ds.setGuidesEnabled(true)
   }
 
-  private createHTMLValue = (node: Menu, style: string) => {
-    const cell = document.createElement('div')
-    cell.classList.add('vertex')
-
-    const cellTitleBox = document.createElement('div')
-    cellTitleBox.classList.add('mxgraph-cell--title')
-    cellTitleBox.setAttribute('style', `width: ${CELL_SIZE_WIDTH}px;`)
-
-    const cellTitle = document.createElement('strong')
-    cellTitle.textContent = node.label
-
-    cellTitleBox.appendChild(cellTitle)
-
-    _.forEach(_.keys(node), attr => {
-      cell.setAttribute(`data-${attr}`, node[attr])
-    })
-
-    cell.appendChild(cellTitleBox)
-
-    if (style === 'node') {
-      const cellIconBox = document.createElement('div')
-      const cellIcon = document.createElement('div')
-
-      cellIcon.classList.add('mxgraph-cell--icon')
-      cellIcon.classList.add('mxgraph-cell--icon-box')
-      cellIcon.classList.add(`mxgraph-cell--icon-${_.toLower(node.type)}`)
-      cellIconBox.appendChild(cellIcon)
-
-      cell.appendChild(cellIconBox)
-    }
-
-    return cell
-  }
-
   private dragCell = (node: Menu) => (
     graph: mxGraphType,
     _event: any,
@@ -1246,7 +1213,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     model.beginUpdate()
     try {
-      const cell = this.createHTMLValue(node, 'node')
+      const cell = createHTMLValue(node, 'node')
 
       v1 = graph.insertVertex(
         parent,

@@ -334,3 +334,37 @@ export const createTextField = function (
     mxEvent.addListener(input, 'blur', applyHandler)
   }
 }
+
+export const createHTMLValue = function (node: Menu, style: string) {
+  const cell = document.createElement('div')
+  cell.classList.add('vertex')
+
+  const cellTitleBox = document.createElement('div')
+  cellTitleBox.classList.add('mxgraph-cell--title')
+  cellTitleBox.setAttribute('style', `width: ${CELL_SIZE_WIDTH}px;`)
+
+  const cellTitle = document.createElement('strong')
+  cellTitle.textContent = node.label
+
+  cellTitleBox.appendChild(cellTitle)
+
+  _.forEach(_.keys(node), attr => {
+    cell.setAttribute(`data-${attr}`, node[attr])
+  })
+
+  cell.appendChild(cellTitleBox)
+
+  if (style === 'node') {
+    const cellIconBox = document.createElement('div')
+    const cellIcon = document.createElement('div')
+
+    cellIcon.classList.add('mxgraph-cell--icon')
+    cellIcon.classList.add('mxgraph-cell--icon-box')
+    cellIcon.classList.add(`mxgraph-cell--icon-${_.toLower(node.type)}`)
+    cellIconBox.appendChild(cellIcon)
+
+    cell.appendChild(cellIconBox)
+  }
+
+  return cell
+}
