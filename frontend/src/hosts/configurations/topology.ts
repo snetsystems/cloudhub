@@ -50,6 +50,7 @@ const {
   mxEdgeStyle,
   mxImage,
   mxForm,
+  mxPoint,
 } = mx
 
 export const configureStylesheet = function (mx: mxGraphExportObject) {
@@ -417,4 +418,105 @@ export const openSensorData = function (data: Promise<any>) {
 
   this.statusRef.current.appendChild(statusWindow)
   document.querySelector('#statusContainer').classList.add('active')
+}
+
+export const dragCell = (node: Menu) => (
+  graph: mxGraphType,
+  _event: any,
+  _cell: mxCellType,
+  x: number,
+  y: number
+) => {
+  const parent = graph.getDefaultParent()
+  const model = graph.getModel()
+  let v1 = null
+
+  model.beginUpdate()
+  try {
+    const cell = createHTMLValue(node, 'node')
+
+    v1 = graph.insertVertex(
+      parent,
+      null,
+      cell.outerHTML,
+      x,
+      y,
+      CELL_SIZE_WIDTH,
+      CELL_SIZE_HEIGHT,
+      'node'
+    )
+
+    v1.setConnectable(true)
+
+    const ipmiBox = document.createElement('div')
+    ipmiBox.classList.add('vertex')
+    ipmiBox.setAttribute('btn-type', 'ipmi')
+
+    const ipmiIcon = document.createElement('span')
+    ipmiIcon.classList.add('mxgraph-cell--ipmi-btn')
+    ipmiIcon.classList.add('icon')
+    ipmiIcon.classList.add('switch')
+
+    ipmiBox.appendChild(ipmiIcon)
+    ipmiBox.appendChild(ipmiIcon)
+    ipmiBox.setAttribute('btn-type', 'ipmi')
+    ipmiBox.setAttribute('ipmi-power-status', 'disconnected')
+
+    const ipmiStatus = graph.insertVertex(
+      v1,
+      null,
+      ipmiBox.outerHTML,
+      0,
+      0,
+      24,
+      24,
+      `ipmi`,
+      true
+    )
+
+    ipmiStatus.geometry.offset = new mxPoint(-12, -12)
+    ipmiStatus.setConnectable(false)
+    ipmiStatus.setVisible(false)
+
+    const linkBox = document.createElement('div')
+    linkBox.classList.add('vertex')
+    linkBox.style.display = 'flex'
+    linkBox.style.alignItems = 'center'
+    linkBox.style.justifyContent = 'center'
+    linkBox.style.width = '25px'
+    linkBox.style.height = '25px'
+    linkBox.style.marginLeft = '-2px'
+
+    const link = document.createElement('a')
+    link.setAttribute('href', '')
+    link.setAttribute('target', '_blank')
+
+    const linkIcon = document.createElement('span')
+    linkIcon.classList.add('mxgraph-cell--link-btn')
+    linkIcon.classList.add('icon')
+    linkIcon.classList.add('dash-j')
+
+    link.appendChild(linkIcon)
+    linkBox.appendChild(link)
+
+    const href = graph.insertVertex(
+      v1,
+      null,
+      linkBox.outerHTML,
+      1,
+      0,
+      24,
+      24,
+      `href`,
+      true
+    )
+
+    href.geometry.offset = new mxPoint(-12, -12)
+    href.setConnectable(false)
+    href.setVisible(false)
+  } finally {
+    model.endUpdate()
+  }
+
+  graph.setSelectionCell(v1)
 }
