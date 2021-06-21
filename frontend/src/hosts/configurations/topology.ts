@@ -31,6 +31,12 @@ import {
   Menu,
 } from 'src/hosts/constants/tools'
 
+import {
+  OUTPUT_INPUT_FIELD,
+  CELL_SIZE_WIDTH,
+  CELL_SIZE_HEIGHT,
+} from 'src/hosts/constants/topology'
+
 const mx = mxgraph()
 const {
   mxGraph,
@@ -42,6 +48,7 @@ const {
   mxPerimeter,
   mxEdgeStyle,
   mxImage,
+  mxForm,
 } = mx
 
 export const configureStylesheet = function (mx: mxGraphExportObject) {
@@ -175,4 +182,33 @@ export const getConnectImage = function (state: mxCellStateType) {
 
 export const isCellSelectable = function (cell: mxCellType) {
   return !this.graph.isCellLocked(cell)
+}
+
+export const createForm = function (graph, properties) {
+  const cell = graph.getSelectionCell()
+
+  if (cell) {
+    const form = new mxForm('properties-table')
+
+    const containerElement = getContainerElement(cell.value)
+    const attrs = _.filter(containerElement.attributes, attr => {
+      let isSame = false
+      _.forEach(OUTPUT_INPUT_FIELD, INPUT_FIELD => {
+        if (attr.nodeName === INPUT_FIELD) {
+          isSame = true
+          return
+        }
+      })
+      return isSame
+    })
+
+    const isDisableName = getIsDisableName(containerElement)
+
+    _.forEach(attrs, attr => {
+      this.createTextField(graph, form, cell, attr, isDisableName)
+    })
+    properties.appendChild(form.getTable())
+  } else {
+    mxUtils.writeln(properties, 'Nothing selected.')
+  }
 }

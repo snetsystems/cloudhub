@@ -105,6 +105,7 @@ import {
   getAllCells,
   getConnectImage,
   isCellSelectable,
+  createForm,
 } from 'src/hosts/configurations/topology'
 
 const mx = mxgraph()
@@ -770,16 +771,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.graph
       .getSelectionModel()
-      .addListener(
-        mxEvent.CHANGE,
-        (
-          mxGraphSelectionModel: mxGraphSelectionModeltype,
-          _mxEventObject: mxEventObjectType
-        ) => {
-          mxGraphSelectionModel.eventListeners
-          this.selectionChanged(mxGraphSelectionModel.graph)
-        }
-      )
+      .addListener(mxEvent.CHANGE, this.onChangedSelection)
 
     this.graph.addListener(mxEvent.CLICK, (_graph, me) => {
       const {
@@ -925,38 +917,44 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
   }
 
-  private selectionChanged = (graph: mxGraphType) => {
+  private onChangedSelection = (
+    mxGraphSelectionModel: mxGraphSelectionModeltype,
+    _mxEventObject: mxEventObjectType
+  ) => {
+    const graph: mxGraphType = mxGraphSelectionModel.graph
     const properties = this.properties
+
     properties.innerHTML = ''
-
     graph.container.focus()
+    createForm.bind(this)(graph, properties)
 
-    const cell = graph.getSelectionCell()
+    // const cell = graph.getSelectionCell()
 
-    if (cell) {
-      const form = new mxForm('properties-table')
+    // if (cell) {
 
-      const containerElement = getContainerElement(cell.value)
-      const attrs = _.filter(containerElement.attributes, attr => {
-        let isSame = false
-        _.forEach(OUTPUT_INPUT_FIELD, INPUT_FIELD => {
-          if (attr.nodeName === INPUT_FIELD) {
-            isSame = true
-            return
-          }
-        })
-        return isSame
-      })
+    // const form = new mxForm('properties-table')
 
-      const isDisableName = getIsDisableName(containerElement)
+    // const containerElement = getContainerElement(cell.value)
+    // const attrs = _.filter(containerElement.attributes, attr => {
+    //   let isSame = false
+    //   _.forEach(OUTPUT_INPUT_FIELD, INPUT_FIELD => {
+    //     if (attr.nodeName === INPUT_FIELD) {
+    //       isSame = true
+    //       return
+    //     }
+    //   })
+    //   return isSame
+    // })
 
-      _.forEach(attrs, attr => {
-        this.createTextField(graph, form, cell, attr, isDisableName)
-      })
-      properties.appendChild(form.getTable())
-    } else {
-      mxUtils.writeln(properties, 'Nothing selected.')
-    }
+    // const isDisableName = getIsDisableName(containerElement)
+
+    // _.forEach(attrs, attr => {
+    //   this.createTextField(graph, form, cell, attr, isDisableName)
+    // })
+    // properties.appendChild(form.getTable())
+    // } else {
+    //   mxUtils.writeln(properties, 'Nothing selected.')
+    // }
   }
 
   private saltIpmiSetPowerAsync = _.throttle(
