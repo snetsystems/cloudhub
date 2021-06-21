@@ -698,3 +698,20 @@ const _getFoldingImage = mxGraph.prototype.getFoldingImage
 export const getFoldingImage = function () {
   return null
 }
+
+export const resizeCell = function (
+  cell: mxCellType,
+  bounds: mxRectangleType,
+  recurse?: boolean
+) {
+  console.log('resizeCell')
+  if (cell.getStyle() === 'node') {
+    const containerElement = getContainerElement(cell.value)
+    const title = containerElement.querySelector('.mxgraph-cell--title')
+    title.setAttribute('style', `width: ${bounds.width}px;`)
+
+    cell.setValue(containerElement.outerHTML)
+  }
+
+  return mxGraph.prototype.resizeCell.apply(this.graph, [cell, bounds, recurse])
+}

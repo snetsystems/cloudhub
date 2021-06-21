@@ -93,6 +93,7 @@ import {
   addToolsButton,
   setToolbar,
   getFoldingImage,
+  resizeCell,
 } from 'src/hosts/configurations/topology'
 
 const mx = mxgraph()
@@ -805,25 +806,26 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.graph.constrainChildren = false
 
-    this.graph.resizeCell = (
-      cell: mxCellType,
-      bounds: mxRectangleType,
-      recurse?: boolean
-    ) => {
-      if (cell.getStyle() === 'node') {
-        const containerElement = getContainerElement(cell.value)
-        const title = containerElement.querySelector('.mxgraph-cell--title')
-        title.setAttribute('style', `width: ${bounds.width}px;`)
+    this.graph.resizeCell = resizeCell.bind(this)
+    //  = (
+    //   cell: mxCellType,
+    //   bounds: mxRectangleType,
+    //   recurse?: boolean
+    // ) => {
+    //   if (cell.getStyle() === 'node') {
+    //     const containerElement = getContainerElement(cell.value)
+    //     const title = containerElement.querySelector('.mxgraph-cell--title')
+    //     title.setAttribute('style', `width: ${bounds.width}px;`)
 
-        cell.setValue(containerElement.outerHTML)
-      }
+    //     cell.setValue(containerElement.outerHTML)
+    //   }
 
-      return mxGraph.prototype.resizeCell.apply(this.graph, [
-        cell,
-        bounds,
-        recurse,
-      ])
-    }
+    //   return mxGraph.prototype.resizeCell.apply(this.graph, [
+    //     cell,
+    //     bounds,
+    //     recurse,
+    //   ])
+    // }
 
     this.editor.setGraphContainer(this.container)
     this.graph.getFoldingImage = getFoldingImage.bind(this)
