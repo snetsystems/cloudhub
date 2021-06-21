@@ -715,3 +715,34 @@ export const resizeCell = function (
 
   return mxGraph.prototype.resizeCell.apply(this.graph, [cell, bounds, recurse])
 }
+
+export const onClickMxGraph = function (
+  _graph: mxGraphType,
+  me: mxEventObjectType
+) {
+  const cell: mxCellType = me.getProperty('cell')
+
+  document.querySelector('#statusContainer').classList.remove('active')
+  document.querySelector('#statusContainerRef').innerHTML = null
+
+  if (!_.isEmpty(cell) && cell.style === 'node') {
+    const containerElement = getContainerElement(cell.value)
+
+    if (containerElement.hasAttribute('data-ipmi_host')) {
+      const target = containerElement.getAttribute('data-using_minion')
+      const ipmiHost = containerElement.getAttribute('data-ipmi_host')
+      const ipmiUser = containerElement.getAttribute('data-ipmi_user')
+      const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
+
+      if (ipmiHost && ipmiUser && ipmiPass && target) {
+        this.saltIpmiGetSensorDataAsync(
+          target,
+          ipmiHost,
+          ipmiUser,
+          ipmiPass,
+          cell
+        )
+      }
+    }
+  }
+}

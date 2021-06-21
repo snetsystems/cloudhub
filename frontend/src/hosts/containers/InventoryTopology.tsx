@@ -94,6 +94,7 @@ import {
   setToolbar,
   getFoldingImage,
   resizeCell,
+  onClickMxGraph,
 } from 'src/hosts/configurations/topology'
 
 const mx = mxgraph()
@@ -691,35 +692,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       .getSelectionModel()
       .addListener(mxEvent.CHANGE, this.onChangedSelection)
 
-    this.graph.addListener(mxEvent.CLICK, (_graph, me) => {
-      const {
-        properties: {cell},
-      } = me
-
-      document.querySelector('#statusContainer').classList.remove('active')
-      document.querySelector('#statusContainerRef').innerHTML = null
-
-      if (!_.isEmpty(cell) && cell.style === 'node') {
-        const containerElement = getContainerElement(cell.value)
-
-        if (containerElement.hasAttribute('data-ipmi_host')) {
-          const target = containerElement.getAttribute('data-using_minion')
-          const ipmiHost = containerElement.getAttribute('data-ipmi_host')
-          const ipmiUser = containerElement.getAttribute('data-ipmi_user')
-          const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
-
-          if (ipmiHost && ipmiUser && ipmiPass && target) {
-            this.saltIpmiGetSensorDataAsync(
-              target,
-              ipmiHost,
-              ipmiUser,
-              ipmiPass,
-              cell
-            )
-          }
-        }
-      }
-    })
+    this.graph.addListener(mxEvent.CLICK, onClickMxGraph.bind(this))
 
     mxPopupMenu.prototype.useLeftButtonForPopup = true
 
@@ -807,25 +780,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.graph.constrainChildren = false
 
     this.graph.resizeCell = resizeCell.bind(this)
-    //  = (
-    //   cell: mxCellType,
-    //   bounds: mxRectangleType,
-    //   recurse?: boolean
-    // ) => {
-    //   if (cell.getStyle() === 'node') {
-    //     const containerElement = getContainerElement(cell.value)
-    //     const title = containerElement.querySelector('.mxgraph-cell--title')
-    //     title.setAttribute('style', `width: ${bounds.width}px;`)
-
-    //     cell.setValue(containerElement.outerHTML)
-    //   }
-
-    //   return mxGraph.prototype.resizeCell.apply(this.graph, [
-    //     cell,
-    //     bounds,
-    //     recurse,
-    //   ])
-    // }
 
     this.editor.setGraphContainer(this.container)
     this.graph.getFoldingImage = getFoldingImage.bind(this)
