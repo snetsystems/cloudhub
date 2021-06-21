@@ -32,6 +32,7 @@ const {
   mxConstants,
   mxPerimeter,
   mxEdgeStyle,
+  mxImage,
 } = mx
 
 export const configureStylesheet = function (mx: mxGraphExportObject) {
@@ -157,4 +158,8 @@ export const getAllCells = function (parent: mxCellType, descendants: boolean) {
     : this.graph.getModel().getChildren(parent)
 
   return cells
+}
+
+export const getConnectImage = function (state: mxCellStateType) {
+  return new mxImage(state.style[mxConstants.STYLE_IMAGE], 16, 16)
 }

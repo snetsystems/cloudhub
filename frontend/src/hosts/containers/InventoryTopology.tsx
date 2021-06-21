@@ -103,6 +103,7 @@ import {
   dblClick,
   setOutline,
   getAllCells,
+  getConnectImage,
 } from 'src/hosts/configurations/topology'
 
 const mx = mxgraph()
@@ -726,9 +727,10 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.graph.setDropEnabled(false)
 
-    this.graph.connectionHandler.getConnectImage = (state: mxCellStateType) => {
-      return new mxImage(state.style[mxConstants.STYLE_IMAGE], 16, 16)
-    }
+    this.graph.connectionHandler.getConnectImage = getConnectImage
+    // (state: mxCellStateType) => {
+    //   return new mxImage(state.style[mxConstants.STYLE_IMAGE], 16, 16)
+    // }
 
     this.graph.connectionHandler.targetConnectImage = true
 
