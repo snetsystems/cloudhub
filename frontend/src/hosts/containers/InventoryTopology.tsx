@@ -569,48 +569,43 @@ class InventoryTopology extends PureComponent<Props, State> {
     const statusTable = document.createElement('table')
     const rootItem = _.keys(data)
 
-    _.reduce(
-      rootItem,
-      (__, current) => {
-        const curr: any = data[current]
-        _.forEach(_.keys(curr), c => {
-          const statusTableRow = document.createElement('tr')
-          let statusTableValue = document.createElement('td')
+    _.forEach(rootItem, key => {
+      const current: any = data[key]
+      _.forEach(_.keys(current), c => {
+        const statusTableRow = document.createElement('tr')
+        let statusTableValue = document.createElement('td')
 
-          const kindStatus = curr[c]
-          const isUnavailable = kindStatus?.unavailable === 1
+        const kindStatus = current[c]
+        const isUnavailable = kindStatus?.unavailable === 1
 
-          if (!isUnavailable) {
-            const statusTableKind = document.createElement('th')
-            statusTableKind.textContent = c
+        if (!isUnavailable) {
+          const statusTableKind = document.createElement('th')
+          statusTableKind.textContent = c
 
-            const {value, units, states} = kindStatus
+          const {value, units, states} = kindStatus
 
-            let kindValue = ''
+          let kindValue = ''
 
-            if (_.isNumber(value) || _.isString(value)) {
-              kindValue += value
-              if (units) {
-                kindValue += ' ' + units
-              }
-            } else {
-              if (_.isEmpty(states)) {
-                kindValue += '-'
-              } else {
-                kindValue += states[0]
-              }
+          if (_.isNumber(value) || _.isString(value)) {
+            kindValue += value
+            if (units) {
+              kindValue += ' ' + units
             }
-
-            statusTableValue.textContent = kindValue
-            statusTableRow.appendChild(statusTableKind)
-            statusTableRow.appendChild(statusTableValue)
-            statusTable.appendChild(statusTableRow)
+          } else {
+            if (_.isEmpty(states)) {
+              kindValue += '-'
+            } else {
+              kindValue += states[0]
+            }
           }
-        })
-        return current
-      },
-      {}
-    )
+
+          statusTableValue.textContent = kindValue
+          statusTableRow.appendChild(statusTableKind)
+          statusTableRow.appendChild(statusTableValue)
+          statusTable.appendChild(statusTableRow)
+        }
+      })
+    })
 
     statusWindow.appendChild(statusTable)
 
