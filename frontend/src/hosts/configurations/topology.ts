@@ -10,6 +10,7 @@ import {
   mxGraphModel as mxGraphModelType,
   mxRectangle as mxRectangleType,
   mxGraphSelectionModel as mxGraphSelectionModeltype,
+  mxConnectionHandler as mxConnectionHandlerType,
   mxEventObject as mxEventObjectType,
   mxGraphExportObject,
 } from 'mxgraph'
@@ -705,7 +706,6 @@ export const resizeCell = function (
   bounds: mxRectangleType,
   recurse?: boolean
 ) {
-  console.log('resizeCell')
   if (cell.getStyle() === 'node') {
     const containerElement = getContainerElement(cell.value)
     const title = containerElement.querySelector('.mxgraph-cell--title')
@@ -752,4 +752,47 @@ export const createEdgeState = function () {
   const edge = this.graph.createEdge(null, null, null, null, null)
 
   return new mxCellState(this.graph.view, edge, this.graph.getCellStyle(edge))
+}
+
+export const onConnectMxGraph = function (
+  _sender: mxConnectionHandlerType,
+  evt: mxEventObjectType
+) {
+  const cells = [evt.getProperty('cell')]
+
+  if (evt.getProperty('terminalInserted')) {
+    cells.push(evt.getProperty('terminal'))
+  }
+
+  insertHandler.bind(this)(cells)
+}
+
+export const insertHandler = function (
+  cells: mxCellType[],
+  _asText?: string,
+  model?: mxGraphModelType
+) {
+  console.log('insertHandler')
+  model = model ? model : this.graph.getModel()
+
+  model.beginUpdate()
+  try {
+    _.forEach(cells, cell => {
+      if (model.isEdge(cell)) {
+        const edgeObj = {
+          ...tmpMenu,
+          name: 'Edge',
+          label: 'Edge',
+          type: 'Edge',
+        }
+
+        const edge = createHTMLValue(edgeObj, 'edge')
+
+        cell.setValue(edge.outerHTML)
+        cell.setStyle('edge')
+      }
+    })
+  } finally {
+    model.endUpdate()
+  }
 }

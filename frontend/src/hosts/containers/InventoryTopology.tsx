@@ -96,6 +96,7 @@ import {
   resizeCell,
   onClickMxGraph,
   createEdgeState,
+  onConnectMxGraph,
 } from 'src/hosts/configurations/topology'
 
 const mx = mxgraph()
@@ -579,35 +580,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.toolbar = this.toolbarRef.current
   }
 
-  private insertHandler = (
-    cells: mxCellType[],
-    _asText?: string,
-    model?: mxGraphModelType
-  ) => {
-    model = model ? model : this.graph.getModel()
-
-    model.beginUpdate()
-    try {
-      _.forEach(cells, cell => {
-        if (model.isEdge(cell)) {
-          const edgeObj = {
-            ...tmpMenu,
-            name: 'Edge',
-            label: 'Edge',
-            type: 'Edge',
-          }
-
-          const edge = createHTMLValue(edgeObj, 'edge')
-
-          cell.setValue(edge.outerHTML)
-          cell.setStyle('edge')
-        }
-      })
-    } finally {
-      model.endUpdate()
-    }
-  }
-
   private configureEditor = () => {
     new mxRubberband(this.graph)
 
@@ -625,15 +597,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.graph.setTooltips(false)
     this.graph.connectionHandler.addListener(
       mxEvent.CONNECT,
-      (_sender, evt) => {
-        const cells = [evt.getProperty('cell')]
-
-        if (evt.getProperty('terminalInserted')) {
-          cells.push(evt.getProperty('terminal'))
-        }
-
-        this.insertHandler(cells)
-      }
+      onConnectMxGraph.bind(this)
     )
 
     this.graph.connectionHandler.createEdgeState = createEdgeState.bind(this)
@@ -688,7 +652,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.graph.addListener(mxEvent.CLICK, onClickMxGraph.bind(this))
 
     mxPopupMenu.prototype.useLeftButtonForPopup = true
-
     this.graph.popupMenuHandler.factoryMethod = (menu, cell, evt) => {
       const cellValue = this.graph.getModel().getValue(cell)
 
