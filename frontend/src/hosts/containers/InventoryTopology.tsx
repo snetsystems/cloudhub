@@ -95,6 +95,7 @@ import {
   getFoldingImage,
   resizeCell,
   onClickMxGraph,
+  createEdgeState,
 } from 'src/hosts/configurations/topology'
 
 const mx = mxgraph()
@@ -635,15 +636,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       }
     )
 
-    this.graph.connectionHandler.createEdgeState = () => {
-      const edge = this.graph.createEdge(null, null, null, null, null)
-
-      return new mxCellState(
-        this.graph.view,
-        edge,
-        this.graph.getCellStyle(edge)
-      )
-    }
+    this.graph.connectionHandler.createEdgeState = createEdgeState.bind(this)
 
     if (mxClient.IS_QUIRKS) {
       document.body.style.overflow = 'hidden'

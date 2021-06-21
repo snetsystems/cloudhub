@@ -63,6 +63,7 @@ const {
   mxImage,
   mxForm,
   mxPoint,
+  mxCellState,
 } = mx
 
 export const configureStylesheet = function (mx: mxGraphExportObject) {
@@ -745,4 +746,10 @@ export const onClickMxGraph = function (
       }
     }
   }
+}
+
+export const createEdgeState = function () {
+  const edge = this.graph.createEdge(null, null, null, null, null)
+
+  return new mxCellState(this.graph.view, edge, this.graph.getCellStyle(edge))
 }
