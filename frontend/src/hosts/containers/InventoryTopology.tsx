@@ -92,6 +92,7 @@ import {
   addHostsButton,
   addToolsButton,
   setToolbar,
+  getFoldingImage,
 } from 'src/hosts/configurations/topology'
 
 const mx = mxgraph()
@@ -825,24 +826,14 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
 
     this.editor.setGraphContainer(this.container)
-
-    // @ts-ignore
-    const getFoldingImage = mxGraph.prototype.getFoldingImage
-    this.graph.getFoldingImage = () => {
-      return null
-    }
+    this.graph.getFoldingImage = getFoldingImage.bind(this)
   }
 
   private onChangedSelection = (
     mxGraphSelectionModel: mxGraphSelectionModeltype,
     _mxEventObject: mxEventObjectType
   ) => {
-    const graph: mxGraphType = mxGraphSelectionModel.graph
-    const properties = this.properties
-
-    properties.innerHTML = ''
-    graph.container.focus()
-    createForm.bind(this)(graph, properties)
+    createForm.bind(this)(mxGraphSelectionModel.graph, this.properties)
   }
 
   private saltIpmiSetPowerAsync = _.throttle(

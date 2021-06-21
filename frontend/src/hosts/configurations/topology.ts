@@ -195,7 +195,13 @@ export const isCellSelectable = function (cell: mxCellType) {
   return !this.graph.isCellLocked(cell)
 }
 
-export const createForm = function (graph, properties) {
+export const createForm = function (
+  graph: mxGraphType,
+  properties: HTMLDivElement
+) {
+  graph.container.focus()
+  properties.innerHTML = ''
+
   const cell = graph.getSelectionCell()
 
   if (cell) {
@@ -685,4 +691,10 @@ export const addToolbarButton = ({
   })
 
   toolbar.appendChild(button)
+}
+
+// @ts-ignore
+const _getFoldingImage = mxGraph.prototype.getFoldingImage
+export const getFoldingImage = function () {
+  return null
 }
