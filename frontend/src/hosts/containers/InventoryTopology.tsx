@@ -8,8 +8,6 @@ import {
   default as mxgraph,
   mxEditor as mxEditorType,
   mxCell as mxCellType,
-  mxCellState as mxCellStateType,
-  mxForm as mxFormType,
   mxGraph as mxGraphType,
   mxGraphModel as mxGraphModelType,
   mxRectangle as mxRectangleType,
@@ -30,19 +28,7 @@ import {
   HANDLE_HORIZONTAL,
   HANDLE_VERTICAL,
 } from 'src/shared/constants/'
-import {
-  toolbarMenu,
-  toolsMenu,
-  tmpMenu,
-  hostMenu,
-  Menu,
-} from 'src/hosts/constants/tools'
-
-import {
-  OUTPUT_INPUT_FIELD,
-  CELL_SIZE_WIDTH,
-  CELL_SIZE_HEIGHT,
-} from 'src/hosts/constants/topology'
+import {tmpMenu} from 'src/hosts/constants/tools'
 
 // Types
 import {
@@ -78,12 +64,7 @@ import {getEnv} from 'src/shared/apis/env'
 // Utils
 import {generateForHosts} from 'src/utils/tempVars'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
-import {
-  getContainerElement,
-  getContainerTitle,
-  getIsDisableName,
-  getIsHasString,
-} from 'src/hosts/utils/topology'
+import {getContainerElement, getIsDisableName} from 'src/hosts/utils/topology'
 
 // error
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -108,7 +89,9 @@ import {
   createForm,
   createHTMLValue,
   openSensorData,
-  dragCell,
+  addHostsButton,
+  addToolsButton,
+  setToolbar,
 } from 'src/hosts/configurations/topology'
 
 const mx = mxgraph()
@@ -274,6 +257,9 @@ class InventoryTopology extends PureComponent<Props, State> {
   private setOutline = setOutline
   private getAllCells = getAllCells
   private openSensorData = openSensorData
+  private addHostsButton = addHostsButton
+  private addToolsButton = addToolsButton
+  private setToolbar = setToolbar
 
   public async componentDidMount() {
     this.createEditor()
@@ -281,8 +267,9 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setActionInEditor()
     this.configureStylesheet(mx)
     this.setOutline()
-    this.setSidebar()
-    this.setToolbar()
+    this.addHostsButton(this.state.hostsObject, this.hosts)
+    this.addToolsButton(this.tools)
+    this.setToolbar(this.editor, this.toolbar)
 
     const topology = await this.props.handleGetInventoryTopology(
       this.props.links
@@ -342,7 +329,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       JSON.stringify(_.keys(this.state.hostsObject))
     ) {
       this.setCellsWarning(_.keys(this.state.hostsObject))
-      this.addHostsButton()
+      this.addHostsButton(this.state.hostsObject, this.hosts)
     }
 
     if (_.isEmpty(this.state.topologyId) && !_.isEmpty(this.state.topology)) {
@@ -566,56 +553,6 @@ class InventoryTopology extends PureComponent<Props, State> {
       this.graphUpdate()
     }
   }
-
-  // {
-  //   if (!data) return
-  //   const statusWindow = document.createElement('div')
-  //   const statusTable = document.createElement('table')
-  //   const rootItem = _.keys(data)
-
-  //   _.forEach(rootItem, key => {
-  //     const current: any = data[key]
-  //     _.forEach(_.keys(current), c => {
-  //       const statusTableRow = document.createElement('tr')
-  //       let statusTableValue = document.createElement('td')
-
-  //       const kindStatus = current[c]
-  //       const isUnavailable = kindStatus?.unavailable === 1
-
-  //       if (!isUnavailable) {
-  //         const statusTableKind = document.createElement('th')
-  //         statusTableKind.textContent = c
-
-  //         const {value, units, states} = kindStatus
-
-  //         let kindValue = ''
-
-  //         if (_.isNumber(value) || _.isString(value)) {
-  //           kindValue += value
-  //           if (units) {
-  //             kindValue += ' ' + units
-  //           }
-  //         } else {
-  //           if (_.isEmpty(states)) {
-  //             kindValue += '-'
-  //           } else {
-  //             kindValue += states[0]
-  //           }
-  //         }
-
-  //         statusTableValue.textContent = kindValue
-  //         statusTableRow.appendChild(statusTableKind)
-  //         statusTableRow.appendChild(statusTableValue)
-  //         statusTable.appendChild(statusTableRow)
-  //       }
-  //     })
-  //   })
-
-  //   statusWindow.appendChild(statusTable)
-
-  //   this.statusRef.current.appendChild(statusWindow)
-  //   document.querySelector('#statusContainer').classList.add('active')
-  // }
 
   private getIpmiTargetList = async () => {
     const minionList: string[] = await this.props.handleGetMinionKeyAcceptedList(
@@ -1108,158 +1045,6 @@ class InventoryTopology extends PureComponent<Props, State> {
 
       this.setState({topology: xmlString, isModalVisible: true})
     })
-  }
-
-  private setSidebar = () => {
-    this.addHostsButton()
-    this.addToolsButton()
-  }
-
-  private addHostsButton = () => {
-    const hostList = _.keys(this.state.hostsObject)
-    let menus: Menu[] = []
-
-    this.hosts.innerHTML = ''
-
-    _.forEach(hostList, host => {
-      const hostObj = {
-        ...hostMenu,
-        name: host,
-        label: host,
-      }
-
-      menus.push(hostObj)
-    })
-
-    _.forEach(menus, menu => {
-      const rowElement = document.createElement('div')
-      rowElement.classList.add('hosts-table--tr')
-      rowElement.classList.add('topology-hosts-row')
-
-      const hostElement = document.createElement('div')
-      hostElement.classList.add('hosts-table--td')
-
-      const span = document.createElement('span')
-      span.style.fontSize = '14px'
-      span.textContent = menu.label
-
-      hostElement.appendChild(span)
-      rowElement.appendChild(hostElement)
-
-      this.addSidebarButton({
-        sideBarArea: this.hosts,
-        node: menu,
-        element: rowElement,
-      })
-    })
-  }
-
-  private addToolsButton = () => {
-    _.forEach(toolsMenu, menu => {
-      const iconBox = document.createElement('div')
-      iconBox.classList.add('tool-instance')
-
-      const icon = document.createElement('div')
-      icon.classList.add(`mxgraph-cell--icon`)
-      icon.classList.add(`mxgraph-cell--icon-${menu.type.toLowerCase()}`)
-
-      iconBox.appendChild(icon)
-
-      this.addSidebarButton({
-        sideBarArea: this.tools,
-        node: menu,
-        element: iconBox,
-      })
-    })
-  }
-
-  private addSidebarButton({
-    sideBarArea,
-    node,
-    element,
-  }: {
-    sideBarArea: HTMLElement
-    node: Menu
-    element: HTMLDivElement
-    iconClassName?: string
-  }) {
-    sideBarArea.appendChild(element)
-
-    const dragElt = document.createElement('div')
-    dragElt.style.border = 'dashed #f58220 1px'
-    dragElt.style.width = `${CELL_SIZE_WIDTH}px`
-    dragElt.style.height = `${CELL_SIZE_HEIGHT}px`
-    const ds = mxUtils.makeDraggable(
-      element,
-      this.graph,
-      dragCell(node),
-      dragElt,
-      0,
-      0,
-      true,
-      true
-    )
-
-    ds.setGuidesEnabled(true)
-  }
-
-  private setToolbar = () => {
-    _.forEach(toolbarMenu, menu => {
-      const {actionName, label, icon, isTransparent} = menu
-      this.addToolbarButton({
-        editor: this.editor,
-        toolbar: this.toolbar,
-        action: actionName,
-        label,
-        icon,
-        isTransparent,
-      })
-    })
-  }
-
-  private addToolbarButton = ({
-    editor,
-    toolbar,
-    action,
-    label,
-    icon,
-    isTransparent = false,
-  }: {
-    editor: mxEditorType
-    toolbar: HTMLElement
-    action: string
-    label: string
-    icon: string
-    isTransparent?: boolean
-  }) => {
-    const button = document.createElement('button')
-    button.style.fontSize = '10'
-    button.classList.add('button')
-    button.classList.add('button-sm')
-    button.classList.add('button-default')
-    button.classList.add('button-square')
-
-    button.title = label
-
-    if (icon !== null) {
-      const span = document.createElement('span')
-      span.classList.add('button-icon')
-      span.classList.add('icon')
-      span.classList.add(icon)
-      button.appendChild(span)
-    }
-
-    if (isTransparent) {
-      button.style.background = 'transparent'
-      button.style.color = '#f58220'
-      button.style.border = 'none'
-    }
-
-    mxEvent.addListener(button, 'click', () => {
-      editor.execute(action)
-    })
-
-    toolbar.appendChild(button)
   }
 
   private graphUpdate = () => {

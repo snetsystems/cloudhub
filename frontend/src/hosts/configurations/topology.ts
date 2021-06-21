@@ -14,6 +14,18 @@ import {
   mxGraphExportObject,
 } from 'mxgraph'
 
+// Types
+import {
+  Source,
+  Links,
+  Host,
+  RemoteDataState,
+  Notification,
+  NotificationFunc,
+  Ipmi,
+  IpmiCell,
+} from 'src/types'
+
 // Utils
 import {
   getContainerElement,
@@ -519,4 +531,158 @@ export const dragCell = (node: Menu) => (
   }
 
   graph.setSelectionCell(v1)
+}
+
+export const addSidebarButton = function ({
+  sideBarArea,
+  node,
+  element,
+}: {
+  sideBarArea: HTMLElement
+  node: Menu
+  element: HTMLDivElement
+  iconClassName?: string
+}) {
+  sideBarArea.appendChild(element)
+
+  const dragElt = document.createElement('div')
+  dragElt.style.border = 'dashed #f58220 1px'
+  dragElt.style.width = `${CELL_SIZE_WIDTH}px`
+  dragElt.style.height = `${CELL_SIZE_HEIGHT}px`
+
+  const dragSource = mxUtils.makeDraggable(
+    element,
+    this.graph,
+    dragCell(node),
+    dragElt,
+    0,
+    0,
+    true,
+    true
+  )
+
+  dragSource.setGuidesEnabled(true)
+}
+
+export const addHostsButton = function (
+  hostsObject: {[x: string]: Host},
+  hostsArea: HTMLDivElement
+) {
+  const hostList = _.keys(hostsObject)
+  let menus: Menu[] = []
+
+  hostsArea.innerHTML = ''
+
+  _.forEach(hostList, host => {
+    const hostObj = {
+      ...hostMenu,
+      name: host,
+      label: host,
+    }
+
+    menus.push(hostObj)
+  })
+
+  _.forEach(menus, menu => {
+    const rowElement = document.createElement('div')
+    rowElement.classList.add('hosts-table--tr')
+    rowElement.classList.add('topology-hosts-row')
+
+    const hostElement = document.createElement('div')
+    hostElement.classList.add('hosts-table--td')
+
+    const span = document.createElement('span')
+    span.style.fontSize = '14px'
+    span.textContent = menu.label
+
+    hostElement.appendChild(span)
+    rowElement.appendChild(hostElement)
+
+    addSidebarButton.bind(this)({
+      sideBarArea: hostsArea,
+      node: menu,
+      element: rowElement,
+    })
+  })
+}
+
+export const addToolsButton = function (toolsArea: HTMLDivElement) {
+  _.forEach(toolsMenu, menu => {
+    const iconBox = document.createElement('div')
+    iconBox.classList.add('tool-instance')
+
+    const icon = document.createElement('div')
+    icon.classList.add(`mxgraph-cell--icon`)
+    icon.classList.add(`mxgraph-cell--icon-${menu.type.toLowerCase()}`)
+
+    iconBox.appendChild(icon)
+
+    addSidebarButton.bind(this)({
+      sideBarArea: toolsArea,
+      node: menu,
+      element: iconBox,
+    })
+  })
+}
+
+export const setToolbar = function (
+  editor: mxEditorType,
+  toolbarArea: HTMLDivElement
+) {
+  _.forEach(toolbarMenu, menu => {
+    const {actionName, label, icon, isTransparent} = menu
+    addToolbarButton({
+      editor,
+      toolbar: toolbarArea,
+      action: actionName,
+      label,
+      icon,
+      isTransparent,
+    })
+  })
+}
+
+export const addToolbarButton = ({
+  editor,
+  toolbar,
+  action,
+  label,
+  icon,
+  isTransparent = false,
+}: {
+  editor: mxEditorType
+  toolbar: HTMLElement
+  action: string
+  label: string
+  icon: string
+  isTransparent?: boolean
+}) => {
+  const button = document.createElement('button')
+  button.style.fontSize = '10'
+  button.classList.add('button')
+  button.classList.add('button-sm')
+  button.classList.add('button-default')
+  button.classList.add('button-square')
+
+  button.title = label
+
+  if (icon !== null) {
+    const span = document.createElement('span')
+    span.classList.add('button-icon')
+    span.classList.add('icon')
+    span.classList.add(icon)
+    button.appendChild(span)
+  }
+
+  if (isTransparent) {
+    button.style.background = 'transparent'
+    button.style.color = '#f58220'
+    button.style.border = 'none'
+  }
+
+  mxEvent.addListener(button, 'click', () => {
+    editor.execute(action)
+  })
+
+  toolbar.appendChild(button)
 }
