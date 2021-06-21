@@ -101,6 +101,7 @@ import {
   isHtmlLabel,
   getLabel,
   dblClick,
+  setOutline,
 } from 'src/hosts/configurations/topology'
 
 const mx = mxgraph()
@@ -263,6 +264,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   )
 
   private configureStylesheet = configureStylesheet
+  private setOutline = setOutline
 
   public async componentDidMount() {
     this.createEditor()
@@ -1153,11 +1155,11 @@ class InventoryTopology extends PureComponent<Props, State> {
     })
   }
 
-  private setOutline = () => {
-    const outln = new mxOutline(this.graph, this.outline)
-    outln.outline.labelsVisible = true
-    outln.outline.setHtmlLabels(true)
-  }
+  // () => {
+  //   const outln = new mxOutline(this.graph, this.outline)
+  //   outln.outline.labelsVisible = true
+  //   outln.outline.setHtmlLabels(true)
+  // }
 
   private setSidebar = () => {
     this.addHostsButton()
@@ -1603,12 +1605,14 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private xmlExport = (sender: mxGraphModelType) => {
+    // xmlExport(sender)
     const enc = new mxCodec(mxUtils.createXmlDocument())
     const cells = enc.encode(sender)
 
     // @ts-ignore
     const xmlString = mxUtils.getPrettyXml(cells)
-
+    console.log('this.xmlExport:', xmlString)
+    console.log('this.xmlExport:', this)
     return xmlString
   }
 

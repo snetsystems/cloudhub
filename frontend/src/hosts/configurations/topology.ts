@@ -23,7 +23,16 @@ import {
 } from 'src/hosts/utils/topology'
 
 const mx = mxgraph()
-const {mxGraph, mxEvent} = mx
+const {
+  mxGraph,
+  mxEvent,
+  mxCodec,
+  mxUtils,
+  mxOutline,
+  mxConstants,
+  mxPerimeter,
+  mxEdgeStyle,
+} = mx
 
 export const configureStylesheet = function (mx: mxGraphExportObject) {
   const {mxConstants, mxPerimeter, mxEdgeStyle} = mx
@@ -129,4 +138,10 @@ export const convertValueToString = function (cell: mxCellType) {
 
 export const dblClick = function (evt: Event) {
   mxEvent.consume(evt)
+}
+
+export const setOutline = function () {
+  const outln = new mxOutline(this.graph, this.outline)
+  outln.outline.labelsVisible = true
+  outln.outline.setHtmlLabels(true)
 }
