@@ -97,6 +97,7 @@ import {
   onClickMxGraph,
   createEdgeState,
   onConnectMxGraph,
+  factoryMethod,
 } from 'src/hosts/configurations/topology'
 
 const mx = mxgraph()
@@ -652,86 +653,10 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.graph.addListener(mxEvent.CLICK, onClickMxGraph.bind(this))
 
     mxPopupMenu.prototype.useLeftButtonForPopup = true
-    this.graph.popupMenuHandler.factoryMethod = (menu, cell, evt) => {
-      const cellValue = this.graph.getModel().getValue(cell)
-
-      // @ts-ignore
-      if (cellValue !== null && mxEvent.isLeftMouseButton(evt)) {
-        const containerElement = getContainerElement(
-          this.graph.getModel().getValue(cell)
-        )
-
-        if (containerElement.getAttribute('btn-type') === 'ipmi') {
-          const ipmiPowerstate = containerElement.getAttribute(
-            'ipmi-power-status'
-          )
-
-          const parentContainerElement = getContainerElement(
-            cell.getParent().value
-          )
-
-          const ipmiTarget = parentContainerElement.getAttribute(
-            'data-using_minion'
-          )
-          const ipmiHost = parentContainerElement.getAttribute('data-ipmi_host')
-          const ipmiUser = parentContainerElement.getAttribute('data-ipmi_user')
-          const ipmiPass = parentContainerElement.getAttribute('data-ipmi_pass')
-
-          if (ipmiPowerstate === 'on') {
-            menu.addItem('Power Off System', null, () => {
-              this.saltIpmiSetPowerAsync(
-                ipmiTarget,
-                ipmiHost,
-                ipmiUser,
-                ipmiPass,
-                IpmiSetPowerStatus.PowerOff
-              )
-            })
-
-            menu.addItem('Graceful Shutdown', null, () => {
-              this.saltIpmiSetPowerAsync(
-                ipmiTarget,
-                ipmiHost,
-                ipmiUser,
-                ipmiPass,
-                IpmiSetPowerStatus.Shutdown
-              )
-            })
-
-            menu.addItem('Force Reset System', null, () => {
-              this.saltIpmiSetPowerAsync(
-                ipmiTarget,
-                ipmiHost,
-                ipmiUser,
-                ipmiPass,
-                IpmiSetPowerStatus.Reset
-              )
-            })
-          } else if (ipmiPowerstate === 'off') {
-            menu.addItem('Power On', null, () => {
-              this.saltIpmiSetPowerAsync(
-                ipmiTarget,
-                ipmiHost,
-                ipmiUser,
-                ipmiPass,
-                IpmiSetPowerStatus.PowerOn
-              )
-            })
-          }
-          if (ipmiHost && ipmiUser && ipmiPass) {
-            this.saltIpmiGetSensorDataAsync(
-              ipmiTarget,
-              ipmiHost,
-              ipmiUser,
-              ipmiPass,
-              cell
-            )
-          }
-
-          this.graph.setSelectionCell(cell.parent)
-        }
-      }
-    }
+    this.graph.popupMenuHandler.factoryMethod = factoryMethod(
+      this.saltIpmiSetPowerAsync,
+      this.saltIpmiGetSensorDataAsync
+    ).bind(this)
 
     this.graph.constrainChildren = false
 

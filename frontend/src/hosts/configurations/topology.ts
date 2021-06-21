@@ -50,6 +50,8 @@ import {
   CELL_SIZE_HEIGHT,
 } from 'src/hosts/constants/topology'
 
+import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
+
 const mx = mxgraph()
 const {
   mxClient,
@@ -796,3 +798,100 @@ export const insertHandler = function (
     model.endUpdate()
   }
 }
+
+export const factoryMethod = (
+  saltIpmiSetPowerAsync: (
+    target: string,
+    ipmiHost: string,
+    ipmiUser: string,
+    ipmiPass: string,
+    state: IpmiSetPowerStatus
+  ) => Promise<void>,
+  saltIpmiGetSensorDataAsync: (
+    target: string,
+    ipmiHost: string,
+    ipmiUser: string,
+    ipmiPass: string,
+    cell: mxCellType
+  ) => Promise<void>
+) =>
+  function (menu, cell, evt) {
+    const cellValue = this.graph.getModel().getValue(cell)
+
+    // @ts-ignore
+    if (cellValue !== null && mxEvent.isLeftMouseButton(evt)) {
+      const containerElement = getContainerElement(
+        this.graph.getModel().getValue(cell)
+      )
+
+      if (containerElement.getAttribute('btn-type') === 'ipmi') {
+        const ipmiPowerstate = containerElement.getAttribute(
+          'ipmi-power-status'
+        )
+
+        const parentContainerElement = getContainerElement(
+          cell.getParent().value
+        )
+
+        const ipmiTarget = parentContainerElement.getAttribute(
+          'data-using_minion'
+        )
+        const ipmiHost = parentContainerElement.getAttribute('data-ipmi_host')
+        const ipmiUser = parentContainerElement.getAttribute('data-ipmi_user')
+        const ipmiPass = parentContainerElement.getAttribute('data-ipmi_pass')
+
+        if (ipmiPowerstate === 'on') {
+          menu.addItem('Power Off System', null, () => {
+            saltIpmiSetPowerAsync(
+              ipmiTarget,
+              ipmiHost,
+              ipmiUser,
+              ipmiPass,
+              IpmiSetPowerStatus.PowerOff
+            )
+          })
+
+          menu.addItem('Graceful Shutdown', null, () => {
+            saltIpmiSetPowerAsync(
+              ipmiTarget,
+              ipmiHost,
+              ipmiUser,
+              ipmiPass,
+              IpmiSetPowerStatus.Shutdown
+            )
+          })
+
+          menu.addItem('Force Reset System', null, () => {
+            saltIpmiSetPowerAsync(
+              ipmiTarget,
+              ipmiHost,
+              ipmiUser,
+              ipmiPass,
+              IpmiSetPowerStatus.Reset
+            )
+          })
+        } else if (ipmiPowerstate === 'off') {
+          menu.addItem('Power On', null, () => {
+            saltIpmiSetPowerAsync(
+              ipmiTarget,
+              ipmiHost,
+              ipmiUser,
+              ipmiPass,
+              IpmiSetPowerStatus.PowerOn
+            )
+          })
+        }
+        if (ipmiHost && ipmiUser && ipmiPass) {
+          saltIpmiGetSensorDataAsync(
+            ipmiTarget,
+            ipmiHost,
+            ipmiUser,
+            ipmiPass,
+            cell
+          )
+        }
+
+        this.graph.setSelectionCell(cell.parent)
+      }
+    }
+  }
