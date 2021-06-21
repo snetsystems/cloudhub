@@ -1,5 +1,5 @@
 import _ from 'lodash'
-
+import CryptoJS from 'crypto-js'
 import {
   default as mxgraph,
   mxEditor as mxEditorType,
@@ -39,6 +39,7 @@ import {
 
 const mx = mxgraph()
 const {
+  mxClient,
   mxGraph,
   mxEvent,
   mxCodec,
@@ -202,10 +203,134 @@ export const createForm = function (graph, properties) {
     const isDisableName = getIsDisableName(containerElement)
 
     _.forEach(attrs, attr => {
-      this.createTextField(graph, form, cell, attr, isDisableName)
+      createTextField.bind(this)(graph, form, cell, attr, isDisableName)
     })
     properties.appendChild(form.getTable())
   } else {
     mxUtils.writeln(properties, 'Nothing selected.')
+  }
+}
+
+export const createTextField = function (
+  graph: mxGraphType,
+  form: mxFormType,
+  cell: mxCellType,
+  attribute: any,
+  isDisableName = false
+) {
+  const nodeName = _.upperCase(attribute.nodeName.replace('data-', ''))
+  const ipmiTargets = this.state.minionList
+  let input = null
+
+  if (attribute.nodeName === 'data-using_minion') {
+    input = form.addCombo(nodeName, false)
+    input.style.padding = '0 9px'
+
+    form.addOption(input, 'NONE', '', false)
+    _.map(ipmiTargets, ipmiTarget => {
+      ipmiTarget === attribute.nodeValue
+        ? form.addOption(input, ipmiTarget, ipmiTarget, true)
+        : form.addOption(input, ipmiTarget, ipmiTarget, false)
+    })
+  } else {
+    const isPassword = _.includes(nodeName, 'PASS')
+    input = form.addText(
+      nodeName,
+      attribute.nodeValue,
+      isPassword ? 'password' : 'text'
+    )
+  }
+
+  input.classList.add('input-sm')
+  input.classList.add('form-control')
+
+  if (attribute.nodeName === 'data-name') {
+    input.disabled = isDisableName
+  }
+
+  const applyHandler = () => {
+    const containerElement = getContainerElement(cell.value)
+
+    let newValue = input.value || ''
+    let isInputPassword = false
+    const oldValue = containerElement.getAttribute(attribute.nodeName) || ''
+
+    if (newValue !== oldValue) {
+      graph.getModel().beginUpdate()
+
+      try {
+        if (attribute.nodeName === 'data-label') {
+          const title = getContainerTitle(containerElement)
+          title.textContent = newValue
+        }
+
+        if (attribute.nodeName === 'data-link') {
+          if (cell.children) {
+            const childrenCell = cell.getChildAt(1)
+            if (childrenCell.style === 'href') {
+              const childrenContainerElement = getContainerElement(
+                childrenCell.value
+              )
+
+              const childrenLink = childrenContainerElement.querySelector('a')
+              childrenLink.setAttribute('href', newValue)
+
+              childrenCell.setValue(childrenContainerElement.outerHTML)
+              childrenCell.setVisible(getIsHasString(newValue))
+            }
+          }
+        }
+
+        if (attribute.nodeName === 'data-ipmi_host') {
+          if (cell.children) {
+            const childrenCell = cell.getChildAt(0)
+
+            if (childrenCell.style === 'ipmi') {
+              graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [
+                cell.getChildAt(0),
+              ])
+
+              childrenCell.setVisible(getIsHasString(newValue))
+            }
+          }
+        }
+
+        if (attribute.nodeName === 'data-ipmi_pass') {
+          if (newValue.length > 0) {
+            newValue = CryptoJS.AES.encrypt(
+              newValue,
+              this.secretKey.url
+            ).toString()
+
+            isInputPassword = true
+          }
+        }
+
+        containerElement.setAttribute(attribute.nodeName, newValue)
+        cell.setValue(containerElement.outerHTML)
+      } finally {
+        if (isInputPassword) {
+          graph.setSelectionCell(cell)
+        }
+        graph.getModel().endUpdate()
+        this.graphUpdate()
+      }
+    }
+  }
+
+  mxEvent.addListener(
+    input,
+    'keypress',
+    (event: KeyboardEvent & MouseEvent) => {
+      if (event.key === 'Enter' && !mxEvent.isShiftDown(event)) {
+        input.blur()
+      }
+    }
+  )
+
+  if (mxClient.IS_IE) {
+    mxEvent.addListener(input, 'focusout', applyHandler)
+  } else {
+    mxEvent.addListener(input, 'blur', applyHandler)
   }
 }
