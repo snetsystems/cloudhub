@@ -1,4 +1,5 @@
 import React, {createRef, PureComponent} from 'react'
+import {Controlled as ReactCodeMirror} from 'react-codemirror2'
 import {connect} from 'react-redux'
 import _ from 'lodash'
 import {getDeep} from 'src/utils/wrappers'
@@ -8,20 +9,18 @@ import {
   default as mxgraph,
   mxEditor as mxEditorType,
   mxCell as mxCellType,
-  mxCellState as mxCellStateType,
-  mxForm as mxFormType,
   mxGraph as mxGraphType,
   mxGraphModel as mxGraphModelType,
-  mxRectangle as mxRectangleType,
   mxGraphSelectionModel as mxGraphSelectionModeltype,
   mxEventObject as mxEventObjectType,
 } from 'mxgraph'
 
 // component
-import {TableBody} from 'src/addon/128t/reusable/layout'
+import {Form, Button, ComponentColor} from 'src/reusable_ui'
+import {Table, TableBody} from 'src/addon/128t/reusable/layout'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
-import XMLExportModal from 'src/hosts/components/XMLExportModal'
+import Modal from 'src/hosts/components/Modal'
 import PageSpinner from 'src/shared/components/PageSpinner'
 
 // constants
@@ -30,13 +29,7 @@ import {
   HANDLE_HORIZONTAL,
   HANDLE_VERTICAL,
 } from 'src/shared/constants/'
-import {
-  toolbarMenu,
-  toolsMenu,
-  tmpMenu,
-  hostMenu,
-  Menu,
-} from 'src/hosts/constants/tools'
+import {tmpMenu} from 'src/hosts/constants/tools'
 
 // Types
 import {
@@ -50,6 +43,8 @@ import {
   IpmiCell,
 } from 'src/types'
 import {AddonType} from 'src/shared/constants'
+import {ComponentStatus} from 'src/reusable_ui/types'
+import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 
 // Actions
 import {
@@ -66,12 +61,12 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 // APIs
 import {getCpuAndLoadForHosts} from 'src/hosts/apis'
-
 import {getEnv} from 'src/shared/apis/env'
 
 // Utils
 import {generateForHosts} from 'src/utils/tempVars'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
+import {getContainerElement, getIsDisableName} from 'src/hosts/utils/topology'
 
 // error
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -79,8 +74,32 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 // css
 import 'mxgraph/javascript/src/css/common.css'
 
-import {Controlled as ReactCodeMirror} from 'react-codemirror2'
-import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
+// Topology Configure
+import {
+  configureStylesheet,
+  convertValueToString,
+  isHtmlLabel,
+  getLabel,
+  dblClick,
+  setOutline,
+  getAllCells,
+  getConnectImage,
+  isCellSelectable,
+  createForm,
+  createHTMLValue,
+  openSensorData,
+  addHostsButton,
+  addToolsButton,
+  setToolbar,
+  getFoldingImage,
+  resizeCell,
+  onClickMxGraph,
+  createEdgeState,
+  onConnectMxGraph,
+  factoryMethod,
+  ipmiPowerIndicator,
+  filteredIpmiPowerStatus,
+} from 'src/hosts/configurations/topology'
 
 const mx = mxgraph()
 
@@ -190,6 +209,8 @@ interface State {
   topology: string
   topologyId: string
   isModalVisible: boolean
+  modalTitle: string
+  modalMessage: JSX.Element
   topologyStatus: RemoteDataState
 }
 
@@ -207,6 +228,8 @@ class InventoryTopology extends PureComponent<Props, State> {
       topology: null,
       topologyId: null,
       isModalVisible: false,
+      modalTitle: null,
+      modalMessage: null,
       topologyStatus: RemoteDataState.Loading,
     }
   }
@@ -231,35 +254,33 @@ class InventoryTopology extends PureComponent<Props, State> {
   private editor: mxEditorType = null
   private graph: mxGraphType = null
 
-  private OUTPUT_INPUT_FIELD = [
-    'data-label',
-    'data-link',
-    // 'data-name',
-    'data-using_minion',
-    'data-ipmi_host',
-    'data-ipmi_user',
-    'data-ipmi_pass',
-  ]
-
-  private CELL_SIZE_WIDTH = 90
-  private CELL_SIZE_HEIGHT = 90
-
-  private secretKey = this.props.links.addons.find(
-    addon => addon.name === 'ipmi-secret-key'
+  private secretKey = _.find(
+    this.props.links.addons,
+    addon => addon.name === AddonType.ipmiSecretKey
   )
 
-  private salt = this.props.links.addons.find(addon => {
-    return addon.name === AddonType.salt
-  })
+  private salt = _.find(
+    this.props.links.addons,
+    addon => addon.name === AddonType.salt
+  )
+
+  private configureStylesheet = configureStylesheet
+  private setOutline = setOutline
+  private getAllCells = getAllCells
+  private openSensorData = openSensorData
+  private addHostsButton = addHostsButton
+  private addToolsButton = addToolsButton
+  private setToolbar = setToolbar
 
   public async componentDidMount() {
     this.createEditor()
     this.configureEditor()
     this.setActionInEditor()
-    this.configureStylesheet()
+    this.configureStylesheet(mx)
     this.setOutline()
-    this.setSidebar()
-    this.setToolbar()
+    this.addHostsButton(this.state.hostsObject, this.hosts)
+    this.addToolsButton(this.tools)
+    this.setToolbar(this.editor, this.toolbar)
 
     const topology = await this.props.handleGetInventoryTopology(
       this.props.links
@@ -298,15 +319,11 @@ class InventoryTopology extends PureComponent<Props, State> {
           const hostList = _.keys(this.state.hostsObject)
 
           this.setCellsWarning(hostList)
-
-          this.setState({
-            topologyStatus: RemoteDataState.Done,
-          })
-        } else {
-          this.setState({
-            topologyStatus: RemoteDataState.Done,
-          })
         }
+
+        this.setState({
+          topologyStatus: RemoteDataState.Done,
+        })
       }
     )
 
@@ -319,7 +336,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       JSON.stringify(_.keys(this.state.hostsObject))
     ) {
       this.setCellsWarning(_.keys(this.state.hostsObject))
-      this.addHostsButton()
+      this.addHostsButton(this.state.hostsObject, this.hosts)
     }
 
     if (_.isEmpty(this.state.topologyId) && !_.isEmpty(this.state.topology)) {
@@ -371,6 +388,110 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
   }
 
+  public render() {
+    const {isModalVisible, modalMessage, modalTitle} = this.state
+    const isExportXML = modalTitle === 'Export XML'
+
+    return (
+      <div id="containerWrapper">
+        {!mxClient.isBrowserSupported() ? (
+          <>this Browser Not Supported</>
+        ) : (
+          <>
+            <Threesizer
+              orientation={HANDLE_VERTICAL}
+              divisions={this.threesizerDivisions}
+              onResize={this.handleResize('screenProportions')}
+            />
+            <Modal
+              isVisible={isModalVisible}
+              headingTitle={modalTitle}
+              onCancel={this.handleClose}
+              message={modalMessage}
+              customStyle={isExportXML ? null : {height: '122px'}}
+              containerMaxWidth={isExportXML ? null : 450}
+            />
+          </>
+        )}
+      </div>
+    )
+  }
+
+  private ConfirmMessage = ({
+    ipmiHost,
+    popupText,
+    onConfirm,
+  }: {
+    target: string
+    ipmiHost: string
+    ipmiUser: string
+    popupText: string
+    onConfirm: () => Promise<any>
+  }) => {
+    const HEADER_WIDTH = {width: '40%'}
+
+    return (
+      <Form>
+        <Form.Element>
+          <Table>
+            <TableBody>
+              <>
+                <div className={'hosts-table--tr'}>
+                  <div className={'hosts-table--th'} style={HEADER_WIDTH}>
+                    Host
+                  </div>
+                  <div className={'hosts-table--td'}>{ipmiHost}</div>
+                </div>
+                <div className={'hosts-table--tr'}>
+                  <div className={'hosts-table--th'} style={HEADER_WIDTH}>
+                    Set Power
+                  </div>
+                  <div className={'hosts-table--td'}>{popupText}</div>
+                </div>
+              </>
+            </TableBody>
+          </Table>
+        </Form.Element>
+        <Form.Footer>
+          <Button text={'Cancel'} onClick={this.handleClose} />
+          <Button
+            color={ComponentColor.Success}
+            text={'Apply'}
+            onClick={onConfirm}
+            status={ComponentStatus.Default}
+          />
+        </Form.Footer>
+      </Form>
+    )
+  }
+
+  private ExportXMLMessage = () => {
+    const options = {
+      tabIndex: 1,
+      readonly: true,
+      indentUnit: 2,
+      smartIndent: true,
+      electricChars: true,
+      completeSingle: false,
+      lineWrapping: true,
+      mode: 'xml',
+      theme: 'xml',
+      autoFocus: true,
+    }
+
+    return (
+      <FancyScrollbar>
+        <ReactCodeMirror
+          autoCursor={true}
+          value={this.state.topology}
+          options={options}
+          onBeforeChange={(): void => {}}
+          onTouchStart={(): void => {}}
+        />
+      </FancyScrollbar>
+    )
+  }
+
   private fetchIntervalData = async () => {
     await this.getHostData()
     await this.getIpmiStatus()
@@ -400,63 +521,11 @@ class InventoryTopology extends PureComponent<Props, State> {
     })
   }
 
-  private getAllCells = (parent: mxCellType, descendants: boolean) => {
-    const cells = descendants
-      ? this.graph.getModel().filterDescendants(
-          mxUtils.bind(this, function (cell) {
-            return cell != parent && this.graph.view.getState(cell) != null
-          }),
-          parent
-        )
-      : this.graph.getModel().getChildren(parent)
-
-    return cells
-  }
-
   private getIpmiStatus = async () => {
     const graph = this.graph
     const parent = graph.getDefaultParent()
-
     const cells = this.getAllCells(parent, true)
-
-    let ipmiCells: IpmiCell[] = []
-
-    _.forEach(cells, cell => {
-      if (cell.getStyle() === 'node') {
-        const containerElement = this.getContainerElement(cell.value)
-
-        if (containerElement.hasAttribute('data-ipmi_host')) {
-          const ipmiTarget = containerElement.getAttribute('data-using_minion')
-          const ipmiHost = containerElement.getAttribute('data-ipmi_host')
-          const ipmiUser = containerElement.getAttribute('data-ipmi_user')
-          const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
-
-          if (
-            !_.isEmpty(ipmiTarget) &&
-            !_.isEmpty(ipmiHost) &&
-            !_.isEmpty(ipmiUser) &&
-            !_.isEmpty(ipmiPass)
-          ) {
-            const decryptedBytes = CryptoJS.AES.decrypt(
-              ipmiPass,
-              this.secretKey.url
-            )
-            const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
-
-            const ipmiCell: IpmiCell = {
-              target: ipmiTarget,
-              host: ipmiHost,
-              user: ipmiUser,
-              pass: originalPass,
-              powerStatus: '',
-              cell: cell,
-            }
-
-            ipmiCells = [...ipmiCells, ipmiCell]
-          }
-        }
-      }
-    })
+    let ipmiCells: IpmiCell[] = filteredIpmiPowerStatus.bind(this)(cells)
 
     this.setIpmiStatus(ipmiCells)
   }
@@ -468,103 +537,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       ipmiCells
     )
 
-    const model = this.graph.getModel()
-    model.beginUpdate()
-    try {
-      _.forEach(ipmiCellsStatus, ipmiCellStatus => {
-        const childrenCell = ipmiCellStatus.cell.getChildAt(0)
-        const childrenContainerElement = this.getContainerElement(
-          childrenCell.value
-        )
-
-        if (!_.isEmpty(ipmiCellStatus.powerStatus)) {
-          if (ipmiCellStatus.powerStatus === 'on') {
-            this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#f58220', [
-              childrenCell,
-            ])
-
-            childrenContainerElement.setAttribute('ipmi-power-status', 'on')
-            childrenCell.setValue(childrenContainerElement.outerHTML)
-          } else if (ipmiCellStatus.powerStatus === 'off') {
-            this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#f58220', [
-              childrenCell,
-            ])
-
-            childrenContainerElement.setAttribute('ipmi-power-status', 'off')
-            childrenCell.setValue(childrenContainerElement.outerHTML)
-          }
-        } else {
-          childrenContainerElement.setAttribute(
-            'ipmi-power-status',
-            'unconnected'
-          )
-
-          this.graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, '#bec2cc', [
-            childrenCell,
-          ])
-
-          childrenCell.setValue(childrenContainerElement.outerHTML)
-        }
-      })
-    } finally {
-      model.endUpdate()
-      this.graphUpdate()
-    }
-  }
-
-  private openSensorData(data) {
-    if (!data) return
-    const statusWindow = document.createElement('div')
-    const statusTable = document.createElement('table')
-    const rootItem = _.keys(data)
-
-    _.reduce(
-      rootItem,
-      (__, current) => {
-        const curr: any = data[current]
-        _.forEach(_.keys(curr), c => {
-          const statusTableRow = document.createElement('tr')
-          let statusTableValue = document.createElement('td')
-
-          const kindStatus = curr[c]
-          const isUnavailable = kindStatus?.unavailable === 1
-
-          if (!isUnavailable) {
-            const statusTableKind = document.createElement('th')
-            statusTableKind.textContent = c
-
-            const {value, units, states} = kindStatus
-
-            let kindValue = ''
-
-            if (_.isNumber(value) || _.isString(value)) {
-              kindValue += value
-              if (units) {
-                kindValue += ' ' + units
-              }
-            } else {
-              if (_.isEmpty(states)) {
-                kindValue += '-'
-              } else {
-                kindValue += states[0]
-              }
-            }
-
-            statusTableValue.textContent = kindValue
-            statusTableRow.appendChild(statusTableKind)
-            statusTableRow.appendChild(statusTableValue)
-            statusTable.appendChild(statusTableRow)
-          }
-        })
-        return current
-      },
-      {}
-    )
-
-    statusWindow.appendChild(statusTable)
-
-    this.statusRef.current.appendChild(statusWindow)
-    document.querySelector('#statusContainer').classList.add('active')
+    ipmiPowerIndicator.bind(this)(ipmiCellsStatus)
   }
 
   private getIpmiTargetList = async () => {
@@ -588,35 +561,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.toolbar = this.toolbarRef.current
   }
 
-  private insertHandler = (
-    cells: mxCellType[],
-    _asText?: string,
-    model?: mxGraphModelType
-  ) => {
-    model = model ? model : this.graph.getModel()
-
-    model.beginUpdate()
-    try {
-      _.forEach(cells, cell => {
-        if (model.isEdge(cell)) {
-          const edgeObj = {
-            ...tmpMenu,
-            name: 'Edge',
-            label: 'Edge',
-            type: 'Edge',
-          }
-
-          const edge = this.createHTMLValue(edgeObj, 'edge')
-
-          cell.setValue(edge.outerHTML)
-          cell.setStyle('edge')
-        }
-      })
-    } finally {
-      model.endUpdate()
-    }
-  }
-
   private configureEditor = () => {
     new mxRubberband(this.graph)
 
@@ -634,26 +578,10 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.graph.setTooltips(false)
     this.graph.connectionHandler.addListener(
       mxEvent.CONNECT,
-      (_sender, evt) => {
-        const cells = [evt.getProperty('cell')]
-
-        if (evt.getProperty('terminalInserted')) {
-          cells.push(evt.getProperty('terminal'))
-        }
-
-        this.insertHandler(cells)
-      }
+      onConnectMxGraph.bind(this)
     )
 
-    this.graph.connectionHandler.createEdgeState = () => {
-      const edge = this.graph.createEdge(null, null, null, null, null)
-
-      return new mxCellState(
-        this.graph.view,
-        edge,
-        this.graph.getCellStyle(edge)
-      )
-    }
+    this.graph.connectionHandler.createEdgeState = createEdgeState.bind(this)
 
     if (mxClient.IS_QUIRKS) {
       document.body.style.overflow = 'hidden'
@@ -665,10 +593,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.graph.setDropEnabled(false)
 
-    this.graph.connectionHandler.getConnectImage = (state: mxCellStateType) => {
-      return new mxImage(state.style[mxConstants.STYLE_IMAGE], 16, 16)
-    }
-
+    this.graph.connectionHandler.getConnectImage = getConnectImage
     this.graph.connectionHandler.targetConnectImage = true
 
     this.graph.setAllowDanglingEdges(false)
@@ -682,7 +607,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         type: 'Group',
       }
 
-      const groupCell = this.createHTMLValue(groupObj, 'group')
+      const groupCell = createHTMLValue(groupObj, 'group')
       group.setValue(groupCell.outerHTML)
       group.setVertex(true)
       group.setConnectable(true)
@@ -692,240 +617,40 @@ class InventoryTopology extends PureComponent<Props, State> {
       return group
     }
 
-    this.graph.isCellSelectable = (cell: mxCellType) => {
-      return !this.graph.isCellLocked(cell)
-    }
+    this.graph.isCellSelectable = isCellSelectable.bind(this)
 
     this.graph.setConnectable(true)
 
-    this.graph.getLabel = cell => {
-      let tmp = mxGraph.prototype.getLabel.apply(this.graph, [cell])
-
-      const isCellCollapsed = this.graph.isCellCollapsed(cell)
-      if (cell.style !== 'group') {
-        if (isCellCollapsed) {
-          const containerElement = this.getContainerElement(tmp)
-          const title = this.getContainerTitle(containerElement)
-
-          tmp = title.outerHTML
-        }
-      }
-
-      return tmp
-    }
-
-    this.graph.isHtmlLabel = (cell: mxCellType) => {
-      return !this.graph.isSwimlane(cell)
-    }
-
-    this.graph.convertValueToString = (cell: mxCellType) => {
-      if (cell) {
-        if (cell.style === 'group' || cell.style === 'edge') {
-          const constainerElement = this.getContainerElement(cell.value)
-          const label = constainerElement.getAttribute('data-label')
-
-          return label
-        } else {
-          return cell.value
-        }
-      }
-
-      return ''
-    }
+    this.graph.dblClick = dblClick.bind(this)
+    this.graph.getLabel = getLabel.bind(this)
+    this.graph.isHtmlLabel = isHtmlLabel.bind(this)
+    this.graph.convertValueToString = convertValueToString.bind(this)
 
     this.graph
       .getSelectionModel()
-      .addListener(
-        mxEvent.CHANGE,
-        (
-          mxGraphSelectionModel: mxGraphSelectionModeltype,
-          _mxEventObject: mxEventObjectType
-        ) => {
-          mxGraphSelectionModel.eventListeners
-          this.selectionChanged(mxGraphSelectionModel.graph)
-        }
-      )
+      .addListener(mxEvent.CHANGE, this.onChangedSelection)
 
-    this.graph.addListener(mxEvent.CLICK, (_graph, me) => {
-      const {
-        properties: {cell},
-      } = me
-
-      document.querySelector('#statusContainer').classList.remove('active')
-      document.querySelector('#statusContainerRef').innerHTML = null
-
-      if (!_.isEmpty(cell) && cell.style === 'node') {
-        const containerElement = this.getContainerElement(cell.value)
-
-        if (containerElement.hasAttribute('data-ipmi_host')) {
-          const target = containerElement.getAttribute('data-using_minion')
-          const ipmiHost = containerElement.getAttribute('data-ipmi_host')
-          const ipmiUser = containerElement.getAttribute('data-ipmi_user')
-          const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
-
-          if (ipmiHost && ipmiUser && ipmiPass && target) {
-            this.saltIpmiGetSensorDataAsync(
-              target,
-              ipmiHost,
-              ipmiUser,
-              ipmiPass,
-              cell
-            )
-          }
-        }
-      }
-    })
+    this.graph.addListener(mxEvent.CLICK, onClickMxGraph.bind(this))
 
     mxPopupMenu.prototype.useLeftButtonForPopup = true
-
-    this.graph.popupMenuHandler.factoryMethod = (menu, cell, evt) => {
-      const cellValue = this.graph.getModel().getValue(cell)
-
-      // @ts-ignore
-      if (cellValue !== null && mxEvent.isLeftMouseButton(evt)) {
-        const containerElement = this.getContainerElement(
-          this.graph.getModel().getValue(cell)
-        )
-
-        if (containerElement.getAttribute('btn-type') === 'ipmi') {
-          const ipmiPowerstate = containerElement.getAttribute(
-            'ipmi-power-status'
-          )
-
-          const parentContainerElement = this.getContainerElement(
-            cell.getParent().value
-          )
-
-          const ipmiTarget = parentContainerElement.getAttribute(
-            'data-using_minion'
-          )
-          const ipmiHost = parentContainerElement.getAttribute('data-ipmi_host')
-          const ipmiUser = parentContainerElement.getAttribute('data-ipmi_user')
-          const ipmiPass = parentContainerElement.getAttribute('data-ipmi_pass')
-
-          if (ipmiPowerstate === 'on') {
-            menu.addItem('Power Off System', null, () => {
-              this.saltIpmiSetPowerAsync(
-                ipmiTarget,
-                ipmiHost,
-                ipmiUser,
-                ipmiPass,
-                IpmiSetPowerStatus.PowerOff
-              )
-            })
-
-            menu.addItem('Graceful Shutdown', null, () => {
-              this.saltIpmiSetPowerAsync(
-                ipmiTarget,
-                ipmiHost,
-                ipmiUser,
-                ipmiPass,
-                IpmiSetPowerStatus.Shutdown
-              )
-            })
-
-            menu.addItem('Force Reset System', null, () => {
-              this.saltIpmiSetPowerAsync(
-                ipmiTarget,
-                ipmiHost,
-                ipmiUser,
-                ipmiPass,
-                IpmiSetPowerStatus.Reset
-              )
-            })
-          } else if (ipmiPowerstate === 'off') {
-            menu.addItem('Power On', null, () => {
-              this.saltIpmiSetPowerAsync(
-                ipmiTarget,
-                ipmiHost,
-                ipmiUser,
-                ipmiPass,
-                IpmiSetPowerStatus.PowerOn
-              )
-            })
-          }
-          if (ipmiHost && ipmiUser && ipmiPass) {
-            this.saltIpmiGetSensorDataAsync(
-              ipmiTarget,
-              ipmiHost,
-              ipmiUser,
-              ipmiPass,
-              cell
-            )
-          }
-
-          this.graph.setSelectionCell(cell.parent)
-        }
-      }
-    }
-
-    this.graph.dblClick = evt => {
-      mxEvent.consume(evt)
-    }
+    this.graph.popupMenuHandler.factoryMethod = factoryMethod(
+      this.saltIpmiSetPowerAsync,
+      this.saltIpmiGetSensorDataAsync
+    ).bind(this)
 
     this.graph.constrainChildren = false
 
-    this.graph.resizeCell = (
-      cell: mxCellType,
-      bounds: mxRectangleType,
-      recurse?: boolean
-    ) => {
-      if (cell.getStyle() === 'node') {
-        const containerElement = this.getContainerElement(cell.value)
-        const title = containerElement.querySelector('.mxgraph-cell--title')
-        title.setAttribute('style', `width: ${bounds.width}px;`)
-
-        cell.setValue(containerElement.outerHTML)
-      }
-
-      return mxGraph.prototype.resizeCell.apply(this.graph, [
-        cell,
-        bounds,
-        recurse,
-      ])
-    }
+    this.graph.resizeCell = resizeCell.bind(this)
 
     this.editor.setGraphContainer(this.container)
-
-    // @ts-ignore
-    const getFoldingImage = mxGraph.prototype.getFoldingImage
-    this.graph.getFoldingImage = () => {
-      return null
-    }
+    this.graph.getFoldingImage = getFoldingImage.bind(this)
   }
 
-  private selectionChanged = (graph: mxGraphType) => {
-    const properties = this.properties
-    properties.innerHTML = ''
-
-    graph.container.focus()
-
-    const cell = graph.getSelectionCell()
-
-    if (cell) {
-      const form = new mxForm('properties-table')
-
-      const containerElement = this.getContainerElement(cell.value)
-      const attrs = _.filter(containerElement.attributes, attr => {
-        let isSame = false
-        _.forEach(this.OUTPUT_INPUT_FIELD, INPUT_FIELD => {
-          if (attr.nodeName === INPUT_FIELD) {
-            isSame = true
-            return
-          }
-        })
-        return isSame
-      })
-
-      const isDisableName = this.getIsDisableName(containerElement)
-
-      _.forEach(attrs, attr => {
-        this.createTextField(graph, form, cell, attr, isDisableName)
-      })
-      properties.appendChild(form.getTable())
-    } else {
-      mxUtils.writeln(properties, 'Nothing selected.')
-    }
+  private onChangedSelection = (
+    mxGraphSelectionModel: mxGraphSelectionModeltype,
+    _mxEventObject: mxEventObjectType
+  ) => {
+    createForm.bind(this)(mxGraphSelectionModel.graph, this.properties)
   }
 
   private saltIpmiSetPowerAsync = _.throttle(
@@ -934,7 +659,8 @@ class InventoryTopology extends PureComponent<Props, State> {
       ipmiHost: string,
       ipmiUser: string,
       ipmiPass: string,
-      state: IpmiSetPowerStatus
+      state: IpmiSetPowerStatus,
+      popupText: string
     ) => {
       const decryptedBytes = CryptoJS.AES.decrypt(ipmiPass, this.secretKey.url)
       const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
@@ -946,35 +672,28 @@ class InventoryTopology extends PureComponent<Props, State> {
         pass: originalPass,
       }
 
-      const setPowerStatus = await this.props.handleSetIpmiStatusAsync(
-        this.salt.url,
-        this.salt.token,
-        ipmi,
-        state
-      )
+      const onConfirm = async () => {
+        this.props
+          .handleSetIpmiStatusAsync(this.salt.url, this.salt.token, ipmi, state)
+          .finally(() => {
+            this.setState({isModalVisible: false})
+          })
+      }
 
-      return setPowerStatus
+      this.setState({
+        isModalVisible: true,
+        modalTitle: 'IPMI Set Power',
+        modalMessage: this.ConfirmMessage({
+          target,
+          ipmiHost,
+          ipmiUser,
+          popupText,
+          onConfirm,
+        }),
+      })
     },
     500
   )
-
-  // private saltIpmiGetPowerAsync = _.throttle(async (ipmi: Ipmi) => {
-  //   const decryptedBytes = CryptoJS.AES.decrypt(ipmi.pass, this.secretKey.url)
-  //   const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
-
-  //   ipmi = {
-  //     ...ipmi,
-  //     pass: originalPass,
-  //   }
-
-  //   const getPowerStatus = await this.props.handleGetIpmiStatus(
-  //     this.salt.url,
-  //     this.salt.token,
-  //     ipmi
-  //   )
-
-  //   return getPowerStatus
-  // }, 500)
 
   private saltIpmiGetSensorDataAsync = _.throttle(
     async (
@@ -1007,43 +726,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     },
     500
   )
-
-  private getParseHTML = (
-    targer: string,
-    type: DOMParserSupportedType = 'text/html'
-  ) => {
-    const parser = new DOMParser()
-    const parseHTML = parser.parseFromString(targer, type)
-
-    return parseHTML
-  }
-
-  private getContainerElement = (target: string): Element => {
-    const doc = this.getParseHTML(target)
-    const containerElement = doc.querySelector('.vertex')
-
-    return containerElement
-  }
-
-  private getContainerTitle = (element: Element) => {
-    const title = element.querySelector('.mxgraph-cell--title > strong')
-    return title
-  }
-
-  private getIsDisableName = (containerElement: Element): boolean => {
-    let isDisableName = false
-
-    if (containerElement) {
-      isDisableName =
-        containerElement.getAttribute('data-isdisablename') === 'true'
-    }
-
-    return isDisableName
-  }
-
-  private getIsHasString = (value: string): boolean => {
-    return value !== ''
-  }
 
   private setActionInEditor = () => {
     this.editor.addAction('group', () => {
@@ -1180,367 +862,16 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.editor.addAction('export', () => {
       const xmlString = this.xmlExport(this.graph.getModel())
-
-      this.setState({topology: xmlString, isModalVisible: true})
-    })
-  }
-
-  private configureStylesheet = () => {
-    let style = new Object()
-    style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE
-    style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter
-    style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER
-    style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE
-    style[mxConstants.STYLE_FILLCOLOR] = '#383846'
-    style[mxConstants.STYLE_STROKECOLOR] = '#ffffff'
-    style[mxConstants.STYLE_STROKECOLOR] = '#f58220'
-    style[mxConstants.STYLE_FONTCOLOR] = '#bec2cc'
-    style[mxConstants.STYLE_ROUNDED] = true
-    style[mxConstants.STYLE_ABSOLUTE_ARCSIZE] = true
-    style[mxConstants.STYLE_ARCSIZE] = '10'
-    style[mxConstants.STYLE_OPACITY] = '100'
-    style[mxConstants.STYLE_FONTSIZE] = '12'
-    style[mxConstants.STYLE_FONTSTYLE] = 0
-    style[mxConstants.STYLE_IMAGE_WIDTH] = '48'
-    style[mxConstants.STYLE_IMAGE_HEIGHT] = '48'
-    this.graph.getStylesheet().putDefaultVertexStyle(style)
-
-    style = new Object()
-    style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_SWIMLANE
-    style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter
-    style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER
-    style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_TOP
-    style[mxConstants.STYLE_FILLCOLOR] = '#E86A00'
-    style[mxConstants.STYLE_GRADIENTCOLOR] = '#E86A00'
-    style[mxConstants.STYLE_STROKECOLOR] = '#E86A00'
-    style[mxConstants.STYLE_FONTCOLOR] = '#ffffff'
-    style[mxConstants.STYLE_ROUNDED] = true
-    style[mxConstants.STYLE_OPACITY] = '80'
-    style[mxConstants.STYLE_STARTSIZE] = '30'
-    style[mxConstants.STYLE_FONTSIZE] = '16'
-    style[mxConstants.STYLE_FONTSTYLE] = 1
-    this.graph.getStylesheet().putCellStyle('group', style)
-
-    style = new Object()
-    style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE
-    style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter
-    style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_LEFT
-    style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE
-    style[mxConstants.STYLE_STROKECOLOR] = '#F58220'
-    this.graph.getStylesheet().putCellStyle('href', style)
-
-    style = new Object()
-    style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE
-    style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter
-    style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_LEFT
-    style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE
-    style[mxConstants.STYLE_STROKECOLOR] = '#f58220'
-    this.graph.getStylesheet().putCellStyle('ipmi', style)
-
-    style = this.graph.getStylesheet().getDefaultEdgeStyle()
-    style[mxConstants.STYLE_LABEL_BACKGROUNDCOLOR] = '#000000'
-    style[mxConstants.STYLE_FONTCOLOR] = '#FFFFFF'
-    style[mxConstants.STYLE_STROKEWIDTH] = '2'
-    style[mxConstants.STYLE_ROUNDED] = true
-    style[mxConstants.STYLE_EDGE] = mxEdgeStyle.OrthConnector
-    style[mxConstants.STYLE_ENDARROW] = null
-    style[mxConstants.STYLE_STARTARROW] = null
-  }
-
-  private setOutline = () => {
-    const outln = new mxOutline(this.graph, this.outline)
-    outln.outline.labelsVisible = true
-    outln.outline.setHtmlLabels(true)
-  }
-
-  private setSidebar = () => {
-    this.addHostsButton()
-    this.addToolsButton()
-  }
-
-  private addHostsButton = () => {
-    const hostList = _.keys(this.state.hostsObject)
-    let menus: Menu[] = []
-
-    this.hosts.innerHTML = ''
-
-    _.forEach(hostList, host => {
-      const hostObj = {
-        ...hostMenu,
-        name: host,
-        label: host,
-      }
-
-      menus.push(hostObj)
-    })
-
-    _.forEach(menus, menu => {
-      const rowElement = document.createElement('div')
-      rowElement.classList.add('hosts-table--tr')
-      rowElement.classList.add('topology-hosts-row')
-
-      const hostElement = document.createElement('div')
-      hostElement.classList.add('hosts-table--td')
-
-      const span = document.createElement('span')
-      span.style.fontSize = '14px'
-      span.textContent = menu.label
-
-      hostElement.appendChild(span)
-      rowElement.appendChild(hostElement)
-
-      this.addSidebarButton({
-        sideBarArea: this.hosts,
-        node: menu,
-        element: rowElement,
+      this.setState({
+        topology: xmlString,
+        isModalVisible: true,
+        modalTitle: 'Export XML',
+        modalMessage: this.ExportXMLMessage(),
       })
     })
   }
 
-  private addToolsButton = () => {
-    _.forEach(toolsMenu, menu => {
-      const iconBox = document.createElement('div')
-      iconBox.classList.add('tool-instance')
-
-      const icon = document.createElement('div')
-      icon.classList.add(`mxgraph-cell--icon`)
-      icon.classList.add(`mxgraph-cell--icon-${menu.type.toLowerCase()}`)
-
-      iconBox.appendChild(icon)
-
-      this.addSidebarButton({
-        sideBarArea: this.tools,
-        node: menu,
-        element: iconBox,
-      })
-    })
-  }
-
-  private addSidebarButton({
-    sideBarArea,
-    node,
-    element,
-  }: {
-    sideBarArea: HTMLElement
-    node: Menu
-    element: HTMLDivElement
-    iconClassName?: string
-  }) {
-    sideBarArea.appendChild(element)
-
-    const dragElt = document.createElement('div')
-    dragElt.style.border = 'dashed #f58220 1px'
-    dragElt.style.width = `${this.CELL_SIZE_WIDTH}px`
-    dragElt.style.height = `${this.CELL_SIZE_HEIGHT}px`
-
-    const ds = mxUtils.makeDraggable(
-      element,
-      this.graph,
-      this.dragCell(node),
-      dragElt,
-      0,
-      0,
-      true,
-      true
-    )
-
-    ds.setGuidesEnabled(true)
-  }
-
-  private createHTMLValue = (node: Menu, style: string) => {
-    const cell = document.createElement('div')
-    cell.classList.add('vertex')
-
-    const cellTitleBox = document.createElement('div')
-    cellTitleBox.classList.add('mxgraph-cell--title')
-    cellTitleBox.setAttribute('style', `width: ${this.CELL_SIZE_WIDTH}px;`)
-
-    const cellTitle = document.createElement('strong')
-    cellTitle.textContent = node.label
-
-    cellTitleBox.appendChild(cellTitle)
-
-    _.forEach(_.keys(node), attr => {
-      cell.setAttribute(`data-${attr}`, node[attr])
-    })
-
-    cell.appendChild(cellTitleBox)
-
-    if (style === 'node') {
-      const cellIconBox = document.createElement('div')
-      const cellIcon = document.createElement('div')
-
-      cellIcon.classList.add('mxgraph-cell--icon')
-      cellIcon.classList.add('mxgraph-cell--icon-box')
-      cellIcon.classList.add(`mxgraph-cell--icon-${_.toLower(node.type)}`)
-      cellIconBox.appendChild(cellIcon)
-
-      cell.appendChild(cellIconBox)
-    }
-
-    return cell
-  }
-
-  private dragCell = (node: Menu) => (
-    graph: mxGraphType,
-    _event: any,
-    _cell: mxCellType,
-    x: number,
-    y: number
-  ) => {
-    const parent = graph.getDefaultParent()
-    const model = graph.getModel()
-    let v1 = null
-
-    model.beginUpdate()
-    try {
-      const cell = this.createHTMLValue(node, 'node')
-
-      v1 = graph.insertVertex(
-        parent,
-        null,
-        cell.outerHTML,
-        x,
-        y,
-        this.CELL_SIZE_WIDTH,
-        this.CELL_SIZE_HEIGHT,
-        'node'
-      )
-
-      v1.setConnectable(true)
-
-      const ipmiBox = document.createElement('div')
-      ipmiBox.classList.add('vertex')
-      ipmiBox.setAttribute('btn-type', 'ipmi')
-
-      const ipmiIcon = document.createElement('span')
-      ipmiIcon.classList.add('mxgraph-cell--ipmi-btn')
-      ipmiIcon.classList.add('icon')
-      ipmiIcon.classList.add('switch')
-
-      ipmiBox.appendChild(ipmiIcon)
-      ipmiBox.appendChild(ipmiIcon)
-      ipmiBox.setAttribute('btn-type', 'ipmi')
-      ipmiBox.setAttribute('ipmi-power-status', 'disconnected')
-
-      const ipmiStatus = graph.insertVertex(
-        v1,
-        null,
-        ipmiBox.outerHTML,
-        0,
-        0,
-        24,
-        24,
-        `ipmi`,
-        true
-      )
-
-      ipmiStatus.geometry.offset = new mxPoint(-12, -12)
-      ipmiStatus.setConnectable(false)
-      ipmiStatus.setVisible(false)
-
-      const linkBox = document.createElement('div')
-      linkBox.classList.add('vertex')
-      linkBox.style.display = 'flex'
-      linkBox.style.alignItems = 'center'
-      linkBox.style.justifyContent = 'center'
-      linkBox.style.width = '25px'
-      linkBox.style.height = '25px'
-      linkBox.style.marginLeft = '-2px'
-
-      const link = document.createElement('a')
-      link.setAttribute('href', '')
-      link.setAttribute('target', '_blank')
-
-      const linkIcon = document.createElement('span')
-      linkIcon.classList.add('mxgraph-cell--link-btn')
-      linkIcon.classList.add('icon')
-      linkIcon.classList.add('dash-j')
-
-      link.appendChild(linkIcon)
-      linkBox.appendChild(link)
-
-      const href = graph.insertVertex(
-        v1,
-        null,
-        linkBox.outerHTML,
-        1,
-        0,
-        24,
-        24,
-        `href`,
-        true
-      )
-
-      href.geometry.offset = new mxPoint(-12, -12)
-      href.setConnectable(false)
-      href.setVisible(false)
-    } finally {
-      model.endUpdate()
-    }
-
-    graph.setSelectionCell(v1)
-  }
-
-  private setToolbar = () => {
-    _.forEach(toolbarMenu, menu => {
-      const {actionName, label, icon, isTransparent} = menu
-      this.addToolbarButton({
-        editor: this.editor,
-        toolbar: this.toolbar,
-        action: actionName,
-        label,
-        icon,
-        isTransparent,
-      })
-    })
-  }
-
-  private addToolbarButton = ({
-    editor,
-    toolbar,
-    action,
-    label,
-    icon,
-    isTransparent = false,
-  }: {
-    editor: mxEditorType
-    toolbar: HTMLElement
-    action: string
-    label: string
-    icon: string
-    isTransparent?: boolean
-  }) => {
-    const button = document.createElement('button')
-    button.style.fontSize = '10'
-    button.classList.add('button')
-    button.classList.add('button-sm')
-    button.classList.add('button-default')
-    button.classList.add('button-square')
-
-    button.title = label
-
-    if (icon !== null) {
-      const span = document.createElement('span')
-      span.classList.add('button-icon')
-      span.classList.add('icon')
-      span.classList.add(icon)
-      button.appendChild(span)
-    }
-
-    if (isTransparent) {
-      button.style.background = 'transparent'
-      button.style.color = '#f58220'
-      button.style.border = 'none'
-    }
-
-    mxEvent.addListener(button, 'click', () => {
-      editor.execute(action)
-    })
-
-    toolbar.appendChild(button)
-  }
-
+  // @ts-ignore
   private graphUpdate = () => {
     this.graph.getModel().beginUpdate()
     try {
@@ -1551,140 +882,15 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
   }
 
-  private createTextField = (
-    graph: mxGraphType,
-    form: mxFormType,
-    cell: mxCellType,
-    attribute: any,
-    isDisableName = false
-  ) => {
-    const nodeName = _.upperCase(attribute.nodeName.replace('data-', ''))
-    const ipmiTargets = this.state.minionList
-    let input = null
-
-    if (attribute.nodeName === 'data-using_minion') {
-      input = form.addCombo(nodeName, false)
-      input.style.padding = '0 9px'
-
-      form.addOption(input, 'NONE', '', false)
-      _.map(ipmiTargets, ipmiTarget => {
-        ipmiTarget === attribute.nodeValue
-          ? form.addOption(input, ipmiTarget, ipmiTarget, true)
-          : form.addOption(input, ipmiTarget, ipmiTarget, false)
-      })
-    } else {
-      const isPassword = _.includes(nodeName, 'PASS')
-      input = form.addText(
-        nodeName,
-        attribute.nodeValue,
-        isPassword ? 'password' : 'text'
-      )
-    }
-
-    input.classList.add('input-sm')
-    input.classList.add('form-control')
-
-    if (attribute.nodeName === 'data-name') {
-      input.disabled = isDisableName
-    }
-
-    const applyHandler = () => {
-      const containerElement = this.getContainerElement(cell.value)
-
-      let newValue = input.value || ''
-      let isInputPassword = false
-      const oldValue = containerElement.getAttribute(attribute.nodeName) || ''
-
-      if (newValue !== oldValue) {
-        graph.getModel().beginUpdate()
-
-        try {
-          if (attribute.nodeName === 'data-label') {
-            const title = this.getContainerTitle(containerElement)
-            title.textContent = newValue
-          }
-
-          if (attribute.nodeName === 'data-link') {
-            if (cell.children) {
-              const childrenCell = cell.getChildAt(1)
-              if (childrenCell.style === 'href') {
-                const childrenContainerElement = this.getContainerElement(
-                  childrenCell.value
-                )
-
-                const childrenLink = childrenContainerElement.querySelector('a')
-                childrenLink.setAttribute('href', newValue)
-
-                childrenCell.setValue(childrenContainerElement.outerHTML)
-                childrenCell.setVisible(this.getIsHasString(newValue))
-              }
-            }
-          }
-
-          if (attribute.nodeName === 'data-ipmi_host') {
-            if (cell.children) {
-              const childrenCell = cell.getChildAt(0)
-
-              if (childrenCell.style === 'ipmi') {
-                graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [
-                  cell.getChildAt(0),
-                ])
-
-                childrenCell.setVisible(this.getIsHasString(newValue))
-              }
-            }
-          }
-
-          if (attribute.nodeName === 'data-ipmi_pass') {
-            if (newValue.length > 0) {
-              newValue = CryptoJS.AES.encrypt(
-                newValue,
-                this.secretKey.url
-              ).toString()
-
-              isInputPassword = true
-            }
-          }
-
-          containerElement.setAttribute(attribute.nodeName, newValue)
-          cell.setValue(containerElement.outerHTML)
-        } finally {
-          if (isInputPassword) {
-            graph.setSelectionCell(cell)
-          }
-          graph.getModel().endUpdate()
-          this.graphUpdate()
-        }
-      }
-    }
-
-    mxEvent.addListener(
-      input,
-      'keypress',
-      (event: KeyboardEvent & MouseEvent) => {
-        if (event.key === 'Enter' && !mxEvent.isShiftDown(event)) {
-          input.blur()
-        }
-      }
-    )
-
-    if (mxClient.IS_IE) {
-      mxEvent.addListener(input, 'focusout', applyHandler)
-    } else {
-      mxEvent.addListener(input, 'blur', applyHandler)
-    }
-  }
-
   private setCellsWarning = (hostList: string[]) => {
     const graph = this.graph
     const parent = graph.getDefaultParent()
-
     const cells = this.getAllCells(parent, true)
 
     _.forEach(cells, cell => {
       if (cell.getStyle() === 'node') {
-        const containerElement = this.getContainerElement(cell.value)
-        const isDisableName = this.getIsDisableName(containerElement)
+        const containerElement = getContainerElement(cell.value)
+        const isDisableName = getIsDisableName(containerElement)
         const name = containerElement.getAttribute('data-name')
 
         if (isDisableName) {
@@ -1703,7 +909,6 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     // @ts-ignore
     const xmlString = mxUtils.getPrettyXml(cells)
-
     return xmlString
   }
 
@@ -1823,53 +1028,6 @@ class InventoryTopology extends PureComponent<Props, State> {
         },
       },
     ]
-  }
-
-  public render() {
-    const options = {
-      tabIndex: 1,
-      readonly: true,
-      indentUnit: 2,
-      smartIndent: true,
-      electricChars: true,
-      completeSingle: false,
-      lineWrapping: true,
-      mode: 'xml',
-      theme: 'xml',
-      autoFocus: true,
-    }
-
-    return (
-      <div id="containerWrapper">
-        {!mxClient.isBrowserSupported() ? (
-          <>this Browser Not Supported</>
-        ) : (
-          <>
-            <Threesizer
-              orientation={HANDLE_VERTICAL}
-              divisions={this.threesizerDivisions}
-              onResize={this.handleResize('screenProportions')}
-            />
-            <XMLExportModal
-              isVisible={this.state.isModalVisible}
-              headingTitle={'XML Export'}
-              onCancel={this.handleClose}
-              message={
-                <FancyScrollbar>
-                  <ReactCodeMirror
-                    autoCursor={true}
-                    value={this.state.topology}
-                    options={options}
-                    onBeforeChange={(): void => {}}
-                    onTouchStart={(): void => {}}
-                  />
-                </FancyScrollbar>
-              }
-            />
-          </>
-        )}
-      </div>
-    )
   }
 }
 

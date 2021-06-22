@@ -1,6 +1,7 @@
 // Libraries
 import React, {Component} from 'react'
 import classnames from 'classnames'
+import _ from 'lodash'
 
 // Components
 import {Dropdown, Button, ButtonShape, IconFont} from 'src/reusable_ui'
@@ -102,7 +103,10 @@ class AutoRefreshDropdown extends Component<Props> {
 
   private get selectedID(): string {
     const {selected} = this.props
-    const selectedOption = getAutoRefreshOptions().find(
+    const autoRefreshOptions = getAutoRefreshOptions()
+
+    const selectedOption = _.find(
+      autoRefreshOptions,
       option => option.milliseconds === selected
     )
 
