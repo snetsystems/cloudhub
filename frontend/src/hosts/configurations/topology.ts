@@ -761,7 +761,6 @@ export const insertHandler = function (
   _asText?: string,
   model?: mxGraphModelType
 ) {
-  console.log('insertHandler')
   model = model ? model : this.graph.getModel()
 
   model.beginUpdate()
@@ -827,8 +826,7 @@ export const factoryMethod = (
         const ipmiHost = parentContainerElement.getAttribute('data-ipmi_host')
         const ipmiUser = parentContainerElement.getAttribute('data-ipmi_user')
         const ipmiPass = parentContainerElement.getAttribute('data-ipmi_pass')
-        const _this = this
-        console.log(_this)
+
         if (ipmiPowerstate === 'on') {
           menu.addItem('Power Off System', null, () => {
             saltIpmiSetPowerAsync(
