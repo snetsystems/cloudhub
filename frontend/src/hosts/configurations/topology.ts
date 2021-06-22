@@ -792,7 +792,8 @@ export const factoryMethod = (
     ipmiHost: string,
     ipmiUser: string,
     ipmiPass: string,
-    state: IpmiSetPowerStatus
+    state: IpmiSetPowerStatus,
+    popupText: string
   ) => Promise<void>,
   saltIpmiGetSensorDataAsync: (
     target: string,
@@ -826,7 +827,8 @@ export const factoryMethod = (
         const ipmiHost = parentContainerElement.getAttribute('data-ipmi_host')
         const ipmiUser = parentContainerElement.getAttribute('data-ipmi_user')
         const ipmiPass = parentContainerElement.getAttribute('data-ipmi_pass')
-
+        const _this = this
+        console.log(_this)
         if (ipmiPowerstate === 'on') {
           menu.addItem('Power Off System', null, () => {
             saltIpmiSetPowerAsync(
@@ -834,7 +836,8 @@ export const factoryMethod = (
               ipmiHost,
               ipmiUser,
               ipmiPass,
-              IpmiSetPowerStatus.PowerOff
+              IpmiSetPowerStatus.PowerOff,
+              'Power Off System'
             )
           })
 
@@ -844,7 +847,8 @@ export const factoryMethod = (
               ipmiHost,
               ipmiUser,
               ipmiPass,
-              IpmiSetPowerStatus.Shutdown
+              IpmiSetPowerStatus.Shutdown,
+              'Graceful Shutdown'
             )
           })
 
@@ -854,7 +858,8 @@ export const factoryMethod = (
               ipmiHost,
               ipmiUser,
               ipmiPass,
-              IpmiSetPowerStatus.Reset
+              IpmiSetPowerStatus.Reset,
+              'Force Reset System'
             )
           })
         } else if (ipmiPowerstate === 'off') {
@@ -864,7 +869,8 @@ export const factoryMethod = (
               ipmiHost,
               ipmiUser,
               ipmiPass,
-              IpmiSetPowerStatus.PowerOn
+              IpmiSetPowerStatus.PowerOn,
+              'Power On'
             )
           })
         }

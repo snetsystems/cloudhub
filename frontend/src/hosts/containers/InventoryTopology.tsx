@@ -16,10 +16,11 @@ import {
 } from 'mxgraph'
 
 // component
-import {TableBody} from 'src/addon/128t/reusable/layout'
+import {Form, Button, ComponentColor} from 'src/reusable_ui'
+import {Table, TableBody} from 'src/addon/128t/reusable/layout'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
-import XMLExportModal from 'src/hosts/components/XMLExportModal'
+import Modal from 'src/hosts/components/Modal'
 import PageSpinner from 'src/shared/components/PageSpinner'
 
 // constants
@@ -29,7 +30,6 @@ import {
   HANDLE_VERTICAL,
 } from 'src/shared/constants/'
 import {tmpMenu} from 'src/hosts/constants/tools'
-import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 
 // Types
 import {
@@ -43,6 +43,8 @@ import {
   IpmiCell,
 } from 'src/types'
 import {AddonType} from 'src/shared/constants'
+import {ComponentStatus} from 'src/reusable_ui/types'
+import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 
 // Actions
 import {
@@ -207,6 +209,8 @@ interface State {
   topology: string
   topologyId: string
   isModalVisible: boolean
+  modalTitle: string
+  modalMessage: JSX.Element
   topologyStatus: RemoteDataState
 }
 
@@ -224,6 +228,8 @@ class InventoryTopology extends PureComponent<Props, State> {
       topology: null,
       topologyId: null,
       isModalVisible: false,
+      modalTitle: null,
+      modalMessage: null,
       topologyStatus: RemoteDataState.Loading,
     }
   }
@@ -383,6 +389,83 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   public render() {
+    const {isModalVisible, modalMessage, modalTitle} = this.state
+    const isExportXML = modalTitle === 'Export XML'
+
+    return (
+      <div id="containerWrapper">
+        {!mxClient.isBrowserSupported() ? (
+          <>this Browser Not Supported</>
+        ) : (
+          <>
+            <Threesizer
+              orientation={HANDLE_VERTICAL}
+              divisions={this.threesizerDivisions}
+              onResize={this.handleResize('screenProportions')}
+            />
+            <Modal
+              isVisible={isModalVisible}
+              headingTitle={modalTitle}
+              onCancel={this.handleClose}
+              message={modalMessage}
+              customStyle={isExportXML ? null : {height: '122px'}}
+              containerMaxWidth={isExportXML ? null : 450}
+            />
+          </>
+        )}
+      </div>
+    )
+  }
+
+  private ConfirmMessage = ({
+    ipmiHost,
+    popupText,
+    onConfirm,
+  }: {
+    target: string
+    ipmiHost: string
+    ipmiUser: string
+    popupText: string
+    onConfirm: () => Promise<any>
+  }) => {
+    const HEADER_WIDTH = {width: '40%'}
+
+    return (
+      <Form>
+        <Form.Element>
+          <Table>
+            <TableBody>
+              <>
+                <div className={'hosts-table--tr'}>
+                  <div className={'hosts-table--th'} style={HEADER_WIDTH}>
+                    Host
+                  </div>
+                  <div className={'hosts-table--td'}>{ipmiHost}</div>
+                </div>
+                <div className={'hosts-table--tr'}>
+                  <div className={'hosts-table--th'} style={HEADER_WIDTH}>
+                    Set Power
+                  </div>
+                  <div className={'hosts-table--td'}>{popupText}</div>
+                </div>
+              </>
+            </TableBody>
+          </Table>
+        </Form.Element>
+        <Form.Footer>
+          <Button text={'Cancel'} onClick={this.handleClose} />
+          <Button
+            color={ComponentColor.Success}
+            text={'Apply'}
+            onClick={onConfirm}
+            status={ComponentStatus.Default}
+          />
+        </Form.Footer>
+      </Form>
+    )
+  }
+
+  private ExportXMLMessage = () => {
     const options = {
       tabIndex: 1,
       readonly: true,
@@ -397,35 +480,15 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
 
     return (
-      <div id="containerWrapper">
-        {!mxClient.isBrowserSupported() ? (
-          <>this Browser Not Supported</>
-        ) : (
-          <>
-            <Threesizer
-              orientation={HANDLE_VERTICAL}
-              divisions={this.threesizerDivisions}
-              onResize={this.handleResize('screenProportions')}
-            />
-            <XMLExportModal
-              isVisible={this.state.isModalVisible}
-              headingTitle={'XML Export'}
-              onCancel={this.handleClose}
-              message={
-                <FancyScrollbar>
-                  <ReactCodeMirror
-                    autoCursor={true}
-                    value={this.state.topology}
-                    options={options}
-                    onBeforeChange={(): void => {}}
-                    onTouchStart={(): void => {}}
-                  />
-                </FancyScrollbar>
-              }
-            />
-          </>
-        )}
-      </div>
+      <FancyScrollbar>
+        <ReactCodeMirror
+          autoCursor={true}
+          value={this.state.topology}
+          options={options}
+          onBeforeChange={(): void => {}}
+          onTouchStart={(): void => {}}
+        />
+      </FancyScrollbar>
     )
   }
 
@@ -596,7 +659,8 @@ class InventoryTopology extends PureComponent<Props, State> {
       ipmiHost: string,
       ipmiUser: string,
       ipmiPass: string,
-      state: IpmiSetPowerStatus
+      state: IpmiSetPowerStatus,
+      popupText: string
     ) => {
       const decryptedBytes = CryptoJS.AES.decrypt(ipmiPass, this.secretKey.url)
       const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
@@ -608,14 +672,25 @@ class InventoryTopology extends PureComponent<Props, State> {
         pass: originalPass,
       }
 
-      const setPowerStatus = await this.props.handleSetIpmiStatusAsync(
-        this.salt.url,
-        this.salt.token,
-        ipmi,
-        state
-      )
+      const onConfirm = async () => {
+        this.props
+          .handleSetIpmiStatusAsync(this.salt.url, this.salt.token, ipmi, state)
+          .finally(() => {
+            this.setState({isModalVisible: false})
+          })
+      }
 
-      return setPowerStatus
+      this.setState({
+        isModalVisible: true,
+        modalTitle: 'IPMI Set Power',
+        modalMessage: this.ConfirmMessage({
+          target,
+          ipmiHost,
+          ipmiUser,
+          popupText,
+          onConfirm,
+        }),
+      })
     },
     500
   )
@@ -787,8 +862,12 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.editor.addAction('export', () => {
       const xmlString = this.xmlExport(this.graph.getModel())
-
-      this.setState({topology: xmlString, isModalVisible: true})
+      this.setState({
+        topology: xmlString,
+        isModalVisible: true,
+        modalTitle: 'Export XML',
+        modalMessage: this.ExportXMLMessage(),
+      })
     })
   }
 
@@ -806,7 +885,6 @@ class InventoryTopology extends PureComponent<Props, State> {
   private setCellsWarning = (hostList: string[]) => {
     const graph = this.graph
     const parent = graph.getDefaultParent()
-
     const cells = this.getAllCells(parent, true)
 
     _.forEach(cells, cell => {
