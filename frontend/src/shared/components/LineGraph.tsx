@@ -119,7 +119,9 @@ class LineGraph extends PureComponent<LineGraphProps, State> {
       this.isValidData = false
     }
 
-    this.setState({timeSeries})
+    if (this.isComponentMounted) {
+      this.setState({timeSeries})
+    }
   }
 
   public componentDidUpdate(prevProps: LineGraphProps) {
