@@ -522,6 +522,8 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private getIpmiStatus = async () => {
+    if(!this.graph) return
+    
     const graph = this.graph
     const parent = graph.getDefaultParent()
     const cells = this.getAllCells(parent, true)
@@ -883,6 +885,8 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private setCellsWarning = (hostList: string[]) => {
+    if(!this.graph) return 
+
     const graph = this.graph
     const parent = graph.getDefaultParent()
     const cells = this.getAllCells(parent, true)

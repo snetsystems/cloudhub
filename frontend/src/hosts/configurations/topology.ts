@@ -931,6 +931,8 @@ export const filteredIpmiPowerStatus = function (cells: mxCellType[]) {
 }
 
 export const ipmiPowerIndicator = function (ipmiCellsStatus: IpmiCell[]) {
+  if(!this.graph) return
+  
   const model = this.graph.getModel()
 
   model.beginUpdate()
