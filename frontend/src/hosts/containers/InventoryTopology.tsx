@@ -327,7 +327,9 @@ class InventoryTopology extends PureComponent<Props, State> {
       }
     )
 
-    this.graph.getModel().addListener(mxEvent.CHANGE, this.handleGraphModel)
+    if (this.graph) {
+      this.graph.getModel().addListener(mxEvent.CHANGE, this.handleGraphModel)
+    }
   }
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
@@ -522,8 +524,8 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private getIpmiStatus = async () => {
-    if(!this.graph) return
-    
+    if (!this.graph) return
+
     const graph = this.graph
     const parent = graph.getDefaultParent()
     const cells = this.getAllCells(parent, true)
@@ -885,7 +887,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private setCellsWarning = (hostList: string[]) => {
-    if(!this.graph) return 
+    if (!this.graph) return
 
     const graph = this.graph
     const parent = graph.getDefaultParent()
