@@ -255,12 +255,7 @@ export class Applications extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {
-      autoRefresh,
-      onChooseAutoRefresh,
-      onManualRefresh,
-      inPresentationMode,
-    } = this.props
+    const {autoRefresh, onManualRefresh, inPresentationMode} = this.props
 
     const {selected} = this.state
 
