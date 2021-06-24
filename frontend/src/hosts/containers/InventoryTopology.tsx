@@ -219,6 +219,12 @@ class InventoryTopology extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
 
+    this.setState = (args, callback) => {
+      if (!this.isComponentMounted) return
+
+      PureComponent.prototype.setState.bind(this)(args, callback)
+    }
+
     this.state = {
       screenProportions: [0.15, 0.85],
       sidebarProportions: [0.333, 0.333, 0.333],
@@ -235,6 +241,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   public intervalID: number
+  private isComponentMounted: boolean = true
 
   private containerRef = createRef<HTMLDivElement>()
   private outlineRef = createRef<HTMLDivElement>()
@@ -320,12 +327,11 @@ class InventoryTopology extends PureComponent<Props, State> {
 
           this.setCellsWarning(hostList)
         }
-
-        this.setState({
-          topologyStatus: RemoteDataState.Done,
-        })
       }
     )
+    this.setState({
+      topologyStatus: RemoteDataState.Done,
+    })
 
     if (this.graph) {
       this.graph.getModel().addListener(mxEvent.CHANGE, this.handleGraphModel)
@@ -388,6 +394,8 @@ class InventoryTopology extends PureComponent<Props, State> {
       clearInterval(this.intervalID)
       this.intervalID = null
     }
+
+    this.isComponentMounted = false
   }
 
   public render() {
