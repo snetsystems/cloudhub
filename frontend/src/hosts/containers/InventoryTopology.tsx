@@ -81,7 +81,6 @@ import {
   isHtmlLabel,
   getLabel,
   dblClick,
-  setOutline,
   getAllCells,
   getConnectImage,
   isCellSelectable,
@@ -103,7 +102,7 @@ import {
 
 const mx = mxgraph()
 
-const {
+export const {
   mxEditor,
   mxGuide,
   mxDivResizer,
@@ -272,7 +271,6 @@ class InventoryTopology extends PureComponent<Props, State> {
   )
 
   private configureStylesheet = configureStylesheet
-  private setOutline = setOutline
   private getAllCells = getAllCells
   private openSensorData = openSensorData
   private addHostsButton = addHostsButton
@@ -284,7 +282,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.configureEditor()
     this.setActionInEditor()
     this.configureStylesheet(mx)
-    this.setOutline()
     this.addHostsButton(this.state.hostsObject, this.hosts)
     this.addToolsButton(this.tools)
     this.setToolbar(this.editor, this.toolbar)
@@ -656,6 +653,10 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.editor.setGraphContainer(this.container)
     this.graph.getFoldingImage = getFoldingImage.bind(this)
+
+    const outln = new mxOutline(this.graph, this.outline)
+    outln.outline.labelsVisible = true
+    outln.outline.setHtmlLabels(true)
   }
 
   private onChangedSelection = (
