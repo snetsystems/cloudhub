@@ -21,7 +21,6 @@ import {Host, IpmiCell} from 'src/types'
 import {
   getContainerElement,
   getContainerTitle,
-  getIsDisableName,
   getIsHasString,
 } from 'src/hosts/utils/topology'
 
@@ -32,13 +31,11 @@ import {
   tmpMenu,
   hostMenu,
   Menu,
+  eachNodeTypeAttrs,
+  orderMenu,
 } from 'src/hosts/constants/tools'
 
-import {
-  OUTPUT_INPUT_FIELD,
-  CELL_SIZE_WIDTH,
-  CELL_SIZE_HEIGHT,
-} from 'src/hosts/constants/topology'
+import {CELL_SIZE_WIDTH, CELL_SIZE_HEIGHT} from 'src/hosts/constants/topology'
 
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 
@@ -187,28 +184,79 @@ export const createForm = function (
   properties.innerHTML = ''
 
   const cell = graph.getSelectionCell()
-
   if (cell) {
-    const form = new mxForm('properties-table')
+    const model = graph.getModel()
+    model.beginUpdate()
+    try {
+      const form = new mxForm('properties-table')
+      const containerElement = getContainerElement(cell.value)
 
-    const containerElement = getContainerElement(cell.value)
-    const attrs = _.filter(containerElement.attributes, attr => {
-      let isSame = false
-      _.forEach(OUTPUT_INPUT_FIELD, INPUT_FIELD => {
-        if (attr.nodeName === INPUT_FIELD) {
-          isSame = true
-          return
+      let attrs = []
+
+      const getNodeType =
+        containerElement.hasAttribute('data-type') &&
+        containerElement.getAttribute('data-type')
+
+      const getNodeAttrs = eachNodeTypeAttrs?.[getNodeType]?.attrs
+      const getNodeHideAttrs = _.map(
+        eachNodeTypeAttrs?.[getNodeType]?.hideAttrs,
+        hideAttr => {
+          return hideAttr === 'class' ? hideAttr : `data-${hideAttr}`
         }
+      )
+
+      const getNodeDisableAttrs = _.map(
+        eachNodeTypeAttrs?.[getNodeType]?.disableAttrs,
+        disableAttr => {
+          return `data-${disableAttr}`
+        }
+      )
+
+      const getCellAttrsNodeName = _.map(
+        containerElement.attributes,
+        attr => attr.nodeName
+      )
+
+      const getNodeAttrsNodeName = _.map(
+        _.keys(getNodeAttrs),
+        key => `data-${key}`
+      )
+
+      const useAttrsNodeName = [...getNodeAttrsNodeName, ...getNodeHideAttrs]
+
+      let addAttrs = _.difference(useAttrsNodeName, getCellAttrsNodeName)
+      let removeAttrs = _.difference(getCellAttrsNodeName, useAttrsNodeName)
+
+      _.forEach(addAttrs, addAttr => {
+        containerElement.setAttribute(
+          addAttr,
+          getNodeAttrs[_.replace(addAttr, /data-/i, '')]
+        )
       })
-      return isSame
-    })
 
-    const isDisableName = getIsDisableName(containerElement)
+      _.forEach(removeAttrs, removeAttr => {
+        containerElement.removeAttribute(removeAttr)
+      })
 
-    _.forEach(attrs, attr => {
-      createTextField.bind(this)(graph, form, cell, attr, isDisableName)
-    })
-    properties.appendChild(form.getTable())
+      const hideAttrs = _.filter(
+        containerElement.attributes,
+        attr => !_.includes(getNodeHideAttrs, attr.nodeName)
+      )
+
+      attrs = _.sortBy([...hideAttrs], attr => {
+        return orderMenu[_.replace(attr.nodeName, /data-/i, '')].order
+      })
+
+      _.forEach(attrs, attr => {
+        const isDisableAttr = _.includes(getNodeDisableAttrs, attr.nodeName)
+        createTextField.bind(this)(graph, form, cell, attr, isDisableAttr)
+      })
+
+      properties.appendChild(form.getTable())
+    } finally {
+      model.endUpdate()
+      graph.refresh()
+    }
   } else {
     mxUtils.writeln(properties, 'Nothing selected.')
   }
@@ -219,7 +267,7 @@ export const createTextField = function (
   form: mxFormType,
   cell: mxCellType,
   attribute: any,
-  isDisableName = false
+  isDisable = false
 ) {
   const nodeName = _.upperCase(attribute.nodeName.replace('data-', ''))
   const ipmiTargets = this.state.minionList
@@ -246,10 +294,7 @@ export const createTextField = function (
 
   input.classList.add('input-sm')
   input.classList.add('form-control')
-
-  if (attribute.nodeName === 'data-name') {
-    input.disabled = isDisableName
-  }
+  input.disabled = isDisable
 
   const applyHandler = () => {
     const containerElement = getContainerElement(cell.value)
@@ -287,12 +332,11 @@ export const createTextField = function (
         if (attribute.nodeName === 'data-ipmi_host') {
           if (cell.children) {
             const childrenCell = cell.getChildAt(0)
-
-            if (childrenCell.style === 'ipmi') {
+            const sepCellStyle = _.split(childrenCell.style, ';')
+            if (sepCellStyle[0] === 'ipmi') {
               graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [
-                cell.getChildAt(0),
+                childrenCell,
               ])
-
               childrenCell.setVisible(getIsHasString(newValue))
             }
           }

@@ -66,7 +66,7 @@ import {getEnv} from 'src/shared/apis/env'
 // Utils
 import {generateForHosts} from 'src/utils/tempVars'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
-import {getContainerElement, getIsDisableName} from 'src/hosts/utils/topology'
+import {getContainerElement, getIsDisableAttr} from 'src/hosts/utils/topology'
 
 // error
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -905,7 +905,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     _.forEach(cells, cell => {
       if (cell.getStyle() === 'node') {
         const containerElement = getContainerElement(cell.value)
-        const isDisableName = getIsDisableName(containerElement)
+        const isDisableName = getIsDisableAttr(containerElement, 'data-name')
         const name = containerElement.getAttribute('data-name')
 
         if (isDisableName) {

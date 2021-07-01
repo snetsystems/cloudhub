@@ -69,15 +69,33 @@ export const toolbarMenu: ToolbarMenu[] = [
 ]
 
 export interface Menu {
+  class?: string[]
   type: string
   name: string
   label: string
   link?: string
   using_minion?: string
-  ipmi_Host?: string
-  ipmi_User?: string
-  ipmi_Pass?: string
-  [key: string]: any
+  ipmi_host?: string
+  ipmi_user?: string
+  ipmi_pass?: string
+}
+
+export type keysMenu = keyof Menu
+
+export type OrderMenu = {
+  [key in keysMenu]: {order: number}
+}
+
+export const orderMenu: OrderMenu = {
+  class: {order: 0},
+  type: {order: 0},
+  name: {order: 1},
+  label: {order: 2},
+  link: {order: 3},
+  using_minion: {order: 4},
+  ipmi_host: {order: 5},
+  ipmi_user: {order: 6},
+  ipmi_pass: {order: 7},
 }
 
 export const toolsMenu: Menu[] = [
@@ -86,10 +104,6 @@ export const toolsMenu: Menu[] = [
     name: 'server',
     label: 'Server',
     link: '',
-    using_minion: '',
-    ipmi_Host: '',
-    ipmi_User: '',
-    ipmi_Pass: '',
   },
   {
     type: 'Database',
@@ -157,16 +171,82 @@ export const tmpMenu: Menu = {
   type: '',
   name: '',
   label: '',
-  isDisableName: false,
 }
 
 export const hostMenu: Menu = {
   ...tmpMenu,
   type: 'Server',
-  isDisableName: true,
   link: '',
-  using_minion: '',
-  ipmi_host: '',
-  ipmi_user: '',
-  ipmi_pass: '',
+}
+
+export enum NodeType {
+  Server = 'Server',
+  Database = 'Database',
+  Internet = 'Internet',
+  Workstation = 'Workstation',
+  VirtualMachine = 'VirtualMachine',
+  Email = 'Email',
+  Firewall = 'Firewall',
+  Router = 'Router',
+  WirelessRouter = 'WirelessRouter',
+  Switch = 'Switch',
+  Cloud = 'Cloud',
+  Group = 'Group',
+  Edge = 'Edge',
+}
+
+export type NodeTypeInterface = {
+  [key in NodeType]: {
+    attrs: Menu
+    hideAttrs: keysMenu[]
+    disableAttrs: keysMenu[]
+  }
+}
+
+export const defaultHideAttrs: keysMenu[] = ['class', 'type']
+export const defaultDisableAttrs: keysMenu[] = []
+
+export const defaultNodeTypeSettings = {
+  attrs: {...tmpMenu},
+  hideAttrs: [...defaultHideAttrs],
+  disableAttrs: [...defaultDisableAttrs],
+}
+
+export const eachNodeTypeAttrs: NodeTypeInterface = {
+  [NodeType.Server]: {
+    ...defaultNodeTypeSettings,
+    attrs: {
+      ...defaultNodeTypeSettings.attrs,
+      link: '',
+      using_minion: '',
+      ipmi_host: '',
+      ipmi_user: '',
+      ipmi_pass: '',
+    },
+    hideAttrs: [...defaultNodeTypeSettings.hideAttrs],
+    disableAttrs: [...defaultNodeTypeSettings.disableAttrs, 'name'],
+  },
+  [NodeType.Database]: {
+    ...defaultNodeTypeSettings,
+    attrs: {
+      ...defaultNodeTypeSettings.attrs,
+    },
+  },
+  [NodeType.Internet]: {...defaultNodeTypeSettings},
+  [NodeType.Workstation]: {...defaultNodeTypeSettings},
+  [NodeType.VirtualMachine]: {...defaultNodeTypeSettings},
+  [NodeType.Email]: {...defaultNodeTypeSettings},
+  [NodeType.Firewall]: {...defaultNodeTypeSettings},
+  [NodeType.Router]: {...defaultNodeTypeSettings},
+  [NodeType.WirelessRouter]: {...defaultNodeTypeSettings},
+  [NodeType.Switch]: {...defaultNodeTypeSettings},
+  [NodeType.Cloud]: {...defaultNodeTypeSettings},
+  [NodeType.Group]: {
+    ...defaultNodeTypeSettings,
+    hideAttrs: [...defaultNodeTypeSettings.hideAttrs, 'name'],
+  },
+  [NodeType.Edge]: {
+    ...defaultNodeTypeSettings,
+    hideAttrs: [...defaultNodeTypeSettings.hideAttrs, 'name'],
+  },
 }
