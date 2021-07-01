@@ -882,6 +882,53 @@ class InventoryTopology extends PureComponent<Props, State> {
         modalMessage: this.ExportXMLMessage(),
       })
     })
+
+    const wrapperToggle = document.createElement('div')
+    wrapperToggle.classList.add('all-users-admin-toggle')
+
+    const toggleSlider = document.createElement('div')
+    toggleSlider.classList.add('slide-toggle')
+    toggleSlider.classList.add('slide-toggle-sm')
+    toggleSlider.classList.add('slide-toggle-success')
+
+    if (this.graph.isEnabled()) {
+      toggleSlider.classList.add('active')
+    } else {
+      toggleSlider.classList.remove('active')
+    }
+
+    const toggleKnob = document.createElement('div')
+    toggleKnob.classList.add('slide-toggle--knob')
+
+    const span = document.createElement('span')
+    span.textContent = 'Editable'
+
+    toggleSlider.appendChild(toggleKnob)
+    wrapperToggle.appendChild(toggleSlider)
+    wrapperToggle.appendChild(span)
+
+    document.querySelector('#toolbarContainer').appendChild(wrapperToggle)
+
+    mxEvent.addListener(wrapperToggle, 'click', () => {
+      if (toggleSlider.classList.contains('active')) {
+        toggleSlider.classList.remove('active')
+        this.editor.execute('disabled')
+      } else {
+        toggleSlider.classList.add('active')
+        this.editor.execute('enabled')
+      }
+    })
+
+    this.editor.addAction('enabled', () => {
+      this.graph.setEnabled(true)
+    })
+
+    this.editor.addAction('disabled', () => {
+      this.graph.clearSelection()
+      this.graph.setEnabled(false)
+    })
+
+    this.graph.setEnabled
   }
 
   // @ts-ignore

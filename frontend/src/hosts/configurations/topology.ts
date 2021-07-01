@@ -473,6 +473,8 @@ export const dragCell = (node: Menu) => (
   x: number,
   y: number
 ) => {
+  if (!graph.isEnabled()) return
+
   const parent = graph.getDefaultParent()
   const model = graph.getModel()
   let v1 = null
