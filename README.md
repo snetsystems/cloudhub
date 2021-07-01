@@ -49,12 +49,12 @@ For the agent management or vsphere, k8s inventory viewer test, you prepare to S
   - SWAN Router & SDPlex(Oncue) Features.
   - Bare-metal Server Remote Management via **IPMI**
   <p align="center">
-    <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/infrastructure.png"/>
-    <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/topology_map.png"/>
-    <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/VMWare.png"/>
-    <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/applications.png"/>
-    <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/agent_configure.png"/>
-    <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/swan.png"/>
+    <img src="./docs/images/infrastructure.png"/>
+    <img src="./docs/images/topology_map.png"/>
+    <img src="./docs/images/VMWare.png"/>
+    <img src="./docs/images/applications.png"/>
+    <img src="./docs/images/agent_configure.png"/>
+    <img src="./docs/images/swan.png"/>
   </p>
 
 ## Change log
