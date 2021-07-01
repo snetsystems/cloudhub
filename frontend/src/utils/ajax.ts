@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import axios, {AxiosResponse, Method} from 'axios'
+import axios, {AxiosResponse, CancelTokenSource, Method} from 'axios'
+import _ from 'lodash'
 
 let links
 export const setAJAXLinks = ({updatedLinks}): void => {
@@ -83,6 +84,7 @@ interface RequestParams {
   params?: object
   headers?: object
   validateStatus?: (status: number) => boolean
+  cancelToken?: CancelTokenSource['token']
 }
 
 async function AJAX<T = any>(
@@ -94,6 +96,7 @@ async function AJAX<T = any>(
     data = {},
     params = {},
     headers = {},
+    cancelToken = null,
   }: RequestParams,
   excludeBasepath = false
 ): Promise<(T | (T & {links: object})) | AxiosResponse<T>> {
@@ -112,6 +115,7 @@ async function AJAX<T = any>(
       data,
       params,
       headers,
+      cancelToken,
     })
 
     // TODO: Just return the unadulterated response without grafting auth, me,
@@ -134,6 +138,70 @@ export async function getAJAX<T = any>(url: string): Promise<AxiosResponse<T>> {
   } catch (error) {
     console.error(error)
     throw error
+  }
+}
+
+interface cancelablePromise {
+  promise: Promise<void>
+  cancel: CancelTokenSource['cancel']
+  cancelMessage?: string
+}
+
+interface cancelableRequestParams extends RequestParams {
+  cancelMessage?: string
+}
+
+export async function cancelablePromise(params: cancelableRequestParams) {
+  if (!this) return
+
+  if (!this?._cancelablePromises) {
+    this['_cancelablePromises'] = []
+    this._cancelablePromises as cancelablePromise[]
+  }
+
+  const {token, cancel} = axios.CancelToken.source()
+  params = {...params, cancelToken: token}
+
+  const promise = AJAX({...params})
+    .then(response => {
+      this.promises = _.filter(this.promises, p => p.promise !== promise)
+      return response
+    })
+    .catch(error => {
+      if (axios.isCancel(error)) {
+        let message = '[Request canceled] '
+
+        if (error.message) {
+          message += error.message
+        }
+
+        console.warn(message)
+        throw error
+      } else {
+        throw error
+      }
+    })
+
+  let cancelablePromise: cancelablePromise = {
+    promise,
+    cancel,
+    cancelMessage: params.cancelMessage,
+  }
+
+  this._cancelablePromises.push(cancelablePromise)
+  return promise
+}
+
+export function cancelPendingPromises() {
+  if (this?._cancelablePromises) {
+    _.forEach(this._cancelablePromises, p => p.cancel(p?.cancelMessage))
+  }
+}
+
+export function createCancelableAJAX() {
+  return {
+    cancelablePromise: cancelablePromise.bind(this),
+    cancelPendingPromises: cancelPendingPromises.bind(this),
   }
 }
 

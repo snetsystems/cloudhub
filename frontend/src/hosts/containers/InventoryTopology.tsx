@@ -81,7 +81,6 @@ import {
   isHtmlLabel,
   getLabel,
   dblClick,
-  setOutline,
   getAllCells,
   getConnectImage,
   isCellSelectable,
@@ -103,7 +102,7 @@ import {
 
 const mx = mxgraph()
 
-const {
+export const {
   mxEditor,
   mxGuide,
   mxDivResizer,
@@ -219,6 +218,12 @@ class InventoryTopology extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
 
+    this.setState = (args, callback) => {
+      if (!this.isComponentMounted) return
+
+      PureComponent.prototype.setState.bind(this)(args, callback)
+    }
+
     this.state = {
       screenProportions: [0.15, 0.85],
       sidebarProportions: [0.333, 0.333, 0.333],
@@ -235,6 +240,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   public intervalID: number
+  private isComponentMounted: boolean = true
 
   private containerRef = createRef<HTMLDivElement>()
   private outlineRef = createRef<HTMLDivElement>()
@@ -265,7 +271,6 @@ class InventoryTopology extends PureComponent<Props, State> {
   )
 
   private configureStylesheet = configureStylesheet
-  private setOutline = setOutline
   private getAllCells = getAllCells
   private openSensorData = openSensorData
   private addHostsButton = addHostsButton
@@ -277,7 +282,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.configureEditor()
     this.setActionInEditor()
     this.configureStylesheet(mx)
-    this.setOutline()
     this.addHostsButton(this.state.hostsObject, this.hosts)
     this.addToolsButton(this.tools)
     this.setToolbar(this.editor, this.toolbar)
@@ -320,14 +324,15 @@ class InventoryTopology extends PureComponent<Props, State> {
 
           this.setCellsWarning(hostList)
         }
-
-        this.setState({
-          topologyStatus: RemoteDataState.Done,
-        })
       }
     )
+    this.setState({
+      topologyStatus: RemoteDataState.Done,
+    })
 
-    this.graph.getModel().addListener(mxEvent.CHANGE, this.handleGraphModel)
+    if (this.graph) {
+      this.graph.getModel().addListener(mxEvent.CHANGE, this.handleGraphModel)
+    }
   }
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
@@ -386,6 +391,8 @@ class InventoryTopology extends PureComponent<Props, State> {
       clearInterval(this.intervalID)
       this.intervalID = null
     }
+
+    this.isComponentMounted = false
   }
 
   public render() {
@@ -522,6 +529,8 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private getIpmiStatus = async () => {
+    if (!this.graph) return
+
     const graph = this.graph
     const parent = graph.getDefaultParent()
     const cells = this.getAllCells(parent, true)
@@ -644,6 +653,10 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.editor.setGraphContainer(this.container)
     this.graph.getFoldingImage = getFoldingImage.bind(this)
+
+    const outln = new mxOutline(this.graph, this.outline)
+    outln.outline.labelsVisible = true
+    outln.outline.setHtmlLabels(true)
   }
 
   private onChangedSelection = (
@@ -883,6 +896,8 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private setCellsWarning = (hostList: string[]) => {
+    if (!this.graph) return
+
     const graph = this.graph
     const parent = graph.getDefaultParent()
     const cells = this.getAllCells(parent, true)

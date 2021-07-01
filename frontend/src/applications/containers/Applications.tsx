@@ -114,9 +114,17 @@ export class Applications extends PureComponent<Props, State> {
   }
 
   public intervalID: number
+  private isComponentMounted: boolean = true
 
   constructor(props: Props) {
     super(props)
+
+    this.setState = (args, callback) => {
+      if (!this.isComponentMounted) return
+
+      PureComponent.prototype.setState.bind(this)(args, callback)
+    }
+
     this.state = {
       hostsObject: {},
       appHostData: {},
@@ -252,15 +260,12 @@ export class Applications extends PureComponent<Props, State> {
     clearInterval(this.intervalID)
     this.intervalID = null
     GlobalAutoRefresher.stopPolling()
+
+    this.isComponentMounted = false
   }
 
   public render() {
-    const {
-      autoRefresh,
-      onChooseAutoRefresh,
-      onManualRefresh,
-      inPresentationMode,
-    } = this.props
+    const {autoRefresh, onManualRefresh, inPresentationMode} = this.props
 
     const {selected} = this.state
 
