@@ -108,9 +108,16 @@ export class HostsPage extends PureComponent<Props, State> {
     manualRefresh: 0,
   }
   public intervalID: number
+  private isComponentMounted: boolean = true
 
   constructor(props: Props) {
     super(props)
+
+    this.setState = (args, callback) => {
+      if (!this.isComponentMounted) return
+
+      PureComponent.prototype.setState.bind(this)(args, callback)
+    }
 
     this.state = {
       hostsObject: {},
@@ -238,6 +245,8 @@ export class HostsPage extends PureComponent<Props, State> {
     clearInterval(this.intervalID)
     this.intervalID = null
     GlobalAutoRefresher.stopPolling()
+
+    this.isComponentMounted = false
   }
 
   public handleChooseAutoRefresh(option) {

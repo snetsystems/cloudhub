@@ -1,0 +1,211 @@
+{
+  "id": "28166bd6-28b7-4336-8edd-f6ae850ba066",
+  "app": "oracle",
+  "measurement": "oracledb",
+  "autoflow": true,
+  "cells": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "cee8adda-4ff6-4c32-8514-2b6add9bde21",
+      "name": "Active Session Count",
+      "queries": [
+        {
+          "query": "SELECT mean(\"ACTIVE_SESSIONS\") AS \"mean_ACTIVE_SESSIONS\" FROM \":db:\".\":rp:\".\"oracledb\"",
+          "label": "Active Session Count",
+          "groupbys": [],
+          "wheres": ["\"METRIC_NAME\"='Active_Sessions'"]
+        }
+      ],
+      "type": "line"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "9bd2acc9-6b80-47d7-908b-e9cfdac63e2e",
+      "name": "Session Limit Usage (%)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"SESSION_LIMIT_USAGE\") AS \"mean_SESSION_LIMIT_USAGE\" FROM \":db:\".\":rp:\".\"oracledb\"",
+          "label": "Session Limit Usage (%)",
+          "groupbys": [],
+          "wheres": ["\"METRIC_NAME\"='Session_Limit_Usage'"]
+        }
+      ],
+      "type": "line"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "63b0f51c-ffb1-467f-b214-e8635353b290",
+      "name": "Total Session Count",
+      "queries": [
+        {
+          "query": "SELECT mean(\"SESSION_COUNT\") AS \"mean_SESSION_COUNT\" FROM \":db:\".\":rp:\".\"oracledb\"",
+          "label": "Total Session Count",
+          "groupbys": [],
+          "wheres": ["\"METRIC_NAME\"='Session_Count'"]
+        }
+      ],
+      "type": "line"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "96a8cf88-dbd0-4229-a95e-46f3443adcb8",
+      "name": "Physical Disk Reads",
+      "queries": [
+        {
+          "query": "SELECT non_negative_derivative(mean(\"PHYSICAL_READS\"))/10 AS \"mean_PHYSICAL_READS\" FROM \":db:\".\":rp:\".\"oracledb\"",
+          "label": "Physical Disk Reads",
+          "groupbys": [],
+          "wheres": ["\"METRIC_NAME\"='Physical_Reads'"]
+        }
+      ],
+      "type": "line"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "ae2e6d22-4f52-4c32-853b-7af7a339d544",
+      "name": "Physical Disk Writes",
+      "queries": [
+        {
+          "query": "SELECT non_negative_derivative(mean(\"PHYSICAL_WRITES\"))/10 AS \"mean_PHYSICAL_WRITES\" FROM \":db:\".\":rp:\".\"oracledb\"",
+          "label": "Physical Disk Writes",
+          "groupbys": [],
+          "wheres": ["\"METRIC_NAME\"='Physical_Writes'"]
+        }
+      ],
+      "type": "line"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "a55cf706-bdaa-46a6-ad32-55ec36a83f72",
+      "name": "Sorts on Disk",
+      "queries": [
+        {
+          "query": "SELECT non_negative_derivative(mean(\"DISK_SORTS\"))/10 AS \"mean_DISK_SORTS\" FROM \":db:\".\":rp:\".\"oracledb\"",
+          "label": "Sorts on Disk",
+          "groupbys": [],
+          "wheres": ["\"METRIC_NAME\"='Disk_Sorts'"]
+        }
+      ],
+      "type": "line"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "b7f7adf7-b6d0-4aa4-8265-d9b9772ae264",
+      "name": "Total Table Scans",
+      "queries": [
+        {
+          "query": "SELECT non_negative_derivative(mean(\"TOTAL_TABLE_SCANS\"))/10 AS \"mean_TOTAL_TABLE_SCANS\" FROM \":db:\".\":rp:\".\"oracledb\"",
+          "label": "Total Table Scans",
+          "groupbys": [],
+          "wheres": ["\"METRIC_NAME\"='Total_Table_Scans'"]
+        }
+      ],
+      "type": "line"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "c08310e7-212e-4a10-a785-26533ad05f14",
+      "name": "In-Memory Sorts Ratio (%)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"MEMORY_SORT_RATIO\") AS \"mean_MEMORY_SORT_RATIO\" FROM \":db:\".\":rp:\".\"oracledb\"",
+          "label": "In-Memory Sorts Ratio (%)",
+          "groupbys": [],
+          "wheres": ["\"METRIC_NAME\"='MEMORY_SORT'"]
+        }
+      ],
+      "type": "line"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "6a7f92b7-6244-4a4a-b993-f87a26b10a0b",
+      "name": "Shared Pool Free Memory (%)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"SHARED_POOL_FREE\") AS \"mean_SHARED_POOL_FREE\" FROM \":db:\".\":rp:\".\"oracledb\"",
+          "label": "Shared Pool Free Memory (%)",
+          "groupbys": [],
+          "wheres": ["\"METRIC_NAME\"='Shared_Pool_Free'"]
+        }
+      ],
+      "type": "line"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "b9315824-137a-4842-9b31-cdd4ceeee0af",
+      "name": "User Rollbacks",
+      "queries": [
+        {
+          "query": "SELECT non_negative_derivative(mean(\"USER_ROLLBACKS\")) / 10 AS \"mean_USER_ROLLBACKS\" FROM \":db:\".\":rp:\".\"oracledb\"",
+          "label": "User Rollbacks",
+          "groupbys": [],
+          "wheres": ["\"METRIC_NAME\"='User_Rollbacks'"]
+        }
+      ],
+      "type": "line"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "58e775dd-fa28-47ca-a5f9-2f57617db29e",
+      "name": "Enqueue Timeouts",
+      "queries": [
+        {
+          "query": "SELECT mean(\"ENQUEUE_TIMEOUTS\") AS \"mean_ENQUEUE_TIMEOUTS\" FROM \":db:\".\":rp:\".\"oracledb\"",
+          "label": "Enqueue Timeouts",
+          "groupbys": [],
+          "wheres": ["\"METRIC_NAME\"='Enqueue_Timeouts'"]
+        }
+      ],
+      "type": "line"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "c5bf1bf4-b01c-4b1a-80d5-37e45b3750dd",
+      "name": "Tablespace Usage (%)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"TS_PCT_USED\") AS \"mean_TS_PCT_USED\" FROM \":db:\".\":rp:\".\"oracledb\"",
+          "label": "Tablespace Usage (%)",
+          "groupbys": ["\"TABLESPACE_NAME\""]
+        }
+      ],
+      "type": "line"
+    }
+  ]
+}

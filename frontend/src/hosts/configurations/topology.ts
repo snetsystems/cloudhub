@@ -48,7 +48,6 @@ const {
   mxGraph,
   mxEvent,
   mxUtils,
-  mxOutline,
   mxConstants,
   mxImage,
   mxForm,
@@ -157,12 +156,6 @@ export const convertValueToString = function (cell: mxCellType) {
 
 export const dblClick = function (evt: Event) {
   mxEvent.consume(evt)
-}
-
-export const setOutline = function () {
-  const outln = new mxOutline(this.graph, this.outline)
-  outln.outline.labelsVisible = true
-  outln.outline.setHtmlLabels(true)
 }
 
 export const getAllCells = function (parent: mxCellType, descendants: boolean) {
@@ -931,6 +924,8 @@ export const filteredIpmiPowerStatus = function (cells: mxCellType[]) {
 }
 
 export const ipmiPowerIndicator = function (ipmiCellsStatus: IpmiCell[]) {
+  if (!this.graph) return
+
   const model = this.graph.getModel()
 
   model.beginUpdate()

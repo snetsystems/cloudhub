@@ -1,0 +1,1730 @@
+{
+  "id": "3ee69add-35ec-4080-9f45-f2338e396a9f",
+  "meta": {
+    "name": "Oracle Database",
+    "version": "1.0",
+    "dashboardVersion": "1.x",
+    "description": "Dashboard for the telegraf input plug-in for Oracle.",
+    "author": "InfluxData",
+    "license": "MIT",
+    "icon": "",
+    "url": "https://github.com/snetsystems/telegraf/tree/release-1.18-snet/plugins/inputs/oracledb"
+  },
+  "data": {
+    "cells": [
+      {
+        "i": "0dff6634-54e2-463a-aea3-e1a9ebbd6619",
+        "x": 5,
+        "y": 4,
+        "w": 3,
+        "h": 2,
+        "name": "Sorts on Disk",
+        "queries": [
+          {
+            "query": "SELECT non_negative_derivative(mean(\"DISK_SORTS\"))/10 AS \"mean_DISK_SORTS\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Disk_Sorts' GROUP BY time(:interval:) FILL(null)",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT non_negative_derivative(mean(\"DISK_SORTS\"))/10 AS \"mean_DISK_SORTS\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Disk_Sorts' GROUP BY time(:interval:) FILL(null)",
+              "range": null,
+              "shifts": null
+            },
+            "source": "",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["", ""],
+            "label": "Sorts on Disk",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "line",
+        "colors": [
+          {
+            "id": "3d341ca4-ad34-468b-9cab-1c6f84db37de",
+            "type": "scale",
+            "hex": "#31C0F6",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "f48663ca-c6e1-4a70-ac94-d26219d451d8",
+            "type": "scale",
+            "hex": "#A500A5",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "cc3fe029-5599-4fc0-bc4b-739c5393d60b",
+            "type": "scale",
+            "hex": "#FF7E27",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf Oracle Input plugin](https://github.com/snetsystems/telegraf/tree/release-1.18-snet/plugins/inputs/oracledb).",
+        "noteVisibility": "showWhenNoData",
+        "links": {
+          "self": "/cloudhub/v1/dashboards/1/cells/0dff6634-54e2-463a-aea3-e1a9ebbd6619"
+        }
+      },
+      {
+        "i": "6f577b13-3350-4e39-8ad5-64adff8bff4e",
+        "x": 5,
+        "y": 2,
+        "w": 3,
+        "h": 2,
+        "name": "Physical Disk Writes",
+        "queries": [
+          {
+            "query": "SELECT non_negative_derivative(mean(\"PHYSICAL_WRITES\"))/10 AS \"mean_PHYSICAL_WRITES\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Physical_Writes' GROUP BY time(:interval:) FILL(null)",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT non_negative_derivative(mean(\"PHYSICAL_WRITES\"))/10 AS \"mean_PHYSICAL_WRITES\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Physical_Writes' GROUP BY time(:interval:) FILL(null)",
+              "range": null,
+              "shifts": null
+            },
+            "source": "",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["", ""],
+            "label": "Physical Disk Writes",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "line",
+        "colors": [
+          {
+            "id": "3d341ca4-ad34-468b-9cab-1c6f84db37de",
+            "type": "scale",
+            "hex": "#31C0F6",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "f48663ca-c6e1-4a70-ac94-d26219d451d8",
+            "type": "scale",
+            "hex": "#A500A5",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "cc3fe029-5599-4fc0-bc4b-739c5393d60b",
+            "type": "scale",
+            "hex": "#FF7E27",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf Oracle Input plugin](https://github.com/snetsystems/telegraf/tree/release-1.18-snet/plugins/inputs/oracledb).",
+        "noteVisibility": "showWhenNoData",
+        "links": {
+          "self": "/cloudhub/v1/dashboards/1/cells/6f577b13-3350-4e39-8ad5-64adff8bff4e"
+        }
+      },
+      {
+        "i": "0a9eb599-764e-42d7-86aa-08c72e4fe742",
+        "x": 5,
+        "y": 0,
+        "w": 3,
+        "h": 2,
+        "name": "Physical Disk Reads",
+        "queries": [
+          {
+            "query": "SELECT non_negative_derivative(mean(\"PHYSICAL_READS\"))/10 AS \"mean_PHYSICAL_READS\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Physical_Reads' GROUP BY time(:interval:) FILL(null)",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT non_negative_derivative(mean(\"PHYSICAL_READS\"))/10 AS \"mean_PHYSICAL_READS\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Physical_Reads' GROUP BY time(:interval:) FILL(null)",
+              "range": null,
+              "shifts": null
+            },
+            "source": "",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["", ""],
+            "label": "Physical Disk Reads",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "line",
+        "colors": [
+          {
+            "id": "3d341ca4-ad34-468b-9cab-1c6f84db37de",
+            "type": "scale",
+            "hex": "#31C0F6",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "f48663ca-c6e1-4a70-ac94-d26219d451d8",
+            "type": "scale",
+            "hex": "#A500A5",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "cc3fe029-5599-4fc0-bc4b-739c5393d60b",
+            "type": "scale",
+            "hex": "#FF7E27",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf Oracle Input plugin](https://github.com/snetsystems/telegraf/tree/release-1.18-snet/plugins/inputs/oracledb).",
+        "noteVisibility": "showWhenNoData",
+        "links": {
+          "self": "/cloudhub/v1/dashboards/1/cells/0a9eb599-764e-42d7-86aa-08c72e4fe742"
+        }
+      },
+      {
+        "i": "ab825d7b-9154-4325-b45b-2c0fe977177a",
+        "x": 2,
+        "y": 4,
+        "w": 3,
+        "h": 2,
+        "name": "Total Session Count",
+        "queries": [
+          {
+            "query": "SELECT mean(\"SESSION_COUNT\") AS \"mean_SESSION_COUNT\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Session_Count' GROUP BY time(:interval:) FILL(previous)",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT mean(\"SESSION_COUNT\") AS \"mean_SESSION_COUNT\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Session_Count' GROUP BY time(:interval:) FILL(previous)",
+              "range": null,
+              "shifts": null
+            },
+            "source": "",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["", ""],
+            "label": "Total Session Count",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "line",
+        "colors": [
+          {
+            "id": "3d341ca4-ad34-468b-9cab-1c6f84db37de",
+            "type": "scale",
+            "hex": "#31C0F6",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "f48663ca-c6e1-4a70-ac94-d26219d451d8",
+            "type": "scale",
+            "hex": "#A500A5",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "cc3fe029-5599-4fc0-bc4b-739c5393d60b",
+            "type": "scale",
+            "hex": "#FF7E27",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf Oracle Input plugin](https://github.com/snetsystems/telegraf/tree/release-1.18-snet/plugins/inputs/oracledb).",
+        "noteVisibility": "showWhenNoData",
+        "links": {
+          "self": "/cloudhub/v1/dashboards/1/cells/ab825d7b-9154-4325-b45b-2c0fe977177a"
+        }
+      },
+      {
+        "i": "ee5bae25-a7ef-4825-a3b0-62e710511f54",
+        "x": 2,
+        "y": 0,
+        "w": 3,
+        "h": 2,
+        "name": "Active Session Count",
+        "queries": [
+          {
+            "query": "SELECT mean(\"ACTIVE_SESSIONS\") AS \"mean_ACTIVE_SESSIONS\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Active_Sessions' GROUP BY time(:interval:) FILL(previous)",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT mean(\"ACTIVE_SESSIONS\") AS \"mean_ACTIVE_SESSIONS\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Active_Sessions' GROUP BY time(:interval:) FILL(previous)",
+              "range": null,
+              "shifts": null
+            },
+            "source": "",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["", ""],
+            "label": "Active Session Count",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "line",
+        "colors": [
+          {
+            "id": "3d341ca4-ad34-468b-9cab-1c6f84db37de",
+            "type": "scale",
+            "hex": "#31C0F6",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "f48663ca-c6e1-4a70-ac94-d26219d451d8",
+            "type": "scale",
+            "hex": "#A500A5",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "cc3fe029-5599-4fc0-bc4b-739c5393d60b",
+            "type": "scale",
+            "hex": "#FF7E27",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf Oracle Input plugin](https://github.com/snetsystems/telegraf/tree/release-1.18-snet/plugins/inputs/oracledb).",
+        "noteVisibility": "showWhenNoData",
+        "links": {
+          "self": "/cloudhub/v1/dashboards/1/cells/ee5bae25-a7ef-4825-a3b0-62e710511f54"
+        }
+      },
+      {
+        "i": "0fcb67b1-b83d-4342-9f3c-b80f78155788",
+        "x": 0,
+        "y": 0,
+        "w": 2,
+        "h": 2,
+        "name": "Buffer Cache",
+        "queries": [
+          {
+            "query": "SELECT last(\"BUFFER_CACHE_HIT_RATIO\") AS \"BUFFER_CACHE_HIT_RATIO\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Buffer_Cache_Hit_Ratio' GROUP BY time(:interval:) FILL(previous)",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT last(\"BUFFER_CACHE_HIT_RATIO\") AS \"BUFFER_CACHE_HIT_RATIO\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Buffer_Cache_Hit_Ratio' GROUP BY time(:interval:) FILL(previous)",
+              "range": null,
+              "shifts": null
+            },
+            "source": "",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "single-stat",
+        "colors": [
+          {
+            "id": "base",
+            "type": "text",
+            "hex": "#00C9FF",
+            "name": "laser",
+            "value": "-1000000000000000000"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          {
+            "internalName": "oracledb.BUFFER_CACHE_HIT_RATIO",
+            "displayName": "",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf Oracle Input plugin](https://github.com/snetsystems/telegraf/tree/release-1.18-snet/plugins/inputs/oracledb).",
+        "noteVisibility": "showWhenNoData",
+        "links": {
+          "self": "/cloudhub/v1/dashboards/1/cells/0fcb67b1-b83d-4342-9f3c-b80f78155788"
+        }
+      },
+      {
+        "i": "9a07fab6-66e9-4752-9521-8540177c50c5",
+        "x": 0,
+        "y": 2,
+        "w": 2,
+        "h": 2,
+        "name": "Cursor Cache",
+        "queries": [
+          {
+            "query": "SELECT last(\"CURSOR_CACHE_HIT_RATIO\") AS \"CURSOR_CACHE_HIT_RATIO\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Cursor_Cache_Hit_Ratio' GROUP BY time(:interval:) FILL(previous)",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT last(\"CURSOR_CACHE_HIT_RATIO\") AS \"CURSOR_CACHE_HIT_RATIO\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Cursor_Cache_Hit_Ratio' GROUP BY time(:interval:) FILL(previous)",
+              "range": null,
+              "shifts": null
+            },
+            "source": "/cloudhub/v1/sources/2",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "single-stat",
+        "colors": [
+          {
+            "id": "base",
+            "type": "text",
+            "hex": "#00C9FF",
+            "name": "laser",
+            "value": "-1000000000000000000"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf Oracle Input plugin](https://github.com/snetsystems/telegraf/tree/release-1.18-snet/plugins/inputs/oracledb).",
+        "noteVisibility": "showWhenNoData",
+        "links": {
+          "self": "/cloudhub/v1/dashboards/1/cells/9a07fab6-66e9-4752-9521-8540177c50c5"
+        }
+      },
+      {
+        "i": "3ff2ddc8-7026-40ef-abb4-70a5090c01a1",
+        "x": 0,
+        "y": 4,
+        "w": 2,
+        "h": 2,
+        "name": "Library Cache",
+        "queries": [
+          {
+            "query": "SELECT last(\"LIBRARY_CACHE_HIT_RATIO\") AS \"LIBRARY_CACHE_HIT_RATIO\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Library_Cache_Hit_Ratio' GROUP BY time(:interval:) FILL(previous)",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT last(\"LIBRARY_CACHE_HIT_RATIO\") AS \"LIBRARY_CACHE_HIT_RATIO\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Library_Cache_Hit_Ratio' GROUP BY time(:interval:) FILL(previous)",
+              "range": null,
+              "shifts": null
+            },
+            "source": "/cloudhub/v1/sources/2",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "single-stat",
+        "colors": [
+          {
+            "id": "base",
+            "type": "text",
+            "hex": "#00C9FF",
+            "name": "laser",
+            "value": "-1000000000000000000"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf Oracle Input plugin](https://github.com/snetsystems/telegraf/tree/release-1.18-snet/plugins/inputs/oracledb).",
+        "noteVisibility": "showWhenNoData",
+        "links": {
+          "self": "/cloudhub/v1/dashboards/1/cells/3ff2ddc8-7026-40ef-abb4-70a5090c01a1"
+        }
+      },
+      {
+        "i": "2c2dc983-c1d8-4a5a-9518-4df669c09b43",
+        "x": 4,
+        "y": 6,
+        "w": 4,
+        "h": 4,
+        "name": "Tablespace",
+        "queries": [
+          {
+            "query": "SELECT last(\"TS_CURR_SIZE\") AS \"last_TS_CURR_SIZE\", last(\"TS_FREE_SIZE\") AS \"last_TS_FREE_SIZE\", last(\"TS_USED_SIZE\") AS \"last_TS_USED_SIZE\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > now() - 10m AND service_name= :tnsname: GROUP BY \"TABLESPACE_NAME\"",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT last(\"TS_CURR_SIZE\") AS \"last_TS_CURR_SIZE\", last(\"TS_FREE_SIZE\") AS \"last_TS_FREE_SIZE\", last(\"TS_USED_SIZE\") AS \"last_TS_USED_SIZE\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > now() - 10m AND service_name= :tnsname: GROUP BY \"TABLESPACE_NAME\"",
+              "range": null,
+              "shifts": null
+            },
+            "source": "/cloudhub/v1/sources/2",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "table",
+        "colors": [
+          {
+            "id": "base",
+            "type": "text",
+            "hex": "#00C9FF",
+            "name": "laser",
+            "value": "-1000000000000000000"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": false
+          },
+          {
+            "internalName": "TABLESPACE_NAME",
+            "displayName": "TABLESPACE",
+            "visible": true
+          },
+          {
+            "internalName": "oracledb.last_TS_CURR_SIZE",
+            "displayName": "CURRENT",
+            "visible": true
+          },
+          {
+            "internalName": "oracledb.last_TS_FREE_SIZE",
+            "displayName": "FREE",
+            "visible": true
+          },
+          {
+            "internalName": "oracledb.last_TS_USED_SIZE",
+            "displayName": "USED",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf Oracle Input plugin](https://github.com/snetsystems/telegraf/tree/release-1.18-snet/plugins/inputs/oracledb).",
+        "noteVisibility": "showWhenNoData",
+        "links": {
+          "self": "/cloudhub/v1/dashboards/1/cells/2c2dc983-c1d8-4a5a-9518-4df669c09b43"
+        }
+      },
+      {
+        "i": "952b0403-4d1a-4a47-8d36-38dde64757ac",
+        "x": 0,
+        "y": 6,
+        "w": 4,
+        "h": 4,
+        "name": "Tablespace Usage (%)",
+        "queries": [
+          {
+            "query": "SELECT mean(\"TS_PCT_USED\") AS \"mean_TS_PCT_USED\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: GROUP BY time(:interval:), \"TABLESPACE_NAME\" FILL(previous)",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT mean(\"TS_PCT_USED\") AS \"mean_TS_PCT_USED\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: GROUP BY time(:interval:), \"TABLESPACE_NAME\" FILL(previous)",
+              "range": null,
+              "shifts": null
+            },
+            "source": "/cloudhub/v1/sources/2",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["0", "100"],
+            "label": "Tablespace Usage (%)",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "line-stacked",
+        "colors": [
+          {
+            "id": "a9f7b62d-3f33-4913-a395-fe2e05eedf46",
+            "type": "scale",
+            "hex": "#31C0F6",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "45e88f6c-3dc6-4f82-8445-f8abf2e76b2d",
+            "type": "scale",
+            "hex": "#A500A5",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "55e71b3e-c913-4089-987e-3a7c3e712ef0",
+            "type": "scale",
+            "hex": "#FF7E27",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf Oracle Input plugin](https://github.com/snetsystems/telegraf/tree/release-1.18-snet/plugins/inputs/oracledb).",
+        "noteVisibility": "showWhenNoData",
+        "links": {
+          "self": "/cloudhub/v1/dashboards/1/cells/952b0403-4d1a-4a47-8d36-38dde64757ac"
+        }
+      },
+      {
+        "i": "352f812c-778f-4b83-b636-e3ec231c20b7",
+        "x": 2,
+        "y": 2,
+        "w": 3,
+        "h": 2,
+        "name": "Session Limit Usage (%)",
+        "queries": [
+          {
+            "query": "SELECT mean(\"SESSION_LIMIT_USAGE\") AS \"mean_SESSION_LIMIT_USAGE\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Session_Limit_Usage' GROUP BY time(:interval:) FILL(previous)",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT mean(\"SESSION_LIMIT_USAGE\") AS \"mean_SESSION_LIMIT_USAGE\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Session_Limit_Usage' GROUP BY time(:interval:) FILL(previous)",
+              "range": null,
+              "shifts": null
+            },
+            "source": "/cloudhub/v1/sources/2",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["", ""],
+            "label": "Session Limit Usage (%)",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "line",
+        "colors": [
+          {
+            "id": "a9f7b62d-3f33-4913-a395-fe2e05eedf46",
+            "type": "scale",
+            "hex": "#31C0F6",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "45e88f6c-3dc6-4f82-8445-f8abf2e76b2d",
+            "type": "scale",
+            "hex": "#A500A5",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "55e71b3e-c913-4089-987e-3a7c3e712ef0",
+            "type": "scale",
+            "hex": "#FF7E27",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf Oracle Input plugin](https://github.com/snetsystems/telegraf/tree/release-1.18-snet/plugins/inputs/oracledb).",
+        "noteVisibility": "showWhenNoData",
+        "links": {
+          "self": "/cloudhub/v1/dashboards/1/cells/352f812c-778f-4b83-b636-e3ec231c20b7"
+        }
+      },
+      {
+        "i": "7da6a19a-45c4-419b-a0ec-1d0500607943",
+        "x": 8,
+        "y": 2,
+        "w": 3,
+        "h": 2,
+        "name": "In-Memory Sorts Ratio (%)",
+        "queries": [
+          {
+            "query": "SELECT mean(\"MEMORY_SORT_RATIO\") AS \"mean_MEMORY_SORT_RATIO\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='MEMORY_SORT' GROUP BY time(:interval:) FILL(previous)",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT mean(\"MEMORY_SORT_RATIO\") AS \"mean_MEMORY_SORT_RATIO\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='MEMORY_SORT' GROUP BY time(:interval:) FILL(previous)",
+              "range": null,
+              "shifts": null
+            },
+            "source": "/cloudhub/v1/sources/2",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["", ""],
+            "label": "In-Memory Sorts Ratio (%)",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "line",
+        "colors": [
+          {
+            "id": "a9f7b62d-3f33-4913-a395-fe2e05eedf46",
+            "type": "scale",
+            "hex": "#31C0F6",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "45e88f6c-3dc6-4f82-8445-f8abf2e76b2d",
+            "type": "scale",
+            "hex": "#A500A5",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "55e71b3e-c913-4089-987e-3a7c3e712ef0",
+            "type": "scale",
+            "hex": "#FF7E27",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf Oracle Input plugin](https://github.com/snetsystems/telegraf/tree/release-1.18-snet/plugins/inputs/oracledb).",
+        "noteVisibility": "showWhenNoData",
+        "links": {
+          "self": "/cloudhub/v1/dashboards/1/cells/7da6a19a-45c4-419b-a0ec-1d0500607943"
+        }
+      },
+      {
+        "i": "e240445c-2312-4d3c-8fc4-ab7fe7c91a3f",
+        "x": 8,
+        "y": 4,
+        "w": 3,
+        "h": 2,
+        "name": "Shared Pool Free Memory (%)",
+        "queries": [
+          {
+            "query": "SELECT mean(\"SHARED_POOL_FREE\") AS \"mean_SHARED_POOL_FREE\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Shared_Pool_Free' GROUP BY time(:interval:) FILL(previous)",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT mean(\"SHARED_POOL_FREE\") AS \"mean_SHARED_POOL_FREE\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Shared_Pool_Free' GROUP BY time(:interval:) FILL(previous)",
+              "range": null,
+              "shifts": null
+            },
+            "source": "/cloudhub/v1/sources/2",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["", ""],
+            "label": "Shared Pool Free Memory (%)",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "line",
+        "colors": [
+          {
+            "id": "a9f7b62d-3f33-4913-a395-fe2e05eedf46",
+            "type": "scale",
+            "hex": "#31C0F6",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "45e88f6c-3dc6-4f82-8445-f8abf2e76b2d",
+            "type": "scale",
+            "hex": "#A500A5",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "55e71b3e-c913-4089-987e-3a7c3e712ef0",
+            "type": "scale",
+            "hex": "#FF7E27",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf Oracle Input plugin](https://github.com/snetsystems/telegraf/tree/release-1.18-snet/plugins/inputs/oracledb).",
+        "noteVisibility": "showWhenNoData",
+        "links": {
+          "self": "/cloudhub/v1/dashboards/1/cells/e240445c-2312-4d3c-8fc4-ab7fe7c91a3f"
+        }
+      },
+      {
+        "i": "9b158d62-cdf4-4fe0-8de3-771f1ce77fc9",
+        "x": 8,
+        "y": 8,
+        "w": 3,
+        "h": 2,
+        "name": "Enqueue Timeouts",
+        "queries": [
+          {
+            "query": "SELECT mean(\"ENQUEUE_TIMEOUTS\") AS \"mean_ENQUEUE_TIMEOUTS\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Enqueue_Timeouts' GROUP BY time(:interval:) FILL(previous)",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT mean(\"ENQUEUE_TIMEOUTS\") AS \"mean_ENQUEUE_TIMEOUTS\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Enqueue_Timeouts' GROUP BY time(:interval:) FILL(previous)",
+              "range": null,
+              "shifts": null
+            },
+            "source": "/cloudhub/v1/sources/2",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["", ""],
+            "label": "Enqueue Timeouts",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "line",
+        "colors": [
+          {
+            "id": "a9f7b62d-3f33-4913-a395-fe2e05eedf46",
+            "type": "scale",
+            "hex": "#31C0F6",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "45e88f6c-3dc6-4f82-8445-f8abf2e76b2d",
+            "type": "scale",
+            "hex": "#A500A5",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "55e71b3e-c913-4089-987e-3a7c3e712ef0",
+            "type": "scale",
+            "hex": "#FF7E27",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf Oracle Input plugin](https://github.com/snetsystems/telegraf/tree/release-1.18-snet/plugins/inputs/oracledb).",
+        "noteVisibility": "showWhenNoData",
+        "links": {
+          "self": "/cloudhub/v1/dashboards/1/cells/9b158d62-cdf4-4fe0-8de3-771f1ce77fc9"
+        }
+      },
+      {
+        "i": "fbd06538-f0f2-4394-8f3f-a3ce88e467d4",
+        "x": 8,
+        "y": 6,
+        "w": 3,
+        "h": 2,
+        "name": "User Rollbacks",
+        "queries": [
+          {
+            "query": "SELECT non_negative_derivative(mean(\"USER_ROLLBACKS\")) / 10 AS \"mean_USER_ROLLBACKS\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='User_Rollbacks' GROUP BY time(:interval:) FILL(null)",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT non_negative_derivative(mean(\"USER_ROLLBACKS\")) / 10 AS \"mean_USER_ROLLBACKS\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='User_Rollbacks' GROUP BY time(:interval:) FILL(null)",
+              "range": null,
+              "shifts": null
+            },
+            "source": "/cloudhub/v1/sources/2",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["", ""],
+            "label": "User Rollbacks",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "line",
+        "colors": [
+          {
+            "id": "a9f7b62d-3f33-4913-a395-fe2e05eedf46",
+            "type": "scale",
+            "hex": "#31C0F6",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "45e88f6c-3dc6-4f82-8445-f8abf2e76b2d",
+            "type": "scale",
+            "hex": "#A500A5",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "55e71b3e-c913-4089-987e-3a7c3e712ef0",
+            "type": "scale",
+            "hex": "#FF7E27",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf Oracle Input plugin](https://github.com/snetsystems/telegraf/tree/release-1.18-snet/plugins/inputs/oracledb).",
+        "noteVisibility": "showWhenNoData",
+        "links": {
+          "self": "/cloudhub/v1/dashboards/1/cells/fbd06538-f0f2-4394-8f3f-a3ce88e467d4"
+        }
+      },
+      {
+        "i": "6c08b393-6bc0-473a-b444-0b6ddb597e4c",
+        "x": 8,
+        "y": 0,
+        "w": 3,
+        "h": 2,
+        "name": "Total Table Scans",
+        "queries": [
+          {
+            "query": "SELECT non_negative_derivative(mean(\"TOTAL_TABLE_SCANS\"))/10 AS \"mean_TOTAL_TABLE_SCANS\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Total_Table_Scans' GROUP BY time(:interval:) FILL(null)",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT non_negative_derivative(mean(\"TOTAL_TABLE_SCANS\"))/10 AS \"mean_TOTAL_TABLE_SCANS\" FROM \":db:\".\":rp:\".\"oracledb\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND service_name= :tnsname: AND \"METRIC_NAME\"='Total_Table_Scans' GROUP BY time(:interval:) FILL(null)",
+              "range": null,
+              "shifts": null
+            },
+            "source": "/cloudhub/v1/sources/2",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["", ""],
+            "label": "Total Table Scans",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "line",
+        "colors": [
+          {
+            "id": "a9f7b62d-3f33-4913-a395-fe2e05eedf46",
+            "type": "scale",
+            "hex": "#31C0F6",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "45e88f6c-3dc6-4f82-8445-f8abf2e76b2d",
+            "type": "scale",
+            "hex": "#A500A5",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "55e71b3e-c913-4089-987e-3a7c3e712ef0",
+            "type": "scale",
+            "hex": "#FF7E27",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf Oracle Input plugin](https://github.com/snetsystems/telegraf/tree/release-1.18-snet/plugins/inputs/oracledb).",
+        "noteVisibility": "showWhenNoData",
+        "links": {
+          "self": "/cloudhub/v1/dashboards/1/cells/6c08b393-6bc0-473a-b444-0b6ddb597e4c"
+        }
+      }
+    ],
+    "templates": [
+      {
+        "tempVar": ":tnsname:",
+        "values": [],
+        "id": "2a640324-4bb6-4011-86f9-165845b36a1d",
+        "type": "tagValues",
+        "label": "",
+        "query": {
+          "influxql": "SHOW TAG VALUES ON :database: FROM :measurement: WITH KEY=:tagKey:",
+          "db": "telegraf",
+          "measurement": "oracledb",
+          "tagKey": "service_name",
+          "fieldKey": ""
+        }
+      }
+    ]
+  }
+}
