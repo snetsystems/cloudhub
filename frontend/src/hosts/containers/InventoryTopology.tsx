@@ -96,8 +96,7 @@ import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {
   getContainerElement,
   getContainerTitle,
-  getIsDisableName,
-  getParseHTML,
+  getIsDisableAttr,
 } from 'src/hosts/utils/topology'
 import {getCells} from 'src/hosts/utils/getCells'
 
@@ -120,7 +119,6 @@ import {
   createForm,
   createHTMLValue,
   openSensorData,
-  addHostsButton,
   addToolsButton,
   setToolbar,
   getFoldingImage,
@@ -309,7 +307,6 @@ class InventoryTopology extends PureComponent<Props, State> {
   private outlineRef = createRef<HTMLDivElement>()
   private statusRef = createRef<HTMLDivElement>()
   private toolbarRef = createRef<HTMLDivElement>()
-  private sidebarHostsRef = createRef<HTMLDivElement>()
   private sidebarToolsRef = createRef<HTMLDivElement>()
   private sidebarPropertiesRef = createRef<HTMLDivElement>()
 
@@ -1080,7 +1077,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     _.forEach(cells, cell => {
       if (cell.getStyle() === 'node') {
         const containerElement = getContainerElement(cell.value)
-        const isDisableName = getIsDisableName(containerElement)
+        const isDisableName = getIsDisableAttr(containerElement, 'data-name')
         const name = containerElement.getAttribute('data-name')
 
         if (isDisableName) {
