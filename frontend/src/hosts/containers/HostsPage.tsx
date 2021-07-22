@@ -19,6 +19,7 @@ import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import GraphTips from 'src/shared/components/GraphTips'
 import VMHostPage from 'src/hosts/containers/VMHostsPage'
 import InventoryTopology from 'src/hosts/containers/InventoryTopology'
+import TestInventoryTopology from 'src/hosts/containers/TestInventoryTopology'
 
 // APIs
 import {
@@ -130,7 +131,8 @@ export class HostsPage extends PureComponent<Props, State> {
       proportions: [0.43, 0.57],
       selected: {lower: '', upper: ''},
       isVsphere: false,
-      activeEditorTab: 'InventoryTopology',
+      activeEditorTab: 'TestInventoryTopology',
+      // activeEditorTab: 'InventoryTopology',
       // activeEditorTab: 'Host',
     }
     this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
@@ -280,6 +282,15 @@ export class HostsPage extends PureComponent<Props, State> {
             <div className="radio-buttons radio-buttons--default radio-buttons--sm radio-buttons--stretch">
               <Radio.Button
                 id="hostspage-tab-InventoryTopology"
+                titleText="TestInventoryTopology"
+                value="TestInventoryTopology"
+                active={activeEditorTab === 'TestInventoryTopology'}
+                onClick={this.onSetActiveEditorTab}
+              >
+                TestInventoryTopology
+              </Radio.Button>
+              <Radio.Button
+                id="hostspage-tab-InventoryTopology"
                 titleText="InventoryTopology"
                 value="InventoryTopology"
                 active={activeEditorTab === 'InventoryTopology'}
@@ -355,6 +366,13 @@ export class HostsPage extends PureComponent<Props, State> {
                 source={source}
                 manualRefresh={this.props.manualRefresh}
                 autoRefresh={autoRefresh}
+              />
+            )}
+            {activeEditorTab === 'TestInventoryTopology' && (
+              <TestInventoryTopology
+              // source={source}
+              // manualRefresh={this.props.manualRefresh}
+              // autoRefresh={autoRefresh}
               />
             )}
           </>
