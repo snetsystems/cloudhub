@@ -12,7 +12,10 @@
   #contentBodySection {
     display: flex;
     position: relative;
-    height: calc(100% - 45px);
+    // height: calc(100% - 45px);
+    height: 100%;
+    transform: translate(0, 0);
+    background-color: #292933;
   }
   #toolbarContainer {
     display: flex;
@@ -40,8 +43,10 @@
   }
   #outlineContainer {
     position: fixed;
-    top: 98px;
-    right: 10px;
+    // top: 98px;
+    // right: 10px;
+    top: 5px;
+    right: 5px;
     width: 200px;
     height: 140px;
     overflow: hidden;
@@ -326,3 +331,144 @@ div.mxPopupMenu {
     }
   }
 }
+/*
+2px solid #383846
+
+    background-color: #202028;
+    color: #999dab;
+*/
+
+#containerWrapper {
+  .dock-panel.dock-style-card .dock-tab {
+    border: 1px solid #999dab;
+    background-color: #383846;
+  }
+
+  .dock-panel {
+    background-color: #292933;
+    border: 1px solid #999dab;
+  }
+  .dock-top .dock-bar {
+    background-color: #292933;
+    border-bottom: 1px solid #999dab;
+  }
+
+  .dock-panel.dock-style-card .dock-tab.dock-tab-active {
+    color: #383846;
+    background-color: #fafafd;
+    // color: #108ee9;
+    cursor: default;
+    transform: translateZ(0);
+  }
+
+  .dock-tab-active:hover {
+    color: #108ee9;
+    cursor: default;
+    transform: translateZ(0);
+  }
+}
+// #containerWrapper {
+//   .dock-panel {
+//     background-color: #292933;
+//     border: 1px solid #383846;
+//   }
+//   .dock-tab-btn {
+//     background-color: #202028;
+//     color: #999dab;
+//   }
+//   .dock-tab.dock-tab-active {
+//     .dock-tab-btn {
+//       background-color: #383846;
+//       color: #f6f6f8;
+//       font-weight: 400;
+//     }
+//   }
+//   .dock-top .dock-bar {
+//     border: 1px solid #383846;
+//   }
+//   .dock-bar {
+//     background-color: #292933;
+//   }
+
+//   .dock-panel.dock-style-main .dock-bar {
+//     border: 1px solid #383846;
+//   }
+//   .dock-tab-active,
+//   .dock-tab-active:hover {
+//     background-color: #31313d;
+//     color: #d4d7dd;
+//     cursor: pointer;
+//   }
+//   .dock-bar.drag-initiator {
+//     background-color: #292933;
+//   }
+//   .dock-ink-bar {
+//     background-color: #31313d;
+//   }
+//   .dock-top.dock-bar {
+//     background-color: #292933;
+//   }
+
+//   .dock-panel.dock-style-main .dock-bar {
+//     background-color: #292933;
+//   }
+
+//   .dock-panel.dock-style-main .dock-bar .dock-ink-bar {
+//     background-color: none;
+//   }
+// }
+
+// example
+// #containerWrapper {
+//   .dock-panel.dock-style-custom {
+//     border: 1px solid #d88;
+//     border-radius: 8px 8px 0 0;
+//   }
+
+//   .dock-panel.dock-style-custom .dock-tab {
+//     margin-right: 0;
+//     border: 1px solid #d88;
+//     background: #d88;
+//     color: #fff;
+//     border-radius: 16px 16px 0 0;
+//   }
+
+//   .dock-panel.dock-style-custom .dock-tab.dock-tab-active {
+//     background: #fff;
+//     color: #c33;
+//   }
+
+//   .dock-panel.dock-style-custom .dock-bar {
+//     background: #facccc;
+//     border-radius: 7px 7px 0 0;
+//     border-bottom: 1px solid #d88;
+//   }
+
+//   .dock-panel.dock-style-custom .dock-tab-hit-area {
+//     /* cover the border area */
+//     left: -1px;
+//     right: -1px;
+//   }
+
+//   .dock-panel.dock-style-custom .dock-panel-max-btn {
+//     opacity: 1;
+//   }
+
+//   .dock-panel.dock-style-custom .dock-panel-max-btn:before {
+//     border-color: #fff;
+//     color: #fff;
+//   }
+
+//   /* different color for the focused panel */
+//   .dock-panel.dock-style-custom:focus-within {
+//     border: 1px dashed #f00;
+//   }
+
+//   /* tab buttons take all the space */
+//   .dock-panel.dock-style-custom .dock-nav-list {
+//     flex-grow: 1;
+//   }
+//   .dock-panel.dock-style-custom .dock-tab {
+//     flex: 1 0 auto;
+//   }
+// }
