@@ -4,6 +4,7 @@ import {connect} from 'react-redux'
 import _ from 'lodash'
 import {getDeep} from 'src/utils/wrappers'
 import CryptoJS from 'crypto-js'
+import classnames from 'classnames'
 
 import {
   default as mxgraph,
@@ -22,6 +23,7 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import Modal from 'src/hosts/components/Modal'
 import PageSpinner from 'src/shared/components/PageSpinner'
+import ResizableDock from 'src/shared/components/ResizableDock'
 
 // constants
 import {
@@ -211,6 +213,9 @@ interface State {
   modalTitle: string
   modalMessage: JSX.Element
   topologyStatus: RemoteDataState
+  isStatusVisible: boolean
+  resizableDockHeight: number
+  resizableDockWidth: number
 }
 
 @ErrorHandling
@@ -236,6 +241,9 @@ class InventoryTopology extends PureComponent<Props, State> {
       modalTitle: null,
       modalMessage: null,
       topologyStatus: RemoteDataState.Loading,
+      isStatusVisible: true,
+      resizableDockHeight: 200,
+      resizableDockWidth: 200,
     }
   }
 
@@ -981,11 +989,37 @@ class InventoryTopology extends PureComponent<Props, State> {
                     <PageSpinner />
                   )}
                   <div id="outlineContainer" ref={this.outlineRef}></div>
-                  <div id="statusContainer">
-                    <FancyScrollbar autoHide={false}>
-                      <div id="statusContainerRef" ref={this.statusRef}></div>
-                    </FancyScrollbar>
-                  </div>
+                  {!this.state.isStatusVisible ? (
+                    <Button
+                      customClass="resizable-openbtn"
+                      onClick={() => {
+                        this.setState({isStatusVisible: true})
+                      }}
+                      text={'Open'}
+                    ></Button>
+                  ) : null}
+                  <ResizableDock
+                    className={classnames('', {
+                      active: this.state.isStatusVisible,
+                    })}
+                    height={this.state.resizableDockHeight}
+                    width={this.state.resizableDockWidth}
+                    onResize={this.onResize}
+                    resizeHandles={['sw']}
+                    maxConstraints={[800, 200]}
+                  >
+                    <div id="statusContainer">
+                      <Button
+                        onClick={() => {
+                          this.setState({isStatusVisible: false})
+                        }}
+                        text="close"
+                      ></Button>
+                      <FancyScrollbar autoHide={false}>
+                        <div id="statusContainerRef" ref={this.statusRef}></div>
+                      </FancyScrollbar>
+                    </div>
+                  </ResizableDock>
                 </div>
               </div>
             </>
@@ -993,6 +1027,11 @@ class InventoryTopology extends PureComponent<Props, State> {
         },
       },
     ]
+  }
+  private onResize = (_event, data) => {
+    const {size} = data
+
+    this.setState({resizableDockWidth: size.width})
   }
 
   private get sidebarDivisions() {

@@ -37,10 +37,12 @@
     height: 100%;
     width: 100%;
     overflow: hidden;
+    transform: translate(0, 0);
   }
   #outlineContainer {
     position: fixed;
-    top: 98px;
+    top: 10px;
+    // top: 98px;
     right: 10px;
     width: 200px;
     height: 140px;
@@ -292,37 +294,43 @@ div.mxPopupMenu {
 }
 
 #statusContainer {
-  display: none;
+  // display: block;
+  // position: fixed;
+  // bottom: 10px;
+  // right: 10px;
+  // width: 226px;
+  // overflow: hidden;
+  // max-height: 500px;
+  // height: 500px;
+
+  // &.active {
+  //   display: block;
+  // }
+
+  // #statusContainerRef {
+  //   width: calc(100% - 3px);
+  // }
+
+  // table {
+  //   border-collapse: collapse;
+  //   width: 100%;
+  //   background-color: #292933;
+
+  //   th {
+  //     font-weight: 500;
+  //   }
+  //   th,
+  //   td {
+  //     border: 1px solid #bec2cc;
+  //     color: #bec2cc;
+  //     padding: 5px;
+  //     font-size: 11px;
+  //   }
+  // }
+}
+
+.resizable-openbtn {
   position: fixed;
-  bottom: 10px;
+  top: 160px;
   right: 10px;
-  width: 226px;
-  overflow: hidden;
-  max-height: 500px;
-  height: 500px;
-
-  &.active {
-    display: block;
-  }
-
-  #statusContainerRef {
-    width: calc(100% - 3px);
-  }
-
-  table {
-    border-collapse: collapse;
-    width: 100%;
-    background-color: #292933;
-
-    th {
-      font-weight: 500;
-    }
-    th,
-    td {
-      border: 1px solid #bec2cc;
-      color: #bec2cc;
-      padding: 5px;
-      font-size: 11px;
-    }
-  }
 }
