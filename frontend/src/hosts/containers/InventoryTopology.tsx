@@ -17,7 +17,7 @@ import {
 } from 'mxgraph'
 
 // component
-import {Form, Button, ComponentColor} from 'src/reusable_ui'
+import {Form, Button, ComponentColor, ComponentSize} from 'src/reusable_ui'
 import {Table, TableBody} from 'src/addon/128t/reusable/layout'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
@@ -100,7 +100,9 @@ import {
   factoryMethod,
   ipmiPowerIndicator,
   filteredIpmiPowerStatus,
+  dragCell,
 } from 'src/hosts/configurations/topology'
+import InventoryTreemenu from '../components/InventoryTreemenu'
 
 const mx = mxgraph()
 
@@ -216,6 +218,7 @@ interface State {
   isStatusVisible: boolean
   resizableDockHeight: number
   resizableDockWidth: number
+  selectItem: string
 }
 
 @ErrorHandling
@@ -230,7 +233,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
 
     this.state = {
-      screenProportions: [0.15, 0.85],
+      screenProportions: [0.3, 0.7],
       sidebarProportions: [0.333, 0.333, 0.333],
       hostsObject: {},
       minionList: [],
@@ -244,6 +247,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       isStatusVisible: true,
       resizableDockHeight: 200,
       resizableDockWidth: 200,
+      selectItem: 'total',
     }
   }
 
@@ -255,6 +259,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   private statusRef = createRef<HTMLDivElement>()
   private toolbarRef = createRef<HTMLDivElement>()
   private sidebarHostsRef = createRef<HTMLDivElement>()
+  private cloudInventoryRef = createRef<HTMLDivElement>()
   private sidebarToolsRef = createRef<HTMLDivElement>()
   private sidebarPropertiesRef = createRef<HTMLDivElement>()
 
@@ -1034,21 +1039,98 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setState({resizableDockWidth: size.width})
   }
 
+  private onChooseItem = selectItem => {
+    console.log('onChooseItem', selectItem)
+    this.setState({selectItem})
+  }
+
   private get sidebarDivisions() {
     const {sidebarProportions} = this.state
     const [topSize, middleSize, bottomSize] = sidebarProportions
+
+    const dummyData = {
+      'first-level-node-1': {
+        label: 'Amazon Web Service',
+        index: 0,
+        level: 0,
+        nodes: {
+          region: {
+            label: 'Seoul',
+            index: 0,
+            level: 2,
+            nodes: {
+              system: {
+                label: 'EC2',
+                index: 0,
+                level: 3,
+                nodes: {},
+              },
+            },
+          },
+        },
+      },
+      'first-level-node-2': {
+        label: 'Google Cloud Platform',
+        index: 1,
+        level: 0,
+        nodes: {},
+      },
+      'first-level-node-3': {
+        label: 'Azure',
+        index: 2,
+        level: 0,
+        nodes: {},
+      },
+    }
 
     return [
       {
         name: 'Detected Hosts',
         headerOrientation: HANDLE_HORIZONTAL,
-        headerButtons: [],
+        headerButtons: [
+          <Button
+            color={
+              this.state.selectItem === 'total'
+                ? ComponentColor.Primary
+                : ComponentColor.Default
+            }
+            text={'total'}
+            onClick={() => {
+              this.onChooseItem('total')
+            }}
+            size={ComponentSize.ExtraSmall}
+          />,
+          <Button
+            color={
+              this.state.selectItem === 'cloud'
+                ? ComponentColor.Primary
+                : ComponentColor.Default
+            }
+            text={'cloud'}
+            onClick={() => {
+              this.onChooseItem('cloud')
+            }}
+            size={ComponentSize.ExtraSmall}
+          />,
+        ],
         menuOptions: [],
         size: topSize,
         render: () => (
           <>
             <FancyScrollbar>
-              <TableBody>{<div ref={this.sidebarHostsRef} />}</TableBody>
+              {this.state.selectItem === 'total' ? (
+                <TableBody>{<div ref={this.sidebarHostsRef} />}</TableBody>
+              ) : (
+                <InventoryTreemenu
+                  data={dummyData}
+                  graph={this.graph}
+
+                  // onMouse
+                  // onClickItem={this.onSelectedHost}
+                  // initialActiveKey={initialActiveKey}
+                  // initialOpenNodes={initialOpenNodes}
+                />
+              )}
             </FancyScrollbar>
           </>
         ),

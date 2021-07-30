@@ -190,7 +190,6 @@ export const createForm = function (
 
   if (cell) {
     const form = new mxForm('properties-table')
-
     const containerElement = getContainerElement(cell.value)
     const attrs = _.filter(containerElement.attributes, attr => {
       let isSame = false
@@ -435,6 +434,7 @@ export const dragCell = (node: Menu) => (
 
   model.beginUpdate()
   try {
+    console.log('node: ', node)
     const cell = createHTMLValue(node, 'node')
 
     v1 = graph.insertVertex(
@@ -588,6 +588,7 @@ export const addHostsButton = function (
     hostElement.appendChild(span)
     rowElement.appendChild(hostElement)
 
+    console.log('menu: ', menu)
     addSidebarButton.bind(this)({
       sideBarArea: hostsArea,
       node: menu,
