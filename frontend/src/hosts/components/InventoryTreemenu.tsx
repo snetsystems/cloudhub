@@ -210,78 +210,116 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
     dragSource.setGuidesEnabled(true)
   }
 
-  public componentDidMount() {
-    const treemenus = document
-      .querySelector('#cloudInventoryContainer .tree-item-group')
-      .querySelectorAll('li')
-    console.log('treemenus: ', treemenus)
-    _.forEach(treemenus, el => {
-      console.log('el: ', el)
-      const dragElt = document.createElement('div')
-      dragElt.style.border = 'dashed #f58220 1px'
-      dragElt.style.width = `${90}px`
-      dragElt.style.height = `${90}px`
-      const value = el.textContent
-      const node = {
-        label: value,
-        link: '',
-        name: 'cloud',
-        type: 'Cloud',
-      }
-      let ds = mxUtils.makeDraggable(
-        el,
-        this.props.graph,
-        dragCell(node),
-        dragElt,
-        0,
-        0,
-        true,
-        true
-      )
-      ds.setGuidesEnabled(true)
-    })
-  }
+  public componentDidMount() {}
 
   componentDidUpdate(_prevProps, prevState) {
-    if (prevState.openNodes !== this.state.openNodes) {
-      const treemenus = document
-        .querySelector('#cloudInventoryContainer .tree-item-group')
-        .querySelectorAll('li')
-      treemenus.forEach(menu => {
-        mxEvent.removeAllListeners(menu)
+    if (prevState.activeKey !== this.state.activeKey) {
+      console.log('this.props.data: ', this.props.data)
+      // console.log('this.props.data: ', this.props.data)
 
-        console.log('menu: ', {menu})
-        // console.log('menu: ', menu['mxListenerList'])
-        menu['mxListenerList'] = []
-      })
-      console.log('treemenus: ', treemenus)
-      _.forEach(treemenus, el => {
-        const dragElt = document.createElement('div')
-        dragElt.style.border = 'dashed #f58220 1px'
-        dragElt.style.width = `${90}px`
-        dragElt.style.height = `${90}px`
+      const activeKeys = this.state.activeKey.split('/')
+      const focusKeys = this.state.focusKey.split('/')
 
-        const value = el.textContent
-        const node = {
-          label: value,
-          link: '',
-          name: 'cloud',
-          type: 'Cloud',
-        }
+      console.log('activeKey: ', activeKeys)
+      console.log('focusKey: ', focusKeys)
+      console.log('this.props.data: ', this.props.data[activeKeys[0]])
 
-        let ds = mxUtils.makeDraggable(
-          el,
-          this.props.graph,
-          dragCell(node),
-          dragElt,
-          0,
-          0,
-          true,
-          true
-        )
+      // console.log(this.props.data[splitKey[0]])
+      // console.log(_.values(this.props.data[splitKey[0]].nodes))
+      // let count = 0
 
-        ds.setGuidesEnabled(true)
-      })
+      // const dkeys = _.keys(this.props.data)
+      // _.forEach(dkeys, dkey => {
+      //   const ikeys = _.keys(this.props.data[dkey].nodes)
+      //   // if (!_.isEmpty(ikeys)) {
+      //   //   _.forEach(ikeys, ikey => {
+      //   //     console.log('ikey', this.props.data[dkey].nodes[ikey])
+      //   //   })
+      //   // }
+      // })
+      // console.log('this.props.data: ', this.props.data)
+      // console.log('key:', key)
+
+      // let selectItem = null
+      // splitKey.forEach(s => {
+      //   selectItem = this.props.data[s]
+      // })
+
+      // console.log('this.props.data[this.state.activeKey]: ', selectItem)
+      // console.log('selectItem.nodes: ', selectItem.nodes)
+      // const treemenus = document
+      //   .querySelector('#cloudInventoryContainer .tree-item-group')
+      //   .querySelectorAll('li')
+      // console.log('treemenus: ', treemenus)
+      // console.log('this.props.data: ', this.props.data)
+      // _.values(this.props.data).forEach(d => {
+      //   console.log(d)
+      // })
+      // const f = _.find(_.values(this.props.data), d => {
+      //   return _.find(treemenus, el => {
+      //     return el.attributes['data-label'].value
+      //     //   const dragElt = document.createElement('div')
+      //     //   dragElt.style.border = 'dashed #f58220 1px'
+      //     //   dragElt.style.width = `${90}px`
+      //     //   dragElt.style.height = `${90}px`
+      //     //   const value = el.textContent
+      //     //   const node = {
+      //     //     label: value,
+      //     //     link: '',
+      //     //     name: 'cloud',
+      //     //     type: 'Cloud',
+      //     //   }
+      //     //   let ds = mxUtils.makeDraggable(
+      //     //     el,
+      //     //     this.props.graph,
+      //     //     dragCell(node),
+      //     //     dragElt,
+      //     //     0,
+      //     //     0,
+      //     //     true,
+      //     //     true
+      //     //   )
+      //     //   ds.setGuidesEnabled(true)
+      //   })
+      //   // console.log('d', d)
+      // })
+      // console.log('f: ', f)
+      // if (prevState.openNodes !== this.state.openNodes) {
+      //   const treemenus = document
+      //     .querySelector('#cloudInventoryContainer .tree-item-group')
+      //     .querySelectorAll('li')
+      //   treemenus.forEach(menu => {
+      //     mxEvent.removeAllListeners(menu)
+      //     console.log('menu: ', {menu})
+      //     // console.log('menu: ', menu['mxListenerList'])
+      //     menu['mxListenerList'] = []
+      //   })
+      //   console.log('treemenus: ', treemenus)
+      //   _.forEach(treemenus, el => {
+      //     const dragElt = document.createElement('div')
+      //     dragElt.style.border = 'dashed #f58220 1px'
+      //     dragElt.style.width = `${90}px`
+      //     dragElt.style.height = `${90}px`
+      //     const value = el.textContent
+      //     const node = {
+      //       label: value,
+      //       link: '',
+      //       name: 'cloud',
+      //       type: 'Cloud',
+      //     }
+      //     let ds = mxUtils.makeDraggable(
+      //       el,
+      //       this.props.graph,
+      //       dragCell(node),
+      //       dragElt,
+      //       0,
+      //       0,
+      //       true,
+      //       true
+      //     )
+      //     ds.setGuidesEnabled(true)
+      //   })
+      // }
     }
   }
   render() {

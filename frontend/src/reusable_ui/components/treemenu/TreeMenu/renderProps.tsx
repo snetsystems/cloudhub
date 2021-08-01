@@ -51,9 +51,9 @@ export const ItemComponent: React.FunctionComponent<TreeMenuItem> = ({
       {disabled: disabled}
     )}
     style={{
-      paddingLeft: `${DEFAULT_PADDING +
-        ICON_SIZE * (hasNodes ? 0 : 1) +
-        level * LEVEL_SPACE}rem`,
+      paddingLeft: `${
+        DEFAULT_PADDING + ICON_SIZE * (hasNodes ? 0 : 1) + level * LEVEL_SPACE
+      }rem`,
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
@@ -62,6 +62,7 @@ export const ItemComponent: React.FunctionComponent<TreeMenuItem> = ({
     role="button"
     aria-pressed={active}
     data-key={parent.trim() + '/' + label}
+    data-label={label}
     onClick={disabled ? null : onClick}
   >
     {hasNodes && (
