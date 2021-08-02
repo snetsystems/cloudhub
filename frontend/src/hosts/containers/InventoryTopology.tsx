@@ -206,6 +206,8 @@ interface Props {
 interface State {
   screenProportions: number[]
   sidebarProportions: number[]
+  bottomProportions: number[]
+  topSideProportions: number[]
   hostsObject: {[x: string]: Host}
   minionList: string[]
   ipmis: Ipmi[]
@@ -219,6 +221,7 @@ interface State {
   resizableDockHeight: number
   resizableDockWidth: number
   selectItem: string
+  isPinned: boolean
 }
 
 @ErrorHandling
@@ -233,8 +236,11 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
 
     this.state = {
-      screenProportions: [0.3, 0.7],
+      isPinned: false,
+      screenProportions: [0.15, 0.85],
       sidebarProportions: [0.333, 0.333, 0.333],
+      bottomProportions: [0.666, 0.333],
+      topSideProportions: [0.7, 0.3],
       hostsObject: {},
       minionList: [],
       ipmis: [],
@@ -510,6 +516,10 @@ class InventoryTopology extends PureComponent<Props, State> {
         />
       </FancyScrollbar>
     )
+  }
+
+  private toggleIsPinned = () => {
+    this.setState({isPinned: !this.state.isPinned})
   }
 
   private fetchIntervalData = async () => {
@@ -983,6 +993,34 @@ class InventoryTopology extends PureComponent<Props, State> {
         menuOptions: [],
         size: rightSize,
         render: () => {
+          return this.renderThreeSizer()
+        },
+      },
+    ]
+  }
+
+  private topThreeSizer = () => {
+    return (
+      <Threesizer
+        orientation={HANDLE_VERTICAL}
+        divisions={this.topThreeSizerDivisions}
+        onResize={this.handleResize('topSideProportions')}
+      />
+    )
+  }
+
+  private get topThreeSizerDivisions() {
+    const [topLeft, topRight] = this.state.topSideProportions
+
+    return [
+      {
+        name: '',
+        handleDisplay: 'none',
+        headerButtons: [],
+        menuOptions: [],
+        headerOrientation: HANDLE_HORIZONTAL,
+        size: this.state.isPinned ? topLeft : 1,
+        render: () => {
           return (
             <>
               <div id="contentHeaderSection">
@@ -995,13 +1033,20 @@ class InventoryTopology extends PureComponent<Props, State> {
                   )}
                   <div id="outlineContainer" ref={this.outlineRef}></div>
                   {!this.state.isStatusVisible ? (
-                    <Button
-                      customClass="resizable-openbtn"
-                      onClick={() => {
-                        this.setState({isStatusVisible: true})
-                      }}
-                      text={'Open'}
-                    ></Button>
+                    <div className="resizable-openbtn">
+                      <Button
+                        onClick={() => {
+                          this.setState({isStatusVisible: true})
+                        }}
+                        text={'Open'}
+                      ></Button>
+                      <Button
+                        onClick={() => {
+                          this.toggleIsPinned()
+                        }}
+                        text="pin"
+                      ></Button>
+                    </div>
                   ) : null}
                   <ResizableDock
                     className={classnames('', {
@@ -1020,6 +1065,12 @@ class InventoryTopology extends PureComponent<Props, State> {
                         }}
                         text="close"
                       ></Button>
+                      <Button
+                        onClick={() => {
+                          this.toggleIsPinned()
+                        }}
+                        text="pin"
+                      ></Button>
                       <FancyScrollbar autoHide={false}>
                         <div id="statusContainerRef" ref={this.statusRef}></div>
                       </FancyScrollbar>
@@ -1031,7 +1082,64 @@ class InventoryTopology extends PureComponent<Props, State> {
           )
         },
       },
+      {
+        name: '1',
+        headerOrientation: HANDLE_VERTICAL,
+        headerButtons: [],
+        menuOptions: [],
+        handleDisplay: this.state.isPinned ? 'visible' : 'none',
+        size: this.state.isPinned ? topRight : 0,
+        render: visibility => {
+          return visibility === 'visible' ? (
+            <>
+              <div>Pinded Hardware info</div>
+            </>
+          ) : null
+        },
+      },
     ]
+  }
+
+  private get renderThreeSizerDivisions() {
+    const {bottomProportions} = this.state
+    const [topSize, bottomSize] = bottomProportions
+    return [
+      {
+        name: '',
+        handleDisplay: 'none',
+        headerOrientation: HANDLE_HORIZONTAL,
+        headerButtons: [],
+        menuOptions: [],
+        size: topSize,
+        render: () => {
+          return this.topThreeSizer()
+        },
+      },
+      {
+        name: '',
+        headerOrientation: HANDLE_VERTICAL,
+        headerButtons: [],
+        menuOptions: [],
+        size: bottomSize,
+        render: () => {
+          return (
+            <>
+              <div>Detail/Monitoring</div>
+            </>
+          )
+        },
+      },
+    ]
+  }
+
+  private renderThreeSizer = () => {
+    return (
+      <Threesizer
+        orientation={HANDLE_HORIZONTAL}
+        divisions={this.renderThreeSizerDivisions}
+        onResize={this.handleResize('bottomProportions')}
+      />
+    )
   }
   private onResize = (_event, data) => {
     const {size} = data
@@ -1054,15 +1162,28 @@ class InventoryTopology extends PureComponent<Props, State> {
         index: 0,
         level: 0,
         nodes: {
-          region: {
+          Seoul: {
             label: 'Seoul',
             index: 0,
-            level: 2,
+            level: 1,
             nodes: {
               system: {
                 label: 'EC2',
                 index: 0,
-                level: 3,
+                level: 2,
+                nodes: {},
+              },
+            },
+          },
+          Pusan: {
+            label: 'Pusan',
+            index: 0,
+            level: 1,
+            nodes: {
+              system: {
+                label: 'EC2',
+                index: 0,
+                level: 2,
                 nodes: {},
               },
             },
