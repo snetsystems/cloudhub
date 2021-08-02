@@ -17,13 +17,22 @@ import {
 } from 'mxgraph'
 
 // component
-import {Form, Button, ComponentColor, ComponentSize} from 'src/reusable_ui'
+import {
+  Form,
+  Button,
+  ComponentColor,
+  ComponentSize,
+  Page,
+  Radio,
+} from 'src/reusable_ui'
 import {Table, TableBody} from 'src/addon/128t/reusable/layout'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import Modal from 'src/hosts/components/Modal'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import ResizableDock from 'src/shared/components/ResizableDock'
+import LayoutRenderer from 'src/shared/components/LayoutRenderer'
+import Dropdown from 'src/shared/components/Dropdown'
 
 // constants
 import {
@@ -32,18 +41,25 @@ import {
   HANDLE_VERTICAL,
 } from 'src/shared/constants/'
 import {tmpMenu} from 'src/hosts/constants/tools'
+import {
+  notifyUnableToGetHosts,
+  notifyUnableToGetApps,
+} from 'src/shared/copy/notifications'
 
 // Types
 import {
   Source,
   Links,
   Host,
+  Layout,
   RemoteDataState,
   Notification,
   NotificationFunc,
   Ipmi,
   IpmiCell,
+  TimeRange,
 } from 'src/types'
+import {timeRanges} from 'src/shared/data/timeRanges'
 import {AddonType} from 'src/shared/constants'
 import {ComponentStatus} from 'src/reusable_ui/types'
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
@@ -62,13 +78,21 @@ import {
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 // APIs
-import {getCpuAndLoadForHosts} from 'src/hosts/apis'
 import {getEnv} from 'src/shared/apis/env'
+// APIs
+import {
+  getCpuAndLoadForHosts,
+  getLayouts,
+  getAppsForHosts,
+  getAppsForHost,
+  getMeasurementsForHost,
+} from 'src/hosts/apis'
 
 // Utils
 import {generateForHosts} from 'src/utils/tempVars'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {getContainerElement, getIsDisableName} from 'src/hosts/utils/topology'
+import {getCells} from 'src/hosts/utils/getCells'
 
 // error
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -222,6 +246,11 @@ interface State {
   resizableDockWidth: number
   selectItem: string
   isPinned: boolean
+  filteredLayouts: Layout[]
+  focusedHost: string
+  timeRange: TimeRange
+  activeEditorTab: string
+  selected: string
 }
 
 @ErrorHandling
@@ -254,6 +283,10 @@ class InventoryTopology extends PureComponent<Props, State> {
       resizableDockHeight: 200,
       resizableDockWidth: 200,
       selectItem: 'total',
+      filteredLayouts: [],
+      focusedHost: 'minion01',
+      timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
+      activeEditorTab: 'details',
     }
   }
 
@@ -296,6 +329,45 @@ class InventoryTopology extends PureComponent<Props, State> {
   private addToolsButton = addToolsButton
   private setToolbar = setToolbar
 
+  private async fetchHostsData(layouts: Layout[]): Promise<void> {
+    const {source, links, notify} = this.props
+    const {addons} = links
+
+    const envVars = await getEnv(links.environment)
+    const telegrafSystemInterval = getDeep<string>(
+      envVars,
+      'telegrafSystemInterval',
+      ''
+    )
+    const hostsError = notifyUnableToGetHosts().message
+    const tempVars = generateForHosts(source)
+
+    try {
+      const hostsObject = await getCpuAndLoadForHosts(
+        source.links.proxy,
+        source.telegraf,
+        telegrafSystemInterval,
+        tempVars
+      )
+      if (!hostsObject) {
+        throw new Error(hostsError)
+      }
+      const newHosts = await getAppsForHosts(
+        source.links.proxy,
+        hostsObject,
+        layouts,
+        source.telegraf,
+        tempVars
+      )
+
+      this.setState({
+        hostsObject: newHosts,
+      })
+    } catch (error) {
+      console.error(error)
+    }
+  }
+
   public async componentDidMount() {
     this.createEditor()
     this.configureEditor()
@@ -304,6 +376,29 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.addHostsButton(this.state.hostsObject, this.hosts)
     this.addToolsButton(this.tools)
     this.setToolbar(this.editor, this.toolbar)
+
+    const layoutResults = await getLayouts()
+    const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
+
+    if (!layouts) {
+      // notify(notifyUnableToGetApps())
+      // this.setState({
+      //   hostsPageStatus: RemoteDataState.Error,
+      //   layouts,
+      // })
+      return
+    }
+
+    const {focusedHost} = this.state
+    console.log('layouts: ', layouts)
+    if (layouts) {
+      this.fetchHostsData(layouts)
+      const {filteredLayouts} = await this.getLayoutsforHost(
+        layouts,
+        focusedHost
+      )
+      this.setState({filteredLayouts})
+    }
 
     const topology = await this.props.handleGetInventoryTopology(
       this.props.links
@@ -1083,13 +1178,13 @@ class InventoryTopology extends PureComponent<Props, State> {
         },
       },
       {
-        name: '1',
+        name: '123',
         headerOrientation: HANDLE_VERTICAL,
         headerButtons: [],
         menuOptions: [],
         handleDisplay: this.state.isPinned ? 'visible' : 'none',
         size: this.state.isPinned ? topRight : 0,
-        render: visibility => {
+        render: (visibility: string) => {
           return visibility === 'visible' ? (
             <>
               <div>Pinded Hardware info</div>
@@ -1121,15 +1216,60 @@ class InventoryTopology extends PureComponent<Props, State> {
         headerButtons: [],
         menuOptions: [],
         size: bottomSize,
-        render: () => {
-          return (
-            <>
-              <div>Detail/Monitoring</div>
-            </>
-          )
-        },
+        render: this.detailsGraph,
       },
     ]
+  }
+
+  private onSetActiveEditorTab = (activeEditorTab: string): void => {
+    this.setState({
+      activeEditorTab,
+    })
+  }
+
+  private detailsGraph = () => {
+    return (
+      <>
+        <div>
+          <div className="radio-buttons radio-buttons--default radio-buttons--sm">
+            <Radio.Button
+              id="hostspage-tab-details"
+              titleText="details"
+              value="details"
+              active={this.state.activeEditorTab === 'details'}
+              onClick={this.onSetActiveEditorTab}
+            >
+              Details
+            </Radio.Button>
+            <Radio.Button
+              id="hostspage-tab-monitoring"
+              titleText="monitoring"
+              value="monitoring"
+              active={this.state.activeEditorTab === 'monitoring'}
+              onClick={this.onSetActiveEditorTab}
+            >
+              Monitoring
+            </Radio.Button>
+          </div>
+          Get from :
+          <Dropdown
+            items={['CloudWatch', '2', '3']}
+            onChoose={this.getHandleOnChoose}
+            selected={this.state.selected}
+            className="dropdown-stretch"
+            disabled={false}
+            // onClick={() => {
+            //   this.handleFocusedBtnName({selected: this.state.selected})
+            // }}
+          />
+        </div>
+        {this.renderGraph()}
+      </>
+    )
+  }
+
+  private getHandleOnChoose = (selectItem: {text: string}) => {
+    this.setState({selected: selectItem.text})
   }
 
   private renderThreeSizer = () => {
@@ -1285,6 +1425,87 @@ class InventoryTopology extends PureComponent<Props, State> {
         },
       },
     ]
+  }
+
+  private renderGraph = () => {
+    console.log('renderGraph')
+    const {source} = this.props
+    const {filteredLayouts, focusedHost, timeRange} = this.state
+
+    const layoutCells = getCells(filteredLayouts, source)
+    const tempVars = generateForHosts(source)
+
+    console.log({
+      source,
+      filteredLayouts,
+      focusedHost,
+      timeRange,
+      layoutCells,
+      tempVars,
+    })
+
+    return (
+      <Page.Contents>
+        <LayoutRenderer
+          source={source}
+          sources={[source]}
+          isStatusPage={false}
+          isStaticPage={true}
+          isEditable={false}
+          cells={layoutCells}
+          templates={tempVars}
+          timeRange={timeRange}
+          manualRefresh={this.props.manualRefresh}
+          host={focusedHost}
+        />
+      </Page.Contents>
+    )
+  }
+
+  private async fetchHostsAndMeasurements(layouts: Layout[], hostID: string) {
+    const {source} = this.props
+
+    const fetchMeasurements = getMeasurementsForHost(source, hostID)
+    const fetchHosts = getAppsForHost(
+      source.links.proxy,
+      hostID,
+      layouts,
+      source.telegraf
+    )
+
+    const [host, measurements] = await Promise.all([
+      fetchHosts,
+      fetchMeasurements,
+    ])
+
+    return {host, measurements}
+  }
+
+  private async getLayoutsforHost(layouts: Layout[], hostID: string) {
+    const {host, measurements} = await this.fetchHostsAndMeasurements(
+      layouts,
+      hostID
+    )
+    const layoutsWithinHost = layouts.filter(layout => {
+      return (
+        host.apps &&
+        host.apps.includes(layout.app) &&
+        measurements.includes(layout.measurement)
+      )
+    })
+    const filteredLayouts = layoutsWithinHost
+      .filter(layout => {
+        return layout.app === 'system' || layout.app === 'win_system'
+      })
+      .sort((x, y) => {
+        return x.measurement < y.measurement
+          ? -1
+          : x.measurement > y.measurement
+          ? 1
+          : 0
+      })
+
+    return {filteredLayouts}
   }
 }
 
