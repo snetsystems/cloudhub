@@ -5,6 +5,19 @@ export const HOSTS_TABLE_SIZING = {
   LoadWidth: '68px',
 }
 
+export const CLOUD_HOSTS_TABLE_SIZING = {
+  CloudNameWidth: '15%',
+  CloudInstanceIDWidth: '10%',
+  CloudInstanceStateWidth: '10%',
+  CloudInstanceTypeWidth: '10%',
+  CloudStatusCheckWidth: '10%',
+  CloudAlarmStatusWidth: '10%',
+  CloudAppsWidth: '15%',
+  CloudCPUWidth: '10%',
+  CloudMemoryWidth: '10%',
+  CloudDiskWidth: '10%',
+}
+
 export const AGENT_TABLE_SIZING = {
   CheckWidth: '30px',
   HostWidth: '35%',
