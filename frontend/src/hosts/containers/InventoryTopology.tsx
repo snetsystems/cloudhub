@@ -287,6 +287,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       focusedHost: 'minion01',
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       activeEditorTab: 'details',
+      selected: 'CloudWatch',
     }
   }
 
@@ -1087,6 +1088,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         headerButtons: [],
         menuOptions: [],
         size: rightSize,
+        handlePixels: 2,
         render: () => {
           return this.renderThreeSizer()
         },
@@ -1216,6 +1218,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         headerButtons: [],
         menuOptions: [],
         size: bottomSize,
+        handlePixels: 2,
         render: this.detailsGraph,
       },
     ]
@@ -1230,39 +1233,46 @@ class InventoryTopology extends PureComponent<Props, State> {
   private detailsGraph = () => {
     return (
       <>
-        <div>
-          <div className="radio-buttons radio-buttons--default radio-buttons--sm">
-            <Radio.Button
-              id="hostspage-tab-details"
-              titleText="details"
-              value="details"
-              active={this.state.activeEditorTab === 'details'}
-              onClick={this.onSetActiveEditorTab}
-            >
-              Details
-            </Radio.Button>
-            <Radio.Button
-              id="hostspage-tab-monitoring"
-              titleText="monitoring"
-              value="monitoring"
-              active={this.state.activeEditorTab === 'monitoring'}
-              onClick={this.onSetActiveEditorTab}
-            >
-              Monitoring
-            </Radio.Button>
-          </div>
-          Get from :
-          <Dropdown
-            items={['CloudWatch', '2', '3']}
-            onChoose={this.getHandleOnChoose}
-            selected={this.state.selected}
-            className="dropdown-stretch"
-            disabled={false}
-            // onClick={() => {
-            //   this.handleFocusedBtnName({selected: this.state.selected})
-            // }}
-          />
-        </div>
+        <>
+          <Page>
+            <Page.Header>
+              <Page.Header.Left>
+                <div className="radio-buttons radio-buttons--default radio-buttons--sm">
+                  <Radio.Button
+                    id="hostspage-tab-details"
+                    titleText="details"
+                    value="details"
+                    active={this.state.activeEditorTab === 'details'}
+                    onClick={this.onSetActiveEditorTab}
+                  >
+                    Details
+                  </Radio.Button>
+                  <Radio.Button
+                    id="hostspage-tab-monitoring"
+                    titleText="monitoring"
+                    value="monitoring"
+                    active={this.state.activeEditorTab === 'monitoring'}
+                    onClick={this.onSetActiveEditorTab}
+                  >
+                    Monitoring
+                  </Radio.Button>
+                </div>
+                <span>Get from :</span>
+                <Dropdown
+                  items={['CloudWatch', '2', '3']}
+                  onChoose={this.getHandleOnChoose}
+                  selected={this.state.selected}
+                  className="dropdown-sm"
+                  disabled={false}
+                  // onClick={() => {
+                  //   this.handleFocusedBtnName({selected: this.state.selected})
+                  // }}
+                />
+              </Page.Header.Left>
+              <Page.Header.Right></Page.Header.Right>
+            </Page.Header>
+          </Page>
+        </>
         {this.renderGraph()}
       </>
     )

@@ -7,6 +7,7 @@ import {getDeep} from 'src/utils/wrappers'
 
 // Components
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
+import Dropdown from 'src/shared/components/Dropdown'
 import HostsTable from 'src/hosts/components/HostsTable'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
@@ -100,6 +101,7 @@ interface State {
   selected: QueriesModels.TimeRange
   isVsphere: boolean
   activeEditorTab: string
+  selectedAgent: string
 }
 
 @ErrorHandling
@@ -130,8 +132,9 @@ export class HostsPage extends PureComponent<Props, State> {
       proportions: [0.43, 0.57],
       selected: {lower: '', upper: ''},
       isVsphere: false,
-      activeEditorTab: 'InventoryTopology',
-      // activeEditorTab: 'Host',
+      // activeEditorTab: 'InventoryTopology',
+      activeEditorTab: 'Host',
+      selectedAgent: 'CloudWatch',
     }
     this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
     this.onSetActiveEditorTab = this.onSetActiveEditorTab.bind(this)
@@ -319,6 +322,7 @@ export class HostsPage extends PureComponent<Props, State> {
             />
             {activeEditorTab !== 'InventoryTopology' && (
               <TimeRangeDropdown
+                //@ts-ignore
                 onChooseTimeRange={this.handleChooseTimeRange.bind(
                   this.state.selected
                 )}
@@ -343,6 +347,7 @@ export class HostsPage extends PureComponent<Props, State> {
               />
             )}
             {activeEditorTab === 'VMware' && (
+              //@ts-ignore
               <VMHostPage
                 source={source}
                 manualRefresh={this.props.manualRefresh}
@@ -351,6 +356,7 @@ export class HostsPage extends PureComponent<Props, State> {
               />
             )}
             {activeEditorTab === 'InventoryTopology' && (
+              //@ts-ignore
               <InventoryTopology
                 source={source}
                 manualRefresh={this.props.manualRefresh}
@@ -431,6 +437,10 @@ export class HostsPage extends PureComponent<Props, State> {
     )
   }
 
+  private getHandleOnChoose = (selectItem: {text: string}) => {
+    this.setState({selectedAgent: selectItem.text})
+  }
+
   private renderGraph = () => {
     const {source} = this.props
     const {filteredLayouts, focusedHost, timeRange} = this.state
@@ -439,20 +449,38 @@ export class HostsPage extends PureComponent<Props, State> {
     const tempVars = generateForHosts(source)
 
     return (
-      <Page.Contents>
-        <LayoutRenderer
-          source={source}
-          sources={[source]}
-          isStatusPage={false}
-          isStaticPage={true}
-          isEditable={false}
-          cells={layoutCells}
-          templates={tempVars}
-          timeRange={timeRange}
-          manualRefresh={this.props.manualRefresh}
-          host={focusedHost}
-        />
-      </Page.Contents>
+      <>
+        <Page.Header>
+          <Page.Header.Left>
+            <>Get from:</>
+            <Dropdown
+              items={['CloudWatch', '2', '3']}
+              onChoose={this.getHandleOnChoose}
+              selected={this.state.selectedAgent}
+              className="dropdown-sm"
+              disabled={false}
+              // onClick={() => {
+              //   this.handleFocusedBtnName({selected: this.state.selected})
+              // }}
+            />
+          </Page.Header.Left>
+          <Page.Header.Right></Page.Header.Right>
+        </Page.Header>
+        <Page.Contents>
+          <LayoutRenderer
+            source={source}
+            sources={[source]}
+            isStatusPage={false}
+            isStaticPage={true}
+            isEditable={false}
+            cells={layoutCells}
+            templates={tempVars}
+            timeRange={timeRange}
+            manualRefresh={this.props.manualRefresh}
+            host={focusedHost}
+          />
+        </Page.Contents>
+      </>
     )
   }
   private async getLayoutsforHost(layouts: Layout[], hostID: string) {
