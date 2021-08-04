@@ -25,7 +25,12 @@ import {
   Page,
   Radio,
 } from 'src/reusable_ui'
-import {Table, TableBody} from 'src/addon/128t/reusable/layout'
+import {
+  Table,
+  TableBody,
+  TableBodyRowItem,
+} from 'src/addon/128t/reusable/layout'
+import {NoState} from 'src/agent_admin/reusable'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import Modal from 'src/hosts/components/Modal'
@@ -40,11 +45,8 @@ import {
   HANDLE_HORIZONTAL,
   HANDLE_VERTICAL,
 } from 'src/shared/constants/'
-import {tmpMenu} from 'src/hosts/constants/tools'
-import {
-  notifyUnableToGetHosts,
-  notifyUnableToGetApps,
-} from 'src/shared/copy/notifications'
+import {hostMenu, tmpMenu} from 'src/hosts/constants/tools'
+import {notifyUnableToGetHosts} from 'src/shared/copy/notifications'
 
 // Types
 import {
@@ -299,14 +301,12 @@ class InventoryTopology extends PureComponent<Props, State> {
   private statusRef = createRef<HTMLDivElement>()
   private toolbarRef = createRef<HTMLDivElement>()
   private sidebarHostsRef = createRef<HTMLDivElement>()
-  private cloudInventoryRef = createRef<HTMLDivElement>()
   private sidebarToolsRef = createRef<HTMLDivElement>()
   private sidebarPropertiesRef = createRef<HTMLDivElement>()
 
   private container: HTMLDivElement = null
   private outline: HTMLDivElement = null
   private toolbar: HTMLDivElement = null
-  private hosts: HTMLDivElement = null
   private tools: HTMLDivElement = null
   private properties: HTMLDivElement = null
 
@@ -374,7 +374,10 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.configureEditor()
     this.setActionInEditor()
     this.configureStylesheet(mx)
-    this.addHostsButton(this.state.hostsObject, this.hosts)
+
+    // this.changedDOM()
+    // this.addHostsButton(this.state.hostsObject, this.hosts)
+
     this.addToolsButton(this.tools)
     this.setToolbar(this.editor, this.toolbar)
 
@@ -448,15 +451,25 @@ class InventoryTopology extends PureComponent<Props, State> {
     if (this.graph) {
       this.graph.getModel().addListener(mxEvent.CHANGE, this.handleGraphModel)
     }
+
+    this.changedDOM()
   }
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
+    if (
+      prevState.selectItem !== this.state.selectItem &&
+      this.state.selectItem === 'total'
+    ) {
+      this.changedDOM()
+      // console.log('componentDidUpdate total')
+    }
+
     if (
       JSON.stringify(_.keys(prevState.hostsObject)) !==
       JSON.stringify(_.keys(this.state.hostsObject))
     ) {
       this.setCellsWarning(_.keys(this.state.hostsObject))
-      this.addHostsButton(this.state.hostsObject, this.hosts)
+      // this.addHostsButton(this.state.hostsObject, this.hosts)
     }
 
     if (_.isEmpty(this.state.topologyId) && !_.isEmpty(this.state.topology)) {
@@ -683,7 +696,6 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.container = this.containerRef.current
     this.outline = this.outlineRef.current
-    this.hosts = this.sidebarHostsRef.current
     this.tools = this.sidebarToolsRef.current
     this.properties = this.sidebarPropertiesRef.current
     this.toolbar = this.toolbarRef.current
@@ -1037,6 +1049,45 @@ class InventoryTopology extends PureComponent<Props, State> {
     })
   }
 
+  private changedDOM = () => {
+    const hostList: NodeListOf<HTMLElement> = document
+      .querySelector('#hostInventoryContainer')
+      .querySelectorAll('.hosts-table--td')
+
+    _.forEach(hostList, host => {
+      mxEvent.removeAllListeners(host)
+    })
+
+    _.forEach(hostList, host => {
+      const dragElt = document.createElement('div')
+      dragElt.style.border = 'dashed #f58220 1px'
+      dragElt.style.width = `${90}px`
+      dragElt.style.height = `${90}px`
+
+      const value = host.textContent
+      const node = {
+        ...hostMenu,
+        label: value,
+        link: '',
+        name: value,
+        type: 'Server',
+      }
+
+      let ds = mxUtils.makeDraggable(
+        host,
+        this.graph,
+        dragCell(node),
+        dragElt,
+        0,
+        0,
+        true,
+        true
+      )
+
+      ds.setGuidesEnabled(true)
+    })
+  }
+
   private xmlExport = (sender: mxGraphModelType) => {
     const enc = new mxCodec(mxUtils.createXmlDocument())
     const cells = enc.encode(sender)
@@ -1088,7 +1139,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         headerButtons: [],
         menuOptions: [],
         size: rightSize,
-        handlePixels: 2,
+        handlePixels: 8,
         render: () => {
           return this.renderThreeSizer()
         },
@@ -1218,7 +1269,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         headerButtons: [],
         menuOptions: [],
         size: bottomSize,
-        handlePixels: 2,
+        handlePixels: 8,
         render: this.detailsGraph,
       },
     ]
@@ -1233,46 +1284,45 @@ class InventoryTopology extends PureComponent<Props, State> {
   private detailsGraph = () => {
     return (
       <>
-        <>
-          <Page>
-            <Page.Header>
-              <Page.Header.Left>
-                <div className="radio-buttons radio-buttons--default radio-buttons--sm">
-                  <Radio.Button
-                    id="hostspage-tab-details"
-                    titleText="details"
-                    value="details"
-                    active={this.state.activeEditorTab === 'details'}
-                    onClick={this.onSetActiveEditorTab}
-                  >
-                    Details
-                  </Radio.Button>
-                  <Radio.Button
-                    id="hostspage-tab-monitoring"
-                    titleText="monitoring"
-                    value="monitoring"
-                    active={this.state.activeEditorTab === 'monitoring'}
-                    onClick={this.onSetActiveEditorTab}
-                  >
-                    Monitoring
-                  </Radio.Button>
-                </div>
-                <span>Get from :</span>
-                <Dropdown
-                  items={['CloudWatch', '2', '3']}
-                  onChoose={this.getHandleOnChoose}
-                  selected={this.state.selected}
-                  className="dropdown-sm"
-                  disabled={false}
-                  // onClick={() => {
-                  //   this.handleFocusedBtnName({selected: this.state.selected})
-                  // }}
-                />
-              </Page.Header.Left>
-              <Page.Header.Right></Page.Header.Right>
-            </Page.Header>
-          </Page>
-        </>
+        <Page>
+          <Page.Header fullWidth={true}>
+            <Page.Header.Left>
+              <div className="radio-buttons radio-buttons--default radio-buttons--sm">
+                <Radio.Button
+                  id="hostspage-tab-details"
+                  titleText="details"
+                  value="details"
+                  active={this.state.activeEditorTab === 'details'}
+                  onClick={this.onSetActiveEditorTab}
+                >
+                  Details
+                </Radio.Button>
+                <Radio.Button
+                  id="hostspage-tab-monitoring"
+                  titleText="monitoring"
+                  value="monitoring"
+                  active={this.state.activeEditorTab === 'monitoring'}
+                  onClick={this.onSetActiveEditorTab}
+                >
+                  Monitoring
+                </Radio.Button>
+              </div>
+              <span>Get from :</span>
+              <Dropdown
+                items={['CloudWatch', '2', '3']}
+                onChoose={this.getHandleOnChoose}
+                selected={this.state.selected}
+                className="dropdown-sm"
+                disabled={false}
+                // onClick={() => {
+                //   this.handleFocusedBtnName({selected: this.state.selected})
+                // }}
+              />
+            </Page.Header.Left>
+            <Page.Header.Right></Page.Header.Right>
+          </Page.Header>
+        </Page>
+
         {this.renderGraph()}
       </>
     )
@@ -1386,25 +1436,46 @@ class InventoryTopology extends PureComponent<Props, State> {
         ],
         menuOptions: [],
         size: topSize,
-        render: () => (
-          <>
-            <FancyScrollbar>
-              {this.state.selectItem === 'total' ? (
-                <TableBody>{<div ref={this.sidebarHostsRef} />}</TableBody>
-              ) : (
-                <InventoryTreemenu
-                  data={dummyData}
-                  graph={this.graph}
+        render: () => {
+          if (this.state.selectItem === 'total') {
+            const hostList = _.keys(this.state.hostsObject)
+            if (hostList.length > 0) {
+              return (
+                <div id={'hostInventoryContainer'}>
+                  <TableBody>
+                    <>
+                      {_.map(hostList, host => {
+                        return (
+                          <div key={host} className={`hosts-table--tr`}>
+                            <TableBodyRowItem title={host} width={'100%'} />
+                          </div>
+                        )
+                      })}
+                    </>
+                  </TableBody>
+                </div>
+              )
+            } else {
+              return <NoState message={'There is no host'} />
+            }
+          }
 
-                  // onMouse
-                  // onClickItem={this.onSelectedHost}
-                  // initialActiveKey={initialActiveKey}
-                  // initialOpenNodes={initialOpenNodes}
-                />
-              )}
-            </FancyScrollbar>
-          </>
-        ),
+          if (this.state.selectItem === 'cloud') {
+            return (
+              <InventoryTreemenu
+                data={dummyData}
+                graph={this.graph}
+
+                // onMouse
+                // onClickItem={this.onSelectedHost}
+                // initialActiveKey={initialActiveKey}
+                // initialOpenNodes={initialOpenNodes}
+              />
+            )
+          }
+
+          return null
+        },
       },
       {
         name: 'Tools',
@@ -1438,21 +1509,11 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private renderGraph = () => {
-    console.log('renderGraph')
     const {source} = this.props
     const {filteredLayouts, focusedHost, timeRange} = this.state
 
     const layoutCells = getCells(filteredLayouts, source)
     const tempVars = generateForHosts(source)
-
-    console.log({
-      source,
-      filteredLayouts,
-      focusedHost,
-      timeRange,
-      layoutCells,
-      tempVars,
-    })
 
     return (
       <Page.Contents>
