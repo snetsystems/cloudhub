@@ -6,15 +6,6 @@ import SearchBar from 'src/hosts/components/SearchBar'
 import HostRow from 'src/hosts/components/HostRow'
 import InfiniteScroll from 'src/shared/components/InfiniteScroll'
 import PageSpinner from 'src/shared/components/PageSpinner'
-import Dropdown from 'src/shared/components/Dropdown'
-import {
-  Form,
-  Button,
-  ComponentColor,
-  ComponentSize,
-  Page,
-  Radio,
-} from 'src/reusable_ui'
 
 import {
   CLOUD_HOSTS_TABLE_SIZING,
@@ -170,42 +161,9 @@ class HostsTable extends PureComponent<Props, State> {
         <div className="panel-heading">
           <div>
             <h2 className="panel-title">{this.HostsTitle}</h2>
-
-            <div className="radio-buttons radio-buttons--default radio-buttons--sm">
-              <Radio.Button
-                id="hostspage-tab-details"
-                titleText="Snet"
-                value="snet"
-                active={this.state.activeEditorTab === 'snet'}
-                onClick={this.onSetActiveEditorTab}
-              >
-                Snet
-              </Radio.Button>
-              <Radio.Button
-                id="hostspage-tab-aws"
-                titleText="AWS"
-                value="aws"
-                active={this.state.activeEditorTab === 'aws'}
-                onClick={this.onSetActiveEditorTab}
-              >
-                AWS
-              </Radio.Button>
-            </div>
           </div>
 
           <div>
-            {this.state.activeEditorTab === 'aws' ? (
-              <Dropdown
-                items={this.state.items}
-                onChoose={this.getHandleOnChoose}
-                selected={this.state.selected}
-                className="dropdown-sm"
-                disabled={false}
-                // onClick={() => {
-                //   this.handleFocusedBtnName({selected: this.state.selected})
-                // }}
-              />
-            ) : null}
             <SearchBar
               placeholder="Filter by Host..."
               onSearch={this.updateSearchTerm}
@@ -220,16 +178,6 @@ class HostsTable extends PureComponent<Props, State> {
         </div>
       </div>
     )
-  }
-
-  private onSetActiveEditorTab = (activeEditorTab: string): void => {
-    this.setState({
-      activeEditorTab,
-    })
-  }
-
-  private getHandleOnChoose = (selectItem: {text: string}) => {
-    this.setState({selected: selectItem.text})
   }
 
   private get TableContents(): JSX.Element {
