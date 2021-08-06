@@ -93,7 +93,12 @@ import {
 // Utils
 import {generateForHosts} from 'src/utils/tempVars'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
-import {getContainerElement, getIsDisableName} from 'src/hosts/utils/topology'
+import {
+  getContainerElement,
+  getContainerTitle,
+  getIsDisableName,
+  getParseHTML,
+} from 'src/hosts/utils/topology'
 import {getCells} from 'src/hosts/utils/getCells'
 
 // error
@@ -248,11 +253,13 @@ interface State {
   resizableDockWidth: number
   selectItem: string
   isPinned: boolean
+  layouts: Layout[]
   filteredLayouts: Layout[]
   focusedHost: string
   timeRange: TimeRange
   activeEditorTab: string
   selected: string
+  appHostData: {}
 }
 
 @ErrorHandling
@@ -270,7 +277,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       isPinned: false,
       screenProportions: [0.15, 0.85],
       sidebarProportions: [0.333, 0.333, 0.333],
-      bottomProportions: [0.666, 0.333],
+      bottomProportions: [0.54, 0.46],
       topSideProportions: [0.7, 0.3],
       hostsObject: {},
       minionList: [],
@@ -285,11 +292,13 @@ class InventoryTopology extends PureComponent<Props, State> {
       resizableDockHeight: 200,
       resizableDockWidth: 200,
       selectItem: 'total',
+      layouts: [],
       filteredLayouts: [],
-      focusedHost: 'minion01',
+      focusedHost: '',
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       activeEditorTab: 'details',
       selected: 'CloudWatch',
+      appHostData: {},
     }
   }
 
@@ -326,7 +335,6 @@ class InventoryTopology extends PureComponent<Props, State> {
   private configureStylesheet = configureStylesheet
   private getAllCells = getAllCells
   private openSensorData = openSensorData
-  private addHostsButton = addHostsButton
   private addToolsButton = addToolsButton
   private setToolbar = setToolbar
 
@@ -375,9 +383,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setActionInEditor()
     this.configureStylesheet(mx)
 
-    // this.changedDOM()
-    // this.addHostsButton(this.state.hostsObject, this.hosts)
-
     this.addToolsButton(this.tools)
     this.setToolbar(this.editor, this.toolbar)
 
@@ -386,23 +391,33 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     if (!layouts) {
       // notify(notifyUnableToGetApps())
-      // this.setState({
-      //   hostsPageStatus: RemoteDataState.Error,
-      //   layouts,
-      // })
+      this.setState({
+        // hostsPageStatus: RemoteDataState.Error,
+        layouts,
+      })
       return
     }
 
-    const {focusedHost} = this.state
-    console.log('layouts: ', layouts)
-    if (layouts) {
-      this.fetchHostsData(layouts)
-      const {filteredLayouts} = await this.getLayoutsforHost(
-        layouts,
-        focusedHost
+    // For rendering whole hosts list
+    await this.fetchHostsData(layouts)
+
+    // For rendering the charts with the focused single host.
+    const hostID =
+      this.state.focusedHost || this.getFirstHost(this.state.hostsObject)
+
+    const {autoRefresh} = this.props
+    if (autoRefresh) {
+      this.intervalID = window.setInterval(
+        () => this.fetchHostsData(layouts),
+        autoRefresh
       )
-      this.setState({filteredLayouts})
     }
+    GlobalAutoRefresher.poll(autoRefresh)
+
+    this.setState({
+      layouts,
+      focusedHost: hostID,
+    })
 
     const topology = await this.props.handleGetInventoryTopology(
       this.props.links
@@ -451,17 +466,37 @@ class InventoryTopology extends PureComponent<Props, State> {
     if (this.graph) {
       this.graph.getModel().addListener(mxEvent.CHANGE, this.handleGraphModel)
     }
+  }
 
-    this.changedDOM()
+  private getFirstHost = (hostsObject: {[x: string]: Host}): string => {
+    const hostsArray = _.values(hostsObject)
+    return hostsArray.length > 0 ? hostsArray[0].name : null
   }
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
+    const {layouts, focusedHost} = this.state
+
+    if (layouts) {
+      if (prevState.focusedHost !== focusedHost) {
+        this.fetchHostsData(layouts)
+        const {filteredLayouts} = await this.getLayoutsforHost(
+          layouts,
+          focusedHost
+        )
+        console.log({filteredLayouts, layouts, focusedHost})
+        this.setState({filteredLayouts})
+      }
+
+      // if (prevProps.autoRefresh !== autoRefresh) {
+      //   GlobalAutoRefresher.poll(autoRefresh)
+      // }
+    }
+
     if (
       prevState.selectItem !== this.state.selectItem &&
       this.state.selectItem === 'total'
     ) {
       this.changedDOM()
-      // console.log('componentDidUpdate total')
     }
 
     if (
@@ -469,7 +504,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       JSON.stringify(_.keys(this.state.hostsObject))
     ) {
       this.setCellsWarning(_.keys(this.state.hostsObject))
-      // this.addHostsButton(this.state.hostsObject, this.hosts)
+      this.changedDOM()
     }
 
     if (_.isEmpty(this.state.topologyId) && !_.isEmpty(this.state.topology)) {
@@ -794,6 +829,15 @@ class InventoryTopology extends PureComponent<Props, State> {
     mxGraphSelectionModel: mxGraphSelectionModeltype,
     _mxEventObject: mxEventObjectType
   ) => {
+    const selectionCells = mxGraphSelectionModel['cells']
+
+    if (selectionCells.length > 0) {
+      const containerElement = getContainerElement(selectionCells[0].value)
+      const title = getContainerTitle(containerElement).textContent
+
+      this.setState({focusedHost: title})
+    }
+
     createForm.bind(this)(mxGraphSelectionModel.graph, this.properties)
   }
 
@@ -1284,7 +1328,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   private detailsGraph = () => {
     return (
       <>
-        <Page>
+        <Page className="inventory-hosts-list-page">
           <Page.Header fullWidth={true}>
             <Page.Header.Left>
               <div className="radio-buttons radio-buttons--default radio-buttons--sm">
@@ -1348,7 +1392,6 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private onChooseItem = selectItem => {
-    console.log('onChooseItem', selectItem)
     this.setState({selectItem})
   }
 
@@ -1410,6 +1453,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         headerOrientation: HANDLE_HORIZONTAL,
         headerButtons: [
           <Button
+            key={'total'}
             color={
               this.state.selectItem === 'total'
                 ? ComponentColor.Primary
@@ -1422,6 +1466,7 @@ class InventoryTopology extends PureComponent<Props, State> {
             size={ComponentSize.ExtraSmall}
           />,
           <Button
+            key={'cloud'}
             color={
               this.state.selectItem === 'cloud'
                 ? ComponentColor.Primary

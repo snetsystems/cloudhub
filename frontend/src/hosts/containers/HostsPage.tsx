@@ -9,7 +9,8 @@ import {getDeep} from 'src/utils/wrappers'
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import Dropdown from 'src/shared/components/Dropdown'
 import HostsTable from 'src/hosts/components/HostsTable'
-import LayoutRenderer from 'src/shared/components/LayoutRenderer'
+import AWSHostsTable from 'src/hosts/components/AWSHostsTable'
+import HostLayoutRenderer from 'src/hosts/components/HostLayoutRenderer'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import ManualRefresh, {
   ManualRefreshProps,
@@ -102,6 +103,7 @@ interface State {
   isVsphere: boolean
   activeEditorTab: string
   selectedAgent: string
+  selectedProvider: string
 }
 
 @ErrorHandling
@@ -135,6 +137,7 @@ export class HostsPage extends PureComponent<Props, State> {
       // activeEditorTab: 'InventoryTopology',
       activeEditorTab: 'Host',
       selectedAgent: 'CloudWatch',
+      selectedProvider: 'Snet',
     }
     this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
     this.onSetActiveEditorTab = this.onSetActiveEditorTab.bind(this)
@@ -426,15 +429,43 @@ export class HostsPage extends PureComponent<Props, State> {
   private renderHostTable = () => {
     const {source} = this.props
     const {hostsObject, hostsPageStatus, focusedHost} = this.state
+
     return (
-      <HostsTable
-        source={source}
-        hosts={_.values(hostsObject)}
-        hostsPageStatus={hostsPageStatus}
-        focusedHost={focusedHost}
-        onClickTableRow={this.handleClickTableRow}
-      />
+      <>
+        <Dropdown
+          items={['Snet', 'AWS', 'GCP', 'Azure']}
+          onChoose={this.getHandleOnChooseProvider}
+          selected={this.state.selectedProvider}
+          className="dropdown-sm"
+          disabled={false}
+          // onClick={() => {
+          //   this.handleFocusedBtnName({selected: this.state.selected})
+          // }}
+        />
+        {this.state.selectedProvider === 'Snet' ? (
+          <HostsTable
+            source={source}
+            hosts={_.values(hostsObject)}
+            hostsPageStatus={hostsPageStatus}
+            focusedHost={focusedHost}
+            onClickTableRow={this.handleClickTableRow}
+          />
+        ) : null}
+        {this.state.selectedProvider === 'AWS' ? (
+          <AWSHostsTable
+            source={source}
+            hosts={_.values(hostsObject)}
+            hostsPageStatus={hostsPageStatus}
+            focusedHost={focusedHost}
+            onClickTableRow={this.handleClickTableRow}
+          />
+        ) : null}
+      </>
     )
+  }
+
+  private getHandleOnChooseProvider = (selectItem: {text: string}) => {
+    this.setState({selectedProvider: selectItem.text})
   }
 
   private getHandleOnChoose = (selectItem: {text: string}) => {
@@ -450,24 +481,28 @@ export class HostsPage extends PureComponent<Props, State> {
 
     return (
       <>
-        <Page.Header>
-          <Page.Header.Left>
-            <>Get from:</>
-            <Dropdown
-              items={['CloudWatch', '2', '3']}
-              onChoose={this.getHandleOnChoose}
-              selected={this.state.selectedAgent}
-              className="dropdown-sm"
-              disabled={false}
-              // onClick={() => {
-              //   this.handleFocusedBtnName({selected: this.state.selected})
-              // }}
-            />
-          </Page.Header.Left>
-          <Page.Header.Right></Page.Header.Right>
-        </Page.Header>
+        {this.state.selectedProvider === 'AWS' ? (
+          <Page.Header>
+            <Page.Header.Left>
+              <>
+                <>Get from: </>
+                <Dropdown
+                  items={['CloudWatch', '2', '3']}
+                  onChoose={this.getHandleOnChoose}
+                  selected={this.state.selectedAgent}
+                  className="dropdown-sm"
+                  disabled={false}
+                  // onClick={() => {
+                  //   this.handleFocusedBtnName({selected: this.state.selected})
+                  // }}
+                />
+              </>
+            </Page.Header.Left>
+            <Page.Header.Right></Page.Header.Right>
+          </Page.Header>
+        ) : null}
         <Page.Contents>
-          <LayoutRenderer
+          <HostLayoutRenderer
             source={source}
             sources={[source]}
             isStatusPage={false}
@@ -478,6 +513,7 @@ export class HostsPage extends PureComponent<Props, State> {
             timeRange={timeRange}
             manualRefresh={this.props.manualRefresh}
             host={focusedHost}
+            provider={this.state.selectedProvider}
           />
         </Page.Contents>
       </>
