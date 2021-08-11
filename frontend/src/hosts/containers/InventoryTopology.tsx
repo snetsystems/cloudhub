@@ -59,6 +59,9 @@ import {
   getMinionKeyAcceptedListAsync,
 } from 'src/hosts/actions'
 
+// Constants
+import {notifyUnableToGetHosts} from 'src/shared/copy/notifications'
+
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 // APIs
@@ -68,7 +71,11 @@ import {getEnv} from 'src/shared/apis/env'
 // Utils
 import {generateForHosts} from 'src/utils/tempVars'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
-import {getContainerElement, getIsDisableName} from 'src/hosts/utils/topology'
+import {
+  getContainerElement,
+  getIsDisableName,
+  getParseHTML,
+} from 'src/hosts/utils/topology'
 
 // error
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -100,6 +107,7 @@ import {
   factoryMethod,
   ipmiPowerIndicator,
   filteredIpmiPowerStatus,
+  detectedHostsStatus,
   dragCell,
 } from 'src/hosts/configurations/topology'
 import InventoryTreemenu from '../components/InventoryTreemenu'
@@ -131,6 +139,7 @@ export const {
   mxGraphModel,
   mxGeometry,
   mxPopupMenu,
+  mxEventObject,
 } = mx
 
 window['mxGraph'] = mxGraph
@@ -157,6 +166,7 @@ window['mxEffects'] = mxEffects
 window['mxOutline'] = mxOutline
 window['mxPoint'] = mxPoint
 window['mxPopupMenu'] = mxPopupMenu
+window['mxEventObject'] = mxEventObject
 
 const warningImage = new mxImage(
   require('mxgraph/javascript/src/images/warning.png'),
@@ -295,7 +305,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.configureEditor()
     this.setActionInEditor()
     this.configureStylesheet(mx)
-    this.addHostsButton(this.state.hostsObject, this.hosts)
+    // this.addHostsButton(this.state.hostsObject, this.hosts)
     this.addToolsButton(this.tools)
     this.setToolbar(this.editor, this.toolbar)
 
@@ -334,6 +344,8 @@ class InventoryTopology extends PureComponent<Props, State> {
           GlobalAutoRefresher.poll(this.props.autoRefresh)
 
           const hostList = _.keys(this.state.hostsObject)
+
+          console.log('hostList', hostList)
 
           this.setCellsWarning(hostList)
         }
@@ -536,6 +548,21 @@ class InventoryTopology extends PureComponent<Props, State> {
       tempVars
     )
 
+    const hostsError = notifyUnableToGetHosts().message
+    if (!hostsObject) {
+      throw new Error(hostsError)
+    }
+
+    const graph = this.graph
+    const parent = graph.getDefaultParent()
+    const cells = this.getAllCells(parent, true)
+
+    // console.log('cells', cells)
+
+    detectedHostsStatus.bind(this)(cells, hostsObject)
+
+    // console.log('hostsObject', hostsObject)
+
     this.setState({
       hostsObject,
     })
@@ -597,7 +624,26 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
 
     mxEdgeHandler.prototype.snapToTerminals = true
-    this.graph.setTooltips(false)
+    this.graph.setTooltips(true)
+    this.graph.getTooltipForCell = function (cell: mxCellType) {
+      console.log(cell)
+
+      //     const doc = getParseHTML(target)
+      // const containerElement = doc.querySelector('.vertex')
+
+      const cellElement = getParseHTML(cell.value)
+      const statusKind = cellElement
+        .querySelector('div')
+        .getAttribute('data-status-kind')
+      const statusValue = cellElement
+        .querySelector('div')
+        .getAttribute('data-status-value')
+
+      console.log(cellElement, statusKind)
+
+      return statusKind !== null ? statusKind + ':' + statusValue + '%' : null
+    }
+
     this.graph.connectionHandler.addListener(
       mxEvent.CONNECT,
       onConnectMxGraph.bind(this)
@@ -620,12 +666,15 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.graph.setAllowDanglingEdges(false)
     this.graph.createGroupCell = (cells: mxCellType[]) => {
+      console.log('createGroupCell', cells)
       const group = mxGraph.prototype.createGroupCell.apply(this.graph, cells)
+      const containerElement = getContainerElement(cells[0].value)
+      const groupName = containerElement.getAttribute('data-parent')
 
       const groupObj = {
         ...tmpMenu,
-        name: 'Group',
-        label: 'Group',
+        name: groupName ? groupName : 'Group',
+        label: groupName ? groupName : 'Group',
         type: 'Group',
       }
 
@@ -635,6 +684,77 @@ class InventoryTopology extends PureComponent<Props, State> {
       group.setConnectable(true)
 
       group.setStyle('group')
+
+      return group
+    }
+
+    mxGraph.prototype.groupCells = function (group, border, cells) {
+      console.log('groupCells', cells)
+      if (cells == null) {
+        cells = mxUtils.sortCells(this.getSelectionCells(), true)
+      }
+
+      cells = this.getCellsForGroup(cells)
+
+      if (group == null) {
+        group = this.createGroupCell(cells)
+      }
+
+      var bounds = this.getBoundsForGroup(group, cells, border)
+
+      if (cells.length >= 1 && bounds != null) {
+        // if (bounds != null) {
+        // Uses parent of group or previous parent of first child
+        var parent = this.model.getParent(group)
+
+        if (parent == null) {
+          parent = this.model.getParent(cells[0])
+        }
+
+        this.model.beginUpdate()
+        try {
+          // Checks if the group has a geometry and
+          // creates one if one does not exist
+          if (this.getCellGeometry(group) == null) {
+            this.model.setGeometry(group, new mxGeometry())
+          }
+
+          // Adds the group into the parent
+          var index = this.model.getChildCount(parent)
+          this.cellsAdded(
+            [group],
+            parent,
+            index,
+            null,
+            null,
+            false,
+            false,
+            false
+          )
+
+          // Adds the children into the group and moves
+          index = this.model.getChildCount(group)
+          this.cellsAdded(cells, group, index, null, null, false, false, false)
+          this.cellsMoved(cells, -bounds.x, -bounds.y, false, false, false)
+
+          // Resizes the group
+          this.cellsResized([group], [bounds], false)
+
+          this.fireEvent(
+            new mxEventObject(
+              mxEvent.GROUP_CELLS,
+              'group',
+              group,
+              'border',
+              border,
+              'cells',
+              cells
+            )
+          )
+        } finally {
+          this.model.endUpdate()
+        }
+      }
 
       return group
     }
@@ -1040,7 +1160,6 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private onChooseItem = selectItem => {
-    console.log('onChooseItem', selectItem)
     this.setState({selectItem})
   }
 
@@ -1049,33 +1168,64 @@ class InventoryTopology extends PureComponent<Props, State> {
     const [topSize, middleSize, bottomSize] = sidebarProportions
 
     const dummyData = {
-      'first-level-node-1': {
+      'Amazon Web Service': {
         label: 'Amazon Web Service',
         index: 0,
         level: 0,
         nodes: {
-          region: {
+          Seoul: {
             label: 'Seoul',
             index: 0,
-            level: 2,
+            level: 1,
             nodes: {
-              system: {
+              EC1: {
+                label: 'EC1',
+                index: 0,
+                level: 2,
+                nodes: {},
+              },
+              EC2: {
                 label: 'EC2',
                 index: 0,
-                level: 3,
+                level: 2,
+                nodes: {},
+              },
+              EC5: {
+                label: 'EC5',
+                index: 0,
+                level: 2,
+                nodes: {},
+              },
+              EC6: {
+                label: 'EC6',
+                index: 0,
+                level: 2,
+                nodes: {},
+              },
+            },
+          },
+          Pusan: {
+            label: 'Pusan',
+            index: 0,
+            level: 1,
+            nodes: {
+              EC3: {
+                label: 'EC3',
+                index: 0,
+                level: 2,
                 nodes: {},
               },
             },
           },
         },
       },
-      'first-level-node-2': {
+      'Google Cloud Platform': {
         label: 'Google Cloud Platform',
         index: 1,
         level: 0,
         nodes: {},
       },
-      'first-level-node-3': {
+      Azure: {
         label: 'Azure',
         index: 2,
         level: 0,

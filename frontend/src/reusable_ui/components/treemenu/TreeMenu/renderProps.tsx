@@ -62,7 +62,9 @@ export const ItemComponent: React.FunctionComponent<TreeMenuItem> = ({
     role="button"
     aria-pressed={active}
     data-key={parent.trim() + '/' + label}
+    data-parent={parent.trim()}
     data-label={label}
+    data-level={level}
     onClick={disabled ? null : onClick}
   >
     {hasNodes && (

@@ -61,11 +61,11 @@ export const toolbarMenu: ToolbarMenu[] = [
     label: 'Fit',
     icon: 'fit',
   },
-  // {
-  //   actionName: 'export',
-  //   label: 'Export',
-  //   icon: 'export',
-  // },
+  {
+    actionName: 'export',
+    label: 'Export',
+    icon: 'export',
+  },
 ]
 
 export interface Menu {
@@ -77,6 +77,7 @@ export interface Menu {
   ipmi_Host?: string
   ipmi_User?: string
   ipmi_Pass?: string
+  parent?: string
   [key: string]: any
 }
 

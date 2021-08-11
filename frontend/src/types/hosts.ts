@@ -17,6 +17,8 @@ export interface Host {
   tags?: {[x: string]: string}
   deltaUptime?: number
   winDeltaUptime?: number
+  memory?: number
+  disk?: number
 }
 
 export interface Layout {
