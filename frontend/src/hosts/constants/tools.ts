@@ -61,11 +61,11 @@ export const toolbarMenu: ToolbarMenu[] = [
     label: 'Fit',
     icon: 'fit',
   },
-  // {
-  //   actionName: 'export',
-  //   label: 'Export',
-  //   icon: 'export',
-  // },
+  {
+    actionName: 'export',
+    label: 'Export',
+    icon: 'export',
+  },
 ]
 
 export interface Menu {
@@ -217,7 +217,7 @@ export const eachNodeTypeAttrs: NodeTypeInterface = {
     ...defaultNodeTypeSettings,
     attrs: {
       ...defaultNodeTypeSettings.attrs,
-      link: '',
+      // link: '',
       using_minion: '',
       ipmi_host: '',
       ipmi_user: '',
@@ -240,7 +240,9 @@ export const eachNodeTypeAttrs: NodeTypeInterface = {
   [NodeType.Router]: {...defaultNodeTypeSettings},
   [NodeType.WirelessRouter]: {...defaultNodeTypeSettings},
   [NodeType.Switch]: {...defaultNodeTypeSettings},
-  [NodeType.Cloud]: {...defaultNodeTypeSettings},
+  [NodeType.Cloud]: {
+    ...defaultNodeTypeSettings,
+  },
   [NodeType.Group]: {
     ...defaultNodeTypeSettings,
     hideAttrs: [...defaultNodeTypeSettings.hideAttrs, 'name'],

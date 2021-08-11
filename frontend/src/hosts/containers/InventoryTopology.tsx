@@ -45,7 +45,13 @@ import {
   HANDLE_HORIZONTAL,
   HANDLE_VERTICAL,
 } from 'src/shared/constants/'
-import {hostMenu, tmpMenu} from 'src/hosts/constants/tools'
+import {
+  defaultHideAttrs,
+  eachNodeTypeAttrs,
+  hostMenu,
+  NodeType,
+  tmpMenu,
+} from 'src/hosts/constants/tools'
 import {notifyUnableToGetHosts} from 'src/shared/copy/notifications'
 
 // Types
@@ -130,6 +136,7 @@ import {
   ipmiPowerIndicator,
   filteredIpmiPowerStatus,
   dragCell,
+  // applyHandler,
 } from 'src/hosts/configurations/topology'
 import InventoryTreemenu from '../components/InventoryTreemenu'
 
@@ -435,6 +442,71 @@ class InventoryTopology extends PureComponent<Props, State> {
             const codec = new mxCodec(doc)
 
             codec.decode(doc.documentElement, graph.getModel())
+
+            // _.forEach(graph.getModel().cells, (cell: mxCellType) => {
+            //   const containerElement = getContainerElement(cell.value)
+
+            //   if (
+            //     containerElement &&
+            //     containerElement.hasAttribute('data-type')
+            //   ) {
+            //     const dataType = containerElement.getAttribute('data-type')
+            //     const attrsKeys = _.map(
+            //       _.keys(eachNodeTypeAttrs[dataType].attrs),
+            //       attr => `data-${attr}`
+            //     )
+
+            //     const filterdAttrs = _.difference(
+            //       _.map(
+            //         _.filter(
+            //           containerElement.attributes,
+            //           attr => attr.nodeName !== 'class'
+            //         ),
+            //         attr => attr.nodeName
+            //       ),
+            //       attrsKeys
+            //     )
+
+            //     console.log(filterdAttrs)
+                // console.log(mergeAttrsKeys)
+
+                // console.log(_.values())
+                // if ( === 'Server') {
+
+                // applyHandler.bind(this)(
+                //   this.graph,
+                //   cell,
+                //   '',
+
+                // )()
+
+                // console.log('containerElement: ', containerElement)
+                // containerElement.removeAttribute('data-link')
+                // console.log('cell.children: ', cell.children)
+                // _.forEach(cell.children, childCell => {
+                //   if (childCell.style === 'href') {
+                //     childCell.setVisible(false)
+                //   }
+                // })
+                // cell.setValue(containerElement.outerHTML)
+                // if (attribute.nodeName === 'data-link') {
+                //   if (cell.children) {
+                //     const childrenCell = cell.getChildAt(1)
+                //     if (childrenCell.style === 'href') {
+                //       const childrenContainerElement = getContainerElement(
+                //         childrenCell.value
+                //       )
+                //       const childrenLink = childrenContainerElement.querySelector('a')
+                //       childrenLink.setAttribute('href', newValue)
+                //       childrenCell.setValue(childrenContainerElement.outerHTML)
+                //       childrenCell.setVisible(getIsHasString(newValue))
+                //     }
+                //   }
+                // }
+                //
+                // }
+              }
+            })
           } finally {
             graph.getModel().endUpdate()
           }
@@ -480,7 +552,7 @@ class InventoryTopology extends PureComponent<Props, State> {
           layouts,
           focusedHost
         )
-        console.log({filteredLayouts, layouts, focusedHost})
+        // console.log({filteredLayouts, layouts, focusedHost})
         this.setState({filteredLayouts})
       }
 

@@ -134,8 +134,8 @@ export class HostsPage extends PureComponent<Props, State> {
       proportions: [0.43, 0.57],
       selected: {lower: '', upper: ''},
       isVsphere: false,
-      // activeEditorTab: 'InventoryTopology',
-      activeEditorTab: 'Host',
+      activeEditorTab: 'InventoryTopology',
+      // activeEditorTab: 'Host',
       selectedAgent: 'CloudWatch',
       selectedProvider: 'Snet',
     }
