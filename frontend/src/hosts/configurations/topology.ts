@@ -299,75 +299,6 @@ export const createTextField = function (
   input.classList.add('form-control')
   input.disabled = isDisable
 
-  const applyHandler = () => {
-    const containerElement = getContainerElement(cell.value)
-
-    let newValue = input.value || ''
-    let isInputPassword = false
-    const oldValue = containerElement.getAttribute(attribute.nodeName) || ''
-
-    if (newValue !== oldValue) {
-      graph.getModel().beginUpdate()
-
-      try {
-        if (attribute.nodeName === 'data-label') {
-          const title = getContainerTitle(containerElement)
-          title.textContent = newValue
-        }
-
-        if (attribute.nodeName === 'data-link') {
-          if (cell.children) {
-            const childrenCell = cell.getChildAt(1)
-            if (childrenCell.style === 'href') {
-              const childrenContainerElement = getContainerElement(
-                childrenCell.value
-              )
-
-              const childrenLink = childrenContainerElement.querySelector('a')
-              childrenLink.setAttribute('href', newValue)
-
-              childrenCell.setValue(childrenContainerElement.outerHTML)
-              childrenCell.setVisible(getIsHasString(newValue))
-            }
-          }
-        }
-
-        if (attribute.nodeName === 'data-ipmi_host') {
-          if (cell.children) {
-            const childrenCell = cell.getChildAt(0)
-            const sepCellStyle = _.split(childrenCell.style, ';')
-            if (sepCellStyle[0] === 'ipmi') {
-              graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [
-                childrenCell,
-              ])
-              childrenCell.setVisible(getIsHasString(newValue))
-            }
-          }
-        }
-
-        if (attribute.nodeName === 'data-ipmi_pass') {
-          if (newValue.length > 0) {
-            newValue = CryptoJS.AES.encrypt(
-              newValue,
-              this.secretKey.url
-            ).toString()
-
-            isInputPassword = true
-          }
-        }
-
-        containerElement.setAttribute(attribute.nodeName, newValue)
-        cell.setValue(containerElement.outerHTML)
-      } finally {
-        if (isInputPassword) {
-          graph.setSelectionCell(cell)
-        }
-        graph.getModel().endUpdate()
-        this.graphUpdate()
-      }
-    }
-  }
-
   mxEvent.addListener(
     input,
     'keypress',
@@ -379,9 +310,85 @@ export const createTextField = function (
   )
 
   if (mxClient.IS_IE) {
-    mxEvent.addListener(input, 'focusout', applyHandler)
+    mxEvent.addListener(input, 'focusout', () => {
+      applyHandler.bind(this)(graph, cell, attribute, input.value)
+    })
   } else {
-    mxEvent.addListener(input, 'blur', applyHandler)
+    mxEvent.addListener(input, 'blur', () => {
+      applyHandler.bind(this)(graph, cell, attribute, input.value)
+    })
+  }
+}
+export const applyHandler = function (
+  graph: mxGraphType,
+  cell: mxCellType,
+  attribute: any,
+  newValue = ''
+) {
+  const containerElement = getContainerElement(cell.value)
+  const oldValue = containerElement.getAttribute(attribute.nodeName) || ''
+
+  let isInputPassword = false
+
+  if (newValue !== oldValue) {
+    graph.getModel().beginUpdate()
+
+    try {
+      if (attribute.nodeName === 'data-label') {
+        const title = getContainerTitle(containerElement)
+        title.textContent = newValue
+      }
+
+      if (attribute.nodeName === 'data-link') {
+        if (cell.children) {
+          const childrenCell = cell.getChildAt(1)
+          if (childrenCell.style === 'href') {
+            const childrenContainerElement = getContainerElement(
+              childrenCell.value
+            )
+
+            const childrenLink = childrenContainerElement.querySelector('a')
+            childrenLink.setAttribute('href', newValue)
+
+            childrenCell.setValue(childrenContainerElement.outerHTML)
+            childrenCell.setVisible(getIsHasString(newValue))
+          }
+        }
+      }
+
+      if (attribute.nodeName === 'data-ipmi_host') {
+        if (cell.children) {
+          const childrenCell = cell.getChildAt(0)
+          const sepCellStyle = _.split(childrenCell.style, ';')
+          if (sepCellStyle[0] === 'ipmi') {
+            graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [
+              childrenCell,
+            ])
+            childrenCell.setVisible(getIsHasString(newValue))
+          }
+        }
+      }
+
+      if (attribute.nodeName === 'data-ipmi_pass') {
+        if (newValue.length > 0) {
+          newValue = CryptoJS.AES.encrypt(
+            newValue,
+            this.secretKey.url
+          ).toString()
+
+          isInputPassword = true
+        }
+      }
+
+      containerElement.setAttribute(attribute.nodeName, newValue)
+      cell.setValue(containerElement.outerHTML)
+    } finally {
+      if (isInputPassword) {
+        graph.setSelectionCell(cell)
+      }
+      graph.getModel().endUpdate()
+      this.graphUpdate()
+    }
   }
 }
 
