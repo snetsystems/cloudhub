@@ -16,7 +16,7 @@ import {
 } from 'src/reusable_ui/components/treemenu/TreeMenu/renderProps'
 import KeyDown from 'src/reusable_ui/components/treemenu/KeyDown'
 import {mxDragSource, mxGraph as mxGraphType} from 'mxgraph'
-import {dragCell} from '../configurations/topology'
+import {dragCell, drawCellInGroup} from '../configurations/topology'
 import {mxEvent, mxGraph, mxUtils} from '../containers/InventoryTopology'
 
 export type TreeMenuProps = {
@@ -224,6 +224,7 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
   }
 
   private changedDOM = () => {
+    const {data} = this.props
     const treemenus = document
       .querySelector('#cloudInventoryContainer .tree-item-group')
       .querySelectorAll('li')
@@ -237,30 +238,74 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
     console.log('treemenus: ', treemenus)
     _.forEach(treemenus, el => {
       const dragElt = document.createElement('div')
-      dragElt.style.border = 'dashed #f58220 1px'
-      dragElt.style.width = `${90}px`
-      dragElt.style.height = `${90}px`
+      if (el.getAttribute('data-level') === '1') {
+        dragElt.style.border = 'dashed #f58220 1px'
+        dragElt.style.width = `${110}px`
+        dragElt.style.height = `${110}px`
 
-      const value = el.textContent
-      const node = {
-        label: value,
-        link: '',
-        name: 'cloud',
-        type: 'Cloud',
+        const childCells = _.get(
+          data,
+          `${el.getAttribute('data-parent')}.nodes.${el.getAttribute(
+            'data-label'
+          )}.nodes`
+        )
+
+        // let nodes: Menu[] = null
+
+        const nodes = _.map(childCells, childCell => {
+          const value = _.get(childCell, 'label')
+          const node = {
+            label: value,
+            link: '',
+            name: 'server',
+            type: 'Server',
+            parent:
+              el.getAttribute('data-parent') +
+              '(' +
+              el.getAttribute('data-label') +
+              ')',
+          }
+          return node
+        })
+
+        let ds = mxUtils.makeDraggable(
+          el,
+          this.props.graph,
+          drawCellInGroup(el, nodes),
+          dragElt,
+          0,
+          0,
+          true,
+          true
+        )
+
+        ds.setGuidesEnabled(true)
+      } else if (el.getAttribute('data-level') === '2') {
+        dragElt.style.border = 'dashed #f58220 1px'
+        dragElt.style.width = `${90}px`
+        dragElt.style.height = `${90}px`
+
+        const value = el.getAttribute('data-label')
+        const node = {
+          label: value,
+          link: '',
+          name: 'server',
+          type: 'Server',
+        }
+
+        let ds = mxUtils.makeDraggable(
+          el,
+          this.props.graph,
+          dragCell(node),
+          dragElt,
+          0,
+          0,
+          true,
+          true
+        )
+
+        ds.setGuidesEnabled(true)
       }
-
-      let ds = mxUtils.makeDraggable(
-        el,
-        this.props.graph,
-        dragCell(node),
-        dragElt,
-        0,
-        0,
-        true,
-        true
-      )
-
-      ds.setGuidesEnabled(true)
     })
   }
 }
