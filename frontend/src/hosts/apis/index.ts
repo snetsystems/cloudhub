@@ -69,7 +69,9 @@ export const getCpuAndLoadForHosts = async (
       SELECT mean("Percent_Processor_Time") FROM \":db:\".\":rp:\".\"win_cpu\" WHERE time > now() - 10m GROUP BY host;
       SELECT mean("Processor_Queue_Length") FROM \":db:\".\":rp:\".\"win_system\" WHERE time > now() - 10s GROUP BY host;
       SELECT non_negative_derivative(mean("System_Up_Time")) AS winDeltaUptime FROM \":db:\".\":rp:\".\"win_system\" WHERE time > now() - ${telegrafSystemInterval} * 10 GROUP BY host, time(${telegrafSystemInterval}) fill(0);
-      SHOW TAG VALUES WITH KEY = "host" WHERE TIME > now() - 10m;`,
+      SHOW TAG VALUES WITH KEY = "host" WHERE TIME > now() - 10m;
+      SELECT mean("used_percent") AS "memUsed" FROM \":db:\".\":rp:\".\"mem\" WHERE time > now() - 10m GROUP BY host;
+      SELECT mean("used_percent") AS "diskUsed" FROM \":db:\".\":rp:\".\"disk\" WHERE time > now() - 10m GROUP BY host;`,
     tempVars
   )
 
@@ -88,6 +90,8 @@ export const getCpuAndLoadForHosts = async (
   const winLoadSeries = getDeep<Series[]>(data, 'results.[4].series', [])
   const winUptimeSeries = getDeep<Series[]>(data, 'results.[5].series', [])
   const allHostsSeries = getDeep<Series[]>(data, 'results.[6].series', [])
+  const memUsedSeries = getDeep<Series[]>(data, 'results.[7].series', [])
+  const diskUsadSeries = getDeep<Series[]>(data, 'results.[8].series', [])
 
   allHostsSeries.forEach(s => {
     const hostnameIndex = s.columns.findIndex(col => col === 'value')
@@ -141,6 +145,18 @@ export const getCpuAndLoadForHosts = async (
     hosts[s.tags.host].winDeltaUptime = Number(
       s.values[s.values.length - 1][winUptimeIndex]
     )
+  })
+
+  memUsedSeries.forEach(s => {
+    const meanIndex = s.columns.findIndex(col => col === 'memUsed')
+    hosts[s.tags.host].memory =
+      Math.round(Number(s.values[0][meanIndex]) * precision) / precision
+  })
+
+  diskUsadSeries.forEach(s => {
+    const meanIndex = s.columns.findIndex(col => col === 'diskUsed')
+    hosts[s.tags.host].disk =
+      Math.round(Number(s.values[0][meanIndex]) * precision) / precision
   })
 
   return hosts

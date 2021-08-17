@@ -78,6 +78,7 @@ export interface Menu {
   ipmi_host?: string
   ipmi_user?: string
   ipmi_pass?: string
+  parent?: string
 }
 
 export type keysMenu = keyof Menu
@@ -96,6 +97,7 @@ export const orderMenu: OrderMenu = {
   ipmi_host: {order: 5},
   ipmi_user: {order: 6},
   ipmi_pass: {order: 7},
+  parent: {order: 8},
 }
 
 export const toolsMenu: Menu[] = [
