@@ -1,4 +1,4 @@
-import React, {createRef, PureComponent} from 'react'
+import React, {createRef, PureComponent, ChangeEvent} from 'react'
 import {Controlled as ReactCodeMirror} from 'react-codemirror2'
 import {connect} from 'react-redux'
 import _ from 'lodash'
@@ -24,6 +24,12 @@ import {
   ComponentSize,
   Page,
   Radio,
+  Input,
+  InputType,
+  OverlayTechnology,
+  OverlayContainer,
+  OverlayHeading,
+  OverlayBody,
 } from 'src/reusable_ui'
 import {
   Table,
@@ -38,6 +44,8 @@ import PageSpinner from 'src/shared/components/PageSpinner'
 import ResizableDock from 'src/shared/components/ResizableDock'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import Dropdown from 'src/shared/components/Dropdown'
+import ConfirmButton from 'src/shared/components/ConfirmButton'
+import InventoryTreemenu from 'src/hosts/components/InventoryTreemenu'
 
 // constants
 import {
@@ -63,8 +71,9 @@ import {
 } from 'src/types'
 import {timeRanges} from 'src/shared/data/timeRanges'
 import {AddonType} from 'src/shared/constants'
-import {ComponentStatus} from 'src/reusable_ui/types'
+import {ButtonShape, ComponentStatus, IconFont} from 'src/reusable_ui/types'
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
+import {Provider} from 'src/hosts/types'
 
 // Actions
 import {
@@ -134,7 +143,6 @@ import {
   applyHandler,
   detectedHostsStatus,
 } from 'src/hosts/configurations/topology'
-import InventoryTreemenu from '../components/InventoryTreemenu'
 
 const mx = mxgraph()
 
@@ -263,6 +271,82 @@ interface State {
   activeEditorTab: string
   selected: string
   appHostData: {}
+  isCloudFormVisible: boolean
+  isUpdateCloud: boolean
+  cloudRegion: string
+  cloudAccessKey: string
+  cloudSecretKey: string
+  provider: Provider
+  treeMenu: any
+}
+
+const treeMenuDummy = {
+  'Amazon Web Service': {
+    label: 'Amazon Web Service',
+    index: 0,
+    level: 0,
+    provider: Provider.AWS,
+    nodes: {
+      Seoul: {
+        label: 'Seoul',
+        index: 0,
+        level: 1,
+        nodes: {
+          EC1: {
+            label: 'EC1',
+            index: 0,
+            level: 2,
+            nodes: {},
+          },
+          EC2: {
+            label: 'EC2',
+            index: 0,
+            level: 2,
+            nodes: {},
+          },
+          EC5: {
+            label: 'EC5',
+            index: 0,
+            level: 2,
+            nodes: {},
+          },
+          EC6: {
+            label: 'EC6',
+            index: 0,
+            level: 2,
+            nodes: {},
+          },
+        },
+      },
+      Pusan: {
+        label: 'Pusan',
+        index: 0,
+        level: 1,
+        nodes: {
+          EC3: {
+            label: 'EC3',
+            index: 0,
+            level: 2,
+            nodes: {},
+          },
+        },
+      },
+    },
+  },
+  'Google Cloud Platform': {
+    label: 'Google Cloud Platform',
+    index: 1,
+    level: 0,
+    provider: Provider.GCP,
+    nodes: {},
+  },
+  Azure: {
+    label: 'Azure',
+    index: 2,
+    level: 0,
+    provider: Provider.AZURE,
+    nodes: {},
+  },
 }
 
 @ErrorHandling
@@ -278,7 +362,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.state = {
       isPinned: false,
-      screenProportions: [0.15, 0.85],
+      screenProportions: [0.3, 0.7],
       sidebarProportions: [0.333, 0.333, 0.333],
       bottomProportions: [0.54, 0.46],
       topSideProportions: [0.7, 0.3],
@@ -302,6 +386,13 @@ class InventoryTopology extends PureComponent<Props, State> {
       activeEditorTab: 'details',
       selected: 'CloudWatch',
       appHostData: {},
+      isCloudFormVisible: false,
+      isUpdateCloud: false,
+      cloudRegion: '',
+      cloudAccessKey: '',
+      cloudSecretKey: '',
+      provider: Provider.AWS,
+      treeMenu: {},
     }
   }
 
@@ -380,6 +471,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   public async componentDidMount() {
+    this.makeTreemenu()
     this.createEditor()
     this.configureEditor()
     this.setActionInEditor()
@@ -607,6 +699,7 @@ class InventoryTopology extends PureComponent<Props, State> {
           <>this Browser Not Supported</>
         ) : (
           <>
+            {this.writeCloudForm}
             <Threesizer
               orientation={HANDLE_VERTICAL}
               divisions={this.threesizerDivisions}
@@ -624,6 +717,24 @@ class InventoryTopology extends PureComponent<Props, State> {
         )}
       </div>
     )
+  }
+
+  // private toggleCloudFormVisible = (): void => {
+  //   this.setState({isCloudFormVisible: !this.state.isCloudFormVisible})
+  // }
+
+  private openCloudForm = () => {
+    this.setState({isCloudFormVisible: true})
+  }
+
+  private closeCloudForm = () => {
+    this.setState({
+      isCloudFormVisible: false,
+      isUpdateCloud: false,
+      cloudRegion: '',
+      cloudAccessKey: '',
+      cloudSecretKey: '',
+    })
   }
 
   private ConfirmMessage = ({
@@ -1529,76 +1640,95 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setState({selectItem})
   }
 
+  private handleAddRegionAsync = () => {
+    this.closeCloudForm()
+    console.log('add')
+  }
+
+  private addRegionBtn = (provider: Provider) => () => {
+    return (
+      <Button
+        color={ComponentColor.Primary}
+        onClick={event => {
+          event.stopPropagation()
+          this.openCloudForm()
+          this.setState({provider})
+        }}
+        size={ComponentSize.ExtraSmall}
+        icon={IconFont.Pencil}
+        shape={ButtonShape.Square}
+      />
+    )
+  }
+
+  private handleUpdateRegionAsync = () => {
+    this.closeCloudForm()
+    console.log('update')
+  }
+
+  private updateRegion = async (region: string) => {
+    console.log('updateRegion: ', region)
+
+    this.setState({
+      isUpdateCloud: true,
+      cloudRegion: 'test',
+      cloudAccessKey: 'test',
+      cloudSecretKey: 'test',
+    })
+  }
+
+  private updateRegionBtn = (region: string) => () => {
+    return (
+      <Button
+        color={ComponentColor.Primary}
+        onClick={event => {
+          event.stopPropagation()
+          this.openCloudForm()
+          this.updateRegion(region)
+        }}
+        size={ComponentSize.ExtraSmall}
+        icon={IconFont.CogOutline}
+        shape={ButtonShape.Square}
+      />
+    )
+  }
+
+  private removeRegion = (region: string) => {
+    const {treeMenu} = this.state
+    const [sProvider, sRegion] = region.split('/')
+    const menus = _.keys(treeMenu)
+
+    for (let i = 0; i < menus.length; i++) {
+      if (treeMenu[menus[i]].provider === sProvider) {
+        delete treeMenu[menus[i]]['nodes'][sRegion]
+        break
+      }
+    }
+
+    this.setState({treeMenu: {...treeMenu}})
+  }
+
+  private removeRegionBtn = (region: string) => () => {
+    return (
+      <ConfirmButton
+        text="Delete"
+        type="btn-danger"
+        size="btn-xs"
+        icon={'trash'}
+        confirmAction={() => {
+          this.removeRegion(region)
+        }}
+        isEventStopPropagation={true}
+        isButtonLeaveHide={true}
+        isHideText={true}
+        square={true}
+      />
+    )
+  }
+
   private get sidebarDivisions() {
     const {sidebarProportions} = this.state
     const [topSize, middleSize, bottomSize] = sidebarProportions
-
-    const dummyData = {
-      'Amazon Web Service': {
-        label: 'Amazon Web Service',
-        index: 0,
-        level: 0,
-        nodes: {
-          Seoul: {
-            label: 'Seoul',
-            index: 0,
-            level: 1,
-            nodes: {
-              EC1: {
-                label: 'EC1',
-                index: 0,
-                level: 2,
-                nodes: {},
-              },
-              EC2: {
-                label: 'EC2',
-                index: 0,
-                level: 2,
-                nodes: {},
-              },
-              EC5: {
-                label: 'EC5',
-                index: 0,
-                level: 2,
-                nodes: {},
-              },
-              EC6: {
-                label: 'EC6',
-                index: 0,
-                level: 2,
-                nodes: {},
-              },
-            },
-          },
-          Pusan: {
-            label: 'Pusan',
-            index: 0,
-            level: 1,
-            nodes: {
-              EC3: {
-                label: 'EC3',
-                index: 0,
-                level: 2,
-                nodes: {},
-              },
-            },
-          },
-        },
-      },
-      'Google Cloud Platform': {
-        label: 'Google Cloud Platform',
-        index: 1,
-        level: 0,
-
-        nodes: {},
-      },
-      Azure: {
-        label: 'Azure',
-        index: 2,
-        level: 0,
-        nodes: {},
-      },
-    }
 
     return [
       {
@@ -1660,15 +1790,17 @@ class InventoryTopology extends PureComponent<Props, State> {
 
           if (this.state.selectItem === 'cloud') {
             return (
-              <InventoryTreemenu
-                data={dummyData}
-                graph={this.graph}
+              <FancyScrollbar>
+                <InventoryTreemenu
+                  data={this.state.treeMenu}
+                  graph={this.graph}
 
-                // onMouse
-                // onClickItem={this.onSelectedHost}
-                // initialActiveKey={initialActiveKey}
-                // initialOpenNodes={initialOpenNodes}
-              />
+                  // onMouse
+                  // onClickItem={this.onSelectedHost}
+                  // initialActiveKey={initialActiveKey}
+                  // initialOpenNodes={initialOpenNodes}
+                />
+              </FancyScrollbar>
             )
           }
 
@@ -1775,6 +1907,119 @@ class InventoryTopology extends PureComponent<Props, State> {
       })
 
     return {filteredLayouts}
+  }
+
+  private handleChangeInput = (inputKey: string) => (
+    e: ChangeEvent<HTMLInputElement>
+  ) => {
+    const input = {[inputKey]: e.target.value}
+    this.setState({...this.state, ...input})
+  }
+  private makeTreemenu = () => {
+    const treeMenu = {...treeMenuDummy}
+
+    _.reduce(
+      _.keys(treeMenuDummy),
+      (_, cur: Provider) => {
+        let nodes = {}
+
+        Object.keys(treeMenu[cur]['nodes']).reduce((_, node) => {
+          treeMenu[cur]['nodes'][node] = {
+            ...treeMenu[cur]['nodes'][node],
+            buttons: [
+              this.updateRegionBtn(`${treeMenu[cur]['provider']}/${node}`),
+              this.removeRegionBtn(`${treeMenu[cur]['provider']}/${node}`),
+            ],
+          }
+
+          nodes[node] = {
+            ...treeMenu[cur]['nodes'][node],
+          }
+
+          return false
+        }, {})
+
+        treeMenu[cur] = {
+          ...treeMenu[cur],
+
+          buttons: [this.addRegionBtn(treeMenu[cur]['provider'])],
+          nodes: {
+            ...nodes,
+          },
+        }
+        return false
+      },
+      {}
+    )
+
+    this.setState({treeMenu})
+  }
+
+  private get writeCloudForm() {
+    const {
+      isCloudFormVisible,
+      isUpdateCloud,
+      cloudRegion,
+      cloudAccessKey,
+      cloudSecretKey,
+    } = this.state
+
+    return (
+      <OverlayTechnology visible={isCloudFormVisible}>
+        <OverlayContainer>
+          <OverlayHeading title={'AWS'} onDismiss={this.closeCloudForm} />
+          <OverlayBody>
+            <Form>
+              <Form.Element label="Region" colsXS={12}>
+                <Input
+                  value={cloudRegion}
+                  onChange={this.handleChangeInput('cloudRegion')}
+                  placeholder={'Input Region'}
+                  type={InputType.Text}
+                  // status={isDisabled && ComponentStatus.Disabled}
+                />
+              </Form.Element>
+              <Form.Element label="Access Key" colsXS={12}>
+                <Input
+                  value={cloudAccessKey}
+                  onChange={this.handleChangeInput('cloudAccessKey')}
+                  placeholder={'Access Key'}
+                  type={InputType.Password}
+                  // status={isDisabled && ComponentStatus.Disabled}
+                />
+              </Form.Element>
+              <Form.Element label="Secret Key" colsXS={12}>
+                <Input
+                  value={cloudSecretKey}
+                  onChange={this.handleChangeInput('cloudSecretKey')}
+                  placeholder={'Secret Key'}
+                  type={InputType.Password}
+                  // status={isDisabled && ComponentStatus.Disabled}
+                />
+              </Form.Element>
+              <Form.Footer>
+                <Button
+                  color={ComponentColor.Default}
+                  onClick={this.closeCloudForm}
+                  size={ComponentSize.Medium}
+                  text={'Cancel'}
+                />
+                <Button
+                  color={ComponentColor.Primary}
+                  onClick={() => {
+                    isUpdateCloud
+                      ? this.handleUpdateRegionAsync()
+                      : this.handleAddRegionAsync()
+                  }}
+                  size={ComponentSize.Medium}
+                  text={isUpdateCloud ? 'Update Region' : 'Save Region'}
+                />
+              </Form.Footer>
+            </Form>
+          </OverlayBody>
+        </OverlayContainer>
+      </OverlayTechnology>
+    )
   }
 }
 
