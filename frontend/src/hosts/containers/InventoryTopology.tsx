@@ -249,7 +249,6 @@ interface State {
   screenProportions: number[]
   sidebarProportions: number[]
   bottomProportions: number[]
-  topSideProportions: number[]
   hostsObject: {[x: string]: Host}
   minionList: string[]
   ipmis: Ipmi[]
@@ -365,7 +364,6 @@ class InventoryTopology extends PureComponent<Props, State> {
       screenProportions: [0.3, 0.7],
       sidebarProportions: [0.333, 0.333, 0.333],
       bottomProportions: [0.54, 0.46],
-      topSideProportions: [0.7, 0.3],
       hostsObject: {},
       minionList: [],
       ipmis: [],
@@ -376,7 +374,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       modalMessage: null,
       topologyStatus: RemoteDataState.Loading,
       isStatusVisible: true,
-      resizableDockHeight: 200,
+      resizableDockHeight: 165,
       resizableDockWidth: 200,
       selectItem: 'total',
       layouts: [],
@@ -609,6 +607,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     if (layouts) {
       if (prevState.focusedHost !== focusedHost) {
+        console.log('focusedHost: ', focusedHost)
         this.fetchHostsData(layouts)
         const {filteredLayouts} = await this.getLayoutsforHost(
           layouts,
@@ -1436,27 +1435,17 @@ class InventoryTopology extends PureComponent<Props, State> {
     ]
   }
 
-  private topThreeSizer = () => {
-    return (
-      <Threesizer
-        orientation={HANDLE_VERTICAL}
-        divisions={this.topThreeSizerDivisions}
-        onResize={this.handleResize('topSideProportions')}
-      />
-    )
-  }
-
-  private get topThreeSizerDivisions() {
-    const [topLeft, topRight] = this.state.topSideProportions
-
+  private get renderThreeSizerDivisions() {
+    const {bottomProportions} = this.state
+    const [topSize, bottomSize] = bottomProportions
     return [
       {
         name: '',
         handleDisplay: 'none',
+        headerOrientation: HANDLE_HORIZONTAL,
         headerButtons: [],
         menuOptions: [],
-        headerOrientation: HANDLE_HORIZONTAL,
-        size: this.state.isPinned ? topLeft : 1,
+        size: topSize,
         render: () => {
           return (
             <>
@@ -1475,14 +1464,9 @@ class InventoryTopology extends PureComponent<Props, State> {
                         onClick={() => {
                           this.setState({isStatusVisible: true})
                         }}
+                        size={ComponentSize.ExtraSmall}
                         text={'Open'}
-                      ></Button>
-                      <Button
-                        onClick={() => {
-                          this.toggleIsPinned()
-                        }}
-                        text="pin"
-                      ></Button>
+                      />
                     </div>
                   ) : null}
                   <ResizableDock
@@ -1500,13 +1484,18 @@ class InventoryTopology extends PureComponent<Props, State> {
                         onClick={() => {
                           this.setState({isStatusVisible: false})
                         }}
-                        text="close"
+                        size={ComponentSize.ExtraSmall}
+                        shape={ButtonShape.Square}
+                        icon={IconFont.Remove}
                       ></Button>
                       <Button
                         onClick={() => {
                           this.toggleIsPinned()
                         }}
-                        text="pin"
+                        size={ComponentSize.ExtraSmall}
+                        shape={ButtonShape.Square}
+                        icon={IconFont.Pin}
+                        // text="pin"
                       ></Button>
                       <FancyScrollbar autoHide={false}>
                         <div id="statusContainerRef" ref={this.statusRef}></div>
@@ -1517,39 +1506,7 @@ class InventoryTopology extends PureComponent<Props, State> {
               </div>
             </>
           )
-        },
-      },
-      {
-        name: '123',
-        headerOrientation: HANDLE_VERTICAL,
-        headerButtons: [],
-        menuOptions: [],
-        handleDisplay: this.state.isPinned ? 'visible' : 'none',
-        size: this.state.isPinned ? topRight : 0,
-        render: (visibility: string) => {
-          return visibility === 'visible' ? (
-            <>
-              <div>Pinded Hardware info</div>
-            </>
-          ) : null
-        },
-      },
-    ]
-  }
-
-  private get renderThreeSizerDivisions() {
-    const {bottomProportions} = this.state
-    const [topSize, bottomSize] = bottomProportions
-    return [
-      {
-        name: '',
-        handleDisplay: 'none',
-        headerOrientation: HANDLE_HORIZONTAL,
-        headerButtons: [],
-        menuOptions: [],
-        size: topSize,
-        render: () => {
-          return this.topThreeSizer()
+          // return this.topThreeSizer()
         },
       },
       {
@@ -1957,6 +1914,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   private get writeCloudForm() {
     const {
+      provider,
       isCloudFormVisible,
       isUpdateCloud,
       cloudRegion,
@@ -1967,7 +1925,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     return (
       <OverlayTechnology visible={isCloudFormVisible}>
         <OverlayContainer>
-          <OverlayHeading title={'AWS'} onDismiss={this.closeCloudForm} />
+          <OverlayHeading title={provider} onDismiss={this.closeCloudForm} />
           <OverlayBody>
             <Form>
               <Form.Element label="Region" colsXS={12}>
