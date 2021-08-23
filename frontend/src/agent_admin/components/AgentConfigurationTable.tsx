@@ -294,15 +294,16 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
         {sortedHosts.length > 0 ? (
           <FancyScrollbar
             children={sortedHosts.map(
-              (m: Minion, i: number): JSX.Element => (
-                <AgentConfigurationTableRow
-                  key={i}
-                  minions={m}
-                  onClickTableRow={onClickTableRow}
-                  onClickAction={onClickAction}
-                  focusedHost={focusedHost}
-                />
-              )
+              (m: Minion, i: number): JSX.Element =>
+                m.os && m.os.toLocaleLowerCase() !== 'windows' ? (
+                  <AgentConfigurationTableRow
+                    key={i}
+                    minions={m}
+                    onClickTableRow={onClickTableRow}
+                    onClickAction={onClickAction}
+                    focusedHost={focusedHost}
+                  />
+                ) : null
             )}
             className="hosts-table--tbody"
           />
