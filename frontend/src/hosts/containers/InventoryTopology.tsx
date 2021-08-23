@@ -272,10 +272,12 @@ interface State {
   appHostData: {}
   isCloudFormVisible: boolean
   isUpdateCloud: boolean
-  cloudRegion: string
+  cloudRegions: string[]
+  selectedCloudRegion: string
   cloudAccessKey: string
   cloudSecretKey: string
   provider: Provider
+  providerLabel: string
   treeMenu: any
 }
 
@@ -376,7 +378,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       isStatusVisible: true,
       resizableDockHeight: 165,
       resizableDockWidth: 200,
-      selectItem: 'total',
+      selectItem: 'cloud',
       layouts: [],
       filteredLayouts: [],
       focusedHost: '',
@@ -386,10 +388,12 @@ class InventoryTopology extends PureComponent<Props, State> {
       appHostData: {},
       isCloudFormVisible: false,
       isUpdateCloud: false,
-      cloudRegion: '',
+      cloudRegions: [],
+      selectedCloudRegion: '',
       cloudAccessKey: '',
       cloudSecretKey: '',
-      provider: Provider.AWS,
+      provider: null,
+      providerLabel: '',
       treeMenu: {},
     }
   }
@@ -722,15 +726,41 @@ class InventoryTopology extends PureComponent<Props, State> {
   //   this.setState({isCloudFormVisible: !this.state.isCloudFormVisible})
   // }
 
-  private openCloudForm = () => {
-    this.setState({isCloudFormVisible: true})
+  private openCloudForm = (provider: string) => {
+    console.log('provider: ', provider)
+    let cloudRegions = []
+    if (_.split(provider, '/')[0] === Provider.AWS) {
+      cloudRegions = [...cloudRegions, 'SEOUL', 'SYDNEY']
+    }
+
+    if (_.split(provider, '/')[0] === Provider.GCP) {
+      cloudRegions = [...cloudRegions, 'SEOUL', 'TOKYO', 'OSAKA', 'TAIWAN']
+    }
+
+    if (_.split(provider, '/')[0] === Provider.AZURE) {
+      cloudRegions = [
+        ...cloudRegions,
+        'SEOUL',
+        'BUSAN',
+        'TOKYO',
+        'SAITAMA',
+        'OSAKA',
+      ]
+    }
+
+    this.setState({
+      isCloudFormVisible: true,
+      cloudRegions,
+      selectedCloudRegion: cloudRegions[0],
+    })
   }
 
   private closeCloudForm = () => {
     this.setState({
       isCloudFormVisible: false,
       isUpdateCloud: false,
-      cloudRegion: '',
+      cloudRegions: [],
+      selectedCloudRegion: '',
       cloudAccessKey: '',
       cloudSecretKey: '',
     })
@@ -1602,18 +1632,18 @@ class InventoryTopology extends PureComponent<Props, State> {
     console.log('add')
   }
 
-  private addRegionBtn = (provider: Provider) => () => {
+  private addRegionBtn = (provider: Provider, label: string) => () => {
     return (
       <Button
         color={ComponentColor.Primary}
         onClick={event => {
           event.stopPropagation()
-          this.openCloudForm()
-          this.setState({provider})
+          this.openCloudForm(provider)
+          this.setState({provider, providerLabel: label})
         }}
         size={ComponentSize.ExtraSmall}
-        icon={IconFont.Pencil}
-        shape={ButtonShape.Square}
+        text={'+ Add Region'}
+        shape={ButtonShape.Default}
       />
     )
   }
@@ -1628,7 +1658,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.setState({
       isUpdateCloud: true,
-      cloudRegion: 'test',
+      selectedCloudRegion: 'test',
       cloudAccessKey: 'test',
       cloudSecretKey: 'test',
     })
@@ -1640,11 +1670,11 @@ class InventoryTopology extends PureComponent<Props, State> {
         color={ComponentColor.Primary}
         onClick={event => {
           event.stopPropagation()
-          this.openCloudForm()
+          this.openCloudForm(_.split(region, '/')[0])
           this.updateRegion(region)
         }}
         size={ComponentSize.ExtraSmall}
-        icon={IconFont.CogOutline}
+        icon={IconFont.Pencil}
         shape={ButtonShape.Square}
       />
     )
@@ -1899,7 +1929,12 @@ class InventoryTopology extends PureComponent<Props, State> {
         treeMenu[cur] = {
           ...treeMenu[cur],
 
-          buttons: [this.addRegionBtn(treeMenu[cur]['provider'])],
+          buttons: [
+            this.addRegionBtn(
+              treeMenu[cur]['provider'],
+              treeMenu[cur]['label']
+            ),
+          ],
           nodes: {
             ...nodes,
           },
@@ -1911,13 +1946,17 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.setState({treeMenu})
   }
+  private handleChooseRegion = (selectItem: {text: string}) => {
+    this.setState({selectedCloudRegion: selectItem.text})
+  }
 
   private get writeCloudForm() {
     const {
-      provider,
+      providerLabel,
       isCloudFormVisible,
       isUpdateCloud,
-      cloudRegion,
+      cloudRegions,
+      selectedCloudRegion,
       cloudAccessKey,
       cloudSecretKey,
     } = this.state
@@ -1925,16 +1964,18 @@ class InventoryTopology extends PureComponent<Props, State> {
     return (
       <OverlayTechnology visible={isCloudFormVisible}>
         <OverlayContainer>
-          <OverlayHeading title={provider} onDismiss={this.closeCloudForm} />
+          <OverlayHeading
+            title={providerLabel}
+            onDismiss={this.closeCloudForm}
+          />
           <OverlayBody>
             <Form>
               <Form.Element label="Region" colsXS={12}>
-                <Input
-                  value={cloudRegion}
-                  onChange={this.handleChangeInput('cloudRegion')}
-                  placeholder={'Input Region'}
-                  type={InputType.Text}
-                  // status={isDisabled && ComponentStatus.Disabled}
+                <Dropdown
+                  items={cloudRegions}
+                  selected={selectedCloudRegion}
+                  onChoose={this.handleChooseRegion}
+                  className="dropdown-stretch"
                 />
               </Form.Element>
               <Form.Element label="Access Key" colsXS={12}>
