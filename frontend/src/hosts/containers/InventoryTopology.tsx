@@ -375,7 +375,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       modalTitle: null,
       modalMessage: null,
       topologyStatus: RemoteDataState.Loading,
-      isStatusVisible: true,
+      isStatusVisible: false,
       resizableDockHeight: 165,
       resizableDockWidth: 200,
       selectItem: 'cloud',
@@ -399,6 +399,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   public intervalID: number
+  public timeout: NodeJS.Timer
   private isComponentMounted: boolean = true
 
   private containerRef = createRef<HTMLDivElement>()
@@ -607,7 +608,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
-    const {layouts, focusedHost} = this.state
+    const {layouts, focusedHost, isPinned} = this.state
 
     if (layouts) {
       if (prevState.focusedHost !== focusedHost) {
@@ -675,6 +676,14 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     if (prevProps.manualRefresh !== this.props.manualRefresh) {
       this.fetchIntervalData()
+    }
+
+    if (prevState.isPinned !== isPinned) {
+      if (isPinned) {
+        clearTimeout(this.timeout)
+      } else {
+        this.setState({isStatusVisible: false})
+      }
     }
   }
 
@@ -1166,6 +1175,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       ipmiPass: string,
       cell: mxCellType
     ) => {
+      const {handleGetIpmiSensorDataAsync} = this.props
       const decryptedBytes = CryptoJS.AES.decrypt(ipmiPass, this.secretKey.url)
       const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
       const pIpmi: Ipmi = {
@@ -1175,17 +1185,33 @@ class InventoryTopology extends PureComponent<Props, State> {
         pass: originalPass,
       }
 
-      const sensorData = await this.props.handleGetIpmiSensorDataAsync(
-        this.salt.url,
-        this.salt.token,
-        pIpmi
+      handleGetIpmiSensorDataAsync(this.salt.url, this.salt.token, pIpmi).then(
+        sensorData => {
+          const {isPinned} = this.state
+
+          this.setState({isStatusVisible: true})
+
+          console.log('get sensor')
+          // timeout 초기화
+          clearTimeout(this.timeout)
+          this.timeout = null
+
+          //
+          if (!isPinned) {
+            this.timeout = setTimeout(() => {
+              this.setState({isStatusVisible: false})
+            }, 3000)
+          }
+
+          // console.log('sensorData: ', sensorData)
+        }
       )
 
       const currentCell = this.graph.getSelectionCell()
 
-      if (cell && currentCell && cell.getId() === currentCell.getId()) {
-        this.openSensorData(sensorData)
-      }
+      // if (cell && currentCell && cell.getId() === currentCell.getId()) {
+      //   this.openSensorData(sensorData)
+      // }
     },
     500
   )
@@ -1488,17 +1514,6 @@ class InventoryTopology extends PureComponent<Props, State> {
                     <PageSpinner />
                   )}
                   <div id="outlineContainer" ref={this.outlineRef}></div>
-                  {!this.state.isStatusVisible ? (
-                    <div className="resizable-openbtn">
-                      <Button
-                        onClick={() => {
-                          this.setState({isStatusVisible: true})
-                        }}
-                        size={ComponentSize.ExtraSmall}
-                        text={'Open'}
-                      />
-                    </div>
-                  ) : null}
                   <ResizableDock
                     className={classnames('', {
                       active: this.state.isStatusVisible,
@@ -1525,6 +1540,11 @@ class InventoryTopology extends PureComponent<Props, State> {
                         size={ComponentSize.ExtraSmall}
                         shape={ButtonShape.Square}
                         icon={IconFont.Pin}
+                        color={
+                          this.state.isPinned
+                            ? ComponentColor.Primary
+                            : ComponentColor.Default
+                        }
                         // text="pin"
                       ></Button>
                       <FancyScrollbar autoHide={false}>
