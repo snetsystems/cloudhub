@@ -23,6 +23,7 @@ import {
   getContainerTitle,
   getIsHasString,
   getParseHTML,
+  getTimeSeriesHostIndicator,
 } from 'src/hosts/utils/topology'
 
 // Constants
@@ -653,7 +654,7 @@ export const dragCell = (node: Menu) => (
   graph.setSelectionCell(v1)
 }
 
-export const drawCellInGroup = (parentElement: HTMLElement, nodes: Menu[]) => (
+export const drawCellInGroup = (nodes: Menu[]) => (
   graph: mxGraphType,
   _event: any,
   _cell: mxCellType,
@@ -663,12 +664,6 @@ export const drawCellInGroup = (parentElement: HTMLElement, nodes: Menu[]) => (
   const parent = graph.getDefaultParent()
   const model = graph.getModel()
   let cells: mxCellType[] = null
-
-  // const groupName =
-  //   parentElement.getAttribute('data-parent') +
-  //   '(' +
-  //   parentElement.getAttribute('data-label') +
-  //   ')'
 
   model.beginUpdate()
   try {
@@ -912,7 +907,6 @@ export const addHostsButton = function (
     hostElement.appendChild(span)
     rowElement.appendChild(hostElement)
 
-    console.log('menu: ', menu)
     addSidebarButton.bind(this)({
       sideBarArea: hostsArea,
       node: menu,
@@ -1300,21 +1294,6 @@ export const detectedHostsStatus = function (
 ) {
   console.log('detectedHostsStatus', cells, hostsObject)
 
-  // _.forEach(cells, cell => {
-  //   if (cell.getStyle() === 'node') {
-  //     const containerElement = getContainerElement(cell.value)
-  //     const isDisableName = getIsDisableName(containerElement)
-  //     const name = containerElement.getAttribute('data-name')
-
-  //     if (isDisableName) {
-  //       graph.removeCellOverlays(cell)
-  //       if (!_.find(hostList, host => host === name)) {
-  //         graph.setCellWarning(cell, 'Warning', warningImage)
-  //       }
-  //     }
-  //   }
-  // })
-
   if (!this.graph) return
 
   const model = this.graph.getModel()
@@ -1344,43 +1323,61 @@ export const detectedHostsStatus = function (
               console.log('statusKind')
 
               if (statusKind === 'cpu') {
-                console.log(findHost.cpu)
                 childCellElement.setAttribute(
                   'data-status-value',
                   _.toString(findHost.cpu)
                 )
                 childCell.setValue(childCellElement.outerHTML)
+                this.graph.setCellStyles(
+                  mxConstants.STYLE_FILLCOLOR,
+                  getTimeSeriesHostIndicator(findHost.cpu),
+                  [childCell]
+                )
               } else if (statusKind === 'memory') {
-                console.log(findHost.memory)
                 childCellElement.setAttribute(
                   'data-status-value',
                   _.toString(findHost.memory)
                 )
                 childCell.setValue(childCellElement.outerHTML)
-                if (findHost.memory > 24.83) {
-                  this.graph.setCellStyles(
-                    mxConstants.STYLE_FILLCOLOR,
-                    'blue',
-                    [childCell]
-                  )
-                }
-                if (findHost.memory > 26.95) {
-                  this.graph.setCellStyles(mxConstants.STYLE_FILLCOLOR, 'red', [
-                    childCell,
-                  ])
-                }
+
+                this.graph.setCellStyles(
+                  mxConstants.STYLE_FILLCOLOR,
+                  getTimeSeriesHostIndicator(findHost.memory),
+                  [childCell]
+                )
               } else if (statusKind === 'disk') {
-                console.log(findHost.disk)
                 childCellElement.setAttribute(
                   'data-status-value',
                   _.toString(findHost.disk)
                 )
                 childCell.setValue(childCellElement.outerHTML)
+                this.graph.setCellStyles(
+                  mxConstants.STYLE_FILLCOLOR,
+                  getTimeSeriesHostIndicator(findHost.disk),
+                  [childCell]
+                )
               }
             })
           }
+        } else {
+          const childCells = this.graph.getChildCells(cell)
+
+          if (!_.isEmpty(childCells)) {
+            _.forEach(childCells, childCell => {
+              const childCellElement = getParseHTML(
+                childCell.value
+              ).querySelector('div')
+              childCellElement.setAttribute('data-status-value', '')
+
+              childCell.setValue(childCellElement.outerHTML)
+              this.graph.setCellStyles(
+                mxConstants.STYLE_FILLCOLOR,
+                getTimeSeriesHostIndicator(''),
+                [childCell]
+              )
+            })
+          }
         }
-        // const statusKind = containerElement.getAttribute('data-status-kind')
       }
     })
   } finally {

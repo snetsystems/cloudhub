@@ -79,6 +79,7 @@ export interface Menu {
   ipmi_user?: string
   ipmi_pass?: string
   parent?: string
+  timeseries_host?: boolean
 }
 
 export type keysMenu = keyof Menu
@@ -98,6 +99,7 @@ export const orderMenu: OrderMenu = {
   ipmi_user: {order: 6},
   ipmi_pass: {order: 7},
   parent: {order: 8},
+  timeseries_host: {order: 9},
 }
 
 export const toolsMenu: Menu[] = [
@@ -205,7 +207,7 @@ export type NodeTypeInterface = {
   }
 }
 
-export const defaultHideAttrs: keysMenu[] = ['class', 'type']
+export const defaultHideAttrs: keysMenu[] = ['class', 'type', 'timeseries_host']
 export const defaultDisableAttrs: keysMenu[] = []
 
 export const defaultNodeTypeSettings = {
@@ -224,6 +226,7 @@ export const eachNodeTypeAttrs: NodeTypeInterface = {
       ipmi_host: '',
       ipmi_user: '',
       ipmi_pass: '',
+      timeseries_host: false,
     },
     hideAttrs: [...defaultNodeTypeSettings.hideAttrs],
     disableAttrs: [...defaultNodeTypeSettings.disableAttrs, 'name'],
