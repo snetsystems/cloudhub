@@ -85,7 +85,6 @@ import {getEnv} from 'src/shared/apis/env'
 import {
   getCpuAndLoadForHosts,
   getLayouts,
-  getAppsForHosts,
   getAppsForHost,
   getMeasurementsForHost,
 } from 'src/hosts/apis'
@@ -96,7 +95,7 @@ import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {
   getContainerElement,
   getContainerTitle,
-  getIsDisableAttr,
+  getTimeSeriesHost,
   getParseHTML,
 } from 'src/hosts/utils/topology'
 import {getCells} from 'src/hosts/utils/getCells'
@@ -340,45 +339,6 @@ class InventoryTopology extends PureComponent<Props, State> {
   private addToolsButton = addToolsButton
   private setToolbar = setToolbar
 
-  private async fetchHostsData(layouts: Layout[]): Promise<void> {
-    const {source, links, notify} = this.props
-    const {addons} = links
-
-    const envVars = await getEnv(links.environment)
-    const telegrafSystemInterval = getDeep<string>(
-      envVars,
-      'telegrafSystemInterval',
-      ''
-    )
-    const hostsError = notifyUnableToGetHosts().message
-    const tempVars = generateForHosts(source)
-
-    try {
-      const hostsObject = await getCpuAndLoadForHosts(
-        source.links.proxy,
-        source.telegraf,
-        telegrafSystemInterval,
-        tempVars
-      )
-      if (!hostsObject) {
-        throw new Error(hostsError)
-      }
-      const newHosts = await getAppsForHosts(
-        source.links.proxy,
-        hostsObject,
-        layouts,
-        source.telegraf,
-        tempVars
-      )
-
-      this.setState({
-        hostsObject: newHosts,
-      })
-    } catch (error) {
-      console.error(error)
-    }
-  }
-
   public async componentDidMount() {
     this.createEditor()
     this.configureEditor()
@@ -387,39 +347,6 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.addToolsButton(this.tools)
     this.setToolbar(this.editor, this.toolbar)
-
-    const layoutResults = await getLayouts()
-    const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
-
-    if (!layouts) {
-      // notify(notifyUnableToGetApps())
-      this.setState({
-        // hostsPageStatus: RemoteDataState.Error,
-        layouts,
-      })
-      return
-    }
-
-    // For rendering whole hosts list
-    await this.fetchHostsData(layouts)
-
-    // For rendering the charts with the focused single host.
-    const hostID =
-      this.state.focusedHost || this.getFirstHost(this.state.hostsObject)
-
-    const {autoRefresh} = this.props
-    if (autoRefresh) {
-      this.intervalID = window.setInterval(
-        () => this.fetchHostsData(layouts),
-        autoRefresh
-      )
-    }
-    GlobalAutoRefresher.poll(autoRefresh)
-
-    this.setState({
-      layouts,
-      focusedHost: hostID,
-    })
 
     const topology = await this.props.handleGetInventoryTopology(
       this.props.links
@@ -431,6 +358,39 @@ class InventoryTopology extends PureComponent<Props, State> {
         topologyId: _.get(topology, 'id'),
       },
       async () => {
+        const layoutResults = await getLayouts()
+        const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
+
+        if (!layouts) {
+          // notify(notifyUnableToGetApps())
+          this.setState({
+            // hostsPageStatus: RemoteDataState.Error,
+            layouts,
+          })
+          return
+        }
+
+        // For rendering whole hosts list
+        await this.getHostData()
+
+        // For rendering the charts with the focused single host.
+        const hostID =
+          this.state.focusedHost || this.getFirstHost(this.state.hostsObject)
+
+        const {autoRefresh} = this.props
+        if (autoRefresh) {
+          this.intervalID = window.setInterval(
+            () => this.getHostData(),
+            autoRefresh
+          )
+        }
+        GlobalAutoRefresher.poll(autoRefresh)
+
+        this.setState({
+          layouts,
+          focusedHost: hostID,
+        })
+
         if (_.get(topology, 'diagram')) {
           const graph = this.graph
 
@@ -517,18 +477,13 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     if (layouts) {
       if (prevState.focusedHost !== focusedHost) {
-        this.fetchHostsData(layouts)
+        this.getHostData()
         const {filteredLayouts} = await this.getLayoutsforHost(
           layouts,
           focusedHost
         )
-        // console.log({filteredLayouts, layouts, focusedHost})
         this.setState({filteredLayouts})
       }
-
-      // if (prevProps.autoRefresh !== autoRefresh) {
-      //   GlobalAutoRefresher.poll(autoRefresh)
-      // }
     }
 
     if (
@@ -800,7 +755,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
 
     mxEdgeHandler.prototype.snapToTerminals = true
-    this.graph.setTooltips(false)
+    // this.graph.setTooltips(false)
     this.graph.setTooltips(true)
     this.graph.getTooltipForCell = function (cell: mxCellType) {
       const cellElement = getParseHTML(cell.value)
@@ -811,7 +766,12 @@ class InventoryTopology extends PureComponent<Props, State> {
         .querySelector('div')
         .getAttribute('data-status-value')
 
-      return statusKind !== null ? statusKind + ':' + statusValue + '%' : null
+      return statusKind !== null
+        ? _.upperCase(statusKind) +
+            ':' +
+            statusValue +
+            (!_.isEmpty(statusValue) ? '%' : '')
+        : null
     }
     this.graph.connectionHandler.addListener(
       mxEvent.CONNECT,
@@ -1206,6 +1166,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private setCellsWarning = (hostList: string[]) => {
+    console.log('setCellsWarning')
     if (!this.graph) return
 
     const graph = this.graph
@@ -1215,12 +1176,12 @@ class InventoryTopology extends PureComponent<Props, State> {
     _.forEach(cells, cell => {
       if (cell.getStyle() === 'node') {
         const containerElement = getContainerElement(cell.value)
-        const isDisableName = getIsDisableAttr(containerElement, 'data-name')
+        const isTimeSeriesHost = getTimeSeriesHost(containerElement)
         const name = containerElement.getAttribute('data-name')
 
-        if (isDisableName) {
+        if (isTimeSeriesHost) {
           graph.removeCellOverlays(cell)
-          if (!_.isEmpty(_.find(hostList, host => host === name))) {
+          if (_.isEmpty(_.find(hostList, host => host === name))) {
             graph.setCellWarning(cell, 'Warning', warningImage)
           }
         }
@@ -1249,6 +1210,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         label: value,
         name: value,
         type: 'Server',
+        timeseries_host: true,
       }
 
       let ds = mxUtils.makeDraggable(

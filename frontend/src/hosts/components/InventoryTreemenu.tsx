@@ -271,7 +271,7 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
         let ds = mxUtils.makeDraggable(
           el,
           this.props.graph,
-          drawCellInGroup(el, nodes),
+          drawCellInGroup(nodes),
           dragElt,
           0,
           0,
