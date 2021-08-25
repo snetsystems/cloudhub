@@ -25,6 +25,11 @@ export enum ActionTypes {
   CreateInventoryTopology = 'CREATE_INVENTORY_TOPOLOGY',
   UpdateInventoryTopology = 'UPDATE_INVENTORY_TOPOLOGY',
   GetIpmiStatus = 'GET_IPMI_STATUS',
+  AddCSPRegion = 'ADD_CSP_REGION',
+  GetCSPRegionAll = 'GET_CSP_REGION_ALL',
+  GetCSPRegion = 'GET_CSP_REGION',
+  UpdateCSPRegion = 'UPDATE_CSP_REGION',
+  DeleteCSPRegion = 'DELETE_CSP_REGION',
 }
 
 export type Action =
@@ -32,6 +37,11 @@ export type Action =
   | CreateInventoryTopologyAction
   | UpdateInventoryTopologyAction
   | GetIpmiStatusAction
+  | AddCSPRegionAction
+  | GetCSPRegionAllAction
+  | GetCSPRegionAction
+  | UpdateCSPRegionAction
+  | DeleteCSPRegionAction
 
 interface LoadInventoryTopologyAction {
   type: ActionTypes.LoadInventoryTopology
@@ -198,5 +208,69 @@ export const getIpmiSensorDataAsync = (
   } catch (error) {
     console.error(error)
     dispatch(errorThrown(error))
+  }
+}
+
+interface AddCSPRegionAction {
+  type: ActionTypes.AddCSPRegion
+}
+
+export const AddCSPRegionAsync = (): AddCSPRegionAction => ({
+  type: ActionTypes.AddCSPRegion,
+})
+
+interface GetCSPRegionAllAction {
+  type: ActionTypes.GetCSPRegionAll
+}
+
+export const GetCSPRegionAllAction = (): GetCSPRegionAllAction => ({
+  type: ActionTypes.GetCSPRegionAll,
+})
+interface GetCSPRegionAction {
+  type: ActionTypes.GetCSPRegion
+}
+
+export const GetCSPRegionAction = (): GetCSPRegionAction => ({
+  type: ActionTypes.GetCSPRegion,
+})
+
+interface UpdateCSPRegionAction {
+  type: ActionTypes.UpdateCSPRegion
+}
+
+export const UpdateCSPRegionAction = (): UpdateCSPRegionAction => ({
+  type: ActionTypes.UpdateCSPRegion,
+})
+
+interface DeleteCSPRegionAction {
+  type: ActionTypes.DeleteCSPRegion
+}
+
+export const DeleteCSPRegionAction = (): DeleteCSPRegionAction => ({
+  type: ActionTypes.DeleteCSPRegion,
+})
+
+export const GetCSPRegionAllAsync = (pUrl, pToken, pCSP) => {
+  try {
+  } catch (error) {
+    console.error(error)
+  }
+}
+export const GetCSPRegionAsync = (pUrl, pToken, pCSP) => {
+  try {
+  } catch (error) {
+    console.error(error)
+  }
+}
+export const UpdateCSPRegionAsync = (pUrl, pToken, pCSP) => {
+  try {
+  } catch (error) {
+    console.error(error)
+  }
+}
+export const DeleteCSPRegionAsync = (pUrl, pToken, pCSP) => {
+  try {
+  } catch (error) {
+    console.error(error)
   }
 }

@@ -45,7 +45,9 @@ import ResizableDock from 'src/shared/components/ResizableDock'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import Dropdown from 'src/shared/components/Dropdown'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
-import InventoryTreemenu from 'src/hosts/components/InventoryTreemenu'
+import InventoryTreemenu, {
+  TreeMenuProps,
+} from 'src/hosts/components/InventoryTreemenu'
 
 // constants
 import {
@@ -96,6 +98,10 @@ import {
   getLayouts,
   getAppsForHost,
   getMeasurementsForHost,
+  getCSP,
+  addCSP,
+  updateCSP,
+  deleteCSP,
 } from 'src/hosts/apis'
 
 // Utils
@@ -142,6 +148,8 @@ import {
   applyHandler,
   detectedHostsStatus,
 } from 'src/hosts/configurations/topology'
+import TreeMenu, {TreeMenuItem} from 'src/reusable_ui/components/treemenu'
+import {GetCSPRegionAllAsync} from '../actions/inventoryTopology'
 
 const mx = mxgraph()
 
@@ -278,6 +286,7 @@ interface State {
   provider: Provider
   providerLabel: string
   treeMenu: any
+  treemenuTopParent: any
 }
 
 const treeMenuDummy = {
@@ -291,6 +300,7 @@ const treeMenuDummy = {
         label: 'Seoul',
         index: 0,
         level: 1,
+        regionID: '1',
         nodes: {
           EC1: {
             label: 'EC1',
@@ -322,6 +332,7 @@ const treeMenuDummy = {
         label: 'Pusan',
         index: 0,
         level: 1,
+        regionID: '2',
         nodes: {
           EC3: {
             label: 'EC3',
@@ -394,6 +405,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       provider: null,
       providerLabel: '',
       treeMenu: {},
+      treemenuTopParent: null,
     }
   }
 
@@ -689,18 +701,20 @@ class InventoryTopology extends PureComponent<Props, State> {
   //   this.setState({isCloudFormVisible: !this.state.isCloudFormVisible})
   // }
 
-  private openCloudForm = (provider: string) => {
-    console.log('provider: ', provider)
+  private openCloudForm = (treemenuTopParent: any) => {
+    const {provider} = treemenuTopParent
+
     let cloudRegions = []
-    if (_.split(provider, '/')[0] === Provider.AWS) {
+
+    if (provider === Provider.AWS) {
       cloudRegions = [...cloudRegions, 'SEOUL', 'SYDNEY']
     }
 
-    if (_.split(provider, '/')[0] === Provider.GCP) {
+    if (provider === Provider.GCP) {
       cloudRegions = [...cloudRegions, 'SEOUL', 'TOKYO', 'OSAKA', 'TAIWAN']
     }
 
-    if (_.split(provider, '/')[0] === Provider.AZURE) {
+    if (provider === Provider.AZURE) {
       cloudRegions = [
         ...cloudRegions,
         'SEOUL',
@@ -1145,7 +1159,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       }
 
       handleGetIpmiSensorDataAsync(this.salt.url, this.salt.token, pIpmi).then(
-        sensorData => {
+        (sensorData: any) => {
           const {isPinned} = this.state
 
           this.setState({isStatusVisible: true})
@@ -1609,18 +1623,34 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private handleAddRegionAsync = () => {
+    const {
+      provider,
+      selectedCloudRegion,
+      cloudAccessKey,
+      cloudSecretKey,
+    } = this.state
+
+    const data = {
+      provider,
+      region: selectedCloudRegion,
+      accesskey: cloudAccessKey,
+      secretkey: cloudSecretKey,
+    }
+
+    addCSP(data).then(data => {
+      console.log('addCSP: ', data)
+    })
+
     this.closeCloudForm()
-    console.log('add')
   }
 
-  private addRegionBtn = (provider: Provider, label: string) => () => {
+  private addRegionBtn = treemenuTopParent => () => {
     return (
       <Button
         color={ComponentColor.Primary}
         onClick={event => {
           event.stopPropagation()
-          this.openCloudForm(provider)
-          this.setState({provider, providerLabel: label})
+          this.openCloudForm(treemenuTopParent)
         }}
         size={ComponentSize.ExtraSmall}
         text={'+ Add Region'}
@@ -1630,12 +1660,44 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private handleUpdateRegionAsync = () => {
-    this.closeCloudForm()
+    // 가정 Salt 보낸 후 etcd 에 저장할 건지 말건지
+    const {
+      selectedCloudRegion,
+      cloudAccessKey,
+      cloudSecretKey,
+      provider,
+      // regionID,
+    } = this.state
+
+    // secretkey 복호화 후
+    const data = {
+      provider,
+      id: '',
+      region: selectedCloudRegion,
+      accsesskey: cloudAccessKey,
+      secretkey: cloudSecretKey,
+    }
+
+    updateCSP(data)
+      .then(data => {
+        console.log('data:', data)
+      })
+      .finally(() => {
+        // // secretkey 암호화 후 저장
+      })
+    // this.closeCloudForm()
     console.log('update')
   }
 
-  private updateRegion = async (region: string) => {
-    console.log('updateRegion: ', region)
+  private openUpdateRegion = async (provider: Provider, region: string) => {
+    let regionID = this.getRegionID(provider, region)
+    // ETCD에서 get 해온다
+    getCSP(regionID).then(data => {
+      // 가져온 data로 setState 해준다.
+      console.log('getCSP: ', data)
+    })
+
+    console.log('updateRegion regionID: ', regionID)
 
     this.setState({
       isUpdateCloud: true,
@@ -1645,14 +1707,19 @@ class InventoryTopology extends PureComponent<Props, State> {
     })
   }
 
-  private updateRegionBtn = (region: string) => () => {
+  // add, update, delete button 클릭시 treemenu level-zero 등록
+  private updateRegionBtn = (
+    treemenuTopParent: any,
+    provider: Provider,
+    region: string
+  ) => () => {
     return (
       <Button
         color={ComponentColor.Primary}
         onClick={event => {
           event.stopPropagation()
-          this.openCloudForm(_.split(region, '/')[0])
-          this.updateRegion(region)
+          this.openCloudForm(treemenuTopParent)
+          this.openUpdateRegion(provider, region)
         }}
         size={ComponentSize.ExtraSmall}
         icon={IconFont.Pencil}
@@ -1661,22 +1728,28 @@ class InventoryTopology extends PureComponent<Props, State> {
     )
   }
 
-  private removeRegion = (region: string) => {
+  private removeRegion = (provider: Provider, region: string) => {
     const {treeMenu} = this.state
-    const [sProvider, sRegion] = region.split('/')
     const menus = _.keys(treeMenu)
 
-    for (let i = 0; i < menus.length; i++) {
-      if (treeMenu[menus[i]].provider === sProvider) {
-        delete treeMenu[menus[i]]['nodes'][sRegion]
-        break
-      }
-    }
+    // for (let i = 0; i < menus.length; i++) {
+    //   if (treeMenu[menus[i]].provider === sProvider) {
+    //     delete treeMenu[menus[i]]['nodes'][sRegion]
+    //     break
+    //   }
+    // }
+
+    let regionID = this.getRegionID(provider, region)
 
     this.setState({treeMenu: {...treeMenu}})
   }
 
-  private removeRegionBtn = (region: string) => () => {
+  private deleteCSPAsync = regionID => {
+    deleteCSP(regionID)
+    GetCSPRegionAllAsync
+  }
+
+  private removeRegionBtn = (provider: Provider, region: string) => () => {
     return (
       <ConfirmButton
         text="Delete"
@@ -1684,7 +1757,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         size="btn-xs"
         icon={'trash'}
         confirmAction={() => {
-          this.removeRegion(region)
+          this.removeRegion(provider, region)
         }}
         isEventStopPropagation={true}
         isButtonLeaveHide={true}
@@ -1692,6 +1765,23 @@ class InventoryTopology extends PureComponent<Props, State> {
         square={true}
       />
     )
+  }
+
+  private getRegionID = (provider: Provider, region: string): string => {
+    const {treeMenu} = this.state
+    const menus = _.keys(treeMenu)
+    let regionID = ''
+
+    if (provider && region) {
+      for (let i = 0; i < menus.length; i++) {
+        if (treeMenu[menus[i]].provider === provider) {
+          regionID = treeMenu[menus[i]]['nodes'][region].regionID
+          break
+        }
+      }
+    }
+
+    return regionID
   }
 
   private get sidebarDivisions() {
@@ -1762,11 +1852,6 @@ class InventoryTopology extends PureComponent<Props, State> {
                 <InventoryTreemenu
                   data={this.state.treeMenu}
                   graph={this.graph}
-
-                  // onMouse
-                  // onClickItem={this.onSelectedHost}
-                  // initialActiveKey={initialActiveKey}
-                  // initialOpenNodes={initialOpenNodes}
                 />
               </FancyScrollbar>
             )
@@ -1891,17 +1976,21 @@ class InventoryTopology extends PureComponent<Props, State> {
       (_, cur: Provider) => {
         let nodes = {}
 
-        Object.keys(treeMenu[cur]['nodes']).reduce((_, node) => {
-          treeMenu[cur]['nodes'][node] = {
-            ...treeMenu[cur]['nodes'][node],
+        Object.keys(treeMenu[cur]['nodes']).reduce((_, region) => {
+          treeMenu[cur]['nodes'][region] = {
+            ...treeMenu[cur]['nodes'][region],
             buttons: [
-              this.updateRegionBtn(`${treeMenu[cur]['provider']}/${node}`),
-              this.removeRegionBtn(`${treeMenu[cur]['provider']}/${node}`),
+              this.updateRegionBtn(
+                treeMenu[cur],
+                treeMenu[cur]['provider'],
+                region
+              ),
+              this.removeRegionBtn(treeMenu[cur]['provider'], region),
             ],
           }
 
-          nodes[node] = {
-            ...treeMenu[cur]['nodes'][node],
+          nodes[region] = {
+            ...treeMenu[cur]['nodes'][region],
           }
 
           return false
@@ -1910,12 +1999,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         treeMenu[cur] = {
           ...treeMenu[cur],
 
-          buttons: [
-            this.addRegionBtn(
-              treeMenu[cur]['provider'],
-              treeMenu[cur]['label']
-            ),
-          ],
+          buttons: [this.addRegionBtn(treeMenu[cur])],
           nodes: {
             ...nodes,
           },
