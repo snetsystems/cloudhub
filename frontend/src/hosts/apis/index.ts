@@ -25,6 +25,7 @@ import {
   setIpmiSetPower,
   IpmiSetPowerStatus,
 } from 'src/shared/apis/saltStack'
+import {Provider} from 'src/hosts/types'
 
 interface HostsObject {
   [x: string]: Host
@@ -639,4 +640,75 @@ export const setIpmiSetPowerApi = async (
   const setPower = yaml.safeLoad(responseSetPower.data)
 
   return setPower
+}
+
+export const getCSP = async (id?: string) => {
+  let url = '/cloudhub/v1/csp'
+
+  if (id) {
+    url += `/${id}`
+  }
+
+  return await AJAX({
+    url,
+    method: 'GET',
+  })
+}
+
+export const addCSP = async ({
+  provider,
+  region,
+  accesskey,
+  secretkey,
+}: {
+  provider: Provider
+  region: string
+  accesskey: string
+  secretkey: string
+}) => {
+  // return await AJAX({
+  //   url: `/cloudhub/v1/csp`,
+  //   method: 'POST',
+  //   data: {provider, region, accsesskey, secretkey},
+  // })
+  return {
+    id: '1',
+    provider: provider,
+    region: region,
+    accesskey: accesskey,
+    secretkey: secretkey,
+    organization: '2',
+    links: {
+      self: '/cloudhub/v1/csp/1',
+    },
+  }
+}
+
+export const updateCSP = async ({
+  id,
+  provider,
+  region,
+  accsesskey,
+  secretkey,
+}) => {
+  // return await AJAX({
+  //   url: `/cloudhub/v1/csp`,
+  //   method: 'PATCH',
+  //   data: {id, provider, region, accsesskey, secretkey},
+  // })
+
+  return {
+    id,
+    provider,
+    region,
+    accsesskey,
+    secretkey,
+  }
+}
+
+export const deleteCSP = async (id: string) => {
+  return await AJAX({
+    url: `/cloudhub/v1/csp/${id}`,
+    method: 'DELETE',
+  })
 }
