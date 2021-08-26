@@ -3,3 +3,7 @@ export enum Provider {
   GCP = 'GCP',
   AZURE = 'AZURE',
 }
+
+export interface AWSInstanceData {
+  [instanceID: string]: {[info: string]: number | string | JSX.Element}
+}
