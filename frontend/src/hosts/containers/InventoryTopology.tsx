@@ -5,6 +5,7 @@ import _ from 'lodash'
 import {getDeep} from 'src/utils/wrappers'
 import CryptoJS from 'crypto-js'
 import classnames from 'classnames'
+import yaml from 'js-yaml'
 
 import {
   default as mxgraph,
@@ -45,9 +46,8 @@ import ResizableDock from 'src/shared/components/ResizableDock'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import Dropdown from 'src/shared/components/Dropdown'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
-import InventoryTreemenu, {
-  TreeMenuProps,
-} from 'src/hosts/components/InventoryTreemenu'
+import InventoryTreemenu from 'src/hosts/components/InventoryTreemenu'
+import TopologyDetails from 'src/hosts/components/TopologyDetails'
 
 // constants
 import {
@@ -150,7 +150,8 @@ import {
 } from 'src/hosts/configurations/topology'
 import TreeMenu, {TreeMenuItem} from 'src/reusable_ui/components/treemenu'
 import {GetCSPRegionAllAsync} from '../actions/inventoryTopology'
-
+import {AWSInstanceData} from 'src/hosts/types/cloud'
+import {saltDetailsDummy} from './detailsTest'
 const mx = mxgraph()
 
 export const {
@@ -287,6 +288,8 @@ interface State {
   providerLabel: string
   treeMenu: any
   treemenuTopParent: any
+  instanceData: AWSInstanceData
+  focuseInstanceID: string
 }
 
 const treeMenuDummy = {
@@ -406,6 +409,8 @@ class InventoryTopology extends PureComponent<Props, State> {
       providerLabel: '',
       treeMenu: {},
       treemenuTopParent: null,
+      instanceData: null,
+      focuseInstanceID: 'i-06b26a0c3fa37533a',
     }
   }
 
@@ -446,6 +451,95 @@ class InventoryTopology extends PureComponent<Props, State> {
   private setToolbar = setToolbar
 
   public async componentDidMount() {
+    const getInstanceData = yaml.safeLoad(saltDetailsDummy)
+    console.log('details: ', getInstanceData)
+
+    let instanceData = {}
+
+    _.reduce(
+      getInstanceData['local'],
+      (_, current) => {
+        console.log(
+          'current: ',
+          current.NetworkInterfaces[0].Association?.PublicIp
+        )
+
+        const instance = {
+          [current.InstanceId]: {
+            Instance_summary: {
+              Instance_ID: current.InstanceId,
+              Public_IPv4_address:
+                current.NetworkInterfaces[0].Association?.PublicIp,
+              Private_IPv4_addresses: current.PrivateIpAddress,
+              IPv6_address: current.NetworkInterfaces[0].Ipv6Addresses,
+              Instance_state: current.State.Name,
+              Public_IPv4_DNS: '',
+              Private_IPv4_DNS: '',
+              Instance_type: current.InstanceType,
+              Elastic_IP_addresses: '',
+              VPC_ID: current.VpcId,
+              AWS_Compute_Optimizer_finding: '',
+              IAM_Role: '',
+              Subnet_ID: current.SubnetId,
+            },
+            Instance_details: {
+              Platform: 'value',
+              AMI_ID: current.ImageId,
+              Monitoring: current.Monitoring.disabled,
+              Platform_details: 'value',
+              AMI_name: 'value',
+              Termination_protection: 'value',
+              Launch_time: current.LaunchTime.toString(),
+              AMI_location: 'value',
+              Lifecycle: 'value',
+              'Stop-hibernate_behavior': 'value',
+              AMI_Launch_index: current.AmiLaunchIndex,
+              Key_pair_name: current.KeyName,
+              State_transition_reason: 'value',
+              Credit_specification: 'value',
+              Kernel_ID: 'value',
+              State_transition_message: 'value',
+              Usage_operation: 'value',
+              RAM_disk_ID: 'value',
+              Owner: current.OwnerId,
+              Enclaves_Support: 'value',
+              Boot_mode: 'value',
+            },
+            Host_and_placement_group: {
+              Host_ID: 'value',
+              Affinity: 'value',
+              Placement_group: 'value',
+              Host_resource_group_name: 'value',
+              Tenancy: current.Placement.Tenancy,
+              Partition_number: 'value',
+              Virtualization_type: current.VirtualizationType,
+              Reservation: 'value',
+              Number_of_vCPUs: current.CpuOptions.CoreCount,
+            },
+            Capacity_reservation: {
+              Capacity_Reservation_ID: 'value',
+              Capacity_Reservation_setting:
+                current.CapacityReservationSpecification
+                  .CapacityReservationPreference,
+            },
+            Accelerators: {
+              Elastic_inference_accelerator_ID: 'value',
+            },
+          },
+        }
+
+        instanceData = {
+          ...instanceData,
+          ...instance,
+        }
+
+        return false
+      },
+      {}
+    )
+
+    this.setState({instanceData})
+
     this.makeTreemenu()
     this.createEditor()
     this.configureEditor()
@@ -1553,6 +1647,12 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private detailsGraph = () => {
+    console.log('this.state.instanceData: ', this.state.instanceData)
+
+    if (!this.state.instanceData) {
+      return
+    }
+
     return (
       <>
         <Page className="inventory-hosts-list-page">
@@ -1592,9 +1692,19 @@ class InventoryTopology extends PureComponent<Props, State> {
             </Page.Header.Left>
             <Page.Header.Right></Page.Header.Right>
           </Page.Header>
+          <Page.Contents scrollable={true}>
+            {this.state.activeEditorTab === 'details' ? (
+              <TopologyDetails
+                selectInstanceData={
+                  this.state.instanceData[this.state.focuseInstanceID]
+                }
+              />
+            ) : null}
+            {this.state.activeEditorTab === 'monitoring'
+              ? this.renderGraph()
+              : null}
+          </Page.Contents>
         </Page>
-
-        {this.renderGraph()}
       </>
     )
   }
@@ -1892,6 +2002,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private renderGraph = () => {
+    console.log('renderGraph')
     const {source} = this.props
     const {filteredLayouts, focusedHost, timeRange} = this.state
 
