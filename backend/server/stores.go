@@ -95,6 +95,7 @@ type DataStore interface {
 	OrganizationConfig(ctx context.Context) cloudhub.OrganizationConfigStore
 	Vspheres(ctx context.Context) cloudhub.VspheresStore
 	Topologies(ctx context.Context) cloudhub.TopologiesStore
+	CSP(ctx context.Context) cloudhub.CSPStore
 }
 
 // ensure that Store implements a DataStore
@@ -113,7 +114,8 @@ type Store struct {
 	ConfigStore             cloudhub.ConfigStore
 	OrganizationConfigStore cloudhub.OrganizationConfigStore
 	VspheresStore           cloudhub.VspheresStore
-	TopologiesStore          cloudhub.TopologiesStore
+	TopologiesStore         cloudhub.TopologiesStore
+	CSPStore                cloudhub.CSPStore
 }
 
 // Sources returns a noop.SourcesStore if the context has no organization specified
@@ -253,4 +255,17 @@ func (s *Store) Topologies(ctx context.Context) cloudhub.TopologiesStore {
 	}
 
 	return &noop.TopologiesStore{}
+}
+
+// CSP returns a noop.CSPStore if the context has no organization specified
+// and an organization.CSPStore otherwise.
+func (s *Store) CSP(ctx context.Context) cloudhub.CSPStore {
+	if isServer := hasServerContext(ctx); isServer {
+		return s.CSPStore
+	}
+	if org, ok := hasOrganizationContext(ctx); ok {
+		return organizations.NewCSPStore(s.CSPStore, org)
+	}
+
+	return &noop.CSPStore{}
 }
