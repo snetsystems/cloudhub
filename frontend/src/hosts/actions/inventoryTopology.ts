@@ -10,6 +10,11 @@ import {
   getIpmiStatusSaltApi,
   getIpmiGetSensorDataApi,
   setIpmiSetPowerApi,
+  loadCloudServiceProvidersAPI,
+  loadCloudServiceProviderAPI,
+  createCloudServiceProviderAPI,
+  updateCloudServiceProviderAPI,
+  deleteCloudServiceProviderAPI,
 } from 'src/hosts/apis'
 
 // Types
@@ -25,11 +30,11 @@ export enum ActionTypes {
   CreateInventoryTopology = 'CREATE_INVENTORY_TOPOLOGY',
   UpdateInventoryTopology = 'UPDATE_INVENTORY_TOPOLOGY',
   GetIpmiStatus = 'GET_IPMI_STATUS',
-  AddCSPRegion = 'ADD_CSP_REGION',
-  GetCSPRegionAll = 'GET_CSP_REGION_ALL',
-  GetCSPRegion = 'GET_CSP_REGION',
-  UpdateCSPRegion = 'UPDATE_CSP_REGION',
-  DeleteCSPRegion = 'DELETE_CSP_REGION',
+  LoadCloudServiceProvider = 'LOAD_CLOUD_SERVICE_PROVIDER',
+  LoadCloudServiceProviders = 'LOAD_CLOUD_SERVICE_PROVIDERS',
+  CreateCloudServiceProvider = 'CREATE_CLOUD_SERVICE_PROVIDER',
+  UpdateCloudServiceProvider = 'UPDATE_CLOUD_SERVICE_PROVIDER',
+  DeleteCloudServiceProvider = 'DELETE_CLOUD_SERVICE_PROVIDER',
 }
 
 export type Action =
@@ -37,11 +42,11 @@ export type Action =
   | CreateInventoryTopologyAction
   | UpdateInventoryTopologyAction
   | GetIpmiStatusAction
-  | AddCSPRegionAction
-  | GetCSPRegionAllAction
-  | GetCSPRegionAction
-  | UpdateCSPRegionAction
-  | DeleteCSPRegionAction
+  | LoadCloudServiceProviderAction
+  | LoadCloudServiceProvidersAction
+  | CreateCloudServiceProviderAction
+  | UpdateCloudServiceProviderAction
+  | DeleteCloudServiceProviderAction
 
 interface LoadInventoryTopologyAction {
   type: ActionTypes.LoadInventoryTopology
@@ -211,66 +216,133 @@ export const getIpmiSensorDataAsync = (
   }
 }
 
-interface AddCSPRegionAction {
-  type: ActionTypes.AddCSPRegion
+interface LoadCloudServiceProviderAction {
+  type: ActionTypes.LoadCloudServiceProvider
 }
 
-export const AddCSPRegionAsync = (): AddCSPRegionAction => ({
-  type: ActionTypes.AddCSPRegion,
-})
-
-interface GetCSPRegionAllAction {
-  type: ActionTypes.GetCSPRegionAll
-}
-
-export const GetCSPRegionAllAction = (): GetCSPRegionAllAction => ({
-  type: ActionTypes.GetCSPRegionAll,
-})
-interface GetCSPRegionAction {
-  type: ActionTypes.GetCSPRegion
-}
-
-export const GetCSPRegionAction = (): GetCSPRegionAction => ({
-  type: ActionTypes.GetCSPRegion,
-})
-
-interface UpdateCSPRegionAction {
-  type: ActionTypes.UpdateCSPRegion
-}
-
-export const UpdateCSPRegionAction = (): UpdateCSPRegionAction => ({
-  type: ActionTypes.UpdateCSPRegion,
-})
-
-interface DeleteCSPRegionAction {
-  type: ActionTypes.DeleteCSPRegion
-}
-
-export const DeleteCSPRegionAction = (): DeleteCSPRegionAction => ({
-  type: ActionTypes.DeleteCSPRegion,
-})
-
-export const GetCSPRegionAllAsync = (pUrl, pToken, pCSP) => {
-  try {
-  } catch (error) {
-    console.error(error)
+export const loadCloudServiceProviderAction = (): LoadCloudServiceProviderAction => {
+  return {
+    type: ActionTypes.LoadCloudServiceProvider,
   }
 }
-export const GetCSPRegionAsync = (pUrl, pToken, pCSP) => {
-  try {
-  } catch (error) {
-    console.error(error)
+
+interface LoadCloudServiceProvidersAction {
+  type: ActionTypes.LoadCloudServiceProviders
+}
+
+export const loadCloudServiceProviderActions = (): LoadCloudServiceProvidersAction => {
+  return {
+    type: ActionTypes.LoadCloudServiceProviders,
   }
 }
-export const UpdateCSPRegionAsync = (pUrl, pToken, pCSP) => {
-  try {
-  } catch (error) {
-    console.error(error)
+
+interface CreateCloudServiceProviderAction {
+  type: ActionTypes.CreateCloudServiceProvider
+}
+
+export const createCloudServiceProviderAction = (): CreateCloudServiceProviderAction => {
+  return {
+    type: ActionTypes.CreateCloudServiceProvider,
   }
 }
-export const DeleteCSPRegionAsync = (pUrl, pToken, pCSP) => {
+
+interface UpdateCloudServiceProviderAction {
+  type: ActionTypes.UpdateCloudServiceProvider
+}
+
+export const updateCloudServiceProviderAction = (): UpdateCloudServiceProviderAction => {
+  return {
+    type: ActionTypes.UpdateCloudServiceProvider,
+  }
+}
+
+interface DeleteCloudServiceProviderAction {
+  type: ActionTypes.DeleteCloudServiceProvider
+}
+
+export const deleteCloudServiceProviderAction = (): DeleteCloudServiceProviderAction => {
+  return {
+    type: ActionTypes.DeleteCloudServiceProvider,
+  }
+}
+
+export const loadCloudServiceProvidersAsync = () => async (
+  dispatch: Dispatch<any>
+) => {
   try {
+    const {data} = await loadCloudServiceProvidersAPI()
+    return data
+  } catch (error) {
+    dispatch(errorThrown(error))
+  }
+}
+
+export const loadCloudServiceProviderAsync = (id: string) => async (
+  dispatch: Dispatch<any>
+) => {
+  try {
+    const url = `/cloudhub/v1/csp/${id}`
+    const {data} = await loadCloudServiceProviderAPI(url)
+    dispatch(loadCloudServiceProviderAction())
+    return data
+  } catch (error) {
+    dispatch(errorThrown(error))
+  }
+}
+
+export const createCloudServiceProviderAsync = ({
+  provider,
+  region,
+  accesskey,
+  secretkey,
+}) => async (dispatch: Dispatch<any>) => {
+  try {
+    const {data} = await createCloudServiceProviderAPI({
+      provider,
+      region,
+      accesskey,
+      secretkey,
+    })
+    dispatch(createCloudServiceProviderAction())
+    return data
   } catch (error) {
     console.error(error)
+    throw error
+  }
+}
+
+export const updateCloudServiceProviderAsync = ({
+  id,
+  provider,
+  region,
+  accesskey,
+  secretkey,
+}) => async (dispatch: Dispatch<any>) => {
+  try {
+    const {data} = await updateCloudServiceProviderAPI({
+      id,
+      provider,
+      region,
+      accesskey,
+      secretkey,
+    })
+    dispatch(updateCloudServiceProviderAction())
+    return data
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const deleteCloudServiceProviderAsync = (id: string) => async (
+  dispatch: Dispatch<any>
+) => {
+  try {
+    deleteCloudServiceProviderAPI(id).then(() => {
+      dispatch(deleteCloudServiceProviderAction())
+    })
+  } catch (error) {
+    console.error(error)
+    throw error
   }
 }

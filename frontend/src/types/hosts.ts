@@ -1,5 +1,6 @@
 import {Axes} from 'src/types'
 import {mxCell as mxCellType} from 'mxgraph'
+import {Provider} from 'src/hosts/types'
 
 export interface HostNames {
   [index: string]: HostName
@@ -66,4 +67,24 @@ export interface IpmiCell {
   pass: string
   powerStatus: string
   cell: mxCellType
+}
+
+export interface CloudHost {
+  name: string
+  cpu: number
+  disk?: number
+  load?: number
+  memory?: number
+  apps?: string[]
+  deltaUptime?: string
+  instanceId?: string
+  instanceType?: string
+  instanceState?: string
+  instanceStatusCheck?: string
+  alarmStatus?: string
+  region?: string
+  provider?: Provider
+}
+export interface CloudHosts {
+  [instanceName: string]: CloudHost
 }

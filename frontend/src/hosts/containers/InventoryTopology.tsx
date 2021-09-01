@@ -86,22 +86,22 @@ import {
   setIpmiStatusAsync,
   getIpmiSensorDataAsync,
   getMinionKeyAcceptedListAsync,
+  loadCloudServiceProviderAsync,
+  loadCloudServiceProvidersAsync,
+  createCloudServiceProviderAsync,
+  updateCloudServiceProviderAsync,
+  deleteCloudServiceProviderAsync,
 } from 'src/hosts/actions'
 
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 // APIs
 import {getEnv} from 'src/shared/apis/env'
-// APIs
 import {
   getCpuAndLoadForHosts,
   getLayouts,
   getAppsForHost,
   getMeasurementsForHost,
-  getCSP,
-  addCSP,
-  updateCSP,
-  deleteCSP,
 } from 'src/hosts/apis'
 
 // Utils
@@ -149,7 +149,7 @@ import {
   detectedHostsStatus,
 } from 'src/hosts/configurations/topology'
 import TreeMenu, {TreeMenuItem} from 'src/reusable_ui/components/treemenu'
-import {GetCSPRegionAllAsync} from '../actions/inventoryTopology'
+
 import {AWSInstanceData} from 'src/hosts/types/cloud'
 import {saltDetailsDummy} from './detailsTest'
 const mx = mxgraph()
@@ -251,6 +251,22 @@ interface Props {
     saltMasterToken: string,
     pIpmis: Ipmi
   ) => Promise<any>
+  handleLoadCloudServiceProviderAsync: (id: string) => Promise<any>
+  handleLoadCloudServiceProvidersAsync: () => Promise<any>
+  handleCreateCloudServiceProviderAsync: (data: {
+    provider: Provider
+    region: string
+    accesskey: string
+    secretkey: string
+  }) => Promise<any>
+  handleUpdateCloudServiceProviderAsync: (data: {
+    provider: Provider
+    region: string
+    accesskey: string
+    secretkey: string
+    id: string
+  }) => Promise<any>
+  handleDeleteCloudServiceProviderAsync: (id: string) => Promise<any>
 }
 
 interface State {
@@ -452,22 +468,15 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   public async componentDidMount() {
     const getInstanceData = yaml.safeLoad(saltDetailsDummy)
-    console.log('details: ', getInstanceData)
-
     let instanceData = {}
 
     _.reduce(
       getInstanceData['local'],
       (_, current) => {
-        console.log(
-          'current: ',
-          current.NetworkInterfaces[0].Association?.PublicIp
-        )
-
         const instance = {
-          [current.InstanceId]: {
+          [current.instanceId]: {
             Instance_summary: {
-              Instance_ID: current.InstanceId,
+              Instance_ID: current.instanceId,
               Public_IPv4_address:
                 current.NetworkInterfaces[0].Association?.PublicIp,
               Private_IPv4_addresses: current.PrivateIpAddress,
@@ -1073,7 +1082,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
 
     mxGraph.prototype.groupCells = function (group, border, cells) {
-      console.log('groupCells', cells)
       if (cells == null) {
         cells = mxUtils.sortCells(this.getSelectionCells(), true)
       }
@@ -1258,7 +1266,6 @@ class InventoryTopology extends PureComponent<Props, State> {
 
           this.setState({isStatusVisible: true})
 
-          console.log('get sensor')
           // timeout 초기화
           clearTimeout(this.timeout)
           this.timeout = null
@@ -1439,7 +1446,6 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private setCellsWarning = (hostList: string[]) => {
-    console.log('setCellsWarning')
     if (!this.graph) return
 
     const graph = this.graph
@@ -1647,8 +1653,6 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private detailsGraph = () => {
-    console.log('this.state.instanceData: ', this.state.instanceData)
-
     if (!this.state.instanceData) {
       return
     }
@@ -1732,7 +1736,8 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setState({selectItem})
   }
 
-  private handleAddRegionAsync = () => {
+  private handleAddRegion = () => {
+    const {handleCreateCloudServiceProviderAsync} = this.props
     const {
       provider,
       selectedCloudRegion,
@@ -1747,7 +1752,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       secretkey: cloudSecretKey,
     }
 
-    addCSP(data).then(data => {
+    handleCreateCloudServiceProviderAsync(data).then(data => {
       console.log('addCSP: ', data)
     })
 
@@ -1769,8 +1774,9 @@ class InventoryTopology extends PureComponent<Props, State> {
     )
   }
 
-  private handleUpdateRegionAsync = () => {
+  private handleUpdateRegion = () => {
     // 가정 Salt 보낸 후 etcd 에 저장할 건지 말건지
+    const {handleUpdateCloudServiceProviderAsync} = this.props
     const {
       selectedCloudRegion,
       cloudAccessKey,
@@ -1784,36 +1790,35 @@ class InventoryTopology extends PureComponent<Props, State> {
       provider,
       id: '',
       region: selectedCloudRegion,
-      accsesskey: cloudAccessKey,
+      accesskey: cloudAccessKey,
       secretkey: cloudSecretKey,
     }
 
-    updateCSP(data)
+    handleUpdateCloudServiceProviderAsync(data)
       .then(data => {
         console.log('data:', data)
       })
       .finally(() => {
         // // secretkey 암호화 후 저장
       })
+
     // this.closeCloudForm()
     console.log('update')
   }
 
   private openUpdateRegion = async (provider: Provider, region: string) => {
+    const {handleLoadCloudServiceProviderAsync} = this.props
+
     let regionID = this.getRegionID(provider, region)
-    // ETCD에서 get 해온다
-    getCSP(regionID).then(data => {
-      // 가져온 data로 setState 해준다.
+
+    handleLoadCloudServiceProviderAsync(regionID).then(data => {
       console.log('getCSP: ', data)
-    })
-
-    console.log('updateRegion regionID: ', regionID)
-
-    this.setState({
-      isUpdateCloud: true,
-      selectedCloudRegion: 'test',
-      cloudAccessKey: 'test',
-      cloudSecretKey: 'test',
+      this.setState({
+        isUpdateCloud: true,
+        selectedCloudRegion: 'test',
+        cloudAccessKey: 'test',
+        cloudSecretKey: 'test',
+      })
     })
   }
 
@@ -1854,9 +1859,11 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setState({treeMenu: {...treeMenu}})
   }
 
-  private deleteCSPAsync = regionID => {
-    deleteCSP(regionID)
-    GetCSPRegionAllAsync
+  private handleDeleteRegion = regionID => {
+    const {handleDeleteCloudServiceProviderAsync} = this.props
+    handleDeleteCloudServiceProviderAsync(regionID).then(() => {
+      this.setState({})
+    })
   }
 
   private removeRegionBtn = (provider: Provider, region: string) => () => {
@@ -2002,7 +2009,6 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private renderGraph = () => {
-    console.log('renderGraph')
     const {source} = this.props
     const {filteredLayouts, focusedHost, timeRange} = this.state
 
@@ -2183,8 +2189,8 @@ class InventoryTopology extends PureComponent<Props, State> {
                   color={ComponentColor.Primary}
                   onClick={() => {
                     isUpdateCloud
-                      ? this.handleUpdateRegionAsync()
-                      : this.handleAddRegionAsync()
+                      ? this.handleUpdateRegion()
+                      : this.handleAddRegion()
                   }}
                   size={ComponentSize.Medium}
                   text={isUpdateCloud ? 'Update Region' : 'Save Region'}
@@ -2212,6 +2218,11 @@ const mapDispatchToProps = {
   handleGetIpmiStatus: getIpmiStatusAsync,
   handleSetIpmiStatusAsync: setIpmiStatusAsync,
   handleGetIpmiSensorDataAsync: getIpmiSensorDataAsync,
+  handleLoadCloudServiceProviderAsync: loadCloudServiceProviderAsync,
+  handleLoadCloudServiceProvidersAsync: loadCloudServiceProvidersAsync,
+  handleCreateCloudServiceProviderAsync: createCloudServiceProviderAsync,
+  handleUpdateCloudServiceProviderAsync: updateCloudServiceProviderAsync,
+  handleDeleteCloudServiceProviderAsync: deleteCloudServiceProviderAsync,
   notify: notifyAction,
 }
 

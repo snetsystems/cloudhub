@@ -9,7 +9,7 @@ import Dropdown from 'src/shared/components/Dropdown'
 
 import {CLOUD_HOSTS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {Source, RemoteDataState, Host} from 'src/types'
+import {Source, RemoteDataState, Host, CloudHost} from 'src/types'
 
 import {HostsPage} from 'src/hosts/containers/HostsPage'
 
@@ -27,7 +27,7 @@ enum SortDirection {
 }
 
 export interface Props {
-  hosts: Host[]
+  cloudHosts: CloudHost[]
   hostsPageStatus: RemoteDataState
   source: Source
   focusedHost: string
@@ -63,8 +63,8 @@ class AWSHostsTable extends PureComponent<Props, State> {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
       sortKey: 'name',
-      selected: 'Select Region',
-      items: ['CloudWatch', '2', '3'],
+      selected: 'All Region',
+      items: ['All Region'],
       activeEditorTab: 'snet',
     }
   }
@@ -144,12 +144,21 @@ class AWSHostsTable extends PureComponent<Props, State> {
     })
   }
 
-  public componentDidUpdate() {
+  public componentDidUpdate(prevProps: Props) {
     setLocalStorage('hostsTableState', {
       sortKey: this.state.sortKey,
       sortDirection: this.state.sortDirection,
       focusedHost: this.props.focusedHost,
     })
+
+    if (prevProps.cloudHosts !== this.props.cloudHosts) {
+      console.log('cloudHosts: ', this.props.cloudHosts)
+      const items = _.uniq([
+        'All Region',
+        ...this.props.cloudHosts.map(h => h.region),
+      ])
+      this.setState({items})
+    }
   }
 
   public render() {
@@ -189,10 +198,10 @@ class AWSHostsTable extends PureComponent<Props, State> {
   }
 
   private get CloudTableContents(): JSX.Element {
-    const {hosts, hostsPageStatus} = this.props
+    const {cloudHosts, hostsPageStatus} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
     const sortedHosts = this.getSortedHosts(
-      hosts,
+      cloudHosts,
       searchTerm,
       sortKey,
       sortDirection
@@ -203,7 +212,7 @@ class AWSHostsTable extends PureComponent<Props, State> {
     if (hostsPageStatus === RemoteDataState.Error) {
       return this.ErrorState
     }
-    if (hosts.length === 0) {
+    if (cloudHosts.length === 0) {
       return this.NoHostsState
     }
     if (sortedHosts.length === 0) {
@@ -213,28 +222,34 @@ class AWSHostsTable extends PureComponent<Props, State> {
   }
 
   private get CloudTableWithHosts(): JSX.Element {
-    const {source, hosts, focusedHost, onClickTableRow} = this.props
-    const {sortKey, sortDirection, searchTerm} = this.state
-    const sortedHosts = this.getSortedHosts(
-      hosts,
+    const {source, cloudHosts, focusedHost, onClickTableRow} = this.props
+    const {sortKey, sortDirection, searchTerm, selected} = this.state
+    let sortedHosts = this.getSortedHosts(
+      cloudHosts,
       searchTerm,
       sortKey,
       sortDirection
     )
 
+    if (selected !== 'All Region') {
+      sortedHosts = [...sortedHosts.filter(h => h.region === selected)]
+    }
+
     return (
       <div className="hosts-table">
         {this.CloudHostsTableHeader}
         <InfiniteScroll
-          items={sortedHosts.map(h => (
-            <CloudHostRow
-              key={h.name}
-              host={h}
-              sourceID={source.id}
-              focusedHost={focusedHost}
-              onClickTableRow={onClickTableRow}
-            />
-          ))}
+          items={sortedHosts.map(h => {
+            return (
+              <CloudHostRow
+                key={h.name}
+                host={h}
+                sourceID={source.id}
+                focusedHost={focusedHost}
+                onClickTableRow={onClickTableRow}
+              />
+            )
+          })}
           itemHeight={26}
           className="hosts-table--tbody"
         />
@@ -273,10 +288,10 @@ class AWSHostsTable extends PureComponent<Props, State> {
   }
 
   private get HostsTitle(): string {
-    const {hostsPageStatus, hosts} = this.props
+    const {hostsPageStatus, cloudHosts} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
     const sortedHosts = this.getSortedHosts(
-      hosts,
+      cloudHosts,
       searchTerm,
       sortKey,
       sortDirection

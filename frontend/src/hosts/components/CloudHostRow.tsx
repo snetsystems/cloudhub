@@ -1,9 +1,8 @@
 import React, {FunctionComponent} from 'react'
 import {Link} from 'react-router'
-import classnames from 'classnames'
 
 import {CLOUD_HOSTS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
-import {Host} from 'src/types'
+import {CloudHost} from 'src/types'
 
 import {HostsPage} from 'src/hosts/containers/HostsPage'
 
@@ -12,7 +11,7 @@ import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
 
 interface Props {
   sourceID: string
-  host: Host
+  host: CloudHost
   focusedHost: string
   onClickTableRow: HostsPage['handleClickTableRow']
 }
@@ -23,7 +22,17 @@ const CloudHostRow: FunctionComponent<Props> = ({
   focusedHost,
   onClickTableRow,
 }) => {
-  const {name, cpu, load, apps = []} = host
+  const {
+    instanceId,
+    instanceType,
+    alarmStatus,
+    instanceState,
+    instanceStatusCheck,
+    name,
+    cpu,
+    load,
+    apps = [],
+  } = host
   const {
     CloudNameWidth,
     CloudInstanceIDWidth,
@@ -39,12 +48,12 @@ const CloudHostRow: FunctionComponent<Props> = ({
 
   const CPUValue = isNaN(cpu) ? 'N/A' : `${cpu.toFixed(2)}%`
   const loadValue = isNaN(load) ? 'N/A' : `${load.toFixed(2)}`
-  const dotClassName = classnames(
-    'table-dot',
-    Math.max(host.deltaUptime || 0, host.winDeltaUptime || 0) > 0
-      ? 'dot-success'
-      : 'dot-critical'
-  )
+  // const dotClassName = classnames(
+  //   'table-dot',
+  //   Math.max(host.deltaUptime || 0, host.winDeltaUptime || 0) > 0
+  //     ? 'dot-success'
+  //     : 'dot-critical'
+  // )
 
   const focusedClasses = (): string => {
     if (name === focusedHost) return 'hosts-table--tr focused'
@@ -57,31 +66,32 @@ const CloudHostRow: FunctionComponent<Props> = ({
         <Link to={`/sources/${sourceID}/infrastructure/${name}`}>{name}</Link>
       </div>
       <div className="hosts-table--td" style={{width: CloudInstanceIDWidth}}>
-        <div className={dotClassName} />
+        {instanceId}
+        {/* <div className={dotClassName} /> */}
       </div>
       <div
         style={{width: CloudInstanceStateWidth}}
         className="monotype hosts-table--td"
       >
-        {CPUValue}
+        {instanceState}
       </div>
       <div
         style={{width: CloudInstanceTypeWidth}}
         className="monotype hosts-table--td"
       >
-        {loadValue}
+        {instanceType}
       </div>
       <div
         style={{width: CloudStatusCheckWidth}}
         className="monotype hosts-table--td"
       >
-        {loadValue}
+        {instanceStatusCheck}
       </div>
       <div
         style={{width: CloudAlarmStatusWidth}}
         className="monotype hosts-table--td"
       >
-        {loadValue}
+        {alarmStatus}
       </div>
       <div
         style={{width: CloudAppsWidth}}

@@ -25,7 +25,6 @@ import {
   setIpmiSetPower,
   IpmiSetPowerStatus,
 } from 'src/shared/apis/saltStack'
-import {Provider} from 'src/hosts/types'
 
 interface HostsObject {
   [x: string]: Host
@@ -642,73 +641,140 @@ export const setIpmiSetPowerApi = async (
   return setPower
 }
 
-export const getCSP = async (id?: string) => {
-  let url = '/cloudhub/v1/csp'
-
-  if (id) {
-    url += `/${id}`
+export const loadCloudServiceProvidersAPI = async () => {
+  try {
+    const url = `/cloudhub/v1/csp`
+    const {data} = await loadCloudServiceProvider(url)
+    return data
+  } catch (error) {
+    console.error(error)
+    throw error
   }
-
-  return await AJAX({
-    url,
-    method: 'GET',
-  })
 }
 
-export const addCSP = async ({
+export const loadCloudServiceProviderAPI = async (id: string) => {
+  try {
+    const url = `/cloudhub/v1/csp/${id}`
+    const {data} = await loadCloudServiceProvider(url)
+
+    return data
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const createCloudServiceProviderAPI = async ({
   provider,
   region,
   accesskey,
   secretkey,
-}: {
-  provider: Provider
-  region: string
-  accesskey: string
-  secretkey: string
 }) => {
-  // return await AJAX({
-  //   url: `/cloudhub/v1/csp`,
-  //   method: 'POST',
-  //   data: {provider, region, accsesskey, secretkey},
-  // })
-  return {
-    id: '1',
-    provider: provider,
-    region: region,
-    accesskey: accesskey,
-    secretkey: secretkey,
-    organization: '2',
-    links: {
-      self: '/cloudhub/v1/csp/1',
-    },
+  try {
+    const {data} = await createCloudServiceProvider({
+      provider,
+      region,
+      accesskey,
+      secretkey,
+    })
+
+    return data
+  } catch (error) {
+    console.error(error)
+    throw error
   }
 }
 
-export const updateCSP = async ({
+export const updateCloudServiceProviderAPI = async ({
   id,
   provider,
   region,
-  accsesskey,
+  accesskey,
   secretkey,
 }) => {
-  // return await AJAX({
-  //   url: `/cloudhub/v1/csp`,
-  //   method: 'PATCH',
-  //   data: {id, provider, region, accsesskey, secretkey},
-  // })
+  try {
+    const {data} = await updateCloudServiceProvider({
+      id,
+      provider,
+      region,
+      accesskey,
+      secretkey,
+    })
 
-  return {
-    id,
-    provider,
-    region,
-    accsesskey,
-    secretkey,
+    return data
+  } catch (error) {
+    console.error(error)
+    throw error
   }
 }
 
-export const deleteCSP = async (id: string) => {
-  return await AJAX({
-    url: `/cloudhub/v1/csp/${id}`,
-    method: 'DELETE',
-  })
+export const deleteCloudServiceProviderAPI = async (id: string) => {
+  try {
+    const {data} = await deleteCloudServiceProvider(id)
+    return data
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const loadCloudServiceProvider = async (url: string) => {
+  try {
+    return await AJAX({
+      url,
+      method: 'GET',
+    })
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const createCloudServiceProvider = async ({
+  provider,
+  region,
+  accesskey,
+  secretkey,
+}) => {
+  try {
+    return await AJAX({
+      url: `/cloudhub/v1/csp`,
+      method: 'POST',
+      data: {provider, region, accesskey, secretkey},
+    })
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const updateCloudServiceProvider = async ({
+  id,
+  provider,
+  region,
+  accesskey,
+  secretkey,
+}) => {
+  try {
+    return await AJAX({
+      url: `/cloudhub/v1/csp`,
+      method: 'PATCH',
+      data: {id, provider, region, accesskey, secretkey},
+    })
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const deleteCloudServiceProvider = async (id: string) => {
+  try {
+    return await AJAX({
+      url: `/cloudhub/v1/csp/${id}`,
+      method: 'DELETE',
+    })
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
 }

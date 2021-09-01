@@ -231,11 +231,8 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
 
     treemenus.forEach(menu => {
       mxEvent.removeAllListeners(menu)
-
-      console.log('menu: ', {menu})
     })
 
-    console.log('treemenus: ', treemenus)
     _.forEach(treemenus, el => {
       const dragElt = document.createElement('div')
       if (el.getAttribute('data-level') === '1') {

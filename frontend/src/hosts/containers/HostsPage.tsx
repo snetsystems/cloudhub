@@ -29,6 +29,7 @@ import {
   getAppsForHosts,
   getAppsForHost,
   getMeasurementsForHost,
+  getCSP,
 } from 'src/hosts/apis'
 import {getEnv} from 'src/shared/apis/env'
 
@@ -69,10 +70,14 @@ import {
   Layout,
   TimeRange,
   RefreshRate,
+  CloudHosts,
 } from 'src/types'
 import {timeRanges} from 'src/shared/data/timeRanges'
 import * as QueriesModels from 'src/types/queries'
 import * as AppActions from 'src/types/actions/app'
+
+import {saltDetailsDummy} from './detailsTest'
+import yaml from 'js-yaml'
 
 interface Props extends ManualRefreshProps {
   source: Source
@@ -104,6 +109,7 @@ interface State {
   activeEditorTab: string
   selectedAgent: string
   selectedProvider: string
+  cloudHostsObject: CloudHosts
 }
 
 @ErrorHandling
@@ -134,10 +140,11 @@ export class HostsPage extends PureComponent<Props, State> {
       proportions: [0.43, 0.57],
       selected: {lower: '', upper: ''},
       isVsphere: false,
-      activeEditorTab: 'InventoryTopology',
-      // activeEditorTab: 'Host',
+      // activeEditorTab: 'InventoryTopology',
+      activeEditorTab: 'Host',
       selectedAgent: 'CloudWatch',
-      selectedProvider: 'Snet',
+      selectedProvider: 'AWS',
+      cloudHostsObject: {},
     }
     this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
     this.onSetActiveEditorTab = this.onSetActiveEditorTab.bind(this)
@@ -148,6 +155,7 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   public async componentDidMount() {
+    this.testCloudHosts()
     const hostsTableState = getLocalStorage('hostsTableState')
     const {focusedHost} =
       hostsTableState && hostsTableState.focusedHost
@@ -214,6 +222,10 @@ export class HostsPage extends PureComponent<Props, State> {
       if (prevProps.autoRefresh !== autoRefresh) {
         GlobalAutoRefresher.poll(autoRefresh)
       }
+    }
+
+    if (prevState.selectedProvider !== this.state.selectedProvider) {
+      // this.setState
     }
   }
 
@@ -428,7 +440,12 @@ export class HostsPage extends PureComponent<Props, State> {
 
   private renderHostTable = () => {
     const {source} = this.props
-    const {hostsObject, hostsPageStatus, focusedHost} = this.state
+    let {
+      hostsObject,
+      cloudHostsObject,
+      hostsPageStatus,
+      focusedHost,
+    } = this.state
 
     return (
       <>
@@ -451,17 +468,29 @@ export class HostsPage extends PureComponent<Props, State> {
             onClickTableRow={this.handleClickTableRow}
           />
         ) : null}
-        {this.state.selectedProvider === 'AWS' ? (
-          <AWSHostsTable
-            source={source}
-            hosts={_.values(hostsObject)}
-            hostsPageStatus={hostsPageStatus}
-            focusedHost={focusedHost}
-            onClickTableRow={this.handleClickTableRow}
-          />
-        ) : null}
+        <AWSHostsTable
+          source={source}
+          cloudHosts={this.filterCloudHosts}
+          hostsPageStatus={hostsPageStatus}
+          focusedHost={focusedHost}
+          onClickTableRow={this.handleClickTableRow}
+        />
+        {/* {this.state.selectedProvider === 'AWS' ? (
+          
+        ) : null} */}
       </>
     )
+  }
+
+  private get filterCloudHosts() {
+    const {cloudHostsObject, selectedProvider} = this.state
+
+    const cloudHosts = _.filter(
+      _.values(cloudHostsObject),
+      obj => obj.provider === selectedProvider.toLocaleLowerCase()
+    )
+    console.log('filterCloudHosts: ', cloudHosts)
+    return cloudHosts
   }
 
   private getHandleOnChooseProvider = (selectItem: {text: string}) => {
@@ -630,6 +659,93 @@ export class HostsPage extends PureComponent<Props, State> {
     hostsTableState.focusedHost = hostName
     setLocalStorage('hostsTableState', hostsTableState)
     this.setState({focusedHost: hostName})
+  }
+
+  private testGetETCD = () => {
+    return new Promise((resolve: any) => {
+      return resolve([
+        {
+          provider: 'aws',
+          region: 'seoul',
+          accesskey: 'accesskey',
+          secretkey: 'secretkey',
+          data: {},
+        },
+        {
+          provider: 'aws',
+          region: 'pusan',
+          accesskey: 'accesskey',
+          secretkey: 'secretkey',
+          data: {},
+        },
+        {
+          provider: 'gcp',
+          region: 'seoul',
+          accesskey: 'accesskey',
+          secretkey: 'secretkey',
+          data: {},
+        },
+        {
+          provider: 'gcp',
+          region: 'seoul-2',
+          accesskey: 'accesskey',
+          secretkey: 'secretkey',
+          data: {},
+        },
+        {
+          provider: 'azure',
+          region: 'tokyo',
+          accesskey: 'accesskey',
+          secretkey: 'secretkey',
+          data: {},
+        },
+      ])
+    })
+  }
+
+  private testGetSalt = () => {
+    const detailsDummy = yaml.safeLoad(saltDetailsDummy)
+
+    return new Promise((resolve: any) => {
+      return resolve(detailsDummy)
+    })
+  }
+
+  private testCloudHosts = () => {
+    this.testGetETCD().then(data => {
+      console.log('data: ', data)
+      this.testGetSalt().then(saltData => {
+        console.log('saltData', saltData)
+
+        let cloudHostsObject = {}
+        saltData['local'].reduce((_, current, i) => {
+          const instanceName = current.Tags.find(tag => tag.Key === 'Name')
+            .Value
+
+          cloudHostsObject[instanceName] = {
+            name: instanceName,
+            cpu: 0,
+            disk: 0,
+            load: 0,
+            memory: 0,
+            deltaUptime: current.LaunchTime.toString(),
+            apps: [],
+            instanceId: current.InstanceId,
+            instanceType: current.InstanceType,
+            instanceState: current.State.Name,
+            instanceStatusCheck: 'test',
+            alarmStatus: 'no alarm',
+            provider: data[i].provider,
+            region: data[i].region,
+          }
+          return false
+        }, [])
+        console.log({cloudHostsObject})
+        this.setState({cloudHostsObject})
+      })
+    })
+    // salt
+    // cloudsObject
   }
 }
 
