@@ -270,7 +270,7 @@ export const loadCloudServiceProvidersAsync = () => async (
   dispatch: Dispatch<any>
 ) => {
   try {
-    const {data} = await loadCloudServiceProvidersAPI()
+    const data = await loadCloudServiceProvidersAPI()
     return data
   } catch (error) {
     dispatch(errorThrown(error))
@@ -282,7 +282,7 @@ export const loadCloudServiceProviderAsync = (id: string) => async (
 ) => {
   try {
     const url = `/cloudhub/v1/csp/${id}`
-    const {data} = await loadCloudServiceProviderAPI(url)
+    const data = await loadCloudServiceProviderAPI(url)
     dispatch(loadCloudServiceProviderAction())
     return data
   } catch (error) {
@@ -297,12 +297,13 @@ export const createCloudServiceProviderAsync = ({
   secretkey,
 }) => async (dispatch: Dispatch<any>) => {
   try {
-    const {data} = await createCloudServiceProviderAPI({
+    const data = await createCloudServiceProviderAPI({
       provider,
       region,
       accesskey,
       secretkey,
     })
+
     dispatch(createCloudServiceProviderAction())
     return data
   } catch (error) {
@@ -319,7 +320,7 @@ export const updateCloudServiceProviderAsync = ({
   secretkey,
 }) => async (dispatch: Dispatch<any>) => {
   try {
-    const {data} = await updateCloudServiceProviderAPI({
+    const data = await updateCloudServiceProviderAPI({
       id,
       provider,
       region,
