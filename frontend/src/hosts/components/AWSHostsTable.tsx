@@ -28,6 +28,7 @@ enum SortDirection {
 
 export interface Props {
   cloudHosts: CloudHost[]
+  providerRegions: string[]
   hostsPageStatus: RemoteDataState
   source: Source
   focusedHost: string
@@ -39,7 +40,7 @@ interface State {
   sortDirection: SortDirection
   sortKey: string
   selected: string
-  items: string[]
+
   activeEditorTab: string
 }
 
@@ -64,7 +65,6 @@ class AWSHostsTable extends PureComponent<Props, State> {
       sortDirection: SortDirection.ASC,
       sortKey: 'name',
       selected: 'All Region',
-      items: ['All Region'],
       activeEditorTab: 'snet',
     }
   }
@@ -144,21 +144,12 @@ class AWSHostsTable extends PureComponent<Props, State> {
     })
   }
 
-  public componentDidUpdate(prevProps: Props) {
+  public componentDidUpdate() {
     setLocalStorage('hostsTableState', {
       sortKey: this.state.sortKey,
       sortDirection: this.state.sortDirection,
       focusedHost: this.props.focusedHost,
     })
-
-    if (prevProps.cloudHosts !== this.props.cloudHosts) {
-      console.log('cloudHosts: ', this.props.cloudHosts)
-      const items = _.uniq([
-        'All Region',
-        ...this.props.cloudHosts.map(h => h.region),
-      ])
-      this.setState({items})
-    }
   }
 
   public render() {
@@ -172,7 +163,7 @@ class AWSHostsTable extends PureComponent<Props, State> {
           <div style={{display: 'flex'}}>
             <div style={{marginRight: '5px'}}>
               <Dropdown
-                items={this.state.items}
+                items={['All Region', ...this.props.providerRegions]}
                 onChoose={this.getHandleOnChoose}
                 selected={this.state.selected}
                 className="dropdown-sm"

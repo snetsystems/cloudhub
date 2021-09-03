@@ -56,17 +56,19 @@ const CloudHostRow: FunctionComponent<Props> = ({
   // )
 
   const focusedClasses = (): string => {
-    if (name === focusedHost) return 'hosts-table--tr focused'
+    if (instanceId === focusedHost) return 'hosts-table--tr focused'
     return 'hosts-table--tr'
   }
 
   return (
-    <div className={focusedClasses()} onClick={onClickTableRow(name)}>
+    <div className={focusedClasses()} onClick={onClickTableRow(instanceId)}>
       <div className="hosts-table--td" style={{width: CloudNameWidth}}>
-        <Link to={`/sources/${sourceID}/infrastructure/${name}`}>{name}</Link>
+        {name}
       </div>
       <div className="hosts-table--td" style={{width: CloudInstanceIDWidth}}>
-        {instanceId}
+        <Link to={`/sources/${sourceID}/infrastructure/${instanceId}`}>
+          {instanceId}
+        </Link>
         {/* <div className={dotClassName} /> */}
       </div>
       <div
@@ -103,7 +105,7 @@ const CloudHostRow: FunctionComponent<Props> = ({
               <Link
                 style={{marginLeft: '2px'}}
                 to={{
-                  pathname: `/sources/${sourceID}/infrastructure/${name}`,
+                  pathname: `/sources/${sourceID}/infrastructure/${instanceId}`,
                   query: {app},
                 }}
               >
