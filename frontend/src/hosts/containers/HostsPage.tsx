@@ -29,7 +29,8 @@ import {
   getAppsForHosts,
   getAppsForHost,
   getMeasurementsForHost,
-  getCSP,
+  getCpuAndLoadForInstances,
+  getAppsForInstances,
 } from 'src/hosts/apis'
 import {getEnv} from 'src/shared/apis/env'
 
@@ -78,6 +79,14 @@ import * as AppActions from 'src/types/actions/app'
 
 import {saltDetailsDummy} from './detailsTest'
 import yaml from 'js-yaml'
+import {
+  loadCloudServiceProviderAsync,
+  loadCloudServiceProvidersAsync,
+  createCloudServiceProviderAsync,
+  updateCloudServiceProviderAsync,
+  deleteCloudServiceProviderAsync,
+} from 'src/hosts/actions'
+import {Provider} from 'src/hosts/types'
 
 interface Props extends ManualRefreshProps {
   source: Source
@@ -86,6 +95,22 @@ interface Props extends ManualRefreshProps {
   onChooseAutoRefresh: (milliseconds: RefreshRate) => void
   handleClearTimeout: (key: string) => void
   notify: NotificationAction
+  handleLoadCloudServiceProviderAsync: (id: string) => Promise<any>
+  handleLoadCloudServiceProvidersAsync: () => Promise<any>
+  handleCreateCloudServiceProviderAsync: (data: {
+    provider: Provider
+    region: string
+    accesskey: string
+    secretkey: string
+  }) => Promise<any>
+  handleUpdateCloudServiceProviderAsync: (data: {
+    provider: Provider
+    region: string
+    accesskey: string
+    secretkey: string
+    id: string
+  }) => Promise<any>
+  handleDeleteCloudServiceProviderAsync: (id: string) => Promise<any>
 }
 
 interface Props {
@@ -110,6 +135,7 @@ interface State {
   selectedAgent: string
   selectedProvider: string
   cloudHostsObject: CloudHosts
+  cloudAccessInfos: []
 }
 
 @ErrorHandling
@@ -143,9 +169,11 @@ export class HostsPage extends PureComponent<Props, State> {
       // activeEditorTab: 'InventoryTopology',
       activeEditorTab: 'Host',
       selectedAgent: 'CloudWatch',
-      selectedProvider: 'AWS',
+      selectedProvider: 'Private',
+      cloudAccessInfos: [],
       cloudHostsObject: {},
     }
+
     this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
     this.onSetActiveEditorTab = this.onSetActiveEditorTab.bind(this)
   }
@@ -155,7 +183,6 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   public async componentDidMount() {
-    this.testCloudHosts()
     const hostsTableState = getLocalStorage('hostsTableState')
     const {focusedHost} =
       hostsTableState && hostsTableState.focusedHost
@@ -185,6 +212,8 @@ export class HostsPage extends PureComponent<Props, State> {
 
     // For rendering whole hosts list
     await this.fetchHostsData(layouts)
+
+    await this.fetchInstancesData(layouts)
 
     // For rendering the charts with the focused single host.
     const hostID = focusedHost || this.getFirstHost(this.state.hostsObject)
@@ -440,17 +469,12 @@ export class HostsPage extends PureComponent<Props, State> {
 
   private renderHostTable = () => {
     const {source} = this.props
-    let {
-      hostsObject,
-      cloudHostsObject,
-      hostsPageStatus,
-      focusedHost,
-    } = this.state
+    let {hostsObject, hostsPageStatus, focusedHost} = this.state
 
     return (
       <>
         <Dropdown
-          items={['Snet', 'AWS', 'GCP', 'Azure']}
+          items={['Private', 'AWS', 'GCP', 'Azure']}
           onChoose={this.getHandleOnChooseProvider}
           selected={this.state.selectedProvider}
           className="dropdown-sm"
@@ -459,7 +483,7 @@ export class HostsPage extends PureComponent<Props, State> {
           //   this.handleFocusedBtnName({selected: this.state.selected})
           // }}
         />
-        {this.state.selectedProvider === 'Snet' ? (
+        {this.state.selectedProvider === 'Private' ? (
           <HostsTable
             source={source}
             hosts={_.values(hostsObject)}
@@ -467,30 +491,33 @@ export class HostsPage extends PureComponent<Props, State> {
             focusedHost={focusedHost}
             onClickTableRow={this.handleClickTableRow}
           />
-        ) : null}
-        <AWSHostsTable
-          source={source}
-          cloudHosts={this.filterCloudHosts}
-          hostsPageStatus={hostsPageStatus}
-          focusedHost={focusedHost}
-          onClickTableRow={this.handleClickTableRow}
-        />
-        {/* {this.state.selectedProvider === 'AWS' ? (
-          
-        ) : null} */}
+        ) : (
+          this.renderAWSHostsTable
+        )}
       </>
     )
   }
 
-  private get filterCloudHosts() {
-    const {cloudHostsObject, selectedProvider} = this.state
+  private get renderAWSHostsTable() {
+    const {source} = this.props
+    const {
+      cloudHostsObject,
+      selectedProvider,
+      hostsPageStatus,
+      focusedHost,
+    } = this.state
+    const cloudHostObject = cloudHostsObject[selectedProvider]
 
-    const cloudHosts = _.filter(
-      _.values(cloudHostsObject),
-      obj => obj.provider === selectedProvider.toLocaleLowerCase()
+    return (
+      <AWSHostsTable
+        source={source}
+        cloudHosts={_.values(_.values(cloudHostObject)[0])}
+        providerRegions={_.keys(cloudHostObject)}
+        hostsPageStatus={hostsPageStatus}
+        focusedHost={focusedHost}
+        onClickTableRow={this.handleClickTableRow}
+      />
     )
-    console.log('filterCloudHosts: ', cloudHosts)
-    return cloudHosts
   }
 
   private getHandleOnChooseProvider = (selectItem: {text: string}) => {
@@ -585,6 +612,7 @@ export class HostsPage extends PureComponent<Props, State> {
       'telegrafSystemInterval',
       ''
     )
+
     const hostsError = notifyUnableToGetHosts().message
     const tempVars = generateForHosts(source)
 
@@ -649,6 +677,91 @@ export class HostsPage extends PureComponent<Props, State> {
     return {host, measurements}
   }
 
+  private fetchInstancesData = async (layouts: Layout[]): Promise<void> => {
+    this.props.handleLoadCloudServiceProvidersAsync().then(data => {
+      this.testGetSalt().then(async saltData => {
+        console.log('saltData: ', saltData)
+        const {source, links, notify} = this.props
+        const {addons} = links
+
+        const envVars = await getEnv(links.environment)
+        const telegrafSystemInterval = getDeep<string>(
+          envVars,
+          'telegrafSystemInterval',
+          ''
+        )
+        const hostsError = notifyUnableToGetHosts().message
+        const tempVars = generateForHosts(source)
+
+        try {
+          const instancesObject = await getCpuAndLoadForInstances(
+            source.links.proxy,
+            source.telegraf,
+            telegrafSystemInterval,
+            tempVars
+          )
+
+          if (!instancesObject) {
+            throw new Error(hostsError)
+          }
+
+          const newCloudHostsObject: CloudHosts = await getAppsForInstances(
+            source.links.proxy,
+            instancesObject,
+            layouts,
+            source.telegraf,
+            tempVars
+          )
+
+          const isUsingVshpere = Boolean(
+            _.find(addons, addon => {
+              return addon.name === 'vsphere' && addon.url === 'on'
+            }) &&
+              _.find(instancesObject, v => {
+                return _.includes(v.apps, 'vsphere')
+              })
+          )
+
+          saltData['local'].reduce((_, current, i) => {
+            const region = current.PrivateDnsName.split('.')[1]
+            if (!newCloudHostsObject['AWS'][region]) return
+            if (!newCloudHostsObject['AWS'][region][current.InstanceId]) return
+
+            const instanceName = current.Tags.find(tag => tag.Key === 'Name')
+
+            newCloudHostsObject['AWS'][region][current.InstanceId] = {
+              ...newCloudHostsObject['AWS'][region][current.InstanceId],
+              name: instanceName.Value,
+              instanceId: current.InstanceId,
+              instanceType: current.InstanceType,
+              instanceState: current.State.Name,
+              instanceStatusCheck: 'test',
+              alarmStatus: 'no alarm',
+              provider: 'AWS',
+              region,
+            }
+
+            return false
+          }, [])
+
+          this.setState({
+            isVsphere: isUsingVshpere,
+            cloudHostsObject: newCloudHostsObject,
+
+            hostsPageStatus: RemoteDataState.Done,
+          })
+        } catch (error) {
+          console.error(error)
+          notify(notifyUnableToGetHosts())
+          this.setState({
+            isVsphere: false,
+            hostsPageStatus: RemoteDataState.Error,
+          })
+        }
+      })
+    })
+  }
+
   private getFirstHost = (hostsObject: {[x: string]: Host}): string => {
     const hostsArray = _.values(hostsObject)
     return hostsArray.length > 0 ? hostsArray[0].name : null
@@ -661,91 +774,12 @@ export class HostsPage extends PureComponent<Props, State> {
     this.setState({focusedHost: hostName})
   }
 
-  private testGetETCD = () => {
-    return new Promise((resolve: any) => {
-      return resolve([
-        {
-          provider: 'aws',
-          region: 'seoul',
-          accesskey: 'accesskey',
-          secretkey: 'secretkey',
-          data: {},
-        },
-        {
-          provider: 'aws',
-          region: 'pusan',
-          accesskey: 'accesskey',
-          secretkey: 'secretkey',
-          data: {},
-        },
-        {
-          provider: 'gcp',
-          region: 'seoul',
-          accesskey: 'accesskey',
-          secretkey: 'secretkey',
-          data: {},
-        },
-        {
-          provider: 'gcp',
-          region: 'seoul-2',
-          accesskey: 'accesskey',
-          secretkey: 'secretkey',
-          data: {},
-        },
-        {
-          provider: 'azure',
-          region: 'tokyo',
-          accesskey: 'accesskey',
-          secretkey: 'secretkey',
-          data: {},
-        },
-      ])
-    })
-  }
-
   private testGetSalt = () => {
     const detailsDummy = yaml.safeLoad(saltDetailsDummy)
 
     return new Promise((resolve: any) => {
       return resolve(detailsDummy)
     })
-  }
-
-  private testCloudHosts = () => {
-    this.testGetETCD().then(data => {
-      console.log('data: ', data)
-      this.testGetSalt().then(saltData => {
-        console.log('saltData', saltData)
-
-        let cloudHostsObject = {}
-        saltData['local'].reduce((_, current, i) => {
-          const instanceName = current.Tags.find(tag => tag.Key === 'Name')
-            .Value
-
-          cloudHostsObject[instanceName] = {
-            name: instanceName,
-            cpu: 0,
-            disk: 0,
-            load: 0,
-            memory: 0,
-            deltaUptime: current.LaunchTime.toString(),
-            apps: [],
-            instanceId: current.InstanceId,
-            instanceType: current.InstanceType,
-            instanceState: current.State.Name,
-            instanceStatusCheck: 'test',
-            alarmStatus: 'no alarm',
-            provider: data[i].provider,
-            region: data[i].region,
-          }
-          return false
-        }, [])
-        console.log({cloudHostsObject})
-        this.setState({cloudHostsObject})
-      })
-    })
-    // salt
-    // cloudsObject
   }
 }
 
@@ -771,6 +805,27 @@ const mdtp = dispatch => ({
     dispatch
   ),
   notify: bindActionCreators(notifyAction, dispatch),
+
+  handleLoadCloudServiceProviderAsync: bindActionCreators(
+    loadCloudServiceProviderAsync,
+    dispatch
+  ),
+  handleLoadCloudServiceProvidersAsync: bindActionCreators(
+    loadCloudServiceProvidersAsync,
+    dispatch
+  ),
+  handleCreateCloudServiceProviderAsync: bindActionCreators(
+    createCloudServiceProviderAsync,
+    dispatch
+  ),
+  handleUpdateCloudServiceProviderAsync: bindActionCreators(
+    updateCloudServiceProviderAsync,
+    dispatch
+  ),
+  handleDeleteCloudServiceProviderAsync: bindActionCreators(
+    deleteCloudServiceProviderAsync,
+    dispatch
+  ),
 })
 
-export default connect(mstp, mdtp)(ManualRefresh<Props>(HostsPage))
+export default connect(mstp, mdtp, null)(ManualRefresh<Props>(HostsPage))
