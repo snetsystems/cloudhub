@@ -387,16 +387,12 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.DELETE("/cloudhub/v1/topologies/:id", EnsureViewer(service.RemoveTopology))
 	router.PATCH("/cloudhub/v1/topologies/:id", EnsureViewer(service.UpdateTopology))
 
-
-
 	// Cloud Solution Provider
-	router.GET("/cloudhub/v1/csp", EnsureViewer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){})))
-	router.GET("/cloudhub/v1/csp/:id", EnsureViewer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){})))
-	router.POST("/cloudhub/v1/csp", EnsureAdmin(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){})))
-	router.DELETE("/cloudhub/v1/csp/:id", EnsureAdmin(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){})))
-	router.PATCH("/cloudhub/v1/csp/:id", EnsureAdmin(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request){})))
-
-
+	router.GET("/cloudhub/v1/csp", EnsureViewer(service.CSP))
+	router.GET("/cloudhub/v1/csp/:id", EnsureViewer(service.CSPID))
+	router.POST("/cloudhub/v1/csp", EnsureAdmin(service.NewCSP))
+	router.DELETE("/cloudhub/v1/csp/:id", EnsureAdmin(service.RemoveCSP))
+	router.PATCH("/cloudhub/v1/csp/:id", EnsureAdmin(service.UpdateCSP))
 	
 	// http logging
 	router.POST("/cloudhub/v1/logging", EnsureViewer(service.HTTPLogging))
