@@ -4568,6 +4568,307 @@
           }
         }
       }
+    },
+    "/csp": {
+      "get": {
+        "tags": ["CSP"],
+        "summary": "Search organization's all CSP",
+        "description": "Returns all CSP from the store",
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved all CSP from the store",
+            "schema": {
+              "$ref": "#/definitions/CSPs"
+            }
+          },
+          "400": {
+            "description": "Failed to load CSP from store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden to access this route",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "CSP not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["CSP"],
+        "summary": "Create organization's new CSP",
+        "description": "Creates a CSP in the store",
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "body",
+            "description": "Cloud Solution Provider Name",
+            "schema": {
+              "$ref": "#/definitions/CSPReq"
+            },
+            "required": true
+          },
+          {
+            "name": "region",
+            "in": "body",
+            "description": "CSP access region",
+            "schema": {
+              "$ref": "#/definitions/CSPReq"
+            },
+            "required": true
+          },
+          {
+            "name": "accesskey",
+            "in": "body",
+            "description": "CSP access key",
+            "schema": {
+              "$ref": "#/definitions/CSPReq"
+            },
+            "required": true
+          },
+          {
+            "name": "secretkey",
+            "in": "body",
+            "description": "CSP access secret key",
+            "schema": {
+              "$ref": "#/definitions/CSPReq"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "CSP successfully created",
+            "headers": {
+              "Location": {
+                "type": "string",
+                "format": "url",
+                "description": "Location of the newly created CSP resource"
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/CSPRes"
+            }
+          },
+          "400": {
+            "description": "Invalid Body – failed to perform operation in data store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden to access this route",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "Invalid data schema provided to server for CSP",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/csp/{id}": {
+      "get": {
+        "tags": ["CSP"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "description": "ID of the CSP",
+            "required": true
+          }
+        ],
+        "summary": "Retrieve a specific CSP",
+        "description": "Returns a specific CSP from the store",
+        "responses": {
+          "200": {
+            "description": "An CSP object",
+            "schema": {
+              "$ref": "#/definitions/CSPRes"
+            }
+          },
+          "400": {
+            "description": "Failed to load CSP from store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden to access this route",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["CSP"],
+        "summary": "Update organization's CSP",
+        "description": "Updates a CSP in the store",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "description": "ID of the CSP",
+            "required": true
+          },
+          {
+            "name": "provider",
+            "in": "body",
+            "description": "Cloud Solution Provider Name",
+            "schema": {
+              "$ref": "#/definitions/CSPReq"
+            },
+            "required": true
+          },
+          {
+            "name": "region",
+            "in": "body",
+            "description": "CSP access region",
+            "schema": {
+              "$ref": "#/definitions/CSPReq"
+            },
+            "required": true
+          },
+          {
+            "name": "accesskey",
+            "in": "body",
+            "description": "CSP access key",
+            "schema": {
+              "$ref": "#/definitions/CSPReq"
+            },
+            "required": true
+          },
+          {
+            "name": "secretkey",
+            "in": "body",
+            "description": "CSP access secret key",
+            "schema": {
+              "$ref": "#/definitions/CSPReq"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "CSP successfully updated",
+            "headers": {
+              "Location": {
+                "type": "string",
+                "format": "url",
+                "description": "Location of the updated CSP resource"
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/CSPRes"
+            }
+          },
+          "400": {
+            "description": "failed to perform operation in data store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden to access this route",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "inventory topology not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "Invalid data schema provided to server for CSP",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["CSP"],
+        "summary": "Delete organization's CSP",
+        "description": "Deletes a CSP in the store",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "description": "ID of the CSP",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "CSP successfully deleted"
+          },
+          "400": {
+            "description": "Failed to perform operation in data store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden to access this route",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "CSP not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
     }
   },
 
@@ -7857,6 +8158,111 @@
       "example": {
         "action": "test",
         "message": "test message"
+      }
+    },
+    "CSPs": {
+      "type": "object",
+      "required": ["CSPs"],
+      "properties": {
+        "links": {
+          "type": "object",
+          "properties": {
+            "self": {
+              "type": "string",
+              "description": "Self link mapping to this resource",
+              "format": "url"
+            }
+          },
+          "readOnly": true
+        },
+        "csps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CSPRes"
+          }
+        }
+      }
+    },
+    "CSPReq": {
+      "type": "object",
+      "description": "CSP access information",
+      "properties": {
+        "provider": {
+          "type": "string",
+          "description": "Cloud Solution Provider Name"
+        },
+        "region": {
+          "type": "string",
+          "description": "CSP access region"
+        },
+        "accesskey": {
+          "type": "string",
+          "description": "CSP access key"
+        },
+        "secretkey": {
+          "type": "string",
+          "description": "CSP access secret key"
+        }
+      },
+      "required": ["provider", "region", "accesskey", "secretkey"],
+      "example": {
+        "provider": "AWS",
+        "region": "ap-northeast-2",
+        "accesskey": "AABCCEEDSKDDLSSSDD",
+        "secretkey": "kjdjd+kDDSQQWD+jdjwidsndbh"
+      }
+    },
+    "CSPRes": {
+      "type": "object",
+      "description": "CSP information",
+      "properties": {
+        "id": {
+          "description": "ID of the CSP",
+          "type": "string",
+          "readOnly": true
+        },
+        "provider": {
+          "type": "string",
+          "description": "Cloud Solution Provider Name"
+        },
+        "region": {
+          "type": "string",
+          "description": "CSP access region"
+        },
+        "accesskey": {
+          "type": "string",
+          "description": "CSP access key"
+        },
+        "secretkey": {
+          "type": "string",
+          "description": "CSP access secret key"
+        },
+        "organization": {
+          "type": "string",
+          "description": "cloudhub organization",
+          "readOnly": true
+        },
+        "links": {"type": "string", "description": "self url"}
+      },
+      "required": [
+        "id",
+        "provider",
+        "region",
+        "accesskey",
+        "secretkey",
+        "organization",
+        "links"
+      ],
+      "example": {
+        "id": "1",
+        "provider": "AWS",
+        "region": "ap-northeast-2",
+        "accesskey": "AABCCEEDSKDDLSSSDD",
+        "secretkey": "kjdjd+kDDSQQWD+jdjwidsndbh",
+        "organization": "2",
+        "links": {
+          "self": "/cloudhub/v1/csp/1"
+        }
       }
     }
   }
