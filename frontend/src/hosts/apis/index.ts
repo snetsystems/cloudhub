@@ -46,6 +46,13 @@ interface Series {
     host: string
   }
 }
+interface CloudSeries extends Series {
+  tags: {
+    host: string
+    region: string
+  }
+}
+
 interface SeriesObj {
   measurement: string
   tags: {host: string}
@@ -303,7 +310,72 @@ export const getAppsForHosts = async (
     )
     _.assign(newHosts[host].tags, seriesObj.tags)
   })
+
   return newHosts
+}
+
+export const getAppsForInstances = async (
+  proxyLink: string,
+  providers,
+  appLayouts: Layout[],
+  telegrafDB: string,
+  tempVars: Template[]
+): Promise<any> => {
+  const measurements = appLayouts
+    .map(m => `\":db:\".\":rp:\".\"${m.measurement}\"`)
+    .join(',')
+
+  const measurementsToApps = _.zipObject(
+    appLayouts.map(m => m.measurement),
+    appLayouts.map(({app}) => app)
+  )
+
+  const {data} = await proxy({
+    source: proxyLink,
+    query: replaceTemplate(
+      `show series from ${measurements} where time > now() - 10m`,
+      tempVars
+    ),
+    db: telegrafDB,
+  })
+
+  const newProviders = {...providers}
+  const allSeries = getDeep<string[][]>(
+    data,
+    'results.[0].series.[0].values',
+    []
+  )
+
+  allSeries.forEach(series => {
+    const seriesObj = parseSeries(series[0])
+    const measurement = seriesObj.measurement
+    const region = getDeep<string>(seriesObj, 'tags.region', '')
+    const host = getDeep<string>(seriesObj, 'tags.host', '')
+
+    if (!newProviders['AWS'][region]) {
+      return
+    }
+
+    if (!newProviders['AWS'][region][host]) {
+      return
+    }
+
+    if (!newProviders['AWS'][region][host].apps) {
+      newProviders['AWS'][region][host].apps = []
+    }
+    if (!newProviders['AWS'][region][host].tags) {
+      newProviders['AWS'][region][host].tags = {}
+    }
+
+    newProviders['AWS'][region][host].apps = _.uniq(
+      newProviders['AWS'][region][host].apps.concat(
+        measurementsToApps[measurement]
+      )
+    )
+    _.assign(newProviders['AWS'][region][host].tags, seriesObj.tags)
+  })
+
+  return newProviders
 }
 
 export const getMeasurementsForHost = async (
@@ -720,10 +792,49 @@ export const deleteCloudServiceProviderAPI = async (id: string) => {
 
 export const loadCloudServiceProvider = async (url: string) => {
   try {
-    return await AJAX({
-      url,
-      method: 'GET',
-    })
+    // return await AJAX({
+    //   url,
+    //   method: 'GET',
+    // })
+    return {
+      data: [
+        {
+          provider: 'aws',
+          region: 'seoul',
+          accesskey: 'accesskey',
+          secretkey: 'secretkey',
+          data: {},
+        },
+        {
+          provider: 'aws',
+          region: 'pusan',
+          accesskey: 'accesskey',
+          secretkey: 'secretkey',
+          data: {},
+        },
+        {
+          provider: 'gcp',
+          region: 'seoul',
+          accesskey: 'accesskey',
+          secretkey: 'secretkey',
+          data: {},
+        },
+        {
+          provider: 'gcp',
+          region: 'seoul-2',
+          accesskey: 'accesskey',
+          secretkey: 'secretkey',
+          data: {},
+        },
+        {
+          provider: 'azure',
+          region: 'tokyo',
+          accesskey: 'accesskey',
+          secretkey: 'secretkey',
+          data: {},
+        },
+      ],
+    }
   } catch (error) {
     console.error(error)
     throw error
@@ -777,4 +888,136 @@ export const deleteCloudServiceProvider = async (id: string) => {
     console.error(error)
     throw error
   }
+}
+
+export const getCpuAndLoadForInstances = async (
+  proxyLink: string,
+  telegrafDB: string,
+  telegrafSystemInterval: string,
+  tempVars: Template[]
+): Promise<any> => {
+  const query = replaceTemplate(
+    `SELECT mean("usage_user") FROM \":db:\".\":rp:\".\"cpu\" WHERE "cpu" = 'cpu-total' AND time > now() - 10m AND region != null GROUP BY host, region;
+    SELECT mean("load1") FROM \":db:\".\":rp:\".\"system\" WHERE time > now() - 10m AND region != null GROUP BY host, region;
+    SELECT non_negative_derivative(mean(uptime)) AS deltaUptime FROM \":db:\".\":rp:\".\"system\" WHERE time > now() - ${telegrafSystemInterval} * 10 AND region != null GROUP BY host, time(${telegrafSystemInterval}), region fill(0);
+    SELECT mean("Percent_Processor_Time") FROM \":db:\".\":rp:\".\"win_cpu\" WHERE time > now() - 10m  AND region != null GROUP BY host, region;
+    SELECT mean("Processor_Queue_Length") FROM \":db:\".\":rp:\".\"win_system\" WHERE time > now() - 10s AND region != null GROUP BY host, region;
+    SELECT non_negative_derivative(mean("System_Up_Time")) AS winDeltaUptime FROM \":db:\".\":rp:\".\"win_system\" WHERE time > now() - ${telegrafSystemInterval} * 10 AND region != null  GROUP BY host, time(${telegrafSystemInterval}), region fill(0);
+    SHOW TAG VALUES WITH KEY = "region" WHERE TIME > now() - 10m ;
+    SELECT mean("used_percent") AS "memUsed" FROM \":db:\".\":rp:\".\"mem\" WHERE time > now() - 10m AND region != null GROUP BY host, region;
+    SELECT mean("used_percent") AS "diskUsed" FROM \":db:\".\":rp:\".\"disk\" WHERE time > now() - 10m AND region != null GROUP BY host, region;
+    SELECT mean("Pool_Paged_Bytes") AS "winMemUsed" FROM \":db:\".\":rp:\".\"win_mem\" WHERE time > now() - 10m  AND region != null GROUP BY host, region;
+    SELECT mean("Percent_Disk_Time") AS "winDiskUsed" FROM \":db:\".\":rp:\".\"win_disk\" WHERE time > now() - 10m  AND region != null GROUP BY host, region;
+    SHOW TAG VALUES WITH KEY = "host" WHERE TIME > now() - 10m;`,
+    tempVars
+  )
+
+  const {data} = await proxy({
+    source: proxyLink,
+    query,
+    db: telegrafDB,
+  })
+
+  const providers = {AWS: {}}
+  const precision = 100
+  const cpuSeries = getDeep<CloudSeries[]>(data, 'results.[0].series', [])
+  const loadSeries = getDeep<CloudSeries[]>(data, 'results.[1].series', [])
+  const uptimeSeries = getDeep<CloudSeries[]>(data, 'results.[2].series', [])
+  const winCPUSeries = getDeep<CloudSeries[]>(data, 'results.[3].series', [])
+  const winLoadSeries = getDeep<CloudSeries[]>(data, 'results.[4].series', [])
+  const winUptimeSeries = getDeep<CloudSeries[]>(data, 'results.[5].series', [])
+  const allResionSeries = getDeep<CloudSeries[]>(data, 'results.[6].series', [])
+
+  const memUsedSeries = getDeep<CloudSeries[]>(data, 'results.[7].series', [])
+  const diskUsedSeries = getDeep<CloudSeries[]>(data, 'results.[8].series', [])
+  const winMemUsedSeries = getDeep<CloudSeries[]>(
+    data,
+    'results.[9].series',
+    []
+  )
+  const winDiskUsedSeries = getDeep<CloudSeries[]>(
+    data,
+    'results.[10].series',
+    []
+  )
+
+  allResionSeries.forEach(s => {
+    const regionIndex = s.columns.findIndex(col => col === 'value')
+
+    s.values.forEach(v => {
+      const region = v[regionIndex]
+      providers.AWS[region] = {}
+    })
+  })
+
+  cpuSeries.forEach(s => {
+    const meanIndex = s.columns.findIndex(col => col === 'mean')
+    providers['AWS'][s.tags.region][s.tags.host] = {
+      ...EmptyHost,
+      name: s.tags.host,
+      cpu: Math.round(Number(s.values[0][meanIndex]) * precision) / precision,
+    }
+  })
+
+  loadSeries.forEach(s => {
+    const meanIndex = s.columns.findIndex(col => col === 'mean')
+    providers['AWS'][s.tags.region][s.tags.host].load =
+      Math.round(Number(s.values[0][meanIndex]) * precision) / precision
+  })
+
+  uptimeSeries.forEach(s => {
+    const uptimeIndex = s.columns.findIndex(col => col === 'deltaUptime')
+    if (providers['AWS'][s.tags.region][s.tags.host]?.deltaUptime) {
+      providers['AWS'][s.tags.region][s.tags.host]['deltaUptime'] = Number(
+        s.values[s.values.length - 1][uptimeIndex]
+      )
+    }
+  })
+
+  winCPUSeries.forEach(s => {
+    const meanIndex = s.columns.findIndex(col => col === 'mean')
+    providers['AWS'][s.tags.region][s.tags.host] = {
+      name: s.tags.host,
+      cpu: Math.round(Number(s.values[0][meanIndex]) * precision) / precision,
+    }
+  })
+
+  winLoadSeries.forEach(s => {
+    const meanIndex = s.columns.findIndex(col => col === 'mean')
+    providers['AWS'][s.tags.region][s.tags.host].load =
+      Math.round(Number(s.values[0][meanIndex]) * precision) / precision
+  })
+
+  winUptimeSeries.forEach(s => {
+    const winUptimeIndex = s.columns.findIndex(col => col === 'winDeltaUptime')
+    providers['AWS'][s.tags.region][s.tags.host].winDeltaUptime = Number(
+      s.values[s.values.length - 1][winUptimeIndex]
+    )
+  })
+
+  memUsedSeries.forEach(s => {
+    const meanIndex = s.columns.findIndex(col => col === 'memUsed')
+    providers['AWS'][s.tags.region][s.tags.host].memory =
+      Math.round(Number(s.values[0][meanIndex]) * precision) / precision
+  })
+
+  diskUsedSeries.forEach(s => {
+    const meanIndex = s.columns.findIndex(col => col === 'diskUsed')
+    providers['AWS'][s.tags.region][s.tags.host].disk =
+      Math.round(Number(s.values[0][meanIndex]) * precision) / precision
+  })
+
+  winMemUsedSeries.forEach(s => {
+    const meanIndex = s.columns.findIndex(col => col === 'winMemUsed')
+    providers['AWS'][s.tags.region][s.tags.host].disk =
+      Math.round(Number(s.values[0][meanIndex]) * precision) / precision
+  })
+
+  winDiskUsedSeries.forEach(s => {
+    const meanIndex = s.columns.findIndex(col => col === 'winDiskUsed')
+    providers['AWS'][s.tags.region][s.tags.host].disk =
+      Math.round(Number(s.values[0][meanIndex]) * precision) / precision
+  })
+
+  return providers
 }
