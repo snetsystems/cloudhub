@@ -148,10 +148,12 @@ import {
   applyHandler,
   detectedHostsStatus,
 } from 'src/hosts/configurations/topology'
-import TreeMenu, {TreeMenuItem} from 'src/reusable_ui/components/treemenu'
 
 import {AWSInstanceData} from 'src/hosts/types/cloud'
+
 import {saltDetailsDummy} from './detailsTest'
+import {treeMenuDummy} from './treeMenuDummy'
+
 const mx = mxgraph()
 
 export const {
@@ -303,80 +305,8 @@ interface State {
   provider: Provider
   providerLabel: string
   treeMenu: any
-  treemenuTopParent: any
   instanceData: AWSInstanceData
   focuseInstanceID: string
-}
-
-const treeMenuDummy = {
-  'Amazon Web Service': {
-    label: 'Amazon Web Service',
-    index: 0,
-    level: 0,
-    provider: Provider.AWS,
-    nodes: {
-      Seoul: {
-        label: 'Seoul',
-        index: 0,
-        level: 1,
-        regionID: '1',
-        nodes: {
-          EC1: {
-            label: 'EC1',
-            index: 0,
-            level: 2,
-            nodes: {},
-          },
-          EC2: {
-            label: 'EC2',
-            index: 0,
-            level: 2,
-            nodes: {},
-          },
-          EC5: {
-            label: 'EC5',
-            index: 0,
-            level: 2,
-            nodes: {},
-          },
-          EC6: {
-            label: 'EC6',
-            index: 0,
-            level: 2,
-            nodes: {},
-          },
-        },
-      },
-      Pusan: {
-        label: 'Pusan',
-        index: 0,
-        level: 1,
-        regionID: '2',
-        nodes: {
-          EC3: {
-            label: 'EC3',
-            index: 0,
-            level: 2,
-            nodes: {},
-          },
-        },
-      },
-    },
-  },
-  'Google Cloud Platform': {
-    label: 'Google Cloud Platform',
-    index: 1,
-    level: 0,
-    provider: Provider.GCP,
-    nodes: {},
-  },
-  Azure: {
-    label: 'Azure',
-    index: 2,
-    level: 0,
-    provider: Provider.AZURE,
-    nodes: {},
-  },
 }
 
 @ErrorHandling
@@ -424,7 +354,6 @@ class InventoryTopology extends PureComponent<Props, State> {
       provider: null,
       providerLabel: '',
       treeMenu: {},
-      treemenuTopParent: null,
       instanceData: null,
       focuseInstanceID: 'i-06b26a0c3fa37533a',
     }
@@ -800,13 +729,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     )
   }
 
-  // private toggleCloudFormVisible = (): void => {
-  //   this.setState({isCloudFormVisible: !this.state.isCloudFormVisible})
-  // }
-
-  private openCloudForm = (treemenuTopParent: any) => {
-    const {provider} = treemenuTopParent
-
+  private openCloudForm = (provider: Provider) => {
     let cloudRegions = []
 
     if (provider === Provider.AWS) {
@@ -829,6 +752,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
 
     this.setState({
+      provider,
       isCloudFormVisible: true,
       cloudRegions,
       selectedCloudRegion: cloudRegions[0],
@@ -1060,6 +984,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.graph.setAllowDanglingEdges(false)
     this.graph.createGroupCell = (cells: mxCellType[]) => {
+      if (_.isEmpty(cells)) return
       const group = mxGraph.prototype.createGroupCell.apply(this.graph, cells)
       const containerElement = getContainerElement(cells[0].value)
       const groupName = containerElement.getAttribute('data-parent')
@@ -1469,9 +1394,13 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private changedDOM = () => {
-    const hostList: NodeListOf<HTMLElement> = document
-      .querySelector('#hostInventoryContainer')
-      .querySelectorAll('.hosts-table--td')
+    const inventoryContainer = document.querySelector('#hostInventoryContainer')
+
+    if (!inventoryContainer) return
+
+    const hostList: NodeListOf<HTMLElement> = inventoryContainer.querySelectorAll(
+      '.hosts-table--td'
+    )
 
     _.forEach(hostList, host => {
       mxEvent.removeAllListeners(host)
@@ -1743,6 +1672,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       selectedCloudRegion,
       cloudAccessKey,
       cloudSecretKey,
+      treeMenu,
     } = this.state
 
     const data = {
@@ -1752,20 +1682,35 @@ class InventoryTopology extends PureComponent<Props, State> {
       secretkey: cloudSecretKey,
     }
 
-    handleCreateCloudServiceProviderAsync(data).then(data => {
-      console.log('addCSP: ', data)
-    })
+    handleCreateCloudServiceProviderAsync(data).then(res => {
+      _.values(treeMenu).forEach(tm => {
+        if (tm.provider === res.provider) {
+          tm.nodes[res.region] = {
+            buttons: [
+              this.updateRegionBtn(res.provider, res.region),
+              this.removeRegionBtn(res.provider, res.region),
+            ],
+            index: 0,
+            label: res.region,
+            level: 1,
+            regionID: res.id,
+            nodes: {},
+          }
+        }
+      })
 
-    this.closeCloudForm()
+      this.setState({treeMenu})
+      this.closeCloudForm()
+    })
   }
 
-  private addRegionBtn = treemenuTopParent => () => {
+  private addRegionBtn = (provider: Provider) => () => {
     return (
       <Button
         color={ComponentColor.Primary}
         onClick={event => {
           event.stopPropagation()
-          this.openCloudForm(treemenuTopParent)
+          this.openCloudForm(provider)
         }}
         size={ComponentSize.ExtraSmall}
         text={'+ Add Region'}
@@ -1782,28 +1727,27 @@ class InventoryTopology extends PureComponent<Props, State> {
       cloudAccessKey,
       cloudSecretKey,
       provider,
-      // regionID,
     } = this.state
+
+    let regionID = this.getRegionID(provider, selectedCloudRegion)
 
     // secretkey 복호화 후
     const data = {
       provider,
-      id: '',
+      id: regionID,
       region: selectedCloudRegion,
       accesskey: cloudAccessKey,
       secretkey: cloudSecretKey,
     }
 
     handleUpdateCloudServiceProviderAsync(data)
-      .then(data => {
-        console.log('data:', data)
+      .then(resp => {
+        console.log('resp:', resp)
       })
       .finally(() => {
+        this.closeCloudForm()
         // // secretkey 암호화 후 저장
       })
-
-    // this.closeCloudForm()
-    console.log('update')
   }
 
   private openUpdateRegion = async (provider: Provider, region: string) => {
@@ -1815,25 +1759,20 @@ class InventoryTopology extends PureComponent<Props, State> {
       console.log('getCSP: ', data)
       this.setState({
         isUpdateCloud: true,
-        selectedCloudRegion: 'test',
+        selectedCloudRegion: region,
         cloudAccessKey: 'test',
         cloudSecretKey: 'test',
       })
     })
   }
 
-  // add, update, delete button 클릭시 treemenu level-zero 등록
-  private updateRegionBtn = (
-    treemenuTopParent: any,
-    provider: Provider,
-    region: string
-  ) => () => {
+  private updateRegionBtn = (provider: Provider, region: string) => () => {
     return (
       <Button
         color={ComponentColor.Primary}
         onClick={event => {
           event.stopPropagation()
-          this.openCloudForm(treemenuTopParent)
+          this.openCloudForm(provider)
           this.openUpdateRegion(provider, region)
         }}
         size={ComponentSize.ExtraSmall}
@@ -1845,24 +1784,19 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   private removeRegion = (provider: Provider, region: string) => {
     const {treeMenu} = this.state
-    const menus = _.keys(treeMenu)
+    const regionID = this.getRegionID(provider, region)
 
-    // for (let i = 0; i < menus.length; i++) {
-    //   if (treeMenu[menus[i]].provider === sProvider) {
-    //     delete treeMenu[menus[i]]['nodes'][sRegion]
-    //     break
-    //   }
-    // }
+    this.props.handleDeleteCloudServiceProviderAsync(regionID).then(() => {
+      const menus = _.keys(treeMenu)
 
-    let regionID = this.getRegionID(provider, region)
+      for (let i = 0; i < menus.length; i++) {
+        if (treeMenu[menus[i]].provider === provider) {
+          delete treeMenu[menus[i]]['nodes'][region]
+          break
+        }
+      }
 
-    this.setState({treeMenu: {...treeMenu}})
-  }
-
-  private handleDeleteRegion = regionID => {
-    const {handleDeleteCloudServiceProviderAsync} = this.props
-    handleDeleteCloudServiceProviderAsync(regionID).then(() => {
-      this.setState({})
+      this.setState({treeMenu: {...treeMenu}})
     })
   }
 
@@ -2085,6 +2019,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     const input = {[inputKey]: e.target.value}
     this.setState({...this.state, ...input})
   }
+
   private makeTreemenu = () => {
     const treeMenu = {...treeMenuDummy}
 
@@ -2097,11 +2032,7 @@ class InventoryTopology extends PureComponent<Props, State> {
           treeMenu[cur]['nodes'][region] = {
             ...treeMenu[cur]['nodes'][region],
             buttons: [
-              this.updateRegionBtn(
-                treeMenu[cur],
-                treeMenu[cur]['provider'],
-                region
-              ),
+              this.updateRegionBtn(treeMenu[cur]['provider'], region),
               this.removeRegionBtn(treeMenu[cur]['provider'], region),
             ],
           }
@@ -2115,8 +2046,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
         treeMenu[cur] = {
           ...treeMenu[cur],
-
-          buttons: [this.addRegionBtn(treeMenu[cur])],
+          buttons: [this.addRegionBtn(treeMenu[cur]['provider'])],
           nodes: {
             ...nodes,
           },
@@ -2128,6 +2058,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.setState({treeMenu})
   }
+
   private handleChooseRegion = (selectItem: {text: string}) => {
     this.setState({selectedCloudRegion: selectItem.text})
   }
@@ -2156,7 +2087,8 @@ class InventoryTopology extends PureComponent<Props, State> {
                 <Dropdown
                   items={cloudRegions}
                   selected={selectedCloudRegion}
-                  onChoose={this.handleChooseRegion}
+                  onChoose={isUpdateCloud ? this.handleChooseRegion : null}
+                  disabled={isUpdateCloud}
                   className="dropdown-stretch"
                 />
               </Form.Element>
