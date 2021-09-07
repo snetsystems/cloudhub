@@ -333,7 +333,7 @@ export const getAppsForInstances = async (
   const {data} = await proxy({
     source: proxyLink,
     query: replaceTemplate(
-      `show series from ${measurements} where time > now() - 10m`,
+      `show series from ${measurements} where time > now() - 10m and region != null`,
       tempVars
     ),
     db: telegrafDB,
@@ -374,7 +374,7 @@ export const getAppsForInstances = async (
     )
     _.assign(newProviders['AWS'][region][host].tags, seriesObj.tags)
   })
-
+  console.log('newProviders : ', newProviders)
   return newProviders
 }
 
@@ -1019,5 +1019,6 @@ export const getCpuAndLoadForInstances = async (
       Math.round(Number(s.values[0][meanIndex]) * precision) / precision
   })
 
+  console.log('providers: ', providers)
   return providers
 }
