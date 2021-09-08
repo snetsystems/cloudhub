@@ -274,6 +274,7 @@ export const loadCloudServiceProvidersAsync = () => async (
     return data
   } catch (error) {
     dispatch(errorThrown(error))
+    throw error
   }
 }
 
@@ -287,6 +288,7 @@ export const loadCloudServiceProviderAsync = (id: string) => async (
     return data
   } catch (error) {
     dispatch(errorThrown(error))
+    throw error
   }
 }
 
@@ -307,7 +309,7 @@ export const createCloudServiceProviderAsync = ({
     dispatch(createCloudServiceProviderAction())
     return data
   } catch (error) {
-    console.error(error)
+    dispatch(errorThrown(error, error.message))
     throw error
   }
 }
@@ -330,7 +332,7 @@ export const updateCloudServiceProviderAsync = ({
     dispatch(updateCloudServiceProviderAction())
     return data
   } catch (error) {
-    console.error(error)
+    dispatch(errorThrown(error))
     throw error
   }
 }
@@ -343,7 +345,7 @@ export const deleteCloudServiceProviderAsync = (id: string) => async (
       dispatch(deleteCloudServiceProviderAction())
     })
   } catch (error) {
-    console.error(error)
+    dispatch(errorThrown(error))
     throw error
   }
 }
