@@ -1,3 +1,4 @@
+import {isNull} from 'lodash'
 import React, {FunctionComponent} from 'react'
 import {Link} from 'react-router'
 
@@ -31,8 +32,11 @@ const CloudHostRow: FunctionComponent<Props> = ({
     name,
     cpu,
     load,
+    disk,
+    memory,
     apps = [],
   } = host
+
   const {
     CloudNameWidth,
     CloudInstanceIDWidth,
@@ -46,9 +50,12 @@ const CloudHostRow: FunctionComponent<Props> = ({
     CloudDiskWidth,
   } = CLOUD_HOSTS_TABLE_SIZING
 
-  const CPUValue = isNaN(cpu) ? 'N/A' : `${cpu.toFixed(2)}%`
-  const loadValue = isNaN(load) ? 'N/A' : `${load.toFixed(2)}`
-  // const dotClassName = classnames(
+  const cpuValue = isNaN(cpu) || isNull(cpu) ? 'N/A' : `${cpu.toFixed(2)}%`
+  const memoryValue =
+    isNaN(memory) || isNull(memory) ? 'N/A' : `${memory.toFixed(2)}`
+  const diskValue = isNaN(disk) || isNull(disk) ? 'N/A' : `${disk.toFixed(2)}`
+
+  // const dotClassName = classnames(,
   //   'table-dot',
   //   Math.max(host.deltaUptime || 0, host.winDeltaUptime || 0) > 0
   //     ? 'dot-success'
@@ -117,22 +124,25 @@ const CloudHostRow: FunctionComponent<Props> = ({
         })}
       </div>
       <div style={{width: CloudCPUWidth}} className="monotype hosts-table--td">
-        {usageIndacator({
-          value: fixedDecimalPercentage(parseFloat(CPUValue), 2),
-        })}
+        {(cpuValue === 'N/A' && cpuValue) ||
+          usageIndacator({
+            value: fixedDecimalPercentage(parseFloat(cpuValue), 2),
+          })}
       </div>
       <div
         style={{width: CloudMemoryWidth}}
         className="monotype hosts-table--td"
       >
-        {usageIndacator({
-          value: fixedDecimalPercentage(parseFloat(CPUValue), 2),
-        })}
+        {(memoryValue === 'N/A' && memoryValue) ||
+          usageIndacator({
+            value: fixedDecimalPercentage(parseFloat(memoryValue), 2),
+          })}
       </div>
       <div style={{width: CloudDiskWidth}} className="monotype hosts-table--td">
-        {usageIndacator({
-          value: fixedDecimalPercentage(parseFloat(CPUValue), 2),
-        })}
+        {(diskValue === 'N/A' && diskValue) ||
+          usageIndacator({
+            value: fixedDecimalPercentage(parseFloat(diskValue), 2),
+          })}
       </div>
     </div>
   )
