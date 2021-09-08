@@ -75,7 +75,7 @@ import {timeRanges} from 'src/shared/data/timeRanges'
 import {AddonType} from 'src/shared/constants'
 import {ButtonShape, ComponentStatus, IconFont} from 'src/reusable_ui/types'
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
-import {Provider} from 'src/hosts/types'
+import {CloudServiceProvider} from 'src/hosts/types'
 
 // Actions
 import {
@@ -86,11 +86,6 @@ import {
   setIpmiStatusAsync,
   getIpmiSensorDataAsync,
   getMinionKeyAcceptedListAsync,
-  loadCloudServiceProviderAsync,
-  loadCloudServiceProvidersAsync,
-  createCloudServiceProviderAsync,
-  updateCloudServiceProviderAsync,
-  deleteCloudServiceProviderAsync,
 } from 'src/hosts/actions'
 
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -149,8 +144,7 @@ import {
   detectedHostsStatus,
 } from 'src/hosts/configurations/topology'
 
-import {AWSInstanceData} from 'src/hosts/types/cloud'
-
+import {AWSInstanceData, CSPAccessObject} from 'src/hosts/types/cloud'
 import {saltDetailsDummy} from './detailsTest'
 import {treeMenuDummy} from './treeMenuDummy'
 
@@ -256,13 +250,13 @@ interface Props {
   handleLoadCloudServiceProviderAsync: (id: string) => Promise<any>
   handleLoadCloudServiceProvidersAsync: () => Promise<any>
   handleCreateCloudServiceProviderAsync: (data: {
-    provider: Provider
+    provider: CloudServiceProvider
     region: string
     accesskey: string
     secretkey: string
   }) => Promise<any>
   handleUpdateCloudServiceProviderAsync: (data: {
-    provider: Provider
+    provider: CloudServiceProvider
     region: string
     accesskey: string
     secretkey: string
@@ -302,11 +296,12 @@ interface State {
   selectedCloudRegion: string
   cloudAccessKey: string
   cloudSecretKey: string
-  provider: Provider
+  provider: CloudServiceProvider
   providerLabel: string
   treeMenu: any
   instanceData: AWSInstanceData
   focuseInstanceID: string
+  cspAccessObjects: CSPAccessObject[]
 }
 
 @ErrorHandling
@@ -356,6 +351,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       treeMenu: {},
       instanceData: null,
       focuseInstanceID: 'i-06b26a0c3fa37533a',
+      cspAccessObjects: null,
     }
   }
 
@@ -396,89 +392,6 @@ class InventoryTopology extends PureComponent<Props, State> {
   private setToolbar = setToolbar
 
   public async componentDidMount() {
-    const getInstanceData = yaml.safeLoad(saltDetailsDummy)
-    let instanceData = {}
-
-    _.reduce(
-      getInstanceData['local'],
-      (_, current) => {
-        const instance = {
-          [current.instanceId]: {
-            Instance_summary: {
-              Instance_ID: current.instanceId,
-              Public_IPv4_address:
-                current.NetworkInterfaces[0].Association?.PublicIp,
-              Private_IPv4_addresses: current.PrivateIpAddress,
-              IPv6_address: current.NetworkInterfaces[0].Ipv6Addresses,
-              Instance_state: current.State.Name,
-              Public_IPv4_DNS: '',
-              Private_IPv4_DNS: '',
-              Instance_type: current.InstanceType,
-              Elastic_IP_addresses: '',
-              VPC_ID: current.VpcId,
-              AWS_Compute_Optimizer_finding: '',
-              IAM_Role: '',
-              Subnet_ID: current.SubnetId,
-            },
-            Instance_details: {
-              Platform: 'value',
-              AMI_ID: current.ImageId,
-              Monitoring: current.Monitoring.disabled,
-              Platform_details: 'value',
-              AMI_name: 'value',
-              Termination_protection: 'value',
-              Launch_time: current.LaunchTime.toString(),
-              AMI_location: 'value',
-              Lifecycle: 'value',
-              'Stop-hibernate_behavior': 'value',
-              AMI_Launch_index: current.AmiLaunchIndex,
-              Key_pair_name: current.KeyName,
-              State_transition_reason: 'value',
-              Credit_specification: 'value',
-              Kernel_ID: 'value',
-              State_transition_message: 'value',
-              Usage_operation: 'value',
-              RAM_disk_ID: 'value',
-              Owner: current.OwnerId,
-              Enclaves_Support: 'value',
-              Boot_mode: 'value',
-            },
-            Host_and_placement_group: {
-              Host_ID: 'value',
-              Affinity: 'value',
-              Placement_group: 'value',
-              Host_resource_group_name: 'value',
-              Tenancy: current.Placement.Tenancy,
-              Partition_number: 'value',
-              Virtualization_type: current.VirtualizationType,
-              Reservation: 'value',
-              Number_of_vCPUs: current.CpuOptions.CoreCount,
-            },
-            Capacity_reservation: {
-              Capacity_Reservation_ID: 'value',
-              Capacity_Reservation_setting:
-                current.CapacityReservationSpecification
-                  .CapacityReservationPreference,
-            },
-            Accelerators: {
-              Elastic_inference_accelerator_ID: 'value',
-            },
-          },
-        }
-
-        instanceData = {
-          ...instanceData,
-          ...instance,
-        }
-
-        return false
-      },
-      {}
-    )
-
-    this.setState({instanceData})
-
-    this.makeTreemenu()
     this.createEditor()
     this.configureEditor()
     this.setActionInEditor()
@@ -729,18 +642,18 @@ class InventoryTopology extends PureComponent<Props, State> {
     )
   }
 
-  private openCloudForm = (provider: Provider) => {
+  private openCloudForm = (provider: CloudServiceProvider) => {
     let cloudRegions = []
 
-    if (provider === Provider.AWS) {
+    if (provider === CloudServiceProvider.AWS) {
       cloudRegions = [...cloudRegions, 'SEOUL', 'SYDNEY']
     }
 
-    if (provider === Provider.GCP) {
+    if (provider === CloudServiceProvider.GCP) {
       cloudRegions = [...cloudRegions, 'SEOUL', 'TOKYO', 'OSAKA', 'TAIWAN']
     }
 
-    if (provider === Provider.AZURE) {
+    if (provider === CloudServiceProvider.AZURE) {
       cloudRegions = [
         ...cloudRegions,
         'SEOUL',
@@ -1704,7 +1617,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     })
   }
 
-  private addRegionBtn = (provider: Provider) => () => {
+  private addRegionBtn = (provider: CloudServiceProvider) => () => {
     return (
       <Button
         color={ComponentColor.Primary}
@@ -1721,7 +1634,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   private handleUpdateRegion = () => {
     // 가정 Salt 보낸 후 etcd 에 저장할 건지 말건지
-    const {handleUpdateCloudServiceProviderAsync} = this.props
+    // const {handleUpdateCloudServiceProviderAsync} = this.props
     const {
       selectedCloudRegion,
       cloudAccessKey,
@@ -1740,33 +1653,39 @@ class InventoryTopology extends PureComponent<Props, State> {
       secretkey: cloudSecretKey,
     }
 
-    handleUpdateCloudServiceProviderAsync(data)
-      .then(resp => {
-        console.log('resp:', resp)
-      })
-      .finally(() => {
-        this.closeCloudForm()
-        // // secretkey 암호화 후 저장
-      })
+    // handleUpdateCloudServiceProviderAsync(data)
+    //   .then(resp => {
+    //     console.log('resp:', resp)
+    //   })
+    //   .finally(() => {
+    //     this.closeCloudForm()
+    //     // // secretkey 암호화 후 저장
+    //   })
   }
 
-  private openUpdateRegion = async (provider: Provider, region: string) => {
-    const {handleLoadCloudServiceProviderAsync} = this.props
+  private openUpdateRegion = async (
+    provider: CloudServiceProvider,
+    region: string
+  ) => {
+    // const {handleLoadCloudServiceProviderAsync} = this.props
 
     let regionID = this.getRegionID(provider, region)
 
-    handleLoadCloudServiceProviderAsync(regionID).then(data => {
-      console.log('getCSP: ', data)
-      this.setState({
-        isUpdateCloud: true,
-        selectedCloudRegion: region,
-        cloudAccessKey: 'test',
-        cloudSecretKey: 'test',
-      })
-    })
+    // handleLoadCloudServiceProviderAsync(regionID).then(data => {
+    //   console.log('getCSP: ', data)
+    //   this.setState({
+    //     isUpdateCloud: true,
+    //     selectedCloudRegion: region,
+    //     cloudAccessKey: 'test',
+    //     cloudSecretKey: 'test',
+    //   })
+    // })
   }
 
-  private updateRegionBtn = (provider: Provider, region: string) => () => {
+  private updateRegionBtn = (
+    provider: CloudServiceProvider,
+    region: string
+  ) => () => {
     return (
       <Button
         color={ComponentColor.Primary}
@@ -1782,7 +1701,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     )
   }
 
-  private removeRegion = (provider: Provider, region: string) => {
+  private removeRegion = (provider: CloudServiceProvider, region: string) => {
     const {treeMenu} = this.state
     const regionID = this.getRegionID(provider, region)
 
@@ -1800,7 +1719,10 @@ class InventoryTopology extends PureComponent<Props, State> {
     })
   }
 
-  private removeRegionBtn = (provider: Provider, region: string) => () => {
+  private removeRegionBtn = (
+    provider: CloudServiceProvider,
+    region: string
+  ) => () => {
     return (
       <ConfirmButton
         text="Delete"
@@ -1818,7 +1740,10 @@ class InventoryTopology extends PureComponent<Props, State> {
     )
   }
 
-  private getRegionID = (provider: Provider, region: string): string => {
+  private getRegionID = (
+    provider: CloudServiceProvider,
+    region: string
+  ): string => {
     const {treeMenu} = this.state
     const menus = _.keys(treeMenu)
     let regionID = ''
@@ -2025,28 +1950,28 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     _.reduce(
       _.keys(treeMenuDummy),
-      (_, cur: Provider) => {
+      (_, currentCSP: CloudServiceProvider) => {
         let nodes = {}
 
-        Object.keys(treeMenu[cur]['nodes']).reduce((_, region) => {
-          treeMenu[cur]['nodes'][region] = {
-            ...treeMenu[cur]['nodes'][region],
+        Object.keys(treeMenu[currentCSP]['nodes']).reduce((_, region) => {
+          treeMenu[currentCSP]['nodes'][region] = {
+            ...treeMenu[currentCSP]['nodes'][region],
             buttons: [
-              this.updateRegionBtn(treeMenu[cur]['provider'], region),
-              this.removeRegionBtn(treeMenu[cur]['provider'], region),
+              this.updateRegionBtn(treeMenu[currentCSP]['provider'], region),
+              this.removeRegionBtn(treeMenu[currentCSP]['provider'], region),
             ],
           }
 
           nodes[region] = {
-            ...treeMenu[cur]['nodes'][region],
+            ...treeMenu[currentCSP]['nodes'][region],
           }
 
           return false
         }, {})
 
-        treeMenu[cur] = {
-          ...treeMenu[cur],
-          buttons: [this.addRegionBtn(treeMenu[cur]['provider'])],
+        treeMenu[currentCSP] = {
+          ...treeMenu[currentCSP],
+          buttons: [this.addRegionBtn(treeMenu[currentCSP]['provider'])],
           nodes: {
             ...nodes,
           },
@@ -2087,7 +2012,7 @@ class InventoryTopology extends PureComponent<Props, State> {
                 <Dropdown
                   items={cloudRegions}
                   selected={selectedCloudRegion}
-                  onChoose={isUpdateCloud ? this.handleChooseRegion : null}
+                  onChoose={isUpdateCloud ? null : this.handleChooseRegion}
                   disabled={isUpdateCloud}
                   className="dropdown-stretch"
                 />
@@ -2098,7 +2023,6 @@ class InventoryTopology extends PureComponent<Props, State> {
                   onChange={this.handleChangeInput('cloudAccessKey')}
                   placeholder={'Access Key'}
                   type={InputType.Password}
-                  // status={isDisabled && ComponentStatus.Disabled}
                 />
               </Form.Element>
               <Form.Element label="Secret Key" colsXS={12}>
@@ -2107,7 +2031,6 @@ class InventoryTopology extends PureComponent<Props, State> {
                   onChange={this.handleChangeInput('cloudSecretKey')}
                   placeholder={'Secret Key'}
                   type={InputType.Password}
-                  // status={isDisabled && ComponentStatus.Disabled}
                 />
               </Form.Element>
               <Form.Footer>
@@ -2150,11 +2073,6 @@ const mapDispatchToProps = {
   handleGetIpmiStatus: getIpmiStatusAsync,
   handleSetIpmiStatusAsync: setIpmiStatusAsync,
   handleGetIpmiSensorDataAsync: getIpmiSensorDataAsync,
-  handleLoadCloudServiceProviderAsync: loadCloudServiceProviderAsync,
-  handleLoadCloudServiceProvidersAsync: loadCloudServiceProvidersAsync,
-  handleCreateCloudServiceProviderAsync: createCloudServiceProviderAsync,
-  handleUpdateCloudServiceProviderAsync: updateCloudServiceProviderAsync,
-  handleDeleteCloudServiceProviderAsync: deleteCloudServiceProviderAsync,
   notify: notifyAction,
 }
 
