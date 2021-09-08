@@ -21,7 +21,7 @@ import {
   handleSelectHostProps,
   vmParam,
 } from 'src/hosts/types/type'
-import {Provider} from 'src/hosts/types/cloud'
+import {CloudServiceProvider} from 'src/hosts/types/cloud'
 
 export {
   VMRole,
@@ -43,5 +43,5 @@ export {
   handleSelectHostProps,
   vmParam,
   reducerVSphere,
-  Provider,
+  CloudServiceProvider,
 }

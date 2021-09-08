@@ -86,7 +86,8 @@ import {
   updateCloudServiceProviderAsync,
   deleteCloudServiceProviderAsync,
 } from 'src/hosts/actions'
-import {Provider} from 'src/hosts/types'
+import {CloudServiceProvider} from 'src/hosts/types'
+import {AWSInstanceData, CSPAccessObject} from 'src/hosts/types/cloud'
 
 interface Props extends ManualRefreshProps {
   source: Source
@@ -98,13 +99,13 @@ interface Props extends ManualRefreshProps {
   handleLoadCloudServiceProviderAsync: (id: string) => Promise<any>
   handleLoadCloudServiceProvidersAsync: () => Promise<any>
   handleCreateCloudServiceProviderAsync: (data: {
-    provider: Provider
+    provider: CloudServiceProvider
     region: string
     accesskey: string
     secretkey: string
   }) => Promise<any>
   handleUpdateCloudServiceProviderAsync: (data: {
-    provider: Provider
+    provider: CloudServiceProvider
     region: string
     accesskey: string
     secretkey: string
@@ -133,7 +134,8 @@ interface State {
   isVsphere: boolean
   activeEditorTab: string
   selectedAgent: string
-  selectedProvider: string
+  selectedCSP: string
+  itemCSPs: string[]
   cloudHostsObject: CloudHosts
   cloudAccessInfos: []
 }
@@ -169,7 +171,8 @@ export class HostsPage extends PureComponent<Props, State> {
       // activeEditorTab: 'InventoryTopology',
       activeEditorTab: 'Host',
       selectedAgent: 'CloudWatch',
-      selectedProvider: 'Private',
+      itemCSPs: ['Private'],
+      selectedCSP: 'Private',
       cloudAccessInfos: [],
       cloudHostsObject: {},
     }
@@ -251,10 +254,6 @@ export class HostsPage extends PureComponent<Props, State> {
       if (prevProps.autoRefresh !== autoRefresh) {
         GlobalAutoRefresher.poll(autoRefresh)
       }
-    }
-
-    if (prevState.selectedProvider !== this.state.selectedProvider) {
-      // this.setState
     }
   }
 
@@ -474,16 +473,16 @@ export class HostsPage extends PureComponent<Props, State> {
     return (
       <>
         <Dropdown
-          items={['Private', 'AWS', 'GCP', 'Azure']}
+          items={this.state.itemCSPs}
           onChoose={this.getHandleOnChooseProvider}
-          selected={this.state.selectedProvider}
+          selected={this.state.selectedCSP}
           className="dropdown-sm"
           disabled={false}
           // onClick={() => {
           //   this.handleFocusedBtnName({selected: this.state.selected})
           // }}
         />
-        {this.state.selectedProvider === 'Private' ? (
+        {this.state.selectedCSP === 'Private' ? (
           <HostsTable
             source={source}
             hosts={_.values(hostsObject)}
@@ -502,11 +501,11 @@ export class HostsPage extends PureComponent<Props, State> {
     const {source} = this.props
     const {
       cloudHostsObject,
-      selectedProvider,
+      selectedCSP,
       hostsPageStatus,
       focusedHost,
     } = this.state
-    const cloudHostObject = cloudHostsObject[selectedProvider]
+    const cloudHostObject = cloudHostsObject[selectedCSP]
 
     return (
       <AWSHostsTable
@@ -521,7 +520,7 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   private getHandleOnChooseProvider = (selectItem: {text: string}) => {
-    this.setState({selectedProvider: selectItem.text})
+    this.setState({selectedCSP: selectItem.text})
   }
 
   private getHandleOnChoose = (selectItem: {text: string}) => {
@@ -537,7 +536,7 @@ export class HostsPage extends PureComponent<Props, State> {
 
     return (
       <>
-        {this.state.selectedProvider === 'AWS' ? (
+        {this.state.selectedCSP === 'AWS' ? (
           <Page.Header>
             <Page.Header.Left>
               <>
@@ -569,7 +568,7 @@ export class HostsPage extends PureComponent<Props, State> {
             timeRange={timeRange}
             manualRefresh={this.props.manualRefresh}
             host={focusedHost}
-            provider={this.state.selectedProvider}
+            provider={this.state.selectedCSP}
           />
         </Page.Contents>
       </>
@@ -680,7 +679,6 @@ export class HostsPage extends PureComponent<Props, State> {
   private fetchInstancesData = async (layouts: Layout[]): Promise<void> => {
     this.props.handleLoadCloudServiceProvidersAsync().then(data => {
       this.testGetSalt().then(async saltData => {
-        console.log('saltData: ', saltData)
         const {source, links, notify} = this.props
         const {addons} = links
 
@@ -698,7 +696,8 @@ export class HostsPage extends PureComponent<Props, State> {
             source.links.proxy,
             source.telegraf,
             telegrafSystemInterval,
-            tempVars
+            tempVars,
+            saltData['local']
           )
 
           if (!instancesObject) {
@@ -722,32 +721,10 @@ export class HostsPage extends PureComponent<Props, State> {
               })
           )
 
-          saltData['local'].reduce((_, current, i) => {
-            const region = current.PrivateDnsName.split('.')[1]
-            if (!newCloudHostsObject['AWS'][region]) return
-            if (!newCloudHostsObject['AWS'][region][current.InstanceId]) return
-
-            const instanceName = current.Tags.find(tag => tag.Key === 'Name')
-
-            newCloudHostsObject['AWS'][region][current.InstanceId] = {
-              ...newCloudHostsObject['AWS'][region][current.InstanceId],
-              name: instanceName.Value,
-              instanceId: current.InstanceId,
-              instanceType: current.InstanceType,
-              instanceState: current.State.Name,
-              instanceStatusCheck: 'test',
-              alarmStatus: 'no alarm',
-              provider: 'AWS',
-              region,
-            }
-
-            return false
-          }, [])
-
           this.setState({
             isVsphere: isUsingVshpere,
             cloudHostsObject: newCloudHostsObject,
-
+            itemCSPs: ['Private', ..._.keys(newCloudHostsObject)],
             hostsPageStatus: RemoteDataState.Done,
           })
         } catch (error) {

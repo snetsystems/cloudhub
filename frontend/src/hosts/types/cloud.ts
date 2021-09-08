@@ -1,7 +1,7 @@
-export enum Provider {
-  AWS = 'AWS',
-  GCP = 'GCP',
-  AZURE = 'AZURE',
+export enum CloudServiceProvider {
+  AWS = 'aws',
+  GCP = 'gcp',
+  AZURE = 'azure',
 }
 
 export interface AWSInstanceData {
@@ -24,4 +24,21 @@ export interface CloudHost {
 }
 export interface CloudHosts {
   [instanceName: string]: CloudHost
+}
+
+export interface getCSPAccessInfoParams {
+  provider: string
+  region: string
+  accesskey: string
+  secretkey: string
+}
+
+export interface CSPAccessObject {
+  id: string
+  provider: string
+  region: string
+  accesskey: string
+  secretkey: string
+  organization: string
+  links: {self: string}
 }
