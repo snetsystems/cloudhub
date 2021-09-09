@@ -86,6 +86,7 @@ import {
   setIpmiStatusAsync,
   getIpmiSensorDataAsync,
   getMinionKeyAcceptedListAsync,
+  createCloudServiceProviderAsync,
 } from 'src/hosts/actions'
 
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -348,7 +349,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       cloudSecretKey: '',
       provider: null,
       providerLabel: '',
-      treeMenu: {},
+      treeMenu: {...treeMenuDummy},
       instanceData: null,
       focuseInstanceID: 'i-06b26a0c3fa37533a',
       cspAccessObjects: null,
@@ -392,6 +393,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   private setToolbar = setToolbar
 
   public async componentDidMount() {
+    this.makeTreemenu()
     this.createEditor()
     this.configureEditor()
     this.setActionInEditor()
@@ -1588,11 +1590,17 @@ class InventoryTopology extends PureComponent<Props, State> {
       treeMenu,
     } = this.state
 
+    const decryptedBytes = CryptoJS.AES.decrypt(
+      cloudSecretKey,
+      this.secretKey.url
+    )
+    const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
+
     const data = {
       provider,
       region: selectedCloudRegion,
       accesskey: cloudAccessKey,
-      secretkey: cloudSecretKey,
+      secretkey: originalSecretkey,
     }
 
     handleCreateCloudServiceProviderAsync(data).then(res => {
@@ -1985,7 +1993,37 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private handleChooseRegion = (selectItem: {text: string}) => {
-    this.setState({selectedCloudRegion: selectItem.text})
+    this.setState({
+      selectedCloudRegion: selectItem.text,
+      cloudAccessKey: '',
+      cloudSecretKey: '',
+    })
+  }
+
+  private encrypt = () => {
+    const {cloudSecretKey} = this.state
+
+    if (cloudSecretKey.length < 1) return
+
+    const encryptCloudSecretKey = CryptoJS.AES.encrypt(
+      cloudSecretKey,
+      this.secretKey.url
+    ).toString()
+
+    this.setState({cloudSecretKey: encryptCloudSecretKey})
+  }
+
+  private onKeyPressEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const enterKeyCode = 13
+    const enterKey = 'Enter'
+
+    if (
+      e.keyCode === enterKeyCode ||
+      e.charCode === enterKeyCode ||
+      e.key === enterKey
+    ) {
+      this.encrypt()
+    }
   }
 
   private get writeCloudForm() {
@@ -2029,6 +2067,11 @@ class InventoryTopology extends PureComponent<Props, State> {
                 <Input
                   value={cloudSecretKey}
                   onChange={this.handleChangeInput('cloudSecretKey')}
+                  onFocus={() => {
+                    this.setState({cloudSecretKey: ''})
+                  }}
+                  onBlur={this.encrypt}
+                  onKeyDown={this.onKeyPressEnter}
                   placeholder={'Secret Key'}
                   type={InputType.Password}
                 />
@@ -2073,6 +2116,7 @@ const mapDispatchToProps = {
   handleGetIpmiStatus: getIpmiStatusAsync,
   handleSetIpmiStatusAsync: setIpmiStatusAsync,
   handleGetIpmiSensorDataAsync: getIpmiSensorDataAsync,
+  handleCreateCloudServiceProviderAsync: createCloudServiceProviderAsync,
   notify: notifyAction,
 }
 
