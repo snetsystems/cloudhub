@@ -2,20 +2,29 @@
 import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
-import _ from 'lodash'
+import _, {filter} from 'lodash'
 import {getDeep} from 'src/utils/wrappers'
+import CryptoJS from 'crypto-js'
 
 // Components
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import Dropdown from 'src/shared/components/Dropdown'
 import HostsTable from 'src/hosts/components/HostsTable'
-import AWSHostsTable from 'src/hosts/components/AWSHostsTable'
+import CspHostsTable from 'src/hosts/components/CspHostsTable'
 import HostLayoutRenderer from 'src/hosts/components/HostLayoutRenderer'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import ManualRefresh, {
   ManualRefreshProps,
 } from 'src/shared/components/ManualRefresh'
-import {Button, ButtonShape, IconFont, Page, Radio} from 'src/reusable_ui'
+import {
+  Button,
+  ButtonShape,
+  IconFont,
+  Page,
+  Radio,
+  Input,
+  InputType,
+} from 'src/reusable_ui'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import GraphTips from 'src/shared/components/GraphTips'
@@ -31,6 +40,9 @@ import {
   getMeasurementsForHost,
   getCpuAndLoadForInstances,
   getAppsForInstances,
+  getCSPHostsApi,
+  paramsCreateCSP,
+  paramsUpdateCSP,
 } from 'src/hosts/apis'
 import {getEnv} from 'src/shared/apis/env'
 
@@ -57,6 +69,7 @@ import {
   notifyUnableToGetHosts,
   notifyUnableToGetApps,
 } from 'src/shared/copy/notifications'
+import {AddonType} from 'src/shared/constants'
 
 //const
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
@@ -77,8 +90,6 @@ import {timeRanges} from 'src/shared/data/timeRanges'
 import * as QueriesModels from 'src/types/queries'
 import * as AppActions from 'src/types/actions/app'
 
-import {saltDetailsDummy} from './detailsTest'
-import yaml from 'js-yaml'
 import {
   loadCloudServiceProviderAsync,
   loadCloudServiceProvidersAsync,
@@ -96,29 +107,15 @@ interface Props extends ManualRefreshProps {
   onChooseAutoRefresh: (milliseconds: RefreshRate) => void
   handleClearTimeout: (key: string) => void
   notify: NotificationAction
-  handleLoadCloudServiceProviderAsync: (id: string) => Promise<any>
-  handleLoadCloudServiceProvidersAsync: () => Promise<any>
-  handleCreateCloudServiceProviderAsync: (data: {
-    provider: CloudServiceProvider
-    region: string
-    accesskey: string
-    secretkey: string
-  }) => Promise<any>
-  handleUpdateCloudServiceProviderAsync: (data: {
-    provider: CloudServiceProvider
-    region: string
-    accesskey: string
-    secretkey: string
-    id: string
-  }) => Promise<any>
-  handleDeleteCloudServiceProviderAsync: (id: string) => Promise<any>
-}
-
-interface Props {
   handleChooseTimeRange: (timeRange: QueriesModels.TimeRange) => void
   handleChooseAutoRefresh: AppActions.SetAutoRefreshActionCreator
   handleClickPresentationButton: AppActions.DelayEnablePresentationModeDispatcher
   inPresentationMode: boolean
+  handleLoadCSPAsync: (id: string) => Promise<any>
+  handleLoadCSPsAsync: () => Promise<any>
+  handleCreateCSPAsync: (data: paramsCreateCSP) => Promise<any>
+  handleUpdateCSPAsync: (data: paramsUpdateCSP) => Promise<any>
+  handleDeleteCSPAsync: (id: string) => Promise<any>
 }
 
 interface State {
@@ -137,7 +134,7 @@ interface State {
   selectedCSP: string
   itemCSPs: string[]
   cloudHostsObject: CloudHosts
-  cloudAccessInfos: []
+  cloudAccessInfos: any[]
 }
 
 @ErrorHandling
@@ -147,6 +144,10 @@ export class HostsPage extends PureComponent<Props, State> {
   }
   public intervalID: number
   private isComponentMounted: boolean = true
+  private secretKey = _.find(
+    this.props.links.addons,
+    addon => addon.name === AddonType.ipmiSecretKey
+  )
 
   constructor(props: Props) {
     super(props)
@@ -215,8 +216,7 @@ export class HostsPage extends PureComponent<Props, State> {
 
     // For rendering whole hosts list
     await this.fetchHostsData(layouts)
-
-    await this.fetchInstancesData(layouts)
+    await this.fetchCspHostsData(layouts)
 
     // For rendering the charts with the focused single host.
     const hostID = focusedHost || this.getFirstHost(this.state.hostsObject)
@@ -314,8 +314,8 @@ export class HostsPage extends PureComponent<Props, State> {
       inPresentationMode,
       source,
     } = this.props
-    const {selected, isVsphere, activeEditorTab} = this.state
-
+    const {selected, isVsphere, activeEditorTab, cloudHostsObject} = this.state
+    console.log('cloudHostsObject: ', cloudHostsObject)
     return (
       <Page className="hosts-list-page">
         <Page.Header inPresentationMode={inPresentationMode}>
@@ -404,6 +404,12 @@ export class HostsPage extends PureComponent<Props, State> {
                 source={source}
                 manualRefresh={this.props.manualRefresh}
                 autoRefresh={autoRefresh}
+                cloudHostsObject={this.state.cloudHostsObject}
+                handleLoadCSP={this.handleLoadCSP}
+                handleLoadCSPs={this.handleLoadCSPs}
+                handleCreateCSP={this.handleCreateCSP}
+                handleUpdateCSP={this.handleUpdateCSP}
+                handleDeleteCSP={this.handleDeleteCSP}
               />
             )}
           </>
@@ -491,13 +497,13 @@ export class HostsPage extends PureComponent<Props, State> {
             onClickTableRow={this.handleClickTableRow}
           />
         ) : (
-          this.renderAWSHostsTable
+          this.renderCspHostsTable
         )}
       </>
     )
   }
 
-  private get renderAWSHostsTable() {
+  private get renderCspHostsTable() {
     const {source} = this.props
     const {
       cloudHostsObject,
@@ -507,10 +513,30 @@ export class HostsPage extends PureComponent<Props, State> {
     } = this.state
     const cloudHostObject = cloudHostsObject[selectedCSP]
 
+    let cloudHosts = []
+
+    _.reduce(
+      _.values(cloudHostObject),
+      (_before, current) => {
+        _.reduce(
+          _.values(current),
+          (__before, cCurrent) => {
+            cloudHosts.push(cCurrent)
+
+            return false
+          },
+          {}
+        )
+
+        return false
+      },
+      {}
+    )
+
     return (
-      <AWSHostsTable
+      <CspHostsTable
         source={source}
-        cloudHosts={_.values(_.values(cloudHostObject)[0])}
+        cloudHosts={cloudHosts}
         providerRegions={_.keys(cloudHostObject)}
         hostsPageStatus={hostsPageStatus}
         focusedHost={focusedHost}
@@ -530,7 +556,6 @@ export class HostsPage extends PureComponent<Props, State> {
   private renderGraph = () => {
     const {source} = this.props
     const {filteredLayouts, focusedHost, timeRange} = this.state
-
     const layoutCells = getCells(filteredLayouts, source)
     const tempVars = generateForHosts(source)
 
@@ -542,7 +567,7 @@ export class HostsPage extends PureComponent<Props, State> {
               <>
                 <>Get from: </>
                 <Dropdown
-                  items={['CloudWatch', '2', '3']}
+                  items={['CloudWatch']}
                   onChoose={this.getHandleOnChoose}
                   selected={this.state.selectedAgent}
                   className="dropdown-sm"
@@ -676,11 +701,51 @@ export class HostsPage extends PureComponent<Props, State> {
     return {host, measurements}
   }
 
-  private fetchInstancesData = async (layouts: Layout[]): Promise<void> => {
-    this.props.handleLoadCloudServiceProvidersAsync().then(data => {
-      this.testGetSalt().then(async saltData => {
-        const {source, links, notify} = this.props
-        const {addons} = links
+  private fetchCspHostsData = async (layouts: Layout[]): Promise<void> => {
+    const {handleLoadCSPsAsync, source, links, notify} = this.props
+    const {addons} = links
+
+    handleLoadCSPsAsync().then(dbResp => {
+      const {} = this.props
+      const accessCsps = _.map(dbResp, csp => {
+        // const decryptedBytes = CryptoJS.AES.decrypt(
+        //   csp.secretKey,
+        //   this.secretKey.url
+        // )
+        // const originalSecretKey = decryptedBytes.toString(CryptoJS.enc.Utf8)
+
+        // csp = {
+        //   ...csp,
+        //   secretKey: originalSecretKey,
+        // }
+
+        return csp
+      })
+
+      console.log('accessCsps: ', accessCsps)
+      // ETCD CSP INFO mapping provider, region, id, organization
+      getCSPHostsApi('', '', accessCsps).then(async getSaltCSPs => {
+        const newCSPs = []
+
+        _.forEach(accessCsps, (accessCsp, i: number) => {
+          const {id, organization, provider, region} = accessCsp
+          const csp = getSaltCSPs[i].map((cspsRegion: any[]): any[] => {
+            cspsRegion = cspsRegion.map(cspHost => {
+              cspHost = {
+                ...cspHost,
+                Csp: {id, organization, provider, region},
+              }
+
+              return cspHost
+            })
+
+            return cspsRegion
+          })
+
+          newCSPs.push(csp)
+        })
+
+        console.log('newCSPs: ', newCSPs)
 
         const envVars = await getEnv(links.environment)
         const telegrafSystemInterval = getDeep<string>(
@@ -697,7 +762,7 @@ export class HostsPage extends PureComponent<Props, State> {
             source.telegraf,
             telegrafSystemInterval,
             tempVars,
-            saltData['local']
+            newCSPs
           )
 
           if (!instancesObject) {
@@ -712,17 +777,8 @@ export class HostsPage extends PureComponent<Props, State> {
             tempVars
           )
 
-          const isUsingVshpere = Boolean(
-            _.find(addons, addon => {
-              return addon.name === 'vsphere' && addon.url === 'on'
-            }) &&
-              _.find(instancesObject, v => {
-                return _.includes(v.apps, 'vsphere')
-              })
-          )
-
           this.setState({
-            isVsphere: isUsingVshpere,
+            cloudAccessInfos: dbResp,
             cloudHostsObject: newCloudHostsObject,
             itemCSPs: ['Private', ..._.keys(newCloudHostsObject)],
             hostsPageStatus: RemoteDataState.Done,
@@ -745,18 +801,123 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   private handleClickTableRow = (hostName: string) => () => {
-    const hostsTableState = getLocalStorage('hostsTableState')
-    hostsTableState.focusedHost = hostName
-    setLocalStorage('hostsTableState', hostsTableState)
-    this.setState({focusedHost: hostName})
+    // const hostsTableState = getLocalStorage('hostsTableState')
+    // hostsTableState.focusedHost = hostName
+    // setLocalStorage('hostsTableState', hostsTableState)
+    // this.setState({focusedHost: hostName})
   }
 
-  private testGetSalt = () => {
-    const detailsDummy = yaml.safeLoad(saltDetailsDummy)
+  private handleLoadCSP = async (id: string) => {
+    const {handleLoadCSPAsync} = this.props
+    const {cloudAccessInfos} = this.state
 
-    return new Promise((resolve: any) => {
-      return resolve(detailsDummy)
+    const dbResp = await handleLoadCSPAsync(id)
+    const {secretkey} = dbResp
+    const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
+    const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
+    const newData = {
+      ...dbResp,
+      secretkey: originalSecretkey,
+    }
+
+    const saltResp = await getCSPHostsApi('', '', [newData])
+
+    let isContain = false
+    let newCloudAccessInfos = _.map(cloudAccessInfos, c => {
+      if (c.id === dbResp.id) {
+        isContain = true
+        c = {
+          ...dbResp,
+        }
+      }
+      return c
     })
+
+    if (!isContain) {
+      newCloudAccessInfos = [...newCloudAccessInfos, dbResp]
+    }
+
+    console.log('handleLoadCSP dbResp: ', dbResp)
+    console.log('handleLoadCSP saltResp: ', saltResp)
+    console.log('handleLoadCSP newCloudAccessInfos: ', newCloudAccessInfos)
+
+    this.setState({cloudAccessInfos: newCloudAccessInfos})
+  }
+
+  private handleLoadCSPs = async () => {
+    const {handleLoadCSPsAsync} = this.props
+
+    const dbResp: any[] = await handleLoadCSPsAsync()
+
+    const newDbResp = _.map(dbResp, resp => {
+      const {secretkey} = resp
+      const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
+      const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
+
+      resp = {
+        ...resp,
+        secretkey: originalSecretkey,
+      }
+
+      return resp
+    })
+
+    await getCSPHostsApi('', '', [newDbResp])
+
+    this.setState({cloudAccessInfos: [...dbResp]})
+  }
+
+  private handleCreateCSP = async (data: paramsCreateCSP) => {
+    const {handleCreateCSPAsync} = this.props
+    const {secretkey} = data
+    const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
+    const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
+
+    const newData = {
+      ...data,
+      secretkey: originalSecretkey,
+    }
+
+    await getCSPHostsApi('', '', [newData])
+    const dbResp = await handleCreateCSPAsync(data)
+
+    this.setState({cloudAccessInfos: [...this.state.cloudAccessInfos, dbResp]})
+  }
+
+  private handleUpdateCSP = async (data: paramsUpdateCSP) => {
+    const {handleUpdateCSPAsync} = this.props
+    const {cloudAccessInfos} = this.state
+    const {secretkey} = data
+    const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
+    const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
+
+    const newData = {
+      ...data,
+      secretkey: originalSecretkey,
+    }
+
+    await getCSPHostsApi('', '', [newData])
+    const resp = await handleUpdateCSPAsync(data)
+    const newCloudAccessInfos = _.map(cloudAccessInfos, c => {
+      if (c.id === resp.id) {
+        c = {
+          ...resp,
+        }
+      }
+      return c
+    })
+
+    this.setState({cloudAccessInfos: [...newCloudAccessInfos]})
+  }
+
+  private handleDeleteCSP = async (id: string) => {
+    const {handleDeleteCSPAsync} = this.props
+    const isDelete = await handleDeleteCSPAsync(id)
+
+    if (isDelete) {
+      console.log(this.state.cloudAccessInfos)
+      this.setState({})
+    }
   }
 }
 
@@ -783,23 +944,23 @@ const mdtp = dispatch => ({
   ),
   notify: bindActionCreators(notifyAction, dispatch),
 
-  handleLoadCloudServiceProviderAsync: bindActionCreators(
+  handleLoadCSPAsync: bindActionCreators(
     loadCloudServiceProviderAsync,
     dispatch
   ),
-  handleLoadCloudServiceProvidersAsync: bindActionCreators(
+  handleLoadCSPsAsync: bindActionCreators(
     loadCloudServiceProvidersAsync,
     dispatch
   ),
-  handleCreateCloudServiceProviderAsync: bindActionCreators(
+  handleCreateCSPAsync: bindActionCreators(
     createCloudServiceProviderAsync,
     dispatch
   ),
-  handleUpdateCloudServiceProviderAsync: bindActionCreators(
+  handleUpdateCSPAsync: bindActionCreators(
     updateCloudServiceProviderAsync,
     dispatch
   ),
-  handleDeleteCloudServiceProviderAsync: bindActionCreators(
+  handleDeleteCSPAsync: bindActionCreators(
     deleteCloudServiceProviderAsync,
     dispatch
   ),
