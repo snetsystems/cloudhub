@@ -15,6 +15,7 @@ import {
   createCloudServiceProviderAPI,
   updateCloudServiceProviderAPI,
   deleteCloudServiceProviderAPI,
+  paramsUpdateCSP,
 } from 'src/hosts/apis'
 
 // Types
@@ -282,8 +283,7 @@ export const loadCloudServiceProviderAsync = (id: string) => async (
   dispatch: Dispatch<any>
 ) => {
   try {
-    const url = `/cloudhub/v1/csp/${id}`
-    const data = await loadCloudServiceProviderAPI(url)
+    const data = await loadCloudServiceProviderAPI(id)
     dispatch(loadCloudServiceProviderAction())
     return data
   } catch (error) {
@@ -314,21 +314,11 @@ export const createCloudServiceProviderAsync = ({
   }
 }
 
-export const updateCloudServiceProviderAsync = ({
-  id,
-  provider,
-  region,
-  accesskey,
-  secretkey,
-}) => async (dispatch: Dispatch<any>) => {
+export const updateCloudServiceProviderAsync = (
+  params: paramsUpdateCSP
+) => async (dispatch: Dispatch<any>) => {
   try {
-    const data = await updateCloudServiceProviderAPI({
-      id,
-      provider,
-      region,
-      accesskey,
-      secretkey,
-    })
+    const data = await updateCloudServiceProviderAPI(params)
     dispatch(updateCloudServiceProviderAction())
     return data
   } catch (error) {
@@ -341,9 +331,9 @@ export const deleteCloudServiceProviderAsync = (id: string) => async (
   dispatch: Dispatch<any>
 ) => {
   try {
-    deleteCloudServiceProviderAPI(id).then(() => {
-      dispatch(deleteCloudServiceProviderAction())
-    })
+    const resp = await deleteCloudServiceProviderAPI(id)
+    dispatch(deleteCloudServiceProviderAction())
+    return resp
   } catch (error) {
     dispatch(errorThrown(error))
     throw error
