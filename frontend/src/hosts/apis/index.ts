@@ -13,6 +13,7 @@ import {
 // Types
 import {Template, Layout, Source, Host, Links} from 'src/types'
 import {HostNames, HostName, Ipmi, IpmiCell} from 'src/types/hosts'
+import {CloudServiceProvider} from 'src/hosts/types'
 import {DashboardSwitcherLinks} from '../../types/dashboards'
 
 // APIs
@@ -24,6 +25,7 @@ import {
   getIpmiGetSensorData,
   setIpmiSetPower,
   IpmiSetPowerStatus,
+  getCSPHosts,
 } from 'src/shared/apis/saltStack'
 
 interface HostsObject {
@@ -374,6 +376,7 @@ export const getAppsForInstances = async (
     if (!newProviders['AWS'][region][host].apps) {
       newProviders['AWS'][region][host].apps = []
     }
+
     if (!newProviders['AWS'][region][host].tags) {
       newProviders['AWS'][region][host].tags = {}
     }
@@ -770,21 +773,11 @@ export const createCloudServiceProviderAPI = async ({
   }
 }
 
-export const updateCloudServiceProviderAPI = async ({
-  id,
-  provider,
-  region,
-  accesskey,
-  secretkey,
-}) => {
+export const updateCloudServiceProviderAPI = async (
+  params: paramsUpdateCSP
+) => {
   try {
-    const {data} = await updateCloudServiceProvider({
-      id,
-      provider,
-      region,
-      accesskey,
-      secretkey,
-    })
+    const {data} = await updateCloudServiceProvider(params)
 
     return data
   } catch (error) {
@@ -795,8 +788,8 @@ export const updateCloudServiceProviderAPI = async ({
 
 export const deleteCloudServiceProviderAPI = async (id: string) => {
   try {
-    const {data} = await deleteCloudServiceProvider(id)
-    return data
+    const {status, statusText} = await deleteCloudServiceProvider(id)
+    return {isDelete: status === 204 && statusText === 'No Content'}
   } catch (error) {
     console.error(error)
     throw error
@@ -815,12 +808,19 @@ export const loadCloudServiceProvider = async (url: string) => {
   }
 }
 
+export interface paramsCreateCSP {
+  provider: CloudServiceProvider
+  region: string
+  accesskey: string
+  secretkey: string
+}
+
 export const createCloudServiceProvider = async ({
   provider,
   region,
   accesskey,
   secretkey,
-}) => {
+}: paramsCreateCSP) => {
   try {
     return await AJAX({
       url: `/cloudhub/v1/csp`,
@@ -833,18 +833,24 @@ export const createCloudServiceProvider = async ({
   }
 }
 
+export interface paramsUpdateCSP {
+  id: CloudServiceProvider
+  region: string
+  accesskey: string
+  secretkey: string
+}
+
 export const updateCloudServiceProvider = async ({
   id,
-  provider,
   region,
   accesskey,
   secretkey,
-}) => {
+}: paramsUpdateCSP) => {
   try {
     return await AJAX({
-      url: `/cloudhub/v1/csp`,
+      url: `/cloudhub/v1/csp/${id}`,
       method: 'PATCH',
-      data: {id, provider, region, accesskey, secretkey},
+      data: {region, accesskey, secretkey},
     })
   } catch (error) {
     console.error(error)
@@ -864,6 +870,29 @@ export const deleteCloudServiceProvider = async (id: string) => {
   }
 }
 
+const getHasNotOwnProperty = (
+  providers: {[key: string]: {}},
+  provider: CloudServiceProvider,
+  region: string,
+  host: string
+): boolean => {
+  let isNotOwn = false
+
+  if (!providers.hasOwnProperty(provider)) {
+    isNotOwn = true
+  }
+
+  if (!providers[provider].hasOwnProperty(region)) {
+    isNotOwn = true
+  }
+
+  if (!providers[provider][region].hasOwnProperty(host)) {
+    isNotOwn = true
+  }
+
+  return isNotOwn
+}
+
 export const getCpuAndLoadForInstances = async (
   proxyLink: string,
   telegrafDB: string,
@@ -875,7 +904,8 @@ export const getCpuAndLoadForInstances = async (
     InstanceType: string
     State: {Name: string}
     Tags: {[x: string]: any}[]
-  }[]
+    Csp: {id: string; organization: string; provider: string; region: string}
+  }[][][]
 ): Promise<any> => {
   const query = replaceTemplate(
     `SELECT mean("usage_user") FROM \":db:\".\":rp:\".\"cpu\" WHERE "cpu" = 'cpu-total' AND time > now() - 60m AND region != null AND csp != null GROUP BY host, region, csp;
@@ -886,8 +916,8 @@ export const getCpuAndLoadForInstances = async (
     SELECT non_negative_derivative(mean("System_Up_Time")) AS winDeltaUptime FROM \":db:\".\":rp:\".\"win_system\" WHERE time > now() - ${telegrafSystemInterval} * 10 AND region != null AND csp != null  GROUP BY host, time(${telegrafSystemInterval}), region, csp fill(0);
     SELECT mean("used_percent") AS "memUsed" FROM \":db:\".\":rp:\".\"mem\" WHERE time > now() - 60m AND region != null AND csp != null GROUP BY host, region, csp;
     SELECT mean("used_percent") AS "diskUsed" FROM \":db:\".\":rp:\".\"disk\" WHERE time > now() - 60m AND region != null AND csp != null GROUP BY host, region, csp;
-    SELECT mean("Pool_Paged_Bytes") AS "winMemUsed" FROM \":db:\".\":rp:\".\"win_mem\" WHERE time > now() - 60m  AND region != null AND csp != null GROUP BY host, region, csp;
-    SELECT mean("Percent_Free_Space") AS "winDiskUsed" FROM \":db:\".\":rp:\".\"win_disk\" WHERE time > now() - 60m  AND region != null AND csp != null GROUP BY host, region, csp;`,
+    SELECT 100 - mean("Percent_Free_Space") AS "winDiskUsed" FROM \":db:\".\":rp:\".\"win_disk\" WHERE time > now() - 10m AND csp != null AND region != null  GROUP BY host, region, csp;
+    `,
     tempVars
   )
 
@@ -897,7 +927,7 @@ export const getCpuAndLoadForInstances = async (
     db: telegrafDB,
   })
 
-  const providers = {AWS: {}}
+  let providers = {AWS: {}}
   const precision = 100
   const cpuSeries = getDeep<CloudSeries[]>(data, 'results.[0].series', [])
   const loadSeries = getDeep<CloudSeries[]>(data, 'results.[1].series', [])
@@ -907,51 +937,84 @@ export const getCpuAndLoadForInstances = async (
   const winUptimeSeries = getDeep<CloudSeries[]>(data, 'results.[5].series', [])
   const memUsedSeries = getDeep<CloudSeries[]>(data, 'results.[6].series', [])
   const diskUsedSeries = getDeep<CloudSeries[]>(data, 'results.[7].series', [])
-
-  const winMemUsedSeries = getDeep<CloudSeries[]>(
+  const winDiskUsedSeries = getDeep<CloudSeries[]>(
     data,
     'results.[8].series',
     []
   )
-  const winDiskUsedSeries = getDeep<CloudSeries[]>(
-    data,
-    'results.[10].series',
-    []
-  )
 
-  _.reduce(
-    cspHosts,
-    (_before, current) => {
-      const region = current.PrivateDnsName.split('.')[1]
-      const instanceName = current.Tags.find(tag => tag.Key === 'Name')
+  try {
+    _.reduce(
+      cspHosts,
+      (_before, currents) => {
+        _.reduce(
+          currents,
+          (__before, current) => {
+            let rRegions = {}
+            let rHosts = {}
+            _.reduce(
+              current,
+              (___before, cCurrent) => {
+                const {
+                  Csp: {provider, region},
+                } = cCurrent
 
-      providers['AWS'] = {
-        ...providers['AWS'],
-        [region]: {
-          ...providers['AWS'][region],
-          [current.InstanceId]: {},
-        },
-      }
+                const instanceName = cCurrent.Tags.find(
+                  tag => tag.Key === 'Name'
+                )
 
-      providers['AWS'][region][current.InstanceId] = {
-        ...providers['AWS'][region][current.InstanceId],
-        ...EmptyCSPHosts,
-        name: instanceName.Value,
-        instanceId: current.InstanceId,
-        instanceType: current.InstanceType,
-        instanceState: current.State.Name,
-        instanceStatusCheck: 'test',
-        alarmStatus: 'no alarm',
-        provider: 'AWS',
-        region,
-      }
+                rHosts = {
+                  ...rHosts,
+                  [instanceName.Value]: {
+                    name: instanceName.Value,
+                    instanceId: cCurrent.InstanceId,
+                    instanceType: cCurrent.InstanceType,
+                    instanceState: cCurrent.State.Name,
+                    instanceStatusCheck: 'test',
+                    alarmStatus: 'no alarm',
+                    csp: {...cCurrent.Csp},
+                  },
+                }
 
-      return false
-    },
-    {}
-  )
+                rRegions = {
+                  ...rRegions,
+                  [region]: {
+                    ...rHosts,
+                  },
+                }
+
+                providers[provider] = {
+                  ...providers[provider],
+                  ...rRegions,
+                }
+
+                return false
+              },
+              {}
+            )
+            return false
+          },
+          {}
+        )
+
+        return false
+      },
+      {}
+    )
+  } catch (error) {
+    console.error(error)
+  }
 
   cpuSeries.forEach(s => {
+    const isHasNotOwnProperty = getHasNotOwnProperty(
+      providers,
+      CloudServiceProvider.AWS,
+      s.tags.region,
+      s.tags.host
+    )
+
+    if (isHasNotOwnProperty) return
+
     const meanIndex = s.columns.findIndex(col => col === 'mean')
     providers['AWS'][s.tags.region][s.tags.host] = {
       ...providers['AWS'][s.tags.region][s.tags.host],
@@ -960,6 +1023,15 @@ export const getCpuAndLoadForInstances = async (
   })
 
   loadSeries.forEach(s => {
+    const isHasNotOwnProperty = getHasNotOwnProperty(
+      providers,
+      CloudServiceProvider.AWS,
+      s.tags.region,
+      s.tags.host
+    )
+
+    if (isHasNotOwnProperty) return
+
     const meanIndex = s.columns.findIndex(col => col === 'mean')
     providers['AWS'][s.tags.region][s.tags.host] = {
       ...providers['AWS'][s.tags.region][s.tags.host],
@@ -969,8 +1041,16 @@ export const getCpuAndLoadForInstances = async (
   })
 
   uptimeSeries.forEach(s => {
-    const uptimeIndex = s.columns.findIndex(col => col === 'deltaUptime')
+    const isHasNotOwnProperty = getHasNotOwnProperty(
+      providers,
+      CloudServiceProvider.AWS,
+      s.tags.region,
+      s.tags.host
+    )
 
+    if (isHasNotOwnProperty) return
+
+    const uptimeIndex = s.columns.findIndex(col => col === 'deltaUptime')
     providers['AWS'][s.tags.region][s.tags.host] = {
       ...providers['AWS'][s.tags.region][s.tags.host],
       deltaUptime: Number(s.values[s.values.length - 1][uptimeIndex]),
@@ -978,8 +1058,16 @@ export const getCpuAndLoadForInstances = async (
   })
 
   winCPUSeries.forEach(s => {
-    const meanIndex = s.columns.findIndex(col => col === 'mean')
+    const isHasNotOwnProperty = getHasNotOwnProperty(
+      providers,
+      CloudServiceProvider.AWS,
+      s.tags.region,
+      s.tags.host
+    )
 
+    if (isHasNotOwnProperty) return
+
+    const meanIndex = s.columns.findIndex(col => col === 'mean')
     providers['AWS'][s.tags.region][s.tags.host] = {
       ...providers['AWS'][s.tags.region][s.tags.host],
       cpu: Math.round(Number(s.values[0][meanIndex]) * precision) / precision,
@@ -987,8 +1075,16 @@ export const getCpuAndLoadForInstances = async (
   })
 
   winLoadSeries.forEach(s => {
-    const meanIndex = s.columns.findIndex(col => col === 'mean')
+    const isHasNotOwnProperty = getHasNotOwnProperty(
+      providers,
+      CloudServiceProvider.AWS,
+      s.tags.region,
+      s.tags.host
+    )
 
+    if (isHasNotOwnProperty) return
+
+    const meanIndex = s.columns.findIndex(col => col === 'mean')
     providers['AWS'][s.tags.region][s.tags.host] = {
       ...providers['AWS'][s.tags.region][s.tags.host],
       load: Math.round(Number(s.values[0][meanIndex]) * precision) / precision,
@@ -996,6 +1092,15 @@ export const getCpuAndLoadForInstances = async (
   })
 
   winUptimeSeries.forEach(s => {
+    const isHasNotOwnProperty = getHasNotOwnProperty(
+      providers,
+      CloudServiceProvider.AWS,
+      s.tags.region,
+      s.tags.host
+    )
+
+    if (isHasNotOwnProperty) return
+
     const winUptimeIndex = s.columns.findIndex(col => col === 'winDeltaUptime')
     providers['AWS'][s.tags.region][s.tags.host] = {
       ...providers['AWS'][s.tags.region][s.tags.host],
@@ -1004,6 +1109,15 @@ export const getCpuAndLoadForInstances = async (
   })
 
   memUsedSeries.forEach(s => {
+    const isHasNotOwnProperty = getHasNotOwnProperty(
+      providers,
+      CloudServiceProvider.AWS,
+      s.tags.region,
+      s.tags.host
+    )
+
+    if (isHasNotOwnProperty) return
+
     const meanIndex = s.columns.findIndex(col => col === 'memUsed')
     providers['AWS'][s.tags.region][s.tags.host] = {
       ...providers['AWS'][s.tags.region][s.tags.host],
@@ -1013,6 +1127,15 @@ export const getCpuAndLoadForInstances = async (
   })
 
   diskUsedSeries.forEach(s => {
+    const isHasNotOwnProperty = getHasNotOwnProperty(
+      providers,
+      CloudServiceProvider.AWS,
+      s.tags.region,
+      s.tags.host
+    )
+
+    if (isHasNotOwnProperty) return
+
     const meanIndex = s.columns.findIndex(col => col === 'diskUsed')
     providers['AWS'][s.tags.region][s.tags.host] = {
       ...providers['AWS'][s.tags.region][s.tags.host],
@@ -1020,24 +1143,36 @@ export const getCpuAndLoadForInstances = async (
     }
   })
 
-  winMemUsedSeries.forEach(s => {
-    const meanIndex = s.columns.findIndex(col => col === 'winMemUsed')
-    providers['AWS'][s.tags.region][s.tags.host] = {
-      ...providers['AWS'][s.tags.region][s.tags.host],
-      memory:
-        Math.round(Number(s.values[0][meanIndex]) * precision) / precision,
-    }
-  })
-
   winDiskUsedSeries.forEach(s => {
+    const isHasNotOwnProperty = getHasNotOwnProperty(
+      providers,
+      CloudServiceProvider.AWS,
+      s.tags.region,
+      s.tags.host
+    )
+
+    if (isHasNotOwnProperty) return
+
     const meanIndex = s.columns.findIndex(col => col === 'winDiskUsed')
     providers['AWS'][s.tags.region][s.tags.host] = {
       ...providers['AWS'][s.tags.region][s.tags.host],
-      disk:
-        Math.round(Number(s.values[0][meanIndex]) * precision) / precision -
-        100,
+      disk: Math.round(Number(s.values[0][meanIndex]) * precision) / precision,
     }
   })
 
   return providers
+}
+
+export const getCSPHostsApi = async (
+  pUrl: string,
+  pToken: string,
+  pCsps: any[]
+) => {
+  try {
+    const {data} = await getCSPHosts(pUrl, pToken, pCsps)
+
+    return data
+  } catch (error) {
+    throw error
+  }
 }
