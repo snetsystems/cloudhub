@@ -6,16 +6,17 @@ export const HOSTS_TABLE_SIZING = {
 }
 
 export const CLOUD_HOSTS_TABLE_SIZING = {
+  CloudRegionWidth: '10%',
   CloudNameWidth: '15%',
   CloudInstanceIDWidth: '10%',
-  CloudInstanceStateWidth: '10%',
-  CloudInstanceTypeWidth: '10%',
-  CloudStatusCheckWidth: '10%',
-  CloudAlarmStatusWidth: '10%',
-  CloudAppsWidth: '15%',
-  CloudCPUWidth: '10%',
-  CloudMemoryWidth: '10%',
-  CloudDiskWidth: '10%',
+  CloudInstanceStateWidth: '7%',
+  CloudInstanceTypeWidth: '7%',
+  CloudStatusCheckWidth: '7%',
+  CloudAlarmStatusWidth: '7%',
+  CloudAppsWidth: '16%',
+  CloudCPUWidth: '7%',
+  CloudMemoryWidth: '7%',
+  CloudDiskWidth: '7%',
 }
 
 export const AGENT_TABLE_SIZING = {

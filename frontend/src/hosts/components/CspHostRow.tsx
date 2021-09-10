@@ -9,6 +9,7 @@ import {HostsPage} from 'src/hosts/containers/HostsPage'
 
 import {usageIndacator} from 'src/agent_admin/reusable'
 import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
+import classNames from 'classnames'
 
 interface Props {
   sourceID: string
@@ -17,13 +18,14 @@ interface Props {
   onClickTableRow: HostsPage['handleClickTableRow']
 }
 
-const CloudHostRow: FunctionComponent<Props> = ({
+const CspHostRow: FunctionComponent<Props> = ({
   host,
   sourceID,
   focusedHost,
   onClickTableRow,
 }) => {
   const {
+    csp,
     instanceId,
     instanceType,
     alarmStatus,
@@ -31,13 +33,13 @@ const CloudHostRow: FunctionComponent<Props> = ({
     instanceStatusCheck,
     name,
     cpu,
-    load,
     disk,
     memory,
     apps = [],
   } = host
 
   const {
+    CloudRegionWidth,
     CloudNameWidth,
     CloudInstanceIDWidth,
     CloudInstanceStateWidth,
@@ -55,13 +57,6 @@ const CloudHostRow: FunctionComponent<Props> = ({
     isNaN(memory) || isNull(memory) ? 'N/A' : `${memory.toFixed(2)}`
   const diskValue = isNaN(disk) || isNull(disk) ? 'N/A' : `${disk.toFixed(2)}`
 
-  // const dotClassName = classnames(,
-  //   'table-dot',
-  //   Math.max(host.deltaUptime || 0, host.winDeltaUptime || 0) > 0
-  //     ? 'dot-success'
-  //     : 'dot-critical'
-  // )
-
   const focusedClasses = (): string => {
     if (instanceId === focusedHost) return 'hosts-table--tr focused'
     return 'hosts-table--tr'
@@ -69,20 +64,29 @@ const CloudHostRow: FunctionComponent<Props> = ({
 
   return (
     <div className={focusedClasses()} onClick={onClickTableRow(instanceId)}>
+      <div className="hosts-table--td" style={{width: CloudRegionWidth}}>
+        {csp.region}
+      </div>
       <div className="hosts-table--td" style={{width: CloudNameWidth}}>
-        {name}
+        <Link to={`/sources/${sourceID}/infrastructure/${name}`}>{name}</Link>
       </div>
       <div className="hosts-table--td" style={{width: CloudInstanceIDWidth}}>
-        <Link to={`/sources/${sourceID}/infrastructure/${instanceId}`}>
-          {instanceId}
-        </Link>
-        {/* <div className={dotClassName} /> */}
+        {instanceId}
       </div>
       <div
         style={{width: CloudInstanceStateWidth}}
         className="monotype hosts-table--td"
       >
-        {instanceState}
+        <div
+          className={classNames(`status-tip`, {
+            active: instanceState === 'running',
+          })}
+        >
+          <div className={'status-tip-bg'}>
+            <span className={'icon checkmark'}></span>
+          </div>
+          {instanceState}
+        </div>
       </div>
       <div
         style={{width: CloudInstanceTypeWidth}}
@@ -112,7 +116,7 @@ const CloudHostRow: FunctionComponent<Props> = ({
               <Link
                 style={{marginLeft: '2px'}}
                 to={{
-                  pathname: `/sources/${sourceID}/infrastructure/${instanceId}`,
+                  pathname: `/sources/${sourceID}/infrastructure/${name}`,
                   query: {app},
                 }}
               >
@@ -148,4 +152,4 @@ const CloudHostRow: FunctionComponent<Props> = ({
   )
 }
 
-export default CloudHostRow
+export default CspHostRow

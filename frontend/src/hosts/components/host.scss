@@ -220,3 +220,34 @@
 .section-item-contents {
   word-wrap: break-word;
 }
+
+.status-tip {
+  display: flex;
+  align-items: center;
+  justify-items: center;
+
+  .status-tip-bg {
+    width: 17px;
+    height: 17px;
+    border-radius: 50%;
+    background-color: #bec2cc;
+    margin-right: 3px;
+    text-align: center;
+    font-size: 11px;
+    line-height: 18px;
+    font-weight: 900;
+    cursor: default;
+  }
+
+  &.active {
+    color: #4ed8a0;
+
+    .status-tip-bg {
+      background-color: #4ed8a0;
+    }
+
+    .icon {
+      color: white;
+    }
+  }
+}
