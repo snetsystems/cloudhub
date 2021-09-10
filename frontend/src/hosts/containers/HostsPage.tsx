@@ -124,6 +124,7 @@ interface State {
   layouts: Layout[]
   filteredLayouts: Layout[]
   focusedHost: string
+  focusedCspHost: string
   HostsTableStateDump: {}
   timeRange: TimeRange
   proportions: number[]
@@ -131,7 +132,7 @@ interface State {
   isVsphere: boolean
   activeEditorTab: string
   selectedAgent: string
-  selectedCSP: string
+  activeCspTab: string
   itemCSPs: string[]
   cloudHostsObject: CloudHosts
   cloudAccessInfos: any[]
@@ -164,6 +165,7 @@ export class HostsPage extends PureComponent<Props, State> {
       layouts: [],
       filteredLayouts: [],
       focusedHost: '',
+      focusedCspHost: '',
       HostsTableStateDump: {},
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       proportions: [0.43, 0.57],
@@ -171,15 +173,16 @@ export class HostsPage extends PureComponent<Props, State> {
       isVsphere: false,
       // activeEditorTab: 'InventoryTopology',
       activeEditorTab: 'Host',
-      selectedAgent: 'CloudWatch',
+      selectedAgent: 'All',
       itemCSPs: ['Private'],
-      selectedCSP: 'Private',
+      activeCspTab: 'Private',
       cloudAccessInfos: [],
       cloudHostsObject: {},
     }
 
     this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
     this.onSetActiveEditorTab = this.onSetActiveEditorTab.bind(this)
+    this.onSetActiveCspTab = this.onSetActiveCspTab.bind(this)
   }
 
   public componentWillMount() {
@@ -315,7 +318,7 @@ export class HostsPage extends PureComponent<Props, State> {
       source,
     } = this.props
     const {selected, isVsphere, activeEditorTab, cloudHostsObject} = this.state
-    console.log('cloudHostsObject: ', cloudHostsObject)
+
     return (
       <Page className="hosts-list-page">
         <Page.Header inPresentationMode={inPresentationMode}>
@@ -404,12 +407,6 @@ export class HostsPage extends PureComponent<Props, State> {
                 source={source}
                 manualRefresh={this.props.manualRefresh}
                 autoRefresh={autoRefresh}
-                cloudHostsObject={this.state.cloudHostsObject}
-                handleLoadCSP={this.handleLoadCSP}
-                handleLoadCSPs={this.handleLoadCSPs}
-                handleCreateCSP={this.handleCreateCSP}
-                handleUpdateCSP={this.handleUpdateCSP}
-                handleDeleteCSP={this.handleDeleteCSP}
               />
             )}
           </>
@@ -478,23 +475,14 @@ export class HostsPage extends PureComponent<Props, State> {
 
     return (
       <>
-        <Dropdown
-          items={this.state.itemCSPs}
-          onChoose={this.getHandleOnChooseProvider}
-          selected={this.state.selectedCSP}
-          className="dropdown-sm"
-          disabled={false}
-          // onClick={() => {
-          //   this.handleFocusedBtnName({selected: this.state.selected})
-          // }}
-        />
-        {this.state.selectedCSP === 'Private' ? (
+        {this.state.activeCspTab === 'Private' ? (
           <HostsTable
             source={source}
             hosts={_.values(hostsObject)}
             hostsPageStatus={hostsPageStatus}
             focusedHost={focusedHost}
             onClickTableRow={this.handleClickTableRow}
+            tableTitle={this.tableTitle}
           />
         ) : (
           this.renderCspHostsTable
@@ -507,11 +495,11 @@ export class HostsPage extends PureComponent<Props, State> {
     const {source} = this.props
     const {
       cloudHostsObject,
-      selectedCSP,
+      activeCspTab,
       hostsPageStatus,
-      focusedHost,
+      focusedCspHost,
     } = this.state
-    const cloudHostObject = cloudHostsObject[selectedCSP]
+    const cloudHostObject = cloudHostsObject[activeCspTab]
 
     let cloudHosts = []
 
@@ -539,14 +527,47 @@ export class HostsPage extends PureComponent<Props, State> {
         cloudHosts={cloudHosts}
         providerRegions={_.keys(cloudHostObject)}
         hostsPageStatus={hostsPageStatus}
-        focusedHost={focusedHost}
-        onClickTableRow={this.handleClickTableRow}
+        focusedHost={focusedCspHost}
+        onClickTableRow={this.handleClickCspTableRow}
+        tableTitle={this.tableTitle}
       />
     )
   }
+  private tableTitle = (): JSX.Element => {
+    const {activeCspTab, itemCSPs} = this.state
 
-  private getHandleOnChooseProvider = (selectItem: {text: string}) => {
-    this.setState({selectedCSP: selectItem.text})
+    return itemCSPs.length > 1 ? (
+      <Radio shape={ButtonShape.StretchToFit}>
+        {_.map(itemCSPs, csp => {
+          return (
+            <Radio.Button
+              key={csp}
+              id="addon-tab-data"
+              titleText={csp}
+              value={csp}
+              active={activeCspTab === csp}
+              onClick={this.onSetActiveCspTab}
+            >
+              {csp}
+            </Radio.Button>
+          )
+        })}
+      </Radio>
+    ) : (
+      <div
+        className={`radio-buttons radio-buttons--default radio-buttons--sm radio-buttons--stretch`}
+      >
+        <button type="button" className={'radio-button active'}>
+          Private
+        </button>
+      </div>
+    )
+  }
+
+  private onSetActiveCspTab(activeCspTab: string): void {
+    this.setState({
+      activeCspTab,
+    })
   }
 
   private getHandleOnChoose = (selectItem: {text: string}) => {
@@ -554,27 +575,30 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   private renderGraph = () => {
-    const {source} = this.props
-    const {filteredLayouts, focusedHost, timeRange} = this.state
+    const {source, manualRefresh} = this.props
+    const {
+      filteredLayouts,
+      focusedHost,
+      timeRange,
+      activeCspTab,
+      selectedAgent,
+    } = this.state
     const layoutCells = getCells(filteredLayouts, source)
     const tempVars = generateForHosts(source)
 
     return (
       <>
-        {this.state.selectedCSP === 'AWS' ? (
+        {activeCspTab === 'AWS' ? (
           <Page.Header>
             <Page.Header.Left>
               <>
                 <>Get from: </>
                 <Dropdown
-                  items={['CloudWatch']}
+                  items={['All', 'CloudWatch', 'Agent']}
                   onChoose={this.getHandleOnChoose}
-                  selected={this.state.selectedAgent}
+                  selected={selectedAgent}
                   className="dropdown-sm"
                   disabled={false}
-                  // onClick={() => {
-                  //   this.handleFocusedBtnName({selected: this.state.selected})
-                  // }}
                 />
               </>
             </Page.Header.Left>
@@ -591,9 +615,9 @@ export class HostsPage extends PureComponent<Props, State> {
             cells={layoutCells}
             templates={tempVars}
             timeRange={timeRange}
-            manualRefresh={this.props.manualRefresh}
+            manualRefresh={manualRefresh}
             host={focusedHost}
-            provider={this.state.selectedCSP}
+            provider={activeCspTab}
           />
         </Page.Contents>
       </>
@@ -706,7 +730,6 @@ export class HostsPage extends PureComponent<Props, State> {
     const {addons} = links
 
     handleLoadCSPsAsync().then(dbResp => {
-      const {} = this.props
       const accessCsps = _.map(dbResp, csp => {
         // const decryptedBytes = CryptoJS.AES.decrypt(
         //   csp.secretKey,
@@ -722,8 +745,6 @@ export class HostsPage extends PureComponent<Props, State> {
         return csp
       })
 
-      console.log('accessCsps: ', accessCsps)
-      // ETCD CSP INFO mapping provider, region, id, organization
       getCSPHostsApi('', '', accessCsps).then(async getSaltCSPs => {
         const newCSPs = []
 
@@ -744,8 +765,6 @@ export class HostsPage extends PureComponent<Props, State> {
 
           newCSPs.push(csp)
         })
-
-        console.log('newCSPs: ', newCSPs)
 
         const envVars = await getEnv(links.environment)
         const telegrafSystemInterval = getDeep<string>(
@@ -801,16 +820,19 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   private handleClickTableRow = (hostName: string) => () => {
-    // const hostsTableState = getLocalStorage('hostsTableState')
-    // hostsTableState.focusedHost = hostName
-    // setLocalStorage('hostsTableState', hostsTableState)
-    // this.setState({focusedHost: hostName})
+    const hostsTableState = getLocalStorage('hostsTableState')
+    hostsTableState.focusedHost = hostName
+    setLocalStorage('hostsTableState', hostsTableState)
+    this.setState({focusedHost: hostName})
+  }
+
+  private handleClickCspTableRow = (hostName: string) => () => {
+    this.setState({focusedCspHost: hostName})
   }
 
   private handleLoadCSP = async (id: string) => {
     const {handleLoadCSPAsync} = this.props
     const {cloudAccessInfos} = this.state
-
     const dbResp = await handleLoadCSPAsync(id)
     const {secretkey} = dbResp
     const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
@@ -820,7 +842,7 @@ export class HostsPage extends PureComponent<Props, State> {
       secretkey: originalSecretkey,
     }
 
-    const saltResp = await getCSPHostsApi('', '', [newData])
+    await getCSPHostsApi('', '', [newData])
 
     let isContain = false
     let newCloudAccessInfos = _.map(cloudAccessInfos, c => {
@@ -836,10 +858,6 @@ export class HostsPage extends PureComponent<Props, State> {
     if (!isContain) {
       newCloudAccessInfos = [...newCloudAccessInfos, dbResp]
     }
-
-    console.log('handleLoadCSP dbResp: ', dbResp)
-    console.log('handleLoadCSP saltResp: ', saltResp)
-    console.log('handleLoadCSP newCloudAccessInfos: ', newCloudAccessInfos)
 
     this.setState({cloudAccessInfos: newCloudAccessInfos})
   }
@@ -915,7 +933,6 @@ export class HostsPage extends PureComponent<Props, State> {
     const isDelete = await handleDeleteCSPAsync(id)
 
     if (isDelete) {
-      console.log(this.state.cloudAccessInfos)
       this.setState({})
     }
   }

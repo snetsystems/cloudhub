@@ -7,6 +7,9 @@ import {createActivityLog} from 'src/shared/apis'
 // Types
 import {Ipmi, IpmiCell} from 'src/types'
 
+// TEST
+import {saltDetailsDummy} from 'src/hosts/containers/detailsTest'
+
 interface Params {
   client?: string
   fun?: string
@@ -909,5 +912,33 @@ const saltActivityLog = async (
       'SaltProxy',
       `Sever ${_.get(result, 'status')} error: ${_.get(result, 'statusText')}.`
     )
+  }
+}
+
+export async function getCSPHosts(
+  pUrl: string,
+  pToken: string,
+  pCSPs: any[]
+): Promise<any> {
+  try {
+    const params = {}
+    // const result = await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+    // return result
+
+    return new Promise(resolve => {
+      console.log('getCSPInstances request params: ', {pUrl, pToken, pCSPs})
+
+      const {local}: {local: []} = yaml.safeLoad(saltDetailsDummy)
+      let res = []
+      for (let i = 0; i < pCSPs.length; i++) {
+        res.push([])
+        res[i].push(local)
+      }
+
+      return resolve({data: res})
+    })
+  } catch (error) {
+    console.error(error)
+    throw error
   }
 }
