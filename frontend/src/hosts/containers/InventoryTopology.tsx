@@ -86,7 +86,11 @@ import {
   setIpmiStatusAsync,
   getIpmiSensorDataAsync,
   getMinionKeyAcceptedListAsync,
+  loadCloudServiceProviderAsync,
+  loadCloudServiceProvidersAsync,
   createCloudServiceProviderAsync,
+  updateCloudServiceProviderAsync,
+  deleteCloudServiceProviderAsync,
 } from 'src/hosts/actions'
 
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -100,6 +104,9 @@ import {
   getMeasurementsForHost,
   getAppsForInstance,
   getMeasurementsForInstance,
+  paramsCreateCSP,
+  paramsUpdateCSP,
+  getCSPHostsApi,
 } from 'src/hosts/apis'
 
 // Utils
@@ -149,7 +156,7 @@ import {
 
 import {AWSInstanceData, CSPAccessObject} from 'src/hosts/types/cloud'
 import {saltDetailsDummy} from './detailsTest'
-import {treeMenuDummy} from './treeMenuDummy'
+import {cloudData, cloudInfo} from './treemenuDummy'
 
 const mx = mxgraph()
 
@@ -218,6 +225,7 @@ interface Instance {
   instanceid: string
   instancename: string
 }
+
 interface Props {
   source: Source
   links: Links
@@ -255,22 +263,11 @@ interface Props {
     saltMasterToken: string,
     pIpmis: Ipmi
   ) => Promise<any>
-  handleLoadCloudServiceProviderAsync: (id: string) => Promise<any>
-  handleLoadCloudServiceProvidersAsync: () => Promise<any>
-  handleCreateCloudServiceProviderAsync: (data: {
-    provider: CloudServiceProvider
-    region: string
-    accesskey: string
-    secretkey: string
-  }) => Promise<any>
-  handleUpdateCloudServiceProviderAsync: (data: {
-    provider: CloudServiceProvider
-    region: string
-    accesskey: string
-    secretkey: string
-    id: string
-  }) => Promise<any>
-  handleDeleteCloudServiceProviderAsync: (id: string) => Promise<any>
+  handleLoadCspAsync: (id: string) => Promise<any>
+  handleLoadCspsAsync: () => Promise<any>
+  handleCreateCspAsync: (data: paramsCreateCSP) => Promise<any>
+  handleUpdateCspAsync: (data: paramsUpdateCSP) => Promise<any>
+  handleDeleteCspAsync: (id: string) => Promise<any>
 }
 
 interface State {
@@ -308,123 +305,14 @@ interface State {
   providerLabel: string
   treeMenu: any
   focusedInstance: Instance
-}
-
-const treeMenuDummy = {
-  aws: {
-    label: 'Amazon Web Service',
-    index: 0,
-    level: 0,
-    provider: CloudServiceProvider.AWS,
-    nodes: {
-      Seoul: {
-        label: 'Seoul',
-        index: 0,
-        level: 1,
-        nodes: {
-          EC1: {
-            label: 'EC1',
-            index: 0,
-            level: 2,
-            nodes: {},
-          },
-          EC2: {
-            label: 'EC2',
-            index: 0,
-            level: 2,
-            nodes: {},
-          },
-          EC5: {
-            label: 'EC5',
-            index: 0,
-            level: 2,
-            nodes: {},
-          },
-          EC6: {
-            label: 'EC6',
-            index: 0,
-            level: 2,
-            nodes: {},
-          },
-        },
-      },
-      Pusan: {
-        label: 'Pusan',
-        index: 0,
-        level: 1,
-        nodes: {
-          EC3: {
-            label: 'EC3',
-            index: 0,
-            level: 2,
-            nodes: {},
-          },
-        },
-      },
-    },
-  },
-  gcp: {
-    label: 'Google Cloud Platform',
-    index: 1,
-    level: 0,
-    provider: CloudServiceProvider.GCP,
-    nodes: {},
-  },
-  azure: {
-    label: 'Azure',
-    index: 2,
-    level: 0,
-    provider: CloudServiceProvider.AZURE,
-    nodes: {},
-  },
-}
-
-const cloudInfo = [
-  {
-    provider: 'aws',
-    region: 'ap-northeast-2',
-    accesskey: 'accesskey',
-    secretkey: 'secretkey',
-    data: {},
-  },
-  {
-    provider: 'aws',
-    region: 'pusan',
-    accesskey: 'accesskey',
-    secretkey: 'secretkey',
-    data: {},
-  },
-  {
-    provider: 'gcp',
-    region: 'seoul',
-    accesskey: 'accesskey',
-    secretkey: 'secretkey',
-    data: {},
-  },
-]
-
-const cloudData = {
-  aws: {
-    label: 'Amazon Web Service',
-    index: 0,
-    level: 0,
-    provider: CloudServiceProvider.AWS,
-    nodes: {},
-  },
-  gcp: {
-    label: 'Google Cloud Platform',
-    index: 1,
-    level: 0,
-    provider: CloudServiceProvider.GCP,
-    nodes: {},
-  },
-  azure: {
-    label: 'Azure',
-    index: 2,
-    level: 0,
-    provider: CloudServiceProvider.AZURE,
-    nodes: {},
-  },
+  cloudAccessInfos: {
+    id: string
+    accesskey: string
+    secretkey: string
+    region: string
+    provider: CloudServiceProvider
+    organization: string
+  }[]
 }
 
 const awsSeoulDummy = require('./aws.yaml')
@@ -477,6 +365,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       providerLabel: '',
       treeMenu: {},
       focusedInstance: null,
+      cloudAccessInfos: [],
     }
   }
 
@@ -785,11 +674,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     )
   }
 
-  // private toggleCloudFormVisible = (): void => {
-  //   this.setState({isCloudFormVisible: !this.state.isCloudFormVisible})
-  // }
-
-  private openCloudForm = (provider: string) => {
+  private openCloudForm = (provider: CloudServiceProvider) => {
     let cloudRegions = []
 
     if (provider === CloudServiceProvider.AWS) {
@@ -1741,7 +1626,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private handleAddRegion = () => {
-    const {handleCreateCloudServiceProviderAsync} = this.props
+    const {handleCreateCspAsync} = this.props
     const {
       provider,
       selectedCloudRegion,
@@ -1763,7 +1648,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       secretkey: originalSecretkey,
     }
 
-    handleCreateCloudServiceProviderAsync(data).then(res => {
+    handleCreateCspAsync(data).then(res => {
       _.values(treeMenu).forEach(tm => {
         if (tm.provider === res.provider) {
           tm.nodes[res.region] = {
@@ -1873,7 +1758,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     const {treeMenu} = this.state
     const regionID = this.getRegionID(provider, region)
 
-    this.props.handleDeleteCloudServiceProviderAsync(regionID).then(() => {
+    this.props.handleDeleteCspAsync(regionID).then(() => {
       const menus = _.keys(treeMenu)
 
       for (let i = 0; i < menus.length; i++) {
@@ -2225,7 +2110,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     const treeMenu = {...cloudDataTree}
 
     _.reduce(
-      _.keys(treeMenuDummy),
+      _.keys(cloudData),
       (_, currentCSP: CloudServiceProvider) => {
         let nodes = {}
 
@@ -2368,6 +2253,113 @@ class InventoryTopology extends PureComponent<Props, State> {
       </OverlayTechnology>
     )
   }
+
+  private handleLoadCSP = async (id: string) => {
+    const {handleLoadCspAsync} = this.props
+    const {cloudAccessInfos} = this.state
+    const dbResp = await handleLoadCspAsync(id)
+    const {secretkey} = dbResp
+    const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
+    const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
+    const newData = {
+      ...dbResp,
+      secretkey: originalSecretkey,
+    }
+
+    await getCSPHostsApi('', '', [newData])
+
+    let isContain = false
+    let newCloudAccessInfos = _.map(cloudAccessInfos, c => {
+      if (c.id === dbResp.id) {
+        isContain = true
+        c = {
+          ...dbResp,
+        }
+      }
+      return c
+    })
+
+    if (!isContain) {
+      newCloudAccessInfos = [...newCloudAccessInfos, dbResp]
+    }
+
+    this.setState({cloudAccessInfos: newCloudAccessInfos})
+  }
+
+  private handleLoadCsps = async () => {
+    const {handleLoadCspsAsync} = this.props
+
+    const dbResp: any[] = await handleLoadCspsAsync()
+
+    const newDbResp = _.map(dbResp, resp => {
+      const {secretkey} = resp
+      const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
+      const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
+
+      resp = {
+        ...resp,
+        secretkey: originalSecretkey,
+      }
+
+      return resp
+    })
+
+    await getCSPHostsApi('', '', [newDbResp])
+
+    this.setState({cloudAccessInfos: [...dbResp]})
+  }
+
+  private handleCreateCsp = async (data: paramsCreateCSP) => {
+    const {handleCreateCspAsync} = this.props
+    const {secretkey} = data
+    const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
+    const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
+
+    const newData = {
+      ...data,
+      secretkey: originalSecretkey,
+    }
+
+    await getCSPHostsApi('', '', [newData])
+    const dbResp = await handleCreateCspAsync(data)
+
+    this.setState({cloudAccessInfos: [...this.state.cloudAccessInfos, dbResp]})
+  }
+
+  private handleUpdateCSP = async (data: paramsUpdateCSP) => {
+    const {handleUpdateCspAsync} = this.props
+    const {cloudAccessInfos} = this.state
+    const {secretkey} = data
+    const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
+    const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
+
+    const newData = {
+      ...data,
+      secretkey: originalSecretkey,
+    }
+
+    await getCSPHostsApi('', '', [newData])
+    const resp = await handleUpdateCspAsync(data)
+    const newCloudAccessInfos = _.map(cloudAccessInfos, c => {
+      if (c.id === resp.id) {
+        c = {
+          ...resp,
+        }
+      }
+      return c
+    })
+
+    this.setState({cloudAccessInfos: [...newCloudAccessInfos]})
+  }
+
+  private handleDeleteCSP = async (id: string) => {
+    const {handleDeleteCspAsync} = this.props
+    const isDelete = await handleDeleteCspAsync(id)
+
+    if (isDelete) {
+      this.setState({})
+    }
+  }
 }
 
 const mapStateToProps = ({links}) => {
@@ -2386,6 +2378,11 @@ const mapDispatchToProps = {
   handleGetIpmiSensorDataAsync: getIpmiSensorDataAsync,
   handleCreateCloudServiceProviderAsync: createCloudServiceProviderAsync,
   notify: notifyAction,
+  handleLoadCspAsync: loadCloudServiceProviderAsync,
+  handleLoadCspsAsync: loadCloudServiceProvidersAsync,
+  handleCreateCspAsync: createCloudServiceProviderAsync,
+  handleUpdateCspAsync: updateCloudServiceProviderAsync,
+  handleDeleteCspAsync: deleteCloudServiceProviderAsync,
 }
 
 export default connect(
