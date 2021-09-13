@@ -589,7 +589,7 @@ export class HostsPage extends PureComponent<Props, State> {
 
     return (
       <>
-        {activeCspTab === 'AWS' ? (
+        {activeCspTab === 'aws' ? (
           <Page.Header>
             <Page.Header.Left>
               <>
@@ -738,17 +738,17 @@ export class HostsPage extends PureComponent<Props, State> {
     const dbResp = await handleLoadCSPsAsync()
 
     const accessCsps = _.map(dbResp, csp => {
-      // const decryptedBytes = CryptoJS.AES.decrypt(
-      //   csp.secretKey,
-      //   this.secretKey.url
-      // )
-      // const originalSecretKey = decryptedBytes.toString(CryptoJS.enc.Utf8)
-
-      // csp = {
-      //   ...csp,
-      //   secretKey: originalSecretKey,
-      // }
-
+      const decryptedBytes = CryptoJS.AES.decrypt(
+        csp.secretkey,
+        this.secretKey.url
+      )
+      const originalSecretKey = decryptedBytes.toString(CryptoJS.enc.Utf8)
+      csp = {
+        ...csp,
+        provider: csp.provider.toLowerCase(),
+        secretKey: originalSecretKey,
+      }
+      console.log('csp: ', csp)
       return csp
     })
 
@@ -833,113 +833,6 @@ export class HostsPage extends PureComponent<Props, State> {
 
   private handleClickCspTableRow = (hostName: string) => () => {
     this.setState({focusedCspHost: hostName})
-  }
-
-  private handleLoadCSP = async (id: string) => {
-    const {handleLoadCSPAsync} = this.props
-    const {cloudAccessInfos} = this.state
-    const dbResp = await handleLoadCSPAsync(id)
-    const {secretkey} = dbResp
-    const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
-    const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
-    const newData = {
-      ...dbResp,
-      secretkey: originalSecretkey,
-    }
-
-    await getCSPHostsApi('', '', [newData])
-
-    let isContain = false
-    let newCloudAccessInfos = _.map(cloudAccessInfos, c => {
-      if (c.id === dbResp.id) {
-        isContain = true
-        c = {
-          ...dbResp,
-        }
-      }
-      return c
-    })
-
-    if (!isContain) {
-      newCloudAccessInfos = [...newCloudAccessInfos, dbResp]
-    }
-
-    this.setState({cloudAccessInfos: newCloudAccessInfos})
-  }
-
-  private handleLoadCSPs = async () => {
-    const {handleLoadCSPsAsync} = this.props
-
-    const dbResp: any[] = await handleLoadCSPsAsync()
-
-    const newDbResp = _.map(dbResp, resp => {
-      const {secretkey} = resp
-      const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
-      const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
-
-      resp = {
-        ...resp,
-        secretkey: originalSecretkey,
-      }
-
-      return resp
-    })
-
-    await getCSPHostsApi('', '', [newDbResp])
-
-    this.setState({cloudAccessInfos: [...dbResp]})
-  }
-
-  private handleCreateCSP = async (data: paramsCreateCSP) => {
-    const {handleCreateCSPAsync} = this.props
-    const {secretkey} = data
-    const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
-    const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
-
-    const newData = {
-      ...data,
-      secretkey: originalSecretkey,
-    }
-
-    await getCSPHostsApi('', '', [newData])
-    const dbResp = await handleCreateCSPAsync(data)
-
-    this.setState({cloudAccessInfos: [...this.state.cloudAccessInfos, dbResp]})
-  }
-
-  private handleUpdateCSP = async (data: paramsUpdateCSP) => {
-    const {handleUpdateCSPAsync} = this.props
-    const {cloudAccessInfos} = this.state
-    const {secretkey} = data
-    const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
-    const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
-
-    const newData = {
-      ...data,
-      secretkey: originalSecretkey,
-    }
-
-    await getCSPHostsApi('', '', [newData])
-    const resp = await handleUpdateCSPAsync(data)
-    const newCloudAccessInfos = _.map(cloudAccessInfos, c => {
-      if (c.id === resp.id) {
-        c = {
-          ...resp,
-        }
-      }
-      return c
-    })
-
-    this.setState({cloudAccessInfos: [...newCloudAccessInfos]})
-  }
-
-  private handleDeleteCSP = async (id: string) => {
-    const {handleDeleteCSPAsync} = this.props
-    const isDelete = await handleDeleteCSPAsync(id)
-
-    if (isDelete) {
-      this.setState({})
-    }
   }
 }
 
