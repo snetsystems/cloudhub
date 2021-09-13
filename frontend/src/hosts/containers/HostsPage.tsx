@@ -82,13 +82,7 @@ import {timeRanges} from 'src/shared/data/timeRanges'
 import * as QueriesModels from 'src/types/queries'
 import * as AppActions from 'src/types/actions/app'
 
-import {
-  loadCloudServiceProviderAsync,
-  loadCloudServiceProvidersAsync,
-  createCloudServiceProviderAsync,
-  updateCloudServiceProviderAsync,
-  deleteCloudServiceProviderAsync,
-} from 'src/hosts/actions'
+import {loadCloudServiceProvidersAsync} from 'src/hosts/actions'
 
 interface Props extends ManualRefreshProps {
   source: Source
@@ -101,11 +95,7 @@ interface Props extends ManualRefreshProps {
   handleChooseAutoRefresh: AppActions.SetAutoRefreshActionCreator
   handleClickPresentationButton: AppActions.DelayEnablePresentationModeDispatcher
   inPresentationMode: boolean
-  handleLoadCSPAsync: (id: string) => Promise<any>
-  handleLoadCSPsAsync: () => Promise<any>
-  handleCreateCSPAsync: (data: paramsCreateCSP) => Promise<any>
-  handleUpdateCSPAsync: (data: paramsUpdateCSP) => Promise<any>
-  handleDeleteCSPAsync: (id: string) => Promise<any>
+  handleLoadCspsAsync: () => Promise<any>
 }
 
 interface State {
@@ -733,9 +723,9 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   private fetchCspHostsData = async (layouts: Layout[]): Promise<void> => {
-    const {handleLoadCSPsAsync, source, links, notify} = this.props
+    const {handleLoadCspsAsync, source, links, notify} = this.props
 
-    const dbResp = await handleLoadCSPsAsync()
+    const dbResp = await handleLoadCspsAsync()
 
     const accessCsps = _.map(dbResp, csp => {
       const decryptedBytes = CryptoJS.AES.decrypt(
@@ -859,24 +849,8 @@ const mdtp = dispatch => ({
   ),
   notify: bindActionCreators(notifyAction, dispatch),
 
-  handleLoadCSPAsync: bindActionCreators(
-    loadCloudServiceProviderAsync,
-    dispatch
-  ),
-  handleLoadCSPsAsync: bindActionCreators(
+  handleLoadCspsAsync: bindActionCreators(
     loadCloudServiceProvidersAsync,
-    dispatch
-  ),
-  handleCreateCSPAsync: bindActionCreators(
-    createCloudServiceProviderAsync,
-    dispatch
-  ),
-  handleUpdateCSPAsync: bindActionCreators(
-    updateCloudServiceProviderAsync,
-    dispatch
-  ),
-  handleDeleteCSPAsync: bindActionCreators(
-    deleteCloudServiceProviderAsync,
     dispatch
   ),
 })
