@@ -2,7 +2,7 @@
 import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
-import _, {filter} from 'lodash'
+import _ from 'lodash'
 import {getDeep} from 'src/utils/wrappers'
 import CryptoJS from 'crypto-js'
 
@@ -16,15 +16,7 @@ import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/Aut
 import ManualRefresh, {
   ManualRefreshProps,
 } from 'src/shared/components/ManualRefresh'
-import {
-  Button,
-  ButtonShape,
-  IconFont,
-  Page,
-  Radio,
-  Input,
-  InputType,
-} from 'src/reusable_ui'
+import {Button, ButtonShape, IconFont, Page, Radio} from 'src/reusable_ui'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import GraphTips from 'src/shared/components/GraphTips'
@@ -97,8 +89,6 @@ import {
   updateCloudServiceProviderAsync,
   deleteCloudServiceProviderAsync,
 } from 'src/hosts/actions'
-import {CloudServiceProvider} from 'src/hosts/types'
-import {AWSInstanceData, CSPAccessObject} from 'src/hosts/types/cloud'
 
 interface Props extends ManualRefreshProps {
   source: Source
@@ -206,6 +196,7 @@ export class HostsPage extends PureComponent<Props, State> {
     const {notify, autoRefresh} = this.props
 
     const layoutResults = await getLayouts()
+
     const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
 
     if (!layouts) {
@@ -242,7 +233,7 @@ export class HostsPage extends PureComponent<Props, State> {
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
     const {autoRefresh} = this.props
-    const {layouts, focusedHost} = this.state
+    const {layouts, focusedHost, focusedCspHost} = this.state
 
     if (layouts) {
       if (prevState.focusedHost !== focusedHost) {
@@ -251,6 +242,17 @@ export class HostsPage extends PureComponent<Props, State> {
           layouts,
           focusedHost
         )
+        this.setState({filteredLayouts})
+      }
+
+      if (prevState.focusedCspHost !== focusedCspHost) {
+        this.fetchCspHostsData(layouts)
+        const {filteredLayouts} = await this.getLayoutsforHost(
+          layouts,
+          focusedCspHost
+        )
+
+        console.log('filteredLayouts: ', filteredLayouts)
         this.setState({filteredLayouts})
       }
 
@@ -527,8 +529,8 @@ export class HostsPage extends PureComponent<Props, State> {
         cloudHosts={cloudHosts}
         providerRegions={_.keys(cloudHostObject)}
         hostsPageStatus={hostsPageStatus}
-        focusedHost={focusedCspHost}
-        onClickTableRow={this.handleClickCspTableRow}
+        focusedHost={this.state.focusedHost}
+        onClickTableRow={this.handleClickTableRow}
         tableTitle={this.tableTitle}
       />
     )
@@ -628,6 +630,8 @@ export class HostsPage extends PureComponent<Props, State> {
       layouts,
       hostID
     )
+
+    console.log(`layouts, hostID`, layouts, hostID)
     const layoutsWithinHost = layouts.filter(layout => {
       return (
         host.apps &&
@@ -647,6 +651,7 @@ export class HostsPage extends PureComponent<Props, State> {
           : 0
       })
 
+    console.log('filteredLayouts: ', filteredLayouts)
     return {filteredLayouts}
   }
 
@@ -827,6 +832,7 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   private handleClickCspTableRow = (hostName: string) => () => {
+    console.log('focusedCspHost: ', hostName)
     this.setState({focusedCspHost: hostName})
   }
 
