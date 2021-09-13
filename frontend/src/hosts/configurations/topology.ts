@@ -499,7 +499,6 @@ export const dragCell = (node: Menu) => (
 
   model.beginUpdate()
   try {
-    console.log('node: ', node)
     const cell = createHTMLValue(node, 'node')
 
     v1 = graph.insertVertex(
@@ -1292,8 +1291,6 @@ export const detectedHostsStatus = function (
   cells: mxCellType[],
   hostsObject: {[x: string]: Host}
 ) {
-  console.log('detectedHostsStatus', cells, hostsObject)
-
   if (!this.graph) return
 
   const model = this.graph.getModel()
@@ -1308,7 +1305,6 @@ export const detectedHostsStatus = function (
         const findHost = _.find(hostsObject, host => host.name === name)
 
         if (!_.isEmpty(findHost)) {
-          console.log(this.graph.getChildCells(cell))
           const childCells = this.graph.getChildCells(cell)
 
           if (!_.isEmpty(childCells)) {
@@ -1319,8 +1315,6 @@ export const detectedHostsStatus = function (
               const statusKind = childCellElement.getAttribute(
                 'data-status-kind'
               )
-
-              console.log('statusKind')
 
               if (statusKind === 'cpu') {
                 childCellElement.setAttribute(
@@ -1384,10 +1378,6 @@ export const detectedHostsStatus = function (
     model.endUpdate()
     this.graphUpdate()
   }
-
-  // _.map(hostsObject, host => {
-  //   console.log(host)
-  // })
 
   return null
 }

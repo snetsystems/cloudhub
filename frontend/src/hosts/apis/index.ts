@@ -71,7 +71,8 @@ export const getCpuAndLoadForHosts = async (
       SELECT non_negative_derivative(mean("System_Up_Time")) AS winDeltaUptime FROM \":db:\".\":rp:\".\"win_system\" WHERE time > now() - ${telegrafSystemInterval} * 10 GROUP BY host, time(${telegrafSystemInterval}) fill(0);
       SHOW TAG VALUES WITH KEY = "host" WHERE TIME > now() - 10m;
       SELECT mean("used_percent") AS "memUsed" FROM \":db:\".\":rp:\".\"mem\" WHERE time > now() - 10m GROUP BY host;
-      SELECT mean("used_percent") AS "diskUsed" FROM \":db:\".\":rp:\".\"disk\" WHERE time > now() - 10m GROUP BY host;`,
+      SELECT mean("used_percent") AS "diskUsed" FROM \":db:\".\":rp:\".\"disk\" WHERE time > now() - 10m GROUP BY host;
+      SELECT 100 - mean("Percent_Free_Space") AS "winDiskUsed" FROM \":db:\".\":rp:\".\"win_disk\" WHERE time > now() - 10m GROUP BY host;`,
     tempVars
   )
 
@@ -92,6 +93,7 @@ export const getCpuAndLoadForHosts = async (
   const allHostsSeries = getDeep<Series[]>(data, 'results.[6].series', [])
   const memUsedSeries = getDeep<Series[]>(data, 'results.[7].series', [])
   const diskUsadSeries = getDeep<Series[]>(data, 'results.[8].series', [])
+  const winDiskUsadSeries = getDeep<Series[]>(data, 'results.[9].series', [])
 
   allHostsSeries.forEach(s => {
     const hostnameIndex = s.columns.findIndex(col => col === 'value')
@@ -155,6 +157,12 @@ export const getCpuAndLoadForHosts = async (
 
   diskUsadSeries.forEach(s => {
     const meanIndex = s.columns.findIndex(col => col === 'diskUsed')
+    hosts[s.tags.host].disk =
+      Math.round(Number(s.values[0][meanIndex]) * precision) / precision
+  })
+
+  winDiskUsadSeries.forEach(s => {
+    const meanIndex = s.columns.findIndex(col => col === 'winDiskUsed')
     hosts[s.tags.host].disk =
       Math.round(Number(s.values[0][meanIndex]) * precision) / precision
   })
@@ -254,7 +262,54 @@ export const getAppsForHost = async (
     )
     _.assign(appsForHost.tags, seriesObj.tags)
   })
+
   return appsForHost
+}
+
+export const getAppsForInstance = async (
+  proxyLink: string,
+  instance: object,
+  appLayouts: Layout[],
+  telegrafDB: string,
+  getFrom: string
+) => {
+  const measurements = appLayouts.map(m => `^${m.measurement}$`).join('|')
+  const measurementsToApps = _.zipObject(
+    appLayouts.map(m => m.measurement),
+    appLayouts.map(({app}) => app)
+  )
+
+  let query = ''
+
+  if (getFrom === 'ALL') {
+    query = `show series from /${measurements}/ where (host = '${instance['instancename']}') or (region = '${instance['region']}' and instance_id = '${instance['instanceid']}')`
+  } else if (getFrom === 'CloudWatch') {
+    query = `show series from /${measurements}/ where region = '${instance['region']}' and instance_id = '${instance['instanceid']}'`
+  } else {
+    query = `show series from /${measurements}/ where host = '${instance['instancename']}'`
+  }
+
+  const {data} = await proxy({
+    source: proxyLink,
+    query: query,
+    db: telegrafDB,
+  })
+
+  const appsForInstance: AppsForHost = {apps: [], tags: {host: null}}
+
+  const allSeries = getDeep<string[][]>(data, 'results.0.series.0.values', [])
+
+  allSeries.forEach(series => {
+    const seriesObj = parseSeries(series[0])
+    const measurement = seriesObj.measurement
+
+    appsForInstance.apps = _.uniq(
+      appsForInstance.apps.concat(measurementsToApps[measurement])
+    )
+    _.assign(appsForInstance.tags, seriesObj.tags)
+  })
+
+  return appsForInstance
 }
 
 export const getAppsForHosts = async (
@@ -324,6 +379,39 @@ export const getMeasurementsForHost = async (
   const measurements = values.map(m => {
     return m[0]
   })
+  return measurements
+}
+
+export const getMeasurementsForInstance = async (
+  source: Source,
+  instance: object,
+  getFrom: string
+): Promise<string[]> => {
+  let query = ''
+
+  if (getFrom === 'ALL') {
+    query = `SHOW MEASUREMENTS WHERE ("host" = '${instance['instancename']}') or ("region" = '${instance['region']}' and "instance_id" = '${instance['instanceid']}')`
+  } else if (getFrom === 'CloudWatch') {
+    query = `SHOW MEASUREMENTS WHERE "region" = '${instance['region']}' and "instance_id" = '${instance['instanceid']}'`
+  } else {
+    query = `SHOW MEASUREMENTS WHERE "host" = '${instance['instancename']}'`
+  }
+
+  const {data} = await proxy({
+    source: source.links.proxy,
+    query: query,
+    db: source.telegraf,
+  })
+
+  if (isEmpty(data) || hasError(data)) {
+    return []
+  }
+
+  const values = getDeep<string[][]>(data, 'results.[0].series.[0].values', [])
+  const measurements = values.map(m => {
+    return m[0]
+  })
+
   return measurements
 }
 

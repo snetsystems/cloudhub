@@ -34,6 +34,7 @@ interface Props {
   onDeleteCell: () => void
   onCloneCell: () => void
   onSummonOverlayTechnologies: () => void
+  instance?: object
 }
 
 interface State {
@@ -137,6 +138,7 @@ class Layout extends Component<Props, State> {
       timeRange,
       manualRefresh,
       templates,
+      instance,
     } = this.props
 
     if (cell.isWidget) {
@@ -160,7 +162,7 @@ class Layout extends Component<Props, State> {
         manualRefresh={manualRefresh}
         staticLegend={IS_STATIC_LEGEND(cell.legend)}
         grabDataForDownload={this.grabDataForDownload}
-        queries={buildQueriesForLayouts(cell, timeRange, host)}
+        queries={buildQueriesForLayouts(cell, timeRange, host, instance)}
         source={this.getSource(cell, source, sources, source)}
         cellNote={cell.note}
         cellNoteVisibility={cell.noteVisibility}
