@@ -58,12 +58,12 @@ const CspHostRow: FunctionComponent<Props> = ({
   const diskValue = isNaN(disk) || isNull(disk) ? 'N/A' : `${disk.toFixed(2)}`
 
   const focusedClasses = (): string => {
-    if (instanceId === focusedHost) return 'hosts-table--tr focused'
+    if (name === focusedHost) return 'hosts-table--tr focused'
     return 'hosts-table--tr'
   }
 
   return (
-    <div className={focusedClasses()} onClick={onClickTableRow(instanceId)}>
+    <div className={focusedClasses()} onClick={onClickTableRow(name)}>
       <div className="hosts-table--td" style={{width: CloudRegionWidth}}>
         {csp.region}
       </div>
