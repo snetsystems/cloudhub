@@ -233,7 +233,7 @@ export class HostsPage extends PureComponent<Props, State> {
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
     const {autoRefresh} = this.props
-    const {layouts, focusedHost, focusedCspHost} = this.state
+    const {layouts, focusedHost, focusedCspHost, activeCspTab} = this.state
 
     if (layouts) {
       if (prevState.focusedHost !== focusedHost) {
@@ -252,7 +252,6 @@ export class HostsPage extends PureComponent<Props, State> {
           focusedCspHost
         )
 
-        console.log('filteredLayouts: ', filteredLayouts)
         this.setState({filteredLayouts})
       }
 
@@ -529,8 +528,8 @@ export class HostsPage extends PureComponent<Props, State> {
         cloudHosts={cloudHosts}
         providerRegions={_.keys(cloudHostObject)}
         hostsPageStatus={hostsPageStatus}
-        focusedHost={this.state.focusedHost}
-        onClickTableRow={this.handleClickTableRow}
+        focusedHost={this.state.focusedCspHost}
+        onClickTableRow={this.handleClickCspTableRow}
         tableTitle={this.tableTitle}
       />
     )
@@ -618,7 +617,11 @@ export class HostsPage extends PureComponent<Props, State> {
             templates={tempVars}
             timeRange={timeRange}
             manualRefresh={manualRefresh}
-            host={focusedHost}
+            host={
+              this.state.activeCspTab === 'Private'
+                ? this.state.focusedHost
+                : this.state.focusedCspHost
+            }
             provider={activeCspTab}
           />
         </Page.Contents>
@@ -631,7 +634,6 @@ export class HostsPage extends PureComponent<Props, State> {
       hostID
     )
 
-    console.log(`layouts, hostID`, layouts, hostID)
     const layoutsWithinHost = layouts.filter(layout => {
       return (
         host.apps &&
@@ -732,91 +734,89 @@ export class HostsPage extends PureComponent<Props, State> {
 
   private fetchCspHostsData = async (layouts: Layout[]): Promise<void> => {
     const {handleLoadCSPsAsync, source, links, notify} = this.props
-    const {addons} = links
 
-    handleLoadCSPsAsync().then(dbResp => {
-      const accessCsps = _.map(dbResp, csp => {
-        // const decryptedBytes = CryptoJS.AES.decrypt(
-        //   csp.secretKey,
-        //   this.secretKey.url
-        // )
-        // const originalSecretKey = decryptedBytes.toString(CryptoJS.enc.Utf8)
+    const dbResp = await handleLoadCSPsAsync()
 
-        // csp = {
-        //   ...csp,
-        //   secretKey: originalSecretKey,
-        // }
+    const accessCsps = _.map(dbResp, csp => {
+      // const decryptedBytes = CryptoJS.AES.decrypt(
+      //   csp.secretKey,
+      //   this.secretKey.url
+      // )
+      // const originalSecretKey = decryptedBytes.toString(CryptoJS.enc.Utf8)
 
-        return csp
-      })
+      // csp = {
+      //   ...csp,
+      //   secretKey: originalSecretKey,
+      // }
 
-      getCSPHostsApi('', '', accessCsps).then(async getSaltCSPs => {
-        const newCSPs = []
+      return csp
+    })
 
-        _.forEach(accessCsps, (accessCsp, i: number) => {
-          const {id, organization, provider, region} = accessCsp
-          const csp = getSaltCSPs[i].map((cspsRegion: any[]): any[] => {
-            cspsRegion = cspsRegion.map(cspHost => {
-              cspHost = {
-                ...cspHost,
-                Csp: {id, organization, provider, region},
-              }
+    const getSaltCSPs = await getCSPHostsApi('', '', accessCsps)
+    let newCSPs = []
 
-              return cspHost
-            })
-
-            return cspsRegion
-          })
-
-          newCSPs.push(csp)
-        })
-
-        const envVars = await getEnv(links.environment)
-        const telegrafSystemInterval = getDeep<string>(
-          envVars,
-          'telegrafSystemInterval',
-          ''
-        )
-        const hostsError = notifyUnableToGetHosts().message
-        const tempVars = generateForHosts(source)
-
-        try {
-          const instancesObject = await getCpuAndLoadForInstances(
-            source.links.proxy,
-            source.telegraf,
-            telegrafSystemInterval,
-            tempVars,
-            newCSPs
-          )
-
-          if (!instancesObject) {
-            throw new Error(hostsError)
+    _.forEach(accessCsps, (accessCsp, i: number) => {
+      const {id, organization, provider, region} = accessCsp
+      const csp = getSaltCSPs[i].map((cspsRegion: any[]): any[] => {
+        cspsRegion = cspsRegion.map(cspHost => {
+          cspHost = {
+            ...cspHost,
+            Csp: {id, organization, provider, region},
           }
 
-          const newCloudHostsObject: CloudHosts = await getAppsForInstances(
-            source.links.proxy,
-            instancesObject,
-            layouts,
-            source.telegraf,
-            tempVars
-          )
+          return cspHost
+        })
 
-          this.setState({
-            cloudAccessInfos: dbResp,
-            cloudHostsObject: newCloudHostsObject,
-            itemCSPs: ['Private', ..._.keys(newCloudHostsObject)],
-            hostsPageStatus: RemoteDataState.Done,
-          })
-        } catch (error) {
-          console.error(error)
-          notify(notifyUnableToGetHosts())
-          this.setState({
-            isVsphere: false,
-            hostsPageStatus: RemoteDataState.Error,
-          })
-        }
+        return cspsRegion
       })
+
+      newCSPs.push(csp)
     })
+
+    const envVars = await getEnv(links.environment)
+    const telegrafSystemInterval = getDeep<string>(
+      envVars,
+      'telegrafSystemInterval',
+      ''
+    )
+    const hostsError = notifyUnableToGetHosts().message
+    const tempVars = generateForHosts(source)
+
+    try {
+      const instancesObject = await getCpuAndLoadForInstances(
+        source.links.proxy,
+        source.telegraf,
+        telegrafSystemInterval,
+        tempVars,
+        newCSPs
+      )
+
+      if (!instancesObject) {
+        throw new Error(hostsError)
+      }
+
+      const newCloudHostsObject: CloudHosts = await getAppsForInstances(
+        source.links.proxy,
+        instancesObject,
+        layouts,
+        source.telegraf,
+        tempVars
+      )
+
+      this.setState({
+        cloudAccessInfos: dbResp,
+        cloudHostsObject: newCloudHostsObject,
+        itemCSPs: ['Private', ..._.keys(newCloudHostsObject)],
+        hostsPageStatus: RemoteDataState.Done,
+      })
+    } catch (error) {
+      console.error(error)
+      notify(notifyUnableToGetHosts())
+      this.setState({
+        isVsphere: false,
+        hostsPageStatus: RemoteDataState.Error,
+      })
+    }
   }
 
   private getFirstHost = (hostsObject: {[x: string]: Host}): string => {
@@ -832,7 +832,6 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   private handleClickCspTableRow = (hostName: string) => () => {
-    console.log('focusedCspHost: ', hostName)
     this.setState({focusedCspHost: hostName})
   }
 
