@@ -98,6 +98,8 @@ import {
   getLayouts,
   getAppsForHost,
   getMeasurementsForHost,
+  getAppsForInstance,
+  getMeasurementsForInstance,
 } from 'src/hosts/apis'
 
 // Utils
@@ -210,7 +212,12 @@ const warningImage = new mxImage(
   16,
   16
 )
-
+interface Instance {
+  provider: string
+  region: string
+  instanceid: string
+  instancename: string
+}
 interface Props {
   source: Source
   links: Links
@@ -300,10 +307,129 @@ interface State {
   provider: CloudServiceProvider
   providerLabel: string
   treeMenu: any
-  instanceData: AWSInstanceData
-  focuseInstanceID: string
-  cspAccessObjects: CSPAccessObject[]
+  focusedInstance: Instance
 }
+
+const treeMenuDummy = {
+  aws: {
+    label: 'Amazon Web Service',
+    index: 0,
+    level: 0,
+    provider: CloudServiceProvider.AWS,
+    nodes: {
+      Seoul: {
+        label: 'Seoul',
+        index: 0,
+        level: 1,
+        nodes: {
+          EC1: {
+            label: 'EC1',
+            index: 0,
+            level: 2,
+            nodes: {},
+          },
+          EC2: {
+            label: 'EC2',
+            index: 0,
+            level: 2,
+            nodes: {},
+          },
+          EC5: {
+            label: 'EC5',
+            index: 0,
+            level: 2,
+            nodes: {},
+          },
+          EC6: {
+            label: 'EC6',
+            index: 0,
+            level: 2,
+            nodes: {},
+          },
+        },
+      },
+      Pusan: {
+        label: 'Pusan',
+        index: 0,
+        level: 1,
+        nodes: {
+          EC3: {
+            label: 'EC3',
+            index: 0,
+            level: 2,
+            nodes: {},
+          },
+        },
+      },
+    },
+  },
+  gcp: {
+    label: 'Google Cloud Platform',
+    index: 1,
+    level: 0,
+    provider: CloudServiceProvider.GCP,
+    nodes: {},
+  },
+  azure: {
+    label: 'Azure',
+    index: 2,
+    level: 0,
+    provider: CloudServiceProvider.AZURE,
+    nodes: {},
+  },
+}
+
+const cloudInfo = [
+  {
+    provider: 'aws',
+    region: 'ap-northeast-2',
+    accesskey: 'accesskey',
+    secretkey: 'secretkey',
+    data: {},
+  },
+  {
+    provider: 'aws',
+    region: 'pusan',
+    accesskey: 'accesskey',
+    secretkey: 'secretkey',
+    data: {},
+  },
+  {
+    provider: 'gcp',
+    region: 'seoul',
+    accesskey: 'accesskey',
+    secretkey: 'secretkey',
+    data: {},
+  },
+]
+
+const cloudData = {
+  aws: {
+    label: 'Amazon Web Service',
+    index: 0,
+    level: 0,
+    provider: CloudServiceProvider.AWS,
+    nodes: {},
+  },
+  gcp: {
+    label: 'Google Cloud Platform',
+    index: 1,
+    level: 0,
+    provider: CloudServiceProvider.GCP,
+    nodes: {},
+  },
+  azure: {
+    label: 'Azure',
+    index: 2,
+    level: 0,
+    provider: CloudServiceProvider.AZURE,
+    nodes: {},
+  },
+}
+
+const awsSeoulDummy = require('./aws.yaml')
+const awsPusanDummy = require('./aws.yaml')
+const gcpSeoulDummy = require('./aws.yaml')
 
 @ErrorHandling
 class InventoryTopology extends PureComponent<Props, State> {
@@ -339,7 +465,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       focusedHost: '',
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       activeEditorTab: 'details',
-      selected: 'CloudWatch',
+      selected: 'ALL',
       appHostData: {},
       isCloudFormVisible: false,
       isUpdateCloud: false,
@@ -349,10 +475,8 @@ class InventoryTopology extends PureComponent<Props, State> {
       cloudSecretKey: '',
       provider: null,
       providerLabel: '',
-      treeMenu: {...treeMenuDummy},
-      instanceData: null,
-      focuseInstanceID: 'i-06b26a0c3fa37533a',
-      cspAccessObjects: null,
+      treeMenu: {},
+      focusedInstance: null,
     }
   }
 
@@ -427,10 +551,6 @@ class InventoryTopology extends PureComponent<Props, State> {
         // For rendering whole hosts list
         await this.getHostData()
 
-        // For rendering the charts with the focused single host.
-        const hostID =
-          this.state.focusedHost || this.getFirstHost(this.state.hostsObject)
-
         const {autoRefresh} = this.props
         if (autoRefresh) {
           this.intervalID = window.setInterval(
@@ -442,7 +562,6 @@ class InventoryTopology extends PureComponent<Props, State> {
 
         this.setState({
           layouts,
-          focusedHost: hostID,
         })
 
         if (_.get(topology, 'diagram')) {
@@ -527,14 +646,35 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
-    const {layouts, focusedHost, isPinned} = this.state
+    const {
+      layouts,
+      focusedHost,
+      isPinned,
+      focusedInstance,
+      selected,
+    } = this.state
 
     if (layouts) {
-      if (prevState.focusedHost !== focusedHost) {
+      if (
+        (prevState.focusedHost !== focusedHost && focusedHost) ||
+        (prevState.selected !== selected && focusedHost)
+      ) {
+        console.log('getLayoutsforHost')
         this.getHostData()
         const {filteredLayouts} = await this.getLayoutsforHost(
           layouts,
           focusedHost
+        )
+        this.setState({filteredLayouts})
+      }
+      if (
+        (prevState.focusedInstance !== focusedInstance && focusedInstance) ||
+        (prevState.selected !== selected && focusedInstance)
+      ) {
+        console.log('getLayoutsforInstance')
+        const {filteredLayouts} = await this.getLayoutsforInstance(
+          layouts,
+          focusedInstance
         )
         this.setState({filteredLayouts})
       }
@@ -549,7 +689,8 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     if (
       JSON.stringify(_.keys(prevState.hostsObject)) !==
-      JSON.stringify(_.keys(this.state.hostsObject))
+        JSON.stringify(_.keys(this.state.hostsObject)) &&
+      prevState.hostsObject !== null
     ) {
       this.setCellsWarning(_.keys(this.state.hostsObject))
       this.changedDOM()
@@ -644,7 +785,11 @@ class InventoryTopology extends PureComponent<Props, State> {
     )
   }
 
-  private openCloudForm = (provider: CloudServiceProvider) => {
+  // private toggleCloudFormVisible = (): void => {
+  //   this.setState({isCloudFormVisible: !this.state.isCloudFormVisible})
+  // }
+
+  private openCloudForm = (provider: string) => {
     let cloudRegions = []
 
     if (provider === CloudServiceProvider.AWS) {
@@ -1030,11 +1175,34 @@ class InventoryTopology extends PureComponent<Props, State> {
   ) => {
     const selectionCells = mxGraphSelectionModel['cells']
 
-    if (selectionCells.length > 0) {
-      const containerElement = getContainerElement(selectionCells[0].value)
-      const title = getContainerTitle(containerElement).textContent
+    console.log('cell click', selectionCells)
 
-      this.setState({focusedHost: title})
+    if (selectionCells.length > 0) {
+      const cellElement = getParseHTML(selectionCells[0].value)
+      const dataNavi = cellElement
+        .querySelector('div')
+        .getAttribute('data-data_navi')
+
+      if (dataNavi) {
+        console.log('meta', _.get(this.state.treeMenu, `${dataNavi}.meta`))
+
+        const instanceData = _.get(this.state.treeMenu, `${dataNavi}`)
+        const provider = _.get(instanceData, 'provider')
+        const region = _.get(instanceData, 'region')
+        const instanceid = _.get(instanceData, 'instanceid')
+        const instancename = _.get(instanceData, 'label')
+        this.setState({
+          focusedInstance: {provider, region, instanceid, instancename},
+          focusedHost: null,
+        })
+      } else {
+        const containerElement = getContainerElement(selectionCells[0].value)
+        const title = getContainerTitle(containerElement).textContent
+
+        this.setState({focusedInstance: null, focusedHost: title})
+      }
+    } else {
+      this.setState({focusedInstance: null, focusedHost: null})
     }
 
     createForm.bind(this)(mxGraphSelectionModel.graph, this.properties)
@@ -1497,10 +1665,6 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private detailsGraph = () => {
-    if (!this.state.instanceData) {
-      return
-    }
-
     return (
       <>
         <Page className="inventory-hosts-list-page">
@@ -1528,7 +1692,7 @@ class InventoryTopology extends PureComponent<Props, State> {
               </div>
               <span>Get from :</span>
               <Dropdown
-                items={['CloudWatch', '2', '3']}
+                items={['ALL', 'CloudWatch', 'Within instances']}
                 onChoose={this.getHandleOnChoose}
                 selected={this.state.selected}
                 className="dropdown-sm"
@@ -1542,11 +1706,7 @@ class InventoryTopology extends PureComponent<Props, State> {
           </Page.Header>
           <Page.Contents scrollable={true}>
             {this.state.activeEditorTab === 'details' ? (
-              <TopologyDetails
-                selectInstanceData={
-                  this.state.instanceData[this.state.focuseInstanceID]
-                }
-              />
+              <TopologyDetails selectInstanceData={} />
             ) : null}
             {this.state.activeEditorTab === 'monitoring'
               ? this.renderGraph()
@@ -1877,7 +2037,12 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   private renderGraph = () => {
     const {source} = this.props
-    const {filteredLayouts, focusedHost, timeRange} = this.state
+    const {
+      filteredLayouts,
+      focusedHost,
+      focusedInstance,
+      timeRange,
+    } = this.state
 
     const layoutCells = getCells(filteredLayouts, source)
     const tempVars = generateForHosts(source)
@@ -1895,6 +2060,7 @@ class InventoryTopology extends PureComponent<Props, State> {
           timeRange={timeRange}
           manualRefresh={this.props.manualRefresh}
           host={focusedHost}
+          instance={focusedInstance}
         />
       </Page.Contents>
     )
@@ -1946,6 +2112,64 @@ class InventoryTopology extends PureComponent<Props, State> {
     return {filteredLayouts}
   }
 
+  private async fetchInstancesAndMeasurements(
+    layouts: Layout[],
+    pInstance: Instance
+  ) {
+    const {source} = this.props
+    const {selected} = this.state
+
+    const fetchMeasurements = getMeasurementsForInstance(
+      source,
+      pInstance,
+      selected
+    )
+    const fetchInstances = getAppsForInstance(
+      source.links.proxy,
+      pInstance,
+      layouts,
+      source.telegraf,
+      selected
+    )
+
+    const [instance, measurements] = await Promise.all([
+      fetchInstances,
+      fetchMeasurements,
+    ])
+
+    return {instance, measurements}
+  }
+
+  private async getLayoutsforInstance(layouts: Layout[], pInstance: Instance) {
+    const {instance, measurements} = await this.fetchInstancesAndMeasurements(
+      layouts,
+      pInstance
+    )
+    const layoutsWithinInstance = layouts.filter(layout => {
+      return (
+        instance.apps &&
+        instance.apps.includes(layout.app) &&
+        measurements.includes(layout.measurement)
+      )
+    })
+    const filteredLayouts = layoutsWithinInstance
+      .filter(layout => {
+        return (
+          layout.app === 'system' ||
+          layout.app === 'win_system' ||
+          layout.app === 'cloudwatch'
+        )
+      })
+      .sort((x, y) => {
+        return x.measurement < y.measurement
+          ? -1
+          : x.measurement > y.measurement
+          ? 1
+          : 0
+      })
+    return {instance, filteredLayouts}
+  }
+
   private handleChangeInput = (inputKey: string) => (
     e: ChangeEvent<HTMLInputElement>
   ) => {
@@ -1954,7 +2178,51 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private makeTreemenu = () => {
-    const treeMenu = {...treeMenuDummy}
+    // action start
+    const arrayCloudData = [awsSeoulDummy, awsPusanDummy, gcpSeoulDummy]
+
+    _.map(arrayCloudData, (cloudData, index) => {
+      cloudInfo[index].data = cloudData
+    })
+    // action end
+
+    const cloudDataTree = {...cloudData}
+
+    _.map(cloudInfo, (cloudRegion, index) => {
+      cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region] = {
+        ...cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region],
+        label: cloudRegion.region,
+        index: _.values(cloudDataTree[cloudRegion.provider]['nodes']).length,
+        level: 1,
+        nodes: {},
+      }
+
+      _.map(_.get(cloudRegion.data, 'local'), (instanceData, index) => {
+        // cloudData[cloudRegion.provider]['nodes'][cloudRegion.region]['nodes']['label']
+
+        cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region][
+          'nodes'
+        ][_.get(instanceData, 'InstanceId')] = {
+          ...cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region][
+            'nodes'
+          ][_.get(instanceData, 'InstanceId')],
+          instanceid: _.get(instanceData, 'InstanceId'),
+          label: _.get(instanceData, 'Tags')[0]['Value'],
+          index: _.values(
+            cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region][
+              'nodes'
+            ]
+          ).length,
+          provider: cloudRegion.provider,
+          region: cloudRegion.region,
+          level: 2,
+          meta: instanceData,
+          nodes: {},
+        }
+      })
+    })
+
+    const treeMenu = {...cloudDataTree}
 
     _.reduce(
       _.keys(treeMenuDummy),

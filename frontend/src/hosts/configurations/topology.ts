@@ -1379,9 +1379,5 @@ export const detectedHostsStatus = function (
     this.graphUpdate()
   }
 
-  // _.map(hostsObject, host => {
-  //   console.log(host)
-  // })
-
   return null
 }

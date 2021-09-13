@@ -10,7 +10,7 @@ import walk, {
   MatchSearchFunction,
 } from 'src/reusable_ui/components/treemenu/TreeMenu/walk'
 import {
-  defaultChildren,
+  defaultChildrenCSP,
   TreeMenuChildren,
   TreeMenuItem,
 } from 'src/reusable_ui/components/treemenu/TreeMenu/renderProps'
@@ -46,13 +46,12 @@ type TreeMenuState = {
 const defaultOnClick = (props: Item) => console.log(props) // eslint-disable-line no-console
 
 class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
-  // private console.log('this.refs: ', )
   static defaultProps: TreeMenuProps = {
     data: {},
     graph: null,
     onClickItem: defaultOnClick,
     debounceTime: 125,
-    children: defaultChildren,
+    children: defaultChildrenCSP,
     hasSearch: true,
   }
 
@@ -207,7 +206,7 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
     const {searchTerm} = this.state
 
     const items = this.generateItems()
-    const renderedChildren = children || defaultChildren
+    const renderedChildren = children || defaultChildrenCSP
     const keyDownProps = this.getKeyDownProps(items)
 
     return (
@@ -247,10 +246,10 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
           )}.nodes`
         )
 
-        // let nodes: Menu[] = null
-
         const nodes = _.map(childCells, childCell => {
           const value = _.get(childCell, 'label')
+          const instanseId = _.get(childCell, 'instanceid')
+
           const node = {
             label: value,
             link: '',
@@ -261,6 +260,9 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
               '(' +
               el.getAttribute('data-label') +
               ')',
+            data_navi: `${el.getAttribute(
+              'data-parent'
+            )}.nodes.${el.getAttribute('data-label')}.nodes.${instanseId}`,
           }
           return node
         })
@@ -283,11 +285,13 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
         dragElt.style.height = `${90}px`
 
         const value = el.getAttribute('data-label')
+        const dataNavi = el.getAttribute('data-navi')
         const node = {
           label: value,
           link: '',
           name: 'server',
           type: 'Server',
+          data_navi: dataNavi,
         }
 
         let ds = mxUtils.makeDraggable(
