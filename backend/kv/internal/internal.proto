@@ -278,6 +278,7 @@ message CSP {
 	string AccessKey    = 4; // CSP access key
 	string SecretKey    = 5; // CSP access secret key
 	string Organization = 6; // Organization is the organization ID that resource belongs to
+	string Minion       = 7; // Minion is the vsphere connect salt minion
 }
 
 // The following is a vim modeline, it autoconfigures vim to have the

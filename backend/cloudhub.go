@@ -1052,6 +1052,7 @@ type CSP struct {
 	AccessKey     string   `json:"accesskey,string"`
 	SecretKey     string   `json:"secretkey,string"`
 	Organization  string   `json:"organization"`
+	Minion        string   `json:"minion,string"`
 }
 
 // CSPStore is the Storage and retrieval of information

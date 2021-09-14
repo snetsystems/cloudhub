@@ -68,29 +68,6 @@ func (s *cspStore) Get(ctx context.Context, q cloudhub.CSPQuery) (*cloudhub.CSP,
 		return s.get(ctx, *q.ID)
 	}
 
-	/* exists csp in organization */
-	// if q.Organization != nil {
-	// 	var csp *cloudhub.CSP
-	// 	err := s.each(ctx, func(t *cloudhub.CSP) {
-	// 		if csp != nil {
-	// 			return
-	// 		}
-	// 		if t.Organization == *q.Organization {
-	// 			csp = t
-	// 		}
-	// 	})
-
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-
-	// 	if csp == nil {
-	// 		return nil, cloudhub.ErrCSPNotFound
-	// 	}
-
-	// 	return csp, nil
-	// }
-
 	return nil, fmt.Errorf("must specify either Organization in CSPQuery")
 }
 
