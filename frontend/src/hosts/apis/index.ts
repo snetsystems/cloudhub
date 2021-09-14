@@ -854,7 +854,12 @@ export const createCloudServiceProviderAPI = async ({
       secretkey,
     })
 
-    return data
+    const newData = {
+      ...data,
+      provider: data.provider.toLowerCase(),
+    }
+
+    return newData
   } catch (error) {
     console.error(error)
     throw error
@@ -910,10 +915,13 @@ export const createCloudServiceProvider = async ({
   secretkey,
 }: paramsCreateCSP) => {
   try {
+    let newProvider: string = provider
+    newProvider = newProvider.toUpperCase()
+
     return await AJAX({
       url: `/cloudhub/v1/csp`,
       method: 'POST',
-      data: {provider, region, accesskey, secretkey},
+      data: {provider: newProvider, region, accesskey, secretkey},
     })
   } catch (error) {
     console.error(error)
