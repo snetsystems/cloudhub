@@ -313,6 +313,7 @@ interface State {
     provider: CloudServiceProvider
     organization: string
   }[]
+  getCspsData: any
 }
 
 const awsSeoulDummy = require('./aws.yaml')
@@ -363,9 +364,10 @@ class InventoryTopology extends PureComponent<Props, State> {
       cloudSecretKey: '',
       provider: null,
       providerLabel: '',
-      treeMenu: {},
+      treeMenu: {...cloudData},
       focusedInstance: null,
       cloudAccessInfos: [],
+      getCspsData: {},
     }
   }
 
@@ -406,7 +408,8 @@ class InventoryTopology extends PureComponent<Props, State> {
   private setToolbar = setToolbar
 
   public async componentDidMount() {
-    this.makeTreemenu()
+    this.handleLoadCsps()
+
     this.createEditor()
     this.configureEditor()
     this.setActionInEditor()
@@ -567,6 +570,11 @@ class InventoryTopology extends PureComponent<Props, State> {
         )
         this.setState({filteredLayouts})
       }
+
+      if (prevState.cloudAccessInfos !== this.state.cloudAccessInfos) {
+        console.log('update cloud', this.state.cloudAccessInfos)
+        this.makeTreemenu()
+      }
     }
 
     if (
@@ -678,7 +686,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     let cloudRegions = []
 
     if (provider === CloudServiceProvider.AWS) {
-      cloudRegions = [...cloudRegions, 'SEOUL', 'SYDNEY']
+      cloudRegions = [...cloudRegions, 'ap-northeast-1', 'ap-northeast-2']
     }
 
     if (provider === CloudServiceProvider.GCP) {
@@ -1625,49 +1633,65 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setState({selectItem})
   }
 
-  private handleAddRegion = () => {
+  private handleAddRegion = async () => {
     const {handleCreateCspAsync} = this.props
     const {
       provider,
-      selectedCloudRegion,
       cloudAccessKey,
       cloudSecretKey,
+      selectedCloudRegion,
       treeMenu,
     } = this.state
-
-    const decryptedBytes = CryptoJS.AES.decrypt(
-      cloudSecretKey,
-      this.secretKey.url
-    )
-    const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
 
     const data = {
       provider,
       region: selectedCloudRegion,
       accesskey: cloudAccessKey,
+      secretkey: cloudSecretKey,
+    }
+
+    const decryptedBytes = CryptoJS.AES.decrypt(
+      cloudAccessKey,
+      this.secretKey.url
+    )
+
+    const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
+
+    const newData = {
+      ...data,
       secretkey: originalSecretkey,
     }
 
-    handleCreateCspAsync(data).then(res => {
-      _.values(treeMenu).forEach(tm => {
-        if (tm.provider === res.provider) {
-          tm.nodes[res.region] = {
-            buttons: [
-              this.updateRegionBtn(res.provider, res.region),
-              this.removeRegionBtn(res.provider, res.region),
-            ],
-            index: 0,
-            label: res.region,
-            level: 1,
-            regionID: res.id,
-            nodes: {},
-          }
-        }
-      })
+    const saltResp = await getCSPHostsApi('', '', [newData])
+    const dbResp = await handleCreateCspAsync(data)
 
-      this.setState({treeMenu})
-      this.closeCloudForm()
+    let newTreemenu = {...treeMenu}
+
+    _.forEach(_.values(newTreemenu), tm => {
+      if (tm.provider === dbResp.provider) {
+        tm.nodes[dbResp.region] = {
+          buttons: [
+            this.updateRegionBtn(dbResp.provider, dbResp.region),
+            this.removeRegionBtn(dbResp.provider, dbResp.region),
+          ],
+          index: 0,
+          label: dbResp.region,
+          level: 1,
+          regionID: dbResp.id,
+          nodes: {},
+        }
+      }
     })
+
+    console.log('ADD dbResp', dbResp)
+    console.log('ADD saltResp', saltResp)
+
+    this.setState({
+      treeMenu: newTreemenu,
+      cloudAccessInfos: [...this.state.cloudAccessInfos, dbResp],
+    })
+
+    this.closeCloudForm()
   }
 
   private addRegionBtn = (provider: CloudServiceProvider) => () => {
@@ -1685,9 +1709,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     )
   }
 
-  private handleUpdateRegion = () => {
-    // 가정 Salt 보낸 후 etcd 에 저장할 건지 말건지
-    // const {handleUpdateCloudServiceProviderAsync} = this.props
+  private handleUpdateRegion = async () => {
     const {
       selectedCloudRegion,
       cloudAccessKey,
@@ -1697,16 +1719,17 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     let regionID = this.getRegionID(provider, selectedCloudRegion)
 
-    // secretkey 복호화 후
     const data = {
       provider,
-      id: regionID,
       region: selectedCloudRegion,
+      id: regionID,
       accesskey: cloudAccessKey,
       secretkey: cloudSecretKey,
     }
 
-    // handleUpdateCloudServiceProviderAsync(data)
+    const resp = await this.handleUpdateCsp(data)
+
+    console.log('update resp: ', resp)
     //   .then(resp => {
     //     console.log('resp:', resp)
     //   })
@@ -1720,19 +1743,19 @@ class InventoryTopology extends PureComponent<Props, State> {
     provider: CloudServiceProvider,
     region: string
   ) => {
-    // const {handleLoadCloudServiceProviderAsync} = this.props
+    const {cloudAccessInfos} = this.state
+    const regionID = this.getRegionID(provider, region)
+    const updateRegion = _.find(cloudAccessInfos, info => info.id === regionID)
 
-    let regionID = this.getRegionID(provider, region)
+    console.log('update ', cloudAccessInfos, provider, region)
+    console.log('update updateRegion', updateRegion)
 
-    // handleLoadCloudServiceProviderAsync(regionID).then(data => {
-    //   console.log('getCSP: ', data)
-    //   this.setState({
-    //     isUpdateCloud: true,
-    //     selectedCloudRegion: region,
-    //     cloudAccessKey: 'test',
-    //     cloudSecretKey: 'test',
-    //   })
-    // })
+    this.setState({
+      isUpdateCloud: true,
+      selectedCloudRegion: updateRegion.region,
+      cloudAccessKey: updateRegion.accesskey,
+      cloudSecretKey: updateRegion.secretkey,
+    })
   }
 
   private updateRegionBtn = (
@@ -1754,22 +1777,37 @@ class InventoryTopology extends PureComponent<Props, State> {
     )
   }
 
-  private removeRegion = (provider: CloudServiceProvider, region: string) => {
-    const {treeMenu} = this.state
+  private removeRegion = async (
+    provider: CloudServiceProvider,
+    region: string
+  ) => {
+    const {treeMenu, cloudAccessInfos} = this.state
+    const {handleDeleteCspAsync} = this.props
     const regionID = this.getRegionID(provider, region)
+    const {isDelete} = await handleDeleteCspAsync(regionID)
 
-    this.props.handleDeleteCspAsync(regionID).then(() => {
-      const menus = _.keys(treeMenu)
-
-      for (let i = 0; i < menus.length; i++) {
-        if (treeMenu[menus[i]].provider === provider) {
-          delete treeMenu[menus[i]]['nodes'][region]
-          break
+    if (isDelete) {
+      const newTreeMenu = _.map(treeMenu, tm => {
+        if (tm.provider === provider && tm.nodes.hasOwnProperty(region)) {
+          delete tm.nodes[region]
         }
-      }
+        return tm
+      })
 
-      this.setState({treeMenu: {...treeMenu}})
-    })
+      const newCloudAccessInfos = _.filter(cloudAccessInfos, info => {
+        let isNotSame = true
+        if (info.provider === provider && info.region === region) {
+          isNotSame = false
+        }
+
+        return isNotSame
+      })
+
+      this.setState({
+        cloudAccessInfos: [...newCloudAccessInfos],
+        treeMenu: {...newTreeMenu},
+      })
+    }
   }
 
   private removeRegionBtn = (
@@ -1800,10 +1838,11 @@ class InventoryTopology extends PureComponent<Props, State> {
     const {treeMenu} = this.state
     const menus = _.keys(treeMenu)
     let regionID = ''
-
+    console.log('treeMenu: ', treeMenu)
     if (provider && region) {
       for (let i = 0; i < menus.length; i++) {
         if (treeMenu[menus[i]].provider === provider) {
+          console.log('hello', treeMenu[menus[i]]['nodes'][region])
           regionID = treeMenu[menus[i]]['nodes'][region].regionID
           break
         }
@@ -2063,57 +2102,53 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private makeTreemenu = () => {
+    const {treeMenu} = this.state
     // action start
-    const arrayCloudData = [awsSeoulDummy, awsPusanDummy, gcpSeoulDummy]
-
-    _.map(arrayCloudData, (cloudData, index) => {
-      cloudInfo[index].data = cloudData
-    })
+    // const arrayCloudData = [awsSeoulDummy, awsPusanDummy, gcpSeoulDummy]
+    // _.map(arrayCloudData, (cloudData, index) => {
+    //   cloudInfo[index].data = cloudData
+    // })
     // action end
-
     const cloudDataTree = {...cloudData}
+    // _.map(cloudInfo, (cloudRegion, index) => {
+    //   cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region] = {
+    //     ...cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region],
+    //     label: cloudRegion.region,
+    //     index: _.values(cloudDataTree[cloudRegion.provider]['nodes']).length,
+    //     level: 1,
+    //     nodes: {},
+    //     regionID: 29,
+    //   }
+    //   _.map(_.get(cloudRegion.data, 'local'), (instanceData, index) => {
+    //     // cloudData[cloudRegion.provider]['nodes'][cloudRegion.region]['nodes']['label']
+    //     cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region][
+    //       'nodes'
+    //     ][_.get(instanceData, 'InstanceId')] = {
+    //       ...cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region][
+    //         'nodes'
+    //       ][_.get(instanceData, 'InstanceId')],
+    //       instanceid: _.get(instanceData, 'InstanceId'),
+    //       label: _.get(instanceData, 'Tags')[0]['Value'],
+    //       index: _.values(
+    //         cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region][
+    //           'nodes'
+    //         ]
+    //       ).length,
+    //       provider: cloudRegion.provider,
+    //       region: cloudRegion.region,
+    //       level: 2,
+    //       meta: instanceData,
+    //       nodes: {},
+    //     }
+    //   })
+    // })
 
-    _.map(cloudInfo, (cloudRegion, index) => {
-      cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region] = {
-        ...cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region],
-        label: cloudRegion.region,
-        index: _.values(cloudDataTree[cloudRegion.provider]['nodes']).length,
-        level: 1,
-        nodes: {},
-      }
-
-      _.map(_.get(cloudRegion.data, 'local'), (instanceData, index) => {
-        // cloudData[cloudRegion.provider]['nodes'][cloudRegion.region]['nodes']['label']
-
-        cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region][
-          'nodes'
-        ][_.get(instanceData, 'InstanceId')] = {
-          ...cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region][
-            'nodes'
-          ][_.get(instanceData, 'InstanceId')],
-          instanceid: _.get(instanceData, 'InstanceId'),
-          label: _.get(instanceData, 'Tags')[0]['Value'],
-          index: _.values(
-            cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region][
-              'nodes'
-            ]
-          ).length,
-          provider: cloudRegion.provider,
-          region: cloudRegion.region,
-          level: 2,
-          meta: instanceData,
-          nodes: {},
-        }
-      })
-    })
-
-    const treeMenu = {...cloudDataTree}
+    // const treeMenu = {...cloudDataTree}
 
     _.reduce(
       _.keys(cloudData),
       (_, currentCSP: CloudServiceProvider) => {
         let nodes = {}
-
         Object.keys(treeMenu[currentCSP]['nodes']).reduce((_, region) => {
           treeMenu[currentCSP]['nodes'][region] = {
             ...treeMenu[currentCSP]['nodes'][region],
@@ -2122,14 +2157,11 @@ class InventoryTopology extends PureComponent<Props, State> {
               this.removeRegionBtn(treeMenu[currentCSP]['provider'], region),
             ],
           }
-
           nodes[region] = {
             ...treeMenu[currentCSP]['nodes'][region],
           }
-
           return false
         }, {})
-
         treeMenu[currentCSP] = {
           ...treeMenu[currentCSP],
           buttons: [this.addRegionBtn(treeMenu[currentCSP]['provider'])],
@@ -2141,7 +2173,6 @@ class InventoryTopology extends PureComponent<Props, State> {
       },
       {}
     )
-
     this.setState({treeMenu})
   }
 
@@ -2288,7 +2319,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   private handleLoadCsps = async () => {
     const {handleLoadCspsAsync} = this.props
-
+    const {treeMenu} = this.state
     const dbResp: any[] = await handleLoadCspsAsync()
 
     const newDbResp = _.map(dbResp, resp => {
@@ -2304,9 +2335,30 @@ class InventoryTopology extends PureComponent<Props, State> {
       return resp
     })
 
-    await getCSPHostsApi('', '', [newDbResp])
+    const saltResp = await getCSPHostsApi('', '', [newDbResp])
 
-    this.setState({cloudAccessInfos: [...dbResp]})
+    let newTreemenu = {...treeMenu}
+
+    _.forEach(dbResp, resp => {
+      _.forEach(_.values(newTreemenu), tm => {
+        if (tm.provider === resp.provider) {
+          console.log('forEach hello')
+          tm.nodes[resp.region] = {
+            buttons: [
+              this.updateRegionBtn(resp.provider, resp.region),
+              this.removeRegionBtn(resp.provider, resp.region),
+            ],
+            index: 0,
+            label: resp.region,
+            level: 1,
+            regionID: resp.id,
+            nodes: {},
+          }
+        }
+      })
+    })
+
+    this.setState({treeMenu: {...newTreemenu}, cloudAccessInfos: [...dbResp]})
   }
 
   private handleCreateCsp = async (data: paramsCreateCSP) => {
@@ -2326,7 +2378,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setState({cloudAccessInfos: [...this.state.cloudAccessInfos, dbResp]})
   }
 
-  private handleUpdateCSP = async (data: paramsUpdateCSP) => {
+  private handleUpdateCsp = async (data: paramsUpdateCSP) => {
     const {handleUpdateCspAsync} = this.props
     const {cloudAccessInfos} = this.state
     const {secretkey} = data
@@ -2350,15 +2402,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     })
 
     this.setState({cloudAccessInfos: [...newCloudAccessInfos]})
-  }
-
-  private handleDeleteCSP = async (id: string) => {
-    const {handleDeleteCspAsync} = this.props
-    const isDelete = await handleDeleteCspAsync(id)
-
-    if (isDelete) {
-      this.setState({})
-    }
   }
 }
 
