@@ -4753,22 +4753,12 @@
             "required": true
           },
           {
-            "name": "provider",
-            "in": "body",
-            "description": "Cloud Solution Provider Name",
-            "schema": {
-              "$ref": "#/definitions/CSPReq"
-            },
-            "required": true
-          },
-          {
             "name": "region",
             "in": "body",
             "description": "CSP access region",
             "schema": {
               "$ref": "#/definitions/CSPReq"
-            },
-            "required": true
+            }
           },
           {
             "name": "accesskey",
@@ -4776,8 +4766,7 @@
             "description": "CSP access key",
             "schema": {
               "$ref": "#/definitions/CSPReq"
-            },
-            "required": true
+            }
           },
           {
             "name": "secretkey",
@@ -4785,8 +4774,7 @@
             "description": "CSP access secret key",
             "schema": {
               "$ref": "#/definitions/CSPReq"
-            },
-            "required": true
+            }
           },
           {
             "name": "minion",
@@ -4794,8 +4782,7 @@
             "description": "target salt minion",
             "schema": {
               "$ref": "#/definitions/CSPReq"
-            },
-            "required": true
+            }
           }
         ],
         "responses": {
