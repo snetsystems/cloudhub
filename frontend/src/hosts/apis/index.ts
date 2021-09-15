@@ -818,9 +818,13 @@ export const setIpmiSetPowerApi = async (
 export const loadCloudServiceProvidersAPI = async () => {
   try {
     const url = `/cloudhub/v1/csp`
-    const {
+    let {
       data: {CSPs},
     } = await loadCloudServiceProvider(url)
+    CSPs = _.map(CSPs, csp => {
+      csp = {...csp, provider: csp.provider.toLowerCase()}
+      return csp
+    })
     return CSPs
   } catch (error) {
     console.error(error)
@@ -930,7 +934,7 @@ export const createCloudServiceProvider = async ({
 }
 
 export interface paramsUpdateCSP {
-  id: CloudServiceProvider
+  id: string
   region: string
   accesskey: string
   secretkey: string
