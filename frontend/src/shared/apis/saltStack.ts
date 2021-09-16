@@ -926,13 +926,9 @@ export async function getCSPHosts(
     // return result
 
     return new Promise(resolve => {
-      console.log('getCSPInstances request params: ', {pUrl, pToken, pCSPs})
-
-      const {local}: {local: []} = yaml.safeLoad(saltDetailsDummy)
       let res = []
       for (let i = 0; i < pCSPs.length; i++) {
-        res.push([])
-        res[i].push(local)
+        res.push(yaml.safeLoad(saltDetailsDummy))
       }
 
       return resolve({data: res})
