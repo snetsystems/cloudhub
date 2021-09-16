@@ -742,12 +742,14 @@ export class HostsPage extends PureComponent<Props, State> {
       return csp
     })
 
-    const getSaltCSPs = await getCSPHostsApi('', '', accessCsps)
+    let getSaltCSPs = await getCSPHostsApi('', '', accessCsps)
     let newCSPs = []
 
-    _.forEach(accessCsps, (accessCsp, i: number) => {
+    getSaltCSPs = _.map(getSaltCSPs, getSaltCSP => _.get(getSaltCSP, 'local'))
+
+    _.forEach(accessCsps, accessCsp => {
       const {id, organization, provider, region} = accessCsp
-      const csp = getSaltCSPs[i].map((cspsRegion: any[]): any[] => {
+      const csp = getSaltCSPs.map((cspsRegion: any[]): any[] => {
         cspsRegion = cspsRegion.map(cspHost => {
           cspHost = {
             ...cspHost,
