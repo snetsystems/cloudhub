@@ -935,14 +935,12 @@ export const createCloudServiceProvider = async ({
 
 export interface paramsUpdateCSP {
   id: string
-  region: string
   accesskey: string
   secretkey: string
 }
 
 export const updateCloudServiceProvider = async ({
   id,
-  region,
   accesskey,
   secretkey,
 }: paramsUpdateCSP) => {
@@ -950,7 +948,7 @@ export const updateCloudServiceProvider = async ({
     return await AJAX({
       url: `/cloudhub/v1/csp/${id}`,
       method: 'PATCH',
-      data: {region, accesskey, secretkey},
+      data: {accesskey, secretkey},
     })
   } catch (error) {
     console.error(error)
