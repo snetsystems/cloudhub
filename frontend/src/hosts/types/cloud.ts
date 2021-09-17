@@ -1,7 +1,7 @@
 export enum CloudServiceProvider {
-  AWS = 'AWS',
-  GCP = 'GCP',
-  AZURE = 'AZURE',
+  AWS = 'aws',
+  GCP = 'gcp',
+  AZURE = 'azure',
 }
 
 export interface AWSInstanceData {

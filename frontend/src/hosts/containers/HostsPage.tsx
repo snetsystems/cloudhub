@@ -11,7 +11,7 @@ import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import Dropdown from 'src/shared/components/Dropdown'
 import HostsTable from 'src/hosts/components/HostsTable'
 import CspHostsTable from 'src/hosts/components/CspHostsTable'
-import HostLayoutRenderer from 'src/hosts/components/HostLayoutRenderer'
+import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import ManualRefresh, {
   ManualRefreshProps,
@@ -35,6 +35,8 @@ import {
   getCSPHostsApi,
   paramsCreateCSP,
   paramsUpdateCSP,
+  getAppsForInstance,
+  getMeasurementsForInstance,
 } from 'src/hosts/apis'
 import {getEnv} from 'src/shared/apis/env'
 
@@ -90,6 +92,12 @@ import {
   deleteCloudServiceProviderAsync,
 } from 'src/hosts/actions'
 
+interface Instance {
+  provider: string
+  region: string
+  instanceid: string
+  instancename: string
+}
 interface Props extends ManualRefreshProps {
   source: Source
   links: Links
@@ -114,7 +122,7 @@ interface State {
   layouts: Layout[]
   filteredLayouts: Layout[]
   focusedHost: string
-  focusedCspHost: string
+  focusedInstance: Instance
   HostsTableStateDump: {}
   timeRange: TimeRange
   proportions: number[]
@@ -155,7 +163,7 @@ export class HostsPage extends PureComponent<Props, State> {
       layouts: [],
       filteredLayouts: [],
       focusedHost: '',
-      focusedCspHost: '',
+      focusedInstance: null,
       HostsTableStateDump: {},
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       proportions: [0.43, 0.57],
@@ -163,7 +171,7 @@ export class HostsPage extends PureComponent<Props, State> {
       isVsphere: false,
       // activeEditorTab: 'InventoryTopology',
       activeEditorTab: 'Host',
-      selectedAgent: 'All',
+      selectedAgent: 'ALL',
       itemCSPs: ['Private'],
       activeCspTab: 'Private',
       cloudAccessInfos: [],
@@ -233,7 +241,13 @@ export class HostsPage extends PureComponent<Props, State> {
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
     const {autoRefresh} = this.props
-    const {layouts, focusedHost, focusedCspHost, activeCspTab} = this.state
+    const {
+      layouts,
+      focusedHost,
+      focusedInstance,
+      activeCspTab,
+      selectedAgent,
+    } = this.state
 
     if (layouts) {
       if (prevState.focusedHost !== focusedHost) {
@@ -245,11 +259,14 @@ export class HostsPage extends PureComponent<Props, State> {
         this.setState({filteredLayouts})
       }
 
-      if (prevState.focusedCspHost !== focusedCspHost) {
+      if (
+        prevState.focusedInstance !== focusedInstance ||
+        (prevState.selectedAgent !== selectedAgent && focusedInstance)
+      ) {
         this.fetchCspHostsData(layouts)
-        const {filteredLayouts} = await this.getLayoutsforHost(
+        const {filteredLayouts} = await this.getLayoutsforInstance(
           layouts,
-          focusedCspHost
+          focusedInstance
         )
 
         this.setState({filteredLayouts})
@@ -498,7 +515,7 @@ export class HostsPage extends PureComponent<Props, State> {
       cloudHostsObject,
       activeCspTab,
       hostsPageStatus,
-      focusedCspHost,
+      focusedInstance,
     } = this.state
     const cloudHostObject = cloudHostsObject[activeCspTab]
 
@@ -528,7 +545,7 @@ export class HostsPage extends PureComponent<Props, State> {
         cloudHosts={cloudHosts}
         providerRegions={_.keys(cloudHostObject)}
         hostsPageStatus={hostsPageStatus}
-        focusedHost={this.state.focusedCspHost}
+        focusedInstance={this.state.focusedInstance}
         onClickTableRow={this.handleClickCspTableRow}
         tableTitle={this.tableTitle}
       />
@@ -566,9 +583,16 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   private onSetActiveCspTab(activeCspTab: string): void {
-    this.setState({
-      activeCspTab,
-    })
+    if (activeCspTab === 'aws' && this.state.focusedInstance === null) {
+      this.setState({
+        activeCspTab,
+        filteredLayouts: [],
+      })
+    } else {
+      this.setState({
+        activeCspTab,
+      })
+    }
   }
 
   private getHandleOnChoose = (selectItem: {text: string}) => {
@@ -576,10 +600,12 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   private renderGraph = () => {
+    console.log('renderGraph')
     const {source, manualRefresh} = this.props
     const {
       filteredLayouts,
       focusedHost,
+      focusedInstance,
       timeRange,
       activeCspTab,
       selectedAgent,
@@ -589,13 +615,13 @@ export class HostsPage extends PureComponent<Props, State> {
 
     return (
       <>
-        {activeCspTab === 'AWS' ? (
+        {activeCspTab === 'aws' ? (
           <Page.Header>
             <Page.Header.Left>
               <>
-                <>Get from: </>
+                <span>Get from :</span>
                 <Dropdown
-                  items={['All', 'CloudWatch', 'Agent']}
+                  items={['ALL', 'CloudWatch', 'Within instances']}
                   onChoose={this.getHandleOnChoose}
                   selected={selectedAgent}
                   className="dropdown-sm"
@@ -607,7 +633,7 @@ export class HostsPage extends PureComponent<Props, State> {
           </Page.Header>
         ) : null}
         <Page.Contents>
-          <HostLayoutRenderer
+          <LayoutRenderer
             source={source}
             sources={[source]}
             isStatusPage={false}
@@ -617,12 +643,8 @@ export class HostsPage extends PureComponent<Props, State> {
             templates={tempVars}
             timeRange={timeRange}
             manualRefresh={manualRefresh}
-            host={
-              this.state.activeCspTab === 'Private'
-                ? this.state.focusedHost
-                : this.state.focusedCspHost
-            }
-            provider={activeCspTab}
+            host={activeCspTab === 'Private' ? focusedHost : ''}
+            instance={activeCspTab === 'aws' ? focusedInstance : null}
           />
         </Page.Contents>
       </>
@@ -655,6 +677,36 @@ export class HostsPage extends PureComponent<Props, State> {
 
     console.log('filteredLayouts: ', filteredLayouts)
     return {filteredLayouts}
+  }
+
+  private async getLayoutsforInstance(layouts: Layout[], pInstance: Instance) {
+    const {instance, measurements} = await this.fetchInstancesAndMeasurements(
+      layouts,
+      pInstance
+    )
+    const layoutsWithinInstance = layouts.filter(layout => {
+      return (
+        instance.apps &&
+        instance.apps.includes(layout.app) &&
+        measurements.includes(layout.measurement)
+      )
+    })
+    const filteredLayouts = layoutsWithinInstance
+      .filter(layout => {
+        return (
+          layout.app === 'system' ||
+          layout.app === 'win_system' ||
+          layout.app === 'cloudwatch'
+        )
+      })
+      .sort((x, y) => {
+        return x.measurement < y.measurement
+          ? -1
+          : x.measurement > y.measurement
+          ? 1
+          : 0
+      })
+    return {instance, filteredLayouts}
   }
 
   private async fetchHostsData(layouts: Layout[]): Promise<void> {
@@ -732,10 +784,52 @@ export class HostsPage extends PureComponent<Props, State> {
     return {host, measurements}
   }
 
+  private async fetchInstancesAndMeasurements(
+    layouts: Layout[],
+    pInstance: Instance
+  ) {
+    const {source} = this.props
+    const {selectedAgent} = this.state
+
+    const fetchMeasurements = getMeasurementsForInstance(
+      source,
+      pInstance,
+      selectedAgent
+    )
+    const fetchInstances = getAppsForInstance(
+      source.links.proxy,
+      pInstance,
+      layouts,
+      source.telegraf,
+      selectedAgent
+    )
+
+    const [instance, measurements] = await Promise.all([
+      fetchInstances,
+      fetchMeasurements,
+    ])
+
+    return {instance, measurements}
+  }
+
   private fetchCspHostsData = async (layouts: Layout[]): Promise<void> => {
     const {handleLoadCSPsAsync, source, links, notify} = this.props
 
-    const dbResp = await handleLoadCSPsAsync()
+    // const dbResp = await handleLoadCSPsAsync()
+
+    const dbResp = [
+      {
+        id: 'test',
+        organization: 'telegraf',
+        provider: 'aws',
+        region: 'ap-northeast-2',
+        accesskey: 'accesskey',
+        secretkey: 'secretkey',
+        data: {},
+      },
+    ]
+
+    console.log('fetchCspHostsData', dbResp)
 
     const accessCsps = _.map(dbResp, csp => {
       // const decryptedBytes = CryptoJS.AES.decrypt(
@@ -755,6 +849,8 @@ export class HostsPage extends PureComponent<Props, State> {
     const getSaltCSPs = await getCSPHostsApi('', '', accessCsps)
     let newCSPs = []
 
+    console.log('getSaltCSPs', getSaltCSPs)
+
     _.forEach(accessCsps, (accessCsp, i: number) => {
       const {id, organization, provider, region} = accessCsp
       const csp = getSaltCSPs[i].map((cspsRegion: any[]): any[] => {
@@ -773,6 +869,8 @@ export class HostsPage extends PureComponent<Props, State> {
       newCSPs.push(csp)
     })
 
+    console.log('newCSPs', newCSPs)
+
     const envVars = await getEnv(links.environment)
     const telegrafSystemInterval = getDeep<string>(
       envVars,
@@ -790,6 +888,8 @@ export class HostsPage extends PureComponent<Props, State> {
         tempVars,
         newCSPs
       )
+
+      console.log('instancesObject', instancesObject)
 
       if (!instancesObject) {
         throw new Error(hostsError)
@@ -831,8 +931,8 @@ export class HostsPage extends PureComponent<Props, State> {
     this.setState({focusedHost: hostName})
   }
 
-  private handleClickCspTableRow = (hostName: string) => () => {
-    this.setState({focusedCspHost: hostName})
+  private handleClickCspTableRow = (focusedInstance: Instance) => () => {
+    this.setState({focusedInstance})
   }
 
   private handleLoadCSP = async (id: string) => {

@@ -147,9 +147,9 @@ import {
   detectedHostsStatus,
 } from 'src/hosts/configurations/topology'
 
-import {AWSInstanceData, CSPAccessObject} from 'src/hosts/types/cloud'
-import {saltDetailsDummy} from './detailsTest'
-import {treeMenuDummy} from './treeMenuDummy'
+// import {AWSInstanceData, CSPAccessObject} from 'src/hosts/types/cloud'
+// import {saltDetailsDummy} from './detailsTest'
+// import {treeMenuDummy} from './treeMenuDummy'
 
 const mx = mxgraph()
 
@@ -310,75 +310,6 @@ interface State {
   focusedInstance: Instance
 }
 
-const treeMenuDummy = {
-  aws: {
-    label: 'Amazon Web Service',
-    index: 0,
-    level: 0,
-    provider: CloudServiceProvider.AWS,
-    nodes: {
-      Seoul: {
-        label: 'Seoul',
-        index: 0,
-        level: 1,
-        nodes: {
-          EC1: {
-            label: 'EC1',
-            index: 0,
-            level: 2,
-            nodes: {},
-          },
-          EC2: {
-            label: 'EC2',
-            index: 0,
-            level: 2,
-            nodes: {},
-          },
-          EC5: {
-            label: 'EC5',
-            index: 0,
-            level: 2,
-            nodes: {},
-          },
-          EC6: {
-            label: 'EC6',
-            index: 0,
-            level: 2,
-            nodes: {},
-          },
-        },
-      },
-      Pusan: {
-        label: 'Pusan',
-        index: 0,
-        level: 1,
-        nodes: {
-          EC3: {
-            label: 'EC3',
-            index: 0,
-            level: 2,
-            nodes: {},
-          },
-        },
-      },
-    },
-  },
-  gcp: {
-    label: 'Google Cloud Platform',
-    index: 1,
-    level: 0,
-    provider: CloudServiceProvider.GCP,
-    nodes: {},
-  },
-  azure: {
-    label: 'Azure',
-    index: 2,
-    level: 0,
-    provider: CloudServiceProvider.AZURE,
-    nodes: {},
-  },
-}
-
 const cloudInfo = [
   {
     provider: 'aws',
@@ -394,13 +325,6 @@ const cloudInfo = [
     secretkey: 'secretkey',
     data: {},
   },
-  {
-    provider: 'gcp',
-    region: 'seoul',
-    accesskey: 'accesskey',
-    secretkey: 'secretkey',
-    data: {},
-  },
 ]
 
 const cloudData = {
@@ -411,25 +335,10 @@ const cloudData = {
     provider: CloudServiceProvider.AWS,
     nodes: {},
   },
-  gcp: {
-    label: 'Google Cloud Platform',
-    index: 1,
-    level: 0,
-    provider: CloudServiceProvider.GCP,
-    nodes: {},
-  },
-  azure: {
-    label: 'Azure',
-    index: 2,
-    level: 0,
-    provider: CloudServiceProvider.AZURE,
-    nodes: {},
-  },
 }
 
 const awsSeoulDummy = require('./aws.yaml')
 const awsPusanDummy = require('./aws.yaml')
-const gcpSeoulDummy = require('./aws.yaml')
 
 @ErrorHandling
 class InventoryTopology extends PureComponent<Props, State> {
@@ -459,7 +368,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       isStatusVisible: false,
       resizableDockHeight: 165,
       resizableDockWidth: 200,
-      selectItem: 'cloud',
+      selectItem: 'Cloud',
       layouts: [],
       filteredLayouts: [],
       focusedHost: '',
@@ -682,7 +591,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     if (
       prevState.selectItem !== this.state.selectItem &&
-      this.state.selectItem === 'total'
+      this.state.selectItem === 'Private'
     ) {
       this.changedDOM()
     }
@@ -789,7 +698,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   //   this.setState({isCloudFormVisible: !this.state.isCloudFormVisible})
   // }
 
-  private openCloudForm = (provider: string) => {
+  private openCloudForm = (provider: CloudServiceProvider) => {
     let cloudRegions = []
 
     if (provider === CloudServiceProvider.AWS) {
@@ -933,8 +842,11 @@ class InventoryTopology extends PureComponent<Props, State> {
       tempVars
     )
 
+    console.log('hostsObject', hostsObject)
+
     const hostsError = notifyUnableToGetHosts().message
     if (!hostsObject) {
+      console.log('notifyUnableToGetHosts')
       throw new Error(hostsError)
     }
 
@@ -1194,15 +1106,24 @@ class InventoryTopology extends PureComponent<Props, State> {
         this.setState({
           focusedInstance: {provider, region, instanceid, instancename},
           focusedHost: null,
+          activeEditorTab: 'details',
         })
       } else {
         const containerElement = getContainerElement(selectionCells[0].value)
         const title = getContainerTitle(containerElement).textContent
 
-        this.setState({focusedInstance: null, focusedHost: title})
+        this.setState({
+          focusedInstance: null,
+          focusedHost: title,
+          activeEditorTab: 'monitoring',
+        })
       }
     } else {
-      this.setState({focusedInstance: null, focusedHost: null})
+      this.setState({
+        focusedInstance: null,
+        focusedHost: null,
+        filteredLayouts: [],
+      })
     }
 
     createForm.bind(this)(mxGraphSelectionModel.graph, this.properties)
@@ -1670,37 +1591,53 @@ class InventoryTopology extends PureComponent<Props, State> {
         <Page className="inventory-hosts-list-page">
           <Page.Header fullWidth={true}>
             <Page.Header.Left>
-              <div className="radio-buttons radio-buttons--default radio-buttons--sm">
-                <Radio.Button
-                  id="hostspage-tab-details"
-                  titleText="details"
-                  value="details"
-                  active={this.state.activeEditorTab === 'details'}
-                  onClick={this.onSetActiveEditorTab}
-                >
-                  Details
-                </Radio.Button>
-                <Radio.Button
-                  id="hostspage-tab-monitoring"
-                  titleText="monitoring"
-                  value="monitoring"
-                  active={this.state.activeEditorTab === 'monitoring'}
-                  onClick={this.onSetActiveEditorTab}
-                >
-                  Monitoring
-                </Radio.Button>
-              </div>
-              <span>Get from :</span>
-              <Dropdown
-                items={['ALL', 'CloudWatch', 'Within instances']}
-                onChoose={this.getHandleOnChoose}
-                selected={this.state.selected}
-                className="dropdown-sm"
-                disabled={false}
-                // onClick={() => {
-                //   this.handleFocusedBtnName({selected: this.state.selected})
-                // }}
-              />
+              {!_.isEmpty(this.state.focusedHost) ? (
+                <div className="radio-buttons radio-buttons--default radio-buttons--sm">
+                  <Radio.Button
+                    id="hostspage-tab-monitoring"
+                    titleText="monitoring"
+                    value="monitoring"
+                    active={true}
+                    onClick={this.onSetActiveEditorTab}
+                  >
+                    Monitoring
+                  </Radio.Button>
+                </div>
+              ) : (
+                <>
+                  <div className="radio-buttons radio-buttons--default radio-buttons--sm">
+                    <Radio.Button
+                      id="hostspage-tab-details"
+                      titleText="details"
+                      value="details"
+                      active={this.state.activeEditorTab === 'details'}
+                      onClick={this.onSetActiveEditorTab}
+                    >
+                      Details
+                    </Radio.Button>
+                    <Radio.Button
+                      id="hostspage-tab-monitoring"
+                      titleText="monitoring"
+                      value="monitoring"
+                      active={this.state.activeEditorTab === 'monitoring'}
+                      onClick={this.onSetActiveEditorTab}
+                    >
+                      Monitoring
+                    </Radio.Button>
+                  </div>
+                  <span>Get from :</span>
+                  <Dropdown
+                    items={['ALL', 'CloudWatch', 'Within instances']}
+                    onChoose={this.getHandleOnChoose}
+                    selected={this.state.selected}
+                    className="dropdown-sm"
+                    disabled={false}
+                    // onClick={() => {
+                    //   this.handleFocusedBtnName({selected: this.state.selected})
+                    // }}
+                  />
+                </>
+              )}
             </Page.Header.Left>
             <Page.Header.Right></Page.Header.Right>
           </Page.Header>
@@ -1938,28 +1875,28 @@ class InventoryTopology extends PureComponent<Props, State> {
         headerOrientation: HANDLE_HORIZONTAL,
         headerButtons: [
           <Button
-            key={'total'}
+            key={'Private'}
             color={
-              this.state.selectItem === 'total'
+              this.state.selectItem === 'Private'
                 ? ComponentColor.Primary
                 : ComponentColor.Default
             }
-            text={'total'}
+            text={'Private'}
             onClick={() => {
-              this.onChooseItem('total')
+              this.onChooseItem('Private')
             }}
             size={ComponentSize.ExtraSmall}
           />,
           <Button
-            key={'cloud'}
+            key={'Cloud'}
             color={
-              this.state.selectItem === 'cloud'
+              this.state.selectItem === 'Cloud'
                 ? ComponentColor.Primary
                 : ComponentColor.Default
             }
-            text={'cloud'}
+            text={'Cloud'}
             onClick={() => {
-              this.onChooseItem('cloud')
+              this.onChooseItem('Cloud')
             }}
             size={ComponentSize.ExtraSmall}
           />,
@@ -1967,7 +1904,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         menuOptions: [],
         size: topSize,
         render: () => {
-          if (this.state.selectItem === 'total') {
+          if (this.state.selectItem === 'Private') {
             const hostList = _.keys(this.state.hostsObject)
             if (hostList.length > 0) {
               return (
@@ -1990,7 +1927,7 @@ class InventoryTopology extends PureComponent<Props, State> {
             }
           }
 
-          if (this.state.selectItem === 'cloud') {
+          if (this.state.selectItem === 'Cloud') {
             return (
               <FancyScrollbar>
                 <InventoryTreemenu
@@ -2179,7 +2116,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   private makeTreemenu = () => {
     // action start
-    const arrayCloudData = [awsSeoulDummy, awsPusanDummy, gcpSeoulDummy]
+    const arrayCloudData = [awsSeoulDummy, awsPusanDummy]
 
     _.map(arrayCloudData, (cloudData, index) => {
       cloudInfo[index].data = cloudData
@@ -2188,7 +2125,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     const cloudDataTree = {...cloudData}
 
-    _.map(cloudInfo, (cloudRegion, index) => {
+    _.map(cloudInfo, cloudRegion => {
       cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region] = {
         ...cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region],
         label: cloudRegion.region,
@@ -2197,7 +2134,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         nodes: {},
       }
 
-      _.map(_.get(cloudRegion.data, 'local'), (instanceData, index) => {
+      _.map(_.get(cloudRegion.data, 'local'), instanceData => {
         // cloudData[cloudRegion.provider]['nodes'][cloudRegion.region]['nodes']['label']
 
         cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region][
@@ -2225,7 +2162,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     const treeMenu = {...cloudDataTree}
 
     _.reduce(
-      _.keys(treeMenuDummy),
+      _.keys(cloudDataTree),
       (_, currentCSP: CloudServiceProvider) => {
         let nodes = {}
 

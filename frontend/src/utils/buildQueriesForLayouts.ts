@@ -59,6 +59,8 @@ const buildCannedDashboardQuery = (
     text += ` group by time(${defaultGroupBy})`
   }
 
+  console.log('buildCannedDashboardQuery', text)
+
   return text
 }
 

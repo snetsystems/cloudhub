@@ -1,5 +1,6 @@
 import {isNull} from 'lodash'
 import React, {FunctionComponent} from 'react'
+import _ from 'lodash'
 import {Link} from 'react-router'
 
 import {CLOUD_HOSTS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
@@ -11,17 +12,23 @@ import {usageIndacator} from 'src/agent_admin/reusable'
 import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
 import classNames from 'classnames'
 
+interface Instance {
+  provider: string
+  region: string
+  instanceid: string
+  instancename: string
+}
 interface Props {
   sourceID: string
   host: CloudHost
-  focusedHost: string
-  onClickTableRow: HostsPage['handleClickTableRow']
+  focusedInstance: Instance
+  onClickTableRow: HostsPage['handleClickCspTableRow']
 }
 
 const CspHostRow: FunctionComponent<Props> = ({
   host,
   sourceID,
-  focusedHost,
+  focusedInstance,
   onClickTableRow,
 }) => {
   const {
@@ -58,12 +65,21 @@ const CspHostRow: FunctionComponent<Props> = ({
   const diskValue = isNaN(disk) || isNull(disk) ? 'N/A' : `${disk.toFixed(2)}`
 
   const focusedClasses = (): string => {
-    if (name === focusedHost) return 'hosts-table--tr focused'
+    if (name === _.get(focusedInstance, 'instancename'))
+      return 'hosts-table--tr focused'
     return 'hosts-table--tr'
   }
 
   return (
-    <div className={focusedClasses()} onClick={onClickTableRow(name)}>
+    <div
+      className={focusedClasses()}
+      onClick={onClickTableRow({
+        provider: csp.provider,
+        region: csp.region,
+        instanceid: instanceId,
+        instancename: name,
+      })}
+    >
       <div className="hosts-table--td" style={{width: CloudRegionWidth}}>
         {csp.region}
       </div>

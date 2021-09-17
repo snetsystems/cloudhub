@@ -21,13 +21,20 @@ enum SortDirection {
   DESC = 'desc',
 }
 
+interface Instance {
+  provider: string
+  region: string
+  instanceid: string
+  instancename: string
+}
+
 export interface Props {
   cloudHosts: CloudHost[]
   providerRegions: string[]
   hostsPageStatus: RemoteDataState
   source: Source
-  focusedHost: string
-  onClickTableRow: HostsPage['handleClickTableRow']
+  focusedInstance: Instance
+  onClickTableRow: HostsPage['handleClickCspTableRow']
   tableTitle: () => JSX.Element
 }
 
@@ -189,7 +196,7 @@ class CspHostsTable extends PureComponent<Props, State> {
   }
 
   private get CloudTableWithHosts(): JSX.Element {
-    const {source, cloudHosts, focusedHost, onClickTableRow} = this.props
+    const {source, cloudHosts, focusedInstance, onClickTableRow} = this.props
     const {sortKey, sortDirection, searchTerm, selected} = this.state
 
     let sortedHosts = this.getSortedHosts(
@@ -213,7 +220,7 @@ class CspHostsTable extends PureComponent<Props, State> {
                 key={`${h.csp.id}-${h.instanceId}`}
                 host={h}
                 sourceID={source.id}
-                focusedHost={focusedHost}
+                focusedInstance={focusedInstance}
                 onClickTableRow={onClickTableRow}
               />
             )
