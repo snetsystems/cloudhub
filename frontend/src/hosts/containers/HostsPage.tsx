@@ -84,13 +84,7 @@ import {timeRanges} from 'src/shared/data/timeRanges'
 import * as QueriesModels from 'src/types/queries'
 import * as AppActions from 'src/types/actions/app'
 
-import {
-  loadCloudServiceProviderAsync,
-  loadCloudServiceProvidersAsync,
-  createCloudServiceProviderAsync,
-  updateCloudServiceProviderAsync,
-  deleteCloudServiceProviderAsync,
-} from 'src/hosts/actions'
+import {loadCloudServiceProvidersAsync} from 'src/hosts/actions'
 
 interface Instance {
   provider: string
@@ -109,11 +103,7 @@ interface Props extends ManualRefreshProps {
   handleChooseAutoRefresh: AppActions.SetAutoRefreshActionCreator
   handleClickPresentationButton: AppActions.DelayEnablePresentationModeDispatcher
   inPresentationMode: boolean
-  handleLoadCSPAsync: (id: string) => Promise<any>
-  handleLoadCSPsAsync: () => Promise<any>
-  handleCreateCSPAsync: (data: paramsCreateCSP) => Promise<any>
-  handleUpdateCSPAsync: (data: paramsUpdateCSP) => Promise<any>
-  handleDeleteCSPAsync: (id: string) => Promise<any>
+  handleLoadCspsAsync: () => Promise<any>
 }
 
 interface State {
@@ -813,47 +803,33 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   private fetchCspHostsData = async (layouts: Layout[]): Promise<void> => {
-    const {handleLoadCSPsAsync, source, links, notify} = this.props
+    const {handleLoadCspsAsync, source, links, notify} = this.props
 
-    // const dbResp = await handleLoadCSPsAsync()
-
-    const dbResp = [
-      {
-        id: 'test',
-        organization: 'telegraf',
-        provider: 'aws',
-        region: 'ap-northeast-2',
-        accesskey: 'accesskey',
-        secretkey: 'secretkey',
-        data: {},
-      },
-    ]
-
-    console.log('fetchCspHostsData', dbResp)
+    const dbResp = await handleLoadCspsAsync()
 
     const accessCsps = _.map(dbResp, csp => {
-      // const decryptedBytes = CryptoJS.AES.decrypt(
-      //   csp.secretKey,
-      //   this.secretKey.url
-      // )
-      // const originalSecretKey = decryptedBytes.toString(CryptoJS.enc.Utf8)
-
-      // csp = {
-      //   ...csp,
-      //   secretKey: originalSecretKey,
-      // }
-
+      const decryptedBytes = CryptoJS.AES.decrypt(
+        csp.secretkey,
+        this.secretKey.url
+      )
+      const originalSecretKey = decryptedBytes.toString(CryptoJS.enc.Utf8)
+      csp = {
+        ...csp,
+        provider: csp.provider.toLowerCase(),
+        secretKey: originalSecretKey,
+      }
+      console.log('csp: ', csp)
       return csp
     })
 
-    const getSaltCSPs = await getCSPHostsApi('', '', accessCsps)
+    let getSaltCSPs = await getCSPHostsApi('', '', accessCsps)
     let newCSPs = []
 
-    console.log('getSaltCSPs', getSaltCSPs)
+    getSaltCSPs = _.map(getSaltCSPs, getSaltCSP => _.get(getSaltCSP, 'local'))
 
-    _.forEach(accessCsps, (accessCsp, i: number) => {
+    _.forEach(accessCsps, accessCsp => {
       const {id, organization, provider, region} = accessCsp
-      const csp = getSaltCSPs[i].map((cspsRegion: any[]): any[] => {
+      const csp = getSaltCSPs.map((cspsRegion: any[]): any[] => {
         cspsRegion = cspsRegion.map(cspHost => {
           cspHost = {
             ...cspHost,
@@ -934,113 +910,6 @@ export class HostsPage extends PureComponent<Props, State> {
   private handleClickCspTableRow = (focusedInstance: Instance) => () => {
     this.setState({focusedInstance})
   }
-
-  private handleLoadCSP = async (id: string) => {
-    const {handleLoadCSPAsync} = this.props
-    const {cloudAccessInfos} = this.state
-    const dbResp = await handleLoadCSPAsync(id)
-    const {secretkey} = dbResp
-    const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
-    const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
-    const newData = {
-      ...dbResp,
-      secretkey: originalSecretkey,
-    }
-
-    await getCSPHostsApi('', '', [newData])
-
-    let isContain = false
-    let newCloudAccessInfos = _.map(cloudAccessInfos, c => {
-      if (c.id === dbResp.id) {
-        isContain = true
-        c = {
-          ...dbResp,
-        }
-      }
-      return c
-    })
-
-    if (!isContain) {
-      newCloudAccessInfos = [...newCloudAccessInfos, dbResp]
-    }
-
-    this.setState({cloudAccessInfos: newCloudAccessInfos})
-  }
-
-  private handleLoadCSPs = async () => {
-    const {handleLoadCSPsAsync} = this.props
-
-    const dbResp: any[] = await handleLoadCSPsAsync()
-
-    const newDbResp = _.map(dbResp, resp => {
-      const {secretkey} = resp
-      const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
-      const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
-
-      resp = {
-        ...resp,
-        secretkey: originalSecretkey,
-      }
-
-      return resp
-    })
-
-    await getCSPHostsApi('', '', [newDbResp])
-
-    this.setState({cloudAccessInfos: [...dbResp]})
-  }
-
-  private handleCreateCSP = async (data: paramsCreateCSP) => {
-    const {handleCreateCSPAsync} = this.props
-    const {secretkey} = data
-    const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
-    const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
-
-    const newData = {
-      ...data,
-      secretkey: originalSecretkey,
-    }
-
-    await getCSPHostsApi('', '', [newData])
-    const dbResp = await handleCreateCSPAsync(data)
-
-    this.setState({cloudAccessInfos: [...this.state.cloudAccessInfos, dbResp]})
-  }
-
-  private handleUpdateCSP = async (data: paramsUpdateCSP) => {
-    const {handleUpdateCSPAsync} = this.props
-    const {cloudAccessInfos} = this.state
-    const {secretkey} = data
-    const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
-    const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
-
-    const newData = {
-      ...data,
-      secretkey: originalSecretkey,
-    }
-
-    await getCSPHostsApi('', '', [newData])
-    const resp = await handleUpdateCSPAsync(data)
-    const newCloudAccessInfos = _.map(cloudAccessInfos, c => {
-      if (c.id === resp.id) {
-        c = {
-          ...resp,
-        }
-      }
-      return c
-    })
-
-    this.setState({cloudAccessInfos: [...newCloudAccessInfos]})
-  }
-
-  private handleDeleteCSP = async (id: string) => {
-    const {handleDeleteCSPAsync} = this.props
-    const isDelete = await handleDeleteCSPAsync(id)
-
-    if (isDelete) {
-      this.setState({})
-    }
-  }
 }
 
 const mstp = state => {
@@ -1066,24 +935,8 @@ const mdtp = dispatch => ({
   ),
   notify: bindActionCreators(notifyAction, dispatch),
 
-  handleLoadCSPAsync: bindActionCreators(
-    loadCloudServiceProviderAsync,
-    dispatch
-  ),
-  handleLoadCSPsAsync: bindActionCreators(
+  handleLoadCspsAsync: bindActionCreators(
     loadCloudServiceProvidersAsync,
-    dispatch
-  ),
-  handleCreateCSPAsync: bindActionCreators(
-    createCloudServiceProviderAsync,
-    dispatch
-  ),
-  handleUpdateCSPAsync: bindActionCreators(
-    updateCloudServiceProviderAsync,
-    dispatch
-  ),
-  handleDeleteCSPAsync: bindActionCreators(
-    deleteCloudServiceProviderAsync,
     dispatch
   ),
 })

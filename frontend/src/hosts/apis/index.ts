@@ -820,9 +820,13 @@ export const setIpmiSetPowerApi = async (
 export const loadCloudServiceProvidersAPI = async () => {
   try {
     const url = `/cloudhub/v1/csp`
-    const {
+    let {
       data: {CSPs},
     } = await loadCloudServiceProvider(url)
+    CSPs = _.map(CSPs, csp => {
+      csp = {...csp, provider: csp.provider.toLowerCase()}
+      return csp
+    })
     return CSPs
   } catch (error) {
     console.error(error)
@@ -856,7 +860,12 @@ export const createCloudServiceProviderAPI = async ({
       secretkey,
     })
 
-    return data
+    const newData = {
+      ...data,
+      provider: data.provider.toLowerCase(),
+    }
+
+    return newData
   } catch (error) {
     console.error(error)
     throw error
@@ -912,10 +921,13 @@ export const createCloudServiceProvider = async ({
   secretkey,
 }: paramsCreateCSP) => {
   try {
+    let newProvider: string = provider
+    newProvider = newProvider.toUpperCase()
+
     return await AJAX({
       url: `/cloudhub/v1/csp`,
       method: 'POST',
-      data: {provider, region, accesskey, secretkey},
+      data: {provider: newProvider, region, accesskey, secretkey},
     })
   } catch (error) {
     console.error(error)
@@ -924,15 +936,13 @@ export const createCloudServiceProvider = async ({
 }
 
 export interface paramsUpdateCSP {
-  id: CloudServiceProvider
-  region: string
+  id: string
   accesskey: string
   secretkey: string
 }
 
 export const updateCloudServiceProvider = async ({
   id,
-  region,
   accesskey,
   secretkey,
 }: paramsUpdateCSP) => {
@@ -940,7 +950,7 @@ export const updateCloudServiceProvider = async ({
     return await AJAX({
       url: `/cloudhub/v1/csp/${id}`,
       method: 'PATCH',
-      data: {region, accesskey, secretkey},
+      data: {accesskey, secretkey},
     })
   } catch (error) {
     console.error(error)
@@ -1019,6 +1029,7 @@ export const getCpuAndLoadForInstances = async (
   })
 
   let providers = {}
+
   const precision = 100
   const cpuSeries = getDeep<CloudSeries[]>(data, 'results.[0].series', [])
   const loadSeries = getDeep<CloudSeries[]>(data, 'results.[1].series', [])
