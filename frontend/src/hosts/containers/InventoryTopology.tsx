@@ -5,7 +5,6 @@ import _ from 'lodash'
 import {getDeep} from 'src/utils/wrappers'
 import CryptoJS from 'crypto-js'
 import classnames from 'classnames'
-import yaml from 'js-yaml'
 
 import {
   default as mxgraph,
@@ -91,6 +90,7 @@ import {
   createCloudServiceProviderAsync,
   updateCloudServiceProviderAsync,
   deleteCloudServiceProviderAsync,
+  getCSPHostsAsync,
 } from 'src/hosts/actions'
 
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -106,7 +106,6 @@ import {
   getMeasurementsForInstance,
   paramsCreateCSP,
   paramsUpdateCSP,
-  getCSPHostsApi,
 } from 'src/hosts/apis'
 
 // Utils
@@ -271,6 +270,11 @@ interface Props {
   handleCreateCspAsync: (data: paramsCreateCSP) => Promise<any>
   handleUpdateCspAsync: (data: paramsUpdateCSP) => Promise<any>
   handleDeleteCspAsync: (id: string) => Promise<any>
+  handleGetCSPHostsAsync: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    pCsp: any[]
+  ) => Promise<any>
 }
 
 interface State {
@@ -831,11 +835,8 @@ class InventoryTopology extends PureComponent<Props, State> {
       tempVars
     )
 
-    console.log('hostsObject', hostsObject)
-
     const hostsError = notifyUnableToGetHosts().message
     if (!hostsObject) {
-      console.log('notifyUnableToGetHosts')
       throw new Error(hostsError)
     }
 
@@ -1661,7 +1662,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private handleAddRegion = async () => {
-    const {handleCreateCspAsync} = this.props
+    const {handleCreateCspAsync, handleGetCSPHostsAsync} = this.props
     const {
       provider,
       cloudAccessKey,
@@ -1689,7 +1690,11 @@ class InventoryTopology extends PureComponent<Props, State> {
       secretkey: originalSecretkey,
     }
 
-    const saltResp = await getCSPHostsApi('', '', [newData])
+    const saltResp = await handleGetCSPHostsAsync(
+      this.salt.url,
+      this.salt.token,
+      [newData]
+    )
     const dbResp = await handleCreateCspAsync(data)
 
     dbResp['data'] = saltResp[0]
@@ -2091,7 +2096,8 @@ class InventoryTopology extends PureComponent<Props, State> {
         nodes: {},
       }
 
-      _.forEach(_.get(cloudRegion.data, 'local'), instanceData => {
+      _.forEach(cloudRegion.data, instanceData => {
+        if (!instanceData) return
         cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region][
           'nodes'
         ][_.get(instanceData, 'InstanceId')] = {
@@ -2227,7 +2233,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private handleLoadCsps = async () => {
-    const {handleLoadCspsAsync} = this.props
+    const {handleLoadCspsAsync, handleGetCSPHostsAsync} = this.props
     const dbResp: any[] = await handleLoadCspsAsync()
     const newDbResp = _.map(dbResp, resp => {
       const {secretkey} = resp
@@ -2242,17 +2248,24 @@ class InventoryTopology extends PureComponent<Props, State> {
       return resp
     })
 
-    const saltResp = await getCSPHostsApi('', '', newDbResp)
+    const saltResp = await handleGetCSPHostsAsync(
+      this.salt.url,
+      this.salt.token,
+      newDbResp
+    )
 
     _.forEach(dbResp, (dResp, index) => {
-      dResp['data'] = saltResp[index]
+      dResp['data'] =
+        _.values(saltResp.return[index])[0].length > 0
+          ? _.values(saltResp.return[index])[0]
+          : []
     })
 
     this.setState({cloudAccessInfos: [...dbResp]})
   }
 
   private handleUpdateRegion = async () => {
-    const {handleUpdateCspAsync} = this.props
+    const {handleUpdateCspAsync, handleGetCSPHostsAsync} = this.props
     const {
       selectedCloudRegion,
       cloudAccessKey,
@@ -2278,7 +2291,11 @@ class InventoryTopology extends PureComponent<Props, State> {
       secretkey: originalSecretkey,
     }
 
-    const saltResp = await getCSPHostsApi('', '', [newData])
+    const saltResp = await handleGetCSPHostsAsync(
+      this.salt.url,
+      this.salt.token,
+      [newData]
+    )
     const dbResp = await handleUpdateCspAsync(data)
 
     const newCloudAccessInfos = _.map(cloudAccessInfos, c => {
@@ -2317,6 +2334,7 @@ const mapDispatchToProps = {
   handleCreateCspAsync: createCloudServiceProviderAsync,
   handleUpdateCspAsync: updateCloudServiceProviderAsync,
   handleDeleteCspAsync: deleteCloudServiceProviderAsync,
+  handleGetCSPHostsAsync: getCSPHostsAsync,
 }
 
 export default connect(

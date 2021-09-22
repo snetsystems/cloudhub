@@ -1007,7 +1007,6 @@ export const getCpuAndLoadForInstances = async (
     Csp: {id: string; organization: string; provider: string; region: string}
   }[][][]
 ): Promise<any> => {
-  console.log('getCpuAndLoadForInstances')
   const query = replaceTemplate(
     `SELECT mean("usage_user") FROM \":db:\".\":rp:\".\"cpu\" WHERE "cpu" = 'cpu-total' AND time > now() - 60m AND region != null AND csp != null GROUP BY host, region, csp;
     SELECT mean("load1") FROM \":db:\".\":rp:\".\"system\" WHERE time > now() - 60m AND region != null AND csp != null GROUP BY host, region, csp;
@@ -1106,8 +1105,6 @@ export const getCpuAndLoadForInstances = async (
   } catch (error) {
     console.error(error)
   }
-
-  console.log('providers', providers)
 
   cpuSeries.forEach(s => {
     const isHasNotOwnProperty = getHasNotOwnProperty(
@@ -1264,8 +1261,6 @@ export const getCpuAndLoadForInstances = async (
     }
   })
 
-  console.log('getCpuAndLoadForInstances', providers)
-
   return providers
 }
 
@@ -1275,11 +1270,10 @@ export const getCSPHostsApi = async (
   pCsps: any[]
 ) => {
   try {
-    const {data} = await getCSPHosts(pUrl, pToken, pCsps)
+    const info = await getCSPHosts(pUrl, pToken, pCsps)
+    const cspHost = yaml.safeLoad(info.data)
 
-    console.log('getCSPHostsApi', data)
-
-    return data
+    return cspHost
   } catch (error) {
     throw error
   }

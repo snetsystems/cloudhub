@@ -16,6 +16,7 @@ import {
   updateCloudServiceProviderAPI,
   deleteCloudServiceProviderAPI,
   paramsUpdateCSP,
+  getCSPHostsApi,
 } from 'src/hosts/apis'
 
 // Types
@@ -36,6 +37,7 @@ export enum ActionTypes {
   CreateCloudServiceProvider = 'CREATE_CLOUD_SERVICE_PROVIDER',
   UpdateCloudServiceProvider = 'UPDATE_CLOUD_SERVICE_PROVIDER',
   DeleteCloudServiceProvider = 'DELETE_CLOUD_SERVICE_PROVIDER',
+  GetCSPHost = 'GET_CSP_HOST',
 }
 
 export type Action =
@@ -48,6 +50,7 @@ export type Action =
   | CreateCloudServiceProviderAction
   | UpdateCloudServiceProviderAction
   | DeleteCloudServiceProviderAction
+  | GetCSPHostAction
 
 interface LoadInventoryTopologyAction {
   type: ActionTypes.LoadInventoryTopology
@@ -266,6 +269,15 @@ export const deleteCloudServiceProviderAction = (): DeleteCloudServiceProviderAc
     type: ActionTypes.DeleteCloudServiceProvider,
   }
 }
+interface GetCSPHostAction {
+  type: ActionTypes.GetCSPHost
+}
+
+export const getCSPHostAction = (): GetCSPHostAction => {
+  return {
+    type: ActionTypes.GetCSPHost,
+  }
+}
 
 export const loadCloudServiceProvidersAsync = () => async (
   dispatch: Dispatch<any>
@@ -337,5 +349,63 @@ export const deleteCloudServiceProviderAsync = (id: string) => async (
   } catch (error) {
     dispatch(errorThrown(error))
     throw error
+  }
+}
+
+// export const getCSPHostsApi = async (
+//   pUrl: string,
+//   pToken: string,
+//   pCsps: any[]
+// ) => {
+//   try {
+//     const {data} = await getCSPHosts(pUrl, pToken, pCsps)
+
+//     console.log('getCSPHostsApi', data)
+
+//     return data
+//   } catch (error) {
+//     throw error
+//   }
+// }
+
+export const getCSPHostsAsync = (
+  pUrl: string,
+  pToken: string,
+  pCsps: any[]
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    console.log('getCSPHostsAsync')
+    const cspHosts = await getCSPHostsApi(pUrl, pToken, pCsps)
+
+    console.log('getCSPHostsAsync', cspHosts)
+
+    // let error = ''
+    // let resultCSP: any[] = pCsps
+
+    // _.map(cspHosts.return, (cspHost, index) => {
+    //   if (_.values(cspHost)[0] !== 'on' && _.values(cspHost)[0] !== 'off') {
+    //     if (error !== null) {
+    //       error += '\n'
+    //     }
+    //     error +=
+    //       `[${pCsps[index].region}] ` + JSON.stringify(_.values(cspHost)[0])
+
+    //       resultCSP[index].powerStatus = ''
+    //   } else {
+    //     resultCSP[index].powerStatus = _.values(cspHost)[0]
+    //   }
+    // })
+
+    // if (!_.isEmpty(error)) {
+    //   const notify = bindActionCreators(notifyAction, dispatch)
+    //   notify(notifyIpmiConnectionFailed(Error(error)))
+    //   console.error(error)
+    // }
+
+    dispatch(getIpmiStatusAction())
+    return cspHosts
+  } catch (error) {
+    console.error(error)
+    dispatch(errorThrown(error))
   }
 }

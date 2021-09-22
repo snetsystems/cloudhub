@@ -32,7 +32,6 @@ import {
   getMeasurementsForHost,
   getCpuAndLoadForInstances,
   getAppsForInstances,
-  getCSPHostsApi,
   paramsCreateCSP,
   paramsUpdateCSP,
   getAppsForInstance,
@@ -84,7 +83,10 @@ import {timeRanges} from 'src/shared/data/timeRanges'
 import * as QueriesModels from 'src/types/queries'
 import * as AppActions from 'src/types/actions/app'
 
-import {loadCloudServiceProvidersAsync} from 'src/hosts/actions'
+import {
+  loadCloudServiceProvidersAsync,
+  getCSPHostsAsync,
+} from 'src/hosts/actions'
 
 interface Instance {
   provider: string
@@ -104,6 +106,11 @@ interface Props extends ManualRefreshProps {
   handleClickPresentationButton: AppActions.DelayEnablePresentationModeDispatcher
   inPresentationMode: boolean
   handleLoadCspsAsync: () => Promise<any>
+  handleGetCSPHostsAsync: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    pCsp: any[]
+  ) => Promise<any>
 }
 
 interface State {
@@ -136,6 +143,10 @@ export class HostsPage extends PureComponent<Props, State> {
   private secretKey = _.find(
     this.props.links.addons,
     addon => addon.name === AddonType.ipmiSecretKey
+  )
+  private salt = _.find(
+    this.props.links.addons,
+    addon => addon.name === AddonType.salt
   )
 
   constructor(props: Props) {
@@ -590,7 +601,6 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   private renderGraph = () => {
-    console.log('renderGraph')
     const {source, manualRefresh} = this.props
     const {
       filteredLayouts,
@@ -665,7 +675,6 @@ export class HostsPage extends PureComponent<Props, State> {
           : 0
       })
 
-    console.log('filteredLayouts: ', filteredLayouts)
     return {filteredLayouts}
   }
 
@@ -803,49 +812,58 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   private fetchCspHostsData = async (layouts: Layout[]): Promise<void> => {
-    const {handleLoadCspsAsync, source, links, notify} = this.props
+    const {
+      handleLoadCspsAsync,
+      source,
+      links,
+      notify,
+      handleGetCSPHostsAsync,
+    } = this.props
 
-    const dbResp = await handleLoadCspsAsync()
+    const dbResp: any[] = await handleLoadCspsAsync()
+    const newDbResp = _.map(dbResp, resp => {
+      const {secretkey} = resp
+      const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
+      const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
 
-    const accessCsps = _.map(dbResp, csp => {
-      const decryptedBytes = CryptoJS.AES.decrypt(
-        csp.secretkey,
-        this.secretKey.url
-      )
-      const originalSecretKey = decryptedBytes.toString(CryptoJS.enc.Utf8)
-      csp = {
-        ...csp,
-        provider: csp.provider.toLowerCase(),
-        secretKey: originalSecretKey,
+      resp = {
+        ...resp,
+        secretkey: originalSecretkey,
       }
-      console.log('csp: ', csp)
-      return csp
+
+      return resp
     })
 
-    let getSaltCSPs = await getCSPHostsApi('', '', accessCsps)
+    let getSaltCSPs = await handleGetCSPHostsAsync(
+      this.salt.url,
+      this.salt.token,
+      newDbResp
+    )
+
     let newCSPs = []
 
-    getSaltCSPs = _.map(getSaltCSPs, getSaltCSP => _.get(getSaltCSP, 'local'))
+    getSaltCSPs = _.map(
+      getSaltCSPs.return,
+      getSaltCSP => _.values(getSaltCSP)[0]
+    )
 
-    _.forEach(accessCsps, accessCsp => {
+    _.forEach(newDbResp, (accessCsp, index) => {
       const {id, organization, provider, region} = accessCsp
-      const csp = getSaltCSPs.map((cspsRegion: any[]): any[] => {
-        cspsRegion = cspsRegion.map(cspHost => {
-          cspHost = {
-            ...cspHost,
-            Csp: {id, organization, provider, region},
-          }
+      let csp = []
 
-          return cspHost
-        })
+      if (Object.keys(getSaltCSPs[index]).includes('error')) return
 
-        return cspsRegion
+      let cspRegion = []
+      _.forEach(getSaltCSPs[index], cspHost => {
+        if (!cspHost) return
+        const host = {...cspHost, Csp: {id, organization, provider, region}}
+        cspRegion.push(host)
       })
+
+      csp.push(cspRegion)
 
       newCSPs.push(csp)
     })
-
-    console.log('newCSPs', newCSPs)
 
     const envVars = await getEnv(links.environment)
     const telegrafSystemInterval = getDeep<string>(
@@ -934,11 +952,11 @@ const mdtp = dispatch => ({
     dispatch
   ),
   notify: bindActionCreators(notifyAction, dispatch),
-
   handleLoadCspsAsync: bindActionCreators(
     loadCloudServiceProvidersAsync,
     dispatch
   ),
+  handleGetCSPHostsAsync: bindActionCreators(getCSPHostsAsync, dispatch),
 })
 
 export default connect(mstp, mdtp, null)(ManualRefresh<Props>(HostsPage))

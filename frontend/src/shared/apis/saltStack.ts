@@ -921,22 +921,28 @@ export async function getCSPHosts(
   pCSPs: any[]
 ): Promise<any> {
   try {
-    const params = {}
-    // const result = await apiRequest(pUrl, pToken, params, 'application/x-yaml')
-    // return result
+    let params = []
 
-    return new Promise(resolve => {
-      console.log('getCSPInstances request params: ', {pUrl, pToken, pCSPs})
-
-      const {local}: {local: []} = yaml.safeLoad(saltDetailsDummy)
-      let res = []
-      for (let i = 0; i < pCSPs.length; i++) {
-        res.push([])
-        res[i].push(local)
+    _.map(pCSPs, pCSP => {
+      const param = {
+        token: pToken,
+        eauth: 'pam',
+        client: 'local',
+        fun: 'boto_ec2.describe_instances',
+        tgt_type: 'glob',
+        tgt: 'saltdev',
+        kwarg: {
+          region: pCSP.region,
+          keyid: pCSP.accesskey,
+          key: pCSP.secretkey,
+        },
       }
-
-      return resolve({data: res})
+      params = [...params, param]
     })
+
+    const result = await apiRequestMulti(pUrl, params, 'application/x-yaml')
+
+    return result
   } catch (error) {
     console.error(error)
     throw error
