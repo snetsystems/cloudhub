@@ -55,6 +55,7 @@ func TestCSPID(t *testing.T) {
 							AccessKey:    "DUEJDJ+KEJDN",
 							SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
 							Organization: "76",
+							Minion:       "minion01",
 						}, nil
 					},
 				},
@@ -62,7 +63,7 @@ func TestCSPID(t *testing.T) {
 			id:              "547",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"547","provider":"AWS","links":{"self":"/cloudhub/v1/csp/547"},"region":"seoul","accesskey":"DUEJDJ+KEJDN","secretkey":"WOWCMSG+KEUCBWDKC+WUCN","organization":"76"}`,
+			wantBody:        `{"id":"547","provider":"AWS","links":{"self":"/cloudhub/v1/csp/547"},"region":"seoul","accesskey":"DUEJDJ+KEJDN","secretkey":"WOWCMSG+KEUCBWDKC+WUCN","organization":"76","minion":"minion01"}`,
 		},
 	}
 
@@ -143,6 +144,7 @@ func TestCSP(t *testing.T) {
 								AccessKey:    "DUEJDJ+KEJDN",
 								SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
 								Organization: "76",
+								Minion:       "minion01",
 							},
 							{
 								ID:           "8367",
@@ -151,6 +153,7 @@ func TestCSP(t *testing.T) {
 								AccessKey:    "XXCIEJRJ+KEUR",
 								SecretKey:    "QOPSMCBDGE+KEICYWLC+KEUICHSJSN",
 								Organization: "32",
+								Minion:       "minion02",
 							},
 						}, nil
 					},
@@ -166,7 +169,7 @@ func TestCSP(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"links":{"self":"/cloudhub/v1/csp"},"CSPs":[{"id":"547","provider":"AWS","links":{"self":"/cloudhub/v1/csp/547"},"region":"seoul","accesskey":"DUEJDJ+KEJDN","secretkey":"WOWCMSG+KEUCBWDKC+WUCN","organization":"76"},{"id":"8367","provider":"GCP","links":{"self":"/cloudhub/v1/csp/8367"},"region":"seoul","accesskey":"XXCIEJRJ+KEUR","secretkey":"QOPSMCBDGE+KEICYWLC+KEUICHSJSN","organization":"32"}]}`,
+			wantBody:        `{"links":{"self":"/cloudhub/v1/csp"},"CSPs":[{"id":"547","provider":"AWS","links":{"self":"/cloudhub/v1/csp/547"},"region":"seoul","accesskey":"DUEJDJ+KEJDN","secretkey":"WOWCMSG+KEUCBWDKC+WUCN","organization":"76","minion":"minion01"},{"id":"8367","provider":"GCP","links":{"self":"/cloudhub/v1/csp/8367"},"region":"seoul","accesskey":"XXCIEJRJ+KEUR","secretkey":"QOPSMCBDGE+KEICYWLC+KEUICHSJSN","organization":"32","minion":"minion02"}]}`,
 		},
 	}
 
@@ -247,6 +250,7 @@ func TestUpdateCSP(t *testing.T) {
 							AccessKey:    "DUEJDJ+KEJDN",
 							SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
 							Organization: "76",
+							Minion:       "minion01",
 						}, nil
 					},
 					AllF: func(ctx context.Context) ([]cloudhub.CSP, error) {
@@ -258,6 +262,7 @@ func TestUpdateCSP(t *testing.T) {
 								AccessKey:    "DUEJDJ+KEJDN",
 								SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
 								Organization: "76",
+								Minion:       "minion01",
 							},
 							{
 								ID:           "8367",
@@ -266,6 +271,7 @@ func TestUpdateCSP(t *testing.T) {
 								AccessKey:    "XXCIEJRJ+KEUR",
 								SecretKey:    "QOPSMCBDGE+KEICYWLC+KEUICHSJSN",
 								Organization: "32",
+								Minion:       "minion02",
 							},
 						}, nil
 					},
@@ -282,7 +288,7 @@ func TestUpdateCSP(t *testing.T) {
 			id:              "547",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"547","provider":"AWS","links":{"self":"/cloudhub/v1/csp/547"},"region":"china","accesskey":"DUEJDJ+KEJDN","secretkey":"WOWCMSG+KEUCBWDKC+WUCN","organization":"76"}`,
+			wantBody:        `{"id":"547","provider":"AWS","links":{"self":"/cloudhub/v1/csp/547"},"region":"china","accesskey":"DUEJDJ+KEJDN","secretkey":"WOWCMSG+KEUCBWDKC+WUCN","organization":"76","minion":"minion01"}`,
 		},
 		{
 			name: "Update CSP - nothing to update",
@@ -309,6 +315,7 @@ func TestUpdateCSP(t *testing.T) {
 							AccessKey:    "DUEJDJ+KEJDN",
 							SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
 							Organization: "76",
+							Minion:       "minion01",
 						}, nil
 					},
 					AllF: func(ctx context.Context) ([]cloudhub.CSP, error) {
@@ -320,6 +327,7 @@ func TestUpdateCSP(t *testing.T) {
 								AccessKey:    "DUEJDJ+KEJDN",
 								SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
 								Organization: "76",
+								Minion:       "minion01",
 							},
 							{
 								ID:           "8367",
@@ -328,6 +336,7 @@ func TestUpdateCSP(t *testing.T) {
 								AccessKey:    "XXCIEJRJ+KEUR",
 								SecretKey:    "QOPSMCBDGE+KEICYWLC+KEUICHSJSN",
 								Organization: "32",
+								Minion:       "minion02",
 							},
 						}, nil
 					},
@@ -366,6 +375,7 @@ func TestUpdateCSP(t *testing.T) {
 							AccessKey:    "DUEJDJ+KEJDN",
 							SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
 							Organization: "76",
+							Minion:       "minion01",
 						}, nil
 					},
 					AllF: func(ctx context.Context) ([]cloudhub.CSP, error) {
@@ -377,6 +387,7 @@ func TestUpdateCSP(t *testing.T) {
 								AccessKey:    "DUEJDJ+KEJDN",
 								SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
 								Organization: "76",
+								Minion:       "minion01",
 							},
 							{
 								ID:           "8367",
@@ -385,6 +396,7 @@ func TestUpdateCSP(t *testing.T) {
 								AccessKey:    "XXCIEJRJ+KEUR",
 								SecretKey:    "QOPSMCBDGE+KEICYWLC+KEUICHSJSN",
 								Organization: "32",
+								Minion:       "minion02",
 							},
 						}, nil
 					},
@@ -431,6 +443,7 @@ func TestUpdateCSP(t *testing.T) {
 							AccessKey:    "DUEJDJ+KEJDN",
 							SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
 							Organization: "76",
+							Minion:       "minion01",
 						}, nil
 					},
 					AllF: func(ctx context.Context) ([]cloudhub.CSP, error) {
@@ -442,6 +455,7 @@ func TestUpdateCSP(t *testing.T) {
 								AccessKey:    "DUEJDJ+KEJDN",
 								SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
 								Organization: "76",
+								Minion:       "minion01",
 							},
 							{
 								ID:           "8367",
@@ -450,6 +464,7 @@ func TestUpdateCSP(t *testing.T) {
 								AccessKey:    "XXCIEJRJ+KEUR",
 								SecretKey:    "QOPSMCBDGE+KEICYWLC+KEUICHSJSN",
 								Organization: "32",
+								Minion:       "minion02",
 							},
 						}, nil
 					},
@@ -466,7 +481,7 @@ func TestUpdateCSP(t *testing.T) {
 			id:              "547",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"547","provider":"AWS","links":{"self":"/cloudhub/v1/csp/547"},"region":"seoul","accesskey":"OCELEICJS+JEUDHGHG","secretkey":"CVC+LFOEWYU++KFYUWCLCOEJDMNCFVMCVJ","organization":"76"}`,
+			wantBody:        `{"id":"547","provider":"AWS","links":{"self":"/cloudhub/v1/csp/547"},"region":"seoul","accesskey":"OCELEICJS+JEUDHGHG","secretkey":"CVC+LFOEWYU++KFYUWCLCOEJDMNCFVMCVJ","organization":"76","minion":"minion01"}`,
 		},
 		{
 			name: "Update CSP - invalid update",
@@ -580,6 +595,7 @@ func TestRemoveCSP(t *testing.T) {
 							AccessKey:    "DUEJDJ+KEJDN",
 							SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
 							Organization: "76",
+							Minion:       "minion01",
 						}, nil
 						default:
 							return &cloudhub.CSP{}, fmt.Errorf("CSP with ID %s not found", *q.ID)
@@ -655,6 +671,7 @@ func TestNewCSP(t *testing.T) {
 					Region:    "seoul",
 					Accesskey: "CLWEIDNCSLFDJSDL",
 					Secretkey: "ZNCVLKJAHSDLFHJASIFOASDHFA",
+					Minion:    "minion01",
 				},
 			},
 			fields: fields{
@@ -668,6 +685,7 @@ func TestNewCSP(t *testing.T) {
 							AccessKey:    "CLWEIDNCSLFDJSDL",
 							SecretKey:    "ZNCVLKJAHSDLFHJASIFOASDHFA",
 							Organization: "88",
+							Minion:       "minion01",
 						}, nil
 					},
 					AllF: func(ctx context.Context) ([]cloudhub.CSP, error) {
@@ -678,7 +696,8 @@ func TestNewCSP(t *testing.T) {
 								Region:       "seoul",
 								AccessKey:    "CLWEIDNCSLFDJSDL",
 								SecretKey:    "ZNCVLKJAHSDLFHJASIFOASDHFA",
-								Organization: "88",
+								Organization: "43",
+								Minion:       "minion02",
 							},
 						}, nil
 					},
@@ -694,7 +713,7 @@ func TestNewCSP(t *testing.T) {
 			},
 			wantStatus:      http.StatusCreated,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"46","provider":"Azure","links":{"self":"/cloudhub/v1/csp/46"},"region":"seoul","accesskey":"CLWEIDNCSLFDJSDL","secretkey":"ZNCVLKJAHSDLFHJASIFOASDHFA","organization":"88"}`,
+			wantBody:        `{"id":"46","provider":"Azure","links":{"self":"/cloudhub/v1/csp/46"},"region":"seoul","accesskey":"CLWEIDNCSLFDJSDL","secretkey":"ZNCVLKJAHSDLFHJASIFOASDHFA","organization":"88","minion":"minion01"}`,
 		},
 		{
 			name: "Fail to create CSP - no provider",
@@ -718,6 +737,7 @@ func TestNewCSP(t *testing.T) {
 							AccessKey:    "CLWEIDNCSLFDJSDL",
 							SecretKey:    "ZNCVLKJAHSDLFHJASIFOASDHFA",
 							Organization: "88",
+							Minion:       "minion01",
 						}, nil
 					},
 				},
@@ -747,6 +767,7 @@ func TestNewCSP(t *testing.T) {
 					Provider:  "Azure",
 					Region:    "seoul",
 					Accesskey: "CLWEIDNCSLFDJSDL",
+					Minion:    "minion01",
 				},
 			},
 			fields: fields{
@@ -760,6 +781,7 @@ func TestNewCSP(t *testing.T) {
 							AccessKey:    "CLWEIDNCSLFDJSDL",
 							SecretKey:    "ZNCVLKJAHSDLFHJASIFOASDHFA",
 							Organization: "88",
+							Minion:       "minion01",
 						}, nil
 					},
 				},

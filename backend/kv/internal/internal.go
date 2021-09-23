@@ -989,6 +989,7 @@ func MarshalCSP(t *cloudhub.CSP) ([]byte, error) {
 		AccessKey:            t.AccessKey,
 		SecretKey:            t.SecretKey,
 		Organization:         t.Organization,
+		Minion:               t.Minion,
 	})
 }
 
@@ -1005,6 +1006,7 @@ func UnmarshalCSP(data []byte, t *cloudhub.CSP) error {
 	t.AccessKey = pb.AccessKey
 	t.SecretKey = pb.SecretKey
 	t.Organization = pb.Organization
+	t.Minion = pb.Minion
 
 	return nil
 }

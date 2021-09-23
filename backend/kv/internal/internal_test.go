@@ -539,6 +539,7 @@ func TestMarshalCSP(t *testing.T) {
 		AccessKey:    "SDKDSIWJD8373",
 		SecretKey:    "OCUWJW++DIE3JD+2KDHWH",
 		Organization: "8373476",
+		Minion:       "minion",
 	}
 
 	var vv cloudhub.CSP

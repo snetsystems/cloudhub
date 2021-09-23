@@ -21,20 +21,22 @@ func TestCSPStore(t *testing.T) {
 
 	csps := []cloudhub.CSP{
 		{
-			ID:           "",
-			Provider:     "AWS",
-			Region:       "seoul",
-			AccessKey:    "DKCICJD837RJCUWH",
-			SecretKey:    "KLDJWHWJ+SKDFUEH8334342DCG",
+			ID: "",
+			Provider: "AWS",
+			Region: "seoul",
+			AccessKey: "DKCICJD837RJCUWH",
+			SecretKey: "KLDJWHWJ+SKDFUEH8334342DCG",
 			Organization: "133",
+			Minion: "minion_01",
 		},
 		{
-			ID:           "",
-			Provider:     "GOOGLE",
-			Region:       "usa",
-			AccessKey:    "ELDFODFBWMFDS83763UYDJKC",
-			SecretKey:    "LKWEJDSI9+37DJDFSHJEWKDSF",
+			ID: "",
+			Provider: "GOOGLE",
+			Region: "usa",
+			AccessKey: "ELDFODFBWMFDS83763UYDJKC",
+			SecretKey: "LKWEJDSI9+37DJDFSHJEWKDSF",
 			Organization: "226541",
+			Minion: "minion_02",
 		},
 	}
 
