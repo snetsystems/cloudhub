@@ -847,6 +847,7 @@ export const loadCloudServiceProviderAPI = async (id: string) => {
 }
 
 export const createCloudServiceProviderAPI = async ({
+  minion,
   provider,
   region,
   accesskey,
@@ -854,6 +855,7 @@ export const createCloudServiceProviderAPI = async ({
 }) => {
   try {
     const {data} = await createCloudServiceProvider({
+      minion,
       provider,
       region,
       accesskey,
@@ -878,7 +880,12 @@ export const updateCloudServiceProviderAPI = async (
   try {
     const {data} = await updateCloudServiceProvider(params)
 
-    return data
+    const newData = {
+      ...data,
+      provider: data.provider.toLowerCase(),
+    }
+
+    return newData
   } catch (error) {
     console.error(error)
     throw error
@@ -908,6 +915,7 @@ export const loadCloudServiceProvider = async (url: string) => {
 }
 
 export interface paramsCreateCSP {
+  minion: string
   provider: CloudServiceProvider
   region: string
   accesskey: string
@@ -915,6 +923,7 @@ export interface paramsCreateCSP {
 }
 
 export const createCloudServiceProvider = async ({
+  minion,
   provider,
   region,
   accesskey,
@@ -927,7 +936,7 @@ export const createCloudServiceProvider = async ({
     return await AJAX({
       url: `/cloudhub/v1/csp`,
       method: 'POST',
-      data: {provider: newProvider, region, accesskey, secretkey},
+      data: {minion, provider: newProvider, region, accesskey, secretkey},
     })
   } catch (error) {
     console.error(error)
@@ -937,12 +946,15 @@ export const createCloudServiceProvider = async ({
 
 export interface paramsUpdateCSP {
   id: string
+  minion: string
+  region: string
   accesskey: string
   secretkey: string
 }
 
 export const updateCloudServiceProvider = async ({
   id,
+  minion,
   accesskey,
   secretkey,
 }: paramsUpdateCSP) => {
@@ -950,7 +962,7 @@ export const updateCloudServiceProvider = async ({
     return await AJAX({
       url: `/cloudhub/v1/csp/${id}`,
       method: 'PATCH',
-      data: {accesskey, secretkey},
+      data: {minion, accesskey, secretkey},
     })
   } catch (error) {
     console.error(error)

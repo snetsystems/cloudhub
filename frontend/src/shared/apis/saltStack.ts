@@ -930,7 +930,7 @@ export async function getCSPHosts(
         client: 'local',
         fun: 'boto_ec2.describe_instances',
         tgt_type: 'glob',
-        tgt: 'saltdev',
+        tgt: pCSP.minion,
         kwarg: {
           region: pCSP.region,
           keyid: pCSP.accesskey,

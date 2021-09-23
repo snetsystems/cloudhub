@@ -170,8 +170,8 @@ export class HostsPage extends PureComponent<Props, State> {
       proportions: [0.43, 0.57],
       selected: {lower: '', upper: ''},
       isVsphere: false,
-      // activeEditorTab: 'InventoryTopology',
-      activeEditorTab: 'Host',
+      activeEditorTab: 'InventoryTopology',
+      // activeEditorTab: 'Host',
       selectedAgent: 'ALL',
       itemCSPs: ['Private'],
       activeCspTab: 'Private',
@@ -851,7 +851,11 @@ export class HostsPage extends PureComponent<Props, State> {
       const {id, organization, provider, region} = accessCsp
       let csp = []
 
-      if (Object.keys(getSaltCSPs[index]).includes('error')) return
+      if (
+        Object.keys(getSaltCSPs[index]).includes('error') ||
+        typeof getSaltCSPs[index] === 'string'
+      )
+        return
 
       let cspRegion = []
       _.forEach(getSaltCSPs[index], cspHost => {
@@ -882,8 +886,6 @@ export class HostsPage extends PureComponent<Props, State> {
         tempVars,
         newCSPs
       )
-
-      console.log('instancesObject', instancesObject)
 
       if (!instancesObject) {
         throw new Error(hostsError)

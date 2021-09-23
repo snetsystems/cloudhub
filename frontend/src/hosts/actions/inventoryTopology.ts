@@ -305,6 +305,7 @@ export const loadCloudServiceProviderAsync = (id: string) => async (
 }
 
 export const createCloudServiceProviderAsync = ({
+  minion,
   provider,
   region,
   accesskey,
@@ -312,6 +313,7 @@ export const createCloudServiceProviderAsync = ({
 }) => async (dispatch: Dispatch<any>) => {
   try {
     const data = await createCloudServiceProviderAPI({
+      minion,
       provider,
       region,
       accesskey,
@@ -352,60 +354,16 @@ export const deleteCloudServiceProviderAsync = (id: string) => async (
   }
 }
 
-// export const getCSPHostsApi = async (
-//   pUrl: string,
-//   pToken: string,
-//   pCsps: any[]
-// ) => {
-//   try {
-//     const {data} = await getCSPHosts(pUrl, pToken, pCsps)
-
-//     console.log('getCSPHostsApi', data)
-
-//     return data
-//   } catch (error) {
-//     throw error
-//   }
-// }
-
 export const getCSPHostsAsync = (
   pUrl: string,
   pToken: string,
   pCsps: any[]
 ) => async (dispatch: Dispatch<Action>) => {
   try {
-    console.log('getCSPHostsAsync')
     const cspHosts = await getCSPHostsApi(pUrl, pToken, pCsps)
-
-    console.log('getCSPHostsAsync', cspHosts)
-
-    // let error = ''
-    // let resultCSP: any[] = pCsps
-
-    // _.map(cspHosts.return, (cspHost, index) => {
-    //   if (_.values(cspHost)[0] !== 'on' && _.values(cspHost)[0] !== 'off') {
-    //     if (error !== null) {
-    //       error += '\n'
-    //     }
-    //     error +=
-    //       `[${pCsps[index].region}] ` + JSON.stringify(_.values(cspHost)[0])
-
-    //       resultCSP[index].powerStatus = ''
-    //   } else {
-    //     resultCSP[index].powerStatus = _.values(cspHost)[0]
-    //   }
-    // })
-
-    // if (!_.isEmpty(error)) {
-    //   const notify = bindActionCreators(notifyAction, dispatch)
-    //   notify(notifyIpmiConnectionFailed(Error(error)))
-    //   console.error(error)
-    // }
-
-    dispatch(getIpmiStatusAction())
+    dispatch(getCSPHostAction())
     return cspHosts
   } catch (error) {
-    console.error(error)
     dispatch(errorThrown(error))
   }
 }
