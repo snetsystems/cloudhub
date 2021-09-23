@@ -321,7 +321,7 @@ interface State {
     region: string
     provider: CloudServiceProvider
     organization: string
-    data: {}
+    data: any[]
   }[]
   cloudGetDatas: any
 }
@@ -1094,6 +1094,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         const region = _.get(instanceData, 'region')
         const instanceid = _.get(instanceData, 'instanceid')
         const instancename = _.get(instanceData, 'label')
+
         this.setState({
           focusedInstance: {provider, region, instanceid, instancename},
           focusedHost: null,
@@ -1621,9 +1622,6 @@ class InventoryTopology extends PureComponent<Props, State> {
                     selected={this.state.selected}
                     className="dropdown-sm"
                     disabled={false}
-                    // onClick={() => {
-                    //   this.handleFocusedBtnName({selected: this.state.selected})
-                    // }}
                   />
                 </>
               )}
@@ -1632,7 +1630,7 @@ class InventoryTopology extends PureComponent<Props, State> {
           </Page.Header>
           <Page.Contents scrollable={true}>
             {this.state.activeEditorTab === 'details' ? (
-              <TopologyDetails selectInstanceData={} />
+              <TopologyDetails selectInstanceData={this.getInstanceData()} />
             ) : null}
             {this.state.activeEditorTab === 'monitoring'
               ? this.renderGraph()
@@ -1642,7 +1640,101 @@ class InventoryTopology extends PureComponent<Props, State> {
       </>
     )
   }
+  private getInstanceData = () => {
+    const {cloudAccessInfos, focusedInstance} = this.state
+    let instanceData = {}
 
+    if (_.isEmpty(cloudAccessInfos) || _.isEmpty(focusedInstance)) {
+      return instanceData
+    }
+
+    const accessInfo = _.find(
+      cloudAccessInfos,
+      c =>
+        c.provider === focusedInstance.provider &&
+        c.region === focusedInstance.region
+    )
+
+    const getData = _.filter(accessInfo.data, d =>
+      _.isNull(d) ? false : d.InstanceId === focusedInstance.instanceid
+    )
+
+    _.reduce(
+      getData,
+      (_, current) => {
+        const instance = {
+          Instance_summary: {
+            Instance_ID: current.InstanceId,
+            Public_IPv4_address:
+              current.NetworkInterfaces[0].Association?.PublicIp,
+            Private_IPv4_addresses: current.PrivateIpAddress,
+            IPv6_address: current.NetworkInterfaces[0].Ipv6Addresses,
+            Instance_state: current.State.Name,
+            Public_IPv4_DNS: '',
+            Private_IPv4_DNS: '',
+            Instance_type: current.InstanceType,
+            Elastic_IP_addresses: '',
+            VPC_ID: current.VpcId,
+            AWS_Compute_Optimizer_finding: '',
+            IAM_Role: '',
+            Subnet_ID: current.SubnetId,
+          },
+          Instance_details: {
+            Platform: 'value',
+            AMI_ID: current.ImageId,
+            Monitoring: current.Monitoring.disabled,
+            Platform_details: 'value',
+            AMI_name: 'value',
+            Termination_protection: 'value',
+            Launch_time: current.LaunchTime.toString(),
+            AMI_location: 'value',
+            Lifecycle: 'value',
+            'Stop-hibernate_behavior': 'value',
+            AMI_Launch_index: current.AmiLaunchIndex,
+            Key_pair_name: current.KeyName,
+            State_transition_reason: 'value',
+            Credit_specification: 'value',
+            Kernel_ID: 'value',
+            State_transition_message: 'value',
+            Usage_operation: 'value',
+            RAM_disk_ID: 'value',
+            Owner: current.OwnerId,
+            Enclaves_Support: 'value',
+            Boot_mode: 'value',
+          },
+          Host_and_placement_group: {
+            Host_ID: 'value',
+            Affinity: 'value',
+            Placement_group: 'value',
+            Host_resource_group_name: 'value',
+            Tenancy: current.Placement.Tenancy,
+            Partition_number: 'value',
+            Virtualization_type: current.VirtualizationType,
+            Reservation: 'value',
+            Number_of_vCPUs: current.CpuOptions.CoreCount,
+          },
+          Capacity_reservation: {
+            Capacity_Reservation_ID: 'value',
+            Capacity_Reservation_setting:
+              current.CapacityReservationSpecification
+                .CapacityReservationPreference,
+          },
+          Accelerators: {
+            Elastic_inference_accelerator_ID: 'value',
+          },
+        }
+
+        instanceData = {
+          ...instance,
+        }
+
+        return false
+      },
+      {}
+    )
+
+    return instanceData
+  }
   private getHandleOnChoose = (selectItem: {text: string}) => {
     this.setState({selected: selectItem.text})
   }
@@ -1684,9 +1776,6 @@ class InventoryTopology extends PureComponent<Props, State> {
       secretkey: cloudSecretKey,
       minion: cloudTargetMinion,
     }
-
-    // const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
-    //   const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
 
     const decryptedBytes = CryptoJS.AES.decrypt(
       cloudSecretKey,
@@ -2294,6 +2383,8 @@ class InventoryTopology extends PureComponent<Props, State> {
     )
 
     _.forEach(dbResp, (dResp, index) => {
+      if (_.isUndefined(saltResp)) return
+
       dResp['data'] =
         _.values(saltResp.return[index])[0].length > 0
           ? _.values(saltResp.return[index])[0]
