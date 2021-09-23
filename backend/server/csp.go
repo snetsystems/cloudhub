@@ -19,6 +19,7 @@ type cspRequest struct {
 	Region       string     `json:"region"`
 	Accesskey    string     `json:"accesskey"`
 	Secretkey    string     `json:"secretkey"`
+	Minion       string     `json:"minion"`
 }
 
 func (r *cspRequest) ValidCreate() error {
@@ -39,20 +40,20 @@ func (r *cspRequest) ValidCreate() error {
 	if r.Secretkey == "" {
 		return fmt.Errorf("secretkey required CSP request body")
 	}
+	if r.Minion == "" {
+		return fmt.Errorf("minion required CSP request body")
+	}
 
 	return nil
 }
 
 func (r *cspRequest) ValidUpdate() error {
-	if r.Region == "" && r.Secretkey == "" && r.Accesskey == "" {
+	if r.Region == "" && r.Secretkey == "" && r.Accesskey == "" && r.Minion == "" {
 		return fmt.Errorf("No fields to update")
 	}
 
 	if r.Provider != ""  {
 		return fmt.Errorf("Provider cannot be changed")
-		// if !supportedProvider(r.Provider) {
-		// 	return fmt.Errorf("provider is not supported")
-		// }
 	}
 
 	return nil
@@ -65,6 +66,7 @@ type cspResponse struct {
 	Accesskey    string     `json:"accesskey"`
 	Secretkey    string     `json:"secretkey"`
 	Organization string     `json:"organization"`
+	Minion       string     `json:"minion"`
 	Links        selfLinks  `json:"links"`
 }
 
@@ -79,6 +81,7 @@ func newCSPResponse(csp *cloudhub.CSP) *cspResponse {
 		Accesskey:    csp.AccessKey,
 		Secretkey:    csp.SecretKey,
 		Organization: csp.Organization,
+		Minion:       csp.Minion,
 		Links:        selfLinks{Self: selfLink},
 	}
 
@@ -164,6 +167,7 @@ func (s *Service) NewCSP(w http.ResponseWriter, r *http.Request) {
 		AccessKey:    req.Accesskey,
 		SecretKey:    req.Secretkey,
 		Organization: defaultOrg.ID,
+		Minion:       req.Minion,
 	}
 
 
@@ -241,11 +245,6 @@ func (s *Service) UpdateCSP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	// provider cannot be changed
-	// if req.Provider != "" {
-	// 	oriCSP.Provider = req.Provider
-	// }
-
 	if req.Region != "" {
 		oriCSP.Region = req.Region
 
@@ -260,6 +259,9 @@ func (s *Service) UpdateCSP(w http.ResponseWriter, r *http.Request) {
 	}
 	if req.Secretkey != "" {
 		oriCSP.SecretKey = req.Secretkey
+	}
+	if req.Minion != "" {
+		oriCSP.Minion = req.Minion
 	}
 
 	if err := s.Store.CSP(ctx).Update(ctx, oriCSP); err != nil {

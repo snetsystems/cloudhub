@@ -16,6 +16,7 @@ import {
   updateCloudServiceProviderAPI,
   deleteCloudServiceProviderAPI,
   paramsUpdateCSP,
+  getCSPHostsApi,
 } from 'src/hosts/apis'
 
 // Types
@@ -36,6 +37,7 @@ export enum ActionTypes {
   CreateCloudServiceProvider = 'CREATE_CLOUD_SERVICE_PROVIDER',
   UpdateCloudServiceProvider = 'UPDATE_CLOUD_SERVICE_PROVIDER',
   DeleteCloudServiceProvider = 'DELETE_CLOUD_SERVICE_PROVIDER',
+  GetCSPHost = 'GET_CSP_HOST',
 }
 
 export type Action =
@@ -48,6 +50,7 @@ export type Action =
   | CreateCloudServiceProviderAction
   | UpdateCloudServiceProviderAction
   | DeleteCloudServiceProviderAction
+  | GetCSPHostAction
 
 interface LoadInventoryTopologyAction {
   type: ActionTypes.LoadInventoryTopology
@@ -266,6 +269,15 @@ export const deleteCloudServiceProviderAction = (): DeleteCloudServiceProviderAc
     type: ActionTypes.DeleteCloudServiceProvider,
   }
 }
+interface GetCSPHostAction {
+  type: ActionTypes.GetCSPHost
+}
+
+export const getCSPHostAction = (): GetCSPHostAction => {
+  return {
+    type: ActionTypes.GetCSPHost,
+  }
+}
 
 export const loadCloudServiceProvidersAsync = () => async (
   dispatch: Dispatch<any>
@@ -293,6 +305,7 @@ export const loadCloudServiceProviderAsync = (id: string) => async (
 }
 
 export const createCloudServiceProviderAsync = ({
+  minion,
   provider,
   region,
   accesskey,
@@ -300,6 +313,7 @@ export const createCloudServiceProviderAsync = ({
 }) => async (dispatch: Dispatch<any>) => {
   try {
     const data = await createCloudServiceProviderAPI({
+      minion,
       provider,
       region,
       accesskey,
@@ -337,5 +351,19 @@ export const deleteCloudServiceProviderAsync = (id: string) => async (
   } catch (error) {
     dispatch(errorThrown(error))
     throw error
+  }
+}
+
+export const getCSPHostsAsync = (
+  pUrl: string,
+  pToken: string,
+  pCsps: any[]
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const cspHosts = await getCSPHostsApi(pUrl, pToken, pCsps)
+    dispatch(getCSPHostAction())
+    return cspHosts
+  } catch (error) {
+    dispatch(errorThrown(error))
   }
 }

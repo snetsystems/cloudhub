@@ -11,7 +11,7 @@ import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import Dropdown from 'src/shared/components/Dropdown'
 import HostsTable from 'src/hosts/components/HostsTable'
 import CspHostsTable from 'src/hosts/components/CspHostsTable'
-import HostLayoutRenderer from 'src/hosts/components/HostLayoutRenderer'
+import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import ManualRefresh, {
   ManualRefreshProps,
@@ -32,9 +32,10 @@ import {
   getMeasurementsForHost,
   getCpuAndLoadForInstances,
   getAppsForInstances,
-  getCSPHostsApi,
   paramsCreateCSP,
   paramsUpdateCSP,
+  getAppsForInstance,
+  getMeasurementsForInstance,
 } from 'src/hosts/apis'
 import {getEnv} from 'src/shared/apis/env'
 
@@ -82,8 +83,17 @@ import {timeRanges} from 'src/shared/data/timeRanges'
 import * as QueriesModels from 'src/types/queries'
 import * as AppActions from 'src/types/actions/app'
 
-import {loadCloudServiceProvidersAsync} from 'src/hosts/actions'
+import {
+  loadCloudServiceProvidersAsync,
+  getCSPHostsAsync,
+} from 'src/hosts/actions'
 
+interface Instance {
+  provider: string
+  region: string
+  instanceid: string
+  instancename: string
+}
 interface Props extends ManualRefreshProps {
   source: Source
   links: Links
@@ -96,6 +106,11 @@ interface Props extends ManualRefreshProps {
   handleClickPresentationButton: AppActions.DelayEnablePresentationModeDispatcher
   inPresentationMode: boolean
   handleLoadCspsAsync: () => Promise<any>
+  handleGetCSPHostsAsync: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    pCsp: any[]
+  ) => Promise<any>
 }
 
 interface State {
@@ -104,7 +119,7 @@ interface State {
   layouts: Layout[]
   filteredLayouts: Layout[]
   focusedHost: string
-  focusedCspHost: string
+  focusedInstance: Instance
   HostsTableStateDump: {}
   timeRange: TimeRange
   proportions: number[]
@@ -129,6 +144,10 @@ export class HostsPage extends PureComponent<Props, State> {
     this.props.links.addons,
     addon => addon.name === AddonType.ipmiSecretKey
   )
+  private salt = _.find(
+    this.props.links.addons,
+    addon => addon.name === AddonType.salt
+  )
 
   constructor(props: Props) {
     super(props)
@@ -145,15 +164,15 @@ export class HostsPage extends PureComponent<Props, State> {
       layouts: [],
       filteredLayouts: [],
       focusedHost: '',
-      focusedCspHost: '',
+      focusedInstance: null,
       HostsTableStateDump: {},
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       proportions: [0.43, 0.57],
       selected: {lower: '', upper: ''},
       isVsphere: false,
-      // activeEditorTab: 'InventoryTopology',
-      activeEditorTab: 'Host',
-      selectedAgent: 'All',
+      activeEditorTab: 'InventoryTopology',
+      // activeEditorTab: 'Host',
+      selectedAgent: 'ALL',
       itemCSPs: ['Private'],
       activeCspTab: 'Private',
       cloudAccessInfos: [],
@@ -223,7 +242,13 @@ export class HostsPage extends PureComponent<Props, State> {
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
     const {autoRefresh} = this.props
-    const {layouts, focusedHost, focusedCspHost, activeCspTab} = this.state
+    const {
+      layouts,
+      focusedHost,
+      focusedInstance,
+      activeCspTab,
+      selectedAgent,
+    } = this.state
 
     if (layouts) {
       if (prevState.focusedHost !== focusedHost) {
@@ -235,11 +260,14 @@ export class HostsPage extends PureComponent<Props, State> {
         this.setState({filteredLayouts})
       }
 
-      if (prevState.focusedCspHost !== focusedCspHost) {
+      if (
+        prevState.focusedInstance !== focusedInstance ||
+        (prevState.selectedAgent !== selectedAgent && focusedInstance)
+      ) {
         this.fetchCspHostsData(layouts)
-        const {filteredLayouts} = await this.getLayoutsforHost(
+        const {filteredLayouts} = await this.getLayoutsforInstance(
           layouts,
-          focusedCspHost
+          focusedInstance
         )
 
         this.setState({filteredLayouts})
@@ -488,7 +516,7 @@ export class HostsPage extends PureComponent<Props, State> {
       cloudHostsObject,
       activeCspTab,
       hostsPageStatus,
-      focusedCspHost,
+      focusedInstance,
     } = this.state
     const cloudHostObject = cloudHostsObject[activeCspTab]
 
@@ -518,7 +546,7 @@ export class HostsPage extends PureComponent<Props, State> {
         cloudHosts={cloudHosts}
         providerRegions={_.keys(cloudHostObject)}
         hostsPageStatus={hostsPageStatus}
-        focusedHost={this.state.focusedCspHost}
+        focusedInstance={this.state.focusedInstance}
         onClickTableRow={this.handleClickCspTableRow}
         tableTitle={this.tableTitle}
       />
@@ -556,9 +584,16 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   private onSetActiveCspTab(activeCspTab: string): void {
-    this.setState({
-      activeCspTab,
-    })
+    if (activeCspTab === 'aws' && this.state.focusedInstance === null) {
+      this.setState({
+        activeCspTab,
+        filteredLayouts: [],
+      })
+    } else {
+      this.setState({
+        activeCspTab,
+      })
+    }
   }
 
   private getHandleOnChoose = (selectItem: {text: string}) => {
@@ -570,6 +605,7 @@ export class HostsPage extends PureComponent<Props, State> {
     const {
       filteredLayouts,
       focusedHost,
+      focusedInstance,
       timeRange,
       activeCspTab,
       selectedAgent,
@@ -583,9 +619,9 @@ export class HostsPage extends PureComponent<Props, State> {
           <Page.Header>
             <Page.Header.Left>
               <>
-                <>Get from: </>
+                <span>Get from :</span>
                 <Dropdown
-                  items={['All', 'CloudWatch', 'Agent']}
+                  items={['ALL', 'CloudWatch', 'Within instances']}
                   onChoose={this.getHandleOnChoose}
                   selected={selectedAgent}
                   className="dropdown-sm"
@@ -597,7 +633,7 @@ export class HostsPage extends PureComponent<Props, State> {
           </Page.Header>
         ) : null}
         <Page.Contents>
-          <HostLayoutRenderer
+          <LayoutRenderer
             source={source}
             sources={[source]}
             isStatusPage={false}
@@ -607,12 +643,8 @@ export class HostsPage extends PureComponent<Props, State> {
             templates={tempVars}
             timeRange={timeRange}
             manualRefresh={manualRefresh}
-            host={
-              this.state.activeCspTab === 'Private'
-                ? this.state.focusedHost
-                : this.state.focusedCspHost
-            }
-            provider={activeCspTab}
+            host={activeCspTab === 'Private' ? focusedHost : ''}
+            instance={activeCspTab === 'aws' ? focusedInstance : null}
           />
         </Page.Contents>
       </>
@@ -643,8 +675,37 @@ export class HostsPage extends PureComponent<Props, State> {
           : 0
       })
 
-    console.log('filteredLayouts: ', filteredLayouts)
     return {filteredLayouts}
+  }
+
+  private async getLayoutsforInstance(layouts: Layout[], pInstance: Instance) {
+    const {instance, measurements} = await this.fetchInstancesAndMeasurements(
+      layouts,
+      pInstance
+    )
+    const layoutsWithinInstance = layouts.filter(layout => {
+      return (
+        instance.apps &&
+        instance.apps.includes(layout.app) &&
+        measurements.includes(layout.measurement)
+      )
+    })
+    const filteredLayouts = layoutsWithinInstance
+      .filter(layout => {
+        return (
+          layout.app === 'system' ||
+          layout.app === 'win_system' ||
+          layout.app === 'cloudwatch'
+        )
+      })
+      .sort((x, y) => {
+        return x.measurement < y.measurement
+          ? -1
+          : x.measurement > y.measurement
+          ? 1
+          : 0
+      })
+    return {instance, filteredLayouts}
   }
 
   private async fetchHostsData(layouts: Layout[]): Promise<void> {
@@ -722,45 +783,88 @@ export class HostsPage extends PureComponent<Props, State> {
     return {host, measurements}
   }
 
+  private async fetchInstancesAndMeasurements(
+    layouts: Layout[],
+    pInstance: Instance
+  ) {
+    const {source} = this.props
+    const {selectedAgent} = this.state
+
+    const fetchMeasurements = getMeasurementsForInstance(
+      source,
+      pInstance,
+      selectedAgent
+    )
+    const fetchInstances = getAppsForInstance(
+      source.links.proxy,
+      pInstance,
+      layouts,
+      source.telegraf,
+      selectedAgent
+    )
+
+    const [instance, measurements] = await Promise.all([
+      fetchInstances,
+      fetchMeasurements,
+    ])
+
+    return {instance, measurements}
+  }
+
   private fetchCspHostsData = async (layouts: Layout[]): Promise<void> => {
-    const {handleLoadCspsAsync, source, links, notify} = this.props
+    const {
+      handleLoadCspsAsync,
+      source,
+      links,
+      notify,
+      handleGetCSPHostsAsync,
+    } = this.props
 
-    const dbResp = await handleLoadCspsAsync()
+    const dbResp: any[] = await handleLoadCspsAsync()
+    const newDbResp = _.map(dbResp, resp => {
+      const {secretkey} = resp
+      const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
+      const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
 
-    const accessCsps = _.map(dbResp, csp => {
-      const decryptedBytes = CryptoJS.AES.decrypt(
-        csp.secretkey,
-        this.secretKey.url
-      )
-      const originalSecretKey = decryptedBytes.toString(CryptoJS.enc.Utf8)
-      csp = {
-        ...csp,
-        provider: csp.provider.toLowerCase(),
-        secretKey: originalSecretKey,
+      resp = {
+        ...resp,
+        secretkey: originalSecretkey,
       }
-      console.log('csp: ', csp)
-      return csp
+
+      return resp
     })
 
-    let getSaltCSPs = await getCSPHostsApi('', '', accessCsps)
+    let getSaltCSPs = await handleGetCSPHostsAsync(
+      this.salt.url,
+      this.salt.token,
+      newDbResp
+    )
+
     let newCSPs = []
 
-    getSaltCSPs = _.map(getSaltCSPs, getSaltCSP => _.get(getSaltCSP, 'local'))
+    getSaltCSPs = _.map(
+      getSaltCSPs.return,
+      getSaltCSP => _.values(getSaltCSP)[0]
+    )
 
-    _.forEach(accessCsps, accessCsp => {
+    _.forEach(newDbResp, (accessCsp, index) => {
       const {id, organization, provider, region} = accessCsp
-      const csp = getSaltCSPs.map((cspsRegion: any[]): any[] => {
-        cspsRegion = cspsRegion.map(cspHost => {
-          cspHost = {
-            ...cspHost,
-            Csp: {id, organization, provider, region},
-          }
+      let csp = []
 
-          return cspHost
-        })
+      if (
+        Object.keys(getSaltCSPs[index]).includes('error') ||
+        typeof getSaltCSPs[index] === 'string'
+      )
+        return
 
-        return cspsRegion
+      let cspRegion = []
+      _.forEach(getSaltCSPs[index], cspHost => {
+        if (!cspHost) return
+        const host = {...cspHost, Csp: {id, organization, provider, region}}
+        cspRegion.push(host)
       })
+
+      csp.push(cspRegion)
 
       newCSPs.push(csp)
     })
@@ -823,8 +927,8 @@ export class HostsPage extends PureComponent<Props, State> {
     this.setState({focusedHost: hostName})
   }
 
-  private handleClickCspTableRow = (hostName: string) => () => {
-    this.setState({focusedCspHost: hostName})
+  private handleClickCspTableRow = (focusedInstance: Instance) => () => {
+    this.setState({focusedInstance})
   }
 }
 
@@ -850,11 +954,11 @@ const mdtp = dispatch => ({
     dispatch
   ),
   notify: bindActionCreators(notifyAction, dispatch),
-
   handleLoadCspsAsync: bindActionCreators(
     loadCloudServiceProvidersAsync,
     dispatch
   ),
+  handleGetCSPHostsAsync: bindActionCreators(getCSPHostsAsync, dispatch),
 })
 
 export default connect(mstp, mdtp, null)(ManualRefresh<Props>(HostsPage))

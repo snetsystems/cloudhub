@@ -5,7 +5,6 @@ import _ from 'lodash'
 import {getDeep} from 'src/utils/wrappers'
 import CryptoJS from 'crypto-js'
 import classnames from 'classnames'
-import yaml from 'js-yaml'
 
 import {
   default as mxgraph,
@@ -91,6 +90,7 @@ import {
   createCloudServiceProviderAsync,
   updateCloudServiceProviderAsync,
   deleteCloudServiceProviderAsync,
+  getCSPHostsAsync,
 } from 'src/hosts/actions'
 
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -106,7 +106,6 @@ import {
   getMeasurementsForInstance,
   paramsCreateCSP,
   paramsUpdateCSP,
-  getCSPHostsApi,
 } from 'src/hosts/apis'
 
 // Utils
@@ -271,6 +270,11 @@ interface Props {
   handleCreateCspAsync: (data: paramsCreateCSP) => Promise<any>
   handleUpdateCspAsync: (data: paramsUpdateCSP) => Promise<any>
   handleDeleteCspAsync: (id: string) => Promise<any>
+  handleGetCSPHostsAsync: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    pCsp: any[]
+  ) => Promise<any>
 }
 
 interface State {
@@ -300,16 +304,18 @@ interface State {
   appHostData: {}
   isCloudFormVisible: boolean
   isUpdateCloud: boolean
-  cloudRegions: string[]
-  selectedCloudRegion: string
+  cloudRegions: string
+  // selectedCloudRegion: string
   cloudAccessKey: string
   cloudSecretKey: string
+  cloudTargetMinion: string
   provider: CloudServiceProvider
   providerLabel: string
   treeMenu: any
   focusedInstance: Instance
   cloudAccessInfos: {
     id: string
+    minion: string
     accesskey: string
     secretkey: string
     region: string
@@ -319,7 +325,6 @@ interface State {
   }[]
   cloudGetDatas: any
 }
-
 @ErrorHandling
 class InventoryTopology extends PureComponent<Props, State> {
   constructor(props: Props) {
@@ -356,7 +361,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       isStatusVisible: false,
       resizableDockHeight: 165,
       resizableDockWidth: 200,
-      selectItem: 'cloud',
+      selectItem: 'Cloud',
       layouts: [],
       filteredLayouts: [],
       focusedHost: '',
@@ -366,10 +371,11 @@ class InventoryTopology extends PureComponent<Props, State> {
       appHostData: {},
       isCloudFormVisible: false,
       isUpdateCloud: false,
-      cloudRegions: [],
-      selectedCloudRegion: '',
+      cloudRegions: '',
+      // selectedCloudRegion: '',
       cloudAccessKey: '',
       cloudSecretKey: '',
+      cloudTargetMinion: '',
       provider: null,
       providerLabel: 'ADD REGION',
       treeMenu: {...cloudData},
@@ -584,7 +590,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     if (
       prevState.selectItem !== this.state.selectItem &&
-      this.state.selectItem === 'total'
+      this.state.selectItem === 'Private'
     ) {
       this.changedDOM()
     }
@@ -713,8 +719,9 @@ class InventoryTopology extends PureComponent<Props, State> {
       provider,
       isCloudFormVisible: true,
       providerLabel: 'ADD REGION',
-      cloudRegions,
-      selectedCloudRegion: cloudRegions[0],
+      cloudTargetMinion: this.state.minionList[0],
+      // cloudRegions,
+      // selectedCloudRegion: cloudRegions[0],
     })
   }
 
@@ -722,10 +729,11 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setState({
       isCloudFormVisible: false,
       isUpdateCloud: false,
-      cloudRegions: [],
-      selectedCloudRegion: '',
+      cloudRegions: '',
+      // selectedCloudRegion: '',
       cloudAccessKey: '',
       cloudSecretKey: '',
+      cloudTargetMinion: '',
     })
   }
 
@@ -1089,15 +1097,24 @@ class InventoryTopology extends PureComponent<Props, State> {
         this.setState({
           focusedInstance: {provider, region, instanceid, instancename},
           focusedHost: null,
+          activeEditorTab: 'details',
         })
       } else {
         const containerElement = getContainerElement(selectionCells[0].value)
         const title = getContainerTitle(containerElement).textContent
 
-        this.setState({focusedInstance: null, focusedHost: title})
+        this.setState({
+          focusedInstance: null,
+          focusedHost: title,
+          activeEditorTab: 'monitoring',
+        })
       }
     } else {
-      this.setState({focusedInstance: null, focusedHost: null})
+      this.setState({
+        focusedInstance: null,
+        focusedHost: null,
+        filteredLayouts: [],
+      })
     }
 
     createForm.bind(this)(mxGraphSelectionModel.graph, this.properties)
@@ -1563,34 +1580,53 @@ class InventoryTopology extends PureComponent<Props, State> {
         <Page className="inventory-hosts-list-page">
           <Page.Header fullWidth={true}>
             <Page.Header.Left>
-              <div className="radio-buttons radio-buttons--default radio-buttons--sm">
-                <Radio.Button
-                  id="hostspage-tab-details"
-                  titleText="details"
-                  value="details"
-                  active={this.state.activeEditorTab === 'details'}
-                  onClick={this.onSetActiveEditorTab}
-                >
-                  Details
-                </Radio.Button>
-                <Radio.Button
-                  id="hostspage-tab-monitoring"
-                  titleText="monitoring"
-                  value="monitoring"
-                  active={this.state.activeEditorTab === 'monitoring'}
-                  onClick={this.onSetActiveEditorTab}
-                >
-                  Monitoring
-                </Radio.Button>
-              </div>
-              <span>Get from :</span>
-              <Dropdown
-                items={['ALL', 'CloudWatch', 'Within instances']}
-                onChoose={this.getHandleOnChoose}
-                selected={this.state.selected}
-                className="dropdown-sm"
-                disabled={false}
-              />
+              {!_.isEmpty(this.state.focusedHost) ? (
+                <div className="radio-buttons radio-buttons--default radio-buttons--sm">
+                  <Radio.Button
+                    id="hostspage-tab-monitoring"
+                    titleText="monitoring"
+                    value="monitoring"
+                    active={true}
+                    onClick={this.onSetActiveEditorTab}
+                  >
+                    Monitoring
+                  </Radio.Button>
+                </div>
+              ) : (
+                <>
+                  <div className="radio-buttons radio-buttons--default radio-buttons--sm">
+                    <Radio.Button
+                      id="hostspage-tab-details"
+                      titleText="details"
+                      value="details"
+                      active={this.state.activeEditorTab === 'details'}
+                      onClick={this.onSetActiveEditorTab}
+                    >
+                      Details
+                    </Radio.Button>
+                    <Radio.Button
+                      id="hostspage-tab-monitoring"
+                      titleText="monitoring"
+                      value="monitoring"
+                      active={this.state.activeEditorTab === 'monitoring'}
+                      onClick={this.onSetActiveEditorTab}
+                    >
+                      Monitoring
+                    </Radio.Button>
+                  </div>
+                  <span>Get from :</span>
+                  <Dropdown
+                    items={['ALL', 'CloudWatch', 'Within instances']}
+                    onChoose={this.getHandleOnChoose}
+                    selected={this.state.selected}
+                    className="dropdown-sm"
+                    disabled={false}
+                    // onClick={() => {
+                    //   this.handleFocusedBtnName({selected: this.state.selected})
+                    // }}
+                  />
+                </>
+              )}
             </Page.Header.Left>
             <Page.Header.Right></Page.Header.Right>
           </Page.Header>
@@ -1631,24 +1667,29 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private handleAddRegion = async () => {
-    const {handleCreateCspAsync} = this.props
+    const {handleCreateCspAsync, handleGetCSPHostsAsync} = this.props
     const {
       provider,
       cloudAccessKey,
       cloudSecretKey,
-      selectedCloudRegion,
+      cloudRegions,
+      cloudTargetMinion,
       cloudAccessInfos,
     } = this.state
 
     const data = {
       provider,
-      region: selectedCloudRegion,
+      region: cloudRegions,
       accesskey: cloudAccessKey,
       secretkey: cloudSecretKey,
+      minion: cloudTargetMinion,
     }
 
+    // const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
+    //   const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
+
     const decryptedBytes = CryptoJS.AES.decrypt(
-      cloudAccessKey,
+      cloudSecretKey,
       this.secretKey.url
     )
 
@@ -1659,10 +1700,18 @@ class InventoryTopology extends PureComponent<Props, State> {
       secretkey: originalSecretkey,
     }
 
-    const saltResp = await getCSPHostsApi('', '', [newData])
+    const saltResp = await handleGetCSPHostsAsync(
+      this.salt.url,
+      this.salt.token,
+      [newData]
+    )
+
     const dbResp = await handleCreateCspAsync(data)
 
-    dbResp['data'] = saltResp[0]
+    dbResp['data'] =
+      _.values(saltResp.return[0])[0].length > 0
+        ? _.values(saltResp.return[0])[0]
+        : []
 
     const newCloudAccessInfos = [...cloudAccessInfos, dbResp]
 
@@ -1699,7 +1748,8 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setState({
       isUpdateCloud: true,
       providerLabel: 'UPDATE REGION',
-      selectedCloudRegion: updateRegion.region,
+      cloudTargetMinion: updateRegion.minion,
+      cloudRegions: updateRegion.region,
       cloudAccessKey: updateRegion.accesskey,
       cloudSecretKey: updateRegion.secretkey,
     })
@@ -1803,28 +1853,28 @@ class InventoryTopology extends PureComponent<Props, State> {
         headerOrientation: HANDLE_HORIZONTAL,
         headerButtons: [
           <Button
-            key={'total'}
+            key={'Private'}
             color={
-              this.state.selectItem === 'total'
+              this.state.selectItem === 'Private'
                 ? ComponentColor.Primary
                 : ComponentColor.Default
             }
-            text={'total'}
+            text={'Private'}
             onClick={() => {
-              this.onChooseItem('total')
+              this.onChooseItem('Private')
             }}
             size={ComponentSize.ExtraSmall}
           />,
           <Button
-            key={'cloud'}
+            key={'Cloud'}
             color={
-              this.state.selectItem === 'cloud'
+              this.state.selectItem === 'Cloud'
                 ? ComponentColor.Primary
                 : ComponentColor.Default
             }
-            text={'cloud'}
+            text={'Cloud'}
             onClick={() => {
-              this.onChooseItem('cloud')
+              this.onChooseItem('Cloud')
             }}
             size={ComponentSize.ExtraSmall}
           />,
@@ -1832,7 +1882,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         menuOptions: [],
         size: topSize,
         render: () => {
-          if (this.state.selectItem === 'total') {
+          if (this.state.selectItem === 'Private') {
             const hostList = _.keys(this.state.hostsObject)
             if (hostList.length > 0) {
               return (
@@ -1855,7 +1905,7 @@ class InventoryTopology extends PureComponent<Props, State> {
             }
           }
 
-          if (this.state.selectItem === 'cloud') {
+          if (this.state.selectItem === 'Cloud') {
             return (
               <FancyScrollbar>
                 <InventoryTreemenu
@@ -2061,7 +2111,8 @@ class InventoryTopology extends PureComponent<Props, State> {
         nodes: {},
       }
 
-      _.forEach(_.get(cloudRegion.data, 'local'), instanceData => {
+      _.forEach(cloudRegion.data, instanceData => {
+        if (!instanceData || typeof instanceData !== 'object') return
         cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region][
           'nodes'
         ][_.get(instanceData, 'InstanceId')] = {
@@ -2087,11 +2138,17 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setState({treeMenu: cloudDataTree})
   }
 
-  private handleChooseRegion = (selectItem: {text: string}) => {
+  // private handleChooseRegion = (selectItem: {text: string}) => {
+  //   this.setState({
+  //     cloudTargetMinion: selectItem.text,
+  //     cloudAccessKey: '',
+  //     cloudSecretKey: '',
+  //   })
+  // }
+
+  private handleChooseTargetMinion = (selectItem: {text: string}) => {
     this.setState({
-      selectedCloudRegion: selectItem.text,
-      cloudAccessKey: '',
-      cloudSecretKey: '',
+      cloudTargetMinion: selectItem.text,
     })
   }
 
@@ -2124,10 +2181,11 @@ class InventoryTopology extends PureComponent<Props, State> {
   private get writeCloudForm() {
     const {
       providerLabel,
+      minionList,
       isCloudFormVisible,
       isUpdateCloud,
       cloudRegions,
-      selectedCloudRegion,
+      cloudTargetMinion,
       cloudAccessKey,
       cloudSecretKey,
     } = this.state
@@ -2141,13 +2199,29 @@ class InventoryTopology extends PureComponent<Props, State> {
           />
           <OverlayBody>
             <Form>
-              <Form.Element label="Region" colsXS={12}>
+              <Form.Element label="Target Minion" colsXS={12}>
                 <Dropdown
+                  items={minionList}
+                  selected={cloudTargetMinion}
+                  onChoose={this.handleChooseTargetMinion}
+                  // disabled={isUpdateCloud}
+                  className="dropdown-stretch"
+                />
+              </Form.Element>
+              <Form.Element label="Region" colsXS={12}>
+                {/* <Dropdown
                   items={cloudRegions}
                   selected={selectedCloudRegion}
                   onChoose={isUpdateCloud ? null : this.handleChooseRegion}
                   disabled={isUpdateCloud}
                   className="dropdown-stretch"
+                /> */}
+                <Input
+                  value={cloudRegions}
+                  onChange={this.handleChangeInput('cloudRegions')}
+                  placeholder={'Region'}
+                  type={InputType.Text}
+                  status={isUpdateCloud && ComponentStatus.Disabled}
                 />
               </Form.Element>
               <Form.Element label="Access Key" colsXS={12}>
@@ -2197,8 +2271,9 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private handleLoadCsps = async () => {
-    const {handleLoadCspsAsync} = this.props
+    const {handleLoadCspsAsync, handleGetCSPHostsAsync} = this.props
     const dbResp: any[] = await handleLoadCspsAsync()
+
     const newDbResp = _.map(dbResp, resp => {
       const {secretkey} = resp
       const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
@@ -2212,29 +2287,39 @@ class InventoryTopology extends PureComponent<Props, State> {
       return resp
     })
 
-    const saltResp = await getCSPHostsApi('', '', newDbResp)
+    const saltResp = await handleGetCSPHostsAsync(
+      this.salt.url,
+      this.salt.token,
+      newDbResp
+    )
 
     _.forEach(dbResp, (dResp, index) => {
-      dResp['data'] = saltResp[index]
+      dResp['data'] =
+        _.values(saltResp.return[index])[0].length > 0
+          ? _.values(saltResp.return[index])[0]
+          : []
     })
 
     this.setState({cloudAccessInfos: [...dbResp]})
   }
 
   private handleUpdateRegion = async () => {
-    const {handleUpdateCspAsync} = this.props
+    const {handleUpdateCspAsync, handleGetCSPHostsAsync} = this.props
     const {
-      selectedCloudRegion,
+      cloudTargetMinion,
+      cloudRegions,
       cloudAccessKey,
       cloudSecretKey,
       provider,
       cloudAccessInfos,
     } = this.state
 
-    let regionID = this.getRegionID(provider, selectedCloudRegion)
+    let regionID = this.getRegionID(provider, cloudRegions)
 
     const data: paramsUpdateCSP = {
       id: regionID,
+      minion: cloudTargetMinion,
+      region: cloudRegions,
       accesskey: cloudAccessKey,
       secretkey: cloudSecretKey,
     }
@@ -2248,14 +2333,22 @@ class InventoryTopology extends PureComponent<Props, State> {
       secretkey: originalSecretkey,
     }
 
-    const saltResp = await getCSPHostsApi('', '', [newData])
+    const saltResp = await handleGetCSPHostsAsync(
+      this.salt.url,
+      this.salt.token,
+      [newData]
+    )
+
     const dbResp = await handleUpdateCspAsync(data)
 
     const newCloudAccessInfos = _.map(cloudAccessInfos, c => {
       if (c.id === dbResp.id) {
         c = {
           ...dbResp,
-          data: saltResp[0],
+          data:
+            _.values(saltResp.return[0])[0].length > 0
+              ? _.values(saltResp.return[0])[0]
+              : [],
         }
       }
       return c
@@ -2287,6 +2380,7 @@ const mapDispatchToProps = {
   handleCreateCspAsync: createCloudServiceProviderAsync,
   handleUpdateCspAsync: updateCloudServiceProviderAsync,
   handleDeleteCspAsync: deleteCloudServiceProviderAsync,
+  handleGetCSPHostsAsync: getCSPHostsAsync,
 }
 
 export default connect(

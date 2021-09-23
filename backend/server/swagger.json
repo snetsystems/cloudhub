@@ -4647,6 +4647,15 @@
               "$ref": "#/definitions/CSPReq"
             },
             "required": true
+          },
+          {
+            "name": "minion",
+            "in": "body",
+            "description": "target salt minion",
+            "schema": {
+              "$ref": "#/definitions/CSPReq"
+            },
+            "required": true
           }
         ],
         "responses": {
@@ -4744,40 +4753,40 @@
             "required": true
           },
           {
-            "name": "provider",
-            "in": "body",
-            "description": "Cloud Solution Provider Name",
-            "schema": {
-              "$ref": "#/definitions/CSPReq"
-            },
-            "required": true
-          },
-          {
             "name": "region",
             "in": "body",
             "description": "CSP access region",
             "schema": {
-              "$ref": "#/definitions/CSPReq"
+              "$ref": "#/definitions/CSPPatch"
             },
-            "required": true
+            "required": false
           },
           {
             "name": "accesskey",
             "in": "body",
             "description": "CSP access key",
             "schema": {
-              "$ref": "#/definitions/CSPReq"
+              "$ref": "#/definitions/CSPPatch"
             },
-            "required": true
+            "required": false
           },
           {
             "name": "secretkey",
             "in": "body",
             "description": "CSP access secret key",
             "schema": {
-              "$ref": "#/definitions/CSPReq"
+              "$ref": "#/definitions/CSPPatch"
             },
-            "required": true
+            "required": false
+          },
+          {
+            "name": "minion",
+            "in": "body",
+            "description": "target salt minion",
+            "schema": {
+              "$ref": "#/definitions/CSPPatch"
+            },
+            "required": false
           }
         ],
         "responses": {
@@ -8173,6 +8182,7 @@
               "format": "url"
             }
           },
+
           "readOnly": true
         },
         "csps": {
@@ -8202,14 +8212,47 @@
         "secretkey": {
           "type": "string",
           "description": "CSP access secret key"
+        },
+        "minion": {
+          "type": "string",
+          "description": "Target Salt Minion"
         }
       },
-      "required": ["provider", "region", "accesskey", "secretkey"],
+      "required": ["provider", "region", "accesskey", "secretkey", "minion"],
       "example": {
         "provider": "AWS",
         "region": "ap-northeast-2",
         "accesskey": "AABCCEEDSKDDLSSSDD",
-        "secretkey": "kjdjd+kDDSQQWD+jdjwidsndbh"
+        "secretkey": "kjdjd+kDDSQQWD+jdjwidsndbh",
+        "minion": "minion01"
+      }
+    },
+    "CSPPatch": {
+      "type": "object",
+      "description": "CSP access information Patch",
+      "properties": {
+        "region": {
+          "type": "string",
+          "description": "CSP access region"
+        },
+        "accesskey": {
+          "type": "string",
+          "description": "CSP access key"
+        },
+        "secretkey": {
+          "type": "string",
+          "description": "CSP access secret key"
+        },
+        "minion": {
+          "type": "string",
+          "description": "Target Salt Minion"
+        }
+      },
+      "example": {
+        "region": "ap-northeast-2",
+        "accesskey": "AABCCEEDSKDDLSSSDD",
+        "secretkey": "kjdjd+kDDSQQWD+jdjwidsndbh",
+        "minion": "minion01"
       }
     },
     "CSPRes": {
@@ -8242,6 +8285,11 @@
           "description": "cloudhub organization",
           "readOnly": true
         },
+        "minion": {
+          "type": "string",
+          "description": "target salt minion",
+          "readOnly": true
+        },
         "links": {"type": "string", "description": "self url"}
       },
       "required": [
@@ -8251,6 +8299,7 @@
         "accesskey",
         "secretkey",
         "organization",
+        "minion",
         "links"
       ],
       "example": {
@@ -8260,6 +8309,7 @@
         "accesskey": "AABCCEEDSKDDLSSSDD",
         "secretkey": "kjdjd+kDDSQQWD+jdjwidsndbh",
         "organization": "2",
+        "minion": "minion01",
         "links": {
           "self": "/cloudhub/v1/csp/1"
         }
