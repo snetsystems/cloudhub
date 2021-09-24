@@ -352,7 +352,7 @@ export const applyHandler = function (
       if (attribute.nodeName === 'data-link') {
         if (cell.children) {
           const childrenCell = cell.getChildAt(1)
-          if (childrenCell.style === 'href') {
+          if (childrenCell.style.includes('href')) {
             const childrenContainerElement = getContainerElement(
               childrenCell.value
             )
@@ -545,6 +545,7 @@ export const dragCell = (node: Menu) => (
     ipmiStatus.setVisible(false)
 
     const linkBox = document.createElement('div')
+    linkBox.setAttribute('btn-type', 'href')
     linkBox.classList.add('vertex')
     linkBox.style.display = 'flex'
     linkBox.style.alignItems = 'center'
@@ -1193,6 +1194,10 @@ export const factoryMethod = (
           )
         }
 
+        this.graph.setSelectionCell(cell.parent)
+      }
+
+      if (containerElement.getAttribute('btn-type') === 'href') {
         this.graph.setSelectionCell(cell.parent)
       }
     }
