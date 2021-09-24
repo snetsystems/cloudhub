@@ -177,6 +177,7 @@ export const tmpMenu: Menu = {
   type: '',
   name: '',
   label: '',
+  link: '',
 }
 
 export const hostMenu: Menu = {
