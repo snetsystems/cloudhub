@@ -268,7 +268,6 @@ export const createForm = function (
       properties.appendChild(form.getTable())
     } finally {
       model.endUpdate()
-      graph.refresh()
     }
   } else {
     mxUtils.writeln(properties, 'Nothing selected.')
