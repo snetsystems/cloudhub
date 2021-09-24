@@ -1172,6 +1172,8 @@ class InventoryTopology extends PureComponent<Props, State> {
       cell: mxCellType
     ) => {
       const {handleGetIpmiSensorDataAsync} = this.props
+      const {isPinned} = this.state
+
       const decryptedBytes = CryptoJS.AES.decrypt(ipmiPass, this.secretKey.url)
       const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
       const pIpmi: Ipmi = {
@@ -1181,30 +1183,27 @@ class InventoryTopology extends PureComponent<Props, State> {
         pass: originalPass,
       }
 
-      handleGetIpmiSensorDataAsync(this.salt.url, this.salt.token, pIpmi).then(
-        (sensorData: any) => {
-          const {isPinned} = this.state
-
-          this.setState({isStatusVisible: true})
-
-          // timeout 초기화
-          clearTimeout(this.timeout)
-          this.timeout = null
-
-          //
-          if (!isPinned) {
-            this.timeout = setTimeout(() => {
-              this.setState({isStatusVisible: false})
-            }, 3000)
-          }
-        }
+      const sensorData = await handleGetIpmiSensorDataAsync(
+        this.salt.url,
+        this.salt.token,
+        pIpmi
       )
+
+      this.setState({isStatusVisible: true})
+      clearTimeout(this.timeout)
+      this.timeout = null
+
+      if (!isPinned) {
+        this.timeout = setTimeout(() => {
+          this.setState({isStatusVisible: false})
+        }, 3000)
+      }
 
       const currentCell = this.graph.getSelectionCell()
 
-      // if (cell && currentCell && cell.getId() === currentCell.getId()) {
-      //   this.openSensorData(sensorData)
-      // }
+      if (cell && currentCell && cell.getId() === currentCell.getId()) {
+        this.openSensorData(sensorData)
+      }
     },
     500
   )
@@ -1545,9 +1544,14 @@ class InventoryTopology extends PureComponent<Props, State> {
                         }
                         // text="pin"
                       ></Button>
-                      <FancyScrollbar autoHide={false}>
-                        <div id="statusContainerRef" ref={this.statusRef}></div>
-                      </FancyScrollbar>
+                      <div className={'status-ref-wrap'}>
+                        <FancyScrollbar autoHide={false}>
+                          <div
+                            id="statusContainerRef"
+                            ref={this.statusRef}
+                          ></div>
+                        </FancyScrollbar>
+                      </div>
                     </div>
                   </ResizableDock>
                 </div>
