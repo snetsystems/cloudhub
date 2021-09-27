@@ -20,8 +20,8 @@ import {Button, ButtonShape, IconFont, Page, Radio} from 'src/reusable_ui'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import GraphTips from 'src/shared/components/GraphTips'
-import VMHostPage from 'src/hosts/containers/VMHostsPage'
-import InventoryTopology from 'src/hosts/containers/InventoryTopology'
+// import VMHostPage from 'src/hosts/containers/VMHostsPage'
+// import InventoryTopology from 'src/hosts/containers/InventoryTopology'
 
 // APIs
 import {
@@ -330,107 +330,20 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {
-      autoRefresh,
-      onManualRefresh,
-      inPresentationMode,
-      source,
-    } = this.props
-    const {selected, isVsphere, activeEditorTab, cloudHostsObject} = this.state
+    // const {
+    //   autoRefresh,
+    //   onManualRefresh,
+    //   inPresentationMode,
+    //   source,
+    // } = this.props
+    // const {selected, isVsphere, activeEditorTab, cloudHostsObject} = this.state
 
     return (
-      <Page className="hosts-list-page">
-        <Page.Header inPresentationMode={inPresentationMode}>
-          <Page.Header.Left>
-            <Page.Title title={this.getTitle} />
-          </Page.Header.Left>
-          <Page.Header.Center widthPixels={220}>
-            <div className="radio-buttons radio-buttons--default radio-buttons--sm radio-buttons--stretch">
-              <Radio.Button
-                id="hostspage-tab-InventoryTopology"
-                titleText="InventoryTopology"
-                value="InventoryTopology"
-                active={activeEditorTab === 'InventoryTopology'}
-                onClick={this.onSetActiveEditorTab}
-              >
-                Topology
-              </Radio.Button>
-              <Radio.Button
-                id="hostspage-tab-Host"
-                titleText="Host"
-                value="Host"
-                active={activeEditorTab === 'Host'}
-                onClick={this.onSetActiveEditorTab}
-              >
-                Host
-              </Radio.Button>
-              {isVsphere && (
-                <Radio.Button
-                  id="hostspage-tab-VMware"
-                  titleText="VMware"
-                  value="VMware"
-                  active={activeEditorTab === 'VMware'}
-                  onClick={this.onSetActiveEditorTab}
-                >
-                  VMware
-                </Radio.Button>
-              )}
-            </div>
-          </Page.Header.Center>
-
-          <Page.Header.Right showSourceIndicator={true}>
-            {activeEditorTab !== 'InventoryTopology' && <GraphTips />}
-            <AutoRefreshDropdown
-              selected={autoRefresh}
-              onChoose={this.handleChooseAutoRefresh}
-              onManualRefresh={onManualRefresh}
-            />
-            {activeEditorTab !== 'InventoryTopology' && (
-              <TimeRangeDropdown
-                //@ts-ignore
-                onChooseTimeRange={this.handleChooseTimeRange.bind(
-                  this.state.selected
-                )}
-                selected={selected}
-              />
-            )}
-            <Button
-              icon={IconFont.ExpandA}
-              onClick={this.handleClickPresentationButton}
-              shape={ButtonShape.Square}
-              titleText="Enter Full-Screen Presentation Mode"
-            />
-          </Page.Header.Right>
-        </Page.Header>
-        <Page.Contents scrollable={true} fullWidth={activeEditorTab !== 'Host'}>
-          <>
-            {activeEditorTab === 'Host' && (
-              <Threesizer
-                orientation={HANDLE_HORIZONTAL}
-                divisions={this.horizontalDivisions}
-                onResize={this.handleResize}
-              />
-            )}
-            {activeEditorTab === 'VMware' && (
-              //@ts-ignore
-              <VMHostPage
-                source={source}
-                manualRefresh={this.props.manualRefresh}
-                timeRange={this.state.timeRange}
-                handleClearTimeout={this.props.handleClearTimeout}
-              />
-            )}
-            {activeEditorTab === 'InventoryTopology' && (
-              //@ts-ignore
-              <InventoryTopology
-                source={source}
-                manualRefresh={this.props.manualRefresh}
-                autoRefresh={autoRefresh}
-              />
-            )}
-          </>
-        </Page.Contents>
-      </Page>
+      <Threesizer
+        orientation={HANDLE_HORIZONTAL}
+        divisions={this.horizontalDivisions}
+        onResize={this.handleResize}
+      />
     )
   }
 

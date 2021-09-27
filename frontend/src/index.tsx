@@ -29,7 +29,7 @@ import CheckSources from 'src/CheckSources'
 import {StatusPage} from 'src/status'
 import DataExplorerPage from 'src/data_explorer'
 import {DashboardsPage, DashboardPage} from 'src/dashboards'
-import {HostsPage, HostPage} from 'src/hosts'
+import {Infrastructure, HostPage} from 'src/hosts'
 import {Applications} from 'src/applications'
 import {LogsPage} from 'src/logs'
 import {ActivityLogsPage} from 'src/activitylogs'
@@ -248,7 +248,7 @@ class Root extends PureComponent<Record<string, never>, State> {
                 <Route
                   path="infrastructure"
                   component={props => (
-                    <HostsPage
+                    <Infrastructure
                       {...props}
                       handleClearTimeout={this.handleClearTimeout}
                     />
