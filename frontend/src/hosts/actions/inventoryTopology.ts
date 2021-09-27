@@ -24,7 +24,10 @@ import {Links, Ipmi, IpmiCell} from 'src/types'
 
 // Notification Action
 import {notify as notifyAction} from 'src/shared/actions/notifications'
-import {notifyIpmiConnectionFailed} from 'src/shared/copy/notifications'
+import {
+  notifyIpmiConnectionFailed,
+  notifygetCSPHostFailed,
+} from 'src/shared/copy/notifications'
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 
 export enum ActionTypes {
@@ -361,6 +364,17 @@ export const getCSPHostsAsync = (
 ) => async (dispatch: Dispatch<Action>) => {
   try {
     const cspHosts = await getCSPHostsApi(pUrl, pToken, pCsps)
+
+    _.forEach(cspHosts.return, (host, index) => {
+      if (!_.isArray(_.values(host)[0])) {
+        const {provider, region} = pCsps[index]
+        const error = new Error(
+          `<br/>PROVIDER: ${provider} <br/>REGION: ${region}`
+        )
+        dispatch(notifyAction(notifygetCSPHostFailed(error)))
+      }
+    })
+
     dispatch(getCSPHostAction())
     return cspHosts
   } catch (error) {
