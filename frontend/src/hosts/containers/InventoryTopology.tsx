@@ -153,8 +153,6 @@ import {
   detectedHostsStatus,
 } from 'src/hosts/configurations/topology'
 
-import {AWSInstanceData, CSPAccessObject} from 'src/hosts/types/cloud'
-import {saltDetailsDummy} from './detailsTest'
 import {
   cloudData,
   // cloudInfo
@@ -324,6 +322,7 @@ interface State {
     data: any[]
   }[]
   cloudGetDatas: any
+  loadingState: RemoteDataState
 }
 @ErrorHandling
 class InventoryTopology extends PureComponent<Props, State> {
@@ -382,6 +381,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       focusedInstance: null,
       cloudAccessInfos: [],
       cloudGetDatas: [],
+      loadingState: RemoteDataState.NotStarted,
     }
   }
 
@@ -691,6 +691,29 @@ class InventoryTopology extends PureComponent<Props, State> {
         )}
       </div>
     )
+  }
+
+  private get loadingState() {
+    const {loadingState} = this.state
+    let isLoading = false
+
+    if (loadingState === RemoteDataState.Loading) {
+      isLoading = true
+    }
+
+    return isLoading ? (
+      <div
+        style={{
+          position: 'absolute',
+          zIndex: 3,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          width: '100%',
+          height: '100%',
+        }}
+      >
+        <PageSpinner />
+      </div>
+    ) : null
   }
 
   private openCloudForm = (provider: CloudServiceProvider) => {
@@ -1793,26 +1816,32 @@ class InventoryTopology extends PureComponent<Props, State> {
       secretkey: originalSecretkey,
     }
 
-    const saltResp = await handleGetCSPHostsAsync(
-      this.salt.url,
-      this.salt.token,
-      [newData]
-    )
+    try {
+      this.setState({loadingState: RemoteDataState.Loading})
+      const saltResp = await handleGetCSPHostsAsync(
+        this.salt.url,
+        this.salt.token,
+        [newData]
+      )
 
-    const dbResp = await handleCreateCspAsync(data)
+      const dbResp = await handleCreateCspAsync(data)
 
-    dbResp['data'] =
-      _.values(saltResp.return[0])[0].length > 0
-        ? _.values(saltResp.return[0])[0]
-        : []
+      dbResp['data'] =
+        _.values(saltResp.return[0])[0].length > 0
+          ? _.values(saltResp.return[0])[0]
+          : []
 
-    const newCloudAccessInfos = [...cloudAccessInfos, dbResp]
+      const newCloudAccessInfos = [...cloudAccessInfos, dbResp]
 
-    this.setState({
-      cloudAccessInfos: newCloudAccessInfos,
-    })
-
-    this.closeCloudForm()
+      this.setState({
+        cloudAccessInfos: newCloudAccessInfos,
+      })
+    } catch (error) {
+      console.error(error)
+    } finally {
+      this.setState({loadingState: RemoteDataState.Done})
+      this.closeCloudForm()
+    }
   }
 
   private addRegionBtn = (provider: CloudServiceProvider) => () => {
@@ -2286,78 +2315,80 @@ class InventoryTopology extends PureComponent<Props, State> {
     return (
       <OverlayTechnology visible={isCloudFormVisible}>
         <OverlayContainer>
-          <OverlayHeading
-            title={providerLabel}
-            onDismiss={this.closeCloudForm}
-          />
-          <OverlayBody>
-            <Form>
-              <Form.Element label="Target Minion" colsXS={12}>
-                <Dropdown
-                  items={minionList}
-                  selected={cloudTargetMinion}
-                  onChoose={this.handleChooseTargetMinion}
-                  // disabled={isUpdateCloud}
-                  className="dropdown-stretch"
-                />
-              </Form.Element>
-              <Form.Element label="Region" colsXS={12}>
-                {/* <Dropdown
+          <div style={{position: 'relative'}}>
+            {this.loadingState}
+            <OverlayHeading
+              title={providerLabel}
+              onDismiss={this.closeCloudForm}
+            />
+            <OverlayBody>
+              <Form>
+                <Form.Element label="Target Minion" colsXS={12}>
+                  <Dropdown
+                    items={minionList}
+                    selected={cloudTargetMinion}
+                    onChoose={this.handleChooseTargetMinion}
+                    className="dropdown-stretch"
+                  />
+                </Form.Element>
+                <Form.Element label="Region" colsXS={12}>
+                  {/* <Dropdown
                   items={cloudRegions}
                   selected={selectedCloudRegion}
                   onChoose={isUpdateCloud ? null : this.handleChooseRegion}
                   disabled={isUpdateCloud}
                   className="dropdown-stretch"
                 /> */}
-                <Input
-                  value={cloudRegions}
-                  onChange={this.handleChangeInput('cloudRegions')}
-                  placeholder={'Region'}
-                  type={InputType.Text}
-                  status={isUpdateCloud && ComponentStatus.Disabled}
-                />
-              </Form.Element>
-              <Form.Element label="Access Key" colsXS={12}>
-                <Input
-                  value={cloudAccessKey}
-                  onChange={this.handleChangeInput('cloudAccessKey')}
-                  placeholder={'Access Key'}
-                  type={InputType.Password}
-                />
-              </Form.Element>
-              <Form.Element label="Secret Key" colsXS={12}>
-                <Input
-                  value={cloudSecretKey}
-                  onChange={this.handleChangeInput('cloudSecretKey')}
-                  onFocus={() => {
-                    this.setState({cloudSecretKey: ''})
-                  }}
-                  onBlur={this.encrypt}
-                  onKeyDown={this.onKeyPressEnter}
-                  placeholder={'Secret Key'}
-                  type={InputType.Password}
-                />
-              </Form.Element>
-              <Form.Footer>
-                <Button
-                  color={ComponentColor.Default}
-                  onClick={this.closeCloudForm}
-                  size={ComponentSize.Medium}
-                  text={'Cancel'}
-                />
-                <Button
-                  color={ComponentColor.Primary}
-                  onClick={() => {
-                    isUpdateCloud
-                      ? this.handleUpdateRegion()
-                      : this.handleAddRegion()
-                  }}
-                  size={ComponentSize.Medium}
-                  text={isUpdateCloud ? 'Update Region' : 'Save Region'}
-                />
-              </Form.Footer>
-            </Form>
-          </OverlayBody>
+                  <Input
+                    value={cloudRegions}
+                    onChange={this.handleChangeInput('cloudRegions')}
+                    placeholder={'Region'}
+                    type={InputType.Text}
+                    status={isUpdateCloud && ComponentStatus.Disabled}
+                  />
+                </Form.Element>
+                <Form.Element label="Access Key" colsXS={12}>
+                  <Input
+                    value={cloudAccessKey}
+                    onChange={this.handleChangeInput('cloudAccessKey')}
+                    placeholder={'Access Key'}
+                    type={InputType.Password}
+                  />
+                </Form.Element>
+                <Form.Element label="Secret Key" colsXS={12}>
+                  <Input
+                    value={cloudSecretKey}
+                    onChange={this.handleChangeInput('cloudSecretKey')}
+                    onFocus={() => {
+                      this.setState({cloudSecretKey: ''})
+                    }}
+                    onBlur={this.encrypt}
+                    onKeyDown={this.onKeyPressEnter}
+                    placeholder={'Secret Key'}
+                    type={InputType.Password}
+                  />
+                </Form.Element>
+                <Form.Footer>
+                  <Button
+                    color={ComponentColor.Default}
+                    onClick={this.closeCloudForm}
+                    size={ComponentSize.Medium}
+                    text={'Cancel'}
+                  />
+                  <Button
+                    color={ComponentColor.Primary}
+                    onClick={() => {
+                      isUpdateCloud
+                        ? this.handleUpdateRegion()
+                        : this.handleAddRegion()
+                    }}
+                    size={ComponentSize.Medium}
+                    text={isUpdateCloud ? 'Update Region' : 'Save Region'}
+                  />
+                </Form.Footer>
+              </Form>
+            </OverlayBody>
+          </div>
         </OverlayContainer>
       </OverlayTechnology>
     )
@@ -2428,29 +2459,37 @@ class InventoryTopology extends PureComponent<Props, State> {
       secretkey: originalSecretkey,
     }
 
-    const saltResp = await handleGetCSPHostsAsync(
-      this.salt.url,
-      this.salt.token,
-      [newData]
-    )
+    try {
+      this.setState({loadingState: RemoteDataState.Loading})
 
-    const dbResp = await handleUpdateCspAsync(data)
+      const saltResp = await handleGetCSPHostsAsync(
+        this.salt.url,
+        this.salt.token,
+        [newData]
+      )
 
-    const newCloudAccessInfos = _.map(cloudAccessInfos, c => {
-      if (c.id === dbResp.id) {
-        c = {
-          ...dbResp,
-          data:
-            _.values(saltResp.return[0])[0].length > 0
-              ? _.values(saltResp.return[0])[0]
-              : [],
+      const dbResp = await handleUpdateCspAsync(data)
+
+      const newCloudAccessInfos = _.map(cloudAccessInfos, c => {
+        if (c.id === dbResp.id) {
+          c = {
+            ...dbResp,
+            data:
+              _.values(saltResp.return[0])[0].length > 0
+                ? _.values(saltResp.return[0])[0]
+                : [],
+          }
         }
-      }
-      return c
-    })
+        return c
+      })
 
-    this.closeCloudForm()
-    this.setState({cloudAccessInfos: [...newCloudAccessInfos]})
+      this.setState({cloudAccessInfos: [...newCloudAccessInfos]})
+    } catch (error) {
+      console.error(error)
+    } finally {
+      this.setState({loadingState: RemoteDataState.Done})
+      this.closeCloudForm()
+    }
   }
 }
 
