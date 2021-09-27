@@ -1689,65 +1689,91 @@ class InventoryTopology extends PureComponent<Props, State> {
     _.reduce(
       getData,
       (_, current) => {
+        const {
+          InstanceId,
+          NetworkInterfaces,
+          PrivateIpAddress,
+          State,
+          PrivateDnsName,
+          InstanceType,
+          VpcId,
+          SubnetId,
+          Platform,
+          ImageId,
+          Monitoring,
+          LaunchTime,
+          AmiLaunchIndex,
+          KeyName,
+          Placement,
+          VirtualizationType,
+          CpuOptions,
+          CapacityReservationSpecification,
+        } = current
+
         const instance = {
           Instance_summary: {
-            Instance_ID: current.InstanceId,
-            Public_IPv4_address:
-              current.NetworkInterfaces[0].Association?.PublicIp,
-            Private_IPv4_addresses: current.PrivateIpAddress,
-            IPv6_address: current.NetworkInterfaces[0].Ipv6Addresses,
-            Instance_state: current.State.Name,
-            Public_IPv4_DNS: '-',
-            Private_IPv4_DNS: '-',
-            Instance_type: current.InstanceType,
-            Elastic_IP_addresses: '-',
-            VPC_ID: current.VpcId,
-            AWS_Compute_Optimizer_finding: '-',
-            IAM_Role: '-',
-            Subnet_ID: current.SubnetId,
+            Instance_ID: this.detailsValueChecker(InstanceId),
+            Public_IPv4_address: this.detailsValueChecker(
+              NetworkInterfaces[0].Association?.PublicIp
+            ),
+            Private_IPv4_addresses: this.detailsValueChecker(PrivateIpAddress),
+            IPv6_address: this.detailsValueChecker(
+              NetworkInterfaces[0].Ipv6Addresses
+            ),
+            Instance_state: this.instanceState(
+              this.detailsValueChecker(State.Name)
+            ),
+            Public_IPv4_DNS: this.detailsValueChecker(),
+            Private_IPv4_DNS: this.detailsValueChecker(PrivateDnsName),
+            Instance_type: this.detailsValueChecker(InstanceType),
+            Elastic_IP_addresses: this.detailsValueChecker(),
+            VPC_ID: this.detailsValueChecker(VpcId),
+            AWS_Compute_Optimizer_finding: this.detailsValueChecker(),
+            IAM_Role: this.detailsValueChecker(),
+            Subnet_ID: this.detailsValueChecker(SubnetId),
           },
           Instance_details: {
-            Platform: '-',
-            AMI_ID: current.ImageId,
-            Monitoring: current.Monitoring.disabled,
-            Platform_details: '-',
-            AMI_name: '-',
-            Termination_protection: '-',
-            Launch_time: current.LaunchTime.toString(),
-            AMI_location: '-',
-            Lifecycle: '-',
-            'Stop-hibernate_behavior': '-',
-            AMI_Launch_index: current.AmiLaunchIndex,
-            Key_pair_name: current.KeyName,
-            State_transition_reason: '-',
-            Credit_specification: '-',
-            Kernel_ID: '-',
-            State_transition_message: '-',
-            Usage_operation: '-',
-            RAM_disk_ID: '-',
-            Owner: current.OwnerId,
-            Enclaves_Support: '-',
-            Boot_mode: '-',
+            Platform: this.detailsValueChecker(Platform),
+            AMI_ID: this.detailsValueChecker(ImageId),
+            Monitoring: this.detailsValueChecker(Monitoring.State),
+            Platform_details: this.detailsValueChecker(),
+            AMI_name: this.detailsValueChecker(),
+            Termination_protection: this.detailsValueChecker(),
+            Launch_time: this.detailsValueChecker(LaunchTime.toString()),
+            AMI_location: this.detailsValueChecker(),
+            Lifecycle: this.detailsValueChecker(),
+            'Stop-hibernate_behavior': this.detailsValueChecker(),
+            AMI_Launch_index: this.detailsValueChecker(AmiLaunchIndex),
+            Key_pair_name: this.detailsValueChecker(KeyName),
+            State_transition_reason: this.detailsValueChecker(),
+            Credit_specification: this.detailsValueChecker(),
+            Kernel_ID: this.detailsValueChecker(),
+            State_transition_message: this.detailsValueChecker(),
+            Usage_operation: this.detailsValueChecker(),
+            RAM_disk_ID: this.detailsValueChecker(),
+            Owner: this.detailsValueChecker(NetworkInterfaces[0].OwnerId),
+            Enclaves_Support: this.detailsValueChecker(),
+            Boot_mode: this.detailsValueChecker(),
           },
           Host_and_placement_group: {
-            Host_ID: '-',
-            Affinity: '-',
-            Placement_group: '-',
-            Host_resource_group_name: '-',
-            Tenancy: current.Placement.Tenancy,
-            Partition_number: '-',
-            Virtualization_type: current.VirtualizationType,
-            Reservation: '-',
-            Number_of_vCPUs: current.CpuOptions.CoreCount,
+            Host_ID: this.detailsValueChecker(),
+            Affinity: this.detailsValueChecker(),
+            Placement_group: this.detailsValueChecker(),
+            Host_resource_group_name: this.detailsValueChecker(),
+            Tenancy: this.detailsValueChecker(Placement.Tenancy),
+            Partition_number: this.detailsValueChecker(),
+            Virtualization_type: this.detailsValueChecker(VirtualizationType),
+            Reservation: this.detailsValueChecker(),
+            Number_of_vCPUs: this.detailsValueChecker(CpuOptions.CoreCount),
           },
           Capacity_reservation: {
-            Capacity_Reservation_ID: '-',
-            Capacity_Reservation_setting:
-              current.CapacityReservationSpecification
-                .CapacityReservationPreference,
+            Capacity_Reservation_ID: this.detailsValueChecker(),
+            Capacity_Reservation_setting: this.detailsValueChecker(
+              CapacityReservationSpecification.CapacityReservationPreference
+            ),
           },
           Accelerators: {
-            Elastic_inference_accelerator_ID: '-',
+            Elastic_inference_accelerator_ID: this.detailsValueChecker(),
           },
         }
 
@@ -1762,6 +1788,36 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     return instanceData
   }
+  private instanceState = (instanceState = null) => {
+    return (
+      <div
+        className={classnames(`status-tip`, {
+          active: instanceState === 'running',
+        })}
+      >
+        <div className={'status-tip-bg'}>
+          <span className={'icon checkmark'}></span>
+        </div>
+        {instanceState}
+      </div>
+    )
+  }
+
+  private detailsValueChecker = (
+    value: string | number | boolean = null
+  ): string | number | boolean | '-' => {
+    if (
+      _.isUndefined(value) ||
+      _.isNaN(value) ||
+      _.isNull(value) ||
+      _.isError(value) ||
+      _.isArray(value)
+    ) {
+      value = '-'
+    }
+    return value
+  }
+
   private getHandleOnChoose = (selectItem: {text: string}) => {
     this.setState({selected: selectItem.text})
   }
