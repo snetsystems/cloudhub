@@ -12,7 +12,7 @@ import Dropdown from 'src/shared/components/Dropdown'
 import HostsTable from 'src/hosts/components/HostsTable'
 import CspHostsTable from 'src/hosts/components/CspHostsTable'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
-import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
+// import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import ManualRefresh, {
   ManualRefreshProps,
 } from 'src/shared/components/ManualRefresh'
@@ -32,8 +32,8 @@ import {
   getMeasurementsForHost,
   getCpuAndLoadForInstances,
   getAppsForInstances,
-  paramsCreateCSP,
-  paramsUpdateCSP,
+  // paramsCreateCSP,
+  // paramsUpdateCSP,
   getAppsForInstance,
   getMeasurementsForInstance,
 } from 'src/hosts/apis'
@@ -218,26 +218,27 @@ export class HostsPage extends PureComponent<Props, State> {
     }
 
     // For rendering whole hosts list
-    await this.fetchHostsData(layouts)
-    await this.fetchCspHostsData(layouts)
+    this.fetchHostsData(layouts).then(() => {
+      // For rendering the charts with the focused single host.
+      const hostID = focusedHost || this.getFirstHost(this.state.hostsObject)
 
-    // For rendering the charts with the focused single host.
-    const hostID = focusedHost || this.getFirstHost(this.state.hostsObject)
+      if (autoRefresh) {
+        this.intervalID = window.setInterval(
+          () => this.fetchHostsData(layouts),
+          autoRefresh
+        )
+      }
+      GlobalAutoRefresher.poll(autoRefresh)
 
-    if (autoRefresh) {
-      this.intervalID = window.setInterval(
-        () => this.fetchHostsData(layouts),
-        autoRefresh
-      )
-    }
-    GlobalAutoRefresher.poll(autoRefresh)
-
-    this.setState({
-      layouts,
-      focusedHost: hostID,
-      proportions: convertProportions,
-      hostsPageStatus: RemoteDataState.Loading,
+      this.setState({
+        layouts,
+        focusedHost: hostID,
+        proportions: convertProportions,
+        hostsPageStatus: RemoteDataState.Loading,
+      })
     })
+
+    await this.fetchCspHostsData(layouts)
   }
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
@@ -246,7 +247,7 @@ export class HostsPage extends PureComponent<Props, State> {
       layouts,
       focusedHost,
       focusedInstance,
-      activeCspTab,
+      // activeCspTab,
       selectedAgent,
     } = this.state
 

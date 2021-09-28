@@ -201,7 +201,11 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
     }
   }
 
-  render() {
+  public componentWillUnmount() {
+    console.log('unmount')
+  }
+
+  public render() {
     const {children, hasSearch} = this.props
     const {searchTerm} = this.state
 

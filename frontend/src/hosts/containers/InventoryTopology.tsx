@@ -304,7 +304,7 @@ interface State {
   cloudSecretKey: string
   cloudTargetMinion: string
   provider: CloudServiceProvider
-  providerLabel: string
+  // providerLabel: string
   treeMenu: any
   focusedInstance: Instance
   cloudAccessInfos: {
@@ -325,10 +325,10 @@ class InventoryTopology extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
 
-    this.setState = (args, callback) => {
-      if (!this.isComponentMounted) return
-      PureComponent.prototype.setState.bind(this)(args, callback)
-    }
+    // this.setState = (args, callback) => {
+    //   if (!this.isComponentMounted) return
+    //   PureComponent.prototype.setState.bind(this)(args, callback)
+    // }
 
     _.reduce(
       _.values(cloudData),
@@ -371,7 +371,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       cloudSecretKey: '',
       cloudTargetMinion: '',
       provider: null,
-      providerLabel: 'ADD REGION',
+      // providerLabel: 'ADD REGION',
       treeMenu: {...cloudData},
       focusedInstance: null,
       cloudAccessInfos: [],
@@ -637,7 +637,12 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
   }
 
+  public componentDidCatch(err, info) {
+    console.log('componentDidCatch: ', err, info)
+  }
+
   public componentWillUnmount() {
+    console.log('I.Tunmount')
     if (this.graph !== null) {
       this.graph.destroy()
       this.graph = null
@@ -657,6 +662,14 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     return (
       <div id="containerWrapper">
+        <Button
+          onClick={() => {
+            this.setState({
+              isCloudFormVisible: !this.state.isCloudFormVisible,
+            })
+          }}
+          text="toggle"
+        ></Button>
         {!mxClient.isBrowserSupported() ? (
           <>this Browser Not Supported</>
         ) : (
@@ -704,14 +717,22 @@ class InventoryTopology extends PureComponent<Props, State> {
     ) : null
   }
 
-  private openCloudForm = (provider: CloudServiceProvider) => {
-    this.setState({
-      provider,
-      isCloudFormVisible: true,
-      providerLabel: 'ADD REGION',
-      cloudTargetMinion: this.state.minionList[0],
-    })
-  }
+  // private openCloudForm = (provider: CloudServiceProvider) => {
+  //   console.log('openCloudForm provider:', provider)
+  //   console.log('openCloudForm this.state.minionList:', this.state.minionList)
+  //   console.log('openCloudForm this', this)
+  //   this.setState(
+  //     {
+  //       provider,
+  //       isCloudFormVisible: true,
+  //       // providerLabel: 'ADD REGION',
+  //       cloudTargetMinion: this.state.minionList[0],
+  //     },
+  //     () => {
+  //       console.log('setState openCloudForm')
+  //     }
+  //   )
+  // }
 
   private closeCloudForm = () => {
     this.setState({
@@ -1862,12 +1883,26 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private addRegionBtn = (provider: CloudServiceProvider) => () => {
+    const _this = this
     return (
       <Button
         color={ComponentColor.Primary}
         onClick={event => {
           event.stopPropagation()
-          this.openCloudForm(provider)
+          console.log('ADD REGION')
+          console.log('ADD REGION this', _this)
+          // this.openCloudForm(provider)
+          _this.setState(
+            {
+              // provider,
+              isCloudFormVisible: true,
+              // providerLabel: 'ADD REGION',
+              // cloudTargetMinion: this.state.minionList[0],
+            },
+            () => {
+              console.log('addRegionBtn setState')
+            }
+          )
         }}
         size={ComponentSize.ExtraSmall}
         text={'+ Add Region'}
@@ -1886,7 +1921,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.setState({
       isUpdateCloud: true,
-      providerLabel: 'UPDATE REGION',
+      // providerLabel: 'UPDATE REGION',
       cloudTargetMinion: updateRegion.minion,
       cloudRegion: updateRegion.region,
       cloudAccessKey: updateRegion.accesskey,
@@ -1903,7 +1938,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         color={ComponentColor.Primary}
         onClick={event => {
           event.stopPropagation()
-          this.openCloudForm(provider)
+          // this.openCloudForm(provider)
           this.openUpdateRegion(provider, region)
         }}
         size={ComponentSize.ExtraSmall}
@@ -2311,7 +2346,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   private get writeCloudForm() {
     const {
-      providerLabel,
+      // providerLabel,
       minionList,
       isCloudFormVisible,
       isUpdateCloud,
@@ -2320,14 +2355,14 @@ class InventoryTopology extends PureComponent<Props, State> {
       cloudAccessKey,
       cloudSecretKey,
     } = this.state
-
+    console.log('isCloudFormVisible: ', isCloudFormVisible)
     return (
       <OverlayTechnology visible={isCloudFormVisible}>
         <OverlayContainer>
           <div style={{position: 'relative'}}>
             {this.loadingState}
             <OverlayHeading
-              title={providerLabel}
+              title={isUpdateCloud ? 'UPDATE REGION' : 'ADD REGION'}
               onDismiss={this.closeCloudForm}
             />
             <OverlayBody>
