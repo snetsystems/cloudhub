@@ -34,6 +34,8 @@ export type TreeMenuProps = {
   children?: TreeMenuChildren
   locale?: LocaleFunction
   matchSearch?: MatchSearchFunction
+  testClick?: (properties: {[x: string]: any}) => void
+  testDelete?: (provider, region) => () => JSX.Element
 }
 
 type TreeMenuState = {
@@ -114,6 +116,7 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
         : undefined
 
       const newItem = {...item, focused, active, onClick, toggleNode}
+      console.log('newItem: ', newItem)
       return newItem
     })
   }
@@ -191,13 +194,13 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
     sideBarArea.appendChild(element)
   }
 
-  public componentDidMount() {
-    this.changedDOM()
-  }
+  // public componentDidMount() {
+  //   this.changedDOM()
+  // }
 
   public componentDidUpdate(_prevProps, prevState: TreeMenuState) {
     if (prevState.openNodes !== this.state.openNodes) {
-      this.changedDOM()
+      // this.changedDOM()
     }
   }
 
@@ -206,7 +209,7 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
   }
 
   public render() {
-    const {children, hasSearch} = this.props
+    const {children, hasSearch, testClick, testDelete} = this.props
     const {searchTerm} = this.state
 
     const items = this.generateItems()
@@ -218,8 +221,20 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
         <div id={'cloudInventoryContainer'}>
           {renderedChildren(
             hasSearch
-              ? {search: this.search, items, reset: this.reset, searchTerm}
-              : {items, reset: this.reset}
+              ? {
+                  search: this.search,
+                  items,
+                  reset: this.reset,
+                  searchTerm,
+                  testClick,
+                  testDelete,
+                }
+              : {
+                  items,
+                  reset: this.reset,
+                  testClick,
+                  testDelete,
+                }
           )}
         </div>
       </KeyDown>

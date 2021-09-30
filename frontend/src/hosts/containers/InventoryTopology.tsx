@@ -320,6 +320,14 @@ interface State {
   cloudGetDatas: any
   loadingState: RemoteDataState
 }
+
+function testOnClick(_this) {
+  console.log('testButton:')
+  _this.forceUpdate()
+  _this.setState({testNum: _this.state.testNum + 1}, () => {
+    console.log('testNum: ', _this.state.testNum)
+  })
+}
 @ErrorHandling
 class InventoryTopology extends PureComponent<Props, State> {
   constructor(props: Props) {
@@ -333,13 +341,16 @@ class InventoryTopology extends PureComponent<Props, State> {
     _.reduce(
       _.values(cloudData),
       (_before, current) => {
-        current.buttons = [this.addRegionBtn(current.provider)]
+        current.buttons = [
+          {provider: current.provider, isUpdate: false, text: 'Add Region'},
+        ]
         return false
       },
       {}
     )
 
     this.state = {
+      testNum: 0,
       isPinned: false,
       screenProportions: [0.3, 0.7],
       sidebarProportions: [0.333, 0.333, 0.333],
@@ -417,6 +428,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   private setToolbar = setToolbar
 
   public async componentDidMount() {
+    // this.testMakeTreemenu(this)
     await this.handleLoadCsps()
 
     this.createEditor()
@@ -653,7 +665,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       this.intervalID = null
     }
 
-    this.isComponentMounted = false
+    // this.isComponentMounted = false
   }
 
   public render() {
@@ -662,14 +674,14 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     return (
       <div id="containerWrapper">
-        <Button
+        {/* <Button
           onClick={() => {
             this.setState({
               isCloudFormVisible: !this.state.isCloudFormVisible,
             })
           }}
           text="toggle"
-        ></Button>
+        ></Button> */}
         {!mxClient.isBrowserSupported() ? (
           <>this Browser Not Supported</>
         ) : (
@@ -731,6 +743,20 @@ class InventoryTopology extends PureComponent<Props, State> {
   //     () => {
   //       console.log('setState openCloudForm')
   //     }
+  //   )
+  // }
+
+  // private testButtons = function () {
+  //   return (
+  //     <Button
+  //       onClick={() => {
+  //         console.log('testButton')
+  //         this.setState({testNum: this.state.testNum + 1}, () => {
+  //           console.log('testNum: ', this.state.testNum)
+  //         })
+  //       }}
+  //       text={'test'}
+  //     />
   //   )
   // }
 
@@ -1770,6 +1796,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     return instanceData
   }
+
   private instanceState = (instanceState = null) => {
     return (
       <div
@@ -1863,7 +1890,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       )
 
       const dbResp = await handleCreateCspAsync(data)
-
+      console.log('dbResp: ', dbResp)
       dbResp['data'] =
         _.values(saltResp.return[0])[0].length > 0
           ? _.values(saltResp.return[0])[0]
@@ -1955,6 +1982,9 @@ class InventoryTopology extends PureComponent<Props, State> {
     const {treeMenu, cloudAccessInfos} = this.state
     const {handleDeleteCspAsync} = this.props
     const regionID = this.getRegionID(provider, region)
+
+    console.log('provider, region: ', provider, region)
+    console.log('regionID: ', regionID)
     const {isDelete} = await handleDeleteCspAsync(regionID)
 
     if (isDelete) {
@@ -2085,6 +2115,19 @@ class InventoryTopology extends PureComponent<Props, State> {
                 <InventoryTreemenu
                   data={this.state.treeMenu}
                   graph={this.graph}
+                  testClick={value => {
+                    console.log('testClick value: ', value)
+                    this.setState({
+                      provider: value.provider,
+                      cloudTargetMinion: this.state.minionList[0],
+                      cloudRegion: value.region,
+                      cloudAccessKey: value.accesskey,
+                      cloudSecretKey: value.secretkey,
+                      isUpdateCloud: value.isUpdateCloud,
+                      isCloudFormVisible: true,
+                    })
+                  }}
+                  testDelete={this.removeRegionBtn}
                 />
               </FancyScrollbar>
             )
@@ -2266,6 +2309,30 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setState({...this.state, ...input})
   }
 
+  // private testOnClick() {
+  //   console.log('testButton:', this)
+  //   this.setState({testNum: this.state.testNum + 1}, () => {
+  //     console.log('testNum: ', this.state.testNum)
+  //   })
+  // }
+
+  // state 변경은 hooks 에서만 사용
+  // class 컴포넌트에서는 this가 꼬이는 듯...
+
+  // private testMakeTreemenu(_this) {
+  //   const {treeMenu} = this.state
+  //   const newTreeMenu = {...cloudData}
+
+  //   _.forEach(_.values(treeMenu), t => {
+  //     newTreeMenu[t.provider] = {
+  //       ...t,
+  //       buttons: [{provider: t.provider}],
+  //     }
+  //   })
+
+  //   this.setState({treeMenu: {...newTreeMenu}})
+  // }
+
   private makeTreemenu = () => {
     const {treeMenu, cloudAccessInfos} = this.state
 
@@ -2275,8 +2342,26 @@ class InventoryTopology extends PureComponent<Props, State> {
       cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region] = {
         ...cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region],
         buttons: [
-          this.updateRegionBtn(cloudRegion.provider, cloudRegion.region),
-          this.removeRegionBtn(cloudRegion.provider, cloudRegion.region),
+          {
+            id: cloudRegion.id,
+            provider: cloudRegion.provider,
+            region: cloudRegion.region,
+            accesskey: cloudRegion.accesskey,
+            secretkey: cloudRegion.secretkey,
+            isUpdateCloud: true,
+            isDeleteCloud: false,
+            icon: 'pencil',
+          },
+          {
+            id: cloudRegion.id,
+            provider: cloudRegion.provider,
+            region: cloudRegion.region,
+            isUpdateCloud: false,
+            isDeleteCloud: true,
+            icon: 'trash',
+          },
+          // this.updateRegionBtn(cloudRegion.provider, cloudRegion.region),
+          // this.removeRegionBtn(cloudRegion.provider, cloudRegion.region),
         ],
         label: cloudRegion.region,
         index: _.values(cloudDataTree[cloudRegion.provider]['nodes']).length,
