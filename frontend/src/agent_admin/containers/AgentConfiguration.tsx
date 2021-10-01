@@ -712,35 +712,28 @@ export class AgentConfiguration extends PureComponent<Props, State> {
     return (
       <>
         {isUserAuthorized ? (
-          <>
-            <div className="panel panel-solid">
-              <Threesizer
-                orientation={HANDLE_HORIZONTAL}
-                divisions={this.horizontalDivisions}
-                onResize={this.horizontalHandleResize}
-              />
-              <AgentConfigModal
-                visible={this.state.isModalVisible}
-                headingTitle={'Confirm'}
-                message={'Do you want to import previous changes?'}
-                cancelText={'No'}
-                confirmText={'Yes'}
-                onCancel={() => {
-                  this.setState({isModalVisible: !this.state.isModalVisible})
-                  this.getConfigInfo(false)
-                }}
-                onConfirm={() => {
-                  this.setState({isModalVisible: !this.state.isModalVisible})
-                  this.getConfigInfo(true)
-                }}
-              />
-            </div>
+          <div className="panel panel-solid">
+            <Threesizer
+              orientation={HANDLE_HORIZONTAL}
+              divisions={this.horizontalDivisions}
+              onResize={this.horizontalHandleResize}
+            />
+            <AgentConfigModal
+              visible={this.state.isModalVisible}
+              headingTitle={'Confirm'}
+              message={'Do you want to import previous changes?'}
+              cancelText={'No'}
+              confirmText={'Yes'}
+              onCancel={() => {
+                this.setState({isModalVisible: !this.state.isModalVisible})
+                this.getConfigInfo(false)
+              }}
+              onConfirm={() => {
+                this.setState({isModalVisible: !this.state.isModalVisible})
+                this.getConfigInfo(true)
+              }}
+            />
             <div className="agent-console">
-              <Threesizer
-                orientation={HANDLE_HORIZONTAL}
-                divisions={this.horizontalDivisions}
-                onResize={this.horizontalHandleResize}
-              />
               <AgentConfigConsoleModal
                 visible={this.state.isConsoleModalVisible}
                 headingTitle={'Console'}
@@ -753,7 +746,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
                 }}
               />
             </div>
-          </>
+          </div>
         ) : (
           <div
             className="generic-empty-state"
