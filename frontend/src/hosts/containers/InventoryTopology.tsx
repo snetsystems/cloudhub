@@ -2083,21 +2083,19 @@ class InventoryTopology extends PureComponent<Props, State> {
     const tempVars = generateForHosts(source)
 
     return (
-      <Page.Contents>
-        <LayoutRenderer
-          source={source}
-          sources={[source]}
-          isStatusPage={false}
-          isStaticPage={true}
-          isEditable={false}
-          cells={layoutCells}
-          templates={tempVars}
-          timeRange={timeRange}
-          manualRefresh={this.props.manualRefresh}
-          host={focusedHost}
-          instance={focusedInstance}
-        />
-      </Page.Contents>
+      <LayoutRenderer
+        source={source}
+        sources={[source]}
+        isStatusPage={false}
+        isStaticPage={true}
+        isEditable={false}
+        cells={layoutCells}
+        templates={tempVars}
+        timeRange={timeRange}
+        manualRefresh={this.props.manualRefresh}
+        host={focusedHost}
+        instance={focusedInstance}
+      />
     )
   }
 
