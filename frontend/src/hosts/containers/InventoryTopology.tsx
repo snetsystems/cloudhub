@@ -1716,7 +1716,9 @@ class InventoryTopology extends PureComponent<Props, State> {
             Partition_number: this.detailsValueChecker(),
             Virtualization_type: this.detailsValueChecker(VirtualizationType),
             Reservation: this.detailsValueChecker(),
-            Number_of_vCPUs: this.detailsValueChecker(CpuOptions.CoreCount),
+            Number_of_vCPUs: this.detailsValueChecker(
+              CpuOptions.CoreCount * CpuOptions.ThreadsPerCore
+            ),
           },
           Capacity_reservation: {
             Capacity_Reservation_ID: this.detailsValueChecker(),
