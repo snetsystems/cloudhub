@@ -25,7 +25,8 @@ export type TreeMenuChildren = (props: {
   searchTerm?: string
   items: TreeMenuItem[]
   reset?: (openNodes?: string[]) => void
-  testClick?: () => {}
+  handleOpenCspFormBtn: (properties: {[x: string]: any}) => JSX.Element
+  handleDeleteRegionBtn: (properties: {[x: string]: any}) => JSX.Element
 }) => JSX.Element
 
 export const ItemComponent: React.FunctionComponent<TreeMenuItem> = ({
@@ -130,7 +131,8 @@ export type CspTreeMenuChildren = (props: {
   searchTerm?: string
   items: TreeMenuItem[]
   reset?: (openNodes?: string[]) => void
-  testClick?: () => {}
+  handleOpenCspFormBtn: (properties: {[x: string]: any}) => JSX.Element
+  handleDeleteRegionBtn: (properties: {[x: string]: any}) => JSX.Element
 }) => JSX.Element
 
 export const ItemComponentCSP: React.FunctionComponent<TreeMenuItem> = ({
@@ -150,8 +152,8 @@ export const ItemComponentCSP: React.FunctionComponent<TreeMenuItem> = ({
   instanceid,
   provider,
   region,
-  testClick,
-  testDelete,
+  handleOpenCspFormBtn,
+  handleDeleteRegionBtn,
 }) => (
   <li
     className={classNames(
@@ -209,21 +211,9 @@ export const ItemComponentCSP: React.FunctionComponent<TreeMenuItem> = ({
         <div className={`tree-item-buttons`}>
           {_.map(buttons, button =>
             button.isDeleteCloud ? (
-              (() => {
-                console.log('button: ', button)
-                return testDelete(button.provider, button.region)()
-              })()
+              <span key={uuid.v4()}>{handleDeleteRegionBtn(button)}</span>
             ) : (
-              <span key={uuid.v4()} style={{marginLeft: '3px'}}>
-                <button
-                  className={`button button-xs button-primary`}
-                  onClick={() => {
-                    testClick(button)
-                  }}
-                >
-                  <span className={`icon ${button.icon}`}>{button.text}</span>
-                </button>
-              </span>
+              <span key={uuid.v4()}>{handleOpenCspFormBtn(button)}</span>
             )
           )}
         </div>
@@ -235,8 +225,8 @@ export const ItemComponentCSP: React.FunctionComponent<TreeMenuItem> = ({
 export const defaultChildrenCSP: CspTreeMenuChildren = ({
   search,
   items,
-  testClick,
-  testDelete,
+  handleOpenCspFormBtn,
+  handleDeleteRegionBtn,
 }) => {
   const onSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const {value} = e.target
@@ -255,7 +245,7 @@ export const defaultChildrenCSP: CspTreeMenuChildren = ({
       )}
       <ul className="tree-item-group">
         {items.map(props => {
-          props = {...props, testClick, testDelete}
+          props = {...props, handleOpenCspFormBtn, handleDeleteRegionBtn}
           return <ItemComponentCSP {...props} />
         })}
       </ul>

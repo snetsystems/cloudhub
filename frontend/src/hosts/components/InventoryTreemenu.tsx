@@ -15,9 +15,9 @@ import {
   TreeMenuItem,
 } from 'src/reusable_ui/components/treemenu/TreeMenu/renderProps'
 import KeyDown from 'src/reusable_ui/components/treemenu/KeyDown'
-import {mxDragSource, mxGraph as mxGraphType} from 'mxgraph'
+import {mxGraph as mxGraphType} from 'mxgraph'
 import {dragCell, drawCellInGroup} from '../configurations/topology'
-import {mxEvent, mxGraph, mxUtils} from '../containers/InventoryTopology'
+import {mxEvent, mxUtils} from '../containers/InventoryTopology'
 
 export type TreeMenuProps = {
   data: {[name: string]: TreeNode} | TreeNodeInArray[]
@@ -34,8 +34,8 @@ export type TreeMenuProps = {
   children?: TreeMenuChildren
   locale?: LocaleFunction
   matchSearch?: MatchSearchFunction
-  testClick?: (properties: {[x: string]: any}) => void
-  testDelete?: (provider, region) => () => JSX.Element
+  handleOpenCspFormBtn?: (properties: {[x: string]: any}) => JSX.Element
+  handleDeleteRegionBtn?: (properties: {[x: string]: any}) => JSX.Element
 }
 
 type TreeMenuState = {
@@ -116,7 +116,6 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
         : undefined
 
       const newItem = {...item, focused, active, onClick, toggleNode}
-      console.log('newItem: ', newItem)
       return newItem
     })
   }
@@ -194,22 +193,23 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
     sideBarArea.appendChild(element)
   }
 
-  // public componentDidMount() {
-  //   this.changedDOM()
-  // }
+  public componentDidMount() {
+    this.changedDOM()
+  }
 
   public componentDidUpdate(_prevProps, prevState: TreeMenuState) {
     if (prevState.openNodes !== this.state.openNodes) {
-      // this.changedDOM()
+      this.changedDOM()
     }
   }
 
-  public componentWillUnmount() {
-    console.log('unmount')
-  }
-
   public render() {
-    const {children, hasSearch, testClick, testDelete} = this.props
+    const {
+      children,
+      hasSearch,
+      handleOpenCspFormBtn,
+      handleDeleteRegionBtn,
+    } = this.props
     const {searchTerm} = this.state
 
     const items = this.generateItems()
@@ -226,14 +226,14 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
                   items,
                   reset: this.reset,
                   searchTerm,
-                  testClick,
-                  testDelete,
+                  handleOpenCspFormBtn,
+                  handleDeleteRegionBtn,
                 }
               : {
                   items,
                   reset: this.reset,
-                  testClick,
-                  testDelete,
+                  handleOpenCspFormBtn,
+                  handleDeleteRegionBtn,
                 }
           )}
         </div>
