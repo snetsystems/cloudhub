@@ -274,8 +274,6 @@ class CspHostsTable extends PureComponent<Props, State> {
       CloudInstanceIDWidth,
       CloudInstanceStateWidth,
       CloudInstanceTypeWidth,
-      CloudStatusCheckWidth,
-      CloudAlarmStatusWidth,
       CloudAppsWidth,
       CloudCPUWidth,
       CloudMemoryWidth,
@@ -323,22 +321,6 @@ class CspHostsTable extends PureComponent<Props, State> {
             style={{width: CloudInstanceTypeWidth}}
           >
             Instance type
-            <span className="icon caret-up" />
-          </div>
-          <div
-            onClick={this.updateSort('statusCheck')}
-            className={this.sortableClasses('statusCheck')}
-            style={{width: CloudStatusCheckWidth}}
-          >
-            Status check
-            <span className="icon caret-up" />
-          </div>
-          <div
-            onClick={this.updateSort('alarmStatus')}
-            className={this.sortableClasses('alarmStatus')}
-            style={{width: CloudAlarmStatusWidth}}
-          >
-            Alarm status
             <span className="icon caret-up" />
           </div>
           <div

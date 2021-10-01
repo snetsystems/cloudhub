@@ -35,9 +35,7 @@ const CspHostRow: FunctionComponent<Props> = ({
     csp,
     instanceId,
     instanceType,
-    alarmStatus,
     instanceState,
-    instanceStatusCheck,
     name,
     cpu,
     disk,
@@ -51,8 +49,6 @@ const CspHostRow: FunctionComponent<Props> = ({
     CloudInstanceIDWidth,
     CloudInstanceStateWidth,
     CloudInstanceTypeWidth,
-    CloudStatusCheckWidth,
-    CloudAlarmStatusWidth,
     CloudAppsWidth,
     CloudCPUWidth,
     CloudMemoryWidth,
@@ -109,18 +105,6 @@ const CspHostRow: FunctionComponent<Props> = ({
         className="monotype hosts-table--td"
       >
         {instanceType}
-      </div>
-      <div
-        style={{width: CloudStatusCheckWidth}}
-        className="monotype hosts-table--td"
-      >
-        {instanceStatusCheck}
-      </div>
-      <div
-        style={{width: CloudAlarmStatusWidth}}
-        className="monotype hosts-table--td"
-      >
-        {alarmStatus}
       </div>
       <div
         style={{width: CloudAppsWidth}}
