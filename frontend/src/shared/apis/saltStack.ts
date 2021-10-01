@@ -7,9 +7,6 @@ import {createActivityLog} from 'src/shared/apis'
 // Types
 import {Ipmi, IpmiCell} from 'src/types'
 
-// TEST
-import {saltDetailsDummy} from 'src/hosts/containers/detailsTest'
-
 interface Params {
   client?: string
   fun?: string
@@ -470,6 +467,35 @@ export async function runLocalServiceReStartTelegraf(
   }
 }
 
+export async function runLocalServiceTestTelegraf(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string
+) {
+  try {
+    const params: Params = {
+      client: 'local',
+      fun: 'cmd.run',
+      tgt_type: '',
+      tgt: '',
+      kwarg: {
+        cmd: 'telegraf --test',
+      },
+    }
+    if (pMinionId) {
+      params.tgt_type = 'list'
+      params.tgt = pMinionId
+    } else {
+      params.tgt_type = 'glob'
+      params.tgt = '*'
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 export async function runLocalCpGetDirTelegraf(
   pUrl: string,
   pToken: string,
@@ -669,6 +695,39 @@ export async function getRunnerSaltCmdTelegraf(
     }
 
     return await apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getRunnerSaltCmdTelegrafPlugin(
+  pUrl: string,
+  pToken: string
+) {
+  try {
+    const params = [
+      {
+        token: pToken,
+        client: 'runner',
+        fun: 'salt.cmd',
+        kwarg: {
+          fun: 'cmd.shell',
+          cmd: 'telegraf --input-list',
+        },
+      },
+      {
+        token: pToken,
+        client: 'runner',
+        fun: 'salt.cmd',
+        kwarg: {
+          fun: 'cmd.shell',
+          cmd: 'telegraf --output-list',
+        },
+      },
+    ]
+
+    return await apiRequestMulti(pUrl, params, 'application/x-yaml')
   } catch (error) {
     console.error(error)
     throw error
