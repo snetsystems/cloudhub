@@ -299,3 +299,24 @@
 .emphasis-word {
   font-weight: 600;
 }
+
+.agent-console {
+  .overlay--container {
+    .overlay--body {
+      height: 400px;
+      padding: 12px;
+      .form--wrapper {
+        height: 100%;
+        flex-wrap: nowrap;
+        flex-direction: column;
+        .form--element {
+          height: 90%;
+        }
+        .form--submit {
+          height: 10%;
+          margin-top: 0;
+        }
+      }
+    }
+  }
+}

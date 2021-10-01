@@ -821,7 +821,7 @@ export class HostsPage extends PureComponent<Props, State> {
       })
     } catch (error) {
       console.error(error)
-      notify(notifyUnableToGetHosts())
+      // notify(notifyUnableToGetHosts())
       this.setState({
         isVsphere: false,
         hostsPageStatus: RemoteDataState.Error,

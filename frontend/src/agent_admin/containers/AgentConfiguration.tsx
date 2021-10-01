@@ -2,6 +2,7 @@
 import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
 import _ from 'lodash'
+import memoize from 'memoize-one'
 import * as TOML from '@iarna/toml'
 import {EditorChange} from 'codemirror'
 import {AxiosResponse} from 'axios'
@@ -13,9 +14,10 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import AgentCodeEditor from 'src/agent_admin/components/AgentCodeEditor'
 import AgentToolbarFunction from 'src/agent_admin/components/AgentToolbarFunction'
 import AgentConfigModal from 'src/agent_admin/components/AgentConfigModal'
+import AgentConfigConsoleModal from 'src/agent_admin/components/AgentConfigConsoleModal'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import Dropdown from 'src/shared/components/Dropdown'
-import {globalSetting} from 'src/agent_admin/help'
+import SearchBar from 'src/hosts/components/SearchBar'
 
 // Middleware
 import {
@@ -35,7 +37,9 @@ import {
   getLocalFileReadAsync,
   getLocalFileWriteAsync,
   runLocalServiceReStartTelegrafAsync,
+  runLocalServiceTestTelegrafAsync,
   getRunnerSaltCmdTelegrafAsync,
+  getRunnerSaltCmdTelegrafPluginAsync,
 } from 'src/agent_admin/actions'
 
 // Notification
@@ -61,7 +65,7 @@ import {
   Notification,
   NotificationFunc,
 } from 'src/types'
-import {MinionsObject} from 'src/agent_admin/type'
+import {MinionsObject, SortDirection} from 'src/agent_admin/type'
 
 interface Props {
   notify: (message: Notification | NotificationFunc) => void
@@ -115,16 +119,21 @@ interface Props {
     saltMasterToken: string,
     measurements: string
   ) => Promise<AxiosResponse>
+  getRunnerSaltCmdTelegrafPlugin: (
+    saltMasterUrl: string,
+    saltMasterToken: string
+  ) => Promise<AxiosResponse>
+  runLocalServiceTestTelegraf: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    minion: string
+  ) => Promise<AxiosResponse>
 }
 
 interface State {
   configPageStatus: RemoteDataState
   measurementsStatus: RemoteDataState
   collectorConfigStatus: RemoteDataState
-  defaultMeasurements: {
-    name: string
-    isActivity: boolean
-  }[]
   horizontalProportions: number[]
   verticalProportions: number[]
   description: string
@@ -133,62 +142,35 @@ interface State {
   configScript: string
   responseMessage: string
   focusedHost: string
-  focusedHostIp: string
   isInitEditor: boolean
   isApplyBtnDisabled: boolean
+  isTestBtnDisabled: boolean
   isGetLocalStorage: boolean
   isModalVisible: boolean
   isCollectorInstalled: boolean
   isModalCall: boolean
   selectedOrg: string
+  inputPluginList: Plugin[]
+  outputPluginList: Plugin[]
+  searchTerm: string
+  isConsoleModalVisible: boolean
+  isConsoleModalMessage: string
 }
-
+interface Plugin {
+  name: string
+  isActivity: boolean
+}
 interface LocalStorageAgentConfig {
   focusedHost?: string
   focusedHostIp?: string
   configScript?: string
   isApplyBtnDisabled?: boolean
+  isTestBtnDisabled?: boolean
 }
 
 @ErrorHandling
 export class AgentConfiguration extends PureComponent<Props, State> {
   private DEFAULT_DROPDOWN_TEXT = 'Select Database(= Group)'
-
-  private defaultMeasurementsData = [
-    'global setting',
-    'cpu',
-    'disk',
-    'diskio',
-    'mem',
-    'net',
-    'netstat',
-    'nstat',
-    'ping',
-    'processes',
-    'system',
-    'swap',
-    'temp',
-    'mysql',
-    'mssql',
-    'influxdb',
-    'mongodb',
-    'postgresql',
-    'redis',
-    'oracle',
-    'activemq',
-    'rabbitmq',
-    'kafka',
-    'zookeeper',
-    'tomcat',
-    'apache',
-    'nginx',
-    'iis',
-    'win_system',
-    'docker',
-    'vsphere',
-    'kube_inventory',
-    'kubernetes',
-  ]
 
   constructor(props: Props) {
     super(props)
@@ -196,23 +178,27 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       configPageStatus: RemoteDataState.NotStarted,
       measurementsStatus: RemoteDataState.NotStarted,
       collectorConfigStatus: RemoteDataState.NotStarted,
-      defaultMeasurements: [],
       horizontalProportions: [0.43, 0.57],
-      verticalProportions: [0.43, 0.57],
+      verticalProportions: [0.3, 0.7],
       description: '',
       focusedMeasure: '',
       focusedMeasurePosition: {top: null, left: null},
       configScript: '',
       responseMessage: '',
       focusedHost: '',
-      focusedHostIp: '',
       isInitEditor: true,
       isApplyBtnDisabled: true,
+      isTestBtnDisabled: true,
       isGetLocalStorage: false,
       isModalVisible: false,
       isCollectorInstalled: false,
       isModalCall: false,
       selectedOrg: this.DEFAULT_DROPDOWN_TEXT,
+      inputPluginList: [],
+      outputPluginList: [],
+      searchTerm: '',
+      isConsoleModalVisible: false,
+      isConsoleModalMessage: '',
     }
   }
 
@@ -222,6 +208,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       focusedHostIp: '',
       configScript: '',
       isApplyBtnDisabled: true,
+      isTestBtnDisabled: true,
     })
 
     this.setState({configPageStatus: this.props.minionsStatus})
@@ -234,6 +221,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       isModalVisible,
       isGetLocalStorage,
       isCollectorInstalled,
+      isConsoleModalVisible,
     } = this.state
 
     const checkData = this.checkData({
@@ -242,14 +230,45 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       isGetLocalStorage,
       isCollectorInstalled,
       minionsObject,
+      isConsoleModalVisible,
     })
+
+    this.getTelegrafPlugin()
+
+    // const telegrafPlugin = await getRunnerSaltCmdTelegrafPlugin(
+    //   saltMasterUrl,
+    //   saltMasterToken
+    // )
+
+    // const inputPlugin = _.get(telegrafPlugin, 'return')[0]
+    //   .replace(/ /g, '')
+    //   .split('\n')
+    // const outputPlugin = _.get(telegrafPlugin, 'return')[1]
+    //   .replace(/ /g, '')
+    //   .split('\n')
+
+    // inputPlugin.shift()
+    // outputPlugin.shift()
+
+    // const inputPluginList = _.map(inputPlugin, input => ({
+    //   name: input,
+    //   isActivity: false,
+    // }))
+    // const outputPluginList = _.map(outputPlugin, output => ({
+    //   name: output,
+    //   isActivity: false,
+    // }))
 
     this.setState({
       isModalCall: checkData.isModalCall,
       isModalVisible: checkData.isModalVisible,
+      isConsoleModalVisible: checkData.isConsoleModalVisible,
       isGetLocalStorage: checkData.isGetLocalStorage,
       isCollectorInstalled: checkData.isCollectorInstalled,
       configPageStatus: this.props.minionsStatus,
+      measurementsStatus: RemoteDataState.Loading,
+      // inputPluginList,
+      // outputPluginList,
     })
   }
 
@@ -259,23 +278,30 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       prevProps.minionsStatus !== this.props.minionsStatus
     ) {
       const {minionsObject} = this.props
-      let {isModalCall, isModalVisible, isGetLocalStorage} = this.state
+      let {
+        isModalCall,
+        isModalVisible,
+        isGetLocalStorage,
+        isConsoleModalVisible,
+      } = this.state
 
       const checkData = this.checkData({
         minionsObject,
         isModalCall,
         isModalVisible,
         isGetLocalStorage,
+        isConsoleModalVisible,
       })
 
       this.setState({
         isModalCall: checkData.isModalCall,
         isModalVisible: checkData.isModalVisible,
+        isConsoleModalVisible: checkData.isConsoleModalVisible,
         isGetLocalStorage: checkData.isGetLocalStorage,
         isCollectorInstalled: checkData.isCollectorInstalled,
         configPageStatus: this.props.minionsStatus,
         collectorConfigStatus: RemoteDataState.Done,
-        measurementsStatus: RemoteDataState.Done,
+        // measurementsStatus: RemoteDataState.Done,
       })
     }
   }
@@ -283,20 +309,58 @@ export class AgentConfiguration extends PureComponent<Props, State> {
   public componentWillUnmount() {
     const {
       focusedHost,
-      focusedHostIp,
       configScript,
       isApplyBtnDisabled,
+      isTestBtnDisabled,
     } = this.state
 
     setLocalStorage('AgentConfigPage', {
-      focusedHost: isApplyBtnDisabled ? '' : focusedHost,
-      focusedHostIp: isApplyBtnDisabled ? '' : focusedHostIp,
-      configScript: isApplyBtnDisabled ? '' : configScript,
+      focusedHost: isApplyBtnDisabled && isTestBtnDisabled ? '' : focusedHost,
+      configScript: isApplyBtnDisabled && isTestBtnDisabled ? '' : configScript,
       isApplyBtnDisabled,
+      isTestBtnDisabled,
     })
   }
 
-  public onClickTableRowCall = (host: string, ip: string) => {
+  public getTelegrafPlugin = async () => {
+    const {
+      saltMasterUrl,
+      saltMasterToken,
+      getRunnerSaltCmdTelegrafPlugin,
+    } = this.props
+
+    const telegrafPlugin = await getRunnerSaltCmdTelegrafPlugin(
+      saltMasterUrl,
+      saltMasterToken
+    )
+
+    const inputPlugin = _.get(telegrafPlugin, 'return')[0]
+      .replace(/ /g, '')
+      .split('\n')
+    const outputPlugin = _.get(telegrafPlugin, 'return')[1]
+      .replace(/ /g, '')
+      .split('\n')
+
+    inputPlugin.shift()
+    outputPlugin.shift()
+
+    const inputPluginList = _.map(inputPlugin, input => ({
+      name: input,
+      isActivity: false,
+    }))
+    const outputPluginList = _.map(outputPlugin, output => ({
+      name: output,
+      isActivity: false,
+    }))
+
+    this.setState({
+      inputPluginList,
+      outputPluginList,
+      measurementsStatus: RemoteDataState.Done,
+    })
+  }
+
+  public onClickTableRowCall = async (host: string) => {
     if (this.state.focusedHost === host) return
     const {
       notify,
@@ -307,10 +371,8 @@ export class AgentConfiguration extends PureComponent<Props, State> {
 
     this.setState({
       configPageStatus: RemoteDataState.Loading,
-      measurementsStatus: RemoteDataState.Loading,
       collectorConfigStatus: RemoteDataState.Loading,
       focusedHost: host,
-      focusedHostIp: ip,
       isInitEditor: true,
       isGetLocalStorage: false,
     })
@@ -343,6 +405,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
           configScript: TOML.stringify(configObj),
           isGetLocalStorage: isChanged,
           isApplyBtnDisabled: isChanged ? !isChanged : true,
+          isTestBtnDisabled: isChanged ? !isChanged : true,
           collectorConfigStatus: RemoteDataState.Done,
           configPageStatus: RemoteDataState.Done,
           selectedOrg: this.DEFAULT_DROPDOWN_TEXT,
@@ -351,16 +414,6 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       .catch(error => {
         console.error(error)
       })
-
-    const getDefaultMeasure = this.defaultMeasurementsData.map(dMeasure => ({
-      name: dMeasure,
-      isActivity: false,
-    }))
-
-    this.setState({
-      defaultMeasurements: getDefaultMeasure,
-      measurementsStatus: RemoteDataState.Done,
-    })
   }
 
   public onClickActionCall = async (host: string, isRunning: boolean) => {
@@ -398,8 +451,9 @@ export class AgentConfiguration extends PureComponent<Props, State> {
     const {focusedHost, configScript} = this.state
     let {
       isModalCall,
-      isModalVisible,
+      // isModalVisible,
       isApplyBtnDisabled,
+      isTestBtnDisabled,
       isGetLocalStorage,
       responseMessage,
     } = this.state
@@ -455,6 +509,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
     getLocalFileWritePromise
       .then(({data}): void => {
         isApplyBtnDisabled = true
+        isTestBtnDisabled = true
         isGetLocalStorage = false
         responseMessage = data.return[0][focusedHost]
 
@@ -468,18 +523,20 @@ export class AgentConfiguration extends PureComponent<Props, State> {
           .then(() => {
             const checkData = this.checkData({
               isModalCall,
-              isModalVisible,
+              // isModalVisible,
               isApplyBtnDisabled,
+              isTestBtnDisabled,
               isGetLocalStorage,
               minionsObject,
             })
 
             this.setState({
               isModalCall: checkData.isModalCall,
-              isModalVisible: checkData.isModalVisible,
+              // isModalVisible: checkData.isModalVisible,
               isGetLocalStorage: checkData.isGetLocalStorage,
               isCollectorInstalled: checkData.isCollectorInstalled,
               isApplyBtnDisabled: checkData.isApplyBtnDisabled,
+              isTestBtnDisabled: checkData.isTestBtnDisabled,
               responseMessage,
               configPageStatus: RemoteDataState.Done,
               collectorConfigStatus: RemoteDataState.Done,
@@ -498,34 +555,146 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       })
   }
 
+  public onClickTestCall = () => {
+    const {
+      notify,
+      saltMasterUrl,
+      saltMasterToken,
+      organizations,
+      me,
+      getLocalFileWrite,
+      runLocalServiceTestTelegraf,
+      minionsObject,
+      handleGetMinionKeyListAll,
+    } = this.props
+    const {focusedHost, configScript} = this.state
+    let {
+      isModalCall,
+      // isModalVisible,
+      isApplyBtnDisabled,
+      isTestBtnDisabled,
+      isGetLocalStorage,
+      responseMessage,
+      isConsoleModalVisible,
+    } = this.state
+
+    let isCheckDone = true
+    try {
+      const configObj = TOML.parse(configScript)
+      const influxdbs: any = _.get(configObj, 'outputs.influxdb')
+      const agent: any = _.get(configObj, 'agent')
+
+      influxdbs.forEach((db: any) => {
+        if (me.superAdmin) {
+          const idx = organizations.findIndex(org => org.name === db.database)
+
+          if (idx < 0) {
+            notify(notifyAgentConfigNoMatchGroup(db.database))
+            isCheckDone = false
+            return
+          }
+        } else {
+          if (db.database !== me.currentOrganization.name) {
+            notify(notifyAgentConfigDBNameWrong(me.currentOrganization.name))
+            isCheckDone = false
+            return
+          }
+        }
+
+        if (agent.hostname !== focusedHost) {
+          notify(notifyAgentConfigHostNameWrong(focusedHost))
+          isCheckDone = false
+          return
+        }
+      })
+    } catch (error) {
+      notify(notifyAgentConfigWrong(error))
+      return
+    }
+
+    if (!isCheckDone) return
+
+    this.setState({
+      configPageStatus: RemoteDataState.Loading,
+      collectorConfigStatus: RemoteDataState.Loading,
+      isConsoleModalMessage: '',
+    })
+
+    const getLocalFileWritePromise = getLocalFileWrite(
+      saltMasterUrl,
+      saltMasterToken,
+      focusedHost,
+      configScript
+    )
+
+    getLocalFileWritePromise
+      .then(({data}): void => {
+        isApplyBtnDisabled = true
+        isTestBtnDisabled = true
+        isGetLocalStorage = false
+        responseMessage = data.return[0][focusedHost]
+
+        const getLocalServiceTestTelegrafPromise = runLocalServiceTestTelegraf(
+          saltMasterUrl,
+          saltMasterToken,
+          focusedHost
+        )
+
+        getLocalServiceTestTelegrafPromise
+          .then((data): void => {
+            const checkData = this.checkData({
+              isModalCall,
+              // isModalVisible,
+              isApplyBtnDisabled,
+              isTestBtnDisabled,
+              isGetLocalStorage,
+              minionsObject,
+              isConsoleModalVisible,
+            })
+
+            this.setState({
+              isModalCall: checkData.isModalCall,
+              // isModalVisible: checkData.isModalVisible,
+              isGetLocalStorage: checkData.isGetLocalStorage,
+              isCollectorInstalled: checkData.isCollectorInstalled,
+              // isApplyBtnDisabled: checkData.isApplyBtnDisabled,
+              isTestBtnDisabled: checkData.isTestBtnDisabled,
+              responseMessage,
+              configPageStatus: RemoteDataState.Done,
+              collectorConfigStatus: RemoteDataState.Done,
+              measurementsStatus: RemoteDataState.Done,
+              isConsoleModalVisible: true,
+              isConsoleModalMessage: data['return'][0][focusedHost],
+            })
+
+            handleGetMinionKeyListAll()
+            // notify(notifyAgentApplySucceeded('is applied'))
+          })
+          .catch(e => {
+            console.error(e)
+          })
+      })
+      .catch(e => {
+        console.error(e)
+      })
+  }
+
   public getConfigInfo = (answer: boolean) => {
     const {
       configScript,
       focusedHost,
-      focusedHostIp,
       isApplyBtnDisabled,
+      isTestBtnDisabled,
     }: LocalStorageAgentConfig = getLocalStorage('AgentConfigPage')
 
     if (answer) {
       this.setState({
         configScript,
         focusedHost,
-        focusedHostIp,
         isApplyBtnDisabled,
+        isTestBtnDisabled,
         isInitEditor: false,
-        measurementsStatus: RemoteDataState.Loading,
-      })
-
-      let getDefaultMeasure = this.defaultMeasurementsData.map(dMeasure => {
-        return {
-          name: dMeasure,
-          isActivity: false,
-        }
-      })
-
-      this.setState({
-        defaultMeasurements: getDefaultMeasure,
-        measurementsStatus: RemoteDataState.Done,
+        // measurementsStatus: RemoteDataState.Loading,
       })
     } else {
       setLocalStorage('AgentConfigPage', {
@@ -533,6 +702,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
         focusedHostIp: '',
         configScript: '',
         isApplyBtnDisabled: true,
+        isTestBtnDisabled: true,
       })
     }
   }
@@ -563,6 +733,19 @@ export class AgentConfiguration extends PureComponent<Props, State> {
                 this.getConfigInfo(true)
               }}
             />
+            <div className="agent-console">
+              <AgentConfigConsoleModal
+                visible={this.state.isConsoleModalVisible}
+                headingTitle={'Console'}
+                message={this.state.isConsoleModalMessage}
+                cancelText={'Close'}
+                onCancel={() => {
+                  this.setState({
+                    isConsoleModalVisible: !this.state.isConsoleModalVisible,
+                  })
+                }}
+              />
+            </div>
           </div>
         ) : (
           <div
@@ -583,6 +766,8 @@ export class AgentConfiguration extends PureComponent<Props, State> {
     isGetLocalStorage,
     isCollectorInstalled,
     isApplyBtnDisabled,
+    isTestBtnDisabled,
+    isConsoleModalVisible,
   }: {
     minionsObject?: Props['minionsObject']
     isModalCall?: State['isModalCall']
@@ -590,6 +775,8 @@ export class AgentConfiguration extends PureComponent<Props, State> {
     isGetLocalStorage?: State['isGetLocalStorage']
     isCollectorInstalled?: State['isCollectorInstalled']
     isApplyBtnDisabled?: State['isApplyBtnDisabled']
+    isTestBtnDisabled?: State['isTestBtnDisabled']
+    isConsoleModalVisible?: State['isConsoleModalVisible']
   }): {
     minionsObject?: Props['minionsObject']
     isModalCall?: State['isModalCall']
@@ -597,6 +784,8 @@ export class AgentConfiguration extends PureComponent<Props, State> {
     isGetLocalStorage?: State['isGetLocalStorage']
     isCollectorInstalled?: State['isCollectorInstalled']
     isApplyBtnDisabled?: State['isApplyBtnDisabled']
+    isTestBtnDisabled?: State['isTestBtnDisabled']
+    isConsoleModalVisible?: State['isConsoleModalVisible']
   } => {
     const CollectorInstalledMinions = _.filter(minionsObject, [
       'isInstall',
@@ -608,6 +797,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
     if (!isModalCall) {
       const {
         isApplyBtnDisabled,
+        isTestBtnDisabled,
         focusedHost,
       }: LocalStorageAgentConfig = getLocalStorage('AgentConfigPage')
 
@@ -616,7 +806,11 @@ export class AgentConfiguration extends PureComponent<Props, State> {
         focusedHost,
       ])
 
-      if (!isApplyBtnDisabled && Boolean(getHostCompare)) {
+      if (
+        !isApplyBtnDisabled &&
+        Boolean(getHostCompare) &&
+        !isTestBtnDisabled
+      ) {
         isModalCall = true
         isModalVisible = true
         isGetLocalStorage = true
@@ -630,6 +824,8 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       isGetLocalStorage,
       isCollectorInstalled,
       isApplyBtnDisabled,
+      isTestBtnDisabled,
+      isConsoleModalVisible,
     }
   }
 
@@ -671,66 +867,102 @@ export class AgentConfiguration extends PureComponent<Props, State> {
     )
   }
 
-  private handleFocusedDefaultMeasure = async ({
+  private handleFocusedPlugin = async ({
     clickPosition,
     _thisProps,
   }: {
     clickPosition: {top: number; left: number}
-    _thisProps: {name: string; idx: number}
+    _thisProps: {name: string; idx: number; inoutkind: string}
   }) => {
     const {
       saltMasterUrl,
       saltMasterToken,
       getRunnerSaltCmdTelegraf,
     } = this.props
-    const {defaultMeasurements} = this.state
-    const {idx, name} = _thisProps
+    const {inputPluginList, outputPluginList, searchTerm} = this.state
+    const {idx, name, inoutkind} = _thisProps
 
-    const mapDefaultMeasurements = defaultMeasurements.map(m => {
+    const sortedInputPlugin = this.getSortedPlugin(
+      inputPluginList,
+      searchTerm,
+      'name',
+      SortDirection.ASC
+    )
+
+    const sortedOutputPlugin = this.getSortedPlugin(
+      outputPluginList,
+      searchTerm,
+      'name',
+      SortDirection.ASC
+    )
+
+    const mapInputPlugin = sortedInputPlugin.map(m => {
       m.isActivity = false
       return m
     })
 
-    defaultMeasurements[idx].isActivity === false
-      ? (defaultMeasurements[idx].isActivity = true)
-      : (defaultMeasurements[idx].isActivity = false)
+    const mapOutputPlugin = sortedOutputPlugin.map(m => {
+      m.isActivity = false
+      return m
+    })
 
-    if (name === 'global setting') {
+    if (inoutkind === 'IN') {
+      mapInputPlugin[idx].isActivity === false
+        ? (mapInputPlugin[idx].isActivity = true)
+        : (mapInputPlugin[idx].isActivity = false)
+    } else {
+      mapOutputPlugin[idx].isActivity === false
+        ? (mapOutputPlugin[idx].isActivity = true)
+        : (mapOutputPlugin[idx].isActivity = false)
+    }
+    try {
+      const {data} = await getRunnerSaltCmdTelegraf(
+        saltMasterUrl,
+        saltMasterToken,
+        name
+      )
       this.setState({
-        defaultMeasurements: [...mapDefaultMeasurements],
+        inputPluginList: [...mapInputPlugin],
+        outputPluginList: [...mapOutputPlugin],
         focusedMeasure: name,
         focusedMeasurePosition: clickPosition,
-        description: globalSetting,
+        description: data.return[0],
       })
-    } else {
-      try {
-        const {data} = await getRunnerSaltCmdTelegraf(
-          saltMasterUrl,
-          saltMasterToken,
-          name
-        )
-        this.setState({
-          defaultMeasurements: [...mapDefaultMeasurements],
-          focusedMeasure: name,
-          focusedMeasurePosition: clickPosition,
-          description: data.return[0],
-        })
-      } catch (error) {
-        console.error(error)
-      }
+    } catch (error) {
+      console.error(error)
     }
   }
 
-  private handleDefaultClose = (): void => {
-    const {defaultMeasurements} = this.state
+  private handlePluginClose = (): void => {
+    const {inputPluginList, outputPluginList, searchTerm} = this.state
 
-    const mapDefaultMeasurements = defaultMeasurements.map(m => {
+    const sortedInputPlugin = this.getSortedPlugin(
+      inputPluginList,
+      searchTerm,
+      'name',
+      SortDirection.ASC
+    )
+
+    const sortedOutputPlugin = this.getSortedPlugin(
+      outputPluginList,
+      searchTerm,
+      'name',
+      SortDirection.ASC
+    )
+
+    const mapInputPlugin = sortedInputPlugin.map(m => {
+      m.isActivity = false
+      return m
+    })
+
+    const mapOutputPlugin = sortedOutputPlugin.map(m => {
       m.isActivity = false
       return m
     })
 
     this.setState({
-      defaultMeasurements: [...mapDefaultMeasurements],
+      inputPluginList: [...mapInputPlugin],
+      outputPluginList: [...mapOutputPlugin],
       focusedMeasure: '',
       focusedMeasurePosition: {top: null, left: null},
     })
@@ -752,6 +984,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
     this.setState({
       isInitEditor: false,
       isApplyBtnDisabled: false,
+      isTestBtnDisabled: false,
       configScript: script,
     })
   }
@@ -766,17 +999,20 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       if (isGetLocalStorage) {
         this.setState({
           isApplyBtnDisabled: false,
+          isTestBtnDisabled: false,
           isInitEditor: false,
         })
       } else {
         this.setState({
           isApplyBtnDisabled: true,
+          isTestBtnDisabled: true,
           isInitEditor: false,
         })
       }
     } else {
       this.setState({
         isApplyBtnDisabled: false,
+        isTestBtnDisabled: false,
       })
     }
   }
@@ -821,7 +1057,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
               width: '100%',
             }}
           >
-            measurements
+            Plugins
           </h2>
         </div>
         <div className="panel-body">{this.MeasurementsContent}</div>
@@ -829,35 +1065,110 @@ export class AgentConfiguration extends PureComponent<Props, State> {
     )
   }
 
+  public getSortedPlugin = memoize(
+    (
+      inputPluginList: Plugin[],
+      searchTerm: string,
+      sortKey: string,
+      sortDirection: SortDirection.ASC
+    ) =>
+      this.sort(
+        this.filter(inputPluginList, searchTerm),
+        sortKey,
+        sortDirection
+      )
+  )
+
+  public filter(plugin: Plugin[], searchTerm: string): Plugin[] {
+    const filterText = searchTerm.toLowerCase()
+    return plugin.filter(h => {
+      return h.name.toLowerCase().includes(filterText)
+    })
+  }
+
+  public sort(
+    plugin: Plugin[],
+    key: string,
+    direction: SortDirection
+  ): Plugin[] {
+    switch (direction) {
+      case SortDirection.ASC:
+        return _.sortBy(plugin, e => e[key])
+      case SortDirection.DESC:
+        return _.sortBy(plugin, e => e[key]).reverse()
+      default:
+        return plugin
+    }
+  }
+
+  public pluginSearchTerm = (searchTerm: string): void => {
+    this.setState({searchTerm})
+  }
+
   private get MeasurementsContentBody() {
     const {
-      defaultMeasurements,
       description,
       focusedMeasure,
       focusedMeasurePosition,
-      focusedHost,
-      focusedHostIp,
+      inputPluginList,
+      outputPluginList,
+      searchTerm,
     } = this.state
+
+    const sortedInputPlugin = this.getSortedPlugin(
+      inputPluginList,
+      searchTerm,
+      'name',
+      SortDirection.ASC
+    )
+
+    const sortedOutputPlugin = this.getSortedPlugin(
+      outputPluginList,
+      searchTerm,
+      'name',
+      SortDirection.ASC
+    )
+
     return (
       <FancyScrollbar>
-        <div className="measurements-title">
-          {focusedHost && focusedHostIp
-            ? `${focusedHost} - ${focusedHostIp}`
-            : null}
+        <div>
+          <SearchBar
+            placeholder="Filter by Plugin..."
+            onSearch={this.pluginSearchTerm}
+          />
         </div>
-        <div className={'default-measurements'}> (Plugin Name)</div>
+        <div className={'default-measurements'}>(Output Plugin)</div>
         <div className="query-builder--list">
-          {defaultMeasurements.map((v, i) => {
+          {sortedOutputPlugin.map((v, i) => {
             return (
               <AgentToolbarFunction
+                inoutkind={'OUT'}
                 name={v.name}
                 isActivity={v.isActivity}
                 key={i}
                 idx={i}
-                handleFocusedMeasure={this.handleFocusedDefaultMeasure.bind(
-                  this
-                )}
-                handleClose={this.handleDefaultClose}
+                handleFocusedPlugin={this.handleFocusedPlugin.bind(this)}
+                handleClose={this.handlePluginClose}
+                description={description}
+                focusedMeasure={focusedMeasure}
+                focusedPosition={focusedMeasurePosition}
+              />
+            )
+          })}
+        </div>
+
+        <div className={'default-measurements'}> (Input Plugin)</div>
+        <div className="query-builder--list">
+          {sortedInputPlugin.map((v, i) => {
+            return (
+              <AgentToolbarFunction
+                inoutkind={'IN'}
+                name={v.name}
+                isActivity={v.isActivity}
+                key={i}
+                idx={i}
+                handleFocusedPlugin={this.handleFocusedPlugin.bind(this)}
+                handleClose={this.handlePluginClose}
                 description={description}
                 focusedMeasure={focusedMeasure}
                 focusedPosition={focusedMeasurePosition}
@@ -871,7 +1182,12 @@ export class AgentConfiguration extends PureComponent<Props, State> {
 
   private CollectorConfig() {
     const {organizations, me} = this.props
-    const {collectorConfigStatus, isApplyBtnDisabled, selectedOrg} = this.state
+    const {
+      collectorConfigStatus,
+      isApplyBtnDisabled,
+      selectedOrg,
+      isTestBtnDisabled,
+    } = this.state
 
     let dropdownOrg: any = null
     if (organizations) {
@@ -898,6 +1214,15 @@ export class AgentConfiguration extends PureComponent<Props, State> {
                   className="dropdown-stretch top"
                 />
               ) : null}
+            </div>
+            <div>
+              <button
+                className="btn btn-inline_block btn-default agent--btn btn-primary"
+                onClick={this.onClickTestCall}
+                disabled={isTestBtnDisabled}
+              >
+                TEST
+              </button>
             </div>
             <div>
               <button
@@ -1038,7 +1363,9 @@ const mdtp = {
   getLocalFileRead: getLocalFileReadAsync,
   getLocalFileWrite: getLocalFileWriteAsync,
   runLocalServiceReStartTelegraf: runLocalServiceReStartTelegrafAsync,
+  runLocalServiceTestTelegraf: runLocalServiceTestTelegrafAsync,
   getRunnerSaltCmdTelegraf: getRunnerSaltCmdTelegrafAsync,
+  getRunnerSaltCmdTelegrafPlugin: getRunnerSaltCmdTelegrafPluginAsync,
 }
 
 export default connect(mstp, mdtp)(AgentConfiguration)

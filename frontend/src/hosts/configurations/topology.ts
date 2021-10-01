@@ -113,7 +113,7 @@ export const configureStylesheet = function (mx: mxGraphExportObject) {
   style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_LEFT
   style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE
   style[mxConstants.STYLE_STROKECOLOR] = ''
-  style[mxConstants.STYLE_FILLCOLOR] = '#4ed8a0'
+  style[mxConstants.STYLE_FILLCOLOR] = '#bec2cc'
   this.graph.getStylesheet().putCellStyle('status', style)
 
   style = this.graph.getStylesheet().getDefaultEdgeStyle()
@@ -1304,7 +1304,10 @@ export const detectedHostsStatus = function (
     _.forEach(cells, cell => {
       if (cell.getStyle() === 'node') {
         const containerElement = getContainerElement(cell.value)
-        const name = containerElement.getAttribute('data-label')
+        const dataNavi = containerElement.getAttribute('data-data_navi')
+        const name = containerElement.getAttribute(
+          _.isEmpty(dataNavi) ? 'data-label' : 'data-name'
+        )
 
         const findHost = _.find(hostsObject, host => host.name === name)
 
@@ -1365,14 +1368,23 @@ export const detectedHostsStatus = function (
               const childCellElement = getParseHTML(
                 childCell.value
               ).querySelector('div')
-              childCellElement.setAttribute('data-status-value', '')
 
-              childCell.setValue(childCellElement.outerHTML)
-              this.graph.setCellStyles(
-                mxConstants.STYLE_FILLCOLOR,
-                getTimeSeriesHostIndicator(''),
-                [childCell]
+              const statusKind = childCellElement.getAttribute(
+                'data-status-kind'
               )
+              if (
+                statusKind === 'cpu' ||
+                statusKind === 'disk' ||
+                statusKind === 'memory'
+              ) {
+                childCellElement.setAttribute('data-status-value', '')
+                childCell.setValue(childCellElement.outerHTML)
+                this.graph.setCellStyles(
+                  mxConstants.STYLE_FILLCOLOR,
+                  '#bec2cc',
+                  [childCell]
+                )
+              }
             })
           }
         }

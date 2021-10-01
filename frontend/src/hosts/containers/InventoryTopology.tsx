@@ -363,7 +363,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       filteredLayouts: [],
       focusedHost: '',
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
-      activeEditorTab: 'details',
+      activeEditorTab: 'monitoring',
       selected: 'ALL',
       appHostData: {},
       isCloudFormVisible: false,
@@ -452,14 +452,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         // For rendering whole hosts list
         await this.getHostData()
 
-        const {autoRefresh} = this.props
-        if (autoRefresh) {
-          this.intervalID = window.setInterval(
-            () => this.getHostData(),
-            autoRefresh
-          )
-        }
-        GlobalAutoRefresher.poll(autoRefresh)
+        await this.getIpmiTargetList()
 
         this.setState({
           layouts,
@@ -555,7 +548,6 @@ class InventoryTopology extends PureComponent<Props, State> {
         (prevState.focusedHost !== focusedHost && focusedHost) ||
         (prevState.selected !== selected && focusedHost)
       ) {
-        this.getHostData()
         const {filteredLayouts} = await this.getLayoutsforHost(
           layouts,
           focusedHost
@@ -798,10 +790,11 @@ class InventoryTopology extends PureComponent<Props, State> {
   private fetchIntervalData = async () => {
     await this.getHostData()
     await this.getIpmiStatus()
-    await this.getIpmiTargetList()
   }
 
   private getHostData = async () => {
+    if (!this.graph) return
+
     const {source, links} = this.props
 
     const envVars = await getEnv(links.environment)
@@ -1076,7 +1069,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         this.setState({
           focusedInstance: {provider, region, instanceid, instancename},
           focusedHost: null,
-          activeEditorTab: 'details',
+          activeEditorTab: 'monitoring',
         })
       } else {
         const containerElement = getContainerElement(selectionCells[0].value)
@@ -1577,15 +1570,6 @@ class InventoryTopology extends PureComponent<Props, State> {
                 <>
                   <div className="radio-buttons radio-buttons--default radio-buttons--sm">
                     <Radio.Button
-                      id="hostspage-tab-details"
-                      titleText="details"
-                      value="details"
-                      active={this.state.activeEditorTab === 'details'}
-                      onClick={this.onSetActiveEditorTab}
-                    >
-                      Details
-                    </Radio.Button>
-                    <Radio.Button
                       id="hostspage-tab-monitoring"
                       titleText="monitoring"
                       value="monitoring"
@@ -1594,15 +1578,30 @@ class InventoryTopology extends PureComponent<Props, State> {
                     >
                       Monitoring
                     </Radio.Button>
+                    <Radio.Button
+                      id="hostspage-tab-details"
+                      titleText="details"
+                      value="details"
+                      active={this.state.activeEditorTab === 'details'}
+                      onClick={this.onSetActiveEditorTab}
+                    >
+                      Details
+                    </Radio.Button>
                   </div>
-                  <span>Get from :</span>
-                  <Dropdown
-                    items={['ALL', 'CloudWatch', 'Within instances']}
-                    onChoose={this.getHandleOnChoose}
-                    selected={this.state.selected}
-                    className="dropdown-sm"
-                    disabled={false}
-                  />
+                  {this.state.activeEditorTab === 'monitoring' ? (
+                    <>
+                      <span>Get from :</span>
+                      <Dropdown
+                        items={['ALL', 'CloudWatch', 'Within instances']}
+                        onChoose={this.getHandleOnChoose}
+                        selected={this.state.selected}
+                        className="dropdown-sm"
+                        disabled={false}
+                      />
+                    </>
+                  ) : (
+                    ''
+                  )}
                 </>
               )}
             </Page.Header.Left>
@@ -2329,8 +2328,10 @@ class InventoryTopology extends PureComponent<Props, State> {
               <Form>
                 <Form.Element label="Target Minion" colsXS={12}>
                   <Dropdown
-                    items={minionList}
-                    selected={cloudTargetMinion}
+                    items={['NONE', ...minionList]}
+                    selected={
+                      cloudTargetMinion !== '' ? cloudTargetMinion : 'NONE'
+                    }
                     onChoose={this.handleChooseTargetMinion}
                     className="dropdown-stretch"
                   />

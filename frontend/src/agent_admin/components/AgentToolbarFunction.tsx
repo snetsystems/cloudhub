@@ -10,13 +10,14 @@ import AgentTooltip from 'src/agent_admin/components/AgentTooltip'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
+  inoutkind: string
   name: string | null
   isActivity: boolean
   idx: number
   description: string
   focusedMeasure: string
   focusedPosition: {top: number; left: number}
-  handleFocusedMeasure: AgentConfiguration['handleFocusedDefaultMeasure']
+  handleFocusedPlugin: AgentConfiguration['handleFocusedPlugin']
   handleClose: () => void
 }
 
@@ -61,7 +62,7 @@ class AgentToolbarFunction extends PureComponent<Props, State> {
             onClick={this.handleFocusing.bind(this)}
             ref={this.functionRef}
           >
-            {`>>`}
+            {`?`}
           </button>
         </div>
         {this.tooltip}
@@ -70,9 +71,9 @@ class AgentToolbarFunction extends PureComponent<Props, State> {
   }
 
   private handleFocusing = () => {
-    const {handleFocusedMeasure} = this.props
+    const {handleFocusedPlugin} = this.props
     const clickPosition = this.functionRef.current.getBoundingClientRect()
-    handleFocusedMeasure({clickPosition, _thisProps: this.props})
+    handleFocusedPlugin({clickPosition, _thisProps: this.props})
   }
 
   private get tooltip(): JSX.Element {

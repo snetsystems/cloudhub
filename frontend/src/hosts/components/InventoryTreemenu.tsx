@@ -272,7 +272,7 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
           const node = {
             label: value,
             link: '',
-            name: 'server',
+            name: value,
             type: 'Server',
             parent:
               el.getAttribute('data-parent') +
@@ -308,7 +308,7 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
         const node = {
           label: value,
           link: '',
-          name: 'server',
+          name: value,
           type: 'Server',
           data_navi: dataNavi,
         }
