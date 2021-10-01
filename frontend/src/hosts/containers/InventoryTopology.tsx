@@ -1588,24 +1588,27 @@ class InventoryTopology extends PureComponent<Props, State> {
                       Details
                     </Radio.Button>
                   </div>
-                  {this.state.activeEditorTab === 'monitoring' ? (
-                    <>
-                      <span>Get from :</span>
-                      <Dropdown
-                        items={['ALL', 'CloudWatch', 'Within instances']}
-                        onChoose={this.getHandleOnChoose}
-                        selected={this.state.selected}
-                        className="dropdown-sm"
-                        disabled={false}
-                      />
-                    </>
-                  ) : (
-                    ''
-                  )}
                 </>
               )}
             </Page.Header.Left>
-            <Page.Header.Right></Page.Header.Right>
+            <Page.Header.Right>
+              {this.state.activeEditorTab === 'monitoring' ? (
+                <>
+                  <span>
+                    Get from <span style={{margin: '0 3px'}}>:</span>
+                  </span>
+                  <Dropdown
+                    items={['ALL', 'CloudWatch', 'Within instances']}
+                    onChoose={this.getHandleOnChoose}
+                    selected={this.state.selected}
+                    className="dropdown-sm"
+                    disabled={false}
+                  />
+                </>
+              ) : (
+                ''
+              )}
+            </Page.Header.Right>
           </Page.Header>
           <Page.Contents scrollable={true}>
             {this.state.activeEditorTab === 'details' ? (

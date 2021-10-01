@@ -533,7 +533,9 @@ export class HostsPage extends PureComponent<Props, State> {
           <Page.Header>
             <Page.Header.Left>
               <>
-                <span>Get from :</span>
+                <span>
+                  Get from <span style={{margin: '0 3px'}}>:</span>
+                </span>
                 <Dropdown
                   items={['ALL', 'CloudWatch', 'Within instances']}
                   onChoose={this.getHandleOnChoose}
