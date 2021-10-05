@@ -17,6 +17,14 @@ export const CLOUD_HOSTS_TABLE_SIZING = {
   CloudDiskWidth: '7%',
 }
 
+export const CLOUD_HOST_SECURITY_TABLE_SIZING = {
+  PortWidth: '25%',
+  ProtocolWidth: '25%',
+  SourceWidth: '25%',
+  DestinationWidth: '25%',
+  SecurityGroupsWidth: '25%',
+}
+
 export const AGENT_TABLE_SIZING = {
   CheckWidth: '30px',
   HostWidth: '35%',

@@ -5,6 +5,9 @@ import _ from 'lodash'
 // component
 import TopologyDetailsSectionItem from 'src/hosts/components/TopologyDetailsSectionItem'
 import {AWSInstanceData} from 'src/hosts/types/cloud'
+import TopologyDetailsSectionTable from './TopologySecurityTable'
+import {RemoteDataState} from 'src/types'
+import uuid from 'uuid'
 
 interface Props {
   title: string
@@ -27,6 +30,12 @@ class TopologyDetailsSection extends PureComponent<Props, State> {
     const {title, selectInstanceData} = this.props
     const {isActive} = this.state
 
+    // const {isTable} = _.values(selectInstanceData)?.[0]
+
+    console.log('selectInstanceData: ', selectInstanceData)
+
+    const isTable = _.isArray(_.values(selectInstanceData)[0])
+    // console.log('isTable: ', isTable)
     return (
       <>
         <div className={'tab-pannel-contents'}>
@@ -42,15 +51,23 @@ class TopologyDetailsSection extends PureComponent<Props, State> {
           </div>
           {this.state.isActive ? (
             <div className={'section-wrap'}>
-              {_.map(_.keys(selectInstanceData), infoKey => {
-                return (
-                  <TopologyDetailsSectionItem
-                    key={infoKey}
-                    label={infoKey.replaceAll('_', ' ')}
-                    contents={selectInstanceData[infoKey]}
-                  />
-                )
-              })}
+              {isTable ? (
+                <TopologyDetailsSectionTable
+                  key={uuid.v4()}
+                  tableData={_.values(selectInstanceData)[0]}
+                  pageStatus={RemoteDataState.Done}
+                />
+              ) : (
+                _.map(_.keys(selectInstanceData), infoKey => {
+                  return (
+                    <TopologyDetailsSectionItem
+                      key={infoKey}
+                      label={infoKey.replaceAll('_', ' ')}
+                      contents={selectInstanceData[infoKey]}
+                    />
+                  )
+                })
+              )}
             </div>
           ) : null}
         </div>
