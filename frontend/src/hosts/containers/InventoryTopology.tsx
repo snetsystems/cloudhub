@@ -90,7 +90,9 @@ import {
   createCloudServiceProviderAsync,
   updateCloudServiceProviderAsync,
   deleteCloudServiceProviderAsync,
-  getCSPHostsAsync,
+  getAWSInstancesAsync,
+  getAWSSecurityAsync,
+  getAWSVolumeAsync,
 } from 'src/hosts/actions'
 
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -265,10 +267,22 @@ interface Props {
   handleCreateCspAsync: (data: paramsCreateCSP) => Promise<any>
   handleUpdateCspAsync: (data: paramsUpdateCSP) => Promise<any>
   handleDeleteCspAsync: (id: string) => Promise<any>
-  handleGetCSPHostsAsync: (
+  handleGetAWSInstancesAsync: (
     saltMasterUrl: string,
     saltMasterToken: string,
     pCsp: any[]
+  ) => Promise<any>
+  handleGetAWSSecurityAsync: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    pCsp: any,
+    pGroupIds: string[]
+  ) => Promise<any>
+  handleGetAWSVolumeAsync: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    pCsp: any,
+    pGroupIds: string[]
   ) => Promise<any>
 }
 
@@ -318,6 +332,8 @@ interface State {
   }[]
   cloudGetDatas: any
   loadingState: RemoteDataState
+  awsSecurity: any
+  awsVolume: any
 }
 
 @ErrorHandling
@@ -330,16 +346,13 @@ class InventoryTopology extends PureComponent<Props, State> {
       PureComponent.prototype.setState.bind(this)(args, callback)
     }
 
-    _.reduce(
-      _.values(cloudData),
-      (_before, current) => {
-        current.buttons = [
-          {provider: current.provider, isUpdate: false, text: 'Add Region'},
-        ]
-        return false
-      },
-      {}
-    )
+    let cloud = {}
+
+    _.map(_.values(cloudData), f => {
+      if (_.find(this.props.links.addons, addon => addon.name === f.provider)) {
+        cloud[`${f.provider}`] = f
+      }
+    })
 
     this.state = {
       isPinned: false,
@@ -358,7 +371,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       isStatusVisible: false,
       resizableDockHeight: 165,
       resizableDockWidth: 200,
-      selectItem: 'Cloud',
+      selectItem: 'Private',
       layouts: [],
       filteredLayouts: [],
       focusedHost: '',
@@ -373,11 +386,13 @@ class InventoryTopology extends PureComponent<Props, State> {
       cloudSecretKey: '',
       cloudTargetMinion: '',
       provider: null,
-      treeMenu: {...cloudData},
+      treeMenu: {...cloud},
       focusedInstance: null,
       cloudAccessInfos: [],
       cloudGetDatas: [],
       loadingState: RemoteDataState.NotStarted,
+      awsSecurity: null,
+      awsVolume: null,
     }
   }
 
@@ -428,6 +443,18 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.addToolsButton(this.tools)
     this.setToolbar(this.editor, this.toolbar)
+
+    // console.log(Object.values(CloudServiceProvider))
+
+    // let cloud = {}
+
+    // _.map(_.values(cloudData), f => {
+    //   if (_.find(this.props.links.addons, addon => addon.name === f.provider)) {
+    //     cloud[`${f.provider}`] = f
+    //   }
+    // })
+
+    // console.log('filterCloud', cloud)
 
     const topology = await this.props.handleGetInventoryTopology(
       this.props.links
@@ -570,12 +597,12 @@ class InventoryTopology extends PureComponent<Props, State> {
       }
     }
 
-    if (
-      prevState.selectItem !== this.state.selectItem &&
-      this.state.selectItem === 'Private'
-    ) {
-      this.changedDOM()
-    }
+    // if (
+    //   prevState.selectItem !== this.state.selectItem &&
+    //   this.state.selectItem === 'Private'
+    // ) {
+    //   this.changedDOM()
+    // }
 
     if (
       JSON.stringify(_.keys(prevState.hostsObject)) !==
@@ -583,7 +610,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       prevState.hostsObject !== null
     ) {
       this.setCellsWarning(_.keys(this.state.hostsObject))
-      this.changedDOM()
+      // this.changedDOM()
     }
 
     if (_.isEmpty(this.state.topologyId) && !_.isEmpty(this.state.topology)) {
@@ -1025,7 +1052,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.graph
       .getSelectionModel()
-      .addListener(mxEvent.CHANGE, this.onChangedSelection)
+      .addListener(mxEvent.CHANGE, _.debounce(this.onChangedSelection, 600))
 
     this.graph.addListener(mxEvent.CLICK, onClickMxGraph.bind(this))
 
@@ -1051,6 +1078,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     mxGraphSelectionModel: mxGraphSelectionModeltype,
     _mxEventObject: mxEventObjectType
   ) => {
+    console.log('onChangedSelection')
     const selectionCells = mxGraphSelectionModel['cells']
 
     if (selectionCells.length > 0) {
@@ -1060,11 +1088,67 @@ class InventoryTopology extends PureComponent<Props, State> {
         .getAttribute('data-data_navi')
 
       if (dataNavi) {
+        // console.log(dataNavi)
+        // _.debounce(() => console.log('debounce'), 100)
+        const {cloudAccessInfos} = this.state
         const instanceData = _.get(this.state.treeMenu, `${dataNavi}`)
         const provider = _.get(instanceData, 'provider')
         const region = _.get(instanceData, 'region')
         const instanceid = _.get(instanceData, 'instanceid')
         const instancename = _.get(instanceData, 'label')
+
+        const accessInfo = _.find(
+          cloudAccessInfos,
+          c => c.provider === provider && c.region === region
+        )
+
+        const {secretkey} = accessInfo
+        const decryptedBytes = CryptoJS.AES.decrypt(
+          secretkey,
+          this.secretKey.url
+        )
+        const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
+
+        const newCloudAccessInfos = {
+          ...accessInfo,
+          secretkey: originalSecretkey,
+        }
+
+        // console.log('accessInfo', accessInfo)
+
+        const getData = _.filter(accessInfo.data, d =>
+          _.isNull(d) ? false : d.InstanceId === instanceid
+        )
+
+        // console.log('getData', getData)
+
+        const securityGroupIds = _.reduce(
+          getData[0].SecurityGroups,
+          (groupIds: string[], current) => {
+            groupIds = [...groupIds, current.GroupId]
+
+            return groupIds
+          },
+          []
+        )
+
+        // console.log('securityGroupIds', securityGroupIds)
+
+        this.getAWSSecurity(newCloudAccessInfos, securityGroupIds)
+
+        const volumeGroupIds = _.reduce(
+          getData[0].BlockDeviceMappings,
+          (groupIds: string[], current) => {
+            groupIds = [...groupIds, current.Ebs.VolumeId]
+
+            return groupIds
+          },
+          []
+        )
+
+        // console.log('volumeGroupIds', volumeGroupIds)
+
+        this.getAWSVolume(newCloudAccessInfos, volumeGroupIds)
 
         this.setState({
           focusedInstance: {provider, region, instanceid, instancename},
@@ -1090,6 +1174,35 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
 
     createForm.bind(this)(mxGraphSelectionModel.graph, this.properties)
+  }
+
+  private getAWSSecurity = async (
+    accessInfos: any,
+    securityGroupIds: string[]
+  ) => {
+    const awsSecurity = await this.props.handleGetAWSSecurityAsync(
+      this.salt.url,
+      this.salt.token,
+      accessInfos,
+      securityGroupIds
+    )
+
+    console.log('getAWSSecurity', awsSecurity)
+
+    this.setState({awsSecurity})
+  }
+
+  private getAWSVolume = async (accessInfos: any, volumeGroupIds: string[]) => {
+    const awsVolume = await this.props.handleGetAWSVolumeAsync(
+      this.salt.url,
+      this.salt.token,
+      accessInfos,
+      volumeGroupIds
+    )
+
+    console.log('getAWSVolume', awsVolume)
+
+    this.setState({awsVolume})
   }
 
   private saltIpmiSetPowerAsync = _.throttle(
@@ -1554,7 +1667,8 @@ class InventoryTopology extends PureComponent<Props, State> {
         <Page className="inventory-hosts-list-page">
           <Page.Header fullWidth={true}>
             <Page.Header.Left>
-              {!_.isEmpty(this.state.focusedHost) ? (
+              {!_.isEmpty(this.state.focusedHost) ||
+              _.isEmpty(this.state.treeMenu) ? (
                 <div className="radio-buttons radio-buttons--default radio-buttons--sm">
                   <Radio.Button
                     id="hostspage-tab-monitoring"
@@ -1795,7 +1909,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private handleAddRegion = async () => {
-    const {handleCreateCspAsync, handleGetCSPHostsAsync} = this.props
+    const {handleCreateCspAsync, handleGetAWSInstancesAsync} = this.props
     const {
       provider,
       cloudAccessKey,
@@ -1827,7 +1941,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     try {
       this.setState({loadingState: RemoteDataState.Loading})
-      const saltResp = await handleGetCSPHostsAsync(
+      const saltResp = await handleGetAWSInstancesAsync(
         this.salt.url,
         this.salt.token,
         [newData]
@@ -1967,34 +2081,36 @@ class InventoryTopology extends PureComponent<Props, State> {
       {
         name: 'Detected Hosts',
         headerOrientation: HANDLE_HORIZONTAL,
-        headerButtons: [
-          <Button
-            key={'Private'}
-            color={
-              this.state.selectItem === 'Private'
-                ? ComponentColor.Primary
-                : ComponentColor.Default
-            }
-            text={'Private'}
-            onClick={() => {
-              this.onChooseItem('Private')
-            }}
-            size={ComponentSize.ExtraSmall}
-          />,
-          <Button
-            key={'Cloud'}
-            color={
-              this.state.selectItem === 'Cloud'
-                ? ComponentColor.Primary
-                : ComponentColor.Default
-            }
-            text={'Cloud'}
-            onClick={() => {
-              this.onChooseItem('Cloud')
-            }}
-            size={ComponentSize.ExtraSmall}
-          />,
-        ],
+        headerButtons: !_.isEmpty(this.state.treeMenu)
+          ? [
+              <Button
+                key={'Private'}
+                color={
+                  this.state.selectItem === 'Private'
+                    ? ComponentColor.Primary
+                    : ComponentColor.Default
+                }
+                text={'Private'}
+                onClick={() => {
+                  this.onChooseItem('Private')
+                }}
+                size={ComponentSize.ExtraSmall}
+              />,
+              <Button
+                key={'Cloud'}
+                color={
+                  this.state.selectItem === 'Cloud'
+                    ? ComponentColor.Primary
+                    : ComponentColor.Default
+                }
+                text={'Cloud'}
+                onClick={() => {
+                  this.onChooseItem('Cloud')
+                }}
+                size={ComponentSize.ExtraSmall}
+              />,
+            ]
+          : [],
         menuOptions: [],
         size: topSize,
         render: () => {
@@ -2212,6 +2328,9 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   private makeTreemenu = () => {
     const {treeMenu, cloudAccessInfos} = this.state
+
+    if (_.isEmpty(treeMenu)) return
+
     const cloudDataTree = {...treeMenu}
 
     _.forEach(cloudAccessInfos, cloudRegion => {
@@ -2393,7 +2512,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private handleLoadCsps = async () => {
-    const {handleLoadCspsAsync, handleGetCSPHostsAsync} = this.props
+    const {handleLoadCspsAsync, handleGetAWSInstancesAsync} = this.props
     const dbResp: any[] = await handleLoadCspsAsync()
 
     const newDbResp = _.map(dbResp, resp => {
@@ -2409,7 +2528,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       return resp
     })
 
-    const saltResp = await handleGetCSPHostsAsync(
+    const saltResp = await handleGetAWSInstancesAsync(
       this.salt.url,
       this.salt.token,
       newDbResp
@@ -2428,7 +2547,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private handleUpdateRegion = async () => {
-    const {handleUpdateCspAsync, handleGetCSPHostsAsync} = this.props
+    const {handleUpdateCspAsync, handleGetAWSInstancesAsync} = this.props
     const {
       cloudTargetMinion,
       cloudRegion,
@@ -2460,7 +2579,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     try {
       this.setState({loadingState: RemoteDataState.Loading})
 
-      const saltResp = await handleGetCSPHostsAsync(
+      const saltResp = await handleGetAWSInstancesAsync(
         this.salt.url,
         this.salt.token,
         [newData]
@@ -2512,7 +2631,9 @@ const mapDispatchToProps = {
   handleCreateCspAsync: createCloudServiceProviderAsync,
   handleUpdateCspAsync: updateCloudServiceProviderAsync,
   handleDeleteCspAsync: deleteCloudServiceProviderAsync,
-  handleGetCSPHostsAsync: getCSPHostsAsync,
+  handleGetAWSInstancesAsync: getAWSInstancesAsync,
+  handleGetAWSSecurityAsync: getAWSSecurityAsync,
+  handleGetAWSVolumeAsync: getAWSVolumeAsync,
 }
 
 export default connect(

@@ -35,6 +35,10 @@ interface Params {
     api_host?: string
     api_user?: string
     api_pass?: string
+    region?: string
+    keyid?: string
+    key?: string
+    group_ids?: string | string[]
   }
   username?: string
   password?: string
@@ -953,28 +957,7 @@ export async function getIpmiGetSensorData(
   }
 }
 
-const saltActivityLog = async (
-  activity: object,
-  result: object
-): Promise<void> => {
-  if (_.get(result, 'status') === 200) {
-    createActivityLog(
-      'SaltProxy',
-      `${_.get(activity, 'message')} result:${JSON.stringify(
-        _.get(result, 'headers.content-type') === 'application/x-yaml'
-          ? _.get(yaml.safeLoad(_.get(result, 'data')), 'return')[0]
-          : _.get(result, 'data.return')[0]
-      )}`
-    )
-  } else {
-    createActivityLog(
-      'SaltProxy',
-      `Sever ${_.get(result, 'status')} error: ${_.get(result, 'statusText')}.`
-    )
-  }
-}
-
-export async function getCSPHosts(
+export async function getLocalBotoEc2DescribeInstances(
   pUrl: string,
   pToken: string,
   pCSPs: any[]
@@ -1005,5 +988,88 @@ export async function getCSPHosts(
   } catch (error) {
     console.error(error)
     throw error
+  }
+}
+
+export async function getLocalBotoSecgroupGetAllSecurityGroups(
+  pUrl: string,
+  pToken: string,
+  pCSP: any,
+  pGroupIds?: string[]
+): Promise<any> {
+  try {
+    const param = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'boto_secgroup.get_all_security_groups',
+      tgt_type: 'glob',
+      tgt: pCSP.minion,
+      kwarg: {
+        region: pCSP.region,
+        keyid: pCSP.accesskey,
+        key: pCSP.secretkey,
+        group_ids: pGroupIds,
+      },
+    }
+
+    const result = await apiRequest(pUrl, pToken, param, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalBoto2DescribeVolumes(
+  pUrl: string,
+  pToken: string,
+  pCSP: any,
+  pVolumeIds?: string[]
+): Promise<any> {
+  try {
+    const param = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'boto_ec2.describe_volumes',
+      tgt_type: 'glob',
+      tgt: pCSP.minion,
+      kwarg: {
+        region: pCSP.region,
+        keyid: pCSP.accesskey,
+        key: pCSP.secretkey,
+        volume_ids: pVolumeIds,
+      },
+    }
+
+    const result = await apiRequest(pUrl, pToken, param, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+const saltActivityLog = async (
+  activity: object,
+  result: object
+): Promise<void> => {
+  if (_.get(result, 'status') === 200) {
+    createActivityLog(
+      'SaltProxy',
+      `${_.get(activity, 'message')} result:${JSON.stringify(
+        _.get(result, 'headers.content-type') === 'application/x-yaml'
+          ? _.get(yaml.safeLoad(_.get(result, 'data')), 'return')[0]
+          : _.get(result, 'data.return')[0]
+      )}`
+    )
+  } else {
+    createActivityLog(
+      'SaltProxy',
+      `Sever ${_.get(result, 'status')} error: ${_.get(result, 'statusText')}.`
+    )
   }
 }

@@ -16,7 +16,9 @@ import {
   updateCloudServiceProviderAPI,
   deleteCloudServiceProviderAPI,
   paramsUpdateCSP,
-  getCSPHostsApi,
+  getAWSInstancesApi,
+  getAWSSecurityApi,
+  getAWSVolumeApi,
 } from 'src/hosts/apis'
 
 // Types
@@ -26,7 +28,7 @@ import {Links, Ipmi, IpmiCell} from 'src/types'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {
   notifyIpmiConnectionFailed,
-  notifygetCSPHostFailed,
+  notifygetAWSInstancesFailed,
 } from 'src/shared/copy/notifications'
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 
@@ -40,7 +42,9 @@ export enum ActionTypes {
   CreateCloudServiceProvider = 'CREATE_CLOUD_SERVICE_PROVIDER',
   UpdateCloudServiceProvider = 'UPDATE_CLOUD_SERVICE_PROVIDER',
   DeleteCloudServiceProvider = 'DELETE_CLOUD_SERVICE_PROVIDER',
-  GetCSPHost = 'GET_CSP_HOST',
+  GetAWSInstances = 'GET_AWS_INSTANCES',
+  GetAWSSecurity = 'GET_AWS_SECURITY',
+  GetAWSVolume = 'GET_AWS_VOLUME',
 }
 
 export type Action =
@@ -53,7 +57,9 @@ export type Action =
   | CreateCloudServiceProviderAction
   | UpdateCloudServiceProviderAction
   | DeleteCloudServiceProviderAction
-  | GetCSPHostAction
+  | GetAWSInstancesAction
+  | GetAWSSecurityAction
+  | GetAWSVolumeAction
 
 interface LoadInventoryTopologyAction {
   type: ActionTypes.LoadInventoryTopology
@@ -272,13 +278,33 @@ export const deleteCloudServiceProviderAction = (): DeleteCloudServiceProviderAc
     type: ActionTypes.DeleteCloudServiceProvider,
   }
 }
-interface GetCSPHostAction {
-  type: ActionTypes.GetCSPHost
+interface GetAWSInstancesAction {
+  type: ActionTypes.GetAWSInstances
 }
 
-export const getCSPHostAction = (): GetCSPHostAction => {
+export const getAWSInstancesAction = (): GetAWSInstancesAction => {
   return {
-    type: ActionTypes.GetCSPHost,
+    type: ActionTypes.GetAWSInstances,
+  }
+}
+
+interface GetAWSSecurityAction {
+  type: ActionTypes.GetAWSSecurity
+}
+
+export const getAWSSecurityAction = (): GetAWSSecurityAction => {
+  return {
+    type: ActionTypes.GetAWSSecurity,
+  }
+}
+
+interface GetAWSVolumeAction {
+  type: ActionTypes.GetAWSVolume
+}
+
+export const getAWSVolumeAction = (): GetAWSVolumeAction => {
+  return {
+    type: ActionTypes.GetAWSVolume,
   }
 }
 
@@ -357,26 +383,60 @@ export const deleteCloudServiceProviderAsync = (id: string) => async (
   }
 }
 
-export const getCSPHostsAsync = (
+export const getAWSInstancesAsync = (
   pUrl: string,
   pToken: string,
   pCsps: any[]
 ) => async (dispatch: Dispatch<Action>) => {
   try {
-    const cspHosts = await getCSPHostsApi(pUrl, pToken, pCsps)
+    const awsInstances = await getAWSInstancesApi(pUrl, pToken, pCsps)
 
-    _.forEach(cspHosts.return, (host, index) => {
+    _.forEach(awsInstances.return, (host, index) => {
       if (!_.isArray(_.values(host)[0])) {
         const {provider, region} = pCsps[index]
         const error = new Error(
           `<br/>PROVIDER: ${provider} <br/>REGION: ${region}`
         )
-        dispatch(notifyAction(notifygetCSPHostFailed(error)))
+        dispatch(notifyAction(notifygetAWSInstancesFailed(error)))
       }
     })
 
-    dispatch(getCSPHostAction())
-    return cspHosts
+    dispatch(getAWSInstancesAction())
+    return awsInstances
+  } catch (error) {
+    dispatch(errorThrown(error))
+  }
+}
+
+export const getAWSSecurityAsync = (
+  pUrl: string,
+  pToken: string,
+  pCsps: any[],
+  pGroupIds: string[]
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const cspSecurity = await getAWSSecurityApi(pUrl, pToken, pCsps, pGroupIds)
+
+    dispatch(getAWSSecurityAction())
+
+    return cspSecurity
+  } catch (error) {
+    dispatch(errorThrown(error))
+  }
+}
+
+export const getAWSVolumeAsync = (
+  pUrl: string,
+  pToken: string,
+  pCsps: any[],
+  pGroupIds: string[]
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const cspSecurity = await getAWSVolumeApi(pUrl, pToken, pCsps, pGroupIds)
+
+    dispatch(getAWSVolumeAction())
+
+    return cspSecurity
   } catch (error) {
     dispatch(errorThrown(error))
   }
