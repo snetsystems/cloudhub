@@ -19,6 +19,7 @@ import {
   getAWSInstancesApi,
   getAWSSecurityApi,
   getAWSVolumeApi,
+  getAWSInstanceTypesApi,
 } from 'src/hosts/apis'
 
 // Types
@@ -45,6 +46,7 @@ export enum ActionTypes {
   GetAWSInstances = 'GET_AWS_INSTANCES',
   GetAWSSecurity = 'GET_AWS_SECURITY',
   GetAWSVolume = 'GET_AWS_VOLUME',
+  GetAWSInstanceTypes = 'GET_AWS_INSTANCE_TYPES',
 }
 
 export type Action =
@@ -59,7 +61,7 @@ export type Action =
   | DeleteCloudServiceProviderAction
   | GetAWSInstancesAction
   | GetAWSSecurityAction
-  | GetAWSVolumeAction
+  | GetAWSInstanceTypesAction
 
 interface LoadInventoryTopologyAction {
   type: ActionTypes.LoadInventoryTopology
@@ -308,6 +310,16 @@ export const getAWSVolumeAction = (): GetAWSVolumeAction => {
   }
 }
 
+interface GetAWSInstanceTypesAction {
+  type: ActionTypes.GetAWSInstanceTypes
+}
+
+export const getAWSInstanceTypesAction = (): GetAWSInstanceTypesAction => {
+  return {
+    type: ActionTypes.GetAWSInstanceTypes,
+  }
+}
+
 export const loadCloudServiceProvidersAsync = () => async (
   dispatch: Dispatch<any>
 ) => {
@@ -415,11 +427,11 @@ export const getAWSSecurityAsync = (
   pGroupIds: string[]
 ) => async (dispatch: Dispatch<Action>) => {
   try {
-    const cspSecurity = await getAWSSecurityApi(pUrl, pToken, pCsps, pGroupIds)
+    const awsSecurity = await getAWSSecurityApi(pUrl, pToken, pCsps, pGroupIds)
 
     dispatch(getAWSSecurityAction())
 
-    return cspSecurity
+    return awsSecurity
   } catch (error) {
     dispatch(errorThrown(error))
   }
@@ -432,11 +444,33 @@ export const getAWSVolumeAsync = (
   pGroupIds: string[]
 ) => async (dispatch: Dispatch<Action>) => {
   try {
-    const cspSecurity = await getAWSVolumeApi(pUrl, pToken, pCsps, pGroupIds)
+    const awsSecurity = await getAWSVolumeApi(pUrl, pToken, pCsps, pGroupIds)
 
     dispatch(getAWSVolumeAction())
 
-    return cspSecurity
+    return awsSecurity
+  } catch (error) {
+    dispatch(errorThrown(error))
+  }
+}
+
+export const getAWSInstanceTypesAsync = (
+  pUrl: string,
+  pToken: string,
+  pCsps: any[],
+  pTypes: string[]
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const awsSecurity = await getAWSInstanceTypesApi(
+      pUrl,
+      pToken,
+      pCsps,
+      pTypes
+    )
+
+    dispatch(getAWSInstanceTypesAction())
+
+    return awsSecurity
   } catch (error) {
     dispatch(errorThrown(error))
   }
