@@ -25,7 +25,9 @@ import {
   getIpmiGetSensorData,
   setIpmiSetPower,
   IpmiSetPowerStatus,
-  getCSPHosts,
+  getLocalBotoEc2DescribeInstances,
+  getLocalBotoSecgroupGetAllSecurityGroups,
+  getLocalBoto2DescribeVolumes,
 } from 'src/shared/apis/saltStack'
 
 interface HostsObject {
@@ -1276,13 +1278,55 @@ export const getCpuAndLoadForInstances = async (
   return providers
 }
 
-export const getCSPHostsApi = async (
+export const getAWSInstancesApi = async (
   pUrl: string,
   pToken: string,
   pCsps: any[]
 ) => {
   try {
-    const info = await getCSPHosts(pUrl, pToken, pCsps)
+    const info = await getLocalBotoEc2DescribeInstances(pUrl, pToken, pCsps)
+    const cspHost = yaml.safeLoad(info.data)
+
+    return cspHost
+  } catch (error) {
+    throw error
+  }
+}
+
+export const getAWSSecurityApi = async (
+  pUrl: string,
+  pToken: string,
+  pCsps: any[],
+  pGroupIds?: string[]
+) => {
+  try {
+    const info = await getLocalBotoSecgroupGetAllSecurityGroups(
+      pUrl,
+      pToken,
+      pCsps,
+      pGroupIds
+    )
+    const cspHost = yaml.safeLoad(info.data)
+
+    return cspHost
+  } catch (error) {
+    throw error
+  }
+}
+
+export const getAWSVolumeApi = async (
+  pUrl: string,
+  pToken: string,
+  pCsps: any[],
+  pGroupIds?: string[]
+) => {
+  try {
+    const info = await getLocalBoto2DescribeVolumes(
+      pUrl,
+      pToken,
+      pCsps,
+      pGroupIds
+    )
     const cspHost = yaml.safeLoad(info.data)
 
     return cspHost

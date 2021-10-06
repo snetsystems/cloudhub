@@ -2,7 +2,7 @@ import {CloudServiceProvider} from 'src/hosts/types'
 
 export const cloudData = {
   aws: {
-    buttons: [],
+    buttons: [{provider: 'aws', isUpdate: false, text: 'Add Region'}],
     label: 'Amazon Web Service',
     index: 0,
     level: 0,
@@ -10,7 +10,7 @@ export const cloudData = {
     nodes: {},
   },
   gcp: {
-    buttons: [],
+    buttons: [{provider: 'gcp', isUpdate: false, text: 'Add Region'}],
     label: 'Google Cloud Platform',
     index: 1,
     level: 0,
@@ -18,7 +18,7 @@ export const cloudData = {
     nodes: {},
   },
   azure: {
-    buttons: [],
+    buttons: [{provider: 'azure', isUpdate: false, text: 'Add Region'}],
     label: 'Azure',
     index: 2,
     level: 0,

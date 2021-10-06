@@ -56,7 +56,7 @@ import * as AppActions from 'src/types/actions/app'
 
 import {
   loadCloudServiceProvidersAsync,
-  getCSPHostsAsync,
+  getAWSInstancesAsync,
 } from 'src/hosts/actions'
 
 // Utils
@@ -321,7 +321,10 @@ const mdtp = dispatch => ({
     loadCloudServiceProvidersAsync,
     dispatch
   ),
-  handleGetCSPHostsAsync: bindActionCreators(getCSPHostsAsync, dispatch),
+  handleGetAWSInstancesAsync: bindActionCreators(
+    getAWSInstancesAsync,
+    dispatch
+  ),
 })
 
 export default connect(mstp, mdtp, null)(ManualRefresh<Props>(Infrastructure))

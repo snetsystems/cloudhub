@@ -85,7 +85,7 @@ import * as AppActions from 'src/types/actions/app'
 
 import {
   loadCloudServiceProvidersAsync,
-  getCSPHostsAsync,
+  getAWSInstancesAsync,
 } from 'src/hosts/actions'
 
 interface Instance {
@@ -106,7 +106,7 @@ interface Props extends ManualRefreshProps {
   handleClickPresentationButton: AppActions.DelayEnablePresentationModeDispatcher
   inPresentationMode: boolean
   handleLoadCspsAsync: () => Promise<any>
-  handleGetCSPHostsAsync: (
+  handleGetAWSInstancesAsync: (
     saltMasterUrl: string,
     saltMasterToken: string,
     pCsp: any[]
@@ -733,24 +733,40 @@ export class HostsPage extends PureComponent<Props, State> {
       source,
       links,
       notify,
-      handleGetCSPHostsAsync,
+      handleGetAWSInstancesAsync,
     } = this.props
 
     const dbResp: any[] = await handleLoadCspsAsync()
-    const newDbResp = _.map(dbResp, resp => {
-      const {secretkey} = resp
-      const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
-      const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
+    const newDbResp = _.filter(
+      _.map(dbResp, resp => {
+        const {secretkey} = resp
+        const decryptedBytes = CryptoJS.AES.decrypt(
+          secretkey,
+          this.secretKey.url
+        )
+        const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
 
-      resp = {
-        ...resp,
-        secretkey: originalSecretkey,
+        resp = {
+          ...resp,
+          secretkey: originalSecretkey,
+        }
+
+        return resp
+      }),
+      filterData => {
+        if (
+          _.find(
+            this.props.links.addons,
+            addon => addon.name === filterData.provider
+          )
+        )
+          return filterData
       }
+    )
 
-      return resp
-    })
+    if (_.isEmpty(newDbResp)) return
 
-    let getSaltCSPs = await handleGetCSPHostsAsync(
+    let getSaltCSPs = await handleGetAWSInstancesAsync(
       this.salt.url,
       this.salt.token,
       newDbResp
@@ -874,7 +890,10 @@ const mdtp = dispatch => ({
     loadCloudServiceProvidersAsync,
     dispatch
   ),
-  handleGetCSPHostsAsync: bindActionCreators(getCSPHostsAsync, dispatch),
+  handleGetAWSInstancesAsync: bindActionCreators(
+    getAWSInstancesAsync,
+    dispatch
+  ),
 })
 
 export default connect(mstp, mdtp, null)(ManualRefresh<Props>(HostsPage))
