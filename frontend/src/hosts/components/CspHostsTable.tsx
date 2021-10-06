@@ -36,6 +36,11 @@ export interface Props {
   focusedInstance: Instance
   onClickTableRow: HostsPage['handleClickCspTableRow']
   tableTitle: () => JSX.Element
+  handleInstanceTypeModal: (
+    provider: string,
+    region: string,
+    type: string
+  ) => void
 }
 
 interface State {
@@ -196,7 +201,13 @@ class CspHostsTable extends PureComponent<Props, State> {
   }
 
   private get CloudTableWithHosts(): JSX.Element {
-    const {source, cloudHosts, focusedInstance, onClickTableRow} = this.props
+    const {
+      source,
+      cloudHosts,
+      focusedInstance,
+      onClickTableRow,
+      handleInstanceTypeModal,
+    } = this.props
     const {sortKey, sortDirection, searchTerm, selected} = this.state
 
     let sortedHosts = this.getSortedHosts(
@@ -222,6 +233,7 @@ class CspHostsTable extends PureComponent<Props, State> {
                 sourceID={source.id}
                 focusedInstance={focusedInstance}
                 onClickTableRow={onClickTableRow}
+                handleInstanceTypeModal={handleInstanceTypeModal}
               />
             )
           })}

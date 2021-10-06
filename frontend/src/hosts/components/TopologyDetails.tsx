@@ -19,20 +19,37 @@ class TopologyDetails extends PureComponent<Props, State> {
 
   public render() {
     const {selectInstanceData} = this.props
-
+    console.log('selectInstanceData: ', selectInstanceData)
     return (
-      <div className={'tab-pannel'}>
-        {_.map(_.keys(selectInstanceData), d => {
-          return (
-            <TopologyDetailsSection
-              key={d}
-              title={d.replaceAll('_', ' ')}
-              selectInstanceData={selectInstanceData[d]}
-              instanceTypeModal={this.props.instanceTypeModal}
-            />
-          )
-        })}
-      </div>
+      <>
+        {_.isNull(selectInstanceData) || _.isUndefined(selectInstanceData) ? (
+          <div
+            className={'tab-pannel'}
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '100%',
+              fontSize: '18px',
+            }}
+          >
+            <div>No Data</div>
+          </div>
+        ) : (
+          <div className={'tab-pannel'}>
+            {_.map(_.keys(selectInstanceData), d => {
+              return (
+                <TopologyDetailsSection
+                  key={d}
+                  title={d.replaceAll('_', ' ')}
+                  selectInstanceData={selectInstanceData[d]}
+                  instanceTypeModal={this.props.instanceTypeModal}
+                />
+              )
+            })}
+          </div>
+        )}
+      </>
     )
   }
 }

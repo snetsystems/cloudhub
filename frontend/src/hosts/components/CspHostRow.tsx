@@ -23,6 +23,11 @@ interface Props {
   host: CloudHost
   focusedInstance: Instance
   onClickTableRow: HostsPage['handleClickCspTableRow']
+  handleInstanceTypeModal: (
+    provider: string,
+    region: string,
+    type: string
+  ) => void
 }
 
 const CspHostRow: FunctionComponent<Props> = ({
@@ -30,6 +35,7 @@ const CspHostRow: FunctionComponent<Props> = ({
   sourceID,
   focusedInstance,
   onClickTableRow,
+  handleInstanceTypeModal,
 }) => {
   const {
     csp,
@@ -102,7 +108,11 @@ const CspHostRow: FunctionComponent<Props> = ({
       </div>
       <div
         style={{width: CloudInstanceTypeWidth}}
-        className="monotype hosts-table--td"
+        className="monotype hosts-table--td hosts-table-item"
+        onClick={e => {
+          e.stopPropagation()
+          handleInstanceTypeModal(csp.provider, csp.region, instanceType)
+        }}
       >
         {instanceType}
       </div>

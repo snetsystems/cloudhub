@@ -1259,6 +1259,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private getAWSInstanceTypes = async (accessInfos: any, types: string[]) => {
+    console.log('!!getAWSInstanceTypes:', accessInfos, types)
     const awsInstanceTypes = await this.props.handleGetAWSInstanceTypesAsync(
       this.salt.url,
       this.salt.token,
@@ -2103,6 +2104,12 @@ class InventoryTopology extends PureComponent<Props, State> {
           if (_.isNull(current)) return false
           console.log('instanceType: ', current)
           const [family, size] = current.InstanceType.split('.')
+          const ValidThreadsPerCore = _.get(
+            current.VCpuInfo,
+            'ValidThreadsPerCore',
+            '-'
+          )
+
           let instanceType = {
             Details: {
               Instance_type: current.InstanceType,
@@ -2123,9 +2130,9 @@ class InventoryTopology extends PureComponent<Props, State> {
               Cores: current.VCpuInfo.DefaultCores,
               Valid_cores: current.VCpuInfo.ValidCores,
               Threads_per_core: current.VCpuInfo.DefaultThreadsPerCore,
-              Valid_threads_per_core: current.VCpuInfo.ValidThreadsPerCore.join(
-                ','
-              ),
+              Valid_threads_per_core: _.isArray(ValidThreadsPerCore)
+                ? ValidThreadsPerCore.join(',')
+                : ValidThreadsPerCore,
               'Sustained_clock_speed_(GHz)':
                 current.ProcessorInfo.SustainedClockSpeedInGhz,
               'Memory_(GiB)': current.MemoryInfo.SizeInMiB / 1024,
