@@ -5,9 +5,10 @@ import _ from 'lodash'
 // component
 import TopologyDetailsSectionItem from 'src/hosts/components/TopologyDetailsSectionItem'
 import {AWSInstanceData} from 'src/hosts/types/cloud'
-import TopologyDetailsSectionTable from './TopologySecurityTable'
+import TopologySecurityTable from './TopologySecurityTable'
 import {RemoteDataState} from 'src/types'
 import uuid from 'uuid'
+import TopologyStorageTable from './TopologyStorageTable'
 
 interface Props {
   title: string
@@ -30,12 +31,9 @@ class TopologyDetailsSection extends PureComponent<Props, State> {
     const {title, selectInstanceData} = this.props
     const {isActive} = this.state
 
-    // const {isTable} = _.values(selectInstanceData)?.[0]
+    const isTable = selectInstanceData?.['role'] === 'table'
 
-    console.log('selectInstanceData: ', selectInstanceData)
-
-    const isTable = _.isArray(_.values(selectInstanceData)[0])
-    // console.log('isTable: ', isTable)
+    console.log('isTable: ', isTable)
     return (
       <>
         <div className={'tab-pannel-contents'}>
@@ -51,28 +49,49 @@ class TopologyDetailsSection extends PureComponent<Props, State> {
           </div>
           {this.state.isActive ? (
             <div className={'section-wrap'}>
-              {isTable ? (
-                <TopologyDetailsSectionTable
-                  key={uuid.v4()}
-                  tableData={_.values(selectInstanceData)[0]}
-                  pageStatus={RemoteDataState.Done}
-                />
-              ) : (
-                _.map(_.keys(selectInstanceData), infoKey => {
-                  return (
-                    <TopologyDetailsSectionItem
-                      key={infoKey}
-                      label={infoKey.replaceAll('_', ' ')}
-                      contents={selectInstanceData[infoKey]}
-                    />
-                  )
-                })
-              )}
+              {isTable
+                ? this.renderTable
+                : _.map(_.keys(selectInstanceData), infoKey => {
+                    return (
+                      <TopologyDetailsSectionItem
+                        key={infoKey}
+                        label={infoKey.replaceAll('_', ' ')}
+                        contents={selectInstanceData[infoKey]}
+                      />
+                    )
+                  })}
             </div>
           ) : null}
         </div>
       </>
     )
+  }
+
+  private get renderTable() {
+    const {selectInstanceData} = this.props
+    console.log('selectInstanceData: ', selectInstanceData)
+
+    if (selectInstanceData['name'] === 'security') {
+      return (
+        <TopologySecurityTable
+          key={uuid.v4()}
+          tableData={selectInstanceData['data']}
+          pageStatus={RemoteDataState.Done}
+        />
+      )
+    }
+
+    if (selectInstanceData['name'] === 'storage') {
+      return (
+        <TopologyStorageTable
+          key={uuid.v4()}
+          tableData={selectInstanceData['data']}
+          pageStatus={RemoteDataState.Done}
+        />
+      )
+    }
+
+    return <>no State</>
   }
 
   private toggleActive = () => {

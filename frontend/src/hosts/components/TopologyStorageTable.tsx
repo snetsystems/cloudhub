@@ -5,9 +5,12 @@ import uuid from 'uuid'
 
 import SearchBar from 'src/hosts/components/SearchBar'
 import PageSpinner from 'src/shared/components/PageSpinner'
-import TopologySecurityTableRow from 'src/hosts/components/TopologySecurityTableRow'
+import TopologyStorageTableRow from 'src/hosts/components/TopologyStorageTableRow'
 
-import {CLOUD_HOST_SECURITY_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
+import {
+  CLOUD_HOST_SECURITY_TABLE_SIZING,
+  CLOUD_HOST_STORAGE_TABLE_SIZING,
+} from 'src/hosts/constants/tableSizing'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {RemoteDataState, Host} from 'src/types'
 
@@ -28,7 +31,7 @@ interface State {
 }
 
 @ErrorHandling
-class TopologySecurityTable extends PureComponent<Props, State> {
+class TopologyStorageTable extends PureComponent<Props, State> {
   public getSortedHosts = memoize(
     (
       hosts,
@@ -63,22 +66,24 @@ class TopologySecurityTable extends PureComponent<Props, State> {
         source?: string
         destination?: string
       }) => {
-        let property = null
+        console.log('h: ', h)
+        return h
+        // let property = null
 
-        if (h.hasOwnProperty('source')) {
-          property = h.source
-        }
+        // if (h.hasOwnProperty('source')) {
+        //   property = h.source
+        // }
 
-        if (h.hasOwnProperty('destination')) {
-          property = h.destination
-        }
+        // if (h.hasOwnProperty('destination')) {
+        //   property = h.destination
+        // }
 
-        return (
-          _.toString(h.port).toLowerCase().includes(filterText) ||
-          h.protocol.toLowerCase().includes(filterText) ||
-          h.security_groups.toLowerCase().includes(filterText) ||
-          (property && property.toLowerCase().includes(filterText))
-        )
+        // return (
+        //   _.toString(h.port).toLowerCase().includes(filterText) ||
+        //   h.protocol.toLowerCase().includes(filterText) ||
+        //   h.security_groups.toLowerCase().includes(filterText) ||
+        //   (property && property.toLowerCase().includes(filterText))
+        // )
       }
     )
   }
@@ -175,7 +180,7 @@ class TopologySecurityTable extends PureComponent<Props, State> {
         {this.HostsTableHeader}
         <div className={`hosts-table--tbody`}>
           {sortedHosts.map(h => (
-            <TopologySecurityTableRow key={uuid.v4()} rowData={h} />
+            <TopologyStorageTableRow key={uuid.v4()} rowData={h} />
           ))}
         </div>
       </div>
@@ -213,29 +218,93 @@ class TopologySecurityTable extends PureComponent<Props, State> {
   }
 
   private get HostsTableHeader(): JSX.Element {
+    const {
+      VolumeIdWidth,
+      DeviceNameWidth,
+      VolumeSizeWidth,
+      VolumeStatusWidth,
+      AttachTimeWidth,
+      EncryptedWidth,
+      DelOnTermWidth,
+    } = CLOUD_HOST_STORAGE_TABLE_SIZING
+
     return (
       <div className="hosts-table--thead">
         <div className="hosts-table--tr">
-          {_.keys(_.values(this.props.tableData)[0]).map(k => {
-            const upperHead = k[0].toUpperCase() + k.slice(1)
-            return (
-              <div
-                key={k}
-                onClick={this.updateSort(k)}
-                className={this.sortableClasses(k)}
-                style={{
-                  width: CLOUD_HOST_SECURITY_TABLE_SIZING[`${upperHead}Width`],
-                }}
-              >
-                {upperHead.replace('_', ' ')}
-                <span className="icon caret-up" />
-              </div>
-            )
-          })}
+          <div
+            onClick={this.updateSort('volumeId')}
+            className={this.sortableClasses('volumeId')}
+            style={{
+              width: VolumeIdWidth,
+            }}
+          >
+            Volume ID
+            <span className="icon caret-up" />
+          </div>
+          <div
+            onClick={this.updateSort('deviceName')}
+            className={this.sortableClasses('deviceName')}
+            style={{
+              width: DeviceNameWidth,
+            }}
+          >
+            Device name
+            <span className="icon caret-up" />
+          </div>
+          <div
+            onClick={this.updateSort('volumeSize')}
+            className={this.sortableClasses('volumeSize')}
+            style={{
+              width: VolumeSizeWidth,
+            }}
+          >
+            Volume size (GiB)
+            <span className="icon caret-up" />
+          </div>
+          <div
+            onClick={this.updateSort('attachmentStatus')}
+            className={this.sortableClasses('attachmentStatus')}
+            style={{
+              width: VolumeStatusWidth,
+            }}
+          >
+            Attachment status
+            <span className="icon caret-up" />
+          </div>
+          <div
+            onClick={this.updateSort('attachmentTime')}
+            className={this.sortableClasses('attachmentTime')}
+            style={{
+              width: AttachTimeWidth,
+            }}
+          >
+            Attachment time
+            <span className="icon caret-up" />
+          </div>
+          <div
+            onClick={this.updateSort('encrypted')}
+            className={this.sortableClasses('encrypted')}
+            style={{
+              width: EncryptedWidth,
+            }}
+          >
+            Encrypted
+            <span className="icon caret-up" />
+          </div>
+          <div
+            onClick={this.updateSort('deleteOnTermination')}
+            className={this.sortableClasses('deleteOnTermination')}
+            style={{
+              width: DelOnTermWidth,
+            }}
+          >
+            Delete on termination
+            <span className="icon caret-up" />
+          </div>
         </div>
       </div>
     )
   }
 }
 
-export default TopologySecurityTable
+export default TopologyStorageTable

@@ -25,6 +25,16 @@ export const CLOUD_HOST_SECURITY_TABLE_SIZING = {
   SecurityGroupsWidth: '25%',
 }
 
+export const CLOUD_HOST_STORAGE_TABLE_SIZING = {
+  VolumeIdWidth: '20%',
+  DeviceNameWidth: '10%',
+  VolumeSizeWidth: '10%',
+  VolumeStatusWidth: '15%',
+  AttachTimeWidth: '25%',
+  EncryptedWidth: '10%',
+  DelOnTermWidth: '10%',
+}
+
 export const AGENT_TABLE_SIZING = {
   CheckWidth: '30px',
   HostWidth: '35%',

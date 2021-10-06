@@ -5,7 +5,7 @@ interface Props {
   rowData: any
 }
 
-class TopologyDetailsSectionTableRow extends PureComponent<Props> {
+class TopologySecurityTableRow extends PureComponent<Props> {
   constructor(props: Props) {
     super(props)
   }
@@ -47,4 +47,4 @@ class TopologyDetailsSectionTableRow extends PureComponent<Props> {
   }
 }
 
-export default TopologyDetailsSectionTableRow
+export default TopologySecurityTableRow
