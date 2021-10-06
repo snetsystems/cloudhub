@@ -39,6 +39,8 @@ interface Params {
     keyid?: string
     key?: string
     group_ids?: string | string[]
+    volume_ids?: string | string[]
+    instance_types?: string | string[]
   }
   username?: string
   password?: string
@@ -1041,6 +1043,37 @@ export async function getLocalBoto2DescribeVolumes(
         keyid: pCSP.accesskey,
         key: pCSP.secretkey,
         volume_ids: pVolumeIds,
+      },
+    }
+
+    const result = await apiRequest(pUrl, pToken, param, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalBoto2DescribeInstanceTypes(
+  pUrl: string,
+  pToken: string,
+  pCSP: any,
+  pTypes?: string[]
+): Promise<any> {
+  try {
+    const param = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'boto_ec2.describe_instance_types',
+      tgt_type: 'glob',
+      tgt: pCSP.minion,
+      kwarg: {
+        region: pCSP.region,
+        keyid: pCSP.accesskey,
+        key: pCSP.secretkey,
+        instance_types: pTypes,
       },
     }
 

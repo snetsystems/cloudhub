@@ -36,6 +36,7 @@ import {
   getAWSInstancesAsync,
   getAWSSecurityAsync,
   getAWSVolumeAsync,
+  getAWSInstanceTypesAsync,
 } from 'src/hosts/actions/inventoryTopology'
 
 export {
@@ -73,4 +74,5 @@ export {
   getAWSInstancesAsync,
   getAWSSecurityAsync,
   getAWSVolumeAsync,
+  getAWSInstanceTypesAsync,
 }

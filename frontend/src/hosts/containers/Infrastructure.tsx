@@ -104,8 +104,11 @@ class Infrastructure extends PureComponent<Props, State> {
   public async componentDidMount() {
     const layoutResults = await getLayouts()
     const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
-    if (layouts) return
-    await this.fetchHostsData(layouts)
+    if (layouts) {
+      await this.fetchHostsData(layouts)
+    } else {
+      return
+    }
   }
   public async componentDidUpdate() {}
 
@@ -273,11 +276,19 @@ class Infrastructure extends PureComponent<Props, State> {
         throw new Error(hostsError)
       }
 
+      const newHosts = await getAppsForHosts(
+        source.links.proxy,
+        hostsObject,
+        layouts,
+        source.telegraf,
+        tempVars
+      )
+
       const isUsingVsphere = Boolean(
         _.find(addons, addon => {
           return addon.name === 'vsphere' && addon.url === 'on'
         }) &&
-          _.find(hostsObject, v => {
+          _.find(newHosts, v => {
             return _.includes(v.apps, 'vsphere')
           })
       )

@@ -13,6 +13,7 @@ import TopologyStorageTable from './TopologyStorageTable'
 interface Props {
   title: string
   selectInstanceData: AWSInstanceData['instanceID']['info']
+  instanceTypeModal: () => void
 }
 
 interface State {
@@ -57,6 +58,7 @@ class TopologyDetailsSection extends PureComponent<Props, State> {
                         key={infoKey}
                         label={infoKey.replaceAll('_', ' ')}
                         contents={selectInstanceData[infoKey]}
+                        instanceTypeModal={this.props.instanceTypeModal}
                       />
                     )
                   })}

@@ -7,6 +7,7 @@ import {AWSInstanceData} from 'src/hosts/types/cloud'
 
 interface Props {
   selectInstanceData: AWSInstanceData['instanceID']
+  instanceTypeModal: () => void
 }
 
 interface State {}
@@ -27,6 +28,7 @@ class TopologyDetails extends PureComponent<Props, State> {
               key={d}
               title={d.replaceAll('_', ' ')}
               selectInstanceData={selectInstanceData[d]}
+              instanceTypeModal={this.props.instanceTypeModal}
             />
           )
         })}

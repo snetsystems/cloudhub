@@ -47,6 +47,7 @@ import Dropdown from 'src/shared/components/Dropdown'
 import ConfirmButton from 'src/shared/components/ConfirmButton'
 import InventoryTreemenu from 'src/hosts/components/InventoryTreemenu'
 import TopologyDetails from 'src/hosts/components/TopologyDetails'
+import InstanceTypeModal from 'src/hosts/components/InstanceTypeModal'
 
 // constants
 import {
@@ -93,6 +94,7 @@ import {
   getAWSInstancesAsync,
   getAWSSecurityAsync,
   getAWSVolumeAsync,
+  getAWSInstanceTypesAsync,
 } from 'src/hosts/actions'
 
 import {notify as notifyAction} from 'src/shared/actions/notifications'
@@ -282,7 +284,13 @@ interface Props {
     saltMasterUrl: string,
     saltMasterToken: string,
     pCsp: any,
-    pGroupIds: string[]
+    pVolumeIds: string[]
+  ) => Promise<any>
+  handleGetAWSInstanceTypesAsync: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    pCsp: any,
+    pTypes: string[]
   ) => Promise<any>
 }
 
@@ -336,6 +344,8 @@ interface State {
   loadingStateDetails: RemoteDataState
   awsSecurity: Promise<any>
   awsVolume: Promise<any>
+  awsInstanceTypes: any
+  isInstanceTypeModalVisible: boolean
 }
 
 @ErrorHandling
@@ -397,6 +407,8 @@ class InventoryTopology extends PureComponent<Props, State> {
       loadingStateDetails: RemoteDataState.Done,
       awsSecurity: null,
       awsVolume: null,
+      awsInstanceTypes: null,
+      isInstanceTypeModalVisible: false,
     }
   }
 
@@ -699,6 +711,17 @@ class InventoryTopology extends PureComponent<Props, State> {
               message={modalMessage}
               customStyle={isExportXML ? null : {height: '122px'}}
               containerMaxWidth={isExportXML ? null : 450}
+            />
+
+            <InstanceTypeModal
+              visible={this.state.isInstanceTypeModalVisible}
+              message={'test'}
+              onCancel={() => {
+                this.setState({
+                  isInstanceTypeModalVisible: !this.state
+                    .isInstanceTypeModalVisible,
+                })
+              }}
             />
           </>
         )}
@@ -1154,6 +1177,21 @@ class InventoryTopology extends PureComponent<Props, State> {
 
         this.getAWSVolume(newCloudAccessInfos, volumeGroupIds)
 
+        console.log('getData[0]', getData[0])
+        const types = _.reduce(
+          getData,
+          (types: string[], current) => {
+            types = [...types, current.InstanceType]
+
+            return types
+          },
+          []
+        )
+
+        console.log('types', types)
+
+        this.getAWSInstanceTypes(newCloudAccessInfos, types)
+
         this.setState({
           focusedInstance: {provider, region, instanceid, instancename},
           focusedHost: null,
@@ -1212,6 +1250,28 @@ class InventoryTopology extends PureComponent<Props, State> {
       this.setState({awsVolume: null})
     }
   }
+
+  private getAWSInstanceTypes = async (accessInfos: any, types: string[]) => {
+    const awsInstanceTypes = await this.props.handleGetAWSInstanceTypesAsync(
+      this.salt.url,
+      this.salt.token,
+      accessInfos,
+      types
+    )
+
+    console.log('awsInstanceTypes', awsInstanceTypes)
+
+    this.setState({awsInstanceTypes})
+  }
+
+  private handleInstanceTypeModal = () => {
+    console.log('handleInstanceTypeModal')
+    this.setState({isInstanceTypeModalVisible: true})
+  }
+
+  // private handleInstanceTypeModalClose = () => {
+  //   this.setState({isInstanceTypeModalVisible: false})
+  // }
 
   private saltIpmiSetPowerAsync = _.throttle(
     async (
@@ -1772,6 +1832,7 @@ class InventoryTopology extends PureComponent<Props, State> {
                   <FancyScrollbar>
                     <TopologyDetails
                       selectInstanceData={this.getInstanceData()}
+                      instanceTypeModal={this.handleInstanceTypeModal}
                     />
                   </FancyScrollbar>
                 </div>
@@ -2809,6 +2870,7 @@ const mapDispatchToProps = {
   handleGetAWSInstancesAsync: getAWSInstancesAsync,
   handleGetAWSSecurityAsync: getAWSSecurityAsync,
   handleGetAWSVolumeAsync: getAWSVolumeAsync,
+  handleGetAWSInstanceTypesAsync: getAWSInstanceTypesAsync,
 }
 
 export default connect(

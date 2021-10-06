@@ -28,6 +28,7 @@ import {
   getLocalBotoEc2DescribeInstances,
   getLocalBotoSecgroupGetAllSecurityGroups,
   getLocalBoto2DescribeVolumes,
+  getLocalBoto2DescribeInstanceTypes,
 } from 'src/shared/apis/saltStack'
 
 interface HostsObject {
@@ -1326,6 +1327,27 @@ export const getAWSVolumeApi = async (
       pToken,
       pCsps,
       pGroupIds
+    )
+    const cspHost = yaml.safeLoad(info.data)
+
+    return cspHost
+  } catch (error) {
+    throw error
+  }
+}
+
+export const getAWSInstanceTypesApi = async (
+  pUrl: string,
+  pToken: string,
+  pCsps: any[],
+  pTypes?: string[]
+) => {
+  try {
+    const info = await getLocalBoto2DescribeInstanceTypes(
+      pUrl,
+      pToken,
+      pCsps,
+      pTypes
     )
     const cspHost = yaml.safeLoad(info.data)
 
