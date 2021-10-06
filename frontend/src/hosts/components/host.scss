@@ -176,7 +176,6 @@
 
 .tab-pannel-contents {
   padding: 5px;
-  margin-bottom: 45px;
 }
 
 .expandable-sectional {
@@ -198,16 +197,18 @@
     font-weight: 500;
   }
 }
+
 .section-wrap {
   display: flex;
   flex-wrap: wrap;
 }
+
 .section-item {
   display: flex;
   flex-direction: column;
   flex: 0 0 33.33333%;
   max-width: 33.33333%;
-  padding: 10px;
+  padding: 5px;
   border-right: 1px solid #292933;
 
   &:nth-child(3n) {
@@ -223,6 +224,14 @@
 
 .section-item-contents {
   word-wrap: break-word;
+
+  &.handler {
+    cursor: pointer;
+    color: $s-brown;
+    &:hover {
+      color: $s-deepOrange2;
+    }
+  }
 }
 
 .status-tip {

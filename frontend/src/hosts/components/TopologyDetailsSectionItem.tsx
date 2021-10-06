@@ -4,7 +4,7 @@ import {AWSInstanceData} from 'src/hosts/types/cloud'
 interface Props {
   label: string
   contents: AWSInstanceData['info']
-  instanceTypeModal: () => void
+  instanceTypeModal?: () => void
 }
 
 interface State {}
@@ -15,25 +15,32 @@ class TopologyDetailsSectionItem extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {label, contents} = this.props
+    const {label} = this.props
 
     return (
       <div className={'section-item'}>
         <div className={'util-label'}>{label}</div>
-        <div
-          className={'section-item-contents'}
-          onClick={() => {
-            label === 'Instance type' ? this.props.instanceTypeModal() : null
-          }}
-        >
-          {contents}
-        </div>
+        {this.renderContents}
       </div>
     )
   }
 
-  private test() {
-    console.log('test')
+  private get renderContents() {
+    const {label, contents, instanceTypeModal} = this.props
+
+    if (label === 'Instance type') {
+      if (instanceTypeModal) {
+        return (
+          <div
+            className={'section-item-contents handler'}
+            onClick={instanceTypeModal}
+          >
+            {contents}
+          </div>
+        )
+      }
+    }
+    return <div className={'section-item-contents'}>{contents}</div>
   }
 }
 

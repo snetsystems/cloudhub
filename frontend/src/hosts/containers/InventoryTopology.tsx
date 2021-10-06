@@ -715,17 +715,24 @@ class InventoryTopology extends PureComponent<Props, State> {
 
             <InstanceTypeModal
               visible={this.state.isInstanceTypeModalVisible}
-              message={'test'}
+              message={this.renderInstanceTypeModal}
               onCancel={() => {
                 this.setState({
-                  isInstanceTypeModalVisible: !this.state
-                    .isInstanceTypeModalVisible,
+                  isInstanceTypeModalVisible: false,
                 })
               }}
             />
           </>
         )}
       </div>
+    )
+  }
+
+  private get renderInstanceTypeModal() {
+    return (
+      <FancyScrollbar style={{height: '450px'}} autoHide={false}>
+        <TopologyDetails selectInstanceData={this.getInstanceType()} />
+      </FancyScrollbar>
     )
   }
 
@@ -2074,6 +2081,119 @@ class InventoryTopology extends PureComponent<Props, State> {
       }
     } catch (error) {
       return instanceData
+    }
+  }
+
+  private getInstanceType = () => {
+    const {awsInstanceTypes} = this.state
+
+    try {
+      if (_.isNull(awsInstanceTypes)) return
+      let instanceTypes = {}
+
+      const getAWSInstanceTypes = _.values(
+        _.values(_.values(awsInstanceTypes)[0])[0]
+      )[0]
+
+      console.log('getAWSInstanceTypes: ', getAWSInstanceTypes)
+
+      _.reduce(
+        getAWSInstanceTypes,
+        (_before, current) => {
+          if (_.isNull(current)) return false
+          console.log('instanceType: ', current)
+          const [family, size] = current.InstanceType.split('.')
+          let instanceType = {
+            Details: {
+              Instance_type: current.InstanceType,
+              Instance_family: family,
+              Instance_size: size,
+              Hypervisor: current.Hypervisor,
+              Auto_Recovery_support: current.AutoRecoverySupported.toString(),
+              Supported_root_device_types: current.SupportedRootDeviceTypes,
+              Dedicated_Host_support: current.DedicatedHostsSupported.toString(),
+              'On-Demand_Hibernation_support': current.HibernationSupported.toString(),
+              Burstable_Performance_support: current.BurstablePerformanceSupported.toString(),
+            },
+            Compute: {
+              'Free-Tier_eligible': current.FreeTierEligible.toString(),
+              Bare_metal: current.BareMetal.toString(),
+              vCPUs: current.VCpuInfo.DefaultVCpus,
+              Architecture: current.ProcessorInfo.SupportedArchitectures,
+              Cores: current.VCpuInfo.DefaultCores,
+              Valid_cores: current.VCpuInfo.ValidCores,
+              Threads_per_core: current.VCpuInfo.DefaultThreadsPerCore,
+              Valid_threads_per_core: current.VCpuInfo.ValidThreadsPerCore.join(
+                ','
+              ),
+              'Sustained_clock_speed_(GHz)':
+                current.ProcessorInfo.SustainedClockSpeedInGhz,
+              'Memory_(GiB)': current.MemoryInfo.SizeInMiB / 1024,
+              Current_generation: current.CurrentGeneration.toString(),
+            },
+            Networking: {
+              EBS_optimization_support: current.EbsInfo.EbsOptimizedSupport,
+              Network_performance: current.NetworkInfo.NetworkPerformance,
+              ENA_support: current.NetworkInfo.EnaSupport,
+              Maximum_number_of_network_interfaces:
+                current.NetworkInfo.MaximumNetworkInterfaces,
+              IPv4_addresses_per_interface:
+                current.NetworkInfo.Ipv4AddressesPerInterface,
+              IPv6_addresses_per_interface:
+                current.NetworkInfo.Ipv6AddressesPerInterface,
+              IPv6_support: current.NetworkInfo.Ipv6Supported.toString(),
+              Supported_placement_group_strategies: current.PlacementGroupInfo.SupportedStrategies.join(
+                ', '
+              ),
+            },
+          }
+
+          if (current.InstanceStorageSupported) {
+            const storage = {
+              Storage: {
+                'Storage_(GB)': current.InstanceStorageInfo.Disks.TotalSizeInGB,
+                Local_instance_storage: '-',
+                Storage_type: current.InstanceStorageInfo.Disks.Type,
+                Storage_disk_count: current.InstanceStorageInfo.Disks.Count,
+                EBS_encryption_support: current.EbsInfo.EncryptionSupport,
+              },
+            }
+
+            instanceType = {
+              ...instanceType,
+              ...storage,
+            }
+          }
+
+          if (current.hasOwnProperty('GpuInfo')) {
+            const accelators = {
+              Accelerators: {
+                GPUs: current.GpuInfo.Gpus.Count,
+                'GPU_memory_(GiB)': current.GpuInfo.Gpus.MemoryInfo.SizeInMiB,
+                GPU_manufacturer: current.GpuInfo.Gpus.Manufacturer,
+                GPU_name: current.GpuInfo.Gpus.Name,
+              },
+            }
+
+            instanceType = {
+              ...instanceType,
+              ...accelators,
+            }
+          }
+
+          instanceTypes = {
+            ...instanceType,
+          }
+          console.log('reduce instanceTypes: ', instanceTypes)
+          return false
+        },
+        {}
+      )
+      console.log('qwe instanceTypes: ', instanceTypes)
+      return instanceTypes
+    } catch (error) {
+      console.error('error instanceTypes: ', error)
+      return {}
     }
   }
 

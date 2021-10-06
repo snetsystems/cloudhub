@@ -7,7 +7,7 @@ import {AWSInstanceData} from 'src/hosts/types/cloud'
 
 interface Props {
   selectInstanceData: AWSInstanceData['instanceID']
-  instanceTypeModal: () => void
+  instanceTypeModal?: () => void
 }
 
 interface State {}

@@ -5,22 +5,16 @@ import {
   OverlayHeading,
   OverlayBody,
   Form,
-  Button,
 } from 'src/reusable_ui'
 import OverlayTechnology from 'src/reusable_ui/components/overlays/OverlayTechnology'
-
-// Components
-import CodeMirrorConsole from 'src/agent_admin/components/CodeMirrorConsole'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
   onCancel: () => void
-  message: string
-  // cancelText: string
+  message: JSX.Element
   visible: boolean
-  // headingTitle: string
 }
 
 interface State {
@@ -38,16 +32,12 @@ class InstanceTypeModal extends PureComponent<Props, State> {
     return (
       <>
         <OverlayTechnology visible={visible}>
-          <OverlayContainer>
+          <OverlayContainer maxWidth={800}>
             <OverlayHeading title={'Instance Type'} onDismiss={onCancel} />
             <OverlayBody>
               <Form>
-                <Form.Element>
-                  <div>{'test'} </div>
-                </Form.Element>
-                <Form.Footer>
-                  <Button text={'CLOSE'} onClick={onCancel} />
-                </Form.Footer>
+                <Form.Element>{message}</Form.Element>
+                <Form.Footer></Form.Footer>
               </Form>
             </OverlayBody>
           </OverlayContainer>
