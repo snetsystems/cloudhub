@@ -5,6 +5,7 @@ import _ from 'lodash'
 import {getDeep} from 'src/utils/wrappers'
 import CryptoJS from 'crypto-js'
 import classnames from 'classnames'
+import yaml from 'js-yaml'
 
 import {
   default as mxgraph,
@@ -155,6 +156,11 @@ import {
 
 import {cloudData} from './treemenuDummy'
 
+import {
+  saltSecurityDummy,
+  saltStorageDummy,
+} from 'src/hosts/containers/detailsTest'
+
 const mx = mxgraph()
 
 export const {
@@ -295,6 +301,7 @@ interface State {
   focusedHost: string
   timeRange: TimeRange
   activeEditorTab: string
+  activeDetailsTab: string
   selected: string
   appHostData: {}
   isCloudFormVisible: boolean
@@ -318,6 +325,7 @@ interface State {
   }[]
   cloudGetDatas: any
   loadingState: RemoteDataState
+  loadingStateDetails: RemoteDataState
 }
 
 @ErrorHandling
@@ -364,6 +372,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       focusedHost: '',
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       activeEditorTab: 'monitoring',
+      activeDetailsTab: 'details',
       selected: 'ALL',
       appHostData: {},
       isCloudFormVisible: false,
@@ -378,6 +387,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       cloudAccessInfos: [],
       cloudGetDatas: [],
       loadingState: RemoteDataState.NotStarted,
+      loadingStateDetails: RemoteDataState.Done,
     }
   }
 
@@ -1548,6 +1558,11 @@ class InventoryTopology extends PureComponent<Props, State> {
     })
   }
 
+  private onClickActiveDetailsTab = (activeDetailsTab: string): void => {
+    this.setState({
+      activeDetailsTab,
+    })
+  }
   private detailsGraph = () => {
     return (
       <>
@@ -1610,9 +1625,45 @@ class InventoryTopology extends PureComponent<Props, State> {
               )}
             </Page.Header.Right>
           </Page.Header>
-          <Page.Contents scrollable={true}>
+          <Page.Contents scrollable={false}>
             {this.state.activeEditorTab === 'details' ? (
-              <TopologyDetails selectInstanceData={this.getInstanceData()} />
+              <>
+                <div style={{marginBottom: '10px'}}>
+                  <Radio shape={ButtonShape.Default} customClass={'auth-radio'}>
+                    <Radio.Button
+                      titleText="Details"
+                      value="details"
+                      active={this.state.activeDetailsTab === 'details'}
+                      onClick={this.onClickActiveDetailsTab}
+                    >
+                      Details
+                    </Radio.Button>
+                    <Radio.Button
+                      titleText="Security"
+                      value="security"
+                      active={this.state.activeDetailsTab === 'security'}
+                      onClick={this.onClickActiveDetailsTab}
+                    >
+                      Security
+                    </Radio.Button>
+                    <Radio.Button
+                      titleText="Storage"
+                      value="storage"
+                      active={this.state.activeDetailsTab === 'storage'}
+                      onClick={this.onClickActiveDetailsTab}
+                    >
+                      Storage
+                    </Radio.Button>
+                  </Radio>
+                </div>
+                <div style={{height: 'calc(100% - 22.5px)'}}>
+                  <FancyScrollbar>
+                    <TopologyDetails
+                      selectInstanceData={this.getInstanceData()}
+                    />
+                  </FancyScrollbar>
+                </div>
+              </>
             ) : null}
             {this.state.activeEditorTab === 'monitoring'
               ? this.renderGraph()
@@ -1622,7 +1673,8 @@ class InventoryTopology extends PureComponent<Props, State> {
       </>
     )
   }
-  private getInstanceData = () => {
+
+  private getInstanceDetails = () => {
     const {cloudAccessInfos, focusedInstance} = this.state
     let instanceData = {}
 
@@ -1744,6 +1796,132 @@ class InventoryTopology extends PureComponent<Props, State> {
     )
 
     return instanceData
+  }
+
+  private getInstanceSecurity = () => {
+    const {cloudAccessInfos, focusedInstance} = this.state
+    let instanceData = {}
+
+    if (_.isEmpty(cloudAccessInfos) || _.isEmpty(focusedInstance)) {
+      return instanceData
+    }
+
+    const security = _.values(yaml.safeLoad(saltSecurityDummy)[0])[0]
+    const getSecurity = _.find(security, d =>
+      _.includes(d.instances, focusedInstance.instanceid)
+    )
+
+    const rules = _.get(getSecurity, 'rules', [])
+
+    const inboundRules = []
+    _.forEach(rules, rule => {
+      const {grants, from_port, ip_protocol} = rule
+      const isAll = ip_protocol === '-1'
+      _.forEach(grants, grant => {
+        const {source_group_group_id, cidr_ip} = grant
+
+        inboundRules.push({
+          port: isAll ? 'All' : from_port,
+          protocol: isAll ? 'All' : _.upperCase(ip_protocol),
+          source: cidr_ip || source_group_group_id,
+          security_groups: getSecurity.name,
+        })
+      })
+    })
+
+    const rulesEgress = _.get(getSecurity, 'rules_egress', [])
+    const outboundRules = []
+
+    _.forEach(rulesEgress, rule => {
+      const {grants, from_port, ip_protocol} = rule
+      const isAll = ip_protocol === '-1'
+      _.forEach(grants, grant => {
+        const {cidr_ip} = grant
+
+        outboundRules.push({
+          port: isAll ? 'All' : from_port,
+          protocol: isAll ? 'All' : _.upperCase(ip_protocol),
+          destination: cidr_ip,
+          security_groups: getSecurity.name,
+        })
+      })
+    })
+    // meta.LaunchTime
+
+    return {
+      Security_details: {
+        IAM_Role: '-',
+        Owner_ID: getSecurity.owner_id,
+        Launch_Time: this.state.treeMenu[focusedInstance.provider]['nodes'][
+          focusedInstance.region
+        ]['nodes'][focusedInstance.instanceid].meta.LaunchTime.toString(),
+        Security_groups: `${getSecurity.id}(${getSecurity.name})`,
+      },
+      Inbound_rules: {name: 'security', role: 'table', data: inboundRules},
+      Outbound_rules: {name: 'security', role: 'table', data: outboundRules},
+    }
+  }
+
+  private getInstancStorage = () => {
+    const {treeMenu, cloudAccessInfos, focusedInstance} = this.state
+    let instanceData = {}
+
+    if (_.isEmpty(cloudAccessInfos) || _.isEmpty(focusedInstance)) {
+      return instanceData
+    }
+
+    const {provider, region, instanceid} = focusedInstance
+    const storage = _.values(yaml.safeLoad(saltStorageDummy)[0])[0]
+    const blockDevices = []
+    _.forEach(storage, s => {
+      if (!s || !s.Attachments) return
+      console.log('s: ', s)
+      _.forEach(s.Attachments, volume => {
+        blockDevices.push({
+          volumeId: volume.VolumeId,
+          deviceName: volume.Device,
+          volumeSize: s.Size,
+          attachmentStatus: volume.State,
+          attachmentTime: volume.AttachTime.toString(),
+          encrypted: s.Encrypted.toString(),
+          deleteOnTermination: volume.DeleteOnTermination.toString(),
+        })
+      })
+    })
+
+    console.log('!! storage: ', storage)
+
+    return {
+      Root_device_details: {
+        Root_device_name:
+          treeMenu[provider]['nodes'][region]['nodes'][instanceid].meta
+            .RootDeviceName,
+        Root_device_type:
+          treeMenu[provider]['nodes'][region]['nodes'][instanceid].meta
+            .RootDeviceType,
+      },
+      Block_devices: {
+        name: 'storage',
+        role: 'table',
+        data: blockDevices,
+      },
+    }
+  }
+
+  private getInstanceData = () => {
+    const {activeDetailsTab} = this.state
+
+    if (activeDetailsTab === 'details') {
+      return this.getInstanceDetails()
+    }
+
+    if (activeDetailsTab === 'security') {
+      return this.getInstanceSecurity()
+    }
+
+    if (activeDetailsTab === 'storage') {
+      return this.getInstancStorage()
+    }
   }
 
   private instanceState = (instanceState = null) => {
