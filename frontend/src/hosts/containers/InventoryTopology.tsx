@@ -5,7 +5,6 @@ import _ from 'lodash'
 import {getDeep} from 'src/utils/wrappers'
 import CryptoJS from 'crypto-js'
 import classnames from 'classnames'
-import yaml from 'js-yaml'
 
 import {
   default as mxgraph,
@@ -157,11 +156,6 @@ import {
 } from 'src/hosts/configurations/topology'
 
 import {cloudData} from './treemenuDummy'
-
-import {
-  saltSecurityDummy,
-  saltStorageDummy,
-} from 'src/hosts/containers/detailsTest'
 
 const mx = mxgraph()
 
@@ -340,8 +334,8 @@ interface State {
   cloudGetDatas: any
   loadingState: RemoteDataState
   loadingStateDetails: RemoteDataState
-  awsSecurity: any
-  awsVolume: any
+  awsSecurity: Promise<any>
+  awsVolume: Promise<any>
 }
 
 @ErrorHandling
@@ -607,12 +601,12 @@ class InventoryTopology extends PureComponent<Props, State> {
       }
     }
 
-    // if (
-    //   prevState.selectItem !== this.state.selectItem &&
-    //   this.state.selectItem === 'Private'
-    // ) {
-    //   this.changedDOM()
-    // }
+    if (
+      prevState.selectItem !== this.state.selectItem &&
+      this.state.selectItem === 'Private'
+    ) {
+      this.changedDOM()
+    }
 
     if (
       JSON.stringify(_.keys(prevState.hostsObject)) !==
@@ -620,7 +614,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       prevState.hostsObject !== null
     ) {
       this.setCellsWarning(_.keys(this.state.hostsObject))
-      // this.changedDOM()
+      this.changedDOM()
     }
 
     if (_.isEmpty(this.state.topologyId) && !_.isEmpty(this.state.topology)) {
@@ -1190,29 +1184,33 @@ class InventoryTopology extends PureComponent<Props, State> {
     accessInfos: any,
     securityGroupIds: string[]
   ) => {
-    const awsSecurity = await this.props.handleGetAWSSecurityAsync(
-      this.salt.url,
-      this.salt.token,
-      accessInfos,
-      securityGroupIds
-    )
+    try {
+      const awsSecurity = await this.props.handleGetAWSSecurityAsync(
+        this.salt.url,
+        this.salt.token,
+        accessInfos,
+        securityGroupIds
+      )
 
-    console.log('getAWSSecurity', awsSecurity)
-
-    this.setState({awsSecurity})
+      this.setState({awsSecurity})
+    } catch (error) {
+      this.setState({awsSecurity: null})
+    }
   }
 
   private getAWSVolume = async (accessInfos: any, volumeGroupIds: string[]) => {
-    const awsVolume = await this.props.handleGetAWSVolumeAsync(
-      this.salt.url,
-      this.salt.token,
-      accessInfos,
-      volumeGroupIds
-    )
+    try {
+      const awsVolume = await this.props.handleGetAWSVolumeAsync(
+        this.salt.url,
+        this.salt.token,
+        accessInfos,
+        volumeGroupIds
+      )
 
-    console.log('getAWSVolume', awsVolume)
-
-    this.setState({awsVolume})
+      this.setState({awsVolume})
+    } catch (error) {
+      this.setState({awsVolume: null})
+    }
   }
 
   private saltIpmiSetPowerAsync = _.throttle(
@@ -1913,112 +1911,108 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private getInstanceSecurity = () => {
-    const {cloudAccessInfos, focusedInstance} = this.state
+    const {treeMenu, focusedInstance, awsSecurity} = this.state
     let instanceData = {}
 
-    if (_.isEmpty(cloudAccessInfos) || _.isEmpty(focusedInstance)) {
+    try {
+      if (_.isNull(awsSecurity)) return
+
+      const getAWSSecurity = _.values(_.values(awsSecurity)[0][0])[0][0]
+      const rules = _.get(getAWSSecurity, 'rules', [])
+      const rulesEgress = _.get(getAWSSecurity, 'rules_egress', [])
+      const outboundRules = []
+      const inboundRules = []
+
+      _.forEach(rules, rule => {
+        const {grants, from_port, ip_protocol} = rule
+        const isAll = ip_protocol === '-1'
+        _.forEach(grants, grant => {
+          const {source_group_group_id, cidr_ip} = grant
+
+          inboundRules.push({
+            port: isAll ? 'All' : from_port,
+            protocol: isAll ? 'All' : _.upperCase(ip_protocol),
+            source: cidr_ip || source_group_group_id,
+            security_groups: getAWSSecurity.name,
+          })
+        })
+      })
+
+      _.forEach(rulesEgress, rule => {
+        const {grants, from_port, ip_protocol} = rule
+        const isAll = ip_protocol === '-1'
+        _.forEach(grants, grant => {
+          const {cidr_ip} = grant
+
+          outboundRules.push({
+            port: isAll ? 'All' : from_port,
+            protocol: isAll ? 'All' : _.upperCase(ip_protocol),
+            destination: cidr_ip,
+            security_groups: getAWSSecurity.name,
+          })
+        })
+      })
+
+      return {
+        Security_details: {
+          Owner_ID: getAWSSecurity.owner_id,
+          Launch_Time: treeMenu[focusedInstance.provider]['nodes'][
+            focusedInstance.region
+          ]['nodes'][focusedInstance.instanceid].meta.LaunchTime.toString(),
+          Security_groups: `${getAWSSecurity.id}(${getAWSSecurity.name})`,
+        },
+        Inbound_rules: {name: 'security', role: 'table', data: inboundRules},
+        Outbound_rules: {name: 'security', role: 'table', data: outboundRules},
+      }
+    } catch (error) {
       return instanceData
-    }
-
-    const security = _.values(yaml.safeLoad(saltSecurityDummy)[0])[0]
-    const getSecurity = _.find(security, d =>
-      _.includes(d.instances, focusedInstance.instanceid)
-    )
-
-    const rules = _.get(getSecurity, 'rules', [])
-
-    const inboundRules = []
-    _.forEach(rules, rule => {
-      const {grants, from_port, ip_protocol} = rule
-      const isAll = ip_protocol === '-1'
-      _.forEach(grants, grant => {
-        const {source_group_group_id, cidr_ip} = grant
-
-        inboundRules.push({
-          port: isAll ? 'All' : from_port,
-          protocol: isAll ? 'All' : _.upperCase(ip_protocol),
-          source: cidr_ip || source_group_group_id,
-          security_groups: getSecurity.name,
-        })
-      })
-    })
-
-    const rulesEgress = _.get(getSecurity, 'rules_egress', [])
-    const outboundRules = []
-
-    _.forEach(rulesEgress, rule => {
-      const {grants, from_port, ip_protocol} = rule
-      const isAll = ip_protocol === '-1'
-      _.forEach(grants, grant => {
-        const {cidr_ip} = grant
-
-        outboundRules.push({
-          port: isAll ? 'All' : from_port,
-          protocol: isAll ? 'All' : _.upperCase(ip_protocol),
-          destination: cidr_ip,
-          security_groups: getSecurity.name,
-        })
-      })
-    })
-    // meta.LaunchTime
-
-    return {
-      Security_details: {
-        IAM_Role: '-',
-        Owner_ID: getSecurity.owner_id,
-        Launch_Time: this.state.treeMenu[focusedInstance.provider]['nodes'][
-          focusedInstance.region
-        ]['nodes'][focusedInstance.instanceid].meta.LaunchTime.toString(),
-        Security_groups: `${getSecurity.id}(${getSecurity.name})`,
-      },
-      Inbound_rules: {name: 'security', role: 'table', data: inboundRules},
-      Outbound_rules: {name: 'security', role: 'table', data: outboundRules},
     }
   }
 
   private getInstancStorage = () => {
-    const {treeMenu, cloudAccessInfos, focusedInstance} = this.state
+    const {treeMenu, focusedInstance, awsVolume} = this.state
     let instanceData = {}
 
-    if (_.isEmpty(cloudAccessInfos) || _.isEmpty(focusedInstance)) {
-      return instanceData
-    }
+    try {
+      if (_.isNull(awsVolume)) return
 
-    const {provider, region, instanceid} = focusedInstance
-    const storage = _.values(yaml.safeLoad(saltStorageDummy)[0])[0]
-    const blockDevices = []
-    _.forEach(storage, s => {
-      if (!s || !s.Attachments) return
-      console.log('s: ', s)
-      _.forEach(s.Attachments, volume => {
-        blockDevices.push({
-          volumeId: volume.VolumeId,
-          deviceName: volume.Device,
-          volumeSize: s.Size,
-          attachmentStatus: volume.State,
-          attachmentTime: volume.AttachTime.toString(),
-          encrypted: s.Encrypted.toString(),
-          deleteOnTermination: volume.DeleteOnTermination.toString(),
+      const {provider, region, instanceid} = focusedInstance
+      const getAWSVolume = _.values(_.values(_.values(awsVolume)[0])[0])[0]
+      const blockDevices = []
+
+      _.forEach(getAWSVolume, s => {
+        if (!s || !s.Attachments) return
+
+        _.forEach(s.Attachments, volume => {
+          blockDevices.push({
+            volumeId: volume.VolumeId,
+            deviceName: volume.Device,
+            volumeSize: s.Size,
+            attachmentStatus: volume.State,
+            attachmentTime: volume.AttachTime.toString(),
+            encrypted: s.Encrypted.toString(),
+            deleteOnTermination: volume.DeleteOnTermination.toString(),
+          })
         })
       })
-    })
 
-    console.log('!! storage: ', storage)
-
-    return {
-      Root_device_details: {
-        Root_device_name:
-          treeMenu[provider]['nodes'][region]['nodes'][instanceid].meta
-            .RootDeviceName,
-        Root_device_type:
-          treeMenu[provider]['nodes'][region]['nodes'][instanceid].meta
-            .RootDeviceType,
-      },
-      Block_devices: {
-        name: 'storage',
-        role: 'table',
-        data: blockDevices,
-      },
+      return {
+        Root_device_details: {
+          Root_device_name:
+            treeMenu[provider]['nodes'][region]['nodes'][instanceid].meta
+              .RootDeviceName,
+          Root_device_type:
+            treeMenu[provider]['nodes'][region]['nodes'][instanceid].meta
+              .RootDeviceType,
+        },
+        Block_devices: {
+          name: 'storage',
+          role: 'table',
+          data: blockDevices,
+        },
+      }
+    } catch (error) {
+      return instanceData
     }
   }
 
