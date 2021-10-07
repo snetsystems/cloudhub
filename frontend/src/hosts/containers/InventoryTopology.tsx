@@ -1753,7 +1753,8 @@ class InventoryTopology extends PureComponent<Props, State> {
               )}
             </Page.Header.Left>
             <Page.Header.Right>
-              {this.state.activeEditorTab === 'monitoring' ? (
+              {this.state.focusedHost === null &&
+              this.state.activeEditorTab === 'monitoring' ? (
                 <>
                   <span>
                     Get from <span style={{margin: '0 3px'}}>:</span>
