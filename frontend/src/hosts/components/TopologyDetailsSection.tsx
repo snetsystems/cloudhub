@@ -34,7 +34,6 @@ class TopologyDetailsSection extends PureComponent<Props, State> {
 
     const isTable = selectInstanceData?.['role'] === 'table'
 
-    console.log('isTable: ', isTable)
     return (
       <>
         <div className={'tab-pannel-contents'}>
@@ -71,7 +70,6 @@ class TopologyDetailsSection extends PureComponent<Props, State> {
 
   private get renderTable() {
     const {selectInstanceData} = this.props
-    console.log('selectInstanceData: ', selectInstanceData)
 
     if (selectInstanceData['name'] === 'security') {
       return (

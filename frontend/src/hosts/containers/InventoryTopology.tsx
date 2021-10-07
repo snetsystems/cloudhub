@@ -460,18 +460,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.addToolsButton(this.tools)
     this.setToolbar(this.editor, this.toolbar)
 
-    // console.log(Object.values(CloudServiceProvider))
-
-    // let cloud = {}
-
-    // _.map(_.values(cloudData), f => {
-    //   if (_.find(this.props.links.addons, addon => addon.name === f.provider)) {
-    //     cloud[`${f.provider}`] = f
-    //   }
-    // })
-
-    // console.log('filterCloud', cloud)
-
     const topology = await this.props.handleGetInventoryTopology(
       this.props.links
     )
@@ -1112,7 +1100,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     mxGraphSelectionModel: mxGraphSelectionModeltype,
     _mxEventObject: mxEventObjectType
   ) => {
-    console.log('onChangedSelection')
     const selectionCells = mxGraphSelectionModel['cells']
 
     if (selectionCells.length > 0) {
@@ -1122,8 +1109,6 @@ class InventoryTopology extends PureComponent<Props, State> {
         .getAttribute('data-data_navi')
 
       if (dataNavi) {
-        // console.log(dataNavi)
-        // _.debounce(() => console.log('debounce'), 100)
         const {cloudAccessInfos} = this.state
         const instanceData = _.get(this.state.treeMenu, `${dataNavi}`)
         const provider = _.get(instanceData, 'provider')
@@ -1148,13 +1133,9 @@ class InventoryTopology extends PureComponent<Props, State> {
           secretkey: originalSecretkey,
         }
 
-        // console.log('accessInfo', accessInfo)
-
         const getData = _.filter(accessInfo.data, d =>
           _.isNull(d) ? false : d.InstanceId === instanceid
         )
-
-        // console.log('getData', getData)
 
         const securityGroupIds = _.reduce(
           getData[0].SecurityGroups,
@@ -1165,8 +1146,6 @@ class InventoryTopology extends PureComponent<Props, State> {
           },
           []
         )
-
-        // console.log('securityGroupIds', securityGroupIds)
 
         this.getAWSSecurity(newCloudAccessInfos, securityGroupIds)
 
@@ -1180,11 +1159,8 @@ class InventoryTopology extends PureComponent<Props, State> {
           []
         )
 
-        // console.log('volumeGroupIds', volumeGroupIds)
-
         this.getAWSVolume(newCloudAccessInfos, volumeGroupIds)
 
-        console.log('getData[0]', getData[0])
         const types = _.reduce(
           getData,
           (types: string[], current) => {
@@ -1194,8 +1170,6 @@ class InventoryTopology extends PureComponent<Props, State> {
           },
           []
         )
-
-        console.log('types', types)
 
         this.getAWSInstanceTypes(newCloudAccessInfos, types)
 
@@ -1259,7 +1233,6 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private getAWSInstanceTypes = async (accessInfos: any, types: string[]) => {
-    console.log('!!getAWSInstanceTypes:', accessInfos, types)
     const awsInstanceTypes = await this.props.handleGetAWSInstanceTypesAsync(
       this.salt.url,
       this.salt.token,
@@ -1267,19 +1240,12 @@ class InventoryTopology extends PureComponent<Props, State> {
       types
     )
 
-    console.log('awsInstanceTypes', awsInstanceTypes)
-
     this.setState({awsInstanceTypes})
   }
 
   private handleInstanceTypeModal = () => {
-    console.log('handleInstanceTypeModal')
     this.setState({isInstanceTypeModalVisible: true})
   }
-
-  // private handleInstanceTypeModalClose = () => {
-  //   this.setState({isInstanceTypeModalVisible: false})
-  // }
 
   private saltIpmiSetPowerAsync = _.throttle(
     async (
@@ -2096,13 +2062,11 @@ class InventoryTopology extends PureComponent<Props, State> {
         _.values(_.values(awsInstanceTypes)[0])[0]
       )[0]
 
-      console.log('getAWSInstanceTypes: ', getAWSInstanceTypes)
-
       _.reduce(
         getAWSInstanceTypes,
         (_before, current) => {
           if (_.isNull(current)) return false
-          console.log('instanceType: ', current)
+
           const [family, size] = current.InstanceType.split('.')
           const ValidThreadsPerCore = _.get(
             current.VCpuInfo,
@@ -2191,12 +2155,12 @@ class InventoryTopology extends PureComponent<Props, State> {
           instanceTypes = {
             ...instanceType,
           }
-          console.log('reduce instanceTypes: ', instanceTypes)
+
           return false
         },
         {}
       )
-      console.log('qwe instanceTypes: ', instanceTypes)
+
       return instanceTypes
     } catch (error) {
       console.error('error instanceTypes: ', error)

@@ -1,8 +1,5 @@
 import React, {PureComponent} from 'react'
-import {
-  CLOUD_HOST_SECURITY_TABLE_SIZING,
-  CLOUD_HOST_STORAGE_TABLE_SIZING,
-} from '../constants/tableSizing'
+import {CLOUD_HOST_STORAGE_TABLE_SIZING} from '../constants/tableSizing'
 
 interface Props {
   rowData: any
@@ -34,7 +31,6 @@ class TopologyStorageTableRow extends PureComponent<Props> {
       EncryptedWidth,
       DelOnTermWidth,
     } = CLOUD_HOST_STORAGE_TABLE_SIZING
-    console.log('props: ', this.props.rowData)
 
     return (
       <>

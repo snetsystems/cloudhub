@@ -51,7 +51,6 @@ class TopologySecurityTable extends PureComponent<Props, State> {
   }
 
   public filter(allHosts, searchTerm: string) {
-    console.log('allHosts: ', allHosts)
     const filterText = searchTerm.toLowerCase()
 
     return _.filter(

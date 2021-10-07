@@ -19,7 +19,7 @@ class TopologyDetails extends PureComponent<Props, State> {
 
   public render() {
     const {selectInstanceData} = this.props
-    console.log('selectInstanceData: ', selectInstanceData)
+
     return (
       <>
         {_.isNull(selectInstanceData) || _.isUndefined(selectInstanceData) ? (

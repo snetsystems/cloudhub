@@ -471,10 +471,6 @@ export const runLocalServiceTestTelegrafAsync = (
       pMinionId
     )
 
-    console.log(
-      'runLocalServiceTestTelegrafAsync',
-      yaml.safeLoad(runLocalServiceTestTelegrafPromise.data)
-    )
     dispatch(cmdRunLocalServiceTestTelegraf())
     return yaml.safeLoad(runLocalServiceTestTelegrafPromise.data)
   } catch (error) {

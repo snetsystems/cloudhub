@@ -12,16 +12,11 @@ import Dropdown from 'src/shared/components/Dropdown'
 import HostsTable from 'src/hosts/components/HostsTable'
 import CspHostsTable from 'src/hosts/components/CspHostsTable'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
-// import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import ManualRefresh, {
   ManualRefreshProps,
 } from 'src/shared/components/ManualRefresh'
-import {Button, ButtonShape, IconFont, Page, Radio} from 'src/reusable_ui'
+import {ButtonShape, Page, Radio} from 'src/reusable_ui'
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
-import GraphTips from 'src/shared/components/GraphTips'
-// import VMHostPage from 'src/hosts/containers/VMHostsPage'
-// import InventoryTopology from 'src/hosts/containers/InventoryTopology'
 
 // APIs
 import {
@@ -32,8 +27,6 @@ import {
   getMeasurementsForHost,
   getCpuAndLoadForInstances,
   getAppsForInstances,
-  // paramsCreateCSP,
-  // paramsUpdateCSP,
   getAppsForInstance,
   getMeasurementsForInstance,
 } from 'src/hosts/apis'
@@ -196,7 +189,6 @@ export class HostsPage extends PureComponent<Props, State> {
     }
 
     this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
-    this.onSetActiveEditorTab = this.onSetActiveEditorTab.bind(this)
     this.onSetActiveCspTab = this.onSetActiveCspTab.bind(this)
   }
 
@@ -259,13 +251,7 @@ export class HostsPage extends PureComponent<Props, State> {
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
     const {autoRefresh} = this.props
-    const {
-      layouts,
-      focusedHost,
-      focusedInstance,
-      // activeCspTab,
-      selectedAgent,
-    } = this.state
+    const {layouts, focusedHost, focusedInstance, selectedAgent} = this.state
 
     if (layouts) {
       if (prevState.focusedHost !== focusedHost) {
@@ -340,21 +326,7 @@ export class HostsPage extends PureComponent<Props, State> {
     onChooseAutoRefresh(milliseconds)
   }
 
-  private onSetActiveEditorTab(activeEditorTab: string): void {
-    this.setState({
-      activeEditorTab,
-    })
-  }
-
   public render() {
-    // const {
-    //   autoRefresh,
-    //   onManualRefresh,
-    //   inPresentationMode,
-    //   source,
-    // } = this.props
-    // const {selected, isVsphere, activeEditorTab, cloudHostsObject} = this.state
-
     return (
       <Threesizer
         orientation={HANDLE_HORIZONTAL}
@@ -362,30 +334,6 @@ export class HostsPage extends PureComponent<Props, State> {
         onResize={this.handleResize}
       />
     )
-  }
-
-  private get getTitle(): string {
-    const {activeEditorTab} = this.state
-
-    switch (activeEditorTab) {
-      case 'InventoryTopology':
-        return 'InventoryTopology'
-      default:
-        return 'Infrastructure'
-    }
-  }
-
-  private handleChooseTimeRange = ({lower, upper}) => {
-    if (upper) {
-      this.setState({timeRange: {lower, upper}, selected: {lower, upper}})
-    } else {
-      const timeRange = timeRanges.find(range => range.lower === lower)
-      this.setState({timeRange, selected: timeRange})
-    }
-  }
-
-  private handleClickPresentationButton = (): void => {
-    this.props.handleClickPresentationButton()
   }
 
   private get horizontalDivisions() {
@@ -442,12 +390,7 @@ export class HostsPage extends PureComponent<Props, State> {
 
   private get renderCspHostsTable() {
     const {source} = this.props
-    const {
-      cloudHostsObject,
-      activeCspTab,
-      hostsPageStatus,
-      focusedInstance,
-    } = this.state
+    const {cloudHostsObject, activeCspTab, hostsPageStatus} = this.state
     const cloudHostObject = cloudHostsObject[activeCspTab]
 
     let cloudHosts = []
@@ -560,13 +503,11 @@ export class HostsPage extends PureComponent<Props, State> {
         _.values(_.values(awsInstanceTypes)[0])[0]
       )[0]
 
-      console.log('getAWSInstanceTypes: ', getAWSInstanceTypes)
-
       _.reduce(
         getAWSInstanceTypes,
         (_before, current) => {
           if (_.isNull(current)) return false
-          console.log('instanceType: ', current)
+
           const [family, size] = current.InstanceType.split('.')
           const ValidThreadsPerCore = _.get(
             current.VCpuInfo,
@@ -637,12 +578,13 @@ export class HostsPage extends PureComponent<Props, State> {
           }
 
           if (current.hasOwnProperty('GpuInfo')) {
+            const {GpuInfo} = current
             const accelators = {
               Accelerators: {
-                GPUs: current.GpuInfo.Gpus.Count,
-                'GPU_memory_(GiB)': current.GpuInfo.Gpus.MemoryInfo.SizeInMiB,
-                GPU_manufacturer: current.GpuInfo.Gpus.Manufacturer,
-                GPU_name: current.GpuInfo.Gpus.Name,
+                GPUs: GpuInfo.Gpus.Count,
+                'GPU_memory_(GiB)': GpuInfo.Gpus.MemoryInfo.SizeInMiB,
+                GPU_manufacturer: GpuInfo.Gpus.Manufacturer,
+                GPU_name: GpuInfo.Gpus.Name,
               },
             }
 
@@ -655,12 +597,12 @@ export class HostsPage extends PureComponent<Props, State> {
           instanceTypes = {
             ...instanceType,
           }
-          console.log('reduce instanceTypes: ', instanceTypes)
+
           return false
         },
         {}
       )
-      console.log('qwe instanceTypes: ', instanceTypes)
+
       return instanceTypes
     } catch (error) {
       console.error('error instanceTypes: ', error)
@@ -934,7 +876,6 @@ export class HostsPage extends PureComponent<Props, State> {
       handleLoadCspsAsync,
       source,
       links,
-      notify,
       handleGetAWSInstancesAsync,
     } = this.props
 

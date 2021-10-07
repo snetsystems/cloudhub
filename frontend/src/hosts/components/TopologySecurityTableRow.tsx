@@ -19,7 +19,7 @@ class TopologySecurityTableRow extends PureComponent<Props> {
       SourceWidth,
       SecurityGroupsWidth,
     } = CLOUD_HOST_SECURITY_TABLE_SIZING
-    console.log('props: ', this.props)
+
     return (
       <>
         <div className={`hosts-table--tr`}>

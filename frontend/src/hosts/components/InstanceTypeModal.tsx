@@ -30,8 +30,8 @@ class InstanceTypeModal extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {onCancel, message, visible, status} = this.props
-    console.log(`InstanceTypeModal `, status)
+    const {onCancel, message, visible} = this.props
+
     return (
       <>
         <OverlayTechnology visible={visible}>
