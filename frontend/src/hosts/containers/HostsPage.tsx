@@ -254,7 +254,11 @@ export class HostsPage extends PureComponent<Props, State> {
     const {layouts, focusedHost, focusedInstance, selectedAgent} = this.state
 
     if (layouts) {
-      if (prevState.focusedHost !== focusedHost) {
+      if (
+        prevState.focusedHost !== focusedHost ||
+        (prevState.activeCspTab !== this.state.activeCspTab &&
+          this.state.activeCspTab === 'Private')
+      ) {
         this.fetchHostsData(layouts)
         const {filteredLayouts} = await this.getLayoutsforHost(
           layouts,
@@ -265,7 +269,9 @@ export class HostsPage extends PureComponent<Props, State> {
 
       if (
         prevState.focusedInstance !== focusedInstance ||
-        (prevState.selectedAgent !== selectedAgent && focusedInstance)
+        (prevState.selectedAgent !== selectedAgent && focusedInstance) ||
+        (prevState.activeCspTab !== this.state.activeCspTab &&
+          this.state.activeCspTab === 'aws')
       ) {
         this.fetchCspHostsData(layouts)
         const {filteredLayouts} = await this.getLayoutsforInstance(
