@@ -7,7 +7,6 @@ import TopologyDetailsSectionItem from 'src/hosts/components/TopologyDetailsSect
 import {AWSInstanceData} from 'src/hosts/types/cloud'
 import TopologySecurityTable from './TopologySecurityTable'
 import {RemoteDataState} from 'src/types'
-import uuid from 'uuid'
 import TopologyStorageTable from './TopologyStorageTable'
 
 interface Props {
@@ -74,7 +73,7 @@ class TopologyDetailsSection extends PureComponent<Props, State> {
     if (selectInstanceData['name'] === 'security') {
       return (
         <TopologySecurityTable
-          key={uuid.v4()}
+          key={'security'}
           tableData={selectInstanceData['data']}
           pageStatus={RemoteDataState.Done}
         />
@@ -84,7 +83,7 @@ class TopologyDetailsSection extends PureComponent<Props, State> {
     if (selectInstanceData['name'] === 'storage') {
       return (
         <TopologyStorageTable
-          key={uuid.v4()}
+          key={'storage'}
           tableData={selectInstanceData['data']}
           pageStatus={RemoteDataState.Done}
         />
