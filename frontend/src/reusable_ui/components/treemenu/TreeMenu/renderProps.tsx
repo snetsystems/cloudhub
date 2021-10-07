@@ -25,8 +25,6 @@ export type TreeMenuChildren = (props: {
   searchTerm?: string
   items: TreeMenuItem[]
   reset?: (openNodes?: string[]) => void
-  handleOpenCspFormBtn: (properties: {[x: string]: any}) => JSX.Element
-  handleDeleteRegionBtn: (properties: {[x: string]: any}) => JSX.Element
 }) => JSX.Element
 
 export const ItemComponent: React.FunctionComponent<TreeMenuItem> = ({
