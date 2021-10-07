@@ -23,14 +23,6 @@ import {
   getCpuAndLoadForHosts,
   getLayouts,
   getAppsForHosts,
-  getAppsForHost,
-  getMeasurementsForHost,
-  getCpuAndLoadForInstances,
-  getAppsForInstances,
-  paramsCreateCSP,
-  paramsUpdateCSP,
-  getAppsForInstance,
-  getMeasurementsForInstance,
 } from 'src/hosts/apis'
 import {getEnv} from 'src/shared/apis/env'
 
@@ -46,12 +38,17 @@ import {
   notifyUnableToGetHosts,
   notifyUnableToGetApps,
 } from 'src/shared/copy/notifications'
-import {AddonType} from 'src/shared/constants'
 
 // Types
-import {Source, Links, TimeRange, RefreshRate, Layout} from 'src/types'
+import {
+  Source,
+  Links,
+  TimeRange,
+  RefreshRate,
+  Layout,
+  NotificationAction,
+} from 'src/types'
 import {timeRanges} from 'src/shared/data/timeRanges'
-import * as QueriesModels from 'src/types/queries'
 import * as AppActions from 'src/types/actions/app'
 
 import {
@@ -78,7 +75,6 @@ interface Props extends ManualRefreshProps {
 interface State {
   timeRange: TimeRange
   activeTab: string
-  // selected: QueriesModels.TimeRange
   isUsingVsphere: boolean
 }
 
@@ -89,24 +85,27 @@ class Infrastructure extends PureComponent<Props, State> {
 
     this.state = {
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
-      // selected: {lower: '', upper: ''},
       activeTab: 'InventoryTopology',
       isUsingVsphere: false,
     }
   }
 
-  public handleChooseAutoRefresh(option) {
+  public handleChooseAutoRefresh = (option: {milliseconds: RefreshRate}) => {
     const {onChooseAutoRefresh} = this.props
     const {milliseconds} = option
+
     onChooseAutoRefresh(milliseconds)
   }
 
   public async componentDidMount() {
+    const {notify} = this.props
     const layoutResults = await getLayouts()
     const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
+
     if (layouts) {
       await this.fetchHostsData(layouts)
     } else {
+      notify(notifyUnableToGetApps())
       return
     }
   }
@@ -170,19 +169,9 @@ class Infrastructure extends PureComponent<Props, State> {
               onChoose={this.handleChooseAutoRefresh}
               onManualRefresh={onManualRefresh}
             />
-            {/* {activeTab !== 'InventoryTopology' && (
-              <TimeRangeDropdown
-                //@ts-ignore
-                onChooseTimeRange={this.handleChooseTimeRange.bind(selected)}
-                selected={selected}
-              />
-            )} */}
             <TimeRangeDropdown
               //@ts-ignore
-              onChooseTimeRange={timeRange => {
-                console.log('timeRange: ', timeRange)
-                this.handleChooseTimeRange(timeRange)
-              }}
+              onChooseTimeRange={this.handleChooseTimeRange}
               selected={timeRange}
             />
             <Button
@@ -197,17 +186,7 @@ class Infrastructure extends PureComponent<Props, State> {
           <>
             {activeTab === 'Host' && (
               //@ts-ignore
-              <HostsPage
-                {...this.props}
-                // this
-                // auth={this.prop
-                // thiss.auth}
-                // source={source}
-                // this
-                // manualRefresh={manual
-                // thisRefresh}
-                // timeRange={timeRange}
-              />
+              <HostsPage {...this.props} />
             )}
             {activeTab === 'VMware' && (
               //@ts-ignore
@@ -298,7 +277,7 @@ class Infrastructure extends PureComponent<Props, State> {
       })
     } catch (error) {
       console.error(error)
-      //   notify(notifyUnableToGetHosts())
+      notify(notifyUnableToGetHosts())
       this.setState({
         isUsingVsphere: false,
       })
