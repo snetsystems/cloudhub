@@ -614,7 +614,7 @@ export class HostsPage extends PureComponent<Props, State> {
     const {activeCspTab, itemCSPs} = this.state
 
     return itemCSPs.length > 1 ? (
-      <Radio shape={ButtonShape.StretchToFit}>
+      <Radio shape={ButtonShape.Default}>
         {_.map(itemCSPs, csp => {
           return (
             <Radio.Button
