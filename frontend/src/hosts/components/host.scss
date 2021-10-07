@@ -268,3 +268,9 @@
     }
   }
 }
+
+#hostInventoryContainer {
+  .hosts-table--tr {
+    cursor: pointer;
+  }
+}

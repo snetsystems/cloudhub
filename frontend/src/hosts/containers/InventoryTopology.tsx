@@ -2448,19 +2448,21 @@ class InventoryTopology extends PureComponent<Props, State> {
             const hostList = _.keys(this.state.hostsObject)
             if (hostList.length > 0) {
               return (
-                <div id={'hostInventoryContainer'}>
-                  <TableBody>
-                    <>
-                      {_.map(hostList, host => {
-                        return (
-                          <div key={host} className={`hosts-table--tr`}>
-                            <TableBodyRowItem title={host} width={'100%'} />
-                          </div>
-                        )
-                      })}
-                    </>
-                  </TableBody>
-                </div>
+                <FancyScrollbar>
+                  <div id={'hostInventoryContainer'}>
+                    <TableBody>
+                      <>
+                        {_.map(hostList, host => {
+                          return (
+                            <div key={host} className={`hosts-table--tr`}>
+                              <TableBodyRowItem title={host} width={'100%'} />
+                            </div>
+                          )
+                        })}
+                      </>
+                    </TableBody>
+                  </div>
+                </FancyScrollbar>
               )
             } else {
               return <NoState message={'There is no host'} />
