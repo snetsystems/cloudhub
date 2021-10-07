@@ -7,10 +7,7 @@ import SearchBar from 'src/hosts/components/SearchBar'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import TopologyStorageTableRow from 'src/hosts/components/TopologyStorageTableRow'
 
-import {
-  CLOUD_HOST_SECURITY_TABLE_SIZING,
-  CLOUD_HOST_STORAGE_TABLE_SIZING,
-} from 'src/hosts/constants/tableSizing'
+import {CLOUD_HOST_STORAGE_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {RemoteDataState, Host} from 'src/types'
 
@@ -54,36 +51,38 @@ class TopologyStorageTable extends PureComponent<Props, State> {
   }
 
   public filter(allHosts, searchTerm: string) {
-    console.log('allHosts: ', allHosts)
     const filterText = searchTerm.toLowerCase()
 
     return _.filter(
       allHosts,
       (h: {
-        port: number | string
-        protocol: string
-        security_groups: string
-        source?: string
-        destination?: string
+        attachmentStatus: string
+        attachmentTime: string
+        deleteOnTermination: string
+        deviceName: string
+        encrypted: string
+        volumeId: string
+        volumeSize: number
       }) => {
-        console.log('h: ', h)
-        return h
-        // let property = null
+        const {
+          attachmentStatus,
+          attachmentTime,
+          deleteOnTermination,
+          deviceName,
+          encrypted,
+          volumeId,
+          volumeSize,
+        } = h
 
-        // if (h.hasOwnProperty('source')) {
-        //   property = h.source
-        // }
-
-        // if (h.hasOwnProperty('destination')) {
-        //   property = h.destination
-        // }
-
-        // return (
-        //   _.toString(h.port).toLowerCase().includes(filterText) ||
-        //   h.protocol.toLowerCase().includes(filterText) ||
-        //   h.security_groups.toLowerCase().includes(filterText) ||
-        //   (property && property.toLowerCase().includes(filterText))
-        // )
+        return (
+          _.toString(volumeSize).toLowerCase().includes(filterText) ||
+          attachmentStatus.toLowerCase().includes(filterText) ||
+          attachmentTime.toLowerCase().includes(filterText) ||
+          deleteOnTermination.toLowerCase().includes(filterText) ||
+          deviceName.toLowerCase().includes(filterText) ||
+          encrypted.toLowerCase().includes(filterText) ||
+          volumeId.toLowerCase().includes(filterText)
+        )
       }
     )
   }
