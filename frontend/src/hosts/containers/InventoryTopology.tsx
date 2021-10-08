@@ -567,11 +567,23 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
     const {
+      handleUpdateInventoryTopology,
+      handleCreateInventoryTopology,
+      links,
+      autoRefresh,
+      manualRefresh,
+    } = this.props
+    const {
       layouts,
       focusedHost,
       isPinned,
       focusedInstance,
       selected,
+      cloudAccessInfos,
+      selectItem,
+      hostsObject,
+      topologyId,
+      topology,
     } = this.state
 
     if (layouts) {
@@ -596,60 +608,50 @@ class InventoryTopology extends PureComponent<Props, State> {
         this.setState({filteredLayouts})
       }
 
-      if (prevState.cloudAccessInfos !== this.state.cloudAccessInfos) {
+      if (prevState.cloudAccessInfos !== cloudAccessInfos) {
         this.makeTreemenu()
       }
     }
 
-    if (
-      prevState.selectItem !== this.state.selectItem &&
-      this.state.selectItem === 'Private'
-    ) {
+    if (prevState.selectItem !== selectItem && selectItem === 'Private') {
       this.changedDOM()
     }
 
     if (
       JSON.stringify(_.keys(prevState.hostsObject)) !==
-        JSON.stringify(_.keys(this.state.hostsObject)) &&
+        JSON.stringify(_.keys(hostsObject)) &&
       prevState.hostsObject !== null
     ) {
-      this.setCellsWarning(_.keys(this.state.hostsObject))
+      this.setCellsWarning(_.keys(hostsObject))
       this.changedDOM()
     }
 
-    if (_.isEmpty(this.state.topologyId) && !_.isEmpty(this.state.topology)) {
-      const response = await this.props.handleCreateInventoryTopology(
-        this.props.links,
-        this.state.topology
-      )
+    if (_.isEmpty(topologyId) && !_.isEmpty(topology)) {
+      const response = await handleCreateInventoryTopology(links, topology)
 
       if (_.get(response, 'data.id')) {
         this.setState({topologyId: _.get(response, 'data.id')})
       }
     } else if (
-      !_.isEmpty(this.state.topologyId) &&
+      !_.isEmpty(topologyId) &&
       !_.isEmpty(prevState.topology) &&
-      prevState.topology !== this.state.topology
+      prevState.topology !== topology
     ) {
-      await this.props.handleUpdateInventoryTopology(
-        this.props.links,
-        this.state.topologyId,
-        this.state.topology
-      )
+      await handleUpdateInventoryTopology(links, topologyId, topology)
     }
 
-    if (prevProps.autoRefresh !== this.props.autoRefresh) {
+    if (prevProps.autoRefresh !== autoRefresh) {
       clearInterval(this.intervalID)
-      GlobalAutoRefresher.poll(this.props.autoRefresh)
+      GlobalAutoRefresher.poll(autoRefresh)
 
-      if (this.props.autoRefresh) {
+      if (autoRefresh) {
         this.intervalID = window.setInterval(() => {
           this.fetchIntervalData()
-        }, this.props.autoRefresh)
+        }, autoRefresh)
       }
     }
 
-    if (prevProps.manualRefresh !== this.props.manualRefresh) {
+    if (prevProps.manualRefresh !== manualRefresh) {
       this.fetchIntervalData()
     }
 
@@ -677,7 +679,12 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {isModalVisible, modalMessage, modalTitle} = this.state
+    const {
+      isModalVisible,
+      modalMessage,
+      modalTitle,
+      isInstanceTypeModalVisible,
+    } = this.state
     const isExportXML = modalTitle === 'Export XML'
 
     return (
@@ -702,18 +709,18 @@ class InventoryTopology extends PureComponent<Props, State> {
             />
 
             <InstanceTypeModal
-              visible={this.state.isInstanceTypeModalVisible}
+              visible={isInstanceTypeModalVisible}
               message={this.renderInstanceTypeModal}
-              onCancel={() => {
-                this.setState({
-                  isInstanceTypeModalVisible: false,
-                })
-              }}
+              onCancel={this.handleCloseInstanceTypeModal}
             />
           </>
         )}
       </div>
     )
+  }
+
+  private handleCloseInstanceTypeModal = () => {
+    this.setState({isInstanceTypeModalVisible: false})
   }
 
   private get renderInstanceTypeModal() {
@@ -806,6 +813,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private ExportXMLMessage = () => {
+    const {topology} = this.state
     const options = {
       tabIndex: 1,
       readonly: true,
@@ -823,7 +831,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       <FancyScrollbar>
         <ReactCodeMirror
           autoCursor={true}
-          value={this.state.topology}
+          value={topology}
           options={options}
           onBeforeChange={(): void => {}}
           onTouchStart={(): void => {}}
@@ -1109,8 +1117,8 @@ class InventoryTopology extends PureComponent<Props, State> {
         .getAttribute('data-data_navi')
 
       if (dataNavi) {
-        const {cloudAccessInfos} = this.state
-        const instanceData = _.get(this.state.treeMenu, `${dataNavi}`)
+        const {cloudAccessInfos, treeMenu} = this.state
+        const instanceData = _.get(treeMenu, `${dataNavi}`)
         const provider = _.get(instanceData, 'provider')
         const region = _.get(instanceData, 'region')
         const instanceid = _.get(instanceData, 'instanceid')
@@ -1615,7 +1623,14 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private get renderThreeSizerDivisions() {
-    const {bottomProportions} = this.state
+    const {
+      bottomProportions,
+      topologyStatus,
+      isStatusVisible,
+      resizableDockHeight,
+      resizableDockWidth,
+      isPinned,
+    } = this.state
     const [topSize, bottomSize] = bottomProportions
     return [
       {
@@ -1633,16 +1648,16 @@ class InventoryTopology extends PureComponent<Props, State> {
               </div>
               <div id="contentBodySection">
                 <div id="graphContainer" ref={this.containerRef}>
-                  {this.state.topologyStatus === RemoteDataState.Loading && (
+                  {topologyStatus === RemoteDataState.Loading && (
                     <PageSpinner />
                   )}
                   <div id="outlineContainer" ref={this.outlineRef}></div>
                   <ResizableDock
                     className={classnames('', {
-                      active: this.state.isStatusVisible,
+                      active: isStatusVisible,
                     })}
-                    height={this.state.resizableDockHeight}
-                    width={this.state.resizableDockWidth}
+                    height={resizableDockHeight}
+                    width={resizableDockWidth}
                     onResize={this.onResize}
                     resizeHandles={['sw']}
                     maxConstraints={[800, 200]}
@@ -1664,7 +1679,7 @@ class InventoryTopology extends PureComponent<Props, State> {
                         shape={ButtonShape.Square}
                         icon={IconFont.Pin}
                         color={
-                          this.state.isPinned
+                          isPinned
                             ? ComponentColor.Primary
                             : ComponentColor.Default
                         }
@@ -1709,13 +1724,19 @@ class InventoryTopology extends PureComponent<Props, State> {
     })
   }
   private detailsGraph = () => {
+    const {
+      focusedHost,
+      treeMenu,
+      activeEditorTab,
+      activeDetailsTab,
+      selected,
+    } = this.state
     return (
       <>
         <Page className="inventory-hosts-list-page">
           <Page.Header fullWidth={true}>
             <Page.Header.Left>
-              {!_.isEmpty(this.state.focusedHost) ||
-              _.isEmpty(this.state.treeMenu) ? (
+              {!_.isEmpty(focusedHost) || _.isEmpty(treeMenu) ? (
                 <div className="radio-buttons radio-buttons--default radio-buttons--sm">
                   <Radio.Button
                     id="hostspage-tab-monitoring"
@@ -1734,7 +1755,7 @@ class InventoryTopology extends PureComponent<Props, State> {
                       id="hostspage-tab-monitoring"
                       titleText="monitoring"
                       value="monitoring"
-                      active={this.state.activeEditorTab === 'monitoring'}
+                      active={activeEditorTab === 'monitoring'}
                       onClick={this.onSetActiveEditorTab}
                     >
                       Monitoring
@@ -1743,7 +1764,7 @@ class InventoryTopology extends PureComponent<Props, State> {
                       id="hostspage-tab-details"
                       titleText="details"
                       value="details"
-                      active={this.state.activeEditorTab === 'details'}
+                      active={activeEditorTab === 'details'}
                       onClick={this.onSetActiveEditorTab}
                     >
                       Details
@@ -1753,8 +1774,7 @@ class InventoryTopology extends PureComponent<Props, State> {
               )}
             </Page.Header.Left>
             <Page.Header.Right>
-              {this.state.focusedHost === null &&
-              this.state.activeEditorTab === 'monitoring' ? (
+              {focusedHost === null && activeEditorTab === 'monitoring' ? (
                 <>
                   <span>
                     Get from <span style={{margin: '0 3px'}}>:</span>
@@ -1762,7 +1782,7 @@ class InventoryTopology extends PureComponent<Props, State> {
                   <Dropdown
                     items={['ALL', 'CloudWatch', 'Within instances']}
                     onChoose={this.getHandleOnChoose}
-                    selected={this.state.selected}
+                    selected={selected}
                     className="dropdown-sm"
                     disabled={false}
                   />
@@ -1773,14 +1793,14 @@ class InventoryTopology extends PureComponent<Props, State> {
             </Page.Header.Right>
           </Page.Header>
           <Page.Contents scrollable={false}>
-            {this.state.activeEditorTab === 'details' ? (
+            {activeEditorTab === 'details' ? (
               <>
                 <div style={{marginBottom: '10px'}}>
                   <Radio shape={ButtonShape.Default} customClass={'auth-radio'}>
                     <Radio.Button
                       titleText="Details"
                       value="details"
-                      active={this.state.activeDetailsTab === 'details'}
+                      active={activeDetailsTab === 'details'}
                       onClick={this.onClickActiveDetailsTab}
                     >
                       Details
@@ -1788,7 +1808,7 @@ class InventoryTopology extends PureComponent<Props, State> {
                     <Radio.Button
                       titleText="Security"
                       value="security"
-                      active={this.state.activeDetailsTab === 'security'}
+                      active={activeDetailsTab === 'security'}
                       onClick={this.onClickActiveDetailsTab}
                     >
                       Security
@@ -1796,7 +1816,7 @@ class InventoryTopology extends PureComponent<Props, State> {
                     <Radio.Button
                       titleText="Storage"
                       value="storage"
-                      active={this.state.activeDetailsTab === 'storage'}
+                      active={activeDetailsTab === 'storage'}
                       onClick={this.onClickActiveDetailsTab}
                     >
                       Storage
@@ -1813,9 +1833,7 @@ class InventoryTopology extends PureComponent<Props, State> {
                 </div>
               </>
             ) : null}
-            {this.state.activeEditorTab === 'monitoring'
-              ? this.renderGraph()
-              : null}
+            {activeEditorTab === 'monitoring' ? this.renderGraph() : null}
           </Page.Contents>
         </Page>
       </>
@@ -2325,6 +2343,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private openCspFormBtn = (properties: any) => {
+    const {minionList} = this.state
     const {
       provider,
       region,
@@ -2341,7 +2360,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         onClick={() => {
           this.setState({
             provider,
-            cloudTargetMinion: this.state.minionList[0],
+            cloudTargetMinion: minionList[0],
             cloudRegion: region,
             cloudAccessKey: accesskey,
             cloudSecretKey: secretkey,
@@ -2404,19 +2423,19 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private get sidebarDivisions() {
-    const {sidebarProportions} = this.state
+    const {sidebarProportions, treeMenu, selectItem, hostsObject} = this.state
     const [topSize, middleSize, bottomSize] = sidebarProportions
 
     return [
       {
         name: 'Detected Hosts',
         headerOrientation: HANDLE_HORIZONTAL,
-        headerButtons: !_.isEmpty(this.state.treeMenu)
+        headerButtons: !_.isEmpty(treeMenu)
           ? [
               <Button
                 key={'Private'}
                 color={
-                  this.state.selectItem === 'Private'
+                  selectItem === 'Private'
                     ? ComponentColor.Primary
                     : ComponentColor.Default
                 }
@@ -2429,7 +2448,7 @@ class InventoryTopology extends PureComponent<Props, State> {
               <Button
                 key={'Cloud'}
                 color={
-                  this.state.selectItem === 'Cloud'
+                  selectItem === 'Cloud'
                     ? ComponentColor.Primary
                     : ComponentColor.Default
                 }
@@ -2444,8 +2463,8 @@ class InventoryTopology extends PureComponent<Props, State> {
         menuOptions: [],
         size: topSize,
         render: () => {
-          if (this.state.selectItem === 'Private') {
-            const hostList = _.keys(this.state.hostsObject)
+          if (selectItem === 'Private') {
+            const hostList = _.keys(hostsObject)
             if (hostList.length > 0) {
               return (
                 <FancyScrollbar>
@@ -2469,11 +2488,11 @@ class InventoryTopology extends PureComponent<Props, State> {
             }
           }
 
-          if (this.state.selectItem === 'Cloud') {
+          if (selectItem === 'Cloud') {
             return (
               <FancyScrollbar>
                 <InventoryTreemenu
-                  data={this.state.treeMenu}
+                  data={treeMenu}
                   graph={this.graph}
                   handleOpenCspFormBtn={this.openCspFormBtn}
                   handleDeleteRegionBtn={this.removeRegionBtn}
@@ -2517,7 +2536,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private renderGraph = () => {
-    const {source} = this.props
+    const {source, manualRefresh} = this.props
     const {
       filteredLayouts,
       focusedHost,
@@ -2538,7 +2557,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         cells={layoutCells}
         templates={tempVars}
         timeRange={timeRange}
-        manualRefresh={this.props.manualRefresh}
+        manualRefresh={manualRefresh}
         host={focusedHost}
         instance={focusedInstance}
       />
