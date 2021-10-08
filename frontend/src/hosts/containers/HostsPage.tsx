@@ -125,7 +125,6 @@ interface State {
   focusedInstance: Instance
   timeRange: TimeRange
   proportions: number[]
-  selected: QueriesModels.TimeRange
   selectedAgent: string
   activeCspTab: string
   itemCSPs: string[]
@@ -170,7 +169,6 @@ export class HostsPage extends PureComponent<Props, State> {
       focusedInstance: null,
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       proportions: [0.43, 0.57],
-      selected: {lower: '', upper: ''},
       selectedAgent: 'ALL',
       itemCSPs: ['Private'],
       activeCspTab: 'Private',
@@ -183,10 +181,6 @@ export class HostsPage extends PureComponent<Props, State> {
 
     this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
     this.onSetActiveCspTab = this.onSetActiveCspTab.bind(this)
-  }
-
-  public componentWillMount() {
-    this.setState({selected: this.state.timeRange})
   }
 
   public async componentDidMount() {
