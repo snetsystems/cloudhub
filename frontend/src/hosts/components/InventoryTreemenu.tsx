@@ -1,5 +1,4 @@
 import React from 'react'
-import ReactDOM from 'react-dom'
 import _, {debounce} from 'lodash'
 
 import walk, {
@@ -10,8 +9,8 @@ import walk, {
   MatchSearchFunction,
 } from 'src/reusable_ui/components/treemenu/TreeMenu/walk'
 import {
+  CspTreeMenuChildren,
   defaultChildrenCSP,
-  TreeMenuChildren,
   TreeMenuItem,
 } from 'src/reusable_ui/components/treemenu/TreeMenu/renderProps'
 import KeyDown from 'src/reusable_ui/components/treemenu/KeyDown'
@@ -31,7 +30,7 @@ export type TreeMenuProps = {
   hasSearch?: boolean
   onClickItem?: (props: Item) => void
   debounceTime?: number
-  children?: TreeMenuChildren
+  children?: CspTreeMenuChildren
   locale?: LocaleFunction
   matchSearch?: MatchSearchFunction
   handleOpenCspFormBtn?: (properties: {[x: string]: any}) => JSX.Element
@@ -172,7 +171,6 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
 
   public addSidbarTreemenu = function ({
     sideBarArea,
-    node,
     element,
   }: {
     sideBarArea: HTMLElement

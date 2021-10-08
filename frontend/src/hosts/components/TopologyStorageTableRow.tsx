@@ -1,14 +1,17 @@
 import React, {PureComponent} from 'react'
-import {CLOUD_HOST_STORAGE_TABLE_SIZING} from '../constants/tableSizing'
+
+import {CLOUD_HOST_STORAGE_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
+import {awsVolume} from 'src/hosts/types/cloud'
 
 interface Props {
-  rowData: any
+  rowData: awsVolume
 }
 
 class TopologyStorageTableRow extends PureComponent<Props> {
   constructor(props: Props) {
     super(props)
   }
+
   public render() {
     const {
       rowData: {

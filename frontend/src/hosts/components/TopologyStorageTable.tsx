@@ -9,7 +9,8 @@ import TopologyStorageTableRow from 'src/hosts/components/TopologyStorageTableRo
 
 import {CLOUD_HOST_STORAGE_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {RemoteDataState, Host} from 'src/types'
+import {RemoteDataState} from 'src/types'
+import {awsVolume} from 'src/hosts/types/cloud'
 
 enum SortDirection {
   ASC = 'asc',
@@ -17,7 +18,7 @@ enum SortDirection {
 }
 
 export interface Props {
-  tableData: []
+  tableData: awsVolume[]
   pageStatus: RemoteDataState
 }
 
@@ -31,11 +32,11 @@ interface State {
 class TopologyStorageTable extends PureComponent<Props, State> {
   public getSortedHosts = memoize(
     (
-      hosts,
+      hosts: awsVolume[],
       searchTerm: string,
       sortKey: string,
       sortDirection: SortDirection
-    ) => {
+    ): awsVolume[] => {
       return this.sort(this.filter(hosts, searchTerm), sortKey, sortDirection)
     }
   )
@@ -50,49 +51,42 @@ class TopologyStorageTable extends PureComponent<Props, State> {
     }
   }
 
-  public filter(allHosts, searchTerm: string) {
+  public filter(allHosts, searchTerm: string): awsVolume[] {
     const filterText = searchTerm.toLowerCase()
 
-    return _.filter(
-      allHosts,
-      (h: {
-        attachmentStatus: string
-        attachmentTime: string
-        deleteOnTermination: string
-        deviceName: string
-        encrypted: string
-        volumeId: string
-        volumeSize: number
-      }) => {
-        const {
-          attachmentStatus,
-          attachmentTime,
-          deleteOnTermination,
-          deviceName,
-          encrypted,
-          volumeId,
-          volumeSize,
-        } = h
+    return _.filter(allHosts, (h: awsVolume) => {
+      const {
+        attachmentStatus,
+        attachmentTime,
+        deleteOnTermination,
+        deviceName,
+        encrypted,
+        volumeId,
+        volumeSize,
+      } = h
 
-        return (
-          _.toString(volumeSize).toLowerCase().includes(filterText) ||
-          attachmentStatus.toLowerCase().includes(filterText) ||
-          attachmentTime.toLowerCase().includes(filterText) ||
-          deleteOnTermination.toLowerCase().includes(filterText) ||
-          deviceName.toLowerCase().includes(filterText) ||
-          encrypted.toLowerCase().includes(filterText) ||
-          volumeId.toLowerCase().includes(filterText)
-        )
-      }
-    )
+      return (
+        _.toString(volumeSize).toLowerCase().includes(filterText) ||
+        attachmentStatus.toLowerCase().includes(filterText) ||
+        attachmentTime.toLowerCase().includes(filterText) ||
+        deleteOnTermination.toLowerCase().includes(filterText) ||
+        deviceName.toLowerCase().includes(filterText) ||
+        encrypted.toLowerCase().includes(filterText) ||
+        volumeId.toLowerCase().includes(filterText)
+      )
+    })
   }
 
-  public sort(hosts: Host[], key: string, direction: SortDirection): Host[] {
+  public sort(
+    hosts: awsVolume[],
+    key: string,
+    direction: SortDirection
+  ): awsVolume[] {
     switch (direction) {
       case SortDirection.ASC:
-        return _.sortBy<Host>(hosts, e => e[key])
+        return _.sortBy<awsVolume>(hosts, e => e[key])
       case SortDirection.DESC:
-        return _.sortBy<Host>(hosts, e => e[key]).reverse()
+        return _.sortBy<awsVolume>(hosts, e => e[key]).reverse()
       default:
         return hosts
     }
@@ -143,31 +137,36 @@ class TopologyStorageTable extends PureComponent<Props, State> {
   private get TableContents(): JSX.Element {
     const {pageStatus, tableData} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
-    const sortedHosts = this.getSortedHosts(
+    const sortedHosts: awsVolume[] = this.getSortedHosts(
       tableData,
       searchTerm,
       sortKey,
       sortDirection
     )
+
     if (pageStatus === RemoteDataState.Loading) {
       return this.LoadingState
     }
+
     if (pageStatus === RemoteDataState.Error) {
       return this.ErrorState
     }
+
     if (tableData.length === 0) {
       return this.NoHostsState
     }
+
     if (sortedHosts.length === 0) {
       return this.NoSortedHostsState
     }
+
     return this.TableWithHosts
   }
 
   private get TableWithHosts(): JSX.Element {
     const {tableData} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
-    const sortedHosts = this.getSortedHosts(
+    const sortedHosts: awsVolume[] = this.getSortedHosts(
       tableData,
       searchTerm,
       sortKey,
@@ -178,7 +177,7 @@ class TopologyStorageTable extends PureComponent<Props, State> {
       <div className="hosts-table">
         {this.HostsTableHeader}
         <div className={`hosts-table--tbody`}>
-          {sortedHosts.map(h => (
+          {_.map(sortedHosts, h => (
             <TopologyStorageTableRow key={uuid.v4()} rowData={h} />
           ))}
         </div>

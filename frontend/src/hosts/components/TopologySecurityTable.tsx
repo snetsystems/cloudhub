@@ -8,16 +8,17 @@ import PageSpinner from 'src/shared/components/PageSpinner'
 import TopologySecurityTableRow from 'src/hosts/components/TopologySecurityTableRow'
 
 import {CLOUD_HOST_SECURITY_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
-import {ErrorHandling} from 'src/shared/decorators/errors'
-import {RemoteDataState, Host} from 'src/types'
+import {RemoteDataState} from 'src/types'
+import {awsSecurity} from 'src/hosts/types/cloud'
 
+import {ErrorHandling} from 'src/shared/decorators/errors'
 enum SortDirection {
   ASC = 'asc',
   DESC = 'desc',
 }
 
 export interface Props {
-  tableData: []
+  tableData: awsSecurity[]
   pageStatus: RemoteDataState
 }
 
@@ -31,11 +32,11 @@ interface State {
 class TopologySecurityTable extends PureComponent<Props, State> {
   public getSortedHosts = memoize(
     (
-      hosts,
+      hosts: awsSecurity[],
       searchTerm: string,
       sortKey: string,
       sortDirection: SortDirection
-    ) => {
+    ): awsSecurity[] => {
       return this.sort(this.filter(hosts, searchTerm), sortKey, sortDirection)
     }
   )
@@ -50,44 +51,38 @@ class TopologySecurityTable extends PureComponent<Props, State> {
     }
   }
 
-  public filter(allHosts, searchTerm: string) {
+  public filter(allHosts, searchTerm: string): awsSecurity[] {
     const filterText = searchTerm.toLowerCase()
+    return _.filter(allHosts, (h: awsSecurity) => {
+      let property = null
 
-    return _.filter(
-      allHosts,
-      (h: {
-        port: number | string
-        protocol: string
-        security_groups: string
-        source?: string
-        destination?: string
-      }) => {
-        let property = null
-
-        if (h.hasOwnProperty('source')) {
-          property = h.source
-        }
-
-        if (h.hasOwnProperty('destination')) {
-          property = h.destination
-        }
-
-        return (
-          _.toString(h.port).toLowerCase().includes(filterText) ||
-          h.protocol.toLowerCase().includes(filterText) ||
-          h.security_groups.toLowerCase().includes(filterText) ||
-          (property && property.toLowerCase().includes(filterText))
-        )
+      if (h.hasOwnProperty('source')) {
+        property = h.source
       }
-    )
+
+      if (h.hasOwnProperty('destination')) {
+        property = h.destination
+      }
+
+      return (
+        _.toString(h.port).toLowerCase().includes(filterText) ||
+        h.protocol.toLowerCase().includes(filterText) ||
+        h.security_groups.toLowerCase().includes(filterText) ||
+        (property && property.toLowerCase().includes(filterText))
+      )
+    })
   }
 
-  public sort(hosts: Host[], key: string, direction: SortDirection): Host[] {
+  public sort(
+    hosts: awsSecurity[],
+    key: string,
+    direction: SortDirection
+  ): awsSecurity[] {
     switch (direction) {
       case SortDirection.ASC:
-        return _.sortBy<Host>(hosts, e => e[key])
+        return _.sortBy<awsSecurity>(hosts, e => e[key])
       case SortDirection.DESC:
-        return _.sortBy<Host>(hosts, e => e[key]).reverse()
+        return _.sortBy<awsSecurity>(hosts, e => e[key]).reverse()
       default:
         return hosts
     }
@@ -138,24 +133,29 @@ class TopologySecurityTable extends PureComponent<Props, State> {
   private get TableContents(): JSX.Element {
     const {pageStatus, tableData} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
-    const sortedHosts = this.getSortedHosts(
+    const sortedHosts: awsSecurity[] = this.getSortedHosts(
       tableData,
       searchTerm,
       sortKey,
       sortDirection
     )
+
     if (pageStatus === RemoteDataState.Loading) {
       return this.LoadingState
     }
+
     if (pageStatus === RemoteDataState.Error) {
       return this.ErrorState
     }
+
     if (tableData.length === 0) {
       return this.NoHostsState
     }
+
     if (sortedHosts.length === 0) {
       return this.NoSortedHostsState
     }
+
     return this.TableWithHosts
   }
 

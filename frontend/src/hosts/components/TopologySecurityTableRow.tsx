@@ -1,14 +1,17 @@
 import React, {PureComponent} from 'react'
-import {CLOUD_HOST_SECURITY_TABLE_SIZING} from '../constants/tableSizing'
+
+import {awsSecurity} from 'src/hosts/types/cloud'
+import {CLOUD_HOST_SECURITY_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 
 interface Props {
-  rowData: any
+  rowData: awsSecurity
 }
 
 class TopologySecurityTableRow extends PureComponent<Props> {
   constructor(props: Props) {
     super(props)
   }
+
   public render() {
     const {
       rowData: {port, protocol, source, destination, security_groups},

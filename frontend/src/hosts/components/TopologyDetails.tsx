@@ -10,15 +10,13 @@ interface Props {
   instanceTypeModal?: () => void
 }
 
-interface State {}
-
-class TopologyDetails extends PureComponent<Props, State> {
+class TopologyDetails extends PureComponent<Props> {
   constructor(props: Props) {
     super(props)
   }
 
   public render() {
-    const {selectInstanceData} = this.props
+    const {selectInstanceData, instanceTypeModal} = this.props
 
     return (
       <>
@@ -43,7 +41,7 @@ class TopologyDetails extends PureComponent<Props, State> {
                   key={d}
                   title={d.replaceAll('_', ' ')}
                   selectInstanceData={selectInstanceData[d]}
-                  instanceTypeModal={this.props.instanceTypeModal}
+                  instanceTypeModal={instanceTypeModal}
                 />
               )
             })}

@@ -42,3 +42,21 @@ export interface CSPAccessObject {
   organization: string
   links: {self: string}
 }
+
+export interface awsSecurity {
+  port: number | string
+  protocol: string
+  security_groups: string
+  source?: string
+  destination?: string
+}
+
+export interface awsVolume {
+  attachmentStatus: string
+  attachmentTime: string
+  deleteOnTermination: string
+  deviceName: string
+  encrypted: string
+  volumeId: string
+  volumeSize: number
+}
