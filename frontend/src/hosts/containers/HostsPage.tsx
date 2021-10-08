@@ -123,12 +123,9 @@ interface State {
   filteredLayouts: Layout[]
   focusedHost: string
   focusedInstance: Instance
-  HostsTableStateDump: {}
   timeRange: TimeRange
   proportions: number[]
   selected: QueriesModels.TimeRange
-  isVsphere: boolean
-  activeEditorTab: string
   selectedAgent: string
   activeCspTab: string
   itemCSPs: string[]
@@ -171,13 +168,9 @@ export class HostsPage extends PureComponent<Props, State> {
       filteredLayouts: [],
       focusedHost: '',
       focusedInstance: null,
-      HostsTableStateDump: {},
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       proportions: [0.43, 0.57],
       selected: {lower: '', upper: ''},
-      isVsphere: false,
-      activeEditorTab: 'InventoryTopology',
-      // activeEditorTab: 'Host',
       selectedAgent: 'ALL',
       itemCSPs: ['Private'],
       activeCspTab: 'Private',
@@ -251,13 +244,18 @@ export class HostsPage extends PureComponent<Props, State> {
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
     const {autoRefresh} = this.props
-    const {layouts, focusedHost, focusedInstance, selectedAgent} = this.state
+    const {
+      layouts,
+      focusedHost,
+      focusedInstance,
+      selectedAgent,
+      activeCspTab,
+    } = this.state
 
     if (layouts) {
       if (
         prevState.focusedHost !== focusedHost ||
-        (prevState.activeCspTab !== this.state.activeCspTab &&
-          this.state.activeCspTab === 'Private')
+        (prevState.activeCspTab !== activeCspTab && activeCspTab === 'Private')
       ) {
         this.fetchHostsData(layouts)
         const {filteredLayouts} = await this.getLayoutsforHost(
@@ -270,8 +268,7 @@ export class HostsPage extends PureComponent<Props, State> {
       if (
         prevState.focusedInstance !== focusedInstance ||
         (prevState.selectedAgent !== selectedAgent && focusedInstance) ||
-        (prevState.activeCspTab !== this.state.activeCspTab &&
-          this.state.activeCspTab === 'aws')
+        (prevState.activeCspTab !== activeCspTab && activeCspTab === 'aws')
       ) {
         this.fetchCspHostsData(layouts)
         const {filteredLayouts} = await this.getLayoutsforInstance(
@@ -374,11 +371,11 @@ export class HostsPage extends PureComponent<Props, State> {
 
   private renderHostTable = () => {
     const {source} = this.props
-    let {hostsObject, hostsPageStatus, focusedHost} = this.state
+    let {hostsObject, hostsPageStatus, focusedHost, activeCspTab} = this.state
 
     return (
       <>
-        {this.state.activeCspTab === 'Private' ? (
+        {activeCspTab === 'Private' ? (
           <HostsTable
             source={source}
             hosts={_.values(hostsObject)}
@@ -396,7 +393,14 @@ export class HostsPage extends PureComponent<Props, State> {
 
   private get renderCspHostsTable() {
     const {source} = this.props
-    const {cloudHostsObject, activeCspTab, hostsPageStatus} = this.state
+    const {
+      cloudHostsObject,
+      activeCspTab,
+      hostsPageStatus,
+      isInstanceTypeModalVisible,
+      instanceTypeLoading,
+      focusedInstance,
+    } = this.state
     const cloudHostObject = cloudHostsObject[activeCspTab]
 
     let cloudHosts = []
@@ -422,8 +426,8 @@ export class HostsPage extends PureComponent<Props, State> {
     return (
       <>
         <InstanceTypeModal
-          visible={this.state.isInstanceTypeModalVisible}
-          status={this.state.instanceTypeLoading}
+          visible={isInstanceTypeModalVisible}
+          status={instanceTypeLoading}
           message={this.renderInstanceTypeModal}
           onCancel={() => {
             this.setState({
@@ -436,7 +440,7 @@ export class HostsPage extends PureComponent<Props, State> {
           cloudHosts={cloudHosts}
           providerRegions={_.keys(cloudHostObject)}
           hostsPageStatus={hostsPageStatus}
-          focusedInstance={this.state.focusedInstance}
+          focusedInstance={focusedInstance}
           onClickTableRow={this.handleClickCspTableRow}
           tableTitle={this.tableTitle}
           handleInstanceTypeModal={this.handleInstanceTypeModal}
@@ -776,7 +780,6 @@ export class HostsPage extends PureComponent<Props, State> {
 
   private async fetchHostsData(layouts: Layout[]): Promise<void> {
     const {source, links, notify} = this.props
-    const {addons} = links
 
     const envVars = await getEnv(links.environment)
     const telegrafSystemInterval = getDeep<string>(
@@ -806,17 +809,7 @@ export class HostsPage extends PureComponent<Props, State> {
         tempVars
       )
 
-      const isUsingVshpere = Boolean(
-        _.find(addons, addon => {
-          return addon.name === 'vsphere' && addon.url === 'on'
-        }) &&
-          _.find(hostsObject, v => {
-            return _.includes(v.apps, 'vsphere')
-          })
-      )
-
       this.setState({
-        isVsphere: isUsingVshpere,
         hostsObject: newHosts,
         hostsPageStatus: RemoteDataState.Done,
       })
@@ -824,7 +817,6 @@ export class HostsPage extends PureComponent<Props, State> {
       console.error(error)
       notify(notifyUnableToGetHosts())
       this.setState({
-        isVsphere: false,
         hostsPageStatus: RemoteDataState.Error,
       })
     }
@@ -883,6 +875,7 @@ export class HostsPage extends PureComponent<Props, State> {
       source,
       links,
       handleGetAWSInstancesAsync,
+      notify,
     } = this.props
 
     const dbResp: any[] = await handleLoadCspsAsync()
@@ -988,9 +981,8 @@ export class HostsPage extends PureComponent<Props, State> {
       })
     } catch (error) {
       console.error(error)
-      // notify(notifyUnableToGetHosts())
+      notify(notifyUnableToGetHosts())
       this.setState({
-        isVsphere: false,
         hostsPageStatus: RemoteDataState.Error,
       })
     }
