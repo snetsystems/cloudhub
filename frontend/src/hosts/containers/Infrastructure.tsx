@@ -109,7 +109,6 @@ class Infrastructure extends PureComponent<Props, State> {
       return
     }
   }
-  public async componentDidUpdate() {}
 
   public render() {
     const {
