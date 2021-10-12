@@ -472,22 +472,12 @@ class InventoryTopology extends PureComponent<Props, State> {
         const layoutResults = await getLayouts()
         const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
 
-        if (!layouts) {
-          this.setState({
-            layouts,
-          })
-          return
-        }
-
-        // For rendering whole hosts list
+        // // For rendering whole hosts list
         await this.getHostData()
-
         await this.getIpmiTargetList()
-
         this.setState({
           layouts,
         })
-
         if (_.get(topology, 'diagram')) {
           const graph = this.graph
 
@@ -911,7 +901,9 @@ class InventoryTopology extends PureComponent<Props, State> {
       this.salt.token
     )
 
-    this.setState({minionList})
+    if (minionList) {
+      this.setState({minionList})
+    }
   }
 
   private createEditor = () => {
