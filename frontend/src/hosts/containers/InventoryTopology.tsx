@@ -449,7 +449,6 @@ class InventoryTopology extends PureComponent<Props, State> {
   private setToolbar = setToolbar
 
   public async componentDidMount() {
-    // this.testMakeTreemenu(this)
     await this.handleLoadCsps()
 
     this.createEditor()
@@ -2295,6 +2294,12 @@ class InventoryTopology extends PureComponent<Props, State> {
         [newData]
       )
 
+      const checkSaltResp: string = saltResp.return[0][newData.minion]
+
+      if (_.isString(checkSaltResp) && _.includes(checkSaltResp, 'exception')) {
+        throw new Error('Failed to add region. exception error')
+      }
+
       const dbResp = await handleCreateCspAsync(data)
       dbResp['data'] =
         _.values(saltResp.return[0])[0].length > 0
@@ -2863,7 +2868,6 @@ class InventoryTopology extends PureComponent<Props, State> {
   private handleLoadCsps = async () => {
     const {handleLoadCspsAsync, handleGetAWSInstancesAsync} = this.props
     const dbResp: any[] = await handleLoadCspsAsync()
-
     const newDbResp = _.map(dbResp, resp => {
       const {secretkey} = resp
       const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
@@ -2973,7 +2977,7 @@ const mapDispatchToProps = {
   handleGetIpmiStatus: getIpmiStatusAsync,
   handleSetIpmiStatusAsync: setIpmiStatusAsync,
   handleGetIpmiSensorDataAsync: getIpmiSensorDataAsync,
-  handleCreateCloudServiceProviderAsync: createCloudServiceProviderAsync,
+  // handleCreateCloudServiceProviderAsync: createCloudServiceProviderAsync,
   notify: notifyAction,
   handleLoadCspAsync: loadCloudServiceProviderAsync,
   handleLoadCspsAsync: loadCloudServiceProvidersAsync,
