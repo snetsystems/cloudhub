@@ -645,8 +645,49 @@ export class HostsPage extends PureComponent<Props, State> {
     )
   }
 
+  private getFirstCloudHost = (): Instance => {
+    const {cloudHostsObject} = this.state
+    let firstHost = {
+      provider: null,
+      region: null,
+      instanceid: null,
+      instancename: null,
+    }
+    try {
+      if (!_.isEmpty(cloudHostsObject)) {
+        const firstProvider = _.keys(cloudHostsObject)[0]
+        const firstRegion = _.keys(cloudHostsObject[firstProvider])[0]
+        const firstInstance = _.keys(
+          cloudHostsObject[firstProvider][firstRegion]
+        )[0]
+        const {instanceId: firstInstanceId} = cloudHostsObject[firstProvider][
+          firstRegion
+        ][firstInstance]
+
+        firstHost = {
+          ...firstHost,
+          provider: firstProvider,
+          region: firstRegion,
+          instanceid: firstInstanceId,
+          instancename: firstInstance,
+        }
+
+        return firstHost
+      }
+    } finally {
+      return firstHost
+    }
+  }
+
+  private onSetFocusedInstance = (instance: Instance): void => {
+    this.setState({focusedInstance: {...instance}})
+  }
+
   private onSetActiveCspTab(activeCspTab: string): void {
-    if (activeCspTab === 'aws' && this.state.focusedInstance === null) {
+    const {focusedInstance} = this.state
+    if (activeCspTab === 'aws' && focusedInstance === null) {
+      const firstCloudHost = this.getFirstCloudHost()
+      this.onSetFocusedInstance(firstCloudHost)
       this.setState({
         activeCspTab,
         filteredLayouts: [],
@@ -995,7 +1036,7 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   private handleClickCspTableRow = (focusedInstance: Instance) => () => {
-    this.setState({focusedInstance})
+    this.onSetFocusedInstance(focusedInstance)
   }
 }
 
