@@ -9,7 +9,7 @@ import (
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-// suport CSP
+// not used
 func getCSP() []string {
 	return []string{"AWS", "GCP", "Azure"}
 }
@@ -25,10 +25,6 @@ type cspRequest struct {
 func (r *cspRequest) ValidCreate() error {
 	if r.Provider == ""  {
 		return fmt.Errorf("provider required CSP request body")
-	}
-
-	if !supportedProvider(r.Provider) {
-		return fmt.Errorf("provider is not supported")
 	}
 
 	if r.Region == "" {
@@ -295,6 +291,7 @@ func existsCSPInOrg(ctx context.Context, s *Service, provider string, region str
 }
 
 // supported provider search
+// not used
 func supportedProvider(reqProvider string) bool {
 	providers := getCSP()
 	for _, provider := range providers {
