@@ -475,9 +475,11 @@ class InventoryTopology extends PureComponent<Props, State> {
         // // For rendering whole hosts list
         await this.getHostData()
         await this.getIpmiTargetList()
+
         this.setState({
           layouts,
         })
+
         if (_.get(topology, 'diagram')) {
           const graph = this.graph
 
@@ -1102,75 +1104,82 @@ class InventoryTopology extends PureComponent<Props, State> {
     const selectionCells = mxGraphSelectionModel['cells']
 
     if (selectionCells.length > 0) {
-      const cellElement = getParseHTML(selectionCells[0].value)
-      const dataNavi = cellElement
-        .querySelector('div')
-        .getAttribute('data-data_navi')
+      const cellElement = getContainerElement(selectionCells[0].value)
+      const dataNavi = cellElement.getAttribute('data-data_navi')
 
       if (dataNavi) {
-        const {cloudAccessInfos, treeMenu} = this.state
-        const instanceData = _.get(treeMenu, `${dataNavi}`)
-        const provider = _.get(instanceData, 'provider')
-        const region = _.get(instanceData, 'region')
-        const instanceid = _.get(instanceData, 'instanceid')
-        const instancename = _.get(instanceData, 'label')
+        const {cloudAccessInfos} = this.state
+
+        const instancename = cellElement.getAttribute('data-name')
+        const navi = dataNavi.split('.')
+        const provider = navi[0]
+        const region = navi[2]
+        const instanceid = navi[4]
 
         const accessInfo = _.find(
           cloudAccessInfos,
           c => c.provider === provider && c.region === region
         )
 
-        const {secretkey} = accessInfo
-        const decryptedBytes = CryptoJS.AES.decrypt(
-          secretkey,
-          this.secretKey.url
-        )
-        const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
+        if (!_.isEmpty(accessInfo)) {
+          const {secretkey} = accessInfo
+          const decryptedBytes = CryptoJS.AES.decrypt(
+            secretkey,
+            this.secretKey.url
+          )
+          const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
 
-        const newCloudAccessInfos = {
-          ...accessInfo,
-          secretkey: originalSecretkey,
+          const newCloudAccessInfos = {
+            ...accessInfo,
+            secretkey: originalSecretkey,
+          }
+
+          const getData = _.filter(accessInfo.data, d =>
+            _.isNull(d) ? false : d.InstanceId === instanceid
+          )
+
+          const securityGroupIds = _.reduce(
+            getData[0].SecurityGroups,
+            (groupIds: string[], current) => {
+              groupIds = [...groupIds, current.GroupId]
+
+              return groupIds
+            },
+            []
+          )
+
+          this.getAWSSecurity(newCloudAccessInfos, securityGroupIds)
+
+          const volumeGroupIds = _.reduce(
+            getData[0].BlockDeviceMappings,
+            (groupIds: string[], current) => {
+              groupIds = [...groupIds, current.Ebs.VolumeId]
+
+              return groupIds
+            },
+            []
+          )
+
+          this.getAWSVolume(newCloudAccessInfos, volumeGroupIds)
+
+          const types = _.reduce(
+            getData,
+            (types: string[], current) => {
+              types = [...types, current.InstanceType]
+
+              return types
+            },
+            []
+          )
+
+          this.getAWSInstanceTypes(newCloudAccessInfos, types)
+        } else {
+          this.setState({
+            awsSecurity: null,
+            awsInstanceTypes: null,
+            awsVolume: null,
+          })
         }
-
-        const getData = _.filter(accessInfo.data, d =>
-          _.isNull(d) ? false : d.InstanceId === instanceid
-        )
-
-        const securityGroupIds = _.reduce(
-          getData[0].SecurityGroups,
-          (groupIds: string[], current) => {
-            groupIds = [...groupIds, current.GroupId]
-
-            return groupIds
-          },
-          []
-        )
-
-        this.getAWSSecurity(newCloudAccessInfos, securityGroupIds)
-
-        const volumeGroupIds = _.reduce(
-          getData[0].BlockDeviceMappings,
-          (groupIds: string[], current) => {
-            groupIds = [...groupIds, current.Ebs.VolumeId]
-
-            return groupIds
-          },
-          []
-        )
-
-        this.getAWSVolume(newCloudAccessInfos, volumeGroupIds)
-
-        const types = _.reduce(
-          getData,
-          (types: string[], current) => {
-            types = [...types, current.InstanceType]
-
-            return types
-          },
-          []
-        )
-
-        this.getAWSInstanceTypes(newCloudAccessInfos, types)
 
         this.setState({
           focusedInstance: {provider, region, instanceid, instancename},
