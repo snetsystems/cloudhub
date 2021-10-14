@@ -57,6 +57,7 @@ import {
 } from 'src/shared/constants/'
 import {eachNodeTypeAttrs, tmpMenu} from 'src/hosts/constants/tools'
 import {notifyUnableToGetHosts} from 'src/shared/copy/notifications'
+import {cloudTreeMenuTemplate} from 'src/hosts/constants/treeMenuTemplate'
 
 // Types
 import {
@@ -157,8 +158,6 @@ import {
   detectedHostsStatus,
 } from 'src/hosts/configurations/topology'
 
-import {cloudData} from './treemenuDummy'
-
 const mx = mxgraph()
 
 export const {
@@ -220,6 +219,7 @@ const warningImage = new mxImage(
   16,
   16
 )
+
 interface Instance {
   provider: string
   region: string
@@ -344,7 +344,7 @@ interface State {
   loadingStateDetails: RemoteDataState
   awsSecurity: Promise<any>
   awsVolume: Promise<any>
-  awsInstanceTypes: any
+  awsInstanceTypes: Promise<any>
   isInstanceTypeModalVisible: boolean
 }
 
@@ -360,9 +360,15 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     let cloud = {}
 
-    _.map(_.values(cloudData), f => {
-      if (_.find(this.props.links.addons, addon => addon.name === f.provider)) {
-        cloud[`${f.provider}`] = f
+    _.forEach(_.values(cloudTreeMenuTemplate), template => {
+      const {
+        links: {addons},
+      } = this.props
+      const findItem = _.find(addons, addon => addon.name === template.provider)
+      const isFind = !_.isEmpty(findItem)
+
+      if (isFind) {
+        cloud[template.provider] = {...template}
       }
     })
 
@@ -2688,54 +2694,55 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     const cloudDataTree = {...treeMenu}
 
-    _.forEach(cloudAccessInfos, cloudRegion => {
-      cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region] = {
-        ...cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region],
+    _.forEach(cloudAccessInfos, cloudAccessInfo => {
+      const {id, provider, region, accesskey, secretkey, data} = cloudAccessInfo
+      const cloudProvider = cloudDataTree[provider]
+      const cloudRegions = cloudProvider['nodes']
+
+      cloudRegions[region] = {
+        ...cloudRegions[region],
         buttons: [
           {
-            id: cloudRegion.id,
-            provider: cloudRegion.provider,
-            region: cloudRegion.region,
-            accesskey: cloudRegion.accesskey,
-            secretkey: cloudRegion.secretkey,
+            id,
+            provider,
+            region,
+            accesskey,
+            secretkey,
             isUpdateCloud: true,
             isDeleteCloud: false,
             text: 'Save Region',
             icon: 'pencil',
           },
           {
-            id: cloudRegion.id,
-            provider: cloudRegion.provider,
-            region: cloudRegion.region,
+            id,
+            provider,
+            region,
             isUpdateCloud: false,
             isDeleteCloud: true,
             text: 'Update Region',
           },
         ],
-        label: cloudRegion.region,
-        index: _.values(cloudDataTree[cloudRegion.provider]['nodes']).length,
+        label: region,
+        index: _.values(cloudRegions).length,
         level: 1,
-        regionID: cloudRegion.id,
+        regionID: id,
         nodes: {},
       }
 
-      _.forEach(cloudRegion.data, instanceData => {
+      _.forEach(data, instanceData => {
         if (!instanceData || typeof instanceData !== 'object') return
-        cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region][
-          'nodes'
-        ][_.get(instanceData, 'InstanceId')] = {
-          ...cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region][
-            'nodes'
-          ][_.get(instanceData, 'InstanceId')],
-          instanceid: _.get(instanceData, 'InstanceId'),
-          label: _.get(instanceData, 'Tags')[0]['Value'],
-          index: _.values(
-            cloudDataTree[cloudRegion.provider]['nodes'][cloudRegion.region][
-              'nodes'
-            ]
-          ).length,
-          provider: cloudRegion.provider,
-          region: cloudRegion.region,
+        const instanceid: string = _.get(instanceData, 'InstanceId')
+        const label = _.get(instanceData, 'Tags')[0]['Value']
+        const cloudRegion = cloudRegions[region]
+        const cloudInstances = cloudRegion['nodes']
+
+        cloudInstances[instanceid] = {
+          ...cloudInstances[instanceid],
+          instanceid,
+          label,
+          index: _.values(cloudInstances).length,
+          provider,
+          region,
           level: 2,
           meta: instanceData,
           nodes: {},

@@ -1,6 +1,6 @@
 import {CloudServiceProvider} from 'src/hosts/types'
 
-export const cloudData = {
+export const cloudTreeMenuTemplate = {
   aws: {
     buttons: [{provider: 'aws', isUpdate: false, text: 'Add Region'}],
     label: 'Amazon Web Service',
@@ -26,27 +26,3 @@ export const cloudData = {
     nodes: {},
   },
 }
-
-export const cloudInfo = [
-  {
-    provider: 'aws',
-    region: 'ap-northeast-2',
-    accesskey: 'accesskey',
-    secretkey: 'secretkey',
-    data: {},
-  },
-  {
-    provider: 'aws',
-    region: 'pusan',
-    accesskey: 'accesskey',
-    secretkey: 'secretkey',
-    data: {},
-  },
-  {
-    provider: 'gcp',
-    region: 'seoul',
-    accesskey: 'accesskey',
-    secretkey: 'secretkey',
-    data: {},
-  },
-]
