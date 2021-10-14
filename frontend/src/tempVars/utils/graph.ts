@@ -182,8 +182,6 @@ function isResolved(node: TemplateNode): boolean {
 }
 
 class CachingTemplateQueryFetcher implements TemplateQueryFetcher {
-  private proxyUrl: string
-
   private cache: {
     [proxyUrl: string]: {
       [query: string]: string[]
@@ -243,7 +241,7 @@ class CachingTemplateQueryFetcher implements TemplateQueryFetcher {
         }
       }
     } else {
-      const response = await proxy({source: this.proxyUrl, query})
+      const response = await proxy({source: proxyURL, query})
       values = parseMetaQuery(query, response.data)
     }
 
