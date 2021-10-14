@@ -553,6 +553,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         }
       }
     )
+
     this.setState({
       topologyStatus: RemoteDataState.Done,
     })
@@ -625,9 +626,10 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     if (_.isEmpty(topologyId) && !_.isEmpty(topology)) {
       const response = await handleCreateInventoryTopology(links, topology)
+      const getTopologyId = _.get(response, 'data.id', null)
 
-      if (_.get(response, 'data.id')) {
-        this.setState({topologyId: _.get(response, 'data.id')})
+      if (getTopologyId) {
+        this.setState({topologyId: getTopologyId})
       }
     } else if (
       !_.isEmpty(topologyId) &&
@@ -1121,7 +1123,6 @@ class InventoryTopology extends PureComponent<Props, State> {
         const provider = navi[0]
         const region = navi[2]
         const instanceid = navi[4]
-
         const accessInfo = _.find(
           cloudAccessInfos,
           c => c.provider === provider && c.region === region
@@ -1853,16 +1854,14 @@ class InventoryTopology extends PureComponent<Props, State> {
     if (_.isEmpty(cloudAccessInfos) || _.isEmpty(focusedInstance)) {
       return instanceData
     }
-
+    const {provider, region, instanceid} = focusedInstance
     const accessInfo = _.find(
       cloudAccessInfos,
-      c =>
-        c.provider === focusedInstance.provider &&
-        c.region === focusedInstance.region
+      c => c.provider === provider && c.region === region
     )
 
     const getData = _.filter(accessInfo.data, d =>
-      _.isNull(d) ? false : d.InstanceId === focusedInstance.instanceid
+      _.isNull(d) ? false : d.InstanceId === instanceid
     )
 
     _.reduce(
