@@ -390,7 +390,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       isStatusVisible: false,
       resizableDockHeight: 165,
       resizableDockWidth: 200,
-      selectItem: 'Private',
+      selectItem: 'Host',
       layouts: [],
       filteredLayouts: [],
       focusedHost: '',
@@ -612,7 +612,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       }
     }
 
-    if (prevState.selectItem !== selectItem && selectItem === 'Private') {
+    if (prevState.selectItem !== selectItem && selectItem === 'Host') {
       this.changedDOM()
     }
 
@@ -2450,15 +2450,15 @@ class InventoryTopology extends PureComponent<Props, State> {
         headerButtons: !_.isEmpty(treeMenu)
           ? [
               <Button
-                key={'Private'}
+                key={'Host'}
                 color={
-                  selectItem === 'Private'
+                  selectItem === 'Host'
                     ? ComponentColor.Primary
                     : ComponentColor.Default
                 }
-                text={'Private'}
+                text={'Host'}
                 onClick={() => {
-                  this.onChooseItem('Private')
+                  this.onChooseItem('Host')
                 }}
                 size={ComponentSize.ExtraSmall}
               />,
@@ -2480,7 +2480,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         menuOptions: [],
         size: topSize,
         render: () => {
-          if (selectItem === 'Private') {
+          if (selectItem === 'Host') {
             const hostList = _.keys(hostsObject)
             if (hostList.length > 0) {
               return (
