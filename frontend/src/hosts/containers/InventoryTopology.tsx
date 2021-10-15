@@ -157,6 +157,7 @@ import {
   applyHandler,
   detectedHostsStatus,
 } from 'src/hosts/configurations/topology'
+import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 
 const mx = mxgraph()
 
@@ -1589,7 +1590,12 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setState({isModalVisible: false})
   }
 
+  private debouncedFit = _.debounce(() => {
+    WindowResizeEventTrigger()
+  }, 250)
+
   private handleResize = (fieldName: string) => (proportions: number[]) => {
+    this.debouncedFit()
     this.setState((prevState: State) => ({
       ...prevState,
       [fieldName]: proportions,
