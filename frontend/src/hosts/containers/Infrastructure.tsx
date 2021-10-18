@@ -104,12 +104,9 @@ class Infrastructure extends PureComponent<Props, State> {
   }
 
   public async componentDidMount() {
-    const {notify, router, source} = this.props
+    const {notify, router} = this.props
     const params = _.get(router.params, 'infraTab', null)
     console.log('params: ', params)
-    if (_.isEmpty(params)) {
-      router.replace(`/sources/${source.id}/infrastructure/topology`)
-    }
 
     const infraTab = params === 'topology' ? 'InventoryTopology' : 'Host'
 
