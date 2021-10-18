@@ -528,4 +528,5 @@ export enum AddonType {
   salt = 'salt',
   router128T = 'swan',
   ipmiSecretKey = 'ipmi-secret-key',
+  aws = 'aws',
 }

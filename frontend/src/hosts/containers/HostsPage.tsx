@@ -151,6 +151,13 @@ export class HostsPage extends PureComponent<Props, State> {
     addon => addon.name === AddonType.salt
   )
 
+  private isUsingAWS =
+    _.get(
+      _.find(this.props.links.addons, addon => addon.name === AddonType.aws),
+      'url',
+      'off'
+    ) === 'on'
+
   constructor(props: Props) {
     super(props)
 
@@ -158,6 +165,12 @@ export class HostsPage extends PureComponent<Props, State> {
       if (!this.isComponentMounted) return
 
       PureComponent.prototype.setState.bind(this)(args, callback)
+    }
+
+    const itemCSPs = ['Private']
+
+    if (this.isUsingAWS) {
+      itemCSPs.push('aws')
     }
 
     this.state = {
@@ -170,7 +183,7 @@ export class HostsPage extends PureComponent<Props, State> {
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       proportions: [0.43, 0.57],
       selectedAgent: 'ALL',
-      itemCSPs: ['Private'],
+      itemCSPs,
       activeCspTab: 'Private',
       cloudAccessInfos: [],
       cloudHostsObject: {},
@@ -1011,7 +1024,6 @@ export class HostsPage extends PureComponent<Props, State> {
       this.setState({
         cloudAccessInfos: dbResp,
         cloudHostsObject: newCloudHostsObject,
-        itemCSPs: ['Private', ..._.keys(newCloudHostsObject)],
         hostsPageStatus: RemoteDataState.Done,
       })
     } catch (error) {
