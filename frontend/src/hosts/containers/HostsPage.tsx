@@ -174,17 +174,17 @@ export class HostsPage extends PureComponent<Props, State> {
     }
 
     this.state = {
+      focusedHost: '',
+      focusedInstance: null,
+      selectedAgent: 'ALL',
+      activeCspTab: 'Private',
       hostsObject: {},
       hostsPageStatus: RemoteDataState.NotStarted,
       layouts: [],
       filteredLayouts: [],
-      focusedHost: '',
-      focusedInstance: null,
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       proportions: [0.43, 0.57],
-      selectedAgent: 'ALL',
       itemCSPs,
-      activeCspTab: 'Private',
       cloudAccessInfos: [],
       cloudHostsObject: {},
       isInstanceTypeModalVisible: false,
@@ -197,12 +197,6 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   public async componentDidMount() {
-    const hostsTableState = getLocalStorage('hostsTableState')
-    const {focusedHost} =
-      hostsTableState && hostsTableState.focusedHost
-        ? hostsTableState.focusedHost
-        : ''
-
     const getItem = getLocalStorage('hostsTableStateProportions')
     const {proportions} = getItem || this.state
 
@@ -227,9 +221,6 @@ export class HostsPage extends PureComponent<Props, State> {
 
     // For rendering whole hosts list
     this.fetchHostsData(layouts).then(() => {
-      // For rendering the charts with the focused single host.
-      const hostID = focusedHost || this.getFirstHost(this.state.hostsObject)
-
       if (autoRefresh) {
         this.intervalID = window.setInterval(
           () => this.fetchHostsData(layouts),
@@ -238,11 +229,33 @@ export class HostsPage extends PureComponent<Props, State> {
       }
       GlobalAutoRefresher.poll(autoRefresh)
 
+      const defaultState = {
+        focusedHost: '',
+        focusedInstance: null,
+        selectedAgent: 'ALL',
+        activeCspTab: 'Private',
+      }
+
+      const getLocalStorageInfrastructure = getLocalStorage('infrastructure')
+      let hostsPage = _.get(getLocalStorageInfrastructure, 'hostsPage', {
+        defaultState,
+      })
+
+      // For rendering the charts with the focused single host.
+      hostsPage = {
+        ...hostsPage,
+        focusedHost: _.get(
+          hostsPage,
+          'focusedHost',
+          this.getFirstHost(this.state.hostsObject)
+        ),
+      }
+
       this.setState({
         layouts,
-        focusedHost: hostID,
         proportions: convertProportions,
         hostsPageStatus: RemoteDataState.Loading,
+        ...hostsPage,
       })
     })
 
@@ -273,9 +286,11 @@ export class HostsPage extends PureComponent<Props, State> {
       }
 
       if (
-        prevState.focusedInstance !== focusedInstance ||
-        (prevState.selectedAgent !== selectedAgent && focusedInstance) ||
-        (prevState.activeCspTab !== activeCspTab && activeCspTab === 'aws')
+        (prevState.activeCspTab !== activeCspTab && activeCspTab === 'aws') ||
+        (prevState.focusedInstance !== focusedInstance &&
+          prevState.activeCspTab !== activeCspTab &&
+          activeCspTab === 'aws') ||
+        (prevState.selectedAgent !== selectedAgent && focusedInstance)
       ) {
         this.fetchCspHostsData(layouts)
         const {filteredLayouts} = await this.getLayoutsforInstance(
@@ -326,6 +341,23 @@ export class HostsPage extends PureComponent<Props, State> {
     clearInterval(this.intervalID)
     this.intervalID = null
     GlobalAutoRefresher.stopPolling()
+
+    const getLocalStorageInfrastructure = getLocalStorage('infrastructure')
+    let getHostsPage = _.get(getLocalStorageInfrastructure, 'hostsPage', {
+      hostsPage: {},
+    })
+
+    getHostsPage = {
+      ...getLocalStorageInfrastructure,
+      hostsPage: {
+        selectedAgent: this.state.selectedAgent,
+        activeCspTab: this.state.activeCspTab,
+        focusedInstance: this.state.focusedInstance,
+        focusedHost: this.state.focusedHost,
+      },
+    }
+
+    setLocalStorage('infrastructure', getHostsPage)
 
     this.isComponentMounted = false
   }
