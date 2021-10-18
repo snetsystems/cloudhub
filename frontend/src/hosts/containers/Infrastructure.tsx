@@ -59,6 +59,11 @@ import {
 // Utils
 import {generateForHosts} from 'src/utils/tempVars'
 import {getDeep} from 'src/utils/wrappers'
+import {RouterState, InjectedRouter} from 'react-router'
+
+interface RouterProps extends InjectedRouter {
+  params: RouterState['params']
+}
 
 interface Props extends ManualRefreshProps {
   source: Source
@@ -70,6 +75,7 @@ interface Props extends ManualRefreshProps {
   handleClearTimeout: (key: string) => void
   handleClickPresentationButton: AppActions.DelayEnablePresentationModeDispatcher
   handleChooseAutoRefresh: AppActions.SetAutoRefreshActionCreator
+  router: RouterProps
 }
 
 interface State {
@@ -98,7 +104,17 @@ class Infrastructure extends PureComponent<Props, State> {
   }
 
   public async componentDidMount() {
-    const {notify} = this.props
+    const {notify, router, source} = this.props
+    const params = _.get(router.params, 'infraTab', null)
+    console.log('params: ', params)
+    if (_.isEmpty(params)) {
+      router.replace(`/sources/${source.id}/infrastructure/topology`)
+    }
+
+    const infraTab = params === 'topology' ? 'InventoryTopology' : 'Host'
+
+    this.setState({activeTab: infraTab})
+
     const layoutResults = await getLayouts()
     const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
 
@@ -107,6 +123,15 @@ class Infrastructure extends PureComponent<Props, State> {
     } else {
       notify(notifyUnableToGetApps())
       return
+    }
+  }
+
+  public componentDidUpdate() {
+    if (this.props.router.params.infraTab === 'topology') {
+      this.setState({activeTab: 'InventoryTopology'})
+    }
+    if (this.props.router.params.infraTab === 'host') {
+      this.setState({activeTab: 'Host'})
     }
   }
 
@@ -224,6 +249,14 @@ class Infrastructure extends PureComponent<Props, State> {
   }
 
   private onChooseActiveTab = (activeTab: string): void => {
+    const {router, source} = this.props
+
+    if (activeTab === 'InventoryTopology') {
+      router.push(`/sources/${source.id}/infrastructure/topology`)
+    } else {
+      router.push(`/sources/${source.id}/infrastructure/host`)
+    }
+
     this.setState({
       activeTab,
     })

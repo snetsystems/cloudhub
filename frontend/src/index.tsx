@@ -246,7 +246,7 @@ class Root extends PureComponent<Record<string, never>, State> {
                   component={DashboardPage}
                 />
                 <Route
-                  path="infrastructure"
+                  path="infrastructure/:infraTab"
                   component={props => (
                     <Infrastructure
                       {...props}
@@ -254,7 +254,10 @@ class Root extends PureComponent<Record<string, never>, State> {
                     />
                   )}
                 />
-                <Route path="infrastructure/:hostID" component={HostPage} />
+                <Route
+                  path="infrastructure/details/:hostID"
+                  component={HostPage}
+                />
                 <Route path="applications" component={Applications} />
                 <Route path="alerts" component={AlertsApp} />
                 <Route path="alert-rules" component={KapacitorRulesPage} />

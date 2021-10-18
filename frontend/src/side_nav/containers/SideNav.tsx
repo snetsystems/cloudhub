@@ -109,11 +109,11 @@ class SideNav extends PureComponent<Props> {
         <NavBlock
           highlightWhen={['infrastructure']}
           icon="server2"
-          link={`${sourcePrefix}/infrastructure`}
+          link={`${sourcePrefix}/infrastructure/topology`}
           location={location}
         >
           <NavHeader
-            link={`${sourcePrefix}/infrastructure`}
+            link={`${sourcePrefix}/infrastructure/topology`}
             title="Infrastructure"
           />
         </NavBlock>

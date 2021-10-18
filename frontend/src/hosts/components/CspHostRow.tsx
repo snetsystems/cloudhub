@@ -86,7 +86,9 @@ const CspHostRow: FunctionComponent<Props> = ({
         {csp.region}
       </div>
       <div className="hosts-table--td" style={{width: CloudNameWidth}}>
-        <Link to={`/sources/${sourceID}/infrastructure/${name}`}>{name}</Link>
+        <Link to={`/sources/${sourceID}/infrastructure/details/${name}`}>
+          {name}
+        </Link>
       </div>
       <div className="hosts-table--td" style={{width: CloudInstanceIDWidth}}>
         {instanceId}
@@ -126,7 +128,7 @@ const CspHostRow: FunctionComponent<Props> = ({
               <Link
                 style={{marginLeft: '2px'}}
                 to={{
-                  pathname: `/sources/${sourceID}/infrastructure/${name}`,
+                  pathname: `/sources/${sourceID}/infrastructure/details/${name}`,
                   query: {app},
                 }}
               >
