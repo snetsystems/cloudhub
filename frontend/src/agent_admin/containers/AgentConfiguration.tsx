@@ -1008,6 +1008,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
           <SearchBar
             placeholder="Filter by Plugin..."
             onSearch={this.pluginSearchTerm}
+            width={500}
           />
         </div>
         <div className="panel-body">{this.MeasurementsContent}</div>
