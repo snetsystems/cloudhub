@@ -242,11 +242,11 @@ export class HostsPage extends PureComponent<Props, State> {
       })
 
       // For rendering the charts with the focused single host.
-      hostsPage['focusedHost'] = _.get(
-        hostsPage,
-        'focusedHost',
-        this.getFirstHost(this.state.hostsObject)
-      )
+      hostsPage['focusedHost'] = _.get(hostsPage, 'focusedHost', '')
+
+      if (_.isEmpty(hostsPage.focusedHost)) {
+        hostsPage['focusedHost'] = this.getFirstHost(this.state.hostsObject)
+      }
 
       if (!this.isUsingAWS) {
         hostsPage['activeCspTab'] = 'Private'
