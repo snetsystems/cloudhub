@@ -123,11 +123,36 @@ class Infrastructure extends PureComponent<Props, State> {
   }
 
   public componentDidUpdate() {
-    if (this.props.router.params.infraTab === 'topology') {
-      this.setState({activeTab: 'InventoryTopology'})
-    }
-    if (this.props.router.params.infraTab === 'host') {
-      this.setState({activeTab: 'Host'})
+    const {router, source} = this.props
+
+    if (!_.isEmpty(router.params.infraTab)) {
+      const {
+        params: {infraTab},
+      } = router
+
+      let isNotFound = true
+
+      if (infraTab === 'topology') {
+        isNotFound = false
+        this.setState({activeTab: 'InventoryTopology'})
+      }
+      if (infraTab === 'host') {
+        isNotFound = false
+        this.setState({activeTab: 'Host'})
+      }
+
+      if (infraTab === 'vmware') {
+        if (this.state.isUsingVsphere) {
+          isNotFound = false
+          this.setState({activeTab: 'VMware'})
+        }
+      }
+
+      if (isNotFound) {
+        router.push(`/sources/${source.id}/infrastructure/topology`)
+      }
+    } else {
+      router.push(`/sources/${source.id}/infrastructure/topology`)
     }
   }
 
@@ -246,11 +271,18 @@ class Infrastructure extends PureComponent<Props, State> {
 
   private onChooseActiveTab = (activeTab: string): void => {
     const {router, source} = this.props
+    const {isUsingVsphere} = this.state
 
     if (activeTab === 'InventoryTopology') {
       router.push(`/sources/${source.id}/infrastructure/topology`)
-    } else {
+    }
+
+    if (activeTab === 'Host') {
       router.push(`/sources/${source.id}/infrastructure/host`)
+    }
+
+    if (isUsingVsphere && activeTab === 'VMware') {
+      router.push(`/sources/${source.id}/infrastructure/vmware`)
     }
 
     this.setState({
