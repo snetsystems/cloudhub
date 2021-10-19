@@ -1023,14 +1023,14 @@ export const getCpuAndLoadForInstances = async (
   }[][][]
 ): Promise<any> => {
   const query = replaceTemplate(
-    `SELECT mean("usage_user") FROM \":db:\".\":rp:\".\"cpu\" WHERE "cpu" = 'cpu-total' AND time > now() - 60m AND region != null AND csp != null GROUP BY host, region, csp;
-    SELECT mean("load1") FROM \":db:\".\":rp:\".\"system\" WHERE time > now() - 60m AND region != null AND csp != null GROUP BY host, region, csp;
+    `SELECT mean("usage_user") FROM \":db:\".\":rp:\".\"cpu\" WHERE "cpu" = 'cpu-total' AND time > now() - 10m AND region != null AND csp != null GROUP BY host, region, csp;
+    SELECT mean("load1") FROM \":db:\".\":rp:\".\"system\" WHERE time > now() - 10m AND region != null AND csp != null GROUP BY host, region, csp;
     SELECT non_negative_derivative(mean(uptime)) AS deltaUptime FROM \":db:\".\":rp:\".\"system\" WHERE time > now() - ${telegrafSystemInterval} * 10 AND region != null AND csp != null GROUP BY host, time(${telegrafSystemInterval}), region, csp fill(0);
-    SELECT mean("Percent_Processor_Time") FROM \":db:\".\":rp:\".\"win_cpu\" WHERE time > now() - 60m  AND region != null AND csp != null GROUP BY host, region, csp;
+    SELECT mean("Percent_Processor_Time") FROM \":db:\".\":rp:\".\"win_cpu\" WHERE time > now() - 10m  AND region != null AND csp != null GROUP BY host, region, csp;
     SELECT mean("Processor_Queue_Length") FROM \":db:\".\":rp:\".\"win_system\" WHERE time > now() - 10s AND region != null AND csp != null GROUP BY host, region, csp;
     SELECT non_negative_derivative(mean("System_Up_Time")) AS winDeltaUptime FROM \":db:\".\":rp:\".\"win_system\" WHERE time > now() - ${telegrafSystemInterval} * 10 AND region != null AND csp != null  GROUP BY host, time(${telegrafSystemInterval}), region, csp fill(0);
-    SELECT mean("used_percent") AS "memUsed" FROM \":db:\".\":rp:\".\"mem\" WHERE time > now() - 60m AND region != null AND csp != null GROUP BY host, region, csp;
-    SELECT mean("used_percent") AS "diskUsed" FROM \":db:\".\":rp:\".\"disk\" WHERE time > now() - 60m AND region != null AND csp != null GROUP BY host, region, csp;
+    SELECT mean("used_percent") AS "memUsed" FROM \":db:\".\":rp:\".\"mem\" WHERE time > now() - 10m AND region != null AND csp != null GROUP BY host, region, csp;
+    SELECT mean("used_percent") AS "diskUsed" FROM \":db:\".\":rp:\".\"disk\" WHERE time > now() - 10m AND region != null AND csp != null GROUP BY host, region, csp;
     SELECT 100 - mean("Percent_Free_Space") AS "winDiskUsed" FROM \":db:\".\":rp:\".\"win_disk\" WHERE time > now() - 10m AND csp != null AND region != null  GROUP BY host, region, csp;
     `,
     tempVars

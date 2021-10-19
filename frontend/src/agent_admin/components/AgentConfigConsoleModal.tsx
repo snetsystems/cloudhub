@@ -16,7 +16,7 @@ import CodeMirrorConsole from 'src/agent_admin/components/CodeMirrorConsole'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
-  onCancel: () => void
+  onClose: () => void
   message: string
   cancelText: string
   visible: boolean
@@ -34,19 +34,19 @@ class AgentConfigConsoleModal extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {onCancel, message, cancelText, visible, headingTitle} = this.props
+    const {onClose, message, cancelText, visible, headingTitle} = this.props
     return (
       <>
         <OverlayTechnology visible={visible}>
           <OverlayContainer>
-            <OverlayHeading title={headingTitle} onDismiss={onCancel} />
+            <OverlayHeading title={headingTitle} onDismiss={onClose} />
             <OverlayBody>
               <Form>
                 <Form.Element>
                   <CodeMirrorConsole res={message} />
                 </Form.Element>
                 <Form.Footer>
-                  <Button text={cancelText} onClick={onCancel} />
+                  <Button text={cancelText} onClick={onClose} />
                 </Form.Footer>
               </Form>
             </OverlayBody>
