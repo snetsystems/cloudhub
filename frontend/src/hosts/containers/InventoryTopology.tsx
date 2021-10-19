@@ -346,6 +346,9 @@ interface State {
   awsSecurity: Promise<any>
   awsVolume: Promise<any>
   awsInstanceTypes: Promise<any>
+  isGetAwsSecurity: RemoteDataState
+  isGetAwsVolume: RemoteDataState
+  isGetAwsInstanceType: RemoteDataState
   isInstanceTypeModalVisible: boolean
 }
 
@@ -416,6 +419,9 @@ class InventoryTopology extends PureComponent<Props, State> {
       awsVolume: null,
       awsInstanceTypes: null,
       isInstanceTypeModalVisible: false,
+      isGetAwsSecurity: RemoteDataState.NotStarted,
+      isGetAwsVolume: RemoteDataState.NotStarted,
+      isGetAwsInstanceType: RemoteDataState.NotStarted,
     }
   }
 
@@ -1188,11 +1194,9 @@ class InventoryTopology extends PureComponent<Props, State> {
             awsVolume: null,
           })
         }
-
         this.setState({
           focusedInstance: {provider, region, instanceid, instancename},
           focusedHost: null,
-          activeEditorTab: 'monitoring',
         })
       } else {
         const containerElement = getContainerElement(selectionCells[0].value)
@@ -1220,6 +1224,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     securityGroupIds: string[]
   ) => {
     try {
+      this.setState({isGetAwsSecurity: RemoteDataState.Loading})
       const awsSecurity = await this.props.handleGetAWSSecurityAsync(
         this.salt.url,
         this.salt.token,
@@ -1230,11 +1235,14 @@ class InventoryTopology extends PureComponent<Props, State> {
       this.setState({awsSecurity})
     } catch (error) {
       this.setState({awsSecurity: null})
+    } finally {
+      this.setState({isGetAwsSecurity: RemoteDataState.Done})
     }
   }
 
   private getAWSVolume = async (accessInfos: any, volumeGroupIds: string[]) => {
     try {
+      this.setState({isGetAwsVolume: RemoteDataState.Loading})
       const awsVolume = await this.props.handleGetAWSVolumeAsync(
         this.salt.url,
         this.salt.token,
@@ -1245,18 +1253,27 @@ class InventoryTopology extends PureComponent<Props, State> {
       this.setState({awsVolume})
     } catch (error) {
       this.setState({awsVolume: null})
+    } finally {
+      this.setState({isGetAwsVolume: RemoteDataState.Done})
     }
   }
 
   private getAWSInstanceTypes = async (accessInfos: any, types: string[]) => {
-    const awsInstanceTypes = await this.props.handleGetAWSInstanceTypesAsync(
-      this.salt.url,
-      this.salt.token,
-      accessInfos,
-      types
-    )
+    try {
+      this.setState({isGetAwsInstanceType: RemoteDataState.Loading})
+      const awsInstanceTypes = await this.props.handleGetAWSInstanceTypesAsync(
+        this.salt.url,
+        this.salt.token,
+        accessInfos,
+        types
+      )
 
-    this.setState({awsInstanceTypes})
+      this.setState({awsInstanceTypes})
+    } catch (error) {
+      this.setState({awsInstanceTypes: null})
+    } finally {
+      this.setState({isGetAwsInstanceType: RemoteDataState.Done})
+    }
   }
 
   private handleInstanceTypeModal = () => {
@@ -1805,6 +1822,7 @@ class InventoryTopology extends PureComponent<Props, State> {
               )}
             </Page.Header.Right>
           </Page.Header>
+          {this.detailsLoadingStatus}
           <Page.Contents scrollable={false}>
             {activeEditorTab === 'details' ? (
               <>
@@ -1851,6 +1869,37 @@ class InventoryTopology extends PureComponent<Props, State> {
         </Page>
       </>
     )
+  }
+
+  private get detailsLoadingStatus() {
+    const {
+      isGetAwsSecurity,
+      isGetAwsVolume,
+      isGetAwsInstanceType,
+      activeEditorTab,
+    } = this.state
+    const isActibeTabDetails = activeEditorTab === 'details'
+
+    if (
+      (isActibeTabDetails && isGetAwsSecurity === RemoteDataState.Loading) ||
+      (isActibeTabDetails && isGetAwsVolume === RemoteDataState.Loading) ||
+      (isActibeTabDetails && isGetAwsInstanceType === RemoteDataState.Loading)
+    ) {
+      return (
+        <div
+          style={{
+            position: 'absolute',
+            zIndex: 3,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            width: '100%',
+            height: '100%',
+          }}
+        >
+          <PageSpinner />
+        </div>
+      )
+    }
+    return null
   }
 
   private getInstanceDetails = () => {
