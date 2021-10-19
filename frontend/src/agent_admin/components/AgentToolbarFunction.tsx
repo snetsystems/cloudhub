@@ -4,7 +4,6 @@ import _ from 'lodash'
 
 // Components
 import {AgentConfiguration} from 'src/agent_admin/containers/AgentConfiguration'
-import AgentTooltip from 'src/agent_admin/components/AgentTooltip'
 
 // Decorator
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -16,9 +15,7 @@ interface Props {
   idx: number
   description: string
   focusedMeasure: string
-  focusedPosition: {top: number; left: number}
   handleFocusedPlugin: AgentConfiguration['handleFocusedPlugin']
-  handleClose: () => void
 }
 
 interface State {
@@ -65,28 +62,13 @@ class AgentToolbarFunction extends PureComponent<Props, State> {
             {`?`}
           </button>
         </div>
-        {this.tooltip}
       </>
     )
   }
 
   private handleFocusing = () => {
     const {handleFocusedPlugin} = this.props
-    const clickPosition = this.functionRef.current.getBoundingClientRect()
-    handleFocusedPlugin({clickPosition, _thisProps: this.props})
-  }
-
-  private get tooltip(): JSX.Element {
-    const {focusedPosition, handleClose, description} = this.props
-    if (this.state.isActive) {
-      return (
-        <AgentTooltip
-          description={description}
-          onDismiss={handleClose}
-          tipPosition={focusedPosition}
-        />
-      )
-    }
+    handleFocusedPlugin({_thisProps: this.props})
   }
 }
 

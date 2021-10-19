@@ -57,7 +57,6 @@ import {
 } from 'src/shared/constants/'
 import {eachNodeTypeAttrs, tmpMenu} from 'src/hosts/constants/tools'
 import {notifyUnableToGetHosts} from 'src/shared/copy/notifications'
-import {cloudTreeMenuTemplate} from 'src/hosts/constants/treeMenuTemplate'
 
 // Types
 import {
@@ -360,6 +359,33 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setState = (args, callback) => {
       if (!this.isComponentMounted) return
       PureComponent.prototype.setState.bind(this)(args, callback)
+    }
+
+    const cloudTreeMenuTemplate = {
+      aws: {
+        buttons: [{provider: 'aws', isUpdate: false, text: 'Add Region'}],
+        label: 'Amazon Web Service',
+        index: 0,
+        level: 0,
+        provider: CloudServiceProvider.AWS,
+        nodes: {},
+      },
+      gcp: {
+        buttons: [{provider: 'gcp', isUpdate: false, text: 'Add Region'}],
+        label: 'Google Cloud Platform',
+        index: 1,
+        level: 0,
+        provider: CloudServiceProvider.GCP,
+        nodes: {},
+      },
+      azure: {
+        buttons: [{provider: 'azure', isUpdate: false, text: 'Add Region'}],
+        label: 'Azure',
+        index: 2,
+        level: 0,
+        provider: CloudServiceProvider.AZURE,
+        nodes: {},
+      },
     }
 
     let cloud = {}

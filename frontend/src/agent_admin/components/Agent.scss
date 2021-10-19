@@ -320,3 +320,15 @@
     }
   }
 }
+
+.agent-plugin {
+  z-index: 300;
+
+  .overlay--body {
+    padding: unset;
+    border-radius: 0 0 $radius $radius;
+    overflow: hidden;
+    border: 2px solid #f58220;
+    z-index: 9;
+  }
+}
