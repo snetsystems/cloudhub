@@ -34,7 +34,7 @@ class AgentConfigPlugInModal extends PureComponent<Props, State> {
       theme: 'agent-conf',
     }
     const {isVisible, plugin, description} = this.props
-    console.log('isVisible', isVisible)
+
     return (
       <div
         className={`agent-plugin`}
@@ -63,26 +63,36 @@ class AgentConfigPlugInModal extends PureComponent<Props, State> {
                 </div>
               </div>
             </div>
-            <div
-              className={`container-fluid full-height`}
-              onMouseDown={e => {
-                e.stopPropagation()
-              }}
-            >
-              {_.isEmpty(description) ? (
-                <div className={'loading-box'}>
-                  <PageSpinner />
-                </div>
-              ) : null}
-              <ReactCodeMirror
-                autoCursor={false}
-                value={description}
-                options={options}
-                onBeforeChange={() => false}
-                onChange={() => false}
-                onTouchStart={() => false}
-              />
-            </div>
+            {_.isEmpty(description) ? (
+              <div
+                className={'loading-box'}
+                style={{
+                  position: 'absolute',
+                  zIndex: 10,
+                  backgroundColor: 'rgba(0,0,0,0.5)',
+                  width: '100%',
+                  height: 'calc(100% - 45px)',
+                }}
+              >
+                <PageSpinner />
+              </div>
+            ) : (
+              <div
+                className={`container-fluid full-height`}
+                onMouseDown={e => {
+                  e.stopPropagation()
+                }}
+              >
+                <ReactCodeMirror
+                  autoCursor={false}
+                  value={description}
+                  options={options}
+                  onBeforeChange={() => false}
+                  onChange={() => false}
+                  onTouchStart={() => false}
+                />
+              </div>
+            )}
           </div>
         </Rnd>
       </div>
