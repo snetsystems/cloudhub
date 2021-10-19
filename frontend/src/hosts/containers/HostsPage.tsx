@@ -769,6 +769,9 @@ export class HostsPage extends PureComponent<Props, State> {
         {activeCspTab === 'aws' ? (
           <Page.Header>
             <Page.Header.Left>
+              <></>
+            </Page.Header.Left>
+            <Page.Header.Right>
               <>
                 <span>
                   Get from <span style={{margin: '0 3px'}}>:</span>
@@ -781,8 +784,7 @@ export class HostsPage extends PureComponent<Props, State> {
                   disabled={false}
                 />
               </>
-            </Page.Header.Left>
-            <Page.Header.Right></Page.Header.Right>
+            </Page.Header.Right>
           </Page.Header>
         ) : null}
         <Page.Contents>
