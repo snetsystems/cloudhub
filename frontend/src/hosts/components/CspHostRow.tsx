@@ -110,13 +110,17 @@ const CspHostRow: FunctionComponent<Props> = ({
       </div>
       <div
         style={{width: CloudInstanceTypeWidth}}
-        className="monotype hosts-table--td hosts-table-item"
-        onClick={e => {
-          e.stopPropagation()
-          handleInstanceTypeModal(csp.provider, csp.region, instanceType)
-        }}
+        className="monotype hosts-table--td"
       >
-        {instanceType}
+        <span
+          className={`hosts-table-item`}
+          onClick={e => {
+            e.stopPropagation()
+            handleInstanceTypeModal(csp.provider, csp.region, instanceType)
+          }}
+        >
+          {instanceType}
+        </span>
       </div>
       <div
         style={{width: CloudAppsWidth}}
