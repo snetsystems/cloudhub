@@ -220,7 +220,7 @@ export class HostsPage extends PureComponent<Props, State> {
     }
 
     // For rendering whole hosts list
-    this.fetchHostsData(layouts).then(() => {
+    this.fetchHostsData(layouts).then(hosts => {
       if (autoRefresh) {
         this.intervalID = window.setInterval(
           () => this.fetchHostsData(layouts),
@@ -244,8 +244,11 @@ export class HostsPage extends PureComponent<Props, State> {
       // For rendering the charts with the focused single host.
       hostsPage['focusedHost'] = _.get(hostsPage, 'focusedHost', '')
 
-      if (_.isEmpty(hostsPage.focusedHost)) {
-        hostsPage['focusedHost'] = this.getFirstHost(this.state.hostsObject)
+      if (
+        _.isEmpty(hostsPage.focusedHost) ||
+        !_.includes(_.keys(hosts), hostsPage['focusedHost'])
+      ) {
+        hostsPage['focusedHost'] = this.getFirstHost(hosts)
       }
 
       if (!this.isUsingAWS) {
@@ -262,7 +265,41 @@ export class HostsPage extends PureComponent<Props, State> {
       })
     })
 
-    await this.fetchCspHostsData(layouts)
+    this.fetchCspHostsData(layouts).then(cloudHosts => {
+      const defaultState = {
+        focusedInstance: null,
+      }
+
+      const getLocalStorageInfrastructure = getLocalStorage('infrastructure')
+      let hostsPage = _.get(getLocalStorageInfrastructure, 'hostsPage', {
+        defaultState,
+      })
+
+      let {focusedInstance} = hostsPage
+
+      // For rendering the charts with the focused single cloudHost.
+      focusedInstance['instancename'] = _.get(
+        focusedInstance,
+        'instancename',
+        ''
+      )
+
+      if (
+        _.isEmpty(focusedInstance.instancename) ||
+        !_.includes(_.keys(cloudHosts), focusedInstance.instancename)
+      ) {
+        const getFocusedInstance = this.getFirstCloudHost(cloudHosts)
+
+        focusedInstance = {
+          ...focusedInstance,
+          ...getFocusedInstance,
+        }
+      }
+
+      this.setState({
+        focusedInstance,
+      })
+    })
   }
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
@@ -693,8 +730,7 @@ export class HostsPage extends PureComponent<Props, State> {
     )
   }
 
-  private getFirstCloudHost = (): Instance => {
-    const {cloudHostsObject} = this.state
+  private getFirstCloudHost = (cloudHostsObject: CloudHosts): Instance => {
     let firstHost = {
       provider: null,
       region: null,
@@ -732,9 +768,10 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   private onSetActiveCspTab(activeCspTab: string): void {
-    const {focusedInstance} = this.state
+    const {focusedInstance, cloudHostsObject} = this.state
+
     if (activeCspTab === 'aws' && focusedInstance === null) {
-      const firstCloudHost = this.getFirstCloudHost()
+      const firstCloudHost = this.getFirstCloudHost(cloudHostsObject)
       this.onSetFocusedInstance(firstCloudHost)
       this.setState({
         activeCspTab,
@@ -766,7 +803,7 @@ export class HostsPage extends PureComponent<Props, State> {
 
     return (
       <>
-        {activeCspTab === 'aws' ? (
+        {this.isUsingAWS && activeCspTab === 'aws' ? (
           <Page.Header>
             <Page.Header.Left>
               <></>
@@ -799,7 +836,9 @@ export class HostsPage extends PureComponent<Props, State> {
             timeRange={timeRange}
             manualRefresh={manualRefresh}
             host={activeCspTab === 'Private' ? focusedHost : ''}
-            instance={activeCspTab === 'aws' ? focusedInstance : null}
+            instance={
+              this.isUsingAWS && activeCspTab === 'aws' ? focusedInstance : null
+            }
           />
         </Page.Contents>
       </>
@@ -863,7 +902,9 @@ export class HostsPage extends PureComponent<Props, State> {
     return {instance, filteredLayouts}
   }
 
-  private async fetchHostsData(layouts: Layout[]): Promise<void> {
+  private async fetchHostsData(
+    layouts: Layout[]
+  ): Promise<{[host: string]: Host}> {
     const {source, links, notify} = this.props
 
     const envVars = await getEnv(links.environment)
@@ -898,6 +939,8 @@ export class HostsPage extends PureComponent<Props, State> {
         hostsObject: newHosts,
         hostsPageStatus: RemoteDataState.Done,
       })
+
+      return newHosts
     } catch (error) {
       console.error(error)
       notify(notifyUnableToGetHosts())
@@ -954,7 +997,9 @@ export class HostsPage extends PureComponent<Props, State> {
     return {instance, measurements}
   }
 
-  private fetchCspHostsData = async (layouts: Layout[]): Promise<void> => {
+  private fetchCspHostsData = async (
+    layouts: Layout[]
+  ): Promise<CloudHosts> => {
     const {
       handleLoadCspsAsync,
       source,
@@ -1063,6 +1108,8 @@ export class HostsPage extends PureComponent<Props, State> {
         cloudHostsObject: newCloudHostsObject,
         hostsPageStatus: RemoteDataState.Done,
       })
+
+      return newCloudHostsObject
     } catch (error) {
       console.error(error)
       notify(notifyUnableToGetHosts())
