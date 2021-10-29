@@ -388,7 +388,9 @@
   &.scissors:before {
     content: '\ea5a';
   }
-
+  &.pin:before {
+    content: '\e966';
+  }
   &.fit:before {
     content: '\ea5b';
   }

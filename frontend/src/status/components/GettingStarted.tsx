@@ -98,6 +98,15 @@ class GettingStarted extends Component {
                 <span className="icon github" /> Release informations
               </a>
             </p>
+            <p>
+              <a
+                href="https://github.com/snetsystems/telegraf/releases"
+                target="_blank"
+              >
+                <span className="icon github" /> Collect Agent(Telegraf) Release
+                information
+              </a>
+            </p>
           </div>
         </div>
       </FancyScrollbar>

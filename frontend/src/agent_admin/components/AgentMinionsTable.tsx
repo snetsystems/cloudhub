@@ -196,7 +196,7 @@ class AgentMinionsTable extends PureComponent<Props, State> {
             <a href="https://github.com/richard-green/MstscLauncher/releases/download/1.1.0/MstscLauncher.exe">
               <span className="icon download" />
             </a>
-            ] and save it your safe path, <br />
+            ] and save it into your safe path, <br />
             Then run it <span className="emphasis-word">JUST ONCE</span> as an{' '}
             <span className="caution-word">administrator</span> mode.
           </span>

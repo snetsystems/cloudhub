@@ -15,7 +15,16 @@
     "target": "es6",
     "module": "es2015",
     "moduleResolution": "node",
-    "lib": ["es6", "es2017", "es2018", "es2019", "es2020", "dom", "webworker"],
+    "lib": [
+      "es6",
+      "es2017",
+      "es2018",
+      "es2019",
+      "es2020",
+      "es2021",
+      "dom",
+      "webworker"
+    ],
     "skipLibCheck": true,
     "isolatedModules": false,
     "esModuleInterop": true,

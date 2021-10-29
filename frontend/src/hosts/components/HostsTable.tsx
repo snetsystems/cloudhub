@@ -31,6 +31,7 @@ export interface Props {
   source: Source
   focusedHost: string
   onClickTableRow: HostsPage['handleClickTableRow']
+  tableTitle: () => JSX.Element
 }
 
 interface State {
@@ -149,11 +150,16 @@ class HostsTable extends PureComponent<Props, State> {
     return (
       <div className="panel">
         <div className="panel-heading">
-          <h2 className="panel-title">{this.HostsTitle}</h2>
-          <SearchBar
-            placeholder="Filter by Host..."
-            onSearch={this.updateSearchTerm}
-          />
+          <div>
+            <h2 className="panel-title">{this.HostsTitle}</h2>
+          </div>
+
+          <div>
+            <SearchBar
+              placeholder="Filter by Host..."
+              onSearch={this.updateSearchTerm}
+            />
+          </div>
         </div>
         <div className="panel-body">{this.TableContents}</div>
       </div>
@@ -244,23 +250,10 @@ class HostsTable extends PureComponent<Props, State> {
     )
   }
 
-  private get HostsTitle(): string {
-    const {hostsPageStatus, hosts} = this.props
-    const {sortKey, sortDirection, searchTerm} = this.state
-    const sortedHosts = this.getSortedHosts(
-      hosts,
-      searchTerm,
-      sortKey,
-      sortDirection
-    )
-    const hostsCount = sortedHosts.length
-    if (hostsPageStatus === RemoteDataState.Loading) {
-      return 'Loading Hosts...'
-    }
-    if (hostsCount === 1) {
-      return `1 Host`
-    }
-    return `${hostsCount} Hosts`
+  private get HostsTitle(): JSX.Element {
+    const {tableTitle} = this.props
+
+    return tableTitle()
   }
 
   private get HostsTableHeader(): JSX.Element {

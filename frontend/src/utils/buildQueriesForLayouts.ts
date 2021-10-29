@@ -13,7 +13,9 @@ import {Cell, CellQuery, LayoutQuery, TimeRange} from 'src/types'
 const buildCannedDashboardQuery = (
   query: LayoutQuery | CellQuery,
   {lower, upper}: TimeRange,
-  host: string
+  host: string,
+  instance?: object,
+  measurement?: string
 ): string => {
   const {defaultGroupBy} = timeRanges.find(range => range.lower === lower) || {
     defaultGroupBy: '5m',
@@ -31,6 +33,14 @@ const buildCannedDashboardQuery = (
 
   if (host) {
     text += ` and \"host\" = '${host}'`
+  }
+
+  if (instance) {
+    if (measurement === 'cloudwatch_aws_ec2') {
+      text += ` and \"region\" = '${instance['region']}' and \"instance_id\" = '${instance['instanceid']}'`
+    } else {
+      text += ` and \"host\" = '${instance['instancename']}'`
+    }
   }
 
   if (wheres && wheres.length > 0) {
@@ -85,7 +95,8 @@ const addTimeBoundsToRawText = (rawText: string): string => {
 export const buildQueriesForLayouts = (
   cell: Cell,
   timeRange: TimeRange,
-  host: string
+  host: string,
+  instance?: object
 ): CellQuery[] => {
   return cell.queries.map(query => {
     let queryText: string
@@ -113,7 +124,13 @@ export const buildQueriesForLayouts = (
         queryText = `${queryText};${shiftedQueries.join(';')}`
       }
     } else {
-      queryText = buildCannedDashboardQuery(query, timeRange, host)
+      queryText = buildCannedDashboardQuery(
+        query,
+        timeRange,
+        host,
+        instance,
+        _.get(cell, 'measurement')
+      )
     }
 
     return {...query, text: queryText}
