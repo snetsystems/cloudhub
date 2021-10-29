@@ -923,7 +923,10 @@ class InventoryTopology extends PureComponent<Props, State> {
     const graph = this.graph
     const parent = graph.getDefaultParent()
     const cells = this.getAllCells(parent, true)
+
     let ipmiCells: IpmiCell[] = filteredIpmiPowerStatus.bind(this)(cells)
+
+    if (_.isEmpty(ipmiCells)) return
 
     this.setIpmiStatus(ipmiCells)
   }
@@ -2438,6 +2441,7 @@ class InventoryTopology extends PureComponent<Props, State> {
     const {minionList} = this.state
     const {
       provider,
+      minion,
       region,
       accesskey,
       secretkey,
@@ -2452,7 +2456,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         onClick={() => {
           this.setState({
             provider,
-            cloudTargetMinion: minionList[0],
+            cloudTargetMinion: isUpdateCloud ? minion : minionList[0],
             cloudRegion: region,
             cloudAccessKey: accesskey,
             cloudSecretKey: secretkey,
@@ -2777,7 +2781,15 @@ class InventoryTopology extends PureComponent<Props, State> {
     const cloudDataTree = {...treeMenu}
 
     _.forEach(cloudAccessInfos, cloudAccessInfo => {
-      const {id, provider, region, accesskey, secretkey, data} = cloudAccessInfo
+      const {
+        id,
+        provider,
+        minion,
+        region,
+        accesskey,
+        secretkey,
+        data,
+      } = cloudAccessInfo
       const cloudProvider = cloudDataTree[provider]
       const cloudRegions = cloudProvider['nodes']
 
@@ -2787,12 +2799,13 @@ class InventoryTopology extends PureComponent<Props, State> {
           {
             id,
             provider,
+            minion,
             region,
             accesskey,
             secretkey,
             isUpdateCloud: true,
             isDeleteCloud: false,
-            text: 'Save Region',
+            text: 'Update Region',
             icon: 'pencil',
           },
           {
@@ -2801,7 +2814,7 @@ class InventoryTopology extends PureComponent<Props, State> {
             region,
             isUpdateCloud: false,
             isDeleteCloud: true,
-            text: 'Update Region',
+            text: 'Delete Region',
           },
         ],
         label: region,
