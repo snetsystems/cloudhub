@@ -12,7 +12,8 @@ CloudHub has been started with _Chronograf_ version **1.7.11**.
 
 As we follow on using guides like the way of _TICK_ Script or _Flux_ queries, for more informations of the basic common features between _Chronograf_ 1.7.11 and CloudHub refer to the following link.<br>
 [Github for **_chronograf_**](https://github.com/influxdata/chronograf/blob/master/README.md)<br>
-[Documentation for **_TICK Stack_**](https://docs.influxdata.com/)
+[Documentation for **_TICK Stack_**](https://docs.influxdata.com/)<br>
+But you should use [Forked **Snetsystems/telegraf**](https://github.com/snetsystems/telegraf/releases)
 
 ### Test Environment
 
@@ -21,7 +22,7 @@ This **_Sandbox_** provided by _sysnetsystems_ will help to do.<br>
 [Download **snetsystems/sandbox**](https://github.com/snetsystems/sandbox)
 
 For the agent management or vsphere, k8s inventory viewer test, you prepare to Salt master, api, minion.<br>
-[Installation SaltStack](https://repo.saltstack.com/)<br>
+You should use [Forked **Snetsystems/salt**](https://github.com/snetsystems/salt/)<br>
 [Documentation for **_SaltStack_** ](https://docs.saltstack.com/en/latest/contents.html)
 
 ## How to use Cloudhub
@@ -44,14 +45,18 @@ For the agent management or vsphere, k8s inventory viewer test, you prepare to S
 - Optionable Addon features.
   - **_VMWare_ Infrastructure** Viewer.
     - via **_VSphere_** API and **_Salt_**
-  - **_K8s Infrastructure_** Diagram & Viewer. (Pending in dev-1.1.0 branch)
+  - **_K8s Infrastructure_** Diagram & Viewer. (Pending in dev-k8s branch)
     - via customized `Salt Kuberetes` Module.
+  - **_AWS_** Instances Monitoring.
   - SWAN Router & SDPlex(Oncue) Features.
   - Bare-metal Server Remote Management via **IPMI**
   <p align="center">
     <img src="./docs/images/infrastructure.png"/>
     <img src="./docs/images/topology_map.png"/>
     <img src="./docs/images/VMWare.png"/>
+    <img src="./docs/images/AWS_01.png"/>
+    <img src="./docs/images/AWS_02.png"/>
+    <img src="./docs/images/AWS_03.png"/>
     <img src="./docs/images/applications.png"/>
     <img src="./docs/images/agent_configure.png"/>
     <img src="./docs/images/swan.png"/>
