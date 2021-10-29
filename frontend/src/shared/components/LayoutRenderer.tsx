@@ -42,6 +42,7 @@ interface Props {
   onDeleteCell?: () => void
   onSummonOverlayTechnologies?: () => void
   onPositionChange?: (cells: Cell[]) => void
+  instance?: object
 }
 
 interface State {
@@ -72,6 +73,7 @@ class LayoutRenderer extends Component<Props, State> {
       onDeleteCell,
       onCloneCell,
       onSummonOverlayTechnologies,
+      instance,
     } = this.props
 
     const {rowHeight} = this.state
@@ -120,6 +122,7 @@ class LayoutRenderer extends Component<Props, State> {
                   onCloneCell={onCloneCell}
                   manualRefresh={manualRefresh}
                   onSummonOverlayTechnologies={onSummonOverlayTechnologies}
+                  instance={instance}
                 />
               </Authorized>
             </div>

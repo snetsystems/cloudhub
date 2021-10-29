@@ -107,12 +107,21 @@ class Threesizer extends PureComponent<Props, State> {
     const stateDivisionSizes = divisions.map(d => d.size)
     const propDivisionSizes = this.props.divisions.map(d => d.size)
 
+    const stateDivisionHandleDisplay = divisions.map(d => d.handleDisplay)
+    const propDivisionHandleDisplay = this.props.divisions.map(
+      d => d.handleDisplay
+    )
+
     const updateDivisions = this.state.divisions.map((d, i) => ({
       ...d,
       size: this.props.divisions[i].size,
+      handleDisplay: this.props.divisions[i].handleDisplay,
     }))
 
-    if (!_.isEqual(propDivisionSizes, stateDivisionSizes)) {
+    if (
+      !_.isEqual(propDivisionSizes, stateDivisionSizes) ||
+      !_.isEqual(propDivisionHandleDisplay, stateDivisionHandleDisplay)
+    ) {
       this.setState({
         divisions: updateDivisions,
       })

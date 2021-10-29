@@ -24,6 +24,7 @@
         "-k=swan:<token key>",
         "-u=oncue:<port>",
         "-u=vsphere:on",
+        "-u=aws:on",
         "-u=ipmi-secret-key:<Seed key using for the encryption of ipmi password>",
         "-c=./cloudhub-canned/",
         "--protoboards-path=./cloudhub-protoboards/",

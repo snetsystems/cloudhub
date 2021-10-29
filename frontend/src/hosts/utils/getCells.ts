@@ -23,7 +23,15 @@ function getLayoutCells(layouts: Layout[]): LayoutCell[] {
   }
 
   const autoflowLayouts = layouts.filter(l => (l.autoflow = true))
-  const autoflowCells = flatten(autoflowLayouts.map(l => l.cells))
+  // const autoflowCells = flatten(autoflowLayouts.map(l => l.cells))
+
+  const autoflowCells = flatten(
+    autoflowLayouts.map(l =>
+      l.cells.map(c => {
+        return {...c, measurement: l.measurement}
+      })
+    )
+  )
 
   const staticLayouts = layouts.filter(layout => !layout.autoflow)
   const cellGroups = [
@@ -39,7 +47,7 @@ function getLayoutCells(layouts: Layout[]): LayoutCell[] {
 function autoPositionCells(cells: LayoutCell[]): LayoutCell[] {
   return cells.reduce((acc, cell, i) => {
     const x = (i * CELL_WIDTH) % PAGE_WIDTH
-    const y = Math.floor(i * CELL_WIDTH / PAGE_WIDTH) * CELL_HEIGHT
+    const y = Math.floor((i * CELL_WIDTH) / PAGE_WIDTH) * CELL_HEIGHT
     const newCell = {...cell, w: CELL_WIDTH, h: CELL_HEIGHT, x, y}
 
     return [...acc, newCell]

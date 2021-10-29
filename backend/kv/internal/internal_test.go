@@ -530,3 +530,24 @@ func TestMarshalTopology(t *testing.T) {
 		t.Fatalf("source protobuf copy error: got %#v, expected %#v", vv, v)
 	}
 }
+
+func TestMarshalCSP(t *testing.T) {
+	v := cloudhub.CSP{
+		ID:           "12",
+		Provider:     "AWS",
+		Region:       "seoul",
+		AccessKey:    "SDKDSIWJD8373",
+		SecretKey:    "OCUWJW++DIE3JD+2KDHWH",
+		Organization: "8373476",
+		Minion:       "minion",
+	}
+
+	var vv cloudhub.CSP
+	if buf, err := internal.MarshalCSP(&v); err != nil {
+		t.Fatal(err)
+	} else if err := internal.UnmarshalCSP(buf, &vv); err != nil {
+		t.Fatal(err)
+	} else if !reflect.DeepEqual(v, vv) {
+		t.Fatalf("source protobuf copy error: got %#v, expected %#v", vv, v)
+	}
+}

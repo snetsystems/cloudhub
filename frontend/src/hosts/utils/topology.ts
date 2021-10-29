@@ -1,3 +1,6 @@
+import _ from 'lodash'
+import {eachNodeTypeAttrs} from '../constants/tools'
+
 export const getParseHTML = (
   targer: string,
   type: DOMParserSupportedType = 'text/html'
@@ -21,17 +24,46 @@ export const getContainerTitle = (element: Element) => {
   return title
 }
 
-export const getIsDisableName = (containerElement: Element): boolean => {
-  let isDisableName = false
+export const getIsDisableAttr = (
+  containerElement: Element,
+  attribute: any
+): boolean => {
+  let isDisable = false
 
   if (containerElement) {
-    isDisableName =
-      containerElement.getAttribute('data-isdisablename') === 'true'
-  }
+    const getType = containerElement.getAttribute('data-type')
 
-  return isDisableName
+    const disableAttrs = _.map(
+      eachNodeTypeAttrs?.[getType].disableAttrs,
+      disableAttr => `data-${disableAttr}`
+    )
+
+    isDisable = _.includes(disableAttrs, attribute)
+  }
+  return isDisable
 }
 
 export const getIsHasString = (value: string): boolean => {
   return value !== ''
+}
+
+export const getTimeSeriesHost = (containerElement: Element): boolean => {
+  let isTimeSeriesHost = false
+
+  if (containerElement) {
+    isTimeSeriesHost =
+      containerElement.getAttribute('data-timeseries_host') === 'true'
+  }
+
+  return isTimeSeriesHost
+}
+
+export const getTimeSeriesHostIndicator = (value: string | number): string => {
+  let status = '#4ed8a0'
+
+  if (value >= 50) status = '#ffb94a'
+  if (value >= 70) status = '#ff8564'
+  if (value >= 90) status = '#dc4e58'
+
+  return status
 }

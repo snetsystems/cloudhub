@@ -73,7 +73,7 @@ import {
 import {JSONFeedData} from './status'
 import {Annotation} from './annotations'
 import {WriteDataMode, QueryUpdateState} from './dataExplorer'
-import {Host, Layout, Ipmi, IpmiCell} from './hosts'
+import {Host, Layout, Ipmi, IpmiCell, CloudHost, CloudHosts} from './hosts'
 import {Env} from './env'
 import {Shells, ShellInfo, ShellLoad} from './shell'
 
@@ -153,4 +153,6 @@ export {
   Shells,
   ShellInfo,
   ShellLoad,
+  CloudHost,
+  CloudHosts,
 }

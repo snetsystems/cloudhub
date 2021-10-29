@@ -48,6 +48,8 @@ const (
 	ErrVsphereNotFound                 = Error("vsphere not found")
 	ErrTopologyNotFound                = Error("topology not found")
 	ErrTopologyAlreadyExists           = Error("topology already exists")
+	ErrCSPNotFound                     = Error("CSP not found")
+	ErrCSPAlreadyExists                = Error("CSP already exists")
 )
 
 // Error is a domain error encountered while processing CloudHub requests
@@ -966,7 +968,7 @@ type BuildStore interface {
 	Update(context.Context, BuildInfo) error
 }
 
-// Vsphere represents an vsphere.
+// Vsphere represents an vsphere
 type Vsphere struct {
 	ID            string   `json:"id,string,omitempty"`
 	Host          string   `json:"host,string"`
@@ -1001,7 +1003,7 @@ type Environment struct {
 	CustomAutoRefresh      string        `json:"customAutoRefresh,omitempty"`
 }
 
-// Topology represents represents an vsphere.
+// Topology is represents represents an topology
 type Topology struct {
 	ID            string   `json:"id,string,omitempty"`
 	Organization  string   `json:"organization,omitempty"` // Organization is the organization ID that resource belongs to
@@ -1032,6 +1034,41 @@ type TopologiesStore interface {
 	Update(context.Context, *Topology) error
 }
 
+// CSPQuery represents the attributes that a CSP may be retrieved by.
+// It is predominantly used in the CSPStore.Get method.
+//
+// It is expected that only one of ID or Organization will be
+// specified, but all are provided CSPStore should prefer ID.
+type CSPQuery struct {
+	ID               *string
+	Organization     *string
+}
+
+// CSP is CSP connection information
+type CSP struct {
+	ID            string   `json:"id,string,omitempty"`
+    Provider      string   `json:"provider,string"`
+	Region        string   `json:"region,string"`
+	AccessKey     string   `json:"accesskey,string"`
+	SecretKey     string   `json:"secretkey,string"`
+	Organization  string   `json:"organization"`
+	Minion        string   `json:"minion,string"`
+}
+
+// CSPStore is the Storage and retrieval of information
+type CSPStore interface {
+	// All lists all CSP from the CSPStore
+	All(context.Context) ([]CSP, error)
+	// Create a new CSP in the CSPStore
+	Add(context.Context, *CSP) (*CSP, error)
+	// Delete the CSP from the CSPStore
+	Delete(context.Context, *CSP) error
+	// Get retrieves a CSP if `ID` exists.
+	Get(ctx context.Context, q CSPQuery) (*CSP, error)
+	// Update replaces the CSP information
+	Update(context.Context, *CSP) error
+}
+
 // KVClient defines what each kv store should be capable of.
 type KVClient interface {
 	// ConfigStore returns the kv's ConfigStore type.
@@ -1054,4 +1091,6 @@ type KVClient interface {
 	VspheresStore() VspheresStore
 	// TopologiesStore returns the kv's TopologiesStore type.
 	TopologiesStore() TopologiesStore
+	// CSPStore returns the kv's CSPStore type.
+	CSPStore() CSPStore
 }
