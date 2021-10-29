@@ -271,6 +271,16 @@ message Topology {
 	string Diagram          = 3; // diagram xml
 }
 
+message CSP {
+	string ID           = 1; // ID is the unique ID of this CSP
+	string Provider     = 2; // Cloud Solution Provider Name
+	string Region       = 3; // CSP access region
+	string AccessKey    = 4; // CSP access key
+	string SecretKey    = 5; // CSP access secret key
+	string Organization = 6; // Organization is the organization ID that resource belongs to
+	string Minion       = 7; // Minion is the vsphere connect salt minion
+}
+
 // The following is a vim modeline, it autoconfigures vim to have the
 // appropriate tabbing and whitespace management to edit this file
 //

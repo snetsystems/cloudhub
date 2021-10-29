@@ -112,6 +112,11 @@ const (
 	MsgLocked = logMessage("administrator has locked %s.")
 	MsgUnlocked = logMessage("%s has been unlocked by an administrator.")
 	MsgSuperLocked = logMessage("Locked by administrator. Please contact the administrator.")
+
+	// CSP
+	MsgCSPCreated = logMessage("%s Topology has been created.")
+	MsgCSPModified = logMessage("%s Topology has been modified.")
+	MsgCSPDeleted = logMessage("%s Topology has been deleted.")
 )
 
 type proxyLogRequest struct {

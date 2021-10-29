@@ -1,5 +1,6 @@
 import {Dispatch} from 'redux'
 import {AxiosResponse} from 'axios'
+import yaml from 'js-yaml'
 import {errorThrown} from 'src/shared/actions/errors'
 
 // Types
@@ -27,9 +28,11 @@ import {
   getLocalFileRead,
   getLocalFileWrite,
   runLocalServiceReStartTelegraf,
+  runLocalServiceTestTelegraf,
   getLocalServiceGetRunning,
   getRunnerSaltCmdTelegraf,
   getRunnerSaltCmdDirectory,
+  getRunnerSaltCmdTelegrafPlugin,
 } from 'src/shared/apis/saltStack'
 
 export enum ActionType {
@@ -49,9 +52,11 @@ export enum ActionType {
   GetLocalFileRead = 'GET_LOCAL_FILE_READ',
   GetLocalFileWrite = 'GET_LOCAL_FILE_WRITE',
   RunLocalServiceReStartTelegraf = 'RUN_LOCAL_SERVICE_RESTART_TELEGRAF',
+  RunLocalServiceTestTelegraf = 'RUN_LOCAL_SERVICE_TEST_TELEGRAF',
   GetLocalServiceGetRunning = 'GET_LOCAL_SERVICE_GET_RUNNING',
   GetRunnerSaltCmdTelegraf = 'GET_RUNNER_SALT_CMD_TELEGRAF',
   GetRunnerSaltCmdDirectory = 'GET_RUNNER_SALT_CMD_DIRECTORY',
+  GetRunnerSaltCmdTelegrafPlugin = 'GET_RUNNER_SALT_CMD_TELEGRAF_PLUGIN',
 }
 
 interface MinionKeyListAllAdminAction {
@@ -107,6 +112,9 @@ interface GetLocalFileWriteAction {
 interface RunLocalServiceReStartTelegrafAction {
   type: ActionType.RunLocalServiceReStartTelegraf
 }
+interface RunLocalServiceTestTelegrafAction {
+  type: ActionType.RunLocalServiceTestTelegraf
+}
 interface GetLocalServiceGetRunningAction {
   type: ActionType.GetLocalServiceGetRunning
 }
@@ -115,6 +123,9 @@ interface GetRunnerSaltCmdTelegrafAction {
 }
 interface GetRunnerSaltCmdDirectoryAction {
   type: ActionType.GetRunnerSaltCmdDirectory
+}
+interface GetRunnerSaltCmdTelegrafPluginAction {
+  type: ActionType.GetRunnerSaltCmdTelegrafPlugin
 }
 
 export type Action =
@@ -134,9 +145,11 @@ export type Action =
   | GetLocalFileReadAction
   | GetLocalFileWriteAction
   | RunLocalServiceReStartTelegrafAction
+  | RunLocalServiceTestTelegrafAction
   | GetLocalServiceGetRunningAction
   | GetRunnerSaltCmdTelegrafAction
   | GetRunnerSaltCmdDirectoryAction
+  | GetRunnerSaltCmdTelegrafPluginAction
 
 export const loadMinionKeyListAllAdmin = (): MinionKeyListAllAdminAction => ({
   type: ActionType.MinionKeyListAllAdmin,
@@ -198,6 +211,10 @@ export const cmdRunLocalServiceReStartTelegraf = (): RunLocalServiceReStartTeleg
   type: ActionType.RunLocalServiceReStartTelegraf,
 })
 
+export const cmdRunLocalServiceTestTelegraf = (): RunLocalServiceTestTelegrafAction => ({
+  type: ActionType.RunLocalServiceTestTelegraf,
+})
+
 export const cmdGetLocalServiceGetRunning = (): GetLocalServiceGetRunningAction => ({
   type: ActionType.GetLocalServiceGetRunning,
 })
@@ -208,6 +225,10 @@ export const cmdGetRunnerSaltCmdTelegraf = (): GetRunnerSaltCmdTelegrafAction =>
 
 export const loadGetRunnerSaltCmdDirectory = (): GetRunnerSaltCmdDirectoryAction => ({
   type: ActionType.GetRunnerSaltCmdDirectory,
+})
+
+export const loadGetRunnerSaltCmdTelegrafPlugin = (): GetRunnerSaltCmdTelegrafPluginAction => ({
+  type: ActionType.GetRunnerSaltCmdTelegrafPlugin,
 })
 
 export const getMinionKeyListAllAdminAsync = (
@@ -438,6 +459,26 @@ export const runLocalServiceReStartTelegrafAsync = (
   }
 }
 
+export const runLocalServiceTestTelegrafAsync = (
+  pUrl: string,
+  pToken: string,
+  pMinionId: string
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const runLocalServiceTestTelegrafPromise = await runLocalServiceTestTelegraf(
+      pUrl,
+      pToken,
+      pMinionId
+    )
+
+    dispatch(cmdRunLocalServiceTestTelegraf())
+    return yaml.safeLoad(runLocalServiceTestTelegrafPromise.data)
+  } catch (error) {
+    console.error(error)
+    dispatch(errorThrown(error))
+  }
+}
+
 export const getLocalServiceGetRunningAsync = (
   pUrl: string,
   pToken: string,
@@ -491,6 +532,21 @@ export const getRunnerSaltCmdDirectoryAsync = (
     dispatch(loadGetRunnerSaltCmdDirectory())
 
     return getDirectoryItems
+  } catch (error) {
+    console.error(error)
+    dispatch(errorThrown(error))
+  }
+}
+
+export const getRunnerSaltCmdTelegrafPluginAsync = (
+  pUrl: string,
+  pToken: string
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const telegrafPlugin = await getRunnerSaltCmdTelegrafPlugin(pUrl, pToken)
+
+    dispatch(loadGetRunnerSaltCmdTelegrafPlugin())
+    return yaml.safeLoad(telegrafPlugin.data)
   } catch (error) {
     console.error(error)
     dispatch(errorThrown(error))

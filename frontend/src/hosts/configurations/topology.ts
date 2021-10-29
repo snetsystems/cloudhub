@@ -21,8 +21,9 @@ import {Host, IpmiCell} from 'src/types'
 import {
   getContainerElement,
   getContainerTitle,
-  getIsDisableName,
   getIsHasString,
+  getParseHTML,
+  getTimeSeriesHostIndicator,
 } from 'src/hosts/utils/topology'
 
 // Constants
@@ -32,13 +33,11 @@ import {
   tmpMenu,
   hostMenu,
   Menu,
+  eachNodeTypeAttrs,
+  orderMenu,
 } from 'src/hosts/constants/tools'
 
-import {
-  OUTPUT_INPUT_FIELD,
-  CELL_SIZE_WIDTH,
-  CELL_SIZE_HEIGHT,
-} from 'src/hosts/constants/topology'
+import {CELL_SIZE_WIDTH, CELL_SIZE_HEIGHT} from 'src/hosts/constants/topology'
 
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 
@@ -108,6 +107,14 @@ export const configureStylesheet = function (mx: mxGraphExportObject) {
   style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE
   style[mxConstants.STYLE_STROKECOLOR] = '#f58220'
   this.graph.getStylesheet().putCellStyle('ipmi', style)
+
+  style = new Object()
+  style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_ELLIPSE
+  style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_LEFT
+  style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE
+  style[mxConstants.STYLE_STROKECOLOR] = ''
+  style[mxConstants.STYLE_FILLCOLOR] = '#bec2cc'
+  this.graph.getStylesheet().putCellStyle('status', style)
 
   style = this.graph.getStylesheet().getDefaultEdgeStyle()
   style[mxConstants.STYLE_LABEL_BACKGROUNDCOLOR] = '#000000'
@@ -187,28 +194,81 @@ export const createForm = function (
   properties.innerHTML = ''
 
   const cell = graph.getSelectionCell()
-
   if (cell) {
-    const form = new mxForm('properties-table')
+    const model = graph.getModel()
+    model.beginUpdate()
+    try {
+      const form = new mxForm('properties-table')
+      const containerElement = getContainerElement(cell.value)
 
-    const containerElement = getContainerElement(cell.value)
-    const attrs = _.filter(containerElement.attributes, attr => {
-      let isSame = false
-      _.forEach(OUTPUT_INPUT_FIELD, INPUT_FIELD => {
-        if (attr.nodeName === INPUT_FIELD) {
-          isSame = true
-          return
+      let attrs = []
+
+      const getNodeType =
+        containerElement.hasAttribute('data-type') &&
+        containerElement.getAttribute('data-type')
+
+      const getNodeAttrs = eachNodeTypeAttrs?.[getNodeType]?.attrs
+      const getNodeHideAttrs = _.map(
+        eachNodeTypeAttrs?.[getNodeType]?.hideAttrs,
+        hideAttr => {
+          return hideAttr === 'class' ? hideAttr : `data-${hideAttr}`
         }
+      )
+
+      const getNodeDisableAttrs = _.map(
+        eachNodeTypeAttrs?.[getNodeType]?.disableAttrs,
+        disableAttr => {
+          return `data-${disableAttr}`
+        }
+      )
+
+      const getCellAttrsNodeName = _.map(
+        containerElement.attributes,
+        attr => attr.nodeName
+      )
+
+      const getNodeAttrsNodeName = _.map(
+        _.keys(getNodeAttrs),
+        key => `data-${key}`
+      )
+
+      const useAttrsNodeName = [...getNodeAttrsNodeName, ...getNodeHideAttrs]
+
+      let addAttrs = _.difference(useAttrsNodeName, getCellAttrsNodeName)
+      let removeAttrs = _.difference(getCellAttrsNodeName, useAttrsNodeName)
+
+      _.forEach(addAttrs, addAttr => {
+        containerElement.setAttribute(
+          addAttr,
+          getNodeAttrs[_.replace(addAttr, /data-/i, '')]
+        )
       })
-      return isSame
-    })
 
-    const isDisableName = getIsDisableName(containerElement)
+      _.forEach(removeAttrs, removeAttr => {
+        containerElement.removeAttribute(removeAttr)
+      })
 
-    _.forEach(attrs, attr => {
-      createTextField.bind(this)(graph, form, cell, attr, isDisableName)
-    })
-    properties.appendChild(form.getTable())
+      const hideAttrs = _.filter(
+        containerElement.attributes,
+        attr => !_.includes(getNodeHideAttrs, attr.nodeName)
+      )
+
+      attrs = _.sortBy([...hideAttrs], attr => {
+        const order =
+          orderMenu?.[_.replace(attr.nodeName, /data-/i, '')]?.order || 999
+
+        return order
+      })
+
+      _.forEach(attrs, attr => {
+        const isDisableAttr = _.includes(getNodeDisableAttrs, attr.nodeName)
+        createTextField.bind(this)(graph, form, cell, attr, isDisableAttr)
+      })
+
+      properties.appendChild(form.getTable())
+    } finally {
+      model.endUpdate()
+    }
   } else {
     mxUtils.writeln(properties, 'Nothing selected.')
   }
@@ -219,7 +279,7 @@ export const createTextField = function (
   form: mxFormType,
   cell: mxCellType,
   attribute: any,
-  isDisableName = false
+  isDisable = false
 ) {
   const nodeName = _.upperCase(attribute.nodeName.replace('data-', ''))
   const ipmiTargets = this.state.minionList
@@ -246,80 +306,7 @@ export const createTextField = function (
 
   input.classList.add('input-sm')
   input.classList.add('form-control')
-
-  if (attribute.nodeName === 'data-name') {
-    input.disabled = isDisableName
-  }
-
-  const applyHandler = () => {
-    const containerElement = getContainerElement(cell.value)
-
-    let newValue = input.value || ''
-    let isInputPassword = false
-    const oldValue = containerElement.getAttribute(attribute.nodeName) || ''
-
-    if (newValue !== oldValue) {
-      graph.getModel().beginUpdate()
-
-      try {
-        if (attribute.nodeName === 'data-label') {
-          const title = getContainerTitle(containerElement)
-          title.textContent = newValue
-        }
-
-        if (attribute.nodeName === 'data-link') {
-          if (cell.children) {
-            const childrenCell = cell.getChildAt(1)
-            if (childrenCell.style === 'href') {
-              const childrenContainerElement = getContainerElement(
-                childrenCell.value
-              )
-
-              const childrenLink = childrenContainerElement.querySelector('a')
-              childrenLink.setAttribute('href', newValue)
-
-              childrenCell.setValue(childrenContainerElement.outerHTML)
-              childrenCell.setVisible(getIsHasString(newValue))
-            }
-          }
-        }
-
-        if (attribute.nodeName === 'data-ipmi_host') {
-          if (cell.children) {
-            const childrenCell = cell.getChildAt(0)
-
-            if (childrenCell.style === 'ipmi') {
-              graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [
-                cell.getChildAt(0),
-              ])
-
-              childrenCell.setVisible(getIsHasString(newValue))
-            }
-          }
-        }
-
-        if (attribute.nodeName === 'data-ipmi_pass') {
-          if (newValue.length > 0) {
-            newValue = CryptoJS.AES.encrypt(
-              newValue,
-              this.secretKey.url
-            ).toString()
-
-            isInputPassword = true
-          }
-        }
-
-        containerElement.setAttribute(attribute.nodeName, newValue)
-        cell.setValue(containerElement.outerHTML)
-      } finally {
-        if (isInputPassword) {
-          graph.setSelectionCell(cell)
-        }
-        graph.getModel().endUpdate()
-        this.graphUpdate()
-      }
-    }
-  }
+  input.disabled = isDisable
 
   mxEvent.addListener(
     input,
@@ -332,9 +319,85 @@ export const createTextField = function (
   )
 
   if (mxClient.IS_IE) {
-    mxEvent.addListener(input, 'focusout', applyHandler)
+    mxEvent.addListener(input, 'focusout', () => {
+      applyHandler.bind(this)(graph, cell, attribute, input.value)
+    })
   } else {
-    mxEvent.addListener(input, 'blur', applyHandler)
+    mxEvent.addListener(input, 'blur', () => {
+      applyHandler.bind(this)(graph, cell, attribute, input.value)
+    })
+  }
+}
+export const applyHandler = function (
+  graph: mxGraphType,
+  cell: mxCellType,
+  attribute: any,
+  newValue = ''
+) {
+  const containerElement = getContainerElement(cell.value)
+  const oldValue = containerElement.getAttribute(attribute.nodeName) || ''
+
+  let isInputPassword = false
+
+  if (newValue !== oldValue) {
+    graph.getModel().beginUpdate()
+
+    try {
+      if (attribute.nodeName === 'data-label') {
+        const title = getContainerTitle(containerElement)
+        title.textContent = newValue
+      }
+
+      if (attribute.nodeName === 'data-link') {
+        if (cell.children) {
+          const childrenCell = cell.getChildAt(1)
+          if (childrenCell.style.includes('href')) {
+            const childrenContainerElement = getContainerElement(
+              childrenCell.value
+            )
+
+            const childrenLink = childrenContainerElement.querySelector('a')
+            childrenLink.setAttribute('href', newValue)
+
+            childrenCell.setValue(childrenContainerElement.outerHTML)
+            childrenCell.setVisible(getIsHasString(newValue))
+          }
+        }
+      }
+
+      if (attribute.nodeName === 'data-ipmi_host') {
+        if (cell.children) {
+          const childrenCell = cell.getChildAt(0)
+          const sepCellStyle = _.split(childrenCell.style, ';')
+          if (sepCellStyle[0] === 'ipmi') {
+            graph.setCellStyles(mxConstants.STYLE_STROKECOLOR, 'white', [
+              childrenCell,
+            ])
+            childrenCell.setVisible(getIsHasString(newValue))
+          }
+        }
+      }
+
+      if (attribute.nodeName === 'data-ipmi_pass') {
+        if (newValue.length > 0) {
+          newValue = CryptoJS.AES.encrypt(
+            newValue,
+            this.secretKey.url
+          ).toString()
+
+          isInputPassword = true
+        }
+      }
+
+      containerElement.setAttribute(attribute.nodeName, newValue)
+      cell.setValue(containerElement.outerHTML)
+    } finally {
+      if (isInputPassword) {
+        graph.setSelectionCell(cell)
+      }
+      graph.getModel().endUpdate()
+      this.graphUpdate()
+    }
   }
 }
 
@@ -481,6 +544,7 @@ export const dragCell = (node: Menu) => (
     ipmiStatus.setVisible(false)
 
     const linkBox = document.createElement('div')
+    linkBox.setAttribute('btn-type', 'href')
     linkBox.classList.add('vertex')
     linkBox.style.display = 'flex'
     linkBox.style.alignItems = 'center'
@@ -516,11 +580,265 @@ export const dragCell = (node: Menu) => (
     href.geometry.offset = new mxPoint(-12, -12)
     href.setConnectable(false)
     href.setVisible(false)
+
+    const statusCPUBox = document.createElement('div')
+    statusCPUBox.setAttribute('data-status-kind', 'cpu')
+    statusCPUBox.style.display = 'flex'
+    statusCPUBox.style.alignItems = 'center'
+    statusCPUBox.style.justifyContent = 'center'
+
+    const statusCPUCell = graph.insertVertex(
+      v1,
+      null,
+      statusCPUBox.outerHTML,
+      0.25,
+      1,
+      12,
+      12,
+      `status`,
+      true
+    )
+
+    statusCPUCell.geometry.offset = new mxPoint(0, 6)
+    statusCPUCell.setConnectable(false)
+    statusCPUCell.setVisible(true)
+
+    const statusMemoryBox = document.createElement('div')
+    statusMemoryBox.setAttribute('data-status-kind', 'memory')
+    statusMemoryBox.style.display = 'flex'
+    statusMemoryBox.style.alignItems = 'center'
+    statusMemoryBox.style.justifyContent = 'center'
+
+    const statusMemoryCell = graph.insertVertex(
+      v1,
+      null,
+      statusMemoryBox.outerHTML,
+      0.5,
+      1,
+      12,
+      12,
+      `status`,
+      true
+    )
+
+    statusMemoryCell.geometry.offset = new mxPoint(-6, 6)
+    statusMemoryCell.setConnectable(false)
+    statusMemoryCell.setVisible(true)
+
+    const statusDiskBox = document.createElement('div')
+    statusDiskBox.setAttribute('data-status-kind', 'disk')
+    statusDiskBox.style.display = 'flex'
+    statusDiskBox.style.alignItems = 'center'
+    statusDiskBox.style.justifyContent = 'center'
+
+    const statusDiskCell = graph.insertVertex(
+      v1,
+      null,
+      statusDiskBox.outerHTML,
+      0.75,
+      1,
+      12,
+      12,
+      `status`,
+      true
+    )
+
+    statusDiskCell.geometry.offset = new mxPoint(-12, 6)
+    statusDiskCell.setConnectable(false)
+    statusDiskCell.setVisible(true)
   } finally {
     model.endUpdate()
   }
 
   graph.setSelectionCell(v1)
+}
+
+export const drawCellInGroup = (nodes: Menu[]) => (
+  graph: mxGraphType,
+  _event: any,
+  _cell: mxCellType,
+  x: number,
+  y: number
+) => {
+  const parent = graph.getDefaultParent()
+  const model = graph.getModel()
+  let cells: mxCellType[] = null
+
+  model.beginUpdate()
+  try {
+    cells = _.map(nodes, (node, index) => {
+      const cell = createHTMLValue(node, 'node')
+
+      const vertex = graph.insertVertex(
+        parent,
+        null,
+        cell.outerHTML,
+        x + index * 20,
+        y,
+        CELL_SIZE_WIDTH,
+        CELL_SIZE_HEIGHT,
+        'node'
+      )
+
+      vertex.setConnectable(true)
+
+      const ipmiBox = document.createElement('div')
+      ipmiBox.classList.add('vertex')
+      ipmiBox.setAttribute('btn-type', 'ipmi')
+
+      const ipmiIcon = document.createElement('span')
+      ipmiIcon.classList.add('mxgraph-cell--ipmi-btn')
+      ipmiIcon.classList.add('icon')
+      ipmiIcon.classList.add('switch')
+
+      ipmiBox.appendChild(ipmiIcon)
+      ipmiBox.appendChild(ipmiIcon)
+      ipmiBox.setAttribute('btn-type', 'ipmi')
+      ipmiBox.setAttribute('ipmi-power-status', 'disconnected')
+
+      const ipmiStatus = graph.insertVertex(
+        vertex,
+        null,
+        ipmiBox.outerHTML,
+        0,
+        0,
+        24,
+        24,
+        `ipmi`,
+        true
+      )
+
+      ipmiStatus.geometry.offset = new mxPoint(-12, -12)
+      ipmiStatus.setConnectable(false)
+      ipmiStatus.setVisible(false)
+
+      const linkBox = document.createElement('div')
+      linkBox.classList.add('vertex')
+      linkBox.style.display = 'flex'
+      linkBox.style.alignItems = 'center'
+      linkBox.style.justifyContent = 'center'
+      linkBox.style.width = '25px'
+      linkBox.style.height = '25px'
+      linkBox.style.marginLeft = '-2px'
+
+      const link = document.createElement('a')
+      link.setAttribute('href', '')
+      link.setAttribute('target', '_blank')
+
+      const linkIcon = document.createElement('span')
+      linkIcon.classList.add('mxgraph-cell--link-btn')
+      linkIcon.classList.add('icon')
+      linkIcon.classList.add('dash-j')
+
+      link.appendChild(linkIcon)
+      linkBox.appendChild(link)
+
+      const href = graph.insertVertex(
+        vertex,
+        null,
+        linkBox.outerHTML,
+        1,
+        0,
+        24,
+        24,
+        `href`,
+        true
+      )
+
+      href.geometry.offset = new mxPoint(-12, -12)
+      href.setConnectable(false)
+      href.setVisible(false)
+
+      const statusCPUBox = document.createElement('div')
+      statusCPUBox.setAttribute('data-status-kind', 'cpu')
+      statusCPUBox.style.display = 'flex'
+      statusCPUBox.style.alignItems = 'center'
+      statusCPUBox.style.justifyContent = 'center'
+
+      const statusCPUCell = graph.insertVertex(
+        vertex,
+        null,
+        statusCPUBox.outerHTML,
+        0.25,
+        1,
+        12,
+        12,
+        `status`,
+        true
+      )
+
+      statusCPUCell.geometry.offset = new mxPoint(0, 6)
+      statusCPUCell.setConnectable(false)
+      statusCPUCell.setVisible(true)
+
+      const statusMemoryBox = document.createElement('div')
+      statusMemoryBox.setAttribute('data-status-kind', 'memory')
+      statusMemoryBox.style.display = 'flex'
+      statusMemoryBox.style.alignItems = 'center'
+      statusMemoryBox.style.justifyContent = 'center'
+
+      const statusMemoryCell = graph.insertVertex(
+        vertex,
+        null,
+        statusMemoryBox.outerHTML,
+        0.5,
+        1,
+        12,
+        12,
+        `status`,
+        true
+      )
+
+      statusMemoryCell.geometry.offset = new mxPoint(-6, 6)
+      statusMemoryCell.setConnectable(false)
+      statusMemoryCell.setVisible(true)
+
+      const statusDiskBox = document.createElement('div')
+      statusDiskBox.setAttribute('data-status-kind', 'disk')
+      statusDiskBox.style.display = 'flex'
+      statusDiskBox.style.alignItems = 'center'
+      statusDiskBox.style.justifyContent = 'center'
+
+      const statusDiskCell = graph.insertVertex(
+        vertex,
+        null,
+        statusDiskBox.outerHTML,
+        0.75,
+        1,
+        12,
+        12,
+        `status`,
+        true
+      )
+
+      statusDiskCell.geometry.offset = new mxPoint(-12, 6)
+      statusDiskCell.setConnectable(false)
+      statusDiskCell.setVisible(true)
+
+      return vertex
+    })
+  } finally {
+    model.endUpdate()
+  }
+
+  // graph.setSelectionCells(cells)
+
+  const getParent = model.getParent(cells[0])
+  const isVertexSwimlane = graph.isSwimlane(getParent)
+
+  if (!isVertexSwimlane) {
+    const groupCell = graph.groupCells(null, 30, cells)
+    graph.setSelectionCell(groupCell)
+  } else {
+    const getParent = model.getParent(cells[0])
+    const getChildCells = graph.getChildCells(getParent)
+    const isSameLength = getChildCells.length !== cells.length
+
+    if (isSameLength) {
+      const groupCell = graph.groupCells(null, 30, cells)
+      graph.setSelectionCell(groupCell)
+    }
+  }
 }
 
 export const addSidebarButton = function ({
@@ -877,6 +1195,10 @@ export const factoryMethod = (
 
         this.graph.setSelectionCell(cell.parent)
       }
+
+      if (containerElement.getAttribute('btn-type') === 'href') {
+        this.graph.setSelectionCell(cell.parent)
+      }
     }
   }
 
@@ -967,4 +1289,111 @@ export const ipmiPowerIndicator = function (ipmiCellsStatus: IpmiCell[]) {
     model.endUpdate()
     this.graphUpdate()
   }
+}
+
+export const detectedHostsStatus = function (
+  cells: mxCellType[],
+  hostsObject: {[x: string]: Host}
+) {
+  if (!this.graph) return
+
+  const model = this.graph.getModel()
+
+  model.beginUpdate()
+  try {
+    _.forEach(cells, cell => {
+      if (cell.getStyle() === 'node') {
+        const containerElement = getContainerElement(cell.value)
+        const dataNavi = containerElement.getAttribute('data-data_navi')
+        const name = containerElement.getAttribute(
+          _.isEmpty(dataNavi) ? 'data-label' : 'data-name'
+        )
+
+        const findHost = _.find(hostsObject, host => host.name === name)
+
+        if (!_.isEmpty(findHost)) {
+          const childCells = this.graph.getChildCells(cell)
+
+          if (!_.isEmpty(childCells)) {
+            _.forEach(childCells, childCell => {
+              const childCellElement = getParseHTML(
+                childCell.value
+              ).querySelector('div')
+              const statusKind = childCellElement.getAttribute(
+                'data-status-kind'
+              )
+
+              if (statusKind === 'cpu') {
+                childCellElement.setAttribute(
+                  'data-status-value',
+                  _.toString(findHost.cpu)
+                )
+                childCell.setValue(childCellElement.outerHTML)
+                this.graph.setCellStyles(
+                  mxConstants.STYLE_FILLCOLOR,
+                  getTimeSeriesHostIndicator(findHost.cpu),
+                  [childCell]
+                )
+              } else if (statusKind === 'memory') {
+                childCellElement.setAttribute(
+                  'data-status-value',
+                  _.toString(findHost.memory)
+                )
+                childCell.setValue(childCellElement.outerHTML)
+
+                this.graph.setCellStyles(
+                  mxConstants.STYLE_FILLCOLOR,
+                  getTimeSeriesHostIndicator(findHost.memory),
+                  [childCell]
+                )
+              } else if (statusKind === 'disk') {
+                childCellElement.setAttribute(
+                  'data-status-value',
+                  _.toString(findHost.disk)
+                )
+                childCell.setValue(childCellElement.outerHTML)
+                this.graph.setCellStyles(
+                  mxConstants.STYLE_FILLCOLOR,
+                  getTimeSeriesHostIndicator(findHost.disk),
+                  [childCell]
+                )
+              }
+            })
+          }
+        } else {
+          const childCells = this.graph.getChildCells(cell)
+
+          if (!_.isEmpty(childCells)) {
+            _.forEach(childCells, childCell => {
+              const childCellElement = getParseHTML(
+                childCell.value
+              ).querySelector('div')
+
+              const statusKind = childCellElement.getAttribute(
+                'data-status-kind'
+              )
+              if (
+                statusKind === 'cpu' ||
+                statusKind === 'disk' ||
+                statusKind === 'memory'
+              ) {
+                childCellElement.setAttribute('data-status-value', '')
+                childCell.setValue(childCellElement.outerHTML)
+                this.graph.setCellStyles(
+                  mxConstants.STYLE_FILLCOLOR,
+                  '#bec2cc',
+                  [childCell]
+                )
+              }
+            })
+          }
+        }
+      }
+    })
+  } finally {
+    model.endUpdate()
+    this.graphUpdate()
+  }
+
+  return null
 }

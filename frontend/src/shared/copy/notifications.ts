@@ -1224,3 +1224,9 @@ export const notifyIpmiConnectionFailed = (error: Error): Notification => ({
   ...defaultErrorNotification,
   message: `IPMI Connection Failed, ${error}`,
 })
+
+export const notifygetAWSInstancesFailed = (error: Error): Notification => ({
+  ...defaultErrorNotification,
+  isHasHTML: true,
+  message: `CSP Host Get Failed, ${error}`,
+})

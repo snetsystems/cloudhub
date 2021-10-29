@@ -29,7 +29,7 @@ import CheckSources from 'src/CheckSources'
 import {StatusPage} from 'src/status'
 import DataExplorerPage from 'src/data_explorer'
 import {DashboardsPage, DashboardPage} from 'src/dashboards'
-import {HostsPage, HostPage} from 'src/hosts'
+import {Infrastructure, HostPage} from 'src/hosts'
 import {Applications} from 'src/applications'
 import {LogsPage} from 'src/logs'
 import {ActivityLogsPage} from 'src/activitylogs'
@@ -246,15 +246,18 @@ class Root extends PureComponent<Record<string, never>, State> {
                   component={DashboardPage}
                 />
                 <Route
-                  path="infrastructure"
+                  path="infrastructure/:infraTab"
                   component={props => (
-                    <HostsPage
+                    <Infrastructure
                       {...props}
                       handleClearTimeout={this.handleClearTimeout}
                     />
                   )}
                 />
-                <Route path="infrastructure/:hostID" component={HostPage} />
+                <Route
+                  path="infrastructure/details/:hostID"
+                  component={HostPage}
+                />
                 <Route path="applications" component={Applications} />
                 <Route path="alerts" component={AlertsApp} />
                 <Route path="alert-rules" component={KapacitorRulesPage} />

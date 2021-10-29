@@ -28,6 +28,15 @@ import {
   getIpmiStatusAsync,
   setIpmiStatusAsync,
   getIpmiSensorDataAsync,
+  loadCloudServiceProviderAsync,
+  loadCloudServiceProvidersAsync,
+  createCloudServiceProviderAsync,
+  updateCloudServiceProviderAsync,
+  deleteCloudServiceProviderAsync,
+  getAWSInstancesAsync,
+  getAWSSecurityAsync,
+  getAWSVolumeAsync,
+  getAWSInstanceTypesAsync,
 } from 'src/hosts/actions/inventoryTopology'
 
 export {
@@ -57,4 +66,13 @@ export {
   getIpmiStatusAsync,
   setIpmiStatusAsync,
   getIpmiSensorDataAsync,
+  loadCloudServiceProviderAsync,
+  loadCloudServiceProvidersAsync,
+  createCloudServiceProviderAsync,
+  updateCloudServiceProviderAsync,
+  deleteCloudServiceProviderAsync,
+  getAWSInstancesAsync,
+  getAWSSecurityAsync,
+  getAWSVolumeAsync,
+  getAWSInstanceTypesAsync,
 }

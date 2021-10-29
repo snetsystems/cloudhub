@@ -5,6 +5,36 @@ export const HOSTS_TABLE_SIZING = {
   LoadWidth: '68px',
 }
 
+export const CLOUD_HOSTS_TABLE_SIZING = {
+  CloudRegionWidth: '11%',
+  CloudNameWidth: '15%',
+  CloudInstanceIDWidth: '15%',
+  CloudInstanceStateWidth: '11%',
+  CloudInstanceTypeWidth: '11%',
+  CloudAppsWidth: '15%',
+  CloudCPUWidth: '7%',
+  CloudMemoryWidth: '7%',
+  CloudDiskWidth: '7%',
+}
+
+export const CLOUD_HOST_SECURITY_TABLE_SIZING = {
+  PortWidth: '25%',
+  ProtocolWidth: '25%',
+  SourceWidth: '25%',
+  DestinationWidth: '25%',
+  SecurityGroupsWidth: '25%',
+}
+
+export const CLOUD_HOST_STORAGE_TABLE_SIZING = {
+  VolumeIdWidth: '20%',
+  DeviceNameWidth: '10%',
+  VolumeSizeWidth: '10%',
+  VolumeStatusWidth: '15%',
+  AttachTimeWidth: '25%',
+  EncryptedWidth: '10%',
+  DelOnTermWidth: '10%',
+}
+
 export const AGENT_TABLE_SIZING = {
   CheckWidth: '30px',
   HostWidth: '35%',

@@ -1,0 +1,44 @@
+.resizable-dock {
+  &.react-resizable {
+    background: linear-gradient(rgb(32, 32, 40) 0%, rgb(15, 14, 21) 100%);
+    position: fixed;
+    top: 160px;
+    transform: translate(0px, 0px);
+    border: 1px solid $s-orange;
+    border-radius: 5px;
+    overflow: hidden;
+    opacity: 0;
+    transition: right 0.25s, opacity 0.25s;
+
+    &.active {
+      right: 10px !important;
+      opacity: 1;
+    }
+
+    .resizable-handlebar {
+      width: 5px;
+      height: calc(100% - 4px);
+      background-color: #f58220;
+      position: absolute;
+      top: 0;
+      left: 0;
+      cursor: col-resize;
+      border-radius: 2px;
+      margin-left: 2px;
+      margin-top: 2px;
+      transition: background-color 0.25s, opacity 0.25s;
+      opacity: 0;
+
+      &:hover,
+      &.dragging {
+        opacity: 1;
+        background-color: $s-deepOrange2;
+      }
+    }
+
+    .resizable-children {
+      padding: 5px;
+      height: 100%;
+    }
+  }
+}

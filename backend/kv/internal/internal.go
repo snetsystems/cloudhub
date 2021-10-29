@@ -979,3 +979,34 @@ func UnmarshalTopology(data []byte, t *cloudhub.Topology) error {
 
 	return nil
 }
+
+// MarshalCSP encodes a mapping to binary protobuf format.
+func MarshalCSP(t *cloudhub.CSP) ([]byte, error) {
+	return proto.Marshal(&CSP{
+		ID:                   t.ID,
+		Provider:             t.Provider,
+		Region:               t.Region,
+		AccessKey:            t.AccessKey,
+		SecretKey:            t.SecretKey,
+		Organization:         t.Organization,
+		Minion:               t.Minion,
+	})
+}
+
+// UnmarshalCSP decodes a mapping from binary protobuf data.
+func UnmarshalCSP(data []byte, t *cloudhub.CSP) error {
+	var pb CSP
+	if err := proto.Unmarshal(data, &pb); err != nil {
+		return err
+	}
+
+	t.ID = pb.ID
+	t.Provider = pb.Provider
+	t.Region = pb.Region
+	t.AccessKey = pb.AccessKey
+	t.SecretKey = pb.SecretKey
+	t.Organization = pb.Organization
+	t.Minion = pb.Minion
+
+	return nil
+}

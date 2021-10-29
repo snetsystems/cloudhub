@@ -4,21 +4,19 @@ import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import _ from 'lodash'
 import {getDeep} from 'src/utils/wrappers'
+import CryptoJS from 'crypto-js'
 
 // Components
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
+import Dropdown from 'src/shared/components/Dropdown'
 import HostsTable from 'src/hosts/components/HostsTable'
+import CspHostsTable from 'src/hosts/components/CspHostsTable'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
-import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 import ManualRefresh, {
   ManualRefreshProps,
 } from 'src/shared/components/ManualRefresh'
-import {Button, ButtonShape, IconFont, Page, Radio} from 'src/reusable_ui'
+import {ButtonShape, Page, Radio} from 'src/reusable_ui'
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
-import GraphTips from 'src/shared/components/GraphTips'
-import VMHostPage from 'src/hosts/containers/VMHostsPage'
-import InventoryTopology from 'src/hosts/containers/InventoryTopology'
 
 // APIs
 import {
@@ -27,6 +25,10 @@ import {
   getAppsForHosts,
   getAppsForHost,
   getMeasurementsForHost,
+  getCpuAndLoadForInstances,
+  getAppsForInstances,
+  getAppsForInstance,
+  getMeasurementsForInstance,
 } from 'src/hosts/apis'
 import {getEnv} from 'src/shared/apis/env'
 
@@ -53,6 +55,7 @@ import {
   notifyUnableToGetHosts,
   notifyUnableToGetApps,
 } from 'src/shared/copy/notifications'
+import {AddonType} from 'src/shared/constants'
 
 //const
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
@@ -67,11 +70,27 @@ import {
   Layout,
   TimeRange,
   RefreshRate,
+  CloudHosts,
 } from 'src/types'
 import {timeRanges} from 'src/shared/data/timeRanges'
 import * as QueriesModels from 'src/types/queries'
 import * as AppActions from 'src/types/actions/app'
 
+import {
+  loadCloudServiceProvidersAsync,
+  getAWSInstancesAsync,
+  getAWSInstanceTypesAsync,
+} from 'src/hosts/actions'
+import InstanceTypeModal from '../components/InstanceTypeModal'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import TopologyDetails from '../components/TopologyDetails'
+
+interface Instance {
+  provider: string
+  region: string
+  instanceid: string
+  instancename: string
+}
 interface Props extends ManualRefreshProps {
   source: Source
   links: Links
@@ -79,13 +98,22 @@ interface Props extends ManualRefreshProps {
   onChooseAutoRefresh: (milliseconds: RefreshRate) => void
   handleClearTimeout: (key: string) => void
   notify: NotificationAction
-}
-
-interface Props {
   handleChooseTimeRange: (timeRange: QueriesModels.TimeRange) => void
   handleChooseAutoRefresh: AppActions.SetAutoRefreshActionCreator
   handleClickPresentationButton: AppActions.DelayEnablePresentationModeDispatcher
   inPresentationMode: boolean
+  handleLoadCspsAsync: () => Promise<any>
+  handleGetAWSInstancesAsync: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    pCsp: any[]
+  ) => Promise<any>
+  handleGetAWSInstanceTypesAsync: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    pCsp: any,
+    pTypes: string[]
+  ) => Promise<any>
 }
 
 interface State {
@@ -94,12 +122,17 @@ interface State {
   layouts: Layout[]
   filteredLayouts: Layout[]
   focusedHost: string
-  HostsTableStateDump: {}
+  focusedInstance: Instance
   timeRange: TimeRange
   proportions: number[]
-  selected: QueriesModels.TimeRange
-  isVsphere: boolean
-  activeEditorTab: string
+  selectedAgent: string
+  activeCspTab: string
+  itemCSPs: string[]
+  cloudHostsObject: CloudHosts
+  cloudAccessInfos: any[]
+  isInstanceTypeModalVisible: boolean
+  awsInstanceTypes: Promise<any>
+  instanceTypeLoading: RemoteDataState
 }
 
 @ErrorHandling
@@ -109,6 +142,21 @@ export class HostsPage extends PureComponent<Props, State> {
   }
   public intervalID: number
   private isComponentMounted: boolean = true
+  private secretKey = _.find(
+    this.props.links.addons,
+    addon => addon.name === AddonType.ipmiSecretKey
+  )
+  private salt = _.find(
+    this.props.links.addons,
+    addon => addon.name === AddonType.salt
+  )
+
+  private isUsingAWS =
+    _.get(
+      _.find(this.props.links.addons, addon => addon.name === AddonType.aws),
+      'url',
+      'off'
+    ) === 'on'
 
   constructor(props: Props) {
     super(props)
@@ -119,35 +167,36 @@ export class HostsPage extends PureComponent<Props, State> {
       PureComponent.prototype.setState.bind(this)(args, callback)
     }
 
+    const itemCSPs = ['Private']
+
+    if (this.isUsingAWS) {
+      itemCSPs.push('aws')
+    }
+
     this.state = {
+      focusedHost: '',
+      focusedInstance: null,
+      selectedAgent: 'ALL',
+      activeCspTab: 'Private',
       hostsObject: {},
       hostsPageStatus: RemoteDataState.NotStarted,
       layouts: [],
       filteredLayouts: [],
-      focusedHost: '',
-      HostsTableStateDump: {},
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       proportions: [0.43, 0.57],
-      selected: {lower: '', upper: ''},
-      isVsphere: false,
-      activeEditorTab: 'InventoryTopology',
-      // activeEditorTab: 'Host',
+      itemCSPs,
+      cloudAccessInfos: [],
+      cloudHostsObject: {},
+      isInstanceTypeModalVisible: false,
+      awsInstanceTypes: null,
+      instanceTypeLoading: RemoteDataState.NotStarted,
     }
-    this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
-    this.onSetActiveEditorTab = this.onSetActiveEditorTab.bind(this)
-  }
 
-  public componentWillMount() {
-    this.setState({selected: this.state.timeRange})
+    this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
+    this.onSetActiveCspTab = this.onSetActiveCspTab.bind(this)
   }
 
   public async componentDidMount() {
-    const hostsTableState = getLocalStorage('hostsTableState')
-    const {focusedHost} =
-      hostsTableState && hostsTableState.focusedHost
-        ? hostsTableState.focusedHost
-        : ''
-
     const getItem = getLocalStorage('hostsTableStateProportions')
     const {proportions} = getItem || this.state
 
@@ -158,6 +207,7 @@ export class HostsPage extends PureComponent<Props, State> {
     const {notify, autoRefresh} = this.props
 
     const layoutResults = await getLayouts()
+
     const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
 
     if (!layouts) {
@@ -170,38 +220,124 @@ export class HostsPage extends PureComponent<Props, State> {
     }
 
     // For rendering whole hosts list
-    await this.fetchHostsData(layouts)
+    this.fetchHostsData(layouts).then(hosts => {
+      if (autoRefresh) {
+        this.intervalID = window.setInterval(
+          () => this.fetchHostsData(layouts),
+          autoRefresh
+        )
+      }
+      GlobalAutoRefresher.poll(autoRefresh)
 
-    // For rendering the charts with the focused single host.
-    const hostID = focusedHost || this.getFirstHost(this.state.hostsObject)
+      const defaultState = {
+        focusedHost: '',
+        focusedInstance: null,
+        selectedAgent: 'ALL',
+        activeCspTab: 'Private',
+      }
 
-    if (autoRefresh) {
-      this.intervalID = window.setInterval(
-        () => this.fetchHostsData(layouts),
-        autoRefresh
+      const getLocalStorageInfrastructure = getLocalStorage('infrastructure')
+      let hostsPage = _.get(getLocalStorageInfrastructure, 'hostsPage', {
+        defaultState,
+      })
+
+      // For rendering the charts with the focused single host.
+      hostsPage['focusedHost'] = _.get(hostsPage, 'focusedHost', '')
+
+      if (
+        _.isEmpty(hostsPage.focusedHost) ||
+        !_.includes(_.keys(hosts), hostsPage['focusedHost'])
+      ) {
+        hostsPage['focusedHost'] = this.getFirstHost(hosts)
+      }
+
+      if (!this.isUsingAWS) {
+        hostsPage['activeCspTab'] = 'Private'
+        hostsPage['focusedInstance'] = null
+        hostsPage['selectedAgent'] = 'ALL'
+      }
+
+      this.setState({
+        layouts,
+        proportions: convertProportions,
+        hostsPageStatus: RemoteDataState.Loading,
+        ...hostsPage,
+      })
+    })
+
+    this.fetchCspHostsData(layouts).then(cloudHosts => {
+      const defaultState = {
+        focusedInstance: null,
+      }
+
+      const getLocalStorageInfrastructure = getLocalStorage('infrastructure')
+      let hostsPage = _.get(getLocalStorageInfrastructure, 'hostsPage', {
+        defaultState,
+      })
+
+      let {focusedInstance} = hostsPage
+
+      // For rendering the charts with the focused single cloudHost.
+      focusedInstance['instancename'] = _.get(
+        focusedInstance,
+        'instancename',
+        ''
       )
-    }
-    GlobalAutoRefresher.poll(autoRefresh)
 
-    this.setState({
-      layouts,
-      focusedHost: hostID,
-      proportions: convertProportions,
-      hostsPageStatus: RemoteDataState.Loading,
+      if (
+        _.isEmpty(focusedInstance.instancename) ||
+        !_.includes(_.keys(cloudHosts), focusedInstance.instancename)
+      ) {
+        const getFocusedInstance = this.getFirstCloudHost(cloudHosts)
+
+        focusedInstance = {
+          ...focusedInstance,
+          ...getFocusedInstance,
+        }
+      }
+
+      this.setState({
+        focusedInstance,
+      })
     })
   }
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
     const {autoRefresh} = this.props
-    const {layouts, focusedHost} = this.state
+    const {
+      layouts,
+      focusedHost,
+      focusedInstance,
+      selectedAgent,
+      activeCspTab,
+    } = this.state
 
     if (layouts) {
-      if (prevState.focusedHost !== focusedHost) {
+      if (
+        prevState.focusedHost !== focusedHost ||
+        (prevState.activeCspTab !== activeCspTab && activeCspTab === 'Private')
+      ) {
         this.fetchHostsData(layouts)
         const {filteredLayouts} = await this.getLayoutsforHost(
           layouts,
           focusedHost
         )
+        this.setState({filteredLayouts})
+      }
+
+      if (
+        (prevState.activeCspTab !== activeCspTab && activeCspTab === 'aws') ||
+        (prevState.focusedInstance !== focusedInstance &&
+          prevState.activeCspTab !== activeCspTab &&
+          activeCspTab === 'aws') ||
+        (prevState.selectedAgent !== selectedAgent && focusedInstance)
+      ) {
+        this.fetchCspHostsData(layouts)
+        const {filteredLayouts} = await this.getLayoutsforInstance(
+          layouts,
+          focusedInstance
+        )
+
         this.setState({filteredLayouts})
       }
 
@@ -246,6 +382,23 @@ export class HostsPage extends PureComponent<Props, State> {
     this.intervalID = null
     GlobalAutoRefresher.stopPolling()
 
+    const getLocalStorageInfrastructure = getLocalStorage('infrastructure')
+    let getHostsPage = _.get(getLocalStorageInfrastructure, 'hostsPage', {
+      hostsPage: {},
+    })
+
+    getHostsPage = {
+      ...getLocalStorageInfrastructure,
+      hostsPage: {
+        selectedAgent: this.state.selectedAgent,
+        activeCspTab: this.state.activeCspTab,
+        focusedInstance: this.state.focusedInstance,
+        focusedHost: this.state.focusedHost,
+      },
+    }
+
+    setLocalStorage('infrastructure', getHostsPage)
+
     this.isComponentMounted = false
   }
 
@@ -255,136 +408,14 @@ export class HostsPage extends PureComponent<Props, State> {
     onChooseAutoRefresh(milliseconds)
   }
 
-  private onSetActiveEditorTab(activeEditorTab: string): void {
-    this.setState({
-      activeEditorTab,
-    })
-  }
-
   public render() {
-    const {
-      autoRefresh,
-      onManualRefresh,
-      inPresentationMode,
-      source,
-    } = this.props
-    const {selected, isVsphere, activeEditorTab} = this.state
-
     return (
-      <Page className="hosts-list-page">
-        <Page.Header inPresentationMode={inPresentationMode}>
-          <Page.Header.Left>
-            <Page.Title title={this.getTitle} />
-          </Page.Header.Left>
-          <Page.Header.Center widthPixels={220}>
-            <div className="radio-buttons radio-buttons--default radio-buttons--sm radio-buttons--stretch">
-              <Radio.Button
-                id="hostspage-tab-InventoryTopology"
-                titleText="InventoryTopology"
-                value="InventoryTopology"
-                active={activeEditorTab === 'InventoryTopology'}
-                onClick={this.onSetActiveEditorTab}
-              >
-                Topology
-              </Radio.Button>
-              <Radio.Button
-                id="hostspage-tab-Host"
-                titleText="Host"
-                value="Host"
-                active={activeEditorTab === 'Host'}
-                onClick={this.onSetActiveEditorTab}
-              >
-                Host
-              </Radio.Button>
-              {isVsphere && (
-                <Radio.Button
-                  id="hostspage-tab-VMware"
-                  titleText="VMware"
-                  value="VMware"
-                  active={activeEditorTab === 'VMware'}
-                  onClick={this.onSetActiveEditorTab}
-                >
-                  VMware
-                </Radio.Button>
-              )}
-            </div>
-          </Page.Header.Center>
-
-          <Page.Header.Right showSourceIndicator={true}>
-            {activeEditorTab !== 'InventoryTopology' && <GraphTips />}
-            <AutoRefreshDropdown
-              selected={autoRefresh}
-              onChoose={this.handleChooseAutoRefresh}
-              onManualRefresh={onManualRefresh}
-            />
-            {activeEditorTab !== 'InventoryTopology' && (
-              <TimeRangeDropdown
-                onChooseTimeRange={this.handleChooseTimeRange.bind(
-                  this.state.selected
-                )}
-                selected={selected}
-              />
-            )}
-            <Button
-              icon={IconFont.ExpandA}
-              onClick={this.handleClickPresentationButton}
-              shape={ButtonShape.Square}
-              titleText="Enter Full-Screen Presentation Mode"
-            />
-          </Page.Header.Right>
-        </Page.Header>
-        <Page.Contents scrollable={true} fullWidth={activeEditorTab !== 'Host'}>
-          <>
-            {activeEditorTab === 'Host' && (
-              <Threesizer
-                orientation={HANDLE_HORIZONTAL}
-                divisions={this.horizontalDivisions}
-                onResize={this.handleResize}
-              />
-            )}
-            {activeEditorTab === 'VMware' && (
-              <VMHostPage
-                source={source}
-                manualRefresh={this.props.manualRefresh}
-                timeRange={this.state.timeRange}
-                handleClearTimeout={this.props.handleClearTimeout}
-              />
-            )}
-            {activeEditorTab === 'InventoryTopology' && (
-              <InventoryTopology
-                source={source}
-                manualRefresh={this.props.manualRefresh}
-                autoRefresh={autoRefresh}
-              />
-            )}
-          </>
-        </Page.Contents>
-      </Page>
+      <Threesizer
+        orientation={HANDLE_HORIZONTAL}
+        divisions={this.horizontalDivisions}
+        onResize={this.handleResize}
+      />
     )
-  }
-
-  private get getTitle(): string {
-    const {activeEditorTab} = this.state
-
-    switch (activeEditorTab) {
-      case 'InventoryTopology':
-        return 'InventoryTopology'
-      default:
-        return 'Infrastructure'
-    }
-  }
-
-  private handleChooseTimeRange = ({lower, upper}) => {
-    if (upper) {
-      this.setState({timeRange: {lower, upper}, selected: {lower, upper}})
-    } else {
-      const timeRange = timeRanges.find(range => range.lower === lower)
-      this.setState({timeRange, selected: timeRange})
-    }
-  }
-
-  private handleClickPresentationButton = (): void => {
-    this.props.handleClickPresentationButton()
   }
 
   private get horizontalDivisions() {
@@ -419,40 +450,398 @@ export class HostsPage extends PureComponent<Props, State> {
 
   private renderHostTable = () => {
     const {source} = this.props
-    const {hostsObject, hostsPageStatus, focusedHost} = this.state
+    let {hostsObject, hostsPageStatus, focusedHost, activeCspTab} = this.state
+
     return (
-      <HostsTable
-        source={source}
-        hosts={_.values(hostsObject)}
-        hostsPageStatus={hostsPageStatus}
-        focusedHost={focusedHost}
-        onClickTableRow={this.handleClickTableRow}
-      />
+      <>
+        {activeCspTab === 'Private' ? (
+          <HostsTable
+            source={source}
+            hosts={_.values(hostsObject)}
+            hostsPageStatus={hostsPageStatus}
+            focusedHost={focusedHost}
+            onClickTableRow={this.handleClickTableRow}
+            tableTitle={this.tableTitle}
+          />
+        ) : (
+          this.renderCspHostsTable
+        )}
+      </>
     )
   }
 
-  private renderGraph = () => {
+  private get renderCspHostsTable() {
     const {source} = this.props
-    const {filteredLayouts, focusedHost, timeRange} = this.state
+    const {
+      cloudHostsObject,
+      activeCspTab,
+      hostsPageStatus,
+      isInstanceTypeModalVisible,
+      instanceTypeLoading,
+      focusedInstance,
+    } = this.state
+    const cloudHostObject = cloudHostsObject[activeCspTab]
 
+    let cloudHosts = []
+
+    _.reduce(
+      _.values(cloudHostObject),
+      (_before, current) => {
+        _.reduce(
+          _.values(current),
+          (__before, cCurrent) => {
+            cloudHosts.push(cCurrent)
+
+            return false
+          },
+          {}
+        )
+
+        return false
+      },
+      {}
+    )
+
+    return (
+      <>
+        <InstanceTypeModal
+          visible={isInstanceTypeModalVisible}
+          status={instanceTypeLoading}
+          message={this.renderInstanceTypeModal}
+          onCancel={() => {
+            this.setState({
+              isInstanceTypeModalVisible: false,
+            })
+          }}
+        />
+        <CspHostsTable
+          source={source}
+          cloudHosts={cloudHosts}
+          providerRegions={_.keys(cloudHostObject)}
+          hostsPageStatus={hostsPageStatus}
+          focusedInstance={focusedInstance}
+          onClickTableRow={this.handleClickCspTableRow}
+          tableTitle={this.tableTitle}
+          handleInstanceTypeModal={this.handleInstanceTypeModal}
+        />
+      </>
+    )
+  }
+
+  private get renderInstanceTypeModal() {
+    return (
+      <FancyScrollbar style={{height: '450px'}} autoHide={false}>
+        <TopologyDetails selectInstanceData={this.getInstanceType()} />
+      </FancyScrollbar>
+    )
+  }
+
+  private getAWSInstanceTypes = async (accessInfo: any, types: string[]) => {
+    try {
+      const awsInstanceTypes = await this.props.handleGetAWSInstanceTypesAsync(
+        this.salt.url,
+        this.salt.token,
+        accessInfo,
+        types
+      )
+
+      this.setState({awsInstanceTypes})
+    } catch (error) {
+      this.setState({awsInstanceTypes: null})
+    } finally {
+      this.setState({instanceTypeLoading: RemoteDataState.Done})
+    }
+  }
+
+  private handleInstanceTypeModal = async (
+    provider: string,
+    region: string,
+    type: string
+  ) => {
+    let accessInfo = _.find(this.state.cloudAccessInfos, cloudAccessInfo => {
+      return (
+        cloudAccessInfo.provider === provider &&
+        cloudAccessInfo.region === region
+      )
+    })
+    const {secretkey} = accessInfo
+    const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
+    const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
+
+    accessInfo = {
+      ...accessInfo,
+      secretkey: originalSecretkey,
+    }
+
+    this.setState({
+      instanceTypeLoading: RemoteDataState.Loading,
+      isInstanceTypeModalVisible: true,
+    })
+
+    await this.getAWSInstanceTypes(accessInfo, [type])
+  }
+
+  private getInstanceType = () => {
+    const {awsInstanceTypes} = this.state
+
+    try {
+      if (_.isNull(awsInstanceTypes)) return
+      let instanceTypes = {}
+
+      const getAWSInstanceTypes = _.values(
+        _.values(_.values(awsInstanceTypes)[0])[0]
+      )[0]
+
+      _.reduce(
+        getAWSInstanceTypes,
+        (_before, current) => {
+          if (_.isNull(current)) return false
+
+          const [family, size] = current.InstanceType.split('.')
+          const ValidThreadsPerCore = _.get(
+            current.VCpuInfo,
+            'ValidThreadsPerCore',
+            '-'
+          )
+
+          let instanceType = {
+            Details: {
+              Instance_type: current.InstanceType,
+              Instance_family: family,
+              Instance_size: size,
+              Hypervisor: current.Hypervisor,
+              Auto_Recovery_support: current.AutoRecoverySupported.toString(),
+              Supported_root_device_types: current.SupportedRootDeviceTypes,
+              Dedicated_Host_support: current.DedicatedHostsSupported.toString(),
+              'On-Demand_Hibernation_support': current.HibernationSupported.toString(),
+              Burstable_Performance_support: current.BurstablePerformanceSupported.toString(),
+            },
+            Compute: {
+              'Free-Tier_eligible': current.FreeTierEligible.toString(),
+              Bare_metal: current.BareMetal.toString(),
+              vCPUs: current.VCpuInfo.DefaultVCpus,
+              Architecture: current.ProcessorInfo.SupportedArchitectures,
+              Cores: current.VCpuInfo.DefaultCores,
+              Valid_cores: current.VCpuInfo.ValidCores,
+              Threads_per_core: current.VCpuInfo.DefaultThreadsPerCore,
+              Valid_threads_per_core: _.isArray(ValidThreadsPerCore)
+                ? ValidThreadsPerCore.join(',')
+                : ValidThreadsPerCore,
+              'Sustained_clock_speed_(GHz)':
+                current.ProcessorInfo.SustainedClockSpeedInGhz,
+              'Memory_(GiB)': current.MemoryInfo.SizeInMiB / 1024,
+              Current_generation: current.CurrentGeneration.toString(),
+            },
+            Networking: {
+              EBS_optimization_support: current.EbsInfo.EbsOptimizedSupport,
+              Network_performance: current.NetworkInfo.NetworkPerformance,
+              ENA_support: current.NetworkInfo.EnaSupport,
+              Maximum_number_of_network_interfaces:
+                current.NetworkInfo.MaximumNetworkInterfaces,
+              IPv4_addresses_per_interface:
+                current.NetworkInfo.Ipv4AddressesPerInterface,
+              IPv6_addresses_per_interface:
+                current.NetworkInfo.Ipv6AddressesPerInterface,
+              IPv6_support: current.NetworkInfo.Ipv6Supported.toString(),
+              Supported_placement_group_strategies: current.PlacementGroupInfo.SupportedStrategies.join(
+                ', '
+              ),
+            },
+          }
+
+          if (current.InstanceStorageSupported) {
+            const storage = {
+              Storage: {
+                'Storage_(GB)': current.InstanceStorageInfo.Disks.TotalSizeInGB,
+                Local_instance_storage: '-',
+                Storage_type: current.InstanceStorageInfo.Disks.Type,
+                Storage_disk_count: current.InstanceStorageInfo.Disks.Count,
+                EBS_encryption_support: current.EbsInfo.EncryptionSupport,
+              },
+            }
+
+            instanceType = {
+              ...instanceType,
+              ...storage,
+            }
+          }
+
+          if (current.hasOwnProperty('GpuInfo')) {
+            const {GpuInfo} = current
+            const accelators = {
+              Accelerators: {
+                GPUs: GpuInfo.Gpus.Count,
+                'GPU_memory_(GiB)': GpuInfo.Gpus.MemoryInfo.SizeInMiB,
+                GPU_manufacturer: GpuInfo.Gpus.Manufacturer,
+                GPU_name: GpuInfo.Gpus.Name,
+              },
+            }
+
+            instanceType = {
+              ...instanceType,
+              ...accelators,
+            }
+          }
+
+          instanceTypes = {
+            ...instanceType,
+          }
+
+          return false
+        },
+        {}
+      )
+
+      return instanceTypes
+    } catch (error) {
+      console.error('error instanceTypes: ', error)
+      return {}
+    }
+  }
+
+  private tableTitle = (): JSX.Element => {
+    const {activeCspTab, itemCSPs} = this.state
+
+    return itemCSPs.length > 1 ? (
+      <Radio shape={ButtonShape.Default}>
+        {_.map(itemCSPs, csp => {
+          return (
+            <Radio.Button
+              key={csp}
+              id="addon-tab-data"
+              titleText={csp}
+              value={csp}
+              active={activeCspTab === csp}
+              onClick={this.onSetActiveCspTab}
+            >
+              {csp}
+            </Radio.Button>
+          )
+        })}
+      </Radio>
+    ) : (
+      <div
+        className={`radio-buttons radio-buttons--default radio-buttons--sm radio-buttons--stretch`}
+      >
+        <button type="button" className={'radio-button active'}>
+          Private
+        </button>
+      </div>
+    )
+  }
+
+  private getFirstCloudHost = (cloudHostsObject: CloudHosts): Instance => {
+    let firstHost = {
+      provider: null,
+      region: null,
+      instanceid: null,
+      instancename: null,
+    }
+    try {
+      if (!_.isEmpty(cloudHostsObject)) {
+        const firstProvider = _.keys(cloudHostsObject)[0]
+        const firstRegion = _.keys(cloudHostsObject[firstProvider])[0]
+        const firstInstance = _.keys(
+          cloudHostsObject[firstProvider][firstRegion]
+        )[0]
+        const {instanceId: firstInstanceId} = cloudHostsObject[firstProvider][
+          firstRegion
+        ][firstInstance]
+
+        firstHost = {
+          ...firstHost,
+          provider: firstProvider,
+          region: firstRegion,
+          instanceid: firstInstanceId,
+          instancename: firstInstance,
+        }
+
+        return firstHost
+      }
+    } finally {
+      return firstHost
+    }
+  }
+
+  private onSetFocusedInstance = (instance: Instance): void => {
+    this.setState({focusedInstance: {...instance}})
+  }
+
+  private onSetActiveCspTab(activeCspTab: string): void {
+    const {focusedInstance, cloudHostsObject} = this.state
+
+    if (activeCspTab === 'aws' && focusedInstance === null) {
+      const firstCloudHost = this.getFirstCloudHost(cloudHostsObject)
+      this.onSetFocusedInstance(firstCloudHost)
+      this.setState({
+        activeCspTab,
+        filteredLayouts: [],
+      })
+    } else {
+      this.setState({
+        activeCspTab,
+      })
+    }
+  }
+
+  private getHandleOnChoose = (selectItem: {text: string}) => {
+    this.setState({selectedAgent: selectItem.text})
+  }
+
+  private renderGraph = () => {
+    const {source, manualRefresh} = this.props
+    const {
+      filteredLayouts,
+      focusedHost,
+      focusedInstance,
+      timeRange,
+      activeCspTab,
+      selectedAgent,
+    } = this.state
     const layoutCells = getCells(filteredLayouts, source)
     const tempVars = generateForHosts(source)
 
     return (
-      <Page.Contents>
-        <LayoutRenderer
-          source={source}
-          sources={[source]}
-          isStatusPage={false}
-          isStaticPage={true}
-          isEditable={false}
-          cells={layoutCells}
-          templates={tempVars}
-          timeRange={timeRange}
-          manualRefresh={this.props.manualRefresh}
-          host={focusedHost}
-        />
-      </Page.Contents>
+      <>
+        {this.isUsingAWS && activeCspTab === 'aws' ? (
+          <Page.Header>
+            <Page.Header.Left>
+              <></>
+            </Page.Header.Left>
+            <Page.Header.Right>
+              <>
+                <span>
+                  Get from <span style={{margin: '0 3px'}}>:</span>
+                </span>
+                <Dropdown
+                  items={['ALL', 'CloudWatch', 'Within instances']}
+                  onChoose={this.getHandleOnChoose}
+                  selected={selectedAgent}
+                  className="dropdown-sm"
+                  disabled={false}
+                />
+              </>
+            </Page.Header.Right>
+          </Page.Header>
+        ) : null}
+        <Page.Contents>
+          <LayoutRenderer
+            source={source}
+            sources={[source]}
+            isStatusPage={false}
+            isStaticPage={true}
+            isEditable={false}
+            cells={layoutCells}
+            templates={tempVars}
+            timeRange={timeRange}
+            manualRefresh={manualRefresh}
+            host={activeCspTab === 'Private' ? focusedHost : ''}
+            instance={
+              this.isUsingAWS && activeCspTab === 'aws' ? focusedInstance : null
+            }
+          />
+        </Page.Contents>
+      </>
     )
   }
   private async getLayoutsforHost(layouts: Layout[], hostID: string) {
@@ -460,6 +849,7 @@ export class HostsPage extends PureComponent<Props, State> {
       layouts,
       hostID
     )
+
     const layoutsWithinHost = layouts.filter(layout => {
       return (
         host.apps &&
@@ -482,9 +872,40 @@ export class HostsPage extends PureComponent<Props, State> {
     return {filteredLayouts}
   }
 
-  private async fetchHostsData(layouts: Layout[]): Promise<void> {
+  private async getLayoutsforInstance(layouts: Layout[], pInstance: Instance) {
+    const {instance, measurements} = await this.fetchInstancesAndMeasurements(
+      layouts,
+      pInstance
+    )
+    const layoutsWithinInstance = layouts.filter(layout => {
+      return (
+        instance.apps &&
+        instance.apps.includes(layout.app) &&
+        measurements.includes(layout.measurement)
+      )
+    })
+    const filteredLayouts = layoutsWithinInstance
+      .filter(layout => {
+        return (
+          layout.app === 'system' ||
+          layout.app === 'win_system' ||
+          layout.app === 'cloudwatch'
+        )
+      })
+      .sort((x, y) => {
+        return x.measurement < y.measurement
+          ? -1
+          : x.measurement > y.measurement
+          ? 1
+          : 0
+      })
+    return {instance, filteredLayouts}
+  }
+
+  private async fetchHostsData(
+    layouts: Layout[]
+  ): Promise<{[host: string]: Host}> {
     const {source, links, notify} = this.props
-    const {addons} = links
 
     const envVars = await getEnv(links.environment)
     const telegrafSystemInterval = getDeep<string>(
@@ -492,6 +913,7 @@ export class HostsPage extends PureComponent<Props, State> {
       'telegrafSystemInterval',
       ''
     )
+
     const hostsError = notifyUnableToGetHosts().message
     const tempVars = generateForHosts(source)
 
@@ -513,25 +935,16 @@ export class HostsPage extends PureComponent<Props, State> {
         tempVars
       )
 
-      const isUsingVshpere = Boolean(
-        _.find(addons, addon => {
-          return addon.name === 'vsphere' && addon.url === 'on'
-        }) &&
-          _.find(hostsObject, v => {
-            return _.includes(v.apps, 'vsphere')
-          })
-      )
-
       this.setState({
-        isVsphere: isUsingVshpere,
         hostsObject: newHosts,
         hostsPageStatus: RemoteDataState.Done,
       })
+
+      return newHosts
     } catch (error) {
       console.error(error)
       notify(notifyUnableToGetHosts())
       this.setState({
-        isVsphere: false,
         hostsPageStatus: RemoteDataState.Error,
       })
     }
@@ -556,6 +969,156 @@ export class HostsPage extends PureComponent<Props, State> {
     return {host, measurements}
   }
 
+  private async fetchInstancesAndMeasurements(
+    layouts: Layout[],
+    pInstance: Instance
+  ) {
+    const {source} = this.props
+    const {selectedAgent} = this.state
+
+    const fetchMeasurements = getMeasurementsForInstance(
+      source,
+      pInstance,
+      selectedAgent
+    )
+    const fetchInstances = getAppsForInstance(
+      source.links.proxy,
+      pInstance,
+      layouts,
+      source.telegraf,
+      selectedAgent
+    )
+
+    const [instance, measurements] = await Promise.all([
+      fetchInstances,
+      fetchMeasurements,
+    ])
+
+    return {instance, measurements}
+  }
+
+  private fetchCspHostsData = async (
+    layouts: Layout[]
+  ): Promise<CloudHosts> => {
+    const {
+      handleLoadCspsAsync,
+      source,
+      links,
+      handleGetAWSInstancesAsync,
+      notify,
+    } = this.props
+
+    const dbResp: any[] = await handleLoadCspsAsync()
+    const newDbResp = _.filter(
+      _.map(dbResp, resp => {
+        const {secretkey} = resp
+        const decryptedBytes = CryptoJS.AES.decrypt(
+          secretkey,
+          this.secretKey.url
+        )
+        const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
+
+        resp = {
+          ...resp,
+          secretkey: originalSecretkey,
+        }
+
+        return resp
+      }),
+      filterData => {
+        if (
+          _.find(
+            this.props.links.addons,
+            addon => addon.name === filterData.provider
+          )
+        )
+          return filterData
+      }
+    )
+
+    if (_.isEmpty(newDbResp)) return
+
+    let getSaltCSPs = await handleGetAWSInstancesAsync(
+      this.salt.url,
+      this.salt.token,
+      newDbResp
+    )
+
+    let newCSPs = []
+
+    getSaltCSPs = _.map(
+      getSaltCSPs.return,
+      getSaltCSP => _.values(getSaltCSP)[0]
+    )
+
+    _.forEach(newDbResp, (accessCsp, index) => {
+      const {id, organization, provider, region} = accessCsp
+      let csp = []
+
+      if (
+        Object.keys(getSaltCSPs[index]).includes('error') ||
+        typeof getSaltCSPs[index] === 'string'
+      )
+        return
+
+      let cspRegion = []
+      _.forEach(getSaltCSPs[index], cspHost => {
+        if (!cspHost) return
+        const host = {...cspHost, Csp: {id, organization, provider, region}}
+        cspRegion.push(host)
+      })
+
+      csp.push(cspRegion)
+
+      newCSPs.push(csp)
+    })
+
+    const envVars = await getEnv(links.environment)
+    const telegrafSystemInterval = getDeep<string>(
+      envVars,
+      'telegrafSystemInterval',
+      ''
+    )
+    const hostsError = notifyUnableToGetHosts().message
+    const tempVars = generateForHosts(source)
+
+    try {
+      const instancesObject = await getCpuAndLoadForInstances(
+        source.links.proxy,
+        source.telegraf,
+        telegrafSystemInterval,
+        tempVars,
+        newCSPs
+      )
+
+      if (!instancesObject) {
+        throw new Error(hostsError)
+      }
+
+      const newCloudHostsObject: CloudHosts = await getAppsForInstances(
+        source.links.proxy,
+        instancesObject,
+        layouts,
+        source.telegraf,
+        tempVars
+      )
+
+      this.setState({
+        cloudAccessInfos: dbResp,
+        cloudHostsObject: newCloudHostsObject,
+        hostsPageStatus: RemoteDataState.Done,
+      })
+
+      return newCloudHostsObject
+    } catch (error) {
+      console.error(error)
+      notify(notifyUnableToGetHosts())
+      this.setState({
+        hostsPageStatus: RemoteDataState.Error,
+      })
+    }
+  }
+
   private getFirstHost = (hostsObject: {[x: string]: Host}): string => {
     const hostsArray = _.values(hostsObject)
     return hostsArray.length > 0 ? hostsArray[0].name : null
@@ -566,6 +1129,10 @@ export class HostsPage extends PureComponent<Props, State> {
     hostsTableState.focusedHost = hostName
     setLocalStorage('hostsTableState', hostsTableState)
     this.setState({focusedHost: hostName})
+  }
+
+  private handleClickCspTableRow = (focusedInstance: Instance) => () => {
+    this.onSetFocusedInstance(focusedInstance)
   }
 }
 
@@ -591,6 +1158,18 @@ const mdtp = dispatch => ({
     dispatch
   ),
   notify: bindActionCreators(notifyAction, dispatch),
+  handleLoadCspsAsync: bindActionCreators(
+    loadCloudServiceProvidersAsync,
+    dispatch
+  ),
+  handleGetAWSInstancesAsync: bindActionCreators(
+    getAWSInstancesAsync,
+    dispatch
+  ),
+  handleGetAWSInstanceTypesAsync: bindActionCreators(
+    getAWSInstanceTypesAsync,
+    dispatch
+  ),
 })
 
-export default connect(mstp, mdtp)(ManualRefresh<Props>(HostsPage))
+export default connect(mstp, mdtp, null)(ManualRefresh<Props>(HostsPage))
