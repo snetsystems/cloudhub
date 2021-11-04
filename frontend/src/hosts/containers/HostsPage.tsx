@@ -317,7 +317,6 @@ export class HostsPage extends PureComponent<Props, State> {
         prevState.focusedHost !== focusedHost ||
         (prevState.activeCspTab !== activeCspTab && activeCspTab === 'Private')
       ) {
-        this.fetchHostsData(layouts)
         const {filteredLayouts} = await this.getLayoutsforHost(
           layouts,
           focusedHost
@@ -332,7 +331,6 @@ export class HostsPage extends PureComponent<Props, State> {
           activeCspTab === 'aws') ||
         (prevState.selectedAgent !== selectedAgent && focusedInstance)
       ) {
-        this.fetchCspHostsData(layouts)
         const {filteredLayouts} = await this.getLayoutsforInstance(
           layouts,
           focusedInstance
