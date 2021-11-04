@@ -219,12 +219,14 @@ export class HostsPage extends PureComponent<Props, State> {
 
     // For rendering whole hosts list
     this.fetchHostsData(layouts).then(hosts => {
-      if (autoRefresh) {
+      if (autoRefresh && this.state.activeCspTab === 'Private') {
+        clearInterval(this.intervalID)
         this.intervalID = window.setInterval(
           () => this.fetchHostsData(layouts),
           autoRefresh
         )
       }
+
       GlobalAutoRefresher.poll(autoRefresh)
 
       const defaultState = {
@@ -264,6 +266,16 @@ export class HostsPage extends PureComponent<Props, State> {
     })
 
     this.fetchCspHostsData(layouts).then(cloudHosts => {
+      if (autoRefresh && this.state.activeCspTab === 'aws') {
+        clearInterval(this.intervalID)
+        this.intervalID = window.setInterval(
+          () => this.fetchCspHostsData(layouts),
+          autoRefresh
+        )
+      }
+
+      GlobalAutoRefresher.poll(autoRefresh)
+
       const defaultState = {
         focusedInstance: null,
       }
@@ -337,6 +349,22 @@ export class HostsPage extends PureComponent<Props, State> {
         this.setState({filteredLayouts})
       }
 
+      if (autoRefresh && prevState.activeCspTab !== activeCspTab) {
+        clearInterval(this.intervalID)
+
+        if (activeCspTab === 'Private') {
+          this.intervalID = window.setInterval(() => {
+            this.fetchHostsData(layouts)
+          }, autoRefresh)
+        }
+
+        if (activeCspTab === 'aws') {
+          this.intervalID = window.setInterval(() => {
+            this.fetchCspHostsData(layouts)
+          }, autoRefresh)
+        }
+      }
+
       if (prevProps.autoRefresh !== autoRefresh) {
         GlobalAutoRefresher.poll(autoRefresh)
       }
@@ -373,9 +401,17 @@ export class HostsPage extends PureComponent<Props, State> {
         GlobalAutoRefresher.poll(nextProps.autoRefresh)
 
         if (nextProps.autoRefresh) {
-          this.intervalID = window.setInterval(() => {
-            this.fetchHostsData(layouts)
-          }, nextProps.autoRefresh)
+          if (this.state.activeCspTab === 'Private') {
+            this.intervalID = window.setInterval(() => {
+              this.fetchHostsData(layouts)
+            }, nextProps.autoRefresh)
+          }
+
+          if (this.state.activeCspTab === 'aws') {
+            this.intervalID = window.setInterval(() => {
+              this.fetchCspHostsData(layouts)
+            }, nextProps.autoRefresh)
+          }
         }
       }
     }
