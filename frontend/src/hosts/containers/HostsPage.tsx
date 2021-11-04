@@ -344,16 +344,28 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   public async UNSAFE_componentWillReceiveProps(nextProps: Props) {
-    const {layouts, focusedHost} = this.state
+    const {layouts, focusedHost, focusedInstance} = this.state
 
     if (layouts) {
       if (this.props.manualRefresh !== nextProps.manualRefresh) {
-        this.fetchHostsData(layouts)
-        const {filteredLayouts} = await this.getLayoutsforHost(
-          layouts,
-          focusedHost
-        )
-        this.setState({filteredLayouts})
+        if (this.state.activeCspTab === 'Private') {
+          this.fetchHostsData(layouts)
+          const {filteredLayouts} = await this.getLayoutsforHost(
+            layouts,
+            focusedHost
+          )
+          this.setState({filteredLayouts})
+        }
+
+        if (this.state.activeCspTab === 'aws') {
+          this.fetchCspHostsData(layouts)
+          const {filteredLayouts} = await this.getLayoutsforInstance(
+            layouts,
+            focusedInstance
+          )
+
+          this.setState({filteredLayouts})
+        }
       }
 
       if (this.props.autoRefresh !== nextProps.autoRefresh) {
