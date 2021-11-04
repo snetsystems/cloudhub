@@ -12,9 +12,7 @@ import Dropdown from 'src/shared/components/Dropdown'
 import HostsTable from 'src/hosts/components/HostsTable'
 import CspHostsTable from 'src/hosts/components/CspHostsTable'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
-import ManualRefresh, {
-  ManualRefreshProps,
-} from 'src/shared/components/ManualRefresh'
+import {ManualRefreshProps} from 'src/shared/components/ManualRefresh'
 import {ButtonShape, Page, Radio} from 'src/reusable_ui'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
@@ -1170,4 +1168,4 @@ const mdtp = dispatch => ({
   ),
 })
 
-export default connect(mstp, mdtp, null)(ManualRefresh<Props>(HostsPage))
+export default connect(mstp, mdtp, null)(HostsPage)
