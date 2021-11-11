@@ -18,14 +18,6 @@ import HostsPage from 'src/hosts/containers/HostsPage'
 import VMHostPage from 'src/hosts/containers/VMHostsPage'
 import InventoryTopology from 'src/hosts/containers/InventoryTopology'
 
-// APIs
-import {
-  getCpuAndLoadForHosts,
-  getLayouts,
-  getAppsForHosts,
-} from 'src/hosts/apis'
-import {getEnv} from 'src/shared/apis/env'
-
 // Actions
 import {
   setAutoRefresh,
@@ -33,19 +25,12 @@ import {
 } from 'src/shared/actions/app'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
-// Constants
-import {
-  notifyUnableToGetHosts,
-  notifyUnableToGetApps,
-} from 'src/shared/copy/notifications'
-
 // Types
 import {
   Source,
   Links,
   TimeRange,
   RefreshRate,
-  Layout,
   NotificationAction,
 } from 'src/types'
 import {timeRanges} from 'src/shared/data/timeRanges'
@@ -57,8 +42,6 @@ import {
 } from 'src/hosts/actions'
 
 // Utils
-import {generateForHosts} from 'src/utils/tempVars'
-import {getDeep} from 'src/utils/wrappers'
 import {RouterState, InjectedRouter} from 'react-router'
 
 interface RouterProps extends InjectedRouter {
@@ -91,7 +74,7 @@ class Infrastructure extends PureComponent<Props, State> {
 
     this.state = {
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
-      activeTab: 'InventoryTopology',
+      activeTab: 'topology',
       isUsingVsphere: false,
     }
   }
@@ -103,56 +86,25 @@ class Infrastructure extends PureComponent<Props, State> {
     onChooseAutoRefresh(milliseconds)
   }
 
-  public async componentDidMount() {
-    const {notify, router} = this.props
-    const params = _.get(router.params, 'infraTab', null)
+  public static getDerivedStateFromProps(nextProps: Props) {
+    const {source, router, links} = nextProps
+    const {addons} = links
 
-    const infraTab = params === 'topology' ? 'InventoryTopology' : 'Host'
+    const infraTab = _.get(router.params, 'infraTab', 'topology')
+    const isUsingVsphere = !_.isEmpty(
+      _.find(addons, addon => {
+        const {name, url} = addon
+        return name === 'vsphere' && url === 'on'
+      })
+    )
 
-    this.setState({activeTab: infraTab})
-
-    const layoutResults = await getLayouts()
-    const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
-
-    if (layouts) {
-      await this.fetchHostsData(layouts)
-    } else {
-      notify(notifyUnableToGetApps())
-      return
+    if (!isUsingVsphere && infraTab === 'vmware') {
+      router.replace(`/sources/${source.id}/infrastructure/topology`)
     }
-  }
 
-  public componentDidUpdate() {
-    const {router, source} = this.props
-
-    if (!_.isEmpty(router.params.infraTab)) {
-      const {
-        params: {infraTab},
-      } = router
-
-      let isNotFound = true
-
-      if (infraTab === 'topology') {
-        isNotFound = false
-        this.setState({activeTab: 'InventoryTopology'})
-      }
-      if (infraTab === 'host') {
-        isNotFound = false
-        this.setState({activeTab: 'Host'})
-      }
-
-      if (infraTab === 'vmware') {
-        if (this.state.isUsingVsphere) {
-          isNotFound = false
-          this.setState({activeTab: 'VMware'})
-        }
-      }
-
-      if (isNotFound) {
-        router.push(`/sources/${source.id}/infrastructure/topology`)
-      }
-    } else {
-      router.push(`/sources/${source.id}/infrastructure/topology`)
+    return {
+      activeTab: infraTab,
+      isUsingVsphere,
     }
   }
 
@@ -178,8 +130,8 @@ class Infrastructure extends PureComponent<Props, State> {
               <Radio.Button
                 id="hostspage-tab-InventoryTopology"
                 titleText="InventoryTopology"
-                value="InventoryTopology"
-                active={activeTab === 'InventoryTopology'}
+                value="topology"
+                active={activeTab === 'topology'}
                 onClick={this.onChooseActiveTab}
               >
                 Topology
@@ -187,8 +139,8 @@ class Infrastructure extends PureComponent<Props, State> {
               <Radio.Button
                 id="hostspage-tab-Host"
                 titleText="Host"
-                value="Host"
-                active={activeTab === 'Host'}
+                value="host"
+                active={activeTab === 'host'}
                 onClick={this.onChooseActiveTab}
               >
                 Host
@@ -197,8 +149,8 @@ class Infrastructure extends PureComponent<Props, State> {
                 <Radio.Button
                   id="hostspage-tab-VMware"
                   titleText="VMware"
-                  value="VMware"
-                  active={activeTab === 'VMware'}
+                  value="vmware"
+                  active={activeTab === 'vmware'}
                   onClick={this.onChooseActiveTab}
                 >
                   VMware
@@ -208,7 +160,7 @@ class Infrastructure extends PureComponent<Props, State> {
           </Page.Header.Center>
 
           <Page.Header.Right showSourceIndicator={true}>
-            {activeTab !== 'InventoryTopology' && <GraphTips />}
+            {activeTab !== 'topology' && <GraphTips />}
             <AutoRefreshDropdown
               selected={autoRefresh}
               onChoose={this.handleChooseAutoRefresh}
@@ -227,13 +179,13 @@ class Infrastructure extends PureComponent<Props, State> {
             />
           </Page.Header.Right>
         </Page.Header>
-        <Page.Contents scrollable={true} fullWidth={activeTab !== 'Host'}>
+        <Page.Contents scrollable={true} fullWidth={activeTab !== 'host'}>
           <>
-            {activeTab === 'Host' && (
+            {activeTab === 'host' && (
               //@ts-ignore
               <HostsPage {...this.props} />
             )}
-            {activeTab === 'VMware' && (
+            {activeTab === 'vmware' && (
               //@ts-ignore
               <VMHostPage
                 source={source}
@@ -242,7 +194,7 @@ class Infrastructure extends PureComponent<Props, State> {
                 handleClearTimeout={handleClearTimeout}
               />
             )}
-            {activeTab === 'InventoryTopology' && (
+            {activeTab === 'topology' && (
               //@ts-ignore
               <InventoryTopology
                 source={source}
@@ -271,77 +223,7 @@ class Infrastructure extends PureComponent<Props, State> {
 
   private onChooseActiveTab = (activeTab: string): void => {
     const {router, source} = this.props
-    const {isUsingVsphere} = this.state
-
-    if (activeTab === 'InventoryTopology') {
-      router.push(`/sources/${source.id}/infrastructure/topology`)
-    }
-
-    if (activeTab === 'Host') {
-      router.push(`/sources/${source.id}/infrastructure/host`)
-    }
-
-    if (isUsingVsphere && activeTab === 'VMware') {
-      router.push(`/sources/${source.id}/infrastructure/vmware`)
-    }
-
-    this.setState({
-      activeTab,
-    })
-  }
-
-  private fetchHostsData = async (layouts: Layout[]): Promise<void> => {
-    const {source, links, notify} = this.props
-    const {addons} = links
-
-    const envVars = await getEnv(links.environment)
-    const telegrafSystemInterval = getDeep<string>(
-      envVars,
-      'telegrafSystemInterval',
-      ''
-    )
-
-    const hostsError = notifyUnableToGetHosts().message
-    const tempVars = generateForHosts(source)
-
-    try {
-      const hostsObject = await getCpuAndLoadForHosts(
-        source.links.proxy,
-        source.telegraf,
-        telegrafSystemInterval,
-        tempVars
-      )
-      if (!hostsObject) {
-        throw new Error(hostsError)
-      }
-
-      const newHosts = await getAppsForHosts(
-        source.links.proxy,
-        hostsObject,
-        layouts,
-        source.telegraf,
-        tempVars
-      )
-
-      const isUsingVsphere = Boolean(
-        _.find(addons, addon => {
-          return addon.name === 'vsphere' && addon.url === 'on'
-        }) &&
-          _.find(newHosts, v => {
-            return _.includes(v.apps, 'vsphere')
-          })
-      )
-
-      this.setState({
-        isUsingVsphere,
-      })
-    } catch (error) {
-      console.error(error)
-      notify(notifyUnableToGetHosts())
-      this.setState({
-        isUsingVsphere: false,
-      })
-    }
+    router.push(`/sources/${source.id}/infrastructure/${activeTab}`)
   }
 }
 

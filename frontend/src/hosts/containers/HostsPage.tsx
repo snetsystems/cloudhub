@@ -12,9 +12,7 @@ import Dropdown from 'src/shared/components/Dropdown'
 import HostsTable from 'src/hosts/components/HostsTable'
 import CspHostsTable from 'src/hosts/components/CspHostsTable'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
-import ManualRefresh, {
-  ManualRefreshProps,
-} from 'src/shared/components/ManualRefresh'
+import {ManualRefreshProps} from 'src/shared/components/ManualRefresh'
 import {ButtonShape, Page, Radio} from 'src/reusable_ui'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
@@ -221,12 +219,14 @@ export class HostsPage extends PureComponent<Props, State> {
 
     // For rendering whole hosts list
     this.fetchHostsData(layouts).then(hosts => {
-      if (autoRefresh) {
+      if (autoRefresh && this.state.activeCspTab === 'Private') {
+        clearInterval(this.intervalID)
         this.intervalID = window.setInterval(
           () => this.fetchHostsData(layouts),
           autoRefresh
         )
       }
+
       GlobalAutoRefresher.poll(autoRefresh)
 
       const defaultState = {
@@ -266,6 +266,16 @@ export class HostsPage extends PureComponent<Props, State> {
     })
 
     this.fetchCspHostsData(layouts).then(cloudHosts => {
+      if (autoRefresh && this.state.activeCspTab === 'aws') {
+        clearInterval(this.intervalID)
+        this.intervalID = window.setInterval(
+          () => this.fetchCspHostsData(layouts),
+          autoRefresh
+        )
+      }
+
+      GlobalAutoRefresher.poll(autoRefresh)
+
       const defaultState = {
         focusedInstance: null,
       }
@@ -317,7 +327,6 @@ export class HostsPage extends PureComponent<Props, State> {
         prevState.focusedHost !== focusedHost ||
         (prevState.activeCspTab !== activeCspTab && activeCspTab === 'Private')
       ) {
-        this.fetchHostsData(layouts)
         const {filteredLayouts} = await this.getLayoutsforHost(
           layouts,
           focusedHost
@@ -332,13 +341,28 @@ export class HostsPage extends PureComponent<Props, State> {
           activeCspTab === 'aws') ||
         (prevState.selectedAgent !== selectedAgent && focusedInstance)
       ) {
-        this.fetchCspHostsData(layouts)
         const {filteredLayouts} = await this.getLayoutsforInstance(
           layouts,
           focusedInstance
         )
 
         this.setState({filteredLayouts})
+      }
+
+      if (autoRefresh && prevState.activeCspTab !== activeCspTab) {
+        clearInterval(this.intervalID)
+
+        if (activeCspTab === 'Private') {
+          this.intervalID = window.setInterval(() => {
+            this.fetchHostsData(layouts)
+          }, autoRefresh)
+        }
+
+        if (activeCspTab === 'aws') {
+          this.intervalID = window.setInterval(() => {
+            this.fetchCspHostsData(layouts)
+          }, autoRefresh)
+        }
       }
 
       if (prevProps.autoRefresh !== autoRefresh) {
@@ -348,16 +372,28 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   public async UNSAFE_componentWillReceiveProps(nextProps: Props) {
-    const {layouts, focusedHost} = this.state
+    const {layouts, focusedHost, focusedInstance} = this.state
 
     if (layouts) {
       if (this.props.manualRefresh !== nextProps.manualRefresh) {
-        this.fetchHostsData(layouts)
-        const {filteredLayouts} = await this.getLayoutsforHost(
-          layouts,
-          focusedHost
-        )
-        this.setState({filteredLayouts})
+        if (this.state.activeCspTab === 'Private') {
+          this.fetchHostsData(layouts)
+          const {filteredLayouts} = await this.getLayoutsforHost(
+            layouts,
+            focusedHost
+          )
+          this.setState({filteredLayouts})
+        }
+
+        if (this.state.activeCspTab === 'aws') {
+          this.fetchCspHostsData(layouts)
+          const {filteredLayouts} = await this.getLayoutsforInstance(
+            layouts,
+            focusedInstance
+          )
+
+          this.setState({filteredLayouts})
+        }
       }
 
       if (this.props.autoRefresh !== nextProps.autoRefresh) {
@@ -365,9 +401,17 @@ export class HostsPage extends PureComponent<Props, State> {
         GlobalAutoRefresher.poll(nextProps.autoRefresh)
 
         if (nextProps.autoRefresh) {
-          this.intervalID = window.setInterval(() => {
-            this.fetchHostsData(layouts)
-          }, nextProps.autoRefresh)
+          if (this.state.activeCspTab === 'Private') {
+            this.intervalID = window.setInterval(() => {
+              this.fetchHostsData(layouts)
+            }, nextProps.autoRefresh)
+          }
+
+          if (this.state.activeCspTab === 'aws') {
+            this.intervalID = window.setInterval(() => {
+              this.fetchCspHostsData(layouts)
+            }, nextProps.autoRefresh)
+          }
         }
       }
     }
@@ -1172,4 +1216,4 @@ const mdtp = dispatch => ({
   ),
 })
 
-export default connect(mstp, mdtp, null)(ManualRefresh<Props>(HostsPage))
+export default connect(mstp, mdtp, null)(HostsPage)
