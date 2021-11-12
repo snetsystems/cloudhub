@@ -17,6 +17,7 @@ import GraphTips from 'src/shared/components/GraphTips'
 import HostsPage from 'src/hosts/containers/HostsPage'
 import VMHostPage from 'src/hosts/containers/VMHostsPage'
 import InventoryTopology from 'src/hosts/containers/InventoryTopology'
+import KubernetesPage from 'src/hosts/containers/KubernetesPage'
 
 // Actions
 import {
@@ -65,6 +66,7 @@ interface State {
   timeRange: TimeRange
   activeTab: string
   isUsingVsphere: boolean
+  isUsingKubernetes: boolean
 }
 
 @ErrorHandling
@@ -76,6 +78,7 @@ class Infrastructure extends PureComponent<Props, State> {
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       activeTab: 'topology',
       isUsingVsphere: false,
+      isUsingKubernetes: false,
     }
   }
 
@@ -91,6 +94,7 @@ class Infrastructure extends PureComponent<Props, State> {
     const {addons} = links
 
     const infraTab = _.get(router.params, 'infraTab', 'topology')
+
     const isUsingVsphere = !_.isEmpty(
       _.find(addons, addon => {
         const {name, url} = addon
@@ -98,13 +102,29 @@ class Infrastructure extends PureComponent<Props, State> {
       })
     )
 
-    if (!isUsingVsphere && infraTab === 'vmware') {
-      router.replace(`/sources/${source.id}/infrastructure/topology`)
+    const isUsingKubernetes = !_.isEmpty(
+      _.find(addons, addon => {
+        const {name, url} = addon
+        return name === 'kubernetes' && url === 'on'
+      })
+    )
+
+    let isRedirect = false
+
+    if (
+      (!isUsingVsphere && infraTab === 'vmware') ||
+      (!isUsingKubernetes && infraTab === 'kubernetes')
+    ) {
+      isRedirect = true
     }
 
+    if (isRedirect) {
+      router.replace(`/sources/${source.id}/infrastructure/topology`)
+    }
     return {
       activeTab: infraTab,
       isUsingVsphere,
+      isUsingKubernetes,
     }
   }
 
@@ -116,8 +136,11 @@ class Infrastructure extends PureComponent<Props, State> {
       inPresentationMode,
       source,
       handleClearTimeout,
+      links,
+      notify,
     } = this.props
-    const {isUsingVsphere, activeTab, timeRange} = this.state
+    const {isUsingVsphere, isUsingKubernetes, activeTab, timeRange} = this.state
+    const {addons} = links
 
     return (
       <Page className="hosts-list-page">
@@ -154,6 +177,17 @@ class Infrastructure extends PureComponent<Props, State> {
                   onClick={this.onChooseActiveTab}
                 >
                   VMware
+                </Radio.Button>
+              )}
+              {isUsingKubernetes && (
+                <Radio.Button
+                  id="hostspage-tab-Kubernetes"
+                  titleText="Kubernetes"
+                  value="kubernetes"
+                  active={activeTab === 'kubernetes'}
+                  onClick={this.onChooseActiveTab}
+                >
+                  Kubernetes
                 </Radio.Button>
               )}
             </div>
@@ -199,6 +233,15 @@ class Infrastructure extends PureComponent<Props, State> {
               <InventoryTopology
                 source={source}
                 manualRefresh={manualRefresh}
+                autoRefresh={autoRefresh}
+              />
+            )}
+            {activeTab === 'kubernetes' && (
+              //@ts-ignore
+              <KubernetesPage
+                source={source}
+                manualRefresh={manualRefresh}
+                timeRange={timeRange}
                 autoRefresh={autoRefresh}
               />
             )}

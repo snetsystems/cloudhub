@@ -36,6 +36,7 @@ import {
   getLocalK8sPersistentVolumesAsync,
   getLocalK8sPersistentVolumeClaimsAsync,
 } from 'src/hosts/actions/kubernetes'
+import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 //Middleware
 import {
@@ -2876,10 +2877,11 @@ class KubernetesPage extends PureComponent<Props, State> {
   }
 }
 
-const mstp = ({auth: {me}}) => {
+const mstp = ({links: {addons}, auth: {me}}) => {
   const meRole = _.get(me, 'role', null)
   return {
     meRole,
+    addons,
   }
 }
 
@@ -2906,6 +2908,7 @@ const mdtp = {
   handleGetRoleBindings: getLocalK8sRoleBindingsAsync,
   handleGetPersistentVolumes: getLocalK8sPersistentVolumesAsync,
   handleGetPersistentVolumeClaims: getLocalK8sPersistentVolumeClaimsAsync,
+  notify: notifyAction,
 }
 
-export default connect(mstp, mdtp)(KubernetesPage)
+export default connect(mstp, mdtp, null)(KubernetesPage)
