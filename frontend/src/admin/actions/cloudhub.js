@@ -32,28 +32,28 @@ import {REVERT_STATE_DELAY} from 'src/shared/constants'
 
 // response contains `users` and `links`
 export const loadUsers = ({users}) => ({
-  type: 'CloudHub_LOAD_USERS',
+  type: 'CLOUDHUB_LOAD_USERS',
   payload: {
     users,
   },
 })
 
 export const loadOrganizations = ({organizations}) => ({
-  type: 'CloudHub_LOAD_ORGANIZATIONS',
+  type: 'CLOUDHUB_LOAD_ORGANIZATIONS',
   payload: {
     organizations,
   },
 })
 
 export const addUser = user => ({
-  type: 'CloudHub_ADD_USER',
+  type: 'CLOUDHUB_ADD_USER',
   payload: {
     user,
   },
 })
 
 export const updateUser = (user, updatedUser) => ({
-  type: 'CloudHub_UPDATE_USER',
+  type: 'CLOUDHUB_UPDATE_USER',
   payload: {
     user,
     updatedUser,
@@ -61,7 +61,7 @@ export const updateUser = (user, updatedUser) => ({
 })
 
 export const syncUser = (staleUser, syncedUser) => ({
-  type: 'CloudHub_SYNC_USER',
+  type: 'CLOUDHUB_SYNC_USER',
   payload: {
     staleUser,
     syncedUser,
@@ -69,21 +69,21 @@ export const syncUser = (staleUser, syncedUser) => ({
 })
 
 export const removeUser = user => ({
-  type: 'CloudHub_REMOVE_USER',
+  type: 'CLOUDHUB_REMOVE_USER',
   payload: {
     user,
   },
 })
 
 export const addOrganization = organization => ({
-  type: 'CloudHub_ADD_ORGANIZATION',
+  type: 'CLOUDHUB_ADD_ORGANIZATION',
   payload: {
     organization,
   },
 })
 
 export const renameOrganization = (organization, newName) => ({
-  type: 'CloudHub_RENAME_ORGANIZATION',
+  type: 'CLOUDHUB_RENAME_ORGANIZATION',
   payload: {
     organization,
     newName,
@@ -91,7 +91,7 @@ export const renameOrganization = (organization, newName) => ({
 })
 
 export const syncOrganization = (staleOrganization, syncedOrganization) => ({
-  type: 'CloudHub_SYNC_ORGANIZATION',
+  type: 'CLOUDHUB_SYNC_ORGANIZATION',
   payload: {
     staleOrganization,
     syncedOrganization,
@@ -99,21 +99,21 @@ export const syncOrganization = (staleOrganization, syncedOrganization) => ({
 })
 
 export const removeOrganization = organization => ({
-  type: 'CloudHub_REMOVE_ORGANIZATION',
+  type: 'CLOUDHUB_REMOVE_ORGANIZATION',
   payload: {
     organization,
   },
 })
 
 export const loadMappings = ({mappings}) => ({
-  type: 'CloudHub_LOAD_MAPPINGS',
+  type: 'CLOUDHUB_LOAD_MAPPINGS',
   payload: {
     mappings,
   },
 })
 
 export const updateMapping = (staleMapping, updatedMapping) => ({
-  type: 'CloudHub_UPDATE_MAPPING',
+  type: 'CLOUDHUB_UPDATE_MAPPING',
   payload: {
     staleMapping,
     updatedMapping,
@@ -121,14 +121,14 @@ export const updateMapping = (staleMapping, updatedMapping) => ({
 })
 
 export const addMapping = mapping => ({
-  type: 'CloudHub_ADD_MAPPING',
+  type: 'CLOUDHUB_ADD_MAPPING',
   payload: {
     mapping,
   },
 })
 
 export const removeMapping = mapping => ({
-  type: 'CloudHub_REMOVE_MAPPING',
+  type: 'CLOUDHUB_REMOVE_MAPPING',
   payload: {
     mapping,
   },

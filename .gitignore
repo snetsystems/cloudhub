@@ -1,5 +1,7 @@
 # Directories
 backup
+cloudhub-canned
+cloudhub-protoboards
 frontend/reports
 frontend/build
 frontend/dist

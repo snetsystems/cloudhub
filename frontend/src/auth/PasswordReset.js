@@ -12,6 +12,7 @@ import {BASIC_PASSWORD_RESET_TYPE} from 'src/auth/constants'
 class PasswordReset extends PureComponent {
   constructor(props) {
     super(props)
+
     this.state = {
       name: '',
     }
@@ -22,10 +23,7 @@ class PasswordReset extends PureComponent {
   }
 
   handlePasswordResetSubmit = _.debounce(() => {
-    const {
-      handlePasswordReset,
-      authData: {basicPasswordReset},
-    } = this.props
+    const {handlePasswordReset, router, basicPasswordReset} = this.props
 
     const {name} = this.state
 
@@ -33,6 +31,8 @@ class PasswordReset extends PureComponent {
       url: basicPasswordReset,
       path: `/kapacitor/v1/service-tests/${AlertTypes.smtp}`,
       name,
+    }).then(res => {
+      router.push('/')
     })
   }, 250)
 
@@ -47,10 +47,7 @@ class PasswordReset extends PureComponent {
   }
 
   componentDidMount = () => {
-    const {
-      router,
-      authData: {passwordPolicy, basicPasswordResetType},
-    } = this.props
+    const {router, passwordPolicy, basicPasswordResetType} = this.props
     if (
       !passwordPolicy ||
       basicPasswordResetType === BASIC_PASSWORD_RESET_TYPE.ADMIN
@@ -86,8 +83,8 @@ class PasswordReset extends PureComponent {
               </div>
               <div className="panel-body" style={{padding: '0px'}}>
                 <div style={{paddingBottom: '15px'}}>
-                  Please enter your email address. We will send you an email to
-                  reset your password.
+                  Please, enter your ID, then we will send your reset password
+                  to your email or an external community in a while.
                 </div>
                 <div className="form-group auth-form">
                   <input
@@ -118,6 +115,9 @@ class PasswordReset extends PureComponent {
     )
   }
 }
+const mapStateToProps = ({
+  links: {passwordPolicy, basicPasswordResetType, basicPasswordReset},
+}) => ({passwordPolicy, basicPasswordResetType, basicPasswordReset})
 
 const mapDispatchToProps = {
   handlePasswordReset: passwordResetAsync,
@@ -128,7 +128,8 @@ const {func, shape, string} = PropTypes
 PasswordReset.propTypes = {
   router: shape(),
   handlePasswordReset: func,
-  authData: shape({basicPasswordReset: string, passwordPolicy: string}),
+  basicPasswordReset: string,
+  passwordPolicy: string,
 }
 
-export default connect(null, mapDispatchToProps)(PasswordReset)
+export default connect(mapStateToProps, mapDispatchToProps)(PasswordReset)

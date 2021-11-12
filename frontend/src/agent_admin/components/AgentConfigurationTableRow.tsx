@@ -42,9 +42,9 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
 
   private handleOnClickTableRow = (): void => {
     const {minions, onClickTableRow} = this.props
-    const {ip, host} = minions
+    const {host} = minions
 
-    onClickTableRow(host, ip)
+    onClickTableRow(host)
   }
 
   private handleOnClickAction = (e: MouseEvent): void => {

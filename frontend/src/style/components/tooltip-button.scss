@@ -1,0 +1,159 @@
+/*
+* Tooltip Button Style
+*/
+.tooltip-button {
+  .caret {
+    visibility: hidden;
+
+    position: fixed;
+    z-index: 1;
+
+    &:after {
+      content: '';
+      border: 8px solid transparent;
+      position: absolute;
+      z-index: 100;
+      border-bottom-color: #676978;
+    }
+
+    &.active {
+      visibility: visible;
+
+      &.bottom &:after {
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border-bottom-color: $g8-storm;
+      }
+    }
+  }
+}
+
+.tooltip-button--inner {
+  display: none;
+  min-width: 20px;
+  min-height: 20px;
+  padding: 0 7px;
+  border: 2px solid $g8-storm;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  color: $g20-white;
+  text-align: center;
+  white-space: pre;
+  background-color: #202028;
+
+  &:after {
+    content: '';
+    border: 8px solid transparent;
+    position: absolute;
+
+    z-index: 100;
+  }
+
+  &:hover {
+    cursor: pointer;
+    border-color: $g10-wolf;
+  }
+
+  .bottom &:after {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+.tooltip-button--position {
+  position: fixed;
+  &:hover + .caret:after {
+    border-bottom-color: $g10-wolf;
+  }
+}
+
+.tooltip-button.active {
+  z-index: 999;
+
+  .tooltip-button--inner {
+    display: block;
+  }
+}
+
+/*
+  * Tooltip Button Style
+  */
+.tooltip-button {
+  .caret {
+    visibility: hidden;
+
+    position: fixed;
+    z-index: 1;
+
+    &:after {
+      content: '';
+      border: 8px solid transparent;
+      position: absolute;
+      z-index: 100;
+      border-bottom-color: #676978;
+    }
+
+    &.active {
+      visibility: visible;
+
+      &.bottom &:after {
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border-bottom-color: $g8-storm;
+      }
+    }
+  }
+}
+
+.tooltip-button--inner {
+  display: none;
+  min-width: 20px;
+  min-height: 20px;
+  padding: 0 7px;
+  border: 2px solid $g8-storm;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 600;
+  color: $g20-white;
+  text-align: center;
+  white-space: pre;
+  background-color: #202028;
+
+  &:after {
+    content: '';
+    border: 8px solid transparent;
+    position: absolute;
+
+    z-index: 100;
+  }
+
+  &:hover {
+    cursor: pointer;
+    border-color: $g10-wolf;
+  }
+
+  .bottom &:after {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+.tooltip-button--position {
+  position: fixed;
+  &:hover + .caret:after {
+    border-bottom-color: $g10-wolf;
+  }
+}
+
+.tooltip-button.active {
+  z-index: 999;
+
+  .tooltip-button--inner {
+    display: block;
+  }
+}

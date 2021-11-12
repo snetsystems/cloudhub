@@ -84,7 +84,6 @@ interface AlertNodes {
   sensu: Sensu[]
   slack: Slack[]
   telegram: Telegram[]
-  hipChat: HipChat[]
   alerta: Alerta[]
   opsGenie: OpsGenie[]
   opsGenie2?: OpsGenie[]
@@ -148,12 +147,6 @@ interface PagerDuty2 {
   routingKey: string
 }
 
-// HipChat sends alerts to stride.com
-interface HipChat {
-  room: string
-  token: string
-}
-
 // Sensu sends alerts to sensu or sensuapp.org
 interface Sensu {
   source: string
@@ -208,7 +201,8 @@ interface OpsGenie {
 }
 
 // Talk sends alerts to Jane Talk (https://jianliao.com/site)
-interface Talk {} // tslint:disable-line
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface Talk {}
 
 // TriggerValues specifies the alerting logic for a specific trigger type
 interface TriggerValues {
@@ -256,7 +250,6 @@ export interface RuleMessage {
 }
 
 export interface KeyMappings {
-  hipchat: string
   opsgenie: string
   opsgenie2: string
   pagerduty: string
@@ -267,7 +260,6 @@ export interface KeyMappings {
 
 export interface FieldsFromConfigAlerts {
   alerta?: string[]
-  hipChat?: string[]
   kafka: string[]
   opsGenie?: string[]
   opsGenie2?: string[]
@@ -313,20 +305,15 @@ export type ConfigKeyMaps =
   | PushoverConfigKeyMap
   | TelegramConfigKeyMap
   | VictorOpsConfigKeyMap
+  // eslint-disable-next-line @typescript-eslint/ban-types
   | {}
 
 export interface AlertaProperties {
   environment: string
   origin: string
   token: string
+  'token-prefix': string
   url: string
-  enabled: boolean
-}
-
-export interface HipChatProperties {
-  room: string
-  url: string
-  token: string
   enabled: boolean
 }
 
@@ -349,6 +336,7 @@ export interface OpsGenieProperties {
   teams: string[]
   recipients: string[]
   enabled: boolean
+  recovery_action?: 'notes' | 'close' // available in OpsGenie2
 }
 
 export interface PagerDutyProperties {
@@ -417,7 +405,6 @@ export interface VictorOpsProperties {
 
 export type ServiceProperties =
   | AlertaProperties
-  | HipChatProperties
   | KafkaProperties
   | OpsGenieProperties
   | PagerDutyProperties
@@ -430,7 +417,7 @@ export type ServiceProperties =
   | TelegramProperties
   | VictorOpsProperties
 
-export type SpecificConfigOptions = Partial<SlackProperties>
+export type SpecificConfigOptions = Partial<SlackProperties & KafkaProperties>
 
 export interface RuleValues {
   value?: string | null
@@ -450,8 +437,8 @@ export interface LogItem {
   username?: string
   host?: string
   duration?: string
-  tag?: object
-  field?: object
+  tag?: Record<string, unknown>
+  field?: Record<string, unknown>
   cluster?: string
 }
 

@@ -1,0 +1,323 @@
+#containerWrapper {
+  display: flex;
+  position: relative;
+  flex-direction: column;
+  height: 100%;
+  .button {
+    margin: 0 0 0 4px;
+  }
+  .button:nth-child(1) {
+    margin: 0;
+  }
+  #contentBodySection {
+    display: flex;
+    position: relative;
+    height: calc(100% - 45px);
+  }
+  #toolbarContainer {
+    display: flex;
+    white-space: nowrap;
+    overflow: hidden;
+    background-color: $g3-castle;
+    padding: 5px 20px;
+    .toolbar--left {
+      flex: 4;
+    }
+    .toolbar--right {
+      flex: 1;
+      display: flex;
+    }
+  }
+  #sidebarContainer {
+    overflow: hidden;
+  }
+  #graphContainer {
+    position: relative;
+    touch-action: none;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    transform: translate(0, 0);
+  }
+  #outlineContainer {
+    position: fixed;
+    top: 10px;
+    // top: 98px;
+    right: 10px;
+    width: 200px;
+    height: 140px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid black;
+  }
+  .properties-table {
+    width: 100%;
+    td {
+      font-size: 14px;
+      font-weight: 600;
+      color: #bec2cc;
+      padding: 0 5px;
+    }
+  }
+  .mxgraph-cell--link-btn {
+    font-size: 16px;
+    color: #bec2cc;
+    &:hover {
+      color: #fff;
+      text-shadow: 0 0 5px #f58220, 0 0 10px #f58220, 0 0 25px #fff;
+      transition: text-shadow 0.3s ease;
+    }
+  }
+
+  .vertex {
+    &[btn-type='ipmi'] {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 25px;
+      height: 25px;
+      margin-left: -2px;
+      cursor: pointer;
+
+      &[ipmi-power-status='disconnected'] {
+        .mxgraph-cell--ipmi-btn.icon.switch {
+          color: $g13-mist;
+          &:hover {
+            cursor: pointer;
+          }
+
+          &:hover {
+            background-color: $g5-pepper;
+            color: $g18-cloud;
+          }
+        }
+      }
+      &[ipmi-power-status='on'] {
+        .mxgraph-cell--ipmi-btn.icon.switch {
+          color: $s-orange;
+          &:hover {
+            color: $s-deepOrange2;
+          }
+        }
+      }
+      &[ipmi-power-status='off'] {
+        .mxgraph-cell--ipmi-btn.icon.switch.switch {
+          color: $g13-mist;
+          &:hover {
+            cursor: pointer;
+          }
+
+          &:hover {
+            background-color: $g5-pepper;
+            color: $g18-cloud;
+          }
+        }
+      }
+    }
+  }
+
+  .mxgraph-cell--ipmi-btn {
+    font-size: 16px;
+    color: #bec2cc;
+  }
+  .tool-box {
+    display: flex;
+    flex-wrap: wrap;
+    min-width: 100px;
+  }
+  .mxgraph-cell--title {
+    padding: 5px;
+    white-space: break-spaces;
+    word-break: break-all;
+  }
+  .tool-instance {
+    width: 48px;
+    height: 48px;
+    margin: 2px;
+    border: 1px solid #f58220;
+    border-radius: 5px;
+    background-color: #383846;
+    padding: 5px;
+    .mxgraph-cell--icon {
+      height: 100%;
+    }
+  }
+  .graph-instance {
+    width: 100px;
+    height: 100px;
+  }
+  .mxgraph-cell--icon-box {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto;
+  }
+  .mxgraph-cell--icon {
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+    &-server {
+      background-image: url('../../assets/images/stencils/clipart/Server_Tower_128x128.png');
+    }
+    &-internet {
+      background-image: url('../../assets/images/stencils/clipart/Earth_globe_128x128.png');
+    }
+    &-workstation {
+      background-image: url('../../assets/images/stencils/clipart/Monitor_Tower_128x128.png');
+    }
+    &-email {
+      background-image: url(../../assets/images/stencils/clipart/Email_128x128.png);
+    }
+    &-firewall {
+      background-image: url(../../assets/images/stencils/clipart/Firewall_02_128x128.png);
+    }
+    &-router {
+      background-image: url(../../assets/images/stencils/clipart/Router_Icon_128x128.png);
+    }
+    &-wirelessrouter {
+      background-image: url(../../assets/images/stencils/clipart/Wireless_Router_N_128x128.png);
+    }
+    &-database {
+      background-image: url(../../assets/images/stencils/clipart/Database_128x128.png);
+    }
+    &-virtualmachine {
+      background-image: url(../../assets/images/stencils/clipart/Virtual_Machine_128x128.png);
+    }
+    &-cloud {
+      background-image: url(../../assets/images/stencils/clipart/Cloud_128x128.png);
+    }
+    &-switch {
+      background-image: url(../../assets/images/stencils/clipart/Switch_128x128.png);
+    }
+  }
+}
+.properties-table--name {
+  flex: 1 0 0;
+  overflow: hidden;
+}
+
+.topology-hosts-row.hosts-table--tr {
+  cursor: default;
+}
+
+.vertex {
+  &.link-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 25px;
+    height: 25px;
+    margin-left: -2px;
+  }
+}
+
+.cloudhub-mxPopupMenu {
+  background: white;
+  position: absolute;
+  border: 0;
+  padding: 3px;
+  margin: 0px;
+}
+.cloudhub-mxPopupMenuItem {
+  color: black;
+  cursor: default;
+  padding: 2px;
+  font-family: Arial;
+  font-size: 11px;
+  &:hover {
+    color: white;
+    cursor: pointer;
+    background-color: $s-orange;
+  }
+}
+
+.cloudhub-mxPopupMenuIcon {
+  background-color: white;
+  padding: 0px;
+}
+.cloudhub-mxPopupMenu hr {
+  border-top: solid 1px #cccccc;
+}
+
+div.mxPopupMenu {
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  box-shadow: none;
+  background: #383846;
+  position: absolute;
+  border: 2px solid #f58220;
+  padding: 3px;
+  border-radius: 4px;
+
+  table.mxPopupMenu {
+    border-collapse: collapse;
+    margin: 0px;
+
+    tr.mxPopupMenuItem {
+      color: #fafafc;
+      cursor: default;
+    }
+    td.mxPopupMenuItem {
+      padding: 2px 5px 2px;
+      font-family: Arial;
+      font-size: 12px;
+
+      &:last-child {
+        padding: 0px 5px;
+      }
+    }
+    td.mxPopupMenuIcon {
+      background-color: white;
+      padding: 0px;
+    }
+    tr.mxPopupMenuItemHover {
+      background-color: #f58220;
+      border-radius: 2px;
+      color: #fafafc;
+    }
+    table.mxPopupMenu hr {
+      border-top: solid 1px #cccccc;
+    }
+    table.mxPopupMenu tr {
+      font-size: 4pt;
+    }
+  }
+
+  td.mxPopupMenuIcon {
+    background-color: #d0d0d0;
+    padding: 2px 4px 2px 4px;
+  }
+
+  .mxDisabled {
+    opacity: 0.2 !important;
+    cursor: default !important;
+  }
+}
+
+#statusContainer {
+  height: 100%;
+  .status-ref-wrap {
+    height: calc(100% - 32px);
+    #statusContainerRef {
+      padding: 5px 0px 1px 0px;
+
+      table {
+        width: calc(100% - 18px);
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 5px;
+        font-size: 11px;
+        border: 1px solid #383846;
+      }
+    }
+  }
+}
+
+.resizable-openbtn {
+  position: fixed;
+  top: 160px;
+  right: 10px;
+}

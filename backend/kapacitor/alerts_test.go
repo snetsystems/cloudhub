@@ -141,6 +141,30 @@ func TestAlertServices(t *testing.T) {
         .header('key', 'value')
 `,
 		},
+		{
+			name: "Test serviceNow",
+			rule: cloudhub.AlertRule{
+				AlertNodes: cloudhub.AlertNodes{
+					ServiceNow: []*cloudhub.ServiceNow{{
+						Source:     "a",
+						Type:       "b",
+						Node:       "c",
+						Resource:   "d",
+						MetricName: "e",
+						MessageKey: "f",
+					}},
+				},
+			},
+			want: `alert()
+        .serviceNow()
+        .source('a')
+        .node('c')
+        .type('b')
+        .resource('d')
+        .metricName('e')
+        .messageKey('f')
+`,
+		},
 	}
 	for _, tt := range tests {
 		got, err := AlertServices(tt.rule)

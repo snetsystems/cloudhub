@@ -29,7 +29,6 @@ interface Props {
   isVisible: boolean
   shells: ShellInfo[]
   tabIndex: number
-  headingTitle: string
   links: Links
   closeShell: () => void
   removeShell: (nodeName: string) => void

@@ -27,6 +27,7 @@ import {DEFAULT_HOME_PAGE} from 'src/shared/constants'
 import * as copy from 'src/shared/copy/notifications'
 
 import {Source, Me, Links, Notification, NotificationFunc} from 'src/types'
+import {connectedSourceAction, connectedSource} from 'src/sources/actions'
 
 interface Auth {
   isUsingAuth: boolean
@@ -35,6 +36,7 @@ interface Auth {
 
 interface State {
   isFetching: boolean
+  isOnetime: boolean
 }
 
 interface Params {
@@ -42,7 +44,7 @@ interface Params {
 }
 
 interface Props {
-  getSources: () => void
+  getSources: () => Promise<void>
   getOrgAll: (link: string) => void
   links: Links
   sources: Source[]
@@ -52,6 +54,7 @@ interface Props {
   location: Location
   auth: Auth
   notify: (message: Notification | NotificationFunc) => void
+  connectedSource: connectedSourceAction
 }
 
 export const SourceContext = React.createContext(undefined)
@@ -80,6 +83,7 @@ export class CheckSources extends Component<Props, State> {
 
     this.state = {
       isFetching: true,
+      isOnetime: false,
     }
   }
 
@@ -88,7 +92,7 @@ export class CheckSources extends Component<Props, State> {
     return {source: sources.find(s => s.id === params.sourceID)}
   }
 
-  public async componentWillMount() {
+  public async UNSAFE_componentWillMount() {
     const {
       router,
       auth: {isUsingAuth, me},
@@ -117,7 +121,7 @@ export class CheckSources extends Component<Props, State> {
     return true
   }
 
-  public async componentWillUpdate(nextProps, nextState) {
+  public async UNSAFE_componentWillUpdate(nextProps, nextState) {
     const {
       router,
       location,
@@ -168,9 +172,11 @@ export class CheckSources extends Component<Props, State> {
 
       if (isUsingAuth && !isUserAuthorized(me.role, EDITOR_ROLE)) {
         if (defaultSource) {
-          return router.push(`/sources/${defaultSource.id}/${restString}`)
+          router.push(`/sources/${defaultSource.id}/${restString}`)
+          return this.props.connectedSource(defaultSource.id)
         } else if (sources[0]) {
-          return router.push(`/sources/${sources[0].id}/${restString}`)
+          router.push(`/sources/${sources[0].id}/${restString}`)
+          return this.props.connectedSource(sources[0].id)
         }
         // if you're a viewer and there are no sources, go to purgatory.
         notify(copy.notifyOrgHasNoSources())
@@ -180,15 +186,22 @@ export class CheckSources extends Component<Props, State> {
       // if you're an editor or not using auth, try for sources or otherwise
       // create one
       if (defaultSource) {
-        return router.push(`/sources/${defaultSource.id}/${restString}`)
+        router.push(`/sources/${defaultSource.id}/${restString}`)
+        return this.props.connectedSource(defaultSource.id)
       } else if (sources[0]) {
-        return router.push(`/sources/${sources[0].id}/${restString}`)
+        router.push(`/sources/${sources[0].id}/${restString}`)
+        return this.props.connectedSource(sources[0].id)
       }
 
       return router.push(`/sources/new?redirectPath=${location.pathname}`)
     }
 
     if (!isFetching && !location.pathname.includes('/manage-sources')) {
+      if (!this.state.isOnetime) {
+        const sourceID = location.pathname.match(/(?:\/sources\/(\d+))/)[1]
+        this.props.connectedSource(sourceID)
+        this.setState({isOnetime: true})
+      }
       try {
         await getSourceHealth(source.links.health)
       } catch (error) {
@@ -232,6 +245,7 @@ const mapDispatchToProps = dispatch => ({
   getSources: bindActionCreators(getSourcesAsync, dispatch),
   getOrgAll: bindActionCreators(loadOrganizationsAsync, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
+  connectedSource: bindActionCreators(connectedSource, dispatch),
 })
 
 export default connect(

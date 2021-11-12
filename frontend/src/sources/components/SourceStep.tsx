@@ -1,3 +1,4 @@
+/* eslint-disable no-empty */
 // Libraries
 import React, {PureComponent} from 'react'
 import {connect} from 'react-redux'
@@ -29,13 +30,19 @@ import {
   notifySourceConnectionSucceeded,
 } from 'src/shared/copy/notifications'
 import {insecureSkipVerifyText} from 'src/shared/copy/tooltipText'
-import {DEFAULT_SOURCE} from 'src/shared/constants'
+import {
+  DEFAULT_SOURCE,
+  SOURCE_TYPE_INFLUX_V2,
+  SOURCE_TYPE_INFLUX_V1,
+} from 'src/shared/constants'
 
 // Types
 import {Source, Me, Organization} from 'src/types'
 import {NextReturn} from 'src/types/wizard'
 
 const isNewSource = (source: Partial<Source>) => !source.id
+const isV2Auth = (source: Partial<Source>) =>
+  source.type && source.type === SOURCE_TYPE_INFLUX_V2
 
 interface Props {
   notify: typeof notifyAction
@@ -103,6 +110,7 @@ class SourceStep extends PureComponent<Props, State> {
   public render() {
     const {source} = this.state
     const {me, organizations, isUsingAuth, onBoarding} = this.props
+    const sourceIsV2 = isV2Auth(source)
 
     let dropdownCurOrg: any = null
     if (isUsingAuth) {
@@ -130,6 +138,7 @@ class SourceStep extends PureComponent<Props, State> {
           label="Connection URL"
           onChange={this.onChangeInput('url')}
           valueModifier={this.URLModifier}
+          onSubmit={this.handleSubmitUrl}
         />
         <WizardTextInput
           value={source.name}
@@ -138,15 +147,17 @@ class SourceStep extends PureComponent<Props, State> {
         />
         <WizardTextInput
           value={source.username}
-          label="Username"
+          label={sourceIsV2 ? 'Organization' : 'Username'}
           onChange={this.onChangeInput('username')}
+          onSubmit={this.handleSubmitUsername}
         />
         <WizardTextInput
           value={source.password}
-          label="Password"
+          label={sourceIsV2 ? 'Token' : 'Password'}
           placeholder={this.passwordPlaceholder}
           type="password"
           onChange={this.onChangeInput('password')}
+          onSubmit={this.handleSubmitPassword}
         />
         <div className="form-group col-xs-6">
           <label>Database(= Group) Name</label>
@@ -179,11 +190,19 @@ class SourceStep extends PureComponent<Props, State> {
         )}
         {!onBoarding && (
           <WizardCheckbox
+            halfWidth={true}
             isChecked={source.default}
-            text={'Make this the default connection'}
+            text={'Default connection'}
             onChange={this.onChangeInput('default')}
           />
         )}
+        <WizardCheckbox
+          halfWidth={!onBoarding}
+          isChecked={sourceIsV2}
+          text={'InfluxDB v2 Auth'}
+          onChange={this.changeAuth}
+        />
+
         {this.isHTTPS && (
           <WizardCheckbox
             isChecked={source.insecureSkipVerify}
@@ -243,7 +262,11 @@ class SourceStep extends PureComponent<Props, State> {
   private onChooseDropdown = (key: string) => (org: Organization) => {
     const {source} = this.state
     const {setError} = this.props
-    this.setState({source: {...source, [key]: org.name}})
+
+    this.setState({
+      source: {...source, [key]: org.name, name: org.name},
+    })
+
     setError(false)
   }
 
@@ -252,6 +275,47 @@ class SourceStep extends PureComponent<Props, State> {
     const {setError} = this.props
     this.setState({source: {...source, [key]: value}})
     setError(false)
+  }
+  private changeAuth = (v2: boolean) => {
+    const {source} = this.state
+    this.setState({
+      source: {
+        ...source,
+        username: '',
+        password: '',
+        type: v2 ? SOURCE_TYPE_INFLUX_V2 : SOURCE_TYPE_INFLUX_V1,
+        version: v2 ? '2.x' : '1.x',
+      },
+    })
+  }
+
+  private handleSubmitUrl = (url: string) => this.detectServerType({url})
+  private handleSubmitUsername = (username: string) =>
+    this.detectServerType({username})
+  private handleSubmitPassword = (password: string) =>
+    this.detectServerType({password})
+
+  private detectServerType = async (changedField: Partial<Source>) => {
+    const source = {...this.state.source, ...changedField}
+    const metaserviceURL = new URL(source.metaUrl || DEFAULT_SOURCE.metaUrl)
+    const sourceURL = new URL(source.url || DEFAULT_SOURCE.url)
+
+    if (isNewSource(source)) {
+      try {
+        metaserviceURL.hostname = sourceURL.hostname
+        const {type} = await createSource(source, {dryRun: 'false'})
+        this.setState({
+          source: {...this.state.source, type, metaUrl: metaserviceURL.href},
+        })
+      } catch (err) {}
+    } else {
+      try {
+        const {type} = await updateSource(source, {dryRun: 'false'})
+        this.setState({
+          source: {...this.state.source, type},
+        })
+      } catch (err) {}
+    }
   }
 
   private get sourceIsEdited(): boolean {
@@ -277,4 +341,4 @@ const mdtp = {
   updateSource: updateSourceAction,
 }
 
-export default connect(null, mdtp, null, {withRef: true})(SourceStep)
+export default connect(null, mdtp, null, {forwardRef: true})(SourceStep)

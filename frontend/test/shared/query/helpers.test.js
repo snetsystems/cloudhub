@@ -47,6 +47,33 @@ describe('Shared.Query.Helpers', () => {
 
       expect(timeRangeType(timeRange)).toBe(RELATIVE_UPPER)
     })
+
+    it('can detect absolute type with variables', () => {
+      const upper = ':upperDashboardTime:'
+      const lower = ':dashboardTime:'
+
+      const timeRange = {lower, upper, format}
+
+      expect(timeRangeType(timeRange)).toBe(ABSOLUTE)
+    })
+
+    it('can detect exclusive relative lower with variable', () => {
+      const lower = ':dashboardTime:'
+      const upper = null
+
+      const timeRange = {lower, upper, format}
+
+      expect(timeRangeType(timeRange)).toBe(RELATIVE_LOWER)
+    })
+
+    it('can detect relative upper with variable', () => {
+      const upper = 'now()'
+      const lower = ':dashboardTime:'
+
+      const timeRange = {lower, upper, format}
+
+      expect(timeRangeType(timeRange)).toBe(RELATIVE_UPPER)
+    })
   })
 
   describe('timeRangeShift', () => {

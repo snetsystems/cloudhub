@@ -306,9 +306,13 @@ export const getTicketRemoteConsoleAsync = (
 }
 
 // CH DB VSHPERE API
-export const getVSpheresAsync = ({shouldResetVSphere = false} = {}) => async (
-  dispatch: Dispatch<Action>
-) => {
+export const getVSpheresAsync = ({
+  shouldResetVSphere = false,
+  sourceID = null,
+}: {
+  shouldResetVSphere: boolean
+  sourceID: string
+}) => async (dispatch: Dispatch<Action>) => {
   let vSpheres = {}
 
   if (shouldResetVSphere) {
@@ -319,9 +323,11 @@ export const getVSpheresAsync = ({shouldResetVSphere = false} = {}) => async (
     const data = await getVSpheresApi()
 
     _.values(data).forEach(v => {
-      vSpheres[v.host] = {
-        ...v,
-        isPause: true,
+      if (v.datasource === sourceID) {
+        vSpheres[v.host] = {
+          ...v,
+          isPause: true,
+        }
       }
     })
 
@@ -352,7 +358,8 @@ export const addVCenterAsync = (
   password: string,
   port: string,
   protocol: string,
-  interval: string
+  interval: string,
+  sourceID: string
 ) => async (dispatch: Dispatch<Action>) => {
   try {
     const resultAddVCenterAsync = await addVSphereApi(
@@ -362,7 +369,8 @@ export const addVCenterAsync = (
       password,
       port,
       protocol,
-      interval
+      interval,
+      sourceID
     )
 
     return resultAddVCenterAsync
@@ -380,7 +388,8 @@ export const updateVSphereAsync = (
   password: string,
   port: string,
   protocol: string,
-  interval: string
+  interval: string,
+  sourceID: string
 ) => async (dispatch: Dispatch<Action>) => {
   try {
     const vSpheres = await updateVSphereApi({
@@ -392,6 +401,7 @@ export const updateVSphereAsync = (
       port,
       protocol,
       interval,
+      sourceID,
     })
 
     return vSpheres

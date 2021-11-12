@@ -536,10 +536,10 @@ export const notifyDashboardExportFailed = (
   message: `Failed to export Dashboard ${name}: ${errorMessage}.`,
 })
 
-export const notifyDashboardImported = (name: string): Notification => ({
+export const notifyDashboardImported = (): Notification => ({
   ...defaultSuccessNotification,
   icon: 'dash-h',
-  message: `Dashboard ${name} imported successfully.`,
+  message: `Dashboard imported successfully.`,
 })
 
 export const notifyDashboardImportFailed = (
@@ -1086,14 +1086,41 @@ export const notifyConnectRemoteConsoleFailed = (
 //  CloudHub User Auth Notifications
 //  ----------------------------------------------------------------------------
 
-export const notifyLoginFailed = (error: {
-  code: number
-  message: string
-}): Notification => ({
-  ...defaultErrorNotification,
-  isHasHTML: true,
-  message: `Login is failed.<br/>CODE: ${error.code}<br/>REASON: ${error.message}`,
-})
+export const notifyLoginFailed = (
+  error: {
+    code: number
+    message: string
+    retryCount: number
+    locked: boolean
+    lockedTime: string
+  },
+  retryPolicysObj: {[k: string]: any}
+): Notification => {
+  const {message, retryCount, locked} = error
+  const {count, delaytime} = retryPolicysObj
+  let temp = `Login is failed.
+  <hr class="notification-line">
+  <div>${message}</div>
+  `
+
+  if (retryCount !== 0) {
+    if (locked) {
+      temp += `<hr class="notification-line">
+    <div>Please try again in ${delaytime} minutes.</div>
+    `
+    } else {
+      temp += `<hr class="notification-line">
+    <div>${count - retryCount} time[s] left.</div>
+      `
+    }
+  }
+
+  return {
+    ...defaultErrorNotification,
+    isHasHTML: true,
+    message: temp,
+  }
+}
 
 export const notifyLoginCheck = (): Notification => ({
   ...defaultErrorNotification,
@@ -1118,10 +1145,12 @@ export const notifyUserPasswordResetCompleted = ({
   name,
   password,
   sendKind,
+  passwordReturn = false,
 }: {
   name: string
   password: string
   sendKind: string
+  passwordReturn?: boolean
 }): Notification => {
   let message = `
     <div>Reset the password is successful.</div>
@@ -1142,7 +1171,7 @@ export const notifyUserPasswordResetCompleted = ({
 
   return {
     ...defaultSuccessNotification,
-    duration: INFINITE,
+    duration: passwordReturn ? INFINITE : TEN_SECONDS,
     isHasHTML: true,
     message,
   }
@@ -1150,7 +1179,8 @@ export const notifyUserPasswordResetCompleted = ({
 
 export const notifyUserPasswordResetFailed = (): Notification => ({
   ...defaultErrorNotification,
-  message: `Reset the password is failed.`,
+  isHasHTML: true,
+  message: `The password reset is failed. <br/>Check out your ID or email address.`,
 })
 
 export const notifyUserUpdateCompleted = (): Notification => ({
@@ -1176,4 +1206,27 @@ export const notifyUserOTPChangeCompleted = (): Notification => ({
 export const notifyUserOTPChangeFailed = (): Notification => ({
   ...defaultErrorNotification,
   message: `Updating your password is failed.`,
+})
+
+export const notifyUserLockChangeSuccess = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `change user lock successfuly`,
+})
+
+export const notifyeUserLockChangFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `change user lock failed.`,
+})
+
+//  CloudHub infrastructure Inventory Topology Notifications
+//  ----------------------------------------------------------------------------
+export const notifyIpmiConnectionFailed = (error: Error): Notification => ({
+  ...defaultErrorNotification,
+  message: `IPMI Connection Failed, ${error}`,
+})
+
+export const notifygetAWSInstancesFailed = (error: Error): Notification => ({
+  ...defaultErrorNotification,
+  isHasHTML: true,
+  message: `CSP Host Get Failed, ${error}`,
 })

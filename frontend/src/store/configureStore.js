@@ -20,6 +20,7 @@ import persistStateEnhancer from './persistStateEnhancer'
 import servicesReducer from 'src/shared/reducers/services'
 import envReducer from 'src/shared/reducers/env'
 import {vspheres} from 'src/hosts/reducers'
+import source from 'src/sources/reducers'
 
 // eslint-disable-next-line no-unused-vars
 function lastAction(state = {}, action) {
@@ -42,9 +43,13 @@ const rootReducer = combineReducers({
   services: servicesReducer,
   vspheres,
   lastAction,
+  source,
 })
 
-const composeEnhancers = window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose
+const composeEnhancers =
+  process.env.NODE_ENV === 'production'
+    ? compose
+    : window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose
 
 export default function configureStore(initialState, browserHistory) {
   const routingMiddleware = routerMiddleware(browserHistory)

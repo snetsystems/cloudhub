@@ -1,12 +1,14 @@
 // Libraries
 import React, {Component} from 'react'
 import classnames from 'classnames'
+import _ from 'lodash'
 
 // Components
 import {Dropdown, Button, ButtonShape, IconFont} from 'src/reusable_ui'
 
 // Constants
-import autoRefreshOptions, {
+import {
+  getAutoRefreshOptions,
   AutoRefreshOption,
   AutoRefreshOptionType,
 } from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
@@ -36,7 +38,6 @@ class AutoRefreshDropdown extends Component<Props> {
   }
 
   public render() {
-    const options = this.props.userAutoRefreshOptions || autoRefreshOptions
     return (
       <div className={this.className}>
         <Dropdown
@@ -45,7 +46,7 @@ class AutoRefreshDropdown extends Component<Props> {
           onChange={this.handleDropdownChange}
           selectedID={this.selectedID}
         >
-          {options.map(option => {
+          {getAutoRefreshOptions().map(option => {
             if (option.type === AutoRefreshOptionType.Header) {
               return (
                 <Dropdown.Divider
@@ -102,9 +103,11 @@ class AutoRefreshDropdown extends Component<Props> {
   }
 
   private get selectedID(): string {
-    const {selected, userAutoRefreshOptions} = this.props
-    const options = userAutoRefreshOptions || autoRefreshOptions
-    const selectedOption = options.find(
+    const {selected} = this.props
+    const autoRefreshOptions = getAutoRefreshOptions()
+
+    const selectedOption = _.find(
+      autoRefreshOptions,
       option => option.milliseconds === selected
     )
 

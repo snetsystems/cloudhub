@@ -28,7 +28,7 @@ $tooltip-code-color: $c-potassium;
   text-transform: none;
   text-align: left;
   cursor: default;
-  pointer-events: unset;
+  pointer-events: auto;
 
   &.place-bottom {
     margin-top: 5px;

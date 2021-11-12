@@ -1,4 +1,4 @@
-VERSION = 1.0.10
+VERSION = 1.1.1
 ifeq ($(OS), Windows_NT)
 	GOBINDATA := $(shell go-bindata.exe --version 2>nil)
 else
@@ -90,7 +90,7 @@ lint:
 	cd frontend && yarn run lint
 
 lint-ci:
-	cd frontend && yarn run eslint && yarn run tslint && yarn run tsc # fail fast for ci process
+	cd frontend && yarn run eslint && yarn run tsc # fail fast for ci process
 
 run: ${BINARY}
 	./backend/cmd/cloudhub/${BINARY}
@@ -103,7 +103,7 @@ clean:
 	if [ -f backend/cmd/cloudhub/${BINARY} ] ; then rm backend/cmd/cloudhub/${BINARY} ; fi
 	if [ -f backend/cmd/cloudhubctl/${CTLBINARY} ] ; then rm backend/cmd/cloudhubctl/${CTLBINARY} ; fi
 	cd frontend && yarn run clean
-	cd frontend && rm -rf node_modules
+#	cd frontend && rm -rf node_modules
 	rm -f backend/dist/dist_gen.go backend/canned/bin_gen.go backend/protoboards/bin_gen.go backend/server/swagger_gen.go
 	@rm -f .godep .jsdep .jssrc .bindata
 

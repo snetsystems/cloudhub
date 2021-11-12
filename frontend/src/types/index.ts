@@ -2,7 +2,15 @@ export * from './app'
 export * from 'src/types/kapacitor'
 import {LayoutCell, LayoutQuery} from './layouts'
 import {Service, NewService, ServiceLinks} from './services'
-import {Links, Organization, Role, Permission, User, Me} from './auth'
+import {
+  Links,
+  Organization,
+  Role,
+  Permission,
+  User,
+  BasicUser,
+  Me,
+} from './auth'
 import {
   PBCell,
   Cell,
@@ -65,7 +73,7 @@ import {
 import {JSONFeedData} from './status'
 import {Annotation} from './annotations'
 import {WriteDataMode, QueryUpdateState} from './dataExplorer'
-import {Host, Layout} from './hosts'
+import {Host, Layout, Ipmi, IpmiCell, CloudHost, CloudHosts} from './hosts'
 import {Env} from './env'
 import {Shells, ShellInfo, ShellLoad} from './shell'
 
@@ -75,6 +83,7 @@ export {
   Links,
   Role,
   User,
+  BasicUser,
   Organization,
   Permission,
   Template,
@@ -137,9 +146,13 @@ export {
   QueryStatus,
   Host,
   Layout,
+  Ipmi,
+  IpmiCell,
   QueryType,
   QueryUpdateState,
   Shells,
   ShellInfo,
   ShellLoad,
+  CloudHost,
+  CloudHosts,
 }

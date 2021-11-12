@@ -1,12 +1,75 @@
+import _ from 'lodash'
+import yaml from 'js-yaml'
+
 import AJAX from 'src/utils/ajax'
-import {SaltStack} from 'src/types/saltstack'
+import {createActivityLog} from 'src/shared/apis'
+
+// Types
+import {Ipmi, IpmiCell} from 'src/types'
+
+interface Params {
+  client?: string
+  fun?: string
+  arg?: string[] | string
+  tgt_type?: string
+  tgt?: string[] | string
+  match?: string
+  include_rejected?: string
+  include_denied?: string
+  include_accepted?: string
+  show_ip?: string
+  kwarg?: {
+    username?: string
+    password?: string
+    eauth?: string
+    name?: string
+    path?: string
+    dest?: string
+    makedirs?: string
+    fun?: string
+    cmd?: string
+    sources?: string
+    args?: string[] | string
+    url?: string
+    method?: string
+    api_host?: string
+    api_user?: string
+    api_pass?: string
+    region?: string
+    keyid?: string
+    key?: string
+    group_ids?: string | string[]
+    volume_ids?: string | string[]
+    instance_types?: string | string[]
+    detail?: any
+    namespace?: any
+    fieldselector?: any
+  }
+  username?: string
+  password?: string
+  eauth?: string
+  token_expire?: number
+}
+
+const activityData = [
+  {action: 'key.accept', message: `Execute 'accept'.`},
+  {action: 'key.reject', message: `Execute 'reject'.`},
+  {action: 'key.delete', message: `Execute 'delete'.`},
+  {action: 'service.start', message: `Execute 'telegraf service start'.`},
+  {action: 'service.stop', message: `Execute 'telegraf service stop'.`},
+  {action: 'pkg.install', message: `Execute 'telegraf package install'.`},
+  {action: 'file.write', message: `Execute 'telegraf config apply'.`},
+  {action: 'ipmi.set_power', message: `Execute 'IPMI power state change'.`},
+]
 
 const apiRequest = async (
   pUrl: string,
   pToken: string,
-  pParams: SaltStack,
+  pParams: Params,
   pAccept?: string
 ) => {
+  const activity = _.find(activityData, f => f.action === _.get(pParams, 'fun'))
+
   try {
     const dParams = {token: pToken, eauth: 'pam'}
     const saltMasterUrl = pUrl
@@ -17,12 +80,52 @@ const apiRequest = async (
     }
 
     const param = JSON.stringify(Object.assign(dParams, pParams))
-    return await AJAX({
+
+    const ajaxResult = await AJAX({
       method: 'POST',
       url: url,
       headers,
       data: param,
     })
+
+    if (!_.isEmpty(activity)) {
+      saltActivityLog(activity, ajaxResult)
+    }
+
+    return ajaxResult
+  } catch (error) {
+    if (!_.isEmpty(activity)) {
+      saltActivityLog(activity, error)
+    }
+
+    console.error(error)
+    throw error
+  }
+}
+
+const apiRequestMulti = async (
+  pUrl: string,
+  pParams: Params[],
+  pAccept?: string
+) => {
+  try {
+    const saltMasterUrl = pUrl
+    const url = saltMasterUrl + '/'
+    const headers = {
+      Accept: pAccept ? pAccept : 'application/json',
+      'Content-type': 'application/json',
+    }
+
+    const param = JSON.stringify(pParams)
+
+    const ajaxResult = await AJAX({
+      method: 'POST',
+      url: url,
+      headers,
+      data: param,
+    })
+
+    return ajaxResult
   } catch (error) {
     console.error(error)
     throw error
@@ -169,7 +272,7 @@ export async function getLocalServiceEnabledTelegraf(
   pMinionId: string
 ) {
   try {
-    const params: SaltStack = {
+    const params: Params = {
       client: 'local',
       fun: 'service.enabled',
       arg: 'telegraf',
@@ -196,7 +299,7 @@ export async function getLocalServiceStatusTelegraf(
   pMinionId: string
 ) {
   try {
-    const params: SaltStack = {
+    const params: Params = {
       client: 'local',
       fun: 'service.status',
       arg: 'telegraf',
@@ -223,7 +326,7 @@ export async function runLocalServiceStartTelegraf(
   pMinionId: string
 ) {
   try {
-    const params: SaltStack = {
+    const params: Params = {
       client: 'local',
       fun: 'service.start',
       arg: 'telegraf',
@@ -250,7 +353,7 @@ export async function runLocalServiceStopTelegraf(
   pMinionId: string
 ) {
   try {
-    const params: SaltStack = {
+    const params: Params = {
       client: 'local',
       fun: 'service.stop',
       arg: 'telegraf',
@@ -277,7 +380,7 @@ export async function runLocalServiceReStartTelegraf(
   pMinionId: string
 ) {
   try {
-    const params: SaltStack = {
+    const params: Params = {
       client: 'local',
       fun: 'service.restart',
       arg: 'telegraf',
@@ -298,13 +401,42 @@ export async function runLocalServiceReStartTelegraf(
   }
 }
 
+export async function runLocalServiceTestTelegraf(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string
+) {
+  try {
+    const params: Params = {
+      client: 'local',
+      fun: 'cmd.run',
+      tgt_type: '',
+      tgt: '',
+      kwarg: {
+        cmd: 'telegraf --test',
+      },
+    }
+    if (pMinionId) {
+      params.tgt_type = 'list'
+      params.tgt = pMinionId
+    } else {
+      params.tgt_type = 'glob'
+      params.tgt = '*'
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 export async function runLocalCpGetDirTelegraf(
   pUrl: string,
   pToken: string,
   pMinionId: string
 ) {
   try {
-    const params: SaltStack = {
+    const params: Params = {
       client: 'local',
       fun: 'cp.get_dir',
       kwarg: {
@@ -336,7 +468,7 @@ export async function runLocalPkgInstallTelegraf(
   pSelectCollector: string
 ) {
   try {
-    const params: SaltStack = {
+    const params: Params = {
       client: 'local',
       fun: 'pkg.install',
       kwarg: {
@@ -367,7 +499,7 @@ export async function getLocalGrainsItems(
   pMinionId: string
 ) {
   try {
-    const params: SaltStack = {
+    const params: Params = {
       client: 'local',
       fun: 'grains.items',
       tgt_type: '',
@@ -395,7 +527,7 @@ export async function getLocalFileRead(
   pMinionId: string
 ) {
   try {
-    const params: SaltStack = {
+    const params: Params = {
       client: 'local',
       fun: 'file.read',
       tgt_type: '',
@@ -427,7 +559,7 @@ export async function getLocalFileWrite(
   pScript: string
 ) {
   try {
-    const params: SaltStack = {
+    const params: Params = {
       client: 'local',
       fun: 'file.write',
       tgt_type: '',
@@ -459,7 +591,7 @@ export async function getLocalServiceGetRunning(
   pMinionId: string
 ) {
   try {
-    const params: SaltStack = {
+    const params: Params = {
       client: 'local',
       fun: 'service.get_running',
       tgt_type: '',
@@ -503,13 +635,46 @@ export async function getRunnerSaltCmdTelegraf(
   }
 }
 
+export async function getRunnerSaltCmdTelegrafPlugin(
+  pUrl: string,
+  pToken: string
+) {
+  try {
+    const params = [
+      {
+        token: pToken,
+        client: 'runner',
+        fun: 'salt.cmd',
+        kwarg: {
+          fun: 'cmd.shell',
+          cmd: 'telegraf --input-list',
+        },
+      },
+      {
+        token: pToken,
+        client: 'runner',
+        fun: 'salt.cmd',
+        kwarg: {
+          fun: 'cmd.shell',
+          cmd: 'telegraf --output-list',
+        },
+      },
+    ]
+
+    return await apiRequestMulti(pUrl, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 export async function runLocalGroupAdduser(
   pUrl: string,
   pToken: string,
   pMinionId: string
 ) {
   try {
-    const params: SaltStack = {
+    const params: Params = {
       client: 'local',
       fun: 'group.adduser',
       tgt_type: '',
@@ -702,7 +867,7 @@ export async function getLocalK8sNamespaces(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pParam: SaltStack
+  pParam: Params
 ) {
   try {
     const params = {
@@ -730,7 +895,7 @@ export async function getLocalK8sNodes(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pParam: SaltStack
+  pParam: Params
 ) {
   try {
     const params = {
@@ -753,12 +918,45 @@ export async function getLocalK8sNodes(
     throw error
   }
 }
+export async function getIpmiGetPower(
+  pUrl: string,
+  pToken: string,
+  pIpmis: IpmiCell[]
+) {
+  try {
+    let params = []
+
+    _.map(pIpmis, pIpmi => {
+      const param = {
+        token: pToken,
+        eauth: 'pam',
+        client: 'local',
+        fun: 'ipmi.get_power',
+        tgt_type: 'glob',
+        tgt: pIpmi.target,
+        kwarg: {
+          api_host: pIpmi.host,
+          api_user: pIpmi.user,
+          api_pass: pIpmi.pass,
+        },
+      }
+      params = [...params, param]
+    })
+
+    const result = await apiRequestMulti(pUrl, params, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
 
 export async function getLocalK8sPods(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pParam: SaltStack
+  pParam: Params
 ) {
   try {
     const params = {
@@ -796,7 +994,7 @@ export async function getLocalK8sDeployments(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pParam: SaltStack
+  pParam: Params
 ) {
   try {
     const params = {
@@ -829,7 +1027,7 @@ export async function getLocalK8sReplicaSets(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pParam: SaltStack
+  pParam: Params
 ) {
   try {
     const params = {
@@ -862,7 +1060,7 @@ export async function getLocalK8sReplicationControllers(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pParam: SaltStack
+  pParam: Params
 ) {
   try {
     const params = {
@@ -891,11 +1089,48 @@ export async function getLocalK8sReplicationControllers(
   }
 }
 
+export enum IpmiSetPowerStatus {
+  PowerOn = 'power_on',
+  PowerOff = 'power_off',
+  Reset = 'reset',
+  Shutdown = 'shutdown',
+}
+
+export async function setIpmiSetPower(
+  pUrl: string,
+  pToken: string,
+  pIpmi: Ipmi,
+  pState: IpmiSetPowerStatus
+) {
+  try {
+    const params = {
+      eauth: 'pam',
+      client: 'local',
+      fun: 'ipmi.set_power',
+      tgt_type: 'glob',
+      tgt: pIpmi.target,
+      kwarg: {
+        state: pState,
+        api_host: pIpmi.host,
+        api_user: pIpmi.user,
+        api_pass: pIpmi.pass,
+      },
+    }
+
+    const result = await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 export async function getLocalK8sDaemonSets(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pParam: SaltStack
+  pParam: Params
 ) {
   try {
     const params = {
@@ -928,7 +1163,7 @@ export async function getLocalK8sStatefulSets(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pParam: SaltStack
+  pParam: Params
 ) {
   try {
     const params = {
@@ -961,7 +1196,7 @@ export async function getLocalK8sJobs(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pParam: SaltStack
+  pParam: Params
 ) {
   try {
     const params = {
@@ -990,11 +1225,39 @@ export async function getLocalK8sJobs(
   }
 }
 
+export async function getIpmiGetSensorData(
+  pUrl: string,
+  pToken: string,
+  pIpmi: Ipmi
+) {
+  try {
+    const params = {
+      eauth: 'pam',
+      client: 'local',
+      fun: 'ipmi.get_sensor_data',
+      tgt_type: 'glob',
+      tgt: pIpmi.target,
+      kwarg: {
+        api_host: pIpmi.host,
+        api_user: pIpmi.user,
+        api_pass: pIpmi.pass,
+      },
+    }
+
+    const result = await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 export async function getLocalK8sCronJobs(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pParam: SaltStack
+  pParam: Params
 ) {
   try {
     const params = {
@@ -1027,7 +1290,7 @@ export async function getLocalK8sServices(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pParam: SaltStack
+  pParam: Params
 ) {
   try {
     const params = {
@@ -1060,7 +1323,7 @@ export async function getLocalK8sIngresses(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pParam: SaltStack
+  pParam: Params
 ) {
   try {
     const params = {
@@ -1093,7 +1356,7 @@ export async function getLocalK8sConfigmaps(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pParam: SaltStack
+  pParam: Params
 ) {
   try {
     const params = {
@@ -1122,11 +1385,45 @@ export async function getLocalK8sConfigmaps(
   }
 }
 
+export async function getLocalBotoEc2DescribeInstances(
+  pUrl: string,
+  pToken: string,
+  pCSPs: any[]
+): Promise<any> {
+  try {
+    let params = []
+
+    _.map(pCSPs, pCSP => {
+      const param = {
+        token: pToken,
+        eauth: 'pam',
+        client: 'local',
+        fun: 'boto_ec2.describe_instances',
+        tgt_type: 'glob',
+        tgt: pCSP.minion,
+        kwarg: {
+          region: pCSP.region,
+          keyid: pCSP.accesskey,
+          key: pCSP.secretkey,
+        },
+      }
+      params = [...params, param]
+    })
+
+    const result = await apiRequestMulti(pUrl, params, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 export async function getLocalK8sSecrets(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pParam: SaltStack
+  pParam: Params
 ) {
   try {
     const params = {
@@ -1159,7 +1456,7 @@ export async function getLocalK8sServiceAccounts(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pParam: SaltStack
+  pParam: Params
 ) {
   try {
     const params = {
@@ -1192,7 +1489,7 @@ export async function getLocalK8sClusterRoles(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pParam: SaltStack
+  pParam: Params
 ) {
   try {
     const params = {
@@ -1215,12 +1512,42 @@ export async function getLocalK8sClusterRoles(
     throw error
   }
 }
+export async function getLocalBotoSecgroupGetAllSecurityGroups(
+  pUrl: string,
+  pToken: string,
+  pCSP: any,
+  pGroupIds?: string[]
+): Promise<any> {
+  try {
+    const param = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'boto_secgroup.get_all_security_groups',
+      tgt_type: 'glob',
+      tgt: pCSP.minion,
+      kwarg: {
+        region: pCSP.region,
+        keyid: pCSP.accesskey,
+        key: pCSP.secretkey,
+        group_ids: pGroupIds,
+      },
+    }
+
+    const result = await apiRequest(pUrl, pToken, param, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
 
 export async function getLocalK8sClusterRoleBindings(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pParam: SaltStack
+  pParam: Params
 ) {
   try {
     const params = {
@@ -1248,7 +1575,7 @@ export async function getLocalK8sRoles(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pParam: SaltStack
+  pParam: Params
 ) {
   try {
     const params = {
@@ -1281,7 +1608,7 @@ export async function getLocalK8sRoleBindings(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pParam: SaltStack
+  pParam: Params
 ) {
   try {
     const params = {
@@ -1309,12 +1636,42 @@ export async function getLocalK8sRoleBindings(
     throw error
   }
 }
+export async function getLocalBoto2DescribeVolumes(
+  pUrl: string,
+  pToken: string,
+  pCSP: any,
+  pVolumeIds?: string[]
+): Promise<any> {
+  try {
+    const param = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'boto_ec2.describe_volumes',
+      tgt_type: 'glob',
+      tgt: pCSP.minion,
+      kwarg: {
+        region: pCSP.region,
+        keyid: pCSP.accesskey,
+        key: pCSP.secretkey,
+        volume_ids: pVolumeIds,
+      },
+    }
+
+    const result = await apiRequest(pUrl, pToken, param, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
 
 export async function getLocalK8sPersistentVolumes(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pParam: SaltStack
+  pParam: Params
 ) {
   try {
     const params = {
@@ -1338,11 +1695,42 @@ export async function getLocalK8sPersistentVolumes(
   }
 }
 
+export async function getLocalBoto2DescribeInstanceTypes(
+  pUrl: string,
+  pToken: string,
+  pCSP: any,
+  pTypes?: string[]
+): Promise<any> {
+  try {
+    const param = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: 'boto_ec2.describe_instance_types',
+      tgt_type: 'glob',
+      tgt: pCSP.minion,
+      kwarg: {
+        region: pCSP.region,
+        keyid: pCSP.accesskey,
+        key: pCSP.secretkey,
+        instance_types: pTypes,
+      },
+    }
+
+    const result = await apiRequest(pUrl, pToken, param, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 export async function getLocalK8sPersistentVolumeClaims(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pParam: SaltStack
+  pParam: Params
 ) {
   try {
     const params = {
@@ -1363,5 +1751,26 @@ export async function getLocalK8sPersistentVolumeClaims(
   } catch (error) {
     console.error(error)
     throw error
+  }
+}
+
+const saltActivityLog = async (
+  activity: object,
+  result: object
+): Promise<void> => {
+  if (_.get(result, 'status') === 200) {
+    createActivityLog(
+      'SaltProxy',
+      `${_.get(activity, 'message')} result:${JSON.stringify(
+        _.get(result, 'headers.content-type') === 'application/x-yaml'
+          ? _.get(yaml.safeLoad(_.get(result, 'data')), 'return')[0]
+          : _.get(result, 'data.return')[0]
+      )}`
+    )
+  } else {
+    createActivityLog(
+      'SaltProxy',
+      `Sever ${_.get(result, 'status')} error: ${_.get(result, 'statusText')}.`
+    )
   }
 }

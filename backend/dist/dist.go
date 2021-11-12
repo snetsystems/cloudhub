@@ -5,6 +5,7 @@ package dist
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	assetfs "github.com/elazarl/go-bindata-assetfs"
 )
@@ -36,6 +37,12 @@ func (b *BindataAssets) Handler() http.Handler {
 // addCacheHeaders requests an hour of Cache-Control and sets an ETag based on file size and modtime
 func (b *BindataAssets) addCacheHeaders(filename string, w http.ResponseWriter) error {
 	w.Header().Add("Cache-Control", "public, max-age=3600")
+
+	w.Header().Add("X-Frame-Options", "SAMEORIGIN")
+	w.Header().Add("X-XSS-Protection", "1; mode=block")
+	w.Header().Add("X-Content-Type-Options", "nosniff")
+	w.Header().Add("Content-Security-Policy", "script-src 'self'; object-src 'self'")	
+	
 	fi, err := AssetInfo(filename)
 	if err != nil {
 		return err
@@ -75,6 +82,11 @@ func (b *BindataAssets) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		if err := b.addCacheHeaders(name, w); err != nil {
 			return nil, err
+		}
+		// https://github.com/influxdata/chronograf/issues/5565
+		// workaround wrong .js content-type on windows
+		if strings.HasSuffix(name, ".js") {
+			w.Header().Set("Content-Type", "text/javascript")
 		}
 		return octets, nil
 	}

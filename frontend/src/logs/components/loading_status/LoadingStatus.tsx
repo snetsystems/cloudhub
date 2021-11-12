@@ -7,7 +7,7 @@ interface Props {
   status: SearchStatus
   lower: number
   upper: number
-  currentMeasurement: string
+  currentMeasurement?: string
 }
 
 class LoadingStatus extends PureComponent<Props> {

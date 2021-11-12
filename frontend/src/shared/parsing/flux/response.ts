@@ -23,7 +23,8 @@ const parseChunks = (response: string): string[] => {
     return []
   }
 
-  const chunks = trimmedResponse.split(/\n\s*\n/)
+  // some influxDB versions (docker v1.8.0) return \r\n as a new line separator
+  const chunks = trimmedResponse.split(/\r?\n\s*\n/)
 
   return chunks
 }
@@ -125,7 +126,10 @@ interface ParseResponseRawResult {
 export const parseResponseRaw = (response: string): ParseResponseRawResult => {
   const chunks = parseChunks(response)
   const parsedChunks = chunks.map(c => Papa.parse(c).data)
-  const maxColumnCount = Math.max(...parsedChunks.map(c => c[0].length))
+  const maxColumnCount =
+    parsedChunks.length > 0
+      ? Math.max(...parsedChunks.map(c => c[0].length))
+      : 0
   const data = []
 
   for (let i = 0; i < parsedChunks.length; i++) {

@@ -268,3 +268,67 @@
     }
   }
 }
+
+.agent-connect-container {
+  width: 200px;
+  display: flex;
+  height: 36px;
+  justify-content: center;
+  align-items: center;
+
+  .form-control.input-sm.connect-input {
+    height: 24px;
+    font-size: 12px;
+    margin-right: 4px;
+  }
+}
+
+.agent-row {
+  &--button {
+    &-sm {
+      width: 35px;
+      font-size: 14px;
+    }
+  }
+}
+
+.caution-word {
+  color: $s-grapefruit;
+}
+
+.emphasis-word {
+  font-weight: 600;
+}
+
+.agent-console {
+  .overlay--container {
+    .overlay--body {
+      height: 400px;
+      padding: 12px;
+      .form--wrapper {
+        height: 100%;
+        flex-wrap: nowrap;
+        flex-direction: column;
+        .form--element {
+          height: 90%;
+        }
+        .form--submit {
+          height: 10%;
+          margin-top: 0;
+        }
+      }
+    }
+  }
+}
+
+.agent-plugin {
+  z-index: 300;
+
+  .overlay--body {
+    padding: unset;
+    border-radius: 0 0 $radius $radius;
+    overflow: hidden;
+    border: 2px solid #f58220;
+    z-index: 9;
+  }
+}

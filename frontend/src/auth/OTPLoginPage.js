@@ -11,6 +11,7 @@ import {loginAsync, otpChangeAsync} from 'src/auth/actions'
 class OTPLoginPage extends PureComponent {
   constructor(props) {
     super(props)
+
     this.state = {
       name: '',
       password: '',
@@ -22,7 +23,8 @@ class OTPLoginPage extends PureComponent {
     (isValidPassword, isValidPasswordConfirm) => {
       const {
         router,
-        authData: {basicauth, basicPassword},
+        basicauth,
+        basicPassword,
         handleOTPChange,
         handleLogin,
       } = this.props
@@ -37,17 +39,17 @@ class OTPLoginPage extends PureComponent {
           ...user,
           password,
         }
-      }
 
-      handleOTPChange({url: basicPassword, user}).then(res => {
-        if (res.status === 200) {
-          setTimeout(() => {
-            handleLogin({url: basicauth.login, user}).then(() => {
-              router.go('/')
-            })
-          }, 1000)
-        }
-      })
+        handleOTPChange({url: basicPassword, user}).then(res => {
+          if (res.status === 200) {
+            setTimeout(() => {
+              handleLogin({url: basicauth.login, user}).then(() => {
+                router.go('/')
+              })
+            }, 1000)
+          }
+        })
+      }
     },
     250
   )
@@ -72,24 +74,22 @@ class OTPLoginPage extends PureComponent {
   }
 
   componentDidMount = () => {
-    const {name} = this.props.location.state
-
-    if (_.isEmpty(name)) {
+    const {location, router} = this.props
+    if (location.state?.name) {
+      const {name} = location.state
+      this.setState({name})
+    } else {
       router.push('/')
     }
-
-    this.setState({name})
   }
 
   render() {
     const {
       router,
-      authData: {
-        basicauth,
-        basicPassword,
-        passwordPolicy,
-        passwordPolicyMessage,
-      },
+      basicauth,
+      basicPassword,
+      passwordPolicy,
+      passwordPolicyMessage,
     } = this.props
     const {name, password, passwordConfirm} = this.state
 
@@ -190,6 +190,10 @@ class OTPLoginPage extends PureComponent {
   }
 }
 
+const mapStateToProps = ({
+  links: {basicauth, passwordPolicy, passwordPolicyMessage, basicPassword},
+}) => ({basicauth, passwordPolicy, passwordPolicyMessage, basicPassword})
+
 const mapDispatchToProps = {
   handleLogin: loginAsync,
   handleOTPChange: otpChangeAsync,
@@ -199,14 +203,12 @@ const {shape, string, func} = PropTypes
 
 OTPLoginPage.propTypes = {
   router: shape().isRequired,
-  authData: shape({
-    basicauth: shape().isRequired,
-    passwordPolicy: string.isRequired,
-    passwordPolicyMessage: string.isRequired,
-  }).isRequired,
+  basicauth: shape().isRequired,
+  passwordPolicy: string.isRequired,
+  passwordPolicyMessage: string.isRequired,
   handleOTPChange: func.isRequired,
   location: shape().isRequired,
   handleLogin: func.isRequired,
 }
 
-export default connect(null, mapDispatchToProps)(OTPLoginPage)
+export default connect(mapStateToProps, mapDispatchToProps)(OTPLoginPage)

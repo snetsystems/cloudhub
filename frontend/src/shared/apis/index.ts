@@ -2,6 +2,7 @@ import AJAX from 'src/utils/ajax'
 import {AlertTypes} from 'src/kapacitor/constants'
 import {Kapacitor, Source, Service, NewService, QueryConfig} from 'src/types'
 import {SpecificConfigOptions} from 'src/types/kapacitor'
+import {Method} from 'axios'
 
 export const getSources = () => {
   return AJAX({
@@ -11,50 +12,42 @@ export const getSources = () => {
 }
 
 export const getSource = async (id: string): Promise<Source> => {
-  try {
-    const {data: source} = await AJAX({
-      url: null,
-      resource: 'sources',
-      id,
-    })
+  const {data: source} = await AJAX({
+    url: null,
+    resource: 'sources',
+    id,
+  })
 
-    return source
-  } catch (error) {
-    throw error
-  }
+  return source
 }
 
 export const createSource = async (
-  attributes: Partial<Source>
+  attributes: Partial<Source>,
+  params: Record<string, string> = {}
 ): Promise<Source> => {
-  try {
-    const {data: source} = await AJAX({
-      url: null,
-      resource: 'sources',
-      method: 'POST',
-      data: attributes,
-    })
+  const {data: source} = await AJAX({
+    url: null,
+    resource: 'sources',
+    method: 'POST',
+    data: attributes,
+    params,
+  })
 
-    return source
-  } catch (error) {
-    throw error
-  }
+  return source
 }
 
 export const updateSource = async (
-  newSource: Partial<Source>
+  newSource: Partial<Source>,
+  params: Record<string, string> = {}
 ): Promise<Source> => {
-  try {
-    const {data: source} = await AJAX({
-      url: newSource.links.self,
-      method: 'PATCH',
-      data: newSource,
-    })
+  const {data: source} = await AJAX({
+    url: newSource.links.self,
+    method: 'PATCH',
+    data: newSource,
+    params,
+  })
 
-    return source
-  } catch (error) {
-    throw error
-  }
+  return source
 }
 
 export const deleteSource = (source: Source) => {
@@ -129,7 +122,7 @@ export const getKapacitors = async (source: Source): Promise<Kapacitor[]> => {
 
 export const deleteKapacitor = async (kapacitor: Kapacitor): Promise<void> => {
   try {
-    return await AJAX({
+    await AJAX({
       method: 'DELETE',
       url: kapacitor.links.self,
     })
@@ -209,7 +202,7 @@ export const updateKapacitorConfigSection = (
   const path = `/kapacitor/v1/config/${section}/${config}`
 
   const params = {
-    method: 'POST',
+    method: 'POST' as Method,
     url: kapacitor.links.proxy,
     params: {
       path,
@@ -339,7 +332,7 @@ export const deleteKapacitorTask = (kapacitor: Kapacitor, id) => {
 
 export const kapacitorProxy = (
   kapacitor: Kapacitor,
-  method: string,
+  method: Method,
   path,
   body?
 ) => {
@@ -473,6 +466,22 @@ export const deleteService = async (service: Service): Promise<void> => {
     await AJAX({
       url: service.links.self,
       method: 'DELETE',
+    })
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const createActivityLog = async (
+  action: string,
+  message: string
+): Promise<void> => {
+  try {
+    await AJAX({
+      url: `/cloudhub/v1/logging`,
+      method: 'POST',
+      data: {action, message},
     })
   } catch (error) {
     console.error(error)

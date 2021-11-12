@@ -7,9 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
@@ -19,12 +21,50 @@ var _ cloudhub.TSDBStatus = &Client{}
 var _ cloudhub.Databases = &Client{}
 
 // Shared transports for all clients to prevent leaking connections
-var (
-	skipVerifyTransport = &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+var skipVerifyTransport *http.Transport
+var defaultTransport *http.Transport
+
+// CreateTransport create a new transport
+func CreateTransport(skipVerify bool) *http.Transport {
+	var transport *http.Transport
+	if cloneable, ok := http.DefaultTransport.(interface{ Clone() *http.Transport }); ok {
+		transport = cloneable.Clone() // available since go1.13
+	} else {
+		// This uses the same values as http.DefaultTransport
+		transport = &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+				DualStack: true,
+			}).DialContext,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       90 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+		}
 	}
-	defaultTransport = &http.Transport{}
-)
+	if skipVerify {
+		if transport.TLSClientConfig == nil {
+			transport.TLSClientConfig = &tls.Config{}
+		}
+		transport.TLSClientConfig.InsecureSkipVerify = true
+	}
+	return transport
+}
+
+// SharedTransport returns a shared transport with requested TLS InsecureSkipVerify value
+func SharedTransport(skipVerify bool) *http.Transport {
+	if skipVerify {
+		return skipVerifyTransport
+	}
+	return defaultTransport
+}
+
+func init() {
+	skipVerifyTransport = CreateTransport(true)
+	defaultTransport = CreateTransport(false)
+}
 
 // Client is a device for retrieving time series data from an InfluxDB instance
 type Client struct {
@@ -36,14 +76,22 @@ type Client struct {
 
 // Response is a partial JSON decoded InfluxQL response used
 // to check for some errors
-type Response struct {
+type responseType struct {
 	Results json.RawMessage
-	Err     string `json:"error,omitempty"`
+	Err     string `json:"error,omitempty"`   //v1 error message
+	V2Err   string `json:"message,omitempty"` //v2 error message
 }
 
 // MarshalJSON returns the raw results bytes from the response
-func (r Response) MarshalJSON() ([]byte, error) {
+func (r responseType) MarshalJSON() ([]byte, error) {
 	return r.Results, nil
+}
+
+func (r *responseType) Error() string {
+	if r.Err != "" {
+		return r.Err
+	}
+	return r.V2Err
 }
 
 func (c *Client) query(u *url.URL, q cloudhub.Query) (cloudhub.Response, error) {
@@ -80,23 +128,19 @@ func (c *Client) query(u *url.URL, q cloudhub.Query) (cloudhub.Response, error) 
 	}
 
 	hc := &http.Client{}
-	if c.InsecureSkipVerify {
-		hc.Transport = skipVerifyTransport
-	} else {
-		hc.Transport = defaultTransport
-	}
+	hc.Transport = SharedTransport(c.InsecureSkipVerify)
 	resp, err := hc.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	var response Response
+	var response responseType
 	dec := json.NewDecoder(resp.Body)
 	decErr := dec.Decode(&response)
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("received status code %d from server: err: %s", resp.StatusCode, response.Err)
+		return nil, fmt.Errorf("received status code %d from server: err: %s", resp.StatusCode, response.Error())
 	}
 
 	// ignore this error if we got an invalid status code
@@ -146,6 +190,75 @@ func (c *Client) Query(ctx context.Context, q cloudhub.Query) (cloudhub.Response
 	case <-ctx.Done():
 		return nil, cloudhub.ErrUpstreamTimeout
 	}
+}
+
+// ValidateAuth returns error when an authenticated communication with the source fails
+func (c *Client) ValidateAuth(ctx context.Context, src *cloudhub.Source) error {
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+
+	if src.Type == cloudhub.InfluxDBv2 {
+		return c.validateAuthFlux(ctx, src)
+	}
+	// v1: use InfluxQL
+	if _, err := c.Query(ctx, cloudhub.Query{Command: "SHOW DATABASES"}); err != nil {
+		return err
+	}
+	return nil
+}
+
+// validateAuthFlux uses Flux query to validate token authentication
+func (c *Client) validateAuthFlux(ctx context.Context, src *cloudhub.Source) error {
+	u, err := url.Parse(c.URL.String())
+	if err != nil {
+		return err
+	}
+	u.Path = "api/v2/query"
+	command := "buckets()"
+	req, err := http.NewRequest("POST", u.String(), strings.NewReader(command))
+	if err != nil {
+		return err
+	}
+	req = req.WithContext(ctx)
+	req.Header.Set("Content-Type", "application/vnd.flux")
+	logs := c.Logger.
+		WithField("component", "proxy").
+		WithField("host", req.Host).
+		WithField("command", command).
+		WithField("org", src.Username)
+	logs.Debug("api/v2/query")
+
+	params := req.URL.Query()
+	params.Set("org", src.Username) // org is stored in Username
+	req.URL.RawQuery = params.Encode()
+
+	if c.Authorizer != nil {
+		if err := c.Authorizer.Set(req); err != nil {
+			logs.Error("Error setting authorization header ", err)
+			return err
+		}
+	}
+
+	hc := &http.Client{}
+	hc.Transport = SharedTransport(c.InsecureSkipVerify)
+	resp, err := hc.Do(req)
+	if err != nil {
+		if err == context.DeadlineExceeded || err == context.Canceled {
+			return cloudhub.ErrUpstreamTimeout
+		}
+		return err
+	}
+	defer resp.Body.Close()
+
+	var response responseType
+
+	if resp.StatusCode != http.StatusOK {
+		dec := json.NewDecoder(resp.Body)
+		dec.Decode(&response)
+		return fmt.Errorf("received status code %d from server: err: %s", resp.StatusCode, response.Error())
+	}
+
+	return nil
 }
 
 // Connect caches the URL and optional Bearer Authorization for the data source
@@ -229,11 +342,7 @@ func (c *Client) ping(u *url.URL) (string, string, error) {
 	}
 
 	hc := &http.Client{}
-	if c.InsecureSkipVerify {
-		hc.Transport = skipVerifyTransport
-	} else {
-		hc.Transport = defaultTransport
-	}
+	hc.Transport = SharedTransport(c.InsecureSkipVerify)
 
 	resp, err := hc.Do(req)
 	if err != nil {
@@ -260,6 +369,10 @@ func (c *Client) ping(u *url.URL) (string, string, error) {
 		return version, cloudhub.InfluxEnterprise, nil
 	} else if strings.Contains(version, "relay") {
 		return version, cloudhub.InfluxRelay, nil
+	}
+	// older InfluxDB instances might have version 'v1.x.x'
+	if strings.HasPrefix(version, "v") {
+		version = version[1:]
 	}
 
 	return version, cloudhub.InfluxDB, nil
@@ -327,11 +440,7 @@ func (c *Client) write(ctx context.Context, u *url.URL, db, rp, lp string) error
 	req.URL.RawQuery = params.Encode()
 
 	hc := &http.Client{}
-	if c.InsecureSkipVerify {
-		hc.Transport = skipVerifyTransport
-	} else {
-		hc.Transport = defaultTransport
-	}
+	hc.Transport = SharedTransport(c.InsecureSkipVerify)
 
 	errChan := make(chan (error))
 	go func() {
@@ -347,7 +456,7 @@ func (c *Client) write(ctx context.Context, u *url.URL, db, rp, lp string) error
 		}
 		defer resp.Body.Close()
 
-		var response Response
+		var response responseType
 		dec := json.NewDecoder(resp.Body)
 		err = dec.Decode(&response)
 		if err != nil && err.Error() != "EOF" {

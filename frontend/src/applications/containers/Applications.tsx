@@ -66,12 +66,13 @@ import {timeRanges} from 'src/shared/data/timeRanges'
 import {SearchStatus} from 'src/types/logs'
 import * as QueriesModels from 'src/types/queries'
 import * as AppActions from 'src/types/actions/app'
+import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
 
 interface Props extends ManualRefreshProps {
   source: Source
   links: Links
   autoRefresh: number
-  onChooseAutoRefresh: () => void
+  onChooseAutoRefresh: (milliseconds: number) => void
   notify: NotificationAction
 }
 
@@ -113,9 +114,17 @@ export class Applications extends PureComponent<Props, State> {
   }
 
   public intervalID: number
+  private isComponentMounted: boolean = true
 
   constructor(props: Props) {
     super(props)
+
+    this.setState = (args, callback) => {
+      if (!this.isComponentMounted) return
+
+      PureComponent.prototype.setState.bind(this)(args, callback)
+    }
+
     this.state = {
       hostsObject: {},
       appHostData: {},
@@ -251,15 +260,12 @@ export class Applications extends PureComponent<Props, State> {
     clearInterval(this.intervalID)
     this.intervalID = null
     GlobalAutoRefresher.stopPolling()
+
+    this.isComponentMounted = false
   }
 
   public render() {
-    const {
-      autoRefresh,
-      onChooseAutoRefresh,
-      onManualRefresh,
-      inPresentationMode,
-    } = this.props
+    const {autoRefresh, onManualRefresh, inPresentationMode} = this.props
 
     const {selected} = this.state
 
@@ -273,10 +279,11 @@ export class Applications extends PureComponent<Props, State> {
             <GraphTips />
             <AutoRefreshDropdown
               selected={autoRefresh}
-              onChoose={onChooseAutoRefresh}
+              onChoose={this.handleChooseAutoRefresh}
               onManualRefresh={onManualRefresh}
             />
             <TimeRangeDropdown
+              // @ts-ignore
               onChooseTimeRange={this.handleChooseTimeRange.bind(
                 this.state.selected
               )}
@@ -299,6 +306,11 @@ export class Applications extends PureComponent<Props, State> {
         </Page.Contents>
       </Page>
     )
+  }
+
+  private handleChooseAutoRefresh = (selected: AutoRefreshOption) => {
+    const {milliseconds} = selected
+    this.props.onChooseAutoRefresh(milliseconds)
   }
 
   private handleChooseTimeRange = ({lower, upper}) => {

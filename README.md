@@ -12,7 +12,8 @@ CloudHub has been started with _Chronograf_ version **1.7.11**.
 
 As we follow on using guides like the way of _TICK_ Script or _Flux_ queries, for more informations of the basic common features between _Chronograf_ 1.7.11 and CloudHub refer to the following link.<br>
 [Github for **_chronograf_**](https://github.com/influxdata/chronograf/blob/master/README.md)<br>
-[Documentation for **_TICK Stack_**](https://docs.influxdata.com/)
+[Documentation for **_TICK Stack_**](https://docs.influxdata.com/)<br>
+But you should use [Forked **Snetsystems/telegraf**](https://github.com/snetsystems/telegraf/releases)
 
 ### Test Environment
 
@@ -21,7 +22,7 @@ This **_Sandbox_** provided by _sysnetsystems_ will help to do.<br>
 [Download **snetsystems/sandbox**](https://github.com/snetsystems/sandbox)
 
 For the agent management or vsphere, k8s inventory viewer test, you prepare to Salt master, api, minion.<br>
-[Installation SaltStack](https://repo.saltstack.com/)<br>
+You should use [Forked **Snetsystems/salt**](https://github.com/snetsystems/salt/)<br>
 [Documentation for **_SaltStack_** ](https://docs.saltstack.com/en/latest/contents.html)
 
 ## How to use Cloudhub
@@ -34,24 +35,31 @@ For the agent management or vsphere, k8s inventory viewer test, you prepare to S
   - Regarding to above, an activity log is added.
 - Add **multi-tenant** feature across Users-Roles-Groups-DataSources.
 - Hosts to Infrastructures and basic charts added.
+- Infrastructure Topology Map authoring feature by user group.
 - Visualization added by criteria of Applications.
 - Integration a backend with **_SaltStack_**.
   - Avoid CORS Problem: `Web UI > CloudHub Salt Proxy > Salt API Server > Salt Master > Salt Minions.`
   - Telegraf agent management and configuration editing and deploying remotely via **_SaltStack_ Rest API**.
-- Web SSH Terminal feature.
+- Web SSH Terminal Console feature.
   - Connection to hosts using ssh protocol via CloudHub WebSocket Proxy.
 - Optionable Addon features.
   - **_VMWare_ Infrastructure** Viewer.
     - via **_VSphere_** API and **_Salt_**
-  - **_K8s Infrastructure_** Diagram & Viewer. (Pending in dev-1.1.0 branch)
-    - via customized **_Salt's Kuberetes_** Module.
+  - **_K8s Infrastructure_** Diagram & Viewer. (Pending in dev-k8s branch)
+    - via customized `Salt Kuberetes` Module.
+  - **_AWS_** Instances Monitoring.
   - SWAN Router & SDPlex(Oncue) Features.
+  - Bare-metal Server Remote Management via **IPMI**
   <p align="center">
-    <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/infrastructure.png"/>
-    <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/VMWare.png"/>
-    <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/applications.png"/>
-    <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/agent_configure.png"/>
-    <img src="https://github.com/snetsystems/cloudhub/blob/master/docs/images/swan.png"/>
+    <img src="./docs/images/infrastructure.png"/>
+    <img src="./docs/images/topology_map.png"/>
+    <img src="./docs/images/VMWare.png"/>
+    <img src="./docs/images/AWS_01.png"/>
+    <img src="./docs/images/AWS_02.png"/>
+    <img src="./docs/images/AWS_03.png"/>
+    <img src="./docs/images/applications.png"/>
+    <img src="./docs/images/agent_configure.png"/>
+    <img src="./docs/images/swan.png"/>
   </p>
 
 ## Change log
@@ -106,9 +114,12 @@ You could know the changelog by versions via that.
 
 ### Preparing dependencies
 
-- CloudHub works with go 1.11+, node LTS, and yarn 1.7+.
+- CloudHub works with **go 1.15+**, **node LTS**, and **yarn 1.15+**.
+- Install **protoc**(protocol buffer compiler)
+  - [Download here](https://github.com/protocolbuffers/protobuf/releases) proper package.
+  - Unzip and then add `bin/protoc` or `bin/protoc.exe` to $PATH env. or simply put into ` $GOPATH/bin` or ` $GOROOT/bin/` diretory.
 - In the case of Windows, it cannot be invoked "make" command,<br>So you need to download and install [GNUMake](http://gnuwin32.sourceforge.net/packages/make.htm) for windows.
-  - [Direct download](http://gnuwin32.sourceforge.net/downlinks/make.php)
+  - [Download here](http://gnuwin32.sourceforge.net/downlinks/make.php)
 
 ### Getting the source code from github.
 
@@ -117,8 +128,8 @@ You could know the changelog by versions via that.
 ```
 # If you're on Windows, run "Git Bash" and type the followings.
 
-$ go get github.com/snetsystems/cloudhub
-$ cd $GOPATH/src/github.com/snetsystems/cloudhub
+$ git clone https://github.com/snetsystems/cloudhub.git
+$ cd cloudhub
 $ make
 ```
 
@@ -142,32 +153,17 @@ You can see the CloudHub UI via browser: http://localhost:8888
 
 ## How to debug via VSCode for Development.
 
-For your convenience, make "_.code-workspace_" for VSCode in your snetsystems folder.
+Run "_cloudhub.code-workspace_" within cloudhub folder.
 
 ```
-$ cd $GOPATH/src/github.com/snetsystems/
-$ cat snet.code-workspace
-{
-  "folders": [
-    {
-      "path": "cloudhub"
-    }
-  ],
-  "settings": {
-    "files.exclude": {}
-  }
-}
-```
-
-Run VSCode as above workspace.
-
-```
-$ code snet.code-workspace
+$ code cloudhub.code-workspace
 ```
 
 Simply, select **"Launch Server"** and then run.<br>
 Also, for UI debugging, select **"Launch Chrome"** and then run debug.<br>
 For continuous debugging, you can use **"Launch Chrome"** after _**yarn start**_<br>
+
+> [Note] On Windows, you have to use **"Launch Chrome"** after _**yarn start**_<br>
 
 > [Note]<br>
 > For continuous debugging, you need to add **_develop mode_** into the running argument.

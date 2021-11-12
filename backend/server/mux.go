@@ -9,7 +9,10 @@ import (
 	"strconv"
 	"strings"
 
+	_ "net/http/pprof" // required for /debug/pprof endpoint
+
 	"github.com/NYTimes/gziphandler"
+	basicAuth "github.com/abbot/go-http-auth"
 	"github.com/bouk/httprouter"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/oauth2"
@@ -33,6 +36,7 @@ type MuxOpts struct {
 	CustomLinks   []CustomLink		// Any custom external links for client's User menu
 	PprofEnabled  bool              // Mount pprof routes for profiling
 	DisableGZip   bool              // Optionally disable gzip.
+	BasicAuth     *basicAuth.BasicAuth // HTTP basic authentication provider
 	AddonURLs     map[string]string // URLs for using in Addon Features, as passed in via CLI/ENV
 	AddonTokens   map[string]string // Tokens to access to Addon Features API, as passed in via CLI/ENV
 	PasswordPolicy        string    // Password validity rules
@@ -304,11 +308,11 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	// TODO: what to do about admin's being able to set superadmin
 	router.GET("/cloudhub/v1/organizations/:oid/users", EnsureAdmin(ensureOrgMatches(service.Users)))
-	router.POST("/cloudhub/v1/organizations/:oid/users", EnsureAdmin(ensureOrgMatches(service.NewUser)))
+	router.POST("/cloudhub/v1/organizations/:oid/users", EnsureAdmin(ensureOrgMatches(service.OrganizationNewUser)))
 
 	router.GET("/cloudhub/v1/organizations/:oid/users/:id", EnsureAdmin(ensureOrgMatches(service.UserID)))
-	router.DELETE("/cloudhub/v1/organizations/:oid/users/:id", EnsureAdmin(ensureOrgMatches(service.RemoveUser)))
-	router.PATCH("/cloudhub/v1/organizations/:oid/users/:id", EnsureAdmin(ensureOrgMatches(service.UpdateUser)))
+	router.DELETE("/cloudhub/v1/organizations/:oid/users/:id", EnsureAdmin(ensureOrgMatches(service.OrganizationRemoveUser)))
+	router.PATCH("/cloudhub/v1/organizations/:oid/users/:id", EnsureAdmin(ensureOrgMatches(service.OrganizationUpdateUser)))
 
 	router.GET("/cloudhub/v1/users", EnsureSuperAdmin(rawStoreAccess(service.Users)))
 	router.POST("/cloudhub/v1/users", EnsureSuperAdmin(rawStoreAccess(service.NewUser)))
@@ -370,12 +374,31 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	router.GET("/cloudhub/v1/env", EnsureViewer(service.Environment))
 
-	// vspheres
+	// vSpheres
 	router.GET("/cloudhub/v1/vspheres", EnsureViewer(service.Vspheres))
 	router.GET("/cloudhub/v1/vspheres/:id", EnsureViewer(service.VsphereID))
 	router.POST("/cloudhub/v1/vspheres", EnsureAdmin(service.NewVsphere))
 	router.DELETE("/cloudhub/v1/vspheres/:id", EnsureAdmin(service.RemoveVsphere))
 	router.PATCH("/cloudhub/v1/vspheres/:id", EnsureAdmin(service.UpdateVsphere))
+
+	// topologies
+	router.GET("/cloudhub/v1/topologies", EnsureViewer(service.Topology))
+	router.POST("/cloudhub/v1/topologies", EnsureViewer(service.NewTopology))
+	router.DELETE("/cloudhub/v1/topologies/:id", EnsureViewer(service.RemoveTopology))
+	router.PATCH("/cloudhub/v1/topologies/:id", EnsureViewer(service.UpdateTopology))
+
+	// Cloud Solution Provider
+	router.GET("/cloudhub/v1/csp", EnsureViewer(service.CSP))
+	router.GET("/cloudhub/v1/csp/:id", EnsureViewer(service.CSPID))
+	router.POST("/cloudhub/v1/csp", EnsureAdmin(service.NewCSP))
+	router.DELETE("/cloudhub/v1/csp/:id", EnsureAdmin(service.RemoveCSP))
+	router.PATCH("/cloudhub/v1/csp/:id", EnsureAdmin(service.UpdateCSP))
+	
+	// http logging
+	router.POST("/cloudhub/v1/logging", EnsureViewer(service.HTTPLogging))
+
+	// login locked
+	router.PATCH("/cloudhub/v1/login/locked", EnsureAdmin(service.LockedUser))
 
 	// Validates go templates for the js client
 	router.POST("/cloudhub/v1/validate_text_templates", EnsureViewer(service.ValidateTextTemplate))
@@ -396,6 +419,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 		BasicLogoutLink: "/basic/logout",
 		LoginAuthType: service.LoginAuthType,
 		BasicPasswordResetType: service.BasicPasswordResetType,
+		RetryPolicys: service.RetryPolicy,
 	}
 
 	getPrincipal := func(r *http.Request) oauth2.Principal {
@@ -417,6 +441,8 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 		// Create middleware that redirects to the appropriate provider logout
 		router.GET("/oauth/logout", logout("/", opts.Basepath, allRoutes.AuthRoutes))
 		out = auth
+	} else if opts.BasicAuth != nil {
+		out = BasicAuthWrapper(router, opts.BasicAuth)
 	} else {
 		out = router
 	}
@@ -468,6 +494,13 @@ func AuthAPI(opts MuxOpts, router cloudhub.Router) (http.Handler, AuthRoutes) {
 	}), routes
 }
 
+// BasicAuthWrapper returns http handlers that wraps the supplied handler with HTTP Basic authentication
+func BasicAuthWrapper(router cloudhub.Router, auth *basicAuth.BasicAuth) http.Handler {
+	return auth.Wrap(func(response http.ResponseWriter, authRequest *basicAuth.AuthenticatedRequest) {
+		router.ServeHTTP(response, &authRequest.Request)
+	})
+}
+
 // BasicAuthAPI adds the Basic routes if auth is enabled. 
 // Copy session information to context when oauth is not used
 // not using it now.
@@ -515,12 +548,43 @@ func Error(w http.ResponseWriter, code int, msg string, logger cloudhub.Logger) 
 	_, _ = w.Write(b)
 }
 
+// ErrorBasic writes an JSON message by basic login
+func ErrorBasic(w http.ResponseWriter, code int, msg string, retryCnt int32, lockedTime string, locked bool, logger cloudhub.Logger) {
+	e := ErrorMessageBasic{
+		Code:       code,
+		Message:    msg,
+		RetryCount: retryCnt,
+		LockedTime: lockedTime,
+		Locked:     locked,
+	}
+	b, err := json.Marshal(e)
+	if err != nil {
+		code = http.StatusInternalServerError
+		b = []byte(`{"code": 500, "message":"server_error"}`)
+	}
+
+	logger.
+		WithField("component", "server").
+		WithField("http_status ", code).
+		WithField("retry_count=", retryCnt).
+		WithField("locked_time=", lockedTime).
+		WithField("locked=", locked).
+		Error("Error message ", msg)
+	w.Header().Set("Content-Type", JSONType)
+	w.WriteHeader(code)
+	_, _ = w.Write(b)
+}
+
 func invalidData(w http.ResponseWriter, err error, logger cloudhub.Logger) {
 	Error(w, http.StatusUnprocessableEntity, fmt.Sprintf("%v", err), logger)
 }
 
 func invalidJSON(w http.ResponseWriter, logger cloudhub.Logger) {
 	Error(w, http.StatusBadRequest, "Unparsable JSON", logger)
+}
+
+func invalidXML(w http.ResponseWriter, logger cloudhub.Logger) {
+	Error(w, http.StatusBadRequest, "Unparsable XML", logger)
 }
 
 func unknownErrorWithMessage(w http.ResponseWriter, err error, logger cloudhub.Logger) {

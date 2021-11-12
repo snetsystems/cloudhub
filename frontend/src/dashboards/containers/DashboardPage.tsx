@@ -42,7 +42,8 @@ import {interval, DASHBOARD_LAYOUT_ROW_HEIGHT} from 'src/shared/constants'
 import {FORMAT_INFLUXQL} from 'src/shared/data/timeRanges'
 import {EMPTY_LINKS} from 'src/dashboards/constants/dashboardHeader'
 import {getNewDashboardCell} from 'src/dashboards/utils/cellGetters'
-import autoRefreshOptions, {
+import {
+  getAutoRefreshOptions,
   AutoRefreshOption,
 } from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
 
@@ -149,6 +150,7 @@ class DashboardPage extends Component<Props, State> {
     let pollRefreshRate = refreshRate
     let localStorageRefresh
 
+    const autoRefreshOptions = getAutoRefreshOptions()
     if (urlSelectedRefresh) {
       const option = autoRefreshOptions.find(
         r => r.label.toLowerCase() === urlSelectedRefresh[1].toLowerCase()
@@ -202,7 +204,7 @@ class DashboardPage extends Component<Props, State> {
 
     const prevPath = getDeep(prevProps.location, 'pathname', null)
     const thisPath = getDeep(this.props.location, 'pathname', null)
-    const localStorageRefresh = autoRefreshOptions.find(
+    const localStorageRefresh = getAutoRefreshOptions().find(
       r => r.milliseconds === refreshRate
     )
 
@@ -384,9 +386,14 @@ class DashboardPage extends Component<Props, State> {
   }
 
   private getDashboard = async () => {
-    const {dashboardID, source, getDashboardWithTemplatesAsync} = this.props
+    const {
+      dashboardID,
+      source,
+      sources,
+      getDashboardWithTemplatesAsync,
+    } = this.props
 
-    await getDashboardWithTemplatesAsync(dashboardID, source)
+    await getDashboardWithTemplatesAsync(dashboardID, source, sources)
     this.updateActiveDashboard()
   }
 
@@ -516,12 +523,13 @@ class DashboardPage extends Component<Props, State> {
     const {
       dashboard,
       source,
+      sources,
       templateVariableLocalSelected,
       rehydrateTemplatesAsync,
     } = this.props
 
     templateVariableLocalSelected(dashboard.id, template.id, value)
-    rehydrateTemplatesAsync(dashboard.id, source)
+    rehydrateTemplatesAsync(dashboard.id, source, sources)
   }
 
   private handleSaveTemplateVariables = async (
@@ -651,7 +659,4 @@ const mdtp = {
   setTimeZone: appActions.setTimeZone,
 }
 
-export default connect(
-  mstp,
-  mdtp
-)(ManualRefresh<Props>(withRouter<Props, any>(DashboardPage)))
+export default withRouter(connect(mstp, mdtp)(ManualRefresh(DashboardPage)))

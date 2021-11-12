@@ -1,6 +1,5 @@
 // Libraries
 import React, {PureComponent, ChangeEvent, MouseEvent} from 'react'
-import _ from 'lodash'
 
 // Components
 import TagValueListItem from 'src/flux/components/TagValueListItem'

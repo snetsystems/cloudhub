@@ -1,5 +1,5 @@
-import React, {SFC} from 'react'
+import React, {FunctionComponent} from 'react'
 
-const MockChild: SFC = () => <div data-test="mock-child" />
+const MockChild: FunctionComponent = () => <div data-test="mock-child" />
 
 export default MockChild

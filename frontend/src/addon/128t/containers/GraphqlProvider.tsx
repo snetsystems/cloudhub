@@ -1,5 +1,5 @@
 import _ from 'lodash'
-import React, {SFC, useState, useEffect} from 'react'
+import React, {FunctionComponent, useState, useEffect} from 'react'
 import {connect} from 'react-redux'
 import {ApolloProvider} from '@apollo/react-hooks'
 import ApolloClient from 'apollo-client'
@@ -52,7 +52,7 @@ interface Props {
   organizations: Organization[]
 }
 
-const GraphqlProvider: SFC<Props> = (props: Props) => {
+const GraphqlProvider: FunctionComponent<Props> = (props: Props) => {
   const addon = props.links.addons.find(addon => {
     return addon.name === AddonType.router128T
   })

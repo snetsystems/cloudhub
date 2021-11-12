@@ -21,6 +21,7 @@ import {
   handleSelectHostProps,
   vmParam,
 } from 'src/hosts/types/type'
+import {CloudServiceProvider} from 'src/hosts/types/cloud'
 
 import {
   Kubernetes,
@@ -65,4 +66,5 @@ export {
   D3DataDepth3,
   Kubernetes,
   KubernetesObject,
+  CloudServiceProvider,
 }

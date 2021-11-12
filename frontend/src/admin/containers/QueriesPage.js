@@ -11,13 +11,14 @@ import {showDatabases, showQueries} from 'shared/apis/metaQuery'
 import QueriesTable from 'src/admin/components/QueriesTable'
 import showDatabasesParser from 'shared/parsing/showDatabases'
 import showQueriesParser from 'shared/parsing/showQueries'
-import {TIMES} from 'src/admin/constants'
 import {notifyQueriesError} from 'shared/copy/notifications'
 import {ErrorHandling} from 'src/shared/decorators/errors'
+import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/AutoRefreshDropdown'
 
 import {
   loadQueries as loadQueriesAction,
   setQueryToKill as setQueryToKillAction,
+  setQueriesSort as setQueriesSortAction,
   killQueryAsync,
 } from 'src/admin/actions/influxdb'
 import {eachRoleQueries} from 'src/admin/utils/eachRoleWorker'
@@ -25,20 +26,55 @@ import {eachRoleQueries} from 'src/admin/utils/eachRoleWorker'
 import {notify as notifyAction} from 'shared/actions/notifications'
 
 class QueriesPage extends Component {
+  constructor(props) {
+    super(props)
+    this.state = {
+      updateInterval: 5000,
+    }
+  }
   componentDidMount() {
     this.updateQueries()
-    const updateInterval = 5000
-    this.intervalID = setInterval(this.updateQueries, updateInterval)
+    if (this.state.updateInterval > 0) {
+      this.intervalID = setInterval(
+        this.updateQueries,
+        this.state.updateInterval
+      )
+    }
   }
 
   componentWillUnmount() {
-    clearInterval(this.intervalID)
+    if (this.intervalID) {
+      clearInterval(this.intervalID)
+    }
   }
 
   render() {
-    const {queries} = this.props
+    const {queries, queriesSort, changeSort} = this.props
+    const {updateInterval, title} = this.state
 
-    return <QueriesTable queries={queries} onKillQuery={this.handleKillQuery} />
+    return (
+      <div className="panel panel-solid">
+        <div className="panel-heading">
+          <h2 className="panel-title">{title}</h2>
+          <div style={{float: 'right'}}>
+            <AutoRefreshDropdown
+              selected={updateInterval}
+              onChoose={this.changeRefreshInterval}
+              onManualRefresh={this.updateQueries}
+              showManualRefresh={true}
+            />
+          </div>
+        </div>
+        <div className="panel-body">
+          <QueriesTable
+            queries={queries}
+            queriesSort={queriesSort}
+            changeSort={changeSort}
+            onKillQuery={this.handleKillQuery}
+          />
+        </div>
+      </div>
+    )
   }
 
   updateQueries = () => {
@@ -48,18 +84,33 @@ class QueriesPage extends Component {
       const checkDatabases = eachRoleQueries(databases, auth)
 
       if (errors.length) {
+        this.setState(state => ({...state, title: ''}))
         errors.forEach(message => notify(notifyQueriesError(message)))
         return
       }
+      this.setState(state => ({
+        ...state,
+        title:
+          databases.length === 1
+            ? '1 Database'
+            : `${databases.length} Databases`,
+      }))
 
       const fetches = checkDatabases.map(db =>
         showQueries(source.links.proxy, db)
       )
 
-      Promise.all(fetches).then(queryResponses => {
+      Promise.allSettled(fetches).then(results => {
         const allQueries = []
-        queryResponses.forEach(queryResponse => {
-          const result = showQueriesParser(queryResponse.data)
+        results.forEach((settledResponse, i) => {
+          if (!settledResponse.value) {
+            console.error(
+              `Unable to show queries on '${databases[i]}': `,
+              settledResponse.reason
+            )
+            return
+          }
+          const result = showQueriesParser(settledResponse.value.data)
           if (result.errors.length) {
             result.errors.forEach(message =>
               notify(notifyQueriesError(message))
@@ -70,17 +121,20 @@ class QueriesPage extends Component {
         })
 
         const queries = uniqBy(flatten(allQueries), q => q.id)
-
-        // sorting queries by magnitude, so generally longer queries will appear atop the list
-        const sortedQueries = queries.sort((a, b) => {
-          const aTime = TIMES.find(t => a.duration.match(t.test))
-          const bTime = TIMES.find(t => b.duration.match(t.test))
-          return +aTime.magnitude <= +bTime.magnitude
-        })
-
-        loadQueries(sortedQueries)
+        loadQueries(queries)
       })
     })
+  }
+  changeRefreshInterval = ({milliseconds: updateInterval}) => {
+    this.setState(state => ({...state, updateInterval}))
+    if (this.intervalID) {
+      clearInterval(this.intervalID)
+      this.intervalID = undefined
+    }
+    if (updateInterval > 0) {
+      this.updateQueries()
+      this.intervalID = setInterval(this.updateQueries, updateInterval)
+    }
   }
 
   handleKillQuery = query => {
@@ -99,15 +153,21 @@ QueriesPage.propTypes = {
     }),
   }),
   queries: arrayOf(shape()),
+  queriesSort: string,
   loadQueries: func,
   queryIDToKill: string,
   setQueryToKill: func,
+  changeSort: func,
   killQuery: func,
   notify: func.isRequired,
 }
 
-const mapStateToProps = ({adminInfluxDB: {queries, queryIDToKill}, auth}) => ({
+const mapStateToProps = ({
+  adminInfluxDB: {queries, queriesSort, queryIDToKill},
+  auth,
+}) => ({
   queries,
+  queriesSort,
   queryIDToKill,
   auth,
 })
@@ -115,6 +175,7 @@ const mapStateToProps = ({adminInfluxDB: {queries, queryIDToKill}, auth}) => ({
 const mapDispatchToProps = dispatch => ({
   loadQueries: bindActionCreators(loadQueriesAction, dispatch),
   setQueryToKill: bindActionCreators(setQueryToKillAction, dispatch),
+  changeSort: bindActionCreators(setQueriesSortAction, dispatch),
   killQuery: bindActionCreators(killQueryAsync, dispatch),
   notify: bindActionCreators(notifyAction, dispatch),
 })

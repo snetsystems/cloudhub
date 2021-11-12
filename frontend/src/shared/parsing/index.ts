@@ -40,10 +40,8 @@ export const extractQueryWarningMessage = (
   }
 
   if (!series) {
-    return 'Your query is syntactically correct but returned no results'
+    return 'Your query or command is syntactically correct but returned no results'
   }
-
-  return null
 }
 
 export const extractQueryErrorMessage = (errorMessage: string): string => {
@@ -51,7 +49,8 @@ export const extractQueryErrorMessage = (errorMessage: string): string => {
     return 'Could not retrieve data'
   }
 
-  const parseErrorMatch = errorMessage.match('error parsing query')
+  const parseErrorMatch =
+    errorMessage.match && errorMessage.match('error parsing query')
 
   if (parseErrorMatch) {
     return errorMessage.slice(parseErrorMatch.index)

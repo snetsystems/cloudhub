@@ -72,9 +72,9 @@ class UpdateUser extends PureComponent {
       this.getUser()
         .then(({data}) => {
           let user = {
-            email,
             roles: data.roles,
             superAdmin: data.superAdmin,
+            email,
           }
 
           if (isValidPassword && isValidPasswordConfirm) {
@@ -294,6 +294,10 @@ const mapDispatchToProps = {
   handleGetUser: getUserAsync,
   notify: notifyAction,
 }
+const mapStateToProps = ({links: {passwordPolicy, passwordPolicyMessage}}) => ({
+  passwordPolicy,
+  passwordPolicyMessage,
+})
 
 const {array, bool, shape, string, func} = PropTypes
 
@@ -304,13 +308,11 @@ UpdateUser.propTypes = {
     links: array,
     isLoading: bool,
   }),
-  links: shape({
-    passwordPolicy: string,
-    passwordPolicyMessage: string,
-  }).isRequired,
+  passwordPolicy: string,
+  passwordPolicyMessage: string,
   handleGetUser: func.isRequired,
   handleUpdateUser: func.isRequired,
   notify: func.isRequired,
 }
 
-export default connect(null, mapDispatchToProps)(UpdateUser)
+export default connect(mapStateToProps, mapDispatchToProps)(UpdateUser)

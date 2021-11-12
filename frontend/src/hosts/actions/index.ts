@@ -22,10 +22,22 @@ import {
 } from 'src/hosts/actions/vspheres'
 
 import {
-  KubernetesAction,
-  KubernetesActionTypes,
-  getKubernetesAllNodesAsync,
-} from 'src/hosts/actions/kubernetes'
+  loadInventoryTopologyAsync,
+  createInventoryTopologyAsync,
+  updateInventoryTopologyAsync,
+  getIpmiStatusAsync,
+  setIpmiStatusAsync,
+  getIpmiSensorDataAsync,
+  loadCloudServiceProviderAsync,
+  loadCloudServiceProvidersAsync,
+  createCloudServiceProviderAsync,
+  updateCloudServiceProviderAsync,
+  deleteCloudServiceProviderAsync,
+  getAWSInstancesAsync,
+  getAWSSecurityAsync,
+  getAWSVolumeAsync,
+  getAWSInstanceTypesAsync,
+} from 'src/hosts/actions/inventoryTopology'
 
 export {
   Action,
@@ -48,7 +60,19 @@ export {
   ResponseVcenterAction,
   RequestPauseVcenterAction,
   RequestRunVcenterAction,
-  KubernetesAction,
-  KubernetesActionTypes,
-  getKubernetesAllNodesAsync,
+  loadInventoryTopologyAsync,
+  createInventoryTopologyAsync,
+  updateInventoryTopologyAsync,
+  getIpmiStatusAsync,
+  setIpmiStatusAsync,
+  getIpmiSensorDataAsync,
+  loadCloudServiceProviderAsync,
+  loadCloudServiceProvidersAsync,
+  createCloudServiceProviderAsync,
+  updateCloudServiceProviderAsync,
+  deleteCloudServiceProviderAsync,
+  getAWSInstancesAsync,
+  getAWSSecurityAsync,
+  getAWSVolumeAsync,
+  getAWSInstanceTypesAsync,
 }

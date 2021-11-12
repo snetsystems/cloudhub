@@ -11,20 +11,27 @@ import {VERSION, GIT_SHA} from 'src/shared/constants'
 
 import {LocalStorage} from 'src/types/localStorage'
 
-export const loadLocalStorage = (errorsQueue: any[]): LocalStorage | {} => {
+export const loadLocalStorage = (
+  errorsQueue: any[]
+): LocalStorage | Record<string, never> => {
   try {
     const serializedState = localStorage.getItem('state')
     const state = JSON.parse(serializedState) || {}
     const gitSHAChanged = state.GIT_SHA && state.GIT_SHA !== GIT_SHA
     const npmVersionChanged = state.VERSION && state.VERSION !== VERSION
 
-    if (npmVersionChanged || gitSHAChanged) {
+    if (
+      npmVersionChanged ||
+      gitSHAChanged ||
+      window.location.search === '?clearLocalStorage'
+    ) {
       window.localStorage.removeItem('state')
 
       if (npmVersionChanged) {
         errorsQueue.push(notifyNewVersion(VERSION))
       }
 
+      // eslint-disable-next-line no-console
       console.debug('Cleared CloudHub localStorage state')
 
       return {}

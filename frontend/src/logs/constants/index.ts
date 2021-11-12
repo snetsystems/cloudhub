@@ -1,6 +1,23 @@
+import {Field} from 'src/types'
 import {TableData} from 'src/types/logs'
 
 export const DEFAULT_TIME_FORMAT = 'YYYY-MM-DD HH:mm:ss'
+
+/** name of a column to carry nanosecond fraction of timestamp */
+export const TIMESTAMP_NSINMS = '_timestamp_nsinms'
+/**
+ * "_timestamp_nsinms" field is added to query to know nanosecond fraction
+ * after millis, which is lost during JSON deserialization to number
+ */
+export const FIELD_TIMESTAMP_NSINMS: Field = {
+  type: 'infixfunc',
+  value: '%',
+  alias: TIMESTAMP_NSINMS,
+  args: [
+    {type: 'field', value: 'timestamp'},
+    {type: 'integer', value: '1000000'},
+  ],
+}
 
 export enum SeverityColorOptions {
   ruby = 'ruby',
@@ -220,14 +237,17 @@ export const NOW = 0
 const NEWER_CHUNK_SIZE_LIMIT = 100
 const OLDER_CHUNK_SIZE_LIMIT = 100
 const MAX_FETCH_COUNT = Infinity // never stop fetching
+const MAX_NO_CHANGE_FETCH_COUNT = 10 // but stop after no data are received after a few attempts
 
 export const NEWER_CHUNK_OPTIONS = {
   maxFetchCount: MAX_FETCH_COUNT,
+  maxNoChangeFetchCount: MAX_NO_CHANGE_FETCH_COUNT,
   chunkSize: NEWER_CHUNK_SIZE_LIMIT,
 }
 
 export const OLDER_CHUNK_OPTIONS = {
   maxFetchCount: MAX_FETCH_COUNT,
+  maxNoChangeFetchCount: MAX_NO_CHANGE_FETCH_COUNT,
   chunkSize: OLDER_CHUNK_SIZE_LIMIT,
 }
 

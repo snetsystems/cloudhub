@@ -48,6 +48,7 @@ interface Props {
   onUpdate: (text: string) => Promise<void>
   config: QueryConfig
   templates: Template[]
+  onMetaQuerySelected: () => void
 }
 
 const FIRST_TEMP_VAR = '0.tempVar'
@@ -320,9 +321,8 @@ class InfluxQLEditor extends Component<Props, State> {
 
     if (found) {
       return found
-    } else {
-      return getDeep<TempVar>(filteredTemplates, '0', defaultVar)
     }
+    return getDeep<TempVar>(filteredTemplates, '0', defaultVar)
   }
 
   private handleKeyDownEditor = (e: KeyboardEvent): void => {
@@ -350,13 +350,16 @@ class InfluxQLEditor extends Component<Props, State> {
     this.setState({isShowingTemplateValues: false, focused: true})
   }
 
-  private handleShowTemplateValues = async (): Promise<void> => {
+  private handleShowTemplateValues = (): void => {
     this.setState({
       isShowingTemplateValues: true,
     })
   }
 
   private handleChooseMetaQuery = (mqto: MetaQueryTemplateOption): void => {
+    if (this.props.onMetaQuerySelected) {
+      this.props.onMetaQuerySelected()
+    }
     this.handleChange(mqto.query)
   }
 
@@ -417,7 +420,11 @@ class InfluxQLEditor extends Component<Props, State> {
         <Dropdown
           titleText="Metaquery Templates"
           mode={DropdownMode.ActionList}
-          children={METAQUERY_TEMPLATE_OPTIONS.map(mqto => {
+          onChange={this.handleChooseMetaQuery}
+          buttonSize={ComponentSize.ExtraSmall}
+          widthPixels={163}
+        >
+          {METAQUERY_TEMPLATE_OPTIONS.map(mqto => {
             if (mqto.type === DropdownChildTypes.Item) {
               return (
                 <Dropdown.Item
@@ -432,10 +439,7 @@ class InfluxQLEditor extends Component<Props, State> {
               return <Dropdown.Divider key={mqto.id} id={mqto.id} />
             }
           })}
-          onChange={this.handleChooseMetaQuery}
-          buttonSize={ComponentSize.ExtraSmall}
-          widthPixels={163}
-        />
+        </Dropdown>
         <Button
           size={ComponentSize.ExtraSmall}
           color={ComponentColor.Primary}

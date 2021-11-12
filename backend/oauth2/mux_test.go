@@ -46,14 +46,14 @@ func setupMuxTest(response interface{}, selector func(*AuthMux) http.Handler) (*
 	auth := &cookie{
 		Name:       DefaultCookieName,
 		Lifespan:   1 * time.Hour,
-		Inactivity: DefaultInactivityDuration,
+		Inactivity: defaultInactivityDuration,
 		Now:        now,
 		Tokens:     mt,
 	}
 
 	useidtoken := false
 
-	jm := NewAuthMux(mp, auth, mt, "", clog.New(clog.ParseLevel("debug")), useidtoken, "", nil)
+	jm := NewAuthMux(mp, auth, mt, "", clog.New(clog.ParseLevel("debug")), useidtoken, "", nil, nil)
 	ts := httptest.NewServer(selector(jm))
 	jar, _ := cookiejar.New(nil)
 	hc := http.Client{

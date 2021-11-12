@@ -1,4 +1,4 @@
-import React, {SFC, MouseEvent} from 'react'
+import React, {FunctionComponent, MouseEvent} from 'react'
 
 import _ from 'lodash'
 import classnames from 'classnames'
@@ -28,7 +28,7 @@ interface ItemProps {
   onAction?: OnActionHandler
 }
 
-const DropdownMenuItem: SFC<ItemProps> = ({
+const DropdownMenuItem: FunctionComponent<ItemProps> = ({
   item,
   highlightedItemIndex,
   onSelection,
@@ -57,22 +57,21 @@ const DropdownMenuItem: SFC<ItemProps> = ({
       <a href="#" onClick={onSelection(item)} onMouseOver={onHighlight(index)}>
         {item.text}
       </a>
-      {actions &&
-        !!actions.length && (
-          <div className="dropdown-actions">
-            {actions.map(action => {
-              return (
-                <button
-                  key={action.text}
-                  className="dropdown-action"
-                  onClick={onAction(action, item)}
-                >
-                  <span title={action.text} className={`icon ${action.icon}`} />
-                </button>
-              )
-            })}
-          </div>
-        )}
+      {actions && !!actions.length && (
+        <div className="dropdown-actions">
+          {actions.map(action => {
+            return (
+              <button
+                key={action.text}
+                className="dropdown-action"
+                onClick={onAction(action, item)}
+              >
+                <span title={action.text} className={`icon ${action.icon}`} />
+              </button>
+            )
+          })}
+        </div>
+      )}
     </li>
   )
 }

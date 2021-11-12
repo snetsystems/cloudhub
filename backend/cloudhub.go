@@ -46,6 +46,10 @@ const (
 	ErrOrganizationConfigNotFound      = Error("could not find organization config")
 	ErrInvalidCellQueryType            = Error("invalid cell query type: must be 'flux' or 'influxql'")
 	ErrVsphereNotFound                 = Error("vsphere not found")
+	ErrTopologyNotFound                = Error("topology not found")
+	ErrTopologyAlreadyExists           = Error("topology already exists")
+	ErrCSPNotFound                     = Error("CSP not found")
+	ErrCSPAlreadyExists                = Error("CSP already exists")
 )
 
 // Error is a domain error encountered while processing CloudHub requests
@@ -96,6 +100,8 @@ const (
 	InfluxEnterprise = "influx-enterprise"
 	// InfluxRelay is the basic HA layer over InfluxDB
 	InfluxRelay = "influx-relay"
+	// InfluxDBv2 is Influx DB 2.x with Token authentication
+	InfluxDBv2 = "influx-v2"
 )
 
 // TSDBStatus represents the current status of a time series database
@@ -217,12 +223,13 @@ type DashboardQuery struct {
 
 // TemplateQuery is used to retrieve choices for template replacement
 type TemplateQuery struct {
-	Command     string `json:"influxql"`     // Command is the query itself
-	DB          string `json:"db,omitempty"` // DB is optional and if empty will not be used.
-	RP          string `json:"rp,omitempty"` // RP is a retention policy and optional; if empty will not be used.
-	Measurement string `json:"measurement"`  // Measurement is the optionally selected measurement for the query
-	TagKey      string `json:"tagKey"`       // TagKey is the optionally selected tag key for the query
-	FieldKey    string `json:"fieldKey"`     // FieldKey is the optionally selected field key for the query
+	Command     string `json:"influxql"`       // Command is the query itself
+	Flux        string `json:"flux,omitempty"` // flux is the flux query, if available
+	DB          string `json:"db,omitempty"`   // DB is optional and if empty will not be used.
+	RP          string `json:"rp,omitempty"`   // RP is a retention policy and optional; if empty will not be used.
+	Measurement string `json:"measurement"`    // Measurement is the optionally selected measurement for the query
+	TagKey      string `json:"tagKey"`         // TagKey is the optionally selected tag key for the query
+	FieldKey    string `json:"fieldKey"`       // FieldKey is the optionally selected field key for the query
 }
 
 // Response is the result of a query against a TimeSeries
@@ -439,6 +446,9 @@ type User struct {
 	PasswordUpdateDate    string      `json:"passwordUpdateDate,omitempty"`
 	PasswordResetFlag     string      `json:"passwordResetFlag,omitempty"`
 	Email                 string      `json:"email,omitempty"`
+	RetryCount            int32       `json:"retryCount,omitempty"`
+	LockedTime            string      `json:"lockedTime,omitempty"`
+	Locked                bool        `json:"locked,omitempty"`
 }
 
 // UserQuery represents the attributes that a user may be retrieved by.
@@ -958,7 +968,7 @@ type BuildStore interface {
 	Update(context.Context, BuildInfo) error
 }
 
-// Vsphere represents an vsphere.
+// Vsphere represents an vsphere
 type Vsphere struct {
 	ID            string   `json:"id,string,omitempty"`
 	Host          string   `json:"host,string"`
@@ -969,6 +979,7 @@ type Vsphere struct {
 	Interval      int      `json:"interval"`
 	Minion        string   `json:"minion"`
 	Organization  string   `json:"organization"`
+	DataSource    string   `json:"datasource"`
 }
 
 // VspheresStore is the Storage and retrieval of information
@@ -989,6 +1000,73 @@ type VspheresStore interface {
 // that were set on the server
 type Environment struct {
 	TelegrafSystemInterval time.Duration `json:"telegrafSystemInterval"`
+	CustomAutoRefresh      string        `json:"customAutoRefresh,omitempty"`
+}
+
+// Topology is represents represents an topology
+type Topology struct {
+	ID            string   `json:"id,string,omitempty"`
+	Organization  string   `json:"organization,omitempty"` // Organization is the organization ID that resource belongs to
+	Diagram       string   `json:"diagram,string,omitempty"` // diagram xml 
+}
+
+// TopologyQuery represents the attributes that a topology may be retrieved by.
+// It is predominantly used in the TopologiesStore.Get method.
+//
+// It is expected that only one of ID or Organization will be
+// specified, but all are provided TopologiesStore should prefer ID.
+type TopologyQuery struct {
+	ID               *string
+	Organization     *string
+}
+
+// TopologiesStore is the Storage and retrieval of information
+type TopologiesStore interface {
+	// All lists all topologies from the TopologiesStore
+	All(context.Context) ([]Topology, error)
+	// Create a new topology in the TopologiesStore
+	Add(context.Context, *Topology) (*Topology, error)
+	// Delete the topology from the TopologiesStore
+	Delete(context.Context, *Topology) error
+	// Get retrieves a topology if `ID` exists.
+	Get(ctx context.Context, q TopologyQuery) (*Topology, error)
+	// Update replaces the topology information
+	Update(context.Context, *Topology) error
+}
+
+// CSPQuery represents the attributes that a CSP may be retrieved by.
+// It is predominantly used in the CSPStore.Get method.
+//
+// It is expected that only one of ID or Organization will be
+// specified, but all are provided CSPStore should prefer ID.
+type CSPQuery struct {
+	ID               *string
+	Organization     *string
+}
+
+// CSP is CSP connection information
+type CSP struct {
+	ID            string   `json:"id,string,omitempty"`
+    Provider      string   `json:"provider,string"`
+	Region        string   `json:"region,string"`
+	AccessKey     string   `json:"accesskey,string"`
+	SecretKey     string   `json:"secretkey,string"`
+	Organization  string   `json:"organization"`
+	Minion        string   `json:"minion,string"`
+}
+
+// CSPStore is the Storage and retrieval of information
+type CSPStore interface {
+	// All lists all CSP from the CSPStore
+	All(context.Context) ([]CSP, error)
+	// Create a new CSP in the CSPStore
+	Add(context.Context, *CSP) (*CSP, error)
+	// Delete the CSP from the CSPStore
+	Delete(context.Context, *CSP) error
+	// Get retrieves a CSP if `ID` exists.
+	Get(ctx context.Context, q CSPQuery) (*CSP, error)
+	// Update replaces the CSP information
+	Update(context.Context, *CSP) error
 }
 
 // KVClient defines what each kv store should be capable of.
@@ -1011,4 +1089,8 @@ type KVClient interface {
 	UsersStore() UsersStore
 	// VspheresStore returns the kv's VspheresStore type.
 	VspheresStore() VspheresStore
+	// TopologiesStore returns the kv's TopologiesStore type.
+	TopologiesStore() TopologiesStore
+	// CSPStore returns the kv's CSPStore type.
+	CSPStore() CSPStore
 }

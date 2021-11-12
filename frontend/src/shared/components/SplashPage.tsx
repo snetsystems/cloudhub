@@ -1,4 +1,4 @@
-import React, {SFC, ReactElement} from 'react'
+import React, {FunctionComponent, ReactElement} from 'react'
 import classnames from 'classnames'
 import {InjectedRouter} from 'react-router'
 
@@ -9,7 +9,7 @@ interface Props {
   isShowLogo: boolean
 }
 
-const SplashPage: SFC<Props> = ({
+const SplashPage: FunctionComponent<Props> = ({
   router = null,
   isShowLogo = true,
   isShowCopy = true,

@@ -3,16 +3,21 @@ package etcd
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"errors"
+	"fmt"
 	"math/rand"
+	"net/url"
+	"strings"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/clientv3/concurrency"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 	"github.com/snetsystems/cloudhub/backend/kv"
 	"github.com/snetsystems/cloudhub/backend/mocks"
+	"github.com/snetsystems/cloudhub/backend/server/config"
 	"github.com/snetsystems/cloudhub/backend/snowflake"
+	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/clientv3/concurrency"
 )
 
 const (
@@ -125,6 +130,63 @@ func WithLogin(u, p string) Option {
 	return func(c *client) error {
 		c.config.Username = u
 		c.config.Password = p
+		return nil
+	}
+}
+
+// WithTLS allows set TLS config.
+func WithTLS(tlsConfig *tls.Config) Option {
+	return func(c *client) error {
+		if tlsConfig != nil {
+			c.config.TLS = tlsConfig
+		}
+		return nil
+	}
+}
+
+// WithURL allows setting host name, user + password and tls.Config from url like
+// "etcd://user:pass@localhost:2379?cert=path_cert&key=path_to_key&ca=path_to_ca_certs"
+func WithURL(u *url.URL) Option {
+	return func(c *client) error {
+		host := u.Host
+		if strings.HasSuffix(u.Scheme, "s") {
+			host = "https://" + host
+		}
+		c.config.Endpoints = []string{host}
+
+		pw, _ := u.User.Password()
+		c.config.Username = u.User.Username()
+		c.config.Password = pw
+
+		query := u.Query()
+		var cert, certKey, cacerts string
+		for key, val := range query {
+			if len(val) != 1 {
+				return fmt.Errorf("query parameter '%s' can appear at most once in '%s'", key, u.String())
+			}
+			switch key {
+			case "cert":
+				cert = val[0]
+			case "key":
+				certKey = val[0]
+			case "ca":
+				cacerts = val[0]
+			default:
+				return fmt.Errorf("query parameter '%s' in '%s', supported parameter names are: cert, key, ca", key, u.String())
+			}
+		}
+		if cert != "" || cacerts != "" {
+			tlsConfig, err := config.CreateTLSConfig(config.TLSOptions{
+				Cert:         cert,
+				Key:          certKey,
+				CACerts:      cacerts,
+				CertOptional: true,
+			})
+			if err != nil {
+				return err
+			}
+			c.config.TLS = tlsConfig
+		}
 		return nil
 	}
 }

@@ -3,7 +3,7 @@
   "info": {
     "title": "CloudHub",
     "description": "API endpoints for CloudHub",
-    "version": "1.0.10"
+    "version": "1.1.1"
   },
   "schemes": ["http"],
   "basePath": "/cloudhub/v1",
@@ -3928,7 +3928,6 @@
         }
       }
     },
-
     "/vspheres": {
       "get": {
         "tags": ["vspheres"],
@@ -3971,7 +3970,8 @@
             "in": "body",
             "schema": {
               "$ref": "#/definitions/VsphereReq"
-            }
+            },
+            "required": true
           },
           {
             "name": "username",
@@ -3979,7 +3979,8 @@
             "description": "vsphere access id",
             "schema": {
               "$ref": "#/definitions/VsphereReq"
-            }
+            },
+            "required": true
           },
           {
             "name": "password",
@@ -3987,7 +3988,8 @@
             "description": "vsphere access password",
             "schema": {
               "$ref": "#/definitions/VsphereReq"
-            }
+            },
+            "required": true
           },
           {
             "name": "protocol",
@@ -3995,7 +3997,8 @@
             "description": "vsphere access protocol",
             "schema": {
               "$ref": "#/definitions/VsphereReq"
-            }
+            },
+            "required": true
           },
           {
             "name": "port",
@@ -4003,7 +4006,8 @@
             "description": "vsphere access port",
             "schema": {
               "$ref": "#/definitions/VsphereReq"
-            }
+            },
+            "required": true
           },
           {
             "name": "interval",
@@ -4011,7 +4015,8 @@
             "description": "vsphere access interval",
             "schema": {
               "$ref": "#/definitions/VsphereReq"
-            }
+            },
+            "required": true
           },
           {
             "name": "minion",
@@ -4019,7 +4024,17 @@
             "description": "vsphere access minion",
             "schema": {
               "$ref": "#/definitions/VsphereReq"
-            }
+            },
+            "required": true
+          },
+          {
+            "name": "datasource",
+            "in": "body",
+            "description": "cloudhub datasource",
+            "schema": {
+              "$ref": "#/definitions/VsphereReq"
+            },
+            "required": true
           }
         ],
         "responses": {
@@ -4178,18 +4193,20 @@
               "$ref": "#/definitions/VsphereReq"
             },
             "required": true
+          },
+          {
+            "name": "datasource",
+            "in": "body",
+            "description": "Updated cloudhub cloudhub",
+            "schema": {
+              "$ref": "#/definitions/VsphereReq"
+            },
+            "required": true
           }
         ],
         "responses": {
           "201": {
             "description": "Vsphere successfully updated",
-            "headers": {
-              "Location": {
-                "type": "string",
-                "format": "url",
-                "description": "Location of the updated vsphere resource"
-              }
-            },
             "schema": {
               "$ref": "#/definitions/VsphereRes"
             }
@@ -4251,6 +4268,604 @@
           },
           "404": {
             "description": "vsphere not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/topologies": {
+      "get": {
+        "tags": ["topologies"],
+        "summary": "Search organization's inventory topology",
+        "description": "Returns a inventory topology from the store",
+        "responses": {
+          "200": {
+            "description": "An inventory topology object",
+            "schema": {
+              "$ref": "#/definitions/InventoryTopologyRes"
+            }
+          },
+          "400": {
+            "description": "Failed to load inventory topology from store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden to access this route",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "inventory topology not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["topologies"],
+        "summary": "Create organization's new inventory topology",
+        "description": "Creates a inventory topology in the store",
+        "parameters": [
+          {
+            "in": "body",
+            "type": "xml",
+            "schema": {
+              "$ref": "#/definitions/InventoryTopologyReq"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Inventory topology successfully created",
+            "headers": {
+              "Location": {
+                "type": "string",
+                "format": "url",
+                "description": "Location of the newly created inventory topology resource"
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/InventoryTopologyRes"
+            }
+          },
+          "400": {
+            "description": "Invalid Body – failed to perform operation in data store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden to access this route",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "Invalid data schema provided to server for inventory topology",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/topologies/{id}": {
+      "patch": {
+        "tags": ["topologies"],
+        "summary": "Update organization's inventory topology",
+        "description": "Updates a inventory topology in the store",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "description": "ID of the topology",
+            "required": true
+          },
+          {
+            "in": "body",
+            "type": "xml",
+            "description": "Updated inventory topology diagram",
+            "schema": {
+              "$ref": "#/definitions/InventoryTopologyReq"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Inventory topology successfully updated",
+            "headers": {
+              "Location": {
+                "type": "string",
+                "format": "url",
+                "description": "Location of the updated inventory topology resource"
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/InventoryTopologyRes"
+            }
+          },
+          "400": {
+            "description": "failed to perform operation in data store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden to access this route",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "inventory topology not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "Invalid data schema provided to server for inventory topology",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["topologies"],
+        "summary": "Delete organization's inventory topology",
+        "description": "Deletes a inventory topology in the store",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "description": "ID of the topology",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "inventory topology successfully deleted"
+          },
+          "400": {
+            "description": "Failed to perform operation in data store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden to access this route",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "inventory topology not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/login/locked": {
+      "patch": {
+        "tags": ["login", "users"],
+        "summary": "Locked user",
+        "description": "Block user login",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "body",
+            "description": "target user name",
+            "schema": {
+              "$ref": "#/definitions/Locked"
+            }
+          },
+          {
+            "name": "locked",
+            "in": "body",
+            "description": "locked choice",
+            "schema": {
+              "$ref": "#/definitions/Locked"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Locked user successfully"
+          },
+          "400": {
+            "description": "Invalid JSON – unable to encode or decode; or failed to perform operation in data store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/logging": {
+      "post": {
+        "tags": ["logging"],
+        "description": "web general acitivity logging",
+        "parameters": [
+          {
+            "name": "action",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Logging"
+            },
+            "required": true
+          },
+          {
+            "name": "message",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/Logging"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "logging successfully"
+          },
+          "400": {
+            "description": "Invalid JSON – unable to encode or decode; or failed to perform operation in data store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/csp": {
+      "get": {
+        "tags": ["CSP"],
+        "summary": "Search organization's all CSP",
+        "description": "Returns all CSP from the store",
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved all CSP from the store",
+            "schema": {
+              "$ref": "#/definitions/CSPs"
+            }
+          },
+          "400": {
+            "description": "Failed to load CSP from store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden to access this route",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "CSP not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["CSP"],
+        "summary": "Create organization's new CSP",
+        "description": "Creates a CSP in the store",
+        "parameters": [
+          {
+            "name": "provider",
+            "in": "body",
+            "description": "Cloud Solution Provider Name",
+            "schema": {
+              "$ref": "#/definitions/CSPReq"
+            },
+            "required": true
+          },
+          {
+            "name": "region",
+            "in": "body",
+            "description": "CSP access region",
+            "schema": {
+              "$ref": "#/definitions/CSPReq"
+            },
+            "required": true
+          },
+          {
+            "name": "accesskey",
+            "in": "body",
+            "description": "CSP access key",
+            "schema": {
+              "$ref": "#/definitions/CSPReq"
+            },
+            "required": true
+          },
+          {
+            "name": "secretkey",
+            "in": "body",
+            "description": "CSP access secret key",
+            "schema": {
+              "$ref": "#/definitions/CSPReq"
+            },
+            "required": true
+          },
+          {
+            "name": "minion",
+            "in": "body",
+            "description": "target salt minion",
+            "schema": {
+              "$ref": "#/definitions/CSPReq"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "CSP successfully created",
+            "headers": {
+              "Location": {
+                "type": "string",
+                "format": "url",
+                "description": "Location of the newly created CSP resource"
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/CSPRes"
+            }
+          },
+          "400": {
+            "description": "Invalid Body – failed to perform operation in data store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden to access this route",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "Invalid data schema provided to server for CSP",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      }
+    },
+    "/csp/{id}": {
+      "get": {
+        "tags": ["CSP"],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "description": "ID of the CSP",
+            "required": true
+          }
+        ],
+        "summary": "Retrieve a specific CSP",
+        "description": "Returns a specific CSP from the store",
+        "responses": {
+          "200": {
+            "description": "An CSP object",
+            "schema": {
+              "$ref": "#/definitions/CSPRes"
+            }
+          },
+          "400": {
+            "description": "Failed to load CSP from store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden to access this route",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["CSP"],
+        "summary": "Update organization's CSP",
+        "description": "Updates a CSP in the store",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "description": "ID of the CSP",
+            "required": true
+          },
+          {
+            "name": "region",
+            "in": "body",
+            "description": "CSP access region",
+            "schema": {
+              "$ref": "#/definitions/CSPPatch"
+            },
+            "required": false
+          },
+          {
+            "name": "accesskey",
+            "in": "body",
+            "description": "CSP access key",
+            "schema": {
+              "$ref": "#/definitions/CSPPatch"
+            },
+            "required": false
+          },
+          {
+            "name": "secretkey",
+            "in": "body",
+            "description": "CSP access secret key",
+            "schema": {
+              "$ref": "#/definitions/CSPPatch"
+            },
+            "required": false
+          },
+          {
+            "name": "minion",
+            "in": "body",
+            "description": "target salt minion",
+            "schema": {
+              "$ref": "#/definitions/CSPPatch"
+            },
+            "required": false
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "CSP successfully updated",
+            "headers": {
+              "Location": {
+                "type": "string",
+                "format": "url",
+                "description": "Location of the updated CSP resource"
+              }
+            },
+            "schema": {
+              "$ref": "#/definitions/CSPRes"
+            }
+          },
+          "400": {
+            "description": "failed to perform operation in data store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden to access this route",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "inventory topology not found",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "Invalid data schema provided to server for CSP",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "default": {
+            "description": "Internal server error",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["CSP"],
+        "summary": "Delete organization's CSP",
+        "description": "Deletes a CSP in the store",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "type": "string",
+            "description": "ID of the CSP",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "CSP successfully deleted"
+          },
+          "400": {
+            "description": "Failed to perform operation in data store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "403": {
+            "description": "Forbidden to access this route",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "404": {
+            "description": "CSP not found",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -4439,6 +5054,19 @@
         "email": {
           "type": "string",
           "description": "send email (only scheme=basic currently supported)"
+        },
+        "retryCount": {
+          "type": "integer",
+          "format": "int32",
+          "description": "login retry count (only scheme=basic currently supported)"
+        },
+        "lockedTime": {
+          "type": "string",
+          "description": "user locked time"
+        },
+        "locked": {
+          "type": "boolean",
+          "description": "user locked"
         }
       },
       "required": ["id", "name", "provider", "roles", "scheme"],
@@ -4457,7 +5085,10 @@
         "superAdmin": false,
         "passwordUpdateDate": "2020-12-30_09:10:34",
         "passwordResetFlag": "Y",
-        "email": "pineapple@cubeoctohedron.flux"
+        "email": "pineapple@cubeoctohedron.flux",
+        "retryCount": 0,
+        "lockedTime": "2021-03-29_13:43:54",
+        "locked": true
       }
     },
     "Users": {
@@ -4480,6 +5111,25 @@
             "$ref": "#/definitions/UserRes"
           }
         }
+      }
+    },
+    "Locked": {
+      "type": "object",
+      "description": "Locked user request",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "user name"
+        },
+        "locked": {
+          "type": "boolean",
+          "description": "locked"
+        }
+      },
+      "required": ["name", "locked"],
+      "example": {
+        "name": "test",
+        "locked": true
       }
     },
     "Role": {
@@ -5210,7 +5860,6 @@
               "alerta",
               "post",
               "http",
-              "hipchat",
               "kafka",
               "opsgenie",
               "opsgenie2",
@@ -6849,6 +7498,21 @@
           "type": "string",
           "format": "url"
         },
+        "vspheres": {
+          "description": "location of the vspheres endpoint",
+          "type": "string",
+          "format": "url"
+        },
+        "topologies": {
+          "description": "location of the topologies endpoint",
+          "type": "string",
+          "format": "url"
+        },
+        "loginLocked": {
+          "description": "location of the loginLocked endpoint",
+          "type": "string",
+          "format": "url"
+        },
         "config": {
           "type": "object",
           "properties": {
@@ -6908,6 +7572,34 @@
               }
             }
           }
+        },
+        "retryPolicys": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "description": "'count', 'delaytime', 'type' = lock or delay ",
+                "type": "string"
+              },
+              "policy": {
+                "description": "retry policy",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "passwordPolicy": {
+          "description": "password regular expression",
+          "type": "string"
+        },
+        "passwordPolicyMessage": {
+          "description": "password regular expression message",
+          "type": "string"
+        },
+        "loginAuthType": {
+          "description": "'mix', 'oauth', 'basic'",
+          "type": "string"
         }
       },
       "example": {
@@ -6974,7 +7666,27 @@
             "name": "vsphere",
             "url": "on"
           }
-        ]
+        ],
+        "vspheres": "/cloudhub/v1/vspheres",
+        "topologies": "/cloudhub/v1/topologies",
+        "loginLocked": "/cloudhub/v1/login/locked",
+        "retryPolicys": [
+          {
+            "name": "count",
+            "policy": "3"
+          },
+          {
+            "name": "delaytime",
+            "policy": "5"
+          },
+          {
+            "name": "type",
+            "policy": "delay"
+          }
+        ],
+        "passwordPolicy": "(?=.*[0-9]{1,50})(?=.*[~`!@#$%\\^&*()-+=]{1,50})(?=.*[a-zA-Z]{2,50}).{8,50}$",
+        "passwordPolicyMessage": "Enter at least 8 characters, including at least 1 digit and 1 special characters and 2 characters.eg, cloud!hub2.",
+        "loginAuthType": "mix"
       }
     },
     "Link": {
@@ -7192,9 +7904,20 @@
         "minion": {
           "type": "string",
           "description": "vsphere access minion"
+        },
+        "datasource": {
+          "type": "string",
+          "description": "cloudhub datasource"
         }
       },
-      "required": ["host", "username", "password", "interval", "minion"],
+      "required": [
+        "host",
+        "username",
+        "password",
+        "interval",
+        "minion",
+        "datasource"
+      ],
       "example": {
         "host": "1.1.1.1",
         "username": "admin@vmware.com",
@@ -7202,7 +7925,8 @@
         "protocol": "https",
         "port": 433,
         "intermal": 1,
-        "minion": "minion01"
+        "minion": "minion01",
+        "datasource": "837"
       }
     },
     "VsphereRes": {
@@ -7256,9 +7980,21 @@
         "organization": {
           "type": "string",
           "description": "cloudhub organization"
+        },
+        "datasource": {
+          "type": "string",
+          "description": "cloudhub datasource"
         }
       },
-      "required": ["host", "username", "password", "interval", "minion"],
+      "required": [
+        "host",
+        "username",
+        "password",
+        "interval",
+        "minion",
+        "organization",
+        "datasource"
+      ],
       "example": {
         "id": "1",
         "host": "1.1.1.1",
@@ -7271,7 +8007,8 @@
         "port": 433,
         "intermal": 1,
         "minion": "minion01",
-        "organization": "123"
+        "organization": "123",
+        "datasource": "87"
       }
     },
     "Vspheres": {
@@ -7376,6 +8113,206 @@
       "example": {
         "name": "test",
         "password": "dkeidj@!@"
+      }
+    },
+    "InventoryTopologyReq": {
+      "type": "object",
+      "description": "inventory topology diagram xml content",
+      "example": "<mxGraphModel><root></root></mxGraphModel>"
+    },
+    "InventoryTopologyRes": {
+      "type": "object",
+      "description": "inventory topology information",
+      "properties": {
+        "id": {
+          "description": "ID of the inventory topology",
+          "type": "string",
+          "readOnly": true
+        },
+        "organization": {
+          "type": "string",
+          "description": "cloudhub organization",
+          "readOnly": true
+        },
+        "diagram": {
+          "type": "string",
+          "description": "diagram xml content"
+        },
+        "links": {"type": "string", "description": "self url"}
+      },
+      "required": ["id", "organization", "diagram", "links"],
+      "example": {
+        "id": "1",
+        "organization": "2",
+        "diagram": "content",
+        "links": {
+          "self": "/cloudhub/v1/topologies/1"
+        }
+      }
+    },
+    "Logging": {
+      "type": "object",
+      "description": "Logging request",
+      "properties": {
+        "action": {
+          "type": "string",
+          "description": "action tag"
+        },
+        "message": {
+          "type": "string",
+          "description": "log message"
+        }
+      },
+      "required": ["action", "message"],
+      "example": {
+        "action": "test",
+        "message": "test message"
+      }
+    },
+    "CSPs": {
+      "type": "object",
+      "required": ["CSPs"],
+      "properties": {
+        "links": {
+          "type": "object",
+          "properties": {
+            "self": {
+              "type": "string",
+              "description": "Self link mapping to this resource",
+              "format": "url"
+            }
+          },
+
+          "readOnly": true
+        },
+        "csps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CSPRes"
+          }
+        }
+      }
+    },
+    "CSPReq": {
+      "type": "object",
+      "description": "CSP access information",
+      "properties": {
+        "provider": {
+          "type": "string",
+          "description": "Cloud Solution Provider Name"
+        },
+        "region": {
+          "type": "string",
+          "description": "CSP access region"
+        },
+        "accesskey": {
+          "type": "string",
+          "description": "CSP access key"
+        },
+        "secretkey": {
+          "type": "string",
+          "description": "CSP access secret key"
+        },
+        "minion": {
+          "type": "string",
+          "description": "Target Salt Minion"
+        }
+      },
+      "required": ["provider", "region", "accesskey", "secretkey", "minion"],
+      "example": {
+        "provider": "AWS",
+        "region": "ap-northeast-2",
+        "accesskey": "AABCCEEDSKDDLSSSDD",
+        "secretkey": "kjdjd+kDDSQQWD+jdjwidsndbh",
+        "minion": "minion01"
+      }
+    },
+    "CSPPatch": {
+      "type": "object",
+      "description": "CSP access information Patch",
+      "properties": {
+        "region": {
+          "type": "string",
+          "description": "CSP access region"
+        },
+        "accesskey": {
+          "type": "string",
+          "description": "CSP access key"
+        },
+        "secretkey": {
+          "type": "string",
+          "description": "CSP access secret key"
+        },
+        "minion": {
+          "type": "string",
+          "description": "Target Salt Minion"
+        }
+      },
+      "example": {
+        "region": "ap-northeast-2",
+        "accesskey": "AABCCEEDSKDDLSSSDD",
+        "secretkey": "kjdjd+kDDSQQWD+jdjwidsndbh",
+        "minion": "minion01"
+      }
+    },
+    "CSPRes": {
+      "type": "object",
+      "description": "CSP information",
+      "properties": {
+        "id": {
+          "description": "ID of the CSP",
+          "type": "string",
+          "readOnly": true
+        },
+        "provider": {
+          "type": "string",
+          "description": "Cloud Solution Provider Name"
+        },
+        "region": {
+          "type": "string",
+          "description": "CSP access region"
+        },
+        "accesskey": {
+          "type": "string",
+          "description": "CSP access key"
+        },
+        "secretkey": {
+          "type": "string",
+          "description": "CSP access secret key"
+        },
+        "organization": {
+          "type": "string",
+          "description": "cloudhub organization",
+          "readOnly": true
+        },
+        "minion": {
+          "type": "string",
+          "description": "target salt minion",
+          "readOnly": true
+        },
+        "links": {"type": "string", "description": "self url"}
+      },
+      "required": [
+        "id",
+        "provider",
+        "region",
+        "accesskey",
+        "secretkey",
+        "organization",
+        "minion",
+        "links"
+      ],
+      "example": {
+        "id": "1",
+        "provider": "AWS",
+        "region": "ap-northeast-2",
+        "accesskey": "AABCCEEDSKDDLSSSDD",
+        "secretkey": "kjdjd+kDDSQQWD+jdjwidsndbh",
+        "organization": "2",
+        "minion": "minion01",
+        "links": {
+          "self": "/cloudhub/v1/csp/1"
+        }
       }
     }
   }

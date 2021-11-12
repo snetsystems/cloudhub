@@ -15,14 +15,14 @@ func ValidTemplateRequest(template *cloudhub.Template) error {
 	switch template.Type {
 	default:
 		return fmt.Errorf("Unknown template type %s", template.Type)
-	case "constant", "csv", "fieldKeys", "tagKeys", "tagValues", "measurements", "databases", "map", "influxql", "text":
+	case "constant", "csv", "fieldKeys", "tagKeys", "tagValues", "measurements", "databases", "map", "influxql", "text", "flux":
 	}
 
 	for _, v := range template.Values {
 		switch v.Type {
 		default:
 			return fmt.Errorf("Unknown template variable type %s", v.Type)
-		case "csv", "map", "fieldKey", "tagKey", "tagValue", "measurement", "database", "constant", "influxql":
+		case "csv", "map", "fieldKey", "tagKey", "tagValue", "measurement", "database", "constant", "influxql", "flux":
 		}
 
 		if template.Type == "map" && v.Key == "" {
@@ -30,8 +30,8 @@ func ValidTemplateRequest(template *cloudhub.Template) error {
 		}
 	}
 
-	if template.Type == "influxql" && template.Query == nil {
-		return fmt.Errorf("No query set for template of type 'influxql'")
+	if (template.Type == "influxql" || template.Type == "flux") && template.Query == nil {
+		return fmt.Errorf("No query set for template of type '%s'", template.Type)
 	}
 
 	return nil
@@ -131,6 +131,10 @@ func (s *Service) NewTemplate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// log registrationte
+	msg := fmt.Sprintf(MsgDashboardTemplateCreated.String(), template.Label, dash.Name)
+	s.logRegistration(ctx, "Dashboards Templates", msg)
+
 	res := newTemplateResponse(dash.ID, template)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
@@ -179,9 +183,11 @@ func (s *Service) RemoveTemplate(w http.ResponseWriter, r *http.Request) {
 
 	tid := httprouter.GetParamFromContext(ctx, "tid")
 	pos := -1
+	var template cloudhub.Template
 	for i, t := range dash.Templates {
 		if t.ID == cloudhub.TemplateID(tid) {
 			pos = i
+			template = t
 			break
 		}
 	}
@@ -196,6 +202,10 @@ func (s *Service) RemoveTemplate(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, msg, s.Logger)
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgDashboardTemplateDeleted.String(), template.Label, dash.Name)
+	s.logRegistration(ctx, "Dashboards Templates", msg)
 
 	w.WriteHeader(http.StatusNoContent)
 }
@@ -246,6 +256,10 @@ func (s *Service) ReplaceTemplate(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, msg, s.Logger)
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgDashboardTemplateModified.String(), template.Label, dash.Name)
+	s.logRegistration(ctx, "Dashboards Templates", msg)
 
 	res := newTemplateResponse(cloudhub.DashboardID(id), template)
 	encodeJSON(w, http.StatusOK, res, s.Logger)

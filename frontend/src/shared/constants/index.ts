@@ -410,7 +410,7 @@ export const HTTP_FORBIDDEN = 403
 export const HTTP_NOT_FOUND = 404
 
 export const AUTOREFRESH_DEFAULT = 0 // in milliseconds
-export const DASHBOARD_REFRESH_DEFAULT = 10000 // in milliseconds
+export const DASHBOARD_REFRESH_DEFAULT = 0 // in milliseconds
 export const SHOW_TEMP_VAR_CONTROL_BAR_DEFAULT = false
 
 export const GRAPH = 'graph'
@@ -451,6 +451,7 @@ export const DEFAULT_SOURCE = {
   telegraf: 'Default',
   insecureSkipVerify: false,
   metaUrl: 'http://influxdb:8091',
+  version: '1.x',
 }
 
 export const DEFAULT_KAPACITOR = {
@@ -515,6 +516,9 @@ export const MIN_SIZE = 0
 
 export const QUERY_BUILDER_LIST_ITEM_HEIGHT = 28
 
+export const SOURCE_TYPE_INFLUX_V1 = 'influx'
+export const SOURCE_TYPE_INFLUX_V2 = 'influx-v2'
+
 export enum DataType {
   flux = 'flux',
   influxQL = 'influxQL',
@@ -523,4 +527,6 @@ export enum DataType {
 export enum AddonType {
   salt = 'salt',
   router128T = 'swan',
+  ipmiSecretKey = 'ipmi-secret-key',
+  aws = 'aws',
 }

@@ -95,6 +95,7 @@
 @import 'src/shared/components/TimeMachine/FluxScriptWizard';
 @import 'src/shared/components/Spinner';
 @import 'src/shared/components/Shell.scss';
+@import 'src/shared/components/ResizableDock.scss';
 
 // Reusable UI Components
 @import '../reusable_ui/components/panel/Panel.scss';
@@ -141,3 +142,5 @@
 @import 'src/hosts/components/host.scss';
 @import 'src/hosts/components/vsphere-icon.scss';
 @import 'custom/snetsystem_custom.scss';
+@import 'src/hosts/components/graph.scss';
+@import 'components/tooltip-button';

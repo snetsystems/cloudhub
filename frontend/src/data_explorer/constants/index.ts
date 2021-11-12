@@ -99,6 +99,12 @@ export const METAQUERY_TEMPLATE_OPTIONS: Array<
     type: DropdownChildTypes.Divider,
   },
   {
+    id: 'Show Field Keys',
+    text: 'Show Field Keys',
+    query: 'SHOW FIELD KEYS ON "db_name"',
+    type: DropdownChildTypes.Item,
+  },
+  {
     id: 'Show Field Key Cardinality',
     text: 'Show Field Key Cardinality',
     query: 'SHOW FIELD KEY CARDINALITY ON "db_name"',
@@ -185,6 +191,12 @@ export const METAQUERY_TEMPLATE_OPTIONS: Array<
     type: DropdownChildTypes.Item,
   },
   {
+    id: 'Show Grants',
+    text: 'Show Grants',
+    query: 'SHOW GRANTS FOR "username"',
+    type: DropdownChildTypes.Item,
+  },
+  {
     id: 'Create User',
     text: 'Create User',
     query: 'CREATE USER "username" WITH PASSWORD \'password\'',
@@ -208,6 +220,46 @@ export const METAQUERY_TEMPLATE_OPTIONS: Array<
     type: DropdownChildTypes.Divider,
   },
   {
+    id: 'Drop Measurement',
+    text: 'Drop Measurement',
+    query: 'USE "db_name"; DROP MEASUREMENT "measurement_name"',
+    type: DropdownChildTypes.Item,
+  },
+  {
+    id: 'Drop Series',
+    text: 'Drop Series',
+    query:
+      'USE "db_name"; DROP SERIES FROM "measurement_name" WHERE "tag" = \'value\'',
+    type: DropdownChildTypes.Item,
+  },
+  {
+    id: 'Delete',
+    text: 'Delete',
+    query:
+      'USE "db_name"; DELETE FROM "measurement_name" WHERE "tag" = \'value\' AND time < \'2020-01-01\'',
+    type: DropdownChildTypes.Item,
+  },
+  {
+    id: `mqtd-divider-7`,
+    type: DropdownChildTypes.Divider,
+  },
+  {
+    id: 'Explain',
+    text: 'Explain',
+    query: 'EXPLAIN SELECT * FROM "db_name"."rp_name"."measurement"',
+    type: DropdownChildTypes.Item,
+  },
+  {
+    id: 'Explain Analyze',
+    text: 'Explain Analyze',
+    query: 'EXPLAIN ANALYZE SELECT * FROM "db_name"."rp_name"."measurement"',
+    type: DropdownChildTypes.Item,
+  },
+  {
+    id: `mqtd-divider-8`,
+    type: DropdownChildTypes.Divider,
+  },
+  {
     id: 'Show Stats',
     text: 'Show Stats',
     query: 'SHOW STATS',
@@ -219,10 +271,34 @@ export const METAQUERY_TEMPLATE_OPTIONS: Array<
     query: 'SHOW DIAGNOSTICS',
     type: DropdownChildTypes.Item,
   },
+  {
+    id: 'Show Subscriptions',
+    text: 'Show Subscriptions',
+    query: 'SHOW SUBSCRIPTIONS',
+    type: DropdownChildTypes.Item,
+  },
+  {
+    id: 'Show Queries',
+    text: 'Show Queries',
+    query: 'SHOW QUERIES',
+    type: DropdownChildTypes.Item,
+  },
+  {
+    id: 'Show Shards',
+    text: 'Show Shards',
+    query: 'SHOW SHARDS',
+    type: DropdownChildTypes.Item,
+  },
+  {
+    id: 'Show Shard Groups',
+    text: 'Show Shard Groups',
+    query: 'SHOW SHARD GROUPS',
+    type: DropdownChildTypes.Item,
+  },
 ]
 
 export const WRITE_DATA_DOCS_LINK =
-  'https://docs.influxdata.com/influxdb/latest/write_protocols/line_protocol_tutorial/'
+  'https://docs.influxdata.com/influxdb/v1.8/write_protocols/line_protocol_tutorial/'
 
 export const DEFAULT_TIME_RANGE = timeRanges.find(
   tr => tr.lower === 'now() - 1h'

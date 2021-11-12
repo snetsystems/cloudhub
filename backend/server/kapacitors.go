@@ -1,10 +1,13 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/bouk/httprouter"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
@@ -108,6 +111,19 @@ func (s *Service) NewKapacitor(w http.ResponseWriter, r *http.Request) {
 		unknownErrorWithMessage(w, msg, s.Logger)
 		return
 	}
+
+	if srv.Active {
+		// make sure that there is at most one active kapacitor
+		err := s.deactivateOtherKapacitors(ctx, srcID, srv.ID)
+		if err != nil {
+			Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+			return
+		}
+	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgKapacitorCreated.String(), srv.Name)
+	s.logRegistration(ctx, "Kapacitors", msg)
 
 	res := newKapacitor(srv)
 	location(w, res.Links.Self)
@@ -217,6 +233,10 @@ func (s *Service) RemoveKapacitor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// log registrationte
+	msg := fmt.Sprintf(MsgKapacitorDeleted.String(), srv.Name)
+	s.logRegistration(ctx, "Kapacitors", msg)
+
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -273,6 +293,7 @@ func (s *Service) UpdateKapacitor(w http.ResponseWriter, r *http.Request) {
 		invalidData(w, err, s.Logger)
 		return
 	}
+	activateKapacitor := false
 
 	if req.Name != nil {
 		srv.Name = *req.Name
@@ -290,6 +311,7 @@ func (s *Service) UpdateKapacitor(w http.ResponseWriter, r *http.Request) {
 		srv.InsecureSkipVerify = *req.InsecureSkipVerify
 	}
 	if req.Active != nil {
+		activateKapacitor = *req.Active
 		srv.Active = *req.Active
 	}
 
@@ -299,8 +321,48 @@ func (s *Service) UpdateKapacitor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if activateKapacitor {
+		// make sure that there is at most one active kapacitor
+		err := s.deactivateOtherKapacitors(ctx, srcID, id)
+		if err != nil {
+			Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+			return
+		}
+	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgKapacitorModified.String(), srv.Name)
+	s.logRegistration(ctx, "Kapacitors", msg)
+
 	res := newKapacitor(srv)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
+}
+
+// deactivateOtherKapacitors deactivates all other kapacitors excluding the one with supplied ID
+func (s *Service) deactivateOtherKapacitors(ctx context.Context, srcID int, ID int) error {
+	serversStore := s.Store.Servers(ctx)
+	mrSrvs, err := serversStore.All(ctx)
+	if err != nil {
+		return errors.New("error loading kapacitors for deactivation")
+	}
+	var deactivationErrors []string = nil
+	var deactivationError error = nil
+	for _, srv := range mrSrvs {
+		if srv.SrcID == srcID && srv.Type == "" && srv.ID != ID {
+			if srv.Active {
+				srv.Active = false
+				if err := serversStore.Update(ctx, srv); err != nil {
+					deactivationErrors = append(deactivationErrors, err.Error())
+					deactivationError = err
+					continue
+				}
+			}
+		}
+	}
+	if len(deactivationErrors) > 1 {
+		return fmt.Errorf(strings.Join(deactivationErrors, "\n"))
+	}
+	return deactivationError
 }
 
 // KapacitorRulesPost proxies POST to kapacitor
@@ -349,6 +411,11 @@ func (s *Service) KapacitorRulesPost(w http.ResponseWriter, r *http.Request) {
 		invalidData(w, err, s.Logger)
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgKapacitorRuleCreated.String(), task.Rule.Name, srv.Name)
+	s.logRegistration(ctx, "Kapacitors Rules", msg)
+
 	res := newAlertResponse(task, srv.SrcID, srv.ID)
 	location(w, res.Links.Self)
 	encodeJSON(w, http.StatusCreated, res, s.Logger)
@@ -407,10 +474,6 @@ func newAlertResponse(task *kapa.Task, srcID, kapaID int) *alertResponse {
 			a.Command = []string{}
 			res.AlertNodes.Exec[i] = a
 		}
-	}
-
-	if res.AlertNodes.HipChat == nil {
-		res.AlertNodes.HipChat = []*cloudhub.HipChat{}
 	}
 
 	if res.AlertNodes.Kafka == nil {
@@ -599,6 +662,11 @@ func (s *Service) KapacitorRulesPut(w http.ResponseWriter, r *http.Request) {
 		invalidData(w, err, s.Logger)
 		return
 	}
+	
+	// log registrationte
+	msg := fmt.Sprintf(MsgKapacitorRuleModified.String(), task.Rule.Name, srv.Name)
+	s.logRegistration(ctx, "Kapacitors Rules", msg)
+
 	res := newAlertResponse(task, srv.SrcID, srv.ID)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
@@ -662,16 +730,24 @@ func (s *Service) KapacitorRulesStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var task *kapa.Task
+	var ruleStatus string
 	if req.Status == "enabled" {
 		task, err = c.Enable(ctx, c.Href(tid))
+		ruleStatus = "activated"
 	} else {
 		task, err = c.Disable(ctx, c.Href(tid))
+		ruleStatus = "deactivated"
 	}
 
 	if err != nil {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
+
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgKapacitorRuleStatus.String(), task.Rule.Name, ruleStatus, srv.Name)
+	s.logRegistration(ctx, "Kapacitors Rules", msg)
 
 	res := newAlertResponse(task, srv.SrcID, srv.ID)
 	encodeJSON(w, http.StatusOK, res, s.Logger)
@@ -783,7 +859,8 @@ func (s *Service) KapacitorRulesDelete(w http.ResponseWriter, r *http.Request) {
 
 	tid := httprouter.GetParamFromContext(ctx, "tid")
 	// Check if the rule is linked to this server and kapacitor
-	if _, err := c.Get(ctx, tid); err != nil {
+	task, err := c.Get(ctx, tid);
+	if err != nil {
 		if err == cloudhub.ErrAlertNotFound {
 			notFound(w, id, s.Logger)
 			return
@@ -795,6 +872,10 @@ func (s *Service) KapacitorRulesDelete(w http.ResponseWriter, r *http.Request) {
 		Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 		return
 	}
+
+	// log registrationte
+	msg := fmt.Sprintf(MsgKapacitorRuleDeleted.String(), task.Rule.Name, srv.Name)
+	s.logRegistration(ctx, "Kapacitors Rules", msg)
 
 	w.WriteHeader(http.StatusNoContent)
 }
