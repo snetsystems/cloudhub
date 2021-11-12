@@ -25,6 +25,7 @@ import {
   getParseHTML,
   getTimeSeriesHostIndicator,
 } from 'src/hosts/utils/topology'
+import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
 
 // Constants
 import {
@@ -109,11 +110,11 @@ export const configureStylesheet = function (mx: mxGraphExportObject) {
   this.graph.getStylesheet().putCellStyle('ipmi', style)
 
   style = new Object()
-  style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_ELLIPSE
-  style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_LEFT
+  style[mxConstants.STYLE_SHAPE] = mxConstants.SHAPE_RECTANGLE
+  style[mxConstants.STYLE_PERIMETER] = mxPerimeter.RectanglePerimeter
   style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE
   style[mxConstants.STYLE_STROKECOLOR] = ''
-  style[mxConstants.STYLE_FILLCOLOR] = '#bec2cc'
+  style[mxConstants.STYLE_FILLCOLOR] = ''
   this.graph.getStylesheet().putCellStyle('status', style)
 
   style = this.graph.getStylesheet().getDefaultEdgeStyle()
@@ -581,71 +582,47 @@ export const dragCell = (node: Menu) => (
     href.setConnectable(false)
     href.setVisible(false)
 
-    const statusCPUBox = document.createElement('div')
-    statusCPUBox.setAttribute('data-status-kind', 'cpu')
-    statusCPUBox.style.display = 'flex'
-    statusCPUBox.style.alignItems = 'center'
-    statusCPUBox.style.justifyContent = 'center'
+    const statusBox = document.createElement('div')
+    statusBox.setAttribute('data-status', 'ture')
+    statusBox.style.display = 'flex'
+    statusBox.style.alignItems = 'center'
+    statusBox.style.justifyContent = 'center'
 
-    const statusCPUCell = graph.insertVertex(
+    const cpuIcon = document.createElement('span')
+    cpuIcon.setAttribute('data-status-kind', 'cpu')
+    cpuIcon.style.marginRight = '5px'
+    cpuIcon.classList.add('time-series-status')
+
+    statusBox.appendChild(cpuIcon)
+
+    const memoryIcon = document.createElement('span')
+    memoryIcon.setAttribute('data-status-kind', 'memory')
+    memoryIcon.classList.add('time-series-status')
+
+    statusBox.appendChild(memoryIcon)
+
+    const diskIcon = document.createElement('span')
+    diskIcon.setAttribute('data-status-kind', 'disk')
+    diskIcon.style.marginLeft = '5px'
+    diskIcon.classList.add('time-series-status')
+
+    statusBox.appendChild(diskIcon)
+
+    const statusCell = graph.insertVertex(
       v1,
       null,
-      statusCPUBox.outerHTML,
-      0.25,
-      1,
-      12,
-      12,
-      `status`,
-      true
-    )
-
-    statusCPUCell.geometry.offset = new mxPoint(0, 6)
-    statusCPUCell.setConnectable(false)
-    statusCPUCell.setVisible(true)
-
-    const statusMemoryBox = document.createElement('div')
-    statusMemoryBox.setAttribute('data-status-kind', 'memory')
-    statusMemoryBox.style.display = 'flex'
-    statusMemoryBox.style.alignItems = 'center'
-    statusMemoryBox.style.justifyContent = 'center'
-
-    const statusMemoryCell = graph.insertVertex(
-      v1,
-      null,
-      statusMemoryBox.outerHTML,
+      statusBox.outerHTML,
       0.5,
       1,
-      12,
-      12,
-      `status`,
-      true
-    )
-
-    statusMemoryCell.geometry.offset = new mxPoint(-6, 6)
-    statusMemoryCell.setConnectable(false)
-    statusMemoryCell.setVisible(true)
-
-    const statusDiskBox = document.createElement('div')
-    statusDiskBox.setAttribute('data-status-kind', 'disk')
-    statusDiskBox.style.display = 'flex'
-    statusDiskBox.style.alignItems = 'center'
-    statusDiskBox.style.justifyContent = 'center'
-
-    const statusDiskCell = graph.insertVertex(
-      v1,
-      null,
-      statusDiskBox.outerHTML,
-      0.75,
-      1,
-      12,
+      48,
       12,
       `status`,
       true
     )
 
-    statusDiskCell.geometry.offset = new mxPoint(-12, 6)
-    statusDiskCell.setConnectable(false)
-    statusDiskCell.setVisible(true)
+    statusCell.geometry.offset = new mxPoint(-24, 6)
+    statusCell.setConnectable(false)
+    statusCell.setVisible(true)
   } finally {
     model.endUpdate()
   }
@@ -749,71 +726,47 @@ export const drawCellInGroup = (nodes: Menu[]) => (
       href.setConnectable(false)
       href.setVisible(false)
 
-      const statusCPUBox = document.createElement('div')
-      statusCPUBox.setAttribute('data-status-kind', 'cpu')
-      statusCPUBox.style.display = 'flex'
-      statusCPUBox.style.alignItems = 'center'
-      statusCPUBox.style.justifyContent = 'center'
+      const statusBox = document.createElement('div')
+      statusBox.setAttribute('data-status', 'ture')
+      statusBox.style.display = 'flex'
+      statusBox.style.alignItems = 'center'
+      statusBox.style.justifyContent = 'center'
 
-      const statusCPUCell = graph.insertVertex(
+      const cpuIcon = document.createElement('span')
+      cpuIcon.setAttribute('data-status-kind', 'cpu')
+      cpuIcon.style.marginRight = '5px'
+      cpuIcon.classList.add('time-series-status')
+
+      statusBox.appendChild(cpuIcon)
+
+      const memoryIcon = document.createElement('span')
+      memoryIcon.setAttribute('data-status-kind', 'memory')
+      memoryIcon.classList.add('time-series-status')
+
+      statusBox.appendChild(memoryIcon)
+
+      const diskIcon = document.createElement('span')
+      diskIcon.setAttribute('data-status-kind', 'disk')
+      diskIcon.style.marginLeft = '5px'
+      diskIcon.classList.add('time-series-status')
+
+      statusBox.appendChild(diskIcon)
+
+      const statusCell = graph.insertVertex(
         vertex,
         null,
-        statusCPUBox.outerHTML,
-        0.25,
-        1,
-        12,
-        12,
-        `status`,
-        true
-      )
-
-      statusCPUCell.geometry.offset = new mxPoint(0, 6)
-      statusCPUCell.setConnectable(false)
-      statusCPUCell.setVisible(true)
-
-      const statusMemoryBox = document.createElement('div')
-      statusMemoryBox.setAttribute('data-status-kind', 'memory')
-      statusMemoryBox.style.display = 'flex'
-      statusMemoryBox.style.alignItems = 'center'
-      statusMemoryBox.style.justifyContent = 'center'
-
-      const statusMemoryCell = graph.insertVertex(
-        vertex,
-        null,
-        statusMemoryBox.outerHTML,
+        statusBox.outerHTML,
         0.5,
         1,
-        12,
-        12,
-        `status`,
-        true
-      )
-
-      statusMemoryCell.geometry.offset = new mxPoint(-6, 6)
-      statusMemoryCell.setConnectable(false)
-      statusMemoryCell.setVisible(true)
-
-      const statusDiskBox = document.createElement('div')
-      statusDiskBox.setAttribute('data-status-kind', 'disk')
-      statusDiskBox.style.display = 'flex'
-      statusDiskBox.style.alignItems = 'center'
-      statusDiskBox.style.justifyContent = 'center'
-
-      const statusDiskCell = graph.insertVertex(
-        vertex,
-        null,
-        statusDiskBox.outerHTML,
-        0.75,
-        1,
-        12,
+        48,
         12,
         `status`,
         true
       )
 
-      statusDiskCell.geometry.offset = new mxPoint(-12, 6)
-      statusDiskCell.setConnectable(false)
-      statusDiskCell.setVisible(true)
+      statusCell.geometry.offset = new mxPoint(-24, 6)
+      statusCell.setConnectable(false)
+      statusCell.setVisible(true)
 
       return vertex
     })
@@ -1304,10 +1257,7 @@ export const detectedHostsStatus = function (
     _.forEach(cells, cell => {
       if (cell.getStyle() === 'node') {
         const containerElement = getContainerElement(cell.value)
-        const dataNavi = containerElement.getAttribute('data-data_navi')
-        const name = containerElement.getAttribute(
-          _.isEmpty(dataNavi) ? 'data-label' : 'data-name'
-        )
+        const name = containerElement.getAttribute('data-name')
 
         const findHost = _.find(hostsObject, host => host.name === name)
 
@@ -1319,44 +1269,76 @@ export const detectedHostsStatus = function (
               const childCellElement = getParseHTML(
                 childCell.value
               ).querySelector('div')
-              const statusKind = childCellElement.getAttribute(
-                'data-status-kind'
-              )
+              if (childCellElement.getAttribute('data-status')) {
+                const statusElement = childCellElement.querySelectorAll(
+                  'span[data-status-kind]'
+                )
 
-              if (statusKind === 'cpu') {
-                childCellElement.setAttribute(
-                  'data-status-value',
-                  _.toString(findHost.cpu)
-                )
-                childCell.setValue(childCellElement.outerHTML)
-                this.graph.setCellStyles(
-                  mxConstants.STYLE_FILLCOLOR,
-                  getTimeSeriesHostIndicator(findHost.cpu),
-                  [childCell]
-                )
-              } else if (statusKind === 'memory') {
-                childCellElement.setAttribute(
-                  'data-status-value',
-                  _.toString(findHost.memory)
-                )
-                childCell.setValue(childCellElement.outerHTML)
+                statusElement.forEach(childElement => {
+                  const statusKind = childElement.getAttribute(
+                    'data-status-kind'
+                  )
+                  if (statusKind === 'cpu') {
+                    childElement.setAttribute(
+                      'data-status-value',
+                      _.toString(findHost.cpu)
+                    )
+                    childElement.setAttribute(
+                      'title',
+                      `CPU : ${_.toString(
+                        fixedDecimalPercentage(
+                          parseFloat(_.toString(findHost.cpu)),
+                          2
+                        )
+                      )}`
+                    )
+                    childElement.removeAttribute('class')
+                    childElement.classList.add(
+                      'time-series-status',
+                      getTimeSeriesHostIndicator(findHost.cpu)
+                    )
+                  } else if (statusKind === 'memory') {
+                    childElement.setAttribute(
+                      'data-status-value',
+                      _.toString(findHost.memory)
+                    )
+                    childElement.setAttribute(
+                      'title',
+                      `Memory : ${_.toString(
+                        fixedDecimalPercentage(
+                          parseFloat(_.toString(findHost.memory)),
+                          2
+                        )
+                      )}`
+                    )
+                    childElement.removeAttribute('class')
+                    childElement.classList.add(
+                      'time-series-status',
+                      getTimeSeriesHostIndicator(findHost.memory)
+                    )
+                  } else if (statusKind === 'disk') {
+                    childElement.setAttribute(
+                      'data-status-value',
+                      _.toString(findHost.disk)
+                    )
+                    childElement.setAttribute(
+                      'title',
+                      `Disk : ${_.toString(
+                        fixedDecimalPercentage(
+                          parseFloat(_.toString(findHost.disk)),
+                          2
+                        )
+                      )}`
+                    )
+                    childElement.removeAttribute('class')
+                    childElement.classList.add(
+                      'time-series-status',
+                      getTimeSeriesHostIndicator(findHost.disk)
+                    )
+                  }
+                })
 
-                this.graph.setCellStyles(
-                  mxConstants.STYLE_FILLCOLOR,
-                  getTimeSeriesHostIndicator(findHost.memory),
-                  [childCell]
-                )
-              } else if (statusKind === 'disk') {
-                childCellElement.setAttribute(
-                  'data-status-value',
-                  _.toString(findHost.disk)
-                )
                 childCell.setValue(childCellElement.outerHTML)
-                this.graph.setCellStyles(
-                  mxConstants.STYLE_FILLCOLOR,
-                  getTimeSeriesHostIndicator(findHost.disk),
-                  [childCell]
-                )
               }
             })
           }
@@ -1369,22 +1351,26 @@ export const detectedHostsStatus = function (
                 childCell.value
               ).querySelector('div')
 
-              const statusKind = childCellElement.getAttribute(
-                'data-status-kind'
+              const statusElement = childCellElement.querySelectorAll(
+                'span[data-status-kind]'
               )
-              if (
-                statusKind === 'cpu' ||
-                statusKind === 'disk' ||
-                statusKind === 'memory'
-              ) {
-                childCellElement.setAttribute('data-status-value', '')
-                childCell.setValue(childCellElement.outerHTML)
-                this.graph.setCellStyles(
-                  mxConstants.STYLE_FILLCOLOR,
-                  '#bec2cc',
-                  [childCell]
-                )
-              }
+
+              statusElement.forEach(childElement => {
+                const statusKind = childElement.getAttribute('data-status-kind')
+
+                if (
+                  statusKind === 'cpu' ||
+                  statusKind === 'disk' ||
+                  statusKind === 'memory'
+                ) {
+                  childElement.removeAttribute('data-status-value')
+                  childElement.removeAttribute('title')
+                  childElement.removeAttribute('class')
+                  childElement.classList.add('time-series-status')
+                }
+              })
+
+              childCell.setValue(childCellElement.outerHTML)
             })
           }
         }

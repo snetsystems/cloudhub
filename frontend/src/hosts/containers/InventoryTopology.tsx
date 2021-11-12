@@ -1954,9 +1954,11 @@ class InventoryTopology extends PureComponent<Props, State> {
         const {
           InstanceId,
           NetworkInterfaces,
+          PublicIpAddress,
           PrivateIpAddress,
           State,
           PrivateDnsName,
+          PublicDnsName,
           InstanceType,
           VpcId,
           SubnetId,
@@ -1966,6 +1968,7 @@ class InventoryTopology extends PureComponent<Props, State> {
           LaunchTime,
           AmiLaunchIndex,
           KeyName,
+          StateTransitionReason,
           Placement,
           VirtualizationType,
           CpuOptions,
@@ -1975,9 +1978,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         const instance = {
           Instance_summary: {
             Instance_ID: this.detailsValueChecker(InstanceId),
-            Public_IPv4_address: this.detailsValueChecker(
-              NetworkInterfaces[0].Association?.PublicIp
-            ),
+            Public_IPv4_address: this.detailsValueChecker(PublicIpAddress),
             Private_IPv4_addresses: this.detailsValueChecker(PrivateIpAddress),
             IPv6_address: this.detailsValueChecker(
               NetworkInterfaces[0].Ipv6Addresses
@@ -1985,59 +1986,40 @@ class InventoryTopology extends PureComponent<Props, State> {
             Instance_state: this.instanceState(
               this.detailsValueChecker(State.Name)
             ),
-            Public_IPv4_DNS: this.detailsValueChecker(),
+            Public_IPv4_DNS: this.detailsValueChecker(PublicDnsName),
             Private_IPv4_DNS: this.detailsValueChecker(PrivateDnsName),
             Instance_type: this.detailsValueChecker(InstanceType),
-            Elastic_IP_addresses: this.detailsValueChecker(),
+            Elastic_IP_addresses: this.detailsValueChecker(
+              NetworkInterfaces[0].Association?.PublicIp
+            ),
             VPC_ID: this.detailsValueChecker(VpcId),
-            AWS_Compute_Optimizer_finding: this.detailsValueChecker(),
-            IAM_Role: this.detailsValueChecker(),
             Subnet_ID: this.detailsValueChecker(SubnetId),
           },
           Instance_details: {
             Platform: this.detailsValueChecker(Platform),
             AMI_ID: this.detailsValueChecker(ImageId),
             Monitoring: this.detailsValueChecker(Monitoring.State),
-            Platform_details: this.detailsValueChecker(),
-            AMI_name: this.detailsValueChecker(),
-            Termination_protection: this.detailsValueChecker(),
             Launch_time: this.detailsValueChecker(LaunchTime.toString()),
-            AMI_location: this.detailsValueChecker(),
-            Lifecycle: this.detailsValueChecker(),
-            'Stop-hibernate_behavior': this.detailsValueChecker(),
             AMI_Launch_index: this.detailsValueChecker(AmiLaunchIndex),
             Key_pair_name: this.detailsValueChecker(KeyName),
-            State_transition_reason: this.detailsValueChecker(),
-            Credit_specification: this.detailsValueChecker(),
-            Kernel_ID: this.detailsValueChecker(),
-            State_transition_message: this.detailsValueChecker(),
-            Usage_operation: this.detailsValueChecker(),
-            RAM_disk_ID: this.detailsValueChecker(),
+            State_transition_reason: this.detailsValueChecker(
+              StateTransitionReason
+            ),
             Owner: this.detailsValueChecker(NetworkInterfaces[0].OwnerId),
-            Enclaves_Support: this.detailsValueChecker(),
-            Boot_mode: this.detailsValueChecker(),
           },
           Host_and_placement_group: {
-            Host_ID: this.detailsValueChecker(),
-            Affinity: this.detailsValueChecker(),
-            Placement_group: this.detailsValueChecker(),
+            Placement_group: this.detailsValueChecker(Placement.GroupName),
             Host_resource_group_name: this.detailsValueChecker(),
             Tenancy: this.detailsValueChecker(Placement.Tenancy),
-            Partition_number: this.detailsValueChecker(),
             Virtualization_type: this.detailsValueChecker(VirtualizationType),
-            Reservation: this.detailsValueChecker(),
             Number_of_vCPUs: this.detailsValueChecker(
               CpuOptions.CoreCount * CpuOptions.ThreadsPerCore
             ),
           },
           Capacity_reservation: {
-            Capacity_Reservation_ID: this.detailsValueChecker(),
             Capacity_Reservation_setting: this.detailsValueChecker(
               CapacityReservationSpecification.CapacityReservationPreference
             ),
-          },
-          Accelerators: {
-            Elastic_inference_accelerator_ID: this.detailsValueChecker(),
           },
         }
 

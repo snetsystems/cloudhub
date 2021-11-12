@@ -61,11 +61,11 @@ export const toolbarMenu: ToolbarMenu[] = [
     label: 'Fit',
     icon: 'fit',
   },
-  {
-    actionName: 'export',
-    label: 'Export',
-    icon: 'export',
-  },
+  // {
+  //   actionName: 'export',
+  //   label: 'Export',
+  //   icon: 'export',
+  // },
 ]
 
 export interface Menu {
@@ -214,7 +214,7 @@ export const defaultHideAttrs: keysMenu[] = [
   'class',
   'type',
   'timeseries_host',
-  'name',
+  // 'name',
   'parent',
   'data_navi',
 ]
@@ -241,7 +241,8 @@ export const eachNodeTypeAttrs: NodeTypeInterface = {
       timeseries_host: false,
     },
     hideAttrs: [...defaultNodeTypeSettings.hideAttrs],
-    disableAttrs: [...defaultNodeTypeSettings.disableAttrs, 'name'],
+    // disableAttrs: [...defaultNodeTypeSettings.disableAttrs, 'name'],
+    disableAttrs: [...defaultNodeTypeSettings.disableAttrs],
   },
   [NodeType.Database]: {
     ...defaultNodeTypeSettings,

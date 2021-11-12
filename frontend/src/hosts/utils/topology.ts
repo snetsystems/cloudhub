@@ -59,11 +59,11 @@ export const getTimeSeriesHost = (containerElement: Element): boolean => {
 }
 
 export const getTimeSeriesHostIndicator = (value: string | number): string => {
-  let status = '#4ed8a0'
+  let status = 'UsageIndacator'
 
-  if (value >= 50) status = '#ffb94a'
-  if (value >= 70) status = '#ff8564'
-  if (value >= 90) status = '#dc4e58'
+  if (value >= 50) status = 'UsageIndacator--caution'
+  if (value >= 70) status = 'UsageIndacator--warning'
+  if (value >= 90) status = 'UsageIndacator--danger'
 
   return status
 }
