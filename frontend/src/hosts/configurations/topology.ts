@@ -32,7 +32,7 @@ import {
   toolbarMenu,
   toolsMenu,
   tmpMenu,
-  hostMenu,
+  // hostMenu,
   Menu,
   eachNodeTypeAttrs,
   orderMenu,
@@ -296,6 +296,22 @@ export const createTextField = function (
         ? form.addOption(input, ipmiTarget, ipmiTarget, true)
         : form.addOption(input, ipmiTarget, ipmiTarget, false)
     })
+  } else if (attribute.nodeName === 'data-status') {
+    input = form.addCombo(nodeName, false)
+    input.style.padding = '0 9px'
+
+    form.addOption(
+      input,
+      'TRUE',
+      true,
+      attribute.nodeValue === 'true' ? true : false
+    )
+    form.addOption(
+      input,
+      'FALSE',
+      false,
+      attribute.nodeValue === 'false' ? true : false
+    )
   } else {
     const isPassword = _.includes(nodeName, 'PASS')
     input = form.addText(
@@ -387,6 +403,14 @@ export const applyHandler = function (
           ).toString()
 
           isInputPassword = true
+        }
+      }
+
+      if (attribute.nodeName === 'data-status') {
+        const childrenCell = cell.getChildAt(2)
+
+        if (childrenCell.style.includes('status')) {
+          childrenCell.setVisible(newValue === 'true' ? true : false)
         }
       }
 
@@ -583,7 +607,9 @@ export const dragCell = (node: Menu) => (
     href.setVisible(false)
 
     const statusBox = document.createElement('div')
+    statusBox.classList.add('vertex')
     statusBox.setAttribute('data-status', 'ture')
+    statusBox.setAttribute('btn-type', 'status')
     statusBox.style.display = 'flex'
     statusBox.style.alignItems = 'center'
     statusBox.style.justifyContent = 'center'
@@ -622,7 +648,7 @@ export const dragCell = (node: Menu) => (
 
     statusCell.geometry.offset = new mxPoint(-24, 6)
     statusCell.setConnectable(false)
-    statusCell.setVisible(true)
+    statusCell.setVisible(_.get(node, 'status'))
   } finally {
     model.endUpdate()
   }
@@ -727,6 +753,8 @@ export const drawCellInGroup = (nodes: Menu[]) => (
       href.setVisible(false)
 
       const statusBox = document.createElement('div')
+      statusBox.classList.add('vertex')
+      statusBox.setAttribute('btn-type', 'status')
       statusBox.setAttribute('data-status', 'ture')
       statusBox.style.display = 'flex'
       statusBox.style.alignItems = 'center'
@@ -766,7 +794,7 @@ export const drawCellInGroup = (nodes: Menu[]) => (
 
       statusCell.geometry.offset = new mxPoint(-24, 6)
       statusCell.setConnectable(false)
-      statusCell.setVisible(true)
+      statusCell.setVisible(_.get(node, 'status'))
 
       return vertex
     })
@@ -823,48 +851,6 @@ export const addSidebarButton = function ({
   )
 
   dragSource.setGuidesEnabled(true)
-}
-
-export const addHostsButton = function (
-  hostsObject: {[x: string]: Host},
-  hostsArea: HTMLDivElement
-) {
-  const hostList = _.keys(hostsObject)
-  let menus: Menu[] = []
-
-  hostsArea.innerHTML = ''
-
-  _.forEach(hostList, host => {
-    const hostObj = {
-      ...hostMenu,
-      name: host,
-      label: host,
-    }
-
-    menus.push(hostObj)
-  })
-
-  _.forEach(menus, menu => {
-    const rowElement = document.createElement('div')
-    rowElement.classList.add('hosts-table--tr')
-    rowElement.classList.add('topology-hosts-row')
-
-    const hostElement = document.createElement('div')
-    hostElement.classList.add('hosts-table--td')
-
-    const span = document.createElement('span')
-    span.style.fontSize = '14px'
-    span.textContent = menu.label
-
-    hostElement.appendChild(span)
-    rowElement.appendChild(hostElement)
-
-    addSidebarButton.bind(this)({
-      sideBarArea: hostsArea,
-      node: menu,
-      element: rowElement,
-    })
-  })
 }
 
 export const addToolsButton = function (toolsArea: HTMLDivElement) {
@@ -1034,7 +1020,7 @@ export const insertHandler = function (
         const edgeObj = {
           ...tmpMenu,
           name: 'Edge',
-          label: 'Edge',
+          label: '',
           type: 'Edge',
         }
 

@@ -24,6 +24,12 @@ export const getContainerTitle = (element: Element) => {
   return title
 }
 
+export const getFocusedHost = (element: Element) => {
+  const host = element.getAttribute('data-name')
+
+  return host
+}
+
 export const getIsDisableAttr = (
   containerElement: Element,
   attribute: any
@@ -45,17 +51,6 @@ export const getIsDisableAttr = (
 
 export const getIsHasString = (value: string): boolean => {
   return value !== ''
-}
-
-export const getTimeSeriesHost = (containerElement: Element): boolean => {
-  let isTimeSeriesHost = false
-
-  if (containerElement) {
-    isTimeSeriesHost =
-      containerElement.getAttribute('data-timeseries_host') === 'true'
-  }
-
-  return isTimeSeriesHost
 }
 
 export const getTimeSeriesHostIndicator = (value: string | number): string => {

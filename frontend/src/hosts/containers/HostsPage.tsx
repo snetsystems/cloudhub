@@ -70,7 +70,6 @@ import {
   RefreshRate,
   CloudHosts,
 } from 'src/types'
-import {timeRanges} from 'src/shared/data/timeRanges'
 import * as QueriesModels from 'src/types/queries'
 import * as AppActions from 'src/types/actions/app'
 
@@ -112,6 +111,7 @@ interface Props extends ManualRefreshProps {
     pCsp: any,
     pTypes: string[]
   ) => Promise<any>
+  timeRange: TimeRange
 }
 
 interface State {
@@ -122,7 +122,6 @@ interface State {
   filteredLayouts: Layout[]
   focusedHost: string
   focusedInstance: Instance
-  timeRange: TimeRange
   proportions: number[]
   selectedAgent: string
   activeCspTab: string
@@ -166,7 +165,7 @@ export class HostsPage extends PureComponent<Props, State> {
       PureComponent.prototype.setState.bind(this)(args, callback)
     }
 
-    const itemCSPs = ['Private']
+    const itemCSPs = ['Host']
 
     if (this.isUsingAWS) {
       itemCSPs.push('aws')
@@ -176,13 +175,12 @@ export class HostsPage extends PureComponent<Props, State> {
       focusedHost: '',
       focusedInstance: null,
       selectedAgent: 'ALL',
-      activeCspTab: 'Private',
+      activeCspTab: 'Host',
       hostsObject: {},
       hostsPageStatus: RemoteDataState.NotStarted,
       awsPageStatus: RemoteDataState.NotStarted,
       layouts: [],
       filteredLayouts: [],
-      timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       proportions: [0.43, 0.57],
       itemCSPs,
       cloudAccessInfos: [],
@@ -192,7 +190,6 @@ export class HostsPage extends PureComponent<Props, State> {
       instanceTypeLoading: RemoteDataState.NotStarted,
     }
 
-    this.handleChooseAutoRefresh = this.handleChooseAutoRefresh.bind(this)
     this.onSetActiveCspTab = this.onSetActiveCspTab.bind(this)
   }
 
@@ -231,7 +228,7 @@ export class HostsPage extends PureComponent<Props, State> {
       focusedHost: '',
       focusedInstance: null,
       selectedAgent: 'ALL',
-      activeCspTab: 'Private',
+      activeCspTab: 'Host',
     }
 
     const hostsPage = _.get(getLocalStorageInfrastructure, 'hostsPage', {
@@ -240,9 +237,9 @@ export class HostsPage extends PureComponent<Props, State> {
 
     this.setState({
       activeCspTab: !this.isUsingAWS
-        ? 'Private'
+        ? 'Host'
         : _.isEmpty(hostsPage['activeCspTab'])
-        ? 'Private'
+        ? 'Host'
         : hostsPage['activeCspTab'],
     })
 
@@ -251,12 +248,12 @@ export class HostsPage extends PureComponent<Props, State> {
     const getFocusedInstance = hostsPage.focusedInstance
 
     const activeTab = !this.isUsingAWS
-      ? 'Private'
+      ? 'Host'
       : _.isEmpty(hostsPage['activeCspTab'])
-      ? 'Private'
+      ? 'Host'
       : hostsPage['activeCspTab']
 
-    if (autoRefresh && activeTab === 'Private') {
+    if (autoRefresh && activeTab === 'Host') {
       clearInterval(this.intervalID)
       this.intervalID = window.setInterval(
         () => this.fetchHostsData(layouts),
@@ -306,10 +303,10 @@ export class HostsPage extends PureComponent<Props, State> {
     if (layouts) {
       if (
         prevState.focusedHost !== focusedHost ||
-        (prevState.activeCspTab !== activeCspTab && activeCspTab === 'Private')
+        (prevState.activeCspTab !== activeCspTab && activeCspTab === 'Host')
       ) {
         this.fetchHostsData(layouts)
-        if (activeCspTab === 'Private') {
+        if (activeCspTab === 'Host') {
           const {filteredLayouts} = await this.getLayoutsforHost(
             layouts,
             focusedHost
@@ -366,7 +363,7 @@ export class HostsPage extends PureComponent<Props, State> {
       if (autoRefresh && prevState.activeCspTab !== activeCspTab) {
         clearInterval(this.intervalID)
 
-        if (activeCspTab === 'Private') {
+        if (activeCspTab === 'Host') {
           this.intervalID = window.setInterval(() => {
             this.fetchHostsData(layouts)
           }, autoRefresh)
@@ -390,7 +387,7 @@ export class HostsPage extends PureComponent<Props, State> {
 
     if (layouts) {
       if (this.props.manualRefresh !== nextProps.manualRefresh) {
-        if (this.state.activeCspTab === 'Private') {
+        if (this.state.activeCspTab === 'Host') {
           this.fetchHostsData(layouts)
           const {filteredLayouts} = await this.getLayoutsforHost(
             layouts,
@@ -415,7 +412,7 @@ export class HostsPage extends PureComponent<Props, State> {
         GlobalAutoRefresher.poll(nextProps.autoRefresh)
 
         if (nextProps.autoRefresh) {
-          if (this.state.activeCspTab === 'Private') {
+          if (this.state.activeCspTab === 'Host') {
             this.intervalID = window.setInterval(() => {
               this.fetchHostsData(layouts)
             }, nextProps.autoRefresh)
@@ -458,12 +455,6 @@ export class HostsPage extends PureComponent<Props, State> {
     setLocalStorage('infrastructure', getHostsPage)
 
     this.isComponentMounted = false
-  }
-
-  public handleChooseAutoRefresh(option) {
-    const {onChooseAutoRefresh} = this.props
-    const {milliseconds} = option
-    onChooseAutoRefresh(milliseconds)
   }
 
   public render() {
@@ -512,7 +503,7 @@ export class HostsPage extends PureComponent<Props, State> {
 
     return (
       <>
-        {activeCspTab === 'Private' ? (
+        {activeCspTab === 'Host' ? (
           <HostsTable
             source={source}
             hosts={_.values(hostsObject)}
@@ -847,12 +838,11 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   private renderGraph = () => {
-    const {source, manualRefresh} = this.props
+    const {source, manualRefresh, timeRange} = this.props
     const {
       filteredLayouts,
       focusedHost,
       focusedInstance,
-      timeRange,
       activeCspTab,
       selectedAgent,
     } = this.state
@@ -893,7 +883,7 @@ export class HostsPage extends PureComponent<Props, State> {
             templates={tempVars}
             timeRange={timeRange}
             manualRefresh={manualRefresh}
-            host={activeCspTab === 'Private' ? focusedHost : ''}
+            host={activeCspTab === 'Host' ? focusedHost : ''}
             instance={
               this.isUsingAWS && activeCspTab === 'aws' ? focusedInstance : null
             }
@@ -1000,10 +990,20 @@ export class HostsPage extends PureComponent<Props, State> {
           hostsPageStatus: RemoteDataState.Done,
         })
       } else {
-        this.setState({
-          hostsObject: newHosts,
-          hostsPageStatus: RemoteDataState.Done,
-        })
+        if (
+          !_.includes(_.keys(_.values(hostsObject)), this.state.focusedHost)
+        ) {
+          this.setState({
+            focusedHost: this.getFirstHost(newHosts),
+            hostsObject: newHosts,
+            hostsPageStatus: RemoteDataState.Done,
+          })
+        } else {
+          this.setState({
+            hostsObject: newHosts,
+            hostsPageStatus: RemoteDataState.Done,
+          })
+        }
       }
 
       return newHosts

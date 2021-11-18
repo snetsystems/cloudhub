@@ -71,7 +71,6 @@ import {
   IpmiCell,
   TimeRange,
 } from 'src/types'
-import {timeRanges} from 'src/shared/data/timeRanges'
 import {AddonType} from 'src/shared/constants'
 import {ButtonShape, ComponentStatus, IconFont} from 'src/reusable_ui/types'
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
@@ -106,6 +105,8 @@ import {
   getLayouts,
   getAppsForHost,
   getMeasurementsForHost,
+  getAppsForEtc,
+  getMeasurementsForEtc,
   getAppsForInstance,
   getMeasurementsForInstance,
   paramsCreateCSP,
@@ -117,8 +118,7 @@ import {generateForHosts} from 'src/utils/tempVars'
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {
   getContainerElement,
-  getContainerTitle,
-  getTimeSeriesHost,
+  getFocusedHost,
   getParseHTML,
 } from 'src/hosts/utils/topology'
 import {getCells} from 'src/hosts/utils/getCells'
@@ -214,12 +214,6 @@ window['mxPoint'] = mxPoint
 window['mxPopupMenu'] = mxPopupMenu
 window['mxEventObject'] = mxEventObject
 
-const warningImage = new mxImage(
-  require('mxgraph/javascript/src/images/warning.png'),
-  16,
-  16
-)
-
 interface Instance {
   provider: string
   region: string
@@ -292,6 +286,7 @@ interface Props {
     pCsp: any,
     pTypes: string[]
   ) => Promise<any>
+  timeRange: TimeRange
 }
 
 interface State {
@@ -314,8 +309,8 @@ interface State {
   isPinned: boolean
   layouts: Layout[]
   filteredLayouts: Layout[]
+  isDetectedHost: boolean
   focusedHost: string
-  timeRange: TimeRange
   activeEditorTab: string
   activeDetailsTab: string
   selected: string
@@ -339,7 +334,6 @@ interface State {
     organization: string
     data: any[]
   }[]
-  cloudGetDatas: any
   loadingState: RemoteDataState
   loadingStateDetails: RemoteDataState
   awsSecurity: Promise<any>
@@ -404,7 +398,7 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     this.state = {
       isPinned: false,
-      screenProportions: [0.3, 0.7],
+      screenProportions: [0.17, 0.83],
       sidebarProportions: [0.333, 0.333, 0.333],
       bottomProportions: [0.54, 0.46],
       hostsObject: {},
@@ -422,8 +416,8 @@ class InventoryTopology extends PureComponent<Props, State> {
       selectItem: 'Host',
       layouts: [],
       filteredLayouts: [],
+      isDetectedHost: false,
       focusedHost: '',
-      timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       activeEditorTab: 'monitoring',
       activeDetailsTab: 'details',
       selected: 'ALL',
@@ -438,7 +432,6 @@ class InventoryTopology extends PureComponent<Props, State> {
       treeMenu: {...cloud},
       focusedInstance: null,
       cloudAccessInfos: [],
-      cloudGetDatas: [],
       loadingState: RemoteDataState.NotStarted,
       loadingStateDetails: RemoteDataState.Done,
       awsSecurity: null,
@@ -579,10 +572,6 @@ class InventoryTopology extends PureComponent<Props, State> {
           }
 
           GlobalAutoRefresher.poll(this.props.autoRefresh)
-
-          const hostList = _.keys(this.state.hostsObject)
-
-          this.setCellsWarning(hostList)
         }
       }
     )
@@ -615,6 +604,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       hostsObject,
       topologyId,
       topology,
+      isDetectedHost,
     } = this.state
 
     if (layouts) {
@@ -622,10 +612,9 @@ class InventoryTopology extends PureComponent<Props, State> {
         (prevState.focusedHost !== focusedHost && focusedHost) ||
         (prevState.selected !== selected && focusedHost)
       ) {
-        const {filteredLayouts} = await this.getLayoutsforHost(
-          layouts,
-          focusedHost
-        )
+        const {filteredLayouts} = isDetectedHost
+          ? await this.getLayoutsforHost(layouts, focusedHost)
+          : await this.getLayoutsforEtc(layouts, focusedHost)
         this.setState({filteredLayouts})
       }
       if (
@@ -653,7 +642,6 @@ class InventoryTopology extends PureComponent<Props, State> {
         JSON.stringify(_.keys(hostsObject)) &&
       prevState.hostsObject !== null
     ) {
-      this.setCellsWarning(_.keys(hostsObject))
       this.changedDOM()
     }
 
@@ -1229,11 +1217,20 @@ class InventoryTopology extends PureComponent<Props, State> {
         })
       } else {
         const containerElement = getContainerElement(selectionCells[0].value)
-        const title = getContainerTitle(containerElement).textContent
+        const isDetectedHost = !_.isEmpty(
+          containerElement.getAttribute('data-detected')
+        )
+          ? containerElement.getAttribute('data-detected') === 'true'
+            ? true
+            : false
+          : false
+
+        const focusedHost = getFocusedHost(containerElement)
 
         this.setState({
           focusedInstance: null,
-          focusedHost: title,
+          isDetectedHost,
+          focusedHost: focusedHost,
           activeEditorTab: 'monitoring',
         })
       }
@@ -1551,29 +1548,6 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
   }
 
-  private setCellsWarning = (hostList: string[]) => {
-    if (!this.graph) return
-
-    const graph = this.graph
-    const parent = graph.getDefaultParent()
-    const cells = this.getAllCells(parent, true)
-
-    _.forEach(cells, cell => {
-      if (cell.getStyle() === 'node') {
-        const containerElement = getContainerElement(cell.value)
-        const isTimeSeriesHost = getTimeSeriesHost(containerElement)
-        const name = containerElement.getAttribute('data-name')
-
-        if (isTimeSeriesHost) {
-          graph.removeCellOverlays(cell)
-          if (_.isEmpty(_.find(hostList, host => host === name))) {
-            graph.setCellWarning(cell, 'Warning', warningImage)
-          }
-        }
-      }
-    })
-  }
-
   private changedDOM = () => {
     const inventoryContainer = document.querySelector('#hostInventoryContainer')
 
@@ -1599,7 +1573,8 @@ class InventoryTopology extends PureComponent<Props, State> {
         label: value,
         name: value,
         type: 'Server',
-        timeseries_host: true,
+        status: true,
+        detected: true,
       }
 
       let ds = mxUtils.makeDraggable(
@@ -2614,13 +2589,8 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private renderGraph = () => {
-    const {source, manualRefresh} = this.props
-    const {
-      filteredLayouts,
-      focusedHost,
-      focusedInstance,
-      timeRange,
-    } = this.state
+    const {source, manualRefresh, timeRange} = this.props
+    const {filteredLayouts, focusedHost, focusedInstance} = this.state
 
     const layoutCells = getCells(filteredLayouts, source)
     const tempVars = generateForHosts(source)
@@ -2678,6 +2648,52 @@ class InventoryTopology extends PureComponent<Props, State> {
     const filteredLayouts = layoutsWithinHost
       .filter(layout => {
         return layout.app === 'system' || layout.app === 'win_system'
+      })
+      .sort((x, y) => {
+        return x.measurement < y.measurement
+          ? -1
+          : x.measurement > y.measurement
+          ? 1
+          : 0
+      })
+
+    return {filteredLayouts}
+  }
+
+  private async fetchEtcAndMeasurements(layouts: Layout[], hostID: string) {
+    const {source} = this.props
+
+    const fetchMeasurements = getMeasurementsForEtc(source, hostID)
+    const fetchHosts = getAppsForEtc(
+      source.links.proxy,
+      hostID,
+      layouts,
+      source.telegraf
+    )
+
+    const [host, measurements] = await Promise.all([
+      fetchHosts,
+      fetchMeasurements,
+    ])
+
+    return {host, measurements}
+  }
+
+  private async getLayoutsforEtc(layouts: Layout[], hostID: string) {
+    const {host, measurements} = await this.fetchEtcAndMeasurements(
+      layouts,
+      hostID
+    )
+    const layoutsWithinHost = layouts.filter(layout => {
+      return (
+        host.apps &&
+        host.apps.includes(layout.app) &&
+        measurements.includes(layout.measurement)
+      )
+    })
+    const filteredLayouts = layoutsWithinHost
+      .filter(layout => {
+        return layout.app === 'cloudwatch_elb'
       })
       .sort((x, y) => {
         return x.measurement < y.measurement
@@ -2975,10 +2991,11 @@ class InventoryTopology extends PureComponent<Props, State> {
     _.forEach(dbResp, (dResp, index) => {
       if (_.isUndefined(saltResp)) return
 
-      dResp['data'] =
-        _.values(saltResp.return[index])[0].length > 0
+      dResp['data'] = !_.isEmpty(saltResp.return[index])
+        ? _.values(saltResp.return[index])[0].length > 0
           ? _.values(saltResp.return[index])[0]
           : []
+        : []
     })
 
     this.setState({cloudAccessInfos: [...dbResp]})

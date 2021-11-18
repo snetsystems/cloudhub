@@ -79,8 +79,9 @@ export interface Menu {
   ipmi_user?: string
   ipmi_pass?: string
   parent?: string
-  timeseries_host?: boolean
   data_navi?: string
+  status?: boolean
+  detected?: boolean
 }
 
 export type keysMenu = keyof Menu
@@ -100,8 +101,9 @@ export const orderMenu: OrderMenu = {
   ipmi_user: {order: 6},
   ipmi_pass: {order: 7},
   parent: {order: 8},
-  timeseries_host: {order: 9},
-  data_navi: {order: 10},
+  data_navi: {order: 9},
+  status: {order: 10},
+  detected: {order: 11},
 }
 
 export const toolsMenu: Menu[] = [
@@ -110,66 +112,96 @@ export const toolsMenu: Menu[] = [
     name: 'server',
     label: 'Server',
     link: '',
+    status: false,
+    detected: false,
   },
   {
     type: 'Database',
     name: 'database',
     label: 'Database',
     link: '',
+    status: false,
+    detected: false,
   },
   {
     type: 'Internet',
     name: 'internet',
     label: 'Internet',
     link: '',
+    status: false,
+    detected: false,
   },
   {
     type: 'Workstation',
     name: 'workstation',
     label: 'Workstation',
     link: '',
+    status: false,
+    detected: false,
   },
   {
     type: 'VirtualMachine',
     name: 'virtual-machine',
     label: 'VirtualMachine',
     link: '',
+    status: false,
+    detected: false,
   },
   {
     type: 'Email',
     name: 'email',
     label: 'Email',
     link: '',
+    status: false,
+    detected: false,
   },
   {
     type: 'Firewall',
     name: 'firewall',
     label: 'Firewall',
     link: '',
+    status: false,
+    detected: false,
   },
   {
     type: 'Router',
     name: 'router',
     label: 'Router',
     link: '',
+    status: false,
+    detected: false,
   },
   {
     type: 'WirelessRouter',
     name: 'wireless-router',
     label: 'WirelessRouter',
     link: '',
+    status: false,
+    detected: false,
   },
   {
     type: 'Switch',
     name: 'switch',
     label: 'Switch',
     link: '',
+    status: false,
+    detected: false,
   },
   {
     type: 'Cloud',
     name: 'cloud',
     label: 'Cloud',
     link: '',
+    status: false,
+    detected: false,
+  },
+  {
+    type: 'Elb',
+    name: 'elastic-load-balancing',
+    label: 'ELB',
+    link: '',
+    status: false,
+    detected: false,
   },
 ]
 
@@ -178,12 +210,8 @@ export const tmpMenu: Menu = {
   name: '',
   label: '',
   link: '',
-}
-
-export const hostMenu: Menu = {
-  ...tmpMenu,
-  type: 'Server',
-  link: '',
+  status: false,
+  detected: false,
 }
 
 export enum NodeType {
@@ -200,6 +228,7 @@ export enum NodeType {
   Cloud = 'Cloud',
   Group = 'Group',
   Edge = 'Edge',
+  Elb = 'Elb',
 }
 
 export type NodeTypeInterface = {
@@ -213,10 +242,9 @@ export type NodeTypeInterface = {
 export const defaultHideAttrs: keysMenu[] = [
   'class',
   'type',
-  'timeseries_host',
-  // 'name',
   'parent',
   'data_navi',
+  'detected',
 ]
 export const defaultDisableAttrs: keysMenu[] = []
 
@@ -231,17 +259,14 @@ export const eachNodeTypeAttrs: NodeTypeInterface = {
     ...defaultNodeTypeSettings,
     attrs: {
       ...defaultNodeTypeSettings.attrs,
-      // link: '',
       using_minion: '',
       ipmi_host: '',
       ipmi_user: '',
       ipmi_pass: '',
       parent: '',
       data_navi: '',
-      timeseries_host: false,
     },
     hideAttrs: [...defaultNodeTypeSettings.hideAttrs],
-    // disableAttrs: [...defaultNodeTypeSettings.disableAttrs, 'name'],
     disableAttrs: [...defaultNodeTypeSettings.disableAttrs],
   },
   [NodeType.Database]: {
@@ -261,12 +286,13 @@ export const eachNodeTypeAttrs: NodeTypeInterface = {
   [NodeType.Cloud]: {
     ...defaultNodeTypeSettings,
   },
+  [NodeType.Elb]: {...defaultNodeTypeSettings},
   [NodeType.Group]: {
     ...defaultNodeTypeSettings,
     hideAttrs: [...defaultNodeTypeSettings.hideAttrs, 'name'],
   },
   [NodeType.Edge]: {
     ...defaultNodeTypeSettings,
-    hideAttrs: [...defaultNodeTypeSettings.hideAttrs, 'name'],
+    hideAttrs: [...defaultNodeTypeSettings.hideAttrs, 'name', 'status', 'link'],
   },
 }
