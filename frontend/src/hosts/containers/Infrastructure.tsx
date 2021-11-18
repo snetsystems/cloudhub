@@ -192,6 +192,7 @@ class Infrastructure extends PureComponent<Props, State> {
               {headerRadioButtons.map(rBtn => {
                 return (
                   <Radio.Button
+                    key={rBtn.titleText}
                     id={rBtn.id}
                     titleText={rBtn.titleText}
                     value={rBtn.value}
