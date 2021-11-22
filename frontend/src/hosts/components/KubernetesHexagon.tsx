@@ -5,6 +5,8 @@ import _ from 'lodash'
 
 // Components
 import PageSpinner from 'src/shared/components/PageSpinner'
+import LoadingSpinner from 'src/flux/components/LoadingSpinner'
+import {NoHostsState} from 'src/addon/128t/reusable'
 
 // Constants
 import {
@@ -14,6 +16,7 @@ import {
 
 // Types
 import {D3K8sData, FocuseNode, KubernetesObject} from 'src/hosts/types'
+import {RemoteDataState} from 'src/types'
 
 interface Props {
   handleOnClickPodName: () => void
@@ -26,6 +29,7 @@ interface Props {
   kubernetesD3Data: D3K8sData
   focuseNode: FocuseNode
   pinNode: string[]
+  remoteDataState: RemoteDataState
 }
 
 interface State {}
@@ -53,9 +57,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       JSON.stringify(prevProps.kubernetesD3Data) !==
         JSON.stringify(this.props.kubernetesD3Data)
     ) {
-      d3.select('svg.kubernetes-svg')
-        .selectAll('g')
-        .remove()
+      d3.select('svg.kubernetes-svg').selectAll('g').remove()
 
       this.drawChart()
     }
@@ -64,9 +66,35 @@ class KubernetesHexagon extends PureComponent<Props, State> {
   public render() {
     return (
       <div ref={this.ref} style={this.containerStyles}>
-        {!this.props.kubernetesD3Data.name ? (
-          <PageSpinner />
-        ) : (
+        {this.renderKubernetes}
+      </div>
+    )
+  }
+
+  private get renderKubernetes() {
+    if (_.isEmpty(this.props.kubernetesD3Data.name)) {
+      return (
+        <>
+          {this.props.remoteDataState === RemoteDataState.Loading ? (
+            <PageSpinner />
+          ) : null}
+        </>
+      )
+    } else {
+      return (
+        <>
+          {this.props.remoteDataState === RemoteDataState.Loading ? (
+            <div
+              style={{
+                position: 'absolute',
+                top: '0px',
+                left: '0px',
+                padding: '5px 20px',
+              }}
+            >
+              <LoadingSpinner />
+            </div>
+          ) : null}
           <svg
             className={'kubernetes-svg'}
             style={{
@@ -77,9 +105,11 @@ class KubernetesHexagon extends PureComponent<Props, State> {
               textAnchor: 'middle',
             }}
           />
-        )}
-      </div>
-    )
+        </>
+      )
+    }
+
+    return <NoHostsState />
   }
 
   private drawChart() {
@@ -118,7 +148,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       const hexagonPath =
         'm' +
         hexagonPoly
-          .map(function(p) {
+          .map(function (p) {
             return [p[0] * hexRadius, p[1] * hexRadius].join(',')
           })
           .join('l') +
@@ -171,16 +201,16 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       .attr('fill', d => clusterTypeColorset[d.data.type])
       .attr('stroke', 'black')
       .attr('pointer-events', d => (d.children ? 'all' : 'none'))
-      .on('mouseover', function() {
+      .on('mouseover', function () {
         onMouseOver(this)
       })
-      .on('mouseleave', function() {
+      .on('mouseleave', function () {
         onMouseLeave(this)
       })
-      .on('click', function() {
+      .on('click', function () {
         onMouseClick(this, data)
       })
-      .on('mousedown', function() {
+      .on('mousedown', function () {
         d3.event.preventDefault()
       })
 
@@ -214,16 +244,16 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       })
       .attr('stroke', 'black')
       .attr('fill', 'white')
-      .on('mouseover', function() {
+      .on('mouseover', function () {
         onMouseOver(this)
       })
-      .on('mouseleave', function() {
+      .on('mouseleave', function () {
         onMouseLeave(this)
       })
-      .on('click', function(data) {
+      .on('click', function (data) {
         onMouseClick(this, data)
       })
-      .on('mousedown', function() {
+      .on('mousedown', function () {
         d3.event.preventDefault()
       })
 
