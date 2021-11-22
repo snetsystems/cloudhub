@@ -78,7 +78,9 @@ class KubernetesHexagon extends PureComponent<Props, State> {
         <>
           {this.props.remoteDataState === RemoteDataState.Loading ? (
             <PageSpinner />
-          ) : null}
+          ) : (
+            <NoHostsState />
+          )}
         </>
       )
     } else {
@@ -109,8 +111,6 @@ class KubernetesHexagon extends PureComponent<Props, State> {
         </>
       )
     }
-
-    return <NoHostsState />
   }
 
   private drawChart() {
