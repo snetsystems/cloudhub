@@ -28,7 +28,7 @@ import {
   D3K8sData,
   KubernetesObject,
 } from 'src/hosts/types'
-import {Source, TimeRange, Cell, Template} from 'src/types'
+import {Source, TimeRange, Cell, Template, RemoteDataState} from 'src/types'
 
 interface Props {
   handleOnSetActiveEditorTab: (tab: string) => void
@@ -57,6 +57,7 @@ interface Props {
   manualRefresh: number
   host: string
   selectMinion: string
+  remoteDataState: RemoteDataState
 }
 
 interface State {}
@@ -139,6 +140,7 @@ class KubernetesContents extends PureComponent<Props, State> {
             handleResize={handleResize}
             handleOpenTooltip={handleOpenTooltip}
             handleCloseTooltip={handleCloseTooltip}
+            remoteDataState={this.props.remoteDataState}
           />
 
           {this.tooltip}
