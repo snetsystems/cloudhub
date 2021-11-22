@@ -59,7 +59,7 @@ import {getCpuAndLoadForK8s} from 'src/hosts/apis'
 
 // Types
 import {Addon} from 'src/types/auth'
-import {Source, Layout, TimeRange, Links} from 'src/types'
+import {Source, Layout, TimeRange, Links, RemoteDataState} from 'src/types'
 import {DashboardSwitcherLinks} from 'src/types/dashboards'
 import {
   TooltipNode,
@@ -120,10 +120,10 @@ interface State {
   isDisabledMinions: boolean
   layouts: Layout[]
   hostLinks: DashboardSwitcherLinks
-  minionsObject: string[]
   kubernetesData: object
   kubernetesD3Data: D3K8sData
   kubernetesObject: KubernetesObject
+  remoteDataState: RemoteDataState
 }
 
 @ErrorHandling
@@ -132,11 +132,18 @@ class KubernetesPage extends PureComponent<Props, State> {
   private getKubernetesObjectInterval: NodeJS.Timer = null
   private getKubernetesResourceInterval: NodeJS.Timer = null
   private noSelect: string = 'no select'
+  private defaultState = {
+    proportions: [0.75, 0.25],
+    selectMinion: this.noSelect,
+    selectedAutoRefresh: 0,
+  }
+
   constructor(props: Props) {
     super(props)
 
     this.state = {
-      proportions: [0.75, 0.25],
+      ...this.defaultState,
+
       activeEditorTab: 'Basic',
       script: '',
       selectedNamespace: 'All namespaces',
@@ -161,16 +168,14 @@ class KubernetesPage extends PureComponent<Props, State> {
         memory: null,
       },
       minions: [],
-      selectMinion: null,
-      selectedAutoRefresh: 0,
       isOpenMinions: false,
       isDisabledMinions: false,
       kubernetesD3Data: {name: null, children: []},
       layouts: [],
       hostLinks: EMPTY_LINKS,
-      minionsObject: [],
       kubernetesData: null,
       kubernetesObject: null,
+      remoteDataState: RemoteDataState.NotStarted,
     }
   }
 
@@ -856,15 +861,16 @@ class KubernetesPage extends PureComponent<Props, State> {
 
     const saltMasterUrl = addon.url
     const saltMasterToken = addon.token
+    try {
+      const minions = await this.props.handleGetMinionKeyAcceptedList(
+        saltMasterUrl,
+        saltMasterToken
+      )
 
-    const minionListObject = await this.props.handleGetMinionKeyAcceptedList(
-      saltMasterUrl,
-      saltMasterToken
-    )
-
-    this.setState({
-      minionsObject: minionListObject,
-    })
+      return minions
+    } catch (error) {
+      return []
+    }
   }
 
   public getNamespaces = async () => {
@@ -895,6 +901,8 @@ class KubernetesPage extends PureComponent<Props, State> {
   }
 
   public getK8sOjbect = async () => {
+    this.setState({remoteDataState: RemoteDataState.Loading})
+
     const info = await Promise.all([
       this.getNamespaces(),
       this.getNodes(),
@@ -2282,6 +2290,7 @@ class KubernetesPage extends PureComponent<Props, State> {
     this.setState({
       kubernetesData,
       kubernetesD3Data,
+      remoteDataState: RemoteDataState.Done,
     })
   }
 
@@ -2422,25 +2431,43 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
   }
 
-  public componentDidMount() {
-    verifyLocalStorage(getLocalStorage, setLocalStorage, 'KubernetesState', {
-      proportions: [0.75, 0.25],
-      selectMinion: this.noSelect,
-      selectedAutoRefresh: 0,
-    })
+  public getFirstMinion = (minions: string[]) => {
+    return _.isEmpty(minions) ? this.noSelect : minions[0]
+  }
 
-    const getLocal = getLocalStorage('KubernetesState')
-    const {proportions, selectMinion, selectedAutoRefresh} = getLocal
+  public async componentDidMount() {
+    verifyLocalStorage(
+      getLocalStorage,
+      setLocalStorage,
+      'kubernetes',
+      this.defaultState
+    )
 
-    if (selectedAutoRefresh === 0 && selectMinion !== this.noSelect) {
-      this.debouncedHandleKubernetesRefresh()
+    let getLocal = getLocalStorage('kubernetes')
+
+    getLocal = {
+      ...this.defaultState,
+      ...getLocal,
     }
+
+    const {
+      proportions,
+      selectedAutoRefresh,
+      selectMinion: storedSelectMinion,
+    } = getLocal
+
+    const minions = await this.getMinionKeyAcceptedList()
+
+    const selectMinion = _.includes(minions, storedSelectMinion)
+      ? storedSelectMinion
+      : this.getFirstMinion(minions)
 
     this.handleKubernetesResourceAutoRefresh()
 
     this.setState({
-      proportions,
+      minions,
       selectMinion,
+      proportions,
       selectedAutoRefresh,
     })
   }
@@ -2456,8 +2483,8 @@ class KubernetesPage extends PureComponent<Props, State> {
 
     if (
       prevState.selectMinion !== selectMinion &&
-      selectedAutoRefresh === 0 &&
-      selectMinion !== this.noSelect
+      this.noSelect !== selectMinion &&
+      selectedAutoRefresh === 0
     ) {
       this.debouncedHandleKubernetesRefresh()
     }
@@ -2471,9 +2498,8 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     if (
-      prevState.kubernetesObject !== null &&
       JSON.stringify(prevState.kubernetesObject) !==
-        JSON.stringify(kubernetesObject)
+      JSON.stringify(kubernetesObject)
     ) {
       this.setD3K8sSeries()
     }
@@ -2513,13 +2539,13 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     if (prevState.selectedAutoRefresh !== selectedAutoRefresh) {
-      const getLocal = getLocalStorage('KubernetesState')
-      setLocalStorage('KubernetesState', {...getLocal, selectedAutoRefresh})
+      const getLocal = getLocalStorage('kubernetes')
+      setLocalStorage('kubernetes', {...getLocal, selectedAutoRefresh})
     }
 
     if (prevState.selectMinion !== selectMinion) {
-      const getLocal = getLocalStorage('KubernetesState')
-      setLocalStorage('KubernetesState', {...getLocal, selectMinion})
+      const getLocal = getLocalStorage('kubernetes')
+      setLocalStorage('kubernetes', {...getLocal, selectMinion})
     }
   }
 
@@ -2621,6 +2647,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           manualRefresh={manualRefresh}
           host={''}
           selectMinion={selectMinion}
+          remoteDataState={this.state.remoteDataState}
         />
       </>
     )
@@ -2760,8 +2787,7 @@ class KubernetesPage extends PureComponent<Props, State> {
 
     if (!isOpenMinions) {
       this.setState({isDisabledMinions: true})
-      const minions: string[] = _.uniq(await this.getNodes(false))
-      // const minions: string[] = _.uniq(await )
+      const minions: string[] = _.uniq(await this.getMinionKeyAcceptedList())
       if (_.indexOf(minions, selectMinion) === -1) {
         this.setState({selectMinion: null})
       }
@@ -2846,7 +2872,7 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   private handleResize = (proportions: number[]) => {
     this.setState({proportions})
-    setLocalStorage('KubernetesState', {
+    setLocalStorage('kubernetes', {
       proportions,
     })
     this.debouncedResizeTrigger()
