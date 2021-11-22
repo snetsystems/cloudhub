@@ -481,8 +481,6 @@ class InventoryTopology extends PureComponent<Props, State> {
   private setToolbar = setToolbar
 
   public async componentDidMount() {
-    await this.handleLoadCsps()
-
     this.createEditor()
     this.configureEditor()
     this.setActionInEditor()
@@ -491,98 +489,26 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.addToolsButton(this.tools)
     this.setToolbar(this.editor, this.toolbar)
 
-    const topology = await this.props.handleGetInventoryTopology(
-      this.props.links
-    )
-
-    this.setState(
-      {
-        topology: _.get(topology, 'diagram'),
-        topologyId: _.get(topology, 'id'),
-      },
-      async () => {
-        const layoutResults = await getLayouts()
-        const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
-
-        // // For rendering whole hosts list
-        await this.getHostData()
-        await this.getIpmiTargetList()
-
-        this.setState({
-          layouts,
-        })
-
-        if (_.get(topology, 'diagram')) {
-          const graph = this.graph
-
-          graph.getModel().beginUpdate()
-          try {
-            const doc = mxUtils.parseXml(topology.diagram)
-            const codec = new mxCodec(doc)
-
-            codec.decode(doc.documentElement, graph.getModel())
-
-            _.forEach(graph.getModel().cells, (cell: mxCellType) => {
-              const containerElement = getContainerElement(cell.value)
-
-              if (
-                containerElement &&
-                containerElement.hasAttribute('data-type')
-              ) {
-                const dataType = containerElement.getAttribute('data-type')
-                const attrsKeys = _.map(
-                  _.keys(eachNodeTypeAttrs[dataType].attrs),
-                  attr => `data-${attr}`
-                )
-
-                const filterdAttrs = _.difference(
-                  _.map(
-                    _.filter(
-                      containerElement.attributes,
-                      attr => attr.nodeName !== 'class'
-                    ),
-                    attr => attr.nodeName
-                  ),
-                  attrsKeys
-                )
-
-                const removeAttrs = _.filter(
-                  containerElement.attributes,
-                  attr => _.indexOf(filterdAttrs, attr.nodeName) > -1
-                )
-
-                _.forEach(removeAttrs, attr => {
-                  applyHandler.bind(this)(this.graph, cell, attr)
-                  containerElement.removeAttribute(attr.nodeName)
-                  cell.setValue(containerElement.outerHTML)
-                })
-              }
-            })
-          } finally {
-            graph.getModel().endUpdate()
-          }
-
-          await this.fetchIntervalData()
-
-          if (this.props.autoRefresh) {
-            this.intervalID = window.setInterval(
-              () => this.fetchIntervalData(),
-              this.props.autoRefresh
-            )
-          }
-
-          GlobalAutoRefresher.poll(this.props.autoRefresh)
-        }
-      }
-    )
+    const layoutResults = await getLayouts()
+    const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
 
     this.setState({
-      topologyStatus: RemoteDataState.Done,
+      layouts,
     })
 
-    if (this.graph) {
-      this.graph.getModel().addListener(mxEvent.CHANGE, this.handleGraphModel)
+    await this.handleLoadCsps()
+    await this.getInventoryTopology()
+    await this.getHostData()
+    await this.getIpmiTargetList()
+
+    if (this.props.autoRefresh) {
+      this.intervalID = window.setInterval(
+        () => this.fetchIntervalData(),
+        this.props.autoRefresh
+      )
     }
+
+    GlobalAutoRefresher.poll(this.props.autoRefresh)
   }
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
@@ -860,6 +786,70 @@ class InventoryTopology extends PureComponent<Props, State> {
     )
   }
 
+  public async getInventoryTopology() {
+    const topology = await this.props.handleGetInventoryTopology(
+      this.props.links
+    )
+
+    if (_.get(topology, 'diagram')) {
+      const graph = this.graph
+
+      graph.getModel().beginUpdate()
+      try {
+        const doc = mxUtils.parseXml(topology.diagram)
+        const codec = new mxCodec(doc)
+
+        codec.decode(doc.documentElement, graph.getModel())
+
+        _.forEach(graph.getModel().cells, (cell: mxCellType) => {
+          const containerElement = getContainerElement(cell.value)
+
+          if (containerElement && containerElement.hasAttribute('data-type')) {
+            const dataType = containerElement.getAttribute('data-type')
+            const attrsKeys = _.map(
+              _.keys(eachNodeTypeAttrs[dataType].attrs),
+              attr => `data-${attr}`
+            )
+
+            const filterdAttrs = _.difference(
+              _.map(
+                _.filter(
+                  containerElement.attributes,
+                  attr => attr.nodeName !== 'class'
+                ),
+                attr => attr.nodeName
+              ),
+              attrsKeys
+            )
+
+            const removeAttrs = _.filter(
+              containerElement.attributes,
+              attr => _.indexOf(filterdAttrs, attr.nodeName) > -1
+            )
+
+            _.forEach(removeAttrs, attr => {
+              applyHandler.bind(this)(this.graph, cell, attr)
+              containerElement.removeAttribute(attr.nodeName)
+              cell.setValue(containerElement.outerHTML)
+            })
+          }
+        })
+      } finally {
+        graph.getModel().endUpdate()
+      }
+    }
+
+    if (this.graph) {
+      this.graph.getModel().addListener(mxEvent.CHANGE, this.handleGraphModel)
+    }
+
+    this.setState({
+      topology: _.get(topology, 'diagram'),
+      topologyId: _.get(topology, 'id'),
+      topologyStatus: RemoteDataState.Done,
+    })
+  }
+
   private toggleIsPinned = () => {
     this.setState({isPinned: !this.state.isPinned})
   }
@@ -870,8 +860,6 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private getHostData = async () => {
-    if (!this.graph) return
-
     const {source, links} = this.props
 
     const envVars = await getEnv(links.environment)
@@ -893,6 +881,8 @@ class InventoryTopology extends PureComponent<Props, State> {
     if (!hostsObject) {
       throw new Error(hostsError)
     }
+
+    if (!this.graph) return
 
     const graph = this.graph
     const parent = graph.getDefaultParent()
@@ -1539,6 +1529,16 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   // @ts-ignore
   private graphUpdate = () => {
+    this.graph.getModel().beginUpdate()
+    try {
+    } finally {
+      this.graph.getModel().endUpdate()
+      this.graph.refresh()
+    }
+  }
+
+  // @ts-ignore
+  private graphUpdateSave = () => {
     this.graph.getModel().beginUpdate()
     try {
     } finally {
@@ -2693,7 +2693,11 @@ class InventoryTopology extends PureComponent<Props, State> {
     })
     const filteredLayouts = layoutsWithinHost
       .filter(layout => {
-        return layout.app === 'cloudwatch_elb'
+        return (
+          layout.app === 'cloudwatch_elb' ||
+          layout.app === 'system' ||
+          layout.app === 'win_system'
+        )
       })
       .sort((x, y) => {
         return x.measurement < y.measurement

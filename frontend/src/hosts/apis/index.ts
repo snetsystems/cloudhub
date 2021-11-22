@@ -293,7 +293,7 @@ export const getAppsForEtc = async (
 
   const {data} = await proxy({
     source: proxyLink,
-    query: `show series from /${measurements}/ where load_balancer = '${host}'`,
+    query: `show series from /${measurements}/ where load_balancer = '${host}' or "host" = '${host}'`,
     db: telegrafDB,
   })
 
@@ -536,7 +536,7 @@ export const getMeasurementsForEtc = async (
 ): Promise<string[]> => {
   const {data} = await proxy({
     source: source.links.proxy,
-    query: `SHOW MEASUREMENTS WHERE "load_balancer" = '${host}'`,
+    query: `SHOW MEASUREMENTS WHERE "load_balancer" = '${host}' or "host" = '${host}'`,
     db: source.telegraf,
   })
 

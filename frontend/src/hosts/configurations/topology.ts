@@ -421,7 +421,7 @@ export const applyHandler = function (
         graph.setSelectionCell(cell)
       }
       graph.getModel().endUpdate()
-      this.graphUpdate()
+      this.graphUpdateSave()
     }
   }
 }
