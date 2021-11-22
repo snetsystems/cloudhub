@@ -45,7 +45,7 @@ interface Props {
   focuseNode: FocuseNode
   pinNode: string[]
   isToolipActive: boolean
-  toolipPosition: TooltipPosition
+  targetPosition: TooltipPosition
   tooltipNode: TooltipNode
   kubernetesObject: KubernetesObject
   kubernetesD3Data: D3K8sData
@@ -168,11 +168,11 @@ class KubernetesContents extends PureComponent<Props, State> {
   }
 
   private get tooltip() {
-    const {isToolipActive, toolipPosition, tooltipNode} = this.props
+    const {isToolipActive, targetPosition, tooltipNode} = this.props
     if (isToolipActive) {
       return (
         <KubernetesTooltip
-          tipPosition={toolipPosition}
+          targetPosition={targetPosition}
           tooltipNode={tooltipNode}
           statusColor={kubernetesStatusColor}
         />

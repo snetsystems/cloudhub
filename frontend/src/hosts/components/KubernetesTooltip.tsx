@@ -1,5 +1,5 @@
 // Libraries
-import React, {PureComponent, CSSProperties, createRef} from 'react'
+import React, {PureComponent, createRef} from 'react'
 import chroma from 'chroma-js'
 import _ from 'lodash'
 
@@ -11,16 +11,16 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
   onDismiss?: () => void
-  tipPosition: TooltipPosition
+  targetPosition: TooltipPosition
   tooltipNode: TooltipNode
   statusColor: chroma.Scale<chroma.Color>
 }
 
 interface State {
-  topPosition: number | null
-  bottomPosition: number | null
-  leftPosition: number | null
-  rightPosition: number | null
+  top: number | null
+  bottom: number | null
+  left: number | null
+  right: number | null
 }
 
 @ErrorHandling
@@ -31,15 +31,13 @@ class KubernetesTooltip extends PureComponent<Props, State> {
     body: '60%',
   }
 
-  private gutter: number = 2
-
   public constructor(props: Props) {
     super(props)
     this.state = {
-      topPosition: null,
-      bottomPosition: null,
-      leftPosition: null,
-      rightPosition: null,
+      top: null,
+      bottom: null,
+      left: null,
+      right: null,
     }
   }
 
@@ -47,38 +45,27 @@ class KubernetesTooltip extends PureComponent<Props, State> {
     this.calcPosition()
   }
 
-  public componentDidUpdate() {
-    this.calcPosition()
-  }
-
   private calcPosition = () => {
-    const {
-      tipPosition: {left: targetLeft, right: targetRight},
-    } = this.props
+    const {targetPosition} = this.props
+    const {top, width, right} = targetPosition
+    const {width: tipWidth} = this.tooltipRef.current.getBoundingClientRect()
 
-    const {
-      bottom,
-      height,
-      width,
-    } = this.tooltipRef.current.getBoundingClientRect()
-
-    if (bottom > window.innerHeight) {
-      this.setState({bottomPosition: height / 2})
+    let position = {
+      bottom: window.innerHeight - top,
+      left: right - width / 2 - tipWidth / 2,
     }
 
-    if (targetRight + width + this.gutter > window.innerWidth) {
-      this.setState({
-        rightPosition: window.innerWidth - targetLeft + this.gutter,
-      })
-    }
+    this.setState({...position})
   }
 
   public render() {
     const {tooltipNode, statusColor} = this.props
+    const {top, bottom, left, right} = this.state
     const {name, cpu, memory} = tooltipNode
+
     return (
       <div
-        style={this.stylePosition}
+        style={{top, bottom, left, right}}
         className={this.handleToolTipClassName}
         ref={this.tooltipRef}
       >
@@ -145,31 +132,6 @@ class KubernetesTooltip extends PureComponent<Props, State> {
 
   private get handleToolTipClassName() {
     return 'kubernetes-toolbar--tooltip'
-  }
-
-  private get stylePosition(): CSSProperties {
-    const {
-      tipPosition: {top, right},
-    } = this.props
-    const {bottomPosition, rightPosition} = this.state
-
-    let position = {
-      bottom: `${bottomPosition || window.innerHeight - top - 15}px`,
-      left: null,
-      right: null,
-    }
-    if (rightPosition) {
-      position = {
-        ...position,
-        right: `${rightPosition}px`,
-      }
-    } else {
-      position = {
-        ...position,
-        left: `${right + this.gutter}px`,
-      }
-    }
-    return position
   }
 }
 

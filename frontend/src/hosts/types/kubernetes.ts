@@ -50,6 +50,7 @@ export interface TooltipPosition {
   top: number
   right: number
   left: number
+  width: number
 }
 
 export interface TooltipNode {
