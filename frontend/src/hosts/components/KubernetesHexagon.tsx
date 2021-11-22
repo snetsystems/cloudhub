@@ -43,9 +43,10 @@ class KubernetesHexagon extends PureComponent<Props, State> {
 
   private ref = createRef<HTMLDivElement>()
 
+  private clickedTarget = null
   private clickedOnce = false
   private timeout = null
-  private timer = 200
+  private dbClickJudgementTimer = 300
 
   constructor(props: Props) {
     super(props)
@@ -411,21 +412,28 @@ class KubernetesHexagon extends PureComponent<Props, State> {
   private runOnSingleClick = (target: SVGSVGElement) => {
     this.props.handleOnClickVisualizePod(target)
     this.clickedOnce = false
+    this.clickedTarget = null
   }
 
   private runOnDBClick = (target: SVGSVGElement, data) => {
     this.clickedOnce = false
+    this.clickedTarget = null
     clearTimeout(this.timeout)
     this.onMouseDBClick(target, data)
   }
 
   private onMouseClick = (target: SVGSVGElement, data: D3K8sData) => {
-    if (this.clickedOnce) {
+    if (this.clickedTarget === target && this.clickedOnce) {
       this.runOnDBClick(target, data)
-    } else {
+    } else if (
+      (this.clickedTarget === null && !this.clickedOnce) ||
+      (this.clickedTarget !== target && this.clickedOnce)
+    ) {
       this.timeout = setTimeout(() => {
         this.runOnSingleClick(target)
-      }, this.timer)
+      }, this.dbClickJudgementTimer)
+
+      this.clickedTarget = target
       this.clickedOnce = true
     }
   }
