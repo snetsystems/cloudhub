@@ -2864,7 +2864,11 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   private handlePinNode = (data: any) => {
     const pinNode = this.parentNavigation(data)
-    this.setState({pinNode})
+    const target = d3.select(`[data-name=${pinNode[0]}]`)
+    const isNull = _.isNull(_.flatMapDeep(target._groups)[0])
+    const isPin = isNull || target.classed('kubernetes-pin')
+
+    this.setState({pinNode: isPin ? [] : pinNode})
   }
 
   private debouncedResizeTrigger = _.debounce(() => {
