@@ -235,12 +235,14 @@ export class HostsPage extends PureComponent<Props, State> {
       defaultState,
     })
 
+    const initActivateTab = !this.isUsingAWS
+      ? 'Host'
+      : _.isEmpty(hostsPage['activeCspTab'])
+      ? 'Host'
+      : hostsPage['activeCspTab']
+
     this.setState({
-      activeCspTab: !this.isUsingAWS
-        ? 'Host'
-        : _.isEmpty(hostsPage['activeCspTab'])
-        ? 'Host'
-        : hostsPage['activeCspTab'],
+      activeCspTab: initActivateTab,
     })
 
     const hostID = hostsPage.focusedHost
@@ -273,20 +275,26 @@ export class HostsPage extends PureComponent<Props, State> {
       this.setState({
         layouts,
         proportions: convertProportions,
-        focusedInstance: getFocusedInstance,
         selectedAgent: 'ALL',
         focusedHost: hostID,
       })
     } else {
-      this.setState({
-        layouts,
-        proportions: convertProportions,
-        focusedHost: hostID,
-        focusedInstance: getFocusedInstance,
-        selectedAgent: _.isEmpty(hostsPage['selectedAgent'])
-          ? 'ALL'
-          : hostsPage['selectedAgent'],
-      })
+      if (initActivateTab === 'Host') {
+        this.setState({
+          layouts,
+          proportions: convertProportions,
+          focusedHost: hostID,
+        })
+      } else {
+        this.setState({
+          layouts,
+          proportions: convertProportions,
+          focusedInstance: getFocusedInstance,
+          selectedAgent: _.isEmpty(hostsPage['selectedAgent'])
+            ? 'ALL'
+            : hostsPage['selectedAgent'],
+        })
+      }
     }
   }
 
@@ -326,29 +334,11 @@ export class HostsPage extends PureComponent<Props, State> {
         if (activeCspTab === 'aws') {
           const {filteredLayouts} = await this.getLayoutsforInstance(
             layouts,
-            _.isEmpty(this.state.cloudHostsObject)
-              ? {provider: '', region: '', instanceid: '', instancename: ''}
-              : focusedInstance
+            focusedInstance
           )
 
           this.setState({filteredLayouts})
         }
-      }
-
-      if (
-        _.isEmpty(prevState.cloudHostsObject) &&
-        !_.isEmpty(this.state.cloudHostsObject) &&
-        this.state.cloudHostsObject !== prevState.cloudHostsObject &&
-        activeCspTab === 'aws'
-      ) {
-        const {filteredLayouts} = await this.getLayoutsforInstance(
-          layouts,
-          focusedInstance
-            ? focusedInstance
-            : this.getFirstCloudHost(this.state.cloudHostsObject)
-        )
-
-        this.setState({filteredLayouts})
       }
 
       if (prevState.selectedAgent !== selectedAgent && focusedInstance) {
@@ -990,9 +980,7 @@ export class HostsPage extends PureComponent<Props, State> {
           hostsPageStatus: RemoteDataState.Done,
         })
       } else {
-        if (
-          !_.includes(_.keys(_.values(hostsObject)), this.state.focusedHost)
-        ) {
+        if (!_.includes(_.keys(newHosts), this.state.focusedHost)) {
           this.setState({
             focusedHost: this.getFirstHost(newHosts),
             hostsObject: newHosts,
@@ -1129,6 +1117,10 @@ export class HostsPage extends PureComponent<Props, State> {
       const {id, organization, provider, region} = accessCsp
       let csp = []
 
+      if (_.isEmpty(getSaltCSPs[index])) {
+        return
+      }
+
       if (
         Object.keys(getSaltCSPs[index]).includes('error') ||
         typeof getSaltCSPs[index] === 'string'
@@ -1146,6 +1138,16 @@ export class HostsPage extends PureComponent<Props, State> {
 
       newCSPs.push(csp)
     })
+
+    if (_.isEmpty(newCSPs)) {
+      this.setState({
+        cloudAccessInfos: [],
+        cloudHostsObject: {},
+        // filteredLayouts: [],
+        awsPageStatus: RemoteDataState.Done,
+      })
+      return
+    }
 
     const envVars = await getEnv(links.environment)
     const telegrafSystemInterval = getDeep<string>(
@@ -1177,7 +1179,7 @@ export class HostsPage extends PureComponent<Props, State> {
         tempVars
       )
 
-      if (_.isEmpty(this.state.focusedInstance)) {
+      if (_.isEmpty(this.state.focusedInstance.provider)) {
         this.setState({
           focusedInstance: this.getFirstCloudHost(newCloudHostsObject),
           cloudAccessInfos: dbResp,

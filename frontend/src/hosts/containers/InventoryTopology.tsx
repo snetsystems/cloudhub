@@ -474,6 +474,13 @@ class InventoryTopology extends PureComponent<Props, State> {
     addon => addon.name === AddonType.salt
   )
 
+  private isUsingAWS =
+    _.get(
+      _.find(this.props.links.addons, addon => addon.name === AddonType.aws),
+      'url',
+      'off'
+    ) === 'on'
+
   private configureStylesheet = configureStylesheet
   private getAllCells = getAllCells
   private openSensorData = openSensorData
@@ -496,7 +503,10 @@ class InventoryTopology extends PureComponent<Props, State> {
       layouts,
     })
 
-    await this.handleLoadCsps()
+    if (this.isUsingAWS) {
+      await this.handleLoadCsps()
+    }
+
     await this.getInventoryTopology()
     await this.getHostData()
     await this.getIpmiTargetList()
