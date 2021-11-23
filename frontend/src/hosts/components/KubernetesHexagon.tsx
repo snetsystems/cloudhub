@@ -45,7 +45,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
 
   private clickedOnce = false
   private timeout = null
-  private timer = 200
+  private timer = 500
 
   constructor(props: Props) {
     super(props)

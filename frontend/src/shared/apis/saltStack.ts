@@ -44,6 +44,7 @@ interface Params {
     detail?: any
     namespace?: any
     fieldselector?: any
+    labelselector?: any
   }
   username?: string
   password?: string
@@ -974,6 +975,11 @@ export async function getLocalK8sPods(
         fieldselector: pParam.hasOwnProperty('kwarg')
           ? pParam.kwarg.hasOwnProperty('fieldselector')
             ? pParam.kwarg.fieldselector
+            : ''
+          : '',
+        labelselector: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('labelselector')
+            ? pParam.kwarg.labelselector
             : ''
           : '',
         detail: pParam.hasOwnProperty('kwarg')

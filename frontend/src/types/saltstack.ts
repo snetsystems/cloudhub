@@ -25,7 +25,9 @@ export interface SaltStack {
     method?: string
     namespace?: string
     fieldselector?: string
+    labelselector?: string
     detail?: boolean
+    limit?: number
   }
   username?: string
   password?: string
