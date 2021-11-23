@@ -24,6 +24,12 @@ export const getContainerTitle = (element: Element) => {
   return title
 }
 
+export const getFocusedHost = (element: Element) => {
+  const host = element.getAttribute('data-name')
+
+  return host
+}
+
 export const getIsDisableAttr = (
   containerElement: Element,
   attribute: any
@@ -47,23 +53,12 @@ export const getIsHasString = (value: string): boolean => {
   return value !== ''
 }
 
-export const getTimeSeriesHost = (containerElement: Element): boolean => {
-  let isTimeSeriesHost = false
-
-  if (containerElement) {
-    isTimeSeriesHost =
-      containerElement.getAttribute('data-timeseries_host') === 'true'
-  }
-
-  return isTimeSeriesHost
-}
-
 export const getTimeSeriesHostIndicator = (value: string | number): string => {
-  let status = '#4ed8a0'
+  let status = 'UsageIndacator'
 
-  if (value >= 50) status = '#ffb94a'
-  if (value >= 70) status = '#ff8564'
-  if (value >= 90) status = '#dc4e58'
+  if (value >= 50) status = 'UsageIndacator--caution'
+  if (value >= 70) status = 'UsageIndacator--warning'
+  if (value >= 90) status = 'UsageIndacator--danger'
 
   return status
 }

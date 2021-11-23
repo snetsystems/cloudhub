@@ -175,7 +175,10 @@ class HostsTable extends PureComponent<Props, State> {
       sortKey,
       sortDirection
     )
-    if (hostsPageStatus === RemoteDataState.Loading) {
+    if (
+      hostsPageStatus === RemoteDataState.Loading ||
+      hostsPageStatus === RemoteDataState.NotStarted
+    ) {
       return this.LoadingState
     }
     if (hostsPageStatus === RemoteDataState.Error) {

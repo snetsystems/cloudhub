@@ -32,7 +32,11 @@ const buildCannedDashboardQuery = (
   }
 
   if (host) {
-    text += ` and \"host\" = '${host}'`
+    if (measurement === 'cloudwatch_aws_application_elb') {
+      text += ` and \"load_balancer\" = '${host}' or \"host\" = '${host}'`
+    } else {
+      text += ` and \"host\" = '${host}'`
+    }
   }
 
   if (instance) {

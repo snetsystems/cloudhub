@@ -1,0 +1,200 @@
+{
+  "id": "8beff1bf-5e86-4196-ae1f-4c369b8bd879",
+  "measurement": "cloudwatch_aws_application_elb",
+  "app": "cloudwatch_elb",
+  "autoflow": true,
+  "cells": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "a74a23a5-0581-4602-9058-03aa9e8163cd",
+      "name": "Target Response Time (Milliseconds)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"target_response_time_average\") AS \"mean_target_response_time_average\" FROM \":db:\".\":rp:\".\"cloudwatch_aws_application_elb\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "29f50f58-9885-4412-9720-52d6d93f3f48",
+      "name": "Requests (Count)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"request_count_average\") AS \"mean_request_count_average\" FROM \":db:\".\":rp:\".\"cloudwatch_aws_application_elb\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "153d5847-4edf-4c48-b95a-b4005c942dc5",
+      "name": "Rule Evaluations (Count)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"rule_evaluations_average\") AS \"mean_rule_evaluations_average\" FROM \":db:\".\":rp:\".\"cloudwatch_aws_application_elb\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "de45086c-c634-45c5-a3b6-96c2724ca379",
+      "name": "HTTP 4XXs (Count)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"http_code_target_4xx_count_average\") AS \"mean_http_code_target_4xx_count_average\" FROM \":db:\".\":rp:\".\"cloudwatch_aws_application_elb\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "12dbc7cc-04e7-4ec9-b0c9-e00032cac594",
+      "name": "ELB 4XXs (Count)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"http_code_elb_4xx_count_average\") AS \"mean_http_code_elb_4xx_count_average\" FROM \":db:\".\":rp:\".\"cloudwatch_aws_application_elb\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "ad152565-f9dc-4171-bb42-f4f3fe732a24",
+      "name": "Client TLS Negotiation Errors (Count)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"client_tls_negotiation_error_count_average\") AS \"mean_client_tls_negotiation_error_count_average\" FROM \":db:\".\":rp:\".\"cloudwatch_aws_application_elb\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "a2163fad-fc67-4de9-bc60-b7b4004843f7",
+      "name": "HTTP 3XXs (Count)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"http_code_target_3xx_count_average\") AS \"mean_http_code_target_3xx_count_average\" FROM \":db:\".\":rp:\".\"cloudwatch_aws_application_elb\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "32de912e-984d-4663-977e-f1ee2ff84e34",
+      "name": "HTTP 2XXs (Count)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"http_code_target_2xx_count_average\") AS \"mean_http_code_target_2xx_count_average\" FROM \":db:\".\":rp:\".\"cloudwatch_aws_application_elb\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "f2eb7077-41f6-4e1c-9bda-1f50a568ef4a",
+      "name": "Active Connection Count (Count)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"active_connection_count_average\") AS \"mean_active_connection_count_average\" FROM \":db:\".\":rp:\".\"cloudwatch_aws_application_elb\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "8ae578e3-ac1d-4980-b6b7-66ed979e73de",
+      "name": "New Connection Count (Count)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"new_connection_count_average\") AS \"mean_new_connection_count_average\" FROM \":db:\".\":rp:\".\"cloudwatch_aws_application_elb\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "22ad1e99-54e8-4952-839a-ba0e6baf62f2",
+      "name": "Processed Bytes (Bytes)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"processed_bytes_average\") AS \"mean_processed_bytes_average\" FROM \":db:\".\":rp:\".\"cloudwatch_aws_application_elb\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "8e8813ef-2f4c-4e99-9b8f-6e8cd3a8b2d6",
+      "name": "HTTP redirect count (Count)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"http_redirect_count_average\") AS \"mean_http_redirect_count_average\" FROM \":db:\".\":rp:\".\"cloudwatch_aws_application_elb\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    }
+  ]
+}
