@@ -116,7 +116,7 @@ interface State {
   focuseNode: FocuseNode
   pinNode: string[]
   isToolipActive: boolean
-  tooltipPosition: TooltipPosition
+  targetPosition: TooltipPosition
   tooltipNode: TooltipNode
   minions: string[]
   selectMinion: string
@@ -167,10 +167,11 @@ class KubernetesPage extends PureComponent<Props, State> {
       focuseNode: {name: null, label: null, type: null},
       pinNode: [],
       isToolipActive: false,
-      tooltipPosition: {
+      targetPosition: {
         top: null,
         right: null,
         left: null,
+        width: null,
       },
       tooltipNode: {
         name: null,
@@ -2659,7 +2660,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       focuseNode,
       pinNode,
       isToolipActive,
-      tooltipPosition,
+      targetPosition,
       tooltipNode,
       minions,
       selectMinion,
@@ -2720,7 +2721,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           script={script}
           height={this.height}
           isToolipActive={isToolipActive}
-          toolipPosition={tooltipPosition}
+          targetPosition={targetPosition}
           tooltipNode={tooltipNode}
           handleOpenTooltip={this.handleOpenTooltip}
           handleCloseTooltip={this.handleCloseTooltip}
@@ -2964,7 +2965,11 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   private handlePinNode = (data: any) => {
     const pinNode = this.parentNavigation(data)
-    this.setState({pinNode})
+    const target = d3.select(`[data-name=${pinNode[0]}]`)
+    const isNull = _.isNull(_.flatMapDeep(target._groups)[0])
+    const isPin = isNull || target.classed('kubernetes-pin')
+
+    this.setState({pinNode: isPin ? [] : pinNode})
   }
 
   private debouncedResizeTrigger = _.debounce(() => {
@@ -2980,10 +2985,10 @@ class KubernetesPage extends PureComponent<Props, State> {
   }
 
   private handleOpenTooltip = (target: HTMLElement) => {
-    const {top, right, left} = target.getBoundingClientRect()
+    const {width, top, right, left} = target.getBoundingClientRect()
     this.setState({
       isToolipActive: true,
-      tooltipPosition: {top, right, left},
+      targetPosition: {width, top, right, left},
       tooltipNode: {
         name: target.getAttribute('data-label'),
         cpu: parseInt(target.getAttribute('data-cpu')),
@@ -2995,7 +3000,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   private handleCloseTooltip = () => {
     this.setState({
       isToolipActive: false,
-      tooltipPosition: {top: null, right: null, left: null},
+      targetPosition: {top: null, right: null, left: null, width: null},
     })
   }
 
