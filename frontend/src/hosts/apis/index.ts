@@ -45,17 +45,6 @@ const EmptyHost: Host = {
   deltaUptime: -1,
   apps: [],
 }
-
-const EmptyCSPHosts: Host = {
-  name: '',
-  cpu: null,
-  load: null,
-  memory: null,
-  disk: null,
-  deltaUptime: -1,
-  apps: [],
-}
-
 interface Series {
   name: string
   columns: string[]
@@ -292,6 +281,41 @@ export const getAppsForHost = async (
   return appsForHost
 }
 
+export const getAppsForEtc = async (
+  proxyLink: string,
+  host: string,
+  appLayouts: Layout[],
+  telegrafDB: string
+) => {
+  const measurements = appLayouts.map(m => `^${m.measurement}$`).join('|')
+  const measurementsToApps = _.zipObject(
+    appLayouts.map(m => m.measurement),
+    appLayouts.map(({app}) => app)
+  )
+
+  const {data} = await proxy({
+    source: proxyLink,
+    query: `show series from /${measurements}/ where load_balancer = '${host}' or "host" = '${host}'`,
+    db: telegrafDB,
+  })
+
+  const appsForEtc: AppsForHost = {apps: [], tags: {host: null}}
+
+  const allSeries = getDeep<string[][]>(data, 'results.0.series.0.values', [])
+
+  allSeries.forEach(series => {
+    const seriesObj = parseSeries(series[0])
+    const measurement = seriesObj.measurement
+
+    appsForEtc.apps = _.uniq(
+      appsForEtc.apps.concat(measurementsToApps[measurement])
+    )
+    _.assign(appsForEtc.tags, seriesObj.tags)
+  })
+
+  return appsForEtc
+}
+
 export const getAppsForInstance = async (
   proxyLink: string,
   instance: object,
@@ -505,6 +529,27 @@ export const getMeasurementsForInstance = async (
     return m[0]
   })
 
+  return measurements
+}
+
+export const getMeasurementsForEtc = async (
+  source: Source,
+  host: string
+): Promise<string[]> => {
+  const {data} = await proxy({
+    source: source.links.proxy,
+    query: `SHOW MEASUREMENTS WHERE "load_balancer" = '${host}' or "host" = '${host}'`,
+    db: source.telegraf,
+  })
+
+  if (isEmpty(data) || hasError(data)) {
+    return []
+  }
+
+  const values = getDeep<string[][]>(data, 'results.[0].series.[0].values', [])
+  const measurements = values.map(m => {
+    return m[0]
+  })
   return measurements
 }
 

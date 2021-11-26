@@ -31,7 +31,7 @@ interface Instance {
 export interface Props {
   cloudHosts: CloudHost[]
   providerRegions: string[]
-  hostsPageStatus: RemoteDataState
+  awsPageStatus: RemoteDataState
   source: Source
   focusedInstance: Instance
   onClickTableRow: HostsPage['handleClickCspTableRow']
@@ -177,7 +177,7 @@ class CspHostsTable extends PureComponent<Props, State> {
   }
 
   private get CloudTableContents(): JSX.Element {
-    const {cloudHosts, hostsPageStatus} = this.props
+    const {cloudHosts, awsPageStatus} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
     const sortedHosts = this.getSortedHosts(
       cloudHosts,
@@ -185,10 +185,13 @@ class CspHostsTable extends PureComponent<Props, State> {
       sortKey,
       sortDirection
     )
-    if (hostsPageStatus === RemoteDataState.Loading) {
+    if (
+      awsPageStatus === RemoteDataState.Loading ||
+      awsPageStatus === RemoteDataState.NotStarted
+    ) {
       return this.LoadingState
     }
-    if (hostsPageStatus === RemoteDataState.Error) {
+    if (awsPageStatus === RemoteDataState.Error) {
       return this.ErrorState
     }
     if (cloudHosts.length === 0) {

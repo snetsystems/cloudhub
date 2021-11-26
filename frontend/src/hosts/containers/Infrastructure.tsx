@@ -230,7 +230,7 @@ class Infrastructure extends PureComponent<Props, State> {
           <>
             {activeTab === 'host' && (
               //@ts-ignore
-              <HostsPage {...this.props} />
+              <HostsPage {...this.props} timeRange={timeRange} />
             )}
             {activeTab === 'vmware' && (
               //@ts-ignore
@@ -247,6 +247,7 @@ class Infrastructure extends PureComponent<Props, State> {
                 source={source}
                 manualRefresh={manualRefresh}
                 autoRefresh={autoRefresh}
+                timeRange={timeRange}
               />
             )}
             {activeTab === 'kubernetes' && (
