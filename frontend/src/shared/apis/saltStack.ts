@@ -45,6 +45,7 @@ interface Params {
     namespace?: any
     fieldselector?: any
     labelselector?: any
+    limit?: number
   }
   username?: string
   password?: string
@@ -987,6 +988,11 @@ export async function getLocalK8sPods(
             ? pParam.kwarg.detail
             : false
           : false,
+        limit: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('limit')
+            ? pParam.kwarg.limit
+            : null
+          : null,
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
@@ -1013,6 +1019,11 @@ export async function getLocalK8sDeployments(
         namespace: pParam.hasOwnProperty('kwarg')
           ? pParam.kwarg.hasOwnProperty('namespace')
             ? pParam.kwarg.namespace
+            : ''
+          : '',
+        labelselector: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('labelselector')
+            ? pParam.kwarg.labelselector
             : ''
           : '',
         detail: pParam.hasOwnProperty('kwarg')
@@ -1048,6 +1059,11 @@ export async function getLocalK8sReplicaSets(
             ? pParam.kwarg.namespace
             : ''
           : '',
+        labelselector: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('labelselector')
+            ? pParam.kwarg.labelselector
+            : ''
+          : '',
         detail: pParam.hasOwnProperty('kwarg')
           ? pParam.kwarg.hasOwnProperty('detail')
             ? pParam.kwarg.detail
@@ -1079,6 +1095,11 @@ export async function getLocalK8sReplicationControllers(
         namespace: pParam.hasOwnProperty('kwarg')
           ? pParam.kwarg.hasOwnProperty('namespace')
             ? pParam.kwarg.namespace
+            : ''
+          : '',
+        labelselector: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('labelselector')
+            ? pParam.kwarg.labelselector
             : ''
           : '',
         detail: pParam.hasOwnProperty('kwarg')
@@ -1151,6 +1172,11 @@ export async function getLocalK8sDaemonSets(
             ? pParam.kwarg.namespace
             : ''
           : '',
+        labelselector: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('labelselector')
+            ? pParam.kwarg.labelselector
+            : ''
+          : '',
         detail: pParam.hasOwnProperty('kwarg')
           ? pParam.kwarg.hasOwnProperty('detail')
             ? pParam.kwarg.detail
@@ -1184,6 +1210,11 @@ export async function getLocalK8sStatefulSets(
             ? pParam.kwarg.namespace
             : ''
           : '',
+        labelselector: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('labelselector')
+            ? pParam.kwarg.labelselector
+            : ''
+          : '',
         detail: pParam.hasOwnProperty('kwarg')
           ? pParam.kwarg.hasOwnProperty('detail')
             ? pParam.kwarg.detail
@@ -1215,6 +1246,11 @@ export async function getLocalK8sJobs(
         namespace: pParam.hasOwnProperty('kwarg')
           ? pParam.kwarg.hasOwnProperty('namespace')
             ? pParam.kwarg.namespace
+            : ''
+          : '',
+        labelselector: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('labelselector')
+            ? pParam.kwarg.labelselector
             : ''
           : '',
         detail: pParam.hasOwnProperty('kwarg')
@@ -1278,6 +1314,11 @@ export async function getLocalK8sCronJobs(
             ? pParam.kwarg.namespace
             : ''
           : '',
+        labelselector: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('labelselector')
+            ? pParam.kwarg.labelselector
+            : ''
+          : '',
         detail: pParam.hasOwnProperty('kwarg')
           ? pParam.kwarg.hasOwnProperty('detail')
             ? pParam.kwarg.detail
@@ -1309,6 +1350,11 @@ export async function getLocalK8sServices(
         namespace: pParam.hasOwnProperty('kwarg')
           ? pParam.kwarg.hasOwnProperty('namespace')
             ? pParam.kwarg.namespace
+            : ''
+          : '',
+        labelselector: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('labelselector')
+            ? pParam.kwarg.labelselector
             : ''
           : '',
         detail: pParam.hasOwnProperty('kwarg')
@@ -1344,6 +1390,11 @@ export async function getLocalK8sIngresses(
             ? pParam.kwarg.namespace
             : ''
           : '',
+        labelselector: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('labelselector')
+            ? pParam.kwarg.labelselector
+            : ''
+          : '',
         detail: pParam.hasOwnProperty('kwarg')
           ? pParam.kwarg.hasOwnProperty('detail')
             ? pParam.kwarg.detail
@@ -1375,6 +1426,11 @@ export async function getLocalK8sConfigmaps(
         namespace: pParam.hasOwnProperty('kwarg')
           ? pParam.kwarg.hasOwnProperty('namespace')
             ? pParam.kwarg.namespace
+            : ''
+          : '',
+        labelselector: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('labelselector')
+            ? pParam.kwarg.labelselector
             : ''
           : '',
         detail: pParam.hasOwnProperty('kwarg')
@@ -1444,6 +1500,11 @@ export async function getLocalK8sSecrets(
             ? pParam.kwarg.namespace
             : ''
           : '',
+        labelselector: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('labelselector')
+            ? pParam.kwarg.labelselector
+            : ''
+          : '',
         detail: pParam.hasOwnProperty('kwarg')
           ? pParam.kwarg.hasOwnProperty('detail')
             ? pParam.kwarg.detail
@@ -1477,6 +1538,11 @@ export async function getLocalK8sServiceAccounts(
             ? pParam.kwarg.namespace
             : ''
           : '',
+        labelselector: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('labelselector')
+            ? pParam.kwarg.labelselector
+            : ''
+          : '',
         detail: pParam.hasOwnProperty('kwarg')
           ? pParam.kwarg.hasOwnProperty('detail')
             ? pParam.kwarg.detail
@@ -1505,6 +1571,11 @@ export async function getLocalK8sClusterRoles(
       fun: 'kubernetes.cluster_roles',
       tgt: pMinionId,
       kwarg: {
+        labelselector: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('labelselector')
+            ? pParam.kwarg.labelselector
+            : ''
+          : '',
         detail: pParam.hasOwnProperty('kwarg')
           ? pParam.kwarg.hasOwnProperty('detail')
             ? pParam.kwarg.detail
@@ -1563,6 +1634,11 @@ export async function getLocalK8sClusterRoleBindings(
       fun: 'kubernetes.cluster_role_bindings',
       tgt: pMinionId,
       kwarg: {
+        labelselector: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('labelselector')
+            ? pParam.kwarg.labelselector
+            : ''
+          : '',
         detail: pParam.hasOwnProperty('kwarg')
           ? pParam.kwarg.hasOwnProperty('detail')
             ? pParam.kwarg.detail
@@ -1596,6 +1672,11 @@ export async function getLocalK8sRoles(
             ? pParam.kwarg.namespace
             : ''
           : '',
+        labelselector: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('labelselector')
+            ? pParam.kwarg.labelselector
+            : ''
+          : '',
         detail: pParam.hasOwnProperty('kwarg')
           ? pParam.kwarg.hasOwnProperty('detail')
             ? pParam.kwarg.detail
@@ -1627,6 +1708,11 @@ export async function getLocalK8sRoleBindings(
         namespace: pParam.hasOwnProperty('kwarg')
           ? pParam.kwarg.hasOwnProperty('namespace')
             ? pParam.kwarg.namespace
+            : ''
+          : '',
+        labelselector: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('labelselector')
+            ? pParam.kwarg.labelselector
             : ''
           : '',
         detail: pParam.hasOwnProperty('kwarg')
@@ -1687,6 +1773,11 @@ export async function getLocalK8sPersistentVolumes(
       fun: 'kubernetes.persistent_volumes',
       tgt: pMinionId,
       kwarg: {
+        labelselector: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('labelselector')
+            ? pParam.kwarg.labelselector
+            : ''
+          : '',
         detail: pParam.hasOwnProperty('kwarg')
           ? pParam.kwarg.hasOwnProperty('detail')
             ? pParam.kwarg.detail
@@ -1746,11 +1837,49 @@ export async function getLocalK8sPersistentVolumeClaims(
       fun: 'kubernetes.persistent_volume_claims',
       tgt: pMinionId,
       kwarg: {
+        labelselector: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('labelselector')
+            ? pParam.kwarg.labelselector
+            : ''
+          : '',
         detail: pParam.hasOwnProperty('kwarg')
           ? pParam.kwarg.hasOwnProperty('detail')
             ? pParam.kwarg.detail
             : false
           : false,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalK8sDetail(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pParam: Params
+) {
+  try {
+    const params = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'local',
+      fun: pParam.fun,
+      tgt: pMinionId,
+      kwarg: {
+        namespace: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('namespace')
+            ? pParam.kwarg.namespace
+            : ''
+          : '',
+        name: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('name')
+            ? pParam.kwarg.name
+            : ''
+          : '',
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')

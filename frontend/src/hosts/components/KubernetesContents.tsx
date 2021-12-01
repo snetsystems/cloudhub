@@ -33,7 +33,7 @@ import {Source, TimeRange, Cell, Template, RemoteDataState} from 'src/types'
 interface Props {
   handleOnSetActiveEditorTab: (tab: string) => void
   handleOnClickPodName: () => void
-  handleOnClickVisualizePod: (target: SVGSVGElement) => void
+  handleOnClickVisualizePod: (data: any) => void
   handleDBClick: (data: any) => void
   handleResize: (proportions: number[]) => void
   handleOpenTooltip: (target: any) => void
@@ -231,28 +231,7 @@ class KubernetesContents extends PureComponent<Props, State> {
               </div>
             </>
           </TableBody>
-          <div className={'kubernetes-radio-btn--container'}>
-            <Radio shape={ButtonShape.StretchToFit}>
-              <Radio.Button
-                id="hostspage-tab-Basic"
-                titleText="Basic"
-                value="Basic"
-                active={activeTab === 'Basic'}
-                onClick={handleOnSetActiveEditorTab}
-              >
-                Basic
-              </Radio.Button>
-              <Radio.Button
-                id="hostspage-tab-Detail"
-                titleText="Detail"
-                value="Detail"
-                active={activeTab === 'Detail'}
-                onClick={handleOnSetActiveEditorTab}
-              >
-                Raw Data
-              </Radio.Button>
-            </Radio>
-          </div>
+          <div className={'kubernetes-detail-title'}>Raw Data</div>
           {activeTab === 'Basic' ? (
             <KubernetesBasicsTable />
           ) : (

@@ -28,6 +28,7 @@ export interface D3DataDepth3 {
   type: string
   value: number
   owner?: string
+  namespace?: string
 }
 
 export interface Kubernetes {
@@ -185,6 +186,12 @@ export interface KubernetesProps {
     pParam?: SaltStack
   ) => Promise<any>
   handleGetPersistentVolumeClaims: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    targetMinion: string,
+    pParam?: SaltStack
+  ) => Promise<any>
+  handleGetK8sDetail: (
     saltMasterUrl: string,
     saltMasterToken: string,
     targetMinion: string,

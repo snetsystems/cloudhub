@@ -25,6 +25,7 @@ import {
   getLocalK8sRoleBindings,
   getLocalK8sPersistentVolumes,
   getLocalK8sPersistentVolumeClaims,
+  getLocalK8sDetail,
 } from 'src/shared/apis/saltStack'
 
 // Types
@@ -52,6 +53,7 @@ export enum ActionTypes {
   RoleBindings = 'GET_ROLEBINDINGS',
   PersistentVolumes = 'GET_PERSISTENTVOLUMES',
   PersistentVolumeClaims = 'GET_PERSISTENTVOLUMECLAIMS',
+  K8sDetail = 'GET_K8S_DETAIL',
 }
 
 interface NamespacesAction {
@@ -138,6 +140,10 @@ interface PersistentVolumeClaimsAction {
   type: ActionTypes.PersistentVolumeClaims
 }
 
+interface K8sDetailAction {
+  type: ActionTypes.K8sDetail
+}
+
 export type Action =
   | NamespacesAction
   | NodesAction
@@ -160,6 +166,7 @@ export type Action =
   | RoleBindingsAction
   | PersistentVolumesAction
   | PersistentVolumeClaimsAction
+  | K8sDetailAction
 
 export const loadNamespaces = (): NamespacesAction => ({
   type: ActionTypes.Namespaces,
@@ -243,6 +250,10 @@ export const loadPersistentVolumes = (): PersistentVolumesAction => ({
 
 export const loadPersistentVolumeClaims = (): PersistentVolumeClaimsAction => ({
   type: ActionTypes.PersistentVolumeClaims,
+})
+
+export const loadK8sDetail = (): K8sDetailAction => ({
+  type: ActionTypes.K8sDetail,
 })
 
 export const getLocalK8sNamespacesAsync = (
@@ -666,6 +677,23 @@ export const getLocalK8sPersistentVolumeClaimsAsync = (
 
     dispatch(loadPersistentVolumeClaims())
     return persistentVolumeClaims
+  } catch (error) {
+    console.error(error)
+    dispatch(errorThrown(error))
+  }
+}
+
+export const getLocalK8sDetailAsync = (
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pParam?: SaltStack
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const k8sDetail = await getLocalK8sDetail(pUrl, pToken, pMinionId, pParam)
+
+    dispatch(loadK8sDetail())
+    return k8sDetail
   } catch (error) {
     console.error(error)
     dispatch(errorThrown(error))

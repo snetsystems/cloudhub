@@ -20,7 +20,7 @@ import {RemoteDataState} from 'src/types'
 
 interface Props {
   handleOnClickPodName: () => void
-  handleOnClickVisualizePod: (target: SVGSVGElement) => void
+  handleOnClickVisualizePod: (data: any) => void
   handleDBClick: (data: any) => void
   handleResize: (proportions: number[]) => void
   handleOpenTooltip: (target: any) => void
@@ -209,7 +209,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       .on('mouseleave', function () {
         onMouseLeave(this)
       })
-      .on('click', function () {
+      .on('click', function (data) {
         onMouseClick(this, data)
       })
       .on('mousedown', function () {
@@ -347,56 +347,70 @@ class KubernetesHexagon extends PureComponent<Props, State> {
 
     _.forEach(kubernetesObject, m => {
       if (m['type'] === 'Node') {
-        const cpuUsage =
-          (parseFloat(m['cpu']) /
-            parseFloat(
-              node
-                .select(`circle[data-label=${m['name']}]`)
-                .attr('data-limit-cpu')
-            )) *
-          100
-        const memoryUsage =
-          (parseFloat(m['memory']) /
-            parseFloat(
-              node
-                .select(`circle[data-label=${m['name']}]`)
-                .attr('data-limit-memory')
-            )) *
-          100
-        const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
-        node
-          .select(`circle[data-label=${m['name']}]`)
-          .attr('data-cpu', `${cpuUsage}`)
-        node
-          .select(`circle[data-label=${m['name']}]`)
-          .attr('data-memory', `${memoryUsage}`)
-          .attr('fill', kubernetesStatusColor(pick / 100))
+        if (
+          _.find(
+            node.select(`circle[data-type=${'Node'}]`).data(),
+            nodeData => nodeData.data.label === m['name']
+          )
+        ) {
+          const cpuUsage =
+            (parseFloat(m['cpu']) /
+              parseFloat(
+                node
+                  .select(`circle[data-label=${m['name']}]`)
+                  .attr('data-limit-cpu')
+              )) *
+            100
+          const memoryUsage =
+            (parseFloat(m['memory']) /
+              parseFloat(
+                node
+                  .select(`circle[data-label=${m['name']}]`)
+                  .attr('data-limit-memory')
+              )) *
+            100
+          const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
+          node
+            .select(`circle[data-label=${m['name']}]`)
+            .attr('data-cpu', `${cpuUsage}`)
+          node
+            .select(`circle[data-label=${m['name']}]`)
+            .attr('data-memory', `${memoryUsage}`)
+            .attr('fill', kubernetesStatusColor(pick / 100))
+        }
       } else {
-        const cpuUsage =
-          (parseFloat(m['cpu']) /
-            parseFloat(
-              node
-                .select(`path[data-label=${m['name']}]`)
-                .attr('data-limit-cpu')
-            )) *
-          100
-        const memoryUsage =
-          (parseFloat(m['memory']) /
-            parseFloat(
-              node
-                .select(`path[data-label=${m['name']}]`)
-                .attr('data-limit-memory')
-            )) *
-          100
+        if (
+          _.find(
+            node.select(`path[data-type=${'Pod'}]`).data(),
+            podData => podData.data.label === m['name']
+          )
+        ) {
+          const cpuUsage =
+            (parseFloat(m['cpu']) /
+              parseFloat(
+                node
+                  .select(`path[data-label=${m['name']}]`)
+                  .attr('data-limit-cpu')
+              )) *
+            100
+          const memoryUsage =
+            (parseFloat(m['memory']) /
+              parseFloat(
+                node
+                  .select(`path[data-label=${m['name']}]`)
+                  .attr('data-limit-memory')
+              )) *
+            100
 
-        const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
-        node
-          .select(`path[data-label=${m['name']}]`)
-          .attr('data-cpu', `${cpuUsage}`)
-        node
-          .select(`path[data-label=${m['name']}]`)
-          .attr('data-memory', `${memoryUsage}`)
-          .attr('fill', kubernetesStatusColor(pick / 100))
+          const pick = cpuUsage > memoryUsage ? cpuUsage : memoryUsage
+          node
+            .select(`path[data-label=${m['name']}]`)
+            .attr('data-cpu', `${cpuUsage}`)
+          node
+            .select(`path[data-label=${m['name']}]`)
+            .attr('data-memory', `${memoryUsage}`)
+            .attr('fill', kubernetesStatusColor(pick / 100))
+        }
       }
     })
 
@@ -410,13 +424,13 @@ class KubernetesHexagon extends PureComponent<Props, State> {
     return this.ref.current.append(svg.attr('viewBox', `${autoBox()}`).node())
   }
 
-  private runOnSingleClick = (target: SVGSVGElement) => {
-    this.props.handleOnClickVisualizePod(target)
+  private runOnSingleClick = (data: any) => {
+    this.props.handleOnClickVisualizePod(data)
     this.clickedOnce = false
     this.clickedTarget = null
   }
 
-  private runOnDBClick = (target: SVGSVGElement, data) => {
+  private runOnDBClick = (target: SVGSVGElement, data: any) => {
     this.clickedOnce = false
     this.clickedTarget = null
     clearTimeout(this.timeout)
@@ -431,7 +445,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       (this.clickedTarget !== target && this.clickedOnce)
     ) {
       this.timeout = setTimeout(() => {
-        this.runOnSingleClick(target)
+        this.runOnSingleClick(data)
       }, this.dbClickJudgementTimer)
 
       this.clickedTarget = target
@@ -441,7 +455,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
 
   private onMouseDBClick = (target: SVGSVGElement, data: any) => {
     this.props.handleDBClick(data)
-    this.props.handleOnClickVisualizePod(target)
+    this.props.handleOnClickVisualizePod(data)
   }
 
   private onMouseOver = (target: SVGSVGElement) => {

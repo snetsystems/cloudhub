@@ -127,7 +127,7 @@ class Infrastructure extends PureComponent<Props, State> {
     const isUsingKubernetes = !_.isEmpty(
       _.find(addons, addon => {
         const {name, url} = addon
-        return name === 'kubernetes' && url === 'on'
+        return name === 'k8s' && url === 'on'
       })
     )
 
