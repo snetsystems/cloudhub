@@ -688,7 +688,14 @@ func (s *Service) OrganizationUpdateUser(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	u.Roles = roles
+	// change req.Roles in u.Roles 
+	for i, existRule := range u.Roles {
+		for _, role := range roles {
+			if existRule.Organization == role.Organization {
+				u.Roles[i] = role
+			}
+		}
+	}
 
 	// If the request contains a name, it must be the same as the
 	// one on the user. This is particularly useful to the front-end
