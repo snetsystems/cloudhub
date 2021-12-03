@@ -16,7 +16,7 @@ class KubernetesRawData extends PureComponent<Props> {
     const options = {
       tabIndex: 1,
       readonly: false,
-      lineNumbers: true,
+      lineNumbers: false,
       autoRefresh: true,
       completeSingle: false,
       lineWrapping: true,

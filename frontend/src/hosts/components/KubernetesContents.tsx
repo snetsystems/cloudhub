@@ -5,7 +5,6 @@ import _ from 'lodash'
 // Component
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
-import {ButtonShape, Radio} from 'src/reusable_ui'
 import {TableBody, TableBodyRowItem} from 'src/addon/128t/reusable/layout'
 
 import KubernetesBasicsTable from 'src/hosts/components/KubernetesBasicsTable'
@@ -181,13 +180,7 @@ class KubernetesContents extends PureComponent<Props, State> {
   }
 
   private KubernetesInformation = () => {
-    const {
-      handleOnSetActiveEditorTab,
-      handleOnClickPodName,
-      activeTab,
-      script,
-      focuseNode,
-    } = this.props
+    const {handleOnClickPodName, activeTab, script, focuseNode} = this.props
     const {HeaderWidth, DataWidth} = KUBERNETES_BASICS_TABLE_SIZE
 
     return (
@@ -198,16 +191,12 @@ class KubernetesContents extends PureComponent<Props, State> {
               <div className="hosts-table--tr">
                 <div
                   className={'hosts-table--th align--start'}
-                  style={{width: HeaderWidth}}
+                  style={{width: HeaderWidth, padding: '4px 8px'}}
                 >
                   Kind
                 </div>
                 <TableBodyRowItem
-                  title={
-                    <div className="pod-name" onClick={handleOnClickPodName}>
-                      {focuseNode.type}
-                    </div>
-                  }
+                  title={<div className="pod-name">{focuseNode.type}</div>}
                   width={DataWidth}
                   className={'align--start'}
                 />
@@ -215,16 +204,12 @@ class KubernetesContents extends PureComponent<Props, State> {
               <div className="hosts-table--tr">
                 <div
                   className={'hosts-table--th align--start'}
-                  style={{width: HeaderWidth}}
+                  style={{width: HeaderWidth, padding: '4px 8px'}}
                 >
                   Label
                 </div>
                 <TableBodyRowItem
-                  title={
-                    <div className="pod-name" onClick={handleOnClickPodName}>
-                      {focuseNode.label}
-                    </div>
-                  }
+                  title={<div className="pod-name">{focuseNode.label}</div>}
                   width={DataWidth}
                   className={'align--start'}
                 />

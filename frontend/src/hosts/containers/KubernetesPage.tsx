@@ -1,7 +1,7 @@
 // Library
 import React, {PureComponent, ChangeEvent} from 'react'
 import {connect} from 'react-redux'
-import _, {join} from 'lodash'
+import _ from 'lodash'
 import * as d3 from 'd3'
 import yaml from 'js-yaml'
 
@@ -49,6 +49,7 @@ import {
 // Constatns
 import {EMPTY_LINKS} from 'src/dashboards/constants/dashboardHeader'
 import {kubernetesStatusColor} from 'src/hosts/constants/color'
+import {k8sNodeTypeAttrs} from 'src/hosts/constants/kubernetes'
 
 // API
 import {
@@ -3211,108 +3212,25 @@ class KubernetesPage extends PureComponent<Props, State> {
     const saltMasterToken = addon.token
     let pParam: SaltStack = {}
 
-    if (focuseNodeType === 'Namespace')
-      pParam = {
-        fun: 'kubernetes.show_namespace',
-        kwarg: {name: focuseNodeLabel},
+    pParam = k8sNodeTypeAttrs?.[focuseNodeType]?.saltParam
+
+    if (pParam !== undefined) {
+      let kwarg = null
+
+      if (
+        k8sNodeTypeAttrs?.[focuseNodeType]?.saltParam.kwarg.hasOwnProperty(
+          'namespace'
+        )
+      ) {
+        kwarg = {namespace: focuseNamespace, name: focuseNodeLabel}
+      } else {
+        kwarg = {name: focuseNodeLabel}
       }
-    else if (focuseNodeType === 'Node')
-      pParam = {fun: 'kubernetes.node', kwarg: {name: focuseNodeLabel}}
-    else if (focuseNodeType === 'Pod')
       pParam = {
-        fun: 'kubernetes.show_pod',
-        kwarg: {namespace: focuseNamespace, name: focuseNodeLabel},
+        ...k8sNodeTypeAttrs?.[focuseNodeType]?.saltParam,
+        kwarg,
       }
-    else if (focuseNodeType === 'DP')
-      pParam = {
-        fun: 'kubernetes.show_deployment',
-        kwarg: {namespace: focuseNamespace, name: focuseNodeLabel},
-      }
-    else if (focuseNodeType === 'RS')
-      pParam = {
-        fun: 'show_replica_set',
-        kwarg: {namespace: focuseNamespace, name: focuseNodeLabel},
-      }
-    else if (focuseNodeType === 'RC')
-      pParam = {
-        fun: 'kubernetes.show_replication_controller',
-        kwarg: {namespace: focuseNamespace, name: focuseNodeLabel},
-      }
-    else if (focuseNodeType === 'DS')
-      pParam = {
-        fun: 'kubernetes.show_daemon_set',
-        kwarg: {namespace: focuseNamespace, name: focuseNodeLabel},
-      }
-    else if (focuseNodeType === 'SS')
-      pParam = {
-        fun: 'kubernetes.show_stateful_set',
-        kwarg: {namespace: focuseNamespace, name: focuseNodeLabel},
-      }
-    else if (focuseNodeType === 'Job')
-      pParam = {
-        fun: 'kubernetes.show_job',
-        kwarg: {namespace: focuseNamespace, name: focuseNodeLabel},
-      }
-    else if (focuseNodeType === 'CJ')
-      pParam = {
-        fun: 'kubernetes.show_cron_job',
-        kwarg: {namespace: focuseNamespace, name: focuseNodeLabel},
-      }
-    else if (focuseNodeType === 'SVC')
-      pParam = {
-        fun: 'kubernetes.show_service',
-        kwarg: {namespace: focuseNamespace, name: focuseNodeLabel},
-      }
-    else if (focuseNodeType === 'IGS')
-      pParam = {
-        fun: 'kubernetes.show_ingress',
-        kwarg: {namespace: focuseNamespace, name: focuseNodeLabel},
-      }
-    else if (focuseNodeType === 'CM')
-      pParam = {
-        fun: 'kubernetes.show_configmap',
-        kwarg: {namespace: focuseNamespace, name: focuseNodeLabel},
-      }
-    else if (focuseNodeType === 'SR')
-      pParam = {
-        fun: 'kubernetes.show_secret',
-        kwarg: {namespace: focuseNamespace, name: focuseNodeLabel},
-      }
-    else if (focuseNodeType === 'SA')
-      pParam = {
-        fun: 'kubernetes.show_service_account',
-        kwarg: {namespace: focuseNamespace, name: focuseNodeLabel},
-      }
-    else if (focuseNodeType === 'CR')
-      pParam = {
-        fun: 'kubernetes.show_cluster_role',
-        kwarg: {name: focuseNodeLabel},
-      }
-    else if (focuseNodeType === 'CRB')
-      pParam = {
-        fun: 'kubernetes.show_cluster_role_binding',
-        kwarg: {name: focuseNodeLabel},
-      }
-    else if (focuseNodeType === 'RL')
-      pParam = {
-        fun: 'kubernetes.show_role',
-        kwarg: {namespace: focuseNamespace, name: focuseNodeLabel},
-      }
-    else if (focuseNodeType === 'RB')
-      pParam = {
-        fun: 'kubernetes.show_role_binding',
-        kwarg: {namespace: focuseNamespace, name: focuseNodeLabel},
-      }
-    else if (focuseNodeType === 'PV')
-      pParam = {
-        fun: 'kubernetes.show_persistent_volume',
-        kwarg: {name: focuseNodeLabel},
-      }
-    else if (focuseNodeType === 'PVC')
-      pParam = {
-        fun: 'kubernetes.show_persistent_volume_claim',
-        kwarg: {namespace: focuseNamespace, name: focuseNodeLabel},
-      }
+    }
 
     if (_.isEmpty(pParam)) return
 
@@ -3335,7 +3253,7 @@ class KubernetesPage extends PureComponent<Props, State> {
         focuseNode: {
           name: focuseNodeName.replace(/\:/g, '\\:').replace(/\./g, '\\.'),
           label: focuseNodeLabel,
-          type: focuseNodeType,
+          type: k8sNodeTypeAttrs?.[focuseNodeType]?.name,
         },
         script: resultJson,
       })

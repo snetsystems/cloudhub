@@ -167,12 +167,11 @@
 }
 
 .pod-name {
-  cursor: pointer;
-  color: #ce9178;
+  color: #999dab;
 
-  &:hover {
-    color: #e35833;
-  }
+  // &:hover {
+  //   color: #e35833;
+  // }
 }
 
 .kubernetes-header--bar {
