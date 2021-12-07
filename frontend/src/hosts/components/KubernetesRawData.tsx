@@ -1,4 +1,5 @@
 import React, {PureComponent} from 'react'
+import _ from 'lodash'
 import yaml from 'js-yaml'
 
 import {Controlled as ReactCodeMirror} from 'react-codemirror2'
@@ -29,7 +30,7 @@ class KubernetesRawData extends PureComponent<Props> {
         <ReactCodeMirror
           autoFocus={true}
           autoCursor={true}
-          value={yaml.dump(script)}
+          value={!_.isEmpty(script) ? yaml.dump(script) : ''}
           options={options}
           onBeforeChange={this.beforeChange}
           onTouchStart={this.onTouchStart}

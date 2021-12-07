@@ -166,12 +166,12 @@
   margin-right: 3px;
 }
 
-.pod-name {
+.k8s-obj-kind {
   color: #999dab;
+}
 
-  // &:hover {
-  //   color: #e35833;
-  // }
+.k8s-obj-label {
+  color: #22adf6;
 }
 
 .kubernetes-header--bar {

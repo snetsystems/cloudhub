@@ -180,7 +180,7 @@ class KubernetesContents extends PureComponent<Props, State> {
   }
 
   private KubernetesInformation = () => {
-    const {handleOnClickPodName, activeTab, script, focuseNode} = this.props
+    const {activeTab, script, focuseNode} = this.props
     const {HeaderWidth, DataWidth} = KUBERNETES_BASICS_TABLE_SIZE
 
     return (
@@ -196,7 +196,7 @@ class KubernetesContents extends PureComponent<Props, State> {
                   Kind
                 </div>
                 <TableBodyRowItem
-                  title={<div className="pod-name">{focuseNode.type}</div>}
+                  title={<div className="k8s-obj-kind">{focuseNode.type}</div>}
                   width={DataWidth}
                   className={'align--start'}
                 />
@@ -209,7 +209,9 @@ class KubernetesContents extends PureComponent<Props, State> {
                   Label
                 </div>
                 <TableBodyRowItem
-                  title={<div className="pod-name">{focuseNode.label}</div>}
+                  title={
+                    <div className="k8s-obj-label">{focuseNode.label}</div>
+                  }
                   width={DataWidth}
                   className={'align--start'}
                 />
