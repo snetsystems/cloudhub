@@ -663,7 +663,8 @@ func (s *Service) OrganizationUpdateUser(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	ctx := serverContext(r.Context())
+	// ctx := serverContext(r.Context())
+	ctx := r.Context()
 	idStr := httprouter.GetParamFromContext(ctx, "id")
 	id, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
@@ -682,7 +683,8 @@ func (s *Service) OrganizationUpdateUser(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	roles, err := s.validRoles(ctx, req.Roles, u.Roles)
+	serverCtx := serverContext(ctx)
+	roles, err := s.validRoles(serverCtx, req.Roles, u.Roles)
 	if err != nil {
 		invalidData(w, err, s.Logger)
 		return

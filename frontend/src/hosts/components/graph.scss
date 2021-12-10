@@ -69,6 +69,29 @@
     }
   }
 
+  .time-series-status {
+    background-color: #bec2cc;
+    width: 12px;
+    height: 12px;
+    border-radius: 75px;
+    &.UsageIndacator {
+      background: #4ed8a0;
+    }
+
+    &.UsageIndacator--caution {
+      background: #ffb94a;
+    }
+
+    &.UsageIndacator--warning {
+      background: #ff8564;
+    }
+
+    &.UsageIndacator--danger {
+      background: red;
+    }
+    // margin: 0 auto;
+  }
+
   .vertex {
     &[btn-type='ipmi'] {
       display: flex;
@@ -187,6 +210,9 @@
     }
     &-switch {
       background-image: url(../../assets/images/stencils/clipart/Switch_128x128.png);
+    }
+    &-elb {
+      background-image: url('../../assets/images/Elastic-Load-Balancing-ELB.svg');
     }
   }
 }
