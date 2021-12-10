@@ -2786,6 +2786,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       selectMinion,
       proportions,
       selectedAutoRefresh,
+      remoteDataState: RemoteDataState.Loading,
     })
   }
 
@@ -2964,7 +2965,6 @@ class KubernetesPage extends PureComponent<Props, State> {
           proportions={proportions}
           activeTab={activeEditorTab}
           handleOnSetActiveEditorTab={this.onSetActiveEditorTab}
-          handleOnClickPodName={this.onClickPodName}
           handleOnClickVisualizePod={this.onClickVisualizePod}
           handleResize={this.handleResize}
           focuseNode={focuseNode}
@@ -3191,10 +3191,6 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterLabelValue: labelValue,
       filterLimit: selectedLimit,
     })
-  }
-
-  private onClickPodName = (): void => {
-    console.log('onClick Pod Name')
   }
 
   private onClickVisualizePod = async (data: any) => {

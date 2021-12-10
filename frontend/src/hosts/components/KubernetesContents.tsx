@@ -31,7 +31,6 @@ import {Source, TimeRange, Cell, Template, RemoteDataState} from 'src/types'
 
 interface Props {
   handleOnSetActiveEditorTab: (tab: string) => void
-  handleOnClickPodName: () => void
   handleOnClickVisualizePod: (data: any) => void
   handleDBClick: (data: any) => void
   handleResize: (proportions: number[]) => void
@@ -118,7 +117,6 @@ class KubernetesContents extends PureComponent<Props, State> {
       kubernetesObject,
       kubernetesD3Data,
       handleDBClick,
-      handleOnClickPodName,
       handleOnClickVisualizePod,
       handleResize,
       handleOpenTooltip,
@@ -134,7 +132,6 @@ class KubernetesContents extends PureComponent<Props, State> {
             focuseNode={focuseNode}
             pinNode={pinNode}
             handleDBClick={handleDBClick}
-            handleOnClickPodName={handleOnClickPodName}
             handleOnClickVisualizePod={handleOnClickVisualizePod}
             handleResize={handleResize}
             handleOpenTooltip={handleOpenTooltip}
