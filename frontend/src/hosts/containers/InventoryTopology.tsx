@@ -388,7 +388,10 @@ class InventoryTopology extends PureComponent<Props, State> {
       const {
         links: {addons},
       } = this.props
-      const findItem = _.find(addons, addon => addon.name === template.provider)
+      const findItem = _.find(
+        addons,
+        addon => addon.name === template.provider && addon.url === 'on'
+      )
       const isFind = !_.isEmpty(findItem)
 
       if (isFind) {

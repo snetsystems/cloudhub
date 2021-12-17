@@ -203,7 +203,7 @@ class KubernetesContents extends PureComponent<Props, State> {
                   className={'hosts-table--th align--start'}
                   style={{width: HeaderWidth, padding: '4px 8px'}}
                 >
-                  Label
+                  Name
                 </div>
                 <TableBodyRowItem
                   title={
@@ -215,7 +215,7 @@ class KubernetesContents extends PureComponent<Props, State> {
               </div>
             </>
           </TableBody>
-          <div className={'kubernetes-detail-title'}>Raw Data</div>
+          <div className={'kubernetes-detail-title'}>Details</div>
           {activeTab === 'Basic' ? (
             <KubernetesBasicsTable />
           ) : (

@@ -65,8 +65,8 @@ type Server struct {
 	KapacitorUsername string `long:"kapacitor-username" description:"Username of your Kapacitor instance" env:"KAPACITOR_USERNAME"`
 	KapacitorPassword string `long:"kapacitor-password" description:"Password of your Kapacitor instance" env:"KAPACITOR_PASSWORD"`
 
-	AddonURLs   map[string]string `short:"u" long:"addon-url" description:"Support addon is [salt, swan, oncue, ipmi-secret-key]. Actually, this is a key-value extensional options, Not only url But for everywhere to be used the key-value extensional options. Multiple URL can be added by using multiple of the same flag with different 'name:url' values, or as an environment variable with comma-separated 'name:url' values. E.g. via flags: '--addon-url=salt:{url} --addon-url=swan:{url} --addon-url=ipmi-secret-key:{seed key}'. E.g. via environment variable: 'export ADDON_URL=salt:{url},swan:{url}'" env:"ADDON_URL" env-delim:","`
-	AddonTokens map[string]string `short:"k" long:"addon-tokens" description:"Support addon is [salt, swan]. API tokens to be used to the client for a request to addon API servers. Multiple tokens can be added by using multiple of the same flag with different 'name:token' values, or as an environment variable with comma-separated 'name:token' values. E.g. via flags: '--addon-tokens=salt:{token} --addon-tokens=swan:{token}'. E.g. via environment variable: 'export ADDON_TOKENS=salt:{token},swan:{token}'" env:"ADDON_TOKENS" env-delim:","`
+	AddonURLs   map[string]string `short:"u" long:"addon-url" description:"Support addon is [salt, aws, k8s, swan, oncue, ipmi-secret-key]. Actually, this is a key-value extensional options, Not only url But for everywhere to be used the key-value extensional options. Multiple values can be added by using multiple of the same flag with different 'name:{value}', or as an environment variable with comma-separated 'name:{value}'. E.g. via flags: '-u=salt:{url} -u=aws:on[off] -u=k8s:on[off] -u=swan:{url} -u=oncue:{port number} -u=ipmi-secret-key:{seed key}'. E.g. via environment variable: 'export ADDON_URL=salt:{url},swan:{url}'" env:"ADDON_URL" env-delim:","`
+	AddonTokens map[string]string `short:"k" long:"addon-tokens" description:"The token associated with addon [salt, swan]. E.g. via flags: '-k=salt:{token} -k=swan:{token}'. E.g. via environment variable: 'export ADDON_TOKENS=salt:{token},swan:{token}'" env:"ADDON_TOKENS" env-delim:","`
 
 	Develop            bool          `short:"d" long:"develop" description:"Run server in develop mode."`
 	BoltPath           string        `short:"b" long:"bolt-path" description:"Full path to boltDB file (e.g. './cloudhub-v1.db')" env:"BOLT_PATH" default:"cloudhub-v1.db"`
@@ -125,8 +125,8 @@ type Server struct {
 
 	LoginAuthType         string   `long:"login-auth-type" description:"Login auth type (mix, oauth, basic)" env:"LOGIN_AUTH_TYPE" default:"oauth"`
 
-	PasswordPolicy        string   `long:"password-policy" description:"Password validity rules" env:"PASSWORD_POLICY"`
-	PasswordPolicyMessage string   `long:"password-policy-message" description:"Password validity rule description" env:"PASSWORD_POLICY_MESSAGE"`
+	PasswordPolicy        string   `long:"password-policy" description:"Regular expression to validate password strength" env:"PASSWORD_POLICY"`
+	PasswordPolicyMessage string   `long:"password-policy-message" description:"The description about password-policy set" env:"PASSWORD_POLICY_MESSAGE"`
 
 	MailSubject           string   `long:"mail-subject" description:"Mail subject" env:"MAIL_SUBJECT"`
 	MailBodyMessage       string   `long:"mail-body-message" description:"Mail body message" env:"MAIL_BODY_MESSAGE"`

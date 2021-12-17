@@ -45,7 +45,7 @@ You should use [Forked **Snetsystems/salt**](https://github.com/snetsystems/salt
 - Optionable Addon features.
   - **_VMWare_ Infrastructure** Viewer.
     - via **_VSphere_** API and **_Salt_**
-  - **_K8s Infrastructure_** Diagram & Viewer. (Pending in dev-k8s branch)
+  - **_K8s Infrastructure_** Diagram & Viewer.
     - via customized `Salt Kuberetes` Module.
   - **_AWS_** Instances Monitoring.
   - SWAN Router & SDPlex(Oncue) Features.
@@ -54,6 +54,7 @@ You should use [Forked **Snetsystems/salt**](https://github.com/snetsystems/salt
     <img src="./docs/images/infrastructure.png"/>
     <img src="./docs/images/topology_map.png"/>
     <img src="./docs/images/VMWare.png"/>
+    <img src="./docs/images/k8s.png"/>
     <img src="./docs/images/AWS_01.png"/>
     <img src="./docs/images/AWS_02.png"/>
     <img src="./docs/images/AWS_03.png"/>
