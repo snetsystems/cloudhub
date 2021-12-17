@@ -31,7 +31,6 @@ import {Source, TimeRange, Cell, Template, RemoteDataState} from 'src/types'
 
 interface Props {
   handleOnSetActiveEditorTab: (tab: string) => void
-  handleOnClickPodName: () => void
   handleOnClickVisualizePod: (data: any) => void
   handleDBClick: (data: any) => void
   handleResize: (proportions: number[]) => void
@@ -118,7 +117,6 @@ class KubernetesContents extends PureComponent<Props, State> {
       kubernetesObject,
       kubernetesD3Data,
       handleDBClick,
-      handleOnClickPodName,
       handleOnClickVisualizePod,
       handleResize,
       handleOpenTooltip,
@@ -134,7 +132,6 @@ class KubernetesContents extends PureComponent<Props, State> {
             focuseNode={focuseNode}
             pinNode={pinNode}
             handleDBClick={handleDBClick}
-            handleOnClickPodName={handleOnClickPodName}
             handleOnClickVisualizePod={handleOnClickVisualizePod}
             handleResize={handleResize}
             handleOpenTooltip={handleOpenTooltip}
@@ -206,7 +203,7 @@ class KubernetesContents extends PureComponent<Props, State> {
                   className={'hosts-table--th align--start'}
                   style={{width: HeaderWidth, padding: '4px 8px'}}
                 >
-                  Label
+                  Name
                 </div>
                 <TableBodyRowItem
                   title={
@@ -218,7 +215,7 @@ class KubernetesContents extends PureComponent<Props, State> {
               </div>
             </>
           </TableBody>
-          <div className={'kubernetes-detail-title'}>Raw Data</div>
+          <div className={'kubernetes-detail-title'}>Details</div>
           {activeTab === 'Basic' ? (
             <KubernetesBasicsTable />
           ) : (

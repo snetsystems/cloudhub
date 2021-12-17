@@ -25,6 +25,7 @@
         "-u=oncue:<port>",
         "-u=vsphere:on",
         "-u=aws:on",
+        "-u=k8s:on",
         "-u=ipmi-secret-key:<Seed key using for the encryption of ipmi password>",
         "-c=./cloudhub-canned/",
         "--protoboards-path=./cloudhub-protoboards/",

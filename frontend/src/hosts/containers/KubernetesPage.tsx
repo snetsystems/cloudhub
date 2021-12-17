@@ -2786,6 +2786,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       selectMinion,
       proportions,
       selectedAutoRefresh,
+      remoteDataState: RemoteDataState.Loading,
     })
   }
 
@@ -2964,7 +2965,6 @@ class KubernetesPage extends PureComponent<Props, State> {
           proportions={proportions}
           activeTab={activeEditorTab}
           handleOnSetActiveEditorTab={this.onSetActiveEditorTab}
-          handleOnClickPodName={this.onClickPodName}
           handleOnClickVisualizePod={this.onClickVisualizePod}
           handleResize={this.handleResize}
           focuseNode={focuseNode}
@@ -3193,10 +3193,6 @@ class KubernetesPage extends PureComponent<Props, State> {
     })
   }
 
-  private onClickPodName = (): void => {
-    console.log('onClick Pod Name')
-  }
-
   private onClickVisualizePod = async (data: any) => {
     const {selectMinion} = this.state
     const focuseNodeName = _.get(data, 'data.name')
@@ -3265,12 +3261,19 @@ class KubernetesPage extends PureComponent<Props, State> {
   }
 
   private handlePinNode = (data: any) => {
-    const pinNode = this.parentNavigation(data)
-    const target = d3.select(`[data-name=${pinNode[0]}]`)
-    const isNull = _.isNull(_.flatMapDeep(target._groups)[0])
-    const isPin = isNull || target.classed('kubernetes-pin')
-
-    this.setState({pinNode: isPin ? [] : pinNode})
+    if (
+      data.depth === 3 ||
+      (data.depth === 2 &&
+        (data.data.type === 'CR' || data.data.type === 'CRB'))
+    ) {
+      const pinNode = this.parentNavigation(data)
+      const target = d3.select(`[data-name=${pinNode[0]}]`)
+      const isNull = _.isNull(_.flatMapDeep(target._groups)[0])
+      const isPin = isNull || target.classed('kubernetes-pin')
+      this.setState({pinNode: isPin ? [] : pinNode})
+    } else {
+      this.setState({pinNode: []})
+    }
   }
 
   private debouncedResizeTrigger = _.debounce(() => {

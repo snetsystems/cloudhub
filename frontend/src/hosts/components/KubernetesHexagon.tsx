@@ -19,7 +19,6 @@ import {D3K8sData, FocuseNode, KubernetesObject} from 'src/hosts/types'
 import {RemoteDataState} from 'src/types'
 
 interface Props {
-  handleOnClickPodName: () => void
   handleOnClickVisualizePod: (data: any) => void
   handleDBClick: (data: any) => void
   handleResize: (proportions: number[]) => void
@@ -202,7 +201,6 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       .attr('r', d => d.r)
       .attr('fill', d => clusterTypeColorset[d.data.type])
       .attr('stroke', 'black')
-      .attr('pointer-events', d => (d.children ? 'all' : 'none'))
       .on('mouseover', function () {
         onMouseOver(this)
       })
@@ -280,7 +278,13 @@ class KubernetesHexagon extends PureComponent<Props, State> {
       .attr('transform', d => `translate(${d.x},${d.y})`)
 
     textNode
-      .filter(d => d.height > 0)
+      .filter(
+        d =>
+          !(
+            d.depth === 3 ||
+            (d.depth === 2 && (d.data.type === 'CR' || d.data.type === 'CRB'))
+          )
+      )
       .append('text')
       .attr('fill', 'white')
       .append('textPath')
@@ -430,16 +434,16 @@ class KubernetesHexagon extends PureComponent<Props, State> {
     this.clickedTarget = null
   }
 
-  private runOnDBClick = (target: SVGSVGElement, data: any) => {
+  private runOnDBClick = (data: any) => {
     this.clickedOnce = false
     this.clickedTarget = null
     clearTimeout(this.timeout)
-    this.onMouseDBClick(target, data)
+    this.onMouseDBClick(data)
   }
 
   private onMouseClick = (target: SVGSVGElement, data: D3K8sData) => {
     if (this.clickedTarget === target && this.clickedOnce) {
-      this.runOnDBClick(target, data)
+      this.runOnDBClick(data)
     } else if (
       (this.clickedTarget === null && !this.clickedOnce) ||
       (this.clickedTarget !== target && this.clickedOnce)
@@ -453,7 +457,7 @@ class KubernetesHexagon extends PureComponent<Props, State> {
     }
   }
 
-  private onMouseDBClick = (target: SVGSVGElement, data: any) => {
+  private onMouseDBClick = (data: any) => {
     this.props.handleDBClick(data)
     this.props.handleOnClickVisualizePod(data)
   }

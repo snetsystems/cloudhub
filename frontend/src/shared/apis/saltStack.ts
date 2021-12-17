@@ -81,8 +81,7 @@ const apiRequest = async (
       'Content-type': 'application/json',
     }
 
-    const param = JSON.stringify(Object.assign(dParams, pParams))
-
+    const param = Object.assign(dParams, pParams)
     const ajaxResult = await AJAX({
       method: 'POST',
       url: url,
@@ -118,7 +117,7 @@ const apiRequestMulti = async (
       'Content-type': 'application/json',
     }
 
-    const param = JSON.stringify(pParams)
+    const param = pParams
 
     const ajaxResult = await AJAX({
       method: 'POST',

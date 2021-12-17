@@ -130,7 +130,7 @@ class KubernetesHeader extends PureComponent<Props> {
               icon={IconFont.Filter}
               onClick={handleClickFilter}
               shape={ButtonShape.Square}
-              titleText="Filter alert text"
+              titleText="Apply Filter"
             />
           </div>
         </div>
