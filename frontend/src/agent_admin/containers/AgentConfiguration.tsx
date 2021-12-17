@@ -157,6 +157,7 @@ interface State {
   isPluginModalVisible: boolean
 }
 interface Plugin {
+  inoutType: string
   name: string
   isActivity: boolean
 }
@@ -309,10 +310,12 @@ export class AgentConfiguration extends PureComponent<Props, State> {
     outputPlugin.shift()
 
     const inputPluginList = _.map(inputPlugin, input => ({
+      inoutType: 'IN',
       name: input,
       isActivity: false,
     }))
     const outputPluginList = _.map(outputPlugin, output => ({
+      inoutType: 'OUT',
       name: output,
       isActivity: false,
     }))
@@ -826,8 +829,8 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       saltMasterToken,
       getRunnerSaltCmdTelegraf,
     } = this.props
-    const {inputPluginList, outputPluginList, searchTerm} = this.state
-    const {idx, name, inoutkind} = _thisProps
+    const {inputPluginList, outputPluginList} = this.state
+    const {name, inoutkind} = _thisProps
 
     this.setState({
       isPluginModalVisible: true,
@@ -835,39 +838,18 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       description: '',
     })
 
-    const sortedInputPlugin = this.getSortedPlugin(
-      inputPluginList,
-      searchTerm,
-      'name',
-      SortDirection.ASC
-    )
-
-    const sortedOutputPlugin = this.getSortedPlugin(
-      outputPluginList,
-      searchTerm,
-      'name',
-      SortDirection.ASC
-    )
-
-    const mapInputPlugin = sortedInputPlugin.map(m => {
-      m.isActivity = false
+    const mapInputPlugin = inputPluginList.map(m => {
+      if (m.inoutType === inoutkind && m.name === name) m.isActivity = true
+      else m.isActivity = false
       return m
     })
 
-    const mapOutputPlugin = sortedOutputPlugin.map(m => {
-      m.isActivity = false
+    const mapOutputPlugin = outputPluginList.map(m => {
+      if (m.inoutType === inoutkind && m.name === name) m.isActivity = true
+      else m.isActivity = false
       return m
     })
 
-    if (inoutkind === 'IN') {
-      mapInputPlugin[idx].isActivity === false
-        ? (mapInputPlugin[idx].isActivity = true)
-        : (mapInputPlugin[idx].isActivity = false)
-    } else {
-      mapOutputPlugin[idx].isActivity === false
-        ? (mapOutputPlugin[idx].isActivity = true)
-        : (mapOutputPlugin[idx].isActivity = false)
-    }
     try {
       const {data} = await getRunnerSaltCmdTelegraf(
         saltMasterUrl,
@@ -885,28 +867,14 @@ export class AgentConfiguration extends PureComponent<Props, State> {
   }
 
   private handlePluginClose = (): void => {
-    const {inputPluginList, outputPluginList, searchTerm} = this.state
+    const {inputPluginList, outputPluginList} = this.state
 
-    const sortedInputPlugin = this.getSortedPlugin(
-      inputPluginList,
-      searchTerm,
-      'name',
-      SortDirection.ASC
-    )
-
-    const sortedOutputPlugin = this.getSortedPlugin(
-      outputPluginList,
-      searchTerm,
-      'name',
-      SortDirection.ASC
-    )
-
-    const mapInputPlugin = sortedInputPlugin.map(m => {
+    const mapInputPlugin = inputPluginList.map(m => {
       m.isActivity = false
       return m
     })
 
-    const mapOutputPlugin = sortedOutputPlugin.map(m => {
+    const mapOutputPlugin = outputPluginList.map(m => {
       m.isActivity = false
       return m
     })

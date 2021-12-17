@@ -23,6 +23,19 @@ import {
 } from 'src/hosts/types/type'
 import {CloudServiceProvider} from 'src/hosts/types/cloud'
 
+import {
+  Kubernetes,
+  KubernetesObject,
+  TooltipNode,
+  TooltipPosition,
+  FocuseNode,
+  KubernetesProps,
+  D3K8sData,
+  D3DataDepth1,
+  D3DataDepth2,
+  D3DataDepth3,
+} from 'src/hosts/types/kubernetes'
+
 export {
   VMRole,
   VCenter,
@@ -43,5 +56,15 @@ export {
   handleSelectHostProps,
   vmParam,
   reducerVSphere,
+  TooltipNode,
+  TooltipPosition,
+  FocuseNode,
+  KubernetesProps,
+  D3K8sData,
+  D3DataDepth1,
+  D3DataDepth2,
+  D3DataDepth3,
+  Kubernetes,
+  KubernetesObject,
   CloudServiceProvider,
 }

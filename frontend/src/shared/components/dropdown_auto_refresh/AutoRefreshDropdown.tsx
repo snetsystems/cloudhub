@@ -20,6 +20,7 @@ interface Props {
   onChoose: (autoRefreshOption: AutoRefreshOption) => void
   showManualRefresh?: boolean
   onManualRefresh?: () => void
+  userAutoRefreshOptions?: AutoRefreshOption[]
 }
 
 @ErrorHandling

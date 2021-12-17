@@ -17,6 +17,7 @@ import GraphTips from 'src/shared/components/GraphTips'
 import HostsPage from 'src/hosts/containers/HostsPage'
 import VMHostPage from 'src/hosts/containers/VMHostsPage'
 import InventoryTopology from 'src/hosts/containers/InventoryTopology'
+import KubernetesPage from 'src/hosts/containers/KubernetesPage'
 
 // Actions
 import {
@@ -64,7 +65,13 @@ interface Props extends ManualRefreshProps {
 interface State {
   timeRange: TimeRange
   activeTab: string
-  isUsingVsphere: boolean
+  headerRadioButtons: {
+    id: string
+    titleText: string
+    value: string
+    active: string
+    label: string
+  }[]
 }
 
 @ErrorHandling
@@ -75,7 +82,7 @@ class Infrastructure extends PureComponent<Props, State> {
     this.state = {
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
       activeTab: 'topology',
-      isUsingVsphere: false,
+      headerRadioButtons: [],
     }
   }
 
@@ -91,6 +98,25 @@ class Infrastructure extends PureComponent<Props, State> {
     const {addons} = links
 
     const infraTab = _.get(router.params, 'infraTab', 'topology')
+    const defaultHeaderRadioButtons = [
+      {
+        id: 'hostspage-tab-InventoryTopology',
+        titleText: 'InventoryTopology',
+        value: 'topology',
+        active: 'topology',
+        label: 'Topology',
+      },
+      {
+        id: 'hostspage-tab-Host',
+        titleText: 'Host',
+        value: 'host',
+        active: 'host',
+        label: 'Host',
+      },
+    ]
+
+    const headerRadioButtons = [...defaultHeaderRadioButtons]
+
     const isUsingVsphere = !_.isEmpty(
       _.find(addons, addon => {
         const {name, url} = addon
@@ -98,13 +124,49 @@ class Infrastructure extends PureComponent<Props, State> {
       })
     )
 
-    if (!isUsingVsphere && infraTab === 'vmware') {
+    const isUsingKubernetes = !_.isEmpty(
+      _.find(addons, addon => {
+        const {name, url} = addon
+        return name === 'k8s' && url === 'on'
+      })
+    )
+
+    if (isUsingVsphere) {
+      headerRadioButtons.push({
+        id: 'hostspage-tab-VMware',
+        titleText: 'VMware',
+        value: 'vmware',
+        active: 'vmware',
+        label: 'VMware',
+      })
+    }
+
+    if (isUsingKubernetes) {
+      headerRadioButtons.push({
+        id: 'hostspage-tab-Kubernetes',
+        titleText: 'Kubernetes',
+        value: 'kubernetes',
+        active: 'kubernetes',
+        label: 'Kubernetes',
+      })
+    }
+
+    let isRedirect = false
+
+    if (
+      (!isUsingVsphere && infraTab === 'vmware') ||
+      (!isUsingKubernetes && infraTab === 'kubernetes')
+    ) {
+      isRedirect = true
+    }
+
+    if (isRedirect) {
       router.replace(`/sources/${source.id}/infrastructure/topology`)
     }
 
     return {
       activeTab: infraTab,
-      isUsingVsphere,
+      headerRadioButtons,
     }
   }
 
@@ -117,7 +179,7 @@ class Infrastructure extends PureComponent<Props, State> {
       source,
       handleClearTimeout,
     } = this.props
-    const {isUsingVsphere, activeTab, timeRange} = this.state
+    const {activeTab, timeRange, headerRadioButtons} = this.state
 
     return (
       <Page className="hosts-list-page">
@@ -125,37 +187,22 @@ class Infrastructure extends PureComponent<Props, State> {
           <Page.Header.Left>
             <Page.Title title={'Infrastructure'} />
           </Page.Header.Left>
-          <Page.Header.Center widthPixels={220}>
+          <Page.Header.Center widthPixels={headerRadioButtons.length * 90}>
             <div className="radio-buttons radio-buttons--default radio-buttons--sm radio-buttons--stretch">
-              <Radio.Button
-                id="hostspage-tab-InventoryTopology"
-                titleText="InventoryTopology"
-                value="topology"
-                active={activeTab === 'topology'}
-                onClick={this.onChooseActiveTab}
-              >
-                Topology
-              </Radio.Button>
-              <Radio.Button
-                id="hostspage-tab-Host"
-                titleText="Host"
-                value="host"
-                active={activeTab === 'host'}
-                onClick={this.onChooseActiveTab}
-              >
-                Host
-              </Radio.Button>
-              {isUsingVsphere && (
-                <Radio.Button
-                  id="hostspage-tab-VMware"
-                  titleText="VMware"
-                  value="vmware"
-                  active={activeTab === 'vmware'}
-                  onClick={this.onChooseActiveTab}
-                >
-                  VMware
-                </Radio.Button>
-              )}
+              {headerRadioButtons.map(rBtn => {
+                return (
+                  <Radio.Button
+                    key={rBtn.titleText}
+                    id={rBtn.id}
+                    titleText={rBtn.titleText}
+                    value={rBtn.value}
+                    active={activeTab === rBtn.active}
+                    onClick={this.onChooseActiveTab}
+                  >
+                    {rBtn.label}
+                  </Radio.Button>
+                )
+              })}
             </div>
           </Page.Header.Center>
 
@@ -201,6 +248,15 @@ class Infrastructure extends PureComponent<Props, State> {
                 manualRefresh={manualRefresh}
                 autoRefresh={autoRefresh}
                 timeRange={timeRange}
+              />
+            )}
+            {activeTab === 'kubernetes' && (
+              //@ts-ignore
+              <KubernetesPage
+                source={source}
+                manualRefresh={manualRefresh}
+                timeRange={timeRange}
+                autoRefresh={autoRefresh}
               />
             )}
           </>

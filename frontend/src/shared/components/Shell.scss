@@ -54,8 +54,8 @@ $overlay-min-height: 150px;
 
   .react-tabs__tab {
     border: 1px solid $g5-pepper;
-    background-color: #202028;
-    color: #999dab;
+    background-color: $g2-kevlar;
+    color: $g11-sidewalk;
     margin-bottom: 0px;
     &.react-tabs__tab--selected {
       background-color: $g5-pepper;
@@ -82,7 +82,7 @@ $overlay-min-height: 150px;
   }
 
   .react-tabs__tab--remove {
-    color: #999dab;
+    color: $g11-sidewalk;
     background-color: unset;
     border-color: transparent;
   }

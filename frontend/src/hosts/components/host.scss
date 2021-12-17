@@ -166,12 +166,237 @@
   margin-right: 3px;
 }
 
-.page.inventory-hosts-list-page {
-  width: 100%;
+.k8s-obj-kind {
+  color: #999dab;
+}
+
+.k8s-obj-label {
+  color: #22adf6;
+}
+
+.kubernetes-header--bar {
+  display: flex;
+  align-items: center;
+  justify-self: auto;
+  padding: 5px 20px;
+  background-color: $g4-onyx;
+
+  .kubernetes-header--bar-item {
+    margin-right: 5px;
+
+    &:last-child {
+      margin-right: 0px;
+      margin-left: auto;
+    }
+  }
+}
+
+.kubernetes-detail-display {
+  min-width: 300px;
+  padding: 10px 20px;
   height: 100%;
 }
 
-.tab-pannel {
+.kubernetes-radio-btn--container {
+  margin: 10px 0px;
+}
+
+.kubernetes-editor--field {
+  background-color: $g2-kevlar;
+  padding: $ix-marg-b;
+  height: calc(100% - 90px);
+  border: $ix-border solid $g5-pepper;
+  border-radius: $radius;
+  &.focus {
+    border-color: $c-pool;
+    box-shadow: 0 0 6px 0 $c-pool;
+  }
+}
+
+.kubernetes-detail-title {
+  height: 40px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #bec2cc;
+  padding: 10px 5px 0 5px;
+}
+
+.devider--bar {
+  background-color: $g2-kevlar;
+  color: white;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  margin: 20px 0 0;
+  font-weight: bold;
+}
+
+.hexagon.focuse {
+  fill: black;
+}
+
+// test Yaml
+.cm-s-yaml {
+  background-color: $g1-raven;
+  color: #d3d4c9;
+  padding-right: 13px;
+
+  // .cm-literal-block {
+  //   color: red;
+  // }
+
+  .cm-key {
+    color: $g11-sidewalk;
+    font-weight: 400;
+  }
+  .cm-array {
+    color: $g11-sidewalk;
+    font-weight: 400;
+  }
+
+  .cm-value {
+    color: $c-viridian;
+    font-weight: 400;
+  }
+
+  .cm-null {
+    color: $g8-storm;
+    font-style: italic;
+  }
+
+  .cm-ip {
+    color: $c-comet;
+    font-weight: 400;
+  }
+
+  .cm-number {
+    color: $c-pool;
+  }
+
+  .cm-object-key {
+    color: $c-honeydew;
+  }
+  .cm-object-bracelet {
+    color: $c-honeydew;
+  }
+
+  .cm-operator {
+    color: $g15-platinum;
+  }
+
+  .cm-argument {
+    color: $g11-sidewalk;
+  }
+
+  .cm-boolean {
+    color: $c-viridian;
+  }
+
+  .cm-object {
+    color: $c-honeydew;
+  }
+
+  .cm-comment {
+    color: $g8-storm;
+  }
+
+  .CodeMirror-scrollbar-filler {
+    background-color: transparent;
+  }
+
+  .CodeMirror-vscrollbar,
+  .CodeMirror-hscrollbar {
+    @include custom-scrollbar-round($g1-raven, $s-orange);
+    &::-webkit-scrollbar-thumb {
+      border-width: 5px;
+    }
+  }
+}
+.tooltip-pin.active {
+  text-shadow: 0 0 5px #f58220, 0 0 5px #f58220, 0 0 5px #f58220,
+    0 0 5px #f58220, 0 0 9px #fff;
+}
+
+.kubernetes-toolbar--tooltip {
+  position: fixed;
+  z-index: 30;
+}
+
+.kubernetes-toolbar--tooltip-contents {
+  border: 2px solid $s-orange;
+  border-radius: 4px;
+  display: inline-flex;
+  flex-direction: column;
+  background-color: $g1-raven;
+  padding: 5px;
+}
+
+.kubernetes-header--left {
+  display: flex;
+  align-items: center;
+}
+
+.kubernetes-header--right {
+  display: flex;
+  margin-left: auto;
+  align-items: center;
+}
+
+.dropdown-loading {
+  position: absolute;
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.5);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 5px;
+}
+
+.dropdown.open {
+  z-index: 99;
+}
+
+.kubernetes-hover {
+  stroke: black;
+  stroke-width: 3px;
+}
+
+.kubernetes-focuse {
+  stroke: #545454;
+  stroke-width: 3px;
+}
+
+.kubernetes-pin {
+  stroke: #ffff00;
+  stroke-width: 3px;
+}
+
+.kubernetes-dashboard {
+  width: 100%;
+  margin: 0 auto;
+  padding: 22.5px 20px;
+  height: auto;
+}
+
+.hexagon-alert {
+  animation: alert 0.25s infinite;
+}
+
+@keyframes alert {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.5;
+  }
+}
+
+.page.inventory-hosts-list-page {
+  width: 100%;
+  height: 100%;
 }
 
 .tab-pannel-contents {
