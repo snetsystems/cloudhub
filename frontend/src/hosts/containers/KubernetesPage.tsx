@@ -3236,9 +3236,9 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterNamespace:
         selectedNamespace !== 'All namespaces' ? selectedNamespace : '',
       filterNode: selectedNode !== 'All nodes' ? selectedNode : '',
-      filterLabelKey: labelKey !== 'Unlimited' ? labelKey : '',
+      filterLabelKey: labelKey,
       filterLabelValue: labelValue,
-      filterLimit: selectedLimit,
+      filterLimit: selectedLimit !== 'Unlimited' ? selectedLimit : '',
     })
   }
 
