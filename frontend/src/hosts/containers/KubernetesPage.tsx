@@ -238,14 +238,15 @@ class KubernetesPage extends PureComponent<Props, State> {
     const saltMasterToken = addon.token
     const pParam: SaltStack = {
       kwarg: {
-        detail: true,
+        namespace: `${filterNamespace}`,
         fieldselector: `spec.nodeName=${node}`,
         labelselector:
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
-        namespace: `${filterNamespace}`,
+
         limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
+        detail: true,
       },
     }
 
@@ -272,6 +273,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
+      filterLimit,
     } = this.state
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
@@ -286,6 +288,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
+        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
         detail: true,
       },
     }
@@ -313,6 +316,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
+      filterLimit,
     } = this.state
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
@@ -327,6 +331,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
+        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
         detail: true,
       },
     }
@@ -354,6 +359,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
+      filterLimit,
     } = this.state
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
@@ -368,6 +374,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
+        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
         detail: true,
       },
     }
@@ -395,6 +402,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
+      filterLimit,
     } = this.state
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
@@ -409,6 +417,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
+        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
         detail: true,
       },
     }
@@ -436,6 +445,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
+      filterLimit,
     } = this.state
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
@@ -450,6 +460,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
+        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
         detail: true,
       },
     }
@@ -477,6 +488,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
+      filterLimit,
     } = this.state
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
@@ -491,6 +503,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
+        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
         detail: true,
       },
     }
@@ -518,6 +531,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
+      filterLimit,
     } = this.state
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
@@ -532,6 +546,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
+        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
         detail: true,
       },
     }
@@ -559,6 +574,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
+      filterLimit,
     } = this.state
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
@@ -573,6 +589,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
+        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
         detail: true,
       },
     }
@@ -603,6 +620,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
+      filterLimit,
     } = this.state
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
@@ -617,6 +635,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
+        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
         detail: true,
       },
     }
@@ -648,6 +667,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
+      filterLimit,
     } = this.state
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
@@ -662,6 +682,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
+        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
         detail: true,
       },
     }
@@ -689,6 +710,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
+      filterLimit,
     } = this.state
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
@@ -703,6 +725,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
+        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
         detail: true,
       },
     }
@@ -730,6 +753,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
+      filterLimit,
     } = this.state
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
@@ -744,6 +768,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
+        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
         detail: true,
       },
     }
@@ -766,7 +791,12 @@ class KubernetesPage extends PureComponent<Props, State> {
   }
 
   public getClusterRoles = async () => {
-    const {selectMinion, filterLabelKey, filterLabelValue} = this.state
+    const {
+      selectMinion,
+      filterLabelKey,
+      filterLabelValue,
+      filterLimit,
+    } = this.state
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
     })
@@ -779,6 +809,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
+        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
         detail: true,
       },
     }
@@ -801,7 +832,12 @@ class KubernetesPage extends PureComponent<Props, State> {
   }
 
   public getClusterRoleBindings = async () => {
-    const {selectMinion, filterLabelKey, filterLabelValue} = this.state
+    const {
+      selectMinion,
+      filterLabelKey,
+      filterLabelValue,
+      filterLimit,
+    } = this.state
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
     })
@@ -814,6 +850,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
+        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
         detail: true,
       },
     }
@@ -841,6 +878,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
+      filterLimit,
     } = this.state
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
@@ -855,6 +893,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
+        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
         detail: true,
       },
     }
@@ -882,6 +921,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
+      filterLimit,
     } = this.state
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
@@ -896,6 +936,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
+        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
         detail: true,
       },
     }
@@ -918,7 +959,12 @@ class KubernetesPage extends PureComponent<Props, State> {
   }
 
   public getPersistentVolumes = async () => {
-    const {selectMinion, filterLabelKey, filterLabelValue} = this.state
+    const {
+      selectMinion,
+      filterLabelKey,
+      filterLabelValue,
+      filterLimit,
+    } = this.state
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
     })
@@ -931,6 +977,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
+        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
         detail: true,
       },
     }
@@ -958,6 +1005,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
+      filterLimit,
     } = this.state
     const addon = this.props.addons.find(addon => {
       return addon.name === AddonType.salt
@@ -972,6 +1020,7 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
+        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
         detail: true,
       },
     }
