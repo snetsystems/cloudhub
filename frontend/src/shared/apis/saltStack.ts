@@ -883,6 +883,11 @@ export async function getLocalK8sNamespaces(
             ? pParam.kwarg.detail
             : false
           : false,
+        limit: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('limit')
+            ? pParam.kwarg.limit
+            : null
+          : null,
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
@@ -911,6 +916,11 @@ export async function getLocalK8sNodes(
             ? pParam.kwarg.detail
             : false
           : false,
+        limit: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('limit')
+            ? pParam.kwarg.limit
+            : null
+          : null,
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
@@ -1030,6 +1040,11 @@ export async function getLocalK8sDeployments(
             ? pParam.kwarg.detail
             : false
           : false,
+        limit: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('limit')
+            ? pParam.kwarg.limit
+            : null
+          : null,
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
@@ -1068,6 +1083,11 @@ export async function getLocalK8sReplicaSets(
             ? pParam.kwarg.detail
             : false
           : false,
+        limit: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('limit')
+            ? pParam.kwarg.limit
+            : null
+          : null,
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
@@ -1106,6 +1126,11 @@ export async function getLocalK8sReplicationControllers(
             ? pParam.kwarg.detail
             : false
           : false,
+        limit: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('limit')
+            ? pParam.kwarg.limit
+            : null
+          : null,
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
@@ -1181,6 +1206,11 @@ export async function getLocalK8sDaemonSets(
             ? pParam.kwarg.detail
             : false
           : false,
+        limit: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('limit')
+            ? pParam.kwarg.limit
+            : null
+          : null,
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
@@ -1219,6 +1249,11 @@ export async function getLocalK8sStatefulSets(
             ? pParam.kwarg.detail
             : false
           : false,
+        limit: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('limit')
+            ? pParam.kwarg.limit
+            : null
+          : null,
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
@@ -1257,6 +1292,11 @@ export async function getLocalK8sJobs(
             ? pParam.kwarg.detail
             : false
           : false,
+        limit: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('limit')
+            ? pParam.kwarg.limit
+            : null
+          : null,
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
@@ -1323,6 +1363,11 @@ export async function getLocalK8sCronJobs(
             ? pParam.kwarg.detail
             : false
           : false,
+        limit: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('limit')
+            ? pParam.kwarg.limit
+            : null
+          : null,
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
@@ -1361,6 +1406,11 @@ export async function getLocalK8sServices(
             ? pParam.kwarg.detail
             : false
           : false,
+        limit: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('limit')
+            ? pParam.kwarg.limit
+            : null
+          : null,
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
@@ -1399,6 +1449,11 @@ export async function getLocalK8sIngresses(
             ? pParam.kwarg.detail
             : false
           : false,
+        limit: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('limit')
+            ? pParam.kwarg.limit
+            : null
+          : null,
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
@@ -1437,6 +1492,11 @@ export async function getLocalK8sConfigmaps(
             ? pParam.kwarg.detail
             : false
           : false,
+        limit: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('limit')
+            ? pParam.kwarg.limit
+            : null
+          : null,
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
@@ -1509,6 +1569,11 @@ export async function getLocalK8sSecrets(
             ? pParam.kwarg.detail
             : false
           : false,
+        limit: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('limit')
+            ? pParam.kwarg.limit
+            : null
+          : null,
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
@@ -1547,6 +1612,11 @@ export async function getLocalK8sServiceAccounts(
             ? pParam.kwarg.detail
             : false
           : false,
+        limit: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('limit')
+            ? pParam.kwarg.limit
+            : null
+          : null,
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
@@ -1580,6 +1650,11 @@ export async function getLocalK8sClusterRoles(
             ? pParam.kwarg.detail
             : false
           : false,
+        limit: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('limit')
+            ? pParam.kwarg.limit
+            : null
+          : null,
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
@@ -1643,6 +1718,11 @@ export async function getLocalK8sClusterRoleBindings(
             ? pParam.kwarg.detail
             : false
           : false,
+        limit: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('limit')
+            ? pParam.kwarg.limit
+            : null
+          : null,
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
@@ -1681,6 +1761,11 @@ export async function getLocalK8sRoles(
             ? pParam.kwarg.detail
             : false
           : false,
+        limit: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('limit')
+            ? pParam.kwarg.limit
+            : null
+          : null,
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
@@ -1719,6 +1804,11 @@ export async function getLocalK8sRoleBindings(
             ? pParam.kwarg.detail
             : false
           : false,
+        limit: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('limit')
+            ? pParam.kwarg.limit
+            : null
+          : null,
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
@@ -1782,6 +1872,11 @@ export async function getLocalK8sPersistentVolumes(
             ? pParam.kwarg.detail
             : false
           : false,
+        limit: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('limit')
+            ? pParam.kwarg.limit
+            : null
+          : null,
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
@@ -1846,6 +1941,11 @@ export async function getLocalK8sPersistentVolumeClaims(
             ? pParam.kwarg.detail
             : false
           : false,
+        limit: pParam.hasOwnProperty('kwarg')
+          ? pParam.kwarg.hasOwnProperty('limit')
+            ? pParam.kwarg.limit
+            : null
+          : null,
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
