@@ -155,12 +155,12 @@ class KubernetesPage extends PureComponent<Props, State> {
       script: '',
       selectedNamespace: 'All namespaces',
       selectedNode: 'All nodes',
-      selectedLimit: 'Unlimited',
+      selectedLimit: '20',
       labelKey: '',
       labelValue: '',
       namespaces: [],
       nodes: [],
-      limits: ['Unlimited', '20', '50', '100'],
+      limits: ['20', '50', '100', 'Unlimited'],
       filterLabelKey: '',
       filterLabelValue: '',
       filterNamespace: '',
@@ -225,6 +225,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   public getPods = async (node: string) => {
     const {
       selectMinion,
+      selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
@@ -245,7 +246,10 @@ class KubernetesPage extends PureComponent<Props, State> {
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
 
-        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
+        limit:
+          filterLimit !== '' && filterLimit !== 'Unlimited'
+            ? parseInt(filterLimit)
+            : parseInt(selectedLimit),
         detail: true,
       },
     }
@@ -270,6 +274,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   public getDeployments = async () => {
     const {
       selectMinion,
+      selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
@@ -288,7 +293,10 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
-        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
+        limit:
+          filterLimit !== '' && filterLimit !== 'Unlimited'
+            ? parseInt(filterLimit)
+            : parseInt(selectedLimit),
         detail: true,
       },
     }
@@ -313,6 +321,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   public getReplicaSets = async () => {
     const {
       selectMinion,
+      selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
@@ -331,7 +340,10 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
-        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
+        limit:
+          filterLimit !== '' && filterLimit !== 'Unlimited'
+            ? parseInt(filterLimit)
+            : parseInt(selectedLimit),
         detail: true,
       },
     }
@@ -356,6 +368,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   public getReplicationControllers = async () => {
     const {
       selectMinion,
+      selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
@@ -374,7 +387,10 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
-        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
+        limit:
+          filterLimit !== '' && filterLimit !== 'Unlimited'
+            ? parseInt(filterLimit)
+            : parseInt(selectedLimit),
         detail: true,
       },
     }
@@ -399,6 +415,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   public getDaemonSets = async () => {
     const {
       selectMinion,
+      selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
@@ -417,7 +434,10 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
-        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
+        limit:
+          filterLimit !== '' && filterLimit !== 'Unlimited'
+            ? parseInt(filterLimit)
+            : parseInt(selectedLimit),
         detail: true,
       },
     }
@@ -442,6 +462,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   public getStatefulSets = async () => {
     const {
       selectMinion,
+      selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
@@ -460,7 +481,10 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
-        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
+        limit:
+          filterLimit !== '' && filterLimit !== 'Unlimited'
+            ? parseInt(filterLimit)
+            : parseInt(selectedLimit),
         detail: true,
       },
     }
@@ -485,6 +509,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   public getCronJobs = async () => {
     const {
       selectMinion,
+      selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
@@ -503,7 +528,10 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
-        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
+        limit:
+          filterLimit !== '' && filterLimit !== 'Unlimited'
+            ? parseInt(filterLimit)
+            : parseInt(selectedLimit),
         detail: true,
       },
     }
@@ -528,6 +556,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   public getJobs = async () => {
     const {
       selectMinion,
+      selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
@@ -546,7 +575,10 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
-        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
+        limit:
+          filterLimit !== '' && filterLimit !== 'Unlimited'
+            ? parseInt(filterLimit)
+            : parseInt(selectedLimit),
         detail: true,
       },
     }
@@ -571,6 +603,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   public getServices = async flag => {
     const {
       selectMinion,
+      selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
@@ -589,7 +622,10 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
-        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
+        limit:
+          filterLimit !== '' && filterLimit !== 'Unlimited'
+            ? parseInt(filterLimit)
+            : parseInt(selectedLimit),
         detail: true,
       },
     }
@@ -617,6 +653,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   public getIngresses = async flag => {
     const {
       selectMinion,
+      selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
@@ -635,7 +672,10 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
-        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
+        limit:
+          filterLimit !== '' && filterLimit !== 'Unlimited'
+            ? parseInt(filterLimit)
+            : parseInt(selectedLimit),
         detail: true,
       },
     }
@@ -664,6 +704,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   public getConfigmaps = async () => {
     const {
       selectMinion,
+      selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
@@ -682,7 +723,10 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
-        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
+        limit:
+          filterLimit !== '' && filterLimit !== 'Unlimited'
+            ? parseInt(filterLimit)
+            : parseInt(selectedLimit),
         detail: true,
       },
     }
@@ -707,6 +751,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   public getSecrets = async () => {
     const {
       selectMinion,
+      selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
@@ -725,7 +770,10 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
-        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
+        limit:
+          filterLimit !== '' && filterLimit !== 'Unlimited'
+            ? parseInt(filterLimit)
+            : parseInt(selectedLimit),
         detail: true,
       },
     }
@@ -750,6 +798,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   public getServiceAccounts = async () => {
     const {
       selectMinion,
+      selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
@@ -768,7 +817,10 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
-        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
+        limit:
+          filterLimit !== '' && filterLimit !== 'Unlimited'
+            ? parseInt(filterLimit)
+            : parseInt(selectedLimit),
         detail: true,
       },
     }
@@ -793,6 +845,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   public getClusterRoles = async () => {
     const {
       selectMinion,
+      selectedLimit,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
@@ -809,7 +862,10 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
-        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
+        limit:
+          filterLimit !== '' && filterLimit !== 'Unlimited'
+            ? parseInt(filterLimit)
+            : parseInt(selectedLimit),
         detail: true,
       },
     }
@@ -834,6 +890,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   public getClusterRoleBindings = async () => {
     const {
       selectMinion,
+      selectedLimit,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
@@ -850,7 +907,10 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
-        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
+        limit:
+          filterLimit !== '' && filterLimit !== 'Unlimited'
+            ? parseInt(filterLimit)
+            : parseInt(selectedLimit),
         detail: true,
       },
     }
@@ -875,6 +935,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   public getRoles = async () => {
     const {
       selectMinion,
+      selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
@@ -893,7 +954,10 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
-        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
+        limit:
+          filterLimit !== '' && filterLimit !== 'Unlimited'
+            ? parseInt(filterLimit)
+            : parseInt(selectedLimit),
         detail: true,
       },
     }
@@ -918,6 +982,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   public getRoleBindings = async () => {
     const {
       selectMinion,
+      selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
@@ -936,7 +1001,10 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
-        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
+        limit:
+          filterLimit !== '' && filterLimit !== 'Unlimited'
+            ? parseInt(filterLimit)
+            : parseInt(selectedLimit),
         detail: true,
       },
     }
@@ -961,6 +1029,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   public getPersistentVolumes = async () => {
     const {
       selectMinion,
+      selectedLimit,
       filterLabelKey,
       filterLabelValue,
       filterLimit,
@@ -977,7 +1046,10 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
-        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
+        limit:
+          filterLimit !== '' && filterLimit !== 'Unlimited'
+            ? parseInt(filterLimit)
+            : parseInt(selectedLimit),
         detail: true,
       },
     }
@@ -1002,6 +1074,7 @@ class KubernetesPage extends PureComponent<Props, State> {
   public getPersistentVolumeClaims = async () => {
     const {
       selectMinion,
+      selectedLimit,
       filterNamespace,
       filterLabelKey,
       filterLabelValue,
@@ -1020,7 +1093,10 @@ class KubernetesPage extends PureComponent<Props, State> {
           !_.isEmpty(filterLabelKey) && !_.isEmpty(filterLabelValue)
             ? `${filterLabelKey}=${filterLabelValue}`
             : '',
-        limit: filterLimit !== '' ? parseInt(filterLimit) : 100,
+        limit:
+          filterLimit !== '' && filterLimit !== 'Unlimited'
+            ? parseInt(filterLimit)
+            : parseInt(selectedLimit),
         detail: true,
       },
     }
@@ -3238,7 +3314,7 @@ class KubernetesPage extends PureComponent<Props, State> {
       filterNode: selectedNode !== 'All nodes' ? selectedNode : '',
       filterLabelKey: labelKey,
       filterLabelValue: labelValue,
-      filterLimit: selectedLimit !== 'Unlimited' ? selectedLimit : '',
+      filterLimit: selectedLimit,
     })
   }
 
