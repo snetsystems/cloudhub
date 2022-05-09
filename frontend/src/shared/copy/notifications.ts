@@ -1230,3 +1230,9 @@ export const notifygetAWSInstancesFailed = (error: Error): Notification => ({
   isHasHTML: true,
   message: `CSP Host Get Failed, ${error}`,
 })
+
+export const notifygetGCPInstancesFailed = (error: Error): Notification => ({
+  ...defaultErrorNotification,
+  isHasHTML: true,
+  message: `GCP Host Get Failed, ${error}`,
+})

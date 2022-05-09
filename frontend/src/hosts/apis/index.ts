@@ -1,6 +1,7 @@
 import _ from 'lodash'
 import {AxiosResponse} from 'axios'
 import yaml from 'js-yaml'
+import fs from 'fs'
 import {getDeep} from 'src/utils/wrappers'
 
 import {proxy} from 'src/utils/queryUrlGenerator'
@@ -55,9 +56,7 @@ interface Series {
 }
 interface CloudSeries extends Series {
   tags: {
-    csp: string
     host: string
-    region: string
   }
 }
 
@@ -69,6 +68,22 @@ interface SeriesObj {
 interface AppsForHost {
   apps: string[]
   tags: {host: string}
+}
+
+interface CSPInstance {
+  PrivateDnsName: string
+  InstanceId: string
+  InstanceType: string
+  State: {Name: string}
+  Tags: {[x: string]: any}[]
+  Csp?: {id: string; organization: string; provider: string; namespace: string}
+}
+
+interface AWSInstances extends CSPInstance {}
+
+interface GCPInstances extends CSPInstance {
+  [x: string]: any
+  name: string
 }
 
 export const getCpuAndLoadForHosts = async (
@@ -86,8 +101,8 @@ export const getCpuAndLoadForHosts = async (
       SELECT non_negative_derivative(mean("System_Up_Time")) AS winDeltaUptime FROM \":db:\".\":rp:\".\"win_system\" WHERE time > now() - ${telegrafSystemInterval} * 10 GROUP BY host, time(${telegrafSystemInterval}) fill(0);
       SHOW TAG VALUES WITH KEY = "host" WHERE TIME > now() - 10m;
       SELECT mean("used_percent") AS "memUsed" FROM \":db:\".\":rp:\".\"mem\" WHERE time > now() - 10m GROUP BY host;
-      SELECT mean("used_percent") AS "diskUsed" FROM \":db:\".\":rp:\".\"disk\" WHERE time > now() - 10m GROUP BY host;
-      SELECT 100 - mean("Percent_Free_Space") AS "winDiskUsed" FROM \":db:\".\":rp:\".\"win_disk\" WHERE time > now() - 10m GROUP BY host;`,
+      SELECT max("diskUsed") AS "diskUsed" FROM (SELECT mean("used_percent") AS "diskUsed" FROM \":db:\".\":rp:\".\"disk\" WHERE time > now() - 10m GROUP BY host, path) GROUP BY host;
+      SELECT max("winDiskUsed") AS "winDiskUsed" FROM (SELECT 100 - mean("Percent_Free_Space") AS "winDiskUsed" FROM \":db:\".\":rp:\".\"win_disk\" WHERE time > now() - 10m GROUP BY host, instance) GROUP BY host;`,
     tempVars
   )
 
@@ -332,9 +347,11 @@ export const getAppsForInstance = async (
   let query = ''
 
   if (getFrom === 'ALL') {
-    query = `show series from /${measurements}/ where (host = '${instance['instancename']}') or (region = '${instance['region']}' and instance_id = '${instance['instanceid']}')`
+    query = `show series from /${measurements}/ where (host = '${instance['instancename']}') or (namespace = '${instance['namespace']}' and instance_id = '${instance['instanceid']}')`
   } else if (getFrom === 'CloudWatch') {
-    query = `show series from /${measurements}/ where region = '${instance['region']}' and instance_id = '${instance['instanceid']}'`
+    query = `show series from /${measurements}/ where region = '${instance['namespace']}' and instance_id = '${instance['instanceid']}'`
+  } else if (getFrom === 'StackDriver') {
+    query = `show series from /${measurements}/ where namespace = '${instance['namespace']}' and instance_id = '${instance['instanceid']}'`
   } else {
     query = `show series from /${measurements}/ where host = '${instance['instancename']}'`
   }
@@ -417,7 +434,8 @@ export const getAppsForInstances = async (
   providers,
   appLayouts: Layout[],
   telegrafDB: string,
-  tempVars: Template[]
+  tempVars: Template[],
+  cspProvider: string
 ): Promise<any> => {
   const measurements = appLayouts
     .map(m => `\":db:\".\":rp:\".\"${m.measurement}\"`)
@@ -431,13 +449,14 @@ export const getAppsForInstances = async (
   const {data} = await proxy({
     source: proxyLink,
     query: replaceTemplate(
-      `show series from ${measurements} where time > now() - 10m and region != null AND csp != null`,
+      `show series from ${measurements} where time > now() - 10m AND csp != null AND csp = '${cspProvider}'`,
       tempVars
     ),
     db: telegrafDB,
   })
 
   const newProviders = {...providers}
+
   const allSeries = getDeep<string[][]>(
     data,
     'results.[0].series.[0].values',
@@ -447,34 +466,36 @@ export const getAppsForInstances = async (
   allSeries.forEach(series => {
     const seriesObj = parseSeries(series[0])
     const measurement = seriesObj.measurement
-    const provider = getDeep<string>(seriesObj, 'tags.csp', '')
-    const region = getDeep<string>(seriesObj, 'tags.region', '')
+
     const host = getDeep<string>(seriesObj, 'tags.host', '')
+    const validationItems = {
+      host: host,
+    }
 
-    if (!newProviders[provider][region]) {
+    if (!newProviders[host]) {
       return
     }
 
-    if (!newProviders[provider][region][host]) {
-      return
-    }
-
-    if (!newProviders[provider][region][host].apps) {
-      newProviders[provider][region][host].apps = []
-    }
-
-    if (!newProviders[provider][region][host].tags) {
-      newProviders[provider][region][host].tags = {}
-    }
-
-    newProviders[provider][region][host].apps = _.uniq(
-      newProviders[provider][region][host].apps.concat(
-        measurementsToApps[measurement]
-      )
+    const isHasNotOwnProperty = getIsHasNotProperty(
+      newProviders,
+      validationItems
     )
-    _.assign(newProviders[provider][region][host].tags, seriesObj.tags)
-  })
 
+    if (isHasNotOwnProperty) return
+
+    if (!newProviders[host].apps) {
+      newProviders[host].apps = []
+    }
+
+    if (!newProviders[host].tags) {
+      newProviders[host].tags = {}
+    }
+
+    newProviders[host].apps = _.uniq(
+      newProviders[host].apps.concat(measurementsToApps[measurement])
+    )
+    _.assign(newProviders[host].tags, seriesObj.tags)
+  })
   return newProviders
 }
 
@@ -505,11 +526,12 @@ export const getMeasurementsForInstance = async (
   getFrom: string
 ): Promise<string[]> => {
   let query = ''
-
   if (getFrom === 'ALL') {
-    query = `SHOW MEASUREMENTS WHERE ("host" = '${instance['instancename']}') or ("region" = '${instance['region']}' and "instance_id" = '${instance['instanceid']}')`
+    query = `SHOW MEASUREMENTS WHERE ("host" = '${instance['instancename']}') or ("namespace" = '${instance['namespace']}' and "instance_id" = '${instance['instanceid']}')`
   } else if (getFrom === 'CloudWatch') {
-    query = `SHOW MEASUREMENTS WHERE "region" = '${instance['region']}' and "instance_id" = '${instance['instanceid']}'`
+    query = `SHOW MEASUREMENTS WHERE "namespace" = '${instance['namespace']}' and "instance_id" = '${instance['instanceid']}'`
+  } else if (getFrom === 'StackDriver') {
+    query = `SHOW MEASUREMENTS WHERE "namespace" = '${instance['namespace']}' and "instance_id" = '${instance['instanceid']}'`
   } else {
     query = `SHOW MEASUREMENTS WHERE "host" = '${instance['instancename']}'`
   }
@@ -1032,80 +1054,28 @@ export const deleteCloudServiceProvider = async (id: string) => {
   }
 }
 
-const getHasNotOwnProperty = (
-  providers: {[key: string]: {}},
-  provider: CloudServiceProvider,
-  region: string,
-  host: string
+const getIsHasNotProperty = (
+  providers: {
+    host: {
+      [key: string]: string
+    }
+  },
+  validationItems: {[key: string]: string}
 ): boolean => {
   let isNotOwn = false
 
-  if (!providers.hasOwnProperty(provider)) {
-    isNotOwn = true
-  }
-
-  if (!providers[provider].hasOwnProperty(region)) {
-    isNotOwn = true
-  }
-
-  if (!providers[provider][region].hasOwnProperty(host)) {
+  const {host} = validationItems
+  if (!providers.hasOwnProperty(host)) {
     isNotOwn = true
   }
 
   return isNotOwn
 }
 
-export const getCpuAndLoadForInstances = async (
-  proxyLink: string,
-  telegrafDB: string,
-  telegrafSystemInterval: string,
-  tempVars: Template[],
-  cspHosts: {
-    PrivateDnsName: string
-    InstanceId: string
-    InstanceType: string
-    State: {Name: string}
-    Tags: {[x: string]: any}[]
-    Csp: {id: string; organization: string; provider: string; region: string}
-  }[][][]
-): Promise<any> => {
-  const query = replaceTemplate(
-    `SELECT mean("usage_user") FROM \":db:\".\":rp:\".\"cpu\" WHERE "cpu" = 'cpu-total' AND time > now() - 10m AND region != null AND csp != null GROUP BY host, region, csp;
-    SELECT mean("load1") FROM \":db:\".\":rp:\".\"system\" WHERE time > now() - 10m AND region != null AND csp != null GROUP BY host, region, csp;
-    SELECT non_negative_derivative(mean(uptime)) AS deltaUptime FROM \":db:\".\":rp:\".\"system\" WHERE time > now() - ${telegrafSystemInterval} * 10 AND region != null AND csp != null GROUP BY host, time(${telegrafSystemInterval}), region, csp fill(0);
-    SELECT mean("Percent_Processor_Time") FROM \":db:\".\":rp:\".\"win_cpu\" WHERE time > now() - 10m  AND region != null AND csp != null GROUP BY host, region, csp;
-    SELECT mean("Processor_Queue_Length") FROM \":db:\".\":rp:\".\"win_system\" WHERE time > now() - 10s AND region != null AND csp != null GROUP BY host, region, csp;
-    SELECT non_negative_derivative(mean("System_Up_Time")) AS winDeltaUptime FROM \":db:\".\":rp:\".\"win_system\" WHERE time > now() - ${telegrafSystemInterval} * 10 AND region != null AND csp != null  GROUP BY host, time(${telegrafSystemInterval}), region, csp fill(0);
-    SELECT mean("used_percent") AS "memUsed" FROM \":db:\".\":rp:\".\"mem\" WHERE time > now() - 10m AND region != null AND csp != null GROUP BY host, region, csp;
-    SELECT mean("used_percent") AS "diskUsed" FROM \":db:\".\":rp:\".\"disk\" WHERE time > now() - 10m AND region != null AND csp != null GROUP BY host, region, csp;
-    SELECT 100 - mean("Percent_Free_Space") AS "winDiskUsed" FROM \":db:\".\":rp:\".\"win_disk\" WHERE time > now() - 10m AND csp != null AND region != null  GROUP BY host, region, csp;
-    `,
-    tempVars
-  )
-
-  const {data} = await proxy({
-    source: proxyLink,
-    query,
-    db: telegrafDB,
-  })
-
+const getAWSInstances = (
+  cspHosts: AWSInstances[][][]
+): {[Key: string]: object} => {
   let providers = {}
-
-  const precision = 100
-  const cpuSeries = getDeep<CloudSeries[]>(data, 'results.[0].series', [])
-  const loadSeries = getDeep<CloudSeries[]>(data, 'results.[1].series', [])
-  const uptimeSeries = getDeep<CloudSeries[]>(data, 'results.[2].series', [])
-  const winCPUSeries = getDeep<CloudSeries[]>(data, 'results.[3].series', [])
-  const winLoadSeries = getDeep<CloudSeries[]>(data, 'results.[4].series', [])
-  const winUptimeSeries = getDeep<CloudSeries[]>(data, 'results.[5].series', [])
-  const memUsedSeries = getDeep<CloudSeries[]>(data, 'results.[6].series', [])
-  const diskUsedSeries = getDeep<CloudSeries[]>(data, 'results.[7].series', [])
-  const winDiskUsedSeries = getDeep<CloudSeries[]>(
-    data,
-    'results.[8].series',
-    []
-  )
-
   try {
     _.reduce(
       cspHosts,
@@ -1113,15 +1083,10 @@ export const getCpuAndLoadForInstances = async (
         _.reduce(
           currents,
           (__before, current) => {
-            let rRegions = {}
             let rHosts = {}
             _.reduce(
               current,
               (___before, cCurrent) => {
-                const {
-                  Csp: {provider, region},
-                } = cCurrent
-
                 const instanceName = cCurrent.Tags.find(
                   tag => tag.Key === 'Name'
                 )
@@ -1133,24 +1098,14 @@ export const getCpuAndLoadForInstances = async (
                     instanceId: cCurrent.InstanceId,
                     instanceType: cCurrent.InstanceType,
                     instanceState: cCurrent.State.Name,
-                    instanceStatusCheck: 'test',
-                    alarmStatus: 'no alarm',
                     csp: {...cCurrent.Csp},
                   },
                 }
 
-                rRegions = {
-                  ...rRegions,
-                  [region]: {
-                    ...rHosts,
-                  },
+                providers = {
+                  ...providers,
+                  ...rHosts,
                 }
-
-                providers[provider] = {
-                  ...providers[provider],
-                  ...rRegions,
-                }
-
                 return false
               },
               {}
@@ -1167,158 +1122,157 @@ export const getCpuAndLoadForInstances = async (
   } catch (error) {
     console.error(error)
   }
+  return providers
+}
 
+const getGCPInstances = (
+  cspHosts: GCPInstances[][][]
+): {[Key: string]: object} => {
+  let providers = {}
+  try {
+    _.map(cspHosts, item => {
+      _.reduce(
+        item,
+        (__before, current) => {
+          let rHosts = {}
+          _.reduce(
+            current,
+            (___before, cCurrent) => {
+              const instanceName = cCurrent.name
+              rHosts = {
+                ...rHosts,
+                [instanceName]: {
+                  name: instanceName,
+                  instanceId: cCurrent.id,
+                  instanceType: cCurrent.size,
+                  instanceState: cCurrent.state,
+                  csp: {...cCurrent.Csp},
+                },
+              }
+              providers = {
+                ...providers,
+                ...rHosts,
+              }
+              return false
+            },
+            {}
+          )
+          return false
+        },
+        {}
+      )
+      return false
+    })
+  } catch (error) {
+    console.error(error)
+  }
+  return providers
+}
+
+const getCspAdapter = (cspHosts, cspProvider) => {
+  const cspAdapter = {
+    aws: {
+      getSortedCspData: () => getAWSInstances(cspHosts),
+    },
+    gcp: {
+      getSortedCspData: () => getGCPInstances(cspHosts),
+    },
+  }
+  return cspAdapter[cspProvider]
+}
+
+export const getCpuAndLoadForInstances = async (
+  proxyLink: string,
+  telegrafDB: string,
+  tempVars: Template[],
+  cspProvider: string,
+  cspHosts: CSPInstance[][][]
+): Promise<any> => {
+  const query = replaceTemplate(
+    `SELECT mean("usage_user") FROM \":db:\".\":rp:\".\"cpu\" WHERE "cpu" = 'cpu-total' AND time > now() - 10m AND csp != null AND csp = '${cspProvider}' GROUP BY host;
+    SELECT mean("Percent_Processor_Time") FROM \":db:\".\":rp:\".\"win_cpu\" WHERE time > now() - 10m  AND csp != null AND csp = '${cspProvider}'  GROUP BY host;
+    SELECT mean("used_percent") AS "memUsed" FROM \":db:\".\":rp:\".\"mem\" WHERE time > now() - 10m AND csp != null AND csp = '${cspProvider}'  GROUP BY host;
+    SELECT max("diskUsed") AS "diskUsed" FROM (SELECT mean("used_percent") AS "diskUsed" FROM \":db:\".\":rp:\".\"disk\" WHERE time > now() - 10m AND csp != null AND csp = '${cspProvider}' GROUP BY host, path) GROUP BY host;
+    SELECT max("winDiskUsed") AS "winDiskUsed" FROM (SELECT 100 - mean("Percent_Free_Space") AS "winDiskUsed" FROM \":db:\".\":rp:\".\"win_disk\" WHERE time > now() - 10m AND csp != null AND csp = '${cspProvider}'  GROUP BY host) group by host;
+    `,
+    tempVars
+  )
+
+  const {data} = await proxy({
+    source: proxyLink,
+    query,
+    db: telegrafDB,
+  })
+  const csp = getCspAdapter(cspHosts, cspProvider)
+  let providers = csp.getSortedCspData()
+
+  const precision = 100
+  const cpuSeries = getDeep<CloudSeries[]>(data, 'results.[0].series', [])
+  const winCPUSeries = getDeep<CloudSeries[]>(data, 'results.[1].series', [])
+  const memUsedSeries = getDeep<CloudSeries[]>(data, 'results.[2].series', [])
+  const diskUsedSeries = getDeep<CloudSeries[]>(data, 'results.[3].series', [])
+  const winDiskUsedSeries = getDeep<CloudSeries[]>(
+    data,
+    'results.[4].series',
+    []
+  )
   cpuSeries.forEach(s => {
-    const isHasNotOwnProperty = getHasNotOwnProperty(
-      providers,
-      CloudServiceProvider.AWS,
-      s.tags.region,
-      s.tags.host
-    )
+    const isHasNotOwnProperty = getIsHasNotProperty(providers, s.tags)
 
     if (isHasNotOwnProperty) return
 
     const meanIndex = s.columns.findIndex(col => col === 'mean')
-    providers[s.tags.csp][s.tags.region][s.tags.host] = {
-      ...providers[s.tags.csp][s.tags.region][s.tags.host],
+    providers[s.tags.host] = {
+      ...providers[s.tags.host],
       cpu: Math.round(Number(s.values[0][meanIndex]) * precision) / precision,
-    }
-  })
-
-  loadSeries.forEach(s => {
-    const isHasNotOwnProperty = getHasNotOwnProperty(
-      providers,
-      CloudServiceProvider.AWS,
-      s.tags.region,
-      s.tags.host
-    )
-
-    if (isHasNotOwnProperty) return
-
-    const meanIndex = s.columns.findIndex(col => col === 'mean')
-    providers[s.tags.csp][s.tags.region][s.tags.host] = {
-      ...providers[s.tags.csp][s.tags.region][s.tags.host],
-
-      load: Math.round(Number(s.values[0][meanIndex]) * precision) / precision,
-    }
-  })
-
-  uptimeSeries.forEach(s => {
-    const isHasNotOwnProperty = getHasNotOwnProperty(
-      providers,
-      CloudServiceProvider.AWS,
-      s.tags.region,
-      s.tags.host
-    )
-
-    if (isHasNotOwnProperty) return
-
-    const uptimeIndex = s.columns.findIndex(col => col === 'deltaUptime')
-    providers[s.tags.csp][s.tags.region][s.tags.host] = {
-      ...providers[s.tags.csp][s.tags.region][s.tags.host],
-      deltaUptime: Number(s.values[s.values.length - 1][uptimeIndex]),
     }
   })
 
   winCPUSeries.forEach(s => {
-    const isHasNotOwnProperty = getHasNotOwnProperty(
-      providers,
-      CloudServiceProvider.AWS,
-      s.tags.region,
-      s.tags.host
-    )
+    const isHasNotOwnProperty = getIsHasNotProperty(providers, s.tags)
 
     if (isHasNotOwnProperty) return
 
     const meanIndex = s.columns.findIndex(col => col === 'mean')
-    providers[s.tags.csp][s.tags.region][s.tags.host] = {
-      ...providers[s.tags.csp][s.tags.region][s.tags.host],
+    providers[s.tags.host] = {
+      ...providers[s.tags.host],
       cpu: Math.round(Number(s.values[0][meanIndex]) * precision) / precision,
     }
   })
 
-  winLoadSeries.forEach(s => {
-    const isHasNotOwnProperty = getHasNotOwnProperty(
-      providers,
-      CloudServiceProvider.AWS,
-      s.tags.region,
-      s.tags.host
-    )
-
-    if (isHasNotOwnProperty) return
-
-    const meanIndex = s.columns.findIndex(col => col === 'mean')
-    providers[s.tags.csp][s.tags.region][s.tags.host] = {
-      ...providers[s.tags.csp][s.tags.region][s.tags.host],
-      load: Math.round(Number(s.values[0][meanIndex]) * precision) / precision,
-    }
-  })
-
-  winUptimeSeries.forEach(s => {
-    const isHasNotOwnProperty = getHasNotOwnProperty(
-      providers,
-      CloudServiceProvider.AWS,
-      s.tags.region,
-      s.tags.host
-    )
-
-    if (isHasNotOwnProperty) return
-
-    const winUptimeIndex = s.columns.findIndex(col => col === 'winDeltaUptime')
-    providers[s.tags.csp][s.tags.region][s.tags.host] = {
-      ...providers[s.tags.csp][s.tags.region][s.tags.host],
-      winDeltaUptime: Number(s.values[s.values.length - 1][winUptimeIndex]),
-    }
-  })
-
   memUsedSeries.forEach(s => {
-    const isHasNotOwnProperty = getHasNotOwnProperty(
-      providers,
-      CloudServiceProvider.AWS,
-      s.tags.region,
-      s.tags.host
-    )
+    const isHasNotOwnProperty = getIsHasNotProperty(providers, s.tags)
 
     if (isHasNotOwnProperty) return
 
     const meanIndex = s.columns.findIndex(col => col === 'memUsed')
-    providers[s.tags.csp][s.tags.region][s.tags.host] = {
-      ...providers[s.tags.csp][s.tags.region][s.tags.host],
+    providers[s.tags.host] = {
+      ...providers[s.tags.host],
       memory:
         Math.round(Number(s.values[0][meanIndex]) * precision) / precision,
     }
   })
 
   diskUsedSeries.forEach(s => {
-    const isHasNotOwnProperty = getHasNotOwnProperty(
-      providers,
-      CloudServiceProvider.AWS,
-      s.tags.region,
-      s.tags.host
-    )
+    const isHasNotOwnProperty = getIsHasNotProperty(providers, s.tags)
 
     if (isHasNotOwnProperty) return
 
     const meanIndex = s.columns.findIndex(col => col === 'diskUsed')
-    providers[s.tags.csp][s.tags.region][s.tags.host] = {
-      ...providers[s.tags.csp][s.tags.region][s.tags.host],
+    providers[s.tags.host] = {
+      ...providers[s.tags.host],
       disk: Math.round(Number(s.values[0][meanIndex]) * precision) / precision,
     }
   })
 
   winDiskUsedSeries.forEach(s => {
-    const isHasNotOwnProperty = getHasNotOwnProperty(
-      providers,
-      CloudServiceProvider.AWS,
-      s.tags.region,
-      s.tags.host
-    )
+    const isHasNotOwnProperty = getIsHasNotProperty(providers, s.tags)
 
     if (isHasNotOwnProperty) return
 
     const meanIndex = s.columns.findIndex(col => col === 'winDiskUsed')
-    providers[s.tags.csp][s.tags.region][s.tags.host] = {
-      ...providers[s.tags.csp][s.tags.region][s.tags.host],
+    providers[s.tags.host] = {
+      ...providers[s.tags.host],
       disk: Math.round(Number(s.values[0][meanIndex]) * precision) / precision,
     }
   })
@@ -1336,6 +1290,31 @@ export const getAWSInstancesApi = async (
     const cspHost = yaml.safeLoad(info.data)
 
     return cspHost
+  } catch (error) {
+    throw error
+  }
+}
+
+export const getGCPInstancesApi = async (
+  pUrl: string,
+  pToken: string,
+  pCsps: any[]
+) => {
+  try {
+    const info = await getLocalBotoEc2DescribeInstances(pUrl, pToken, pCsps)
+
+    //Test Code dummyData with gcp
+    const dummyData = yaml.safeLoad(
+      fs.readFileSync(
+        '../frontend/test/dummy_data/gceListNodesFull.yaml',
+        'utf8'
+      )
+    )
+    const cspDummyHost = dummyData
+
+    const cspHost = yaml.safeLoad(info.data)
+
+    return cspDummyHost
   } catch (error) {
     throw error
   }
@@ -1384,6 +1363,27 @@ export const getAWSVolumeApi = async (
 }
 
 export const getAWSInstanceTypesApi = async (
+  pUrl: string,
+  pToken: string,
+  pCsps: any[],
+  pTypes?: string[]
+) => {
+  try {
+    const info = await getLocalBoto2DescribeInstanceTypes(
+      pUrl,
+      pToken,
+      pCsps,
+      pTypes
+    )
+    const cspHost = yaml.safeLoad(info.data)
+
+    return cspHost
+  } catch (error) {
+    throw error
+  }
+}
+
+export const getGCPInstanceTypesApi = async (
   pUrl: string,
   pToken: string,
   pCsps: any[],

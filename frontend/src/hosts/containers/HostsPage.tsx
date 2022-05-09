@@ -76,15 +76,18 @@ import * as AppActions from 'src/types/actions/app'
 import {
   loadCloudServiceProvidersAsync,
   getAWSInstancesAsync,
+  getGCPInstancesAsync,
   getAWSInstanceTypesAsync,
 } from 'src/hosts/actions'
 import InstanceTypeModal from '../components/InstanceTypeModal'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import TopologyDetails from '../components/TopologyDetails'
+import {getGCPInstanceTypesAsync} from '../actions/inventoryTopology'
+import {CloudServiceProvider} from '../types/cloud'
 
 interface Instance {
-  provider: string
-  region: string
+  provider: CloudServiceProvider
+  namespace: string
   instanceid: string
   instancename: string
 }
@@ -111,25 +114,40 @@ interface Props extends ManualRefreshProps {
     pCsp: any,
     pTypes: string[]
   ) => Promise<any>
+  handleGetGCPInstancesAsync: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    pCsp: any[]
+  ) => Promise<any>
+  handleGetGCPInstanceTypesAsync: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    pCsp: any,
+    pTypes: string[]
+  ) => Promise<any>
   timeRange: TimeRange
 }
 
 interface State {
   hostsObject: {[x: string]: Host}
   hostsPageStatus: RemoteDataState
-  awsPageStatus: RemoteDataState
+  cspPageStatus: RemoteDataState
   layouts: Layout[]
   filteredLayouts: Layout[]
   focusedHost: string
   focusedInstance: Instance
   proportions: number[]
+  namespaceFilterItems: string[]
+  agentFilterItems: string[]
   selectedAgent: string
+  selectedNamespace: string
   activeCspTab: string
   itemCSPs: string[]
   cloudHostsObject: CloudHosts
   cloudAccessInfos: any[]
   isInstanceTypeModalVisible: boolean
   awsInstanceTypes: Promise<any>
+  gcpInstanceTypes: Promise<any>
   instanceTypeLoading: RemoteDataState
 }
 
@@ -156,6 +174,13 @@ export class HostsPage extends PureComponent<Props, State> {
       'off'
     ) === 'on'
 
+  private isUsingGCP =
+    _.get(
+      _.find(this.props.links.addons, addon => addon.name === AddonType.gcp),
+      'url',
+      'off'
+    ) === 'on'
+
   constructor(props: Props) {
     super(props)
 
@@ -171,14 +196,21 @@ export class HostsPage extends PureComponent<Props, State> {
       itemCSPs.push('aws')
     }
 
+    if (this.isUsingGCP) {
+      itemCSPs.push('gcp')
+    }
+
     this.state = {
       focusedHost: '',
       focusedInstance: null,
+      namespaceFilterItems: [],
+      agentFilterItems: [],
       selectedAgent: 'ALL',
+      selectedNamespace: 'ALL',
       activeCspTab: 'Host',
       hostsObject: {},
       hostsPageStatus: RemoteDataState.NotStarted,
-      awsPageStatus: RemoteDataState.NotStarted,
+      cspPageStatus: RemoteDataState.NotStarted,
       layouts: [],
       filteredLayouts: [],
       proportions: [0.43, 0.57],
@@ -187,6 +219,7 @@ export class HostsPage extends PureComponent<Props, State> {
       cloudHostsObject: {},
       isInstanceTypeModalVisible: false,
       awsInstanceTypes: null,
+      gcpInstanceTypes: null,
       instanceTypeLoading: RemoteDataState.NotStarted,
     }
 
@@ -205,7 +238,7 @@ export class HostsPage extends PureComponent<Props, State> {
 
     this.setState({
       hostsPageStatus: RemoteDataState.Loading,
-      awsPageStatus: RemoteDataState.Loading,
+      cspPageStatus: RemoteDataState.Loading,
     })
 
     const layoutResults = await getLayouts()
@@ -216,7 +249,7 @@ export class HostsPage extends PureComponent<Props, State> {
       notify(notifyUnableToGetApps())
       this.setState({
         hostsPageStatus: RemoteDataState.Error,
-        awsPageStatus: RemoteDataState.Error,
+        cspPageStatus: RemoteDataState.Error,
         layouts,
       })
       return
@@ -228,18 +261,21 @@ export class HostsPage extends PureComponent<Props, State> {
       focusedHost: '',
       focusedInstance: null,
       selectedAgent: 'ALL',
+      selectedNamespace: 'ALL',
       activeCspTab: 'Host',
     }
+    const hostsPage = _.get(
+      getLocalStorageInfrastructure,
+      'hostsPage',
+      defaultState
+    )
 
-    const hostsPage = _.get(getLocalStorageInfrastructure, 'hostsPage', {
-      defaultState,
-    })
-
-    const initActivateTab = !this.isUsingAWS
-      ? 'Host'
-      : _.isEmpty(hostsPage['activeCspTab'])
-      ? 'Host'
-      : hostsPage['activeCspTab']
+    const initActivateTab =
+      !this.isUsingAWS && !this.isUsingGCP
+        ? 'Host'
+        : _.isEmpty(hostsPage['activeCspTab'])
+        ? 'Host'
+        : hostsPage['activeCspTab']
 
     this.setState({
       activeCspTab: initActivateTab,
@@ -247,13 +283,25 @@ export class HostsPage extends PureComponent<Props, State> {
 
     const hostID = hostsPage.focusedHost
 
-    const getFocusedInstance = hostsPage.focusedInstance
+    const activeTab =
+      !this.isUsingAWS && !this.isUsingGCP
+        ? 'Host'
+        : _.isEmpty(hostsPage['activeCspTab'])
+        ? 'Host'
+        : hostsPage['activeCspTab']
 
-    const activeTab = !this.isUsingAWS
-      ? 'Host'
-      : _.isEmpty(hostsPage['activeCspTab'])
-      ? 'Host'
-      : hostsPage['activeCspTab']
+    if (hostID === '' && activeTab === 'Host') {
+      this.fetchHostsData(layouts)
+      if (activeTab === 'Host') {
+        const {filteredLayouts} = await this.getLayoutsforHost(
+          layouts,
+          activeTab
+        )
+        this.setState({filteredLayouts})
+      }
+    }
+
+    const getFocusedInstance = hostsPage.focusedInstance
 
     if (autoRefresh && activeTab === 'Host') {
       clearInterval(this.intervalID)
@@ -261,7 +309,7 @@ export class HostsPage extends PureComponent<Props, State> {
         () => this.fetchHostsData(layouts),
         autoRefresh
       )
-    } else if (autoRefresh && activeTab === 'aws') {
+    } else if (autoRefresh && (activeTab === 'aws' || activeTab === 'gcp')) {
       clearInterval(this.intervalID)
       this.intervalID = window.setInterval(
         () => this.fetchCspHostsData(layouts),
@@ -270,8 +318,7 @@ export class HostsPage extends PureComponent<Props, State> {
     }
 
     GlobalAutoRefresher.poll(autoRefresh)
-
-    if (!this.isUsingAWS) {
+    if (!this.isUsingAWS && !this.isUsingGCP) {
       this.setState({
         layouts,
         proportions: convertProportions,
@@ -290,6 +337,9 @@ export class HostsPage extends PureComponent<Props, State> {
           layouts,
           proportions: convertProportions,
           focusedInstance: getFocusedInstance,
+          selectedNamespace: _.isEmpty(hostsPage['selectedNamespace'])
+            ? 'ALL'
+            : hostsPage['selectedNamespace'],
           selectedAgent: _.isEmpty(hostsPage['selectedAgent'])
             ? 'ALL'
             : hostsPage['selectedAgent'],
@@ -305,43 +355,47 @@ export class HostsPage extends PureComponent<Props, State> {
       focusedHost,
       focusedInstance,
       selectedAgent,
+      selectedNamespace,
       activeCspTab,
     } = this.state
 
-    if (layouts) {
+    if (layouts.length > 0) {
       if (
-        prevState.focusedHost !== focusedHost ||
-        (prevState.activeCspTab !== activeCspTab && activeCspTab === 'Host')
+        activeCspTab === 'Host' &&
+        (prevState.focusedHost !== focusedHost ||
+          prevState.activeCspTab !== activeCspTab)
       ) {
         this.fetchHostsData(layouts)
         if (activeCspTab === 'Host') {
-          const {filteredLayouts} = await this.getLayoutsforHost(
-            layouts,
-            focusedHost
-          )
-          this.setState({filteredLayouts})
+          if (focusedHost !== '') {
+            const {filteredLayouts} = await this.getLayoutsforHost(
+              layouts,
+              focusedHost
+            )
+            this.setState({filteredLayouts})
+          }
+        }
+      } else {
+        if (
+          prevState.activeCspTab !== activeCspTab ||
+          prevState.focusedInstance !== focusedInstance
+        ) {
+          this.fetchCspHostsData(layouts)
+          if (focusedInstance) {
+            const {filteredLayouts} = await this.getLayoutsforInstance(
+              layouts,
+              focusedInstance
+            )
+            this.setState({filteredLayouts})
+          }
         }
       }
 
       if (
-        prevState.focusedInstance !== focusedInstance ||
-        (prevState.activeCspTab !== activeCspTab &&
-          activeCspTab === 'aws' &&
-          focusedInstance)
+        focusedInstance &&
+        (prevState.selectedAgent !== selectedAgent ||
+          prevState.selectedNamespace !== selectedNamespace)
       ) {
-        this.fetchCspHostsData(layouts)
-
-        if (activeCspTab === 'aws') {
-          const {filteredLayouts} = await this.getLayoutsforInstance(
-            layouts,
-            focusedInstance
-          )
-
-          this.setState({filteredLayouts})
-        }
-      }
-
-      if (prevState.selectedAgent !== selectedAgent && focusedInstance) {
         const {filteredLayouts} = await this.getLayoutsforInstance(
           layouts,
           focusedInstance
@@ -359,7 +413,7 @@ export class HostsPage extends PureComponent<Props, State> {
           }, autoRefresh)
         }
 
-        if (activeCspTab === 'aws') {
+        if (activeCspTab === 'aws' || activeCspTab === 'gcp') {
           this.intervalID = window.setInterval(() => {
             this.fetchCspHostsData(layouts)
           }, autoRefresh)
@@ -373,11 +427,11 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   public async UNSAFE_componentWillReceiveProps(nextProps: Props) {
-    const {layouts, focusedHost, focusedInstance} = this.state
+    const {layouts, focusedHost, focusedInstance, activeCspTab} = this.state
 
     if (layouts) {
       if (this.props.manualRefresh !== nextProps.manualRefresh) {
-        if (this.state.activeCspTab === 'Host') {
+        if (activeCspTab === 'Host') {
           this.fetchHostsData(layouts)
           const {filteredLayouts} = await this.getLayoutsforHost(
             layouts,
@@ -386,7 +440,7 @@ export class HostsPage extends PureComponent<Props, State> {
           this.setState({filteredLayouts})
         }
 
-        if (this.state.activeCspTab === 'aws') {
+        if (activeCspTab === 'aws' || activeCspTab === 'gcp') {
           this.fetchCspHostsData(layouts)
           const {filteredLayouts} = await this.getLayoutsforInstance(
             layouts,
@@ -402,13 +456,13 @@ export class HostsPage extends PureComponent<Props, State> {
         GlobalAutoRefresher.poll(nextProps.autoRefresh)
 
         if (nextProps.autoRefresh) {
-          if (this.state.activeCspTab === 'Host') {
+          if (activeCspTab === 'Host') {
             this.intervalID = window.setInterval(() => {
               this.fetchHostsData(layouts)
             }, nextProps.autoRefresh)
           }
 
-          if (this.state.activeCspTab === 'aws') {
+          if (activeCspTab === 'aws' || activeCspTab === 'gcp') {
             this.intervalID = window.setInterval(() => {
               this.fetchCspHostsData(layouts)
             }, nextProps.autoRefresh)
@@ -436,6 +490,7 @@ export class HostsPage extends PureComponent<Props, State> {
       ...getLocalStorageInfrastructure,
       hostsPage: {
         selectedAgent: this.state.selectedAgent,
+        selectedNamespace: this.state.selectedNamespace,
         activeCspTab: this.state.activeCspTab,
         focusedInstance: this.state.focusedInstance,
         focusedHost: this.state.focusedHost,
@@ -514,50 +569,45 @@ export class HostsPage extends PureComponent<Props, State> {
     const {
       cloudHostsObject,
       activeCspTab,
-      awsPageStatus,
+      cspPageStatus,
       isInstanceTypeModalVisible,
       instanceTypeLoading,
       focusedInstance,
+      selectedNamespace,
+      namespaceFilterItems,
     } = this.state
-    const cloudHostObject = cloudHostsObject[activeCspTab]
-
+    const cloudHostObject = cloudHostsObject
     let cloudHosts = []
 
     _.reduce(
       _.values(cloudHostObject),
-      (_before, current) => {
-        _.reduce(
-          _.values(current),
-          (__before, cCurrent) => {
-            cloudHosts.push(cCurrent)
-
-            return false
-          },
-          {}
-        )
-
+      (__before, cCurrent) => {
+        cloudHosts.push(cCurrent)
         return false
       },
       {}
     )
-
     return (
       <>
-        <InstanceTypeModal
-          visible={isInstanceTypeModalVisible}
-          status={instanceTypeLoading}
-          message={this.renderInstanceTypeModal}
-          onCancel={() => {
-            this.setState({
-              isInstanceTypeModalVisible: false,
-            })
-          }}
-        />
+        {activeCspTab === 'aws' && (
+          <InstanceTypeModal
+            visible={isInstanceTypeModalVisible}
+            status={instanceTypeLoading}
+            message={this.renderInstanceTypeModal}
+            onCancel={() => {
+              this.setState({
+                isInstanceTypeModalVisible: false,
+              })
+            }}
+          />
+        )}
         <CspHostsTable
           source={source}
           cloudHosts={cloudHosts}
-          providerRegions={_.keys(cloudHostObject)}
-          awsPageStatus={awsPageStatus}
+          namespaceFilterItems={namespaceFilterItems}
+          cspPageStatus={cspPageStatus}
+          getHandleOnChoose={this.getHandleOnChooseNamespace}
+          selectedNamespace={selectedNamespace}
           focusedInstance={focusedInstance}
           onClickTableRow={this.handleClickCspTableRow}
           tableTitle={this.tableTitle}
@@ -594,13 +644,13 @@ export class HostsPage extends PureComponent<Props, State> {
 
   private handleInstanceTypeModal = async (
     provider: string,
-    region: string,
+    namespace: string,
     type: string
   ) => {
     let accessInfo = _.find(this.state.cloudAccessInfos, cloudAccessInfo => {
       return (
         cloudAccessInfo.provider === provider &&
-        cloudAccessInfo.region === region
+        cloudAccessInfo.namespace === namespace
       )
     })
     const {secretkey} = accessInfo
@@ -770,61 +820,66 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   private getFirstCloudHost = (cloudHostsObject: CloudHosts): Instance => {
-    let firstHost = {
+    let firstHost: Instance = {
       provider: null,
-      region: null,
       instanceid: null,
       instancename: null,
+      namespace: null,
     }
+
+    const {focusedInstance} = this.state
+
+    let firstInstance = focusedInstance
     try {
       if (!_.isEmpty(cloudHostsObject)) {
-        const firstProvider = _.keys(cloudHostsObject)[0]
-        const firstRegion = _.keys(cloudHostsObject[firstProvider])[0]
-        const firstInstance = _.keys(
-          cloudHostsObject[firstProvider][firstRegion]
-        )[0]
-        const {instanceId: firstInstanceId} = cloudHostsObject[firstProvider][
-          firstRegion
-        ][firstInstance]
-
+        const instancename = _.keys(cloudHostsObject)[0]
+        const {
+          instanceId,
+          csp: {provider, namespace},
+        } = cloudHostsObject[instancename]
         firstHost = {
           ...firstHost,
-          provider: firstProvider,
-          region: firstRegion,
-          instanceid: firstInstanceId,
-          instancename: firstInstance,
+          provider: provider,
+          instanceid: instanceId,
+          namespace: namespace,
+          instancename: instancename,
         }
 
-        return firstHost
+        firstInstance = firstHost
+        return firstInstance
       }
     } finally {
-      return firstHost
+      return firstInstance
     }
   }
 
-  private onSetFocusedInstance = (instance: Instance): void => {
-    this.setState({focusedInstance: {...instance}})
+  private onSetFocusedInstance = (focusedInstance: Instance): void => {
+    this.setState({focusedInstance: focusedInstance})
   }
 
   private onSetActiveCspTab(activeCspTab: string): void {
-    const {focusedInstance, cloudHostsObject} = this.state
-
-    if (activeCspTab === 'aws' && focusedInstance === null) {
-      const firstCloudHost = this.getFirstCloudHost(cloudHostsObject)
-      this.onSetFocusedInstance(firstCloudHost)
+    if (activeCspTab !== 'Host') {
       this.setState({
+        focusedInstance: null,
+        selectedNamespace: 'ALL',
+        selectedAgent: 'ALL',
         activeCspTab,
+        cspPageStatus: RemoteDataState.Loading,
         filteredLayouts: [],
       })
     } else {
       this.setState({
         activeCspTab,
+        hostsPageStatus: RemoteDataState.Loading,
       })
     }
   }
 
   private getHandleOnChoose = (selectItem: {text: string}) => {
     this.setState({selectedAgent: selectItem.text})
+  }
+  private getHandleOnChooseNamespace = (selectItem: {text: string}) => {
+    this.setState({selectedNamespace: selectItem.text})
   }
 
   private renderGraph = () => {
@@ -835,13 +890,14 @@ export class HostsPage extends PureComponent<Props, State> {
       focusedInstance,
       activeCspTab,
       selectedAgent,
+      agentFilterItems,
     } = this.state
     const layoutCells = getCells(filteredLayouts, source)
     const tempVars = generateForHosts(source)
 
     return (
       <>
-        {this.isUsingAWS && activeCspTab === 'aws' ? (
+        {activeCspTab !== 'Host' ? (
           <Page.Header>
             <Page.Header.Left>
               <></>
@@ -852,7 +908,7 @@ export class HostsPage extends PureComponent<Props, State> {
                   Get from <span style={{margin: '0 3px'}}>:</span>
                 </span>
                 <Dropdown
-                  items={['ALL', 'CloudWatch', 'Within instances']}
+                  items={agentFilterItems}
                   onChoose={this.getHandleOnChoose}
                   selected={selectedAgent}
                   className="dropdown-sm"
@@ -874,9 +930,7 @@ export class HostsPage extends PureComponent<Props, State> {
             timeRange={timeRange}
             manualRefresh={manualRefresh}
             host={activeCspTab === 'Host' ? focusedHost : ''}
-            instance={
-              this.isUsingAWS && activeCspTab === 'aws' ? focusedInstance : null
-            }
+            instance={activeCspTab !== 'Host' ? focusedInstance : null}
           />
         </Page.Contents>
       </>
@@ -927,7 +981,8 @@ export class HostsPage extends PureComponent<Props, State> {
         return (
           layout.app === 'system' ||
           layout.app === 'win_system' ||
-          layout.app === 'cloudwatch'
+          layout.app === 'cloudwatch' ||
+          layout.app === 'stackDriver'
         )
       })
       .sort((x, y) => {
@@ -1057,13 +1112,15 @@ export class HostsPage extends PureComponent<Props, State> {
     const {
       handleLoadCspsAsync,
       source,
-      links,
       handleGetAWSInstancesAsync,
+      handleGetGCPInstancesAsync,
       notify,
     } = this.props
 
     const dbResp: any[] = await handleLoadCspsAsync()
-    const newDbResp = _.filter(
+    const activeCspTab = this.state.activeCspTab
+
+    let newDbResp: any[] = _.filter(
       _.map(dbResp, resp => {
         const {secretkey} = resp
         const decryptedBytes = CryptoJS.AES.decrypt(
@@ -1079,32 +1136,72 @@ export class HostsPage extends PureComponent<Props, State> {
 
         return resp
       }),
+      //test Code Temporary variable assignment with aws
       filterData => {
-        if (
-          _.find(
-            this.props.links.addons,
-            addon => addon.name === filterData.provider
-          )
-        )
-          return filterData
+        if ('aws' === filterData.provider) return filterData
       }
     )
+    //test Code Temporary variable assignment with gcp
+    if (activeCspTab == 'gcp') {
+      newDbResp[0] = {
+        ...newDbResp[0],
+        provider: 'gcp',
+        namespace: 'ch-gcp-dev',
+      }
+      //test Code
+      newDbResp[1] = {
+        accesskey: 'AKIAQZTWFOPP6G3V5POJ',
+        id: '3',
+        links: {
+          self: '/cloudhub/v1/csp/2',
+        },
+        minion: 'cmp-dev08',
+        namespace: 'ch-gcp-dev1111',
+        organization: '4',
+        provider: 'gcp',
+        region: 'ap-northeast-2',
+        secretkey: 'V+nblZpkODDN+HD5UKhskfoilO3ATTyXbCyf+j1o',
+      }
+    } else {
+      newDbResp[0] = {
+        ...newDbResp[0],
+        namespace: 'ap-northeast-2',
+      }
+    }
+
+    let namespaceFilterItems = []
+    _.map(newDbResp, resp => {
+      if (resp.provider == activeCspTab) {
+        namespaceFilterItems.push(resp.namespace)
+      }
+    })
+
+    let agentFilterItems =
+      activeCspTab === 'aws'
+        ? ['ALL', 'CloudWatch', 'Within instances']
+        : ['ALL', 'StackDriver', 'Within instances']
 
     if (_.isEmpty(newDbResp)) {
       this.setState({
         cloudAccessInfos: [],
         cloudHostsObject: {},
         filteredLayouts: [],
-        awsPageStatus: RemoteDataState.Done,
+        cspPageStatus: RemoteDataState.Done,
       })
       return
     }
-
-    let getSaltCSPs = await handleGetAWSInstancesAsync(
-      this.salt.url,
-      this.salt.token,
-      newDbResp
-    )
+    let getSaltCSPs =
+      this.state.activeCspTab == 'aws'
+        ? await handleGetAWSInstancesAsync(
+            this.salt.url,
+            this.salt.token,
+            newDbResp
+          )
+        : await handleGetGCPInstancesAsync(
+            this.salt.url,
+            this.salt.token,
+            newDbResp
+          )
 
     let newCSPs = []
 
@@ -1114,7 +1211,8 @@ export class HostsPage extends PureComponent<Props, State> {
     )
 
     _.forEach(newDbResp, (accessCsp, index) => {
-      const {id, organization, provider, region} = accessCsp
+      const {id, organization, namespace} = accessCsp
+      const provider = this.state.activeCspTab
       let csp = []
 
       if (_.isEmpty(getSaltCSPs[index])) {
@@ -1127,14 +1225,17 @@ export class HostsPage extends PureComponent<Props, State> {
       )
         return
 
-      let cspRegion = []
+      let cspNaemspace = []
       _.forEach(getSaltCSPs[index], cspHost => {
         if (!cspHost) return
-        const host = {...cspHost, Csp: {id, organization, provider, region}}
-        cspRegion.push(host)
+        const host = {
+          ...cspHost,
+          Csp: {id, organization, provider, namespace},
+        }
+        cspNaemspace.push(host)
       })
 
-      csp.push(cspRegion)
+      csp.push(cspNaemspace)
 
       newCSPs.push(csp)
     })
@@ -1143,27 +1244,19 @@ export class HostsPage extends PureComponent<Props, State> {
       this.setState({
         cloudAccessInfos: [],
         cloudHostsObject: {},
-        // filteredLayouts: [],
-        awsPageStatus: RemoteDataState.Done,
+        cspPageStatus: RemoteDataState.Done,
       })
       return
     }
 
-    const envVars = await getEnv(links.environment)
-    const telegrafSystemInterval = getDeep<string>(
-      envVars,
-      'telegrafSystemInterval',
-      ''
-    )
     const hostsError = notifyUnableToGetHosts().message
     const tempVars = generateForHosts(source)
-
     try {
       const instancesObject = await getCpuAndLoadForInstances(
         source.links.proxy,
         source.telegraf,
-        telegrafSystemInterval,
         tempVars,
+        activeCspTab,
         newCSPs
       )
 
@@ -1176,30 +1269,34 @@ export class HostsPage extends PureComponent<Props, State> {
         instancesObject,
         layouts,
         source.telegraf,
-        tempVars
+        tempVars,
+        activeCspTab
       )
 
-      if (_.isEmpty(this.state.focusedInstance.provider)) {
+      if (_.isEmpty(this.state.focusedInstance)) {
         this.setState({
           focusedInstance: this.getFirstCloudHost(newCloudHostsObject),
           cloudAccessInfos: dbResp,
           cloudHostsObject: newCloudHostsObject,
-          awsPageStatus: RemoteDataState.Done,
+          cspPageStatus: RemoteDataState.Done,
+          namespaceFilterItems: namespaceFilterItems,
+          agentFilterItems: agentFilterItems,
         })
       } else {
         this.setState({
           cloudAccessInfos: dbResp,
           cloudHostsObject: newCloudHostsObject,
-          awsPageStatus: RemoteDataState.Done,
+          cspPageStatus: RemoteDataState.Done,
+          namespaceFilterItems: namespaceFilterItems,
+          agentFilterItems: agentFilterItems,
         })
       }
-
       return newCloudHostsObject
     } catch (error) {
       console.error(error)
       notify(notifyUnableToGetHosts())
       this.setState({
-        awsPageStatus: RemoteDataState.Error,
+        cspPageStatus: RemoteDataState.Error,
       })
     }
   }
@@ -1216,8 +1313,8 @@ export class HostsPage extends PureComponent<Props, State> {
     this.setState({focusedHost: hostName})
   }
 
-  private handleClickCspTableRow = (focusedInstance: Instance) => () => {
-    this.onSetFocusedInstance(focusedInstance)
+  private handleClickCspTableRow = (instance: Instance) => () => {
+    this.onSetFocusedInstance(instance)
   }
 }
 
@@ -1251,8 +1348,16 @@ const mdtp = dispatch => ({
     getAWSInstancesAsync,
     dispatch
   ),
+  handleGetGCPInstancesAsync: bindActionCreators(
+    getGCPInstancesAsync,
+    dispatch
+  ),
   handleGetAWSInstanceTypesAsync: bindActionCreators(
     getAWSInstanceTypesAsync,
+    dispatch
+  ),
+  handleGetGCPInstanceTypesAsync: bindActionCreators(
+    getGCPInstanceTypesAsync,
     dispatch
   ),
 })

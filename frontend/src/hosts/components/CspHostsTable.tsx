@@ -23,22 +23,24 @@ enum SortDirection {
 
 interface Instance {
   provider: string
-  region: string
+  namespace: string
   instanceid: string
   instancename: string
 }
 
 export interface Props {
   cloudHosts: CloudHost[]
-  providerRegions: string[]
-  awsPageStatus: RemoteDataState
+  namespaceFilterItems: string[]
+  selectedNamespace: string
+  cspPageStatus: RemoteDataState
   source: Source
   focusedInstance: Instance
+  getHandleOnChoose: (selectItem: {text: string}) => void
   onClickTableRow: HostsPage['handleClickCspTableRow']
   tableTitle: () => JSX.Element
   handleInstanceTypeModal: (
     provider: string,
-    region: string,
+    namespace: string,
     type: string
   ) => void
 }
@@ -47,8 +49,6 @@ interface State {
   searchTerm: string
   sortDirection: SortDirection
   sortKey: string
-  selected: string
-
   activeEditorTab: string
 }
 
@@ -72,7 +72,6 @@ class CspHostsTable extends PureComponent<Props, State> {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
       sortKey: 'name',
-      selected: 'All Region',
       activeEditorTab: 'snet',
     }
   }
@@ -142,8 +141,11 @@ class CspHostsTable extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {providerRegions} = this.props
-    const {selected} = this.state
+    const {
+      namespaceFilterItems,
+      selectedNamespace,
+      getHandleOnChoose,
+    } = this.props
 
     return (
       <div className="panel">
@@ -155,9 +157,9 @@ class CspHostsTable extends PureComponent<Props, State> {
           <div style={{display: 'flex'}}>
             <div style={{marginRight: '5px'}}>
               <Dropdown
-                items={['All Region', ...providerRegions]}
-                onChoose={this.getHandleOnChoose}
-                selected={selected}
+                items={['ALL', ...namespaceFilterItems]}
+                onChoose={getHandleOnChoose}
+                selected={selectedNamespace}
                 className="dropdown-sm"
               />
             </div>
@@ -172,12 +174,8 @@ class CspHostsTable extends PureComponent<Props, State> {
     )
   }
 
-  private getHandleOnChoose = (selectItem: {text: string}) => {
-    this.setState({selected: selectItem.text})
-  }
-
   private get CloudTableContents(): JSX.Element {
-    const {cloudHosts, awsPageStatus} = this.props
+    const {cloudHosts, cspPageStatus} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
     const sortedHosts = this.getSortedHosts(
       cloudHosts,
@@ -186,12 +184,12 @@ class CspHostsTable extends PureComponent<Props, State> {
       sortDirection
     )
     if (
-      awsPageStatus === RemoteDataState.Loading ||
-      awsPageStatus === RemoteDataState.NotStarted
+      cspPageStatus === RemoteDataState.Loading ||
+      cspPageStatus === RemoteDataState.NotStarted
     ) {
       return this.LoadingState
     }
-    if (awsPageStatus === RemoteDataState.Error) {
+    if (cspPageStatus === RemoteDataState.Error) {
       return this.ErrorState
     }
     if (cloudHosts.length === 0) {
@@ -210,8 +208,9 @@ class CspHostsTable extends PureComponent<Props, State> {
       focusedInstance,
       onClickTableRow,
       handleInstanceTypeModal,
+      selectedNamespace,
     } = this.props
-    const {sortKey, sortDirection, searchTerm, selected} = this.state
+    const {sortKey, sortDirection, searchTerm} = this.state
 
     let sortedHosts = this.getSortedHosts(
       cloudHosts,
@@ -220,8 +219,10 @@ class CspHostsTable extends PureComponent<Props, State> {
       sortDirection
     )
 
-    if (selected !== 'All Region') {
-      sortedHosts = [...sortedHosts.filter(h => h.csp.region === selected)]
+    if (selectedNamespace !== 'ALL') {
+      sortedHosts = [
+        ...sortedHosts.filter(h => h.csp.namespace === selectedNamespace),
+      ]
     }
 
     return (
@@ -299,11 +300,13 @@ class CspHostsTable extends PureComponent<Props, State> {
       <div className="hosts-table--thead">
         <div className="hosts-table--tr">
           <div
-            onClick={this.updateSort('region')}
-            className={this.sortableClasses('region')}
+            onClick={this.updateSort('namespace')}
+            className={this.sortableClasses('namespace')}
             style={{width: CloudRegionWidth}}
           >
-            Region
+            {this.props.focusedInstance.provider == 'gcp'
+              ? 'Project'
+              : 'Region'}
             <span className="icon caret-up" />
           </div>
           <div

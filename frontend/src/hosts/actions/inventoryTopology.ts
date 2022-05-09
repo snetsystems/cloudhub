@@ -17,9 +17,11 @@ import {
   deleteCloudServiceProviderAPI,
   paramsUpdateCSP,
   getAWSInstancesApi,
+  getGCPInstancesApi,
   getAWSSecurityApi,
   getAWSVolumeApi,
   getAWSInstanceTypesApi,
+  getGCPInstanceTypesApi,
 } from 'src/hosts/apis'
 
 // Types
@@ -30,6 +32,7 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {
   notifyIpmiConnectionFailed,
   notifygetAWSInstancesFailed,
+  notifygetGCPInstancesFailed,
 } from 'src/shared/copy/notifications'
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 
@@ -44,9 +47,11 @@ export enum ActionTypes {
   UpdateCloudServiceProvider = 'UPDATE_CLOUD_SERVICE_PROVIDER',
   DeleteCloudServiceProvider = 'DELETE_CLOUD_SERVICE_PROVIDER',
   GetAWSInstances = 'GET_AWS_INSTANCES',
+  GetGCPInstances = 'GET_GCP_INSTANCES',
   GetAWSSecurity = 'GET_AWS_SECURITY',
   GetAWSVolume = 'GET_AWS_VOLUME',
   GetAWSInstanceTypes = 'GET_AWS_INSTANCE_TYPES',
+  GetGCPInstanceTypes = 'GET_GCP_INSTANCE_TYPES',
 }
 
 export type Action =
@@ -60,9 +65,10 @@ export type Action =
   | UpdateCloudServiceProviderAction
   | DeleteCloudServiceProviderAction
   | GetAWSInstancesAction
+  | GetGCPInstancesAction
   | GetAWSSecurityAction
   | GetAWSInstanceTypesAction
-
+  | GetGCPInstanceTypesAction
 interface LoadInventoryTopologyAction {
   type: ActionTypes.LoadInventoryTopology
 }
@@ -290,6 +296,16 @@ export const getAWSInstancesAction = (): GetAWSInstancesAction => {
   }
 }
 
+interface GetGCPInstancesAction {
+  type: ActionTypes.GetGCPInstances
+}
+
+export const getGCPInstancesAction = (): GetGCPInstancesAction => {
+  return {
+    type: ActionTypes.GetGCPInstances,
+  }
+}
+
 interface GetAWSSecurityAction {
   type: ActionTypes.GetAWSSecurity
 }
@@ -320,12 +336,24 @@ export const getAWSInstanceTypesAction = (): GetAWSInstanceTypesAction => {
   }
 }
 
+interface GetGCPInstanceTypesAction {
+  type: ActionTypes.GetGCPInstanceTypes
+}
+
+export const getGCPInstanceTypesAction = (): GetGCPInstanceTypesAction => {
+  return {
+    type: ActionTypes.GetGCPInstanceTypes,
+  }
+}
+
 export const loadCloudServiceProvidersAsync = () => async (
   dispatch: Dispatch<any>
 ) => {
   try {
     const data = await loadCloudServiceProvidersAPI()
-    return data
+    //Test Code add nameSpace Key
+    const tmpData = [{...data[0], namespace: data[0].region}]
+    return tmpData
   } catch (error) {
     dispatch(errorThrown(error))
     throw error
@@ -420,6 +448,49 @@ export const getAWSInstancesAsync = (
   }
 }
 
+export const getGCPInstancesAsync = (
+  pUrl: string,
+  pToken: string,
+  pCsps: any[]
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const gcpInstances = await getGCPInstancesApi(pUrl, pToken, pCsps)
+    let convertedGcpInstances = {return: []}
+
+    _.map(gcpInstances.return, item => {
+      _.reduce(
+        item,
+        (_before, current, namesapce) => {
+          let GcpInstancesItem = [null]
+          Object.keys(current.gce).forEach((key, _) => {
+            GcpInstancesItem.push(current.gce[key])
+          })
+          convertedGcpInstances.return.push({
+            [namesapce]: GcpInstancesItem,
+          })
+          return false
+        },
+        {}
+      )
+    })
+
+    _.forEach(convertedGcpInstances.return, (host, index) => {
+      if (!_.isArray(_.values(host)[0])) {
+        const {provider, region} = pCsps[index]
+        const error = new Error(
+          `<br/>PROVIDER: ${provider} <br/>REGION: ${region}`
+        )
+        dispatch(notifyAction(notifygetGCPInstancesFailed(error)))
+      }
+    })
+
+    dispatch(getGCPInstancesAction())
+    return convertedGcpInstances
+  } catch (error) {
+    dispatch(errorThrown(error))
+  }
+}
+
 export const getAWSSecurityAsync = (
   pUrl: string,
   pToken: string,
@@ -469,6 +540,28 @@ export const getAWSInstanceTypesAsync = (
     )
 
     dispatch(getAWSInstanceTypesAction())
+
+    return awsSecurity
+  } catch (error) {
+    dispatch(errorThrown(error))
+  }
+}
+
+export const getGCPInstanceTypesAsync = (
+  pUrl: string,
+  pToken: string,
+  pCsps: any[],
+  pTypes: string[]
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const awsSecurity = await getGCPInstanceTypesApi(
+      pUrl,
+      pToken,
+      pCsps,
+      pTypes
+    )
+
+    dispatch(getGCPInstanceTypesAction())
 
     return awsSecurity
   } catch (error) {

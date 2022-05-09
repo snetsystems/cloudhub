@@ -14,7 +14,7 @@ import classNames from 'classnames'
 
 interface Instance {
   provider: string
-  region: string
+  namespace: string
   instanceid: string
   instancename: string
 }
@@ -25,7 +25,7 @@ interface Props {
   onClickTableRow: HostsPage['handleClickCspTableRow']
   handleInstanceTypeModal: (
     provider: string,
-    region: string,
+    namespace: string,
     type: string
   ) => void
 }
@@ -77,13 +77,13 @@ const CspHostRow: FunctionComponent<Props> = ({
       className={focusedClasses()}
       onClick={onClickTableRow({
         provider: csp.provider,
-        region: csp.region,
+        namespace: csp.namespace,
         instanceid: instanceId,
         instancename: name,
       })}
     >
       <div className="hosts-table--td" style={{width: CloudRegionWidth}}>
-        {csp.region}
+        {csp.namespace}
       </div>
       <div className="hosts-table--td" style={{width: CloudNameWidth}}>
         <Link to={`/sources/${sourceID}/infrastructure/details/${name}`}>
@@ -112,15 +112,19 @@ const CspHostRow: FunctionComponent<Props> = ({
         style={{width: CloudInstanceTypeWidth}}
         className="monotype hosts-table--td"
       >
-        <span
-          className={`hosts-table-item`}
-          onClick={e => {
-            e.stopPropagation()
-            handleInstanceTypeModal(csp.provider, csp.region, instanceType)
-          }}
-        >
-          {instanceType}
-        </span>
+        {csp.provider == 'aws' ? (
+          <span
+            className={`hosts-table-item`}
+            onClick={e => {
+              e.stopPropagation()
+              handleInstanceTypeModal(csp.provider, csp.namespace, instanceType)
+            }}
+          >
+            {instanceType}
+          </span>
+        ) : (
+          <span>{instanceType}</span>
+        )}
       </div>
       <div
         style={{width: CloudAppsWidth}}

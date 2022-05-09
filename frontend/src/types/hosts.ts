@@ -86,7 +86,7 @@ export interface CloudHost {
   csp: {
     id: string
     organization: string
-    region: string
+    namespace: string
     provider: CloudServiceProvider
   }
 }
