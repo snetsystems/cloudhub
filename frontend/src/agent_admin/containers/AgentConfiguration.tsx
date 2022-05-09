@@ -65,6 +65,7 @@ import {
   RemoteDataState,
   Notification,
   NotificationFunc,
+  DropdownItem,
 } from 'src/types'
 import {MinionsObject, SortDirection} from 'src/agent_admin/type'
 
@@ -127,11 +128,17 @@ interface Props {
   runLocalServiceTestTelegraf: (
     saltMasterUrl: string,
     saltMasterToken: string,
-    minion: string
+    minion: string,
+    selectedInputPlugin?: string
   ) => Promise<AxiosResponse>
 }
 
 interface State {
+  inputPluginTestStatus: RemoteDataState
+  existingInputPluginList: DropdownItem[]
+  selectedInputPlugin: string
+  isOpenPlugin: boolean
+  isDisabledPlugins: boolean
   configPageStatus: RemoteDataState
   measurementsStatus: RemoteDataState
   collectorConfigStatus: RemoteDataState
@@ -175,6 +182,11 @@ export class AgentConfiguration extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
     this.state = {
+      inputPluginTestStatus: RemoteDataState.NotStarted,
+      existingInputPluginList: [{text: 'None'}],
+      selectedInputPlugin: 'None',
+      isOpenPlugin: false,
+      isDisabledPlugins: false,
       configPageStatus: RemoteDataState.NotStarted,
       measurementsStatus: RemoteDataState.NotStarted,
       collectorConfigStatus: RemoteDataState.NotStarted,
@@ -369,6 +381,10 @@ export class AgentConfiguration extends PureComponent<Props, State> {
         }
 
         this.setState({
+          existingInputPluginList: this.getExistingInputPluginList([
+            'None',
+            ..._.keys(configObj.inputs),
+          ]),
           configScript: TOML.stringify(configObj),
           isGetLocalStorage: isChanged,
           isApplyBtnDisabled: isChanged ? !isChanged : true,
@@ -516,7 +532,40 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       })
   }
 
-  public onClickTestCall = () => {
+  handleSelectPlugin = (newPlugin: DropdownItem) => {
+    const newPluginName = newPlugin.text === undefined ? 'None' : newPlugin.text
+
+    this.setState({selectedInputPlugin: newPluginName})
+  }
+
+  onClickInputPluginsDropdown = async () => {
+    const {isOpenPlugin} = this.state
+
+    if (!isOpenPlugin) {
+      this.setState({isDisabledPlugins: true})
+      this.handleOpenPluginsDropdown()
+      this.setState({isDisabledPlugins: false})
+    } else {
+      this.handleCloseInputPluginsDropdown()
+    }
+  }
+
+  handleOpenPluginsDropdown = () => {
+    this.setState({isOpenPlugin: true})
+  }
+
+  handleCloseInputPluginsDropdown = () => {
+    this.setState({isOpenPlugin: false})
+  }
+
+  handleCloseConsoleModal = () => {
+    this.setState({
+      isConsoleModalVisible: !this.state.isConsoleModalVisible,
+      selectedInputPlugin: 'None',
+    })
+  }
+
+  public onClickShowConsoleModal = () => {
     const {
       notify,
       saltMasterUrl,
@@ -524,9 +573,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       organizations,
       me,
       getLocalFileWrite,
-      runLocalServiceTestTelegraf,
       minionsObject,
-      handleGetMinionKeyListAll,
     } = this.props
     const {focusedHost, configScript} = this.state
     let {
@@ -538,12 +585,15 @@ export class AgentConfiguration extends PureComponent<Props, State> {
     } = this.state
 
     let isCheckDone = true
+    let existingInputPlugins
+
     try {
       if (!configScript) return
 
       const configObj = TOML.parse(configScript)
       const influxdbs: any = _.get(configObj, 'outputs.influxdb')
       const agent: any = _.get(configObj, 'agent')
+      existingInputPlugins = configObj.inputs
 
       influxdbs.forEach((db: any) => {
         if (me.superAdmin) {
@@ -576,8 +626,8 @@ export class AgentConfiguration extends PureComponent<Props, State> {
     if (!isCheckDone) return
 
     this.setState({
-      configPageStatus: RemoteDataState.Loading,
-      collectorConfigStatus: RemoteDataState.Loading,
+      inputPluginTestStatus: RemoteDataState.Loading,
+      isConsoleModalVisible: true,
       isConsoleModalMessage: '',
     })
 
@@ -594,39 +644,57 @@ export class AgentConfiguration extends PureComponent<Props, State> {
         isGetLocalStorage = false
         responseMessage = data.return[0][focusedHost]
 
-        const getLocalServiceTestTelegrafPromise = runLocalServiceTestTelegraf(
-          saltMasterUrl,
-          saltMasterToken,
-          focusedHost
-        )
+        const checkData = this.checkData({
+          isModalCall,
+          isApplyBtnDisabled,
+          isGetLocalStorage,
+          minionsObject,
+          isConsoleModalVisible,
+        })
 
-        getLocalServiceTestTelegrafPromise
-          .then((data): void => {
-            const checkData = this.checkData({
-              isModalCall,
-              isApplyBtnDisabled,
-              isGetLocalStorage,
-              minionsObject,
-              isConsoleModalVisible,
-            })
+        this.setState({
+          existingInputPluginList: this.getExistingInputPluginList([
+            'None',
+            ..._.keys(existingInputPlugins),
+          ]),
+          isModalCall: checkData.isModalCall,
+          isGetLocalStorage: checkData.isGetLocalStorage,
+          isCollectorInstalled: checkData.isCollectorInstalled,
+          responseMessage,
+          inputPluginTestStatus: RemoteDataState.Done,
+        })
+      })
+      .catch(e => {
+        console.error(e)
+      })
+  }
 
-            this.setState({
-              isModalCall: checkData.isModalCall,
-              isGetLocalStorage: checkData.isGetLocalStorage,
-              isCollectorInstalled: checkData.isCollectorInstalled,
-              responseMessage,
-              configPageStatus: RemoteDataState.Done,
-              collectorConfigStatus: RemoteDataState.Done,
-              measurementsStatus: RemoteDataState.Done,
-              isConsoleModalVisible: true,
-              isConsoleModalMessage: data['return'][0][focusedHost],
-            })
+  public onClickTestCall = () => {
+    const {
+      saltMasterUrl,
+      saltMasterToken,
+      runLocalServiceTestTelegraf,
+    } = this.props
+    const {selectedInputPlugin, focusedHost} = this.state
 
-            handleGetMinionKeyListAll()
-          })
-          .catch(e => {
-            console.error(e)
-          })
+    const getLocalServiceTestTelegrafPromise = runLocalServiceTestTelegraf(
+      saltMasterUrl,
+      saltMasterToken,
+      focusedHost,
+      selectedInputPlugin
+    )
+
+    this.setState({
+      inputPluginTestStatus: RemoteDataState.Loading,
+      isConsoleModalMessage: '',
+    })
+
+    getLocalServiceTestTelegrafPromise
+      .then((data): void => {
+        this.setState({
+          inputPluginTestStatus: RemoteDataState.Done,
+          isConsoleModalMessage: data['return'][0][focusedHost],
+        })
       })
       .catch(e => {
         console.error(e)
@@ -659,6 +727,16 @@ export class AgentConfiguration extends PureComponent<Props, State> {
 
   render() {
     const {isUserAuthorized} = this.props
+    const {
+      existingInputPluginList,
+      inputPluginTestStatus,
+      isOpenPlugin,
+      isDisabledPlugins,
+      selectedInputPlugin,
+      isConsoleModalVisible,
+      isConsoleModalMessage,
+    } = this.state
+
     return (
       <>
         {isUserAuthorized ? (
@@ -685,15 +763,22 @@ export class AgentConfiguration extends PureComponent<Props, State> {
             />
             <div className="agent-console">
               <AgentConfigConsoleModal
-                visible={this.state.isConsoleModalVisible}
-                headingTitle={'Console'}
-                message={this.state.isConsoleModalMessage}
+                inputPluginTestStatus={inputPluginTestStatus}
+                onClickTestCall={this.onClickTestCall}
+                existingInputPluginList={existingInputPluginList}
+                isOpenPlugin={isOpenPlugin}
+                isDisabledPlugins={isDisabledPlugins}
+                onChoose={this.handleSelectPlugin}
+                onClickInputPluginsDropdown={this.onClickInputPluginsDropdown}
+                onCloseInputPluginsDropdown={
+                  this.handleCloseInputPluginsDropdown
+                }
+                selectedInputPlugin={selectedInputPlugin}
+                visible={isConsoleModalVisible}
+                headingTitle={'Agent Plugin Test'}
+                message={isConsoleModalMessage}
                 cancelText={'Close'}
-                onClose={() => {
-                  this.setState({
-                    isConsoleModalVisible: !this.state.isConsoleModalVisible,
-                  })
-                }}
+                onClose={this.handleCloseConsoleModal}
               />
             </div>
             <AgentConfigPlugInModal
@@ -984,6 +1069,12 @@ export class AgentConfiguration extends PureComponent<Props, State> {
     )
   }
 
+  public getExistingInputPluginList(pluginList: string[]): DropdownItem[] {
+    return _.map(pluginList, plugin => ({
+      text: plugin,
+    }))
+  }
+
   public getSortedPlugin = memoize(
     (
       inputPluginList: Plugin[],
@@ -1121,7 +1212,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
             <div>
               <button
                 className="btn btn-inline_block btn-default agent--btn btn-primary"
-                onClick={this.onClickTestCall}
+                onClick={this.onClickShowConsoleModal}
                 disabled={_.isEmpty(configScript) ? true : false}
               >
                 TEST
