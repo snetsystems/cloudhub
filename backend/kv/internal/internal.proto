@@ -274,7 +274,7 @@ message Topology {
 message CSP {
 	string ID           = 1; // ID is the unique ID of this CSP
 	string Provider     = 2; // Cloud Solution Provider Name
-	string Region       = 3; // CSP access region
+	string NameSpace    = 3; // CSP access namespace
 	string AccessKey    = 4; // CSP access key
 	string SecretKey    = 5; // CSP access secret key
 	string Organization = 6; // Organization is the organization ID that resource belongs to
