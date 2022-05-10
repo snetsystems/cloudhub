@@ -17,11 +17,14 @@ import {
   deleteCloudServiceProviderAPI,
   paramsUpdateCSP,
   getAWSInstancesApi,
-  getGCPInstancesApi,
   getAWSSecurityApi,
   getAWSVolumeApi,
   getAWSInstanceTypesApi,
   getGCPInstanceTypesApi,
+  getCSPListInstancesApi,
+  getGCPInstancesApi,
+  fileWriteConfigApi,
+  fileWriteKeyApi,
 } from 'src/hosts/apis'
 
 // Types
@@ -31,10 +34,12 @@ import {Links, Ipmi, IpmiCell} from 'src/types'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {
   notifyIpmiConnectionFailed,
+  notifygetCSPListInstancesFailed,
   notifygetAWSInstancesFailed,
   notifygetGCPInstancesFailed,
 } from 'src/shared/copy/notifications'
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
+import {CloudServiceProvider, CSPFileWriteParam} from '../types'
 
 export enum ActionTypes {
   LoadInventoryTopology = 'LOAD_INVENTORY_TOPOLOGY',
@@ -46,12 +51,15 @@ export enum ActionTypes {
   CreateCloudServiceProvider = 'CREATE_CLOUD_SERVICE_PROVIDER',
   UpdateCloudServiceProvider = 'UPDATE_CLOUD_SERVICE_PROVIDER',
   DeleteCloudServiceProvider = 'DELETE_CLOUD_SERVICE_PROVIDER',
+  GetCSPListInstances = 'GET_CSP_LIST_INSTANCES',
   GetAWSInstances = 'GET_AWS_INSTANCES',
   GetGCPInstances = 'GET_GCP_INSTANCES',
   GetAWSSecurity = 'GET_AWS_SECURITY',
   GetAWSVolume = 'GET_AWS_VOLUME',
   GetAWSInstanceTypes = 'GET_AWS_INSTANCE_TYPES',
   GetGCPInstanceTypes = 'GET_GCP_INSTANCE_TYPES',
+  WriteCSPConfig = 'WRITE_CSP_CONFIG',
+  WriteCSPKey = 'WRITE_CSP_KEY',
 }
 
 export type Action =
@@ -64,11 +72,14 @@ export type Action =
   | CreateCloudServiceProviderAction
   | UpdateCloudServiceProviderAction
   | DeleteCloudServiceProviderAction
+  | GetCSPListInstancesAction
   | GetAWSInstancesAction
   | GetGCPInstancesAction
   | GetAWSSecurityAction
   | GetAWSInstanceTypesAction
   | GetGCPInstanceTypesAction
+  | WriteCSPConfigAction
+  | WriteCSPKeyAction
 interface LoadInventoryTopologyAction {
   type: ActionTypes.LoadInventoryTopology
 }
@@ -286,6 +297,16 @@ export const deleteCloudServiceProviderAction = (): DeleteCloudServiceProviderAc
     type: ActionTypes.DeleteCloudServiceProvider,
   }
 }
+
+interface GetCSPListInstancesAction {
+  type: ActionTypes.GetCSPListInstances
+}
+
+export const getCSPListInstancesAction = (): GetCSPListInstancesAction => {
+  return {
+    type: ActionTypes.GetCSPListInstances,
+  }
+}
 interface GetAWSInstancesAction {
   type: ActionTypes.GetAWSInstances
 }
@@ -346,14 +367,33 @@ export const getGCPInstanceTypesAction = (): GetGCPInstanceTypesAction => {
   }
 }
 
+interface WriteCSPConfigAction {
+  type: ActionTypes.WriteCSPConfig
+}
+
+export const writeCSPConfigAction = (): WriteCSPConfigAction => {
+  return {
+    type: ActionTypes.WriteCSPConfig,
+  }
+}
+
+interface WriteCSPKeyAction {
+  type: ActionTypes.WriteCSPKey
+}
+
+export const writeCSPKeyAction = (): WriteCSPKeyAction => {
+  return {
+    type: ActionTypes.WriteCSPKey,
+  }
+}
+
 export const loadCloudServiceProvidersAsync = () => async (
   dispatch: Dispatch<any>
 ) => {
   try {
     const data = await loadCloudServiceProvidersAPI()
-    //Test Code add nameSpace Key
-    const tmpData = [{...data[0], namespace: data[0].region}]
-    return tmpData
+
+    return data
   } catch (error) {
     dispatch(errorThrown(error))
     throw error
@@ -374,17 +414,15 @@ export const loadCloudServiceProviderAsync = (id: string) => async (
 }
 
 export const createCloudServiceProviderAsync = ({
-  minion,
   provider,
-  region,
+  namespace,
   accesskey,
   secretkey,
 }) => async (dispatch: Dispatch<any>) => {
   try {
     const data = await createCloudServiceProviderAPI({
-      minion,
       provider,
-      region,
+      namespace,
       accesskey,
       secretkey,
     })
@@ -423,6 +461,42 @@ export const deleteCloudServiceProviderAsync = (id: string) => async (
   }
 }
 
+export const getCSPListInstancesAsync = (
+  pUrl: string,
+  pToken: string,
+  pCsps: any[]
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const cspInstances = await getCSPListInstancesApi(pUrl, pToken, pCsps)
+
+    _.forEach(cspInstances.return, (host, index) => {
+      if (pCsps[index].provider === CloudServiceProvider.AWS) {
+        if (!_.isArray(_.values(host[0]))) {
+          const {provider, namespace} = pCsps[index]
+          const error = new Error(
+            `<br/>PROVIDER: ${provider} <br/>REGION: ${namespace}`
+          )
+          dispatch(notifyAction(notifygetCSPListInstancesFailed(error)))
+        }
+      } else if (pCsps[index].provider === CloudServiceProvider.GCP) {
+        if (!_.isObject(host)) {
+          const {provider, namespace} = pCsps[index]
+          const error = new Error(
+            `<br/>PROVIDER: ${provider} <br/>PRPJECT: ${namespace}`
+          )
+          dispatch(notifyAction(notifygetCSPListInstancesFailed(error)))
+        }
+      }
+    })
+
+    dispatch(getCSPListInstancesAction())
+
+    return cspInstances
+  } catch (error) {
+    dispatch(errorThrown(error))
+  }
+}
+
 export const getAWSInstancesAsync = (
   pUrl: string,
   pToken: string,
@@ -432,16 +506,17 @@ export const getAWSInstancesAsync = (
     const awsInstances = await getAWSInstancesApi(pUrl, pToken, pCsps)
 
     _.forEach(awsInstances.return, (host, index) => {
-      if (!_.isArray(_.values(host)[0])) {
-        const {provider, region} = pCsps[index]
+      if (!_.isArray(_.values(host[0]))) {
+        const {provider, namespace} = pCsps[index]
         const error = new Error(
-          `<br/>PROVIDER: ${provider} <br/>REGION: ${region}`
+          `<br/>PROVIDER: ${provider} <br/>REGION: ${namespace}`
         )
         dispatch(notifyAction(notifygetAWSInstancesFailed(error)))
       }
     })
 
     dispatch(getAWSInstancesAction())
+
     return awsInstances
   } catch (error) {
     dispatch(errorThrown(error))
@@ -476,9 +551,9 @@ export const getGCPInstancesAsync = (
 
     _.forEach(convertedGcpInstances.return, (host, index) => {
       if (!_.isArray(_.values(host)[0])) {
-        const {provider, region} = pCsps[index]
+        const {provider, namespace} = pCsps[index]
         const error = new Error(
-          `<br/>PROVIDER: ${provider} <br/>REGION: ${region}`
+          `<br/>PROVIDER: ${provider} <br/>PROJECT: ${namespace}`
         )
         dispatch(notifyAction(notifygetGCPInstancesFailed(error)))
       }
@@ -564,6 +639,38 @@ export const getGCPInstanceTypesAsync = (
     dispatch(getGCPInstanceTypesAction())
 
     return awsSecurity
+  } catch (error) {
+    dispatch(errorThrown(error))
+  }
+}
+
+export const writeCSPConfigAsync = (
+  pUrl: string,
+  pToken: string,
+  pFileWrite: CSPFileWriteParam
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const config = await fileWriteConfigApi(pUrl, pToken, pFileWrite)
+
+    dispatch(writeCSPConfigAction())
+
+    return config
+  } catch (error) {
+    dispatch(errorThrown(error))
+  }
+}
+
+export const writeCSPKeyAsync = (
+  pUrl: string,
+  pToken: string,
+  pFileWrite: CSPFileWriteParam
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const key = await fileWriteKeyApi(pUrl, pToken, pFileWrite)
+
+    dispatch(writeCSPKeyAction())
+
+    return key
   } catch (error) {
     dispatch(errorThrown(error))
   }

@@ -1,7 +1,6 @@
 import _ from 'lodash'
 import {AxiosResponse} from 'axios'
 import yaml from 'js-yaml'
-import fs from 'fs'
 import {getDeep} from 'src/utils/wrappers'
 
 import {proxy} from 'src/utils/queryUrlGenerator'
@@ -14,7 +13,7 @@ import {
 // Types
 import {Template, Layout, Source, Host, Links} from 'src/types'
 import {HostNames, HostName, Ipmi, IpmiCell} from 'src/types/hosts'
-import {CloudServiceProvider} from 'src/hosts/types'
+import {CloudServiceProvider, CSPFileWriteParam} from 'src/hosts/types'
 import {DashboardSwitcherLinks} from '../../types/dashboards'
 
 // APIs
@@ -30,6 +29,9 @@ import {
   getLocalBotoSecgroupGetAllSecurityGroups,
   getLocalBoto2DescribeVolumes,
   getLocalBoto2DescribeInstanceTypes,
+  getCSPListInstances,
+  getRunnerCloudActionListInstances,
+  getCSPRunnerFileWrite,
 } from 'src/shared/apis/saltStack'
 import {getCpuAndLoadForK8s} from 'src/hosts/apis/kubernetes'
 
@@ -919,17 +921,15 @@ export const loadCloudServiceProviderAPI = async (id: string) => {
 }
 
 export const createCloudServiceProviderAPI = async ({
-  minion,
   provider,
-  region,
+  namespace,
   accesskey,
   secretkey,
 }) => {
   try {
     const {data} = await createCloudServiceProvider({
-      minion,
       provider,
-      region,
+      namespace,
       accesskey,
       secretkey,
     })
@@ -987,17 +987,15 @@ export const loadCloudServiceProvider = async (url: string) => {
 }
 
 export interface paramsCreateCSP {
-  minion: string
   provider: CloudServiceProvider
-  region: string
+  namespace: string
   accesskey: string
   secretkey: string
 }
 
 export const createCloudServiceProvider = async ({
-  minion,
   provider,
-  region,
+  namespace,
   accesskey,
   secretkey,
 }: paramsCreateCSP) => {
@@ -1008,7 +1006,12 @@ export const createCloudServiceProvider = async ({
     return await AJAX({
       url: `/cloudhub/v1/csp`,
       method: 'POST',
-      data: {minion, provider: newProvider, region, accesskey, secretkey},
+      data: {
+        provider: newProvider,
+        namespace: namespace,
+        accesskey,
+        secretkey,
+      },
     })
   } catch (error) {
     console.error(error)
@@ -1018,15 +1021,13 @@ export const createCloudServiceProvider = async ({
 
 export interface paramsUpdateCSP {
   id: string
-  minion: string
-  region: string
+  namespace: string
   accesskey: string
   secretkey: string
 }
 
 export const updateCloudServiceProvider = async ({
   id,
-  minion,
   accesskey,
   secretkey,
 }: paramsUpdateCSP) => {
@@ -1034,7 +1035,7 @@ export const updateCloudServiceProvider = async ({
     return await AJAX({
       url: `/cloudhub/v1/csp/${id}`,
       method: 'PATCH',
-      data: {minion, accesskey, secretkey},
+      data: {accesskey, secretkey},
     })
   } catch (error) {
     console.error(error)
@@ -1280,6 +1281,21 @@ export const getCpuAndLoadForInstances = async (
   return providers
 }
 
+export const getCSPListInstancesApi = async (
+  pUrl: string,
+  pToken: string,
+  pCsps: any[]
+) => {
+  try {
+    const info = await getCSPListInstances(pUrl, pToken, pCsps)
+    const cspHost = yaml.safeLoad(info.data)
+
+    return cspHost
+  } catch (error) {
+    throw error
+  }
+}
+
 export const getAWSInstancesApi = async (
   pUrl: string,
   pToken: string,
@@ -1301,20 +1317,11 @@ export const getGCPInstancesApi = async (
   pCsps: any[]
 ) => {
   try {
-    const info = await getLocalBotoEc2DescribeInstances(pUrl, pToken, pCsps)
-
-    //Test Code dummyData with gcp
-    const dummyData = yaml.safeLoad(
-      fs.readFileSync(
-        '../frontend/test/dummy_data/gceListNodesFull.yaml',
-        'utf8'
-      )
-    )
-    const cspDummyHost = dummyData
+    const info = await getRunnerCloudActionListInstances(pUrl, pToken, pCsps)
 
     const cspHost = yaml.safeLoad(info.data)
 
-    return cspDummyHost
+    return cspHost
   } catch (error) {
     throw error
   }
@@ -1399,6 +1406,34 @@ export const getGCPInstanceTypesApi = async (
     const cspHost = yaml.safeLoad(info.data)
 
     return cspHost
+  } catch (error) {
+    throw error
+  }
+}
+
+export const fileWriteConfigApi = async (
+  pUrl: string,
+  pToken: string,
+  pFileWrite: CSPFileWriteParam
+) => {
+  try {
+    const info = await getCSPRunnerFileWrite(pUrl, pToken, pFileWrite)
+
+    return info
+  } catch (error) {
+    throw error
+  }
+}
+
+export const fileWriteKeyApi = async (
+  pUrl: string,
+  pToken: string,
+  pFileWrite: CSPFileWriteParam
+) => {
+  try {
+    const info = await getCSPRunnerFileWrite(pUrl, pToken, pFileWrite)
+
+    return info
   } catch (error) {
     throw error
   }

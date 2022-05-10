@@ -4615,25 +4615,20 @@
           {
             "name": "provider",
             "in": "body",
-            "description": "Cloud Solution Provider Name",
             "schema": {
               "$ref": "#/definitions/CSPReq"
-            },
-            "required": true
+            }
           },
           {
-            "name": "region",
+            "name": "namespace",
             "in": "body",
-            "description": "CSP access region",
             "schema": {
               "$ref": "#/definitions/CSPReq"
-            },
-            "required": true
+            }
           },
           {
             "name": "accesskey",
             "in": "body",
-            "description": "CSP access key",
             "schema": {
               "$ref": "#/definitions/CSPReq"
             },
@@ -4642,7 +4637,6 @@
           {
             "name": "secretkey",
             "in": "body",
-            "description": "CSP access secret key",
             "schema": {
               "$ref": "#/definitions/CSPReq"
             },
@@ -4651,7 +4645,6 @@
           {
             "name": "minion",
             "in": "body",
-            "description": "target salt minion",
             "schema": {
               "$ref": "#/definitions/CSPReq"
             },
@@ -4753,40 +4746,32 @@
             "required": true
           },
           {
-            "name": "region",
+            "name": "namespace",
             "in": "body",
-            "description": "CSP access region",
             "schema": {
               "$ref": "#/definitions/CSPPatch"
-            },
-            "required": false
+            }
           },
           {
             "name": "accesskey",
             "in": "body",
-            "description": "CSP access key",
             "schema": {
               "$ref": "#/definitions/CSPPatch"
-            },
-            "required": false
+            }
           },
           {
             "name": "secretkey",
             "in": "body",
-            "description": "CSP access secret key",
             "schema": {
               "$ref": "#/definitions/CSPPatch"
-            },
-            "required": false
+            }
           },
           {
             "name": "minion",
             "in": "body",
-            "description": "target salt minion",
             "schema": {
               "$ref": "#/definitions/CSPPatch"
-            },
-            "required": false
+            }
           }
         ],
         "responses": {
@@ -8199,11 +8184,11 @@
       "properties": {
         "provider": {
           "type": "string",
-          "description": "Cloud Solution Provider Name"
+          "description": "Cloud Service Provider Name"
         },
-        "region": {
+        "namespace": {
           "type": "string",
-          "description": "CSP access region"
+          "description": "CSP namespace: region(if aws) or projec id(if gcp)"
         },
         "accesskey": {
           "type": "string",
@@ -8215,13 +8200,13 @@
         },
         "minion": {
           "type": "string",
-          "description": "Target Salt Minion"
+          "description": "Target Salt Minion: Currently Not used"
         }
       },
-      "required": ["provider", "region", "accesskey", "secretkey", "minion"],
+      "required": ["provider", "namespace"],
       "example": {
         "provider": "AWS",
-        "region": "ap-northeast-2",
+        "namespace": "ap-northeast-2",
         "accesskey": "AABCCEEDSKDDLSSSDD",
         "secretkey": "kjdjd+kDDSQQWD+jdjwidsndbh",
         "minion": "minion01"
@@ -8231,9 +8216,9 @@
       "type": "object",
       "description": "CSP access information Patch",
       "properties": {
-        "region": {
+        "namespace": {
           "type": "string",
-          "description": "CSP access region"
+          "description": "CSP namespace: region(if aws) or projec id(if gcp)"
         },
         "accesskey": {
           "type": "string",
@@ -8245,11 +8230,11 @@
         },
         "minion": {
           "type": "string",
-          "description": "Target Salt Minion"
+          "description": "Target Salt Minion: Currently Not Used"
         }
       },
       "example": {
-        "region": "ap-northeast-2",
+        "namespace": "ap-northeast-2",
         "accesskey": "AABCCEEDSKDDLSSSDD",
         "secretkey": "kjdjd+kDDSQQWD+jdjwidsndbh",
         "minion": "minion01"
@@ -8266,11 +8251,11 @@
         },
         "provider": {
           "type": "string",
-          "description": "Cloud Solution Provider Name"
+          "description": "Cloud Service Provider Name"
         },
-        "region": {
+        "namespace": {
           "type": "string",
-          "description": "CSP access region"
+          "description": "CSP access namespace"
         },
         "accesskey": {
           "type": "string",
@@ -8287,25 +8272,16 @@
         },
         "minion": {
           "type": "string",
-          "description": "target salt minion",
+          "description": "target salt minion: Currently Not Used",
           "readOnly": true
         },
         "links": {"type": "string", "description": "self url"}
       },
-      "required": [
-        "id",
-        "provider",
-        "region",
-        "accesskey",
-        "secretkey",
-        "organization",
-        "minion",
-        "links"
-      ],
+      "required": ["id", "provider", "namespace", "organization", "links"],
       "example": {
         "id": "1",
         "provider": "AWS",
-        "region": "ap-northeast-2",
+        "namespace": "ap-northeast-2",
         "accesskey": "AABCCEEDSKDDLSSSDD",
         "secretkey": "kjdjd+kDDSQQWD+jdjwidsndbh",
         "organization": "2",

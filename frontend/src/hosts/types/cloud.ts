@@ -25,22 +25,16 @@ export interface CloudHost {
 export interface CloudHosts {
   [instanceName: string]: CloudHost
 }
-
-export interface getCSPAccessInfoParams {
-  provider: string
-  region: string
-  accesskey: string
-  secretkey: string
-}
-
 export interface CSPAccessObject {
   id: string
-  provider: string
-  region: string
+  minion: string
   accesskey: string
   secretkey: string
+  provider: string
+  namespace: string
   organization: string
-  links: {self: string}
+  links?: {self: string}
+  data?: any[]
 }
 
 export interface awsSecurity {
@@ -59,4 +53,10 @@ export interface awsVolume {
   encrypted: string
   volumeId: string
   volumeSize: number
+}
+
+export interface CSPFileWriteParam {
+  path: string
+  fileName: string
+  script: string
 }

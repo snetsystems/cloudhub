@@ -985,7 +985,7 @@ func MarshalCSP(t *cloudhub.CSP) ([]byte, error) {
 	return proto.Marshal(&CSP{
 		ID:                   t.ID,
 		Provider:             t.Provider,
-		Region:               t.Region,
+		NameSpace:            t.NameSpace,
 		AccessKey:            t.AccessKey,
 		SecretKey:            t.SecretKey,
 		Organization:         t.Organization,
@@ -1002,7 +1002,7 @@ func UnmarshalCSP(data []byte, t *cloudhub.CSP) error {
 
 	t.ID = pb.ID
 	t.Provider = pb.Provider
-	t.Region = pb.Region
+	t.NameSpace = pb.NameSpace
 	t.AccessKey = pb.AccessKey
 	t.SecretKey = pb.SecretKey
 	t.Organization = pb.Organization

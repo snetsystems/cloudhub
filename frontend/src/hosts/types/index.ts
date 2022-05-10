@@ -21,7 +21,11 @@ import {
   handleSelectHostProps,
   vmParam,
 } from 'src/hosts/types/type'
-import {CloudServiceProvider} from 'src/hosts/types/cloud'
+import {
+  CloudServiceProvider,
+  CSPAccessObject,
+  CSPFileWriteParam,
+} from 'src/hosts/types/cloud'
 
 import {
   Kubernetes,
@@ -67,4 +71,6 @@ export {
   Kubernetes,
   KubernetesObject,
   CloudServiceProvider,
+  CSPAccessObject,
+  CSPFileWriteParam,
 }

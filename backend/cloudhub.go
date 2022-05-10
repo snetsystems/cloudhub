@@ -1048,11 +1048,11 @@ type CSPQuery struct {
 type CSP struct {
 	ID            string   `json:"id,string,omitempty"`
     Provider      string   `json:"provider,string"`
-	Region        string   `json:"region,string"`
+	NameSpace     string   `json:"namespace,string"`
 	AccessKey     string   `json:"accesskey,string"`
 	SecretKey     string   `json:"secretkey,string"`
 	Organization  string   `json:"organization"`
-	Minion        string   `json:"minion,string"`
+	Minion        string   `json:"minion,string"` // won't use but not remove.
 }
 
 // CSPStore is the Storage and retrieval of information

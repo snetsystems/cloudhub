@@ -6,8 +6,9 @@ import {createActivityLog} from 'src/shared/apis'
 
 // Types
 import {Ipmi, IpmiCell} from 'src/types'
-
+import {CloudServiceProvider, CSPFileWriteParam} from 'src/hosts/types'
 interface Params {
+  token?: string
   client?: string
   fun?: string
   arg?: string[] | string
@@ -46,11 +47,15 @@ interface Params {
     fieldselector?: any
     labelselector?: any
     limit?: number
+    dir_path?: string
+    mode?: string
   }
   username?: string
   password?: string
   eauth?: string
   token_expire?: number
+  provider?: string
+  func?: string
 }
 
 const activityData = [
@@ -1518,17 +1523,90 @@ export async function getLocalBotoEc2DescribeInstances(
       const param = {
         token: pToken,
         eauth: 'pam',
-        client: 'local',
-        fun: 'boto_ec2.describe_instances',
-        tgt_type: 'glob',
-        tgt: pCSP.minion,
+        client: 'runner',
+        fun: 'salt.cmd',
         kwarg: {
-          region: pCSP.region,
+          fun: 'boto_ec2.describe_instances',
+          region: pCSP.namespace,
           keyid: pCSP.accesskey,
           key: pCSP.secretkey,
         },
       }
       params = [...params, param]
+    })
+
+    const result = await apiRequestMulti(pUrl, params, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getRunnerCloudActionListInstances(
+  pUrl: string,
+  pToken: string,
+  pCSPs: any[]
+): Promise<any> {
+  try {
+    let params = []
+
+    _.map(pCSPs, pCSP => {
+      const param = {
+        token: pToken,
+        eauth: 'pam',
+        client: 'runner',
+        fun: 'cloud.action',
+        func: 'list_instances',
+        provider: pCSP.namespace,
+      }
+      params = [...params, param]
+    })
+
+    const result = await apiRequestMulti(pUrl, params, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getCSPListInstances(
+  pUrl: string,
+  pToken: string,
+  pCSPs: any[]
+): Promise<any> {
+  try {
+    let params = []
+
+    _.map(pCSPs, pCSP => {
+      if (pCSP.provider === CloudServiceProvider.AWS) {
+        const param = {
+          token: pToken,
+          eauth: 'pam',
+          client: 'runner',
+          fun: 'salt.cmd',
+          kwarg: {
+            fun: 'boto_ec2.describe_instances',
+            region: pCSP.namespace,
+            keyid: pCSP.accesskey,
+            key: pCSP.secretkey,
+          },
+        }
+        params = [...params, param]
+      } else if (pCSP.provider === CloudServiceProvider.GCP) {
+        const param = {
+          token: pToken,
+          eauth: 'pam',
+          client: 'runner',
+          fun: 'cloud.action',
+          func: 'list_instances',
+          provider: pCSP.namespace,
+        }
+        params = [...params, param]
+      }
     })
 
     const result = await apiRequestMulti(pUrl, params, 'application/x-yaml')
@@ -1673,12 +1751,11 @@ export async function getLocalBotoSecgroupGetAllSecurityGroups(
     const param = {
       token: pToken,
       eauth: 'pam',
-      client: 'local',
-      fun: 'boto_secgroup.get_all_security_groups',
-      tgt_type: 'glob',
-      tgt: pCSP.minion,
+      client: 'runner',
+      fun: 'salt.cmd',
       kwarg: {
-        region: pCSP.region,
+        fun: 'boto_secgroup.get_all_security_groups',
+        region: pCSP.namespace,
         keyid: pCSP.accesskey,
         key: pCSP.secretkey,
         group_ids: pGroupIds,
@@ -1827,12 +1904,11 @@ export async function getLocalBoto2DescribeVolumes(
     const param = {
       token: pToken,
       eauth: 'pam',
-      client: 'local',
-      fun: 'boto_ec2.describe_volumes',
-      tgt_type: 'glob',
-      tgt: pCSP.minion,
+      client: 'runner',
+      fun: 'salt.cmd',
       kwarg: {
-        region: pCSP.region,
+        fun: 'boto_ec2.describe_volumes',
+        region: pCSP.namespace,
         keyid: pCSP.accesskey,
         key: pCSP.secretkey,
         volume_ids: pVolumeIds,
@@ -1896,12 +1972,11 @@ export async function getLocalBoto2DescribeInstanceTypes(
     const param = {
       token: pToken,
       eauth: 'pam',
-      client: 'local',
-      fun: 'boto_ec2.describe_instance_types',
-      tgt_type: 'glob',
-      tgt: pCSP.minion,
+      client: 'runner',
+      fun: 'salt.cmd',
       kwarg: {
-        region: pCSP.region,
+        fun: 'boto_ec2.describe_instance_types',
+        region: pCSP.namespace,
         keyid: pCSP.accesskey,
         key: pCSP.secretkey,
         instance_types: pTypes,
@@ -1982,6 +2057,78 @@ export async function getLocalK8sDetail(
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getCSPRunnerFileWrite(
+  pUrl: string,
+  pToken: string,
+  pFileWrite: CSPFileWriteParam
+) {
+  try {
+    const mkdir = {
+      eauth: 'pam',
+      client: 'runner',
+      fun: 'salt.cmd',
+      kwarg: {
+        fun: 'file.mkdir',
+        dir_path: pFileWrite.path,
+      },
+    }
+
+    const mkdirRes = await apiRequest(pUrl, pToken, mkdir, 'application/x-yaml')
+
+    if (!yaml.safeLoad(mkdirRes.data).return) {
+      return false
+    }
+
+    const write = {
+      eauth: 'pam',
+      client: 'runner',
+      fun: 'salt.cmd',
+      kwarg: {
+        fun: 'file.write',
+        path: pFileWrite.path + pFileWrite.fileName,
+        args: [pFileWrite.script],
+      },
+    }
+
+    const writeRes = await apiRequest(pUrl, pToken, write, 'application/x-yaml')
+
+    if (_.includes(yaml.safeLoad(writeRes.data).return, 'Exception')) {
+      return false
+    }
+
+    const fileExtensionRegex = new RegExp(`.pem$`)
+
+    if (pFileWrite.fileName.match(fileExtensionRegex)) {
+      const setMode = {
+        eauth: 'pam',
+        client: 'runner',
+        fun: 'salt.cmd',
+        kwarg: {
+          fun: 'file.set_mode',
+          path: pFileWrite.path + pFileWrite.fileName,
+          mode: '0600',
+        },
+      }
+
+      const setModeRes = await apiRequest(
+        pUrl,
+        pToken,
+        setMode,
+        'application/x-yaml'
+      )
+
+      if (yaml.safeLoad(setModeRes.data).return[0] !== setMode.kwarg.mode) {
+        return false
+      }
+    }
+
+    return true
   } catch (error) {
     console.error(error)
     throw error

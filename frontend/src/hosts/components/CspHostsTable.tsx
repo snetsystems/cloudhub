@@ -285,7 +285,7 @@ class CspHostsTable extends PureComponent<Props, State> {
 
   private get CloudHostsTableHeader(): JSX.Element {
     const {
-      CloudRegionWidth,
+      CloudNamespaceWidth,
       CloudNameWidth,
       CloudInstanceIDWidth,
       CloudInstanceStateWidth,
@@ -302,7 +302,7 @@ class CspHostsTable extends PureComponent<Props, State> {
           <div
             onClick={this.updateSort('namespace')}
             className={this.sortableClasses('namespace')}
-            style={{width: CloudRegionWidth}}
+            style={{width: CloudNamespaceWidth}}
           >
             {this.props.focusedInstance.provider == 'gcp'
               ? 'Project'
