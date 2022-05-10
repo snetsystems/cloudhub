@@ -315,6 +315,12 @@ export class HostsPage extends PureComponent<Props, State> {
         () => this.fetchCspHostsData(layouts),
         autoRefresh
       )
+    } else if (autoRefresh && activeTab === 'gcp') {
+      clearInterval(this.intervalID)
+      this.intervalID = window.setInterval(
+        () => this.fetchCspHostsData(layouts),
+        autoRefresh
+      )
     }
 
     GlobalAutoRefresher.poll(autoRefresh)
@@ -679,7 +685,7 @@ export class HostsPage extends PureComponent<Props, State> {
 
       const getAWSInstanceTypes = _.values(
         _.values(_.values(awsInstanceTypes)[0])[0]
-      )[0]
+      )
 
       _.reduce(
         getAWSInstanceTypes,
@@ -803,7 +809,7 @@ export class HostsPage extends PureComponent<Props, State> {
               active={activeCspTab === csp}
               onClick={this.onSetActiveCspTab}
             >
-              {csp}
+              {csp.toUpperCase()}
             </Radio.Button>
           )
         })}
@@ -822,9 +828,9 @@ export class HostsPage extends PureComponent<Props, State> {
   private getFirstCloudHost = (cloudHostsObject: CloudHosts): Instance => {
     let firstHost: Instance = {
       provider: null,
+      namespace: null,
       instanceid: null,
       instancename: null,
-      namespace: null,
     }
 
     const {focusedInstance} = this.state
@@ -1122,52 +1128,29 @@ export class HostsPage extends PureComponent<Props, State> {
 
     let newDbResp: any[] = _.filter(
       _.map(dbResp, resp => {
-        const {secretkey} = resp
-        const decryptedBytes = CryptoJS.AES.decrypt(
-          secretkey,
-          this.secretKey.url
-        )
-        const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
+        if (resp.provider === 'aws') {
+          const {secretkey} = resp
+          const decryptedBytes = CryptoJS.AES.decrypt(
+            secretkey,
+            this.secretKey.url
+          )
+          const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
 
-        resp = {
-          ...resp,
-          secretkey: originalSecretkey,
+          resp = {
+            ...resp,
+            secretkey: originalSecretkey,
+          }
+        } else if (resp.provider === 'gcp') {
+          resp = {
+            ...resp,
+          }
         }
-
         return resp
       }),
-      //test Code Temporary variable assignment with aws
       filterData => {
-        if ('aws' === filterData.provider) return filterData
+        if (filterData.provider === activeCspTab) return filterData
       }
     )
-    //test Code Temporary variable assignment with gcp
-    if (activeCspTab == 'gcp') {
-      newDbResp[0] = {
-        ...newDbResp[0],
-        provider: 'gcp',
-        namespace: 'ch-gcp-dev',
-      }
-      //test Code
-      newDbResp[1] = {
-        accesskey: 'AKIAQZTWFOPP6G3V5POJ',
-        id: '3',
-        links: {
-          self: '/cloudhub/v1/csp/2',
-        },
-        minion: 'cmp-dev08',
-        namespace: 'ch-gcp-dev1111',
-        organization: '4',
-        provider: 'gcp',
-        region: 'ap-northeast-2',
-        secretkey: 'V+nblZpkODDN+HD5UKhskfoilO3ATTyXbCyf+j1o',
-      }
-    } else {
-      newDbResp[0] = {
-        ...newDbResp[0],
-        namespace: 'ap-northeast-2',
-      }
-    }
 
     let namespaceFilterItems = []
     _.map(newDbResp, resp => {
@@ -1191,7 +1174,7 @@ export class HostsPage extends PureComponent<Props, State> {
       return
     }
     let getSaltCSPs =
-      this.state.activeCspTab == 'aws'
+      this.state.activeCspTab === 'aws'
         ? await handleGetAWSInstancesAsync(
             this.salt.url,
             this.salt.token,
@@ -1205,9 +1188,10 @@ export class HostsPage extends PureComponent<Props, State> {
 
     let newCSPs = []
 
-    getSaltCSPs = _.map(
-      getSaltCSPs.return,
-      getSaltCSP => _.values(getSaltCSP)[0]
+    getSaltCSPs = _.map(getSaltCSPs.return, getSaltCSP =>
+      this.state.activeCspTab === 'aws'
+        ? _.values(getSaltCSP)
+        : _.values(getSaltCSP)[0]
     )
 
     _.forEach(newDbResp, (accessCsp, index) => {

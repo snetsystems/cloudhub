@@ -41,7 +41,7 @@ const buildCannedDashboardQuery = (
 
   if (instance) {
     if (measurement === 'cloudwatch_aws_ec2') {
-      text += ` and \"region\" = '${instance['region']}' and \"instance_id\" = '${instance['instanceid']}'`
+      text += ` and \"region\" = '${instance['namespace']}' and \"instance_id\" = '${instance['instanceid']}'`
     } else {
       text += ` and \"host\" = '${instance['instancename']}'`
     }

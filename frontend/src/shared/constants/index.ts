@@ -529,4 +529,5 @@ export enum AddonType {
   router128T = 'swan',
   ipmiSecretKey = 'ipmi-secret-key',
   aws = 'aws',
+  gcp = 'gcp',
 }

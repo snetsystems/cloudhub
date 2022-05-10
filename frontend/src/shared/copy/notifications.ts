@@ -1225,6 +1225,14 @@ export const notifyIpmiConnectionFailed = (error: Error): Notification => ({
   message: `IPMI Connection Failed, ${error}`,
 })
 
+export const notifygetCSPListInstancesFailed = (
+  error: Error
+): Notification => ({
+  ...defaultErrorNotification,
+  isHasHTML: true,
+  message: `CSP Host Get Failed, ${error}`,
+})
+
 export const notifygetAWSInstancesFailed = (error: Error): Notification => ({
   ...defaultErrorNotification,
   isHasHTML: true,
@@ -1235,4 +1243,14 @@ export const notifygetGCPInstancesFailed = (error: Error): Notification => ({
   ...defaultErrorNotification,
   isHasHTML: true,
   message: `GCP Host Get Failed, ${error}`,
+})
+
+export const notifygetCSPConfigFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to create CSP configuration file.`,
+})
+
+export const notifygetCSPKeyFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to create CSP key file.`,
 })

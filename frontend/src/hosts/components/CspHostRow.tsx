@@ -50,7 +50,7 @@ const CspHostRow: FunctionComponent<Props> = ({
   } = host
 
   const {
-    CloudRegionWidth,
+    CloudNamespaceWidth,
     CloudNameWidth,
     CloudInstanceIDWidth,
     CloudInstanceStateWidth,
@@ -82,7 +82,7 @@ const CspHostRow: FunctionComponent<Props> = ({
         instancename: name,
       })}
     >
-      <div className="hosts-table--td" style={{width: CloudRegionWidth}}>
+      <div className="hosts-table--td" style={{width: CloudNamespaceWidth}}>
         {csp.namespace}
       </div>
       <div className="hosts-table--td" style={{width: CloudNameWidth}}>
