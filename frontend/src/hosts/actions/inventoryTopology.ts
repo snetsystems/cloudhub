@@ -25,6 +25,7 @@ import {
   getGCPInstancesApi,
   fileWriteConfigApi,
   fileWriteKeyApi,
+  getRunnerFileReadApi,
 } from 'src/hosts/apis'
 
 // Types
@@ -60,6 +61,7 @@ export enum ActionTypes {
   GetGCPInstanceTypes = 'GET_GCP_INSTANCE_TYPES',
   WriteCSPConfig = 'WRITE_CSP_CONFIG',
   WriteCSPKey = 'WRITE_CSP_KEY',
+  GetRunnerFileRead = 'GET_RUNNER_FILE_READ',
 }
 
 export type Action =
@@ -80,6 +82,7 @@ export type Action =
   | GetGCPInstanceTypesAction
   | WriteCSPConfigAction
   | WriteCSPKeyAction
+  | GetRunnerFileReadAction
 interface LoadInventoryTopologyAction {
   type: ActionTypes.LoadInventoryTopology
 }
@@ -387,6 +390,16 @@ export const writeCSPKeyAction = (): WriteCSPKeyAction => {
   }
 }
 
+interface GetRunnerFileReadAction {
+  type: ActionTypes.GetRunnerFileRead
+}
+
+export const getRunnerFileReadAction = (): GetRunnerFileReadAction => {
+  return {
+    type: ActionTypes.GetRunnerFileRead,
+  }
+}
+
 export const loadCloudServiceProvidersAsync = () => async (
   dispatch: Dispatch<any>
 ) => {
@@ -669,6 +682,22 @@ export const writeCSPKeyAsync = (
     const key = await fileWriteKeyApi(pUrl, pToken, pFileWrite)
 
     dispatch(writeCSPKeyAction())
+
+    return key
+  } catch (error) {
+    dispatch(errorThrown(error))
+  }
+}
+
+export const getRunnerFileReadAsync = (
+  pUrl: string,
+  pToken: string,
+  pFilePath: []
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const key = await getRunnerFileReadApi(pUrl, pToken, pFilePath)
+
+    dispatch(getRunnerFileReadAction())
 
     return key
   } catch (error) {

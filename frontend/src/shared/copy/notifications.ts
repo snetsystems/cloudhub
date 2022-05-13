@@ -1225,6 +1225,11 @@ export const notifyIpmiConnectionFailed = (error: Error): Notification => ({
   message: `IPMI Connection Failed, ${error}`,
 })
 
+export const notifyRequiredFailed = (required: string): Notification => ({
+  ...defaultErrorNotification,
+  message: `Please enter '${required}' value.`,
+})
+
 export const notifygetCSPListInstancesFailed = (
   error: Error
 ): Notification => ({

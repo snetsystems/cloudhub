@@ -41,6 +41,7 @@ import {
   getAWSInstanceTypesAsync,
   writeCSPConfigAsync,
   writeCSPKeyAsync,
+  getRunnerFileReadAsync,
 } from 'src/hosts/actions/inventoryTopology'
 
 export {
@@ -83,4 +84,5 @@ export {
   getAWSInstanceTypesAsync,
   writeCSPConfigAsync,
   writeCSPKeyAsync,
+  getRunnerFileReadAsync,
 }

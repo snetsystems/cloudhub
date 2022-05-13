@@ -3,8 +3,9 @@ import {Controlled as ReactCodeMirror} from 'react-codemirror2'
 import {connect} from 'react-redux'
 import _ from 'lodash'
 import {getDeep} from 'src/utils/wrappers'
-import CryptoJS from 'crypto-js'
 import classnames from 'classnames'
+import * as TOML from '@iarna/toml'
+import yaml from 'js-yaml'
 
 import {
   default as mxgraph,
@@ -24,12 +25,6 @@ import {
   ComponentSize,
   Page,
   Radio,
-  Input,
-  InputType,
-  OverlayTechnology,
-  OverlayContainer,
-  OverlayHeading,
-  OverlayBody,
 } from 'src/reusable_ui'
 import {
   Table,
@@ -48,6 +43,7 @@ import ConfirmButton from 'src/shared/components/ConfirmButton'
 import InventoryTreemenu from 'src/hosts/components/InventoryTreemenu'
 import TopologyDetails from 'src/hosts/components/TopologyDetails'
 import InstanceTypeModal from 'src/hosts/components/InstanceTypeModal'
+import TopologyCSPMngModal from 'src/hosts/components/TopologyCSPMngModal'
 
 // constants
 import {
@@ -60,6 +56,7 @@ import {
   notifyUnableToGetHosts,
   notifygetCSPConfigFailed,
   notifygetCSPKeyFailed,
+  notifyRequiredFailed,
 } from 'src/shared/copy/notifications'
 
 // Types
@@ -81,6 +78,7 @@ import {
   CloudServiceProvider,
   CSPAccessObject,
   CSPFileWriteParam,
+  Instance,
 } from 'src/hosts/types'
 
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
@@ -106,9 +104,10 @@ import {
   getAWSInstanceTypesAsync,
   writeCSPConfigAsync,
   writeCSPKeyAsync,
+  getRunnerFileReadAsync,
 } from 'src/hosts/actions'
 
-import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {notify, notify as notifyAction} from 'src/shared/actions/notifications'
 
 // APIs
 import {getEnv} from 'src/shared/apis/env'
@@ -134,6 +133,18 @@ import {
   getParseHTML,
 } from 'src/hosts/utils/topology'
 import {getCells} from 'src/hosts/utils/getCells'
+import {
+  getInstanceType,
+  getInstanceDetails,
+  getInstancStorage,
+  getInstanceSecurity,
+  cryptoJSAESencrypt,
+  cryptoJSAESdecrypt,
+  createCSPInstanceData,
+  updateCSPInstanceData,
+  getNamespaceID,
+  isGCPRequiredCheck,
+} from 'src/hosts/utils'
 
 // error
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -226,13 +237,6 @@ window['mxPoint'] = mxPoint
 window['mxPopupMenu'] = mxPopupMenu
 window['mxEventObject'] = mxEventObject
 
-interface Instance {
-  provider: string
-  namespace: string
-  instanceid: string
-  instancename: string
-}
-
 interface Props {
   source: Source
   links: Links
@@ -270,7 +274,7 @@ interface Props {
     saltMasterToken: string,
     pIpmis: Ipmi
   ) => Promise<any>
-  handleLoadCspAsync: (id: string) => Promise<any>
+  // handleLoadCspAsync: (id: string) => Promise<any>
   handleLoadCspsAsync: () => Promise<any>
   handleCreateCspAsync: (data: paramsCreateCSP) => Promise<any>
   handleUpdateCspAsync: (data: paramsUpdateCSP) => Promise<any>
@@ -313,6 +317,11 @@ interface Props {
     saltMasterUrl: string,
     saltMasterToken: string,
     fileWrite: CSPFileWriteParam
+  ) => Promise<any>
+  handleGetRunnerFileReadAsync: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    filePath: string[]
   ) => Promise<any>
 }
 
@@ -365,7 +374,7 @@ interface State {
 }
 
 @ErrorHandling
-class InventoryTopology extends PureComponent<Props, State> {
+export class InventoryTopology extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
 
@@ -509,6 +518,9 @@ class InventoryTopology extends PureComponent<Props, State> {
   private openSensorData = openSensorData
   private addToolsButton = addToolsButton
   private setToolbar = setToolbar
+
+  private confPath = `/etc/salt/cloud.providers.d/`
+  private keyPath = `/etc/salt/csp_key/`
 
   public async componentDidMount() {
     this.createEditor()
@@ -664,6 +676,15 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   public render() {
     const {
+      provider,
+      cloudNamespace,
+      cloudAccessKey,
+      cloudSecretKey,
+      cloudSAEmail,
+      cloudSAKey,
+      isUpdateCloud,
+      loadingState,
+      isCloudFormVisible,
       isModalVisible,
       modalMessage,
       modalTitle,
@@ -677,7 +698,27 @@ class InventoryTopology extends PureComponent<Props, State> {
           <>this Browser Not Supported</>
         ) : (
           <>
-            {this.writeCloudForm}
+            <TopologyCSPMngModal
+              provider={provider}
+              cloudNamespace={cloudNamespace}
+              cloudAccessKey={cloudAccessKey}
+              cloudSecretKey={cloudSecretKey}
+              cloudSAEmail={cloudSAEmail}
+              cloudSAKey={cloudSAKey}
+              isUpdateCloud={isUpdateCloud}
+              isVisible={isCloudFormVisible}
+              loadingState={loadingState}
+              onInputChange={this.handleChangeInput}
+              onTextAreaChange={this.handleChangeTextArea}
+              onAddNamespace={this.handleAddNamespace}
+              onUpdateNamespace={this.handleUpdateNamespace}
+              onKeyPressEnter={this.handleKeyPressEnter}
+              onEncrypt={this.handleEncrypt}
+              onFocus={() => {
+                this.setState({cloudSecretKey: ''})
+              }}
+              onCancel={this.closeCloudForm}
+            />
             <Threesizer
               orientation={HANDLE_VERTICAL}
               divisions={this.threesizerDivisions}
@@ -691,7 +732,6 @@ class InventoryTopology extends PureComponent<Props, State> {
               customStyle={isExportXML ? null : {height: '122px'}}
               containerMaxWidth={isExportXML ? null : 450}
             />
-
             <InstanceTypeModal
               visible={isInstanceTypeModalVisible}
               message={this.renderInstanceTypeModal}
@@ -710,32 +750,11 @@ class InventoryTopology extends PureComponent<Props, State> {
   private get renderInstanceTypeModal() {
     return (
       <FancyScrollbar style={{height: '450px'}} autoHide={false}>
-        <TopologyDetails selectInstanceData={this.getInstanceType()} />
+        <TopologyDetails
+          selectInstanceData={getInstanceType(this.state.awsInstanceTypes)}
+        />
       </FancyScrollbar>
     )
-  }
-
-  private get loadingState() {
-    const {loadingState} = this.state
-    let isLoading = false
-
-    if (loadingState === RemoteDataState.Loading) {
-      isLoading = true
-    }
-
-    return isLoading ? (
-      <div
-        style={{
-          position: 'absolute',
-          zIndex: 3,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          width: '100%',
-          height: '100%',
-        }}
-      >
-        <PageSpinner />
-      </div>
-    ) : null
   }
 
   private closeCloudForm = () => {
@@ -744,6 +763,8 @@ class InventoryTopology extends PureComponent<Props, State> {
       cloudNamespace: '',
       cloudAccessKey: '',
       cloudSecretKey: '',
+      cloudSAEmail: '',
+      cloudSAKey: '',
     })
   }
 
@@ -1181,15 +1202,10 @@ class InventoryTopology extends PureComponent<Props, State> {
 
         if (!_.isEmpty(accessInfo) && provider === CloudServiceProvider.AWS) {
           const {secretkey} = accessInfo
-          const decryptedBytes = CryptoJS.AES.decrypt(
-            secretkey,
-            this.secretKey.url
-          )
-          const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
 
           const newCloudAccessInfos = {
             ...accessInfo,
-            secretkey: originalSecretkey,
+            secretkey: cryptoJSAESdecrypt(secretkey, this.secretKey.url),
           }
 
           const getData = _.filter(accessInfo.data, d =>
@@ -1347,14 +1363,11 @@ class InventoryTopology extends PureComponent<Props, State> {
       state: IpmiSetPowerStatus,
       popupText: string
     ) => {
-      const decryptedBytes = CryptoJS.AES.decrypt(ipmiPass, this.secretKey.url)
-      const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
-
       const ipmi: Ipmi = {
         target,
         host: ipmiHost,
         user: ipmiUser,
-        pass: originalPass,
+        pass: cryptoJSAESdecrypt(ipmiPass, this.secretKey.url),
       }
 
       const onConfirm = async () => {
@@ -1391,13 +1404,11 @@ class InventoryTopology extends PureComponent<Props, State> {
       const {handleGetIpmiSensorDataAsync} = this.props
       const {isPinned} = this.state
 
-      const decryptedBytes = CryptoJS.AES.decrypt(ipmiPass, this.secretKey.url)
-      const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
       const pIpmi: Ipmi = {
         target,
         host: ipmiHost,
         user: ipmiUser,
-        pass: originalPass,
+        pass: cryptoJSAESdecrypt(ipmiPass, this.secretKey.url),
       }
 
       const sensorData = await handleGetIpmiSensorDataAsync(
@@ -1959,428 +1970,31 @@ class InventoryTopology extends PureComponent<Props, State> {
     return null
   }
 
-  private getInstanceDetails = () => {
-    const {cloudAccessInfos, focusedInstance} = this.state
-
-    let instanceData = {}
-
-    if (_.isEmpty(cloudAccessInfos) || _.isEmpty(focusedInstance)) {
-      return instanceData
-    }
-    const {provider, namespace, instanceid} = focusedInstance
-    const accessInfo = _.find(
-      cloudAccessInfos,
-      c => c.provider === provider && c.namespace === namespace
-    )
-
-    if (accessInfo === null) return
-
-    const getData = _.filter(accessInfo.data, d =>
-      _.isNull(d)
-        ? false
-        : accessInfo.provider === CloudServiceProvider.AWS
-        ? d.InstanceId === instanceid
-        : d.id === instanceid
-    )
-
-    if (provider === CloudServiceProvider.AWS) {
-      _.reduce(
-        getData,
-        (_, current) => {
-          const {
-            InstanceId,
-            NetworkInterfaces,
-            PublicIpAddress,
-            PrivateIpAddress,
-            State,
-            PrivateDnsName,
-            PublicDnsName,
-            InstanceType,
-            VpcId,
-            SubnetId,
-            Platform,
-            ImageId,
-            Monitoring,
-            LaunchTime,
-            AmiLaunchIndex,
-            KeyName,
-            StateTransitionReason,
-            Placement,
-            VirtualizationType,
-            CpuOptions,
-            CapacityReservationSpecification,
-          } = current
-
-          const instance = {
-            Instance_summary: {
-              Instance_ID: this.detailsValueChecker(InstanceId),
-              Public_IPv4_address: this.detailsValueChecker(PublicIpAddress),
-              Private_IPv4_addresses: this.detailsValueChecker(
-                PrivateIpAddress
-              ),
-              IPv6_address: this.detailsValueChecker(
-                NetworkInterfaces[0].Ipv6Addresses
-              ),
-              Instance_state: this.instanceState(
-                this.detailsValueChecker(State.Name)
-              ),
-              Public_IPv4_DNS: this.detailsValueChecker(PublicDnsName),
-              Private_IPv4_DNS: this.detailsValueChecker(PrivateDnsName),
-              Instance_type: this.detailsValueChecker(InstanceType),
-              Elastic_IP_addresses: this.detailsValueChecker(
-                NetworkInterfaces[0].Association?.PublicIp
-              ),
-              VPC_ID: this.detailsValueChecker(VpcId),
-              Subnet_ID: this.detailsValueChecker(SubnetId),
-            },
-            Instance_details: {
-              Platform: this.detailsValueChecker(Platform),
-              AMI_ID: this.detailsValueChecker(ImageId),
-              Monitoring: this.detailsValueChecker(Monitoring.State),
-              Launch_time: this.detailsValueChecker(LaunchTime.toString()),
-              AMI_Launch_index: this.detailsValueChecker(AmiLaunchIndex),
-              Key_pair_name: this.detailsValueChecker(KeyName),
-              State_transition_reason: this.detailsValueChecker(
-                StateTransitionReason
-              ),
-              Owner: this.detailsValueChecker(NetworkInterfaces[0].OwnerId),
-            },
-            Host_and_placement_group: {
-              Placement_group: this.detailsValueChecker(Placement.GroupName),
-              Host_resource_group_name: this.detailsValueChecker(),
-              Tenancy: this.detailsValueChecker(Placement.Tenancy),
-              Virtualization_type: this.detailsValueChecker(VirtualizationType),
-              Number_of_vCPUs: this.detailsValueChecker(
-                CpuOptions.CoreCount * CpuOptions.ThreadsPerCore
-              ),
-            },
-            Capacity_reservation: {
-              Capacity_Reservation_setting: this.detailsValueChecker(
-                CapacityReservationSpecification.CapacityReservationPreference
-              ),
-            },
-          }
-
-          instanceData = {
-            ...instance,
-          }
-
-          return false
-        },
-        {}
-      )
-    } else if (provider === CloudServiceProvider.GCP) {
-      _.reduce(
-        getData,
-        (_, current) => {
-          const {
-            id,
-            image,
-            name,
-            private_ips,
-            public_ips,
-            size,
-            state,
-          } = current
-
-          const instance = {
-            Instance_summary: {
-              Instance_ID: this.detailsValueChecker(id),
-              Instance_Name: this.detailsValueChecker(name),
-              Instance_Image: this.detailsValueChecker(image),
-              Instance_Type: this.detailsValueChecker(size),
-              Instance_state: this.instanceState(
-                this.detailsValueChecker(state)
-              ),
-              Private_IP: this.detailsValueChecker(private_ips[0]),
-              Public_IP: this.detailsValueChecker(public_ips[0]),
-            },
-          }
-
-          instanceData = {
-            ...instance,
-          }
-
-          return false
-        },
-        {}
-      )
-    }
-
-    return instanceData
-  }
-
-  private getInstanceSecurity = () => {
-    const {treeMenu, focusedInstance, awsSecurity} = this.state
-    let instanceData = {}
-
-    try {
-      if (_.isNull(awsSecurity)) return
-
-      const getAWSSecurity = _.values(_.values(awsSecurity)[0][0])[0]
-      const rules = _.get(getAWSSecurity, 'rules', [])
-      const rulesEgress = _.get(getAWSSecurity, 'rules_egress', [])
-      const outboundRules = []
-      const inboundRules = []
-
-      _.forEach(rules, rule => {
-        const {grants, from_port, ip_protocol} = rule
-        const isAll = ip_protocol === '-1'
-        _.forEach(grants, grant => {
-          const {source_group_group_id, cidr_ip} = grant
-
-          inboundRules.push({
-            port: isAll ? 'All' : from_port,
-            protocol: isAll ? 'All' : _.upperCase(ip_protocol),
-            source: cidr_ip || source_group_group_id,
-            security_groups: getAWSSecurity.name,
-          })
-        })
-      })
-
-      _.forEach(rulesEgress, rule => {
-        const {grants, from_port, ip_protocol} = rule
-        const isAll = ip_protocol === '-1'
-        _.forEach(grants, grant => {
-          const {cidr_ip} = grant
-
-          outboundRules.push({
-            port: isAll ? 'All' : from_port,
-            protocol: isAll ? 'All' : _.upperCase(ip_protocol),
-            destination: cidr_ip,
-            security_groups: getAWSSecurity.name,
-          })
-        })
-      })
-
-      return {
-        Security_details: {
-          Owner_ID: getAWSSecurity.owner_id,
-          Launch_Time: treeMenu[focusedInstance.provider]['nodes'][
-            focusedInstance.namespace
-          ]['nodes'][focusedInstance.instanceid].meta.LaunchTime.toString(),
-          Security_groups: `${getAWSSecurity.id}(${getAWSSecurity.name})`,
-        },
-        Inbound_rules: {name: 'security', role: 'table', data: inboundRules},
-        Outbound_rules: {name: 'security', role: 'table', data: outboundRules},
-      }
-    } catch (error) {
-      return instanceData
-    }
-  }
-
-  private getInstancStorage = () => {
-    const {treeMenu, focusedInstance, awsVolume} = this.state
-    let instanceData = {}
-
-    try {
-      if (_.isNull(awsVolume)) return
-
-      const {provider, namespace, instanceid} = focusedInstance
-      const getAWSVolume = _.values(_.values(_.values(awsVolume)[0])[0])
-      const blockDevices = []
-
-      _.forEach(getAWSVolume, s => {
-        if (!s || !s.Attachments) return
-
-        _.forEach(s.Attachments, volume => {
-          blockDevices.push({
-            volumeId: volume.VolumeId,
-            deviceName: volume.Device,
-            volumeSize: s.Size,
-            attachmentStatus: volume.State,
-            attachmentTime: volume.AttachTime.toString(),
-            encrypted: s.Encrypted.toString(),
-            deleteOnTermination: volume.DeleteOnTermination.toString(),
-          })
-        })
-      })
-
-      return {
-        Root_device_details: {
-          Root_device_name:
-            treeMenu[provider]['nodes'][namespace]['nodes'][instanceid].meta
-              .RootDeviceName,
-          Root_device_type:
-            treeMenu[provider]['nodes'][namespace]['nodes'][instanceid].meta
-              .RootDeviceType,
-        },
-        Block_devices: {
-          name: 'storage',
-          role: 'table',
-          data: blockDevices,
-        },
-      }
-    } catch (error) {
-      return instanceData
-    }
-  }
-
-  private getInstanceType = () => {
-    const {awsInstanceTypes} = this.state
-
-    try {
-      if (_.isNull(awsInstanceTypes)) return
-      let instanceTypes = {}
-
-      const getAWSInstanceTypes = _.values(
-        _.values(_.values(awsInstanceTypes)[0])[0]
-      )
-
-      _.reduce(
-        getAWSInstanceTypes,
-        (_before, current) => {
-          if (_.isNull(current)) return false
-
-          const [family, size] = current.InstanceType.split('.')
-          const ValidThreadsPerCore = _.get(
-            current.VCpuInfo,
-            'ValidThreadsPerCore',
-            '-'
-          )
-
-          let instanceType = {
-            Details: {
-              Instance_type: current.InstanceType,
-              Instance_family: family,
-              Instance_size: size,
-              Hypervisor: current.Hypervisor,
-              Auto_Recovery_support: current.AutoRecoverySupported.toString(),
-              Supported_root_device_types: current.SupportedRootDeviceTypes,
-              Dedicated_Host_support: current.DedicatedHostsSupported.toString(),
-              'On-Demand_Hibernation_support': current.HibernationSupported.toString(),
-              Burstable_Performance_support: current.BurstablePerformanceSupported.toString(),
-            },
-            Compute: {
-              'Free-Tier_eligible': current.FreeTierEligible.toString(),
-              Bare_metal: current.BareMetal.toString(),
-              vCPUs: current.VCpuInfo.DefaultVCpus,
-              Architecture: current.ProcessorInfo.SupportedArchitectures,
-              Cores: current.VCpuInfo.DefaultCores,
-              Valid_cores: current.VCpuInfo.ValidCores,
-              Threads_per_core: current.VCpuInfo.DefaultThreadsPerCore,
-              Valid_threads_per_core: _.isArray(ValidThreadsPerCore)
-                ? ValidThreadsPerCore.join(',')
-                : ValidThreadsPerCore,
-              'Sustained_clock_speed_(GHz)':
-                current.ProcessorInfo.SustainedClockSpeedInGhz,
-              'Memory_(GiB)': current.MemoryInfo.SizeInMiB / 1024,
-              Current_generation: current.CurrentGeneration.toString(),
-            },
-            Networking: {
-              EBS_optimization_support: current.EbsInfo.EbsOptimizedSupport,
-              Network_performance: current.NetworkInfo.NetworkPerformance,
-              ENA_support: current.NetworkInfo.EnaSupport,
-              Maximum_number_of_network_interfaces:
-                current.NetworkInfo.MaximumNetworkInterfaces,
-              IPv4_addresses_per_interface:
-                current.NetworkInfo.Ipv4AddressesPerInterface,
-              IPv6_addresses_per_interface:
-                current.NetworkInfo.Ipv6AddressesPerInterface,
-              IPv6_support: current.NetworkInfo.Ipv6Supported.toString(),
-              Supported_placement_group_strategies: current.PlacementGroupInfo.SupportedStrategies.join(
-                ', '
-              ),
-            },
-          }
-
-          if (current.InstanceStorageSupported) {
-            const storage = {
-              Storage: {
-                'Storage_(GB)': current.InstanceStorageInfo.Disks.TotalSizeInGB,
-                Local_instance_storage: '-',
-                Storage_type: current.InstanceStorageInfo.Disks.Type,
-                Storage_disk_count: current.InstanceStorageInfo.Disks.Count,
-                EBS_encryption_support: current.EbsInfo.EncryptionSupport,
-              },
-            }
-
-            instanceType = {
-              ...instanceType,
-              ...storage,
-            }
-          }
-
-          if (current.hasOwnProperty('GpuInfo')) {
-            const accelators = {
-              Accelerators: {
-                GPUs: current.GpuInfo.Gpus.Count,
-                'GPU_memory_(GiB)': current.GpuInfo.Gpus.MemoryInfo.SizeInMiB,
-                GPU_manufacturer: current.GpuInfo.Gpus.Manufacturer,
-                GPU_name: current.GpuInfo.Gpus.Name,
-              },
-            }
-
-            instanceType = {
-              ...instanceType,
-              ...accelators,
-            }
-          }
-
-          instanceTypes = {
-            ...instanceType,
-          }
-
-          return false
-        },
-        {}
-      )
-
-      return instanceTypes
-    } catch (error) {
-      console.error('error instanceTypes: ', error)
-      return {}
-    }
-  }
-
   private getInstanceData = () => {
-    const {activeDetailsTab, focusedInstance} = this.state
+    const {
+      activeDetailsTab,
+      focusedInstance,
+      cloudAccessInfos,
+      treeMenu,
+      awsSecurity,
+      awsVolume,
+    } = this.state
 
     if (_.get(focusedInstance, 'provider') === CloudServiceProvider.AWS) {
       if (activeDetailsTab === 'details') {
-        return this.getInstanceDetails()
+        return getInstanceDetails(cloudAccessInfos, focusedInstance)
       }
 
       if (activeDetailsTab === 'security') {
-        return this.getInstanceSecurity()
+        return getInstanceSecurity(treeMenu, focusedInstance, awsSecurity)
       }
 
       if (activeDetailsTab === 'storage') {
-        return this.getInstancStorage()
+        return getInstancStorage(treeMenu, focusedInstance, awsVolume)
       }
     } else {
-      return this.getInstanceDetails()
+      return getInstanceDetails(cloudAccessInfos, focusedInstance)
     }
-  }
-
-  private instanceState = (instanceState = null) => {
-    return (
-      <div
-        className={classnames(`status-tip`, {
-          active: instanceState.toString().toLowerCase() === 'running',
-        })}
-      >
-        <div className={'status-tip-bg'}>
-          <span className={'icon checkmark'}></span>
-        </div>
-        {instanceState}
-      </div>
-    )
-  }
-
-  private detailsValueChecker = (
-    value: string | number | boolean = null
-  ): string | number | boolean | '-' => {
-    if (
-      _.isUndefined(value) ||
-      _.isNaN(value) ||
-      _.isNull(value) ||
-      _.isError(value) ||
-      _.isArray(value)
-    ) {
-      value = '-'
-    }
-    return value
   }
 
   private getHandleOnChoose = (selectItem: {text: string}) => {
@@ -2406,15 +2020,90 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setState({selectItem})
   }
 
+  private handleLoadCsps = async () => {
+    const {handleLoadCspsAsync, handleGetCSPListInstancesAsync} = this.props
+    const dbResp: any[] = await handleLoadCspsAsync()
+
+    const newDbResp = _.map(dbResp, resp => {
+      if (resp.provider === 'aws') {
+        const {secretkey} = resp
+
+        resp = {
+          ...resp,
+          secretkey: cryptoJSAESdecrypt(secretkey, this.secretKey.url),
+        }
+      } else if (resp.provider === 'gcp') {
+        resp = {
+          ...resp,
+          saemail: 'test',
+          sakey: 'testkey',
+        }
+      }
+
+      return resp
+    })
+
+    const saltResp = await handleGetCSPListInstancesAsync(
+      this.salt.url,
+      this.salt.token,
+      newDbResp
+    )
+
+    _.forEach(newDbResp, (dResp, index) => {
+      if (_.isUndefined(saltResp)) return
+
+      if (dResp.provider === CloudServiceProvider.AWS) {
+        dResp['data'] = !_.isEmpty(saltResp.return[index])
+          ? _.values(saltResp.return[index]).length > 0
+            ? _.values(saltResp.return[index])
+            : []
+          : []
+      } else if (dResp.provider === CloudServiceProvider.GCP) {
+        dResp['data'] =
+          !_.isEmpty(saltResp.return[index]) &&
+          _.isObject(saltResp.return[index])
+            ? _.values(saltResp.return[index][dResp.namespace]['gce']).length >
+              0
+              ? _.values(saltResp.return[index][dResp.namespace]['gce'])
+              : []
+            : []
+      }
+    })
+
+    this.setState({cloudAccessInfos: [...newDbResp]})
+  }
+
   private handleAddNamespace = async () => {
-    const {handleCreateCspAsync, handleGetCSPListInstancesAsync} = this.props
+    const {
+      notify,
+      handleCreateCspAsync,
+      handleGetCSPListInstancesAsync,
+    } = this.props
     const {
       provider,
+      cloudNamespace,
       cloudAccessKey,
       cloudSecretKey,
-      cloudNamespace,
+      cloudSAEmail,
+      cloudSAKey,
+      isUpdateCloud,
       cloudAccessInfos,
     } = this.state
+
+    const requiredCheck = isGCPRequiredCheck(
+      provider,
+      cloudNamespace,
+      cloudAccessKey,
+      cloudSecretKey,
+      cloudSAEmail,
+      cloudSAKey,
+      isUpdateCloud
+    )
+
+    if (!_.isNull(requiredCheck)) {
+      notify(notifyRequiredFailed(requiredCheck))
+      return
+    }
 
     const data = {
       provider,
@@ -2425,16 +2114,9 @@ class InventoryTopology extends PureComponent<Props, State> {
 
     const newData = (() => {
       if (provider === CloudServiceProvider.AWS) {
-        const decryptedBytes = CryptoJS.AES.decrypt(
-          cloudSecretKey,
-          this.secretKey.url
-        )
-
-        const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
-
         return {
           ...data,
-          secretkey: originalSecretkey,
+          secretkey: cryptoJSAESdecrypt(cloudSecretKey, this.secretKey.url),
         }
       } else {
         return data
@@ -2445,7 +2127,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       this.setState({loadingState: RemoteDataState.Loading})
 
       if (
-        !(provider === CloudServiceProvider.AWS
+        !(provider === CloudServiceProvider.GCP
           ? await this.cloudproviderConfigWrite()
           : true)
       )
@@ -2471,22 +2153,11 @@ class InventoryTopology extends PureComponent<Props, State> {
 
       const dbResp = await handleCreateCspAsync(data)
 
-      if (dbResp.provider === CloudServiceProvider.AWS) {
-        dbResp['data'] = !_.isEmpty(saltResp.return[0])
-          ? _.values(saltResp.return[0]).length > 0
-            ? _.values(saltResp.return[0])
-            : []
-          : []
-      } else if (dbResp.provider === CloudServiceProvider.GCP) {
-        dbResp['data'] =
-          !_.isEmpty(saltResp.return[0]) && _.isObject(saltResp.return[0])
-            ? _.values(saltResp.return[0][dbResp.namespace]['gce']).length > 0
-              ? _.values(saltResp.return[0][dbResp.namespace]['gce'])
-              : []
-            : []
-      }
-
-      const newCloudAccessInfos = [...cloudAccessInfos, dbResp]
+      const newCloudAccessInfos = createCSPInstanceData(
+        dbResp,
+        saltResp,
+        cloudAccessInfos
+      )
 
       this.setState({
         cloudAccessInfos: newCloudAccessInfos,
@@ -2499,13 +2170,98 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
   }
 
-  private removeNamespace = async (
+  private handleUpdateNamespace = async () => {
+    const {handleUpdateCspAsync, handleGetCSPListInstancesAsync} = this.props
+    const {
+      treeMenu,
+      provider,
+      cloudNamespace,
+      cloudAccessKey,
+      cloudSecretKey,
+      cloudSAEmail,
+      cloudSAKey,
+      isUpdateCloud,
+      cloudAccessInfos,
+    } = this.state
+
+    const requiredCheck = isGCPRequiredCheck(
+      provider,
+      cloudNamespace,
+      cloudAccessKey,
+      cloudSecretKey,
+      cloudSAEmail,
+      cloudSAKey,
+      isUpdateCloud
+    )
+
+    if (!_.isNull(requiredCheck)) {
+      notify(notifyRequiredFailed(requiredCheck))
+      return
+    }
+
+    let namespaceID = getNamespaceID(treeMenu, provider, cloudNamespace)
+
+    const data: paramsUpdateCSP = {
+      id: namespaceID,
+      namespace: cloudNamespace,
+      accesskey: cloudAccessKey,
+      secretkey: cloudSecretKey,
+    }
+
+    const newData = (() => {
+      if (provider === CloudServiceProvider.AWS) {
+        const {secretkey} = data
+
+        return {
+          ...data,
+          provider,
+          secretkey: cryptoJSAESdecrypt(secretkey, this.secretKey.url),
+        }
+      } else {
+        return {...data, provider}
+      }
+    })()
+
+    try {
+      this.setState({loadingState: RemoteDataState.Loading})
+
+      if (
+        !(provider === CloudServiceProvider.GCP
+          ? await this.cloudproviderConfigWrite()
+          : true)
+      )
+        return
+
+      const saltResp = await handleGetCSPListInstancesAsync(
+        this.salt.url,
+        this.salt.token,
+        [newData]
+      )
+
+      const dbResp = await handleUpdateCspAsync(data)
+
+      const newCloudAccessInfos = updateCSPInstanceData(
+        dbResp,
+        saltResp,
+        cloudAccessInfos
+      )
+
+      this.setState({cloudAccessInfos: [...newCloudAccessInfos]})
+    } catch (error) {
+      console.error(error)
+    } finally {
+      this.setState({loadingState: RemoteDataState.Done})
+      this.closeCloudForm()
+    }
+  }
+
+  private handleRemoveNamespace = async (
     provider: CloudServiceProvider,
     namespace: string
   ) => {
     const {treeMenu, cloudAccessInfos} = this.state
     const {handleDeleteCspAsync} = this.props
-    const namespaceID = this.getNamespaceID(provider, namespace)
+    const namespaceID = getNamespaceID(treeMenu, provider, namespace)
     const {isDelete} = await handleDeleteCspAsync(namespaceID)
 
     if (isDelete) {
@@ -2541,15 +2297,44 @@ class InventoryTopology extends PureComponent<Props, State> {
     return (
       <Button
         color={ComponentColor.Primary}
-        onClick={() => {
-          this.setState({
-            provider,
-            cloudNamespace: namespace,
-            cloudAccessKey: accesskey,
-            cloudSecretKey: secretkey,
-            isUpdateCloud: isUpdateCloud,
-            isCloudFormVisible: true,
-          })
+        onClick={async () => {
+          const {handleGetRunnerFileReadAsync} = this.props
+
+          if (provider === CloudServiceProvider.GCP && isUpdateCloud) {
+            const confFile = `${this.confPath + namespace.trim()}.conf`
+            const keyFile = `${
+              this.keyPath + provider + '/' + namespace.trim()
+            }.pem`
+
+            const saltResp = await handleGetRunnerFileReadAsync(
+              this.salt.url,
+              this.salt.token,
+              [confFile, keyFile]
+            )
+
+            this.setState({
+              provider,
+              cloudNamespace: namespace,
+              cloudAccessKey: accesskey,
+              cloudSecretKey: secretkey,
+              cloudSAEmail: _.get(
+                yaml.safeLoad(saltResp.return[0]),
+                `${namespace}.service_account_email_address`
+              ),
+              cloudSAKey: saltResp.return[1],
+              isUpdateCloud: isUpdateCloud,
+              isCloudFormVisible: true,
+            })
+          } else {
+            this.setState({
+              provider,
+              cloudNamespace: namespace,
+              cloudAccessKey: accesskey,
+              cloudSecretKey: secretkey,
+              isUpdateCloud: isUpdateCloud,
+              isCloudFormVisible: true,
+            })
+          }
         }}
         shape={isUpdateCloud ? ButtonShape.Square : ButtonShape.Default}
         size={ComponentSize.ExtraSmall}
@@ -2574,7 +2359,7 @@ class InventoryTopology extends PureComponent<Props, State> {
           size="btn-xs"
           icon={'trash'}
           confirmAction={() => {
-            this.removeNamespace(provider, namespace)
+            this.handleRemoveNamespace(provider, namespace)
           }}
           isEventStopPropagation={true}
           isButtonLeaveHide={true}
@@ -2583,26 +2368,6 @@ class InventoryTopology extends PureComponent<Props, State> {
         />
       </div>
     )
-  }
-
-  private getNamespaceID = (
-    provider: CloudServiceProvider,
-    namespace: string
-  ): string => {
-    const {treeMenu} = this.state
-    const menus = _.keys(treeMenu)
-    let namespaceID = ''
-
-    if (provider && namespace) {
-      for (let i = 0; i < menus.length; i++) {
-        if (treeMenu[menus[i]].provider === provider) {
-          namespaceID = treeMenu[menus[i]]['nodes'][namespace].namespaceID
-          break
-        }
-      }
-    }
-
-    return namespaceID
   }
 
   private get sidebarDivisions() {
@@ -2924,7 +2689,6 @@ class InventoryTopology extends PureComponent<Props, State> {
         id,
         provider,
         namespace,
-        minion,
         accesskey,
         secretkey,
         data,
@@ -2939,7 +2703,6 @@ class InventoryTopology extends PureComponent<Props, State> {
             {
               id,
               provider,
-              minion,
               namespace,
               accesskey,
               secretkey,
@@ -2970,7 +2733,6 @@ class InventoryTopology extends PureComponent<Props, State> {
             {
               id,
               provider,
-              minion,
               namespace,
               accesskey,
               secretkey,
@@ -3047,20 +2809,20 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setState({treeMenu: cloudDataTree})
   }
 
-  private encrypt = () => {
+  private handleEncrypt = () => {
     const {cloudSecretKey} = this.state
 
     if (cloudSecretKey.length < 1) return
 
-    const encryptCloudSecretKey = CryptoJS.AES.encrypt(
+    const encryptCloudSecretKey = cryptoJSAESencrypt(
       cloudSecretKey,
       this.secretKey.url
-    ).toString()
+    )
 
     this.setState({cloudSecretKey: encryptCloudSecretKey})
   }
 
-  private onKeyPressEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  private handleKeyPressEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
     const enterKeyCode = 13
     const enterKey = 'Enter'
 
@@ -3069,156 +2831,21 @@ class InventoryTopology extends PureComponent<Props, State> {
       e.charCode === enterKeyCode ||
       e.key === enterKey
     ) {
-      this.encrypt()
+      this.handleEncrypt()
     }
   }
 
-  private get writeCloudForm() {
-    const {provider, isCloudFormVisible, isUpdateCloud} = this.state
-
-    const title = (() => {
-      if (provider === CloudServiceProvider.AWS) {
-        return 'Region'
-      } else if (provider === CloudServiceProvider.GCP) {
-        return 'Project'
-      }
-      return ''
-    })()
-
-    return (
-      <OverlayTechnology visible={isCloudFormVisible}>
-        <OverlayContainer>
-          <div style={{position: 'relative'}}>
-            {this.loadingState}
-            <OverlayHeading
-              title={
-                isUpdateCloud
-                  ? `UPDATE ${_.toUpper(title)}`
-                  : `ADD ${_.toUpper(title)}`
-              }
-              onDismiss={this.closeCloudForm}
-            />
-            <OverlayBody>{this.cspForm}</OverlayBody>
-          </div>
-        </OverlayContainer>
-      </OverlayTechnology>
-    )
-  }
-
-  private get cspForm() {
-    const {
-      provider,
-      isUpdateCloud,
-      cloudNamespace,
-      cloudAccessKey,
-      cloudSecretKey,
-      cloudSAEmail,
-      cloudSAKey,
-    } = this.state
-
-    const title = (() => {
-      if (provider === CloudServiceProvider.AWS) {
-        return 'Region'
-      } else if (provider === CloudServiceProvider.GCP) {
-        return 'Project'
-      }
-      return ''
-    })()
-
-    return (
-      <Form>
-        <Form.Element label={title} colsXS={12}>
-          <Input
-            onChange={this.handleChangeInput('cloudNamespace')}
-            value={cloudNamespace}
-            placeholder={title}
-            type={InputType.Text}
-            status={isUpdateCloud && ComponentStatus.Disabled}
-          />
-        </Form.Element>
-        {provider === CloudServiceProvider.AWS ? (
-          <Form.Element label="Access Key" colsXS={12}>
-            <Input
-              onChange={this.handleChangeInput('cloudAccessKey')}
-              value={cloudAccessKey}
-              placeholder={'Access Key'}
-              type={InputType.Password}
-            />
-          </Form.Element>
-        ) : null}
-        {provider === CloudServiceProvider.AWS ? (
-          <Form.Element label="Secret Key" colsXS={12}>
-            <Input
-              onChange={this.handleChangeInput('cloudSecretKey')}
-              value={cloudSecretKey}
-              onFocus={() => {
-                this.setState({cloudSecretKey: ''})
-              }}
-              onBlur={this.encrypt}
-              onKeyDown={this.onKeyPressEnter}
-              placeholder={'Secret Key'}
-              type={InputType.Password}
-            />
-          </Form.Element>
-        ) : null}
-        {provider === CloudServiceProvider.GCP ? (
-          <Form.Element label="Service Account Email Address" colsXS={12}>
-            <Input
-              onChange={this.handleChangeInput('cloudSAEmail')}
-              value={cloudSAEmail}
-              onKeyDown={this.onKeyPressEnter}
-              placeholder={'Service Account Email Address'}
-              type={InputType.Text}
-            />
-          </Form.Element>
-        ) : null}
-        {provider === CloudServiceProvider.GCP ? (
-          <Form.Element label="Service Account Private Key" colsXS={12}>
-            <div className="rule-builder--message" style={{padding: 0}}>
-              <textarea
-                onChange={this.handleChangeTextArea('cloudSAKey')}
-                className="form-control input-sm monotype"
-                value={cloudSAKey}
-                placeholder="Service Account Private Key"
-              />
-            </div>
-          </Form.Element>
-        ) : null}
-        <Form.Footer>
-          <Button
-            color={ComponentColor.Default}
-            onClick={this.closeCloudForm}
-            size={ComponentSize.Medium}
-            text={'Cancel'}
-          />
-          <Button
-            color={ComponentColor.Primary}
-            onClick={() => {
-              isUpdateCloud
-                ? this.handleUpdateNamespace()
-                : this.handleAddNamespace()
-            }}
-            size={ComponentSize.Medium}
-            text={isUpdateCloud ? `Update ${title}` : `Save ${title}`}
-          />
-        </Form.Footer>
-      </Form>
-    )
-  }
-
   private cloudproviderConfigWrite = async () => {
-    const {cloudNamespace, cloudSAEmail, cloudSAKey} = this.state
+    const {provider, cloudNamespace, cloudSAEmail, cloudSAKey} = this.state
     const {notify, handleWriteCspConfig, handleWriteCspKey} = this.props
     try {
-      const confPath = `/etc/salt/cloud.providers.d/`
       const confFileName = `${cloudNamespace.trim()}.conf`
-      const keyPath = `/etc/salt/gcp_key/`
       const keyFileName = `${cloudNamespace.trim()}.pem`
 
       const cspConfig = `${cloudNamespace.trim()}:
   project: ${cloudNamespace}
   service_account_email_address: ${cloudSAEmail.trim()}
-  service_account_private_key: ${keyPath + keyFileName}
+  service_account_private_key: ${this.keyPath + provider + '/' + keyFileName}
 
   grains:
     node_type: broker
@@ -3227,14 +2854,9 @@ class InventoryTopology extends PureComponent<Props, State> {
   driver: gce`
 
       const config: CSPFileWriteParam = {
-        path: confPath,
+        path: this.confPath,
         fileName: confFileName,
         script: cspConfig,
-      }
-      const key: CSPFileWriteParam = {
-        path: keyPath,
-        fileName: keyFileName,
-        script: cloudSAKey.trim(),
       }
 
       await handleWriteCspConfig(this.salt.url, this.salt.token, config).then(
@@ -3246,167 +2868,27 @@ class InventoryTopology extends PureComponent<Props, State> {
         }
       )
 
-      await handleWriteCspKey(this.salt.url, this.salt.token, key).then(
-        keyRes => {
-          if (!keyRes) {
-            notify(notifygetCSPKeyFailed())
-            throw new Error(notifygetCSPKeyFailed().message)
-          }
+      if (!_.isEmpty(cloudSAKey)) {
+        const key: CSPFileWriteParam = {
+          path: this.keyPath + provider + '/',
+          fileName: keyFileName,
+          script: cloudSAKey.trim(),
         }
-      )
+
+        await handleWriteCspKey(this.salt.url, this.salt.token, key).then(
+          keyRes => {
+            if (!keyRes) {
+              notify(notifygetCSPKeyFailed())
+              throw new Error(notifygetCSPKeyFailed().message)
+            }
+          }
+        )
+      }
 
       return true
     } catch (error) {
       console.error(error)
       this.setState({loadingState: RemoteDataState.Done})
-    }
-  }
-
-  private handleLoadCsps = async () => {
-    const {handleLoadCspsAsync, handleGetCSPListInstancesAsync} = this.props
-    const dbResp: any[] = await handleLoadCspsAsync()
-
-    const newDbResp = _.map(dbResp, resp => {
-      if (resp.provider === 'aws') {
-        const {secretkey} = resp
-        const decryptedBytes = CryptoJS.AES.decrypt(
-          secretkey,
-          this.secretKey.url
-        )
-        const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
-
-        resp = {
-          ...resp,
-          secretkey: originalSecretkey,
-        }
-      } else if (resp.provider === 'gcp') {
-        resp = {
-          ...resp,
-        }
-      }
-
-      return resp
-    })
-
-    const saltResp = await handleGetCSPListInstancesAsync(
-      this.salt.url,
-      this.salt.token,
-      newDbResp
-    )
-
-    _.forEach(dbResp, (dResp, index) => {
-      if (_.isUndefined(saltResp)) return
-
-      if (dResp.provider === CloudServiceProvider.AWS) {
-        dResp['data'] = !_.isEmpty(saltResp.return[index])
-          ? _.values(saltResp.return[index]).length > 0
-            ? _.values(saltResp.return[index])
-            : []
-          : []
-      } else if (dResp.provider === CloudServiceProvider.GCP) {
-        dResp['data'] =
-          !_.isEmpty(saltResp.return[index]) &&
-          _.isObject(saltResp.return[index])
-            ? _.values(saltResp.return[index][dResp.namespace]['gce']).length >
-              0
-              ? _.values(saltResp.return[index][dResp.namespace]['gce'])
-              : []
-            : []
-      }
-    })
-
-    this.setState({cloudAccessInfos: [...dbResp]})
-  }
-
-  private handleUpdateNamespace = async () => {
-    const {handleUpdateCspAsync, handleGetCSPListInstancesAsync} = this.props
-    const {
-      cloudNamespace,
-      cloudAccessKey,
-      cloudSecretKey,
-      provider,
-      cloudAccessInfos,
-    } = this.state
-
-    let namespaceID = this.getNamespaceID(provider, cloudNamespace)
-
-    const data: paramsUpdateCSP = {
-      id: namespaceID,
-      namespace: cloudNamespace,
-      accesskey: cloudAccessKey,
-      secretkey: cloudSecretKey,
-    }
-
-    const newData = (() => {
-      if (provider === CloudServiceProvider.AWS) {
-        const {secretkey} = data
-        const decryptedBytes = CryptoJS.AES.decrypt(
-          secretkey,
-          this.secretKey.url
-        )
-        const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
-
-        return {
-          ...data,
-          provider,
-          secretkey: originalSecretkey,
-        }
-      } else {
-        return {...data, provider}
-      }
-    })()
-
-    try {
-      this.setState({loadingState: RemoteDataState.Loading})
-
-      if (
-        !(provider === CloudServiceProvider.AWS
-          ? await this.cloudproviderConfigWrite()
-          : true)
-      )
-        return
-
-      const saltResp = await handleGetCSPListInstancesAsync(
-        this.salt.url,
-        this.salt.token,
-        [newData]
-      )
-
-      const dbResp = await handleUpdateCspAsync(data)
-
-      const newCloudAccessInfos = _.map(cloudAccessInfos, c => {
-        if (c.id === dbResp.id) {
-          if (dbResp.provider === CloudServiceProvider.AWS) {
-            c = {
-              ...dbResp,
-              data: !_.isEmpty(saltResp.return[0])
-                ? _.values(saltResp.return[0]).length > 0
-                  ? _.values(saltResp.return[0])
-                  : []
-                : [],
-            }
-          } else if (dbResp.provider === CloudServiceProvider.GCP) {
-            c = {
-              ...dbResp,
-              data:
-                !_.isEmpty(saltResp.return[0]) && _.isObject(saltResp.return[0])
-                  ? _.values(saltResp.return[0][dbResp.namespace]['gce'])
-                      .length > 0
-                    ? _.values(saltResp.return[0][dbResp.namespace]['gce'])
-                    : []
-                  : [],
-            }
-          }
-        }
-        return c
-      })
-
-      this.setState({cloudAccessInfos: [...newCloudAccessInfos]})
-    } catch (error) {
-      console.error(error)
-    } finally {
-      this.setState({loadingState: RemoteDataState.Done})
-      this.closeCloudForm()
     }
   }
 }
@@ -3426,7 +2908,7 @@ const mapDispatchToProps = {
   handleSetIpmiStatusAsync: setIpmiStatusAsync,
   handleGetIpmiSensorDataAsync: getIpmiSensorDataAsync,
   notify: notifyAction,
-  handleLoadCspAsync: loadCloudServiceProviderAsync,
+  // handleLoadCspAsync: loadCloudServiceProviderAsync,
   handleLoadCspsAsync: loadCloudServiceProvidersAsync,
   handleCreateCspAsync: createCloudServiceProviderAsync,
   handleUpdateCspAsync: updateCloudServiceProviderAsync,
@@ -3438,6 +2920,7 @@ const mapDispatchToProps = {
   handleGetAWSInstanceTypesAsync: getAWSInstanceTypesAsync,
   handleWriteCspConfig: writeCSPConfigAsync,
   handleWriteCspKey: writeCSPKeyAsync,
+  handleGetRunnerFileReadAsync: getRunnerFileReadAsync,
 }
 
 export default connect(

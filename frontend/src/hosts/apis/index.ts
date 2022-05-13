@@ -32,6 +32,7 @@ import {
   getCSPListInstances,
   getRunnerCloudActionListInstances,
   getCSPRunnerFileWrite,
+  getRunnerFileRead,
 } from 'src/shared/apis/saltStack'
 import {getCpuAndLoadForK8s} from 'src/hosts/apis/kubernetes'
 
@@ -1028,6 +1029,7 @@ export interface paramsUpdateCSP {
 
 export const updateCloudServiceProvider = async ({
   id,
+  namespace,
   accesskey,
   secretkey,
 }: paramsUpdateCSP) => {
@@ -1035,7 +1037,7 @@ export const updateCloudServiceProvider = async ({
     return await AJAX({
       url: `/cloudhub/v1/csp/${id}`,
       method: 'PATCH',
-      data: {accesskey, secretkey},
+      data: {namespace, accesskey, secretkey},
     })
   } catch (error) {
     console.error(error)
@@ -1434,6 +1436,22 @@ export const fileWriteKeyApi = async (
     const info = await getCSPRunnerFileWrite(pUrl, pToken, pFileWrite)
 
     return info
+  } catch (error) {
+    throw error
+  }
+}
+
+export const getRunnerFileReadApi = async (
+  pUrl: string,
+  pToken: string,
+  pFilePath: []
+) => {
+  try {
+    const info = await getRunnerFileRead(pUrl, pToken, pFilePath)
+
+    const fileRead = yaml.safeLoad(info.data)
+
+    return fileRead
   } catch (error) {
     throw error
   }

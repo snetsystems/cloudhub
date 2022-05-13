@@ -1,4 +1,5 @@
 import React, {PureComponent} from 'react'
+import classnames from 'classnames'
 import {AWSInstanceData} from 'src/hosts/types/cloud'
 
 interface Props {
@@ -39,8 +40,29 @@ class TopologyDetailsSectionItem extends PureComponent<Props, State> {
           </div>
         )
       }
+    } else if (label === 'Instance state') {
+      return (
+        <div className={'section-item-contents'}>
+          {this.instanceState(contents)}
+        </div>
+      )
     }
     return <div className={'section-item-contents'}>{contents}</div>
+  }
+
+  private instanceState = (instanceState = null) => {
+    return (
+      <div
+        className={classnames(`status-tip`, {
+          active: instanceState.toString().toLowerCase() === 'running',
+        })}
+      >
+        <div className={'status-tip-bg'}>
+          <span className={'icon checkmark'}></span>
+        </div>
+        {instanceState}
+      </div>
+    )
   }
 }
 
