@@ -6,9 +6,9 @@ export const HOSTS_TABLE_SIZING = {
 }
 
 export const CLOUD_HOSTS_TABLE_SIZING = {
-  CloudNamespaceWidth: '11%',
+  CloudNamespaceWidth: '13%',
   CloudNameWidth: '15%',
-  CloudInstanceIDWidth: '15%',
+  CloudInstanceIDWidth: '13%',
   CloudInstanceStateWidth: '11%',
   CloudInstanceTypeWidth: '11%',
   CloudAppsWidth: '15%',

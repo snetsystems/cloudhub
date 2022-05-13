@@ -71,7 +71,7 @@ class CspHostsTable extends PureComponent<Props, State> {
     this.state = {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
-      sortKey: 'name',
+      sortKey: 'namesapce',
       activeEditorTab: 'snet',
     }
   }
@@ -160,7 +160,7 @@ class CspHostsTable extends PureComponent<Props, State> {
                 items={['ALL', ...namespaceFilterItems]}
                 onChoose={getHandleOnChoose}
                 selected={selectedNamespace}
-                className="dropdown-sm"
+                className="dropdown-150"
               />
             </div>
             <SearchBar

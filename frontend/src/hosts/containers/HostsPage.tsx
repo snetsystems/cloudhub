@@ -54,6 +54,7 @@ import {
   notifyUnableToGetApps,
 } from 'src/shared/copy/notifications'
 import {AddonType} from 'src/shared/constants'
+import {agentFilter} from 'src/hosts/constants/topology'
 
 //const
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
@@ -234,7 +235,7 @@ export class HostsPage extends PureComponent<Props, State> {
       ? proportions
       : proportions.split(',').map(v => Number(v))
 
-    const {notify, autoRefresh} = this.props
+    const {notify, autoRefresh, handleLoadCspsAsync} = this.props
 
     this.setState({
       hostsPageStatus: RemoteDataState.Loading,
@@ -264,11 +265,44 @@ export class HostsPage extends PureComponent<Props, State> {
       selectedNamespace: 'ALL',
       activeCspTab: 'Host',
     }
-    const hostsPage = _.get(
+    let hostsPage = _.get(
       getLocalStorageInfrastructure,
       'hostsPage',
       defaultState
     )
+    const getStoragedInstance = hostsPage.focusedInstance
+
+    if (getStoragedInstance) {
+      const dbResp: any[] = await handleLoadCspsAsync()
+
+      if (dbResp.length > 0) {
+        _.map(dbResp, csp => {
+          const isDeletedNamespace =
+            dbResp.length == 1
+              ? csp.namespace !== getStoragedInstance.namespace
+              : csp.provider === getStoragedInstance.provider &&
+                csp.namespace !== getStoragedInstance.namespace
+
+          if (isDeletedNamespace) {
+            hostsPage = {
+              ...defaultState,
+              activeCspTab: hostsPage['activeCspTab'],
+            }
+          }
+
+          return
+        })
+      } else {
+        setLocalStorage(
+          'infrastructure',
+          (hostsPage = {
+            ...defaultState,
+            activeCspTab: hostsPage['activeCspTab'],
+          })
+        )
+      }
+    }
+    const getFocusedInstance = hostsPage.focusedInstance
 
     const initActivateTab =
       !this.isUsingAWS && !this.isUsingGCP
@@ -301,8 +335,9 @@ export class HostsPage extends PureComponent<Props, State> {
       }
     }
 
-    const getFocusedInstance = hostsPage.focusedInstance
-
+    if (activeTab !== 'Host' && !getFocusedInstance) {
+      this.fetchCspHostsData(layouts)
+    }
     if (autoRefresh && activeTab === 'Host') {
       clearInterval(this.intervalID)
       this.intervalID = window.setInterval(
@@ -380,6 +415,7 @@ export class HostsPage extends PureComponent<Props, State> {
             )
             this.setState({filteredLayouts})
           }
+          this.setInfrastructureLocalStorage()
         }
       } else {
         if (
@@ -394,6 +430,7 @@ export class HostsPage extends PureComponent<Props, State> {
             )
             this.setState({filteredLayouts})
           }
+          this.setInfrastructureLocalStorage()
         }
       }
 
@@ -408,6 +445,7 @@ export class HostsPage extends PureComponent<Props, State> {
         )
 
         this.setState({filteredLayouts})
+        this.setInfrastructureLocalStorage()
       }
 
       if (autoRefresh && prevState.activeCspTab !== activeCspTab) {
@@ -424,10 +462,12 @@ export class HostsPage extends PureComponent<Props, State> {
             this.fetchCspHostsData(layouts)
           }, autoRefresh)
         }
+        this.setInfrastructureLocalStorage()
       }
 
       if (prevProps.autoRefresh !== autoRefresh) {
         GlobalAutoRefresher.poll(autoRefresh)
+        this.setInfrastructureLocalStorage()
       }
     }
   }
@@ -487,23 +527,7 @@ export class HostsPage extends PureComponent<Props, State> {
     this.intervalID = null
     GlobalAutoRefresher.stopPolling()
 
-    const getLocalStorageInfrastructure = getLocalStorage('infrastructure')
-    let getHostsPage = _.get(getLocalStorageInfrastructure, 'hostsPage', {
-      hostsPage: {},
-    })
-
-    getHostsPage = {
-      ...getLocalStorageInfrastructure,
-      hostsPage: {
-        selectedAgent: this.state.selectedAgent,
-        selectedNamespace: this.state.selectedNamespace,
-        activeCspTab: this.state.activeCspTab,
-        focusedInstance: this.state.focusedInstance,
-        focusedHost: this.state.focusedHost,
-      },
-    }
-
-    setLocalStorage('infrastructure', getHostsPage)
+    this.setInfrastructureLocalStorage()
 
     this.isComponentMounted = false
   }
@@ -588,7 +612,9 @@ export class HostsPage extends PureComponent<Props, State> {
     _.reduce(
       _.values(cloudHostObject),
       (__before, cCurrent) => {
-        cloudHosts.push(cCurrent)
+        if (cCurrent.instanceId) {
+          cloudHosts.push(cCurrent)
+        }
         return false
       },
       {}
@@ -860,7 +886,10 @@ export class HostsPage extends PureComponent<Props, State> {
   }
 
   private onSetFocusedInstance = (focusedInstance: Instance): void => {
-    this.setState({focusedInstance: focusedInstance})
+    this.setState({
+      cspPageStatus: RemoteDataState.Loading,
+      focusedInstance: focusedInstance,
+    })
   }
 
   private onSetActiveCspTab(activeCspTab: string): void {
@@ -1005,7 +1034,7 @@ export class HostsPage extends PureComponent<Props, State> {
     layouts: Layout[]
   ): Promise<{[host: string]: Host}> {
     const {source, links, notify} = this.props
-
+    const {focusedHost} = this.state
     const envVars = await getEnv(links.environment)
     const telegrafSystemInterval = getDeep<string>(
       envVars,
@@ -1034,14 +1063,14 @@ export class HostsPage extends PureComponent<Props, State> {
         tempVars
       )
 
-      if (_.isEmpty(this.state.focusedHost)) {
+      if (_.isEmpty(focusedHost)) {
         this.setState({
           focusedHost: this.getFirstHost(newHosts),
           hostsObject: newHosts,
           hostsPageStatus: RemoteDataState.Done,
         })
       } else {
-        if (!_.includes(_.keys(newHosts), this.state.focusedHost)) {
+        if (!_.includes(_.keys(newHosts), focusedHost)) {
           this.setState({
             focusedHost: this.getFirstHost(newHosts),
             hostsObject: newHosts,
@@ -1123,8 +1152,9 @@ export class HostsPage extends PureComponent<Props, State> {
       notify,
     } = this.props
 
+    const {focusedInstance, activeCspTab} = this.state
     const dbResp: any[] = await handleLoadCspsAsync()
-    const activeCspTab = this.state.activeCspTab
+    const agentFilterItems = agentFilter[activeCspTab]
 
     let newDbResp: any[] = _.filter(
       _.map(dbResp, resp => {
@@ -1152,17 +1182,11 @@ export class HostsPage extends PureComponent<Props, State> {
       }
     )
 
-    let namespaceFilterItems = []
-    _.map(newDbResp, resp => {
+    const namespaceFilterItems = _.map(newDbResp, resp => {
       if (resp.provider == activeCspTab) {
-        namespaceFilterItems.push(resp.namespace)
+        return resp.namespace
       }
     })
-
-    let agentFilterItems =
-      activeCspTab === 'aws'
-        ? ['ALL', 'CloudWatch', 'Within instances']
-        : ['ALL', 'StackDriver', 'Within instances']
 
     if (_.isEmpty(newDbResp)) {
       this.setState({
@@ -1174,7 +1198,7 @@ export class HostsPage extends PureComponent<Props, State> {
       return
     }
     let getSaltCSPs =
-      this.state.activeCspTab === 'aws'
+      activeCspTab === 'aws'
         ? await handleGetAWSInstancesAsync(
             this.salt.url,
             this.salt.token,
@@ -1189,14 +1213,12 @@ export class HostsPage extends PureComponent<Props, State> {
     let newCSPs = []
 
     getSaltCSPs = _.map(getSaltCSPs.return, getSaltCSP =>
-      this.state.activeCspTab === 'aws'
-        ? _.values(getSaltCSP)
-        : _.values(getSaltCSP)[0]
+      activeCspTab === 'aws' ? _.values(getSaltCSP) : _.values(getSaltCSP)[0]
     )
 
     _.forEach(newDbResp, (accessCsp, index) => {
       const {id, organization, namespace} = accessCsp
-      const provider = this.state.activeCspTab
+      const provider = activeCspTab
       let csp = []
 
       if (_.isEmpty(getSaltCSPs[index])) {
@@ -1257,7 +1279,7 @@ export class HostsPage extends PureComponent<Props, State> {
         activeCspTab
       )
 
-      if (_.isEmpty(this.state.focusedInstance)) {
+      if (_.isEmpty(focusedInstance)) {
         this.setState({
           focusedInstance: this.getFirstCloudHost(newCloudHostsObject),
           cloudAccessInfos: dbResp,
@@ -1299,6 +1321,31 @@ export class HostsPage extends PureComponent<Props, State> {
 
   private handleClickCspTableRow = (instance: Instance) => () => {
     this.onSetFocusedInstance(instance)
+  }
+
+  private setInfrastructureLocalStorage = () => {
+    const getLocalStorageInfrastructure = getLocalStorage('infrastructure')
+    let getHostsPage = _.get(getLocalStorageInfrastructure, 'hostsPage', {
+      hostsPage: {},
+    })
+    const {
+      selectedAgent,
+      selectedNamespace,
+      activeCspTab,
+      focusedInstance,
+      focusedHost,
+    } = this.state
+    getHostsPage = {
+      ...getLocalStorageInfrastructure,
+      hostsPage: {
+        selectedAgent: selectedAgent,
+        selectedNamespace: selectedNamespace,
+        activeCspTab: activeCspTab,
+        focusedInstance: focusedInstance,
+        focusedHost: focusedHost,
+      },
+    }
+    setLocalStorage('infrastructure', getHostsPage)
   }
 }
 
