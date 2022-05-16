@@ -606,19 +606,20 @@ export class HostsPage extends PureComponent<Props, State> {
       selectedNamespace,
       namespaceFilterItems,
     } = this.state
-    const cloudHostObject = cloudHostsObject
-    let cloudHosts = []
 
-    _.reduce(
-      _.values(cloudHostObject),
-      (__before, cCurrent) => {
-        if (cCurrent.instanceId) {
-          cloudHosts.push(cCurrent)
-        }
-        return false
-      },
-      {}
-    )
+    let cloudHosts = []
+    if (focusedInstance) {
+      _.reduce(
+        _.values(cloudHostsObject),
+        (__before, cCurrent) => {
+          if (cCurrent.instanceId) {
+            cloudHosts.push(cCurrent)
+          }
+          return false
+        },
+        {}
+      )
+    }
     return (
       <>
         {activeCspTab === 'aws' && (
@@ -895,6 +896,7 @@ export class HostsPage extends PureComponent<Props, State> {
   private onSetActiveCspTab(activeCspTab: string): void {
     if (activeCspTab !== 'Host') {
       this.setState({
+        cloudHostsObject: {},
         focusedInstance: null,
         selectedNamespace: 'ALL',
         selectedAgent: 'ALL',
