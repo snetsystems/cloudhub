@@ -21,7 +21,7 @@ const detailsValueChecker = (
 
 export const getInstanceType = (awsInstanceTypes: any) => {
   try {
-    if (_.isNull(awsInstanceTypes)) return
+    if (_.isEmpty(awsInstanceTypes)) return
     let instanceTypes = {}
 
     const getAWSInstanceTypes = _.values(

@@ -4,7 +4,6 @@ import {connect} from 'react-redux'
 import _ from 'lodash'
 import {getDeep} from 'src/utils/wrappers'
 import classnames from 'classnames'
-import * as TOML from '@iarna/toml'
 import yaml from 'js-yaml'
 
 import {
@@ -52,6 +51,7 @@ import {
   HANDLE_VERTICAL,
 } from 'src/shared/constants/'
 import {eachNodeTypeAttrs, tmpMenu} from 'src/hosts/constants/tools'
+import {agentFilter} from 'src/hosts/constants/topology'
 import {
   notifyUnableToGetHosts,
   notifygetCSPConfigFailed,
@@ -1868,12 +1868,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
                     Get from <span style={{margin: '0 3px'}}>:</span>
                   </span>
                   <Dropdown
-                    items={
-                      _.get(focusedInstance, 'provider') ===
-                      CloudServiceProvider.AWS
-                        ? ['ALL', 'CloudWatch', 'Within instances']
-                        : ['ALL', 'Stackdriver', 'Within instances']
-                    }
+                    items={agentFilter[_.get(focusedInstance, 'provider')]}
                     onChoose={this.getHandleOnChoose}
                     selected={selected}
                     className="dropdown-sm"
@@ -2035,8 +2030,8 @@ export class InventoryTopology extends PureComponent<Props, State> {
       } else if (resp.provider === 'gcp') {
         resp = {
           ...resp,
-          saemail: 'test',
-          sakey: 'testkey',
+          // saemail: 'test',
+          // sakey: 'testkey',
         }
       }
 
@@ -2049,7 +2044,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       newDbResp
     )
 
-    _.forEach(newDbResp, (dResp, index) => {
+    _.forEach(dbResp, (dResp, index) => {
       if (_.isUndefined(saltResp)) return
 
       if (dResp.provider === CloudServiceProvider.AWS) {
@@ -2070,7 +2065,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       }
     })
 
-    this.setState({cloudAccessInfos: [...newDbResp]})
+    this.setState({cloudAccessInfos: [...dbResp]})
   }
 
   private handleAddNamespace = async () => {
@@ -2512,12 +2507,15 @@ export class InventoryTopology extends PureComponent<Props, State> {
   private async fetchHostsAndMeasurements(layouts: Layout[], hostID: string) {
     const {source} = this.props
 
+    const tempVars = generateForHosts(source)
+
     const fetchMeasurements = getMeasurementsForHost(source, hostID)
     const fetchHosts = getAppsForHost(
       source.links.proxy,
       hostID,
       layouts,
-      source.telegraf
+      source.telegraf,
+      tempVars
     )
 
     const [host, measurements] = await Promise.all([
@@ -2558,12 +2556,15 @@ export class InventoryTopology extends PureComponent<Props, State> {
   private async fetchEtcAndMeasurements(layouts: Layout[], hostID: string) {
     const {source} = this.props
 
+    const tempVars = generateForHosts(source)
+
     const fetchMeasurements = getMeasurementsForEtc(source, hostID)
     const fetchHosts = getAppsForEtc(
       source.links.proxy,
       hostID,
       layouts,
-      source.telegraf
+      source.telegraf,
+      tempVars
     )
 
     const [host, measurements] = await Promise.all([
@@ -2612,6 +2613,8 @@ export class InventoryTopology extends PureComponent<Props, State> {
     const {source} = this.props
     const {selected} = this.state
 
+    const tempVars = generateForHosts(source)
+
     const fetchMeasurements = getMeasurementsForInstance(
       source,
       pInstance,
@@ -2622,6 +2625,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       pInstance,
       layouts,
       source.telegraf,
+      tempVars,
       selected
     )
 
@@ -2638,6 +2642,11 @@ export class InventoryTopology extends PureComponent<Props, State> {
       layouts,
       pInstance
     )
+
+    console.log('layouts', layouts)
+    console.log('instance', instance)
+    console.log('measurements', measurements)
+
     const layoutsWithinInstance = layouts.filter(layout => {
       return (
         instance.apps &&
@@ -2645,12 +2654,14 @@ export class InventoryTopology extends PureComponent<Props, State> {
         measurements.includes(layout.measurement)
       )
     })
+    console.log('layoutsWithinInstance', layoutsWithinInstance)
     const filteredLayouts = layoutsWithinInstance
       .filter(layout => {
         return (
           layout.app === 'system' ||
           layout.app === 'win_system' ||
-          layout.app === 'cloudwatch'
+          layout.app === 'cloudwatch' ||
+          layout.app === 'stackdriver_compute'
         )
       })
       .sort((x, y) => {

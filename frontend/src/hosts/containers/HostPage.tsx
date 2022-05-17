@@ -178,13 +178,15 @@ class HostPage extends PureComponent<Props, State> {
 
   private async fetchHostsAndMeasurements(layouts: Layout[]) {
     const {source, params} = this.props
+    const tempVars = generateForHosts(source)
 
     const fetchMeasurements = getMeasurementsForHost(source, params.hostID)
     const fetchHosts = getAppsForHost(
       source.links.proxy,
       params.hostID,
       layouts,
-      source.telegraf
+      source.telegraf,
+      tempVars
     )
 
     const [host, measurements] = await Promise.all([

@@ -592,13 +592,15 @@ export class Applications extends PureComponent<Props, State> {
     hostID: string
   ) => {
     const {source} = this.props
+    const tempVars = generateForHosts(source)
 
     const fetchMeasurements = getMeasurementsForHost(source, hostID)
     const fetchHosts = getAppsForHost(
       source.links.proxy,
       hostID,
       layouts,
-      source.telegraf
+      source.telegraf,
+      tempVars
     )
 
     const [host, measurements] = await Promise.all([

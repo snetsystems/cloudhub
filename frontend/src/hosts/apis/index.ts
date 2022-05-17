@@ -268,9 +268,12 @@ export const getAppsForHost = async (
   proxyLink: string,
   host: string,
   appLayouts: Layout[],
-  telegrafDB: string
+  telegrafDB: string,
+  tempVars: Template[]
 ) => {
-  const measurements = appLayouts.map(m => `^${m.measurement}$`).join('|')
+  const measurements = appLayouts
+    .map(m => `\":db:\".\":rp:\".\"${m.measurement}\"`)
+    .join(',')
   const measurementsToApps = _.zipObject(
     appLayouts.map(m => m.measurement),
     appLayouts.map(({app}) => app)
@@ -278,7 +281,10 @@ export const getAppsForHost = async (
 
   const {data} = await proxy({
     source: proxyLink,
-    query: `show series from /${measurements}/ where host = '${host}'`,
+    query: replaceTemplate(
+      `show series from ${measurements} where host = '${host}'`,
+      tempVars
+    ),
     db: telegrafDB,
   })
 
@@ -303,9 +309,12 @@ export const getAppsForEtc = async (
   proxyLink: string,
   host: string,
   appLayouts: Layout[],
-  telegrafDB: string
+  telegrafDB: string,
+  tempVars: Template[]
 ) => {
-  const measurements = appLayouts.map(m => `^${m.measurement}$`).join('|')
+  const measurements = appLayouts
+    .map(m => `\":db:\".\":rp:\".\"${m.measurement}\"`)
+    .join(',')
   const measurementsToApps = _.zipObject(
     appLayouts.map(m => m.measurement),
     appLayouts.map(({app}) => app)
@@ -313,7 +322,10 @@ export const getAppsForEtc = async (
 
   const {data} = await proxy({
     source: proxyLink,
-    query: `show series from /${measurements}/ where load_balancer = '${host}' or "host" = '${host}'`,
+    query: replaceTemplate(
+      `show series from ${measurements} where load_balancer = '${host}' or "host" = '${host}'`,
+      tempVars
+    ),
     db: telegrafDB,
   })
 
@@ -339,9 +351,12 @@ export const getAppsForInstance = async (
   instance: object,
   appLayouts: Layout[],
   telegrafDB: string,
+  tempVars: Template[],
   getFrom: string
 ) => {
-  const measurements = appLayouts.map(m => `^${m.measurement}$`).join('|')
+  const measurements = appLayouts
+    .map(m => `\":db:\".\":rp:\".\"${m.measurement}\"`)
+    .join(',')
   const measurementsToApps = _.zipObject(
     appLayouts.map(m => m.measurement),
     appLayouts.map(({app}) => app)
@@ -350,18 +365,18 @@ export const getAppsForInstance = async (
   let query = ''
 
   if (getFrom === 'ALL') {
-    query = `show series from /${measurements}/ where (host = '${instance['instancename']}') or (namespace = '${instance['namespace']}' and instance_id = '${instance['instanceid']}')`
+    query = `show series from ${measurements} where (host = '${instance['instancename']}') or (region = '${instance['namespace']}' and instance_id = '${instance['instanceid']}') or (project_id = '${instance['namespace']}' and instance_id = '${instance['instanceid']}')`
   } else if (getFrom === 'CloudWatch') {
-    query = `show series from /${measurements}/ where region = '${instance['namespace']}' and instance_id = '${instance['instanceid']}'`
+    query = `show series from ${measurements} where region = '${instance['namespace']}' and instance_id = '${instance['instanceid']}'`
   } else if (getFrom === 'StackDriver') {
-    query = `show series from /${measurements}/ where namespace = '${instance['namespace']}' and instance_id = '${instance['instanceid']}'`
+    query = `show series from ${measurements} where project_id = '${instance['namespace']}' and instance_id = '${instance['instanceid']}'`
   } else {
-    query = `show series from /${measurements}/ where host = '${instance['instancename']}'`
+    query = `show series from ${measurements} where host = '${instance['instancename']}'`
   }
 
   const {data} = await proxy({
     source: proxyLink,
-    query: query,
+    query: replaceTemplate(query, tempVars),
     db: telegrafDB,
   })
 
@@ -530,11 +545,11 @@ export const getMeasurementsForInstance = async (
 ): Promise<string[]> => {
   let query = ''
   if (getFrom === 'ALL') {
-    query = `SHOW MEASUREMENTS WHERE ("host" = '${instance['instancename']}') or ("namespace" = '${instance['namespace']}' and "instance_id" = '${instance['instanceid']}')`
+    query = `SHOW MEASUREMENTS WHERE ("host" = '${instance['instancename']}') or ("region" = '${instance['namespace']}' and "instance_id" = '${instance['instanceid']}') or ("project_id" = '${instance['namespace']}' and "instance_id" = '${instance['instanceid']}')`
   } else if (getFrom === 'CloudWatch') {
-    query = `SHOW MEASUREMENTS WHERE "namespace" = '${instance['namespace']}' and "instance_id" = '${instance['instanceid']}'`
+    query = `SHOW MEASUREMENTS WHERE "region" = '${instance['namespace']}' and "instance_id" = '${instance['instanceid']}'`
   } else if (getFrom === 'StackDriver') {
-    query = `SHOW MEASUREMENTS WHERE "namespace" = '${instance['namespace']}' and "instance_id" = '${instance['instanceid']}'`
+    query = `SHOW MEASUREMENTS WHERE "project_id" = '${instance['namespace']}' and "instance_id" = '${instance['instanceid']}'`
   } else {
     query = `SHOW MEASUREMENTS WHERE "host" = '${instance['instancename']}'`
   }
@@ -579,7 +594,7 @@ export const getMeasurementsForEtc = async (
 }
 
 const parseSeries = (seriesString: string): SeriesObj => {
-  const ident = /\w+/
+  const ident = /[^,]+/
   const tag = /,?([^=]+)=([^,]+)/
 
   const parseMeasurement = (s, obj) => {

@@ -3177,12 +3177,14 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   private async fetchHostsAndMeasurements(layouts: Layout[]) {
     const {source} = this.props
+    const tempVars = generateForHosts(source)
     const fetchMeasurements = getMeasurementsForHost(source, '')
     const fetchHosts = getAppsForHost(
       source.links.proxy,
       '',
       layouts,
-      source.telegraf
+      source.telegraf,
+      tempVars
     )
 
     const [host, measurements] = await Promise.all([
