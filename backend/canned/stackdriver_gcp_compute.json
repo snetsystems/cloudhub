@@ -1,0 +1,24 @@
+{
+  "id": "131028e1-34a5-4acf-bc9e-17f63332c387",
+  "measurement": "compute.googleapis.com/instance",
+  "app": "stackdriver_compute",
+  "autoflow": true,
+  "cells": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "7841eab1-8669-4e95-a848-ebdd318783c5",
+      "name": "CPU utilization(%)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"utilization\") AS \"mean_utilization\" FROM \":db:\".\":rp:\".\"compute.googleapis.com/instance/cpu\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    }
+  ]
+}

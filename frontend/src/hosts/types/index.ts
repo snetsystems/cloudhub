@@ -25,6 +25,7 @@ import {
   CloudServiceProvider,
   CSPAccessObject,
   CSPFileWriteParam,
+  Instance,
 } from 'src/hosts/types/cloud'
 
 import {
@@ -73,4 +74,5 @@ export {
   CloudServiceProvider,
   CSPAccessObject,
   CSPFileWriteParam,
+  Instance,
 }

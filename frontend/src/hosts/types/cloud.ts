@@ -30,6 +30,8 @@ export interface CSPAccessObject {
   minion: string
   accesskey: string
   secretkey: string
+  saemail: string
+  sakey: string
   provider: string
   namespace: string
   organization: string
@@ -59,4 +61,11 @@ export interface CSPFileWriteParam {
   path: string
   fileName: string
   script: string
+}
+
+export interface Instance {
+  provider: string
+  namespace: string
+  instanceid: string
+  instancename: string
 }

@@ -1241,12 +1241,14 @@ const VMHostsPage = (props: Props): JSX.Element => {
     layouts: Layout[],
     hostID: string
   ) => {
+    const tempVars = generateForHosts(source)
     const fetchMeasurements = getMeasurementsForHost(source, hostID)
     const fetchHosts = getAppsForHost(
       source.links.proxy,
       hostID,
       layouts,
-      source.telegraf
+      source.telegraf,
+      tempVars
     )
 
     const [host, measurements] = await Promise.all([

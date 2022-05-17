@@ -2135,6 +2135,37 @@ export async function getCSPRunnerFileWrite(
   }
 }
 
+export async function getRunnerFileRead(
+  pUrl: string,
+  pToken: string,
+  pParams: any[]
+): Promise<any> {
+  try {
+    let params = []
+
+    _.map(pParams, pParam => {
+      const param = {
+        token: pToken,
+        eauth: 'pam',
+        client: 'runner',
+        fun: 'salt.cmd',
+        kwarg: {
+          fun: 'file.read',
+          path: pParam,
+        },
+      }
+      params = [...params, param]
+    })
+
+    const result = await apiRequestMulti(pUrl, params, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 const saltActivityLog = async (
   activity: object,
   result: object

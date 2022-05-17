@@ -1019,7 +1019,7 @@ export class HostsPage extends PureComponent<Props, State> {
           layout.app === 'system' ||
           layout.app === 'win_system' ||
           layout.app === 'cloudwatch' ||
-          layout.app === 'stackDriver'
+          layout.app === 'stackdriver_compute'
         )
       })
       .sort((x, y) => {
@@ -1099,12 +1099,15 @@ export class HostsPage extends PureComponent<Props, State> {
   private async fetchHostsAndMeasurements(layouts: Layout[], hostID: string) {
     const {source} = this.props
 
+    const tempVars = generateForHosts(source)
+
     const fetchMeasurements = getMeasurementsForHost(source, hostID)
     const fetchHosts = getAppsForHost(
       source.links.proxy,
       hostID,
       layouts,
-      source.telegraf
+      source.telegraf,
+      tempVars
     )
 
     const [host, measurements] = await Promise.all([
@@ -1122,6 +1125,8 @@ export class HostsPage extends PureComponent<Props, State> {
     const {source} = this.props
     const {selectedAgent} = this.state
 
+    const tempVars = generateForHosts(source)
+
     const fetchMeasurements = getMeasurementsForInstance(
       source,
       pInstance,
@@ -1132,6 +1137,7 @@ export class HostsPage extends PureComponent<Props, State> {
       pInstance,
       layouts,
       source.telegraf,
+      tempVars,
       selectedAgent
     )
 
