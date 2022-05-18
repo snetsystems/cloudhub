@@ -3,45 +3,57 @@ import _ from 'lodash'
 import memoize from 'memoize-one'
 
 import SearchBar from 'src/hosts/components/SearchBar'
-import HostRow from 'src/hosts/components/HostRow'
-import InfiniteScroll from 'src/shared/components/InfiniteScroll'
 import PageSpinner from 'src/shared/components/PageSpinner'
+import Dropdown from 'src/shared/components/Dropdown'
 
-import {HOSTS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
+import {CLOUD_HOSTS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 import {ErrorHandling} from 'src/shared/decorators/errors'
-import {Source, RemoteDataState, Host} from 'src/types'
+import {Source, RemoteDataState, CloudHost} from 'src/types'
 
 import {HostsPage} from 'src/hosts/containers/HostsPage'
 
 //middlware
-import {
-  setLocalStorage,
-  getLocalStorage,
-  verifyLocalStorage,
-} from 'src/shared/middleware/localStorage'
+import CspHostRow from './CspHostRow'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 enum SortDirection {
   ASC = 'asc',
   DESC = 'desc',
 }
 
+interface Instance {
+  provider: string
+  namespace: string
+  instanceid: string
+  instancename: string
+}
+
 export interface Props {
-  hosts: Host[]
+  cloudHosts: CloudHost[]
+  namespaceFilterItems: string[]
+  selectedNamespace: string
   cspPageStatus: RemoteDataState
   source: Source
-  focusedHost: string
-  onClickTableRow: HostsPage['handleClickTableRow']
+  focusedInstance: Instance
+  getHandleOnChoose: (selectItem: {text: string}) => void
+  onClickTableRow: HostsPage['handleClickCspTableRow']
   tableTitle: () => JSX.Element
+  handleInstanceTypeModal: (
+    provider: string,
+    namespace: string,
+    type: string
+  ) => void
 }
 
 interface State {
   searchTerm: string
   sortDirection: SortDirection
   sortKey: string
+  activeEditorTab: string
 }
 
 @ErrorHandling
-class HostsTable extends PureComponent<Props, State> {
+class AwsHostsTable extends PureComponent<Props, State> {
   public getSortedHosts = memoize(
     (
       hosts,
@@ -59,15 +71,15 @@ class HostsTable extends PureComponent<Props, State> {
     this.state = {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
-      sortKey: 'name',
+      sortKey: 'namesapce',
+      activeEditorTab: 'snet',
     }
   }
 
-  public filter(allHosts: Host[], searchTerm: string): Host[] {
+  public filter(allHosts: CloudHost[], searchTerm: string): CloudHost[] {
     const filterText = searchTerm.toLowerCase()
     return allHosts.filter(h => {
       const apps = h.apps ? h.apps.join(', ') : ''
-
       let tagResult = false
       if (h.tags) {
         tagResult = Object.keys(h.tags).reduce((acc, key) => {
@@ -76,20 +88,25 @@ class HostsTable extends PureComponent<Props, State> {
       } else {
         tagResult = false
       }
+
       return (
-        h.name.toLowerCase().includes(filterText) ||
+        h.instanceId.toLowerCase().includes(filterText) ||
         apps.toLowerCase().includes(filterText) ||
         tagResult
       )
     })
   }
 
-  public sort(hosts: Host[], key: string, direction: SortDirection): Host[] {
+  public sort(
+    hosts: CloudHost[],
+    key: string,
+    direction: SortDirection
+  ): CloudHost[] {
     switch (direction) {
       case SortDirection.ASC:
-        return _.sortBy<Host>(hosts, e => e[key])
+        return _.sortBy<CloudHost>(hosts, e => e[key])
       case SortDirection.DESC:
-        return _.sortBy<Host>(hosts, e => e[key]).reverse()
+        return _.sortBy<CloudHost>(hosts, e => e[key]).reverse()
       default:
         return hosts
     }
@@ -123,30 +140,13 @@ class HostsTable extends PureComponent<Props, State> {
     return 'hosts-table--th sortable-header'
   }
 
-  public componentWillMount() {
-    verifyLocalStorage(getLocalStorage, setLocalStorage, 'hostsTableState', {
-      sortKey: this.state.sortKey,
-      sortDirection: this.state.sortDirection,
-      focusedHost: this.props.focusedHost,
-    })
-
-    const {sortKey, sortDirection} = getLocalStorage('hostsTableState')
-
-    this.setState({
-      sortKey,
-      sortDirection,
-    })
-  }
-
-  public componentDidUpdate() {
-    setLocalStorage('hostsTableState', {
-      sortKey: this.state.sortKey,
-      sortDirection: this.state.sortDirection,
-      focusedHost: this.props.focusedHost,
-    })
-  }
-
   public render() {
+    const {
+      namespaceFilterItems,
+      selectedNamespace,
+      getHandleOnChoose,
+    } = this.props
+
     return (
       <div className="panel">
         <div className="panel-heading">
@@ -154,23 +154,31 @@ class HostsTable extends PureComponent<Props, State> {
             <h2 className="panel-title">{this.HostsTitle}</h2>
           </div>
 
-          <div>
+          <div style={{display: 'flex'}}>
+            <div style={{marginRight: '5px'}}>
+              <Dropdown
+                items={['ALL', ...namespaceFilterItems]}
+                onChoose={getHandleOnChoose}
+                selected={selectedNamespace}
+                className="dropdown-150"
+              />
+            </div>
             <SearchBar
-              placeholder="Filter by Host..."
+              placeholder="Filter by Name..."
               onSearch={this.updateSearchTerm}
             />
           </div>
         </div>
-        <div className="panel-body">{this.TableContents}</div>
+        <div className="panel-body">{this.CloudTableContents}</div>
       </div>
     )
   }
 
-  private get TableContents(): JSX.Element {
-    const {hosts, cspPageStatus} = this.props
+  private get CloudTableContents(): JSX.Element {
+    const {cloudHosts, cspPageStatus} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
     const sortedHosts = this.getSortedHosts(
-      hosts,
+      cloudHosts,
       searchTerm,
       sortKey,
       sortDirection
@@ -184,39 +192,55 @@ class HostsTable extends PureComponent<Props, State> {
     if (cspPageStatus === RemoteDataState.Error) {
       return this.ErrorState
     }
-    if (hosts.length === 0) {
+    if (cloudHosts.length === 0) {
       return this.NoHostsState
     }
     if (sortedHosts.length === 0) {
       return this.NoSortedHostsState
     }
-    return this.TableWithHosts
+    return this.CloudTableWithHosts
   }
 
-  private get TableWithHosts(): JSX.Element {
-    const {source, hosts, focusedHost, onClickTableRow} = this.props
+  private get CloudTableWithHosts(): JSX.Element {
+    const {
+      source,
+      cloudHosts,
+      focusedInstance,
+      onClickTableRow,
+      handleInstanceTypeModal,
+      selectedNamespace,
+    } = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
-    const sortedHosts = this.getSortedHosts(
-      hosts,
+
+    let sortedHosts = this.getSortedHosts(
+      cloudHosts,
       searchTerm,
       sortKey,
       sortDirection
     )
 
+    if (selectedNamespace !== 'ALL') {
+      sortedHosts = [
+        ...sortedHosts.filter(h => h.csp.namespace === selectedNamespace),
+      ]
+    }
+
     return (
       <div className="hosts-table">
-        {this.HostsTableHeader}
-        <InfiniteScroll
-          items={sortedHosts.map(h => (
-            <HostRow
-              key={h.name}
-              host={h}
-              sourceID={source.id}
-              focusedHost={focusedHost}
-              onClickTableRow={onClickTableRow}
-            />
-          ))}
-          itemHeight={26}
+        {this.CloudHostsTableHeader}
+        <FancyScrollbar
+          children={sortedHosts.map(h => {
+            return (
+              <CspHostRow
+                key={`${h.csp.id}-${h.instanceId}`}
+                host={h}
+                sourceID={source.id}
+                focusedInstance={focusedInstance}
+                onClickTableRow={onClickTableRow}
+                handleInstanceTypeModal={handleInstanceTypeModal}
+              />
+            )
+          })}
           className="hosts-table--tbody"
         />
       </div>
@@ -259,49 +283,96 @@ class HostsTable extends PureComponent<Props, State> {
     return tableTitle()
   }
 
-  private get HostsTableHeader(): JSX.Element {
-    const {NameWidth, StatusWidth, CPUWidth, LoadWidth} = HOSTS_TABLE_SIZING
+  private get CloudHostsTableHeader(): JSX.Element {
+    const {
+      CloudNamespaceWidth,
+      CloudNameWidth,
+      CloudInstanceIDWidth,
+      CloudInstanceStateWidth,
+      CloudInstanceTypeWidth,
+      CloudAppsWidth,
+      CloudCPUWidth,
+      CloudMemoryWidth,
+      CloudDiskWidth,
+    } = CLOUD_HOSTS_TABLE_SIZING
 
     return (
       <div className="hosts-table--thead">
         <div className="hosts-table--tr">
           <div
-            onClick={this.updateSort('name')}
-            className={this.sortableClasses('name')}
-            style={{width: NameWidth}}
+            onClick={this.updateSort('namespace')}
+            className={this.sortableClasses('namespace')}
+            style={{width: CloudNamespaceWidth}}
           >
-            Host
+            Region
             <span className="icon caret-up" />
           </div>
           <div
-            onClick={this.updateSort('deltaUptime')}
-            className={this.sortableClasses('deltaUptime')}
-            style={{width: StatusWidth}}
+            onClick={this.updateSort('name')}
+            className={this.sortableClasses('name')}
+            style={{width: CloudNameWidth}}
           >
-            Status
+            Name
             <span className="icon caret-up" />
+          </div>
+          <div
+            onClick={this.updateSort('instanceID')}
+            className={this.sortableClasses('instanceID')}
+            style={{width: CloudInstanceIDWidth}}
+          >
+            Instance ID
+            <span className="icon caret-up" />
+          </div>
+          <div
+            onClick={this.updateSort('instanceState')}
+            className={this.sortableClasses('instanceState')}
+            style={{width: CloudInstanceStateWidth}}
+          >
+            Instance state
+            <span className="icon caret-up" />
+          </div>
+          <div
+            onClick={this.updateSort('instanceType')}
+            className={this.sortableClasses('instanceType')}
+            style={{width: CloudInstanceTypeWidth}}
+          >
+            Instance type
+            <span className="icon caret-up" />
+          </div>
+          <div
+            className="hosts-table--th list-type"
+            style={{width: CloudAppsWidth}}
+          >
+            Apps
           </div>
           <div
             onClick={this.updateSort('cpu')}
             className={this.sortableClasses('cpu')}
-            style={{width: CPUWidth}}
+            style={{width: CloudCPUWidth}}
           >
             CPU
             <span className="icon caret-up" />
           </div>
           <div
-            onClick={this.updateSort('load')}
-            className={this.sortableClasses('load')}
-            style={{width: LoadWidth}}
+            onClick={this.updateSort('memory')}
+            className={this.sortableClasses('memory')}
+            style={{width: CloudMemoryWidth}}
           >
-            Load
+            Memory
             <span className="icon caret-up" />
           </div>
-          <div className="hosts-table--th list-type">Apps</div>
+          <div
+            onClick={this.updateSort('disk')}
+            className={this.sortableClasses('disk')}
+            style={{width: CloudDiskWidth}}
+          >
+            Disk
+            <span className="icon caret-up" />
+          </div>
         </div>
       </div>
     )
   }
 }
 
-export default HostsTable
+export default AwsHostsTable

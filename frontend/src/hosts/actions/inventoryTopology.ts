@@ -548,14 +548,12 @@ export const getGCPInstancesAsync = (
     _.map(gcpInstances.return, item => {
       _.reduce(
         item,
-        (_before, current, namesapce) => {
+        (_before, current) => {
           let GcpInstancesItem = [null]
           Object.keys(current.gce).forEach((key, _) => {
             GcpInstancesItem.push(current.gce[key])
           })
-          convertedGcpInstances.return.push({
-            [namesapce]: GcpInstancesItem,
-          })
+          convertedGcpInstances.return.push(GcpInstancesItem)
           return false
         },
         {}
@@ -563,7 +561,7 @@ export const getGCPInstancesAsync = (
     })
 
     _.forEach(convertedGcpInstances.return, (host, index) => {
-      if (!_.isArray(_.values(host)[0])) {
+      if (!_.isArray(_.values(host))) {
         const {provider, namespace} = pCsps[index]
         const error = new Error(
           `<br/>PROVIDER: ${provider} <br/>PROJECT: ${namespace}`
