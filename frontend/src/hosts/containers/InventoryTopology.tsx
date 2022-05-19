@@ -51,7 +51,6 @@ import {
   HANDLE_VERTICAL,
 } from 'src/shared/constants/'
 import {eachNodeTypeAttrs, tmpMenu} from 'src/hosts/constants/tools'
-import {agentFilter} from 'src/hosts/constants/topology'
 import {
   notifyUnableToGetHosts,
   notifygetCSPConfigFailed,
@@ -1868,7 +1867,12 @@ export class InventoryTopology extends PureComponent<Props, State> {
                     Get from <span style={{margin: '0 3px'}}>:</span>
                   </span>
                   <Dropdown
-                    items={agentFilter[_.get(focusedInstance, 'provider')]}
+                    items={
+                      _.get(focusedInstance, 'provider') ===
+                      CloudServiceProvider.AWS
+                        ? ['ALL', 'CloudWatch', 'Within instances']
+                        : ['ALL', 'StackDriver', 'Within instances']
+                    }
                     onChoose={this.getHandleOnChoose}
                     selected={selected}
                     className="dropdown-sm"
@@ -2642,11 +2646,6 @@ export class InventoryTopology extends PureComponent<Props, State> {
       layouts,
       pInstance
     )
-
-    console.log('layouts', layouts)
-    console.log('instance', instance)
-    console.log('measurements', measurements)
-
     const layoutsWithinInstance = layouts.filter(layout => {
       return (
         instance.apps &&
@@ -2654,14 +2653,13 @@ export class InventoryTopology extends PureComponent<Props, State> {
         measurements.includes(layout.measurement)
       )
     })
-    console.log('layoutsWithinInstance', layoutsWithinInstance)
     const filteredLayouts = layoutsWithinInstance
       .filter(layout => {
         return (
           layout.app === 'system' ||
           layout.app === 'win_system' ||
           layout.app === 'cloudwatch' ||
-          layout.app === 'stackdriver_compute'
+          layout.app === 'stackdriver'
         )
       })
       .sort((x, y) => {

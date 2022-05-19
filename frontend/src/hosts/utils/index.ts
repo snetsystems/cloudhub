@@ -243,7 +243,16 @@ export const getInstanceDetails = (
     _.reduce(
       getData,
       (_, current) => {
-        const {id, image, name, private_ips, public_ips, size, state} = current
+        const {
+          id,
+          image,
+          name,
+          private_ips,
+          public_ips,
+          size,
+          state,
+          extra,
+        } = current
 
         const instance = {
           Instance_summary: {
@@ -255,6 +264,12 @@ export const getInstanceDetails = (
             Private_IP: detailsValueChecker(private_ips[0]),
             Public_IP: detailsValueChecker(public_ips[0]),
           },
+          Zone: {
+            Name: detailsValueChecker(extra.zone.name),
+            Country: detailsValueChecker(extra.zone.country),
+            Status: detailsValueChecker(extra.zone.status),
+            Description: detailsValueChecker(extra.zone.extra.description),
+          },
         }
 
         instanceData = {
@@ -265,6 +280,59 @@ export const getInstanceDetails = (
       },
       {}
     )
+
+    const computeNetwork = []
+    const computeDisk = []
+
+    if (!_.isEmpty(getData)) {
+      _.forEach(_.get(getData[0], 'extra.networkInterfaces'), network => {
+        const {name, networkIP, accessConfigs} = network
+
+        if (!_.isEmpty(accessConfigs)) {
+          _.forEach(accessConfigs, accessConfig => {
+            computeNetwork.push({
+              name: name,
+              internal_ip: networkIP,
+              external_ip: accessConfig.natIP,
+              tier: accessConfig.networkTier,
+              type: accessConfig.type,
+            })
+          })
+        } else {
+          computeNetwork.push({
+            name: name,
+            internal_ip: networkIP,
+            external_ip: '-',
+            tier: '-',
+            type: '-',
+          })
+        }
+      })
+
+      _.forEach(_.get(getData[0], 'extra.disks'), disk => {
+        computeDisk.push({
+          devicename: detailsValueChecker(_.get(disk, 'deviceName')),
+          disksize: detailsValueChecker(_.get(disk, 'diskSizeGb')),
+          diskinterface: detailsValueChecker(_.get(disk, 'interface')),
+          boot: detailsValueChecker(_.toString(_.get(disk, 'boot'))),
+          autodelete: detailsValueChecker(
+            _.toString(_.get(disk, 'autoDelete'))
+          ),
+          mode: detailsValueChecker(_.get(disk, 'mode')),
+          type: detailsValueChecker(_.get(disk, 'type')),
+        })
+      })
+    }
+
+    instanceData = {
+      ...instanceData,
+      Network_Interfaces: {
+        name: 'network',
+        role: 'table',
+        data: computeNetwork,
+      },
+      Disk: {name: 'disk', role: 'table', data: computeDisk},
+    }
   }
 
   return instanceData

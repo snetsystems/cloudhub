@@ -57,6 +57,24 @@ export interface awsVolume {
   volumeSize: number
 }
 
+export interface cspNetwork {
+  name: string
+  internal_ip: string
+  external_ip: string
+  tier: string
+  type: string
+}
+
+export interface cspDisk {
+  devicename: string
+  disksize: string | number
+  diskinterface: string
+  boot: string | boolean
+  autodelete: string | boolean
+  mode: string
+  type: string
+}
+
 export interface CSPFileWriteParam {
   path: string
   fileName: string

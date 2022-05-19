@@ -8,6 +8,8 @@ import {AWSInstanceData} from 'src/hosts/types/cloud'
 import TopologySecurityTable from './TopologySecurityTable'
 import {RemoteDataState} from 'src/types'
 import TopologyStorageTable from './TopologyStorageTable'
+import TopologyNetworkTable from './TopologyNetworkTable'
+import TopologyDiskTable from './TopologyDiskTable'
 
 interface Props {
   title: string
@@ -84,6 +86,26 @@ class TopologyDetailsSection extends PureComponent<Props, State> {
       return (
         <TopologyStorageTable
           key={'storage'}
+          tableData={selectInstanceData['data']}
+          pageStatus={RemoteDataState.Done}
+        />
+      )
+    }
+
+    if (selectInstanceData['name'] === 'network') {
+      return (
+        <TopologyNetworkTable
+          key={'network'}
+          tableData={selectInstanceData['data']}
+          pageStatus={RemoteDataState.Done}
+        />
+      )
+    }
+
+    if (selectInstanceData['name'] === 'disk') {
+      return (
+        <TopologyDiskTable
+          key={'disk'}
           tableData={selectInstanceData['data']}
           pageStatus={RemoteDataState.Done}
         />

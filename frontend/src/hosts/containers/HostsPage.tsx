@@ -963,31 +963,28 @@ export class HostsPage extends PureComponent<Props, State> {
             />
           )
         }
+        case 'gcp': {
+          return (
+            <AwsHostRenderGraph
+              source={source}
+              timeRange={timeRange}
+              focusedHost={activeCspTab === 'Host' ? focusedHost : ''}
+              agentFilterItems={agentFilterItems}
+              selectedAgent={selectedAgent}
+              awsFocusedInstance={gcpFocusedInstance}
+              activeCspTab={activeCspTab}
+              filteredLayouts={filteredLayouts}
+              getHandleOnChoose={this.getHandleOnChoose}
+              manualRefresh={manualRefresh}
+              onManualRefresh={function (): void {
+                throw new Error('Function not implemented.')
+              }}
+            />
+          )
+        }
         default: {
           return (
             <>
-              {activeCspTab === 'gcp' && (
-                <Page.Header>
-                  <Page.Header.Left>
-                    <></>
-                  </Page.Header.Left>
-                  <Page.Header.Right>
-                    <>
-                      <span>
-                        Get from <span style={{margin: '0 3px'}}>:</span>
-                      </span>
-                      <Dropdown
-                        items={agentFilterItems}
-                        onChoose={this.getHandleOnChoose}
-                        selected={selectedAgent}
-                        className="dropdown-sm"
-                        disabled={false}
-                      />
-                    </>
-                  </Page.Header.Right>
-                </Page.Header>
-              )}
-
               <Page.Contents>
                 <LayoutRenderer
                   source={source}
@@ -1000,7 +997,7 @@ export class HostsPage extends PureComponent<Props, State> {
                   timeRange={timeRange}
                   manualRefresh={manualRefresh}
                   host={activeCspTab === 'Host' ? focusedHost : ''}
-                  instance={gcpFocusedInstance}
+                  instance={null}
                 />
               </Page.Contents>
             </>
@@ -1057,7 +1054,7 @@ export class HostsPage extends PureComponent<Props, State> {
           layout.app === 'system' ||
           layout.app === 'win_system' ||
           layout.app === 'cloudwatch' ||
-          layout.app === 'stackdriver_compute'
+          layout.app === 'stackdriver'
         )
       })
       .sort((x, y) => {
