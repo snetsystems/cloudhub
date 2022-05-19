@@ -241,12 +241,6 @@ func (s *Service) UpdateCSP(w http.ResponseWriter, r *http.Request) {
 
 	if req.NameSpace != "" {
 		oriCSP.NameSpace = req.NameSpace
-
-		// validate that the provider and namespace exists
-		if existsCSPInOrg(ctx, s, oriCSP.Provider, oriCSP.NameSpace) {
-			invalidData(w, fmt.Errorf("Provider and NameSpace is already existed in organization"), s.Logger)
-			return
-		}
 	}
 	if req.Accesskey != "" {
 		oriCSP.AccessKey = req.Accesskey
