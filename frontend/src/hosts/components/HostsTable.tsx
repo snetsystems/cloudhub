@@ -4,7 +4,7 @@ import memoize from 'memoize-one'
 
 import SearchBar from 'src/hosts/components/SearchBar'
 import HostRow from 'src/hosts/components/HostRow'
-import InfiniteScroll from 'src/shared/components/InfiniteScroll'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import PageSpinner from 'src/shared/components/PageSpinner'
 
 import {HOSTS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
@@ -206,8 +206,8 @@ class HostsTable extends PureComponent<Props, State> {
     return (
       <div className="hosts-table">
         {this.HostsTableHeader}
-        <InfiniteScroll
-          items={sortedHosts.map(h => (
+        <FancyScrollbar
+          children={sortedHosts.map(h => (
             <HostRow
               key={h.name}
               host={h}
@@ -216,7 +216,6 @@ class HostsTable extends PureComponent<Props, State> {
               onClickTableRow={onClickTableRow}
             />
           ))}
-          itemHeight={26}
           className="hosts-table--tbody"
         />
       </div>
