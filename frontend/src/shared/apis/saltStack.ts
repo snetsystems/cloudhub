@@ -410,18 +410,20 @@ export async function runLocalServiceReStartTelegraf(
 export async function runLocalServiceTestTelegraf(
   pUrl: string,
   pToken: string,
-  pMinionId: string
+  pMinionId: string,
+  pSelectedPlugin?: string
 ) {
   try {
+    const inputFilter =
+      pSelectedPlugin === 'All' ? '' : `--input-filter ${pSelectedPlugin}`
     const params: Params = {
       client: 'local',
       fun: 'cmd.run',
-      tgt_type: '',
-      tgt: '',
       kwarg: {
-        cmd: 'telegraf --test',
+        cmd: `telegraf --test ${inputFilter}`,
       },
     }
+
     if (pMinionId) {
       params.tgt_type = 'list'
       params.tgt = pMinionId
