@@ -1,0 +1,884 @@
+{
+  "id": "ab9849bf-ec52-4f16-a937-8d371e947cdd",
+  "meta": {
+    "name": "GCP StackDriver",
+    "measurements": [
+      "agent.googleapis.com/memory",
+      "compute.googleapis.com/instance/cpu",
+      "compute.googleapis.com/instance/disk",
+      "compute.googleapis.com/instance/network"
+    ],
+    "version": "1.0",
+    "dashboardVersion": "1.x",
+    "description": "Dashboard for the telegraf input plug-in: stackdriver. Provides visibility on a single node.",
+    "author": "InfluxData",
+    "license": "MIT",
+    "icon": "",
+    "url": "https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/stackdriver"
+  },
+  "data": {
+    "cells": [
+      {
+        "i": "e87c9fab-fa09-4f86-980c-1f53dd73c39b",
+        "x": 0,
+        "y": 0,
+        "w": 3,
+        "h": 3,
+        "name": "Instance Count",
+        "queries": [
+          {
+            "query": "SELECT count(distinct(instance_id)) FROM (SELECT mean(\"utilization\") AS \"mean_utilization\" FROM \"RnD\".\"autogen\".\"compute.googleapis.com/instance/cpu\" WHERE time > :dashboardTime: AND project_id = :project_id: GROUP BY time(:interval:), \"instance_id\" LIMIT 1) FILL(previous)",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT count(distinct(instance_id)) FROM (SELECT mean(\"utilization\") AS \"mean_utilization\" FROM \"RnD\".\"autogen\".\"compute.googleapis.com/instance/cpu\" WHERE time > :dashboardTime: AND project_id = :project_id: GROUP BY time(:interval:), \"instance_id\" LIMIT 1) FILL(previous)",
+              "range": null,
+              "shifts": null
+            },
+            "source": "",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "single-stat",
+        "colors": [
+          {
+            "id": "base",
+            "type": "text",
+            "hex": "#00C9FF",
+            "name": "laser",
+            "value": "-1000000000000000000"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          {
+            "internalName": "compute.googleapis.com/instance/cpu.count",
+            "displayName": "",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf stackdriver Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/stackdriver).",
+        "noteVisibility": "showWhenNoData"
+      },
+      {
+        "i": "bef2e015-083b-4df1-b25c-9b4735e8a0d5",
+        "x": 9,
+        "y": 0,
+        "w": 3,
+        "h": 3,
+        "name": "CPU utilization (%)",
+        "queries": [
+          {
+            "query": "SELECT mean(\"utilization\") * 100 AS \"mean_utilization\" FROM \"RnD\".\"autogen\".\"compute.googleapis.com/instance/cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"project_id\"=:project_id: AND \"instance_id\"=:instance_id: GROUP BY time(:interval:) FILL(null)",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT mean(\"utilization\") * 100 AS \"mean_utilization\" FROM \"RnD\".\"autogen\".\"compute.googleapis.com/instance/cpu\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"project_id\"=:project_id: AND \"instance_id\"=:instance_id: GROUP BY time(:interval:) FILL(null)",
+              "range": null,
+              "shifts": null
+            },
+            "source": "",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "line",
+        "colors": [
+          {
+            "id": "aefff0c5-47a8-412c-98d6-783eb9ea5297",
+            "type": "scale",
+            "hex": "#31C0F6",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "6746d238-adea-4c79-a20a-a884b126dee6",
+            "type": "scale",
+            "hex": "#A500A5",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "9840212c-9078-43d1-944c-133b8cb23429",
+            "type": "scale",
+            "hex": "#FF7E27",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf stackdriver Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/stackdriver).",
+        "noteVisibility": "showWhenNoData"
+      },
+      {
+        "i": "cbc3ecc3-53e5-4c71-a70b-70169d22eb78",
+        "x": 3,
+        "y": 0,
+        "w": 3,
+        "h": 3,
+        "name": "Memory usage (%)",
+        "queries": [
+          {
+            "query": "SELECT mean(\"percent_used\") AS \"mean_percent_used\" FROM \"RnD\".\"autogen\".\"agent.googleapis.com/memory\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"project_id\" = :project_id: AND \"instance_id\" = :instance_id: AND \"state\"='used' GROUP BY time(:interval:) FILL(null)",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT mean(\"percent_used\") AS \"mean_percent_used\" FROM \"RnD\".\"autogen\".\"agent.googleapis.com/memory\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"project_id\" = :project_id: AND \"instance_id\" = :instance_id: AND \"state\"='used' GROUP BY time(:interval:) FILL(null)",
+              "range": null,
+              "shifts": null
+            },
+            "source": "",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "line",
+        "colors": [
+          {
+            "id": "bf41b18f-099c-4e0e-9da6-f0e91e76f94f",
+            "type": "scale",
+            "hex": "#31C0F6",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "e5741a39-b804-42c2-8a17-7088309952bb",
+            "type": "scale",
+            "hex": "#A500A5",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "9686f211-8f7d-4674-b81c-7bcd88f08fc2",
+            "type": "scale",
+            "hex": "#FF7E27",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf stackdriver Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/stackdriver).",
+        "noteVisibility": "showWhenNoData"
+      },
+      {
+        "i": "c27542a2-2c93-48eb-a52f-454b4edfdfe1",
+        "x": 6,
+        "y": 0,
+        "w": 3,
+        "h": 3,
+        "name": "Network send (KiB)",
+        "queries": [
+          {
+            "query": "SELECT non_negative_derivative(max(\"sent_bytes_count\"), 1s) AS \"mean_sent_bytes_count\" FROM \"RnD\".\"autogen\".\"compute.googleapis.com/instance/network\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"project_id\" = :project_id: AND \"instance_id\" = :instance_id: GROUP BY time(:interval:) FILL(null)",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT non_negative_derivative(max(\"sent_bytes_count\"), 1s) AS \"mean_sent_bytes_count\" FROM \"RnD\".\"autogen\".\"compute.googleapis.com/instance/network\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"project_id\" = :project_id: AND \"instance_id\" = :instance_id: GROUP BY time(:interval:) FILL(null)",
+              "range": null,
+              "shifts": null
+            },
+            "source": "",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "line",
+        "colors": [
+          {
+            "id": "da117f3b-16e3-4819-9a53-e363bc07414b",
+            "type": "scale",
+            "hex": "#31C0F6",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "e6f82fbd-6a8a-4316-89d9-837d77c108d3",
+            "type": "scale",
+            "hex": "#A500A5",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "2249e9ab-4dac-49a8-ad07-99720dd8f013",
+            "type": "scale",
+            "hex": "#FF7E27",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf stackdriver Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/stackdriver).",
+        "noteVisibility": "showWhenNoData"
+      },
+      {
+        "i": "f7dc9d05-8346-4723-868f-50d97c217da1",
+        "x": 0,
+        "y": 3,
+        "w": 3,
+        "h": 3,
+        "name": "Network Received (KiB)",
+        "queries": [
+          {
+            "query": "SELECT non_negative_derivative(max(\"received_bytes_count\"), 1s) AS \"mean_received_bytes_count\" FROM \"RnD\".\"autogen\".\"compute.googleapis.com/instance/network\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"project_id\" = :project_id: AND \"instance_id\" = :instance_id: GROUP BY time(:interval:) FILL(null)",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT non_negative_derivative(max(\"received_bytes_count\"), 1s) AS \"mean_received_bytes_count\" FROM \"RnD\".\"autogen\".\"compute.googleapis.com/instance/network\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"project_id\" = :project_id: AND \"instance_id\" = :instance_id: GROUP BY time(:interval:) FILL(null)",
+              "range": null,
+              "shifts": null
+            },
+            "source": "",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "line",
+        "colors": [
+          {
+            "id": "79d6d5b6-4b55-4e8e-8bb7-1e3d67a01fac",
+            "type": "scale",
+            "hex": "#31C0F6",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "08914d4e-5c1e-455a-98bc-2ec9804d2066",
+            "type": "scale",
+            "hex": "#A500A5",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "866f8b5a-5d86-4d43-a28c-fe1981047230",
+            "type": "scale",
+            "hex": "#FF7E27",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf stackdriver Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/stackdriver).",
+        "noteVisibility": "showWhenNoData"
+      },
+      {
+        "i": "2a427cd6-2b55-4de5-9e51-e0d1015d8ca5",
+        "x": 3,
+        "y": 3,
+        "w": 3,
+        "h": 3,
+        "name": "DisK Write (KiB)",
+        "queries": [
+          {
+            "query": "SELECT mean(\"write_bytes_count\") AS \"mean_write_bytes_count\" FROM \"RnD\".\"autogen\".\"compute.googleapis.com/instance/disk\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"project_id\" = :project_id: AND \"instance_id\" = :instance_id: GROUP BY time(:interval:) FILL(null)",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT mean(\"write_bytes_count\") AS \"mean_write_bytes_count\" FROM \"RnD\".\"autogen\".\"compute.googleapis.com/instance/disk\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"project_id\" = :project_id: AND \"instance_id\" = :instance_id: GROUP BY time(:interval:) FILL(null)",
+              "range": null,
+              "shifts": null
+            },
+            "source": "",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "line",
+        "colors": [
+          {
+            "id": "cbcd12b2-a846-4c2a-9398-b34d35d0b64f",
+            "type": "scale",
+            "hex": "#31C0F6",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "5e4d9263-cc8f-4e09-956d-18c36837a814",
+            "type": "scale",
+            "hex": "#A500A5",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "673e9df3-289e-42af-99c6-eac7cb72655e",
+            "type": "scale",
+            "hex": "#FF7E27",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf stackdriver Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/stackdriver).",
+        "noteVisibility": "showWhenNoData"
+      },
+      {
+        "i": "878aaedf-43ac-4509-8f62-bb68e55f3124",
+        "x": 6,
+        "y": 3,
+        "w": 3,
+        "h": 3,
+        "name": "Disk Read (KiB)",
+        "queries": [
+          {
+            "query": "SELECT mean(\"read_bytes_count\") AS \"mean_read_bytes_count\" FROM \"RnD\".\"autogen\".\"compute.googleapis.com/instance/disk\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"project_id\" = :project_id: AND \"instance_id\" = :instance_id: GROUP BY time(:interval:) FILL(null)",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT mean(\"read_bytes_count\") AS \"mean_read_bytes_count\" FROM \"RnD\".\"autogen\".\"compute.googleapis.com/instance/disk\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"project_id\" = :project_id: AND \"instance_id\" = :instance_id: GROUP BY time(:interval:) FILL(null)",
+              "range": null,
+              "shifts": null
+            },
+            "source": "",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "line",
+        "colors": [
+          {
+            "id": "6c92a99c-44a2-4679-b694-d2d8a9382fd4",
+            "type": "scale",
+            "hex": "#31C0F6",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "7d715936-8c4f-4bcf-a1dc-d1df154421fb",
+            "type": "scale",
+            "hex": "#A500A5",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "1a9776af-2875-4646-8b58-dcb9676d6a7e",
+            "type": "scale",
+            "hex": "#FF7E27",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf stackdriver Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/stackdriver).",
+        "noteVisibility": "showWhenNoData"
+      },
+      {
+        "i": "c56583b0-fd5f-445e-a01c-7534f7355ae3",
+        "x": 9,
+        "y": 3,
+        "w": 3,
+        "h": 3,
+        "name": "Disk Usage (%)",
+        "queries": [
+          {
+            "query": "SELECT mean(\"percent_used\") AS \"mean_percent_used\" FROM \"RnD\".\"autogen\".\"agent.googleapis.com/disk\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"project_id\" = :project_id: AND \"instance_id\" = :instance_id: AND \"state\"='used' AND (\"device\"='/dev/sda1' OR \"device\"='/dev/sda2') GROUP BY time(:interval:), \"device\" FILL(null)",
+            "queryConfig": {
+              "database": "",
+              "measurement": "",
+              "retentionPolicy": "",
+              "fields": [],
+              "tags": {},
+              "groupBy": {
+                "time": "",
+                "tags": []
+              },
+              "areTagsAccepted": false,
+              "rawText": "SELECT mean(\"percent_used\") AS \"mean_percent_used\" FROM \"RnD\".\"autogen\".\"agent.googleapis.com/disk\" WHERE time > :dashboardTime: AND time < :upperDashboardTime: AND \"project_id\" = :project_id: AND \"instance_id\" = :instance_id: AND \"state\"='used' AND (\"device\"='/dev/sda1' OR \"device\"='/dev/sda2') GROUP BY time(:interval:), \"device\" FILL(null)",
+              "range": null,
+              "shifts": null
+            },
+            "source": "",
+            "type": "influxql"
+          }
+        ],
+        "axes": {
+          "x": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          },
+          "y2": {
+            "bounds": ["", ""],
+            "label": "",
+            "prefix": "",
+            "suffix": "",
+            "base": "10",
+            "scale": "linear"
+          }
+        },
+        "type": "line",
+        "colors": [
+          {
+            "id": "52bbc0f8-2955-4498-8061-3afeea561a6f",
+            "type": "scale",
+            "hex": "#31C0F6",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "d43d4252-0561-4168-8ec5-87b16f914b55",
+            "type": "scale",
+            "hex": "#A500A5",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          },
+          {
+            "id": "293f4809-b990-4620-b03a-5292c6e09dec",
+            "type": "scale",
+            "hex": "#FF7E27",
+            "name": "Nineteen Eighty Four",
+            "value": "0"
+          }
+        ],
+        "legend": {},
+        "tableOptions": {
+          "verticalTimeAxis": true,
+          "sortBy": {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          },
+          "wrapping": "truncate",
+          "fixFirstColumn": true
+        },
+        "fieldOptions": [
+          {
+            "internalName": "time",
+            "displayName": "",
+            "visible": true
+          }
+        ],
+        "timeFormat": "MM/DD/YYYY HH:mm:ss",
+        "decimalPlaces": {
+          "isEnforced": true,
+          "digits": 2
+        },
+        "note": "To enable this graph, you will need to configure the [Telegraf stackdriver Input plugin](https://github.com/snetsystems/telegraf/tree/master/plugins/inputs/stackdriver).",
+        "noteVisibility": "showWhenNoData"
+      }
+    ],
+    "templates": [
+      {
+        "tempVar": ":project_id:",
+        "values": [],
+        "id": "",
+        "type": "tagValues",
+        "label": "",
+        "query": {
+          "influxql": "SHOW TAG VALUES ON :database: FROM :measurement: WITH KEY=:tagKey:",
+          "db": "telegraf",
+          "measurement": "compute.googleapis.com/instance",
+          "tagKey": "project_id",
+          "fieldKey": ""
+        }
+      },
+      {
+        "tempVar": ":instance_id:",
+        "values": [],
+        "id": "",
+        "type": "tagValues",
+        "label": "",
+        "query": {
+          "influxql": "SHOW TAG VALUES ON :database: FROM :measurement: WITH KEY=:tagKey:",
+          "db": "telegraf",
+          "measurement": "compute.googleapis.com/instance",
+          "tagKey": "instance_id",
+          "fieldKey": ""
+        }
+      }
+    ]
+  }
+}
