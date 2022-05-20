@@ -13,6 +13,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 // Utils
 import {isSearchMatch} from 'src/utils/searchMatch'
 import {getSuggestedProtoboards} from 'src/dashboards/utils/protoboardSuggestion'
+import {generateForHosts} from 'src/utils/tempVars'
 
 // Components
 import GridSizer from 'src/reusable_ui/components/grid_sizer/GridSizer'
@@ -240,6 +241,8 @@ class DashboardStep extends Component<Props, State> {
     const {source} = this.props
 
     if (source) {
+      const tempVars = generateForHosts(source)
+
       if (this.isComponentMounted) {
         this.setState({fetchingSuggested: RemoteDataState.Loading})
       }
@@ -247,7 +250,8 @@ class DashboardStep extends Component<Props, State> {
       try {
         const suggestedProtoboardsList = await getSuggestedProtoboards(
           source,
-          protoboards
+          protoboards,
+          tempVars
         )
 
         if (suggestedProtoboardsList.length === 0) {
