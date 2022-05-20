@@ -117,7 +117,7 @@ class AgentConfigConsoleModal extends PureComponent<Props, State> {
                   />
 
                   <button
-                    className="button button-xs button-primary agent-dropbox--btn"
+                    className="button button-sm button-primary agent-dropbox--btn"
                     onClick={onClickTestCall}
                   >
                     Test

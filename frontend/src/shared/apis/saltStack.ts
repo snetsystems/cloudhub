@@ -410,7 +410,7 @@ export async function runLocalServiceTestTelegraf(
 ) {
   try {
     const inputFilter =
-      pSelectedPlugin === 'None' ? '' : `--input-filter ${pSelectedPlugin}`
+      pSelectedPlugin === 'All' ? '' : `--input-filter ${pSelectedPlugin}`
     const params: Params = {
       client: 'local',
       fun: 'cmd.run',
