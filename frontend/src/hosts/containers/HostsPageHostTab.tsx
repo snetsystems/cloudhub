@@ -47,6 +47,7 @@ import {
   notifyUnableToGetHosts,
   notifyUnableToGetApps,
 } from 'src/shared/copy/notifications'
+import {layoutFilter} from 'src/hosts/constants/topology'
 
 //const
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
@@ -362,9 +363,7 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
       )
     })
     const filteredLayouts = layoutsWithinHost
-      .filter(layout => {
-        return layout.app === 'system' || layout.app === 'win_system'
-      })
+      .filter(layout => layoutFilter[layout.app])
       .sort((x, y) => {
         return x.measurement < y.measurement
           ? -1

@@ -17,9 +17,6 @@ import PageSpinner from 'src/shared/components/PageSpinner'
 //Middleware
 import {getLocalStorage} from 'src/shared/middleware/localStorage'
 
-// Constants
-import {AddonType} from 'src/shared/constants'
-
 // Types
 import {Source, Links, Layout, TimeRange, RemoteDataState} from 'src/types'
 import {CloudServiceProvider} from 'src/hosts/types/cloud'
@@ -44,20 +41,6 @@ export class HostsPage extends PureComponent<Props, State> {
   }
   private isComponentMounted: boolean = true
 
-  private isUsingAWS =
-    _.get(
-      _.find(this.props.links.addons, addon => addon.name === AddonType.aws),
-      'url',
-      'off'
-    ) === 'on'
-
-  private isUsingGCP =
-    _.get(
-      _.find(this.props.links.addons, addon => addon.name === AddonType.gcp),
-      'url',
-      'off'
-    ) === 'on'
-
   constructor(props: Props) {
     super(props)
 
@@ -66,15 +49,16 @@ export class HostsPage extends PureComponent<Props, State> {
       PureComponent.prototype.setState.bind(this)(args, callback)
     }
 
-    const itemCSPs = ['Host']
-
-    if (this.isUsingAWS) {
-      itemCSPs.push('aws')
-    }
-
-    if (this.isUsingGCP) {
-      itemCSPs.push('gcp')
-    }
+    const addOnCsp = _.filter(_.values(CloudServiceProvider), csp => {
+      return (
+        _.get(
+          _.find(this.props.links.addons, addon => addon.name === csp),
+          'url',
+          'off'
+        ) === 'on'
+      )
+    })
+    const itemCSPs = ['Host', ...addOnCsp]
 
     this.state = {
       activeCspTab: '',
@@ -103,7 +87,7 @@ export class HostsPage extends PureComponent<Props, State> {
     )
 
     const initActivateTab =
-      !this.isUsingAWS && !this.isUsingGCP
+      this.state.itemCSPs.length === 1
         ? 'Host'
         : _.isEmpty(hostsPage['activeCspTab'])
         ? 'Host'
@@ -133,40 +117,16 @@ export class HostsPage extends PureComponent<Props, State> {
     }
     switch (activeCspTab) {
       case 'Host': {
-        return (
-          <HostsPageHostTab
-            {...this.props}
-            timeRange={this.props.timeRange}
-            tableTitle={this.tableTitle}
-          />
-        )
+        return <HostsPageHostTab {...this.props} tableTitle={this.tableTitle} />
       }
       case CloudServiceProvider.AWS: {
-        return (
-          <HostsPageAwsTab
-            {...this.props}
-            timeRange={this.props.timeRange}
-            tableTitle={this.tableTitle}
-          />
-        )
+        return <HostsPageAwsTab {...this.props} tableTitle={this.tableTitle} />
       }
       case CloudServiceProvider.GCP: {
-        return (
-          <HostsPageGcpTab
-            {...this.props}
-            timeRange={this.props.timeRange}
-            tableTitle={this.tableTitle}
-          />
-        )
+        return <HostsPageGcpTab {...this.props} tableTitle={this.tableTitle} />
       }
       default: {
-        return (
-          <HostsPageHostTab
-            {...this.props}
-            timeRange={this.props.timeRange}
-            tableTitle={this.tableTitle}
-          />
-        )
+        return <HostsPageHostTab {...this.props} tableTitle={this.tableTitle} />
       }
     }
   }

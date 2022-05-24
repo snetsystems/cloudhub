@@ -57,6 +57,7 @@ import {
   notifygetCSPKeyFailed,
   notifyRequiredFailed,
 } from 'src/shared/copy/notifications'
+import {layoutFilter} from 'src/hosts/constants/topology'
 
 // Types
 import {
@@ -91,7 +92,6 @@ import {
   setIpmiStatusAsync,
   getIpmiSensorDataAsync,
   getMinionKeyAcceptedListAsync,
-  loadCloudServiceProviderAsync,
   loadCloudServiceProvidersAsync,
   createCloudServiceProviderAsync,
   updateCloudServiceProviderAsync,
@@ -2543,9 +2543,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       )
     })
     const filteredLayouts = layoutsWithinHost
-      .filter(layout => {
-        return layout.app === 'system' || layout.app === 'win_system'
-      })
+      .filter(layout => layoutFilter[layout.app])
       .sort((x, y) => {
         return x.measurement < y.measurement
           ? -1
@@ -2592,13 +2590,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       )
     })
     const filteredLayouts = layoutsWithinHost
-      .filter(layout => {
-        return (
-          layout.app === 'cloudwatch_elb' ||
-          layout.app === 'system' ||
-          layout.app === 'win_system'
-        )
-      })
+      .filter(layout => layoutFilter[layout.app])
       .sort((x, y) => {
         return x.measurement < y.measurement
           ? -1
@@ -2654,14 +2646,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       )
     })
     const filteredLayouts = layoutsWithinInstance
-      .filter(layout => {
-        return (
-          layout.app === 'system' ||
-          layout.app === 'win_system' ||
-          layout.app === 'cloudwatch' ||
-          layout.app === 'stackdriver'
-        )
-      })
+      .filter(layout => layoutFilter[layout.app])
       .sort((x, y) => {
         return x.measurement < y.measurement
           ? -1
