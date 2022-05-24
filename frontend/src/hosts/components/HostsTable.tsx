@@ -1,17 +1,19 @@
+// Libraries
 import React, {PureComponent} from 'react'
 import _ from 'lodash'
 import memoize from 'memoize-one'
 
+//components
 import SearchBar from 'src/hosts/components/SearchBar'
 import HostRow from 'src/hosts/components/HostRow'
 import InfiniteScroll from 'src/shared/components/InfiniteScroll'
 import PageSpinner from 'src/shared/components/PageSpinner'
 
+//types
 import {HOSTS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Source, RemoteDataState, Host} from 'src/types'
-
-import {HostsPage} from 'src/hosts/containers/HostsPage'
+import {HostsPageHostTab} from 'src/hosts/containers/HostsPageHostTab'
 
 //middlware
 import {
@@ -27,10 +29,10 @@ enum SortDirection {
 
 export interface Props {
   hosts: Host[]
-  cspPageStatus: RemoteDataState
+  hostPageStatus: RemoteDataState
   source: Source
   focusedHost: string
-  onClickTableRow: HostsPage['handleClickTableRow']
+  onClickTableRow: HostsPageHostTab['handleClickTableRow']
   tableTitle: () => JSX.Element
 }
 
@@ -167,7 +169,7 @@ class HostsTable extends PureComponent<Props, State> {
   }
 
   private get TableContents(): JSX.Element {
-    const {hosts, cspPageStatus} = this.props
+    const {hosts, hostPageStatus} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
     const sortedHosts = this.getSortedHosts(
       hosts,
@@ -176,12 +178,12 @@ class HostsTable extends PureComponent<Props, State> {
       sortDirection
     )
     if (
-      cspPageStatus === RemoteDataState.Loading ||
-      cspPageStatus === RemoteDataState.NotStarted
+      hostPageStatus === RemoteDataState.Loading ||
+      hostPageStatus === RemoteDataState.NotStarted
     ) {
       return this.LoadingState
     }
-    if (cspPageStatus === RemoteDataState.Error) {
+    if (hostPageStatus === RemoteDataState.Error) {
       return this.ErrorState
     }
     if (hosts.length === 0) {

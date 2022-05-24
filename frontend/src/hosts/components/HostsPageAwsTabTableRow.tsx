@@ -1,16 +1,18 @@
+// Libraries
 import {isNull} from 'lodash'
 import React, {FunctionComponent} from 'react'
 import _ from 'lodash'
 import {Link} from 'react-router'
 
+//types
 import {CLOUD_HOSTS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 import {CloudHost} from 'src/types'
 
-import {HostsPage} from 'src/hosts/containers/HostsPage'
-
+//Components
 import {usageIndacator} from 'src/agent_admin/reusable'
 import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
 import classNames from 'classnames'
+import {HostsPageAwsTab} from 'src/hosts/containers/HostsPageAwsTab'
 
 interface Instance {
   provider: string
@@ -22,7 +24,7 @@ interface Props {
   sourceID: string
   host: CloudHost
   focusedInstance: Instance
-  onClickTableRow: HostsPage['handleClickCspTableRow']
+  onClickTableRow: HostsPageAwsTab['handleClickCspTableRow']
   handleInstanceTypeModal: (
     provider: string,
     namespace: string,
@@ -30,7 +32,7 @@ interface Props {
   ) => void
 }
 
-const CspHostRow: FunctionComponent<Props> = ({
+const HostsPageAwsTabTableRow: FunctionComponent<Props> = ({
   host,
   sourceID,
   focusedInstance,
@@ -112,19 +114,15 @@ const CspHostRow: FunctionComponent<Props> = ({
         style={{width: CloudInstanceTypeWidth}}
         className="monotype hosts-table--td"
       >
-        {csp.provider == 'aws' ? (
-          <span
-            className={`hosts-table-item`}
-            onClick={e => {
-              e.stopPropagation()
-              handleInstanceTypeModal(csp.provider, csp.namespace, instanceType)
-            }}
-          >
-            {instanceType}
-          </span>
-        ) : (
-          <span>{instanceType}</span>
-        )}
+        <span
+          className={`hosts-table-item`}
+          onClick={e => {
+            e.stopPropagation()
+            handleInstanceTypeModal(csp.provider, csp.namespace, instanceType)
+          }}
+        >
+          {instanceType}
+        </span>
       </div>
       <div
         style={{width: CloudAppsWidth}}
@@ -172,4 +170,4 @@ const CspHostRow: FunctionComponent<Props> = ({
   )
 }
 
-export default CspHostRow
+export default HostsPageAwsTabTableRow

@@ -1,20 +1,24 @@
+// Libraries
 import React, {PureComponent} from 'react'
 import _ from 'lodash'
 import memoize from 'memoize-one'
 
+//components
+import HostsPageGcpTabTableRow from 'src/hosts/components/HostsPageGcpTabTableRow'
 import SearchBar from 'src/hosts/components/SearchBar'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import Dropdown from 'src/shared/components/Dropdown'
 
+//types
 import {CLOUD_HOSTS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Source, RemoteDataState, CloudHost} from 'src/types'
 
-import {HostsPage} from 'src/hosts/containers/HostsPage'
-
 //middlware
-import CspHostRow from './CspHostRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+
+//types
+import {HostsPageGcpTab} from '../containers/HostsPageGcpTab'
 
 enum SortDirection {
   ASC = 'asc',
@@ -36,13 +40,8 @@ export interface Props {
   source: Source
   focusedInstance: Instance
   getHandleOnChoose: (selectItem: {text: string}) => void
-  onClickTableRow: HostsPage['handleClickCspTableRow']
+  onClickTableRow: HostsPageGcpTab['handleClickCspTableRow']
   tableTitle: () => JSX.Element
-  handleInstanceTypeModal: (
-    provider: string,
-    namespace: string,
-    type: string
-  ) => void
 }
 
 interface State {
@@ -53,7 +52,7 @@ interface State {
 }
 
 @ErrorHandling
-class CspHostsTable extends PureComponent<Props, State> {
+class HostsPageGcpTabTable extends PureComponent<Props, State> {
   public getSortedHosts = memoize(
     (
       hosts,
@@ -193,10 +192,10 @@ class CspHostsTable extends PureComponent<Props, State> {
       return this.ErrorState
     }
     if (cloudHosts.length === 0) {
-      return this.NoHostsState
+      return this.NoInstancesState
     }
     if (sortedHosts.length === 0) {
-      return this.NoSortedHostsState
+      return this.NoSortedInstancesState
     }
     return this.CloudTableWithHosts
   }
@@ -207,7 +206,6 @@ class CspHostsTable extends PureComponent<Props, State> {
       cloudHosts,
       focusedInstance,
       onClickTableRow,
-      handleInstanceTypeModal,
       selectedNamespace,
     } = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
@@ -231,13 +229,12 @@ class CspHostsTable extends PureComponent<Props, State> {
         <FancyScrollbar
           children={sortedHosts.map(h => {
             return (
-              <CspHostRow
+              <HostsPageGcpTabTableRow
                 key={`${h.csp.id}-${h.instanceId}`}
                 host={h}
                 sourceID={source.id}
                 focusedInstance={focusedInstance}
                 onClickTableRow={onClickTableRow}
-                handleInstanceTypeModal={handleInstanceTypeModal}
               />
             )
           })}
@@ -259,19 +256,19 @@ class CspHostsTable extends PureComponent<Props, State> {
     )
   }
 
-  private get NoHostsState(): JSX.Element {
+  private get NoInstancesState(): JSX.Element {
     return (
       <div className="generic-empty-state">
-        <h4 style={{margin: '90px 0'}}>No Hosts found</h4>
+        <h4 style={{margin: '90px 0'}}>No Instances found</h4>
       </div>
     )
   }
 
-  private get NoSortedHostsState(): JSX.Element {
+  private get NoSortedInstancesState(): JSX.Element {
     return (
       <div className="generic-empty-state">
         <h4 style={{margin: '90px 0'}}>
-          There are no hosts that match the search criteria
+          There are no Instances that match the search criteria
         </h4>
       </div>
     )
@@ -304,9 +301,7 @@ class CspHostsTable extends PureComponent<Props, State> {
             className={this.sortableClasses('namespace')}
             style={{width: CloudNamespaceWidth}}
           >
-            {this.props.focusedInstance.provider == 'gcp'
-              ? 'Project'
-              : 'Region'}
+            Project
             <span className="icon caret-up" />
           </div>
           <div
@@ -334,7 +329,6 @@ class CspHostsTable extends PureComponent<Props, State> {
             <span className="icon caret-up" />
           </div>
           <div
-            onClick={this.updateSort('instanceType')}
             className={this.sortableClasses('instanceType')}
             style={{width: CloudInstanceTypeWidth}}
           >
@@ -377,4 +371,4 @@ class CspHostsTable extends PureComponent<Props, State> {
   }
 }
 
-export default CspHostsTable
+export default HostsPageGcpTabTable
