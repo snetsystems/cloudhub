@@ -276,7 +276,7 @@ export class HostsPageGcpTab extends PureComponent<Props, State> {
       selectedNamespace,
     } = this.state
 
-    if (layouts) {
+    if (layouts && prevState.focusedInstance) {
       if (prevState.focusedInstance !== focusedInstance) {
         const {filteredLayouts} = await this.getLayoutsforInstance(
           layouts,
@@ -285,9 +285,8 @@ export class HostsPageGcpTab extends PureComponent<Props, State> {
         this.setState({filteredLayouts})
       }
       if (
-        focusedInstance &&
-        (prevState.selectedAgent !== selectedAgent ||
-          prevState.selectedNamespace !== selectedNamespace)
+        prevState.selectedAgent !== selectedAgent ||
+        prevState.selectedNamespace !== selectedNamespace
       ) {
         const {filteredLayouts} = await this.getLayoutsforInstance(
           layouts,
@@ -562,8 +561,7 @@ export class HostsPageGcpTab extends PureComponent<Props, State> {
         return (
           layout.app === 'system' ||
           layout.app === 'win_system' ||
-          layout.app === 'cloudwatch' ||
-          layout.app === 'stackdriver_compute'
+          layout.app === 'stackdriver'
         )
       })
       .sort((x, y) => {
@@ -620,21 +618,7 @@ export class HostsPageGcpTab extends PureComponent<Props, State> {
     const dbResp: any[] = await handleLoadCspsAsync()
     const agentFilterItems = agentFilter[activeCspTab]
     let newDbResp: any[] = _.filter(
-      _.map(dbResp, resp => {
-        const {secretkey} = resp
-        const decryptedBytes = CryptoJS.AES.decrypt(
-          secretkey,
-          this.secretKey.url
-        )
-        const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
-
-        resp = {
-          ...resp,
-          secretkey: originalSecretkey,
-        }
-
-        return resp
-      }),
+      _.map(dbResp, resp => resp),
       filterData => {
         if (filterData.provider === activeCspTab) return filterData
       }

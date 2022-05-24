@@ -280,7 +280,7 @@ export class HostsPageAwsTab extends PureComponent<Props, State> {
       selectedNamespace,
     } = this.state
 
-    if (layouts) {
+    if (layouts.length && prevState.focusedInstance) {
       if (prevState.focusedInstance !== focusedInstance) {
         const {filteredLayouts} = await this.getLayoutsforInstance(
           layouts,
@@ -290,9 +290,8 @@ export class HostsPageAwsTab extends PureComponent<Props, State> {
       }
 
       if (
-        focusedInstance &&
-        (prevState.selectedAgent !== selectedAgent ||
-          prevState.selectedNamespace !== selectedNamespace)
+        prevState.selectedAgent !== selectedAgent ||
+        prevState.selectedNamespace !== selectedNamespace
       ) {
         const {filteredLayouts} = await this.getLayoutsforInstance(
           layouts,
@@ -751,8 +750,7 @@ export class HostsPageAwsTab extends PureComponent<Props, State> {
         return (
           layout.app === 'system' ||
           layout.app === 'win_system' ||
-          layout.app === 'cloudwatch' ||
-          layout.app === 'stackdriver_compute'
+          layout.app === 'cloudwatch'
         )
       })
       .sort((x, y) => {
@@ -829,7 +827,6 @@ export class HostsPageAwsTab extends PureComponent<Props, State> {
         if (filterData.provider === activeCspTab) return filterData
       }
     )
-
     if (_.isEmpty(newDbResp)) {
       this.setState({
         cloudAccessInfos: [],
