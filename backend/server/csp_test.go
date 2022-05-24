@@ -291,6 +291,73 @@ func TestUpdateCSP(t *testing.T) {
 			wantBody:        `{"id":"547","provider":"aws","links":{"self":"/cloudhub/v1/csp/547"},"namespace":"china","accesskey":"DUEJDJ+KEJDN","secretkey":"WOWCMSG+KEUCBWDKC+WUCN","organization":"76","minion":"minion01"}`,
 		},
 		{
+			name: "Update CSP Duplicated NameSpace",
+			args: args{
+				w: httptest.NewRecorder(),
+				r: httptest.NewRequest(
+					"PATCH",
+					"http://any.url", // can be any valid URL as we are bypassing mux
+					nil,
+				),
+				csp: &cspRequest{
+					NameSpace: "seoul",
+				},
+			},
+			fields: fields{
+				Logger: log.New(log.DebugLevel),
+				CSPStore: &mocks.CSPStore{
+					UpdateF: func(ctx context.Context, csp *cloudhub.CSP) error {
+						return nil
+					},
+					GetF: func(ctx context.Context, q cloudhub.CSPQuery) (*cloudhub.CSP, error) {
+						return &cloudhub.CSP{
+							ID:           "547",
+							Provider:     "aws",
+							NameSpace:    "seoul",
+							AccessKey:    "DUEJDJ+KEJDN",
+							SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
+							Organization: "76",
+							Minion:       "minion01",
+						}, nil
+					},
+					AllF: func(ctx context.Context) ([]cloudhub.CSP, error) {
+						return []cloudhub.CSP{
+							{
+								ID:           "547",
+								Provider:     "aws",
+								NameSpace:    "seoul",
+								AccessKey:    "DUEJDJ+KEJDN",
+								SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
+								Organization: "76",
+								Minion:       "minion01",
+							},
+							{
+								ID:           "8367",
+								Provider:     "gcp",
+								NameSpace:    "seoul",
+								AccessKey:    "XXCIEJRJ+KEUR",
+								SecretKey:    "QOPSMCBDGE+KEICYWLC+KEUICHSJSN",
+								Organization: "32",
+								Minion:       "minion02",
+							},
+						}, nil
+					},
+				},
+				OrganizationsStore: &mocks.OrganizationsStore{
+					DefaultOrganizationF: func(context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
+							ID:   "76",
+							Name: "snet_org",
+						}, nil
+					},
+				},
+			},
+			id:              "547",
+			wantStatus:      http.StatusOK,
+			wantContentType: "application/json",
+			wantBody:        `{"id":"547","provider":"aws","links":{"self":"/cloudhub/v1/csp/547"},"namespace":"seoul","accesskey":"DUEJDJ+KEJDN","secretkey":"WOWCMSG+KEUCBWDKC+WUCN","organization":"76","minion":"minion01"}`,
+		},
+		{
 			name: "Update CSP-nothing to update",
 			args: args{
 				w: httptest.NewRecorder(),

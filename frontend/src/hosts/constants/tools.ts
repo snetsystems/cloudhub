@@ -305,7 +305,13 @@ export const eachNodeTypeAttrs: NodeTypeInterface = {
   [NodeType.Elb]: {...defaultNodeTypeSettings},
   [NodeType.Group]: {
     ...defaultNodeTypeSettings,
-    hideAttrs: [...defaultNodeTypeSettings.hideAttrs, 'name'],
+    hideAttrs: [
+      ...defaultNodeTypeSettings.hideAttrs,
+      'name',
+      'status',
+      'link',
+      'icon',
+    ],
   },
   [NodeType.Edge]: {
     ...defaultNodeTypeSettings,

@@ -1,7 +1,7 @@
 {
   "id": "131028e1-34a5-4acf-bc9e-17f63332c387",
   "measurement": "compute.googleapis.com/instance",
-  "app": "stackdriver_compute",
+  "app": "stackdriver",
   "autoflow": true,
   "cells": [
     {
@@ -10,13 +10,111 @@
       "w": 4,
       "h": 4,
       "i": "7841eab1-8669-4e95-a848-ebdd318783c5",
-      "name": "CPU utilization(%)",
+      "name": "CPU utilization %",
       "queries": [
         {
-          "query": "SELECT mean(\"utilization\") AS \"mean_utilization\" FROM \":db:\".\":rp:\".\"compute.googleapis.com/instance/cpu\"",
+          "query": "SELECT mean(\"utilization\") AS \"utilization\" FROM \":db:\".\":rp:\".\"compute.googleapis.com/instance/cpu\"",
           "label": "",
           "groupbys": [],
           "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "f5af3d08-8ed9-4424-99ef-e1430e184278",
+      "name": "Memory usage %",
+      "queries": [
+        {
+          "query": "SELECT mean(\"percent_used\") AS \"percent_used\" FROM \":db:\".\":rp:\".\"agent.googleapis.com/memory\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": ["\"state\"='used'"]
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "f07ad359-b4c0-4982-9e80-0b9a02815c49",
+      "name": "Network send (KiB)",
+      "queries": [
+        {
+          "query": "SELECT non_negative_derivative(max(\"sent_bytes_count\"), 1s) AS \"sent_bytes\" FROM \":db:\".\":rp:\".\"compute.googleapis.com/instance/network\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "f6bf1bf6-8b53-43ce-b317-cc586e895462",
+      "name": "Network Received (KiB)",
+      "queries": [
+        {
+          "query": "SELECT non_negative_derivative(max(\"received_bytes_count\"), 1s) AS \"received_bytes\" FROM \":db:\".\":rp:\".\"compute.googleapis.com/instance/network\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "67797d38-b8b2-4993-ba82-b95ada947ca4",
+      "name": "DisK Write (KiB)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"write_bytes_count\") AS \"write_bytes\" FROM \":db:\".\":rp:\".\"compute.googleapis.com/instance/disk\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "c16f00e9-49c9-4d86-b154-92a93f670bfd",
+      "name": "Disk Read (KiB)",
+      "queries": [
+        {
+          "query": "SELECT mean(\"read_bytes_count\") AS \"read_bytes\" FROM \":db:\".\":rp:\".\"compute.googleapis.com/instance/disk\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": []
+        }
+      ]
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "0c759247-db5f-4be4-8a95-bf1c8d4b00cf",
+      "name": "Disk Usage %",
+      "queries": [
+        {
+          "query": "SELECT mean(\"percent_used\") AS \"percent_used\" FROM \":db:\".\":rp:\".\"agent.googleapis.com/disk\"",
+          "label": "",
+          "groupbys": ["\"device\""],
+          "wheres": [
+            "\"state\"='used' AND (\"device\"='/dev/sda1' OR \"device\"='/dev/sda2')"
+          ]
         }
       ]
     }

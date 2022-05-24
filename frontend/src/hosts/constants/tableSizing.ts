@@ -35,6 +35,22 @@ export const CLOUD_HOST_STORAGE_TABLE_SIZING = {
   DelOnTermWidth: '10%',
 }
 
+export const CLOUD_HOST_NETWORK_TABLE_SIZING = {
+  NameWidth: '20%',
+  InternalipWidth: '20%',
+  ExternalipWidth: '20%',
+  TierWidth: '20%',
+  TypeWidth: '20%',
+}
+export const CLOUD_HOST_DISK_TABLE_SIZING = {
+  DevicenameWidth: '20%',
+  DisksizeWidth: '10%',
+  InterfaceWidth: '14%',
+  BootWidth: '14%',
+  AutodeleteWidth: '14%',
+  ModeWidth: '14%',
+  TypeWidth: '14%',
+}
 export const AGENT_TABLE_SIZING = {
   CheckWidth: '30px',
   HostWidth: '35%',
