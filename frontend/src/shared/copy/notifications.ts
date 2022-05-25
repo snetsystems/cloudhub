@@ -1259,3 +1259,15 @@ export const notifygetCSPKeyFailed = (): Notification => ({
   ...defaultErrorNotification,
   message: `Failed to create CSP key file.`,
 })
+
+export const notifyTopologySaved = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Topology saved successfully.`,
+})
+
+export const notifyTopologySaveFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `There was an error saving the topology : ${errorMessage}`,
+})

@@ -56,6 +56,8 @@ import {
   notifygetCSPConfigFailed,
   notifygetCSPKeyFailed,
   notifyRequiredFailed,
+  notifyTopologySaved,
+  notifyTopologySaveFailed,
 } from 'src/shared/copy/notifications'
 import {layoutFilter} from 'src/hosts/constants/topology'
 
@@ -86,8 +88,6 @@ import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 // Actions
 import {
   loadInventoryTopologyAsync,
-  createInventoryTopologyAsync,
-  updateInventoryTopologyAsync,
   getIpmiStatusAsync,
   setIpmiStatusAsync,
   getIpmiSensorDataAsync,
@@ -121,6 +121,8 @@ import {
   getMeasurementsForInstance,
   paramsCreateCSP,
   paramsUpdateCSP,
+  createInventoryTopology,
+  updateInventoryTopology,
 } from 'src/hosts/apis'
 
 // Utils
@@ -244,15 +246,6 @@ interface Props {
   notify: (message: Notification | NotificationFunc) => void
   onManualRefresh: () => void
   handleGetInventoryTopology: (links: Links) => Promise<any>
-  handleCreateInventoryTopology: (
-    links: Links,
-    topology: string
-  ) => Promise<any>
-  handleUpdateInventoryTopology: (
-    links: Links,
-    topologyId: string,
-    topology: string
-  ) => Promise<any>
   handleGetMinionKeyAcceptedList: (
     saltMasterUrl: string,
     saltMasterToken: string
@@ -273,7 +266,6 @@ interface Props {
     saltMasterToken: string,
     pIpmis: Ipmi
   ) => Promise<any>
-  // handleLoadCspAsync: (id: string) => Promise<any>
   handleLoadCspsAsync: () => Promise<any>
   handleCreateCspAsync: (data: paramsCreateCSP) => Promise<any>
   handleUpdateCspAsync: (data: paramsUpdateCSP) => Promise<any>
@@ -556,13 +548,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
   }
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
-    const {
-      handleUpdateInventoryTopology,
-      handleCreateInventoryTopology,
-      links,
-      autoRefresh,
-      manualRefresh,
-    } = this.props
+    const {autoRefresh, manualRefresh} = this.props
     const {
       layouts,
       focusedHost,
@@ -572,8 +558,6 @@ export class InventoryTopology extends PureComponent<Props, State> {
       cloudAccessInfos,
       selectItem,
       hostsObject,
-      topologyId,
-      topology,
       isDetectedHost,
     } = this.state
 
@@ -618,21 +602,6 @@ export class InventoryTopology extends PureComponent<Props, State> {
       prevState.hostsObject !== null
     ) {
       this.changedDOM()
-    }
-
-    if (_.isEmpty(topologyId) && !_.isEmpty(topology)) {
-      const response = await handleCreateInventoryTopology(links, topology)
-      const getTopologyId = _.get(response, 'data.id', null)
-
-      if (getTopologyId) {
-        this.setState({topologyId: getTopologyId})
-      }
-    } else if (
-      !_.isEmpty(topologyId) &&
-      !_.isEmpty(prevState.topology) &&
-      prevState.topology !== topology
-    ) {
-      await handleUpdateInventoryTopology(links, topologyId, topology)
     }
 
     if (prevProps.autoRefresh !== autoRefresh) {
@@ -1577,6 +1546,10 @@ export class InventoryTopology extends PureComponent<Props, State> {
         modalMessage: this.ExportXMLMessage(),
       })
     })
+
+    this.editor.addAction('save', async () => {
+      this.handleTopologySave()
+    })
   }
 
   // @ts-ignore
@@ -2034,8 +2007,6 @@ export class InventoryTopology extends PureComponent<Props, State> {
       } else if (resp.provider === 'gcp') {
         resp = {
           ...resp,
-          // saemail: 'test',
-          // sakey: 'testkey',
         }
       }
 
@@ -2070,6 +2041,45 @@ export class InventoryTopology extends PureComponent<Props, State> {
     })
 
     this.setState({cloudAccessInfos: [...dbResp]})
+  }
+
+  private handleTopologySave = async () => {
+    const {notify, links} = this.props
+    const {topologyId, topology} = this.state
+
+    this.setState({topologyStatus: RemoteDataState.Loading})
+
+    try {
+      if (_.isEmpty(topologyId) && !_.isEmpty(topology)) {
+        const response = await createInventoryTopology(links, topology)
+        const getTopologyId = _.get(response, 'data.id', null)
+
+        notify(notifyTopologySaved())
+
+        this.setState({
+          topologyId: getTopologyId,
+          topologyStatus: RemoteDataState.Done,
+        })
+      } else if (!_.isEmpty(topologyId)) {
+        await updateInventoryTopology(links, topologyId, topology)
+
+        notify(notifyTopologySaved())
+
+        this.setState({topologyStatus: RemoteDataState.Done})
+      }
+    } catch (err) {
+      this.setState({topologyStatus: RemoteDataState.Done})
+
+      const {data} = err
+      const {error} = data
+      if (!error) {
+        notify(notifyTopologySaveFailed('Cannot save topology'))
+        return false
+      }
+      const errorMsg = error.split(': ').pop()
+      notify(notifyTopologySaveFailed(errorMsg))
+      return false
+    }
   }
 
   private handleAddNamespace = async () => {
@@ -2895,14 +2905,11 @@ const mapStateToProps = ({links}) => {
 
 const mapDispatchToProps = {
   handleGetInventoryTopology: loadInventoryTopologyAsync,
-  handleCreateInventoryTopology: createInventoryTopologyAsync,
-  handleUpdateInventoryTopology: updateInventoryTopologyAsync,
   handleGetMinionKeyAcceptedList: getMinionKeyAcceptedListAsync,
   handleGetIpmiStatus: getIpmiStatusAsync,
   handleSetIpmiStatusAsync: setIpmiStatusAsync,
   handleGetIpmiSensorDataAsync: getIpmiSensorDataAsync,
   notify: notifyAction,
-  // handleLoadCspAsync: loadCloudServiceProviderAsync,
   handleLoadCspsAsync: loadCloudServiceProvidersAsync,
   handleCreateCspAsync: createCloudServiceProviderAsync,
   handleUpdateCspAsync: updateCloudServiceProviderAsync,

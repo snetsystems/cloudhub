@@ -412,4 +412,8 @@
   &.switch:before {
     content: '\ea5f';
   }
+
+  &.floppy-disk::before {
+    content: '\e937';
+  }
 }
