@@ -250,10 +250,15 @@ export class HostsPageAwsTab extends PureComponent<Props, State> {
     }
 
     await this.fetchCspHostsData(layouts)
-    const {filteredLayouts} = await this.getLayoutsforInstance(
-      layouts,
-      this.state.focusedInstance
-    )
+
+    let focusedLayout = []
+    if (this.state.focusedInstance) {
+      const {filteredLayouts} = await this.getLayoutsforInstance(
+        layouts,
+        this.state.focusedInstance
+      )
+      focusedLayout = filteredLayouts
+    }
 
     this.setState(state => {
       return {
@@ -266,7 +271,7 @@ export class HostsPageAwsTab extends PureComponent<Props, State> {
         selectedAgent: _.isEmpty(hostsPage['selectedAgent'])
           ? 'ALL'
           : hostsPage['selectedAgent'],
-        filteredLayouts,
+        filteredLayouts: focusedLayout,
       }
     })
   }

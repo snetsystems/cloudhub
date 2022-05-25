@@ -70,8 +70,7 @@ import {
   loadCloudServiceProvidersAsync,
   getGCPInstancesAsync,
 } from 'src/hosts/actions'
-import {Instance} from '../types'
-import {getGCPInstanceTypesAsync} from '../actions/inventoryTopology'
+import {Instance} from 'src/hosts/types/index'
 
 interface Props extends ManualRefreshProps {
   source: Source
@@ -90,12 +89,6 @@ interface Props extends ManualRefreshProps {
     saltMasterUrl: string,
     saltMasterToken: string,
     pCsp: any[]
-  ) => Promise<any>
-  handleGetGCPInstanceTypesAsync: (
-    saltMasterUrl: string,
-    saltMasterToken: string,
-    pCsp: any,
-    pTypes: string[]
   ) => Promise<any>
   handleClickCspTableRow: () => void
   tableTitle: () => JSX.Element
@@ -242,10 +235,15 @@ export class HostsPageGcpTab extends PureComponent<Props, State> {
     }
 
     await this.fetchCspHostsData(layouts)
-    const {filteredLayouts} = await this.getLayoutsforInstance(
-      layouts,
-      this.state.focusedInstance
-    )
+
+    let focusedLayout = []
+    if (this.state.focusedInstance) {
+      const {filteredLayouts} = await this.getLayoutsforInstance(
+        layouts,
+        this.state.focusedInstance
+      )
+      focusedLayout = filteredLayouts
+    }
 
     this.setState(state => {
       return {
@@ -258,7 +256,7 @@ export class HostsPageGcpTab extends PureComponent<Props, State> {
         selectedAgent: _.isEmpty(hostsPage['selectedAgent'])
           ? 'ALL'
           : hostsPage['selectedAgent'],
-        filteredLayouts,
+        filteredLayouts: focusedLayout,
       }
     })
   }
@@ -764,11 +762,6 @@ const mdtp = dispatch => ({
   ),
   handleGetGCPInstancesAsync: bindActionCreators(
     getGCPInstancesAsync,
-    dispatch
-  ),
-
-  handleGetGCPInstanceTypesAsync: bindActionCreators(
-    getGCPInstanceTypesAsync,
     dispatch
   ),
 })
