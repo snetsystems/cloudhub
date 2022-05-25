@@ -69,20 +69,7 @@ class HostsTable extends PureComponent<Props, State> {
     const filterText = searchTerm.toLowerCase()
     return allHosts.filter(h => {
       const apps = h.apps ? h.apps.join(', ') : ''
-
-      let tagResult = false
-      if (h.tags) {
-        tagResult = Object.keys(h.tags).reduce((acc, key) => {
-          return acc || h.tags[key].toLowerCase().includes(filterText)
-        }, false)
-      } else {
-        tagResult = false
-      }
-      return (
-        h.name.toLowerCase().includes(filterText) ||
-        apps.toLowerCase().includes(filterText) ||
-        tagResult
-      )
+      return (apps + h.name).toLowerCase().includes(filterText)
     })
   }
 

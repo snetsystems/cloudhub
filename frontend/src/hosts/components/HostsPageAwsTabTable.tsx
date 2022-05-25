@@ -57,7 +57,7 @@ interface State {
 }
 
 @ErrorHandling
-class HostsPageAwsHostsTable extends PureComponent<Props, State> {
+class HostsPageAwsTabTable extends PureComponent<Props, State> {
   public getSortedHosts = memoize(
     (
       hosts,
@@ -84,20 +84,15 @@ class HostsPageAwsHostsTable extends PureComponent<Props, State> {
     const filterText = searchTerm.toLowerCase()
     return allHosts.filter(h => {
       const apps = h.apps ? h.apps.join(', ') : ''
-      let tagResult = false
-      if (h.tags) {
-        tagResult = Object.keys(h.tags).reduce((acc, key) => {
-          return acc || h.tags[key].toLowerCase().includes(filterText)
-        }, false)
-      } else {
-        tagResult = false
-      }
-
-      return (
-        h.instanceId.toLowerCase().includes(filterText) ||
-        apps.toLowerCase().includes(filterText) ||
-        tagResult
-      )
+      const {
+        name,
+        instanceType,
+        instanceId,
+        csp: {namespace},
+      } = h
+      return (apps + instanceId + instanceType + name + namespace)
+        .toLowerCase()
+        .includes(filterText)
     })
   }
 
@@ -379,4 +374,4 @@ class HostsPageAwsHostsTable extends PureComponent<Props, State> {
   }
 }
 
-export default HostsPageAwsHostsTable
+export default HostsPageAwsTabTable

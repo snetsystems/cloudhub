@@ -4,7 +4,6 @@ import {connect} from 'react-redux'
 import {bindActionCreators} from 'redux'
 import _ from 'lodash'
 import {getDeep} from 'src/utils/wrappers'
-import CryptoJS from 'crypto-js'
 
 // Components
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
@@ -125,10 +124,7 @@ export class HostsPageGcpTab extends PureComponent<Props, State> {
   }
   public intervalID: number
   private isComponentMounted: boolean = true
-  private secretKey = _.find(
-    this.props.links.addons,
-    addon => addon.name === AddonType.ipmiSecretKey
-  )
+
   private salt = _.find(
     this.props.links.addons,
     addon => addon.name === AddonType.salt
