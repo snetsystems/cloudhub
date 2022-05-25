@@ -58,6 +58,7 @@ import {
   notifyRequiredFailed,
   notifyTopologySaved,
   notifyTopologySaveFailed,
+  notifyTopologySaveAuthFailed,
 } from 'src/shared/copy/notifications'
 import {layoutFilter} from 'src/hosts/constants/topology'
 
@@ -73,6 +74,7 @@ import {
   Ipmi,
   IpmiCell,
   TimeRange,
+  Me,
 } from 'src/types'
 import {AddonType} from 'src/shared/constants'
 import {ButtonShape, ComponentStatus, IconFont} from 'src/reusable_ui/types'
@@ -182,6 +184,9 @@ import {
 } from 'src/hosts/configurations/topology'
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 
+// Authorized
+import {ADMIN_ROLE, SUPERADMIN_ROLE, EDITOR_ROLE} from 'src/auth/Authorized'
+
 const mx = mxgraph()
 
 export const {
@@ -238,7 +243,11 @@ window['mxPoint'] = mxPoint
 window['mxPopupMenu'] = mxPopupMenu
 window['mxEventObject'] = mxEventObject
 
+interface Auth {
+  me: Me
+}
 interface Props {
+  auth: Auth
   source: Source
   links: Links
   autoRefresh: number
@@ -1405,6 +1414,9 @@ export class InventoryTopology extends PureComponent<Props, State> {
   )
 
   private setActionInEditor = () => {
+    const {auth} = this.props
+    const meRole = _.get(auth, 'me.role', '')
+
     this.editor.addAction('group', () => {
       if (this.graph.isEnabled()) {
         let cells = mxUtils.sortCells(this.graph.getSelectionCells(), true)
@@ -1548,7 +1560,15 @@ export class InventoryTopology extends PureComponent<Props, State> {
     })
 
     this.editor.addAction('save', async () => {
-      this.handleTopologySave()
+      if (
+        meRole === SUPERADMIN_ROLE ||
+        meRole === ADMIN_ROLE ||
+        meRole === EDITOR_ROLE
+      ) {
+        this.handleTopologySave()
+      } else {
+        this.props.notify(notifyTopologySaveAuthFailed())
+      }
     })
   }
 
@@ -2897,9 +2917,10 @@ export class InventoryTopology extends PureComponent<Props, State> {
   }
 }
 
-const mapStateToProps = ({links}) => {
+const mapStateToProps = ({links, auth}) => {
   return {
     links,
+    auth,
   }
 }
 

@@ -1271,3 +1271,8 @@ export const notifyTopologySaveFailed = (
   ...defaultErrorNotification,
   message: `There was an error saving the topology : ${errorMessage}`,
 })
+
+export const notifyTopologySaveAuthFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `User does not have authorization required to save topology.`,
+})
