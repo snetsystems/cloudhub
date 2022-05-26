@@ -363,11 +363,7 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
     })
     const filteredLayouts = layoutsWithinHost
       .filter(layout => {
-        return (
-          layout.app === 'system' ||
-          layout.app === 'win_system' ||
-          layout.app === 'stackdriver'
-        )
+        return layout.app === 'system' || layout.app === 'win_system'
       })
       .sort((x, y) => {
         return x.measurement < y.measurement
