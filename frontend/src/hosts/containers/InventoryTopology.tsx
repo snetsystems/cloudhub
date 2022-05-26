@@ -60,7 +60,6 @@ import {
   notifyTopologySaveFailed,
   notifyTopologySaveAuthFailed,
 } from 'src/shared/copy/notifications'
-import {layoutFilter} from 'src/hosts/constants/topology'
 
 // Types
 import {
@@ -125,6 +124,7 @@ import {
   paramsUpdateCSP,
   createInventoryTopology,
   updateInventoryTopology,
+  setRunnerFileRemoveApi,
 } from 'src/hosts/apis'
 
 // Utils
@@ -2309,6 +2309,22 @@ export class InventoryTopology extends PureComponent<Props, State> {
         cloudAccessInfos: [...newCloudAccessInfos],
         treeMenu: {...treeMenu},
       })
+
+      if (provider === CloudServiceProvider.GCP) {
+        try {
+          const confFile = `${this.confPath + namespace.trim()}.conf`
+          const keyFile = `${
+            this.keyPath + provider + '/' + namespace.trim()
+          }.pem`
+
+          await setRunnerFileRemoveApi(this.salt.url, this.salt.token, [
+            confFile,
+            keyFile,
+          ])
+        } catch (error) {
+          console.error(error)
+        }
+      }
     }
   }
 
@@ -2573,7 +2589,9 @@ export class InventoryTopology extends PureComponent<Props, State> {
       )
     })
     const filteredLayouts = layoutsWithinHost
-      .filter(layout => layoutFilter[layout.app])
+      .filter(layout => {
+        return layout.app === 'system' || layout.app === 'win_system'
+      })
       .sort((x, y) => {
         return x.measurement < y.measurement
           ? -1
@@ -2620,7 +2638,13 @@ export class InventoryTopology extends PureComponent<Props, State> {
       )
     })
     const filteredLayouts = layoutsWithinHost
-      .filter(layout => layoutFilter[layout.app])
+      .filter(layout => {
+        return (
+          layout.app === 'cloudwatch_elb' ||
+          layout.app === 'system' ||
+          layout.app === 'win_system'
+        )
+      })
       .sort((x, y) => {
         return x.measurement < y.measurement
           ? -1
@@ -2676,7 +2700,14 @@ export class InventoryTopology extends PureComponent<Props, State> {
       )
     })
     const filteredLayouts = layoutsWithinInstance
-      .filter(layout => layoutFilter[layout.app])
+      .filter(layout => {
+        return (
+          layout.app === 'system' ||
+          layout.app === 'win_system' ||
+          layout.app === 'cloudwatch' ||
+          layout.app === 'stackdriver'
+        )
+      })
       .sort((x, y) => {
         return x.measurement < y.measurement
           ? -1
