@@ -33,6 +33,7 @@ import {
   getRunnerCloudActionListInstances,
   getCSPRunnerFileWrite,
   getRunnerFileRead,
+  setRunnerFileRemove,
 } from 'src/shared/apis/saltStack'
 import {getCpuAndLoadForK8s} from 'src/hosts/apis/kubernetes'
 
@@ -1459,7 +1460,7 @@ export const fileWriteKeyApi = async (
 export const getRunnerFileReadApi = async (
   pUrl: string,
   pToken: string,
-  pFilePath: []
+  pFilePath: string[]
 ) => {
   try {
     const info = await getRunnerFileRead(pUrl, pToken, pFilePath)
@@ -1467,6 +1468,22 @@ export const getRunnerFileReadApi = async (
     const fileRead = yaml.safeLoad(info.data)
 
     return fileRead
+  } catch (error) {
+    throw error
+  }
+}
+
+export const setRunnerFileRemoveApi = async (
+  pUrl: string,
+  pToken: string,
+  pFilePath: string[]
+) => {
+  try {
+    const info = await setRunnerFileRemove(pUrl, pToken, pFilePath)
+
+    const fileRemove = yaml.safeLoad(info.data)
+
+    return fileRemove
   } catch (error) {
     throw error
   }

@@ -56,8 +56,10 @@ import {
   notifygetCSPConfigFailed,
   notifygetCSPKeyFailed,
   notifyRequiredFailed,
+  notifyTopologySaved,
+  notifyTopologySaveFailed,
+  notifyTopologySaveAuthFailed,
 } from 'src/shared/copy/notifications'
-import {layoutFilter} from 'src/hosts/constants/topology'
 
 // Types
 import {
@@ -71,6 +73,7 @@ import {
   Ipmi,
   IpmiCell,
   TimeRange,
+  Me,
 } from 'src/types'
 import {AddonType} from 'src/shared/constants'
 import {ButtonShape, ComponentStatus, IconFont} from 'src/reusable_ui/types'
@@ -86,8 +89,6 @@ import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 // Actions
 import {
   loadInventoryTopologyAsync,
-  createInventoryTopologyAsync,
-  updateInventoryTopologyAsync,
   getIpmiStatusAsync,
   setIpmiStatusAsync,
   getIpmiSensorDataAsync,
@@ -121,6 +122,9 @@ import {
   getMeasurementsForInstance,
   paramsCreateCSP,
   paramsUpdateCSP,
+  createInventoryTopology,
+  updateInventoryTopology,
+  setRunnerFileRemoveApi,
 } from 'src/hosts/apis'
 
 // Utils
@@ -180,6 +184,9 @@ import {
 } from 'src/hosts/configurations/topology'
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 
+// Authorized
+import {ADMIN_ROLE, SUPERADMIN_ROLE, EDITOR_ROLE} from 'src/auth/Authorized'
+
 const mx = mxgraph()
 
 export const {
@@ -236,7 +243,11 @@ window['mxPoint'] = mxPoint
 window['mxPopupMenu'] = mxPopupMenu
 window['mxEventObject'] = mxEventObject
 
+interface Auth {
+  me: Me
+}
 interface Props {
+  auth: Auth
   source: Source
   links: Links
   autoRefresh: number
@@ -244,15 +255,6 @@ interface Props {
   notify: (message: Notification | NotificationFunc) => void
   onManualRefresh: () => void
   handleGetInventoryTopology: (links: Links) => Promise<any>
-  handleCreateInventoryTopology: (
-    links: Links,
-    topology: string
-  ) => Promise<any>
-  handleUpdateInventoryTopology: (
-    links: Links,
-    topologyId: string,
-    topology: string
-  ) => Promise<any>
   handleGetMinionKeyAcceptedList: (
     saltMasterUrl: string,
     saltMasterToken: string
@@ -273,7 +275,6 @@ interface Props {
     saltMasterToken: string,
     pIpmis: Ipmi
   ) => Promise<any>
-  // handleLoadCspAsync: (id: string) => Promise<any>
   handleLoadCspsAsync: () => Promise<any>
   handleCreateCspAsync: (data: paramsCreateCSP) => Promise<any>
   handleUpdateCspAsync: (data: paramsUpdateCSP) => Promise<any>
@@ -556,13 +557,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
   }
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
-    const {
-      handleUpdateInventoryTopology,
-      handleCreateInventoryTopology,
-      links,
-      autoRefresh,
-      manualRefresh,
-    } = this.props
+    const {autoRefresh, manualRefresh} = this.props
     const {
       layouts,
       focusedHost,
@@ -572,8 +567,6 @@ export class InventoryTopology extends PureComponent<Props, State> {
       cloudAccessInfos,
       selectItem,
       hostsObject,
-      topologyId,
-      topology,
       isDetectedHost,
     } = this.state
 
@@ -618,21 +611,6 @@ export class InventoryTopology extends PureComponent<Props, State> {
       prevState.hostsObject !== null
     ) {
       this.changedDOM()
-    }
-
-    if (_.isEmpty(topologyId) && !_.isEmpty(topology)) {
-      const response = await handleCreateInventoryTopology(links, topology)
-      const getTopologyId = _.get(response, 'data.id', null)
-
-      if (getTopologyId) {
-        this.setState({topologyId: getTopologyId})
-      }
-    } else if (
-      !_.isEmpty(topologyId) &&
-      !_.isEmpty(prevState.topology) &&
-      prevState.topology !== topology
-    ) {
-      await handleUpdateInventoryTopology(links, topologyId, topology)
     }
 
     if (prevProps.autoRefresh !== autoRefresh) {
@@ -1436,6 +1414,9 @@ export class InventoryTopology extends PureComponent<Props, State> {
   )
 
   private setActionInEditor = () => {
+    const {auth} = this.props
+    const meRole = _.get(auth, 'me.role', '')
+
     this.editor.addAction('group', () => {
       if (this.graph.isEnabled()) {
         let cells = mxUtils.sortCells(this.graph.getSelectionCells(), true)
@@ -1576,6 +1557,18 @@ export class InventoryTopology extends PureComponent<Props, State> {
         modalTitle: 'Export XML',
         modalMessage: this.ExportXMLMessage(),
       })
+    })
+
+    this.editor.addAction('save', async () => {
+      if (
+        meRole === SUPERADMIN_ROLE ||
+        meRole === ADMIN_ROLE ||
+        meRole === EDITOR_ROLE
+      ) {
+        this.handleTopologySave()
+      } else {
+        this.props.notify(notifyTopologySaveAuthFailed())
+      }
     })
   }
 
@@ -2034,8 +2027,6 @@ export class InventoryTopology extends PureComponent<Props, State> {
       } else if (resp.provider === 'gcp') {
         resp = {
           ...resp,
-          // saemail: 'test',
-          // sakey: 'testkey',
         }
       }
 
@@ -2070,6 +2061,45 @@ export class InventoryTopology extends PureComponent<Props, State> {
     })
 
     this.setState({cloudAccessInfos: [...dbResp]})
+  }
+
+  private handleTopologySave = async () => {
+    const {notify, links} = this.props
+    const {topologyId, topology} = this.state
+
+    this.setState({topologyStatus: RemoteDataState.Loading})
+
+    try {
+      if (_.isEmpty(topologyId) && !_.isEmpty(topology)) {
+        const response = await createInventoryTopology(links, topology)
+        const getTopologyId = _.get(response, 'data.id', null)
+
+        notify(notifyTopologySaved())
+
+        this.setState({
+          topologyId: getTopologyId,
+          topologyStatus: RemoteDataState.Done,
+        })
+      } else if (!_.isEmpty(topologyId)) {
+        await updateInventoryTopology(links, topologyId, topology)
+
+        notify(notifyTopologySaved())
+
+        this.setState({topologyStatus: RemoteDataState.Done})
+      }
+    } catch (err) {
+      this.setState({topologyStatus: RemoteDataState.Done})
+
+      const {data} = err
+      const {error} = data
+      if (!error) {
+        notify(notifyTopologySaveFailed('Cannot save topology'))
+        return false
+      }
+      const errorMsg = error.split(': ').pop()
+      notify(notifyTopologySaveFailed(errorMsg))
+      return false
+    }
   }
 
   private handleAddNamespace = async () => {
@@ -2279,6 +2309,22 @@ export class InventoryTopology extends PureComponent<Props, State> {
         cloudAccessInfos: [...newCloudAccessInfos],
         treeMenu: {...treeMenu},
       })
+
+      if (provider === CloudServiceProvider.GCP) {
+        try {
+          const confFile = `${this.confPath + namespace.trim()}.conf`
+          const keyFile = `${
+            this.keyPath + provider + '/' + namespace.trim()
+          }.pem`
+
+          await setRunnerFileRemoveApi(this.salt.url, this.salt.token, [
+            confFile,
+            keyFile,
+          ])
+        } catch (error) {
+          console.error(error)
+        }
+      }
     }
   }
 
@@ -2543,7 +2589,9 @@ export class InventoryTopology extends PureComponent<Props, State> {
       )
     })
     const filteredLayouts = layoutsWithinHost
-      .filter(layout => layoutFilter[layout.app])
+      .filter(layout => {
+        return layout.app === 'system' || layout.app === 'win_system'
+      })
       .sort((x, y) => {
         return x.measurement < y.measurement
           ? -1
@@ -2590,7 +2638,13 @@ export class InventoryTopology extends PureComponent<Props, State> {
       )
     })
     const filteredLayouts = layoutsWithinHost
-      .filter(layout => layoutFilter[layout.app])
+      .filter(layout => {
+        return (
+          layout.app === 'cloudwatch_elb' ||
+          layout.app === 'system' ||
+          layout.app === 'win_system'
+        )
+      })
       .sort((x, y) => {
         return x.measurement < y.measurement
           ? -1
@@ -2646,7 +2700,14 @@ export class InventoryTopology extends PureComponent<Props, State> {
       )
     })
     const filteredLayouts = layoutsWithinInstance
-      .filter(layout => layoutFilter[layout.app])
+      .filter(layout => {
+        return (
+          layout.app === 'system' ||
+          layout.app === 'win_system' ||
+          layout.app === 'cloudwatch' ||
+          layout.app === 'stackdriver'
+        )
+      })
       .sort((x, y) => {
         return x.measurement < y.measurement
           ? -1
@@ -2887,22 +2948,20 @@ export class InventoryTopology extends PureComponent<Props, State> {
   }
 }
 
-const mapStateToProps = ({links}) => {
+const mapStateToProps = ({links, auth}) => {
   return {
     links,
+    auth,
   }
 }
 
 const mapDispatchToProps = {
   handleGetInventoryTopology: loadInventoryTopologyAsync,
-  handleCreateInventoryTopology: createInventoryTopologyAsync,
-  handleUpdateInventoryTopology: updateInventoryTopologyAsync,
   handleGetMinionKeyAcceptedList: getMinionKeyAcceptedListAsync,
   handleGetIpmiStatus: getIpmiStatusAsync,
   handleSetIpmiStatusAsync: setIpmiStatusAsync,
   handleGetIpmiSensorDataAsync: getIpmiSensorDataAsync,
   notify: notifyAction,
-  // handleLoadCspAsync: loadCloudServiceProviderAsync,
   handleLoadCspsAsync: loadCloudServiceProvidersAsync,
   handleCreateCspAsync: createCloudServiceProviderAsync,
   handleUpdateCspAsync: updateCloudServiceProviderAsync,
