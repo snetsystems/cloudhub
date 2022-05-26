@@ -47,7 +47,7 @@ import {
   notifyUnableToGetApps,
 } from 'src/shared/copy/notifications'
 import {AddonType} from 'src/shared/constants'
-import {agentFilter, layoutFilter} from 'src/hosts/constants/topology'
+import {agentFilter} from 'src/hosts/constants/topology'
 
 //const
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
@@ -551,7 +551,13 @@ export class HostsPageGcpTab extends PureComponent<Props, State> {
       )
     })
     const filteredLayouts = layoutsWithinInstance
-      .filter(layout => layoutFilter[layout.app])
+      .filter(layout => {
+        return (
+          layout.app === 'system' ||
+          layout.app === 'win_system' ||
+          layout.app === 'stackdriver'
+        )
+      })
       .sort((x, y) => {
         return x.measurement < y.measurement
           ? -1
