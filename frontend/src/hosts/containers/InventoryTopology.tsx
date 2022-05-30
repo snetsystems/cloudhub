@@ -506,9 +506,12 @@ export class InventoryTopology extends PureComponent<Props, State> {
     addon => addon.name === AddonType.salt
   )
 
-  private isUsingAWS =
+  private isUsingCSP =
     _.get(
-      _.find(this.props.links.addons, addon => addon.name === AddonType.aws),
+      _.find(
+        this.props.links.addons,
+        addon => addon.name === AddonType.aws || addon.name === AddonType.gcp
+      ),
       'url',
       'off'
     ) === 'on'
@@ -519,8 +522,18 @@ export class InventoryTopology extends PureComponent<Props, State> {
   private addToolsButton = addToolsButton
   private setToolbar = setToolbar
 
-  private confPath = `/etc/salt/cloud.providers.d/`
-  private keyPath = `/etc/salt/csp_key/`
+  private confPath = `${
+    _.get(
+      _.find(this.props.links.addons, addon => addon.name === AddonType.gcp),
+      'token'
+    ) || '/etc/salt/'
+  }cloud.providers.d/`
+  private keyPath = `${
+    _.get(
+      _.find(this.props.links.addons, addon => addon.name === AddonType.gcp),
+      'token'
+    ) || '/etc/salt/'
+  }csp_key/`
 
   public async componentDidMount() {
     this.createEditor()
@@ -538,7 +551,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       layouts,
     })
 
-    if (this.isUsingAWS) {
+    if (this.isUsingCSP) {
       await this.handleLoadCsps()
     }
 
@@ -2016,15 +2029,19 @@ export class InventoryTopology extends PureComponent<Props, State> {
     const {handleLoadCspsAsync, handleGetCSPListInstancesAsync} = this.props
     const dbResp: any[] = await handleLoadCspsAsync()
 
-    const newDbResp = _.map(dbResp, resp => {
-      if (resp.provider === 'aws') {
+    const filterDbResp: any[] = _.filter(dbResp, resp =>
+      _.includes(_.keys(this.state.treeMenu), resp.provider)
+    )
+
+    const newDbResp = _.map(filterDbResp, resp => {
+      if (resp.provider === CloudServiceProvider.AWS) {
         const {secretkey} = resp
 
         resp = {
           ...resp,
           secretkey: cryptoJSAESdecrypt(secretkey, this.secretKey.url),
         }
-      } else if (resp.provider === 'gcp') {
+      } else if (resp.provider === CloudServiceProvider.GCP) {
         resp = {
           ...resp,
         }
@@ -2039,7 +2056,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       newDbResp
     )
 
-    _.forEach(dbResp, (dResp, index) => {
+    _.forEach(filterDbResp, (dResp, index) => {
       if (_.isUndefined(saltResp)) return
 
       if (dResp.provider === CloudServiceProvider.AWS) {
@@ -2060,7 +2077,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       }
     })
 
-    this.setState({cloudAccessInfos: [...dbResp]})
+    this.setState({cloudAccessInfos: [...filterDbResp]})
   }
 
   private handleTopologySave = async () => {
