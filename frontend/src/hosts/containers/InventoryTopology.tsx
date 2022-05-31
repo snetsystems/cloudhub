@@ -3,8 +3,8 @@ import {Controlled as ReactCodeMirror} from 'react-codemirror2'
 import {connect} from 'react-redux'
 import _ from 'lodash'
 import {getDeep} from 'src/utils/wrappers'
-import CryptoJS from 'crypto-js'
 import classnames from 'classnames'
+import yaml from 'js-yaml'
 
 import {
   default as mxgraph,
@@ -24,12 +24,6 @@ import {
   ComponentSize,
   Page,
   Radio,
-  Input,
-  InputType,
-  OverlayTechnology,
-  OverlayContainer,
-  OverlayHeading,
-  OverlayBody,
 } from 'src/reusable_ui'
 import {
   Table,
@@ -48,6 +42,7 @@ import ConfirmButton from 'src/shared/components/ConfirmButton'
 import InventoryTreemenu from 'src/hosts/components/InventoryTreemenu'
 import TopologyDetails from 'src/hosts/components/TopologyDetails'
 import InstanceTypeModal from 'src/hosts/components/InstanceTypeModal'
+import TopologyCSPMngModal from 'src/hosts/components/TopologyCSPMngModal'
 
 // constants
 import {
@@ -56,7 +51,15 @@ import {
   HANDLE_VERTICAL,
 } from 'src/shared/constants/'
 import {eachNodeTypeAttrs, tmpMenu} from 'src/hosts/constants/tools'
-import {notifyUnableToGetHosts} from 'src/shared/copy/notifications'
+import {
+  notifyUnableToGetHosts,
+  notifygetCSPConfigFailed,
+  notifygetCSPKeyFailed,
+  notifyRequiredFailed,
+  notifyTopologySaved,
+  notifyTopologySaveFailed,
+  notifyTopologySaveAuthFailed,
+} from 'src/shared/copy/notifications'
 
 // Types
 import {
@@ -70,33 +73,41 @@ import {
   Ipmi,
   IpmiCell,
   TimeRange,
+  Me,
 } from 'src/types'
 import {AddonType} from 'src/shared/constants'
 import {ButtonShape, ComponentStatus, IconFont} from 'src/reusable_ui/types'
+import {
+  CloudServiceProvider,
+  CSPAccessObject,
+  CSPFileWriteParam,
+  Instance,
+} from 'src/hosts/types'
+
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
-import {CloudServiceProvider} from 'src/hosts/types'
 
 // Actions
 import {
   loadInventoryTopologyAsync,
-  createInventoryTopologyAsync,
-  updateInventoryTopologyAsync,
   getIpmiStatusAsync,
   setIpmiStatusAsync,
   getIpmiSensorDataAsync,
   getMinionKeyAcceptedListAsync,
-  loadCloudServiceProviderAsync,
   loadCloudServiceProvidersAsync,
   createCloudServiceProviderAsync,
   updateCloudServiceProviderAsync,
   deleteCloudServiceProviderAsync,
+  getCSPListInstancesAsync,
   getAWSInstancesAsync,
   getAWSSecurityAsync,
   getAWSVolumeAsync,
   getAWSInstanceTypesAsync,
+  writeCSPConfigAsync,
+  writeCSPKeyAsync,
+  getRunnerFileReadAsync,
 } from 'src/hosts/actions'
 
-import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {notify, notify as notifyAction} from 'src/shared/actions/notifications'
 
 // APIs
 import {getEnv} from 'src/shared/apis/env'
@@ -111,6 +122,9 @@ import {
   getMeasurementsForInstance,
   paramsCreateCSP,
   paramsUpdateCSP,
+  createInventoryTopology,
+  updateInventoryTopology,
+  setRunnerFileRemoveApi,
 } from 'src/hosts/apis'
 
 // Utils
@@ -122,6 +136,18 @@ import {
   getParseHTML,
 } from 'src/hosts/utils/topology'
 import {getCells} from 'src/hosts/utils/getCells'
+import {
+  getInstanceType,
+  getInstanceDetails,
+  getInstancStorage,
+  getInstanceSecurity,
+  cryptoJSAESencrypt,
+  cryptoJSAESdecrypt,
+  createCSPInstanceData,
+  updateCSPInstanceData,
+  getNamespaceID,
+  isGCPRequiredCheck,
+} from 'src/hosts/utils'
 
 // error
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -157,6 +183,9 @@ import {
   detectedHostsStatus,
 } from 'src/hosts/configurations/topology'
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
+
+// Authorized
+import {ADMIN_ROLE, SUPERADMIN_ROLE, EDITOR_ROLE} from 'src/auth/Authorized'
 
 const mx = mxgraph()
 
@@ -214,14 +243,11 @@ window['mxPoint'] = mxPoint
 window['mxPopupMenu'] = mxPopupMenu
 window['mxEventObject'] = mxEventObject
 
-interface Instance {
-  provider: string
-  region: string
-  instanceid: string
-  instancename: string
+interface Auth {
+  me: Me
 }
-
 interface Props {
+  auth: Auth
   source: Source
   links: Links
   autoRefresh: number
@@ -229,15 +255,6 @@ interface Props {
   notify: (message: Notification | NotificationFunc) => void
   onManualRefresh: () => void
   handleGetInventoryTopology: (links: Links) => Promise<any>
-  handleCreateInventoryTopology: (
-    links: Links,
-    topology: string
-  ) => Promise<any>
-  handleUpdateInventoryTopology: (
-    links: Links,
-    topologyId: string,
-    topology: string
-  ) => Promise<any>
   handleGetMinionKeyAcceptedList: (
     saltMasterUrl: string,
     saltMasterToken: string
@@ -258,11 +275,15 @@ interface Props {
     saltMasterToken: string,
     pIpmis: Ipmi
   ) => Promise<any>
-  handleLoadCspAsync: (id: string) => Promise<any>
   handleLoadCspsAsync: () => Promise<any>
   handleCreateCspAsync: (data: paramsCreateCSP) => Promise<any>
   handleUpdateCspAsync: (data: paramsUpdateCSP) => Promise<any>
   handleDeleteCspAsync: (id: string) => Promise<any>
+  handleGetCSPListInstancesAsync: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    pCsp: any[]
+  ) => Promise<any>
   handleGetAWSInstancesAsync: (
     saltMasterUrl: string,
     saltMasterToken: string,
@@ -287,6 +308,21 @@ interface Props {
     pTypes: string[]
   ) => Promise<any>
   timeRange: TimeRange
+  handleWriteCspConfig: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    fileWrite: CSPFileWriteParam
+  ) => Promise<any>
+  handleWriteCspKey: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    fileWrite: CSPFileWriteParam
+  ) => Promise<any>
+  handleGetRunnerFileReadAsync: (
+    saltMasterUrl: string,
+    saltMasterToken: string,
+    filePath: string[]
+  ) => Promise<any>
 }
 
 interface State {
@@ -317,23 +353,15 @@ interface State {
   appHostData: {}
   isCloudFormVisible: boolean
   isUpdateCloud: boolean
-  cloudRegion: string
+  provider: CloudServiceProvider
+  cloudNamespace: string
   cloudAccessKey: string
   cloudSecretKey: string
-  cloudTargetMinion: string
-  provider: CloudServiceProvider
+  cloudSAEmail: string
+  cloudSAKey: string
   treeMenu: any
   focusedInstance: Instance
-  cloudAccessInfos: {
-    id: string
-    minion: string
-    accesskey: string
-    secretkey: string
-    region: string
-    provider: CloudServiceProvider
-    organization: string
-    data: any[]
-  }[]
+  cloudAccessInfos: CSPAccessObject[]
   loadingState: RemoteDataState
   loadingStateDetails: RemoteDataState
   awsSecurity: Promise<any>
@@ -346,7 +374,7 @@ interface State {
 }
 
 @ErrorHandling
-class InventoryTopology extends PureComponent<Props, State> {
+export class InventoryTopology extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
 
@@ -365,7 +393,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         nodes: {},
       },
       gcp: {
-        buttons: [{provider: 'gcp', isUpdate: false, text: 'Add Region'}],
+        buttons: [{provider: 'gcp', isUpdate: false, text: 'Add Project'}],
         label: 'Google Cloud Platform',
         index: 1,
         level: 0,
@@ -373,7 +401,7 @@ class InventoryTopology extends PureComponent<Props, State> {
         nodes: {},
       },
       azure: {
-        buttons: [{provider: 'azure', isUpdate: false, text: 'Add Region'}],
+        buttons: [{provider: 'azure', isUpdate: false, text: 'Add Namespace'}],
         label: 'Azure',
         index: 2,
         level: 0,
@@ -427,11 +455,12 @@ class InventoryTopology extends PureComponent<Props, State> {
       appHostData: {},
       isCloudFormVisible: false,
       isUpdateCloud: false,
-      cloudRegion: '',
+      provider: null,
+      cloudNamespace: '',
       cloudAccessKey: '',
       cloudSecretKey: '',
-      cloudTargetMinion: '',
-      provider: null,
+      cloudSAEmail: '',
+      cloudSAKey: '',
       treeMenu: {...cloud},
       focusedInstance: null,
       cloudAccessInfos: [],
@@ -477,9 +506,12 @@ class InventoryTopology extends PureComponent<Props, State> {
     addon => addon.name === AddonType.salt
   )
 
-  private isUsingAWS =
+  private isUsingCSP =
     _.get(
-      _.find(this.props.links.addons, addon => addon.name === AddonType.aws),
+      _.find(
+        this.props.links.addons,
+        addon => addon.name === AddonType.aws || addon.name === AddonType.gcp
+      ),
       'url',
       'off'
     ) === 'on'
@@ -489,6 +521,25 @@ class InventoryTopology extends PureComponent<Props, State> {
   private openSensorData = openSensorData
   private addToolsButton = addToolsButton
   private setToolbar = setToolbar
+
+  private confPath = `${
+    _.get(
+      _.find(
+        this.props.links.addons,
+        addon => addon.name === 'salt-config-path'
+      ),
+      'url'
+    ) || '/etc/salt/'
+  }cloud.providers.d/`
+  private keyPath = `${
+    _.get(
+      _.find(
+        this.props.links.addons,
+        addon => addon.name === 'salt-config-path'
+      ),
+      'url'
+    ) || '/etc/salt/'
+  }csp_key/`
 
   public async componentDidMount() {
     this.createEditor()
@@ -506,7 +557,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       layouts,
     })
 
-    if (this.isUsingAWS) {
+    if (this.isUsingCSP) {
       await this.handleLoadCsps()
     }
 
@@ -525,13 +576,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   }
 
   public async componentDidUpdate(prevProps: Props, prevState: State) {
-    const {
-      handleUpdateInventoryTopology,
-      handleCreateInventoryTopology,
-      links,
-      autoRefresh,
-      manualRefresh,
-    } = this.props
+    const {autoRefresh, manualRefresh} = this.props
     const {
       layouts,
       focusedHost,
@@ -541,8 +586,6 @@ class InventoryTopology extends PureComponent<Props, State> {
       cloudAccessInfos,
       selectItem,
       hostsObject,
-      topologyId,
-      topology,
       isDetectedHost,
     } = this.state
 
@@ -560,11 +603,16 @@ class InventoryTopology extends PureComponent<Props, State> {
         (prevState.focusedInstance !== focusedInstance && focusedInstance) ||
         (prevState.selected !== selected && focusedInstance)
       ) {
+        const getfrom =
+          _.get(prevState.focusedInstance, 'provider') !==
+          focusedInstance.provider
+            ? 'ALL'
+            : selected
         const {filteredLayouts} = await this.getLayoutsforInstance(
           layouts,
           focusedInstance
         )
-        this.setState({filteredLayouts})
+        this.setState({filteredLayouts, selected: getfrom})
       }
 
       if (prevState.cloudAccessInfos !== cloudAccessInfos) {
@@ -582,21 +630,6 @@ class InventoryTopology extends PureComponent<Props, State> {
       prevState.hostsObject !== null
     ) {
       this.changedDOM()
-    }
-
-    if (_.isEmpty(topologyId) && !_.isEmpty(topology)) {
-      const response = await handleCreateInventoryTopology(links, topology)
-      const getTopologyId = _.get(response, 'data.id', null)
-
-      if (getTopologyId) {
-        this.setState({topologyId: getTopologyId})
-      }
-    } else if (
-      !_.isEmpty(topologyId) &&
-      !_.isEmpty(prevState.topology) &&
-      prevState.topology !== topology
-    ) {
-      await handleUpdateInventoryTopology(links, topologyId, topology)
     }
 
     if (prevProps.autoRefresh !== autoRefresh) {
@@ -639,6 +672,15 @@ class InventoryTopology extends PureComponent<Props, State> {
 
   public render() {
     const {
+      provider,
+      cloudNamespace,
+      cloudAccessKey,
+      cloudSecretKey,
+      cloudSAEmail,
+      cloudSAKey,
+      isUpdateCloud,
+      loadingState,
+      isCloudFormVisible,
       isModalVisible,
       modalMessage,
       modalTitle,
@@ -652,7 +694,27 @@ class InventoryTopology extends PureComponent<Props, State> {
           <>this Browser Not Supported</>
         ) : (
           <>
-            {this.writeCloudForm}
+            <TopologyCSPMngModal
+              provider={provider}
+              cloudNamespace={cloudNamespace}
+              cloudAccessKey={cloudAccessKey}
+              cloudSecretKey={cloudSecretKey}
+              cloudSAEmail={cloudSAEmail}
+              cloudSAKey={cloudSAKey}
+              isUpdateCloud={isUpdateCloud}
+              isVisible={isCloudFormVisible}
+              loadingState={loadingState}
+              onInputChange={this.handleChangeInput}
+              onTextAreaChange={this.handleChangeTextArea}
+              onAddNamespace={this.handleAddNamespace}
+              onUpdateNamespace={this.handleUpdateNamespace}
+              onKeyPressEnter={this.handleKeyPressEnter}
+              onEncrypt={this.handleEncrypt}
+              onFocus={() => {
+                this.setState({cloudSecretKey: ''})
+              }}
+              onCancel={this.closeCloudForm}
+            />
             <Threesizer
               orientation={HANDLE_VERTICAL}
               divisions={this.threesizerDivisions}
@@ -666,7 +728,6 @@ class InventoryTopology extends PureComponent<Props, State> {
               customStyle={isExportXML ? null : {height: '122px'}}
               containerMaxWidth={isExportXML ? null : 450}
             />
-
             <InstanceTypeModal
               visible={isInstanceTypeModalVisible}
               message={this.renderInstanceTypeModal}
@@ -685,41 +746,21 @@ class InventoryTopology extends PureComponent<Props, State> {
   private get renderInstanceTypeModal() {
     return (
       <FancyScrollbar style={{height: '450px'}} autoHide={false}>
-        <TopologyDetails selectInstanceData={this.getInstanceType()} />
+        <TopologyDetails
+          selectInstanceData={getInstanceType(this.state.awsInstanceTypes)}
+        />
       </FancyScrollbar>
     )
-  }
-
-  private get loadingState() {
-    const {loadingState} = this.state
-    let isLoading = false
-
-    if (loadingState === RemoteDataState.Loading) {
-      isLoading = true
-    }
-
-    return isLoading ? (
-      <div
-        style={{
-          position: 'absolute',
-          zIndex: 3,
-          backgroundColor: 'rgba(0,0,0,0.5)',
-          width: '100%',
-          height: '100%',
-        }}
-      >
-        <PageSpinner />
-      </div>
-    ) : null
   }
 
   private closeCloudForm = () => {
     this.setState({
       isCloudFormVisible: false,
-      cloudRegion: '',
+      cloudNamespace: '',
       cloudAccessKey: '',
       cloudSecretKey: '',
-      cloudTargetMinion: '',
+      cloudSAEmail: '',
+      cloudSAKey: '',
     })
   }
 
@@ -1148,24 +1189,19 @@ class InventoryTopology extends PureComponent<Props, State> {
         const instancename = cellElement.getAttribute('data-name')
         const navi = dataNavi.split('.')
         const provider = navi[0]
-        const region = navi[2]
+        const namespace = navi[2]
         const instanceid = navi[4]
         const accessInfo = _.find(
           cloudAccessInfos,
-          c => c.provider === provider && c.region === region
+          c => c.provider === provider && c.namespace === namespace
         )
 
-        if (!_.isEmpty(accessInfo)) {
+        if (!_.isEmpty(accessInfo) && provider === CloudServiceProvider.AWS) {
           const {secretkey} = accessInfo
-          const decryptedBytes = CryptoJS.AES.decrypt(
-            secretkey,
-            this.secretKey.url
-          )
-          const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
 
           const newCloudAccessInfos = {
             ...accessInfo,
-            secretkey: originalSecretkey,
+            secretkey: cryptoJSAESdecrypt(secretkey, this.secretKey.url),
           }
 
           const getData = _.filter(accessInfo.data, d =>
@@ -1215,7 +1251,12 @@ class InventoryTopology extends PureComponent<Props, State> {
           })
         }
         this.setState({
-          focusedInstance: {provider, region, instanceid, instancename},
+          focusedInstance: {
+            provider,
+            namespace,
+            instanceid,
+            instancename,
+          },
           focusedHost: null,
         })
       } else {
@@ -1318,14 +1359,11 @@ class InventoryTopology extends PureComponent<Props, State> {
       state: IpmiSetPowerStatus,
       popupText: string
     ) => {
-      const decryptedBytes = CryptoJS.AES.decrypt(ipmiPass, this.secretKey.url)
-      const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
-
       const ipmi: Ipmi = {
         target,
         host: ipmiHost,
         user: ipmiUser,
-        pass: originalPass,
+        pass: cryptoJSAESdecrypt(ipmiPass, this.secretKey.url),
       }
 
       const onConfirm = async () => {
@@ -1362,13 +1400,11 @@ class InventoryTopology extends PureComponent<Props, State> {
       const {handleGetIpmiSensorDataAsync} = this.props
       const {isPinned} = this.state
 
-      const decryptedBytes = CryptoJS.AES.decrypt(ipmiPass, this.secretKey.url)
-      const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
       const pIpmi: Ipmi = {
         target,
         host: ipmiHost,
         user: ipmiUser,
-        pass: originalPass,
+        pass: cryptoJSAESdecrypt(ipmiPass, this.secretKey.url),
       }
 
       const sensorData = await handleGetIpmiSensorDataAsync(
@@ -1397,6 +1433,9 @@ class InventoryTopology extends PureComponent<Props, State> {
   )
 
   private setActionInEditor = () => {
+    const {auth} = this.props
+    const meRole = _.get(auth, 'me.role', '')
+
     this.editor.addAction('group', () => {
       if (this.graph.isEnabled()) {
         let cells = mxUtils.sortCells(this.graph.getSelectionCells(), true)
@@ -1537,6 +1576,18 @@ class InventoryTopology extends PureComponent<Props, State> {
         modalTitle: 'Export XML',
         modalMessage: this.ExportXMLMessage(),
       })
+    })
+
+    this.editor.addAction('save', async () => {
+      if (
+        meRole === SUPERADMIN_ROLE ||
+        meRole === ADMIN_ROLE ||
+        meRole === EDITOR_ROLE
+      ) {
+        this.handleTopologySave()
+      } else {
+        this.props.notify(notifyTopologySaveAuthFailed())
+      }
     })
   }
 
@@ -1773,6 +1824,7 @@ class InventoryTopology extends PureComponent<Props, State> {
   private detailsGraph = () => {
     const {
       focusedHost,
+      focusedInstance,
       treeMenu,
       activeEditorTab,
       activeDetailsTab,
@@ -1827,7 +1879,12 @@ class InventoryTopology extends PureComponent<Props, State> {
                     Get from <span style={{margin: '0 3px'}}>:</span>
                   </span>
                   <Dropdown
-                    items={['ALL', 'CloudWatch', 'Within instances']}
+                    items={
+                      _.get(focusedInstance, 'provider') ===
+                      CloudServiceProvider.AWS
+                        ? ['ALL', 'CloudWatch', 'Within instances']
+                        : ['ALL', 'StackDriver', 'Within instances']
+                    }
                     onChoose={this.getHandleOnChoose}
                     selected={selected}
                     className="dropdown-sm"
@@ -1843,34 +1900,39 @@ class InventoryTopology extends PureComponent<Props, State> {
           <Page.Contents scrollable={false}>
             {activeEditorTab === 'details' ? (
               <>
-                <div style={{marginBottom: '10px'}}>
-                  <Radio shape={ButtonShape.Default} customClass={'auth-radio'}>
-                    <Radio.Button
-                      titleText="Details"
-                      value="details"
-                      active={activeDetailsTab === 'details'}
-                      onClick={this.onClickActiveDetailsTab}
-                    >
-                      Details
-                    </Radio.Button>
-                    <Radio.Button
-                      titleText="Security"
-                      value="security"
-                      active={activeDetailsTab === 'security'}
-                      onClick={this.onClickActiveDetailsTab}
-                    >
-                      Security
-                    </Radio.Button>
-                    <Radio.Button
-                      titleText="Storage"
-                      value="storage"
-                      active={activeDetailsTab === 'storage'}
-                      onClick={this.onClickActiveDetailsTab}
-                    >
-                      Storage
-                    </Radio.Button>
-                  </Radio>
-                </div>
+                {_.get(focusedInstance, 'provider') ===
+                CloudServiceProvider.AWS ? (
+                  <>
+                    <div style={{marginBottom: '10px'}}>
+                      <div className="radio-buttons radio-buttons--default radio-buttons--sm">
+                        <Radio.Button
+                          titleText="Details"
+                          value="details"
+                          active={activeDetailsTab === 'details'}
+                          onClick={this.onClickActiveDetailsTab}
+                        >
+                          Details
+                        </Radio.Button>
+                        <Radio.Button
+                          titleText="Security"
+                          value="security"
+                          active={activeDetailsTab === 'security'}
+                          onClick={this.onClickActiveDetailsTab}
+                        >
+                          Security
+                        </Radio.Button>
+                        <Radio.Button
+                          titleText="Storage"
+                          value="storage"
+                          active={activeDetailsTab === 'storage'}
+                          onClick={this.onClickActiveDetailsTab}
+                        >
+                          Storage
+                        </Radio.Button>
+                      </div>
+                    </div>
+                  </>
+                ) : null}
                 <div style={{height: 'calc(100% - 22.5px)'}}>
                   <FancyScrollbar>
                     <TopologyDetails
@@ -1919,377 +1981,31 @@ class InventoryTopology extends PureComponent<Props, State> {
     return null
   }
 
-  private getInstanceDetails = () => {
-    const {cloudAccessInfos, focusedInstance} = this.state
-    let instanceData = {}
-
-    if (_.isEmpty(cloudAccessInfos) || _.isEmpty(focusedInstance)) {
-      return instanceData
-    }
-    const {provider, region, instanceid} = focusedInstance
-    const accessInfo = _.find(
-      cloudAccessInfos,
-      c => c.provider === provider && c.region === region
-    )
-
-    const getData = _.filter(accessInfo.data, d =>
-      _.isNull(d) ? false : d.InstanceId === instanceid
-    )
-
-    _.reduce(
-      getData,
-      (_, current) => {
-        const {
-          InstanceId,
-          NetworkInterfaces,
-          PublicIpAddress,
-          PrivateIpAddress,
-          State,
-          PrivateDnsName,
-          PublicDnsName,
-          InstanceType,
-          VpcId,
-          SubnetId,
-          Platform,
-          ImageId,
-          Monitoring,
-          LaunchTime,
-          AmiLaunchIndex,
-          KeyName,
-          StateTransitionReason,
-          Placement,
-          VirtualizationType,
-          CpuOptions,
-          CapacityReservationSpecification,
-        } = current
-
-        const instance = {
-          Instance_summary: {
-            Instance_ID: this.detailsValueChecker(InstanceId),
-            Public_IPv4_address: this.detailsValueChecker(PublicIpAddress),
-            Private_IPv4_addresses: this.detailsValueChecker(PrivateIpAddress),
-            IPv6_address: this.detailsValueChecker(
-              NetworkInterfaces[0].Ipv6Addresses
-            ),
-            Instance_state: this.instanceState(
-              this.detailsValueChecker(State.Name)
-            ),
-            Public_IPv4_DNS: this.detailsValueChecker(PublicDnsName),
-            Private_IPv4_DNS: this.detailsValueChecker(PrivateDnsName),
-            Instance_type: this.detailsValueChecker(InstanceType),
-            Elastic_IP_addresses: this.detailsValueChecker(
-              NetworkInterfaces[0].Association?.PublicIp
-            ),
-            VPC_ID: this.detailsValueChecker(VpcId),
-            Subnet_ID: this.detailsValueChecker(SubnetId),
-          },
-          Instance_details: {
-            Platform: this.detailsValueChecker(Platform),
-            AMI_ID: this.detailsValueChecker(ImageId),
-            Monitoring: this.detailsValueChecker(Monitoring.State),
-            Launch_time: this.detailsValueChecker(LaunchTime.toString()),
-            AMI_Launch_index: this.detailsValueChecker(AmiLaunchIndex),
-            Key_pair_name: this.detailsValueChecker(KeyName),
-            State_transition_reason: this.detailsValueChecker(
-              StateTransitionReason
-            ),
-            Owner: this.detailsValueChecker(NetworkInterfaces[0].OwnerId),
-          },
-          Host_and_placement_group: {
-            Placement_group: this.detailsValueChecker(Placement.GroupName),
-            Host_resource_group_name: this.detailsValueChecker(),
-            Tenancy: this.detailsValueChecker(Placement.Tenancy),
-            Virtualization_type: this.detailsValueChecker(VirtualizationType),
-            Number_of_vCPUs: this.detailsValueChecker(
-              CpuOptions.CoreCount * CpuOptions.ThreadsPerCore
-            ),
-          },
-          Capacity_reservation: {
-            Capacity_Reservation_setting: this.detailsValueChecker(
-              CapacityReservationSpecification.CapacityReservationPreference
-            ),
-          },
-        }
-
-        instanceData = {
-          ...instance,
-        }
-
-        return false
-      },
-      {}
-    )
-
-    return instanceData
-  }
-
-  private getInstanceSecurity = () => {
-    const {treeMenu, focusedInstance, awsSecurity} = this.state
-    let instanceData = {}
-
-    try {
-      if (_.isNull(awsSecurity)) return
-
-      const getAWSSecurity = _.values(_.values(awsSecurity)[0][0])[0][0]
-      const rules = _.get(getAWSSecurity, 'rules', [])
-      const rulesEgress = _.get(getAWSSecurity, 'rules_egress', [])
-      const outboundRules = []
-      const inboundRules = []
-
-      _.forEach(rules, rule => {
-        const {grants, from_port, ip_protocol} = rule
-        const isAll = ip_protocol === '-1'
-        _.forEach(grants, grant => {
-          const {source_group_group_id, cidr_ip} = grant
-
-          inboundRules.push({
-            port: isAll ? 'All' : from_port,
-            protocol: isAll ? 'All' : _.upperCase(ip_protocol),
-            source: cidr_ip || source_group_group_id,
-            security_groups: getAWSSecurity.name,
-          })
-        })
-      })
-
-      _.forEach(rulesEgress, rule => {
-        const {grants, from_port, ip_protocol} = rule
-        const isAll = ip_protocol === '-1'
-        _.forEach(grants, grant => {
-          const {cidr_ip} = grant
-
-          outboundRules.push({
-            port: isAll ? 'All' : from_port,
-            protocol: isAll ? 'All' : _.upperCase(ip_protocol),
-            destination: cidr_ip,
-            security_groups: getAWSSecurity.name,
-          })
-        })
-      })
-
-      return {
-        Security_details: {
-          Owner_ID: getAWSSecurity.owner_id,
-          Launch_Time: treeMenu[focusedInstance.provider]['nodes'][
-            focusedInstance.region
-          ]['nodes'][focusedInstance.instanceid].meta.LaunchTime.toString(),
-          Security_groups: `${getAWSSecurity.id}(${getAWSSecurity.name})`,
-        },
-        Inbound_rules: {name: 'security', role: 'table', data: inboundRules},
-        Outbound_rules: {name: 'security', role: 'table', data: outboundRules},
-      }
-    } catch (error) {
-      return instanceData
-    }
-  }
-
-  private getInstancStorage = () => {
-    const {treeMenu, focusedInstance, awsVolume} = this.state
-    let instanceData = {}
-
-    try {
-      if (_.isNull(awsVolume)) return
-
-      const {provider, region, instanceid} = focusedInstance
-      const getAWSVolume = _.values(_.values(_.values(awsVolume)[0])[0])[0]
-      const blockDevices = []
-
-      _.forEach(getAWSVolume, s => {
-        if (!s || !s.Attachments) return
-
-        _.forEach(s.Attachments, volume => {
-          blockDevices.push({
-            volumeId: volume.VolumeId,
-            deviceName: volume.Device,
-            volumeSize: s.Size,
-            attachmentStatus: volume.State,
-            attachmentTime: volume.AttachTime.toString(),
-            encrypted: s.Encrypted.toString(),
-            deleteOnTermination: volume.DeleteOnTermination.toString(),
-          })
-        })
-      })
-
-      return {
-        Root_device_details: {
-          Root_device_name:
-            treeMenu[provider]['nodes'][region]['nodes'][instanceid].meta
-              .RootDeviceName,
-          Root_device_type:
-            treeMenu[provider]['nodes'][region]['nodes'][instanceid].meta
-              .RootDeviceType,
-        },
-        Block_devices: {
-          name: 'storage',
-          role: 'table',
-          data: blockDevices,
-        },
-      }
-    } catch (error) {
-      return instanceData
-    }
-  }
-
-  private getInstanceType = () => {
-    const {awsInstanceTypes} = this.state
-
-    try {
-      if (_.isNull(awsInstanceTypes)) return
-      let instanceTypes = {}
-
-      const getAWSInstanceTypes = _.values(
-        _.values(_.values(awsInstanceTypes)[0])[0]
-      )[0]
-
-      _.reduce(
-        getAWSInstanceTypes,
-        (_before, current) => {
-          if (_.isNull(current)) return false
-
-          const [family, size] = current.InstanceType.split('.')
-          const ValidThreadsPerCore = _.get(
-            current.VCpuInfo,
-            'ValidThreadsPerCore',
-            '-'
-          )
-
-          let instanceType = {
-            Details: {
-              Instance_type: current.InstanceType,
-              Instance_family: family,
-              Instance_size: size,
-              Hypervisor: current.Hypervisor,
-              Auto_Recovery_support: current.AutoRecoverySupported.toString(),
-              Supported_root_device_types: current.SupportedRootDeviceTypes,
-              Dedicated_Host_support: current.DedicatedHostsSupported.toString(),
-              'On-Demand_Hibernation_support': current.HibernationSupported.toString(),
-              Burstable_Performance_support: current.BurstablePerformanceSupported.toString(),
-            },
-            Compute: {
-              'Free-Tier_eligible': current.FreeTierEligible.toString(),
-              Bare_metal: current.BareMetal.toString(),
-              vCPUs: current.VCpuInfo.DefaultVCpus,
-              Architecture: current.ProcessorInfo.SupportedArchitectures,
-              Cores: current.VCpuInfo.DefaultCores,
-              Valid_cores: current.VCpuInfo.ValidCores,
-              Threads_per_core: current.VCpuInfo.DefaultThreadsPerCore,
-              Valid_threads_per_core: _.isArray(ValidThreadsPerCore)
-                ? ValidThreadsPerCore.join(',')
-                : ValidThreadsPerCore,
-              'Sustained_clock_speed_(GHz)':
-                current.ProcessorInfo.SustainedClockSpeedInGhz,
-              'Memory_(GiB)': current.MemoryInfo.SizeInMiB / 1024,
-              Current_generation: current.CurrentGeneration.toString(),
-            },
-            Networking: {
-              EBS_optimization_support: current.EbsInfo.EbsOptimizedSupport,
-              Network_performance: current.NetworkInfo.NetworkPerformance,
-              ENA_support: current.NetworkInfo.EnaSupport,
-              Maximum_number_of_network_interfaces:
-                current.NetworkInfo.MaximumNetworkInterfaces,
-              IPv4_addresses_per_interface:
-                current.NetworkInfo.Ipv4AddressesPerInterface,
-              IPv6_addresses_per_interface:
-                current.NetworkInfo.Ipv6AddressesPerInterface,
-              IPv6_support: current.NetworkInfo.Ipv6Supported.toString(),
-              Supported_placement_group_strategies: current.PlacementGroupInfo.SupportedStrategies.join(
-                ', '
-              ),
-            },
-          }
-
-          if (current.InstanceStorageSupported) {
-            const storage = {
-              Storage: {
-                'Storage_(GB)': current.InstanceStorageInfo.Disks.TotalSizeInGB,
-                Local_instance_storage: '-',
-                Storage_type: current.InstanceStorageInfo.Disks.Type,
-                Storage_disk_count: current.InstanceStorageInfo.Disks.Count,
-                EBS_encryption_support: current.EbsInfo.EncryptionSupport,
-              },
-            }
-
-            instanceType = {
-              ...instanceType,
-              ...storage,
-            }
-          }
-
-          if (current.hasOwnProperty('GpuInfo')) {
-            const accelators = {
-              Accelerators: {
-                GPUs: current.GpuInfo.Gpus.Count,
-                'GPU_memory_(GiB)': current.GpuInfo.Gpus.MemoryInfo.SizeInMiB,
-                GPU_manufacturer: current.GpuInfo.Gpus.Manufacturer,
-                GPU_name: current.GpuInfo.Gpus.Name,
-              },
-            }
-
-            instanceType = {
-              ...instanceType,
-              ...accelators,
-            }
-          }
-
-          instanceTypes = {
-            ...instanceType,
-          }
-
-          return false
-        },
-        {}
-      )
-
-      return instanceTypes
-    } catch (error) {
-      console.error('error instanceTypes: ', error)
-      return {}
-    }
-  }
-
   private getInstanceData = () => {
-    const {activeDetailsTab} = this.state
+    const {
+      activeDetailsTab,
+      focusedInstance,
+      cloudAccessInfos,
+      treeMenu,
+      awsSecurity,
+      awsVolume,
+    } = this.state
 
-    if (activeDetailsTab === 'details') {
-      return this.getInstanceDetails()
+    if (_.get(focusedInstance, 'provider') === CloudServiceProvider.AWS) {
+      if (activeDetailsTab === 'details') {
+        return getInstanceDetails(cloudAccessInfos, focusedInstance)
+      }
+
+      if (activeDetailsTab === 'security') {
+        return getInstanceSecurity(treeMenu, focusedInstance, awsSecurity)
+      }
+
+      if (activeDetailsTab === 'storage') {
+        return getInstancStorage(treeMenu, focusedInstance, awsVolume)
+      }
+    } else {
+      return getInstanceDetails(cloudAccessInfos, focusedInstance)
     }
-
-    if (activeDetailsTab === 'security') {
-      return this.getInstanceSecurity()
-    }
-
-    if (activeDetailsTab === 'storage') {
-      return this.getInstancStorage()
-    }
-  }
-
-  private instanceState = (instanceState = null) => {
-    return (
-      <div
-        className={classnames(`status-tip`, {
-          active: instanceState === 'running',
-        })}
-      >
-        <div className={'status-tip-bg'}>
-          <span className={'icon checkmark'}></span>
-        </div>
-        {instanceState}
-      </div>
-    )
-  }
-
-  private detailsValueChecker = (
-    value: string | number | boolean = null
-  ): string | number | boolean | '-' => {
-    if (
-      _.isUndefined(value) ||
-      _.isNaN(value) ||
-      _.isNull(value) ||
-      _.isError(value) ||
-      _.isArray(value)
-    ) {
-      value = '-'
-    }
-    return value
   }
 
   private getHandleOnChoose = (selectItem: {text: string}) => {
@@ -2315,58 +2031,185 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setState({selectItem})
   }
 
-  private handleAddRegion = async () => {
-    const {handleCreateCspAsync, handleGetAWSInstancesAsync} = this.props
+  private handleLoadCsps = async () => {
+    const {handleLoadCspsAsync, handleGetCSPListInstancesAsync} = this.props
+    const dbResp: any[] = await handleLoadCspsAsync()
+
+    const filterDbResp: any[] = _.filter(dbResp, resp =>
+      _.includes(_.keys(this.state.treeMenu), resp.provider)
+    )
+
+    const newDbResp = _.map(filterDbResp, resp => {
+      if (resp.provider === CloudServiceProvider.AWS) {
+        const {secretkey} = resp
+
+        resp = {
+          ...resp,
+          secretkey: cryptoJSAESdecrypt(secretkey, this.secretKey.url),
+        }
+      } else if (resp.provider === CloudServiceProvider.GCP) {
+        resp = {
+          ...resp,
+        }
+      }
+
+      return resp
+    })
+
+    const saltResp = await handleGetCSPListInstancesAsync(
+      this.salt.url,
+      this.salt.token,
+      newDbResp
+    )
+
+    _.forEach(filterDbResp, (dResp, index) => {
+      if (_.isUndefined(saltResp)) return
+
+      if (dResp.provider === CloudServiceProvider.AWS) {
+        dResp['data'] = !_.isEmpty(saltResp.return[index])
+          ? _.values(saltResp.return[index]).length > 0
+            ? _.values(saltResp.return[index])
+            : []
+          : []
+      } else if (dResp.provider === CloudServiceProvider.GCP) {
+        dResp['data'] =
+          !_.isEmpty(saltResp.return[index]) &&
+          _.isObject(saltResp.return[index])
+            ? _.values(saltResp.return[index][dResp.namespace]['gce']).length >
+              0
+              ? _.values(saltResp.return[index][dResp.namespace]['gce'])
+              : []
+            : []
+      }
+    })
+
+    this.setState({cloudAccessInfos: [...filterDbResp]})
+  }
+
+  private handleTopologySave = async () => {
+    const {notify, links} = this.props
+    const {topologyId, topology} = this.state
+
+    this.setState({topologyStatus: RemoteDataState.Loading})
+
+    try {
+      if (_.isEmpty(topologyId) && !_.isEmpty(topology)) {
+        const response = await createInventoryTopology(links, topology)
+        const getTopologyId = _.get(response, 'data.id', null)
+
+        notify(notifyTopologySaved())
+
+        this.setState({
+          topologyId: getTopologyId,
+          topologyStatus: RemoteDataState.Done,
+        })
+      } else if (!_.isEmpty(topologyId)) {
+        await updateInventoryTopology(links, topologyId, topology)
+
+        notify(notifyTopologySaved())
+
+        this.setState({topologyStatus: RemoteDataState.Done})
+      }
+    } catch (err) {
+      this.setState({topologyStatus: RemoteDataState.Done})
+
+      const {data} = err
+      const {error} = data
+      if (!error) {
+        notify(notifyTopologySaveFailed('Cannot save topology'))
+        return false
+      }
+      const errorMsg = error.split(': ').pop()
+      notify(notifyTopologySaveFailed(errorMsg))
+      return false
+    }
+  }
+
+  private handleAddNamespace = async () => {
+    const {
+      notify,
+      handleCreateCspAsync,
+      handleGetCSPListInstancesAsync,
+    } = this.props
     const {
       provider,
+      cloudNamespace,
       cloudAccessKey,
       cloudSecretKey,
-      cloudRegion,
-      cloudTargetMinion,
+      cloudSAEmail,
+      cloudSAKey,
+      isUpdateCloud,
       cloudAccessInfos,
     } = this.state
 
-    const data = {
+    const requiredCheck = isGCPRequiredCheck(
       provider,
-      region: cloudRegion,
-      accesskey: cloudAccessKey,
-      secretkey: cloudSecretKey,
-      minion: cloudTargetMinion,
-    }
-
-    const decryptedBytes = CryptoJS.AES.decrypt(
+      cloudNamespace,
+      cloudAccessKey,
       cloudSecretKey,
-      this.secretKey.url
+      cloudSAEmail,
+      cloudSAKey,
+      isUpdateCloud
     )
 
-    const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
-
-    const newData = {
-      ...data,
-      secretkey: originalSecretkey,
+    if (!_.isNull(requiredCheck)) {
+      notify(notifyRequiredFailed(requiredCheck))
+      return
     }
+
+    const data = {
+      provider,
+      namespace: cloudNamespace,
+      accesskey: cloudAccessKey,
+      secretkey: cloudSecretKey,
+    }
+
+    const newData = (() => {
+      if (provider === CloudServiceProvider.AWS) {
+        return {
+          ...data,
+          secretkey: cryptoJSAESdecrypt(cloudSecretKey, this.secretKey.url),
+        }
+      } else {
+        return data
+      }
+    })()
 
     try {
       this.setState({loadingState: RemoteDataState.Loading})
-      const saltResp = await handleGetAWSInstancesAsync(
+
+      if (
+        !(provider === CloudServiceProvider.GCP
+          ? await this.cloudproviderConfigWrite()
+          : true)
+      )
+        return
+
+      const saltResp = await handleGetCSPListInstancesAsync(
         this.salt.url,
         this.salt.token,
         [newData]
       )
 
-      const checkSaltResp: string = saltResp.return[0][newData.minion]
+      const checkSaltResp: string = (() => {
+        if (provider === CloudServiceProvider.AWS) {
+          return saltResp.return[0]
+        } else {
+          return saltResp.return[0][newData.namespace]
+        }
+      })()
 
       if (_.isString(checkSaltResp) && _.includes(checkSaltResp, 'exception')) {
-        throw new Error('Failed to add region. exception error')
+        throw new Error('Failed to add namespace. exception error')
       }
 
       const dbResp = await handleCreateCspAsync(data)
-      dbResp['data'] =
-        _.values(saltResp.return[0])[0].length > 0
-          ? _.values(saltResp.return[0])[0]
-          : []
 
-      const newCloudAccessInfos = [...cloudAccessInfos, dbResp]
+      const newCloudAccessInfos = createCSPInstanceData(
+        dbResp,
+        saltResp,
+        cloudAccessInfos
+      )
 
       this.setState({
         cloudAccessInfos: newCloudAccessInfos,
@@ -2379,21 +2222,106 @@ class InventoryTopology extends PureComponent<Props, State> {
     }
   }
 
-  private removeRegion = async (
+  private handleUpdateNamespace = async () => {
+    const {handleUpdateCspAsync, handleGetCSPListInstancesAsync} = this.props
+    const {
+      treeMenu,
+      provider,
+      cloudNamespace,
+      cloudAccessKey,
+      cloudSecretKey,
+      cloudSAEmail,
+      cloudSAKey,
+      isUpdateCloud,
+      cloudAccessInfos,
+    } = this.state
+
+    const requiredCheck = isGCPRequiredCheck(
+      provider,
+      cloudNamespace,
+      cloudAccessKey,
+      cloudSecretKey,
+      cloudSAEmail,
+      cloudSAKey,
+      isUpdateCloud
+    )
+
+    if (!_.isNull(requiredCheck)) {
+      notify(notifyRequiredFailed(requiredCheck))
+      return
+    }
+
+    let namespaceID = getNamespaceID(treeMenu, provider, cloudNamespace)
+
+    const data: paramsUpdateCSP = {
+      id: namespaceID,
+      namespace: cloudNamespace,
+      accesskey: cloudAccessKey,
+      secretkey: cloudSecretKey,
+    }
+
+    const newData = (() => {
+      if (provider === CloudServiceProvider.AWS) {
+        const {secretkey} = data
+
+        return {
+          ...data,
+          provider,
+          secretkey: cryptoJSAESdecrypt(secretkey, this.secretKey.url),
+        }
+      } else {
+        return {...data, provider}
+      }
+    })()
+
+    try {
+      this.setState({loadingState: RemoteDataState.Loading})
+
+      if (
+        !(provider === CloudServiceProvider.GCP
+          ? await this.cloudproviderConfigWrite()
+          : true)
+      )
+        return
+
+      const saltResp = await handleGetCSPListInstancesAsync(
+        this.salt.url,
+        this.salt.token,
+        [newData]
+      )
+
+      const dbResp = await handleUpdateCspAsync(data)
+
+      const newCloudAccessInfos = updateCSPInstanceData(
+        dbResp,
+        saltResp,
+        cloudAccessInfos
+      )
+
+      this.setState({cloudAccessInfos: [...newCloudAccessInfos]})
+    } catch (error) {
+      console.error(error)
+    } finally {
+      this.setState({loadingState: RemoteDataState.Done})
+      this.closeCloudForm()
+    }
+  }
+
+  private handleRemoveNamespace = async (
     provider: CloudServiceProvider,
-    region: string
+    namespace: string
   ) => {
     const {treeMenu, cloudAccessInfos} = this.state
     const {handleDeleteCspAsync} = this.props
-    const regionID = this.getRegionID(provider, region)
-    const {isDelete} = await handleDeleteCspAsync(regionID)
+    const namespaceID = getNamespaceID(treeMenu, provider, namespace)
+    const {isDelete} = await handleDeleteCspAsync(namespaceID)
 
     if (isDelete) {
-      delete treeMenu[provider]['nodes'][region]
+      delete treeMenu[provider]['nodes'][namespace]
 
       const newCloudAccessInfos = _.filter(cloudAccessInfos, info => {
         let isNotSame = true
-        if (info.provider === provider && info.region === region) {
+        if (info.provider === provider && info.namespace === namespace) {
           isNotSame = false
         }
 
@@ -2404,15 +2332,29 @@ class InventoryTopology extends PureComponent<Props, State> {
         cloudAccessInfos: [...newCloudAccessInfos],
         treeMenu: {...treeMenu},
       })
+
+      if (provider === CloudServiceProvider.GCP) {
+        try {
+          const confFile = `${this.confPath + namespace.trim()}.conf`
+          const keyFile = `${
+            this.keyPath + provider + '/' + namespace.trim()
+          }.pem`
+
+          await setRunnerFileRemoveApi(this.salt.url, this.salt.token, [
+            confFile,
+            keyFile,
+          ])
+        } catch (error) {
+          console.error(error)
+        }
+      }
     }
   }
 
   private openCspFormBtn = (properties: any) => {
-    const {minionList} = this.state
     const {
       provider,
-      minion,
-      region,
+      namespace,
       accesskey,
       secretkey,
       isUpdateCloud,
@@ -2423,16 +2365,44 @@ class InventoryTopology extends PureComponent<Props, State> {
     return (
       <Button
         color={ComponentColor.Primary}
-        onClick={() => {
-          this.setState({
-            provider,
-            cloudTargetMinion: isUpdateCloud ? minion : minionList[0],
-            cloudRegion: region,
-            cloudAccessKey: accesskey,
-            cloudSecretKey: secretkey,
-            isUpdateCloud: isUpdateCloud,
-            isCloudFormVisible: true,
-          })
+        onClick={async () => {
+          const {handleGetRunnerFileReadAsync} = this.props
+
+          if (provider === CloudServiceProvider.GCP && isUpdateCloud) {
+            const confFile = `${this.confPath + namespace.trim()}.conf`
+            const keyFile = `${
+              this.keyPath + provider + '/' + namespace.trim()
+            }.pem`
+
+            const saltResp = await handleGetRunnerFileReadAsync(
+              this.salt.url,
+              this.salt.token,
+              [confFile, keyFile]
+            )
+
+            this.setState({
+              provider,
+              cloudNamespace: namespace,
+              cloudAccessKey: accesskey,
+              cloudSecretKey: secretkey,
+              cloudSAEmail: _.get(
+                yaml.safeLoad(saltResp.return[0]),
+                `${namespace}.service_account_email_address`
+              ),
+              cloudSAKey: saltResp.return[1],
+              isUpdateCloud: isUpdateCloud,
+              isCloudFormVisible: true,
+            })
+          } else {
+            this.setState({
+              provider,
+              cloudNamespace: namespace,
+              cloudAccessKey: accesskey,
+              cloudSecretKey: secretkey,
+              isUpdateCloud: isUpdateCloud,
+              isCloudFormVisible: true,
+            })
+          }
         }}
         shape={isUpdateCloud ? ButtonShape.Square : ButtonShape.Default}
         size={ComponentSize.ExtraSmall}
@@ -2442,12 +2412,12 @@ class InventoryTopology extends PureComponent<Props, State> {
     )
   }
 
-  private removeRegionBtn = ({
+  private removeNamespaceBtn = ({
     provider,
-    region,
+    namespace,
   }: {
     provider: CloudServiceProvider
-    region: string
+    namespace: string
   }) => {
     return (
       <div style={{marginLeft: '3px'}}>
@@ -2457,7 +2427,7 @@ class InventoryTopology extends PureComponent<Props, State> {
           size="btn-xs"
           icon={'trash'}
           confirmAction={() => {
-            this.removeRegion(provider, region)
+            this.handleRemoveNamespace(provider, namespace)
           }}
           isEventStopPropagation={true}
           isButtonLeaveHide={true}
@@ -2466,26 +2436,6 @@ class InventoryTopology extends PureComponent<Props, State> {
         />
       </div>
     )
-  }
-
-  private getRegionID = (
-    provider: CloudServiceProvider,
-    region: string
-  ): string => {
-    const {treeMenu} = this.state
-    const menus = _.keys(treeMenu)
-    let regionID = ''
-
-    if (provider && region) {
-      for (let i = 0; i < menus.length; i++) {
-        if (treeMenu[menus[i]].provider === provider) {
-          regionID = treeMenu[menus[i]]['nodes'][region].regionID
-          break
-        }
-      }
-    }
-
-    return regionID
   }
 
   private get sidebarDivisions() {
@@ -2561,7 +2511,7 @@ class InventoryTopology extends PureComponent<Props, State> {
                   data={treeMenu}
                   graph={this.graph}
                   handleOpenCspFormBtn={this.openCspFormBtn}
-                  handleDeleteRegionBtn={this.removeRegionBtn}
+                  handleDeleteNamespaceBtn={this.removeNamespaceBtn}
                 />
               </FancyScrollbar>
             )
@@ -2630,12 +2580,15 @@ class InventoryTopology extends PureComponent<Props, State> {
   private async fetchHostsAndMeasurements(layouts: Layout[], hostID: string) {
     const {source} = this.props
 
+    const tempVars = generateForHosts(source)
+
     const fetchMeasurements = getMeasurementsForHost(source, hostID)
     const fetchHosts = getAppsForHost(
       source.links.proxy,
       hostID,
       layouts,
-      source.telegraf
+      source.telegraf,
+      tempVars
     )
 
     const [host, measurements] = await Promise.all([
@@ -2676,12 +2629,15 @@ class InventoryTopology extends PureComponent<Props, State> {
   private async fetchEtcAndMeasurements(layouts: Layout[], hostID: string) {
     const {source} = this.props
 
+    const tempVars = generateForHosts(source)
+
     const fetchMeasurements = getMeasurementsForEtc(source, hostID)
     const fetchHosts = getAppsForEtc(
       source.links.proxy,
       hostID,
       layouts,
-      source.telegraf
+      source.telegraf,
+      tempVars
     )
 
     const [host, measurements] = await Promise.all([
@@ -2730,6 +2686,8 @@ class InventoryTopology extends PureComponent<Props, State> {
     const {source} = this.props
     const {selected} = this.state
 
+    const tempVars = generateForHosts(source)
+
     const fetchMeasurements = getMeasurementsForInstance(
       source,
       pInstance,
@@ -2740,6 +2698,7 @@ class InventoryTopology extends PureComponent<Props, State> {
       pInstance,
       layouts,
       source.telegraf,
+      tempVars,
       selected
     )
 
@@ -2768,7 +2727,8 @@ class InventoryTopology extends PureComponent<Props, State> {
         return (
           layout.app === 'system' ||
           layout.app === 'win_system' ||
-          layout.app === 'cloudwatch'
+          layout.app === 'cloudwatch' ||
+          layout.app === 'stackdriver'
         )
       })
       .sort((x, y) => {
@@ -2788,6 +2748,13 @@ class InventoryTopology extends PureComponent<Props, State> {
     this.setState({...this.state, ...input})
   }
 
+  private handleChangeTextArea = (inputKey: string) => (
+    e: ChangeEvent<HTMLTextAreaElement>
+  ) => {
+    const input = {[inputKey]: e.target.value}
+    this.setState({...this.state, ...input})
+  }
+
   private makeTreemenu = () => {
     const {treeMenu, cloudAccessInfos} = this.state
 
@@ -2799,90 +2766,141 @@ class InventoryTopology extends PureComponent<Props, State> {
       const {
         id,
         provider,
-        minion,
-        region,
+        namespace,
         accesskey,
         secretkey,
         data,
       } = cloudAccessInfo
       const cloudProvider = cloudDataTree[provider]
-      const cloudRegions = cloudProvider['nodes']
+      const cloudNamespaces = cloudProvider['nodes']
 
-      cloudRegions[region] = {
-        ...cloudRegions[region],
-        buttons: [
-          {
-            id,
-            provider,
-            minion,
-            region,
-            accesskey,
-            secretkey,
-            isUpdateCloud: true,
-            isDeleteCloud: false,
-            text: 'Update Region',
-            icon: 'pencil',
-          },
-          {
-            id,
-            provider,
-            region,
-            isUpdateCloud: false,
-            isDeleteCloud: true,
-            text: 'Delete Region',
-          },
-        ],
-        label: region,
-        index: _.values(cloudRegions).length,
-        level: 1,
-        regionID: id,
-        nodes: {},
-      }
-
-      _.forEach(data, instanceData => {
-        if (!instanceData || typeof instanceData !== 'object') return
-        const instanceid: string = _.get(instanceData, 'InstanceId')
-        const label = _.get(instanceData, 'Tags')[0]['Value']
-        const cloudRegion = cloudRegions[region]
-        const cloudInstances = cloudRegion['nodes']
-
-        cloudInstances[instanceid] = {
-          ...cloudInstances[instanceid],
-          instanceid,
-          label,
-          index: _.values(cloudInstances).length,
-          provider,
-          region,
-          level: 2,
-          meta: instanceData,
+      if (cloudAccessInfo.provider === CloudServiceProvider.AWS) {
+        cloudNamespaces[namespace] = {
+          ...cloudNamespaces[namespace],
+          buttons: [
+            {
+              id,
+              provider,
+              namespace,
+              accesskey,
+              secretkey,
+              isUpdateCloud: true,
+              isDeleteCloud: false,
+              text: 'Update Namespace',
+              icon: 'pencil',
+            },
+            {
+              id,
+              provider,
+              namespace,
+              isUpdateCloud: false,
+              isDeleteCloud: true,
+              text: 'Delete Namespace',
+            },
+          ],
+          label: namespace,
+          index: _.values(cloudNamespaces).length,
+          level: 1,
+          namespaceID: id,
           nodes: {},
         }
-      })
+      } else if (cloudAccessInfo.provider === CloudServiceProvider.GCP) {
+        cloudNamespaces[namespace] = {
+          ...cloudNamespaces[namespace],
+          buttons: [
+            {
+              id,
+              provider,
+              namespace,
+              accesskey,
+              secretkey,
+              isUpdateCloud: true,
+              isDeleteCloud: false,
+              text: 'Update Project',
+              icon: 'pencil',
+            },
+            {
+              id,
+              provider,
+              namespace,
+              isUpdateCloud: false,
+              isDeleteCloud: true,
+              text: 'Delete Project',
+            },
+          ],
+          label: namespace,
+          index: _.values(cloudNamespaces).length,
+          level: 1,
+          namespaceID: id,
+          nodes: {},
+        }
+      }
+
+      if (cloudAccessInfo.provider === CloudServiceProvider.AWS) {
+        _.forEach(data, instanceData => {
+          if (
+            !instanceData ||
+            !_.isObject(instanceData) ||
+            !_.has(instanceData, 'Tags')
+          )
+            return
+          const instanceid: string = _.get(instanceData, 'InstanceId')
+          const label = _.get(instanceData, 'Tags')[0]['Value']
+          const cloudNamespace = cloudNamespaces[namespace]
+          const cloudInstances = cloudNamespace['nodes']
+
+          cloudInstances[instanceid] = {
+            ...cloudInstances[instanceid],
+            instanceid,
+            label,
+            index: _.values(cloudInstances).length,
+            provider,
+            namespace,
+            level: 2,
+            meta: instanceData,
+            nodes: {},
+          }
+        })
+      } else if (cloudAccessInfo.provider === CloudServiceProvider.GCP) {
+        _.forEach(data, instanceData => {
+          if (!instanceData || typeof instanceData !== 'object') return
+          const instanceid: string = _.get(instanceData, 'id')
+          const label = _.get(instanceData, 'name')
+          const cloudNamespace = cloudNamespaces[namespace]
+          const cloudInstances = cloudNamespace['nodes']
+
+          cloudInstances[instanceid] = {
+            ...cloudInstances[instanceid],
+            instanceid,
+            label,
+            index: _.values(cloudInstances).length,
+            provider,
+            namespace,
+            level: 2,
+            meta: instanceData,
+            nodes: {},
+          }
+        })
+      }
     })
 
     this.setState({treeMenu: cloudDataTree})
   }
 
-  private handleChooseTargetMinion = (selectItem: {text: string}) => {
-    this.setState({
-      cloudTargetMinion: selectItem.text,
-    })
-  }
-
-  private encrypt = () => {
+  private handleEncrypt = () => {
     const {cloudSecretKey} = this.state
 
     if (cloudSecretKey.length < 1) return
 
-    const encryptCloudSecretKey = CryptoJS.AES.encrypt(
+    const encryptCloudSecretKey = cryptoJSAESencrypt(
       cloudSecretKey,
       this.secretKey.url
-    ).toString()
+    )
 
     this.setState({cloudSecretKey: encryptCloudSecretKey})
   }
 
-  private onKeyPressEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  private handleKeyPressEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
     const enterKeyCode = 13
     const enterKey = 'Enter'
 
@@ -2891,222 +2909,94 @@ class InventoryTopology extends PureComponent<Props, State> {
       e.charCode === enterKeyCode ||
       e.key === enterKey
     ) {
-      this.encrypt()
+      this.handleEncrypt()
     }
   }
 
-  private get writeCloudForm() {
-    const {
-      minionList,
-      isCloudFormVisible,
-      isUpdateCloud,
-      cloudRegion,
-      cloudTargetMinion,
-      cloudAccessKey,
-      cloudSecretKey,
-    } = this.state
+  private cloudproviderConfigWrite = async () => {
+    const {provider, cloudNamespace, cloudSAEmail, cloudSAKey} = this.state
+    const {notify, handleWriteCspConfig, handleWriteCspKey} = this.props
+    try {
+      const confFileName = `${cloudNamespace.trim()}.conf`
+      const keyFileName = `${cloudNamespace.trim()}.pem`
 
-    return (
-      <OverlayTechnology visible={isCloudFormVisible}>
-        <OverlayContainer>
-          <div style={{position: 'relative'}}>
-            {this.loadingState}
-            <OverlayHeading
-              title={isUpdateCloud ? 'UPDATE REGION' : 'ADD REGION'}
-              onDismiss={this.closeCloudForm}
-            />
-            <OverlayBody>
-              <Form>
-                <Form.Element label="Target Minion" colsXS={12}>
-                  <Dropdown
-                    items={['NONE', ...minionList]}
-                    selected={
-                      cloudTargetMinion !== '' ? cloudTargetMinion : 'NONE'
-                    }
-                    onChoose={this.handleChooseTargetMinion}
-                    className="dropdown-stretch"
-                  />
-                </Form.Element>
-                <Form.Element label="Region" colsXS={12}>
-                  <Input
-                    value={cloudRegion}
-                    onChange={this.handleChangeInput('cloudRegion')}
-                    placeholder={'Region'}
-                    type={InputType.Text}
-                    status={isUpdateCloud && ComponentStatus.Disabled}
-                  />
-                </Form.Element>
-                <Form.Element label="Access Key" colsXS={12}>
-                  <Input
-                    value={cloudAccessKey}
-                    onChange={this.handleChangeInput('cloudAccessKey')}
-                    placeholder={'Access Key'}
-                    type={InputType.Password}
-                  />
-                </Form.Element>
-                <Form.Element label="Secret Key" colsXS={12}>
-                  <Input
-                    value={cloudSecretKey}
-                    onChange={this.handleChangeInput('cloudSecretKey')}
-                    onFocus={() => {
-                      this.setState({cloudSecretKey: ''})
-                    }}
-                    onBlur={this.encrypt}
-                    onKeyDown={this.onKeyPressEnter}
-                    placeholder={'Secret Key'}
-                    type={InputType.Password}
-                  />
-                </Form.Element>
-                <Form.Footer>
-                  <Button
-                    color={ComponentColor.Default}
-                    onClick={this.closeCloudForm}
-                    size={ComponentSize.Medium}
-                    text={'Cancel'}
-                  />
-                  <Button
-                    color={ComponentColor.Primary}
-                    onClick={() => {
-                      isUpdateCloud
-                        ? this.handleUpdateRegion()
-                        : this.handleAddRegion()
-                    }}
-                    size={ComponentSize.Medium}
-                    text={isUpdateCloud ? 'Update Region' : 'Save Region'}
-                  />
-                </Form.Footer>
-              </Form>
-            </OverlayBody>
-          </div>
-        </OverlayContainer>
-      </OverlayTechnology>
-    )
-  }
+      const cspConfig = `${cloudNamespace.trim()}:
+  project: ${cloudNamespace}
+  service_account_email_address: ${cloudSAEmail.trim()}
+  service_account_private_key: ${this.keyPath + provider + '/' + keyFileName}
 
-  private handleLoadCsps = async () => {
-    const {handleLoadCspsAsync, handleGetAWSInstancesAsync} = this.props
-    const dbResp: any[] = await handleLoadCspsAsync()
-    const newDbResp = _.map(dbResp, resp => {
-      const {secretkey} = resp
-      const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
-      const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
+  grains:
+    node_type: broker
+    release: 1.0.1
 
-      resp = {
-        ...resp,
-        secretkey: originalSecretkey,
+  driver: gce`
+
+      const config: CSPFileWriteParam = {
+        path: this.confPath,
+        fileName: confFileName,
+        script: cspConfig,
       }
 
-      return resp
-    })
-
-    const saltResp = await handleGetAWSInstancesAsync(
-      this.salt.url,
-      this.salt.token,
-      newDbResp
-    )
-
-    _.forEach(dbResp, (dResp, index) => {
-      if (_.isUndefined(saltResp)) return
-
-      dResp['data'] = !_.isEmpty(saltResp.return[index])
-        ? _.values(saltResp.return[index])[0].length > 0
-          ? _.values(saltResp.return[index])[0]
-          : []
-        : []
-    })
-
-    this.setState({cloudAccessInfos: [...dbResp]})
-  }
-
-  private handleUpdateRegion = async () => {
-    const {handleUpdateCspAsync, handleGetAWSInstancesAsync} = this.props
-    const {
-      cloudTargetMinion,
-      cloudRegion,
-      cloudAccessKey,
-      cloudSecretKey,
-      provider,
-      cloudAccessInfos,
-    } = this.state
-
-    let regionID = this.getRegionID(provider, cloudRegion)
-
-    const data: paramsUpdateCSP = {
-      id: regionID,
-      minion: cloudTargetMinion,
-      region: cloudRegion,
-      accesskey: cloudAccessKey,
-      secretkey: cloudSecretKey,
-    }
-
-    const {secretkey} = data
-    const decryptedBytes = CryptoJS.AES.decrypt(secretkey, this.secretKey.url)
-    const originalSecretkey = decryptedBytes.toString(CryptoJS.enc.Utf8)
-
-    const newData = {
-      ...data,
-      secretkey: originalSecretkey,
-    }
-
-    try {
-      this.setState({loadingState: RemoteDataState.Loading})
-
-      const saltResp = await handleGetAWSInstancesAsync(
-        this.salt.url,
-        this.salt.token,
-        [newData]
-      )
-
-      const dbResp = await handleUpdateCspAsync(data)
-
-      const newCloudAccessInfos = _.map(cloudAccessInfos, c => {
-        if (c.id === dbResp.id) {
-          c = {
-            ...dbResp,
-            data:
-              _.values(saltResp.return[0])[0].length > 0
-                ? _.values(saltResp.return[0])[0]
-                : [],
+      await handleWriteCspConfig(this.salt.url, this.salt.token, config).then(
+        configRes => {
+          if (!configRes) {
+            notify(notifygetCSPConfigFailed())
+            throw new Error(notifygetCSPConfigFailed().message)
           }
         }
-        return c
-      })
+      )
 
-      this.setState({cloudAccessInfos: [...newCloudAccessInfos]})
+      if (!_.isEmpty(cloudSAKey)) {
+        const key: CSPFileWriteParam = {
+          path: this.keyPath + provider + '/',
+          fileName: keyFileName,
+          script: cloudSAKey.trim(),
+        }
+
+        await handleWriteCspKey(this.salt.url, this.salt.token, key).then(
+          keyRes => {
+            if (!keyRes) {
+              notify(notifygetCSPKeyFailed())
+              throw new Error(notifygetCSPKeyFailed().message)
+            }
+          }
+        )
+      }
+
+      return true
     } catch (error) {
       console.error(error)
-    } finally {
       this.setState({loadingState: RemoteDataState.Done})
-      this.closeCloudForm()
     }
   }
 }
 
-const mapStateToProps = ({links}) => {
+const mapStateToProps = ({links, auth}) => {
   return {
     links,
+    auth,
   }
 }
 
 const mapDispatchToProps = {
   handleGetInventoryTopology: loadInventoryTopologyAsync,
-  handleCreateInventoryTopology: createInventoryTopologyAsync,
-  handleUpdateInventoryTopology: updateInventoryTopologyAsync,
   handleGetMinionKeyAcceptedList: getMinionKeyAcceptedListAsync,
   handleGetIpmiStatus: getIpmiStatusAsync,
   handleSetIpmiStatusAsync: setIpmiStatusAsync,
   handleGetIpmiSensorDataAsync: getIpmiSensorDataAsync,
-  // handleCreateCloudServiceProviderAsync: createCloudServiceProviderAsync,
   notify: notifyAction,
-  handleLoadCspAsync: loadCloudServiceProviderAsync,
   handleLoadCspsAsync: loadCloudServiceProvidersAsync,
   handleCreateCspAsync: createCloudServiceProviderAsync,
   handleUpdateCspAsync: updateCloudServiceProviderAsync,
   handleDeleteCspAsync: deleteCloudServiceProviderAsync,
+  handleGetCSPListInstancesAsync: getCSPListInstancesAsync,
   handleGetAWSInstancesAsync: getAWSInstancesAsync,
   handleGetAWSSecurityAsync: getAWSSecurityAsync,
   handleGetAWSVolumeAsync: getAWSVolumeAsync,
   handleGetAWSInstanceTypesAsync: getAWSInstanceTypesAsync,
+  handleWriteCspConfig: writeCSPConfigAsync,
+  handleWriteCspKey: writeCSPKeyAsync,
+  handleGetRunnerFileReadAsync: getRunnerFileReadAsync,
 }
 
 export default connect(

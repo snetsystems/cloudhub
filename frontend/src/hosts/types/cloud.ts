@@ -25,22 +25,18 @@ export interface CloudHost {
 export interface CloudHosts {
   [instanceName: string]: CloudHost
 }
-
-export interface getCSPAccessInfoParams {
-  provider: string
-  region: string
-  accesskey: string
-  secretkey: string
-}
-
 export interface CSPAccessObject {
   id: string
-  provider: string
-  region: string
+  minion: string
   accesskey: string
   secretkey: string
+  saemail: string
+  sakey: string
+  provider: string
+  namespace: string
   organization: string
-  links: {self: string}
+  links?: {self: string}
+  data?: any[]
 }
 
 export interface awsSecurity {
@@ -59,4 +55,35 @@ export interface awsVolume {
   encrypted: string
   volumeId: string
   volumeSize: number
+}
+
+export interface cspNetwork {
+  name: string
+  internal_ip: string
+  external_ip: string
+  tier: string
+  type: string
+}
+
+export interface cspDisk {
+  devicename: string
+  disksize: string | number
+  diskinterface: string
+  boot: string | boolean
+  autodelete: string | boolean
+  mode: string
+  type: string
+}
+
+export interface CSPFileWriteParam {
+  path: string
+  fileName: string
+  script: string
+}
+
+export interface Instance {
+  provider: string
+  namespace: string
+  instanceid: string
+  instancename: string
 }

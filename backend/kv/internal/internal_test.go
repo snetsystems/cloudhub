@@ -534,8 +534,8 @@ func TestMarshalTopology(t *testing.T) {
 func TestMarshalCSP(t *testing.T) {
 	v := cloudhub.CSP{
 		ID:           "12",
-		Provider:     "AWS",
-		Region:       "seoul",
+		Provider:     "aws",
+		NameSpace:    "seoul",
 		AccessKey:    "SDKDSIWJD8373",
 		SecretKey:    "OCUWJW++DIE3JD+2KDHWH",
 		Organization: "8373476",

@@ -22,8 +22,8 @@ func TestCSPStore(t *testing.T) {
 	csps := []cloudhub.CSP{
 		{
 			ID: "",
-			Provider: "AWS",
-			Region: "seoul",
+			Provider: "aws",
+			NameSpace: "seoul",
 			AccessKey: "DKCICJD837RJCUWH",
 			SecretKey: "KLDJWHWJ+SKDFUEH8334342DCG",
 			Organization: "133",
@@ -31,8 +31,8 @@ func TestCSPStore(t *testing.T) {
 		},
 		{
 			ID: "",
-			Provider: "GOOGLE",
-			Region: "usa",
+			Provider: "gcp",
+			NameSpace: "usa",
 			AccessKey: "ELDFODFBWMFDS83763UYDJKC",
 			SecretKey: "LKWEJDSI9+37DJDFSHJEWKDSF",
 			Organization: "226541",
@@ -58,7 +58,7 @@ func TestCSPStore(t *testing.T) {
 	}
 
 	// Update CSP.
-	csps[1].Region = "china"
+	csps[1].NameSpace = "china"
 	if err := s.Update(ctx, &csps[1]); err != nil {
 		t.Fatal(err)
 	}
@@ -68,8 +68,8 @@ func TestCSPStore(t *testing.T) {
 	fmt.Println(csp)
 	if err != nil {
 		t.Fatal(err)
-	} else if csp.Region != "china" {
-		t.Fatalf("CSP 1 update error: got %v, expected %v", csp.Region, "china")
+	} else if csp.NameSpace != "china" {
+		t.Fatalf("CSP 1 update error: got %v, expected %v", csp.NameSpace, "china")
 	}
 
 	// Delete an CSP.

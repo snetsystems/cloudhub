@@ -65,7 +65,7 @@ type Server struct {
 	KapacitorUsername string `long:"kapacitor-username" description:"Username of your Kapacitor instance" env:"KAPACITOR_USERNAME"`
 	KapacitorPassword string `long:"kapacitor-password" description:"Password of your Kapacitor instance" env:"KAPACITOR_PASSWORD"`
 
-	AddonURLs   map[string]string `short:"u" long:"addon-url" description:"Support addon is [salt, aws, k8s, swan, oncue, ipmi-secret-key]. Actually, this is a key-value extensional options, Not only url But for everywhere to be used the key-value extensional options. Multiple values can be added by using multiple of the same flag with different 'name:{value}', or as an environment variable with comma-separated 'name:{value}'. E.g. via flags: '-u=salt:{url} -u=aws:on[off] -u=k8s:on[off] -u=swan:{url} -u=oncue:{port number} -u=ipmi-secret-key:{seed key}'. E.g. via environment variable: 'export ADDON_URL=salt:{url},swan:{url}'" env:"ADDON_URL" env-delim:","`
+	AddonURLs   map[string]string `short:"u" long:"addon-url" description:"Support addon is [salt, aws, gcp, k8s, swan, oncue, ipmi-secret-key]. Actually, this is a key-value extensional option not only url but also any key-value. Refer to the following usage samples. E.g., via flags: '-u=salt:{url} -u=salt_config_path:{path} -u=aws:on[off] -u=gcp:on[off] -u=k8s:on[off] -u=swan:{url} -u=oncue:{port number} -u=ipmi-secret-key:{seed key}'. E.g. via environment variable: 'export ADDON_URL=salt:{url},swan:{url}'" env:"ADDON_URL" env-delim:","`
 	AddonTokens map[string]string `short:"k" long:"addon-tokens" description:"The token associated with addon [salt, swan]. E.g. via flags: '-k=salt:{token} -k=swan:{token}'. E.g. via environment variable: 'export ADDON_TOKENS=salt:{token},swan:{token}'" env:"ADDON_TOKENS" env-delim:","`
 
 	Develop            bool          `short:"d" long:"develop" description:"Run server in develop mode."`
@@ -97,22 +97,22 @@ type Server struct {
 	GoogleClientID     string   `long:"google-client-id" description:"Google Client ID for OAuth 2 support" env:"GOOGLE_CLIENT_ID"`
 	GoogleClientSecret string   `long:"google-client-secret" description:"Google Client Secret for OAuth 2 support" env:"GOOGLE_CLIENT_SECRET"`
 	GoogleDomains      []string `long:"google-domains" description:"Google email domain user is required to have active membership (env comma separated)" env:"GOOGLE_DOMAINS" env-delim:","`
-	
-	PublicURL          string   `long:"public-url" description:"Full public URL used to access CloudHub from a web browser. Used for OAuth2 authentication. (http://localhost:8888)" env:"PUBLIC_URL"`
+
+	PublicURL string `long:"public-url" description:"Full public URL used to access CloudHub from a web browser. Used for OAuth2 authentication. (http://localhost:8888)" env:"PUBLIC_URL"`
 
 	HerokuClientID      string   `long:"heroku-client-id" description:"Heroku Client ID for OAuth 2 support" env:"HEROKU_CLIENT_ID"`
 	HerokuSecret        string   `long:"heroku-secret" description:"Heroku Secret for OAuth 2 support" env:"HEROKU_SECRET"`
 	HerokuOrganizations []string `long:"heroku-organization" description:"Heroku Organization Memberships a user is required to have for access to CloudHub (env comma separated)" env:"HEROKU_ORGS" env-delim:","`
 
-	GenericName         string   `long:"generic-name" description:"Generic OAuth2 name presented on the login page"  env:"GENERIC_NAME"`
-	GenericClientID     string   `long:"generic-client-id" description:"Generic OAuth2 Client ID. Can be used own OAuth2 service."  env:"GENERIC_CLIENT_ID"`
-	GenericClientSecret string   `long:"generic-client-secret" description:"Generic OAuth2 Client Secret" env:"GENERIC_CLIENT_SECRET"`
-	GenericScopes       []string `long:"generic-scopes" description:"Scopes requested by provider of web client." default:"user:email (env comma separated)" env:"GENERIC_SCOPES" env-delim:","`
-	GenericDomains      []string `long:"generic-domains" description:"Email domain users' email address to have (example.com) (env comma separated)" env:"GENERIC_DOMAINS" env-delim:","`
-	GenericAuthURL      string   `long:"generic-auth-url" description:"OAuth 2.0 provider's authorization endpoint URL" env:"GENERIC_AUTH_URL"`
-	GenericTokenURL     string   `long:"generic-token-url" description:"OAuth 2.0 provider's token endpoint URL" env:"GENERIC_TOKEN_URL"`
-	GenericAPIURL       string   `long:"generic-api-url" description:"URL that returns OpenID UserInfo compatible information." env:"GENERIC_API_URL"`
-	GenericAPIKey       string   `long:"generic-api-key" description:"JSON lookup key into OpenID UserInfo. (Azure should be userPrincipalName)" default:"email" env:"GENERIC_API_KEY"`
+	GenericName         string         `long:"generic-name" description:"Generic OAuth2 name presented on the login page"  env:"GENERIC_NAME"`
+	GenericClientID     string         `long:"generic-client-id" description:"Generic OAuth2 Client ID. Can be used own OAuth2 service."  env:"GENERIC_CLIENT_ID"`
+	GenericClientSecret string         `long:"generic-client-secret" description:"Generic OAuth2 Client Secret" env:"GENERIC_CLIENT_SECRET"`
+	GenericScopes       []string       `long:"generic-scopes" description:"Scopes requested by provider of web client." default:"user:email (env comma separated)" env:"GENERIC_SCOPES" env-delim:","`
+	GenericDomains      []string       `long:"generic-domains" description:"Email domain users' email address to have (example.com) (env comma separated)" env:"GENERIC_DOMAINS" env-delim:","`
+	GenericAuthURL      string         `long:"generic-auth-url" description:"OAuth 2.0 provider's authorization endpoint URL" env:"GENERIC_AUTH_URL"`
+	GenericTokenURL     string         `long:"generic-token-url" description:"OAuth 2.0 provider's token endpoint URL" env:"GENERIC_TOKEN_URL"`
+	GenericAPIURL       string         `long:"generic-api-url" description:"URL that returns OpenID UserInfo compatible information." env:"GENERIC_API_URL"`
+	GenericAPIKey       string         `long:"generic-api-key" description:"JSON lookup key into OpenID UserInfo. (Azure should be userPrincipalName)" default:"email" env:"GENERIC_API_KEY"`
 	GenericInsecure     bool           `long:"generic-insecure" description:"Whether or not to verify auth-url's tls certificates." env:"GENERIC_INSECURE"`
 	GenericRootCA       flags.Filename `long:"generic-root-ca" description:"File location of root ca cert for generic oauth tls verification." env:"GENERIC_ROOT_CA"`
 	OAuthNoPKCE         bool           `long:"oauth-no-pkce" description:"Disables OAuth PKCE." env:"OAUTH_NO_PKCE"`
@@ -123,29 +123,29 @@ type Server struct {
 	Auth0Organizations []string `long:"auth0-organizations" description:"Auth0 organizations permitted to access CloudHub (env comma separated)" env:"AUTH0_ORGS" env-delim:","`
 	Auth0SuperAdminOrg string   `long:"auth0-superadmin-org" description:"Auth0 organization from which users are automatically granted SuperAdmin status" env:"AUTH0_SUPERADMIN_ORG"`
 
-	LoginAuthType         string   `long:"login-auth-type" description:"Login auth type (mix, oauth, basic)" env:"LOGIN_AUTH_TYPE" default:"oauth"`
+	LoginAuthType string `long:"login-auth-type" description:"Login auth type (mix, oauth, basic)" env:"LOGIN_AUTH_TYPE" default:"oauth"`
 
-	PasswordPolicy        string   `long:"password-policy" description:"Regular expression to validate password strength" env:"PASSWORD_POLICY"`
-	PasswordPolicyMessage string   `long:"password-policy-message" description:"The description about password-policy set" env:"PASSWORD_POLICY_MESSAGE"`
+	PasswordPolicy        string `long:"password-policy" description:"Regular expression to validate password strength" env:"PASSWORD_POLICY"`
+	PasswordPolicyMessage string `long:"password-policy-message" description:"The description about password-policy set" env:"PASSWORD_POLICY_MESSAGE"`
 
-	MailSubject           string   `long:"mail-subject" description:"Mail subject" env:"MAIL_SUBJECT"`
-	MailBodyMessage       string   `long:"mail-body-message" description:"Mail body message" env:"MAIL_BODY_MESSAGE"`
-	
-	ExternaExec           string   `long:"external-exec" description:"External program path" env:"EXTERNAL_EXEC"`
-    ExternaExecArgs       string   `long:"external-exec-args" description:"Arguments of external program" env:"EXTERNAL_EXEC_ARGS"`
+	MailSubject     string `long:"mail-subject" description:"Mail subject" env:"MAIL_SUBJECT"`
+	MailBodyMessage string `long:"mail-body-message" description:"Mail body message" env:"MAIL_BODY_MESSAGE"`
 
-	RetryPolicy           map[string]string `long:"retry-policy" description:"Login Retry policy. 'count' is the number of login failures. 'delaytime' is the time when login is blocked. 'type' is how to block login. E.g. via flags: '--retry-policy=count:{count} --retry-policy=delaytime:{minute} --retry-policy=type:{lock or delay}'. E.g. via environment variable: 'export RETRY_POLICY=count:{count},delaytime:{minute},type:{lock or delay}'" env:"RETRY_POLICY" env-delim:","`
+	ExternaExec     string `long:"external-exec" description:"External program path" env:"EXTERNAL_EXEC"`
+	ExternaExecArgs string `long:"external-exec-args" description:"Arguments of external program" env:"EXTERNAL_EXEC_ARGS"`
 
-	StatusFeedURL          string  `long:"status-feed-url" description:"URL of a JSON Feed to display as a News Feed on the client Status page." default:"https://www.snetgroup.info/" env:"STATUS_FEED_URL"`
+	RetryPolicy map[string]string `long:"retry-policy" description:"Login Retry policy. 'count' is the number of login failures. 'delaytime' is the time when login is blocked. 'type' is how to block login. E.g. via flags: '--retry-policy=count:{count} --retry-policy=delaytime:{minute} --retry-policy=type:{lock or delay}'. E.g. via environment variable: 'export RETRY_POLICY=count:{count},delaytime:{minute},type:{lock or delay}'" env:"RETRY_POLICY" env-delim:","`
+
+	StatusFeedURL          string            `long:"status-feed-url" description:"URL of a JSON Feed to display as a News Feed on the client Status page." default:"https://www.snetgroup.info/" env:"STATUS_FEED_URL"`
 	CustomLinks            map[string]string `long:"custom-link" description:"Custom link to be added to the client User menu. Multiple links can be added by using multiple of the same flag with different 'name:url' values, or as an environment variable with comma-separated 'name:url' values. E.g. via flags: '--custom-link=snetsystems:https://www.snetsystems.com --custom-link=CloudHub:https://github.com/snetsystems/cloudhub'. E.g. via environment variable: 'export CUSTOM_LINKS=snetsystems:https://www.snetsystems.com,CloudHub:https://github.com/snetsystems/cloudhub'" env:"CUSTOM_LINKS" env-delim:","`
 	TelegrafSystemInterval time.Duration     `long:"telegraf-system-interval" default:"1m" description:"Duration used in the GROUP BY time interval for the hosts list" env:"TELEGRAF_SYSTEM_INTERVAL"`
-	CustomAutoRefresh string `long:"custom-auto-refresh" description:"Adds custom auto refresh options using semicolon separated list of label=milliseconds pairs" env:"CUSTOM_AUTO_REFRESH"`
+	CustomAutoRefresh      string            `long:"custom-auto-refresh" description:"Adds custom auto refresh options using semicolon separated list of label=milliseconds pairs" env:"CUSTOM_AUTO_REFRESH"`
 
 	ReportingDisabled bool   `short:"r" long:"reporting-disabled" description:"Disable reporting of usage stats (os,arch,version,cluster_id,uptime) once every 24hr" env:"REPORTING_DISABLED"`
-	LogLevel    string `short:"l" long:"log-level" value-name:"choice" choice:"debug" choice:"info" choice:"error" default:"info" description:"Set the logging level" env:"LOG_LEVEL"`
-	Basepath    string `short:"p" long:"basepath" description:"A URL path prefix under which all CloudHub routes will be mounted. (Note: PREFIX_ROUTES has been deprecated. Now, if basepath is set, all routes will be prefixed with it.)" env:"BASE_PATH"`
-	ShowVersion bool   `short:"v" long:"version" description:"Show CloudHub version info"`
-	BuildInfo   cloudhub.BuildInfo
+	LogLevel          string `short:"l" long:"log-level" value-name:"choice" choice:"debug" choice:"info" choice:"error" default:"info" description:"Set the logging level" env:"LOG_LEVEL"`
+	Basepath          string `short:"p" long:"basepath" description:"A URL path prefix under which all CloudHub routes will be mounted. (Note: PREFIX_ROUTES has been deprecated. Now, if basepath is set, all routes will be prefixed with it.)" env:"BASE_PATH"`
+	ShowVersion       bool   `short:"v" long:"version" description:"Show CloudHub version info"`
+	BuildInfo         cloudhub.BuildInfo
 
 	BasicAuthRealm    string         `long:"basic-auth-realm" default:"Cloudhub" description:"User visible basic authentication realm" env:"BASICAUTH_REALM"`
 	BasicAuthHtpasswd flags.Filename `long:"htpasswd" description:"File location of .htpasswd file, turns on HTTP basic authentication when specified." env:"HTPASSWD"`
@@ -153,7 +153,7 @@ type Server struct {
 	TLSCiphers    string `long:"tls-ciphers" description:"Comma-separated list of cipher suites to use. Use 'help' cipher to print available ciphers." env:"TLS_CIPHERS"`
 	TLSMinVersion string `long:"tls-min-version" description:"Minimum version of the TLS protocol that will be negotiated." default:"1.2" env:"TLS_MIN_VERSION"`
 	TLSMaxVersion string `long:"tls-max-version" description:"Maximum version of the TLS protocol that will be negotiated." env:"TLS_MAX_VERSION"`
-	
+
 	oauthClient http.Client
 }
 
@@ -641,7 +641,7 @@ func (s *Server) Serve(ctx context.Context) {
 	} else {
 		basicPasswordResetType = "all"
 	}
-	
+
 	service := openService(ctx, db, s.newBuilders(logger), logger, s.useAuth(), s.AddonURLs, s.MailSubject, s.MailBodyMessage, s.ExternaExec, s.ExternaExecArgs, s.LoginAuthType, basicPasswordResetType, s.RetryPolicy)
 	service.SuperAdminProviderGroups = superAdminProviderGroups{
 		auth0: s.Auth0SuperAdminOrg,
@@ -706,20 +706,20 @@ func (s *Server) Serve(ctx context.Context) {
 	}
 
 	handler := NewMux(MuxOpts{
-		Develop:       s.Develop,
-		Auth:          auth,
-		Logger:        logger,
-		UseAuth:       s.useAuth(),
-		ProviderFuncs: providerFuncs,
-		Basepath:      s.Basepath,
-		StatusFeedURL: s.StatusFeedURL,
-		CustomLinks:   customLinks,
-		PprofEnabled:  s.PprofEnabled,
-		DisableGZip:   s.DisableGZip,
-		BasicAuth:     basicAuthenticator,
-		AddonURLs:     s.AddonURLs,
-		AddonTokens:   s.AddonTokens,
-		PasswordPolicy: s.PasswordPolicy,
+		Develop:               s.Develop,
+		Auth:                  auth,
+		Logger:                logger,
+		UseAuth:               s.useAuth(),
+		ProviderFuncs:         providerFuncs,
+		Basepath:              s.Basepath,
+		StatusFeedURL:         s.StatusFeedURL,
+		CustomLinks:           customLinks,
+		PprofEnabled:          s.PprofEnabled,
+		DisableGZip:           s.DisableGZip,
+		BasicAuth:             basicAuthenticator,
+		AddonURLs:             s.AddonURLs,
+		AddonTokens:           s.AddonTokens,
+		PasswordPolicy:        s.PasswordPolicy,
 		PasswordPolicyMessage: s.PasswordPolicyMessage,
 	}, service)
 
@@ -849,17 +849,17 @@ func openService(ctx context.Context, db kv.Store, builder builders, logger clou
 			TopologiesStore:         svc.TopologiesStore(),
 			CSPStore:                svc.CSPStore(),
 		},
-		Logger:                   logger,
-		UseAuth:                  useAuth,
-		Databases:                &influx.Client{Logger: logger},
-		AddonURLs:                addonURLs,
-		MailSubject:              mailSubject,
-		MailBody:                 mailBody,
-		ExternalExec:             externalExec,
-		ExternalExecArgs:         externalExecArgs,
-		LoginAuthType:            loginAuthType,
-		BasicPasswordResetType:   basicPasswordResetType,
-		RetryPolicy:              retryPolicy,
+		Logger:                 logger,
+		UseAuth:                useAuth,
+		Databases:              &influx.Client{Logger: logger},
+		AddonURLs:              addonURLs,
+		MailSubject:            mailSubject,
+		MailBody:               mailBody,
+		ExternalExec:           externalExec,
+		ExternalExecArgs:       externalExecArgs,
+		LoginAuthType:          loginAuthType,
+		BasicPasswordResetType: basicPasswordResetType,
+		RetryPolicy:            retryPolicy,
 	}
 }
 

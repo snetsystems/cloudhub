@@ -130,7 +130,7 @@ export type CspTreeMenuChildren = (props: {
   items: TreeMenuItem[]
   reset?: (openNodes?: string[]) => void
   handleOpenCspFormBtn: (properties: {[x: string]: any}) => JSX.Element
-  handleDeleteRegionBtn: (properties: {[x: string]: any}) => JSX.Element
+  handleDeleteNamespaceBtn: (properties: {[x: string]: any}) => JSX.Element
 }) => JSX.Element
 
 export const ItemComponentCSP: React.FunctionComponent<TreeMenuItem> = ({
@@ -149,9 +149,9 @@ export const ItemComponentCSP: React.FunctionComponent<TreeMenuItem> = ({
   parent,
   instanceid,
   provider,
-  region,
+  namespace,
   handleOpenCspFormBtn,
-  handleDeleteRegionBtn,
+  handleDeleteNamespaceBtn,
 }) => (
   <li
     className={classNames(
@@ -177,9 +177,9 @@ export const ItemComponentCSP: React.FunctionComponent<TreeMenuItem> = ({
     data-level={level}
     data-instanceid={instanceid ? instanceid : ''}
     data-provider={provider ? provider : ''}
-    data-region={region ? region : ''}
+    data-namespace={namespace ? namespace : ''}
     data-navi={
-      instanceid ? `${provider}.nodes.${region}.nodes.${instanceid}` : ''
+      instanceid ? `${provider}.nodes.${namespace}.nodes.${instanceid}` : ''
     }
     onClick={disabled ? null : onClick}
   >
@@ -209,7 +209,7 @@ export const ItemComponentCSP: React.FunctionComponent<TreeMenuItem> = ({
         <div className={`tree-item-buttons`}>
           {_.map(buttons, button =>
             button.isDeleteCloud ? (
-              <span key={uuid.v4()}>{handleDeleteRegionBtn(button)}</span>
+              <span key={uuid.v4()}>{handleDeleteNamespaceBtn(button)}</span>
             ) : (
               <span key={uuid.v4()}>{handleOpenCspFormBtn(button)}</span>
             )
@@ -224,7 +224,7 @@ export const defaultChildrenCSP: CspTreeMenuChildren = ({
   search,
   items,
   handleOpenCspFormBtn,
-  handleDeleteRegionBtn,
+  handleDeleteNamespaceBtn,
 }) => {
   const onSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const {value} = e.target
@@ -243,7 +243,7 @@ export const defaultChildrenCSP: CspTreeMenuChildren = ({
       )}
       <ul className="tree-item-group">
         {items.map(props => {
-          props = {...props, handleOpenCspFormBtn, handleDeleteRegionBtn}
+          props = {...props, handleOpenCspFormBtn, handleDeleteNamespaceBtn}
           return <ItemComponentCSP {...props} />
         })}
       </ul>

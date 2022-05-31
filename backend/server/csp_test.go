@@ -18,8 +18,8 @@ import (
 
 func TestCSPID(t *testing.T) {
 	type fields struct {
-		CSPStore   cloudhub.CSPStore
-		Logger     cloudhub.Logger
+		CSPStore cloudhub.CSPStore
+		Logger   cloudhub.Logger
 	}
 	type args struct {
 		w *httptest.ResponseRecorder
@@ -50,8 +50,8 @@ func TestCSPID(t *testing.T) {
 					GetF: func(ctx context.Context, q cloudhub.CSPQuery) (*cloudhub.CSP, error) {
 						return &cloudhub.CSP{
 							ID:           "547",
-							Provider:     "AWS",
-							Region:       "seoul",
+							Provider:     "aws",
+							NameSpace:    "seoul",
 							AccessKey:    "DUEJDJ+KEJDN",
 							SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
 							Organization: "76",
@@ -63,7 +63,7 @@ func TestCSPID(t *testing.T) {
 			id:              "547",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"547","provider":"AWS","links":{"self":"/cloudhub/v1/csp/547"},"region":"seoul","accesskey":"DUEJDJ+KEJDN","secretkey":"WOWCMSG+KEUCBWDKC+WUCN","organization":"76","minion":"minion01"}`,
+			wantBody:        `{"id":"547","provider":"aws","links":{"self":"/cloudhub/v1/csp/547"},"namespace":"seoul","accesskey":"DUEJDJ+KEJDN","secretkey":"WOWCMSG+KEUCBWDKC+WUCN","organization":"76","minion":"minion01"}`,
 		},
 	}
 
@@ -106,9 +106,9 @@ func TestCSPID(t *testing.T) {
 
 func TestCSP(t *testing.T) {
 	type fields struct {
-		CSPStore            cloudhub.CSPStore
-		OrganizationsStore  cloudhub.OrganizationsStore
-		Logger              cloudhub.Logger
+		CSPStore           cloudhub.CSPStore
+		OrganizationsStore cloudhub.OrganizationsStore
+		Logger             cloudhub.Logger
 	}
 	type args struct {
 		w *httptest.ResponseRecorder
@@ -139,8 +139,8 @@ func TestCSP(t *testing.T) {
 						return []cloudhub.CSP{
 							{
 								ID:           "547",
-								Provider:     "AWS",
-								Region:       "seoul",
+								Provider:     "aws",
+								NameSpace:    "seoul",
 								AccessKey:    "DUEJDJ+KEJDN",
 								SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
 								Organization: "76",
@@ -148,8 +148,8 @@ func TestCSP(t *testing.T) {
 							},
 							{
 								ID:           "8367",
-								Provider:     "GCP",
-								Region:       "seoul",
+								Provider:     "gcp",
+								NameSpace:    "seoul",
 								AccessKey:    "XXCIEJRJ+KEUR",
 								SecretKey:    "QOPSMCBDGE+KEICYWLC+KEUICHSJSN",
 								Organization: "32",
@@ -169,7 +169,7 @@ func TestCSP(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"links":{"self":"/cloudhub/v1/csp"},"CSPs":[{"id":"547","provider":"AWS","links":{"self":"/cloudhub/v1/csp/547"},"region":"seoul","accesskey":"DUEJDJ+KEJDN","secretkey":"WOWCMSG+KEUCBWDKC+WUCN","organization":"76","minion":"minion01"},{"id":"8367","provider":"GCP","links":{"self":"/cloudhub/v1/csp/8367"},"region":"seoul","accesskey":"XXCIEJRJ+KEUR","secretkey":"QOPSMCBDGE+KEICYWLC+KEUICHSJSN","organization":"32","minion":"minion02"}]}`,
+			wantBody:        `{"links":{"self":"/cloudhub/v1/csp"},"CSPs":[{"id":"547","provider":"aws","links":{"self":"/cloudhub/v1/csp/547"},"namespace":"seoul","accesskey":"DUEJDJ+KEJDN","secretkey":"WOWCMSG+KEUCBWDKC+WUCN","organization":"76","minion":"minion01"},{"id":"8367","provider":"gcp","links":{"self":"/cloudhub/v1/csp/8367"},"namespace":"seoul","accesskey":"XXCIEJRJ+KEUR","secretkey":"QOPSMCBDGE+KEICYWLC+KEUICHSJSN","organization":"32","minion":"minion02"}]}`,
 		},
 	}
 
@@ -177,8 +177,8 @@ func TestCSP(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Service{
 				Store: &mocks.Store{
-					OrganizationsStore:    tt.fields.OrganizationsStore,
-					CSPStore:              tt.fields.CSPStore,
+					OrganizationsStore: tt.fields.OrganizationsStore,
+					CSPStore:           tt.fields.CSPStore,
 				},
 				Logger: tt.fields.Logger,
 			}
@@ -224,7 +224,7 @@ func TestUpdateCSP(t *testing.T) {
 		wantBody        string
 	}{
 		{
-			name: "Update CSP Region",
+			name: "Update CSP NameSpace",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
@@ -233,7 +233,7 @@ func TestUpdateCSP(t *testing.T) {
 					nil,
 				),
 				csp: &cspRequest{
-					Region: "china",
+					NameSpace: "china",
 				},
 			},
 			fields: fields{
@@ -245,8 +245,8 @@ func TestUpdateCSP(t *testing.T) {
 					GetF: func(ctx context.Context, q cloudhub.CSPQuery) (*cloudhub.CSP, error) {
 						return &cloudhub.CSP{
 							ID:           "547",
-							Provider:     "AWS",
-							Region:       "seoul",
+							Provider:     "aws",
+							NameSpace:    "seoul",
 							AccessKey:    "DUEJDJ+KEJDN",
 							SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
 							Organization: "76",
@@ -257,8 +257,8 @@ func TestUpdateCSP(t *testing.T) {
 						return []cloudhub.CSP{
 							{
 								ID:           "547",
-								Provider:     "AWS",
-								Region:       "seoul",
+								Provider:     "aws",
+								NameSpace:    "seoul",
 								AccessKey:    "DUEJDJ+KEJDN",
 								SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
 								Organization: "76",
@@ -266,8 +266,8 @@ func TestUpdateCSP(t *testing.T) {
 							},
 							{
 								ID:           "8367",
-								Provider:     "GCP",
-								Region:       "seoul",
+								Provider:     "gcp",
+								NameSpace:    "seoul",
 								AccessKey:    "XXCIEJRJ+KEUR",
 								SecretKey:    "QOPSMCBDGE+KEICYWLC+KEUICHSJSN",
 								Organization: "32",
@@ -288,10 +288,77 @@ func TestUpdateCSP(t *testing.T) {
 			id:              "547",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"547","provider":"AWS","links":{"self":"/cloudhub/v1/csp/547"},"region":"china","accesskey":"DUEJDJ+KEJDN","secretkey":"WOWCMSG+KEUCBWDKC+WUCN","organization":"76","minion":"minion01"}`,
+			wantBody:        `{"id":"547","provider":"aws","links":{"self":"/cloudhub/v1/csp/547"},"namespace":"china","accesskey":"DUEJDJ+KEJDN","secretkey":"WOWCMSG+KEUCBWDKC+WUCN","organization":"76","minion":"minion01"}`,
 		},
 		{
-			name: "Update CSP - nothing to update",
+			name: "Update CSP Duplicated NameSpace",
+			args: args{
+				w: httptest.NewRecorder(),
+				r: httptest.NewRequest(
+					"PATCH",
+					"http://any.url", // can be any valid URL as we are bypassing mux
+					nil,
+				),
+				csp: &cspRequest{
+					NameSpace: "seoul",
+				},
+			},
+			fields: fields{
+				Logger: log.New(log.DebugLevel),
+				CSPStore: &mocks.CSPStore{
+					UpdateF: func(ctx context.Context, csp *cloudhub.CSP) error {
+						return nil
+					},
+					GetF: func(ctx context.Context, q cloudhub.CSPQuery) (*cloudhub.CSP, error) {
+						return &cloudhub.CSP{
+							ID:           "547",
+							Provider:     "aws",
+							NameSpace:    "seoul",
+							AccessKey:    "DUEJDJ+KEJDN",
+							SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
+							Organization: "76",
+							Minion:       "minion01",
+						}, nil
+					},
+					AllF: func(ctx context.Context) ([]cloudhub.CSP, error) {
+						return []cloudhub.CSP{
+							{
+								ID:           "547",
+								Provider:     "aws",
+								NameSpace:    "seoul",
+								AccessKey:    "DUEJDJ+KEJDN",
+								SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
+								Organization: "76",
+								Minion:       "minion01",
+							},
+							{
+								ID:           "8367",
+								Provider:     "gcp",
+								NameSpace:    "seoul",
+								AccessKey:    "XXCIEJRJ+KEUR",
+								SecretKey:    "QOPSMCBDGE+KEICYWLC+KEUICHSJSN",
+								Organization: "32",
+								Minion:       "minion02",
+							},
+						}, nil
+					},
+				},
+				OrganizationsStore: &mocks.OrganizationsStore{
+					DefaultOrganizationF: func(context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
+							ID:   "76",
+							Name: "snet_org",
+						}, nil
+					},
+				},
+			},
+			id:              "547",
+			wantStatus:      http.StatusOK,
+			wantContentType: "application/json",
+			wantBody:        `{"id":"547","provider":"aws","links":{"self":"/cloudhub/v1/csp/547"},"namespace":"seoul","accesskey":"DUEJDJ+KEJDN","secretkey":"WOWCMSG+KEUCBWDKC+WUCN","organization":"76","minion":"minion01"}`,
+		},
+		{
+			name: "Update CSP-nothing to update",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
@@ -310,8 +377,8 @@ func TestUpdateCSP(t *testing.T) {
 					GetF: func(ctx context.Context, q cloudhub.CSPQuery) (*cloudhub.CSP, error) {
 						return &cloudhub.CSP{
 							ID:           "547",
-							Provider:     "AWS",
-							Region:       "seoul",
+							Provider:     "aws",
+							NameSpace:    "seoul",
 							AccessKey:    "DUEJDJ+KEJDN",
 							SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
 							Organization: "76",
@@ -322,8 +389,8 @@ func TestUpdateCSP(t *testing.T) {
 						return []cloudhub.CSP{
 							{
 								ID:           "547",
-								Provider:     "AWS",
-								Region:       "seoul",
+								Provider:     "aws",
+								NameSpace:    "seoul",
 								AccessKey:    "DUEJDJ+KEJDN",
 								SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
 								Organization: "76",
@@ -331,8 +398,8 @@ func TestUpdateCSP(t *testing.T) {
 							},
 							{
 								ID:           "8367",
-								Provider:     "GCP",
-								Region:       "seoul",
+								Provider:     "gcp",
+								NameSpace:    "seoul",
 								AccessKey:    "XXCIEJRJ+KEUR",
 								SecretKey:    "QOPSMCBDGE+KEICYWLC+KEUICHSJSN",
 								Organization: "32",
@@ -348,7 +415,7 @@ func TestUpdateCSP(t *testing.T) {
 			wantBody:        `{"code":422,"message":"No fields to update"}`,
 		},
 		{
-			name: "Update CSP - Provider cannot be changed",
+			name: "Update CSP-Provider cannot be changed",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
@@ -357,8 +424,8 @@ func TestUpdateCSP(t *testing.T) {
 					nil,
 				),
 				csp: &cspRequest{
-					Provider: "Azure",
-					Region:   "USA",
+					Provider:  "azure",
+					NameSpace: "us",
 				},
 			},
 			fields: fields{
@@ -370,8 +437,8 @@ func TestUpdateCSP(t *testing.T) {
 					GetF: func(ctx context.Context, q cloudhub.CSPQuery) (*cloudhub.CSP, error) {
 						return &cloudhub.CSP{
 							ID:           "547",
-							Provider:     "AWS",
-							Region:       "seoul",
+							Provider:     "aws",
+							NameSpace:    "seoul",
 							AccessKey:    "DUEJDJ+KEJDN",
 							SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
 							Organization: "76",
@@ -382,8 +449,8 @@ func TestUpdateCSP(t *testing.T) {
 						return []cloudhub.CSP{
 							{
 								ID:           "547",
-								Provider:     "AWS",
-								Region:       "seoul",
+								Provider:     "aws",
+								NameSpace:    "seoul",
 								AccessKey:    "DUEJDJ+KEJDN",
 								SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
 								Organization: "76",
@@ -391,8 +458,8 @@ func TestUpdateCSP(t *testing.T) {
 							},
 							{
 								ID:           "8367",
-								Provider:     "GCP",
-								Region:       "seoul",
+								Provider:     "gcp",
+								NameSpace:    "seoul",
 								AccessKey:    "XXCIEJRJ+KEUR",
 								SecretKey:    "QOPSMCBDGE+KEICYWLC+KEUICHSJSN",
 								Organization: "32",
@@ -438,8 +505,8 @@ func TestUpdateCSP(t *testing.T) {
 					GetF: func(ctx context.Context, q cloudhub.CSPQuery) (*cloudhub.CSP, error) {
 						return &cloudhub.CSP{
 							ID:           "547",
-							Provider:     "AWS",
-							Region:       "seoul",
+							Provider:     "aws",
+							NameSpace:    "seoul",
 							AccessKey:    "DUEJDJ+KEJDN",
 							SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
 							Organization: "76",
@@ -450,8 +517,8 @@ func TestUpdateCSP(t *testing.T) {
 						return []cloudhub.CSP{
 							{
 								ID:           "547",
-								Provider:     "AWS",
-								Region:       "seoul",
+								Provider:     "aws",
+								NameSpace:    "seoul",
 								AccessKey:    "DUEJDJ+KEJDN",
 								SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
 								Organization: "76",
@@ -459,12 +526,9 @@ func TestUpdateCSP(t *testing.T) {
 							},
 							{
 								ID:           "8367",
-								Provider:     "GCP",
-								Region:       "seoul",
-								AccessKey:    "XXCIEJRJ+KEUR",
-								SecretKey:    "QOPSMCBDGE+KEICYWLC+KEUICHSJSN",
+								Provider:     "gcp",
+								NameSpace:    "seoul",
 								Organization: "32",
-								Minion:       "minion02",
 							},
 						}, nil
 					},
@@ -481,10 +545,10 @@ func TestUpdateCSP(t *testing.T) {
 			id:              "547",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"547","provider":"AWS","links":{"self":"/cloudhub/v1/csp/547"},"region":"seoul","accesskey":"OCELEICJS+JEUDHGHG","secretkey":"CVC+LFOEWYU++KFYUWCLCOEJDMNCFVMCVJ","organization":"76","minion":"minion01"}`,
+			wantBody:        `{"id":"547","provider":"aws","links":{"self":"/cloudhub/v1/csp/547"},"namespace":"seoul","accesskey":"OCELEICJS+JEUDHGHG","secretkey":"CVC+LFOEWYU++KFYUWCLCOEJDMNCFVMCVJ","organization":"76","minion":"minion01"}`,
 		},
 		{
-			name: "Update CSP - invalid update",
+			name: "Update CSP-invalid update",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
@@ -589,14 +653,14 @@ func TestRemoveCSP(t *testing.T) {
 						switch *q.ID {
 						case "547":
 							return &cloudhub.CSP{
-							ID:           "547",
-							Provider:     "AWS",
-							Region:       "seoul",
-							AccessKey:    "DUEJDJ+KEJDN",
-							SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
-							Organization: "76",
-							Minion:       "minion01",
-						}, nil
+								ID:           "547",
+								Provider:     "aws",
+								NameSpace:    "seoul",
+								AccessKey:    "DUEJDJ+KEJDN",
+								SecretKey:    "WOWCMSG+KEUCBWDKC+WUCN",
+								Organization: "76",
+								Minion:       "minion01",
+							}, nil
 						default:
 							return &cloudhub.CSP{}, fmt.Errorf("CSP with ID %s not found", *q.ID)
 						}
@@ -644,9 +708,9 @@ func TestNewCSP(t *testing.T) {
 		Logger             cloudhub.Logger
 	}
 	type args struct {
-		w    *httptest.ResponseRecorder
-		r    *http.Request
-		csp  *cspRequest
+		w   *httptest.ResponseRecorder
+		r   *http.Request
+		csp *cspRequest
 	}
 	tests := []struct {
 		name            string
@@ -658,7 +722,7 @@ func TestNewCSP(t *testing.T) {
 		wantBody        string
 	}{
 		{
-			name: "Create CSP",
+			name: "Create CSP:aws",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
@@ -667,8 +731,8 @@ func TestNewCSP(t *testing.T) {
 					nil,
 				),
 				csp: &cspRequest{
-					Provider:  "Azure",
-					Region:    "seoul",
+					Provider:  "aws",
+					NameSpace: "seoul",
 					Accesskey: "CLWEIDNCSLFDJSDL",
 					Secretkey: "ZNCVLKJAHSDLFHJASIFOASDHFA",
 					Minion:    "minion01",
@@ -680,8 +744,8 @@ func TestNewCSP(t *testing.T) {
 					AddF: func(ctx context.Context, csp *cloudhub.CSP) (*cloudhub.CSP, error) {
 						return &cloudhub.CSP{
 							ID:           "46",
-							Provider:     "Azure",
-							Region:       "seoul",
+							Provider:     "aws",
+							NameSpace:    "seoul",
 							AccessKey:    "CLWEIDNCSLFDJSDL",
 							SecretKey:    "ZNCVLKJAHSDLFHJASIFOASDHFA",
 							Organization: "88",
@@ -692,8 +756,8 @@ func TestNewCSP(t *testing.T) {
 						return []cloudhub.CSP{
 							{
 								ID:           "23",
-								Provider:     "AWS",
-								Region:       "seoul",
+								Provider:     "gcp",
+								NameSpace:    "seoul",
 								AccessKey:    "CLWEIDNCSLFDJSDL",
 								SecretKey:    "ZNCVLKJAHSDLFHJASIFOASDHFA",
 								Organization: "43",
@@ -713,7 +777,59 @@ func TestNewCSP(t *testing.T) {
 			},
 			wantStatus:      http.StatusCreated,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"46","provider":"Azure","links":{"self":"/cloudhub/v1/csp/46"},"region":"seoul","accesskey":"CLWEIDNCSLFDJSDL","secretkey":"ZNCVLKJAHSDLFHJASIFOASDHFA","organization":"88","minion":"minion01"}`,
+			wantBody:        `{"id":"46","provider":"aws","links":{"self":"/cloudhub/v1/csp/46"},"namespace":"seoul","accesskey":"CLWEIDNCSLFDJSDL","secretkey":"ZNCVLKJAHSDLFHJASIFOASDHFA","organization":"88","minion":"minion01"}`,
+		},
+		{
+			name: "Create CSP:gcp",
+			args: args{
+				w: httptest.NewRecorder(),
+				r: httptest.NewRequest(
+					"POST",
+					"http://any.url", // can be any valid URL as we are bypassing mux
+					nil,
+				),
+				csp: &cspRequest{
+					Provider:  "gcp",
+					NameSpace: "seoul",
+				},
+			},
+			fields: fields{
+				Logger: log.New(log.DebugLevel),
+				CSPStore: &mocks.CSPStore{
+					AddF: func(ctx context.Context, csp *cloudhub.CSP) (*cloudhub.CSP, error) {
+						return &cloudhub.CSP{
+							ID:           "46",
+							Provider:     "gcp",
+							NameSpace:    "seoul",
+							Organization: "88",
+						}, nil
+					},
+					AllF: func(ctx context.Context) ([]cloudhub.CSP, error) {
+						return []cloudhub.CSP{
+							{
+								ID:           "23",
+								Provider:     "aws",
+								NameSpace:    "seoul",
+								AccessKey:    "CLWEIDNCSLFDJSDL",
+								SecretKey:    "ZNCVLKJAHSDLFHJASIFOASDHFA",
+								Organization: "43",
+								Minion:       "minion02",
+							},
+						}, nil
+					},
+				},
+				OrganizationsStore: &mocks.OrganizationsStore{
+					DefaultOrganizationF: func(context.Context) (*cloudhub.Organization, error) {
+						return &cloudhub.Organization{
+							ID:   "88",
+							Name: "snet_org",
+						}, nil
+					},
+				},
+			},
+			wantStatus:      http.StatusCreated,
+			wantContentType: "application/json",
+			wantBody:        `{"id":"46","provider":"gcp","links":{"self":"/cloudhub/v1/csp/46"},"namespace":"seoul","accesskey":"","secretkey":"","organization":"88","minion":""}`,
 		},
 		{
 			name: "Fail to create CSP - no provider",
@@ -732,8 +848,8 @@ func TestNewCSP(t *testing.T) {
 					AddF: func(ctx context.Context, csp *cloudhub.CSP) (*cloudhub.CSP, error) {
 						return &cloudhub.CSP{
 							ID:           "46",
-							Provider:     "Azure",
-							Region:       "seoul",
+							Provider:     "aws",
+							NameSpace:    "seoul",
 							AccessKey:    "CLWEIDNCSLFDJSDL",
 							SecretKey:    "ZNCVLKJAHSDLFHJASIFOASDHFA",
 							Organization: "88",
@@ -755,7 +871,7 @@ func TestNewCSP(t *testing.T) {
 			wantBody:        `{"code":422,"message":"provider required CSP request body"}`,
 		},
 		{
-			name: "Create CSP - no secretkey",
+			name: "Fail to create CSP:aws - no secretkey",
 			args: args{
 				w: httptest.NewRecorder(),
 				r: httptest.NewRequest(
@@ -764,8 +880,8 @@ func TestNewCSP(t *testing.T) {
 					nil,
 				),
 				csp: &cspRequest{
-					Provider:  "Azure",
-					Region:    "seoul",
+					Provider:  "aws",
+					NameSpace: "seoul",
 					Accesskey: "CLWEIDNCSLFDJSDL",
 					Minion:    "minion01",
 				},
@@ -776,12 +892,22 @@ func TestNewCSP(t *testing.T) {
 					AddF: func(ctx context.Context, csp *cloudhub.CSP) (*cloudhub.CSP, error) {
 						return &cloudhub.CSP{
 							ID:           "46",
-							Provider:     "Azure",
-							Region:       "seoul",
+							Provider:     "aws",
+							NameSpace:    "seoul",
 							AccessKey:    "CLWEIDNCSLFDJSDL",
 							SecretKey:    "ZNCVLKJAHSDLFHJASIFOASDHFA",
 							Organization: "88",
 							Minion:       "minion01",
+						}, nil
+					},
+					AllF: func(ctx context.Context) ([]cloudhub.CSP, error) {
+						return []cloudhub.CSP{
+							{
+								ID:           "23",
+								Provider:     "gcp",
+								NameSpace:    "seoul",
+								Organization: "43",
+							},
 						}, nil
 					},
 				},
@@ -804,8 +930,8 @@ func TestNewCSP(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Service{
 				Store: &mocks.Store{
-					OrganizationsStore:  tt.fields.OrganizationsStore,
-					CSPStore:            tt.fields.CSPStore,
+					OrganizationsStore: tt.fields.OrganizationsStore,
+					CSPStore:           tt.fields.CSPStore,
 				},
 				Logger: tt.fields.Logger,
 			}

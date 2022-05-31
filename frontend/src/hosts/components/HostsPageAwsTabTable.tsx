@@ -1,20 +1,24 @@
+// Libraries
 import React, {PureComponent} from 'react'
 import _ from 'lodash'
 import memoize from 'memoize-one'
 
+//components
 import SearchBar from 'src/hosts/components/SearchBar'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import Dropdown from 'src/shared/components/Dropdown'
 
+//types
 import {CLOUD_HOSTS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Source, RemoteDataState, CloudHost} from 'src/types'
 
-import {HostsPage} from 'src/hosts/containers/HostsPage'
+//components
+import HostsPageAwsTabTableRow from 'src/hosts/components/HostsPageAwsTabTableRow'
 
 //middlware
-import CspHostRow from './CspHostRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import {HostsPageAwsTab} from '../containers/HostsPageAwsTab'
 
 enum SortDirection {
   ASC = 'asc',
@@ -23,22 +27,24 @@ enum SortDirection {
 
 interface Instance {
   provider: string
-  region: string
+  namespace: string
   instanceid: string
   instancename: string
 }
 
 export interface Props {
   cloudHosts: CloudHost[]
-  providerRegions: string[]
-  awsPageStatus: RemoteDataState
+  namespaceFilterItems: string[]
+  selectedNamespace: string
+  cspPageStatus: RemoteDataState
   source: Source
   focusedInstance: Instance
-  onClickTableRow: HostsPage['handleClickCspTableRow']
+  getHandleOnChoose: (selectItem: {text: string}) => void
+  onClickTableRow: HostsPageAwsTab['handleClickCspTableRow']
   tableTitle: () => JSX.Element
   handleInstanceTypeModal: (
     provider: string,
-    region: string,
+    namespace: string,
     type: string
   ) => void
 }
@@ -47,13 +53,11 @@ interface State {
   searchTerm: string
   sortDirection: SortDirection
   sortKey: string
-  selected: string
-
   activeEditorTab: string
 }
 
 @ErrorHandling
-class CspHostsTable extends PureComponent<Props, State> {
+class HostsPageAwsTabTable extends PureComponent<Props, State> {
   public getSortedHosts = memoize(
     (
       hosts,
@@ -71,8 +75,7 @@ class CspHostsTable extends PureComponent<Props, State> {
     this.state = {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
-      sortKey: 'name',
-      selected: 'All Region',
+      sortKey: 'namesapce',
       activeEditorTab: 'snet',
     }
   }
@@ -81,20 +84,15 @@ class CspHostsTable extends PureComponent<Props, State> {
     const filterText = searchTerm.toLowerCase()
     return allHosts.filter(h => {
       const apps = h.apps ? h.apps.join(', ') : ''
-      let tagResult = false
-      if (h.tags) {
-        tagResult = Object.keys(h.tags).reduce((acc, key) => {
-          return acc || h.tags[key].toLowerCase().includes(filterText)
-        }, false)
-      } else {
-        tagResult = false
-      }
-
-      return (
-        h.instanceId.toLowerCase().includes(filterText) ||
-        apps.toLowerCase().includes(filterText) ||
-        tagResult
-      )
+      const {
+        name,
+        instanceType,
+        instanceId,
+        csp: {namespace},
+      } = h
+      return (apps + instanceId + instanceType + name + namespace)
+        .toLowerCase()
+        .includes(filterText)
     })
   }
 
@@ -142,8 +140,11 @@ class CspHostsTable extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {providerRegions} = this.props
-    const {selected} = this.state
+    const {
+      namespaceFilterItems,
+      selectedNamespace,
+      getHandleOnChoose,
+    } = this.props
 
     return (
       <div className="panel">
@@ -155,10 +156,10 @@ class CspHostsTable extends PureComponent<Props, State> {
           <div style={{display: 'flex'}}>
             <div style={{marginRight: '5px'}}>
               <Dropdown
-                items={['All Region', ...providerRegions]}
-                onChoose={this.getHandleOnChoose}
-                selected={selected}
-                className="dropdown-sm"
+                items={['ALL', ...namespaceFilterItems]}
+                onChoose={getHandleOnChoose}
+                selected={selectedNamespace}
+                className="dropdown-150"
               />
             </div>
             <SearchBar
@@ -172,12 +173,8 @@ class CspHostsTable extends PureComponent<Props, State> {
     )
   }
 
-  private getHandleOnChoose = (selectItem: {text: string}) => {
-    this.setState({selected: selectItem.text})
-  }
-
   private get CloudTableContents(): JSX.Element {
-    const {cloudHosts, awsPageStatus} = this.props
+    const {cloudHosts, cspPageStatus} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
     const sortedHosts = this.getSortedHosts(
       cloudHosts,
@@ -186,19 +183,19 @@ class CspHostsTable extends PureComponent<Props, State> {
       sortDirection
     )
     if (
-      awsPageStatus === RemoteDataState.Loading ||
-      awsPageStatus === RemoteDataState.NotStarted
+      cspPageStatus === RemoteDataState.Loading ||
+      cspPageStatus === RemoteDataState.NotStarted
     ) {
       return this.LoadingState
     }
-    if (awsPageStatus === RemoteDataState.Error) {
+    if (cspPageStatus === RemoteDataState.Error) {
       return this.ErrorState
     }
     if (cloudHosts.length === 0) {
-      return this.NoHostsState
+      return this.NoInstancesState
     }
     if (sortedHosts.length === 0) {
-      return this.NoSortedHostsState
+      return this.NoSortedInstancesState
     }
     return this.CloudTableWithHosts
   }
@@ -210,8 +207,9 @@ class CspHostsTable extends PureComponent<Props, State> {
       focusedInstance,
       onClickTableRow,
       handleInstanceTypeModal,
+      selectedNamespace,
     } = this.props
-    const {sortKey, sortDirection, searchTerm, selected} = this.state
+    const {sortKey, sortDirection, searchTerm} = this.state
 
     let sortedHosts = this.getSortedHosts(
       cloudHosts,
@@ -220,8 +218,10 @@ class CspHostsTable extends PureComponent<Props, State> {
       sortDirection
     )
 
-    if (selected !== 'All Region') {
-      sortedHosts = [...sortedHosts.filter(h => h.csp.region === selected)]
+    if (selectedNamespace !== 'ALL') {
+      sortedHosts = [
+        ...sortedHosts.filter(h => h.csp.namespace === selectedNamespace),
+      ]
     }
 
     return (
@@ -230,7 +230,7 @@ class CspHostsTable extends PureComponent<Props, State> {
         <FancyScrollbar
           children={sortedHosts.map(h => {
             return (
-              <CspHostRow
+              <HostsPageAwsTabTableRow
                 key={`${h.csp.id}-${h.instanceId}`}
                 host={h}
                 sourceID={source.id}
@@ -258,19 +258,19 @@ class CspHostsTable extends PureComponent<Props, State> {
     )
   }
 
-  private get NoHostsState(): JSX.Element {
+  private get NoInstancesState(): JSX.Element {
     return (
       <div className="generic-empty-state">
-        <h4 style={{margin: '90px 0'}}>No Hosts found</h4>
+        <h4 style={{margin: '90px 0'}}>No Instances found</h4>
       </div>
     )
   }
 
-  private get NoSortedHostsState(): JSX.Element {
+  private get NoSortedInstancesState(): JSX.Element {
     return (
       <div className="generic-empty-state">
         <h4 style={{margin: '90px 0'}}>
-          There are no hosts that match the search criteria
+          There are no Instances that match the search criteria
         </h4>
       </div>
     )
@@ -284,7 +284,7 @@ class CspHostsTable extends PureComponent<Props, State> {
 
   private get CloudHostsTableHeader(): JSX.Element {
     const {
-      CloudRegionWidth,
+      CloudNamespaceWidth,
       CloudNameWidth,
       CloudInstanceIDWidth,
       CloudInstanceStateWidth,
@@ -299,9 +299,9 @@ class CspHostsTable extends PureComponent<Props, State> {
       <div className="hosts-table--thead">
         <div className="hosts-table--tr">
           <div
-            onClick={this.updateSort('region')}
-            className={this.sortableClasses('region')}
-            style={{width: CloudRegionWidth}}
+            onClick={this.updateSort('namespace')}
+            className={this.sortableClasses('namespace')}
+            style={{width: CloudNamespaceWidth}}
           >
             Region
             <span className="icon caret-up" />
@@ -374,4 +374,4 @@ class CspHostsTable extends PureComponent<Props, State> {
   }
 }
 
-export default CspHostsTable
+export default HostsPageAwsTabTable

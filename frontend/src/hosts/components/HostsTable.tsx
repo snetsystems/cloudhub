@@ -1,17 +1,19 @@
+// Libraries
 import React, {PureComponent} from 'react'
 import _ from 'lodash'
 import memoize from 'memoize-one'
 
+//components
 import SearchBar from 'src/hosts/components/SearchBar'
 import HostRow from 'src/hosts/components/HostRow'
-import InfiniteScroll from 'src/shared/components/InfiniteScroll'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import PageSpinner from 'src/shared/components/PageSpinner'
 
+//types
 import {HOSTS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Source, RemoteDataState, Host} from 'src/types'
-
-import {HostsPage} from 'src/hosts/containers/HostsPage'
+import {HostsPageHostTab} from 'src/hosts/containers/HostsPageHostTab'
 
 //middlware
 import {
@@ -27,10 +29,10 @@ enum SortDirection {
 
 export interface Props {
   hosts: Host[]
-  hostsPageStatus: RemoteDataState
+  hostPageStatus: RemoteDataState
   source: Source
   focusedHost: string
-  onClickTableRow: HostsPage['handleClickTableRow']
+  onClickTableRow: HostsPageHostTab['handleClickTableRow']
   tableTitle: () => JSX.Element
 }
 
@@ -67,20 +69,7 @@ class HostsTable extends PureComponent<Props, State> {
     const filterText = searchTerm.toLowerCase()
     return allHosts.filter(h => {
       const apps = h.apps ? h.apps.join(', ') : ''
-
-      let tagResult = false
-      if (h.tags) {
-        tagResult = Object.keys(h.tags).reduce((acc, key) => {
-          return acc || h.tags[key].toLowerCase().includes(filterText)
-        }, false)
-      } else {
-        tagResult = false
-      }
-      return (
-        h.name.toLowerCase().includes(filterText) ||
-        apps.toLowerCase().includes(filterText) ||
-        tagResult
-      )
+      return (apps + h.name).toLowerCase().includes(filterText)
     })
   }
 
@@ -167,7 +156,7 @@ class HostsTable extends PureComponent<Props, State> {
   }
 
   private get TableContents(): JSX.Element {
-    const {hosts, hostsPageStatus} = this.props
+    const {hosts, hostPageStatus} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
     const sortedHosts = this.getSortedHosts(
       hosts,
@@ -176,12 +165,12 @@ class HostsTable extends PureComponent<Props, State> {
       sortDirection
     )
     if (
-      hostsPageStatus === RemoteDataState.Loading ||
-      hostsPageStatus === RemoteDataState.NotStarted
+      hostPageStatus === RemoteDataState.Loading ||
+      hostPageStatus === RemoteDataState.NotStarted
     ) {
       return this.LoadingState
     }
-    if (hostsPageStatus === RemoteDataState.Error) {
+    if (hostPageStatus === RemoteDataState.Error) {
       return this.ErrorState
     }
     if (hosts.length === 0) {
@@ -206,8 +195,8 @@ class HostsTable extends PureComponent<Props, State> {
     return (
       <div className="hosts-table">
         {this.HostsTableHeader}
-        <InfiniteScroll
-          items={sortedHosts.map(h => (
+        <FancyScrollbar
+          children={sortedHosts.map(h => (
             <HostRow
               key={h.name}
               host={h}
@@ -216,7 +205,6 @@ class HostsTable extends PureComponent<Props, State> {
               onClickTableRow={onClickTableRow}
             />
           ))}
-          itemHeight={26}
           className="hosts-table--tbody"
         />
       </div>

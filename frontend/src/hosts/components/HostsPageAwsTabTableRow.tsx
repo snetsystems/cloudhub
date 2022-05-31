@@ -1,20 +1,22 @@
+// Libraries
 import {isNull} from 'lodash'
 import React, {FunctionComponent} from 'react'
 import _ from 'lodash'
 import {Link} from 'react-router'
 
+//types
 import {CLOUD_HOSTS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 import {CloudHost} from 'src/types'
 
-import {HostsPage} from 'src/hosts/containers/HostsPage'
-
+//Components
 import {usageIndacator} from 'src/agent_admin/reusable'
 import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
 import classNames from 'classnames'
+import {HostsPageAwsTab} from 'src/hosts/containers/HostsPageAwsTab'
 
 interface Instance {
   provider: string
-  region: string
+  namespace: string
   instanceid: string
   instancename: string
 }
@@ -22,15 +24,15 @@ interface Props {
   sourceID: string
   host: CloudHost
   focusedInstance: Instance
-  onClickTableRow: HostsPage['handleClickCspTableRow']
+  onClickTableRow: HostsPageAwsTab['handleClickCspTableRow']
   handleInstanceTypeModal: (
     provider: string,
-    region: string,
+    namespace: string,
     type: string
   ) => void
 }
 
-const CspHostRow: FunctionComponent<Props> = ({
+const HostsPageAwsTabTableRow: FunctionComponent<Props> = ({
   host,
   sourceID,
   focusedInstance,
@@ -50,7 +52,7 @@ const CspHostRow: FunctionComponent<Props> = ({
   } = host
 
   const {
-    CloudRegionWidth,
+    CloudNamespaceWidth,
     CloudNameWidth,
     CloudInstanceIDWidth,
     CloudInstanceStateWidth,
@@ -77,13 +79,13 @@ const CspHostRow: FunctionComponent<Props> = ({
       className={focusedClasses()}
       onClick={onClickTableRow({
         provider: csp.provider,
-        region: csp.region,
+        namespace: csp.namespace,
         instanceid: instanceId,
         instancename: name,
       })}
     >
-      <div className="hosts-table--td" style={{width: CloudRegionWidth}}>
-        {csp.region}
+      <div className="hosts-table--td" style={{width: CloudNamespaceWidth}}>
+        {csp.namespace}
       </div>
       <div className="hosts-table--td" style={{width: CloudNameWidth}}>
         <Link to={`/sources/${sourceID}/infrastructure/details/${name}`}>
@@ -116,7 +118,7 @@ const CspHostRow: FunctionComponent<Props> = ({
           className={`hosts-table-item`}
           onClick={e => {
             e.stopPropagation()
-            handleInstanceTypeModal(csp.provider, csp.region, instanceType)
+            handleInstanceTypeModal(csp.provider, csp.namespace, instanceType)
           }}
         >
           {instanceType}
@@ -168,4 +170,4 @@ const CspHostRow: FunctionComponent<Props> = ({
   )
 }
 
-export default CspHostRow
+export default HostsPageAwsTabTableRow

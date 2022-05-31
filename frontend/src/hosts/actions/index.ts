@@ -33,10 +33,15 @@ import {
   createCloudServiceProviderAsync,
   updateCloudServiceProviderAsync,
   deleteCloudServiceProviderAsync,
+  getCSPListInstancesAsync,
   getAWSInstancesAsync,
+  getGCPInstancesAsync,
   getAWSSecurityAsync,
   getAWSVolumeAsync,
   getAWSInstanceTypesAsync,
+  writeCSPConfigAsync,
+  writeCSPKeyAsync,
+  getRunnerFileReadAsync,
 } from 'src/hosts/actions/inventoryTopology'
 
 export {
@@ -71,8 +76,13 @@ export {
   createCloudServiceProviderAsync,
   updateCloudServiceProviderAsync,
   deleteCloudServiceProviderAsync,
+  getCSPListInstancesAsync,
   getAWSInstancesAsync,
+  getGCPInstancesAsync,
   getAWSSecurityAsync,
   getAWSVolumeAsync,
   getAWSInstanceTypesAsync,
+  writeCSPConfigAsync,
+  writeCSPKeyAsync,
+  getRunnerFileReadAsync,
 }

@@ -15,40 +15,40 @@ func getCSP() []string {
 }
 
 type cspRequest struct {
-	Provider     string     `json:"provider"`
-	Region       string     `json:"region"`
-	Accesskey    string     `json:"accesskey"`
-	Secretkey    string     `json:"secretkey"`
-	Minion       string     `json:"minion"`
+	Provider  string `json:"provider"`
+	NameSpace string `json:"namespace"`
+	Accesskey string `json:"accesskey"`
+	Secretkey string `json:"secretkey"`
+	Minion    string `json:"minion"`
 }
 
 func (r *cspRequest) ValidCreate() error {
-	if r.Provider == ""  {
+	if r.Provider == "" {
 		return fmt.Errorf("provider required CSP request body")
 	}
 
-	if r.Region == "" {
-		return fmt.Errorf("region required CSP request body")
+	if r.NameSpace == "" {
+		return fmt.Errorf("namespace required CSP request body")
 	}
-	if r.Accesskey == "" {
-		return fmt.Errorf("accesskey required CSP request body")
-	}
-	if r.Secretkey == "" {
-		return fmt.Errorf("secretkey required CSP request body")
-	}
-	if r.Minion == "" {
-		return fmt.Errorf("minion required CSP request body")
+
+	if r.Provider == "aws" {
+		if r.Accesskey == "" {
+			return fmt.Errorf("accesskey required CSP request body")
+		}
+		if r.Secretkey == "" {
+			return fmt.Errorf("secretkey required CSP request body")
+		}
 	}
 
 	return nil
 }
 
 func (r *cspRequest) ValidUpdate() error {
-	if r.Region == "" && r.Secretkey == "" && r.Accesskey == "" && r.Minion == "" {
+	if r.NameSpace == "" && r.Secretkey == "" && r.Accesskey == "" && r.Minion == "" {
 		return fmt.Errorf("No fields to update")
 	}
 
-	if r.Provider != ""  {
+	if r.Provider != "" {
 		return fmt.Errorf("Provider cannot be changed")
 	}
 
@@ -56,16 +56,15 @@ func (r *cspRequest) ValidUpdate() error {
 }
 
 type cspResponse struct {
-	ID           string     `json:"id"`
-	Provider     string     `json:"provider"`
-	Region       string     `json:"region"`
-	Accesskey    string     `json:"accesskey"`
-	Secretkey    string     `json:"secretkey"`
-	Organization string     `json:"organization"`
-	Minion       string     `json:"minion"`
-	Links        selfLinks  `json:"links"`
+	ID           string    `json:"id"`
+	Provider     string    `json:"provider"`
+	NameSpace    string    `json:"namespace"`
+	Accesskey    string    `json:"accesskey"`
+	Secretkey    string    `json:"secretkey"`
+	Organization string    `json:"organization"`
+	Minion       string    `json:"minion"`
+	Links        selfLinks `json:"links"`
 }
-
 
 func newCSPResponse(csp *cloudhub.CSP) *cspResponse {
 	selfLink := fmt.Sprintf("/cloudhub/v1/csp/%s", csp.ID)
@@ -73,7 +72,7 @@ func newCSPResponse(csp *cloudhub.CSP) *cspResponse {
 	resData := &cspResponse{
 		ID:           csp.ID,
 		Provider:     csp.Provider,
-		Region:       csp.Region,
+		NameSpace:    csp.NameSpace,
 		Accesskey:    csp.AccessKey,
 		Secretkey:    csp.SecretKey,
 		Organization: csp.Organization,
@@ -85,8 +84,8 @@ func newCSPResponse(csp *cloudhub.CSP) *cspResponse {
 }
 
 type cspsResponse struct {
-	Links selfLinks       `json:"links"`
-	CSPs []*cspResponse   `json:"CSPs"`
+	Links selfLinks      `json:"links"`
+	CSPs  []*cspResponse `json:"CSPs"`
 }
 
 func newCSPsResponse(csps []cloudhub.CSP) *cspsResponse {
@@ -96,7 +95,7 @@ func newCSPsResponse(csps []cloudhub.CSP) *cspsResponse {
 	}
 
 	selfLink := "/cloudhub/v1/csp"
-	
+
 	return &cspsResponse{
 		CSPs: cspsResp,
 		Links: selfLinks{
@@ -159,17 +158,16 @@ func (s *Service) NewCSP(w http.ResponseWriter, r *http.Request) {
 
 	csp := &cloudhub.CSP{
 		Provider:     req.Provider,
-		Region:       req.Region,
+		NameSpace:    req.NameSpace,
 		AccessKey:    req.Accesskey,
 		SecretKey:    req.Secretkey,
 		Organization: defaultOrg.ID,
 		Minion:       req.Minion,
 	}
 
-
-	// validate that the provider and region exists
-	if existsCSPInOrg(ctx, s, csp.Provider, csp.Region) {
-		invalidData(w, fmt.Errorf("Provider and Region does existed in organization"), s.Logger)
+	// validate that the provider and namespace exists
+	if existsCSPInOrg(ctx, s, csp.Provider, csp.NameSpace) {
+		invalidData(w, fmt.Errorf("Provider and NameSpace does existed in organization"), s.Logger)
 		return
 	}
 
@@ -222,7 +220,7 @@ func (s *Service) UpdateCSP(w http.ResponseWriter, r *http.Request) {
 		invalidData(w, err, s.Logger)
 		return
 	}
-	
+
 	var req cspRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		invalidJSON(w, s.Logger)
@@ -240,15 +238,9 @@ func (s *Service) UpdateCSP(w http.ResponseWriter, r *http.Request) {
 		notFound(w, id, s.Logger)
 		return
 	}
-	
-	if req.Region != "" {
-		oriCSP.Region = req.Region
 
-		// validate that the provider and region exists
-		if existsCSPInOrg(ctx, s, oriCSP.Provider, oriCSP.Region) {
-			invalidData(w, fmt.Errorf("Provider and Region does existed in organization"), s.Logger)
-			return
-		}
+	if req.NameSpace != "" {
+		oriCSP.NameSpace = req.NameSpace
 	}
 	if req.Accesskey != "" {
 		oriCSP.AccessKey = req.Accesskey
@@ -274,17 +266,17 @@ func (s *Service) UpdateCSP(w http.ResponseWriter, r *http.Request) {
 	encodeJSON(w, http.StatusOK, res, s.Logger)
 }
 
-// exists CSP and Region in organization
-func existsCSPInOrg(ctx context.Context, s *Service, provider string, region string) bool {
+// exists CSP and NameSpace in organization
+func existsCSPInOrg(ctx context.Context, s *Service, provider string, namespace string) bool {
 	csps, err := s.Store.CSP(ctx).All(ctx)
 	if err != nil {
 		return true
 	}
 
-	for _, csp := range csps {	
-		if csp.Provider == provider && csp.Region == region {
+	for _, csp := range csps {
+		if csp.Provider == provider && csp.NameSpace == namespace {
 			return true
-		}	
+		}
 	}
 
 	return false

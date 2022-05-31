@@ -462,13 +462,15 @@ export const runLocalServiceReStartTelegrafAsync = (
 export const runLocalServiceTestTelegrafAsync = (
   pUrl: string,
   pToken: string,
-  pMinionId: string
+  pMinionId: string,
+  pSelectedPlugin?: string
 ) => async (dispatch: Dispatch<Action>) => {
   try {
     const runLocalServiceTestTelegrafPromise = await runLocalServiceTestTelegraf(
       pUrl,
       pToken,
-      pMinionId
+      pMinionId,
+      pSelectedPlugin
     )
 
     dispatch(cmdRunLocalServiceTestTelegraf())

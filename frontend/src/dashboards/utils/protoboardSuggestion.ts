@@ -2,8 +2,9 @@
 import _ from 'lodash'
 // Utils
 import {proxy} from 'src/utils/queryUrlGenerator'
+import replaceTemplate from 'src/tempVars/utils/replace'
 // Types
-import {Source, Protoboard} from 'src/types'
+import {Source, Protoboard, Template} from 'src/types'
 
 interface SeriesObject {
   measurement: string
@@ -32,7 +33,8 @@ interface HostsSeries {
 
 export const getSuggestedProtoboards = async (
   source: Source,
-  protoboards: Protoboard[]
+  protoboards: Protoboard[],
+  tempVars: Template[]
 ): Promise<string[]> => {
   const hosts = await getHosts(source)
 
@@ -40,7 +42,7 @@ export const getSuggestedProtoboards = async (
     return []
   }
 
-  const newHosts = await addAppsToHosts(source, hosts, protoboards)
+  const newHosts = await addAppsToHosts(source, hosts, protoboards, tempVars)
 
   const suggestedProtoboards = _.reduce(
     newHosts,
@@ -59,7 +61,8 @@ export const getSuggestedProtoboards = async (
 export const addAppsToHosts = async (
   source: Source,
   hosts: Hosts,
-  protoboards: Protoboard[]
+  protoboards: Protoboard[],
+  tempVars: Template[]
 ) => {
   const measurementsList: string[] = []
   const measurementsToProtoboards = {}
@@ -71,11 +74,13 @@ export const addAppsToHosts = async (
     })
   })
 
-  const joinedMeasurements = measurementsList.join('|')
+  const joinedMeasurements = measurementsList
+    .map(m => `\":db:\".\":rp:\".\"${m}\"`)
+    .join(',')
 
   const newHosts = {...hosts}
 
-  const allSeries = await getAllSeries(source, joinedMeasurements)
+  const allSeries = await getAllSeries(source, joinedMeasurements, tempVars)
 
   allSeries.forEach(series => {
     const {measurement, host} = parseSeries(series)
@@ -123,11 +128,15 @@ export const getHosts = async (source: Source): Promise<Hosts> => {
 
 const getAllSeries = async (
   source: Source,
-  joinedMeasurements: string
+  joinedMeasurements: string,
+  tempVars: Template[]
 ): Promise<string[]> => {
   const resp = await proxy({
     source: source.links.proxy,
-    query: `show series from /${joinedMeasurements}/ where time > now() - 10m`,
+    query: replaceTemplate(
+      `show series from ${joinedMeasurements} where time > now() - 10m`,
+      tempVars
+    ),
     db: source.telegraf,
   })
 
@@ -157,7 +166,7 @@ const parseSeries = (series: string): SeriesObject => {
 }
 
 const parseMeasurement = (s: string): ParseMeasurementResponse => {
-  const word = /\w+/
+  const word = /[^,]+/
   const match = word.exec(s)
   const measurement = match[0]
 

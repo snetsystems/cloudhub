@@ -1225,8 +1225,54 @@ export const notifyIpmiConnectionFailed = (error: Error): Notification => ({
   message: `IPMI Connection Failed, ${error}`,
 })
 
+export const notifyRequiredFailed = (required: string): Notification => ({
+  ...defaultErrorNotification,
+  message: `Please enter '${required}' value.`,
+})
+
+export const notifygetCSPListInstancesFailed = (
+  error: Error
+): Notification => ({
+  ...defaultErrorNotification,
+  isHasHTML: true,
+  message: `CSP Host Get Failed, ${error}`,
+})
+
 export const notifygetAWSInstancesFailed = (error: Error): Notification => ({
   ...defaultErrorNotification,
   isHasHTML: true,
   message: `CSP Host Get Failed, ${error}`,
+})
+
+export const notifygetGCPInstancesFailed = (error: Error): Notification => ({
+  ...defaultErrorNotification,
+  isHasHTML: true,
+  message: `GCP Host Get Failed, ${error}`,
+})
+
+export const notifygetCSPConfigFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to create CSP configuration file.`,
+})
+
+export const notifygetCSPKeyFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to create CSP key file.`,
+})
+
+export const notifyTopologySaved = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Topology saved successfully.`,
+})
+
+export const notifyTopologySaveFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  message: `There was an error saving the topology : ${errorMessage}`,
+})
+
+export const notifyTopologySaveAuthFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `User does not have authorization required to save topology.`,
 })
