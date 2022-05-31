@@ -34,7 +34,7 @@ export type TreeMenuProps = {
   locale?: LocaleFunction
   matchSearch?: MatchSearchFunction
   handleOpenCspFormBtn?: (properties: {[x: string]: any}) => JSX.Element
-  handleDeleteRegionBtn?: (properties: {[x: string]: any}) => JSX.Element
+  handleDeleteNamespaceBtn?: (properties: {[x: string]: any}) => JSX.Element
 }
 
 type TreeMenuState = {
@@ -206,7 +206,7 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
       children,
       hasSearch,
       handleOpenCspFormBtn,
-      handleDeleteRegionBtn,
+      handleDeleteNamespaceBtn,
     } = this.props
     const {searchTerm} = this.state
 
@@ -225,13 +225,13 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
                   reset: this.reset,
                   searchTerm,
                   handleOpenCspFormBtn,
-                  handleDeleteRegionBtn,
+                  handleDeleteNamespaceBtn,
                 }
               : {
                   items,
                   reset: this.reset,
                   handleOpenCspFormBtn,
-                  handleDeleteRegionBtn,
+                  handleDeleteNamespaceBtn,
                 }
           )}
         </div>
@@ -282,6 +282,7 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
             )}.nodes.${el.getAttribute('data-label')}.nodes.${instanseId}`,
             status: true,
             detected: true,
+            icon: 'Server',
           }
           return node
         })
@@ -313,6 +314,7 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
           data_navi: dataNavi,
           status: true,
           detected: true,
+          icon: 'Server',
         }
 
         let ds = mxUtils.makeDraggable(

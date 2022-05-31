@@ -61,6 +61,11 @@ export const toolbarMenu: ToolbarMenu[] = [
     label: 'Fit',
     icon: 'fit',
   },
+  {
+    actionName: 'save',
+    label: 'Save',
+    icon: 'floppy-disk',
+  },
   // {
   //   actionName: 'export',
   //   label: 'Export',
@@ -82,6 +87,7 @@ export interface Menu {
   data_navi?: string
   status?: boolean
   detected?: boolean
+  icon?: string
 }
 
 export type keysMenu = keyof Menu
@@ -104,6 +110,7 @@ export const orderMenu: OrderMenu = {
   data_navi: {order: 9},
   status: {order: 10},
   detected: {order: 11},
+  icon: {order: 12},
 }
 
 export const toolsMenu: Menu[] = [
@@ -114,6 +121,7 @@ export const toolsMenu: Menu[] = [
     link: '',
     status: false,
     detected: false,
+    icon: 'Server',
   },
   {
     type: 'Database',
@@ -122,6 +130,7 @@ export const toolsMenu: Menu[] = [
     link: '',
     status: false,
     detected: false,
+    icon: 'Database',
   },
   {
     type: 'Internet',
@@ -130,6 +139,7 @@ export const toolsMenu: Menu[] = [
     link: '',
     status: false,
     detected: false,
+    icon: 'Internet',
   },
   {
     type: 'Workstation',
@@ -138,6 +148,7 @@ export const toolsMenu: Menu[] = [
     link: '',
     status: false,
     detected: false,
+    icon: 'Workstation',
   },
   {
     type: 'VirtualMachine',
@@ -146,6 +157,7 @@ export const toolsMenu: Menu[] = [
     link: '',
     status: false,
     detected: false,
+    icon: 'VirtualMachine',
   },
   {
     type: 'Email',
@@ -154,6 +166,7 @@ export const toolsMenu: Menu[] = [
     link: '',
     status: false,
     detected: false,
+    icon: 'Email',
   },
   {
     type: 'Firewall',
@@ -162,6 +175,7 @@ export const toolsMenu: Menu[] = [
     link: '',
     status: false,
     detected: false,
+    icon: 'Firewall',
   },
   {
     type: 'Router',
@@ -170,6 +184,7 @@ export const toolsMenu: Menu[] = [
     link: '',
     status: false,
     detected: false,
+    icon: 'Router',
   },
   {
     type: 'WirelessRouter',
@@ -178,6 +193,7 @@ export const toolsMenu: Menu[] = [
     link: '',
     status: false,
     detected: false,
+    icon: 'WirelessRouter',
   },
   {
     type: 'Switch',
@@ -186,6 +202,7 @@ export const toolsMenu: Menu[] = [
     link: '',
     status: false,
     detected: false,
+    icon: 'Switch',
   },
   {
     type: 'Cloud',
@@ -194,6 +211,7 @@ export const toolsMenu: Menu[] = [
     link: '',
     status: false,
     detected: false,
+    icon: 'Cloud',
   },
   {
     type: 'Elb',
@@ -202,6 +220,7 @@ export const toolsMenu: Menu[] = [
     link: '',
     status: false,
     detected: false,
+    icon: 'ELB',
   },
 ]
 
@@ -212,6 +231,7 @@ export const tmpMenu: Menu = {
   link: '',
   status: false,
   detected: false,
+  icon: '',
 }
 
 export enum NodeType {
@@ -265,6 +285,7 @@ export const eachNodeTypeAttrs: NodeTypeInterface = {
       ipmi_pass: '',
       parent: '',
       data_navi: '',
+      icon: 'server',
     },
     hideAttrs: [...defaultNodeTypeSettings.hideAttrs],
     disableAttrs: [...defaultNodeTypeSettings.disableAttrs],
@@ -289,10 +310,22 @@ export const eachNodeTypeAttrs: NodeTypeInterface = {
   [NodeType.Elb]: {...defaultNodeTypeSettings},
   [NodeType.Group]: {
     ...defaultNodeTypeSettings,
-    hideAttrs: [...defaultNodeTypeSettings.hideAttrs, 'name'],
+    hideAttrs: [
+      ...defaultNodeTypeSettings.hideAttrs,
+      'name',
+      'status',
+      'link',
+      'icon',
+    ],
   },
   [NodeType.Edge]: {
     ...defaultNodeTypeSettings,
-    hideAttrs: [...defaultNodeTypeSettings.hideAttrs, 'name', 'status', 'link'],
+    hideAttrs: [
+      ...defaultNodeTypeSettings.hideAttrs,
+      'name',
+      'status',
+      'link',
+      'icon',
+    ],
   },
 }

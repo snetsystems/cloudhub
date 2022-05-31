@@ -312,6 +312,15 @@ export const createTextField = function (
       false,
       attribute.nodeValue === 'false' ? true : false
     )
+  } else if (attribute.nodeName === 'data-icon') {
+    input = form.addCombo(nodeName, false)
+    input.style.padding = '0 9px'
+
+    _.map(toolsMenu, tool => {
+      tool.icon === attribute.nodeValue
+        ? form.addOption(input, tool.icon, tool.icon, true)
+        : form.addOption(input, tool.icon, tool.icon, false)
+    })
   } else {
     const isPassword = _.includes(nodeName, 'PASS')
     input = form.addText(
@@ -412,6 +421,15 @@ export const applyHandler = function (
         if (childrenCell.style.includes('status')) {
           childrenCell.setVisible(newValue === 'true' ? true : false)
         }
+      }
+
+      if (attribute.nodeName === 'data-icon') {
+        containerElement
+          .querySelector('.mxgraph-cell--icon')
+          .classList.replace(
+            `mxgraph-cell--icon-${oldValue.replaceAll(`-`, '').toLowerCase()}`,
+            `mxgraph-cell--icon-${newValue.replaceAll(`-`, '').toLowerCase()}`
+          )
       }
 
       containerElement.setAttribute(attribute.nodeName, newValue)

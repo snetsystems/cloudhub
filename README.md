@@ -48,6 +48,7 @@ You should use [Forked **Snetsystems/salt**](https://github.com/snetsystems/salt
   - **_K8s Infrastructure_** Diagram & Viewer.
     - via customized `Salt Kuberetes` Module.
   - **_AWS_** Instances Monitoring.
+  - **_GCE_** Instances Monitoring.
   - SWAN Router & SDPlex(Oncue) Features.
   - Bare-metal Server Remote Management via **IPMI**
   <p align="center">
@@ -65,8 +66,9 @@ You should use [Forked **Snetsystems/salt**](https://github.com/snetsystems/salt
 
 ## Change log
 
-We've been managing this project with Github's [Projects](https://github.com/snetsystems/cloudhub/projects) since v0.9.1 last Mar.
-You could know the changelog by versions via that.
+You could know the changelog by versions via the follows.<br>
+Version <= v1.2.0: [Projects(Legacy)](https://github.com/snetsystems/cloudhub/projects?query=is%3Aclosed)<br>
+Version >= v1.3.0: [Projects(Newly)](https://github.com/users/snetsystems/projects/3/views/1?sortedBy%5Bdirection%5D=asc&sortedBy%5BcolumnId%5D=Title&visibleFields=%5B%22Title%22%2C%22Assignees%22%2C%22Status%22%2C%22Repository%22%2C%22Labels%22%2C%22Reviewers%22%2C%22Linked+Pull+Requests%22%5D&groupedBy%5BcolumnId%5D=Status)
 
 ## Setting in VSCode
 
@@ -115,7 +117,7 @@ You could know the changelog by versions via that.
 
 ### Preparing dependencies
 
-- CloudHub works with **go 1.15+**, **node LTS**, and **yarn 1.15+**.
+- CloudHub works with **go 1.16+**, **node LTS**, and **yarn 1.15+**.
 - Install **protoc**(protocol buffer compiler)
   - [Download here](https://github.com/protocolbuffers/protobuf/releases) proper package.
   - Unzip and then add `bin/protoc` or `bin/protoc.exe` to $PATH env. or simply put into ` $GOPATH/bin` or ` $GOROOT/bin/` diretory.
