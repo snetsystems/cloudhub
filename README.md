@@ -117,7 +117,7 @@ Version >= v1.3.0: [Projects(Newly)](https://github.com/users/snetsystems/projec
 
 ### Preparing dependencies
 
-- CloudHub works with **go 1.16+**, **node LTS**, and **yarn 1.15+**.
+- CloudHub works with **go 1.16.x**, **node 12.x**, and **yarn 1.15.x**. Thus, you have to install that according to each offcial guide.
 - Install **protoc**(protocol buffer compiler)
   - [Download here](https://github.com/protocolbuffers/protobuf/releases) proper package.
   - Unzip and then add `bin/protoc` or `bin/protoc.exe` to $PATH env. or simply put into ` $GOPATH/bin` or ` $GOROOT/bin/` diretory.
