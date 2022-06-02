@@ -74,7 +74,7 @@ Version >= v1.3.0: [Projects(Newly)](https://github.com/users/snetsystems/projec
 
 - Add the followings into **User Setting** or **Workspace Setting**.
 
-```
+```json
 {
   "terminal.integrated.shell.windows": "C:\\Program Files\\Git\\bin\\bash.exe",
   "terminal.integrated.rightClickBehavior": "default",
@@ -117,7 +117,11 @@ Version >= v1.3.0: [Projects(Newly)](https://github.com/users/snetsystems/projec
 
 ### Preparing dependencies
 
-- CloudHub works with **go 1.16.x**, **node 12.x**, and **yarn 1.15.x**. Thus, you have to install that according to each offcial guide.
+- CloudHub works with **go 1.16.x**, **node 12.x**, and **yarn 1.15.x ~ 1.22.x**. Thus, you have to install that according to each offcial guide.<br>
+  - Yarn install example:
+    ```bash
+    $ npm install --global yarn@1.22.18
+    ```
 - Install **protoc**(protocol buffer compiler)
   - [Download here](https://github.com/protocolbuffers/protobuf/releases) proper package.
   - Unzip and then add `bin/protoc` or `bin/protoc.exe` to $PATH env. or simply put into ` $GOPATH/bin` or ` $GOROOT/bin/` diretory.
@@ -128,7 +132,7 @@ Version >= v1.3.0: [Projects(Newly)](https://github.com/users/snetsystems/projec
 
 [If you're on Windows, run "Git Bash" and] type the followings.
 
-```
+```bash
 # If you're on Windows, run "Git Bash" and type the followings.
 
 $ git clone https://github.com/snetsystems/cloudhub.git
@@ -138,7 +142,7 @@ $ make
 
 If well done, you can see the binary.
 
-```
+```bash
 $ cd backend/cmd/cloudhub
 $ ls -l
 total 28072
@@ -148,7 +152,7 @@ total 28072
 
 Once run cloudhub, 8888 port will be listened.
 
-```
+```bash
 $ ./cloudhub
 ```
 
@@ -158,7 +162,7 @@ You can see the CloudHub UI via browser: http://localhost:8888
 
 Run "_cloudhub.code-workspace_" within cloudhub folder.
 
-```
+```bash
 $ code cloudhub.code-workspace
 ```
 
@@ -178,7 +182,7 @@ For continuous debugging, you can use **"Launch Chrome"** after _**yarn start**_
 > > - Snetsystems Github login setting as a default.
 > >   - You need to change to the Github's keys of your organization.
 > >   - If you don't need to login, get rid of the login information.
-> >   ```
+> >   ```json
 > >    ...
 > >    "args": [
 > >      "-l=debug",
@@ -195,7 +199,7 @@ For continuous debugging, you can use **"Launch Chrome"** after _**yarn start**_
 
 If you run a not login mode, you can use **"Launch Chrome via Proxy"** after _**yarn start**_
 
-```
+```bash
 $ cd $CloudHub_PATH/frontend
 $ yarn start
 yarn run v1.15.2
