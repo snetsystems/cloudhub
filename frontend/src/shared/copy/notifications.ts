@@ -1220,6 +1220,34 @@ export const notifyeUserLockChangFailed = (): Notification => ({
 
 //  CloudHub infrastructure Inventory Topology Notifications
 //  ----------------------------------------------------------------------------
+export const notifyTopologyExported = (name: string): Notification => ({
+  ...defaultSuccessNotification,
+  message: `${name} exported successfully.`,
+})
+
+export const notifyTopologyExportedFailed = (
+  name: string,
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to export ${name}: ${errorMessage}.`,
+})
+
+export const notifyTopologyImported = (fileName: string): Notification => ({
+  ...defaultSuccessNotification,
+  message: `${fileName} imported successfully.`,
+})
+
+export const notifyTopologyImportFailed = (
+  fileName: string,
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to import Topology from file ${fileName}: ${errorMessage}.`,
+})
+
 export const notifyIpmiConnectionFailed = (error: Error): Notification => ({
   ...defaultErrorNotification,
   message: `IPMI Connection Failed, ${error}`,
