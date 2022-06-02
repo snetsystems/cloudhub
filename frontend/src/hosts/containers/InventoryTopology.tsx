@@ -1,10 +1,10 @@
 import React, {createRef, PureComponent, ChangeEvent} from 'react'
-import {Controlled as ReactCodeMirror} from 'react-codemirror2'
 import {connect} from 'react-redux'
 import _ from 'lodash'
 import {getDeep} from 'src/utils/wrappers'
 import classnames from 'classnames'
 import yaml from 'js-yaml'
+import download from 'src/external/download'
 
 import {
   default as mxgraph,
@@ -24,6 +24,7 @@ import {
   ComponentSize,
   Page,
   Radio,
+  OverlayTechnology,
 } from 'src/reusable_ui'
 import {
   Table,
@@ -59,6 +60,8 @@ import {
   notifyTopologySaved,
   notifyTopologySaveFailed,
   notifyTopologySaveAuthFailed,
+  notifyTopologyExported,
+  notifyTopologyExportedFailed,
 } from 'src/shared/copy/notifications'
 
 // Types
@@ -98,7 +101,6 @@ import {
   updateCloudServiceProviderAsync,
   deleteCloudServiceProviderAsync,
   getCSPListInstancesAsync,
-  getAWSInstancesAsync,
   getAWSSecurityAsync,
   getAWSVolumeAsync,
   getAWSInstanceTypesAsync,
@@ -183,6 +185,7 @@ import {
   detectedHostsStatus,
 } from 'src/hosts/configurations/topology'
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
+import ImportTopologyOverlay from '../components/ImportTopologyOverlay'
 
 // Authorized
 import {ADMIN_ROLE, SUPERADMIN_ROLE, EDITOR_ROLE} from 'src/auth/Authorized'
@@ -284,11 +287,6 @@ interface Props {
     saltMasterToken: string,
     pCsp: any[]
   ) => Promise<any>
-  handleGetAWSInstancesAsync: (
-    saltMasterUrl: string,
-    saltMasterToken: string,
-    pCsp: any[]
-  ) => Promise<any>
   handleGetAWSSecurityAsync: (
     saltMasterUrl: string,
     saltMasterToken: string,
@@ -371,6 +369,7 @@ interface State {
   isGetAwsVolume: RemoteDataState
   isGetAwsInstanceType: RemoteDataState
   isInstanceTypeModalVisible: boolean
+  isImportTopologyOverlayVisible: boolean
 }
 
 @ErrorHandling
@@ -473,6 +472,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       isGetAwsSecurity: RemoteDataState.NotStarted,
       isGetAwsVolume: RemoteDataState.NotStarted,
       isGetAwsInstanceType: RemoteDataState.NotStarted,
+      isImportTopologyOverlayVisible: false,
     }
   }
 
@@ -685,7 +685,9 @@ export class InventoryTopology extends PureComponent<Props, State> {
       modalMessage,
       modalTitle,
       isInstanceTypeModalVisible,
+      isImportTopologyOverlayVisible,
     } = this.state
+    const {notify} = this.props
     const isExportXML = modalTitle === 'Export XML'
 
     return (
@@ -733,10 +735,74 @@ export class InventoryTopology extends PureComponent<Props, State> {
               message={this.renderInstanceTypeModal}
               onCancel={this.handleCloseInstanceTypeModal}
             />
+            <OverlayTechnology visible={isImportTopologyOverlayVisible}>
+              <ImportTopologyOverlay
+                onDismissOverlay={this.handleImportTopologyToggleOverlay}
+                onImportTopology={this.onImportTopology}
+                notify={notify}
+              />
+            </OverlayTechnology>
           </>
         )}
       </div>
     )
+  }
+
+  private onImportTopology = async (importedTopology: string) => {
+    const topology = importedTopology
+    const graph = this.graph
+
+    graph.getModel().beginUpdate()
+
+    try {
+      const doc = mxUtils.parseXml(topology)
+      const codec = new mxCodec(doc)
+
+      codec.decode(doc.documentElement, graph.getModel())
+
+      _.forEach(graph.getModel().cells, (cell: mxCellType) => {
+        const containerElement = getContainerElement(cell.value)
+
+        if (containerElement && containerElement.hasAttribute('data-type')) {
+          const dataType = containerElement.getAttribute('data-type')
+          const attrsKeys = _.map(
+            _.keys(eachNodeTypeAttrs[dataType].attrs),
+            attr => `data-${attr}`
+          )
+
+          const filterdAttrs = _.difference(
+            _.map(
+              _.filter(
+                containerElement.attributes,
+                attr => attr.nodeName !== 'class'
+              ),
+              attr => attr.nodeName
+            ),
+            attrsKeys
+          )
+
+          const removeAttrs = _.filter(
+            containerElement.attributes,
+            attr => _.indexOf(filterdAttrs, attr.nodeName) > -1
+          )
+
+          _.forEach(removeAttrs, attr => {
+            applyHandler.bind(this)(this.graph, cell, attr)
+            containerElement.removeAttribute(attr.nodeName)
+            cell.setValue(containerElement.outerHTML)
+          })
+        }
+      })
+    } finally {
+      graph.getModel().endUpdate()
+    }
+  }
+
+  private handleImportTopologyToggleOverlay = (): void => {
+    this.setState({
+      isImportTopologyOverlayVisible: !this.state
+        .isImportTopologyOverlayVisible,
+    })
   }
 
   private handleCloseInstanceTypeModal = () => {
@@ -809,34 +875,6 @@ export class InventoryTopology extends PureComponent<Props, State> {
           />
         </Form.Footer>
       </Form>
-    )
-  }
-
-  private ExportXMLMessage = () => {
-    const {topology} = this.state
-    const options = {
-      tabIndex: 1,
-      readonly: true,
-      indentUnit: 2,
-      smartIndent: true,
-      electricChars: true,
-      completeSingle: false,
-      lineWrapping: true,
-      mode: 'xml',
-      theme: 'xml',
-      autoFocus: true,
-    }
-
-    return (
-      <FancyScrollbar>
-        <ReactCodeMirror
-          autoCursor={true}
-          value={topology}
-          options={options}
-          onBeforeChange={(): void => {}}
-          onTouchStart={(): void => {}}
-        />
-      </FancyScrollbar>
     )
   }
 
@@ -1568,13 +1606,9 @@ export class InventoryTopology extends PureComponent<Props, State> {
       }
     })
 
-    this.editor.addAction('export', () => {
-      const xmlString = this.xmlExport(this.graph.getModel())
+    this.editor.addAction('import', () => {
       this.setState({
-        topology: xmlString,
-        isModalVisible: true,
-        modalTitle: 'Export XML',
-        modalMessage: this.ExportXMLMessage(),
+        isImportTopologyOverlayVisible: true,
       })
     })
 
@@ -1587,6 +1621,19 @@ export class InventoryTopology extends PureComponent<Props, State> {
         this.handleTopologySave()
       } else {
         this.props.notify(notifyTopologySaveAuthFailed())
+      }
+    })
+
+    this.editor.addAction('export', () => {
+      const {auth} = this.props
+      const xmlString = this.xmlExport(this.graph.getModel())
+      const exportFileName = `Topology_${auth.me.currentOrganization.name}`
+
+      try {
+        download(xmlString, `${exportFileName}.xml`, 'text/xml')
+        this.props.notify(notifyTopologyExported(exportFileName))
+      } catch (error) {
+        this.props.notify(notifyTopologyExportedFailed(exportFileName, error))
       }
     })
   }
@@ -2990,7 +3037,6 @@ const mapDispatchToProps = {
   handleUpdateCspAsync: updateCloudServiceProviderAsync,
   handleDeleteCspAsync: deleteCloudServiceProviderAsync,
   handleGetCSPListInstancesAsync: getCSPListInstancesAsync,
-  handleGetAWSInstancesAsync: getAWSInstancesAsync,
   handleGetAWSSecurityAsync: getAWSSecurityAsync,
   handleGetAWSVolumeAsync: getAWSVolumeAsync,
   handleGetAWSInstanceTypesAsync: getAWSInstanceTypesAsync,
