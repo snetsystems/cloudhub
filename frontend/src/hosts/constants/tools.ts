@@ -62,11 +62,6 @@ export const toolbarMenu: ToolbarMenu[] = [
     icon: 'fit',
   },
   {
-    actionName: 'save',
-    label: 'Save',
-    icon: 'floppy-disk',
-  },
-  {
     actionName: 'import',
     label: 'Import',
     icon: 'import',
@@ -75,6 +70,11 @@ export const toolbarMenu: ToolbarMenu[] = [
     actionName: 'export',
     label: 'Export',
     icon: 'export',
+  },
+  {
+    actionName: 'save',
+    label: 'Save',
+    icon: 'floppy-disk',
   },
 ]
 

@@ -44,6 +44,7 @@ import InventoryTreemenu from 'src/hosts/components/InventoryTreemenu'
 import TopologyDetails from 'src/hosts/components/TopologyDetails'
 import InstanceTypeModal from 'src/hosts/components/InstanceTypeModal'
 import TopologyCSPMngModal from 'src/hosts/components/TopologyCSPMngModal'
+import ImportTopologyOverlay from 'src/hosts/components/ImportTopologyOverlay'
 
 // constants
 import {
@@ -185,7 +186,6 @@ import {
   detectedHostsStatus,
 } from 'src/hosts/configurations/topology'
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
-import ImportTopologyOverlay from '../components/ImportTopologyOverlay'
 
 // Authorized
 import {ADMIN_ROLE, SUPERADMIN_ROLE, EDITOR_ROLE} from 'src/auth/Authorized'
@@ -1612,18 +1612,6 @@ export class InventoryTopology extends PureComponent<Props, State> {
       })
     })
 
-    this.editor.addAction('save', async () => {
-      if (
-        meRole === SUPERADMIN_ROLE ||
-        meRole === ADMIN_ROLE ||
-        meRole === EDITOR_ROLE
-      ) {
-        this.handleTopologySave()
-      } else {
-        this.props.notify(notifyTopologySaveAuthFailed())
-      }
-    })
-
     this.editor.addAction('export', () => {
       const {auth} = this.props
       const xmlString = this.xmlExport(this.graph.getModel())
@@ -1634,6 +1622,18 @@ export class InventoryTopology extends PureComponent<Props, State> {
         this.props.notify(notifyTopologyExported(exportFileName))
       } catch (error) {
         this.props.notify(notifyTopologyExportedFailed(exportFileName, error))
+      }
+    })
+
+    this.editor.addAction('save', async () => {
+      if (
+        meRole === SUPERADMIN_ROLE ||
+        meRole === ADMIN_ROLE ||
+        meRole === EDITOR_ROLE
+      ) {
+        this.handleTopologySave()
+      } else {
+        this.props.notify(notifyTopologySaveAuthFailed())
       }
     })
   }
