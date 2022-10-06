@@ -10,7 +10,15 @@ import {
   AGENT_CONTROL_TABLE_SIZING,
 } from 'src/agent_admin/constants/tableSizing'
 
-import {AGENT_COLLECTOR_DIRECTORY} from 'src/agent_admin/constants/directory'
+import {
+  AGENT_COLLECTOR_DIRECTORY,
+  AGENT_TENANT_DIRECTORY,
+} from 'src/agent_admin/constants/directory'
+
+import {
+  COLLECTOR_CONFIG_TABLE_DATA,
+  COLLECTOR_DROPDOWN_DATA,
+} from 'src/agent_admin/constants/CollectorConfigTable'
 
 export {
   NETWORK_ACCESS,
@@ -20,4 +28,7 @@ export {
   AGENT_CONFIGURATION_TABLE_SIZING,
   AGENT_CONTROL_TABLE_SIZING,
   AGENT_COLLECTOR_DIRECTORY,
+  AGENT_TENANT_DIRECTORY,
+  COLLECTOR_CONFIG_TABLE_DATA,
+  COLLECTOR_DROPDOWN_DATA,
 }

@@ -103,13 +103,15 @@ interface Props {
   getLocalFileRead: (
     saltMasterUrl: string,
     saltMasterToken: string,
-    minion: string
+    minion: string,
+    path?: string
   ) => Promise<AxiosResponse>
   getLocalFileWrite: (
     saltMasterUrl: string,
     saltMasterToken: string,
     minion: string,
-    script: string
+    script: string,
+    path?: string
   ) => Promise<AxiosResponse>
   runLocalServiceReStartTelegraf: (
     saltMasterUrl: string,

@@ -10,6 +10,7 @@ import AgentMinions from 'src/agent_admin/containers/AgentMinions'
 import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
 import AgentControl from 'src/agent_admin/containers/AgentControl'
 import {openShell} from 'src/shared/actions/shell'
+import ServiceConfig from 'src/agent_admin/containers/ServiceConfig'
 
 // Actions
 import {getMinionKeyListAllAdminAsync} from 'src/agent_admin/actions'
@@ -193,6 +194,21 @@ class AgentAdminPage extends PureComponent<Props, State> {
             minionsStatus={minionsStatus}
             handleGetMinionKeyListAll={this.getMinionKeyListAll}
             handleSetMinionStatus={this.setMinionStatus}
+          />
+        ),
+      },
+      {
+        url: 'service-config',
+        name: 'Service Config',
+        enabled: isUserAuthorized(meRole, ADMIN_ROLE),
+        component: (
+          <ServiceConfig
+            saltMasterUrl={saltMasterUrl}
+            saltMasterToken={saltMasterToken}
+            minionsObject={minionsObject}
+            minionsStatus={minionsStatus}
+            isUserAuthorized={isUserAuthorized(meRole, ADMIN_ROLE)}
+            handleGetMinionKeyListAll={this.getMinionKeyListAll}
           />
         ),
       },

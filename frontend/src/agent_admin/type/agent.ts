@@ -18,3 +18,12 @@ export interface AgentDirFile {
   isLoading?: boolean
   status?: string | GetAgentDirectoryInfo
 }
+
+export interface CollectorConfigTableData {
+  authentication: string
+  project: string
+  domain: string
+  username: string
+  password: string
+  interval: string
+}

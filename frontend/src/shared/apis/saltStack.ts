@@ -532,7 +532,8 @@ export async function getLocalGrainsItems(
 export async function getLocalFileRead(
   pUrl: string,
   pToken: string,
-  pMinionId: string
+  pMinionId: string,
+  pDirPath: string = '/etc/telegraf/telegraf.conf'
 ) {
   try {
     const params: Params = {
@@ -541,7 +542,7 @@ export async function getLocalFileRead(
       tgt_type: '',
       tgt: '',
       kwarg: {
-        path: '/etc/telegraf/telegraf.conf',
+        path: pDirPath,
       },
     }
 
@@ -564,7 +565,8 @@ export async function getLocalFileWrite(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pScript: string
+  pScript: string,
+  pDirPath = '/etc/telegraf/telegraf.conf'
 ) {
   try {
     const params: Params = {
@@ -573,7 +575,7 @@ export async function getLocalFileWrite(
       tgt_type: '',
       tgt: '',
       kwarg: {
-        path: '/etc/telegraf/telegraf.conf',
+        path: pDirPath,
         args: [pScript],
       },
     }
@@ -715,6 +717,30 @@ export async function getRunnerSaltCmdDirectory(
       fun: 'salt.cmd',
       kwarg: {
         fun: 'cmd.shell',
+        cmd: `ls -lt --time-style=long-iso ${pDirPath} | grep ^- | awk \'{printf "%sT%s %s\\n",$6,$7,$NF}\'`,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalSaltCmdDirectory(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pDirPath: string
+) {
+  try {
+    const params = {
+      eauth: 'pam',
+      client: 'local',
+      tgt: pMinionId,
+      tgt_type: 'glob',
+      fun: 'cmd.shell',
+      kwarg: {
         cmd: `ls -lt --time-style=long-iso ${pDirPath} | grep ^- | awk \'{printf "%sT%s %s\\n",$6,$7,$NF}\'`,
       },
     }

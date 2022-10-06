@@ -33,6 +33,7 @@ import {
   getRunnerSaltCmdTelegraf,
   getRunnerSaltCmdDirectory,
   getRunnerSaltCmdTelegrafPlugin,
+  getLocalSaltCmdDirectory,
 } from 'src/shared/apis/saltStack'
 
 export enum ActionType {
@@ -57,6 +58,7 @@ export enum ActionType {
   GetRunnerSaltCmdTelegraf = 'GET_RUNNER_SALT_CMD_TELEGRAF',
   GetRunnerSaltCmdDirectory = 'GET_RUNNER_SALT_CMD_DIRECTORY',
   GetRunnerSaltCmdTelegrafPlugin = 'GET_RUNNER_SALT_CMD_TELEGRAF_PLUGIN',
+  GetLocalSaltCmdDirectory = 'GET_LOCAL_SALT_CMD_DIRECTORY',
 }
 
 interface MinionKeyListAllAdminAction {
@@ -128,6 +130,10 @@ interface GetRunnerSaltCmdTelegrafPluginAction {
   type: ActionType.GetRunnerSaltCmdTelegrafPlugin
 }
 
+interface GetLocalSaltCmdDirectoryAction {
+  type: ActionType.GetLocalSaltCmdDirectory
+}
+
 export type Action =
   | MinionKeyListAllAdminAction
   | MinionKeyListAllAction
@@ -150,6 +156,7 @@ export type Action =
   | GetRunnerSaltCmdTelegrafAction
   | GetRunnerSaltCmdDirectoryAction
   | GetRunnerSaltCmdTelegrafPluginAction
+  | GetLocalSaltCmdDirectoryAction
 
 export const loadMinionKeyListAllAdmin = (): MinionKeyListAllAdminAction => ({
   type: ActionType.MinionKeyListAllAdmin,
@@ -229,6 +236,10 @@ export const loadGetRunnerSaltCmdDirectory = (): GetRunnerSaltCmdDirectoryAction
 
 export const loadGetRunnerSaltCmdTelegrafPlugin = (): GetRunnerSaltCmdTelegrafPluginAction => ({
   type: ActionType.GetRunnerSaltCmdTelegrafPlugin,
+})
+
+export const loadGetLocalSaltCmdDirectory = (): GetLocalSaltCmdDirectoryAction => ({
+  type: ActionType.GetLocalSaltCmdDirectory,
 })
 
 export const getMinionKeyListAllAdminAsync = (
@@ -403,13 +414,15 @@ export const runLocalGroupAdduserAsync = (
 export const getLocalFileReadAsync = (
   pUrl: string,
   pToken: string,
-  pMinionId: string
+  pMinionId: string,
+  pDirPath?: string
 ) => async (dispatch: Dispatch<Action>) => {
   try {
     const getLocalFileReadPromise = await getLocalFileRead(
       pUrl,
       pToken,
-      pMinionId
+      pMinionId,
+      pDirPath
     )
     dispatch(loadGetLocalFileRead())
     return getLocalFileReadPromise
@@ -423,14 +436,16 @@ export const getLocalFileWriteAsync = (
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pScript: string
+  pScript: string,
+  pDirPath?: string
 ) => async (dispatch: Dispatch<Action>) => {
   try {
     const getLocalFileWritePromise = await getLocalFileWrite(
       pUrl,
       pToken,
       pMinionId,
-      pScript
+      pScript,
+      pDirPath
     )
     dispatch(cmdGetLocalFileWrite())
     return getLocalFileWritePromise
@@ -532,6 +547,29 @@ export const getRunnerSaltCmdDirectoryAsync = (
     )
 
     dispatch(loadGetRunnerSaltCmdDirectory())
+
+    return getDirectoryItems
+  } catch (error) {
+    console.error(error)
+    dispatch(errorThrown(error))
+  }
+}
+
+export const getLocalSaltCmdDirectoryAsync = (
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pDirPath: string
+) => async (dispatch: Dispatch<Action>) => {
+  try {
+    const getDirectoryItems = await getLocalSaltCmdDirectory(
+      pUrl,
+      pToken,
+      pMinionId,
+      pDirPath
+    )
+
+    dispatch(loadGetLocalSaltCmdDirectory())
 
     return getDirectoryItems
   } catch (error) {

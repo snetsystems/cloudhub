@@ -1054,6 +1054,21 @@ export const notifyAgentDeleteFailed = (error: Error): Notification => ({
   message: `Agent Delete Failed, ${error}`,
 })
 
+export const notifyConfigFileSaveFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Please Select a Tenant`,
+})
+
+export const notifyConfigFileReadFailed = (error: string): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to Read File ${error}`,
+})
+
+export const notifyGetProjectFileFailed = (error: Error): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to Get File ${error}`,
+})
+
 //  CloudHub Shell Sources Notifications
 //  ----------------------------------------------------------------------------
 

@@ -136,3 +136,31 @@ export const transBps = (
   }
   return str
 }
+
+export const calculateDataStorage = (
+  fileSize: number,
+  dataUnit?: string,
+  fractionDigits?: number
+) => {
+  const bytesFileSize = convertFileSizeToBytes(fileSize, dataUnit)
+
+  return transBytes(bytesFileSize, fractionDigits)
+}
+
+export const convertFileSizeToBytes = (
+  fileSize: number,
+  dataUnit: string = 'Byte'
+): number => {
+  const upperCaseDataUnit = dataUnit.toUpperCase()
+
+  if (upperCaseDataUnit === 'TB') {
+    fileSize = fileSize * 1024 * 1024 * 1024 * 1024
+  } else if (upperCaseDataUnit === 'GB') {
+    fileSize = fileSize * 1024 * 1024 * 1024
+  } else if (upperCaseDataUnit === 'MB') {
+    fileSize = fileSize * 1024 * 1024
+  } else if (upperCaseDataUnit === 'KB') {
+    fileSize = fileSize * 1024
+  }
+  return fileSize
+}
