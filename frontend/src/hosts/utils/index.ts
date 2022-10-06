@@ -1,8 +1,10 @@
+// libraries
 import _ from 'lodash'
 import CryptoJS from 'crypto-js'
 
-//types
+// types
 import {CloudServiceProvider, CSPAccessObject, Instance} from 'src/hosts/types'
+import {OpenStackLayoutCell} from 'src/hosts/types/openstack'
 
 const detailsValueChecker = (
   value: string | number | boolean = null
@@ -589,4 +591,27 @@ export const isGCPRequiredCheck = (
   }
 
   return null
+}
+
+export const getOpenStackPageLayoutsByRole = (
+  role: string
+): OpenStackLayoutCell[] => {
+  switch (role) {
+    case 'admin':
+    case 'superadmin':
+      return [
+        {i: 'projectTable', x: 0, y: 0, w: 20, h: 5, minW: 5, minH: 2},
+        {i: 'projectDetail', x: 0, y: 5, w: 10, h: 5, minW: 5, minH: 2},
+        {i: 'instanceDetail', x: 10, y: 5, w: 10, h: 5, minW: 5, minH: 2},
+        {i: 'instanceTable', x: 0, y: 10, w: 20, h: 5, minW: 5, minH: 2},
+        {i: 'instanceGraph', x: 0, y: 15, w: 20, h: 5, minW: 5, minH: 2},
+      ]
+    default:
+      return [
+        {i: 'projectDetail', x: 0, y: 0, w: 10, h: 10, minW: 5, minH: 2},
+        {i: 'instanceDetail', x: 10, y: 0, w: 10, h: 10, minW: 5, minH: 2},
+        {i: 'instanceTable', x: 0, y: 5, w: 20, h: 5, minW: 5, minH: 2},
+        {i: 'instanceGraph', x: 0, y: 10, w: 20, h: 5, minW: 5, minH: 2},
+      ]
+  }
 }

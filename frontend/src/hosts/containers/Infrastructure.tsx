@@ -13,11 +13,11 @@ import {Button, ButtonShape, IconFont, Page, Radio} from 'src/reusable_ui'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import GraphTips from 'src/shared/components/GraphTips'
-
 import HostsPage from 'src/hosts/containers/HostsPage'
 import VMHostPage from 'src/hosts/containers/VMHostsPage'
 import InventoryTopology from 'src/hosts/containers/InventoryTopology'
 import KubernetesPage from 'src/hosts/containers/KubernetesPage'
+import OpenStackPage from 'src/hosts/containers/OpenStackPage'
 
 // Actions
 import {
@@ -131,6 +131,13 @@ class Infrastructure extends PureComponent<Props, State> {
       })
     )
 
+    const isUsingOpenStack = !_.isEmpty(
+      _.find(addons, addon => {
+        const {name, url} = addon
+        return name === 'osp' && url === 'on'
+      })
+    )
+
     if (isUsingVsphere) {
       headerRadioButtons.push({
         id: 'hostspage-tab-VMware',
@@ -151,6 +158,15 @@ class Infrastructure extends PureComponent<Props, State> {
       })
     }
 
+    if (isUsingOpenStack) {
+      headerRadioButtons.push({
+        id: 'hostspage-tab-OpenStack',
+        titleText: 'OpenStack',
+        value: 'openstack',
+        active: 'openstack',
+        label: 'OpenStack',
+      })
+    }
     let isRedirect = false
 
     if (
@@ -253,6 +269,15 @@ class Infrastructure extends PureComponent<Props, State> {
             {activeTab === 'kubernetes' && (
               //@ts-ignore
               <KubernetesPage
+                source={source}
+                manualRefresh={manualRefresh}
+                timeRange={timeRange}
+                autoRefresh={autoRefresh}
+              />
+            )}
+            {activeTab === 'openstack' && (
+              //@ts-ignore
+              <OpenStackPage
                 source={source}
                 manualRefresh={manualRefresh}
                 timeRange={timeRange}

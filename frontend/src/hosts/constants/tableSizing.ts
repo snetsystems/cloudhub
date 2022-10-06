@@ -157,3 +157,17 @@ export const KUBERNETES_BASICS_TABLE_SIZE = {
   HeaderWidth: '15%',
   DataWidth: '85%',
 }
+
+export const OPENSATCK_TABLE_SIZING = {
+  InstanceNameWidth: '12%',
+  ImageNameWidth: '10%',
+  IpAddressWidth: '9%',
+  FlavorWidth: '10%',
+  KeyPairWidth: '8%',
+  StatusWidth: '9%',
+  AvailabilityWidth: '7%',
+  ZoneWidth: '7%',
+  TaskWidth: '7%',
+  PowerStateWidth: '7%',
+  AgeWidth: '14%',
+}

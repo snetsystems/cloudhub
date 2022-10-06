@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import _, {keys} from 'lodash'
 import {AxiosResponse} from 'axios'
 import yaml from 'js-yaml'
 import {getDeep} from 'src/utils/wrappers'
@@ -14,7 +14,7 @@ import {
 import {Template, Layout, Source, Host, Links} from 'src/types'
 import {HostNames, HostName, Ipmi, IpmiCell} from 'src/types/hosts'
 import {CloudServiceProvider, CSPFileWriteParam} from 'src/hosts/types'
-import {DashboardSwitcherLinks} from '../../types/dashboards'
+import {DashboardSwitcherLinks} from 'src/types/dashboards'
 
 // APIs
 import {
@@ -34,6 +34,8 @@ import {
   getCSPRunnerFileWrite,
   getRunnerFileRead,
   setRunnerFileRemove,
+  getRunnerCloudActionListNodesFull,
+  getRunnerCloudActionOSPProject,
 } from 'src/shared/apis/saltStack'
 import {getCpuAndLoadForK8s} from 'src/hosts/apis/kubernetes'
 
@@ -1336,10 +1338,24 @@ export const getGCPInstancesApi = async (
 ) => {
   try {
     const info = await getRunnerCloudActionListInstances(pUrl, pToken, pCsps)
-
     const cspHost = yaml.safeLoad(info.data)
 
     return cspHost
+  } catch (error) {
+    throw error
+  }
+}
+
+export const getOSPInstancesApi = async (
+  pUrl: string,
+  pToken: string,
+  pCsps: any[]
+) => {
+  try {
+    const info = await getRunnerCloudActionListNodesFull(pUrl, pToken, pCsps)
+    const ospInstances = yaml.safeLoad(info.data)
+
+    return ospInstances
   } catch (error) {
     throw error
   }
@@ -1361,6 +1377,237 @@ export const getAWSSecurityApi = async (
     const cspHost = yaml.safeLoad(info.data)
 
     return cspHost
+  } catch (error) {
+    throw error
+  }
+}
+
+export const getOSPProjectsApi = async (
+  pUrl: string,
+  pToken: string,
+  pCsps: any[]
+) => {
+  try {
+    const saltCallList = [
+      'get_compute_limits',
+      'get_volume_limits',
+      'get_network_quotas',
+    ]
+    const instanceInfo = await getRunnerCloudActionOSPProject(
+      pUrl,
+      pToken,
+      pCsps,
+      saltCallList
+    )
+    const convertJsonFormat = yaml.safeLoad(instanceInfo.data)
+
+    let ospProjects = {}
+
+    _.map(convertJsonFormat?.return, item => {
+      if (typeof item !== 'string') {
+        _.map(_.values(item), info => {
+          const projectData = _.values(info)[0]
+
+          ospProjects[_.keys(item)[0]] = {
+            ...ospProjects[_.keys(item)[0]],
+            ...projectData,
+          }
+        })
+      }
+    })
+    let conVertProjects = {}
+
+    _.reduce(
+      ospProjects,
+      function (__obj, val: any, key) {
+        conVertProjects[key] = {
+          projectData: {
+            projectName: key,
+            row: {
+              projectName: key,
+              instances: {
+                gaugePosition: `${
+                  (val.total_instances_used / val.max_total_instances) * 100
+                }`,
+                resourceUsuage: `${val.total_instances_used}/${val.max_total_instances}`,
+              },
+              vcpus: {
+                gaugePosition: `${
+                  (val.total_cores_used / val.max_total_cores) * 100
+                }`,
+                resourceUsuage: `${val.total_cores_used}/${val.max_total_cores}`,
+              },
+              ram: {
+                gaugePosition: `${
+                  (val.total_ram_used / val.max_total_ram_size) * 100
+                }`,
+                resourceUsuage: `${val.total_ram_used}/${val.max_total_ram_size}`,
+              },
+              volumes: {
+                gaugePosition: `${
+                  (val.absolute.totalVolumesUsed /
+                    val.absolute.maxTotalVolumes) *
+                  100
+                }`,
+                resourceUsuage: `${val.absolute.totalVolumesUsed}/${val.absolute.maxTotalVolumes}`,
+              },
+              volumeSnapshots: {
+                gaugePosition: `${
+                  (val.absolute.totalSnapshotsUsed /
+                    val.absolute.maxTotalSnapshots) *
+                  100
+                }`,
+                resourceUsuage: `${val.absolute.totalSnapshotsUsed}/${val.absolute.maxTotalSnapshots}`,
+              },
+              volumeStorage: {
+                gaugePosition: `${
+                  (val.absolute.totalGigabytesUsed /
+                    val.absolute.maxTotalVolumeGigabytes) *
+                  100
+                }`,
+                resourceUsuage: `${val.absolute.totalGigabytesUsed}/${val.absolute.maxTotalVolumeGigabytes}`,
+              },
+              floatingIPs: {
+                gaugePosition: `${
+                  (val.floatingip.used / val.floatingip.limit) * 100
+                }`,
+                resourceUsuage: `${val.floatingip.used}/${val.floatingip.limit}`,
+              },
+              securityGroups: {
+                gaugePosition: `${
+                  (val.security_group.used / val.security_group.limit) * 100
+                }`,
+                resourceUsuage: `${val.security_group.used}/${val.security_group.limit}`,
+              },
+              securityGroupRules: {
+                gaugePosition: `${
+                  (val.security_group_rule.used /
+                    val.security_group_rule.limit) *
+                  100
+                }`,
+                resourceUsuage: `${val.security_group_rule.used}/${val.security_group_rule.limit}`,
+              },
+              networks: {
+                gaugePosition: `${
+                  (val.network.used / val.network.limit) * 100
+                }`,
+                resourceUsuage: `${val.network.used}/${val.network.limit}`,
+              },
+              ports: {
+                gaugePosition: `${(val.port.used / val.port.limit) * 100}`,
+                resourceUsuage: `${val.port.used}/${val.port.limit}`,
+              },
+              routers: {
+                gaugePosition: `${(val.router.used / val.router.limit) * 100}`,
+                resourceUsuage: `${val.router.used}/${val.router.limit}`,
+              },
+            },
+            chart: {
+              Computed: [
+                {
+                  resourceName: 'Instances',
+                  gaugePosition: `${
+                    (val.total_instances_used / val.max_total_instances) * 100
+                  }`,
+                  resourceUsuage: `${val.total_instances_used}/${val.max_total_instances}`,
+                },
+                {
+                  resourceName: 'VCPUS',
+                  gaugePosition: `${
+                    (val.total_cores_used / val.max_total_cores) * 100
+                  }`,
+                  resourceUsuage: `${val.total_cores_used}/${val.max_total_cores}`,
+                },
+                {
+                  resourceName: 'RAM ',
+                  gaugePosition: `${
+                    (val.total_ram_used / val.max_total_ram_size) * 100
+                  }`,
+                  resourceUsuage: `${val.total_ram_used}/${val.max_total_ram_size}`,
+                },
+              ],
+              Volume: [
+                {
+                  resourceName: 'Volumes',
+                  gaugePosition: `${
+                    (val.absolute.totalVolumesUsed /
+                      val.absolute.maxTotalVolumes) *
+                    100
+                  }`,
+                  resourceUsuage: `${val.absolute.totalVolumesUsed}/${val.absolute.maxTotalVolumes}`,
+                },
+                {
+                  resourceName: 'Volume Sanpshots',
+                  gaugePosition: `${
+                    (val.absolute.totalSnapshotsUsed /
+                      val.absolute.maxTotalSnapshots) *
+                    100
+                  }`,
+                  resourceUsuage: `${val.absolute.totalSnapshotsUsed}/${val.absolute.maxTotalSnapshots}`,
+                },
+                {
+                  resourceName: 'Volume Storage ',
+                  gaugePosition: `${
+                    (val.absolute.totalGigabytesUsed /
+                      val.absolute.maxTotalVolumeGigabytes) *
+                    100
+                  }`,
+                  resourceUsuage: `${val.absolute.totalGigabytesUsed}/${val.absolute.maxTotalVolumeGigabytes}`,
+                },
+              ],
+              Network: [
+                {
+                  resourceName: 'Floating IPs',
+                  gaugePosition: `${
+                    (val.floatingip.used / val.floatingip.limit) * 100
+                  }`,
+                  resourceUsuage: `${val.floatingip.used}/${val.floatingip.limit}`,
+                },
+                {
+                  resourceName: 'Sercurity Groups',
+                  gaugePosition: `${
+                    (val.security_group.used / val.security_group.limit) * 100
+                  }`,
+                  resourceUsuage: `${val.security_group.used}/${val.security_group.limit}`,
+                },
+                {
+                  resourceName: 'Security Group Rules',
+                  gaugePosition: `${
+                    (val.security_group_rule.used /
+                      val.security_group_rule.limit) *
+                    100
+                  }`,
+                  resourceUsuage: `${val.security_group_rule.used}/${val.security_group_rule.limit}`,
+                },
+                {
+                  resourceName: 'Networks',
+                  gaugePosition: `${
+                    (val.network.used / val.network.limit) * 100
+                  }`,
+                  resourceUsuage: `${val.network.used}/${val.network.limit}`,
+                },
+                {
+                  resourceName: 'Ports',
+                  gaugePosition: `${(val.port.used / val.port.limit) * 100}`,
+                  resourceUsuage: `${val.port.used}/${val.port.limit}`,
+                },
+                {
+                  resourceName: 'Routers',
+                  gaugePosition: `${
+                    (val.router.used / val.router.limit) * 100
+                  }`,
+                  resourceUsuage: `${val.router.used}/${val.router.limit}`,
+                },
+              ],
+            },
+          },
+        }
+        return conVertProjects[key]
+      },
+      {}
+    )
+
+    return conVertProjects
   } catch (error) {
     throw error
   }

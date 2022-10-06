@@ -41,6 +41,14 @@ import {
   D3DataDepth3,
 } from 'src/hosts/types/kubernetes'
 
+import {
+  OpenStackPageTableProjectData,
+  OpenStackPageTableCloudResource,
+  OpenStackGaugeChartProjectData,
+  OpenStackGaugeChartCloudResource,
+  OpenStackGaugeChartSize,
+} from 'src/hosts/types/openstack'
+
 export {
   VMRole,
   VCenter,
@@ -75,4 +83,9 @@ export {
   CSPAccessObject,
   CSPFileWriteParam,
   Instance,
+  OpenStackPageTableProjectData,
+  OpenStackPageTableCloudResource,
+  OpenStackGaugeChartProjectData,
+  OpenStackGaugeChartCloudResource,
+  OpenStackGaugeChartSize,
 }
