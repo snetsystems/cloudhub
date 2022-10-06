@@ -1,4 +1,4 @@
-import _, {keys} from 'lodash'
+import _ from 'lodash'
 import {AxiosResponse} from 'axios'
 import yaml from 'js-yaml'
 import {getDeep} from 'src/utils/wrappers'

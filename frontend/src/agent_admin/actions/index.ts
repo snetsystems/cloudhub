@@ -423,14 +423,16 @@ export const getLocalFileWriteAsync = (
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pScript: string
+  pScript: string,
+  pConfPath?: string
 ) => async (dispatch: Dispatch<Action>) => {
   try {
     const getLocalFileWritePromise = await getLocalFileWrite(
       pUrl,
       pToken,
       pMinionId,
-      pScript
+      pScript,
+      pConfPath
     )
     dispatch(cmdGetLocalFileWrite())
     return getLocalFileWritePromise

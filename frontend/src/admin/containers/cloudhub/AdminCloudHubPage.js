@@ -10,6 +10,7 @@ import UsersPage from 'src/admin/containers/cloudhub/UsersPage'
 import AllUsersPage from 'src/admin/containers/cloudhub/AllUsersPage'
 import OrganizationsPage from 'src/admin/containers/cloudhub/OrganizationsPage'
 import ProvidersPage from 'src/admin/containers/ProvidersPage'
+import ProviderConfPage from 'src/admin/containers/cloudhub/ProviderConfPage'
 
 import {
   isUserAuthorized,
@@ -51,6 +52,18 @@ const sections = (me, providers) => [
     enabled: isUserAuthorized(me.role, SUPERADMIN_ROLE),
     component: <ProvidersPage />,
   },
+  {
+    url: 'provider-conf',
+    name: 'Provider Conf ',
+    enabled: isUserAuthorized(me.role, ADMIN_ROLE),
+    component: (
+      <ProviderConfPage
+        meID={me.id}
+        meCurrentOrganization={me.currentOrganization}
+        providers={providers}
+      />
+    ),
+  },
 ]
 
 const AdminCloudHubPage = props => {
@@ -82,7 +95,7 @@ const AdminCloudHubPage = props => {
         <Page.Header.Right />
       </Page.Header>
       <Page.Contents fullWidth={true}>
-        <div className="container-fluid">
+        <div className="container-fluid full-height">
           <SubSections
             sections={sections(me, providers)}
             activeSection={tab}

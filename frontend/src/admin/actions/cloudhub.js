@@ -14,6 +14,8 @@ import {
   createMapping as createMappingAJAX,
   updateMapping as updateMappingAJAX,
   deleteMapping as deleteMappingAJAX,
+  createCloudServiceProvider as createCloudServiceProviderAJAX,
+  updateCloudServiceProvider as updateCloudServiceProviderAJAX,
 } from 'src/admin/apis/cloudhub'
 
 import {notify} from 'src/shared/actions/notifications'
@@ -132,6 +134,14 @@ export const removeMapping = mapping => ({
   payload: {
     mapping,
   },
+})
+
+export const createCloudServiceProviderAction = () => ({
+  type: 'CREATE_CLOUD_SERVICE_PROVIDER',
+})
+
+export const updateCloudServiceProviderAction = () => ({
+  type: 'UPDATE_CLOUD_SERVICE_PROVIDER',
 })
 
 // async actions (thunks)
@@ -313,5 +323,39 @@ export const deleteOrganizationAsync = organization => async dispatch => {
   } catch (error) {
     dispatch(errorThrown(error))
     dispatch(addOrganization(organization))
+  }
+}
+
+export const createCloudServiceProviderAsync = parms => async dispatch => {
+  try {
+    const {data} = await createCloudServiceProviderAJAX(parms)
+
+    const newData = {
+      ...data,
+      provider: data.provider.toLowerCase(),
+    }
+
+    dispatch(createCloudServiceProviderAction())
+    return newData
+  } catch (error) {
+    dispatch(errorThrown(error, error.message))
+    throw error
+  }
+}
+
+export const updateCloudServiceProviderAsync = parms => async dispatch => {
+  try {
+    const {data} = await updateCloudServiceProviderAJAX(parms)
+
+    const newData = {
+      ...data,
+      provider: data.provider.toLowerCase(),
+    }
+
+    dispatch(updateCloudServiceProviderAction())
+    return newData
+  } catch (error) {
+    dispatch(errorThrown(error, error.message))
+    throw error
   }
 }

@@ -564,7 +564,8 @@ export async function getLocalFileWrite(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pScript: string
+  pScript: string,
+  pConfPath = '/etc/telegraf/telegraf.conf'
 ) {
   try {
     const params: Params = {
@@ -573,7 +574,7 @@ export async function getLocalFileWrite(
       tgt_type: '',
       tgt: '',
       kwarg: {
-        path: '/etc/telegraf/telegraf.conf',
+        path: pConfPath,
         args: [pScript],
       },
     }
@@ -1564,6 +1565,70 @@ export async function getRunnerCloudActionListInstances(
         provider: pCSP.namespace,
       }
       params = [...params, param]
+    })
+
+    const result = await apiRequestMulti(pUrl, params, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getRunnerCloudActionListNodesFull(
+  pUrl: string,
+  pToken: string,
+  pCSPs: any[]
+): Promise<any> {
+  try {
+    let params = []
+    _.map(pCSPs, pCSP => {
+      const param = {
+        token: pToken,
+        eauth: 'pam',
+        client: 'runner',
+        fun: 'cloud.action',
+        func: 'list_nodes_full',
+        provider: pCSP.namespace,
+        all_projects: 'True',
+      }
+      params = [...params, param]
+    })
+
+    const result = await apiRequestMulti(pUrl, params, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getRunnerCloudActionOSPProject(
+  pUrl: string,
+  pToken: string,
+  pCsps: any[],
+  pCallList: string[]
+): Promise<any> {
+  try {
+    let params = []
+
+    _.map(pCsps, pCSP => {
+      _.map(pCallList, saltFunction => {
+        const param = {
+          token: pToken,
+          eauth: 'pam',
+          client: 'runner',
+          fun: 'cloud.action',
+          func: saltFunction,
+          provider: pCSP.namespace,
+          kwarg: {
+            project: pCSP.namespace,
+          },
+        }
+        params = [...params, param]
+      })
     })
 
     const result = await apiRequestMulti(pUrl, params, 'application/x-yaml')
