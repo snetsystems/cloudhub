@@ -79,12 +79,10 @@ import {
   LAYOUT_MARGIN,
   HANDLE_VERTICAL,
 } from 'src/shared/constants'
-
 import {
   DEFAULT_CELL_BG_COLOR,
   DEFAULT_CELL_TEXT_COLOR,
 } from 'src/dashboards/constants'
-
 import {
   vcenterCells,
   datacenterCells,
@@ -92,6 +90,7 @@ import {
   hostCells,
   vmCells,
 } from 'src/hosts/constants/layout'
+import {notIncludeApps} from 'src/hosts/constants/apps'
 
 // Util
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
@@ -649,6 +648,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     const layoutResultsFn = async (): Promise<void> => {
       const layoutRst = await getLayouts()
       const init_layouts = getDeep<Layout[]>(layoutRst, 'data.layouts', [])
+
       setLayouts(init_layouts)
     }
     layoutResultsFn()
@@ -687,7 +687,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
     const {filteredLayouts} = await getLayoutsforHostApp(
       layouts.length > 0 ? layouts : init_layouts,
-      props.minion,
+      props,
       measurement
     )
 
@@ -1237,16 +1237,28 @@ const VMHostsPage = (props: Props): JSX.Element => {
     return vcenter
   }
 
-  const fetchHostsAndMeasurements = async (
-    layouts: Layout[],
-    hostID: string
-  ) => {
+  const fetchHostsAndMeasurements = async (layouts: Layout[], props: Item) => {
     const tempVars = generateForHosts(source)
-    const fetchMeasurements = getMeasurementsForHost(source, hostID)
+    const fetchMeasurements = getMeasurementsForHost(source, props.minion)
+
+    const filterLayouts: Layout[] = (() => {
+      const focusType = _.get(props, 'type')
+      if (focusType === 'vm' || focusType === 'host') {
+        return _.filter(
+          layouts,
+          m => m.measurement.indexOf(_.get(props, 'type')) !== -1
+        )
+      } else if (focusType === 'vcenter' || focusType === 'datacenter') {
+        return _.filter(layouts, m => m.measurement.indexOf('host') !== -1)
+      } else {
+        return _.filter(layouts, m => !_.includes(notIncludeApps, m.app))
+      }
+    })()
+
     const fetchHosts = getAppsForHost(
       source.links.proxy,
-      hostID,
-      layouts,
+      props.minion,
+      filterLayouts,
       source.telegraf,
       tempVars
     )
@@ -1261,13 +1273,10 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
   const getLayoutsforHostApp = async (
     layouts: Layout[],
-    hostID: string,
+    props: Item,
     _measurement: string
   ) => {
-    const {host, measurements} = await fetchHostsAndMeasurements(
-      layouts,
-      hostID
-    )
+    const {host, measurements} = await fetchHostsAndMeasurements(layouts, props)
 
     const layoutsWithinHost = layouts.filter(layout => {
       return (

@@ -50,6 +50,7 @@ import {
 import {EMPTY_LINKS} from 'src/dashboards/constants/dashboardHeader'
 import {kubernetesStatusColor} from 'src/hosts/constants/color'
 import {k8sNodeTypeAttrs} from 'src/hosts/constants/kubernetes'
+import {k8sApps} from 'src/hosts/constants/apps'
 
 // API
 import {
@@ -3179,10 +3180,11 @@ class KubernetesPage extends PureComponent<Props, State> {
     const {source} = this.props
     const tempVars = generateForHosts(source)
     const fetchMeasurements = getMeasurementsForHost(source, '')
+    const filterLayout = _.filter(layouts, m => _.includes(k8sApps, m.app))
     const fetchHosts = getAppsForHost(
       source.links.proxy,
       '',
-      layouts,
+      filterLayout,
       source.telegraf,
       tempVars
     )

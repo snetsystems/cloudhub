@@ -47,7 +47,7 @@ import {
   notifyUnableToGetHosts,
   notifyUnableToGetApps,
 } from 'src/shared/copy/notifications'
-
+import {notIncludeApps} from 'src/hosts/constants/apps'
 //const
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
 
@@ -141,6 +141,11 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
       return
     }
 
+    const filterLayouts = _.filter(
+      layouts,
+      m => !_.includes(notIncludeApps, m.app)
+    )
+
     const getLocalStorageInfrastructure = getLocalStorage('infrastructure')
 
     const defaultState = {
@@ -166,7 +171,7 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
     if (autoRefresh) {
       clearInterval(this.intervalID)
       this.intervalID = window.setInterval(
-        () => this.fetchHostsData(layouts),
+        () => this.fetchHostsData(filterLayouts),
         autoRefresh
       )
     }
@@ -175,15 +180,15 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
 
     const hostID = hostsPage.focusedHost
     if (hostID === '') {
-      await this.fetchHostsData(layouts)
+      await this.fetchHostsData(filterLayouts)
       const {filteredLayouts} = await this.getLayoutsforHost(
-        layouts,
+        filterLayouts,
         this.state.focusedHost
       )
       this.setState({filteredLayouts})
     } else {
       this.setState({
-        layouts,
+        layouts: filterLayouts,
         proportions: convertProportions,
         focusedHost: hostID,
       })
