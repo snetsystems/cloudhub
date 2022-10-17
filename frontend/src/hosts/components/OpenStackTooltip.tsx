@@ -4,20 +4,15 @@ import _ from 'lodash'
 
 // types
 import {TooltipPosition} from 'src/hosts/types'
-
+import {OpenStackInstanceFlaverDetail} from 'src/hosts/types/openstack'
 // decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
+import {calculateDataStorage} from 'src/shared/utils/units'
 
 interface Props {
   onDismiss?: () => void
   targetPosition: TooltipPosition
-  tooltipNode: {
-    instanceId: string
-    vcpus: number | null
-    ram: number | null
-    size: number | null
-    flavor: string | null
-  }
+  tooltipNode: Partial<OpenStackInstanceFlaverDetail>
 }
 
 interface State {
@@ -65,7 +60,7 @@ class OpenStackTooltip extends PureComponent<Props, State> {
   public render() {
     const {tooltipNode} = this.props
     const {top, bottom, left, right} = this.state
-    const {instanceId, vcpus, ram, size, flavor} = tooltipNode
+    const {id, vcpus, ram, size, flavor} = tooltipNode
 
     return (
       <div
@@ -93,7 +88,7 @@ class OpenStackTooltip extends PureComponent<Props, State> {
                 style={{width: this.tableSize.body}}
               >
                 <div className={'UsageIndacator-container'}>
-                  <div className={'UsageIndacator-value'}>{instanceId} </div>
+                  <div className={'UsageIndacator-value'}>{id} </div>
                 </div>
               </div>
             </div>
@@ -127,7 +122,9 @@ class OpenStackTooltip extends PureComponent<Props, State> {
                 style={{width: this.tableSize.body}}
               >
                 <div className={'UsageIndacator-container'}>
-                  <div className={'UsageIndacator-value'}>{ram}</div>
+                  <div
+                    className={'UsageIndacator-value'}
+                  >{`${calculateDataStorage(ram, 'MB', 0)}`}</div>
                 </div>
               </div>
             </div>
@@ -144,7 +141,9 @@ class OpenStackTooltip extends PureComponent<Props, State> {
                 style={{width: this.tableSize.body}}
               >
                 <div className={'UsageIndacator-container'}>
-                  <div className={'UsageIndacator-value'}>{size}</div>
+                  <div
+                    className={'UsageIndacator-value'}
+                  >{`${calculateDataStorage(size, 'GB', 0)}`}</div>
                 </div>
               </div>
             </div>

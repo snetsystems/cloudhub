@@ -26,7 +26,6 @@ import {
   fileWriteConfigApi,
   fileWriteKeyApi,
   getRunnerFileReadApi,
-  getOSPInstancesApi,
   getOSPProjectsApi,
 } from 'src/hosts/apis'
 
@@ -43,6 +42,7 @@ import {
 } from 'src/shared/copy/notifications'
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 import {CloudServiceProvider, CSPFileWriteParam} from 'src/hosts/types'
+
 export enum ActionTypes {
   LoadInventoryTopology = 'LOAD_INVENTORY_TOPOLOGY',
   CreateInventoryTopology = 'CREATE_INVENTORY_TOPOLOGY',
@@ -587,85 +587,9 @@ export const getOpenStackProjectsAsync = (
   pCsps: any[]
 ) => async (dispatch: Dispatch<Action>) => {
   try {
-    const getInstances = await getOSPInstancesApi(pUrl, pToken, pCsps)
-    const projects = await getOSPProjectsApi(pUrl, pToken, pCsps)
+    const ospProjects = await getOSPProjectsApi(pUrl, pToken, pCsps)
 
-    let openStackProjects = null
-
-    _.map(getInstances, item => {
-      if (typeof item !== 'string') {
-        _.reduce(
-          item,
-          (_before, current) => {
-            let tempObjectToArray = []
-            Object.keys(current).forEach(key => {
-              const instance = current[key]
-              const filteredInstance = {
-                ...instance,
-                instanceId: instance['id'],
-                instanceName: instance['name'],
-                imageName: 'cirro image',
-                ipAddress: instance['private_v4'],
-                flavor: instance['flavor']['name'],
-                keyPair: '',
-                availability: '',
-                status: instance['status'],
-                zone: instance['location']['zone'],
-                task: instance['task_state'] || '',
-                powerState: instance['powerState'] || '',
-                age: instance['age'] || '',
-                detail: {
-                  overview: {
-                    name: instance['name'],
-                    id: instance['id'],
-                    description: '-',
-                    projectId: instance['location']['project']['id'],
-                    status: instance['status'],
-                    locked: 'False',
-                    availabilityZone: instance['az'],
-                    created: instance['created'],
-                    age: instance['age'] || '',
-                  },
-                  speces: {
-                    flavor: instance['flavor']['name'],
-                  },
-                  ipAddress: {
-                    demoNw: instance['networks']['demo-nw'],
-                  },
-                  securityGroups: {
-                    default: ``,
-                  },
-                  metaData: instance['metaData'],
-                  volumesAttached: {
-                    attachedTo: '',
-                  },
-                },
-              }
-              tempObjectToArray.push(filteredInstance)
-            })
-
-            openStackProjects = _.groupBy(tempObjectToArray, e => {
-              return e['location']['project']['name']
-            })
-
-            openStackProjects = _.map(
-              openStackProjects,
-              (instance, projactName) => {
-                return {
-                  ...projects[projactName],
-                  instances: instance,
-                }
-              }
-            )
-
-            return false
-          },
-          {}
-        )
-      }
-    })
-
-    return openStackProjects
+    return ospProjects
   } catch (error) {
     dispatch(errorThrown(error))
   }

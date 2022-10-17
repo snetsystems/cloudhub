@@ -36,8 +36,10 @@ import {
   setRunnerFileRemove,
   getRunnerCloudActionListNodesFull,
   getRunnerCloudActionOSPProject,
+  getRunnerCloudActionAvailSizes,
 } from 'src/shared/apis/saltStack'
 import {getCpuAndLoadForK8s} from 'src/hosts/apis/kubernetes'
+import {calculateDataStorage} from 'src/shared/utils/units'
 
 export {getCpuAndLoadForK8s}
 export interface HostsObject {
@@ -1382,32 +1384,60 @@ export const getAWSSecurityApi = async (
   }
 }
 
+export const getOSPFlaverApi = async (
+  pUrl: string,
+  pToken: string,
+  pCsps: any[]
+) => {
+  try {
+    const info = await getRunnerCloudActionAvailSizes(pUrl, pToken, pCsps)
+    const ospInstances = yaml.safeLoad(info.data)
+
+    return ospInstances
+  } catch (error) {
+    throw error
+  }
+}
+
 export const getOSPProjectsApi = async (
   pUrl: string,
   pToken: string,
   pCsps: any[]
 ) => {
   try {
-    const saltCallList = [
-      'get_compute_limits',
-      'get_volume_limits',
-      'get_network_quotas',
-    ]
-    const instanceInfo = await getRunnerCloudActionOSPProject(
+    const saltFunctions = {
+      project: [
+        'get_compute_limits',
+        'get_volume_limits',
+        'get_network_quotas',
+      ],
+      flaver: ['avail_sizes'],
+
+      instance: ['list_nodes_full'],
+    }
+    const saltRes = await getRunnerCloudActionOSPProject(
       pUrl,
       pToken,
       pCsps,
-      saltCallList
+      saltFunctions
     )
-    const convertJsonFormat = yaml.safeLoad(instanceInfo.data)
 
+    const convertJson = _.map(saltRes, res => {
+      const convert = yaml.safeLoad(res.data)
+      return convert.return[0]
+    })
+
+    const openstackData = convertJson
+    const projects = openstackData.splice(0, saltFunctions.project.length)
+    const instances = openstackData.splice(0, saltFunctions.instance.length)[0]
+    const flaver = openstackData.splice(0, saltFunctions.flaver.length)[0]
+
+    let conVertProjects = {}
     let ospProjects = {}
-
-    _.map(convertJsonFormat?.return, item => {
+    _.map(projects, item => {
       if (typeof item !== 'string') {
         _.map(_.values(item), info => {
           const projectData = _.values(info)[0]
-
           ospProjects[_.keys(item)[0]] = {
             ...ospProjects[_.keys(item)[0]],
             ...projectData,
@@ -1415,8 +1445,6 @@ export const getOSPProjectsApi = async (
         })
       }
     })
-    let conVertProjects = {}
-
     _.reduce(
       ospProjects,
       function (__obj, val: any, key) {
@@ -1441,7 +1469,15 @@ export const getOSPProjectsApi = async (
                 gaugePosition: `${
                   (val.total_ram_used / val.max_total_ram_size) * 100
                 }`,
-                resourceUsuage: `${val.total_ram_used}/${val.max_total_ram_size}`,
+                resourceUsuage: `${calculateDataStorage(
+                  val.total_ram_used,
+                  'MB',
+                  0
+                )}/${calculateDataStorage(
+                  val.max_total_ram_size,
+                  'MB',
+                  0
+                )}`.replaceAll(' ', ''),
               },
               volumes: {
                 gaugePosition: `${
@@ -1465,7 +1501,15 @@ export const getOSPProjectsApi = async (
                     val.absolute.maxTotalVolumeGigabytes) *
                   100
                 }`,
-                resourceUsuage: `${val.absolute.totalGigabytesUsed}/${val.absolute.maxTotalVolumeGigabytes}`,
+                resourceUsuage: `${calculateDataStorage(
+                  val.absolute.totalGigabytesUsed,
+                  'GB',
+                  0
+                )}/${calculateDataStorage(
+                  val.absolute.maxTotalVolumeGigabytes,
+                  'GB',
+                  0
+                )}`.replaceAll(' ', ''),
               },
               floatingIPs: {
                 gaugePosition: `${
@@ -1509,21 +1553,29 @@ export const getOSPProjectsApi = async (
                   gaugePosition: `${
                     (val.total_instances_used / val.max_total_instances) * 100
                   }`,
-                  resourceUsuage: `${val.total_instances_used}/${val.max_total_instances}`,
+                  resourceUsuage: `Used ${val.total_instances_used} of ${val.max_total_instances}`,
                 },
                 {
                   resourceName: 'VCPUS',
                   gaugePosition: `${
                     (val.total_cores_used / val.max_total_cores) * 100
                   }`,
-                  resourceUsuage: `${val.total_cores_used}/${val.max_total_cores}`,
+                  resourceUsuage: `Used ${val.total_cores_used} of ${val.max_total_cores}`,
                 },
                 {
                   resourceName: 'RAM ',
                   gaugePosition: `${
                     (val.total_ram_used / val.max_total_ram_size) * 100
                   }`,
-                  resourceUsuage: `${val.total_ram_used}/${val.max_total_ram_size}`,
+                  resourceUsuage: `Used ${(calculateDataStorage(
+                    val.total_ram_used,
+                    'MB',
+                    0
+                  ) as string).replaceAll(' ', '')} of ${(calculateDataStorage(
+                    val.max_total_ram_size,
+                    'MB',
+                    0
+                  ) as string).replaceAll(' ', '')}`,
                 },
               ],
               Volume: [
@@ -1534,7 +1586,7 @@ export const getOSPProjectsApi = async (
                       val.absolute.maxTotalVolumes) *
                     100
                   }`,
-                  resourceUsuage: `${val.absolute.totalVolumesUsed}/${val.absolute.maxTotalVolumes}`,
+                  resourceUsuage: `Used ${val.absolute.totalVolumesUsed} of ${val.absolute.maxTotalVolumes}`,
                 },
                 {
                   resourceName: 'Volume Sanpshots',
@@ -1543,7 +1595,7 @@ export const getOSPProjectsApi = async (
                       val.absolute.maxTotalSnapshots) *
                     100
                   }`,
-                  resourceUsuage: `${val.absolute.totalSnapshotsUsed}/${val.absolute.maxTotalSnapshots}`,
+                  resourceUsuage: `Used ${val.absolute.totalSnapshotsUsed} of ${val.absolute.maxTotalSnapshots}`,
                 },
                 {
                   resourceName: 'Volume Storage ',
@@ -1552,7 +1604,15 @@ export const getOSPProjectsApi = async (
                       val.absolute.maxTotalVolumeGigabytes) *
                     100
                   }`,
-                  resourceUsuage: `${val.absolute.totalGigabytesUsed}/${val.absolute.maxTotalVolumeGigabytes}`,
+                  resourceUsuage: `Used ${(calculateDataStorage(
+                    val.absolute.totalGigabytesUsed,
+                    'GB',
+                    0
+                  ) as string).replaceAll(' ', '')} of ${(calculateDataStorage(
+                    val.absolute.maxTotalVolumeGigabytes,
+                    'GB',
+                    0
+                  ) as string).replaceAll(' ', '')}`,
                 },
               ],
               Network: [
@@ -1561,14 +1621,14 @@ export const getOSPProjectsApi = async (
                   gaugePosition: `${
                     (val.floatingip.used / val.floatingip.limit) * 100
                   }`,
-                  resourceUsuage: `${val.floatingip.used}/${val.floatingip.limit}`,
+                  resourceUsuage: `Allocated ${val.floatingip.used} of ${val.floatingip.limit}`,
                 },
                 {
                   resourceName: 'Sercurity Groups',
                   gaugePosition: `${
                     (val.security_group.used / val.security_group.limit) * 100
                   }`,
-                  resourceUsuage: `${val.security_group.used}/${val.security_group.limit}`,
+                  resourceUsuage: `Used ${val.security_group.used} of ${val.security_group.limit}`,
                 },
                 {
                   resourceName: 'Security Group Rules',
@@ -1577,37 +1637,157 @@ export const getOSPProjectsApi = async (
                       val.security_group_rule.limit) *
                     100
                   }`,
-                  resourceUsuage: `${val.security_group_rule.used}/${val.security_group_rule.limit}`,
+                  resourceUsuage: `Used ${val.security_group_rule.used} of ${val.security_group_rule.limit}`,
                 },
                 {
                   resourceName: 'Networks',
                   gaugePosition: `${
                     (val.network.used / val.network.limit) * 100
                   }`,
-                  resourceUsuage: `${val.network.used}/${val.network.limit}`,
+                  resourceUsuage: `Used ${val.network.used} of ${val.network.limit}`,
                 },
                 {
                   resourceName: 'Ports',
                   gaugePosition: `${(val.port.used / val.port.limit) * 100}`,
-                  resourceUsuage: `${val.port.used}/${val.port.limit}`,
+                  resourceUsuage: `Used ${val.port.used} of ${val.port.limit}`,
                 },
                 {
                   resourceName: 'Routers',
                   gaugePosition: `${
                     (val.router.used / val.router.limit) * 100
                   }`,
-                  resourceUsuage: `${val.router.used}/${val.router.limit}`,
+                  resourceUsuage: `Used ${val.router.used} of ${val.router.limit}`,
                 },
               ],
             },
           },
         }
+
         return conVertProjects[key]
       },
       {}
     )
 
-    return conVertProjects
+    let openStackProjects = null
+    function _powerStateCodeConvert(stateCode) {
+      const code = {
+        0: 'NoState',
+        1: 'Running',
+        2: '_Unused',
+        3: 'Paused',
+        4: 'Shutdown',
+        5: '_unused',
+        6: 'Crashed',
+        7: 'Suspended',
+      }
+      return code[stateCode]
+    }
+
+    _.map(instances, item => {
+      if (typeof item !== 'string') {
+        _.reduce(
+          item,
+          (_before, current) => {
+            let tempObjectToArray = []
+            Object.keys(current).forEach(key => {
+              const instance = current[key]
+              const projectName = instance['location']['project']['name']
+
+              const volumesAttached = _.map(
+                instance['os-extended-volumes:volumes_attached'],
+                volume => `${volume['id']}\n`
+              )
+
+              const securityGroups = _.reduce(
+                instance['security_groups'],
+                (_before, current) => {
+                  return {
+                    [current.name]: 'security_groups \n',
+                  }
+                },
+                {}
+              )
+
+              if (!(projectName in conVertProjects)) {
+                return
+              }
+              const flaverDetail = _.map(flaver, openstack => {
+                if (typeof item !== 'string') {
+                  return _.filter(_.values(openstack)[0], flaver => {
+                    return flaver.name == instance['flavor']['name']
+                  })[0]
+                }
+              })[0]
+
+              const filteredInstance = {
+                instanceId: instance['id'],
+                projectName: projectName,
+                instanceName: instance['name'],
+                imageName: 'cirro image',
+                ipAddress: instance['private_v4'],
+                flavor: instance['flavor']['name'],
+                keyPair: instance['key_name'],
+                availabilityZone: instance['location']['zone'],
+                status: instance['status'],
+                task: instance['task_state'] || '',
+                powerState: _powerStateCodeConvert(instance['power_state']),
+                age: instance['age'] || '',
+                flaverDetail: {
+                  id: flaverDetail?.['id'],
+                  ram: flaverDetail?.['ram'],
+                  vcpus: flaverDetail?.['vcpus'],
+                  size: flaverDetail?.['disk'],
+                },
+                detail: {
+                  overview: {
+                    name: instance['name'],
+                    id: instance['id'],
+                    description: instance['security_groups'][0]['description'],
+                    projectId: instance['location']['project']['id'],
+                    status: instance['status'],
+                    locked: 'False',
+                    availabilityZone: instance['az'],
+                    created: instance['created'],
+                    age: instance['age'] || '',
+                  },
+                  speces: {
+                    flavor: instance['flavor']['name'],
+                  },
+                  ipAddress: {
+                    demoNw: instance['networks']['demo-nw'],
+                  },
+                  securityGroups: securityGroups,
+                  metaData: instance['metadata'],
+                  volumesAttached: {
+                    attachedTo: volumesAttached,
+                  },
+                },
+              }
+              tempObjectToArray.push(filteredInstance)
+            })
+
+            openStackProjects = _.groupBy(tempObjectToArray, e => {
+              return e['projectName']
+            })
+
+            openStackProjects = _.map(
+              openStackProjects,
+              (instance, projactName) => {
+                return {
+                  ...conVertProjects[projactName],
+                  instances: instance,
+                }
+              }
+            )
+
+            return false
+          },
+          {}
+        )
+      }
+    })
+
+    return openStackProjects
   } catch (error) {
     throw error
   }

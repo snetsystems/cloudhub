@@ -16,7 +16,11 @@ import OpenStackPageHeader from 'src/hosts/components/OpenStackPageHeader'
 import {OPENSATCK_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Source, RemoteDataState} from 'src/types'
-import {OpenStackInstance, OpenStackProject} from 'src/hosts/types/openstack'
+import {
+  OpenStackInstance,
+  OpenStackInstanceFlaverDetail,
+  OpenStackProject,
+} from 'src/hosts/types/openstack'
 
 // constants
 import {
@@ -44,13 +48,7 @@ interface State {
   activeEditorTab: string
   isToolipActive: boolean
   targetPosition: {width: number; top: number; right: number; left: number}
-  tooltipNode?: {
-    instanceId: string
-    vcpus: number | null
-    ram: number | null
-    size: number | null
-    flavor: string | null
-  }
+  tooltipNode: Partial<OpenStackInstanceFlaverDetail>
 }
 
 @ErrorHandling
@@ -80,6 +78,7 @@ class OpenStackPageInstanceTable extends PureComponent<Props, State> {
       activeEditorTab: 'snet',
       isToolipActive: false,
       targetPosition: {width: 0, top: 0, right: 0, left: 0},
+      tooltipNode: {},
     }
   }
 
@@ -95,9 +94,8 @@ class OpenStackPageInstanceTable extends PureComponent<Props, State> {
         ipAddress,
         flavor,
         keyPair,
-        zone,
         status,
-        availability,
+        availabilityZone,
         task,
         powerState,
         age,
@@ -109,9 +107,8 @@ class OpenStackPageInstanceTable extends PureComponent<Props, State> {
         ipAddress +
         flavor +
         keyPair +
-        zone +
         status +
-        availability +
+        availabilityZone +
         task +
         powerState +
         age
@@ -306,8 +303,7 @@ class OpenStackPageInstanceTable extends PureComponent<Props, State> {
       FlavorWidth,
       KeyPairWidth,
       StatusWidth,
-      AvailabilityWidth,
-      ZoneWidth,
+      AvailabilityZoneWidth,
       TaskWidth,
       PowerStateWidth,
       AgeWidth,
@@ -365,24 +361,16 @@ class OpenStackPageInstanceTable extends PureComponent<Props, State> {
             <span className="icon caret-up" />
           </div>
           <div
-            onClick={this.updateSort('cpu')}
-            className={this.sortableClasses('cpu')}
-            style={{width: AvailabilityWidth}}
+            onClick={this.updateSort('availabilityZone')}
+            className={this.sortableClasses('availabilityZone')}
+            style={{width: AvailabilityZoneWidth}}
           >
-            Availability
+            Availability Zone
             <span className="icon caret-up" />
           </div>
           <div
-            onClick={this.updateSort('memory')}
-            className={this.sortableClasses('memory')}
-            style={{width: ZoneWidth}}
-          >
-            Zone
-            <span className="icon caret-up" />
-          </div>
-          <div
-            onClick={this.updateSort('disk')}
-            className={this.sortableClasses('disk')}
+            onClick={this.updateSort('task')}
+            className={this.sortableClasses('task')}
             style={{width: TaskWidth}}
           >
             Task
@@ -416,7 +404,7 @@ class OpenStackPageInstanceTable extends PureComponent<Props, State> {
       isToolipActive: true,
       targetPosition: {width, top, right, left},
       tooltipNode: {
-        instanceId: target.getAttribute('data-instance-id'),
+        id: target.getAttribute('data-instance-id'),
         vcpus: parseInt(target.getAttribute('data-vcpus')),
         ram: parseInt(target.getAttribute('data-ram')),
         size: parseInt(target.getAttribute('data-size')),

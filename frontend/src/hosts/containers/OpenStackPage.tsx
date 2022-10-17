@@ -58,7 +58,6 @@ import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {getCells} from 'src/hosts/utils/getCells'
 import {generateForHosts} from 'src/utils/tempVars'
 import {getDeep} from 'src/utils/wrappers'
-import {getOpenStackPageLayoutsByRole} from 'src/hosts/utils/'
 
 // api
 import {getLayouts} from 'src/hosts/apis'
@@ -66,6 +65,7 @@ import {getOpenStackProjectsAsync} from 'src/hosts/actions/inventoryTopology'
 
 // constants
 import Authorized, {ADMIN_ROLE} from 'src/auth/Authorized'
+import {getOpenStackPageLayoutsByRole} from 'src/hosts/constants/layout'
 
 interface Props extends ManualRefreshProps {
   meRole: string
@@ -138,9 +138,7 @@ export class OpenStackPage extends PureComponent<Props, State> {
   }
 
   public async componentDidMount() {
-    const {meRole} = this.props
-
-    const convertOpenStackLayouts = getOpenStackPageLayoutsByRole(meRole)
+    const convertOpenStackLayouts = getOpenStackPageLayoutsByRole
     const layoutResults = await getLayouts()
 
     const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
@@ -153,27 +151,29 @@ export class OpenStackPage extends PureComponent<Props, State> {
       })
       return
     }
+    try {
+      await this.fetchOpenStackData(layouts)
+      this.onSetFocusedProject()
+      this.onSetFocusedInstance()
 
-    await this.fetchOpenStackData(layouts)
-    this.onSetFocusedProject()
-    this.onSetFocusedInstance()
-
-    this.setState(state => {
-      return {
-        ...state,
+      this.setState(state => {
+        return {
+          ...state,
+          openStackPageStatus: RemoteDataState.Done,
+          openStackLayouts: convertOpenStackLayouts,
+        }
+      })
+    } catch (error) {
+      this.setState({
         openStackPageStatus: RemoteDataState.Done,
         openStackLayouts: convertOpenStackLayouts,
-      }
-    })
+      })
+    }
   }
 
   componentDidUpdate(_, prevState: Readonly<State>): void {
     const {focusedProject} = this.state
     const {focusedProject: preFocusedProject} = prevState
-
-    if (focusedProject !== preFocusedProject) {
-      this.onSetFocusedInstance()
-    }
   }
   public async UNSAFE_componentWillReceiveProps(nextProps: Props) {
     const {layouts, focusedInstance} = this.state
@@ -372,18 +372,18 @@ export class OpenStackPage extends PureComponent<Props, State> {
       source,
       handleGetOpenStackProjectsAsync,
       notify,
+      meRole,
     } = this.props
 
     try {
-      const tempNamespace = 'pj-demo'
+      const namespace = []
       let resProjects = await handleGetOpenStackProjectsAsync(
         this.salt.url,
         this.salt.token,
-        [{namespace: tempNamespace}]
+        namespace
       )
 
       const dbResp = []
-
       this.setState({
         cloudAccessInfos: dbResp,
         projects: resProjects,
@@ -401,13 +401,15 @@ export class OpenStackPage extends PureComponent<Props, State> {
   }
 
   private handleClickInstanceTableRow = (instance: OpenStackInstance) => () => {
-    this.onSetFocusedInstance(instance)
+    const {focusedProject} = this.state
+    this.onSetFocusedInstance({focusedInstance: instance, focusedProject})
   }
 
   private handleClickProjectTableRow = (
     focusedProject: OpenStackProject
   ) => () => {
     this.onSetFocusedProject(focusedProject)
+    this.onSetFocusedInstance({focusedProject})
   }
 
   private onSetFocusedProject = (focusedProject?) => {
@@ -424,20 +426,18 @@ export class OpenStackPage extends PureComponent<Props, State> {
     }
   }
 
-  private onSetFocusedInstance = (
-    focusedInstance?: Partial<OpenStackInstance>
-  ): void => {
-    const {focusedProject} = this.state
+  private onSetFocusedInstance = ({
+    focusedInstance = {},
+    focusedProject = {} as Partial<OpenStackProject>,
+  } = {}): void => {
+    const {projects} = this.state
+    const project = _.isEmpty(focusedProject) ? projects[0] : focusedProject
 
-    if (_.isEmpty(focusedInstance) && !_.isEmpty(focusedProject)) {
-      this.setState({
-        focusedInstance: focusedProject.instances[0],
-      })
-    } else {
-      this.setState({
-        focusedInstance: focusedInstance,
-      })
-    }
+    this.setState({
+      focusedInstance: _.isEmpty(focusedInstance)
+        ? project.instances[0]
+        : focusedInstance,
+    })
   }
 }
 

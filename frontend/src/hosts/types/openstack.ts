@@ -35,6 +35,13 @@ export interface OpenStackInstanceDetail {
     attachedTo: string
   }
 }
+export interface OpenStackInstanceFlaverDetail {
+  id: string
+  vcpus: number
+  ram: number
+  size: number
+  flavor: string
+}
 
 export interface OpenStackInstance {
   instanceId: string
@@ -44,12 +51,12 @@ export interface OpenStackInstance {
   flavor: string
   keyPair: string
   status: string
-  availability: string
-  zone: string
+  availabilityZone: string
   task: string
   powerState: string
   age: string
   detail: OpenStackInstanceDetail
+  flaverDetail: OpenStackInstanceFlaverDetail
 }
 
 export interface OpenStackPageTableProjectData {
@@ -84,4 +91,8 @@ export interface OpenStackLayoutCell {
   h: number
   minW?: number
   minH?: number
+}
+
+export type OpenStackApiFunctions = {
+  [x: string]: string[]
 }

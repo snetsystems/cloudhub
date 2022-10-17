@@ -35,11 +35,11 @@ const OpenStackPageInstanceTableRow: FunctionComponent<Props> = ({
     flavor,
     keyPair,
     status,
-    availability,
-    zone,
+    availabilityZone,
     task,
     powerState,
     age,
+    flaverDetail,
   } = instance
 
   const {
@@ -49,8 +49,7 @@ const OpenStackPageInstanceTableRow: FunctionComponent<Props> = ({
     FlavorWidth,
     KeyPairWidth,
     StatusWidth,
-    AvailabilityWidth,
-    ZoneWidth,
+    AvailabilityZoneWidth,
     TaskWidth,
     PowerStateWidth,
     AgeWidth,
@@ -83,10 +82,10 @@ const OpenStackPageInstanceTableRow: FunctionComponent<Props> = ({
       </div>
       <div className="hosts-table--td" style={{width: FlavorWidth}}>
         <span
-          data-instance-id={instanceId}
-          data-vcpus={1}
-          data-ram={1024}
-          data-size={500}
+          data-instance-id={flaverDetail.id}
+          data-vcpus={flaverDetail.vcpus}
+          data-ram={flaverDetail.ram}
+          data-size={flaverDetail.size}
           data-flavor={flavor}
           className={`hosts-table-item`}
           onMouseOver={onMouseOver}
@@ -101,12 +100,10 @@ const OpenStackPageInstanceTableRow: FunctionComponent<Props> = ({
       <div className="hosts-table--td" style={{width: StatusWidth}}>
         {status}
       </div>
-      <div className="hosts-table--td" style={{width: AvailabilityWidth}}>
-        {availability}
+      <div className="hosts-table--td" style={{width: AvailabilityZoneWidth}}>
+        {availabilityZone}
       </div>
-      <div className="hosts-table--td" style={{width: ZoneWidth}}>
-        {zone}
-      </div>
+
       <div className="hosts-table--td" style={{width: TaskWidth}}>
         {task}
       </div>
