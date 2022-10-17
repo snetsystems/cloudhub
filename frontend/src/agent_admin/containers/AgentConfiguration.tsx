@@ -123,7 +123,8 @@ interface Props {
   ) => Promise<AxiosResponse>
   getRunnerSaltCmdTelegrafPlugin: (
     saltMasterUrl: string,
-    saltMasterToken: string
+    saltMasterToken: string,
+    cmd: string
   ) => Promise<AxiosResponse>
   runLocalServiceTestTelegraf: (
     saltMasterUrl: string,
@@ -305,16 +306,23 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       saltMasterToken,
       getRunnerSaltCmdTelegrafPlugin,
     } = this.props
+    const telegrafPlugin = await Promise.all([
+      getRunnerSaltCmdTelegrafPlugin(
+        saltMasterUrl,
+        saltMasterToken,
+        'telegraf --input-list'
+      ),
+      getRunnerSaltCmdTelegrafPlugin(
+        saltMasterUrl,
+        saltMasterToken,
+        'telegraf --output-list'
+      ),
+    ])
 
-    const telegrafPlugin = await getRunnerSaltCmdTelegrafPlugin(
-      saltMasterUrl,
-      saltMasterToken
-    )
-
-    const inputPlugin = _.get(telegrafPlugin, 'return')[0]
+    const inputPlugin = _.get(telegrafPlugin[0], 'return')[0]
       .replace(/ /g, '')
       .split('\n')
-    const outputPlugin = _.get(telegrafPlugin, 'return')[1]
+    const outputPlugin = _.get(telegrafPlugin[1], 'return')[0]
       .replace(/ /g, '')
       .split('\n')
 

@@ -544,10 +544,15 @@ export const getRunnerSaltCmdDirectoryAsync = (
 
 export const getRunnerSaltCmdTelegrafPluginAsync = (
   pUrl: string,
-  pToken: string
+  pToken: string,
+  pCmd: string
 ) => async (dispatch: Dispatch<Action>) => {
   try {
-    const telegrafPlugin = await getRunnerSaltCmdTelegrafPlugin(pUrl, pToken)
+    const telegrafPlugin = await getRunnerSaltCmdTelegrafPlugin(
+      pUrl,
+      pToken,
+      pCmd
+    )
 
     dispatch(loadGetRunnerSaltCmdTelegrafPlugin())
     return yaml.safeLoad(telegrafPlugin.data)
