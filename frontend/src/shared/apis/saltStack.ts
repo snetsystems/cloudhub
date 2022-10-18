@@ -649,7 +649,8 @@ export async function getRunnerSaltCmdTelegraf(
 
 export async function getRunnerSaltCmdTelegrafPlugin(
   pUrl: string,
-  pToken: string
+  pToken: string,
+  pCmd: string
 ) {
   try {
     const params = [
@@ -659,16 +660,7 @@ export async function getRunnerSaltCmdTelegrafPlugin(
         fun: 'salt.cmd',
         kwarg: {
           fun: 'cmd.shell',
-          cmd: 'telegraf --input-list',
-        },
-      },
-      {
-        token: pToken,
-        client: 'runner',
-        fun: 'salt.cmd',
-        kwarg: {
-          fun: 'cmd.shell',
-          cmd: 'telegraf --output-list',
+          cmd: pCmd,
         },
       },
     ]

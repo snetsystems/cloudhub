@@ -11,9 +11,7 @@ export const fixedDecimalPercentage = (
   value: number,
   digits: number
 ): number | string => {
-  return value === null || value === undefined
-    ? ''
-    : `${value.toFixed(digits)} %`
+  return value > -1 ? `${value.toFixed(digits)} %` : `0.00 %`
 }
 
 export const toFixed = (

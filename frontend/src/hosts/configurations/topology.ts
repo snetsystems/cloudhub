@@ -1299,7 +1299,7 @@ export const detectedHostsStatus = function (
                     childElement.removeAttribute('class')
                     childElement.classList.add(
                       'time-series-status',
-                      getTimeSeriesHostIndicator(findHost.cpu)
+                      getTimeSeriesHostIndicator(findHost, 'cpu')
                     )
                   } else if (statusKind === 'memory') {
                     childElement.setAttribute(
@@ -1318,7 +1318,7 @@ export const detectedHostsStatus = function (
                     childElement.removeAttribute('class')
                     childElement.classList.add(
                       'time-series-status',
-                      getTimeSeriesHostIndicator(findHost.memory)
+                      getTimeSeriesHostIndicator(findHost, 'memory')
                     )
                   } else if (statusKind === 'disk') {
                     childElement.setAttribute(
@@ -1337,7 +1337,7 @@ export const detectedHostsStatus = function (
                     childElement.removeAttribute('class')
                     childElement.classList.add(
                       'time-series-status',
-                      getTimeSeriesHostIndicator(findHost.disk)
+                      getTimeSeriesHostIndicator(findHost, 'disk')
                     )
                   }
                 })

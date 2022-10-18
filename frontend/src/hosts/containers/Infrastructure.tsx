@@ -14,10 +14,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import GraphTips from 'src/shared/components/GraphTips'
 import HostsPage from 'src/hosts/containers/HostsPage'
-import VMHostPage from 'src/hosts/containers/VMHostsPage'
 import InventoryTopology from 'src/hosts/containers/InventoryTopology'
-import KubernetesPage from 'src/hosts/containers/KubernetesPage'
-import OpenStackPage from 'src/hosts/containers/OpenStackPage'
 
 // Actions
 import {
@@ -94,8 +91,7 @@ class Infrastructure extends PureComponent<Props, State> {
   }
 
   public static getDerivedStateFromProps(nextProps: Props) {
-    const {source, router, links} = nextProps
-    const {addons} = links
+    const {router} = nextProps
 
     const infraTab = _.get(router.params, 'infraTab', 'topology')
     const defaultHeaderRadioButtons = [
@@ -117,69 +113,6 @@ class Infrastructure extends PureComponent<Props, State> {
 
     const headerRadioButtons = [...defaultHeaderRadioButtons]
 
-    const isUsingVsphere = !_.isEmpty(
-      _.find(addons, addon => {
-        const {name, url} = addon
-        return name === 'vsphere' && url === 'on'
-      })
-    )
-
-    const isUsingKubernetes = !_.isEmpty(
-      _.find(addons, addon => {
-        const {name, url} = addon
-        return name === 'k8s' && url === 'on'
-      })
-    )
-
-    const isUsingOpenStack = !_.isEmpty(
-      _.find(addons, addon => {
-        const {name, url} = addon
-        return name === 'osp' && url === 'on'
-      })
-    )
-
-    if (isUsingVsphere) {
-      headerRadioButtons.push({
-        id: 'hostspage-tab-VMware',
-        titleText: 'VMware',
-        value: 'vmware',
-        active: 'vmware',
-        label: 'VMware',
-      })
-    }
-
-    if (isUsingKubernetes) {
-      headerRadioButtons.push({
-        id: 'hostspage-tab-Kubernetes',
-        titleText: 'Kubernetes',
-        value: 'kubernetes',
-        active: 'kubernetes',
-        label: 'Kubernetes',
-      })
-    }
-
-    if (isUsingOpenStack) {
-      headerRadioButtons.push({
-        id: 'hostspage-tab-OpenStack',
-        titleText: 'OpenStack',
-        value: 'openstack',
-        active: 'openstack',
-        label: 'OpenStack',
-      })
-    }
-    let isRedirect = false
-
-    if (
-      (!isUsingVsphere && infraTab === 'vmware') ||
-      (!isUsingKubernetes && infraTab === 'kubernetes')
-    ) {
-      isRedirect = true
-    }
-
-    if (isRedirect) {
-      router.replace(`/sources/${source.id}/infrastructure/topology`)
-    }
-
     return {
       activeTab: infraTab,
       headerRadioButtons,
@@ -193,7 +126,6 @@ class Infrastructure extends PureComponent<Props, State> {
       onManualRefresh,
       inPresentationMode,
       source,
-      handleClearTimeout,
     } = this.props
     const {activeTab, timeRange, headerRadioButtons} = this.state
 
@@ -248,15 +180,6 @@ class Infrastructure extends PureComponent<Props, State> {
               //@ts-ignore
               <HostsPage {...this.props} timeRange={timeRange} />
             )}
-            {activeTab === 'vmware' && (
-              //@ts-ignore
-              <VMHostPage
-                source={source}
-                manualRefresh={manualRefresh}
-                timeRange={timeRange}
-                handleClearTimeout={handleClearTimeout}
-              />
-            )}
             {activeTab === 'topology' && (
               //@ts-ignore
               <InventoryTopology
@@ -264,24 +187,6 @@ class Infrastructure extends PureComponent<Props, State> {
                 manualRefresh={manualRefresh}
                 autoRefresh={autoRefresh}
                 timeRange={timeRange}
-              />
-            )}
-            {activeTab === 'kubernetes' && (
-              //@ts-ignore
-              <KubernetesPage
-                source={source}
-                manualRefresh={manualRefresh}
-                timeRange={timeRange}
-                autoRefresh={autoRefresh}
-              />
-            )}
-            {activeTab === 'openstack' && (
-              //@ts-ignore
-              <OpenStackPage
-                source={source}
-                manualRefresh={manualRefresh}
-                timeRange={timeRange}
-                autoRefresh={autoRefresh}
               />
             )}
           </>
