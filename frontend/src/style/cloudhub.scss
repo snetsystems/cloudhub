@@ -96,6 +96,7 @@
 @import 'src/shared/components/Spinner';
 @import 'src/shared/components/Shell.scss';
 @import 'src/shared/components/ResizableDock.scss';
+@import 'components/openstack-gauge-chart.scss';
 
 // Reusable UI Components
 @import '../reusable_ui/components/panel/Panel.scss';
@@ -140,7 +141,8 @@
 
 // Custom
 @import 'src/hosts/components/host.scss';
-@import 'src/hosts/components/vsphere-icon.scss';
+@import 'src/clouds/components/clouds.scss';
+@import 'src/clouds/components/vsphere-icon.scss';
 @import 'custom/snetsystem_custom.scss';
 @import 'src/hosts/components/graph.scss';
 @import 'components/tooltip-button';

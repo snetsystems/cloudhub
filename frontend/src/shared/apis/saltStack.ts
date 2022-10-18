@@ -7,6 +7,9 @@ import {createActivityLog} from 'src/shared/apis'
 // Types
 import {Ipmi, IpmiCell} from 'src/types'
 import {CloudServiceProvider, CSPFileWriteParam} from 'src/hosts/types'
+import {SUPERADMIN_ROLE} from 'src/auth/Authorized'
+import {OpenStackApiFunctions} from 'src/hosts/types/openstack'
+
 interface Params {
   token?: string
   client?: string
@@ -566,7 +569,7 @@ export async function getLocalFileWrite(
   pToken: string,
   pMinionId: string,
   pScript: string,
-  pDirPath = '/etc/telegraf/telegraf.conf'
+  pConfPath = '/etc/telegraf/telegraf.conf'
 ) {
   try {
     const params: Params = {
@@ -575,7 +578,7 @@ export async function getLocalFileWrite(
       tgt_type: '',
       tgt: '',
       kwarg: {
-        path: pDirPath,
+        path: pConfPath,
         args: [pScript],
       },
     }
@@ -647,7 +650,8 @@ export async function getRunnerSaltCmdTelegraf(
 
 export async function getRunnerSaltCmdTelegrafPlugin(
   pUrl: string,
-  pToken: string
+  pToken: string,
+  pCmd: string
 ) {
   try {
     const params = [
@@ -657,16 +661,7 @@ export async function getRunnerSaltCmdTelegrafPlugin(
         fun: 'salt.cmd',
         kwarg: {
           fun: 'cmd.shell',
-          cmd: 'telegraf --input-list',
-        },
-      },
-      {
-        token: pToken,
-        client: 'runner',
-        fun: 'salt.cmd',
-        kwarg: {
-          fun: 'cmd.shell',
-          cmd: 'telegraf --output-list',
+          cmd: pCmd,
         },
       },
     ]
@@ -1594,6 +1589,128 @@ export async function getRunnerCloudActionListInstances(
 
     const result = await apiRequestMulti(pUrl, params, 'application/x-yaml')
 
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getRunnerCloudActionListNodesFull(
+  pUrl: string,
+  pToken: string,
+  pCSPs: any[]
+): Promise<any> {
+  try {
+    let params = []
+    _.map(pCSPs, pCSP => {
+      const param = {
+        token: pToken,
+        eauth: 'pam',
+        client: 'runner',
+        fun: 'cloud.action',
+        func: 'list_nodes_full',
+        provider: pCSP.namespace,
+        all_projects: pCSP.role === SUPERADMIN_ROLE ? true : false,
+      }
+      params = [...params, param]
+    })
+
+    const result = await apiRequestMulti(pUrl, params, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getRunnerCloudActionAvailSizes(
+  pUrl: string,
+  pToken: string,
+  pCSPs: any[]
+): Promise<any> {
+  try {
+    let params = []
+    _.map(pCSPs, pCSP => {
+      const param = {
+        token: pToken,
+        eauth: 'pam',
+        client: 'runner',
+        fun: 'cloud.action',
+        func: 'avail_sizes',
+        provider: pCSP.namespace,
+      }
+      params = [...params, param]
+    })
+
+    const result = await apiRequestMulti(pUrl, params, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+export async function getRunnerCloudActionOSPProject(
+  pUrl: string,
+  pToken: string,
+  pCsps: any[],
+  pCallList: OpenStackApiFunctions
+): Promise<any> {
+  try {
+    let paramsList = []
+    const callList = (callType, saltFunction, pCSP) => {
+      const defaultOptions = {
+        func: saltFunction,
+        provider: pCSP.namespace,
+      }
+      switch (callType) {
+        case 'project': {
+          return {
+            ...defaultOptions,
+            kwarg: {
+              project: pCSP.namespace,
+            },
+          }
+        }
+
+        case 'instance': {
+          return {
+            ...defaultOptions,
+            all_projects: pCSP.role === SUPERADMIN_ROLE ? true : false,
+          }
+        }
+        case 'flaver': {
+          return {
+            ...defaultOptions,
+          }
+        }
+        default:
+          break
+      }
+    }
+    _.map(pCsps, pCSP => {
+      _.map(pCallList, (saltFunctions, functionType) => {
+        _.map(saltFunctions, saltFunction => {
+          const option = callList(functionType, saltFunction, pCSP)
+          const param = {
+            token: pToken,
+            eauth: 'pam',
+            client: 'runner',
+            fun: 'cloud.action',
+            ...option,
+          }
+          paramsList = [...paramsList, param]
+        })
+      })
+    })
+
+    const requestList = _.map(paramsList, params =>
+      apiRequest(pUrl, pToken, params, 'application/x-yaml')
+    )
+
+    const result = await Promise.all(requestList)
     return result
   } catch (error) {
     console.error(error)

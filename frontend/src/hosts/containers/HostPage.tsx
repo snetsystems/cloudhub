@@ -1,4 +1,5 @@
 import React, {PureComponent} from 'react'
+import _ from 'lodash'
 import {connect} from 'react-redux'
 import classnames from 'classnames'
 
@@ -16,6 +17,7 @@ import {
   loadHostsLinks,
 } from 'src/hosts/apis'
 import {EMPTY_LINKS} from 'src/dashboards/constants/dashboardHeader'
+import {notIncludeApps} from 'src/hosts/constants/apps'
 
 import {
   setAutoRefresh,
@@ -68,18 +70,25 @@ class HostPage extends PureComponent<Props, State> {
       data: {layouts},
     } = await getLayouts()
 
+    const filterLayouts = _.filter(
+      layouts,
+      m => !_.includes(notIncludeApps, m.app)
+    )
+
     // fetching layouts and mappings can be done at the same time
-    const {host, measurements} = await this.fetchHostsAndMeasurements(layouts)
+    const {host, measurements} = await this.fetchHostsAndMeasurements(
+      filterLayouts
+    )
 
     const focusedApp = location.query.app
 
-    const filteredLayouts = layouts
-      .filter(layout => {
+    const filteredLayouts = filterLayouts
+      .filter(filterLayouts => {
         return focusedApp
-          ? layout.app === focusedApp
+          ? filterLayouts.app === focusedApp
           : host.apps &&
-              host.apps.includes(layout.app) &&
-              measurements.includes(layout.measurement)
+              host.apps.includes(filterLayouts.app) &&
+              measurements.includes(filterLayouts.measurement)
       })
       .sort((x, y) => {
         return x.measurement < y.measurement

@@ -1,7 +1,8 @@
+// libraries
 import _ from 'lodash'
 import CryptoJS from 'crypto-js'
 
-//types
+// types
 import {CloudServiceProvider, CSPAccessObject, Instance} from 'src/hosts/types'
 
 const detailsValueChecker = (

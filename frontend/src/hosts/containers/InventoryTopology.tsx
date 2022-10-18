@@ -64,6 +64,7 @@ import {
   notifyTopologyExported,
   notifyTopologyExportedFailed,
 } from 'src/shared/copy/notifications'
+import {notIncludeApps} from 'src/hosts/constants/apps'
 
 // Types
 import {
@@ -96,7 +97,6 @@ import {
   getIpmiStatusAsync,
   setIpmiStatusAsync,
   getIpmiSensorDataAsync,
-  getMinionKeyAcceptedListAsync,
   loadCloudServiceProvidersAsync,
   createCloudServiceProviderAsync,
   updateCloudServiceProviderAsync,
@@ -128,6 +128,7 @@ import {
   createInventoryTopology,
   updateInventoryTopology,
   setRunnerFileRemoveApi,
+  getMinionKeyAcceptedList,
 } from 'src/hosts/apis'
 
 // Utils
@@ -258,10 +259,6 @@ interface Props {
   notify: (message: Notification | NotificationFunc) => void
   onManualRefresh: () => void
   handleGetInventoryTopology: (links: Links) => Promise<any>
-  handleGetMinionKeyAcceptedList: (
-    saltMasterUrl: string,
-    saltMasterToken: string
-  ) => Promise<string[]>
   handleGetIpmiStatus: (
     saltMasterUrl: string,
     saltMasterToken: string,
@@ -1012,13 +1009,17 @@ export class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private getIpmiTargetList = async () => {
-    const minionList: string[] = await this.props.handleGetMinionKeyAcceptedList(
-      this.salt.url,
-      this.salt.token
-    )
+    try {
+      const minionList: string[] = await getMinionKeyAcceptedList(
+        this.salt.url,
+        this.salt.token
+      )
 
-    if (minionList) {
-      this.setState({minionList})
+      if (minionList) {
+        this.setState({minionList})
+      }
+    } catch (error) {
+      console.error(error)
     }
   }
 
@@ -1247,7 +1248,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
           )
 
           const securityGroupIds = _.reduce(
-            getData[0].SecurityGroups,
+            _.get(getData[0], 'SecurityGroups'),
             (groupIds: string[], current) => {
               groupIds = [...groupIds, current.GroupId]
 
@@ -1259,7 +1260,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
           this.getAWSSecurity(newCloudAccessInfos, securityGroupIds)
 
           const volumeGroupIds = _.reduce(
-            getData[0].BlockDeviceMappings,
+            _.get(getData[0], 'BlockDeviceMappings'),
             (groupIds: string[], current) => {
               groupIds = [...groupIds, current.Ebs.VolumeId]
 
@@ -2630,10 +2631,14 @@ export class InventoryTopology extends PureComponent<Props, State> {
     const tempVars = generateForHosts(source)
 
     const fetchMeasurements = getMeasurementsForHost(source, hostID)
+    const filterLayouts = _.filter(
+      layouts,
+      m => !_.includes(notIncludeApps, m.app)
+    )
     const fetchHosts = getAppsForHost(
       source.links.proxy,
       hostID,
-      layouts,
+      filterLayouts,
       source.telegraf,
       tempVars
     )
@@ -2677,12 +2682,15 @@ export class InventoryTopology extends PureComponent<Props, State> {
     const {source} = this.props
 
     const tempVars = generateForHosts(source)
-
     const fetchMeasurements = getMeasurementsForEtc(source, hostID)
+    const filterLayouts = _.filter(layouts, m =>
+      _.includes(['cloudwatch_elb'], m.app)
+    )
+
     const fetchHosts = getAppsForEtc(
       source.links.proxy,
       hostID,
-      layouts,
+      filterLayouts,
       source.telegraf,
       tempVars
     )
@@ -2731,19 +2739,32 @@ export class InventoryTopology extends PureComponent<Props, State> {
     pInstance: Instance
   ) {
     const {source} = this.props
-    const {selected} = this.state
+    const {selected, focusedInstance} = this.state
 
     const tempVars = generateForHosts(source)
-
     const fetchMeasurements = getMeasurementsForInstance(
       source,
       pInstance,
       selected
     )
+    const filterLayouts = (() => {
+      if (focusedInstance.provider === CloudServiceProvider.AWS) {
+        return _.filter(layouts, m =>
+          _.includes(['cloudwatch', 'system', 'win_system'], m.app)
+        )
+      } else if (focusedInstance.provider === CloudServiceProvider.GCP) {
+        return _.filter(layouts, m =>
+          _.includes(['stackdriver', 'system', 'win_system'], m.app)
+        )
+      } else {
+        return layouts
+      }
+    })()
+
     const fetchInstances = getAppsForInstance(
       source.links.proxy,
       pInstance,
-      layouts,
+      filterLayouts,
       source.telegraf,
       tempVars,
       selected
@@ -3027,7 +3048,6 @@ const mapStateToProps = ({links, auth}) => {
 
 const mapDispatchToProps = {
   handleGetInventoryTopology: loadInventoryTopologyAsync,
-  handleGetMinionKeyAcceptedList: getMinionKeyAcceptedListAsync,
   handleGetIpmiStatus: getIpmiStatusAsync,
   handleSetIpmiStatusAsync: setIpmiStatusAsync,
   handleGetIpmiSensorDataAsync: getIpmiSensorDataAsync,

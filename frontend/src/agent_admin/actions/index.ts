@@ -437,7 +437,7 @@ export const getLocalFileWriteAsync = (
   pToken: string,
   pMinionId: string,
   pScript: string,
-  pDirPath?: string
+  pConfPath?: string
 ) => async (dispatch: Dispatch<Action>) => {
   try {
     const getLocalFileWritePromise = await getLocalFileWrite(
@@ -445,7 +445,7 @@ export const getLocalFileWriteAsync = (
       pToken,
       pMinionId,
       pScript,
-      pDirPath
+      pConfPath
     )
     dispatch(cmdGetLocalFileWrite())
     return getLocalFileWritePromise
@@ -580,10 +580,15 @@ export const getLocalSaltCmdDirectoryAsync = (
 
 export const getRunnerSaltCmdTelegrafPluginAsync = (
   pUrl: string,
-  pToken: string
+  pToken: string,
+  pCmd: string
 ) => async (dispatch: Dispatch<Action>) => {
   try {
-    const telegrafPlugin = await getRunnerSaltCmdTelegrafPlugin(pUrl, pToken)
+    const telegrafPlugin = await getRunnerSaltCmdTelegrafPlugin(
+      pUrl,
+      pToken,
+      pCmd
+    )
 
     dispatch(loadGetRunnerSaltCmdTelegrafPlugin())
     return yaml.safeLoad(telegrafPlugin.data)

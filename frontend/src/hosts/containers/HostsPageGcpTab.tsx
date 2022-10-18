@@ -48,6 +48,7 @@ import {
 } from 'src/shared/copy/notifications'
 import {AddonType} from 'src/shared/constants'
 import {agentFilter} from 'src/hosts/constants/topology'
+import {notIncludeAppsGCP} from 'src/hosts/constants/apps'
 
 //const
 import {HANDLE_HORIZONTAL} from 'src/shared/constants'
@@ -582,10 +583,14 @@ export class HostsPageGcpTab extends PureComponent<Props, State> {
       pInstance,
       selectedAgent
     )
+    const filterLayouts = _.filter(
+      layouts,
+      m => !_.includes(notIncludeAppsGCP, m.app)
+    )
     const fetchInstances = getAppsForInstance(
       source.links.proxy,
       pInstance,
-      layouts,
+      filterLayouts,
       source.telegraf,
       tempVars,
       selectedAgent
@@ -698,10 +703,14 @@ export class HostsPageGcpTab extends PureComponent<Props, State> {
         throw new Error(hostsError)
       }
 
+      const filterLayouts = _.filter(
+        layouts,
+        m => !_.includes(notIncludeAppsGCP, m.app)
+      )
       const newCloudHostsObject: CloudHosts = await getAppsForInstances(
         source.links.proxy,
         instancesObject,
-        layouts,
+        filterLayouts,
         source.telegraf,
         tempVars,
         activeCspTab
