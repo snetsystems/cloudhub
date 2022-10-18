@@ -416,4 +416,8 @@
   &.floppy-disk::before {
     content: '\e937';
   }
+
+  &.cloud::before {
+    content: '\e9c1';
+  }
 }

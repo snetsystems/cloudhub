@@ -97,7 +97,6 @@ import {
   getIpmiStatusAsync,
   setIpmiStatusAsync,
   getIpmiSensorDataAsync,
-  getMinionKeyAcceptedListAsync,
   loadCloudServiceProvidersAsync,
   createCloudServiceProviderAsync,
   updateCloudServiceProviderAsync,
@@ -129,6 +128,7 @@ import {
   createInventoryTopology,
   updateInventoryTopology,
   setRunnerFileRemoveApi,
+  getMinionKeyAcceptedList,
 } from 'src/hosts/apis'
 
 // Utils
@@ -259,10 +259,6 @@ interface Props {
   notify: (message: Notification | NotificationFunc) => void
   onManualRefresh: () => void
   handleGetInventoryTopology: (links: Links) => Promise<any>
-  handleGetMinionKeyAcceptedList: (
-    saltMasterUrl: string,
-    saltMasterToken: string
-  ) => Promise<string[]>
   handleGetIpmiStatus: (
     saltMasterUrl: string,
     saltMasterToken: string,
@@ -1013,13 +1009,17 @@ export class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private getIpmiTargetList = async () => {
-    const minionList: string[] = await this.props.handleGetMinionKeyAcceptedList(
-      this.salt.url,
-      this.salt.token
-    )
+    try {
+      const minionList: string[] = await getMinionKeyAcceptedList(
+        this.salt.url,
+        this.salt.token
+      )
 
-    if (minionList) {
-      this.setState({minionList})
+      if (minionList) {
+        this.setState({minionList})
+      }
+    } catch (error) {
+      console.error(error)
     }
   }
 
@@ -3048,7 +3048,6 @@ const mapStateToProps = ({links, auth}) => {
 
 const mapDispatchToProps = {
   handleGetInventoryTopology: loadInventoryTopologyAsync,
-  handleGetMinionKeyAcceptedList: getMinionKeyAcceptedListAsync,
   handleGetIpmiStatus: getIpmiStatusAsync,
   handleSetIpmiStatusAsync: setIpmiStatusAsync,
   handleGetIpmiSensorDataAsync: getIpmiSensorDataAsync,

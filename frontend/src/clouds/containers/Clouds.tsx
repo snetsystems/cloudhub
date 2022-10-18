@@ -9,12 +9,14 @@ import AutoRefreshDropdown from 'src/shared/components/dropdown_auto_refresh/Aut
 import ManualRefresh, {
   ManualRefreshProps,
 } from 'src/shared/components/ManualRefresh'
-import {Button, ButtonShape, IconFont, Page, Radio} from 'src/reusable_ui'
+import {Button, ButtonShape, IconFont, Page} from 'src/reusable_ui'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import TimeRangeDropdown from 'src/shared/components/TimeRangeDropdown'
 import GraphTips from 'src/shared/components/GraphTips'
-import HostsPage from 'src/hosts/containers/HostsPage'
-import InventoryTopology from 'src/hosts/containers/InventoryTopology'
+
+import VMHostPage from 'src/clouds/containers/VMHostsPage'
+import KubernetesPage from 'src/clouds/containers/KubernetesPage'
+import OpenStackPage from 'src/clouds/containers/OpenStackPage'
 
 // Actions
 import {
@@ -33,11 +35,6 @@ import {
 } from 'src/types'
 import {timeRanges} from 'src/shared/data/timeRanges'
 import * as AppActions from 'src/types/actions/app'
-
-import {
-  loadCloudServiceProvidersAsync,
-  getAWSInstancesAsync,
-} from 'src/hosts/actions'
 
 // Utils
 import {RouterState, InjectedRouter} from 'react-router'
@@ -61,25 +58,15 @@ interface Props extends ManualRefreshProps {
 
 interface State {
   timeRange: TimeRange
-  activeTab: string
-  headerRadioButtons: {
-    id: string
-    titleText: string
-    value: string
-    active: string
-    label: string
-  }[]
 }
 
 @ErrorHandling
-class Infrastructure extends PureComponent<Props, State> {
+class Clouds extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
 
     this.state = {
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
-      activeTab: 'topology',
-      headerRadioButtons: [],
     }
   }
 
@@ -90,35 +77,6 @@ class Infrastructure extends PureComponent<Props, State> {
     onChooseAutoRefresh(milliseconds)
   }
 
-  public static getDerivedStateFromProps(nextProps: Props) {
-    const {router} = nextProps
-
-    const infraTab = _.get(router.params, 'infraTab', 'topology')
-    const defaultHeaderRadioButtons = [
-      {
-        id: 'hostspage-tab-InventoryTopology',
-        titleText: 'InventoryTopology',
-        value: 'topology',
-        active: 'topology',
-        label: 'Topology',
-      },
-      {
-        id: 'hostspage-tab-Host',
-        titleText: 'Host',
-        value: 'host',
-        active: 'host',
-        label: 'Host',
-      },
-    ]
-
-    const headerRadioButtons = [...defaultHeaderRadioButtons]
-
-    return {
-      activeTab: infraTab,
-      headerRadioButtons,
-    }
-  }
-
   public render() {
     const {
       autoRefresh,
@@ -126,36 +84,29 @@ class Infrastructure extends PureComponent<Props, State> {
       onManualRefresh,
       inPresentationMode,
       source,
+      handleClearTimeout,
+      router,
     } = this.props
-    const {activeTab, timeRange, headerRadioButtons} = this.state
+    const {timeRange} = this.state
 
     return (
       <Page className="hosts-list-page">
         <Page.Header inPresentationMode={inPresentationMode}>
           <Page.Header.Left>
-            <Page.Title title={'Infrastructure'} />
+            <Page.Title
+              title={
+                _.get(router.params, 'cloud') === 'vmware'
+                  ? 'VMware'
+                  : _.get(router.params, 'cloud') === 'kubernetes'
+                  ? 'Kubernetes'
+                  : _.get(router.params, 'cloud') === 'openstack'
+                  ? 'Openstack'
+                  : 'Clouds'
+              }
+            />
           </Page.Header.Left>
-          <Page.Header.Center widthPixels={headerRadioButtons.length * 90}>
-            <div className="radio-buttons radio-buttons--default radio-buttons--sm radio-buttons--stretch">
-              {headerRadioButtons.map(rBtn => {
-                return (
-                  <Radio.Button
-                    key={rBtn.titleText}
-                    id={rBtn.id}
-                    titleText={rBtn.titleText}
-                    value={rBtn.value}
-                    active={activeTab === rBtn.active}
-                    onClick={this.onChooseActiveTab}
-                  >
-                    {rBtn.label}
-                  </Radio.Button>
-                )
-              })}
-            </div>
-          </Page.Header.Center>
-
           <Page.Header.Right showSourceIndicator={true}>
-            {activeTab !== 'topology' && <GraphTips />}
+            <GraphTips />
             <AutoRefreshDropdown
               selected={autoRefresh}
               onChoose={this.handleChooseAutoRefresh}
@@ -174,19 +125,34 @@ class Infrastructure extends PureComponent<Props, State> {
             />
           </Page.Header.Right>
         </Page.Header>
-        <Page.Contents scrollable={true} fullWidth={activeTab !== 'host'}>
+        <Page.Contents scrollable={true} fullWidth={true}>
           <>
-            {activeTab === 'host' && (
+            {_.get(router.params, 'cloud') === 'vmware' && (
               //@ts-ignore
-              <HostsPage {...this.props} timeRange={timeRange} />
-            )}
-            {activeTab === 'topology' && (
-              //@ts-ignore
-              <InventoryTopology
+              <VMHostPage
                 source={source}
                 manualRefresh={manualRefresh}
-                autoRefresh={autoRefresh}
                 timeRange={timeRange}
+                autoRefresh={autoRefresh}
+                handleClearTimeout={handleClearTimeout}
+              />
+            )}
+            {_.get(router.params, 'cloud') === 'kubernetes' && (
+              //@ts-ignore
+              <KubernetesPage
+                source={source}
+                manualRefresh={manualRefresh}
+                timeRange={timeRange}
+                autoRefresh={autoRefresh}
+              />
+            )}
+            {_.get(router.params, 'cloud') === 'openstack' && (
+              //@ts-ignore
+              <OpenStackPage
+                source={source}
+                manualRefresh={manualRefresh}
+                timeRange={timeRange}
+                autoRefresh={autoRefresh}
               />
             )}
           </>
@@ -206,11 +172,6 @@ class Infrastructure extends PureComponent<Props, State> {
 
   private handleClickPresentationButton = (): void => {
     this.props.handleClickPresentationButton()
-  }
-
-  private onChooseActiveTab = (activeTab: string): void => {
-    const {router, source} = this.props
-    router.push(`/sources/${source.id}/infrastructure/${activeTab}`)
   }
 }
 
@@ -236,14 +197,6 @@ const mdtp = dispatch => ({
     dispatch
   ),
   notify: bindActionCreators(notifyAction, dispatch),
-  handleLoadCspsAsync: bindActionCreators(
-    loadCloudServiceProvidersAsync,
-    dispatch
-  ),
-  handleGetAWSInstancesAsync: bindActionCreators(
-    getAWSInstancesAsync,
-    dispatch
-  ),
 })
 
-export default connect(mstp, mdtp, null)(ManualRefresh<Props>(Infrastructure))
+export default connect(mstp, mdtp, null)(ManualRefresh<Props>(Clouds))

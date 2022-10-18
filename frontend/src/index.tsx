@@ -30,6 +30,7 @@ import {StatusPage} from 'src/status'
 import DataExplorerPage from 'src/data_explorer'
 import {DashboardsPage, DashboardPage} from 'src/dashboards'
 import {Infrastructure, HostPage} from 'src/hosts'
+import {Clouds} from 'src/clouds'
 import {Applications} from 'src/applications'
 import {LogsPage} from 'src/logs'
 import {ActivityLogsPage} from 'src/activitylogs'
@@ -66,7 +67,7 @@ import {
   RequestPauseVcenterAction,
   getVSphereInfoSaltApiAsync,
   ActionTypes as vmHostActionType,
-} from 'src/hosts/actions'
+} from 'src/clouds/actions'
 
 import {TimeMachineContextProvider} from 'src/shared/utils/TimeMachineContext'
 
@@ -81,7 +82,7 @@ import {setCustomAutoRefreshOptions} from './shared/components/dropdown_auto_ref
 
 import {AddonType} from 'src/shared/constants'
 import {Addon} from 'src/types/auth'
-import {reducerVSphere, ResponseVSphere} from './hosts/types'
+import {reducerVSphere, ResponseVSphere} from './clouds/types'
 
 const errorsQueue = []
 
@@ -257,6 +258,15 @@ class Root extends PureComponent<Record<string, never>, State> {
                 <Route
                   path="infrastructure/details/:hostID"
                   component={HostPage}
+                />
+                <Route
+                  path="clouds/:cloud"
+                  component={props => (
+                    <Clouds
+                      {...props}
+                      handleClearTimeout={this.handleClearTimeout}
+                    />
+                  )}
                 />
                 <Route path="applications" component={Applications} />
                 <Route path="alerts" component={AlertsApp} />

@@ -67,7 +67,6 @@ class SideNav extends PureComponent<Props> {
       logoutLink,
       links,
       me,
-      env,
       sources = [],
     } = this.props
 
@@ -77,6 +76,18 @@ class SideNav extends PureComponent<Props> {
     const isDefaultPage = location.split('/').includes(DEFAULT_HOME_PAGE)
     const isUsingSalt = this.isExistInLinks(AddonType.salt)
     const isUsing128T = this.isExistInLinks(AddonType.router128T)
+    const isUsingVMware = this.isExistInLinks(AddonType.vsphere)
+    const isUsingK8s = this.isExistInLinks(AddonType.k8s)
+    const isUsingOsp = this.isExistInLinks(AddonType.osp)
+    const cloudsNavLink = (() => {
+      if (isUsingVMware) {
+        return 'vmware'
+      } else if (isUsingK8s) {
+        return 'kubernetes'
+      } else if (isUsingOsp) {
+        return 'openstack'
+      }
+    })()
 
     return isHidden ? null : (
       <nav className="sidebar">
@@ -117,6 +128,34 @@ class SideNav extends PureComponent<Props> {
             title="Infrastructure"
           />
         </NavBlock>
+        {(isUsingVMware || isUsingK8s || isUsingOsp) && (
+          <NavBlock
+            highlightWhen={['clouds']}
+            icon="cloud"
+            link={`${sourcePrefix}/clouds/${cloudsNavLink}`}
+            location={location}
+          >
+            <NavHeader
+              link={`${sourcePrefix}/clouds/${cloudsNavLink}`}
+              title="Clouds"
+            />
+            {isUsingVMware && (
+              <NavListItem link={`${sourcePrefix}/clouds/vmware`}>
+                VMware
+              </NavListItem>
+            )}
+            {isUsingK8s && (
+              <NavListItem link={`${sourcePrefix}/clouds/kubernetes`}>
+                Kubernetes
+              </NavListItem>
+            )}
+            {isUsingOsp && (
+              <NavListItem link={`${sourcePrefix}/clouds/openstack`}>
+                Openstack
+              </NavListItem>
+            )}
+          </NavBlock>
+        )}
         <NavBlock
           highlightWhen={['applications']}
           icon="_snet--application"

@@ -38,10 +38,7 @@ import {
   getRunnerCloudActionOSPProject,
   getRunnerCloudActionAvailSizes,
 } from 'src/shared/apis/saltStack'
-import {getCpuAndLoadForK8s} from 'src/hosts/apis/kubernetes'
 import {calculateDataStorage} from 'src/shared/utils/units'
-
-export {getCpuAndLoadForK8s}
 export interface HostsObject {
   [x: string]: Host
 }
@@ -283,7 +280,6 @@ export const getAppsForHost = async (
     appLayouts.map(m => m.measurement),
     appLayouts.map(({app}) => app)
   )
-
   const {data} = await proxy({
     source: proxyLink,
     query: replaceTemplate(
@@ -659,7 +655,7 @@ const hasError = (resp): boolean => {
 export const getMinionKeyAcceptedList = async (
   pUrl: string,
   pToken: string
-): Promise<String[]> => {
+): Promise<string[]> => {
   const info = await Promise.all([getWheelKeyAcceptedList(pUrl, pToken)])
   const minions = _.get(
     yaml.safeLoad(info[0].data),

@@ -19,7 +19,7 @@ import dashTimeV1 from 'src/dashboards/reducers/dashTimeV1'
 import persistStateEnhancer from './persistStateEnhancer'
 import servicesReducer from 'src/shared/reducers/services'
 import envReducer from 'src/shared/reducers/env'
-import {vspheres} from 'src/hosts/reducers'
+import {vspheres} from 'src/clouds/reducers'
 import source from 'src/sources/reducers'
 
 // eslint-disable-next-line no-unused-vars

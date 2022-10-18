@@ -4,7 +4,6 @@ import CryptoJS from 'crypto-js'
 
 // types
 import {CloudServiceProvider, CSPAccessObject, Instance} from 'src/hosts/types'
-import {OpenStackLayoutCell} from 'src/hosts/types/openstack'
 
 const detailsValueChecker = (
   value: string | number | boolean = null
