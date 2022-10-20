@@ -4631,24 +4631,42 @@
             "in": "body",
             "schema": {
               "$ref": "#/definitions/CSPReq"
-            },
-            "required": true
+            }
           },
           {
             "name": "secretkey",
             "in": "body",
             "schema": {
               "$ref": "#/definitions/CSPReq"
-            },
-            "required": true
+            }
+          },
+          {
+            "name": "authurl",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/CSPReq"
+            }
+          },
+          {
+            "name": "projectdomain",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/CSPReq"
+            }
+          },
+          {
+            "name": "userdomain",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/CSPReq"
+            }
           },
           {
             "name": "minion",
             "in": "body",
             "schema": {
               "$ref": "#/definitions/CSPReq"
-            },
-            "required": true
+            }
           }
         ],
         "responses": {
@@ -4764,6 +4782,27 @@
             "in": "body",
             "schema": {
               "$ref": "#/definitions/CSPPatch"
+            }
+          },
+          {
+            "name": "authurl",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/CSPReq"
+            }
+          },
+          {
+            "name": "projectdomain",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/CSPReq"
+            }
+          },
+          {
+            "name": "userdomain",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/CSPReq"
             }
           },
           {
@@ -8184,31 +8223,46 @@
       "properties": {
         "provider": {
           "type": "string",
-          "description": "Cloud Service Provider Name"
+          "description": "Cloud Service Provider Name: One of aws, gcp, azure, osp"
         },
         "namespace": {
           "type": "string",
-          "description": "CSP namespace: region(if aws) or projec id(if gcp)"
+          "description": "If provider=aws, Region and if provider=gcp, Project ID and if provider=osp, project_name"
         },
         "accesskey": {
           "type": "string",
-          "description": "CSP access key"
+          "description": "If provider=aws, Access Key and if provider=osp, username"
         },
         "secretkey": {
           "type": "string",
-          "description": "CSP access secret key"
+          "description": "If provider=aws, Secret Key and if provider=osp, password"
+        },
+        "authurl": {
+          "type": "string",
+          "description": "If provider=osp, Authentication URL(usually keystone service url)"
+        },
+        "projectdomain": {
+          "type": "string",
+          "description": "If provider=osp, Project Domain"
+        },
+        "userdomain": {
+          "type": "string",
+          "description": "IF provider=osp, User Domain"
         },
         "minion": {
           "type": "string",
-          "description": "Target Salt Minion: Currently Not used"
+          "description": "Target Salt Minion(Applied if providor is aws only)"
         }
       },
       "required": ["provider", "namespace"],
       "example": {
-        "provider": "AWS",
-        "namespace": "ap-northeast-2",
-        "accesskey": "AABCCEEDSKDDLSSSDD",
-        "secretkey": "kjdjd+kDDSQQWD+jdjwidsndbh",
+        "provider": "osp",
+        "namespace": "osp_pj_demo01",
+        "accesskey": "user01",
+        "secretkey": "password01",
+        "authurl": "http://auth.url:5000/v3",
+        "projectdomain": "Default",
+        "userdomain": "Default",
         "minion": "minion01"
       }
     },
@@ -8218,19 +8272,31 @@
       "properties": {
         "namespace": {
           "type": "string",
-          "description": "CSP namespace: region(if aws) or projec id(if gcp)"
+          "description": "If provider=aws, Region and if provider=gcp, Project ID and if provider=osp, project_name"
         },
         "accesskey": {
           "type": "string",
-          "description": "CSP access key"
+          "description": "If provider=aws, Access Key and if provider=osp, username"
         },
         "secretkey": {
           "type": "string",
-          "description": "CSP access secret key"
+          "description": "If provider=aws, Secret Key and if provider=osp, password"
+        },
+        "authurl": {
+          "type": "string",
+          "description": "If provider=osp, Authentication URL(usually keystone service url)"
+        },
+        "projectdomain": {
+          "type": "string",
+          "description": "If provider=osp, Project Domain"
+        },
+        "userdomain": {
+          "type": "string",
+          "description": "IF provider=osp, User Domain"
         },
         "minion": {
           "type": "string",
-          "description": "Target Salt Minion: Currently Not Used"
+          "description": "Target Salt Minion(Applied if providor is aws only)"
         }
       },
       "example": {
@@ -8251,19 +8317,31 @@
         },
         "provider": {
           "type": "string",
-          "description": "Cloud Service Provider Name"
+          "description": "Cloud Service Provider Name: One of aws, gcp, azure, osp"
         },
         "namespace": {
           "type": "string",
-          "description": "CSP access namespace"
+          "description": "If provider=aws, Region and if provider=gcp, Project ID and if provider=osp, project_name"
         },
         "accesskey": {
           "type": "string",
-          "description": "CSP access key"
+          "description": "If provider=aws, Access Key and if provider=osp, username"
         },
         "secretkey": {
           "type": "string",
-          "description": "CSP access secret key"
+          "description": "If provider=aws, Secret Key and if provider=osp, password"
+        },
+        "authurl": {
+          "type": "string",
+          "description": "If provider=osp, Authentication URL(usually keystone service url)"
+        },
+        "projectdomain": {
+          "type": "string",
+          "description": "If provider=osp, Project Domain"
+        },
+        "userdomain": {
+          "type": "string",
+          "description": "IF provider=osp, User Domain"
         },
         "organization": {
           "type": "string",
@@ -8272,7 +8350,7 @@
         },
         "minion": {
           "type": "string",
-          "description": "target salt minion: Currently Not Used",
+          "description": "Target Salt Minion(Applied if providor is aws only)",
           "readOnly": true
         },
         "links": {"type": "string", "description": "self url"}
@@ -8280,10 +8358,13 @@
       "required": ["id", "provider", "namespace", "organization", "links"],
       "example": {
         "id": "1",
-        "provider": "AWS",
-        "namespace": "ap-northeast-2",
-        "accesskey": "AABCCEEDSKDDLSSSDD",
-        "secretkey": "kjdjd+kDDSQQWD+jdjwidsndbh",
+        "provider": "osp",
+        "namespace": "osp_pj_demo01",
+        "accesskey": "user01",
+        "secretkey": "password01",
+        "authurl": "http://auth.url:5000/v3",
+        "projectdomain": "Default",
+        "userdomain": "Default",
         "organization": "2",
         "minion": "minion01",
         "links": {

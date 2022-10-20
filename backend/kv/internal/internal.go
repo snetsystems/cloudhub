@@ -923,16 +923,16 @@ func UnmarshalMappingPB(data []byte, m *Mapping) error {
 // We are ignoring the password for now.
 func MarshalVsphere(v cloudhub.Vsphere) ([]byte, error) {
 	return proto.Marshal(&Vsphere{
-		ID:         v.ID,
-		Host:       v.Host,
-		UserName:   v.UserName,
-		Password:   v.Password,
-		Protocol:   v.Protocol,
-		Port:       int64(v.Port),
-		Interval:   int64(v.Interval),
-		Minion:     v.Minion,
+		ID:           v.ID,
+		Host:         v.Host,
+		UserName:     v.UserName,
+		Password:     v.Password,
+		Protocol:     v.Protocol,
+		Port:         int64(v.Port),
+		Interval:     int64(v.Interval),
+		Minion:       v.Minion,
 		Organization: v.Organization,
-		DataSource: v.DataSource,
+		DataSource:   v.DataSource,
 	})
 }
 
@@ -983,13 +983,16 @@ func UnmarshalTopology(data []byte, t *cloudhub.Topology) error {
 // MarshalCSP encodes a mapping to binary protobuf format.
 func MarshalCSP(t *cloudhub.CSP) ([]byte, error) {
 	return proto.Marshal(&CSP{
-		ID:                   t.ID,
-		Provider:             t.Provider,
-		NameSpace:            t.NameSpace,
-		AccessKey:            t.AccessKey,
-		SecretKey:            t.SecretKey,
-		Organization:         t.Organization,
-		Minion:               t.Minion,
+		ID:            t.ID,
+		Provider:      t.Provider,
+		NameSpace:     t.NameSpace,
+		AccessKey:     t.AccessKey,
+		SecretKey:     t.SecretKey,
+		AuthURL:       t.AuthURL,
+		ProjectDomain: t.ProjectDomain,
+		UserDomain:    t.UserDomain,
+		Organization:  t.Organization,
+		Minion:        t.Minion,
 	})
 }
 
@@ -1005,6 +1008,9 @@ func UnmarshalCSP(data []byte, t *cloudhub.CSP) error {
 	t.NameSpace = pb.NameSpace
 	t.AccessKey = pb.AccessKey
 	t.SecretKey = pb.SecretKey
+	t.AuthURL = pb.AuthURL
+	t.ProjectDomain = pb.ProjectDomain
+	t.UserDomain = pb.UserDomain
 	t.Organization = pb.Organization
 	t.Minion = pb.Minion
 
