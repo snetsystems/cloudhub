@@ -642,7 +642,21 @@ func (s *Server) Serve(ctx context.Context) {
 		basicPasswordResetType = "all"
 	}
 
-	service := openService(ctx, db, s.newBuilders(logger), logger, s.useAuth(), s.AddonURLs, s.MailSubject, s.MailBodyMessage, s.ExternaExec, s.ExternaExecArgs, s.LoginAuthType, basicPasswordResetType, s.RetryPolicy)
+	service := openService(
+		ctx,
+		db,
+		s.newBuilders(logger),
+		logger,
+		s.useAuth(),
+		s.AddonURLs,
+		s.AddonTokens,
+		s.MailSubject,
+		s.MailBodyMessage,
+		s.ExternaExec,
+		s.ExternaExecArgs,
+		s.LoginAuthType,
+		basicPasswordResetType,
+		s.RetryPolicy)
 	service.SuperAdminProviderGroups = superAdminProviderGroups{
 		auth0: s.Auth0SuperAdminOrg,
 	}
@@ -717,8 +731,6 @@ func (s *Server) Serve(ctx context.Context) {
 		PprofEnabled:          s.PprofEnabled,
 		DisableGZip:           s.DisableGZip,
 		BasicAuth:             basicAuthenticator,
-		AddonURLs:             s.AddonURLs,
-		AddonTokens:           s.AddonTokens,
 		PasswordPolicy:        s.PasswordPolicy,
 		PasswordPolicyMessage: s.PasswordPolicyMessage,
 	}, service)
@@ -777,7 +789,22 @@ func (s *Server) Serve(ctx context.Context) {
 		Info("Stopped serving cloudhub at ", scheme, "://", listener.Addr())
 }
 
-func openService(ctx context.Context, db kv.Store, builder builders, logger cloudhub.Logger, useAuth bool, addonURLs map[string]string, mailSubject, mailBody, externalExec, externalExecArgs string, loginAuthType string, basicPasswordResetType string, retryPolicy map[string]string) Service {
+func openService(
+	ctx context.Context,
+	db kv.Store,
+	builder builders,
+	logger cloudhub.Logger,
+	useAuth bool,
+	addonURLs map[string]string,
+	addonTokens map[string]string,
+	mailSubject,
+	mailBody,
+	externalExec,
+	externalExecArgs string,
+	loginAuthType string,
+	basicPasswordResetType string,
+	retryPolicy map[string]string) Service {
+
 	svc, err := kv.NewService(ctx, db, kv.WithLogger(logger))
 	if err != nil {
 		logger.Error("Unable to create kv service", err)
@@ -853,6 +880,7 @@ func openService(ctx context.Context, db kv.Store, builder builders, logger clou
 		UseAuth:                useAuth,
 		Databases:              &influx.Client{Logger: logger},
 		AddonURLs:              addonURLs,
+		AddonTokens:            addonTokens,
 		MailSubject:            mailSubject,
 		MailBody:               mailBody,
 		ExternalExec:           externalExec,

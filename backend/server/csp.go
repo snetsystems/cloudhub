@@ -9,34 +9,45 @@ import (
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
 
-// not used
-func getCSP() []string {
-	return []string{"AWS", "GCP", "Azure"}
-}
-
 type cspRequest struct {
-	Provider  string `json:"provider"`
-	NameSpace string `json:"namespace"`
-	Accesskey string `json:"accesskey"`
-	Secretkey string `json:"secretkey"`
-	Minion    string `json:"minion"`
+	Provider      string `json:"provider"`
+	NameSpace     string `json:"namespace"`
+	AccessKey     string `json:"accesskey"`
+	SecretKey     string `json:"secretkey"`
+	AuthURL       string `json:"authurl"`
+	ProjectDomain string `json:"projectdomain"`
+	UserDomain    string `json:"userdomain"`
+	Minion        string `json:"minion"`
 }
 
 func (r *cspRequest) ValidCreate() error {
-	if r.Provider == "" {
+	switch {
+	case r.Provider == "":
 		return fmt.Errorf("provider required CSP request body")
-	}
-
-	if r.NameSpace == "" {
+	case r.NameSpace == "":
 		return fmt.Errorf("namespace required CSP request body")
 	}
 
-	if r.Provider == "aws" {
-		if r.Accesskey == "" {
+	switch r.Provider {
+	case "aws":
+		switch {
+		case r.AccessKey == "":
 			return fmt.Errorf("accesskey required CSP request body")
-		}
-		if r.Secretkey == "" {
+		case r.SecretKey == "":
 			return fmt.Errorf("secretkey required CSP request body")
+		}
+	case "osp":
+		switch {
+		case r.AccessKey == "":
+			return fmt.Errorf("accesskey required CSP request body")
+		case r.SecretKey == "":
+			return fmt.Errorf("secretkey required CSP request body")
+		case r.AuthURL == "":
+			return fmt.Errorf("authurl required CSP request body")
+		case r.ProjectDomain == "":
+			return fmt.Errorf("projectdomain required CSP request body")
+		case r.UserDomain == "":
+			return fmt.Errorf("userdomain required CSP request body")
 		}
 	}
 
@@ -44,40 +55,46 @@ func (r *cspRequest) ValidCreate() error {
 }
 
 func (r *cspRequest) ValidUpdate() error {
-	if r.NameSpace == "" && r.Secretkey == "" && r.Accesskey == "" && r.Minion == "" {
-		return fmt.Errorf("No fields to update")
-	}
-
 	if r.Provider != "" {
 		return fmt.Errorf("Provider cannot be changed")
+	}
+
+	if r.NameSpace == "" && r.SecretKey == "" && r.AccessKey == "" && r.AuthURL == "" && r.ProjectDomain == "" && r.UserDomain == "" && r.Minion == "" {
+		return fmt.Errorf("No fields to update")
 	}
 
 	return nil
 }
 
 type cspResponse struct {
-	ID           string    `json:"id"`
-	Provider     string    `json:"provider"`
-	NameSpace    string    `json:"namespace"`
-	Accesskey    string    `json:"accesskey"`
-	Secretkey    string    `json:"secretkey"`
-	Organization string    `json:"organization"`
-	Minion       string    `json:"minion"`
-	Links        selfLinks `json:"links"`
+	ID            string    `json:"id"`
+	Provider      string    `json:"provider"`
+	NameSpace     string    `json:"namespace"`
+	AccessKey     string    `json:"accesskey"`
+	SecretKey     string    `json:"secretkey"`
+	AuthURL       string    `json:"authurl"`
+	ProjectDomain string    `json:"projectdomain"`
+	UserDomain    string    `json:"userdomain"`
+	Organization  string    `json:"organization"`
+	Minion        string    `json:"minion"`
+	Links         selfLinks `json:"links"`
 }
 
 func newCSPResponse(csp *cloudhub.CSP) *cspResponse {
 	selfLink := fmt.Sprintf("/cloudhub/v1/csp/%s", csp.ID)
 
 	resData := &cspResponse{
-		ID:           csp.ID,
-		Provider:     csp.Provider,
-		NameSpace:    csp.NameSpace,
-		Accesskey:    csp.AccessKey,
-		Secretkey:    csp.SecretKey,
-		Organization: csp.Organization,
-		Minion:       csp.Minion,
-		Links:        selfLinks{Self: selfLink},
+		ID:            csp.ID,
+		Provider:      csp.Provider,
+		NameSpace:     csp.NameSpace,
+		AccessKey:     csp.AccessKey,
+		SecretKey:     csp.SecretKey,
+		AuthURL:       csp.AuthURL,
+		ProjectDomain: csp.ProjectDomain,
+		UserDomain:    csp.UserDomain,
+		Organization:  csp.Organization,
+		Minion:        csp.Minion,
+		Links:         selfLinks{Self: selfLink},
 	}
 
 	return resData
@@ -157,12 +174,15 @@ func (s *Service) NewCSP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	csp := &cloudhub.CSP{
-		Provider:     req.Provider,
-		NameSpace:    req.NameSpace,
-		AccessKey:    req.Accesskey,
-		SecretKey:    req.Secretkey,
-		Organization: defaultOrg.ID,
-		Minion:       req.Minion,
+		Provider:      req.Provider,
+		NameSpace:     req.NameSpace,
+		AccessKey:     req.AccessKey,
+		SecretKey:     req.SecretKey,
+		AuthURL:       req.AuthURL,
+		ProjectDomain: req.ProjectDomain,
+		UserDomain:    req.UserDomain,
+		Organization:  defaultOrg.ID,
+		Minion:        req.Minion,
 	}
 
 	// validate that the provider and namespace exists
@@ -242,11 +262,20 @@ func (s *Service) UpdateCSP(w http.ResponseWriter, r *http.Request) {
 	if req.NameSpace != "" {
 		oriCSP.NameSpace = req.NameSpace
 	}
-	if req.Accesskey != "" {
-		oriCSP.AccessKey = req.Accesskey
+	if req.AccessKey != "" {
+		oriCSP.AccessKey = req.AccessKey
 	}
-	if req.Secretkey != "" {
-		oriCSP.SecretKey = req.Secretkey
+	if req.SecretKey != "" {
+		oriCSP.SecretKey = req.SecretKey
+	}
+	if req.AuthURL != "" {
+		oriCSP.AuthURL = req.AuthURL
+	}
+	if req.ProjectDomain != "" {
+		oriCSP.ProjectDomain = req.ProjectDomain
+	}
+	if req.UserDomain != "" {
+		oriCSP.UserDomain = req.UserDomain
 	}
 	if req.Minion != "" {
 		oriCSP.Minion = req.Minion
@@ -279,17 +308,5 @@ func existsCSPInOrg(ctx context.Context, s *Service, provider string, namespace 
 		}
 	}
 
-	return false
-}
-
-// supported provider search
-// not used
-func supportedProvider(reqProvider string) bool {
-	providers := getCSP()
-	for _, provider := range providers {
-		if provider == reqProvider {
-			return true
-		}
-	}
 	return false
 }
