@@ -492,16 +492,16 @@ func Test_MarshalDashboard_WithEmptyCellType(t *testing.T) {
 
 func TestMarshalVsphere(t *testing.T) {
 	v := cloudhub.Vsphere{
-		ID:                 "12",
-		Host:               "1.1.1.1",
-		UserName:           "testtt",
-		Password:           "ummmmmm",
-		Protocol:           "http",
-		Port:               2542,
-		Interval:           10,
-		Minion:             "minion01",
-		Organization:       "8373476",
-		DataSource:			"2562",
+		ID:           "12",
+		Host:         "1.1.1.1",
+		UserName:     "testtt",
+		Password:     "ummmmmm",
+		Protocol:     "http",
+		Port:         2542,
+		Interval:     10,
+		Minion:       "minion01",
+		Organization: "8373476",
+		DataSource:   "2562",
 	}
 
 	var vv cloudhub.Vsphere
@@ -533,13 +533,16 @@ func TestMarshalTopology(t *testing.T) {
 
 func TestMarshalCSP(t *testing.T) {
 	v := cloudhub.CSP{
-		ID:           "12",
-		Provider:     "aws",
-		NameSpace:    "seoul",
-		AccessKey:    "SDKDSIWJD8373",
-		SecretKey:    "OCUWJW++DIE3JD+2KDHWH",
-		Organization: "8373476",
-		Minion:       "minion",
+		ID:            "12",
+		Provider:      "osp",
+		NameSpace:     "osp_pj_demo01",
+		AccessKey:     "user01",
+		SecretKey:     "password01",
+		AuthURL:       "http://localhost:5000/v3",
+		ProjectDomain: "PJ_Default",
+		UserDomain:    "User_Default",
+		Organization:  "7",
+		Minion:        "minion01",
 	}
 
 	var vv cloudhub.CSP
