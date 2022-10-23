@@ -1,5 +1,11 @@
 // Library
-import React, {useState, useEffect, useCallback, ChangeEvent} from 'react'
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  ChangeEvent,
+  useRef,
+} from 'react'
 import {connect} from 'react-redux'
 import _ from 'lodash'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
@@ -99,6 +105,7 @@ import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 import {generateForHosts} from 'src/utils/tempVars'
 import {getCells} from 'src/hosts/utils/getCells'
 import {getDeep} from 'src/utils/wrappers'
+import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 
 import {
   setLocalStorage,
@@ -255,7 +262,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const [user, setUser] = useState('')
   const [password, setPassword] = useState('')
   const [protocol, setProtocol] = useState('https')
-  const [interval, setInterval] = useState('1m')
+  const [intervalvSphere, setIntervalvSphere] = useState('1m')
   const [vSphereId, setVSphereId] = useState('0')
 
   // host state
@@ -264,6 +271,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   const [vCenters, setVCenters] = useState<
     {[name: string]: TreeNode} | TreeNodeInArray[]
   >({})
+  const [focusedHostTree, setFocusedHostTree] = useState('')
 
   const [acceptedMinionList, setAcceptedMinionList] = useState([])
 
@@ -299,7 +307,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
   }
 
   const handleChangeInterval = (e: {text: string}): void => {
-    setInterval(e.text)
+    setIntervalvSphere(e.text)
   }
 
   const handleClose = (): void => {
@@ -351,7 +359,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     setUser(_.get(vsphereInfo, 'username', ''))
     setPassword(_.get(vsphereInfo, 'password', ''))
     setProtocol(_.get(vsphereInfo, 'protocol', 'https'))
-    setInterval(calcInterval(_.get(vsphereInfo, 'interval', '60000')))
+    setIntervalvSphere(calcInterval(_.get(vsphereInfo, 'interval', '60000')))
     setIsModalVisible(true)
     setIsUpdate(true)
     setVSphereId(id)
@@ -399,8 +407,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
           password !== _.get(vsphereInfo, 'password', '') ? password : null,
           port !== _.get(vsphereInfo, 'port', '') ? port : null,
           protocol !== _.get(vsphereInfo, 'protocol', '') ? protocol : null,
-          interval !== calcInterval(_.get(vsphereInfo, 'interval', 0))
-            ? interval
+          intervalvSphere !== calcInterval(_.get(vsphereInfo, 'interval', 0))
+            ? intervalvSphere
             : null,
           source.id
         ).then(async ({data}) => {
@@ -448,7 +456,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
           password,
           port,
           protocol,
-          interval,
+          intervalvSphere,
           source.id
         )
 
@@ -523,6 +531,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
       const makeTreemenusKey = _.keys(makeTreemenus)
 
       const addChartsInfoFocusedHostFn = async (): Promise<void> => {
+        setFocusedHostTree(_.get(makeTreemenus[makeTreemenusKey[0]], 'key', ''))
         const addChartsInfoFocusedHost = await requestCharts(
           makeTreemenus[makeTreemenusKey[0]]
         )
@@ -643,7 +652,9 @@ const VMHostsPage = (props: Props): JSX.Element => {
     setSelectMinion(getFocusedHost.minion)
     setOpenNodes([...getOpenNodes, ...mountOpenNodes])
     setProportions(getProportions)
+
     const addChartsInfoFocusedHostFn = async (): Promise<void> => {
+      setFocusedHostTree(_.get(getFocusedHost, 'key', ''))
       const addChartsInfoFocusedHost = await requestCharts(getFocusedHost)
       setFocusedHost(addChartsInfoFocusedHost)
     }
@@ -815,6 +826,31 @@ const VMHostsPage = (props: Props): JSX.Element => {
     })
   }, [focusedHost])
 
+  const useInterval = (callback, delay) => {
+    const savedCallback = useRef(null)
+
+    useEffect(() => {
+      savedCallback.current = callback
+    }, [callback])
+
+    useEffect(() => {
+      const executeCallback = () => {
+        savedCallback.current()
+      }
+
+      if (delay > 0) {
+        const timerId = setInterval(executeCallback, delay)
+        GlobalAutoRefresher.poll(autoRefresh)
+        return () => {
+          clearInterval(timerId)
+          GlobalAutoRefresher.stopPolling()
+        }
+      }
+    }, [delay])
+  }
+
+  useInterval(() => {}, autoRefresh)
+
   const cellBackgroundColor: string = DEFAULT_CELL_BG_COLOR
   const cellTextColor: string = DEFAULT_CELL_TEXT_COLOR
 
@@ -948,6 +984,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
               delete getLayout[host]
 
               if (getFocusedHost.key.split('/')[0] === host) {
+                setFocusedHostTree(_.get(initialFocusedHost, 'key', ''))
                 setFocusedHost(initialFocusedHost)
                 setLocalStorage('VMHostsPage', {
                   ...getLocal,
@@ -1619,6 +1656,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
     p[0]['key'] = p[0].parent_name + '/' + p[0].name
 
     setSelectMinion(p[0].minion)
+    setFocusedHostTree(_.get(p[0], 'key', ''))
     const addChartsInfoFocusedHost = await requestCharts(p[0])
     setFocusedHost(addChartsInfoFocusedHost)
     setOpenNodes([...openNodes, ...newPath])
@@ -1634,6 +1672,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
   const onSelectHost = async (props: Item) => {
     setSelectMinion(props.minion)
+    setFocusedHostTree(_.get(props, 'key', ''))
     const addChartsInfoFocusedHost = await requestCharts(props)
     setFocusedHost(addChartsInfoFocusedHost)
   }
@@ -1677,7 +1716,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
               data={vCenters}
               onClickItem={onSelectHost}
               onClickToggle={onClickToggle}
-              activeKey={_.get(focusedHost, 'key', '')}
+              activeKey={focusedHostTree}
               openNodes={openNodes}
             />
           </FancyScrollbar>
@@ -1744,8 +1783,8 @@ const VMHostsPage = (props: Props): JSX.Element => {
     layout,
     proportions,
     focusedHost,
+    focusedHostTree,
     timeRange,
-    autoRefresh,
     manualRefresh,
   ])
 
@@ -1769,7 +1808,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             user={user}
             password={password}
             protocol={protocol}
-            interval={interval}
+            interval={intervalvSphere}
             targetItems={acceptedMinionList}
             intervalItems={intervalItems}
             isDisabled={vspheres.status === VcenterStatus.Request}
