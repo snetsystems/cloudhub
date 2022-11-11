@@ -958,6 +958,18 @@ export const notifyAgentApplySucceeded = (
   message: `Collector Configuration ${sourceName} successfully.`,
 })
 
+export const notifyAgentApplyFailed = (error: Error) => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Rewrite Telegraf Config File ${error}`,
+})
+
+export const notifyTelegrafReloadFailed = (error: Error) => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Telegraf Reload Fail ${error}`,
+})
+
 export const notifyAgentLoadedSucceeded = (
   sourceName: string
 ): Notification => ({
@@ -1054,18 +1066,49 @@ export const notifyAgentDeleteFailed = (error: Error): Notification => ({
   message: `Agent Delete Failed, ${error}`,
 })
 
-export const notifyConfigFileSaveFailed = (): Notification => ({
+export const notifyAgentConfigTempDirectoryMakeFailed = (
+  error: Error
+): Notification => ({
   ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Make Temp Directory ${error}`,
+})
+
+export const notifyAgentConfigTempFileWriteFailed = (
+  error: Error
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Make Temp Config File ${error}`,
+})
+
+export const notifyMinionNotSelected = (): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Please Select a Minion`,
+})
+
+export const notifyConfigFileSaveFailed = (error: Error): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Save File ${error}`,
+})
+
+export const notifyConfigFileSaveFailedByNoTenant = (): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
   message: `Please Select a Tenant`,
 })
 
 export const notifyConfigFileReadFailed = (error: string): Notification => ({
   ...defaultErrorNotification,
+  duration: INFINITE,
   message: `Failed to Read File ${error}`,
 })
 
 export const notifyGetProjectFileFailed = (error: Error): Notification => ({
   ...defaultErrorNotification,
+  duration: INFINITE,
   message: `Failed to Get File ${error}`,
 })
 

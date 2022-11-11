@@ -33,8 +33,10 @@ class CollectorConfigTable extends PureComponent<Props> {
   public render() {
     return (
       <>
-        {this.CollectorConfigTable}
-        {this.SaveButton}
+        <div style={{height: '100%', maxHeight: '555px'}}>
+          {this.CollectorConfigTable}
+          {this.SaveButton}
+        </div>
       </>
     )
   }
@@ -54,7 +56,11 @@ class CollectorConfigTable extends PureComponent<Props> {
       return (
         <div
           className={`form-group `}
-          style={{padding: '3.5% 0% 0% 3%', marginBottom: 'unset'}}
+          style={{
+            height: '13%',
+            padding: '2.5% 0% 0% 3%',
+            marginBottom: 'unset',
+          }}
           key={name}
         >
           <label htmlFor={name}>{label}</label>
@@ -84,7 +90,7 @@ class CollectorConfigTable extends PureComponent<Props> {
         className={`form-group`}
         style={{padding: '3.5% 0% 0% 3%', marginBottom: 'unset'}}
       >
-        <label htmlFor={'service'}>{'Enabled Service'}</label>
+        <label htmlFor={'service'}>{'Collecting Service'}</label>
         <MultiSelectDropdown
           selectedIDs={selectedService}
           onChange={handleUpdateEnableServices}

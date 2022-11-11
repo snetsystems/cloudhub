@@ -1,3 +1,5 @@
+import {CollectorConfigTabName} from 'src/agent_admin/type/'
+
 export const COLLECTOR_CONFIG_TABLE_DATA = [
   {
     name: 'authentication',
@@ -65,4 +67,14 @@ export const COLLECTOR_DROPDOWN_DATA = [
   'storage_pools',
   'subnets',
   'volumes',
+]
+
+export const COLLECTOR_CONFIG_TAB_ABBREVIATION = {
+  osp: 'openstack',
+  ocp: 'openshift',
+}
+
+export const COLLECTOR_CONFIG_TAB_ORDER: CollectorConfigTabName[] = [
+  'openstack',
+  'openshift',
 ]

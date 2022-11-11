@@ -27,3 +27,10 @@ export interface CollectorConfigTableData {
   password: string
   interval: string
 }
+
+export interface CollectorConfigTabData {
+  name: CollectorConfigTabName
+  component: JSX.Element
+}
+
+export type CollectorConfigTabName = 'openstack' | 'openshift'

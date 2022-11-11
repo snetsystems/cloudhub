@@ -4,6 +4,8 @@ import {connect} from 'react-redux'
 import _ from 'lodash'
 import {AxiosResponse} from 'axios'
 import * as TOML from '@iarna/toml'
+import {EditorChange} from 'codemirror'
+import path from 'path'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -13,7 +15,6 @@ import {
   getLocalFileReadAsync,
   getLocalFileWriteAsync,
   getLocalSaltCmdDirectoryAsync,
-  runLocalServiceReStartTelegrafAsync,
 } from 'src/agent_admin/actions'
 
 // Notification
@@ -23,6 +24,10 @@ import {
   notifyConfigFileSaveFailed,
   notifyConfigFileReadFailed,
   notifyGetProjectFileFailed,
+  notifyMinionNotSelected,
+  notifyConfigFileSaveFailedByNoTenant,
+  notifyTelegrafReloadFailed,
+  notifyAgentApplyFailed,
 } from 'src/shared/copy/notifications'
 
 // Types
@@ -38,6 +43,7 @@ import {
   AgentDirFile,
   AgentDirFileInfo,
   CollectorConfigTableData,
+  CollectorConfigTabName,
   GetAgentDirectoryInfo,
   MinionsObject,
 } from 'src/agent_admin/type'
@@ -47,6 +53,8 @@ import {
   AGENT_TENANT_DIRECTORY,
   GET_STATUS,
   NETWORK_ACCESS,
+  AGENT_TENANT_CLOUD_DIRECTORY,
+  COLLECTOR_CONFIG_TAB_ORDER,
 } from 'src/agent_admin/constants'
 
 // Components
@@ -54,11 +62,15 @@ import CollectorConfig from 'src/agent_admin/components/CollectorConfig'
 import ServiceConfigCollectorService from 'src/agent_admin/components/ServiceConfigCollectorService'
 import ServiceConfigTenant from 'src/agent_admin/components/ServiceConfigTenant'
 
+// APIS
+import {runLocalServiceReloadTelegraf} from 'src/shared/apis/saltStack'
+
 interface Props {
   isUserAuthorized: boolean
   saltMasterUrl: string
   saltMasterToken: string
   me: Me
+  collectorConfigTableTabs: CollectorConfigTabName[]
   organizations: Organization[]
   minionsObject: MinionsObject
   minionsStatus: RemoteDataState
@@ -83,19 +95,16 @@ interface Props {
     script: string,
     path?: string
   ) => Promise<AxiosResponse>
-  runLocalServiceReStartTelegraf: (
-    saltMasterUrl: string,
-    saltMasterToken: string,
-    minion: string
-  ) => Promise<AxiosResponse>
 }
 
 interface State {
   isCollectorInstalled: boolean
   configScript: string
+  inputConfigScript: string
+  configEditStyle: 'basic' | 'toml'
   focusedMinion: string
   focusedTenant: string
-  activeSection: string
+  focusedCollectorConfigTab: CollectorConfigTabName | ''
   selectedService: string[]
   serviceConfigStatus: RemoteDataState
   collectorConfigTableData: CollectorConfigTableData
@@ -108,8 +117,10 @@ export class ServiceConfig extends PureComponent<Props, State> {
     super(props)
 
     this.state = {
-      activeSection: 'openstack',
+      focusedCollectorConfigTab: '',
+      inputConfigScript: '',
       configScript: '',
+      configEditStyle: 'basic',
       isCollectorInstalled: false,
       serviceConfigStatus: RemoteDataState.Loading,
       focusedMinion: '',
@@ -132,16 +143,30 @@ export class ServiceConfig extends PureComponent<Props, State> {
   }
 
   public componentDidMount() {
-    const {minionsObject} = this.props
+    const {minionsObject, collectorConfigTableTabs} = this.props
     const CollectorInstalledMinions = _.filter(minionsObject, [
       'isInstall',
       true,
     ])
+    const defaultSelectedCollectorConfigTab = this.getDefaultCollectorConfigTab(
+      collectorConfigTableTabs
+    )
 
     this.setState({
+      focusedCollectorConfigTab: defaultSelectedCollectorConfigTab,
       isCollectorInstalled: Boolean(CollectorInstalledMinions.length),
       serviceConfigStatus: this.props.minionsStatus,
     })
+  }
+
+  public getDefaultCollectorConfigTab(
+    collectorConfigTableTabs: CollectorConfigTabName[]
+  ): CollectorConfigTabName {
+    const cloudTabOrder: CollectorConfigTabName[] = COLLECTOR_CONFIG_TAB_ORDER
+
+    return cloudTabOrder.find(
+      cloudTab => collectorConfigTableTabs.indexOf(cloudTab) !== -1
+    )
   }
 
   public componentDidUpdate(prevProps: Props) {
@@ -162,6 +187,12 @@ export class ServiceConfig extends PureComponent<Props, State> {
     }
   }
 
+  public handleClickConfigEditStyle = configEditStyle => {
+    this.setState({
+      configEditStyle: configEditStyle,
+    })
+  }
+
   public handleClickMinionTableRow = selectedMinion => () => {
     this.setState({
       serviceConfigStatus: RemoteDataState.Loading,
@@ -177,45 +208,30 @@ export class ServiceConfig extends PureComponent<Props, State> {
       },
       selectedService: [],
       projectFileList: {files: [], isLoading: true},
+      configScript: '',
+      inputConfigScript: '',
     })
 
     try {
-      this.getProjectFileList(selectedMinion)
+      this.getProjectFileListFromMinion(selectedMinion)
     } catch (error) {
       this.notifyGetProjectFileError(error)
     }
   }
 
-  public notifyGetProjectFileError(error) {
-    const {notify} = this.props
-
-    this.setState({
-      serviceConfigStatus: RemoteDataState.Done,
-      focusedMinion: '',
-      focusedTenant: '',
-      collectorConfigTableData: {
-        authentication: '',
-        project: '',
-        domain: '',
-        username: '',
-        password: '',
-        interval: '',
-      },
-      selectedService: [],
-      projectFileList: {files: [], isLoading: true},
-    })
-
-    notify(notifyGetProjectFileFailed(error))
-  }
-
-  public getProjectFileList = async selectedMinion => {
+  public getProjectFileListFromMinion = async selectedMinion => {
     const {saltMasterUrl, saltMasterToken} = this.props
+    const {focusedCollectorConfigTab} = this.state
+    const agentTenantDirectory = path.join(
+      AGENT_TENANT_DIRECTORY.DIR,
+      AGENT_TENANT_CLOUD_DIRECTORY[focusedCollectorConfigTab]
+    )
 
     const projectFileList: AgentDirFile = await this.getLocalSaltCmdDirectoryData(
       saltMasterUrl,
       saltMasterToken,
       selectedMinion,
-      AGENT_TENANT_DIRECTORY.FULL_DIR
+      agentTenantDirectory
     )
 
     this.setState({
@@ -230,6 +246,7 @@ export class ServiceConfig extends PureComponent<Props, State> {
     minionID: string,
     fullDir: string
   ): Promise<AgentDirFile> => {
+    const fileExtensionCheckRegex = /conf$/
     let applications: AgentDirFileInfo[] = []
     const getDirectoryItems: GetAgentDirectoryInfo = await this.props.getLocalSaltCmdDirectory(
       url,
@@ -257,12 +274,15 @@ export class ServiceConfig extends PureComponent<Props, State> {
         ]
       } else {
         if (getData.indexOf('\n') > -1) {
-          applications = getData.split('\n').map((item: string) => {
-            const time: string = item.substring(0, item.indexOf(' '))
-            const tenant = item.substring(item.indexOf(' ') + 1).split('.')[0]
-            return this.generatorFileInfo({time, item: tenant, fullDir})
-          })
-        } else {
+          applications = getData
+            .split('\n')
+            .filter(item => fileExtensionCheckRegex.test(item))
+            .map((item: string) => {
+              const time: string = item.substring(0, item.indexOf(' '))
+              const tenant = item.substring(item.indexOf(' ') + 1).split('.')[0]
+              return this.generatorFileInfo({time, item: tenant, fullDir})
+            })
+        } else if (fileExtensionCheckRegex.test(getData)) {
           const time: string = getData.substring(0, getData.indexOf(' '))
           const tenant = getData
             .substring(getData.indexOf(' ') + 1)
@@ -305,16 +325,40 @@ export class ServiceConfig extends PureComponent<Props, State> {
     }
   }
 
+  public handleBeforeChangeScript = (
+    __: CodeMirror.Editor,
+    ___: EditorChange,
+    script: string
+  ) => {
+    this.setState({
+      inputConfigScript: script,
+    })
+  }
+
+  public handleChangeScript = (
+    _: CodeMirror.Editor,
+    __: EditorChange,
+    ___: string
+  ) => {}
+
   public handleSaveClick = () => {
     const {notify} = this.props
     const {focusedTenant} = this.state
 
     if (focusedTenant === '') {
-      notify(notifyConfigFileSaveFailed())
+      notify(notifyConfigFileSaveFailedByNoTenant())
       return
     }
 
-    this.writeLocalFile()
+    try {
+      this.writeLocalFile()
+    } catch (error) {
+      error.message =
+        error.line === undefined
+          ? error.message
+          : `Parsing error on line ${error.line} column ${error.col}`
+      notify(notifyConfigFileSaveFailed(error))
+    }
   }
 
   public writeLocalFile() {
@@ -323,11 +367,17 @@ export class ServiceConfig extends PureComponent<Props, State> {
       saltMasterToken,
       getLocalFileWrite,
       notify,
-      runLocalServiceReStartTelegraf,
     } = this.props
-    const {focusedMinion, focusedTenant} = this.state
+    const {focusedMinion, focusedTenant, focusedCollectorConfigTab} = this.state
     const configScript = this.updateCollectorConfigTableData()
-    const tenantConfigDirectory = `${AGENT_TENANT_DIRECTORY.FULL_DIR}${focusedTenant}.conf`
+    const agentTenantDirectory = path.join(
+      AGENT_TENANT_DIRECTORY.DIR,
+      AGENT_TENANT_CLOUD_DIRECTORY[focusedCollectorConfigTab]
+    )
+    const tenantConfigDirectory = path.join(
+      agentTenantDirectory,
+      `${focusedTenant}.conf`
+    )
 
     const getLocalFileWritePromise = getLocalFileWrite(
       saltMasterUrl,
@@ -343,39 +393,57 @@ export class ServiceConfig extends PureComponent<Props, State> {
 
     getLocalFileWritePromise
       .then((): void => {
-        const getLocalServiceReStartTelegrafPromise = runLocalServiceReStartTelegraf(
+        const getLocalServiceReloadTelegrafPromise = runLocalServiceReloadTelegraf(
           saltMasterUrl,
           saltMasterToken,
           focusedMinion
         )
+        getLocalServiceReloadTelegrafPromise
+          .then(({data}) => {
+            const isReloadSucceeded = data.return[0][focusedMinion]
 
-        getLocalServiceReStartTelegrafPromise
-          .then(() => {
+            if (isReloadSucceeded !== true) {
+              throw new Error('Failed to Reload Telegraf')
+            }
+
             this.setState({
               serviceConfigStatus: RemoteDataState.Done,
               configScript: configScript,
             })
-
             notify(notifyAgentApplySucceeded('is applied'))
           })
-          .catch(e => {
-            console.error(e)
+          .catch(error => {
+            notify(notifyTelegrafReloadFailed(error))
+            this.setState({
+              serviceConfigStatus: RemoteDataState.Done,
+              configScript: configScript,
+            })
           })
       })
-      .catch(e => {
-        console.error(e)
+      .catch(error => {
+        notify(notifyAgentApplyFailed(error))
+
+        this.setState({
+          serviceConfigStatus: RemoteDataState.Done,
+        })
       })
   }
 
   public updateCollectorConfigTableData() {
     const {
       collectorConfigTableData,
-      activeSection,
+      focusedCollectorConfigTab,
       configScript,
       selectedService,
+      configEditStyle,
     } = this.state
+
+    if (configEditStyle === 'toml') {
+      return this.updateCollectorConfigTableDataByTOM(configScript)
+    }
+
     const configObj = TOML.parse(configScript)
-    const inputPlugins = configObj?.['inputs']?.[activeSection]?.[0]
+    const inputPlugins = configObj['inputs'][focusedCollectorConfigTab][0]
 
     inputPlugins.authentication_endpoint =
       collectorConfigTableData.authentication
@@ -386,6 +454,36 @@ export class ServiceConfig extends PureComponent<Props, State> {
     inputPlugins.interval = collectorConfigTableData.interval
     inputPlugins.enabled_services = selectedService
 
+    const inputConfigObj = _.cloneDeep(configObj)
+
+    delete inputConfigObj.outputs
+    this.setState({
+      inputConfigScript: TOML.stringify(inputConfigObj),
+    })
+
+    return TOML.stringify(configObj)
+  }
+
+  public updateCollectorConfigTableDataByTOM(configScript) {
+    const {focusedCollectorConfigTab, inputConfigScript} = this.state
+    const configObj = TOML.parse(configScript)
+    const inputConfigObj = TOML.parse(inputConfigScript)
+    const inputPlugins = inputConfigObj['inputs'][focusedCollectorConfigTab][0]
+
+    configObj.inputs = inputConfigObj.inputs
+
+    this.setState({
+      collectorConfigTableData: {
+        authentication: inputPlugins.authentication_endpoint,
+        project: inputPlugins.project,
+        domain: inputPlugins.domain,
+        username: inputPlugins.username,
+        password: inputPlugins.password,
+        interval: inputPlugins.interval,
+      },
+      selectedService: inputPlugins.enabled_services,
+    })
+
     return TOML.stringify(configObj)
   }
 
@@ -395,8 +493,15 @@ export class ServiceConfig extends PureComponent<Props, State> {
 
   public readLocalFile(selectedTenant) {
     const {saltMasterUrl, saltMasterToken, getLocalFileRead} = this.props
-    const {focusedMinion} = this.state
-    const tenantConfigDirectory = `${AGENT_TENANT_DIRECTORY.FULL_DIR}${selectedTenant}.conf`
+    const {focusedMinion, focusedCollectorConfigTab} = this.state
+    const agentTenantDirectory = path.join(
+      AGENT_TENANT_DIRECTORY.DIR,
+      AGENT_TENANT_CLOUD_DIRECTORY[focusedCollectorConfigTab]
+    )
+    const tenantConfigDirectory = path.join(
+      agentTenantDirectory,
+      `${selectedTenant}.conf`
+    )
 
     const getLocalFileReadPromise = getLocalFileRead(
       saltMasterUrl,
@@ -419,8 +524,12 @@ export class ServiceConfig extends PureComponent<Props, State> {
         )
         const configObj = TOML.parse(hostLocalFileReadData)
         const inputPlugins = this.getInputPlugins(configObj)
+        const inputConfigObj = _.cloneDeep(configObj)
+
+        delete inputConfigObj.outputs
 
         this.setState({
+          inputConfigScript: TOML.stringify(inputConfigObj),
           configScript: TOML.stringify(configObj),
           serviceConfigStatus: RemoteDataState.Done,
           focusedTenant: selectedTenant,
@@ -442,7 +551,10 @@ export class ServiceConfig extends PureComponent<Props, State> {
 
   public notifyReadLocalFileError(error) {
     const {notify} = this.props
-    const tomlParsingErrorMessage = `Parsing error on line ${error.line} column ${error.col}: ${error.message}`
+    const tomlParsingErrorMessage =
+      error.name === 'PluginNotFound'
+        ? error.message
+        : `Parsing error on line ${error.line} column ${error.col}`
 
     this.setState({
       serviceConfigStatus: RemoteDataState.Done,
@@ -456,23 +568,36 @@ export class ServiceConfig extends PureComponent<Props, State> {
         interval: '',
       },
       selectedService: [],
+      configScript: '',
+      inputConfigScript: '',
     })
 
     notify(notifyConfigFileReadFailed(tomlParsingErrorMessage))
   }
 
   public getInputPlugins = configObject => {
-    const {activeSection} = this.state
-    const inputPlugins = configObject?.['inputs']?.[activeSection]?.[0]
+    const {focusedCollectorConfigTab} = this.state
+    const cloudInputPlugins = configObject['inputs'][focusedCollectorConfigTab]
+
+    if (cloudInputPlugins === undefined) {
+      let error = new Error(
+        `${focusedCollectorConfigTab.toUpperCase()} Plugin is not found`
+      )
+      error.name = 'PluginNotFound'
+
+      throw error
+    }
+
+    const cloudInputPlugin = cloudInputPlugins[0]
 
     return {
-      authentication: inputPlugins?.authentication_endpoint,
-      project: inputPlugins?.project,
-      domain: inputPlugins?.domain,
-      username: inputPlugins?.username,
-      password: inputPlugins?.password,
-      interval: inputPlugins?.interval,
-      enabledService: inputPlugins?.enabled_services,
+      authentication: cloudInputPlugin?.authentication_endpoint,
+      project: cloudInputPlugin?.project,
+      domain: cloudInputPlugin?.domain,
+      username: cloudInputPlugin?.username,
+      password: cloudInputPlugin?.password,
+      interval: cloudInputPlugin?.interval,
+      enabledService: cloudInputPlugin?.enabled_services,
     }
   }
 
@@ -495,12 +620,93 @@ export class ServiceConfig extends PureComponent<Props, State> {
     this.setState({selectedService: enabledServices})
   }
 
-  public handleTabClick = selectedSection => () => {
-    this.setState({activeSection: selectedSection.toLowerCase()})
+  public handleTabClick = (
+    selectedCollectorConfigTab: CollectorConfigTabName
+  ) => () => {
+    const {notify} = this.props
+    const {focusedMinion} = this.state
+
+    if (focusedMinion === '') {
+      notify(notifyMinionNotSelected())
+      return
+    }
+
+    this.setState({
+      focusedTenant: '',
+      collectorConfigTableData: {
+        authentication: '',
+        project: '',
+        domain: '',
+        username: '',
+        password: '',
+        interval: '',
+      },
+      selectedService: [],
+      focusedCollectorConfigTab: selectedCollectorConfigTab,
+      serviceConfigStatus: RemoteDataState.Loading,
+      configScript: '',
+      inputConfigScript: '',
+    })
+
+    try {
+      this.getProjectFileList(selectedCollectorConfigTab)
+    } catch (error) {
+      this.notifyGetProjectFileError(error)
+    }
+  }
+
+  public getProjectFileList = async selectedCollectorConfigTab => {
+    const {saltMasterUrl, saltMasterToken} = this.props
+    const {focusedMinion} = this.state
+    const agentTenantDirectory = path.join(
+      AGENT_TENANT_DIRECTORY.DIR,
+      AGENT_TENANT_CLOUD_DIRECTORY[selectedCollectorConfigTab]
+    )
+
+    const projectFileList: AgentDirFile = await this.getLocalSaltCmdDirectoryData(
+      saltMasterUrl,
+      saltMasterToken,
+      focusedMinion,
+      agentTenantDirectory
+    )
+
+    this.setState({
+      projectFileList: projectFileList,
+      serviceConfigStatus: RemoteDataState.Done,
+    })
+  }
+
+  public notifyGetProjectFileError(error) {
+    const {notify} = this.props
+
+    this.setState({
+      focusedMinion: '',
+      focusedTenant: '',
+      collectorConfigTableData: {
+        authentication: '',
+        project: '',
+        domain: '',
+        username: '',
+        password: '',
+        interval: '',
+      },
+      selectedService: [],
+      projectFileList: {files: [], isLoading: true},
+      serviceConfigStatus: RemoteDataState.Done,
+      configScript: '',
+      inputConfigScript: '',
+    })
+
+    notify(notifyGetProjectFileFailed(error))
   }
 
   render() {
-    const {isUserAuthorized, minionsObject} = this.props
+    const {
+      isUserAuthorized,
+      minionsObject,
+      collectorConfigTableTabs,
+    } = this.props
+
     const {
       serviceConfigStatus,
       focusedMinion,
@@ -508,8 +714,11 @@ export class ServiceConfig extends PureComponent<Props, State> {
       isCollectorInstalled,
       projectFileList,
       collectorConfigTableData,
-      activeSection,
+      focusedCollectorConfigTab,
       selectedService,
+      configScript,
+      inputConfigScript,
+      configEditStyle,
     } = this.state
 
     return (
@@ -539,21 +748,29 @@ export class ServiceConfig extends PureComponent<Props, State> {
                   focusedMinion={focusedMinion}
                   focusedTenant={focusedTenant}
                   isCollectorInstalled={isCollectorInstalled}
+                  focusedCollectorConfigTab={focusedCollectorConfigTab}
                   onClickTableRow={this.handleClickTenantTableRow}
                 />
               </div>
             </div>
             <div className="service-config-collector__container">
               <CollectorConfig
+                inputConfigScript={inputConfigScript}
+                configScript={configScript}
+                configEditStyle={configEditStyle}
+                collectorConfigTableTabs={collectorConfigTableTabs}
                 serviceConfigStatus={serviceConfigStatus}
                 isCollectorInstalled={isCollectorInstalled}
                 collectorConfigTableData={collectorConfigTableData}
-                activeSection={activeSection}
+                focusedCollectorConfigTab={focusedCollectorConfigTab}
                 selectedService={selectedService}
                 handleTabClick={this.handleTabClick}
                 handleInputChange={this.handleInputChange}
                 handleUpdateEnableServices={this.handleUpdateEnableServices}
                 handleSaveClick={this.handleSaveClick}
+                handleClickConfigEditStyle={this.handleClickConfigEditStyle}
+                handleBeforeChangeScript={this.handleBeforeChangeScript}
+                handleChangeScript={this.handleChangeScript}
               />
             </div>
           </div>
@@ -580,7 +797,6 @@ const mdtp = {
   getLocalFileRead: getLocalFileReadAsync,
   getLocalFileWrite: getLocalFileWriteAsync,
   getLocalSaltCmdDirectory: getLocalSaltCmdDirectoryAsync,
-  runLocalServiceReStartTelegraf: runLocalServiceReStartTelegrafAsync,
 }
 
 export default connect(mstp, mdtp)(ServiceConfig)

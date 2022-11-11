@@ -2,14 +2,17 @@
 import React, {MouseEventHandler, PureComponent} from 'react'
 
 // Types
-import {PageSection} from 'src/types/shared'
+import {
+  CollectorConfigTabData,
+  CollectorConfigTabName,
+} from 'src/agent_admin/type/'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
 interface Props {
-  section: Pick<PageSection, 'name' | 'component'>
-  activeSection: string
+  section: CollectorConfigTabData
+  focusedCollectorConfigTab: CollectorConfigTabName | ''
   handleTabClick: (selectedSection: string) => MouseEventHandler<HTMLDivElement>
 }
 
@@ -20,17 +23,20 @@ class CollectorConfigTab extends PureComponent<Props> {
   }
 
   public render() {
-    const {section, activeSection, handleTabClick} = this.props
-    const sectionName = section.name.toLowerCase()
+    const {section, focusedCollectorConfigTab, handleTabClick} = this.props
+    const sectionName = section.name
+    const capitalSectionName = sectionName.replace(/^[a-z]/, char =>
+      char.toUpperCase()
+    )
 
     return (
       <div
         className={`subsection--tab ${
-          sectionName === activeSection ? 'active' : ''
+          sectionName === focusedCollectorConfigTab ? 'active' : ''
         }`}
         onClick={handleTabClick(sectionName)}
       >
-        {section.name}
+        {capitalSectionName}
       </div>
     )
   }

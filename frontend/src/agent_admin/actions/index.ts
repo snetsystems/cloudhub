@@ -478,14 +478,16 @@ export const runLocalServiceTestTelegrafAsync = (
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pSelectedPlugin?: string
+  pSelectedPlugin?: string,
+  pConfPath?: string
 ) => async (dispatch: Dispatch<Action>) => {
   try {
     const runLocalServiceTestTelegrafPromise = await runLocalServiceTestTelegraf(
       pUrl,
       pToken,
       pMinionId,
-      pSelectedPlugin
+      pSelectedPlugin,
+      pConfPath
     )
 
     dispatch(cmdRunLocalServiceTestTelegraf())

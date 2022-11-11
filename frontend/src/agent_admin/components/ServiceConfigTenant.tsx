@@ -9,7 +9,7 @@ import ServiceConfigRow from 'src/agent_admin/components/ServiceConfigRow'
 
 // Types
 import {RemoteDataState} from 'src/types'
-import {AgentDirFile} from 'src/agent_admin/type'
+import {AgentDirFile, CollectorConfigTabName} from 'src/agent_admin/type'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -17,6 +17,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 type Tenant = string
 
 interface Props {
+  focusedCollectorConfigTab: CollectorConfigTabName | ''
   focusedMinion: string
   focusedTenant: string
   isCollectorInstalled: boolean
@@ -98,6 +99,14 @@ class ServiceConfigTenant extends PureComponent<Props, State> {
     if (serviceConfigTenantStatus === RemoteDataState.Error) {
       return this.ErrorState
     }
+
+    if (
+      serviceConfigTenantStatus === RemoteDataState.Done &&
+      this.isTabNotSelected()
+    ) {
+      return this.TabIsNotSelected
+    }
+
     if (
       serviceConfigTenantStatus === RemoteDataState.Done &&
       this.isEmptyData()
@@ -132,10 +141,24 @@ class ServiceConfigTenant extends PureComponent<Props, State> {
     )
   }
 
+  private isTabNotSelected = () => {
+    const {focusedMinion, focusedCollectorConfigTab} = this.props
+
+    return focusedMinion !== '' && focusedCollectorConfigTab === ''
+  }
+
+  private get TabIsNotSelected(): JSX.Element {
+    return (
+      <div className="agent--state generic-empty-state">
+        <h4>{'Tab is not selected'}</h4>
+      </div>
+    )
+  }
+
   private get NoDataState(): JSX.Element {
     const {focusedMinion} = this.props
     const stateText =
-      focusedMinion === '' ? 'Minion not selected' : 'No Tenant found'
+      focusedMinion === '' ? 'Minion is not selected' : 'No Tenant found'
 
     return (
       <div className="agent--state generic-empty-state">

@@ -5,6 +5,8 @@ import {
   AgentDirFileInfo,
   AgentDirFile,
   CollectorConfigTableData,
+  CollectorConfigTabName,
+  CollectorConfigTabData,
 } from 'src/agent_admin/type/agent'
 
 export {
@@ -15,4 +17,6 @@ export {
   AgentDirFileInfo,
   AgentDirFile,
   CollectorConfigTableData,
+  CollectorConfigTabName,
+  CollectorConfigTabData,
 }
