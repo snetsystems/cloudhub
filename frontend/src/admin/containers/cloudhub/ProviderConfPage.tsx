@@ -4,25 +4,29 @@ import {connect} from 'react-redux'
 import * as TOML from '@iarna/toml'
 import uuid from 'uuid'
 import _ from 'lodash'
-import {AxiosResponse} from 'axios'
+import path from 'path'
 
 // apis
 import {setRunnerFileRemoveApi} from 'src/hosts/apis'
+import {
+  runServicePluginTestTelegrafByRunner,
+  runServiceReLoadTelegrafByRunner,
+} from 'src/shared/apis/saltStack'
 
 // actions
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {
   deleteCloudServiceProviderAsync,
   getCSPListInstancesAsync,
+  getRunnerFileReadAsync,
   loadCloudServiceProvidersAsync,
   writeCSPConfigAsync,
   writeCSPKeyAsync,
 } from 'src/hosts/actions'
 import {
-  getLocalFileWriteAsync,
-  getMinionKeyListAllAdminAsync,
-  runLocalServiceReStartTelegrafAsync,
-} from 'src/agent_admin/actions'
+  createCloudServiceProviderAsync,
+  updateCloudServiceProviderAsync,
+} from 'src/admin/actions/cloudhub'
 
 // types
 import {
@@ -35,35 +39,34 @@ import {
 import {CSPData, OpenStackCspInput} from 'src/types/providerConf'
 import {Addon} from 'src/types/auth'
 import {CSPFileWriteParam} from 'src/hosts/types'
-import {MinionsObject} from 'src/agent_admin/type'
-import {
-  createCloudServiceProviderAsync,
-  updateCloudServiceProviderAsync,
-} from 'src/admin/actions/cloudhub'
 
 // components
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {
+  notifyError,
+  notifyExceptionRunner,
   notifygetCSPConfigFailed,
-  notifyRequiredFailed,
 } from 'src/shared/copy/notifications'
 import {ProviderOpenStackConfigs} from 'src/admin/components/cloudhub/ProviderOpenStackConfigs'
+import PageSpinner from 'src/shared/components/PageSpinner'
 
 // constants
 import {HandleType, ProviderTypes} from 'src/admin/constants/providerConf'
 import {AddonType} from 'src/shared/constants'
 
 // utils
-import {isRequiredCheck} from 'src/admin/utils/conf'
+import {valiDationCheck} from 'src/admin/utils/conf'
+import {cryptoJSAESdecrypt, cryptoJSAESencrypt} from 'src/hosts/utils'
 
 interface Props {
   meCurrentOrganization: {id: string; name: string}
+  cspProviders: string[]
   source: Source
   sources: Source[]
   meRole: string
   notify: (message: Notification | NotificationFunc) => void
   handleLoadCspsAsync: () => Promise<any>
-  handleWriteCspConfig: (
+  handleWriteConfig: (
     saltMasterUrl: string,
     saltMasterToken: string,
     fileWrite: CSPFileWriteParam
@@ -81,31 +84,17 @@ interface Props {
   handleCreateCspAsync: (data) => Promise<any>
   handleUpdateCspAsync: (data) => Promise<any>
   handleDeleteCspAsync: (id: string) => Promise<any>
-  runLocalServiceReStartTelegraf: (
+  handleGetRunnerFileReadAsync: (
     saltMasterUrl: string,
     saltMasterToken: string,
-    minion: string
-  ) => Promise<AxiosResponse>
-  getLocalFileWrite: (
-    saltMasterUrl: string,
-    saltMasterToken: string,
-    minion: string,
-    script: string,
-    path?: string
-  ) => Promise<AxiosResponse>
-  handleGetMinionKeyListAll: (
-    saltMasterUrl: string,
-    saltMasterToken: string,
-    source: Source,
-    meRole: string
-  ) => Promise<MinionsObject>
+    filePath: string[]
+  ) => Promise<any>
   addons: Addon[]
   links: Links
 }
 
 interface State {
   isLoading: boolean
-  cspTabs: string[]
   focusedTab: string
   cspInput: OpenStackCspInput | object
   providerPageStatus: RemoteDataState
@@ -127,24 +116,29 @@ export class ProviderConfPage extends PureComponent<Props, State> {
   }cloud.providers.d/`
   private telegrafConfigPath = '/etc/telegraf/telegraf.d/'
 
+  private secretKey = _.find(
+    this.props.links.addons,
+    addon => addon.name === AddonType.ipmiSecretKey
+  )
+  private defaultProperties = {
+    [ProviderTypes.osp]: {
+      id: '',
+      projectName: '',
+      prevProjectName: '',
+      authUrl: '',
+      userName: '',
+      password: '',
+      projectDomain: 'default',
+      userDomain: 'default',
+      minion: '',
+      disabled: false,
+    },
+  }
   constructor(props: Props) {
     super(props)
 
-    const addOnCsp = _.values(
-      _.filter(ProviderTypes, (_value, key) => {
-        return (
-          _.get(
-            _.find(this.props.links.addons, addon => addon.name === key),
-            'url',
-            'off'
-          ) === 'on'
-        )
-      })
-    )
-
     this.state = {
       isLoading: true,
-      cspTabs: [...addOnCsp],
       focusedTab: null,
       cspInput: {},
       providerPageStatus: RemoteDataState.NotStarted,
@@ -174,7 +168,6 @@ export class ProviderConfPage extends PureComponent<Props, State> {
       saltMasterToken: saltMasterToken,
     })
   }
-  public UNSAFE_componentWillMount() {}
 
   public async componentDidMount() {
     const {focusedTab} = this.state
@@ -189,6 +182,7 @@ export class ProviderConfPage extends PureComponent<Props, State> {
       })
     }
   }
+
   public async componentDidUpdate(
     _prevProps: Readonly<Props>,
     prevState: Readonly<State>
@@ -208,6 +202,11 @@ export class ProviderConfPage extends PureComponent<Props, State> {
   }
 
   public render() {
+    const {providerPageStatus} = this.state
+    if (providerPageStatus === RemoteDataState.NotStarted) {
+      return this.LoadingState
+    }
+
     return (
       <div className="provider-conf-wrap">
         {this.renderTabNav}
@@ -215,13 +214,19 @@ export class ProviderConfPage extends PureComponent<Props, State> {
       </div>
     )
   }
+
+  private get LoadingState(): JSX.Element {
+    return <PageSpinner />
+  }
+
   private get renderTabNav(): JSX.Element {
-    const {cspTabs, focusedTab} = this.state
+    const {cspProviders} = this.props
+    const {focusedTab} = this.state
     return (
       <div className="provider-conf-csp">
         <div className="col-md-2 subsection--nav" data-test="subsectionNav">
           <div className="subsection--tabs">
-            {_.map(cspTabs, tabNav => (
+            {_.map(cspProviders, tabNav => (
               <div
                 onClick={this.handleClickTab}
                 key={uuid.v4()}
@@ -269,106 +274,90 @@ export class ProviderConfPage extends PureComponent<Props, State> {
     properties: Record<string, string>,
     handleType: string
   ): Promise<void> => {
-    const {runLocalServiceReStartTelegraf} = this.props
     const {saltMasterUrl, saltMasterToken} = this.state
-    const {minion} = properties
-    this.setState({providerPageStatus: RemoteDataState.Loading})
+    const {notify} = this.props
+    try {
+      this.setState({providerPageStatus: RemoteDataState.Loading})
 
-    switch (handleType) {
-      case HandleType.Save: {
-        await this.writeConfFile(properties, section)
-        break
+      switch (handleType) {
+        case HandleType.Save: {
+          const invalidProperty = valiDationCheck(properties, section)
+          if (!_.isNull(invalidProperty)) {
+            notify(invalidProperty)
+            this.setState({
+              providerPageStatus: RemoteDataState.Done,
+            })
+            return
+          }
+          await this.writeConfFile(properties, section)
+          break
+        }
+        case HandleType.Update: {
+          const invalidProperty = valiDationCheck(properties, section)
+          if (!_.isNull(invalidProperty)) {
+            notify(invalidProperty)
+            this.setState({
+              providerPageStatus: RemoteDataState.Done,
+            })
+            return
+          }
+          await this.updateConfFile(properties, section)
+          break
+        }
+        case HandleType.Delete: {
+          await this.deleteConfFile(properties, section)
+          break
+        }
       }
-      case HandleType.Update: {
-        await this.updateConfFile(properties, section)
-        break
+
+      const reloadResult = await runServiceReLoadTelegrafByRunner(
+        saltMasterUrl,
+        saltMasterToken
+      )
+
+      if (reloadResult.data.return[0] !== 'true') {
+        throw new Error('telegraf Reload Failed')
       }
-      case HandleType.Delete: {
-        await this.deleteConfFile(properties, section)
-        break
+      this.setState({providerPageStatus: RemoteDataState.Done})
+    } catch (error) {
+      if (error.message) {
+        notify(notifyError(error.message))
+      } else {
+        notify(notifyExceptionRunner())
       }
+
+      this.setState({providerPageStatus: RemoteDataState.Done})
     }
-
-    await runLocalServiceReStartTelegraf(saltMasterUrl, saltMasterToken, minion)
-    this.setState({providerPageStatus: RemoteDataState.Done})
   }
 
   private writeConfFile = async (properties, section) => {
     const {saltMasterUrl, saltMasterToken} = this.state
-    const {
-      handleWriteCspConfig,
-      handleCreateCspAsync,
-      handleUpdateCspAsync,
-      notify,
-      getLocalFileWrite,
-      runLocalServiceReStartTelegraf,
-    } = this.props
+    const {handleWriteConfig, handleCreateCspAsync, notify} = this.props
 
     switch (section) {
       case ProviderTypes.osp: {
         try {
           const {
-            id,
             projectName,
             authUrl,
             userName,
             password,
             projectDomain,
             userDomain,
-            minion,
           } = properties as OpenStackCspInput
 
-          const requiredCheck = isRequiredCheck(properties, section)
-
-          if (!_.isNull(requiredCheck)) {
-            notify(notifyRequiredFailed(requiredCheck))
-            this.setState({cspInput: properties})
-            return
-          }
-
-          const saltStackProviderConfig = `osp_${projectName.trim()}.conf`
-
-          const script = `
-${projectName.trim()}:
-  driver: openstack
-  region_name: RegionOne
-  auth:
-    username: ${userName}
-    password: ${password}
-    project_name: ${projectName.trim()}
-    user_domain_name: ${userDomain}
-    project_domain_name: ${projectDomain}
-    auth_url: ${authUrl}`
-
-          const saltConfig = {
-            path: this.confPath,
-            fileName: saltStackProviderConfig,
-            script,
-          }
-
-          const cspSaltConfigRes = await handleWriteCspConfig(
-            saltMasterUrl,
-            saltMasterToken,
-            saltConfig
-          )
-
-          if (!cspSaltConfigRes) {
-            notify(notifygetCSPConfigFailed())
-            throw new Error(notifygetCSPConfigFailed().message)
-          }
-
-          const saltPlugin = TOML.parse(`
+          const telegrafPlugin = TOML.parse(`
           [[outputs.influxdb]]
           urls = [ "http://influxdb:8086" ]
           database = "${projectName.trim()}"
           [outputs.influxdb.tagpass]
-            tenant = "${projectName.trim()}"
+            tenant = ["${projectName.trim()}"]
         
           [[inputs.openstack]]
           interval = "2m"
-          authentication_endpoint = "http://openstack:5000/v3"
+          authentication_endpoint = "${authUrl}"
           enabled_services = ["servers","projects"]
-          domain = "default"
+          domain = "${projectDomain}"
           project = "${projectName.trim()}"
           username = "${userName}"
           password = "${password}"
@@ -376,62 +365,87 @@ ${projectName.trim()}:
           [inputs.openstack.tags]
             tenant="${projectName.trim()}"
           `)
-          const stringifyToML = TOML.stringify(saltPlugin)
-          const telelgrafConf = stringifyToML
-          const telelgrafConfPath = `${
-            this.telegrafConfigPath + 'tenant/osp_' + projectName.trim()
-          }.conf`
+          const telelgrafConfigScript = TOML.stringify(telegrafPlugin)
 
-          const focusedHost = minion
-          const telegrafConfigRes = await getLocalFileWrite(
+          const telegrafScript = {
+            path: path.join(this.telegrafConfigPath, 'tenant', 'osp'),
+            fileName: `${projectName.trim()}.conf`,
+            script: telelgrafConfigScript,
+          }
+          const telegrafConfig = await handleWriteConfig(
             saltMasterUrl,
             saltMasterToken,
-            focusedHost,
-            telelgrafConf,
-            telelgrafConfPath
+            telegrafScript
           )
 
-          if (!telegrafConfigRes) {
+          if (!telegrafConfig) {
             notify(notifygetCSPConfigFailed())
             throw new Error(notifygetCSPConfigFailed().message)
           }
 
-          await runLocalServiceReStartTelegraf(
+          await this.telegrafPluginTest({
+            namespace: projectName,
+            provider: 'openstack',
+          })
+
+          const saltStackProviderConfig = `osp_${projectName.trim()}.conf`
+
+          const script = `${projectName.trim()}:
+  driver: openstack
+  region_name: RegionOne
+  auth:
+    username: '${userName}'
+    password: '${password}'
+    project_name: '${projectName.trim()}'
+    user_domain_name: ${userDomain}
+    project_domain_name: ${projectDomain}
+    auth_url: '${authUrl}'`
+
+          const saltConfigScript = {
+            path: this.confPath,
+            fileName: saltStackProviderConfig,
+            script,
+          }
+
+          const saltConfig = handleWriteConfig(
             saltMasterUrl,
             saltMasterToken,
-            focusedHost
+            saltConfigScript
           )
 
           const etcdData = {
             provider: 'osp',
             namespace: projectName.trim(),
             accesskey: userName,
-            secretkey: password,
+            secretkey: cryptoJSAESencrypt(password, this.secretKey.url),
             authurl: authUrl,
             projectdomain: projectDomain,
             userdomain: userDomain,
           }
-          let dbResp = null
-          if (!id) {
-            dbResp = await handleCreateCspAsync(etcdData)
-          } else {
-            const updateData = {
-              ...etcdData,
-              id: id,
-            }
-            dbResp = await handleUpdateCspAsync(updateData)
+
+          const cspConfig = handleCreateCspAsync(etcdData)
+
+          const [saltRes, cspRes] = await Promise.all([saltConfig, cspConfig])
+
+          if (!saltRes || !cspRes) {
+            notify(notifygetCSPConfigFailed())
+            throw new Error(notifygetCSPConfigFailed().message)
           }
 
-          this.setState({
-            cspInput: {
-              ...properties,
-              prevProjectName: projectName.trim(),
-              disabled: true,
-              id: dbResp.id,
-            },
+          this.setState(preState => {
+            return {
+              ...preState,
+              cspInput: {
+                ...properties,
+                password: '*'.repeat(password.length),
+                prevProjectName: projectName.trim(),
+                disabled: true,
+                id: cspRes.id,
+              },
+            }
           })
         } catch (error) {
-          console.log(error)
+          throw error
         }
         return
       }
@@ -441,30 +455,197 @@ ${projectName.trim()}:
     try {
       switch (section) {
         case ProviderTypes.osp: {
-          await this.writeConfFile(properties, section)
           const {saltMasterUrl, saltMasterToken} = this.state
-          const {prevProjectName} = properties as OpenStackCspInput
+          const {
+            handleWriteConfig,
+            handleUpdateCspAsync,
+            notify,
+            handleGetRunnerFileReadAsync,
+          } = this.props
 
-          const saltConfFileName = `${
-            this.confPath + 'osp_' + prevProjectName.trim()
-          }.conf`
-          const telelgrafConfFileName = `${
-            this.telegrafConfigPath + 'tenant/osp_' + prevProjectName.trim()
-          }.conf`
+          const {
+            id,
+            projectName,
+            authUrl,
+            userName,
+            password,
+            projectDomain,
+            userDomain,
+            prevProjectName,
+            enCryptPassword,
+          } = properties as OpenStackCspInput
 
-          await setRunnerFileRemoveApi(saltMasterUrl, saltMasterToken, [
-            saltConfFileName,
-            telelgrafConfFileName,
-          ])
+          const deCryptPassword = cryptoJSAESdecrypt(
+            enCryptPassword,
+            this.secretKey.url
+          )
+          const updatePassword =
+            '*'.repeat(deCryptPassword.length) === password
+              ? enCryptPassword
+              : cryptoJSAESencrypt(password, this.secretKey.url)
+
+          const saltStackProviderConfig = `osp_${projectName.trim()}.conf`
+          const script = `${projectName.trim()}:
+  driver: openstack
+  region_name: RegionOne
+  auth:
+    username: '${userName}'
+    password: '${cryptoJSAESdecrypt(updatePassword, this.secretKey.url)}'
+    project_name: '${projectName.trim()}'
+    user_domain_name: ${userDomain}
+    project_domain_name: ${projectDomain}
+    auth_url: '${authUrl}'`
+
+          const saltConfigScript = {
+            path: this.confPath,
+            fileName: saltStackProviderConfig,
+            script,
+          }
+
+          const saltConfig = handleWriteConfig(
+            saltMasterUrl,
+            saltMasterToken,
+            saltConfigScript
+          )
+
+          const telelgrafConfPath = path.join(
+            this.telegrafConfigPath,
+            'tenant',
+            'osp',
+            `${prevProjectName.trim()}.conf`
+          )
+          prevProjectName.trim()
+
+          const getSavedTelegrafConfig = await handleGetRunnerFileReadAsync(
+            saltMasterUrl,
+            saltMasterToken,
+            [telelgrafConfPath]
+          )
+
+          const localFileReadData = getSavedTelegrafConfig.return[0].substring(
+            0,
+            getSavedTelegrafConfig.return[0].lastIndexOf('\n')
+          )
+
+          const savedTelegrafConfigInput = TOML.parse(localFileReadData)[
+            'inputs'
+          ]['openstack'][0]
+
+          const savedTelegrafConfigOutput = TOML.parse(localFileReadData)[
+            'outputs'
+          ]['influxdb'][0]
+
+          const saltPlugin = TOML.parse(`
+          [[outputs.influxdb]]
+          urls = [ ${_.map(
+            savedTelegrafConfigOutput.urls,
+            url => `'${url}'`
+          ).join()} ]
+          database = "${projectName.trim()}"
+          [outputs.influxdb.tagpass]
+            tenant = ["${projectName.trim()}"]
+        
+          [[inputs.openstack]]
+          interval = "${savedTelegrafConfigInput.interval}"
+          authentication_endpoint = "${authUrl}"
+          enabled_services = [${_.map(
+            savedTelegrafConfigInput.enabled_services,
+            service => `'${service}'`
+          ).join()}]
+          domain = "${savedTelegrafConfigInput.domain}"
+          project = "${projectName.trim()}"
+          username = "${userName}"
+          password = "${cryptoJSAESdecrypt(updatePassword, this.secretKey.url)}"
+          server_diagnotics = ${savedTelegrafConfigInput.server_diagnotics}
+          [inputs.openstack.tags]
+            tenant="${projectName.trim()}"
+          `)
+          const telelgrafConfigScript = TOML.stringify(saltPlugin)
+
+          const telegrafScript = {
+            path: path.join(this.telegrafConfigPath, 'tenant', 'osp'),
+            fileName: `${projectName.trim()}.conf`,
+            script: telelgrafConfigScript,
+          }
+
+          const telegrafConfig = await handleWriteConfig(
+            saltMasterUrl,
+            saltMasterToken,
+            telegrafScript
+          )
+
+          if (telegrafConfig) {
+            notify(notifygetCSPConfigFailed())
+            throw new Error(notifygetCSPConfigFailed().message)
+          }
+
+          await this.telegrafPluginTest({
+            namespace: projectName,
+            provider: 'openstack',
+          })
+
+          const etcdData = {
+            provider: 'osp',
+            namespace: projectName.trim(),
+            accesskey: userName,
+            secretkey: updatePassword,
+            authurl: authUrl,
+            projectdomain: projectDomain,
+            userdomain: userDomain,
+          }
+
+          const updateData = {
+            ...etcdData,
+            id: id,
+          }
+
+          const cspConfig = handleUpdateCspAsync(updateData)
+
+          const [saltRes, cspRes] = await Promise.all([saltConfig, cspConfig])
+
+          if (!saltRes || !cspRes) {
+            notify(notifygetCSPConfigFailed())
+            throw new Error(notifygetCSPConfigFailed().message)
+          }
+
+          if (prevProjectName !== projectName) {
+            const saltConfFileName = path.join(
+              this.confPath,
+              `${'osp_' + prevProjectName.trim()}.conf`
+            )
+            const telelgrafConfFileName = path.join(
+              this.telegrafConfigPath,
+              'tenant',
+              'osp',
+              `${prevProjectName.trim()}.conf`
+            )
+
+            await setRunnerFileRemoveApi(saltMasterUrl, saltMasterToken, [
+              saltConfFileName,
+              telelgrafConfFileName,
+            ])
+          }
+
+          this.setState(prevState => {
+            return {
+              ...prevState,
+              cspInput: {
+                ...properties,
+                prevProjectName: projectName.trim(),
+                disabled: true,
+                id: id,
+              },
+            }
+          })
         }
       }
     } catch (error) {
-      console.log(error)
+      throw error
     }
   }
   private deleteConfFile = async (properties: object, section: string) => {
-    const {handleDeleteCspAsync} = this.props
     const {saltMasterUrl, saltMasterToken} = this.state
+    const {handleDeleteCspAsync} = this.props
 
     try {
       switch (section) {
@@ -472,12 +653,17 @@ ${projectName.trim()}:
           const {id, prevProjectName} = properties as OpenStackCspInput
 
           try {
-            const saltConfFileName = `${
-              this.confPath + 'osp_' + prevProjectName.trim()
-            }.conf`
-            const telelgrafConfFileName = `${
-              this.telegrafConfigPath + 'tenant/osp_' + prevProjectName.trim()
-            }.conf`
+            const saltConfFileName = path.join(
+              this.confPath,
+              `${'osp_' + prevProjectName.trim()}.conf`
+            )
+
+            const telelgrafConfFileName = path.join(
+              this.telegrafConfigPath,
+              'tenant',
+              'osp',
+              `${prevProjectName.trim()}.conf`
+            )
 
             const deleteConfFileRes = await setRunnerFileRemoveApi(
               saltMasterUrl,
@@ -485,28 +671,57 @@ ${projectName.trim()}:
               [saltConfFileName, telelgrafConfFileName]
             )
 
-            if (deleteConfFileRes) {
-              await handleDeleteCspAsync(id)
-              this.setState({
-                cspInput: {},
-              })
-            }
+            const cspDelte = handleDeleteCspAsync(id)
+            this.setState({
+              cspInput: this.defaultProperties[ProviderTypes.osp],
+            })
+
+            await Promise.all([deleteConfFileRes, cspDelte])
           } catch (error) {
-            console.error(error)
+            throw error
           }
           break
         }
       }
     } catch (error) {
-      console.log(error)
+      throw error
+    }
+  }
+  private telegrafPluginTest = async ({namespace, provider}) => {
+    const {saltMasterUrl, saltMasterToken} = this.state
+    const testFilePath = path.join(
+      this.telegrafConfigPath,
+      'tenant',
+      'osp',
+      `${namespace.trim()}.conf`
+    )
+
+    const testPlugin = {
+      path: testFilePath,
+      plugin: provider,
+    }
+
+    const testResult = await runServicePluginTestTelegrafByRunner(
+      saltMasterUrl,
+      saltMasterToken,
+      testPlugin
+    )
+
+    if (typeof testResult === 'string' && testResult.includes('E!')) {
+      await setRunnerFileRemoveApi(saltMasterUrl, saltMasterToken, [
+        testFilePath,
+      ])
+      throw new Error(
+        `${provider}: unable to authenticate ${provider} \n Please check your connection information again`
+      )
     }
   }
 
   private getCurrentCspData = async provider => {
     const {meCurrentOrganization, handleLoadCspsAsync} = this.props
+
     try {
       const dbResp: any[] = await handleLoadCspsAsync()
-
       const cspData = _.filter(dbResp, csp => {
         if (
           csp.provider == provider &&
@@ -536,35 +751,23 @@ ${projectName.trim()}:
             minion,
           } = await this.getCurrentCspData('osp')
 
-          if (!id) {
-            return {
-              id: '',
-              projectName: '',
-              authUrl: '',
-              userName: '',
-              password: '',
-              projectDomain: '',
-              prevProjectName: '',
-              userDomain: '',
-              minion: '',
-              disabled: false,
-            }
-          }
-
           return {
             id: id,
             projectName: namespace,
+            prevProjectName: namespace,
             authUrl: authurl,
             userName: accesskey,
-            password: secretkey,
+            password: '*'.repeat(
+              cryptoJSAESdecrypt(secretkey, this.secretKey.url).length
+            ),
+            enCryptPassword: secretkey,
             projectDomain: projectdomain,
-            prevProjectName: namespace,
             userDomain: userdomain,
             minion: minion,
             disabled: true,
           }
         } catch (error) {
-          return {}
+          return this.defaultProperties[ProviderTypes.osp]
         }
       }
 
@@ -600,14 +803,12 @@ const mstp = ({
 const mdtp = {
   notify: notifyAction,
   handleLoadCspsAsync: loadCloudServiceProvidersAsync,
-  handleWriteCspConfig: writeCSPConfigAsync,
+  handleWriteConfig: writeCSPConfigAsync,
   handleWriteCspKey: writeCSPKeyAsync,
   handleGetCSPListInstancesAsync: getCSPListInstancesAsync,
   handleCreateCspAsync: createCloudServiceProviderAsync,
   handleUpdateCspAsync: updateCloudServiceProviderAsync,
   handleDeleteCspAsync: deleteCloudServiceProviderAsync,
-  getLocalFileWrite: getLocalFileWriteAsync,
-  runLocalServiceReStartTelegraf: runLocalServiceReStartTelegrafAsync,
-  handleGetMinionKeyListAll: getMinionKeyListAllAdminAsync,
+  handleGetRunnerFileReadAsync: getRunnerFileReadAsync,
 }
 export default connect(mstp, mdtp)(ProviderConfPage)

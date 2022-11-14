@@ -95,6 +95,7 @@ export class ProviderOpenStackConfigs extends PureComponent<Props> {
               type="password"
               placeholder="Pawssord"
               className="form-control"
+              onFocus={this.restPassword}
               key={password}
               ref={r => (this.password = r)}
               defaultValue={password || ''}
@@ -150,20 +151,26 @@ export class ProviderOpenStackConfigs extends PureComponent<Props> {
       </div>
     )
   }
-
+  private restPassword = () => {
+    this.password.value = ''
+  }
   private handleSubmit = async e => {
     e.preventDefault()
+    const {id, prevProjectName, enCryptPassword, minion} = this.props.cspInput
+
     const properties = {
-      id: this.props.cspInput.id || '',
+      id: id || '',
       projectName: this.projectName.value,
       authUrl: this.authUrl.value,
       userName: this.userName.value,
       password: this.password.value,
       projectDomain: this.projectDomain.value,
       userDomain: this.userDomain.value,
-      prevProjectName: this.props.cspInput.prevProjectName,
-      minion: this.props.cspInput.minion,
+      prevProjectName: prevProjectName || '',
+      enCryptPassword: enCryptPassword || '',
+      minion: minion || '',
     }
+
     const handleType = e.target.name
     await this.props.onHandleSubmit(properties, handleType)
   }

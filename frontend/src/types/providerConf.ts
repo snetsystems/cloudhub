@@ -8,8 +8,10 @@ export interface OpenStackCspInput {
   userDomain: string
   disabled: boolean
   prevProjectName?: string
+  enCryptPassword?: string
   minion?: string
 }
+
 export interface GcpCspInput {
   id?: string
   projectName: string

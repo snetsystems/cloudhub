@@ -403,13 +403,15 @@ export const runLocalGroupAdduserAsync = (
 export const getLocalFileReadAsync = (
   pUrl: string,
   pToken: string,
-  pMinionId: string
+  pMinionId: string,
+  pDirPath?: string
 ) => async (dispatch: Dispatch<Action>) => {
   try {
     const getLocalFileReadPromise = await getLocalFileRead(
       pUrl,
       pToken,
-      pMinionId
+      pMinionId,
+      pDirPath
     )
     dispatch(loadGetLocalFileRead())
     return getLocalFileReadPromise
