@@ -4,18 +4,18 @@ import _ from 'lodash'
 
 // types
 import {OpenStackPage} from 'src/clouds/containers/OpenStackPage'
-import {OpenStackProject} from 'src/clouds/types/openstack'
+import {FocusedProject, OpenStackProject} from 'src/clouds/types/openstack'
 
 interface Props {
   project: OpenStackProject
+  focusedProject: FocusedProject
   tableOrder: string[]
-  focusedProject: Partial<OpenStackProject>
   onClickTableRow: OpenStackPage['handleClickProjectTableRow']
 }
 
 const OpenStackPageProjectTableRow: FunctionComponent<Props> = ({
   project = {} as OpenStackProject,
-  focusedProject = {} as OpenStackProject,
+  focusedProject = null,
   tableOrder = [],
   onClickTableRow,
 }) => {
@@ -37,12 +37,12 @@ const OpenStackPageProjectTableRow: FunctionComponent<Props> = ({
             width: '100%',
             position: 'relative',
             height: '2px',
-            backgroundColor: 'rgb(255 164 47)',
+            backgroundColor: '#00C9FF',
           }}
           className="UsageIndacator-background"
         >
           <div
-            style={{width: `${numValue}%`, background: '#E35833'}}
+            style={{width: `${numValue}%`, background: '#bf3d5e'}}
             className="UsageIndacator UsageIndacator"
           ></div>
         </div>
@@ -104,10 +104,7 @@ const OpenStackPageProjectTableRow: FunctionComponent<Props> = ({
   }
 
   const focusedClasses = (): string => {
-    if (
-      project.projectData.projectName ===
-      _.get(focusedProject.projectData, 'projectName')
-    )
+    if (project.projectData.projectName === focusedProject)
       return 'hosts-table--tr focused'
     return 'hosts-table--tr'
   }
@@ -115,7 +112,9 @@ const OpenStackPageProjectTableRow: FunctionComponent<Props> = ({
   return (
     <div
       className={focusedClasses()}
-      onClick={onClickTableRow((project as unknown) as OpenStackProject)}
+      onClick={onClickTableRow(
+        project.projectData.projectName as FocusedProject
+      )}
     >
       <div
         className="hosts-table--td"

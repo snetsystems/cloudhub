@@ -9,12 +9,14 @@ import {
 // component
 import OpenStackPageInstanceDetailSection from 'src/clouds/components/OpenStackPageInstanceDetailSection'
 import OpenStackPageHeader from 'src/clouds/components/OpenStackPageHeader'
+import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 // types
-import {OpenStackInstance} from 'src/clouds/types/openstack'
+import {FocusedInstance, OpenStackInstance} from 'src/clouds/types/openstack'
 
 interface Props {
   selectInstanceData: OpenStackInstance['detail']
+  focusedInstance: Partial<FocusedInstance>
   instanceTypeModal?: () => void
 }
 
@@ -47,24 +49,26 @@ class OpenStackPageInstanceDetail extends PureComponent<Props> {
     )
   }
   public render() {
-    const {selectInstanceData} = this.props
-    const selectedInstanceName = !_.isEmpty(selectInstanceData)
-      ? selectInstanceData.overview.name
-      : ''
+    const {focusedInstance} = this.props
 
     return (
       <>
         <OpenStackPageHeader
-          cellName={`Limit Summary (${selectedInstanceName})`}
+          cellName={`Limit Summary (${focusedInstance.instanceName || ''})`}
           cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
           cellTextColor={DEFAULT_CELL_TEXT_COLOR}
         />
-        <div
-          style={{backgroundColor: DEFAULT_CELL_BG_COLOR}}
-          className={'tab-pannel'}
-        >
-          {this.InstanceDetailContetns}
-        </div>
+        <FancyScrollbar style={{height: 'calc(100% - 45px)'}} autoHide={true}>
+          <div
+            style={{
+              backgroundColor: DEFAULT_CELL_BG_COLOR,
+              height: 'calc(100% - 45px)',
+            }}
+            className={'tab-pannel'}
+          >
+            {this.InstanceDetailContetns}
+          </div>
+        </FancyScrollbar>
       </>
     )
   }

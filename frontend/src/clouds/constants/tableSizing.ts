@@ -95,14 +95,13 @@ export const KUBERNETES_BASICS_TABLE_SIZE = {
 }
 
 export const OPENSATCK_TABLE_SIZING = {
-  InstanceNameWidth: '12%',
-  ImageNameWidth: '10%',
-  IpAddressWidth: '9%',
+  InstanceNameWidth: '14%',
+  IpAddressWidth: '11%',
   FlavorWidth: '10%',
-  KeyPairWidth: '8%',
-  StatusWidth: '9%',
+  KeyPairWidth: '10%',
+  StatusWidth: '11%',
   AvailabilityZoneWidth: '14%',
   TaskWidth: '7%',
   PowerStateWidth: '7%',
-  AgeWidth: '14%',
+  AgeWidth: '16%',
 }

@@ -3,15 +3,15 @@ import React from 'react'
 import {PureComponent} from 'react'
 
 // components
-import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import OpenStackPageInstanceDetail from 'src/clouds/components/OpenStackPageInstanceDetail'
 
 // types
-import {OpenStackInstance} from 'src/clouds/types/openstack'
+import {FocusedInstance, OpenStackInstance} from 'src/clouds/types/openstack'
 
 export interface Props {
-  focusedInstance: Partial<OpenStackInstance>
+  focusedInstanceData: Partial<OpenStackInstance>
+  focusedInstance: Partial<FocusedInstance>
 }
 
 @ErrorHandling
@@ -20,18 +20,18 @@ class OpenStackPageInstanceOverview extends PureComponent<Props> {
     super(props)
   }
   public render() {
-    const {focusedInstance} = this.props
+    const {focusedInstanceData, focusedInstance} = this.props
     const selectInstanceData = focusedInstance
-      ? focusedInstance?.detail
+      ? focusedInstanceData?.detail
       : ({} as OpenStackInstance['detail'])
 
     return (
       <div style={{height: '100%', backgroundColor: '#292933'}}>
-        <FancyScrollbar autoHide={true}>
-          <OpenStackPageInstanceDetail
-            selectInstanceData={selectInstanceData}
-          />
-        </FancyScrollbar>
+        <OpenStackPageInstanceDetail
+          focusedInstance={focusedInstance}
+          selectInstanceData={selectInstanceData}
+        />
+
         <div className="dash-graph--gradient-border">
           <div className="dash-graph--gradient-top-left" />
           <div className="dash-graph--gradient-top-right" />

@@ -20,7 +20,7 @@ class OpenStackPageHeader extends Component<Props> {
     return (
       <div
         className={
-          'dash-graph--heading dash-graph--draggable dash-graph--heading-draggable'
+          'dash-graph--heading  dash-graph--heading-draggable openstacck-dash-graph--draggable'
         }
         style={{margin: 0, height: '40px', backgroundColor: '#292933'}}
       >

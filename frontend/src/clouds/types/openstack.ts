@@ -4,7 +4,6 @@ export interface OpenStackProjectData {
   chart: OpenStackGaugeChartProjectData
 }
 export interface OpenStackProject {
-  projectName: string
   projectData: OpenStackProjectData
   instances: OpenStackInstance[]
 }
@@ -13,10 +12,8 @@ export interface OpenStackInstanceDetail {
   overview: {
     name: string
     id: string
-    description: string
     projectId: string
     status: string
-    locked: string
     availabilityZone: string
     created: string
     age: string
@@ -45,8 +42,8 @@ export interface OpenStackInstanceFlaverDetail {
 
 export interface OpenStackInstance {
   instanceId: string
-  instanceName: string
-  imageName: string
+  instanceName: string | null
+  projectName: string | null
   ipAddress: string
   flavor: string
   keyPair: string
@@ -58,7 +55,12 @@ export interface OpenStackInstance {
   detail: OpenStackInstanceDetail
   flaverDetail: OpenStackInstanceFlaverDetail
 }
+export type FocusedInstance = Pick<
+  OpenStackInstance,
+  'instanceId' | 'instanceName' | 'projectName'
+>
 
+export type FocusedProject = string
 export interface OpenStackPageTableProjectData {
   [cloudResource: string]: OpenStackPageTableCloudResource
 }
@@ -95,4 +97,54 @@ export interface OpenStackLayoutCell {
 
 export type OpenStackApiFunctions = {
   [x: string]: string[]
+}
+
+export const OpenStackDataGroupTypes = {
+  projects: 'projects',
+  instances: 'instances',
+  flaver: 'flaver',
+} as const
+
+export type OpenStackDataGroupTypes = typeof OpenStackDataGroupTypes[keyof typeof OpenStackDataGroupTypes]
+
+export type OpenStackApiInfo = {
+  options?: object
+  apiList: string[]
+}
+
+export type OpenStackApiList = {
+  [x in OpenStackDataGroupTypes]?: OpenStackApiInfo
+}
+
+export interface OpenStackCallParams {
+  saltFunction: string
+  namespace: string
+  pToken: string
+  saltOptions: object
+}
+
+export interface OpenstackProjectAPIInfo {
+  [namesapce: string]: {
+    flaver: object[]
+    instance: object[]
+    project: object[]
+  }
+}
+export interface OpenStackInstanceLink {
+  instanceId: string
+  instanceName: string
+  namespace: string
+}
+export interface OpenStackInstanceLinks {
+  [index: string]: OpenStackInstanceLink
+}
+
+export interface SecurityGroupRule {
+  id: string
+  securityGroup: string
+  ethertype: 'IPv4' | 'IPv6'
+  protocol: string
+  portrange: string
+  remoteIPPrefix: string
+  remoteSecurityGroup?: string
 }

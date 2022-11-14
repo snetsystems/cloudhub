@@ -9,8 +9,8 @@ import PageSpinner from 'src/shared/components/PageSpinner'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import OpenStackPageProjectTableRow from 'src/clouds/components/OpenStackPageProjectTableRow'
 import {OpenStackPage} from 'src/clouds/containers/OpenStackPage'
-import {OpenStackProject} from 'src/clouds/types/openstack'
-import OpenStackPageHeader from 'src/clouds/components//OpenStackPageHeader'
+import {FocusedProject, OpenStackProject} from 'src/clouds/types/openstack'
+import OpenStackPageHeader from 'src/clouds/components/OpenStackPageHeader'
 
 // types
 import {Source, RemoteDataState} from 'src/types'
@@ -31,10 +31,10 @@ enum SortDirection {
 
 export interface Props {
   projects: OpenStackProject[]
+  focusedProject: FocusedProject
   source: Source
   openStackPageStatus: RemoteDataState
   resourceTableOrder?: string[]
-  focusedProject: Partial<OpenStackProject>
   onClickTableRow: OpenStackPage['handleClickProjectTableRow']
 }
 
@@ -180,9 +180,7 @@ class OpenStackPageProjectTable extends PureComponent<Props, State> {
     return (
       <div className="panel">
         <OpenStackPageHeader
-          cellName={`Limit Summary (${
-            focusedProject?.projectData.projectName || ''
-          })`}
+          cellName={`Limit Summary (${focusedProject || ''})`}
           cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
           cellTextColor={DEFAULT_CELL_TEXT_COLOR}
         >
@@ -272,8 +270,6 @@ class OpenStackPageProjectTable extends PureComponent<Props, State> {
 
     return sortedProjects.map(project => {
       const {projectName} = project?.projectData
-      const currentFocusedProject =
-        project?.projectName == focusedProject.projectName ? focusedProject : {}
 
       return (
         <OpenStackPageProjectTableRow
@@ -281,7 +277,7 @@ class OpenStackPageProjectTable extends PureComponent<Props, State> {
           project={project}
           tableOrder={resourceTableOrder}
           onClickTableRow={onClickTableRow}
-          focusedProject={currentFocusedProject}
+          focusedProject={focusedProject}
         />
       )
     })

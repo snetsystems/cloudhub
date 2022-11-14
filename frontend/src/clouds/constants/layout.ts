@@ -125,10 +125,10 @@ export const vmCells = [
   },
 ]
 
-export const getOpenStackPageLayoutsByRole = [
+export const getOpenStackPageLayouts = [
   {i: 'projectTable', x: 0, y: 0, w: 20, h: 5, minW: 5, minH: 2},
-  {i: 'projectDetail', x: 0, y: 5, w: 10, h: 5, minW: 5, minH: 2},
-  {i: 'instanceDetail', x: 10, y: 5, w: 10, h: 5, minW: 5, minH: 2},
-  {i: 'instanceTable', x: 0, y: 10, w: 20, h: 5, minW: 5, minH: 2},
-  {i: 'instanceGraph', x: 0, y: 15, w: 20, h: 5, minW: 5, minH: 2},
+  {i: 'projectDetail', x: 0, y: 10, w: 10, h: 10, minW: 8, minH: 10},
+  {i: 'instanceDetail', x: 10, y: 10, w: 10, h: 10, minW: 5, minH: 5},
+  {i: 'instanceTable', x: 0, y: 15, w: 20, h: 5, minW: 5, minH: 2},
+  {i: 'instanceGraph', x: 0, y: 20, w: 20, h: 8, minW: 10, minH: 8},
 ]

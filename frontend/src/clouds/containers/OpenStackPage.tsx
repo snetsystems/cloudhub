@@ -4,14 +4,19 @@ import {connect} from 'react-redux'
 import _ from 'lodash'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 import {bindActionCreators} from 'redux'
+import ReactObserver from 'react-resize-observer'
 
 // middleware
 const GridLayout = WidthProvider(ReactGridLayout)
+import {
+  getLocalStorage,
+  setLocalStorage,
+} from 'src/shared/middleware/localStorage'
 
 // constants
 import {
   notifyUnableToGetApps,
-  notifyUnableToGetHosts,
+  notifyUnableToGetProjects,
 } from 'src/shared/copy/notifications'
 
 // actions
@@ -25,81 +30,70 @@ import {
   TimeRange,
   RemoteDataState,
   NotificationAction,
-  RefreshRate,
 } from 'src/types'
 import {
-  OpenStackInstance,
+  FocusedInstance,
+  FocusedProject,
   OpenStackLayoutCell,
   OpenStackProject,
 } from 'src/clouds/types/openstack'
 import {loadCloudServiceProvidersAsync} from 'src/hosts/actions'
-import {
-  delayEnablePresentationMode,
-  setAutoRefresh,
-} from 'src/shared/actions/app'
-import * as QueriesModels from 'src/types/queries'
-import * as AppActions from 'src/types/actions/app'
 
 // Components
 import {ManualRefreshProps} from 'src/shared/components/ManualRefresh'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import {AddonType, LAYOUT_MARGIN} from 'src/shared/constants'
-import {Page} from 'src/reusable_ui'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import OpenStackPageInstanceOverview from 'src/clouds/components/OpenStackPageInstanceOverview'
 import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import OpenStackPageInstanceTable from 'src/clouds/components/OpenStackPageInstanceTable'
 import OpenStackProjectGaugeChartLayout from 'src/clouds/components/OpenStackProjectGaugeChartLayout'
 import OpenStackPageProjectTable from 'src/clouds/components/OpenStackPageProjectTable'
+import OpenStackPageHeader from 'src/clouds/components/OpenStackPageHeader'
 
 // utils
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
 import {getCells} from 'src/hosts/utils/getCells'
 import {generateForHosts} from 'src/utils/tempVars'
 import {getDeep} from 'src/utils/wrappers'
+import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 
 // api
-import {getLayouts} from 'src/hosts/apis'
-import {getOpenStackProjectsAsync} from 'src/hosts/actions/inventoryTopology'
+import {
+  getAppsForInstance,
+  getLayouts,
+  getMeasurementsForInstance,
+} from 'src/hosts/apis'
+import {getOspSaltInfo} from 'src/clouds/apis/openstack'
 
 // constants
-import Authorized, {ADMIN_ROLE} from 'src/auth/Authorized'
-import {getOpenStackPageLayoutsByRole} from 'src/clouds/constants/layout'
+import {getOpenStackPageLayouts} from 'src/clouds/constants/layout'
+import {notIncludeAppsOsp} from 'src/hosts/constants/apps'
+import {
+  DEFAULT_CELL_BG_COLOR,
+  DEFAULT_CELL_TEXT_COLOR,
+  GRAPH_BG_COLOR,
+} from 'src/dashboards/constants'
 
 interface Props extends ManualRefreshProps {
   meRole: string
+  meCurrentOrganization: {id: string; name: string}
+  meOrganizations: [{id: string; name: string}]
   source: Source
   links: Links
   autoRefresh: number
   timeRange: TimeRange
-  inPresentationMode: boolean
   notify: NotificationAction
-  onChooseAutoRefresh: (milliseconds: RefreshRate) => void
-  handleClearTimeout: (key: string) => void
-  handleChooseTimeRange: (timeRange: QueriesModels.TimeRange) => void
-  handleChooseAutoRefresh: AppActions.SetAutoRefreshActionCreator
-  handleClickPresentationButton: AppActions.DelayEnablePresentationModeDispatcher
   handleLoadCspsAsync: () => Promise<any>
-  handleGetOpenStackProjectsAsync: (
-    saltMasterUrl: string,
-    saltMasterToken: string,
-    pCsp: any[]
-  ) => Promise<any>
-}
-
-interface CloudObject {
-  [projectName: string]: OpenStackInstance
 }
 
 interface State {
-  focusedInstance: Partial<OpenStackInstance>
-  focusedProject: Partial<OpenStackProject>
+  focusedInstance: Partial<FocusedInstance>
+  focusedProject: FocusedProject
   layouts: Layout[]
   filteredLayouts: Layout[]
   projects: Partial<OpenStackProject[]>
-  cloudAccessInfos: any[]
-  cloudObject: CloudObject
   openStackPageStatus: RemoteDataState
   openStackLayouts: OpenStackLayoutCell[]
 }
@@ -109,6 +103,7 @@ export class OpenStackPage extends PureComponent<Props, State> {
   public static defaultProps: Partial<Props> = {
     manualRefresh: 0,
   }
+
   private isComponentMounted: boolean = true
   public intervalID: number
 
@@ -116,6 +111,7 @@ export class OpenStackPage extends PureComponent<Props, State> {
     this.props.links.addons,
     addon => addon.name === AddonType.salt
   )
+
   constructor(props: Props) {
     super(props)
 
@@ -126,21 +122,19 @@ export class OpenStackPage extends PureComponent<Props, State> {
 
     this.state = {
       focusedInstance: {},
-      focusedProject: {},
+      focusedProject: null,
       layouts: [],
       filteredLayouts: [],
-      openStackPageStatus: RemoteDataState.NotStarted,
-      cloudAccessInfos: [],
-      cloudObject: {},
       projects: [],
+      openStackPageStatus: RemoteDataState.NotStarted,
       openStackLayouts: [],
     }
   }
 
   public async componentDidMount() {
-    const convertOpenStackLayouts = getOpenStackPageLayoutsByRole
-    const layoutResults = await getLayouts()
+    const {autoRefresh} = this.props
 
+    const layoutResults = await getLayouts()
     const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
 
     if (!layouts) {
@@ -152,13 +146,53 @@ export class OpenStackPage extends PureComponent<Props, State> {
       return
     }
     try {
-      await this.fetchOpenStackData(layouts)
+      const projects = await this.fetchOpenStackData()
+
+      const {openStackLayouts: layoutsByStorage} =
+        getLocalStorage('openStackLayouts') || getOpenStackPageLayouts
+      const openStackLayouts = layoutsByStorage || getOpenStackPageLayouts
+
+      let convertOpenStackLayouts = Array.isArray(openStackLayouts)
+        ? openStackLayouts
+        : openStackLayouts.split(',').map(v => Number(v))
+
+      if (projects.length < 2) {
+        convertOpenStackLayouts = _.filter(
+          convertOpenStackLayouts,
+          layout => layout.i !== 'projectTable'
+        )
+      }
+      if (projects.length > 1 && convertOpenStackLayouts.length < 5) {
+        convertOpenStackLayouts = getOpenStackPageLayouts
+      }
+
       this.onSetFocusedProject()
       this.onSetFocusedInstance()
+
+      let focusedLayout = []
+      if (!_.isEmpty(this.state.focusedInstance)) {
+        const {filteredLayouts} = await this.getLayoutsforInstance(
+          layouts,
+          this.state.focusedInstance
+        )
+        focusedLayout = filteredLayouts
+      }
+
+      if (autoRefresh) {
+        clearInterval(this.intervalID)
+        this.intervalID = window.setInterval(
+          () => this.fetchOpenStackData(),
+          autoRefresh
+        )
+      }
+
+      GlobalAutoRefresher.poll(autoRefresh)
 
       this.setState(state => {
         return {
           ...state,
+          layouts,
+          filteredLayouts: focusedLayout,
           openStackPageStatus: RemoteDataState.Done,
           openStackLayouts: convertOpenStackLayouts,
         }
@@ -166,21 +200,41 @@ export class OpenStackPage extends PureComponent<Props, State> {
     } catch (error) {
       this.setState({
         openStackPageStatus: RemoteDataState.Done,
-        openStackLayouts: convertOpenStackLayouts,
+        openStackLayouts: getOpenStackPageLayouts,
       })
     }
   }
 
-  componentDidUpdate(_, prevState: Readonly<State>): void {
-    const {focusedProject} = this.state
-    const {focusedProject: preFocusedProject} = prevState
+  public async componentDidUpdate(
+    prevProps: Readonly<Props>,
+    prevState: Readonly<State>
+  ): Promise<void> {
+    const {
+      focusedProject: preFocusedProject,
+      focusedInstance: preFocusedInstance,
+    } = prevState
+    const {autoRefresh} = this.props
+    const {focusedInstance, layouts} = this.state
+
+    if (layouts.length && preFocusedProject) {
+      if (preFocusedInstance.instanceName !== focusedInstance.instanceName) {
+        const {filteredLayouts} = await this.getLayoutsforInstance(
+          layouts,
+          focusedInstance
+        )
+        this.setState({filteredLayouts})
+      }
+
+      if (prevProps.autoRefresh !== autoRefresh) {
+        GlobalAutoRefresher.poll(autoRefresh)
+      }
+    }
   }
   public async UNSAFE_componentWillReceiveProps(nextProps: Props) {
     const {layouts, focusedInstance} = this.state
-
-    if (layouts) {
+    if (layouts.length) {
       if (this.props.manualRefresh !== nextProps.manualRefresh) {
-        this.fetchOpenStackData(layouts)
+        await this.fetchOpenStackData()
         const {filteredLayouts} = await this.getLayoutsforInstance(
           layouts,
           focusedInstance
@@ -193,18 +247,28 @@ export class OpenStackPage extends PureComponent<Props, State> {
         GlobalAutoRefresher.poll(nextProps.autoRefresh)
 
         if (nextProps.autoRefresh) {
-          this.intervalID = window.setInterval(() => {
-            this.fetchOpenStackData(layouts)
-          }, nextProps.autoRefresh)
+          this.intervalID = window.setInterval(
+            () => this.fetchOpenStackData(),
+            nextProps.autoRefresh
+          )
         }
       }
     }
   }
 
   public componentWillUnmount() {
+    const {openStackLayouts} = this.state
+
     clearInterval(this.intervalID)
     this.intervalID = null
     GlobalAutoRefresher.stopPolling()
+
+    const saveLayouts = _.isEmpty(openStackLayouts)
+      ? getOpenStackPageLayouts
+      : openStackLayouts
+    setLocalStorage('openStackLayouts', {
+      openStackLayouts: saveLayouts,
+    })
 
     this.isComponentMounted = false
   }
@@ -228,7 +292,7 @@ export class OpenStackPage extends PureComponent<Props, State> {
           rowHeight={50}
           margin={[LAYOUT_MARGIN, LAYOUT_MARGIN]}
           containerPadding={[20, 10]}
-          draggableHandle={'.dash-graph--draggable'}
+          draggableHandle={'.openstacck-dash-graph--draggable'}
           onLayoutChange={this.handleLayoutChange}
           useCSSTransforms={false}
           isDraggable={true}
@@ -241,23 +305,36 @@ export class OpenStackPage extends PureComponent<Props, State> {
       </FancyScrollbar>
     )
   }
-  private openStackPageRender(layout): JSX.Element {
-    const {focusedProject, openStackPageStatus} = this.state
+  private openStackPageRender(layout: OpenStackLayoutCell): JSX.Element {
+    const {
+      openStackPageStatus,
+      projects,
+      focusedProject,
+      focusedInstance,
+      filteredLayouts,
+    } = this.state
+    const {source, manualRefresh, timeRange} = this.props
+
+    const updateFocusedProject = _.filter(
+      projects,
+      project => project?.projectData.projectName === focusedProject
+    )[0]
+
+    const updateInstance = _.filter(
+      updateFocusedProject?.instances,
+      instance => instance.instanceName === focusedInstance.instanceName
+    )[0]
+
     switch (layout.i) {
       case 'projectTable': {
-        const {projects, focusedProject} = this.state
-        const {source} = this.props
-
         return (
-          <Authorized requiredRole={ADMIN_ROLE}>
-            <OpenStackPageProjectTable
-              projects={projects}
-              openStackPageStatus={openStackPageStatus}
-              source={source}
-              focusedProject={focusedProject}
-              onClickTableRow={this.handleClickProjectTableRow}
-            />
-          </Authorized>
+          <OpenStackPageProjectTable
+            projects={projects}
+            focusedProject={focusedProject}
+            openStackPageStatus={openStackPageStatus}
+            source={source}
+            onClickTableRow={this.handleClickProjectTableRow}
+          />
         )
       }
 
@@ -265,63 +342,103 @@ export class OpenStackPage extends PureComponent<Props, State> {
         return (
           <OpenStackProjectGaugeChartLayout
             gaugeChartState={openStackPageStatus}
-            projectName={focusedProject?.projectData.projectName || ''}
-            projectData={focusedProject?.projectData.chart}
+            focusedProject={focusedProject}
+            projectData={updateFocusedProject?.projectData?.chart}
           />
         )
       }
 
       case 'instanceDetail': {
-        const {focusedInstance} = this.state
-
         return (
-          <OpenStackPageInstanceOverview focusedInstance={focusedInstance} />
+          <OpenStackPageInstanceOverview
+            focusedInstance={focusedInstance}
+            focusedInstanceData={updateInstance}
+          />
         )
       }
 
       case 'instanceTable': {
-        const {
-          focusedProject,
-          openStackPageStatus,
-          focusedInstance,
-        } = this.state
-        const {source} = this.props
-
         return (
           <OpenStackPageInstanceTable
             openStackPageStatus={openStackPageStatus}
             source={source}
-            focusedProject={focusedProject}
             focusedInstance={focusedInstance}
+            focusedProject={focusedProject}
+            focusedProjectData={updateFocusedProject}
             onClickTableRow={this.handleClickInstanceTableRow}
           />
         )
       }
 
       case 'instanceGraph': {
-        const {source, manualRefresh, timeRange} = this.props
-        const {filteredLayouts, focusedInstance} = this.state
         const layoutCells = getCells(filteredLayouts, source)
         const tempVars = generateForHosts(source)
+        const instance = {
+          instancename: updateInstance?.instanceName,
+          instanceid: updateInstance?.instanceId,
+          namespace: updateInstance?.projectName,
+        }
+        const debouncedFit = _.debounce(() => {
+          WindowResizeEventTrigger()
+        }, 150)
+        const handleOnResize = (): void => {
+          debouncedFit()
+        }
 
         return (
-          <>
-            <Page.Contents>
-              <LayoutRenderer
-                source={source}
-                sources={[source]}
-                isStatusPage={false}
-                isStaticPage={true}
-                isEditable={false}
-                cells={layoutCells}
-                templates={tempVars}
-                timeRange={timeRange}
-                manualRefresh={manualRefresh}
-                instance={focusedInstance}
-                host={''}
-              />
-            </Page.Contents>
-          </>
+          <div
+            className="panel"
+            style={{backgroundColor: DEFAULT_CELL_BG_COLOR}}
+          >
+            <OpenStackPageHeader
+              cellName={`Monitoring (${focusedInstance.instanceName || ''})`}
+              cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
+              cellTextColor={DEFAULT_CELL_TEXT_COLOR}
+            ></OpenStackPageHeader>
+            {_.isEmpty(updateInstance) ? (
+              <div className="panel-body">
+                <div className="generic-empty-state">
+                  <h4 style={{margin: '90px 0'}}>No Instances found</h4>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div
+                  className="panel-body"
+                  style={{backgroundColor: GRAPH_BG_COLOR}}
+                >
+                  <div
+                    style={{
+                      position: 'relative',
+                      width: '100%',
+                      height: '100%',
+                    }}
+                  >
+                    <ReactObserver onResize={handleOnResize} />
+                    <LayoutRenderer
+                      source={source}
+                      sources={[source]}
+                      isStatusPage={false}
+                      isStaticPage={true}
+                      isEditable={false}
+                      cells={layoutCells}
+                      templates={tempVars}
+                      timeRange={timeRange}
+                      manualRefresh={manualRefresh}
+                      instance={instance}
+                      host={''}
+                    />
+                  </div>
+                </div>
+                <div className="dash-graph--gradient-border">
+                  <div className="dash-graph--gradient-top-left" />
+                  <div className="dash-graph--gradient-top-right" />
+                  <div className="dash-graph--gradient-bottom-left" />
+                  <div className="dash-graph--gradient-bottom-right" />
+                </div>
+              </>
+            )}
+          </div>
         )
       }
     }
@@ -332,8 +449,9 @@ export class OpenStackPage extends PureComponent<Props, State> {
   }
 
   private handleLayoutChange = layout => {
-    let changed = false
     const {openStackLayouts} = this.state
+
+    let changed = false
     const newCells = openStackLayouts.map(cell => {
       const l = layout.find(ly => ly.i === cell.i)
 
@@ -366,58 +484,123 @@ export class OpenStackPage extends PureComponent<Props, State> {
     }
   }
 
-  private async fetchOpenStackData(layouts) {
-    const {
-      handleLoadCspsAsync,
-      source,
-      handleGetOpenStackProjectsAsync,
-      notify,
-      meRole,
-    } = this.props
+  private async fetchOpenStackData() {
+    const {handleLoadCspsAsync, notify, meRole} = this.props
 
     try {
-      const namespace = []
-      let resProjects = await handleGetOpenStackProjectsAsync(
-        this.salt.url,
-        this.salt.token,
-        namespace
+      const accessInfo = {url: this.salt.url, token: this.salt.token}
+      const ospProjects = await getOspSaltInfo(
+        meRole,
+        handleLoadCspsAsync,
+        accessInfo
       )
 
-      const dbResp = []
-      this.setState({
-        cloudAccessInfos: dbResp,
-        projects: resProjects,
+      this.setState(state => {
+        return {
+          ...state,
+          projects: ospProjects,
+        }
       })
+      return ospProjects
     } catch (error) {
-      console.error(error)
-      notify(notifyUnableToGetHosts())
+      notify(notifyUnableToGetProjects())
+      throw error
     }
   }
 
-  private async getLayoutsforInstance(layouts, focusedInstance) {
-    const instance = {}
-    const filteredLayouts = []
+  private async getLayoutsforInstance(
+    layouts: Layout[],
+    pInstance: Partial<FocusedInstance>
+  ) {
+    const {instance, measurements} = await this.fetchInstancesAndMeasurements(
+      layouts,
+      pInstance
+    )
+
+    const layoutsWithinInstance = layouts.filter(layout => {
+      return (
+        instance.apps &&
+        instance.apps.includes(layout.app) &&
+        measurements.includes(layout.measurement)
+      )
+    })
+
+    const filteredLayouts = layoutsWithinInstance
+      .filter(layout => {
+        return layout.app === 'openstack'
+      })
+      .sort((x, y) => {
+        return x.measurement < y.measurement
+          ? -1
+          : x.measurement > y.measurement
+          ? 1
+          : 0
+      })
+
     return {instance, filteredLayouts}
   }
 
-  private handleClickInstanceTableRow = (instance: OpenStackInstance) => () => {
+  private async fetchInstancesAndMeasurements(
+    layouts: Layout[],
+    focusedInstance: Partial<FocusedInstance>
+  ) {
+    const {source} = this.props
+
+    const tempVars = generateForHosts(source)
+    const pInstance = {
+      instancename: focusedInstance.instanceName,
+      instanceid: focusedInstance.instanceId,
+      namespace: focusedInstance.projectName,
+    }
+    const getFrom = 'OpenStack'
+
+    const fetchMeasurements = getMeasurementsForInstance(
+      source,
+      pInstance,
+      getFrom
+    )
+
+    const filterLayouts = _.filter(
+      layouts,
+      m => !_.includes(notIncludeAppsOsp, m.app)
+    )
+
+    const fetchInstances = getAppsForInstance(
+      source.links.proxy,
+      pInstance,
+      filterLayouts,
+      source.telegraf,
+      tempVars,
+      getFrom
+    )
+
+    const [instance, measurements] = await Promise.all([
+      fetchInstances,
+      fetchMeasurements,
+    ])
+
+    return {instance, measurements}
+  }
+
+  private handleClickInstanceTableRow = (instance: FocusedInstance) => () => {
     const {focusedProject} = this.state
+
     this.onSetFocusedInstance({focusedInstance: instance, focusedProject})
   }
 
   private handleClickProjectTableRow = (
-    focusedProject: OpenStackProject
+    focusedProject: FocusedProject
   ) => () => {
     this.onSetFocusedProject(focusedProject)
     this.onSetFocusedInstance({focusedProject})
   }
 
-  private onSetFocusedProject = (focusedProject?) => {
+  private onSetFocusedProject = (focusedProject?: FocusedProject | null) => {
     const {projects} = this.state
 
     if (_.isEmpty(focusedProject) && !_.isEmpty(projects)) {
       this.setState({
-        focusedProject: projects[0],
+        focusedProject: projects[0].projectData.projectName,
       })
     } else {
       this.setState({
@@ -427,17 +610,47 @@ export class OpenStackPage extends PureComponent<Props, State> {
   }
 
   private onSetFocusedInstance = ({
-    focusedInstance = {},
-    focusedProject = {} as Partial<OpenStackProject>,
+    focusedInstance = {} as Partial<FocusedInstance>,
+    focusedProject = null as FocusedProject,
   } = {}): void => {
     const {projects} = this.state
-    const project = _.isEmpty(focusedProject) ? projects[0] : focusedProject
 
-    this.setState({
-      focusedInstance: _.isEmpty(focusedInstance)
-        ? project.instances[0]
-        : focusedInstance,
-    })
+    if (_.isEmpty(focusedProject) && _.isEmpty(focusedInstance)) {
+      const selectedProject = projects[0]
+      if (!_.isEmpty(selectedProject.instances)) {
+        const selectedInstance = selectedProject.instances[0]
+        this.setState({
+          focusedInstance: {
+            instanceName: selectedInstance.instanceName,
+            instanceId: selectedInstance.instanceId,
+            projectName: selectedInstance.projectName,
+          },
+        })
+      }
+    } else {
+      const selectedProject = _.filter(
+        projects,
+        project => project.projectData.projectName === focusedProject
+      )[0]
+
+      let selectedInstance = {} as FocusedInstance
+      if (_.isEmpty(focusedInstance)) {
+        selectedInstance = selectedProject.instances[0]
+      } else {
+        selectedInstance = _.filter(
+          selectedProject.instances,
+          instnace => instnace.instanceId === focusedInstance.instanceId
+        )[0]
+      }
+
+      this.setState({
+        focusedInstance: {
+          instanceName: selectedInstance.instanceName,
+          instanceId: selectedInstance.instanceId,
+          projectName: selectedInstance.projectName,
+        },
+      })
+    }
   }
 }
 
@@ -445,34 +658,28 @@ const mstp = state => {
   const {
     app: {
       persisted: {autoRefresh},
-      ephemeral: {inPresentationMode},
     },
     links,
     auth: {me},
   } = state
 
   const meRole = _.get(me, 'role', null)
+  const meCurrentOrganization = me.currentOrganization
+  const meOrganizations = me.organizations
+
   return {
     meRole,
+    meCurrentOrganization,
+    meOrganizations,
     links,
     autoRefresh,
-    inPresentationMode,
   }
 }
 
 const mdtp = dispatch => ({
-  onChooseAutoRefresh: bindActionCreators(setAutoRefresh, dispatch),
-  handleClickPresentationButton: bindActionCreators(
-    delayEnablePresentationMode,
-    dispatch
-  ),
   notify: bindActionCreators(notifyAction, dispatch),
   handleLoadCspsAsync: bindActionCreators(
     loadCloudServiceProvidersAsync,
-    dispatch
-  ),
-  handleGetOpenStackProjectsAsync: bindActionCreators(
-    getOpenStackProjectsAsync,
     dispatch
   ),
 })

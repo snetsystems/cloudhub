@@ -11,7 +11,7 @@ import Gauge from 'src/shared/components/Gauge'
 
 // constants
 import {stringifyColorValues} from 'src/shared/constants/colorOperations'
-import {DEFAULT_GAUGE_COLORS} from 'src/shared/constants/thresholds'
+import {OPENSTACK_GAUGE_COLORS} from 'src/clouds/constants/color'
 
 interface Props {
   gaugePosition: number
@@ -33,7 +33,7 @@ export default class OpenStackProjectGaugeChart extends PureComponent<
   State
 > {
   public static defaultProps: Partial<Props> = {
-    colors: stringifyColorValues(DEFAULT_GAUGE_COLORS),
+    colors: stringifyColorValues(OPENSTACK_GAUGE_COLORS),
     decimalPlaces: {
       isEnforced: false,
       digits: 2,

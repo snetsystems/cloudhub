@@ -1,11 +1,10 @@
 // libraries
 import React, {FunctionComponent} from 'react'
 import _ from 'lodash'
-import {Link} from 'react-router'
 
 // types
 import {OPENSATCK_TABLE_SIZING} from 'src/clouds/constants/tableSizing'
-import {OpenStackInstance} from 'src/clouds/types/openstack'
+import {FocusedInstance, OpenStackInstance} from 'src/clouds/types/openstack'
 
 // components
 import {OpenStackPage} from 'src/clouds/containers/OpenStackPage'
@@ -13,7 +12,7 @@ import {OpenStackPage} from 'src/clouds/containers/OpenStackPage'
 interface Props {
   sourceID: string
   instance: Partial<OpenStackInstance>
-  focusedInstance: Partial<OpenStackInstance>
+  focusedInstance: Partial<FocusedInstance>
   onClickTableRow: OpenStackPage['handleClickInstanceTableRow']
   onMouseOver: any
   onMouseLeave: any
@@ -21,7 +20,6 @@ interface Props {
 
 const OpenStackPageInstanceTableRow: FunctionComponent<Props> = ({
   instance,
-  sourceID,
   focusedInstance,
   onClickTableRow,
   onMouseOver,
@@ -30,7 +28,6 @@ const OpenStackPageInstanceTableRow: FunctionComponent<Props> = ({
   const {
     instanceId,
     instanceName,
-    imageName,
     ipAddress,
     flavor,
     keyPair,
@@ -44,7 +41,6 @@ const OpenStackPageInstanceTableRow: FunctionComponent<Props> = ({
 
   const {
     InstanceNameWidth,
-    ImageNameWidth,
     IpAddressWidth,
     FlavorWidth,
     KeyPairWidth,
@@ -56,7 +52,7 @@ const OpenStackPageInstanceTableRow: FunctionComponent<Props> = ({
   } = OPENSATCK_TABLE_SIZING
 
   const focusedClasses = (): string => {
-    if (instanceId === _.get(focusedInstance, 'instanceId'))
+    if (instanceId === focusedInstance.instanceId)
       return 'hosts-table--tr focused'
     return 'hosts-table--tr'
   }
@@ -67,16 +63,9 @@ const OpenStackPageInstanceTableRow: FunctionComponent<Props> = ({
       onClick={onClickTableRow(instance as OpenStackInstance)}
     >
       <div className="hosts-table--td" style={{width: InstanceNameWidth}}>
-        <Link
-          to={`/sources/${sourceID}/infrastructure/details/${instanceName}`}
-        >
-          {instanceName}
-        </Link>
+        {instanceName}
       </div>
 
-      <div className="hosts-table--td" style={{width: ImageNameWidth}}>
-        {imageName}
-      </div>
       <div className="hosts-table--td" style={{width: IpAddressWidth}}>
         {ipAddress}
       </div>
@@ -103,7 +92,6 @@ const OpenStackPageInstanceTableRow: FunctionComponent<Props> = ({
       <div className="hosts-table--td" style={{width: AvailabilityZoneWidth}}>
         {availabilityZone}
       </div>
-
       <div className="hosts-table--td" style={{width: TaskWidth}}>
         {task}
       </div>
@@ -111,7 +99,7 @@ const OpenStackPageInstanceTableRow: FunctionComponent<Props> = ({
         {powerState}
       </div>
       <div className="hosts-table--td" style={{width: AgeWidth}}>
-        {age}
+        <span style={{wordSpacing: '-3px'}}>{age}</span>
       </div>
     </div>
   )

@@ -1304,3 +1304,22 @@ export const notifyTopologySaveAuthFailed = (): Notification => ({
   ...defaultErrorNotification,
   message: `User does not have authorization required to save topology.`,
 })
+
+export const notifyUnableToGetProjects = (): Notification => ({
+  ...defaultErrorNotification,
+  message: 'Unable to get Projects.',
+})
+
+export const notifyInvalidProperty = (errorMessage: string): Notification => ({
+  ...defaultErrorNotification,
+  message: errorMessage,
+})
+
+export const notifyError = (errorMessage: string): Notification => ({
+  ...defaultErrorNotification,
+  message: errorMessage,
+})
+export const notifyExceptionRunner = (): Notification => ({
+  ...defaultErrorNotification,
+  message: notifyGenericFail(),
+})

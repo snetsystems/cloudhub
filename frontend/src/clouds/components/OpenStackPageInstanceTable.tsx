@@ -13,10 +13,11 @@ import OpenStackPageInstanceTableRow from 'src/clouds/components/OpenStackPageIn
 import OpenStackPageHeader from 'src/clouds/components/OpenStackPageHeader'
 
 // types
-import {OPENSATCK_TABLE_SIZING} from 'src/clouds/constants/tableSizing'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Source, RemoteDataState} from 'src/types'
 import {
+  FocusedInstance,
+  FocusedProject,
   OpenStackInstance,
   OpenStackInstanceFlaverDetail,
   OpenStackProject,
@@ -27,6 +28,7 @@ import {
   DEFAULT_CELL_BG_COLOR,
   DEFAULT_CELL_TEXT_COLOR,
 } from 'src/dashboards/constants'
+import {OPENSATCK_TABLE_SIZING} from 'src/clouds/constants/tableSizing'
 
 enum SortDirection {
   ASC = 'asc',
@@ -34,9 +36,10 @@ enum SortDirection {
 }
 
 export interface Props {
-  focusedProject: Partial<OpenStackProject>
+  focusedProjectData: Partial<OpenStackProject>
+  focusedProject: FocusedProject
+  focusedInstance: Partial<FocusedInstance>
   source: Source
-  focusedInstance: Partial<OpenStackInstance>
   openStackPageStatus: RemoteDataState
   onClickTableRow: OpenStackPage['handleClickInstanceTableRow']
 }
@@ -45,7 +48,6 @@ interface State {
   searchTerm: string
   sortDirection: SortDirection
   sortKey: string
-  activeEditorTab: string
   isToolipActive: boolean
   targetPosition: {width: number; top: number; right: number; left: number}
   tooltipNode: Partial<OpenStackInstanceFlaverDetail>
@@ -75,7 +77,6 @@ class OpenStackPageInstanceTable extends PureComponent<Props, State> {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
       sortKey: 'instanceName',
-      activeEditorTab: 'snet',
       isToolipActive: false,
       targetPosition: {width: 0, top: 0, right: 0, left: 0},
       tooltipNode: {},
@@ -90,7 +91,6 @@ class OpenStackPageInstanceTable extends PureComponent<Props, State> {
     return instances.filter(h => {
       const {
         instanceName,
-        imageName,
         ipAddress,
         flavor,
         keyPair,
@@ -103,7 +103,6 @@ class OpenStackPageInstanceTable extends PureComponent<Props, State> {
 
       return (
         instanceName +
-        imageName +
         ipAddress +
         flavor +
         keyPair +
@@ -167,9 +166,7 @@ class OpenStackPageInstanceTable extends PureComponent<Props, State> {
     return (
       <div className="panel" style={{backgroundColor: DEFAULT_CELL_BG_COLOR}}>
         <OpenStackPageHeader
-          cellName={`instances (${
-            focusedProject?.projectData.projectName || ''
-          })`}
+          cellName={`Instances (${focusedProject || ''})`}
           cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
           cellTextColor={DEFAULT_CELL_TEXT_COLOR}
         >
@@ -193,10 +190,10 @@ class OpenStackPageInstanceTable extends PureComponent<Props, State> {
   }
 
   private get CloudTableContents(): JSX.Element {
-    const {focusedProject, openStackPageStatus} = this.props
+    const {focusedProjectData, openStackPageStatus} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
-    const instances = focusedProject?.instances || []
+    const instances = focusedProjectData?.instances || []
     const sortedInstances = this.getSortedInstances(
       instances,
       searchTerm,
@@ -220,17 +217,18 @@ class OpenStackPageInstanceTable extends PureComponent<Props, State> {
     }
     return this.CloudTableWithInstances
   }
+  selectInstanceData
 
   private get CloudTableWithInstances(): JSX.Element {
     const {
       source,
-      focusedProject,
       focusedInstance,
+      focusedProjectData,
       onClickTableRow,
     } = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
 
-    const instances = focusedProject.instances
+    const instances = focusedProjectData.instances
 
     let sortedInstances = this.getSortedInstances(
       instances,
@@ -298,7 +296,6 @@ class OpenStackPageInstanceTable extends PureComponent<Props, State> {
   private get OpenStackPageTableHeader(): JSX.Element {
     const {
       InstanceNameWidth,
-      ImageNameWidth,
       IpAddressWidth,
       FlavorWidth,
       KeyPairWidth,
@@ -318,14 +315,6 @@ class OpenStackPageInstanceTable extends PureComponent<Props, State> {
             style={{width: InstanceNameWidth}}
           >
             Instance Name
-            <span className="icon caret-up" />
-          </div>
-          <div
-            onClick={this.updateSort('name')}
-            className={this.sortableClasses('name')}
-            style={{width: ImageNameWidth}}
-          >
-            Image Name
             <span className="icon caret-up" />
           </div>
           <div

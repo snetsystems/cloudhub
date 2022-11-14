@@ -1,14 +1,17 @@
+// Libraries
 import _ from 'lodash'
 import yaml from 'js-yaml'
-
 import AJAX from 'src/utils/ajax'
+import path from 'path'
+
+// APIs
 import {createActivityLog} from 'src/shared/apis'
 
 // Types
 import {Ipmi, IpmiCell} from 'src/types'
 import {CloudServiceProvider, CSPFileWriteParam} from 'src/hosts/types'
 import {SUPERADMIN_ROLE} from 'src/auth/Authorized'
-import {OpenStackApiFunctions} from 'src/hosts/types/openstack'
+import {OpenStackApiInfo, OpenStackCallParams} from 'src/clouds/types/openstack'
 
 interface Params {
   token?: string
@@ -410,6 +413,49 @@ export async function runLocalServiceReStartTelegraf(
   }
 }
 
+export async function runServiceReLoadTelegrafByRunner(
+  pUrl: string,
+  pToken: string
+) {
+  try {
+    const params: Params = {
+      client: 'runner',
+      fun: 'salt.cmd',
+      kwarg: {
+        fun: 'service.reload',
+        name: 'telegraf',
+      },
+    }
+
+    return await apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function runServicePluginTestTelegrafByRunner(
+  pUrl: string,
+  pToken: string,
+  pParams: Record<string, string>
+) {
+  try {
+    const params: Params = {
+      client: 'runner',
+      fun: 'salt.cmd',
+      kwarg: {
+        fun: 'cmd.shell',
+        cmd: `telegraf --test --debug --config ${pParams.path} --input-filter ${pParams.plugin}`,
+      },
+    }
+    const res = await apiRequest(pUrl, pToken, params)
+    return res.data.return[0]
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 export async function runLocalServiceTestTelegraf(
   pUrl: string,
   pToken: string,
@@ -535,7 +581,8 @@ export async function getLocalGrainsItems(
 export async function getLocalFileRead(
   pUrl: string,
   pToken: string,
-  pMinionId: string
+  pMinionId: string,
+  pDirPath: string = '/etc/telegraf/telegraf.conf'
 ) {
   try {
     const params: Params = {
@@ -544,7 +591,7 @@ export async function getLocalFileRead(
       tgt_type: '',
       tgt: '',
       kwarg: {
-        path: '/etc/telegraf/telegraf.conf',
+        path: pDirPath,
       },
     }
 
@@ -1600,95 +1647,101 @@ export async function getRunnerCloudActionListNodesFull(
   }
 }
 
-export async function getRunnerCloudActionAvailSizes(
+export async function getRunnerCloudActionOSPProject(
   pUrl: string,
   pToken: string,
-  pCSPs: any[]
+  pCallInfo: object
 ): Promise<any> {
   try {
-    let params = []
-    _.map(pCSPs, pCSP => {
+    let requestList = []
+
+    const pCallParams = ({
+      saltFunction,
+      namespace,
+      pToken,
+      saltOptions,
+    }: OpenStackCallParams) => {
       const param = {
         token: pToken,
         eauth: 'pam',
         client: 'runner',
         fun: 'cloud.action',
-        func: 'avail_sizes',
-        provider: pCSP.namespace,
-      }
-      params = [...params, param]
-    })
-
-    const result = await apiRequestMulti(pUrl, params, 'application/x-yaml')
-
-    return result
-  } catch (error) {
-    console.error(error)
-    throw error
-  }
-}
-export async function getRunnerCloudActionOSPProject(
-  pUrl: string,
-  pToken: string,
-  pCsps: any[],
-  pCallList: OpenStackApiFunctions
-): Promise<any> {
-  try {
-    let paramsList = []
-    const callList = (callType, saltFunction, pCSP) => {
-      const defaultOptions = {
         func: saltFunction,
-        provider: pCSP.namespace,
+        provider: namespace,
       }
-      switch (callType) {
-        case 'project': {
-          return {
-            ...defaultOptions,
-            kwarg: {
-              project: pCSP.namespace,
-            },
-          }
-        }
-
-        case 'instance': {
-          return {
-            ...defaultOptions,
-            all_projects: pCSP.role === SUPERADMIN_ROLE ? true : false,
-          }
-        }
-        case 'flaver': {
-          return {
-            ...defaultOptions,
-          }
-        }
-        default:
-          break
+      const options = saltOptions || null
+      return {
+        ...param,
+        ...options,
       }
     }
-    _.map(pCsps, pCSP => {
-      _.map(pCallList, (saltFunctions, functionType) => {
-        _.map(saltFunctions, saltFunction => {
-          const option = callList(functionType, saltFunction, pCSP)
-          const param = {
-            token: pToken,
-            eauth: 'pam',
-            client: 'runner',
-            fun: 'cloud.action',
-            ...option,
+
+    _.map(pCallInfo, (pCSP, namespace) => {
+      _.map(pCSP, async (apiInfo: OpenStackApiInfo, groupname) => {
+        _.map(apiInfo.apiList, async saltFunction => {
+          const param = pCallParams({
+            saltFunction: saltFunction,
+            namespace: namespace,
+            pToken: pToken,
+            saltOptions: apiInfo.options,
+          }) as Params
+
+          const openstackReq = async () => {
+            return {
+              namespace: namespace,
+              groupname: groupname,
+              res: await apiRequest(pUrl, pToken, param, 'application/x-yaml'),
+            }
           }
-          paramsList = [...paramsList, param]
+          requestList.push(openstackReq)
         })
       })
     })
 
-    const requestList = _.map(paramsList, params =>
-      apiRequest(pUrl, pToken, params, 'application/x-yaml')
+    const result = _.groupBy(
+      await Promise.all(requestList.map(async req => req())),
+      e => {
+        return e.namespace
+      }
     )
 
-    const result = await Promise.all(requestList)
-    return result
+    const getJsonFromSaltRes = saltRes => {
+      const convertRes = _.reduce(
+        saltRes,
+        (acc, salt) => {
+          const namesapce = _.reduce(
+            salt,
+            (_acc, _salt) => {
+              const loadSalt = yaml.safeLoad(_salt.res.data).return[0]
+
+              if (typeof loadSalt === 'string') {
+                return
+              }
+              const saltInfo = _.values(_.values(loadSalt)[0])[0]
+
+              _acc[_salt.groupname] = {
+                ..._acc[_salt.groupname],
+                ...saltInfo,
+              }
+
+              return _acc
+            },
+            {}
+          )
+          if (namesapce) {
+            acc[salt[0].namespace] = namesapce
+          }
+
+          return acc
+        },
+        {}
+      )
+      return convertRes
+    }
+    const saltRes = getJsonFromSaltRes(result)
+
+    return saltRes
   } catch (error) {
-    console.error(error)
     throw error
   }
 }
@@ -2211,7 +2264,7 @@ export async function getCSPRunnerFileWrite(
       fun: 'salt.cmd',
       kwarg: {
         fun: 'file.write',
-        path: pFileWrite.path + pFileWrite.fileName,
+        path: path.join(pFileWrite.path, pFileWrite.fileName),
         args: [pFileWrite.script],
       },
     }
@@ -2231,7 +2284,7 @@ export async function getCSPRunnerFileWrite(
         fun: 'salt.cmd',
         kwarg: {
           fun: 'file.set_mode',
-          path: pFileWrite.path + pFileWrite.fileName,
+          path: path.join(pFileWrite.path, pFileWrite.fileName),
           mode: '0600',
         },
       }

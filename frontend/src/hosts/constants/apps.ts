@@ -6,6 +6,7 @@ export const notIncludeApps: string[] = [
   'cloudwatch',
   'stackdriver',
   'cloudwatch_elb',
+  'openstack',
 ]
 
 export const awsApps: string[] = ['cloudwatch', 'cloudwatch_elb']
@@ -30,3 +31,10 @@ export const notIncludeAppsK8s: string[] = _.filter(
 )
 
 export const vsphereApps: string[] = ['vsphere']
+
+export const ospApps: string[] = ['openstack']
+
+export const notIncludeAppsOsp: string[] = _.filter(
+  notIncludeApps,
+  m => !_.includes(ospApps, m)
+)

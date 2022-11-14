@@ -26,7 +26,6 @@ import {
   fileWriteConfigApi,
   fileWriteKeyApi,
   getRunnerFileReadApi,
-  getOSPProjectsApi,
 } from 'src/hosts/apis'
 
 // Types
@@ -576,20 +575,6 @@ export const getGCPInstancesAsync = (
 
     dispatch(getGCPInstancesAction())
     return convertedGcpInstances
-  } catch (error) {
-    dispatch(errorThrown(error))
-  }
-}
-
-export const getOpenStackProjectsAsync = (
-  pUrl: string,
-  pToken: string,
-  pCsps: any[]
-) => async (dispatch: Dispatch<Action>) => {
-  try {
-    const ospProjects = await getOSPProjectsApi(pUrl, pToken, pCsps)
-
-    return ospProjects
   } catch (error) {
     dispatch(errorThrown(error))
   }

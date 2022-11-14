@@ -1,4 +1,11 @@
 import chroma from 'chroma-js'
+import {
+  COLOR_TYPE_MAX,
+  COLOR_TYPE_MIN,
+  DEFAULT_VALUE_MAX,
+  DEFAULT_VALUE_MIN,
+  THRESHOLD_COLORS,
+} from 'src/shared/constants/thresholds'
 
 export const clusterTypeColorset = {
   Node: '#ffffff',
@@ -45,3 +52,21 @@ export const clusterTypeColorset = {
 export const kubernetesStatusColor = chroma
   .scale(['#30e7f1', '#00cc2c', '#ff9e00', '#ff0000'])
   .mode('lrgb')
+
+export const OPENSTACK_GAUGE_COLORS = [
+  {
+    type: COLOR_TYPE_MIN,
+    hex: THRESHOLD_COLORS[11].hex,
+    id: '0',
+    name: THRESHOLD_COLORS[11].name,
+    value: DEFAULT_VALUE_MIN,
+  },
+
+  {
+    type: COLOR_TYPE_MAX,
+    hex: THRESHOLD_COLORS[1].hex,
+    id: '1',
+    name: THRESHOLD_COLORS[1].name,
+    value: DEFAULT_VALUE_MAX,
+  },
+]

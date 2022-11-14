@@ -6,6 +6,7 @@ import _ from 'lodash'
 // component
 import {AWSInstanceData} from 'src/hosts/types/cloud'
 import OpenStackPageInstanceDetailSectionItem from 'src/clouds/components/OpenStackPageInstanceDetailSectionItem'
+import OpenStackSecurityGroup from 'src/clouds/components/OpenStackSecurityGroup'
 
 interface Props {
   title: string
@@ -42,15 +43,7 @@ class OpenStackPageInstanceDetailSection extends PureComponent<Props, State> {
         </div>
         {this.state.isActive ? (
           <div className={'section-wrap'} style={{flexDirection: 'column'}}>
-            {_.map(_.keys(selectInstanceData), infoKey => {
-              return (
-                <OpenStackPageInstanceDetailSectionItem
-                  key={infoKey}
-                  label={infoKey.replaceAll('_', ' ')}
-                  contents={selectInstanceData[infoKey]}
-                />
-              )
-            })}
+            {this.renderItem(title, selectInstanceData)}
           </div>
         ) : null}
       </div>
@@ -59,6 +52,27 @@ class OpenStackPageInstanceDetailSection extends PureComponent<Props, State> {
 
   private toggleActive = () => {
     this.setState({isActive: !this.state.isActive})
+  }
+
+  private renderItem = (title, selectInstanceData) => {
+    if (title == 'securityGroups') {
+      return (
+        <OpenStackSecurityGroup
+          key={`detail_${title}`}
+          securityGroupRules={selectInstanceData}
+        />
+      )
+    } else {
+      return _.map(_.keys(selectInstanceData), infoKey => {
+        return (
+          <OpenStackPageInstanceDetailSectionItem
+            key={`detail_${infoKey}`}
+            label={infoKey.replaceAll('_', ' ')}
+            contents={selectInstanceData[infoKey]}
+          />
+        )
+      })
+    }
   }
 
   private get styleClassnames() {

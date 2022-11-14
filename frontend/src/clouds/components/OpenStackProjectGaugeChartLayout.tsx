@@ -5,7 +5,7 @@ import React, {Fragment, PureComponent} from 'react'
 // component
 import OpenStackProjectGaugeChart from 'src/clouds/components/OpenStackProjectGaugeChart'
 import PageSpinner from 'src/shared/components/PageSpinner'
-import OpenStackPageHeader from 'src/clouds/components//OpenStackPageHeader'
+import OpenStackPageHeader from 'src/clouds/components/OpenStackPageHeader'
 
 // types
 import {RemoteDataState} from 'src/types'
@@ -13,6 +13,7 @@ import {
   OpenStackGaugeChartProjectData,
   OpenStackGaugeChartSize,
 } from 'src/clouds/types/'
+import {FocusedProject} from 'src/clouds/types/openstack'
 
 // constants
 import {
@@ -22,7 +23,7 @@ import {
 
 interface Props {
   gaugeChartState: RemoteDataState
-  projectName: string
+  focusedProject: FocusedProject
   projectData: OpenStackGaugeChartProjectData
   maxInstanceCount?: number
 }
@@ -71,11 +72,21 @@ export default class OpenStackProjectGaugeChartLayout extends PureComponent<Prop
           const cloudResources = projectData[cloudService]
 
           return (
-            <div className="gauge-wrap" key={cloudService}>
+            <div
+              style={{
+                minWidth: '8rem',
+                maxWidth: '50rem',
+                minHeight: '5rem',
+                maxHeight: '15rem',
+              }}
+              className="gauge-wrap"
+              key={cloudService}
+            >
               {cloudResources.map((cloudResource, index) => {
                 const gaugeTitle = index === 0 ? cloudService : ''
                 const resourceName = cloudResource?.resourceName
-                const gaugePosition = cloudResource?.gaugePosition
+                const gaugePosition =
+                  Math.round(cloudResource?.gaugePosition * 10) / 10
                 const resourceUsuage = cloudResource?.resourceUsuage
 
                 return (
@@ -86,6 +97,7 @@ export default class OpenStackProjectGaugeChartLayout extends PureComponent<Prop
                       gaugePosition={gaugePosition}
                       gaugeChartSize={this.gaugeChartSize}
                       resourceUsuage={resourceUsuage}
+                      decimalPlaces={{isEnforced: true, digits: 2}}
                     />
                   </Fragment>
                 )
@@ -120,12 +132,12 @@ export default class OpenStackProjectGaugeChartLayout extends PureComponent<Prop
   }
 
   public render() {
-    const {projectName} = this.props
+    const {focusedProject} = this.props
 
     return (
       <>
         <OpenStackPageHeader
-          cellName={`Limit Summary (${projectName})`}
+          cellName={`Limit Summary (${focusedProject})`}
           cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
           cellTextColor={DEFAULT_CELL_TEXT_COLOR}
         />

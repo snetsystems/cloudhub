@@ -210,3 +210,17 @@
 .hexagon-alert {
   animation: alert 0.25s infinite;
 }
+.openstack-toolbar--tooltip {
+  position: fixed;
+  z-index: 30;
+}
+
+.openstack-toolbar--tooltip-contents {
+  border: 2px solid $s-orange;
+  border-radius: 4px;
+  display: inline-flex;
+  flex-direction: column;
+  background-color: $g1-raven;
+  padding: 5px;
+  min-width: 170px;
+}
