@@ -114,7 +114,7 @@ const AdminCloudHubPage = props => {
         <Page.Header.Right />
       </Page.Header>
       <Page.Contents fullWidth={true}>
-        <div className="container-fluid full-height">
+        <div className="container-fluid">
           <SubSections
             sections={sections(me, providers, cspProviders)}
             activeSection={tab}
