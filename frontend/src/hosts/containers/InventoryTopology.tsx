@@ -524,19 +524,13 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
   private confPath = `${
     _.get(
-      _.find(
-        this.props.links.addons,
-        addon => addon.name === 'salt-config-path'
-      ),
+      _.find(this.props.links.addons, addon => addon.name === 'salt-env-path'),
       'url'
     ) || '/etc/salt/'
   }cloud.providers.d/`
   private keyPath = `${
     _.get(
-      _.find(
-        this.props.links.addons,
-        addon => addon.name === 'salt-config-path'
-      ),
+      _.find(this.props.links.addons, addon => addon.name === 'salt-env-path'),
       'url'
     ) || '/etc/salt/'
   }csp_key/`

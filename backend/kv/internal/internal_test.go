@@ -534,7 +534,7 @@ func TestMarshalTopology(t *testing.T) {
 func TestMarshalCSP(t *testing.T) {
 	v := cloudhub.CSP{
 		ID:            "12",
-		Provider:      "osp",
+		Provider:      cloudhub.OSP,
 		NameSpace:     "osp_pj_demo01",
 		AccessKey:     "user01",
 		SecretKey:     "password01",

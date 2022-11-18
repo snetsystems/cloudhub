@@ -55,11 +55,11 @@ type Server struct {
 	Cert flags.Filename `long:"cert" description:"Path to PEM encoded public key certificate. " env:"TLS_CERTIFICATE"`
 	Key  flags.Filename `long:"key" description:"Path to private key associated with given certificate. " env:"TLS_PRIVATE_KEY"`
 
-	InfluxDBURL      string `long:"influxdb-url" description:"Location of your InfluxDB instance" env:"INFLUXDB_URL"`
-	InfluxDBUsername string `long:"influxdb-username" description:"Username for your InfluxDB instance" env:"INFLUXDB_USERNAME"`
-	InfluxDBPassword string `long:"influxdb-password" description:"Password for your InfluxDB instance" env:"INFLUXDB_PASSWORD"`
-	InfluxDBOrg      string `long:"influxdb-org" description:"Organization for your InfluxDB v2 instance" env:"INFLUXDB_ORG"`
-	InfluxDBToken    string `long:"influxdb-token" description:"Token for your InfluxDB v2 instance" env:"INFLUXDB_TOKEN"`
+	InfluxDBURLs     []string `long:"influxdb-url" description:"Location of your InfluxDB instance" env:"INFLUXDB_URL"`
+	InfluxDBUsername string   `long:"influxdb-username" description:"Username for your InfluxDB instance" env:"INFLUXDB_USERNAME"`
+	InfluxDBPassword string   `long:"influxdb-password" description:"Password for your InfluxDB instance" env:"INFLUXDB_PASSWORD"`
+	InfluxDBOrg      string   `long:"influxdb-org" description:"Organization for your InfluxDB v2 instance" env:"INFLUXDB_ORG"`
+	InfluxDBToken    string   `long:"influxdb-token" description:"Token for your InfluxDB v2 instance" env:"INFLUXDB_TOKEN"`
 
 	KapacitorURL      string `long:"kapacitor-url" description:"Location of your Kapacitor instance" env:"KAPACITOR_URL"`
 	KapacitorUsername string `long:"kapacitor-username" description:"Username of your Kapacitor instance" env:"KAPACITOR_USERNAME"`
@@ -548,7 +548,7 @@ func (s *Server) newBuilders(logger cloudhub.Logger) builders {
 			Path:   s.ResourcesPath,
 		},
 		Sources: &MultiSourceBuilder{
-			InfluxDBURL:      s.InfluxDBURL,
+			InfluxDBURLs:     s.InfluxDBURLs,
 			InfluxDBUsername: s.InfluxDBUsername,
 			InfluxDBPassword: s.InfluxDBPassword,
 			InfluxDBOrg:      s.InfluxDBOrg,

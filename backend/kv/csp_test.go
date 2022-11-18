@@ -22,7 +22,7 @@ func TestCSPStore(t *testing.T) {
 	csps := []cloudhub.CSP{
 		{
 			ID:            "",
-			Provider:      "aws",
+			Provider:      cloudhub.AWS,
 			NameSpace:     "seoul",
 			AccessKey:     "DKCICJD837RJCUWH",
 			SecretKey:     "KLDJWHWJ+SKDFUEH8334342DCG",
@@ -34,7 +34,7 @@ func TestCSPStore(t *testing.T) {
 		},
 		{
 			ID:            "",
-			Provider:      "gcp",
+			Provider:      cloudhub.GCP,
 			NameSpace:     "gcp_pj_demo01",
 			AccessKey:     "ELDFODFBWMFDS83763UYDJKC",
 			SecretKey:     "LKWEJDSI9+37DJDFSHJEWKDSF",
@@ -46,7 +46,7 @@ func TestCSPStore(t *testing.T) {
 		},
 		{
 			ID:            "",
-			Provider:      "osp",
+			Provider:      cloudhub.OSP,
 			NameSpace:     "osp_pj_demo01",
 			AccessKey:     "user01",
 			SecretKey:     "password01",
@@ -79,6 +79,15 @@ func TestCSPStore(t *testing.T) {
 	csps[1].NameSpace = "gcp_pj_demo02"
 	if err := s.Update(ctx, &csps[1]); err != nil {
 		t.Fatal(err)
+	}
+
+	// Get all test.
+	getCsps, err := s.All(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len := len(getCsps); len < 3 {
+		t.Fatalf("CSP gets all error: the expected length is 3 but the real length is %d", len)
 	}
 
 	// Get test.
