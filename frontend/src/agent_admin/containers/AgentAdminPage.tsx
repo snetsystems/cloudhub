@@ -10,6 +10,7 @@ import AgentMinions from 'src/agent_admin/containers/AgentMinions'
 import AgentConfiguration from 'src/agent_admin/containers/AgentConfiguration'
 import AgentControl from 'src/agent_admin/containers/AgentControl'
 import {openShell} from 'src/shared/actions/shell'
+import ServiceConfig from 'src/agent_admin/containers/ServiceConfig'
 
 // Actions
 import {getMinionKeyListAllAdminAsync} from 'src/agent_admin/actions'
@@ -18,7 +19,12 @@ import {getMinionKeyListAllAdminAsync} from 'src/agent_admin/actions'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 // Constants
-import {isUserAuthorized, ADMIN_ROLE} from 'src/auth/Authorized'
+import {
+  isUserAuthorized,
+  ADMIN_ROLE,
+  SUPERADMIN_ROLE,
+} from 'src/auth/Authorized'
+import {COLLECTOR_CONFIG_TAB_ABBREVIATION} from 'src/agent_admin/constants'
 
 // Types
 import {
@@ -141,6 +147,7 @@ class AgentAdminPage extends PureComponent<Props, State> {
       minionsObject,
       minionsStatus,
     } = this.state
+    const collectorConfigTableTabs = this.getCollectorConfigTableTabs()
 
     return [
       {
@@ -196,7 +203,36 @@ class AgentAdminPage extends PureComponent<Props, State> {
           />
         ),
       },
+      {
+        url: 'service-config',
+        name: 'Service Config',
+        enabled:
+          isUserAuthorized(meRole, SUPERADMIN_ROLE) &&
+          collectorConfigTableTabs.length > 0,
+        component: (
+          <ServiceConfig
+            saltMasterUrl={saltMasterUrl}
+            saltMasterToken={saltMasterToken}
+            minionsObject={minionsObject}
+            minionsStatus={minionsStatus}
+            collectorConfigTableTabs={collectorConfigTableTabs}
+            isUserAuthorized={isUserAuthorized(meRole, ADMIN_ROLE)}
+            handleGetMinionKeyListAll={this.getMinionKeyListAll}
+          />
+        ),
+      },
     ]
+  }
+
+  public getCollectorConfigTableTabs = () => {
+    const cloudsName = COLLECTOR_CONFIG_TAB_ABBREVIATION
+    const addons = this.props.addons
+
+    return _.filter(
+      addons,
+      addon =>
+        _.keys(cloudsName).indexOf(addon.name) !== -1 && addon.url === 'on'
+    ).map(cloudname => cloudsName[cloudname.name])
   }
 
   public onRefresh = () => {

@@ -413,6 +413,35 @@ export async function runLocalServiceReStartTelegraf(
   }
 }
 
+export async function runLocalServiceReloadTelegraf(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string
+) {
+  try {
+    const params: Params = {
+      client: 'local',
+      fun: 'service.reload',
+      arg: 'telegraf',
+      tgt_type: '',
+      tgt: '',
+    }
+
+    if (pMinionId) {
+      params.tgt_type = 'list'
+      params.tgt = pMinionId
+    } else {
+      params.tgt_type = 'glob'
+      params.tgt = '*'
+    }
+
+    return await apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 export async function runServiceReLoadTelegrafByRunner(
   pUrl: string,
   pToken: string
@@ -460,16 +489,48 @@ export async function runLocalServiceTestTelegraf(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pSelectedPlugin?: string
+  pSelectedPlugin?: string,
+  pConfPath = '/etc/telegraf/telegraf.conf'
 ) {
   try {
     const inputFilter =
       pSelectedPlugin === 'All' ? '' : `--input-filter ${pSelectedPlugin}`
+    const testConfigCommand = `--config ${pConfPath}`
     const params: Params = {
       client: 'local',
       fun: 'cmd.run',
       kwarg: {
-        cmd: `telegraf --test ${inputFilter}`,
+        cmd: `telegraf ${testConfigCommand} --test ${inputFilter}`,
+      },
+    }
+
+    if (pMinionId) {
+      params.tgt_type = 'list'
+      params.tgt = pMinionId
+    } else {
+      params.tgt_type = 'glob'
+      params.tgt = '*'
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function runLocalServiceDebugTelegraf(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pSelectedPlugin?: string,
+  pConfPath = '/etc/telegraf/telegraf.conf'
+) {
+  try {
+    const params: Params = {
+      client: 'local',
+      fun: 'cmd.run',
+      kwarg: {
+        cmd: `telegraf --test --config ${pConfPath} --input-filter ${pSelectedPlugin}`,
       },
     }
 
@@ -758,6 +819,30 @@ export async function getRunnerSaltCmdDirectory(
       fun: 'salt.cmd',
       kwarg: {
         fun: 'cmd.shell',
+        cmd: `ls -lt --time-style=long-iso ${pDirPath} | grep ^- | awk \'{printf "%sT%s %s\\n",$6,$7,$NF}\'`,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalSaltCmdDirectory(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pDirPath: string
+) {
+  try {
+    const params = {
+      eauth: 'pam',
+      client: 'local',
+      tgt: pMinionId,
+      tgt_type: 'glob',
+      fun: 'cmd.shell',
+      kwarg: {
         cmd: `ls -lt --time-style=long-iso ${pDirPath} | grep ^- | awk \'{printf "%sT%s %s\\n",$6,$7,$NF}\'`,
       },
     }
@@ -2230,6 +2315,44 @@ export async function getLocalK8sDetail(
       },
     }
     return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalDirectoryMake(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pDirPath: string
+) {
+  try {
+    const params: Params = {
+      eauth: 'pam',
+      client: 'local',
+      fun: 'file.mkdir',
+      arg: pDirPath,
+      tgt_type: '',
+      tgt: '',
+    }
+
+    if (pMinionId) {
+      params.tgt_type = 'list'
+      params.tgt = pMinionId
+    } else {
+      params.tgt_type = 'glob'
+      params.tgt = '*'
+    }
+
+    const makeDirectoryResponse = await apiRequest(
+      pUrl,
+      pToken,
+      params,
+      'application/x-yaml'
+    )
+
+    return yaml.safeLoad(makeDirectoryResponse.data).return
   } catch (error) {
     console.error(error)
     throw error
