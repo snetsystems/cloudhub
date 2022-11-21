@@ -43,15 +43,22 @@ import {CSPFileWriteParam} from 'src/hosts/types'
 // components
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {
+  notifyCreateProviderConf,
+  notifyDeleteProviderConf,
   notifyError,
   notifyExceptionRunner,
   notifygetCSPConfigFailed,
+  notifyUpdateProviderConf,
 } from 'src/shared/copy/notifications'
 import {ProviderOpenStackConfigs} from 'src/admin/components/cloudhub/ProviderOpenStackConfigs'
 import PageSpinner from 'src/shared/components/PageSpinner'
 
 // constants
-import {HandleType, ProviderTypes} from 'src/admin/constants/providerConf'
+import {
+  ADMIN_TENANT_DIRECTORY,
+  HandleType,
+  ProviderTypes,
+} from 'src/admin/constants/providerConf'
 import {AddonType} from 'src/shared/constants'
 
 // utils
@@ -114,14 +121,15 @@ export class ProviderConfPage extends PureComponent<Props, State> {
       'url'
     ) || '/etc/salt/'
   }cloud.providers.d/`
-  private telegrafConfigPath = '/etc/telegraf/telegraf.d/'
+
+  private telegrafConfigPath = ADMIN_TENANT_DIRECTORY.DIR
 
   private secretKey = _.find(
     this.props.links.addons,
     addon => addon.name === AddonType.ipmiSecretKey
   )
   private defaultProperties = {
-    [ProviderTypes.osp]: {
+    [ProviderTypes.OpenStack]: {
       id: '',
       projectName: '',
       prevProjectName: '',
@@ -173,10 +181,10 @@ export class ProviderConfPage extends PureComponent<Props, State> {
     const {focusedTab} = this.state
 
     if (!focusedTab) {
-      const getFocusedTab = ProviderTypes.osp
+      const getFocusedTab = ProviderTypes.OpenStack
       const focusedInputs = await this.getFocusedInputs(getFocusedTab)
       this.setState({
-        focusedTab: ProviderTypes.osp,
+        focusedTab: ProviderTypes.OpenStack,
         cspInput: focusedInputs,
         providerPageStatus: RemoteDataState.Done,
       })
@@ -247,10 +255,10 @@ export class ProviderConfPage extends PureComponent<Props, State> {
   private get renderTab(): JSX.Element {
     const {focusedTab, cspInput, providerPageStatus} = this.state
     switch (focusedTab) {
-      case ProviderTypes.osp:
+      case ProviderTypes.OpenStack:
         return (
           <ProviderOpenStackConfigs
-            onHandleSubmit={this.handleSubmit(ProviderTypes.osp)}
+            onHandleSubmit={this.handleSubmit(ProviderTypes.OpenStack)}
             cspInput={cspInput as OpenStackCspInput}
             pageStatus={providerPageStatus}
           />
@@ -259,7 +267,7 @@ export class ProviderConfPage extends PureComponent<Props, State> {
       default:
         return (
           <ProviderOpenStackConfigs
-            onHandleSubmit={this.handleSubmit(ProviderTypes.osp)}
+            onHandleSubmit={this.handleSubmit(ProviderTypes.OpenStack)}
             cspInput={cspInput as OpenStackCspInput}
             pageStatus={providerPageStatus}
           />
@@ -277,16 +285,20 @@ export class ProviderConfPage extends PureComponent<Props, State> {
     const {saltMasterUrl, saltMasterToken} = this.state
     const {notify} = this.props
     try {
-      this.setState({providerPageStatus: RemoteDataState.Loading})
+      this.setState(state => ({
+        ...state,
+        providerPageStatus: RemoteDataState.Loading,
+      }))
 
       switch (handleType) {
         case HandleType.Save: {
           const invalidProperty = valiDationCheck(properties, section)
           if (!_.isNull(invalidProperty)) {
             notify(invalidProperty)
-            this.setState({
+            this.setState(state => ({
+              ...state,
               providerPageStatus: RemoteDataState.Done,
-            })
+            }))
             return
           }
           await this.writeConfFile(properties, section)
@@ -296,12 +308,14 @@ export class ProviderConfPage extends PureComponent<Props, State> {
           const invalidProperty = valiDationCheck(properties, section)
           if (!_.isNull(invalidProperty)) {
             notify(invalidProperty)
-            this.setState({
+            this.setState(state => ({
+              ...state,
               providerPageStatus: RemoteDataState.Done,
-            })
+            }))
             return
           }
           await this.updateConfFile(properties, section)
+
           break
         }
         case HandleType.Delete: {
@@ -315,10 +329,15 @@ export class ProviderConfPage extends PureComponent<Props, State> {
         saltMasterToken
       )
 
-      if (reloadResult.data.return[0] !== 'true') {
+      if (reloadResult.data.return[0] !== true) {
         throw new Error('telegraf Reload Failed')
       }
-      this.setState({providerPageStatus: RemoteDataState.Done})
+      this.setState(state => ({
+        ...state,
+        providerPageStatus: RemoteDataState.Done,
+      }))
+
+      this.submitSuccessNotify(section, handleType)
     } catch (error) {
       if (error.message) {
         notify(notifyError(error.message))
@@ -326,7 +345,10 @@ export class ProviderConfPage extends PureComponent<Props, State> {
         notify(notifyExceptionRunner())
       }
 
-      this.setState({providerPageStatus: RemoteDataState.Done})
+      this.setState(state => ({
+        ...state,
+        providerPageStatus: RemoteDataState.Done,
+      }))
     }
   }
 
@@ -335,7 +357,7 @@ export class ProviderConfPage extends PureComponent<Props, State> {
     const {handleWriteConfig, handleCreateCspAsync, notify} = this.props
 
     switch (section) {
-      case ProviderTypes.osp: {
+      case ProviderTypes.OpenStack: {
         try {
           const {
             projectName,
@@ -348,27 +370,29 @@ export class ProviderConfPage extends PureComponent<Props, State> {
 
           const telegrafPlugin = TOML.parse(`
           [[outputs.influxdb]]
-          urls = [ "http://influxdb:8086" ]
-          database = "${projectName.trim()}"
+          urls = [ 'http://10.20.2.51:8086' ]
+          database = '${projectName.trim()}'
+
           [outputs.influxdb.tagpass]
-            tenant = ["${projectName.trim()}"]
-        
+            tenant = ['${projectName.trim()}']
+
           [[inputs.openstack]]
-          interval = "2m"
-          authentication_endpoint = "${authUrl}"
-          enabled_services = ["servers","projects"]
-          domain = "${projectDomain}"
-          project = "${projectName.trim()}"
-          username = "${userName}"
-          password = "${password}"
+          interval = '2m'
+          authentication_endpoint = '${authUrl}'
+          enabled_services = ['servers','projects']
+          domain = '${projectDomain}'
+          project = '${projectName.trim()}'
+          username = '${userName}'
+          password = '${password}'
           server_diagnotics = true
+          
           [inputs.openstack.tags]
-            tenant="${projectName.trim()}"
-          `)
+            tenant='${projectName.trim()}'`)
+
           const telelgrafConfigScript = TOML.stringify(telegrafPlugin)
 
           const telegrafScript = {
-            path: path.join(this.telegrafConfigPath, 'tenant', 'osp'),
+            path: this.getTelegrafPath('osp'),
             fileName: `${projectName.trim()}.conf`,
             script: telelgrafConfigScript,
           }
@@ -385,7 +409,7 @@ export class ProviderConfPage extends PureComponent<Props, State> {
 
           await this.telegrafPluginTest({
             namespace: projectName,
-            provider: 'openstack',
+            plugin: 'openstack',
           })
 
           const saltStackProviderConfig = `osp_${projectName.trim()}.conf`
@@ -454,7 +478,7 @@ export class ProviderConfPage extends PureComponent<Props, State> {
   private updateConfFile = async (properties: object, section: string) => {
     try {
       switch (section) {
-        case ProviderTypes.osp: {
+        case ProviderTypes.OpenStack: {
           const {saltMasterUrl, saltMasterToken} = this.state
           const {
             handleWriteConfig,
@@ -508,12 +532,11 @@ export class ProviderConfPage extends PureComponent<Props, State> {
             saltConfigScript
           )
 
-          const telelgrafConfPath = path.join(
-            this.telegrafConfigPath,
-            'tenant',
+          const telelgrafConfPath = this.getTelegrafPath(
             'osp',
             `${prevProjectName.trim()}.conf`
           )
+
           prevProjectName.trim()
 
           const getSavedTelegrafConfig = await handleGetRunnerFileReadAsync(
@@ -541,29 +564,29 @@ export class ProviderConfPage extends PureComponent<Props, State> {
             savedTelegrafConfigOutput.urls,
             url => `'${url}'`
           ).join()} ]
-          database = "${projectName.trim()}"
+          database = '${projectName.trim()}'
           [outputs.influxdb.tagpass]
-            tenant = ["${projectName.trim()}"]
+            tenant = ['${projectName.trim()}']
         
           [[inputs.openstack]]
-          interval = "${savedTelegrafConfigInput.interval}"
-          authentication_endpoint = "${authUrl}"
+          interval = '${savedTelegrafConfigInput.interval}'
+          authentication_endpoint = '${authUrl}'
           enabled_services = [${_.map(
             savedTelegrafConfigInput.enabled_services,
             service => `'${service}'`
           ).join()}]
-          domain = "${savedTelegrafConfigInput.domain}"
-          project = "${projectName.trim()}"
-          username = "${userName}"
-          password = "${cryptoJSAESdecrypt(updatePassword, this.secretKey.url)}"
+          domain = '${savedTelegrafConfigInput.domain}'
+          project = '${projectName.trim()}'
+          username = '${userName}'
+          password = '${cryptoJSAESdecrypt(updatePassword, this.secretKey.url)}'
           server_diagnotics = ${savedTelegrafConfigInput.server_diagnotics}
           [inputs.openstack.tags]
-            tenant="${projectName.trim()}"
+            tenant='${projectName.trim()}'
           `)
           const telelgrafConfigScript = TOML.stringify(saltPlugin)
 
           const telegrafScript = {
-            path: path.join(this.telegrafConfigPath, 'tenant', 'osp'),
+            path: this.getTelegrafPath('osp'),
             fileName: `${projectName.trim()}.conf`,
             script: telelgrafConfigScript,
           }
@@ -574,14 +597,13 @@ export class ProviderConfPage extends PureComponent<Props, State> {
             telegrafScript
           )
 
-          if (telegrafConfig) {
-            notify(notifygetCSPConfigFailed())
-            throw new Error(notifygetCSPConfigFailed().message)
+          if (!telegrafConfig) {
+            throw new Error('telegraf update Failed')
           }
 
           await this.telegrafPluginTest({
             namespace: projectName,
-            provider: 'openstack',
+            plugin: 'openstack',
           })
 
           const etcdData = {
@@ -613,13 +635,10 @@ export class ProviderConfPage extends PureComponent<Props, State> {
               this.confPath,
               `${'osp_' + prevProjectName.trim()}.conf`
             )
-            const telelgrafConfFileName = path.join(
-              this.telegrafConfigPath,
-              'tenant',
+            const telelgrafConfFileName = this.getTelegrafPath(
               'osp',
               `${prevProjectName.trim()}.conf`
             )
-
             await setRunnerFileRemoveApi(saltMasterUrl, saltMasterToken, [
               saltConfFileName,
               telelgrafConfFileName,
@@ -649,19 +668,17 @@ export class ProviderConfPage extends PureComponent<Props, State> {
 
     try {
       switch (section) {
-        case ProviderTypes.osp: {
+        case ProviderTypes.OpenStack: {
           const {id, prevProjectName} = properties as OpenStackCspInput
 
           try {
             const saltConfFileName = path.join(
               this.confPath,
-              `${'osp_' + prevProjectName.trim()}.conf`
+              `${ProviderTypes.OpenStack + '_' + prevProjectName.trim()}.conf`
             )
 
             const telelgrafConfFileName = path.join(
               this.telegrafConfigPath,
-              'tenant',
-              'osp',
               `${prevProjectName.trim()}.conf`
             )
 
@@ -673,7 +690,7 @@ export class ProviderConfPage extends PureComponent<Props, State> {
 
             const cspDelte = handleDeleteCspAsync(id)
             this.setState({
-              cspInput: this.defaultProperties[ProviderTypes.osp],
+              cspInput: this.defaultProperties[ProviderTypes.OpenStack],
             })
 
             await Promise.all([deleteConfFileRes, cspDelte])
@@ -687,18 +704,16 @@ export class ProviderConfPage extends PureComponent<Props, State> {
       throw error
     }
   }
-  private telegrafPluginTest = async ({namespace, provider}) => {
-    const {saltMasterUrl, saltMasterToken} = this.state
+  private telegrafPluginTest = async ({namespace, plugin}) => {
+    const {saltMasterUrl, saltMasterToken, focusedTab} = this.state
     const testFilePath = path.join(
-      this.telegrafConfigPath,
-      'tenant',
-      'osp',
+      this.getTelegrafPath(focusedTab),
       `${namespace.trim()}.conf`
     )
 
     const testPlugin = {
       path: testFilePath,
-      plugin: provider,
+      plugin: plugin,
     }
 
     const testResult = await runServicePluginTestTelegrafByRunner(
@@ -707,12 +722,12 @@ export class ProviderConfPage extends PureComponent<Props, State> {
       testPlugin
     )
 
-    if (typeof testResult === 'string' && testResult.includes('E!')) {
+    if (testResult.includes('E!')) {
       await setRunnerFileRemoveApi(saltMasterUrl, saltMasterToken, [
         testFilePath,
       ])
       throw new Error(
-        `${provider}: unable to authenticate ${provider} \n Please check your connection information again`
+        `${plugin}: unable to authenticate ${plugin} \n Please check your connection information again`
       )
     }
   }
@@ -738,7 +753,7 @@ export class ProviderConfPage extends PureComponent<Props, State> {
   }
   private getFocusedInputs = async (section: string): Promise<object> => {
     switch (section) {
-      case ProviderTypes.osp: {
+      case ProviderTypes.OpenStack: {
         try {
           const {
             id,
@@ -749,7 +764,7 @@ export class ProviderConfPage extends PureComponent<Props, State> {
             projectdomain,
             userdomain,
             minion,
-          } = await this.getCurrentCspData('osp')
+          } = await this.getCurrentCspData(ProviderTypes.OpenStack)
 
           return {
             id: id,
@@ -767,13 +782,36 @@ export class ProviderConfPage extends PureComponent<Props, State> {
             disabled: true,
           }
         } catch (error) {
-          return this.defaultProperties[ProviderTypes.osp]
+          return this.defaultProperties[ProviderTypes.OpenStack]
         }
       }
 
       default: {
         return {}
       }
+    }
+  }
+  private submitSuccessNotify = (provider: string, handleType: string) => {
+    const {notify} = this.props
+    const notifyType = {
+      Save: () => {
+        notify(notifyCreateProviderConf(provider))
+      },
+      Update: () => {
+        notify(notifyUpdateProviderConf(provider))
+      },
+      Delete: () => {
+        notify(notifyDeleteProviderConf(provider))
+      },
+    }
+    notifyType[handleType]()
+  }
+
+  private getTelegrafPath(provider: string, fileName = '') {
+    if (fileName) {
+      return path.join(this.telegrafConfigPath, provider, fileName)
+    } else {
+      return path.join(this.telegrafConfigPath, provider)
     }
   }
 }

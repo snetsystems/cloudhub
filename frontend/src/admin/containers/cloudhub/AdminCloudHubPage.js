@@ -103,7 +103,7 @@ const AdminCloudHubPage = props => {
       providers.push(authObj.name)
     })
   }
-  const cspProviders = addOnCsp(ProviderTypes, addons)
+  const cspProviders = addOnCsp(_.invert(ProviderTypes), addons)
 
   return (
     <Page>

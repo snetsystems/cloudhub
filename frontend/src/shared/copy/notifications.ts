@@ -1387,3 +1387,17 @@ export const notifyExceptionRunner = (): Notification => ({
   ...defaultErrorNotification,
   message: notifyGenericFail(),
 })
+
+export const notifyUpdateProviderConf = (provider: string): Notification => ({
+  ...defaultSuccessNotification,
+  message: `${provider} conf updated successfully.`,
+})
+export const notifyCreateProviderConf = (provider: string): Notification => ({
+  ...defaultSuccessNotification,
+  message: `${provider} conf created successfully.`,
+})
+
+export const notifyDeleteProviderConf = (provider: string): Notification => ({
+  ...defaultSuccessNotification,
+  message: `${provider} conf deleted successfully.`,
+})
