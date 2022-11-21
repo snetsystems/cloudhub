@@ -472,6 +472,36 @@ export async function runLocalServiceTestTelegraf(
   }
 }
 
+export async function runLocalServiceDebugTelegraf(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pSelectedPlugin?: string,
+  pConfPath = '/etc/telegraf/telegraf.conf'
+) {
+  try {
+    const params: Params = {
+      client: 'local',
+      fun: 'cmd.run',
+      kwarg: {
+        cmd: `telegraf --test --config ${pConfPath} --input-filter ${pSelectedPlugin}`,
+      },
+    }
+
+    if (pMinionId) {
+      params.tgt_type = 'list'
+      params.tgt = pMinionId
+    } else {
+      params.tgt_type = 'glob'
+      params.tgt = '*'
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 export async function runLocalCpGetDirTelegraf(
   pUrl: string,
   pToken: string,

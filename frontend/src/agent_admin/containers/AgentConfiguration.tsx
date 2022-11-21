@@ -678,9 +678,9 @@ export class AgentConfiguration extends PureComponent<Props, State> {
 
     getLocalDirectoryMakePromise
       .then(data => {
-        const isDirectoryMade = data[0][focusedHost]
+        const isDirectoryMadeSucceeded = data[0][focusedHost]
 
-        if (!isDirectoryMade) {
+        if (!isDirectoryMadeSucceeded) {
           throw new Error('Failed to Make Temp Directory')
         }
 
@@ -720,7 +720,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
           inputPluginTestStatus: RemoteDataState.Done,
         })
 
-        notify(notifyAgentConfigTempDirectoryMakeFailed(error))
+        notify(notifyAgentConfigTempDirectoryMakeFailed(error.data))
       })
   }
 

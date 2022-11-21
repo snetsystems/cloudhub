@@ -1088,6 +1088,12 @@ export const notifyMinionNotSelected = (): Notification => ({
   message: `Please Select a Minion`,
 })
 
+export const notifyTelegrafDubugFailed = (error: Error): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Debug Telegraf ${error}`,
+})
+
 export const notifyConfigFileSaveFailed = (error: Error): Notification => ({
   ...defaultErrorNotification,
   duration: INFINITE,

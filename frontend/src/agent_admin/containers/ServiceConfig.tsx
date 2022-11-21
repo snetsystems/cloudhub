@@ -28,6 +28,9 @@ import {
   notifyConfigFileSaveFailedByNoTenant,
   notifyTelegrafReloadFailed,
   notifyAgentApplyFailed,
+  notifyAgentConfigTempFileWriteFailed,
+  notifyAgentConfigTempDirectoryMakeFailed,
+  notifyTelegrafDubugFailed,
 } from 'src/shared/copy/notifications'
 
 // Types
@@ -55,6 +58,7 @@ import {
   NETWORK_ACCESS,
   AGENT_TENANT_CLOUD_DIRECTORY,
   COLLECTOR_CONFIG_TAB_ORDER,
+  AGENT_TELEGRAF_CONFIG,
 } from 'src/agent_admin/constants'
 
 // Components
@@ -63,7 +67,12 @@ import ServiceConfigCollectorService from 'src/agent_admin/components/ServiceCon
 import ServiceConfigTenant from 'src/agent_admin/components/ServiceConfigTenant'
 
 // APIS
-import {runLocalServiceReloadTelegraf} from 'src/shared/apis/saltStack'
+import {
+  getLocalDirectoryMake,
+  getLocalFileWrite,
+  runLocalServiceDebugTelegraf,
+  runLocalServiceReloadTelegraf,
+} from 'src/shared/apis/saltStack'
 
 interface Props {
   isUserAuthorized: boolean
@@ -350,83 +359,24 @@ export class ServiceConfig extends PureComponent<Props, State> {
       return
     }
 
+    this.setState({
+      serviceConfigStatus: RemoteDataState.Loading,
+    })
+
     try {
-      this.writeLocalFile()
+      const configScript = this.updateCollectorConfigTableData()
+
+      this.debugTelegrafCloudPlugin(configScript)
     } catch (error) {
       error.message =
         error.line === undefined
           ? error.message
           : `Parsing error on line ${error.line} column ${error.col}`
       notify(notifyConfigFileSaveFailed(error))
+      this.setState({
+        serviceConfigStatus: RemoteDataState.Done,
+      })
     }
-  }
-
-  public writeLocalFile() {
-    const {
-      saltMasterUrl,
-      saltMasterToken,
-      getLocalFileWrite,
-      notify,
-    } = this.props
-    const {focusedMinion, focusedTenant, focusedCollectorConfigTab} = this.state
-    const configScript = this.updateCollectorConfigTableData()
-    const agentTenantDirectory = path.join(
-      AGENT_TENANT_DIRECTORY.DIR,
-      AGENT_TENANT_CLOUD_DIRECTORY[focusedCollectorConfigTab]
-    )
-    const tenantConfigDirectory = path.join(
-      agentTenantDirectory,
-      `${focusedTenant}.conf`
-    )
-
-    const getLocalFileWritePromise = getLocalFileWrite(
-      saltMasterUrl,
-      saltMasterToken,
-      focusedMinion,
-      configScript,
-      tenantConfigDirectory
-    )
-
-    this.setState({
-      serviceConfigStatus: RemoteDataState.Loading,
-    })
-
-    getLocalFileWritePromise
-      .then((): void => {
-        const getLocalServiceReloadTelegrafPromise = runLocalServiceReloadTelegraf(
-          saltMasterUrl,
-          saltMasterToken,
-          focusedMinion
-        )
-        getLocalServiceReloadTelegrafPromise
-          .then(({data}) => {
-            const isReloadSucceeded = data.return[0][focusedMinion]
-
-            if (isReloadSucceeded !== true) {
-              throw new Error('Failed to Reload Telegraf')
-            }
-
-            this.setState({
-              serviceConfigStatus: RemoteDataState.Done,
-              configScript: configScript,
-            })
-            notify(notifyAgentApplySucceeded('is applied'))
-          })
-          .catch(error => {
-            notify(notifyTelegrafReloadFailed(error))
-            this.setState({
-              serviceConfigStatus: RemoteDataState.Done,
-              configScript: configScript,
-            })
-          })
-      })
-      .catch(error => {
-        notify(notifyAgentApplyFailed(error))
-
-        this.setState({
-          serviceConfigStatus: RemoteDataState.Done,
-        })
-      })
   }
 
   public updateCollectorConfigTableData() {
@@ -485,6 +435,139 @@ export class ServiceConfig extends PureComponent<Props, State> {
     })
 
     return TOML.stringify(configObj)
+  }
+
+  public debugTelegrafCloudPlugin(configScript) {
+    const {notify, saltMasterUrl, saltMasterToken} = this.props
+    const {focusedMinion, focusedCollectorConfigTab} = this.state
+    const getLocalDirectoryMakePromise = getLocalDirectoryMake(
+      saltMasterUrl,
+      saltMasterToken,
+      focusedMinion,
+      AGENT_TELEGRAF_CONFIG.TEMPDIRECTORY
+    )
+
+    getLocalDirectoryMakePromise
+      .then(data => {
+        const isDirectoryMadeSucceeded = data[0][focusedMinion]
+
+        if (!isDirectoryMadeSucceeded) {
+          throw new Error('Failed to Make Temp Directory')
+        }
+
+        const getLocalFileWritePromise = getLocalFileWrite(
+          saltMasterUrl,
+          saltMasterToken,
+          focusedMinion,
+          configScript,
+          AGENT_TELEGRAF_CONFIG.TEMPFILE
+        )
+
+        getLocalFileWritePromise
+          .then((): void => {
+            const getRunLocalServiceDebugTelegraf = runLocalServiceDebugTelegraf(
+              saltMasterUrl,
+              saltMasterToken,
+              focusedMinion,
+              focusedCollectorConfigTab,
+              AGENT_TELEGRAF_CONFIG.TEMPFILE
+            )
+
+            getRunLocalServiceDebugTelegraf
+              .then(({data}): void => {
+                const isTestFailed = data.indexOf('E!') !== -1 ? true : false
+
+                if (isTestFailed) {
+                  const errorMessage = data.split('[telegraf]')[1]
+
+                  throw new Error(errorMessage)
+                }
+
+                this.writeLocalFile(configScript)
+              })
+              .catch(error => {
+                this.setState({
+                  serviceConfigStatus: RemoteDataState.Done,
+                })
+                notify(notifyTelegrafDubugFailed(error))
+              })
+          })
+          .catch(error => {
+            this.setState({
+              serviceConfigStatus: RemoteDataState.Done,
+            })
+            notify(notifyAgentConfigTempFileWriteFailed(error))
+          })
+      })
+      .catch(error => {
+        this.setState({
+          serviceConfigStatus: RemoteDataState.Done,
+        })
+        notify(notifyAgentConfigTempDirectoryMakeFailed(error.data))
+      })
+  }
+
+  public writeLocalFile(configScript) {
+    const {
+      saltMasterUrl,
+      saltMasterToken,
+      getLocalFileWrite,
+      notify,
+    } = this.props
+    const {focusedMinion, focusedTenant, focusedCollectorConfigTab} = this.state
+    const agentTenantDirectory = path.join(
+      AGENT_TENANT_DIRECTORY.DIR,
+      AGENT_TENANT_CLOUD_DIRECTORY[focusedCollectorConfigTab]
+    )
+    const tenantConfigDirectory = path.join(
+      agentTenantDirectory,
+      `${focusedTenant}.conf`
+    )
+
+    const getLocalFileWritePromise = getLocalFileWrite(
+      saltMasterUrl,
+      saltMasterToken,
+      focusedMinion,
+      configScript,
+      tenantConfigDirectory
+    )
+
+    getLocalFileWritePromise
+      .then((): void => {
+        const getLocalServiceReloadTelegrafPromise = runLocalServiceReloadTelegraf(
+          saltMasterUrl,
+          saltMasterToken,
+          focusedMinion
+        )
+        getLocalServiceReloadTelegrafPromise
+          .then(({data}) => {
+            const isReloadSucceeded = data.return[0][focusedMinion]
+
+            if (isReloadSucceeded !== true) {
+              throw new Error('Failed to Reload Telegraf')
+            }
+
+            this.setState({
+              serviceConfigStatus: RemoteDataState.Done,
+              configScript: configScript,
+            })
+            notify(notifyAgentApplySucceeded('is applied'))
+          })
+          .catch(error => {
+            notify(notifyTelegrafReloadFailed(error))
+            this.setState({
+              serviceConfigStatus: RemoteDataState.Done,
+              configScript: configScript,
+            })
+          })
+      })
+      .catch(error => {
+        notify(notifyAgentApplyFailed(error))
+
+        this.setState({
+          serviceConfigStatus: RemoteDataState.Done,
+        })
+      })
   }
 
   public handleClickTenantTableRow = selectedTenant => () => {
