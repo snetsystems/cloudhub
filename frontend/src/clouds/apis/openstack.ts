@@ -434,7 +434,7 @@ export const getOSPProjectInfo = (saltRes: OpenstackProjectAPIInfo) => {
             )
 
             const flaverDetail = _.filter(
-              saltInfo[projectName].flaver,
+              saltInfo[projectName]?.flaver,
               flaver => flaver['name'] == instance['flavor']['name']
             )[0]
 
@@ -496,9 +496,11 @@ export const getOSPProjectInfo = (saltRes: OpenstackProjectAPIInfo) => {
       _.reduce(
         openStackProjects,
         (acc, instance, namespace) => {
-          acc[namespace] = {
-            projectData: acc[namespace].projectData,
-            instances: instance,
+          if (acc[namespace]) {
+            acc[namespace] = {
+              projectData: acc[namespace].projectData,
+              instances: instance,
+            }
           }
 
           return acc

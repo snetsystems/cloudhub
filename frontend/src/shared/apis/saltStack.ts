@@ -1797,20 +1797,26 @@ export async function getRunnerCloudActionOSPProject(
           const namesapce = _.reduce(
             salt,
             (_acc, _salt) => {
-              const loadSalt = yaml.safeLoad(_salt.res.data).return[0]
+              try {
+                const loadSalt = yaml.safeLoad(_salt.res.data).return[0]
 
-              if (typeof loadSalt === 'string') {
+                if (typeof loadSalt === 'string') {
+                  return
+                }
+
+                const saltInfo = _.values(_.values(loadSalt)[0])[0]
+
+                _acc[_salt.groupname] = {
+                  ..._acc[_salt.groupname],
+                  ...saltInfo,
+                }
+
+                return _acc
+              } catch (error) {
                 return
               }
-              const saltInfo = _.values(_.values(loadSalt)[0])[0]
-
-              _acc[_salt.groupname] = {
-                ..._acc[_salt.groupname],
-                ...saltInfo,
-              }
-
-              return _acc
             },
+
             {}
           )
           if (namesapce) {
@@ -1824,7 +1830,6 @@ export async function getRunnerCloudActionOSPProject(
       return convertRes
     }
     const saltRes = getJsonFromSaltRes(result)
-
     return saltRes
   } catch (error) {
     throw error
