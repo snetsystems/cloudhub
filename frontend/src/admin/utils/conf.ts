@@ -8,7 +8,7 @@ import {OpenStackCspInput} from 'src/types/providerConf'
 
 export const valiDationCheck = (properties, section) => {
   switch (section) {
-    case ProviderTypes.osp: {
+    case ProviderTypes.OpenStack: {
       let invalidationProperty = null
       const {
         projectName,
