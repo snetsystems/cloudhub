@@ -21,40 +21,31 @@ func TestCSPStore(t *testing.T) {
 
 	csps := []cloudhub.CSP{
 		{
-			ID:            "",
-			Provider:      "aws",
-			NameSpace:     "seoul",
-			AccessKey:     "DKCICJD837RJCUWH",
-			SecretKey:     "KLDJWHWJ+SKDFUEH8334342DCG",
-			AuthURL:       "",
-			ProjectDomain: "",
-			UserDomain:    "",
-			Organization:  "5",
-			Minion:        "minion_01",
+			ID:           "",
+			Provider:     cloudhub.AWS,
+			NameSpace:    "seoul",
+			AccessKey:    "DKCICJD837RJCUWH",
+			SecretKey:    "KLDJWHWJ+SKDFUEH8334342DCG",
+			Organization: "5",
+			Minion:       "minion_01",
 		},
 		{
-			ID:            "",
-			Provider:      "gcp",
-			NameSpace:     "gcp_pj_demo01",
-			AccessKey:     "ELDFODFBWMFDS83763UYDJKC",
-			SecretKey:     "LKWEJDSI9+37DJDFSHJEWKDSF",
-			AuthURL:       "",
-			ProjectDomain: "",
-			UserDomain:    "",
-			Organization:  "6",
-			Minion:        "",
+			ID:           "",
+			Provider:     cloudhub.GCP,
+			NameSpace:    "gcp_pj_demo01",
+			AccessKey:    "ELDFODFBWMFDS83763UYDJKC",
+			SecretKey:    "LKWEJDSI9+37DJDFSHJEWKDSF",
+			Organization: "6",
+			Minion:       "",
 		},
 		{
-			ID:            "",
-			Provider:      "osp",
-			NameSpace:     "osp_pj_demo01",
-			AccessKey:     "user01",
-			SecretKey:     "password01",
-			AuthURL:       "http://auth.url:5000/v3",
-			ProjectDomain: "Default",
-			UserDomain:    "Default",
-			Organization:  "7",
-			Minion:        "",
+			ID:           "",
+			Provider:     cloudhub.OSP,
+			NameSpace:    "osp_pj_demo01",
+			AccessKey:    "user01",
+			SecretKey:    "password01",
+			Organization: "7",
+			Minion:       "",
 		},
 	}
 
@@ -79,6 +70,15 @@ func TestCSPStore(t *testing.T) {
 	csps[1].NameSpace = "gcp_pj_demo02"
 	if err := s.Update(ctx, &csps[1]); err != nil {
 		t.Fatal(err)
+	}
+
+	// Get all test.
+	getCsps, err := s.All(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len := len(getCsps); len < 3 {
+		t.Fatalf("CSP gets all error: the expected length is 3 but the real length is %d", len)
 	}
 
 	// Get test.

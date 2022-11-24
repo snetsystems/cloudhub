@@ -20,9 +20,10 @@ require (
 	github.com/jessevdk/go-flags v1.4.0
 	github.com/lestrrat-go/jwx v0.9.0
 	github.com/microcosm-cc/bluemonday v1.0.16
+	github.com/pelletier/go-toml/v2 v2.0.5
 	github.com/sergi/go-diff v1.1.0
 	github.com/sirupsen/logrus v1.6.0
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.8.0
 	go.etcd.io/bbolt v1.3.5
 	go.etcd.io/etcd v0.5.0-alpha.5.0.20201125193152-8a03d2e9614b
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
@@ -98,7 +99,7 @@ require (
 	google.golang.org/grpc v1.29.1 // indirect
 	google.golang.org/protobuf v1.23.0 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	sigs.k8s.io/yaml v1.1.0 // indirect
 )
 

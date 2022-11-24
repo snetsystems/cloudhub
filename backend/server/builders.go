@@ -112,7 +112,7 @@ type SourcesBuilder interface {
 
 // MultiSourceBuilder implements SourcesBuilder
 type MultiSourceBuilder struct {
-	InfluxDBURL      string
+	InfluxDBURLs     []string
 	InfluxDBUsername string
 	InfluxDBPassword string
 	InfluxDBOrg      string
@@ -130,7 +130,7 @@ func (fs *MultiSourceBuilder) Build(db cloudhub.SourcesStore) (*multistore.Sourc
 
 	stores := []cloudhub.SourcesStore{db, files}
 
-	if fs.InfluxDBURL != "" {
+	for i := len(fs.InfluxDBURLs) - 1; i >= 0; i-- {
 		var influxdbType, username, password string
 		if fs.InfluxDBOrg == "" || fs.InfluxDBToken == "" {
 			// v1 InfluxDB
@@ -146,17 +146,18 @@ func (fs *MultiSourceBuilder) Build(db cloudhub.SourcesStore) (*multistore.Sourc
 
 		influxStore := &memdb.SourcesStore{
 			Source: &cloudhub.Source{
-				ID:       0,
-				Name:     fs.InfluxDBURL,
+				ID:       i,
+				Name:     fs.InfluxDBURLs[i],
 				Type:     influxdbType,
 				Username: username,
 				Password: password,
-				URL:      fs.InfluxDBURL,
-				Default:  true,
+				URL:      fs.InfluxDBURLs[i],
+				Default:  false,
 				Version:  "unknown", // a real version is re-fetched at runtime; use "unknown" version as a fallback, empty version would imply OSS 2.x
 			}}
 		stores = append([]cloudhub.SourcesStore{influxStore}, stores...)
 	}
+
 	sources := &multistore.SourcesStore{
 		Stores: stores,
 	}

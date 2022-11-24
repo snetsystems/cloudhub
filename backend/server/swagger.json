@@ -4641,27 +4641,6 @@
             }
           },
           {
-            "name": "authurl",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/CSPReq"
-            }
-          },
-          {
-            "name": "projectdomain",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/CSPReq"
-            }
-          },
-          {
-            "name": "userdomain",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/CSPReq"
-            }
-          },
-          {
             "name": "minion",
             "in": "body",
             "schema": {
@@ -4782,27 +4761,6 @@
             "in": "body",
             "schema": {
               "$ref": "#/definitions/CSPPatch"
-            }
-          },
-          {
-            "name": "authurl",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/CSPReq"
-            }
-          },
-          {
-            "name": "projectdomain",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/CSPReq"
-            }
-          },
-          {
-            "name": "userdomain",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/CSPReq"
             }
           },
           {
@@ -8237,18 +8195,6 @@
           "type": "string",
           "description": "If provider=aws, Secret Key and if provider=osp, password"
         },
-        "authurl": {
-          "type": "string",
-          "description": "If provider=osp, Authentication URL(usually keystone service url)"
-        },
-        "projectdomain": {
-          "type": "string",
-          "description": "If provider=osp, Project Domain"
-        },
-        "userdomain": {
-          "type": "string",
-          "description": "IF provider=osp, User Domain"
-        },
         "minion": {
           "type": "string",
           "description": "Target Salt Minion(Applied if providor is aws only)"
@@ -8260,9 +8206,6 @@
         "namespace": "osp_pj_demo01",
         "accesskey": "user01",
         "secretkey": "password01",
-        "authurl": "http://auth.url:5000/v3",
-        "projectdomain": "Default",
-        "userdomain": "Default",
         "minion": "minion01"
       }
     },
@@ -8281,18 +8224,6 @@
         "secretkey": {
           "type": "string",
           "description": "If provider=aws, Secret Key and if provider=osp, password"
-        },
-        "authurl": {
-          "type": "string",
-          "description": "If provider=osp, Authentication URL(usually keystone service url)"
-        },
-        "projectdomain": {
-          "type": "string",
-          "description": "If provider=osp, Project Domain"
-        },
-        "userdomain": {
-          "type": "string",
-          "description": "IF provider=osp, User Domain"
         },
         "minion": {
           "type": "string",
@@ -8331,18 +8262,6 @@
           "type": "string",
           "description": "If provider=aws, Secret Key and if provider=osp, password"
         },
-        "authurl": {
-          "type": "string",
-          "description": "If provider=osp, Authentication URL(usually keystone service url)"
-        },
-        "projectdomain": {
-          "type": "string",
-          "description": "If provider=osp, Project Domain"
-        },
-        "userdomain": {
-          "type": "string",
-          "description": "IF provider=osp, User Domain"
-        },
         "organization": {
           "type": "string",
           "description": "cloudhub organization",
@@ -8362,9 +8281,6 @@
         "namespace": "osp_pj_demo01",
         "accesskey": "user01",
         "secretkey": "password01",
-        "authurl": "http://auth.url:5000/v3",
-        "projectdomain": "Default",
-        "userdomain": "Default",
         "organization": "2",
         "minion": "minion01",
         "links": {
