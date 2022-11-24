@@ -17,28 +17,6 @@ type cspStore struct {
 	client *Service
 }
 
-// All returns all known CSP
-func (s *cspStore) All(ctx context.Context) ([]cloudhub.CSP, error) {
-	var csps []cloudhub.CSP
-	if err := s.client.kv.View(ctx, func(tx Tx) error {
-		if err := tx.Bucket(cspBucket).ForEach(func(k, v []byte) error {
-			var csp cloudhub.CSP
-			if err := internal.UnmarshalCSP(v, &csp); err != nil {
-				return err
-			}
-			csps = append(csps, csp)
-			return nil
-		}); err != nil {
-			return err
-		}
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-
-	return csps, nil
-}
-
 // Add creates a new CSP in the cspStore
 func (s *cspStore) Add(ctx context.Context, csp *cloudhub.CSP) (*cloudhub.CSP, error) {
 	if err := s.client.kv.Update(ctx, func(tx Tx) error {
@@ -71,7 +49,7 @@ func (s *cspStore) Get(ctx context.Context, q cloudhub.CSPQuery) (*cloudhub.CSP,
 	return nil, fmt.Errorf("must specify either Organization in CSPQuery")
 }
 
-//  get searches the cspStore for CSP with id and returns the bolt representation
+// get searches the cspStore for CSP with id and returns the bolt representation
 func (s *cspStore) get(ctx context.Context, id string) (*cloudhub.CSP, error) {
 	var csp cloudhub.CSP
 	err := s.client.kv.View(ctx, func(tx Tx) error {
@@ -128,6 +106,20 @@ func (s *cspStore) Update(ctx context.Context, csp *cloudhub.CSP) error {
 	}
 
 	return nil
+}
+
+// All returns all known CSP
+func (s *cspStore) All(ctx context.Context) ([]cloudhub.CSP, error) {
+	var csps []cloudhub.CSP
+	err := s.each(ctx, func(o *cloudhub.CSP) {
+		csps = append(csps, *o)
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return csps, nil
 }
 
 func (s *cspStore) each(ctx context.Context, fn func(*cloudhub.CSP)) error {

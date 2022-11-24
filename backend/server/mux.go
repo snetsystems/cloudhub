@@ -405,7 +405,6 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 		Logger:                opts.Logger,
 		StatusFeed:            opts.StatusFeedURL,
 		CustomLinks:           opts.CustomLinks,
-		AddonURLs:             service.AddonURLs,
 		AddonTokens:           service.AddonTokens,
 		PasswordPolicy:        opts.PasswordPolicy,
 		PasswordPolicyMessage: opts.PasswordPolicyMessage,
@@ -418,6 +417,8 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 		LoginAuthType:          service.LoginAuthType,
 		BasicPasswordResetType: service.BasicPasswordResetType,
 		RetryPolicys:           service.RetryPolicy,
+		AddonURLs:              service.AddonURLs,
+		OSP:                    service.OSP,
 	}
 
 	getPrincipal := func(r *http.Request) oauth2.Principal {

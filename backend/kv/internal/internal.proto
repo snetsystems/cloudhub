@@ -277,9 +277,6 @@ message CSP {
 	string NameSpace        = 3; // CSP access namespace
 	string AccessKey        = 4; // CSP access key
 	string SecretKey        = 5; // CSP access secret key
-	string AuthURL          = 6; // Authentication Server url(usually keystone service url)
-	string ProjectDomain    = 7; // CSP ProjectDomain
-	string UserDomain       = 8; // CSP UserDomain
 	string Organization     = 9; // Organization is the organization ID that resource belongs to
 	string Minion           = 10; // Minion is the vsphere connect salt minion
 }

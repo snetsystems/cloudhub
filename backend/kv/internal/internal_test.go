@@ -533,16 +533,13 @@ func TestMarshalTopology(t *testing.T) {
 
 func TestMarshalCSP(t *testing.T) {
 	v := cloudhub.CSP{
-		ID:            "12",
-		Provider:      "osp",
-		NameSpace:     "osp_pj_demo01",
-		AccessKey:     "user01",
-		SecretKey:     "password01",
-		AuthURL:       "http://localhost:5000/v3",
-		ProjectDomain: "PJ_Default",
-		UserDomain:    "User_Default",
-		Organization:  "7",
-		Minion:        "minion01",
+		ID:           "12",
+		Provider:     cloudhub.OSP,
+		NameSpace:    "osp_pj_demo01",
+		AccessKey:    "user01",
+		SecretKey:    "password01",
+		Organization: "7",
+		Minion:       "minion01",
 	}
 
 	var vv cloudhub.CSP
