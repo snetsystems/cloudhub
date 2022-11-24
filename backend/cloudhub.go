@@ -1069,12 +1069,9 @@ type CSP struct {
 	AccessKey string `json:"accesskey,string"`
 	// if provider=aws, Secret Key
 	// if provider=osp, password
-	SecretKey     string `json:"secretkey,string"`
-	AuthURL       string `json:"authurl,string"`       // if provider=osp, Authentication URL(usually keystone service url)
-	ProjectDomain string `json:"projectdomain,string"` // if provider=osp, Project Domain ID
-	UserDomain    string `json:"userdomain,string"`    // if provider=osp, User Domain ID
-	Organization  string `json:"organization"`
-	Minion        string `json:"minion,string"`
+	SecretKey    string `json:"secretkey,string"`
+	Organization string `json:"organization"`
+	Minion       string `json:"minion,string"`
 }
 
 // CSPStore is the Storage and retrieval of information
