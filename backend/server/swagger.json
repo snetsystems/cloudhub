@@ -40,7 +40,6 @@
           {
             "name": "name",
             "in": "body",
-            "description": "access user name",
             "schema": {
               "$ref": "#/definitions/LoginReq"
             }
@@ -48,7 +47,13 @@
           {
             "name": "password",
             "in": "body",
-            "description": "access user password",
+            "schema": {
+              "$ref": "#/definitions/LoginReq"
+            }
+          },
+          {
+            "name": "isEncoded",
+            "in": "body",
             "schema": {
               "$ref": "#/definitions/LoginReq"
             }
@@ -63,6 +68,12 @@
           },
           "400": {
             "description": "Invalid JSON – unable to encode or decode; or failed to perform operation in data store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity – indicates that the server understands the content type of the request entity, and the syntax of the request entity is correct, but it was unable to process the contained instructions.",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -8027,12 +8038,17 @@
         "password": {
           "type": "string",
           "description": "user password"
+        },
+        "IsEncoded": {
+          "type": "string",
+          "description": "true or false(case-insensitive), default: false"
         }
       },
       "required": ["name", "password"],
       "example": {
         "name": "test",
-        "password": "dkeidj@!@"
+        "password": "dkeidj@!@",
+        "IsEncoded": "false"
       }
     },
     "LoginRes": {

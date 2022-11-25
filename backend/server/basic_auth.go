@@ -42,13 +42,14 @@ type statusRecorder struct {
 	buf    *bytes.Buffer
 }
 
-type loginResponse struct {
-	PasswordResetFlag string `json:"passwordResetFlag"`
+type loginRequest struct {
+	Name      string `json:"name"`
+	Password  string `json:"password"`
+	IsEncoded string `json:"isEncoded"`
 }
 
-type loginRequest struct {
-	Name     string `json:"name"`
-	Password string `json:"password"`
+type loginResponse struct {
+	PasswordResetFlag string `json:"passwordResetFlag"`
 }
 
 type resetResponse struct {
@@ -439,7 +440,18 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 		}
 
 		// valid password - sha512
-		if !validPassword([]byte(req.Password), strTohex, []byte(SecretKey)) {
+		isValid := false
+		if req.IsEncoded == "" || strings.ToLower(req.IsEncoded) == "false" {
+			isValid = validPassword([]byte(req.Password), strTohex, []byte(SecretKey))
+		} else if strings.ToLower(req.IsEncoded) == "true" {
+			isValid = validEncodedPassword(req.Password, strTohex)
+		} else {
+			invalidData(w, fmt.Errorf("isEncoded must be true or false"), s.Logger)
+			return
+		}
+
+		// valid password - sha512
+		if !isValid {
 			msg := fmt.Sprintf(MsgDifferentPassword.String())
 			s.logRegistration(ctx, "Login", msg, user.Name)
 
@@ -534,6 +546,12 @@ func validPassword(reqPassword, hashPassword, key []byte) bool {
 	expectedPassword := mac.Sum(nil)
 
 	return hmac.Equal(hashPassword, expectedPassword)
+}
+
+func validEncodedPassword(reqPassword string, hashPassword []byte) bool {
+	strTohex, _ := hex.DecodeString(reqPassword)
+
+	return hmac.Equal(hashPassword, strTohex)
 }
 
 func randResetPassword() string {
