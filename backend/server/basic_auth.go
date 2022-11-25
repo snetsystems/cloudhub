@@ -39,32 +39,32 @@ var (
 type statusRecorder struct {
 	http.ResponseWriter
 	Status int
-	buf *bytes.Buffer
+	buf    *bytes.Buffer
 }
 
 type loginResponse struct {
-	PasswordResetFlag   string `json:"passwordResetFlag"`
+	PasswordResetFlag string `json:"passwordResetFlag"`
 }
 
 type loginRequest struct {
-	Name       string   `json:"name"`
-	Password   string   `json:"password"`
+	Name     string `json:"name"`
+	Password string `json:"password"`
 }
 
 type resetResponse struct {
-	Name       string          `json:"name"`
-	Password   string          `json:"password,omitempty"`
-	Provider   string          `json:"provider"`
-	Scheme     string          `json:"scheme"`
-	Pwrtn      string          `json:"pwrtn"`
-	Email      string          `json:"email,omitempty"`
-	SendKind   string          `json:"send_kind"`
-	PasswordResetFlag  string  `json:"passwordResetFlag"`
+	Name              string `json:"name"`
+	Password          string `json:"password,omitempty"`
+	Provider          string `json:"provider"`
+	Scheme            string `json:"scheme"`
+	Pwrtn             string `json:"pwrtn"`
+	Email             string `json:"email,omitempty"`
+	SendKind          string `json:"send_kind"`
+	PasswordResetFlag string `json:"passwordResetFlag"`
 }
 
 type kapacitorResponse struct {
-	Success   bool   `json:"success"`
-	Message   string `json:"message"`
+	Success bool   `json:"success"`
+	Message string `json:"message"`
 }
 
 func (r *loginRequest) ValidCreate() error {
@@ -117,15 +117,15 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 
 	if path == "" {
 		invalidData(w, fmt.Errorf("path required on password reset"), s.Logger)
-		return 
+		return
 	}
 	if name == "" {
 		invalidData(w, fmt.Errorf("name required on password reset"), s.Logger)
-		return 
+		return
 	}
 	if pwrtn == "" {
 		invalidData(w, fmt.Errorf("pwrtn required on password reset"), s.Logger)
-		return 
+		return
 	}
 
 	pwrtnBool, err := strconv.ParseBool(pwrtn)
@@ -158,7 +158,7 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		resetPassword := randResetPassword()
 
 		user.PasswordResetFlag = "Y"
-		user.Passwd = getPasswordToSHA512(resetPassword, BasicProvider)
+		user.Passwd = getPasswordToSHA512(resetPassword, SecretKey)
 		user.RetryCount = 0
 		user.Locked = false
 		user.LockedTime = ""
@@ -169,24 +169,24 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		}
 
 		res := &resetResponse{
-			Name:     name,
-			Provider: BasicProvider,
-			Scheme:   BasicScheme,
-			Pwrtn:    pwrtn,
-			SendKind: "",
+			Name:              name,
+			Provider:          BasicProvider,
+			Scheme:            BasicScheme,
+			Pwrtn:             pwrtn,
+			SendKind:          "",
 			PasswordResetFlag: user.PasswordResetFlag,
-			Password: resetPassword,
+			Password:          resetPassword,
 		}
 
 		encodeJSON(w, http.StatusOK, res, s.Logger)
 		return
 	}
-	
+
 	// setting external program server option (user call)
 	if s.ExternalExec != "" {
 		resetPassword := randResetPassword()
 		sendKind := "external"
-		
+
 		// external program, arguments
 		var args []string
 		if s.ExternalExecArgs != "" {
@@ -194,7 +194,7 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		} else {
 			args = []string{name, resetPassword}
 		}
-		
+
 		if !programExec(s.ExternalExec, args, s.Logger) {
 			sendKind = "error"
 			if !pwrtnBool {
@@ -204,7 +204,7 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		}
 
 		user.PasswordResetFlag = "Y"
-		user.Passwd = getPasswordToSHA512(resetPassword, BasicProvider)
+		user.Passwd = getPasswordToSHA512(resetPassword, SecretKey)
 		user.RetryCount = 0
 		user.Locked = false
 		user.LockedTime = ""
@@ -215,22 +215,21 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		}
 
 		res := &resetResponse{
-			Name:     name,
-			Provider: BasicProvider,
-			Scheme:   BasicScheme,
-			Pwrtn:    pwrtn,
-			SendKind: sendKind,
+			Name:              name,
+			Provider:          BasicProvider,
+			Scheme:            BasicScheme,
+			Pwrtn:             pwrtn,
+			SendKind:          sendKind,
 			PasswordResetFlag: user.PasswordResetFlag,
 		}
 
-		if pwrtnBool {			
+		if pwrtnBool {
 			res.Password = resetPassword
 		}
 
 		encodeJSON(w, http.StatusOK, res, s.Logger)
 		return
-	} 
-	
+	}
 
 	// setting kapacitor server option
 	if serverKapacitor.URL != "" {
@@ -247,14 +246,14 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 			mailBody := strings.Replace(s.MailBody, "$user_id", user.Name, -1)
 			mailBody = strings.Replace(mailBody, "$user_pw", resetPassword, -1)
 
-			jsonBody, _ := json.Marshal(struct{
-				To []string     `json:"to"`
-				Subject string  `json:"subject"`
-				Body string     `json:"body"`
+			jsonBody, _ := json.Marshal(struct {
+				To      []string `json:"to"`
+				Subject string   `json:"subject"`
+				Body    string   `json:"body"`
 			}{
-				To: []string{user.Email},
+				To:      []string{user.Email},
 				Subject: mailSubjct,
-				Body: mailBody,
+				Body:    mailBody,
 			})
 
 			// Clone GET -> POST
@@ -270,7 +269,7 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 				buf:            &bytes.Buffer{},
 			}
 
-			s.KapacitorProxyPost(recorder, kapacitorReq)			
+			s.KapacitorProxyPost(recorder, kapacitorReq)
 
 			if recorder.Status != 200 {
 				sendKind = "error"
@@ -314,7 +313,7 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		}
 
 		user.PasswordResetFlag = "Y"
-		user.Passwd = getPasswordToSHA512(resetPassword, BasicProvider)
+		user.Passwd = getPasswordToSHA512(resetPassword, SecretKey)
 		user.RetryCount = 0
 		user.Locked = false
 		user.LockedTime = ""
@@ -325,19 +324,19 @@ func (s *Service) UserPwdReset(w http.ResponseWriter, r *http.Request) {
 		}
 
 		res := &resetResponse{
-			Name:     name,
-			Provider: BasicProvider,
-			Scheme:   BasicScheme,
-			Pwrtn:    pwrtn,
-			SendKind: sendKind,
+			Name:              name,
+			Provider:          BasicProvider,
+			Scheme:            BasicScheme,
+			Pwrtn:             pwrtn,
+			SendKind:          sendKind,
 			PasswordResetFlag: user.PasswordResetFlag,
 		}
-		
+
 		if user.Email != "" {
-			res.Email = user.Email 
+			res.Email = user.Email
 		}
- 
-		if pwrtnBool {			
+
+		if pwrtnBool {
 			res.Password = resetPassword
 		}
 
@@ -367,7 +366,7 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 			invalidData(w, err, s.Logger)
 			return
 		}
-		
+
 		user, err := s.Store.Users(ctx).Get(ctx, cloudhub.UserQuery{
 			Name:     &req.Name,
 			Provider: &BasicProvider,
@@ -386,13 +385,13 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 			if user.RetryCount == 0 {
 				msg := fmt.Sprintf(MsgSuperLocked.String())
 				s.logRegistration(ctx, "Retry", msg, user.Name)
-				
+
 				ErrorBasic(w, http.StatusLocked, msg, user.RetryCount, user.LockedTime, user.Locked, s.Logger)
 				return
 			} else if retryType != "" && retryType == "lock" {
 				msg := fmt.Sprintf(MsgRetryLoginLocked.String(), user.Name)
 				s.logRegistration(ctx, "Retry", msg, user.Name)
-				
+
 				ErrorBasic(w, http.StatusLocked, msg, user.RetryCount, user.LockedTime, user.Locked, s.Logger)
 				return
 			} else if retryType != "" && retryType == "delay" && delayTime != "" {
@@ -403,13 +402,13 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 				if err == nil {
 					delayMinute, _ := time.ParseDuration(fmt.Sprintf("%dm", delayMin))
 					diffTime := nowTime.Sub(lockedTime)
-					
+
 					if diffTime.Minutes() < delayMinute.Minutes() {
 						msg := fmt.Sprintf(MsgRetryDelayTimeAfter.String())
 						s.logRegistration(ctx, "Retry", msg, user.Name)
-						
+
 						ErrorBasic(w, http.StatusLocked, msg, user.RetryCount, user.LockedTime, user.Locked, s.Logger)
-						return	
+						return
 					}
 					// init retry data
 					user.RetryCount = 0
@@ -431,16 +430,16 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 			s.logRegistration(ctx, "Login", msg, user.Name)
 			Error(w, http.StatusBadRequest, fmt.Sprintf("empty user table password"), s.Logger)
 			return
-		}		
+		}
 
 		strTohex, err := hex.DecodeString(user.Passwd)
 		if err != nil {
 			Error(w, http.StatusInternalServerError, err.Error(), s.Logger)
 			return
 		}
-		
+
 		// valid password - sha512
-		if !validPassword([]byte(req.Password), strTohex, []byte(BasicProvider)) {
+		if !validPassword([]byte(req.Password), strTohex, []byte(SecretKey)) {
 			msg := fmt.Sprintf(MsgDifferentPassword.String())
 			s.logRegistration(ctx, "Login", msg, user.Name)
 
@@ -450,7 +449,7 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 
 			if err == nil {
 				user.RetryCount++
-				if user.RetryCount >= int32(retryCnt)  {
+				if user.RetryCount >= int32(retryCnt) {
 					user.Locked = true
 					user.LockedTime = getNowDate()
 					httpCode = http.StatusLocked
@@ -460,10 +459,10 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 				err := s.Store.Users(ctx).Update(ctx, user)
 				if err == nil && user.Locked {
 					msg := fmt.Sprintf(MsgRetryCountOver.String(), user.Name)
-					s.logRegistration(ctx, "Retry", msg, user.Name)	
+					s.logRegistration(ctx, "Retry", msg, user.Name)
 				}
-			}			
-			
+			}
+
 			ErrorBasic(w, httpCode, errMsg, user.RetryCount, user.LockedTime, user.Locked, s.Logger)
 			return
 		}
@@ -472,9 +471,9 @@ func (s *Service) Login(auth oauth2.Authenticator, basePath string) http.Handler
 			Subject:      user.Name,
 			Issuer:       BasicProvider,
 			Organization: orgID,
-			Group: "",
+			Group:        "",
 		}
-		
+
 		if user.PasswordResetFlag == "N" {
 			if err := auth.Authorize(ctx, w, principal); err != nil {
 				Error(w, http.StatusInternalServerError, fmt.Sprintf("Failed auth.Authorize: %v, %v", err, principal), s.Logger)
@@ -542,7 +541,7 @@ func randResetPassword() string {
 	length := 8
 
 	rand.Seed(time.Now().UnixNano())
-	
+
 	var b strings.Builder
 	for i := 0; i < length; i++ {
 		b.WriteRune(chars[rand.Intn(len(chars))])
