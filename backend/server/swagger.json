@@ -8039,7 +8039,7 @@
           "type": "string",
           "description": "user password"
         },
-        "IsEncoded": {
+        "isEncoded": {
           "type": "string",
           "description": "true or false(case-insensitive), default: false"
         }
@@ -8048,7 +8048,7 @@
       "example": {
         "name": "test",
         "password": "dkeidj@!@",
-        "IsEncoded": "false"
+        "isEncoded": "false"
       }
     },
     "LoginRes": {
