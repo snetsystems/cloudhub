@@ -113,9 +113,9 @@
     },
     "/basic/password/reset": {
       "get": {
-        "tags": ["passwd reset(user)"],
+        "tags": ["passwd reset by user"],
         "summary": "Password reset",
-        "description": "password reset (Before Login)",
+        "description": "password reset by user (Before Login)",
         "parameters": [
           {
             "name": "path",
@@ -166,9 +166,9 @@
     },
     "/password/reset": {
       "get": {
-        "tags": ["passwd reset(admin)"],
+        "tags": ["passwd reset by admin"],
         "summary": "Password reset",
-        "description": "password reset (Admin)",
+        "description": "password force reset by Admin",
         "parameters": [
           {
             "name": "path",
@@ -219,9 +219,9 @@
     },
     "/basic/password": {
       "patch": {
-        "tags": ["passwd change"],
+        "tags": ["passwd change by admin"],
         "summary": "Password change",
-        "description": "Password change (by basic)",
+        "description": "Password force change by admin",
         "parameters": [
           {
             "name": "name",
@@ -8029,7 +8029,7 @@
     },
     "LoginReq": {
       "type": "object",
-      "description": "login information (by basic)",
+      "description": "login information with basic",
       "properties": {
         "name": {
           "type": "string",
@@ -8053,7 +8053,7 @@
     },
     "LoginRes": {
       "type": "object",
-      "description": "login information (by basic)",
+      "description": "login information with basic",
       "properties": {
         "passwordResetFlag": {
           "type": "string",
@@ -8067,7 +8067,7 @@
     },
     "PasswdResetRes": {
       "type": "object",
-      "description": "password reset (by basic)",
+      "description": "password reset with basic",
       "properties": {
         "passwordResetFlag": {
           "type": "string",
@@ -8096,7 +8096,7 @@
     },
     "Password": {
       "type": "object",
-      "description": "password change (by basic)",
+      "description": "password change with basic",
       "properties": {
         "name": {
           "type": "string",

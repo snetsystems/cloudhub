@@ -56,8 +56,9 @@ type getRoutesResponse struct {
 	BasicPasswordReset      string                             `json:"basicPasswordReset"`      // Location of basic password reset.
 	BasicPasswordAdminReset string                             `json:"basicPasswordAdminReset"` // Location of basic password admin reset.
 	BasicPassword           string                             `json:"basicPassword"`           // Location of basic password change.
-	ExternalLinks           getExternalLinksResponse           `json:"external"`                // All external links for the client to use
-	OrganizationConfig      getOrganizationConfigLinksResponse `json:"orgConfig"`               // Location of the organization config endpoint
+	BasicPWChangeExternal   string                             `json:"basicPWChangeExternal"`
+	ExternalLinks           getExternalLinksResponse           `json:"external"`  // All external links for the client to use
+	OrganizationConfig      getOrganizationConfigLinksResponse `json:"orgConfig"` // Location of the organization config endpoint
 	Flux                    getFluxLinksResponse               `json:"flux"`
 	Vspheres                string                             `json:"vspheres"`              // Location of the vspheres endpoint
 	ValidTextTemplates      string                             `json:"validateTextTemplates"` // Location of the valid text templates endpoint
@@ -69,6 +70,7 @@ type getRoutesResponse struct {
 	RetryPolicys            RetryPolicys                       `json:"retryPolicys"`
 	LoginLocked             string                             `json:"loginLocked"`
 	Addons                  []getAddonLinksResponse            `json:"addons"`
+	CSP                     string                             `json:"cloudServiceProvider"`
 	OSP                     OSP                                `json:"osp"`
 }
 
@@ -129,6 +131,7 @@ func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		BasicPasswordReset:      "/basic/password/reset",
 		BasicPasswordAdminReset: "/cloudhub/v1/password/reset",
 		BasicPassword:           "/basic/password",
+		BasicPWChangeExternal:   "/cloudhub/v1/basic/password",
 		ExternalLinks: getExternalLinksResponse{
 			StatusFeed:  &a.StatusFeed,
 			CustomLinks: a.CustomLinks,
@@ -148,6 +151,7 @@ func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		RetryPolicys:           make(RetryPolicys, len(a.RetryPolicys)),
 		LoginLocked:            "/cloudhub/v1/login/locked",
 		Addons:                 make([]getAddonLinksResponse, len(a.AddonURLs)),
+		CSP:                    "/cloudhub/v1/csp",
 		OSP: OSP{
 			AdminProvider: a.OSP.AdminProvider,
 			AdminUser:     a.OSP.AdminUser,

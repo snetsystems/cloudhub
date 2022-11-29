@@ -171,6 +171,9 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	// User password change
 	router.PATCH("/basic/password", service.UserPassword)
 
+	// User password change
+	router.PATCH("/cloudhub/v1/basic/password", EnsureAdmin(service.UserPassword))
+
 	// User password reset
 	router.GET("/basic/password/reset", service.UserPwdReset)
 	router.GET("/cloudhub/v1/password/reset", EnsureAdmin(service.UserPwdAdminReset))
