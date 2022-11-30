@@ -40,7 +40,6 @@
           {
             "name": "name",
             "in": "body",
-            "description": "access user name",
             "schema": {
               "$ref": "#/definitions/LoginReq"
             }
@@ -48,7 +47,13 @@
           {
             "name": "password",
             "in": "body",
-            "description": "access user password",
+            "schema": {
+              "$ref": "#/definitions/LoginReq"
+            }
+          },
+          {
+            "name": "isEncoded",
+            "in": "body",
             "schema": {
               "$ref": "#/definitions/LoginReq"
             }
@@ -63,6 +68,12 @@
           },
           "400": {
             "description": "Invalid JSON – unable to encode or decode; or failed to perform operation in data store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity – indicates that the server understands the content type of the request entity, and the syntax of the request entity is correct, but it was unable to process the contained instructions.",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -102,9 +113,9 @@
     },
     "/basic/password/reset": {
       "get": {
-        "tags": ["passwd reset(user)"],
+        "tags": ["passwd reset by user"],
         "summary": "Password reset",
-        "description": "password reset (Before Login)",
+        "description": "password reset by user (Before Login)",
         "parameters": [
           {
             "name": "path",
@@ -155,9 +166,9 @@
     },
     "/password/reset": {
       "get": {
-        "tags": ["passwd reset(admin)"],
+        "tags": ["passwd reset by admin"],
         "summary": "Password reset",
-        "description": "password reset (Admin)",
+        "description": "password force reset by Admin",
         "parameters": [
           {
             "name": "path",
@@ -208,9 +219,9 @@
     },
     "/basic/password": {
       "patch": {
-        "tags": ["passwd change"],
+        "tags": ["passwd change by admin"],
         "summary": "Password change",
-        "description": "Password change (by basic)",
+        "description": "Password force change by admin",
         "parameters": [
           {
             "name": "name",
@@ -4641,27 +4652,6 @@
             }
           },
           {
-            "name": "authurl",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/CSPReq"
-            }
-          },
-          {
-            "name": "projectdomain",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/CSPReq"
-            }
-          },
-          {
-            "name": "userdomain",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/CSPReq"
-            }
-          },
-          {
             "name": "minion",
             "in": "body",
             "schema": {
@@ -4782,27 +4772,6 @@
             "in": "body",
             "schema": {
               "$ref": "#/definitions/CSPPatch"
-            }
-          },
-          {
-            "name": "authurl",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/CSPReq"
-            }
-          },
-          {
-            "name": "projectdomain",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/CSPReq"
-            }
-          },
-          {
-            "name": "userdomain",
-            "in": "body",
-            "schema": {
-              "$ref": "#/definitions/CSPReq"
             }
           },
           {
@@ -8060,7 +8029,7 @@
     },
     "LoginReq": {
       "type": "object",
-      "description": "login information (by basic)",
+      "description": "login information with basic",
       "properties": {
         "name": {
           "type": "string",
@@ -8069,17 +8038,22 @@
         "password": {
           "type": "string",
           "description": "user password"
+        },
+        "isEncoded": {
+          "type": "string",
+          "description": "true or false(case-insensitive), default: false"
         }
       },
       "required": ["name", "password"],
       "example": {
         "name": "test",
-        "password": "dkeidj@!@"
+        "password": "dkeidj@!@",
+        "isEncoded": "false"
       }
     },
     "LoginRes": {
       "type": "object",
-      "description": "login information (by basic)",
+      "description": "login information with basic",
       "properties": {
         "passwordResetFlag": {
           "type": "string",
@@ -8093,7 +8067,7 @@
     },
     "PasswdResetRes": {
       "type": "object",
-      "description": "password reset (by basic)",
+      "description": "password reset with basic",
       "properties": {
         "passwordResetFlag": {
           "type": "string",
@@ -8122,7 +8096,7 @@
     },
     "Password": {
       "type": "object",
-      "description": "password change (by basic)",
+      "description": "password change with basic",
       "properties": {
         "name": {
           "type": "string",
@@ -8237,18 +8211,6 @@
           "type": "string",
           "description": "If provider=aws, Secret Key and if provider=osp, password"
         },
-        "authurl": {
-          "type": "string",
-          "description": "If provider=osp, Authentication URL(usually keystone service url)"
-        },
-        "projectdomain": {
-          "type": "string",
-          "description": "If provider=osp, Project Domain"
-        },
-        "userdomain": {
-          "type": "string",
-          "description": "IF provider=osp, User Domain"
-        },
         "minion": {
           "type": "string",
           "description": "Target Salt Minion(Applied if providor is aws only)"
@@ -8260,9 +8222,6 @@
         "namespace": "osp_pj_demo01",
         "accesskey": "user01",
         "secretkey": "password01",
-        "authurl": "http://auth.url:5000/v3",
-        "projectdomain": "Default",
-        "userdomain": "Default",
         "minion": "minion01"
       }
     },
@@ -8281,18 +8240,6 @@
         "secretkey": {
           "type": "string",
           "description": "If provider=aws, Secret Key and if provider=osp, password"
-        },
-        "authurl": {
-          "type": "string",
-          "description": "If provider=osp, Authentication URL(usually keystone service url)"
-        },
-        "projectdomain": {
-          "type": "string",
-          "description": "If provider=osp, Project Domain"
-        },
-        "userdomain": {
-          "type": "string",
-          "description": "IF provider=osp, User Domain"
         },
         "minion": {
           "type": "string",
@@ -8331,18 +8278,6 @@
           "type": "string",
           "description": "If provider=aws, Secret Key and if provider=osp, password"
         },
-        "authurl": {
-          "type": "string",
-          "description": "If provider=osp, Authentication URL(usually keystone service url)"
-        },
-        "projectdomain": {
-          "type": "string",
-          "description": "If provider=osp, Project Domain"
-        },
-        "userdomain": {
-          "type": "string",
-          "description": "IF provider=osp, User Domain"
-        },
         "organization": {
           "type": "string",
           "description": "cloudhub organization",
@@ -8362,9 +8297,6 @@
         "namespace": "osp_pj_demo01",
         "accesskey": "user01",
         "secretkey": "password01",
-        "authurl": "http://auth.url:5000/v3",
-        "projectdomain": "Default",
-        "userdomain": "Default",
         "organization": "2",
         "minion": "minion01",
         "links": {

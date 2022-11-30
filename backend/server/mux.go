@@ -171,6 +171,9 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	// User password change
 	router.PATCH("/basic/password", service.UserPassword)
 
+	// User password change
+	router.PATCH("/cloudhub/v1/basic/password", EnsureAdmin(service.UserPassword))
+
 	// User password reset
 	router.GET("/basic/password/reset", service.UserPwdReset)
 	router.GET("/cloudhub/v1/password/reset", EnsureAdmin(service.UserPwdAdminReset))
@@ -405,7 +408,6 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 		Logger:                opts.Logger,
 		StatusFeed:            opts.StatusFeedURL,
 		CustomLinks:           opts.CustomLinks,
-		AddonURLs:             service.AddonURLs,
 		AddonTokens:           service.AddonTokens,
 		PasswordPolicy:        opts.PasswordPolicy,
 		PasswordPolicyMessage: opts.PasswordPolicyMessage,
@@ -418,6 +420,8 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 		LoginAuthType:          service.LoginAuthType,
 		BasicPasswordResetType: service.BasicPasswordResetType,
 		RetryPolicys:           service.RetryPolicy,
+		AddonURLs:              service.AddonURLs,
+		OSP:                    service.OSP,
 	}
 
 	getPrincipal := func(r *http.Request) oauth2.Principal {
