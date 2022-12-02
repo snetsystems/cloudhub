@@ -157,7 +157,7 @@ export const deleteMapping = async mapping => {
 export const createCloudServiceProvider = async params => {
   try {
     let newProvider = params.provider
-    newProvider = newProvider.toUpperCase()
+    newProvider = newProvider
     const reqData = {
       ...params,
       provider: newProvider,

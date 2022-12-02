@@ -116,6 +116,16 @@ export interface Links {
   passwordPolicy?: string
   passwordPolicyMessage?: string
   loginLocked: string
+  osp: OSP
+}
+
+export interface OSP {
+  'admin-provider': string
+  'admin-pw': string
+  'admin-user': string
+  'auth-url': string
+  'pj-domain-id': string
+  'user-domain-id': string
 }
 
 export interface ExternalLink {

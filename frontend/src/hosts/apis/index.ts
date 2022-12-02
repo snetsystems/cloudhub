@@ -1021,7 +1021,7 @@ export const createCloudServiceProvider = async ({
 }: paramsCreateCSP) => {
   try {
     let newProvider: string = provider
-    newProvider = newProvider.toUpperCase()
+    newProvider = newProvider
 
     return await AJAX({
       url: `/cloudhub/v1/csp`,

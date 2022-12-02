@@ -29,6 +29,8 @@ export class ProviderOpenStackConfigs extends PureComponent<Props> {
 
   constructor(props) {
     super(props)
+
+    this.handleSubmit = this.handleSubmit.bind(this)
   }
 
   public render() {
@@ -41,7 +43,6 @@ export class ProviderOpenStackConfigs extends PureComponent<Props> {
         password,
         projectDomain,
         userDomain,
-        disabled,
       },
       pageStatus,
     } = this.props
@@ -62,6 +63,7 @@ export class ProviderOpenStackConfigs extends PureComponent<Props> {
               placeholder="Project Name"
               type="text"
               className="form-control"
+              disabled={true}
               key={projectName}
               ref={r => (this.projectName = r)}
               defaultValue={projectName || ''}
@@ -73,6 +75,7 @@ export class ProviderOpenStackConfigs extends PureComponent<Props> {
               type="text"
               placeholder="Auth URL"
               className="form-control"
+              disabled={true}
               key={authUrl}
               ref={r => (this.authUrl = r)}
               defaultValue={authUrl || ''}
@@ -84,6 +87,7 @@ export class ProviderOpenStackConfigs extends PureComponent<Props> {
               type="text"
               placeholder="User Name"
               className="form-control"
+              disabled={true}
               key={userName}
               ref={r => (this.userName = r)}
               defaultValue={userName || ''}
@@ -95,7 +99,7 @@ export class ProviderOpenStackConfigs extends PureComponent<Props> {
               type="password"
               placeholder="Pawssord"
               className="form-control"
-              onFocus={this.restPassword}
+              disabled={true}
               key={password}
               ref={r => (this.password = r)}
               defaultValue={password || ''}
@@ -109,7 +113,7 @@ export class ProviderOpenStackConfigs extends PureComponent<Props> {
               placeholder="Project Domain"
               className="form-control"
               key={projectDomain}
-              disabled={disabled || false}
+              disabled={true}
               ref={r => (this.projectDomain = r)}
               defaultValue={projectDomain || ''}
             />
@@ -120,6 +124,7 @@ export class ProviderOpenStackConfigs extends PureComponent<Props> {
               type="text"
               placeholder="User Domain"
               className="form-control"
+              disabled={true}
               key={userDomain}
               ref={r => (this.userDomain = r)}
               defaultValue={userDomain || ''}
@@ -130,33 +135,20 @@ export class ProviderOpenStackConfigs extends PureComponent<Props> {
               className="btn btn-primary"
               onClick={this.handleSubmit}
               type="button"
-              name={id ? HandleType.Update : HandleType.Save}
             >
               <span className="icon checkmark"></span>
-              {id ? HandleType.Update : HandleType.Save}
+              {id ? HandleType.Delete : HandleType.Create}
             </button>
-            {id && (
-              <button
-                className="btn btn-primary"
-                onClick={this.handleSubmit}
-                type="button"
-                name={HandleType.Delete}
-              >
-                <span className="icon pulse-c"></span>
-                {HandleType.Delete}
-              </button>
-            )}
           </div>
         </form>
       </div>
     )
   }
-  private restPassword = () => {
-    this.password.value = ''
-  }
+
   private handleSubmit = async e => {
     e.preventDefault()
-    const {id, prevProjectName, enCryptPassword, minion} = this.props.cspInput
+
+    const {id} = this.props.cspInput
 
     const properties = {
       id: id || '',
@@ -166,12 +158,8 @@ export class ProviderOpenStackConfigs extends PureComponent<Props> {
       password: this.password.value,
       projectDomain: this.projectDomain.value,
       userDomain: this.userDomain.value,
-      prevProjectName: prevProjectName || '',
-      enCryptPassword: enCryptPassword || '',
-      minion: minion || '',
     }
-
-    const handleType = e.target.name
+    const handleType = id ? HandleType.Delete : HandleType.Create
     await this.props.onHandleSubmit(properties, handleType)
   }
 }
