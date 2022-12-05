@@ -6,6 +6,7 @@ import {AxiosResponse} from 'axios'
 import * as TOML from '@iarna/toml'
 import {EditorChange} from 'codemirror'
 import path from 'path'
+import moment from 'moment'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -455,12 +456,17 @@ export class ServiceConfig extends PureComponent<Props, State> {
           throw new Error('Failed to Make Temp Directory')
         }
 
+        const timeStamp = moment().format('YYYYMMDDHHmmssSS')
+        const tempDirectory = path.join(
+          AGENT_TELEGRAF_CONFIG.TEMPDIRECTORY,
+          `${timeStamp}.conf`
+        )
         const getLocalFileWritePromise = getLocalFileWrite(
           saltMasterUrl,
           saltMasterToken,
           focusedMinion,
           configScript,
-          AGENT_TELEGRAF_CONFIG.TEMPFILE
+          tempDirectory
         )
 
         getLocalFileWritePromise
@@ -470,7 +476,7 @@ export class ServiceConfig extends PureComponent<Props, State> {
               saltMasterToken,
               focusedMinion,
               focusedCollectorConfigTab,
-              AGENT_TELEGRAF_CONFIG.TEMPFILE
+              tempDirectory
             )
 
             getRunLocalServiceDebugTelegraf
