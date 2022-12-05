@@ -442,49 +442,6 @@ export async function runLocalServiceReloadTelegraf(
   }
 }
 
-export async function runServiceReLoadTelegrafByRunner(
-  pUrl: string,
-  pToken: string
-) {
-  try {
-    const params: Params = {
-      client: 'runner',
-      fun: 'salt.cmd',
-      kwarg: {
-        fun: 'service.reload',
-        name: 'telegraf',
-      },
-    }
-
-    return await apiRequest(pUrl, pToken, params)
-  } catch (error) {
-    console.error(error)
-    throw error
-  }
-}
-
-export async function runServicePluginTestTelegrafByRunner(
-  pUrl: string,
-  pToken: string,
-  pParams: Record<string, string>
-) {
-  try {
-    const params: Params = {
-      client: 'runner',
-      fun: 'salt.cmd',
-      kwarg: {
-        fun: 'cmd.shell',
-        cmd: `telegraf --test --debug --config ${pParams.path} --input-filter ${pParams.plugin}`,
-      },
-    }
-    const res = await apiRequest(pUrl, pToken, params)
-    return res.data.return[0]
-  } catch (error) {
-    console.error(error)
-    throw error
-  }
-}
-
 export async function runLocalServiceTestTelegraf(
   pUrl: string,
   pToken: string,
@@ -1742,7 +1699,6 @@ export async function getRunnerCloudActionOSPProject(
 
     const pCallParams = ({
       saltFunction,
-      namespace,
       pToken,
       saltOptions,
     }: OpenStackCallParams) => {
@@ -1752,7 +1708,6 @@ export async function getRunnerCloudActionOSPProject(
         client: 'runner',
         fun: 'cloud.action',
         func: saltFunction,
-        provider: namespace,
       }
       const options = saltOptions || null
       return {
@@ -1766,7 +1721,6 @@ export async function getRunnerCloudActionOSPProject(
         _.map(apiInfo.apiList, async saltFunction => {
           const param = pCallParams({
             saltFunction: saltFunction,
-            namespace: namespace,
             pToken: pToken,
             saltOptions: apiInfo.options,
           }) as Params

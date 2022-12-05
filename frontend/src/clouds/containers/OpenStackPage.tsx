@@ -111,7 +111,7 @@ export class OpenStackPage extends PureComponent<Props, State> {
     this.props.links.addons,
     addon => addon.name === AddonType.salt
   )
-
+  private adminProvider = this.props.links.osp['admin-provider']
   constructor(props: Props) {
     super(props)
 
@@ -488,7 +488,11 @@ export class OpenStackPage extends PureComponent<Props, State> {
     const {handleLoadCspsAsync, notify, meRole} = this.props
 
     try {
-      const accessInfo = {url: this.salt.url, token: this.salt.token}
+      const accessInfo = {
+        url: this.salt.url,
+        token: this.salt.token,
+        adminProvider: this.adminProvider,
+      }
       const ospProjects = await getOspSaltInfo(
         meRole,
         handleLoadCspsAsync,

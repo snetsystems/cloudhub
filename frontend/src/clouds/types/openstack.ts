@@ -118,7 +118,6 @@ export type OpenStackApiList = {
 
 export interface OpenStackCallParams {
   saltFunction: string
-  namespace: string
   pToken: string
   saltOptions: object
 }

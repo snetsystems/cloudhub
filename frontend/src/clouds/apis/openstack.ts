@@ -4,10 +4,7 @@ import moment, {unitOfTime} from 'moment'
 
 // constants
 import {SUPERADMIN_ROLE} from 'src/auth/Authorized'
-import {
-  notIncludeOspProjects,
-  OSP_ADMIN_PROVIDER,
-} from 'src/clouds/constants/openstack'
+import {notIncludeOspProjects} from 'src/clouds/constants/openstack'
 
 // api
 import {getRunnerCloudActionOSPProject} from 'src/shared/apis/saltStack'
@@ -26,22 +23,26 @@ import {
 export const getOspSaltInfo = async (
   meRole: string,
   handleLoadCspsAsync: () => Promise<any>,
-  accessInfo: {url: string; token: string}
+  accessInfo: {url: string; token: string; adminProvider: string}
 ) => {
   try {
     let namespaces = []
     let allProjectInstances = {}
-
+    const adminProvider = accessInfo.adminProvider
     if (meRole == SUPERADMIN_ROLE) {
       const pCallInfo = {
-        [OSP_ADMIN_PROVIDER]: {
+        [adminProvider]: {
           [OpenStackDataGroupTypes.instances]: {
             options: {
+              provider: adminProvider,
               all_projects: true,
             },
             apiList: ['list_nodes_full'],
           },
           [OpenStackDataGroupTypes.projects]: {
+            options: {
+              provider: adminProvider,
+            },
             apiList: ['list_projects'],
           },
         },
@@ -52,10 +53,10 @@ export const getOspSaltInfo = async (
         pCallInfo
       )
 
-      const instances = resApis[OSP_ADMIN_PROVIDER].instances
+      const instances = resApis[adminProvider].instances
 
       namespaces = _.reduce(
-        resApis[OSP_ADMIN_PROVIDER].projects,
+        resApis[adminProvider].projects,
         (acc, project) => {
           if (!_.includes(notIncludeOspProjects, project.name)) {
             acc.push(project.name)
@@ -69,6 +70,7 @@ export const getOspSaltInfo = async (
       }
     } else {
       const dbResp: any[] = await handleLoadCspsAsync()
+
       namespaces = _.map(dbResp, csp => {
         if (csp.provider == 'osp') {
           return csp.namespace
@@ -82,6 +84,7 @@ export const getOspSaltInfo = async (
         acc[namespace] = {
           [OpenStackDataGroupTypes.projects]: {
             options: {
+              provider: adminProvider,
               kwarg: {
                 project: namespace,
               },
@@ -93,7 +96,9 @@ export const getOspSaltInfo = async (
             ],
           },
           [OpenStackDataGroupTypes.flaver]: {
-            options: {},
+            options: {
+              provider: adminProvider,
+            },
             apiList: ['avail_sizes'],
           },
         }
@@ -102,6 +107,8 @@ export const getOspSaltInfo = async (
             ...acc[namespace],
             [OpenStackDataGroupTypes.instances]: {
               options: {
+                provider:
+                  meRole === SUPERADMIN_ROLE ? adminProvider : namespace,
                 all_projects: false,
               },
               apiList: ['list_nodes_full'],
@@ -435,7 +442,7 @@ export const getOSPProjectInfo = (saltRes: OpenstackProjectAPIInfo) => {
 
             const flaverDetail = _.filter(
               saltInfo[projectName]?.flaver,
-              flaver => flaver['name'] == instance['flavor']['name']
+              flaver => flaver['id'] == instance['flavor']['id']
             )[0]
 
             const filteredInstance = {
