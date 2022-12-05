@@ -6,6 +6,8 @@ import memoize from 'memoize-one'
 import * as TOML from '@iarna/toml'
 import {EditorChange} from 'codemirror'
 import {AxiosResponse} from 'axios'
+import path from 'path'
+import moment from 'moment'
 
 // Components
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
@@ -170,6 +172,7 @@ interface State {
   isConsoleModalVisible: boolean
   isConsoleModalMessage: string
   isPluginModalVisible: boolean
+  timeStampTempFile: string
 }
 interface Plugin {
   inoutType: string
@@ -218,6 +221,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       isConsoleModalVisible: false,
       isConsoleModalMessage: '',
       isPluginModalVisible: false,
+      timeStampTempFile: '',
     }
   }
 
@@ -684,12 +688,17 @@ export class AgentConfiguration extends PureComponent<Props, State> {
           throw new Error('Failed to Make Temp Directory')
         }
 
+        const timeStamp = moment().format('YYYYMMDDHHmmssSS')
+        const tempDirectory = path.join(
+          AGENT_TELEGRAF_CONFIG.TEMPDIRECTORY,
+          `${timeStamp}.conf`
+        )
         const getLocalFileWritePromise = getLocalFileWrite(
           saltMasterUrl,
           saltMasterToken,
           focusedHost,
           configScript,
-          AGENT_TELEGRAF_CONFIG.TEMPFILE
+          tempDirectory
         )
 
         getLocalFileWritePromise
@@ -703,6 +712,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
               ]),
               responseMessage,
               inputPluginTestStatus: RemoteDataState.Done,
+              timeStampTempFile: tempDirectory,
             })
           })
           .catch(error => {
@@ -730,9 +740,14 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       saltMasterToken,
       runLocalServiceTestTelegraf,
     } = this.props
-    const {selectedInputPlugin, focusedHost, isApplyBtnEnabled} = this.state
+    const {
+      selectedInputPlugin,
+      focusedHost,
+      isApplyBtnEnabled,
+      timeStampTempFile,
+    } = this.state
     const telegrafConfDirectory = isApplyBtnEnabled
-      ? AGENT_TELEGRAF_CONFIG.TEMPFILE
+      ? timeStampTempFile
       : AGENT_TELEGRAF_CONFIG.FILE
 
     const getLocalServiceTestTelegrafPromise = runLocalServiceTestTelegraf(
