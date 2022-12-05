@@ -343,6 +343,7 @@ const mapStatetoProps = ({
     passwordPolicyMessage,
     loginAuthType,
     basicPasswordResetType,
+    retryPolicys,
   },
 }) => ({
   auth,
@@ -351,6 +352,7 @@ const mapStatetoProps = ({
   passwordPolicyMessage,
   loginAuthType,
   basicPasswordResetType,
+  retryPolicys,
 })
 const mapDispatchToProps = {
   handleLogin: loginAsync,

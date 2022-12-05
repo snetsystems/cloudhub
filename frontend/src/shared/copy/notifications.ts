@@ -1103,7 +1103,7 @@ export const notifyLoginFailed = (
   <div>${message}</div>
   `
 
-  if (retryCount !== 0) {
+  if (retryCount && retryCount !== 0) {
     if (locked) {
       temp += `<hr class="notification-line">
     <div>Please try again in ${delaytime} minutes.</div>
