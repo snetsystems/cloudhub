@@ -423,9 +423,9 @@ export const getOSPProjectInfo = (saltRes: OpenstackProjectAPIInfo) => {
               _.map(instance['security_groups'], securityGroup => {
                 const securityGroupRules = securityGroup.security_group_rules
 
-                return _.map(securityGroupRules, (securityGroupRule, index) => {
+                return _.map(securityGroupRules, securityGroupRule => {
                   return {
-                    id: `${index}_securityGroup.name`,
+                    id: securityGroupRule.id,
                     securityGroup: securityGroup.name,
                     ethertype: securityGroupRule.ethertype,
                     protocol: securityGroupRule.protocol,

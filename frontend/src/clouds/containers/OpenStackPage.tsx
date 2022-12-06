@@ -639,7 +639,8 @@ export class OpenStackPage extends PureComponent<Props, State> {
 
       let selectedInstance = {} as FocusedInstance
       if (_.isEmpty(focusedInstance)) {
-        selectedInstance = selectedProject.instances[0]
+        selectedInstance =
+          selectedProject.instances?.[0] || ({} as FocusedInstance)
       } else {
         selectedInstance = _.filter(
           selectedProject.instances,
