@@ -320,7 +320,7 @@ export class OpenStackPage extends PureComponent<Props, State> {
 
     const updateInstance = _.filter(
       updateFocusedProject?.instances,
-      instance => instance.instanceName === focusedInstance.instanceName
+      instance => instance.instanceId === focusedInstance.instanceId
     )[0]
 
     switch (layout.i) {
