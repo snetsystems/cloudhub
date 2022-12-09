@@ -137,7 +137,7 @@ export default class OpenStackProjectGaugeChartLayout extends PureComponent<Prop
     return (
       <>
         <OpenStackPageHeader
-          cellName={`Limit Summary (${focusedProject})`}
+          cellName={`Limit Summary (${focusedProject || ''})`}
           cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
           cellTextColor={DEFAULT_CELL_TEXT_COLOR}
         />

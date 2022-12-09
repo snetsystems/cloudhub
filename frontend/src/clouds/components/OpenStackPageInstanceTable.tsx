@@ -19,7 +19,7 @@ import {
   FocusedInstance,
   FocusedProject,
   OpenStackInstance,
-  OpenStackInstanceFlaverDetail,
+  OpenStackInstanceFlavorDetail,
   OpenStackProject,
 } from 'src/clouds/types/openstack'
 
@@ -50,7 +50,7 @@ interface State {
   sortKey: string
   isToolipActive: boolean
   targetPosition: {width: number; top: number; right: number; left: number}
-  tooltipNode: Partial<OpenStackInstanceFlaverDetail>
+  tooltipNode: Partial<OpenStackInstanceFlavorDetail>
 }
 
 @ErrorHandling

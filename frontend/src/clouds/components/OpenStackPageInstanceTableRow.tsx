@@ -36,7 +36,7 @@ const OpenStackPageInstanceTableRow: FunctionComponent<Props> = ({
     task,
     powerState,
     age,
-    flaverDetail,
+    flavorDetail,
   } = instance
 
   const {
@@ -71,10 +71,10 @@ const OpenStackPageInstanceTableRow: FunctionComponent<Props> = ({
       </div>
       <div className="hosts-table--td" style={{width: FlavorWidth}}>
         <span
-          data-instance-id={flaverDetail.id}
-          data-vcpus={flaverDetail.vcpus}
-          data-ram={flaverDetail.ram}
-          data-size={flaverDetail.size}
+          data-instance-id={flavorDetail.id}
+          data-vcpus={flavorDetail.vcpus}
+          data-ram={flavorDetail.ram}
+          data-size={flavorDetail.size}
           data-flavor={flavor}
           className={`hosts-table-item`}
           onMouseOver={onMouseOver}

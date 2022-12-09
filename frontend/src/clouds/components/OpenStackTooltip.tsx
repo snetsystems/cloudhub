@@ -4,7 +4,7 @@ import _ from 'lodash'
 
 // types
 import {TooltipPosition} from 'src/clouds/types'
-import {OpenStackInstanceFlaverDetail} from 'src/clouds/types/openstack'
+import {OpenStackInstanceFlavorDetail} from 'src/clouds/types/openstack'
 // decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {calculateDataStorage} from 'src/shared/utils/units'
@@ -12,7 +12,7 @@ import {calculateDataStorage} from 'src/shared/utils/units'
 interface Props {
   onDismiss?: () => void
   targetPosition: TooltipPosition
-  tooltipNode: Partial<OpenStackInstanceFlaverDetail>
+  tooltipNode: Partial<OpenStackInstanceFlavorDetail>
 }
 
 interface State {

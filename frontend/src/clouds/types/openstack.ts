@@ -32,7 +32,7 @@ export interface OpenStackInstanceDetail {
     attachedTo: string
   }
 }
-export interface OpenStackInstanceFlaverDetail {
+export interface OpenStackInstanceFlavorDetail {
   id: string
   vcpus: number
   ram: number
@@ -53,7 +53,7 @@ export interface OpenStackInstance {
   powerState: string
   age: string
   detail: OpenStackInstanceDetail
-  flaverDetail: OpenStackInstanceFlaverDetail
+  flavorDetail: OpenStackInstanceFlavorDetail
 }
 export type FocusedInstance = Pick<
   OpenStackInstance,
@@ -102,7 +102,7 @@ export type OpenStackApiFunctions = {
 export const OpenStackDataGroupTypes = {
   projects: 'projects',
   instances: 'instances',
-  flaver: 'flaver',
+  flavors: 'flavors',
 } as const
 
 export type OpenStackDataGroupTypes = typeof OpenStackDataGroupTypes[keyof typeof OpenStackDataGroupTypes]
@@ -124,7 +124,7 @@ export interface OpenStackCallParams {
 
 export interface OpenstackProjectAPIInfo {
   [namesapce: string]: {
-    flaver: object[]
+    flavor: object[]
     instance: object[]
     project: object[]
   }

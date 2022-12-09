@@ -20,140 +20,162 @@ import {
   OpenstackProjectAPIInfo,
 } from 'src/clouds/types/openstack'
 
-export const getOspSaltInfo = async (
-  meRole: string,
-  handleLoadCspsAsync: () => Promise<any>,
-  accessInfo: {url: string; token: string; adminProvider: string}
-) => {
-  try {
-    let namespaces = []
-    let allProjectInstances = {}
-    const adminProvider = accessInfo.adminProvider
-    if (meRole == SUPERADMIN_ROLE) {
-      const pCallInfo = {
-        [adminProvider]: {
-          [OpenStackDataGroupTypes.instances]: {
-            options: {
-              provider: adminProvider,
+export const superAdminSaltCall = async (accessInfo: {
+  url: string
+  token: string
+  adminProvider: string
+}) => {
+  let namespaces = []
+  const adminProvider = accessInfo.adminProvider
+
+  const preCallList = {
+    [adminProvider]: {
+      [OpenStackDataGroupTypes.instances]: {
+        options: {
+          provider: adminProvider,
+          all_projects: true,
+        },
+        apiList: ['list_nodes_full'],
+      },
+      [OpenStackDataGroupTypes.projects]: {
+        options: {
+          provider: adminProvider,
+        },
+        apiList: ['list_projects'],
+      },
+      [OpenStackDataGroupTypes.flavors]: {
+        options: {
+          provider: adminProvider,
+        },
+        apiList: ['avail_sizes'],
+      },
+    },
+  }
+
+  const resApis = await getOSPApiAsync(
+    accessInfo.url,
+    accessInfo.token,
+    preCallList
+  )
+
+  const instances = resApis[adminProvider].instances
+  const flavors = resApis[adminProvider].flavors
+
+  namespaces = _.reduce(
+    resApis[adminProvider].projects,
+    (acc, project) => {
+      if (!_.includes(notIncludeOspProjects, project.name)) {
+        acc.push(project.name)
+      }
+      return acc
+    },
+    []
+  )
+
+  const pCallInfo: OpenStackApiList = _.reduce(
+    namespaces,
+    (acc, namespace, _) => {
+      acc[namespace] = {
+        [OpenStackDataGroupTypes.projects]: {
+          options: {
+            provider: adminProvider,
+            kwarg: {
+              project: namespace,
+            },
+          },
+          apiList: [
+            'get_compute_limits',
+            'get_volume_limits',
+            'get_network_quotas',
+          ],
+        },
+      }
+
+      return acc
+    },
+    {}
+  )
+
+  let saltRes = await getOSPApiAsync(
+    accessInfo.url,
+    accessInfo.token,
+    pCallInfo
+  )
+  let instanceSaveProject = Object.keys(saltRes)[0]
+
+  saltRes = {
+    ...saltRes,
+    [instanceSaveProject]: {
+      ...saltRes[instanceSaveProject],
+      instances: instances,
+      flavors: flavors,
+    },
+  }
+  const openStackProjects = getOSPProjectInfo(saltRes)
+  return openStackProjects
+}
+
+export const adminSaltCall = async (handleLoadCspsAsync, accessInfo) => {
+  const adminProvider = accessInfo.adminProvider
+  const dbResp: any[] = await handleLoadCspsAsync()
+
+  const namespaces = _.map(dbResp, csp => {
+    if (csp.provider == 'osp') {
+      return csp.namespace
+    }
+  })
+  const pCallInfo: OpenStackApiList = _.reduce(
+    namespaces,
+    (acc, namespace, _) => {
+      acc[namespace] = {
+        [OpenStackDataGroupTypes.projects]: {
+          options: {
+            provider: adminProvider,
+            kwarg: {
+              project: namespace,
+            },
+          },
+          apiList: [
+            'get_compute_limits',
+            'get_volume_limits',
+            'get_network_quotas',
+          ],
+        },
+        [OpenStackDataGroupTypes.flavors]: {
+          options: {
+            provider: adminProvider,
+          },
+          apiList: ['avail_sizes'],
+        },
+        [OpenStackDataGroupTypes.instances]: {
+          options: {
+            provider: adminProvider,
+            kwarg: {
+              project: namespace,
               all_projects: true,
             },
-            apiList: ['list_nodes_full'],
           },
-          [OpenStackDataGroupTypes.projects]: {
-            options: {
-              provider: adminProvider,
-            },
-            apiList: ['list_projects'],
-          },
+          apiList: ['list_nodes_full'],
         },
       }
-      const resApis = await getOSPApiAsync(
-        accessInfo.url,
-        accessInfo.token,
-        pCallInfo
-      )
 
-      const instances = resApis[adminProvider].instances
+      return acc
+    },
+    {}
+  )
 
-      namespaces = _.reduce(
-        resApis[adminProvider].projects,
-        (acc, project) => {
-          if (!_.includes(notIncludeOspProjects, project.name)) {
-            acc.push(project.name)
-          }
-          return acc
-        },
-        []
-      )
-      allProjectInstances = {
-        ...instances,
-      }
-    } else {
-      const dbResp: any[] = await handleLoadCspsAsync()
+  let saltRes = await getOSPApiAsync(
+    accessInfo.url,
+    accessInfo.token,
+    pCallInfo
+  )
 
-      namespaces = _.map(dbResp, csp => {
-        if (csp.provider == 'osp') {
-          return csp.namespace
-        }
-      })
-    }
-
-    const pCallInfo: OpenStackApiList = _.reduce(
-      namespaces,
-      (acc, namespace, _) => {
-        acc[namespace] = {
-          [OpenStackDataGroupTypes.projects]: {
-            options: {
-              provider: adminProvider,
-              kwarg: {
-                project: namespace,
-              },
-            },
-            apiList: [
-              'get_compute_limits',
-              'get_volume_limits',
-              'get_network_quotas',
-            ],
-          },
-          [OpenStackDataGroupTypes.flaver]: {
-            options: {
-              provider: adminProvider,
-            },
-            apiList: ['avail_sizes'],
-          },
-        }
-        if (meRole !== SUPERADMIN_ROLE) {
-          acc[namespace] = {
-            ...acc[namespace],
-            [OpenStackDataGroupTypes.instances]: {
-              options: {
-                provider:
-                  meRole === SUPERADMIN_ROLE ? adminProvider : namespace,
-                all_projects: false,
-              },
-              apiList: ['list_nodes_full'],
-            },
-          }
-        }
-
-        return acc
-      },
-      {}
-    )
-
-    let saltRes = await getOSPApiAsync(
-      accessInfo.url,
-      accessInfo.token,
-      pCallInfo
-    )
-    let instanceSaveProject = Object.keys(saltRes)[0]
-
-    const savedInstance = saltRes[instanceSaveProject].instances
-      ? saltRes[instanceSaveProject].instances
-      : {}
-
-    allProjectInstances = {
-      ...allProjectInstances,
-      ...savedInstance,
-    }
-
-    saltRes = {
-      ...saltRes,
-      [instanceSaveProject]: {
-        ...saltRes[instanceSaveProject],
-        instances: allProjectInstances,
-      },
-    }
-
-    if (_.isEmpty(saltRes)) {
-      throw Error
-    }
-
-    const openStackProjects = getOSPProjectInfo(saltRes)
-    return openStackProjects
-  } catch (error) {
-    throw error
+  if (_.isEmpty(saltRes)) {
+    throw Error
   }
+
+  const openStackProjects = getOSPProjectInfo(saltRes)
+  return openStackProjects
 }
 
 export const getOSPApiAsync = async (
@@ -408,6 +430,7 @@ export const getOSPProjectInfo = (saltRes: OpenstackProjectAPIInfo) => {
       saltInfo,
       (_before, saltData: any) => {
         const instances = saltData?.instances
+        const falvors = saltData?.flavors
 
         if (!_.isEmpty(instances)) {
           let tempObjectToArray = []
@@ -440,9 +463,9 @@ export const getOSPProjectInfo = (saltRes: OpenstackProjectAPIInfo) => {
               })
             )
 
-            const flaverDetail = _.filter(
-              saltInfo[projectName]?.flaver,
-              flaver => flaver['id'] == instance['flavor']['id']
+            const flavorDetail = _.filter(
+              falvors,
+              flavor => flavor['id'] == instance['flavor']['id']
             )[0]
 
             const filteredInstance = {
@@ -457,11 +480,11 @@ export const getOSPProjectInfo = (saltRes: OpenstackProjectAPIInfo) => {
               task: instance['task_state'] || '',
               powerState: powerStateCodeConvert(instance['power_state']),
               age: calculateDateDuration(instance['created']) || '',
-              flaverDetail: {
-                id: flaverDetail?.['id'] || '',
-                ram: flaverDetail?.['ram'] || '',
-                vcpus: flaverDetail?.['vcpus'] || '',
-                size: flaverDetail?.['disk'] || '',
+              flavorDetail: {
+                id: flavorDetail?.['id'] || '',
+                ram: flavorDetail?.['ram'] || '',
+                vcpus: flavorDetail?.['vcpus'] || '',
+                size: flavorDetail?.['disk'] || '',
               },
               detail: {
                 overview: {

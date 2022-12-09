@@ -14,10 +14,7 @@ import {
 } from 'src/shared/middleware/localStorage'
 
 // constants
-import {
-  notifyUnableToGetApps,
-  notifyUnableToGetProjects,
-} from 'src/shared/copy/notifications'
+import {notifyUnableToGetProjects} from 'src/shared/copy/notifications'
 
 // actions
 import {notify, notify as notifyAction} from 'src/shared/actions/notifications'
@@ -65,7 +62,7 @@ import {
   getLayouts,
   getMeasurementsForInstance,
 } from 'src/hosts/apis'
-import {getOspSaltInfo} from 'src/clouds/apis/openstack'
+import {adminSaltCall, superAdminSaltCall} from 'src/clouds/apis/openstack'
 
 // constants
 import {getOpenStackPageLayouts} from 'src/clouds/constants/layout'
@@ -75,6 +72,7 @@ import {
   DEFAULT_CELL_TEXT_COLOR,
   GRAPH_BG_COLOR,
 } from 'src/dashboards/constants'
+import {SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
 interface Props extends ManualRefreshProps {
   meRole: string
@@ -138,7 +136,7 @@ export class OpenStackPage extends PureComponent<Props, State> {
     const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
 
     if (!layouts) {
-      notify(notifyUnableToGetApps())
+      notify(notifyUnableToGetProjects())
       this.setState({
         openStackPageStatus: RemoteDataState.Error,
         layouts,
@@ -493,11 +491,11 @@ export class OpenStackPage extends PureComponent<Props, State> {
         token: this.salt.token,
         adminProvider: this.adminProvider,
       }
-      const ospProjects = await getOspSaltInfo(
-        meRole,
-        handleLoadCspsAsync,
-        accessInfo
-      )
+
+      const ospProjects =
+        meRole == SUPERADMIN_ROLE
+          ? await superAdminSaltCall(accessInfo)
+          : await adminSaltCall(handleLoadCspsAsync, accessInfo)
 
       this.setState(state => {
         return {
