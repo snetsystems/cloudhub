@@ -342,20 +342,3 @@ export const createCloudServiceProviderAsync = parms => async dispatch => {
     throw error
   }
 }
-
-export const updateCloudServiceProviderAsync = parms => async dispatch => {
-  try {
-    const {data} = await updateCloudServiceProviderAJAX(parms)
-
-    const newData = {
-      ...data,
-      provider: data.provider.toLowerCase(),
-    }
-
-    dispatch(updateCloudServiceProviderAction())
-    return newData
-  } catch (error) {
-    dispatch(errorThrown(error, error.message))
-    throw error
-  }
-}

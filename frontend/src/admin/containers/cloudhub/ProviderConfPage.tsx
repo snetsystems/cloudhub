@@ -7,10 +7,10 @@ import _ from 'lodash'
 // actions
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {
+  createCloudServiceProviderAsync,
   deleteCloudServiceProviderAsync,
   loadCloudServiceProvidersAsync,
 } from 'src/hosts/actions'
-import {createCloudServiceProviderAsync} from 'src/admin/actions/cloudhub'
 
 // types
 import {
@@ -37,6 +37,10 @@ import PageSpinner from 'src/shared/components/PageSpinner'
 
 // constants
 import {HandleType, ProviderTypes} from 'src/admin/constants/providerConf'
+import {AddonType} from 'src/shared/constants'
+
+// apis
+import {createOspProject, deleteOspProject} from 'src/shared/apis/saltStack'
 
 interface Props {
   meCurrentOrganization: {id: string; name: string}
@@ -56,6 +60,8 @@ interface State {
   focusedTab: string
   cspInput: OpenStackCspInput | object
   providerPageStatus: RemoteDataState
+  saltMasterToken: string
+  saltMasterUrl: string
 }
 
 @ErrorHandling
@@ -86,6 +92,8 @@ export class ProviderConfPage extends PureComponent<Props, State> {
       focusedTab: null,
       cspInput: {},
       providerPageStatus: RemoteDataState.NotStarted,
+      saltMasterToken: '',
+      saltMasterUrl: '',
     }
 
     this.setState = (args, callback) => {
@@ -95,6 +103,19 @@ export class ProviderConfPage extends PureComponent<Props, State> {
 
     this.handleClickTab = this.handleClickTab.bind(this)
     this.handleSubmit = this.handleSubmit.bind(this)
+  }
+
+  public async componentWillMount() {
+    const addon = this.props.addons.find(addon => {
+      return addon.name === AddonType.salt
+    })
+
+    const saltMasterToken = addon.token
+    const saltMasterUrl = addon.url
+    this.setState({
+      saltMasterToken: saltMasterToken,
+      saltMasterUrl: saltMasterUrl,
+    })
   }
 
   public async componentDidMount() {
@@ -245,7 +266,12 @@ export class ProviderConfPage extends PureComponent<Props, State> {
   }
 
   private createCsp = async (properties, section) => {
-    const {handleCreateCspAsync, notify} = this.props
+    const {
+      handleCreateCspAsync,
+      notify,
+      links: {osp},
+    } = this.props
+    const {saltMasterToken, saltMasterUrl} = this.state
     switch (section) {
       case ProviderTypes.OpenStack: {
         const {
@@ -257,6 +283,17 @@ export class ProviderConfPage extends PureComponent<Props, State> {
           userDomain,
         } = properties as OpenStackCspInput
 
+        const projectData = {
+          pToken: saltMasterToken,
+          pUrl: saltMasterUrl,
+          provider: osp['admin-provider'],
+          namespace: projectName.trim(),
+          projectdomain: projectDomain,
+        }
+        const cspProjectRes = await createOspProject(projectData)
+        if (cspProjectRes.data.includes('Exception')) {
+          throw new Error(notifygetCSPConfigFailed().message)
+        }
         const etcdData = {
           provider: ProviderTypes.OpenStack,
           namespace: projectName.trim(),
@@ -287,10 +324,25 @@ export class ProviderConfPage extends PureComponent<Props, State> {
   }
 
   private deleteCsp = async (properties, section) => {
-    const {handleDeleteCspAsync} = this.props
+    const {
+      handleDeleteCspAsync,
+      links: {osp},
+    } = this.props
+
+    const {saltMasterToken, saltMasterUrl} = this.state
     switch (section) {
       case ProviderTypes.OpenStack: {
         try {
+          const projectDelete = await deleteOspProject({
+            provider: osp['admin-provider'],
+            namespace: properties.projectName,
+            pToken: saltMasterToken,
+            pUrl: saltMasterUrl,
+            projectdomain: properties.projectDomain,
+          })
+          if (projectDelete.data.includes('Exception')) {
+            throw new Error(notifygetCSPConfigFailed().message)
+          }
           const cspDelte = await handleDeleteCspAsync(properties.id)
           if (cspDelte.isDelete) {
             this.setState({

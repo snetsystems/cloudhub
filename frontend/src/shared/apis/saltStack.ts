@@ -55,6 +55,7 @@ interface Params {
     limit?: number
     dir_path?: string
     mode?: string
+    name_or_id?: string
   }
   username?: string
   password?: string
@@ -2470,5 +2471,59 @@ const saltActivityLog = async (
       'SaltProxy',
       `Sever ${_.get(result, 'status')} error: ${_.get(result, 'statusText')}.`
     )
+  }
+}
+
+export const createOspProject = async params => {
+  try {
+    const {pToken, pUrl, provider, namespace, projectdomain} = params
+
+    const param = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'runner',
+      fun: 'cloud.action',
+      func: 'call',
+      provider: provider,
+      kwarg: {
+        endpoint_func: 'create_project',
+        name: namespace,
+        domain_id: projectdomain,
+      },
+    }
+
+    const result = await apiRequest(pUrl, pToken, param, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const deleteOspProject = async params => {
+  try {
+    const {pToken, pUrl, provider, namespace, projectdomain} = params
+
+    const param = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'runner',
+      fun: 'cloud.action',
+      func: 'call',
+      provider: provider,
+      kwarg: {
+        endpoint_func: 'delete_project',
+        name_or_id: namespace,
+        domain_id: projectdomain,
+      },
+    }
+
+    const result = await apiRequest(pUrl, pToken, param, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
   }
 }
