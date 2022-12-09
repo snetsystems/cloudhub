@@ -325,20 +325,3 @@ export const deleteOrganizationAsync = organization => async dispatch => {
     dispatch(addOrganization(organization))
   }
 }
-
-export const createCloudServiceProviderAsync = parms => async dispatch => {
-  try {
-    const {data} = await createCloudServiceProviderAJAX(parms)
-
-    const newData = {
-      ...data,
-      provider: data.provider.toLowerCase(),
-    }
-
-    dispatch(createCloudServiceProviderAction())
-    return newData
-  } catch (error) {
-    dispatch(errorThrown(error, error.message))
-    throw error
-  }
-}
