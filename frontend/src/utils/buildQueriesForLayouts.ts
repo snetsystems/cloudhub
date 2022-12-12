@@ -44,6 +44,8 @@ const buildCannedDashboardQuery = (
       text += ` and \"region\" = '${instance['namespace']}' and \"instance_id\" = '${instance['instanceid']}'`
     } else if (measurement === 'compute.googleapis.com/instance') {
       text += ` and \"project_id\" = '${instance['namespace']}' and \"instance_id\" = '${instance['instanceid']}'`
+    } else if (measurement === 'openstack_server_diagnostics') {
+      text += ` and \"tenant\" = '${instance['namespace']}' and \"server_id\" = '${instance['instanceid']}'`
     } else {
       text += ` and \"host\" = '${instance['instancename']}'`
     }

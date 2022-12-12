@@ -18,3 +18,19 @@ export interface AgentDirFile {
   isLoading?: boolean
   status?: string | GetAgentDirectoryInfo
 }
+
+export interface CollectorConfigTableData {
+  authentication: string
+  project: string
+  domain: string
+  username: string
+  password: string
+  interval: string
+}
+
+export interface CollectorConfigTabData {
+  name: CollectorConfigTabName
+  component: JSX.Element
+}
+
+export type CollectorConfigTabName = 'openstack' | 'openshift'

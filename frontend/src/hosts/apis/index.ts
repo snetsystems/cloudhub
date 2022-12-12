@@ -14,7 +14,7 @@ import {
 import {Template, Layout, Source, Host, Links} from 'src/types'
 import {HostNames, HostName, Ipmi, IpmiCell} from 'src/types/hosts'
 import {CloudServiceProvider, CSPFileWriteParam} from 'src/hosts/types'
-import {DashboardSwitcherLinks} from '../../types/dashboards'
+import {DashboardSwitcherLinks} from 'src/types/dashboards'
 
 // APIs
 import {
@@ -34,10 +34,8 @@ import {
   getCSPRunnerFileWrite,
   getRunnerFileRead,
   setRunnerFileRemove,
+  getRunnerCloudActionListNodesFull,
 } from 'src/shared/apis/saltStack'
-import {getCpuAndLoadForK8s} from 'src/hosts/apis/kubernetes'
-
-export {getCpuAndLoadForK8s}
 export interface HostsObject {
   [x: string]: Host
 }
@@ -279,7 +277,6 @@ export const getAppsForHost = async (
     appLayouts.map(m => m.measurement),
     appLayouts.map(({app}) => app)
   )
-
   const {data} = await proxy({
     source: proxyLink,
     query: replaceTemplate(
@@ -371,6 +368,8 @@ export const getAppsForInstance = async (
     query = `show series from ${measurements} where region = '${instance['namespace']}' and instance_id = '${instance['instanceid']}'`
   } else if (getFrom === 'StackDriver') {
     query = `show series from ${measurements} where project_id = '${instance['namespace']}' and instance_id = '${instance['instanceid']}'`
+  } else if (getFrom === 'OpenStack') {
+    query = `show series from  ${measurements} where "tenant" = '${instance['namespace']}' and "server_id" = '${instance['instanceid']}'  `
   } else {
     query = `show series from ${measurements} where host = '${instance['instancename']}'`
   }
@@ -392,6 +391,7 @@ export const getAppsForInstance = async (
     appsForInstance.apps = _.uniq(
       appsForInstance.apps.concat(measurementsToApps[measurement])
     )
+
     _.assign(appsForInstance.tags, seriesObj.tags)
   })
 
@@ -545,12 +545,15 @@ export const getMeasurementsForInstance = async (
   getFrom: string
 ): Promise<string[]> => {
   let query = ''
+
   if (getFrom === 'ALL') {
     query = `SHOW MEASUREMENTS WHERE ("host" = '${instance['instancename']}') or ("region" = '${instance['namespace']}' and "instance_id" = '${instance['instanceid']}') or ("project_id" = '${instance['namespace']}' and "instance_id" = '${instance['instanceid']}')`
   } else if (getFrom === 'CloudWatch') {
     query = `SHOW MEASUREMENTS WHERE "region" = '${instance['namespace']}' and "instance_id" = '${instance['instanceid']}'`
   } else if (getFrom === 'StackDriver') {
     query = `SHOW MEASUREMENTS WHERE "project_id" = '${instance['namespace']}' and "instance_id" = '${instance['instanceid']}'`
+  } else if (getFrom === 'OpenStack') {
+    query = `SHOW MEASUREMENTS WHERE "server_id" = '${instance['instanceid']}' and "tenant" = '${instance['namespace']}'`
   } else {
     query = `SHOW MEASUREMENTS WHERE "host" = '${instance['instancename']}'`
   }
@@ -655,7 +658,7 @@ const hasError = (resp): boolean => {
 export const getMinionKeyAcceptedList = async (
   pUrl: string,
   pToken: string
-): Promise<String[]> => {
+): Promise<string[]> => {
   const info = await Promise.all([getWheelKeyAcceptedList(pUrl, pToken)])
   const minions = _.get(
     yaml.safeLoad(info[0].data),
@@ -1018,7 +1021,7 @@ export const createCloudServiceProvider = async ({
 }: paramsCreateCSP) => {
   try {
     let newProvider: string = provider
-    newProvider = newProvider.toUpperCase()
+    newProvider = newProvider
 
     return await AJAX({
       url: `/cloudhub/v1/csp`,
@@ -1336,10 +1339,24 @@ export const getGCPInstancesApi = async (
 ) => {
   try {
     const info = await getRunnerCloudActionListInstances(pUrl, pToken, pCsps)
-
     const cspHost = yaml.safeLoad(info.data)
 
     return cspHost
+  } catch (error) {
+    throw error
+  }
+}
+
+export const getOSPInstancesApi = async (
+  pUrl: string,
+  pToken: string,
+  pCsps: any[]
+) => {
+  try {
+    const info = await getRunnerCloudActionListNodesFull(pUrl, pToken, pCsps)
+    const ospInstances = yaml.safeLoad(info.data)
+
+    return ospInstances
   } catch (error) {
     throw error
   }

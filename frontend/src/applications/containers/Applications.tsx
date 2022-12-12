@@ -52,6 +52,7 @@ import {
   notifyUnableToGetApps,
 } from 'src/shared/copy/notifications'
 import {HANDLE_VERTICAL} from 'src/shared/constants'
+import {notIncludeApps} from 'src/hosts/constants/apps'
 
 // Types
 import {
@@ -196,19 +197,24 @@ export class Applications extends PureComponent<Props, State> {
       return
     }
 
+    const filterLayouts = _.filter(
+      layouts,
+      m => !_.includes(notIncludeApps, m.app)
+    )
+
     // For rendering whole hosts list(setState(hostsObject))
-    await this.fetchHostsAppsData(layouts)
+    await this.fetchHostsAppsData(filterLayouts)
 
     if (autoRefresh) {
       this.intervalID = window.setInterval(
-        () => this.fetchHostsAppsData(layouts),
+        () => this.fetchHostsAppsData(filterLayouts),
         autoRefresh
       )
     }
     GlobalAutoRefresher.poll(autoRefresh)
 
     const {filteredLayouts} = await this.getLayoutsforHostApp(
-      layouts,
+      filterLayouts,
       focusedHost,
       focusedApp
     )
@@ -216,14 +222,13 @@ export class Applications extends PureComponent<Props, State> {
     if (focusedHost === focusedApp) {
       this.setState({
         filteredLayouts,
-        layouts,
+        layouts: filterLayouts,
         isNotSelectStatus: true,
       })
     } else {
       this.setState({
         filteredLayouts,
-
-        layouts,
+        layouts: filterLayouts,
         isNotSelectStatus: false,
       })
     }

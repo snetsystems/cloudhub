@@ -1,0 +1,230 @@
+{
+  "id": "7331616d-cb12-41cd-aebd-ee5c15190482",
+  "measurement": "openstack_server_diagnostics",
+  "app": "openstack",
+  "autoflow": true,
+  "cells": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 4,
+      "h": 4,
+      "i": "d593c44d-ccfd-4903-816e-215cfe96d2c7",
+      "name": "CPU Usage",
+      "queries": [
+        {
+          "query": "SELECT non_negative_derivative(mean(\"cpu0_time\")) AS \"mean_cpu0_time\" FROM \":db:\".\":rp:\".\"openstack_server_diagnostics\"",
+          "label": "",
+          "groupbys": ["time(:interval:)"],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line"
+    },
+    {
+      "i": "6bc9d581-5b18-4948-aa22-08fc1bf156ab",
+      "x": 0,
+      "y": 5,
+      "w": 8,
+      "h": 5,
+      "name": "Port Recevie Packet",
+      "queries": [
+        {
+          "query": "SELECT mean(\"port_rx_packets\") AS \"mean_port_rx_packets\" FROM \":db:\".\":rp:\".\"openstack_server_diagnostics\"",
+          "label": "",
+          "groupbys": ["time(:interval:)"],
+          "wheres": []
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "port_rx_packets",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line"
+    },
+    {
+      "i": "dcfe8313-cad3-4f72-b8bd-775a84c63965",
+      "x": 8,
+      "y": 0,
+      "w": 4,
+      "h": 2,
+      "name": "Port Transmit Packets",
+      "queries": [
+        {
+          "query": "SELECT non_negative_derivative(max(\"port_tx_packets\")) AS \"mean_port_tx_packets\" FROM \":db:\".\":rp:\".\"openstack_server_diagnostics\""
+        }
+      ]
+    },
+
+    {
+      "i": "c79db90f-cec7-4593-b9f7-9b26face0c18",
+      "x": 0,
+      "y": 5,
+      "w": 5,
+      "h": 5,
+      "name": "System - Memory Used",
+      "queries": [
+        {
+          "query": "SELECT mean(\"memory-actual\") AS \"mean_memory-actual\", mean(\"memory-rss\") AS \"mean_memory-rss\" FROM \":db:\".\":rp:\".\"openstack_server_diagnostics\"",
+          "queryConfig": {
+            "fields": [
+              {
+                "value": "mean",
+                "type": "func",
+                "alias": "mean_memory-actual",
+                "args": [
+                  {
+                    "value": "memory-actual",
+                    "type": "field",
+                    "alias": ""
+                  }
+                ]
+              },
+              {
+                "value": "mean",
+                "type": "func",
+                "alias": "mean_memory-rss",
+                "args": [
+                  {
+                    "value": "memory-rss",
+                    "type": "field",
+                    "alias": ""
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "2",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line",
+
+      "fieldOptions": [
+        {
+          "internalName": "time",
+          "displayName": "",
+          "visible": true
+        },
+        {
+          "internalName": "openstack_server_diagnostics.mean_memory-actual",
+          "displayName": "",
+          "visible": true
+        },
+        {
+          "internalName": "openstack_server_diagnostics.mean_memory-rss",
+          "displayName": "",
+          "visible": true
+        }
+      ]
+    },
+    {
+      "i": "06202665-2f85-4221-96a4-189ad0fb2627",
+      "x": 5,
+      "y": 5,
+      "w": 5,
+      "h": 5,
+      "name": "Disk Read Request",
+      "queries": [
+        {
+          "query": "SELECT non_negative_derivative(mean(\"disk_read_req\")) AS \"mean_disk_read_req\" FROM \":db:\".\":rp:\".\"openstack_server_diagnostics\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": []
+        }
+      ],
+
+      "type": "line"
+    },
+    {
+      "i": "5023214a-f2d3-475c-a3d3-4ec1df62f94f",
+      "x": 8,
+      "y": 2,
+      "w": 4,
+      "h": 2,
+      "name": "Disk Write Request",
+      "queries": [
+        {
+          "query": "SELECT non_negative_derivative(mean(\"mean_disk_write_req\")) AS \"disk_write_req\"  FROM \":db:\".\":rp:\".\"openstack_server_diagnostics\"",
+          "label": "",
+          "groupbys": [],
+          "wheres": []
+        }
+      ],
+
+      "type": "line"
+    }
+  ]
+}

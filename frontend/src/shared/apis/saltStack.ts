@@ -1,12 +1,18 @@
+// Libraries
 import _ from 'lodash'
 import yaml from 'js-yaml'
-
 import AJAX from 'src/utils/ajax'
+import path from 'path'
+
+// APIs
 import {createActivityLog} from 'src/shared/apis'
 
 // Types
 import {Ipmi, IpmiCell} from 'src/types'
 import {CloudServiceProvider, CSPFileWriteParam} from 'src/hosts/types'
+import {SUPERADMIN_ROLE} from 'src/auth/Authorized'
+import {OpenStackApiInfo, OpenStackCallParams} from 'src/clouds/types/openstack'
+
 interface Params {
   token?: string
   client?: string
@@ -49,6 +55,7 @@ interface Params {
     limit?: number
     dir_path?: string
     mode?: string
+    name_or_id?: string
   }
   username?: string
   password?: string
@@ -407,20 +414,81 @@ export async function runLocalServiceReStartTelegraf(
   }
 }
 
+export async function runLocalServiceReloadTelegraf(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string
+) {
+  try {
+    const params: Params = {
+      client: 'local',
+      fun: 'service.reload',
+      arg: 'telegraf',
+      tgt_type: '',
+      tgt: '',
+    }
+
+    if (pMinionId) {
+      params.tgt_type = 'list'
+      params.tgt = pMinionId
+    } else {
+      params.tgt_type = 'glob'
+      params.tgt = '*'
+    }
+
+    return await apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 export async function runLocalServiceTestTelegraf(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pSelectedPlugin?: string
+  pSelectedPlugin?: string,
+  pConfPath = '/etc/telegraf/telegraf.conf'
 ) {
   try {
     const inputFilter =
       pSelectedPlugin === 'All' ? '' : `--input-filter ${pSelectedPlugin}`
+    const testConfigCommand = `--config ${pConfPath}`
     const params: Params = {
       client: 'local',
       fun: 'cmd.run',
       kwarg: {
-        cmd: `telegraf --test ${inputFilter}`,
+        cmd: `telegraf ${testConfigCommand} --test ${inputFilter}`,
+      },
+    }
+
+    if (pMinionId) {
+      params.tgt_type = 'list'
+      params.tgt = pMinionId
+    } else {
+      params.tgt_type = 'glob'
+      params.tgt = '*'
+    }
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function runLocalServiceDebugTelegraf(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pSelectedPlugin?: string,
+  pConfPath = '/etc/telegraf/telegraf.conf'
+) {
+  try {
+    const params: Params = {
+      client: 'local',
+      fun: 'cmd.run',
+      kwarg: {
+        cmd: `telegraf --test --config ${pConfPath} --input-filter ${pSelectedPlugin}`,
       },
     }
 
@@ -532,7 +600,8 @@ export async function getLocalGrainsItems(
 export async function getLocalFileRead(
   pUrl: string,
   pToken: string,
-  pMinionId: string
+  pMinionId: string,
+  pDirPath: string = '/etc/telegraf/telegraf.conf'
 ) {
   try {
     const params: Params = {
@@ -541,7 +610,7 @@ export async function getLocalFileRead(
       tgt_type: '',
       tgt: '',
       kwarg: {
-        path: '/etc/telegraf/telegraf.conf',
+        path: pDirPath,
       },
     }
 
@@ -564,7 +633,8 @@ export async function getLocalFileWrite(
   pUrl: string,
   pToken: string,
   pMinionId: string,
-  pScript: string
+  pScript: string,
+  pConfPath = '/etc/telegraf/telegraf.conf'
 ) {
   try {
     const params: Params = {
@@ -573,7 +643,7 @@ export async function getLocalFileWrite(
       tgt_type: '',
       tgt: '',
       kwarg: {
-        path: '/etc/telegraf/telegraf.conf',
+        path: pConfPath,
         args: [pScript],
       },
     }
@@ -645,7 +715,8 @@ export async function getRunnerSaltCmdTelegraf(
 
 export async function getRunnerSaltCmdTelegrafPlugin(
   pUrl: string,
-  pToken: string
+  pToken: string,
+  pCmd: string
 ) {
   try {
     const params = [
@@ -655,16 +726,7 @@ export async function getRunnerSaltCmdTelegrafPlugin(
         fun: 'salt.cmd',
         kwarg: {
           fun: 'cmd.shell',
-          cmd: 'telegraf --input-list',
-        },
-      },
-      {
-        token: pToken,
-        client: 'runner',
-        fun: 'salt.cmd',
-        kwarg: {
-          fun: 'cmd.shell',
-          cmd: 'telegraf --output-list',
+          cmd: pCmd,
         },
       },
     ]
@@ -715,6 +777,30 @@ export async function getRunnerSaltCmdDirectory(
       fun: 'salt.cmd',
       kwarg: {
         fun: 'cmd.shell',
+        cmd: `ls -lt --time-style=long-iso ${pDirPath} | grep ^- | awk \'{printf "%sT%s %s\\n",$6,$7,$NF}\'`,
+      },
+    }
+    return await apiRequest(pUrl, pToken, params)
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getLocalSaltCmdDirectory(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pDirPath: string
+) {
+  try {
+    const params = {
+      eauth: 'pam',
+      client: 'local',
+      tgt: pMinionId,
+      tgt_type: 'glob',
+      fun: 'cmd.shell',
+      kwarg: {
         cmd: `ls -lt --time-style=long-iso ${pDirPath} | grep ^- | awk \'{printf "%sT%s %s\\n",$6,$7,$NF}\'`,
       },
     }
@@ -1575,6 +1661,136 @@ export async function getRunnerCloudActionListInstances(
   }
 }
 
+export async function getRunnerCloudActionListNodesFull(
+  pUrl: string,
+  pToken: string,
+  pCSPs: any[]
+): Promise<any> {
+  try {
+    let params = []
+    _.map(pCSPs, pCSP => {
+      const param = {
+        token: pToken,
+        eauth: 'pam',
+        client: 'runner',
+        fun: 'cloud.action',
+        func: 'list_nodes_full',
+        provider: pCSP.namespace,
+        all_projects: pCSP.role === SUPERADMIN_ROLE ? true : false,
+      }
+      params = [...params, param]
+    })
+
+    const result = await apiRequestMulti(pUrl, params, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export async function getRunnerCloudActionOSPProject(
+  pUrl: string,
+  pToken: string,
+  pCallInfo: object
+): Promise<any> {
+  try {
+    let requestList = []
+
+    const pCallParams = ({
+      saltFunction,
+      pToken,
+      saltOptions,
+    }: OpenStackCallParams) => {
+      const param = {
+        token: pToken,
+        eauth: 'pam',
+        client: 'runner',
+        fun: 'cloud.action',
+        func: saltFunction,
+      }
+      const options = saltOptions || null
+      return {
+        ...param,
+        ...options,
+      }
+    }
+
+    _.map(pCallInfo, (pCSP, namespace) => {
+      _.map(pCSP, async (apiInfo: OpenStackApiInfo, groupname) => {
+        _.map(apiInfo.apiList, async saltFunction => {
+          const param = pCallParams({
+            saltFunction: saltFunction,
+            pToken: pToken,
+            saltOptions: apiInfo.options,
+          }) as Params
+
+          const openstackReq = async () => {
+            return {
+              namespace: namespace,
+              groupname: groupname,
+              res: await apiRequest(pUrl, pToken, param, 'application/x-yaml'),
+            }
+          }
+          requestList.push(openstackReq)
+        })
+      })
+    })
+
+    const result = _.groupBy(
+      await Promise.all(requestList.map(async req => req())),
+      e => {
+        return e.namespace
+      }
+    )
+
+    const getJsonFromSaltRes = saltRes => {
+      const convertRes = _.reduce(
+        saltRes,
+        (acc, salt) => {
+          const namesapce = _.reduce(
+            salt,
+            (_acc, _salt) => {
+              try {
+                const loadSalt = yaml.safeLoad(_salt.res.data).return[0]
+
+                if (typeof loadSalt === 'string') {
+                  return
+                }
+
+                const saltInfo = _.values(_.values(loadSalt)[0])[0]
+
+                _acc[_salt.groupname] = {
+                  ..._acc[_salt.groupname],
+                  ...saltInfo,
+                }
+
+                return _acc
+              } catch (error) {
+                return
+              }
+            },
+
+            {}
+          )
+          if (namesapce) {
+            acc[salt[0].namespace] = namesapce
+          }
+
+          return acc
+        },
+        {}
+      )
+      return convertRes
+    }
+    const saltRes = getJsonFromSaltRes(result)
+    return saltRes
+  } catch (error) {
+    throw error
+  }
+}
+
 export async function getCSPListInstances(
   pUrl: string,
   pToken: string,
@@ -2065,6 +2281,44 @@ export async function getLocalK8sDetail(
   }
 }
 
+export async function getLocalDirectoryMake(
+  pUrl: string,
+  pToken: string,
+  pMinionId: string,
+  pDirPath: string
+) {
+  try {
+    const params: Params = {
+      eauth: 'pam',
+      client: 'local',
+      fun: 'file.mkdir',
+      arg: pDirPath,
+      tgt_type: '',
+      tgt: '',
+    }
+
+    if (pMinionId) {
+      params.tgt_type = 'list'
+      params.tgt = pMinionId
+    } else {
+      params.tgt_type = 'glob'
+      params.tgt = '*'
+    }
+
+    const makeDirectoryResponse = await apiRequest(
+      pUrl,
+      pToken,
+      params,
+      'application/x-yaml'
+    )
+
+    return yaml.safeLoad(makeDirectoryResponse.data).return
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
 export async function getCSPRunnerFileWrite(
   pUrl: string,
   pToken: string,
@@ -2093,7 +2347,7 @@ export async function getCSPRunnerFileWrite(
       fun: 'salt.cmd',
       kwarg: {
         fun: 'file.write',
-        path: pFileWrite.path + pFileWrite.fileName,
+        path: path.join(pFileWrite.path, pFileWrite.fileName),
         args: [pFileWrite.script],
       },
     }
@@ -2113,7 +2367,7 @@ export async function getCSPRunnerFileWrite(
         fun: 'salt.cmd',
         kwarg: {
           fun: 'file.set_mode',
-          path: pFileWrite.path + pFileWrite.fileName,
+          path: path.join(pFileWrite.path, pFileWrite.fileName),
           mode: '0600',
         },
       }
@@ -2217,5 +2471,59 @@ const saltActivityLog = async (
       'SaltProxy',
       `Sever ${_.get(result, 'status')} error: ${_.get(result, 'statusText')}.`
     )
+  }
+}
+
+export const createOspProject = async params => {
+  try {
+    const {pToken, pUrl, provider, namespace, projectdomain} = params
+
+    const param = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'runner',
+      fun: 'cloud.action',
+      func: 'call',
+      provider: provider,
+      kwarg: {
+        endpoint_func: 'create_project',
+        name: namespace,
+        domain_id: projectdomain,
+      },
+    }
+
+    const result = await apiRequest(pUrl, pToken, param, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const deleteOspProject = async params => {
+  try {
+    const {pToken, pUrl, provider, namespace, projectdomain} = params
+
+    const param = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'runner',
+      fun: 'cloud.action',
+      func: 'call',
+      provider: provider,
+      kwarg: {
+        endpoint_func: 'delete_project',
+        name_or_id: namespace,
+        domain_id: projectdomain,
+      },
+    }
+
+    const result = await apiRequest(pUrl, pToken, param, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
   }
 }

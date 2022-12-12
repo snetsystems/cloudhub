@@ -40,7 +40,7 @@ import {
   notifygetGCPInstancesFailed,
 } from 'src/shared/copy/notifications'
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
-import {CloudServiceProvider, CSPFileWriteParam} from '../types'
+import {CloudServiceProvider, CSPFileWriteParam} from 'src/hosts/types'
 
 export enum ActionTypes {
   LoadInventoryTopology = 'LOAD_INVENTORY_TOPOLOGY',
@@ -543,21 +543,24 @@ export const getGCPInstancesAsync = (
 ) => async (dispatch: Dispatch<Action>) => {
   try {
     const gcpInstances = await getGCPInstancesApi(pUrl, pToken, pCsps)
+
     let convertedGcpInstances = {return: []}
 
     _.map(gcpInstances.return, item => {
-      _.reduce(
-        item,
-        (_before, current) => {
-          let GcpInstancesItem = [null]
-          Object.keys(current.gce).forEach((key, _) => {
-            GcpInstancesItem.push(current.gce[key])
-          })
-          convertedGcpInstances.return.push(GcpInstancesItem)
-          return false
-        },
-        {}
-      )
+      if (typeof item !== 'string') {
+        _.reduce(
+          item,
+          (_before, current) => {
+            let GcpInstancesItem = [null]
+            Object.keys(current.gce).forEach((key, _) => {
+              GcpInstancesItem.push(current.gce[key])
+            })
+            convertedGcpInstances.return.push(GcpInstancesItem)
+            return false
+          },
+          {}
+        )
+      }
     })
 
     _.forEach(convertedGcpInstances.return, (host, index) => {

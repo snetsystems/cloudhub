@@ -29,10 +29,7 @@
 
 .auth-box {
   z-index: 90;
-  position: absolute;
-  top: 43%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  position: relative;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -83,10 +80,9 @@
   @include no-user-select();
   font-weight: 600;
   z-index: 90;
-  position: absolute;
-  bottom: ($sidebar--width / 4);
-  left: 50%;
-  transform: translateX(-50%);
+  position: relative;
+  top: ($sidebar--width / 2);
+  text-align: center;
   font-size: 13px;
   color: $g11-sidewalk;
 
