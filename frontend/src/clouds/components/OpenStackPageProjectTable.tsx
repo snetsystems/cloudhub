@@ -180,7 +180,7 @@ class OpenStackPageProjectTable extends PureComponent<Props, State> {
     return (
       <div className="panel">
         <OpenStackPageHeader
-          cellName={`Limit Summary (${focusedProject || ''})`}
+          cellName={`Project Limit Summary (${focusedProject || ''})`}
           cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
           cellTextColor={DEFAULT_CELL_TEXT_COLOR}
         >
