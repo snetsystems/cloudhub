@@ -54,7 +54,7 @@ class OpenStackPageInstanceDetail extends PureComponent<Props> {
     return (
       <>
         <OpenStackPageHeader
-          cellName={`Limit Summary (${focusedInstance.instanceName || ''})`}
+          cellName={`Details (${focusedInstance.instanceName || ''})`}
           cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
           cellTextColor={DEFAULT_CELL_TEXT_COLOR}
         />
