@@ -6,6 +6,7 @@ import React, {Fragment, PureComponent} from 'react'
 import OpenStackProjectGaugeChart from 'src/clouds/components/OpenStackProjectGaugeChart'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import OpenStackPageHeader from 'src/clouds/components/OpenStackPageHeader'
+import LoadingDots from 'src/shared/components/LoadingDots'
 
 // types
 import {RemoteDataState} from 'src/types'
@@ -26,6 +27,7 @@ interface Props {
   focusedProject: FocusedProject
   projectData: OpenStackGaugeChartProjectData
   maxInstanceCount?: number
+  saltRemoteDataState: RemoteDataState
 }
 
 export default class OpenStackProjectGaugeChartLayout extends PureComponent<Props> {
@@ -132,7 +134,7 @@ export default class OpenStackProjectGaugeChartLayout extends PureComponent<Prop
   }
 
   public render() {
-    const {focusedProject} = this.props
+    const {focusedProject, saltRemoteDataState} = this.props
 
     return (
       <>
@@ -140,7 +142,13 @@ export default class OpenStackProjectGaugeChartLayout extends PureComponent<Prop
           cellName={`Limit Summary (${focusedProject || ''})`}
           cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
           cellTextColor={DEFAULT_CELL_TEXT_COLOR}
-        />
+        >
+          {saltRemoteDataState === RemoteDataState.Loading && (
+            <LoadingDots
+              className={'graph-panel__refreshing openstack-dots--loading'}
+            />
+          )}
+        </OpenStackPageHeader>
         <div style={{height: 'calc(100% - 40px)'}} className="panel-body">
           {this.CloudGaugeContents}
         </div>

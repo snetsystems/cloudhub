@@ -93,6 +93,7 @@ interface State {
   filteredLayouts: Layout[]
   projects: Partial<OpenStackProject[]>
   openStackPageStatus: RemoteDataState
+  saltRemoteDataState: RemoteDataState
   openStackLayouts: OpenStackLayoutCell[]
 }
 
@@ -125,12 +126,13 @@ export class OpenStackPage extends PureComponent<Props, State> {
       filteredLayouts: [],
       projects: [],
       openStackPageStatus: RemoteDataState.NotStarted,
+      saltRemoteDataState: RemoteDataState.NotStarted,
       openStackLayouts: [],
     }
   }
 
   public async componentDidMount() {
-    const {autoRefresh} = this.props
+    const {autoRefresh, meRole} = this.props
 
     const layoutResults = await getLayouts()
     const layouts = getDeep<Layout[]>(layoutResults, 'data.layouts', [])
@@ -143,25 +145,24 @@ export class OpenStackPage extends PureComponent<Props, State> {
       })
       return
     }
+    const openstackLayoutsByRole =
+      getOpenStackPageLayouts[
+        meRole == SUPERADMIN_ROLE ? SUPERADMIN_ROLE : 'other'
+      ]
+
     try {
-      const projects = await this.fetchOpenStackData()
+      await this.fetchOpenStackData()
 
       const {openStackLayouts: layoutsByStorage} =
-        getLocalStorage('openStackLayouts') || getOpenStackPageLayouts
-      const openStackLayouts = layoutsByStorage || getOpenStackPageLayouts
+        getLocalStorage('openStackLayouts') || openstackLayoutsByRole
+      const ospLayouts = layoutsByStorage || openstackLayoutsByRole
 
-      let convertOpenStackLayouts = Array.isArray(openStackLayouts)
-        ? openStackLayouts
-        : openStackLayouts.split(',').map(v => Number(v))
+      let storageOpenStackLayouts = Array.isArray(ospLayouts)
+        ? ospLayouts
+        : ospLayouts.split(',').map(v => Number(v))
 
-      if (projects.length < 2) {
-        convertOpenStackLayouts = _.filter(
-          convertOpenStackLayouts,
-          layout => layout.i !== 'projectTable'
-        )
-      }
-      if (projects.length > 1 && convertOpenStackLayouts.length < 5) {
-        convertOpenStackLayouts = getOpenStackPageLayouts
+      if (openstackLayoutsByRole.length !== storageOpenStackLayouts.length) {
+        storageOpenStackLayouts = openstackLayoutsByRole
       }
 
       this.onSetFocusedProject()
@@ -192,13 +193,14 @@ export class OpenStackPage extends PureComponent<Props, State> {
           layouts,
           filteredLayouts: focusedLayout,
           openStackPageStatus: RemoteDataState.Done,
-          openStackLayouts: convertOpenStackLayouts,
+          openStackLayouts: storageOpenStackLayouts,
         }
       })
     } catch (error) {
       this.setState({
         openStackPageStatus: RemoteDataState.Done,
-        openStackLayouts: getOpenStackPageLayouts,
+        saltRemoteDataState: RemoteDataState.Done,
+        openStackLayouts: openstackLayoutsByRole,
       })
     }
   }
@@ -310,6 +312,7 @@ export class OpenStackPage extends PureComponent<Props, State> {
       focusedProject,
       focusedInstance,
       filteredLayouts,
+      saltRemoteDataState,
     } = this.state
     const {source, manualRefresh, timeRange} = this.props
 
@@ -332,6 +335,7 @@ export class OpenStackPage extends PureComponent<Props, State> {
             openStackPageStatus={openStackPageStatus}
             source={source}
             onClickTableRow={this.handleClickProjectTableRow}
+            saltRemoteDataState={saltRemoteDataState}
           />
         )
       }
@@ -342,6 +346,7 @@ export class OpenStackPage extends PureComponent<Props, State> {
             gaugeChartState={openStackPageStatus}
             focusedProject={focusedProject}
             projectData={updateFocusedProject?.projectData?.chart}
+            saltRemoteDataState={saltRemoteDataState}
           />
         )
       }
@@ -351,6 +356,7 @@ export class OpenStackPage extends PureComponent<Props, State> {
           <OpenStackPageInstanceOverview
             focusedInstance={focusedInstance}
             focusedInstanceData={updateInstance}
+            saltRemoteDataState={saltRemoteDataState}
           />
         )
       }
@@ -364,6 +370,7 @@ export class OpenStackPage extends PureComponent<Props, State> {
             focusedProject={focusedProject}
             focusedProjectData={updateFocusedProject}
             onClickTableRow={this.handleClickInstanceTableRow}
+            saltRemoteDataState={saltRemoteDataState}
           />
         )
       }
@@ -491,18 +498,20 @@ export class OpenStackPage extends PureComponent<Props, State> {
         token: this.salt.token,
         adminProvider: this.adminProvider,
       }
-
+      this.setState(prevState => ({
+        ...prevState,
+        saltRemoteDataState: RemoteDataState.Loading,
+      }))
       const ospProjects =
         meRole == SUPERADMIN_ROLE
           ? await superAdminSaltCall(accessInfo)
           : await adminSaltCall(handleLoadCspsAsync, accessInfo)
 
-      this.setState(state => {
-        return {
-          ...state,
-          projects: ospProjects,
-        }
-      })
+      this.setState(prevState => ({
+        ...prevState,
+        projects: ospProjects,
+        saltRemoteDataState: RemoteDataState.Done,
+      }))
       return ospProjects
     } catch (error) {
       notify(notifyUnableToGetProjects())
