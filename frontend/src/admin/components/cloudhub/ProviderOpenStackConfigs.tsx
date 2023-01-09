@@ -9,6 +9,7 @@ import {RemoteDataState} from 'src/types'
 
 // constants
 import {HandleType} from 'src/admin/constants/providerConf'
+import {ComponentColor, ComponentSize, SlideToggle} from 'src/reusable_ui'
 
 // components
 import PageSpinner from 'src/shared/components/PageSpinner'
@@ -19,7 +20,10 @@ interface Props {
   pageStatus: RemoteDataState
 }
 
-export class ProviderOpenStackConfigs extends PureComponent<Props> {
+interface State {
+  isActiveToggle: boolean
+}
+export class ProviderOpenStackConfigs extends PureComponent<Props, State> {
   private projectName: HTMLInputElement
   private authUrl: HTMLInputElement
   private userName: HTMLInputElement
@@ -31,6 +35,10 @@ export class ProviderOpenStackConfigs extends PureComponent<Props> {
     super(props)
 
     this.handleSubmit = this.handleSubmit.bind(this)
+
+    this.state = {
+      isActiveToggle: this.props.cspInput.hasProjectOption,
+    }
   }
 
   public render() {
@@ -46,6 +54,7 @@ export class ProviderOpenStackConfigs extends PureComponent<Props> {
       },
       pageStatus,
     } = this.props
+    const {isActiveToggle} = this.state
 
     return (
       <div className="provider-conf-api-credentials config-endpoint--tab-contents">
@@ -130,8 +139,12 @@ export class ProviderOpenStackConfigs extends PureComponent<Props> {
               defaultValue={userDomain || ''}
             />
           </div>
-          <div className="form-group form-group-submit col-xs-12 text-center">
+          <div
+            style={{display: 'flex', justifyContent: 'center'}}
+            className="form-group form-group-submit col-xs-12 text-center"
+          >
             <button
+              style={{marginLeft: '13em'}}
               className="btn btn-primary"
               onClick={this.handleSubmit}
               type="button"
@@ -139,12 +152,33 @@ export class ProviderOpenStackConfigs extends PureComponent<Props> {
               <span className="icon checkmark"></span>
               {id ? HandleType.Delete : HandleType.Create}
             </button>
+
+            <div style={{marginLeft: '1em'}} className="all-users-admin-toggle">
+              <SlideToggle
+                active={isActiveToggle}
+                onChange={this.handleToggleClick}
+                size={ComponentSize.ExtraSmall}
+                color={ComponentColor.Success}
+              />
+              <span
+                onClick={this.handleToggleClick}
+                className="wizard-checkbox--label"
+              >
+                in OpenStack, too.
+              </span>
+            </div>
           </div>
         </form>
       </div>
     )
   }
-
+  private handleToggleClick = () => {
+    const {isActiveToggle} = this.state
+    this.setState(prevState => ({
+      ...prevState,
+      isActiveToggle: !isActiveToggle,
+    }))
+  }
   private handleSubmit = async e => {
     e.preventDefault()
 
@@ -158,6 +192,7 @@ export class ProviderOpenStackConfigs extends PureComponent<Props> {
       password: this.password.value,
       projectDomain: this.projectDomain.value,
       userDomain: this.userDomain.value,
+      hasProjectOption: this.state.isActiveToggle,
     }
     const handleType = id ? HandleType.Delete : HandleType.Create
     await this.props.onHandleSubmit(properties, handleType)

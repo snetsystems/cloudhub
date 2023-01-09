@@ -2527,3 +2527,31 @@ export const deleteOspProject = async params => {
     throw error
   }
 }
+
+export const grantRoleOspProject = async params => {
+  try {
+    const {pToken, pUrl, provider, namespace, user} = params
+
+    const param = {
+      token: pToken,
+      eauth: 'pam',
+      client: 'runner',
+      fun: 'cloud.action',
+      func: 'call',
+      provider: provider,
+      kwarg: {
+        endpoint_func: 'grant_role',
+        name_or_id: provider,
+        user: user,
+        project: namespace,
+      },
+    }
+
+    const result = await apiRequest(pUrl, pToken, param, 'application/x-yaml')
+
+    return result
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}

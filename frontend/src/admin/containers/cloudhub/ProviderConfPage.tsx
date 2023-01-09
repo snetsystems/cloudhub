@@ -40,7 +40,11 @@ import {HandleType, ProviderTypes} from 'src/admin/constants/providerConf'
 import {AddonType} from 'src/shared/constants'
 
 // apis
-import {createOspProject, deleteOspProject} from 'src/shared/apis/saltStack'
+import {
+  createOspProject,
+  deleteOspProject,
+  grantRoleOspProject,
+} from 'src/shared/apis/saltStack'
 
 interface Props {
   meCurrentOrganization: {id: string; name: string}
@@ -56,7 +60,6 @@ interface Props {
 }
 
 interface State {
-  isLoading: boolean
   focusedTab: string
   cspInput: OpenStackCspInput | object
   providerPageStatus: RemoteDataState
@@ -80,6 +83,7 @@ export class ProviderConfPage extends PureComponent<Props, State> {
         password: storeData['admin-pw'],
         projectDomain: storeData['pj-domain-id'],
         userDomain: storeData['user-domain-id'],
+        hasProjectOption: true,
       },
     }
     return convertProperties[provider]
@@ -88,7 +92,6 @@ export class ProviderConfPage extends PureComponent<Props, State> {
     super(props)
 
     this.state = {
-      isLoading: true,
       focusedTab: null,
       cspInput: {},
       providerPageStatus: RemoteDataState.NotStarted,
@@ -166,7 +169,17 @@ export class ProviderConfPage extends PureComponent<Props, State> {
   }
 
   private get LoadingState(): JSX.Element {
-    return <PageSpinner />
+    return (
+      <div
+        style={{
+          height: `calc(${innerHeight}px - 95px)`,
+          position: 'relative',
+          width: '100%',
+        }}
+      >
+        <PageSpinner />
+      </div>
+    )
   }
 
   private get renderTabNav(): JSX.Element {
@@ -281,18 +294,27 @@ export class ProviderConfPage extends PureComponent<Props, State> {
           password,
           projectDomain,
           userDomain,
+          hasProjectOption,
         } = properties as OpenStackCspInput
 
-        const projectData = {
-          pToken: saltMasterToken,
-          pUrl: saltMasterUrl,
-          provider: osp['admin-provider'],
-          namespace: projectName.trim(),
-          projectdomain: projectDomain,
-        }
-        const cspProjectRes = await createOspProject(projectData)
-        if (cspProjectRes.data.includes('Exception')) {
-          throw new Error(notifygetCSPConfigFailed().message)
+        if (hasProjectOption) {
+          const projectData = {
+            pToken: saltMasterToken,
+            pUrl: saltMasterUrl,
+            provider: osp['admin-provider'],
+            namespace: projectName.trim(),
+            projectdomain: projectDomain,
+            user: osp['admin-user'],
+          }
+          const cspProjectRes = await createOspProject(projectData)
+          const cspProjectGrantRes = await grantRoleOspProject(projectData)
+
+          if (
+            cspProjectRes.data.includes('Exception') ||
+            cspProjectGrantRes.data.includes('false')
+          ) {
+            throw new Error(notifygetCSPConfigFailed().message)
+          }
         }
         const etcdData = {
           provider: ProviderTypes.OpenStack,
@@ -316,6 +338,7 @@ export class ProviderConfPage extends PureComponent<Props, State> {
             cspInput: {
               ...properties,
               id: cspRes.id,
+              hasProjectOption: true,
             },
           }
         })
@@ -333,17 +356,26 @@ export class ProviderConfPage extends PureComponent<Props, State> {
     switch (section) {
       case ProviderTypes.OpenStack: {
         try {
-          const projectDelete = await deleteOspProject({
-            provider: osp['admin-provider'],
-            namespace: properties.projectName,
-            pToken: saltMasterToken,
-            pUrl: saltMasterUrl,
-            projectdomain: properties.projectDomain,
-          })
-          if (projectDelete.data.includes('Exception')) {
-            throw new Error(notifygetCSPConfigFailed().message)
+          const {
+            id,
+            projectName,
+            projectDomain,
+            hasProjectOption,
+          } = properties as OpenStackCspInput
+          if (hasProjectOption) {
+            const projectDelete = await deleteOspProject({
+              provider: osp['admin-provider'],
+              namespace: projectName,
+              pToken: saltMasterToken,
+              pUrl: saltMasterUrl,
+              projectdomain: projectDomain,
+            })
+
+            if (projectDelete.data.includes('Exception')) {
+              throw new Error(notifygetCSPConfigFailed().message)
+            }
           }
-          const cspDelte = await handleDeleteCspAsync(properties.id)
+          const cspDelte = await handleDeleteCspAsync(id)
           if (cspDelte.isDelete) {
             this.setState({
               cspInput: this.defaultProperties(ProviderTypes.OpenStack),
@@ -375,13 +407,13 @@ export class ProviderConfPage extends PureComponent<Props, State> {
 
   private getFocusedInputs = async (section: string): Promise<object> => {
     const defaultProperties = this.defaultProperties(section)
-
     const cspId = await this.getCurrentCspData(section)
 
     const foucsedInputsProperties = {
       [ProviderTypes.OpenStack]: {
         ...defaultProperties,
         id: cspId,
+        hasProjectOption: true,
       } as OpenStackCspInput,
     }
 
