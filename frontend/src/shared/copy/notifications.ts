@@ -1395,4 +1395,8 @@ export const notifyCreateProviderConf = (provider: string): Notification => ({
 export const notifyDeleteProviderConf = (provider: string): Notification => ({
   ...defaultSuccessNotification,
   message: `${provider}  deleted successfully.`,
+}) 
+export const notifygetProjectConfigFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to Deleted Project configuration file.`,
 })

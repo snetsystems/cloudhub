@@ -31,6 +31,7 @@ import {
   notifyError,
   notifyExceptionRunner,
   notifygetCSPConfigFailed,
+  notifygetProjectConfigFailed,
 } from 'src/shared/copy/notifications'
 import {ProviderOpenStackConfigs} from 'src/admin/components/cloudhub/ProviderOpenStackConfigs'
 import PageSpinner from 'src/shared/components/PageSpinner'
@@ -372,7 +373,7 @@ export class ProviderConfPage extends PureComponent<Props, State> {
             })
 
             if (projectDelete.data.includes('Exception')) {
-              throw new Error(notifygetCSPConfigFailed().message)
+              throw new Error(notifygetProjectConfigFailed().message)
             }
           }
           const cspDelte = await handleDeleteCspAsync(id)
