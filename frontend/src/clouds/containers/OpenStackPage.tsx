@@ -145,6 +145,7 @@ export class OpenStackPage extends PureComponent<Props, State> {
       })
       return
     }
+
     const openstackLayoutsByRole =
       getOpenStackPageLayouts[
         meRole == SUPERADMIN_ROLE ? SUPERADMIN_ROLE : 'other'
@@ -156,7 +157,6 @@ export class OpenStackPage extends PureComponent<Props, State> {
       const {openStackLayouts: layoutsByStorage} =
         getLocalStorage('openStackLayouts') || openstackLayoutsByRole
       const ospLayouts = layoutsByStorage || openstackLayoutsByRole
-
       let storageOpenStackLayouts = Array.isArray(ospLayouts)
         ? ospLayouts
         : ospLayouts.split(',').map(v => Number(v))
@@ -169,6 +169,7 @@ export class OpenStackPage extends PureComponent<Props, State> {
       this.onSetFocusedInstance()
 
       let focusedLayout = []
+
       if (!_.isEmpty(this.state.focusedInstance)) {
         const {filteredLayouts} = await this.getLayoutsforInstance(
           layouts,
@@ -257,6 +258,7 @@ export class OpenStackPage extends PureComponent<Props, State> {
   }
 
   public componentWillUnmount() {
+    const {meRole} = this.props
     const {openStackLayouts} = this.state
 
     clearInterval(this.intervalID)
@@ -264,8 +266,11 @@ export class OpenStackPage extends PureComponent<Props, State> {
     GlobalAutoRefresher.stopPolling()
 
     const saveLayouts = _.isEmpty(openStackLayouts)
-      ? getOpenStackPageLayouts
+      ? getOpenStackPageLayouts[
+          meRole == SUPERADMIN_ROLE ? SUPERADMIN_ROLE : 'other'
+        ]
       : openStackLayouts
+
     setLocalStorage('openStackLayouts', {
       openStackLayouts: saveLayouts,
     })
@@ -610,13 +615,15 @@ export class OpenStackPage extends PureComponent<Props, State> {
     const {projects} = this.state
 
     if (_.isEmpty(focusedProject) && !_.isEmpty(projects)) {
-      this.setState({
+      this.setState(prevState => ({
+        ...prevState,
         focusedProject: projects[0].projectData.projectName,
-      })
+      }))
     } else {
-      this.setState({
+      this.setState(prevState => ({
+        ...prevState,
         focusedProject: focusedProject,
-      })
+      }))
     }
   }
 
@@ -630,13 +637,14 @@ export class OpenStackPage extends PureComponent<Props, State> {
       const selectedProject = projects[0]
       if (!_.isEmpty(selectedProject.instances)) {
         const selectedInstance = selectedProject.instances[0]
-        this.setState({
+        this.setState(prevState => ({
+          ...prevState,
           focusedInstance: {
             instanceName: selectedInstance.instanceName,
             instanceId: selectedInstance.instanceId,
             projectName: selectedInstance.projectName,
           },
-        })
+        }))
       }
     } else {
       const selectedProject = _.filter(
