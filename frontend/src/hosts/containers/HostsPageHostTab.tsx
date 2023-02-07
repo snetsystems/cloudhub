@@ -61,9 +61,14 @@ import {
   Layout,
   TimeRange,
   RefreshRate,
+  Me,
 } from 'src/types'
 import * as QueriesModels from 'src/types/queries'
 import * as AppActions from 'src/types/actions/app'
+
+interface Auth {
+  me: Me
+}
 
 export interface Props extends ManualRefreshProps {
   source: Source
@@ -71,6 +76,7 @@ export interface Props extends ManualRefreshProps {
   autoRefresh: number
   inPresentationMode: boolean
   timeRange: TimeRange
+  auth: Auth
   onChooseAutoRefresh: (milliseconds: RefreshRate) => void
   handleClearTimeout: (key: string) => void
   notify: NotificationAction
@@ -384,7 +390,7 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
   private async fetchHostsData(
     layouts: Layout[]
   ): Promise<{[host: string]: Host}> {
-    const {source, links, notify} = this.props
+    const {source, links, notify, auth} = this.props
     const {focusedHost} = this.state
     const envVars = await getEnv(links.environment)
     const telegrafSystemInterval = getDeep<string>(
@@ -395,13 +401,15 @@ export class HostsPageHostTab extends PureComponent<Props, State> {
 
     const hostsError = notifyUnableToGetHosts().message
     const tempVars = generateForHosts(source)
+    const meRole = _.get(auth, 'me.role', '')
 
     try {
       const hostsObject = await getCpuAndLoadForHosts(
         source.links.proxy,
         source.telegraf,
         telegrafSystemInterval,
-        tempVars
+        tempVars,
+        meRole
       )
       if (!hostsObject) {
         throw new Error(hostsError)
@@ -488,11 +496,13 @@ const mstp = state => {
       ephemeral: {inPresentationMode},
     },
     links,
+    auth,
   } = state
   return {
     links,
     autoRefresh,
     inPresentationMode,
+    auth,
   }
 }
 

@@ -32,15 +32,13 @@ import {
   toolbarMenu,
   toolsMenu,
   tmpMenu,
-  // hostMenu,
   Menu,
   eachNodeTypeAttrs,
   orderMenu,
 } from 'src/hosts/constants/tools'
-
 import {CELL_SIZE_WIDTH, CELL_SIZE_HEIGHT} from 'src/hosts/constants/topology'
-
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
+import {COLLECTOR_SERVER} from 'src/shared/constants'
 
 const mx = mxgraph()
 const {
@@ -283,7 +281,10 @@ export const createTextField = function (
   isDisable = false
 ) {
   const nodeName = _.upperCase(attribute.nodeName.replace('data-', ''))
-  const ipmiTargets = this.state.minionList
+
+  const ipmiTargets = _.filter(this.state.minionList, minion =>
+    _.startsWith(minion, COLLECTOR_SERVER)
+  )
   let input = null
 
   if (attribute.nodeName === 'data-using_minion') {

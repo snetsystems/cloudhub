@@ -62,12 +62,17 @@ import {
   Host,
   Layout,
   TimeRange,
+  Me,
 } from 'src/types'
 import {timeRanges} from 'src/shared/data/timeRanges'
 import {SearchStatus} from 'src/types/logs'
 import * as QueriesModels from 'src/types/queries'
 import * as AppActions from 'src/types/actions/app'
 import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
+
+interface Auth {
+  me: Me
+}
 
 interface Props extends ManualRefreshProps {
   source: Source
@@ -78,11 +83,11 @@ interface Props extends ManualRefreshProps {
 }
 
 interface Props {
+  auth: Auth
+  inPresentationMode: boolean
   handleChooseTimeRange: (timeRange: QueriesModels.TimeRange) => void
   handleChooseAutoRefresh: AppActions.SetAutoRefreshActionCreator
   handleClickPresentationButton: AppActions.DelayEnablePresentationModeDispatcher
-
-  inPresentationMode: boolean
 }
 
 interface State {
@@ -426,8 +431,9 @@ export class Applications extends PureComponent<Props, State> {
   }
 
   private fetchHostsAppsData = async (layouts: Layout[]): Promise<void> => {
-    const {source, links, notify} = this.props
+    const {source, links, auth, notify} = this.props
 
+    const meRole = _.get(auth, 'me.role', '')
     const envVars = await getEnv(links.environment)
     const telegrafSystemInterval = getDeep<string>(
       envVars,
@@ -442,7 +448,8 @@ export class Applications extends PureComponent<Props, State> {
         source.links.proxy,
         source.telegraf,
         telegrafSystemInterval,
-        tempVars
+        tempVars,
+        meRole
       )
 
       if (!hostsObject) {
@@ -624,11 +631,13 @@ const mstp = state => {
       ephemeral: {inPresentationMode},
     },
     links,
+    auth,
   } = state
   return {
     links,
     autoRefresh,
     inPresentationMode,
+    auth,
   }
 }
 

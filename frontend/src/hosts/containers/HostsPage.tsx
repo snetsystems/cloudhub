@@ -153,11 +153,7 @@ export class HostsPage extends PureComponent<Props, State> {
     ) : (
       <div
         className={`radio-buttons radio-buttons--default radio-buttons--sm radio-buttons--stretch`}
-      >
-        <button type="button" className={'radio-button active'}>
-          Private
-        </button>
-      </div>
+      ></div>
     )
   }
   private get LoadingState(): JSX.Element {

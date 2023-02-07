@@ -1,10 +1,14 @@
+// library
 import React, {
   PureComponent,
   MouseEvent,
   ChangeEvent,
   KeyboardEvent,
 } from 'react'
+import _ from 'lodash'
 import classnames from 'classnames'
+
+// components
 import OnClickOutside from 'src/shared/components/OnClickOutside'
 import DropdownMenu, {
   DropdownMenuEmpty,
@@ -12,11 +16,13 @@ import DropdownMenu, {
 import DropdownInput from 'src/shared/components/DropdownInput'
 import DropdownHead from 'src/shared/components/DropdownHead'
 import LoadingSpinner from 'src/flux/components/LoadingSpinner'
-
 import {ErrorHandling} from 'src/shared/decorators/errors'
-
+// types
 import {DropdownItem, DropdownAction} from 'src/types'
 import {ComponentStatus} from 'src/reusable_ui'
+
+//constants
+import {COLLECTOR_SERVER} from 'src/shared/constants'
 
 interface AddNew {
   url?: string
@@ -188,7 +194,10 @@ export class KubernetesDropdown extends PureComponent<Props, State> {
 
     const {searchTerm, filteredItems, highlightedItemIndex} = this.state
 
-    const menuItems = useAutoComplete ? filteredItems : items
+    const minions = useAutoComplete ? filteredItems : items
+    const menuItems = _.filter(minions, (item: string) =>
+      _.startsWith(item, COLLECTOR_SERVER)
+    ) as DropdownItem[]
 
     return (
       <div
