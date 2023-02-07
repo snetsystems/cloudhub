@@ -74,6 +74,13 @@ const activityData = [
   {action: 'pkg.install', message: `Execute 'telegraf package install'.`},
   {action: 'file.write', message: `Execute 'telegraf config apply'.`},
   {action: 'ipmi.set_power', message: `Execute 'IPMI power state change'.`},
+  {action: 'service.restart', message: `Execute 'telegraf service restart'.`},
+  {action: 'service.reload', message: `Execute 'telegraf service reload'.`},
+  {action: 'file.mkdir', message: `Execute 'file mkdir'.`},
+  {action: 'file.remove', message: `Execute 'file remove'.`},
+  {action: 'file.set_mode', message: `Execute 'file set_mode'.`},
+  {action: 'group.adduser', message: `Execute 'group.adduser'.`},
+  {action: 'grant_role', message: `Execute 'grant_role'.`},
 ]
 
 const apiRequest = async (
@@ -82,7 +89,14 @@ const apiRequest = async (
   pParams: Params,
   pAccept?: string
 ) => {
-  const activity = _.find(activityData, f => f.action === _.get(pParams, 'fun'))
+  const activity = _.find(
+    activityData,
+    f =>
+      f.action ===
+      (_.get(pParams?.kwarg, 'fun') ||
+        _.get(pParams?.kwarg, 'endpoint_func') ||
+        _.get(pParams, 'fun'))
+  )
 
   try {
     const dParams = {token: pToken, eauth: 'pam'}
@@ -138,8 +152,50 @@ const apiRequestMulti = async (
       data: param,
     })
 
+    _.reduce(
+      pParams,
+      (_acc, pParam: Params) => {
+        const activity = _.find(
+          activityData,
+          f =>
+            f.action ===
+            (_.get(pParam?.kwarg, 'fun') ||
+              _.get(pParam?.kwarg, 'endpoint_func') ||
+              _.get(pParam, 'fun'))
+        )
+
+        if (!_.isEmpty(activity)) {
+          saltActivityLog(activity, ajaxResult)
+        }
+
+        return activity
+      },
+      {}
+    )
+
     return ajaxResult
   } catch (error) {
+    _.reduce(
+      pParams,
+      (_acc, pParam: Params) => {
+        const activity = _.find(
+          activityData,
+          f =>
+            f.action ===
+            (_.get(pParam.kwarg, 'fun') ||
+              _.get(pParam?.kwarg, 'endpoint_func') ||
+              _.get(pParam, 'fun'))
+        )
+
+        if (!_.isEmpty(activity)) {
+          saltActivityLog(activity, error)
+        }
+
+        return activity
+      },
+      {}
+    )
+
     console.error(error)
     throw error
   }
