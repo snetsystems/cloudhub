@@ -20,6 +20,8 @@ interface Props {
   focusedHost: string
   onClickTableRow: AgentConfiguration['onClickTableRowCall']
   onClickAction: AgentConfiguration['onClickActionCall']
+  onMouseOver: (event: MouseEvent<HTMLElement>, minionIPAddress: string) => void
+  onMouseLeave: () => void
 }
 
 @ErrorHandling
@@ -55,7 +57,7 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
     onClickAction(host, isRunning)
   }
   private get TableRowEachPage(): JSX.Element {
-    const {minions} = this.props
+    const {minions, onMouseLeave, onMouseOver} = this.props
     const {osVersion, os, ip, host, isRunning} = minions
     const {
       HostWidth,
@@ -64,6 +66,11 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
       IPWidth,
       ActionWidth,
     } = AGENT_CONFIGURATION_TABLE_SIZING
+    const minionIPAddresses = ip.split(',')
+    const isMultipleIPAddress = ip !== '' && minionIPAddresses.length > 1
+    const minionIPAddress = isMultipleIPAddress
+      ? `${minionIPAddresses[0]},...`
+      : ip
 
     return (
       <div
@@ -76,7 +83,14 @@ class AgentConfigurationTableRow extends PureComponent<Props> {
           width={OSWidth}
         />
         <TableBodyRowItem title={osVersion} width={OSVersionWidth} />
-        <TableBodyRowItem title={ip} width={IPWidth} />
+        <div
+          className={`hosts-table--td`}
+          onMouseLeave={onMouseLeave}
+          onMouseOver={event => onMouseOver(event, ip)}
+          style={{width: IPWidth}}
+        >
+          {ip ? minionIPAddress : '-'}
+        </div>
         <TableBodyRowItem
           title={
             <button

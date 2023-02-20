@@ -1,5 +1,5 @@
 // Libraries
-import React, {PureComponent} from 'react'
+import React, {PureComponent, MouseEvent} from 'react'
 import _ from 'lodash'
 import memoize from 'memoize-one'
 
@@ -9,6 +9,7 @@ import AgentConfigurationTableRow from 'src/agent_admin/components/AgentConfigur
 import SearchBar from 'src/hosts/components/SearchBar'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
+import AgentMinionsToolTip from 'src/agent_admin/components/AgentMinionsToolTip'
 
 // Constants
 import {AGENT_CONFIGURATION_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
@@ -33,6 +34,9 @@ interface State {
   searchTerm: string
   sortDirection: SortDirection
   sortKey: string
+  isToolipActive: boolean
+  targetPosition: {width: number; top: number; right: number; left: number}
+  minionIPAdress: string
 }
 
 @ErrorHandling
@@ -44,6 +48,9 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
       sortKey: 'host',
+      isToolipActive: false,
+      targetPosition: {width: 0, top: 0, right: 0, left: 0},
+      minionIPAdress: '',
     }
   }
 
@@ -276,6 +283,43 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     return this.AgentTableHeaderEachPage
   }
 
+  private onMouseOver = (
+    event: MouseEvent<HTMLDivElement>,
+    minionIPAddress: string
+  ) => {
+    const eventTarget = event.target as HTMLCanvasElement
+    const {width, top, right, left} = eventTarget.getBoundingClientRect()
+
+    this.setState({
+      isToolipActive: true,
+      targetPosition: {width, top, right, left},
+      minionIPAdress: minionIPAddress,
+    })
+  }
+
+  private onMouseLeave = () => {
+    this.setState({
+      isToolipActive: false,
+      targetPosition: {top: null, right: null, left: null, width: null},
+    })
+  }
+
+  private get tooltip() {
+    const {isToolipActive, targetPosition, minionIPAdress} = this.state
+    const minionIPAddresses = minionIPAdress.split(',')
+    const isMultipleIPAddress =
+      minionIPAdress !== '' && minionIPAddresses.length > 1
+
+    if (isToolipActive && isMultipleIPAddress) {
+      return (
+        <AgentMinionsToolTip
+          targetPosition={targetPosition}
+          tooltipNode={minionIPAddresses}
+        />
+      )
+    }
+  }
+
   private get AgentTableWithHosts() {
     const {minions, onClickTableRow, onClickAction, focusedHost} = this.props
     const {sortKey, sortDirection, searchTerm} = this.state
@@ -291,6 +335,7 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
     return (
       <div className="hosts-table">
         {this.AgentTableHeader}
+        {this.tooltip}
         {sortedHosts.length > 0 ? (
           <FancyScrollbar
             children={sortedHosts.map(
@@ -302,6 +347,8 @@ class AgentConfigurationTable extends PureComponent<Props, State> {
                     onClickTableRow={onClickTableRow}
                     onClickAction={onClickAction}
                     focusedHost={focusedHost}
+                    onMouseLeave={this.onMouseLeave}
+                    onMouseOver={this.onMouseOver}
                   />
                 ) : null
             )}

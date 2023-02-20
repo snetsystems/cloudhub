@@ -349,6 +349,20 @@
   }
 }
 
+.agentadmin-toolbar--tooltip {
+  position: fixed;
+  z-index: 30;
+}
+
+.agentadmin-toolbar--tooltip-contents {
+  border: 2px solid $s-orange;
+  border-radius: 4px;
+  display: inline-flex;
+  flex-direction: column;
+  background-color: $g1-raven;
+  width: 122px;
+}
+
 .service-config_wrap {
   display: flex;
   height: 100%;

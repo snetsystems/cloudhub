@@ -7,7 +7,6 @@ import {Source} from 'src/types'
 // APIs
 import {
   getWheelKeyListAll,
-  getRunnerManageAllowed,
   getLocalServiceEnabledTelegraf,
   getLocalServiceStatusTelegraf,
   getLocalGrainsItems,
@@ -96,20 +95,28 @@ export const getMinionKeyListAllAdmin = async (
     }
 
   const paramKeyList = _.values(minions).map(m => m.host)
-
   const info1 = await Promise.all([
-    getRunnerManageAllowed(pUrl, pToken),
     getLocalGrainsItems(pUrl, pToken, paramKeyList.toString()),
   ])
-
-  const ipList = info1[0].data.return[0]
-  const osList = info1[1].data.return[0]
+  const ipv4Regexformat: RegExp = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/
+  const exceptLoopbackRegexFormat: RegExp = /^(?!127.0.0.1)/
+  const osList = info1[0].data.return[0]
 
   for (const k of _.values(minions).map(m => m.host)) {
+    const ipInterfaces = osList[k]?.ip_interfaces
+    const ipList: string = _.keys(ipInterfaces)
+      .map(item =>
+        ipInterfaces[item]
+          .filter(ip => ipv4Regexformat.test(ip))
+          .filter(ip => exceptLoopbackRegexFormat.test(ip))
+      )
+      .flat()
+      .join(',')
+
     if (osList[k]) {
       minions[k] = {
         ...minions[k],
-        ip: ipList[k],
+        ip: ipList,
         os: osList[k].os,
         osVersion: osList[k].osrelease,
         isSaltRuning: typeof osList[k] !== 'object' ? false : true,
@@ -117,7 +124,7 @@ export const getMinionKeyListAllAdmin = async (
     } else {
       minions[k] = {
         ...minions[k],
-        ip: ipList[k],
+        ip: ipList,
         isSaltRuning: false,
       }
     }
@@ -165,7 +172,7 @@ export const getTelegrafInstalled = async (
     Object.keys(newMinions).toString()
   )
 
-  Object.keys(data.return[0]).forEach(function(k) {
+  Object.keys(data.return[0]).forEach(function (k) {
     if (newMinions.hasOwnProperty(k)) {
       newMinions[k] = {
         host: k,
@@ -193,7 +200,7 @@ export const getTelegrafServiceStatus = async (
     Object.keys(newMinions).toString()
   )
 
-  Object.keys(data.return[0]).forEach(function(k) {
+  Object.keys(data.return[0]).forEach(function (k) {
     if (newMinions.hasOwnProperty(k)) {
       newMinions[k] = {
         host: k,
