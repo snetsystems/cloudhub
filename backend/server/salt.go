@@ -11,6 +11,77 @@ import (
 	"time"
 )
 
+func (s *Service) saltProxyServe(body []byte, u *url.URL, w http.ResponseWriter, r *http.Request) {
+	var mapBody map[string]interface{}
+	err := json.Unmarshal(body, &mapBody)
+	if err != nil {
+		msg := fmt.Sprintf("Unmarshal Error from the salt body: %v", err)
+		Error(w, http.StatusInternalServerError, msg, s.Logger)
+		return
+	}
+
+	mapBody["token"] = s.AddonTokens["salt"]
+	authBody, err := json.Marshal(mapBody)
+	if err != nil {
+		msg := fmt.Sprintf("Marshal Error to the salt body: %v", err)
+		Error(w, http.StatusInternalServerError, msg, s.Logger)
+		return
+	}
+
+	director := func(req *http.Request) {
+		req.Host = u.Host
+		req.URL = u
+		req.Body = ioutil.NopCloser(bytes.NewReader(authBody))
+		req.ContentLength = int64(len(authBody))
+	}
+
+	// Without a FlushInterval the HTTP Chunked response for salt logs is
+	// buffered and flushed every 30 seconds.
+	proxy := &httputil.ReverseProxy{
+		Director:      director,
+		FlushInterval: time.Second,
+	}
+
+	proxy.ServeHTTP(w, r)
+}
+
+func (s *Service) saltArrayProxyServe(body []byte, u *url.URL, w http.ResponseWriter, r *http.Request) {
+	var bodies []map[string]interface{}
+	err := json.Unmarshal(body, &bodies)
+	if err != nil {
+		msg := fmt.Sprintf("Unmarshal Error from the salt body: %v", err)
+		Error(w, http.StatusInternalServerError, msg, s.Logger)
+		return
+	}
+
+	for _, body := range bodies {
+		body["token"] = s.AddonTokens["salt"]
+	}
+
+	authBody, err := json.Marshal(bodies)
+	if err != nil {
+		msg := fmt.Sprintf("Marshal Error to the salt body: %v", err)
+		Error(w, http.StatusInternalServerError, msg, s.Logger)
+		return
+	}
+
+	director := func(req *http.Request) {
+		req.Host = u.Host
+		req.URL = u
+		req.Body = ioutil.NopCloser(bytes.NewReader(authBody))
+		req.ContentLength = int64(len(authBody))
+	}
+
+	// Without a FlushInterval the HTTP Chunked response for salt logs is
+	// buffered and flushed every 30 seconds.
+	proxy := &httputil.ReverseProxy{
+		Director:      director,
+		FlushInterval: time.Second,
+	}
+
+	proxy.ServeHTTP(w, r)
+}
+
 // SaltProxy proxies requests to services using the path query parameter.
 func (s *Service) SaltProxy(w http.ResponseWriter, r *http.Request) {
 	var uri string
@@ -30,32 +101,12 @@ func (s *Service) SaltProxy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var mapBody map[string]interface{}
-	err = json.Unmarshal(body, &mapBody)
-	if err != nil {
-		msg := fmt.Sprintf("Unmarshal Error from the salt body: %v", err)
-		Error(w, http.StatusInternalServerError, msg, s.Logger)
-		return
+	t := r.URL.Query().Get("type")
+	if t == "array" {
+		s.saltArrayProxyServe(body, u, w, r)
+	} else {
+		s.saltProxyServe(body, u, w, r)
 	}
-
-	mapBody["token"] = s.AddonTokens["salt"]
-	authBody, err := json.Marshal(mapBody)
-
-	director := func(req *http.Request) {
-		req.Host = u.Host
-		req.URL = u
-		req.Body = ioutil.NopCloser(bytes.NewReader(authBody))
-		req.ContentLength = int64(len(authBody))
-	}
-
-	// Without a FlushInterval the HTTP Chunked response for salt logs is
-	// buffered and flushed every 30 seconds.
-	proxy := &httputil.ReverseProxy{
-		Director:      director,
-		FlushInterval: time.Second,
-	}
-
-	proxy.ServeHTTP(w, r)
 }
 
 // SaltProxyPost proxies POST to service
