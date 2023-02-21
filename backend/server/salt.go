@@ -24,9 +24,28 @@ func (s *Service) SaltProxy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		invalidData(w, err, s.Logger)
+		return
+	}
+
+	var mapBody map[string]interface{}
+	err = json.Unmarshal(body, &mapBody)
+	if err != nil {
+		msg := fmt.Sprintf("Unmarshal Error from the salt body: %v", err)
+		Error(w, http.StatusInternalServerError, msg, s.Logger)
+		return
+	}
+
+	mapBody["token"] = s.AddonTokens["salt"]
+	authBody, err := json.Marshal(mapBody)
+
 	director := func(req *http.Request) {
 		req.Host = u.Host
 		req.URL = u
+		req.Body = ioutil.NopCloser(bytes.NewReader(authBody))
+		req.ContentLength = int64(len(authBody))
 	}
 
 	// Without a FlushInterval the HTTP Chunked response for salt logs is

@@ -3,7 +3,7 @@
   "info": {
     "title": "CloudHub",
     "description": "API endpoints for CloudHub",
-    "version": "1.1.1"
+    "version": "1.4.0"
   },
   "schemes": ["http"],
   "basePath": "/cloudhub/v1",
@@ -7560,7 +7560,7 @@
                 "type": "string"
               },
               "token": {
-                "description": "token for the authentication",
+                "description": "[Deprecated] token for the authentication",
                 "type": "string"
               }
             }
@@ -7644,12 +7644,12 @@
           {
             "name": "salt",
             "url": "/cloudhub/v1/proxy/salt",
-            "token": "58163e8e0f6b3efcd7bbb1ad0e3a2ee53e8fae1248b291312e1bdbfc13b289d2"
+            "token": "<This is deprecated therefore it'll be always empty or removed.>"
           },
           {
             "name": "swan",
-            "url": "https://211.189.153.40/api/v1/graphql",
-            "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiYWRtaW4iLCJzY29wZXMiOlsiY29uZmlndXJlIl0sImlhdCI6MTU3NDAzNjAxM30.beW77E48pOhNKHNuFB6q343hg5XGbV7HzUcI-8LaV4RJTOiOALpA4NPWF4nDmFcveVuGuH8rETnLNbeXFa2zmssbCg_TfaAt49yyq_Meg43TYXKOYl5pl7mJ1k-nte0zW4fX2J6brRE5ouvU3e2ssvRVmvsnuqWxdQ1Doqm4e2zLaVIblMsb80DpSr7AZfbF5Ld11KwUPIxAsU7LIN_tfKfy4-LPqwN78eD6fGcb_u6m2sm5jVZihuwKmzhIVEVIHtnGbr2oSrAHLrpeokLCGctXF1b7pCt7pCWIeBqyr7EjjOx90d8LoH49idMPLymDR_NPi-8Cs0GXszJtW82DuA"
+            "url": "https://<swan_domain>/api/v1/graphql",
+            "token": ""
           },
           {
             "name": "oncue",
@@ -7845,22 +7845,22 @@
       }
     },
     "SaltProxy": {
-      "description": "Entirely used as the body for the request to the Salt backend.",
+      "description": "The body of the request to the Salt backend.",
       "type": "object",
       "example": {
-        "token": "765a77ba67cc48f4a249059d5bb66b2912fb8f8590864f0347d46bb02eceb81f",
+        "token": "<This is deprecated therefore empty or remove the field.>",
         "eauth": "pam",
         "client": "runner",
         "fun": "manage.status"
       }
     },
     "SaltProxyResponse": {
-      "description": "Entire response from the Salt API.",
+      "description": "Response from the Salt API.",
       "type": "object",
       "example": {
         "return": [
           {
-            "up": ["jack-server-01.snet.com", "jack-server-02.snet.com"],
+            "up": ["server-01.snet.com", "server-02.snet.com"],
             "down": []
           }
         ]
