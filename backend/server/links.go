@@ -70,7 +70,7 @@ type RetryPolicys []RetryPolicy
 type getAddonLinksResponse struct {
 	Name  string `json:"name"`
 	URL   string `json:"url"`
-	Token string `json:"token"`
+	Token string `json:"token"` // [Deprecated] Token is not going to transfer the client(frontend).
 }
 
 // OSP is to access to OpenStack API

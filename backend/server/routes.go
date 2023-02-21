@@ -177,8 +177,6 @@ func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if len(routes.Addons) > 0 {
 		i := 0
 		for name, url := range a.AddonURLs {
-			token := a.AddonTokens[name]
-
 			var emitURL string
 			switch name {
 			case "salt":
@@ -188,9 +186,8 @@ func (a *AllRoutes) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 
 			routes.Addons[i] = getAddonLinksResponse{
-				Name:  name,
-				URL:   emitURL,
-				Token: token,
+				Name: name,
+				URL:  emitURL,
 			}
 			i++
 		}
