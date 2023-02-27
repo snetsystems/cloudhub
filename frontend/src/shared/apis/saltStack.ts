@@ -10,7 +10,6 @@ import {createActivityLog} from 'src/shared/apis'
 // Types
 import {Ipmi, IpmiCell} from 'src/types'
 import {CloudServiceProvider, CSPFileWriteParam} from 'src/hosts/types'
-import {SUPERADMIN_ROLE} from 'src/auth/Authorized'
 import {OpenStackApiInfo, OpenStackCallParams} from 'src/clouds/types/openstack'
 
 interface Params {
@@ -137,7 +136,7 @@ const apiRequestMulti = async (
 ) => {
   try {
     const saltMasterUrl = pUrl
-    const url = saltMasterUrl + '/'
+    const url = saltMasterUrl + '?type=array'
     const headers = {
       Accept: pAccept ? pAccept : 'application/json',
       'Content-type': 'application/json',
@@ -775,19 +774,16 @@ export async function getRunnerSaltCmdTelegrafPlugin(
   pCmd: string
 ) {
   try {
-    const params = [
-      {
-        token: pToken,
-        client: 'runner',
-        fun: 'salt.cmd',
-        kwarg: {
-          fun: 'cmd.shell',
-          cmd: pCmd,
-        },
+    const params = {
+      client: 'runner',
+      fun: 'salt.cmd',
+      kwarg: {
+        fun: 'cmd.shell',
+        cmd: pCmd,
       },
-    ]
+    }
 
-    return await apiRequestMulti(pUrl, params, 'application/x-yaml')
+    return await apiRequest(pUrl, pToken, params, 'application/x-yaml')
   } catch (error) {
     console.error(error)
     throw error
@@ -1081,29 +1077,23 @@ export async function getLocalK8sNodes(
 export async function getIpmiGetPower(
   pUrl: string,
   pToken: string,
-  pIpmis: IpmiCell[]
+  pIpmis: IpmiCell
 ) {
   try {
-    let params = []
+    let params = {
+      eauth: 'pam',
+      client: 'local',
+      fun: 'ipmi.get_power',
+      tgt_type: 'glob',
+      tgt: pIpmis.target,
+      kwarg: {
+        api_host: pIpmis.host,
+        api_user: pIpmis.user,
+        api_pass: pIpmis.pass,
+      },
+    }
 
-    _.map(pIpmis, pIpmi => {
-      const param = {
-        token: pToken,
-        eauth: 'pam',
-        client: 'local',
-        fun: 'ipmi.get_power',
-        tgt_type: 'glob',
-        tgt: pIpmi.target,
-        kwarg: {
-          api_host: pIpmi.host,
-          api_user: pIpmi.user,
-          api_pass: pIpmi.pass,
-        },
-      }
-      params = [...params, param]
-    })
-
-    const result = await apiRequestMulti(pUrl, params, 'application/x-yaml')
+    const result = await apiRequest(pUrl, pToken, params, 'application/x-yaml')
 
     return result
   } catch (error) {
@@ -1704,35 +1694,6 @@ export async function getRunnerCloudActionListInstances(
         fun: 'cloud.action',
         func: 'list_instances',
         provider: pCSP.namespace,
-      }
-      params = [...params, param]
-    })
-
-    const result = await apiRequestMulti(pUrl, params, 'application/x-yaml')
-
-    return result
-  } catch (error) {
-    console.error(error)
-    throw error
-  }
-}
-
-export async function getRunnerCloudActionListNodesFull(
-  pUrl: string,
-  pToken: string,
-  pCSPs: any[]
-): Promise<any> {
-  try {
-    let params = []
-    _.map(pCSPs, pCSP => {
-      const param = {
-        token: pToken,
-        eauth: 'pam',
-        client: 'runner',
-        fun: 'cloud.action',
-        func: 'list_nodes_full',
-        provider: pCSP.namespace,
-        all_projects: pCSP.role === SUPERADMIN_ROLE ? true : false,
       }
       params = [...params, param]
     })

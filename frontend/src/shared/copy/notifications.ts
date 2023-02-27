@@ -1312,9 +1312,9 @@ export const notifyTopologyImportFailed = (
   message: `Failed to import Topology from file ${fileName}: ${errorMessage}.`,
 })
 
-export const notifyIpmiConnectionFailed = (error: Error): Notification => ({
+export const notifyIpmiConnectionFailed = (host: string): Notification => ({
   ...defaultErrorNotification,
-  message: `IPMI Connection Failed, ${error}`,
+  message: `${host} IPMI Connection Failed`,
 })
 
 export const notifyRequiredFailed = (required: string): Notification => ({
@@ -1395,7 +1395,7 @@ export const notifyCreateProviderConf = (provider: string): Notification => ({
 export const notifyDeleteProviderConf = (provider: string): Notification => ({
   ...defaultSuccessNotification,
   message: `${provider}  deleted successfully.`,
-}) 
+})
 export const notifygetProjectConfigFailed = (): Notification => ({
   ...defaultErrorNotification,
   message: `Failed to Deleted Project configuration file.`,

@@ -170,17 +170,24 @@ export const getIpmiStatusAsync = (
   pIpmis: IpmiCell[]
 ) => async (dispatch: Dispatch<Action>) => {
   try {
-    const ipmis = await getIpmiStatusSaltApi(pUrl, pToken, pIpmis)
+    const ipmis = await Promise.all(
+      pIpmis.map(pIpmi => {
+        return getIpmiStatusSaltApi(pUrl, pToken, pIpmi)
+      })
+    )
 
     let error = ''
+    let ipmiHost = ''
     let resultIpmis: IpmiCell[] = pIpmis
 
-    _.map(ipmis.return, (ipmi, index) => {
+    _.map(ipmis, (ipmiAPIResponse, index) => {
+      const ipmi = ipmiAPIResponse?.return?.[0]
       if (_.values(ipmi)[0] !== 'on' && _.values(ipmi)[0] !== 'off') {
         if (error !== null) {
           error += '\n'
         }
-        error += `[${pIpmis[index].host}] ` + JSON.stringify(_.values(ipmi)[0])
+        ipmiHost = pIpmis[index].host
+        error += `[${ipmiHost}] ` + JSON.stringify(_.values(ipmi)[0])
 
         resultIpmis[index].powerStatus = ''
       } else {
@@ -190,7 +197,7 @@ export const getIpmiStatusAsync = (
 
     if (!_.isEmpty(error)) {
       const notify = bindActionCreators(notifyAction, dispatch)
-      notify(notifyIpmiConnectionFailed(Error(error)))
+      notify(notifyIpmiConnectionFailed(ipmiHost))
       console.error(error)
     }
 

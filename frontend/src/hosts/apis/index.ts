@@ -34,7 +34,6 @@ import {
   getCSPRunnerFileWrite,
   getRunnerFileRead,
   setRunnerFileRemove,
-  getRunnerCloudActionListNodesFull,
 } from 'src/shared/apis/saltStack'
 import {COLLECTOR_SERVER, DEFAULT_ORGANIZATION} from 'src/shared/constants'
 import {SUPERADMIN_ROLE} from 'src/auth/Authorized'
@@ -905,7 +904,7 @@ export const updateInventoryTopology = async (
 export const getIpmiStatusSaltApi = async (
   pUrl: string,
   pToken: string,
-  pIpmis: IpmiCell[]
+  pIpmis: IpmiCell
 ): Promise<any> => {
   const info = await getIpmiGetPower(pUrl, pToken, pIpmis)
   const ipmiStatus = yaml.safeLoad(info.data)
@@ -1367,21 +1366,6 @@ export const getGCPInstancesApi = async (
     const cspHost = yaml.safeLoad(info.data)
 
     return cspHost
-  } catch (error) {
-    throw error
-  }
-}
-
-export const getOSPInstancesApi = async (
-  pUrl: string,
-  pToken: string,
-  pCsps: any[]
-) => {
-  try {
-    const info = await getRunnerCloudActionListNodesFull(pUrl, pToken, pCsps)
-    const ospInstances = yaml.safeLoad(info.data)
-
-    return ospInstances
   } catch (error) {
     throw error
   }
