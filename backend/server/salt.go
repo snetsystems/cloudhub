@@ -2,9 +2,11 @@ package server
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -38,7 +40,20 @@ func (s *Service) saltProxyServe(body []byte, u *url.URL, w http.ResponseWriter,
 	// Without a FlushInterval the HTTP Chunked response for salt logs is
 	// buffered and flushed every 30 seconds.
 	proxy := &httputil.ReverseProxy{
-		Director:      director,
+		Director: director,
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+				DualStack: true,
+			}).DialContext,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       90 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+			TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+		},
 		FlushInterval: time.Second,
 	}
 
@@ -75,7 +90,20 @@ func (s *Service) saltArrayProxyServe(body []byte, u *url.URL, w http.ResponseWr
 	// Without a FlushInterval the HTTP Chunked response for salt logs is
 	// buffered and flushed every 30 seconds.
 	proxy := &httputil.ReverseProxy{
-		Director:      director,
+		Director: director,
+		Transport: &http.Transport{
+			Proxy: http.ProxyFromEnvironment,
+			DialContext: (&net.Dialer{
+				Timeout:   30 * time.Second,
+				KeepAlive: 30 * time.Second,
+				DualStack: true,
+			}).DialContext,
+			MaxIdleConns:          100,
+			IdleConnTimeout:       90 * time.Second,
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+			TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+		},
 		FlushInterval: time.Second,
 	}
 
@@ -116,7 +144,22 @@ func (s *Service) SaltProxyPost(w http.ResponseWriter, r *http.Request) {
 
 // SaltHTTPPost posts a http request to salt api server
 func (s *Service) SaltHTTPPost(payload []byte) (int, []byte, error) {
-	resp, err := http.Post(s.AddonURLs["salt"], "application/json", bytes.NewBuffer(payload))
+	transport := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+			DualStack: true,
+		}).DialContext,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: transport}
+
+	resp, err := client.Post(s.AddonURLs["salt"], "application/json", bytes.NewBuffer(payload))
 	if err != nil {
 		return 0, nil, err
 	}
