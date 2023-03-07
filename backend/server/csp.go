@@ -179,16 +179,17 @@ func (s *Service) NewCSP(w http.ResponseWriter, r *http.Request) {
 	// If the provider is osp, generate the salt and telegraf config.
 	switch csp.Provider {
 	case cloudhub.OSP:
-		statusCode, resp, err := s.generateSaltConfigForOSP(csp)
-		if err != nil {
-			unknownErrorWithMessage(w, err, s.Logger)
-			return
-		} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-			Error(w, statusCode, string(resp), s.Logger)
-			return
-		}
+		// It does not need to call generateSaltConfigForOSP no longer.
+		// statusCode, resp, err := s.generateSaltConfigForOSP(csp)
+		// if err != nil {
+		// 	unknownErrorWithMessage(w, err, s.Logger)
+		// 	return
+		// } else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+		// 	Error(w, statusCode, string(resp), s.Logger)
+		// 	return
+		// }
 
-		statusCode, resp, err = s.generateTelegrafConfigForOSP(ctx, csp)
+		statusCode, resp, err := s.generateTelegrafConfigForOSP(ctx, csp)
 		if err != nil {
 			unknownErrorWithMessage(w, err, s.Logger)
 			return
@@ -331,6 +332,7 @@ func (s *Service) existsCSPInOrg(ctx context.Context, provider string, namespace
 	return false
 }
 
+// Deprecated: It does not need to call generateSaltConfigForOSP no longer.
 func (s *Service) generateSaltConfigForOSP(csp *cloudhub.CSP) (int, []byte, error) {
 	fileName := fmt.Sprintf("osp_%s.conf", csp.NameSpace)
 	saltConfigPath := path.Join(s.AddonURLs["salt-env-path"], "etc/salt/cloud.providers.d", fileName)
