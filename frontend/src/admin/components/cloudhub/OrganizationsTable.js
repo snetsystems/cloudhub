@@ -62,7 +62,7 @@ class OrganizationsTable extends Component {
       )
     }
     return (
-      <div className="panel panel-solid" style={{overflow: 'hidden'}}>
+      <div className="panel panel-solid">
         <div className="panel-heading">
           <h2 className="panel-title">{tableTitle}</h2>
           <button
