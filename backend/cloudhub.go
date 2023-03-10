@@ -435,20 +435,20 @@ type Scope string
 
 // User represents an authenticated user.
 type User struct {
-	ID                    uint64      `json:"id,string,omitempty"`
-	Name                  string      `json:"name"`
-	Passwd                string      `json:"password,omitempty"`
-	Permissions           Permissions `json:"permissions,omitempty"`
-	Roles                 []Role      `json:"roles"`
-	Provider              string      `json:"provider,omitempty"`
-	Scheme                string      `json:"scheme,omitempty"`
-	SuperAdmin            bool        `json:"superAdmin,omitempty"`
-	PasswordUpdateDate    string      `json:"passwordUpdateDate,omitempty"`
-	PasswordResetFlag     string      `json:"passwordResetFlag,omitempty"`
-	Email                 string      `json:"email,omitempty"`
-	RetryCount            int32       `json:"retryCount,omitempty"`
-	LockedTime            string      `json:"lockedTime,omitempty"`
-	Locked                bool        `json:"locked,omitempty"`
+	ID                 uint64      `json:"id,string,omitempty"`
+	Name               string      `json:"name"`
+	Passwd             string      `json:"password,omitempty"`
+	Permissions        Permissions `json:"permissions,omitempty"`
+	Roles              []Role      `json:"roles"`
+	Provider           string      `json:"provider,omitempty"`
+	Scheme             string      `json:"scheme,omitempty"`
+	SuperAdmin         bool        `json:"superAdmin,omitempty"`
+	PasswordUpdateDate string      `json:"passwordUpdateDate,omitempty"`
+	PasswordResetFlag  string      `json:"passwordResetFlag,omitempty"`
+	Email              string      `json:"email,omitempty"`
+	RetryCount         int32       `json:"retryCount,omitempty"`
+	LockedTime         string      `json:"lockedTime,omitempty"`
+	Locked             bool        `json:"locked,omitempty"`
 }
 
 // UserQuery represents the attributes that a user may be retrieved by.
@@ -825,13 +825,15 @@ const MappingWildcard string = "*"
 // explicit role within the organization.
 //
 // One can think of a mapping like so:
-//     Provider:Scheme:Group -> Organization
-//     github:oauth2:cloudhub -> Happy
-//     beyondcorp:ldap:cloudhub -> TheBillHilliettas
+//
+//	Provider:Scheme:Group -> Organization
+//	github:oauth2:cloudhub -> Happy
+//	beyondcorp:ldap:cloudhub -> TheBillHilliettas
 //
 // Any of Provider, Scheme, or Group may be provided as a wildcard *
-//     github:oauth2:* -> MyOrg
-//     *:*:* -> AllOrg
+//
+//	github:oauth2:* -> MyOrg
+//	*:*:* -> AllOrg
 type Mapping struct {
 	ID                   string `json:"id"`
 	Organization         string `json:"organizationId"`
@@ -962,6 +964,7 @@ type BuildInfo struct {
 	Version string
 	Commit  string
 }
+
 // BuildStore is the storage and retrieval of CloudHub build information
 type BuildStore interface {
 	Get(context.Context) (BuildInfo, error)
@@ -970,16 +973,16 @@ type BuildStore interface {
 
 // Vsphere represents an vsphere
 type Vsphere struct {
-	ID            string   `json:"id,string,omitempty"`
-	Host          string   `json:"host,string"`
-	UserName      string   `json:"username,string"`
-	Password      string   `json:"password"`
-	Protocol      string   `json:"protocol,omitempty"`
-	Port          int      `json:"port,omitempty"`
-	Interval      int      `json:"interval"`
-	Minion        string   `json:"minion"`
-	Organization  string   `json:"organization"`
-	DataSource    string   `json:"datasource"`
+	ID           string `json:"id,string,omitempty"`
+	Host         string `json:"host,string"`
+	UserName     string `json:"username,string"`
+	Password     string `json:"password"`
+	Protocol     string `json:"protocol,omitempty"`
+	Port         int    `json:"port,omitempty"`
+	Interval     int    `json:"interval"`
+	Minion       string `json:"minion"`
+	Organization string `json:"organization"`
+	DataSource   string `json:"datasource"`
 }
 
 // VspheresStore is the Storage and retrieval of information
@@ -1005,9 +1008,9 @@ type Environment struct {
 
 // Topology is represents represents an topology
 type Topology struct {
-	ID            string   `json:"id,string,omitempty"`
-	Organization  string   `json:"organization,omitempty"` // Organization is the organization ID that resource belongs to
-	Diagram       string   `json:"diagram,string,omitempty"` // diagram xml 
+	ID           string `json:"id,string,omitempty"`
+	Organization string `json:"organization,omitempty"`   // Organization is the organization ID that resource belongs to
+	Diagram      string `json:"diagram,string,omitempty"` // diagram xml
 }
 
 // TopologyQuery represents the attributes that a topology may be retrieved by.
@@ -1016,8 +1019,8 @@ type Topology struct {
 // It is expected that only one of ID or Organization will be
 // specified, but all are provided TopologiesStore should prefer ID.
 type TopologyQuery struct {
-	ID               *string
-	Organization     *string
+	ID           *string
+	Organization *string
 }
 
 // TopologiesStore is the Storage and retrieval of information
@@ -1034,25 +1037,41 @@ type TopologiesStore interface {
 	Update(context.Context, *Topology) error
 }
 
+// The kinds of CSP.
+const (
+	AWS   = "aws"
+	AZURE = "azure"
+	GCP   = "gcp"
+	OSP   = "osp"
+	OCP   = "ocp"
+)
+
 // CSPQuery represents the attributes that a CSP may be retrieved by.
 // It is predominantly used in the CSPStore.Get method.
 //
 // It is expected that only one of ID or Organization will be
 // specified, but all are provided CSPStore should prefer ID.
 type CSPQuery struct {
-	ID               *string
-	Organization     *string
+	ID           *string
+	Organization *string
 }
 
 // CSP is CSP connection information
 type CSP struct {
-	ID            string   `json:"id,string,omitempty"`
-    Provider      string   `json:"provider,string"`
-	NameSpace     string   `json:"namespace,string"`
-	AccessKey     string   `json:"accesskey,string"`
-	SecretKey     string   `json:"secretkey,string"`
-	Organization  string   `json:"organization"`
-	Minion        string   `json:"minion,string"` // won't use but not remove.
+	ID       string `json:"id,string,omitempty"`
+	Provider string `json:"provider,string"` // aws, gcp, azure, osp, ocp, and so on.
+	// if provider=aws, Region
+	// if provider=gcp, Project ID
+	// if provider=osp, project_name
+	NameSpace string `json:"namespace,string"`
+	// if provider=aws, Access Key
+	// if provider=osp, username
+	AccessKey string `json:"accesskey,string"`
+	// if provider=aws, Secret Key
+	// if provider=osp, password
+	SecretKey    string `json:"secretkey,string"`
+	Organization string `json:"organization"`
+	Minion       string `json:"minion,string"`
 }
 
 // CSPStore is the Storage and retrieval of information

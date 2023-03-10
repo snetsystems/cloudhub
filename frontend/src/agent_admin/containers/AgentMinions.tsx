@@ -10,6 +10,7 @@ import Threesizer from 'src/shared/components/threesizer/Threesizer'
 import AgentMinionsTable from 'src/agent_admin/components/AgentMinionsTable'
 import AgentMinionsConsole from 'src/agent_admin/components/AgentMinionsConsole'
 import AgentMinionsModal from 'src/agent_admin/components/AgentMinionsModal'
+import AgentMinionsConsoleTableBodyRow from 'src/agent_admin/components/AgentMinionsConsoleTableBodyRow'
 
 // Actions
 import {
@@ -225,6 +226,39 @@ export class AgentMinions extends PureComponent<Props, State> {
     }
   }
 
+  public renderConsoleTableBodyRow({
+    name,
+    host,
+    idx,
+    os,
+    ip,
+    _this,
+    handleShellModalOpen,
+    handleShellModalClose,
+  }: {
+    name: string
+    host: string
+    idx: number
+    os: string
+    ip: string
+    _this: HTMLElement
+    handleShellModalOpen?: (shell: ShellInfo) => void
+    handleShellModalClose?: () => void
+  }) {
+    return (
+      <AgentMinionsConsoleTableBodyRow
+        name={name}
+        os={os}
+        ip={ip}
+        host={host}
+        idx={idx}
+        targetObject={_this}
+        handleShellModalOpen={handleShellModalOpen}
+        handleShellModalClose={handleShellModalClose}
+      />
+    )
+  }
+
   public onClickModalCall({
     name,
     host,
@@ -292,6 +326,7 @@ export class AgentMinions extends PureComponent<Props, State> {
         minionsPageStatus={minionsPageStatus}
         onClickTableRow={this.onClickTableRowCall}
         onClickModal={this.onClickModalCall}
+        renderConsoleTableBodyRow={this.renderConsoleTableBodyRow}
         handleWheelKeyCommand={this.handleWheelKeyCommand}
         focusedHost={focusedHost}
         handleShellModalOpen={handleShellModalOpen}

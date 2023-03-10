@@ -21,22 +21,31 @@ func TestCSPStore(t *testing.T) {
 
 	csps := []cloudhub.CSP{
 		{
-			ID: "",
-			Provider: "aws",
-			NameSpace: "seoul",
-			AccessKey: "DKCICJD837RJCUWH",
-			SecretKey: "KLDJWHWJ+SKDFUEH8334342DCG",
-			Organization: "133",
-			Minion: "minion_01",
+			ID:           "",
+			Provider:     cloudhub.AWS,
+			NameSpace:    "seoul",
+			AccessKey:    "DKCICJD837RJCUWH",
+			SecretKey:    "KLDJWHWJ+SKDFUEH8334342DCG",
+			Organization: "5",
+			Minion:       "minion_01",
 		},
 		{
-			ID: "",
-			Provider: "gcp",
-			NameSpace: "usa",
-			AccessKey: "ELDFODFBWMFDS83763UYDJKC",
-			SecretKey: "LKWEJDSI9+37DJDFSHJEWKDSF",
-			Organization: "226541",
-			Minion: "minion_02",
+			ID:           "",
+			Provider:     cloudhub.GCP,
+			NameSpace:    "gcp_pj_demo01",
+			AccessKey:    "ELDFODFBWMFDS83763UYDJKC",
+			SecretKey:    "LKWEJDSI9+37DJDFSHJEWKDSF",
+			Organization: "6",
+			Minion:       "",
+		},
+		{
+			ID:           "",
+			Provider:     cloudhub.OSP,
+			NameSpace:    "osp_pj_demo01",
+			AccessKey:    "user01",
+			SecretKey:    "password01",
+			Organization: "7",
+			Minion:       "",
 		},
 	}
 
@@ -48,8 +57,8 @@ func TestCSPStore(t *testing.T) {
 			t.Fatal(err)
 		}
 		csps[i].ID = rtnCSP.ID
-		
-		// Confirm first ts in the store is the same as the original.
+
+		// Check out first ts in the store is the same as the original.
 		if actual, err := s.Get(ctx, cloudhub.CSPQuery{ID: &rtnCSP.ID}); err != nil {
 			t.Fatal(err)
 		} else if !reflect.DeepEqual(*actual, csps[i]) {
@@ -58,27 +67,44 @@ func TestCSPStore(t *testing.T) {
 	}
 
 	// Update CSP.
-	csps[1].NameSpace = "china"
+	csps[1].NameSpace = "gcp_pj_demo02"
 	if err := s.Update(ctx, &csps[1]); err != nil {
 		t.Fatal(err)
 	}
 
-	// Confirm CSP have updated.
-	csp, err := s.Get(ctx, cloudhub.CSPQuery{ID: &csps[1].ID});
+	// Get all test.
+	getCsps, err := s.All(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len := len(getCsps); len < 3 {
+		t.Fatalf("CSP gets all error: the expected length is 3 but the real length is %d", len)
+	}
+
+	// Get test.
+	csp, err := s.Get(ctx, cloudhub.CSPQuery{ID: &csps[1].ID})
 	fmt.Println(csp)
 	if err != nil {
 		t.Fatal(err)
-	} else if csp.NameSpace != "china" {
-		t.Fatalf("CSP 1 update error: got %v, expected %v", csp.NameSpace, "china")
+	} else if csp.NameSpace != "gcp_pj_demo02" {
+		t.Fatalf("CSP 1 update error: got %v, expected %v", csp.NameSpace, "gcp_pj_demo02")
 	}
 
-	// Delete an CSP.
+	// Getting test for a wrong id.
+	id := "1000"
+	empty_csp, err := s.Get(ctx, cloudhub.CSPQuery{ID: &id})
+	fmt.Println(empty_csp)
+	if err == nil {
+		t.Fatalf("Must be occured error for a wrong id=%v, message=\"CSP not found\"", id)
+	}
+
+	// Delete the CSP.
 	if err := s.Delete(ctx, csp); err != nil {
 		t.Fatal(err)
 	}
 
-	// Confirm CSP has been deleted.
+	// Check out CSP has been deleted.
 	if _, err := s.Get(ctx, cloudhub.CSPQuery{ID: &csps[1].ID}); err != cloudhub.ErrCSPNotFound {
 		t.Fatalf("CSP delete error: got %v, expected %v", err, cloudhub.ErrCSPNotFound)
-	}	
+	}
 }

@@ -32,12 +32,6 @@ type CustomLink struct {
 	URL  string `json:"url"`
 }
 
-type getAddonLinksResponse struct {
-	Name  string `json:"name"`
-	URL   string `json:"url"`
-	Token string `json:"token"`
-}
-
 // NewCustomLinks transforms `--custom-link` CLI flag data or `CUSTOM_LINKS` ENV
 // var data into a data structure that the CloudHub client will expect
 func NewCustomLinks(links map[string]string) ([]CustomLink, error) {
@@ -62,4 +56,44 @@ func NewCustomLinks(links map[string]string) ([]CustomLink, error) {
 	}
 
 	return customLinks, nil
+}
+
+// RetryPolicy retry policy server option
+type RetryPolicy struct {
+	Name   string `json:"name"`
+	Policy string `json:"policy"`
+}
+
+// RetryPolicys all retry oplicy
+type RetryPolicys []RetryPolicy
+
+type getAddonLinksResponse struct {
+	Name  string `json:"name"`
+	URL   string `json:"url"`
+	Token string `json:"token"` // [Deprecated] Token is not going to transfer the client(frontend).
+}
+
+// OSP is to access to OpenStack API
+type OSP struct {
+	AdminProvider string `json:"admin-provider"`
+	AdminUser     string `json:"admin-user"`
+	AdminPW       string `json:"admin-pw"`
+	AuthURL       string `json:"auth-url"`
+	ProjectDomain string `json:"pj-domain-id"`
+	UserDomain    string `json:"user-domain-id"`
+}
+
+// NewOSP converts map to OSP Struct
+func NewOSP(osp map[string]string) OSP {
+	var newOsp OSP
+	if len(osp) > 0 {
+		newOsp.AdminProvider = osp["admin-provider"]
+		newOsp.AdminUser = osp["admin-user"]
+		newOsp.AdminPW = osp["admin-pw"]
+		newOsp.AuthURL = osp["auth-url"]
+		newOsp.ProjectDomain = osp["pj-domain-id"]
+		newOsp.UserDomain = osp["user-domain-id"]
+	}
+
+	return newOsp
 }

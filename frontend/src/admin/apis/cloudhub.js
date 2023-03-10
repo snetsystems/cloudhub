@@ -153,3 +153,38 @@ export const deleteMapping = async mapping => {
     throw error
   }
 }
+
+export const createCloudServiceProvider = async params => {
+  try {
+    let newProvider = params.provider
+    newProvider = newProvider
+    const reqData = {
+      ...params,
+      provider: newProvider,
+    }
+    return await AJAX({
+      url: `/cloudhub/v1/csp`,
+      method: 'POST',
+      data: reqData,
+    })
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}
+
+export const updateCloudServiceProvider = async params => {
+  try {
+    const reqData = params
+    delete reqData['provider']
+
+    return await AJAX({
+      url: `/cloudhub/v1/csp/${params.id}`,
+      method: 'PATCH',
+      data: reqData,
+    })
+  } catch (error) {
+    console.error(error)
+    throw error
+  }
+}

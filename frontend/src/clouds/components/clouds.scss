@@ -1,0 +1,230 @@
+.vm-status-page__container {
+  height: 100%;
+
+  .dash-graph--heading {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .panel {
+    .panel-heading {
+      padding: 5px 5px 0 5px;
+    }
+    .panel-body {
+      padding: 5px;
+      overflow: hidden;
+    }
+  }
+
+  .hosts-table--tr {
+    border-bottom: 1px solid #353535;
+  }
+  .hosts-table--td {
+    font-size: 12px;
+  }
+}
+
+.charts-body {
+  position: relative;
+  height: 100%;
+  @include gradient-v($g2-kevlar, $g0-obsidian);
+
+  .panel {
+    .panel-body {
+      padding: 7px;
+      background-color: transparent;
+    }
+  }
+}
+
+.vm-status-page__container {
+  position: relative;
+}
+
+.vm-page-spinner-container {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  z-index: 100;
+}
+
+.vm-page-spinner-overay {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  z-index: -1;
+  background: linear-gradient(
+    to bottom,
+    rgba(32, 32, 40, 0.15) 0%,
+    rgba(15, 14, 21, 1) 100%
+  );
+}
+
+.heading--button-box {
+  position: relative;
+  z-index: 3;
+  margin-right: 5px;
+  &:last-child {
+    margin-right: 0;
+  }
+}
+
+.icon-vmrc {
+  width: 100%;
+  height: 100%;
+  background-image: url('../../assets/images/vmrc.png');
+  background-size: auto 70%;
+  background-position: center center;
+  background-repeat: no-repeat;
+}
+
+.icon-margin-right-03 {
+  flex: 0 0 18px;
+  margin-right: 3px;
+}
+
+.k8s-obj-kind {
+  color: #999dab;
+}
+
+.k8s-obj-label {
+  color: #22adf6;
+}
+
+.kubernetes-header--bar {
+  display: flex;
+  align-items: center;
+  justify-self: auto;
+  padding: 5px 20px;
+  background-color: $g4-onyx;
+
+  .kubernetes-header--bar-item {
+    margin-right: 5px;
+
+    &:last-child {
+      margin-right: 0px;
+      margin-left: auto;
+    }
+  }
+}
+
+.kubernetes-detail-display {
+  min-width: 300px;
+  padding: 10px 20px;
+  height: 100%;
+}
+
+.kubernetes-radio-btn--container {
+  margin: 10px 0px;
+}
+
+.kubernetes-editor--field {
+  background-color: $g2-kevlar;
+  padding: $ix-marg-b;
+  height: calc(100% - 90px);
+  border: $ix-border solid $g5-pepper;
+  border-radius: $radius;
+  &.focus {
+    border-color: $c-pool;
+    box-shadow: 0 0 6px 0 $c-pool;
+  }
+}
+
+.kubernetes-detail-title {
+  height: 40px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #bec2cc;
+  padding: 10px 5px 0 5px;
+}
+
+.devider--bar {
+  background-color: $g2-kevlar;
+  color: white;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  margin: 20px 0 0;
+  font-weight: bold;
+}
+
+.hexagon.focuse {
+  fill: black;
+}
+
+.tooltip-pin.active {
+  text-shadow: 0 0 5px #f58220, 0 0 5px #f58220, 0 0 5px #f58220,
+    0 0 5px #f58220, 0 0 9px #fff;
+}
+
+.kubernetes-toolbar--tooltip {
+  position: fixed;
+  z-index: 30;
+}
+
+.kubernetes-toolbar--tooltip-contents {
+  border: 2px solid $s-orange;
+  border-radius: 4px;
+  display: inline-flex;
+  flex-direction: column;
+  background-color: $g1-raven;
+  padding: 5px;
+}
+
+.kubernetes-header--left {
+  display: flex;
+  align-items: center;
+}
+
+.kubernetes-header--right {
+  display: flex;
+  margin-left: auto;
+  align-items: center;
+}
+
+.kubernetes-hover {
+  stroke: black;
+  stroke-width: 3px;
+}
+
+.kubernetes-focuse {
+  stroke: #545454;
+  stroke-width: 3px;
+}
+
+.kubernetes-pin {
+  stroke: #ffff00;
+  stroke-width: 3px;
+}
+
+.kubernetes-dashboard {
+  width: 100%;
+  margin: 0 auto;
+  padding: 22.5px 20px;
+  height: auto;
+}
+
+.hexagon-alert {
+  animation: alert 0.25s infinite;
+}
+.openstack-toolbar--tooltip {
+  position: fixed;
+  z-index: 30;
+}
+
+.openstack-toolbar--tooltip-contents {
+  border: 2px solid $s-orange;
+  border-radius: 4px;
+  display: inline-flex;
+  flex-direction: column;
+  background-color: $g1-raven;
+  padding: 5px;
+  min-width: 170px;
+}
+
+.openstack-dots--loading {
+  top: 10px !important;
+}

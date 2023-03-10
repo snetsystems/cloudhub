@@ -1,9 +1,5 @@
 // Libraries
-import React, {PureComponent} from 'react'
-
-// Components
-import TooltipButton from 'src/shared/components/TooltipButton'
-import AgentConnect from 'src/agent_admin/components/AgentConnect'
+import React, {MouseEvent, PureComponent} from 'react'
 
 // Constants
 import {AGENT_MINION_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
@@ -27,6 +23,9 @@ interface Props {
   handleWheelKeyCommand: (host: string, cmdstatus: string) => void
   handleShellModalOpen?: (shell: ShellInfo) => void
   handleShellModalClose?: () => void
+  onMouseOver: (event: MouseEvent<HTMLElement>, minionIPAddress: string) => void
+  onMouseLeave: () => void
+  renderConsoleTableBodyRow: ({}) => object
 }
 
 @ErrorHandling
@@ -70,6 +69,9 @@ class AgentMinionsTableRow extends PureComponent<Props> {
       onClickModal,
       handleWheelKeyCommand,
       handleShellModalOpen,
+      onMouseLeave,
+      onMouseOver,
+      renderConsoleTableBodyRow,
     } = this.props
     const {osVersion, os, ip, host, status} = minions
     const {
@@ -80,6 +82,11 @@ class AgentMinionsTableRow extends PureComponent<Props> {
       StatusWidth,
       OperationWidth,
     } = AGENT_MINION_TABLE_SIZING
+    const minionIPAddresses = ip.split(',')
+    const isMultipleIPAddress = ip !== '' && minionIPAddresses.length > 1
+    const minionIPAddress = isMultipleIPAddress
+      ? `${minionIPAddresses[0]},...`
+      : ip
 
     return (
       <div
@@ -92,7 +99,14 @@ class AgentMinionsTableRow extends PureComponent<Props> {
           width={OSWidth}
         />
         <TableBodyRowItem title={osVersion} width={OSVersionWidth} />
-        <TableBodyRowItem title={ip} width={IPWidth} />
+        <div
+          className={`hosts-table--td`}
+          onMouseLeave={onMouseLeave}
+          onMouseOver={event => onMouseOver(event, ip)}
+          style={{width: IPWidth}}
+        >
+          {ip ? minionIPAddress : '-'}
+        </div>
         <TableBodyRowItem
           title={this.isStatusIndicator(status)}
           width={StatusWidth}
@@ -114,42 +128,16 @@ class AgentMinionsTableRow extends PureComponent<Props> {
         />
         <TableBodyRowItem
           title={
-            <div id={`table-row--select${idx}`}>
-              {os && os.toLocaleLowerCase() === 'windows' ? (
-                ip ? (
-                  <button
-                    className="btn btn-sm btn-default icon computer-desktop agent-row--button-sm"
-                    title={'Open Remote Desktop'}
-                    onClick={e => {
-                      e.stopPropagation()
-                      window.location.href =
-                        'rdp://' + ip + '/?admin=&span=&w=1280&h=800'
-                    }}
-                  ></button>
-                ) : (
-                  <TooltipButton
-                    icon="computer-desktop"
-                    isEventStopPropagation={true}
-                    customClass={'agent-row--button-sm'}
-                    title={'Open Remote Desktop'}
-                  >
-                    <AgentConnect />
-                  </TooltipButton>
-                )
-              ) : (
-                <button
-                  className="btn btn-sm btn-default icon bash agent-row--button-sm"
-                  title={'Open SSH Terminal'}
-                  onClick={e => {
-                    e.stopPropagation()
-                    handleShellModalOpen({
-                      isNewEditor: false,
-                      addr: ip,
-                      nodename: host,
-                    })
-                  }}
-                ></button>
-              )}
+            <div id={`table-row--select-ip${idx}`}>
+              {renderConsoleTableBodyRow({
+                name: 'ipselectdropdown',
+                host,
+                ip,
+                os,
+                _this: this,
+                idx,
+                handleShellModalOpen,
+              })}
             </div>
           }
           width={OperationWidth}

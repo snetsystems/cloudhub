@@ -1,0 +1,56 @@
+.gauge-wrap {
+  display: flex;
+  width: 100%;
+  height: 33%;
+}
+
+.gauge-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  margin: 2% 0% 0% 2%;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: 3px;
+  transition: background-color 0.25s ease, color 0.25s ease;
+  @include no-user-select();
+  color: $c-laser;
+
+  .gauge-title {
+    width: 100%;
+    height: 5%;
+
+    > div {
+      color: #8e9dab;
+      font-weight: 800;
+    }
+  }
+
+  .gauge-chart {
+    width: 100%;
+    height: 80%;
+    min-width: 5rem;
+    > canvas.gauge {
+      width: 100% !important;
+      height: 100% !important;
+    }
+  }
+
+  .gauge-label {
+    width: 100%;
+    position: relative;
+    top: -5px;
+    text-align: center;
+
+    > div {
+      width: 100%;
+      color: #8e9dab;
+      font-weight: 500;
+      font-size: 10px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+  }
+}

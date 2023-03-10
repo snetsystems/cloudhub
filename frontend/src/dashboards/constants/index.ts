@@ -156,3 +156,4 @@ export const DYNAMIC_SOURCE_ITEM: SourceItemValue = {
 
 export const DEFAULT_CELL_BG_COLOR = '#292933'
 export const DEFAULT_CELL_TEXT_COLOR = '#FFFFFF'
+export const GRAPH_BG_COLOR = '#1f1f27'

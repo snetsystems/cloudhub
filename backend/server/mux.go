@@ -26,21 +26,19 @@ const (
 
 // MuxOpts are the options for the router.  Mostly related to auth.
 type MuxOpts struct {
-	Logger        cloudhub.Logger
-	Develop       bool                 // Develop loads assets from filesystem instead of bindata
-	Basepath      string               // URL path prefix under which all cloudhub routes will be mounted
-	UseAuth       bool                 // UseAuth turns on Github OAuth and JWT
-	Auth          oauth2.Authenticator // Auth is used to authenticate and authorize
-	ProviderFuncs []func(func(oauth2.Provider, oauth2.Mux))
-	StatusFeedURL string            // JSON Feed URL for the client Status page News Feed
-	CustomLinks   []CustomLink		// Any custom external links for client's User menu
-	PprofEnabled  bool              // Mount pprof routes for profiling
-	DisableGZip   bool              // Optionally disable gzip.
-	BasicAuth     *basicAuth.BasicAuth // HTTP basic authentication provider
-	AddonURLs     map[string]string // URLs for using in Addon Features, as passed in via CLI/ENV
-	AddonTokens   map[string]string // Tokens to access to Addon Features API, as passed in via CLI/ENV
-	PasswordPolicy        string    // Password validity rules
-	PasswordPolicyMessage string    // Password validity rule description
+	Logger                cloudhub.Logger
+	Develop               bool                 // Develop loads assets from filesystem instead of bindata
+	Basepath              string               // URL path prefix under which all cloudhub routes will be mounted
+	UseAuth               bool                 // UseAuth turns on Github OAuth and JWT
+	Auth                  oauth2.Authenticator // Auth is used to authenticate and authorize
+	ProviderFuncs         []func(func(oauth2.Provider, oauth2.Mux))
+	StatusFeedURL         string               // JSON Feed URL for the client Status page News Feed
+	CustomLinks           []CustomLink         // Any custom external links for client's User menu
+	PprofEnabled          bool                 // Mount pprof routes for profiling
+	DisableGZip           bool                 // Optionally disable gzip.
+	BasicAuth             *basicAuth.BasicAuth // HTTP basic authentication provider
+	PasswordPolicy        string               // Password validity rules
+	PasswordPolicyMessage string               // Password validity rule description
 }
 
 // NewMux attaches all the route handlers; handler returned servers cloudhub.
@@ -93,7 +91,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 		)
 	}
 	_ = EnsureMember
-	
+
 	EnsureViewer := func(next http.HandlerFunc) http.HandlerFunc {
 		return AuthorizedUser(
 			service.Store,
@@ -172,6 +170,9 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	// User password change
 	router.PATCH("/basic/password", service.UserPassword)
+
+	// User password change
+	router.PATCH("/cloudhub/v1/basic/password", EnsureAdmin(service.UserPassword))
 
 	// User password reset
 	router.GET("/basic/password/reset", service.UserPwdReset)
@@ -393,7 +394,7 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 	router.POST("/cloudhub/v1/csp", EnsureAdmin(service.NewCSP))
 	router.DELETE("/cloudhub/v1/csp/:id", EnsureAdmin(service.RemoveCSP))
 	router.PATCH("/cloudhub/v1/csp/:id", EnsureAdmin(service.UpdateCSP))
-	
+
 	// http logging
 	router.POST("/cloudhub/v1/logging", EnsureViewer(service.HTTPLogging))
 
@@ -402,24 +403,25 @@ func NewMux(opts MuxOpts, service Service) http.Handler {
 
 	// Validates go templates for the js client
 	router.POST("/cloudhub/v1/validate_text_templates", EnsureViewer(service.ValidateTextTemplate))
-	
+
 	allRoutes := &AllRoutes{
-		Logger:      opts.Logger,
-		StatusFeed:  opts.StatusFeedURL,
-		CustomLinks: opts.CustomLinks,
-		AddonURLs:   opts.AddonURLs,
-		AddonTokens: opts.AddonTokens,
-		PasswordPolicy: opts.PasswordPolicy,
+		Logger:                opts.Logger,
+		StatusFeed:            opts.StatusFeedURL,
+		CustomLinks:           opts.CustomLinks,
+		AddonTokens:           service.AddonTokens,
+		PasswordPolicy:        opts.PasswordPolicy,
 		PasswordPolicyMessage: opts.PasswordPolicyMessage,
-		BasicRoute:  BasicAuthRoute{
-			Name: "cloudhub",
-			Login: "/basic/login",
+		BasicRoute: BasicAuthRoute{
+			Name:   "cloudhub",
+			Login:  "/basic/login",
 			Logout: "/basic/logout",
 		},
-		BasicLogoutLink: "/basic/logout",
-		LoginAuthType: service.LoginAuthType,
+		BasicLogoutLink:        "/basic/logout",
+		LoginAuthType:          service.LoginAuthType,
 		BasicPasswordResetType: service.BasicPasswordResetType,
-		RetryPolicys: service.RetryPolicy,
+		RetryPolicys:           service.RetryPolicy,
+		AddonURLs:              service.AddonURLs,
+		OSP:                    service.OSP,
 	}
 
 	getPrincipal := func(r *http.Request) oauth2.Principal {
@@ -501,17 +503,17 @@ func BasicAuthWrapper(router cloudhub.Router, auth *basicAuth.BasicAuth) http.Ha
 	})
 }
 
-// BasicAuthAPI adds the Basic routes if auth is enabled. 
+// BasicAuthAPI adds the Basic routes if auth is enabled.
 // Copy session information to context when oauth is not used
 // not using it now.
-func BasicAuthAPI(opts MuxOpts, router cloudhub.Router) (http.Handler) {
+func BasicAuthAPI(opts MuxOpts, router cloudhub.Router) http.Handler {
 	rootPath := path.Join(opts.Basepath, "/cloudhub/v1")
 
 	tokenMiddleware := AuthorizedToken(opts.Auth, opts.Logger, router)
 	// Wrap the API with token validation middleware.
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cleanPath := path.Clean(r.URL.Path) // compare ignoring path garbage, trailing slashes, etc.
-		if (strings.HasPrefix(cleanPath, rootPath) && len(cleanPath) > len(rootPath)) {
+		if strings.HasPrefix(cleanPath, rootPath) && len(cleanPath) > len(rootPath) {
 			tokenMiddleware.ServeHTTP(w, r)
 			return
 		}

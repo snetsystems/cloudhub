@@ -5,37 +5,35 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path"
+	"strings"
 
+	"github.com/pelletier/go-toml/v2"
 	cloudhub "github.com/snetsystems/cloudhub/backend"
 )
-
-// not used
-func getCSP() []string {
-	return []string{"AWS", "GCP", "Azure"}
-}
 
 type cspRequest struct {
 	Provider  string `json:"provider"`
 	NameSpace string `json:"namespace"`
-	Accesskey string `json:"accesskey"`
-	Secretkey string `json:"secretkey"`
+	AccessKey string `json:"accesskey"`
+	SecretKey string `json:"secretkey"`
 	Minion    string `json:"minion"`
 }
 
-func (r *cspRequest) ValidCreate() error {
-	if r.Provider == "" {
+func (r *cspRequest) validCreate() error {
+	switch {
+	case r.Provider == "":
 		return fmt.Errorf("provider required CSP request body")
-	}
-
-	if r.NameSpace == "" {
+	case r.NameSpace == "":
 		return fmt.Errorf("namespace required CSP request body")
 	}
 
-	if r.Provider == "aws" {
-		if r.Accesskey == "" {
+	switch r.Provider {
+	case cloudhub.AWS:
+		switch {
+		case r.AccessKey == "":
 			return fmt.Errorf("accesskey required CSP request body")
-		}
-		if r.Secretkey == "" {
+		case r.SecretKey == "":
 			return fmt.Errorf("secretkey required CSP request body")
 		}
 	}
@@ -43,13 +41,13 @@ func (r *cspRequest) ValidCreate() error {
 	return nil
 }
 
-func (r *cspRequest) ValidUpdate() error {
-	if r.NameSpace == "" && r.Secretkey == "" && r.Accesskey == "" && r.Minion == "" {
-		return fmt.Errorf("No fields to update")
-	}
-
+func (r *cspRequest) validUpdate() error {
 	if r.Provider != "" {
 		return fmt.Errorf("Provider cannot be changed")
+	}
+
+	if r.NameSpace == "" && r.SecretKey == "" && r.AccessKey == "" && r.Minion == "" {
+		return fmt.Errorf("No fields to update")
 	}
 
 	return nil
@@ -59,8 +57,8 @@ type cspResponse struct {
 	ID           string    `json:"id"`
 	Provider     string    `json:"provider"`
 	NameSpace    string    `json:"namespace"`
-	Accesskey    string    `json:"accesskey"`
-	Secretkey    string    `json:"secretkey"`
+	AccessKey    string    `json:"accesskey"`
+	SecretKey    string    `json:"secretkey"`
 	Organization string    `json:"organization"`
 	Minion       string    `json:"minion"`
 	Links        selfLinks `json:"links"`
@@ -73,8 +71,8 @@ func newCSPResponse(csp *cloudhub.CSP) *cspResponse {
 		ID:           csp.ID,
 		Provider:     csp.Provider,
 		NameSpace:    csp.NameSpace,
-		Accesskey:    csp.AccessKey,
-		Secretkey:    csp.SecretKey,
+		AccessKey:    csp.AccessKey,
+		SecretKey:    csp.SecretKey,
 		Organization: csp.Organization,
 		Minion:       csp.Minion,
 		Links:        selfLinks{Self: selfLink},
@@ -144,7 +142,7 @@ func (s *Service) NewCSP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := req.ValidCreate(); err != nil {
+	if err := req.validCreate(); err != nil {
 		invalidData(w, err, s.Logger)
 		return
 	}
@@ -159,22 +157,46 @@ func (s *Service) NewCSP(w http.ResponseWriter, r *http.Request) {
 	csp := &cloudhub.CSP{
 		Provider:     req.Provider,
 		NameSpace:    req.NameSpace,
-		AccessKey:    req.Accesskey,
-		SecretKey:    req.Secretkey,
+		AccessKey:    req.AccessKey,
+		SecretKey:    req.SecretKey,
 		Organization: defaultOrg.ID,
 		Minion:       req.Minion,
 	}
 
 	// validate that the provider and namespace exists
-	if existsCSPInOrg(ctx, s, csp.Provider, csp.NameSpace) {
+	if s.existsCSPInOrg(ctx, csp.Provider, csp.NameSpace) {
 		invalidData(w, fmt.Errorf("Provider and NameSpace does existed in organization"), s.Logger)
 		return
 	}
 
+	// Add CSP
 	res, err := s.Store.CSP(ctx).Add(ctx, csp)
 	if err != nil {
 		invalidData(w, err, s.Logger)
 		return
+	}
+
+	// If the provider is osp, generate the salt and telegraf config.
+	switch csp.Provider {
+	case cloudhub.OSP:
+		// It does not need to call generateSaltConfigForOSP no longer.
+		// statusCode, resp, err := s.generateSaltConfigForOSP(csp)
+		// if err != nil {
+		// 	unknownErrorWithMessage(w, err, s.Logger)
+		// 	return
+		// } else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+		// 	Error(w, statusCode, string(resp), s.Logger)
+		// 	return
+		// }
+
+		statusCode, resp, err := s.generateTelegrafConfigForOSP(ctx, csp)
+		if err != nil {
+			unknownErrorWithMessage(w, err, s.Logger)
+			return
+		} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+			Error(w, statusCode, string(resp), s.Logger)
+			return
+		}
 	}
 
 	// log registrationte
@@ -199,6 +221,28 @@ func (s *Service) RemoveCSP(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		notFound(w, id, s.Logger)
 		return
+	}
+
+	// If the provider is osp, remove firstly the salt and telegraf config.
+	switch csp.Provider {
+	case cloudhub.OSP:
+		statusCode, resp, err := s.removeSaltConfigForOSP(csp)
+		if err != nil {
+			unknownErrorWithMessage(w, err, s.Logger)
+			return
+		} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+			Error(w, statusCode, string(resp), s.Logger)
+			return
+		}
+
+		statusCode, resp, err = s.removeTelegrafConfigForOSP(csp)
+		if err != nil {
+			unknownErrorWithMessage(w, err, s.Logger)
+			return
+		} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+			Error(w, statusCode, string(resp), s.Logger)
+			return
+		}
 	}
 
 	if err := s.Store.CSP(ctx).Delete(ctx, csp); err != nil {
@@ -227,7 +271,13 @@ func (s *Service) UpdateCSP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := req.ValidUpdate(); err != nil {
+	switch req.Provider {
+	case cloudhub.OSP:
+		Error(w, http.StatusForbidden, "If the provider is OSP, this API does not support to update anything.", s.Logger)
+		return
+	}
+
+	if err := req.validUpdate(); err != nil {
 		invalidData(w, err, s.Logger)
 		return
 	}
@@ -242,11 +292,11 @@ func (s *Service) UpdateCSP(w http.ResponseWriter, r *http.Request) {
 	if req.NameSpace != "" {
 		oriCSP.NameSpace = req.NameSpace
 	}
-	if req.Accesskey != "" {
-		oriCSP.AccessKey = req.Accesskey
+	if req.AccessKey != "" {
+		oriCSP.AccessKey = req.AccessKey
 	}
-	if req.Secretkey != "" {
-		oriCSP.SecretKey = req.Secretkey
+	if req.SecretKey != "" {
+		oriCSP.SecretKey = req.SecretKey
 	}
 	if req.Minion != "" {
 		oriCSP.Minion = req.Minion
@@ -267,7 +317,7 @@ func (s *Service) UpdateCSP(w http.ResponseWriter, r *http.Request) {
 }
 
 // exists CSP and NameSpace in organization
-func existsCSPInOrg(ctx context.Context, s *Service, provider string, namespace string) bool {
+func (s *Service) existsCSPInOrg(ctx context.Context, provider string, namespace string) bool {
 	csps, err := s.Store.CSP(ctx).All(ctx)
 	if err != nil {
 		return true
@@ -282,14 +332,149 @@ func existsCSPInOrg(ctx context.Context, s *Service, provider string, namespace 
 	return false
 }
 
-// supported provider search
-// not used
-func supportedProvider(reqProvider string) bool {
-	providers := getCSP()
-	for _, provider := range providers {
-		if provider == reqProvider {
-			return true
+// Deprecated: It does not need to call generateSaltConfigForOSP no longer.
+func (s *Service) generateSaltConfigForOSP(csp *cloudhub.CSP) (int, []byte, error) {
+	fileName := fmt.Sprintf("osp_%s.conf", csp.NameSpace)
+	saltConfigPath := path.Join(s.AddonURLs["salt-env-path"], "etc/salt/cloud.providers.d", fileName)
+	authURLforSalt := strings.TrimRight(s.OSP.AuthURL, "/") + "/v3"
+	textYaml := fmt.Sprintf("%s:\n  driver: openstack\n  region_name: RegionOne\n  auth:\n    username: '%s'\n    password: '%s'\n    project_name: '%s'\n    user_domain_name: %s\n    project_domain_name: %s\n    auth_url: '%s'", csp.NameSpace, s.OSP.AdminUser, s.OSP.AdminPW, csp.NameSpace, s.OSP.UserDomain, s.OSP.ProjectDomain, authURLforSalt)
+
+	return s.CreateFile(saltConfigPath, []string{textYaml})
+}
+
+func (s *Service) removeSaltConfigForOSP(csp *cloudhub.CSP) (int, []byte, error) {
+	fileName := fmt.Sprintf("osp_%s.conf", csp.NameSpace)
+	path := path.Join(s.AddonURLs["salt-env-path"], "etc/salt/cloud.providers.d", fileName)
+
+	return s.RemoveFile(path)
+}
+
+type telegrafConfig struct {
+	Outputs outputs `toml:"outputs"`
+	Inputs  inputs  `toml:"inputs"`
+}
+type tagpass struct {
+	Tenant []string `toml:"tenant"`
+}
+type influxdb struct {
+	Urls     []string `toml:"urls"`
+	Database string   `toml:"database"`
+	Tagpass  tagpass  `toml:"tagpass"`
+}
+type outputs struct {
+	Influxdb []influxdb `toml:"influxdb"`
+}
+type tags struct {
+	Tenant string `toml:"tenant"`
+}
+type openstack struct {
+	Interval               string   `toml:"interval"`
+	AuthenticationEndpoint string   `toml:"authentication_endpoint"`
+	EnabledServices        []string `toml:"enabled_services"`
+	Domain                 string   `toml:"domain"`
+	Project                string   `toml:"project"`
+	Username               string   `toml:"username"`
+	Password               string   `toml:"password"`
+	ServerDiagnotics       bool     `toml:"server_diagnotics"`
+	Tags                   tags     `toml:"tags"`
+}
+type inputs struct {
+	Openstack []openstack `toml:"openstack"`
+}
+
+func (s *Service) generateTelegrafConfigForOSP(ctx context.Context, csp *cloudhub.CSP) (int, []byte, error) {
+	fileName := fmt.Sprintf("%s.conf", csp.NameSpace)
+	dirPath := "/etc/telegraf/telegraf.d/tenant/osp"
+	filePath := path.Join(dirPath, fileName)
+
+	if statusCode, resp, err := s.DirectoryExists(dirPath); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+		return statusCode, nil, err
+	} else if resp != nil {
+		r := &struct {
+			Return []bool `json:"return"`
+		}{}
+		if err := json.Unmarshal(resp, r); err != nil {
+			return http.StatusInternalServerError, nil, err
 		}
+
+		if !r.Return[0] {
+			if statusCode, _, err := s.Mkdir(dirPath); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+				return statusCode, nil, err
+			}
+		}
+	} else {
+		return http.StatusInternalServerError, nil, fmt.Errorf("Unknown error ocuured at DirectoryExists() func")
 	}
-	return false
+
+	serverCtx := serverContext(ctx)
+	var outputURLs []string
+	i := 0
+	for {
+		// Retrieve influxdb-urls only of the server option.
+		source, err := s.Store.Sources(serverCtx).Get(serverCtx, i)
+		if err != nil { // if the source type is not influxdb-url, err is not nil
+			break
+		}
+		outputURLs = append(outputURLs, source.URL)
+		i++
+	}
+
+	if outputURLs == nil {
+		return http.StatusInternalServerError, nil, fmt.Errorf("Output plugin(something like influxdb) urls for telegraf are empty or invalid")
+	}
+
+	telegrafConfig := &telegrafConfig{
+		Outputs: outputs{
+			Influxdb: []influxdb{
+				{
+					Urls:     outputURLs,
+					Database: csp.NameSpace,
+					Tagpass: tagpass{
+						Tenant: []string{csp.NameSpace},
+					},
+				},
+			},
+		},
+		Inputs: inputs{
+			Openstack: []openstack{
+				{
+					Interval:               "2m",
+					AuthenticationEndpoint: s.OSP.AuthURL,
+					EnabledServices:        []string{"servers", "flavors"},
+					Domain:                 s.OSP.UserDomain,
+					Project:                csp.NameSpace,
+					Username:               s.OSP.AdminUser,
+					Password:               s.OSP.AdminPW,
+					ServerDiagnotics:       true,
+					Tags: tags{
+						Tenant: csp.NameSpace,
+					},
+				},
+			},
+		},
+	}
+	b, _ := toml.Marshal(telegrafConfig)
+	statusCode, resp, err := s.CreateFile(filePath, []string{string(b)})
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+		return statusCode, resp, err
+	}
+
+	return s.DaemonReload("telegraf.service")
+}
+
+func (s *Service) removeTelegrafConfigForOSP(csp *cloudhub.CSP) (int, []byte, error) {
+	fileName := fmt.Sprintf("%s.conf", csp.NameSpace)
+	dirPath := "/etc/telegraf/telegraf.d/tenant/osp"
+	filePath := path.Join(dirPath, fileName)
+
+	statusCode, resp, err := s.RemoveFile(filePath)
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+		return statusCode, resp, err
+	}
+
+	return s.DaemonReload("telegraf.service")
 }

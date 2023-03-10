@@ -958,6 +958,18 @@ export const notifyAgentApplySucceeded = (
   message: `Collector Configuration ${sourceName} successfully.`,
 })
 
+export const notifyAgentApplyFailed = (error: Error) => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Rewrite Telegraf Config File ${error}`,
+})
+
+export const notifyTelegrafReloadFailed = (error: Error) => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Telegraf Reload Fail ${error}`,
+})
+
 export const notifyAgentLoadedSucceeded = (
   sourceName: string
 ): Notification => ({
@@ -1054,6 +1066,58 @@ export const notifyAgentDeleteFailed = (error: Error): Notification => ({
   message: `Agent Delete Failed, ${error}`,
 })
 
+export const notifyAgentConfigTempDirectoryMakeFailed = (
+  error: Error
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Make Temp Directory ${error}`,
+})
+
+export const notifyAgentConfigTempFileWriteFailed = (
+  error: Error
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Make Temp Config File ${error}`,
+})
+
+export const notifyMinionNotSelected = (): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Please Select a Minion`,
+})
+
+export const notifyTelegrafDubugFailed = (error: Error): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Debug Telegraf ${error}`,
+})
+
+export const notifyConfigFileSaveFailed = (error: Error): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Save File ${error}`,
+})
+
+export const notifyConfigFileSaveFailedByNoTenant = (): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Please Select a Tenant`,
+})
+
+export const notifyConfigFileReadFailed = (error: string): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Read File ${error}`,
+})
+
+export const notifyGetProjectFileFailed = (error: Error): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Get File ${error}`,
+})
+
 //  CloudHub Shell Sources Notifications
 //  ----------------------------------------------------------------------------
 
@@ -1103,7 +1167,7 @@ export const notifyLoginFailed = (
   <div>${message}</div>
   `
 
-  if (retryCount !== 0) {
+  if (retryCount && retryCount !== 0) {
     if (locked) {
       temp += `<hr class="notification-line">
     <div>Please try again in ${delaytime} minutes.</div>
@@ -1248,9 +1312,9 @@ export const notifyTopologyImportFailed = (
   message: `Failed to import Topology from file ${fileName}: ${errorMessage}.`,
 })
 
-export const notifyIpmiConnectionFailed = (error: Error): Notification => ({
+export const notifyIpmiConnectionFailed = (host: string): Notification => ({
   ...defaultErrorNotification,
-  message: `IPMI Connection Failed, ${error}`,
+  message: `${host} IPMI Connection Failed`,
 })
 
 export const notifyRequiredFailed = (required: string): Notification => ({
@@ -1303,4 +1367,36 @@ export const notifyTopologySaveFailed = (
 export const notifyTopologySaveAuthFailed = (): Notification => ({
   ...defaultErrorNotification,
   message: `User does not have authorization required to save topology.`,
+})
+
+export const notifyUnableToGetProjects = (): Notification => ({
+  ...defaultErrorNotification,
+  message: 'Unable to get Projects.',
+})
+
+export const notifyInvalidProperty = (errorMessage: string): Notification => ({
+  ...defaultErrorNotification,
+  message: errorMessage,
+})
+
+export const notifyError = (errorMessage: string): Notification => ({
+  ...defaultErrorNotification,
+  message: errorMessage,
+})
+export const notifyExceptionRunner = (): Notification => ({
+  ...defaultErrorNotification,
+  message: notifyGenericFail(),
+})
+export const notifyCreateProviderConf = (provider: string): Notification => ({
+  ...defaultSuccessNotification,
+  message: `${provider}  created successfully.`,
+})
+
+export const notifyDeleteProviderConf = (provider: string): Notification => ({
+  ...defaultSuccessNotification,
+  message: `${provider}  deleted successfully.`,
+})
+export const notifygetProjectConfigFailed = (): Notification => ({
+  ...defaultErrorNotification,
+  message: `Failed to Deleted Project configuration file.`,
 })

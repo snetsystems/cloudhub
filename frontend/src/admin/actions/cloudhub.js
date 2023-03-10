@@ -14,6 +14,8 @@ import {
   createMapping as createMappingAJAX,
   updateMapping as updateMappingAJAX,
   deleteMapping as deleteMappingAJAX,
+  createCloudServiceProvider as createCloudServiceProviderAJAX,
+  updateCloudServiceProvider as updateCloudServiceProviderAJAX,
 } from 'src/admin/apis/cloudhub'
 
 import {notify} from 'src/shared/actions/notifications'
@@ -132,6 +134,14 @@ export const removeMapping = mapping => ({
   payload: {
     mapping,
   },
+})
+
+export const createCloudServiceProviderAction = () => ({
+  type: 'CREATE_CLOUD_SERVICE_PROVIDER',
+})
+
+export const updateCloudServiceProviderAction = () => ({
+  type: 'UPDATE_CLOUD_SERVICE_PROVIDER',
 })
 
 // async actions (thunks)

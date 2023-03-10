@@ -6,6 +6,8 @@ import memoize from 'memoize-one'
 import * as TOML from '@iarna/toml'
 import {EditorChange} from 'codemirror'
 import {AxiosResponse} from 'axios'
+import path from 'path'
+import moment from 'moment'
 
 // Components
 import Threesizer from 'src/shared/components/threesizer/Threesizer'
@@ -37,7 +39,6 @@ import {
   runLocalGroupAdduserAsync,
   getLocalFileReadAsync,
   getLocalFileWriteAsync,
-  runLocalServiceReStartTelegrafAsync,
   runLocalServiceTestTelegrafAsync,
   getRunnerSaltCmdTelegrafAsync,
   getRunnerSaltCmdTelegrafPluginAsync,
@@ -52,11 +53,15 @@ import {
   notifyAgentConfigDBNameWrong,
   notifyAgentConfigHostNameWrong,
   notifyAgentConfigHostNameChanged,
+  notifyAgentConfigTempDirectoryMakeFailed,
+  notifyAgentConfigTempFileWriteFailed,
+  notifyTelegrafReloadFailed,
+  notifyAgentApplyFailed,
 } from 'src/shared/copy/notifications'
 
 // Constants
 import {HANDLE_HORIZONTAL, HANDLE_VERTICAL} from 'src/shared/constants'
-import {GET_STATUS} from 'src/agent_admin/constants'
+import {AGENT_TELEGRAF_CONFIG, GET_STATUS} from 'src/agent_admin/constants'
 
 // Types
 import {
@@ -68,6 +73,12 @@ import {
   DropdownItem,
 } from 'src/types'
 import {MinionsObject, SortDirection} from 'src/agent_admin/type'
+
+// API
+import {
+  getLocalDirectoryMake,
+  runLocalServiceReloadTelegraf,
+} from 'src/shared/apis/saltStack'
 
 interface Props {
   notify: (message: Notification | NotificationFunc) => void
@@ -103,18 +114,15 @@ interface Props {
   getLocalFileRead: (
     saltMasterUrl: string,
     saltMasterToken: string,
-    minion: string
+    minion: string,
+    path?: string
   ) => Promise<AxiosResponse>
   getLocalFileWrite: (
     saltMasterUrl: string,
     saltMasterToken: string,
     minion: string,
-    script: string
-  ) => Promise<AxiosResponse>
-  runLocalServiceReStartTelegraf: (
-    saltMasterUrl: string,
-    saltMasterToken: string,
-    minion: string
+    script: string,
+    path?: string
   ) => Promise<AxiosResponse>
   getRunnerSaltCmdTelegraf: (
     saltMasterUrl: string,
@@ -123,13 +131,15 @@ interface Props {
   ) => Promise<AxiosResponse>
   getRunnerSaltCmdTelegrafPlugin: (
     saltMasterUrl: string,
-    saltMasterToken: string
+    saltMasterToken: string,
+    cmd: string
   ) => Promise<AxiosResponse>
   runLocalServiceTestTelegraf: (
     saltMasterUrl: string,
     saltMasterToken: string,
     minion: string,
-    selectedInputPlugin?: string
+    selectedInputPlugin?: string,
+    path?: string
   ) => Promise<AxiosResponse>
 }
 
@@ -162,6 +172,7 @@ interface State {
   isConsoleModalVisible: boolean
   isConsoleModalMessage: string
   isPluginModalVisible: boolean
+  timeStampTempFile: string
 }
 interface Plugin {
   inoutType: string
@@ -210,6 +221,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       isConsoleModalVisible: false,
       isConsoleModalMessage: '',
       isPluginModalVisible: false,
+      timeStampTempFile: '',
     }
   }
 
@@ -305,16 +317,23 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       saltMasterToken,
       getRunnerSaltCmdTelegrafPlugin,
     } = this.props
+    const telegrafPlugin = await Promise.all([
+      getRunnerSaltCmdTelegrafPlugin(
+        saltMasterUrl,
+        saltMasterToken,
+        'telegraf --input-list'
+      ),
+      getRunnerSaltCmdTelegrafPlugin(
+        saltMasterUrl,
+        saltMasterToken,
+        'telegraf --output-list'
+      ),
+    ])
 
-    const telegrafPlugin = await getRunnerSaltCmdTelegrafPlugin(
-      saltMasterUrl,
-      saltMasterToken
-    )
-
-    const inputPlugin = _.get(telegrafPlugin, 'return')[0]
+    const inputPlugin = _.get(telegrafPlugin[0], 'return')[0]
       .replace(/ /g, '')
       .split('\n')
-    const outputPlugin = _.get(telegrafPlugin, 'return')[1]
+    const outputPlugin = _.get(telegrafPlugin[1], 'return')[0]
       .replace(/ /g, '')
       .split('\n')
 
@@ -426,7 +445,6 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       organizations,
       me,
       getLocalFileWrite,
-      runLocalServiceReStartTelegraf,
       minionsObject,
       handleGetMinionKeyListAll,
     } = this.props
@@ -492,14 +510,20 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       .then(({data}): void => {
         responseMessage = data.return[0][focusedHost]
 
-        const getLocalServiceReStartTelegrafPromise = runLocalServiceReStartTelegraf(
+        const getLocalServiceReloadTelegrafPromise = runLocalServiceReloadTelegraf(
           saltMasterUrl,
           saltMasterToken,
           focusedHost
         )
 
-        getLocalServiceReStartTelegrafPromise
-          .then(() => {
+        getLocalServiceReloadTelegrafPromise
+          .then(({data}) => {
+            const isReloadSucceeded = data.return[0][focusedHost]
+
+            if (isReloadSucceeded !== true) {
+              throw new Error('Failed to Reload Telegraf')
+            }
+
             isGetLocalStorage = false
             isApplyBtnEnabled = false
 
@@ -524,12 +548,24 @@ export class AgentConfiguration extends PureComponent<Props, State> {
             handleGetMinionKeyListAll()
             notify(notifyAgentApplySucceeded('is applied'))
           })
-          .catch(e => {
-            console.error(e)
+          .catch(error => {
+            notify(notifyTelegrafReloadFailed(error))
+
+            this.setState({
+              configPageStatus: RemoteDataState.Done,
+              collectorConfigStatus: RemoteDataState.Done,
+              measurementsStatus: RemoteDataState.Done,
+            })
           })
       })
-      .catch(e => {
-        console.error(e)
+      .catch(error => {
+        notify(notifyAgentApplyFailed(error))
+
+        this.setState({
+          configPageStatus: RemoteDataState.Done,
+          collectorConfigStatus: RemoteDataState.Done,
+          measurementsStatus: RemoteDataState.Done,
+        })
       })
   }
 
@@ -574,16 +610,9 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       organizations,
       me,
       getLocalFileWrite,
-      minionsObject,
     } = this.props
     const {focusedHost, configScript} = this.state
-    let {
-      isModalCall,
-      isApplyBtnEnabled,
-      isGetLocalStorage,
-      responseMessage,
-      isConsoleModalVisible,
-    } = this.state
+    let {isApplyBtnEnabled, responseMessage} = this.state
 
     let isCheckDone = true
     let existingInputPlugins
@@ -644,39 +673,64 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       isConsoleModalMessage: '',
     })
 
-    const getLocalFileWritePromise = getLocalFileWrite(
+    const getLocalDirectoryMakePromise = getLocalDirectoryMake(
       saltMasterUrl,
       saltMasterToken,
       focusedHost,
-      configScript
+      AGENT_TELEGRAF_CONFIG.TEMPDIRECTORY
     )
 
-    getLocalFileWritePromise
-      .then(({data}): void => {
-        responseMessage = data.return[0][focusedHost]
+    getLocalDirectoryMakePromise
+      .then(data => {
+        const isDirectoryMadeSucceeded = data[0][focusedHost]
 
-        const checkData = this.checkData({
-          isModalCall,
-          isApplyBtnEnabled,
-          isGetLocalStorage,
-          minionsObject,
-          isConsoleModalVisible,
-        })
+        if (!isDirectoryMadeSucceeded) {
+          throw new Error('Failed to Make Temp Directory')
+        }
 
+        const timeStamp = moment().format('YYYYMMDDHHmmssSS')
+        const tempDirectory = path.join(
+          AGENT_TELEGRAF_CONFIG.TEMPDIRECTORY,
+          `${timeStamp}.conf`
+        )
+        const getLocalFileWritePromise = getLocalFileWrite(
+          saltMasterUrl,
+          saltMasterToken,
+          focusedHost,
+          configScript,
+          tempDirectory
+        )
+
+        getLocalFileWritePromise
+          .then(({data}): void => {
+            responseMessage = data.return[0][focusedHost]
+
+            this.setState({
+              existingInputPluginList: this.getExistingInputPluginList([
+                'All',
+                ..._.keys(existingInputPlugins),
+              ]),
+              responseMessage,
+              inputPluginTestStatus: RemoteDataState.Done,
+              timeStampTempFile: tempDirectory,
+            })
+          })
+          .catch(error => {
+            this.setState({
+              isConsoleModalVisible: false,
+              inputPluginTestStatus: RemoteDataState.Done,
+            })
+
+            notify(notifyAgentConfigTempFileWriteFailed(error))
+          })
+      })
+      .catch(error => {
         this.setState({
-          existingInputPluginList: this.getExistingInputPluginList([
-            'All',
-            ..._.keys(existingInputPlugins),
-          ]),
-          isModalCall: checkData.isModalCall,
-          isGetLocalStorage: checkData.isGetLocalStorage,
-          isCollectorInstalled: checkData.isCollectorInstalled,
-          responseMessage,
+          isConsoleModalVisible: false,
           inputPluginTestStatus: RemoteDataState.Done,
         })
-      })
-      .catch(e => {
-        console.error(e)
+
+        notify(notifyAgentConfigTempDirectoryMakeFailed(error.data))
       })
   }
 
@@ -686,13 +740,22 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       saltMasterToken,
       runLocalServiceTestTelegraf,
     } = this.props
-    const {selectedInputPlugin, focusedHost} = this.state
+    const {
+      selectedInputPlugin,
+      focusedHost,
+      isApplyBtnEnabled,
+      timeStampTempFile,
+    } = this.state
+    const telegrafConfDirectory = isApplyBtnEnabled
+      ? timeStampTempFile
+      : AGENT_TELEGRAF_CONFIG.FILE
 
     const getLocalServiceTestTelegrafPromise = runLocalServiceTestTelegraf(
       saltMasterUrl,
       saltMasterToken,
       focusedHost,
-      selectedInputPlugin
+      selectedInputPlugin,
+      telegrafConfDirectory
     )
 
     this.setState({
@@ -1373,7 +1436,6 @@ const mdtp = {
   runLocalGroupAdduser: runLocalGroupAdduserAsync,
   getLocalFileRead: getLocalFileReadAsync,
   getLocalFileWrite: getLocalFileWriteAsync,
-  runLocalServiceReStartTelegraf: runLocalServiceReStartTelegrafAsync,
   runLocalServiceTestTelegraf: runLocalServiceTestTelegrafAsync,
   getRunnerSaltCmdTelegraf: getRunnerSaltCmdTelegrafAsync,
   getRunnerSaltCmdTelegrafPlugin: getRunnerSaltCmdTelegrafPluginAsync,

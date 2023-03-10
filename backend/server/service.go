@@ -16,7 +16,6 @@ type Service struct {
 	SuperAdminProviderGroups superAdminProviderGroups
 	Env                      cloudhub.Environment
 	Databases                cloudhub.Databases
-	AddonURLs                map[string]string
 	MailSubject              string
 	MailBody                 string
 	ExternalExec             string
@@ -24,6 +23,9 @@ type Service struct {
 	LoginAuthType            string
 	BasicPasswordResetType   string
 	RetryPolicy              map[string]string
+	AddonURLs                map[string]string // URLs for using in Addon Features, as passed in via CLI/ENV
+	AddonTokens              map[string]string // Tokens to access to Addon Features API, as passed in via CLI/ENV
+	OSP                      OSP
 }
 
 type superAdminProviderGroups struct {
@@ -44,11 +46,11 @@ type ErrorMessage struct {
 
 // ErrorMessageBasic is the error response format for basic login service errors
 type ErrorMessageBasic struct {
-	Code          int    `json:"code"`
-	Message       string `json:"message"`
-	RetryCount    int32  `json:"retryCount"`
-	LockedTime    string `json:"lockedTime"`
-	Locked        bool   `json:"locked"`
+	Code       int    `json:"code"`
+	Message    string `json:"message"`
+	RetryCount int32  `json:"retryCount"`
+	LockedTime string `json:"lockedTime"`
+	Locked     bool   `json:"locked"`
 }
 
 // TimeSeries returns a new client connected to a time series database

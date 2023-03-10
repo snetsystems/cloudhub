@@ -3,7 +3,7 @@
   "info": {
     "title": "CloudHub",
     "description": "API endpoints for CloudHub",
-    "version": "1.1.1"
+    "version": "1.4.0"
   },
   "schemes": ["http"],
   "basePath": "/cloudhub/v1",
@@ -40,7 +40,6 @@
           {
             "name": "name",
             "in": "body",
-            "description": "access user name",
             "schema": {
               "$ref": "#/definitions/LoginReq"
             }
@@ -48,7 +47,13 @@
           {
             "name": "password",
             "in": "body",
-            "description": "access user password",
+            "schema": {
+              "$ref": "#/definitions/LoginReq"
+            }
+          },
+          {
+            "name": "isEncoded",
+            "in": "body",
             "schema": {
               "$ref": "#/definitions/LoginReq"
             }
@@ -63,6 +68,12 @@
           },
           "400": {
             "description": "Invalid JSON – unable to encode or decode; or failed to perform operation in data store",
+            "schema": {
+              "$ref": "#/definitions/Error"
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity – indicates that the server understands the content type of the request entity, and the syntax of the request entity is correct, but it was unable to process the contained instructions.",
             "schema": {
               "$ref": "#/definitions/Error"
             }
@@ -102,9 +113,9 @@
     },
     "/basic/password/reset": {
       "get": {
-        "tags": ["passwd reset(user)"],
+        "tags": ["passwd reset by user"],
         "summary": "Password reset",
-        "description": "password reset (Before Login)",
+        "description": "password reset by user (Before Login)",
         "parameters": [
           {
             "name": "path",
@@ -155,9 +166,9 @@
     },
     "/password/reset": {
       "get": {
-        "tags": ["passwd reset(admin)"],
+        "tags": ["passwd reset by admin"],
         "summary": "Password reset",
-        "description": "password reset (Admin)",
+        "description": "password force reset by Admin",
         "parameters": [
           {
             "name": "path",
@@ -208,9 +219,9 @@
     },
     "/basic/password": {
       "patch": {
-        "tags": ["passwd change"],
+        "tags": ["passwd change by admin"],
         "summary": "Password change",
-        "description": "Password change (by basic)",
+        "description": "Password force change by admin",
         "parameters": [
           {
             "name": "name",
@@ -3905,7 +3916,7 @@
     },
     "/proxy/salt": {
       "post": {
-        "tags": ["proxy", "salt proxy"],
+        "tags": ["salt proxy"],
         "description": "POST body directly to Salt backend. The response and status code from Salt is directly returned.",
         "parameters": [
           {
@@ -4631,24 +4642,21 @@
             "in": "body",
             "schema": {
               "$ref": "#/definitions/CSPReq"
-            },
-            "required": true
+            }
           },
           {
             "name": "secretkey",
             "in": "body",
             "schema": {
               "$ref": "#/definitions/CSPReq"
-            },
-            "required": true
+            }
           },
           {
             "name": "minion",
             "in": "body",
             "schema": {
               "$ref": "#/definitions/CSPReq"
-            },
-            "required": true
+            }
           }
         ],
         "responses": {
@@ -7552,7 +7560,7 @@
                 "type": "string"
               },
               "token": {
-                "description": "token for the authentication",
+                "description": "[Deprecated] token for the authentication",
                 "type": "string"
               }
             }
@@ -7636,12 +7644,12 @@
           {
             "name": "salt",
             "url": "/cloudhub/v1/proxy/salt",
-            "token": "58163e8e0f6b3efcd7bbb1ad0e3a2ee53e8fae1248b291312e1bdbfc13b289d2"
+            "token": "<This is deprecated therefore it'll be always empty or removed.>"
           },
           {
             "name": "swan",
-            "url": "https://211.189.153.40/api/v1/graphql",
-            "token": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiYWRtaW4iLCJzY29wZXMiOlsiY29uZmlndXJlIl0sImlhdCI6MTU3NDAzNjAxM30.beW77E48pOhNKHNuFB6q343hg5XGbV7HzUcI-8LaV4RJTOiOALpA4NPWF4nDmFcveVuGuH8rETnLNbeXFa2zmssbCg_TfaAt49yyq_Meg43TYXKOYl5pl7mJ1k-nte0zW4fX2J6brRE5ouvU3e2ssvRVmvsnuqWxdQ1Doqm4e2zLaVIblMsb80DpSr7AZfbF5Ld11KwUPIxAsU7LIN_tfKfy4-LPqwN78eD6fGcb_u6m2sm5jVZihuwKmzhIVEVIHtnGbr2oSrAHLrpeokLCGctXF1b7pCt7pCWIeBqyr7EjjOx90d8LoH49idMPLymDR_NPi-8Cs0GXszJtW82DuA"
+            "url": "https://<swan_domain>/api/v1/graphql",
+            "token": ""
           },
           {
             "name": "oncue",
@@ -7837,22 +7845,22 @@
       }
     },
     "SaltProxy": {
-      "description": "Entirely used as the body for the request to the Salt backend.",
+      "description": "The body of the request to the Salt backend.",
       "type": "object",
       "example": {
-        "token": "765a77ba67cc48f4a249059d5bb66b2912fb8f8590864f0347d46bb02eceb81f",
+        "token": "<This is deprecated therefore empty or remove the field.>",
         "eauth": "pam",
         "client": "runner",
         "fun": "manage.status"
       }
     },
     "SaltProxyResponse": {
-      "description": "Entire response from the Salt API.",
+      "description": "Response from the Salt API.",
       "type": "object",
       "example": {
         "return": [
           {
-            "up": ["jack-server-01.snet.com", "jack-server-02.snet.com"],
+            "up": ["server-01.snet.com", "server-02.snet.com"],
             "down": []
           }
         ]
@@ -8021,7 +8029,7 @@
     },
     "LoginReq": {
       "type": "object",
-      "description": "login information (by basic)",
+      "description": "login information with basic",
       "properties": {
         "name": {
           "type": "string",
@@ -8030,17 +8038,22 @@
         "password": {
           "type": "string",
           "description": "user password"
+        },
+        "isEncoded": {
+          "type": "string",
+          "description": "true or false(case-insensitive), default: false"
         }
       },
       "required": ["name", "password"],
       "example": {
         "name": "test",
-        "password": "dkeidj@!@"
+        "password": "dkeidj@!@",
+        "isEncoded": "false"
       }
     },
     "LoginRes": {
       "type": "object",
-      "description": "login information (by basic)",
+      "description": "login information with basic",
       "properties": {
         "passwordResetFlag": {
           "type": "string",
@@ -8054,7 +8067,7 @@
     },
     "PasswdResetRes": {
       "type": "object",
-      "description": "password reset (by basic)",
+      "description": "password reset with basic",
       "properties": {
         "passwordResetFlag": {
           "type": "string",
@@ -8083,7 +8096,7 @@
     },
     "Password": {
       "type": "object",
-      "description": "password change (by basic)",
+      "description": "password change with basic",
       "properties": {
         "name": {
           "type": "string",
@@ -8184,31 +8197,31 @@
       "properties": {
         "provider": {
           "type": "string",
-          "description": "Cloud Service Provider Name"
+          "description": "Cloud Service Provider Name: One of aws, gcp, azure, osp"
         },
         "namespace": {
           "type": "string",
-          "description": "CSP namespace: region(if aws) or projec id(if gcp)"
+          "description": "If provider=aws, Region and if provider=gcp, Project ID and if provider=osp, project_name"
         },
         "accesskey": {
           "type": "string",
-          "description": "CSP access key"
+          "description": "If provider=aws, Access Key and if provider=osp, username"
         },
         "secretkey": {
           "type": "string",
-          "description": "CSP access secret key"
+          "description": "If provider=aws, Secret Key and if provider=osp, password"
         },
         "minion": {
           "type": "string",
-          "description": "Target Salt Minion: Currently Not used"
+          "description": "Target Salt Minion(Applied if providor is aws only)"
         }
       },
       "required": ["provider", "namespace"],
       "example": {
-        "provider": "AWS",
-        "namespace": "ap-northeast-2",
-        "accesskey": "AABCCEEDSKDDLSSSDD",
-        "secretkey": "kjdjd+kDDSQQWD+jdjwidsndbh",
+        "provider": "osp",
+        "namespace": "osp_pj_demo01",
+        "accesskey": "user01",
+        "secretkey": "password01",
         "minion": "minion01"
       }
     },
@@ -8218,19 +8231,19 @@
       "properties": {
         "namespace": {
           "type": "string",
-          "description": "CSP namespace: region(if aws) or projec id(if gcp)"
+          "description": "If provider=aws, Region and if provider=gcp, Project ID and if provider=osp, project_name"
         },
         "accesskey": {
           "type": "string",
-          "description": "CSP access key"
+          "description": "If provider=aws, Access Key and if provider=osp, username"
         },
         "secretkey": {
           "type": "string",
-          "description": "CSP access secret key"
+          "description": "If provider=aws, Secret Key and if provider=osp, password"
         },
         "minion": {
           "type": "string",
-          "description": "Target Salt Minion: Currently Not Used"
+          "description": "Target Salt Minion(Applied if providor is aws only)"
         }
       },
       "example": {
@@ -8251,19 +8264,19 @@
         },
         "provider": {
           "type": "string",
-          "description": "Cloud Service Provider Name"
+          "description": "Cloud Service Provider Name: One of aws, gcp, azure, osp"
         },
         "namespace": {
           "type": "string",
-          "description": "CSP access namespace"
+          "description": "If provider=aws, Region and if provider=gcp, Project ID and if provider=osp, project_name"
         },
         "accesskey": {
           "type": "string",
-          "description": "CSP access key"
+          "description": "If provider=aws, Access Key and if provider=osp, username"
         },
         "secretkey": {
           "type": "string",
-          "description": "CSP access secret key"
+          "description": "If provider=aws, Secret Key and if provider=osp, password"
         },
         "organization": {
           "type": "string",
@@ -8272,7 +8285,7 @@
         },
         "minion": {
           "type": "string",
-          "description": "target salt minion: Currently Not Used",
+          "description": "Target Salt Minion(Applied if providor is aws only)",
           "readOnly": true
         },
         "links": {"type": "string", "description": "self url"}
@@ -8280,10 +8293,10 @@
       "required": ["id", "provider", "namespace", "organization", "links"],
       "example": {
         "id": "1",
-        "provider": "AWS",
-        "namespace": "ap-northeast-2",
-        "accesskey": "AABCCEEDSKDDLSSSDD",
-        "secretkey": "kjdjd+kDDSQQWD+jdjwidsndbh",
+        "provider": "osp",
+        "namespace": "osp_pj_demo01",
+        "accesskey": "user01",
+        "secretkey": "password01",
         "organization": "2",
         "minion": "minion01",
         "links": {

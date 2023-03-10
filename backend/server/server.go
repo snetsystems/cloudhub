@@ -55,18 +55,15 @@ type Server struct {
 	Cert flags.Filename `long:"cert" description:"Path to PEM encoded public key certificate. " env:"TLS_CERTIFICATE"`
 	Key  flags.Filename `long:"key" description:"Path to private key associated with given certificate. " env:"TLS_PRIVATE_KEY"`
 
-	InfluxDBURL      string `long:"influxdb-url" description:"Location of your InfluxDB instance" env:"INFLUXDB_URL"`
-	InfluxDBUsername string `long:"influxdb-username" description:"Username for your InfluxDB instance" env:"INFLUXDB_USERNAME"`
-	InfluxDBPassword string `long:"influxdb-password" description:"Password for your InfluxDB instance" env:"INFLUXDB_PASSWORD"`
-	InfluxDBOrg      string `long:"influxdb-org" description:"Organization for your InfluxDB v2 instance" env:"INFLUXDB_ORG"`
-	InfluxDBToken    string `long:"influxdb-token" description:"Token for your InfluxDB v2 instance" env:"INFLUXDB_TOKEN"`
+	InfluxDBURLs     []string `long:"influxdb-url" description:"Array of the location of your InfluxDB instance" env:"INFLUXDB_URL"`
+	InfluxDBUsername string   `long:"influxdb-username" description:"Username for your InfluxDB instance" env:"INFLUXDB_USERNAME"`
+	InfluxDBPassword string   `long:"influxdb-password" description:"Password for your InfluxDB instance" env:"INFLUXDB_PASSWORD"`
+	InfluxDBOrg      string   `long:"influxdb-org" description:"Organization for your InfluxDB v2 instance" env:"INFLUXDB_ORG"`
+	InfluxDBToken    string   `long:"influxdb-token" description:"Token for your InfluxDB v2 instance" env:"INFLUXDB_TOKEN"`
 
 	KapacitorURL      string `long:"kapacitor-url" description:"Location of your Kapacitor instance" env:"KAPACITOR_URL"`
 	KapacitorUsername string `long:"kapacitor-username" description:"Username of your Kapacitor instance" env:"KAPACITOR_USERNAME"`
 	KapacitorPassword string `long:"kapacitor-password" description:"Password of your Kapacitor instance" env:"KAPACITOR_PASSWORD"`
-
-	AddonURLs   map[string]string `short:"u" long:"addon-url" description:"Support addon is [salt, aws, gcp, k8s, swan, oncue, ipmi-secret-key]. Actually, this is a key-value extensional option not only url but also any key-value. Refer to the following usage samples. E.g., via flags: '-u=salt:{url} -u=salt_config_path:{path} -u=aws:on[off] -u=gcp:on[off] -u=k8s:on[off] -u=swan:{url} -u=oncue:{port number} -u=ipmi-secret-key:{seed key}'. E.g. via environment variable: 'export ADDON_URL=salt:{url},swan:{url}'" env:"ADDON_URL" env-delim:","`
-	AddonTokens map[string]string `short:"k" long:"addon-tokens" description:"The token associated with addon [salt, swan]. E.g. via flags: '-k=salt:{token} -k=swan:{token}'. E.g. via environment variable: 'export ADDON_TOKENS=salt:{token},swan:{token}'" env:"ADDON_TOKENS" env-delim:","`
 
 	Develop            bool          `short:"d" long:"develop" description:"Run server in develop mode."`
 	BoltPath           string        `short:"b" long:"bolt-path" description:"Full path to boltDB file (e.g. './cloudhub-v1.db')" env:"BOLT_PATH" default:"cloudhub-v1.db"`
@@ -155,6 +152,11 @@ type Server struct {
 	TLSMaxVersion string `long:"tls-max-version" description:"Maximum version of the TLS protocol that will be negotiated." env:"TLS_MAX_VERSION"`
 
 	oauthClient http.Client
+
+	AddonURLs   map[string]string `short:"u" long:"addon-url" description:"Support addon is [salt, aws, gcp, k8s, swan, oncue, ipmi-secret-key]. Actually, this is a key-value extensional option not only url but also any key-value. Refer to the following usage samples. E.g., via flags: '-u=salt:{url} -u=salt_config_path:{path} -u=aws:on[off] -u=gcp:on[off] -u=k8s:on[off] -u=swan:{url} -u=oncue:{port number} -u=ipmi-secret-key:{seed key}'. E.g. via environment variable: 'export ADDON_URL=salt:{url},swan:{url}'" env:"ADDON_URL" env-delim:","`
+	AddonTokens map[string]string `short:"k" long:"addon-tokens" description:"The token associated with addon [salt, swan]. E.g. via flags: '-k=salt:{token} -k=swan:{token}'. E.g. via environment variable: 'export ADDON_TOKENS=salt:{token},swan:{token}'" env:"ADDON_TOKENS" env-delim:","`
+
+	OSP map[string]string `long:"osp" description:"The Informations to access to OSP API. '--osp=admin-provider:{salt admin provider} --osp=admin-user:{admin user name} --osp=admin-pw:{admin user password} --osp=auth-url:{keystone url} --osp=pj-domain-id:{project domain id} --osp=user-domain-id:{user domain id}'. E.g. via environment variable: 'export OSP=admin:{salt admin provider},admin-user:{admin user name}', etc." env:"OSP" env-delim:","`
 }
 
 func provide(p oauth2.Provider, m oauth2.Mux, ok func() error) func(func(oauth2.Provider, oauth2.Mux)) {
@@ -548,7 +550,7 @@ func (s *Server) newBuilders(logger cloudhub.Logger) builders {
 			Path:   s.ResourcesPath,
 		},
 		Sources: &MultiSourceBuilder{
-			InfluxDBURL:      s.InfluxDBURL,
+			InfluxDBURLs:     s.InfluxDBURLs,
 			InfluxDBUsername: s.InfluxDBUsername,
 			InfluxDBPassword: s.InfluxDBPassword,
 			InfluxDBOrg:      s.InfluxDBOrg,
@@ -588,6 +590,8 @@ func (s *Server) Serve(ctx context.Context) {
 			Error(err)
 		return
 	}
+
+	osp := NewOSP(s.OSP)
 
 	var db kv.Store
 	if len(s.EtcdEndpoints) == 0 {
@@ -642,7 +646,22 @@ func (s *Server) Serve(ctx context.Context) {
 		basicPasswordResetType = "all"
 	}
 
-	service := openService(ctx, db, s.newBuilders(logger), logger, s.useAuth(), s.AddonURLs, s.MailSubject, s.MailBodyMessage, s.ExternaExec, s.ExternaExecArgs, s.LoginAuthType, basicPasswordResetType, s.RetryPolicy)
+	service := openService(
+		ctx,
+		db,
+		s.newBuilders(logger),
+		logger,
+		s.useAuth(),
+		s.MailSubject,
+		s.MailBodyMessage,
+		s.ExternaExec,
+		s.ExternaExecArgs,
+		s.LoginAuthType,
+		basicPasswordResetType,
+		s.RetryPolicy,
+		s.AddonURLs,
+		s.AddonTokens,
+		osp)
 	service.SuperAdminProviderGroups = superAdminProviderGroups{
 		auth0: s.Auth0SuperAdminOrg,
 	}
@@ -717,8 +736,6 @@ func (s *Server) Serve(ctx context.Context) {
 		PprofEnabled:          s.PprofEnabled,
 		DisableGZip:           s.DisableGZip,
 		BasicAuth:             basicAuthenticator,
-		AddonURLs:             s.AddonURLs,
-		AddonTokens:           s.AddonTokens,
 		PasswordPolicy:        s.PasswordPolicy,
 		PasswordPolicyMessage: s.PasswordPolicyMessage,
 	}, service)
@@ -777,7 +794,23 @@ func (s *Server) Serve(ctx context.Context) {
 		Info("Stopped serving cloudhub at ", scheme, "://", listener.Addr())
 }
 
-func openService(ctx context.Context, db kv.Store, builder builders, logger cloudhub.Logger, useAuth bool, addonURLs map[string]string, mailSubject, mailBody, externalExec, externalExecArgs string, loginAuthType string, basicPasswordResetType string, retryPolicy map[string]string) Service {
+func openService(
+	ctx context.Context,
+	db kv.Store,
+	builder builders,
+	logger cloudhub.Logger,
+	useAuth bool,
+	mailSubject,
+	mailBody,
+	externalExec,
+	externalExecArgs string,
+	loginAuthType string,
+	basicPasswordResetType string,
+	retryPolicy map[string]string,
+	addonURLs map[string]string,
+	addonTokens map[string]string,
+	osp OSP) Service {
+
 	svc, err := kv.NewService(ctx, db, kv.WithLogger(logger))
 	if err != nil {
 		logger.Error("Unable to create kv service", err)
@@ -852,7 +885,6 @@ func openService(ctx context.Context, db kv.Store, builder builders, logger clou
 		Logger:                 logger,
 		UseAuth:                useAuth,
 		Databases:              &influx.Client{Logger: logger},
-		AddonURLs:              addonURLs,
 		MailSubject:            mailSubject,
 		MailBody:               mailBody,
 		ExternalExec:           externalExec,
@@ -860,6 +892,9 @@ func openService(ctx context.Context, db kv.Store, builder builders, logger clou
 		LoginAuthType:          loginAuthType,
 		BasicPasswordResetType: basicPasswordResetType,
 		RetryPolicy:            retryPolicy,
+		AddonURLs:              addonURLs,
+		AddonTokens:            addonTokens,
+		OSP:                    osp,
 	}
 }
 

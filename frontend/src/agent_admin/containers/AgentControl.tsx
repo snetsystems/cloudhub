@@ -174,10 +174,7 @@ export class AgentControl extends PureComponent<Props, State> {
       fullDir
     )
 
-    if (
-      getDirectoryItems.status === 200 &&
-      getDirectoryItems.statusText === 'OK'
-    ) {
+    if (getDirectoryItems.status === 200) {
       const getData: string = getDirectoryItems.data.return[0]
       if (
         getData.length === 0 ||
@@ -203,7 +200,7 @@ export class AgentControl extends PureComponent<Props, State> {
           ]
         }
 
-        applications.sort(function(a, b) {
+        applications.sort(function (a, b) {
           return b.updateGetTime - a.updateGetTime
         })
       }
@@ -213,8 +210,7 @@ export class AgentControl extends PureComponent<Props, State> {
       files: applications,
       isLoading: false,
       status:
-        getDirectoryItems.status === 200 &&
-        getDirectoryItems.statusText === 'OK'
+        getDirectoryItems.status === 200
           ? NETWORK_ACCESS.SUCCESS
           : getDirectoryItems,
     }

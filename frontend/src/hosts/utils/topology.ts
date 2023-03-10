@@ -1,6 +1,9 @@
 import _ from 'lodash'
 import {eachNodeTypeAttrs} from '../constants/tools'
 
+// Types
+import {Host} from 'src/types'
+
 export const getParseHTML = (
   targer: string,
   type: DOMParserSupportedType = 'text/html'
@@ -53,12 +56,19 @@ export const getIsHasString = (value: string): boolean => {
   return value !== ''
 }
 
-export const getTimeSeriesHostIndicator = (value: string | number): string => {
-  let status = 'UsageIndacator'
+export const getTimeSeriesHostIndicator = (host: Host, key: string): string => {
+  if (
+    _.get(host, key, 0) > 0 &&
+    Math.max(host.deltaUptime || 0, host.winDeltaUptime || 0) > 0
+  ) {
+    let status = 'UsageIndacator'
 
-  if (value >= 50) status = 'UsageIndacator--caution'
-  if (value >= 70) status = 'UsageIndacator--warning'
-  if (value >= 90) status = 'UsageIndacator--danger'
+    if (_.get(host, key, 0) >= 50) status = 'UsageIndacator--caution'
+    if (_.get(host, key, 0) >= 70) status = 'UsageIndacator--warning'
+    if (_.get(host, key, 0) >= 90) status = 'UsageIndacator--danger'
 
-  return status
+    return status
+  } else {
+    return null
+  }
 }

@@ -1,5 +1,5 @@
 // Libraries
-import React, {PureComponent} from 'react'
+import React, {MouseEvent, PureComponent} from 'react'
 import _ from 'lodash'
 import memoize from 'memoize-one'
 
@@ -9,6 +9,7 @@ import {AgentMinions} from 'src/agent_admin/containers/AgentMinions'
 import AgentMinionsTableRow from 'src/agent_admin/components/AgentMinionsTableRow'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import PageSpinner from 'src/shared/components/PageSpinner'
+import AgentMinionsToolTip from 'src/agent_admin/components/AgentMinionsToolTip'
 
 // Constants
 import {AGENT_MINION_TABLE_SIZING} from 'src/agent_admin/constants/tableSizing'
@@ -29,12 +30,16 @@ export interface Props {
   handleWheelKeyCommand: (host: string, cmdstatus: string) => void
   handleShellModalOpen?: (shell: ShellInfo) => void
   handleShellModalClose: () => void
+  renderConsoleTableBodyRow: ({}) => object
 }
 
 interface State {
   searchTerm: string
   sortDirection: SortDirection
   sortKey: string
+  isToolipActive: boolean
+  targetPosition: {width: number; top: number; right: number; left: number}
+  minionIPAdress: string
 }
 
 @ErrorHandling
@@ -46,6 +51,9 @@ class AgentMinionsTable extends PureComponent<Props, State> {
       searchTerm: '',
       sortDirection: SortDirection.ASC,
       sortKey: 'host',
+      isToolipActive: false,
+      targetPosition: {width: 0, top: 0, right: 0, left: 0},
+      minionIPAdress: '',
     }
   }
 
@@ -297,11 +305,49 @@ class AgentMinionsTable extends PureComponent<Props, State> {
     )
   }
 
+  private onMouseOver = (
+    event: MouseEvent<HTMLDivElement>,
+    minionIPAddress: string
+  ) => {
+    const eventTarget = event.target as HTMLCanvasElement
+    const {width, top, right, left} = eventTarget.getBoundingClientRect()
+
+    this.setState({
+      isToolipActive: true,
+      targetPosition: {width, top, right, left},
+      minionIPAdress: minionIPAddress,
+    })
+  }
+
+  private onMouseLeave = () => {
+    this.setState({
+      isToolipActive: false,
+      targetPosition: {top: null, right: null, left: null, width: null},
+    })
+  }
+
+  private get tooltip() {
+    const {isToolipActive, targetPosition, minionIPAdress} = this.state
+    const minionIPAddresses = minionIPAdress.split(',')
+    const isMultipleIPAddress =
+      minionIPAdress !== '' && minionIPAddresses.length > 1
+
+    if (isToolipActive && isMultipleIPAddress) {
+      return (
+        <AgentMinionsToolTip
+          targetPosition={targetPosition}
+          tooltipNode={minionIPAddresses}
+        />
+      )
+    }
+  }
+
   private get AgentTableWithHosts() {
     const {
       minions,
       onClickTableRow,
       onClickModal,
+      renderConsoleTableBodyRow,
       handleWheelKeyCommand,
       focusedHost,
       handleShellModalOpen,
@@ -320,6 +366,7 @@ class AgentMinionsTable extends PureComponent<Props, State> {
       <>
         <div className="hosts-table">
           {this.AgentTableHeader}
+          {this.tooltip}
           {sortedHosts.length > 0 ? (
             <FancyScrollbar
               children={sortedHosts.map((m: Minion, i: number) => (
@@ -333,6 +380,9 @@ class AgentMinionsTable extends PureComponent<Props, State> {
                   focusedHost={focusedHost}
                   handleShellModalOpen={handleShellModalOpen}
                   handleShellModalClose={handleShellModalClose}
+                  onMouseLeave={this.onMouseLeave}
+                  onMouseOver={this.onMouseOver}
+                  renderConsoleTableBodyRow={renderConsoleTableBodyRow}
                 />
               ))}
               className="hosts-table--tbody"
