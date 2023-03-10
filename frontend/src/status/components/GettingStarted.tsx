@@ -19,23 +19,12 @@ class GettingStarted extends Component {
             <p>
               <strong>
                 <a
-                  href="https://seversky.atlassian.net/wiki/spaces/CSHD/pages/217612473/Installation+guide/"
+                  href="https://seversky.atlassian.net/wiki/spaces/CSHD/pages/2072969304/Quick+Installation+Guide"
                   target="_blank"
                 >
                   Install the CloudHub
                 </a>
               </strong>
-              <br />
-              Save some time and use this handy tool to install the rest of the
-              stack:
-            </p>
-            <p>
-              <a
-                href="https://seversky.atlassian.net/wiki/spaces/CSHD/pages/217022681/Installing+Server+Node#Install-Pre-required-Packages"
-                target="_blank"
-              >
-                Install Component Stack
-              </a>
               <br />
               <a
                 href="https://seversky.atlassian.net/wiki/spaces/CSHD/pages/219873404/Getting+started/"
@@ -72,10 +61,10 @@ class GettingStarted extends Component {
               </a>
               <br />
               <a
-                href="https://seversky.atlassian.net/wiki/spaces/CSHD/pages/259817509/Advanced+Kapacitor+usage/"
+                href="https://seversky.atlassian.net/wiki/spaces/CSHD/pages/363626497/Online+Only+Server+Troubleshoot+Guides/"
                 target="_blank"
               >
-                Advanced Kapacitor Usage
+                Server Troubleshoot Guides
               </a>
             </p>
           </div>
@@ -95,7 +84,8 @@ class GettingStarted extends Component {
                 href="https://github.com/snetsystems/cloudhub/releases/"
                 target="_blank"
               >
-                <span className="icon github" /> Release informations
+                <span className="icon github" /> CloudHub Portal Release
+                informations
               </a>
             </p>
             <p>
