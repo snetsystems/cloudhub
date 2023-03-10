@@ -45,6 +45,7 @@ You should use [Forked **Snetsystems/salt**](https://github.com/snetsystems/salt
 - Optionable Addon features.
   - **_VMWare_ Infrastructure** Viewer.
     - via **_VSphere_** API and **_Salt_**
+  - **\_OpenStack Infrastructure\_\_** Monitoring.
   - **_K8s Infrastructure_** Diagram & Viewer.
     - via customized `Salt Kuberetes` Module.
   - **_AWS_** Instances Monitoring.
@@ -55,6 +56,7 @@ You should use [Forked **Snetsystems/salt**](https://github.com/snetsystems/salt
     <img src="./docs/images/infrastructure.png"/>
     <img src="./docs/images/topology_map.png"/>
     <img src="./docs/images/VMWare.png"/>
+    <img src="./docs/images/osp.png"/>
     <img src="./docs/images/k8s.png"/>
     <img src="./docs/images/AWS_01.png"/>
     <img src="./docs/images/AWS_02.png"/>
@@ -67,8 +69,8 @@ You should use [Forked **Snetsystems/salt**](https://github.com/snetsystems/salt
 ## Change log
 
 You could know the changelog by versions via the follows.<br>
-Version <= v1.2.0: [Projects(Legacy)](https://github.com/snetsystems/cloudhub/projects?query=is%3Aclosed)<br>
-Version >= v1.3.0: [Projects(Newly)](https://github.com/users/snetsystems/projects/3/views/1?sortedBy%5Bdirection%5D=asc&sortedBy%5BcolumnId%5D=Title&visibleFields=%5B%22Title%22%2C%22Assignees%22%2C%22Status%22%2C%22Repository%22%2C%22Labels%22%2C%22Reviewers%22%2C%22Linked+Pull+Requests%22%5D&groupedBy%5BcolumnId%5D=Status)
+Version <= v1.2.0: [Projects(Legacy)](https://github.com/snetsystems/cloudhub/projects?query=is%3Aclosed&type=classic)<br>
+Version >= v1.3.0: [Projects(Newly)](https://github.com/snetsystems?tab=projects)
 
 ## Setting in VSCode
 
