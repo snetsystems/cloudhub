@@ -125,10 +125,18 @@ export const vmCells = [
   },
 ]
 
-export const getOpenStackPageLayouts = [
-  {i: 'projectTable', x: 0, y: 0, w: 20, h: 5, minW: 5, minH: 2},
-  {i: 'projectDetail', x: 0, y: 10, w: 10, h: 10, minW: 8, minH: 10},
-  {i: 'instanceDetail', x: 10, y: 10, w: 10, h: 10, minW: 5, minH: 5},
-  {i: 'instanceTable', x: 0, y: 15, w: 20, h: 5, minW: 5, minH: 2},
-  {i: 'instanceGraph', x: 0, y: 20, w: 20, h: 8, minW: 10, minH: 8},
-]
+export const getOpenStackPageLayouts = {
+  superadmin: [
+    {i: 'projectTable', x: 0, y: 0, w: 11, h: 8, minW: 5, minH: 2},
+    {i: 'projectDetail', x: 11, y: 0, w: 9, h: 8, minW: 5, minH: 7},
+    {i: 'instanceTable', x: 0, y: 8, w: 11, h: 8, minW: 5, minH: 2},
+    {i: 'instanceDetail', x: 11, y: 8, w: 9, h: 8, minW: 5, minH: 5},
+    {i: 'instanceGraph', x: 0, y: 16, w: 20, h: 8, minW: 10, minH: 8},
+  ],
+  other: [
+    {i: 'projectDetail', x: 0, y: 0, w: 20, h: 8, minW: 5, minH: 7},
+    {i: 'instanceTable', x: 0, y: 8, w: 11, h: 8, minW: 5, minH: 2},
+    {i: 'instanceDetail', x: 11, y: 8, w: 9, h: 8, minW: 5, minH: 5},
+    {i: 'instanceGraph', x: 0, y: 16, w: 20, h: 8, minW: 10, minH: 8},
+  ],
+}

@@ -534,3 +534,6 @@ export enum AddonType {
   gcp = 'gcp',
   osp = 'osp',
 }
+
+export const COLLECTOR_SERVER = 'ch-collector'
+export const DEFAULT_ORGANIZATION = 'Default'

@@ -11,6 +11,7 @@ import OpenStackPageProjectTableRow from 'src/clouds/components/OpenStackPagePro
 import {OpenStackPage} from 'src/clouds/containers/OpenStackPage'
 import {FocusedProject, OpenStackProject} from 'src/clouds/types/openstack'
 import OpenStackPageHeader from 'src/clouds/components/OpenStackPageHeader'
+import LoadingDots from 'src/shared/components/LoadingDots'
 
 // types
 import {Source, RemoteDataState} from 'src/types'
@@ -35,6 +36,7 @@ export interface Props {
   source: Source
   openStackPageStatus: RemoteDataState
   resourceTableOrder?: string[]
+  saltRemoteDataState: RemoteDataState
   onClickTableRow: OpenStackPage['handleClickProjectTableRow']
 }
 
@@ -176,7 +178,7 @@ class OpenStackPageProjectTable extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {focusedProject} = this.props
+    const {focusedProject, saltRemoteDataState} = this.props
     return (
       <div className="panel">
         <OpenStackPageHeader
@@ -184,6 +186,11 @@ class OpenStackPageProjectTable extends PureComponent<Props, State> {
           cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
           cellTextColor={DEFAULT_CELL_TEXT_COLOR}
         >
+          {saltRemoteDataState === RemoteDataState.Loading && (
+            <LoadingDots
+              className={'graph-panel__refreshing openstack-dots--loading'}
+            />
+          )}
           <div
             className="dash-grah"
             style={{display: 'flex', zIndex: 4, marginRight: '10px'}}

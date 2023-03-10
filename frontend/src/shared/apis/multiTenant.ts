@@ -7,6 +7,9 @@ import {HostNames} from 'src/types/hosts'
 import replaceTemplate from 'src/tempVars/utils/replace'
 import {generateForHosts} from 'src/utils/tempVars'
 
+// Constants
+import {COLLECTOR_SERVER} from 'src/shared/constants'
+
 interface HostsObject {
   [x: string]: Host
 }
@@ -40,7 +43,7 @@ export const getAllHosts = async (source: Source): Promise<HostNames> => {
   try {
     const {data} = await proxy({
       source: proxyLink,
-      query: 'SHOW TAG VALUES WITH KEY = "host" WHERE TIME > now() - 10m;',
+      query: `SHOW TAG VALUES WITH KEY = "host" WHERE TIME > now() - 10m and "host" !~ /^${COLLECTOR_SERVER}/;`,
       db: telegraf,
     })
 
@@ -78,9 +81,9 @@ export const getAllHostsAndStatus = async (
     const {data} = await proxy({
       source: proxyLink,
       query: replaceTemplate(
-        `SHOW TAG VALUES WITH KEY = "host" WHERE TIME > now() - 10m;
-              SELECT non_negative_derivative(mean(uptime)) AS deltaUptime FROM \":db:\".\":rp:\".\"system\" WHERE time > now() - 1m0s * 10 GROUP BY host, time(1m0s) fill(0);
-              SELECT non_negative_derivative(mean("System_Up_Time")) AS winDeltaUptime FROM \":db:\".\":rp:\".\"win_system\" WHERE time > now() - 1m0s * 10 GROUP BY host, time(1m0s) fill(0);`,
+        `SHOW TAG VALUES WITH KEY = "host" WHERE TIME > now() - 10m and "host" !~ /^${COLLECTOR_SERVER}/;
+              SELECT non_negative_derivative(mean(uptime)) AS deltaUptime FROM \":db:\".\":rp:\".\"system\" WHERE time > now() - 1m0s * 10 and "host" !~ /^${COLLECTOR_SERVER}/ GROUP BY host, time(1m0s) fill(0);
+              SELECT non_negative_derivative(mean("System_Up_Time")) AS winDeltaUptime FROM \":db:\".\":rp:\".\"win_system\" WHERE time > now() - 1m0s * 10 and "host" !~ /^${COLLECTOR_SERVER}/ GROUP BY host, time(1m0s) fill(0);`,
         tempVars
       ),
       db: telegraf,

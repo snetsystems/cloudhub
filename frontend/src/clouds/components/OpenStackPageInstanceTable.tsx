@@ -11,6 +11,7 @@ import {OpenStackPage} from 'src/clouds/containers/OpenStackPage'
 import OpenStackTooltip from 'src/clouds/components/OpenStackTooltip'
 import OpenStackPageInstanceTableRow from 'src/clouds/components/OpenStackPageInstanceTableRow'
 import OpenStackPageHeader from 'src/clouds/components/OpenStackPageHeader'
+import LoadingDots from 'src/shared/components/LoadingDots'
 
 // types
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -41,6 +42,7 @@ export interface Props {
   focusedInstance: Partial<FocusedInstance>
   source: Source
   openStackPageStatus: RemoteDataState
+  saltRemoteDataState: RemoteDataState
   onClickTableRow: OpenStackPage['handleClickInstanceTableRow']
 }
 
@@ -161,7 +163,7 @@ class OpenStackPageInstanceTable extends PureComponent<Props, State> {
   }
 
   public render() {
-    const {focusedProject} = this.props
+    const {focusedProject, saltRemoteDataState} = this.props
 
     return (
       <div className="panel" style={{backgroundColor: DEFAULT_CELL_BG_COLOR}}>
@@ -170,6 +172,11 @@ class OpenStackPageInstanceTable extends PureComponent<Props, State> {
           cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
           cellTextColor={DEFAULT_CELL_TEXT_COLOR}
         >
+          {saltRemoteDataState === RemoteDataState.Loading && (
+            <LoadingDots
+              className={'graph-panel__refreshing openstack-dots--loading'}
+            />
+          )}
           <div style={{display: 'flex', zIndex: 4, marginRight: '10px'}}>
             <SearchBar
               placeholder="Filter by Name..."

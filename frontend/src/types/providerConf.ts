@@ -6,6 +6,7 @@ export interface OpenStackCspInput {
   password: string
   projectDomain: string
   userDomain: string
+  hasProjectOption: boolean
 }
 
 export interface GcpCspInput {

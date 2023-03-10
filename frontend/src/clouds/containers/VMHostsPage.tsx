@@ -42,7 +42,6 @@ import {
   TreeNodeInArray,
 } from 'src/reusable_ui/components/treemenu/TreeMenu/walk'
 
-import {AddonType} from 'src/shared/constants'
 import {Addon} from 'src/types/auth'
 import {
   VMDatacenter,
@@ -85,6 +84,7 @@ import {
   LAYOUT_MARGIN,
   HANDLE_VERTICAL,
 } from 'src/shared/constants'
+import {AddonType, COLLECTOR_SERVER} from 'src/shared/constants'
 
 import {
   DEFAULT_CELL_BG_COLOR,
@@ -331,7 +331,9 @@ const VMHostsPage = (props: Props): JSX.Element => {
       setTarget(minionList[0])
     }
 
-    setAcceptedMinionList(minionList)
+    setAcceptedMinionList(
+      _.filter(minionList, minion => _.startsWith(minion, COLLECTOR_SERVER))
+    )
     setIsModalVisible(true)
     setIsUpdate(false)
   }
@@ -349,7 +351,10 @@ const VMHostsPage = (props: Props): JSX.Element => {
 
     if (minionList && minionList.length > 0) {
       setTarget(_.get(vsphereInfo, 'minion', MINION_LIST_EMPTY))
-      setAcceptedMinionList(minionList)
+
+      setAcceptedMinionList(
+        _.filter(minionList, minion => _.startsWith(minion, COLLECTOR_SERVER))
+      )
     } else {
       setTarget(MINION_LIST_EMPTY)
     }

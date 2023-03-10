@@ -61,6 +61,7 @@ import {
   COLLECTOR_CONFIG_TAB_ORDER,
   AGENT_TELEGRAF_CONFIG,
 } from 'src/agent_admin/constants'
+import {COLLECTOR_SERVER} from 'src/shared/constants'
 
 // Components
 import CollectorConfig from 'src/agent_admin/components/CollectorConfig'
@@ -108,6 +109,7 @@ interface Props {
 }
 
 interface State {
+  collectorServerObject: MinionsObject
   isCollectorInstalled: boolean
   configScript: string
   inputConfigScript: string
@@ -127,6 +129,7 @@ export class ServiceConfig extends PureComponent<Props, State> {
     super(props)
 
     this.state = {
+      collectorServerObject: {},
       focusedCollectorConfigTab: '',
       inputConfigScript: '',
       configScript: '',
@@ -154,15 +157,22 @@ export class ServiceConfig extends PureComponent<Props, State> {
 
   public componentDidMount() {
     const {minionsObject, collectorConfigTableTabs} = this.props
-    const CollectorInstalledMinions = _.filter(minionsObject, [
-      'isInstall',
-      true,
-    ])
     const defaultSelectedCollectorConfigTab = this.getDefaultCollectorConfigTab(
       collectorConfigTableTabs
     )
+    const collectorServerMinions = _.pickBy(
+      minionsObject,
+      function (value, key) {
+        return _.startsWith(key, COLLECTOR_SERVER)
+      }
+    )
+    const CollectorInstalledMinions = _.filter(collectorServerMinions, [
+      'isInstall',
+      true,
+    ])
 
     this.setState({
+      collectorServerObject: collectorServerMinions,
       focusedCollectorConfigTab: defaultSelectedCollectorConfigTab,
       isCollectorInstalled: Boolean(CollectorInstalledMinions.length),
       serviceConfigStatus: this.props.minionsStatus,
@@ -185,12 +195,19 @@ export class ServiceConfig extends PureComponent<Props, State> {
       prevProps.minionsStatus !== this.props.minionsStatus
     ) {
       const {minionsObject} = this.props
-      const CollectorInstalledMinions = _.filter(minionsObject, [
+      const collectorServerMinions = _.pickBy(
+        minionsObject,
+        function (value, key) {
+          return _.startsWith(key, COLLECTOR_SERVER)
+        }
+      )
+      const CollectorInstalledMinions = _.filter(collectorServerMinions, [
         'isInstall',
         true,
       ])
 
       this.setState({
+        collectorServerObject: collectorServerMinions,
         isCollectorInstalled: Boolean(CollectorInstalledMinions.length),
         serviceConfigStatus: this.props.minionsStatus,
       })
@@ -786,13 +803,10 @@ export class ServiceConfig extends PureComponent<Props, State> {
   }
 
   render() {
-    const {
-      isUserAuthorized,
-      minionsObject,
-      collectorConfigTableTabs,
-    } = this.props
+    const {isUserAuthorized, collectorConfigTableTabs} = this.props
 
     const {
+      collectorServerObject,
       serviceConfigStatus,
       focusedMinion,
       focusedTenant,
@@ -816,7 +830,7 @@ export class ServiceConfig extends PureComponent<Props, State> {
                 style={{height: '35%'}}
               >
                 <ServiceConfigCollectorService
-                  minions={_.values(minionsObject)}
+                  minions={_.values(collectorServerObject)}
                   serviceConfigStatus={serviceConfigStatus}
                   focusedMinion={focusedMinion}
                   isCollectorInstalled={isCollectorInstalled}

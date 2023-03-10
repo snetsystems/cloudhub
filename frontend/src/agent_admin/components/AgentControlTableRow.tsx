@@ -1,5 +1,5 @@
 // Libraries
-import React, {PureComponent} from 'react'
+import React, {MouseEvent, PureComponent} from 'react'
 import _ from 'lodash'
 
 // Components
@@ -22,6 +22,8 @@ interface Props {
   isAllCheck: boolean
   handleMinionCheck: AgentControl['handleMinionCheck']
   onClickAction: AgentControl['onClickActionCall']
+  onMouseOver: (event: MouseEvent<HTMLElement>, minionIPAddress: string) => void
+  onMouseLeave: () => void
 }
 
 @ErrorHandling
@@ -29,9 +31,7 @@ class AgentControlTableRow extends PureComponent<Props> {
   public focusedClasses = (): string =>
     Boolean(this.props.isCheck) ? 'hosts-table--tr focused' : 'hosts-table--tr'
 
-  public getHandleMinionCheck = (
-    event: React.MouseEvent<HTMLInputElement, MouseEvent>
-  ) => {
+  public getHandleMinionCheck = (event: React.MouseEvent<HTMLInputElement>) => {
     event.stopPropagation()
     return this.props.handleMinionCheck({_this: this})
   }
@@ -41,7 +41,7 @@ class AgentControlTableRow extends PureComponent<Props> {
   }
 
   private get TableRowEachPage() {
-    const {minions, isCheck} = this.props
+    const {minions, isCheck, onMouseLeave, onMouseOver} = this.props
     const {osVersion, os, ip, host, isInstall, isRunning} = minions
     const {
       CheckWidth,
@@ -52,6 +52,11 @@ class AgentControlTableRow extends PureComponent<Props> {
       IPWidth,
       ActionWidth,
     } = AGENT_CONTROL_TABLE_SIZING
+    const minionIPAddresses = ip.split(',')
+    const isMultipleIPAddress = ip !== '' && minionIPAddresses.length > 1
+    const minionIPAddress = isMultipleIPAddress
+      ? `${minionIPAddresses[0]},...`
+      : ip
 
     return (
       <div className={this.focusedClasses()}>
@@ -76,7 +81,14 @@ class AgentControlTableRow extends PureComponent<Props> {
           width={OSWidth}
         />
         <TableBodyRowItem title={osVersion} width={OSVersionWidth} />
-        <TableBodyRowItem title={ip} width={IPWidth} />
+        <div
+          className={`hosts-table--td`}
+          onMouseLeave={onMouseLeave}
+          onMouseOver={event => onMouseOver(event, ip)}
+          style={{width: IPWidth}}
+        >
+          {ip ? minionIPAddress : '-'}
+        </div>
         <TableBodyRowItem
           title={isInstall === true ? 'Enable' : 'Disable'}
           width={StatusWidth}

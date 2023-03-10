@@ -6,6 +6,9 @@ import replaceTemplate from 'src/tempVars/utils/replace'
 // Types
 import {Source, Protoboard, Template} from 'src/types'
 
+// Constants
+import {COLLECTOR_SERVER} from 'src/shared/constants'
+
 interface SeriesObject {
   measurement: string
   host: string
@@ -102,7 +105,7 @@ export const addAppsToHosts = async (
 export const getHosts = async (source: Source): Promise<Hosts> => {
   const hosts = {}
 
-  const query = `SHOW TAG VALUES WITH KEY = "host" WHERE TIME > now() - 10m;`
+  const query = `SHOW TAG VALUES WITH KEY = "host" WHERE TIME > now() - 10m and "host" !~ /^${COLLECTOR_SERVER}/;`
 
   const resp = await proxy({
     source: source.links.proxy,

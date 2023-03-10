@@ -1,3 +1,4 @@
+// library
 import React, {createRef, PureComponent, ChangeEvent} from 'react'
 import {connect} from 'react-redux'
 import _ from 'lodash'
@@ -5,16 +6,7 @@ import {getDeep} from 'src/utils/wrappers'
 import classnames from 'classnames'
 import yaml from 'js-yaml'
 import download from 'src/external/download'
-
-import {
-  default as mxgraph,
-  mxEditor as mxEditorType,
-  mxCell as mxCellType,
-  mxGraph as mxGraphType,
-  mxGraphModel as mxGraphModelType,
-  mxGraphSelectionModel as mxGraphSelectionModeltype,
-  mxEventObject as mxEventObjectType,
-} from 'mxgraph'
+import path from 'path'
 
 // component
 import {
@@ -88,6 +80,15 @@ import {
   CSPFileWriteParam,
   Instance,
 } from 'src/hosts/types'
+import {
+  default as mxgraph,
+  mxEditor as mxEditorType,
+  mxCell as mxCellType,
+  mxGraph as mxGraphType,
+  mxGraphModel as mxGraphModelType,
+  mxGraphSelectionModel as mxGraphSelectionModeltype,
+  mxEventObject as mxEventObjectType,
+} from 'mxgraph'
 
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 
@@ -943,8 +944,9 @@ export class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private getHostData = async () => {
-    const {source, links} = this.props
+    const {source, links, auth} = this.props
 
+    const meRole = _.get(auth, 'me.role', '')
     const envVars = await getEnv(links.environment)
     const telegrafSystemInterval = getDeep<string>(
       envVars,
@@ -957,14 +959,14 @@ export class InventoryTopology extends PureComponent<Props, State> {
       source.links.proxy,
       source.telegraf,
       telegrafSystemInterval,
-      tempVars
+      tempVars,
+      meRole
     )
 
     const hostsError = notifyUnableToGetHosts().message
     if (!hostsObject) {
       throw new Error(hostsError)
     }
-
     if (!this.graph) return
 
     const graph = this.graph
@@ -2378,9 +2380,11 @@ export class InventoryTopology extends PureComponent<Props, State> {
       if (provider === CloudServiceProvider.GCP) {
         try {
           const confFile = `${this.confPath + namespace.trim()}.conf`
-          const keyFile = `${
-            this.keyPath + provider + '/' + namespace.trim()
-          }.pem`
+          const keyFile = path.join(
+            this.keyPath,
+            provider,
+            namespace.trim() + '.pem'
+          )
 
           await setRunnerFileRemoveApi(this.salt.url, this.salt.token, [
             confFile,
@@ -2412,9 +2416,11 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
           if (provider === CloudServiceProvider.GCP && isUpdateCloud) {
             const confFile = `${this.confPath + namespace.trim()}.conf`
-            const keyFile = `${
-              this.keyPath + provider + '/' + namespace.trim()
-            }.pem`
+            const keyFile = path.join(
+              this.keyPath,
+              provider,
+              namespace.trim() + '.pem'
+            )
 
             const saltResp = await handleGetRunnerFileReadAsync(
               this.salt.url,
@@ -2985,7 +2991,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       const cspConfig = `${cloudNamespace.trim()}:
   project: ${cloudNamespace}
   service_account_email_address: ${cloudSAEmail.trim()}
-  service_account_private_key: ${this.keyPath + provider + '/' + keyFileName}
+  service_account_private_key: ${path.join(this.keyPath, provider, keyFileName)}
 
   grains:
     node_type: broker
@@ -3010,7 +3016,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
       if (!_.isEmpty(cloudSAKey)) {
         const key: CSPFileWriteParam = {
-          path: this.keyPath + provider + '/',
+          path: path.join(this.keyPath, provider, '/'),
           fileName: keyFileName,
           script: cloudSAKey.trim(),
         }

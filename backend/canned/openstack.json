@@ -15,7 +15,7 @@
         {
           "query": "SELECT non_negative_derivative(mean(\"cpu0_time\")) AS \"mean_cpu0_time\" FROM \":db:\".\":rp:\".\"openstack_server_diagnostics\"",
           "label": "",
-          "groupbys": ["time(:interval:)"],
+          "groupbys": [],
           "wheres": []
         }
       ],
@@ -58,7 +58,7 @@
         {
           "query": "SELECT mean(\"port_rx_packets\") AS \"mean_port_rx_packets\" FROM \":db:\".\":rp:\".\"openstack_server_diagnostics\"",
           "label": "",
-          "groupbys": ["time(:interval:)"],
+          "groupbys": [],
           "wheres": []
         }
       ],
@@ -217,7 +217,7 @@
       "name": "Disk Write Request",
       "queries": [
         {
-          "query": "SELECT non_negative_derivative(mean(\"mean_disk_write_req\")) AS \"disk_write_req\"  FROM \":db:\".\":rp:\".\"openstack_server_diagnostics\"",
+          "query": "SELECT non_negative_derivative(mean(\"disk_write_req\")) AS \"disk_write_req\"  FROM \":db:\".\":rp:\".\"openstack_server_diagnostics\"",
           "label": "",
           "groupbys": [],
           "wheres": []

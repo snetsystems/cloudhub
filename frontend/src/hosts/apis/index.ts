@@ -34,8 +34,9 @@ import {
   getCSPRunnerFileWrite,
   getRunnerFileRead,
   setRunnerFileRemove,
-  getRunnerCloudActionListNodesFull,
 } from 'src/shared/apis/saltStack'
+import {COLLECTOR_SERVER, DEFAULT_ORGANIZATION} from 'src/shared/constants'
+import {SUPERADMIN_ROLE} from 'src/auth/Authorized'
 export interface HostsObject {
   [x: string]: Host
 }
@@ -92,7 +93,8 @@ export const getCpuAndLoadForHosts = async (
   proxyLink: string,
   telegrafDB: string,
   telegrafSystemInterval: string,
-  tempVars: Template[]
+  tempVars: Template[],
+  meRole: string
 ): Promise<HostsObject> => {
   const query = replaceTemplate(
     `SELECT mean("usage_user") FROM \":db:\".\":rp:\".\"cpu\" WHERE "cpu" = 'cpu-total' AND time > now() - 10m GROUP BY host;
@@ -198,6 +200,28 @@ export const getCpuAndLoadForHosts = async (
     hosts[s.tags.host].disk =
       Math.round(Number(s.values[0][meanIndex]) * precision) / precision
   })
+
+  if (
+    meRole !== SUPERADMIN_ROLE ||
+    (meRole === SUPERADMIN_ROLE &&
+      telegrafDB.toLocaleLowerCase() !==
+        DEFAULT_ORGANIZATION.toLocaleLowerCase())
+  ) {
+    const hostsWithoutCollectorServer = _.reduce(
+      hosts,
+      (acc, host) => {
+        if (!_.startsWith(host.name, COLLECTOR_SERVER)) {
+          acc = {
+            ...acc,
+            [host.name]: host,
+          }
+        }
+        return acc
+      },
+      {}
+    )
+    return hostsWithoutCollectorServer
+  }
 
   return hosts
 }
@@ -880,7 +904,7 @@ export const updateInventoryTopology = async (
 export const getIpmiStatusSaltApi = async (
   pUrl: string,
   pToken: string,
-  pIpmis: IpmiCell[]
+  pIpmis: IpmiCell
 ): Promise<any> => {
   const info = await getIpmiGetPower(pUrl, pToken, pIpmis)
   const ipmiStatus = yaml.safeLoad(info.data)
@@ -1342,21 +1366,6 @@ export const getGCPInstancesApi = async (
     const cspHost = yaml.safeLoad(info.data)
 
     return cspHost
-  } catch (error) {
-    throw error
-  }
-}
-
-export const getOSPInstancesApi = async (
-  pUrl: string,
-  pToken: string,
-  pCsps: any[]
-) => {
-  try {
-    const info = await getRunnerCloudActionListNodesFull(pUrl, pToken, pCsps)
-    const ospInstances = yaml.safeLoad(info.data)
-
-    return ospInstances
   } catch (error) {
     throw error
   }
