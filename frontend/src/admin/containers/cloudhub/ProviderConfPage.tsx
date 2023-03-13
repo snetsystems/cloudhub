@@ -378,9 +378,10 @@ export class ProviderConfPage extends PureComponent<Props, State> {
           }
           const cspDelte = await handleDeleteCspAsync(id)
           if (cspDelte.isDelete) {
-            this.setState({
+            this.setState(preState => ({
+              ...preState,
               cspInput: this.defaultProperties(ProviderTypes.OpenStack),
-            })
+            }))
           }
         } catch (error) {
           throw error
