@@ -376,6 +376,7 @@ type openstack struct {
 	Username               string   `toml:"username"`
 	Password               string   `toml:"password"`
 	ServerDiagnotics       bool     `toml:"server_diagnotics"`
+	InsecureSkipVerify     bool     `toml:"insecure_skip_verify"`
 	Tags                   tags     `toml:"tags"`
 }
 type inputs struct {
@@ -446,6 +447,7 @@ func (s *Service) generateTelegrafConfigForOSP(ctx context.Context, csp *cloudhu
 					Username:               s.OSP.AdminUser,
 					Password:               s.OSP.AdminPW,
 					ServerDiagnotics:       true,
+					InsecureSkipVerify:     true,
 					Tags: tags{
 						Tenant: csp.NameSpace,
 					},
