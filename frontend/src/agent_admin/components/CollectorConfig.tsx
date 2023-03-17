@@ -23,8 +23,7 @@ import AgentCodeEditor from 'src/agent_admin/components/AgentCodeEditor'
 interface Props {
   isCollectorInstalled: boolean
   focusedCollectorConfigTab: CollectorConfigTabName | ''
-  configScript: string
-  inputConfigScript: string
+  tomlConfigScript: string
   selectedService: string[]
   collectorConfigTableTabs: CollectorConfigTabName[]
   collectorConfigTableData: CollectorConfigTableData
@@ -112,7 +111,7 @@ class CollectorConfig extends PureComponent<Props, State> {
 
   private get CodeEditor() {
     const {
-      inputConfigScript,
+      tomlConfigScript,
       handleBeforeChangeScript,
       handleChangeScript,
     } = this.props
@@ -129,7 +128,7 @@ class CollectorConfig extends PureComponent<Props, State> {
           }}
         >
           <AgentCodeEditor
-            configScript={inputConfigScript}
+            configScript={tomlConfigScript}
             onBeforeChangeScript={handleBeforeChangeScript}
             onChangeScript={handleChangeScript}
           />
