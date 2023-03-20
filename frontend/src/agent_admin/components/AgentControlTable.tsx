@@ -12,6 +12,7 @@ import AgentControlModal from 'src/agent_admin/components/AgentControlModal'
 import Dropdown from 'src/shared/components/Dropdown'
 import LoadingSpinner from 'src/flux/components/LoadingSpinner'
 import AgentMinionsToolTip from 'src/agent_admin/components/AgentMinionsToolTip'
+import AgentControlSupportOSVersionToolTip from 'src/agent_admin/components/AgentControlSupportOSVersionToolTip'
 
 // Contants
 import {
@@ -218,10 +219,14 @@ class AgentControlTable extends PureComponent<Props, State> {
             This feature is{' '}
             <span className="caution-word">not supported yet</span> for Windows.
           </span>
-          <SearchBar
-            placeholder="Filter by Host..."
-            onSearch={this.updateSearchTerm}
-          />
+          <span style={{display: 'flex'}}>
+            <span className="tooltip--agent-control">OS Support</span>
+            <AgentControlSupportOSVersionToolTip />
+            <SearchBar
+              placeholder="Filter by Host..."
+              onSearch={this.updateSearchTerm}
+            />
+          </span>
         </div>
         <div className="panel-body">{this.AgentTableContents}</div>
         <div className="panel-body--agent-control">

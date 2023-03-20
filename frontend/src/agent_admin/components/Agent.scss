@@ -107,6 +107,11 @@
     cursor: pointer;
   }
 
+  .tooltip--agent-control {
+    line-height: 30px;
+    padding-right: 0.1rem;
+  }
+
   .panel-body--agent-control {
     display: flex;
     flex-direction: row;
