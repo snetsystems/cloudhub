@@ -20,6 +20,7 @@ import {
   RequestPauseVcenterAction,
   RequestRunVcenterAction,
 } from 'src/clouds/actions/vspheres'
+import {setCloudAutoRefresh} from 'src/clouds/actions/clouds'
 
 export {
   Action,
@@ -42,4 +43,5 @@ export {
   ResponseVcenterAction,
   RequestPauseVcenterAction,
   RequestRunVcenterAction,
+  setCloudAutoRefresh,
 }

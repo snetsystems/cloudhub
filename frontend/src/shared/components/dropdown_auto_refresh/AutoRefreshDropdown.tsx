@@ -15,16 +15,23 @@ import {
 
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
+// Types
+import {CloudAutoRefresh} from 'src/clouds/types/type'
+
 interface Props {
   selected: number
   onChoose: (autoRefreshOption: AutoRefreshOption) => void
   showManualRefresh?: boolean
   onManualRefresh?: () => void
   userAutoRefreshOptions?: AutoRefreshOption[]
+  customAutoRefreshOptions?: AutoRefreshOption[]
+  customAutoRefreshSelected?: CloudAutoRefresh
 }
-
+interface State {
+  isOpen: boolean
+}
 @ErrorHandling
-class AutoRefreshDropdown extends Component<Props> {
+class AutoRefreshDropdown extends Component<Props, State> {
   public static defaultProps: Partial<Props> = {
     showManualRefresh: true,
   }
@@ -46,23 +53,7 @@ class AutoRefreshDropdown extends Component<Props> {
           onChange={this.handleDropdownChange}
           selectedID={this.selectedID}
         >
-          {getAutoRefreshOptions().map(option => {
-            if (option.type === AutoRefreshOptionType.Header) {
-              return (
-                <Dropdown.Divider
-                  key={option.id}
-                  id={option.id}
-                  text={option.label}
-                />
-              )
-            }
-
-            return (
-              <Dropdown.Item key={option.id} id={option.id} value={option}>
-                {option.label}
-              </Dropdown.Item>
-            )
-          })}
+          {this.autoRefreshDropdownItems}
         </Dropdown>
         {this.manualRefreshButton}
       </div>
@@ -77,9 +68,15 @@ class AutoRefreshDropdown extends Component<Props> {
   }
 
   private get isPaused(): boolean {
-    const {selected} = this.props
-
-    return selected === 0
+    const {
+      selected,
+      customAutoRefreshOptions,
+      customAutoRefreshSelected,
+    } = this.props
+    const checkSelected = customAutoRefreshOptions
+      ? customAutoRefreshSelected?.[customAutoRefreshOptions[0].group] === 0
+      : selected === 0
+    return checkSelected
   }
 
   private get className(): string {
@@ -103,14 +100,30 @@ class AutoRefreshDropdown extends Component<Props> {
   }
 
   private get selectedID(): string {
-    const {selected} = this.props
-    const autoRefreshOptions = getAutoRefreshOptions()
+    const {
+      selected,
+      customAutoRefreshOptions,
+      customAutoRefreshSelected,
+    } = this.props
 
+    if (customAutoRefreshOptions) {
+      const autoRefreshOptions = this.getCombinedAutoRefreshOptions()
+
+      const selectedOption = _.find(
+        autoRefreshOptions,
+        option =>
+          option.milliseconds ===
+          (customAutoRefreshSelected?.[option.group] ||
+            customAutoRefreshSelected.default)
+      )
+      return selectedOption?.id || 'auto-refresh-paused'
+    }
+
+    const autoRefreshOptions = getAutoRefreshOptions()
     const selectedOption = _.find(
       autoRefreshOptions,
       option => option.milliseconds === selected
     )
-
     return selectedOption.id
   }
 
@@ -132,6 +145,32 @@ class AutoRefreshDropdown extends Component<Props> {
     }
 
     return null
+  }
+  private getCombinedAutoRefreshOptions() {
+    const {customAutoRefreshOptions} = this.props
+
+    return customAutoRefreshOptions || getAutoRefreshOptions()
+  }
+
+  private get autoRefreshDropdownItems(): JSX.Element[] {
+    const autoRefreshDropdownItems = this.getCombinedAutoRefreshOptions()
+    return autoRefreshDropdownItems.map(option => {
+      if (option.type === AutoRefreshOptionType.Header) {
+        return (
+          <Dropdown.Divider
+            key={option.id}
+            id={option.id}
+            text={option.label}
+          />
+        )
+      }
+
+      return (
+        <Dropdown.Item key={option.id} id={option.id} value={option}>
+          {option.label}
+        </Dropdown.Item>
+      )
+    })
   }
 }
 
