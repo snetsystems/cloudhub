@@ -424,17 +424,20 @@ func (s *Service) generateTelegrafConfigForOSP(ctx context.Context, csp *cloudhu
 		return http.StatusInternalServerError, nil, fmt.Errorf("Output plugin(something like influxdb) urls for telegraf are empty or invalid")
 	}
 
+	var influxdbs []influxdb
+	for _, url := range outputURLs {
+		influxdbs = append(influxdbs, influxdb{
+			Urls:     []string{url},
+			Database: csp.NameSpace,
+			Tagpass: tagpass{
+				Tenant: []string{csp.NameSpace},
+			},
+		})
+	}
+
 	telegrafConfig := &telegrafConfig{
 		Outputs: outputs{
-			Influxdb: []influxdb{
-				{
-					Urls:     outputURLs,
-					Database: csp.NameSpace,
-					Tagpass: tagpass{
-						Tenant: []string{csp.NameSpace},
-					},
-				},
-			},
+			Influxdb: influxdbs,
 		},
 		Inputs: inputs{
 			Openstack: []openstack{

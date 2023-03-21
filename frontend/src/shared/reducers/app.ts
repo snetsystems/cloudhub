@@ -1,11 +1,20 @@
+// library
 import {combineReducers} from 'redux'
 
+// constants
 import {
   AUTOREFRESH_DEFAULT,
   SHOW_TEMP_VAR_CONTROL_BAR_DEFAULT,
 } from 'src/shared/constants'
+import {CLOUD_AUTO_REFRESH} from 'src/clouds/constants/autoRefresh'
+
+// actions
 import {ActionTypes, Action} from 'src/types/actions/app'
+import {CloudAction, CloudActionTypes} from 'src/clouds/types/actions/clouds'
+
+// types
 import {TimeZones} from 'src/types'
+import {CloudAutoRefresh} from 'src/clouds/types/type'
 
 interface State {
   ephemeral: {
@@ -13,6 +22,7 @@ interface State {
   }
   persisted: {
     autoRefresh: number
+    cloudAutoRefresh: CloudAutoRefresh
     showTemplateVariableControlBar: boolean
     timeZone: TimeZones
   }
@@ -24,6 +34,7 @@ const initialState: State = {
   },
   persisted: {
     autoRefresh: AUTOREFRESH_DEFAULT,
+    cloudAutoRefresh: CLOUD_AUTO_REFRESH,
     showTemplateVariableControlBar: SHOW_TEMP_VAR_CONTROL_BAR_DEFAULT,
     timeZone: TimeZones.Local,
   },
@@ -60,7 +71,7 @@ const appEphemeralReducer = (
 
 const appPersistedReducer = (
   state = initialAppPersistedState,
-  action: Action
+  action: Action | CloudAction
 ) => {
   switch (action.type) {
     case ActionTypes.SetAutoRefresh: {
@@ -84,6 +95,15 @@ const appPersistedReducer = (
       return {
         ...state,
         timeZone,
+      }
+    }
+    case CloudActionTypes.SetCloudAutoRefresh: {
+      return {
+        ...state,
+        cloudAutoRefresh: {
+          ...state.cloudAutoRefresh,
+          ...action.payload.cloudAutoRefresh,
+        },
       }
     }
 

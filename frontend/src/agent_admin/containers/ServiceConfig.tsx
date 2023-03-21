@@ -112,7 +112,7 @@ interface State {
   collectorServerObject: MinionsObject
   isCollectorInstalled: boolean
   configScript: string
-  inputConfigScript: string
+  tomlConfigScript: string
   configEditStyle: 'basic' | 'toml'
   focusedMinion: string
   focusedTenant: string
@@ -131,7 +131,7 @@ export class ServiceConfig extends PureComponent<Props, State> {
     this.state = {
       collectorServerObject: {},
       focusedCollectorConfigTab: '',
-      inputConfigScript: '',
+      tomlConfigScript: '',
       configScript: '',
       configEditStyle: 'basic',
       isCollectorInstalled: false,
@@ -236,7 +236,7 @@ export class ServiceConfig extends PureComponent<Props, State> {
       selectedService: [],
       projectFileList: {files: [], isLoading: true},
       configScript: '',
-      inputConfigScript: '',
+      tomlConfigScript: '',
     })
 
     try {
@@ -354,7 +354,7 @@ export class ServiceConfig extends PureComponent<Props, State> {
     script: string
   ) => {
     this.setState({
-      inputConfigScript: script,
+      tomlConfigScript: script,
     })
   }
 
@@ -403,7 +403,7 @@ export class ServiceConfig extends PureComponent<Props, State> {
     } = this.state
 
     if (configEditStyle === 'toml') {
-      return this.updateCollectorConfigTableDataByTOM(configScript)
+      return this.updateCollectorConfigTableDataByTOM()
     }
 
     const configObj = TOML.parse(configScript)
@@ -418,23 +418,17 @@ export class ServiceConfig extends PureComponent<Props, State> {
     inputPlugins.interval = collectorConfigTableData.interval
     inputPlugins.enabled_services = selectedService
 
-    const inputConfigObj = _.cloneDeep(configObj)
-
-    delete inputConfigObj.outputs
     this.setState({
-      inputConfigScript: TOML.stringify(inputConfigObj),
+      tomlConfigScript: TOML.stringify(configObj),
     })
 
     return TOML.stringify(configObj)
   }
 
-  public updateCollectorConfigTableDataByTOM(configScript) {
-    const {focusedCollectorConfigTab, inputConfigScript} = this.state
-    const configObj = TOML.parse(configScript)
-    const inputConfigObj = TOML.parse(inputConfigScript)
-    const inputPlugins = inputConfigObj['inputs'][focusedCollectorConfigTab][0]
-
-    configObj.inputs = inputConfigObj.inputs
+  public updateCollectorConfigTableDataByTOM() {
+    const {focusedCollectorConfigTab, tomlConfigScript} = this.state
+    const tomlConfigObj = TOML.parse(tomlConfigScript)
+    const inputPlugins = tomlConfigObj['inputs'][focusedCollectorConfigTab][0]
 
     this.setState({
       collectorConfigTableData: {
@@ -448,7 +442,7 @@ export class ServiceConfig extends PureComponent<Props, State> {
       selectedService: inputPlugins.enabled_services,
     })
 
-    return TOML.stringify(configObj)
+    return TOML.stringify(tomlConfigObj)
   }
 
   public debugTelegrafCloudPlugin(configScript) {
@@ -626,12 +620,9 @@ export class ServiceConfig extends PureComponent<Props, State> {
         )
         const configObj = TOML.parse(hostLocalFileReadData)
         const inputPlugins = this.getInputPlugins(configObj)
-        const inputConfigObj = _.cloneDeep(configObj)
-
-        delete inputConfigObj.outputs
 
         this.setState({
-          inputConfigScript: TOML.stringify(inputConfigObj),
+          tomlConfigScript: TOML.stringify(configObj),
           configScript: TOML.stringify(configObj),
           serviceConfigStatus: RemoteDataState.Done,
           focusedTenant: selectedTenant,
@@ -671,7 +662,7 @@ export class ServiceConfig extends PureComponent<Props, State> {
       },
       selectedService: [],
       configScript: '',
-      inputConfigScript: '',
+      tomlConfigScript: '',
     })
 
     notify(notifyConfigFileReadFailed(tomlParsingErrorMessage))
@@ -747,7 +738,7 @@ export class ServiceConfig extends PureComponent<Props, State> {
       focusedCollectorConfigTab: selectedCollectorConfigTab,
       serviceConfigStatus: RemoteDataState.Loading,
       configScript: '',
-      inputConfigScript: '',
+      tomlConfigScript: '',
     })
 
     try {
@@ -796,7 +787,7 @@ export class ServiceConfig extends PureComponent<Props, State> {
       projectFileList: {files: [], isLoading: true},
       serviceConfigStatus: RemoteDataState.Done,
       configScript: '',
-      inputConfigScript: '',
+      tomlConfigScript: '',
     })
 
     notify(notifyGetProjectFileFailed(error))
@@ -815,8 +806,7 @@ export class ServiceConfig extends PureComponent<Props, State> {
       collectorConfigTableData,
       focusedCollectorConfigTab,
       selectedService,
-      configScript,
-      inputConfigScript,
+      tomlConfigScript,
       configEditStyle,
     } = this.state
 
@@ -854,8 +844,7 @@ export class ServiceConfig extends PureComponent<Props, State> {
             </div>
             <div className="service-config-collector__container">
               <CollectorConfig
-                inputConfigScript={inputConfigScript}
-                configScript={configScript}
+                tomlConfigScript={tomlConfigScript}
                 configEditStyle={configEditStyle}
                 collectorConfigTableTabs={collectorConfigTableTabs}
                 serviceConfigStatus={serviceConfigStatus}

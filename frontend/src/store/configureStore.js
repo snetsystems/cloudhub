@@ -52,9 +52,11 @@ const composeEnhancers =
     : window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ || compose
 
 if (process.env.NODE_ENV === 'production') {
-  window.__REACT_DEVTOOLS_GLOBAL_HOOK__.inject = function () {}
-  window.__REACT_DEVTOOLS_GLOBAL_HOOK__.onCommitFiberRoot = function () {}
-  window.__REACT_DEVTOOLS_GLOBAL_HOOK__.onCommitFiberUnmount = function () {}
+  if (typeof window.__REACT_DEVTOOLS_GLOBAL_HOOK__ === 'object') {
+    window.__REACT_DEVTOOLS_GLOBAL_HOOK__.inject = function () {}
+    window.__REACT_DEVTOOLS_GLOBAL_HOOK__.onCommitFiberRoot = function () {}
+    window.__REACT_DEVTOOLS_GLOBAL_HOOK__.onCommitFiberUnmount = function () {}
+  }
 }
 
 export default function configureStore(initialState, browserHistory) {

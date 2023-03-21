@@ -2,7 +2,7 @@
 import React, {Component} from 'react'
 import chroma from 'chroma-js'
 
-// constents
+// constants
 import {DEFAULT_CELL_BG_COLOR} from 'src/dashboards/constants'
 
 // error handler
@@ -22,7 +22,12 @@ class OpenStackPageHeader extends Component<Props> {
         className={
           'dash-graph--heading  dash-graph--heading-draggable openstacck-dash-graph--draggable'
         }
-        style={{margin: 0, height: '40px', backgroundColor: '#292933'}}
+        style={{
+          margin: 0,
+          height: '40px',
+          backgroundColor: '#292933',
+          zIndex: 6,
+        }}
       >
         {this.cellName}
         {this.props.children}

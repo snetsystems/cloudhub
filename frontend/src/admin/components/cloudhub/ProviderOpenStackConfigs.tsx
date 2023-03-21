@@ -150,7 +150,7 @@ export class ProviderOpenStackConfigs extends PureComponent<Props, State> {
               type="button"
             >
               <span className="icon checkmark"></span>
-              {id ? HandleType.Delete : HandleType.Create}
+              {_.isEmpty(id) ? HandleType.Create : HandleType.Delete}
             </button>
 
             <div style={{marginLeft: '1em'}} className="all-users-admin-toggle">
@@ -182,8 +182,7 @@ export class ProviderOpenStackConfigs extends PureComponent<Props, State> {
   private handleSubmit = async e => {
     e.preventDefault()
 
-    const {id} = this.props.cspInput
-
+    const {id, hasProjectOption} = this.props.cspInput
     const properties = {
       id: id || '',
       projectName: this.projectName.value,
@@ -196,5 +195,9 @@ export class ProviderOpenStackConfigs extends PureComponent<Props, State> {
     }
     const handleType = id ? HandleType.Delete : HandleType.Create
     await this.props.onHandleSubmit(properties, handleType)
+    this.setState(prevState => ({
+      ...prevState,
+      isActiveToggle: hasProjectOption,
+    }))
   }
 }

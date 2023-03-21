@@ -24,6 +24,11 @@ import {
   COLLECTOR_CONFIG_TAB_ORDER,
 } from 'src/agent_admin/constants/CollectorConfigTable'
 
+import {
+  SUPPORTED_OS_VERSION,
+  SUPPORTED_OS_VERSION_ORDER,
+} from 'src/agent_admin/constants/agentControlTableSupportedOsVersion'
+
 export {
   NETWORK_ACCESS,
   GET_STATUS,
@@ -39,4 +44,6 @@ export {
   COLLECTOR_DROPDOWN_DATA,
   COLLECTOR_CONFIG_TAB_ABBREVIATION,
   COLLECTOR_CONFIG_TAB_ORDER,
+  SUPPORTED_OS_VERSION,
+  SUPPORTED_OS_VERSION_ORDER,
 }

@@ -24,6 +24,7 @@ import {
   delayEnablePresentationMode,
 } from 'src/shared/actions/app'
 import {notify as notifyAction} from 'src/shared/actions/notifications'
+import {setCloudAutoRefresh} from 'src/clouds/actions'
 
 // Types
 import {
@@ -35,9 +36,14 @@ import {
 } from 'src/types'
 import {timeRanges} from 'src/shared/data/timeRanges'
 import * as AppActions from 'src/types/actions/app'
+import {CloudAutoRefresh} from 'src/clouds/types/type'
 
 // Utils
 import {RouterState, InjectedRouter} from 'react-router'
+
+// Constants
+import {AutoRefreshOption} from 'src/shared/components/dropdown_auto_refresh/autoRefreshOptions'
+import {getTimeOptionByGroup} from 'src/clouds/constants/autoRefresh'
 
 interface RouterProps extends InjectedRouter {
   params: RouterState['params']
@@ -47,9 +53,11 @@ interface Props extends ManualRefreshProps {
   source: Source
   links: Links
   autoRefresh: number
+  cloudAutoRefresh: CloudAutoRefresh
   inPresentationMode: boolean
   notify: NotificationAction
   onChooseAutoRefresh: (milliseconds: RefreshRate) => void
+  onChooseCloudAutoRefresh: (autoRefreshGroup: CloudAutoRefresh) => void
   handleClearTimeout: (key: string) => void
   handleClickPresentationButton: AppActions.DelayEnablePresentationModeDispatcher
   handleChooseAutoRefresh: AppActions.SetAutoRefreshActionCreator
@@ -58,28 +66,50 @@ interface Props extends ManualRefreshProps {
 
 interface State {
   timeRange: TimeRange
+  autoRefreshOptions: AutoRefreshOption[] | null
+  currentRoute: string | null
 }
 
 @ErrorHandling
 class Clouds extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
+    const currentRoute = this.props.router.params?.cloud
 
     this.state = {
       timeRange: timeRanges.find(tr => tr.lower === 'now() - 1h'),
+      autoRefreshOptions: getTimeOptionByGroup(currentRoute),
+      currentRoute,
     }
   }
 
-  public handleChooseAutoRefresh = (option: {milliseconds: RefreshRate}) => {
-    const {onChooseAutoRefresh} = this.props
-    const {milliseconds} = option
+  componentDidUpdate(): void {
+    if (this.state.currentRoute !== this.props.router.params?.cloud) {
+      const currentRoute = this.props.router.params?.cloud
 
-    onChooseAutoRefresh(milliseconds)
+      this.setState(prevState => ({
+        ...prevState,
+        autoRefreshOptions: getTimeOptionByGroup(currentRoute),
+        currentRoute,
+      }))
+    }
+  }
+
+  public handleChooseAutoRefresh = (option: {
+    milliseconds: RefreshRate
+    group?: string
+  }) => {
+    const {onChooseAutoRefresh, onChooseCloudAutoRefresh} = this.props
+    const {milliseconds, group} = option
+    group
+      ? onChooseCloudAutoRefresh({[group]: milliseconds})
+      : onChooseAutoRefresh(milliseconds)
   }
 
   public render() {
     const {
       autoRefresh,
+      cloudAutoRefresh,
       manualRefresh,
       onManualRefresh,
       inPresentationMode,
@@ -87,7 +117,7 @@ class Clouds extends PureComponent<Props, State> {
       handleClearTimeout,
       router,
     } = this.props
-    const {timeRange} = this.state
+    const {timeRange, autoRefreshOptions, currentRoute} = this.state
 
     return (
       <Page className="hosts-list-page">
@@ -111,12 +141,16 @@ class Clouds extends PureComponent<Props, State> {
               selected={autoRefresh}
               onChoose={this.handleChooseAutoRefresh}
               onManualRefresh={onManualRefresh}
+              customAutoRefreshOptions={autoRefreshOptions}
+              customAutoRefreshSelected={cloudAutoRefresh}
             />
-            <TimeRangeDropdown
-              //@ts-ignore
-              onChooseTimeRange={this.handleChooseTimeRange}
-              selected={timeRange}
-            />
+            {currentRoute !== 'openstack' && (
+              <TimeRangeDropdown
+                //@ts-ignore
+                onChooseTimeRange={this.handleChooseTimeRange}
+                selected={timeRange}
+              />
+            )}
             <Button
               icon={IconFont.ExpandA}
               onClick={this.handleClickPresentationButton}
@@ -152,7 +186,7 @@ class Clouds extends PureComponent<Props, State> {
                 source={source}
                 manualRefresh={manualRefresh}
                 timeRange={timeRange}
-                autoRefresh={autoRefresh}
+                autoRefresh={cloudAutoRefresh?.openstack || 0}
               />
             )}
           </>
@@ -178,20 +212,23 @@ class Clouds extends PureComponent<Props, State> {
 const mstp = state => {
   const {
     app: {
-      persisted: {autoRefresh},
+      persisted: {autoRefresh, cloudAutoRefresh},
       ephemeral: {inPresentationMode},
     },
     links,
   } = state
+
   return {
     links,
     autoRefresh,
+    cloudAutoRefresh,
     inPresentationMode,
   }
 }
 
 const mdtp = dispatch => ({
   onChooseAutoRefresh: bindActionCreators(setAutoRefresh, dispatch),
+  onChooseCloudAutoRefresh: bindActionCreators(setCloudAutoRefresh, dispatch),
   handleClickPresentationButton: bindActionCreators(
     delayEnablePresentationMode,
     dispatch
