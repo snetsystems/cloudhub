@@ -117,7 +117,7 @@ class Clouds extends PureComponent<Props, State> {
       handleClearTimeout,
       router,
     } = this.props
-    const {timeRange, autoRefreshOptions} = this.state
+    const {timeRange, autoRefreshOptions, currentRoute} = this.state
 
     return (
       <Page className="hosts-list-page">
@@ -144,11 +144,13 @@ class Clouds extends PureComponent<Props, State> {
               customAutoRefreshOptions={autoRefreshOptions}
               customAutoRefreshSelected={cloudAutoRefresh}
             />
-            <TimeRangeDropdown
-              //@ts-ignore
-              onChooseTimeRange={this.handleChooseTimeRange}
-              selected={timeRange}
-            />
+            {currentRoute !== 'openstack' && (
+              <TimeRangeDropdown
+                //@ts-ignore
+                onChooseTimeRange={this.handleChooseTimeRange}
+                selected={timeRange}
+              />
+            )}
             <Button
               icon={IconFont.ExpandA}
               onClick={this.handleClickPresentationButton}

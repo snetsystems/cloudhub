@@ -73,10 +73,18 @@ class AutoRefreshDropdown extends Component<Props, State> {
       customAutoRefreshOptions,
       customAutoRefreshSelected,
     } = this.props
-    const checkSelected = customAutoRefreshOptions
-      ? customAutoRefreshSelected?.[customAutoRefreshOptions[0].group] === 0
-      : selected === 0
-    return checkSelected
+
+    if (customAutoRefreshOptions) {
+      const groupName = customAutoRefreshOptions[0].group
+      const customRefreshTime =
+        customAutoRefreshSelected?.[groupName] === undefined
+          ? 0
+          : customAutoRefreshSelected?.[groupName]
+
+      return customRefreshTime === 0
+    }
+
+    return selected === 0
   }
 
   private get className(): string {
@@ -114,7 +122,7 @@ class AutoRefreshDropdown extends Component<Props, State> {
         option =>
           option.milliseconds ===
           (customAutoRefreshSelected?.[option.group] ||
-            customAutoRefreshSelected.default)
+            customAutoRefreshSelected?.default)
       )
       return selectedOption?.id || 'auto-refresh-paused'
     }
