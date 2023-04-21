@@ -1434,6 +1434,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
     ) => {
       const {handleGetIpmiSensorDataAsync} = this.props
       const {isPinned} = this.state
+      if (!target) return
 
       const pIpmi: Ipmi = {
         target,
