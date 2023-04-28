@@ -2684,7 +2684,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
     const tempVars = generateForHosts(source)
     const fetchMeasurements = getMeasurementsForEtc(source, hostID)
     const filterLayouts = _.filter(layouts, m =>
-      _.includes(['cloudwatch_elb'], m.app)
+      _.includes(['cloudwatch_elb', 'system', 'win_system'], m.app)
     )
 
     const fetchHosts = getAppsForEtc(
