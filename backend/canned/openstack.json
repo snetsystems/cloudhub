@@ -7,8 +7,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "d593c44d-ccfd-4903-816e-215cfe96d2c7",
       "name": "CPU Usage",
       "queries": [
@@ -52,7 +52,7 @@
       "x": 0,
       "y": 5,
       "w": 8,
-      "h": 5,
+      "h": 30,
       "name": "Port Recevie Packet",
       "queries": [
         {
@@ -92,10 +92,10 @@
     },
     {
       "i": "dcfe8313-cad3-4f72-b8bd-775a84c63965",
-      "x": 8,
+      "x": 64,
       "y": 0,
-      "w": 4,
-      "h": 2,
+      "w": 32,
+      "h": 12,
       "name": "Port Transmit Packets",
       "queries": [
         {
@@ -108,8 +108,8 @@
       "i": "c79db90f-cec7-4593-b9f7-9b26face0c18",
       "x": 0,
       "y": 5,
-      "w": 5,
-      "h": 5,
+      "w": 40,
+      "h": 30,
       "name": "System - Memory Used",
       "queries": [
         {
@@ -192,10 +192,10 @@
     },
     {
       "i": "06202665-2f85-4221-96a4-189ad0fb2627",
-      "x": 5,
+      "x": 40,
       "y": 5,
-      "w": 5,
-      "h": 5,
+      "w": 40,
+      "h": 30,
       "name": "Disk Read Request",
       "queries": [
         {
@@ -210,10 +210,10 @@
     },
     {
       "i": "5023214a-f2d3-475c-a3d3-4ec1df62f94f",
-      "x": 8,
+      "x": 64,
       "y": 2,
-      "w": 4,
-      "h": 2,
+      "w": 32,
+      "h": 12,
       "name": "Disk Write Request",
       "queries": [
         {

@@ -7,8 +7,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "a209be7f-33c6-4612-88b2-848ae402c66a",
       "name": "NGINX – Client Connections",
       "queries": [
@@ -22,8 +22,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "0fc591ad-8541-4de3-a36e-4ae69ff954c4",
       "name": "NGINX – Client Errors",
       "queries": [
@@ -37,8 +37,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "a1f37574-b86e-4278-8acc-ba78d3ac2e4e",
       "name": "NGINX – Client Requests",
       "queries": [
@@ -52,8 +52,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "5b91c5b0-d270-4d03-aeae-007f2351c80c",
       "name": "NGINX – Active Client State",
       "queries": [

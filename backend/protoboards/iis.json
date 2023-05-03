@@ -14,8 +14,8 @@
   "data": {
     "cells": [
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "IIS - Service",
         "queries": [
           {

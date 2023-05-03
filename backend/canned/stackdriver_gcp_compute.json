@@ -7,8 +7,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "7841eab1-8669-4e95-a848-ebdd318783c5",
       "name": "CPU utilization %",
       "queries": [
@@ -23,8 +23,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "f5af3d08-8ed9-4424-99ef-e1430e184278",
       "name": "Memory usage %",
       "queries": [
@@ -39,8 +39,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "f07ad359-b4c0-4982-9e80-0b9a02815c49",
       "name": "Network send (KiB)",
       "queries": [
@@ -55,8 +55,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "f6bf1bf6-8b53-43ce-b317-cc586e895462",
       "name": "Network Received (KiB)",
       "queries": [
@@ -71,8 +71,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "67797d38-b8b2-4993-ba82-b95ada947ca4",
       "name": "DisK Write (KiB)",
       "queries": [
@@ -87,8 +87,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "c16f00e9-49c9-4d86-b154-92a93f670bfd",
       "name": "Disk Read (KiB)",
       "queries": [
@@ -103,8 +103,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "0c759247-db5f-4be4-8a95-bf1c8d4b00cf",
       "name": "Disk Usage %",
       "queries": [

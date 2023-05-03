@@ -7,8 +7,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "f07967cb-2c2a-41cb-8420-f041f46b0635",
       "name": "NSQ - Topic Messages",
       "queries": [
@@ -20,10 +20,10 @@
       ]
     },
     {
-      "x": 4,
+      "x": 32,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "912f337b-3af2-42af-9352-b31a5bc3b431",
       "name": "NSQ - Topic Messages on Disk",
       "queries": [
@@ -37,8 +37,8 @@
     {
       "x": 0,
       "y": 4,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "06909f21-f035-4668-8193-8e06a018accb",
       "name": "NSQ - Topic Ingress",
       "queries": [
@@ -50,10 +50,10 @@
       ]
     },
     {
-      "x": 4,
+      "x": 32,
       "y": 4,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "a5aa73a5-42aa-464a-aaaa-0a7a50632a0a",
       "name": "NSQ topic egress",
       "queries": [

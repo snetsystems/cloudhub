@@ -7,23 +7,19 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "4c79cefb-5152-410c-9b88-74f9bff7ef23",
       "name": "Docker - Container Network",
       "queries": [
         {
           "query": "SELECT derivative(mean(\"tx_bytes\"), 10s) AS \"net_tx_bytes\" FROM \":db:\".\":rp:\".\"docker_container_net\"",
-          "groupbys": [
-            "\"container_name\""
-          ],
+          "groupbys": ["\"container_name\""],
           "wheres": []
         },
         {
           "query": "SELECT derivative(mean(\"rx_bytes\"), 10s) AS \"net_rx_bytes\" FROM \":db:\".\":rp:\".\"docker_container_net\"",
-          "groupbys": [
-            "\"container_name\""
-          ],
+          "groupbys": ["\"container_name\""],
           "wheres": []
         }
       ]

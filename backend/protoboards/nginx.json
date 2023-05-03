@@ -14,8 +14,8 @@
   "data": {
     "cells": [
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "NGINX – Client Connections",
         "queries": [
           {
@@ -52,8 +52,8 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "NGINX – Client Errors",
         "queries": [
           {
@@ -90,8 +90,8 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "NGINX – Client Requests",
         "queries": [
           {
@@ -128,8 +128,8 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "NGINX – Active Client State",
         "queries": [
           {

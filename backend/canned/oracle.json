@@ -7,8 +7,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "cee8adda-4ff6-4c32-8514-2b6add9bde21",
       "name": "Active Session Count",
       "queries": [
@@ -24,8 +24,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "9bd2acc9-6b80-47d7-908b-e9cfdac63e2e",
       "name": "Session Limit Usage (%)",
       "queries": [
@@ -41,8 +41,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "63b0f51c-ffb1-467f-b214-e8635353b290",
       "name": "Total Session Count",
       "queries": [
@@ -58,8 +58,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "96a8cf88-dbd0-4229-a95e-46f3443adcb8",
       "name": "Physical Disk Reads",
       "queries": [
@@ -75,8 +75,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "ae2e6d22-4f52-4c32-853b-7af7a339d544",
       "name": "Physical Disk Writes",
       "queries": [
@@ -92,8 +92,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "a55cf706-bdaa-46a6-ad32-55ec36a83f72",
       "name": "Sorts on Disk",
       "queries": [
@@ -109,8 +109,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "b7f7adf7-b6d0-4aa4-8265-d9b9772ae264",
       "name": "Total Table Scans",
       "queries": [
@@ -126,8 +126,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "c08310e7-212e-4a10-a785-26533ad05f14",
       "name": "In-Memory Sorts Ratio (%)",
       "queries": [
@@ -143,8 +143,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "6a7f92b7-6244-4a4a-b993-f87a26b10a0b",
       "name": "Shared Pool Free Memory (%)",
       "queries": [
@@ -160,8 +160,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "b9315824-137a-4842-9b31-cdd4ceeee0af",
       "name": "User Rollbacks",
       "queries": [
@@ -177,8 +177,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "58e775dd-fa28-47ca-a5f9-2f57617db29e",
       "name": "Enqueue Timeouts",
       "queries": [
@@ -194,8 +194,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "c5bf1bf4-b01c-4b1a-80d5-37e45b3750dd",
       "name": "Tablespace Usage (%)",
       "queries": [

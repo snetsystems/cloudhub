@@ -7,8 +7,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "6ec7e632-2c19-475c-8747-56feaacf46ce",
       "name": "System Load",
       "queries": [

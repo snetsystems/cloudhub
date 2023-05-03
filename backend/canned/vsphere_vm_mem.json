@@ -7,8 +7,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "1625eb7b-00ba-4e95-ac8c-8089ab8888f3",
       "name": "Memory Usage (VM)",
       "queries": [

@@ -284,7 +284,7 @@ export class OpenStackPage extends PureComponent<Props, State> {
         <GridLayout
           className="layout"
           layout={openStackLayouts}
-          cols={20}
+          cols={96}
           rowHeight={50}
           margin={[LAYOUT_MARGIN, LAYOUT_MARGIN]}
           containerPadding={[20, 10]}

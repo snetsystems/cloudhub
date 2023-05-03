@@ -14,10 +14,10 @@
   "data": {
     "cells": [
       {
-        "x": 4,
+        "x": 32,
         "y": 0,
-        "w": 6,
-        "h": 3,
+        "w": 48,
+        "h": 18,
         "name": "Used Memory",
         "queries": [
           {
@@ -121,10 +121,10 @@
         "noteVisibility": "default"
       },
       {
-        "x": 3,
+        "x": 24,
         "y": 3,
-        "w": 4,
-        "h": 3,
+        "w": 32,
+        "h": 18,
         "name": "Reads/Writes (Count/sec)",
         "queries": [
           {
@@ -228,10 +228,10 @@
         "noteVisibility": "default"
       },
       {
-        "x": 7,
+        "x": 56,
         "y": 3,
-        "w": 3,
-        "h": 3,
+        "w": 24,
+        "h": 18,
         "name": "Read/Write bytes (BPS)",
         "queries": [
           {
@@ -337,8 +337,8 @@
       {
         "x": 0,
         "y": 3,
-        "w": 3,
-        "h": 3,
+        "w": 24,
+        "h": 18,
         "name": "Read/Write Latency(Millisecond)",
         "queries": [
           {
@@ -444,8 +444,8 @@
       {
         "x": 0,
         "y": 0,
-        "w": 4,
-        "h": 3,
+        "w": 32,
+        "h": 18,
         "name": "CPU usage(%)",
         "queries": [
           {

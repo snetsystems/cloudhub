@@ -14,8 +14,8 @@
   "data": {
     "cells": [
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "phpfpm – Accepted Connections",
         "queries": [
           {
@@ -53,8 +53,8 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "phpfpm – Processes",
         "queries": [
           {
@@ -92,8 +92,8 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "phpfpm – Slow Requests",
         "queries": [
           {
@@ -131,8 +131,8 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "phpfpm – Max Children Reached",
         "queries": [
           {

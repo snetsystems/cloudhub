@@ -7,8 +7,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "2c822bd9-bdd1-4e6a-8231-f2ad57d3b377",
       "name": "Network Usage (VM)",
       "queries": [

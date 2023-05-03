@@ -21,8 +21,8 @@
       {
         "x": 0,
         "y": 0,
-        "w": 12,
-        "h": 1,
+        "w": 96,
+        "h": 6,
         "name": "",
         "queries": [
           {
@@ -93,8 +93,8 @@
       {
         "x": 0,
         "y": 1,
-        "w": 4,
-        "h": 2,
+        "w": 32,
+        "h": 12,
         "name": "Total Nodes",
         "queries": [
           {
@@ -171,10 +171,10 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 8,
+        "x": 64,
         "y": 1,
-        "w": 4,
-        "h": 2,
+        "w": 32,
+        "h": 12,
         "name": "Total Containers",
         "queries": [
           {
@@ -251,10 +251,10 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 4,
+        "x": 32,
         "y": 1,
-        "w": 4,
-        "h": 2,
+        "w": 32,
+        "h": 12,
         "name": "Total Pod Count",
         "queries": [
           {
@@ -333,8 +333,8 @@
       {
         "x": 0,
         "y": 3,
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "K8s - Node Millicores",
         "queries": [
           {
@@ -419,10 +419,10 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 4,
+        "x": 32,
         "y": 3,
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "K8s - Node Memory Bytes",
         "queries": [
           {
@@ -507,10 +507,10 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 8,
+        "x": 64,
         "y": 3,
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "K8s - Pod Millicores",
         "queries": [
           {
@@ -597,8 +597,8 @@
       {
         "x": 0,
         "y": 7,
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "K8s - Pod Memory Bytes",
         "queries": [
           {
@@ -683,10 +683,10 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 4,
+        "x": 32,
         "y": 7,
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "K8s - Pod TX Bytes/Second",
         "queries": [
           {
@@ -771,10 +771,10 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 8,
+        "x": 64,
         "y": 7,
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "K8s - Pod RX Bytes/Second ",
         "queries": [
           {
@@ -861,8 +861,8 @@
       {
         "x": 0,
         "y": 11,
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "K8s - Kubelet Millicores",
         "queries": [
           {
@@ -947,10 +947,10 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 4,
+        "x": 32,
         "y": 11,
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "K8s - Kubelet Memory Bytes",
         "queries": [
           {

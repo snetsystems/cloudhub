@@ -14,8 +14,8 @@
   "data": {
     "cells": [
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "Consul – Number of Critical Health Checks",
         "queries": [
           {
@@ -54,8 +54,8 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "Consul – Number of Warning Health Checks",
         "queries": [
           {

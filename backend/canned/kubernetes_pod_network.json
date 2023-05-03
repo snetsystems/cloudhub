@@ -7,8 +7,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "0e06ddcd-05dd-493f-9dba-a382300a7190",
       "name": "K8s - Pod TX Bytes/Second",
       "queries": [
@@ -20,10 +20,10 @@
       ]
     },
     {
-      "x": 4,
+      "x": 32,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "cc062b4c-70ca-4bd7-b372-398e734feb49",
       "name": "K8s - Pod RX Bytes/Second ",
       "queries": [

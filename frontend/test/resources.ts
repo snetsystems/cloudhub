@@ -421,8 +421,8 @@ export const layout = {
     {
       x: 0,
       y: 0,
-      w: 4,
-      h: 4,
+      w: 32,
+      h: 24,
       i: '0246e457-916b-43e3-be99-211c4cbc03e8',
       name: 'Apache Bytes/Second',
       queries: [
@@ -455,10 +455,10 @@ export const layout = {
       colors: [],
     },
     {
-      x: 4,
+      x: 32,
       y: 0,
-      w: 4,
-      h: 4,
+      w: 32,
+      h: 24,
       i: '37f2e4bb-9fa5-4891-a424-9df5ce7458bb',
       name: 'Apache - Requests/Second',
       queries: [
@@ -491,10 +491,10 @@ export const layout = {
       colors: [],
     },
     {
-      x: 8,
+      x: 64,
       y: 0,
-      w: 4,
-      h: 4,
+      w: 32,
+      h: 24,
       i: 'ea9174b3-2b56-4e80-a37d-064507c6775a',
       name: 'Apache - Total Accesses',
       queries: [
@@ -589,8 +589,8 @@ export const dashboard: Dashboard = {
 export const cell: Cell = {
   x: 0,
   y: 0,
-  w: 4,
-  h: 4,
+  w: 32,
+  h: 24,
   i: '0246e457-916b-43e3-be99-211c4cbc03e8',
   name: 'Apache Bytes/Second',
   queries: [],

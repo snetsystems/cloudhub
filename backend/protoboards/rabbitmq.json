@@ -14,8 +14,8 @@
   "data": {
     "cells": [
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "RabbitMQ - Overview",
         "queries": [
           {
@@ -57,8 +57,8 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "RabbitMQ - Published/Delivered per second",
         "queries": [
           {
@@ -97,8 +97,8 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "RabbitMQ - Acked/Unacked per second",
         "queries": [
           {

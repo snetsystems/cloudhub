@@ -7,8 +7,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "cf5d0608-b513-4244-a55f-accf520da3a1",
       "name": "System - Open Sockets",
       "queries": [
@@ -25,10 +25,10 @@
       ]
     },
     {
-      "x": 4,
+      "x": 32,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "63503235-a588-49a7-ae0a-fb015c888e5b",
       "name": "System - Sockets Created/Second ",
       "queries": [

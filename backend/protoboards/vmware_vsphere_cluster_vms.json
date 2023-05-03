@@ -13,10 +13,10 @@
   "data": {
     "cells": [
       {
-        "x": 6,
+        "x": 48,
         "y": 7,
-        "w": 6,
-        "h": 4,
+        "w": 48,
+        "h": 24,
         "name": "Total Disk Latency for :vmname:",
         "queries": [
           {
@@ -109,8 +109,8 @@
       {
         "x": 0,
         "y": 7,
-        "w": 6,
-        "h": 4,
+        "w": 48,
+        "h": 24,
         "name": "Network Usage for :vmname:",
         "queries": [
           {
@@ -201,10 +201,10 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 8,
+        "x": 64,
         "y": 3,
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "CPU Ready Average % for :vmname:",
         "queries": [
           {
@@ -295,10 +295,10 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 4,
+        "x": 32,
         "y": 3,
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "RAM Usage Average for :vmware:",
         "queries": [
           {
@@ -391,8 +391,8 @@
       {
         "x": 0,
         "y": 3,
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
         "name": "CPU Usage Average for :vmname:",
         "queries": [
           {
@@ -483,10 +483,10 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 8,
+        "x": 64,
         "y": 1,
-        "w": 4,
-        "h": 2,
+        "w": 32,
+        "h": 12,
         "name": "RAM Usage for :vmname:",
         "queries": [
           {
@@ -563,10 +563,10 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 4,
+        "x": 32,
         "y": 1,
-        "w": 4,
-        "h": 2,
+        "w": 32,
+        "h": 12,
         "name": "CPU Usage for :vmname: ",
         "queries": [
           {
@@ -645,8 +645,8 @@
       {
         "x": 0,
         "y": 1,
-        "w": 4,
-        "h": 2,
+        "w": 32,
+        "h": 12,
         "name": "Uptime for :vmname:",
         "queries": [
           {
@@ -725,8 +725,8 @@
       {
         "x": 0,
         "y": 0,
-        "w": 12,
-        "h": 1,
+        "w": 96,
+        "h": 6,
         "name": "",
         "queries": [
           {

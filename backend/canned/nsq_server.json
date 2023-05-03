@@ -7,8 +7,8 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "c376a3d8-cd2a-4212-bf1d-da776b75feeb",
       "name": "NSQ - Topic Count",
       "queries": [
@@ -20,10 +20,10 @@
       ]
     },
     {
-      "x": 4,
+      "x": 32,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
       "i": "aa1aa20a-48aa-4a42-aaa0-426aa6a58aa8",
       "name": "NSQ - Server Count",
       "queries": [

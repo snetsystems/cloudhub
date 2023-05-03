@@ -68,8 +68,8 @@ export const DEFAULT_FIELD_OPTIONS = [DEFAULT_INFLUXQL_TIME_FIELD]
 export const NEW_DEFAULT_DASHBOARD_CELL: NewDefaultCell = {
   x: 0,
   y: 0,
-  w: 4,
-  h: 4,
+  w: 32,
+  h: 24,
   name: UNTITLED_GRAPH,
   type: CellType.Line,
   queries: [],
