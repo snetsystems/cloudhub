@@ -368,6 +368,7 @@ interface State {
   isGetAwsInstanceType: RemoteDataState
   isInstanceTypeModalVisible: boolean
   isImportTopologyOverlayVisible: boolean
+  isTopologyChanged: boolean
 }
 
 @ErrorHandling
@@ -471,6 +472,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       isGetAwsVolume: RemoteDataState.NotStarted,
       isGetAwsInstanceType: RemoteDataState.NotStarted,
       isImportTopologyOverlayVisible: false,
+      isTopologyChanged: false,
     }
   }
 
@@ -649,6 +651,15 @@ export class InventoryTopology extends PureComponent<Props, State> {
   }
 
   public componentWillUnmount() {
+    const {isTopologyChanged} = this.state
+
+    if (
+      isTopologyChanged &&
+      window.confirm('Do you want to save unsaved changes?')
+    ) {
+      this.handleTopologySave()
+    }
+
     if (this.graph !== null) {
       this.graph.destroy()
       this.graph = null
@@ -1712,7 +1723,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
   private handleGraphModel = (sender: mxGraphModelType) => {
     const topology = this.xmlExport(sender)
 
-    this.setState({topology})
+    this.setState({topology, isTopologyChanged: true})
   }
 
   private handleClose = () => {
@@ -2152,7 +2163,10 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
         notify(notifyTopologySaved())
 
-        this.setState({topologyStatus: RemoteDataState.Done})
+        this.setState({
+          topologyStatus: RemoteDataState.Done,
+          isTopologyChanged: false,
+        })
       }
     } catch (err) {
       this.setState({topologyStatus: RemoteDataState.Done})
