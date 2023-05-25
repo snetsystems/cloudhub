@@ -18,6 +18,8 @@
         "y": 0,
         "w": 96,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "",
         "queries": [
           {
@@ -100,6 +102,8 @@
         "y": 11,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "PostgresSQL - Buffers",
         "queries": [
           {
@@ -207,6 +211,8 @@
         "y": 11,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Postgres deadlocks/conflicts",
         "queries": [
           {
@@ -314,6 +320,8 @@
         "y": 11,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "PostgreSQL commit/rolback per sec",
         "queries": [
           {
@@ -421,6 +429,8 @@
         "y": 8,
         "w": 48,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "PostgreSQL rows in / sec",
         "queries": [
           {
@@ -528,6 +538,8 @@
         "y": 8,
         "w": 48,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "PostgreSQL rows out / sec",
         "queries": [
           {
@@ -635,6 +647,8 @@
         "y": 5,
         "w": 24,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Processes",
         "queries": [
           {
@@ -739,6 +753,8 @@
         "y": 2,
         "w": 24,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "CPU Usage",
         "queries": [
           {
@@ -843,6 +859,8 @@
         "y": 2,
         "w": 24,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Filesystems usage",
         "queries": [
           {
@@ -957,6 +975,8 @@
         "y": 5,
         "w": 24,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Swap",
         "queries": [
           {
@@ -1064,6 +1084,8 @@
         "y": 1,
         "w": 16,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "System Load",
         "queries": [
           {
@@ -1154,6 +1176,8 @@
         "y": 5,
         "w": 24,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Network",
         "queries": [
           {
@@ -1261,6 +1285,8 @@
         "y": 1,
         "w": 24,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "Total Memory",
         "queries": [
           {
@@ -1351,6 +1377,8 @@
         "y": 5,
         "w": 24,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "I/O",
         "queries": [
           {
@@ -1458,6 +1486,8 @@
         "y": 2,
         "w": 24,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "System Load",
         "queries": [
           {
@@ -1565,6 +1595,8 @@
         "y": 1,
         "w": 16,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "nCPU",
         "queries": [
           {
@@ -1655,6 +1687,8 @@
         "y": 1,
         "w": 24,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Memory usage",
         "queries": [
           {
@@ -1759,6 +1793,8 @@
         "y": 1,
         "w": 16,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "System Uptime",
         "queries": [
           {

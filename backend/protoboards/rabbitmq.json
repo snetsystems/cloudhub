@@ -16,6 +16,8 @@
       {
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "RabbitMQ - Overview",
         "queries": [
           {
@@ -59,6 +61,8 @@
       {
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "RabbitMQ - Published/Delivered per second",
         "queries": [
           {
@@ -99,6 +103,8 @@
       {
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "RabbitMQ - Acked/Unacked per second",
         "queries": [
           {

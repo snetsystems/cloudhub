@@ -17,6 +17,8 @@
         "y": 17,
         "w": 48,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "VM Network Usage for :clustername:",
         "queries": [
           {
@@ -111,6 +113,8 @@
         "y": 17,
         "w": 48,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "VM CPU % Ready for :clustername:",
         "queries": [
           {
@@ -205,6 +209,8 @@
         "y": 13,
         "w": 48,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "VM Mem Usage for :clustername:",
         "queries": [
           {
@@ -299,6 +305,8 @@
         "y": 13,
         "w": 48,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "VM CPU Usage MHz for :clustername:",
         "queries": [
           {
@@ -393,6 +401,8 @@
         "y": 12,
         "w": 96,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "",
         "queries": [
           {
@@ -465,6 +475,8 @@
         "y": 1,
         "w": 96,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "",
         "queries": [
           {
@@ -537,6 +549,8 @@
         "y": 4,
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Datastores - Usage Capacity :datastore:",
         "queries": [
           {
@@ -631,6 +645,8 @@
         "y": 8,
         "w": 48,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Disk Throughput for :clustername:",
         "queries": [
           {
@@ -725,6 +741,8 @@
         "y": 8,
         "w": 48,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Network Usage for :clustername:",
         "queries": [
           {
@@ -819,6 +837,8 @@
         "y": 4,
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "RAM Usage for :clustername:",
         "queries": [
           {
@@ -913,6 +933,8 @@
         "y": 4,
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "CPU Usage for :clustername:",
         "queries": [
           {
@@ -1007,6 +1029,8 @@
         "y": 2,
         "w": 32,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "RAM Usage for :clustername:",
         "queries": [
           {
@@ -1087,6 +1111,8 @@
         "y": 2,
         "w": 32,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "CPU Usage for :clustername:",
         "queries": [
           {
@@ -1167,6 +1193,8 @@
         "y": 2,
         "w": 32,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Uptime for :clustername:",
         "queries": [
           {
@@ -1247,6 +1275,8 @@
         "y": 0,
         "w": 96,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "",
         "queries": [
           {

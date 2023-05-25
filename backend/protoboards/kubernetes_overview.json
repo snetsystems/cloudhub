@@ -23,6 +23,8 @@
         "y": 0,
         "w": 96,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "",
         "queries": [
           {
@@ -95,6 +97,8 @@
         "y": 1,
         "w": 32,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Total Container Count",
         "queries": [
           {
@@ -175,6 +179,8 @@
         "y": 1,
         "w": 32,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Total Pod Count",
         "queries": [
           {
@@ -255,6 +261,8 @@
         "y": 1,
         "w": 32,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Total Node Count",
         "queries": [
           {
@@ -335,6 +343,8 @@
         "y": 3,
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "K8s - Node Millicores",
         "queries": [
           {
@@ -423,6 +433,8 @@
         "y": 3,
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "K8s - Node Memory Bytes",
         "queries": [
           {
@@ -525,6 +537,8 @@
         "y": 3,
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "K8s - Pod Millicores",
         "queries": [
           {
@@ -613,6 +627,8 @@
         "y": 7,
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "K8s - Pod Memory Bytes",
         "queries": [
           {
@@ -715,6 +731,8 @@
         "y": 7,
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "K8s - Pod TX Bytes/Second",
         "queries": [
           {
@@ -803,6 +821,8 @@
         "y": 7,
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "K8s - Pod RX Bytes/Second ",
         "queries": [
           {
@@ -891,6 +911,8 @@
         "y": 11,
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "K8s - Kubelet Millicores",
         "queries": [
           {
@@ -979,6 +1001,8 @@
         "y": 11,
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "K8s - Kubelet Memory Bytes",
         "queries": [
           {

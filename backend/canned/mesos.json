@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "0fa47984-825b-46f1-9ca5-0366e3220007",
       "name": "Mesos Active Slaves",
       "queries": [
@@ -25,6 +27,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "0fa47984-825b-46f1-9ca5-0366e3220001",
       "name": "Mesos Tasks Active",
       "queries": [
@@ -41,6 +45,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "0fa47984-825b-46f1-9ca5-0366e3220004",
       "name": "Mesos Tasks",
       "queries": [
@@ -67,6 +73,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "0fa47984-825b-46f1-9ca5-0366e3220005",
       "name": "Mesos Outstanding offers",
       "queries": [
@@ -83,6 +91,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "0fa47984-825b-46f1-9ca5-0366e3220002",
       "name": "Mesos Available/Used CPUs",
       "queries": [
@@ -99,6 +109,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "0fa47984-825b-46f1-9ca5-0366e3220003",
       "name": "Mesos Available/Used Memory",
       "queries": [
@@ -115,6 +127,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "0fa47984-825b-46f1-9ca5-0366e3220008",
       "name": "Mesos Master Uptime",
       "colors": [],

@@ -6647,6 +6647,8 @@
             "y": 0,
             "w": 32,
             "h": 24,
+            "minW": 10,
+            "minH": 4,
             "i": "4c79cefb-5152-410c-9b88-74f9bff7ef23",
             "name": "Docker - Container Network",
             "queries": [
@@ -6856,6 +6858,8 @@
         "y": 5,
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "usage_user",
         "queries": [
           {
@@ -6965,6 +6969,8 @@
             "y": 0,
             "w": 32,
             "h": 24,
+            "minW": 10,
+            "minH": 4,
             "name": "",
             "queries": [
               {
@@ -7039,6 +7045,8 @@
             "y": 5,
             "w": 32,
             "h": 24,
+            "minW": 10,
+            "minH": 4,
             "name": "usage_user",
             "queries": [
               {
@@ -7054,6 +7062,8 @@
             "y": 0,
             "w": 32,
             "h": 24,
+            "minW": 10,
+            "minH": 4,
             "name": "usage_system",
             "queries": [
               {
@@ -7104,6 +7114,8 @@
             "y": 5,
             "w": 32,
             "h": 24,
+            "minW": 10,
+            "minH": 4,
             "name": "usage_user",
             "queries": [
               {
@@ -7119,6 +7131,8 @@
             "y": 0,
             "w": 32,
             "h": 24,
+            "minW": 10,
+            "minH": 4,
             "name": "usage_system",
             "queries": [
               {

@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "2637ee2e-7643-46a8-8233-a20049b2efd5",
       "name": "Rx/Tx (BPS)",
       "queries": [
@@ -46,6 +48,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "5c2d7375-35f2-4a5b-b606-37e29d4f71b1",
       "name": "In/Out Error (pps)",
       "queries": [
@@ -83,6 +87,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "c2599999-0e9e-4efa-9c2e-8b80a9e7eeab",
       "name": "CPU utilizaion",
       "queries": [
@@ -116,6 +122,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "f1e337d0-267b-4339-85b2-a3b7ffeeafb5",
       "name": "Memory Utilization",
       "queries": [

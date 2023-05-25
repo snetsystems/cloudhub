@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "dfb4c50f-547e-484a-944b-d6374ba2b4c0",
       "name": "Consul – HTTP Request Time (ms)",
       "queries": [

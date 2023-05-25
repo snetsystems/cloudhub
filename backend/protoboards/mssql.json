@@ -18,6 +18,8 @@
         "y": 0,
         "w": 48,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Used Memory",
         "queries": [
           {
@@ -125,6 +127,8 @@
         "y": 3,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Reads/Writes (Count/sec)",
         "queries": [
           {
@@ -232,6 +236,8 @@
         "y": 3,
         "w": 24,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Read/Write bytes (BPS)",
         "queries": [
           {
@@ -339,6 +345,8 @@
         "y": 3,
         "w": 24,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Read/Write Latency(Millisecond)",
         "queries": [
           {
@@ -446,6 +454,8 @@
         "y": 0,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "CPU usage(%)",
         "queries": [
           {

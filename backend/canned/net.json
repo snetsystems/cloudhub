@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "e2f65d45-1898-4a16-860c-14b655575925",
       "name": "System – Network Mb/s",
       "queries": [
@@ -30,6 +32,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "5e957624-b28b-4904-8068-5e7a9a058609",
       "name": "System – Network Error Rate",
       "queries": [

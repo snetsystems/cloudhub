@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "531192d3-f183-4481-afea-79103d56875a",
       "name": "MySQL – Reads/Second",
       "queries": [
@@ -29,6 +31,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "2dc5e60e-6ddb-43cb-80c5-dfc9294dad97",
       "name": "MySQL – Writes/Second",
       "queries": [
@@ -49,6 +53,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "2179fd37-6380-47dc-a1f3-959b69d8f9ec",
       "name": "MySQL – Connections/Second",
       "queries": [
@@ -64,6 +70,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "b13816b7-041d-4387-b593-86898aa379ab",
       "name": "MySQL – Connections Errors/Second",
       "queries": [

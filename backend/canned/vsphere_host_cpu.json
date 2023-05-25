@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "c234a27e-6907-4177-a343-7f27a69d6f51",
       "name": "CPU Usage (MHz)",
       "queries": [

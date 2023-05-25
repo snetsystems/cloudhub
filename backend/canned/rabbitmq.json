@@ -8,6 +8,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "c46351c6-b33a-4dc2-a053-3517e7c8098e",
       "name": "RabbitMQ - Overview",
       "queries": [
@@ -33,6 +35,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "c46351c6-b33a-4dc2-a053-3517e6c8098e",
       "name": "RabbitMQ - Published/Delivered per second",
       "queries": [
@@ -53,6 +57,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "c46351c6-b33a-4dc2-a053-3547e7c8098e",
       "name": "RabbitMQ - Acked/Unacked per second",
       "queries": [

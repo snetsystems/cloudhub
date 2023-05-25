@@ -16,6 +16,8 @@
       {
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "MongoDB – Read/Second",
         "queries": [
           {
@@ -54,6 +56,8 @@
       {
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "MongoDB – Writes/Second",
         "queries": [
           {
@@ -92,6 +96,8 @@
       {
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "MongoDB – Active Connections",
         "queries": [
           {
@@ -130,6 +136,8 @@
       {
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "MongoDB – Reads/Writes Waiting in Queue",
         "queries": [
           {
@@ -168,6 +176,8 @@
       {
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "MongoDB – Network Bytes/Second",
         "queries": [
           {
@@ -206,6 +216,8 @@
       {
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "MongoDB – Page Faults",
         "queries": [
           {
@@ -244,6 +256,8 @@
       {
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "MongoDB – Memory Usage (MB)",
         "queries": [
           {

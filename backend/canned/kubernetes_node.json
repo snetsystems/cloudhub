@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "5f406919-14b8-4c01-b0ce-f8ed75310805",
       "name": "K8s - Node Millicores",
       "queries": [
@@ -24,6 +26,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "042d47cc-fcfd-4b26-a690-d81c0321d408",
       "name": "K8s - Node Memory Bytes",
       "queries": [

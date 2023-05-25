@@ -70,6 +70,8 @@ export const NEW_DEFAULT_DASHBOARD_CELL: NewDefaultCell = {
   y: 0,
   w: 32,
   h: 24,
+  minW: 10,
+  minH: 4,
   name: UNTITLED_GRAPH,
   type: CellType.Line,
   queries: [],
@@ -85,6 +87,8 @@ export const NEW_DEFAULT_DASHBOARD_CELL: NewDefaultCell = {
 interface EmptyDefaultDashboardCell {
   x: number
   y: number
+  minW: number
+  minH: number
   queries: QueryConfig[]
   name: string
   type: CellType
@@ -102,6 +106,8 @@ export const EMPTY_DASHBOARD: EmptyDefaultDashboard = {
     {
       x: 0,
       y: 0,
+      minW: 10,
+      minH: 4,
       queries: [],
       name: 'Loading...',
       type: CellType.Line,

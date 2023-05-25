@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "eb8a6e8c-8182-4773-8410-ed0f3cc08943",
       "name": "Disk Usage (VM)",
       "queries": [
@@ -25,6 +27,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "c03b485a-6003-47b1-9824-79440244e46f",
       "name": "Disk Latency (VM)",
       "queries": [

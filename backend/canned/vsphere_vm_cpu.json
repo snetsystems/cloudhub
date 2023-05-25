@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "7bd6dc0e-6e73-4baa-8826-a4c8d5476a68",
       "name": "CPU Usage(MHz) (VM)",
       "queries": [

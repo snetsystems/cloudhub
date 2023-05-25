@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "5b2bddce-badb-4594-91fb-0486f62266e5",
       "name": "Consul – Leadership Election",
       "queries": [

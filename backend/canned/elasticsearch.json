@@ -9,6 +9,8 @@
       "y": 0,
       "w": 96,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "3254c2ee-4b0f-440e-9cba-b996b96bf12a",
       "name": "ElasticSearch - Query Throughput",
       "queries": [
@@ -24,6 +26,8 @@
       "y": 4,
       "w": 96,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "7db341c0-455b-4595-8d34-61dfbdaf6cc6",
       "name": "ElasticSearch - Open Connections",
       "queries": [
@@ -39,6 +43,8 @@
       "y": 8,
       "w": 48,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "ca304109-35db-4066-91e4-00875a618abb",
       "name": "ElasticSearch - Query Latency",
       "queries": [
@@ -54,6 +60,8 @@
       "y": 8,
       "w": 48,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "e0418118-a562-49d1-bf50-83943f72b245",
       "name": "ElasticSearch - Fetch Latency",
       "queries": [
@@ -69,6 +77,8 @@
       "y": 12,
       "w": 48,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "3912091e-2ee5-4f47-bc74-40520239372d",
       "name": "ElasticSearch - Suggest Latency",
       "queries": [
@@ -84,6 +94,8 @@
       "y": 12,
       "w": 48,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "01e536cd-baf8-4bf3-9cee-9c1d149b58ef",
       "name": "ElasticSearch - Scroll Latency",
       "queries": [
@@ -99,6 +111,8 @@
       "y": 16,
       "w": 96,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "306d6cdc-93ef-49d9-8151-a1bae355dfc6",
       "name": "ElasticSearch - Indexing Latency",
       "queries": [
@@ -114,6 +128,8 @@
       "y": 20,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "5ef57f9f-4cba-4f9e-9264-15aa2954c724",
       "name": "ElasticSearch - JVM GC Collection Counts",
       "queries": [
@@ -129,6 +145,8 @@
       "y": 20,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "fa7c807e-3e87-4d26-869b-e0ffd3ef344a",
       "name": "ElasticSearch - JVM GC Latency",
       "queries": [
@@ -144,6 +162,8 @@
       "y": 20,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "6f4e01c4-31d6-4302-8e62-9f31f6c3f46f",
       "name": "ElasticSearch - JVM Heap Usage",
       "queries": [

@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "9e14639d-b8d9-4245-8c45-862ed4383701",
       "name": "Consul Agent – Number of Go Routines",
       "queries": [
@@ -24,6 +26,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "9e14639d-b8d9-4245-8c45-862ed4383702",
       "name": "Consul Agent – Runtime Alloc Bytes",
       "queries": [
@@ -39,6 +43,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "9e14639d-b8d9-4245-8c45-862ed4383703",
       "name": "Consul Agent – Heap Objects",
       "queries": [

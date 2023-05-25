@@ -18,6 +18,8 @@
         "y": 10,
         "w": 24,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Requests Per Sec",
         "queries": [
           {
@@ -98,6 +100,8 @@
         "y": 16,
         "w": 96,
         "h": 42,
+        "minW": 10,
+        "minH": 4,
         "name": "Apache Logs",
         "queries": [
           {
@@ -226,6 +230,8 @@
         "y": 10,
         "w": 72,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Throughput",
         "queries": [
           {
@@ -320,6 +326,8 @@
         "y": 13,
         "w": 96,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Response Codes",
         "queries": [
           {
@@ -414,6 +422,8 @@
         "y": 8,
         "w": 24,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "CPU Load",
         "queries": [
           {
@@ -494,6 +504,8 @@
         "y": 6,
         "w": 24,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Apache Uptime",
         "queries": [
           {
@@ -574,6 +586,8 @@
         "y": 6,
         "w": 40,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Scoreboard",
         "queries": [
           {
@@ -668,6 +682,8 @@
         "y": 6,
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Workers",
         "queries": [
           {
@@ -762,6 +778,8 @@
         "y": 0,
         "w": 96,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "",
         "queries": [
           {
@@ -834,6 +852,8 @@
         "y": 3,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Network",
         "queries": [
           {
@@ -928,6 +948,8 @@
         "y": 3,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "I/O",
         "queries": [
           {
@@ -1022,6 +1044,8 @@
         "y": 3,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Load",
         "queries": [
           {
@@ -1116,6 +1140,8 @@
         "y": 1,
         "w": 40,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Memory Used %",
         "queries": [
           {
@@ -1210,6 +1236,8 @@
         "y": 1,
         "w": 16,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "RAM",
         "queries": [
           {
@@ -1290,6 +1318,8 @@
         "y": 1,
         "w": 16,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "CPUs",
         "queries": [
           {
@@ -1370,6 +1400,8 @@
         "y": 1,
         "w": 24,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "System Uptime",
         "queries": [
           {

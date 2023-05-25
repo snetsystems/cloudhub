@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "9c168ac8-2985-4883-bdf2-938ea9f065b9",
       "name": "Redis - Connected Clients",
       "queries": [
@@ -23,6 +25,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "9c168ac8-2985-4883-bdf2-938ea9f065a0",
       "name": "Redis - Blocked Clients",
       "queries": [
@@ -37,6 +41,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "9c168ac8-2985-4883-bdf2-938ea9f065b1",
       "name": "Redis - CPU",
       "queries": [
@@ -51,6 +57,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "9c168ac8-2985-4883-bdf2-938ea9f065b2",
       "name": "Redis - Memory",
       "queries": [

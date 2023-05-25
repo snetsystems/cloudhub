@@ -23,6 +23,8 @@
         "y": 5,
         "w": 16,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "# Series",
         "queries": [
           {
@@ -113,6 +115,8 @@
         "y": 3,
         "w": 16,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "# Measurements",
         "queries": [
           {
@@ -203,6 +207,8 @@
         "y": 0,
         "w": 96,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "",
         "queries": [
           {
@@ -285,6 +291,8 @@
         "y": 4,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Filesystems usage",
         "queries": [
           {
@@ -389,6 +397,8 @@
         "y": 1,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Memory usage",
         "queries": [
           {
@@ -493,6 +503,8 @@
         "y": 1,
         "w": 16,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "System Uptime",
         "queries": [
           {
@@ -583,6 +595,8 @@
         "y": 1,
         "w": 24,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Network",
         "queries": [
           {
@@ -687,6 +701,8 @@
         "y": 4,
         "w": 48,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "CPU Utilization %",
         "queries": [
           {
@@ -791,6 +807,8 @@
         "y": 1,
         "w": 24,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "System Load",
         "queries": [
           {
@@ -895,6 +913,8 @@
         "y": 2,
         "w": 16,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "nCPU",
         "queries": [
           {
@@ -985,6 +1005,8 @@
         "y": 7,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "# Measurements Per DB",
         "queries": [
           {
@@ -1089,6 +1111,8 @@
         "y": 7,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "# Series Per DB",
         "queries": [
           {
@@ -1193,6 +1217,8 @@
         "y": 10,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "InfluxDB GC activity",
         "queries": [
           {
@@ -1297,6 +1323,8 @@
         "y": 10,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "InfluxDB active requests",
         "queries": [
           {
@@ -1401,6 +1429,8 @@
         "y": 10,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "InfluxDB - HTTP Requests / Min",
         "queries": [
           {
@@ -1520,6 +1550,8 @@
         "y": 16,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "InfluxDB - Client errors",
         "queries": [
           {
@@ -1639,6 +1671,8 @@
         "y": 13,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "InfluxDB - query executor duration",
         "queries": [
           {
@@ -1738,6 +1772,8 @@
         "y": 13,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "InfluxDB - written points / min",
         "queries": [
           {
@@ -1837,6 +1873,8 @@
         "y": 13,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "InfluxDB - Write Errors",
         "queries": [
           {
@@ -1956,6 +1994,8 @@
         "y": 7,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "InfluxDB Memory Heap",
         "queries": [
           {
@@ -2060,6 +2100,8 @@
         "y": 16,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "# CQ / Minute",
         "queries": [
           {

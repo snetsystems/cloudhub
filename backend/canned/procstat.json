@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "e75a6baa-9938-4ade-b83f-55a239039964",
       "name": "Processes – Resident Memory (MB)",
       "queries": [
@@ -25,6 +27,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "2bfae447-47c6-4f85-9fec-494301d29a04",
       "name": "Processes – CPU Usage %",
       "queries": [

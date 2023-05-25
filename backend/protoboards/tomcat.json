@@ -18,6 +18,8 @@
         "y": 3,
         "w": 48,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Tomcat - Tx (BPS)",
         "queries": [
           {
@@ -122,6 +124,8 @@
         "y": 0,
         "w": 48,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Tomcat - JVM Memory",
         "queries": [
           {
@@ -226,6 +230,8 @@
         "y": 0,
         "w": 48,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Tomcat - Requests Count",
         "queries": [
           {
@@ -330,6 +336,8 @@
         "y": 3,
         "w": 48,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Tomcat - Rx (BPS)",
         "queries": [
           {

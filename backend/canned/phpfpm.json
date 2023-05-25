@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "da42044d-8d10-4e3c-a0a2-41512266fd00",
       "name": "phpfpm – Accepted Connections",
       "queries": [
@@ -24,6 +26,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "7aae5ec6-dbaf-4926-b922-d585e6a869be",
       "name": "phpfpm – Processes",
       "queries": [
@@ -39,6 +43,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "e4de9091-7250-4634-bf38-81a441ef0f27",
       "name": "phpfpm – Slow Requests",
       "queries": [
@@ -54,6 +60,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "7ed72ef0-a429-4edd-9c8e-a11625a279c2",
       "name": "phpfpm – Max Children Reached",
       "queries": [

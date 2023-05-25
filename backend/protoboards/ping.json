@@ -16,6 +16,8 @@
       {
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Ping – Packet Loss Percent",
         "queries": [
           {
@@ -54,6 +56,8 @@
       {
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Ping – Response Times (ms)",
         "queries": [
           {

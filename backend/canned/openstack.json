@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "d593c44d-ccfd-4903-816e-215cfe96d2c7",
       "name": "CPU Usage",
       "queries": [
@@ -53,6 +55,8 @@
       "y": 5,
       "w": 8,
       "h": 30,
+      "minW": 10,
+      "minH": 4,
       "name": "Port Recevie Packet",
       "queries": [
         {
@@ -96,6 +100,8 @@
       "y": 0,
       "w": 32,
       "h": 12,
+      "minW": 10,
+      "minH": 4,
       "name": "Port Transmit Packets",
       "queries": [
         {
@@ -110,6 +116,8 @@
       "y": 5,
       "w": 40,
       "h": 30,
+      "minW": 10,
+      "minH": 4,
       "name": "System - Memory Used",
       "queries": [
         {
@@ -196,6 +204,8 @@
       "y": 5,
       "w": 40,
       "h": 30,
+      "minW": 10,
+      "minH": 4,
       "name": "Disk Read Request",
       "queries": [
         {
@@ -214,6 +224,8 @@
       "y": 2,
       "w": 32,
       "h": 12,
+      "minW": 10,
+      "minH": 4,
       "name": "Disk Write Request",
       "queries": [
         {

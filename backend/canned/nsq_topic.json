@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "f07967cb-2c2a-41cb-8420-f041f46b0635",
       "name": "NSQ - Topic Messages",
       "queries": [
@@ -24,6 +26,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "912f337b-3af2-42af-9352-b31a5bc3b431",
       "name": "NSQ - Topic Messages on Disk",
       "queries": [
@@ -39,6 +43,8 @@
       "y": 4,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "06909f21-f035-4668-8193-8e06a018accb",
       "name": "NSQ - Topic Ingress",
       "queries": [
@@ -54,6 +60,8 @@
       "y": 4,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "a5aa73a5-42aa-464a-aaaa-0a7a50632a0a",
       "name": "NSQ topic egress",
       "queries": [

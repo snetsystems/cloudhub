@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "974f6948-d79a-4925-8162-193e6ddf1c7a",
       "name": "InfluxDB - Query Performance",
       "queries": [

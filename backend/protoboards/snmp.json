@@ -120,6 +120,8 @@
         "y": 0,
         "w": 24,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "In/Out Error (pps)",
         "queries": [
           {
@@ -225,6 +227,8 @@
         "y": 0,
         "w": 40,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Rx/Tx (BPS)",
         "queries": [
           {
@@ -330,6 +334,8 @@
         "y": 3,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Memory Utilization (%)",
         "queries": [
           {
@@ -445,6 +451,8 @@
         "y": 3,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "CPU utilizaion (%)",
         "queries": [
           {

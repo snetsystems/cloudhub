@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "3bf8c678-5904-46e7-9c9f-d0d16f0c3fc4",
       "name": "System - TX Bytes/Second",
       "queries": [
@@ -24,6 +26,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "46963ea2-b09b-4dcf-b08b-7cbcd8766f77",
       "name": "RX Bytes/Second",
       "queries": [

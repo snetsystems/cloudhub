@@ -27,6 +27,8 @@
         "y": 2,
         "w": 24,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Firewall Dropped Traffic",
         "queries": [
           {
@@ -137,6 +139,8 @@
         "y": 0,
         "w": 24,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Max CPU",
         "queries": [
           {
@@ -228,6 +232,8 @@
         "y": 0,
         "w": 24,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "VMx by Region",
         "queries": [
           {
@@ -333,6 +339,8 @@
         "y": 0,
         "w": 24,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Active VMs",
         "queries": [
           {
@@ -429,6 +437,8 @@
         "y": 2,
         "w": 24,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "CPU utilization",
         "queries": [
           {
@@ -534,6 +544,8 @@
         "y": 2,
         "w": 24,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Memory usage (Agent)",
         "queries": [
           {
@@ -639,6 +651,8 @@
         "y": 5,
         "w": 24,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Network Sent",
         "queries": [
           {
@@ -744,6 +758,8 @@
         "y": 5,
         "w": 24,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Network Received",
         "queries": [
           {
@@ -849,6 +865,8 @@
         "y": 5,
         "w": 24,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "DisK Write",
         "queries": [
           {
@@ -954,6 +972,8 @@
         "y": 5,
         "w": 24,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Disk Read",
         "queries": [
           {
@@ -1059,6 +1079,8 @@
         "y": 2,
         "w": 24,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Disk Usage",
         "queries": [
           {
@@ -1164,6 +1186,8 @@
         "y": 0,
         "w": 24,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "With Agent",
         "queries": [
           {

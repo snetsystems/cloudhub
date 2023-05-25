@@ -17,6 +17,8 @@
         "y": 7,
         "w": 48,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Total Disk Latency for :esxhostname:",
         "queries": [
           {
@@ -111,6 +113,8 @@
         "y": 7,
         "w": 48,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Network Usage for :esxhostname:",
         "queries": [
           {
@@ -205,6 +209,8 @@
         "y": 3,
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "CPU Ready Average % for :esxhostname:",
         "queries": [
           {
@@ -299,6 +305,8 @@
         "y": 3,
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "RAM Usage Average for :esxhostname:",
         "queries": [
           {
@@ -393,6 +401,8 @@
         "y": 3,
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "CPU Usage Average for :esxhostname:",
         "queries": [
           {
@@ -487,6 +497,8 @@
         "y": 1,
         "w": 32,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "RAM Usage for :esxhostname:",
         "queries": [
           {
@@ -567,6 +579,8 @@
         "y": 1,
         "w": 32,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "CPU Usage for :esxhostname: ",
         "queries": [
           {
@@ -647,6 +661,8 @@
         "y": 1,
         "w": 32,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Uptime for :esxhostname:",
         "queries": [
           {
@@ -727,6 +743,8 @@
         "y": 0,
         "w": 96,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "",
         "queries": [
           {

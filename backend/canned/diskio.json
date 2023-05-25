@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "7f647740-d9f0-4012-8e7a-5d898c8f271e",
       "name": "System – Disk MB/s",
       "queries": [

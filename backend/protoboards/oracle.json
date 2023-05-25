@@ -18,6 +18,8 @@
         "y": 4,
         "w": 24,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Sorts on Disk",
         "queries": [
           {
@@ -126,6 +128,8 @@
         "y": 2,
         "w": 24,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Physical Disk Writes",
         "queries": [
           {
@@ -234,6 +238,8 @@
         "y": 0,
         "w": 24,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Physical Disk Reads",
         "queries": [
           {
@@ -342,6 +348,8 @@
         "y": 4,
         "w": 24,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Total Session Count",
         "queries": [
           {
@@ -450,6 +458,8 @@
         "y": 0,
         "w": 24,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Active Session Count",
         "queries": [
           {
@@ -558,6 +568,8 @@
         "y": 0,
         "w": 16,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Buffer Cache",
         "queries": [
           {
@@ -657,6 +669,8 @@
         "y": 2,
         "w": 16,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Cursor Cache",
         "queries": [
           {
@@ -751,6 +765,8 @@
         "y": 4,
         "w": 16,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Library Cache",
         "queries": [
           {
@@ -845,6 +861,8 @@
         "y": 6,
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Tablespace",
         "queries": [
           {
@@ -959,6 +977,8 @@
         "y": 6,
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Tablespace Usage (%)",
         "queries": [
           {
@@ -1067,6 +1087,8 @@
         "y": 2,
         "w": 24,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Session Limit Usage (%)",
         "queries": [
           {
@@ -1175,6 +1197,8 @@
         "y": 2,
         "w": 32,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "In-Memory Sorts Ratio (%)",
         "queries": [
           {
@@ -1283,6 +1307,8 @@
         "y": 4,
         "w": 32,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Shared Pool Free Memory (%)",
         "queries": [
           {
@@ -1391,6 +1417,8 @@
         "y": 8,
         "w": 32,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Enqueue Timeouts",
         "queries": [
           {
@@ -1499,6 +1527,8 @@
         "y": 6,
         "w": 32,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "User Rollbacks",
         "queries": [
           {
@@ -1607,6 +1637,8 @@
         "y": 0,
         "w": 32,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Total Table Scans",
         "queries": [
           {

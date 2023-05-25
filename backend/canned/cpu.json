@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "cc9ba2b6-e398-4396-80dc-819bb7ac7ce1",
       "name": "CPU Usage",
       "queries": [

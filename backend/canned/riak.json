@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "e12ebb94-2592-4b83-86fc-1f8a9aa84262",
       "name": "Riak – Total Memory Bytes",
       "queries": [
@@ -24,6 +26,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "8355d65d-34a7-4b6e-ae54-eaf25cd14e4b",
       "name": "Riak – Object Byte Size",
       "queries": [
@@ -39,6 +43,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "91e26cbe-1595-4d17-a54b-c26e08ecf572",
       "name": "Riak – Number of Siblings/Minute",
       "queries": [
@@ -54,6 +60,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "eefbdfec-8578-46a8-a0d5-1247d1d4cf97",
       "name": "Riak – Latency (ms)",
       "queries": [
@@ -69,6 +77,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "48f268ae-3218-4b07-a2e9-575f89e2d6c9",
       "name": "Riak – Reads and Writes/Minute",
       "queries": [
@@ -84,6 +94,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "f7c601c2-1007-49ec-bbcd-3f3e678ba781",
       "name": "Riak – Active Connections",
       "queries": [
@@ -99,6 +111,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "f29575f9-6b78-465c-b055-b518d6eda09d",
       "name": "Riak – Read Repairs/Minute",
       "queries": [

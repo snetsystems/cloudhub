@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "ef8eeeb5-b408-46d6-8cfc-20c00c9d7239",
       "name": "Consul – Leadership Change",
       "queries": [

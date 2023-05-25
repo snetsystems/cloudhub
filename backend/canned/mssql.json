@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "be2aeb77-037b-4ea6-a148-f5532156785e",
       "name": "CPU usage(%)",
       "queries": [
@@ -54,6 +56,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "7156b6e0-30fc-49d7-b5c3-12b3d4ca8b4e",
       "name": "Used Memory",
       "queries": [
@@ -99,6 +103,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "98d910b6-f804-46d6-afba-9a4a7b1a88f5",
       "name": "Reads/Writes (Count/sec)",
       "queries": [
@@ -144,6 +150,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "718f0401-85a3-4305-b45b-6ad5d7775c96",
       "name": "Read/Write bytes (BPS)",
       "queries": [
@@ -189,6 +197,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "375a4a81-2f5e-4058-ab8c-bbbf9be89db9",
       "name": "Read/Write Latency(Millisecond)",
       "queries": [

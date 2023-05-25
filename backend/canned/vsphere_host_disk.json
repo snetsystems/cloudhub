@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "db3c4f3a-47ca-4407-b005-dd637e67ce25",
       "name": "Disk Usage",
       "queries": [
@@ -25,6 +27,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "8ac447bf-d605-4816-9211-5390f21b3634",
       "name": "Disk Latency",
       "queries": [

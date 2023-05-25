@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "12384232-7bc7-4129-8958-ef551a320524",
       "name": "InfluxDB - Write Points",
       "queries": [
@@ -25,6 +27,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "6281a48f-c29a-4941-bdd9-07f6d0fd98cf",
       "name": "InfluxDB - Write Errors",
       "queries": [

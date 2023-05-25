@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "59df3d73-5fac-48cb-84f1-dbe9a1bb886c",
       "name": "Consul – Number of serf events",
       "queries": [

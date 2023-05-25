@@ -16,6 +16,8 @@
       {
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "NGINX – Client Connections",
         "queries": [
           {
@@ -54,6 +56,8 @@
       {
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "NGINX – Client Errors",
         "queries": [
           {
@@ -92,6 +96,8 @@
       {
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "NGINX – Client Requests",
         "queries": [
           {
@@ -130,6 +136,8 @@
       {
         "w": 32,
         "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "NGINX – Active Client State",
         "queries": [
           {

@@ -9,6 +9,8 @@
       "y": 0,
       "w": 32,
       "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "6459c528-ceb7-48b8-8ca4-dfcb99f23891",
       "name": "Memory Usage",
       "queries": [

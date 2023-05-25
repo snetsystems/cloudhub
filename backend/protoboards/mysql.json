@@ -18,6 +18,8 @@
         "y": 0,
         "w": 96,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "",
         "queries": [
           {
@@ -90,6 +92,8 @@
         "y": 7,
         "w": 32,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "InnoDB data",
         "queries": [
           {
@@ -184,6 +188,8 @@
         "y": 2,
         "w": 16,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "Open Connections",
         "queries": [
           {
@@ -264,6 +270,8 @@
         "y": 5,
         "w": 32,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "MySQL Connections",
         "queries": [
           {
@@ -358,6 +366,8 @@
         "y": 1,
         "w": 16,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "InnoDB buffer pool size",
         "queries": [
           {
@@ -438,6 +448,8 @@
         "y": 2,
         "w": 16,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "InnoDB buffer usage",
         "queries": [
           {
@@ -553,6 +565,8 @@
         "y": 7,
         "w": 32,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "MySQL queries / sec",
         "queries": [
           {
@@ -647,6 +661,8 @@
         "y": 5,
         "w": 32,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "MySQL sent bytes /sec",
         "queries": [
           {
@@ -741,6 +757,8 @@
         "y": 3,
         "w": 32,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "MySQL Connections/User",
         "queries": [
           {
@@ -835,6 +853,8 @@
         "y": 7,
         "w": 32,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "MySQL slow queries",
         "queries": [
           {
@@ -929,6 +949,8 @@
         "y": 5,
         "w": 32,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "MySQL received bytes / sec",
         "queries": [
           {
@@ -1023,6 +1045,8 @@
         "y": 3,
         "w": 32,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Network",
         "queries": [
           {
@@ -1117,6 +1141,8 @@
         "y": 2,
         "w": 16,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "Total Memory",
         "queries": [
           {
@@ -1197,6 +1223,8 @@
         "y": 1,
         "w": 16,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "System Uptime",
         "queries": [
           {
@@ -1282,6 +1310,8 @@
         "y": 3,
         "w": 32,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "I/O",
         "queries": [
           {
@@ -1376,6 +1406,8 @@
         "y": 1,
         "w": 16,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "System Load",
         "queries": [
           {
@@ -1470,6 +1502,8 @@
         "y": 1,
         "w": 16,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "nCPU",
         "queries": [
           {
@@ -1550,6 +1584,8 @@
         "y": 2,
         "w": 16,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "MySQL uptime",
         "queries": [
           {
@@ -1635,6 +1671,8 @@
         "y": 1,
         "w": 16,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Memory usage",
         "queries": [
           {
@@ -1729,6 +1767,8 @@
         "y": 1,
         "w": 16,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "Max Connections",
         "queries": [
           {

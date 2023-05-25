@@ -22,6 +22,8 @@
         "y": 0,
         "w": 96,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "",
         "queries": [
           {
@@ -104,6 +106,8 @@
         "y": 4,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Block I/O per Container",
         "queries": [
           {
@@ -208,6 +212,8 @@
         "y": 1,
         "w": 24,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "System Load",
         "queries": [
           {
@@ -315,6 +321,8 @@
         "y": 1,
         "w": 24,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "System Memory Usage",
         "queries": [
           {
@@ -419,6 +427,8 @@
         "y": 2,
         "w": 24,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "System CPU Usage",
         "queries": [
           {
@@ -523,6 +533,8 @@
         "y": 4,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Disk I/O",
         "queries": [
           {
@@ -630,6 +642,8 @@
         "y": 7,
         "w": 48,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Memory usage % per container",
         "queries": [
           {
@@ -734,6 +748,8 @@
         "y": 1,
         "w": 16,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "# Containers",
         "queries": [
           {
@@ -824,6 +840,8 @@
         "y": 1,
         "w": 16,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "Total Memory",
         "queries": [
           {
@@ -914,6 +932,8 @@
         "y": 1,
         "w": 16,
         "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "nCPU",
         "queries": [
           {
@@ -1004,6 +1024,8 @@
         "y": 2,
         "w": 24,
         "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "# Running containers",
         "queries": [
           {
@@ -1108,6 +1130,8 @@
         "y": 10,
         "w": 48,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Net I/O per Container",
         "queries": [
           {
@@ -1212,6 +1236,8 @@
         "y": 7,
         "w": 48,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "CPU Usage per Container",
         "queries": [
           {
@@ -1316,6 +1342,8 @@
         "y": 10,
         "w": 48,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Memory Usage per Container",
         "queries": [
           {
@@ -1420,6 +1448,8 @@
         "y": 4,
         "w": 32,
         "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Filesystem usage",
         "queries": [
           {
