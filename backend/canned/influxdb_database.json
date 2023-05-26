@@ -7,8 +7,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "ebc3e2df-640f-4344-b493-d5aae873b6d3",
       "name": "InfluxDB - Cardinality",
       "queries": [

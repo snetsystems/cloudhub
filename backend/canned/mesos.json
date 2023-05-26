@@ -7,8 +7,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "0fa47984-825b-46f1-9ca5-0366e3220007",
       "name": "Mesos Active Slaves",
       "queries": [
@@ -23,8 +25,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "0fa47984-825b-46f1-9ca5-0366e3220001",
       "name": "Mesos Tasks Active",
       "queries": [
@@ -39,8 +43,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "0fa47984-825b-46f1-9ca5-0366e3220004",
       "name": "Mesos Tasks",
       "queries": [
@@ -65,8 +71,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "0fa47984-825b-46f1-9ca5-0366e3220005",
       "name": "Mesos Outstanding offers",
       "queries": [
@@ -81,8 +89,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "0fa47984-825b-46f1-9ca5-0366e3220002",
       "name": "Mesos Available/Used CPUs",
       "queries": [
@@ -97,8 +107,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "0fa47984-825b-46f1-9ca5-0366e3220003",
       "name": "Mesos Available/Used Memory",
       "queries": [
@@ -113,8 +125,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "0fa47984-825b-46f1-9ca5-0366e3220008",
       "name": "Mesos Master Uptime",
       "colors": [],

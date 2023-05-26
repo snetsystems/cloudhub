@@ -16,8 +16,10 @@
       {
         "x": 0,
         "y": 0,
-        "w": 12,
-        "h": 1,
+        "w": 96,
+        "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "",
         "queries": [
           {
@@ -98,8 +100,10 @@
       {
         "x": 0,
         "y": 11,
-        "w": 4,
-        "h": 3,
+        "w": 32,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "PostgresSQL - Buffers",
         "queries": [
           {
@@ -203,10 +207,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 8,
+        "x": 64,
         "y": 11,
-        "w": 4,
-        "h": 3,
+        "w": 32,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Postgres deadlocks/conflicts",
         "queries": [
           {
@@ -310,10 +316,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 4,
+        "x": 32,
         "y": 11,
-        "w": 4,
-        "h": 3,
+        "w": 32,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "PostgreSQL commit/rolback per sec",
         "queries": [
           {
@@ -417,10 +425,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 6,
+        "x": 48,
         "y": 8,
-        "w": 6,
-        "h": 3,
+        "w": 48,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "PostgreSQL rows in / sec",
         "queries": [
           {
@@ -526,8 +536,10 @@
       {
         "x": 0,
         "y": 8,
-        "w": 6,
-        "h": 3,
+        "w": 48,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "PostgreSQL rows out / sec",
         "queries": [
           {
@@ -631,10 +643,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 6,
+        "x": 48,
         "y": 5,
-        "w": 3,
-        "h": 3,
+        "w": 24,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Processes",
         "queries": [
           {
@@ -735,10 +749,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 3,
+        "x": 24,
         "y": 2,
-        "w": 3,
-        "h": 3,
+        "w": 24,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "CPU Usage",
         "queries": [
           {
@@ -841,8 +857,10 @@
       {
         "x": 0,
         "y": 2,
-        "w": 3,
-        "h": 3,
+        "w": 24,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Filesystems usage",
         "queries": [
           {
@@ -953,10 +971,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 9,
+        "x": 72,
         "y": 5,
-        "w": 3,
-        "h": 3,
+        "w": 24,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Swap",
         "queries": [
           {
@@ -1060,10 +1080,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 4,
+        "x": 32,
         "y": 1,
-        "w": 2,
-        "h": 1,
+        "w": 16,
+        "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "System Load",
         "queries": [
           {
@@ -1150,10 +1172,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 3,
+        "x": 24,
         "y": 5,
-        "w": 3,
-        "h": 3,
+        "w": 24,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Network",
         "queries": [
           {
@@ -1257,10 +1281,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 6,
+        "x": 48,
         "y": 1,
-        "w": 3,
-        "h": 1,
+        "w": 24,
+        "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "Total Memory",
         "queries": [
           {
@@ -1349,8 +1375,10 @@
       {
         "x": 0,
         "y": 5,
-        "w": 3,
-        "h": 3,
+        "w": 24,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "I/O",
         "queries": [
           {
@@ -1454,10 +1482,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 6,
+        "x": 48,
         "y": 2,
-        "w": 3,
-        "h": 3,
+        "w": 24,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "System Load",
         "queries": [
           {
@@ -1561,10 +1591,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 2,
+        "x": 16,
         "y": 1,
-        "w": 2,
-        "h": 1,
+        "w": 16,
+        "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "nCPU",
         "queries": [
           {
@@ -1651,10 +1683,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 9,
+        "x": 72,
         "y": 1,
-        "w": 3,
-        "h": 4,
+        "w": 24,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Memory usage",
         "queries": [
           {
@@ -1757,8 +1791,10 @@
       {
         "x": 0,
         "y": 1,
-        "w": 2,
-        "h": 1,
+        "w": 16,
+        "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "System Uptime",
         "queries": [
           {

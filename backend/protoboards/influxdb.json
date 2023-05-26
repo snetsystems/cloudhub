@@ -21,8 +21,10 @@
       {
         "x": 0,
         "y": 5,
-        "w": 2,
-        "h": 2,
+        "w": 16,
+        "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "# Series",
         "queries": [
           {
@@ -111,8 +113,10 @@
       {
         "x": 0,
         "y": 3,
-        "w": 2,
-        "h": 2,
+        "w": 16,
+        "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "# Measurements",
         "queries": [
           {
@@ -201,8 +205,10 @@
       {
         "x": 0,
         "y": 0,
-        "w": 12,
-        "h": 1,
+        "w": 96,
+        "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "",
         "queries": [
           {
@@ -281,10 +287,12 @@
         "noteVisibility": "default"
       },
       {
-        "x": 8,
+        "x": 64,
         "y": 4,
-        "w": 4,
-        "h": 3,
+        "w": 32,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Filesystems usage",
         "queries": [
           {
@@ -385,10 +393,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 8,
+        "x": 64,
         "y": 1,
-        "w": 4,
-        "h": 3,
+        "w": 32,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Memory usage",
         "queries": [
           {
@@ -491,8 +501,10 @@
       {
         "x": 0,
         "y": 1,
-        "w": 2,
-        "h": 1,
+        "w": 16,
+        "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "System Uptime",
         "queries": [
           {
@@ -579,10 +591,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 5,
+        "x": 40,
         "y": 1,
-        "w": 3,
-        "h": 3,
+        "w": 24,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Network",
         "queries": [
           {
@@ -683,10 +697,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 2,
+        "x": 16,
         "y": 4,
-        "w": 6,
-        "h": 3,
+        "w": 48,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "CPU Utilization %",
         "queries": [
           {
@@ -787,10 +803,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 2,
+        "x": 16,
         "y": 1,
-        "w": 3,
-        "h": 3,
+        "w": 24,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "System Load",
         "queries": [
           {
@@ -893,8 +911,10 @@
       {
         "x": 0,
         "y": 2,
-        "w": 2,
-        "h": 1,
+        "w": 16,
+        "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "nCPU",
         "queries": [
           {
@@ -983,8 +1003,10 @@
       {
         "x": 0,
         "y": 7,
-        "w": 4,
-        "h": 3,
+        "w": 32,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "# Measurements Per DB",
         "queries": [
           {
@@ -1085,10 +1107,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 4,
+        "x": 32,
         "y": 7,
-        "w": 4,
-        "h": 3,
+        "w": 32,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "# Series Per DB",
         "queries": [
           {
@@ -1189,10 +1213,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 8,
+        "x": 64,
         "y": 10,
-        "w": 4,
-        "h": 3,
+        "w": 32,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "InfluxDB GC activity",
         "queries": [
           {
@@ -1295,8 +1321,10 @@
       {
         "x": 0,
         "y": 10,
-        "w": 4,
-        "h": 3,
+        "w": 32,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "InfluxDB active requests",
         "queries": [
           {
@@ -1397,10 +1425,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 4,
+        "x": 32,
         "y": 10,
-        "w": 4,
-        "h": 3,
+        "w": 32,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "InfluxDB - HTTP Requests / Min",
         "queries": [
           {
@@ -1518,8 +1548,10 @@
       {
         "x": 0,
         "y": 16,
-        "w": 4,
-        "h": 3,
+        "w": 32,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "InfluxDB - Client errors",
         "queries": [
           {
@@ -1635,10 +1667,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 4,
+        "x": 32,
         "y": 13,
-        "w": 4,
-        "h": 3,
+        "w": 32,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "InfluxDB - query executor duration",
         "queries": [
           {
@@ -1736,8 +1770,10 @@
       {
         "x": 0,
         "y": 13,
-        "w": 4,
-        "h": 3,
+        "w": 32,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "InfluxDB - written points / min",
         "queries": [
           {
@@ -1833,10 +1869,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 8,
+        "x": 64,
         "y": 13,
-        "w": 4,
-        "h": 3,
+        "w": 32,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "InfluxDB - Write Errors",
         "queries": [
           {
@@ -1952,10 +1990,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 8,
+        "x": 64,
         "y": 7,
-        "w": 4,
-        "h": 3,
+        "w": 32,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "InfluxDB Memory Heap",
         "queries": [
           {
@@ -2056,10 +2096,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 4,
+        "x": 32,
         "y": 16,
-        "w": 4,
-        "h": 3,
+        "w": 32,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "# CQ / Minute",
         "queries": [
           {

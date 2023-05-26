@@ -13,10 +13,12 @@
   "data": {
     "cells": [
       {
-        "x": 6,
+        "x": 48,
         "y": 7,
-        "w": 6,
-        "h": 4,
+        "w": 48,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Total Disk Latency for :esxhostname:",
         "queries": [
           {
@@ -109,8 +111,10 @@
       {
         "x": 0,
         "y": 7,
-        "w": 6,
-        "h": 4,
+        "w": 48,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Network Usage for :esxhostname:",
         "queries": [
           {
@@ -201,10 +205,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 8,
+        "x": 64,
         "y": 3,
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "CPU Ready Average % for :esxhostname:",
         "queries": [
           {
@@ -295,10 +301,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 4,
+        "x": 32,
         "y": 3,
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "RAM Usage Average for :esxhostname:",
         "queries": [
           {
@@ -391,8 +399,10 @@
       {
         "x": 0,
         "y": 3,
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "CPU Usage Average for :esxhostname:",
         "queries": [
           {
@@ -483,10 +493,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 8,
+        "x": 64,
         "y": 1,
-        "w": 4,
-        "h": 2,
+        "w": 32,
+        "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "RAM Usage for :esxhostname:",
         "queries": [
           {
@@ -563,10 +575,12 @@
         "noteVisibility": "showWhenNoData"
       },
       {
-        "x": 4,
+        "x": 32,
         "y": 1,
-        "w": 4,
-        "h": 2,
+        "w": 32,
+        "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "CPU Usage for :esxhostname: ",
         "queries": [
           {
@@ -645,8 +659,10 @@
       {
         "x": 0,
         "y": 1,
-        "w": 4,
-        "h": 2,
+        "w": 32,
+        "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Uptime for :esxhostname:",
         "queries": [
           {
@@ -725,8 +741,10 @@
       {
         "x": 0,
         "y": 0,
-        "w": 12,
-        "h": 1,
+        "w": 96,
+        "h": 6,
+        "minW": 10,
+        "minH": 4,
         "name": "",
         "queries": [
           {

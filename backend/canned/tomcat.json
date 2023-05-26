@@ -7,8 +7,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "3e14be06-cb87-4d88-99f1-eff1b3d071de",
       "name": "Tomcat - Requests Count",
       "queries": [
@@ -40,8 +42,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "1f08afed-b9b2-4604-9922-9846aac612dc",
       "name": "Tomcat - Tx (BPS)",
       "queries": [
@@ -73,8 +77,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "6a2f91a3-0217-4dca-bd09-97672217e11b",
       "name": "Tomcat - Rx (BPS)",
       "queries": [
@@ -106,8 +112,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "a4d25835-2971-4dca-9f83-078744d1bbfb",
       "name": "Tomcat - JVM Memory",
       "queries": [

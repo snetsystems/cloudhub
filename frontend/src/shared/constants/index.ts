@@ -435,8 +435,8 @@ export const STATUS_PAGE_ROW_COUNT = 10 // TODO: calculate based on actual Statu
 export const PAGE_HEADER_HEIGHT = 60 // TODO: get this dynamically to ensure longevity
 export const PAGE_CONTAINER_MARGIN = 30 // TODO: get this dynamically to ensure longevity
 export const LAYOUT_MARGIN = 4
-export const DASHBOARD_LAYOUT_ROW_HEIGHT = 83.5
-export const STATIC_LAYOUT_ROW_HEIGHT = 40
+export const DASHBOARD_LAYOUT_ROW_HEIGHT = 10.6
+export const STATIC_LAYOUT_ROW_HEIGHT = 3.35
 
 export const DYGRAPH_CONTAINER_H_MARGIN = 16
 export const DYGRAPH_CONTAINER_V_MARGIN = 8

@@ -6,9 +6,9 @@ import {Source, Cell} from 'src/types'
 import {Layout, LayoutCell, LayoutQuery} from 'src/types/hosts'
 import {CellType, CellQuery} from 'src/types/dashboards'
 
-const CELL_WIDTH = 4
-const CELL_HEIGHT = 4
-const PAGE_WIDTH = 12
+const CELL_WIDTH = 32
+const CELL_HEIGHT = 24
+const PAGE_WIDTH = 96
 
 export function getCells(layouts: Layout[], source: Source): Cell[] {
   const layoutCells = getLayoutCells(layouts)

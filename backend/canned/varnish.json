@@ -6,8 +6,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 12,
-      "h": 4,
+      "w": 96,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "10b406cc-50a8-4c14-bf0e-5fe8bce1661c",
       "name": "Varnish - Cache Hits/Misses",
       "queries": [

@@ -1741,7 +1741,7 @@ const VMHostsPage = (props: Props): JSX.Element => {
             <FancyScrollbar autoHide={false}>
               <GridLayout
                 layout={layout}
-                cols={12}
+                cols={96}
                 rowHeight={calculateRowHeight()}
                 margin={[LAYOUT_MARGIN, LAYOUT_MARGIN]}
                 containerPadding={[15, 15]}
