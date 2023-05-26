@@ -3,7 +3,7 @@
   "info": {
     "title": "CloudHub",
     "description": "API endpoints for CloudHub",
-    "version": "1.4.0"
+    "version": "1.4.3"
   },
   "schemes": ["http"],
   "basePath": "/cloudhub/v1",
