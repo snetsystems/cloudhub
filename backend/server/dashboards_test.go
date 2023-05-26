@@ -19,22 +19,22 @@ func TestCorrectWidthHeight(t *testing.T) {
 			name: "updates width",
 			cell: cloudhub.DashboardCell{
 				W: 0,
-				H: 4,
+				H: 24,
 			},
 			want: cloudhub.DashboardCell{
-				W: 4,
-				H: 4,
+				W: 32,
+				H: 24,
 			},
 		},
 		{
 			name: "updates height",
 			cell: cloudhub.DashboardCell{
-				W: 4,
+				W: 32,
 				H: 0,
 			},
 			want: cloudhub.DashboardCell{
-				W: 4,
-				H: 4,
+				W: 32,
+				H: 24,
 			},
 		},
 		{
@@ -44,19 +44,19 @@ func TestCorrectWidthHeight(t *testing.T) {
 				H: 0,
 			},
 			want: cloudhub.DashboardCell{
-				W: 4,
-				H: 4,
+				W: 32,
+				H: 24,
 			},
 		},
 		{
 			name: "updates neither",
 			cell: cloudhub.DashboardCell{
-				W: 4,
-				H: 4,
+				W: 32,
+				H: 24,
 			},
 			want: cloudhub.DashboardCell{
-				W: 4,
-				H: 4,
+				W: 32,
+				H: 24,
 			},
 		},
 	}
@@ -82,20 +82,20 @@ func TestDashboardDefaults(t *testing.T) {
 						H: 0,
 					},
 					{
-						W: 2,
-						H: 2,
+						W: 16,
+						H: 12,
 					},
 				},
 			},
 			want: cloudhub.Dashboard{
 				Cells: []cloudhub.DashboardCell{
 					{
-						W: 4,
-						H: 4,
+						W: 32,
+						H: 24,
 					},
 					{
-						W: 2,
-						H: 2,
+						W: 16,
+						H: 12,
 					},
 				},
 			},
@@ -105,23 +105,23 @@ func TestDashboardDefaults(t *testing.T) {
 			d: cloudhub.Dashboard{
 				Cells: []cloudhub.DashboardCell{
 					{
-						W: 4,
-						H: 4,
+						W: 32,
+						H: 24,
 					}, {
-						W: 2,
-						H: 2,
+						W: 16,
+						H: 12,
 					},
 				},
 			},
 			want: cloudhub.Dashboard{
 				Cells: []cloudhub.DashboardCell{
 					{
-						W: 4,
-						H: 4,
+						W: 32,
+						H: 24,
 					},
 					{
-						W: 2,
-						H: 2,
+						W: 16,
+						H: 12,
 					},
 				},
 			},
@@ -157,8 +157,8 @@ func TestValidDashboardRequest(t *testing.T) {
 						},
 					},
 					{
-						W: 2,
-						H: 2,
+						W: 16,
+						H: 12,
 						Queries: []cloudhub.DashboardQuery{
 							{
 								Command: "SELECT winning_horses from grays_sports_alamanc where time > 1955-11-1T00:00:00",
@@ -172,8 +172,8 @@ func TestValidDashboardRequest(t *testing.T) {
 				Organization: "1337",
 				Cells: []cloudhub.DashboardCell{
 					{
-						W: 4,
-						H: 4,
+						W: 32,
+						H: 24,
 						Queries: []cloudhub.DashboardQuery{
 							{
 								Command: "SELECT donors from hill_valley_preservation_society where time > 1985-10-25T08:00:00",
@@ -183,8 +183,8 @@ func TestValidDashboardRequest(t *testing.T) {
 						NoteVisibility: "default",
 					},
 					{
-						W: 2,
-						H: 2,
+						W: 16,
+						H: 12,
 						Queries: []cloudhub.DashboardQuery{
 							{
 								Command: "SELECT winning_horses from grays_sports_alamanc where time > 1955-11-1T00:00:00",
@@ -273,8 +273,8 @@ func Test_newDashboardResponse(t *testing.T) {
 						},
 						DashboardCell: cloudhub.DashboardCell{
 							ID: "a",
-							W:  4,
-							H:  4,
+							W:  32,
+							H:  24,
 							Queries: []cloudhub.DashboardQuery{
 								{
 									Command: "SELECT donors from hill_valley_preservation_society where time > '1985-10-25 08:00:00'",
@@ -320,8 +320,8 @@ func Test_newDashboardResponse(t *testing.T) {
 						},
 						DashboardCell: cloudhub.DashboardCell{
 							ID: "b",
-							W:  4,
-							H:  4,
+							W:  32,
+							H:  24,
 							Axes: map[string]cloudhub.Axis{
 								"x": {
 									Bounds: []string{"", ""},

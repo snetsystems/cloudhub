@@ -461,8 +461,8 @@ func TestService_ReplaceDashboardCell(t *testing.T) {
 					"i": "3c5c4102-fa40-4585-a8f9-917c77e37192",
 					"x": 0,
 					"y": 0,
-					"w": 4,
-					"h": 4,
+					"w": 32,
+					"h": 24,
 					"name": "Untitled Cell",
 					"queries": [
 					  {
@@ -588,8 +588,8 @@ func TestService_ReplaceDashboardCell(t *testing.T) {
 					"i": "3c5c4102-fa40-4585-a8f9-917c77e37192",
 					"x": 0,
 					"y": 0,
-					"w": 4,
-					"h": 4,
+					"w": 32,
+					"h": 24,
 					"name": "Untitled Cell",
 					"queries": [
 					  {
@@ -650,8 +650,8 @@ func TestService_ReplaceDashboardCell(t *testing.T) {
 					"i": "3c5c4102-fa40-4585-a8f9-917c77e37192",
 					"x": 0,
 					"y": 0,
-					"w": 4,
-					"h": 4,
+					"w": 32,
+					"h": 24,
 					"name": "Untitled Cell",
 					"queries": [
 					  {

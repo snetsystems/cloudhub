@@ -682,6 +682,8 @@ type DashboardCell struct {
 	Y              int32            `json:"y"`
 	W              int32            `json:"w"`
 	H              int32            `json:"h"`
+	MinW           int32            `json:"minW"`
+	MinH           int32            `json:"minH"`
 	Name           string           `json:"name"`
 	Queries        []DashboardQuery `json:"queries"`
 	Axes           map[string]Axis  `json:"axes"`
@@ -781,6 +783,8 @@ type ProtoboardCell struct {
 	Y              int32            `json:"y"`
 	W              int32            `json:"w"`
 	H              int32            `json:"h"`
+	MinW           int32            `json:"minW"`
+	MinH           int32            `json:"minH"`
 	Name           string           `json:"name"`
 	Queries        []DashboardQuery `json:"queries"`
 	Axes           map[string]Axis  `json:"axes"`

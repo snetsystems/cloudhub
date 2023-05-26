@@ -368,6 +368,7 @@ interface State {
   isGetAwsInstanceType: RemoteDataState
   isInstanceTypeModalVisible: boolean
   isImportTopologyOverlayVisible: boolean
+  isTopologyChanged: boolean
 }
 
 @ErrorHandling
@@ -471,6 +472,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       isGetAwsVolume: RemoteDataState.NotStarted,
       isGetAwsInstanceType: RemoteDataState.NotStarted,
       isImportTopologyOverlayVisible: false,
+      isTopologyChanged: false,
     }
   }
 
@@ -649,6 +651,15 @@ export class InventoryTopology extends PureComponent<Props, State> {
   }
 
   public componentWillUnmount() {
+    const {isTopologyChanged} = this.state
+
+    if (
+      isTopologyChanged &&
+      window.confirm('Do you want to save unsaved changes?')
+    ) {
+      this.handleTopologySave()
+    }
+
     if (this.graph !== null) {
       this.graph.destroy()
       this.graph = null
@@ -1434,6 +1445,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
     ) => {
       const {handleGetIpmiSensorDataAsync} = this.props
       const {isPinned} = this.state
+      if (!target) return
 
       const pIpmi: Ipmi = {
         target,
@@ -1712,7 +1724,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
   private handleGraphModel = (sender: mxGraphModelType) => {
     const topology = this.xmlExport(sender)
 
-    this.setState({topology})
+    this.setState({topology, isTopologyChanged: true})
   }
 
   private handleClose = () => {
@@ -2152,7 +2164,10 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
         notify(notifyTopologySaved())
 
-        this.setState({topologyStatus: RemoteDataState.Done})
+        this.setState({
+          topologyStatus: RemoteDataState.Done,
+          isTopologyChanged: false,
+        })
       }
     } catch (err) {
       this.setState({topologyStatus: RemoteDataState.Done})
@@ -2684,7 +2699,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
     const tempVars = generateForHosts(source)
     const fetchMeasurements = getMeasurementsForEtc(source, hostID)
     const filterLayouts = _.filter(layouts, m =>
-      _.includes(['cloudwatch_elb'], m.app)
+      _.includes(['cloudwatch_elb', 'system', 'win_system'], m.app)
     )
 
     const fetchHosts = getAppsForEtc(

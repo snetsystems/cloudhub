@@ -7,8 +7,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "1b5716f1-b9d1-4a8b-b3bb-6e7d120af490",
       "name": "Memcached - Current Connections",
       "queries": [
@@ -23,8 +25,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "1b5716f1-b9d1-4a8b-b3bb-6e7d120af400",
       "name": "Memcached - Get Hits/Second",
       "queries": [
@@ -39,8 +43,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "1b5716f1-b9d1-4a8b-b3bb-6e7d120af405",
       "name": "Memcached - Get Misses/Second",
       "queries": [
@@ -55,8 +61,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "1b5716f1-b9d1-4a8b-b3bb-6e7d120af413",
       "name": "Memcached - Delete Hits/Second",
       "queries": [
@@ -71,8 +79,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "1b5716f1-b9d1-4a8b-b3bb-6e7d120af412",
       "name": "Memcached - Delete Misses/Second",
       "queries": [
@@ -87,8 +97,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "1b5716f1-b9d1-4a8b-b3bb-6e7d120af411",
       "name": "Memcached - Incr Hits/Second",
       "queries": [
@@ -103,8 +115,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "1b5716f1-b9d1-4a8b-b3bb-6e7d120af510",
       "name": "Memcached - Incr Misses/Second",
       "queries": [
@@ -119,8 +133,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "1b5716f1-b9d1-4a8b-b3bb-6e7d120af402",
       "name": "Memcached - Current Items",
       "queries": [
@@ -135,8 +151,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "1b5716f1-b9d1-4a8b-b3bb-6e7d120af403",
       "name": "Memcached - Total Items",
       "queries": [
@@ -151,8 +169,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "1b5716f1-b9d1-4a8b-b3bb-6e7d120af404",
       "name": "Memcached - Bytes Stored",
       "queries": [
@@ -167,8 +187,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "1b5716f1-b9d1-4a8b-b3bb-6e7d120af406",
       "name": "Memcached - Bytes Read/Sec",
       "queries": [
@@ -183,8 +205,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "1b5716f1-b9d1-4a8b-b3bb-6e7d120af407",
       "name": "Memcached - Bytes Written/Sec",
       "queries": [
@@ -199,8 +223,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "1b5716f1-b9d1-4a8b-b3bb-6e7d120af401",
       "name": "Memcached - Evictions/10 Seconds",
       "queries": [

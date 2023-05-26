@@ -155,6 +155,8 @@ func Test_MarshalDashboard(t *testing.T) {
 				Y:    0,
 				W:    4,
 				H:    4,
+				MinW: 10,
+				MinH: 10,
 				Name: "Super awesome query",
 				Queries: []cloudhub.DashboardQuery{
 					{

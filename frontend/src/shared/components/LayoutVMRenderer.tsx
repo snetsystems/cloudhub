@@ -97,7 +97,7 @@ class LayoutVMRenderer extends Component<Props, State> {
       >
         <GridLayout
           layout={cells}
-          cols={12}
+          cols={96}
           rowHeight={rowHeight}
           margin={[LAYOUT_MARGIN, LAYOUT_MARGIN]}
           containerPadding={[0, 0]}

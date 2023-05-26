@@ -248,7 +248,8 @@ export const getIpmiSensorDataAsync = (
       _.keys(sensorData[pIpmis.target]).length > 0
 
     if (!isSensorData) {
-      throw new Error(`[${pIpmis.target}]: ${sensorData[pIpmis.target]}`)
+      const notify = bindActionCreators(notifyAction, dispatch)
+      notify(notifyIpmiConnectionFailed(pIpmis.host))
     }
 
     return sensorData

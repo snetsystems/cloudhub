@@ -11,7 +11,7 @@ import {
 } from 'src/dashboards/constants'
 import {TEMPLATE_RANGE} from 'src/tempVars/constants'
 
-const MAX_COLUMNS = 12
+const MAX_COLUMNS = 96
 
 // Types
 import {Cell, CellType, Dashboard, NewDefaultCell} from 'src/types/dashboards'

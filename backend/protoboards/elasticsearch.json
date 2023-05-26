@@ -14,8 +14,10 @@
   "data": {
     "cells": [
       {
-        "w": 12,
-        "h": 4,
+        "w": 96,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "ElasticSearch - Query Throughput",
         "queries": [
           {
@@ -51,8 +53,10 @@
         }
       },
       {
-        "w": 12,
-        "h": 4,
+        "w": 96,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "ElasticSearch - Open Connections",
         "queries": [
           {
@@ -88,8 +92,10 @@
         }
       },
       {
-        "w": 6,
-        "h": 4,
+        "w": 48,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "ElasticSearch - Query Latency",
         "queries": [
           {
@@ -125,8 +131,10 @@
         }
       },
       {
-        "w": 6,
-        "h": 4,
+        "w": 48,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "ElasticSearch - Fetch Latency",
         "queries": [
           {
@@ -162,8 +170,10 @@
         }
       },
       {
-        "w": 6,
-        "h": 4,
+        "w": 48,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "ElasticSearch - Suggest Latency",
         "queries": [
           {
@@ -199,8 +209,10 @@
         }
       },
       {
-        "w": 6,
-        "h": 4,
+        "w": 48,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "ElasticSearch - Scroll Latency",
         "queries": [
           {
@@ -236,8 +248,10 @@
         }
       },
       {
-        "w": 12,
-        "h": 4,
+        "w": 96,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "ElasticSearch - Indexing Latency",
         "queries": [
           {
@@ -273,8 +287,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "ElasticSearch - JVM GC Collection Counts",
         "queries": [
           {
@@ -310,8 +326,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "ElasticSearch - JVM GC Latency",
         "queries": [
           {
@@ -347,8 +365,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "ElasticSearch - JVM Heap Usage",
         "queries": [
           {

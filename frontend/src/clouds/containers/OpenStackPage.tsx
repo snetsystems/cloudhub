@@ -39,7 +39,11 @@ import {loadCloudServiceProvidersAsync} from 'src/hosts/actions'
 import {ManualRefreshProps} from 'src/shared/components/ManualRefresh'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import PageSpinner from 'src/shared/components/PageSpinner'
-import {AddonType, LAYOUT_MARGIN} from 'src/shared/constants'
+import {
+  AddonType,
+  DASHBOARD_LAYOUT_ROW_HEIGHT,
+  LAYOUT_MARGIN,
+} from 'src/shared/constants'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import OpenStackPageInstanceOverview from 'src/clouds/components/OpenStackPageInstanceOverview'
 import OpenStackPageInstanceTable from 'src/clouds/components/OpenStackPageInstanceTable'
@@ -284,8 +288,8 @@ export class OpenStackPage extends PureComponent<Props, State> {
         <GridLayout
           className="layout"
           layout={openStackLayouts}
-          cols={20}
-          rowHeight={50}
+          cols={96}
+          rowHeight={DASHBOARD_LAYOUT_ROW_HEIGHT}
           margin={[LAYOUT_MARGIN, LAYOUT_MARGIN]}
           containerPadding={[20, 10]}
           draggableHandle={'.openstacck-dash-graph--draggable'}
@@ -412,10 +416,7 @@ export class OpenStackPage extends PureComponent<Props, State> {
         y: l.y,
         h: l.h,
         w: l.w,
-        minW: l.minW,
-        minH: l.minH,
       }
-
       return {
         ...cell,
         ...newLayout,

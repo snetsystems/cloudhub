@@ -14,8 +14,10 @@
   "data": {
     "cells": [
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "System - CPU Usage",
         "queries": [
           {
@@ -51,8 +53,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "System - Available Bytes",
         "queries": [
           {
@@ -88,8 +92,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "System - TX Bytes/Second",
         "queries": [
           {
@@ -125,8 +131,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "RX Bytes/Second",
         "queries": [
           {
@@ -162,8 +170,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "System - Load",
         "queries": [
           {

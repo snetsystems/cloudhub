@@ -14,8 +14,10 @@
   "data": {
     "cells": [
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Redis - Connected Clients",
         "queries": [
           {
@@ -51,8 +53,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Redis - Blocked Clients",
         "queries": [
           {
@@ -88,8 +92,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Redis - CPU",
         "queries": [
           {
@@ -125,8 +131,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Redis - Memory",
         "queries": [
           {

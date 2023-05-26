@@ -75,6 +75,8 @@ export interface Cell {
   y: number
   w: number
   h: number
+  minW?: number
+  minH?: number
   name: string
   queries: CellQuery[]
   type: CellType
