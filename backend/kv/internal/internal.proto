@@ -32,22 +32,24 @@ message DashboardCell {
 	int32 y                              = 2; // Y-coordinate of Cell in the Dashboard
 	int32 w                              = 3; // Width of Cell in the Dashboard
 	int32 h                              = 4; // Height of Cell in the Dashboard
-	int32 minW                           = 5; // Min Width of Cell in the Dashboard
-	int32 minH                           = 6; // Min Height of Cell in the Dashboard
-	repeated Query queries               = 7; // Time-series data queries for Dashboard
-	string name                          = 8; // User-facing name for this Dashboard
-	string type                          = 9; // Dashboard visualization type
-	string ID                            = 10; // id is the unique id of the dashboard. MIGRATED FIELD added in 1.2.0-beta6
-	map<string, Axis> axes               = 11; // Axes represent the graphical viewport for a cell's visualizations
-	repeated Color colors                = 12; // Colors represent encoding data values to color
-	Legend legend                        = 13; // Legend is summary information for a cell
-	TableOptions tableOptions            = 14; // TableOptions for visualization of cell with type 'table'
-	repeated RenamableField fieldOptions = 15; // Options for each of the fields returned in a cell
-	string timeFormat                    = 16; // format for time
-	DecimalPlaces decimalPlaces          = 17; // Represents how precise the values of this field should be
-	string note                          = 18; // arbitrary string for note-taking/making
-	string noteVisibility                = 19; // config option for showing note
+	repeated Query queries               = 5; // Time-series data queries for Dashboard
+	string name                          = 6; // User-facing name for this Dashboard
+	string type                          = 7; // Dashboard visualization type
+	string ID                            = 8; // id is the unique id of the dashboard. MIGRATED FIELD added in 1.2.0-beta6
+	map<string, Axis> axes               = 9; // Axes represent the graphical viewport for a cell's visualizations
+	repeated Color colors                = 10; // Colors represent encoding data values to color
+	Legend legend                        = 11; // Legend is summary information for a cell
+	TableOptions tableOptions            = 12; // TableOptions for visualization of cell with type 'table'
+	repeated RenamableField fieldOptions = 13; // Options for each of the fields returned in a cell
+	string timeFormat                    = 14; // format for time
+	DecimalPlaces decimalPlaces          = 15; // Represents how precise the values of this field should be
+	string note                          = 16; // arbitrary string for note-taking/making
+	string noteVisibility                = 17; // config option for showing note
+	int32 minW                           = 18; // Min Width of Cell in the Dashboard
+	int32 minH                           = 19; // Min Height of Cell in the Dashboard
 }
+
+
 
 message DecimalPlaces {
 	bool isEnforced			= 1; // whether decimal places should be enforced
