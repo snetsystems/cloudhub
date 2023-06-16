@@ -53,7 +53,7 @@ interface Props {
   onLogout: () => void
   minionsObject: MinionsObject
   minionsStatus: RemoteDataState
-  handleGetMinionKeyListAll: () => void
+  handleTelegrafStatus: (targetMinion: string) => Promise<void>
   handleSetMinionStatus: ({
     minionsStatus,
   }: {
@@ -235,19 +235,17 @@ export class AgentControl extends PureComponent<Props, State> {
   }
 
   public handleAllCheck = (_this: object): void => {
-    const {saltMasterToken} = this.props
-
-    if (saltMasterToken !== null && saltMasterToken !== '') {
-      const {Minions, isAllCheck} = this.state
-      if (isAllCheck === false) {
-        Minions.map(m => (m.isCheck = true))
-      } else {
-        Minions.map(m => (m.isCheck = false))
-      }
-      this.setState({isAllCheck: !isAllCheck, Minions})
+    const {Minions, isAllCheck} = this.state
+    if (isAllCheck === false) {
+      Minions.map(m => (m.isCheck = true))
     } else {
-      this.setState({controlPageStatus: RemoteDataState.Done})
+      Minions.map(m => (m.isCheck = false))
     }
+    this.setState({
+      isAllCheck: !isAllCheck,
+      Minions,
+      controlPageStatus: RemoteDataState.Done,
+    })
   }
 
   public handleMinionCheck = ({_this}): void => {
@@ -274,7 +272,7 @@ export class AgentControl extends PureComponent<Props, State> {
       saltMasterToken,
       runLocalServiceStartTelegraf,
       runLocalServiceStopTelegraf,
-      handleGetMinionKeyListAll,
+      handleTelegrafStatus,
     } = this.props
 
     this.setState({controlPageStatus: RemoteDataState.Loading})
@@ -308,7 +306,7 @@ export class AgentControl extends PureComponent<Props, State> {
         console.error(error)
       }
     }
-    handleGetMinionKeyListAll()
+    await handleTelegrafStatus(host)
   }
 
   public onClickRunCall = async () => {
@@ -316,7 +314,7 @@ export class AgentControl extends PureComponent<Props, State> {
       saltMasterUrl,
       saltMasterToken,
       runLocalServiceStartTelegraf,
-      handleGetMinionKeyListAll,
+      handleTelegrafStatus,
     } = this.props
     const {Minions} = this.state
 
@@ -338,10 +336,10 @@ export class AgentControl extends PureComponent<Props, State> {
         minionLog: 'Service Start' + '\n' + yaml.dump(data.return[0]),
         isAllCheck: false,
       })
+      await handleTelegrafStatus(minion)
     } catch (error) {
       console.error(error)
     }
-    handleGetMinionKeyListAll()
   }
 
   public onClickStopCall = async () => {
@@ -349,7 +347,7 @@ export class AgentControl extends PureComponent<Props, State> {
       saltMasterUrl,
       saltMasterToken,
       runLocalServiceStopTelegraf,
-      handleGetMinionKeyListAll,
+      handleTelegrafStatus,
     } = this.props
     const {Minions} = this.state
     this.setState({controlPageStatus: RemoteDataState.Loading})
@@ -369,11 +367,10 @@ export class AgentControl extends PureComponent<Props, State> {
         minionLog: 'Service Stop' + '\n' + yaml.dump(data.return[0]),
         isAllCheck: false,
       })
+      await handleTelegrafStatus(minion)
     } catch (error) {
       console.error(error)
     }
-
-    handleGetMinionKeyListAll()
   }
 
   public onClickInstallCall = async () => {
@@ -382,7 +379,7 @@ export class AgentControl extends PureComponent<Props, State> {
       saltMasterToken,
       runLocalPkgInstallTelegraf,
       runLocalGroupAdduser,
-      handleGetMinionKeyListAll,
+      handleTelegrafStatus,
     } = this.props
     const {Minions, chooseMenu} = this.state
     this.setState({controlPageStatus: RemoteDataState.Loading})
@@ -421,10 +418,10 @@ export class AgentControl extends PureComponent<Props, State> {
           yaml.dump(getLocalGroupAdduserPromise.data.return[0]),
         isAllCheck: false,
       })
+      await handleTelegrafStatus(minion)
     } catch (error) {
       console.error(error)
     }
-    handleGetMinionKeyListAll()
   }
 
   public handleOnChoose = ({selectItem}: {selectItem: string}): void => {

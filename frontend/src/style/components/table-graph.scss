@@ -117,9 +117,9 @@
   &.table-graph--scroll-window {
     &::-webkit-scrollbar {
       width: 10px;
-      height: 10px;
-
+      height: 13px;
       &-button {
+        display: none;
         background-color: $g5-pepper;
       }
       &-track {
@@ -131,7 +131,7 @@
         border-radius: 5px;
       }
       &-thumb {
-        background-color: $g11-sidewalk;
+        @include gradient-h($s-orange, $s-grapefruit);
         border: 2px solid $g5-pepper;
         border-radius: 5px;
       }

@@ -15,3 +15,13 @@ export interface Minion {
 export interface MinionsObject {
   [x: string]: Minion
 }
+
+export const MinionState = {
+  Delete: 'Delete',
+  Accept: 'Accept',
+  Reject: 'Reject',
+  Denied: 'Denied',
+  UnAccept: 'UnAccept',
+} as const
+
+export type MinionStateType = typeof MinionState[keyof typeof MinionState]

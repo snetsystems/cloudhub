@@ -10,6 +10,7 @@ import {TableBodyRowItem} from 'src/agent_admin/reusable/'
 // Types
 import {Minion} from 'src/agent_admin/type'
 import {ShellInfo} from 'src/types'
+import {MinionState} from 'src/agent_admin/type/minion'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -43,12 +44,14 @@ class AgentMinionsTableRow extends PureComponent<Props> {
   }
 
   public isStatusIndicator = (status: string) => {
-    if (status === 'Accept') {
+    if (status === MinionState.Accept) {
       return <div className="agent--indicator indicator--primary">Accepted</div>
-    } else if (status === 'UnAccept') {
+    } else if (status === MinionState.UnAccept) {
       return <div className="agent--indicator indicator--fail">UnAccept</div>
-    } else if (status === 'Reject') {
+    } else if (status === MinionState.Reject) {
       return <div className="agent--indicator indicator--fail">Reject</div>
+    } else if (status === MinionState.Denied) {
+      return <div className="agent--indicator indicator--fail">Denied</div>
     }
   }
 

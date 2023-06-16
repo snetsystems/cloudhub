@@ -11,6 +11,7 @@ import {createActivityLog} from 'src/shared/apis'
 import {Ipmi, IpmiCell} from 'src/types'
 import {CloudServiceProvider, CSPFileWriteParam} from 'src/hosts/types'
 import {OpenStackApiInfo, OpenStackCallParams} from 'src/clouds/types/openstack'
+import {MinionState, MinionStateType} from 'src/agent_admin/type/minion'
 
 interface Params {
   token?: string
@@ -315,6 +316,45 @@ export async function getWheelKeyListAll(pUrl: string, pToken: string) {
     return await apiRequest(pUrl, pToken, params)
   } catch (error) {
     console.error(error)
+    throw error
+  }
+}
+
+export async function getMinionsState(
+  pUrl: string,
+  pToken: string,
+  minionId: string
+) {
+  try {
+    const result: {key: string; minionState: MinionStateType} = {
+      key: minionId,
+      minionState: MinionState.Delete,
+    }
+    const params = {
+      client: 'wheel',
+      fun: 'key.name_match',
+      match: minionId,
+    }
+
+    const response = await apiRequest(pUrl, pToken, params)
+    const responseData = response.data.return[0].data.return
+
+    const stateMappings: Record<string, MinionStateType> = {
+      minions: MinionState.Accept,
+      minions_pre: MinionState.UnAccept,
+      minions_rejected: MinionState.Reject,
+      minions_denied: MinionState.Denied,
+    }
+
+    for (const key in stateMappings) {
+      if (responseData[key]?.length > 0) {
+        result.minionState = stateMappings[key]
+        break
+      }
+    }
+
+    return result
+  } catch (error) {
     throw error
   }
 }

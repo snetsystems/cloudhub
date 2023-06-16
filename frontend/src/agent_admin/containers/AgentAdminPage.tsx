@@ -42,6 +42,9 @@ import {AddonType} from 'src/shared/constants'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {MinionsObject} from 'src/agent_admin/type'
 
+// APIs
+import {getTelegrafState, updateMinionKeyState} from 'src/agent_admin/apis'
+
 interface Props {
   links: Links
   source: Source
@@ -140,6 +143,51 @@ class AgentAdminPage extends PureComponent<Props, State> {
     })
   }
 
+  public updateTelegrafState = async (targetMinion: string) => {
+    const addon = this.props.addons.find(addon => {
+      return addon.name === AddonType.salt
+    })
+    const {minionsObject} = this.state
+    const saltMasterUrl = addon.url
+    const saltMasterToken = addon.token
+    this.setState({minionsStatus: RemoteDataState.Loading})
+
+    const minionAfterTelegrafUpdate = await getTelegrafState(
+      saltMasterUrl,
+      saltMasterToken,
+      targetMinion,
+      minionsObject
+    )
+
+    this.setState({
+      minionsObject: minionAfterTelegrafUpdate,
+      minionsStatus: RemoteDataState.Done,
+    })
+  }
+
+  public updateMinionState = async (targetMinion: string) => {
+    const addon = this.props.addons.find(addon => {
+      return addon.name === AddonType.salt
+    })
+    const {minionsObject} = this.state
+    const saltMasterUrl = addon.url
+    const saltMasterToken = addon.token
+
+    this.setState({minionsStatus: RemoteDataState.Loading})
+
+    const minionListObject = await updateMinionKeyState(
+      saltMasterUrl,
+      saltMasterToken,
+      targetMinion,
+      minionsObject
+    )
+
+    this.setState({
+      minionsObject: minionListObject,
+      minionsStatus: RemoteDataState.Done,
+    })
+  }
+
   public sections = (meRole: string) => {
     const {
       saltMasterUrl,
@@ -162,7 +210,7 @@ class AgentAdminPage extends PureComponent<Props, State> {
             saltMasterToken={saltMasterToken}
             minionsObject={minionsObject}
             minionsStatus={minionsStatus}
-            handleGetMinionKeyListAll={this.getMinionKeyListAll}
+            handleUpdateMinionStatus={this.updateMinionState}
             handleSetMinionStatus={this.setMinionStatus}
             handleShellModalOpen={this.onClickShellModalOpen}
             handleShellModalClose={this.onClickShellModalClose}
@@ -181,7 +229,7 @@ class AgentAdminPage extends PureComponent<Props, State> {
             saltMasterToken={saltMasterToken}
             minionsObject={minionsObject}
             minionsStatus={minionsStatus}
-            handleGetMinionKeyListAll={this.getMinionKeyListAll}
+            handleTelegrafStatus={this.updateTelegrafState}
             handleSetMinionStatus={this.setMinionStatus}
           />
         ),
@@ -198,6 +246,7 @@ class AgentAdminPage extends PureComponent<Props, State> {
             saltMasterToken={saltMasterToken}
             minionsObject={minionsObject}
             minionsStatus={minionsStatus}
+            handleTelegrafStatus={this.updateTelegrafState}
             handleGetMinionKeyListAll={this.getMinionKeyListAll}
             handleSetMinionStatus={this.setMinionStatus}
           />
@@ -217,7 +266,6 @@ class AgentAdminPage extends PureComponent<Props, State> {
             minionsStatus={minionsStatus}
             collectorConfigTableTabs={collectorConfigTableTabs}
             isUserAuthorized={isUserAuthorized(meRole, ADMIN_ROLE)}
-            handleGetMinionKeyListAll={this.getMinionKeyListAll}
           />
         ),
       },
