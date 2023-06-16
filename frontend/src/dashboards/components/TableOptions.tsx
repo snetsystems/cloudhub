@@ -173,9 +173,9 @@ export class TableOptions extends Component<Props, Record<string, never>> {
     const sortBy = fieldOptions.find(
       f => f.internalName === tableOptions.sortBy.internalName
     )
+    const updatedSortBy = {...sortBy, direction: direction}
 
-    sortBy.direction = direction
-    onUpdateTableOptions({...tableOptions, sortBy})
+    onUpdateTableOptions({...tableOptions, sortBy: updatedSortBy})
   }
 
   private handleTimeFormatChange = timeFormat => {
