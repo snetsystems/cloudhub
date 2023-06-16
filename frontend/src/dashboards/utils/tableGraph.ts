@@ -156,6 +156,7 @@ export const computeFieldOptions = (
       internalName: label,
       displayName: '',
       visible: true,
+      direction: 'asc',
     }
     astNames = [...astNames, field]
   })

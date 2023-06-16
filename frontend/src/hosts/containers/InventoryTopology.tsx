@@ -653,10 +653,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
   public componentWillUnmount() {
     const {isTopologyChanged} = this.state
 
-    if (
-      isTopologyChanged &&
-      window.confirm('Do you want to save unsaved changes?')
-    ) {
+    if (isTopologyChanged && window.confirm('Do you want to save changes?')) {
       this.handleTopologySave()
     }
 

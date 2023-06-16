@@ -33,6 +33,7 @@ interface RenamableField {
   internalName: string
   displayName: string
   visible: boolean
+  direction?: '' | 'asc' | 'desc'
 }
 
 interface TableOptionsInterface {
@@ -91,8 +92,10 @@ export class TableOptions extends Component<Props, Record<string, never>> {
           <div className="form-group-wrapper">
             <GraphOptionsSortBy
               selected={tableOptions.sortBy || DEFAULT_INFLUXQL_TIME_FIELD}
+              selectedDirection={tableOptions?.sortBy?.direction || 'asc'}
               sortByOptions={tableSortByOptions}
               onChooseSortBy={this.handleChooseSortBy}
+              onChooseSortByDirection={this.handleChooseSortByDirection}
             />
             <GraphOptionsDecimalPlaces
               digits={decimalPlaces.digits}
@@ -103,14 +106,18 @@ export class TableOptions extends Component<Props, Record<string, never>> {
               verticalTimeAxis={verticalTimeAxis}
               onToggleVerticalTimeAxis={this.handleToggleVerticalTimeAxis}
             />
-            <GraphOptionsTimeFormat
-              timeFormat={timeFormat}
-              onTimeFormatChange={this.handleTimeFormatChange}
-            />
-            <GraphOptionsFixFirstColumn
-              fixed={fixFirstColumn}
-              onToggleFixFirstColumn={this.handleToggleFixFirstColumn}
-            />
+            <div
+              style={{width: '100%', display: 'flex', alignItems: 'flex-end'}}
+            >
+              <GraphOptionsFixFirstColumn
+                fixed={fixFirstColumn}
+                onToggleFixFirstColumn={this.handleToggleFixFirstColumn}
+              />
+              <GraphOptionsTimeFormat
+                timeFormat={timeFormat}
+                onTimeFormatChange={this.handleTimeFormatChange}
+              />
+            </div>
           </div>
           <GraphOptionsCustomizeFields
             fields={fieldOptions}
@@ -158,6 +165,16 @@ export class TableOptions extends Component<Props, Record<string, never>> {
   private handleChooseSortBy = (option: DropdownOption) => {
     const {tableOptions, onUpdateTableOptions, fieldOptions} = this.props
     const sortBy = fieldOptions.find(f => f.internalName === option.key)
+    onUpdateTableOptions({...tableOptions, sortBy})
+  }
+
+  private handleChooseSortByDirection = (direction: 'asc' | 'desc') => {
+    const {tableOptions, onUpdateTableOptions, fieldOptions} = this.props
+    const sortBy = fieldOptions.find(
+      f => f.internalName === tableOptions.sortBy.internalName
+    )
+
+    sortBy.direction = direction
     onUpdateTableOptions({...tableOptions, sortBy})
   }
 

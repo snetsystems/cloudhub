@@ -370,6 +370,8 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
       timeFormat,
       note,
       noteVisibility,
+      fieldOptions,
+      tableOptions,
     } = visualizationOptions
 
     const isFluxQuery = queryType === QueryType.Flux
@@ -448,6 +450,8 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
           timeFormat,
           note,
           noteVisibility,
+          fieldOptions,
+          tableOptions,
         }
         return sendDashboardCell(dashboard, newCell)
       })

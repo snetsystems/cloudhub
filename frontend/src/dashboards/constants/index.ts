@@ -26,18 +26,21 @@ export interface TimeField {
   internalName: string
   displayName: string
   visible: boolean
+  direction?: '' | 'asc' | 'desc'
 }
 
 export const DEFAULT_INFLUXQL_TIME_FIELD: TimeField = {
   internalName: 'time',
   displayName: '',
   visible: true,
+  direction: 'asc',
 }
 
 export const DEFAULT_FLUX_TIME_FIELD: TimeField = {
   internalName: '_time',
   displayName: '',
   visible: true,
+  direction: 'asc',
 }
 
 export const DEFAULT_TABLE_OPTIONS = {
