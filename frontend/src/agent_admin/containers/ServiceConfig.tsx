@@ -86,7 +86,6 @@ interface Props {
   minionsObject: MinionsObject
   minionsStatus: RemoteDataState
   notify: (message: Notification | NotificationFunc) => void
-  handleGetMinionKeyListAll: () => void
   getLocalSaltCmdDirectory: (
     saltMasterUrl: string,
     saltMasterToken: string,

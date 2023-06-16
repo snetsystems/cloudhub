@@ -91,6 +91,7 @@ interface Props {
   minionsObject: MinionsObject
   minionsStatus: RemoteDataState
   handleGetMinionKeyListAll: () => void
+  handleTelegrafStatus: (targetMinion: string) => Promise<void>
   handleSetMinionStatus: ({
     minionsStatus,
   }: {
@@ -423,7 +424,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       saltMasterToken,
       runLocalServiceStartTelegraf,
       runLocalServiceStopTelegraf,
-      handleGetMinionKeyListAll,
+      handleTelegrafStatus,
     } = this.props
 
     this.setState({
@@ -434,7 +435,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       ? await runLocalServiceStopTelegraf(saltMasterUrl, saltMasterToken, host)
       : await runLocalServiceStartTelegraf(saltMasterUrl, saltMasterToken, host)
 
-    handleGetMinionKeyListAll()
+    await handleTelegrafStatus(host)
   }
 
   public onClickApplyCall = () => {
@@ -446,7 +447,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
       me,
       getLocalFileWrite,
       minionsObject,
-      handleGetMinionKeyListAll,
+      handleTelegrafStatus,
     } = this.props
     const {focusedHost, configScript} = this.state
     let {
@@ -517,7 +518,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
         )
 
         getLocalServiceReloadTelegrafPromise
-          .then(({data}) => {
+          .then(async ({data}) => {
             const isReloadSucceeded = data.return[0][focusedHost]
 
             if (isReloadSucceeded !== true) {
@@ -545,7 +546,7 @@ export class AgentConfiguration extends PureComponent<Props, State> {
               measurementsStatus: RemoteDataState.Done,
             })
 
-            handleGetMinionKeyListAll()
+            await handleTelegrafStatus(focusedHost)
             notify(notifyAgentApplySucceeded('is applied'))
           })
           .catch(error => {
