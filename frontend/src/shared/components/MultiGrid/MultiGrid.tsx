@@ -424,6 +424,7 @@ class MultiGrid extends React.PureComponent<PropsMultiGrid, State> {
                 style={{
                   overflowY: 'hidden',
                   height: Math.max(scrollPaneHeight, height),
+                  zIndex: 10,
                 }}
                 width={width - leftWidth - verticalScrollbarWidth}
               />

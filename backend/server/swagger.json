@@ -3,7 +3,7 @@
   "info": {
     "title": "CloudHub",
     "description": "API endpoints for CloudHub",
-    "version": "1.4.3"
+    "version": "1.4.4"
   },
   "schemes": ["http"],
   "basePath": "/cloudhub/v1",
@@ -7231,6 +7231,10 @@
         "visible": {
           "description": "Indicates whether this field should be visible on the table",
           "type": "boolean"
+        },
+        "direction": {
+          "description": "Indicates whether this field is in descending order or ascending order",
+          "type": "string"
         }
       }
     },

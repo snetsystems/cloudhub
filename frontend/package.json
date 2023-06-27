@@ -1,6 +1,6 @@
 {
   "name": "frontend",
-  "version": "1.4.3",
+  "version": "1.4.4",
   "private": true,
   "description": "This is CloudHub's User interface made in React & Typescript",
   "author": "Jack Kim",

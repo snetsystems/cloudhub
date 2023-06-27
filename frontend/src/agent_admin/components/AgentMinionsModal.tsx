@@ -7,6 +7,9 @@ import ReactModal from 'react-modal'
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
 
+// Types
+import {MinionState} from 'src/agent_admin/type/minion'
+
 interface Props {
   name: string
   host: string
@@ -53,21 +56,21 @@ class AgentMinionsModal extends PureComponent<Props, State> {
 
   public onClickAccept = (event: MouseEvent<HTMLElement>) => {
     const {handleWheelKeyCommand, host} = this.props
-    handleWheelKeyCommand(host, 'Accept')
+    handleWheelKeyCommand(host, MinionState.Accept)
     event.stopPropagation()
     this.handleCloseModal()
   }
 
   public onClickReject = (event: MouseEvent<HTMLElement>) => {
     const {handleWheelKeyCommand, host} = this.props
-    handleWheelKeyCommand(host, 'Reject')
+    handleWheelKeyCommand(host, MinionState.Reject)
     event.stopPropagation()
     this.handleCloseModal()
   }
 
   public onClickDelete = (event: MouseEvent<HTMLElement>) => {
     const {handleWheelKeyCommand, host} = this.props
-    handleWheelKeyCommand(host, 'Delete')
+    handleWheelKeyCommand(host, MinionState.Delete)
     event.stopPropagation()
     this.handleCloseModal()
   }
@@ -103,19 +106,34 @@ class AgentMinionsModal extends PureComponent<Props, State> {
             onMouseLeave={this.handleCloseModal}
           >
             <div className="dropdown--menu">
-              {status === 'UnAccept' || status === 'Reject' ? (
-                <div className="dropdown--item" onClick={this.onClickAccept}>
-                  <div className="dropdown-item--children">Accept</div>
+              {status === MinionState.Denied ? (
+                <div className="dropdown--item" onClick={this.onClickDelete}>
+                  <div className="dropdown-item--children">Delete</div>
                 </div>
               ) : (
-                <div className="dropdown--item" onClick={this.onClickReject}>
-                  <div className="dropdown-item--children">Reject</div>
-                </div>
-              )}
+                <>
+                  {status === MinionState.UnAccept ||
+                  status === MinionState.Reject ? (
+                    <div
+                      className="dropdown--item"
+                      onClick={this.onClickAccept}
+                    >
+                      <div className="dropdown-item--children">Accept</div>
+                    </div>
+                  ) : (
+                    <div
+                      className="dropdown--item"
+                      onClick={this.onClickReject}
+                    >
+                      <div className="dropdown-item--children">Reject</div>
+                    </div>
+                  )}
 
-              <div className="dropdown--item" onClick={this.onClickDelete}>
-                <div className="dropdown-item--children">Delete</div>
-              </div>
+                  <div className="dropdown--item" onClick={this.onClickDelete}>
+                    <div className="dropdown-item--children">Delete</div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </ReactModal>

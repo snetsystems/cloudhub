@@ -19,6 +19,7 @@ interface RenamableField {
   internalName: string
   displayName: string
   visible: boolean
+  direction?: '' | 'asc' | 'desc'
 }
 
 interface Props {
@@ -34,6 +35,7 @@ interface Props {
   connectDropTarget?: ConnectDropTarget
   connectDragPreview?: ConnectDragPreview
   moveField: (dragIndex: number, hoverIndex: number) => void
+  direction: '' | 'asc' | 'desc'
 }
 
 const fieldSource: DragSourceSpec<Props> = {
@@ -177,12 +179,23 @@ export default class GraphOptionsCustomizableField extends Component<Props> {
   }
 
   private handleFieldRename(e: ChangeEvent<HTMLInputElement>) {
-    const {onFieldUpdate, internalName, visible} = this.props
-    onFieldUpdate({internalName, displayName: e.target.value, visible})
+    const {onFieldUpdate, internalName, visible, direction} = this.props
+    onFieldUpdate({
+      internalName,
+      displayName: e.target.value,
+      visible,
+      direction,
+    })
   }
 
   private handleToggleVisible() {
-    const {onFieldUpdate, internalName, displayName, visible} = this.props
-    onFieldUpdate({internalName, displayName, visible: !visible})
+    const {
+      onFieldUpdate,
+      internalName,
+      displayName,
+      visible,
+      direction,
+    } = this.props
+    onFieldUpdate({internalName, displayName, visible: !visible, direction})
   }
 }

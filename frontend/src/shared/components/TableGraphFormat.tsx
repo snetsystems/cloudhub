@@ -108,9 +108,15 @@ class TableGraphFormat extends PureComponent<Props, State> {
       ''
     )
 
+    const sortDirection: string = _.get(
+      this.props,
+      'tableOptions.sortBy.direction',
+      ''
+    )
+
     this.state = {
       formattedData: null,
-      sort: {field: sortField, direction: DEFAULT_SORT_DIRECTION},
+      sort: {field: sortField, direction: sortDirection},
       computedFieldOptions: props.fieldOptions,
       invalidDataError: null,
     }
@@ -171,6 +177,12 @@ class TableGraphFormat extends PureComponent<Props, State> {
       // setup sort unless the data are refreshed
       sort.field = sortField || this.sortField
       sort.direction = DEFAULT_SORT_DIRECTION
+    } else {
+      sort.field = tableOptions.sortBy.internalName
+      sort.direction =
+        tableOptions.sortBy.direction === ''
+          ? 'asc'
+          : tableOptions.sortBy.direction
     }
 
     const latestUUID = this.props.uuid

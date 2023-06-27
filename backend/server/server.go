@@ -153,7 +153,7 @@ type Server struct {
 
 	oauthClient http.Client
 
-	AddonURLs   map[string]string `short:"u" long:"addon-url" description:"Support addon is [salt, aws, gcp, k8s, swan, oncue, ipmi-secret-key]. Actually, this is a key-value extensional option not only url but also any key-value. Refer to the following usage samples. E.g., via flags: '-u=salt:{url} -u=salt_config_path:{path} -u=aws:on[off] -u=gcp:on[off] -u=k8s:on[off] -u=swan:{url} -u=oncue:{port number} -u=ipmi-secret-key:{seed key}'. E.g. via environment variable: 'export ADDON_URL=salt:{url},swan:{url}'" env:"ADDON_URL" env-delim:","`
+	AddonURLs   map[string]string `short:"u" long:"addon-url" description:"Support addon is [salt, aws, gcp, osp, k8s, swan, oncue, ipmi-secret-key]. Actually, this is a key-value extensional option not only url but also any key-value. Refer to the following usage samples. E.g., via flags: '-u=salt:{url} -u=salt_config_path:{path} -u=aws:on[off] -u=gcp:on[off] -u=k8s:on[off] -u=swan:{url} -u=oncue:{port number} -u=ipmi-secret-key:{seed key}'. E.g. via environment variable: 'export ADDON_URL=salt:{url},swan:{url}'" env:"ADDON_URL" env-delim:","`
 	AddonTokens map[string]string `short:"k" long:"addon-tokens" description:"The token associated with addon [salt, swan]. E.g. via flags: '-k=salt:{token} -k=swan:{token}'. E.g. via environment variable: 'export ADDON_TOKENS=salt:{token},swan:{token}'" env:"ADDON_TOKENS" env-delim:","`
 
 	OSP map[string]string `long:"osp" description:"The Informations to access to OSP API. '--osp=admin-provider:{salt admin provider} --osp=admin-user:{admin user name} --osp=admin-pw:{admin user password} --osp=auth-url:{keystone url} --osp=pj-domain-id:{project domain id} --osp=user-domain-id:{user domain id}'. E.g. via environment variable: 'export OSP=admin:{salt admin provider},admin-user:{admin user name}', etc." env:"OSP" env-delim:","`
@@ -782,6 +782,12 @@ func (s *Server) Serve(ctx context.Context) {
 		WithField("component", "server").
 		Info("Serving cloudhub at ", scheme, "://", listener.Addr())
 
+	if _, err := service.IsMinionAvailable("osp"); err != nil {
+		logger.
+			WithField("component", "server").
+			Error(err)
+		return
+	}
 	if err := httpServer.Serve(listener); err != nil {
 		logger.
 			WithField("component", "server").

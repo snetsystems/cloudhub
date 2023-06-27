@@ -36,6 +36,7 @@ import {
   ShellInfo,
 } from 'src/types'
 import {MinionsObject} from 'src/agent_admin/type'
+import {MinionState} from 'src/agent_admin/type/minion'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -68,7 +69,7 @@ interface Props {
   saltMasterToken: string
   minionsObject: MinionsObject
   minionsStatus: RemoteDataState
-  handleGetMinionKeyListAll: () => void
+  handleUpdateMinionStatus: (targetMinion: string) => Promise<void>
   handleSetMinionStatus: ({
     minionsStatus,
   }: {
@@ -127,7 +128,7 @@ export class AgentMinions extends PureComponent<Props, State> {
       minionsPageStatus: RemoteDataState.Loading,
     })
 
-    if (minionsObject[host].status === 'Accept') {
+    if (minionsObject[host].status === MinionState.Accept) {
       try {
         const {data} = await handleGetLocalGrainsItem(
           saltMasterUrl,
@@ -158,14 +159,14 @@ export class AgentMinions extends PureComponent<Props, State> {
       saltMasterUrl,
       saltMasterToken,
       handleRunRejectKey,
-      handleGetMinionKeyListAll,
+      handleUpdateMinionStatus,
       handleRunAcceptKey,
       handleRunDeleteKey,
     } = this.props
 
     this.setState({minionsPageStatus: RemoteDataState.Loading})
     switch (cmdstatus) {
-      case 'Reject': {
+      case MinionState.Reject: {
         try {
           const {data} = await handleRunRejectKey(
             saltMasterUrl,
@@ -173,7 +174,7 @@ export class AgentMinions extends PureComponent<Props, State> {
             host
           )
 
-          handleGetMinionKeyListAll()
+          await handleUpdateMinionStatus(host)
 
           this.setState({
             minionLog: yaml.dump(data.return[0]),
@@ -183,7 +184,7 @@ export class AgentMinions extends PureComponent<Props, State> {
         }
         return
       }
-      case 'Accept': {
+      case MinionState.Accept: {
         try {
           const {data} = await handleRunAcceptKey(
             saltMasterUrl,
@@ -191,7 +192,7 @@ export class AgentMinions extends PureComponent<Props, State> {
             host
           )
 
-          handleGetMinionKeyListAll()
+          await handleUpdateMinionStatus(host)
 
           this.setState({
             minionLog: yaml.dump(data.return[0]),
@@ -201,7 +202,7 @@ export class AgentMinions extends PureComponent<Props, State> {
         }
         return
       }
-      case 'Delete': {
+      case MinionState.Delete: {
         try {
           const {data} = await handleRunDeleteKey(
             saltMasterUrl,
@@ -209,7 +210,7 @@ export class AgentMinions extends PureComponent<Props, State> {
             host
           )
 
-          handleGetMinionKeyListAll()
+          await handleUpdateMinionStatus(host)
 
           this.setState({
             minionLog: yaml.dump(data.return[0]),
@@ -219,8 +220,9 @@ export class AgentMinions extends PureComponent<Props, State> {
         }
         return
       }
+
       default: {
-        handleGetMinionKeyListAll()
+        await handleUpdateMinionStatus(host)
         return
       }
     }

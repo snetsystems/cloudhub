@@ -16,6 +16,7 @@ export interface FieldOption {
   internalName: string
   displayName: string
   visible: boolean
+  direction?: '' | 'asc' | 'desc'
 }
 
 export interface TableOptions {
