@@ -15,8 +15,8 @@
       "name": "CPU Usage",
       "queries": [
         {
-          "query": "SELECT non_negative_derivative(mean(\"cpu0_time\")) AS \"mean_cpu0_time\" FROM \":db:\".\":rp:\".\"openstack_server_diagnostics\"",
-          "label": "",
+          "query": "SELECT non_negative_derivative(mean(\"cpu_time\"), 1s) / 10000000 AS \"cpu_percent\" FROM \":db:\".\":rp:\".\"openstack_server_diagnostics\"",
+          "label": "CPU Usage",
           "groupbys": [],
           "wheres": []
         }
@@ -32,7 +32,7 @@
         },
         "y": {
           "bounds": ["", ""],
-          "label": "",
+          "label": "CPU Usage",
           "prefix": "",
           "suffix": "",
           "base": "10",
@@ -57,10 +57,10 @@
       "h": 30,
       "minW": 10,
       "minH": 4,
-      "name": "Port Recevie Packet",
+      "name": "Port Recevie",
       "queries": [
         {
-          "query": "SELECT mean(\"port_rx_packets\") AS \"mean_port_rx_packets\" FROM \":db:\".\":rp:\".\"openstack_server_diagnostics\"",
+          "query": "SELECT non_negative_derivative(mean(\"port_rx\")) AS \"port_rx\" FROM \":db:\".\":rp:\".\"openstack_server_diagnostics\"",
           "label": "",
           "groupbys": [],
           "wheres": []
@@ -77,7 +77,7 @@
         },
         "y": {
           "bounds": ["", ""],
-          "label": "port_rx_packets",
+          "label": "Port Recevie",
           "prefix": "",
           "suffix": "",
           "base": "10",
@@ -102,12 +102,22 @@
       "h": 12,
       "minW": 10,
       "minH": 4,
-      "name": "Port Transmit Packets",
+      "name": "Port Transmit",
       "queries": [
         {
-          "query": "SELECT non_negative_derivative(max(\"port_tx_packets\")) AS \"mean_port_tx_packets\" FROM \":db:\".\":rp:\".\"openstack_server_diagnostics\""
+          "query": "SELECT non_negative_derivative(mean(\"port_tx\")) AS \"mean_port_tx\" FROM \":db:\".\":rp:\".\"openstack_server_diagnostics\""
         }
-      ]
+      ],
+      "axes": {
+        "y": {
+          "bounds": ["", ""],
+          "label": "Port Transmit",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      }
     },
 
     {
@@ -163,7 +173,7 @@
         },
         "y": {
           "bounds": ["", ""],
-          "label": "",
+          "label": "Memory Used",
           "prefix": "",
           "suffix": "",
           "base": "2",
@@ -215,7 +225,16 @@
           "wheres": []
         }
       ],
-
+      "axes": {
+        "y": {
+          "bounds": ["", ""],
+          "label": "Disk Read Request",
+          "prefix": "",
+          "suffix": "",
+          "base": "2",
+          "scale": "linear"
+        }
+      },
       "type": "line"
     },
     {
@@ -235,7 +254,16 @@
           "wheres": []
         }
       ],
-
+      "axes": {
+        "y": {
+          "bounds": ["", ""],
+          "label": "Disk Write Request",
+          "prefix": "",
+          "suffix": "",
+          "base": "2",
+          "scale": "linear"
+        }
+      },
       "type": "line"
     }
   ]

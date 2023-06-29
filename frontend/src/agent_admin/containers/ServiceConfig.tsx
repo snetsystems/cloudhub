@@ -487,7 +487,10 @@ export class ServiceConfig extends PureComponent<Props, State> {
 
             getRunLocalServiceDebugTelegraf
               .then(({data}): void => {
-                const isTestFailed = data.indexOf('E!') !== -1 ? true : false
+                const isTestFailed =
+                  data.includes('E!') || data.includes('runtime error')
+                    ? true
+                    : false
 
                 if (isTestFailed) {
                   const errorMessage = data.split('[telegraf]')[1]

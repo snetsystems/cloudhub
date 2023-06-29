@@ -476,7 +476,7 @@ func (s *Service) generateTelegrafConfigForOSP(ctx context.Context, csp *cloudhu
 				{
 					Interval:               "2m",
 					AuthenticationEndpoint: s.OSP.AuthURL,
-					EnabledServices:        []string{"servers", "flavors"},
+					EnabledServices:        []string{"projects", "servers", "flavors", "networks", "ports", "storage_pools", "subnets", "volumes", "compute_quotas", "network_quotas", "volume_quotas"},
 					Domain:                 s.OSP.UserDomain,
 					Project:                csp.NameSpace,
 					Username:               s.OSP.AdminUser,
