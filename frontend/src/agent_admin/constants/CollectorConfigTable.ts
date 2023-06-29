@@ -63,10 +63,12 @@ export const COLLECTOR_DROPDOWN_DATA = [
   'projects',
   'servers',
   'services',
-  'stacks',
   'storage_pools',
   'subnets',
   'volumes',
+  'compute_quotas',
+  'network_quotas',
+  'volume_quotas',
 ]
 
 export const COLLECTOR_CONFIG_TAB_ABBREVIATION = {
