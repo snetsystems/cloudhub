@@ -290,6 +290,7 @@ export const createTextField = function (
   if (attribute.nodeName === 'data-using_minion') {
     input = form.addCombo(nodeName, false)
     input.style.padding = '0 9px'
+    input.classList.add('form-select')
 
     form.addOption(input, 'NONE', '', false)
     _.map(ipmiTargets, ipmiTarget => {
@@ -300,6 +301,7 @@ export const createTextField = function (
   } else if (attribute.nodeName === 'data-status') {
     input = form.addCombo(nodeName, false)
     input.style.padding = '0 9px'
+    input.classList.add('form-select')
 
     form.addOption(
       input,
@@ -316,6 +318,7 @@ export const createTextField = function (
   } else if (attribute.nodeName === 'data-icon') {
     input = form.addCombo(nodeName, false)
     input.style.padding = '0 9px'
+    input.classList.add('form-select')
 
     _.map(toolsMenu, tool => {
       tool.icon === attribute.nodeValue

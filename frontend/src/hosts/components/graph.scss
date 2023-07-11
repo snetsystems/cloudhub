@@ -53,10 +53,14 @@
   .properties-table {
     width: 100%;
     td {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
       color: #bec2cc;
       padding: 0 5px;
+    }
+
+    .form-select {
+      appearance: auto;
     }
   }
   .mxgraph-cell--link-btn {
