@@ -526,7 +526,6 @@ export const openSensorData = function (data: Promise<any>) {
   statusWindow.appendChild(statusTable)
 
   this.statusRef.current.appendChild(statusWindow)
-  document.querySelector('#statusContainer').classList.add('active')
 }
 
 export const dragCell = (node: Menu) => (
@@ -981,10 +980,9 @@ export const onClickMxGraph = function (
 ) {
   const cell: mxCellType = me.getProperty('cell')
 
-  document.querySelector('#statusContainer').classList.remove('active')
-  document.querySelector('#statusContainerRef').innerHTML = null
-
   if (!_.isEmpty(cell) && cell.style === 'node') {
+    document.querySelector('#statusContainer').classList.remove('active')
+    document.querySelector('#statusContainerRef').innerHTML = ``
     const containerElement = getContainerElement(cell.value)
 
     if (containerElement.hasAttribute('data-ipmi_host')) {
@@ -993,15 +991,13 @@ export const onClickMxGraph = function (
       const ipmiUser = containerElement.getAttribute('data-ipmi_user')
       const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
 
-      if (ipmiHost && ipmiUser && ipmiPass && target) {
-        this.saltIpmiGetSensorDataAsync(
-          target,
-          ipmiHost,
-          ipmiUser,
-          ipmiPass,
-          cell
-        )
-      }
+      this.saltIpmiGetSensorDataAsync(
+        target,
+        ipmiHost,
+        ipmiUser,
+        ipmiPass,
+        cell
+      )
     }
   }
 }
@@ -1141,7 +1137,7 @@ export const factoryMethod = (
             )
           })
         }
-        if (ipmiHost && ipmiUser && ipmiPass) {
+        if (ipmiHost && ipmiUser && ipmiPass && ipmiTarget) {
           saltIpmiGetSensorDataAsync(
             ipmiTarget,
             ipmiHost,

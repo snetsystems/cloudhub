@@ -1,8 +1,13 @@
 import React, {FunctionComponent} from 'react'
 
-const PageSpinner: FunctionComponent<Record<string, never>> = () => {
+interface PageSpinnerProps {
+  customClass?: string
+}
+const PageSpinner: FunctionComponent<PageSpinnerProps> = ({
+  customClass = '',
+}) => {
   return (
-    <div className="page-spinner-container">
+    <div className={`${customClass} page-spinner-container`.trimLeft()}>
       <div className="page-spinner" />
     </div>
   )
