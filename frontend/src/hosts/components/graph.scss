@@ -42,13 +42,31 @@
   #outlineContainer {
     position: fixed;
     top: 10px;
-    // top: 98px;
     right: 10px;
     width: 200px;
     height: 140px;
     overflow: hidden;
     background: rgba(0, 0, 0, 0.7);
     border: 2px solid black;
+  }
+  .impiInfoBorder {
+    border: 2px solid $g5-pepper;
+  }
+  .impiInfoButton {
+    width: 18px;
+    height: 18px;
+    line-height: 14px;
+    & > span {
+      font-size: 9px;
+    }
+  }
+  .ipmiInfoSpinner,
+  .ipmiInfoNoData {
+    height: 100%;
+    position: absolute;
+    width: 100%;
+    padding-top: 16px;
+    box-sizing: border-box;
   }
   .properties-table {
     width: 100%;
@@ -325,6 +343,11 @@ div.mxPopupMenu {
 
 #statusContainer {
   height: 100%;
+  .status-title {
+    padding-left: 1rem;
+    font-weight: 600;
+    color: $FONT_COLOR_NORMAL;
+  }
   .status-ref-wrap {
     height: calc(100% - 32px);
     #statusContainerRef {
