@@ -57,10 +57,7 @@ export const getIsHasString = (value: string): boolean => {
 }
 
 export const getTimeSeriesHostIndicator = (host: Host, key: string): string => {
-  if (
-    _.get(host, key, 0) > 0 &&
-    Math.max(host.deltaUptime || 0, host.winDeltaUptime || 0) > 0
-  ) {
+  if (Math.max(host.deltaUptime || 0, host.winDeltaUptime || 0) > 0) {
     let status = 'UsageIndacator'
 
     if (_.get(host, key, 0) >= 50) status = 'UsageIndacator--caution'

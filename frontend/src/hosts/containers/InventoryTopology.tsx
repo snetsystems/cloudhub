@@ -369,6 +369,7 @@ interface State {
   isInstanceTypeModalVisible: boolean
   isImportTopologyOverlayVisible: boolean
   isTopologyChanged: boolean
+  isOpenSensorData: RemoteDataState
 }
 
 @ErrorHandling
@@ -426,7 +427,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
     })
 
     this.state = {
-      isPinned: false,
+      isPinned: true,
       screenProportions: [0.17, 0.83],
       sidebarProportions: [0.333, 0.333, 0.333],
       bottomProportions: [0.54, 0.46],
@@ -439,7 +440,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       modalTitle: null,
       modalMessage: null,
       topologyStatus: RemoteDataState.Loading,
-      isStatusVisible: false,
+      isStatusVisible: true,
       resizableDockHeight: 165,
       resizableDockWidth: 200,
       selectItem: 'Host',
@@ -473,6 +474,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       isGetAwsInstanceType: RemoteDataState.NotStarted,
       isImportTopologyOverlayVisible: false,
       isTopologyChanged: false,
+      isOpenSensorData: RemoteDataState.NotStarted,
     }
   }
 
@@ -1441,8 +1443,35 @@ export class InventoryTopology extends PureComponent<Props, State> {
       cell: mxCellType
     ) => {
       const {handleGetIpmiSensorDataAsync} = this.props
-      const {isPinned} = this.state
-      if (!target) return
+      const {isPinned, isStatusVisible, minionList} = this.state
+
+      if (!ipmiHost || !ipmiUser || !ipmiPass || !target) {
+        if (!isStatusVisible && !isPinned) {
+          this.setState({isStatusVisible: false})
+        }
+        this.setState({
+          isOpenSensorData: RemoteDataState.Error,
+        })
+        return
+      }
+
+      document.querySelector('#statusContainer').classList.add('active')
+      this.setState({isStatusVisible: true})
+
+      clearTimeout(this.timeout)
+      this.timeout = null
+
+      if (!_.includes(minionList, target)) {
+        if (!isPinned) {
+          this.timeout = setTimeout(() => {
+            this.setState({isStatusVisible: false})
+          }, 3000)
+        }
+        this.setState({
+          isOpenSensorData: RemoteDataState.Error,
+        })
+        return
+      }
 
       const pIpmi: Ipmi = {
         target,
@@ -1451,15 +1480,33 @@ export class InventoryTopology extends PureComponent<Props, State> {
         pass: cryptoJSAESdecrypt(ipmiPass, this.secretKey.url),
       }
 
+      this.setState({
+        isOpenSensorData: RemoteDataState.Loading,
+      })
+
       const sensorData = await handleGetIpmiSensorDataAsync(
         this.salt.url,
         this.salt.token,
         pIpmi
       )
 
-      this.setState({isStatusVisible: true})
-      clearTimeout(this.timeout)
-      this.timeout = null
+      const valueToCheck = _.values(sensorData)[0]
+      const includesException =
+        (typeof valueToCheck === 'string' &&
+          valueToCheck.toLowerCase().includes('exception')) ||
+        (typeof valueToCheck === 'boolean' && valueToCheck === false)
+
+      if (_.isEmpty(sensorData) || includesException) {
+        if (!isPinned) {
+          this.timeout = setTimeout(() => {
+            this.setState({isStatusVisible: false})
+          }, 3000)
+        }
+        this.setState({
+          isOpenSensorData: RemoteDataState.Error,
+        })
+        return
+      }
 
       if (!isPinned) {
         this.timeout = setTimeout(() => {
@@ -1471,7 +1518,15 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
       if (cell && currentCell && cell.getId() === currentCell.getId()) {
         this.openSensorData(sensorData)
+      } else {
+        this.setState({
+          isOpenSensorData: RemoteDataState.Error,
+        })
+        return
       }
+      this.setState({
+        isOpenSensorData: RemoteDataState.Done,
+      })
     },
     500
   )
@@ -1781,6 +1836,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       resizableDockHeight,
       resizableDockWidth,
       isPinned,
+      isOpenSensorData,
     } = this.state
     const [topSize, bottomSize] = bottomProportions
     return [
@@ -1806,6 +1862,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
                   <ResizableDock
                     className={classnames('', {
                       active: isStatusVisible,
+                      impiInfoBorder: isStatusVisible,
                     })}
                     height={resizableDockHeight}
                     width={resizableDockWidth}
@@ -1818,6 +1875,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
                         onClick={() => {
                           this.setState({isStatusVisible: false})
                         }}
+                        customClass={'impiInfoButton'}
                         size={ComponentSize.ExtraSmall}
                         shape={ButtonShape.Square}
                         icon={IconFont.Remove}
@@ -1829,14 +1887,26 @@ export class InventoryTopology extends PureComponent<Props, State> {
                         size={ComponentSize.ExtraSmall}
                         shape={ButtonShape.Square}
                         icon={IconFont.Pin}
+                        customClass={'impiInfoButton'}
                         color={
                           isPinned
                             ? ComponentColor.Primary
                             : ComponentColor.Default
                         }
                       ></Button>
+                      <span className="status-title">IPMI Sensor Info</span>
                       <div className={'status-ref-wrap'}>
                         <FancyScrollbar autoHide={false}>
+                          {(isOpenSensorData === RemoteDataState.NotStarted ||
+                            isOpenSensorData === RemoteDataState.Error) && (
+                            <NoState
+                              customClass="ipmiInfoNoData"
+                              message="No Data"
+                            />
+                          )}
+                          {isOpenSensorData === RemoteDataState.Loading && (
+                            <PageSpinner customClass="ipmiInfoSpinner" />
+                          )}
                           <div
                             id="statusContainerRef"
                             ref={this.statusRef}
