@@ -89,6 +89,7 @@ import {
   mxGraphSelectionModel as mxGraphSelectionModeltype,
   mxEventObject as mxEventObjectType,
 } from 'mxgraph'
+import {HostDetailTable} from 'src/hosts/types/agent'
 
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 
@@ -152,6 +153,7 @@ import {
   updateCSPInstanceData,
   getNamespaceID,
   isGCPRequiredCheck,
+  getAgentDetails,
 } from 'src/hosts/utils'
 
 // error
@@ -186,6 +188,7 @@ import {
   dragCell,
   applyHandler,
   detectedHostsStatus,
+  getFromOptions,
 } from 'src/hosts/configurations/topology'
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 
@@ -370,6 +373,8 @@ interface State {
   isImportTopologyOverlayVisible: boolean
   isTopologyChanged: boolean
   isOpenSensorData: RemoteDataState
+  hostDetailInfoWithSalt: Partial<HostDetailTable>
+  isGetHostDetailInfo: RemoteDataState
 }
 
 @ErrorHandling
@@ -475,6 +480,8 @@ export class InventoryTopology extends PureComponent<Props, State> {
       isImportTopologyOverlayVisible: false,
       isTopologyChanged: false,
       isOpenSensorData: RemoteDataState.NotStarted,
+      hostDetailInfoWithSalt: {},
+      isGetHostDetailInfo: RemoteDataState.NotStarted,
     }
   }
 
@@ -583,6 +590,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       selectItem,
       hostsObject,
       isDetectedHost,
+      activeEditorTab,
     } = this.state
 
     if (layouts) {
@@ -649,6 +657,27 @@ export class InventoryTopology extends PureComponent<Props, State> {
       } else {
         this.setState({isStatusVisible: false})
       }
+    }
+    if (
+      (prevState.activeEditorTab !== activeEditorTab ||
+        prevState.focusedHost !== focusedHost) &&
+      activeEditorTab === 'details'
+    ) {
+      this.setState({
+        isGetHostDetailInfo: RemoteDataState.Loading,
+        hostDetailInfoWithSalt: {},
+      })
+
+      const hostInfo = await getAgentDetails(
+        this.salt.url,
+        this.salt.token,
+        focusedHost
+      )
+
+      this.setState({
+        hostDetailInfoWithSalt: hostInfo,
+        isGetHostDetailInfo: RemoteDataState.Done,
+      })
     }
   }
 
@@ -1222,6 +1251,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
     mxGraphSelectionModel: mxGraphSelectionModeltype,
     _mxEventObject: mxEventObjectType
   ) => {
+    const {activeEditorTab} = this.state
     const selectionCells = mxGraphSelectionModel['cells']
 
     if (selectionCells.length > 0) {
@@ -1320,7 +1350,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
           focusedInstance: null,
           isDetectedHost,
           focusedHost: focusedHost,
-          activeEditorTab: 'monitoring',
+          activeEditorTab: activeEditorTab,
         })
       }
     } else {
@@ -1946,68 +1976,49 @@ export class InventoryTopology extends PureComponent<Props, State> {
   }
   private detailsGraph = () => {
     const {
-      focusedHost,
       focusedInstance,
-      treeMenu,
       activeEditorTab,
       activeDetailsTab,
       selected,
     } = this.state
+
+    const getFromItems = getFromOptions(focusedInstance)
     return (
       <>
         <Page className="inventory-hosts-list-page">
           <Page.Header fullWidth={true}>
             <Page.Header.Left>
-              {!_.isEmpty(focusedHost) || _.isEmpty(treeMenu) ? (
+              <>
                 <div className="radio-buttons radio-buttons--default radio-buttons--sm">
                   <Radio.Button
                     id="hostspage-tab-monitoring"
                     titleText="monitoring"
                     value="monitoring"
-                    active={true}
+                    active={activeEditorTab === 'monitoring'}
                     onClick={this.onSetActiveEditorTab}
                   >
                     Monitoring
                   </Radio.Button>
+                  <Radio.Button
+                    id="hostspage-tab-details"
+                    titleText="details"
+                    value="details"
+                    active={activeEditorTab === 'details'}
+                    onClick={this.onSetActiveEditorTab}
+                  >
+                    Details
+                  </Radio.Button>
                 </div>
-              ) : (
-                <>
-                  <div className="radio-buttons radio-buttons--default radio-buttons--sm">
-                    <Radio.Button
-                      id="hostspage-tab-monitoring"
-                      titleText="monitoring"
-                      value="monitoring"
-                      active={activeEditorTab === 'monitoring'}
-                      onClick={this.onSetActiveEditorTab}
-                    >
-                      Monitoring
-                    </Radio.Button>
-                    <Radio.Button
-                      id="hostspage-tab-details"
-                      titleText="details"
-                      value="details"
-                      active={activeEditorTab === 'details'}
-                      onClick={this.onSetActiveEditorTab}
-                    >
-                      Details
-                    </Radio.Button>
-                  </div>
-                </>
-              )}
+              </>
             </Page.Header.Left>
             <Page.Header.Right>
-              {focusedHost === null && activeEditorTab === 'monitoring' ? (
+              {activeEditorTab === 'monitoring' ? (
                 <>
                   <span>
                     Get from <span style={{margin: '0 3px'}}>:</span>
                   </span>
                   <Dropdown
-                    items={
-                      _.get(focusedInstance, 'provider') ===
-                      CloudServiceProvider.AWS
-                        ? ['ALL', 'CloudWatch', 'Within instances']
-                        : ['ALL', 'StackDriver', 'Within instances']
-                    }
+                    items={getFromItems}
                     onChoose={this.getHandleOnChoose}
                     selected={selected}
                     className="dropdown-sm"
@@ -2078,6 +2089,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       isGetAwsSecurity,
       isGetAwsVolume,
       isGetAwsInstanceType,
+      isGetHostDetailInfo,
       activeEditorTab,
     } = this.state
     const isActibeTabDetails = activeEditorTab === 'details'
@@ -2085,7 +2097,9 @@ export class InventoryTopology extends PureComponent<Props, State> {
     if (
       (isActibeTabDetails && isGetAwsSecurity === RemoteDataState.Loading) ||
       (isActibeTabDetails && isGetAwsVolume === RemoteDataState.Loading) ||
-      (isActibeTabDetails && isGetAwsInstanceType === RemoteDataState.Loading)
+      (isActibeTabDetails &&
+        isGetAwsInstanceType === RemoteDataState.Loading) ||
+      (isActibeTabDetails && isGetHostDetailInfo === RemoteDataState.Loading)
     ) {
       return (
         <div
@@ -2108,26 +2122,33 @@ export class InventoryTopology extends PureComponent<Props, State> {
     const {
       activeDetailsTab,
       focusedInstance,
+      hostDetailInfoWithSalt,
       cloudAccessInfos,
       treeMenu,
       awsSecurity,
       awsVolume,
+      focusedHost,
     } = this.state
+    switch (_.get(focusedInstance, 'provider')) {
+      case CloudServiceProvider.AWS: {
+        if (activeDetailsTab === 'details') {
+          return getInstanceDetails(cloudAccessInfos, focusedInstance)
+        }
 
-    if (_.get(focusedInstance, 'provider') === CloudServiceProvider.AWS) {
-      if (activeDetailsTab === 'details') {
+        if (activeDetailsTab === 'security') {
+          return getInstanceSecurity(treeMenu, focusedInstance, awsSecurity)
+        }
+
+        if (activeDetailsTab === 'storage') {
+          return getInstancStorage(treeMenu, focusedInstance, awsVolume)
+        }
+      }
+      case CloudServiceProvider.AWS: {
         return getInstanceDetails(cloudAccessInfos, focusedInstance)
       }
-
-      if (activeDetailsTab === 'security') {
-        return getInstanceSecurity(treeMenu, focusedInstance, awsSecurity)
+      default: {
+        return focusedHost === null ? {} : hostDetailInfoWithSalt
       }
-
-      if (activeDetailsTab === 'storage') {
-        return getInstancStorage(treeMenu, focusedInstance, awsVolume)
-      }
-    } else {
-      return getInstanceDetails(cloudAccessInfos, focusedInstance)
     }
   }
 
@@ -2709,20 +2730,23 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
   private async fetchHostsAndMeasurements(layouts: Layout[], hostID: string) {
     const {source} = this.props
-
+    const {selected} = this.state
     const tempVars = generateForHosts(source)
 
-    const fetchMeasurements = getMeasurementsForHost(source, hostID)
+    const fetchMeasurements = getMeasurementsForHost(source, hostID, selected)
+
     const filterLayouts = _.filter(
       layouts,
       m => !_.includes(notIncludeApps, m.app)
     )
+
     const fetchHosts = getAppsForHost(
       source.links.proxy,
       hostID,
       filterLayouts,
       source.telegraf,
-      tempVars
+      tempVars,
+      selected
     )
 
     const [host, measurements] = await Promise.all([
@@ -2747,7 +2771,11 @@ export class InventoryTopology extends PureComponent<Props, State> {
     })
     const filteredLayouts = layoutsWithinHost
       .filter(layout => {
-        return layout.app === 'system' || layout.app === 'win_system'
+        return (
+          layout.app === 'system' ||
+          layout.app === 'win_system' ||
+          layout.app === 'ipmi_sensor'
+        )
       })
       .sort((x, y) => {
         return x.measurement < y.measurement

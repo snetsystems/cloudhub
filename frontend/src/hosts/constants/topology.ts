@@ -6,6 +6,6 @@ interface AgentFilter {
 }
 
 export const agentFilter: AgentFilter = {
-  aws: ['ALL', 'CloudWatch', 'Within instances'],
-  gcp: ['ALL', 'StackDriver', 'Within instances'],
+  aws: ['ALL', 'CloudWatch', 'Agent'],
+  gcp: ['ALL', 'StackDriver', 'Agent'],
 }

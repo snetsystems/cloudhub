@@ -292,7 +292,8 @@ export const getAppsForHost = async (
   host: string,
   appLayouts: Layout[],
   telegrafDB: string,
-  tempVars: Template[]
+  tempVars: Template[],
+  getFrom = 'Agent'
 ) => {
   const measurements = appLayouts
     .map(m => `\":db:\".\":rp:\".\"${m.measurement}\"`)
@@ -301,12 +302,18 @@ export const getAppsForHost = async (
     appLayouts.map(m => m.measurement),
     appLayouts.map(({app}) => app)
   )
+
+  let query = ''
+  if (getFrom === 'ALL') {
+    query = `show series from ${measurements} where (host = '${host}') or (hostname = '${host}')`
+  } else if (getFrom === 'IPMI') {
+    query = `show series from ${measurements} where hostname = '${host}'`
+  } else {
+    query = `show series from ${measurements} where host = '${host}'`
+  }
   const {data} = await proxy({
     source: proxyLink,
-    query: replaceTemplate(
-      `show series from ${measurements} where host = '${host}'`,
-      tempVars
-    ),
+    query: replaceTemplate(query, tempVars),
     db: telegrafDB,
   })
 
@@ -544,11 +551,20 @@ export const getAppsForInstances = async (
 
 export const getMeasurementsForHost = async (
   source: Source,
-  host: string
+  host: string,
+  getFrom = 'Agent'
 ): Promise<string[]> => {
+  let query = ''
+  if (getFrom === 'ALL') {
+    query = `SHOW MEASUREMENTS WHERE ("host" = '${host}') or ("hostname" = '${host}')`
+  } else if (getFrom === 'IPMI') {
+    query = `SHOW MEASUREMENTS WHERE hostname = '${host}'`
+  } else {
+    query = `SHOW MEASUREMENTS WHERE host = '${host}'`
+  }
   const {data} = await proxy({
     source: source.links.proxy,
-    query: `SHOW MEASUREMENTS WHERE "host" = '${host}'`,
+    query,
     db: source.telegraf,
   })
 

@@ -16,6 +16,7 @@ import {
 
 // Types
 import {Host, IpmiCell} from 'src/types'
+import {CloudServiceProvider, Instance} from 'src/hosts/types/cloud'
 
 // Utils
 import {
@@ -36,7 +37,11 @@ import {
   eachNodeTypeAttrs,
   orderMenu,
 } from 'src/hosts/constants/tools'
-import {CELL_SIZE_WIDTH, CELL_SIZE_HEIGHT} from 'src/hosts/constants/topology'
+import {
+  CELL_SIZE_WIDTH,
+  CELL_SIZE_HEIGHT,
+  agentFilter,
+} from 'src/hosts/constants/topology'
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 import {COLLECTOR_SERVER} from 'src/shared/constants'
 
@@ -1386,4 +1391,19 @@ export const detectedHostsStatus = function (
   }
 
   return null
+}
+
+export const getFromOptions = (focusedInstance: Instance) => {
+  switch (_.get(focusedInstance, 'provider')) {
+    case CloudServiceProvider.AWS: {
+      return agentFilter[CloudServiceProvider.AWS]
+    }
+
+    case CloudServiceProvider.GCP: {
+      return agentFilter[CloudServiceProvider.GCP]
+    }
+    default: {
+      return ['ALL', 'IPMI', 'Agent']
+    }
+  }
 }
