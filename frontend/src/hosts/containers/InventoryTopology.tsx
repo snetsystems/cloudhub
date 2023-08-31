@@ -37,6 +37,7 @@ import TopologyDetails from 'src/hosts/components/TopologyDetails'
 import InstanceTypeModal from 'src/hosts/components/InstanceTypeModal'
 import TopologyCSPMngModal from 'src/hosts/components/TopologyCSPMngModal'
 import ImportTopologyOverlay from 'src/hosts/components/ImportTopologyOverlay'
+import TopologyPreferences from 'src/hosts/components/TopologyPreferences'
 
 // constants
 import {
@@ -55,8 +56,15 @@ import {
   notifyTopologySaveAuthFailed,
   notifyTopologyExported,
   notifyTopologyExportedFailed,
+  notifyPreferencesTemperatureSaveFailed,
+  notifyPreferencesTemperatureSaved,
 } from 'src/shared/copy/notifications'
 import {notIncludeApps} from 'src/hosts/constants/apps'
+import {
+  defaultPreferencesTemperature,
+  temperatureMaxValue,
+  temperatureMinValue,
+} from 'src/hosts/constants/topology'
 
 // Types
 import {
@@ -79,6 +87,7 @@ import {
   CSPAccessObject,
   CSPFileWriteParam,
   Instance,
+  PreferenceType,
 } from 'src/hosts/types'
 import {
   default as mxgraph,
@@ -376,6 +385,11 @@ interface State {
   isOpenSensorData: RemoteDataState
   hostDetailInfoWithSalt: Partial<HostDetailTable>
   isGetHostDetailInfo: RemoteDataState
+  isPreferencesOverlayVisible: boolean
+  preferenceTemperatureValues: string[]
+  unsavedTopology: string
+  preferencesStatus: RemoteDataState
+  unsavedPreferenceTemperatureValues: string[]
 }
 
 @ErrorHandling
@@ -483,6 +497,11 @@ export class InventoryTopology extends PureComponent<Props, State> {
       isOpenSensorData: RemoteDataState.NotStarted,
       hostDetailInfoWithSalt: {},
       isGetHostDetailInfo: RemoteDataState.NotStarted,
+      isPreferencesOverlayVisible: false,
+      preferenceTemperatureValues: [],
+      unsavedPreferenceTemperatureValues: [],
+      unsavedTopology: '',
+      preferencesStatus: RemoteDataState.Done,
     }
   }
 
@@ -716,8 +735,11 @@ export class InventoryTopology extends PureComponent<Props, State> {
       isModalVisible,
       modalMessage,
       modalTitle,
+      preferenceTemperatureValues,
       isInstanceTypeModalVisible,
       isImportTopologyOverlayVisible,
+      isPreferencesOverlayVisible,
+      preferencesStatus,
     } = this.state
     const {notify} = this.props
     const isExportXML = modalTitle === 'Export XML'
@@ -774,6 +796,22 @@ export class InventoryTopology extends PureComponent<Props, State> {
                 notify={notify}
               />
             </OverlayTechnology>
+            {isPreferencesOverlayVisible && (
+              <TopologyPreferences
+                preferencesStatus={preferencesStatus}
+                preferenceTemperatureValues={preferenceTemperatureValues}
+                onChangeTemperatureInput={this.handleChangeTemperatureInput}
+                onClickTemperatureResetButton={
+                  this.handleClickTemperatureResetButton
+                }
+                onClickTemperatureSaveButton={
+                  this.handleClickTemperatureSaveButton
+                }
+                onChangeRadioButton={this.handleChangeRadioButton}
+                onDismissOverlay={this.handlePreferencesToggleOverlay}
+                notify={notify}
+              />
+            )}
           </>
         )}
       </div>
@@ -834,6 +872,233 @@ export class InventoryTopology extends PureComponent<Props, State> {
     this.setState({
       isImportTopologyOverlayVisible: !this.state
         .isImportTopologyOverlayVisible,
+    })
+  }
+
+  private selectedTemperatureType(
+    preferenceTemperatureValues: string[]
+  ): PreferenceType['temperatureType'] {
+    const temperatureType = _.filter(
+      preferenceTemperatureValues,
+      temperatureValue => temperatureValue.includes('active:1')
+    ).map(item => {
+      const selectedTemperatureTypeMatch = item.match(/type:(\w+),/)
+
+      return selectedTemperatureTypeMatch
+        ? (selectedTemperatureTypeMatch[1] as PreferenceType['temperatureType'])
+        : 'inlet'
+    })
+
+    return temperatureType[0]
+  }
+
+  private handleChangeTemperatureInput = (
+    temperatureType: PreferenceType['temperatureType'],
+    temperatureValueType: PreferenceType['temperatureValueType'],
+    temperatureValue: string
+  ): void => {
+    const {preferenceTemperatureValues} = this.state
+
+    if (
+      temperatureValue === '' ||
+      !/^-?\d+(\.\d+)?$/.test(temperatureValue) ||
+      /[+-]/.test(temperatureValue) ||
+      /^0[0-9]+$/.test(temperatureValue)
+    ) {
+      temperatureValue = '0'
+    }
+
+    const updatedTemperatureValues = _.map(
+      preferenceTemperatureValues,
+      preferenceTemperatureValue => {
+        if (preferenceTemperatureValue.includes(`type:${temperatureType}`)) {
+          return preferenceTemperatureValue.replace(
+            new RegExp(`${temperatureValueType}:\\d*`),
+            `${temperatureValueType}:${temperatureValue}`
+          )
+        }
+        return preferenceTemperatureValue
+      }
+    )
+
+    this.setState({
+      preferenceTemperatureValues: updatedTemperatureValues,
+    })
+  }
+
+  public isValidTemperature = () => {
+    const {notify} = this.props
+    const {preferenceTemperatureValues} = this.state
+
+    return _.some(preferenceTemperatureValues, preferenceTemperatureValue => {
+      const selectedTemperatureTypeMatch = preferenceTemperatureValue.match(
+        /type:(\w+),/
+      )
+      const temperatureMinValue = preferenceTemperatureValue.match(
+        /min:(-?\d*)/
+      )
+      const temperatureMaxValue = preferenceTemperatureValue.match(
+        /max:(-?\d*)/
+      )
+
+      if (!temperatureMinValue || !temperatureMaxValue) {
+        notify(
+          notifyPreferencesTemperatureSaveFailed(
+            `Invalid Value in ${selectedTemperatureTypeMatch[1]} type`
+          )
+        )
+        return true
+      }
+      if (temperatureMinValue[1] === '' || temperatureMaxValue[1] === '') {
+        notify(
+          notifyPreferencesTemperatureSaveFailed(
+            `Empty Value in ${selectedTemperatureTypeMatch[1]} type`
+          )
+        )
+        return true
+      }
+
+      const minValue = parseInt(temperatureMinValue[1], 10)
+      const maxValue = parseInt(temperatureMaxValue[1], 10)
+
+      if (minValue >= maxValue || minValue < 0 || maxValue < 0) {
+        notify(
+          notifyPreferencesTemperatureSaveFailed(
+            `Out of range in ${selectedTemperatureTypeMatch[1]} type`
+          )
+        )
+        return true
+      }
+    })
+  }
+
+  private handleClickTemperatureSaveButton = async () => {
+    const {notify, links} = this.props
+    const {
+      topologyId,
+      unsavedTopology,
+      preferenceTemperatureValues,
+    } = this.state
+
+    if (this.isValidTemperature()) {
+      return
+    }
+
+    this.setState({
+      topologyStatus: RemoteDataState.Loading,
+      preferencesStatus: RemoteDataState.Loading,
+    })
+
+    try {
+      if (_.isEmpty(topologyId) && !_.isEmpty(unsavedTopology)) {
+        const response = await createInventoryTopology(
+          links,
+          unsavedTopology,
+          preferenceTemperatureValues
+        )
+        const getTopologyId = _.get(response, 'data.id', null)
+
+        notify(notifyPreferencesTemperatureSaved())
+
+        this.setState({
+          unsavedPreferenceTemperatureValues: preferenceTemperatureValues,
+          topologyId: getTopologyId,
+          topologyStatus: RemoteDataState.Done,
+          preferencesStatus: RemoteDataState.Done,
+        })
+      } else if (!_.isEmpty(topologyId)) {
+        await updateInventoryTopology(
+          links,
+          topologyId,
+          unsavedTopology,
+          preferenceTemperatureValues
+        )
+
+        notify(notifyPreferencesTemperatureSaved())
+
+        this.setState({
+          unsavedPreferenceTemperatureValues: preferenceTemperatureValues,
+          topologyStatus: RemoteDataState.Done,
+          preferencesStatus: RemoteDataState.Done,
+        })
+      }
+    } catch (err) {
+      this.setState({
+        topologyStatus: RemoteDataState.Done,
+        preferencesStatus: RemoteDataState.Done,
+      })
+
+      const {data} = err
+      const {error} = data
+      if (!error) {
+        notify(
+          notifyPreferencesTemperatureSaveFailed('Cannot save preferences')
+        )
+        return false
+      }
+      const errorMsg = error.split(': ').pop()
+      notify(notifyPreferencesTemperatureSaveFailed(errorMsg))
+      return false
+    }
+  }
+
+  private handleClickTemperatureResetButton = (
+    temperatureType: PreferenceType['temperatureType']
+  ): void => {
+    const {preferenceTemperatureValues} = this.state
+    const isInActiveTemperatureType =
+      temperatureType !==
+      this.selectedTemperatureType(preferenceTemperatureValues)
+
+    if (isInActiveTemperatureType) {
+      return
+    }
+
+    const updatedTemperatureValues = _.map(
+      preferenceTemperatureValues,
+      temperatureValue => {
+        if (temperatureValue.includes(`type:${temperatureType}`)) {
+          temperatureValue = temperatureValue.replace(
+            /min:\d*/,
+            `min:${temperatureMinValue[temperatureType]}`
+          )
+          temperatureValue = temperatureValue.replace(
+            /max:\d*/,
+            `max:${temperatureMaxValue[temperatureType]}`
+          )
+        }
+        return temperatureValue
+      }
+    )
+
+    this.setState({
+      preferenceTemperatureValues: updatedTemperatureValues,
+    })
+  }
+
+  private handleChangeRadioButton = (
+    temperatureType: PreferenceType['temperatureType']
+  ): void => {
+    const {preferenceTemperatureValues} = this.state
+    const updatedTemperatureValues = _.map(
+      preferenceTemperatureValues,
+      temperatureValue => {
+        if (temperatureValue.includes(`type:${temperatureType}`)) {
+          return temperatureValue.replace(/active:\d/, 'active:1')
+        } else {
+          return temperatureValue.replace(/active:\d/, 'active:0')
+        }
+      }
+    )
+
+    this.setState({
+      preferenceTemperatureValues: updatedTemperatureValues,
+    })
+  }
+
+  private handlePreferencesToggleOverlay = (): void => {
+    this.setState({
+      isPreferencesOverlayVisible: !this.state.isPreferencesOverlayVisible,
     })
   }
 
@@ -968,6 +1233,17 @@ export class InventoryTopology extends PureComponent<Props, State> {
     }
 
     this.setState({
+      preferenceTemperatureValues: _.get(
+        topology,
+        'preferences',
+        defaultPreferencesTemperature
+      ),
+      unsavedPreferenceTemperatureValues: _.get(
+        topology,
+        'preferences',
+        defaultPreferencesTemperature
+      ),
+      unsavedTopology: _.get(topology, 'diagram'),
       topology: _.get(topology, 'diagram'),
       topologyId: _.get(topology, 'id'),
       topologyStatus: RemoteDataState.Done,
@@ -1006,6 +1282,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
   }
   private getHostData = async () => {
     const {source, links, auth} = this.props
+    const {unsavedPreferenceTemperatureValues} = this.state
 
     const meRole = _.get(auth, 'me.role', '')
     const envVars = await getEnv(links.environment)
@@ -1035,8 +1312,10 @@ export class InventoryTopology extends PureComponent<Props, State> {
     const graph = this.graph
     const parent = graph.getDefaultParent()
     const cells = this.getAllCells(parent, true)
-
-    detectedHostsStatus.bind(this)(cells, hostsObject)
+    const selectedTmpType = this.selectedTemperatureType(
+      unsavedPreferenceTemperatureValues
+    )
+    detectedHostsStatus.bind(this)(cells, hostsObject, selectedTmpType)
 
     this.setState({
       hostsObject,
@@ -1751,6 +2030,18 @@ export class InventoryTopology extends PureComponent<Props, State> {
         this.props.notify(notifyTopologySaveAuthFailed())
       }
     })
+
+    this.editor.addAction('preferences', async () => {
+      if (
+        meRole === SUPERADMIN_ROLE ||
+        meRole === ADMIN_ROLE ||
+        meRole === EDITOR_ROLE
+      ) {
+        this.setState({
+          isPreferencesOverlayVisible: true,
+        })
+      }
+    })
   }
 
   // @ts-ignore
@@ -2256,27 +2547,42 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
   private handleTopologySave = async () => {
     const {notify, links} = this.props
-    const {topologyId, topology} = this.state
+    const {
+      topologyId,
+      topology,
+      unsavedPreferenceTemperatureValues,
+    } = this.state
 
     this.setState({topologyStatus: RemoteDataState.Loading})
 
     try {
       if (_.isEmpty(topologyId) && !_.isEmpty(topology)) {
-        const response = await createInventoryTopology(links, topology)
+        const response = await createInventoryTopology(
+          links,
+          topology,
+          unsavedPreferenceTemperatureValues
+        )
         const getTopologyId = _.get(response, 'data.id', null)
 
         notify(notifyTopologySaved())
 
         this.setState({
+          unsavedTopology: topology,
           topologyId: getTopologyId,
           topologyStatus: RemoteDataState.Done,
         })
       } else if (!_.isEmpty(topologyId)) {
-        await updateInventoryTopology(links, topologyId, topology)
+        await updateInventoryTopology(
+          links,
+          topologyId,
+          topology,
+          unsavedPreferenceTemperatureValues
+        )
 
         notify(notifyTopologySaved())
 
         this.setState({
+          unsavedTopology: topology,
           topologyStatus: RemoteDataState.Done,
           isTopologyChanged: false,
         })

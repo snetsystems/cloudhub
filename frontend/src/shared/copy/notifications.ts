@@ -1400,3 +1400,16 @@ export const notifygetProjectConfigFailed = (): Notification => ({
   ...defaultErrorNotification,
   message: `Failed to Deleted Project configuration file.`,
 })
+
+export const notifyPreferencesTemperatureSaved = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Preferences saved successfully.`,
+})
+
+export const notifyPreferencesTemperatureSaveFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Save Preferences : ${errorMessage}`,
+})

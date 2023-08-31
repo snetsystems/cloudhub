@@ -44,6 +44,7 @@ import {
 } from 'src/hosts/constants/topology'
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 import {COLLECTOR_SERVER} from 'src/shared/constants'
+import {PreferenceType} from 'src/hosts/types'
 
 const mx = mxgraph()
 const {
@@ -1414,7 +1415,7 @@ const renderHostState = (
 export const detectedHostsStatus = function (
   cells: mxCellType[],
   hostsObject: {[x: string]: Host},
-  selectedTmpType = 'inlet'
+  selectedTmpType: PreferenceType['temperatureType'] = 'inlet'
 ) {
   if (!this.graph) return
 

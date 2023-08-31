@@ -971,6 +971,7 @@ func MarshalTopology(t *cloudhub.Topology) ([]byte, error) {
 		ID:           t.ID,
 		Organization: t.Organization,
 		Diagram:      t.Diagram,
+		Preferences:  t.Preferences,
 	})
 }
 
@@ -984,6 +985,7 @@ func UnmarshalTopology(data []byte, t *cloudhub.Topology) error {
 	t.ID = pb.ID
 	t.Organization = pb.Organization
 	t.Diagram = pb.Diagram
+	t.Preferences = pb.Preferences
 
 	return nil
 }

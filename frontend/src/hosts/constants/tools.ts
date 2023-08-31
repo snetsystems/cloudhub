@@ -76,6 +76,11 @@ export const toolbarMenu: ToolbarMenu[] = [
     label: 'Save',
     icon: 'floppy-disk',
   },
+  {
+    actionName: 'preferences',
+    label: 'Preferences',
+    icon: 'wrench',
+  },
 ]
 
 export interface Menu {

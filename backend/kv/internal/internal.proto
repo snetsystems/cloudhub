@@ -271,9 +271,10 @@ message Vsphere {
 }
 
 message Topology {
-	string ID               = 1; // ID is the unique ID of this topology
-	string Organization     = 2; // Organization is the organization ID that resource belongs to
-	string Diagram          = 3; // diagram xml
+	string ID               		 = 1; // ID is the unique ID of this topology
+	string Organization     		 = 2; // Organization is the organization ID that resource belongs to
+	string Diagram          		 = 3; // diagram xml
+	repeated string Preferences      = 4; // Temperature type and values
 }
 
 message CSP {

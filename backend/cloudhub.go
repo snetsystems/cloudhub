@@ -1013,9 +1013,10 @@ type Environment struct {
 
 // Topology is represents represents an topology
 type Topology struct {
-	ID           string `json:"id,string,omitempty"`
-	Organization string `json:"organization,omitempty"`   // Organization is the organization ID that resource belongs to
-	Diagram      string `json:"diagram,string,omitempty"` // diagram xml
+	ID           string   `json:"id,string,omitempty"`
+	Organization string   `json:"organization,omitempty"`   // Organization is the organization ID that resource belongs to
+	Diagram      string   `json:"diagram,string,omitempty"` // diagram xml
+	Preferences  []string `json:"preferences,omitempty"`    // User preferences
 }
 
 // TopologyQuery represents the attributes that a topology may be retrieved by.

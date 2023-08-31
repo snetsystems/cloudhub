@@ -899,11 +899,15 @@ export const loadInventoryTopology = async (links: Links) => {
   }
 }
 
-export const createInventoryTopology = async (links: Links, cells: string) => {
+export const createInventoryTopology = async (
+  links: Links,
+  cells: string,
+  preferences: string[]
+) => {
   return await AJAX({
     url: `${_.get(links, 'topologies')}`,
     method: 'POST',
-    data: cells,
+    data: {cells, preferences},
     headers: {'Content-Type': 'text/xml'},
   })
 }
@@ -911,12 +915,13 @@ export const createInventoryTopology = async (links: Links, cells: string) => {
 export const updateInventoryTopology = async (
   links: Links,
   cellsId: string,
-  cells: string
+  cells: string,
+  preferences: string[]
 ) => {
   return await AJAX({
     url: `${_.get(links, 'topologies')}/${cellsId}`,
     method: 'PATCH',
-    data: cells,
+    data: {cells, preferences},
     headers: {'Content-Type': 'text/xml'},
   })
 }
