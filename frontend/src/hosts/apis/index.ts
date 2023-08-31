@@ -45,7 +45,6 @@ const EmptyHost: Host = {
   name: '',
   cpu: 0.0,
   load: 0.0,
-
   deltaUptime: -1,
   apps: [],
 }
@@ -60,6 +59,11 @@ interface Series {
 interface CloudSeries extends Series {
   tags: {
     host: string
+  }
+}
+type IpmiSeries = Omit<Series, 'tags'> & {
+  tags: {
+    hostname: Series['tags']['host']
   }
 }
 
@@ -1529,4 +1533,113 @@ export const setRunnerFileRemoveApi = async (
   } catch (error) {
     throw error
   }
+}
+
+export const getHostsInfoWithIpmi = async (
+  proxyLink: string,
+  telegrafDB: string,
+  telegrafSystemInterval: string,
+  tempVars: Template[],
+  meRole: string
+): Promise<HostsObject> => {
+  const query = replaceTemplate(
+    `SELECT mean("value") AS "ipmiCpu" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "name" = 'cpu_usage' AND time > now() - 10m GROUP BY hostname fill(null);
+     SELECT mean("value") AS "ipmiMemory" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "name" = 'mem_usage' AND time > now() - 10m GROUP BY hostname;
+     SELECT non_negative_derivative(mean(value)) AS ipmiDeltaUptime FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE time > now() - ${telegrafSystemInterval} * 10 GROUP BY hostname, time(${telegrafSystemInterval}) fill(0);
+     SHOW TAG VALUES FROM \":db:\".\":rp:\".\"ipmi_sensor\" WITH KEY = "hostname" WHERE TIME > now() - 10m;
+     SELECT mean("value") AS "inside" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "name" = 'temp' AND time > now() - 10m GROUP BY hostname;
+     SELECT mean("value") AS "inlet" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE ("name" = 'inlet_temp') AND time > now() - 10m GROUP BY hostname;
+     SELECT mean("value") AS "outlet" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE ("name" = 'outlet') or ("name" = 'outlet_temp' ) AND time > now() - 10m GROUP BY hostname;
+     `,
+    tempVars
+  )
+
+  const {data} = await proxy({
+    source: proxyLink,
+    query,
+    db: telegrafDB,
+  })
+
+  const hosts: HostsObject = {}
+  const precision = 100
+  const ipmiCpuSeries = getDeep<IpmiSeries[]>(data, 'results.[0].series', [])
+  const ipmiMemorySeries = getDeep<IpmiSeries[]>(data, 'results.[1].series', [])
+  const allHostsSeries = getDeep<IpmiSeries[]>(data, 'results.[3].series', [])
+  const ipmiInsideSeries = getDeep<IpmiSeries[]>(data, 'results.[4].series', [])
+  const ipmiInletSeries = getDeep<IpmiSeries[]>(data, 'results.[5].series', [])
+  const ipmiOutletSeries = getDeep<IpmiSeries[]>(data, 'results.[6].series', [])
+
+  allHostsSeries.forEach(s => {
+    const hostnameIndex = s.columns.findIndex(col => col === 'value')
+    s.values.forEach(v => {
+      const hostname = v[hostnameIndex]
+      hosts[hostname] = {
+        ...EmptyHost,
+        name: hostname,
+      }
+    })
+  })
+
+  ipmiCpuSeries.forEach(s => {
+    const meanIndex = s.columns.findIndex(col => col === 'ipmiCpu')
+    if (meanIndex !== -1) {
+      hosts[s.tags.hostname] = {
+        ...EmptyHost,
+        name: s.tags.hostname,
+        ipmiCpu:
+          Math.round(Number(s.values[0][meanIndex]) * precision) / precision,
+      }
+    }
+  })
+
+  ipmiMemorySeries.forEach(s => {
+    const meanIndex = s.columns.findIndex(col => col === 'ipmiMemory')
+    if (meanIndex !== -1) {
+      hosts[s.tags.hostname].ipmiMemory =
+        Math.round(Number(s.values[0][meanIndex]) * precision) / precision
+    }
+  })
+  ipmiInsideSeries.forEach(s => {
+    const meanIndex = s.columns.findIndex(col => col === 'inside')
+    if (meanIndex !== -1) {
+      hosts[s.tags.hostname].inside = Number(s.values[0][meanIndex])
+    }
+  })
+
+  ipmiInletSeries.forEach(s => {
+    const meanIndex = s.columns.findIndex(col => col === 'inlet')
+    if (meanIndex !== -1) {
+      hosts[s.tags.hostname].inlet = Number(s.values[0][meanIndex])
+    }
+  })
+  ipmiOutletSeries.forEach(s => {
+    const meanIndex = s.columns.findIndex(col => col === 'outlet')
+    if (meanIndex !== -1) {
+      hosts[s.tags.hostname].outlet = Number(s.values[0][meanIndex])
+    }
+  })
+
+  if (
+    meRole !== SUPERADMIN_ROLE ||
+    (meRole === SUPERADMIN_ROLE &&
+      telegrafDB.toLocaleLowerCase() !==
+        DEFAULT_ORGANIZATION.toLocaleLowerCase())
+  ) {
+    const hostsWithoutCollectorServer = _.reduce(
+      hosts,
+      (acc, host) => {
+        if (!_.startsWith(host.name, COLLECTOR_SERVER)) {
+          acc = {
+            ...acc,
+            [host.name]: host,
+          }
+        }
+        return acc
+      },
+      {}
+    )
+    return hostsWithoutCollectorServer
+  }
+
+  return hosts
 }

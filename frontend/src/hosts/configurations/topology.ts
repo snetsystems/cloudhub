@@ -310,9 +310,15 @@ export const createTextField = function (
 
     form.addOption(
       input,
-      'TRUE',
-      true,
-      attribute.nodeValue === 'true' ? true : false
+      'From Agent ',
+      'agent',
+      attribute.nodeValue === 'agent' ? true : false
+    )
+    form.addOption(
+      input,
+      'From IPMI',
+      'ipmi',
+      attribute.nodeValue === 'ipmi' ? true : false
     )
     form.addOption(
       input,
@@ -339,6 +345,8 @@ export const createTextField = function (
     )
   }
 
+  input.setAttribute('data-attribute', attribute.nodeName)
+
   input.classList.add('input-sm')
   input.classList.add('form-control')
   input.disabled = isDisable
@@ -356,10 +364,12 @@ export const createTextField = function (
   if (mxClient.IS_IE) {
     mxEvent.addListener(input, 'focusout', () => {
       applyHandler.bind(this)(graph, cell, attribute, input.value)
+      this.fetchIntervalData()
     })
   } else {
     mxEvent.addListener(input, 'blur', () => {
       applyHandler.bind(this)(graph, cell, attribute, input.value)
+      this.fetchIntervalData()
     })
   }
 }
@@ -428,7 +438,7 @@ export const applyHandler = function (
         const childrenCell = cell.getChildAt(2)
 
         if (childrenCell.style.includes('status')) {
-          childrenCell.setVisible(newValue === 'true' ? true : false)
+          childrenCell.setVisible(newValue !== 'false' ? true : false)
         }
       }
 
@@ -634,11 +644,18 @@ export const dragCell = (node: Menu) => (
 
     const statusBox = document.createElement('div')
     statusBox.classList.add('vertex')
-    statusBox.setAttribute('data-status', 'ture')
+    statusBox.setAttribute('data-status', 'agent')
     statusBox.setAttribute('btn-type', 'status')
     statusBox.style.display = 'flex'
     statusBox.style.alignItems = 'center'
     statusBox.style.justifyContent = 'center'
+
+    const tmpIcon = document.createElement('span')
+    tmpIcon.setAttribute('data-status-kind', 'temperature')
+    tmpIcon.style.marginRight = '5px'
+    tmpIcon.classList.add('time-series-status')
+
+    statusBox.appendChild(tmpIcon)
 
     const cpuIcon = document.createElement('span')
     cpuIcon.setAttribute('data-status-kind', 'cpu')
@@ -781,10 +798,17 @@ export const drawCellInGroup = (nodes: Menu[]) => (
       const statusBox = document.createElement('div')
       statusBox.classList.add('vertex')
       statusBox.setAttribute('btn-type', 'status')
-      statusBox.setAttribute('data-status', 'ture')
+      statusBox.setAttribute('data-status', 'agent')
       statusBox.style.display = 'flex'
       statusBox.style.alignItems = 'center'
       statusBox.style.justifyContent = 'center'
+
+      const temperatureIcom = document.createElement('span')
+      temperatureIcom.setAttribute('data-status-kind', 'temperature')
+      temperatureIcom.style.marginRight = '5px'
+      temperatureIcom.classList.add('time-series-status')
+
+      statusBox.appendChild(temperatureIcom)
 
       const cpuIcon = document.createElement('span')
       cpuIcon.setAttribute('data-status-kind', 'cpu')
@@ -1252,10 +1276,145 @@ export const ipmiPowerIndicator = function (ipmiCellsStatus: IpmiCell[]) {
     this.graphUpdate()
   }
 }
+const keysWithGatherType = {
+  agent: {
+    cpu: 'cpu',
+    memory: 'memory',
+    disk: 'disk',
+    temperature: {
+      inside: 'inside',
+      inlet: 'inlet',
+      outlet: 'outlet',
+    },
+  },
+  ipmi: {
+    cpu: 'ipmiCpu',
+    memory: 'ipmiMemory',
+    temperature: {
+      inside: 'inside',
+      inlet: 'inlet',
+      outlet: 'outlet',
+    },
+  },
+  true: {
+    cpu: 'cpu',
+    memory: 'memory',
+    disk: 'disk',
+    temperature: {
+      inside: 'inside',
+      inlet: 'inlet',
+      outlet: 'outlet',
+    },
+  },
+}
+const titleWithGatherType = {
+  agent: {
+    cpu: 'CPU',
+    memory: 'Memory',
+    disk: 'Disk',
+    inside: 'Inside Temperature',
+    inlet: 'Inlet Temperature',
+    outlet: 'Outlet Temperature',
+  },
+  ipmi: {
+    ipmiCpu: 'CPU',
+    ipmiMemory: 'Memory',
+    inside: 'Inside Temperature',
+    inlet: 'Inlet Temperature',
+    outlet: 'Outlet Temperature',
+  },
+  true: {
+    cpu: 'CPU',
+    memory: 'Memory',
+    disk: 'Disk',
+    inside: 'Inside Temperature',
+    inlet: 'Inlet Temperature',
+    outlet: 'Outlet Temperature',
+  },
+}
+const notAvailableData = (childElement: any, notAvailableTitle: string) => {
+  childElement.removeAttribute('data-status-value')
+  childElement.removeAttribute('data-status-value')
+  childElement.removeAttribute('class')
+  childElement.classList.add('time-series-status')
+  childElement.setAttribute('title', `${notAvailableTitle} : N/A`)
+}
+const dataStatusValue = (
+  statusKind: string,
+  hostValue: number | undefined,
+  host: Host,
+  dataGatherType: string
+) => {
+  let statusValue = 'N/A'
 
+  if (hostValue === undefined) {
+    return statusValue
+  }
+  if (statusKind === 'temperature') {
+    statusValue = `${_.toString(hostValue.toFixed(2))} °C`
+  }
+  if (dataGatherType === 'ipmi' && statusKind !== 'temperature') {
+    statusValue = _.toString(
+      fixedDecimalPercentage(parseFloat(_.toString(hostValue)), 2)
+    )
+  }
+  if (Math.max(host.deltaUptime || 0, host.winDeltaUptime || 0) > 0) {
+    statusValue = _.toString(
+      fixedDecimalPercentage(parseFloat(_.toString(hostValue)), 2)
+    )
+  }
+
+  return statusValue
+}
+const renderHostState = (
+  dataGatherType: string,
+  statusKind: string,
+  childElement: any,
+  findHost: Host,
+  selectedTmpType = keysWithGatherType.ipmi.temperature.inside
+) => {
+  const findKey =
+    statusKind === 'temperature'
+      ? keysWithGatherType[dataGatherType][statusKind][selectedTmpType]
+      : keysWithGatherType[dataGatherType][statusKind]
+
+  const statusTitle = titleWithGatherType[dataGatherType][findKey]
+
+  const notAvailableTitle =
+    titleWithGatherType.true[
+      statusKind === 'temperature' ? selectedTmpType : statusKind
+    ]
+
+  if (!statusTitle) {
+    notAvailableData(childElement, notAvailableTitle)
+    return
+  }
+  const hostValue = findHost[findKey]
+
+  if (dataGatherType === 'ipmi' && statusKind === 'disk') {
+    notAvailableData(childElement, notAvailableTitle)
+    return
+  }
+
+  const statusValue = dataStatusValue(
+    statusKind,
+    hostValue,
+    findHost,
+    dataGatherType
+  )
+
+  childElement.setAttribute('data-status-value', _.toString(hostValue))
+  childElement.setAttribute('title', `${statusTitle} : ${statusValue}`)
+  childElement.removeAttribute('class')
+  childElement.classList.add(
+    'time-series-status',
+    getTimeSeriesHostIndicator(findHost, findKey, statusKind, statusValue)
+  )
+}
 export const detectedHostsStatus = function (
   cells: mxCellType[],
-  hostsObject: {[x: string]: Host}
+  hostsObject: {[x: string]: Host},
+  selectedTmpType = 'inlet'
 ) {
   if (!this.graph) return
 
@@ -1278,6 +1437,10 @@ export const detectedHostsStatus = function (
               const childCellElement = getParseHTML(
                 childCell.value
               ).querySelector('div')
+              const dataGatherType = containerElement.getAttribute(
+                'data-status'
+              )
+
               if (childCellElement.getAttribute('data-status')) {
                 const statusElement = childCellElement.querySelectorAll(
                   'span[data-status-kind]'
@@ -1287,64 +1450,14 @@ export const detectedHostsStatus = function (
                   const statusKind = childElement.getAttribute(
                     'data-status-kind'
                   )
-                  if (statusKind === 'cpu') {
-                    childElement.setAttribute(
-                      'data-status-value',
-                      _.toString(findHost.cpu)
-                    )
-                    childElement.setAttribute(
-                      'title',
-                      `CPU : ${_.toString(
-                        fixedDecimalPercentage(
-                          parseFloat(_.toString(findHost.cpu)),
-                          2
-                        )
-                      )}`
-                    )
-                    childElement.removeAttribute('class')
-                    childElement.classList.add(
-                      'time-series-status',
-                      getTimeSeriesHostIndicator(findHost, 'cpu')
-                    )
-                  } else if (statusKind === 'memory') {
-                    childElement.setAttribute(
-                      'data-status-value',
-                      _.toString(findHost.memory)
-                    )
-                    childElement.setAttribute(
-                      'title',
-                      `Memory : ${_.toString(
-                        fixedDecimalPercentage(
-                          parseFloat(_.toString(findHost.memory)),
-                          2
-                        )
-                      )}`
-                    )
-                    childElement.removeAttribute('class')
-                    childElement.classList.add(
-                      'time-series-status',
-                      getTimeSeriesHostIndicator(findHost, 'memory')
-                    )
-                  } else if (statusKind === 'disk') {
-                    childElement.setAttribute(
-                      'data-status-value',
-                      _.toString(findHost.disk)
-                    )
-                    childElement.setAttribute(
-                      'title',
-                      `Disk : ${_.toString(
-                        fixedDecimalPercentage(
-                          parseFloat(_.toString(findHost.disk)),
-                          2
-                        )
-                      )}`
-                    )
-                    childElement.removeAttribute('class')
-                    childElement.classList.add(
-                      'time-series-status',
-                      getTimeSeriesHostIndicator(findHost, 'disk')
-                    )
-                  }
+
+                  renderHostState(
+                    dataGatherType,
+                    statusKind,
+                    childElement,
+                    findHost,
+                    selectedTmpType
+                  )
                 })
 
                 childCell.setValue(childCellElement.outerHTML)
@@ -1370,10 +1483,20 @@ export const detectedHostsStatus = function (
                 if (
                   statusKind === 'cpu' ||
                   statusKind === 'disk' ||
-                  statusKind === 'memory'
+                  statusKind === 'memory' ||
+                  statusKind === 'temperature'
                 ) {
+                  const notAvailableTitle =
+                    titleWithGatherType.true[
+                      statusKind === 'temperature'
+                        ? selectedTmpType
+                        : statusKind
+                    ]
                   childElement.removeAttribute('data-status-value')
-                  childElement.removeAttribute('title')
+                  childElement.setAttribute(
+                    'title',
+                    `${notAvailableTitle} : N/A`
+                  )
                   childElement.removeAttribute('class')
                   childElement.classList.add('time-series-status')
                 }

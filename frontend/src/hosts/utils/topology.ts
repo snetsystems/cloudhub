@@ -56,16 +56,22 @@ export const getIsHasString = (value: string): boolean => {
   return value !== ''
 }
 
-export const getTimeSeriesHostIndicator = (host: Host, key: string): string => {
-  if (Math.max(host.deltaUptime || 0, host.winDeltaUptime || 0) > 0) {
-    let status = 'UsageIndacator'
-
-    if (_.get(host, key, 0) >= 50) status = 'UsageIndacator--caution'
-    if (_.get(host, key, 0) >= 70) status = 'UsageIndacator--warning'
-    if (_.get(host, key, 0) >= 90) status = 'UsageIndacator--danger'
-
-    return status
-  } else {
+export const getTimeSeriesHostIndicator = (
+  host: Host,
+  key: string,
+  statusKind: string,
+  statusValue: string
+): string => {
+  if (statusValue === 'N/A') {
     return null
   }
+  let status = 'UsageIndacator'
+  if (statusKind === 'temperature') {
+    status = 'UsageIndacator-ipmi'
+  }
+  if (_.get(host, key, 0) >= 50) status = 'UsageIndacator--caution'
+  if (_.get(host, key, 0) >= 70) status = 'UsageIndacator--warning'
+  if (_.get(host, key, 0) >= 90) status = 'UsageIndacator--danger'
+
+  return status
 }

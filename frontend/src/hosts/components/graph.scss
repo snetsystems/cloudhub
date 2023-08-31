@@ -99,7 +99,9 @@
     &.UsageIndacator {
       background: #4ed8a0;
     }
-
+    &.UsageIndacator-ipmi {
+      background: $c-laser;
+    }
     &.UsageIndacator--caution {
       background: #ffb94a;
     }

@@ -20,6 +20,11 @@ export interface Host {
   winDeltaUptime?: number
   memory?: number
   disk?: number
+  ipmiCpu?: number
+  ipmiMemory?: number
+  inside?: number
+  inlet?: number
+  outlet?: number
 }
 
 export interface Layout {

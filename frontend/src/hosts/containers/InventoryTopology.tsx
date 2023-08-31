@@ -131,6 +131,7 @@ import {
   updateInventoryTopology,
   setRunnerFileRemoveApi,
   getMinionKeyAcceptedList,
+  getHostsInfoWithIpmi,
 } from 'src/hosts/apis'
 
 // Utils
@@ -981,7 +982,28 @@ export class InventoryTopology extends PureComponent<Props, State> {
     await this.getHostData()
     await this.getIpmiStatus()
   }
+  private getIpmiData = async () => {
+    const {source, links, auth} = this.props
 
+    const meRole = _.get(auth, 'me.role', '')
+    const envVars = await getEnv(links.environment)
+    const telegrafSystemInterval = getDeep<string>(
+      envVars,
+      'telegrafSystemInterval',
+      ''
+    )
+    const tempVars = generateForHosts(source)
+
+    const hostsObject = await getHostsInfoWithIpmi(
+      source.links.proxy,
+      source.telegraf,
+      telegrafSystemInterval,
+      tempVars,
+      meRole
+    )
+
+    return hostsObject
+  }
   private getHostData = async () => {
     const {source, links, auth} = this.props
 
@@ -994,13 +1016,15 @@ export class InventoryTopology extends PureComponent<Props, State> {
     )
     const tempVars = generateForHosts(source)
 
-    const hostsObject = await getCpuAndLoadForHosts(
+    const agentObject = await getCpuAndLoadForHosts(
       source.links.proxy,
       source.telegraf,
       telegrafSystemInterval,
       tempVars,
       meRole
     )
+    const ipmiObject = await this.getIpmiData()
+    const hostsObject = _.defaultsDeep({}, agentObject, ipmiObject)
 
     const hostsError = notifyUnableToGetHosts().message
     if (!hostsObject) {
