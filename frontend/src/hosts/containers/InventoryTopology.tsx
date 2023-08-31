@@ -2753,8 +2753,12 @@ export class InventoryTopology extends PureComponent<Props, State> {
       fetchHosts,
       fetchMeasurements,
     ])
+    const filteredMeasurements =
+      selected === 'Agent'
+        ? measurements.filter(measurement => measurement !== 'ipmi_sensor')
+        : measurements
 
-    return {host, measurements}
+    return {host, measurements: filteredMeasurements}
   }
 
   private async getLayoutsforHost(layouts: Layout[], hostID: string) {
