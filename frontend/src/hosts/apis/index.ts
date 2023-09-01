@@ -1554,7 +1554,7 @@ export const getHostsInfoWithIpmi = async (
      SHOW TAG VALUES FROM \":db:\".\":rp:\".\"ipmi_sensor\" WITH KEY = "hostname" WHERE TIME > now() - 10m;
      SELECT mean("value") AS "inside" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "name" = 'temp' AND time > now() - 10m GROUP BY hostname;
      SELECT mean("value") AS "inlet" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE ("name" = 'inlet_temp') AND time > now() - 10m GROUP BY hostname;
-     SELECT mean("value") AS "outlet" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE ("name" = 'outlet') or  ("name" = 'exhaust_temp' ) or ("name" = 'outlet_temp' ) AND time > now() - 10m GROUP BY hostname;
+     SELECT mean("value") AS "outlet" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE ("name" = 'exhaust_temp' ) or ("name" = 'outlet_temp' ) AND time > now() - 10m GROUP BY hostname;
      `,
     tempVars
   )
