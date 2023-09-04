@@ -59,13 +59,16 @@ class TopologyPreferences extends PureComponent<Props> {
     temperatureValueType: PreferenceType['temperatureValueType']
   ) {
     const {preferenceTemperatureValues} = this.props
+    if (preferenceTemperatureValues.length === 0) return '0'
+
     const selectedTemperatureType = preferenceTemperatureValues.find(
       temperatureValue => temperatureValue.includes(`type:${temperatureType}`)
     )
-    const match = selectedTemperatureType.match(
-      new RegExp(`${temperatureValueType}:([\\d]+)`)
-    )
-    return match === null ? '0' : match[1]
+
+    return selectedTemperatureType
+      .split(',')
+      .find(splittedValue => splittedValue.includes(`${temperatureValueType}:`))
+      .split(':')[1]
   }
 
   private getResetColorClassName(
@@ -221,8 +224,8 @@ class TopologyPreferences extends PureComponent<Props> {
           <Button
             color={ComponentColor.Success}
             customClass="temperature-save"
-            text="Save"
-            titleText="Save"
+            text="OK"
+            titleText="OK"
             onClick={() => {
               onClickTemperatureSaveButton()
             }}
@@ -239,13 +242,18 @@ class TopologyPreferences extends PureComponent<Props> {
   }
 
   public render() {
-    const {onDismissOverlay, preferencesStatus} = this.props
+    const {
+      onDismissOverlay,
+      preferencesStatus,
+      preferenceTemperatureValues,
+    } = this.props
     const title = 'Preferences'
 
     return (
       <>
         <div className="topology-preferences">
-          {preferencesStatus === RemoteDataState.Loading && (
+          {(preferencesStatus === RemoteDataState.Loading ||
+            preferenceTemperatureValues.length === 0) && (
             <div className="topology-spinner">
               <PageSpinner />
             </div>

@@ -1377,8 +1377,9 @@ const renderHostState = (
   statusKind: string,
   childElement: any,
   findHost: Host,
-  selectedTmpType = keysWithGatherType.ipmi.temperature.inside
+  selectedTemperatureValue: string = 'type:inlet,active:1,min:15,max:30'
 ) => {
+  const selectedTmpType = selectedTemperatureType(selectedTemperatureValue)
   const findKey =
     statusKind === 'temperature'
       ? keysWithGatherType[dataGatherType][statusKind][selectedTmpType]
@@ -1414,17 +1415,35 @@ const renderHostState = (
   childElement.removeAttribute('class')
   childElement.classList.add(
     'time-series-status',
-    getTimeSeriesHostIndicator(findHost, findKey, statusKind, statusValue)
+    getTimeSeriesHostIndicator(
+      findHost,
+      findKey,
+      statusKind,
+      statusValue,
+      selectedTemperatureValue
+    )
   )
 }
+
+const selectedTemperatureType = (
+  preferenceTemperatureValue: string
+): PreferenceType['temperatureType'] => {
+  const selectedTemperatureType = preferenceTemperatureValue.match(
+    /type:(\w+),/
+  )
+
+  return selectedTemperatureType[1] as PreferenceType['temperatureType']
+}
+
 export const detectedHostsStatus = function (
   cells: mxCellType[],
   hostsObject: {[x: string]: Host},
-  selectedTmpType: PreferenceType['temperatureType'] = 'inlet'
+  selectedTemperatureValue: string = 'type:inlet,active:1,min:15,max:30'
 ) {
   if (!this.graph) return
 
   const model = this.graph.getModel()
+  const selectedTmpType = selectedTemperatureType(selectedTemperatureValue)
 
   model.beginUpdate()
   try {
@@ -1462,7 +1481,7 @@ export const detectedHostsStatus = function (
                     statusKind,
                     childElement,
                     findHost,
-                    selectedTmpType
+                    selectedTemperatureValue
                   )
                 })
 

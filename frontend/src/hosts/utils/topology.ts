@@ -56,19 +56,81 @@ export const getIsHasString = (value: string): boolean => {
   return value !== ''
 }
 
+const getselectedTemperatureMinValue = (
+  preferenceTemperatureValue: string
+): number => {
+  const selectedTemperatureMinValue = preferenceTemperatureValue
+    .split(',')
+    .find(splittedValue => splittedValue.includes(`min:`))
+    .split(':')[1]
+
+  return parseInt(selectedTemperatureMinValue, 10)
+}
+
+const getselectedTemperatureMaxValue = (
+  preferenceTemperatureValue: string
+): number => {
+  const selectedTemperatureMaxValue = preferenceTemperatureValue
+    .split(',')
+    .find(splittedValue => splittedValue.includes(`max:`))
+    .split(':')[1]
+
+  return parseInt(selectedTemperatureMaxValue, 10)
+}
+
+const getIpmiTemperatureIndicator = (
+  statusValue: string,
+  selectedTemperatureValue: string
+): string => {
+  const temperatureMinValue = getselectedTemperatureMinValue(
+    selectedTemperatureValue
+  )
+  const temperatureMaxValue = getselectedTemperatureMaxValue(
+    selectedTemperatureValue
+  )
+
+  const currentValue = parseFloat(statusValue)
+
+  if (currentValue - temperatureMinValue < 0 && currentValue >= 0) {
+    return 'UsageIndacator-ipmi'
+  }
+
+  if (currentValue - temperatureMinValue < 0) {
+    return null
+  }
+
+  const normalizedValue =
+    ((currentValue - temperatureMinValue) /
+      (temperatureMaxValue - temperatureMinValue)) *
+    100
+
+  if (normalizedValue >= 50) {
+    return 'UsageIndacator-ipmi--caution'
+  } else if (normalizedValue >= 70) {
+    return 'UsageIndacator-ipmi--warning'
+  } else if (normalizedValue >= 90) {
+    return 'UsageIndacator-ipmi--danger'
+  } else {
+    return 'UsageIndacator-ipmi'
+  }
+}
+
 export const getTimeSeriesHostIndicator = (
   host: Host,
   key: string,
   statusKind: string,
-  statusValue: string
+  statusValue: string,
+  selectedTemperatureValue: string
 ): string => {
   if (statusValue === 'N/A') {
     return null
   }
-  let status = 'UsageIndacator'
   if (statusKind === 'temperature') {
-    status = 'UsageIndacator-ipmi'
+    return getIpmiTemperatureIndicator(statusValue, selectedTemperatureValue)
   }
+
+  let status = 'UsageIndacator'
+
   if (_.get(host, key, 0) >= 50) status = 'UsageIndacator--caution'
   if (_.get(host, key, 0) >= 70) status = 'UsageIndacator--warning'
   if (_.get(host, key, 0) >= 90) status = 'UsageIndacator--danger'

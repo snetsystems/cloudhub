@@ -912,8 +912,14 @@ export class InventoryTopology extends PureComponent<Props, State> {
       preferenceTemperatureValues,
       preferenceTemperatureValue => {
         if (preferenceTemperatureValue.includes(`type:${temperatureType}`)) {
+          const temperatueValue = preferenceTemperatureValue
+            .split(',')
+            .find(splittedTemperatureValue =>
+              splittedTemperatureValue.includes(`${temperatureValueType}:`)
+            )
+            .split(':')[1]
           return preferenceTemperatureValue.replace(
-            new RegExp(`${temperatureValueType}:\\d*`),
+            new RegExp(`${temperatureValueType}:${temperatueValue}`),
             `${temperatureValueType}:${temperatureValue}`
           )
         }
@@ -930,16 +936,26 @@ export class InventoryTopology extends PureComponent<Props, State> {
     const {notify} = this.props
     const {preferenceTemperatureValues} = this.state
 
-    return _.some(preferenceTemperatureValues, preferenceTemperatureValue => {
+    return _.filter(preferenceTemperatureValues, temperatureValue =>
+      temperatureValue.includes('active:1')
+    ).some(preferenceTemperatureValue => {
       const selectedTemperatureTypeMatch = preferenceTemperatureValue.match(
         /type:(\w+),/
       )
-      const temperatureMinValue = preferenceTemperatureValue.match(
-        /min:(-?\d*)/
-      )
-      const temperatureMaxValue = preferenceTemperatureValue.match(
-        /max:(-?\d*)/
-      )
+
+      const temperatureMinValue = preferenceTemperatureValue
+        .split(',')
+        .find(splittedTemperatureValue =>
+          splittedTemperatureValue.includes('min:')
+        )
+        .split(':')[1]
+
+      const temperatureMaxValue = preferenceTemperatureValue
+        .split(',')
+        .find(splittedTemperatureValue =>
+          splittedTemperatureValue.includes('max:')
+        )
+        .split(':')[1]
 
       if (!temperatureMinValue || !temperatureMaxValue) {
         notify(
@@ -949,7 +965,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
         )
         return true
       }
-      if (temperatureMinValue[1] === '' || temperatureMaxValue[1] === '') {
+      if (temperatureMinValue === '' || temperatureMaxValue === '') {
         notify(
           notifyPreferencesTemperatureSaveFailed(
             `Empty Value in ${selectedTemperatureTypeMatch[1]} type`
@@ -958,8 +974,8 @@ export class InventoryTopology extends PureComponent<Props, State> {
         return true
       }
 
-      const minValue = parseInt(temperatureMinValue[1], 10)
-      const maxValue = parseInt(temperatureMaxValue[1], 10)
+      const minValue = parseInt(temperatureMinValue, 10)
+      const maxValue = parseInt(temperatureMaxValue, 10)
 
       if (minValue >= maxValue || minValue < 0 || maxValue < 0) {
         notify(
@@ -973,73 +989,34 @@ export class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private handleClickTemperatureSaveButton = async () => {
-    const {notify, links} = this.props
-    const {
-      topologyId,
-      unsavedTopology,
-      preferenceTemperatureValues,
-    } = this.state
+    const {notify} = this.props
+    const {hostsObject, preferenceTemperatureValues} = this.state
 
     if (this.isValidTemperature()) {
       return
     }
 
     this.setState({
-      topologyStatus: RemoteDataState.Loading,
-      preferencesStatus: RemoteDataState.Loading,
+      isTopologyChanged: true,
+      unsavedPreferenceTemperatureValues: preferenceTemperatureValues,
     })
 
-    try {
-      if (_.isEmpty(topologyId) && !_.isEmpty(unsavedTopology)) {
-        const response = await createInventoryTopology(
-          links,
-          unsavedTopology,
-          preferenceTemperatureValues
-        )
-        const getTopologyId = _.get(response, 'data.id', null)
+    if (!this.graph) return
 
-        notify(notifyPreferencesTemperatureSaved())
+    const graph = this.graph
+    const parent = graph.getDefaultParent()
+    const cells = this.getAllCells(parent, true)
+    const selectedTemperatureValue = _.filter(
+      preferenceTemperatureValues,
+      temperatureValue => temperatureValue.includes('active:1')
+    )
+    detectedHostsStatus.bind(this)(
+      cells,
+      hostsObject,
+      selectedTemperatureValue?.[0]
+    )
 
-        this.setState({
-          unsavedPreferenceTemperatureValues: preferenceTemperatureValues,
-          topologyId: getTopologyId,
-          topologyStatus: RemoteDataState.Done,
-          preferencesStatus: RemoteDataState.Done,
-        })
-      } else if (!_.isEmpty(topologyId)) {
-        await updateInventoryTopology(
-          links,
-          topologyId,
-          unsavedTopology,
-          preferenceTemperatureValues
-        )
-
-        notify(notifyPreferencesTemperatureSaved())
-
-        this.setState({
-          unsavedPreferenceTemperatureValues: preferenceTemperatureValues,
-          topologyStatus: RemoteDataState.Done,
-          preferencesStatus: RemoteDataState.Done,
-        })
-      }
-    } catch (err) {
-      this.setState({
-        topologyStatus: RemoteDataState.Done,
-        preferencesStatus: RemoteDataState.Done,
-      })
-
-      const {data} = err
-      const {error} = data
-      if (!error) {
-        notify(
-          notifyPreferencesTemperatureSaveFailed('Cannot save preferences')
-        )
-        return false
-      }
-      const errorMsg = error.split(': ').pop()
-      notify(notifyPreferencesTemperatureSaveFailed(errorMsg))
-      return false
-    }
+    notify(notifyPreferencesTemperatureSaved())
   }
 
   private handleClickTemperatureResetButton = (
@@ -1058,12 +1035,26 @@ export class InventoryTopology extends PureComponent<Props, State> {
       preferenceTemperatureValues,
       temperatureValue => {
         if (temperatureValue.includes(`type:${temperatureType}`)) {
+          const temperatueMinValue = temperatureValue
+            .split(',')
+            .find(splittedTemperatureValue =>
+              splittedTemperatureValue.includes(`min:`)
+            )
+            .split(':')[1]
+
+          const temperatueMaxValue = temperatureValue
+            .split(',')
+            .find(splittedTemperatureValue =>
+              splittedTemperatureValue.includes(`max:`)
+            )
+            .split(':')[1]
+
           temperatureValue = temperatureValue.replace(
-            /min:\d*/,
+            new RegExp(`min:${temperatueMinValue}`),
             `min:${temperatureMinValue[temperatureType]}`
           )
           temperatureValue = temperatureValue.replace(
-            /max:\d*/,
+            new RegExp(`max:${temperatueMaxValue}`),
             `max:${temperatureMaxValue[temperatureType]}`
           )
         }
@@ -1312,16 +1303,20 @@ export class InventoryTopology extends PureComponent<Props, State> {
     const graph = this.graph
     const parent = graph.getDefaultParent()
     const cells = this.getAllCells(parent, true)
-    const selectedTmpType = this.selectedTemperatureType(
-      unsavedPreferenceTemperatureValues
+    const selectedTemperatureValue = _.filter(
+      unsavedPreferenceTemperatureValues,
+      temperatureValue => temperatureValue.includes('active:1')
     )
-    detectedHostsStatus.bind(this)(cells, hostsObject, selectedTmpType)
+    detectedHostsStatus.bind(this)(
+      cells,
+      hostsObject,
+      selectedTemperatureValue?.[0]
+    )
 
     this.setState({
       hostsObject,
     })
   }
-
   private getIpmiStatus = async () => {
     if (!this.graph) return
 
@@ -2581,6 +2576,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
         notify(notifyTopologySaved())
 
+        this.fetchIntervalData()
         this.setState({
           unsavedTopology: topology,
           topologyStatus: RemoteDataState.Done,
