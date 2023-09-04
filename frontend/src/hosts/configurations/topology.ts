@@ -692,7 +692,8 @@ export const dragCell = (node: Menu) => (
 
     statusCell.geometry.offset = new mxPoint(-24, 6)
     statusCell.setConnectable(false)
-    statusCell.setVisible(_.get(node, 'status'))
+    const statusCheck = _.get(node, 'status') ? true : false
+    statusCell.setVisible(statusCheck)
   } finally {
     model.endUpdate()
   }
@@ -845,7 +846,8 @@ export const drawCellInGroup = (nodes: Menu[]) => (
 
       statusCell.geometry.offset = new mxPoint(-24, 6)
       statusCell.setConnectable(false)
-      statusCell.setVisible(_.get(node, 'status'))
+      const statusCheck = _.get(node, 'status') ? true : false
+      statusCell.setVisible(statusCheck)
 
       return vertex
     })
@@ -1359,7 +1361,10 @@ const dataStatusValue = (
       fixedDecimalPercentage(parseFloat(_.toString(hostValue)), 2)
     )
   }
-  if (Math.max(host.deltaUptime || 0, host.winDeltaUptime || 0) > 0) {
+  if (
+    dataGatherType === 'agent' &&
+    Math.max(host.deltaUptime || 0, host.winDeltaUptime || 0) > 0
+  ) {
     statusValue = _.toString(
       fixedDecimalPercentage(parseFloat(_.toString(hostValue)), 2)
     )

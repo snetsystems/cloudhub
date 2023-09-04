@@ -2090,7 +2090,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
         label: value,
         name: value,
         type: 'Server',
-        status: true,
+        status: 'agent',
         detected: true,
       }
 

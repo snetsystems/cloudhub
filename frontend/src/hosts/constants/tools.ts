@@ -95,7 +95,7 @@ export interface Menu {
   ipmi_pass?: string
   parent?: string
   data_navi?: string
-  status?: boolean
+  status?: string | boolean
   detected?: boolean
   icon?: string
 }
