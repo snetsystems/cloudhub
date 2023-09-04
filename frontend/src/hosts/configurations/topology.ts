@@ -1355,19 +1355,19 @@ const dataStatusValue = (
   }
   if (statusKind === 'temperature') {
     statusValue = `${_.toString(hostValue.toFixed(2))} °C`
+    return statusValue
   }
   if (dataGatherType === 'ipmi' && statusKind !== 'temperature') {
     statusValue = _.toString(
       fixedDecimalPercentage(parseFloat(_.toString(hostValue)), 2)
     )
+    return statusValue
   }
-  if (
-    dataGatherType === 'agent' &&
-    Math.max(host.deltaUptime || 0, host.winDeltaUptime || 0) > 0
-  ) {
+  if (Math.max(host.deltaUptime || 0, host.winDeltaUptime || 0) > 0) {
     statusValue = _.toString(
       fixedDecimalPercentage(parseFloat(_.toString(hostValue)), 2)
     )
+    return statusValue
   }
 
   return statusValue
