@@ -199,6 +199,7 @@ import {
   applyHandler,
   detectedHostsStatus,
   getFromOptions,
+  getFocusedCell,
 } from 'src/hosts/configurations/topology'
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 
@@ -585,7 +586,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
     }
 
     await this.getInventoryTopology()
-    await this.getHostData()
+    await this.fetchIntervalData()
     await this.getIpmiTargetList()
 
     if (this.props.autoRefresh) {
@@ -1273,8 +1274,6 @@ export class InventoryTopology extends PureComponent<Props, State> {
   }
   private getHostData = async () => {
     const {source, links, auth} = this.props
-    const {unsavedPreferenceTemperatureValues} = this.state
-
     const meRole = _.get(auth, 'me.role', '')
     const envVars = await getEnv(links.environment)
     const telegrafSystemInterval = getDeep<string>(
@@ -1298,6 +1297,17 @@ export class InventoryTopology extends PureComponent<Props, State> {
     if (!hostsObject) {
       throw new Error(hostsError)
     }
+
+    this.getDetectedHostStatus()
+
+    this.setState({
+      hostsObject,
+    })
+  }
+
+  private getDetectedHostStatus = (hostname?: string | null) => {
+    const {unsavedPreferenceTemperatureValues, hostsObject} = this.state
+
     if (!this.graph) return
 
     const graph = this.graph
@@ -1307,16 +1317,15 @@ export class InventoryTopology extends PureComponent<Props, State> {
       unsavedPreferenceTemperatureValues,
       temperatureValue => temperatureValue.includes('active:1')
     )
+    const filteredCells = hostname ? getFocusedCell(cells, hostname) : cells
+
     detectedHostsStatus.bind(this)(
-      cells,
+      filteredCells,
       hostsObject,
       selectedTemperatureValue?.[0]
     )
-
-    this.setState({
-      hostsObject,
-    })
   }
+
   private getIpmiStatus = async () => {
     if (!this.graph) return
 
@@ -2092,7 +2101,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       let ds = mxUtils.makeDraggable(
         host,
         this.graph,
-        dragCell(node),
+        dragCell(node, this),
         dragElt,
         0,
         0,

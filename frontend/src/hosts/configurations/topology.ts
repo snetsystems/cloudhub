@@ -362,17 +362,18 @@ export const createTextField = function (
     }
   )
 
-  if (mxClient.IS_IE) {
-    mxEvent.addListener(input, 'focusout', () => {
-      applyHandler.bind(this)(graph, cell, attribute, input.value)
+  const container = getContainerElement(cell.value)
+  const dataType = container.getAttribute('data-type')
+  const dataStatus = container.getAttribute('data-status')
+
+  const updateEvent = mxClient.IS_IE ? 'focusout' : 'blur'
+
+  mxEvent.addListener(input, updateEvent, () => {
+    applyHandler.bind(this)(graph, cell, attribute, input.value)
+    if (dataType === 'Server' && dataStatus !== 'false') {
       this.fetchIntervalData()
-    })
-  } else {
-    mxEvent.addListener(input, 'blur', () => {
-      applyHandler.bind(this)(graph, cell, attribute, input.value)
-      this.fetchIntervalData()
-    })
-  }
+    }
+  })
 }
 export const applyHandler = function (
   graph: mxGraphType,
@@ -547,7 +548,7 @@ export const openSensorData = function (data: Promise<any>) {
   this.statusRef.current.appendChild(statusWindow)
 }
 
-export const dragCell = (node: Menu) => (
+export const dragCell = (node: Menu, self: any) => (
   graph: mxGraphType,
   _event: any,
   _cell: mxCellType,
@@ -559,9 +560,8 @@ export const dragCell = (node: Menu) => (
   let v1 = null
 
   model.beginUpdate()
+  const cell = createHTMLValue(node, 'node')
   try {
-    const cell = createHTMLValue(node, 'node')
-
     v1 = graph.insertVertex(
       parent,
       null,
@@ -699,6 +699,13 @@ export const dragCell = (node: Menu) => (
   }
 
   graph.setSelectionCell(v1)
+
+  const dataType = cell.getAttribute('data-type')
+  const dataStatus = cell.getAttribute('data-status')
+  const dataName = cell.getAttribute('data-name')
+  if (dataType === 'Server' && dataStatus !== 'false') {
+    self.getDetectedHostStatus(dataName)
+  }
 }
 
 export const drawCellInGroup = (nodes: Menu[]) => (
@@ -895,7 +902,7 @@ export const addSidebarButton = function ({
   const dragSource = mxUtils.makeDraggable(
     element,
     this.graph,
-    dragCell(node),
+    dragCell(node, this),
     dragElt,
     0,
     0,
@@ -1433,6 +1440,15 @@ const selectedTemperatureType = (
   )
 
   return selectedTemperatureType[1] as PreferenceType['temperatureType']
+}
+export const getFocusedCell = (cells: mxCellType[], hostname: string) => {
+  const findCells = cells.filter(
+    cell =>
+      cell.getStyle() === 'node' &&
+      getContainerElement(cell.value).getAttribute('data-name') === hostname
+  )
+
+  return findCells
 }
 
 export const detectedHostsStatus = function (
