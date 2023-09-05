@@ -1328,7 +1328,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
     })
   }
 
-  private getDetectedHostStatus = (hostname?: string | null) => {
+  private getDetectedHostStatus = (focusedCellId?: string) => {
     const {unsavedPreferenceTemperatureValues, hostsObject} = this.state
 
     if (!this.graph) return
@@ -1340,7 +1340,10 @@ export class InventoryTopology extends PureComponent<Props, State> {
       unsavedPreferenceTemperatureValues,
       temperatureValue => temperatureValue.includes('active:1')
     )
-    const filteredCells = hostname ? getFocusedCell(cells, hostname) : cells
+
+    const filteredCells = focusedCellId
+      ? getFocusedCell(cells, focusedCellId)
+      : cells
 
     detectedHostsStatus.bind(this)(
       filteredCells,
@@ -1349,14 +1352,16 @@ export class InventoryTopology extends PureComponent<Props, State> {
     )
   }
 
-  private getIpmiStatus = async (hostname?: string) => {
+  private getIpmiStatus = async (focusedCellId?: string) => {
     if (!this.graph) return
 
     const graph = this.graph
     const parent = graph.getDefaultParent()
     const cells = this.getAllCells(parent, true)
 
-    const filteredCells = hostname ? getFocusedCell(cells, hostname) : cells
+    const filteredCells = focusedCellId
+      ? getFocusedCell(cells, focusedCellId)
+      : cells
     let ipmiCells: IpmiCell[] = filteredIpmiPowerStatus.bind(this)(
       filteredCells
     )

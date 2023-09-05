@@ -367,14 +367,14 @@ export const createTextField = function (
   const container = getContainerElement(cell.value)
   const dataType = container.getAttribute('data-type')
   const dataStatus = container.getAttribute('data-status')
-  const dataName = container.getAttribute('data-name')
+
   const updateEvent = mxClient.IS_IE ? 'focusout' : 'blur'
 
   mxEvent.addListener(input, updateEvent, async () => {
     applyHandler.bind(this)(graph, cell, attribute, input.value)
     if (dataType === 'Server' && dataStatus !== 'false') {
-      await this.getIpmiStatus(dataName)
-      this.getDetectedHostStatus(dataName)
+      await this.getIpmiStatus(cell.getId())
+      this.getDetectedHostStatus(cell.getId())
     }
   })
 }
@@ -706,9 +706,9 @@ export const dragCell = (node: Menu, self: any) => (
 
   const dataType = cell.getAttribute('data-type')
   const dataStatus = cell.getAttribute('data-status')
-  const dataName = cell.getAttribute('data-name')
+
   if (dataType === 'Server' && dataStatus !== 'false') {
-    self.getDetectedHostStatus(dataName)
+    self.getDetectedHostStatus(v1.getId())
   }
 }
 
@@ -1449,11 +1449,9 @@ const selectedTemperatureType = (
 
   return selectedTemperatureType[1] as PreferenceType['temperatureType']
 }
-export const getFocusedCell = (cells: mxCellType[], hostname: string) => {
+export const getFocusedCell = (cells: mxCellType[], focusedCell: string) => {
   const findCells = cells.filter(
-    cell =>
-      cell.getStyle() === 'node' &&
-      getContainerElement(cell.value).getAttribute('data-name') === hostname
+    cell => cell.getStyle() === 'node' && cell.getId() === focusedCell
   )
 
   return findCells
