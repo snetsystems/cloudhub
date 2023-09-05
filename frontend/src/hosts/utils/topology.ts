@@ -64,7 +64,7 @@ const getselectedTemperatureMinValue = (
     .find(splittedValue => splittedValue.includes(`min:`))
     .split(':')[1]
 
-  return parseInt(selectedTemperatureMinValue, 10)
+  return parseFloat(selectedTemperatureMinValue)
 }
 
 const getselectedTemperatureMaxValue = (
@@ -75,7 +75,7 @@ const getselectedTemperatureMaxValue = (
     .find(splittedValue => splittedValue.includes(`max:`))
     .split(':')[1]
 
-  return parseInt(selectedTemperatureMaxValue, 10)
+  return parseFloat(selectedTemperatureMaxValue)
 }
 
 const getIpmiTemperatureIndicator = (

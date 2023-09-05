@@ -977,8 +977,8 @@ export class InventoryTopology extends PureComponent<Props, State> {
         return true
       }
 
-      const minValue = parseInt(temperatureMinValue, 10)
-      const maxValue = parseInt(temperatureMaxValue, 10)
+      const minValue = parseFloat(temperatureMinValue)
+      const maxValue = parseFloat(temperatureMaxValue)
 
       if (minValue >= maxValue || minValue < 0 || maxValue < 0) {
         notify(
