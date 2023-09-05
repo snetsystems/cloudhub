@@ -58,6 +58,7 @@ import {
   notifyTopologyExportedFailed,
   notifyPreferencesTemperatureSaveFailed,
   notifyPreferencesTemperatureSaved,
+  notifyFetchIntervalDataFailed,
 } from 'src/shared/copy/notifications'
 import {notIncludeApps} from 'src/hosts/constants/apps'
 import {
@@ -568,6 +569,8 @@ export class InventoryTopology extends PureComponent<Props, State> {
   }csp_key/`
 
   public async componentDidMount() {
+    const {notify} = this.props
+
     this.createEditor()
     this.configureEditor()
     this.setActionInEditor()
@@ -583,13 +586,17 @@ export class InventoryTopology extends PureComponent<Props, State> {
       layouts,
     })
 
-    if (this.isUsingCSP) {
-      await this.handleLoadCsps()
-    }
+    try {
+      if (this.isUsingCSP) {
+        await this.handleLoadCsps()
+      }
 
-    await this.getInventoryTopology()
-    await this.fetchIntervalData()
-    await this.getIpmiTargetList()
+      await this.getInventoryTopology()
+      await this.fetchIntervalData()
+      await this.getIpmiTargetList()
+    } catch (error) {
+      notify(notifyFetchIntervalDataFailed(error.message))
+    }
 
     if (this.props.autoRefresh) {
       this.intervalID = window.setInterval(
@@ -1249,16 +1256,24 @@ export class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private fetchIntervalData = async () => {
+    const {notify} = this.props
+
     this.setState(preState => ({
       ...preState,
       fetchIntervalDataStatus: RemoteDataState.Loading,
     }))
-    await this.getHostData()
-    await this.getIpmiStatus()
-    this.setState(preState => ({
-      ...preState,
-      fetchIntervalDataStatus: RemoteDataState.Done,
-    }))
+
+    try {
+      await this.getHostData()
+      await this.getIpmiStatus()
+    } catch (error) {
+      notify(notifyFetchIntervalDataFailed(error.message))
+    } finally {
+      this.setState(preState => ({
+        ...preState,
+        fetchIntervalDataStatus: RemoteDataState.Done,
+      }))
+    }
   }
   private getIpmiData = async () => {
     const {source, links, auth} = this.props

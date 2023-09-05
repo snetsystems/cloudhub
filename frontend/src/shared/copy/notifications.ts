@@ -1413,3 +1413,11 @@ export const notifyPreferencesTemperatureSaveFailed = (
   duration: INFINITE,
   message: `Failed to Save Preferences : ${errorMessage}`,
 })
+
+export const notifyFetchIntervalDataFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Fetch Interval Data : ${errorMessage}`,
+})

@@ -383,6 +383,7 @@ export const applyHandler = function (
 ) {
   const containerElement = getContainerElement(cell.value)
   const oldValue = containerElement.getAttribute(attribute.nodeName) || ''
+  const dataType = containerElement.getAttribute('data-type')
 
   let isInputPassword = false
 
@@ -436,7 +437,7 @@ export const applyHandler = function (
         }
       }
 
-      if (attribute.nodeName === 'data-status') {
+      if (dataType === 'Server' && attribute.nodeName === 'data-status') {
         const childrenCell = cell.getChildAt(2)
 
         if (childrenCell.style.includes('status')) {
