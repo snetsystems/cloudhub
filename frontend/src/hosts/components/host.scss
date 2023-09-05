@@ -229,6 +229,18 @@
     border-right: none;
   }
 }
+.section-item-detail-host {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 25%;
+  max-width: 25%;
+  padding: 5px;
+  border-right: 1px solid #292933;
+
+  &:nth-child(4n) {
+    border-right: none;
+  }
+}
 
 .util-label {
   padding-bottom: 5px;

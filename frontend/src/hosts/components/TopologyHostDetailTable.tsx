@@ -19,7 +19,7 @@ class TopologyHostDetailTable extends PureComponent<Props, State> {
     const {label} = this.props
 
     return (
-      <div className={'section-item'} style={{flex: '0 0 25%'}}>
+      <div className={'section-item-detail-host'}>
         <div className={'util-label'} style={{fontSize: '13px'}}>
           {label}
         </div>
