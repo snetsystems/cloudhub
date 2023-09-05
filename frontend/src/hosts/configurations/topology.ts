@@ -46,6 +46,8 @@ import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 import {COLLECTOR_SERVER} from 'src/shared/constants'
 import {PreferenceType} from 'src/hosts/types'
 
+import {notifyDecryptedBytesFailed} from 'src/shared/copy/notifications'
+
 const mx = mxgraph()
 const {
   mxClient,
@@ -1219,22 +1221,26 @@ export const filteredIpmiPowerStatus = function (cells: mxCellType[]) {
           !_.isEmpty(ipmiUser) &&
           !_.isEmpty(ipmiPass)
         ) {
-          const decryptedBytes = CryptoJS.AES.decrypt(
-            ipmiPass,
-            this.secretKey.url
-          )
-          const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
+          try {
+            const decryptedBytes = CryptoJS.AES.decrypt(
+              ipmiPass,
+              this.secretKey.url
+            )
+            const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
 
-          const ipmiCell: IpmiCell = {
-            target: ipmiTarget,
-            host: ipmiHost,
-            user: ipmiUser,
-            pass: originalPass,
-            powerStatus: '',
-            cell: cell,
+            const ipmiCell: IpmiCell = {
+              target: ipmiTarget,
+              host: ipmiHost,
+              user: ipmiUser,
+              pass: originalPass,
+              powerStatus: '',
+              cell: cell,
+            }
+
+            ipmiCells = [...ipmiCells, ipmiCell]
+          } catch (error) {
+            this.props.notify(notifyDecryptedBytesFailed(error.message))
           }
-
-          ipmiCells = [...ipmiCells, ipmiCell]
         }
       }
     }

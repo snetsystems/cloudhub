@@ -1422,3 +1422,11 @@ export const notifyFetchIntervalDataFailed = (
   duration: INFINITE,
   message: `Failed to Fetch Interval Data : ${errorMessage}`,
 })
+
+export const notifyDecryptedBytesFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Decrypt Bytes : ${errorMessage}`,
+})
