@@ -38,7 +38,7 @@ import InstanceTypeModal from 'src/hosts/components/InstanceTypeModal'
 import TopologyCSPMngModal from 'src/hosts/components/TopologyCSPMngModal'
 import ImportTopologyOverlay from 'src/hosts/components/ImportTopologyOverlay'
 import TopologyPreferences from 'src/hosts/components/TopologyPreferences'
-
+import LoadingSpinner from 'src/flux/components/LoadingSpinner'
 // constants
 import {
   HANDLE_NONE,
@@ -391,6 +391,7 @@ interface State {
   unsavedTopology: string
   preferencesStatus: RemoteDataState
   unsavedPreferenceTemperatureValues: string[]
+  fetchIntervalDataStatus: RemoteDataState
 }
 
 @ErrorHandling
@@ -503,6 +504,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       unsavedPreferenceTemperatureValues: [],
       unsavedTopology: '',
       preferencesStatus: RemoteDataState.Done,
+      fetchIntervalDataStatus: RemoteDataState.NotStarted,
     }
   }
 
@@ -1247,8 +1249,16 @@ export class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private fetchIntervalData = async () => {
+    this.setState(preState => ({
+      ...preState,
+      fetchIntervalDataStatus: RemoteDataState.Loading,
+    }))
     await this.getHostData()
     await this.getIpmiStatus()
+    this.setState(preState => ({
+      ...preState,
+      fetchIntervalDataStatus: RemoteDataState.Done,
+    }))
   }
   private getIpmiData = async () => {
     const {source, links, auth} = this.props
@@ -2186,6 +2196,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       resizableDockWidth,
       isPinned,
       isOpenSensorData,
+      fetchIntervalDataStatus,
     } = this.state
     const [topSize, bottomSize] = bottomProportions
     return [
@@ -2206,6 +2217,9 @@ export class InventoryTopology extends PureComponent<Props, State> {
                 <div id="graphContainer" ref={this.containerRef}>
                   {topologyStatus === RemoteDataState.Loading && (
                     <PageSpinner />
+                  )}
+                  {fetchIntervalDataStatus === RemoteDataState.Loading && (
+                    <LoadingSpinner className={'fetchIntervalDots'} />
                   )}
                   <div id="outlineContainer" ref={this.outlineRef}></div>
                   <ResizableDock
