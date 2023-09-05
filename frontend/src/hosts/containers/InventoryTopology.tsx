@@ -1349,14 +1349,17 @@ export class InventoryTopology extends PureComponent<Props, State> {
     )
   }
 
-  private getIpmiStatus = async () => {
+  private getIpmiStatus = async (hostname?: string) => {
     if (!this.graph) return
 
     const graph = this.graph
     const parent = graph.getDefaultParent()
     const cells = this.getAllCells(parent, true)
 
-    let ipmiCells: IpmiCell[] = filteredIpmiPowerStatus.bind(this)(cells)
+    const filteredCells = hostname ? getFocusedCell(cells, hostname) : cells
+    let ipmiCells: IpmiCell[] = filteredIpmiPowerStatus.bind(this)(
+      filteredCells
+    )
 
     if (_.isEmpty(ipmiCells)) return
 

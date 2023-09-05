@@ -365,13 +365,14 @@ export const createTextField = function (
   const container = getContainerElement(cell.value)
   const dataType = container.getAttribute('data-type')
   const dataStatus = container.getAttribute('data-status')
-
+  const dataName = container.getAttribute('data-name')
   const updateEvent = mxClient.IS_IE ? 'focusout' : 'blur'
 
-  mxEvent.addListener(input, updateEvent, () => {
+  mxEvent.addListener(input, updateEvent, async () => {
     applyHandler.bind(this)(graph, cell, attribute, input.value)
     if (dataType === 'Server' && dataStatus !== 'false') {
-      this.fetchIntervalData()
+      await this.getIpmiStatus(dataName)
+      this.getDetectedHostStatus(dataName)
     }
   })
 }

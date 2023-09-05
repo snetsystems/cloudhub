@@ -1314,6 +1314,7 @@ export const notifyTopologyImportFailed = (
 
 export const notifyIpmiConnectionFailed = (host: string): Notification => ({
   ...defaultErrorNotification,
+  duration: INFINITE,
   message: `${host} IPMI Connection Failed`,
 })
 
