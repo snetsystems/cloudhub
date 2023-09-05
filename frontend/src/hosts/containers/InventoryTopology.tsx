@@ -1266,6 +1266,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
     try {
       await this.getHostData()
       await this.getIpmiStatus()
+      this.getDetectedHostStatus()
     } catch (error) {
       notify(notifyFetchIntervalDataFailed(error.message))
     } finally {
@@ -1322,9 +1323,6 @@ export class InventoryTopology extends PureComponent<Props, State> {
     if (!hostsObject) {
       throw new Error(hostsError)
     }
-
-    this.getDetectedHostStatus()
-
     this.setState({
       hostsObject,
     })
