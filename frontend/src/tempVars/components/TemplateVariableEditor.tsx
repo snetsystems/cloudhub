@@ -161,7 +161,7 @@ class TemplateVariableEditor extends PureComponent<Props, State> {
                 spellCheck={false}
               />
             </div>
-            <div className="form-group col-sm-6">
+            <div className="form-group col-sm-6 form-group-type">
               <label>Type</label>
               <Dropdown
                 items={TEMPLATE_TYPES_LIST}

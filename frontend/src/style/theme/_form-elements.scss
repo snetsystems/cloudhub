@@ -218,6 +218,9 @@ textarea.form-control {
 .form-group > .btn {
   display: inline-block;
 }
+.form-group.form-group-type {
+  z-index: 50001;
+}
 .form-group > label,
 label.form-label {
   width: 100%;
