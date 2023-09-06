@@ -1237,7 +1237,9 @@ export const filteredIpmiPowerStatus = function (cells: mxCellType[]) {
 
             ipmiCells = [...ipmiCells, ipmiCell]
           } catch (error) {
-            this.props.notify(notifyDecryptedBytesFailed(error.message))
+            this.props.notify(
+              notifyDecryptedBytesFailed(`incorrect ${ipmiHost} IPMI Password`)
+            )
           }
         }
       }

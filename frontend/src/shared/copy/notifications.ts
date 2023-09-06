@@ -1428,5 +1428,5 @@ export const notifyDecryptedBytesFailed = (
 ): Notification => ({
   ...defaultErrorNotification,
   duration: INFINITE,
-  message: `Failed to Decrypt Bytes : ${errorMessage}`,
+  message: `Failed to Decrypt : ${errorMessage}`,
 })
