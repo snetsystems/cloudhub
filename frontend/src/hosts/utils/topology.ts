@@ -104,12 +104,12 @@ const getIpmiTemperatureIndicator = (
       (temperatureMaxValue - temperatureMinValue)) *
     100
 
-  if (normalizedValue >= 50) {
-    return 'UsageIndacator-ipmi--caution'
+  if (normalizedValue >= 90) {
+    return 'UsageIndacator-ipmi--danger'
   } else if (normalizedValue >= 70) {
     return 'UsageIndacator-ipmi--warning'
-  } else if (normalizedValue >= 90) {
-    return 'UsageIndacator-ipmi--danger'
+  } else if (normalizedValue >= 50) {
+    return 'UsageIndacator-ipmi--caution'
   } else {
     return 'UsageIndacator-ipmi'
   }
