@@ -366,13 +366,12 @@ export const createTextField = function (
 
   const container = getContainerElement(cell.value)
   const dataType = container.getAttribute('data-type')
-  const dataStatus = container.getAttribute('data-status')
 
   const updateEvent = mxClient.IS_IE ? 'focusout' : 'blur'
 
   mxEvent.addListener(input, updateEvent, async () => {
     applyHandler.bind(this)(graph, cell, attribute, input.value)
-    if (dataType === 'Server' && dataStatus !== 'false') {
+    if (dataType === 'Server') {
       await this.getIpmiStatus(cell.getId())
       this.getDetectedHostStatus(cell.getId())
     }
@@ -705,9 +704,8 @@ export const dragCell = (node: Menu, self: any) => (
   graph.setSelectionCell(v1)
 
   const dataType = cell.getAttribute('data-type')
-  const dataStatus = cell.getAttribute('data-status')
 
-  if (dataType === 'Server' && dataStatus !== 'false') {
+  if (dataType === 'Server') {
     self.getDetectedHostStatus(v1.getId())
   }
 }
