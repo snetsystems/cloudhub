@@ -318,11 +318,21 @@
 
 .topology-preferences {
   position: fixed;
-  top: 18%;
+  top: 20%;
   left: 50%;
   transform: translate(-50%, -50%);
   width: 370px;
   border: 2px solid $g5-pepper;
+
+  .preferences-title--min {
+    padding-left: 22.1%;
+    font-size: 13px;
+  }
+
+  .preferences-title--max {
+    padding-left: 15.8%;
+    font-size: 13px;
+  }
 
   .topology-spinner {
     position: absolute;
@@ -332,8 +342,13 @@
     height: 100%;
   }
 
+  .overlay--container {
+    height: 234px;
+  }
+
   .overlay--body {
-    padding: 1px 15px 10px 29px;
+    padding: 6px 15px 10px 29px;
+    height: 190px;
   }
 
   .temperature-type {
@@ -383,7 +398,11 @@
     margin: 10px 0px 0px 4px !important;
   }
 
-  .temperature-save {
+  .temperature--buttons {
+    padding: 2.2% 0% 0% 27%;
+  }
+
+  .temperature-ok {
     background-color: $c-rainforest;
     color: $g20-white;
     display: inline-block;
@@ -395,6 +414,12 @@
     display: inline-block;
     width: 58px;
     margin: 0 4px;
+  }
+
+  .temperature-apply {
+    display: inline-block;
+    width: 58px;
+    margin-left: 40px !important;
   }
 }
 .fetchIntervalDots {

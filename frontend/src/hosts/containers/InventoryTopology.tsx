@@ -56,9 +56,10 @@ import {
   notifyTopologySaveAuthFailed,
   notifyTopologyExported,
   notifyTopologyExportedFailed,
-  notifyPreferencesTemperatureSaveFailed,
-  notifyPreferencesTemperatureSaved,
+  notifyPreferencesTemperatureApplyFailed,
+  notifyPreferencesTemperatureApplySucceeded,
   notifyFetchIntervalDataFailed,
+  notifyGetDetectedHostStatusFailed,
 } from 'src/shared/copy/notifications'
 import {notIncludeApps} from 'src/hosts/constants/apps'
 import {
@@ -814,9 +815,10 @@ export class InventoryTopology extends PureComponent<Props, State> {
                 onClickTemperatureResetButton={
                   this.handleClickTemperatureResetButton
                 }
-                onClickTemperatureSaveButton={
-                  this.handleClickTemperatureSaveButton
+                onClickTemperatureApplyButton={
+                  this.handleClickTemperatureApplyButton
                 }
+                onClickTemperatureOkButton={this.handleClickTemperatureOkButton}
                 onChangeRadioButton={this.handleChangeRadioButton}
                 onDismissOverlay={this.handlePreferencesToggleOverlay}
                 notify={notify}
@@ -969,16 +971,16 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
       if (!temperatureMinValue || !temperatureMaxValue) {
         notify(
-          notifyPreferencesTemperatureSaveFailed(
-            `Invalid Value in ${selectedTemperatureTypeMatch[1]} type`
+          notifyPreferencesTemperatureApplyFailed(
+            `Invalid Value in ${selectedTemperatureTypeMatch[1]} temperature type`
           )
         )
         return true
       }
       if (temperatureMinValue === '' || temperatureMaxValue === '') {
         notify(
-          notifyPreferencesTemperatureSaveFailed(
-            `Empty Value in ${selectedTemperatureTypeMatch[1]} type`
+          notifyPreferencesTemperatureApplyFailed(
+            `Empty Value in ${selectedTemperatureTypeMatch[1]} temperature type`
           )
         )
         return true
@@ -989,8 +991,8 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
       if (minValue >= maxValue || minValue < 0 || maxValue < 0) {
         notify(
-          notifyPreferencesTemperatureSaveFailed(
-            `Out of range in ${selectedTemperatureTypeMatch[1]} type`
+          notifyPreferencesTemperatureApplyFailed(
+            `Out of range in ${selectedTemperatureTypeMatch[1]} temperature type`
           )
         )
         return true
@@ -998,7 +1000,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
     })
   }
 
-  private handleClickTemperatureSaveButton = async () => {
+  private handleClickTemperatureOkButton = async () => {
     const {notify} = this.props
     const {hostsObject, preferenceTemperatureValues} = this.state
 
@@ -1006,27 +1008,71 @@ export class InventoryTopology extends PureComponent<Props, State> {
       return
     }
 
-    this.setState({
-      isTopologyChanged: true,
-      unsavedPreferenceTemperatureValues: preferenceTemperatureValues,
-    })
+    try {
+      if (!this.graph) return
 
-    if (!this.graph) return
+      const graph = this.graph
+      const parent = graph.getDefaultParent()
+      const cells = this.getAllCells(parent, true)
+      const selectedTemperatureValue = _.filter(
+        preferenceTemperatureValues,
+        temperatureValue => temperatureValue.includes('active:1')
+      )
+      detectedHostsStatus.bind(this)(
+        cells,
+        hostsObject,
+        selectedTemperatureValue?.[0]
+      )
 
-    const graph = this.graph
-    const parent = graph.getDefaultParent()
-    const cells = this.getAllCells(parent, true)
-    const selectedTemperatureValue = _.filter(
-      preferenceTemperatureValues,
-      temperatureValue => temperatureValue.includes('active:1')
-    )
-    detectedHostsStatus.bind(this)(
-      cells,
-      hostsObject,
-      selectedTemperatureValue?.[0]
-    )
+      notify(notifyPreferencesTemperatureApplySucceeded())
 
-    notify(notifyPreferencesTemperatureSaved())
+      this.setState({
+        isTopologyChanged: true,
+        unsavedPreferenceTemperatureValues: preferenceTemperatureValues,
+        isPreferencesOverlayVisible: !this.state.isPreferencesOverlayVisible,
+      })
+    } catch (error) {
+      notify(notifyGetDetectedHostStatusFailed(error.message))
+    } finally {
+      this.setState({
+        isPreferencesOverlayVisible: !this.state.isPreferencesOverlayVisible,
+      })
+    }
+  }
+
+  private handleClickTemperatureApplyButton = async () => {
+    const {notify} = this.props
+    const {hostsObject, preferenceTemperatureValues} = this.state
+
+    if (this.isValidTemperature()) {
+      return
+    }
+
+    try {
+      if (!this.graph) return
+
+      const graph = this.graph
+      const parent = graph.getDefaultParent()
+      const cells = this.getAllCells(parent, true)
+      const selectedTemperatureValue = _.filter(
+        preferenceTemperatureValues,
+        temperatureValue => temperatureValue.includes('active:1')
+      )
+      detectedHostsStatus.bind(this)(
+        cells,
+        hostsObject,
+        selectedTemperatureValue?.[0]
+      )
+
+      notify(notifyPreferencesTemperatureApplySucceeded())
+
+      this.setState({
+        isTopologyChanged: true,
+        unsavedPreferenceTemperatureValues: preferenceTemperatureValues,
+      })
+    } catch (error) {
+      notify(notifyGetDetectedHostStatusFailed(error.message))
+    }
   }
 
   private handleClickTemperatureResetButton = (
@@ -1098,7 +1144,10 @@ export class InventoryTopology extends PureComponent<Props, State> {
   }
 
   private handlePreferencesToggleOverlay = (): void => {
+    const {unsavedPreferenceTemperatureValues} = this.state
+
     this.setState({
+      preferenceTemperatureValues: unsavedPreferenceTemperatureValues,
       isPreferencesOverlayVisible: !this.state.isPreferencesOverlayVisible,
     })
   }

@@ -1402,17 +1402,17 @@ export const notifygetProjectConfigFailed = (): Notification => ({
   message: `Failed to Deleted Project configuration file.`,
 })
 
-export const notifyPreferencesTemperatureSaved = (): Notification => ({
+export const notifyPreferencesTemperatureApplySucceeded = (): Notification => ({
   ...defaultSuccessNotification,
-  message: `Preferences saved successfully.`,
+  message: `Preferences Applied successfully.`,
 })
 
-export const notifyPreferencesTemperatureSaveFailed = (
+export const notifyPreferencesTemperatureApplyFailed = (
   errorMessage: string
 ): Notification => ({
   ...defaultErrorNotification,
   duration: INFINITE,
-  message: `Failed to Save Preferences : ${errorMessage}`,
+  message: `Failed to Apply Preferences : ${errorMessage}`,
 })
 
 export const notifyFetchIntervalDataFailed = (
@@ -1429,4 +1429,12 @@ export const notifyDecryptedBytesFailed = (
   ...defaultErrorNotification,
   duration: INFINITE,
   message: `Failed to Decrypt : ${errorMessage}`,
+})
+
+export const notifyGetDetectedHostStatusFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Get Detected Host Status : ${errorMessage}`,
 })

@@ -4,7 +4,7 @@ import _ from 'lodash'
 import PageSpinner from 'src/shared/components/PageSpinner'
 import InputNumberClickToEdit from 'src/shared/components/InputNumberClickToEdit'
 
-import {Button, ComponentColor} from 'src/reusable_ui'
+import {Button, ComponentColor, ComponentStatus} from 'src/reusable_ui'
 import Container from 'src/reusable_ui/components/overlays/OverlayContainer'
 import Heading from 'src/reusable_ui/components/overlays/OverlayHeading'
 import Body from 'src/reusable_ui/components/overlays/OverlayBody'
@@ -29,7 +29,8 @@ interface Props {
   onChangeRadioButton: (
     temperatureType: PreferenceType['temperatureType']
   ) => void
-  onClickTemperatureSaveButton: () => void
+  onClickTemperatureApplyButton: () => void
+  onClickTemperatureOkButton: () => void
   notify: (message: Notification) => void
 }
 
@@ -79,12 +80,20 @@ class TopologyPreferences extends PureComponent<Props> {
       : ComponentColor.Default
   }
 
+  private getResetStatus(
+    temperatureType: PreferenceType['temperatureType']
+  ): ComponentStatus {
+    return temperatureType === this.SelectedTemperatureType
+      ? ComponentStatus.Default
+      : ComponentStatus.Disabled
+  }
+
   private getResetButtonClassName(
     temperatureType: PreferenceType['temperatureType']
   ): string {
     return temperatureType === this.SelectedTemperatureType
       ? 'temperature-reset--active'
-      : 'temperature-reset'
+      : 'btn-default temperature-reset'
   }
 
   private get renderSetTemperaturePopup() {
@@ -92,7 +101,8 @@ class TopologyPreferences extends PureComponent<Props> {
       onChangeTemperatureInput,
       onClickTemperatureResetButton,
       onChangeRadioButton,
-      onClickTemperatureSaveButton,
+      onClickTemperatureApplyButton,
+      onClickTemperatureOkButton,
       onDismissOverlay,
     } = this.props
 
@@ -100,6 +110,10 @@ class TopologyPreferences extends PureComponent<Props> {
 
     return (
       <>
+        <div>
+          <span className="preferences-title--min">{'Min(°C)'}</span>
+          <span className="preferences-title--max">{'Max(°C)'}</span>
+        </div>
         <div>
           <TopologyRadioButton
             id="temp_inlet"
@@ -133,6 +147,7 @@ class TopologyPreferences extends PureComponent<Props> {
           <Button
             color={this.getResetColorClassName('inlet')}
             customClass={this.getResetButtonClassName('inlet')}
+            status={this.getResetStatus('inlet')}
             text="Reset"
             titleText="Reset"
             onClick={() => {
@@ -173,6 +188,7 @@ class TopologyPreferences extends PureComponent<Props> {
           <Button
             color={this.getResetColorClassName('inside')}
             customClass={this.getResetButtonClassName('inside')}
+            status={this.getResetStatus('inside')}
             text="Reset"
             titleText="Reset"
             onClick={() => {
@@ -213,6 +229,7 @@ class TopologyPreferences extends PureComponent<Props> {
           <Button
             color={this.getResetColorClassName('outlet')}
             customClass={this.getResetButtonClassName('outlet')}
+            status={this.getResetStatus('outlet')}
             text="Reset"
             titleText="Reset"
             onClick={() => {
@@ -220,14 +237,14 @@ class TopologyPreferences extends PureComponent<Props> {
             }}
           />
         </div>
-        <div style={{padding: '1.8% 30% 0% 27%'}}>
+        <div className="temperature--buttons">
           <Button
             color={ComponentColor.Success}
-            customClass="temperature-save"
+            customClass="temperature-ok"
             text="OK"
             titleText="OK"
             onClick={() => {
-              onClickTemperatureSaveButton()
+              onClickTemperatureOkButton()
             }}
           />
           <Button
@@ -235,6 +252,14 @@ class TopologyPreferences extends PureComponent<Props> {
             text="Cancel"
             titleText="Cancel"
             onClick={onDismissOverlay}
+          />
+          <Button
+            customClass="temperature-apply"
+            text="Apply"
+            titleText="Apply"
+            onClick={() => {
+              onClickTemperatureApplyButton()
+            }}
           />
         </div>
       </>
@@ -247,7 +272,7 @@ class TopologyPreferences extends PureComponent<Props> {
       preferencesStatus,
       preferenceTemperatureValues,
     } = this.props
-    const title = 'Preferences'
+    const title = 'Temperature Preferences'
 
     return (
       <>
