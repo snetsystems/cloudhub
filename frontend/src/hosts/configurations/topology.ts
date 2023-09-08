@@ -364,17 +364,13 @@ export const createTextField = function (
     }
   )
 
-  const container = getContainerElement(cell.value)
-  const dataType = container.getAttribute('data-type')
-
   const updateEvent = mxClient.IS_IE ? 'focusout' : 'blur'
 
   mxEvent.addListener(input, updateEvent, async () => {
     applyHandler.bind(this)(graph, cell, attribute, input.value)
-    if (dataType === 'Server') {
-      await this.getIpmiStatus(cell.getId())
-      this.getDetectedHostStatus(cell.getId())
-    }
+
+    await this.getIpmiStatus(cell.getId())
+    this.getDetectedHostStatus(cell.getId())
   })
 }
 export const applyHandler = function (
@@ -385,7 +381,6 @@ export const applyHandler = function (
 ) {
   const containerElement = getContainerElement(cell.value)
   const oldValue = containerElement.getAttribute(attribute.nodeName) || ''
-  const dataType = containerElement.getAttribute('data-type')
 
   let isInputPassword = false
 
@@ -439,7 +434,7 @@ export const applyHandler = function (
         }
       }
 
-      if (dataType === 'Server' && attribute.nodeName === 'data-status') {
+      if (attribute.nodeName === 'data-status') {
         const childrenCell = cell.getChildAt(2)
 
         if (childrenCell.style.includes('status')) {

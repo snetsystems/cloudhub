@@ -197,7 +197,7 @@
         {
           "query": "SELECT mean(\"value\") AS \"mean_value\"  FROM \":db:\".\":rp:\".\"ipmi_sensor\"",
           "label": "Temperature",
-          "groupbys": [],
+          "groupbys": ["\"name\""],
           "wheres": ["\"unit\" = 'degrees_c'"]
         }
       ],
