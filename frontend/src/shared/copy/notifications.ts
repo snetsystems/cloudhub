@@ -1404,7 +1404,7 @@ export const notifygetProjectConfigFailed = (): Notification => ({
 
 export const notifyPreferencesTemperatureApplySucceeded = (): Notification => ({
   ...defaultSuccessNotification,
-  message: `Preferences Applied successfully.`,
+  message: `Temperature Preferences Applied successfully.`,
 })
 
 export const notifyPreferencesTemperatureApplyFailed = (
@@ -1412,7 +1412,7 @@ export const notifyPreferencesTemperatureApplyFailed = (
 ): Notification => ({
   ...defaultErrorNotification,
   duration: INFINITE,
-  message: `Failed to Apply Preferences : ${errorMessage}`,
+  message: `Failed to Apply Temperature Preferences : ${errorMessage}`,
 })
 
 export const notifyFetchIntervalDataFailed = (

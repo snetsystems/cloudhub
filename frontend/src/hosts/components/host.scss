@@ -324,14 +324,29 @@
   width: 370px;
   border: 2px solid $g5-pepper;
 
+  #preferences-title {
+    font-size: 17px;
+    padding-right: 25px;
+  }
+
   .preferences-title--min {
     padding-left: 22.1%;
-    font-size: 13px;
+    font-size: 11px;
+    font-weight: 500;
   }
 
   .preferences-title--max {
     padding-left: 15.8%;
-    font-size: 13px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+
+  .preferences-td {
+    height: 36px;
+  }
+
+  .preferences-td--outlet {
+    height: 43px;
   }
 
   .topology-spinner {
@@ -348,7 +363,7 @@
 
   .overlay--body {
     padding: 6px 15px 10px 29px;
-    height: 190px;
+    height: 189px;
   }
 
   .temperature-type {
@@ -364,6 +379,15 @@
     width: 90px;
     display: inline-block;
     padding-right: 1%;
+
+    > .input-cte {
+      color: #ffffff;
+      border-radius: 2px;
+    }
+
+    > .input-cte__disabled {
+      border-radius: 2px;
+    }
   }
 
   .temperature-blank {
@@ -386,7 +410,7 @@
   }
 
   .temperature-reset--active {
-    background-color: $s-orange;
+    background-color: $s-pinkRed;
     color: $g18-cloud;
     display: inline-block;
     margin-left: 1%;
@@ -398,8 +422,14 @@
     margin: 10px 0px 0px 4px !important;
   }
 
-  .temperature--buttons {
+  .temperature-apply {
     padding: 2.2% 0% 0% 27%;
+  }
+
+  .temperature-apply--button {
+    background-color: $s-orange;
+    width: 58px;
+    margin-left: 40px !important;
   }
 
   .temperature-ok {
@@ -414,12 +444,6 @@
     display: inline-block;
     width: 58px;
     margin: 0 4px;
-  }
-
-  .temperature-apply {
-    display: inline-block;
-    width: 58px;
-    margin-left: 40px !important;
   }
 }
 .fetchIntervalDots {

@@ -6,7 +6,6 @@ import InputNumberClickToEdit from 'src/shared/components/InputNumberClickToEdit
 
 import {Button, ComponentColor, ComponentStatus} from 'src/reusable_ui'
 import Container from 'src/reusable_ui/components/overlays/OverlayContainer'
-import Heading from 'src/reusable_ui/components/overlays/OverlayHeading'
 import Body from 'src/reusable_ui/components/overlays/OverlayBody'
 import TopologyRadioButton from 'src/hosts/components//TopologyRadioButton'
 
@@ -37,6 +36,33 @@ interface Props {
 class TopologyPreferences extends PureComponent<Props> {
   constructor(props: Props) {
     super(props)
+  }
+
+  private get renderPreferencesHeader() {
+    const {onClickTemperatureOkButton, onDismissOverlay} = this.props
+
+    return (
+      <div className="overlay--heading">
+        <div id="preferences-title" className="overlay--title">
+          {'Temperature Preferences'}
+        </div>
+        <Button
+          customClass="temperature-cancel"
+          text="Cancel"
+          titleText="Cancel"
+          onClick={onDismissOverlay}
+        />
+        <Button
+          color={ComponentColor.Success}
+          customClass="temperature-ok"
+          text="OK"
+          titleText="OK"
+          onClick={() => {
+            onClickTemperatureOkButton()
+          }}
+        />
+      </div>
+    )
   }
 
   private get SelectedTemperatureType(): PreferenceType['temperatureType'] {
@@ -102,8 +128,6 @@ class TopologyPreferences extends PureComponent<Props> {
       onClickTemperatureResetButton,
       onChangeRadioButton,
       onClickTemperatureApplyButton,
-      onClickTemperatureOkButton,
-      onDismissOverlay,
     } = this.props
 
     const selectedTemperatureType = this.SelectedTemperatureType
@@ -114,7 +138,7 @@ class TopologyPreferences extends PureComponent<Props> {
           <span className="preferences-title--min">{'Min(°C)'}</span>
           <span className="preferences-title--max">{'Max(°C)'}</span>
         </div>
-        <div>
+        <div className="preferences-td">
           <TopologyRadioButton
             id="temp_inlet"
             checked={selectedTemperatureType === 'inlet'}
@@ -155,7 +179,7 @@ class TopologyPreferences extends PureComponent<Props> {
             }}
           />
         </div>
-        <div>
+        <div className="preferences-td">
           <TopologyRadioButton
             id="temp_inside"
             checked={selectedTemperatureType === 'inside'}
@@ -196,7 +220,7 @@ class TopologyPreferences extends PureComponent<Props> {
             }}
           />
         </div>
-        <div>
+        <div className="preferences-td--outlet">
           <TopologyRadioButton
             id="temp_outlet"
             checked={selectedTemperatureType === 'outlet'}
@@ -237,24 +261,9 @@ class TopologyPreferences extends PureComponent<Props> {
             }}
           />
         </div>
-        <div className="temperature--buttons">
+        <div className="temperature-apply">
           <Button
-            color={ComponentColor.Success}
-            customClass="temperature-ok"
-            text="OK"
-            titleText="OK"
-            onClick={() => {
-              onClickTemperatureOkButton()
-            }}
-          />
-          <Button
-            customClass="temperature-cancel"
-            text="Cancel"
-            titleText="Cancel"
-            onClick={onDismissOverlay}
-          />
-          <Button
-            customClass="temperature-apply"
+            customClass="temperature-apply--button"
             text="Apply"
             titleText="Apply"
             onClick={() => {
@@ -267,12 +276,7 @@ class TopologyPreferences extends PureComponent<Props> {
   }
 
   public render() {
-    const {
-      onDismissOverlay,
-      preferencesStatus,
-      preferenceTemperatureValues,
-    } = this.props
-    const title = 'Temperature Preferences'
+    const {preferencesStatus, preferenceTemperatureValues} = this.props
 
     return (
       <>
@@ -284,7 +288,7 @@ class TopologyPreferences extends PureComponent<Props> {
             </div>
           )}
           <Container maxWidth={800}>
-            <Heading title={title} onDismiss={onDismissOverlay} />
+            {this.renderPreferencesHeader}
             <Body>{this.renderSetTemperaturePopup}</Body>
           </Container>
         </div>
