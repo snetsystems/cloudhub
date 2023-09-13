@@ -39,6 +39,7 @@ import TopologyCSPMngModal from 'src/hosts/components/TopologyCSPMngModal'
 import ImportTopologyOverlay from 'src/hosts/components/ImportTopologyOverlay'
 import TopologyPreferences from 'src/hosts/components/TopologyPreferences'
 import LoadingSpinner from 'src/flux/components/LoadingSpinner'
+import TopologyTooltip from 'src/hosts/components/TopologyTooltip'
 // constants
 import {
   HANDLE_NONE,
@@ -101,7 +102,7 @@ import {
   mxEventObject as mxEventObjectType,
 } from 'mxgraph'
 import {HostDetailTable} from 'src/hosts/types/agent'
-
+import {TemperatureTooltip} from 'src/hosts/types/preferences'
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 
 // Actions
@@ -202,6 +203,8 @@ import {
   detectedHostsStatus,
   getFromOptions,
   getFocusedCell,
+  onMouseMovexGraph,
+  mouseOverTooltipStatus,
 } from 'src/hosts/configurations/topology'
 import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 
@@ -394,6 +397,9 @@ interface State {
   preferencesStatus: RemoteDataState
   unsavedPreferenceTemperatureValues: string[]
   fetchIntervalDataStatus: RemoteDataState
+  isTooltipActiveHost: string | null
+  targetPosition: {width: number; top: number; right: number; left: number}
+  tooltipNode: Partial<TemperatureTooltip>
 }
 
 @ErrorHandling
@@ -507,6 +513,9 @@ export class InventoryTopology extends PureComponent<Props, State> {
       unsavedTopology: '',
       preferencesStatus: RemoteDataState.Done,
       fetchIntervalDataStatus: RemoteDataState.NotStarted,
+      isTooltipActiveHost: null,
+      targetPosition: {width: 0, top: 0, right: 0, left: 0},
+      tooltipNode: {},
     }
   }
 
@@ -1385,7 +1394,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
     const graph = this.graph
     const parent = graph.getDefaultParent()
     const cells = this.getAllCells(parent, true)
-    const selectedTemperatureValue = _.filter(
+    const selectedTemperatureValue = _.find(
       unsavedPreferenceTemperatureValues,
       temperatureValue => temperatureValue.includes('active:1')
     )
@@ -1397,7 +1406,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
     detectedHostsStatus.bind(this)(
       filteredCells,
       hostsObject,
-      selectedTemperatureValue?.[0]
+      selectedTemperatureValue
     )
   }
 
@@ -1615,6 +1624,22 @@ export class InventoryTopology extends PureComponent<Props, State> {
       .addListener(mxEvent.CHANGE, _.debounce(this.onChangedSelection, 600))
 
     this.graph.addListener(mxEvent.CLICK, onClickMxGraph.bind(this))
+
+    this.graph.addMouseListener({
+      mouseDown: () => {},
+      mouseMove: _.throttle((_, me) => {
+        const tooltipInfo = onMouseMovexGraph.call(this, this.graph, me)
+
+        if (tooltipInfo) {
+          this.showTooltip(tooltipInfo.cell, tooltipInfo.geometry)
+        } else {
+          this.closeTooltip()
+        }
+      }, 500),
+      mouseUp: () => {
+        this.closeTooltip()
+      },
+    })
 
     mxPopupMenu.prototype.useLeftButtonForPopup = true
     this.graph.popupMenuHandler.factoryMethod = factoryMethod(
@@ -2349,6 +2374,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
                     </div>
                   </ResizableDock>
                 </div>
+                {this.tooltip}
               </div>
             </>
           )
@@ -3570,8 +3596,71 @@ export class InventoryTopology extends PureComponent<Props, State> {
       this.setState({loadingState: RemoteDataState.Done})
     }
   }
-}
 
+  private showTooltip = (
+    focusedCell: mxCellType,
+    geometry: {x: number; y: number}
+  ) => {
+    const {
+      isTooltipActiveHost,
+      hostsObject,
+      unsavedPreferenceTemperatureValues,
+    } = this.state
+
+    const container = getContainerElement(focusedCell.value)
+    const hostname = container.getAttribute('data-name')
+    const dataGatherType = container.getAttribute('data-status')
+
+    if (isTooltipActiveHost === hostname) {
+      return
+    }
+
+    const tooltipStatus = mouseOverTooltipStatus(
+      hostsObject,
+      hostname,
+      unsavedPreferenceTemperatureValues,
+      dataGatherType
+    )
+
+    this.setState({
+      isTooltipActiveHost: hostname,
+      targetPosition: {
+        left: geometry.x,
+        top: geometry.y,
+        right: 0,
+        width: 0,
+      },
+
+      tooltipNode: {
+        dataType: dataGatherType,
+        hostname,
+        ...tooltipStatus,
+      },
+    })
+  }
+
+  private closeTooltip = () => {
+    const {isTooltipActiveHost} = this.state
+    if (isTooltipActiveHost !== null) {
+      this.setState({
+        isTooltipActiveHost: null,
+      })
+    }
+  }
+
+  private get tooltip() {
+    const {isTooltipActiveHost, targetPosition, tooltipNode} = this.state
+
+    if (isTooltipActiveHost) {
+      return (
+        <TopologyTooltip
+          targetPosition={targetPosition}
+          tooltipNode={tooltipNode}
+        />
+      )
+    }
+  }
+}
 const mapStateToProps = ({links, auth}) => {
   return {
     links,

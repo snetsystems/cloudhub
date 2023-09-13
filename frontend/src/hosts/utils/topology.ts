@@ -3,6 +3,13 @@ import {eachNodeTypeAttrs} from '../constants/tools'
 
 // Types
 import {Host} from 'src/types'
+import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
+import {
+  DATA_GATHER_TYPE,
+  keysWithGatherType,
+  titleWithGatherType,
+  TOOLTIP_TYPE,
+} from 'src/hosts/constants/topology'
 
 export const getParseHTML = (
   targer: string,
@@ -125,7 +132,7 @@ export const getTimeSeriesHostIndicator = (
   if (statusValue === 'N/A') {
     return null
   }
-  if (statusKind === 'temperature') {
+  if (statusKind === TOOLTIP_TYPE.temperature) {
     return getIpmiTemperatureIndicator(statusValue, selectedTemperatureValue)
   }
 
@@ -136,4 +143,61 @@ export const getTimeSeriesHostIndicator = (
   if (_.get(host, key, 0) >= 90) status = 'UsageIndacator--danger'
 
   return status
+}
+
+export const getSelectedHostKey = ({
+  dataGatherType,
+  statusKind,
+  selectedTmpType,
+}) => {
+  return statusKind === TOOLTIP_TYPE.temperature
+    ? keysWithGatherType[dataGatherType][statusKind][selectedTmpType]
+    : keysWithGatherType[dataGatherType][statusKind]
+}
+export const getStatusTitle = ({dataGatherType, findKey}) =>
+  titleWithGatherType[dataGatherType][findKey]
+
+export const getNotAvailableTitle = ({statusKind, selectedTmpType}) =>
+  titleWithGatherType.true[
+    statusKind === TOOLTIP_TYPE.temperature ? selectedTmpType : statusKind
+  ]
+
+export const dataStatusValue = (
+  statusKind: string,
+  hostValue: number | undefined,
+  host: Host,
+  dataGatherType: string
+) => {
+  let statusValue = 'N/A'
+
+  if (hostValue === undefined) {
+    return statusValue
+  }
+  if (
+    statusKind === TOOLTIP_TYPE.disk &&
+    dataGatherType === DATA_GATHER_TYPE.ipmi
+  ) {
+    return statusValue
+  }
+  if (statusKind === TOOLTIP_TYPE.temperature) {
+    statusValue = `${_.toString(hostValue.toFixed(2))} °C`
+    return statusValue
+  }
+  if (
+    dataGatherType === DATA_GATHER_TYPE.ipmi &&
+    statusKind !== TOOLTIP_TYPE.temperature
+  ) {
+    statusValue = _.toString(
+      fixedDecimalPercentage(parseFloat(_.toString(hostValue)), 2)
+    )
+    return statusValue
+  }
+  if (Math.max(host.deltaUptime || 0, host.winDeltaUptime || 0) > 0) {
+    statusValue = _.toString(
+      fixedDecimalPercentage(parseFloat(_.toString(hostValue)), 2)
+    )
+    return statusValue
+  }
+
+  return statusValue
 }

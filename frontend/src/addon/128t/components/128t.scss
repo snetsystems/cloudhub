@@ -549,6 +549,18 @@
     &.UsageIndacator--danger {
       color: red;
     }
+
+    &.UsageIndacator-ipmi--caution {
+      color: #ffb94a;
+    }
+
+    &.UsageIndacator-ipmi--warning {
+      color: #ff8564;
+    }
+
+    &.UsageIndacator-ipmi--danger {
+      color: red;
+    }
   }
 
   .UsageIndacator {
@@ -565,7 +577,23 @@
       background: $c-topaz;
     }
 
+    &.UsageIndacator-ipmi {
+      background: $c-laser;
+    }
+
     &.UsageIndacator--danger {
+      background: red;
+    }
+
+    &.UsageIndacator-ipmi--caution {
+      background: #ffb94a;
+    }
+
+    &.UsageIndacator-ipmi--warning {
+      background: #ff8564;
+    }
+
+    &.UsageIndacator-ipmi--danger {
       background: red;
     }
   }

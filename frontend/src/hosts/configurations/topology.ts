@@ -12,6 +12,7 @@ import {
   mxConnectionHandler as mxConnectionHandlerType,
   mxEventObject as mxEventObjectType,
   mxGraphExportObject,
+  mxMouseEvent,
 } from 'mxgraph'
 
 // Types
@@ -20,13 +21,16 @@ import {CloudServiceProvider, Instance} from 'src/hosts/types/cloud'
 
 // Utils
 import {
+  dataStatusValue,
   getContainerElement,
   getContainerTitle,
   getIsHasString,
+  getNotAvailableTitle,
   getParseHTML,
+  getSelectedHostKey,
+  getStatusTitle,
   getTimeSeriesHostIndicator,
 } from 'src/hosts/utils/topology'
-import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
 
 // Constants
 import {
@@ -41,6 +45,9 @@ import {
   CELL_SIZE_WIDTH,
   CELL_SIZE_HEIGHT,
   agentFilter,
+  TOOLTIP_TYPE,
+  objectKeyWithGatherType,
+  TOOLTIP_OFFSET_X,
 } from 'src/hosts/constants/topology'
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 import {COLLECTOR_SERVER} from 'src/shared/constants'
@@ -1041,6 +1048,62 @@ export const onClickMxGraph = function (
   }
 }
 
+function getAbsoluteGeometry(cell: mxCellType) {
+  let accumulatedX = 0
+  let accumulatedY = 0
+
+  const {x, y, width} = cell.getGeometry()
+
+  let currentCell = cell.getParent()
+  while (currentCell) {
+    const parentGeometry = currentCell.getGeometry()
+
+    if (parentGeometry) {
+      accumulatedX += parentGeometry.x
+      accumulatedY += parentGeometry.y
+    }
+    currentCell = currentCell.getParent()
+  }
+
+  return {x: accumulatedX + x, y: accumulatedY + y, width}
+}
+
+export const onMouseMovexGraph = function (
+  _graph: mxGraphType,
+  me: mxMouseEvent
+) {
+  const cell: mxCellType = me.getCell()
+  if (_.isEmpty(cell)) {
+    return
+  }
+  if (!_.isEmpty(cell) && cell.style === 'node') {
+    const focusedCell = getContainerElement(
+      this.graph.getModel().getValue(cell)
+    )
+    const dataType = focusedCell.getAttribute('data-type')
+
+    if (dataType === 'Server') {
+      const graphContainer = _graph.container
+
+      const containerRect = graphContainer.getBoundingClientRect()
+      const currentScale = _graph.view.getScale()
+      const {x, y, width} = getAbsoluteGeometry(cell)
+      const {x: translateX, y: translateY} = _graph.view.getTranslate()
+
+      const scaledX = (x + translateX) * currentScale
+      const scaledY = (y + translateY) * currentScale
+      const scaledWidth = width * currentScale
+      const scaleOffset = TOOLTIP_OFFSET_X * currentScale
+
+      const geometry = {
+        x: scaledX + containerRect.x + scaledWidth + scaleOffset,
+        y: scaledY + containerRect.y,
+      }
+      return {cell, geometry}
+    }
+  }
+}
+
 export const createEdgeState = function () {
   const edge = this.graph.createEdge(null, null, null, null, null)
 
@@ -1289,62 +1352,7 @@ export const ipmiPowerIndicator = function (ipmiCellsStatus: IpmiCell[]) {
     this.graphUpdate()
   }
 }
-const keysWithGatherType = {
-  agent: {
-    cpu: 'cpu',
-    memory: 'memory',
-    disk: 'disk',
-    temperature: {
-      inside: 'inside',
-      inlet: 'inlet',
-      outlet: 'outlet',
-    },
-  },
-  ipmi: {
-    cpu: 'ipmiCpu',
-    memory: 'ipmiMemory',
-    temperature: {
-      inside: 'inside',
-      inlet: 'inlet',
-      outlet: 'outlet',
-    },
-  },
-  true: {
-    cpu: 'cpu',
-    memory: 'memory',
-    disk: 'disk',
-    temperature: {
-      inside: 'inside',
-      inlet: 'inlet',
-      outlet: 'outlet',
-    },
-  },
-}
-const titleWithGatherType = {
-  agent: {
-    cpu: 'CPU',
-    memory: 'Memory',
-    disk: 'Disk',
-    inside: 'Inside Temperature',
-    inlet: 'Inlet Temperature',
-    outlet: 'Outlet Temperature',
-  },
-  ipmi: {
-    ipmiCpu: 'CPU',
-    ipmiMemory: 'Memory',
-    inside: 'Inside Temperature',
-    inlet: 'Inlet Temperature',
-    outlet: 'Outlet Temperature',
-  },
-  true: {
-    cpu: 'CPU',
-    memory: 'Memory',
-    disk: 'Disk',
-    inside: 'Inside Temperature',
-    inlet: 'Inlet Temperature',
-    outlet: 'Outlet Temperature',
-  },
-}
+
 const notAvailableData = (childElement: any, notAvailableTitle: string) => {
   childElement.removeAttribute('data-status-value')
   childElement.removeAttribute('data-status-value')
@@ -1352,36 +1360,7 @@ const notAvailableData = (childElement: any, notAvailableTitle: string) => {
   childElement.classList.add('time-series-status')
   childElement.setAttribute('title', `${notAvailableTitle} : N/A`)
 }
-const dataStatusValue = (
-  statusKind: string,
-  hostValue: number | undefined,
-  host: Host,
-  dataGatherType: string
-) => {
-  let statusValue = 'N/A'
 
-  if (hostValue === undefined) {
-    return statusValue
-  }
-  if (statusKind === 'temperature') {
-    statusValue = `${_.toString(hostValue.toFixed(2))} °C`
-    return statusValue
-  }
-  if (dataGatherType === 'ipmi' && statusKind !== 'temperature') {
-    statusValue = _.toString(
-      fixedDecimalPercentage(parseFloat(_.toString(hostValue)), 2)
-    )
-    return statusValue
-  }
-  if (Math.max(host.deltaUptime || 0, host.winDeltaUptime || 0) > 0) {
-    statusValue = _.toString(
-      fixedDecimalPercentage(parseFloat(_.toString(hostValue)), 2)
-    )
-    return statusValue
-  }
-
-  return statusValue
-}
 const renderHostState = (
   dataGatherType: string,
   statusKind: string,
@@ -1390,28 +1369,21 @@ const renderHostState = (
   selectedTemperatureValue: string = 'type:inlet,active:1,min:15,max:30'
 ) => {
   const selectedTmpType = selectedTemperatureType(selectedTemperatureValue)
-  const findKey =
-    statusKind === 'temperature'
-      ? keysWithGatherType[dataGatherType][statusKind][selectedTmpType]
-      : keysWithGatherType[dataGatherType][statusKind]
 
-  const statusTitle = titleWithGatherType[dataGatherType][findKey]
+  const findKey = getSelectedHostKey({
+    dataGatherType,
+    statusKind,
+    selectedTmpType,
+  })
 
-  const notAvailableTitle =
-    titleWithGatherType.true[
-      statusKind === 'temperature' ? selectedTmpType : statusKind
-    ]
+  const statusTitle = getStatusTitle({dataGatherType, findKey})
+  const notAvailableTitle = getNotAvailableTitle({statusKind, selectedTmpType})
 
   if (!statusTitle) {
     notAvailableData(childElement, notAvailableTitle)
     return
   }
   const hostValue = findHost[findKey]
-
-  if (dataGatherType === 'ipmi' && statusKind === 'disk') {
-    notAvailableData(childElement, notAvailableTitle)
-    return
-  }
 
   const statusValue = dataStatusValue(
     statusKind,
@@ -1435,7 +1407,7 @@ const renderHostState = (
   )
 }
 
-const selectedTemperatureType = (
+export const selectedTemperatureType = (
   preferenceTemperatureValue: string
 ): PreferenceType['temperatureType'] => {
   const selectedTemperatureType = preferenceTemperatureValue.match(
@@ -1458,7 +1430,7 @@ export const detectedHostsStatus = function (
   selectedTemperatureValue: string = 'type:inlet,active:1,min:15,max:30'
 ) {
   if (!this.graph) return
-
+  const {cpu, memory, disk, temperature} = TOOLTIP_TYPE
   const model = this.graph.getModel()
   const selectedTmpType = selectedTemperatureType(selectedTemperatureValue)
 
@@ -1523,17 +1495,16 @@ export const detectedHostsStatus = function (
                 const statusKind = childElement.getAttribute('data-status-kind')
 
                 if (
-                  statusKind === 'cpu' ||
-                  statusKind === 'disk' ||
-                  statusKind === 'memory' ||
-                  statusKind === 'temperature'
+                  statusKind === cpu ||
+                  statusKind === disk ||
+                  statusKind === memory ||
+                  statusKind === temperature
                 ) {
-                  const notAvailableTitle =
-                    titleWithGatherType.true[
-                      statusKind === 'temperature'
-                        ? selectedTmpType
-                        : statusKind
-                    ]
+                  const notAvailableTitle = getNotAvailableTitle({
+                    statusKind,
+                    selectedTmpType,
+                  })
+
                   childElement.removeAttribute('data-status-value')
                   childElement.setAttribute(
                     'title',
@@ -1571,4 +1542,58 @@ export const getFromOptions = (focusedInstance: Instance) => {
       return ['ALL', 'IPMI', 'Agent']
     }
   }
+}
+
+export const mouseOverTooltipStatus = (
+  hostsObject: {[x: string]: Host},
+  hostName: string,
+  unsavedPreferenceTemperatureValues: string[],
+  dataGatherType: string
+) => {
+  const focusedHost = _.find(hostsObject, host => host.name === hostName)
+
+  const selectedTemperatureValue = _.find(
+    unsavedPreferenceTemperatureValues,
+    temperatureValue => temperatureValue.includes('active:1')
+  )
+  const selectedTmpType = selectedTemperatureType(selectedTemperatureValue)
+
+  const findKeys = _.map(TOOLTIP_TYPE, statusKind =>
+    getSelectedHostKey({
+      dataGatherType,
+      statusKind,
+      selectedTmpType,
+    })
+  )
+  const tooltipStatus = _.reduce(
+    findKeys,
+    (result, findKey) => {
+      const statusKind = objectKeyWithGatherType[dataGatherType][findKey]
+      const value = dataStatusValue(
+        statusKind,
+        focusedHost?.[findKey],
+        focusedHost,
+        dataGatherType
+      )
+      result[statusKind] = {
+        title:
+          getStatusTitle({dataGatherType, findKey}) ??
+          getNotAvailableTitle({
+            statusKind,
+            selectedTmpType,
+          }),
+        status: getTimeSeriesHostIndicator(
+          focusedHost,
+          findKey,
+          statusKind,
+          value,
+          selectedTemperatureValue
+        ),
+        value,
+      }
+      return result
+    },
+    {}
+  )
+  return tooltipStatus
 }
