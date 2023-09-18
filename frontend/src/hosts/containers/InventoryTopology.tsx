@@ -100,6 +100,7 @@ import {
   mxGraphModel as mxGraphModelType,
   mxGraphSelectionModel as mxGraphSelectionModeltype,
   mxEventObject as mxEventObjectType,
+  mxGraphView,
 } from 'mxgraph'
 import {HostDetailTable} from 'src/hosts/types/agent'
 import {TemperatureTooltip} from 'src/hosts/types/preferences'
@@ -210,6 +211,10 @@ import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 
 // Authorized
 import {ADMIN_ROLE, SUPERADMIN_ROLE, EDITOR_ROLE} from 'src/auth/Authorized'
+import {
+  getLocalStorage,
+  setLocalStorage,
+} from 'src/shared/middleware/localStorage'
 
 const mx = mxgraph()
 
@@ -602,6 +607,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       }
 
       await this.getInventoryTopology()
+      this.setTopologySetting()
       await this.fetchIntervalData()
       await this.getIpmiTargetList()
     } catch (error) {
@@ -723,7 +729,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
   public componentWillUnmount() {
     const {isTopologyChanged} = this.state
-
+    const view = this.graph.getView()
     if (isTopologyChanged && window.confirm('Do you want to save changes?')) {
       this.handleTopologySave()
     }
@@ -737,7 +743,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       clearInterval(this.intervalID)
       this.intervalID = null
     }
-
+    this.setLocalStorageToplogySetting(view)
     this.isComponentMounted = false
   }
 
@@ -3659,6 +3665,32 @@ export class InventoryTopology extends PureComponent<Props, State> {
         />
       )
     }
+  }
+
+  private setTopologySetting = () => {
+    const {auth} = this.props
+
+    const {zoom, translate} = getLocalStorage('inventoryTopologySetting')[
+      auth.me.currentOrganization.name
+    ] ?? {
+      zoom: 1,
+      translate: {x: 0, y: 0},
+    }
+
+    const view = this.graph.getView()
+    view.setScale(zoom)
+    view.setTranslate(translate.x, translate.y)
+    view.revalidate()
+  }
+
+  private setLocalStorageToplogySetting = (view: mxGraphView) => {
+    const {auth} = this.props
+    const zoom = view.getScale()
+    const translate = view.getTranslate()
+
+    setLocalStorage('inventoryTopologySetting', {
+      [auth.me.currentOrganization.name]: {zoom, translate},
+    })
   }
 }
 const mapStateToProps = ({links, auth}) => {
