@@ -189,7 +189,7 @@ class TopologyPreferences extends PureComponent<Props> {
               onChangeRadioButton('inside')
             }}
           />
-          <div className="temperature-type">Inside</div>
+          <div className="temperature-type">CPU</div>
           <InputNumberClickToEdit
             disabled={selectedTemperatureType !== 'inside'}
             wrapperClass="fancytable--td temperature-range"
