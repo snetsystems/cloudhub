@@ -109,8 +109,9 @@ export const getCpuAndLoadForHosts = async (
       SELECT non_negative_derivative(mean("System_Up_Time")) AS winDeltaUptime FROM \":db:\".\":rp:\".\"win_system\" WHERE time > now() - ${telegrafSystemInterval} * 10 GROUP BY host, time(${telegrafSystemInterval}) fill(0);
       SHOW TAG VALUES WITH KEY = "host" WHERE TIME > now() - 10m;
       SELECT mean("used_percent") AS "memUsed" FROM \":db:\".\":rp:\".\"mem\" WHERE time > now() - 10m GROUP BY host;
-      SELECT max("diskUsed") AS "diskUsed" FROM (SELECT mean("used_percent") AS "diskUsed" FROM \":db:\".\":rp:\".\"disk\" WHERE time > now() - 10m GROUP BY host, path) GROUP BY host;
-      SELECT max("winDiskUsed") AS "winDiskUsed" FROM (SELECT 100 - mean("Percent_Free_Space") AS "winDiskUsed" FROM \":db:\".\":rp:\".\"win_disk\" WHERE time > now() - 10m GROUP BY host, instance) GROUP BY host;`,
+      SELECT max("used_percent") AS "diskUsed" , "path" AS "diskPath" FROM \":db:\".\":rp:\".\"disk\" WHERE time > now() - 10m  GROUP BY  time(2m), host FILL(null) ORDER BY DESC LIMIT 1;
+      SELECT 100 - max("Percent_Free_Space") AS "diskUsed" , "instance" AS "diskPath" FROM \":db:\".\":rp:\".\"win_disk\" WHERE time > now() - 10m GROUP BY time(2m), host FILL(null) ORDER BY DESC LIMIT 1;
+      `,
     tempVars
   )
 
@@ -195,14 +196,18 @@ export const getCpuAndLoadForHosts = async (
 
   diskUsadSeries.forEach(s => {
     const meanIndex = s.columns.findIndex(col => col === 'diskUsed')
+    const diskPathIndex = s.columns.findIndex(col => col === 'diskPath')
     hosts[s.tags.host].disk =
       Math.round(Number(s.values[0][meanIndex]) * precision) / precision
+    hosts[s.tags.host].extraTag = {diskPath: s.values[0][diskPathIndex]}
   })
 
   winDiskUsadSeries.forEach(s => {
     const meanIndex = s.columns.findIndex(col => col === 'winDiskUsed')
+    const diskPathIndex = s.columns.findIndex(col => col === 'diskPath')
     hosts[s.tags.host].disk =
       Math.round(Number(s.values[0][meanIndex]) * precision) / precision
+    hosts[s.tags.host].extraTag = {diskPath: s.values[0][diskPathIndex]}
   })
 
   if (
@@ -1535,18 +1540,22 @@ export const setRunnerFileRemoveApi = async (
 export const getHostsInfoWithIpmi = async (
   proxyLink: string,
   telegrafDB: string,
-  telegrafSystemInterval: string,
   tempVars: Template[],
   meRole: string
 ): Promise<HostsObject> => {
   const query = replaceTemplate(
     `SELECT mean("value") AS "ipmiCpu" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "name" = 'cpu_usage' AND time > now() - 10m GROUP BY hostname fill(null);
      SELECT mean("value") AS "ipmiMemory" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "name" = 'mem_usage' AND time > now() - 10m GROUP BY hostname;
-     SELECT non_negative_derivative(mean(value)) AS ipmiDeltaUptime FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE time > now() - ${telegrafSystemInterval} * 10 GROUP BY hostname, time(${telegrafSystemInterval}) fill(0);
      SHOW TAG VALUES FROM \":db:\".\":rp:\".\"ipmi_sensor\" WITH KEY = "hostname" WHERE TIME > now() - 10m;
-     SELECT mean("value") AS "inside" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "name" = 'temp' AND time > now() - 10m GROUP BY hostname;
-     SELECT mean("value") AS "inlet" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE ("name" = 'inlet_temp') AND time > now() - 10m GROUP BY hostname;
-     SELECT mean("value") AS "outlet" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE ("name" = 'exhaust_temp' ) or ("name" = 'outlet_temp' ) AND time > now() - 10m GROUP BY hostname;
+     SELECT max("value") AS "inlet" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE time > now() - 5m AND ("name" =~ ${new RegExp(
+       /inlet_temp|mb_cpu_in_temp|temp_mb_inlet/
+     )}) GROUP BY time(2m), hostname FILL(null) ORDER BY DESC LIMIT 1;
+     SELECT max("value") AS "inside", "name" as "cpu_count" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE time > now() - 5m AND ("name" =~ ${new RegExp(
+       /cpu\d+_temp|cpu_temp_\d+|cpu_dimmg\d+_temp|temp_cpu\d+/
+     )}) GROUP BY time(2m), hostname FILL(null) ORDER BY DESC LIMIT 1;
+     SELECT max("value") AS "outlet" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE time > now() - 5m AND ("name" =~ ${new RegExp(
+       /exhaust_temp|outlet_temp|mb_cpu_out_temp|mb_cpu_out_temp/
+     )}) GROUP BY time(2m), hostname FILL(null) ORDER BY DESC LIMIT 1;
      `,
     tempVars
   )
@@ -1561,11 +1570,10 @@ export const getHostsInfoWithIpmi = async (
   const precision = 100
   const ipmiCpuSeries = getDeep<IpmiSeries[]>(data, 'results.[0].series', [])
   const ipmiMemorySeries = getDeep<IpmiSeries[]>(data, 'results.[1].series', [])
-  const allHostsSeries = getDeep<IpmiSeries[]>(data, 'results.[3].series', [])
+  const allHostsSeries = getDeep<IpmiSeries[]>(data, 'results.[2].series', [])
+  const ipmiInletSeries = getDeep<IpmiSeries[]>(data, 'results.[3].series', [])
   const ipmiInsideSeries = getDeep<IpmiSeries[]>(data, 'results.[4].series', [])
-  const ipmiInletSeries = getDeep<IpmiSeries[]>(data, 'results.[5].series', [])
-  const ipmiOutletSeries = getDeep<IpmiSeries[]>(data, 'results.[6].series', [])
-
+  const ipmiOutletSeries = getDeep<IpmiSeries[]>(data, 'results.[5].series', [])
   allHostsSeries.forEach(s => {
     const hostnameIndex = s.columns.findIndex(col => col === 'value')
     s.values.forEach(v => {
@@ -1598,8 +1606,17 @@ export const getHostsInfoWithIpmi = async (
   })
   ipmiInsideSeries.forEach(s => {
     const meanIndex = s.columns.findIndex(col => col === 'inside')
+    const cpuCountIndex = s.columns.findIndex(col => col === 'cpu_count')
     if (meanIndex !== -1) {
       hosts[s.tags.hostname].inside = Number(s.values[0][meanIndex])
+    }
+
+    if (meanIndex !== -1) {
+      const foundNumber =
+        cpuCountIndex !== -1
+          ? (s.values[0][cpuCountIndex]?.match(/\d/) || [])[0] || 0
+          : 0
+      hosts[s.tags.hostname].extraTag = {cpuCount: foundNumber}
     }
   })
 

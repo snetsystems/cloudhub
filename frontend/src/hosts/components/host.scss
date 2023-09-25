@@ -488,3 +488,29 @@
     transform: scale(1);
   }
 }
+
+.tooltip-data-type {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #ffffff78;
+  font-size: 0.58rem;
+  padding-right: 8px;
+  font-style: italic;
+}
+
+.tooltip-cpu-count {
+  position: relative;
+  top: 0.06rem;
+  margin-left: 0.2rem;
+}
+
+.tooltip-disk-path {
+  width: 100%;
+  white-space: pre-line;
+  word-break: break-all;
+  color: #ffffff78;
+  font-size: 0.58rem;
+  font-style: italic;
+  padding: 0px 8px 6px;
+}

@@ -10,4 +10,5 @@ export type TemperatureTooltip = {
   cpu: {title: string; value: string; status: string}
   memory: {title: string; value: string; status: string}
   disk: {title: string; value: string; status: string}
+  extraTag?: {[x: string]: any}
 }

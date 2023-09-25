@@ -1341,21 +1341,15 @@ export class InventoryTopology extends PureComponent<Props, State> {
     }
   }
   private getIpmiData = async () => {
-    const {source, links, auth} = this.props
+    const {source, auth} = this.props
 
     const meRole = _.get(auth, 'me.role', '')
-    const envVars = await getEnv(links.environment)
-    const telegrafSystemInterval = getDeep<string>(
-      envVars,
-      'telegrafSystemInterval',
-      ''
-    )
+
     const tempVars = generateForHosts(source)
 
     const hostsObject = await getHostsInfoWithIpmi(
       source.links.proxy,
       source.telegraf,
-      telegrafSystemInterval,
       tempVars,
       meRole
     )
@@ -3641,6 +3635,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
         dataType: dataGatherType,
         hostname,
         ...tooltipStatus,
+        extraTag: hostsObject[hostname]?.extraTag ?? {},
       },
     })
   }

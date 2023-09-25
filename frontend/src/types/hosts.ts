@@ -25,6 +25,7 @@ export interface Host {
   inside?: number
   inlet?: number
   outlet?: number
+  extraTag?: {[x: string]: any}
 }
 
 export interface Layout {

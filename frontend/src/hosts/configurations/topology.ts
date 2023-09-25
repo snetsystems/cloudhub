@@ -1093,7 +1093,7 @@ export const onMouseMovexGraph = function (
       const scaledX = (x + translateX) * currentScale
       const scaledY = (y + translateY) * currentScale
       const scaledWidth = width * currentScale
-      const scaleOffset = TOOLTIP_OFFSET_X * currentScale
+      const scaleOffset = TOOLTIP_OFFSET_X
 
       const geometry = {
         x: scaledX + containerRect.x + scaledWidth + scaleOffset,
@@ -1539,7 +1539,7 @@ export const getFromOptions = (focusedInstance: Instance) => {
       return agentFilter[CloudServiceProvider.GCP]
     }
     default: {
-      return ['IPMI', 'Agent']
+      return ['Agent', 'IPMI']
     }
   }
 }

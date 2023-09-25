@@ -6,8 +6,8 @@ interface AgentFilter {
 }
 
 export const agentFilter: AgentFilter = {
-  aws: ['CloudWatch', 'Agent'],
-  gcp: ['StackDriver', 'Agent'],
+  aws: ['Agent', 'CloudWatch'],
+  gcp: ['Agent', 'StackDriver'],
 }
 
 export const defaultTemperatureType = 'inlet'
@@ -71,31 +71,31 @@ export const keysWithGatherType = {
     },
   },
 }
-
+export const inletText = 'CPU Temp'
 export const titleWithGatherType = {
   agent: {
     cpu: 'CPU usage',
     memory: 'Memory usage',
     disk: 'Disk usage',
-    inside: 'Inside Temperature',
-    inlet: 'Inlet Temperature',
-    outlet: 'Outlet Temperature',
+    inside: inletText,
+    inlet: 'Inlet Temp',
+    outlet: 'Outlet Temp',
   },
   ipmi: {
     ipmiCpu: 'CPU usage',
     ipmiMemory: 'Memory usage',
     disk: 'Disk usage',
-    inside: 'Inside Temperature',
-    inlet: 'Inlet Temperature',
-    outlet: 'Outlet Temperature',
+    inside: inletText,
+    inlet: 'Inlet Temp',
+    outlet: 'Outlet Temp',
   },
   true: {
     cpu: 'CPU usage',
     memory: 'Memory usage',
     disk: 'Disk usage',
-    inside: 'Inside Temperature',
-    inlet: 'Inlet Temperature',
-    outlet: 'Outlet Temperature',
+    inside: inletText,
+    inlet: 'Inlet Temp',
+    outlet: 'Outlet Temp',
   },
 }
 
@@ -131,4 +131,4 @@ export const TOPOLOGY_TOOLTIP_TABLE_SIZING = {
   TABLE_ROW_IN_BODY: '52%',
 }
 
-export const TOOLTIP_OFFSET_X = 20
+export const TOOLTIP_OFFSET_X = 5
