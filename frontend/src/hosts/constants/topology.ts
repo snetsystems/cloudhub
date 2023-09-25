@@ -6,8 +6,8 @@ interface AgentFilter {
 }
 
 export const agentFilter: AgentFilter = {
-  aws: ['ALL', 'CloudWatch', 'Agent'],
-  gcp: ['ALL', 'StackDriver', 'Agent'],
+  aws: ['CloudWatch', 'Agent'],
+  gcp: ['StackDriver', 'Agent'],
 }
 
 export const defaultTemperatureType = 'inlet'
