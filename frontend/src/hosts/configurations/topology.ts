@@ -1539,7 +1539,7 @@ export const getFromOptions = (focusedInstance: Instance) => {
       return agentFilter[CloudServiceProvider.GCP]
     }
     default: {
-      return ['ALL', 'IPMI', 'Agent']
+      return ['IPMI', 'Agent']
     }
   }
 }

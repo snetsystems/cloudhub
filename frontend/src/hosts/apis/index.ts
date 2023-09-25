@@ -308,9 +308,7 @@ export const getAppsForHost = async (
   )
 
   let query = ''
-  if (getFrom === 'ALL') {
-    query = `show series from ${measurements} where (host = '${host}') or (hostname = '${host}')`
-  } else if (getFrom === 'IPMI') {
+  if (getFrom === 'IPMI') {
     query = `show series from ${measurements} where hostname = '${host}'`
   } else {
     query = `show series from ${measurements} where host = '${host}'`
@@ -397,9 +395,7 @@ export const getAppsForInstance = async (
 
   let query = ''
 
-  if (getFrom === 'ALL') {
-    query = `show series from ${measurements} where (host = '${instance['instancename']}') or (region = '${instance['namespace']}' and instance_id = '${instance['instanceid']}') or (project_id = '${instance['namespace']}' and instance_id = '${instance['instanceid']}')`
-  } else if (getFrom === 'CloudWatch') {
+  if (getFrom === 'CloudWatch') {
     query = `show series from ${measurements} where region = '${instance['namespace']}' and instance_id = '${instance['instanceid']}'`
   } else if (getFrom === 'StackDriver') {
     query = `show series from ${measurements} where project_id = '${instance['namespace']}' and instance_id = '${instance['instanceid']}'`
@@ -559,9 +555,7 @@ export const getMeasurementsForHost = async (
   getFrom = 'Agent'
 ): Promise<string[]> => {
   let query = ''
-  if (getFrom === 'ALL') {
-    query = `SHOW MEASUREMENTS WHERE ("host" = '${host}') or ("hostname" = '${host}')`
-  } else if (getFrom === 'IPMI') {
+  if (getFrom === 'IPMI') {
     query = `SHOW MEASUREMENTS WHERE hostname = '${host}'`
   } else {
     query = `SHOW MEASUREMENTS WHERE host = '${host}'`
@@ -590,9 +584,7 @@ export const getMeasurementsForInstance = async (
 ): Promise<string[]> => {
   let query = ''
 
-  if (getFrom === 'ALL') {
-    query = `SHOW MEASUREMENTS WHERE ("host" = '${instance['instancename']}') or ("region" = '${instance['namespace']}' and "instance_id" = '${instance['instanceid']}') or ("project_id" = '${instance['namespace']}' and "instance_id" = '${instance['instanceid']}')`
-  } else if (getFrom === 'CloudWatch') {
+  if (getFrom === 'CloudWatch') {
     query = `SHOW MEASUREMENTS WHERE "region" = '${instance['namespace']}' and "instance_id" = '${instance['instanceid']}'`
   } else if (getFrom === 'StackDriver') {
     query = `SHOW MEASUREMENTS WHERE "project_id" = '${instance['namespace']}' and "instance_id" = '${instance['instanceid']}'`

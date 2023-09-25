@@ -485,7 +485,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       focusedHost: '',
       activeEditorTab: 'monitoring',
       activeDetailsTab: 'details',
-      selected: 'ALL',
+      selected: 'Agent',
       appHostData: {},
       isCloudFormVisible: false,
       isUpdateCloud: false,
@@ -656,7 +656,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
         const getfrom =
           _.get(prevState.focusedInstance, 'provider') !==
           focusedInstance.provider
-            ? 'ALL'
+            ? 'Agent'
             : selected
         const {filteredLayouts} = await this.getLayoutsforInstance(
           layouts,
