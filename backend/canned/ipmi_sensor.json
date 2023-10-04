@@ -206,7 +206,7 @@
           "bounds": ["", ""],
           "label": "",
           "prefix": "",
-          "suffix": "",
+          "suffix": "°C",
           "base": "10",
           "scale": "linear"
         },
@@ -242,8 +242,10 @@
         {
           "query": "SELECT mean(\"value\") AS \"mean_value\"  FROM \":db:\".\":rp:\".\"ipmi_sensor\"",
           "label": "Power Consumption",
-          "groupbys": [],
-          "wheres": ["\"name\" = 'total_power' or \"name\" = 'pwr_consumption'"]
+          "groupbys": ["\"name\""],
+          "wheres": [
+            "(\"name\" = 'total_power' OR \"name\" = 'pwr_consumption' OR \"name\" = 'pwr_system' OR (\"name\" =~ /^psu\\d+_pwr_in$/) )"
+          ]
         }
       ],
       "axes": {
@@ -259,7 +261,7 @@
           "bounds": ["", ""],
           "label": "Power Consumption",
           "prefix": "",
-          "suffix": "",
+          "suffix": "W",
           "base": "10",
           "scale": "linear"
         },
