@@ -405,6 +405,7 @@ interface State {
   isTooltipActiveHost: string | null
   targetPosition: {width: number; top: number; right: number; left: number}
   tooltipNode: Partial<TemperatureTooltip>
+  isMouseUp: boolean
 }
 
 @ErrorHandling
@@ -521,6 +522,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       isTooltipActiveHost: null,
       targetPosition: {width: 0, top: 0, right: 0, left: 0},
       tooltipNode: {},
+      isMouseUp: false,
     }
   }
 
@@ -1632,11 +1634,13 @@ export class InventoryTopology extends PureComponent<Props, State> {
     this.graph.addListener(mxEvent.CLICK, onClickMxGraph.bind(this))
 
     this.graph.addMouseListener({
-      mouseDown: () => {},
+      mouseDown: () => {
+        this.setState({isMouseUp: false})
+      },
       mouseMove: _.throttle((_, me) => {
         const tooltipInfo = onMouseMovexGraph.call(this, this.graph, me)
 
-        if (tooltipInfo) {
+        if (this.state.isMouseUp && tooltipInfo) {
           this.showTooltip(tooltipInfo.cell, tooltipInfo.geometry)
         } else {
           this.closeTooltip()
@@ -1644,6 +1648,8 @@ export class InventoryTopology extends PureComponent<Props, State> {
       }, 500),
       mouseUp: () => {
         this.closeTooltip()
+
+        this.setState({isMouseUp: true})
       },
     })
 
