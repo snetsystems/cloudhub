@@ -1353,12 +1353,11 @@ export const ipmiPowerIndicator = function (ipmiCellsStatus: IpmiCell[]) {
   }
 }
 
-const notAvailableData = (childElement: any, notAvailableTitle: string) => {
+const notAvailableData = (childElement: any) => {
   childElement.removeAttribute('data-status-value')
   childElement.removeAttribute('data-status-value')
   childElement.removeAttribute('class')
   childElement.classList.add('time-series-status')
-  childElement.setAttribute('title', `${notAvailableTitle} : N/A`)
 }
 
 const renderHostState = (
@@ -1377,10 +1376,9 @@ const renderHostState = (
   })
 
   const statusTitle = getStatusTitle({dataGatherType, findKey})
-  const notAvailableTitle = getNotAvailableTitle({statusKind, selectedTmpType})
 
   if (!statusTitle) {
-    notAvailableData(childElement, notAvailableTitle)
+    notAvailableData(childElement)
     return
   }
   const hostValue = findHost[findKey]
@@ -1393,7 +1391,6 @@ const renderHostState = (
   )
 
   childElement.setAttribute('data-status-value', _.toString(hostValue))
-  childElement.setAttribute('title', `${statusTitle} : ${statusValue}`)
   childElement.removeAttribute('class')
   childElement.classList.add(
     'time-series-status',
