@@ -127,6 +127,8 @@ const Shell = (props: Props) => {
     const socketURL =
       protocol +
       window.location.hostname +
+      ':' +
+      window.location.port +
       '/cloudhub/v1/WebTerminalHandler?' +
       encodeURIComponent(urlParam)
 

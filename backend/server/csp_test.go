@@ -29,6 +29,7 @@ const (
 	saltTestUserDomain    = "<user domain id>"
 	saltTestInfluxDBURL1  = "http://<primary influxdb-url>"
 	saltTestInfluxDBURL2  = "http://<secondary influxdb-url>"
+	saltTargetMinion      = ""
 )
 
 func TestCSPID(t *testing.T) {
@@ -1289,6 +1290,7 @@ func TestService_generateTelegrafConfigForOSP(t *testing.T) {
 				},
 				AddonTokens: map[string]string{
 					"salt": saltTestToken,
+					"osp":  saltTargetMinion,
 				},
 				Logger: log.New(log.DebugLevel),
 				Store: &mocks.Store{
@@ -1365,6 +1367,7 @@ func TestService_removeTelegrafConfigForOSP(t *testing.T) {
 				},
 				AddonTokens: map[string]string{
 					"salt": saltTestToken,
+					"osp":  saltTargetMinion,
 				},
 				Logger: log.New(log.DebugLevel),
 			},

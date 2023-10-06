@@ -45,7 +45,11 @@ message DashboardCell {
 	DecimalPlaces decimalPlaces          = 15; // Represents how precise the values of this field should be
 	string note                          = 16; // arbitrary string for note-taking/making
 	string noteVisibility                = 17; // config option for showing note
+	int32 minW                           = 18; // Min Width of Cell in the Dashboard
+	int32 minH                           = 19; // Min Height of Cell in the Dashboard
 }
+
+
 
 message DecimalPlaces {
 	bool isEnforced			= 1; // whether decimal places should be enforced
@@ -65,6 +69,7 @@ message RenamableField {
 	string internalName     = 1; // name of column
 	string displayName      = 2; // what column is renamed to
 	bool visible						= 3; // Represents whether RenamableField is visible
+	string direction = 4;                    // Sort Direction
 }
 
 message Color {
@@ -266,9 +271,10 @@ message Vsphere {
 }
 
 message Topology {
-	string ID               = 1; // ID is the unique ID of this topology
-	string Organization     = 2; // Organization is the organization ID that resource belongs to
-	string Diagram          = 3; // diagram xml
+	string ID               		 = 1; // ID is the unique ID of this topology
+	string Organization     		 = 2; // Organization is the organization ID that resource belongs to
+	string Diagram          		 = 3; // diagram xml
+	repeated string Preferences      = 4; // Temperature type and values
 }
 
 message CSP {

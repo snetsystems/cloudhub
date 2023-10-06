@@ -1,3 +1,4 @@
+// library
 import React, {PureComponent} from 'react'
 import classnames from 'classnames'
 import _ from 'lodash'
@@ -5,15 +6,21 @@ import _ from 'lodash'
 // component
 import TopologyDetailsSectionItem from 'src/hosts/components/TopologyDetailsSectionItem'
 import {AWSInstanceData} from 'src/hosts/types/cloud'
-import TopologySecurityTable from './TopologySecurityTable'
+import TopologySecurityTable from 'src/hosts/components/TopologySecurityTable'
 import {RemoteDataState} from 'src/types'
-import TopologyStorageTable from './TopologyStorageTable'
-import TopologyNetworkTable from './TopologyNetworkTable'
-import TopologyDiskTable from './TopologyDiskTable'
+import TopologyStorageTable from 'src/hosts/components/TopologyStorageTable'
+import TopologyNetworkTable from 'src/hosts/components/TopologyNetworkTable'
+import TopologyDiskTable from 'src/hosts/components/TopologyDiskTable'
+import TopologyHostDetailTable from 'src/hosts/components/TopologyHostDetailTable'
+
+// types
+import {HostDetailTable} from 'src/hosts/types/agent'
 
 interface Props {
   title: string
-  selectInstanceData: AWSInstanceData['instanceID']['info']
+  selectInstanceData:
+    | AWSInstanceData['instanceID']['info']
+    | Partial<HostDetailTable['tableHeader']>
   instanceTypeModal: () => void
 }
 
@@ -110,6 +117,18 @@ class TopologyDetailsSection extends PureComponent<Props, State> {
           pageStatus={RemoteDataState.Done}
         />
       )
+    }
+
+    if (selectInstanceData['name'] === 'host') {
+      return _.map(_.keys(selectInstanceData['data']), infoKey => {
+        return (
+          <TopologyHostDetailTable
+            key={`detail_${infoKey}`}
+            label={infoKey.replaceAll('_', ' ')}
+            contents={selectInstanceData['data'][infoKey]}
+          />
+        )
+      })
     }
 
     return <>no State</>

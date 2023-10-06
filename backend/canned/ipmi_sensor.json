@@ -1,0 +1,280 @@
+{
+  "id": "e284d8f3-c483-4e45-ba2a-75dc81f2000a",
+  "measurement": "ipmi_sensor",
+  "app": "ipmi_sensor",
+  "autoflow": true,
+  "cells": [
+    {
+      "x": 0,
+      "y": 0,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
+      "i": "b76464ea-6aaf-4be0-95d2-d32e7ac35593",
+      "name": "CPU Usage - IPMI",
+      "queries": [
+        {
+          "query": "SELECT mean(\"value\") AS \"mean_value\"  FROM \":db:\".\":rp:\".\"ipmi_sensor\"",
+          "label": "CPU Usage",
+          "groupbys": [],
+          "wheres": ["\"name\" = 'cpu_usage'"]
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "CPU Usage",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
+      "i": "4cb1f164-d1b1-4cfb-ab3c-48159517228a",
+      "name": "Memory Usage - IPMI",
+      "queries": [
+        {
+          "query": "SELECT mean(\"value\") AS \"mean_value\"  FROM \":db:\".\":rp:\".\"ipmi_sensor\"",
+          "label": "Memory Usage",
+          "groupbys": [],
+          "wheres": ["\"name\" = 'mem_usage'"]
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Memory Usage",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
+      "i": "9a320179-5fbf-484e-92d5-5b619495a3ad",
+      "name": "System Usage - IPMI",
+      "queries": [
+        {
+          "query": "SELECT mean(\"value\") AS \"mean_value\"  FROM \":db:\".\":rp:\".\"ipmi_sensor\"",
+          "label": "System Usage",
+          "groupbys": [],
+          "wheres": ["\"name\" = 'sys_usage'"]
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "System Usage",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
+      "i": "b161508c-5285-4e0b-8370-9ffc78cecbc0",
+      "name": "I/O Usage - IPMI",
+      "queries": [
+        {
+          "query": "SELECT mean(\"value\") AS \"mean_value\"  FROM \":db:\".\":rp:\".\"ipmi_sensor\"",
+          "label": "I/O Usage",
+          "groupbys": [],
+          "wheres": ["\"name\" = 'io_usage'"]
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "I/O Usage",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
+      "i": "48fcc479-46ba-4f6a-a336-aa7561f38f7e",
+      "name": "Temperature - IPMI",
+      "queries": [
+        {
+          "query": "SELECT mean(\"value\") AS \"mean_value\"  FROM \":db:\".\":rp:\".\"ipmi_sensor\"",
+          "label": "Temperature",
+          "groupbys": ["\"name\""],
+          "wheres": ["\"unit\" = 'degrees_c'"]
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "°C",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Temperature",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line"
+    },
+    {
+      "x": 0,
+      "y": 0,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
+      "i": "9b33156c-5123-4c15-a94c-d34824a75664",
+      "name": "Power Consumption - IPMI",
+      "queries": [
+        {
+          "query": "SELECT mean(\"value\") AS \"mean_value\"  FROM \":db:\".\":rp:\".\"ipmi_sensor\"",
+          "label": "Power Consumption",
+          "groupbys": ["\"name\""],
+          "wheres": [
+            "(\"name\" = 'total_power' OR \"name\" = 'pwr_consumption' OR \"name\" = 'pwr_system' OR (\"name\" =~ /^psu\\d+_pwr_in$/) )"
+          ]
+        }
+      ],
+      "axes": {
+        "x": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y": {
+          "bounds": ["", ""],
+          "label": "Power Consumption",
+          "prefix": "",
+          "suffix": "W",
+          "base": "10",
+          "scale": "linear"
+        },
+        "y2": {
+          "bounds": ["", ""],
+          "label": "",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      },
+      "type": "line"
+    }
+  ]
+}

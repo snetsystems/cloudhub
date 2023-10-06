@@ -16,6 +16,7 @@ export interface FieldOption {
   internalName: string
   displayName: string
   visible: boolean
+  direction?: '' | 'asc' | 'desc'
 }
 
 export interface TableOptions {
@@ -75,6 +76,8 @@ export interface Cell {
   y: number
   w: number
   h: number
+  minW?: number
+  minH?: number
   name: string
   queries: CellQuery[]
   type: CellType

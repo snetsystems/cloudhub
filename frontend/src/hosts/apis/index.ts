@@ -45,7 +45,6 @@ const EmptyHost: Host = {
   name: '',
   cpu: 0.0,
   load: 0.0,
-
   deltaUptime: -1,
   apps: [],
 }
@@ -60,6 +59,11 @@ interface Series {
 interface CloudSeries extends Series {
   tags: {
     host: string
+  }
+}
+type IpmiSeries = Omit<Series, 'tags'> & {
+  tags: {
+    hostname: Series['tags']['host']
   }
 }
 
@@ -105,8 +109,9 @@ export const getCpuAndLoadForHosts = async (
       SELECT non_negative_derivative(mean("System_Up_Time")) AS winDeltaUptime FROM \":db:\".\":rp:\".\"win_system\" WHERE time > now() - ${telegrafSystemInterval} * 10 GROUP BY host, time(${telegrafSystemInterval}) fill(0);
       SHOW TAG VALUES WITH KEY = "host" WHERE TIME > now() - 10m;
       SELECT mean("used_percent") AS "memUsed" FROM \":db:\".\":rp:\".\"mem\" WHERE time > now() - 10m GROUP BY host;
-      SELECT max("diskUsed") AS "diskUsed" FROM (SELECT mean("used_percent") AS "diskUsed" FROM \":db:\".\":rp:\".\"disk\" WHERE time > now() - 10m GROUP BY host, path) GROUP BY host;
-      SELECT max("winDiskUsed") AS "winDiskUsed" FROM (SELECT 100 - mean("Percent_Free_Space") AS "winDiskUsed" FROM \":db:\".\":rp:\".\"win_disk\" WHERE time > now() - 10m GROUP BY host, instance) GROUP BY host;`,
+      SELECT max("diskUsed") AS "diskUsed", "path" AS "diskPath" FROM (SELECT last("used_percent") AS "diskUsed" FROM \":db:\".\":rp:\".\"disk\" WHERE time > now() - 10m GROUP BY host, path) GROUP BY host;
+      SELECT max("winDiskUsed") AS "winDiskUsed", instance FROM (SELECT 100 - last("Percent_Free_Space") AS "winDiskUsed" FROM \":db:\".\":rp:\".\"win_disk\" WHERE time > now() - 10m GROUP BY host, instance) GROUP BY host;
+      `,
     tempVars
   )
 
@@ -191,14 +196,18 @@ export const getCpuAndLoadForHosts = async (
 
   diskUsadSeries.forEach(s => {
     const meanIndex = s.columns.findIndex(col => col === 'diskUsed')
+    const diskPathIndex = s.columns.findIndex(col => col === 'diskPath')
     hosts[s.tags.host].disk =
       Math.round(Number(s.values[0][meanIndex]) * precision) / precision
+    hosts[s.tags.host].extraTag = {diskPath: s.values[0][diskPathIndex]}
   })
 
   winDiskUsadSeries.forEach(s => {
     const meanIndex = s.columns.findIndex(col => col === 'winDiskUsed')
+    const diskPathIndex = s.columns.findIndex(col => col === 'diskPath')
     hosts[s.tags.host].disk =
       Math.round(Number(s.values[0][meanIndex]) * precision) / precision
+    hosts[s.tags.host].extraTag = {diskPath: s.values[0][diskPathIndex]}
   })
 
   if (
@@ -292,7 +301,8 @@ export const getAppsForHost = async (
   host: string,
   appLayouts: Layout[],
   telegrafDB: string,
-  tempVars: Template[]
+  tempVars: Template[],
+  getFrom = 'Agent'
 ) => {
   const measurements = appLayouts
     .map(m => `\":db:\".\":rp:\".\"${m.measurement}\"`)
@@ -301,12 +311,16 @@ export const getAppsForHost = async (
     appLayouts.map(m => m.measurement),
     appLayouts.map(({app}) => app)
   )
+
+  let query = ''
+  if (getFrom === 'IPMI') {
+    query = `show series from ${measurements} where hostname = '${host}'`
+  } else {
+    query = `show series from ${measurements} where host = '${host}'`
+  }
   const {data} = await proxy({
     source: proxyLink,
-    query: replaceTemplate(
-      `show series from ${measurements} where host = '${host}'`,
-      tempVars
-    ),
+    query: replaceTemplate(query, tempVars),
     db: telegrafDB,
   })
 
@@ -386,9 +400,7 @@ export const getAppsForInstance = async (
 
   let query = ''
 
-  if (getFrom === 'ALL') {
-    query = `show series from ${measurements} where (host = '${instance['instancename']}') or (region = '${instance['namespace']}' and instance_id = '${instance['instanceid']}') or (project_id = '${instance['namespace']}' and instance_id = '${instance['instanceid']}')`
-  } else if (getFrom === 'CloudWatch') {
+  if (getFrom === 'CloudWatch') {
     query = `show series from ${measurements} where region = '${instance['namespace']}' and instance_id = '${instance['instanceid']}'`
   } else if (getFrom === 'StackDriver') {
     query = `show series from ${measurements} where project_id = '${instance['namespace']}' and instance_id = '${instance['instanceid']}'`
@@ -544,11 +556,18 @@ export const getAppsForInstances = async (
 
 export const getMeasurementsForHost = async (
   source: Source,
-  host: string
+  host: string,
+  getFrom = 'Agent'
 ): Promise<string[]> => {
+  let query = ''
+  if (getFrom === 'IPMI') {
+    query = `SHOW MEASUREMENTS WHERE hostname = '${host}'`
+  } else {
+    query = `SHOW MEASUREMENTS WHERE host = '${host}'`
+  }
   const {data} = await proxy({
     source: source.links.proxy,
-    query: `SHOW MEASUREMENTS WHERE "host" = '${host}'`,
+    query,
     db: source.telegraf,
   })
 
@@ -570,9 +589,7 @@ export const getMeasurementsForInstance = async (
 ): Promise<string[]> => {
   let query = ''
 
-  if (getFrom === 'ALL') {
-    query = `SHOW MEASUREMENTS WHERE ("host" = '${instance['instancename']}') or ("region" = '${instance['namespace']}' and "instance_id" = '${instance['instanceid']}') or ("project_id" = '${instance['namespace']}' and "instance_id" = '${instance['instanceid']}')`
-  } else if (getFrom === 'CloudWatch') {
+  if (getFrom === 'CloudWatch') {
     query = `SHOW MEASUREMENTS WHERE "region" = '${instance['namespace']}' and "instance_id" = '${instance['instanceid']}'`
   } else if (getFrom === 'StackDriver') {
     query = `SHOW MEASUREMENTS WHERE "project_id" = '${instance['namespace']}' and "instance_id" = '${instance['instanceid']}'`
@@ -879,11 +896,15 @@ export const loadInventoryTopology = async (links: Links) => {
   }
 }
 
-export const createInventoryTopology = async (links: Links, cells: string) => {
+export const createInventoryTopology = async (
+  links: Links,
+  cells: string,
+  preferences: string[]
+) => {
   return await AJAX({
     url: `${_.get(links, 'topologies')}`,
     method: 'POST',
-    data: cells,
+    data: {cells, preferences},
     headers: {'Content-Type': 'text/xml'},
   })
 }
@@ -891,12 +912,13 @@ export const createInventoryTopology = async (links: Links, cells: string) => {
 export const updateInventoryTopology = async (
   links: Links,
   cellsId: string,
-  cells: string
+  cells: string,
+  preferences: string[]
 ) => {
   return await AJAX({
     url: `${_.get(links, 'topologies')}/${cellsId}`,
     method: 'PATCH',
-    data: cells,
+    data: {cells, preferences},
     headers: {'Content-Type': 'text/xml'},
   })
 }
@@ -1238,8 +1260,8 @@ export const getCpuAndLoadForInstances = async (
     `SELECT mean("usage_user") FROM \":db:\".\":rp:\".\"cpu\" WHERE "cpu" = 'cpu-total' AND time > now() - 10m AND csp != null AND csp = '${cspProvider}' GROUP BY host;
     SELECT mean("Percent_Processor_Time") FROM \":db:\".\":rp:\".\"win_cpu\" WHERE time > now() - 10m  AND csp != null AND csp = '${cspProvider}'  GROUP BY host;
     SELECT mean("used_percent") AS "memUsed" FROM \":db:\".\":rp:\".\"mem\" WHERE time > now() - 10m AND csp != null AND csp = '${cspProvider}'  GROUP BY host;
-    SELECT max("diskUsed") AS "diskUsed" FROM (SELECT mean("used_percent") AS "diskUsed" FROM \":db:\".\":rp:\".\"disk\" WHERE time > now() - 10m AND csp != null AND csp = '${cspProvider}' GROUP BY host, path) GROUP BY host;
-    SELECT max("winDiskUsed") AS "winDiskUsed" FROM (SELECT 100 - mean("Percent_Free_Space") AS "winDiskUsed" FROM \":db:\".\":rp:\".\"win_disk\" WHERE time > now() - 10m AND csp != null AND csp = '${cspProvider}'  GROUP BY host) group by host;
+    SELECT max("diskUsed") AS "diskUsed" FROM (SELECT last("used_percent") AS "diskUsed" FROM \":db:\".\":rp:\".\"disk\" WHERE time > now() - 10m AND csp != null AND csp = '${cspProvider}' GROUP BY host, path) GROUP BY host;
+    SELECT max("winDiskUsed") AS "winDiskUsed" FROM (SELECT 100 - last("Percent_Free_Space") AS "winDiskUsed" FROM \":db:\".\":rp:\".\"win_disk\" WHERE time > now() - 10m AND csp != null AND csp = '${cspProvider}'  GROUP BY host, instance ) group by host;
     `,
     tempVars
   )
@@ -1513,4 +1535,125 @@ export const setRunnerFileRemoveApi = async (
   } catch (error) {
     throw error
   }
+}
+
+export const getHostsInfoWithIpmi = async (
+  proxyLink: string,
+  telegrafDB: string,
+  tempVars: Template[],
+  meRole: string
+): Promise<HostsObject> => {
+  const query = replaceTemplate(
+    `SELECT mean("value") AS "ipmiCpu" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "name" = 'cpu_usage' AND time > now() - 10m GROUP BY hostname fill(null);
+     SELECT mean("value") AS "ipmiMemory" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "name" = 'mem_usage' AND time > now() - 10m GROUP BY hostname;
+     SHOW TAG VALUES FROM \":db:\".\":rp:\".\"ipmi_sensor\" WITH KEY = "hostname" WHERE TIME > now() - 10m;
+     SELECT max("inlet") AS "inlet" FROM ( SELECT last("value") AS "inlet" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE time > now() - 10m AND ("name" =~ ${new RegExp(
+       /inlet_temp|mb_cpu_in_temp|temp_mb_inlet/
+     )}) GROUP BY hostname ) GROUP BY hostname;
+     SELECT max("inside") AS "inside", "name" as "cpu_count" FROM ( SELECT last("value") AS "inside"  FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE time > now() - 10m AND ("name" =~ ${new RegExp(
+       /cpu\d+_temp|cpu_temp_\d+|cpu_dimmg\d+_temp|temp_cpu\d+/
+     )}) GROUP BY hostname, "name" ) GROUP BY hostname;
+     SELECT max("outlet") AS "outlet" FROM ( SELECT last("value") AS "outlet" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE time > now() - 10m AND ("name" =~ ${new RegExp(
+       /exhaust_temp|outlet_temp|mb_cpu_out_temp|mb_cpu_out_temp/
+     )}) GROUP BY hostname ) GROUP BY hostname;
+     `,
+    tempVars
+  )
+
+  const {data} = await proxy({
+    source: proxyLink,
+    query,
+    db: telegrafDB,
+  })
+
+  const hosts: HostsObject = {}
+  const precision = 100
+  const ipmiCpuSeries = getDeep<IpmiSeries[]>(data, 'results.[0].series', [])
+  const ipmiMemorySeries = getDeep<IpmiSeries[]>(data, 'results.[1].series', [])
+  const allHostsSeries = getDeep<IpmiSeries[]>(data, 'results.[2].series', [])
+  const ipmiInletSeries = getDeep<IpmiSeries[]>(data, 'results.[3].series', [])
+  const ipmiInsideSeries = getDeep<IpmiSeries[]>(data, 'results.[4].series', [])
+  const ipmiOutletSeries = getDeep<IpmiSeries[]>(data, 'results.[5].series', [])
+  allHostsSeries.forEach(s => {
+    const hostnameIndex = s.columns.findIndex(col => col === 'value')
+    s.values.forEach(v => {
+      const hostname = v[hostnameIndex]
+      hosts[hostname] = {
+        ...EmptyHost,
+        name: hostname,
+      }
+    })
+  })
+
+  ipmiCpuSeries.forEach(s => {
+    const meanIndex = s.columns.findIndex(col => col === 'ipmiCpu')
+    if (meanIndex !== -1) {
+      hosts[s.tags.hostname] = {
+        ...EmptyHost,
+        name: s.tags.hostname,
+        ipmiCpu:
+          Math.round(Number(s.values[0][meanIndex]) * precision) / precision,
+      }
+    }
+  })
+
+  ipmiMemorySeries.forEach(s => {
+    const meanIndex = s.columns.findIndex(col => col === 'ipmiMemory')
+    if (meanIndex !== -1) {
+      hosts[s.tags.hostname].ipmiMemory =
+        Math.round(Number(s.values[0][meanIndex]) * precision) / precision
+    }
+  })
+  ipmiInsideSeries.forEach(s => {
+    const meanIndex = s.columns.findIndex(col => col === 'inside')
+    const cpuCountIndex = s.columns.findIndex(col => col === 'cpu_count')
+    if (meanIndex !== -1) {
+      hosts[s.tags.hostname].inside = Number(s.values[0][meanIndex])
+    }
+
+    if (meanIndex !== -1) {
+      const foundNumber =
+        cpuCountIndex !== -1
+          ? (s.values[0][cpuCountIndex]?.match(/\d/) || [])[0] || 0
+          : 0
+      hosts[s.tags.hostname].extraTag = {cpuCount: foundNumber}
+    }
+  })
+
+  ipmiInletSeries.forEach(s => {
+    const meanIndex = s.columns.findIndex(col => col === 'inlet')
+    if (meanIndex !== -1) {
+      hosts[s.tags.hostname].inlet = Number(s.values[0][meanIndex])
+    }
+  })
+  ipmiOutletSeries.forEach(s => {
+    const meanIndex = s.columns.findIndex(col => col === 'outlet')
+    if (meanIndex !== -1) {
+      hosts[s.tags.hostname].outlet = Number(s.values[0][meanIndex])
+    }
+  })
+
+  if (
+    meRole !== SUPERADMIN_ROLE ||
+    (meRole === SUPERADMIN_ROLE &&
+      telegrafDB.toLocaleLowerCase() !==
+        DEFAULT_ORGANIZATION.toLocaleLowerCase())
+  ) {
+    const hostsWithoutCollectorServer = _.reduce(
+      hosts,
+      (acc, host) => {
+        if (!_.startsWith(host.name, COLLECTOR_SERVER)) {
+          acc = {
+            ...acc,
+            [host.name]: host,
+          }
+        }
+        return acc
+      },
+      {}
+    )
+    return hostsWithoutCollectorServer
+  }
+
+  return hosts
 }

@@ -135,8 +135,14 @@ export const ErrorState = (): JSX.Element => (
   </div>
 )
 
-export const NoState = ({message}: {message: string}): JSX.Element => (
-  <div className="generic-empty-state">
+export const NoState = ({
+  message,
+  customClass = '',
+}: {
+  message: string
+  customClass?: string
+}): JSX.Element => (
+  <div className={`${customClass} generic-empty-state`.trimLeft()}>
     <h4 style={{margin: '90px 0'}}>{message}</h4>
   </div>
 )

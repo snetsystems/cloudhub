@@ -155,6 +155,8 @@ func Test_MarshalDashboard(t *testing.T) {
 				Y:    0,
 				W:    4,
 				H:    4,
+				MinW: 10,
+				MinH: 10,
 				Name: "Super awesome query",
 				Queries: []cloudhub.DashboardQuery{
 					{
@@ -519,6 +521,11 @@ func TestMarshalTopology(t *testing.T) {
 		ID:           "12",
 		Organization: "8373476",
 		Diagram:      "<mxGraphModel><root></root></mxGraphModel>",
+		Preferences: []string{
+			"type:inlet,active:1,min:15,max:30",
+			"type:inside,active:0,min:38,max:55",
+			"type:outlet,active:0,min:30,max:50",
+		},
 	}
 
 	var vv cloudhub.Topology

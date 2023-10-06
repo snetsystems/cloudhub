@@ -9,8 +9,14 @@ const GraphOptionsFixFirstColumn: FunctionComponent<Props> = ({
   fixed,
   onToggleFixFirstColumn,
 }) => (
-  <div className="form-group col-xs-12">
-    <div className="form-control-static">
+  <div
+    className="form-group col-xs-12"
+    style={{width: '50%', marginBottom: '0px'}}
+  >
+    <div
+      className="form-control-static"
+      style={{minHeight: 'unset', padding: '5px 9px'}}
+    >
       <input
         type="checkbox"
         id="fixFirstColumnCheckbox"

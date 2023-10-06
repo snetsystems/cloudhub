@@ -19,8 +19,10 @@
   "data": {
     "cells": [
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Consul Agent – Number of Go Routines",
         "queries": [
           {
@@ -56,8 +58,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Consul Agent – Runtime Alloc Bytes",
         "queries": [
           {
@@ -93,8 +97,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Consul Agent – Heap Objects",
         "queries": [
           {
@@ -130,8 +136,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Consul – Number of Agents",
         "queries": [
           {
@@ -168,8 +176,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Consul – Leadership Election",
         "queries": [
           {
@@ -206,8 +216,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Consul – HTTP Request Time (ms)",
         "queries": [
           {
@@ -244,8 +256,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Consul – Leadership Change",
         "queries": [
           {
@@ -282,8 +296,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Consul – Number of serf events",
         "queries": [
           {

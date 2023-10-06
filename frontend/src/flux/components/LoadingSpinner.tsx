@@ -2,11 +2,12 @@ import React, {FunctionComponent, CSSProperties} from 'react'
 
 interface Props {
   style?: CSSProperties
+  className?: string
 }
 
-const LoadingSpinner: FunctionComponent<Props> = ({style}) => {
+const LoadingSpinner: FunctionComponent<Props> = ({style, className = ''}) => {
   return (
-    <div className="loading-spinner" style={style}>
+    <div className={`loading-spinner ${className}`} style={style}>
       <div className="spinner">
         <div className="bounce1" />
         <div className="bounce2" />

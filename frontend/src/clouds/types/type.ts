@@ -150,3 +150,7 @@ export interface reducerVSphere {
   }
   status: VcenterStatus
 }
+
+export type CloudAutoRefresh = {
+  [x: string]: number
+}

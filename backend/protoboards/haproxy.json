@@ -14,8 +14,10 @@
   "data": {
     "cells": [
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "HAProxy – Number of Servers",
         "queries": [
           {
@@ -51,8 +53,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "HAProxy – Sum HTTP 2xx",
         "queries": [
           {
@@ -88,8 +92,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "HAProxy – Sum HTTP 4xx",
         "queries": [
           {
@@ -125,8 +131,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "HAProxy – Sum HTTP 5xx",
         "queries": [
           {
@@ -162,8 +170,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "HAProxy – Frontend HTTP Requests/Second  ",
         "queries": [
           {
@@ -199,8 +209,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "HAProxy – Frontend Sessions/Second ",
         "queries": [
           {
@@ -236,8 +248,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "HAProxy – Frontend Session Usage %",
         "queries": [
           {
@@ -273,8 +287,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "HAProxy – Frontend Security Denials/Second",
         "queries": [
           {
@@ -310,8 +326,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "HAProxy – Frontend Request Errors/Second",
         "queries": [
           {
@@ -347,8 +365,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "HAProxy – Frontend Bytes/Second",
         "queries": [
           {
@@ -387,8 +407,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "HAProxy – Backend Average Response Time (ms)",
         "queries": [
           {
@@ -424,8 +446,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "HAProxy – Backend Connection Errors/Second",
         "queries": [
           {
@@ -461,8 +485,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "HAProxy – Backend Queued Requests/Second",
         "queries": [
           {
@@ -498,8 +524,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "HAProxy – Backend Average Request Queue Time (ms)",
         "queries": [
           {
@@ -535,8 +563,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "HAProxy – Backend Error Responses/Second",
         "queries": [
           {

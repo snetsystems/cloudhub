@@ -157,6 +157,7 @@ class TimeMachineTables extends PureComponent<Props, State> {
         internalName: h,
         displayName: '',
         visible: true,
+        direction: 'asc',
       }))
     }
 

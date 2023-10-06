@@ -682,6 +682,8 @@ type DashboardCell struct {
 	Y              int32            `json:"y"`
 	W              int32            `json:"w"`
 	H              int32            `json:"h"`
+	MinW           int32            `json:"minW"`
+	MinH           int32            `json:"minH"`
 	Name           string           `json:"name"`
 	Queries        []DashboardQuery `json:"queries"`
 	Axes           map[string]Axis  `json:"axes"`
@@ -701,6 +703,7 @@ type RenamableField struct {
 	InternalName string `json:"internalName"`
 	DisplayName  string `json:"displayName"`
 	Visible      bool   `json:"visible"`
+	Direction    string `json:"direction"`
 }
 
 // TableOptions is a type of options for a DashboardCell with type Table
@@ -781,6 +784,8 @@ type ProtoboardCell struct {
 	Y              int32            `json:"y"`
 	W              int32            `json:"w"`
 	H              int32            `json:"h"`
+	MinW           int32            `json:"minW"`
+	MinH           int32            `json:"minH"`
 	Name           string           `json:"name"`
 	Queries        []DashboardQuery `json:"queries"`
 	Axes           map[string]Axis  `json:"axes"`
@@ -1008,9 +1013,10 @@ type Environment struct {
 
 // Topology is represents represents an topology
 type Topology struct {
-	ID           string `json:"id,string,omitempty"`
-	Organization string `json:"organization,omitempty"`   // Organization is the organization ID that resource belongs to
-	Diagram      string `json:"diagram,string,omitempty"` // diagram xml
+	ID           string   `json:"id,string,omitempty"`
+	Organization string   `json:"organization,omitempty"`   // Organization is the organization ID that resource belongs to
+	Diagram      string   `json:"diagram,string,omitempty"` // diagram xml
+	Preferences  []string `json:"preferences,omitempty"`    // User preferences
 }
 
 // TopologyQuery represents the attributes that a topology may be retrieved by.

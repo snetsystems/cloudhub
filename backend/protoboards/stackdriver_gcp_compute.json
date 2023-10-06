@@ -23,10 +23,12 @@
     "cells": [
       {
         "i": "750a64dd-f6ce-44eb-a692-d762bbe9cb9a",
-        "x": 9,
+        "x": 72,
         "y": 2,
-        "w": 3,
-        "h": 3,
+        "w": 24,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Firewall Dropped Traffic",
         "queries": [
           {
@@ -133,10 +135,12 @@
       },
       {
         "i": "699ffb67-182d-4c78-9ccf-235713736421",
-        "x": 6,
+        "x": 48,
         "y": 0,
-        "w": 3,
-        "h": 2,
+        "w": 24,
+        "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Max CPU",
         "queries": [
           {
@@ -224,10 +228,12 @@
       },
       {
         "i": "de11dcc0-ea9f-42cd-a2d5-d6c63868e7db",
-        "x": 9,
+        "x": 72,
         "y": 0,
-        "w": 3,
-        "h": 2,
+        "w": 24,
+        "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "VMx by Region",
         "queries": [
           {
@@ -331,8 +337,10 @@
         "i": "ef7c1786-be99-4460-a589-df8bee0d9403",
         "x": 0,
         "y": 0,
-        "w": 3,
-        "h": 2,
+        "w": 24,
+        "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "Active VMs",
         "queries": [
           {
@@ -427,8 +435,10 @@
         "i": "12e24c04-805f-458e-892c-89a91297779a",
         "x": 0,
         "y": 2,
-        "w": 3,
-        "h": 3,
+        "w": 24,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "CPU utilization",
         "queries": [
           {
@@ -530,10 +540,12 @@
       },
       {
         "i": "9c064469-014a-4013-a4c7-7872ed5a476b",
-        "x": 6,
+        "x": 48,
         "y": 2,
-        "w": 3,
-        "h": 3,
+        "w": 24,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Memory usage (Agent)",
         "queries": [
           {
@@ -637,8 +649,10 @@
         "i": "1094c8e9-2380-4e1d-ac20-fa16421207ce",
         "x": 0,
         "y": 5,
-        "w": 3,
-        "h": 3,
+        "w": 24,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Network Sent",
         "queries": [
           {
@@ -740,10 +754,12 @@
       },
       {
         "i": "a5906bc3-be8f-4fc0-89b3-87f8771b82c8",
-        "x": 3,
+        "x": 24,
         "y": 5,
-        "w": 3,
-        "h": 3,
+        "w": 24,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Network Received",
         "queries": [
           {
@@ -845,10 +861,12 @@
       },
       {
         "i": "3da2a349-9b5f-48ed-a5d7-d83f346fa0dc",
-        "x": 9,
+        "x": 72,
         "y": 5,
-        "w": 3,
-        "h": 3,
+        "w": 24,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "DisK Write",
         "queries": [
           {
@@ -950,10 +968,12 @@
       },
       {
         "i": "8ef741bd-fb92-4279-a411-532d53b25c6c",
-        "x": 6,
+        "x": 48,
         "y": 5,
-        "w": 3,
-        "h": 3,
+        "w": 24,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Disk Read",
         "queries": [
           {
@@ -1055,10 +1075,12 @@
       },
       {
         "i": "58fdbc1f-1392-4ba8-a9f7-1892e27d3202",
-        "x": 3,
+        "x": 24,
         "y": 2,
-        "w": 3,
-        "h": 3,
+        "w": 24,
+        "h": 18,
+        "minW": 10,
+        "minH": 4,
         "name": "Disk Usage",
         "queries": [
           {
@@ -1160,10 +1182,12 @@
       },
       {
         "i": "d9df16a8-1e5c-49c3-b252-cf5c158f5569",
-        "x": 3,
+        "x": 24,
         "y": 0,
-        "w": 3,
-        "h": 2,
+        "w": 24,
+        "h": 12,
+        "minW": 10,
+        "minH": 4,
         "name": "With Agent",
         "queries": [
           {

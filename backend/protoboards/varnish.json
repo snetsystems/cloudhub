@@ -14,8 +14,10 @@
   "data": {
     "cells": [
       {
-        "w": 12,
-        "h": 4,
+        "w": 96,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "Varnish - Cache Hits/Misses",
         "queries": [
           {

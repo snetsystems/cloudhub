@@ -1314,6 +1314,7 @@ export const notifyTopologyImportFailed = (
 
 export const notifyIpmiConnectionFailed = (host: string): Notification => ({
   ...defaultErrorNotification,
+  duration: INFINITE,
   message: `${host} IPMI Connection Failed`,
 })
 
@@ -1399,4 +1400,41 @@ export const notifyDeleteProviderConf = (provider: string): Notification => ({
 export const notifygetProjectConfigFailed = (): Notification => ({
   ...defaultErrorNotification,
   message: `Failed to Deleted Project configuration file.`,
+})
+
+export const notifyPreferencesTemperatureApplySucceeded = (): Notification => ({
+  ...defaultSuccessNotification,
+  message: `Temperature Preferences Applied successfully.`,
+})
+
+export const notifyPreferencesTemperatureApplyFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Apply Temperature Preferences : ${errorMessage}`,
+})
+
+export const notifyFetchIntervalDataFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Fetch Interval Data : ${errorMessage}`,
+})
+
+export const notifyDecryptedBytesFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Decrypt : ${errorMessage}`,
+})
+
+export const notifyGetDetectedHostStatusFailed = (
+  errorMessage: string
+): Notification => ({
+  ...defaultErrorNotification,
+  duration: INFINITE,
+  message: `Failed to Get Detected Host Status : ${errorMessage}`,
 })

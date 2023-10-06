@@ -26,18 +26,21 @@ export interface TimeField {
   internalName: string
   displayName: string
   visible: boolean
+  direction?: '' | 'asc' | 'desc'
 }
 
 export const DEFAULT_INFLUXQL_TIME_FIELD: TimeField = {
   internalName: 'time',
   displayName: '',
   visible: true,
+  direction: 'asc',
 }
 
 export const DEFAULT_FLUX_TIME_FIELD: TimeField = {
   internalName: '_time',
   displayName: '',
   visible: true,
+  direction: 'asc',
 }
 
 export const DEFAULT_TABLE_OPTIONS = {
@@ -68,8 +71,10 @@ export const DEFAULT_FIELD_OPTIONS = [DEFAULT_INFLUXQL_TIME_FIELD]
 export const NEW_DEFAULT_DASHBOARD_CELL: NewDefaultCell = {
   x: 0,
   y: 0,
-  w: 4,
-  h: 4,
+  w: 32,
+  h: 24,
+  minW: 10,
+  minH: 4,
   name: UNTITLED_GRAPH,
   type: CellType.Line,
   queries: [],
@@ -85,6 +90,8 @@ export const NEW_DEFAULT_DASHBOARD_CELL: NewDefaultCell = {
 interface EmptyDefaultDashboardCell {
   x: number
   y: number
+  minW: number
+  minH: number
   queries: QueryConfig[]
   name: string
   type: CellType
@@ -102,6 +109,8 @@ export const EMPTY_DASHBOARD: EmptyDefaultDashboard = {
     {
       x: 0,
       y: 0,
+      minW: 10,
+      minH: 4,
       queries: [],
       name: 'Loading...',
       type: CellType.Line,

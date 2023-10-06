@@ -3,7 +3,7 @@
   "info": {
     "title": "CloudHub",
     "description": "API endpoints for CloudHub",
-    "version": "1.4.0"
+    "version": "1.4.6"
   },
   "schemes": ["http"],
   "basePath": "/cloudhub/v1",
@@ -4337,7 +4337,6 @@
         "parameters": [
           {
             "in": "body",
-            "type": "xml",
             "schema": {
               "$ref": "#/definitions/InventoryTopologyReq"
             }
@@ -4399,7 +4398,6 @@
           },
           {
             "in": "body",
-            "type": "xml",
             "description": "Updated inventory topology diagram",
             "schema": {
               "$ref": "#/definitions/InventoryTopologyReq"
@@ -6645,8 +6643,10 @@
           {
             "x": 0,
             "y": 0,
-            "w": 4,
-            "h": 4,
+            "w": 32,
+            "h": 24,
+            "minW": 10,
+            "minH": 4,
             "i": "4c79cefb-5152-410c-9b88-74f9bff7ef23",
             "name": "Docker - Container Network",
             "queries": [
@@ -6852,10 +6852,12 @@
         }
       },
       "example": {
-        "x": 5,
+        "x": 40,
         "y": 5,
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "usage_user",
         "queries": [
           {
@@ -6963,8 +6965,10 @@
           {
             "x": 0,
             "y": 0,
-            "w": 4,
-            "h": 4,
+            "w": 32,
+            "h": 24,
+            "minW": 10,
+            "minH": 4,
             "name": "",
             "queries": [
               {
@@ -7035,10 +7039,12 @@
       "example": {
         "cells": [
           {
-            "x": 5,
+            "x": 40,
             "y": 5,
-            "w": 4,
-            "h": 4,
+            "w": 32,
+            "h": 24,
+            "minW": 10,
+            "minH": 4,
             "name": "usage_user",
             "queries": [
               {
@@ -7052,8 +7058,10 @@
           {
             "x": 0,
             "y": 0,
-            "w": 4,
-            "h": 4,
+            "w": 32,
+            "h": 24,
+            "minW": 10,
+            "minH": 4,
             "name": "usage_system",
             "queries": [
               {
@@ -7100,10 +7108,12 @@
         "id": 4,
         "cells": [
           {
-            "x": 5,
+            "x": 40,
             "y": 5,
-            "w": 4,
-            "h": 4,
+            "w": 32,
+            "h": 24,
+            "minW": 10,
+            "minH": 4,
             "name": "usage_user",
             "queries": [
               {
@@ -7117,8 +7127,10 @@
           {
             "x": 0,
             "y": 0,
-            "w": 4,
-            "h": 4,
+            "w": 32,
+            "h": 24,
+            "minW": 10,
+            "minH": 4,
             "name": "usage_system",
             "queries": [
               {
@@ -7217,6 +7229,10 @@
         "visible": {
           "description": "Indicates whether this field should be visible on the table",
           "type": "boolean"
+        },
+        "direction": {
+          "description": "Indicates whether this field is in descending order or ascending order",
+          "type": "string"
         }
       }
     },
@@ -8116,7 +8132,25 @@
     "InventoryTopologyReq": {
       "type": "object",
       "description": "inventory topology diagram xml content",
-      "example": "<mxGraphModel><root></root></mxGraphModel>"
+      "properties": {
+        "cells": {
+          "type": "string",
+          "description": "XML content representing the cells",
+          "example": "<xml><root></root></xml>"
+        },
+        "preferences": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of temperature values",
+          "example": [
+            "type:inlet,active:0,min:15,max:30",
+            "type:inside,active:1,min:56,max:55",
+            "type:outlet,active:0,min:34,max:50"
+          ]
+        }
+      }
     },
     "InventoryTopologyRes": {
       "type": "object",
@@ -8136,13 +8170,24 @@
           "type": "string",
           "description": "diagram xml content"
         },
+        "preferences": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "links": {"type": "string", "description": "self url"}
       },
-      "required": ["id", "organization", "diagram", "links"],
+      "required": ["id", "organization", "diagram", "links", "preferences"],
       "example": {
         "id": "1",
         "organization": "2",
         "diagram": "content",
+        "preferences": [
+          "type:inlet,active:0,min:15,max:30",
+          "type:inside,active:1,min:20,max:55",
+          "type:outlet,active:0,min:34,max:50"
+        ],
         "links": {
           "self": "/cloudhub/v1/topologies/1"
         }

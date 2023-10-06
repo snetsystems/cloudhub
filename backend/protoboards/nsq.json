@@ -14,8 +14,10 @@
   "data": {
     "cells": [
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "NSQ - Channel Client Count",
         "queries": [
           {
@@ -52,8 +54,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "NSQ - Channel Messages Count",
         "queries": [
           {
@@ -90,8 +94,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "NSQ - Topic Count",
         "queries": [
           {
@@ -127,8 +133,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "NSQ - Server Count",
         "queries": [
           {
@@ -164,8 +172,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "NSQ - Topic Messages",
         "queries": [
           {
@@ -202,8 +212,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "NSQ - Topic Messages on Disk",
         "queries": [
           {
@@ -240,8 +252,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "NSQ - Topic Ingress",
         "queries": [
           {
@@ -278,8 +292,10 @@
         }
       },
       {
-        "w": 4,
-        "h": 4,
+        "w": 32,
+        "h": 24,
+        "minW": 10,
+        "minH": 4,
         "name": "NSQ topic egress",
         "queries": [
           {

@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -11,25 +12,31 @@ import (
 )
 
 type topologyResponse struct {
-	ID           string     `json:"id"`
-	Organization string     `json:"organization"`
-	Links        selfLinks  `json:"links"`
-	Diagram      string     `json:"diagram,omitempty"`
+	ID           string    `json:"id"`
+	Organization string    `json:"organization"`
+	Links        selfLinks `json:"links"`
+	Diagram      string    `json:"diagram,omitempty"`
+	Preferences  []string  `json:"preferences,omitempty"`
+}
+
+type RequestBody struct {
+	Cells       string   `json:"cells"`
+	Preferences []string `json:"preferences"`
 }
 
 func newTopologyResponse(t *cloudhub.Topology, resDiagram bool) *topologyResponse {
 	selfLink := fmt.Sprintf("/cloudhub/v1/topologies/%s", t.ID)
 
-
 	resData := &topologyResponse{
 		ID:           t.ID,
 		Organization: t.Organization,
 		Links:        selfLinks{Self: selfLink},
+		Preferences:  t.Preferences,
 	}
 
 	if resDiagram {
 		resData.Diagram = t.Diagram
-	}	
+	}
 
 	return resData
 }
@@ -48,7 +55,7 @@ func (s *Service) Topology(w http.ResponseWriter, r *http.Request) {
 		if err != cloudhub.ErrTopologyNotFound {
 			Error(w, http.StatusBadRequest, err.Error(), s.Logger)
 			return
-		} 
+		}
 		res := &topologyResponse{
 			ID:           "",
 			Organization: "",
@@ -73,9 +80,9 @@ func (s *Service) NewTopology(w http.ResponseWriter, r *http.Request) {
 	if g, e := r.ContentLength, int64(0); g == e {
 		msg := fmt.Errorf("request body ContentLength of %d", g)
 		invalidData(w, msg, s.Logger)
-	 	return
+		return
 	}
-	
+
 	ctx := r.Context()
 	defaultOrg, err := s.Store.Organizations(ctx).DefaultOrganization(ctx)
 	if err != nil {
@@ -83,9 +90,18 @@ func (s *Service) NewTopology(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var requestData RequestBody
+
+	if err := json.Unmarshal([]byte(byteSlice2String(body)), &requestData); err != nil {
+		msg := fmt.Errorf("Invalid data in request body")
+		invalidData(w, msg, s.Logger)
+		return
+	}
+
 	topology := &cloudhub.Topology{
-		Diagram: byteSlice2String(body),
-		Organization:  defaultOrg.ID,
+		Diagram:      requestData.Cells,
+		Preferences:  requestData.Preferences,
+		Organization: defaultOrg.ID,
 	}
 
 	if err := ValidTopologRequest(topology, defaultOrg.ID); err != nil {
@@ -155,7 +171,7 @@ func (s *Service) UpdateTopology(w http.ResponseWriter, r *http.Request) {
 	if g, e := r.ContentLength, int64(0); g == e {
 		msg := fmt.Errorf("request body ContentLength of %d", g)
 		invalidData(w, msg, s.Logger)
-	 	return
+		return
 	}
 
 	topology, err := s.Store.Topologies(ctx).Get(ctx, cloudhub.TopologyQuery{ID: &id})
@@ -164,7 +180,16 @@ func (s *Service) UpdateTopology(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	topology.Diagram = byteSlice2String(body)
+	var requestData RequestBody
+
+	if err := json.Unmarshal([]byte(byteSlice2String(body)), &requestData); err != nil {
+		msg := fmt.Errorf("Invalid data in request body")
+		invalidData(w, msg, s.Logger)
+		return
+	}
+
+	topology.Diagram = requestData.Cells
+	topology.Preferences = requestData.Preferences
 
 	if err := s.Store.Topologies(ctx).Update(ctx, topology); err != nil {
 		msg := fmt.Sprintf("Error updating topology ID %s: %v", id, err)
@@ -197,12 +222,12 @@ func (s *Service) topologyExists(ctx context.Context, orgID string) bool {
 	return false
 }
 
-// no-copy conversion from byte slice to string 
+// no-copy conversion from byte slice to string
 func byteSlice2String(bs []byte) string {
 	return *(*string)(unsafe.Pointer(&bs))
 }
 
 // no-copy conversion from string to byte slice
 func string2byteSlice(s string) []byte {
-    return *(*[]byte)(unsafe.Pointer(&s))
+	return *(*[]byte)(unsafe.Pointer(&s))
 }

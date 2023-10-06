@@ -34,6 +34,8 @@ const buildCannedDashboardQuery = (
   if (host) {
     if (measurement === 'cloudwatch_aws_application_elb') {
       text += ` and \"load_balancer\" = '${host}' or \"host\" = '${host}'`
+    } else if (measurement === 'ipmi_sensor') {
+      text += ` and \"hostname" \= '${host}'`
     } else {
       text += ` and \"host\" = '${host}'`
     }

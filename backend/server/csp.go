@@ -376,6 +376,7 @@ type openstack struct {
 	Username               string   `toml:"username"`
 	Password               string   `toml:"password"`
 	ServerDiagnotics       bool     `toml:"server_diagnotics"`
+	InsecureSkipVerify     bool     `toml:"insecure_skip_verify"`
 	Tags                   tags     `toml:"tags"`
 }
 type inputs struct {
@@ -386,24 +387,56 @@ func (s *Service) generateTelegrafConfigForOSP(ctx context.Context, csp *cloudhu
 	fileName := fmt.Sprintf("%s.conf", csp.NameSpace)
 	dirPath := "/etc/telegraf/telegraf.d/tenant/osp"
 	filePath := path.Join(dirPath, fileName)
+	var statusCode int
+	var resp []byte
+	var err error
 
-	if statusCode, resp, err := s.DirectoryExists(dirPath); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-		return statusCode, nil, err
-	} else if resp != nil {
-		r := &struct {
-			Return []bool `json:"return"`
-		}{}
-		if err := json.Unmarshal(resp, r); err != nil {
-			return http.StatusInternalServerError, nil, err
-		}
+	useLocalModule, err := s.IsMinionActive("osp")
 
-		if !r.Return[0] {
-			if statusCode, _, err := s.Mkdir(dirPath); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
-				return statusCode, nil, err
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	if useLocalModule {
+		if statusCode, resp, err := s.DirectoryExistsWithLocalClient(dirPath, s.AddonTokens["osp"]); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+			return statusCode, nil, err
+		} else if resp != nil {
+			r := &struct {
+				Return []map[string]bool `json:"return"`
+			}{}
+
+			if err := json.Unmarshal(resp, r); err != nil {
+				return http.StatusInternalServerError, nil, err
 			}
+
+			if !r.Return[0][s.AddonTokens["osp"]] {
+				if statusCode, _, err := s.MkdirWithLocalClient(dirPath, s.AddonTokens["osp"]); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+					return statusCode, nil, err
+				}
+			}
+		} else {
+			return http.StatusInternalServerError, nil, fmt.Errorf("Unknown error ocuured at DirectoryExists() func")
 		}
+
 	} else {
-		return http.StatusInternalServerError, nil, fmt.Errorf("Unknown error ocuured at DirectoryExists() func")
+		if statusCode, resp, err := s.DirectoryExists(dirPath); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+			return statusCode, nil, err
+		} else if resp != nil {
+			r := &struct {
+				Return []bool `json:"return"`
+			}{}
+			if err := json.Unmarshal(resp, r); err != nil {
+				return http.StatusInternalServerError, nil, err
+			}
+
+			if !r.Return[0] {
+				if statusCode, _, err := s.Mkdir(dirPath); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+					return statusCode, nil, err
+				}
+			}
+		} else {
+			return http.StatusInternalServerError, nil, fmt.Errorf("Unknown error ocuured at DirectoryExists() func")
+		}
 	}
 
 	serverCtx := serverContext(ctx)
@@ -423,29 +456,33 @@ func (s *Service) generateTelegrafConfigForOSP(ctx context.Context, csp *cloudhu
 		return http.StatusInternalServerError, nil, fmt.Errorf("Output plugin(something like influxdb) urls for telegraf are empty or invalid")
 	}
 
+	var influxdbs []influxdb
+	for _, url := range outputURLs {
+		influxdbs = append(influxdbs, influxdb{
+			Urls:     []string{url},
+			Database: csp.NameSpace,
+			Tagpass: tagpass{
+				Tenant: []string{csp.NameSpace},
+			},
+		})
+	}
+
 	telegrafConfig := &telegrafConfig{
 		Outputs: outputs{
-			Influxdb: []influxdb{
-				{
-					Urls:     outputURLs,
-					Database: csp.NameSpace,
-					Tagpass: tagpass{
-						Tenant: []string{csp.NameSpace},
-					},
-				},
-			},
+			Influxdb: influxdbs,
 		},
 		Inputs: inputs{
 			Openstack: []openstack{
 				{
 					Interval:               "2m",
 					AuthenticationEndpoint: s.OSP.AuthURL,
-					EnabledServices:        []string{"servers", "flavors"},
+					EnabledServices:        []string{"projects", "servers", "flavors", "networks", "ports", "storage_pools", "subnets", "volumes", "compute_quotas", "network_quotas", "volume_quotas"},
 					Domain:                 s.OSP.UserDomain,
 					Project:                csp.NameSpace,
 					Username:               s.OSP.AdminUser,
 					Password:               s.OSP.AdminPW,
 					ServerDiagnotics:       true,
+					InsecureSkipVerify:     true,
 					Tags: tags{
 						Tenant: csp.NameSpace,
 					},
@@ -454,7 +491,13 @@ func (s *Service) generateTelegrafConfigForOSP(ctx context.Context, csp *cloudhu
 		},
 	}
 	b, _ := toml.Marshal(telegrafConfig)
-	statusCode, resp, err := s.CreateFile(filePath, []string{string(b)})
+
+	if useLocalModule && err == nil {
+		statusCode, resp, err = s.CreateFileWithLocalClient(filePath, []string{string(b)}, s.AddonTokens["osp"])
+	} else {
+		statusCode, resp, err = s.CreateFile(filePath, []string{string(b)})
+	}
+
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
@@ -468,8 +511,20 @@ func (s *Service) removeTelegrafConfigForOSP(csp *cloudhub.CSP) (int, []byte, er
 	fileName := fmt.Sprintf("%s.conf", csp.NameSpace)
 	dirPath := "/etc/telegraf/telegraf.d/tenant/osp"
 	filePath := path.Join(dirPath, fileName)
+	useLocalModule, err := s.IsMinionActive("osp")
+	var statusCode int
+	var resp []byte
 
-	statusCode, resp, err := s.RemoveFile(filePath)
+	if err != nil {
+		return http.StatusInternalServerError, nil, err
+	}
+
+	if useLocalModule {
+		statusCode, resp, err = s.RemoveFileWithLocalClient(filePath, s.AddonTokens["osp"])
+	} else {
+		statusCode, resp, err = s.RemoveFile(filePath)
+	}
+
 	if err != nil {
 		return http.StatusInternalServerError, nil, err
 	} else if statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
@@ -477,4 +532,89 @@ func (s *Service) removeTelegrafConfigForOSP(csp *cloudhub.CSP) (int, []byte, er
 	}
 
 	return s.DaemonReload("telegraf.service")
+}
+
+func (s *Service) IsMinionActive(provider string) (bool, error) {
+
+	useLocalModule := false
+
+	if _, ok := s.AddonTokens[provider]; ok {
+		useLocalModule = true
+		if statusCode, resp, err := s.IsActiveMinionPingTest(s.AddonTokens[provider]); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+			return useLocalModule, err
+		} else if resp != nil {
+
+			r := &struct {
+				Return []map[string]bool `json:"return"`
+			}{}
+
+			if err := json.Unmarshal(resp, r); err != nil || !r.Return[0][s.AddonTokens[provider]] {
+
+				return useLocalModule, fmt.Errorf("Target minion %s is not available.", s.AddonTokens[provider])
+			}
+		}
+		return useLocalModule, nil
+	} else {
+		return useLocalModule, nil
+	}
+
+}
+
+type Response struct {
+	Return []ReturnData `json:"return"`
+}
+
+type ReturnData struct {
+	Tag  string                 `json:"tag"`
+	Data ReturnWheelKeyListData `json:"data"`
+}
+
+type ReturnWheelKeyListData struct {
+	Fun        string         `json:"fun"`
+	JID        string         `json:"jid"`
+	Tag        string         `json:"tag"`
+	User       string         `json:"user"`
+	Stamp      string         `json:"_stamp"`
+	MinionData MinionResponse `json:"return"`
+	Success    bool           `json:"success"`
+}
+
+type MinionResponse struct {
+	Minions         []string `json:"minions"`
+	MinionsPre      []string `json:"minions_pre"`
+	MinionsRejected []string `json:"minions_rejected"`
+	MinionsDenied   []string `json:"minions_denied"`
+	Local           []string `json:"local"`
+}
+
+func (s *Service) IsMinionAvailable(provider string) (bool, error) {
+
+	IsMinionAvailable := false
+
+	if targetMinion, ok := s.AddonTokens[provider]; ok {
+
+		if statusCode, resp, err := s.GetWheelKeyListAll(); err != nil || statusCode < http.StatusOK || statusCode >= http.StatusMultipleChoices {
+			return IsMinionAvailable, fmt.Errorf("Target minion %s is not available.", targetMinion)
+		} else {
+			var response Response
+			if err := json.Unmarshal([]byte(resp), &response); err != nil {
+				fmt.Println("JSON 파싱 오류:", err)
+				return IsMinionAvailable, err
+			}
+
+			minionData := response.Return[0].Data.MinionData
+			for _, minions := range [][]string{minionData.Minions, minionData.MinionsPre, minionData.MinionsRejected, minionData.MinionsDenied} {
+				for _, minion := range minions {
+					if minion == targetMinion {
+						IsMinionAvailable = true
+						return IsMinionAvailable, nil
+					}
+				}
+			}
+		}
+		return IsMinionAvailable, fmt.Errorf("Target minion %s is not available.", targetMinion)
+	} else {
+		return IsMinionAvailable, nil
+	}
+
 }

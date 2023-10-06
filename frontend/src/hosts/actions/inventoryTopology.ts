@@ -130,12 +130,14 @@ export const loadInventoryTopologyAsync = (links: Links) => async (
 
 export const createInventoryTopologyAsync = (
   links: Links,
-  cells: string
+  cells: string,
+  preferences: string[]
 ) => async (dispatch: Dispatch<Action>) => {
   try {
     const resultCreateInventoryTopology = await createInventoryTopology(
       links,
-      cells
+      cells,
+      preferences
     )
 
     return resultCreateInventoryTopology
@@ -148,13 +150,15 @@ export const createInventoryTopologyAsync = (
 export const updateInventoryTopologyAsync = (
   links: Links,
   cellsId: string,
-  cells: string
+  cells: string,
+  preferences: string[]
 ) => async (dispatch: Dispatch<Action>) => {
   try {
     const resultUpdateInventoryTopology = await updateInventoryTopology(
       links,
       cellsId,
-      cells
+      cells,
+      preferences
     )
 
     return resultUpdateInventoryTopology
@@ -248,7 +252,8 @@ export const getIpmiSensorDataAsync = (
       _.keys(sensorData[pIpmis.target]).length > 0
 
     if (!isSensorData) {
-      throw new Error(`[${pIpmis.target}]: ${sensorData[pIpmis.target]}`)
+      const notify = bindActionCreators(notifyAction, dispatch)
+      notify(notifyIpmiConnectionFailed(pIpmis.host))
     }
 
     return sensorData

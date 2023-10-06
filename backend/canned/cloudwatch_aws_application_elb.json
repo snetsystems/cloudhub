@@ -7,8 +7,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "a74a23a5-0581-4602-9058-03aa9e8163cd",
       "name": "Target Response Time (Milliseconds)",
       "queries": [
@@ -23,8 +25,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "29f50f58-9885-4412-9720-52d6d93f3f48",
       "name": "Requests (Count)",
       "queries": [
@@ -39,8 +43,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "153d5847-4edf-4c48-b95a-b4005c942dc5",
       "name": "Rule Evaluations (Count)",
       "queries": [
@@ -55,8 +61,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "de45086c-c634-45c5-a3b6-96c2724ca379",
       "name": "HTTP 4XXs (Count)",
       "queries": [
@@ -71,8 +79,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "12dbc7cc-04e7-4ec9-b0c9-e00032cac594",
       "name": "ELB 4XXs (Count)",
       "queries": [
@@ -87,8 +97,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "ad152565-f9dc-4171-bb42-f4f3fe732a24",
       "name": "Client TLS Negotiation Errors (Count)",
       "queries": [
@@ -103,8 +115,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "a2163fad-fc67-4de9-bc60-b7b4004843f7",
       "name": "HTTP 3XXs (Count)",
       "queries": [
@@ -119,8 +133,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "32de912e-984d-4663-977e-f1ee2ff84e34",
       "name": "HTTP 2XXs (Count)",
       "queries": [
@@ -135,8 +151,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "f2eb7077-41f6-4e1c-9bda-1f50a568ef4a",
       "name": "Active Connection Count (Count)",
       "queries": [
@@ -151,8 +169,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "8ae578e3-ac1d-4980-b6b7-66ed979e73de",
       "name": "New Connection Count (Count)",
       "queries": [
@@ -167,8 +187,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "22ad1e99-54e8-4952-839a-ba0e6baf62f2",
       "name": "Processed Bytes (Bytes)",
       "queries": [
@@ -183,8 +205,10 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "8e8813ef-2f4c-4e99-9b8f-6e8cd3a8b2d6",
       "name": "HTTP redirect count (Count)",
       "queries": [

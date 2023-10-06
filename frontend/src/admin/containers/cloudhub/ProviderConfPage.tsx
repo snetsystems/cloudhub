@@ -84,7 +84,7 @@ export class ProviderConfPage extends PureComponent<Props, State> {
         password: storeData['admin-pw'],
         projectDomain: storeData['pj-domain-id'],
         userDomain: storeData['user-domain-id'],
-        hasProjectOption: true,
+        hasProjectOption: false,
       },
     }
     return convertProperties[provider]
@@ -337,9 +337,8 @@ export class ProviderConfPage extends PureComponent<Props, State> {
           return {
             ...preState,
             cspInput: {
-              ...properties,
+              ...this.defaultProperties(ProviderTypes.OpenStack),
               id: cspRes.id,
-              hasProjectOption: true,
             },
           }
         })
@@ -378,9 +377,10 @@ export class ProviderConfPage extends PureComponent<Props, State> {
           }
           const cspDelte = await handleDeleteCspAsync(id)
           if (cspDelte.isDelete) {
-            this.setState({
+            this.setState(preState => ({
+              ...preState,
               cspInput: this.defaultProperties(ProviderTypes.OpenStack),
-            })
+            }))
           }
         } catch (error) {
           throw error
@@ -414,7 +414,6 @@ export class ProviderConfPage extends PureComponent<Props, State> {
       [ProviderTypes.OpenStack]: {
         ...defaultProperties,
         id: cspId,
-        hasProjectOption: true,
       } as OpenStackCspInput,
     }
 

@@ -4,7 +4,6 @@ import {connect} from 'react-redux'
 import _ from 'lodash'
 import ReactGridLayout, {WidthProvider} from 'react-grid-layout'
 import {bindActionCreators} from 'redux'
-import ReactObserver from 'react-resize-observer'
 
 // middleware
 const GridLayout = WidthProvider(ReactGridLayout)
@@ -40,21 +39,22 @@ import {loadCloudServiceProvidersAsync} from 'src/hosts/actions'
 import {ManualRefreshProps} from 'src/shared/components/ManualRefresh'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import PageSpinner from 'src/shared/components/PageSpinner'
-import {AddonType, LAYOUT_MARGIN} from 'src/shared/constants'
+import {
+  AddonType,
+  DASHBOARD_LAYOUT_ROW_HEIGHT,
+  LAYOUT_MARGIN,
+} from 'src/shared/constants'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 import OpenStackPageInstanceOverview from 'src/clouds/components/OpenStackPageInstanceOverview'
-import LayoutRenderer from 'src/shared/components/LayoutRenderer'
 import OpenStackPageInstanceTable from 'src/clouds/components/OpenStackPageInstanceTable'
 import OpenStackProjectGaugeChartLayout from 'src/clouds/components/OpenStackProjectGaugeChartLayout'
 import OpenStackPageProjectTable from 'src/clouds/components/OpenStackPageProjectTable'
-import OpenStackPageHeader from 'src/clouds/components/OpenStackPageHeader'
+import OpenStackInstanceGraph from 'src/clouds/components/OpenStackInstanceGraph'
 
 // utils
 import {GlobalAutoRefresher} from 'src/utils/AutoRefresher'
-import {getCells} from 'src/hosts/utils/getCells'
 import {generateForHosts} from 'src/utils/tempVars'
 import {getDeep} from 'src/utils/wrappers'
-import {WindowResizeEventTrigger} from 'src/shared/utils/trigger'
 
 // api
 import {
@@ -67,11 +67,6 @@ import {adminSaltCall, superAdminSaltCall} from 'src/clouds/apis/openstack'
 // constants
 import {getOpenStackPageLayouts} from 'src/clouds/constants/layout'
 import {notIncludeAppsOsp} from 'src/hosts/constants/apps'
-import {
-  DEFAULT_CELL_BG_COLOR,
-  DEFAULT_CELL_TEXT_COLOR,
-  GRAPH_BG_COLOR,
-} from 'src/dashboards/constants'
 import {SUPERADMIN_ROLE} from 'src/auth/Authorized'
 
 interface Props extends ManualRefreshProps {
@@ -113,7 +108,6 @@ export class OpenStackPage extends PureComponent<Props, State> {
   private adminProvider = this.props.links.osp['admin-provider']
   constructor(props: Props) {
     super(props)
-
     this.setState = (args, callback) => {
       if (!this.isComponentMounted) return
       PureComponent.prototype.setState.bind(this)(args, callback)
@@ -188,9 +182,9 @@ export class OpenStackPage extends PureComponent<Props, State> {
 
       GlobalAutoRefresher.poll(autoRefresh)
 
-      this.setState(state => {
+      this.setState(prevState => {
         return {
-          ...state,
+          ...prevState,
           layouts,
           filteredLayouts: focusedLayout,
           openStackPageStatus: RemoteDataState.Done,
@@ -198,11 +192,12 @@ export class OpenStackPage extends PureComponent<Props, State> {
         }
       })
     } catch (error) {
-      this.setState({
+      this.setState(prevState => ({
+        ...prevState,
         openStackPageStatus: RemoteDataState.Done,
         saltRemoteDataState: RemoteDataState.Done,
         openStackLayouts: openstackLayoutsByRole,
-      })
+      }))
     }
   }
 
@@ -293,8 +288,8 @@ export class OpenStackPage extends PureComponent<Props, State> {
         <GridLayout
           className="layout"
           layout={openStackLayouts}
-          cols={20}
-          rowHeight={50}
+          cols={96}
+          rowHeight={DASHBOARD_LAYOUT_ROW_HEIGHT}
           margin={[LAYOUT_MARGIN, LAYOUT_MARGIN]}
           containerPadding={[20, 10]}
           draggableHandle={'.openstacck-dash-graph--draggable'}
@@ -319,7 +314,7 @@ export class OpenStackPage extends PureComponent<Props, State> {
       filteredLayouts,
       saltRemoteDataState,
     } = this.state
-    const {source, manualRefresh, timeRange} = this.props
+    const {source, manualRefresh, autoRefresh, timeRange} = this.props
 
     const updateFocusedProject = _.filter(
       projects,
@@ -381,74 +376,16 @@ export class OpenStackPage extends PureComponent<Props, State> {
       }
 
       case 'instanceGraph': {
-        const layoutCells = getCells(filteredLayouts, source)
-        const tempVars = generateForHosts(source)
-        const instance = {
-          instancename: updateInstance?.instanceName,
-          instanceid: updateInstance?.instanceId,
-          namespace: updateInstance?.projectName,
-        }
-        const debouncedFit = _.debounce(() => {
-          WindowResizeEventTrigger()
-        }, 150)
-        const handleOnResize = (): void => {
-          debouncedFit()
-        }
-
         return (
-          <div
-            className="panel"
-            style={{backgroundColor: DEFAULT_CELL_BG_COLOR}}
-          >
-            <OpenStackPageHeader
-              cellName={`Monitoring (${focusedInstance.instanceName || ''})`}
-              cellBackgroundColor={DEFAULT_CELL_BG_COLOR}
-              cellTextColor={DEFAULT_CELL_TEXT_COLOR}
-            ></OpenStackPageHeader>
-            {_.isEmpty(updateInstance) ? (
-              <div className="panel-body">
-                <div className="generic-empty-state">
-                  <h4 style={{margin: '90px 0'}}>No Instances found</h4>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div
-                  className="panel-body"
-                  style={{backgroundColor: GRAPH_BG_COLOR}}
-                >
-                  <div
-                    style={{
-                      position: 'relative',
-                      width: '100%',
-                      height: '100%',
-                    }}
-                  >
-                    <ReactObserver onResize={handleOnResize} />
-                    <LayoutRenderer
-                      source={source}
-                      sources={[source]}
-                      isStatusPage={false}
-                      isStaticPage={true}
-                      isEditable={false}
-                      cells={layoutCells}
-                      templates={tempVars}
-                      timeRange={timeRange}
-                      manualRefresh={manualRefresh}
-                      instance={instance}
-                      host={''}
-                    />
-                  </div>
-                </div>
-                <div className="dash-graph--gradient-border">
-                  <div className="dash-graph--gradient-top-left" />
-                  <div className="dash-graph--gradient-top-right" />
-                  <div className="dash-graph--gradient-bottom-left" />
-                  <div className="dash-graph--gradient-bottom-right" />
-                </div>
-              </>
-            )}
-          </div>
+          <OpenStackInstanceGraph
+            filteredLayouts={filteredLayouts}
+            source={source}
+            instance={updateInstance}
+            focusedInstance={focusedInstance}
+            manualRefresh={manualRefresh}
+            timeRange={timeRange}
+            autoRefresh={autoRefresh}
+          />
         )
       }
     }
@@ -479,10 +416,7 @@ export class OpenStackPage extends PureComponent<Props, State> {
         y: l.y,
         h: l.h,
         w: l.w,
-        minW: l.minW,
-        minH: l.minH,
       }
-
       return {
         ...cell,
         ...newLayout,
@@ -676,9 +610,6 @@ export class OpenStackPage extends PureComponent<Props, State> {
 
 const mstp = state => {
   const {
-    app: {
-      persisted: {autoRefresh},
-    },
     links,
     auth: {me},
   } = state
@@ -692,7 +623,6 @@ const mstp = state => {
     meCurrentOrganization,
     meOrganizations,
     links,
-    autoRefresh,
   }
 }
 

@@ -292,6 +292,7 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 			InternalName: c.TableOptions.SortBy.InternalName,
 			DisplayName:  c.TableOptions.SortBy.DisplayName,
 			Visible:      c.TableOptions.SortBy.Visible,
+			Direction:    c.TableOptions.SortBy.Direction,
 		}
 
 		tableOptions := &TableOptions{
@@ -312,6 +313,7 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 				InternalName: field.InternalName,
 				DisplayName:  field.DisplayName,
 				Visible:      field.Visible,
+				Direction:    field.Direction,
 			}
 		}
 
@@ -324,6 +326,8 @@ func MarshalDashboard(d cloudhub.Dashboard) ([]byte, error) {
 			Y:       c.Y,
 			W:       c.W,
 			H:       c.H,
+			MinW:    c.MinW,
+			MinH:    c.MinH,
 			Name:    c.Name,
 			Queries: queries,
 			Type:    c.Type,
@@ -472,6 +476,7 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 				sortBy.InternalName = c.TableOptions.SortBy.InternalName
 				sortBy.DisplayName = c.TableOptions.SortBy.DisplayName
 				sortBy.Visible = c.TableOptions.SortBy.Visible
+				sortBy.Direction = c.TableOptions.SortBy.Direction
 			}
 			tableOptions.SortBy = sortBy
 			tableOptions.VerticalTimeAxis = c.TableOptions.VerticalTimeAxis
@@ -485,6 +490,7 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 			fieldOptions[i].InternalName = field.InternalName
 			fieldOptions[i].DisplayName = field.DisplayName
 			fieldOptions[i].Visible = field.Visible
+			fieldOptions[i].Direction = field.Direction
 		}
 
 		decimalPlaces := cloudhub.DecimalPlaces{}
@@ -512,6 +518,8 @@ func UnmarshalDashboard(data []byte, d *cloudhub.Dashboard) error {
 			Y:              c.Y,
 			W:              c.W,
 			H:              c.H,
+			MinW:           c.MinW,
+			MinH:           c.MinH,
 			Name:           c.Name,
 			Queries:        queries,
 			Type:           cellType,
@@ -963,6 +971,7 @@ func MarshalTopology(t *cloudhub.Topology) ([]byte, error) {
 		ID:           t.ID,
 		Organization: t.Organization,
 		Diagram:      t.Diagram,
+		Preferences:  t.Preferences,
 	})
 }
 
@@ -976,6 +985,7 @@ func UnmarshalTopology(data []byte, t *cloudhub.Topology) error {
 	t.ID = pb.ID
 	t.Organization = pb.Organization
 	t.Diagram = pb.Diagram
+	t.Preferences = pb.Preferences
 
 	return nil
 }

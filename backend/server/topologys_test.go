@@ -17,9 +17,9 @@ import (
 
 func TestTopology(t *testing.T) {
 	type fields struct {
-		OrganizationsStore  cloudhub.OrganizationsStore
-		TopologiesStore      cloudhub.TopologiesStore
-		Logger              cloudhub.Logger
+		OrganizationsStore cloudhub.OrganizationsStore
+		TopologiesStore    cloudhub.TopologiesStore
+		Logger             cloudhub.Logger
 	}
 	type args struct {
 		w *httptest.ResponseRecorder
@@ -51,6 +51,11 @@ func TestTopology(t *testing.T) {
 							ID:           "1",
 							Organization: "225",
 							Diagram:      "<xml></xml>",
+							Preferences: []string{
+								"type:inlet,active:1,min:15,max:30",
+								"type:inside,active:0,min:38,max:55",
+								"type:outlet,active:0,min:30,max:50",
+							},
 						}, nil
 					},
 				},
@@ -65,7 +70,7 @@ func TestTopology(t *testing.T) {
 			},
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1","organization":"225","links":{"self":"/cloudhub/v1/topologies/1"},"diagram":"<xml></xml>"}`,
+			wantBody:        `{"id":"1","organization":"225","links":{"self":"/cloudhub/v1/topologies/1"},"diagram":"<xml></xml>","preferences":["type:inlet,active:1,min:15,max:30","type:inside,active:0,min:38,max:55","type:outlet,active:0,min:30,max:50"]}`,
 		},
 	}
 
@@ -73,8 +78,8 @@ func TestTopology(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Service{
 				Store: &mocks.Store{
-					OrganizationsStore:    tt.fields.OrganizationsStore,
-					TopologiesStore: tt.fields.TopologiesStore,
+					OrganizationsStore: tt.fields.OrganizationsStore,
+					TopologiesStore:    tt.fields.TopologiesStore,
 				},
 				Logger: tt.fields.Logger,
 			}
@@ -100,13 +105,13 @@ func TestTopology(t *testing.T) {
 
 func TestUpdateTopology(t *testing.T) {
 	type fields struct {
-		TopologiesStore     cloudhub.TopologiesStore
-		Logger             cloudhub.Logger
+		TopologiesStore cloudhub.TopologiesStore
+		Logger          cloudhub.Logger
 	}
 	type args struct {
-		w      *httptest.ResponseRecorder
-		r      *http.Request
-		body   string
+		w    *httptest.ResponseRecorder
+		r    *http.Request
+		body string
 	}
 	tests := []struct {
 		name            string
@@ -126,7 +131,11 @@ func TestUpdateTopology(t *testing.T) {
 					"http://any.url", // can be any valid URL as we are bypassing mux
 					nil,
 				),
-				body: "<xml><root></root></xml>",
+				body: `{"cells":"<xml><root></root></xml>", "preferences":[
+					"type:inlet,active:0,min:15,max:30",
+					"type:inside,active:1,min:56,max:55",
+					"type:outlet,active:0,min:34,max:50"
+				]}`,
 			},
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
@@ -139,6 +148,11 @@ func TestUpdateTopology(t *testing.T) {
 							ID:           "1",
 							Organization: "225",
 							Diagram:      "<xml></xml>",
+							Preferences: []string{
+								"type:inlet,active:1,min:15,max:30",
+								"type:inside,active:0,min:38,max:55",
+								"type:outlet,active:0,min:30,max:50",
+							},
 						}, nil
 					},
 				},
@@ -146,15 +160,15 @@ func TestUpdateTopology(t *testing.T) {
 			id:              "1",
 			wantStatus:      http.StatusOK,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1","organization":"225","links":{"self":"/cloudhub/v1/topologies/1"}}`,
-		},		
+			wantBody:        `{"id":"1","organization":"225","links":{"self":"/cloudhub/v1/topologies/1"},"preferences":["type:inlet,active:1,min:15,max:30","type:inside,active:0,min:38,max:55","type:outlet,active:0,min:30,max:50"]}`,
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Service{
 				Store: &mocks.Store{
-					TopologiesStore:      tt.fields.TopologiesStore,
+					TopologiesStore: tt.fields.TopologiesStore,
 				},
 				Logger: tt.fields.Logger,
 			}
@@ -192,8 +206,8 @@ func TestUpdateTopology(t *testing.T) {
 
 func TestRemoveTopology(t *testing.T) {
 	type fields struct {
-		TopologiesStore     cloudhub.TopologiesStore
-		Logger             cloudhub.Logger
+		TopologiesStore cloudhub.TopologiesStore
+		Logger          cloudhub.Logger
 	}
 	type args struct {
 		w *httptest.ResponseRecorder
@@ -272,9 +286,9 @@ func TestRemoveTopology(t *testing.T) {
 
 func TestNewTopology(t *testing.T) {
 	type fields struct {
-		OrganizationsStore  cloudhub.OrganizationsStore
-		TopologiesStore      cloudhub.TopologiesStore
-		Logger              cloudhub.Logger
+		OrganizationsStore cloudhub.OrganizationsStore
+		TopologiesStore    cloudhub.TopologiesStore
+		Logger             cloudhub.Logger
 	}
 	type args struct {
 		w    *httptest.ResponseRecorder
@@ -299,16 +313,25 @@ func TestNewTopology(t *testing.T) {
 					"http://any.url", // can be any valid URL as we are bypassing mux
 					nil,
 				),
-				body: "<xml></xml>",
+				body: `{"cells":"<xml></xml>","preferences": [
+					"type:inlet,active:0,min:15,max:30",
+					"type:inside,active:1,min:56,max:55",
+					"type:outlet,active:0,min:34,max:50"
+				]}`,
 			},
 			fields: fields{
 				Logger: log.New(log.DebugLevel),
 				TopologiesStore: &mocks.TopologiesStore{
 					AddF: func(context.Context, *cloudhub.Topology) (*cloudhub.Topology, error) {
 						return &cloudhub.Topology{
-							ID: "1",
+							ID:           "1",
 							Organization: "225",
 							Diagram:      "<xml></xml>",
+							Preferences: []string{
+								"type:inlet,active:1,min:15,max:30",
+								"type:inside,active:0,min:38,max:55",
+								"type:outlet,active:0,min:30,max:50",
+							},
 						}, nil
 					},
 					GetF: func(ctx context.Context, q cloudhub.TopologyQuery) (*cloudhub.Topology, error) {
@@ -326,13 +349,13 @@ func TestNewTopology(t *testing.T) {
 						switch *q.ID {
 						case "225":
 							return &cloudhub.Organization{
-								ID:          "225",
-								Name:        "snet_org",
+								ID:   "225",
+								Name: "snet_org",
 							}, nil
 						case "987":
 							return &cloudhub.Organization{
-								ID:          "987",
-								Name:        "test",
+								ID:   "987",
+								Name: "test",
 							}, nil
 						default:
 							return &cloudhub.Organization{}, fmt.Errorf("Organization with ID %s not found", *q.ID)
@@ -342,7 +365,7 @@ func TestNewTopology(t *testing.T) {
 			},
 			wantStatus:      http.StatusCreated,
 			wantContentType: "application/json",
-			wantBody:        `{"id":"1","links":{"self":"/cloudhub/v1/topologies/1"},"organization":"225"}`,
+			wantBody:        `{"id":"1","links":{"self":"/cloudhub/v1/topologies/1"},"organization":"225","preferences":["type:inlet,active:1,min:15,max:30","type:inside,active:0,min:38,max:55","type:outlet,active:0,min:30,max:50"]}`,
 		},
 		{
 			name: "Fail to create topology - no body",
@@ -360,7 +383,7 @@ func TestNewTopology(t *testing.T) {
 				TopologiesStore: &mocks.TopologiesStore{
 					AddF: func(context.Context, *cloudhub.Topology) (*cloudhub.Topology, error) {
 						return &cloudhub.Topology{
-							ID: "1",
+							ID:           "1",
 							Organization: "225",
 							Diagram:      "<xml></xml>",
 						}, nil
@@ -384,13 +407,13 @@ func TestNewTopology(t *testing.T) {
 						switch *q.ID {
 						case "225":
 							return &cloudhub.Organization{
-								ID:          "225",
-								Name:        "snet_org",
+								ID:   "225",
+								Name: "snet_org",
 							}, nil
 						case "987":
 							return &cloudhub.Organization{
-								ID:          "987",
-								Name:        "test",
+								ID:   "987",
+								Name: "test",
 							}, nil
 						default:
 							return &cloudhub.Organization{}, fmt.Errorf("Organization with ID %s not found", *q.ID)
@@ -401,15 +424,15 @@ func TestNewTopology(t *testing.T) {
 			wantStatus:      http.StatusUnprocessableEntity,
 			wantContentType: "application/json",
 			wantBody:        `{"code":422,"message":"request body ContentLength of 0"}`,
-		},		
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Service{
 				Store: &mocks.Store{
-					OrganizationsStore:    tt.fields.OrganizationsStore,
-					TopologiesStore:        tt.fields.TopologiesStore,
+					OrganizationsStore: tt.fields.OrganizationsStore,
+					TopologiesStore:    tt.fields.TopologiesStore,
 				},
 				Logger: tt.fields.Logger,
 			}

@@ -7,16 +7,16 @@
     {
       "x": 0,
       "y": 0,
-      "w": 12,
-      "h": 4,
+      "w": 96,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "b417bc9f-b16d-4691-91a7-85adfdd3e8ec",
       "name": "PostgreSQL - Rows",
       "queries": [
         {
           "query": "SELECT non_negative_derivative(mean(\"tup_fetched\")) AS \"fetched\", non_negative_derivative(mean(\"tup_returned\")) AS \"returned\", non_negative_derivative(mean(\"tup_inserted\")) AS \"inserted\", non_negative_derivative(mean(\"tup_updated\")) AS \"updated\" FROM \":db:\".\":rp:\".\"postgresql\"",
-          "groupbys": [
-            "db"
-          ],
+          "groupbys": ["db"],
           "wheres": []
         }
       ]
@@ -24,16 +24,16 @@
     {
       "x": 0,
       "y": 8,
-      "w": 12,
-      "h": 4,
+      "w": 96,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "230d5baa-9376-438c-9a55-6f97f8c68e69",
       "name": "PostgreSQL - QPS",
       "queries": [
         {
           "query": "SELECT non_negative_derivative(mean(\"xact_commit\")) AS \"xact_commit\" FROM \":db:\".\":rp:\".\"postgresql\"",
-          "groupbys": [
-            "db"
-          ],
+          "groupbys": ["db"],
           "wheres": []
         }
       ]
@@ -41,8 +41,10 @@
     {
       "x": 0,
       "y": 4,
-      "w": 6,
-      "h": 4,
+      "w": 48,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "4762130d-7005-467f-80ad-8c7f6dfe822e",
       "name": "PostgreSQL - Buffers",
       "queries": [
@@ -54,10 +56,12 @@
       ]
     },
     {
-      "x": 6,
+      "x": 48,
       "y": 4,
-      "w": 6,
-      "h": 4,
+      "w": 48,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "95e73bda-7527-4aca-89dd-109cb6bb4294",
       "name": "PostgreSQL - Conflicts/Deadlocks",
       "queries": [

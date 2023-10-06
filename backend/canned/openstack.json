@@ -7,14 +7,16 @@
     {
       "x": 0,
       "y": 0,
-      "w": 4,
-      "h": 4,
+      "w": 32,
+      "h": 24,
+      "minW": 10,
+      "minH": 4,
       "i": "d593c44d-ccfd-4903-816e-215cfe96d2c7",
       "name": "CPU Usage",
       "queries": [
         {
-          "query": "SELECT non_negative_derivative(mean(\"cpu0_time\")) AS \"mean_cpu0_time\" FROM \":db:\".\":rp:\".\"openstack_server_diagnostics\"",
-          "label": "",
+          "query": "SELECT non_negative_derivative(mean(\"cpu_time\"), 1s) / 10000000 AS \"cpu_percent\" FROM \":db:\".\":rp:\".\"openstack_server_diagnostics\"",
+          "label": "CPU Usage",
           "groupbys": [],
           "wheres": []
         }
@@ -30,7 +32,7 @@
         },
         "y": {
           "bounds": ["", ""],
-          "label": "",
+          "label": "CPU Usage",
           "prefix": "",
           "suffix": "",
           "base": "10",
@@ -52,11 +54,13 @@
       "x": 0,
       "y": 5,
       "w": 8,
-      "h": 5,
-      "name": "Port Recevie Packet",
+      "h": 30,
+      "minW": 10,
+      "minH": 4,
+      "name": "Port Recevie",
       "queries": [
         {
-          "query": "SELECT mean(\"port_rx_packets\") AS \"mean_port_rx_packets\" FROM \":db:\".\":rp:\".\"openstack_server_diagnostics\"",
+          "query": "SELECT non_negative_derivative(mean(\"port_rx\")) AS \"port_rx\" FROM \":db:\".\":rp:\".\"openstack_server_diagnostics\"",
           "label": "",
           "groupbys": [],
           "wheres": []
@@ -73,7 +77,7 @@
         },
         "y": {
           "bounds": ["", ""],
-          "label": "port_rx_packets",
+          "label": "Port Recevie",
           "prefix": "",
           "suffix": "",
           "base": "10",
@@ -92,24 +96,38 @@
     },
     {
       "i": "dcfe8313-cad3-4f72-b8bd-775a84c63965",
-      "x": 8,
+      "x": 64,
       "y": 0,
-      "w": 4,
-      "h": 2,
-      "name": "Port Transmit Packets",
+      "w": 32,
+      "h": 12,
+      "minW": 10,
+      "minH": 4,
+      "name": "Port Transmit",
       "queries": [
         {
-          "query": "SELECT non_negative_derivative(max(\"port_tx_packets\")) AS \"mean_port_tx_packets\" FROM \":db:\".\":rp:\".\"openstack_server_diagnostics\""
+          "query": "SELECT non_negative_derivative(mean(\"port_tx\")) AS \"mean_port_tx\" FROM \":db:\".\":rp:\".\"openstack_server_diagnostics\""
         }
-      ]
+      ],
+      "axes": {
+        "y": {
+          "bounds": ["", ""],
+          "label": "Port Transmit",
+          "prefix": "",
+          "suffix": "",
+          "base": "10",
+          "scale": "linear"
+        }
+      }
     },
 
     {
       "i": "c79db90f-cec7-4593-b9f7-9b26face0c18",
       "x": 0,
       "y": 5,
-      "w": 5,
-      "h": 5,
+      "w": 40,
+      "h": 30,
+      "minW": 10,
+      "minH": 4,
       "name": "System - Memory Used",
       "queries": [
         {
@@ -155,7 +173,7 @@
         },
         "y": {
           "bounds": ["", ""],
-          "label": "",
+          "label": "Memory Used",
           "prefix": "",
           "suffix": "",
           "base": "2",
@@ -192,10 +210,12 @@
     },
     {
       "i": "06202665-2f85-4221-96a4-189ad0fb2627",
-      "x": 5,
+      "x": 40,
       "y": 5,
-      "w": 5,
-      "h": 5,
+      "w": 40,
+      "h": 30,
+      "minW": 10,
+      "minH": 4,
       "name": "Disk Read Request",
       "queries": [
         {
@@ -205,15 +225,26 @@
           "wheres": []
         }
       ],
-
+      "axes": {
+        "y": {
+          "bounds": ["", ""],
+          "label": "Disk Read Request",
+          "prefix": "",
+          "suffix": "",
+          "base": "2",
+          "scale": "linear"
+        }
+      },
       "type": "line"
     },
     {
       "i": "5023214a-f2d3-475c-a3d3-4ec1df62f94f",
-      "x": 8,
+      "x": 64,
       "y": 2,
-      "w": 4,
-      "h": 2,
+      "w": 32,
+      "h": 12,
+      "minW": 10,
+      "minH": 4,
       "name": "Disk Write Request",
       "queries": [
         {
@@ -223,7 +254,16 @@
           "wheres": []
         }
       ],
-
+      "axes": {
+        "y": {
+          "bounds": ["", ""],
+          "label": "Disk Write Request",
+          "prefix": "",
+          "suffix": "",
+          "base": "2",
+          "scale": "linear"
+        }
+      },
       "type": "line"
     }
   ]

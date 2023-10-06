@@ -5,6 +5,7 @@ import {
   CSPFileWriteParam,
   Instance,
 } from 'src/hosts/types/cloud'
+import {PreferenceType} from 'src/hosts/types/preferences'
 
 export {
   LayoutCell,
@@ -12,4 +13,5 @@ export {
   CSPAccessObject,
   CSPFileWriteParam,
   Instance,
+  PreferenceType,
 }

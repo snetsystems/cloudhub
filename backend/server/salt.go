@@ -203,6 +203,38 @@ func (s *Service) CreateFile(path string, contents []string) (int, []byte, error
 	return s.SaltHTTPPost(payload)
 }
 
+func (s *Service) CreateFileWithLocalClient(path string, contents []string, targetMinion string) (int, []byte, error) {
+
+	type kwarg struct {
+		Path string   `json:"path"`
+		Args []string `json:"args"`
+	}
+	type param struct {
+		Token  string `json:"token"`
+		Eauth  string `json:"eauth"`
+		Client string `json:"client"`
+		Fun    string `json:"fun"`
+		Target string `json:"tgt"`
+		Kwarg  kwarg  `json:"kwarg"`
+	}
+
+	body := &param{
+		Token:  s.AddonTokens["salt"],
+		Eauth:  "pam",
+		Fun:    "file.write",
+		Client: "local",
+		Target: targetMinion,
+		Kwarg: kwarg{
+			Path: path,
+			Args: contents,
+		},
+	}
+
+	payload, _ := json.Marshal(body)
+	return s.SaltHTTPPost(payload)
+
+}
+
 // RemoveFile removes the file using salt
 func (s *Service) RemoveFile(path string) (int, []byte, error) {
 	type kwarg struct {
@@ -226,6 +258,29 @@ func (s *Service) RemoveFile(path string) (int, []byte, error) {
 			Fun:  "file.remove",
 			Path: path,
 		},
+	}
+
+	payload, _ := json.Marshal(body)
+	return s.SaltHTTPPost(payload)
+}
+
+func (s *Service) RemoveFileWithLocalClient(path string, targetMinion string) (int, []byte, error) {
+	type param struct {
+		Token  string `json:"token"`
+		Eauth  string `json:"eauth"`
+		Client string `json:"client"`
+		Fun    string `json:"fun"`
+		Target string `json:"tgt"`
+		Arg    string `json:"arg"`
+	}
+
+	body := &param{
+		Token:  s.AddonTokens["salt"],
+		Eauth:  "pam",
+		Client: "local",
+		Fun:    "file.remove",
+		Target: targetMinion,
+		Arg:    path,
 	}
 
 	payload, _ := json.Marshal(body)
@@ -261,6 +316,30 @@ func (s *Service) DirectoryExists(path string) (int, []byte, error) {
 	return s.SaltHTTPPost(payload)
 }
 
+func (s *Service) DirectoryExistsWithLocalClient(path string, targetMinion string) (int, []byte, error) {
+
+	type param struct {
+		Token  string `json:"token"`
+		Eauth  string `json:"eauth"`
+		Client string `json:"client"`
+		Fun    string `json:"fun"`
+		Target string `json:"tgt"`
+		Arg    string `json:"arg"`
+	}
+
+	body := &param{
+		Token:  s.AddonTokens["salt"],
+		Eauth:  "pam",
+		Client: "local",
+		Fun:    "file.directory_exists",
+		Target: targetMinion,
+		Arg:    path,
+	}
+
+	payload, _ := json.Marshal(body)
+	return s.SaltHTTPPost(payload)
+}
+
 // Mkdir make the path to ensure that a directory is available
 func (s *Service) Mkdir(path string) (int, []byte, error) {
 	type kwarg struct {
@@ -290,6 +369,30 @@ func (s *Service) Mkdir(path string) (int, []byte, error) {
 	return s.SaltHTTPPost(payload)
 }
 
+func (s *Service) MkdirWithLocalClient(path string, targetMinion string) (int, []byte, error) {
+
+	type param struct {
+		Token  string `json:"token"`
+		Eauth  string `json:"eauth"`
+		Client string `json:"client"`
+		Fun    string `json:"fun"`
+		Target string `json:"tgt"`
+		Arg    string `json:"arg"`
+	}
+
+	body := &param{
+		Token:  s.AddonTokens["salt"],
+		Eauth:  "pam",
+		Client: "local",
+		Fun:    "file.mkdir",
+		Target: targetMinion,
+		Arg:    path,
+	}
+
+	payload, _ := json.Marshal(body)
+	return s.SaltHTTPPost(payload)
+}
+
 // DaemonReload reloads the config of the specified service with systemd
 func (s *Service) DaemonReload(name string) (int, []byte, error) {
 	type kwarg struct {
@@ -313,6 +416,48 @@ func (s *Service) DaemonReload(name string) (int, []byte, error) {
 			Fun:  "service.reload",
 			Name: name,
 		},
+	}
+
+	payload, _ := json.Marshal(body)
+	return s.SaltHTTPPost(payload)
+}
+
+func (s *Service) IsActiveMinionPingTest(targetMinion string) (int, []byte, error) {
+
+	type param struct {
+		Token  string `json:"token"`
+		Eauth  string `json:"eauth"`
+		Client string `json:"client"`
+		Fun    string `json:"fun"`
+		Target string `json:"tgt"`
+	}
+
+	body := &param{
+		Token:  s.AddonTokens["salt"],
+		Eauth:  "pam",
+		Client: "local",
+		Fun:    "test.ping",
+		Target: targetMinion,
+	}
+
+	payload, _ := json.Marshal(body)
+	return s.SaltHTTPPost(payload)
+}
+
+func (s *Service) GetWheelKeyListAll() (int, []byte, error) {
+
+	type param struct {
+		Token  string `json:"token"`
+		Eauth  string `json:"eauth"`
+		Client string `json:"client"`
+		Fun    string `json:"fun"`
+	}
+
+	body := &param{
+		Token:  s.AddonTokens["salt"],
+		Eauth:  "pam",
+		Client: "wheel",
+		Fun:    "key.list_all",
 	}
 
 	payload, _ := json.Marshal(body)

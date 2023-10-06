@@ -76,6 +76,11 @@ export const toolbarMenu: ToolbarMenu[] = [
     label: 'Save',
     icon: 'floppy-disk',
   },
+  {
+    actionName: 'preferences',
+    label: 'Preferences',
+    icon: 'wrench',
+  },
 ]
 
 export interface Menu {
@@ -90,7 +95,7 @@ export interface Menu {
   ipmi_pass?: string
   parent?: string
   data_navi?: string
-  status?: boolean
+  status?: string | boolean
   detected?: boolean
   icon?: string
 }
