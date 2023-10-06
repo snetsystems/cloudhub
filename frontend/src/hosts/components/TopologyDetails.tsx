@@ -1,12 +1,16 @@
+// Library
 import _ from 'lodash'
 import React, {PureComponent} from 'react'
+
+// Component
 import TopologyDetailsSection from 'src/hosts/components/TopologyDetailsSection'
 
-// component
+// Types
 import {AWSInstanceData} from 'src/hosts/types/cloud'
+import {HostDetailTable} from 'src/hosts/types/agent'
 
 interface Props {
-  selectInstanceData: AWSInstanceData['instanceID']
+  selectInstanceData: AWSInstanceData['instanceID'] | HostDetailTable
   instanceTypeModal?: () => void
 }
 

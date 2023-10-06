@@ -12,20 +12,25 @@ import {
   mxConnectionHandler as mxConnectionHandlerType,
   mxEventObject as mxEventObjectType,
   mxGraphExportObject,
+  mxMouseEvent,
 } from 'mxgraph'
 
 // Types
 import {Host, IpmiCell} from 'src/types'
+import {CloudServiceProvider, Instance} from 'src/hosts/types/cloud'
 
 // Utils
 import {
+  dataStatusValue,
   getContainerElement,
   getContainerTitle,
   getIsHasString,
+  getNotAvailableTitle,
   getParseHTML,
+  getSelectedHostKey,
+  getStatusTitle,
   getTimeSeriesHostIndicator,
 } from 'src/hosts/utils/topology'
-import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
 
 // Constants
 import {
@@ -36,9 +41,19 @@ import {
   eachNodeTypeAttrs,
   orderMenu,
 } from 'src/hosts/constants/tools'
-import {CELL_SIZE_WIDTH, CELL_SIZE_HEIGHT} from 'src/hosts/constants/topology'
+import {
+  CELL_SIZE_WIDTH,
+  CELL_SIZE_HEIGHT,
+  agentFilter,
+  TOOLTIP_TYPE,
+  objectKeyWithGatherType,
+  TOOLTIP_OFFSET_X,
+} from 'src/hosts/constants/topology'
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 import {COLLECTOR_SERVER} from 'src/shared/constants'
+import {PreferenceType} from 'src/hosts/types'
+
+import {notifyDecryptedBytesFailed} from 'src/shared/copy/notifications'
 
 const mx = mxgraph()
 const {
@@ -305,9 +320,15 @@ export const createTextField = function (
 
     form.addOption(
       input,
-      'TRUE',
-      true,
-      attribute.nodeValue === 'true' ? true : false
+      'From Agent ',
+      'agent',
+      attribute.nodeValue === 'agent' ? true : false
+    )
+    form.addOption(
+      input,
+      'From IPMI',
+      'ipmi',
+      attribute.nodeValue === 'ipmi' ? true : false
     )
     form.addOption(
       input,
@@ -334,6 +355,8 @@ export const createTextField = function (
     )
   }
 
+  input.setAttribute('data-attribute', attribute.nodeName)
+
   input.classList.add('input-sm')
   input.classList.add('form-control')
   input.disabled = isDisable
@@ -348,15 +371,14 @@ export const createTextField = function (
     }
   )
 
-  if (mxClient.IS_IE) {
-    mxEvent.addListener(input, 'focusout', () => {
-      applyHandler.bind(this)(graph, cell, attribute, input.value)
-    })
-  } else {
-    mxEvent.addListener(input, 'blur', () => {
-      applyHandler.bind(this)(graph, cell, attribute, input.value)
-    })
-  }
+  const updateEvent = mxClient.IS_IE ? 'focusout' : 'blur'
+
+  mxEvent.addListener(input, updateEvent, async () => {
+    applyHandler.bind(this)(graph, cell, attribute, input.value)
+
+    await this.getIpmiStatus(cell.getId())
+    this.getDetectedHostStatus(cell.getId())
+  })
 }
 export const applyHandler = function (
   graph: mxGraphType,
@@ -423,7 +445,7 @@ export const applyHandler = function (
         const childrenCell = cell.getChildAt(2)
 
         if (childrenCell.style.includes('status')) {
-          childrenCell.setVisible(newValue === 'true' ? true : false)
+          childrenCell.setVisible(newValue !== 'false' ? true : false)
         }
       }
 
@@ -531,7 +553,7 @@ export const openSensorData = function (data: Promise<any>) {
   this.statusRef.current.appendChild(statusWindow)
 }
 
-export const dragCell = (node: Menu) => (
+export const dragCell = (node: Menu, self: any) => (
   graph: mxGraphType,
   _event: any,
   _cell: mxCellType,
@@ -543,9 +565,8 @@ export const dragCell = (node: Menu) => (
   let v1 = null
 
   model.beginUpdate()
+  const cell = createHTMLValue(node, 'node')
   try {
-    const cell = createHTMLValue(node, 'node')
-
     v1 = graph.insertVertex(
       parent,
       null,
@@ -629,11 +650,18 @@ export const dragCell = (node: Menu) => (
 
     const statusBox = document.createElement('div')
     statusBox.classList.add('vertex')
-    statusBox.setAttribute('data-status', 'ture')
+    statusBox.setAttribute('data-status', 'agent')
     statusBox.setAttribute('btn-type', 'status')
     statusBox.style.display = 'flex'
     statusBox.style.alignItems = 'center'
     statusBox.style.justifyContent = 'center'
+
+    const tmpIcon = document.createElement('span')
+    tmpIcon.setAttribute('data-status-kind', 'temperature')
+    tmpIcon.style.marginRight = '5px'
+    tmpIcon.classList.add('time-series-status')
+
+    statusBox.appendChild(tmpIcon)
 
     const cpuIcon = document.createElement('span')
     cpuIcon.setAttribute('data-status-kind', 'cpu')
@@ -669,12 +697,19 @@ export const dragCell = (node: Menu) => (
 
     statusCell.geometry.offset = new mxPoint(-24, 6)
     statusCell.setConnectable(false)
-    statusCell.setVisible(_.get(node, 'status'))
+    const statusCheck = _.get(node, 'status') ? true : false
+    statusCell.setVisible(statusCheck)
   } finally {
     model.endUpdate()
   }
 
   graph.setSelectionCell(v1)
+
+  const dataType = cell.getAttribute('data-type')
+
+  if (dataType === 'Server') {
+    self.getDetectedHostStatus(v1.getId())
+  }
 }
 
 export const drawCellInGroup = (nodes: Menu[]) => (
@@ -776,10 +811,17 @@ export const drawCellInGroup = (nodes: Menu[]) => (
       const statusBox = document.createElement('div')
       statusBox.classList.add('vertex')
       statusBox.setAttribute('btn-type', 'status')
-      statusBox.setAttribute('data-status', 'ture')
+      statusBox.setAttribute('data-status', 'agent')
       statusBox.style.display = 'flex'
       statusBox.style.alignItems = 'center'
       statusBox.style.justifyContent = 'center'
+
+      const temperatureIcom = document.createElement('span')
+      temperatureIcom.setAttribute('data-status-kind', 'temperature')
+      temperatureIcom.style.marginRight = '5px'
+      temperatureIcom.classList.add('time-series-status')
+
+      statusBox.appendChild(temperatureIcom)
 
       const cpuIcon = document.createElement('span')
       cpuIcon.setAttribute('data-status-kind', 'cpu')
@@ -815,7 +857,8 @@ export const drawCellInGroup = (nodes: Menu[]) => (
 
       statusCell.geometry.offset = new mxPoint(-24, 6)
       statusCell.setConnectable(false)
-      statusCell.setVisible(_.get(node, 'status'))
+      const statusCheck = _.get(node, 'status') ? true : false
+      statusCell.setVisible(statusCheck)
 
       return vertex
     })
@@ -863,7 +906,7 @@ export const addSidebarButton = function ({
   const dragSource = mxUtils.makeDraggable(
     element,
     this.graph,
-    dragCell(node),
+    dragCell(node, this),
     dragElt,
     0,
     0,
@@ -1001,6 +1044,62 @@ export const onClickMxGraph = function (
         ipmiPass,
         cell
       )
+    }
+  }
+}
+
+function getAbsoluteGeometry(cell: mxCellType) {
+  let accumulatedX = 0
+  let accumulatedY = 0
+
+  const {x, y, width} = cell.getGeometry()
+
+  let currentCell = cell.getParent()
+  while (currentCell) {
+    const parentGeometry = currentCell.getGeometry()
+
+    if (parentGeometry) {
+      accumulatedX += parentGeometry.x
+      accumulatedY += parentGeometry.y
+    }
+    currentCell = currentCell.getParent()
+  }
+
+  return {x: accumulatedX + x, y: accumulatedY + y, width}
+}
+
+export const onMouseMovexGraph = function (
+  _graph: mxGraphType,
+  me: mxMouseEvent
+) {
+  const cell: mxCellType = me.getCell()
+  if (_.isEmpty(cell)) {
+    return
+  }
+  if (!_.isEmpty(cell) && cell.style === 'node') {
+    const focusedCell = getContainerElement(
+      this.graph.getModel().getValue(cell)
+    )
+    const dataType = focusedCell.getAttribute('data-type')
+
+    if (dataType === 'Server') {
+      const graphContainer = _graph.container
+
+      const containerRect = graphContainer.getBoundingClientRect()
+      const currentScale = _graph.view.getScale()
+      const {x, y, width} = getAbsoluteGeometry(cell)
+      const {x: translateX, y: translateY} = _graph.view.getTranslate()
+
+      const scaledX = (x + translateX) * currentScale
+      const scaledY = (y + translateY) * currentScale
+      const scaledWidth = width * currentScale
+      const scaleOffset = TOOLTIP_OFFSET_X
+
+      const geometry = {
+        x: scaledX + containerRect.x + scaledWidth + scaleOffset,
+        y: scaledY + containerRect.y,
+      }
+      return {cell, geometry}
     }
   }
 }
@@ -1178,22 +1277,28 @@ export const filteredIpmiPowerStatus = function (cells: mxCellType[]) {
           !_.isEmpty(ipmiUser) &&
           !_.isEmpty(ipmiPass)
         ) {
-          const decryptedBytes = CryptoJS.AES.decrypt(
-            ipmiPass,
-            this.secretKey.url
-          )
-          const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
+          try {
+            const decryptedBytes = CryptoJS.AES.decrypt(
+              ipmiPass,
+              this.secretKey.url
+            )
+            const originalPass = decryptedBytes.toString(CryptoJS.enc.Utf8)
 
-          const ipmiCell: IpmiCell = {
-            target: ipmiTarget,
-            host: ipmiHost,
-            user: ipmiUser,
-            pass: originalPass,
-            powerStatus: '',
-            cell: cell,
+            const ipmiCell: IpmiCell = {
+              target: ipmiTarget,
+              host: ipmiHost,
+              user: ipmiUser,
+              pass: originalPass,
+              powerStatus: '',
+              cell: cell,
+            }
+
+            ipmiCells = [...ipmiCells, ipmiCell]
+          } catch (error) {
+            this.props.notify(
+              notifyDecryptedBytesFailed(`incorrect ${ipmiHost} IPMI Password`)
+            )
           }
-
-          ipmiCells = [...ipmiCells, ipmiCell]
         }
       }
     }
@@ -1248,13 +1353,83 @@ export const ipmiPowerIndicator = function (ipmiCellsStatus: IpmiCell[]) {
   }
 }
 
+const notAvailableData = (childElement: any) => {
+  childElement.removeAttribute('data-status-value')
+  childElement.removeAttribute('data-status-value')
+  childElement.removeAttribute('class')
+  childElement.classList.add('time-series-status')
+}
+
+const renderHostState = (
+  dataGatherType: string,
+  statusKind: string,
+  childElement: any,
+  findHost: Host,
+  selectedTemperatureValue: string = 'type:inlet,active:1,min:15,max:30'
+) => {
+  const selectedTmpType = selectedTemperatureType(selectedTemperatureValue)
+
+  const findKey = getSelectedHostKey({
+    dataGatherType,
+    statusKind,
+    selectedTmpType,
+  })
+
+  const statusTitle = getStatusTitle({dataGatherType, findKey})
+
+  if (!statusTitle) {
+    notAvailableData(childElement)
+    return
+  }
+  const hostValue = findHost[findKey]
+
+  const statusValue = dataStatusValue(
+    statusKind,
+    hostValue,
+    findHost,
+    dataGatherType
+  )
+
+  childElement.setAttribute('data-status-value', _.toString(hostValue))
+  childElement.removeAttribute('class')
+  childElement.classList.add(
+    'time-series-status',
+    getTimeSeriesHostIndicator(
+      findHost,
+      findKey,
+      statusKind,
+      statusValue,
+      selectedTemperatureValue
+    )
+  )
+}
+
+export const selectedTemperatureType = (
+  preferenceTemperatureValue: string
+): PreferenceType['temperatureType'] => {
+  const selectedTemperatureType = preferenceTemperatureValue.match(
+    /type:(\w+),/
+  )
+
+  return selectedTemperatureType[1] as PreferenceType['temperatureType']
+}
+export const getFocusedCell = (cells: mxCellType[], focusedCell: string) => {
+  const findCells = cells.filter(
+    cell => cell.getStyle() === 'node' && cell.getId() === focusedCell
+  )
+
+  return findCells
+}
+
 export const detectedHostsStatus = function (
   cells: mxCellType[],
-  hostsObject: {[x: string]: Host}
+  hostsObject: {[x: string]: Host},
+  selectedTemperatureValue: string = 'type:inlet,active:1,min:15,max:30'
 ) {
   if (!this.graph) return
-
+  const {cpu, memory, disk, temperature} = TOOLTIP_TYPE
   const model = this.graph.getModel()
+  const selectedTmpType = selectedTemperatureType(selectedTemperatureValue)
 
   model.beginUpdate()
   try {
@@ -1273,6 +1448,10 @@ export const detectedHostsStatus = function (
               const childCellElement = getParseHTML(
                 childCell.value
               ).querySelector('div')
+              const dataGatherType = containerElement.getAttribute(
+                'data-status'
+              )
+
               if (childCellElement.getAttribute('data-status')) {
                 const statusElement = childCellElement.querySelectorAll(
                   'span[data-status-kind]'
@@ -1282,64 +1461,14 @@ export const detectedHostsStatus = function (
                   const statusKind = childElement.getAttribute(
                     'data-status-kind'
                   )
-                  if (statusKind === 'cpu') {
-                    childElement.setAttribute(
-                      'data-status-value',
-                      _.toString(findHost.cpu)
-                    )
-                    childElement.setAttribute(
-                      'title',
-                      `CPU : ${_.toString(
-                        fixedDecimalPercentage(
-                          parseFloat(_.toString(findHost.cpu)),
-                          2
-                        )
-                      )}`
-                    )
-                    childElement.removeAttribute('class')
-                    childElement.classList.add(
-                      'time-series-status',
-                      getTimeSeriesHostIndicator(findHost, 'cpu')
-                    )
-                  } else if (statusKind === 'memory') {
-                    childElement.setAttribute(
-                      'data-status-value',
-                      _.toString(findHost.memory)
-                    )
-                    childElement.setAttribute(
-                      'title',
-                      `Memory : ${_.toString(
-                        fixedDecimalPercentage(
-                          parseFloat(_.toString(findHost.memory)),
-                          2
-                        )
-                      )}`
-                    )
-                    childElement.removeAttribute('class')
-                    childElement.classList.add(
-                      'time-series-status',
-                      getTimeSeriesHostIndicator(findHost, 'memory')
-                    )
-                  } else if (statusKind === 'disk') {
-                    childElement.setAttribute(
-                      'data-status-value',
-                      _.toString(findHost.disk)
-                    )
-                    childElement.setAttribute(
-                      'title',
-                      `Disk : ${_.toString(
-                        fixedDecimalPercentage(
-                          parseFloat(_.toString(findHost.disk)),
-                          2
-                        )
-                      )}`
-                    )
-                    childElement.removeAttribute('class')
-                    childElement.classList.add(
-                      'time-series-status',
-                      getTimeSeriesHostIndicator(findHost, 'disk')
-                    )
-                  }
+
+                  renderHostState(
+                    dataGatherType,
+                    statusKind,
+                    childElement,
+                    findHost,
+                    selectedTemperatureValue
+                  )
                 })
 
                 childCell.setValue(childCellElement.outerHTML)
@@ -1363,12 +1492,21 @@ export const detectedHostsStatus = function (
                 const statusKind = childElement.getAttribute('data-status-kind')
 
                 if (
-                  statusKind === 'cpu' ||
-                  statusKind === 'disk' ||
-                  statusKind === 'memory'
+                  statusKind === cpu ||
+                  statusKind === disk ||
+                  statusKind === memory ||
+                  statusKind === temperature
                 ) {
+                  const notAvailableTitle = getNotAvailableTitle({
+                    statusKind,
+                    selectedTmpType,
+                  })
+
                   childElement.removeAttribute('data-status-value')
-                  childElement.removeAttribute('title')
+                  childElement.setAttribute(
+                    'title',
+                    `${notAvailableTitle} : N/A`
+                  )
                   childElement.removeAttribute('class')
                   childElement.classList.add('time-series-status')
                 }
@@ -1386,4 +1524,73 @@ export const detectedHostsStatus = function (
   }
 
   return null
+}
+
+export const getFromOptions = (focusedInstance: Instance) => {
+  switch (_.get(focusedInstance, 'provider')) {
+    case CloudServiceProvider.AWS: {
+      return agentFilter[CloudServiceProvider.AWS]
+    }
+
+    case CloudServiceProvider.GCP: {
+      return agentFilter[CloudServiceProvider.GCP]
+    }
+    default: {
+      return ['Agent', 'IPMI']
+    }
+  }
+}
+
+export const mouseOverTooltipStatus = (
+  hostsObject: {[x: string]: Host},
+  hostName: string,
+  unsavedPreferenceTemperatureValues: string[],
+  dataGatherType: string
+) => {
+  const focusedHost = _.find(hostsObject, host => host.name === hostName)
+
+  const selectedTemperatureValue = _.find(
+    unsavedPreferenceTemperatureValues,
+    temperatureValue => temperatureValue.includes('active:1')
+  )
+  const selectedTmpType = selectedTemperatureType(selectedTemperatureValue)
+
+  const findKeys = _.map(TOOLTIP_TYPE, statusKind =>
+    getSelectedHostKey({
+      dataGatherType,
+      statusKind,
+      selectedTmpType,
+    })
+  )
+  const tooltipStatus = _.reduce(
+    findKeys,
+    (result, findKey) => {
+      const statusKind = objectKeyWithGatherType[dataGatherType][findKey]
+      const value = dataStatusValue(
+        statusKind,
+        focusedHost?.[findKey],
+        focusedHost,
+        dataGatherType
+      )
+      result[statusKind] = {
+        title:
+          getStatusTitle({dataGatherType, findKey}) ??
+          getNotAvailableTitle({
+            statusKind,
+            selectedTmpType,
+          }),
+        status: getTimeSeriesHostIndicator(
+          focusedHost,
+          findKey,
+          statusKind,
+          value,
+          selectedTemperatureValue
+        ),
+        value,
+      }
+      return result
+    },
+    {}
+  )
+  return tooltipStatus
 }

@@ -549,6 +549,18 @@
     &.UsageIndacator--danger {
       color: red;
     }
+
+    &.UsageIndacator-ipmi--caution {
+      color: $c-pineapple;
+    }
+
+    &.UsageIndacator-ipmi--warning {
+      color: $c-pineapple;
+    }
+
+    &.UsageIndacator-ipmi--danger {
+      color: red;
+    }
   }
 
   .UsageIndacator {
@@ -558,15 +570,39 @@
     margin-top: 2px;
 
     &.UsageIndacator--caution {
-      background: $s-oragne2;
+      background: -webkit-linear-gradient(left, #2de5a5 8%, $c-pineapple 100%);
     }
 
     &.UsageIndacator--warning {
-      background: $c-topaz;
+      background: -webkit-linear-gradient(
+        left,
+        $c-pineapple 0%,
+        $c-dreamsicle 100%
+      );
+    }
+
+    &.UsageIndacator-ipmi {
+      background: -webkit-linear-gradient(left, $c-laser 0%, #2de5a5 100%);
     }
 
     &.UsageIndacator--danger {
-      background: red;
+      background: -webkit-linear-gradient(left, $c-dreamsicle, red 100%);
+    }
+
+    &.UsageIndacator-ipmi--caution {
+      background: -webkit-linear-gradient(left, #2de5a5 0%, $c-pineapple 100%);
+    }
+
+    &.UsageIndacator-ipmi--warning {
+      background: -webkit-linear-gradient(
+        left,
+        $c-pineapple 0%,
+        $c-dreamsicle 100%
+      );
+    }
+
+    &.UsageIndacator-ipmi--danger {
+      background: -webkit-linear-gradient(left, $c-dreamsicle, red 100%);
     }
   }
 }

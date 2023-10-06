@@ -5,6 +5,10 @@ import CryptoJS from 'crypto-js'
 // types
 import {CloudServiceProvider, CSPAccessObject, Instance} from 'src/hosts/types'
 
+// apis
+import {getLocalGrainsItems} from 'src/shared/apis/saltStack'
+import {HostInfoWithSalt} from 'src/hosts/types/agent'
+
 const detailsValueChecker = (
   value: string | number | boolean = null
 ): string | number | boolean | '-' => {
@@ -590,4 +594,92 @@ export const isGCPRequiredCheck = (
   }
 
   return null
+}
+
+export const getAgentDetails = async (
+  pUrl: string,
+  pToken: string,
+  pHostanme: string
+) => {
+  const res = await getLocalGrainsItems(pUrl, pToken, pHostanme)
+  const host = res?.data?.return[0][pHostanme] || {}
+  const {
+    os,
+    os_family,
+    osrelease,
+    kernel,
+    ip_interfaces,
+    ip4_gw,
+    ip6_gw,
+    dns,
+    locale_info,
+    biosversion,
+    mem_total,
+    swap_total,
+    gpus,
+    cpuarch,
+    cpu_model,
+    selinux,
+    init,
+    biosreleasedate,
+    manufacturer,
+    path,
+    localhost,
+  }: HostInfoWithSalt = host
+
+  if (_.isEmpty(host)) {
+    return host
+  }
+
+  const hostInfo = {
+    System: {
+      name: 'host',
+      role: 'table',
+      data: {
+        os,
+        os_family,
+        osrelease,
+        kernel,
+        init,
+        biosreleasedate,
+        path,
+        localhost,
+      },
+    },
+    Hardware: {
+      name: 'host',
+      role: 'table',
+      data: {
+        biosversion,
+        mem_total,
+        swap_total,
+        gpus,
+        cpuarch,
+        cpu_model,
+        manufacturer,
+      },
+    },
+    Network: {
+      name: 'host',
+      role: 'table',
+      data: {dns, ip_interfaces, ip4_gw, ip6_gw},
+    },
+    Locale: {
+      name: 'host',
+      role: 'table',
+      data: {
+        defaultlanguage: locale_info.defaultlanguage,
+        defaultencoding: locale_info.defaultencoding,
+        detectedencoding: locale_info.detectedencoding,
+        timezone: locale_info.timezone,
+      },
+    },
+
+    Security: {
+      name: 'host',
+      role: 'table',
+      data: {selinux},
+    },
+  }
+  return hostInfo
 }

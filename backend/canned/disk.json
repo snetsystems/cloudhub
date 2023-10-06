@@ -19,6 +19,12 @@
           "label": "% used",
           "groupbys": ["\"path\""],
           "wheres": []
+        },
+        {
+          "query": "SELECT 100 - mean(\"Percent_Free_Space\") AS \"Percent_Free_Space\" FROM \":db:\".\":rp:\".\"win_disk\"",
+          "label": "% used",
+          "groupbys": ["\"instance\""],
+          "wheres": []
         }
       ]
     }

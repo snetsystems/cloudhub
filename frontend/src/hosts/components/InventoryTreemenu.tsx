@@ -280,7 +280,7 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
             data_navi: `${el.getAttribute(
               'data-parent'
             )}.nodes.${el.getAttribute('data-label')}.nodes.${instanseId}`,
-            status: true,
+            status: 'agent',
             detected: true,
             icon: 'Server',
           }
@@ -312,7 +312,7 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
           name: value,
           type: 'Server',
           data_navi: dataNavi,
-          status: true,
+          status: 'agent',
           detected: true,
           icon: 'Server',
         }
@@ -320,7 +320,7 @@ class InventoryTreemenu extends React.Component<TreeMenuProps, TreeMenuState> {
         let ds = mxUtils.makeDraggable(
           el,
           this.props.graph,
-          dragCell(node),
+          dragCell(node, this),
           dragElt,
           0,
           0,

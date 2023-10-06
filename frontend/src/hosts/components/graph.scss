@@ -99,6 +99,21 @@
     &.UsageIndacator {
       background: #4ed8a0;
     }
+    &.UsageIndacator-ipmi {
+      background: $c-laser;
+    }
+
+    &.UsageIndacator-ipmi--caution {
+      background: #ffb94a;
+    }
+
+    &.UsageIndacator-ipmi--warning {
+      background: #ff8564;
+    }
+
+    &.UsageIndacator-ipmi--danger {
+      background: red;
+    }
 
     &.UsageIndacator--caution {
       background: #ffb94a;
