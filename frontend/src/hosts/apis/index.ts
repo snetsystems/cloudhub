@@ -109,8 +109,8 @@ export const getCpuAndLoadForHosts = async (
       SELECT non_negative_derivative(mean("System_Up_Time")) AS winDeltaUptime FROM \":db:\".\":rp:\".\"win_system\" WHERE time > now() - ${telegrafSystemInterval} * 10 GROUP BY host, time(${telegrafSystemInterval}) fill(0);
       SHOW TAG VALUES WITH KEY = "host" WHERE TIME > now() - 10m;
       SELECT mean("used_percent") AS "memUsed" FROM \":db:\".\":rp:\".\"mem\" WHERE time > now() - 10m GROUP BY host;
-      SELECT max("used_percent") AS "diskUsed" , "path" AS "diskPath" FROM \":db:\".\":rp:\".\"disk\" WHERE time > now() - 10m  GROUP BY  time(2m), host FILL(null) ORDER BY DESC LIMIT 1;
-      SELECT 100 - max("Percent_Free_Space") AS "diskUsed" , "instance" AS "diskPath" FROM \":db:\".\":rp:\".\"win_disk\" WHERE time > now() - 10m GROUP BY time(2m), host FILL(null) ORDER BY DESC LIMIT 1;
+      SELECT max("diskUsed") AS "diskUsed", "path" AS "diskPath" FROM (SELECT last("used_percent") AS "diskUsed" FROM \":db:\".\":rp:\".\"disk\" WHERE time > now() - 10m GROUP BY host, path) GROUP BY host;
+      SELECT max("winDiskUsed") AS "winDiskUsed", instance FROM (SELECT 100 - last("Percent_Free_Space") AS "winDiskUsed" FROM \":db:\".\":rp:\".\"win_disk\" WHERE time > now() - 10m GROUP BY host, instance) GROUP BY host;
       `,
     tempVars
   )
@@ -1260,8 +1260,8 @@ export const getCpuAndLoadForInstances = async (
     `SELECT mean("usage_user") FROM \":db:\".\":rp:\".\"cpu\" WHERE "cpu" = 'cpu-total' AND time > now() - 10m AND csp != null AND csp = '${cspProvider}' GROUP BY host;
     SELECT mean("Percent_Processor_Time") FROM \":db:\".\":rp:\".\"win_cpu\" WHERE time > now() - 10m  AND csp != null AND csp = '${cspProvider}'  GROUP BY host;
     SELECT mean("used_percent") AS "memUsed" FROM \":db:\".\":rp:\".\"mem\" WHERE time > now() - 10m AND csp != null AND csp = '${cspProvider}'  GROUP BY host;
-    SELECT max("diskUsed") AS "diskUsed" FROM (SELECT mean("used_percent") AS "diskUsed" FROM \":db:\".\":rp:\".\"disk\" WHERE time > now() - 10m AND csp != null AND csp = '${cspProvider}' GROUP BY host, path) GROUP BY host;
-    SELECT max("winDiskUsed") AS "winDiskUsed" FROM (SELECT 100 - mean("Percent_Free_Space") AS "winDiskUsed" FROM \":db:\".\":rp:\".\"win_disk\" WHERE time > now() - 10m AND csp != null AND csp = '${cspProvider}'  GROUP BY host) group by host;
+    SELECT max("diskUsed") AS "diskUsed" FROM (SELECT last("used_percent") AS "diskUsed" FROM \":db:\".\":rp:\".\"disk\" WHERE time > now() - 10m AND csp != null AND csp = '${cspProvider}' GROUP BY host, path) GROUP BY host;
+    SELECT max("winDiskUsed") AS "winDiskUsed" FROM (SELECT 100 - last("Percent_Free_Space") AS "winDiskUsed" FROM \":db:\".\":rp:\".\"win_disk\" WHERE time > now() - 10m AND csp != null AND csp = '${cspProvider}'  GROUP BY host, instance ) group by host;
     `,
     tempVars
   )
@@ -1547,15 +1547,15 @@ export const getHostsInfoWithIpmi = async (
     `SELECT mean("value") AS "ipmiCpu" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "name" = 'cpu_usage' AND time > now() - 10m GROUP BY hostname fill(null);
      SELECT mean("value") AS "ipmiMemory" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "name" = 'mem_usage' AND time > now() - 10m GROUP BY hostname;
      SHOW TAG VALUES FROM \":db:\".\":rp:\".\"ipmi_sensor\" WITH KEY = "hostname" WHERE TIME > now() - 10m;
-     SELECT max("value") AS "inlet" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE time > now() - 5m AND ("name" =~ ${new RegExp(
+     SELECT max("inlet") AS "inlet" FROM ( SELECT last("value") AS "inlet" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE time > now() - 10m AND ("name" =~ ${new RegExp(
        /inlet_temp|mb_cpu_in_temp|temp_mb_inlet/
-     )}) GROUP BY time(2m), hostname FILL(null) ORDER BY DESC LIMIT 1;
-     SELECT max("value") AS "inside", "name" as "cpu_count" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE time > now() - 5m AND ("name" =~ ${new RegExp(
+     )}) GROUP BY hostname ) GROUP BY hostname;
+     SELECT max("inside") AS "inside", "name" as "cpu_count" FROM ( SELECT last("value") AS "inside"  FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE time > now() - 10m AND ("name" =~ ${new RegExp(
        /cpu\d+_temp|cpu_temp_\d+|cpu_dimmg\d+_temp|temp_cpu\d+/
-     )}) GROUP BY time(2m), hostname FILL(null) ORDER BY DESC LIMIT 1;
-     SELECT max("value") AS "outlet" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE time > now() - 5m AND ("name" =~ ${new RegExp(
+     )}) GROUP BY hostname, "name" ) GROUP BY hostname;
+     SELECT max("outlet") AS "outlet" FROM ( SELECT last("value") AS "outlet" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE time > now() - 10m AND ("name" =~ ${new RegExp(
        /exhaust_temp|outlet_temp|mb_cpu_out_temp|mb_cpu_out_temp/
-     )}) GROUP BY time(2m), hostname FILL(null) ORDER BY DESC LIMIT 1;
+     )}) GROUP BY hostname ) GROUP BY hostname;
      `,
     tempVars
   )
