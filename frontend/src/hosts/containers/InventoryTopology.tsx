@@ -3671,7 +3671,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
   private setTopologySetting = () => {
     const {auth} = this.props
 
-    const {zoom, translate} = getLocalStorage('inventoryTopologySetting')[
+    const {zoom, translate} = getLocalStorage('inventoryTopologySetting')?.[
       auth.me.currentOrganization.name
     ] ?? {
       zoom: 1,
