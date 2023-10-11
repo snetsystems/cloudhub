@@ -58,7 +58,7 @@ export default function TopologyTooltip({targetPosition, tooltipNode}: Props) {
                     <>
                       {temperature.title}
                       <span className="tooltip-cpu-count">
-                        {`#${extraTag.cpuCount ?? 0}`}
+                        {`#${extraTag.cpuCount ?? 1}`}
                       </span>
                     </>
                   ) : (
@@ -118,7 +118,7 @@ export default function TopologyTooltip({targetPosition, tooltipNode}: Props) {
                   width={TABLE_ROW_IN_BODY}
                 ></TableBodyRowItem>
               </div>
-              {extraTag?.diskPath && (
+              {dataType.toUpperCase() !== 'IPMI' && extraTag?.diskPath && (
                 <div className={'hosts-table--tr'}>
                   <span className="tooltip-disk-path">
                     Disk path: {extraTag?.diskPath}

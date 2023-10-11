@@ -1554,7 +1554,7 @@ export const getHostsInfoWithIpmi = async (
        /cpu\d+_temp|cpu_temp_\d+|cpu_dimmg\d+_temp|temp_cpu\d+/
      )}) GROUP BY hostname, "name" ) GROUP BY hostname;
      SELECT max("outlet") AS "outlet" FROM ( SELECT last("value") AS "outlet" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "hostname" != '' AND time > now() - 10m AND ("name" =~ ${new RegExp(
-       /exhaust_temp|outlet_temp|mb_cpu_out_temp|mb_cpu_out_temp/
+       /exhaust_temp|outlet_temp|mb_cpu_out_temp|temp_mb_outlet/
      )}) GROUP BY hostname ) GROUP BY hostname;
      `,
     tempVars

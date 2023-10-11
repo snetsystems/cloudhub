@@ -522,7 +522,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
       isTooltipActiveHost: null,
       targetPosition: {width: 0, top: 0, right: 0, left: 0},
       tooltipNode: {},
-      isMouseUp: false,
+      isMouseUp: true,
     }
   }
 
