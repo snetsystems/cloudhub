@@ -25,8 +25,8 @@ export const temperatureMaxValue = {
 }
 
 export const defaultPreferencesTemperature = [
-  'type:inlet,active:1,min:15,max:30',
-  'type:inside,active:0,min:38,max:55',
+  'type:inlet,active:0,min:15,max:30',
+  'type:inside,active:1,min:38,max:55',
   'type:outlet,active:0,min:30,max:50',
 ]
 

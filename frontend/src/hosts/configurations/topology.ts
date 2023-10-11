@@ -1365,7 +1365,7 @@ const renderHostState = (
   statusKind: string,
   childElement: any,
   findHost: Host,
-  selectedTemperatureValue: string = 'type:inlet,active:1,min:15,max:30'
+  selectedTemperatureValue: string = 'type:inside,active:1,min:38,max:55'
 ) => {
   const selectedTmpType = selectedTemperatureType(selectedTemperatureValue)
 
@@ -1424,7 +1424,7 @@ export const getFocusedCell = (cells: mxCellType[], focusedCell: string) => {
 export const detectedHostsStatus = function (
   cells: mxCellType[],
   hostsObject: {[x: string]: Host},
-  selectedTemperatureValue: string = 'type:inlet,active:1,min:15,max:30'
+  selectedTemperatureValue: string = 'type:inside,active:1,min:38,max:55'
 ) {
   if (!this.graph) return
   const {cpu, memory, disk, temperature} = TOOLTIP_TYPE
