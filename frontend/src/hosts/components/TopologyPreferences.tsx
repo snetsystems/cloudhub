@@ -140,47 +140,6 @@ class TopologyPreferences extends PureComponent<Props> {
         </div>
         <div className="preferences-td">
           <TopologyRadioButton
-            id="temp_inlet"
-            checked={selectedTemperatureType === 'inlet'}
-            name="toppologyPreference"
-            titleText="Inlet"
-            onChange={() => {
-              onChangeRadioButton('inlet')
-            }}
-          />
-          <div className="temperature-type">Inlet</div>
-          <InputNumberClickToEdit
-            disabled={selectedTemperatureType !== 'inlet'}
-            wrapperClass="fancytable--td temperature-range"
-            placeholder="min"
-            value={this.getTemperatureValue('inlet', 'min')}
-            onChange={(value: string) => {
-              onChangeTemperatureInput('inlet', 'min', value)
-            }}
-          />
-          <span className="temperature-blank"> </span>
-          <InputNumberClickToEdit
-            disabled={selectedTemperatureType !== 'inlet'}
-            wrapperClass="fancytable--td temperature-range"
-            placeholder="max"
-            value={this.getTemperatureValue('inlet', 'max')}
-            onChange={(value: string) => {
-              onChangeTemperatureInput('inlet', 'max', value)
-            }}
-          />
-          <Button
-            color={this.getResetColorClassName('inlet')}
-            customClass={this.getResetButtonClassName('inlet')}
-            status={this.getResetStatus('inlet')}
-            text="Reset"
-            titleText="Reset"
-            onClick={() => {
-              onClickTemperatureResetButton('inlet')
-            }}
-          />
-        </div>
-        <div className="preferences-td">
-          <TopologyRadioButton
             id="temp_inside"
             checked={selectedTemperatureType === 'inside'}
             name="toppologyPreference"
@@ -217,6 +176,47 @@ class TopologyPreferences extends PureComponent<Props> {
             titleText="Reset"
             onClick={() => {
               onClickTemperatureResetButton('inside')
+            }}
+          />
+        </div>
+        <div className="preferences-td">
+          <TopologyRadioButton
+            id="temp_inlet"
+            checked={selectedTemperatureType === 'inlet'}
+            name="toppologyPreference"
+            titleText="Inlet"
+            onChange={() => {
+              onChangeRadioButton('inlet')
+            }}
+          />
+          <div className="temperature-type">Inlet</div>
+          <InputNumberClickToEdit
+            disabled={selectedTemperatureType !== 'inlet'}
+            wrapperClass="fancytable--td temperature-range"
+            placeholder="min"
+            value={this.getTemperatureValue('inlet', 'min')}
+            onChange={(value: string) => {
+              onChangeTemperatureInput('inlet', 'min', value)
+            }}
+          />
+          <span className="temperature-blank"> </span>
+          <InputNumberClickToEdit
+            disabled={selectedTemperatureType !== 'inlet'}
+            wrapperClass="fancytable--td temperature-range"
+            placeholder="max"
+            value={this.getTemperatureValue('inlet', 'max')}
+            onChange={(value: string) => {
+              onChangeTemperatureInput('inlet', 'max', value)
+            }}
+          />
+          <Button
+            color={this.getResetColorClassName('inlet')}
+            customClass={this.getResetButtonClassName('inlet')}
+            status={this.getResetStatus('inlet')}
+            text="Reset"
+            titleText="Reset"
+            onClick={() => {
+              onClickTemperatureResetButton('inlet')
             }}
           />
         </div>
