@@ -45,7 +45,7 @@ export type HostInfoWithSalt = {
   ip6_interfaces: {
     [x in string]: string[]
   }
-  gpus: string[]
+  gpus: string[] | object[]
   biosversion: string
   selinux: {
     [x in string]: string[] | string | boolean
@@ -61,7 +61,7 @@ export type HostDetailTable = {
     name: string
     role: string
     data: {
-      [key: string]: object | string | string[] | boolean | number
+      [key: string]: object | string | string[] | boolean | number | object[]
     }
   }
 }
