@@ -3,49 +3,22 @@ import React, {PureComponent} from 'react'
 
 interface Props {
   label: string
-  contents: {
-    [key: string]: {[info: string]: number | string | JSX.Element}
-  }
+  contents: any
 }
-
 interface State {}
-
 class TopologyHostDetailTable extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props)
   }
 
   public render() {
-    const {label} = this.props
+    const {label, contents} = this.props
 
     return (
       <div className={'section-item-detail-host'}>
         <div className={'util-label'} style={{fontSize: '13px'}}>
           {label}
         </div>
-        {this.renderContents}
-      </div>
-    )
-  }
-
-  renderValue = (value: any) => {
-    if (Array.isArray(value)) {
-      return value.map((v, index) => (
-        <div key={index} style={{lineHeight: 1.2}}>
-          {this.renderValue(v)}
-        </div>
-      ))
-    } else if (typeof value === 'boolean') {
-      return <span>{value.toString()}</span>
-    } else {
-      return <span>{value}</span>
-    }
-  }
-  private get renderContents() {
-    const {contents} = this.props
-
-    if (typeof contents === 'object' && !Array.isArray(contents)) {
-      return (
         <div
           className={'section-item-contents'}
           style={{
@@ -53,29 +26,47 @@ class TopologyHostDetailTable extends PureComponent<Props, State> {
             marginLeft: 4,
           }}
         >
-          {Object.keys(contents).map(key => (
-            <div style={{display: 'flex', marginBottom: 5}} key={key}>
+          {this.renderValue(contents)}
+        </div>
+      </div>
+    )
+  }
+
+  renderValue = (
+    value: any,
+    depth: number = 0,
+    maxDepth: number = 5
+  ): JSX.Element => {
+    if (depth >= maxDepth) {
+      return <span>Maximum Display Depth Exceeded</span>
+    }
+    if (Array.isArray(value)) {
+      return (
+        <div>
+          {value.map((v, index) => (
+            <div key={index} style={{lineHeight: 1.2}}>
+              {this.renderValue(v, depth + 1)}
+            </div>
+          ))}
+        </div>
+      )
+    } else if (typeof value === 'object') {
+      return (
+        <div>
+          {Object.keys(value).map(key => (
+            <div key={key} style={{display: 'flex', marginBottom: 5}}>
               <strong style={{fontSize: 12}}>{key}:</strong>
               <div style={{marginLeft: 6}}>
-                {this.renderValue(contents[key])}
+                {this.renderValue(value[key], depth + 1)}
               </div>
             </div>
           ))}
         </div>
       )
+    } else if (typeof value === 'boolean') {
+      return <span>{value.toString()}</span>
     } else {
-      return (
-        <div
-          className={'section-item-contents'}
-          style={{
-            flex: 3,
-            fontSize: '11px',
-            marginLeft: 4,
-          }}
-        >
-          {contents}
-        </div>
-      )
+      return <span>{value}</span>
     }
   }
 }
