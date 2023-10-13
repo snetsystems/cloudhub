@@ -204,7 +204,7 @@ export const getCpuAndLoadForHosts = async (
 
   winDiskUsadSeries.forEach(s => {
     const meanIndex = s.columns.findIndex(col => col === 'winDiskUsed')
-    const diskPathIndex = s.columns.findIndex(col => col === 'diskPath')
+    const diskPathIndex = s.columns.findIndex(col => col === 'instance')
     hosts[s.tags.host].disk =
       Math.round(Number(s.values[0][meanIndex]) * precision) / precision
     hosts[s.tags.host].extraTag = {diskPath: s.values[0][diskPathIndex]}
