@@ -32,14 +32,7 @@ class TopologyHostDetailTable extends PureComponent<Props, State> {
     )
   }
 
-  renderValue = (
-    value: any,
-    depth: number = 0,
-    maxDepth: number = 5
-  ): JSX.Element => {
-    if (depth >= maxDepth) {
-      return <span>Maximum Display Depth Exceeded</span>
-    }
+  renderValue = (value: any, depth: number = 0): JSX.Element => {
     if (Array.isArray(value)) {
       return (
         <div>
