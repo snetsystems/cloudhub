@@ -13,6 +13,7 @@ import {TopologyTooltipIndacator} from 'src/hosts/components/TopologyTooltipInda
 // constatns
 import {
   inletText,
+  TOOLTIP_WIDTH,
   TOPOLOGY_TOOLTIP_TABLE_SIZING,
 } from 'src/hosts/constants/topology'
 
@@ -32,7 +33,7 @@ export default function TopologyTooltip({targetPosition, tooltipNode}: Props) {
     <div
       style={{
         position: 'fixed',
-        width: '240px',
+        width: `${TOOLTIP_WIDTH}px`,
         top: targetPosition.top,
         left: targetPosition.left,
       }}
