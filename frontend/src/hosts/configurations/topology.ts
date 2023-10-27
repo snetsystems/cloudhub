@@ -1454,7 +1454,6 @@ export const detectedHostsStatus = function (
   if (!this.graph) return
   const {cpu, memory, disk, temperature} = TOOLTIP_TYPE
   const model = this.graph.getModel()
-  const selectedTmpType = selectedTemperatureType(selectedTemperatureValue)
 
   model.beginUpdate()
   try {
@@ -1522,16 +1521,7 @@ export const detectedHostsStatus = function (
                   statusKind === memory ||
                   statusKind === temperature
                 ) {
-                  const notAvailableTitle = getNotAvailableTitle({
-                    statusKind,
-                    selectedTmpType,
-                  })
-
                   childElement.removeAttribute('data-status-value')
-                  childElement.setAttribute(
-                    'title',
-                    `${notAvailableTitle} : N/A`
-                  )
                   childElement.removeAttribute('class')
                   childElement.classList.add('time-series-status')
                 }
