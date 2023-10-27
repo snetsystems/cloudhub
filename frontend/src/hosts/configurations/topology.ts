@@ -1295,6 +1295,7 @@ export const filteredIpmiPowerStatus = function (cells: mxCellType[]) {
         const ipmiHost = containerElement.getAttribute('data-ipmi_host')
         const ipmiUser = containerElement.getAttribute('data-ipmi_user')
         const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
+        const hostname = containerElement.getAttribute('data-label')
 
         if (
           !_.isEmpty(ipmiTarget) &&
@@ -1321,7 +1322,9 @@ export const filteredIpmiPowerStatus = function (cells: mxCellType[]) {
             ipmiCells = [...ipmiCells, ipmiCell]
           } catch (error) {
             this.props.notify(
-              notifyDecryptedBytesFailed(`incorrect ${ipmiHost} IPMI Password`)
+              notifyDecryptedBytesFailed(
+                `incorrect IPMI Password for ${hostname} : ${ipmiHost}`
+              )
             )
           }
         }
