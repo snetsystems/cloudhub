@@ -551,11 +551,11 @@
     }
 
     &.UsageIndacator-ipmi--caution {
-      color: $c-pineapple;
+      color: $s-oragne2;
     }
 
     &.UsageIndacator-ipmi--warning {
-      color: $c-pineapple;
+      color: $c-topaz;
     }
 
     &.UsageIndacator-ipmi--danger {
@@ -581,29 +581,40 @@
       );
     }
 
-    &.UsageIndacator-ipmi {
-      background: -webkit-linear-gradient(left, $c-laser 0%, #2de5a5 100%);
-    }
-
     &.UsageIndacator--danger {
       background: -webkit-linear-gradient(left, $c-dreamsicle, red 100%);
     }
+  }
+}
 
-    &.UsageIndacator-ipmi--caution {
-      background: -webkit-linear-gradient(left, #2de5a5 0%, $c-pineapple 100%);
-    }
+.IPMI-UsageIndacator {
+  height: 2px;
+  text-align: center;
+  background: -webkit-linear-gradient(left, #2de5a5 0%, #2de5a5 100%);
+  margin-top: 2px;
 
-    &.UsageIndacator-ipmi--warning {
-      background: -webkit-linear-gradient(
-        left,
-        $c-pineapple 0%,
-        $c-dreamsicle 100%
-      );
-    }
+  &.UsageIndacator--caution {
+    background: $c-pineapple 100%;
+  }
 
-    &.UsageIndacator-ipmi--danger {
-      background: -webkit-linear-gradient(left, $c-dreamsicle, red 100%);
-    }
+  &.UsageIndacator--warning {
+    background: $c-dreamsicle;
+  }
+
+  &.UsageIndacator--danger {
+    background: red;
+  }
+
+  &.UsageIndacator-ipmi--caution {
+    background: $c-pineapple 100%;
+  }
+
+  &.UsageIndacator-ipmi--warning {
+    background: $c-dreamsicle;
+  }
+
+  &.UsageIndacator-ipmi--danger {
+    background: red;
   }
 }
 
