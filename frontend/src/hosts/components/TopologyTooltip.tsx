@@ -42,6 +42,7 @@ export default function TopologyTooltip({targetPosition, tooltipNode}: Props) {
         <div style={{display: 'flex'}}>
           <strong style={{flex: 1}} className={'hosts-table-title'}>
             {hostname}
+            {extraTag.ipmi_ip && `(${extraTag.ipmi_ip})`}
           </strong>
           <span className="tooltip-data-type">
             from {dataType.toUpperCase() === 'IPMI' ? 'IPMI' : 'Agent'}
