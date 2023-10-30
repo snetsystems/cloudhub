@@ -394,7 +394,7 @@ interface State {
   isImportTopologyOverlayVisible: boolean
   isTopologyChanged: boolean
   isOpenSensorData: RemoteDataState
-  hostDetailInfoWithSalt: Partial<HostDetailTable>
+  hostDetailInfoWithSalt: Partial<HostDetailTable> | {}
   isGetHostDetailInfo: RemoteDataState
   isPreferencesOverlayVisible: boolean
   preferenceTemperatureValues: string[]

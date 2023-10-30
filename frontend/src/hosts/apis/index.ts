@@ -1556,6 +1556,7 @@ export const getHostsInfoWithIpmi = async (
      SELECT max("outlet") AS "outlet" FROM ( SELECT last("value") AS "outlet" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE "hostname" != '' AND time > now() - 10m AND ("name" =~ ${new RegExp(
        /exhaust_temp|outlet_temp|mb_cpu_out_temp|temp_mb_outlet/
      )}) GROUP BY hostname ) GROUP BY hostname;
+     SELECT last(value) as "ipmi_ip" FROM \":db:\".\":rp:\".\"ipmi_sensor\" WHERE time > now() - 10m GROUP BY  "hostname", "server" FILL(null);
      `,
     tempVars
   )
@@ -1574,6 +1575,7 @@ export const getHostsInfoWithIpmi = async (
   const ipmiInletSeries = getDeep<IpmiSeries[]>(data, 'results.[3].series', [])
   const ipmiInsideSeries = getDeep<IpmiSeries[]>(data, 'results.[4].series', [])
   const ipmiOutletSeries = getDeep<IpmiSeries[]>(data, 'results.[5].series', [])
+  const ipmiHostsAndIp = getDeep<IpmiSeries[]>(data, 'results.[6].series', [])
   allHostsSeries.forEach(s => {
     const hostnameIndex = s.columns.findIndex(col => col === 'value')
     s.values.forEach(v => {
@@ -1632,7 +1634,14 @@ export const getHostsInfoWithIpmi = async (
       hosts[s.tags.hostname].outlet = Number(s.values[0][meanIndex])
     }
   })
-
+  ipmiHostsAndIp.forEach(s => {
+    if (hosts.hasOwnProperty(s.tags.hostname)) {
+      hosts[s.tags.hostname].extraTag = {
+        ...hosts[s.tags.hostname].extraTag,
+        ipmi_ip: s.tags['server'],
+      }
+    }
+  })
   if (
     meRole !== SUPERADMIN_ROLE ||
     (meRole === SUPERADMIN_ROLE &&

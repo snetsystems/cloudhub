@@ -1,4 +1,4 @@
-import {Dispatch, bindActionCreators} from 'redux'
+import {Dispatch} from 'redux'
 import {errorThrown} from 'src/shared/actions/errors'
 import _ from 'lodash'
 
@@ -34,7 +34,6 @@ import {Links, Ipmi, IpmiCell} from 'src/types'
 // Notification Action
 import {notify as notifyAction} from 'src/shared/actions/notifications'
 import {
-  notifyIpmiConnectionFailed,
   notifygetCSPListInstancesFailed,
   notifygetAWSInstancesFailed,
   notifygetGCPInstancesFailed,
@@ -200,8 +199,6 @@ export const getIpmiStatusAsync = (
     })
 
     if (!_.isEmpty(error)) {
-      const notify = bindActionCreators(notifyAction, dispatch)
-      notify(notifyIpmiConnectionFailed(ipmiHost))
       console.error(error)
     }
 
@@ -246,15 +243,6 @@ export const getIpmiSensorDataAsync = (
       pIpmis
     )
     const sensorData = responseSensorData.return[0]
-    const isSensorData =
-      _.isObject(sensorData[pIpmis.target]) &&
-      !_.isArray(sensorData[pIpmis.target]) &&
-      _.keys(sensorData[pIpmis.target]).length > 0
-
-    if (!isSensorData) {
-      const notify = bindActionCreators(notifyAction, dispatch)
-      notify(notifyIpmiConnectionFailed(pIpmis.host))
-    }
 
     return sensorData
   } catch (error) {

@@ -48,6 +48,9 @@ import {
   TOOLTIP_TYPE,
   objectKeyWithGatherType,
   TOOLTIP_OFFSET_X,
+  TOOLTIP_WIDTH,
+  DETECT_RATE,
+  OUTLINE,
 } from 'src/hosts/constants/topology'
 import {IpmiSetPowerStatus} from 'src/shared/apis/saltStack'
 import {COLLECTOR_SERVER} from 'src/shared/constants'
@@ -1052,7 +1055,7 @@ function getAbsoluteGeometry(cell: mxCellType) {
   let accumulatedX = 0
   let accumulatedY = 0
 
-  const {x, y, width} = cell.getGeometry()
+  const {x, y, width, height} = cell.getGeometry()
 
   let currentCell = cell.getParent()
   while (currentCell) {
@@ -1065,7 +1068,7 @@ function getAbsoluteGeometry(cell: mxCellType) {
     currentCell = currentCell.getParent()
   }
 
-  return {x: accumulatedX + x, y: accumulatedY + y, width}
+  return {x: accumulatedX + x, y: accumulatedY + y, width, height}
 }
 
 export const onMouseMovexGraph = function (
@@ -1086,7 +1089,9 @@ export const onMouseMovexGraph = function (
       const graphContainer = _graph.container
 
       const containerRect = graphContainer.getBoundingClientRect()
+
       const currentScale = _graph.view.getScale()
+
       const {x, y, width} = getAbsoluteGeometry(cell)
       const {x: translateX, y: translateY} = _graph.view.getTranslate()
 
@@ -1094,10 +1099,30 @@ export const onMouseMovexGraph = function (
       const scaledY = (y + translateY) * currentScale
       const scaledWidth = width * currentScale
       const scaleOffset = TOOLTIP_OFFSET_X
+      const compareY = scaledY + containerRect.y
+      const compareX = scaledX + containerRect.x + scaledWidth + scaleOffset
+      const isUnderContainerHeight = compareY < containerRect.y * DETECT_RATE
+      const isOverContainerHeight =
+        compareY > containerRect.height * DETECT_RATE
+      const isOverContainerWidth = compareX > containerRect.width * DETECT_RATE
+
+      const maxRenderY = compareY - (compareY - containerRect.height) - OUTLINE
+      const minRenderX =
+        compareX - (TOOLTIP_WIDTH + scaleOffset) - scaledWidth - scaleOffset
+
+      let renderY = compareY
+      let renderX = compareX
+
+      if (isUnderContainerHeight) {
+        renderY = containerRect.y
+      }
+      if (isOverContainerHeight) {
+        renderY = maxRenderY
+      }
 
       const geometry = {
-        x: scaledX + containerRect.x + scaledWidth + scaleOffset,
-        y: scaledY + containerRect.y,
+        x: isOverContainerWidth ? minRenderX : renderX,
+        y: renderY,
       }
       return {cell, geometry}
     }
@@ -1270,6 +1295,7 @@ export const filteredIpmiPowerStatus = function (cells: mxCellType[]) {
         const ipmiHost = containerElement.getAttribute('data-ipmi_host')
         const ipmiUser = containerElement.getAttribute('data-ipmi_user')
         const ipmiPass = containerElement.getAttribute('data-ipmi_pass')
+        const hostname = containerElement.getAttribute('data-label')
 
         if (
           !_.isEmpty(ipmiTarget) &&
@@ -1296,7 +1322,9 @@ export const filteredIpmiPowerStatus = function (cells: mxCellType[]) {
             ipmiCells = [...ipmiCells, ipmiCell]
           } catch (error) {
             this.props.notify(
-              notifyDecryptedBytesFailed(`incorrect ${ipmiHost} IPMI Password`)
+              notifyDecryptedBytesFailed(
+                `incorrect IPMI Password for ${hostname} : ${ipmiHost}`
+              )
             )
           }
         }
@@ -1429,7 +1457,6 @@ export const detectedHostsStatus = function (
   if (!this.graph) return
   const {cpu, memory, disk, temperature} = TOOLTIP_TYPE
   const model = this.graph.getModel()
-  const selectedTmpType = selectedTemperatureType(selectedTemperatureValue)
 
   model.beginUpdate()
   try {
@@ -1497,16 +1524,7 @@ export const detectedHostsStatus = function (
                   statusKind === memory ||
                   statusKind === temperature
                 ) {
-                  const notAvailableTitle = getNotAvailableTitle({
-                    statusKind,
-                    selectedTmpType,
-                  })
-
                   childElement.removeAttribute('data-status-value')
-                  childElement.setAttribute(
-                    'title',
-                    `${notAvailableTitle} : N/A`
-                  )
                   childElement.removeAttribute('class')
                   childElement.classList.add('time-series-status')
                 }
