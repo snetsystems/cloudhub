@@ -409,7 +409,7 @@ interface State {
     right: number
     left: number
     isOverContainerHeight: boolean
-    cellId: number
+    cellId: string
   }
   tooltipNode: Partial<TemperatureTooltip>
   isMouseUp: boolean
@@ -533,7 +533,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
         right: 0,
         left: 0,
         isOverContainerHeight: false,
-        cellId: -1,
+        cellId: '',
       },
       tooltipNode: {},
       isMouseUp: true,
@@ -3626,7 +3626,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
     focusedCell: mxCellType,
     geometry: {x: number; y: number},
     isOverContainerHeight: boolean,
-    cellId: number
+    cellId: string
   ) => {
     const {
       isTooltipActiveHost,
@@ -3638,7 +3638,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
     const hostname = container.getAttribute('data-name')
     const dataGatherType = container.getAttribute('data-status')
 
-    if (isTooltipActiveHost === hostname) {
+    if (isTooltipActiveHost === cellId) {
       return
     }
 
@@ -3650,7 +3650,7 @@ export class InventoryTopology extends PureComponent<Props, State> {
     )
 
     this.setState({
-      isTooltipActiveHost: hostname,
+      isTooltipActiveHost: cellId,
       targetPosition: {
         left: geometry.x,
         top: geometry.y,
