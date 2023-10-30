@@ -209,21 +209,19 @@ class KubernetesPage extends PureComponent<Props, State> {
     const target =
       !selectMinion || selectMinion === this.noSelect ? '*' : selectMinion
 
-    const nodes = await this.props.handleGetNodes(
-      saltMasterUrl,
-      saltMasterToken,
-      target,
-      pParam
-    )
-
-    const resultJson = JSON.parse(
-      JSON.stringify(
-        _.values(yaml.safeLoad(nodes.data).return[0])[0],
-        this.jsonRemoveNull
+    try {
+      const nodes = await this.props.handleGetNodes(
+        saltMasterUrl,
+        saltMasterToken,
+        target,
+        pParam
       )
-    )
 
-    return resultJson
+      return this.yamltoJson(nodes)
+    } catch (error) {
+      console.error(error)
+      return null
+    }
   }
 
   public getPods = async (node: string) => {
@@ -258,21 +256,19 @@ class KubernetesPage extends PureComponent<Props, State> {
       },
     }
 
-    const pods = await this.props.handleGetPods(
-      saltMasterUrl,
-      saltMasterToken,
-      selectMinion,
-      pParam
-    )
-
-    const resultJson = JSON.parse(
-      JSON.stringify(
-        _.values(yaml.safeLoad(pods.data).return[0])[0],
-        this.jsonRemoveNull
+    try {
+      const pods = await this.props.handleGetPods(
+        saltMasterUrl,
+        saltMasterToken,
+        selectMinion,
+        pParam
       )
-    )
 
-    return resultJson
+      return this.yamltoJson(pods)
+    } catch (error) {
+      console.error(error)
+      return null
+    }
   }
 
   public getDeployments = async () => {
@@ -305,21 +301,19 @@ class KubernetesPage extends PureComponent<Props, State> {
       },
     }
 
-    const deployments = await this.props.handleGetDeployments(
-      saltMasterUrl,
-      saltMasterToken,
-      selectMinion,
-      pParam
-    )
-
-    const resultJson = JSON.parse(
-      JSON.stringify(
-        _.values(yaml.safeLoad(deployments.data).return[0])[0],
-        this.jsonRemoveNull
+    try {
+      const deployments = await this.props.handleGetDeployments(
+        saltMasterUrl,
+        saltMasterToken,
+        selectMinion,
+        pParam
       )
-    )
 
-    return resultJson
+      return this.yamltoJson(deployments)
+    } catch (error) {
+      console.error(error)
+      return null
+    }
   }
 
   public getReplicaSets = async () => {
@@ -352,21 +346,19 @@ class KubernetesPage extends PureComponent<Props, State> {
       },
     }
 
-    const replicaSets = await this.props.handleGetReplicaSets(
-      saltMasterUrl,
-      saltMasterToken,
-      selectMinion,
-      pParam
-    )
-
-    const resultJson = JSON.parse(
-      JSON.stringify(
-        _.values(yaml.safeLoad(replicaSets.data).return[0])[0],
-        this.jsonRemoveNull
+    try {
+      const replicaSets = await this.props.handleGetReplicaSets(
+        saltMasterUrl,
+        saltMasterToken,
+        selectMinion,
+        pParam
       )
-    )
 
-    return resultJson
+      return this.yamltoJson(replicaSets)
+    } catch (error) {
+      console.error(error)
+      return null
+    }
   }
 
   public getReplicationControllers = async () => {
@@ -399,21 +391,19 @@ class KubernetesPage extends PureComponent<Props, State> {
       },
     }
 
-    const replicationControllers = await this.props.handleGetReplicationControllers(
-      saltMasterUrl,
-      saltMasterToken,
-      selectMinion,
-      pParam
-    )
-
-    const resultJson = JSON.parse(
-      JSON.stringify(
-        _.values(yaml.safeLoad(replicationControllers.data).return[0])[0],
-        this.jsonRemoveNull
+    try {
+      const replicationControllers = await this.props.handleGetReplicationControllers(
+        saltMasterUrl,
+        saltMasterToken,
+        selectMinion,
+        pParam
       )
-    )
 
-    return resultJson
+      return this.yamltoJson(replicationControllers)
+    } catch (error) {
+      console.error(error)
+      return null
+    }
   }
 
   public getDaemonSets = async () => {
@@ -446,21 +436,19 @@ class KubernetesPage extends PureComponent<Props, State> {
       },
     }
 
-    const daemonSets = await this.props.handleGetDaemonSets(
-      saltMasterUrl,
-      saltMasterToken,
-      selectMinion,
-      pParam
-    )
-
-    const resultJson = JSON.parse(
-      JSON.stringify(
-        _.values(yaml.safeLoad(daemonSets.data).return[0])[0],
-        this.jsonRemoveNull
+    try {
+      const daemonSets = await this.props.handleGetDaemonSets(
+        saltMasterUrl,
+        saltMasterToken,
+        selectMinion,
+        pParam
       )
-    )
 
-    return resultJson
+      return this.yamltoJson(daemonSets)
+    } catch (error) {
+      console.error(error)
+      return null
+    }
   }
 
   public getStatefulSets = async () => {
@@ -493,21 +481,19 @@ class KubernetesPage extends PureComponent<Props, State> {
       },
     }
 
-    const statefulSets = await this.props.handleGetStatefulSets(
-      saltMasterUrl,
-      saltMasterToken,
-      selectMinion,
-      pParam
-    )
-
-    const resultJson = JSON.parse(
-      JSON.stringify(
-        _.values(yaml.safeLoad(statefulSets.data).return[0])[0],
-        this.jsonRemoveNull
+    try {
+      const statefulSets = await this.props.handleGetStatefulSets(
+        saltMasterUrl,
+        saltMasterToken,
+        selectMinion,
+        pParam
       )
-    )
 
-    return resultJson
+      return this.yamltoJson(statefulSets)
+    } catch (error) {
+      console.error(error)
+      return null
+    }
   }
 
   public getCronJobs = async () => {
@@ -540,21 +526,19 @@ class KubernetesPage extends PureComponent<Props, State> {
       },
     }
 
-    const cronJobs = await this.props.handleGetCronJobs(
-      saltMasterUrl,
-      saltMasterToken,
-      selectMinion,
-      pParam
-    )
-
-    const resultJson = JSON.parse(
-      JSON.stringify(
-        _.values(yaml.safeLoad(cronJobs.data).return[0])[0],
-        this.jsonRemoveNull
+    try {
+      const cronJobs = await this.props.handleGetCronJobs(
+        saltMasterUrl,
+        saltMasterToken,
+        selectMinion,
+        pParam
       )
-    )
 
-    return resultJson
+      return this.yamltoJson(cronJobs)
+    } catch (error) {
+      console.error(error)
+      return null
+    }
   }
 
   public getJobs = async () => {
@@ -587,21 +571,19 @@ class KubernetesPage extends PureComponent<Props, State> {
       },
     }
 
-    const jobs = await this.props.handleGetJobs(
-      saltMasterUrl,
-      saltMasterToken,
-      selectMinion,
-      pParam
-    )
-
-    const resultJson = JSON.parse(
-      JSON.stringify(
-        _.values(yaml.safeLoad(jobs.data).return[0])[0],
-        this.jsonRemoveNull
+    try {
+      const jobs = await this.props.handleGetJobs(
+        saltMasterUrl,
+        saltMasterToken,
+        selectMinion,
+        pParam
       )
-    )
 
-    return resultJson
+      return this.yamltoJson(jobs)
+    } catch (error) {
+      console.error(error)
+      return null
+    }
   }
 
   public getServices = async flag => {
@@ -635,23 +617,21 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     if (flag) {
-      const services = await this.props.handleGetServices(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      const resultJson = JSON.parse(
-        JSON.stringify(
-          _.values(yaml.safeLoad(services.data).return[0])[0],
-          this.jsonRemoveNull
+      try {
+        const services = await this.props.handleGetServices(
+          saltMasterUrl,
+          saltMasterToken,
+          selectMinion,
+          pParam
         )
-      )
-      return resultJson
-    } else {
-      return null
+
+        return this.yamltoJson(services)
+      } catch (error) {
+        console.error(error)
+        return null
+      }
     }
+    return null
   }
 
   public getIngresses = async flag => {
@@ -685,24 +665,21 @@ class KubernetesPage extends PureComponent<Props, State> {
     }
 
     if (flag) {
-      const ingresses = await this.props.handleGetIngresses(
-        saltMasterUrl,
-        saltMasterToken,
-        selectMinion,
-        pParam
-      )
-
-      const resultJson = JSON.parse(
-        JSON.stringify(
-          _.values(yaml.safeLoad(ingresses.data).return[0])[0],
-          this.jsonRemoveNull
+      try {
+        const ingresses = await this.props.handleGetIngresses(
+          saltMasterUrl,
+          saltMasterToken,
+          selectMinion,
+          pParam
         )
-      )
 
-      return resultJson
-    } else {
-      return null
+        return this.yamltoJson(ingresses)
+      } catch (error) {
+        console.error(error)
+        return null
+      }
     }
+    return null
   }
 
   public getConfigmaps = async () => {
@@ -735,21 +712,21 @@ class KubernetesPage extends PureComponent<Props, State> {
       },
     }
 
-    const configmaps = await this.props.handleGetConfigmaps(
-      saltMasterUrl,
-      saltMasterToken,
-      selectMinion,
-      pParam
-    )
-
-    const resultJson = JSON.parse(
-      JSON.stringify(
-        _.values(yaml.safeLoad(configmaps.data).return[0])[0],
-        this.jsonRemoveNull
+    try {
+      const configmaps = await this.props.handleGetConfigmaps(
+        saltMasterUrl,
+        saltMasterToken,
+        selectMinion,
+        pParam
       )
-    )
 
-    return resultJson
+      return this.yamltoJson(configmaps)
+    } catch (error) {
+      console.error(error)
+      return null
+    }
+
+    return null
   }
 
   public getSecrets = async () => {
@@ -782,21 +759,19 @@ class KubernetesPage extends PureComponent<Props, State> {
       },
     }
 
-    const secrets = await this.props.handleGetSecrets(
-      saltMasterUrl,
-      saltMasterToken,
-      selectMinion,
-      pParam
-    )
-
-    const resultJson = JSON.parse(
-      JSON.stringify(
-        _.values(yaml.safeLoad(secrets.data).return[0])[0],
-        this.jsonRemoveNull
+    try {
+      const secrets = await this.props.handleGetSecrets(
+        saltMasterUrl,
+        saltMasterToken,
+        selectMinion,
+        pParam
       )
-    )
 
-    return resultJson
+      return this.yamltoJson(secrets)
+    } catch (error) {
+      console.error(error)
+      return null
+    }
   }
 
   public getServiceAccounts = async () => {
@@ -829,21 +804,19 @@ class KubernetesPage extends PureComponent<Props, State> {
       },
     }
 
-    const serviceAccounts = await this.props.handleGetServiceAccounts(
-      saltMasterUrl,
-      saltMasterToken,
-      selectMinion,
-      pParam
-    )
-
-    const resultJson = JSON.parse(
-      JSON.stringify(
-        _.values(yaml.safeLoad(serviceAccounts.data).return[0])[0],
-        this.jsonRemoveNull
+    try {
+      const serviceAccounts = await this.props.handleGetServiceAccounts(
+        saltMasterUrl,
+        saltMasterToken,
+        selectMinion,
+        pParam
       )
-    )
 
-    return resultJson
+      return this.yamltoJson(serviceAccounts)
+    } catch (error) {
+      console.error(error)
+      return null
+    }
   }
 
   public getClusterRoles = async () => {
@@ -874,21 +847,19 @@ class KubernetesPage extends PureComponent<Props, State> {
       },
     }
 
-    const clusterRoles = await this.props.handleGetClusterRoles(
-      saltMasterUrl,
-      saltMasterToken,
-      selectMinion,
-      pParam
-    )
-
-    const resultJson = JSON.parse(
-      JSON.stringify(
-        _.values(yaml.safeLoad(clusterRoles.data).return[0])[0],
-        this.jsonRemoveNull
+    try {
+      const clusterRoles = await this.props.handleGetClusterRoles(
+        saltMasterUrl,
+        saltMasterToken,
+        selectMinion,
+        pParam
       )
-    )
 
-    return resultJson
+      return this.yamltoJson(clusterRoles)
+    } catch (error) {
+      console.error(error)
+      return null
+    }
   }
 
   public getClusterRoleBindings = async () => {
@@ -919,21 +890,19 @@ class KubernetesPage extends PureComponent<Props, State> {
       },
     }
 
-    const clusterRoleBindings = await this.props.handleGetClusterRoleBindings(
-      saltMasterUrl,
-      saltMasterToken,
-      selectMinion,
-      pParam
-    )
-
-    const resultJson = JSON.parse(
-      JSON.stringify(
-        _.values(yaml.safeLoad(clusterRoleBindings.data).return[0])[0],
-        this.jsonRemoveNull
+    try {
+      const clusterRoleBindings = await this.props.handleGetClusterRoleBindings(
+        saltMasterUrl,
+        saltMasterToken,
+        selectMinion,
+        pParam
       )
-    )
 
-    return resultJson
+      return this.yamltoJson(clusterRoleBindings)
+    } catch (error) {
+      console.error(error)
+      return null
+    }
   }
 
   public getRoles = async () => {
@@ -966,21 +935,19 @@ class KubernetesPage extends PureComponent<Props, State> {
       },
     }
 
-    const roles = await this.props.handleGetRoles(
-      saltMasterUrl,
-      saltMasterToken,
-      selectMinion,
-      pParam
-    )
-
-    const resultJson = JSON.parse(
-      JSON.stringify(
-        _.values(yaml.safeLoad(roles.data).return[0])[0],
-        this.jsonRemoveNull
+    try {
+      const roles = await this.props.handleGetRoles(
+        saltMasterUrl,
+        saltMasterToken,
+        selectMinion,
+        pParam
       )
-    )
 
-    return resultJson
+      return this.yamltoJson(roles)
+    } catch (error) {
+      console.error(error)
+      return null
+    }
   }
 
   public getRoleBindings = async () => {
@@ -1013,21 +980,19 @@ class KubernetesPage extends PureComponent<Props, State> {
       },
     }
 
-    const roleBindings = await this.props.handleGetRoleBindings(
-      saltMasterUrl,
-      saltMasterToken,
-      selectMinion,
-      pParam
-    )
-
-    const resultJson = JSON.parse(
-      JSON.stringify(
-        _.values(yaml.safeLoad(roleBindings.data).return[0])[0],
-        this.jsonRemoveNull
+    try {
+      const roleBindings = await this.props.handleGetRoleBindings(
+        saltMasterUrl,
+        saltMasterToken,
+        selectMinion,
+        pParam
       )
-    )
 
-    return resultJson
+      return this.yamltoJson(roleBindings)
+    } catch (error) {
+      console.error(error)
+      return null
+    }
   }
 
   public getPersistentVolumes = async () => {
@@ -1058,21 +1023,19 @@ class KubernetesPage extends PureComponent<Props, State> {
       },
     }
 
-    const persistentVolumes = await this.props.handleGetPersistentVolumes(
-      saltMasterUrl,
-      saltMasterToken,
-      selectMinion,
-      pParam
-    )
-
-    const resultJson = JSON.parse(
-      JSON.stringify(
-        _.values(yaml.safeLoad(persistentVolumes.data).return[0])[0],
-        this.jsonRemoveNull
+    try {
+      const persistentVolumes = await this.props.handleGetPersistentVolumes(
+        saltMasterUrl,
+        saltMasterToken,
+        selectMinion,
+        pParam
       )
-    )
 
-    return resultJson
+      return this.yamltoJson(persistentVolumes)
+    } catch (error) {
+      console.error(error)
+      return null
+    }
   }
 
   public getPersistentVolumeClaims = async () => {
@@ -1105,21 +1068,19 @@ class KubernetesPage extends PureComponent<Props, State> {
       },
     }
 
-    const persistentVolumeClaims = await this.props.handleGetPersistentVolumeClaims(
-      saltMasterUrl,
-      saltMasterToken,
-      selectMinion,
-      pParam
-    )
-
-    const resultJson = JSON.parse(
-      JSON.stringify(
-        _.values(yaml.safeLoad(persistentVolumeClaims.data).return[0])[0],
-        this.jsonRemoveNull
+    try {
+      const persistentVolumeClaims = await this.props.handleGetPersistentVolumeClaims(
+        saltMasterUrl,
+        saltMasterToken,
+        selectMinion,
+        pParam
       )
-    )
 
-    return resultJson
+      return this.yamltoJson(persistentVolumeClaims)
+    } catch (error) {
+      console.error(error)
+      return null
+    }
   }
 
   public jsonRemoveNull = (key: string, value: any) => {
@@ -1273,21 +1234,19 @@ class KubernetesPage extends PureComponent<Props, State> {
       kwarg: {namespace: '', detail: true},
     }
 
-    const namespaces = await this.props.handleGetNamespaces(
-      saltMasterUrl,
-      saltMasterToken,
-      selectMinion,
-      pParam
-    )
-
-    const resultJson = JSON.parse(
-      JSON.stringify(
-        _.values(yaml.safeLoad(namespaces.data).return[0])[0],
-        this.jsonRemoveNull
+    try {
+      const namespaces = await this.props.handleGetNamespaces(
+        saltMasterUrl,
+        saltMasterToken,
+        selectMinion,
+        pParam
       )
-    )
 
-    return resultJson
+      return this.yamltoJson(namespaces)
+    } catch (error) {
+      console.error(error)
+      return null
+    }
   }
 
   public getK8sObject = async () => {
@@ -3442,6 +3401,25 @@ class KubernetesPage extends PureComponent<Props, State> {
 
   private onChooseMinion = (minion: {text: string}) => {
     this.setState({selectMinion: minion.text})
+  }
+
+  private yamltoJson = (pData: any) => {
+    try {
+      const jsonData = _.values(yaml.safeLoad(pData.data).return[0])[0]
+
+      if (jsonData !== null && jsonData !== undefined) {
+        const resultJson = JSON.parse(
+          JSON.stringify(jsonData, this.jsonRemoveNull)
+        )
+
+        return resultJson
+      }
+
+      return null
+    } catch (error) {
+      console.log(error)
+      return null
+    }
   }
 }
 
