@@ -403,7 +403,14 @@ interface State {
   unsavedPreferenceTemperatureValues: string[]
   fetchIntervalDataStatus: RemoteDataState
   isTooltipActiveHost: string | null
-  targetPosition: {width: number; top: number; right: number; left: number}
+  targetPosition: {
+    width: number
+    top: number
+    right: number
+    left: number
+    isOverContainerHeight: boolean
+    cellId: number
+  }
   tooltipNode: Partial<TemperatureTooltip>
   isMouseUp: boolean
 }
@@ -520,7 +527,14 @@ export class InventoryTopology extends PureComponent<Props, State> {
       preferencesStatus: RemoteDataState.Done,
       fetchIntervalDataStatus: RemoteDataState.NotStarted,
       isTooltipActiveHost: null,
-      targetPosition: {width: 0, top: 0, right: 0, left: 0},
+      targetPosition: {
+        width: 0,
+        top: 0,
+        right: 0,
+        left: 0,
+        isOverContainerHeight: false,
+        cellId: -1,
+      },
       tooltipNode: {},
       isMouseUp: true,
     }
@@ -1635,11 +1649,16 @@ export class InventoryTopology extends PureComponent<Props, State> {
         const tooltipInfo = onMouseMovexGraph.call(this, this.graph, me)
 
         if (this.state.isMouseUp && tooltipInfo) {
-          this.showTooltip(tooltipInfo.cell, tooltipInfo.geometry)
+          this.showTooltip(
+            tooltipInfo.cell,
+            tooltipInfo.geometry,
+            tooltipInfo.isOverContainerHeight,
+            tooltipInfo.cellId
+          )
         } else {
           this.closeTooltip()
         }
-      }, 500),
+      }, 250),
       mouseUp: () => {
         this.closeTooltip()
 
@@ -3605,7 +3624,9 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
   private showTooltip = (
     focusedCell: mxCellType,
-    geometry: {x: number; y: number}
+    geometry: {x: number; y: number},
+    isOverContainerHeight: boolean,
+    cellId: number
   ) => {
     const {
       isTooltipActiveHost,
@@ -3635,6 +3656,8 @@ export class InventoryTopology extends PureComponent<Props, State> {
         top: geometry.y,
         right: 0,
         width: 0,
+        isOverContainerHeight,
+        cellId,
       },
 
       tooltipNode: {
@@ -3657,10 +3680,10 @@ export class InventoryTopology extends PureComponent<Props, State> {
 
   private get tooltip() {
     const {isTooltipActiveHost, targetPosition, tooltipNode} = this.state
-
     if (isTooltipActiveHost) {
       return (
         <TopologyTooltip
+          key={targetPosition.cellId}
           targetPosition={targetPosition}
           tooltipNode={tooltipNode}
         />
