@@ -134,4 +134,5 @@ export const TOPOLOGY_TOOLTIP_TABLE_SIZING = {
 export const TOOLTIP_OFFSET_X = 5
 export const TOOLTIP_WIDTH = 240
 export const OUTLINE = 58
-export const DETECT_RATE = 0.8
+export const DETECT_RATE = 0.85
+export const STATIC_TOOLTIP_HEIGHT = 147

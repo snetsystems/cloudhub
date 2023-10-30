@@ -1087,7 +1087,7 @@ export const onMouseMovexGraph = function (
 
     if (dataType === 'Server') {
       const graphContainer = _graph.container
-
+      const cellId = cell.getId()
       const containerRect = graphContainer.getBoundingClientRect()
 
       const currentScale = _graph.view.getScale()
@@ -1124,7 +1124,8 @@ export const onMouseMovexGraph = function (
         x: isOverContainerWidth ? minRenderX : renderX,
         y: renderY,
       }
-      return {cell, geometry}
+
+      return {cell, geometry, isOverContainerHeight, cellId}
     }
   }
 }
