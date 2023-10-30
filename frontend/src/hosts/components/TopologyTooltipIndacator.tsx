@@ -14,7 +14,9 @@ export const TopologyTooltipIndacator = ({
       <div className={classnames('UsageIndacator-value', indicatorStatus)}>
         {value}
       </div>
-      <div className={classnames('UsageIndacator', indicatorStatus)}></div>
+      <div
+        className={classnames('IPMI-UsageIndacator ', indicatorStatus)}
+      ></div>
     </div>
   )
 }
