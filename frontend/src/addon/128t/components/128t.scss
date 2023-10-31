@@ -539,11 +539,11 @@
 
   .UsageIndacator-value {
     &.UsageIndacator--caution {
-      color: $s-oragne2;
+      color: $c-pineapple;
     }
 
     &.UsageIndacator--warning {
-      color: $c-topaz;
+      color: $c-dreamsicle;
     }
 
     &.UsageIndacator--danger {
@@ -551,11 +551,11 @@
     }
 
     &.UsageIndacator-ipmi--caution {
-      color: $s-oragne2;
+      color: $c-pineapple;
     }
 
     &.UsageIndacator-ipmi--warning {
-      color: $c-topaz;
+      color: $c-dreamsicle;
     }
 
     &.UsageIndacator-ipmi--danger {
@@ -590,11 +590,11 @@
 .IPMI-UsageIndacator {
   height: 2px;
   text-align: center;
-  background: -webkit-linear-gradient(left, #2de5a5 0%, #2de5a5 100%);
+  background: $c-rainforest;
   margin-top: 2px;
 
   &.UsageIndacator--caution {
-    background: $c-pineapple 100%;
+    background: $c-pineapple;
   }
 
   &.UsageIndacator--warning {
@@ -606,7 +606,7 @@
   }
 
   &.UsageIndacator-ipmi--caution {
-    background: $c-pineapple 100%;
+    background: $c-pineapple;
   }
 
   &.UsageIndacator-ipmi--warning {
