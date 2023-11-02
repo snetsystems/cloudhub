@@ -80,8 +80,7 @@ export const configureStylesheet = function (mx: mxGraphExportObject) {
   style[mxConstants.STYLE_ALIGN] = mxConstants.ALIGN_CENTER
   style[mxConstants.STYLE_VERTICAL_ALIGN] = mxConstants.ALIGN_MIDDLE
   style[mxConstants.STYLE_FILLCOLOR] = '#383846'
-  style[mxConstants.STYLE_STROKECOLOR] = '#ffffff'
-  style[mxConstants.STYLE_STROKECOLOR] = '#f58220'
+  style[mxConstants.STYLE_STROKECOLOR] = '#bec2cc'
   style[mxConstants.STYLE_FONTCOLOR] = '#bec2cc'
   style[mxConstants.STYLE_ROUNDED] = true
   style[mxConstants.STYLE_ABSOLUTE_ARCSIZE] = true
@@ -492,7 +491,7 @@ export const createHTMLValue = function (node: Menu, style: string) {
 
   cell.appendChild(cellTitleBox)
 
-  if (style === 'node') {
+  if (style.includes('node')) {
     const cellIconBox = document.createElement('div')
     const cellIcon = document.createElement('div')
 
@@ -1012,7 +1011,7 @@ export const resizeCell = function (
   bounds: mxRectangleType,
   recurse?: boolean
 ) {
-  if (cell.getStyle() === 'node') {
+  if (cell.getStyle().includes('node')) {
     const containerElement = getContainerElement(cell.value)
     const title = containerElement.querySelector('.mxgraph-cell--title')
     title.setAttribute('style', `width: ${bounds.width}px;`)
@@ -1029,7 +1028,7 @@ export const onClickMxGraph = function (
 ) {
   const cell: mxCellType = me.getProperty('cell')
 
-  if (!_.isEmpty(cell) && cell.style === 'node') {
+  if (!_.isEmpty(cell) && cell.style.includes('node')) {
     document.querySelector('#statusContainer').classList.remove('active')
     document.querySelector('#statusContainerRef').innerHTML = ``
     const containerElement = getContainerElement(cell.value)
@@ -1079,7 +1078,7 @@ export const onMouseMovexGraph = function (
   if (_.isEmpty(cell)) {
     return
   }
-  if (!_.isEmpty(cell) && cell.style === 'node') {
+  if (!_.isEmpty(cell) && cell.style.includes('node')) {
     const focusedCell = getContainerElement(
       this.graph.getModel().getValue(cell)
     )
@@ -1288,7 +1287,7 @@ export const filteredIpmiPowerStatus = function (cells: mxCellType[]) {
   let ipmiCells: IpmiCell[] = []
 
   _.forEach(cells, cell => {
-    if (cell.getStyle() === 'node') {
+    if (cell.getStyle().includes('node')) {
       const containerElement = getContainerElement(cell.value)
 
       if (containerElement.hasAttribute('data-ipmi_host')) {
@@ -1444,7 +1443,7 @@ export const selectedTemperatureType = (
 }
 export const getFocusedCell = (cells: mxCellType[], focusedCell: string) => {
   const findCells = cells.filter(
-    cell => cell.getStyle() === 'node' && cell.getId() === focusedCell
+    cell => cell.getStyle().includes('node') && cell.getId() === focusedCell
   )
 
   return findCells
@@ -1462,7 +1461,7 @@ export const detectedHostsStatus = function (
   model.beginUpdate()
   try {
     _.forEach(cells, cell => {
-      if (cell.getStyle() === 'node') {
+      if (cell.getStyle().includes('node')) {
         const containerElement = getContainerElement(cell.value)
         const name = containerElement.getAttribute('data-name')
 
@@ -1470,6 +1469,14 @@ export const detectedHostsStatus = function (
 
         if (!_.isEmpty(findHost)) {
           const childCells = this.graph.getChildCells(cell)
+          this.graph.setCellStyles(
+            mxConstants.STYLE_STROKECOLOR,
+            Math.max(findHost.deltaUptime || 0, findHost.winDeltaUptime || 0) >
+              0
+              ? '#f58220'
+              : '#bec2cc',
+            [cell]
+          )
 
           if (!_.isEmpty(childCells)) {
             _.forEach(childCells, childCell => {
