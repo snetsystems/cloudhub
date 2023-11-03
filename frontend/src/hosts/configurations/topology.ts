@@ -1537,7 +1537,11 @@ export const detectedHostsStatus = function (
                   childElement.classList.add('time-series-status')
                 }
               })
-
+              this.graph.setCellStyles(
+                mxConstants.STYLE_STROKECOLOR,
+                '#bec2cc',
+                [cell]
+              )
               childCell.setValue(childCellElement.outerHTML)
             })
           }
