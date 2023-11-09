@@ -6,7 +6,7 @@ import CryptoJS from 'crypto-js'
 import {CloudServiceProvider, CSPAccessObject, Instance} from 'src/hosts/types'
 
 // apis
-import {getLocalGrainsItems} from 'src/shared/apis/saltStack'
+import {getLocalGrainsItem} from 'src/shared/apis/saltStack'
 import {HostInfoWithSalt} from 'src/hosts/types/agent'
 
 const detailsValueChecker = (
@@ -596,13 +596,35 @@ export const isGCPRequiredCheck = (
   return null
 }
 
+export const limitDepth = (
+  obj: Object,
+  depth: number,
+  currentDepth: number = 0
+): any => {
+  if (currentDepth >= depth)
+    return _.isArray(obj) ? '' : _.isObject(obj) ? '' : obj ?? ''
+
+  if (_.isArray(obj)) {
+    return obj.map(val => limitDepth(val, depth, currentDepth + 1))
+  } else if (_.isObject(obj)) {
+    return _.mapValues(obj, val => limitDepth(val, depth, currentDepth + 1))
+  } else {
+    return obj ?? ''
+  }
+}
+
 export const getAgentDetails = async (
   pUrl: string,
   pToken: string,
   pHostanme: string
 ) => {
-  const res = await getLocalGrainsItems(pUrl, pToken, pHostanme)
-  const host = res?.data?.return[0][pHostanme] || {}
+  const res = await getLocalGrainsItem(pUrl, pToken, pHostanme)
+
+  const host: HostInfoWithSalt = res?.data?.return[0][pHostanme] || {}
+  const limitedDepthHost: HostInfoWithSalt = _.mapValues(host, val =>
+    limitDepth(val, 2)
+  )
+
   const {
     os,
     os_family,
@@ -611,7 +633,6 @@ export const getAgentDetails = async (
     ip_interfaces,
     ip4_gw,
     ip6_gw,
-    dns,
     locale_info,
     biosversion,
     mem_total,
@@ -620,12 +641,9 @@ export const getAgentDetails = async (
     cpuarch,
     cpu_model,
     selinux,
-    init,
-    biosreleasedate,
-    manufacturer,
     path,
     localhost,
-  }: HostInfoWithSalt = host
+  }: HostInfoWithSalt = limitedDepthHost
 
   if (_.isEmpty(host)) {
     return host
@@ -640,8 +658,6 @@ export const getAgentDetails = async (
         os_family,
         osrelease,
         kernel,
-        init,
-        biosreleasedate,
         path,
         localhost,
       },
@@ -656,22 +672,26 @@ export const getAgentDetails = async (
         gpus,
         cpuarch,
         cpu_model,
-        manufacturer,
       },
     },
     Network: {
       name: 'host',
       role: 'table',
-      data: {dns, ip_interfaces, ip4_gw, ip6_gw},
+      data: {
+        ip_interfaces,
+        ip4_gw,
+        ip6_gw,
+        dns: limitedDepthHost?.['dns:nameservers'],
+      },
     },
     Locale: {
       name: 'host',
       role: 'table',
       data: {
-        defaultlanguage: locale_info.defaultlanguage,
-        defaultencoding: locale_info.defaultencoding,
-        detectedencoding: locale_info.detectedencoding,
-        timezone: locale_info.timezone,
+        defaultlanguage: locale_info?.defaultlanguage,
+        defaultencoding: locale_info?.defaultencoding,
+        detectedencoding: locale_info?.detectedencoding,
+        timezone: locale_info?.timezone,
       },
     },
 

@@ -25,8 +25,8 @@ export const temperatureMaxValue = {
 }
 
 export const defaultPreferencesTemperature = [
-  'type:inlet,active:1,min:15,max:30',
-  'type:inside,active:0,min:38,max:55',
+  'type:inlet,active:0,min:15,max:30',
+  'type:inside,active:1,min:38,max:55',
   'type:outlet,active:0,min:30,max:50',
 ]
 
@@ -132,3 +132,7 @@ export const TOPOLOGY_TOOLTIP_TABLE_SIZING = {
 }
 
 export const TOOLTIP_OFFSET_X = 5
+export const TOOLTIP_WIDTH = 240
+export const OUTLINE = 58
+export const DETECT_RATE = 0.85
+export const STATIC_TOOLTIP_HEIGHT = 147

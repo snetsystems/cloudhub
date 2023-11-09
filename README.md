@@ -36,6 +36,9 @@ You should use [Forked **Snetsystems/salt**](https://github.com/snetsystems/salt
 - Add **multi-tenant** feature across Users-Roles-Groups-DataSources.
 - Hosts to Infrastructures and basic charts added.
 - Infrastructure Topology Map authoring feature by user group.
+  - Status Overview of entire nodes(About CPU Temperature, CPU Memory, Disk usage, etc.).
+  - Show IPMI Sensor Data.
+  - Addable to connect to Public Cloud(AWS, GCE).
 - Visualization added by criteria of Applications.
 - Integration a backend with **_SaltStack_**.
   - Avoid CORS Problem: `Web UI > CloudHub Salt Proxy > Salt API Server > Salt Master > Salt Minions.`
