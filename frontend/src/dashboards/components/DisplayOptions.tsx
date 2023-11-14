@@ -34,6 +34,7 @@ import {
   TableOptions as TableOptionsInterface,
 } from 'src/types/dashboards'
 import {ColorNumber, ColorString} from 'src/types/colors'
+import HistorgramOptions from './HistorgramOptions'
 
 interface ConnectedProps {
   type: CellType
@@ -234,6 +235,21 @@ class DisplayOptions extends Component<Props, State> {
             onUpdateTimeFormat={onUpdateTimeFormat}
             onUpdateThresholdsListColors={onUpdateThresholdsListColors}
             onUpdateThresholdsListType={onUpdateThresholdsListType}
+          />
+        )
+      case CellType.Histogram:
+        return (
+          <HistorgramOptions
+            axes={this.axes}
+            type={type}
+            lineColors={lineColors}
+            staticLegend={staticLegend}
+            defaultYLabel={defaultYLabel}
+            decimalPlaces={decimalPlaces}
+            onUpdateAxes={onUpdateAxes}
+            onToggleStaticLegend={onToggleStaticLegend}
+            onUpdateLineColors={onUpdateLineColors}
+            onUpdateDecimalPlaces={onUpdateDecimalPlaces}
           />
         )
       default:

@@ -108,6 +108,7 @@ export enum CellType {
   News = 'news',
   Guide = 'guide',
   Note = 'note',
+  Histogram = 'histogram',
 }
 
 interface DashboardLinks {

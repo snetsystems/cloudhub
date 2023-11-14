@@ -14,8 +14,96 @@ interface GraphSVGs {
   [CellType.Gauge]: Graphic
   [CellType.Table]: Graphic
   [CellType.Note]: Graphic
+  [CellType.Histogram]: Graphic
 }
 const GRAPH_SVGS: GraphSVGs = {
+  histogram: (
+    <div className="graph-type-selector--graphic">
+      <svg
+        width="100%"
+        height="100%"
+        version="1.1"
+        id="Bar"
+        x="0px"
+        y="0px"
+        viewBox="0 0 150 150"
+        preserveAspectRatio="none meet"
+        shapeRendering="geometricPrecision"
+      >
+        <rect
+          x="0"
+          y="108.4"
+          className="graph-type-selector--graphic-line graphic-line-a"
+          width="26.8"
+          height="16.6"
+        />
+        <rect
+          x="27.8"
+          y="82.4"
+          className="graph-type-selector--graphic-line graphic-line-b"
+          width="26.8"
+          height="42.6"
+        />
+        <rect
+          x="54.6"
+          y="28.8"
+          className="graph-type-selector--graphic-line graphic-line-c"
+          width="26.8"
+          height="96.2"
+        />
+        <rect
+          x="81.4"
+          y="47.9"
+          className="graph-type-selector--graphic-line graphic-line-a"
+          width="26.8"
+          height="77.1"
+        />
+        <rect
+          x="108.2"
+          y="25"
+          className="graph-type-selector--graphic-line graphic-line-b"
+          width="26.8"
+          height="100"
+        />
+
+        <rect
+          x="0"
+          y="108.4"
+          className="graph-type-selector--graphic-fill graphic-fill-a"
+          width="26.8"
+          height="16.6"
+        />
+        <rect
+          x="27.8"
+          y="82.4"
+          className="graph-type-selector--graphic-fill graphic-fill-b"
+          width="26.8"
+          height="42.6"
+        />
+        <rect
+          x="54.6"
+          y="28.8"
+          className="graph-type-selector--graphic-fill graphic-fill-c"
+          width="26.8"
+          height="96.2"
+        />
+        <rect
+          x="81.4"
+          y="47.9"
+          className="graph-type-selector--graphic-fill graphic-fill-a"
+          width="26.8"
+          height="77.1"
+        />
+        <rect
+          x="108.2"
+          y="25"
+          className="graph-type-selector--graphic-fill graphic-fill-b"
+          width="26.8"
+          height="100"
+        />
+      </svg>
+    </div>
+  ),
   line: (
     <div className="graph-type-selector--graphic">
       <svg
@@ -619,5 +707,10 @@ export const GRAPH_TYPES: GraphType[] = [
     type: CellType.Note,
     menuOption: 'Note',
     graphic: GRAPH_SVGS[CellType.Note],
+  },
+  {
+    type: CellType.Histogram,
+    menuOption: 'Histogram',
+    graphic: GRAPH_SVGS[CellType.Histogram],
   },
 ]
