@@ -662,6 +662,29 @@ interface GraphType {
   graphic: Graphic
 }
 
+export const COMMON_GRAPH_TYPES: GraphType[] = [
+  {
+    type: CellType.SingleStat,
+    menuOption: 'Single Stat',
+    graphic: GRAPH_SVGS[CellType.SingleStat],
+  },
+  {
+    type: CellType.Gauge,
+    menuOption: 'Gauge',
+    graphic: GRAPH_SVGS[CellType.Gauge],
+  },
+  {
+    type: CellType.Table,
+    menuOption: 'Table',
+    graphic: GRAPH_SVGS[CellType.Table],
+  },
+  {
+    type: CellType.Note,
+    menuOption: 'Note',
+    graphic: GRAPH_SVGS[CellType.Note],
+  },
+]
+
 export const GRAPH_TYPES: GraphType[] = [
   {
     type: CellType.Line,
@@ -688,26 +711,9 @@ export const GRAPH_TYPES: GraphType[] = [
     menuOption: 'Line + Single Stat',
     graphic: GRAPH_SVGS[CellType.LinePlusSingleStat],
   },
-  {
-    type: CellType.SingleStat,
-    menuOption: 'Single Stat',
-    graphic: GRAPH_SVGS[CellType.SingleStat],
-  },
-  {
-    type: CellType.Gauge,
-    menuOption: 'Gauge',
-    graphic: GRAPH_SVGS[CellType.Gauge],
-  },
-  {
-    type: CellType.Table,
-    menuOption: 'Table',
-    graphic: GRAPH_SVGS[CellType.Table],
-  },
-  {
-    type: CellType.Note,
-    menuOption: 'Note',
-    graphic: GRAPH_SVGS[CellType.Note],
-  },
+]
+
+export const STATISTICAL_GRAPH_TYPES: GraphType[] = [
   {
     type: CellType.Histogram,
     menuOption: 'Histogram',

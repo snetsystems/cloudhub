@@ -6,7 +6,11 @@ import classnames from 'classnames'
 import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 // Constants
-import {GRAPH_TYPES} from 'src/dashboards/graphics/graph'
+import {
+  COMMON_GRAPH_TYPES,
+  GRAPH_TYPES,
+  STATISTICAL_GRAPH_TYPES,
+} from 'src/dashboards/graphics/graph'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -28,7 +32,42 @@ class GraphTypeSelector extends Component<Props> {
       <FancyScrollbar autoHide={false} className="graph-type-selector">
         <div className="graph-type-selector--container">
           <div className="graph-type-selector--grid">
+            <h5 style={{borderBottom: '2px solid #383846'}}>COMMON</h5>
+            {COMMON_GRAPH_TYPES.map(graphType => (
+              <div
+                key={graphType.type}
+                className={classnames('graph-type-selector--option', {
+                  active: graphType.type === type,
+                })}
+              >
+                <div onClick={this.onChangeCellType(graphType.type)}>
+                  {graphType.graphic}
+                  <p>{graphType.menuOption}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="graph-type-selector--grid">
+            <h5 className="graph-type-selector--title">TIME SERIES GRAPH</h5>
             {GRAPH_TYPES.map(graphType => (
+              <div
+                key={graphType.type}
+                className={classnames('graph-type-selector--option', {
+                  active: graphType.type === type,
+                })}
+              >
+                <div onClick={this.onChangeCellType(graphType.type)}>
+                  {graphType.graphic}
+                  <p>{graphType.menuOption}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="graph-type-selector--grid">
+            <h5 className="graph-type-selector--title">STATISTICAL GRAPH</h5>
+            {STATISTICAL_GRAPH_TYPES.map(graphType => (
               <div
                 key={graphType.type}
                 className={classnames('graph-type-selector--option', {

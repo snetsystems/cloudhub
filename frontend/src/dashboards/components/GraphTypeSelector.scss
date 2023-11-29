@@ -16,6 +16,11 @@ $graph-type--graphic: 150px;
   padding: 30px;
 }
 
+.graph-type-selector--title {
+  padding-top: 5%;
+  border-bottom: 2px solid #383846;
+}
+
 .graph-type-selector--grid {
   width: 100%;
   display: inline-block;

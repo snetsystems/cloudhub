@@ -12,7 +12,7 @@ import GraphOptionsDecimalPlaces from 'src/dashboards/components/GraphOptionsDec
 
 // Constants
 import {AXES_SCALE_OPTIONS} from 'src/dashboards/constants/cellEditor'
-import {GRAPH_TYPES} from 'src/dashboards/graphics/graph'
+import {STATISTICAL_GRAPH_TYPES} from 'src/dashboards/graphics/graph'
 
 // Decorators
 import {ErrorHandling} from 'src/shared/decorators/errors'
@@ -87,7 +87,9 @@ class HistorgramOptions extends PureComponent<Props, State> {
 
     const [min, max] = bounds
 
-    const {menuOption} = GRAPH_TYPES.find(graph => graph.type === type)
+    const {menuOption} = STATISTICAL_GRAPH_TYPES.find(
+      graph => graph.type === type
+    )
 
     return (
       <FancyScrollbar className="display-options" autoHide={false}>
