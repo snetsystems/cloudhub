@@ -7,6 +7,7 @@ import {fixedDecimalPercentage} from 'src/shared/utils/decimalPlaces'
 import {
   DATA_GATHER_TYPE,
   keysWithGatherType,
+  NOT_AVAILABLE_STATUS,
   titleWithGatherType,
   TOOLTIP_TYPE,
 } from 'src/hosts/constants/topology'
@@ -129,7 +130,7 @@ export const getTimeSeriesHostIndicator = (
   statusValue: string,
   selectedTemperatureValue: string
 ): string => {
-  if (statusValue === 'N/A') {
+  if (statusValue === NOT_AVAILABLE_STATUS) {
     return null
   }
   if (statusKind === TOOLTIP_TYPE.temperature) {
@@ -168,7 +169,7 @@ export const dataStatusValue = (
   host: Host,
   dataGatherType: string
 ) => {
-  let statusValue = 'N/A'
+  let statusValue = NOT_AVAILABLE_STATUS
 
   if (hostValue === undefined) {
     return statusValue
