@@ -10,6 +10,9 @@ import {HostsPageHostTab} from 'src/hosts/containers/HostsPageHostTab'
 import {HOSTS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 import {Host} from 'src/types'
 
+//constants
+import {NOT_AVAILABLE_STATUS} from 'src/hosts/constants/topology'
+
 interface Props {
   sourceID: string
   host: Host
@@ -26,8 +29,8 @@ const HostRow: FunctionComponent<Props> = ({
   const {name, cpu, load, apps = []} = host
   const {NameWidth, StatusWidth, CPUWidth, LoadWidth} = HOSTS_TABLE_SIZING
 
-  const CPUValue = isNaN(cpu) ? 'N/A' : `${cpu.toFixed(2)}%`
-  const loadValue = isNaN(load) ? 'N/A' : `${load.toFixed(2)}`
+  const CPUValue = isNaN(cpu) ? NOT_AVAILABLE_STATUS : `${cpu.toFixed(2)}%`
+  const loadValue = isNaN(load) ? NOT_AVAILABLE_STATUS : `${load.toFixed(2)}`
   const dotClassName = classnames(
     'table-dot',
     Math.max(host.deltaUptime || 0, host.winDeltaUptime || 0) > 0
