@@ -65,6 +65,7 @@ export const getCellTypeColors = ({
     case CellType.Line:
     case CellType.LinePlusSingleStat:
     case CellType.Stacked:
+    case CellType.Histogram:
     case CellType.StepPlot: {
       return stringifyColorValues(lineColors)
     }

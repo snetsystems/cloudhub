@@ -56,7 +56,7 @@ import {
 } from 'src/types/dashboards'
 import {GrabDataForDownloadHandler} from 'src/types/layout'
 import {TimeSeriesServerResponse} from 'src/types/series'
-import HistogramGraph from 'src/shared/components/Histogram/HistogramGraph'
+import StaticGraph from 'src/shared/components/static_graph/StaticGraph'
 
 interface TypeAndData {
   dataType: DataType
@@ -251,7 +251,7 @@ class RefreshingGraph extends Component<Props> {
                       case CellType.Gauge:
                         return this.gauge(timeSeriesInfluxQL, timeSeriesFlux)
                       case CellType.Histogram:
-                        return this.historgramGraph(
+                        return this.StaticGraph(
                           timeSeriesInfluxQL,
                           timeSeriesFlux,
                           loading
@@ -506,7 +506,7 @@ class RefreshingGraph extends Component<Props> {
     )
   }
 
-  private historgramGraph = (
+  private StaticGraph = (
     influxQLData: TimeSeriesServerResponse[],
     fluxData: FluxTable[],
     loading: RemoteDataState
@@ -515,38 +515,28 @@ class RefreshingGraph extends Component<Props> {
       axes,
       type,
       colors,
-      onZoom,
       cellID,
       queries,
-      timeRange,
-      cellHeight,
       decimalPlaces,
       staticLegend,
       manualRefresh,
-      onUpdateVisType,
-      handleSetHoverTime,
     } = this.props
 
     const {dataType, data} = this.getTypeAndData(influxQLData, fluxData)
 
     return (
-      <HistogramGraph
+      <StaticGraph
         data={data}
         type={type}
         axes={axes}
         cellID={cellID}
         colors={colors}
-        onZoom={onZoom}
         queries={queries}
         loading={loading}
         dataType={dataType}
         key={manualRefresh}
-        timeRange={timeRange}
-        cellHeight={cellHeight}
         staticLegend={staticLegend}
         decimalPlaces={decimalPlaces}
-        onUpdateVisType={onUpdateVisType}
-        handleSetHoverTime={handleSetHoverTime}
       />
     )
   }
