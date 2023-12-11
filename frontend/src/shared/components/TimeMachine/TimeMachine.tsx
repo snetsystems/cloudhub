@@ -52,6 +52,7 @@ import {
   QueryUpdateState,
   Me,
   TimeZones,
+  StaticLegendPositionType,
 } from 'src/types'
 import {SourceOption} from 'src/types/sources'
 import {Links, ScriptStatus} from 'src/types/flux'
@@ -80,6 +81,7 @@ interface PassedProps {
   isInCEO: boolean
   templates: Template[]
   isStaticLegend: boolean
+  staticLegendPosition: StaticLegendPositionType
   onResetFocus: () => void
   updateSourceLink?: typeof updateSourceLinkAction
   notify: NotificationAction
@@ -89,6 +91,9 @@ interface PassedProps {
     stateToUpdate: QueryUpdateState
   ) => void
   onToggleStaticLegend: (isStaticLegend: boolean) => void
+  onToggleStaticLegendPosition: (
+    staticLegendPosition: StaticLegendPositionType
+  ) => void
   children: (
     activeEditorTab: CEOTabs,
     onSetActiveEditorTab: (activeEditorTab: CEOTabs) => void
@@ -243,7 +248,13 @@ class TimeMachine extends PureComponent<Props, State> {
   }
 
   private get editorTab() {
-    const {onResetFocus, isStaticLegend, onToggleStaticLegend} = this.props
+    const {
+      onResetFocus,
+      isStaticLegend,
+      staticLegendPosition,
+      onToggleStaticLegend,
+      onToggleStaticLegendPosition,
+    } = this.props
     const {activeEditorTab} = this.state
 
     if (activeEditorTab === CEOTabs.Queries) {
@@ -257,8 +268,10 @@ class TimeMachine extends PureComponent<Props, State> {
     return (
       <DisplayOptions
         queryConfigs={this.queriesWorkingDraft}
+        onToggleStaticLegendPosition={onToggleStaticLegendPosition}
         onToggleStaticLegend={onToggleStaticLegend}
         staticLegend={isStaticLegend}
+        staticLegendPosition={staticLegendPosition}
         onResetFocus={onResetFocus}
         stateToUpdate={this.stateToUpdate}
       />

@@ -20,7 +20,10 @@ import {editCellQueryStatus} from 'src/dashboards/actions'
 
 // Constants
 import {getCellTypeColors} from 'src/dashboards/constants/cellEditor'
-import {IS_STATIC_LEGEND} from 'src/shared/constants'
+import {
+  DEFAULT_STATIC_LEGEND_POSITION,
+  IS_STATIC_LEGEND,
+} from 'src/shared/constants'
 import {STATIC_LEGEND} from 'src/dashboards/constants/cellEditor'
 
 // Types
@@ -46,6 +49,7 @@ import {
   TableOptions,
   NoteVisibility,
   Axes,
+  StaticLegendPositionType,
 } from 'src/types/dashboards'
 import {Links, ScriptStatus} from 'src/types/flux'
 import {ColorString, ColorNumber} from 'src/types/colors'
@@ -100,6 +104,7 @@ interface State {
   isStaticLegend: boolean
   scriptStatus: ScriptStatus
   draftCellName: string
+  staticLegendPosition: StaticLegendPositionType
 }
 
 @ErrorHandling
@@ -115,6 +120,7 @@ class CellEditorOverlay extends Component<Props, State> {
       isStaticLegend: IS_STATIC_LEGEND(legend),
       scriptStatus: {type: 'none', text: ''},
       draftCellName: props.cell.name,
+      staticLegendPosition: DEFAULT_STATIC_LEGEND_POSITION,
     }
   }
 
@@ -151,7 +157,7 @@ class CellEditorOverlay extends Component<Props, State> {
       dashboardRefresh,
     } = this.props
 
-    const {isStaticLegend} = this.state
+    const {isStaticLegend, staticLegendPosition} = this.state
 
     return (
       <div
@@ -170,7 +176,9 @@ class CellEditorOverlay extends Component<Props, State> {
           editQueryStatus={editQueryStatus}
           onResetFocus={this.handleResetFocus}
           onToggleStaticLegend={this.handleToggleStaticLegend}
+          onToggleStaticLegendPosition={this.handleToggleStaticLegendPosition}
           isStaticLegend={isStaticLegend}
+          staticLegendPosition={staticLegendPosition}
           queryStatus={queryStatus}
           onUpdateScriptStatus={this.handleUpdateScriptStatus}
           me={me}
@@ -339,6 +347,12 @@ class CellEditorOverlay extends Component<Props, State> {
         }
         break
     }
+  }
+
+  private handleToggleStaticLegendPosition = (
+    staticLegendPosition: StaticLegendPositionType
+  ): void => {
+    this.setState({staticLegendPosition})
   }
 
   private handleToggleStaticLegend = (isStaticLegend: boolean): void => {

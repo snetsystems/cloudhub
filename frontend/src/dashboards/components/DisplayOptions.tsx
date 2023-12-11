@@ -23,7 +23,7 @@ import {HANDLE_VERTICAL} from 'src/shared/constants'
 import {DEFAULT_AXES} from 'src/dashboards/constants/cellEditor'
 
 // Types
-import {buildDefaultYLabel} from 'src/shared/presenters'
+import {buildDefaultXLabel, buildDefaultYLabel} from 'src/shared/presenters'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Axes, QueryConfig, CellType, QueryUpdateState} from 'src/types'
 import {
@@ -32,6 +32,7 @@ import {
   NoteVisibility,
   ThresholdType,
   TableOptions as TableOptionsInterface,
+  StaticLegendPositionType,
 } from 'src/types/dashboards'
 import {ColorNumber, ColorString} from 'src/types/colors'
 import HistorgramOptions from './HistorgramOptions'
@@ -66,14 +67,19 @@ interface ConnectedProps {
 interface PassedProps {
   queryConfigs: QueryConfig[]
   staticLegend: boolean
+  staticLegendPosition: StaticLegendPositionType
   stateToUpdate: QueryUpdateState
   onResetFocus: () => void
+  onToggleStaticLegendPosition: (
+    staticLegendPosition: StaticLegendPositionType
+  ) => void
   onToggleStaticLegend: (isStaticLegend: boolean) => void
 }
 
 type Props = PassedProps & ConnectedProps
 
 interface State {
+  defaultXLabel: string
   defaultYLabel: string
   proportions: number[]
 }
@@ -84,6 +90,7 @@ class DisplayOptions extends Component<Props, State> {
     super(props)
 
     this.state = {
+      defaultXLabel: this.defaultXLabel,
       defaultYLabel: this.defaultYLabel,
       proportions: [undefined, undefined, undefined],
     }
@@ -93,7 +100,10 @@ class DisplayOptions extends Component<Props, State> {
     const {queryConfigs} = prevProps
 
     if (!_.isEqual(queryConfigs[0], this.props.queryConfigs[0])) {
-      this.setState({defaultYLabel: this.defaultYLabel})
+      this.setState({
+        defaultXLabel: this.defaultXLabel,
+        defaultYLabel: this.defaultYLabel,
+      })
     }
   }
 
@@ -168,7 +178,9 @@ class DisplayOptions extends Component<Props, State> {
       lineColors,
       gaugeColors,
       staticLegend,
+      staticLegendPosition,
       onToggleStaticLegend,
+      onToggleStaticLegendPosition,
       onResetFocus,
       queryConfigs,
       thresholdsListType,
@@ -187,7 +199,7 @@ class DisplayOptions extends Component<Props, State> {
       onUpdateTimeFormat,
     } = this.props
 
-    const {defaultYLabel} = this.state
+    const {defaultXLabel, defaultYLabel} = this.state
 
     switch (type) {
       case CellType.Gauge:
@@ -244,10 +256,13 @@ class DisplayOptions extends Component<Props, State> {
             type={type}
             lineColors={lineColors}
             staticLegend={staticLegend}
+            staticLegendPosition={staticLegendPosition}
+            defaultXLabel={defaultXLabel}
             defaultYLabel={defaultYLabel}
             decimalPlaces={decimalPlaces}
             onUpdateAxes={onUpdateAxes}
             onToggleStaticLegend={onToggleStaticLegend}
+            onToggleStaticLegendPosition={onToggleStaticLegendPosition}
             onUpdateLineColors={onUpdateLineColors}
             onUpdateDecimalPlaces={onUpdateDecimalPlaces}
           />
@@ -272,6 +287,15 @@ class DisplayOptions extends Component<Props, State> {
 
   private get axes(): Axes {
     return this.props.axes || DEFAULT_AXES
+  }
+
+  private get defaultXLabel(): string {
+    const {queryConfigs} = this.props
+    if (queryConfigs.length) {
+      return buildDefaultXLabel(queryConfigs[0])
+    }
+
+    return ''
   }
 
   private get defaultYLabel(): string {

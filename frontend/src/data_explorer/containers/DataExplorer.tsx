@@ -42,6 +42,7 @@ import {notify as notifyAction} from 'src/shared/actions/notifications'
 
 // Constants
 import {
+  DEFAULT_STATIC_LEGEND_POSITION,
   TEMPLATES,
   TEMP_VAR_DASHBOARD_TIME,
   TEMP_VAR_UPPER_DASHBOARD_TIME,
@@ -63,6 +64,7 @@ import {
   TimeRange,
   TimeZones,
   Me,
+  StaticLegendPositionType,
 } from 'src/types'
 import {ErrorHandling} from 'src/shared/decorators/errors'
 import {Links} from 'src/types/flux'
@@ -120,6 +122,7 @@ interface State {
   isStaticLegend: boolean
   isComponentMounted: boolean
   activeQueryIndex: number
+  staticLegendPosition: StaticLegendPositionType
 }
 
 @ErrorHandling
@@ -133,6 +136,7 @@ export class DataExplorer extends PureComponent<Props, State> {
       isStaticLegend: false,
       isComponentMounted: false,
       activeQueryIndex: 0,
+      staticLegendPosition: DEFAULT_STATIC_LEGEND_POSITION,
     }
 
     props.onResetTimeMachine()
@@ -184,7 +188,11 @@ export class DataExplorer extends PureComponent<Props, State> {
       autoRefresh,
     } = this.props
 
-    const {isStaticLegend, isComponentMounted} = this.state
+    const {
+      isStaticLegend,
+      staticLegendPosition,
+      isComponentMounted,
+    } = this.state
 
     if (!isComponentMounted) {
       return <PageSpinner />
@@ -204,10 +212,12 @@ export class DataExplorer extends PureComponent<Props, State> {
             templates={this.templates}
             queryStatus={queryStatus}
             isStaticLegend={isStaticLegend}
+            staticLegendPosition={staticLegendPosition}
             editQueryStatus={editQueryStatus}
             updateSourceLink={updateSourceLink}
             onResetFocus={this.handleResetFocus}
             onToggleStaticLegend={this.handleToggleStaticLegend}
+            onToggleStaticLegendPosition={this.handleToggleStaticLegendPosition}
             onActiveQueryIndexChange={this.onActiveQueryIndexChange}
             me={me}
             isUsingAuth={isUsingAuth}
@@ -431,6 +441,12 @@ export class DataExplorer extends PureComponent<Props, State> {
     this.setState({
       isSendToDashboardVisible: !this.state.isSendToDashboardVisible,
     })
+  }
+
+  private handleToggleStaticLegendPosition = (
+    staticLegendPosition: StaticLegendPositionType
+  ): void => {
+    this.setState({staticLegendPosition})
   }
 
   private handleToggleStaticLegend = (isStaticLegend: boolean): void => {

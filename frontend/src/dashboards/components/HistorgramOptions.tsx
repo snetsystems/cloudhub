@@ -19,7 +19,7 @@ import {ErrorHandling} from 'src/shared/decorators/errors'
 
 // Types
 import {Axes, CellType} from 'src/types'
-import {DecimalPlaces} from 'src/types/dashboards'
+import {DecimalPlaces, StaticLegendPositionType} from 'src/types/dashboards'
 import {ColorString} from 'src/types/colors'
 
 const {LINEAR, LOG, BASE_2, BASE_10, BASE_RAW} = AXES_SCALE_OPTIONS
@@ -29,18 +29,25 @@ interface Props {
   type: string
   axes: Axes
   staticLegend: boolean
+  staticLegendPosition: StaticLegendPositionType
+  defaultXLabel: string
   defaultYLabel: string
   lineColors: ColorString[]
   decimalPlaces: DecimalPlaces
   onUpdateAxes: (axes: Axes) => void
   onToggleStaticLegend: (isStaticLegend: boolean) => void
+  onToggleStaticLegendPosition: (
+    staticLegendPosition: StaticLegendPositionType
+  ) => void
   onUpdateLineColors: (colors: ColorString[]) => void
   onUpdateDecimalPlaces: (decimalPlaces: DecimalPlaces) => void
 }
 
 interface State {
-  prefix: string
-  suffix: string
+  xPrefix: string
+  xSuffix: string
+  yPrefix: string
+  ySuffix: string
 }
 
 @ErrorHandling
@@ -68,8 +75,10 @@ class HistorgramOptions extends PureComponent<Props, State> {
   constructor(props) {
     super(props)
     this.state = {
-      prefix: getDeep<string>(props, 'axes.y.prefix', ''),
-      suffix: getDeep<string>(props, 'axes.y.suffix', ''),
+      xPrefix: getDeep<string>(props, 'axes.x.prefix', ''),
+      xSuffix: getDeep<string>(props, 'axes.x.suffix', ''),
+      yPrefix: getDeep<string>(props, 'axes.y.prefix', ''),
+      ySuffix: getDeep<string>(props, 'axes.y.suffix', ''),
     }
   }
 
@@ -80,13 +89,13 @@ class HistorgramOptions extends PureComponent<Props, State> {
       },
       type,
       lineColors,
+      defaultXLabel,
       defaultYLabel,
       onUpdateLineColors,
     } = this.props
-    const {prefix, suffix} = this.state
+    const {xPrefix, xSuffix, yPrefix, ySuffix} = this.state
 
     const [min, max] = bounds
-
     const {menuOption} = STATISTICAL_GRAPH_TYPES.find(
       graph => graph.type === type
     )
@@ -97,14 +106,51 @@ class HistorgramOptions extends PureComponent<Props, State> {
           <h5 className="display-options--header">{menuOption} Controls</h5>
           <form autoComplete="off" className="form-group-wrapper">
             <div className="form-group col-sm-12">
-              <label htmlFor="prefix">Title</label>
+              <label>X-Axis Title</label>
               <OptIn
                 type="text"
                 customValue={label}
-                onSetValue={this.handleSetLabel}
+                onSetValue={this.handleSetXAxisLabel}
+                customPlaceholder={defaultXLabel || 'x-axis title'}
+              />
+            </div>
+            <Input
+              name="x-prefix"
+              id="x-prefix"
+              value={xPrefix}
+              labelText="X-Value's Prefix"
+              onChange={this.handleSetXAxisPrefix}
+            />
+            <Input
+              name="x-suffix"
+              id="x-suffix"
+              value={xSuffix}
+              labelText="X-Value's Suffix"
+              onChange={this.handleSetXAxisSuffix}
+            />
+            <div className="form-group col-sm-12">
+              <label>Y-Axis Title</label>
+              <OptIn
+                type="text"
+                customValue={label}
+                onSetValue={this.handleSetYAxisLabel}
                 customPlaceholder={defaultYLabel || 'y-axis title'}
               />
             </div>
+            <Input
+              name="y-prefix"
+              id="y-prefix"
+              value={yPrefix}
+              labelText="Y-Value's Prefix"
+              onChange={this.handleSetYAxisPrefix}
+            />
+            <Input
+              name="y-suffix"
+              id="y-suffix"
+              value={ySuffix}
+              labelText="Y-Value's Suffix"
+              onChange={this.handleSetYAxisSuffix}
+            />
             <LineGraphColorSelector
               onUpdateLineColors={onUpdateLineColors}
               lineColors={lineColors}
@@ -129,24 +175,11 @@ class HistorgramOptions extends PureComponent<Props, State> {
                 min={getInputMin()}
               />
             </div>
-            <Input
-              name="prefix"
-              id="prefix"
-              value={prefix}
-              labelText="Y-Value's Prefix"
-              onChange={this.handleSetPrefix}
-            />
-            <Input
-              name="suffix"
-              id="suffix"
-              value={suffix}
-              labelText="Y-Value's Suffix"
-              onChange={this.handleSetSuffix}
-            />
             {this.yValuesFormatTabs}
             {this.scaleTabs}
             {this.decimalPlaces}
             {this.staticLegendTabs}
+            {this.staticLegendPositionTabs}
           </form>
         </div>
       </FancyScrollbar>
@@ -177,6 +210,54 @@ class HistorgramOptions extends PureComponent<Props, State> {
             onClick={onToggleStaticLegend}
           >
             Hide
+          </Radio.Button>
+        </Radio>
+      </div>
+    )
+  }
+
+  private get staticLegendPositionTabs(): JSX.Element {
+    const {staticLegendPosition, onToggleStaticLegendPosition} = this.props
+
+    return (
+      <div className="form-group col-sm-6">
+        <label>Static Legend Position</label>
+        <Radio shape={ButtonShape.StretchToFit}>
+          <Radio.Button
+            id="static-legend-tab--top"
+            value={true}
+            active={staticLegendPosition === 'top'}
+            titleText="Show static legend on the top side"
+            onClick={() => onToggleStaticLegendPosition('top')}
+          >
+            Top
+          </Radio.Button>
+          <Radio.Button
+            id="static-legend-tab--left"
+            value={false}
+            active={staticLegendPosition === 'left'}
+            titleText="Show static legend on the left side"
+            onClick={() => onToggleStaticLegendPosition('left')}
+          >
+            Left
+          </Radio.Button>
+          <Radio.Button
+            id="static-legend-tab--bottom"
+            value={false}
+            active={staticLegendPosition === 'bottom'}
+            titleText="Show static legend on the bottom side"
+            onClick={() => onToggleStaticLegendPosition('bottom')}
+          >
+            Bottom
+          </Radio.Button>
+          <Radio.Button
+            id="static-legend-tab--right"
+            value={false}
+            active={staticLegendPosition === 'right'}
+            titleText="Show static legend on the right side"
+            onClick={() => onToggleStaticLegendPosition('right')}
+          >
+            Right
           </Radio.Button>
         </Radio>
       </div>
@@ -276,7 +357,22 @@ class HistorgramOptions extends PureComponent<Props, State> {
     )
   }
 
-  private handleSetPrefix = (e: ChangeEvent<HTMLInputElement>): void => {
+  private handleSetXAxisPrefix = (e: ChangeEvent<HTMLInputElement>): void => {
+    const {onUpdateAxes, axes} = this.props
+    const prefix = e.target.value
+
+    const newAxes = {
+      ...axes,
+      x: {
+        ...axes.x,
+        prefix,
+      },
+    }
+
+    this.setState({xPrefix: prefix}, () => onUpdateAxes(newAxes))
+  }
+
+  private handleSetYAxisPrefix = (e: ChangeEvent<HTMLInputElement>): void => {
     const {onUpdateAxes, axes} = this.props
     const prefix = e.target.value
 
@@ -288,10 +384,24 @@ class HistorgramOptions extends PureComponent<Props, State> {
       },
     }
 
-    this.setState({prefix}, () => onUpdateAxes(newAxes))
+    this.setState({yPrefix: prefix}, () => onUpdateAxes(newAxes))
   }
 
-  private handleSetSuffix = (e: ChangeEvent<HTMLInputElement>): void => {
+  private handleSetXAxisSuffix = (e: ChangeEvent<HTMLInputElement>): void => {
+    const {onUpdateAxes, axes} = this.props
+    const suffix = e.target.value
+
+    const newAxes = {
+      ...axes,
+      x: {
+        ...axes.x,
+        suffix,
+      },
+    }
+    this.setState({xSuffix: suffix}, () => onUpdateAxes(newAxes))
+  }
+
+  private handleSetYAxisSuffix = (e: ChangeEvent<HTMLInputElement>): void => {
     const {onUpdateAxes, axes} = this.props
     const suffix = e.target.value
 
@@ -302,7 +412,7 @@ class HistorgramOptions extends PureComponent<Props, State> {
         suffix,
       },
     }
-    this.setState({suffix}, () => onUpdateAxes(newAxes))
+    this.setState({ySuffix: suffix}, () => onUpdateAxes(newAxes))
   }
 
   private handleSetYAxisBoundMin = (min: string): void => {
@@ -333,7 +443,14 @@ class HistorgramOptions extends PureComponent<Props, State> {
     onUpdateAxes(newAxes)
   }
 
-  private handleSetLabel = (label: string): void => {
+  private handleSetXAxisLabel = (label: string): void => {
+    const {onUpdateAxes, axes} = this.props
+    const newAxes = {...axes, x: {...axes.x, label}}
+
+    onUpdateAxes(newAxes)
+  }
+
+  private handleSetYAxisLabel = (label: string): void => {
     const {onUpdateAxes, axes} = this.props
     const newAxes = {...axes, y: {...axes.y, label}}
 

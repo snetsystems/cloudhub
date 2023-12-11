@@ -23,6 +23,7 @@ import {
   Protoboard,
   QueryType,
   RefreshRate,
+  StaticLegendPositionType,
 } from './dashboards'
 import {
   Template,
@@ -155,4 +156,5 @@ export {
   ShellLoad,
   CloudHost,
   CloudHosts,
+  StaticLegendPositionType,
 }

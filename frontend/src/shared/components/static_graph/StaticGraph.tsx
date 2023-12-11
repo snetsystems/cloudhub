@@ -15,7 +15,7 @@ import {TimeSeriesServerResponse} from 'src/types/series'
 import {Query, Axes, RemoteDataState, CellType, FluxTable} from 'src/types'
 import {DataType} from 'src/shared/constants'
 import {getDeep} from 'src/utils/wrappers'
-import {buildDefaultYLabel} from 'src/shared/presenters'
+import {buildDefaultXLabel, buildDefaultYLabel} from 'src/shared/presenters'
 
 import {Chart as ChartJS} from 'chart.js'
 
@@ -76,18 +76,22 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
   }
 
   private get StaticGraphWithType() {
-    const {data, axes, colors, cellID, queries, type} = this.props
-    const chartLabel = this.getLabel('y', axes, queries)
+    const {data, axes, colors, cellID, queries, type, staticLegend} = this.props
+    const xAxisTitle = this.getAxisTitle('x', axes, queries)
+    const yAxisTitle = this.getAxisTitle('y', axes, queries)
 
     switch (type) {
       case CellType.Histogram:
         return (
           <BarChart
+            axes={axes}
             cellID={cellID}
             staticGraphStyle={this.staticGraphStyle}
-            chartLabel={chartLabel}
+            xAxisTitle={xAxisTitle}
+            yAxisTitle={yAxisTitle}
             data={data}
             colors={colors}
+            staticLegend={staticLegend}
           />
         )
 
@@ -126,7 +130,11 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
     return {...this.containerStyle, zIndex: 2}
   }
 
-  private getLabel = (axis: string, axes: Axes, queries: Query[]): string => {
+  private getAxisTitle = (
+    axis: string,
+    axes: Axes,
+    queries: Query[]
+  ): string => {
     const label = getDeep<string>(axes, `${axis}.label`, '') || ''
     const queryConfig = getDeep(queries, '0.queryConfig', false)
 
@@ -134,7 +142,9 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
       return label
     }
 
-    return buildDefaultYLabel(queryConfig)
+    return axis === 'x'
+      ? buildDefaultXLabel(queryConfig)
+      : buildDefaultYLabel(queryConfig)
   }
 }
 
