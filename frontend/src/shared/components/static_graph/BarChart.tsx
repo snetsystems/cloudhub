@@ -21,6 +21,10 @@ import _ from 'lodash'
 import {ColorString} from 'src/types/colors'
 import {getLineColorsHexes} from 'src/shared/constants/graphColorPalettes'
 import {STATIC_GRAPH_OPTIONS} from 'src/shared/constants/staticGraph'
+import {
+  convertToStaticGraphMinMaxValue,
+  formatStaticGraphValue,
+} from 'src/shared/utils/staticGraph'
 
 ChartJS.register(
   CategoryScale,
@@ -81,59 +85,11 @@ const BarChart = ({
 
   const type: ScaleType = axes?.y?.scale === 'log' ? 'logarithmic' : undefined
   const bounds: BoundsType = axes?.y?.bounds
-  const min: MinMaxValueType =
-    /^-?\d+(\.\d+)?$/.test(bounds[0]) && _.isFinite(_.toNumber(bounds[0]))
-      ? _.toNumber(bounds[0])
-      : undefined
-
-  const max: MinMaxValueType =
-    /^-?\d+(\.\d+)?$/.test(bounds[1]) && _.isFinite(_.toNumber(bounds[1]))
-      ? _.toNumber(bounds[1])
-      : undefined
+  const min: MinMaxValueType = convertToStaticGraphMinMaxValue(bounds[0])
+  const max: MinMaxValueType = convertToStaticGraphMinMaxValue(bounds[1])
 
   const isValidValue = value => {
     return value !== undefined && value !== ''
-  }
-
-  const formatYAxisValue = value => {
-    let formattedValue
-
-    switch (axes?.y?.base) {
-      case 'raw':
-        if (value >= 1e5) {
-          formattedValue = value.toExponential(2)
-        } else {
-          formattedValue = value
-        }
-        break
-      case '10':
-        if (value >= 1e9) {
-          formattedValue = (value / 1e9).toFixed(2) + ' B'
-        } else if (value >= 1e6) {
-          formattedValue = (value / 1e6).toFixed(2) + ' M'
-        } else if (value >= 1e3) {
-          formattedValue = (value / 1e3).toFixed(2) + ' K'
-        } else {
-          formattedValue = value
-        }
-        break
-      case '2':
-      default:
-        if (value >= 1e9) {
-          formattedValue = (value / 1e9).toFixed(2) + ' GB'
-        } else if (value >= 1e6) {
-          formattedValue = (value / 1e6).toFixed(2) + ' MB'
-        } else if (value >= 1e3) {
-          formattedValue = (value / 1e3).toFixed(2) + ' KB'
-        } else {
-          formattedValue = value
-        }
-        break
-    }
-
-    const prefix = axes?.y?.prefix ? axes.y.prefix : ''
-    const suffix = axes?.y?.suffix ? axes.y.suffix : ''
-    return prefix + formattedValue + suffix
   }
 
   const dynamicOption = {
@@ -173,7 +129,7 @@ const BarChart = ({
         ticks: {
           ...STATIC_GRAPH_OPTIONS.scales?.y?.ticks,
           callback: function (value) {
-            return formatYAxisValue(value)
+            return formatStaticGraphValue(axes, value)
           },
         },
       },
