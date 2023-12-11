@@ -10,7 +10,7 @@ import InvalidQuery from 'src/shared/components/InvalidQuery'
 
 // Types
 import {ColorString} from 'src/types/colors'
-import {DecimalPlaces} from 'src/types/dashboards'
+import {DecimalPlaces, StaticLegendPositionType} from 'src/types/dashboards'
 import {TimeSeriesServerResponse} from 'src/types/series'
 import {Query, Axes, RemoteDataState, CellType, FluxTable} from 'src/types'
 import {DataType} from 'src/shared/constants'
@@ -35,6 +35,7 @@ interface Props {
   dataType: DataType
   cellID: string
   staticLegend: boolean
+  staticLegendPosition: StaticLegendPositionType
 }
 
 type StaticGraphProps = Props & RouteComponentProps<any, any>

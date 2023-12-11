@@ -26,6 +26,7 @@ import {
   DecimalPlaces,
   NoteVisibility,
   ThresholdType,
+  StaticLegendPositionType,
 } from 'src/types/dashboards'
 import {AutoRefresher} from 'src/utils/AutoRefresher'
 
@@ -55,6 +56,7 @@ interface PassedProps {
   templates: Template[]
   onEditQueryStatus: (queryID: string, status: Status) => void
   staticLegend: boolean
+  staticLegendPosition: StaticLegendPositionType
   manualRefresh: number
   editorLocation?: QueryUpdateState
   showRawFluxData?: boolean
@@ -82,6 +84,7 @@ const TimeMachineVisualization: FunctionComponent<Props> = props => {
             queries={props.queries}
             templates={props.templates}
             editQueryStatus={props.onEditQueryStatus}
+            staticLegendPosition={props.staticLegendPosition}
             staticLegend={props.staticLegend}
             timeRange={props.timeRange}
             manualRefresh={props.manualRefresh}

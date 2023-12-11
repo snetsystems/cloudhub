@@ -53,6 +53,7 @@ import {
   FieldOption,
   DecimalPlaces,
   NoteVisibility,
+  StaticLegendPositionType,
 } from 'src/types/dashboards'
 import {GrabDataForDownloadHandler} from 'src/types/layout'
 import {TimeSeriesServerResponse} from 'src/types/series'
@@ -81,6 +82,7 @@ interface Props {
   timeFormat: string
   cellHeight: number
   staticLegend: boolean
+  staticLegendPosition: StaticLegendPositionType
   autoRefresher: AutoRefresher
   manualRefresh: number
   resizerTopHeight: number
@@ -519,6 +521,7 @@ class RefreshingGraph extends Component<Props> {
       queries,
       decimalPlaces,
       staticLegend,
+      staticLegendPosition,
       manualRefresh,
     } = this.props
 
@@ -536,6 +539,7 @@ class RefreshingGraph extends Component<Props> {
         dataType={dataType}
         key={manualRefresh}
         staticLegend={staticLegend}
+        staticLegendPosition={staticLegendPosition}
         decimalPlaces={decimalPlaces}
       />
     )

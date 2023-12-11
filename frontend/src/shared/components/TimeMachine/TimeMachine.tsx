@@ -225,7 +225,12 @@ class TimeMachine extends PureComponent<Props, State> {
   }
 
   private renderVisualization = () => {
-    const {templates, isStaticLegend, manualRefresh} = this.props
+    const {
+      templates,
+      isStaticLegend,
+      staticLegendPosition,
+      manualRefresh,
+    } = this.props
     const {autoRefresher, isViewingRawData} = this.state
 
     return (
@@ -235,6 +240,7 @@ class TimeMachine extends PureComponent<Props, State> {
         queries={this.queriesForVis}
         autoRefresher={autoRefresher}
         staticLegend={isStaticLegend}
+        staticLegendPosition={staticLegendPosition}
         manualRefresh={manualRefresh}
         editorLocation={this.stateToUpdate}
         showRawFluxData={isViewingRawData}
