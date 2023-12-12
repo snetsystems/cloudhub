@@ -313,6 +313,8 @@ class RefreshingGraph extends Component<Props> {
       'manualRefresh',
       'timeRange',
       'inView',
+      'staticLegend',
+      'staticLegendPosition',
     ]
 
     const prevVisValues = _.pick(prevProps, visProps)
