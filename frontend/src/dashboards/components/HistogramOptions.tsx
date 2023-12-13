@@ -233,15 +233,6 @@ class HistorgramOptions extends PureComponent<Props, State> {
             Top
           </Radio.Button>
           <Radio.Button
-            id="static-legend-tab--right"
-            value={false}
-            active={staticLegendPosition === 'right'}
-            titleText="Show static legend on the right side"
-            onClick={() => onToggleStaticLegendPosition('right')}
-          >
-            Right
-          </Radio.Button>
-          <Radio.Button
             id="static-legend-tab--bottom"
             value={false}
             active={staticLegendPosition === 'bottom'}
@@ -258,6 +249,15 @@ class HistorgramOptions extends PureComponent<Props, State> {
             onClick={() => onToggleStaticLegendPosition('left')}
           >
             Left
+          </Radio.Button>
+          <Radio.Button
+            id="static-legend-tab--right"
+            value={false}
+            active={staticLegendPosition === 'right'}
+            titleText="Show static legend on the right side"
+            onClick={() => onToggleStaticLegendPosition('right')}
+          >
+            Right
           </Radio.Button>
         </Radio>
       </div>
