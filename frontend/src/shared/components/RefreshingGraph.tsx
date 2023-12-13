@@ -24,7 +24,7 @@ import {
   DEFAULT_TIME_FORMAT,
   DEFAULT_DECIMAL_PLACES,
 } from 'src/dashboards/constants'
-import {DataType} from 'src/shared/constants'
+import {DEFAULT_STATIC_LEGEND_POSITION, DataType} from 'src/shared/constants'
 
 // Utils
 import {AutoRefresher, GlobalAutoRefresher} from 'src/utils/AutoRefresher'
@@ -110,6 +110,7 @@ class RefreshingGraph extends Component<Props> {
     timeFormat: DEFAULT_TIME_FORMAT,
     decimalPlaces: DEFAULT_DECIMAL_PLACES,
     autoRefresher: GlobalAutoRefresher,
+    staticLegendPosition: DEFAULT_STATIC_LEGEND_POSITION,
   }
 
   public shouldComponentUpdate(nextProps: Props) {
