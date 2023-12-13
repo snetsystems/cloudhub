@@ -101,7 +101,6 @@ interface Props {
   onUpdateFieldOptions?: (fieldOptions: FieldOption[]) => void
   onUpdateVisType?: (type: CellType) => Promise<void>
 }
-
 class RefreshingGraph extends Component<Props> {
   public static defaultProps: Partial<Props> = {
     inView: true,
@@ -254,6 +253,9 @@ class RefreshingGraph extends Component<Props> {
                       case CellType.Gauge:
                         return this.gauge(timeSeriesInfluxQL, timeSeriesFlux)
                       case CellType.Histogram:
+                      case CellType.StaticPie:
+                      case CellType.StaticDoughnut:
+                      case CellType.StaticScatter:
                         return this.StaticGraph(
                           timeSeriesInfluxQL,
                           timeSeriesFlux,

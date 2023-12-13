@@ -35,7 +35,7 @@ import {
   StaticLegendPositionType,
 } from 'src/types/dashboards'
 import {ColorNumber, ColorString} from 'src/types/colors'
-import HistorgramOptions from './HistorgramOptions'
+import HistogramOptions from 'src/dashboards/components/HistogramOptions'
 
 interface ConnectedProps {
   type: CellType
@@ -249,9 +249,12 @@ class DisplayOptions extends Component<Props, State> {
             onUpdateThresholdsListType={onUpdateThresholdsListType}
           />
         )
+      case CellType.StaticPie:
+      case CellType.StaticDoughnut:
+      case CellType.StaticScatter:
       case CellType.Histogram:
         return (
-          <HistorgramOptions
+          <HistogramOptions
             axes={this.axes}
             type={type}
             lineColors={lineColors}

@@ -1,5 +1,3 @@
-import {LINE_COLORS} from 'src/shared/graphs/helpers'
-
 const CHART_GRID_COLOR = '#383846'
 const CHART_TITLE_COLOR = '#999dab'
 const CHART_TITLE_FONT_SIZE = 11
@@ -7,6 +5,7 @@ const CHART_TITLE_FONT_WEIGHT = '600'
 const CHART_LABEL_FONT_SIZE = 11
 const CHART_LABEL_FONT_WEIGHT = '600'
 
+export const LEGEND_MIN_MARGIN_WIDTH = 30
 export const STATIC_GRAPH_OPTIONS = {
   layout: {
     padding: {
@@ -33,13 +32,23 @@ export const STATIC_GRAPH_OPTIONS = {
         mode: 'x' as const,
       },
     },
-
-    colorschemes: {
-      scheme: LINE_COLORS,
+    tooltip: {
+      pointStyle: 'circle',
+      usePointStyle: true,
+      boxWidth: 8,
+      boxHeight: 8,
+      animation: false as any,
+      callbacks: {
+        labelPointStyle: function () {
+          return {
+            pointStyle: 'circle' as const,
+            rotation: 0,
+          }
+        },
+      },
     },
-
     legend: {
-      display: true,
+      display: false,
     },
   },
 
@@ -87,6 +96,65 @@ export const STATIC_GRAPH_OPTIONS = {
           weight: CHART_LABEL_FONT_WEIGHT,
         },
       },
+    },
+  },
+}
+
+export const LEGEND_POSITION = {
+  right: {
+    container: {flexDirection: 'row' as const},
+
+    legend: {
+      container: {
+        maxHeight: '100%',
+        minWidth: 'auto',
+        maxWidth: '120px',
+      },
+      item: {},
+    },
+  },
+  left: {
+    container: {
+      flexDirection: 'row-reverse' as const,
+    },
+
+    legend: {
+      container: {
+        maxHeight: '100%',
+        minWidth: 'auto',
+        maxWidth: '120px',
+      },
+      item: {},
+    },
+  },
+  top: {
+    container: {
+      flexDirection: 'column-reverse' as const,
+      alignItems: 'start',
+    },
+
+    legend: {
+      container: {
+        maxHeight: '50%',
+        minWidth: '200px',
+        overflowX: 'hidden' as const,
+      },
+      item: {},
+    },
+  },
+  bottom: {
+    container: {
+      flexDirection: 'column' as const,
+      alignItems: 'start',
+    },
+
+    legend: {
+      container: {
+        maxHeight: '50%',
+        minWidth: '200px',
+        overflowX: 'hidden' as const,
+      },
+      item: {},
     },
   },
 }

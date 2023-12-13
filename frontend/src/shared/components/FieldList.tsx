@@ -3,6 +3,7 @@ import _ from 'lodash'
 
 import {
   ApplyFuncsToFieldArgs,
+  CellType,
   Field,
   FieldFunc,
   GroupBy,
@@ -56,6 +57,7 @@ interface Props {
   initialGroupByTime?: string | null
   isQuerySupportedByExplorer?: boolean
   source: Source
+  type?: CellType
 }
 
 interface State {
@@ -250,6 +252,7 @@ class FieldList extends PureComponent<Props, State> {
       initialGroupByTime: time,
       isKapacitorRule,
       isQuerySupportedByExplorer,
+      type,
     } = this.props
     const {fields, groupBy} = query
     const isDisabled = !isKapacitorRule && !isQuerySupportedByExplorer
@@ -257,7 +260,14 @@ class FieldList extends PureComponent<Props, State> {
     if (isDisabled) {
       return
     }
-    const initialGroupBy = {...groupBy, time}
+
+    const initialGroupBy =
+      type === CellType.Histogram ||
+      type === CellType.StaticPie ||
+      type === CellType.StaticDoughnut ||
+      type === CellType.StaticScatter
+        ? {...groupBy}
+        : {...groupBy, time}
 
     if (!_.size(fields)) {
       return isKapacitorRule

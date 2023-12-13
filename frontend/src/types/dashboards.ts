@@ -109,7 +109,10 @@ export enum CellType {
   Guide = 'guide',
   Note = 'note',
   Histogram = 'histogram',
-  StaticBar = 'StaticBar',
+  StaticBar = 'staticBar',
+  StaticPie = 'staticPie',
+  StaticDoughnut = 'staticDoughnut',
+  StaticScatter = 'staticScatter',
 }
 
 interface DashboardLinks {

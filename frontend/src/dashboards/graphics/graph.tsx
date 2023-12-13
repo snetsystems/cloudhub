@@ -15,8 +15,134 @@ interface GraphSVGs {
   [CellType.Table]: Graphic
   [CellType.Note]: Graphic
   [CellType.Histogram]: Graphic
+  [CellType.StaticPie]: Graphic
+  [CellType.StaticDoughnut]: Graphic
+  [CellType.StaticScatter]: Graphic
 }
 const GRAPH_SVGS: GraphSVGs = {
+  staticScatter: (
+    <div className="graph-type-selector--graphic">
+      <svg
+        viewBox="0 0 100 100"
+        width="100%"
+        height="100%"
+        version="1.1"
+        id="staticScatter"
+        x="0px"
+        y="0px"
+        preserveAspectRatio="none meet"
+        shapeRendering="geometricPrecision"
+      >
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-a"
+        ></circle>
+
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-b"
+        ></circle>
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-c"
+        ></circle>
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-d"
+        ></circle>
+      </svg>
+    </div>
+  ),
+  staticDoughnut: (
+    <div className="graph-type-selector--graphic">
+      <svg
+        viewBox="0 0 100 100"
+        width="100%"
+        height="100%"
+        version="1.1"
+        id="staticDoughnut"
+        x="0px"
+        y="0px"
+        preserveAspectRatio="none meet"
+        shapeRendering="geometricPrecision"
+      >
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-a"
+        ></circle>
+
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-b"
+        ></circle>
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-c"
+        ></circle>
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-d"
+        ></circle>
+      </svg>
+    </div>
+  ),
+  staticPie: (
+    <div className="graph-type-selector--graphic">
+      <svg
+        viewBox="0 0 100 100"
+        width="100%"
+        height="100%"
+        version="1.1"
+        id="staticPie"
+        x="0px"
+        y="0px"
+        preserveAspectRatio="none meet"
+        shapeRendering="geometricPrecision"
+      >
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-a"
+        ></circle>
+
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-b"
+        ></circle>
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-c"
+        ></circle>
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-d"
+        ></circle>
+      </svg>
+    </div>
+  ),
   histogram: (
     <div className="graph-type-selector--graphic">
       <svg
@@ -718,5 +844,20 @@ export const STATISTICAL_GRAPH_TYPES: GraphType[] = [
     type: CellType.Histogram,
     menuOption: 'Histogram',
     graphic: GRAPH_SVGS[CellType.Histogram],
+  },
+  {
+    type: CellType.StaticPie,
+    menuOption: 'Pie',
+    graphic: GRAPH_SVGS[CellType.StaticPie],
+  },
+  {
+    type: CellType.StaticDoughnut,
+    menuOption: 'Doughnut',
+    graphic: GRAPH_SVGS[CellType.StaticPie],
+  },
+  {
+    type: CellType.StaticScatter,
+    menuOption: 'Scatter',
+    graphic: GRAPH_SVGS[CellType.StaticPie],
   },
 ]

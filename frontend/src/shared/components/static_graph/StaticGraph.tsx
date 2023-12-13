@@ -1,12 +1,16 @@
 // Libraries
 import React, {PureComponent, CSSProperties} from 'react'
 import {withRouter, RouteComponentProps} from 'react-router'
+import {Chart as ChartJS} from 'chart.js'
 
 // Components
 import {ErrorHandlingWith} from 'src/shared/decorators/errors'
 import InvalidData from 'src/shared/components/InvalidData'
 import BarChart from 'src/shared/components/static_graph/BarChart'
 import InvalidQuery from 'src/shared/components/InvalidQuery'
+import PieChart from 'src/shared/components/static_graph/PieChart'
+import DoughnutChart from 'src/shared/components/static_graph/Doughnut'
+import ScatterChart from 'src/shared/components/static_graph/Scatter'
 
 // Types
 import {ColorString} from 'src/types/colors'
@@ -17,13 +21,10 @@ import {DataType} from 'src/shared/constants'
 import {getDeep} from 'src/utils/wrappers'
 import {buildDefaultXLabel, buildDefaultYLabel} from 'src/shared/presenters'
 
-import {Chart as ChartJS} from 'chart.js'
-
 ChartJS.defaults.font.size = 11
 ChartJS.defaults.color = '#999dab'
 ChartJS.defaults.font.family =
   '"Roboto", Helvetica, Arial, Tahoma, Verdana, sans-serif'
-
 interface Props {
   axes: Axes
   type: CellType
@@ -60,7 +61,6 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
 
   public render() {
     const {loading, data} = this.props
-
     if (
       data.length > 1 ||
       data[0]['response']['results'][0]['series'][0]['values'].length > 1
@@ -77,7 +77,16 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
   }
 
   private get StaticGraphWithType() {
-    const {data, axes, colors, cellID, queries, type, staticLegend} = this.props
+    const {
+      data,
+      axes,
+      colors,
+      cellID,
+      queries,
+      type,
+      staticLegend,
+      staticLegendPosition,
+    } = this.props
     const xAxisTitle = this.getAxisTitle('x', axes, queries)
     const yAxisTitle = this.getAxisTitle('y', axes, queries)
 
@@ -93,9 +102,45 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             data={data}
             colors={colors}
             staticLegend={staticLegend}
+            staticLegendPosition={staticLegendPosition}
           />
         )
-
+      case CellType.StaticPie:
+        return (
+          <PieChart
+            axes={axes}
+            cellID={cellID}
+            staticGraphStyle={this.staticGraphStyle}
+            data={data}
+            colors={colors}
+            staticLegend={staticLegend}
+            staticLegendPosition={staticLegendPosition}
+          />
+        )
+      case CellType.StaticDoughnut:
+        return (
+          <DoughnutChart
+            axes={axes}
+            cellID={cellID}
+            staticGraphStyle={this.staticGraphStyle}
+            data={data}
+            colors={colors}
+            staticLegend={staticLegend}
+            staticLegendPosition={staticLegendPosition}
+          />
+        )
+      case CellType.StaticScatter:
+        return (
+          <ScatterChart
+            axes={axes}
+            cellID={cellID}
+            staticGraphStyle={this.staticGraphStyle}
+            data={data}
+            colors={colors}
+            staticLegend={staticLegend}
+            staticLegendPosition={staticLegendPosition}
+          />
+        )
       default:
         break
     }

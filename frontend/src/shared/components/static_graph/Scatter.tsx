@@ -1,57 +1,54 @@
-// Libraries
+// Library
 import React, {useEffect, useRef, useState} from 'react'
-import {Bar} from 'react-chartjs-2'
+import {Scatter} from 'react-chartjs-2'
 import {
   Chart as ChartJS,
-  CategoryScale,
   LinearScale,
-  BarElement,
   Title,
   Tooltip,
   Legend,
-  LogarithmicScale,
+  LineElement,
+  PointElement,
+  DefaultDataPoint,
 } from 'chart.js'
-import zoomPlugin from 'chartjs-plugin-zoom'
 import _ from 'lodash'
+import zoomPlugin from 'chartjs-plugin-zoom'
 
 // Types
 import {Axes, FluxTable, StaticLegendPositionType} from 'src/types'
 import {TimeSeriesServerResponse} from 'src/types/series'
-import {ColorString} from 'src/types/colors'
 
 // Utils
 import {fastMap} from 'src/utils/fast'
 import {getLineColorsHexes} from 'src/shared/constants/graphColorPalettes'
-
-import {
-  convertToStaticGraphMinMaxValue,
-  formatStaticGraphValue,
-} from 'src/shared/utils/staticGraph'
+import {changeColorsOpacity} from 'src/shared/graphs/helpers'
 
 // Constants
+import {ColorString} from 'src/types/colors'
 import {
   LEGEND_POSITION,
   STATIC_GRAPH_OPTIONS,
 } from 'src/shared/constants/staticGraph'
 
 // Components
+import InvalidQuery from 'src/shared/components/InvalidQuery'
 import ChartContainer from 'src/shared/components/static_graph/common/ChartContainer'
 import {StaticGraphLegend} from 'src/shared/components/static_graph/common/StaticGraphLegend'
+import {
+  convertToStaticGraphMinMaxValue,
+  formatStaticGraphValue,
+} from 'src/shared/utils/staticGraph'
 
 ChartJS.register(
-  CategoryScale,
+  LineElement,
   LinearScale,
-  LogarithmicScale,
-  BarElement,
+  PointElement,
   Title,
   Tooltip,
   Legend,
   zoomPlugin
 )
 
-type ScaleType = 'logarithmic' | undefined
-type BoundsType = [string, string] | undefined
-type MinMaxValueType = number | undefined
 interface Props {
   axes: Axes
   cellID: string
@@ -63,8 +60,11 @@ interface Props {
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
 }
+type ScaleType = 'logarithmic' | undefined
+type BoundsType = [string, string] | undefined
+type MinMaxValueType = number | undefined
 
-const BarChart = ({
+const ScatterChart = ({
   axes,
   staticGraphStyle,
   data,
@@ -74,30 +74,53 @@ const BarChart = ({
   staticLegend,
   staticLegendPosition,
 }: Props) => {
-  const chartRef = useRef<ChartJS<'bar', [], unknown>>(null)
+  const chartRef = useRef<
+    ChartJS<'scatter', DefaultDataPoint<'scatter'>[], unknown>
+  >(null)
   const [chartInstance, setChartInstance] = useState<
-    ChartJS<'bar', [], unknown>
+    ChartJS<'scatter', DefaultDataPoint<'scatter'>[], unknown>
   >(null)
   const {container, legend} = LEGEND_POSITION[staticLegendPosition]
+
   const convertData = data[0]['response']['results'][0]['series']
-  const axesX = fastMap(convertData, item => _.values(item.tags))
-  const columns = convertData[0].columns
-  const processedData = fastMap(convertData, item =>
-    item.values[0].slice(1).map(value => value)
-  )
-  const getcolors = getLineColorsHexes(colors, columns.length - 1)
-  const datasets = columns.slice(1).map((col, colIndex) => ({
-    label: col,
-    data: fastMap(processedData, data => data[colIndex]),
-    backgroundColor: getcolors[colIndex],
-    borderColor: getcolors[colIndex],
-    borderWidth: 1,
-  }))
-  const chartData = {
-    labels: axesX,
-    datasets,
+  const axesX = fastMap(convertData, item => _.values(item.tags)[0]) as string[]
+  const getcolors = getLineColorsHexes(colors, convertData.length)
+
+  if (convertData.length > 3000) {
+    return (
+      <InvalidQuery
+        message={
+          'The results of the `group by` clause are too numerous to display. Please modify your query.'
+        }
+      />
+    )
   }
 
+  const scatterData = fastMap(convertData, (item, colIndex) => {
+    return {
+      label: _.values(item.tags).join('/'),
+      data: _.reduce(
+        item.values,
+        (acc: any[], value: any) => {
+          if (!(value[1] ?? false) && !(value[2] ?? false)) {
+            return acc
+          }
+
+          acc.push({x: value[1], y: value[2]})
+          return acc
+        },
+        []
+      ),
+      backgroundColor: changeColorsOpacity([getcolors[colIndex]], 0.8)[0],
+      borderColor: getcolors[colIndex],
+      borderWidth: 1,
+    }
+  })
+
+  const chartData = {
+    labels: axesX,
+    datasets: scatterData,
+  }
   const type: ScaleType = axes?.y?.scale === 'log' ? 'logarithmic' : undefined
   const bounds: BoundsType = axes?.y?.bounds
   const min: MinMaxValueType = convertToStaticGraphMinMaxValue(bounds[0])
@@ -106,11 +129,24 @@ const BarChart = ({
   const isValidValue = value => {
     return value !== undefined && value !== ''
   }
-
   const dynamicOption = {
     ...STATIC_GRAPH_OPTIONS,
     plugins: {
       ...STATIC_GRAPH_OPTIONS.plugins,
+      tooltip: {
+        ...STATIC_GRAPH_OPTIONS.plugins.tooltip,
+        callbacks: {
+          ...STATIC_GRAPH_OPTIONS.plugins.tooltip.callbacks,
+          label: function (context) {
+            let label = context.dataset.label || ''
+            if (label) {
+              const {x, y} = context.dataset.data[0] ?? {x: '0', y: '0'}
+              label += `: (${x} , ${y})`
+            }
+            return label
+          },
+        },
+      },
     },
     scales: {
       ...STATIC_GRAPH_OPTIONS.scales,
@@ -150,7 +186,7 @@ const BarChart = ({
 
   useEffect(() => {
     chartRef.current.resize()
-  }, [staticLegend, staticLegendPosition])
+  }, [staticLegendPosition])
 
   useEffect(() => {
     if (!chartInstance && chartRef.current) {
@@ -161,9 +197,14 @@ const BarChart = ({
   return (
     <div className="dygraph-child">
       <div className="dygraph-child-container" style={{...staticGraphStyle}}>
-        <div className="static-graph-container" style={{...container}}>
+        <div
+          className="static-graph-container"
+          style={{
+            ...container,
+          }}
+        >
           <ChartContainer>
-            <Bar ref={chartRef} options={dynamicOption} data={chartData} />
+            <Scatter ref={chartRef} options={dynamicOption} data={chartData} />
           </ChartContainer>
           {staticLegend && chartInstance && (
             <StaticGraphLegend
@@ -179,4 +220,4 @@ const BarChart = ({
   )
 }
 
-export default BarChart
+export default ScatterChart

@@ -1,15 +1,14 @@
 // Libraries
 import React, {useEffect, useRef, useState} from 'react'
-import {Bar} from 'react-chartjs-2'
+import {Pie} from 'react-chartjs-2'
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  BarElement,
   Title,
   Tooltip,
   Legend,
-  LogarithmicScale,
+  ArcElement,
 } from 'chart.js'
 import zoomPlugin from 'chartjs-plugin-zoom'
 import _ from 'lodash'
@@ -22,7 +21,7 @@ import {ColorString} from 'src/types/colors'
 // Utils
 import {fastMap} from 'src/utils/fast'
 import {getLineColorsHexes} from 'src/shared/constants/graphColorPalettes'
-
+import {changeColorsOpacity} from 'src/shared/graphs/helpers'
 import {
   convertToStaticGraphMinMaxValue,
   formatStaticGraphValue,
@@ -41,17 +40,12 @@ import {StaticGraphLegend} from 'src/shared/components/static_graph/common/Stati
 ChartJS.register(
   CategoryScale,
   LinearScale,
-  LogarithmicScale,
-  BarElement,
+  ArcElement,
   Title,
   Tooltip,
   Legend,
   zoomPlugin
 )
-
-type ScaleType = 'logarithmic' | undefined
-type BoundsType = [string, string] | undefined
-type MinMaxValueType = number | undefined
 interface Props {
   axes: Axes
   cellID: string
@@ -64,7 +58,11 @@ interface Props {
   staticLegendPosition: StaticLegendPositionType
 }
 
-const BarChart = ({
+type ScaleType = 'logarithmic' | undefined
+type BoundsType = [string, string] | undefined
+type MinMaxValueType = number | undefined
+
+const PieChart = ({
   axes,
   staticGraphStyle,
   data,
@@ -74,9 +72,9 @@ const BarChart = ({
   staticLegend,
   staticLegendPosition,
 }: Props) => {
-  const chartRef = useRef<ChartJS<'bar', [], unknown>>(null)
+  const chartRef = useRef<ChartJS<'pie', [], unknown>>(null)
   const [chartInstance, setChartInstance] = useState<
-    ChartJS<'bar', [], unknown>
+    ChartJS<'pie', [], unknown>
   >(null)
   const {container, legend} = LEGEND_POSITION[staticLegendPosition]
   const convertData = data[0]['response']['results'][0]['series']
@@ -85,12 +83,12 @@ const BarChart = ({
   const processedData = fastMap(convertData, item =>
     item.values[0].slice(1).map(value => value)
   )
-  const getcolors = getLineColorsHexes(colors, columns.length - 1)
+  const getColors = getLineColorsHexes(colors, axesX.length)
   const datasets = columns.slice(1).map((col, colIndex) => ({
     label: col,
     data: fastMap(processedData, data => data[colIndex]),
-    backgroundColor: getcolors[colIndex],
-    borderColor: getcolors[colIndex],
+    backgroundColor: changeColorsOpacity(getColors, 0.2),
+    borderColor: getColors,
     borderWidth: 1,
   }))
   const chartData = {
@@ -163,7 +161,7 @@ const BarChart = ({
       <div className="dygraph-child-container" style={{...staticGraphStyle}}>
         <div className="static-graph-container" style={{...container}}>
           <ChartContainer>
-            <Bar ref={chartRef} options={dynamicOption} data={chartData} />
+            <Pie ref={chartRef} options={dynamicOption} data={chartData} />
           </ChartContainer>
           {staticLegend && chartInstance && (
             <StaticGraphLegend
@@ -179,4 +177,4 @@ const BarChart = ({
   )
 }
 
-export default BarChart
+export default PieChart

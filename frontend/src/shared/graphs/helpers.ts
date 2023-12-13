@@ -6,6 +6,7 @@ import {CSSProperties} from 'react'
 
 // Utils
 import {getDeep} from 'src/utils/wrappers'
+import {fastMap} from 'src/utils/fast'
 
 // Constants
 import {DataType} from 'src/shared/constants'
@@ -263,4 +264,14 @@ export const hasDataPropsChanged = (
     isDataTypeChanged || isDataIDsChanged || isTimeRangeChanged
 
   return isDataChanged
+}
+
+export const changeColorsOpacity = (colors: string[], opacity: number) => {
+  return fastMap(colors, color => {
+    const r: string = parseInt(color.slice(1, 3), 16).toString()
+    const g: string = parseInt(color.slice(3, 5), 16).toString()
+    const b: string = parseInt(color.slice(5, 7), 16).toString()
+
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`
+  })
 }
