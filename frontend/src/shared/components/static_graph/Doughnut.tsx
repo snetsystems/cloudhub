@@ -82,7 +82,7 @@ const DoughnutChart = ({
   const datasets = columns.slice(1).map((col, colIndex) => ({
     label: col,
     data: fastMap(processedData, data => data[colIndex]),
-    backgroundColor: changeColorsOpacity(getColors, 0.2),
+    backgroundColor: changeColorsOpacity(getColors, 0.5),
     borderColor: getColors,
     borderWidth: 1,
   }))
@@ -168,7 +168,6 @@ const DoughnutChart = ({
               chartInstance={chartInstance}
               legendStyle={legend}
               data={chartData}
-              colors={colors}
             />
           )}
         </div>

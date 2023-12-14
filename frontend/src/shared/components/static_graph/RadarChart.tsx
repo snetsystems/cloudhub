@@ -11,7 +11,7 @@ import {
   PointElement,
   RadialLinearScale,
 } from 'chart.js'
-
+import zoomPlugin from 'chartjs-plugin-zoom'
 import _ from 'lodash'
 
 // Types
@@ -21,6 +21,7 @@ import {
   StaticLegendPositionType,
   StatisticalGraphBoundsType,
   StatisticalGraphMinMaxValueType,
+  StatisticalGraphScaleType,
 } from 'src/types'
 import {TimeSeriesServerResponse} from 'src/types/series'
 import {ColorString} from 'src/types/colors'
@@ -29,10 +30,14 @@ import {ColorString} from 'src/types/colors'
 import {fastMap} from 'src/utils/fast'
 import {getLineColorsHexes} from 'src/shared/constants/graphColorPalettes'
 
-import {convertToStaticGraphMinMaxValue} from 'src/shared/utils/staticGraph'
+import {
+  convertToStaticGraphMinMaxValue,
+  formatStaticGraphValue,
+} from 'src/shared/utils/staticGraph'
 
 // Constants
 import {
+  CHART_GRID_COLOR,
   CHART_LABEL_FONT_SIZE,
   CHART_LABEL_FONT_WEIGHT,
   LEGEND_POSITION,
@@ -71,6 +76,8 @@ const RadarChart = ({
   staticGraphStyle,
   data,
   colors,
+  xAxisTitle,
+  yAxisTitle,
   staticLegend,
   staticLegendPosition,
 }: Props) => {
@@ -139,7 +146,7 @@ const RadarChart = ({
           },
         },
         grid: {
-          color: changeColorsOpacity(getcolors, 0.7)[axesX.length],
+          color: 'rgba(255, 99, 132, 0.5)',
         },
       },
     },
@@ -167,7 +174,6 @@ const RadarChart = ({
               chartInstance={chartInstance}
               legendStyle={legend}
               data={chartData}
-              colors={colors}
             />
           )}
         </div>

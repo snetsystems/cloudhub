@@ -180,7 +180,6 @@ const BarChart = ({
               chartInstance={chartInstance}
               legendStyle={legend}
               data={chartData}
-              colors={colors}
             />
           )}
         </div>
