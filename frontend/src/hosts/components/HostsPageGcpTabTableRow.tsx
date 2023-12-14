@@ -14,6 +14,9 @@ import {CLOUD_HOSTS_TABLE_SIZING} from 'src/hosts/constants/tableSizing'
 import {CloudHost} from 'src/types'
 import {HostsPageGcpTab} from 'src/hosts/containers/HostsPageGcpTab'
 
+//constants
+import {NOT_AVAILABLE_STATUS} from 'src/hosts/constants/topology'
+
 interface Instance {
   provider: string
   namespace: string
@@ -57,10 +60,14 @@ const HostsPageGcpTabTableRow: FunctionComponent<Props> = ({
     CloudDiskWidth,
   } = CLOUD_HOSTS_TABLE_SIZING
 
-  const cpuValue = isNaN(cpu) || isNull(cpu) ? 'N/A' : `${cpu.toFixed(2)}%`
+  const cpuValue =
+    isNaN(cpu) || isNull(cpu) ? NOT_AVAILABLE_STATUS : `${cpu.toFixed(2)}%`
   const memoryValue =
-    isNaN(memory) || isNull(memory) ? 'N/A' : `${memory.toFixed(2)}`
-  const diskValue = isNaN(disk) || isNull(disk) ? 'N/A' : `${disk.toFixed(2)}`
+    isNaN(memory) || isNull(memory)
+      ? NOT_AVAILABLE_STATUS
+      : `${memory.toFixed(2)}`
+  const diskValue =
+    isNaN(disk) || isNull(disk) ? NOT_AVAILABLE_STATUS : `${disk.toFixed(2)}`
 
   const focusedClasses = (): string => {
     if (name === _.get(focusedInstance, 'instancename'))
@@ -132,7 +139,7 @@ const HostsPageGcpTabTableRow: FunctionComponent<Props> = ({
         })}
       </div>
       <div style={{width: CloudCPUWidth}} className="monotype hosts-table--td">
-        {(cpuValue === 'N/A' && cpuValue) ||
+        {(cpuValue === NOT_AVAILABLE_STATUS && cpuValue) ||
           usageIndacator({
             value: fixedDecimalPercentage(parseFloat(cpuValue), 2),
           })}
@@ -141,13 +148,13 @@ const HostsPageGcpTabTableRow: FunctionComponent<Props> = ({
         style={{width: CloudMemoryWidth}}
         className="monotype hosts-table--td"
       >
-        {(memoryValue === 'N/A' && memoryValue) ||
+        {(memoryValue === NOT_AVAILABLE_STATUS && memoryValue) ||
           usageIndacator({
             value: fixedDecimalPercentage(parseFloat(memoryValue), 2),
           })}
       </div>
       <div style={{width: CloudDiskWidth}} className="monotype hosts-table--td">
-        {(diskValue === 'N/A' && diskValue) ||
+        {(diskValue === NOT_AVAILABLE_STATUS && diskValue) ||
           usageIndacator({
             value: fixedDecimalPercentage(parseFloat(diskValue), 2),
           })}

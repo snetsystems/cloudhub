@@ -11,6 +11,7 @@ export const agentFilter: AgentFilter = {
 }
 
 export const defaultTemperatureType = 'inlet'
+export const NOT_AVAILABLE_STATUS = 'N/A'
 
 export const temperatureMinValue = {
   inlet: '15',

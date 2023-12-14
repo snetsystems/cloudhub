@@ -10,8 +10,8 @@ import {
   getWheelKeyListAll,
   getLocalServiceEnabledTelegraf,
   getLocalServiceStatusTelegraf,
-  getLocalGrainsItems,
   getMinionsState,
+  getLocalGrainsItem,
 } from 'src/shared/apis/saltStack'
 import {getAllHosts} from 'src/shared/apis/multiTenant'
 
@@ -116,7 +116,7 @@ export const getMinionKeyListAllAdmin = async (
 
   const paramKeyList = _.values(minions).map(m => m.host)
   const grainItemInfo = await Promise.all([
-    getLocalGrainsItems(pUrl, pToken, paramKeyList.toString()),
+    getLocalGrainsItem(pUrl, pToken, paramKeyList.toString()),
   ])
   const ipv4Regexformat: RegExp = /^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$/
   const exceptLoopbackRegexFormat: RegExp = /^(?!127.0.0.1)/
@@ -264,7 +264,7 @@ export const getGrainItem = async (
 ) => {
   try {
     const grainItemsInfo = await waitForSaltCallCompletion(
-      getLocalGrainsItems,
+      getLocalGrainsItem,
       res => res.data?.return[0][minionId] !== false,
       [pUrl, pToken, minionId]
     )

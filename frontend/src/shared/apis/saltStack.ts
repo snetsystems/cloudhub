@@ -238,6 +238,7 @@ export async function getLocalGrainsItem(
         'selinux',
         'path',
       ],
+      tgt_type: 'list',
     }
 
     return await apiRequest(pUrl, pToken, params)
