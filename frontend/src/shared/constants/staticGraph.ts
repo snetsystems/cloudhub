@@ -1,9 +1,9 @@
-const CHART_GRID_COLOR = '#383846'
-const CHART_TITLE_COLOR = '#999dab'
-const CHART_TITLE_FONT_SIZE = 11
-const CHART_TITLE_FONT_WEIGHT = '600'
-const CHART_LABEL_FONT_SIZE = 11
-const CHART_LABEL_FONT_WEIGHT = '600'
+export const CHART_GRID_COLOR = '#383846'
+export const CHART_TITLE_COLOR = '#999dab'
+export const CHART_TITLE_FONT_SIZE = 11
+export const CHART_TITLE_FONT_WEIGHT = '600'
+export const CHART_LABEL_FONT_SIZE = 11
+export const CHART_LABEL_FONT_WEIGHT = '600'
 
 export const LEGEND_MIN_MARGIN_WIDTH = 30
 export const STATIC_GRAPH_OPTIONS = {
@@ -136,7 +136,7 @@ export const LEGEND_POSITION = {
     legend: {
       container: {
         maxHeight: '50%',
-        minWidth: '200px',
+        minWidth: '100px',
         overflowX: 'hidden' as const,
       },
       item: {},
@@ -151,7 +151,7 @@ export const LEGEND_POSITION = {
     legend: {
       container: {
         maxHeight: '50%',
-        minWidth: '200px',
+        minWidth: '100px',
         overflowX: 'hidden' as const,
       },
       item: {},

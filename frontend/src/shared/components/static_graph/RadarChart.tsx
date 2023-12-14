@@ -1,14 +1,15 @@
 // Libraries
 import React, {useEffect, useRef, useState} from 'react'
-import {Pie} from 'react-chartjs-2'
+import {Radar} from 'react-chartjs-2'
 import {
   Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
   Title,
   Tooltip,
   Legend,
-  ArcElement,
+  Filler,
+  LineElement,
+  PointElement,
+  RadialLinearScale,
 } from 'chart.js'
 
 import _ from 'lodash'
@@ -20,7 +21,6 @@ import {
   StaticLegendPositionType,
   StatisticalGraphBoundsType,
   StatisticalGraphMinMaxValueType,
-  StatisticalGraphScaleType,
 } from 'src/types'
 import {TimeSeriesServerResponse} from 'src/types/series'
 import {ColorString} from 'src/types/colors'
@@ -28,14 +28,13 @@ import {ColorString} from 'src/types/colors'
 // Utils
 import {fastMap} from 'src/utils/fast'
 import {getLineColorsHexes} from 'src/shared/constants/graphColorPalettes'
-import {changeColorsOpacity} from 'src/shared/graphs/helpers'
-import {
-  convertToStaticGraphMinMaxValue,
-  formatStaticGraphValue,
-} from 'src/shared/utils/staticGraph'
+
+import {convertToStaticGraphMinMaxValue} from 'src/shared/utils/staticGraph'
 
 // Constants
 import {
+  CHART_LABEL_FONT_SIZE,
+  CHART_LABEL_FONT_WEIGHT,
   LEGEND_POSITION,
   STATIC_GRAPH_OPTIONS,
 } from 'src/shared/constants/staticGraph'
@@ -43,8 +42,18 @@ import {
 // Components
 import ChartContainer from 'src/shared/components/static_graph/common/ChartContainer'
 import {StaticGraphLegend} from 'src/shared/components/static_graph/common/StaticGraphLegend'
+import {changeColorsOpacity} from 'src/shared/graphs/helpers'
 
-ChartJS.register(CategoryScale, LinearScale, ArcElement, Title, Tooltip, Legend)
+ChartJS.register(
+  RadialLinearScale,
+  PointElement,
+  LineElement,
+  Filler,
+  Title,
+  Tooltip,
+  Legend
+)
+
 interface Props {
   axes: Axes
   cellID: string
@@ -57,19 +66,17 @@ interface Props {
   staticLegendPosition: StaticLegendPositionType
 }
 
-const PieChart = ({
+const RadarChart = ({
   axes,
   staticGraphStyle,
   data,
   colors,
-  xAxisTitle,
-  yAxisTitle,
   staticLegend,
   staticLegendPosition,
 }: Props) => {
-  const chartRef = useRef<ChartJS<'pie', [], unknown>>(null)
+  const chartRef = useRef<ChartJS<'radar', [], unknown>>(null)
   const [chartInstance, setChartInstance] = useState<
-    ChartJS<'pie', [], unknown>
+    ChartJS<'radar', [], unknown>
   >(null)
   const {container, legend} = LEGEND_POSITION[staticLegendPosition]
   const convertData = data[0]['response']['results'][0]['series']
@@ -78,21 +85,23 @@ const PieChart = ({
   const processedData = fastMap(convertData, item =>
     item.values[0].slice(1).map(value => value)
   )
-  const getColors = getLineColorsHexes(colors, axesX.length)
+  const getcolors = getLineColorsHexes(colors, columns.length - 1)
   const datasets = columns.slice(1).map((col, colIndex) => ({
     label: col,
     data: fastMap(processedData, data => data[colIndex]),
-    backgroundColor: changeColorsOpacity(getColors, 0.2),
-    borderColor: getColors,
+    backgroundColor: changeColorsOpacity(getcolors, 0.2)[colIndex],
+    borderColor: getcolors[colIndex],
     borderWidth: 1,
+    pointBackgroundColor: changeColorsOpacity(getcolors, 0.7)[colIndex],
+    pointBorderColor: getcolors[colIndex],
+    pointHoverBackgroundColor: '#fff',
+    pointHoverBorderColor: getcolors[colIndex],
   }))
   const chartData = {
     labels: axesX,
     datasets,
   }
 
-  const type: StatisticalGraphScaleType =
-    axes?.y?.scale === 'log' ? 'logarithmic' : undefined
   const bounds: StatisticalGraphBoundsType = axes?.y?.bounds
   const min: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
     bounds[0]
@@ -101,47 +110,36 @@ const PieChart = ({
     bounds[1]
   )
 
-  const isValidValue = value => {
-    return value !== undefined && value !== ''
-  }
-
   const dynamicOption = {
     ...STATIC_GRAPH_OPTIONS,
     plugins: {
       ...STATIC_GRAPH_OPTIONS.plugins,
       zoom: {},
     },
+    elements: {
+      line: {
+        borderWidth: 3,
+      },
+    },
     scales: {
       ...STATIC_GRAPH_OPTIONS.scales,
-      x: {
-        ...STATIC_GRAPH_OPTIONS.scales?.x,
-        title: {
-          ...STATIC_GRAPH_OPTIONS.scales?.x?.title,
-          text: xAxisTitle,
+      r: {
+        min: min,
+        max: max,
+        angleLines: {
+          display: false,
         },
+
         ticks: {
-          ...STATIC_GRAPH_OPTIONS.scales?.x?.ticks,
-          callback: function (value) {
-            return (
-              axes?.x?.prefix + this.getLabelForValue(value) + axes?.x?.suffix
-            )
+          backdropColor: 'transparent',
+          color: '#fff',
+          font: {
+            size: CHART_LABEL_FONT_SIZE,
+            weight: CHART_LABEL_FONT_WEIGHT,
           },
         },
-      },
-      y: {
-        ...STATIC_GRAPH_OPTIONS.scales?.y,
-        ...(type && {type}),
-        ...(isValidValue(min) && {min}),
-        ...(isValidValue(max) && {max}),
-        title: {
-          ...STATIC_GRAPH_OPTIONS.scales?.y?.title,
-          text: yAxisTitle,
-        },
-        ticks: {
-          ...STATIC_GRAPH_OPTIONS.scales?.y?.ticks,
-          callback: function (value) {
-            return formatStaticGraphValue(axes, value)
-          },
+        grid: {
+          color: changeColorsOpacity(getcolors, 0.7)[axesX.length],
         },
       },
     },
@@ -162,7 +160,7 @@ const PieChart = ({
       <div className="dygraph-child-container" style={{...staticGraphStyle}}>
         <div className="static-graph-container" style={{...container}}>
           <ChartContainer>
-            <Pie ref={chartRef} options={dynamicOption} data={chartData} />
+            <Radar ref={chartRef} options={dynamicOption} data={chartData} />
           </ChartContainer>
           {staticLegend && chartInstance && (
             <StaticGraphLegend
@@ -178,4 +176,4 @@ const PieChart = ({
   )
 }
 
-export default PieChart
+export default RadarChart

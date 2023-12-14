@@ -113,6 +113,9 @@ export enum CellType {
   StaticPie = 'staticPie',
   StaticDoughnut = 'staticDoughnut',
   StaticScatter = 'staticScatter',
+  StaticRadar = 'staticRadar',
+  StaticStackedChart = 'staticStackedChart',
+  StaticLineChart = 'staticLineChart',
 }
 
 interface DashboardLinks {

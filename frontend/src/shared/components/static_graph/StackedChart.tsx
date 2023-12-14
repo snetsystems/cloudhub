@@ -1,16 +1,17 @@
 // Libraries
 import React, {useEffect, useRef, useState} from 'react'
-import {Pie} from 'react-chartjs-2'
+import {Bar} from 'react-chartjs-2'
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
+  BarElement,
   Title,
   Tooltip,
   Legend,
-  ArcElement,
+  LogarithmicScale,
 } from 'chart.js'
-
+import zoomPlugin from 'chartjs-plugin-zoom'
 import _ from 'lodash'
 
 // Types
@@ -28,7 +29,7 @@ import {ColorString} from 'src/types/colors'
 // Utils
 import {fastMap} from 'src/utils/fast'
 import {getLineColorsHexes} from 'src/shared/constants/graphColorPalettes'
-import {changeColorsOpacity} from 'src/shared/graphs/helpers'
+
 import {
   convertToStaticGraphMinMaxValue,
   formatStaticGraphValue,
@@ -43,8 +44,19 @@ import {
 // Components
 import ChartContainer from 'src/shared/components/static_graph/common/ChartContainer'
 import {StaticGraphLegend} from 'src/shared/components/static_graph/common/StaticGraphLegend'
+import {changeColorsOpacity} from 'src/shared/graphs/helpers'
 
-ChartJS.register(CategoryScale, LinearScale, ArcElement, Title, Tooltip, Legend)
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  LogarithmicScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  zoomPlugin
+)
+
 interface Props {
   axes: Axes
   cellID: string
@@ -57,7 +69,7 @@ interface Props {
   staticLegendPosition: StaticLegendPositionType
 }
 
-const PieChart = ({
+const StackedChart = ({
   axes,
   staticGraphStyle,
   data,
@@ -67,9 +79,9 @@ const PieChart = ({
   staticLegend,
   staticLegendPosition,
 }: Props) => {
-  const chartRef = useRef<ChartJS<'pie', [], unknown>>(null)
+  const chartRef = useRef<ChartJS<'bar', [], unknown>>(null)
   const [chartInstance, setChartInstance] = useState<
-    ChartJS<'pie', [], unknown>
+    ChartJS<'bar', [], unknown>
   >(null)
   const {container, legend} = LEGEND_POSITION[staticLegendPosition]
   const convertData = data[0]['response']['results'][0]['series']
@@ -78,12 +90,12 @@ const PieChart = ({
   const processedData = fastMap(convertData, item =>
     item.values[0].slice(1).map(value => value)
   )
-  const getColors = getLineColorsHexes(colors, axesX.length)
+  const getcolors = getLineColorsHexes(colors, columns.length - 1)
   const datasets = columns.slice(1).map((col, colIndex) => ({
     label: col,
     data: fastMap(processedData, data => data[colIndex]),
-    backgroundColor: changeColorsOpacity(getColors, 0.2),
-    borderColor: getColors,
+    backgroundColor: changeColorsOpacity(getcolors, 0.7)[colIndex],
+    borderColor: getcolors[colIndex],
     borderWidth: 1,
   }))
   const chartData = {
@@ -109,11 +121,11 @@ const PieChart = ({
     ...STATIC_GRAPH_OPTIONS,
     plugins: {
       ...STATIC_GRAPH_OPTIONS.plugins,
-      zoom: {},
     },
     scales: {
       ...STATIC_GRAPH_OPTIONS.scales,
       x: {
+        stacked: true,
         ...STATIC_GRAPH_OPTIONS.scales?.x,
         title: {
           ...STATIC_GRAPH_OPTIONS.scales?.x?.title,
@@ -129,6 +141,7 @@ const PieChart = ({
         },
       },
       y: {
+        stacked: true,
         ...STATIC_GRAPH_OPTIONS.scales?.y,
         ...(type && {type}),
         ...(isValidValue(min) && {min}),
@@ -162,7 +175,7 @@ const PieChart = ({
       <div className="dygraph-child-container" style={{...staticGraphStyle}}>
         <div className="static-graph-container" style={{...container}}>
           <ChartContainer>
-            <Pie ref={chartRef} options={dynamicOption} data={chartData} />
+            <Bar ref={chartRef} options={dynamicOption} data={chartData} />
           </ChartContainer>
           {staticLegend && chartInstance && (
             <StaticGraphLegend
@@ -178,4 +191,4 @@ const PieChart = ({
   )
 }
 
-export default PieChart
+export default StackedChart

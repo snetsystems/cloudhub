@@ -44,6 +44,7 @@ import {
 // Components
 import ChartContainer from 'src/shared/components/static_graph/common/ChartContainer'
 import {StaticGraphLegend} from 'src/shared/components/static_graph/common/StaticGraphLegend'
+import {changeColorsOpacity} from 'src/shared/graphs/helpers'
 
 ChartJS.register(
   CategoryScale,
@@ -93,7 +94,7 @@ const BarChart = ({
   const datasets = columns.slice(1).map((col, colIndex) => ({
     label: col,
     data: fastMap(processedData, data => data[colIndex]),
-    backgroundColor: getcolors[colIndex],
+    backgroundColor: changeColorsOpacity(getcolors, 0.7)[colIndex],
     borderColor: getcolors[colIndex],
     borderWidth: 1,
   }))

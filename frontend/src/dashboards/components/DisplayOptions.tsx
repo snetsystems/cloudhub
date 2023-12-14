@@ -252,6 +252,9 @@ class DisplayOptions extends Component<Props, State> {
       case CellType.StaticPie:
       case CellType.StaticDoughnut:
       case CellType.StaticScatter:
+      case CellType.StaticRadar:
+      case CellType.StaticStackedChart:
+      case CellType.StaticLineChart:
       case CellType.Histogram:
         return (
           <HistogramOptions

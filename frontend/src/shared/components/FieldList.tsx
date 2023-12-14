@@ -265,7 +265,10 @@ class FieldList extends PureComponent<Props, State> {
       type === CellType.Histogram ||
       type === CellType.StaticPie ||
       type === CellType.StaticDoughnut ||
-      type === CellType.StaticScatter
+      type === CellType.StaticScatter ||
+      type === CellType.StaticRadar ||
+      type === CellType.StaticStackedChart ||
+      type === CellType.StaticLineChart
         ? {...groupBy}
         : {...groupBy, time}
 

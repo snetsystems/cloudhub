@@ -20,6 +20,7 @@ import {getLineColorsHexes} from 'src/shared/constants/graphColorPalettes'
 
 // Components
 import LoadingDots from 'src/shared/components/LoadingDots'
+
 export interface StaticGraphLegendProps<
   TType extends ChartType = ChartType,
   TData = DefaultDataPoint<TType>,
@@ -80,7 +81,7 @@ export const StaticGraphLegend = <
   >
   useEffect(() => {
     if (chartInstance) {
-      let legendItems = chartInstance.legend.legendItems
+      let chartInstanceLegendItems = chartInstance.legend.legendItems
       if (type === 'bar') {
         const getcolors = getLineColorsHexes(colors, data.labels.length)
         const barLegend = _.reduce(
@@ -96,17 +97,17 @@ export const StaticGraphLegend = <
           []
         )
         barDataRef.current = barLegend
-        legendItems = barLegend
+        chartInstanceLegendItems = barLegend
       }
 
-      const maxLengthLegend = findLongestString(legendItems)
+      const maxLengthLegend = findLongestString(chartInstanceLegendItems)
       const textWidthCanvas = measureTextWidthCanvas(
         maxLengthLegend.text,
         '11px Roboto'
       )
 
       setMaxContent(textWidthCanvas + LEGEND_MIN_MARGIN_WIDTH)
-      setLegendItems(legendItems)
+      setLegendItems(chartInstanceLegendItems)
     }
   }, [chartInstance, data])
 
@@ -119,7 +120,25 @@ export const StaticGraphLegend = <
   }
 
   const toggleVisibility = (index: number) => {
-    if (type === 'pie' || type === 'doughnut') {
+    const newLegendItems = _.map(legendItems, (v, i) =>
+      index === i ? {...v, hidden: !v.hidden} : v
+    )
+
+    if (type === 'bar') {
+      const hiddenIndexes = newLegendItems.reduce((acc, item, idx) => {
+        if (item.hidden) acc.add(idx)
+        return acc
+      }, new Set())
+      chartInstance.data.datasets.forEach((dataset, index) => {
+        dataset.data = data.datasets[index].data.filter(
+          (_, idx) => !hiddenIndexes.has(idx)
+        )
+      })
+
+      chartInstance.data.labels = data.labels.filter(
+        (_, idx) => !hiddenIndexes.has(idx)
+      )
+    } else if (type === 'pie' || type === 'doughnut') {
       chartInstance.toggleDataVisibility(index)
     } else {
       const isHidden = chartInstance.isDatasetVisible(index)
@@ -127,9 +146,7 @@ export const StaticGraphLegend = <
     }
 
     chartInstance.update()
-    setLegendItems(prevState =>
-      _.map(prevState, (v, i) => (index === i ? {...v, hidden: !v.hidden} : v))
-    )
+    setLegendItems(newLegendItems)
   }
 
   const getActiveItem = hidden => {

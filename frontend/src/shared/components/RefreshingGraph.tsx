@@ -256,6 +256,9 @@ class RefreshingGraph extends Component<Props> {
                       case CellType.StaticPie:
                       case CellType.StaticDoughnut:
                       case CellType.StaticScatter:
+                      case CellType.StaticRadar:
+                      case CellType.StaticStackedChart:
+                      case CellType.StaticLineChart:
                         return this.StaticGraph(
                           timeSeriesInfluxQL,
                           timeSeriesFlux,

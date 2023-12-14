@@ -18,8 +18,134 @@ interface GraphSVGs {
   [CellType.StaticPie]: Graphic
   [CellType.StaticDoughnut]: Graphic
   [CellType.StaticScatter]: Graphic
+  [CellType.StaticRadar]: Graphic
+  [CellType.StaticStackedChart]: Graphic
+  [CellType.StaticLineChart]: Graphic
 }
 const GRAPH_SVGS: GraphSVGs = {
+  staticLineChart: (
+    <div className="graph-type-selector--graphic">
+      <svg
+        viewBox="0 0 100 100"
+        width="100%"
+        height="100%"
+        version="1.1"
+        id="staticScatter"
+        x="0px"
+        y="0px"
+        preserveAspectRatio="none meet"
+        shapeRendering="geometricPrecision"
+      >
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-a"
+        ></circle>
+
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-b"
+        ></circle>
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-c"
+        ></circle>
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-d"
+        ></circle>
+      </svg>
+    </div>
+  ),
+  staticStackedChart: (
+    <div className="graph-type-selector--graphic">
+      <svg
+        viewBox="0 0 100 100"
+        width="100%"
+        height="100%"
+        version="1.1"
+        id="staticScatter"
+        x="0px"
+        y="0px"
+        preserveAspectRatio="none meet"
+        shapeRendering="geometricPrecision"
+      >
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-a"
+        ></circle>
+
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-b"
+        ></circle>
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-c"
+        ></circle>
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-d"
+        ></circle>
+      </svg>
+    </div>
+  ),
+  staticRadar: (
+    <div className="graph-type-selector--graphic">
+      <svg
+        viewBox="0 0 100 100"
+        width="100%"
+        height="100%"
+        version="1.1"
+        id="staticScatter"
+        x="0px"
+        y="0px"
+        preserveAspectRatio="none meet"
+        shapeRendering="geometricPrecision"
+      >
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-a"
+        ></circle>
+
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-b"
+        ></circle>
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-c"
+        ></circle>
+        <circle
+          r="15%"
+          cx="50%"
+          cy="50%"
+          className="graph-type-selector--graphic-circle-line graphic-line-d"
+        ></circle>
+      </svg>
+    </div>
+  ),
   staticScatter: (
     <div className="graph-type-selector--graphic">
       <svg
@@ -846,6 +972,11 @@ export const STATISTICAL_GRAPH_TYPES: GraphType[] = [
     graphic: GRAPH_SVGS[CellType.Histogram],
   },
   {
+    type: CellType.StaticStackedChart,
+    menuOption: 'Stacked Histogram',
+    graphic: GRAPH_SVGS[CellType.StaticPie],
+  },
+  {
     type: CellType.StaticPie,
     menuOption: 'Pie',
     graphic: GRAPH_SVGS[CellType.StaticPie],
@@ -858,6 +989,16 @@ export const STATISTICAL_GRAPH_TYPES: GraphType[] = [
   {
     type: CellType.StaticScatter,
     menuOption: 'Scatter',
+    graphic: GRAPH_SVGS[CellType.StaticPie],
+  },
+  {
+    type: CellType.StaticRadar,
+    menuOption: 'Radar',
+    graphic: GRAPH_SVGS[CellType.StaticPie],
+  },
+  {
+    type: CellType.StaticLineChart,
+    menuOption: 'Line',
     graphic: GRAPH_SVGS[CellType.StaticPie],
   },
 ]

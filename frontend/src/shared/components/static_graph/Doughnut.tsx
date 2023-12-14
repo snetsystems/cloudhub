@@ -10,11 +10,18 @@ import {
   Legend,
   ArcElement,
 } from 'chart.js'
-import zoomPlugin from 'chartjs-plugin-zoom'
+
 import _ from 'lodash'
 
 // Types
-import {Axes, FluxTable, StaticLegendPositionType} from 'src/types'
+import {
+  Axes,
+  FluxTable,
+  StaticLegendPositionType,
+  StatisticalGraphBoundsType,
+  StatisticalGraphMinMaxValueType,
+  StatisticalGraphScaleType,
+} from 'src/types'
 import {TimeSeriesServerResponse} from 'src/types/series'
 import {ColorString} from 'src/types/colors'
 
@@ -37,15 +44,7 @@ import {
 import ChartContainer from 'src/shared/components/static_graph/common/ChartContainer'
 import {StaticGraphLegend} from 'src/shared/components/static_graph/common/StaticGraphLegend'
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  zoomPlugin
-)
+ChartJS.register(CategoryScale, LinearScale, ArcElement, Title, Tooltip, Legend)
 interface Props {
   axes: Axes
   cellID: string
@@ -57,10 +56,6 @@ interface Props {
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
 }
-
-type ScaleType = 'logarithmic' | undefined
-type BoundsType = [string, string] | undefined
-type MinMaxValueType = number | undefined
 
 const DoughnutChart = ({
   axes,
@@ -96,10 +91,15 @@ const DoughnutChart = ({
     datasets,
   }
 
-  const type: ScaleType = axes?.y?.scale === 'log' ? 'logarithmic' : undefined
-  const bounds: BoundsType = axes?.y?.bounds
-  const min: MinMaxValueType = convertToStaticGraphMinMaxValue(bounds[0])
-  const max: MinMaxValueType = convertToStaticGraphMinMaxValue(bounds[1])
+  const type: StatisticalGraphScaleType =
+    axes?.y?.scale === 'log' ? 'logarithmic' : undefined
+  const bounds: StatisticalGraphBoundsType = axes?.y?.bounds
+  const min: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
+    bounds[0]
+  )
+  const max: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
+    bounds[1]
+  )
 
   const isValidValue = value => {
     return value !== undefined && value !== ''
@@ -109,6 +109,7 @@ const DoughnutChart = ({
     ...STATIC_GRAPH_OPTIONS,
     plugins: {
       ...STATIC_GRAPH_OPTIONS.plugins,
+      zoom: {},
     },
     scales: {
       ...STATIC_GRAPH_OPTIONS.scales,

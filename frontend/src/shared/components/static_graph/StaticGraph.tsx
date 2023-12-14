@@ -11,6 +11,9 @@ import InvalidQuery from 'src/shared/components/InvalidQuery'
 import PieChart from 'src/shared/components/static_graph/PieChart'
 import DoughnutChart from 'src/shared/components/static_graph/Doughnut'
 import ScatterChart from 'src/shared/components/static_graph/Scatter'
+import RadarChart from 'src/shared/components/static_graph/RadarChart'
+import StackedChart from 'src/shared/components/static_graph/StackedChart'
+import LineChart from 'src/shared/components/static_graph/LineChart'
 
 // Types
 import {ColorString} from 'src/types/colors'
@@ -132,6 +135,42 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
       case CellType.StaticScatter:
         return (
           <ScatterChart
+            axes={axes}
+            cellID={cellID}
+            staticGraphStyle={this.staticGraphStyle}
+            data={data}
+            colors={colors}
+            staticLegend={staticLegend}
+            staticLegendPosition={staticLegendPosition}
+          />
+        )
+      case CellType.StaticRadar:
+        return (
+          <RadarChart
+            axes={axes}
+            cellID={cellID}
+            staticGraphStyle={this.staticGraphStyle}
+            data={data}
+            colors={colors}
+            staticLegend={staticLegend}
+            staticLegendPosition={staticLegendPosition}
+          />
+        )
+      case CellType.StaticStackedChart:
+        return (
+          <StackedChart
+            axes={axes}
+            cellID={cellID}
+            staticGraphStyle={this.staticGraphStyle}
+            data={data}
+            colors={colors}
+            staticLegend={staticLegend}
+            staticLegendPosition={staticLegendPosition}
+          />
+        )
+      case CellType.StaticLineChart:
+        return (
+          <LineChart
             axes={axes}
             cellID={cellID}
             staticGraphStyle={this.staticGraphStyle}
