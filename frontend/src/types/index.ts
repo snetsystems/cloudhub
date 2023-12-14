@@ -77,6 +77,11 @@ import {WriteDataMode, QueryUpdateState} from './dataExplorer'
 import {Host, Layout, Ipmi, IpmiCell, CloudHost, CloudHosts} from './hosts'
 import {Env} from './env'
 import {Shells, ShellInfo, ShellLoad} from './shell'
+import {
+  StatisticalGraphBoundsType,
+  StatisticalGraphMinMaxValueType,
+  StatisticalGraphScaleType,
+} from './statisticalgraph'
 
 export {
   Me,
@@ -157,4 +162,7 @@ export {
   CloudHost,
   CloudHosts,
   StaticLegendPositionType,
+  StatisticalGraphBoundsType,
+  StatisticalGraphMinMaxValueType,
+  StatisticalGraphScaleType,
 }
