@@ -116,6 +116,7 @@ export const StaticGraphLegend = <
   useEffect(() => {
     if (chartInstance) {
       const chartInstanceLegendItems = chartInstance.legend.legendItems
+
       const maxLengthLegend = findLongestString(chartInstanceLegendItems)
       const textWidthCanvas = measureTextWidthCanvas(
         maxLengthLegend.text,
@@ -188,7 +189,9 @@ export const StaticGraphLegend = <
               }}
             >
               <div
-                style={{backgroundColor: v.fillStyle as string}}
+                style={{
+                  backgroundColor: v.strokeStyle as string,
+                }}
                 className="static-graph-static-legend--item--maker"
               />
               <span>{v.text}</span>
