@@ -125,12 +125,19 @@
     background-color: $g1-raven;
     font-style: italic;
 
+    .static-graph-static-legend--item--maker {
+      opacity: 0.35;
+    }
+
     span {
       opacity: 0.35;
     }
 
     &:hover {
       background-color: $g2-kevlar;
+      .static-graph-static-legend--item--maker {
+        opacity: 0.65;
+      }
 
       span {
         opacity: 0.65;

@@ -186,7 +186,7 @@ const ScatterChart = ({
 
   useEffect(() => {
     chartRef.current.resize()
-  }, [staticLegendPosition])
+  }, [staticLegend, staticLegendPosition])
 
   useEffect(() => {
     if (!chartInstance && chartRef.current) {

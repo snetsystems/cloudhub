@@ -4,6 +4,7 @@ import type {
   DefaultDataPoint,
   ChartData,
   ChartConfiguration,
+  LegendItem,
 } from 'chart.js'
 import {useEffect, useState} from 'react'
 import {Chart as ChartJS} from 'chart.js'
@@ -13,7 +14,7 @@ import classnames from 'classnames'
 
 // Constants
 import {LEGEND_MIN_MARGIN_WIDTH} from 'src/shared/constants/staticGraph'
-import {ColorString} from 'src/types/colors'
+
 // Components
 import LoadingDots from 'src/shared/components/LoadingDots'
 
@@ -56,6 +57,44 @@ const measureTextWidthCanvas = (text: string, font: string): number => {
   return 0
 }
 
+const toggleVisibilityWithType = <
+  TType extends ChartType = ChartType,
+  TData = DefaultDataPoint<TType>
+>(
+  type: string,
+  chartInstance: ChartJS<TType, TData[], unknown>,
+  index: number
+) => {
+  switch (type) {
+    case 'pie':
+    case 'doughnut': {
+      return {
+        isVisible: chartInstance.getDataVisibility(index),
+        dataVisibility: (itemIndex: number, isVisible: boolean) => {
+          const isCurrentlyVisible = chartInstance.getDataVisibility(itemIndex)
+          if (isCurrentlyVisible !== isVisible) {
+            chartInstance.toggleDataVisibility(itemIndex)
+          }
+        },
+      }
+    }
+
+    default: {
+      return {
+        isVisible: chartInstance.isDatasetVisible(index),
+        dataVisibility: (itemIndex: number, isVisible: boolean) =>
+          chartInstance.setDatasetVisibility(itemIndex, isVisible),
+      }
+    }
+  }
+}
+
+const getActiveItem = (hidden: boolean) => {
+  return classnames('static-graph-static-legend--item', {
+    disabled: hidden,
+  })
+}
+
 export const StaticGraphLegend = <
   TType extends ChartType = ChartType,
   TData = DefaultDataPoint<TType>,
@@ -65,7 +104,8 @@ export const StaticGraphLegend = <
   legendStyle,
   data,
 }: StaticGraphLegendProps<TType, TData, TLabel>): React.ReactElement => {
-  const [legendItems, setLegendItems] = useState([])
+  const [legendItems, setLegendItems] = useState<LegendItem[]>([])
+  const [clickStatus, setClickStatus] = useState<boolean>(false)
   const [maxContent, setMaxContent] = useState<number>()
 
   const {type} = chartInstance.config as ChartConfiguration<
@@ -95,26 +135,36 @@ export const StaticGraphLegend = <
     )
   }
 
-  const toggleVisibility = (index: number) => {
-    const newLegendItems = _.map(legendItems, (v, i) =>
-      index === i ? {...v, hidden: !v.hidden} : v
+  const toggleVisibility = (
+    index: number,
+    e: React.MouseEvent<HTMLDivElement, MouseEvent>
+  ) => {
+    const {isVisible, dataVisibility} = toggleVisibilityWithType(
+      type,
+      chartInstance,
+      index
     )
 
-    if (type === 'pie' || type === 'doughnut') {
-      chartInstance.toggleDataVisibility(index)
-    } else {
-      const isHidden = chartInstance.isDatasetVisible(index)
-      chartInstance.setDatasetVisibility(index, !isHidden)
+    if (e.shiftKey || e.metaKey) {
+      dataVisibility(index, !isVisible)
+      const newLegendItems = _.map(legendItems, (v, i) =>
+        index === i ? {...v, hidden: !v.hidden} : v
+      )
+      setLegendItems(newLegendItems)
+      chartInstance.update()
+      return
     }
 
-    chartInstance.update()
-    setLegendItems(newLegendItems)
-  }
-
-  const getActiveItem = hidden => {
-    return classnames('static-graph-static-legend--item', {
-      disabled: hidden,
+    const prevClickStatus = clickStatus && isVisible
+    const newLegendItems = _.map(legendItems, (item, i) => {
+      const hidden = index === i ? false : !prevClickStatus
+      dataVisibility(i, !hidden)
+      return {...item, hidden}
     })
+
+    setLegendItems(newLegendItems)
+    setClickStatus(!prevClickStatus)
+    chartInstance.update()
   }
 
   return (
@@ -132,13 +182,13 @@ export const StaticGraphLegend = <
             <div
               className={getActiveItem(v.hidden)}
               key={`static-legend--${i}-${v.text}`}
-              onMouseDown={() => toggleVisibility(i)}
+              onMouseDown={e => toggleVisibility(i, e)}
               style={{
                 ...legendStyle.item,
               }}
             >
               <div
-                style={{backgroundColor: v.fillStyle}}
+                style={{backgroundColor: v.fillStyle as string}}
                 className="static-graph-static-legend--item--maker"
               />
               <span>{v.text}</span>
