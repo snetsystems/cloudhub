@@ -129,7 +129,6 @@ const RadarChart = ({
       },
     },
     scales: {
-      ...STATIC_GRAPH_OPTIONS.scales,
       r: {
         min: min,
         max: max,
@@ -138,6 +137,7 @@ const RadarChart = ({
         },
 
         ticks: {
+          display: false,
           backdropColor: 'transparent',
           color: '#fff',
           font: {

@@ -14,14 +14,7 @@ import {
 import _ from 'lodash'
 
 // Types
-import {
-  Axes,
-  FluxTable,
-  StaticLegendPositionType,
-  StatisticalGraphBoundsType,
-  StatisticalGraphMinMaxValueType,
-  StatisticalGraphScaleType,
-} from 'src/types'
+import {Axes, FluxTable, StaticLegendPositionType} from 'src/types'
 import {TimeSeriesServerResponse} from 'src/types/series'
 import {ColorString} from 'src/types/colors'
 
@@ -29,10 +22,6 @@ import {ColorString} from 'src/types/colors'
 import {fastMap} from 'src/utils/fast'
 import {getLineColorsHexes} from 'src/shared/constants/graphColorPalettes'
 import {changeColorsOpacity} from 'src/shared/graphs/helpers'
-import {
-  convertToStaticGraphMinMaxValue,
-  formatStaticGraphValue,
-} from 'src/shared/utils/staticGraph'
 
 // Constants
 import {
@@ -58,12 +47,9 @@ interface Props {
 }
 
 const PieChart = ({
-  axes,
   staticGraphStyle,
   data,
   colors,
-  xAxisTitle,
-  yAxisTitle,
   staticLegend,
   staticLegendPosition,
 }: Props) => {
@@ -91,60 +77,13 @@ const PieChart = ({
     datasets,
   }
 
-  const type: StatisticalGraphScaleType =
-    axes?.y?.scale === 'log' ? 'logarithmic' : undefined
-  const bounds: StatisticalGraphBoundsType = axes?.y?.bounds
-  const min: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
-    bounds[0]
-  )
-  const max: StatisticalGraphMinMaxValueType = convertToStaticGraphMinMaxValue(
-    bounds[1]
-  )
-
-  const isValidValue = value => {
-    return value !== undefined && value !== ''
-  }
-
   const dynamicOption = {
     ...STATIC_GRAPH_OPTIONS,
     plugins: {
       ...STATIC_GRAPH_OPTIONS.plugins,
       zoom: {},
     },
-    scales: {
-      ...STATIC_GRAPH_OPTIONS.scales,
-      x: {
-        ...STATIC_GRAPH_OPTIONS.scales?.x,
-        title: {
-          ...STATIC_GRAPH_OPTIONS.scales?.x?.title,
-          text: xAxisTitle,
-        },
-        ticks: {
-          ...STATIC_GRAPH_OPTIONS.scales?.x?.ticks,
-          callback: function (value) {
-            return (
-              axes?.x?.prefix + this.getLabelForValue(value) + axes?.x?.suffix
-            )
-          },
-        },
-      },
-      y: {
-        ...STATIC_GRAPH_OPTIONS.scales?.y,
-        ...(type && {type}),
-        ...(isValidValue(min) && {min}),
-        ...(isValidValue(max) && {max}),
-        title: {
-          ...STATIC_GRAPH_OPTIONS.scales?.y?.title,
-          text: yAxisTitle,
-        },
-        ticks: {
-          ...STATIC_GRAPH_OPTIONS.scales?.y?.ticks,
-          callback: function (value) {
-            return formatStaticGraphValue(axes, value)
-          },
-        },
-      },
-    },
+    scales: {},
   }
 
   useEffect(() => {
