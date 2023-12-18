@@ -1,5 +1,9 @@
 import _ from 'lodash'
 import {Axes} from 'src/types'
+import {
+  LEGEND_FONT_SIZE_FONT_FAMILY,
+  LEGEND_MIN_MARGIN_WIDTH,
+} from 'src/shared/constants/staticGraph'
 
 export const convertToStaticGraphMinMaxValue = (value: string) => {
   return /^-?\d+(\.\d+)?$/.test(value) && _.isFinite(_.toNumber(value))
@@ -46,4 +50,53 @@ export const formatStaticGraphValue = (axes: Axes, value: number) => {
   const prefix = axes?.y?.prefix ? axes.y.prefix : ''
   const suffix = axes?.y?.suffix ? axes.y.suffix : ''
   return prefix + formattedValue + suffix
+}
+
+export const findLongestString = (arr: any[], findKey?: string) => {
+  if (!findKey) {
+    return _.reduce(
+      arr,
+      (longest, current) => {
+        return current.length > longest.length ? current : longest
+      },
+      ''
+    )
+  }
+
+  return _.reduce(
+    arr,
+    (longest, current) => {
+      const compareText = _.isArray(current[findKey])
+        ? {[findKey]: _.join(current[findKey], '/')}
+        : current
+
+      return compareText[findKey].length > longest[findKey].length
+        ? compareText
+        : longest
+    },
+    {[findKey]: ''}
+  )
+}
+
+export const measureTextWidthCanvas = (text: string, font: string): number => {
+  const canvas = document.createElement('canvas')
+  const context = canvas.getContext('2d')
+
+  if (context) {
+    context.font = font
+    const metrics = context.measureText(text)
+    return metrics.width
+  }
+
+  return 0
+}
+
+export const getMaxContentLength = (arr: any[], findKey?: string) => {
+  const maxLengthLegend = findLongestString(arr, findKey)
+  const textWidthCanvas = measureTextWidthCanvas(
+    findKey ? maxLengthLegend[findKey] : maxLengthLegend,
+    LEGEND_FONT_SIZE_FONT_FAMILY
+  )
+
+  return textWidthCanvas + LEGEND_MIN_MARGIN_WIDTH
 }

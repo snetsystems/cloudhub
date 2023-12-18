@@ -12,11 +12,9 @@ import React from 'react'
 import _ from 'lodash'
 import classnames from 'classnames'
 
-// Constants
-import {LEGEND_MIN_MARGIN_WIDTH} from 'src/shared/constants/staticGraph'
-
 // Components
 import LoadingDots from 'src/shared/components/LoadingDots'
+import {getMaxContentLength} from 'src/shared/utils/staticGraph'
 
 export interface StaticGraphLegendProps<
   TType extends ChartType = ChartType,
@@ -28,33 +26,6 @@ export interface StaticGraphLegendProps<
   data: ChartData<TType, TData[], TLabel>
 
   handleUpdateData?: (data: ChartData<TType, TData[], TLabel>) => void
-}
-
-const findLongestString = (arr: any[]) => {
-  return _.reduce(
-    arr,
-    (longest, current) => {
-      const compareText = _.isArray(current.text)
-        ? {text: _.join(current.text, '/')}
-        : current
-
-      return compareText.text.length > longest.text.length
-        ? compareText
-        : longest
-    },
-    {text: ''}
-  )
-}
-
-const measureTextWidthCanvas = (text: string, font: string): number => {
-  const canvas = document.createElement('canvas')
-  const context = canvas.getContext('2d')
-  if (context) {
-    context.font = font
-    const metrics = context.measureText(text)
-    return metrics.width
-  }
-  return 0
 }
 
 const toggleVisibilityWithType = <
@@ -116,14 +87,12 @@ export const StaticGraphLegend = <
   useEffect(() => {
     if (chartInstance) {
       const chartInstanceLegendItems = chartInstance.legend.legendItems
-
-      const maxLengthLegend = findLongestString(chartInstanceLegendItems)
-      const textWidthCanvas = measureTextWidthCanvas(
-        maxLengthLegend.text,
-        '11px Roboto'
+      const maxLegendLength = getMaxContentLength(
+        chartInstanceLegendItems,
+        'text'
       )
 
-      setMaxContent(textWidthCanvas + LEGEND_MIN_MARGIN_WIDTH)
+      setMaxContent(maxLegendLength)
       setLegendItems(chartInstanceLegendItems)
     }
   }, [chartInstance, data])

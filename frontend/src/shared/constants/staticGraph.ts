@@ -4,7 +4,7 @@ export const CHART_TITLE_FONT_SIZE = 11
 export const CHART_TITLE_FONT_WEIGHT = '600'
 export const CHART_LABEL_FONT_SIZE = 11
 export const CHART_LABEL_FONT_WEIGHT = '600'
-
+export const LEGEND_FONT_SIZE_FONT_FAMILY = '11px Roboto'
 export const LEGEND_MIN_MARGIN_WIDTH = 30
 export const STATIC_GRAPH_OPTIONS = {
   layout: {
