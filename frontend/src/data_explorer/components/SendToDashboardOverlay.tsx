@@ -45,6 +45,7 @@ import {
   Cell,
   QueryType,
   Notification,
+  StaticLegendPositionType,
 } from 'src/types'
 import {VisualizationOptions} from 'src/types/dataExplorer'
 import {ColorString} from 'src/types/colors'
@@ -58,6 +59,7 @@ interface PassedProps {
     newCell: Partial<Cell>
   ) => Promise<{success: boolean; dashboard: Dashboard}>
   isStaticLegend: boolean
+  staticLegendPosition: StaticLegendPositionType
   handleGetDashboards: () => Dashboard[]
   notify: (message: Notification) => void
   activeQueryIndex: number
@@ -358,6 +360,7 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
       onCancel,
       visualizationOptions,
       isStaticLegend,
+      staticLegendPosition,
       queryDrafts,
     } = this.props
     const {
@@ -415,7 +418,9 @@ class SendToDashboardOverlay extends PureComponent<Props, State> {
       lineColors,
     })
 
-    const legend = isStaticLegend ? STATIC_LEGEND : {}
+    const legend = isStaticLegend
+      ? {...STATIC_LEGEND, orientation: staticLegendPosition}
+      : {orientation: staticLegendPosition}
 
     let selectedDashboards = this.selectedDashboards
 

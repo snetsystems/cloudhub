@@ -485,6 +485,9 @@ export const TEMPLATES: Template[] = [interval]
 export const IS_STATIC_LEGEND = legend =>
   _.get(legend, 'type', false) === 'static'
 
+export const GET_STATIC_LEGEND_POSITION = legend =>
+  _.get(legend, 'orientation', 'bottom')
+
 export const DEFAULT_STATIC_LEGEND_POSITION = 'bottom'
 
 export const linksLink = '/cloudhub/v1'

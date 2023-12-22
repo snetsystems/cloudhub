@@ -919,7 +919,7 @@ func TestHasCorrectLegend(t *testing.T) {
 			c:    &cloudhub.DashboardCell{},
 		},
 		{
-			name: "must have both an orientation and type",
+			name: "must have an orientation",
 			c: &cloudhub.DashboardCell{
 				Legend: cloudhub.Legend{
 					Type: "static",
@@ -928,13 +928,12 @@ func TestHasCorrectLegend(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "must have both a type and orientation",
+			name: "empty type is ok",
 			c: &cloudhub.DashboardCell{
 				Legend: cloudhub.Legend{
 					Orientation: "bottom",
 				},
 			},
-			wantErr: true,
 		},
 		{
 			name: "invalid types",

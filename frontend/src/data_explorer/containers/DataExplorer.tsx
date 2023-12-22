@@ -354,6 +354,7 @@ export class DataExplorer extends PureComponent<Props, State> {
     const {
       isSendToDashboardVisible,
       isStaticLegend,
+      staticLegendPosition,
       activeQueryIndex,
     } = this.state
     return (
@@ -368,6 +369,7 @@ export class DataExplorer extends PureComponent<Props, State> {
             handleGetDashboards={handleGetDashboards}
             sendDashboardCell={sendDashboardCell}
             isStaticLegend={isStaticLegend}
+            staticLegendPosition={staticLegendPosition}
           />
         </OverlayTechnology>
       </Authorized>

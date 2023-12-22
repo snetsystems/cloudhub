@@ -21,7 +21,7 @@ import {editCellQueryStatus} from 'src/dashboards/actions'
 // Constants
 import {getCellTypeColors} from 'src/dashboards/constants/cellEditor'
 import {
-  DEFAULT_STATIC_LEGEND_POSITION,
+  GET_STATIC_LEGEND_POSITION,
   IS_STATIC_LEGEND,
 } from 'src/shared/constants'
 import {STATIC_LEGEND} from 'src/dashboards/constants/cellEditor'
@@ -120,7 +120,7 @@ class CellEditorOverlay extends Component<Props, State> {
       isStaticLegend: IS_STATIC_LEGEND(legend),
       scriptStatus: {type: 'none', text: ''},
       draftCellName: props.cell.name,
-      staticLegendPosition: DEFAULT_STATIC_LEGEND_POSITION,
+      staticLegendPosition: GET_STATIC_LEGEND_POSITION(legend),
     }
   }
 
@@ -263,7 +263,7 @@ class CellEditorOverlay extends Component<Props, State> {
       gaugeColors,
       lineColors,
     } = this.props
-    const {isStaticLegend, draftCellName} = this.state
+    const {isStaticLegend, staticLegendPosition, draftCellName} = this.state
 
     let queries: CellQuery[] = queryDrafts
 
@@ -298,7 +298,9 @@ class CellEditorOverlay extends Component<Props, State> {
       note,
       noteVisibility,
       type,
-      legend: isStaticLegend ? STATIC_LEGEND : {},
+      legend: isStaticLegend
+        ? {...STATIC_LEGEND, orientation: staticLegendPosition}
+        : {orientation: staticLegendPosition},
     }
 
     return newCell
