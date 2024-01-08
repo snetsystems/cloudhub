@@ -26,246 +26,591 @@ const GRAPH_SVGS: GraphSVGs = {
   staticLineChart: (
     <div className="graph-type-selector--graphic">
       <svg
-        viewBox="0 0 100 100"
+        viewBox="0 0 150 150"
         width="100%"
         height="100%"
         version="1.1"
-        id="staticScatter"
+        id="StaticLineChart"
         x="0px"
         y="0px"
         preserveAspectRatio="none meet"
         shapeRendering="geometricPrecision"
       >
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-a"
-        ></circle>
-
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-b"
-        ></circle>
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-c"
-        ></circle>
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-d"
-        ></circle>
+        <polygon
+          className="graph-type-selector--graphic-fill graphic-fill-a"
+          points="148,40 111.5,47.2 75,25 38.5,90.8 2,111.8 2,125 148,125 	"
+        />
+        <polyline
+          className="graph-type-selector--graphic-line graphic-line-a"
+          points="2,111.8 38.5,90.8 75,25 111.5,47.2 148,40 	"
+        />
+        <polygon
+          className="graph-type-selector--graphic-fill graphic-fill-b"
+          points="148,88.2 111.5,95.5 75,61.7 38.5,49.3 2,90.8 2,125 148,125 	"
+        />
+        <polyline
+          className="graph-type-selector--graphic-line graphic-line-b"
+          points="2,90.8 38.5,49.3 75,61.7 111.5,95.5 148,88.2 	"
+        />
+        <polygon
+          className="graph-type-selector--graphic-fill graphic-fill-c"
+          points="148,96 111.5,106.3 75,85.7 38.5,116.5 2,115 2,125 148,125 	"
+        />
+        <polyline
+          className="graph-type-selector--graphic-line graphic-line-c"
+          points="2,115 38.5,116.5 75,85.7 111.5,106.3 148,96 	"
+        />
       </svg>
     </div>
   ),
   staticStackedChart: (
     <div className="graph-type-selector--graphic">
       <svg
-        viewBox="0 0 100 100"
+        viewBox="0 0 150 150"
         width="100%"
         height="100%"
         version="1.1"
-        id="staticScatter"
+        id="StaticStackedChart"
         x="0px"
         y="0px"
         preserveAspectRatio="none meet"
         shapeRendering="geometricPrecision"
       >
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-a"
-        ></circle>
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-a"
+          width="26.799999"
+          height="21.85733"
+          x="1.9999996"
+          y="102.28688"
+        />
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-b"
+          width="26.799999"
+          height="15.068274"
+          x="1.9999996"
+          y="87.215126"
+        />
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-c"
+          width="26.799999"
+          height="8.4023552"
+          x="1.9999996"
+          y="78.809258"
+        />
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-a"
+          width="26.799999"
+          height="40.305695"
+          x="31.800001"
+          y="83.838524"
+        />
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-b"
+          width="26.799999"
+          height="27.786432"
+          x="31.800001"
+          y="56.045654"
+        />
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-c"
+          width="26.799999"
+          height="15.49424"
+          x="31.800001"
+          y="40.544941"
+        />
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-a"
+          width="26.799999"
+          height="47.305618"
+          x="91.400002"
+          y="76.8386"
+        />
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-b"
+          width="26.799999"
+          height="32.612118"
+          x="91.400002"
+          y="44.218922"
+        />
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-c"
+          width="26.799999"
+          height="10.871027"
+          x="91.400002"
+          y="33.340321"
+        />
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-a"
+          width="26.799999"
+          height="54.595627"
+          x="61.599998"
+          y="69.548592"
+        />
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-b"
+          width="26.799999"
+          height="37.637794"
+          x="61.599998"
+          y="31.902079"
+        />
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-c"
+          width="26.799999"
+          height="15.258255"
+          x="61.599998"
+          y="16.63508"
+        />
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-a"
+          width="26.799999"
+          height="51.935741"
+          x="121.2"
+          y="72.208473"
+        />
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-b"
+          width="26.799999"
+          height="35.804092"
+          x="121.2"
+          y="36.396095"
+        />
+        <rect
+          className="graph-type-selector--graphic-line graphic-line-c"
+          width="26.799999"
+          height="12.584609"
+          x="121.2"
+          y="23.803171"
+        />
 
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-b"
-        ></circle>
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-c"
-        ></circle>
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-d"
-        ></circle>
+        <rect
+          className="graph-type-selector--graphic-fill graphic-fill-a"
+          width="26.799999"
+          height="21.85733"
+          x="1.9999996"
+          y="102.28688"
+        />
+        <rect
+          className="graph-type-selector--graphic-fill graphic-fill-b"
+          width="26.799999"
+          height="15.068274"
+          x="1.9999996"
+          y="87.215126"
+        />
+        <rect
+          className="graph-type-selector--graphic-fill graphic-fill-c"
+          width="26.799999"
+          height="8.4023552"
+          x="1.9999996"
+          y="78.809258"
+        />
+        <rect
+          className="graph-type-selector--graphic-fill graphic-fill-a"
+          width="26.799999"
+          height="40.305695"
+          x="31.800001"
+          y="83.838524"
+        />
+        <rect
+          className="graph-type-selector--graphic-fill graphic-fill-b"
+          width="26.799999"
+          height="27.786432"
+          x="31.800001"
+          y="56.045654"
+        />
+        <rect
+          className="graph-type-selector--graphic-fill graphic-fill-c"
+          width="26.799999"
+          height="15.49424"
+          x="31.800001"
+          y="40.544941"
+        />
+        <rect
+          className="graph-type-selector--graphic-fill graphic-fill-a"
+          width="26.799999"
+          height="47.305618"
+          x="91.400002"
+          y="76.8386"
+        />
+        <rect
+          className="graph-type-selector--graphic-fill graphic-fill-b"
+          width="26.799999"
+          height="32.612118"
+          x="91.400002"
+          y="44.218922"
+        />
+        <rect
+          className="graph-type-selector--graphic-fill graphic-fill-c"
+          width="26.799999"
+          height="10.871027"
+          x="91.400002"
+          y="33.340321"
+        />
+        <rect
+          className="graph-type-selector--graphic-fill graphic-fill-a"
+          width="26.799999"
+          height="54.595627"
+          x="61.599998"
+          y="69.548592"
+        />
+        <rect
+          className="graph-type-selector--graphic-fill graphic-fill-b"
+          width="26.799999"
+          height="37.637794"
+          x="61.599998"
+          y="31.902079"
+        />
+        <rect
+          className="graph-type-selector--graphic-fill graphic-fill-c"
+          width="26.799999"
+          height="15.258255"
+          x="61.599998"
+          y="16.63508"
+        />
+        <rect
+          className="graph-type-selector--graphic-fill graphic-fill-a"
+          width="26.799999"
+          height="51.935741"
+          x="121.2"
+          y="72.208473"
+        />
+        <rect
+          className="graph-type-selector--graphic-fill graphic-fill-b"
+          width="26.799999"
+          height="35.804092"
+          x="121.2"
+          y="36.396095"
+        />
+        <rect
+          className="graph-type-selector--graphic-fill graphic-fill-c"
+          width="26.799999"
+          height="12.584609"
+          x="121.2"
+          y="23.803171"
+        />
       </svg>
     </div>
   ),
   staticRadar: (
     <div className="graph-type-selector--graphic">
       <svg
-        viewBox="0 0 100 100"
+        viewBox="0 0 150 150"
         width="100%"
         height="100%"
         version="1.1"
-        id="staticScatter"
+        id="StaticRadar"
         x="0px"
         y="0px"
         preserveAspectRatio="none meet"
         shapeRendering="geometricPrecision"
       >
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-a"
-        ></circle>
-
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-b"
-        ></circle>
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-c"
-        ></circle>
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-d"
-        ></circle>
+        <path
+          className="graph-type-selector--graphic-line graphic-line-a"
+          d="m26.841 61.132 17.938 57.563 57.857-3.896 24.555-55.285L74.736 20.95Z"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-a"
+          d="m26.841 61.132 17.938 57.563 57.857-3.896 24.555-55.285L74.736 20.95Z"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-b"
+          d="m42.72 66.792 32.274-24.407 30.215 25.51-8.013 39.405-44.183.367Z"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-b"
+          d="m42.72 66.792 32.274-24.407 30.215 25.51-8.013 39.405-44.183.367Z"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-c"
+          d="M74.898 49.493C51.842 68.596 50.2 69.352 50.2 69.352l5.167 35.59 32.723-9.245 10.718-26.139z"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-c"
+          d="M74.898 49.493C51.842 68.596 50.2 69.352 50.2 69.352l5.167 35.59 32.723-9.245 10.718-26.139z"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-d"
+          d="m109.679 124.051-68.993.192L19.185 58.2l55.704-41.01 55.928 40.7Z"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-d"
+          d="m99.032 109.942-47.975.33L33.55 63.546l41.283-32.184 41.405 32.278Z"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-d"
+          d="M19.202 58.219 74.85 78.205l-44.938-16.14ZM75.03 78.69l-34.38 45.595Z"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-d"
+          d="m74.807 17.212.198 61.049zm56.631 40.87L74.614 78.48Zm-21.68 66.069L74.974 78.217Z"
+        />
       </svg>
     </div>
   ),
   staticScatter: (
     <div className="graph-type-selector--graphic">
       <svg
-        viewBox="0 0 100 100"
+        viewBox="0 0 150 150"
         width="100%"
         height="100%"
         version="1.1"
-        id="staticScatter"
+        id="StaticScatter"
         x="0px"
         y="0px"
         preserveAspectRatio="none meet"
         shapeRendering="geometricPrecision"
       >
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-a"
-        ></circle>
-
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-b"
-        ></circle>
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-c"
-        ></circle>
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-d"
-        ></circle>
+        <path
+          className="graph-type-selector--graphic-line graphic-line-a"
+          d="M 15.289455,15.750441 V 123.47933 H 136.12866"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-a"
+          d="m 27.011062,111.95665 a 3.0594244,2.6651985 0 0 1 -3.020965,2.66499 3.0594244,2.6651985 0 0 1 -3.096917,-2.59798 3.0594244,2.6651985 0 0 1 2.943103,-2.73031 3.0594244,2.6651985 0 0 1 3.170912,2.52934"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-a"
+          d="m 27.011062,111.95665 a 3.0594244,2.6651985 0 0 1 -3.020965,2.66499 3.0594244,2.6651985 0 0 1 -3.096917,-2.59798 3.0594244,2.6651985 0 0 1 2.943103,-2.73031 3.0594244,2.6651985 0 0 1 3.170912,2.52934"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-b"
+          d="m 36.484914,93.106676 a 3.0594244,2.6651985 0 0 1 -3.020965,2.664987 3.0594244,2.6651985 0 0 1 -3.096917,-2.597985 3.0594244,2.6651985 0 0 1 2.943103,-2.730306 3.0594244,2.6651985 0 0 1 3.170912,2.529342"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-b"
+          d="m 36.484914,93.106676 a 3.0594244,2.6651985 0 0 1 -3.020965,2.664987 3.0594244,2.6651985 0 0 1 -3.096917,-2.597985 3.0594244,2.6651985 0 0 1 2.943103,-2.730306 3.0594244,2.6651985 0 0 1 3.170912,2.529342"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-c"
+          d="m 50.550048,115.94132 a 3.0594244,2.6651985 0 0 1 -3.020965,2.66499 3.0594244,2.6651985 0 0 1 -3.096917,-2.59798 3.0594244,2.6651985 0 0 1 2.943104,-2.73031 3.0594244,2.6651985 0 0 1 3.170911,2.52934"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-c"
+          d="m 50.550048,115.94132 a 3.0594244,2.6651985 0 0 1 -3.020965,2.66499 3.0594244,2.6651985 0 0 1 -3.096917,-2.59798 3.0594244,2.6651985 0 0 1 2.943104,-2.73031 3.0594244,2.6651985 0 0 1 3.170911,2.52934"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-a"
+          d="m 68.451121,107.58719 a 3.0594244,2.6651985 0 0 1 -3.020965,2.66499 3.0594244,2.6651985 0 0 1 -3.096916,-2.59798 3.0594244,2.6651985 0 0 1 2.943104,-2.73031 3.0594244,2.6651985 0 0 1 3.17091,2.52934"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-a"
+          d="m 68.451121,107.58719 a 3.0594244,2.6651985 0 0 1 -3.020965,2.66499 3.0594244,2.6651985 0 0 1 -3.096916,-2.59798 3.0594244,2.6651985 0 0 1 2.943104,-2.73031 3.0594244,2.6651985 0 0 1 3.17091,2.52934"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-b"
+          d="m 40.320864,78.06921 a 3.0594244,2.6651985 0 0 1 -3.020965,2.664989 3.0594244,2.6651985 0 0 1 -3.096917,-2.597987 3.0594244,2.6651985 0 0 1 2.943104,-2.730306 3.0594244,2.6651985 0 0 1 3.170911,2.529343"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-b"
+          d="m 40.320864,78.06921 a 3.0594244,2.6651985 0 0 1 -3.020965,2.664989 3.0594244,2.6651985 0 0 1 -3.096917,-2.597987 3.0594244,2.6651985 0 0 1 2.943104,-2.730306 3.0594244,2.6651985 0 0 1 3.170911,2.529343"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-c"
+          d="m 56.303962,89.208067 a 3.0594244,2.6651985 0 0 1 -3.020965,2.664989 3.0594244,2.6651985 0 0 1 -3.096918,-2.597987 3.0594244,2.6651985 0 0 1 2.943104,-2.730306 3.0594244,2.6651985 0 0 1 3.170911,2.529343"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-c"
+          d="m 56.303962,89.208067 a 3.0594244,2.6651985 0 0 1 -3.020965,2.664989 3.0594244,2.6651985 0 0 1 -3.096918,-2.597987 3.0594244,2.6651985 0 0 1 2.943104,-2.730306 3.0594244,2.6651985 0 0 1 3.170911,2.529343"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-a"
+          d="m 70.369087,88.651133 a 3.0594244,2.6651985 0 0 1 -3.020965,2.664988 3.0594244,2.6651985 0 0 1 -3.096916,-2.597987 3.0594244,2.6651985 0 0 1 2.943103,-2.730304 3.0594244,2.6651985 0 0 1 3.170911,2.529341"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-a"
+          d="m 70.369087,88.651133 a 3.0594244,2.6651985 0 0 1 -3.020965,2.664988 3.0594244,2.6651985 0 0 1 -3.096916,-2.597987 3.0594244,2.6651985 0 0 1 2.943103,-2.730304 3.0594244,2.6651985 0 0 1 3.170911,2.529341"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-b"
+          d="m 82.516243,100.90388 a 3.0594244,2.6651985 0 0 1 -3.020965,2.66499 3.0594244,2.6651985 0 0 1 -3.096918,-2.59799 3.0594244,2.6651985 0 0 1 2.943104,-2.730302 3.0594244,2.6651985 0 0 1 3.170911,2.529342"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-b"
+          d="m 82.516243,100.90388 a 3.0594244,2.6651985 0 0 1 -3.020965,2.66499 3.0594244,2.6651985 0 0 1 -3.096918,-2.59799 3.0594244,2.6651985 0 0 1 2.943104,-2.730302 3.0594244,2.6651985 0 0 1 3.170911,2.529342"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-c"
+          d="m 84.434214,91.43585 a 3.0594244,2.6651985 0 0 1 -3.020965,2.664988 3.0594244,2.6651985 0 0 1 -3.096917,-2.597987 3.0594244,2.6651985 0 0 1 2.943104,-2.730304 3.0594244,2.6651985 0 0 1 3.170911,2.529341"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-c"
+          d="m 84.434214,91.43585 a 3.0594244,2.6651985 0 0 1 -3.020965,2.664988 3.0594244,2.6651985 0 0 1 -3.096917,-2.597987 3.0594244,2.6651985 0 0 1 2.943104,-2.730304 3.0594244,2.6651985 0 0 1 3.170911,2.529341"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-a"
+          d="m 65.254492,64.702577 a 3.0594244,2.6651985 0 0 1 -3.020964,2.664987 3.0594244,2.6651985 0 0 1 -3.096918,-2.597985 3.0594244,2.6651985 0 0 1 2.943104,-2.730306 3.0594244,2.6651985 0 0 1 3.170911,2.529342"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-a"
+          d="m 65.254492,64.702577 a 3.0594244,2.6651985 0 0 1 -3.020964,2.664987 3.0594244,2.6651985 0 0 1 -3.096918,-2.597985 3.0594244,2.6651985 0 0 1 2.943104,-2.730306 3.0594244,2.6651985 0 0 1 3.170911,2.529342"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-b"
+          d="m 91.466774,66.373408 a 3.0594244,2.6651985 0 0 1 -3.020965,2.664988 3.0594244,2.6651985 0 0 1 -3.096916,-2.597985 3.0594244,2.6651985 0 0 1 2.943103,-2.730306 3.0594244,2.6651985 0 0 1 3.170912,2.529341"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-b"
+          d="m 91.466774,66.373408 a 3.0594244,2.6651985 0 0 1 -3.020965,2.664988 3.0594244,2.6651985 0 0 1 -3.096916,-2.597985 3.0594244,2.6651985 0 0 1 2.943103,-2.730306 3.0594244,2.6651985 0 0 1 3.170912,2.529341"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-c"
+          d="m 106.81054,82.524748 a 3.0594244,2.6651985 0 0 1 -3.02097,2.664988 3.0594244,2.6651985 0 0 1 -3.09691,-2.597985 3.0594244,2.6651985 0 0 1 2.9431,-2.730306 3.0594244,2.6651985 0 0 1 3.17091,2.529341"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-c"
+          d="m 106.81054,82.524748 a 3.0594244,2.6651985 0 0 1 -3.02097,2.664988 3.0594244,2.6651985 0 0 1 -3.09691,-2.597985 3.0594244,2.6651985 0 0 1 2.9431,-2.730306 3.0594244,2.6651985 0 0 1 3.17091,2.529341"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-a"
+          d="m 108.08921,59.133149 a 3.0594244,2.6651985 0 0 1 -3.02097,2.664988 3.0594244,2.6651985 0 0 1 -3.09692,-2.597987 3.0594244,2.6651985 0 0 1 2.94311,-2.730304 3.0594244,2.6651985 0 0 1 3.17091,2.529341"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-a"
+          d="m 108.08921,59.133149 a 3.0594244,2.6651985 0 0 1 -3.02097,2.664988 3.0594244,2.6651985 0 0 1 -3.09692,-2.597987 3.0594244,2.6651985 0 0 1 2.94311,-2.730304 3.0594244,2.6651985 0 0 1 3.17091,2.529341"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-b"
+          d="m 73.5657,58.019262 a 3.0594244,2.6651985 0 0 1 -3.020964,2.664989 3.0594244,2.6651985 0 0 1 -3.096918,-2.597986 3.0594244,2.6651985 0 0 1 2.943104,-2.730306 3.0594244,2.6651985 0 0 1 3.170911,2.529343"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-b"
+          d="m 73.5657,58.019262 a 3.0594244,2.6651985 0 0 1 -3.020964,2.664989 3.0594244,2.6651985 0 0 1 -3.096918,-2.597986 3.059244,2.6651985 0 0 1 2.943104,-2.730306 3.0594244,2.6651985 0 0 1 3.170911,2.529343"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-c"
+          d="m 80.598271,36.298471 a 3.0594244,2.6651985 0 0 1 -3.020965,2.664987 3.0594244,2.6651985 0 0 1 -3.096916,-2.597986 3.0594244,2.6651985 0 0 1 2.943104,-2.730305 3.0594244,2.6651985 0 0 1 3.170911,2.529341"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-c"
+          d="m 80.598271,36.298471 a 3.0594244,2.6651985 0 0 1 -3.020965,2.664987 3.0594244,2.6651985 0 0 1 -3.096916,-2.597986 3.0594244,2.6651985 0 0 1 2.943104,-2.730305 3.0594244,2.6651985 0 0 1 3.170911,2.529341"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-a"
+          d="m 106.81054,42.424857 a 3.0594244,2.6651985 0 0 1 -3.02097,2.664989 3.0594244,2.6651985 0 0 1 -3.09691,-2.597986 3.0594244,2.6651985 0 0 1 2.9431,-2.730306 3.0594244,2.6651985 0 0 1 3.17091,2.529342"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-a"
+          d="m 106.81054,42.424857 a 3.0594244,2.6651985 0 0 1 -3.02097,2.664989 3.0594244,2.6651985 0 0 1 -3.09691,-2.597986 3.0594244,2.6651985 0 0 1 2.9431,-2.730306 3.0594244,2.6651985 0 0 1 3.17091,2.529342"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-b"
+          d="m 130.40374,76.468119 a 3.0594244,2.6651985 0 0 1 -3.02096,2.664988 3.0594244,2.6651985 0 0 1 -3.09692,-2.597985 3.0594244,2.6651985 0 0 1 2.9431,-2.730306 3.0594244,2.6651985 0 0 1 3.17091,2.529341"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-b"
+          d="m 130.40374,76.468119 a 3.0594244,2.6651985 0 0 1 -3.02096,2.664988 3.0594244,2.6651985 0 0 1 -3.09692,-2.597985 3.0594244,2.6651985 0 0 1 2.9431,-2.730306 3.0594244,2.6651985 0 0 1 3.17091,2.529341"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-c"
+          d="m 131.07396,43.538738 a 3.0594244,2.6651985 0 0 1 -3.02096,2.664988 3.0594244,2.6651985 0 0 1 -3.09692,-2.597985 3.0594244,2.6651985 0 0 1 2.9431,-2.730306 3.0594244,2.6651985 0 0 1 3.17092,2.529341"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-c"
+          d="m 131.07396,43.538738 a 3.0594244,2.6651985 0 0 1 -3.02096,2.664988 3.0594244,2.6651985 0 0 1 -3.09692,-2.597985 3.0594244,2.6651985 0 0 1 2.9431,-2.730306 3.0594244,2.6651985 0 0 1 3.17092,2.529341"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-a"
+          d="m 123.43295,32.956808 a 3.0594244,2.6651985 0 0 1 -3.02096,2.664988 3.0594244,2.6651985 0 0 1 -3.09692,-2.597986 3.0594244,2.6651985 0 0 1 2.9431,-2.730306 3.0594244,2.6651985 0 0 1 3.17092,2.529342"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-a"
+          d="m 123.43295,32.956808 a 3.0594244,2.6651985 0 0 1 -3.02096,2.664988 3.0594244,2.6651985 0 0 1 -3.09692,-2.597986 3.0594244,2.6651985 0 0 1 2.9431,-2.730306 3.0594244,2.6651985 0 0 1 3.17092,2.529342"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-b"
+          d="m 93.536853,23.279565 a 3.0594244,2.6651985 0 0 1 -3.020965,2.664988 3.0594244,2.6651985 0 0 1 -3.096918,-2.597987 3.0594244,2.6651985 0 0 1 2.943104,-2.730304 3.0594244,2.6651985 0 0 1 3.170911,2.529341"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-b"
+          d="m 93.536853,23.279565 a 3.0594244,2.6651985 0 0 1 -3.020965,2.664988 3.0594244,2.6651985 0 0 1 -3.096918,-2.597987 3.0594244,2.6651985 0 0 1 2.943104,-2.730304 3.0594244,2.6651985 0 0 1 3.170911,2.529341"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-c"
+          d="m 128.60817,22.339558 a 3.0594244,2.6651985 0 0 1 -3.02096,2.664989 3.0594244,2.6651985 0 0 1 -3.09692,-2.597987 3.0594244,2.6651985 0 0 1 2.9431,-2.730306 3.0594244,2.6651985 0 0 1 3.17091,2.529343"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-c"
+          d="m 128.60817,22.339558 a 3.0594244,2.6651985 0 0 1 -3.02096,2.664989 3.0594244,2.6651985 0 0 1 -3.09692,-2.597987 3.0594244,2.6651985 0 0 1 2.9431,-2.730306 3.0594244,2.6651985 0 0 1 3.17091,2.529343"
+        />
       </svg>
     </div>
   ),
   staticDoughnut: (
     <div className="graph-type-selector--graphic">
       <svg
-        viewBox="0 0 100 100"
+        viewBox="0 0 150 150"
         width="100%"
         height="100%"
         version="1.1"
-        id="staticDoughnut"
+        id="StaticDoughnut"
         x="0px"
         y="0px"
         preserveAspectRatio="none meet"
         shapeRendering="geometricPrecision"
       >
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-a"
-        ></circle>
-
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-b"
-        ></circle>
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-c"
-        ></circle>
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-d"
-        ></circle>
+        <path
+          className="graph-type-selector--graphic-line graphic-line-a"
+          d="M73.037 124.824c-12.059-.485-23.367-4.803-32.912-12.567-3.325-2.704-6.928-6.588-9.54-10.286-1.108-1.568-2.62-3.975-2.62-4.17 0-.105 23.048-13.488 23.227-13.488.034 0 .343.434.687.963 3.253 5.015 8.373 9.03 14.075 11.042 5.256 1.854 11.53 2.008 16.857.415 6.57-1.965 11.828-5.948 15.6-11.82 1.26-1.962 2.43-4.603 3.144-7.105 1.597-5.59 1.351-11.707-.69-17.158-2.474-6.609-7.565-12.173-13.877-15.167-3.517-1.667-6.28-2.369-10.696-2.714l-1.109-.087V15.696l1.467.07c5.935.281 10.658 1.14 15.846 2.88 6.305 2.114 12.075 5.316 17.312 9.606 1.962 1.607 5.77 5.41 7.318 7.306 6.923 8.483 11.033 18.31 12.228 29.239.295 2.693.292 8.354-.005 11.072-.751 6.878-2.328 12.332-5.317 18.393-5.465 11.08-13.853 19.488-24.882 24.94a54.171 54.171 0 0 1-19.174 5.417c-1.814.163-5.375.268-6.94.205z"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-a"
+          d="M73.037 124.824c-12.059-.485-23.367-4.803-32.912-12.567-3.325-2.704-6.928-6.588-9.54-10.286-1.108-1.568-2.62-3.975-2.62-4.17 0-.105 23.048-13.488 23.227-13.488.034 0 .343.434.687.963 3.253 5.015 8.373 9.03 14.075 11.042 5.256 1.854 11.53 2.008 16.857.415 6.57-1.965 11.828-5.948 15.6-11.82 1.26-1.962 2.43-4.603 3.144-7.105 1.597-5.59 1.351-11.707-.69-17.158-2.474-6.609-7.565-12.173-13.877-15.167-3.517-1.667-6.28-2.369-10.696-2.714l-1.109-.087V15.696l1.467.07c5.935.281 10.658 1.14 15.846 2.88 6.305 2.114 12.075 5.316 17.312 9.606 1.962 1.607 5.77 5.41 7.318 7.306 6.923 8.483 11.033 18.31 12.228 29.239.295 2.693.292 8.354-.005 11.072-.751 6.878-2.328 12.332-5.317 18.393-5.465 11.08-13.853 19.488-24.882 24.94a54.171 54.171 0 0 1-19.174 5.417c-1.814.163-5.375.268-6.94.205z"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-b"
+          d="M26.74 95.724c-4.553-8.577-6.808-18.83-6.222-28.286.16-2.577.577-6.192.734-6.346.07-.07 26.438 4.566 26.538 4.666.038.038-.002.544-.09 1.126-.208 1.401-.21 5.325-.002 6.849.465 3.407 1.445 6.568 2.846 9.185.318.593.464 1.01.38 1.085-.254.226-23.06 13.321-23.198 13.321-.075 0-.52-.72-.986-1.6z"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-b"
+          d="M26.74 95.724c-4.553-8.577-6.808-18.83-6.222-28.286.16-2.577.577-6.192.734-6.346.07-.07 26.438 4.566 26.538 4.666.038.038-.002.544-.09 1.126-.208 1.401-.21 5.325-.002 6.849.465 3.407 1.445 6.568 2.846 9.185.318.593.464 1.01.38 1.085-.254.226-23.06 13.321-23.198 13.321-.075 0-.52-.72-.986-1.6z"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-c"
+          d="M34.332 62.95c-7.161-1.274-13.01-2.377-12.999-2.451.382-2.376 1.424-6.144 2.53-9.142 3.408-9.247 9.431-17.568 17.165-23.715 9.244-7.348 20.107-11.345 32.26-11.869l1.609-.07v26.98l-.966.084c-.531.046-1.577.152-2.325.237-9.177 1.04-17.462 7.02-21.474 15.502-.856 1.81-1.603 3.951-1.935 5.547-.226 1.084-.296 1.242-.551 1.23-.161-.009-6.152-1.058-13.314-2.332z"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-c"
+          d="M34.332 62.95c-7.161-1.274-13.01-2.377-12.999-2.451.382-2.376 1.424-6.144 2.53-9.142 3.408-9.247 9.431-17.568 17.165-23.715 9.244-7.348 20.107-11.345 32.26-11.869l1.609-.07v26.98l-.966.084c-.531.046-1.577.152-2.325.237-9.177 1.04-17.462 7.02-21.474 15.502-.856 1.81-1.603 3.951-1.935 5.547-.226 1.084-.296 1.242-.551 1.23-.161-.009-6.152-1.058-13.314-2.332z"
+        />
       </svg>
     </div>
   ),
   staticPie: (
     <div className="graph-type-selector--graphic">
       <svg
-        viewBox="0 0 100 100"
+        viewBox="0 0 150 150"
         width="100%"
         height="100%"
         version="1.1"
-        id="staticPie"
+        id="StaticPie"
         x="0px"
         y="0px"
         preserveAspectRatio="none meet"
         shapeRendering="geometricPrecision"
       >
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-a"
-        ></circle>
-
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-b"
-        ></circle>
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-c"
-        ></circle>
-        <circle
-          r="15%"
-          cx="50%"
-          cy="50%"
-          className="graph-type-selector--graphic-circle-line graphic-line-d"
-        ></circle>
+        <path
+          className="graph-type-selector--graphic-line graphic-line-a"
+          d="M72.943 125.287c-16.99-.683-32.847-9.21-42.496-22.848-1.11-1.568-2.623-3.974-2.623-4.17 0-.068 10.62-6.246 23.598-13.728L75.02 70.936l.036-27.376.037-27.377 1.467.07c11.435.542 21.275 3.857 30.14 10.153 20.165 14.321 28.123 40.61 19.317 63.811-8.207 21.622-29.965 36-53.074 35.07z"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-a"
+          d="M72.943 125.287c-16.99-.683-32.847-9.21-42.496-22.848-1.11-1.568-2.623-3.974-2.623-4.17 0-.068 10.62-6.246 23.598-13.728L75.02 70.936l.036-27.376.037-27.377 1.467.07c11.435.542 21.275 3.857 30.14 10.153 20.165 14.321 28.123 40.61 19.317 63.811-8.207 21.622-29.965 36-53.074 35.07z"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-b"
+          d="M26.583 96.112c-2.93-5.568-4.824-11.468-5.802-18.076-.465-3.14-.474-11.43-.016-14.453.165-1.086.322-1.995.35-2.018.077-.067 53.117 9.274 53.113 9.354-.002.04-1.081.687-2.398 1.44-1.318.751-11.788 6.782-23.268 13.4-11.48 6.619-20.923 12.034-20.984 12.033-.061 0-.51-.756-.995-1.68z"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-b"
+          d="M26.583 96.112c-2.93-5.568-4.824-11.468-5.802-18.076-.465-3.14-.474-11.43-.016-14.453.165-1.086.322-1.995.35-2.018.077-.067 53.117 9.274 53.113 9.354-.002.04-1.081.687-2.398 1.44-1.318.751-11.788 6.782-23.268 13.4-11.48 6.619-20.923 12.034-20.984 12.033-.061 0-.51-.756-.995-1.68z"
+        />
+        <path
+          className="graph-type-selector--graphic-line graphic-line-c"
+          d="M47.59 65.786c-14.534-2.571-26.416-4.736-26.404-4.81 1.16-7.213 4.954-16.021 9.631-22.362 10.05-13.626 25.23-21.645 42.305-22.35l1.683-.07v54.297l-.393-.015c-.217-.008-12.286-2.118-26.821-4.69z"
+        />
+        <path
+          className="graph-type-selector--graphic-fill graphic-fill-c"
+          d="M47.59 65.786c-14.534-2.571-26.416-4.736-26.404-4.81 1.16-7.213 4.954-16.021 9.631-22.362 10.05-13.626 25.23-21.645 42.305-22.35l1.683-.07v54.297l-.393-.015c-.217-.008-12.286-2.118-26.821-4.69z"
+        />
       </svg>
     </div>
   ),
@@ -974,7 +1319,7 @@ export const STATISTICAL_GRAPH_TYPES: GraphType[] = [
   {
     type: CellType.StaticStackedChart,
     menuOption: 'Stacked Histogram',
-    graphic: GRAPH_SVGS[CellType.StaticPie],
+    graphic: GRAPH_SVGS[CellType.StaticStackedChart],
   },
   {
     type: CellType.StaticPie,
@@ -984,21 +1329,21 @@ export const STATISTICAL_GRAPH_TYPES: GraphType[] = [
   {
     type: CellType.StaticDoughnut,
     menuOption: 'Doughnut',
-    graphic: GRAPH_SVGS[CellType.StaticPie],
+    graphic: GRAPH_SVGS[CellType.StaticDoughnut],
   },
   {
     type: CellType.StaticScatter,
     menuOption: 'Scatter',
-    graphic: GRAPH_SVGS[CellType.StaticPie],
+    graphic: GRAPH_SVGS[CellType.StaticScatter],
   },
   {
     type: CellType.StaticRadar,
     menuOption: 'Radar',
-    graphic: GRAPH_SVGS[CellType.StaticPie],
+    graphic: GRAPH_SVGS[CellType.StaticRadar],
   },
   {
     type: CellType.StaticLineChart,
     menuOption: 'Line',
-    graphic: GRAPH_SVGS[CellType.StaticPie],
+    graphic: GRAPH_SVGS[CellType.StaticLineChart],
   },
 ]
