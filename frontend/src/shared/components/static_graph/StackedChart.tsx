@@ -1,5 +1,5 @@
 // Libraries
-import React, {useEffect, useRef, useState} from 'react'
+import React, {useEffect, useMemo, useRef, useState} from 'react'
 import {Bar} from 'react-chartjs-2'
 import {
   Chart as ChartJS,
@@ -23,16 +23,13 @@ import {
   StatisticalGraphMinMaxValueType,
   StatisticalGraphScaleType,
 } from 'src/types'
-import {TimeSeriesServerResponse} from 'src/types/series'
+import {TimeSeriesSeries, TimeSeriesServerResponse} from 'src/types/series'
 import {ColorString} from 'src/types/colors'
-
-// Utils
-import {fastMap} from 'src/utils/fast'
-import {getLineColorsHexes} from 'src/shared/constants/graphColorPalettes'
 
 import {
   convertToStaticGraphMinMaxValue,
   formatStaticGraphValue,
+  staticGraphDatasets,
 } from 'src/shared/utils/staticGraph'
 
 // Constants
@@ -44,7 +41,8 @@ import {
 // Components
 import ChartContainer from 'src/shared/components/static_graph/common/ChartContainer'
 import {StaticGraphLegend} from 'src/shared/components/static_graph/common/StaticGraphLegend'
-import {changeColorsOpacity} from 'src/shared/graphs/helpers'
+
+import {CellType, FieldOption, TableOptions} from 'src/types/dashboards'
 
 ChartJS.register(
   CategoryScale,
@@ -67,6 +65,8 @@ interface Props {
   yAxisTitle?: string
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
+  tableOptions: TableOptions
+  fieldOptions: FieldOption[]
 }
 
 const StackedChart = ({
@@ -78,30 +78,31 @@ const StackedChart = ({
   yAxisTitle,
   staticLegend,
   staticLegendPosition,
+  tableOptions,
+  fieldOptions,
 }: Props) => {
   const chartRef = useRef<ChartJS<'bar', [], unknown>>(null)
   const [chartInstance, setChartInstance] = useState<
     ChartJS<'bar', [], unknown>
   >(null)
   const {container, legend} = LEGEND_POSITION[staticLegendPosition]
-  const convertData = data[0]['response']['results'][0]['series']
-  const axesX = fastMap(convertData, item => _.values(item.tags))
-  const columns = convertData[0].columns
-  const processedData = fastMap(convertData, item =>
-    item.values[0].slice(1).map(value => value)
+
+  const rawData: TimeSeriesSeries[] = _.get(
+    data,
+    ['0', 'response', 'results', '0', 'series'],
+    []
   )
-  const getcolors = getLineColorsHexes(colors, columns.length - 1)
-  const datasets = columns.slice(1).map((col, colIndex) => ({
-    label: col,
-    data: fastMap(processedData, data => data[colIndex]),
-    backgroundColor: changeColorsOpacity(getcolors, 0.7)[colIndex],
-    borderColor: getcolors[colIndex],
-    borderWidth: 1,
-  }))
-  const chartData = {
-    labels: axesX,
-    datasets,
-  }
+
+  const chartData = useMemo(
+    () =>
+      staticGraphDatasets(CellType.StaticStackedChart)({
+        rawData,
+        fieldOptions,
+        tableOptions,
+        colors,
+      }),
+    [data]
+  )
 
   const type: StatisticalGraphScaleType =
     axes?.y?.scale === 'log' ? 'logarithmic' : undefined

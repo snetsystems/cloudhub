@@ -531,6 +531,8 @@ class RefreshingGraph extends Component<Props> {
       staticLegend,
       staticLegendPosition,
       manualRefresh,
+      tableOptions,
+      fieldOptions,
     } = this.props
 
     const {dataType, data} = this.getTypeAndData(influxQLData, fluxData)
@@ -546,6 +548,8 @@ class RefreshingGraph extends Component<Props> {
         loading={loading}
         dataType={dataType}
         key={manualRefresh}
+        tableOptions={tableOptions}
+        fieldOptions={fieldOptions}
         staticLegend={staticLegend}
         staticLegendPosition={staticLegendPosition}
         decimalPlaces={decimalPlaces}

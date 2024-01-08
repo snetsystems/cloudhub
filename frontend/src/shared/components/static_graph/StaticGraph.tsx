@@ -17,7 +17,12 @@ import LineChart from 'src/shared/components/static_graph/LineChart'
 
 // Types
 import {ColorString} from 'src/types/colors'
-import {DecimalPlaces, StaticLegendPositionType} from 'src/types/dashboards'
+import {
+  DecimalPlaces,
+  FieldOption,
+  StaticLegendPositionType,
+  TableOptions,
+} from 'src/types/dashboards'
 import {TimeSeriesServerResponse} from 'src/types/series'
 import {Query, Axes, RemoteDataState, CellType, FluxTable} from 'src/types'
 import {DataType} from 'src/shared/constants'
@@ -40,6 +45,8 @@ interface Props {
   cellID: string
   staticLegend: boolean
   staticLegendPosition: StaticLegendPositionType
+  tableOptions: TableOptions
+  fieldOptions: FieldOption[]
 }
 
 type StaticGraphProps = Props & RouteComponentProps<any, any>
@@ -89,6 +96,8 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
       type,
       staticLegend,
       staticLegendPosition,
+      tableOptions,
+      fieldOptions,
     } = this.props
     const xAxisTitle = this.getAxisTitle('x', axes, queries)
     const yAxisTitle = this.getAxisTitle('y', axes, queries)
@@ -106,6 +115,22 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             colors={colors}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
+            tableOptions={tableOptions}
+            fieldOptions={fieldOptions}
+          />
+        )
+      case CellType.StaticStackedChart:
+        return (
+          <StackedChart
+            axes={axes}
+            cellID={cellID}
+            staticGraphStyle={this.staticGraphStyle}
+            data={data}
+            colors={colors}
+            staticLegend={staticLegend}
+            staticLegendPosition={staticLegendPosition}
+            tableOptions={tableOptions}
+            fieldOptions={fieldOptions}
           />
         )
       case CellType.StaticPie:
@@ -118,6 +143,8 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             colors={colors}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
+            tableOptions={tableOptions}
+            fieldOptions={fieldOptions}
           />
         )
       case CellType.StaticDoughnut:
@@ -130,6 +157,8 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             colors={colors}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
+            tableOptions={tableOptions}
+            fieldOptions={fieldOptions}
           />
         )
       case CellType.StaticScatter:
@@ -156,18 +185,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             staticLegendPosition={staticLegendPosition}
           />
         )
-      case CellType.StaticStackedChart:
-        return (
-          <StackedChart
-            axes={axes}
-            cellID={cellID}
-            staticGraphStyle={this.staticGraphStyle}
-            data={data}
-            colors={colors}
-            staticLegend={staticLegend}
-            staticLegendPosition={staticLegendPosition}
-          />
-        )
+
       case CellType.StaticLineChart:
         return (
           <LineChart
@@ -178,6 +196,8 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             colors={colors}
             staticLegend={staticLegend}
             staticLegendPosition={staticLegendPosition}
+            tableOptions={tableOptions}
+            fieldOptions={fieldOptions}
           />
         )
       default:
