@@ -336,12 +336,8 @@ const GRAPH_SVGS: GraphSVGs = {
           d="m99.032 109.942-47.975.33L33.55 63.546l41.283-32.184 41.405 32.278Z"
         />
         <path
-          className="graph-type-selector--graphic-line graphic-line-d"
-          d="M19.202 58.219 74.85 78.205l-44.938-16.14ZM75.03 78.69l-34.38 45.595Z"
-        />
-        <path
-          className="graph-type-selector--graphic-line graphic-line-d"
-          d="m74.807 17.212.198 61.049zm56.631 40.87L74.614 78.48Zm-21.68 66.069L74.974 78.217Z"
+          className="graph-type-selector--graphic-line graphic-line-e"
+          d="M19.202 58.219 74.85 78.205l-44.938-16.14ZM75.03 78.69l-34.38 45.595Zm-.223-61.478.198 61.049zm56.631 40.87L74.614 78.48Zm-21.68 66.069L74.974 78.217Z"
         />
       </svg>
     </div>

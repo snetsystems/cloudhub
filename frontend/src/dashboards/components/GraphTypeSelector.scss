@@ -169,6 +169,11 @@ $graph-type--graphic: 150px;
   &.graphic-line-d {
     stroke: $g13-mist;
   }
+  &.graphic-line-e {
+    stroke-width: 0.5px;
+    stroke: $g13-mist;
+    opacity: 0.4;
+  }
 }
 .graph-type-selector--graphic-fill {
   opacity: 0.045;
