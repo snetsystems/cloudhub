@@ -108,13 +108,12 @@ export enum CellType {
   News = 'news',
   Guide = 'guide',
   Note = 'note',
-  Histogram = 'histogram',
   StaticBar = 'staticBar',
   StaticPie = 'staticPie',
   StaticDoughnut = 'staticDoughnut',
   StaticScatter = 'staticScatter',
   StaticRadar = 'staticRadar',
-  StaticStackedChart = 'staticStackedChart',
+  StaticStackedBar = 'staticStackedBar',
   StaticLineChart = 'staticLineChart',
 }
 

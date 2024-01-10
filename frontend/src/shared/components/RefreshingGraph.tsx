@@ -252,12 +252,12 @@ class RefreshingGraph extends Component<Props> {
                         )
                       case CellType.Gauge:
                         return this.gauge(timeSeriesInfluxQL, timeSeriesFlux)
-                      case CellType.Histogram:
+                      case CellType.StaticBar:
                       case CellType.StaticPie:
                       case CellType.StaticDoughnut:
                       case CellType.StaticScatter:
                       case CellType.StaticRadar:
-                      case CellType.StaticStackedChart:
+                      case CellType.StaticStackedBar:
                       case CellType.StaticLineChart:
                         return this.StaticGraph(
                           timeSeriesInfluxQL,

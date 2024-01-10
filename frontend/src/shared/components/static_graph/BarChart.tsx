@@ -95,7 +95,7 @@ const BarChart = ({
 
   const chartData = useMemo(
     () =>
-      staticGraphDatasets(CellType.Histogram)({
+      staticGraphDatasets(CellType.StaticBar)({
         rawData,
         fieldOptions,
         tableOptions,

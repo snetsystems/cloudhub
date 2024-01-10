@@ -167,9 +167,9 @@ export const sortedStaticGraphData = (
 
 export const staticGraphDatasets = (cellType: CellType) => {
   switch (cellType) {
-    case CellType.StaticStackedChart:
+    case CellType.StaticStackedBar:
     case CellType.StaticLineChart:
-    case CellType.Histogram: {
+    case CellType.StaticBar: {
       return createBarChartDatasets
     }
     case CellType.StaticPie:

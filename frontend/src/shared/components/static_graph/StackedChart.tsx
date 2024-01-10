@@ -95,7 +95,7 @@ const StackedChart = ({
 
   const chartData = useMemo(
     () =>
-      staticGraphDatasets(CellType.StaticStackedChart)({
+      staticGraphDatasets(CellType.StaticStackedBar)({
         rawData,
         fieldOptions,
         tableOptions,

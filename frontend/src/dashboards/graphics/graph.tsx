@@ -14,13 +14,13 @@ interface GraphSVGs {
   [CellType.Gauge]: Graphic
   [CellType.Table]: Graphic
   [CellType.Note]: Graphic
-  [CellType.Histogram]: Graphic
   [CellType.StaticPie]: Graphic
   [CellType.StaticDoughnut]: Graphic
   [CellType.StaticScatter]: Graphic
   [CellType.StaticRadar]: Graphic
-  [CellType.StaticStackedChart]: Graphic
+  [CellType.StaticStackedBar]: Graphic
   [CellType.StaticLineChart]: Graphic
+  [CellType.StaticBar]: Graphic
 }
 const GRAPH_SVGS: GraphSVGs = {
   staticLineChart: (
@@ -63,7 +63,7 @@ const GRAPH_SVGS: GraphSVGs = {
       </svg>
     </div>
   ),
-  staticStackedChart: (
+  staticStackedBar: (
     <div className="graph-type-selector--graphic">
       <svg
         viewBox="0 0 150 150"
@@ -614,7 +614,7 @@ const GRAPH_SVGS: GraphSVGs = {
       </svg>
     </div>
   ),
-  histogram: (
+  staticBar: (
     <div className="graph-type-selector--graphic">
       <svg
         width="100%"
@@ -1312,14 +1312,14 @@ export const GRAPH_TYPES: GraphType[] = [
 
 export const STATISTICAL_GRAPH_TYPES: GraphType[] = [
   {
-    type: CellType.Histogram,
-    menuOption: 'Histogram',
-    graphic: GRAPH_SVGS[CellType.Histogram],
+    type: CellType.StaticBar,
+    menuOption: 'Bar',
+    graphic: GRAPH_SVGS[CellType.StaticBar],
   },
   {
-    type: CellType.StaticStackedChart,
-    menuOption: 'Stacked Histogram',
-    graphic: GRAPH_SVGS[CellType.StaticStackedChart],
+    type: CellType.StaticStackedBar,
+    menuOption: 'Stacked Bar',
+    graphic: GRAPH_SVGS[CellType.StaticStackedBar],
   },
   {
     type: CellType.StaticPie,

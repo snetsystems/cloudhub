@@ -103,7 +103,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
     const yAxisTitle = this.getAxisTitle('y', axes, queries)
 
     switch (type) {
-      case CellType.Histogram:
+      case CellType.StaticBar:
         return (
           <BarChart
             axes={axes}
@@ -119,7 +119,7 @@ class StaticGraph extends PureComponent<StaticGraphProps, State> {
             fieldOptions={fieldOptions}
           />
         )
-      case CellType.StaticStackedChart:
+      case CellType.StaticStackedBar:
         return (
           <StackedChart
             axes={axes}

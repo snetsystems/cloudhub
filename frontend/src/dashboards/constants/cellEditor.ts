@@ -65,12 +65,11 @@ export const getCellTypeColors = ({
     case CellType.Line:
     case CellType.LinePlusSingleStat:
     case CellType.Stacked:
-    case CellType.Histogram:
     case CellType.StaticPie:
     case CellType.StaticDoughnut:
     case CellType.StaticScatter:
     case CellType.StaticRadar:
-    case CellType.StaticStackedChart:
+    case CellType.StaticStackedBar:
     case CellType.StaticLineChart:
     case CellType.StaticBar:
     case CellType.StepPlot: {

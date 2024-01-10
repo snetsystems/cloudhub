@@ -262,12 +262,12 @@ class FieldList extends PureComponent<Props, State> {
     }
 
     const initialGroupBy =
-      type === CellType.Histogram ||
+      type === CellType.StaticBar ||
       type === CellType.StaticPie ||
       type === CellType.StaticDoughnut ||
       type === CellType.StaticScatter ||
       type === CellType.StaticRadar ||
-      type === CellType.StaticStackedChart ||
+      type === CellType.StaticStackedBar ||
       type === CellType.StaticLineChart
         ? {...groupBy}
         : {...groupBy, time}
