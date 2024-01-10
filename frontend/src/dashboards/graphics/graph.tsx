@@ -1259,7 +1259,7 @@ interface GraphType {
   graphic: Graphic
 }
 
-export const COMMON_GRAPH_TYPES: GraphType[] = [
+export const OTHERS_GRAPH_TYPES: GraphType[] = [
   {
     type: CellType.SingleStat,
     menuOption: 'Single Stat',

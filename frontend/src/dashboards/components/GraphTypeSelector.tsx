@@ -7,7 +7,7 @@ import FancyScrollbar from 'src/shared/components/FancyScrollbar'
 
 // Constants
 import {
-  COMMON_GRAPH_TYPES,
+  OTHERS_GRAPH_TYPES,
   GRAPH_TYPES,
   STATISTICAL_GRAPH_TYPES,
 } from 'src/dashboards/graphics/graph'
@@ -32,23 +32,6 @@ class GraphTypeSelector extends Component<Props> {
       <FancyScrollbar autoHide={false} className="graph-type-selector">
         <div className="graph-type-selector--container">
           <div className="graph-type-selector--grid">
-            <h5 style={{borderBottom: '2px solid #383846'}}>COMMON</h5>
-            {COMMON_GRAPH_TYPES.map(graphType => (
-              <div
-                key={graphType.type}
-                className={classnames('graph-type-selector--option', {
-                  active: graphType.type === type,
-                })}
-              >
-                <div onClick={this.onChangeCellType(graphType.type)}>
-                  {graphType.graphic}
-                  <p>{graphType.menuOption}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="graph-type-selector--grid">
             <h5 className="graph-type-selector--title">TIME SERIES GRAPH</h5>
             {GRAPH_TYPES.map(graphType => (
               <div
@@ -66,8 +49,32 @@ class GraphTypeSelector extends Component<Props> {
           </div>
 
           <div className="graph-type-selector--grid">
-            <h5 className="graph-type-selector--title">STATISTICAL GRAPH</h5>
+            <h5
+              className="graph-type-selector--title"
+              style={{paddingTop: '5%'}}
+            >
+              STATISTICAL GRAPH
+            </h5>
             {STATISTICAL_GRAPH_TYPES.map(graphType => (
+              <div
+                key={graphType.type}
+                className={classnames('graph-type-selector--option', {
+                  active: graphType.type === type,
+                })}
+              >
+                <div onClick={this.onChangeCellType(graphType.type)}>
+                  {graphType.graphic}
+                  <p>{graphType.menuOption}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div
+            className="graph-type-selector--title"
+            style={{paddingTop: '5%'}}
+          >
+            <h5 style={{borderBottom: '2px solid #383846'}}>OTHERS</h5>
+            {OTHERS_GRAPH_TYPES.map(graphType => (
               <div
                 key={graphType.type}
                 className={classnames('graph-type-selector--option', {
