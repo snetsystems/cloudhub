@@ -17,6 +17,7 @@ export interface FieldOption {
   displayName: string
   visible: boolean
   direction?: '' | 'asc' | 'desc'
+  tempVar?: string
 }
 
 export interface TableOptions {

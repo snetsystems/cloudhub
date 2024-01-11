@@ -47,6 +47,7 @@ import {
   RemoteDataState,
   QueryUpdateState,
   QueryType,
+  TemplateValue,
 } from 'src/types'
 import {
   TableOptions,
@@ -100,6 +101,7 @@ interface Props {
   onUpdateCellColors?: (bgColor: string, textColor: string) => void
   onUpdateFieldOptions?: (fieldOptions: FieldOption[]) => void
   onUpdateVisType?: (type: CellType) => Promise<void>
+  onPickTemplate?: (template: Template, value: TemplateValue) => void
 }
 class RefreshingGraph extends Component<Props> {
   public static defaultProps: Partial<Props> = {
@@ -377,6 +379,8 @@ class RefreshingGraph extends Component<Props> {
       handleSetHoverTime,
       editorLocation,
       onUpdateFieldOptions,
+      templates,
+      onPickTemplate,
     } = this.props
 
     const {dataType, data} = this.getTypeAndData(influxQLData, fluxData)
@@ -432,6 +436,8 @@ class RefreshingGraph extends Component<Props> {
                 editorLocation={editorLocation}
                 handleSetHoverTime={handleSetHoverTime}
                 onUpdateFieldOptions={onUpdateFieldOptions}
+                onPickTemplate={onPickTemplate}
+                templates={templates}
               />
             )}
           </TableGraphFormat>

@@ -704,6 +704,7 @@ type RenamableField struct {
 	DisplayName  string `json:"displayName"`
 	Visible      bool   `json:"visible"`
 	Direction    string `json:"direction"`
+	TempVar      string `json:"tempVar"`
 }
 
 // TableOptions is a type of options for a DashboardCell with type Table

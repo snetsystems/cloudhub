@@ -20,6 +20,7 @@ interface RenamableField {
   displayName: string
   visible: boolean
   direction?: '' | 'asc' | 'desc'
+  tempVar?: string
 }
 
 interface Props {
@@ -36,6 +37,7 @@ interface Props {
   connectDragPreview?: ConnectDragPreview
   moveField: (dragIndex: number, hoverIndex: number) => void
   direction: '' | 'asc' | 'desc'
+  tempVar: string
 }
 
 const fieldSource: DragSourceSpec<Props> = {
@@ -121,6 +123,7 @@ export default class GraphOptionsCustomizableField extends Component<Props> {
 
     this.handleFieldRename = this.handleFieldRename.bind(this)
     this.handleToggleVisible = this.handleToggleVisible.bind(this)
+    this.handleTemplateVariable = this.handleTemplateVariable.bind(this)
   }
   public render(): JSX.Element | null {
     const {
@@ -131,6 +134,7 @@ export default class GraphOptionsCustomizableField extends Component<Props> {
       connectDragPreview,
       connectDropTarget,
       visible,
+      tempVar,
     } = this.props
 
     const fieldClass = `customizable-field${isDragging ? ' dragging' : ''}`
@@ -173,18 +177,31 @@ export default class GraphOptionsCustomizableField extends Component<Props> {
             placeholder={`Rename ${internalName}`}
             disabled={!visible}
           />
+          <input
+            className="form-control input-sm customizable-field--input"
+            type="text"
+            spellCheck={false}
+            id="tempVar"
+            value={tempVar}
+            data-test="custom-time-format"
+            onChange={this.handleTemplateVariable}
+            placeholder={`Template Variables`}
+            disabled={!visible}
+            style={internalName === 'time' ? {visibility: 'hidden'} : null}
+          />
         </div>
       )
     )
   }
 
   private handleFieldRename(e: ChangeEvent<HTMLInputElement>) {
-    const {onFieldUpdate, internalName, visible, direction} = this.props
+    const {onFieldUpdate, internalName, visible, direction, tempVar} = this.props
     onFieldUpdate({
       internalName,
       displayName: e.target.value,
       visible,
       direction,
+      tempVar
     })
   }
 
@@ -195,7 +212,25 @@ export default class GraphOptionsCustomizableField extends Component<Props> {
       displayName,
       visible,
       direction,
+      tempVar,
     } = this.props
-    onFieldUpdate({internalName, displayName, visible: !visible, direction})
+    onFieldUpdate({internalName, displayName, visible: !visible, direction, tempVar,})
+  }
+
+  private handleTemplateVariable(e: ChangeEvent<HTMLInputElement>) {
+    const {
+      onFieldUpdate,
+      internalName,
+      displayName,
+      visible,
+      direction,
+    } = this.props
+    onFieldUpdate({
+      internalName,
+      displayName,
+      tempVar: e.target.value,
+      visible,
+      direction,
+    })
   }
 }
